@@ -4,7 +4,18 @@
       <h3 class="skill-dialog__title">{{ isEdit ? t.editCard : t.addCard }}</h3>
       <div class="skill-dialog__body">
         <label class="skill-dialog__label">{{ t.title_ }}</label>
-        <input v-model="form.title" class="skill-dialog__input" placeholder="输入题目..." />
+        <div class="skill-dialog__title-row">
+          <input v-model="form.title" class="skill-dialog__input" placeholder="输入题目..." />
+          <button
+            class="skill-dialog__ai-btn"
+            :disabled="!form.title.trim() || aiGenerating"
+            @click="aiGenerate"
+            :title="t.aiGenerate || 'AI 生成答案'"
+          >
+            <span v-if="aiGenerating" class="skill-dialog__ai-spinner" />
+            <span v-else>✨</span>
+          </button>
+        </div>
 
         <label class="skill-dialog__label">{{ t.answer }}</label>
         <textarea v-model="form.answer" class="skill-dialog__textarea" rows="3" placeholder="输入正确答案..." />
@@ -58,10 +69,13 @@
 
 <script setup lang="ts">
 import { reactive, ref, computed } from "vue"
+import type { Plugin } from "siyuan"
 import type { SkillCard, SkillI18n, CreateSkillDTO, Language, Difficulty } from "../types"
+import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi"
 
 const props = defineProps<{
   i18n: SkillI18n
+  plugin: Plugin
   editCard?: SkillCard | null
 }>()
 
@@ -75,6 +89,7 @@ const isEdit = computed(() => !!props.editCard)
 const t = computed(() => props.i18n)
 
 const tagsInput = ref(props.editCard?.tags.join(", ") || "")
+const aiGenerating = ref(false)
 
 const form = reactive({
   title: props.editCard?.title || "",
@@ -87,6 +102,50 @@ const form = reactive({
   category: props.editCard?.category || "",
   difficulty: (props.editCard?.difficulty || "beginner") as Difficulty,
 })
+
+// --- AI 生成 ---
+async function aiGenerate() {
+  const title = form.title.trim()
+  if (!title || aiGenerating.value) return
+
+  aiGenerating.value = true
+  try {
+    const aiConfig = getApiConfigFromPlugin(props.plugin)
+    const prompt = `为以下技术题目生成学习卡片内容：
+题目：${title}
+
+请输出严格 JSON（不要任何前缀或解释）：
+{
+  "answer": "简洁准确的答案（1-3句话）",
+  "distractors": ["错误但看似合理的选项1", "错误选项2", "错误选项3"],
+  "category": "所属分类（如：异步编程、基础语法、设计模式）",
+  "tags": ["标签1", "标签2", "标签3"]
+}`
+
+    const result = await callAI(prompt, aiConfig, {
+      systemPrompt: "你是编程技能导师，专门为技术学习卡片生成准确答案和高质量干扰项。只输出JSON，禁止任何解释。",
+      temperature: 0.5,
+      maxTokens: 600,
+      responseFormat: { type: "json_object" },
+    })
+
+    const parsed = JSON.parse(result)
+    if (parsed.answer) form.answer = parsed.answer
+    if (Array.isArray(parsed.distractors)) {
+      form.distractor1 = parsed.distractors[0] || ""
+      form.distractor2 = parsed.distractors[1] || ""
+      form.distractor3 = parsed.distractors[2] || ""
+    }
+    if (parsed.category) form.category = parsed.category
+    if (Array.isArray(parsed.tags) && parsed.tags.length > 0) {
+      tagsInput.value = parsed.tags.join(", ")
+    }
+  } catch (err: any) {
+    console.warn("AI 生成失败:", err.message || err)
+  } finally {
+    aiGenerating.value = false
+  }
+}
 
 function handleSave() {
   if (!form.title.trim() || !form.answer.trim()) return
@@ -143,6 +202,38 @@ function handleSave() {
     padding: 16px 20px;
     overflow-y: auto;
     flex: 1;
+  }
+  &__title-row {
+    display: flex;
+    gap: 6px;
+    .skill-dialog__input { flex: 1; }
+  }
+  &__ai-btn {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--b3-theme-surface-lighter, #e2e8f0);
+    border-radius: 6px;
+    background: var(--b3-theme-background, #fff);
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.15s;
+    &:hover:not(:disabled) {
+      border-color: #6366f1;
+      background: rgba(99, 102, 241, 0.06);
+    }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+  }
+  &__ai-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--b3-theme-surface-lighter, #e2e8f0);
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: ai-spin 0.6s linear infinite;
   }
   &__label {
     display: block;
@@ -226,5 +317,8 @@ function handleSave() {
       &:hover { background: #4f46e5; }
     }
   }
+}
+@keyframes ai-spin {
+  to { transform: rotate(360deg); }
 }
 </style>

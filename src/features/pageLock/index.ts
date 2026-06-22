@@ -150,7 +150,7 @@ export function showGlobalPasswordDialog(plugin: Plugin) {
 
   const modal = createModalVueApp(LockDialog, {
     maskId: "page-lock-dialog-mask",
-    width: "400px",
+    width: "480px",
     height: "auto",
     getCloseHandler: () => () => { modal.close() },
     buildProps: () => ({

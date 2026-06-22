@@ -18,8 +18,8 @@
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-md;
-  width: 420px;
-  max-width: 90vw;
+  width: 100%;
+  max-width: 480px;
   overflow: hidden;
 }
 
@@ -114,7 +114,6 @@
 
 @media (max-width: 480px) {
   .page-lock-dialog {
-    width: 95vw;
     border-radius: $radius-sm;
   }
 

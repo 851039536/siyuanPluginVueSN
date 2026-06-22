@@ -1,6 +1,10 @@
 <template>
   <div class="encryption-section">
     <div class="section-header">
+      <IconWrapper
+        name="pageLock"
+        :size="14"
+      />
       <span class="section-title">{{ i18n.passwordSetting || '文档加密' }}</span>
     </div>
 
@@ -10,7 +14,10 @@
         class="status-card"
         :class="{ 'has-password': hasPassword }"
       >
-        <span class="status-icon">{{ hasPassword ? '✓' : '⚠' }}</span>
+        <IconWrapper
+          :name="hasPassword ? 'success' : 'warning'"
+          :size="14"
+        />
         <span class="status-text">
           {{ hasPassword ? (i18n.passwordSet || '密码已设置') : (i18n.passwordNotSet || '尚未设置密码') }}
         </span>
@@ -18,7 +25,10 @@
 
       <!-- 密码说明 -->
       <div class="info-card">
-        <span class="info-icon">ℹ</span>
+        <IconWrapper
+          name="info"
+          :size="13"
+        />
         <span class="info-text">{{ i18n.passwordSettingDesc || '设置全局加密密码，用于锁定文档' }}</span>
       </div>
 
@@ -27,11 +37,18 @@
         class="action-btn"
         @click="openPasswordDialog"
       >
-        <span class="btn-icon">🔑</span>
+        <IconWrapper
+          name="pageLock"
+          :size="16"
+        />
         <span class="btn-text">
           {{ hasPassword ? (i18n.updatePassword || '更新密码') : (i18n.setPassword || '设置密码') }}
         </span>
-        <span class="btn-arrow">→</span>
+        <IconWrapper
+          name="chevronRight"
+          :size="14"
+          class="btn-arrow"
+        />
       </button>
     </div>
   </div>
@@ -46,6 +63,7 @@ import {
 } from "vue"
 import { usePlugin } from "@/main"
 import { emitCustomEvent } from "@/utils/eventBus"
+import IconWrapper from "@/components/IconWrapper.vue"
 
 import { GeneralSettingsStorage } from "../types/storage"
 
@@ -95,41 +113,47 @@ defineExpose({
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@use "@/variables" as *;
+
 .encryption-section {
   background: var(--b3-theme-surface);
-  border-radius: 8px;
+  border-radius: $radius-md;
   border: 1px solid var(--b3-theme-surface-lighter);
-  margin: 16px;
+  margin: $spacing-4;
   overflow: hidden;
 }
 
 .section-header {
-  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-3 $spacing-4;
   background: var(--b3-theme-surface-light);
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  color: var(--b3-theme-on-surface);
 }
 
 .section-title {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-surface);
 }
 
 .section-content {
-  padding: 16px;
+  padding: $spacing-4;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: $spacing-3;
 }
 
 .status-card,
 .info-card {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  border-radius: 6px;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-3;
+  border-radius: $radius-base;
 }
 
 .info-card {
@@ -140,7 +164,7 @@ defineExpose({
 
 .status-card {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: $font-weight-medium;
 }
 
 .status-card.has-password {
@@ -153,22 +177,8 @@ defineExpose({
   color: var(--b3-card-warning-color);
 }
 
-.status-icon,
-.info-icon {
-  flex-shrink: 0;
-}
-
-.status-icon {
-  font-size: 14px;
-}
-
-.info-icon {
-  font-size: 13px;
-  color: var(--b3-theme-primary);
-}
-
 .info-text {
-  font-size: 12px;
+  font-size: $font-size-xs;
   color: var(--b3-theme-on-surface-light);
   line-height: 1.5;
 }
@@ -176,38 +186,34 @@ defineExpose({
 .action-btn {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
+  gap: $spacing-2;
+  padding: $spacing-3;
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 6px;
+  border-radius: $radius-base;
   background: var(--b3-theme-background);
   cursor: pointer;
-}
 
-.action-btn:hover {
-  background: var(--b3-theme-primary-lightest);
-  border-color: var(--b3-theme-primary);
-}
+  &:hover {
+    background: var(--b3-theme-primary-lightest);
+    border-color: var(--b3-theme-primary);
 
-.btn-icon {
-  font-size: 16px;
+    .btn-arrow {
+      transform: translateX(3px);
+      color: var(--b3-theme-primary);
+    }
+  }
 }
 
 .btn-text {
   flex: 1;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: $font-weight-medium;
   color: var(--b3-theme-on-background);
   text-align: left;
 }
 
 .btn-arrow {
-  font-size: 14px;
   color: var(--b3-theme-on-surface-light);
-}
-
-.action-btn:hover .btn-arrow {
-  transform: translateX(3px);
-  color: var(--b3-theme-primary);
+  transition: transform 0.2s ease;
 }
 </style>

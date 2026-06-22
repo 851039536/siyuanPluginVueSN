@@ -128,7 +128,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue"
+import { ref, computed, watch, onMounted, onUnmounted } from "vue"
 import type { SkillCard, SkillI18n } from "../types"
 import IconWrapper from "@/components/IconWrapper.vue"
 import DifficultyBadge from "./DifficultyBadge.vue"
@@ -277,6 +277,35 @@ function resetQuiz() {
 function optionLetter(i: number): string {
   return String.fromCharCode(65 + i)
 }
+
+// --- 键盘快捷键 ---
+function onKeydown(e: KeyboardEvent) {
+  if (e.key === " " || e.key === "Enter") {
+    e.preventDefault()
+    if (phase.value === "feedback") {
+      goNext()
+    } else if (phase.value === "result") {
+      resetQuiz()
+    }
+  }
+  // A/B/C/D 快速选择（仅在 question 阶段）
+  const quiz = currentItem.value
+  if (phase.value === "question" && quiz) {
+    const key = e.key.toUpperCase()
+    const idx = key.charCodeAt(0) - 65
+    if (idx >= 0 && idx < quiz.options.length) {
+      e.preventDefault()
+      selectAnswer(idx)
+    }
+  }
+}
+
+onMounted(() => {
+  window.addEventListener("keydown", onKeydown)
+})
+onUnmounted(() => {
+  window.removeEventListener("keydown", onKeydown)
+})
 
 function langLabel(lang: string): string {
   const map: Record<string, string> = {

@@ -92,10 +92,14 @@ onMounted(async () => {
   await loadCards()
   const presetLoaded = await storage.isPresetLoaded()
   if (!presetLoaded) {
-    await storage.bulkCreate(PRESET_CARDS)
+    // 先标记再插入，防止标记保存失败导致后续重复插入
     await storage.markPresetLoaded()
-    await loadCards()
-    console.log(fullI18n.value.presetDataLoaded)
+    // 额外保护：如果已有卡片则不重复插入（如标记位异常但数据已存在）
+    if (cards.value.length === 0) {
+      await storage.bulkCreate(PRESET_CARDS)
+      await loadCards()
+      console.log(fullI18n.value.presetDataLoaded)
+    }
   }
 })
 

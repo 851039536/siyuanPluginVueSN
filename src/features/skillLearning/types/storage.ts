@@ -17,13 +17,14 @@ export class SkillStorage {
 
   /** 检查预设数据是否已加载 */
   async isPresetLoaded(): Promise<boolean> {
-    const val = await this.storage.load<boolean>(PRESET_FLAG_KEY)
-    return val === true
+    const val = await this.storage.load<string>(PRESET_FLAG_KEY)
+    // 用字符串存储标志位，兼容思源 API 对 boolean 序列化的不可靠行为
+    return val === "1"
   }
 
   /** 标记预设数据已加载 */
   async markPresetLoaded(): Promise<void> {
-    await this.storage.save(PRESET_FLAG_KEY, true)
+    await this.storage.save(PRESET_FLAG_KEY, "1")
   }
 
   /** 批量导入（用于初始预设数据和 Markdown 导入） */
@@ -48,10 +49,10 @@ export class SkillStorage {
     return newCards
   }
 
-  /** 获取所有卡片 */
+  /** 获取所有卡片（自动去重） */
   async getAllCards(): Promise<SkillCard[]> {
     const data = await this.storage.load<SkillCard[]>(STORAGE_KEY)
-    return (data || []).map((card) => ({
+    const rawCards = (data || []).map((card) => ({
       ...card,
       distractors: card.distractors || [],
       practiceCount: card.practiceCount ?? 0,
@@ -59,6 +60,21 @@ export class SkillStorage {
       difficulty: card.difficulty || "beginner",
       tags: card.tags || [],
     }))
+
+    // 按标题去重（保留最早创建的），修复之前因标记位异常导致的重复数据
+    const seen = new Set<string>()
+    const deduped = rawCards.filter((c) => {
+      if (seen.has(c.title)) return false
+      seen.add(c.title)
+      return true
+    })
+
+    // 检测到重复时自动回写清理
+    if (deduped.length < rawCards.length) {
+      await this.storage.save(STORAGE_KEY, deduped)
+    }
+
+    return deduped
   }
 
   /** 获取唯一语言列表 */

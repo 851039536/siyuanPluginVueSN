@@ -12,7 +12,8 @@
       <template v-if="step === 'input'">
         <div class="dialog-section">
           <h3 class="dialog-title">
-            🔓 {{ i18n.decryptText }}
+            <IconWrapper name="pageLock" :size="16" />
+            {{ i18n.decryptText }}
           </h3>
           <p class="dialog-desc">
             {{ i18n.enterPasswordToDecrypt }}
@@ -58,7 +59,8 @@
       <template v-else-if="step === 'result'">
         <div class="dialog-section">
           <h3 class="dialog-title">
-            ✅ {{ i18n.decryptSuccess }}
+            <IconWrapper name="success" :size="16" />
+            {{ i18n.decryptSuccess }}
           </h3>
           <p class="dialog-desc">
             {{ i18n.decryptResultHint }}
@@ -86,13 +88,15 @@
             class="btn btn-outline"
             @click="copyContent"
           >
-            📋 {{ copied ? i18n.copied : i18n.copyContent }}
+            <IconWrapper name="list" :size="14" />
+            {{ copied ? i18n.copied : i18n.copyContent }}
           </button>
           <button
             class="btn btn-primary"
             @click="replaceContent"
           >
-            🔄 {{ i18n.replaceEncrypted }}
+            <IconWrapper name="refresh" :size="14" />
+            {{ i18n.replaceEncrypted }}
           </button>
         </div>
       </template>
@@ -111,6 +115,7 @@ import {
   decryptText,
   deriveKey,
 } from "../types"
+import IconWrapper from "@/components/IconWrapper.vue"
 
 interface Props {
   visible: boolean

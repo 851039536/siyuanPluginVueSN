@@ -4,7 +4,7 @@
     role="alert"
     aria-live="polite"
   >
-    <span class="vp-warning__tag">⚠️ 服务未连接</span>
+    <span class="vp-warning__tag"><IconWrapper name="warning" :size="12" /> 服务未连接</span>
     <span class="vp-warning__msg">{{ message }}</span>
     <button
       class="vp-warning__retry"
@@ -17,6 +17,8 @@
 </template>
 
 <script setup lang="ts">
+import IconWrapper from "@/components/IconWrapper.vue"
+
 interface Props {
   /** 警告消息 */
   message?: string

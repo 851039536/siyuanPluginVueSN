@@ -7,6 +7,7 @@ import {
   showMessage,
 } from "siyuan"
 import { emitCustomEvent } from "@/utils/eventBus"
+import { getIconHTML } from "@/utils/iconHelper"
 import {
   CONSTANTS,
   deriveKey,
@@ -60,7 +61,7 @@ export class Encryption {
 
       if (isEncrypted) {
         menu.addItem({
-          iconHTML: "🔓",
+          iconHTML: getIconHTML("mdi:lock-open-variant", 14),
           label: this.plugin.i18n.decryptText,
           click: async () => {
             await this.decryptSelectedText()
@@ -68,7 +69,7 @@ export class Encryption {
         })
       } else {
         menu.addItem({
-          iconHTML: "🔒",
+          iconHTML: getIconHTML("mdi:lock", 14),
           label: this.plugin.i18n.encryptText,
           click: async () => {
             await this.encryptSelectedText()

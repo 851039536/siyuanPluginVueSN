@@ -15,3 +15,4 @@
 - 2026-06-16：index.scss 审查修复 — 移除 6 处 box-shadow（Codex 违规→替换为 border），紧凑模式块硬编码值替换为 $spacing-*/$font-size-* Token，移除废弃的 $codeblock-shadow 变量，修复格式问题。唯一保留的 box-shadow：Mac 代码块 ::before 伪元素的红黄绿按钮（纯 CSS 渲染技术，非页面阴影效果）
 - 2026-06-13：dataBackup 模块全面审查重构（见当天日报）
 - 2026-06-11：flashcardReading 模块审查重构（见当天日报）
+- 2026-06-22：新增 skillLearning（技能学习）功能 — 代码片段练习库+闪卡记忆，Dock 右侧栏面板，C#/JS/TS/Vue 技术栈，支持自建/预设/Markdown导入三种内容来源，复用 useTypingQueue 加权复习算法

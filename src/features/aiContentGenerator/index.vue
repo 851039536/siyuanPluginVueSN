@@ -1065,7 +1065,7 @@ const undoEdit = async () => {
     }
 
     showMessage(
-      `✓ 已撤回对文档的编辑: ${lastHistory.docTitle}`,
+      `已撤回对文档的编辑: ${lastHistory.docTitle}`,
       2000,
       "info",
     );
@@ -1243,7 +1243,7 @@ const insertSubDocument = async () => {
 
     if (subDocId) {
       showMessage(
-        `✓ 已在文档"${parentDoc.content || editTargetDoc.value.title}"下创建子文档: ${finalSubDocTitle}`,
+        `已在文档"${parentDoc.content || editTargetDoc.value.title}"下创建子文档: ${finalSubDocTitle}`,
         3000,
         "info",
       );

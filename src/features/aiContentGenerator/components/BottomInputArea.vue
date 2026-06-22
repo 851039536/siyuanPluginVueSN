@@ -78,7 +78,7 @@
                   ></span>
                 </span>
               </template>
-              <template v-else>🧠 无技能</template>
+              <template v-else>无技能</template>
             </span>
             <svg
               class="skill-select-arrow"
@@ -124,7 +124,7 @@
                 :class="{ active: currentSkillIndex === -1 }"
                 @click="selectSkill(-1)"
               >
-                🧠 无技能
+                无技能
               </div>
               <div
                 v-for="skill in filteredSkills"

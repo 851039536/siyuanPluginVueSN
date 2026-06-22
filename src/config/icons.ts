@@ -196,6 +196,12 @@ export const FEATURE_ICONS = {
     color: "#d97757",
   },
 
+  // 技能学习
+  skillLearning: {
+    icon: "mdi:code-braces-box",
+    color: "#6366f1",
+  },
+
   // 单词阅读
   flashcardReading: {
     icon: "mdi:card-bulleted",

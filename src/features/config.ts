@@ -284,6 +284,13 @@ export const FEATURE_CONFIG = [
     defaultTitle: "Git 推送",
     defaultDesc: "同时推送项目到 GitHub 和 Gitee，持久化项目路径映射",
   },
+  {
+    id: "skillLearning",
+    defaultTitle: "技能学习",
+    defaultDesc: "代码片段练习库，配合闪卡式记忆掌握 C#/JS/TS/Vue 编程技能",
+    titleI18nKey: "skillLearning.title",
+    descI18nKey: "skillLearning.description",
+  },
 ] as const
 
 /**

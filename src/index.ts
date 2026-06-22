@@ -52,6 +52,7 @@ import {
   registerRssReader,
   registerScriptLauncher,
   registerShortcut,
+  registerSkillLearning,
   registerSkillsViewer,
   registerStatistics,
   registerStatusBar,
@@ -286,6 +287,7 @@ export default class PluginSample extends Plugin {
     if (s.enableScriptLauncher) registerScriptLauncher(this)
     if (s.enableDataSnapshot) registerDataSnapshot(this)
     if (s.enableGitPush) registerGitPush(this)
+    if (s.enableSkillLearning) registerSkillLearning(this)
   }
 
   /**

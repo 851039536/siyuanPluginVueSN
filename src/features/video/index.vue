@@ -114,7 +114,7 @@
       @click.stop
     >
       <div class="dialog-header">
-        <h3>🔒 批量加密视频</h3>
+        <h3><IconWrapper name="pageLock" :size="16" /> 批量加密视频</h3>
         <Button
           icon="x"
           variant="ghost"
@@ -207,7 +207,7 @@
       @click.stop
     >
       <div class="dialog-header">
-        <h3>🔓 批量解密视频</h3>
+        <h3><IconWrapper name="pageLock" :size="16" /> 批量解密视频</h3>
         <Button
           icon="x"
           variant="ghost"
@@ -289,7 +289,7 @@
       @click.stop
     >
       <div class="dialog-header">
-        <h3>🎬 视频合并</h3>
+        <h3><IconWrapper name="video" :size="16" /> 视频合并</h3>
         <Button
           icon="x"
           variant="ghost"
@@ -382,7 +382,17 @@
                 class="info-value"
                 :style="{ color: mergeResult.success ? '#788c5d' : '#d97757' }"
               >
-                {{ mergeResult.success ? '✅ 合并成功' : '❌ 合并失败' }}
+                <IconWrapper
+                  v-if="mergeResult.success"
+                  name="success"
+                  :size="14"
+                />
+                <IconWrapper
+                  v-else
+                  name="error"
+                  :size="14"
+                />
+                {{ mergeResult.success ? '合并成功' : '合并失败' }}
               </span>
             </div>
             <div
@@ -432,7 +442,7 @@
       @click.stop
     >
       <div class="dialog-header">
-        <h3>🎵 视频音频合并</h3>
+        <h3><IconWrapper name="headphones" :size="16" /> 视频音频合并</h3>
         <Button
           icon="x"
           variant="ghost"
@@ -495,7 +505,17 @@
                 class="info-value"
                 :style="{ color: mergeAudioResult.success ? '#788c5d' : '#d97757' }"
               >
-                {{ mergeAudioResult.success ? '✅ 合并成功' : '❌ 合并失败' }}
+                <IconWrapper
+                  v-if="mergeAudioResult.success"
+                  name="success"
+                  :size="14"
+                />
+                <IconWrapper
+                  v-else
+                  name="error"
+                  :size="14"
+                />
+                {{ mergeAudioResult.success ? '合并成功' : '合并失败' }}
               </span>
             </div>
             <div
@@ -545,7 +565,7 @@
       @click.stop
     >
       <div class="dialog-header">
-        <h3>🗜️ 视频压缩</h3>
+        <h3><IconWrapper name="copy" :size="16" /> 视频压缩</h3>
         <Button
           icon="x"
           variant="ghost"
@@ -664,7 +684,17 @@
                 class="info-value"
                 :style="{ color: compressResult.success ? '#788c5d' : '#d97757' }"
               >
-                {{ compressResult.success ? '✅ 压缩成功' : '❌ 压缩失败' }}
+                <IconWrapper
+                  v-if="compressResult.success"
+                  name="success"
+                  :size="14"
+                />
+                <IconWrapper
+                  v-else
+                  name="error"
+                  :size="14"
+                />
+                {{ compressResult.success ? '压缩成功' : '压缩失败' }}
               </span>
             </div>
             <div
@@ -735,7 +765,7 @@
       @click.stop
     >
       <div class="dialog-header">
-        <h3>⚙️ FFmpeg 路径设置</h3>
+        <h3><IconWrapper name="settings" :size="16" /> FFmpeg 路径设置</h3>
         <Button
           icon="x"
           variant="ghost"
@@ -780,7 +810,17 @@
                 class="info-value"
                 :style="{ color: ffmpegTestResult === 'success' ? '#788c5d' : '#d97757' }"
               >
-                {{ ffmpegTestResult === 'success' ? '✅ 路径有效' : '❌ 路径无效' }}
+                <IconWrapper
+                  v-if="ffmpegTestResult === 'success'"
+                  name="success"
+                  :size="14"
+                />
+                <IconWrapper
+                  v-else
+                  name="error"
+                  :size="14"
+                />
+                {{ ffmpegTestResult === 'success' ? '路径有效' : '路径无效' }}
               </span>
             </div>
           </div>

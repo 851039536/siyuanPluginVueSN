@@ -167,7 +167,7 @@
           class="detail-group"
         >
           <div class="detail-group-title">
-            🆕 {{ i18n.todayCreated || '新增' }}（{{ detailNewDocs.length }}）
+            <IconWrapper name="success" :size="12" /> {{ i18n.todayCreated || '新增' }}（{{ detailNewDocs.length }}）
           </div>
           <div
             v-for="doc in detailNewDocs"
@@ -189,7 +189,7 @@
           class="detail-group"
         >
           <div class="detail-group-title">
-            ✏️ {{ i18n.todayModified || '修改' }}（{{ detailModifiedDocs.length }}）
+            <IconWrapper name="edit" :size="12" /> {{ i18n.todayModified || '修改' }}（{{ detailModifiedDocs.length }}）
           </div>
           <div
             v-for="doc in detailModifiedDocs"
@@ -242,6 +242,7 @@ import {
   computed,
   ref,
 } from "vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 import { formatDate } from "../utils"
 
 interface Props {

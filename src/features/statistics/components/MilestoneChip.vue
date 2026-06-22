@@ -3,7 +3,7 @@
     class="milestone-chip"
     :class="[`tier-${tier}`, { achieved, locked: !achieved && !isNext, next: !achieved && isNext }]"
   >
-    <span class="chip-icon">{{ achieved ? icon : (isNext ? '🎯' : '🔒') }}</span>
+    <IconWrapper class="chip-icon" :name="(achieved ? icon : (isNext ? 'star' : 'pageLock')) as any" :size="14" />
     <span class="chip-label">{{ label }}</span>
     <span v-if="achieved" class="chip-tier">{{ tierLabel }}</span>
     <div v-if="!achieved" class="chip-progress">
@@ -13,6 +13,8 @@
 </template>
 
 <script setup lang="ts">
+import IconWrapper from "@/components/IconWrapper.vue"
+
 interface Props {
   icon: string
   label: string

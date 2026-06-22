@@ -10,7 +10,8 @@
           :class="{ active: modelValue === mode.value }"
           @click="$emit('update:modelValue', mode.value)"
         >
-          {{ mode.icon }} {{ mode.label }}
+          <IconWrapper v-if="mode.icon" :name="mode.icon" :size="12" />
+          {{ mode.label }}
         </button>
       </div>
     </div>
@@ -93,6 +94,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 import { formatNumber } from "../utils"
 
 interface Props {
@@ -158,10 +160,10 @@ function onRangeChange(mode: "day" | "month", value: number): void {
 }
 
 const periodModes = computed(() => [
-  { value: "day" as const, label: props.i18n.day || '日', icon: "📅" },
-  { value: "week" as const, label: props.i18n.week || '周', icon: "📊" },
-  { value: "month" as const, label: props.i18n.month || '月', icon: "📆" },
-  { value: "year" as const, label: props.i18n.year || '年', icon: "📈" },
+  { value: "day" as const, label: props.i18n.day || '日', icon: "list" as const },
+  { value: "week" as const, label: props.i18n.week || '周', icon: "format" as const },
+  { value: "month" as const, label: props.i18n.month || '月', icon: "list" as const },
+  { value: "year" as const, label: props.i18n.year || '年', icon: undefined },
 ])
 
 const dayRanges = computed(() => [

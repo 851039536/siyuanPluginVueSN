@@ -1,6 +1,6 @@
 <template>
   <CollapsibleSection
-    :title="`📋 ${i18n.docChanges || '文档变化'} — ${rangeLabel}`"
+    :title="`${i18n.docChanges || '文档变化'} — ${rangeLabel}`"
     :default-expanded="true"
     :badge="badgeText"
   >
@@ -135,7 +135,7 @@
             class="changed-docs-group"
           >
             <div class="changed-docs-group-title">
-              🆕 {{ i18n.todayCreated || '新增' }}（{{ changedDocs.newDocs.length }}）
+              <IconWrapper name="success" :size="12" /> {{ i18n.todayCreated || '新增' }}（{{ changedDocs.newDocs.length }}）
             </div>
             <div
               v-for="doc in changedDocs.newDocs"
@@ -154,7 +154,7 @@
             class="changed-docs-group"
           >
             <div class="changed-docs-group-title">
-              ✏️ {{ i18n.todayModified || '修改' }}（{{ changedDocs.modifiedDocs.length }}）
+              <IconWrapper name="edit" :size="12" /> {{ i18n.todayModified || '修改' }}（{{ changedDocs.modifiedDocs.length }}）
             </div>
             <div
               v-for="doc in changedDocs.modifiedDocs"
@@ -198,6 +198,7 @@ import {
   computed,
   ref,
 } from "vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 import { padZero } from "../utils"
 import CollapsibleSection from "./CollapsibleSection.vue"
 

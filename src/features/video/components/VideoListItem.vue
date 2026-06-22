@@ -39,12 +39,12 @@
             title="解密"
             @click.stop="handleDecrypt"
           />
-          <span
+          <IconWrapper
             class="encrypted-badge"
+            :name="encryptionIcon"
+            :size="14"
             :title="encryptionType"
-          >
-            {{ encryptionIcon }}
-          </span>
+          />
         </template>
       </div>
     </div>
@@ -104,11 +104,7 @@ const encryptionType = computed(() => {
 
 // 加密图标
 const encryptionIcon = computed(() => {
-  const name = props.video.name.toLowerCase()
-  if (name.endsWith(".sn2")) {
-    return "🔒🔒"
-  }
-  return "🔒"
+  return "pageLock"
 })
 
 // 播放按钮提示

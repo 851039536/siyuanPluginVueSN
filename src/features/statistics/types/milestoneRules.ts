@@ -1,3 +1,5 @@
+import type { IconKey } from "@/config/icons"
+
 /** 自定义里程碑规则持久化结构 */
 export interface MilestoneRulesData {
   _version: 1
@@ -7,17 +9,17 @@ export interface MilestoneRulesData {
 
 /** 10 种里程碑类型 */
 export const MILESTONE_TYPES = [
-  { key: "notes",     label: "笔记数",   icon: "📝" },
-  { key: "words",     label: "总字数",   icon: "✍️" },
-  { key: "blocks",    label: "内容块数", icon: "🧱" },
-  { key: "tags",      label: "标签数",   icon: "🏷️" },
-  { key: "backlinks", label: "双链数",   icon: "🔗" },
-  { key: "assets",    label: "附件数",   icon: "📁" },
-  { key: "images",    label: "图片数",   icon: "🖼️" },
-  { key: "notebooks", label: "笔记本数", icon: "📓" },
-  { key: "code",      label: "代码块数", icon: "💻" },
-  { key: "streak",    label: "连续写作天数", icon: "🔥" },
-  { key: "activeDays",label: "活跃天数", icon: "📅" },
+  { key: "notes",     label: "笔记数",   icon: "edit" as IconKey },
+  { key: "words",     label: "总字数",   icon: "edit" as IconKey },
+  { key: "blocks",    label: "内容块数", icon: "format" as IconKey },
+  { key: "tags",      label: "标签数",   icon: "list" as IconKey },
+  { key: "backlinks", label: "双链数",   icon: "forward" as IconKey },
+  { key: "assets",    label: "附件数",   icon: "folder" as IconKey },
+  { key: "images",    label: "图片数",   icon: "image" as IconKey },
+  { key: "notebooks", label: "笔记本数", icon: "folder" as IconKey },
+  { key: "code",      label: "代码块数", icon: "code" as IconKey },
+  { key: "streak",    label: "连续写作天数", icon: "star" as IconKey },
+  { key: "activeDays",label: "活跃天数", icon: "list" as IconKey },
 ] as const
 
 export type MilestoneTypeKey = typeof MILESTONE_TYPES[number]["key"]
@@ -57,7 +59,7 @@ export const DEFAULT_LEVEL_CONFIG: LevelConfig = {
 /** 自定义成就定义 */
 export interface CustomAchievement {
   id: string
-  icon: string
+  icon: IconKey
   title: string
   description: string
   tier: "common" | "rare" | "epic" | "legendary"

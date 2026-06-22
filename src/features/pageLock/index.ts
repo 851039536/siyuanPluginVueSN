@@ -127,7 +127,7 @@ export async function lockPageWithGlobalPassword(
   if (success) {
     await setBlockAttrs(docId, {
       "custom-page-locked": "true",
-      "custom-lock-icon": "🔒",
+      "custom-lock-icon": "",
     })
 
     showMessage(plugin.i18n.lockSuccess, 3000, "info")

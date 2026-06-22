@@ -34,20 +34,6 @@
           :cards="cards"
           :i18n="fullI18n"
         />
-        <ReviewMode
-          v-else-if="viewMode === 'review'"
-          :cards="cards"
-          :currentCard="reviewQueue.currentCard.value"
-          :currentIndex="reviewQueue.currentIndex.value"
-          :isFlipped="reviewQueue.isFlipped.value"
-          :roundComplete="reviewQueue.roundComplete.value"
-          :totalCount="reviewQueue.totalCount.value"
-          :reviewed="reviewQueue.reviewed.value"
-          :i18n="fullI18n"
-          @flip="reviewQueue.flip()"
-          @rate="handleRate"
-          @restart="reviewQueue.restart()"
-        />
       </KeepAlive>
     </div>
 
@@ -72,14 +58,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue"
 import type { Plugin } from "siyuan"
-import type { SkillCard, SkillI18n, ViewMode, CreateSkillDTO, ReviewRating } from "./types"
+import type { SkillCard, SkillI18n, ViewMode, CreateSkillDTO } from "./types"
 import { useSkillStorage } from "./composables/useSkillStorage"
-import { useReviewQueue } from "./composables/useReviewQueue"
 import { useI18n } from "./composables/useI18n"
 import { PRESET_CARDS } from "./data/presetData"
 import SkillListView from "./components/SkillListView.vue"
 import FlashcardView from "./components/FlashcardView.vue"
-import ReviewMode from "./components/ReviewMode.vue"
 import SkillDialog from "./components/SkillDialog.vue"
 
 const props = defineProps<{
@@ -89,11 +73,10 @@ const props = defineProps<{
 
 const t = computed(() => fullI18n.value as Record<string, string>)
 const fullI18n = useI18n(props.i18n)
-const { cards, loadCards, createCard, updateCard, deleteCard, incrementPracticeCount, storage } =
+const { cards, loadCards, createCard, updateCard, deleteCard, storage } =
   useSkillStorage(props.plugin)
 
 const viewMode = ref<ViewMode>("list")
-const reviewQueue = useReviewQueue(cards)
 const showDialog = ref(false)
 const editingCard = ref<SkillCard | null>(null)
 
@@ -102,7 +85,6 @@ const practicedCount = computed(() => cards.value.filter((c) => c.practiceCount 
 const tabs = computed(() => [
   { id: "list" as ViewMode, label: fullI18n.value.listView || "列表" },
   { id: "flashcard" as ViewMode, label: fullI18n.value.flashcardView || "闪卡" },
-  { id: "review" as ViewMode, label: fullI18n.value.reviewView || "复习" },
 ])
 
 onMounted(async () => {
@@ -139,14 +121,6 @@ async function handleCreate(dto: CreateSkillDTO) {
 async function handleUpdate(id: string, dto: CreateSkillDTO) {
   await updateCard(id, dto)
   closeDialog()
-}
-
-function handleRate(rating: ReviewRating) {
-  reviewQueue.rate(rating)
-  const card = reviewQueue.currentCard.value
-  if (card && rating === "remembered") {
-    incrementPracticeCount(card.id)
-  }
 }
 </script>
 

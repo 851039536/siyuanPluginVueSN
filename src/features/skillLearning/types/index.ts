@@ -9,7 +9,7 @@ export type Language = "csharp" | "javascript" | "typescript" | "vue" | "other"
 export type Difficulty = "beginner" | "intermediate" | "advanced"
 
 /** 视图模式 */
-export type ViewMode = "list" | "flashcard" | "review"
+export type ViewMode = "list" | "flashcard"
 
 /** 代码片段练习卡片 */
 export interface SkillCard {

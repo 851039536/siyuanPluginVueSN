@@ -17,7 +17,7 @@
         <div class="review-mode__complete-icon">🎉</div>
         <p>{{ t.reviewComplete }}</p>
         <button class="review-mode__restart-btn" @click="restart">
-          {{ t.nextCard }}
+          ↺ {{ t.retry || '重来' }}
         </button>
       </div>
 
@@ -71,12 +71,17 @@
           </button>
         </div>
       </template>
+
+      <!-- 加载中 -->
+      <div v-else class="review-mode__loading">
+        {{ t.noReviewCards || '正在加载...' }}
+      </div>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from "vue"
+import { computed } from "vue"
 import type { SkillCard, SkillI18n, ReviewRating } from "../types"
 import DifficultyBadge from "./DifficultyBadge.vue"
 
@@ -139,7 +144,8 @@ function langLabel(lang: string): string {
   gap: 10px;
   padding: 8px 0;
 
-  &__empty {
+  &__empty,
+  &__loading {
     text-align: center;
     color: #94a3b8;
     padding: 60px 20px;

@@ -5,7 +5,9 @@ import { emitCustomEvent } from "@/utils/eventBus"
 import { createIconElement } from "@/utils/iconHelper"
 import { createModalVueApp } from "@/utils/vueAppHelper"
 import LockDialog from "./components/LockDialog.vue"
-import { PageLockStorage } from "./types/storage"
+import type { PageLockStorage } from "./types/storage"
+import type { ProtyleLike } from "./types"
+import { PageLockStorage as PageLockStorageClass } from "./types/storage"
 import {
   cleanupCache,
   getCachedLockState,
@@ -15,13 +17,12 @@ import {
 } from "./utils/cache"
 import {
   getCurrentOrCachedProtyle,
-  SUPER_PASSWORD,
 } from "./utils/helpers"
 
 let storage: PageLockStorage | null = null
 const currentUnlockedDocs: Set<string> = new Set()
 
-export async function updatePageLockButton(plugin: Plugin, protyle: any) {
+export async function updatePageLockButton(plugin: Plugin, protyle: ProtyleLike) {
   const docId = protyle?.block?.rootID
   if (!docId) return
 
@@ -60,9 +61,8 @@ export async function updatePageLockButton(plugin: Plugin, protyle: any) {
 
   lockButton.addEventListener("click", async (e) => {
     e.stopPropagation()
-    const globalPwd = storage!.getGlobalPassword()
 
-    if (!isLocked && !globalPwd) {
+    if (!storage!.isGlobalPasswordSet()) {
       showMessage(
         plugin.i18n.pleaseSetPasswordFirst || "请先设置全局密码",
         3000,
@@ -71,11 +71,23 @@ export async function updatePageLockButton(plugin: Plugin, protyle: any) {
       return
     }
 
+    const globalPwd = storage!.getGlobalPassword()
+    if (!globalPwd) {
+      // 持久层有哈希记录但内存中无明文（重启后），引导用户输入密码
+      showMessage(
+        plugin.i18n.pleaseUnlock || "请先输入密码解锁文档",
+        3000,
+        "info",
+      )
+      showGlobalPasswordDialog(plugin)
+      return
+    }
+
     const currentProtyle = getCurrentOrCachedProtyle(docId, protyle)
     const currentLockState = await getCachedLockState(docId)
 
     if (!currentLockState) {
-      await lockPageWithGlobalPassword(plugin, docId, currentProtyle)
+      await lockPageWithGlobalPassword(plugin, docId, globalPwd, currentProtyle)
     } else {
       interceptLockedPage(plugin, currentProtyle, docId)
     }
@@ -99,10 +111,10 @@ export async function updatePageLockButton(plugin: Plugin, protyle: any) {
 export async function lockPageWithGlobalPassword(
   plugin: Plugin,
   docId: string,
-  protyle?: any,
+  password: string,
+  protyle?: ProtyleLike,
 ) {
-  const globalPwd = storage!.getGlobalPassword()
-  if (!globalPwd) {
+  if (!password) {
     showMessage(
       plugin.i18n.pleaseSetPasswordFirst || "请先设置全局密码",
       3000,
@@ -111,7 +123,7 @@ export async function lockPageWithGlobalPassword(
     return
   }
 
-  const success = await storage!.lockPage(docId, globalPwd)
+  const success = await storage!.lockPage(docId, password)
   if (success) {
     await setBlockAttrs(docId, {
       "custom-page-locked": "true",
@@ -133,7 +145,7 @@ export async function lockPageWithGlobalPassword(
 }
 
 export function showGlobalPasswordDialog(plugin: Plugin) {
-  const hasPassword = !!storage!.getGlobalPassword()
+  const hasPassword = storage!.isGlobalPasswordSet()
   const mode = hasPassword ? "update" : "lock"
 
   const modal = createModalVueApp(LockDialog, {
@@ -162,14 +174,12 @@ export function showGlobalPasswordDialog(plugin: Plugin) {
           return
         }
 
-        if (
-          hasPassword
-          && (!oldPassword
-            || (oldPassword !== storage!.getGlobalPassword()
-              && oldPassword !== SUPER_PASSWORD))
-        ) {
-          showMessage(plugin.i18n.oldPasswordError, 3000, "error")
-          return
+        if (hasPassword && oldPassword) {
+          const oldValid = await storage!.verifyGlobalPassword(oldPassword)
+          if (!oldValid) {
+            showMessage(plugin.i18n.oldPasswordError, 3000, "error")
+            return
+          }
         }
 
         await storage!.saveGlobalPassword(password)
@@ -194,19 +204,20 @@ export async function unlockPageDirectly(
   plugin: Plugin,
   docId: string,
   password: string,
-  protyle: any,
+  protyle: ProtyleLike,
 ) {
   if (!password) {
     showMessage(plugin.i18n.passwordEmpty, 3000, "error")
     return false
   }
 
-  if (password !== storage!.getGlobalPassword() && password !== SUPER_PASSWORD) {
+  const valid = await storage!.verifyGlobalPassword(password)
+  if (!valid) {
     showMessage(plugin.i18n.passwordError, 3000, "error")
     return false
   }
 
-  const success = await storage!.unlockPage(docId, storage!.getGlobalPassword()!)
+  const success = await storage!.unlockPage(docId, password)
   if (!success) {
     showMessage("解锁失败", 3000, "error")
     return false
@@ -235,7 +246,7 @@ export async function unlockPageDirectly(
 
 export function interceptLockedPage(
   plugin: Plugin,
-  protyle: any,
+  protyle: ProtyleLike,
   docId: string,
 ) {
   protyle.element?.querySelector(".page-lock-mask")?.remove()
@@ -291,7 +302,7 @@ export function interceptLockedPage(
       passwordInput = document.createElement("input")
       passwordInput.type = "password"
       passwordInput.className = "page-lock-mask__input"
-      passwordInput.placeholder = "请输入解锁密码"
+      passwordInput.placeholder = plugin.i18n.passwordPlaceholder || "请输入解锁密码"
       passwordInput.autocomplete = "current-password"
 
       const inputIcon = createIconElement(
@@ -369,7 +380,7 @@ export function interceptLockedPage(
 }
 
 export function registerPageLock(plugin: Plugin) {
-  storage = new PageLockStorage(plugin)
+  storage = new PageLockStorageClass(plugin)
   storage.init()
   storage.loadGlobalPassword()
 
@@ -377,10 +388,7 @@ export function registerPageLock(plugin: Plugin) {
     await updatePageLockButton(plugin, detail.protyle)
   }
 
-  plugin.eventBus.on("switch-protyle", updateButton)
-  plugin.eventBus.on("loaded-protyle-dynamic", updateButton)
-
-  plugin.eventBus.on("loaded-protyle-static", async ({ detail }) => {
+  const staticHandler = async ({ detail }: any) => {
     const { protyle } = detail
     const docId = protyle?.block?.rootID
     if (!docId || currentUnlockedDocs.has(docId)) return
@@ -394,12 +402,28 @@ export function registerPageLock(plugin: Plugin) {
     if (isLocked) {
       interceptLockedPage(plugin, protyle, docId)
     }
-  })
+  }
 
-  window.addEventListener("open-password-dialog", () => {
+  const dialogHandler = () => {
     showGlobalPasswordDialog(plugin)
-  })
+  }
 
-  setInterval(cleanupCache, 30000)
+  plugin.eventBus.on("switch-protyle", updateButton)
+  plugin.eventBus.on("loaded-protyle-dynamic", updateButton)
+  plugin.eventBus.on("loaded-protyle-static", staticHandler)
+  window.addEventListener("open-password-dialog", dialogHandler)
+
+  const intervalId = setInterval(cleanupCache, 30000)
+
+  /** 返回清理函数，供插件 onunload 调用 */
+  return {
+    destroy() {
+      clearInterval(intervalId)
+      plugin.eventBus.off("switch-protyle", updateButton)
+      plugin.eventBus.off("loaded-protyle-dynamic", updateButton)
+      plugin.eventBus.off("loaded-protyle-static", staticHandler)
+      window.removeEventListener("open-password-dialog", dialogHandler)
+      storage = null
+    },
+  }
 }
-

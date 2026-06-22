@@ -3,7 +3,7 @@
     <!-- 主开关 -->
     <div class="master-row">
       <label class="section-header setting-label">
-        <span class="section-icon">📐</span>
+        <IconWrapper name="formatSize" :size="14" class="section-icon" />
         {{ i18n?.compactModeSettings || '紧凑模式' }}
       </label>
       <SiSwitch
@@ -19,7 +19,7 @@
       <!-- 密度级别 -->
       <div class="sub-section">
         <div class="section-header sub-title">
-          <span class="section-icon">📏</span>
+          <IconWrapper name="formatSize" :size="14" class="section-icon" />
           {{ i18n?.compactModeDensity || '密度级别' }}
         </div>
         <div class="options-row">
@@ -45,7 +45,7 @@
       <!-- 字号缩放 -->
       <div class="sub-section">
         <div class="section-header sub-title">
-          <span class="section-icon">🔤</span>
+          <IconWrapper name="code" :size="14" class="section-icon" />
           {{ i18n?.compactModeFontScale || '字号缩放' }}
         </div>
         <div class="options-row">
@@ -71,7 +71,7 @@
       <!-- 区域独立开关 -->
       <div class="sub-section">
         <div class="section-header sub-title">
-          <span class="section-icon">🎯</span>
+          <IconWrapper name="forward" :size="14" class="section-icon" />
           {{ i18n?.compactModeAreas || '生效区域' }}
         </div>
         <div class="areas-grid">
@@ -95,6 +95,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from "vue"
 import SiSwitch from "@/components/Switch.vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 import { applyCompactMode } from "@/features/compactMode"
 import type { CompactModeSettings } from "@/features/compactMode"
 import { saveSettings } from "@/config/settings"

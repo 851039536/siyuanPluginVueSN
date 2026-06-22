@@ -2,7 +2,7 @@
  * 技能学习 - 加权随机复习队列
  * 复用 flashcardReading composables/useTypingQueue.ts 的核心算法
  */
-import { ref, computed, type Ref } from "vue"
+import { ref, computed, watch, type Ref } from "vue"
 import type { SkillCard, ReviewRating } from "../types"
 
 /** 计算每张卡片的权重（练习次数越少权重越高） */
@@ -66,16 +66,33 @@ export function useReviewQueue(cards: Ref<SkillCard[]>) {
     return result
   }
 
-  const queue = ref<SkillCard[]>(buildQueue())
-  const totalCount = computed(() => cards.value.length)
-  const reviewed = ref(0)
+  const queue = ref<SkillCard[]>([])
 
   const rebuild = () => {
     queue.value = buildQueue()
-    if (currentIndex.value >= queue.value.length) {
-      currentIndex.value = 0
-    }
+    currentIndex.value = 0
+    isFlipped.value = false
+    reviewed.value = 0
+    roundComplete.value = false
   }
+
+  // cards 变化时自动重建队列（如首次加载、新增/删除卡片）
+  watch(
+    () => cards.value,
+    () => {
+      queue.value = buildQueue()
+      if (currentIndex.value >= queue.value.length) {
+        currentIndex.value = 0
+      }
+    },
+    { deep: true },
+  )
+
+  // 首次构建
+  queue.value = buildQueue()
+
+  const totalCount = computed(() => cards.value.length)
+  const reviewed = ref(0)
 
   const currentCard = computed(() => queue.value[currentIndex.value])
 

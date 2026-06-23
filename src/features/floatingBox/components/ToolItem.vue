@@ -9,26 +9,20 @@
       class="tool-icon"
       :style="{ background: tool.bgColor }"
     >
-      <svg
-        viewBox="0 0 24 24"
+      <Icon
+        :icon="tool.icon"
         width="18"
         height="18"
-        v-html="tool.icon"
       />
     </div>
     <span class="tool-label">{{ tool.label }}</span>
-    <svg
+    <Icon
       v-if="tool.children?.length"
+      icon="mdi:chevron-right"
       class="tool-arrow"
-      viewBox="0 0 24 24"
       width="10"
       height="10"
-    >
-      <path
-        fill="currentColor"
-        d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"
-      />
-    </svg>
+    />
 
     <!-- 子菜单 -->
     <div
@@ -49,6 +43,7 @@
 </template>
 
 <script setup lang="ts">
+import { Icon } from "@iconify/vue"
 import type {
   FloatingTool,
   FloatingToolChild,

@@ -106,6 +106,7 @@
             @select="emit('selectFeature', feature.id, $event)"
             @status-change="emit('statusFeature', feature.id, $event)"
             @open-versions="emit('openVersions', feature.id)"
+            @toggle-sub-feature="emit('toggleSubFeature', $event)"
           />
         </TransitionGroup>
       </template>
@@ -119,10 +120,11 @@ import type {
   Feature,
   FeatureStatus,
   FeatureVersionEntry,
+  SubFeature,
 } from "./types"
 import type { IconKey } from "@/config/icons"
 import type { PluginSettings } from "@/config/settings"
-import type { FeatureMeta } from "@/features/config"
+import type { FeatureMeta, SubFeatureMeta } from "@/features/config"
 import {
   computed,
   nextTick,
@@ -156,6 +158,7 @@ interface Emits {
   (e: "selectFeature", featureId: string, value: string): void
   (e: "statusFeature", featureId: string, status: string): void
   (e: "openVersions", featureId: string): void
+  (e: "toggleSubFeature", featureId: string, enabled: boolean): void
 }
 
 const props = defineProps<Props>()
@@ -184,6 +187,7 @@ const features = computed<Feature[]>(() =>
     titleI18nKey,
     descI18nKey,
     actions,
+    subFeatures,
   }) => {
     const versions = props.featureVersions?.[id] || []
     return {
@@ -194,6 +198,13 @@ const features = computed<Feature[]>(() =>
       actions: actions || [],
       status: (props.settings.featureStatus?.[id] || "") as FeatureStatus,
       version: versions.length > 0 ? versions[0].version : DEFAULT_VERSION,
+      subFeatures: subFeatures?.map((sub: SubFeatureMeta): SubFeature => ({
+        id: sub.id,
+        label: (sub.labelI18nKey ? resolveI18n(props.i18n, sub.labelI18nKey) : "") || sub.defaultLabel,
+        icon: sub.icon,
+        color: sub.color,
+        enabled: getFeatureEnabled(sub.id),
+      })),
     }
   }),
 )

@@ -84,7 +84,7 @@ export { registerWordQuery } from "./wordQuery"
  * 白名单：仅用于 UI 配置展示、不需要 register 函数的功能
  * 当 config.ts 新增此类功能时，必须在此添加 ID
  */
-type _ConfigOnly = "qrCode" | "pronunciation" | "skills" | "translate" | "heatmapMarker"
+type _ConfigOnly = "qrCode" | "skills" | "heatmapMarker"
 
 /**
  * 需要 register 导出的功能列表（必须与本文件 export 行一一对应）

@@ -1,6 +1,6 @@
 import type { IconKey } from "@/config/icons"
 import type { PluginSettings } from "@/config/settings"
-import type { FeatureAction } from "@/features/config"
+import type { FeatureAction, SubFeatureMeta } from "@/features/config"
 import type { ModalAppInstance } from "@/utils/vueAppHelper"
 /**
  * 超级面板 - 类型定义
@@ -39,6 +39,22 @@ export interface FeatureVersionEntry {
 }
 
 /**
+ * 子功能配置
+ */
+export interface SubFeature {
+  /** 子功能ID */
+  id: string
+  /** 子功能标签 */
+  label: string
+  /** 图标名 */
+  icon: string
+  /** 图标颜色 */
+  color: string
+  /** 是否启用 */
+  enabled: boolean
+}
+
+/**
  * 功能配置
  */
 export interface Feature {
@@ -56,6 +72,8 @@ export interface Feature {
   status: FeatureStatus
   /** 当前版本号 */
   version: string
+  /** 子功能列表 */
+  subFeatures?: SubFeature[]
 }
 
 /**
@@ -143,6 +161,11 @@ export class SuperPanelManager {
         },
         onToggleFeature: async (featureId: string, enabled: boolean) => {
           await this.handleToggleFeature(featureId, enabled)
+        },
+        onToggleSubFeature: async (featureId: string) => {
+          const settingKey = featureIdToSettingKey(featureId)
+          const current = (this.reactiveSettings as any)?.[settingKey] ?? false
+          await this.handleToggleFeature(featureId, !current)
         },
         onStatusFeature: async (featureId: string, status: string) => {
           await this.handleStatusFeature(featureId, status)

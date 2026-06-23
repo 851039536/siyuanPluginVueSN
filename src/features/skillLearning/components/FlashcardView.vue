@@ -146,6 +146,7 @@ import IconWrapper from "@/components/IconWrapper.vue"
 import DifficultyBadge from "./DifficultyBadge.vue"
 import CategoryFilter from "./CategoryFilter.vue"
 import { langLabel } from "../composables/useLangLabel"
+import { useFilteredCards } from "../composables/useFilteredCards"
 
 interface CardOption {
   text: string
@@ -164,26 +165,22 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  practice: [cardId: string]
+  practice: [cardId: string, isCorrect: boolean]
 }>()
 
 const t = computed(() => props.i18n)
 
 // --- 分类筛选 ---
-const selectedLanguage = ref("")
-const selectedCategory = ref("")
-const selectedDifficulty = ref("")
+const cardsRef = computed(() => props.cards)
+const {
+  selectedLanguage,
+  selectedCategory,
+  selectedDifficulty,
+  languageList,
+  categoryList,
+  filteredCards,
+} = useFilteredCards(cardsRef)
 
-const languageList = computed(() => [...new Set(props.cards.map((c) => c.language))].sort())
-const categoryList = computed(() => [...new Set(props.cards.map((c) => c.category))].sort())
-
-const filteredCards = computed(() => {
-  let result = props.cards
-  if (selectedLanguage.value) result = result.filter((c) => c.language === selectedLanguage.value)
-  if (selectedCategory.value) result = result.filter((c) => c.category === selectedCategory.value)
-  if (selectedDifficulty.value) result = result.filter((c) => c.difficulty === selectedDifficulty.value)
-  return result
-})
 
 // --- 工具函数 ---
 function shuffle<T>(arr: T[]): T[] {
@@ -279,8 +276,8 @@ function selectAnswer(oi: number) {
   item.selectedIndex = oi
   item.isCorrect = item.options[oi].correct
   phase.value = "feedback"
-  // 记录练习（无论对错都计数）
-  emit("practice", item.card.id)
+  // 记录练习（区分对错）
+  emit("practice", item.card.id, item.isCorrect ?? false)
 }
 
 function goNext() {

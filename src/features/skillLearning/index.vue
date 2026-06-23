@@ -66,8 +66,6 @@
       @update="handleUpdate"
       @close="closeDialog"
     />
-
-
   </div>
 </template>
 
@@ -91,7 +89,7 @@ const props = defineProps<{
 
 const t = computed(() => fullI18n.value as Record<string, string>)
 const fullI18n = useI18n(props.i18n)
-const { cards, loadCards, createCard, updateCard, deleteCard, incrementPracticeCount, updateReviewData, storage } =
+const { cards, loadCards, createCard, updateCard, deleteCard, incrementPracticeWithAccuracy, updateReviewAndPractice, storage } =
   useSkillStorage(props.plugin)
 
 const viewMode = ref<ViewMode>("list")
@@ -155,13 +153,13 @@ async function handleDeleteCard(cardId: string) {
   }
 }
 
-async function handlePractice(cardId: string) {
-  await incrementPracticeCount(cardId)
+async function handlePractice(cardId: string, isCorrect: boolean) {
+  await incrementPracticeWithAccuracy(cardId, isCorrect)
 }
 
-async function handleRate(cardId: string, _rating: ReviewRating, data: ReviewData) {
-  await updateReviewData(cardId, data)
-  await incrementPracticeCount(cardId)
+async function handleRate(cardId: string, rating: ReviewRating, data: ReviewData) {
+  const isCorrect = rating === "remembered"
+  await updateReviewAndPractice(cardId, data, isCorrect)
 }
 </script>
 

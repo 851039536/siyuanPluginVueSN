@@ -65,5 +65,9 @@
   "forgotHint": "Again in 1 day",
   "statsView": "Stats",
   "dueForReview": "Due",
-  "practiceProgress": "Coverage"
+  "practiceProgress": "Coverage",
+  "accuracyRate": "Accuracy",
+  "correctCountLabel": "Correct",
+  "wrongCountLabel": "Wrong",
+  "notPracticed": "Not Practiced"
 }

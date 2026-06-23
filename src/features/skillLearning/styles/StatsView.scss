@@ -1,14 +1,11 @@
 @use "@/variables.scss" as *;
+@use "./shared" as *;
 
 .stats-view {
   padding: $spacing-2 0;
 
   &__empty {
-    text-align: center;
-    padding: 32px $spacing-4;
-    font-style: italic;
-    opacity: 0.35;
-    font-size: $font-size-sm;
+    @include shared-empty;
   }
 
   // ---- summary cards ----
@@ -28,7 +25,7 @@
     background: var(--b3-theme-surface);
   }
   &__stat-value {
-    font-size: 1.5rem;
+    font-size: 24px;
     font-weight: 700;
     color: var(--b3-theme-on-background);
     font-feature-settings: "tnum";
@@ -44,9 +41,21 @@
     margin-top: 2px;
   }
 
+  // ---- rings row ----
+  &__rings-row {
+    display: flex;
+    gap: $spacing-4;
+    margin-bottom: $spacing-4;
+  }
+
   // ---- section ----
   &__section {
     margin-bottom: $spacing-4;
+
+    &--ring {
+      flex: 1;
+      margin-bottom: 0;
+    }
   }
   &__section-title {
     font-size: 10px;

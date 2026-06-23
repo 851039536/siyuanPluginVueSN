@@ -10,7 +10,10 @@ export function getNodeModules(): { fs: any, path: any } | null {
   try {
     const fs = require("node:fs")
     const path = require("node:path")
-    return { fs, path }
+    return {
+      fs,
+      path,
+    }
   } catch {
     return null
   }
@@ -22,7 +25,11 @@ export function getNodeProcessModules(): { child_process: any, os: any, util: an
     const child_process = require("node:child_process")
     const os = require("node:os")
     const util = require("node:util")
-    return { child_process, os, util }
+    return {
+      child_process,
+      os,
+      util,
+    }
   } catch {
     return null
   }
@@ -32,9 +39,13 @@ export function getNodeProcessModules(): { child_process: any, os: any, util: an
 export function getNodeFsPathOs(): { fs: any, path: any, os: any } | null {
   try {
     const fs = require("node:fs")
-    const path = require("node:path")
     const os = require("node:os")
-    return { fs, path, os }
+    const path = require("node:path")
+    return {
+      fs,
+      path,
+      os,
+    }
   } catch {
     return null
   }

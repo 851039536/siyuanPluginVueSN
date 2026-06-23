@@ -59,7 +59,10 @@ export async function encryptSetting(value: string): Promise<string> {
 
   try {
     const key = await getEncryptionKey()
-    const { iv, ciphertext } = await aesGcmEncrypt(
+    const {
+      iv,
+      ciphertext,
+    } = await aesGcmEncrypt(
       new TextEncoder().encode(value),
       key,
     )

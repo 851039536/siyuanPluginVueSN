@@ -3,19 +3,11 @@
 
 import type { FeatureId } from "./config"
 
-export {
-  imageCreationInitialKeywords,
-  imageCreationInitialTitle,
-  imageCreationVisible,
-  hideImageCreation,
-  registerImageCreation,
-  showImageCreation,
-} from "./imageCreation"
 export { registerAIContentGenerator } from "./aiContentGenerator"
 export { registerApiDebugger } from "./apiDebugger"
-export { closeToolCollection, registerToolCollection, toggleToolCollection, toolCollectionVisible } from "./toolCollection"
 export { registerBookmarkMarker } from "./bookmarkMarker"
 export { registerDataBackup } from "./dataBackup"
+export { registerDataSnapshot } from "./dataSnapshot"
 export { registerDiskBrowser } from "./diskBrowser"
 export { registerDocAnalysis } from "./docAnalysis"
 export { registerDocNavigation } from "./docNavigation"
@@ -26,16 +18,28 @@ export {
   registerEverythingSearch,
   showEverythingSearch,
 } from "./everythingSearch"
-export { registerFlashcardReading } from "./flashcardReading"
+export {
+  registerFlashcardReading,
+  toggleFlashcardDialog,
+} from "./flashcardReading"
 export { registerFloatingBox } from "./floatingBox"
 export { registerFloatingToolbar } from "./floatingToolbar"
 export { registerFormatAssistant } from "./formatAssistant"
 export { registerGeneralSettings } from "./generalSettings"
+export { registerGitPush } from "./gitPush"
 export { registerHtmlViewer } from "./htmlViewer"
 export {
   htmlViewerVisible,
 } from "./htmlViewer/state"
 export { registerImageCompressor } from "./imageCompressor"
+export {
+  hideImageCreation,
+  imageCreationInitialKeywords,
+  imageCreationInitialTitle,
+  imageCreationVisible,
+  registerImageCreation,
+  showImageCreation,
+} from "./imageCreation"
 /**
  * 功能模块统一导出
  *
@@ -56,7 +60,9 @@ export {
 } from "./passwordVault"
 export { registerResourceManager } from "./resourceManager"
 export { registerRssReader } from "./rssReader"
+export { registerScriptLauncher } from "./scriptLauncher"
 export { registerShortcut } from "./shortcut"
+export { registerSkillLearning } from "./skillLearning"
 export {
   hideSkillsViewer,
   registerSkillsViewer,
@@ -69,15 +75,20 @@ export {
 export { registerStatusBar } from "./statusBar"
 export { registerSuperPanel } from "./superPanel"
 export { registerTableOfContents } from "./tableOfContents"
-export { getTextDiffManager, registerTextDiff } from "./textDiff"
+export {
+  getTextDiffManager,
+  registerTextDiff,
+} from "./textDiff"
 export { registerThemeColor } from "./themeColor"
+export {
+  closeToolCollection,
+  registerToolCollection,
+  toggleToolCollection,
+  toolCollectionVisible,
+} from "./toolCollection"
 // unitConverter 已迁移至 toolCollection/tools/unitConverter/
 export { registerVideo } from "./video"
-export { registerDataSnapshot } from "./dataSnapshot"
-export { registerGitPush } from "./gitPush"
-export { registerScriptLauncher } from "./scriptLauncher"
 export { registerWebsiteNavigation } from "./websiteNavigation"
-export { registerSkillLearning } from "./skillLearning"
 export { registerWordQuery } from "./wordQuery"
 
 /**

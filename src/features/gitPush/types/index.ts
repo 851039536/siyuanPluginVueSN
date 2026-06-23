@@ -1,22 +1,91 @@
 import type { Plugin } from "siyuan"
-import { createVueDockApp } from "@/utils/vueAppHelper"
-import { getNodeProcessModules } from "@/utils/nodeModules"
-import { getNodeFsPathOs } from "@/utils/nodeModules"
-import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi"
-import type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo, ScannedGitRepo, StashEntry, ProjectStatus, TagInfo, ConflictFile, CommitTemplate } from "./storage"
-import { GitPushStorage, COMMIT_TYPE_VALUES, PROJECT_STATUS_VALUES } from "./storage"
-import GitPushPanel from "../index.vue"
+import type {
+  BranchInfo,
+  CommitLogEntry,
+  CommitTemplate,
+  ConflictFile,
+  FileChange,
+  GitProject,
+  GitRemoteInfo,
+  ProjectCategory,
+  ProjectStatus,
+  PushStatusInfo,
+  RemotePushStatus,
+  ScannedGitRepo,
+  StashEntry,
+  TagInfo,
+  WorkingTreeInfo,
+} from "./storage"
+import {
+  callAI,
+  getApiConfigFromPlugin,
+} from "@/utils/aiApi"
+import {
+  getNodeFsPathOs,
+  getNodeProcessModules,
+} from "@/utils/nodeModules"
 
-export type { GitProject, GitRemoteInfo, PushStatusInfo, RemotePushStatus, FileChange, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo, StashEntry, ProjectStatus, TagInfo, ConflictFile, CommitTemplate }
+import { createVueDockApp } from "@/utils/vueAppHelper"
+import GitPushPanel from "../index.vue"
+import {
+  COMMIT_TYPE_VALUES,
+  GitPushStorage,
+  PROJECT_STATUS_VALUES,
+} from "./storage"
+
+export type {
+  BranchInfo,
+  CommitLogEntry,
+  CommitTemplate,
+  ConflictFile,
+  FileChange,
+  GitProject,
+  GitRemoteInfo,
+  ProjectCategory,
+  ProjectStatus,
+  PushStatusInfo,
+  RemotePushStatus,
+  StashEntry,
+  TagInfo,
+  WorkingTreeInfo,
+}
 export type { ScannedGitRepo }
-export { GitPushStorage, COMMIT_TYPE_VALUES, PROJECT_STATUS_VALUES }
+export {
+  COMMIT_TYPE_VALUES,
+  GitPushStorage,
+  PROJECT_STATUS_VALUES,
+}
 
 /** 远程平台元数据（单一数据源，供 index.vue / StatsPanel.vue / types 共用） */
 export const PLATFORM_META = [
-  { key: "github" as const, icon: "mdi:github", label: "GitHub", remoteProp: "githubRemote" as const, urlProp: "githubUrl" as const },
-  { key: "gitee" as const, icon: "mdi:git", label: "Gitee", remoteProp: "giteeRemote" as const, urlProp: "giteeUrl" as const },
-  { key: "gitea" as const, icon: "mdi:tea", label: "Gitea", remoteProp: "giteaRemote" as const, urlProp: "giteaUrl" as const },
-  { key: "cnb" as const, icon: "mdi:cloud-braces", label: "CNB", remoteProp: "cnbRemote" as const, urlProp: "cnbUrl" as const },
+  {
+    key: "github" as const,
+    icon: "mdi:github",
+    label: "GitHub",
+    remoteProp: "githubRemote" as const,
+    urlProp: "githubUrl" as const,
+  },
+  {
+    key: "gitee" as const,
+    icon: "mdi:git",
+    label: "Gitee",
+    remoteProp: "giteeRemote" as const,
+    urlProp: "giteeUrl" as const,
+  },
+  {
+    key: "gitea" as const,
+    icon: "mdi:tea",
+    label: "Gitea",
+    remoteProp: "giteaRemote" as const,
+    urlProp: "giteaUrl" as const,
+  },
+  {
+    key: "cnb" as const,
+    icon: "mdi:cloud-braces",
+    label: "CNB",
+    remoteProp: "cnbRemote" as const,
+    urlProp: "cnbUrl" as const,
+  },
 ]
 
 export type PlatformKey = typeof PLATFORM_META[number]["key"]
@@ -127,7 +196,7 @@ export class GitPushManager {
    */
   async removeProject(id: string): Promise<void> {
     const projects = await this.getProjects()
-    const idx = projects.findIndex(p => p.id === id)
+    const idx = projects.findIndex((p) => p.id === id)
     if (idx !== -1) {
       projects.splice(idx, 1)
       await this.storage.projects.save(projects)
@@ -141,7 +210,7 @@ export class GitPushManager {
    */
   async updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "tags" | "starred" | "status" | "archived" | "note" | "name" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl">>): Promise<GitProject | null> {
     const projects = await this.getProjects()
-    const project = projects.find(p => p.id === id)
+    const project = projects.find((p) => p.id === id)
     if (!project) return null
     Object.assign(project, patch)
     await this.storage.projects.save(projects)
@@ -152,7 +221,7 @@ export class GitPushManager {
   /** 切换收藏状态 */
   async toggleStar(id: string): Promise<GitProject | null> {
     const projects = await this.getProjects()
-    const project = projects.find(p => p.id === id)
+    const project = projects.find((p) => p.id === id)
     if (!project) return null
     project.starred = !project.starred
     await this.storage.projects.save(projects)
@@ -169,7 +238,7 @@ export class GitPushManager {
     const t = tag.trim()
     if (!t) return null
     const projects = await this.getProjects()
-    const project = projects.find(p => p.id === id)
+    const project = projects.find((p) => p.id === id)
     if (!project) return null
     const tags = project.tags || []
     if (!tags.includes(t)) {
@@ -183,10 +252,10 @@ export class GitPushManager {
   /** 移除标签 */
   async removeTag(id: string, tag: string): Promise<GitProject | null> {
     const projects = await this.getProjects()
-    const project = projects.find(p => p.id === id)
+    const project = projects.find((p) => p.id === id)
     if (!project) return null
     if (project.tags) {
-      project.tags = project.tags.filter(t => t !== tag)
+      project.tags = project.tags.filter((t) => t !== tag)
       if (project.tags.length === 0) project.tags = undefined
       await this.storage.projects.save(projects)
       await this.syncGlobalTags()
@@ -197,7 +266,7 @@ export class GitPushManager {
   /** 记录最后活动时间（由 commitLog 更新触发，仅当变化时持久化） */
   async recordLastActivity(id: string, isoTime: string): Promise<void> {
     const projects = await this.getProjects()
-    const project = projects.find(p => p.id === id)
+    const project = projects.find((p) => p.id === id)
     if (!project || project.lastActivity === isoTime) return
     project.lastActivity = isoTime
     await this.storage.projects.save(projects)
@@ -208,7 +277,9 @@ export class GitPushManager {
     const projects = await this.getProjects()
     const set = new Set<string>()
     for (const p of projects) {
-      if (p.tags) for (const t of p.tags) if (t) set.add(t)
+      if (p.tags) { for (const t of p.tags) { if (t) set.add(t)
+      }
+      }
     }
     await this.storage.tags.save([...set].sort())
   }
@@ -223,7 +294,7 @@ export class GitPushManager {
    */
   async refreshRemotes(id: string): Promise<GitProject | null> {
     const projects = await this.getProjects()
-    const project = projects.find(p => p.id === id)
+    const project = projects.find((p) => p.id === id)
     if (!project) return null
     this.applyRemotesToProject(project, await this.detectRemotes(project.path))
     await this.storage.projects.save(projects)
@@ -280,33 +351,56 @@ export class GitPushManager {
   }
 
   /** 推送操作的单个远程结果 */
-  private skippedResult = { ok: false, stdout: "", stderr: "", skipped: true }
+  private skippedResult = {
+    ok: false,
+    stdout: "",
+    stderr: "",
+    skipped: true,
+  }
 
   /**
    * 推送项目到全部已配置的远程（未配置的平台自动跳过）
    */
   async pushToAll(id: string): Promise<{
     success: boolean
-    github: { ok: boolean; stdout: string; stderr: string; skipped?: boolean }
-    gitee: { ok: boolean; stdout: string; stderr: string; skipped?: boolean }
-    gitea: { ok: boolean; stdout: string; stderr: string; skipped?: boolean }
-    cnb: { ok: boolean; stdout: string; stderr: string; skipped?: boolean }
+    github: { ok: boolean, stdout: string, stderr: string, skipped?: boolean }
+    gitee: { ok: boolean, stdout: string, stderr: string, skipped?: boolean }
+    gitea: { ok: boolean, stdout: string, stderr: string, skipped?: boolean }
+    cnb: { ok: boolean, stdout: string, stderr: string, skipped?: boolean }
   }> {
     const projects = await this.getProjects()
-    const project = projects.find(p => p.id === id)
+    const project = projects.find((p) => p.id === id)
 
     if (!project) {
-      const notFound = { ok: false, stdout: "", stderr: "项目未找到" }
-      return { success: false, github: notFound, gitee: notFound, gitea: notFound, cnb: notFound }
+      const notFound = {
+        ok: false,
+        stdout: "",
+        stderr: "项目未找到",
+      }
+      return {
+        success: false,
+        github: notFound,
+        gitee: notFound,
+        gitea: notFound,
+        cnb: notFound,
+      }
     }
 
     const tryPush = async (remoteName: string | undefined) => {
       if (!remoteName) return this.skippedResult
       try {
         const stdout = await this.execGit(project.path, ["push", remoteName, "--all"]) || ""
-        return { ok: true, stdout, stderr: "" }
+        return {
+          ok: true,
+          stdout,
+          stderr: "",
+        }
       } catch (e: any) {
-        return { ok: false, stdout: "", stderr: e?.message || String(e) }
+        return {
+          ok: false,
+          stdout: "",
+          stderr: e?.message || String(e),
+        }
       }
     }
 
@@ -314,7 +408,13 @@ export class GitPushManager {
     const gitee = await tryPush(project.giteeRemote)
     const gitea = await tryPush(project.giteaRemote)
     const cnb = await tryPush(project.cnbRemote)
-    return { success: github.ok || gitee.ok || gitea.ok || cnb.ok, github, gitee, gitea, cnb }
+    return {
+      success: github.ok || gitee.ok || gitea.ok || cnb.ok,
+      github,
+      gitee,
+      gitea,
+      cnb,
+    }
   }
 
   /**
@@ -323,24 +423,39 @@ export class GitPushManager {
   async pushSingle(
     id: string,
     target: PlatformKey,
-  ): Promise<{ ok: boolean; stdout: string; stderr: string }> {
+  ): Promise<{ ok: boolean, stdout: string, stderr: string }> {
     const projects = await this.getProjects()
-    const project = projects.find(p => p.id === id)
+    const project = projects.find((p) => p.id === id)
     if (!project) {
-      return { ok: false, stdout: "", stderr: "项目未找到" }
+      return {
+        ok: false,
+        stdout: "",
+        stderr: "项目未找到",
+      }
     }
 
     const remoteName =
-      target === "github" ? (project.githubRemote || "github")
-      : target === "gitee" ? (project.giteeRemote || "gitee")
-      : target === "cnb" ? (project.cnbRemote || "cnb")
-      : (project.giteaRemote || "gitea")
+      target === "github"
+        ? (project.githubRemote || "github")
+        : target === "gitee"
+          ? (project.giteeRemote || "gitee")
+          : target === "cnb"
+            ? (project.cnbRemote || "cnb")
+            : (project.giteaRemote || "gitea")
 
     try {
       const stdout = await this.execGit(project.path, ["push", remoteName, "--all"]) || ""
-      return { ok: true, stdout, stderr: "" }
+      return {
+        ok: true,
+        stdout,
+        stderr: "",
+      }
     } catch (e: any) {
-      return { ok: false, stdout: "", stderr: e?.message || String(e) }
+      return {
+        ok: false,
+        stdout: "",
+        stderr: e?.message || String(e),
+      }
     }
   }
 
@@ -349,26 +464,44 @@ export class GitPushManager {
    */
   async pullToAll(id: string): Promise<{
     success: boolean
-    github: { ok: boolean; stdout: string; stderr: string; skipped?: boolean }
-    gitee: { ok: boolean; stdout: string; stderr: string; skipped?: boolean }
-    gitea: { ok: boolean; stdout: string; stderr: string; skipped?: boolean }
-    cnb: { ok: boolean; stdout: string; stderr: string; skipped?: boolean }
+    github: { ok: boolean, stdout: string, stderr: string, skipped?: boolean }
+    gitee: { ok: boolean, stdout: string, stderr: string, skipped?: boolean }
+    gitea: { ok: boolean, stdout: string, stderr: string, skipped?: boolean }
+    cnb: { ok: boolean, stdout: string, stderr: string, skipped?: boolean }
   }> {
     const projects = await this.getProjects()
-    const project = projects.find(p => p.id === id)
+    const project = projects.find((p) => p.id === id)
 
     if (!project) {
-      const notFound = { ok: false, stdout: "", stderr: "项目未找到" }
-      return { success: false, github: notFound, gitee: notFound, gitea: notFound, cnb: notFound }
+      const notFound = {
+        ok: false,
+        stdout: "",
+        stderr: "项目未找到",
+      }
+      return {
+        success: false,
+        github: notFound,
+        gitee: notFound,
+        gitea: notFound,
+        cnb: notFound,
+      }
     }
 
     const tryPull = async (remoteName: string | undefined) => {
       if (!remoteName) return this.skippedResult
       try {
         const stdout = await this.execGit(project.path, ["pull", remoteName, "--ff-only"]) || ""
-        return { ok: true, stdout, stderr: "" }
+        return {
+          ok: true,
+          stdout,
+          stderr: "",
+        }
       } catch (e: any) {
-        return { ok: false, stdout: "", stderr: e?.message || String(e) }
+        return {
+          ok: false,
+          stdout: "",
+          stderr: e?.message || String(e),
+        }
       }
     }
 
@@ -376,7 +509,13 @@ export class GitPushManager {
     const gitee = await tryPull(project.giteeRemote)
     const gitea = await tryPull(project.giteaRemote)
     const cnb = await tryPull(project.cnbRemote)
-    return { success: github.ok || gitee.ok || gitea.ok || cnb.ok, github, gitee, gitea, cnb }
+    return {
+      success: github.ok || gitee.ok || gitea.ok || cnb.ok,
+      github,
+      gitee,
+      gitea,
+      cnb,
+    }
   }
 
   /**
@@ -385,24 +524,39 @@ export class GitPushManager {
   async pullSingle(
     id: string,
     target: PlatformKey,
-  ): Promise<{ ok: boolean; stdout: string; stderr: string }> {
+  ): Promise<{ ok: boolean, stdout: string, stderr: string }> {
     const projects = await this.getProjects()
-    const project = projects.find(p => p.id === id)
+    const project = projects.find((p) => p.id === id)
     if (!project) {
-      return { ok: false, stdout: "", stderr: "项目未找到" }
+      return {
+        ok: false,
+        stdout: "",
+        stderr: "项目未找到",
+      }
     }
 
     const remoteName =
-      target === "github" ? (project.githubRemote || "github")
-      : target === "gitee" ? (project.giteeRemote || "gitee")
-      : target === "cnb" ? (project.cnbRemote || "cnb")
-      : (project.giteaRemote || "gitea")
+      target === "github"
+        ? (project.githubRemote || "github")
+        : target === "gitee"
+          ? (project.giteeRemote || "gitee")
+          : target === "cnb"
+            ? (project.cnbRemote || "cnb")
+            : (project.giteaRemote || "gitea")
 
     try {
       const stdout = await this.execGit(project.path, ["pull", remoteName, "--ff-only"]) || ""
-      return { ok: true, stdout, stderr: "" }
+      return {
+        ok: true,
+        stdout,
+        stderr: "",
+      }
     } catch (e: any) {
-      return { ok: false, stdout: "", stderr: e?.message || String(e) }
+      return {
+        ok: false,
+        stdout: "",
+        stderr: e?.message || String(e),
+      }
     }
   }
 
@@ -413,8 +567,12 @@ export class GitPushManager {
    */
   async checkPushStatus(id: string, opts?: { branch?: string }): Promise<PushStatusInfo> {
     const projects = await this.getProjects()
-    const project = projects.find(p => p.id === id)
-    const emptyResult: PushStatusInfo = { branch: "", remotes: {}, needsPush: false }
+    const project = projects.find((p) => p.id === id)
+    const emptyResult: PushStatusInfo = {
+      branch: "",
+      remotes: {},
+      needsPush: false,
+    }
 
     if (!project) return emptyResult
 
@@ -432,14 +590,21 @@ export class GitPushManager {
     }
 
     // 检查每个已知的远程（由 PLATFORM_META 驱动）
-    const remotesToCheck: { key: string; remoteName: string }[] = []
+    const remotesToCheck: { key: string, remoteName: string }[] = []
     for (const pm of PLATFORM_META) {
       const name = project[pm.remoteProp]
-      if (name) remotesToCheck.push({ key: pm.key, remoteName: name as string })
+      if (name) { remotesToCheck.push({
+        key: pm.key,
+        remoteName: name as string,
+      })
+      }
     }
 
     // 并行检查每个远程
-    const remoteChecks = remotesToCheck.map(async ({ key, remoteName }) => {
+    const remoteChecks = remotesToCheck.map(async ({
+      key,
+      remoteName,
+    }) => {
       try {
         // 尝试检查远程分支是否存在
         await this.execGit(project.path, [
@@ -456,10 +621,18 @@ export class GitPushManager {
           `${remoteName}/${status.branch}...HEAD`,
         ])
         const parts = counts.split("\t")
-        const behind = parseInt(parts[0] || "0", 10) // 左侧 = 远程有而本地没有
-        const ahead = parseInt(parts[1] || "0", 10)  // 右侧 = 本地有而远程没有
+        const behind = Number.parseInt(parts[0] || "0", 10) // 左侧 = 远程有而本地没有
+        const ahead = Number.parseInt(parts[1] || "0", 10) // 右侧 = 本地有而远程没有
 
-        return { key, result: { ahead, behind, noUpstream: false }, ahead }
+        return {
+          key,
+          result: {
+            ahead,
+            behind,
+            noUpstream: false,
+          },
+          ahead,
+        }
       } catch {
         // 远程分支不存在 → 意味着从未推送过，全部本地提交都需要推送
         const totalCommits = await this.execGit(project.path, [
@@ -467,14 +640,26 @@ export class GitPushManager {
           "--count",
           "HEAD",
         ]).catch(() => "0")
-        const ahead = parseInt(totalCommits, 10) || 0
+        const ahead = Number.parseInt(totalCommits, 10) || 0
 
-        return { key, result: { ahead, behind: 0, noUpstream: true }, ahead }
+        return {
+          key,
+          result: {
+            ahead,
+            behind: 0,
+            noUpstream: true,
+          },
+          ahead,
+        }
       }
     })
 
     const results = await Promise.all(remoteChecks)
-    for (const { key, result, ahead } of results) {
+    for (const {
+      key,
+      result,
+      ahead,
+    } of results) {
       status.remotes[key] = result
       if (ahead > 0) status.needsPush = true
     }
@@ -489,7 +674,9 @@ export class GitPushManager {
     try {
       const format = "%h%n%s%n%an%n%ar%n%aI"
       const raw = await this.execGit(projectPath, [
-        "log", `-${count}`, `--format=${format}`,
+        "log",
+        `-${count}`,
+        `--format=${format}`,
       ])
       if (!raw) return []
 
@@ -517,12 +704,16 @@ export class GitPushManager {
   async getBranches(projectPath: string): Promise<BranchInfo[]> {
     try {
       const raw = await this.execGit(projectPath, [
-        "branch", "--format=%(refname:short)%00%(HEAD)",
+        "branch",
+        "--format=%(refname:short)%00%(HEAD)",
       ])
       if (!raw) return []
-      return raw.split("\n").filter(Boolean).map(line => {
+      return raw.split("\n").filter(Boolean).map((line) => {
         const [name, head] = line.split("\0")
-        return { name, current: head === "*" }
+        return {
+          name,
+          current: head === "*",
+        }
       })
     } catch {
       return []
@@ -561,7 +752,7 @@ export class GitPushManager {
         const match = line.match(/^stash@\{(\d+)\}:\s*(.+)$/)
         if (match) {
           entries.push({
-            index: parseInt(match[1], 10),
+            index: Number.parseInt(match[1], 10),
             message: match[2],
           })
         }
@@ -591,7 +782,7 @@ export class GitPushManager {
   async generateStashDescription(projectPath: string): Promise<string> {
     const wt = await this.getWorkingTreeStatus(projectPath)
     if (!wt.hasChanges) return ""
-    const names = wt.files.slice(0, 8).map(f => f.path.split("/").pop() || f.path).join("、")
+    const names = wt.files.slice(0, 8).map((f) => f.path.split("/").pop() || f.path).join("、")
     const more = wt.files.length > 8 ? `等${wt.files.length}个文件` : ""
 
     const aiConfig = getApiConfigFromPlugin(this.plugin)
@@ -605,7 +796,10 @@ export class GitPushManager {
 示例：README.md → "更新README文档"；index.ts+types.ts → "重构类型定义"；App.vue+style.css → "调整页面布局和样式"；package.json → "更新依赖配置"
 变更文件：${names}${more}`,
         aiConfig,
-        { temperature: 0.5, maxTokens: 40 },
+        {
+          temperature: 0.5,
+          maxTokens: 40,
+        },
       )
       const t = result?.trim()
       return t && t.length > 0 ? t : `${wt.files.length}个文件`
@@ -620,9 +814,13 @@ export class GitPushManager {
   async getTags(projectPath: string, limit = 10): Promise<TagInfo[]> {
     try {
       const raw = await this.execGit(projectPath, ["tag", "-l", `--sort=-creatordate`, `-n1`, `--format=%(refname:short)|%(subject)|%(creatordate:iso)`])
-      return raw.trim().split("\n").filter(Boolean).slice(0, limit).map(line => {
+      return raw.trim().split("\n").filter(Boolean).slice(0, limit).map((line) => {
         const [name, message, date] = line.split("|")
-        return { name, message: message || undefined, date: date || undefined }
+        return {
+          name,
+          message: message || undefined,
+          date: date || undefined,
+        }
       })
     } catch { return [] }
   }
@@ -658,7 +856,7 @@ export class GitPushManager {
   async getConflictFiles(projectPath: string): Promise<ConflictFile[]> {
     try {
       const raw = await this.execGit(projectPath, ["diff", "--name-only", "--diff-filter=U"])
-      return raw.trim().split("\n").filter(Boolean).map(path => ({
+      return raw.trim().split("\n").filter(Boolean).map((path) => ({
         path: path.trim(),
         status: "both-modified",
       }))
@@ -757,7 +955,10 @@ export class GitPushManager {
   async scanForGitRepos(dirPath: string): Promise<ScannedGitRepo[]> {
     const nodeModules = getNodeFsPathOs()
     if (!nodeModules) throw new Error("Node 环境不可用")
-    const { fs, path } = nodeModules
+    const {
+      fs,
+      path,
+    } = nodeModules
 
     if (!fs.existsSync(dirPath)) {
       throw new Error("路径不存在")
@@ -767,8 +968,16 @@ export class GitPushManager {
     }
 
     const SKIP_DIRS = new Set([
-      "node_modules", ".git", "__pycache__", ".venv", "venv",
-      "dist", "build", "target", "bin", "obj",
+      "node_modules",
+      ".git",
+      "__pycache__",
+      ".venv",
+      "venv",
+      "dist",
+      "build",
+      "target",
+      "bin",
+      "obj",
     ])
 
     const results: ScannedGitRepo[] = []
@@ -817,17 +1026,31 @@ export class GitPushManager {
     remotes: GitRemoteInfo[]
   }> {
     const projects = await this.getProjects()
-    const project = projects.find(p => p.id === id)
+    const project = projects.find((p) => p.id === id)
     if (!project) {
-      return { canPush: false, github: false, gitee: false, gitea: false, cnb: false, remotes: [] }
+      return {
+        canPush: false,
+        github: false,
+        gitee: false,
+        gitea: false,
+        cnb: false,
+        remotes: [],
+      }
     }
 
     const remotes = await this.detectRemotes(project.path)
-    const github = remotes.some(r => this.isKnownRemote(r, "github"))
-    const gitee = remotes.some(r => this.isKnownRemote(r, "gitee"))
-    const gitea = remotes.some(r => this.isKnownRemote(r, "gitea"))
-    const cnb = remotes.some(r => this.isKnownRemote(r, "cnb"))
-    return { canPush: github || gitee || gitea || cnb, github, gitee, gitea, cnb, remotes }
+    const github = remotes.some((r) => this.isKnownRemote(r, "github"))
+    const gitee = remotes.some((r) => this.isKnownRemote(r, "gitee"))
+    const gitea = remotes.some((r) => this.isKnownRemote(r, "gitea"))
+    const cnb = remotes.some((r) => this.isKnownRemote(r, "cnb"))
+    return {
+      canPush: github || gitee || gitea || cnb,
+      github,
+      gitee,
+      gitea,
+      cnb,
+      remotes,
+    }
   }
 
   /**
@@ -845,7 +1068,12 @@ export class GitPushManager {
         cp.execFile(
           "git",
           args,
-          { cwd, timeout: 30000, encoding: "utf8", windowsHide: true },
+          {
+            cwd,
+            timeout: 30000,
+            encoding: "utf8",
+            windowsHide: true,
+          },
           (error: any, stdout: string, stderr: string) => {
             if (isStageOp) console.log(`[gitPush:execGit] stdout=${stdout?.substring(0, 200)} stderr=${stderr?.substring(0, 200)}`)
             this.gitRunning--
@@ -875,7 +1103,7 @@ export class GitPushManager {
    * 获取工作区变更状态（git status --porcelain -b）
    * @param opts.skipRefresh 跳过 `update-index --refresh`（首屏/批量探测时设为 true，避免遍历 index 的重命令）
    */
-  async getWorkingTreeStatus(projectPath: string, opts?: { skipRefresh?: boolean; branch?: string }): Promise<WorkingTreeInfo> {
+  async getWorkingTreeStatus(projectPath: string, opts?: { skipRefresh?: boolean, branch?: string }): Promise<WorkingTreeInfo> {
     const empty: WorkingTreeInfo = {
       branch: "",
       files: [],
@@ -909,9 +1137,16 @@ export class GitPushManager {
       }
       // -c core.quotepath=false 禁用中文路径八进制转义，避免 git add 时找不到文件
       const raw = await this.execGit(projectPath, [
-        "-c", "core.quotepath=false", "status", "--porcelain",
+        "-c",
+        "core.quotepath=false",
+        "status",
+        "--porcelain",
       ])
-      if (!raw) return { ...empty, branch }
+      if (!raw) { return {
+        ...empty,
+        branch,
+      }
+      }
 
       const lines = raw.split("\n").filter(Boolean)
       for (const line of lines) {
@@ -964,7 +1199,12 @@ export class GitPushManager {
           }
         }
 
-        files.push({ path: actualPath, status, staged, oldPath })
+        files.push({
+          path: actualPath,
+          status,
+          staged,
+          oldPath,
+        })
       }
     } catch {
       // git status 失败，返回空
@@ -1038,24 +1278,40 @@ export class GitPushManager {
    * 根据暂存区差异自动生成提交信息
    * 优先使用配置的 AI 模型分析 diff 内容；无 API Key 则降级为启发式
    */
-  async generateCommitMessage(projectPath: string): Promise<{ message: string; source: "ai" | "heuristic" }> {
+  async generateCommitMessage(projectPath: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
     try {
       // 获取暂存区差异文本
       const diffText = await this.execGit(projectPath, [
-        "-c", "core.quotepath=false", "diff", "--text", "--cached", "--stat",
+        "-c",
+        "core.quotepath=false",
+        "diff",
+        "--text",
+        "--cached",
+        "--stat",
       ])
-      if (!diffText) return { message: "chore: update files", source: "heuristic" }
+      if (!diffText) { return {
+        message: "chore: update files",
+        source: "heuristic",
+      }
+      }
 
       // 截取用于 AI 的 diff（最多 3000 字符，避免 token 超限）
       const fullDiff = await this.execGit(projectPath, [
-        "-c", "core.quotepath=false", "diff", "--text", "--cached",
+        "-c",
+        "core.quotepath=false",
+        "diff",
+        "--text",
+        "--cached",
       ])
       const diffSnippet = (fullDiff || diffText).substring(0, 3000)
 
       // 尝试 AI 生成（参照 wordQuery 使用 callAI 非流式调用）
       const aiConfig = getApiConfigFromPlugin(this.plugin)
       if (!aiConfig.apiKey) {
-        return { message: this.heuristicCommitMessage(diffText), source: "heuristic" }
+        return {
+          message: this.heuristicCommitMessage(diffText),
+          source: "heuristic",
+        }
       }
 
       try {
@@ -1082,7 +1338,10 @@ ${diffSnippet}`,
         const trimmed = result?.trim() ?? ""
         const match = trimmed.match(/(feat|fix|chore|docs|style|refactor|test)(?:\([^)]+\))?\s*:\s*(.+)/i)
         if (match) {
-          return { message: `${match[1]}: ${match[2].trim()}`, source: "ai" }
+          return {
+            message: `${match[1]}: ${match[2].trim()}`,
+            source: "ai",
+          }
         }
         // AI 未返回有效提交信息，降级
         console.warn("[gitPush] AI 未返回有效 commit 格式，降级启发式:", trimmed.substring(0, 80))
@@ -1091,9 +1350,15 @@ ${diffSnippet}`,
       }
 
       // 降级：启发式生成
-      return { message: this.heuristicCommitMessage(diffText), source: "heuristic" }
+      return {
+        message: this.heuristicCommitMessage(diffText),
+        source: "heuristic",
+      }
     } catch {
-      return { message: "chore: update files", source: "heuristic" }
+      return {
+        message: "chore: update files",
+        source: "heuristic",
+      }
     }
   }
 
@@ -1103,20 +1368,20 @@ ${diffSnippet}`,
   private heuristicCommitMessage(statText: string): string {
     const lines = statText.split("\n").filter(Boolean)
     // 统计行如: "3 files changed, 15 insertions(+), 2 deletions(-)"
-    const files = lines.slice(0, -1).map(l => l.split("|")[0]?.trim()).filter(Boolean)
+    const files = lines.slice(0, -1).map((l) => l.split("|")[0]?.trim()).filter(Boolean)
 
     let type = "chore"
     const allPaths = files.join(" ").toLowerCase()
 
-    if (files.some(f => f.match(/\.(test|spec)\./))) type = "test"
-    else if (files.some(f => f.match(/\.(css|scss|less|style)/))) type = "style"
+    if (files.some((f) => f.match(/\.(test|spec)\./))) type = "test"
+    else if (files.some((f) => f.match(/\.(css|scss|less|style)/))) type = "style"
     else if (allPaths.includes("fix") || allPaths.includes("bug")) type = "fix"
     else if (allPaths.includes("readme") || allPaths.includes("doc")) type = "docs"
     else if (allPaths.includes("refactor") || allPaths.includes("rename")) type = "refactor"
     else if (allPaths.includes(".d.ts") || allPaths.includes("types/")) type = "types"
     else if (files.length >= 5) type = "feat"
 
-    const fileList = files.slice(0, 3).map(f => f.split("/").pop() || f).join(", ")
+    const fileList = files.slice(0, 3).map((f) => f.split("/").pop() || f).join(", ")
     const more = files.length > 3 ? ` 等 ${files.length} 个文件` : ""
 
     return `${type}: ${fileList}${more}`
@@ -1144,7 +1409,7 @@ ${diffSnippet}`,
   /** 更新分类 */
   async updateCategory(id: string, data: Partial<Pick<ProjectCategory, "name" | "color">>): Promise<void> {
     const cats = await this.getCategories()
-    const cat = cats.find(c => c.id === id)
+    const cat = cats.find((c) => c.id === id)
     if (!cat || id === "__ungrouped__") return
     if (data.name !== undefined) cat.name = data.name
     if (data.color !== undefined) cat.color = data.color
@@ -1155,7 +1420,7 @@ ${diffSnippet}`,
   async deleteCategory(id: string): Promise<void> {
     if (id === "__ungrouped__") return
     const cats = await this.getCategories()
-    const idx = cats.findIndex(c => c.id === id)
+    const idx = cats.findIndex((c) => c.id === id)
     if (idx === -1) return
     cats.splice(idx, 1)
     await this.storage.categories.save(cats)
@@ -1175,7 +1440,7 @@ ${diffSnippet}`,
   /** 移动项目到指定分类 */
   async moveProject(projectId: string, categoryId: string): Promise<void> {
     const projs = await this.getProjects()
-    const p = projs.find(x => x.id === projectId)
+    const p = projs.find((x) => x.id === projectId)
     if (!p) return
     p.categoryId = categoryId
     await this.storage.projects.save(projs)

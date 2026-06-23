@@ -17,12 +17,36 @@ const COVER_FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "PingFang SC", "Mi
 
 // 尺寸预设
 export const COVER_SIZE_PRESETS: CoverSizePreset[] = [
-  { label: "微信公众号 (900×383)", width: 900, height: 383 },
-  { label: "头条封面 (1280×720)", width: 1280, height: 720 },
-  { label: "小红书 (1080×1440)", width: 1080, height: 1440 },
-  { label: "知乎 (1920×1080)", width: 1920, height: 1080 },
-  { label: "博客横幅 (1200×630)", width: 1200, height: 630 },
-  { label: "正方形 (1080×1080)", width: 1080, height: 1080 },
+  {
+    label: "微信公众号 (900×383)",
+    width: 900,
+    height: 383,
+  },
+  {
+    label: "头条封面 (1280×720)",
+    width: 1280,
+    height: 720,
+  },
+  {
+    label: "小红书 (1080×1440)",
+    width: 1080,
+    height: 1440,
+  },
+  {
+    label: "知乎 (1920×1080)",
+    width: 1920,
+    height: 1080,
+  },
+  {
+    label: "博客横幅 (1200×630)",
+    width: 1200,
+    height: 630,
+  },
+  {
+    label: "正方形 (1080×1080)",
+    width: 1080,
+    height: 1080,
+  },
 ]
 
 // ============================================================
@@ -90,7 +114,13 @@ export const COVER_STYLE_REGISTRY: StyleDefinition[] = [
     id: "minimal",
     label: "极简",
     description: "白底大字、黑色标题、简洁装饰线",
-    colors: { bg: "#ffffff", titleColor: "#1a1a1a", subtitleColor: "#666666", accent: "#e74c3c", accentAlt: "#c0392b" },
+    colors: {
+      bg: "#ffffff",
+      titleColor: "#1a1a1a",
+      subtitleColor: "#666666",
+      accent: "#e74c3c",
+      accentAlt: "#c0392b",
+    },
     decorHtml: `<div class="decor-diamond"></div><div class="decor-circle"></div><div class="decor-circle-sm"></div><div class="decor-line-l"></div><div class="decor-line-r"></div><div class="decor-dots"></div>`,
     buildDecorCss(c) {
       return `
@@ -118,7 +148,13 @@ export const COVER_STYLE_REGISTRY: StyleDefinition[] = [
     id: "tech",
     label: "科技",
     description: "深色背景、霓虹线条、青色强调",
-    colors: { bg: "#0a0a0a", titleColor: "#ffffff", subtitleColor: "#888888", accent: "#00ffff", accentAlt: "#00cc99" },
+    colors: {
+      bg: "#0a0a0a",
+      titleColor: "#ffffff",
+      subtitleColor: "#888888",
+      accent: "#00ffff",
+      accentAlt: "#00cc99",
+    },
     decorHtml: `<div class="decor-scan"></div><div class="decor-scan s2"></div><div class="decor-corner tl"></div><div class="decor-corner tr"></div><div class="decor-corner bl"></div><div class="decor-corner br"></div><div class="decor-node n1"></div><div class="decor-node n2"></div><div class="decor-node n3"></div><div class="decor-node n4"></div><div class="decor-node n5"></div><div class="decor-data-line"></div>`,
     buildDecorCss(c) {
       return `
@@ -154,7 +190,13 @@ export const COVER_STYLE_REGISTRY: StyleDefinition[] = [
     id: "magazine",
     label: "杂志",
     description: "大标题排版、分栏布局、衬线字体",
-    colors: { bg: "#faf8f5", titleColor: "#1a1a1a", subtitleColor: "#555555", accent: "#c0392b", accentAlt: "#e74c3c" },
+    colors: {
+      bg: "#faf8f5",
+      titleColor: "#1a1a1a",
+      subtitleColor: "#555555",
+      accent: "#c0392b",
+      accentAlt: "#e74c3c",
+    },
     decorHtml: `<div class="decor-topline"></div><div class="decor-block"></div><div class="decor-block b2"></div><div class="decor-ring"></div><div class="decor-ring r2"></div><div class="decor-bar"></div><div class="decor-pageno"></div><div class="decor-dot-row"></div>`,
     buildDecorCss(c) {
       return `
@@ -183,7 +225,13 @@ export const COVER_STYLE_REGISTRY: StyleDefinition[] = [
     id: "drawio",
     label: "导图",
     description: "白底蓝边、网格辅助线、架构图风格",
-    colors: { bg: "#f5f6f8", titleColor: "#1a1a2e", subtitleColor: "#546e7a", accent: "#1565c0", accentAlt: "#0d47a1" },
+    colors: {
+      bg: "#f5f6f8",
+      titleColor: "#1a1a2e",
+      subtitleColor: "#546e7a",
+      accent: "#1565c0",
+      accentAlt: "#0d47a1",
+    },
     decorHtml: `<div class="decor-grid"></div><div class="decor-corner tl"></div><div class="decor-corner tr"></div><div class="decor-corner bl"></div><div class="decor-corner br"></div><div class="decor-connector c1"></div><div class="decor-connector c2"></div><div class="decor-node-a"></div><div class="decor-node-b"></div><div class="decor-crosshair"></div><div class="decor-label-box"></div>`,
     buildDecorCss(c) {
       return `
@@ -219,7 +267,13 @@ export const COVER_STYLE_REGISTRY: StyleDefinition[] = [
     id: "chinese",
     label: "国风",
     description: "暖色宣纸底、水墨深色标题、朱红点缀",
-    colors: { bg: "#f5e6d3", titleColor: "#2c1810", subtitleColor: "#5a3e2b", accent: "#c0392b", accentAlt: "#e74c3c" },
+    colors: {
+      bg: "#f5e6d3",
+      titleColor: "#2c1810",
+      subtitleColor: "#5a3e2b",
+      accent: "#c0392b",
+      accentAlt: "#e74c3c",
+    },
     decorHtml: `<div class="decor-seal"></div><div class="decor-seal s2"></div><div class="decor-ink"></div><div class="decor-ink i2"></div><div class="decor-line-v"></div><div class="decor-line-v v2"></div><div class="decor-mountain"></div><div class="decor-cloud"></div><div class="decor-cloud c2"></div><div class="decor-wave"></div>`,
     buildDecorCss(c) {
       return `
@@ -254,7 +308,7 @@ export const COVER_STYLE_REGISTRY: StyleDefinition[] = [
 ]
 
 /** 风格预设列表（从注册表派生 label + description） */
-export const COVER_STYLE_PRESETS: CoverStylePreset[] = COVER_STYLE_REGISTRY.map(s => ({
+export const COVER_STYLE_PRESETS: CoverStylePreset[] = COVER_STYLE_REGISTRY.map((s) => ({
   id: s.id,
   label: s.label,
   description: s.description,
@@ -266,7 +320,7 @@ export const COVER_STYLE_PRESETS: CoverStylePreset[] = COVER_STYLE_REGISTRY.map(
 
 /** 构建完整封面 HTML（纯代码，无 AI） */
 function buildCoverHtml(config: CoverGenerationConfig): string {
-  const style = COVER_STYLE_REGISTRY.find(s => s.id === config.styleId) ?? COVER_STYLE_REGISTRY[0]
+  const style = COVER_STYLE_REGISTRY.find((s) => s.id === config.styleId) ?? COVER_STYLE_REGISTRY[0]
   const c = style.colors
   const titleSize = Math.max(48, Math.floor(config.width / 15))
   const subtitleSize = Math.max(20, Math.floor(config.width / 40))

@@ -150,7 +150,11 @@ export function useTimeUtils() {
   function relativeTime(iso?: string): string { /* ... */ }
   function activityLevel(iso?: string): "fresh" | "recent" | "stale" | "dead" { /* ... */ }
   function sortProjects(list: GitProject[]): GitProject[] { /* ... */ }
-  return { relativeTime, activityLevel, sortProjects }
+  return {
+    relativeTime,
+    activityLevel,
+    sortProjects,
+  }
 }
 ```
 
@@ -165,7 +169,16 @@ export function useProjectFilters(props: { plugin: Plugin }) {
   const gitOpsPaused = ref(false)
   // watch 持久化 gitOpsPaused
   // smartViewProjects, filteredGroups computed
-  return { viewMode, showArchived, searchQuery, selectedTags, gitOpsPaused, smartViewProjects, filteredGroups, VIEW_MODE_META }
+  return {
+    viewMode,
+    showArchived,
+    searchQuery,
+    selectedTags,
+    gitOpsPaused,
+    smartViewProjects,
+    filteredGroups,
+    VIEW_MODE_META,
+  }
 }
 ```
 

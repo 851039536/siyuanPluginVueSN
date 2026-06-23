@@ -1,3 +1,4 @@
+import type { VersionManager } from "../composables/useVersionManager"
 import type { IconKey } from "@/config/icons"
 import type { PluginSettings } from "@/config/settings"
 import type { FeatureAction } from "@/features/config"
@@ -19,11 +20,11 @@ import { PluginStorage } from "@/utils/pluginStorage"
 import { createModalVueApp } from "@/utils/vueAppHelper"
 import AiSettingsPanel from "../components/AiSettingsPanel.vue"
 import VersionPanel from "../components/VersionPanel.vue"
-import SuperPanelPanel from "../index.vue"
 import {
-  type VersionManager,
   createVersionManager,
+
 } from "../composables/useVersionManager"
+import SuperPanelPanel from "../index.vue"
 
 export type { FeatureAction }
 

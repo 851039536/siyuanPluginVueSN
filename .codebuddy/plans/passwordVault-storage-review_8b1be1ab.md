@@ -81,20 +81,26 @@ todos:
 ```typescript
 // 新格式（v2）
 export interface StoredPasswordEntry {
-  id: string           // 明文 — 唯一标识
-  category: string     // 明文 — 分类筛选依赖
-  encryptedPayload: string  // Base64 — AES-GCM({name,account,password,description})
-  iv: string           // Base64 — 初始化向量
-  createdAt: number    // 明文
-  updatedAt: number    // 明文
-  version?: number     // 数据版本标记（可选，2=新格式）
+  id: string // 明文 — 唯一标识
+  category: string // 明文 — 分类筛选依赖
+  encryptedPayload: string // Base64 — AES-GCM({name,account,password,description})
+  iv: string // Base64 — 初始化向量
+  createdAt: number // 明文
+  updatedAt: number // 明文
+  version?: number // 数据版本标记（可选，2=新格式）
 }
 
 // 旧格式（v1，用于迁移检测）
 interface LegacyStoredPasswordEntry {
-  id: string; category: string; name: string; account: string
-  encryptedPassword: string; iv: string; description: string
-  createdAt: number; updatedAt: number
+  id: string
+  category: string
+  name: string
+  account: string
+  encryptedPassword: string
+  iv: string
+  description: string
+  createdAt: number
+  updatedAt: number
 }
 ```
 

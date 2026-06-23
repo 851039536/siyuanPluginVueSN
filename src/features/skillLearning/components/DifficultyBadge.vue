@@ -1,12 +1,18 @@
 <template>
-  <span class="difficulty-badge" :class="`difficulty-badge--${difficulty}`">
+  <span
+    class="difficulty-badge"
+    :class="`difficulty-badge--${difficulty}`"
+  >
     {{ label }}
   </span>
 </template>
 
 <script setup lang="ts">
+import type {
+  Difficulty,
+  SkillI18n,
+} from "../types"
 import { computed } from "vue"
-import type { Difficulty, SkillI18n } from "../types"
 
 const props = defineProps<{
   difficulty: Difficulty

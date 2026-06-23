@@ -177,7 +177,7 @@
           <!-- 对话控制 -->
           <Button
             v-if="!isGenerating && (conversationCount || 0) > 0"
-            :title="'清空对话历史（' + (conversationCount || 0) + ' 轮）'"
+            :title="`清空对话历史（${conversationCount || 0} 轮）`"
             variant="ghost"
             size="small"
             @click="$emit('clear-conversation')"

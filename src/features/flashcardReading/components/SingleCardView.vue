@@ -22,27 +22,27 @@
               size="small"
               icon="contentCopy"
               :iconSize="16"
-            :title="t.copyContent"
-            @click="$emit('copyContent', currentCard)"
-          />
-          <Button
-            v-if="!hideActions"
-            variant="ghost"
-            size="small"
-            icon="edit"
-            :iconSize="16"
-            :title="t.editCard"
-            @click="$emit('edit', currentCard)"
-          />
-          <Button
-            v-if="!hideActions"
-            variant="danger"
-            size="small"
-            icon="delete"
-            :iconSize="16"
-            :title="t.deleteCard"
-            @click="$emit('delete', currentCard)"
-          />
+              :title="t.copyContent"
+              @click="$emit('copyContent', currentCard)"
+            />
+            <Button
+              v-if="!hideActions"
+              variant="ghost"
+              size="small"
+              icon="edit"
+              :iconSize="16"
+              :title="t.editCard"
+              @click="$emit('edit', currentCard)"
+            />
+            <Button
+              v-if="!hideActions"
+              variant="danger"
+              size="small"
+              icon="delete"
+              :iconSize="16"
+              :title="t.deleteCard"
+              @click="$emit('delete', currentCard)"
+            />
           </div>
         </div>
       </template>

@@ -75,8 +75,8 @@ import {
   computed,
   ref,
 } from "vue"
-import { copyToClipboard } from "@/utils/domUtils"
 import IconWrapper from "@/components/IconWrapper.vue"
+import { copyToClipboard } from "@/utils/domUtils"
 import CategoryManager from "./components/CategoryManager.vue"
 import FilterBar from "./components/FilterBar.vue"
 import PanelHeader from "./components/PanelHeader.vue"

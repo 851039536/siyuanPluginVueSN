@@ -7,11 +7,11 @@ export function registerImageCreation(_plugin: Plugin) {
 
 export {
   activeTab,
+  hideImageCreation,
   imageCreationInitialKeywords,
   imageCreationInitialTitle,
   imageCreationVisible,
-  hideImageCreation,
-  showImageCreation,
   showCodeImage,
+  showImageCreation,
   switchTab,
 } from "./composables/useImageCreationState"

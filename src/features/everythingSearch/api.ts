@@ -267,7 +267,7 @@ export function getFileIconType(filename: string, isFolder: boolean): string {
 }
 
 /** 获取 Electron shell 模块（懒加载单例） */
-let _shell: any = undefined
+let _shell: any
 function getElectronShell() {
   if (!_shell) {
     _shell = window.require("@electron/remote").shell

@@ -14,7 +14,11 @@
         </button>
       </div>
       <div class="skill-learning-panel__actions">
-        <button class="skill-learning-panel__btn" @click="openAddDialog" :title="t.addCard">
+        <button
+          class="skill-learning-panel__btn"
+          :title="t.addCard"
+          @click="openAddDialog"
+        >
           +
         </button>
       </div>
@@ -70,17 +74,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue"
 import type { Plugin } from "siyuan"
-import type { SkillCard, SkillI18n, ViewMode, CreateSkillDTO, ReviewRating, ReviewData } from "./types"
-import { useSkillStorage } from "./composables/useSkillStorage"
-import { useI18n } from "./composables/useI18n"
-import { PRESET_CARDS } from "./data/presetData"
-import SkillListView from "./components/SkillListView.vue"
+import type {
+  CreateSkillDTO,
+  ReviewData,
+  ReviewRating,
+  SkillCard,
+  SkillI18n,
+  ViewMode,
+} from "./types"
+import {
+  computed,
+  onMounted,
+  ref,
+} from "vue"
 import FlashcardView from "./components/FlashcardView.vue"
-import SkillDialog from "./components/SkillDialog.vue"
 import ReviewView from "./components/ReviewView.vue"
+import SkillDialog from "./components/SkillDialog.vue"
+import SkillListView from "./components/SkillListView.vue"
 import StatsView from "./components/StatsView.vue"
+import { useI18n } from "./composables/useI18n"
+import { useSkillStorage } from "./composables/useSkillStorage"
+import { PRESET_CARDS } from "./data/presetData"
 
 const props = defineProps<{
   i18n: SkillI18n | undefined
@@ -89,7 +104,16 @@ const props = defineProps<{
 
 const t = computed(() => fullI18n.value as Record<string, string>)
 const fullI18n = useI18n(props.i18n)
-const { cards, loadCards, createCard, updateCard, deleteCard, incrementPracticeWithAccuracy, updateReviewAndPractice, storage } =
+const {
+  cards,
+  loadCards,
+  createCard,
+  updateCard,
+  deleteCard,
+  incrementPracticeWithAccuracy,
+  updateReviewAndPractice,
+  storage,
+} =
   useSkillStorage(props.plugin)
 
 const viewMode = ref<ViewMode>("list")
@@ -99,10 +123,22 @@ const editingCard = ref<SkillCard | null>(null)
 const practicedCount = computed(() => cards.value.filter((c) => c.practiceCount > 0).length)
 
 const tabs = computed(() => [
-  { id: "list" as ViewMode, label: fullI18n.value.listView || "列表" },
-  { id: "flashcard" as ViewMode, label: fullI18n.value.flashcardView || "闪卡" },
-  { id: "review" as ViewMode, label: fullI18n.value.reviewView || "复习" },
-  { id: "stats" as ViewMode, label: fullI18n.value.statsView || "统计" },
+  {
+    id: "list" as ViewMode,
+    label: fullI18n.value.listView || "列表",
+  },
+  {
+    id: "flashcard" as ViewMode,
+    label: fullI18n.value.flashcardView || "闪卡",
+  },
+  {
+    id: "review" as ViewMode,
+    label: fullI18n.value.reviewView || "复习",
+  },
+  {
+    id: "stats" as ViewMode,
+    label: fullI18n.value.statsView || "统计",
+  },
 ])
 
 onMounted(async () => {

@@ -124,7 +124,10 @@ import type {
 } from "./types"
 import type { IconKey } from "@/config/icons"
 import type { PluginSettings } from "@/config/settings"
-import type { FeatureMeta, SubFeatureMeta } from "@/features/config"
+import type {
+  FeatureMeta,
+  SubFeatureMeta,
+} from "@/features/config"
 import {
   computed,
   nextTick,

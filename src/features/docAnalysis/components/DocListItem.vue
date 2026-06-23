@@ -91,7 +91,9 @@
           v-if="doc.unpublishedPlatforms"
           class="unpublished-tooltip"
         >
-          <div class="tooltip-header">未发布平台</div>
+          <div class="tooltip-header">
+            未发布平台
+          </div>
           <div
             v-for="name in doc.unpublishedPlatforms"
             :key="name"
@@ -102,7 +104,9 @@
           v-else
           class="unpublished-tooltip published-all"
         >
-          <div class="tooltip-header">全部已发布</div>
+          <div class="tooltip-header">
+            全部已发布
+          </div>
         </div>
       </div>
     </div>

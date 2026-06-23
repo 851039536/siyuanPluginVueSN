@@ -4,7 +4,6 @@
  */
 import type { CSSProperties } from "vue"
 import type { SelectOption } from "@/components/Select.vue"
-import { CODE_IMAGE_DEFAULTS } from "../types"
 import hljs from "highlight.js"
 import html2canvas from "html2canvas"
 import { showMessage } from "siyuan"
@@ -13,6 +12,7 @@ import {
   ref,
 } from "vue"
 import { triggerBlobDownload } from "@/utils/domUtils"
+import { CODE_IMAGE_DEFAULTS } from "../types"
 import "highlight.js/styles/github.css"
 import "highlight.js/styles/github-dark.css"
 
@@ -45,32 +45,83 @@ export const LANGUAGE_MAP = Object.freeze({
 } as const)
 
 export const languageOptions: SelectOption[] = Object.entries(LANGUAGE_MAP).map(
-  ([value, label]) => ({ value, label }),
+  ([value, label]) => ({
+    value,
+    label,
+  }),
 )
 
 export const codeStyleOptions: SelectOption[] = [
-  { value: "github", label: "GitHub" },
-  { value: "mac", label: "Mac" },
-  { value: "cartoon", label: "卡通" },
-  { value: "wave", label: "波浪渐变" },
-  { value: "glass", label: "玻璃拟态" },
-  { value: "neon", label: "霓虹灯" },
-  { value: "3d", label: "3D立体" },
+  {
+    value: "github",
+    label: "GitHub",
+  },
+  {
+    value: "mac",
+    label: "Mac",
+  },
+  {
+    value: "cartoon",
+    label: "卡通",
+  },
+  {
+    value: "wave",
+    label: "波浪渐变",
+  },
+  {
+    value: "glass",
+    label: "玻璃拟态",
+  },
+  {
+    value: "neon",
+    label: "霓虹灯",
+  },
+  {
+    value: "3d",
+    label: "3D立体",
+  },
 ]
 
 export const textStyleOptions: SelectOption[] = [
-  { value: "quote", label: "名人名言" },
-  { value: "poetry", label: "诗词意境" },
-  { value: "note", label: "手写便签" },
-  { value: "poster", label: "激励海报" },
-  { value: "card", label: "引用卡片" },
-  { value: "newspaper", label: "复古报纸" },
-  { value: "gradient", label: "渐变文字" },
+  {
+    value: "quote",
+    label: "名人名言",
+  },
+  {
+    value: "poetry",
+    label: "诗词意境",
+  },
+  {
+    value: "note",
+    label: "手写便签",
+  },
+  {
+    value: "poster",
+    label: "激励海报",
+  },
+  {
+    value: "card",
+    label: "引用卡片",
+  },
+  {
+    value: "newspaper",
+    label: "复古报纸",
+  },
+  {
+    value: "gradient",
+    label: "渐变文字",
+  },
 ]
 
 export const themeOptions: SelectOption[] = [
-  { value: "light", label: "浅色" },
-  { value: "dark", label: "深色" },
+  {
+    value: "light",
+    label: "浅色",
+  },
+  {
+    value: "dark",
+    label: "深色",
+  },
 ]
 
 // ============================================================

@@ -5,7 +5,10 @@
       <div class="setting-row">
         <div class="setting-item">
           <label class="setting-label">
-            <span class="label-icon"><IconWrapper name="listBulleted" :size="14" /></span>
+            <span class="label-icon"><IconWrapper
+              name="listBulleted"
+              :size="14"
+            /></span>
             {{ i18n.listStyleSettings || '列表样式设置' }}
           </label>
           <p class="setting-description">
@@ -18,7 +21,10 @@
       <div class="setting-row">
         <div class="setting-item">
           <label class="setting-label">
-            <span class="label-icon"><IconWrapper name="sparkles" :size="14" /></span>
+            <span class="label-icon"><IconWrapper
+              name="sparkles"
+              :size="14"
+            /></span>
             {{ i18n.enableListStyle || '启用列表样式设置' }}
           </label>
           <div class="toggle-container">
@@ -41,7 +47,10 @@
           class="setting-section"
         >
           <div class="section-header">
-            <span class="section-icon"><IconWrapper :name="section.icon" :size="14" /></span>
+            <span class="section-icon"><IconWrapper
+              :name="section.icon"
+              :size="14"
+            /></span>
             <span class="section-title">{{ i18n[section.titleKey] || section.fallback }}</span>
           </div>
 
@@ -72,7 +81,10 @@
         <div class="setting-row">
           <div class="setting-item">
             <label class="setting-label">
-              <span class="label-icon"><IconWrapper name="formatSize" :size="14" /></span>
+              <span class="label-icon"><IconWrapper
+                name="formatSize"
+                :size="14"
+              /></span>
               {{ i18n.listSymbolSize || '无序列表符号大小' }}
               <span class="setting-value">{{ settings.symbolSize }}em</span>
             </label>
@@ -99,13 +111,19 @@
             class="preview-toggle"
             @click="togglePreview"
           >
-            <span class="preview-icon"><IconWrapper name="eye" :size="14" /></span>
+            <span class="preview-icon"><IconWrapper
+              name="eye"
+              :size="14"
+            /></span>
             <span>{{ i18n.preview || '预览效果' }}</span>
             <span
               class="toggle-arrow"
               :class="{ expanded: showPreview }"
             >
-              <IconWrapper name="chevronDown" :size="10" />
+              <IconWrapper
+                name="chevronDown"
+                :size="10"
+              />
             </span>
           </div>
           <transition name="preview-expand">
@@ -158,7 +176,10 @@
             class="reset-btn"
             @click="resetSettings"
           >
-            <IconWrapper name="refresh" :size="14" />
+            <IconWrapper
+              name="refresh"
+              :size="14"
+            />
             <span>{{ i18n.resetToDefault || '恢复默认设置' }}</span>
           </button>
         </div>
@@ -168,7 +189,13 @@
 </template>
 
 <script setup lang="ts">
-import { Plugin, showMessage } from "siyuan"
+import type { ListStyleSettings as ListStyleSettingsData } from "../types/storage"
+import type { IconKey } from "@/config/icons"
+
+import {
+  Plugin,
+  showMessage,
+} from "siyuan"
 import {
   computed,
   onBeforeUnmount,
@@ -176,12 +203,13 @@ import {
   ref,
   watch,
 } from "vue"
-
-import SiSwitch from "@/components/Switch.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import type { IconKey } from "@/config/icons"
-import { injectStyle, removeStyle } from "@/utils/domUtils"
-import { GeneralSettingsStorage, type ListStyleSettings as ListStyleSettingsData } from "../types/storage"
+import SiSwitch from "@/components/Switch.vue"
+import {
+  injectStyle,
+  removeStyle,
+} from "@/utils/domUtils"
+import { GeneralSettingsStorage } from "../types/storage"
 
 interface Props {
   i18n?: Record<string, string>
@@ -227,8 +255,18 @@ const colorSections: {
   fallback: string
   icon: IconKey
 }[] = [
-  { key: "orderedListColors", titleKey: "orderedListColors", fallback: "有序列表颜色", icon: "listOrdered" },
-  { key: "unorderedListColors", titleKey: "unorderedListColors", fallback: "无序列表颜色", icon: "list" },
+  {
+    key: "orderedListColors",
+    titleKey: "orderedListColors",
+    fallback: "有序列表颜色",
+    icon: "listOrdered",
+  },
+  {
+    key: "unorderedListColors",
+    titleKey: "unorderedListColors",
+    fallback: "无序列表颜色",
+    icon: "list",
+  },
 ]
 
 /** 创建一份与 DEFAULT_SETTINGS 无引用共享的设置副本 */
@@ -340,7 +378,10 @@ async function loadSettings() {
   try {
     const data = await gsStorage.value.listStyle.load()
     if (data) {
-      settings.value = { ...DEFAULT_SETTINGS, ...data }
+      settings.value = {
+        ...DEFAULT_SETTINGS,
+        ...data,
+      }
       applyListStyles(settings.value)
     }
   } catch (error) {

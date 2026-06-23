@@ -1,15 +1,32 @@
 <template>
   <div class="bcl-panel">
-    <div class="bcl-header" :class="{ expanded }" @click="toggleExpanded">
-      <Icon :icon="expanded ? 'mdi:chevron-down' : 'mdi:chevron-right'" height="14" />
+    <div
+      class="bcl-header"
+      :class="{ expanded }"
+      @click="toggleExpanded"
+    >
+      <Icon
+        :icon="expanded ? 'mdi:chevron-down' : 'mdi:chevron-right'"
+        height="14"
+      />
       <span class="bcl-title">COMMIT LOG</span>
-      <span v-if="!loading && entries.length" class="bcl-count">{{ entries.length }}</span>
+      <span
+        v-if="!loading && entries.length"
+        class="bcl-count"
+      >{{ entries.length }}</span>
     </div>
 
-    <div v-if="expanded" class="bcl-body">
+    <div
+      v-if="expanded"
+      class="bcl-body"
+    >
       <!-- 搜索栏 -->
       <div class="bcl-search">
-        <Icon icon="mdi:magnify" height="12" class="bcl-search-icon" />
+        <Icon
+          icon="mdi:magnify"
+          height="12"
+          class="bcl-search-icon"
+        />
         <input
           v-model="searchKeyword"
           class="bcl-search-input"
@@ -27,26 +44,55 @@
           class="vp-btn vp-btn--ghost vp-btn--sm"
           @click.stop="searchKeyword = ''; searchAuthor = ''"
         >
-          <Icon icon="mdi:close" height="10" />
+          <Icon
+            icon="mdi:close"
+            height="10"
+          />
         </button>
       </div>
 
-      <div v-if="loading" class="bcl-loading">
-        <Icon icon="mdi:loading" class="gp-spin" height="14" />
+      <div
+        v-if="loading"
+        class="bcl-loading"
+      >
+        <Icon
+          icon="mdi:loading"
+          class="gp-spin"
+          height="14"
+        />
         <span>加载中...</span>
       </div>
 
-      <div v-else-if="filteredEntries.length === 0" class="bcl-empty">
+      <div
+        v-else-if="filteredEntries.length === 0"
+        class="bcl-empty"
+      >
         {{ (searchKeyword || searchAuthor) ? '无匹配结果' : '暂无提交记录' }}
       </div>
 
-      <div v-else class="bcl-list">
-        <div v-for="entry in filteredEntries" :key="entry.hash" class="bcl-entry">
-          <span class="bcl-hash" :title="entry.hash">{{ entry.hash }}</span>
-          <span class="bcl-msg" :title="entry.message">{{ entry.message }}</span>
+      <div
+        v-else
+        class="bcl-list"
+      >
+        <div
+          v-for="entry in filteredEntries"
+          :key="entry.hash"
+          class="bcl-entry"
+        >
+          <span
+            class="bcl-hash"
+            :title="entry.hash"
+          >{{ entry.hash }}</span>
+          <span
+            class="bcl-msg"
+            :title="entry.message"
+          >{{ entry.message }}</span>
           <span class="bcl-meta">
             <span class="bcl-author">{{ entry.author }}</span>
-            <span class="bcl-date" :title="entry.date">{{ entry.relativeDate }}</span>
+            <span
+              class="bcl-date"
+              :title="entry.date"
+            >{{ entry.relativeDate }}</span>
           </span>
         </div>
       </div>
@@ -55,9 +101,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue"
-import { Icon } from "@iconify/vue"
 import type { CommitLogEntry } from "../types"
+import { Icon } from "@iconify/vue"
+import {
+  computed,
+  ref,
+} from "vue"
 
 const props = defineProps<{
   entries: CommitLogEntry[]
@@ -72,11 +121,11 @@ const filteredEntries = computed(() => {
   let list = props.entries
   if (searchKeyword.value) {
     const kw = searchKeyword.value.toLowerCase()
-    list = list.filter(e => e.message.toLowerCase().includes(kw))
+    list = list.filter((e) => e.message.toLowerCase().includes(kw))
   }
   if (searchAuthor.value) {
     const au = searchAuthor.value.toLowerCase()
-    list = list.filter(e => e.author.toLowerCase().includes(au))
+    list = list.filter((e) => e.author.toLowerCase().includes(au))
   }
   return list
 })

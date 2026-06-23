@@ -135,32 +135,74 @@ const emit = defineEmits<Emits>()
 
 /** 最大结果选项 */
 const MAX_RESULTS_OPTIONS = [
-  { value: 50, label: "50" },
-  { value: 100, label: "100" },
-  { value: 200, label: "200" },
-  { value: 500, label: "500" },
+  {
+    value: 50,
+    label: "50",
+  },
+  {
+    value: 100,
+    label: "100",
+  },
+  {
+    value: 200,
+    label: "200",
+  },
+  {
+    value: 500,
+    label: "500",
+  },
 ]
 
 /** 防抖延迟选项 */
 const DEBOUNCE_OPTIONS = [
-  { value: 200, label: "200ms" },
-  { value: 500, label: "500ms" },
-  { value: 1000, label: "1s" },
+  {
+    value: 200,
+    label: "200ms",
+  },
+  {
+    value: 500,
+    label: "500ms",
+  },
+  {
+    value: 1000,
+    label: "1s",
+  },
 ]
 
 /** 排序选项 */
 const SORT_OPTIONS = [
-  { value: "date_modified", label: "修改时间" },
-  { value: "name", label: "名称" },
-  { value: "path", label: "路径" },
-  { value: "size", label: "大小" },
+  {
+    value: "date_modified",
+    label: "修改时间",
+  },
+  {
+    value: "name",
+    label: "名称",
+  },
+  {
+    value: "path",
+    label: "路径",
+  },
+  {
+    value: "size",
+    label: "大小",
+  },
 ]
 
 /** 文件大小单位选项 */
 const SIZE_UNIT_OPTIONS = [
-  { value: "KB", label: "KB" },
-  { value: "MB", label: "MB" },
-  { value: "GB", label: "GB" },
+  {
+    value: "KB",
+    label: "KB",
+  },
+  {
+    value: "MB",
+    label: "MB",
+  },
+  {
+    value: "GB",
+    label: "GB",
+  },
 ]
 
 /** 更新选项 */

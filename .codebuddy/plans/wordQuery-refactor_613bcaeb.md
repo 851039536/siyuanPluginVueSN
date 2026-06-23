@@ -84,11 +84,15 @@ import { copyToClipboard, fallbackCopyToClipboard } from "@/utils/domUtils"
 ```typescript
 const FIELD_MAPPINGS = [
   {
-    pattern: /(单词|词语)：/, class: "word-section", label: "$1：",
+    pattern: /(单词|词语)：/,
+    class: "word-section",
+    label: "$1：",
     contentPatterns: [], // word 类型不需要复制提取
   },
   {
-    pattern: /(拼音|音标)：/, class: "phonetic-section", label: "$1：",
+    pattern: /(拼音|音标)：/,
+    class: "phonetic-section",
+    label: "$1：",
     contentPatterns: [/音标：[^\n]+/, /拼音：[^\n]+/],
   },
   // ... 其他条目
@@ -103,8 +107,14 @@ const FIELD_MAPPINGS = [
 
 ```typescript
 export const LANGUAGE_MAP: Record<string, string> = {
-  auto: "自动检测", zh: "中文", en: "英文", ja: "日文",
-  ko: "韩文", fr: "法文", de: "德文", es: "西班牙文",
+  auto: "自动检测",
+  zh: "中文",
+  en: "英文",
+  ja: "日文",
+  ko: "韩文",
+  fr: "法文",
+  de: "德文",
+  es: "西班牙文",
 }
 ```
 

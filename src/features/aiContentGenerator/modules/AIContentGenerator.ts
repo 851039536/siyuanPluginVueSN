@@ -1,13 +1,13 @@
-/**
- * AI内容生成类
- * 仅负责 Dock 注册和 UI 编排，API 调用使用 @/utils/aiApi 统一模块
- */
-import type { AiApiConfig } from "@/utils/aiApi"
 import type {
   GenerateOptions,
   ReviewResult,
   SkillItem,
 } from "@/types/ai"
+/**
+ * AI内容生成类
+ * 仅负责 Dock 注册和 UI 编排，API 调用使用 @/utils/aiApi 统一模块
+ */
+import type { AiApiConfig } from "@/utils/aiApi"
 import {
   Plugin,
   showMessage,
@@ -24,7 +24,7 @@ import AIContentGeneratorPanel from "../index.vue"
  * 从任意文本中提取 JSON 对象。
  */
 function extractJsonFromText(text: string): string | null {
-  const codeBlock = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/)
+  const codeBlock = text.match(/```(?:json)?\s*([\s\S]*?)\n?```/)
   if (codeBlock) {
     const inner = codeBlock[1].trim()
     if (inner.startsWith("{")) return inner

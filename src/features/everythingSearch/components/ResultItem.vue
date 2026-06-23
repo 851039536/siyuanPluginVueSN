@@ -4,23 +4,38 @@
     @dblclick="handleDblClick"
   >
     <!-- 类型图标 -->
-    <div class="vp-result-item__icon" :class="iconClass">
-      <IconWrapper :name="iconKey" :size="14" />
+    <div
+      class="vp-result-item__icon"
+      :class="iconClass"
+    >
+      <IconWrapper
+        :name="iconKey"
+        :size="14"
+      />
     </div>
 
     <!-- 文件信息 -->
     <div class="vp-result-item__info">
-      <div class="vp-result-item__name" :title="item.name">
+      <div
+        class="vp-result-item__name"
+        :title="item.name"
+      >
         {{ item.name }}
       </div>
-      <div class="vp-result-item__path" :title="fullPath">
+      <div
+        class="vp-result-item__path"
+        :title="fullPath"
+      >
         {{ item.path }}
       </div>
     </div>
 
     <!-- 元数据 -->
     <div class="vp-result-item__meta">
-      <span v-if="item.type === 'file'" class="vp-result-item__size">{{ formattedSize }}</span>
+      <span
+        v-if="item.type === 'file'"
+        class="vp-result-item__size"
+      >{{ formattedSize }}</span>
       <span class="vp-result-item__date">{{ item.dateModified }}</span>
     </div>
 

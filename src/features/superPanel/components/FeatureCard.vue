@@ -13,70 +13,70 @@
         </div>
         <div class="feature-info">
           <span class="feature-title">{{ feature.title }}</span>
-        <span
-          class="version-badge"
-          title="点击查看版本信息"
-          @click.stop="emit('openVersions')"
-        >{{ feature.version || '1.0.0.0' }}</span>
-        <span class="status-badge-wrapper">
           <span
-            ref="statusBadgeRef"
-            class="status-badge"
-            :class="feature.status ? `status-${feature.status}` : ''"
-            title="点击选择状态"
-            @click.stop="toggleStatusMenu"
-          >{{ feature.status ? statusLabels?.[feature.status] || feature.status : '+' }}</span>
-          <Transition name="status-popover">
-            <div
-              v-if="showStatusMenu"
-              class="status-popover"
-              @click.stop
-            >
-              <button
-                v-for="opt in statusOptions"
-                :key="opt.value"
-                class="status-option"
-                :class="{ active: feature.status === opt.value }"
-                @click="selectStatus(opt.value)"
+            class="version-badge"
+            title="点击查看版本信息"
+            @click.stop="emit('openVersions')"
+          >{{ feature.version || '1.0.0.0' }}</span>
+          <span class="status-badge-wrapper">
+            <span
+              ref="statusBadgeRef"
+              class="status-badge"
+              :class="feature.status ? `status-${feature.status}` : ''"
+              title="点击选择状态"
+              @click.stop="toggleStatusMenu"
+            >{{ feature.status ? statusLabels?.[feature.status] || feature.status : '+' }}</span>
+            <Transition name="status-popover">
+              <div
+                v-if="showStatusMenu"
+                class="status-popover"
+                @click.stop
               >
-                <span
-                  v-if="opt.value"
-                  class="status-option-dot"
-                  :class="`status-${opt.value}`"
-                />
-                {{ opt.label }}
-              </button>
-            </div>
-          </Transition>
-        </span>
-      </div>
-      <div
-        v-if="feature.actions.length > 0"
-        class="feature-header-actions"
-      >
-        <Button
-          v-for="action in feature.actions"
-          :key="action.key"
-          variant="ghost"
-          size="small"
-          @click.stop="handleAction(action.key)"
+                <button
+                  v-for="opt in statusOptions"
+                  :key="opt.value"
+                  class="status-option"
+                  :class="{ active: feature.status === opt.value }"
+                  @click="selectStatus(opt.value)"
+                >
+                  <span
+                    v-if="opt.value"
+                    class="status-option-dot"
+                    :class="`status-${opt.value}`"
+                  />
+                  {{ opt.label }}
+                </button>
+              </div>
+            </Transition>
+          </span>
+        </div>
+        <div
+          v-if="feature.actions.length > 0"
+          class="feature-header-actions"
         >
-          {{ action.label }}
-          <span
-            v-if="action.hotkey"
-            class="action-hotkey"
-          >{{ action.hotkey }}</span>
-        </Button>
+          <Button
+            v-for="action in feature.actions"
+            :key="action.key"
+            variant="ghost"
+            size="small"
+            @click.stop="handleAction(action.key)"
+          >
+            {{ action.label }}
+            <span
+              v-if="action.hotkey"
+              class="action-hotkey"
+            >{{ action.hotkey }}</span>
+          </Button>
+        </div>
+        <Switch
+          v-if="showToggle"
+          :model-value="enabled"
+          size="small"
+          class="feature-toggle"
+          @update:model-value="emit('toggle', $event)"
+        />
       </div>
-      <Switch
-        v-if="showToggle"
-        :model-value="enabled"
-        size="small"
-        class="feature-toggle"
-        @update:model-value="emit('toggle', $event)"
-      />
-    </div>
-    <span class="feature-desc">{{ feature.desc }}</span>
+      <span class="feature-desc">{{ feature.desc }}</span>
       <div
         v-if="feature.subFeatures?.length"
         class="feature-sub-features"
@@ -131,6 +131,7 @@ import type {
   Feature,
   FeatureStatus,
 } from "../types"
+import { Icon } from "@iconify/vue"
 import {
   computed,
   ref,
@@ -138,7 +139,6 @@ import {
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Switch from "@/components/Switch.vue"
-import { Icon } from "@iconify/vue"
 import { useClickOutside } from "../composables/useClickOutside"
 import { FEATURE_STATUSES } from "../types"
 

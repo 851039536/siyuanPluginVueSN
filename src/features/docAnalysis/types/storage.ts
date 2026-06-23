@@ -1,8 +1,8 @@
-import type { FilterOptions } from "./index"
 /**
  * 文档分析功能 - 数据存储管理
  */
 import type { Plugin } from "siyuan"
+import type { FilterOptions } from "./index"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 

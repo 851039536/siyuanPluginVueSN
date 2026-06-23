@@ -142,8 +142,8 @@ import {
   computed,
   ref,
 } from "vue"
-import CodeBlockSettings from "./components/CodeBlockSettings.vue"
 import CompactModeSettings from "@/features/compactMode/components/CompactModeSettings.vue"
+import CodeBlockSettings from "./components/CodeBlockSettings.vue"
 import DocCountSettings from "./components/DocCountSettings.vue"
 import DocumentFontSettings from "./components/DocumentFontSettings.vue"
 import EncryptionSettings from "./components/EncryptionSettings.vue"

@@ -34,13 +34,20 @@
             ></span>
             {{ row.name }}
           </td>
-          <td class="nb-td nb-td-num">{{ row.docs.toLocaleString() }}</td>
-          <td class="nb-td nb-td-num">{{ row.words.toLocaleString() }}</td>
+          <td class="nb-td nb-td-num">
+            {{ row.docs.toLocaleString() }}
+          </td>
+          <td class="nb-td nb-td-num">
+            {{ row.words.toLocaleString() }}
+          </td>
           <td class="nb-td nb-td-num nb-td-pct">
             <div class="pct-bar-wrap">
               <div
                 class="pct-bar"
-                :style="{ width: row.pct + '%', background: row.color }"
+                :style="{
+                  width: `${row.pct}%`,
+                  background: row.color,
+                }"
               ></div>
             </div>
             {{ row.pct }}%
@@ -74,13 +81,32 @@ const props = withDefaults(defineProps<Props>(), {
   wordStats: () => [],
 })
 
-const { hoveredNotebook, onHover } = useNotebookHover()
+const {
+  hoveredNotebook,
+  onHover,
+} = useNotebookHover()
 
 const columns = [
-  { key: 'name', label: '笔记本', type: 'string' as const },
-  { key: 'docs', label: '文档数', type: 'number' as const },
-  { key: 'words', label: '字数', type: 'number' as const },
-  { key: 'pct', label: '占比', type: 'number' as const },
+  {
+    key: 'name',
+    label: '笔记本',
+    type: 'string' as const,
+  },
+  {
+    key: 'docs',
+    label: '文档数',
+    type: 'number' as const,
+  },
+  {
+    key: 'words',
+    label: '字数',
+    type: 'number' as const,
+  },
+  {
+    key: 'pct',
+    label: '占比',
+    type: 'number' as const,
+  },
 ] as const
 
 type SortKey = typeof columns[number]['key']
@@ -98,8 +124,8 @@ function toggleSort(key: SortKey) {
 }
 
 const mergedRows = computed(() => {
-  const docMap = new Map(props.docStats.map(d => [d.name, d.count]))
-  const wordMap = new Map(props.wordStats.map(d => [d.name, d]))
+  const docMap = new Map(props.docStats.map((d) => [d.name, d.count]))
+  const wordMap = new Map(props.wordStats.map((d) => [d.name, d]))
 
   const names = new Set([...docMap.keys(), ...wordMap.keys()])
   const rows: Array<{ name: string, docs: number, words: number, pct: number, color: string }> = []

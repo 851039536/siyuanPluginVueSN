@@ -80,13 +80,13 @@ export function getSourceHintText(skill: SkillItem): string {
  * 用于在内容中标注问题对应的位置
  */
 export function extractIssueLocations(
-  issues: Array<{ description: string; severity: string }>,
+  issues: Array<{ description: string, severity: string }>,
   content: string,
-): Array<{ issueIndex: number; excerpt: string }> {
-  const locations: Array<{ issueIndex: number; excerpt: string }> = []
+): Array<{ issueIndex: number, excerpt: string }> {
+  const locations: Array<{ issueIndex: number, excerpt: string }> = []
 
   issues.forEach((issue, idx) => {
-    const sentences = issue.description.split(/[。；]/).filter(s => s.length > 5)
+    const sentences = issue.description.split(/[。；]/).filter((s) => s.length > 5)
     for (const sentence of sentences) {
       const pos = content.indexOf(sentence)
       if (pos >= 0) {
@@ -94,7 +94,10 @@ export function extractIssueLocations(
           Math.max(0, pos - 10),
           pos + sentence.length + 10,
         )
-        locations.push({ issueIndex: idx, excerpt })
+        locations.push({
+          issueIndex: idx,
+          excerpt,
+        })
         break
       }
     }

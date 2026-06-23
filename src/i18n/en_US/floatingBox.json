@@ -11,6 +11,16 @@
     "refresh": "Refresh",
     "refreshTitle": "Refresh Interface",
     "textDiff": "Text Diff",
-    "textDiffTitle": "Open Text Diff Tool"
+    "textDiffTitle": "Open Text Diff Tool",
+    "passwordVault": "Password Vault",
+    "passwordVaultTitle": "Open Password Vault",
+    "flashcardReading": "Flashcard Reading",
+    "flashcardReadingTitle": "Open Flashcard Reading",
+    "refreshFiletree": "File Tree",
+    "refreshFiletreeTitle": "Reload File Tree",
+    "refreshTag": "Tag Tree",
+    "refreshTagTitle": "Reload Tag Tree",
+    "refreshUI": "Full Refresh",
+    "refreshUITitle": "Reload Entire Interface"
   }
 }

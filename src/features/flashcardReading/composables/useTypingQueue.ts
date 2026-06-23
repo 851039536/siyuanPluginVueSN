@@ -33,7 +33,10 @@ export function useTypingQueue(cards: Ref<Flashcard[]>) {
     if (list.length <= 1) return [...list]
 
     const weights = computeWeights(list)
-    const entries = list.map((card, i) => ({ card, weight: weights[i] }))
+    const entries = list.map((card, i) => ({
+      card,
+      weight: weights[i],
+    }))
     let totalWeight = weights.reduce((sum, w) => sum + w, 0)
 
     const result: Flashcard[] = []

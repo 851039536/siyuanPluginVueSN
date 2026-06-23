@@ -55,8 +55,8 @@
 <script setup lang="ts">
 import type { NotebookBlockTypeStat } from "../types"
 import { computed } from "vue"
-import { NOTEBOOK_COLORS } from "../types/constants"
 import { useNotebookHover } from "../composables/useNotebookHover"
+import { NOTEBOOK_COLORS } from "../types/constants"
 
 interface Props {
   data?: NotebookBlockTypeStat[]
@@ -66,7 +66,10 @@ const props = withDefaults(defineProps<Props>(), {
   data: () => [],
 })
 
-const { hoveredNotebook, onHover } = useNotebookHover()
+const {
+  hoveredNotebook,
+  onHover,
+} = useNotebookHover()
 
 const legendLabels = computed(() => {
   const seen = new Map<string, string>()

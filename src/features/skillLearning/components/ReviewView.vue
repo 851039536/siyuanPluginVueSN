@@ -1,14 +1,25 @@
 <template>
   <div class="review-view">
     <!-- 空状态：没有卡片 -->
-    <div v-if="cards.length === 0" class="review-view__empty">
+    <div
+      v-if="cards.length === 0"
+      class="review-view__empty"
+    >
       {{ t.noCards }}
     </div>
 
     <!-- 全部复习完成 -->
-    <div v-else-if="allReviewed" class="review-view__complete">
-      <IconWrapper name="mdi:check-circle-outline" class="review-view__complete-icon" />
-      <div class="review-view__complete-text">{{ t.reviewComplete }}</div>
+    <div
+      v-else-if="allReviewed"
+      class="review-view__complete"
+    >
+      <IconWrapper
+        name="mdi:check-circle-outline"
+        class="review-view__complete-icon"
+      />
+      <div class="review-view__complete-text">
+        {{ t.reviewComplete }}
+      </div>
       <div class="review-view__complete-sub">
         {{ t.nextReviewHint || '下一轮复习将在卡片到期后自动出现' }}
       </div>
@@ -21,7 +32,7 @@
         <div class="review-view__progress-bar">
           <div
             class="review-view__progress-fill"
-            :style="{ width: ((queueIndex + 1) / queue.length * 100) + '%' }"
+            :style="{ width: `${(queueIndex + 1) / queue.length * 100}%` }"
           />
         </div>
         <span class="review-view__counter">{{ queueIndex + 1 }} / {{ queue.length }}</span>
@@ -35,40 +46,69 @@
       >
         <!-- 正面：题目 -->
         <div class="review-view__front">
-          <div class="review-view__q-title">{{ currentCard.title }}</div>
+          <div class="review-view__q-title">
+            {{ currentCard.title }}
+          </div>
           <div class="review-view__q-meta">
-            <span class="review-view__lang-tag" :class="`lang--${currentCard.language}`">
+            <span
+              class="review-view__lang-tag"
+              :class="`lang--${currentCard.language}`"
+            >
               {{ langLabel(currentCard.language) }}
             </span>
-            <DifficultyBadge :difficulty="currentCard.difficulty" :i18n="t" />
+            <DifficultyBadge
+              :difficulty="currentCard.difficulty"
+              :i18n="t"
+            />
             <span class="review-view__category-tag">{{ currentCard.category }}</span>
           </div>
-          <div class="review-view__flip-hint">{{ t.tapToReveal || '点击卡片查看答案' }}</div>
+          <div class="review-view__flip-hint">
+            {{ t.tapToReveal || '点击卡片查看答案' }}
+          </div>
         </div>
 
         <!-- 背面：答案 -->
         <div class="review-view__back">
-          <div class="review-view__a-label">{{ t.answer }}</div>
-          <div class="review-view__a-text">{{ currentCard.answer }}</div>
-          <div v-if="currentCard.codeSnippet" class="review-view__code-block">
+          <div class="review-view__a-label">
+            {{ t.answer }}
+          </div>
+          <div class="review-view__a-text">
+            {{ currentCard.answer }}
+          </div>
+          <div
+            v-if="currentCard.codeSnippet"
+            class="review-view__code-block"
+          >
             <pre><code>{{ currentCard.codeSnippet }}</code></pre>
           </div>
         </div>
       </div>
 
       <!-- 评分按钮（只在翻转后显示） -->
-      <div v-if="flipped" class="review-view__ratings">
-        <button class="review-view__rating review-view__rating--forgot" @click="rate('forgot')">
+      <div
+        v-if="flipped"
+        class="review-view__ratings"
+      >
+        <button
+          class="review-view__rating review-view__rating--forgot"
+          @click="rate('forgot')"
+        >
           <span class="review-view__rating-icon">✗</span>
           <span class="review-view__rating-label">{{ t.forgot }}</span>
           <span class="review-view__rating-hint">{{ t.forgotHint || '1天后重来' }}</span>
         </button>
-        <button class="review-view__rating review-view__rating--fuzzy" @click="rate('fuzzy')">
+        <button
+          class="review-view__rating review-view__rating--fuzzy"
+          @click="rate('fuzzy')"
+        >
           <span class="review-view__rating-icon">~</span>
           <span class="review-view__rating-label">{{ t.fuzzy }}</span>
           <span class="review-view__rating-hint">{{ fuzzyHint }}</span>
         </button>
-        <button class="review-view__rating review-view__rating--remembered" @click="rate('remembered')">
+        <button
+          class="review-view__rating review-view__rating--remembered"
+          @click="rate('remembered')"
+        >
           <span class="review-view__rating-icon">✓</span>
           <span class="review-view__rating-label">{{ t.remembered }}</span>
           <span class="review-view__rating-hint">{{ rememberedHint }}</span>
@@ -79,11 +119,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue"
-import type { SkillCard, SkillI18n, ReviewRating, ReviewData } from "../types"
-import { useReviewQueue, calcNextReview } from "../composables/useReviewQueue"
-import { langLabel } from "../composables/useLangLabel"
+import type {
+  ReviewData,
+  ReviewRating,
+  SkillCard,
+  SkillI18n,
+} from "../types"
+import {
+  computed,
+  onActivated,
+  onDeactivated,
+  ref,
+
+} from "vue"
+
 import IconWrapper from "@/components/IconWrapper.vue"
+import { langLabel } from "../composables/useLangLabel"
+import {
+  calcNextReview,
+  useReviewQueue,
+} from "../composables/useReviewQueue"
+
 import DifficultyBadge from "./DifficultyBadge.vue"
 
 const props = defineProps<{
@@ -98,7 +154,10 @@ const emit = defineEmits<{
 const t = computed(() => props.i18n)
 const cardsRef = computed(() => props.cards)
 
-const { dueCards, allReviewed } = useReviewQueue(cardsRef)
+const {
+  dueCards,
+  allReviewed,
+} = useReviewQueue(cardsRef)
 const queue = computed(() => dueCards.value)
 const queueIndex = ref(0)
 const flipped = ref(false)
@@ -162,8 +221,6 @@ function onKeydown(e: KeyboardEvent) {
     else if (e.key === "3") rate("remembered")
   }
 }
-
-import { onActivated, onDeactivated } from "vue"
 onActivated(() => window.addEventListener("keydown", onKeydown))
 onDeactivated(() => window.removeEventListener("keydown", onKeydown))
 </script>

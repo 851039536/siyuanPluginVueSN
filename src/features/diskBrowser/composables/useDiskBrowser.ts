@@ -6,6 +6,7 @@ import type {
   DiskInfo,
   FolderInfo,
 } from "../types"
+import type { DiskBrowserStorage } from "../types/storage"
 import { showMessage } from "siyuan"
 import {
   computed,
@@ -13,7 +14,7 @@ import {
   onUnmounted,
   ref,
 } from "vue"
-import type { DiskBrowserStorage } from "../types/storage"
+import { copyToClipboard } from "@/utils/domUtils"
 import { getNodeProcessModules } from "@/utils/nodeModules"
 import { getDefaultDisks } from "../types"
 import {
@@ -23,7 +24,6 @@ import {
   getCacheExpiryTime,
   isCacheValid,
 } from "../utils"
-import { copyToClipboard } from "@/utils/domUtils"
 
 const DEBOUNCE_DELAY = 500
 
@@ -138,7 +138,11 @@ export function useDiskBrowser(
   const currentFolderCache = computed((): CacheStatus => {
     const path = currentPath.value || expandedDisk.value
     if (!path) {
-      return { text: "", isExpired: false, tooltip: "" }
+      return {
+        text: "",
+        isExpired: false,
+        tooltip: "",
+      }
     }
     const cached = folderCacheMap.value.get(path)
     return computeCacheStatus(cached, i18n, cacheExpiryTime, "short")

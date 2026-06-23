@@ -68,7 +68,9 @@
         :value="selectedNotebook"
         @change="switchNotebook(($event.target as HTMLSelectElement).value)"
       >
-        <option value="">{{ i18n.allNotebooks || '全部笔记本' }}</option>
+        <option value="">
+          {{ i18n.allNotebooks || '全部笔记本' }}
+        </option>
         <option
           v-for="nb in notebooks"
           :key="nb.id"
@@ -167,7 +169,10 @@
           class="detail-group"
         >
           <div class="detail-group-title">
-            <IconWrapper name="success" :size="12" /> {{ i18n.todayCreated || '新增' }}（{{ detailNewDocs.length }}）
+            <IconWrapper
+              name="success"
+              :size="12"
+            /> {{ i18n.todayCreated || '新增' }}（{{ detailNewDocs.length }}）
           </div>
           <div
             v-for="doc in detailNewDocs"
@@ -189,7 +194,10 @@
           class="detail-group"
         >
           <div class="detail-group-title">
-            <IconWrapper name="edit" :size="12" /> {{ i18n.todayModified || '修改' }}（{{ detailModifiedDocs.length }}）
+            <IconWrapper
+              name="edit"
+              :size="12"
+            /> {{ i18n.todayModified || '修改' }}（{{ detailModifiedDocs.length }}）
           </div>
           <div
             v-for="doc in detailModifiedDocs"
@@ -237,7 +245,10 @@
 </template>
 
 <script setup lang="ts">
-import type { ChangedDoc, HeatmapMetric } from "../types"
+import type {
+  ChangedDoc,
+  HeatmapMetric,
+} from "../types"
 import {
   computed,
   ref,
@@ -277,15 +288,33 @@ const selectedNotebook = ref('')
 const loading = ref(false)
 
 const rangeOptions = computed(() => [
-  { value: 3, label: props.i18n.months3 || '3个月' },
-  { value: 6, label: props.i18n.months6 || '6个月' },
-  { value: 12, label: props.i18n.year1 || '1年' },
+  {
+    value: 3,
+    label: props.i18n.months3 || '3个月',
+  },
+  {
+    value: 6,
+    label: props.i18n.months6 || '6个月',
+  },
+  {
+    value: 12,
+    label: props.i18n.year1 || '1年',
+  },
 ])
 
 const metricOptions = computed(() => [
-  { value: 'docsModified' as HeatmapMetric, label: props.i18n.metricDocsModified || '修改文档' },
-  { value: 'docsCreated' as HeatmapMetric, label: props.i18n.metricDocsCreated || '新增文档' },
-  { value: 'blockEdits' as HeatmapMetric, label: props.i18n.metricBlockEdits || '编辑块' },
+  {
+    value: 'docsModified' as HeatmapMetric,
+    label: props.i18n.metricDocsModified || '修改文档',
+  },
+  {
+    value: 'docsCreated' as HeatmapMetric,
+    label: props.i18n.metricDocsCreated || '新增文档',
+  },
+  {
+    value: 'blockEdits' as HeatmapMetric,
+    label: props.i18n.metricBlockEdits || '编辑块',
+  },
 ])
 
 function metricLabel(m: HeatmapMetric): string {
@@ -383,7 +412,11 @@ const calendarCells = computed(() => {
   const remainder = cells.length % 7
   if (remainder > 0) {
     for (let i = 0; i < 7 - remainder; i++) {
-      cells.push({ date: '', level: 'level-empty', tooltip: '' })
+      cells.push({
+        date: '',
+        level: 'level-empty',
+        tooltip: '',
+      })
       cursor.setDate(cursor.getDate() + 1)
     }
   }
@@ -404,7 +437,10 @@ const monthLabels = computed(() => {
     const d = new Date(cell.date)
     const m = d.getMonth()
     if (m !== lastMonth) {
-      labels.push({ text: monthNames[m], col: week + 1 })
+      labels.push({
+        text: monthNames[m],
+        col: week + 1,
+      })
       lastMonth = m
     }
   }
@@ -416,7 +452,7 @@ const monthLabels = computed(() => {
 const longestStreak = computed(() => {
   if (activityMap.value.size === 0) return 0
   const sorted = [...activityMap.value.entries()].sort((a, b) => a[0].localeCompare(b[0]))
-  let max = 0, current = 0
+  let max = 0; let current = 0
   for (const [, count] of sorted) {
     if (count > 0) { current++; max = Math.max(max, current) }
     else { current = 0 }

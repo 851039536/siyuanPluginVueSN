@@ -1,12 +1,15 @@
 /**
  * 工具合集功能模块
- * 
+ *
  * 底部面板集成多种实用小工具，通过 Tab 标签页切换
  * 遵循跨功能通信规则：通过 App.vue 中枢调度 + emitCustomEvent 事件总线
  */
 import type { Plugin } from "siyuan"
 import type { App } from "vue"
-import { createApp, ref } from "vue"
+import {
+  createApp,
+  ref,
+} from "vue"
 import ToolCollectionPanel from "./index.vue"
 import "./styles/index.scss"
 
@@ -36,7 +39,7 @@ let container: HTMLElement | null = null
 
 /**
  * 注册工具合集功能
- * 
+ *
  * 将面板挂载到 document.body，通过模块级 ref 控制显隐。
  * 卸载时清理 app 实例和 DOM 元素。
  */
@@ -64,7 +67,10 @@ export function registerToolCollection(plugin: Plugin) {
   app.mount(container)
 
   // 保存引用供 onunload 清理
-  ;(plugin as any).__toolCollection = { app, container }
+  ;(plugin as any).__toolCollection = {
+    app,
+    container,
+  }
 }
 
 /**

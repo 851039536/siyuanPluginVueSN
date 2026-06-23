@@ -1,7 +1,10 @@
 <template>
   <div class="table-style-settings">
     <label class="setting-label">
-      <span class="label-icon"><IconWrapper name="tableBorder" :size="14" /></span>
+      <span class="label-icon"><IconWrapper
+        name="tableBorder"
+        :size="14"
+      /></span>
       {{ i18n.tableStyleSettings || '表格样式设置' }}
     </label>
     <SiSwitch
@@ -16,7 +19,10 @@
       <!-- 颜色设置 -->
       <div class="style-card">
         <div class="card-title">
-          <span class="title-icon"><IconWrapper name="codeBlockColor" :size="14" /></span>
+          <span class="title-icon"><IconWrapper
+            name="codeBlockColor"
+            :size="14"
+          /></span>
           {{ i18n.tableStyleSettings || '表格样式' }}
         </div>
 
@@ -66,9 +72,15 @@
           class="preview-header"
           @click="togglePreview"
         >
-          <span class="preview-header-icon"><IconWrapper :name="showPreview ? 'eye' : 'eyeOff'" :size="14" /></span>
+          <span class="preview-header-icon"><IconWrapper
+            :name="showPreview ? 'eye' : 'eyeOff'"
+            :size="14"
+          /></span>
           <span>{{ i18n.preview || '预览效果' }}</span>
-          <span class="preview-arrow"><IconWrapper name="chevronDown" :size="10" /></span>
+          <span class="preview-arrow"><IconWrapper
+            name="chevronDown"
+            :size="10"
+          /></span>
         </div>
         <div
           v-show="showPreview"
@@ -112,14 +124,22 @@
       class="reset-btn"
       @click="resetSettings"
     >
-      <IconWrapper name="refresh" :size="14" />
+      <IconWrapper
+        name="refresh"
+        :size="14"
+      />
       <span>{{ i18n.resetToDefault || '恢复默认设置' }}</span>
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Plugin } from "siyuan"
+import type { TableStyleSettings as TableStyleSettingsData } from "../types/storage"
+import {
+  Plugin,
+  showMessage,
+
+} from "siyuan"
 import {
   computed,
   onBeforeUnmount,
@@ -127,11 +147,14 @@ import {
   ref,
   watch,
 } from "vue"
-import SiSwitch from "@/components/Switch.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { showMessage } from "siyuan"
-import { injectStyle, removeStyle } from "@/utils/domUtils"
-import { GeneralSettingsStorage, type TableStyleSettings as TableStyleSettingsData } from "../types/storage"
+
+import SiSwitch from "@/components/Switch.vue"
+import {
+  injectStyle,
+  removeStyle,
+} from "@/utils/domUtils"
+import { GeneralSettingsStorage } from "../types/storage"
 
 interface Props {
   i18n?: Record<string, string>
@@ -168,18 +191,43 @@ const colorFields: {
   fallback: string
   placeholder: string
 }[] = [
-  { key: "cellBorderColor", labelKey: "tableCellBorder", fallback: "单元格边框", placeholder: "#000000" },
-  { key: "headerBackground", labelKey: "tableHeaderBackground", fallback: "表头背景", placeholder: "#e0ffd6" },
-  { key: "oddRowBackground", labelKey: "tableOddRowBackground", fallback: "奇数行背景", placeholder: "#ffffff" },
-  { key: "evenRowBackground", labelKey: "tableEvenRowBackground", fallback: "偶数行背景", placeholder: "#f8f8f8" },
-  { key: "textColor", labelKey: "tableTextColor", fallback: "文本颜色", placeholder: "#000000" },
+  {
+    key: "cellBorderColor",
+    labelKey: "tableCellBorder",
+    fallback: "单元格边框",
+    placeholder: "#000000",
+  },
+  {
+    key: "headerBackground",
+    labelKey: "tableHeaderBackground",
+    fallback: "表头背景",
+    placeholder: "#e0ffd6",
+  },
+  {
+    key: "oddRowBackground",
+    labelKey: "tableOddRowBackground",
+    fallback: "奇数行背景",
+    placeholder: "#ffffff",
+  },
+  {
+    key: "evenRowBackground",
+    labelKey: "tableEvenRowBackground",
+    fallback: "偶数行背景",
+    placeholder: "#f8f8f8",
+  },
+  {
+    key: "textColor",
+    labelKey: "tableTextColor",
+    fallback: "文本颜色",
+    placeholder: "#000000",
+  },
 ]
 
 const settings = ref<TableStyleSettingsData>({ ...DEFAULT_SETTINGS })
 const showPreview = ref(true)
 
 const previewTableStyle = computed(() => ({
-  borderRadius: `${settings.value.borderRadius}px`,
+  "borderRadius": `${settings.value.borderRadius}px`,
   "--preview-cell-border": settings.value.cellBorderColor,
   "--preview-header-bg": settings.value.headerBackground,
   "--preview-odd-bg": settings.value.oddRowBackground,
@@ -266,7 +314,10 @@ async function loadSettings() {
   try {
     const data = await gsStorage.value.tableStyle.load()
     if (data) {
-      settings.value = { ...DEFAULT_SETTINGS, ...data }
+      settings.value = {
+        ...DEFAULT_SETTINGS,
+        ...data,
+      }
       applyTableStyles(settings.value)
     }
   } catch (error) {

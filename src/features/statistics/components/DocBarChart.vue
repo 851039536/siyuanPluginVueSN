@@ -52,11 +52,11 @@ import {
   computed,
 } from "vue"
 import Loader from "@/components/Loader.vue"
+import { useNotebookHover } from "../composables/useNotebookHover"
 import {
   formatNumber,
   formatShortNumber,
 } from "../utils"
-import { useNotebookHover } from "../composables/useNotebookHover"
 
 interface NotebookDocCount {
   name: string
@@ -84,7 +84,10 @@ const props = withDefaults(defineProps<Props>(), {
   }),
 })
 
-const { hoveredNotebook, onHover } = useNotebookHover()
+const {
+  hoveredNotebook,
+  onHover,
+} = useNotebookHover()
 
 const maxCount = computed(() => {
   if (!props.chartData.length) return 0

@@ -8,8 +8,11 @@ import {
   computed,
   ref,
 } from "vue"
-import { executeSql, formatDateTime } from "../queries/executeSql"
 import { getStatistics } from "../queries"
+import {
+  executeSql,
+  formatDateTime,
+} from "../queries/executeSql"
 import { StatisticsStorage } from "../types/storage"
 import { formatDate } from "../utils"
 

@@ -4,7 +4,11 @@ import type {
   CompressResult,
   ImageInfo,
 } from "../types"
-import { computed, ref, shallowRef } from "vue"
+import {
+  computed,
+  ref,
+  shallowRef,
+} from "vue"
 import {
   batchCompressImages,
   getCompressStats,

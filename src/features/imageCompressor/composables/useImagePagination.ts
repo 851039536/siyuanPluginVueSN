@@ -1,6 +1,11 @@
 import type { Ref } from "vue"
 import type { ImageInfo } from "../types"
-import { computed, nextTick, ref, watch } from "vue"
+import {
+  computed,
+  nextTick,
+  ref,
+  watch,
+} from "vue"
 
 export function useImagePagination(images: Ref<ImageInfo[]>) {
   const currentPage = ref(1)

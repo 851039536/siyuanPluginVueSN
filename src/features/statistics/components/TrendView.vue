@@ -9,8 +9,14 @@
         v-if="trendStats"
         class="trend-stats-inline"
       >
-        <span class="stat-item"><IconWrapper name="list" :size="12" /> {{ i18n.avgDailyCreated }} <strong>{{ trendStats.avgDailyCreated }}</strong></span>
-        <span class="stat-item"><IconWrapper name="edit" :size="12" /> {{ i18n.avgDailyModified }} <strong>{{ trendStats.avgDailyModified }}</strong></span>
+        <span class="stat-item"><IconWrapper
+          name="list"
+          :size="12"
+        /> {{ i18n.avgDailyCreated }} <strong>{{ trendStats.avgDailyCreated }}</strong></span>
+        <span class="stat-item"><IconWrapper
+          name="edit"
+          :size="12"
+        /> {{ i18n.avgDailyModified }} <strong>{{ trendStats.avgDailyModified }}</strong></span>
       </div>
     </div>
 
@@ -25,7 +31,11 @@
         class="comparison-card"
       >
         <div class="comparison-header">
-          <IconWrapper class="comparison-icon" :name="card.icon" :size="14" />
+          <IconWrapper
+            class="comparison-icon"
+            :name="card.icon"
+            :size="14"
+          />
           <span class="comparison-title">{{ card.title }}</span>
         </div>
         <div class="comparison-body">
@@ -69,7 +79,10 @@
             :class="{ active: activeMetric === tab.key }"
             @click="activeMetric = tab.key"
           >
-            <IconWrapper :name="tab.icon" :size="12" /> {{ tab.label }}
+            <IconWrapper
+              :name="tab.icon"
+              :size="12"
+            /> {{ tab.label }}
           </button>
         </div>
       </div>
@@ -158,7 +171,11 @@
             {{ historicalData[hoveredIndex]?.dateLabel || historicalData[hoveredIndex]?.date }}
           </div>
           <div class="tooltip-value">
-            <IconWrapper class="tooltip-metric-icon" :name="activeMetricObj.icon" :size="12" />
+            <IconWrapper
+              class="tooltip-metric-icon"
+              :name="activeMetricObj.icon"
+              :size="12"
+            />
             <strong>{{ formatNumber(chartPoints[hoveredIndex].value) }}</strong>
             <span class="tooltip-unit">{{ activeMetricObj.unit }}</span>
           </div>
@@ -179,23 +196,38 @@
                 {{ i18n.date }}
               </th>
               <th class="col-notes">
-                <IconWrapper :name="'file'" :size="12" />
+                <IconWrapper
+                  name="file"
+                  :size="12"
+                />
                 {{ i18n.notes }}
               </th>
               <th class="col-words">
-                <IconWrapper :name="'edit'" :size="12" />
+                <IconWrapper
+                  name="edit"
+                  :size="12"
+                />
                 {{ i18n.words }}
               </th>
               <th class="col-blocks">
-                <IconWrapper :name="'format'" :size="12" />
+                <IconWrapper
+                  name="format"
+                  :size="12"
+                />
                 {{ i18n.blocks || '块' }}
               </th>
               <th class="col-created">
-                <IconWrapper :name="'list'" :size="12" />
+                <IconWrapper
+                  name="list"
+                  :size="12"
+                />
                 {{ i18n.created }}
               </th>
               <th class="col-modified">
-                <IconWrapper :name="'edit'" :size="12" />
+                <IconWrapper
+                  name="edit"
+                  :size="12"
+                />
                 {{ i18n.modified }}
               </th>
               <th class="col-change">

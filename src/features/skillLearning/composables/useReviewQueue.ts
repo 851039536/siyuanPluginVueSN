@@ -1,12 +1,24 @@
-import { computed, type Ref, type ComputedRef } from "vue"
-import type { SkillCard, ReviewRating, ReviewData } from "../types"
+import type {
+  ComputedRef,
+  Ref,
+} from "vue"
+import type {
+  ReviewData,
+  ReviewRating,
+  SkillCard,
+} from "../types"
+import { computed } from "vue"
 
 const DEFAULT_EF = 2.5
 const MIN_EF = 1.3
 const DAY_MS = 24 * 60 * 60 * 1000
 
 export function calcNextReview(rating: ReviewRating, prev?: ReviewData): ReviewData {
-  const qMap: Record<ReviewRating, number> = { remembered: 5, fuzzy: 3, forgot: 1 }
+  const qMap: Record<ReviewRating, number> = {
+    remembered: 5,
+    fuzzy: 3,
+    forgot: 1,
+  }
   const q = qMap[rating] ?? 3
 
   const ef = prev?.ef ?? DEFAULT_EF
@@ -40,8 +52,11 @@ export function calcNextReview(rating: ReviewRating, prev?: ReviewData): ReviewD
 export function useReviewQueue(cardsRef: Ref<SkillCard[]> | ComputedRef<SkillCard[]>) {
   const now = Date.now()
   const dueCards = computed(() =>
-    cardsRef.value.filter((c) => !c.reviewData || c.reviewData.nextReview <= now)
+    cardsRef.value.filter((c) => !c.reviewData || c.reviewData.nextReview <= now),
   )
   const allReviewed = computed(() => dueCards.value.length === 0)
-  return { dueCards, allReviewed }
+  return {
+    dueCards,
+    allReviewed,
+  }
 }

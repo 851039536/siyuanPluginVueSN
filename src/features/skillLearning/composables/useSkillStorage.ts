@@ -1,9 +1,15 @@
+import type { Plugin } from "siyuan"
+import type { Ref } from "vue"
+import type {
+  CreateSkillDTO,
+  ReviewData,
+  SkillCard,
+  UpdateSkillDTO,
+} from "../types"
 /**
  * 技能学习 - 存储响应式封装
  */
-import { ref, type Ref } from "vue"
-import type { Plugin } from "siyuan"
-import type { SkillCard, CreateSkillDTO, UpdateSkillDTO, ReviewData } from "../types"
+import { ref } from "vue"
 import { SkillStorage } from "../types/storage"
 
 export function useSkillStorage(plugin: Plugin) {
@@ -33,7 +39,11 @@ export function useSkillStorage(plugin: Plugin) {
       if (ok) {
         const idx = cards.value.findIndex((c) => c.id === id)
         if (idx !== -1) {
-          cards.value[idx] = { ...cards.value[idx], ...dto, updatedAt: Date.now() }
+          cards.value[idx] = {
+            ...cards.value[idx],
+            ...dto,
+            updatedAt: Date.now(),
+          }
         }
       }
       return ok

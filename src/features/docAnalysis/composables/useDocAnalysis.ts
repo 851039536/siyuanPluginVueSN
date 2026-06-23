@@ -26,16 +26,16 @@ import {
 } from "../types/storage"
 import { DEFAULT_DOC_STATS } from "../utils/defaults"
 import {
+  computeUnpublishedPlatformNames,
+  getPlatformIdFromAttrKey,
+} from "../utils/platformPublish"
+import {
   buildIdInClause,
   buildIdNotInClause,
   escapeSql,
   quoteSql,
   quoteSqlList,
 } from "../utils/sqlHelpers"
-import {
-  computeUnpublishedPlatformNames,
-  getPlatformIdFromAttrKey,
-} from "../utils/platformPublish"
 
 /** 笔记本信息 */
 export interface NotebookInfo {
@@ -43,7 +43,8 @@ export interface NotebookInfo {
   name: string
 }
 
-/** 子查询：统计每个文档的内容大小和字数（合并减少扫描次数）
+/**
+ * 子查询：统计每个文档的内容大小和字数（合并减少扫描次数）
  *  length = 字符数，对中日韩文本 ≈ 词数，对英文文本 ≈ 字符数（非精确词数）
  *  两者使用相同表达式，因为思源 blocks 表无独立字数列
  */
@@ -58,17 +59,72 @@ const SIZE_WORDCOUNT_SUBQUERY = `
 
 /** 平台元数据：单一数据源，所有平台列表由此推导 */
 export const PLATFORM_META: { id: string, matchers: string[], name: string, url: string }[] = [
-  { id: "csdn", matchers: ["csdn"], name: "CSDN", url: "https://mp.csdn.net/mp_blog/creation/editor" },
-  { id: "zhihu", matchers: ["zhihu"], name: "知乎", url: "https://zhuanlan.zhihu.com/write" },
-  { id: "juejin", matchers: ["juejin"], name: "掘金", url: "https://juejin.cn/editor/drafts/new" },
-  { id: "cnblogs", matchers: ["cnblogs", "blog"], name: "博客园", url: "https://i.cnblogs.com/posts/edit" },
-  { id: "bili", matchers: ["bili", "bibi"], name: "B站", url: "https://www.bilibili.com/" },
-  { id: "gzh", matchers: ["gzh"], name: "公众号", url: "" },
-  { id: "jianshu", matchers: ["jianshu"], name: "简书", url: "https://www.jianshu.com/writer" },
-  { id: "cto51", matchers: ["cto51"], name: "51CTO", url: "https://blog.51cto.com/writer" },
-  { id: "segmentfault", matchers: ["segmentfault", "sifou"], name: "思否", url: "https://segmentfault.com/write" },
-  { id: "oschina", matchers: ["oschina"], name: "开源中国", url: "https://oschina.net/writer" },
-  { id: "infoq", matchers: ["infoq"], name: "InfoQ", url: "https://www.infoq.com/" },
+  {
+    id: "csdn",
+    matchers: ["csdn"],
+    name: "CSDN",
+    url: "https://mp.csdn.net/mp_blog/creation/editor",
+  },
+  {
+    id: "zhihu",
+    matchers: ["zhihu"],
+    name: "知乎",
+    url: "https://zhuanlan.zhihu.com/write",
+  },
+  {
+    id: "juejin",
+    matchers: ["juejin"],
+    name: "掘金",
+    url: "https://juejin.cn/editor/drafts/new",
+  },
+  {
+    id: "cnblogs",
+    matchers: ["cnblogs", "blog"],
+    name: "博客园",
+    url: "https://i.cnblogs.com/posts/edit",
+  },
+  {
+    id: "bili",
+    matchers: ["bili", "bibi"],
+    name: "B站",
+    url: "https://www.bilibili.com/",
+  },
+  {
+    id: "gzh",
+    matchers: ["gzh"],
+    name: "公众号",
+    url: "",
+  },
+  {
+    id: "jianshu",
+    matchers: ["jianshu"],
+    name: "简书",
+    url: "https://www.jianshu.com/writer",
+  },
+  {
+    id: "cto51",
+    matchers: ["cto51"],
+    name: "51CTO",
+    url: "https://blog.51cto.com/writer",
+  },
+  {
+    id: "segmentfault",
+    matchers: ["segmentfault", "sifou"],
+    name: "思否",
+    url: "https://segmentfault.com/write",
+  },
+  {
+    id: "oschina",
+    matchers: ["oschina"],
+    name: "开源中国",
+    url: "https://oschina.net/writer",
+  },
+  {
+    id: "infoq",
+    matchers: ["infoq"],
+    name: "InfoQ",
+    url: "https://www.infoq.com/",
+  },
 ]
 
 /** 全平台位掩码，由 PLATFORM_META.length 动态计算 */
@@ -542,12 +598,30 @@ export function useDocAnalysis(plugin: Plugin) {
       if (rows && rows.length > 0) {
         const r = rows[0]
         docStats.wordCountDistribution = [
-          { label: "0~500字", count: r.wc_0_500 || 0 },
-          { label: "500~2000字", count: r.wc_500_2000 || 0 },
-          { label: "2000~5000字", count: r.wc_2000_5000 || 0 },
-          { label: "5000~1万字", count: r.wc_5000_10000 || 0 },
-          { label: "1万~2万字", count: r.wc_10000_20000 || 0 },
-          { label: ">2万字", count: r.wc_20000_plus || 0 },
+          {
+            label: "0~500字",
+            count: r.wc_0_500 || 0,
+          },
+          {
+            label: "500~2000字",
+            count: r.wc_500_2000 || 0,
+          },
+          {
+            label: "2000~5000字",
+            count: r.wc_2000_5000 || 0,
+          },
+          {
+            label: "5000~1万字",
+            count: r.wc_5000_10000 || 0,
+          },
+          {
+            label: "1万~2万字",
+            count: r.wc_10000_20000 || 0,
+          },
+          {
+            label: ">2万字",
+            count: r.wc_20000_plus || 0,
+          },
         ]
       }
     } catch (error) {
@@ -950,7 +1024,10 @@ export function useDocAnalysis(plugin: Plugin) {
     }
 
     if (sizeConditions[category]) {
-      await runDocQuery({ extraWhere: sizeConditions[category], orderBy: "word_count ASC" })
+      await runDocQuery({
+        extraWhere: sizeConditions[category],
+        orderBy: "word_count ASC",
+      })
       return
     }
 
@@ -959,9 +1036,12 @@ export function useDocAnalysis(plugin: Plugin) {
 
     // 按精确深度过滤（点击深度柱状图触发）
     if (category.startsWith("depth_")) {
-      const d = parseInt(category.slice(6), 10)
+      const d = Number.parseInt(category.slice(6), 10)
       if (!isNaN(d)) {
-        qConfig = { extraWhere: `AND LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 = ${d}`, orderBy: "b.updated DESC" }
+        qConfig = {
+          extraWhere: `AND LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 = ${d}`,
+          orderBy: "b.updated DESC",
+        }
         await runDocQuery(qConfig)
         return
       }
@@ -992,16 +1072,31 @@ export function useDocAnalysis(plugin: Plugin) {
         break
       }
       case "deep":
-        qConfig = { extraWhere: "AND LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 >= 5", orderBy: "doc_depth DESC" }
+        qConfig = {
+          extraWhere: "AND LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 >= 5",
+          orderBy: "doc_depth DESC",
+        }
         break
       case "hasRef":
-        qConfig = { extraSelect: "COALESCE(r.ref_count, 0) as ref_count, 0 as image_count,", extraJoin: `INNER JOIN (${REF_SUBQUERY}) r ON b.id = r.root_id`, orderBy: "r.ref_count DESC" }
+        qConfig = {
+          extraSelect: "COALESCE(r.ref_count, 0) as ref_count, 0 as image_count,",
+          extraJoin: `INNER JOIN (${REF_SUBQUERY}) r ON b.id = r.root_id`,
+          orderBy: "r.ref_count DESC",
+        }
         break
       case "hasImage":
-        qConfig = { extraSelect: "0 as ref_count, COALESCE(img.image_count, 0) as image_count,", extraJoin: `INNER JOIN (${IMAGE_SUBQUERY}) img ON b.id = img.root_id`, orderBy: "img.image_count DESC" }
+        qConfig = {
+          extraSelect: "0 as ref_count, COALESCE(img.image_count, 0) as image_count,",
+          extraJoin: `INNER JOIN (${IMAGE_SUBQUERY}) img ON b.id = img.root_id`,
+          orderBy: "img.image_count DESC",
+        }
         break
       case "hasBookmark":
-        qConfig = { bookmarkInner: true, extraWhere: "AND bm.bookmark != '无'", orderBy: "bm.bookmark ASC" }
+        qConfig = {
+          bookmarkInner: true,
+          extraWhere: "AND bm.bookmark != '无'",
+          orderBy: "bm.bookmark ASC",
+        }
         break
       case "noBookmark":
         qConfig = { extraWhere: "AND b.id NOT IN (SELECT block_id FROM attributes WHERE name = 'bookmark' LIMIT 10000)" }

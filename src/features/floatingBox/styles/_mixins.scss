@@ -1,0 +1,63 @@
+// ==================== 共享 SCSS Mixins & Variables ====================
+// 由 _modal/_grid/_form/_category/_responsive 等 PromptsModal partial 共同引用
+// index.scss（工具栏样式）如有需要也可 @use 本文件
+
+@use "sass:color";
+@use "@/variables" as *;
+
+$modal-z-index: 1000;
+$modal-small-max-width: 500px;
+$modal-form-max-width: 900px;
+$modal-large-max-width: 1200px;
+$card-border-radius: 8px;
+
+@mixin modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: $modal-z-index;
+  backdrop-filter: blur(4px);
+}
+
+@mixin modal-base {
+  background: var(--b3-theme-background);
+  border-radius: $radius-lg;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--b3-border-color);
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+@mixin card-hover {
+  &:hover {
+    border-color: var(--b3-theme-primary);
+
+    &::before {
+      opacity: 1;
+    }
+  }
+}
+
+@mixin form-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-background);
+  font-size: 14px;
+  font-family: inherit;
+
+  &:focus {
+    outline: none;
+    border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+  }
+}

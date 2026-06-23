@@ -1,9 +1,9 @@
 import type PluginSample from "@/index"
 import { Plugin } from "siyuan"
 import { createApp } from "vue"
+import { applyCompactMode } from "@/features/compactMode"
 import App from "./App.vue"
 import "highlight.js/styles/github-dark.css"
-import { applyCompactMode } from "@/features/compactMode"
 
 let plugin: Plugin | null = null
 export function usePlugin(pluginProps?: Plugin): Plugin {
@@ -28,7 +28,13 @@ export function init(pluginInstance: Plugin) {
     compactMode: s?.compactMode ?? true,
     compactModeDensity: s?.compactModeDensity ?? 'compact',
     compactModeFontScale: s?.compactModeFontScale ?? 94,
-    compactModeAreas: s?.compactModeAreas ?? { sidebar: true, editor: true, tabs: true, dialogs: true, controls: true },
+    compactModeAreas: s?.compactModeAreas ?? {
+      sidebar: true,
+      editor: true,
+      tabs: true,
+      dialogs: true,
+      controls: true,
+    },
   })
 
   const div = document.createElement("div")

@@ -4,16 +4,13 @@ import {
   Plugin,
 } from "siyuan"
 
-import { applyCompactMode } from "@/features/compactMode"
-
 import PluginInfoString from "@/../plugin.json"
-
-import { setupIconifyOffline } from "@/utils/iconifySetup"
 
 import {
   destroyCommands,
   initCommands,
 } from "@/commands"
+
 import {
   clearCachedKey,
   DEFAULT_SETTINGS,
@@ -28,7 +25,6 @@ import {
   getStatisticsInstance,
   registerAIContentGenerator,
   registerApiDebugger,
-  registerImageCreation,
   registerBookmarkMarker,
   registerDataBackup,
   registerDataSnapshot,
@@ -45,6 +41,7 @@ import {
   registerGitPush,
   registerHtmlViewer,
   registerImageCompressor,
+  registerImageCreation,
   registerPageLock,
   registerPasswordVault,
   registerResourceManager,
@@ -53,22 +50,25 @@ import {
   registerShortcut,
   registerSkillLearning,
   registerSkillsViewer,
-  registerToolCollection,
   registerStatistics,
   registerStatusBar,
   registerSuperPanel,
   registerTableOfContents,
   registerTextDiff,
   registerThemeColor,
+  registerToolCollection,
   // unitConverter 已迁移至 toolCollection/tools/unitConverter/
   registerVideo,
   registerWebsiteNavigation,
   registerWordQuery,
 } from "@/features"
+import { applyCompactMode } from "@/features/compactMode"
+
 import {
   destroy,
   init,
 } from "@/main"
+import { setupIconifyOffline } from "@/utils/iconifySetup"
 // ========== 全局样式导入 ==========
 // 使用普通 import 而非 @use，确保 CSS 在插件加载时就注入
 // Vite 会将此 CSS 编译到 index.css 并在入口点立即注入
@@ -153,7 +153,13 @@ export default class PluginSample extends Plugin {
       compactMode: this.settings.compactMode,
       compactModeDensity: this.settings.compactModeDensity ?? 'compact',
       compactModeFontScale: this.settings.compactModeFontScale ?? 94,
-      compactModeAreas: this.settings.compactModeAreas ?? { sidebar: true, editor: true, tabs: true, dialogs: true, controls: true },
+      compactModeAreas: this.settings.compactModeAreas ?? {
+        sidebar: true,
+        editor: true,
+        tabs: true,
+        dialogs: true,
+        controls: true,
+      },
     })
     // 主题色可能在异步加载后需要重新应用（scheme 已变）
     if ((this as any).__themeColor) {

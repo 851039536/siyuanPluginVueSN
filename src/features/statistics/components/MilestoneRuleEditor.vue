@@ -1,10 +1,29 @@
 <template>
-  <div v-if="visible" class="rule-editor-overlay" @click.self="$emit('close')">
+  <div
+    v-if="visible"
+    class="rule-editor-overlay"
+    @click.self="$emit('close')"
+  >
     <div class="rule-editor-panel">
       <div class="rule-editor-header">
-        <h3 class="rule-editor-title">规则设置</h3>
-        <button class="rule-editor-close" @click="$emit('close')">
-          <svg width="16" height="16" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <h3 class="rule-editor-title">
+          规则设置
+        </h3>
+        <button
+          class="rule-editor-close"
+          @click="$emit('close')"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+          ><path
+            d="M4 4l8 8M12 4l-8 8"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          /></svg>
         </button>
       </div>
 
@@ -28,7 +47,10 @@
       </div>
 
       <!-- Milestones tab toolbar -->
-      <div v-if="activeTab === 'milestones'" class="rule-editor-toolbar">
+      <div
+        v-if="activeTab === 'milestones'"
+        class="rule-editor-toolbar"
+      >
         <label class="level-count-label">
           每类里程碑级数:
           <input
@@ -39,14 +61,21 @@
             @change="onLevelCountChange"
           />
         </label>
-        <button class="btn-reset-all" @click="onResetAll">恢复默认值</button>
+        <button
+          class="btn-reset-all"
+          @click="onResetAll"
+        >
+          恢复默认值
+        </button>
       </div>
 
       <div class="rule-editor-body">
         <!-- ═══ Milestones Tab ═══ -->
         <div v-show="activeTab === 'milestones'">
           <div class="rule-editor-help">
-            <p class="help-title">使用说明</p>
+            <p class="help-title">
+              使用说明
+            </p>
             <ul class="help-list">
               <li>每行对应一种统计类型，输入框为该类型各<b>等级</b>的达标目标值。</li>
               <li>等级从 <b>Lv.1</b> 开始递增，值必须从小到大排列（第一个里程碑最简单，越往后越难）。</li>
@@ -72,9 +101,19 @@
             class="rule-row"
           >
             <div class="rule-row-header">
-              <IconWrapper class="rule-row-icon" :name="row.icon as IconKey" :size="14" />
+              <IconWrapper
+                class="rule-row-icon"
+                :name="row.icon as IconKey"
+                :size="14"
+              />
               <span class="rule-row-label">{{ row.label }}</span>
-              <button class="btn-reset-row" title="恢复此行默认值" @click="onResetRow(row.key)">↺</button>
+              <button
+                class="btn-reset-row"
+                title="恢复此行默认值"
+                @click="onResetRow(row.key)"
+              >
+                ↺
+              </button>
             </div>
             <div class="rule-row-inputs">
               <input
@@ -91,37 +130,78 @@
         </div>
 
         <!-- ═══ Achievements Tab ═══ -->
-        <div v-show="activeTab === 'achievements'" class="ach-tab">
-          <div v-if="customAchievements.length === 0" class="ach-empty">
+        <div
+          v-show="activeTab === 'achievements'"
+          class="ach-tab"
+        >
+          <div
+            v-if="customAchievements.length === 0"
+            class="ach-empty"
+          >
             暂无自定义成就，点击下方按钮添加。
           </div>
-          <div v-else class="ach-list">
+          <div
+            v-else
+            class="ach-list"
+          >
             <div
               v-for="ach in customAchievements"
               :key="ach.id"
               class="ach-list-item"
             >
-              <IconWrapper class="ach-list-icon" :name="ach.icon as IconKey" :size="16" />
+              <IconWrapper
+                class="ach-list-icon"
+                :name="ach.icon as IconKey"
+                :size="16"
+              />
               <span class="ach-list-title">{{ ach.title }}</span>
-              <span class="ach-list-tier" :class="`tier-${ach.tier}`">{{ TIER_LABELS[ach.tier] }}</span>
-              <span class="ach-list-type"><IconWrapper :name="(TYPE_LABEL_MAP[ach.type]?.icon as IconKey)" :size="12" /> {{ TYPE_LABEL_MAP[ach.type]?.label }}</span>
+              <span
+                class="ach-list-tier"
+                :class="`tier-${ach.tier}`"
+              >{{ TIER_LABELS[ach.tier] }}</span>
+              <span class="ach-list-type"><IconWrapper
+                :name="(TYPE_LABEL_MAP[ach.type]?.icon as IconKey)"
+                :size="12"
+              /> {{ TYPE_LABEL_MAP[ach.type]?.label }}</span>
               <span class="ach-list-threshold">≥ {{ ach.threshold.toLocaleString() }}</span>
-              <button class="btn-del-ach-item" title="删除此成就" @click="onDeleteAchievement(ach.id)">×</button>
+              <button
+                class="btn-del-ach-item"
+                title="删除此成就"
+                @click="onDeleteAchievement(ach.id)"
+              >
+                ×
+              </button>
             </div>
           </div>
 
-          <button class="btn-add-achievement" @click="showAddAchievement = !showAddAchievement">
+          <button
+            class="btn-add-achievement"
+            @click="showAddAchievement = !showAddAchievement"
+          >
             <span class="btn-add-icon">{{ showAddAchievement ? '−' : '+' }}</span>
             {{ showAddAchievement ? '取消' : '添加自定义成就' }}
           </button>
 
-          <div v-if="showAddAchievement" class="add-achievement-form">
+          <div
+            v-if="showAddAchievement"
+            class="add-achievement-form"
+          >
             <div class="ach-form-row">
               <label class="ach-form-label">统计类型</label>
-              <select v-model="newAchievement.type" class="ach-form-select">
-              <option v-for="t in MILESTONE_TYPES" :key="t.key" :value="t.key">
-                <IconWrapper :name="t.icon" :size="12" /> {{ t.label }}
-              </option>
+              <select
+                v-model="newAchievement.type"
+                class="ach-form-select"
+              >
+                <option
+                  v-for="t in MILESTONE_TYPES"
+                  :key="t.key"
+                  :value="t.key"
+                >
+                  <IconWrapper
+                    :name="t.icon"
+                    :size="12"
+                  /> {{ t.label }}
+                </option>
               </select>
               <span class="ach-form-hint">{{ STAT_TYPE_DESCRIPTIONS[newAchievement.type] }}</span>
             </div>
@@ -161,23 +241,44 @@
             </div>
             <div class="ach-form-row">
               <label class="ach-form-label">稀有度</label>
-              <select v-model="newAchievement.tier" class="ach-form-select">
-                <option value="common">普通</option>
-                <option value="rare">稀有</option>
-                <option value="epic">史诗</option>
-                <option value="legendary">传说</option>
+              <select
+                v-model="newAchievement.tier"
+                class="ach-form-select"
+              >
+                <option value="common">
+                  普通
+                </option>
+                <option value="rare">
+                  稀有
+                </option>
+                <option value="epic">
+                  史诗
+                </option>
+                <option value="legendary">
+                  传说
+                </option>
               </select>
             </div>
             <div class="ach-form-actions">
-              <button class="btn-ach-submit" @click="onAddAchievement">添加成就</button>
+              <button
+                class="btn-ach-submit"
+                @click="onAddAchievement"
+              >
+                添加成就
+              </button>
             </div>
           </div>
         </div>
 
         <!-- ═══ Level Tab ═══ -->
-        <div v-show="activeTab === 'level'" class="level-tab">
+        <div
+          v-show="activeTab === 'level'"
+          class="level-tab"
+        >
           <div class="level-config-help">
-            <p class="help-title">等级系统说明</p>
+            <p class="help-title">
+              等级系统说明
+            </p>
             <ul class="help-list">
               <li><b>成就点</b>：每达成一个里程碑获得对应稀有度的成就点，累积成就点提升等级。</li>
               <li><b>曲线乘数</b>：控制升级难度，值越大每级所需成就点越多，升级越慢。</li>
@@ -186,10 +287,19 @@
           </div>
 
           <div class="level-config-section">
-            <div class="level-config-label">里程碑成就点</div>
+            <div class="level-config-label">
+              里程碑成就点
+            </div>
             <div class="tier-points-grid">
-              <div v-for="tier in ['common','rare','epic','legendary']" :key="tier" class="tier-point-item">
-                <span class="tier-point-badge" :class="`tier-${tier}`">{{ TIER_LABELS[tier] }}</span>
+              <div
+                v-for="tier in ['common', 'rare', 'epic', 'legendary']"
+                :key="tier"
+                class="tier-point-item"
+              >
+                <span
+                  class="tier-point-badge"
+                  :class="`tier-${tier}`"
+                >{{ TIER_LABELS[tier] }}</span>
                 <input
                   type="number"
                   class="tier-point-input"
@@ -203,7 +313,9 @@
           </div>
 
           <div class="level-config-section">
-            <div class="level-config-label">等级曲线乘数</div>
+            <div class="level-config-label">
+              等级曲线乘数
+            </div>
             <div class="curve-row">
               <input
                 type="number"
@@ -220,7 +332,11 @@
             <div class="curve-preview">
               <span class="curve-preview-label">预览前 10 级所需成就点：</span>
               <span class="curve-preview-values">
-                <span v-for="lv in 10" :key="lv" class="curve-preview-lv">
+                <span
+                  v-for="lv in 10"
+                  :key="lv"
+                  class="curve-preview-lv"
+                >
                   Lv.{{ lv }}: {{ pointsForLevelPreview(lv) }}
                 </span>
               </span>
@@ -228,25 +344,53 @@
           </div>
 
           <div class="level-config-actions">
-            <button class="btn-save-level" @click="onSaveLevelConfig">保存等级设置</button>
+            <button
+              class="btn-save-level"
+              @click="onSaveLevelConfig"
+            >
+              保存等级设置
+            </button>
           </div>
         </div>
       </div>
 
       <div class="rule-editor-footer">
-        <button class="btn-cancel" @click="$emit('close')">关闭</button>
-        <button v-if="activeTab === 'milestones'" class="btn-save" @click="onSave">保存规则</button>
+        <button
+          class="btn-cancel"
+          @click="$emit('close')"
+        >
+          关闭
+        </button>
+        <button
+          v-if="activeTab === 'milestones'"
+          class="btn-save"
+          @click="onSave"
+        >
+          保存规则
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue"
+import type {
+  CustomAchievement,
+  LevelConfig,
+  MilestoneTypeKey,
+} from "../types/milestoneRules"
 import type { IconKey } from "@/config/icons"
+import {
+  computed,
+  ref,
+  watch,
+} from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import type { CustomAchievement, LevelConfig, MilestoneTypeKey } from "../types/milestoneRules"
-import { DEFAULT_LEVEL_CONFIG, MILESTONE_TYPES, STAT_TYPE_DESCRIPTIONS } from "../types/milestoneRules"
+import {
+  DEFAULT_LEVEL_CONFIG,
+  MILESTONE_TYPES,
+  STAT_TYPE_DESCRIPTIONS,
+} from "../types/milestoneRules"
 import { generateDefaultRules } from "../utils/milestones"
 
 interface Row {
@@ -280,8 +424,11 @@ const TIER_LABELS: Record<string, string> = {
 }
 
 const TYPE_LABEL_MAP = Object.fromEntries(
-  MILESTONE_TYPES.map((t) => [t.key, { icon: t.icon, label: t.label }]),
-) as Record<string, { icon: string; label: string }>
+  MILESTONE_TYPES.map((t) => [t.key, {
+    icon: t.icon,
+    label: t.label,
+  }]),
+) as Record<string, { icon: string, label: string }>
 
 // ── Tabs ──
 const activeTab = ref<"milestones" | "achievements" | "level">("milestones")
@@ -322,7 +469,7 @@ function onTargetChange(typeKey: MilestoneTypeKey, idx: number, val: number) {
 }
 
 function onLevelCountChange(e: Event) {
-  const count = parseInt((e.target as HTMLInputElement).value) || 10
+  const count = Number.parseInt((e.target as HTMLInputElement).value) || 10
   const clamped = Math.max(1, count)
   for (const row of editableRows.value) {
     while (row.targets.length < clamped) {

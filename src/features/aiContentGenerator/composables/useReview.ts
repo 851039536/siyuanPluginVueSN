@@ -1,9 +1,15 @@
+import type {
+  ReviewResult,
+  SkillItem,
+} from "@/types/ai"
 /**
  * 审核系统 Composable
  * 封装审核状态和操作方法，供 index.vue 调用
  */
-import { ref, computed } from "vue"
-import type { ReviewResult, SkillItem } from "@/types/ai"
+import {
+  computed,
+  ref,
+} from "vue"
 
 export interface FixEntry {
   timestamp: number
@@ -23,7 +29,7 @@ export function useReview() {
 
   const needsFix = computed(() =>
     reviewResult.value?.rating === "需改进"
-    && (reviewResult.value?.issues?.length ?? 0) > 0
+    && (reviewResult.value?.issues?.length ?? 0) > 0,
   )
 
   const resetReview = () => {

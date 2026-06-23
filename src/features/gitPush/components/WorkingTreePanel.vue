@@ -1,14 +1,30 @@
 <template>
   <div class="wt-panel">
     <!-- 工作区摘要条（可点击展开） -->
-    <div class="wt-summary" :class="{ expanded: expanded }" @click="toggleExpanded">
-      <Icon :icon="expanded ? 'mdi:chevron-down' : 'mdi:chevron-right'" height="14" />
+    <div
+      class="wt-summary"
+      :class="{ expanded }"
+      @click="toggleExpanded"
+    >
+      <Icon
+        :icon="expanded ? 'mdi:chevron-down' : 'mdi:chevron-right'"
+        height="14"
+      />
       <span class="wt-label">WORKING TREE</span>
       <template v-if="tree.hasChanges">
         <span class="wt-count">
-          <span v-if="tree.stagedCount" class="wt-staged">●{{ tree.stagedCount }}</span>
-          <span v-if="tree.unstagedCount" class="wt-unstaged">●{{ tree.unstagedCount }}</span>
-          <span v-if="tree.untrackedCount" class="wt-untracked">○{{ tree.untrackedCount }}</span>
+          <span
+            v-if="tree.stagedCount"
+            class="wt-staged"
+          >●{{ tree.stagedCount }}</span>
+          <span
+            v-if="tree.unstagedCount"
+            class="wt-unstaged"
+          >●{{ tree.unstagedCount }}</span>
+          <span
+            v-if="tree.untrackedCount"
+            class="wt-untracked"
+          >○{{ tree.untrackedCount }}</span>
         </span>
         <span class="wt-summary-text">
           {{ i18n.pendingChanges || '个文件变更' }}
@@ -20,9 +36,15 @@
     </div>
 
     <!-- 展开的工作区详情 -->
-    <div v-if="expanded" class="wt-body">
+    <div
+      v-if="expanded"
+      class="wt-body"
+    >
       <!-- 工具栏 -->
-      <div v-if="tree.hasChanges" class="wt-toolbar">
+      <div
+        v-if="tree.hasChanges"
+        class="wt-toolbar"
+      >
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
           :disabled="(tree.unstagedCount === 0 && tree.untrackedCount === 0) || gitOpLoading"
@@ -40,9 +62,18 @@
       </div>
 
       <!-- 文件列表 -->
-      <div v-if="tree.files.length" class="wt-files">
-        <div v-if="!activeDiffFile" class="wt-diff-hint">
-          <Icon icon="mdi:information-outline" height="11" />
+      <div
+        v-if="tree.files.length"
+        class="wt-files"
+      >
+        <div
+          v-if="!activeDiffFile"
+          class="wt-diff-hint"
+        >
+          <Icon
+            icon="mdi:information-outline"
+            height="11"
+          />
           <span>点击文件名或「差异」按钮查看带颜色的 diff 比对</span>
         </div>
         <div
@@ -59,18 +90,41 @@
             :title="gitOpLoading ? '处理中...' : file.staged ? (i18n.unstageFile || '取消暂存') : (i18n.stageFile || '暂存')"
             @click.stop="toggleStage(file)"
           >
-            <Icon v-if="gitOpLoading" icon="mdi:loading" class="gp-spin" height="14" />
-            <Icon v-else-if="file.staged" icon="mdi:checkbox-marked" height="14" />
-            <Icon v-else icon="mdi:checkbox-blank-outline" height="14" />
+            <Icon
+              v-if="gitOpLoading"
+              icon="mdi:loading"
+              class="gp-spin"
+              height="14"
+            />
+            <Icon
+              v-else-if="file.staged"
+              icon="mdi:checkbox-marked"
+              height="14"
+            />
+            <Icon
+              v-else
+              icon="mdi:checkbox-blank-outline"
+              height="14"
+            />
           </button>
 
           <!-- 状态图标 -->
-          <span class="wt-file-status" :class="`wt-s-${file.status}`" :title="statusTitle(file)">
+          <span
+            class="wt-file-status"
+            :class="`wt-s-${file.status}`"
+            :title="statusTitle(file)"
+          >
             <template v-if="file.status === 'renamed'">
-              <IconWrapper name="forward" :size="12" />
+              <IconWrapper
+                name="forward"
+                :size="12"
+              />
             </template>
             <template v-else-if="file.status === 'unmerged'">
-              <IconWrapper name="warning" :size="12" />
+              <IconWrapper
+                name="warning"
+                :size="12"
+              />
             </template>
             <template v-else>
               {{ statusIcon(file) }}
@@ -80,7 +134,7 @@
           <!-- 文件名（点击查看差异） -->
           <span
             class="wt-file-path"
-            :title="'点击查看差异 — ' + file.path"
+            :title="`点击查看差异 — ${file.path}`"
             @click="toggleDiff(file)"
           >{{ file.path }}</span>
 
@@ -90,7 +144,10 @@
             :title="activeDiffFile?.path === file.path ? '关闭差异' : '查看差异（带增/删/改着色）'"
             @click.stop="toggleDiff(file)"
           >
-            <Icon icon="mdi:file-compare" height="13" />
+            <Icon
+              icon="mdi:file-compare"
+              height="13"
+            />
             <span class="wt-diff-btn-label">差异</span>
           </button>
 
@@ -100,23 +157,39 @@
             :title="file.staged ? '取消暂存并丢弃更改' : file.status === 'untracked' ? '删除未跟踪文件' : '丢弃更改'"
             @click.stop="$emit('discardFile', file.path, file.staged, file.status)"
           >
-            <Icon icon="mdi:undo-variant" height="13" />
+            <Icon
+              icon="mdi:undo-variant"
+              height="13"
+            />
           </button>
         </div>
       </div>
 
       <!-- 差异查看弹窗 -->
       <Teleport to="body">
-        <div v-if="activeDiffFile" class="wt-diff-overlay" @click.self="activeDiffFile = null">
+        <div
+          v-if="activeDiffFile"
+          class="wt-diff-overlay"
+          @click.self="activeDiffFile = null"
+        >
           <div class="wt-diff-dialog">
             <div class="wt-diff-header">
               <div class="wt-diff-title-row">
-                <Icon icon="mdi:file-compare" height="14" />
+                <Icon
+                  icon="mdi:file-compare"
+                  height="14"
+                />
                 <span class="wt-diff-title">{{ activeDiffFile.path }}</span>
                 <span class="wt-diff-badge">{{ activeDiffFile.staged ? (i18n.staged || '暂存') : (i18n.unstaged || '未暂存') }}</span>
               </div>
-              <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="activeDiffFile = null">
-                <Icon icon="mdi:close" height="14" />
+              <button
+                class="vp-btn vp-btn--ghost vp-btn--sm"
+                @click="activeDiffFile = null"
+              >
+                <Icon
+                  icon="mdi:close"
+                  height="14"
+                />
               </button>
             </div>
             <div class="wt-diff-legend">
@@ -140,7 +213,10 @@
       </Teleport>
 
       <!-- 提交表单 -->
-      <div v-if="tree.stagedCount > 0" class="wt-commit-form">
+      <div
+        v-if="tree.stagedCount > 0"
+        class="wt-commit-form"
+      >
         <!-- 常规提交类型快速选择 -->
         <div class="wt-commit-types">
           <button
@@ -154,14 +230,26 @@
           </button>
         </div>
         <!-- 提交信息模板 -->
-        <div v-if="commitTemplates?.length" class="wt-template-row">
-          <Icon icon="mdi:file-document-outline" height="13" />
+        <div
+          v-if="commitTemplates?.length"
+          class="wt-template-row"
+        >
+          <Icon
+            icon="mdi:file-document-outline"
+            height="13"
+          />
           <select
             class="wt-template-select"
             @change="handleSelectTemplate(($event.target as HTMLSelectElement).value)"
           >
-            <option value="">{{ i18n.selectTemplate || '选择模板...' }}</option>
-            <option v-for="tpl in commitTemplates" :key="tpl.id" :value="tpl.id">
+            <option value="">
+              {{ i18n.selectTemplate || '选择模板...' }}
+            </option>
+            <option
+              v-for="tpl in commitTemplates"
+              :key="tpl.id"
+              :value="tpl.id"
+            >
               {{ tpl.name }}
             </option>
           </select>
@@ -178,8 +266,17 @@
             :disabled="generating"
             @click.stop="handleGenerate"
           >
-            <Icon v-if="generating" icon="mdi:loading" class="gp-spin" height="13" />
-            <Icon v-else icon="mdi:auto-fix" height="13" />
+            <Icon
+              v-if="generating"
+              icon="mdi:loading"
+              class="gp-spin"
+              height="13"
+            />
+            <Icon
+              v-else
+              icon="mdi:auto-fix"
+              height="13"
+            />
             <span>{{ generating ? (i18n.generating || '生成中...') : (i18n.generateMsg || '生成提交信息') }}</span>
           </button>
           <button
@@ -187,33 +284,61 @@
             :disabled="!commitMessage.trim() || committing"
             @click.stop="handleCommit"
           >
-            <Icon v-if="committing" icon="mdi:loading" class="gp-spin" height="13" />
-            <Icon v-else icon="mdi:source-commit" height="13" />
+            <Icon
+              v-if="committing"
+              icon="mdi:loading"
+              class="gp-spin"
+              height="13"
+            />
+            <Icon
+              v-else
+              icon="mdi:source-commit"
+              height="13"
+            />
             <span>{{ committing ? (i18n.committing || '提交中...') : (i18n.commit || '提交') }}</span>
           </button>
         </div>
       </div>
       <!-- 操作反馈（不限提交表单可见，暂存失败等信息在此显示） -->
-      <div v-if="commitOutput" class="wt-commit-output">
-        <button class="wt-output-close" @click.stop="$emit('clearOutput')" title="关闭">×</button>
+      <div
+        v-if="commitOutput"
+        class="wt-commit-output"
+      >
+        <button
+          class="wt-output-close"
+          title="关闭"
+          @click.stop="$emit('clearOutput')"
+        >
+          ×
+        </button>
         <pre>{{ commitOutput }}</pre>
       </div>
 
       <!-- 提交历史 -->
-      <BranchCommitList :entries="commitLogEntries" :loading="commitLogLoading" />
+      <BranchCommitList
+        :entries="commitLogEntries"
+        :loading="commitLogLoading"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue"
+import type {
+  CommitLogEntry,
+  CommitTemplate,
+  FileChange,
+  WorkingTreeInfo,
+} from "../types"
 import { Icon } from "@iconify/vue"
+import {
+  computed,
+  ref,
+  watch,
+} from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import type { FileChange, WorkingTreeInfo, CommitLogEntry, CommitTemplate } from "../types"
 import { COMMIT_TYPE_VALUES } from "../types/storage"
 import BranchCommitList from "./BranchCommitList.vue"
-
-const COMMIT_TYPES = COMMIT_TYPE_VALUES.map(v => ({ value: v, label: v }))
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -244,6 +369,11 @@ const emit = defineEmits<{
   expand: []
 }>()
 
+const COMMIT_TYPES = COMMIT_TYPE_VALUES.map((v) => ({
+  value: v,
+  label: v,
+}))
+
 const expanded = ref(false)
 const commitType = ref("chore")
 const commitMessage = ref("")
@@ -270,28 +400,64 @@ const activeDiffText = computed(() => {
 })
 
 type DiffLineType = "add" | "del" | "hunk" | "ctx"
-interface DiffLine { text: string; type: DiffLineType }
+interface DiffLine { text: string, type: DiffLineType }
 
 /** 将 diff 文本解析为带类型的行数组（用于着色渲染） */
 const coloredDiffLines = computed<DiffLine[]>(() => {
   if (!activeDiffText.value) return []
-  return activeDiffText.value.split("\n").map(line => {
-    if (line.startsWith("+") && !line.startsWith("+++")) return { text: line, type: "add" }
-    if (line.startsWith("-") && !line.startsWith("---")) return { text: line, type: "del" }
-    if (line.startsWith("@@")) return { text: line, type: "hunk" }
-    return { text: line, type: "ctx" }
+  return activeDiffText.value.split("\n").map((line) => {
+    if (line.startsWith("+") && !line.startsWith("+++")) { return {
+      text: line,
+      type: "add",
+    }
+    }
+    if (line.startsWith("-") && !line.startsWith("---")) { return {
+      text: line,
+      type: "del",
+    }
+    }
+    if (line.startsWith("@@")) { return {
+      text: line,
+      type: "hunk",
+    }
+    }
+    return {
+      text: line,
+      type: "ctx",
+    }
   })
 })
 
 /** 文件状态元数据（图标 + 标题统一维护） */
-const STATUS_MAP: Record<string, { icon: string; title: string }> = {
-  modified:  { icon: "~", title: "已修改" },
-  added:     { icon: "+", title: "新增" },
-  deleted:   { icon: "−", title: "已删除" },
-  renamed:   { icon: "forward", title: "重命名" },
-  untracked: { icon: "?", title: "未跟踪" },
-  copied:    { icon: "⇋", title: "已复制" },
-  unmerged:  { icon: "warning", title: "冲突" },
+const STATUS_MAP: Record<string, { icon: string, title: string }> = {
+  modified: {
+    icon: "~",
+    title: "已修改",
+  },
+  added: {
+    icon: "+",
+    title: "新增",
+  },
+  deleted: {
+    icon: "−",
+    title: "已删除",
+  },
+  renamed: {
+    icon: "forward",
+    title: "重命名",
+  },
+  untracked: {
+    icon: "?",
+    title: "未跟踪",
+  },
+  copied: {
+    icon: "⇋",
+    title: "已复制",
+  },
+  unmerged: {
+    icon: "warning",
+    title: "冲突",
+  },
 }
 
 function statusIcon(file: FileChange): string {
@@ -339,7 +505,7 @@ function updateCommitMessage() {
 
 function handleSelectTemplate(tplId: string) {
   if (!tplId) return
-  const tpl = props.commitTemplates?.find(t => t.id === tplId)
+  const tpl = props.commitTemplates?.find((t) => t.id === tplId)
   if (!tpl) return
   // 填充模板，支持 {branch}/{files} 占位符
   commitMessage.value = tpl.pattern

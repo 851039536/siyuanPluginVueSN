@@ -104,7 +104,7 @@ todos:
 
 ```typescript
 type DiffLineType = "add" | "del" | "hunk" | "ctx"
-interface DiffLine { text: string; type: DiffLineType }
+interface DiffLine { text: string, type: DiffLineType }
 
 function classifyDiffLine(line: string): DiffLineType {
   if (line.startsWith("+") && !line.startsWith("+++")) return "add"
@@ -131,11 +131,11 @@ const filteredEntries = computed(() => {
   let list = props.entries
   if (searchKeyword.value) {
     const kw = searchKeyword.value.toLowerCase()
-    list = list.filter(e => e.message.toLowerCase().includes(kw))
+    list = list.filter((e) => e.message.toLowerCase().includes(kw))
   }
   if (searchAuthor.value) {
     const au = searchAuthor.value.toLowerCase()
-    list = list.filter(e => e.author.toLowerCase().includes(au))
+    list = list.filter((e) => e.author.toLowerCase().includes(au))
   }
   return list
 })
@@ -151,12 +151,12 @@ graph TD
     A -->|pullToAll/pullSingle| C[pullResults]
     A -->|getBranches/switchBranch| D[branchList]
     A -->|getCommitLog| E[commitEntries]
-    
+
     F[useGitPush Composable] -->|ref/reactive| A
     F -->|pullingRemote/pullOutputs| G[index.vue PullButtons]
     F -->|branches| H[index.vue BranchTags]
     F -->|commitLogs| I[BranchCommitList]
-    
+
     J[WorkingTreePanel] -->|coloredDiffLines computed| K[DiffView]
     I -->|filteredEntries computed| L[SearchBar]
 ```

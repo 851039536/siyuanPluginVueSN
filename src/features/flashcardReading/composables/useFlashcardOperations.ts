@@ -8,7 +8,10 @@ import type {
 } from "../types"
 import type { FlashcardStorage } from "../types/storage"
 import { showMessage } from "siyuan"
-import { computed, ref } from "vue"
+import {
+  computed,
+  ref,
+} from "vue"
 import { CARD_CONFIG } from "./useFlashcardStorage"
 
 export function useFlashcardOperations(

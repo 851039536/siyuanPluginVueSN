@@ -181,7 +181,11 @@ const selectedCategory = ref("all")
 const searchQuery = ref("")
 
 const allCategoryChips = computed(() => [
-  { id: "all", name: "全部", color: "#b0aea5" },
+  {
+    id: "all",
+    name: "全部",
+    color: "#b0aea5",
+  },
   ...props.categories,
 ])
 

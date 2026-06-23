@@ -11,6 +11,16 @@
     "refresh": "刷新",
     "refreshTitle": "刷新界面",
     "textDiff": "文本对比",
-    "textDiffTitle": "打开文本对比工具"
+    "textDiffTitle": "打开文本对比工具",
+    "passwordVault": "密码箱",
+    "passwordVaultTitle": "打开密码箱",
+    "flashcardReading": "单词阅读",
+    "flashcardReadingTitle": "打开单词阅读",
+    "refreshFiletree": "文件树",
+    "refreshFiletreeTitle": "重载文件树",
+    "refreshTag": "标签树",
+    "refreshTagTitle": "重载标签树",
+    "refreshUI": "完整刷新",
+    "refreshUITitle": "重载整个界面"
   }
 }

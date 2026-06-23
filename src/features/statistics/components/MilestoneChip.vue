@@ -1,13 +1,30 @@
 <template>
   <div
     class="milestone-chip"
-    :class="[`tier-${tier}`, { achieved, locked: !achieved && !isNext, next: !achieved && isNext }]"
+    :class="[`tier-${tier}`, {
+      achieved,
+      locked: !achieved && !isNext,
+      next: !achieved && isNext,
+    }]"
   >
-    <IconWrapper class="chip-icon" :name="(achieved ? icon : (isNext ? 'star' : 'pageLock')) as any" :size="14" />
+    <IconWrapper
+      class="chip-icon"
+      :name="(achieved ? icon : (isNext ? 'star' : 'pageLock')) as any"
+      :size="14"
+    />
     <span class="chip-label">{{ label }}</span>
-    <span v-if="achieved" class="chip-tier">{{ tierLabel }}</span>
-    <div v-if="!achieved" class="chip-progress">
-      <div class="chip-progress-fill" :style="{ width: `${progress}%` }" />
+    <span
+      v-if="achieved"
+      class="chip-tier"
+    >{{ tierLabel }}</span>
+    <div
+      v-if="!achieved"
+      class="chip-progress"
+    >
+      <div
+        class="chip-progress-fill"
+        :style="{ width: `${progress}%` }"
+      />
     </div>
   </div>
 </template>

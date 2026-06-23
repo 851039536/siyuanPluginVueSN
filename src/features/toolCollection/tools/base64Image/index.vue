@@ -338,10 +338,13 @@ import {
   ref,
   watch,
 } from "vue"
-import { copyToClipboard, triggerDownload } from "@/utils/domUtils"
 import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
+import {
+  copyToClipboard,
+  triggerDownload,
+} from "@/utils/domUtils"
 import CopyDropdown from "./components/CopyDropdown.vue"
 import FilterSettings from "./components/FilterSettings.vue"
 import QrcodeGenerator from "./components/QrcodeGenerator.vue"
@@ -430,33 +433,81 @@ const watermarkSettings = ref({
 
 // 格式选项
 const formatOptions: SelectOption[] = [
-  { value: "image/jpeg", label: "JPEG" },
-  { value: "image/png", label: "PNG" },
-  { value: "image/webp", label: "WebP" },
-  { value: "image/gif", label: "GIF" },
+  {
+    value: "image/jpeg",
+    label: "JPEG",
+  },
+  {
+    value: "image/png",
+    label: "PNG",
+  },
+  {
+    value: "image/webp",
+    label: "WebP",
+  },
+  {
+    value: "image/gif",
+    label: "GIF",
+  },
 ]
 
 // 水印位置选项
 const watermarkPositionOptions: SelectOption[] = [
-  { value: "top-left", label: "左上角" },
-  { value: "top-right", label: "右上角" },
-  { value: "bottom-left", label: "左下角" },
-  { value: "bottom-right", label: "右下角" },
-  { value: "center", label: "居中" },
+  {
+    value: "top-left",
+    label: "左上角",
+  },
+  {
+    value: "top-right",
+    label: "右上角",
+  },
+  {
+    value: "bottom-left",
+    label: "左下角",
+  },
+  {
+    value: "bottom-right",
+    label: "右下角",
+  },
+  {
+    value: "center",
+    label: "居中",
+  },
 ]
 
 // 复制选项
 const copyOptions = [
-  { value: "base64", label: i18n.base64Image_copyBase64 || "纯Base64" },
-  { value: "html", label: i18n.base64Image_copyHtml || "HTML <img> 标签" },
-  { value: "markdown", label: i18n.base64Image_copyMarkdown || "Markdown 图片语法" },
-  { value: "css", label: i18n.base64Image_copyCss || "CSS 背景图片语法" },
+  {
+    value: "base64",
+    label: i18n.base64Image_copyBase64 || "纯Base64",
+  },
+  {
+    value: "html",
+    label: i18n.base64Image_copyHtml || "HTML <img> 标签",
+  },
+  {
+    value: "markdown",
+    label: i18n.base64Image_copyMarkdown || "Markdown 图片语法",
+  },
+  {
+    value: "css",
+    label: i18n.base64Image_copyCss || "CSS 背景图片语法",
+  },
 ]
 
 const urlCopyOptions = [
-  { value: "base64", label: i18n.base64Image_copyBase64 || "纯Base64" },
-  { value: "html", label: i18n.base64Image_copyHtml || "HTML <img> 标签" },
-  { value: "markdown", label: i18n.base64Image_copyMarkdown || "Markdown" },
+  {
+    value: "base64",
+    label: i18n.base64Image_copyBase64 || "纯Base64",
+  },
+  {
+    value: "html",
+    label: i18n.base64Image_copyHtml || "HTML <img> 标签",
+  },
+  {
+    value: "markdown",
+    label: i18n.base64Image_copyMarkdown || "Markdown",
+  },
 ]
 
 // UI状态
@@ -464,7 +515,13 @@ const isDecoding = ref(false)
 
 // 预览滤镜样式
 const previewFilterStyle = computed(() => {
-  const { grayscale, blur, brightness, contrast, saturation } = filterSettings.value
+  const {
+    grayscale,
+    blur,
+    brightness,
+    contrast,
+    saturation,
+  } = filterSettings.value
   return {
     filter: `grayscale(${grayscale}%) blur(${blur}px) brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`,
   }
@@ -498,7 +555,10 @@ const processImage = () => {
   const objectUrl = URL.createObjectURL(selectedFile.value)
 
   img.onload = () => {
-    let { width, height } = img
+    let {
+      width,
+      height,
+    } = img
 
     if (maintainAspectRatio.value && width > maxWidth.value) {
       height = (height * maxWidth.value) / width
@@ -508,14 +568,25 @@ const processImage = () => {
     canvas.width = width
     canvas.height = height
 
-    const { grayscale, blur, brightness, contrast, saturation } = filterSettings.value
+    const {
+      grayscale,
+      blur,
+      brightness,
+      contrast,
+      saturation,
+    } = filterSettings.value
     ctx!.filter = `grayscale(${grayscale}%) blur(${blur}px) brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`
     ctx?.drawImage(img, 0, 0, width, height)
     ctx!.filter = "none"
 
     // 添加水印
     if (watermarkSettings.value.enabled && watermarkSettings.value.text) {
-      const { text, position, opacity, fontSize } = watermarkSettings.value
+      const {
+        text,
+        position,
+        opacity,
+        fontSize,
+      } = watermarkSettings.value
       ctx!.globalAlpha = opacity / 100
       ctx!.font = `${fontSize}px Arial`
       ctx!.fillStyle = "rgba(255, 255, 255, 0.8)"

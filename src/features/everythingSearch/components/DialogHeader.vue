@@ -1,7 +1,10 @@
 <template>
   <div class="vp-header">
     <div class="vp-title">
-      <span class="vp-title__icon" aria-hidden="true">⌘</span>
+      <span
+        class="vp-title__icon"
+        aria-hidden="true"
+      >⌘</span>
       <span class="vp-title__text">{{ title }}</span>
     </div>
     <button

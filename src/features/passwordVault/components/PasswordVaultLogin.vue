@@ -1,7 +1,9 @@
 <template>
   <div class="login-page">
     <div class="login-body">
-      <p class="login-title">{{ isFirstTime ? '创建主密码' : '解锁密码箱' }}</p>
+      <p class="login-title">
+        {{ isFirstTime ? '创建主密码' : '解锁密码箱' }}
+      </p>
 
       <!-- 显示保存的密码提示 -->
       <div

@@ -1,0 +1,92 @@
+@use "@/variables" as *;
+@use "./mixins" as floatingBox;
+
+// ==================== Modal 基座样式 ====================
+
+.vp-overlay {
+  @include floatingBox.modal-overlay;
+}
+
+.vp-modal {
+  @include floatingBox.modal-base;
+  width: 90%;
+  max-width: floatingBox.$modal-large-max-width;
+
+  &.vp-modal--small {
+    max-width: floatingBox.$modal-small-max-width;
+  }
+
+  &.vp-modal--form {
+    max-width: floatingBox.$modal-form-max-width;
+  }
+}
+
+.vp-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-3 $spacing-4;
+  border-bottom: 1px solid var(--b3-border-color);
+
+  .vp-modal-title {
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+
+    .vp-modal-icon {
+      color: var(--b3-theme-primary);
+      flex-shrink: 0;
+
+      &--danger {
+        color: var(--b3-theme-error);
+      }
+    }
+
+    h2 {
+      margin: 0;
+      font-size: $font-size-xl;
+      font-weight: 600;
+      color: var(--b3-theme-on-background);
+      font-family: $font-heading;
+    }
+  }
+
+  .vp-modal-actions {
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+  }
+}
+
+.vp-modal-body {
+  padding: $spacing-3 $spacing-4;
+  overflow-y: auto;
+  flex: 1;
+}
+
+// Loading 状态
+.vp-loading {
+  text-align: center;
+  padding: $spacing-16 $spacing-4;
+  color: var(--b3-theme-on-surface-light);
+  font-size: $font-size-sm;
+  font-family: $font-body;
+}
+
+.vp-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: $spacing-10 $spacing-4;
+  color: var(--b3-theme-on-surface-light);
+  font-size: $font-size-sm;
+  font-style: italic;
+  opacity: 0.35;
+}
+
+// 删除确认
+.vp-delete-msg {
+  margin: 0 0 $spacing-4;
+  color: var(--b3-theme-on-background);
+  font-size: $font-size-sm;
+  line-height: 1.5;
+}

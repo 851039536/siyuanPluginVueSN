@@ -23,7 +23,10 @@
 <script setup lang="ts">
 import { ref } from "vue"
 import Button from "@/components/Button.vue"
-import { getProviderDisplayName, PROVIDER_MAP } from "./providers"
+import {
+  getProviderDisplayName,
+  PROVIDER_MAP,
+} from "./providers"
 import TextInput from "./TextInput.vue"
 
 interface Props {

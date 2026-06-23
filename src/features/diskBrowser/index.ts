@@ -1,6 +1,8 @@
 import type { Plugin } from "siyuan"
+import type { DiskBrowserI18n } from "./types"
 import { createVueDockApp } from "@/utils/vueAppHelper"
 import DiskBrowserPanel from "./index.vue"
+
 import { DiskBrowserStorage } from "./types/storage"
 
 export type {
@@ -12,8 +14,6 @@ export type {
   FolderInfo,
 } from "./types"
 export { DiskBrowserStorage } from "./types/storage"
-
-import type { DiskBrowserI18n } from "./types"
 
 export function registerDiskBrowser(plugin: Plugin) {
   const storage = new DiskBrowserStorage(plugin)

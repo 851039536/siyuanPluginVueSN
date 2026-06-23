@@ -22,13 +22,18 @@ const ALL_AREAS = ["sidebar", "editor", "tabs", "dialogs", "controls"] as const
 export interface CompactModeSettings {
   compactMode: boolean
   compactModeDensity: 'moderate' | 'compact' | 'extreme'
-  compactModeFontScale: number   // 100 | 98 | 96 | 94 | 92 | 90
+  compactModeFontScale: number // 100 | 98 | 96 | 94 | 92 | 90
   compactModeAreas: Record<string, boolean>
 }
 
 export function applyCompactMode(settings: CompactModeSettings): void {
   const html = document.documentElement
-  const { compactMode, compactModeDensity, compactModeFontScale, compactModeAreas } = settings
+  const {
+    compactMode,
+    compactModeDensity,
+    compactModeFontScale,
+    compactModeAreas,
+  } = settings
 
   if (!compactMode) {
     html.classList.remove(COMPACT_MASTER)

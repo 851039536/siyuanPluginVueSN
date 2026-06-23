@@ -184,11 +184,11 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
+import { showMessage } from "siyuan"
 import {
   computed,
   ref,
 } from "vue"
-import { showMessage } from "siyuan"
 import {
   exportMdContent,
   setBlockAttrs,

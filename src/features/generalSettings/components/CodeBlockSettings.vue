@@ -6,7 +6,10 @@
         <div class="setting-item">
           <label class="setting-label">
             <span class="label-icon">
-              <IconWrapper name="codeBlockEnable" :size="14" />
+              <IconWrapper
+                name="codeBlockEnable"
+                :size="14"
+              />
             </span>
             {{ i18n.enableCodeBlockStyle || '启用代码块样式增强' }}
           </label>
@@ -34,7 +37,10 @@
         <div class="setting-item">
           <label class="setting-label">
             <span class="label-icon">
-              <IconWrapper name="codeBlockStyle" :size="14" />
+              <IconWrapper
+                name="codeBlockStyle"
+                :size="14"
+              />
             </span>
             {{ i18n.codeBlockStyle || '代码块风格' }}
           </label>
@@ -48,7 +54,10 @@
               @click="settings.style = style"
             >
               <div class="style-card-icon">
-                <IconWrapper :name="styleIcons[style]" :size="22" />
+                <IconWrapper
+                  :name="styleIcons[style]"
+                  :size="22"
+                />
               </div>
               <div class="style-card-name">
                 {{ styleNameMap[style] }}
@@ -73,7 +82,10 @@
       >
         <div class="setting-header">
           <span class="label-icon">
-            <IconWrapper name="codeBlockAdvanced" :size="14" />
+            <IconWrapper
+              name="codeBlockAdvanced"
+              :size="14"
+            />
           </span>
           <span>{{ i18n.advancedSettings || '高级设置' }}</span>
         </div>
@@ -82,7 +94,10 @@
         <div class="setting-item">
           <label class="setting-label">
             <span class="label-icon">
-              <IconWrapper name="codeBlockBackground" :size="14" />
+              <IconWrapper
+                name="codeBlockBackground"
+                :size="14"
+              />
             </span>
             {{ i18n.codeBlockBackground || '背景色' }}
             <span class="setting-value">{{ Math.round(settings.backgroundColorOpacity * 100) }}%</span>
@@ -109,12 +124,12 @@
             </button>
             <input
               :value="settings.backgroundColorOpacity"
-              @input="onOpacityInput"
               type="range"
               min="0.1"
               max="1"
               step="0.05"
               class="range-slider"
+              @input="onOpacityInput"
             />
             <button
               class="slider-btn"
@@ -130,7 +145,10 @@
         <div class="setting-item">
           <label class="setting-label">
             <span class="label-icon">
-              <IconWrapper name="codeBlockBorder" :size="14" />
+              <IconWrapper
+                name="codeBlockBorder"
+                :size="14"
+              />
             </span>
             {{ i18n.codeBlockBorder || '边框设置' }}
           </label>
@@ -209,7 +227,10 @@
         <div class="setting-item">
           <label class="setting-label">
             <span class="label-icon">
-              <IconWrapper name="codeBlockShadow" :size="14" />
+              <IconWrapper
+                name="codeBlockShadow"
+                :size="14"
+              />
             </span>
             {{ i18n.codeBlockShadow || '阴影' }}
           </label>
@@ -230,7 +251,10 @@
         <div class="setting-item">
           <label class="setting-label">
             <span class="label-icon">
-              <IconWrapper name="codeBlockFont" :size="14" />
+              <IconWrapper
+                name="codeBlockFont"
+                :size="14"
+              />
             </span>
             {{ i18n.codeFontSettings || '代码字体' }}
           </label>
@@ -321,7 +345,10 @@
         <div class="setting-item">
           <label class="setting-label">
             <span class="label-icon">
-              <IconWrapper name="codeBlockColor" :size="14" />
+              <IconWrapper
+                name="codeBlockColor"
+                :size="14"
+              />
             </span>
             {{ i18n.codeColorSettings || '代码颜色' }}
           </label>
@@ -352,7 +379,10 @@
         <div class="setting-item">
           <label class="setting-label">
             <span class="label-icon">
-              <IconWrapper name="codeBlockCollapse" :size="14" />
+              <IconWrapper
+                name="codeBlockCollapse"
+                :size="14"
+              />
             </span>
             {{ i18n.codeBlockCollapse || '代码块折叠' }}
           </label>
@@ -377,7 +407,10 @@
         >
           <label class="setting-label">
             <span class="label-icon">
-              <IconWrapper name="codeBlockHeight" :size="14" />
+              <IconWrapper
+                name="codeBlockHeight"
+                :size="14"
+              />
             </span>
             {{ i18n.collapseHeight || '折叠高度' }}
             <span class="setting-value">{{ settings.collapseHeight }}px</span>
@@ -417,8 +450,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue"
+import type { IconKey } from "@/config/icons"
 import type { CodeBlockSettings } from "@/features/generalSettings/types/storage"
+import {
+  computed,
+  onMounted,
+  ref,
+  watch,
+} from "vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 import {
   DEFAULT_CODEBLOCK_SETTINGS,
   GeneralSettingsStorage,
@@ -428,8 +468,14 @@ import {
   applyCodeBlockEnhancedStyles,
   applyCodeBlockStyle,
 } from "../utils/styles"
-import type { IconKey } from "@/config/icons"
-import IconWrapper from "@/components/IconWrapper.vue"
+
+const props = withDefaults(defineProps<Props>(), {
+  i18n: () => ({}),
+  plugin: null,
+  initialSettings: () => ({ ...DEFAULT_CODEBLOCK_SETTINGS }),
+})
+
+const emit = defineEmits<Emits>()
 
 // ── 常量 ──
 const STYLE_OPTIONS: CodeBlockSettings["style"][] = ["default", "github", "mac"] as const
@@ -459,14 +505,6 @@ interface Emits {
   (e: "change", settings: CodeBlockSettings): void
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  i18n: () => ({}),
-  plugin: null,
-  initialSettings: () => ({ ...DEFAULT_CODEBLOCK_SETTINGS }),
-})
-
-const emit = defineEmits<Emits>()
-
 // ── 状态 ──
 const settings = ref<CodeBlockSettings>({ ...props.initialSettings })
 const presetCodeFont = ref("")
@@ -486,19 +524,55 @@ const styleDescMap = computed<Record<string, string>>(() => ({
 }))
 
 const shadowOptions = computed(() => [
-  { label: props.i18n.noneShadow || "无阴影", value: "none" },
-  { label: props.i18n.lightShadow || "轻阴影", value: "0 2px 8px rgba(0, 0, 0, 0.1)" },
-  { label: props.i18n.mediumShadow || "中阴影", value: "0 4px 12px rgba(0, 0, 0, 0.15)" },
-  { label: props.i18n.heavyShadow || "重阴影", value: "0 8px 24px rgba(0, 0, 0, 0.2)" },
+  {
+    label: props.i18n.noneShadow || "无阴影",
+    value: "none",
+  },
+  {
+    label: props.i18n.lightShadow || "轻阴影",
+    value: "0 2px 8px rgba(0, 0, 0, 0.1)",
+  },
+  {
+    label: props.i18n.mediumShadow || "中阴影",
+    value: "0 4px 12px rgba(0, 0, 0, 0.15)",
+  },
+  {
+    label: props.i18n.heavyShadow || "重阴影",
+    value: "0 8px 24px rgba(0, 0, 0, 0.2)",
+  },
 ])
 
 const colorFields = [
-  { key: "textColor" as const, i18nKey: "textColor", label: "文本颜色" },
-  { key: "keywordColor" as const, i18nKey: "keywordColor", label: "关键字颜色" },
-  { key: "stringColor" as const, i18nKey: "stringColor", label: "字符串颜色" },
-  { key: "commentColor" as const, i18nKey: "commentColor", label: "注释颜色" },
-  { key: "functionColor" as const, i18nKey: "functionColor", label: "函数颜色" },
-  { key: "numberColor" as const, i18nKey: "numberColor", label: "数字颜色" },
+  {
+    key: "textColor" as const,
+    i18nKey: "textColor",
+    label: "文本颜色",
+  },
+  {
+    key: "keywordColor" as const,
+    i18nKey: "keywordColor",
+    label: "关键字颜色",
+  },
+  {
+    key: "stringColor" as const,
+    i18nKey: "stringColor",
+    label: "字符串颜色",
+  },
+  {
+    key: "commentColor" as const,
+    i18nKey: "commentColor",
+    label: "注释颜色",
+  },
+  {
+    key: "functionColor" as const,
+    i18nKey: "functionColor",
+    label: "函数颜色",
+  },
+  {
+    key: "numberColor" as const,
+    i18nKey: "numberColor",
+    label: "数字颜色",
+  },
 ]
 
 // ── 防抖 ──
@@ -539,7 +613,10 @@ watch(
     debouncedApplyEnhanced(newSettings)
     debouncedSave(newSettings)
   },
-  { deep: true, immediate: false },
+  {
+    deep: true,
+    immediate: false,
+  },
 )
 
 // ── 方法 ──

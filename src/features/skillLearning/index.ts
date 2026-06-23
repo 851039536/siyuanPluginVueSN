@@ -3,8 +3,8 @@
  * 参考 rssReader/index.ts 的最简 Dock 注册模式
  */
 import type { Plugin } from "siyuan"
-import { createVueDockApp } from "@/utils/vueAppHelper"
 import { emitCustomEvent } from "@/utils/eventBus"
+import { createVueDockApp } from "@/utils/vueAppHelper"
 import SkillLearningPanel from "./index.vue"
 
 export function registerSkillLearning(plugin: Plugin) {

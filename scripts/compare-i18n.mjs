@@ -1,9 +1,12 @@
+import { execSync } from 'node:child_process'
 /**
  * 比较合并后的 zh_CN.json 与 git 原始版本的差异
  */
 import { readFileSync } from 'node:fs'
-import { execSync } from 'node:child_process'
-import { join, dirname } from 'node:path'
+import {
+  dirname,
+  join,
+} from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -14,10 +17,10 @@ for (const lang of ['zh_CN', 'en_US']) {
 
   // 从 git 获取原始版本
   const original = JSON.parse(
-    execSync(`git show HEAD:src/i18n/${lang}.json`, { encoding: 'utf-8' })
+    execSync(`git show HEAD:src/i18n/${lang}.json`, { encoding: 'utf-8' }),
   )
   const merged = JSON.parse(
-    readFileSync(join(i18nDir, `${lang}.json`), 'utf-8')
+    readFileSync(join(i18nDir, `${lang}.json`), 'utf-8'),
   )
 
   const origKeys = Object.keys(original)
@@ -26,8 +29,8 @@ for (const lang of ['zh_CN', 'en_US']) {
   console.log(`Original: ${origKeys.length} keys`)
   console.log(`Merged:   ${mergedKeys.length} keys`)
 
-  const onlyInMerged = mergedKeys.filter(k => !origKeys.includes(k))
-  const onlyInOriginal = origKeys.filter(k => !mergedKeys.includes(k))
+  const onlyInMerged = mergedKeys.filter((k) => !origKeys.includes(k))
+  const onlyInOriginal = origKeys.filter((k) => !mergedKeys.includes(k))
 
   if (onlyInMerged.length) {
     console.log(`❌ ${onlyInMerged.length} keys only in merged:`, onlyInMerged.slice(0, 10))

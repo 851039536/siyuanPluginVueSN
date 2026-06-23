@@ -264,6 +264,7 @@ import {
   watch,
 } from "vue"
 import Loader from "@/components/Loader.vue"
+import { PluginStorage } from "@/utils/pluginStorage"
 import BarChart from "./components/BarChart.vue"
 import DocBarChart from "./components/DocBarChart.vue"
 import DocChangeSection from "./components/DocChangeSection.vue"
@@ -300,10 +301,9 @@ import {
   getReportData,
   getTrendPrediction,
 } from "./queries/reportStats"
-import { milestoneTargetOfWithRules } from "./utils/milestones"
-import { STATISTICS_STORAGE_KEYS } from "./types/storage"
-import { PluginStorage } from "@/utils/pluginStorage"
 import { STORAGE_KEY_MILESTONE_RULES } from "./types/milestoneRules"
+import { STATISTICS_STORAGE_KEYS } from "./types/storage"
+import { milestoneTargetOfWithRules } from "./utils/milestones"
 
 interface Props {
   plugin: Plugin
@@ -443,13 +443,34 @@ const i18n = computed(() => ({
 }))
 
 const TAB_CONFIGS = [
-  { id: 'overview', labelKey: 'tabOverview' },
-  { id: 'heatmap', labelKey: 'activityHeatmap' },
-  { id: 'activity', labelKey: 'notebookActivity' },
-  { id: 'trend', labelKey: 'trendTab' },
-  { id: 'notebookDistribution', labelKey: 'notebookDistributionTab' },
-  { id: 'report', labelKey: 'reportTab' },
-  { id: 'milestones', labelKey: 'milestones' },
+  {
+    id: 'overview',
+    labelKey: 'tabOverview',
+  },
+  {
+    id: 'heatmap',
+    labelKey: 'activityHeatmap',
+  },
+  {
+    id: 'activity',
+    labelKey: 'notebookActivity',
+  },
+  {
+    id: 'trend',
+    labelKey: 'trendTab',
+  },
+  {
+    id: 'notebookDistribution',
+    labelKey: 'notebookDistributionTab',
+  },
+  {
+    id: 'report',
+    labelKey: 'reportTab',
+  },
+  {
+    id: 'milestones',
+    labelKey: 'milestones',
+  },
 ] as const
 
 type TabId = typeof TAB_CONFIGS[number]['id']
@@ -509,19 +530,55 @@ const milestonesAchievedCount = computed(() => {
   const s = stats.value
   if (!s) return 0
   const fields: Array<{ type: string, val: number }> = [
-    { type: 'notes', val: s.totalNotes },
-    { type: 'words', val: s.totalWords },
-    { type: 'blocks', val: s.totalBlocks },
-    { type: 'tags', val: s.totalTags },
-    { type: 'backlinks', val: s.totalBacklinks },
-    { type: 'assets', val: s.totalAssets },
-    { type: 'images', val: s.totalImages },
-    { type: 'notebooks', val: s.notebookCount },
-    { type: 'code', val: s.codeBlocks },
-    { type: 'streak', val: s.writingStreak },
-    { type: 'activeDays', val: s.activeDays },
+    {
+      type: 'notes',
+      val: s.totalNotes,
+    },
+    {
+      type: 'words',
+      val: s.totalWords,
+    },
+    {
+      type: 'blocks',
+      val: s.totalBlocks,
+    },
+    {
+      type: 'tags',
+      val: s.totalTags,
+    },
+    {
+      type: 'backlinks',
+      val: s.totalBacklinks,
+    },
+    {
+      type: 'assets',
+      val: s.totalAssets,
+    },
+    {
+      type: 'images',
+      val: s.totalImages,
+    },
+    {
+      type: 'notebooks',
+      val: s.notebookCount,
+    },
+    {
+      type: 'code',
+      val: s.codeBlocks,
+    },
+    {
+      type: 'streak',
+      val: s.writingStreak,
+    },
+    {
+      type: 'activeDays',
+      val: s.activeDays,
+    },
   ]
-  return fields.reduce((sum, { type, val }) => {
+  return fields.reduce((sum, {
+    type,
+    val,
+  }) => {
     let n = 0
     while (n < 200 && milestoneTargetOfWithRules(type, n + 1, customRules.value) <= val) n++
     return sum + n
@@ -535,7 +592,11 @@ const storagePaths = computed(() => {
   const pluginName = props.plugin.name || ""
   const baseDir = `${dataDir}/storage/petal/${pluginName}`
   return [
-    { key: STATISTICS_STORAGE_KEYS.HISTORY, desc: "每日快照 · 概览(日环比) 趋势 热力图", path: `${baseDir}/${STATISTICS_STORAGE_KEYS.HISTORY}.json` },
+    {
+      key: STATISTICS_STORAGE_KEYS.HISTORY,
+      desc: "每日快照 · 概览(日环比) 趋势 热力图",
+      path: `${baseDir}/${STATISTICS_STORAGE_KEYS.HISTORY}.json`,
+    },
   ]
 })
 

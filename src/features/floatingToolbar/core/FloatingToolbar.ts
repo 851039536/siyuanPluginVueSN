@@ -1,10 +1,10 @@
 import { Plugin } from "siyuan"
 import { FlashcardStorage } from "@/features/flashcardReading/types/storage"
+import { copyToClipboard } from "@/utils/domUtils"
 import {
   ToolbarAction,
   ToolbarActionManager,
 } from "../types"
-import { copyToClipboard } from "@/utils/domUtils"
 import { HeatmapMarker } from "./HeatmapMarker"
 import {
   debounce,

@@ -1,26 +1,39 @@
 <template>
   <div class="flashcard-quiz">
     <!-- 空状态 -->
-    <div v-if="quizItems.length === 0" class="flashcard-quiz__empty">
+    <div
+      v-if="quizItems.length === 0"
+      class="flashcard-quiz__empty"
+    >
       {{ t.noCards || '暂无卡片' }}
     </div>
 
     <!-- 结果页 -->
     <template v-else-if="phase === 'result'">
       <div class="flashcard-quiz__result">
-        <div class="flashcard-quiz__result-score">{{ correctCount }} / {{ quizItems.length }}</div>
-        <div class="flashcard-quiz__result-label">{{ t.quizScore || '正确率' }}: {{ accuracy }}%</div>
+        <div class="flashcard-quiz__result-score">
+          {{ correctCount }} / {{ quizItems.length }}
+        </div>
+        <div class="flashcard-quiz__result-label">
+          {{ t.quizScore || '正确率' }}: {{ accuracy }}%
+        </div>
         <IconWrapper
           :name="accuracy >= 80 ? 'mdi:trophy-outline' : accuracy >= 50 ? 'mdi:thumb-up-outline' : 'mdi:arm-flex-outline'"
           class="flashcard-quiz__result-icon"
         />
 
-        <div class="flashcard-quiz__result-detail" v-if="detailExpanded">
+        <div
+          v-if="detailExpanded"
+          class="flashcard-quiz__result-detail"
+        >
           <div
             v-for="(item, qi) in quizItems"
             :key="item.card.id"
             class="flashcard-quiz__result-item"
-            :class="{ 'flashcard-quiz__result-item--ok': item.isCorrect, 'flashcard-quiz__result-item--fail': !item.isCorrect }"
+            :class="{
+              'flashcard-quiz__result-item--ok': item.isCorrect,
+              'flashcard-quiz__result-item--fail': !item.isCorrect,
+            }"
           >
             <span class="flashcard-quiz__result-mark">{{ item.isCorrect ? '✓' : '✗' }}</span>
             <span class="flashcard-quiz__result-title">{{ qi + 1 }}. {{ item.card.title }}</span>
@@ -35,7 +48,10 @@
           >
             {{ detailExpanded ? (t.hideDetails || '收起详情') : (t.showDetails || '查看详情') }}
           </button>
-          <button class="flashcard-quiz__btn flashcard-quiz__btn--primary" @click="resetQuiz">
+          <button
+            class="flashcard-quiz__btn flashcard-quiz__btn--primary"
+            @click="resetQuiz"
+          >
             ↺ {{ t.retry || '重来' }}
           </button>
         </div>
@@ -61,7 +77,7 @@
         <div class="flashcard-quiz__progress-bar">
           <div
             class="flashcard-quiz__progress-fill"
-            :style="{ width: ((currentIndex + (phase === 'feedback' ? 1 : 0)) / quizItems.length * 100) + '%' }"
+            :style="{ width: `${(currentIndex + (phase === 'feedback' ? 1 : 0)) / quizItems.length * 100}%` }"
           />
         </div>
         <span class="flashcard-quiz__counter">{{ currentIndex + 1 }} / {{ quizItems.length }}</span>
@@ -81,10 +97,16 @@
           <div class="flashcard-quiz__q-body">
             <span class="flashcard-quiz__q-title">{{ currentItem.card.title }}</span>
             <div class="flashcard-quiz__q-meta">
-              <span class="flashcard-quiz__lang-tag" :class="`lang--${currentItem.card.language}`">
+              <span
+                class="flashcard-quiz__lang-tag"
+                :class="`lang--${currentItem.card.language}`"
+              >
                 {{ langLabel(currentItem.card.language) }}
               </span>
-              <DifficultyBadge :difficulty="currentItem.card.difficulty" :i18n="t" />
+              <DifficultyBadge
+                :difficulty="currentItem.card.difficulty"
+                :i18n="t"
+              />
             </div>
           </div>
         </div>
@@ -104,18 +126,27 @@
           >
             <span class="flashcard-quiz__option-letter">{{ optionLetter(oi) }}</span>
             <span class="flashcard-quiz__option-text">{{ opt.text || t.emptyOption }}</span>
-            <span v-if="phase === 'feedback' && opt.correct" class="flashcard-quiz__option-icon">✓</span>
-            <span v-else-if="phase === 'feedback' && currentItem.selectedIndex === oi && !opt.correct" class="flashcard-quiz__option-icon">✗</span>
+            <span
+              v-if="phase === 'feedback' && opt.correct"
+              class="flashcard-quiz__option-icon"
+            >✓</span>
+            <span
+              v-else-if="phase === 'feedback' && currentItem.selectedIndex === oi && !opt.correct"
+              class="flashcard-quiz__option-icon"
+            >✗</span>
           </button>
         </div>
 
         <!-- 答题后反馈区 -->
-        <div v-if="phase === 'feedback'" class="flashcard-quiz__feedback-area">
+        <div
+          v-if="phase === 'feedback'"
+          class="flashcard-quiz__feedback-area"
+        >
           <div
             class="flashcard-quiz__feedback-banner"
             :class="currentItem.isCorrect ? 'flashcard-quiz__feedback-banner--ok' : 'flashcard-quiz__feedback-banner--fail'"
           >
-            {{ currentItem.isCorrect ? '✓ ' + (t.correct || '正确') : '✗ ' + (t.incorrect || '错误') }}
+            {{ currentItem.isCorrect ? `✓ ${t.correct || '正确'}` : `✗ ${t.incorrect || '错误'}` }}
           </div>
 
           <button
@@ -126,12 +157,18 @@
             {{ showCode ? (t.hideCode || '收起代码') : (t.viewCode || '查看代码') }}
           </button>
 
-          <div v-if="showCode && currentItem.card.codeSnippet" class="flashcard-quiz__code-block">
+          <div
+            v-if="showCode && currentItem.card.codeSnippet"
+            class="flashcard-quiz__code-block"
+          >
             <pre><code>{{ currentItem.card.codeSnippet }}</code></pre>
           </div>
 
-          <button class="flashcard-quiz__btn flashcard-quiz__btn--primary flashcard-quiz__btn--next" @click="goNext">
-            {{ currentIndex < quizItems.length - 1 ? (t.nextQuestion || '下一题') + ' →' : (t.viewResult || '查看结果') }}
+          <button
+            class="flashcard-quiz__btn flashcard-quiz__btn--primary flashcard-quiz__btn--next"
+            @click="goNext"
+          >
+            {{ currentIndex < quizItems.length - 1 ? `${t.nextQuestion || '下一题'} →` : (t.viewResult || '查看结果') }}
           </button>
         </div>
       </div>
@@ -140,13 +177,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onActivated, onDeactivated } from "vue"
-import type { SkillCard, SkillI18n } from "../types"
+import type {
+  SkillCard,
+  SkillI18n,
+} from "../types"
+import {
+  computed,
+  onActivated,
+  onDeactivated,
+  ref,
+  watch,
+} from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import DifficultyBadge from "./DifficultyBadge.vue"
-import CategoryFilter from "./CategoryFilter.vue"
-import { langLabel } from "../composables/useLangLabel"
 import { useFilteredCards } from "../composables/useFilteredCards"
+import { langLabel } from "../composables/useLangLabel"
+import CategoryFilter from "./CategoryFilter.vue"
+import DifficultyBadge from "./DifficultyBadge.vue"
 
 interface CardOption {
   text: string
@@ -199,11 +245,14 @@ function buildQuiz(cards: SkillCard[]): QuizItem[] {
   const shuffled = shuffle([...cards])
 
   // 2. 预建按语言分组的答案池（避免 O(n²) 嵌套查找）
-  const answersByLang = new Map<string, { id: string; text: string }[]>()
+  const answersByLang = new Map<string, { id: string, text: string }[]>()
   for (const c of shuffled) {
     if (c.answer && c.answer.trim()) {
       if (!answersByLang.has(c.language)) answersByLang.set(c.language, [])
-      answersByLang.get(c.language)!.push({ id: c.id, text: c.answer })
+      answersByLang.get(c.language)!.push({
+        id: c.id,
+        text: c.answer,
+      })
     }
   }
 
@@ -211,7 +260,10 @@ function buildQuiz(cards: SkillCard[]): QuizItem[] {
   const allPool = [...answersByLang.values()].flat()
 
   return shuffled.map((card) => {
-    const correctOpt: CardOption = { text: card.answer, correct: true }
+    const correctOpt: CardOption = {
+      text: card.answer,
+      correct: true,
+    }
     let distractors: CardOption[] = []
 
     // 优先使用手动指定的干扰项
@@ -219,7 +271,10 @@ function buildQuiz(cards: SkillCard[]): QuizItem[] {
       distractors = card.distractors
         .filter(Boolean)
         .slice(0, 3)
-        .map((d) => ({ text: d.trim(), correct: false }))
+        .map((d) => ({
+          text: d.trim(),
+          correct: false,
+        }))
     } else {
       // 从同语言池中抽取 + 跨语言池补充
       const sameLang = (answersByLang.get(card.language) || [])
@@ -232,18 +287,29 @@ function buildQuiz(cards: SkillCard[]): QuizItem[] {
         if (distractors.length >= 3) return
         if (!seen.has(a.text) && a.text !== card.answer) {
           seen.add(a.text)
-          distractors.push({ text: a.text, correct: false })
+          distractors.push({
+            text: a.text,
+            correct: false,
+          })
         }
       })
     }
 
     // 不够 3 个时用占位补足
     while (distractors.length < 3) {
-      distractors.push({ text: `——`, correct: false })
+      distractors.push({
+        text: `——`,
+        correct: false,
+      })
     }
 
     const options = shuffle([correctOpt, ...distractors])
-    return { card, options, selectedIndex: null, isCorrect: null }
+    return {
+      card,
+      options,
+      selectedIndex: null,
+      isCorrect: null,
+    }
   })
 }
 

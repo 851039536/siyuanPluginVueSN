@@ -242,11 +242,11 @@
 </template>
 
 <script setup lang="ts">
+import type { Plugin } from "siyuan"
 import type {
   RegexExample,
   RegexResult,
 } from "../utils/codeUtils"
-import type { Plugin } from "siyuan"
 import { showMessage } from "siyuan"
 import { ref } from "vue"
 import Button from "@/components/Button.vue"
@@ -281,7 +281,11 @@ const testResult = ref<{
 } | null>(null)
 const isGenerating = ref(false)
 
-const { errorMessage, clearErrorOnInput, getApiConfig } = useCodeFeature(props.plugin)
+const {
+  errorMessage,
+  clearErrorOnInput,
+  getApiConfig,
+} = useCodeFeature(props.plugin)
 clearErrorOnInput(description)
 
 function addExample() {

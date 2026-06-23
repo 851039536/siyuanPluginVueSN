@@ -151,7 +151,10 @@ export class FlashcardStorage {
   async getTypingSettings(): Promise<TypingSettings> {
     try {
       const data = await this.storage.load<TypingSettings>(this.SETTINGS_KEY)
-      return { ...FlashcardStorage.DEFAULT_SETTINGS, ...data }
+      return {
+        ...FlashcardStorage.DEFAULT_SETTINGS,
+        ...data,
+      }
     } catch {
       return { ...FlashcardStorage.DEFAULT_SETTINGS }
     }

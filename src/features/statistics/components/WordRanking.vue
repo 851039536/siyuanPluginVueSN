@@ -2,7 +2,10 @@
   <div class="word-ranking-section">
     <div class="ranking-header">
       <h4 class="subsection-title">
-        <IconWrapper name="star" :size="16" /> {{ i18n.title }}
+        <IconWrapper
+          name="star"
+          :size="16"
+        /> {{ i18n.title }}
       </h4>
       <div class="ranking-controls">
         <select
@@ -60,8 +63,8 @@ import {
   computed,
   ref,
 } from "vue"
-import { formatNumber } from "../utils"
 import IconWrapper from "@/components/IconWrapper.vue"
+import { formatNumber } from "../utils"
 
 interface DailyWordCount {
   date: string

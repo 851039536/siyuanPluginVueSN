@@ -9,7 +9,10 @@
       @click.stop
     >
       <div class="dialog-header">
-        <h3><IconWrapper name="download" :size="16" /> 视频下载</h3>
+        <h3><IconWrapper
+          name="download"
+          :size="16"
+        /> 视频下载</h3>
         <Button
           icon="x"
           variant="ghost"

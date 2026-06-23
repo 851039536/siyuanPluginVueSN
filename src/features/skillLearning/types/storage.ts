@@ -1,9 +1,14 @@
+import type {
+  CreateSkillDTO,
+  ReviewData,
+  SkillCard,
+  UpdateSkillDTO,
+} from "./index"
 /**
  * 技能学习功能 - 数据存储层
  */
 import { Plugin } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
-import type { SkillCard, CreateSkillDTO, UpdateSkillDTO, ReviewData } from "./index"
 
 export const STORAGE_KEY = "skill-learning-cards"
 const PRESET_FLAG_KEY = "skill-learning-preset-loaded"
@@ -121,7 +126,11 @@ export class SkillStorage {
       if (!unique) throw new Error("Title already exists")
     }
 
-    cards[idx] = { ...cards[idx], ...dto, updatedAt: Date.now() }
+    cards[idx] = {
+      ...cards[idx],
+      ...dto,
+      updatedAt: Date.now(),
+    }
     await this.storage.save(STORAGE_KEY, cards)
     return true
   }

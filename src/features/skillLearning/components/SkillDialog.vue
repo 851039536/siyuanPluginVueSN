@@ -1,66 +1,142 @@
 <template>
-  <div class="skill-dialog-overlay" @click.self="$emit('close')">
+  <div
+    class="skill-dialog-overlay"
+    @click.self="$emit('close')"
+  >
     <div class="skill-dialog">
-      <h3 class="skill-dialog__title">{{ isEdit ? t.editCard : t.addCard }}</h3>
+      <h3 class="skill-dialog__title">
+        {{ isEdit ? t.editCard : t.addCard }}
+      </h3>
       <div class="skill-dialog__body">
         <label class="skill-dialog__label">{{ t.title_ }}</label>
         <div class="skill-dialog__title-row">
-          <input v-model="form.title" class="skill-dialog__input" placeholder="输入题目..." />
+          <input
+            v-model="form.title"
+            class="skill-dialog__input"
+            placeholder="输入题目..."
+          />
           <button
             class="skill-dialog__ai-btn"
             :disabled="!form.title.trim() || aiGenerating"
-            @click="aiGenerate"
             :title="t.aiGenerate || 'AI 生成全部内容'"
+            @click="aiGenerate"
           >
-            <span v-if="aiGenerating" class="skill-dialog__ai-spinner" />
+            <span
+              v-if="aiGenerating"
+              class="skill-dialog__ai-spinner"
+            />
             <span v-else>✨</span>
           </button>
         </div>
-        <div v-if="aiError" class="skill-dialog__ai-error">{{ aiError }}</div>
+        <div
+          v-if="aiError"
+          class="skill-dialog__ai-error"
+        >
+          {{ aiError }}
+        </div>
 
         <label class="skill-dialog__label">{{ t.answer }}</label>
-        <textarea v-model="form.answer" class="skill-dialog__textarea" rows="3" placeholder="输入正确答案..." />
+        <textarea
+          v-model="form.answer"
+          class="skill-dialog__textarea"
+          rows="3"
+          placeholder="输入正确答案..."
+        />
 
         <label class="skill-dialog__label">{{ t.distractors || '干扰项（错误选项）' }}</label>
-        <input v-model="form.distractor1" class="skill-dialog__input" :placeholder="t.distractor1 || '错误选项 1'" />
-        <input v-model="form.distractor2" class="skill-dialog__input" :placeholder="t.distractor2 || '错误选项 2'" />
-        <input v-model="form.distractor3" class="skill-dialog__input" :placeholder="t.distractor3 || '错误选项 3'" />
+        <input
+          v-model="form.distractor1"
+          class="skill-dialog__input"
+          :placeholder="t.distractor1 || '错误选项 1'"
+        />
+        <input
+          v-model="form.distractor2"
+          class="skill-dialog__input"
+          :placeholder="t.distractor2 || '错误选项 2'"
+        />
+        <input
+          v-model="form.distractor3"
+          class="skill-dialog__input"
+          :placeholder="t.distractor3 || '错误选项 3'"
+        />
 
         <label class="skill-dialog__label">{{ t.codeSnippet }}</label>
-        <textarea v-model="form.codeSnippet" class="skill-dialog__textarea skill-dialog__code" rows="5" placeholder="输入代码片段..." spellcheck="false" />
+        <textarea
+          v-model="form.codeSnippet"
+          class="skill-dialog__textarea skill-dialog__code"
+          rows="5"
+          placeholder="输入代码片段..."
+          spellcheck="false"
+        />
 
         <div class="skill-dialog__row">
           <div class="skill-dialog__field">
             <label class="skill-dialog__label">{{ t.language }}</label>
-            <select v-model="form.language" class="skill-dialog__select">
-              <option value="csharp">C#</option>
-              <option value="javascript">JavaScript</option>
-              <option value="typescript">TypeScript</option>
-              <option value="vue">Vue</option>
-              <option value="other">Other</option>
+            <select
+              v-model="form.language"
+              class="skill-dialog__select"
+            >
+              <option value="csharp">
+                C#
+              </option>
+              <option value="javascript">
+                JavaScript
+              </option>
+              <option value="typescript">
+                TypeScript
+              </option>
+              <option value="vue">
+                Vue
+              </option>
+              <option value="other">
+                Other
+              </option>
             </select>
           </div>
           <div class="skill-dialog__field">
             <label class="skill-dialog__label">{{ t.difficulty }}</label>
-            <select v-model="form.difficulty" class="skill-dialog__select">
-              <option value="beginner">{{ t.beginner }}</option>
-              <option value="intermediate">{{ t.intermediate }}</option>
-              <option value="advanced">{{ t.advanced }}</option>
+            <select
+              v-model="form.difficulty"
+              class="skill-dialog__select"
+            >
+              <option value="beginner">
+                {{ t.beginner }}
+              </option>
+              <option value="intermediate">
+                {{ t.intermediate }}
+              </option>
+              <option value="advanced">
+                {{ t.advanced }}
+              </option>
             </select>
           </div>
         </div>
 
         <label class="skill-dialog__label">{{ t.category }}</label>
-        <input v-model="form.category" class="skill-dialog__input" placeholder="如: 异步编程, 设计模式..." />
+        <input
+          v-model="form.category"
+          class="skill-dialog__input"
+          placeholder="如: 异步编程, 设计模式..."
+        />
 
         <label class="skill-dialog__label">{{ t.tags }}</label>
-        <input v-model="tagsInput" class="skill-dialog__input" placeholder="标签用逗号分隔" />
+        <input
+          v-model="tagsInput"
+          class="skill-dialog__input"
+          placeholder="标签用逗号分隔"
+        />
       </div>
       <div class="skill-dialog__footer">
-        <button class="skill-dialog__btn skill-dialog__btn--cancel" @click="$emit('close')">
+        <button
+          class="skill-dialog__btn skill-dialog__btn--cancel"
+          @click="$emit('close')"
+        >
           {{ t.cancel }}
         </button>
-        <button class="skill-dialog__btn skill-dialog__btn--save" @click="handleSave">
+        <button
+          class="skill-dialog__btn skill-dialog__btn--save"
+          @click="handleSave"
+        >
           {{ t.save }}
         </button>
       </div>
@@ -69,10 +145,23 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, computed } from "vue"
 import type { Plugin } from "siyuan"
-import type { SkillCard, SkillI18n, CreateSkillDTO, Language, Difficulty } from "../types"
-import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi"
+import type {
+  CreateSkillDTO,
+  Difficulty,
+  Language,
+  SkillCard,
+  SkillI18n,
+} from "../types"
+import {
+  computed,
+  reactive,
+  ref,
+} from "vue"
+import {
+  callAI,
+  getApiConfigFromPlugin,
+} from "@/utils/aiApi"
 
 const props = defineProps<{
   i18n: SkillI18n

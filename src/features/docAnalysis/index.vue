@@ -239,8 +239,12 @@
             icon="mdi:file-check-outline"
             class="empty-icon"
           />
-          <p v-if="activePlatformFilter">{{ activePlatformName }} 已全部发布</p>
-          <p v-else>没有找到符合条件的文档</p>
+          <p v-if="activePlatformFilter">
+            {{ activePlatformName }} 已全部发布
+          </p>
+          <p v-else>
+            没有找到符合条件的文档
+          </p>
           <p class="empty-desc">
             尝试调整搜索条件或选择其他笔记本
           </p>
@@ -278,7 +282,10 @@
       v-if="showPublishTip"
       class="publish-tip"
     >
-      <h4><Icon icon="mdi:format-list-bulleted" height="14" /> 书签 · 发布标准</h4>
+      <h4><Icon
+        icon="mdi:format-list-bulleted"
+        height="14"
+      /> 书签 · 发布标准</h4>
       <ul>
         <li>
           <span class="tip-badge pending">待发布</span>

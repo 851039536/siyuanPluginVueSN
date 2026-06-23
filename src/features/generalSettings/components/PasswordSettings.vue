@@ -61,9 +61,9 @@ import {
   onUnmounted,
   ref,
 } from "vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 import { usePlugin } from "@/main"
 import { emitCustomEvent } from "@/utils/eventBus"
-import IconWrapper from "@/components/IconWrapper.vue"
 
 import { GeneralSettingsStorage } from "../types/storage"
 

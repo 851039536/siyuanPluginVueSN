@@ -1,22 +1,41 @@
 <template>
-  <div class="gp-mask" @click.self="$emit('close')">
-    <div class="gp-dialog" style="width: 340px;">
+  <div
+    class="gp-mask"
+    @click.self="$emit('close')"
+  >
+    <div
+      class="gp-dialog"
+      style="width: 340px;"
+    >
       <div class="gp-dialog-header">
         <span class="gp-dialog-title">{{ i18n.manageCategories || '管理分类' }}</span>
-        <button class="vp-btn vp-btn--ghost vp-btn--sm" @click="$emit('close')">
+        <button
+          class="vp-btn vp-btn--ghost vp-btn--sm"
+          @click="$emit('close')"
+        >
           <Icon icon="mdi:close" />
         </button>
       </div>
       <div class="gp-dialog-body">
-        <div v-for="cat in categories" :key="cat.id" class="gp-cat-row">
-          <span class="gp-cat-dot-sm" :style="{ background: cat.color }" />
+        <div
+          v-for="cat in categories"
+          :key="cat.id"
+          class="gp-cat-row"
+        >
+          <span
+            class="gp-cat-dot-sm"
+            :style="{ background: cat.color }"
+          />
           <span class="gp-cat-name-sm">{{ cat.name }}</span>
           <button
             v-if="cat.id !== '__ungrouped__'"
             class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
             @click="$emit('delete-category', cat.id)"
           >
-            <Icon icon="mdi:delete-outline" height="12" />
+            <Icon
+              icon="mdi:delete-outline"
+              height="12"
+            />
           </button>
         </div>
         <div class="gp-cat-add-row">
@@ -24,8 +43,8 @@
             v-model="newCatName"
             class="gp-input"
             :placeholder="i18n.catNamePlaceholder || '分类名称'"
-            @keyup.enter="addCategory"
             style="flex:1"
+            @keyup.enter="addCategory"
           />
           <input
             v-model="newCatColor"
@@ -38,7 +57,10 @@
             :disabled="!newCatName.trim()"
             @click="addCategory"
           >
-            <Icon icon="mdi:plus" height="13" />
+            <Icon
+              icon="mdi:plus"
+              height="13"
+            />
           </button>
         </div>
       </div>
@@ -47,16 +69,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
 import { Icon } from "@iconify/vue"
+import { ref } from "vue"
 
 defineProps<{
   i18n: Record<string, any>
-  categories: { id: string; name: string; color: string }[]
+  categories: { id: string, name: string, color: string }[]
 }>()
 
 const emit = defineEmits<{
-  close: []
+  "close": []
   "add-category": [name: string, color: string]
   "delete-category": [id: string]
 }>()

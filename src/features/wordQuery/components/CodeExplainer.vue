@@ -139,8 +139,8 @@
 </template>
 
 <script setup lang="ts">
-import type { CodeExplanationResult } from "../utils/codeUtils"
 import type { Plugin } from "siyuan"
+import type { CodeExplanationResult } from "../utils/codeUtils"
 import { showMessage } from "siyuan"
 import { ref } from "vue"
 import Button from "@/components/Button.vue"
@@ -163,7 +163,11 @@ const codeInput = ref("")
 const result = ref<CodeExplanationResult | null>(null)
 const isExplaining = ref(false)
 
-const { errorMessage, clearErrorOnInput, getApiConfig } = useCodeFeature(props.plugin)
+const {
+  errorMessage,
+  clearErrorOnInput,
+  getApiConfig,
+} = useCodeFeature(props.plugin)
 clearErrorOnInput(codeInput)
 
 function handleInput() {

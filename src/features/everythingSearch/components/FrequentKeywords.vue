@@ -3,11 +3,17 @@
     <div class="vp-freq-keywords__row">
       <span class="vp-freq-keywords__label">常用关键字</span>
 
-      <div v-if="keywords.length === 0" class="vp-freq-keywords__empty">
+      <div
+        v-if="keywords.length === 0"
+        class="vp-freq-keywords__empty"
+      >
         暂无，点击 + 添加
       </div>
 
-      <template v-for="kw in keywords" :key="kw">
+      <template
+        v-for="kw in keywords"
+        :key="kw"
+      >
         <button
           class="vp-freq-keywords__chip"
           :title="`搜索: ${kw}`"
@@ -23,7 +29,10 @@
       </template>
 
       <!-- 添加输入区 -->
-      <div v-if="isAdding" class="vp-freq-keywords__add-wrap">
+      <div
+        v-if="isAdding"
+        class="vp-freq-keywords__add-wrap"
+      >
         <input
           ref="addInputRef"
           v-model="newKeyword"
@@ -41,7 +50,10 @@
         >
           确定
         </button>
-        <button class="vp-freq-keywords__add-cancel" @click="cancelAdd">
+        <button
+          class="vp-freq-keywords__add-cancel"
+          @click="cancelAdd"
+        >
           取消
         </button>
       </div>
@@ -58,7 +70,10 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, ref } from "vue"
+import {
+  nextTick,
+  ref,
+} from "vue"
 
 interface Props {
   keywords: string[]

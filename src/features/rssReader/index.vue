@@ -50,9 +50,18 @@
             {{ selectedItem!.title }}
           </h2>
           <div class="detail-meta">
-            <span v-if="selectedItem!.feedTitle" class="meta-chip">{{ selectedItem!.feedTitle }}</span>
-            <span v-if="selectedItem!.author" class="meta-chip"><span class="meta-key">AUTHOR</span> {{ selectedItem!.author }}</span>
-            <span v-if="selectedItem!.pubDate" class="meta-chip">{{ formatDate(selectedItem!.pubDate) }}</span>
+            <span
+              v-if="selectedItem!.feedTitle"
+              class="meta-chip"
+            >{{ selectedItem!.feedTitle }}</span>
+            <span
+              v-if="selectedItem!.author"
+              class="meta-chip"
+            ><span class="meta-key">AUTHOR</span> {{ selectedItem!.author }}</span>
+            <span
+              v-if="selectedItem!.pubDate"
+              class="meta-chip"
+            >{{ formatDate(selectedItem!.pubDate) }}</span>
           </div>
           <div
             class="detail-body"

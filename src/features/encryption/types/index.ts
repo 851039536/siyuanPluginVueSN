@@ -3,9 +3,9 @@
  */
 
 import {
-  arrayBufferToBase64,
   aesGcmDecrypt,
   aesGcmEncrypt,
+  arrayBufferToBase64,
   base64ToUint8Array,
   deriveAESKey,
 } from "@/utils/cryptoPrimitives"
@@ -35,7 +35,10 @@ export async function encryptText(
   text: string,
   key: CryptoKey,
 ): Promise<string> {
-  const { iv, ciphertext } = await aesGcmEncrypt(
+  const {
+    iv,
+    ciphertext,
+  } = await aesGcmEncrypt(
     new TextEncoder().encode(text),
     key,
   )

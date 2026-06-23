@@ -136,8 +136,8 @@ src/features/skillLearning/
 ```typescript
 export interface SkillCard {
   // ... 现有字段保持不变
-  correctCount?: number   // 新增：闪卡答题正确次数
-  wrongCount?: number     // 新增：闪卡答题错误次数
+  correctCount?: number // 新增：闪卡答题正确次数
+  wrongCount?: number // 新增：闪卡答题错误次数
 }
 ```
 
@@ -159,9 +159,19 @@ export function useFilteredCards(cardsRef: Ref<SkillCard[]>) {
   const paginated: ComputedRef<boolean>
   const paginatedCards: ComputedRef<SkillCard[]>
 
-  return { searchQuery, selectedLanguage, selectedCategory, selectedDifficulty,
-           page, languageList, categoryList, filteredCards, totalPages,
-           paginated, paginatedCards }
+  return {
+    searchQuery,
+    selectedLanguage,
+    selectedCategory,
+    selectedDifficulty,
+    page,
+    languageList,
+    categoryList,
+    filteredCards,
+    totalPages,
+    paginated,
+    paginatedCards,
+  }
 }
 ```
 
@@ -170,8 +180,8 @@ export function useFilteredCards(cardsRef: Ref<SkillCard[]>) {
 ```typescript
 // storage.ts - 合并为单次存储操作
 async function updatePracticeAndReviewData(
-  id: string, 
-  reviewData: ReviewData, 
-  isCorrect?: boolean
+  id: string,
+  reviewData: ReviewData,
+  isCorrect?: boolean,
 ): Promise<boolean>
 ```

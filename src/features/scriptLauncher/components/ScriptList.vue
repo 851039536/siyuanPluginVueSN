@@ -80,7 +80,9 @@
                 <span v-if="script.lastRunAt">{{ formatLastRun(script.lastRunAt) }}</span>
                 <span v-else>{{ i18n.neverRun || "未运行" }}</span>
               </p>
-              <p class="script-list__card-path">data/storage/sc/{{ script.fileName }}</p>
+              <p class="script-list__card-path">
+                data/storage/sc/{{ script.fileName }}
+              </p>
             </div>
 
             <template #footer>

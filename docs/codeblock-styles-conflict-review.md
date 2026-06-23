@@ -1,7 +1,7 @@
 # 代码块样式冲突审查报告
 
-**审查日期**：2026-06-17  
-**审查范围**：静态 SCSS 预设样式 vs 动态 JS 注入样式  
+**审查日期**：2026-06-17
+**审查范围**：静态 SCSS 预设样式 vs 动态 JS 注入样式
 **相关文件**：
 - `src/features/generalSettings/styles/codeblockThemes.scss` — 静态 SCSS 层
 - `src/features/generalSettings/utils/styles.ts` → `applyCodeBlockEnhancedStyles()` — 动态 JS 层

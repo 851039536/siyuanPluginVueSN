@@ -1,0 +1,10 @@
+@use "@/variables" as *;
+
+// ==================== 删除确认 — DeleteConfirmModal.vue ====================
+
+.vp-delete-msg {
+  margin: 0 0 $spacing-4;
+  color: var(--b3-theme-on-background);
+  font-size: $font-size-sm;
+  line-height: 1.5;
+}

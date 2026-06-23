@@ -117,5 +117,6 @@ function handleDelete(id: string) {
 </script>
 
 <style lang="scss" scoped>
+@use '../styles/CategoryManageModal.scss';
 @use '../styles/index.scss';
 </style>

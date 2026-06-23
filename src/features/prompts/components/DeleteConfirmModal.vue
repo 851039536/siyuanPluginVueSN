@@ -66,5 +66,6 @@ defineEmits<{
 </script>
 
 <style lang="scss" scoped>
+@use '../styles/DeleteConfirmModal.scss';
 @use '../styles/index.scss';
 </style>

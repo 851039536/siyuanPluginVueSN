@@ -1,7 +1,7 @@
 @use "@/variables" as *;
 @use "./mixins" as m;
 
-// ==================== 表单/编辑器样式 ====================
+// ==================== 表单/编辑器 — PromptFormModal.vue ====================
 
 .vp-form {
   .vp-form-group {
@@ -39,13 +39,6 @@
       min-height: 100px;
       line-height: 1.5;
     }
-  }
-
-  .vp-form-actions {
-    display: flex;
-    gap: $spacing-3;
-    justify-content: flex-end;
-    margin-top: $spacing-6;
   }
 }
 

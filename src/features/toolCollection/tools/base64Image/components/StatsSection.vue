@@ -26,6 +26,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue"
+import { formatFileSize } from "../utils/format"
 
 interface Props {
   title: string
@@ -49,14 +50,6 @@ const ratioClass = computed(() => {
   if (r < 0) return "negative"
   return "neutral"
 })
-
-const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return "0 Bytes"
-  const k = 1024
-  const sizes = ["Bytes", "KB", "MB", "GB"]
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return `${Math.round((bytes / k ** i) * 100) / 100} ${sizes[i]}`
-}
 </script>
 
 <style scoped lang="scss">

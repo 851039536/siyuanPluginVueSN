@@ -33,6 +33,17 @@
       flex-shrink: 0;
     }
 
+    .vp-chip-count {
+      font-size: 10px;
+      font-weight: $font-weight-medium;
+      min-width: 18px;
+      height: 18px;
+      line-height: 18px;
+      text-align: center;
+      border-radius: $radius-full;
+      background: var(--b3-theme-on-surface-lighter);
+    }
+
     &:hover {
       border-color: var(--b3-theme-primary);
     }
@@ -44,6 +55,10 @@
 
       .vp-chip-dot {
         background: var(--b3-theme-on-primary) !important;
+      }
+
+      .vp-chip-count {
+        background: var(--b3-theme-primary-lighter);
       }
     }
   }

@@ -2,55 +2,50 @@
   <!-- 主弹窗 -->
   <div
     v-if="showModal"
-    class="vp-overlay"
-    @click="closeModal"
+    class="vp-modal"
     @keydown.escape="closeModal"
   >
-    <div
-      class="vp-modal"
-      @click.stop
-    >
-      <div class="vp-modal-header">
-        <div class="vp-modal-title">
-          <IconWrapper
-            name="starCircle"
-            :size="24"
-            class="vp-modal-icon"
-          />
-          <h2>{{ i18n?.title || '提示词库' }}</h2>
-        </div>
-        <div class="vp-modal-actions">
-          <Button
-            variant="ghost"
-            size="small"
-            icon="listBulleted"
-            :title="i18n?.manageCategories || '管理分类'"
-            @click="showCategoryManage = true"
-          />
-          <Button
-            variant="ghost"
-            icon="close"
-            size="small"
-            @click="closeModal"
-          />
-        </div>
+    <div class="vp-modal-header">
+      <div class="vp-modal-title">
+        <IconWrapper
+          name="starCircle"
+          :size="24"
+          class="vp-modal-icon"
+        />
+        <h2>{{ i18n?.title || '提示词库' }}</h2>
       </div>
-
-      <PromptsGrid
-        :filtered-prompts="filteredPrompts"
-        :all-categories="allCategories"
-        :selected-category="selectedCategory"
-        :search-query="searchQuery"
-        :loading="loading"
-        :i18n="i18n"
-        @update:search-query="searchQuery = $event"
-        @select-category="selectedCategory = $event"
-        @add-prompt="showAddModal = true; editingPrompt = null"
-        @edit-prompt="(p: Prompt) => { editingPrompt = p; showAddModal = true }"
-        @request-delete="deleteConfirmTarget = $event"
-        @copy-content="copyContent"
-      />
+      <div class="vp-modal-actions">
+        <Button
+          variant="ghost"
+          size="small"
+          icon="listBulleted"
+          :title="i18n?.manageCategories || '管理分类'"
+          @click="showCategoryManage = true"
+        />
+        <Button
+          variant="ghost"
+          icon="close"
+          size="small"
+          @click="closeModal"
+        />
+      </div>
     </div>
+
+    <PromptsGrid
+      :filtered-prompts="filteredPrompts"
+      :all-categories="allCategories"
+      :selected-category="selectedCategory"
+      :search-query="searchQuery"
+      :category-counts="categoryCounts"
+      :loading="loading"
+      :i18n="i18n"
+      @update:search-query="searchQuery = $event"
+      @select-category="selectedCategory = $event"
+      @add-prompt="showAddModal = true; editingPrompt = null"
+      @edit-prompt="(p: Prompt) => { editingPrompt = p; showAddModal = true }"
+      @request-delete="deleteConfirmTarget = $event"
+      @copy-content="copyContent"
+    />
   </div>
 
   <!-- 添加/编辑弹窗 -->
@@ -141,6 +136,15 @@ const {
   add: addCategory,
   remove: removeCategory,
 } = useCategoryManager(storage)
+
+// --- 分类统计 ---
+const categoryCounts = computed(() => {
+  const counts: Record<string, number> = {}
+  for (const p of prompts.value) {
+    counts[p.category] = (counts[p.category] || 0) + 1
+  }
+  return counts
+})
 
 // --- 过滤计算 ---
 // 缓存分类元数据，仅在分类列表变化时重建

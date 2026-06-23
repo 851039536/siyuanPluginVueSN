@@ -118,4 +118,11 @@
       color: $brand-light;
     }
   }
+
+  // 删除按钮 — 危险操作悬停红色
+  &__action--delete:hover {
+    background: #e74c3c;
+    border-color: #e74c3c;
+    color: #fff;
+  }
 }

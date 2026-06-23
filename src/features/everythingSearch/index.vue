@@ -44,6 +44,7 @@
           @item-open="handleItemOpen"
           @item-show-in-folder="handleItemShowInFolder"
           @item-copy-path="handleItemCopyPath"
+          @item-delete="handleItemDelete"
         />
 
         <!-- 底部配置 -->
@@ -76,6 +77,7 @@ import { usePlugin } from "@/main"
 import { copyToClipboard } from "@/utils/domUtils"
 import {
   checkEverythingService,
+  deleteFile,
   getFullPath,
   openFile,
   searchFiles,
@@ -172,8 +174,17 @@ const checkService = async () => {
 
 /** 搜索 */
 const handleSearch = async () => {
-  const query = searchQuery.value.trim()
-  if (!query) return
+  // 拼接基础查询与文件大小过滤条件
+  const rawQuery = searchQuery.value.trim()
+  if (!rawQuery) return
+
+  let query = rawQuery
+  if (options.minSize > 0) {
+    query += ` size:>${options.minSize}${options.minSizeUnit.toLowerCase()}`
+  }
+  if (options.maxSize > 0) {
+    query += ` size:<${options.maxSize}${options.maxSizeUnit.toLowerCase()}`
+  }
 
   // 取消之前的防抖定时器
   if (debounceTimer.value) {
@@ -291,6 +302,21 @@ const handleItemShowInFolder = (item: EverythingSearchResult) => {
 const handleItemCopyPath = async (item: EverythingSearchResult) => {
   const ok = await copyToClipboard(getFullPath(item))
   showMessage(ok ? "路径已复制" : "复制失败", 2000, ok ? "info" : "error")
+}
+
+/** 删除文件 */
+const handleItemDelete = (item: EverythingSearchResult) => {
+  const fullPath = getFullPath(item)
+  try {
+    deleteFile(fullPath)
+    searchState.results = searchState.results.filter((r) => r !== item)
+    if (searchState.results.length === 0) {
+      searchState.status = "empty"
+    }
+    showMessage("文件已移入回收站", 2000, "info")
+  } catch (error) {
+    showMessage(`删除失败: ${(error as Error).message}`, 3000, "error")
+  }
 }
 
 /** 键盘事件（仅在弹窗可见时监听） */

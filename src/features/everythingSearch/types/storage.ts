@@ -32,6 +32,10 @@ export const DEFAULT_OPTIONS: SearchOptions = {
   sort: "date_modified",
   ascending: false,
   advancedMode: false,
+  minSize: 0,
+  minSizeUnit: 'KB',
+  maxSize: 0,
+  maxSizeUnit: 'KB',
 }
 
 /**

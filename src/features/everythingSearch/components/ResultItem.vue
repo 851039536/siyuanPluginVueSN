@@ -50,6 +50,14 @@
       >
         <svg><use xlink:href="#iconCopy" /></svg>
       </button>
+      <button
+        class="vp-result-item__action vp-result-item__action--delete"
+        title="删除"
+        aria-label="删除"
+        @click.stop="handleDelete"
+      >
+        <svg><use xlink:href="#iconTrashcan" /></svg>
+      </button>
     </div>
   </div>
 </template>
@@ -74,6 +82,7 @@ interface Emits {
   (e: "open", item: EverythingSearchResult): void
   (e: "showInFolder", item: EverythingSearchResult): void
   (e: "copyPath", item: EverythingSearchResult): void
+  (e: "delete", item: EverythingSearchResult): void
 }
 
 const props = defineProps<Props>()
@@ -117,6 +126,7 @@ const handleDblClick = () => emit("dblClick", props.item)
 const handleOpen = () => emit("open", props.item)
 const handleShowInFolder = () => emit("showInFolder", props.item)
 const handleCopyPath = () => emit("copyPath", props.item)
+const handleDelete = () => emit("delete", props.item)
 </script>
 
 <style scoped lang="scss">

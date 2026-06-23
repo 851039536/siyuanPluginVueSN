@@ -32,6 +32,14 @@ export interface SearchOptions {
   ascending: boolean
   /** 高级搜索模式（显示语法帮助面板） */
   advancedMode: boolean
+  /** 最小文件大小过滤值（0=禁用） */
+  minSize: number
+  /** 最小文件大小单位 */
+  minSizeUnit: 'KB' | 'MB' | 'GB'
+  /** 最大文件大小过滤值（0=禁用） */
+  maxSize: number
+  /** 最大文件大小单位 */
+  maxSizeUnit: 'KB' | 'MB' | 'GB'
 }
 
 /** 搜索结果状态 */

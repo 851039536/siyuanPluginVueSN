@@ -262,6 +262,10 @@ const handleOptionUpdate = (
   value: SearchOptionsType[keyof SearchOptionsType],
 ) => {
   Object.assign(options, { [key]: value })
+  // 当前有搜索词时立即重新搜索
+  if (searchQuery.value.trim()) {
+    handleSearch()
+  }
 }
 
 /** 处理配置更新 */

@@ -29,10 +29,13 @@ class MyFeatureStorage {
 import { createVueDockApp } from '@/utils/vueAppHelper'
 
 createVueDockApp(plugin, MyPanel, {
-  position: "RightTop", width: 380,
-  icon: "iconSettings", title: "标题", type: "my-feature-dock",
+  position: "RightTop",
+  width: 380,
+  icon: "iconSettings",
+  title: "标题",
+  type: "my-feature-dock",
   i18n: plugin.i18n.myFeature || {},
-  extraProps: { onCustom: handler },  // 可选额外 props
+  extraProps: { onCustom: handler }, // 可选额外 props
 })
 ```
 
@@ -42,13 +45,19 @@ createVueDockApp(plugin, MyPanel, {
 import { createModalVueApp } from '@/utils/vueAppHelper'
 
 this.modal = createModalVueApp(MyDialog, {
-  maskId: "my-feature-mask", width: "90vw", height: "85vh",
-  persistent: false,  // true: 关闭时隐藏 DOM 保留 Vue 实例；false: 关闭即销毁
+  maskId: "my-feature-mask",
+  width: "90vw",
+  height: "85vh",
+  persistent: false, // true: 关闭时隐藏 DOM 保留 Vue 实例；false: 关闭即销毁
   getCloseHandler: () => this.close.bind(this),
-  buildProps: () => ({ onClose: this.close.bind(this), i18n, plugin }),
+  buildProps: () => ({
+    onClose: this.close.bind(this),
+    i18n,
+    plugin,
+  }),
 })
-this.modal.open()   // 打开（persistent 模式复用已有实例）
-this.modal.close()  // 关闭（persistent 仅 display:none）
+this.modal.open() // 打开（persistent 模式复用已有实例）
+this.modal.close() // 关闭（persistent 仅 display:none）
 this.modal.destroy() // 彻底销毁（persistent 模式卸载时必调）
 // this.modal.visible → boolean
 ```
@@ -96,7 +105,7 @@ class MyFeature {
   constructor(plugin: Plugin) {
     this.modal = createModalVueApp(MyPanel, {
       maskId: "my-feature-mask",
-      persistent: true,          // 关键：关闭时仅 display:none，不销毁 Vue
+      persistent: true, // 关键：关闭时仅 display:none，不销毁 Vue
       getCloseHandler: () => this.close,
       buildProps: () => ({
         onClose: this.close,
@@ -131,7 +140,10 @@ private startTimer() {
 
 ```typescript
 // index.vue
-import { onMounted, onUnmounted } from "vue"
+import {
+  onMounted,
+  onUnmounted,
+} from "vue"
 
 function handleTick() {
   // 执行后台任务
@@ -198,7 +210,11 @@ import { useStatusBarTask } from '@/features/statusBar/composables/useStatusBarT
 const task = useStatusBarTask('my-feature', 'ph:archive')
 
 // 更新进度 → 状态栏显示 "导出中 45%"，带脉冲动画
-task.progress({ label: '导出中', percent: 45, phase: '压缩' })
+task.progress({
+  label: '导出中',
+  percent: 45,
+  phase: '压缩',
+})
 
 // 完成 → 显示 "导出完成"，hover 看详情，5 秒后自动消失
 task.complete('导出完成', '已导出 100 条数据')
@@ -222,52 +238,81 @@ task.clear()
 ### DOM 操作
 
 ```typescript
-import { copyToClipboard, fallbackCopyToClipboard } from '@/utils/domUtils'
+import {
+  copyToClipboard,
+  fallbackCopyToClipboard,
+  injectStyle,
+  removeStyle,
+
+} from '@/utils/domUtils'
+
+import {
+  triggerBlobDownload,
+  triggerDownload,
+} from '@/utils/domUtils' // Blob → 自动 createObjectURL + revoke
+
 // 优先 Clipboard API，失败降级到 execCommand
 const ok = await copyToClipboard('text')
-
-import { triggerDownload, triggerBlobDownload } from '@/utils/domUtils'
-triggerDownload(url, 'file.zip')        // url 或 Blob URL
-triggerBlobDownload(blob, 'file.json')  // Blob → 自动 createObjectURL + revoke
-
-import { injectStyle, removeStyle } from '@/utils/domUtils'
-injectStyle('my-id', '.cls { color: red; }')  // 幂等：已存在则替换
+triggerDownload(url, 'file.zip') // url 或 Blob URL
+triggerBlobDownload(blob, 'file.json')
+injectStyle('my-id', '.cls { color: red; }') // 幂等：已存在则替换
 removeStyle('my-id')
 ```
 
 ### Node 模块加载
 
 ```typescript
-import { getNodeModules, getNodeProcessModules, getNodeFsPathOs } from '@/utils/nodeModules'
+import {
+  getNodeFsPathOs,
+  getNodeModules,
+  getNodeProcessModules,
+} from '@/utils/nodeModules'
 
-const node = getNodeModules()          // → { fs, path } | null
-const proc = getNodeProcessModules()   // → { child_process, os } | null
-const all  = getNodeFsPathOs()         // → { fs, path, os } | null
+const node = getNodeModules() // → { fs, path } | null
+const proc = getNodeProcessModules() // → { child_process, os } | null
+const all = getNodeFsPathOs() // → { fs, path, os } | null
 // 仅在 Electron 环境可用，纯浏览器返回 null
 ```
 
 ### 加密
 
 ```typescript
-// 配置加密（settingsCrypto）：应用内嵌密钥，自动加解密 PluginSettings 敏感字段
-import { encryptSetting, decryptSetting, clearCachedKey } from '@/utils/settingsCrypto'
-const encrypted = await encryptSetting('plaintext')  // → "enc:iv.ciphertext"
-const plain     = await decryptSetting(encrypted)    // 无 enc: 前缀的旧数据直接返回
-clearCachedKey()  // 插件卸载时调用
-
 // 加密基元（cryptoPrimitives）：各模块用自身密钥策略，共享底层操作
-import { deriveAESKey, aesGcmEncrypt, aesGcmDecrypt, deriveBits } from '@/utils/cryptoPrimitives'
+import {
+  aesGcmDecrypt,
+  aesGcmEncrypt,
+  deriveAESKey,
+  deriveBits,
+} from '@/utils/cryptoPrimitives'
+
+// 配置加密（settingsCrypto）：应用内嵌密钥，自动加解密 PluginSettings 敏感字段
+import {
+  clearCachedKey,
+  decryptSetting,
+  encryptSetting,
+} from '@/utils/settingsCrypto'
+  // 插件卸载时调用
+const encrypted = await encryptSetting('plaintext') // → "enc:iv.ciphertext"
+const plain = await decryptSetting(encrypted) // 无 enc: 前缀的旧数据直接返回
+clearCachedKey()
 const key = await deriveAESKey(passwordBytes, salt, 100000, 256)
-const { iv, ciphertext } = await aesGcmEncrypt(dataBytes, key)
+const {
+  iv,
+  ciphertext,
+} = await aesGcmEncrypt(dataBytes, key)
 const plaintext = await aesGcmDecrypt(ciphertext, key, iv)
 ```
 
 ### AI 调用
 
 ```typescript
-import { callAI, callAIStream, getApiConfigFromPlugin } from '@/utils/aiApi'
+import {
+  callAI,
+  callAIStream,
+  getApiConfigFromPlugin,
+} from '@/utils/aiApi'
 
-const config = getApiConfigFromPlugin(plugin)  // 从 PluginSettings 提取 AI 配置
+const config = getApiConfigFromPlugin(plugin) // 从 PluginSettings 提取 AI 配置
 const result = await callAI(prompt, config, { model: 'gpt-4o' })
 // 类型: AiProvider, AiApiConfig, AiCallOptions 定义在 src/types/ai.ts
 ```
@@ -276,9 +321,16 @@ const result = await callAI(prompt, config, { model: 'gpt-4o' })
 
 ```typescript
 // src/index.ts onload 同步阶段（addDock 等 API 必须同步完成）
-import { loadFeatureFlagsSync, setFeatureFlagsDir } from '@/config/settings'
+import {
+  loadFeatureFlagsSync,
+  setFeatureFlagsDir,
+} from '@/config/settings'
+
 setFeatureFlagsDir((this as any).dataDir)
-this.settings = { ...DEFAULT_SETTINGS, ...loadFeatureFlagsSync() }
+this.settings = {
+  ...DEFAULT_SETTINGS,
+  ...loadFeatureFlagsSync(),
+}
 
 // 开关 key 映射：featureId → enableXxx（qrCode → enableQRCode，aiContentGenerator → enableAIContentGenerator）
 // 新功能需在 FEATURE_ID_TO_KEY_MAP 处理缩写词映射
@@ -287,10 +339,18 @@ this.settings = { ...DEFAULT_SETTINGS, ...loadFeatureFlagsSync() }
 ### 全局设置
 
 ```typescript
-import { loadSettings, saveSettings, clearCachedKey } from '@/config/settings'
+import {
+  clearCachedKey,
+  loadSettings,
+  saveSettings,
+} from '@/config/settings'
+
 const settings = await loadSettings(plugin)
-await saveSettings(plugin, { ...settings, enableXxx: true })
-clearCachedKey()  // 卸载时
+await saveSettings(plugin, {
+  ...settings,
+  enableXxx: true,
+})
+clearCachedKey() // 卸载时
 // 注意：settings.ts 是唯一允许直接调用 plugin.loadData/saveData 的例外
 ```
 
@@ -301,7 +361,10 @@ clearCachedKey()  // 卸载时
 路径**相对于工作区根目录**（不是 `data/`）。存到 `data/` 子目录必须带 `data/` 前缀：
 
 ```typescript
-import { getFile, putFile } from '@/api'
+import {
+  getFile,
+  putFile,
+} from '@/api'
 
 await putFile("data/storage/sc/script.py", false, file)
 const blob = await getFile("data/storage/sc/script.py")

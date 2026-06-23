@@ -179,7 +179,7 @@ defineExpose({
   &__wrapper {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: $spacing-3;
     position: relative;
   }
 

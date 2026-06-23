@@ -91,6 +91,10 @@
   background: var(--b3-theme-surface-light);
   margin-bottom: 8px;
 
+  &--hidden {
+    opacity: 0.45;
+  }
+
   &-drag {
     display: flex;
     align-items: center;
@@ -193,6 +197,17 @@
   &:disabled {
     opacity: 0.3;
     cursor: not-allowed;
+  }
+
+  &--hidden {
+    color: var(--b3-theme-on-surface-variant);
+    opacity: 0.5;
+
+    &:hover:not(:disabled) {
+      border-color: var(--b3-theme-primary);
+      color: var(--b3-theme-primary);
+      opacity: 1;
+    }
   }
 
   &--danger {

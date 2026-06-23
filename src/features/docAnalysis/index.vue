@@ -46,7 +46,7 @@
     <div class="platform-filter-bar">
       <span class="platform-filter-label">平台过滤</span>
       <button
-        v-for="platform in PLATFORM_META"
+        v-for="platform in visiblePlatforms"
         :key="platform.id"
         class="platform-chip"
         :class="{ active: activePlatformFilter === platform.id }"
@@ -403,6 +403,9 @@ const {
   savePlatformMeta,
   platformUnpublishedCounts,
 } = useDocAnalysis(props.plugin)
+
+/** 非隐藏平台（过滤栏显示用） */
+const visiblePlatforms = computed(() => PLATFORM_META.value.filter((p) => !p.hidden))
 
 const showPublishTip = ref(false)
 

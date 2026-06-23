@@ -216,7 +216,7 @@ const handleClick = (event: MouseEvent) => {
   // 尺寸变体
   &--small {
     .si-card__header {
-      padding: 10px 12px;
+      padding: 10px $spacing-3;
     }
 
     .si-card__title {
@@ -228,11 +228,11 @@ const handleClick = (event: MouseEvent) => {
     }
 
     .si-card__body {
-      padding: 12px;
+      padding: $spacing-3;
     }
 
     .si-card__footer {
-      padding: 10px 12px;
+      padding: 10px $spacing-3;
     }
 
     .si-card__cover {
@@ -242,7 +242,7 @@ const handleClick = (event: MouseEvent) => {
 
   &--medium {
     .si-card__header {
-      padding: 14px 16px;
+      padding: 14px $spacing-4;
     }
 
     .si-card__title {
@@ -254,11 +254,11 @@ const handleClick = (event: MouseEvent) => {
     }
 
     .si-card__body {
-      padding: 16px;
+      padding: $spacing-4;
     }
 
     .si-card__footer {
-      padding: 14px 16px;
+      padding: 14px $spacing-4;
     }
 
     .si-card__cover {
@@ -268,7 +268,7 @@ const handleClick = (event: MouseEvent) => {
 
   &--large {
     .si-card__header {
-      padding: 18px 20px;
+      padding: 18px $spacing-5;
     }
 
     .si-card__title {
@@ -280,11 +280,11 @@ const handleClick = (event: MouseEvent) => {
     }
 
     .si-card__body {
-      padding: 20px;
+      padding: $spacing-5;
     }
 
     .si-card__footer {
-      padding: 18px 20px;
+      padding: 18px $spacing-5;
     }
 
     .si-card__cover {
@@ -334,7 +334,7 @@ const handleClick = (event: MouseEvent) => {
 
     &-extra {
       flex-shrink: 0;
-      margin-left: 12px;
+      margin-left: $spacing-3;
     }
   }
 
@@ -347,7 +347,7 @@ const handleClick = (event: MouseEvent) => {
   }
 
   &__subtitle {
-    margin: 4px 0 0;
+    margin: $spacing-1 0 0;
     font-family: $font-body;
     font-size: $font-size-xs;
     color: var(--b3-theme-secondary, $brand-mid-gray);

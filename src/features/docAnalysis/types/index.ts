@@ -199,6 +199,8 @@ export interface PlatformMeta {
   matchers: string[]
   name: string
   url: string
+  /** 隐藏该平台（不在过滤栏显示，分析仍纳入统计） */
+  hidden?: boolean
 }
 
 // ============================================================

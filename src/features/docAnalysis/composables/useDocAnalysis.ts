@@ -6,6 +6,7 @@ import type {
   DocStats,
   DuplicateNameGroup,
   FilterOptions,
+  PlatformMeta,
   QueryState,
 } from "../types/index"
 
@@ -22,6 +23,7 @@ import {
 } from "@/api"
 import {
   DEFAULT_FILTER_OPTIONS,
+  DEFAULT_PLATFORM_META,
   DocAnalysisStorage,
 } from "../types/storage"
 import { DEFAULT_DOC_STATS } from "../utils/defaults"
@@ -57,78 +59,15 @@ const SIZE_WORDCOUNT_SUBQUERY = `
   GROUP BY root_id
 `
 
-/** 平台元数据：单一数据源，所有平台列表由此推导 */
-export const PLATFORM_META: { id: string, matchers: string[], name: string, url: string }[] = [
-  {
-    id: "csdn",
-    matchers: ["csdn"],
-    name: "CSDN",
-    url: "https://mp.csdn.net/mp_blog/creation/editor",
-  },
-  {
-    id: "zhihu",
-    matchers: ["zhihu"],
-    name: "知乎",
-    url: "https://zhuanlan.zhihu.com/write",
-  },
-  {
-    id: "juejin",
-    matchers: ["juejin"],
-    name: "掘金",
-    url: "https://juejin.cn/editor/drafts/new",
-  },
-  {
-    id: "cnblogs",
-    matchers: ["cnblogs", "blog"],
-    name: "博客园",
-    url: "https://i.cnblogs.com/posts/edit",
-  },
-  {
-    id: "bili",
-    matchers: ["bili", "bibi"],
-    name: "B站",
-    url: "https://www.bilibili.com/",
-  },
-  {
-    id: "gzh",
-    matchers: ["gzh"],
-    name: "公众号",
-    url: "",
-  },
-  {
-    id: "jianshu",
-    matchers: ["jianshu"],
-    name: "简书",
-    url: "https://www.jianshu.com/writer",
-  },
-  {
-    id: "cto51",
-    matchers: ["cto51"],
-    name: "51CTO",
-    url: "https://blog.51cto.com/writer",
-  },
-  {
-    id: "segmentfault",
-    matchers: ["segmentfault", "sifou"],
-    name: "思否",
-    url: "https://segmentfault.com/write",
-  },
-  {
-    id: "oschina",
-    matchers: ["oschina"],
-    name: "开源中国",
-    url: "https://oschina.net/writer",
-  },
-  {
-    id: "infoq",
-    matchers: ["infoq"],
-    name: "InfoQ",
-    url: "https://www.infoq.com/",
-  },
-]
+export { DEFAULT_PLATFORM_META }
 
-/** 全平台位掩码，由 PLATFORM_META.length 动态计算 */
-const ALL_PLATFORMS = (1 << PLATFORM_META.length) - 1
+/** 平台元数据（响应式，支持用户动态增删改） */
+export const PLATFORM_META = ref<PlatformMeta[]>([...DEFAULT_PLATFORM_META])
+
+/** 全平台位掩码，随 PLATFORM_META 动态计算 */
+function getAllPlatformsMask() {
+  return (1 << PLATFORM_META.value.length) - 1
+}
 
 /** 子查询：获取每个文档的书签名称（思源书签存储在 attributes 表中） */
 const BOOKMARK_SUBQUERY = `
@@ -209,6 +148,29 @@ export function useDocAnalysis(plugin: Plugin) {
 
   // 过滤选项
   const filterOptions = reactive<FilterOptions>({ ...DEFAULT_FILTER_OPTIONS })
+
+  /**
+   * 从存储加载平台元数据（用户自定义优先，无则用默认值）
+   */
+  async function loadPlatformMeta(): Promise<PlatformMeta[]> {
+    try {
+      const saved = await storage.platformMeta.loadOrDefault()
+      if (saved && Array.isArray(saved) && saved.length > 0) {
+        PLATFORM_META.value = saved
+      }
+    } catch {
+      PLATFORM_META.value = [...DEFAULT_PLATFORM_META]
+    }
+    return PLATFORM_META.value
+  }
+
+  /**
+   * 保存平台元数据到存储
+   */
+  async function savePlatformMeta(meta: PlatformMeta[]): Promise<boolean> {
+    PLATFORM_META.value = meta
+    return storage.platformMeta.save(meta)
+  }
 
   // 文档统计信息
   const docStats = reactive<DocStats>({ ...DEFAULT_DOC_STATS })
@@ -804,7 +766,8 @@ export function useDocAnalysis(plugin: Plugin) {
       }
 
       // 从 PLATFORM_META 推导位掩码，消除硬编码重复
-      const platformBits: [string, number][] = PLATFORM_META.flatMap((p, i) =>
+      const meta = PLATFORM_META.value
+      const platformBits: [string, number][] = meta.flatMap((p, i) =>
         p.matchers.map((m) => [m, 1 << i] as [string, number]),
       )
 
@@ -830,8 +793,9 @@ export function useDocAnalysis(plugin: Plugin) {
       const noSet = new Set<string>()
       /** 各平台已发布文档计数（按 platform.id 索引） */
       const pCounts: Record<string, number> = {}
-      for (const p of PLATFORM_META) pCounts[p.id] = 0
+      for (const p of meta) pCounts[p.id] = 0
 
+      const allMask = getAllPlatformsMask()
       let totalPlatformHits = 0 // ∑ 每个文档命中的平台数，用于计算人均
 
       for (const [id, mask] of docMap) {
@@ -841,7 +805,7 @@ export function useDocAnalysis(plugin: Plugin) {
           continue
         }
 
-        if (mask === ALL_PLATFORMS) {
+        if (mask === allMask) {
           full++
           fullSet.add(id)
         }
@@ -850,9 +814,9 @@ export function useDocAnalysis(plugin: Plugin) {
         }
 
         // 逐位统计各平台
-        for (let i = 0; i < PLATFORM_META.length; i++) {
+        for (let i = 0; i < meta.length; i++) {
           if (mask & (1 << i)) {
-            pCounts[PLATFORM_META[i].id]++
+            pCounts[meta[i].id]++
             totalPlatformHits++
           }
         }
@@ -862,7 +826,7 @@ export function useDocAnalysis(plugin: Plugin) {
 
       // 各平台未发布数 = 在发布体系中但缺少该平台的文档数
       const unpubCounts: Record<string, number> = {}
-      for (const p of PLATFORM_META) {
+      for (const p of meta) {
         unpubCounts[p.id] = inSystem - pCounts[p.id]
       }
 
@@ -1288,13 +1252,13 @@ export function useDocAnalysis(plugin: Plugin) {
         for (const row of yamlRows) {
           const id = String(row.block_id)
           if (!docPublishedMap.has(id)) docPublishedMap.set(id, new Set())
-          const platformId = getPlatformIdFromAttrKey(String(row.name))
+          const platformId = getPlatformIdFromAttrKey(String(row.name), PLATFORM_META.value)
           if (platformId) docPublishedMap.get(id)!.add(platformId)
         }
       }
 
       for (const doc of docs) {
-        doc.unpublishedPlatforms = computeUnpublishedPlatformNames(docPublishedMap.get(doc.id) || new Set())
+        doc.unpublishedPlatforms = computeUnpublishedPlatformNames(docPublishedMap.get(doc.id) || new Set(), PLATFORM_META.value)
       }
     } catch (error) {
       console.error("查询文档发布属性失败:", error)
@@ -1308,8 +1272,8 @@ export function useDocAnalysis(plugin: Plugin) {
   async function queryByMissingPlatform(platformMatcher: string) {
     statsFilter.value = ""
 
-    const meta = PLATFORM_META.find((p) => p.matchers.includes(platformMatcher))
-    const matchers = meta ? meta.matchers : [platformMatcher]
+    const platformEntry = PLATFORM_META.value.find((p) => p.id === platformMatcher || p.matchers.includes(platformMatcher))
+    const matchers = platformEntry ? platformEntry.matchers : [platformMatcher]
     const nameConditions = matchers.map((m) => `name LIKE '%${escapeSql(m)}%'`).join(" OR ")
 
     await runDocQuery({
@@ -1353,6 +1317,8 @@ export function useDocAnalysis(plugin: Plugin) {
     openDoc,
     updateSort,
     clearResults,
+    loadPlatformMeta,
+    savePlatformMeta,
     platformUnpublishedCounts,
     docsInPublishSystem,
   }

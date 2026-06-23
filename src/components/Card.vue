@@ -191,11 +191,10 @@ const handleClick = (event: MouseEvent) => {
   }
 
   &--elevated {
-    border: none;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--b3-border-color, $brand-subtle-gray);
 
     &:hover {
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      border-color: var(--b3-theme-primary, $brand-orange);
     }
   }
 
@@ -211,7 +210,7 @@ const handleClick = (event: MouseEvent) => {
 
   // 圆角
   &--rounded {
-    border-radius: 8px;
+    border-radius: $radius-md;
   }
 
   // 尺寸变体
@@ -221,11 +220,11 @@ const handleClick = (event: MouseEvent) => {
     }
 
     .si-card__title {
-      font-size: 14px;
+      font-size: $font-size-sm;
     }
 
     .si-card__subtitle {
-      font-size: 12px;
+      font-size: $font-size-xs;
     }
 
     .si-card__body {
@@ -247,11 +246,11 @@ const handleClick = (event: MouseEvent) => {
     }
 
     .si-card__title {
-      font-size: 16px;
+      font-size: $font-size-base;
     }
 
     .si-card__subtitle {
-      font-size: 13px;
+      font-size: $font-size-xs;
     }
 
     .si-card__body {
@@ -273,11 +272,11 @@ const handleClick = (event: MouseEvent) => {
     }
 
     .si-card__title {
-      font-size: 18px;
+      font-size: $font-size-lg;
     }
 
     .si-card__subtitle {
-      font-size: 14px;
+      font-size: $font-size-sm;
     }
 
     .si-card__body {
@@ -350,7 +349,7 @@ const handleClick = (event: MouseEvent) => {
   &__subtitle {
     margin: 4px 0 0;
     font-family: $font-body;
-    font-size: 13px;
+    font-size: $font-size-xs;
     color: var(--b3-theme-secondary, $brand-mid-gray);
     line-height: 1.4;
   }
@@ -392,7 +391,7 @@ const handleClick = (event: MouseEvent) => {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 8px;
+    gap: $spacing-2;
   }
 
   // 加载状态

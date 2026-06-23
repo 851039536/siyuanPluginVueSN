@@ -572,7 +572,7 @@ defineExpose({
     gap: 8px;
     background: var(--b3-theme-background);
     border: 1px solid var(--b3-border-color);
-    border-radius: 6px;
+    border-radius: $vp-radius;
     cursor: pointer;
     outline: none;
     user-select: none;
@@ -606,7 +606,7 @@ defineExpose({
     justify-content: center;
     cursor: pointer;
     color: var(--b3-theme-secondary);
-    border-radius: 4px;
+    border-radius: $radius-sm;
     padding: 2px;
 
     &:hover {
@@ -635,10 +635,9 @@ defineExpose({
     width: 100%;
     background: var(--b3-theme-background);
     border: 1px solid var(--b3-border-color);
-    border-radius: 6px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    border-radius: $radius-sm;
     overflow: hidden;
-    margin-top: 4px;
+    margin-top: $spacing-1;
 
     &--top {
       bottom: 100%;
@@ -656,7 +655,7 @@ defineExpose({
     width: 100%;
     padding: 6px 10px;
     border: 1px solid var(--b3-border-color);
-    border-radius: 4px;
+    border-radius: $radius-sm;
     font-size: 13px;
     font-family: $font-body;
     outline: none;
@@ -676,7 +675,7 @@ defineExpose({
     padding: 12px;
     text-align: center;
     color: var(--b3-theme-secondary);
-    font-size: 13px;
+    font-size: $font-size-xs;
   }
 
   &__options {
@@ -694,7 +693,7 @@ defineExpose({
 
     &::-webkit-scrollbar-thumb {
       background: var(--b3-theme-surface-light);
-      border-radius: 3px;
+      border-radius: $radius-sm;
 
       &:hover {
         background: var(--b3-theme-secondary);
@@ -709,7 +708,7 @@ defineExpose({
   &__group {
     &-label {
       padding: 8px 12px 4px;
-      font-size: 12px;
+      font-size: $font-size-xs;
       font-weight: 600;
       color: var(--b3-theme-secondary);
       text-transform: uppercase;
@@ -719,7 +718,7 @@ defineExpose({
 
   &__option {
     padding: 8px 12px;
-    font-size: 14px;
+    font-size: $font-size-sm;
     color: var(--b3-theme-on-background);
     cursor: pointer;
     user-select: none;
@@ -750,23 +749,23 @@ defineExpose({
   &--small {
     .si-select__trigger {
       min-height: 28px;
-      padding: 4px 8px;
-      font-size: 13px;
+      padding: $spacing-1 $spacing-2;
+      font-size: $font-size-xs;
     }
   }
 
   &--medium {
     .si-select__trigger {
       min-height: 36px;
-      padding: 6px 12px;
-      font-size: 14px;
+      padding: $spacing-2 $spacing-3;
+      font-size: $font-size-sm;
     }
   }
 
   &--large {
     .si-select__trigger {
       min-height: 44px;
-      padding: 8px 16px;
+      padding: $spacing-2 $spacing-4;
       font-size: 15px;
     }
   }

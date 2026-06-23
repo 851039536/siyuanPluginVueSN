@@ -917,8 +917,8 @@ const platformEntries = computed(() => {
   const counts = props.stats.platformCounts || {}
   const entries = Object.entries(counts)
     .map(([id, count]) => {
-      // 从 PLATFORM_META 查找名称（静态导入会循环，直接用 id 推导）
-      const meta = PLATFORM_META.find((p) => p.id === id)
+      // 从 PLATFORM_META 查找名称
+      const meta = PLATFORM_META.value.find((p) => p.id === id)
       return {
         id,
         name: meta?.name || id,

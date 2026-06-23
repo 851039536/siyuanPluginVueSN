@@ -63,21 +63,21 @@ withDefaults(defineProps<Props>(), {
   &__label {
     display: flex;
     align-items: center;
-    margin-bottom: 6px;
+    margin-bottom: $spacing-1;
     font-weight: 500;
     color: var(--b3-theme-on-background, $brand-dark);
     font-family: $font-heading;
 
     &--small {
-      font-size: 12px;
+      font-size: $font-size-xs;
     }
 
     &--medium {
-      font-size: 13px;
+      font-size: $font-size-sm;
     }
 
     &--large {
-      font-size: 14px;
+      font-size: $font-size-base;
     }
   }
 
@@ -87,8 +87,8 @@ withDefaults(defineProps<Props>(), {
   }
 
   &__hint {
-    margin-top: 4px;
-    font-size: 12px;
+    margin-top: $spacing-1;
+    font-size: $font-size-xs;
     color: var(--b3-theme-secondary, $brand-mid-gray);
 
     &--error {
@@ -97,8 +97,8 @@ withDefaults(defineProps<Props>(), {
   }
 
   &__count {
-    margin-top: 4px;
-    font-size: 12px;
+    margin-top: $spacing-1;
+    font-size: $font-size-xs;
     color: var(--b3-theme-secondary, $brand-mid-gray);
     text-align: right;
   }

@@ -159,7 +159,7 @@ const displayContent = computed(() => {
     &--large {
       height: 24px;
       padding: 0 8px;
-      font-size: 12px;
+      font-size: $font-size-xs;
       line-height: 1;
       min-width: 24px;
     }

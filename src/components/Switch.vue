@@ -113,7 +113,7 @@ const handleClick = () => {
 .si-switch {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: $spacing-3;
   border: none;
   background: transparent;
   cursor: pointer;

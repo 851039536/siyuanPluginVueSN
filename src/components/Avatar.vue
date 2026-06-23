@@ -204,7 +204,7 @@ const handleClick = (event: MouseEvent) => {
 
     &:hover:not(.si-avatar--disabled) {
       transform: scale(1.05);
-      box-shadow: $shadow-md;
+      border-color: var(--b3-theme-primary, $brand-orange);
     }
 
     &:active:not(.si-avatar--disabled) {

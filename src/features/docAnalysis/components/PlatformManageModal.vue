@@ -23,6 +23,7 @@
           v-for="(p, idx) in localPlatforms"
           :key="idx"
           class="platform-row"
+          :class="{ 'platform-row--hidden': p.hidden }"
         >
           <!-- 拖拽排序手柄 -->
           <span class="platform-row-drag" title="拖拽排序">
@@ -80,6 +81,14 @@
 
           <!-- 操作按钮 -->
           <div class="platform-row-actions">
+            <button
+              class="row-btn"
+              :class="{ 'row-btn--hidden': p.hidden }"
+              :title="p.hidden ? '取消隐藏' : '隐藏'"
+              @click="toggleHidden(idx)"
+            >
+              <Icon :icon="p.hidden ? 'mdi:eye-off-outline' : 'mdi:eye-outline'" />
+            </button>
             <button
               class="row-btn"
               :disabled="idx === 0"
@@ -223,6 +232,10 @@ function addPlatform() {
 function removePlatform(idx: number) {
   localPlatforms.value.splice(idx, 1)
   validate()
+}
+
+function toggleHidden(idx: number) {
+  localPlatforms.value[idx].hidden = !localPlatforms.value[idx].hidden
 }
 
 function moveUp(idx: number) {

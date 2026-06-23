@@ -569,7 +569,7 @@ defineExpose({
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    gap: $spacing-2;
     background: var(--b3-theme-background);
     border: 1px solid var(--b3-border-color);
     border-radius: $vp-radius;
@@ -647,7 +647,7 @@ defineExpose({
   }
 
   &__filter {
-    padding: 8px;
+    padding: $spacing-2;
     border-bottom: 1px solid var(--b3-border-color);
   }
 
@@ -672,7 +672,7 @@ defineExpose({
   }
 
   &__empty {
-    padding: 12px;
+    padding: $spacing-3;
     text-align: center;
     color: var(--b3-theme-secondary);
     font-size: $font-size-xs;
@@ -701,13 +701,13 @@ defineExpose({
     }
 
     &--grouped {
-      padding: 4px 0;
+      padding: $spacing-1 0;
     }
   }
 
   &__group {
     &-label {
-      padding: 8px 12px 4px;
+      padding: $spacing-2 $spacing-3 $spacing-1;
       font-size: $font-size-xs;
       font-weight: 600;
       color: var(--b3-theme-secondary);
@@ -717,7 +717,7 @@ defineExpose({
   }
 
   &__option {
-    padding: 8px 12px;
+    padding: $spacing-2 $spacing-3;
     font-size: $font-size-sm;
     color: var(--b3-theme-on-background);
     cursor: pointer;

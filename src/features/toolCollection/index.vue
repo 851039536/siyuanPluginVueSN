@@ -68,7 +68,7 @@
 import type { Plugin } from "siyuan"
 import type { Ref } from "vue"
 import { computed, onMounted, ref, watch } from "vue"
-import Icon from "@/components/IconWrapper.vue"
+import { Icon } from "@iconify/vue"
 import { PluginStorage } from "@/utils/pluginStorage"
 import type { ToolMeta } from "./types"
 import Base64ImageTool from "./tools/base64Image/index.vue"

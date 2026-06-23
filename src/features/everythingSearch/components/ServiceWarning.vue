@@ -41,52 +41,5 @@ const handleRetry = () => {
 </script>
 
 <style scoped lang="scss">
-@use "@/variables" as *;
-
-$vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
-
-.vp-warning {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 16px;
-  background: var(--b3-theme-surface-light);
-  border-bottom: 1px dashed var(--b3-theme-primary);
-  font-family: $font-body;
-
-  &__tag {
-    font-size: 11px;
-    font-weight: 600;
-    color: $brand-orange;
-    padding: 2px 6px;
-    border: 1px solid rgba($brand-orange, 0.3);
-    border-radius: 3px;
-    flex-shrink: 0;
-  }
-
-  &__msg {
-    flex: 1;
-    font-size: 12px;
-    color: var(--b3-theme-on-surface);
-    opacity: 0.6;
-  }
-
-  &__retry {
-    display: inline-flex;
-    align-items: center;
-    padding: 3px 10px;
-    font-size: 12px;
-    color: $brand-orange;
-    background: transparent;
-    border: 1px solid rgba($brand-orange, 0.35);
-    border-radius: 4px;
-    cursor: pointer;
-    flex-shrink: 0;
-
-    &:hover {
-      background: rgba($brand-orange, 0.08);
-      border-color: $brand-orange;
-    }
-  }
-}
+@use "../styles/ServiceWarning.scss";
 </style>

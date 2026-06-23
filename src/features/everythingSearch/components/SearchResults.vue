@@ -33,10 +33,9 @@
       </div>
       <div class="vp-results__scroll">
         <ResultItem
-          v-for="(item, index) in state.results"
-          :key="`${item.name}-${item.path}-${index}`"
+          v-for="item in state.results"
+          :key="`${item.name}-${item.path}`"
           :item="item"
-          @click="handleItemClick"
           @dbl-click="handleItemDblClick"
           @open="handleItemOpen"
           @show-in-folder="handleItemShowInFolder"
@@ -65,7 +64,6 @@ interface Props {
 }
 
 interface Emits {
-  (e: "itemClick", item: EverythingSearchResult): void
   (e: "itemDblClick", item: EverythingSearchResult): void
   (e: "itemOpen", item: EverythingSearchResult): void
   (e: "itemShowInFolder", item: EverythingSearchResult): void
@@ -84,11 +82,6 @@ const emptyHintText = computed(() => {
     ? "输入关键词自动搜索本地文件"
     : "输入关键词点击搜索按钮搜索本地文件"
 })
-
-/** 处理项目点击 */
-const handleItemClick = (item: EverythingSearchResult) => {
-  emit("itemClick", item)
-}
 
 /** 处理项目双击 */
 const handleItemDblClick = (item: EverythingSearchResult) => {
@@ -111,101 +104,6 @@ const handleItemCopyPath = (item: EverythingSearchResult) => {
 }
 </script>
 
-<style lang="scss">
-@use "@/variables" as *;
-
-$vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
-
-.vp-results {
-  flex: 1;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-
-  &__loading {
-    flex: 1;
-    position: relative;
-  }
-
-  &__list {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  &__header {
-    padding: 4px 16px;
-    background: var(--b3-theme-surface-light);
-    border-bottom: 1px solid var(--b3-border-color);
-  }
-
-  &__count {
-    font-size: 11px;
-    font-family: $font-body;
-    color: var(--b3-theme-on-surface);
-    opacity: 0.5;
-  }
-
-  &__scroll {
-    flex: 1;
-    overflow-y: auto;
-
-    &::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    &::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: $brand-light-gray;
-      border-radius: 3px;
-
-      &:hover {
-        background: $brand-mid-gray;
-      }
-    }
-  }
-}
-
-// 空/错误状态
-.vp-empty {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 30px;
-
-  &__emoji {
-    font-size: 32px;
-    margin-bottom: 8px;
-  }
-
-  &__msg {
-    font-size: 13px;
-    font-family: $font-body;
-    color: var(--b3-theme-on-surface);
-    opacity: 0.5;
-  }
-
-  &__hint {
-    font-size: 11px;
-    color: var(--b3-theme-on-surface);
-    opacity: 0.35;
-    margin-top: 8px;
-
-    code {
-      font-family: "JetBrains Mono", "Consolas", monospace;
-      padding: 1px 4px;
-      background: var(--b3-theme-surface);
-      border: 1px solid var(--b3-border-color);
-      border-radius: 2px;
-      font-size: 10px;
-      opacity: 0.7;
-    }
-  }
-}
+<style scoped lang="scss">
+@use "../styles/SearchResults.scss";
 </style>

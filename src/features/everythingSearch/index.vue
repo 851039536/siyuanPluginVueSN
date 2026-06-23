@@ -5,10 +5,7 @@
       class="vp-overlay"
       @click.self="closeDialog"
     >
-      <div
-        v-if="visible"
-        class="vp-dialog"
-      >
+      <div class="vp-dialog">
         <!-- 头部 -->
         <DialogHeader @close="closeDialog" />
 
@@ -24,7 +21,7 @@
         />
 
         <!-- 搜索选项 -->
-        <SearchOptionsPanel
+        <SearchOptions
           :options="options"
           :available-drives="availableDrives"
           @update:options="handleOptionUpdate"
@@ -48,8 +45,7 @@
         <SearchResults
           :state="searchState"
           :auto-search="options.autoSearch"
-          @item-click="handleItemClick"
-          @item-dbl-click="handleItemDblClick"
+          @item-dbl-click="handleItemOpen"
           @item-open="handleItemOpen"
           @item-show-in-folder="handleItemShowInFolder"
           @item-copy-path="handleItemCopyPath"
@@ -92,11 +88,9 @@ import {
 } from "./api"
 import AdvancedHelpPanel from "./components/AdvancedHelpPanel.vue"
 import DialogFooter from "./components/DialogFooter.vue"
-
-// 子组件
 import DialogHeader from "./components/DialogHeader.vue"
 import SearchBar from "./components/SearchBar.vue"
-import SearchOptionsPanel from "./components/SearchOptions.vue"
+import SearchOptions from "./components/SearchOptions.vue"
 import SearchResults from "./components/SearchResults.vue"
 import ServiceWarning from "./components/ServiceWarning.vue"
 import {
@@ -149,7 +143,7 @@ const searchState = reactive<SearchState>({
 })
 
 /** 从插件存储加载配置 */
-const loadConfigFromPlugin = async () => {
+const loadConfig = async () => {
   try {
     const savedData = await storage.init()
     Object.assign(config, savedData.config)
@@ -186,7 +180,7 @@ const checkService = async () => {
 }
 
 /** 列出所有可选盘符（A-Z） */
-const listAvailableDrives = async () => {
+const listAvailableDrives = () => {
   const drives = Array.from({ length: 26 }, (_, i) => `${String.fromCharCode(65 + i)}:`)
   availableDrives.value = drives
 }
@@ -312,16 +306,6 @@ const handleSyntaxInsert = (keyword: string) => {
   searchBarRef.value?.focus()
 }
 
-/** 点击项目 */
-const handleItemClick = () => {
-  // 单击选中（预留）
-}
-
-/** 打开项目 */
-const handleItemDblClick = async (item: EverythingSearchResult) => {
-  await handleItemOpen(item)
-}
-
 /** 打开项目 */
 const handleItemOpen = async (item: EverythingSearchResult) => {
   try {
@@ -332,9 +316,9 @@ const handleItemOpen = async (item: EverythingSearchResult) => {
 }
 
 /** 在文件夹中显示 */
-const handleItemShowInFolder = async (item: EverythingSearchResult) => {
+const handleItemShowInFolder = (item: EverythingSearchResult) => {
   try {
-    await showInExplorer(getFullPath(item))
+    showInExplorer(getFullPath(item))
   } catch (error) {
     showMessage(`操作失败: ${(error as Error).message}`, 3000, "error")
   }
@@ -387,7 +371,7 @@ watch(
 
 onMounted(async () => {
   await loadConfig()
-  await listAvailableDrives()
+  listAvailableDrives()
 })
 
 onUnmounted(() => {
@@ -399,14 +383,6 @@ onUnmounted(() => {
   }
 })
 
-/** 加载配置 */
-const loadConfig = async () => {
-  try {
-    await loadConfigFromPlugin()
-  } catch (error) {
-    console.error("加载配置失败:", error)
-  }
-}
 </script>
 
 <style scoped lang="scss">

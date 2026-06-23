@@ -65,7 +65,7 @@
         <span class="vp-options__key">数量</span>
         <Select
           :model-value="options.maxResults"
-          :options="maxResultsOptions"
+          :options="MAX_RESULTS_OPTIONS"
           size="small"
           @update:model-value="updateOption('maxResults', $event as number)"
         />
@@ -75,7 +75,7 @@
         <span class="vp-options__key">延迟</span>
         <Select
           :model-value="options.debounceDelay"
-          :options="debounceOptions"
+          :options="DEBOUNCE_OPTIONS"
           size="small"
           @update:model-value="updateOption('debounceDelay', $event as number)"
         />
@@ -85,7 +85,7 @@
         <span class="vp-options__key">排序</span>
         <Select
           :model-value="options.sort"
-          :options="sortOptions"
+          :options="SORT_OPTIONS"
           size="small"
           @update:model-value="updateOption('sort', $event as string)"
         />
@@ -145,27 +145,27 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 /** 最大结果选项 */
-const maxResultsOptions = computed(() => [
+const MAX_RESULTS_OPTIONS = [
   { value: 50, label: "50" },
   { value: 100, label: "100" },
   { value: 200, label: "200" },
   { value: 500, label: "500" },
-])
+]
 
 /** 防抖延迟选项 */
-const debounceOptions = computed(() => [
+const DEBOUNCE_OPTIONS = [
   { value: 200, label: "200ms" },
   { value: 500, label: "500ms" },
   { value: 1000, label: "1s" },
-])
+]
 
 /** 排序选项 */
-const sortOptions = computed(() => [
+const SORT_OPTIONS = [
   { value: "date_modified", label: "修改时间" },
   { value: "name", label: "名称" },
   { value: "path", label: "路径" },
   { value: "size", label: "大小" },
-])
+]
 
 /** 盘符选项 */
 const driveOptions = computed(() => [
@@ -196,67 +196,5 @@ const handleRefreshDrives = () => {
 </script>
 
 <style scoped lang="scss">
-@use "@/variables" as *;
-
-$vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
-
-.vp-options {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-  padding: 6px 16px;
-  background: var(--b3-theme-surface-light);
-  border-bottom: 1px dashed var(--b3-border-color);
-
-  &__item {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-
-    &--select {
-      gap: 6px;
-    }
-  }
-
-  &__group {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px 12px;
-    padding-top: 4px;
-    padding-left: 8px;
-    border-left: 1px solid var(--b3-border-color);
-    margin-left: 4px;
-  }
-
-  &__key {
-    font-size: 11px;
-    color: var(--b3-theme-on-surface);
-    opacity: 0.5;
-    white-space: nowrap;
-  }
-
-  &__refresh {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    padding: 0;
-    background: transparent;
-    border: 1px solid var(--b3-border-color);
-    border-radius: 4px;
-    cursor: pointer;
-    color: var(--b3-theme-on-surface);
-    font-size: 13px;
-    opacity: 0.5;
-
-    &:hover {
-      opacity: 1;
-      border-color: var(--b3-theme-primary);
-      color: var(--b3-theme-primary);
-    }
-  }
-}
+@use "../styles/SearchOptions.scss";
 </style>

@@ -129,7 +129,8 @@
       "Skill(simplify:*)",
       "Bash(rm \"e:/5.vue/siyuan-plugin-vite-vue-sn/src/features/aiContentGenerator/components/AutomationView.vue\")",
       "Bash(echo \"hello world\")",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(pnpm i18n:verify)"
     ],
     "deny": [],
     "ask": [],

@@ -40,6 +40,8 @@ export interface SearchOptions {
   maxSize: number
   /** 最大文件大小单位 */
   maxSizeUnit: 'KB' | 'MB' | 'GB'
+  /** 常用关键字列表 */
+  frequentKeywords: string[]
 }
 
 /** 搜索结果状态 */

@@ -36,6 +36,7 @@ export const DEFAULT_OPTIONS: SearchOptions = {
   minSizeUnit: 'KB',
   maxSize: 0,
   maxSizeUnit: 'KB',
+  frequentKeywords: [],
 }
 
 /**

@@ -25,6 +25,14 @@
           @update:options="handleOptionUpdate"
         />
 
+        <!-- 常用关键字 -->
+        <FrequentKeywords
+          :keywords="options.frequentKeywords"
+          @insert="handleKeywordInsert"
+          @add="handleKeywordAdd"
+          @delete="handleKeywordDelete"
+        />
+
         <!-- 高级搜索语法帮助 -->
         <AdvancedHelpPanel
           v-if="options.advancedMode"
@@ -86,6 +94,7 @@ import {
 import AdvancedHelpPanel from "./components/AdvancedHelpPanel.vue"
 import DialogFooter from "./components/DialogFooter.vue"
 import DialogHeader from "./components/DialogHeader.vue"
+import FrequentKeywords from "./components/FrequentKeywords.vue"
 import SearchBar from "./components/SearchBar.vue"
 import SearchOptions from "./components/SearchOptions.vue"
 import SearchResults from "./components/SearchResults.vue"
@@ -282,6 +291,25 @@ const handleSyntaxInsert = (keyword: string) => {
     ? `${searchQuery.value} ${keyword}`
     : keyword
   searchBarRef.value?.focus()
+}
+
+/** 插入常用关键字到搜索框 */
+const handleKeywordInsert = (keyword: string) => {
+  searchQuery.value = keyword
+  searchBarRef.value?.focus()
+}
+
+/** 添加常用关键字 */
+const handleKeywordAdd = (keyword: string) => {
+  options.frequentKeywords.push(keyword)
+}
+
+/** 删除常用关键字 */
+const handleKeywordDelete = (keyword: string) => {
+  const idx = options.frequentKeywords.indexOf(keyword)
+  if (idx !== -1) {
+    options.frequentKeywords.splice(idx, 1)
+  }
 }
 
 /** 打开项目 */

@@ -14,7 +14,6 @@
           ref="searchBarRef"
           v-model="searchQuery"
           :is-searching="searchState.status === 'loading'"
-          :auto-search="options.autoSearch"
           @search="handleSearch"
           @clear="handleClear"
           @escape="closeDialog"
@@ -44,7 +43,6 @@
         <!-- 结果区域 -->
         <SearchResults
           :state="searchState"
-          :auto-search="options.autoSearch"
           @item-dbl-click="handleItemOpen"
           @item-open="handleItemOpen"
           @item-show-in-folder="handleItemShowInFolder"
@@ -192,7 +190,7 @@ const refreshDrives = () => {
 
 /** 处理盘符变化 */
 const handleDriveChange = () => {
-  if (options.autoSearch && searchQuery.value.trim()) {
+  if (searchQuery.value.trim()) {
     debouncedSearch()
   }
 }
@@ -246,10 +244,6 @@ const handleSearch = async () => {
 const debouncedSearch = () => {
   if (debounceTimer.value) {
     clearTimeout(debounceTimer.value)
-  }
-
-  if (!options.autoSearch) {
-    return
   }
 
   const query = searchQuery.value.trim()

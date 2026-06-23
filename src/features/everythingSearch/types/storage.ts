@@ -28,7 +28,6 @@ export const DEFAULT_OPTIONS: SearchOptions = {
   matchPath: false,
   regex: false,
   maxResults: 100,
-  autoSearch: true,
   debounceDelay: 500,
   sort: "date_modified",
   ascending: false,

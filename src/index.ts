@@ -60,7 +60,7 @@ import {
   registerTableOfContents,
   registerTextDiff,
   registerThemeColor,
-  registerUnitConverter,
+  // unitConverter 已迁移至 toolCollection/tools/unitConverter/
   registerVideo,
   registerWebsiteNavigation,
   registerWordQuery,
@@ -263,7 +263,7 @@ export default class PluginSample extends Plugin {
     if (s.enableShortcuts) registerShortcut(this)
     if (s.enableWordQuery) registerWordQuery(this)
     if (s.enableGeneralSettings) registerGeneralSettings(this)
-    if (s.enableUnitConverter) registerUnitConverter(this)
+    // unitConverter 已迁移至 toolCollection/tools/unitConverter/
     if (s.enableDiskBrowser) registerDiskBrowser(this)
     if (s.enableAIContentGenerator) registerAIContentGenerator(this)
     if (s.enableImageCreation) registerImageCreation(this)

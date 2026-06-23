@@ -53,6 +53,11 @@
             :plugin="plugin"
             :i18n="plugin.i18n"
           />
+          <UnitConverterTool
+            v-if="currentTool === 'unitConverter'"
+            :plugin="plugin"
+            :i18n="plugin.i18n"
+          />
         </div>
       </div>
     </div>
@@ -66,6 +71,7 @@ import { computed, onMounted, ref, watch } from "vue"
 import Icon from "@/components/IconWrapper.vue"
 import { PluginStorage } from "@/utils/pluginStorage"
 import Base64ImageTool from "./tools/base64Image/index.vue"
+import UnitConverterTool from "./tools/unitConverter/index.vue"
 
 interface Props {
   plugin: Plugin
@@ -139,6 +145,11 @@ const tools = computed<ToolMeta[]>(() => [
     id: "base64Image",
     label: i18n.base64Image || "Base64图片转换",
     icon: "mdi:code-brackets",
+  },
+  {
+    id: "unitConverter",
+    label: i18n.unitConverter || "单位转换",
+    icon: "mdi:swap-horizontal",
   },
 ])
 

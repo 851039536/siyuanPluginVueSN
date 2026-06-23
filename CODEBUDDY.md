@@ -163,11 +163,11 @@ toolCollection/
 
 ```ts
 plugin.addCommand({
-  langKey: "toggleToolCollection",   // i18n 键（命令名称，显示在快捷键设置界面）
-  langText: "工具合集",               // 回退文本（i18n 缺失时使用）
-  hotkey: "⌃⌥T",                    // macOS 风格：⌃=Ctrl ⌥=Alt ⌘=Cmd ⇧=Shift；Windows 自动转换
+  langKey: "toggleToolCollection", // i18n 键（命令名称，显示在快捷键设置界面）
+  langText: "工具合集", // 回退文本（i18n 缺失时使用）
+  hotkey: "⌃⌥T", // macOS 风格：⌃=Ctrl ⌥=Alt ⌘=Cmd ⇧=Shift；Windows 自动转换
   callback: () => {
-    toggleToolCollection()           // 回调函数
+    toggleToolCollection() // 回调函数
   },
 })
 ```

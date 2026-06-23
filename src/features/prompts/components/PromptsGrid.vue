@@ -48,10 +48,10 @@
         <Button
           variant="primary"
           size="small"
+          icon="add"
+          :title="i18n?.addPrompt || '添加提示词'"
           @click="$emit('addPrompt')"
-        >
-          {{ i18n?.addPrompt || '添加提示词' }}
-        </Button>
+        />
       </div>
 
       <!-- 提示词网格 -->

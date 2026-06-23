@@ -1,5 +1,5 @@
 // ==================== 共享 SCSS Mixins & Variables ====================
-// 由 _modal/_grid/_form/_category/_responsive 等 PromptsModal partial 共同引用
+// 由 index.scss 及各组件 SCSS 共同引用
 
 @use "sass:color";
 @use "@/variables" as *;
@@ -32,16 +32,6 @@ $card-border-radius: $radius-md;
   border: 1px solid var(--b3-border-color);
   max-height: 90vh;
   overflow: hidden;
-}
-
-@mixin card-hover {
-  &:hover {
-    border-color: var(--b3-theme-primary);
-
-    &::before {
-      opacity: 1;
-    }
-  }
 }
 
 @mixin form-input {

@@ -348,6 +348,7 @@ import QrcodeGenerator from "./components/QrcodeGenerator.vue"
 import StatsSection from "./components/StatsSection.vue"
 import UploadArea from "./components/UploadArea.vue"
 import WatermarkSettings from "./components/WatermarkSettings.vue"
+import { formatFileSize } from "./utils/format"
 
 interface Props {
   i18n: Record<string, string>
@@ -732,15 +733,6 @@ const clearAll = () => {
   urlBase64Output.value = ""
   qrcodeInput.value = ""
   qrcodeOutput.value = ""
-}
-
-// 格式化文件大小
-const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return "0 Bytes"
-  const k = 1024
-  const sizes = ["Bytes", "KB", "MB", "GB"]
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return `${Math.round((bytes / k ** i) * 100) / 100} ${sizes[i]}`
 }
 
 // 处理粘贴事件

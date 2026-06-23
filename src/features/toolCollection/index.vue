@@ -70,6 +70,7 @@ import type { Ref } from "vue"
 import { computed, onMounted, ref, watch } from "vue"
 import Icon from "@/components/IconWrapper.vue"
 import { PluginStorage } from "@/utils/pluginStorage"
+import type { ToolMeta } from "./types"
 import Base64ImageTool from "./tools/base64Image/index.vue"
 import UnitConverterTool from "./tools/unitConverter/index.vue"
 
@@ -86,7 +87,7 @@ const i18n = (props.plugin.i18n as Record<string, string>) || {}
 const visibleRef = ref(false)
 
 watch(
-  () => (props.visible as Ref<boolean>).value,
+  () => props.visible.value,
   (val) => {
     visibleRef.value = val
   },
@@ -94,7 +95,7 @@ watch(
 )
 
 const close = () => {
-  ;(props.visible as Ref<boolean>).value = false
+  props.visible.value = false
 }
 
 // ==================== 面板尺寸（持久化存储） ====================
@@ -133,12 +134,6 @@ const adjustHeight = async (delta: number) => {
 }
 
 // ==================== 工具注册表 ====================
-interface ToolMeta {
-  id: string
-  label: string
-  icon: string
-}
-
 const tools = computed<ToolMeta[]>(() => [
   {
     id: "base64Image",

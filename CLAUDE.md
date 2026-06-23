@@ -267,6 +267,88 @@ export function registerMyFeature(plugin: Plugin) {
 }
 ```
 
+
+### 底部面板模式（Tab 切换）
+
+部分工具类功能不需要独立 Dock 面板，适合整合到统一的"底部面板 + Tab 切换"容器中。参考实现：`src/features/toolCollection/`。
+
+**架构要点**：
+
+```
+toolCollection/
+├── index.ts              # registerToolCollection() + 公开 API（toggle/close/visible）
+├── index.vue             # 面板容器：Overlay + Header + Tab 栏 + 内容区 + Transition 动画
+├── types/index.ts        # ToolMeta 接口（id/label/icon）
+├── styles/index.scss     # 面板样式（固定底部定位、Tab 栏、slide-up 动画）
+└── tools/                # 各工具模块（独立子目录，互不依赖）
+    └── <toolName>/
+        ├── index.vue     # 工具主组件（接收 plugin / i18n props）
+        ├── components/   # 工具子组件
+        └── styles/       # 工具样式（SCSS 分离）
+```
+
+**通信流程**：
+
+1. **触发**：状态栏（或快捷键）→ `emitCustomEvent("toggleToolCollection")`
+2. **调度**：`App.vue` 监听 `window.addEventListener("toggleToolCollection", ...)` → 调用 `toggleToolCollection()`
+3. **响应**：`toolCollection/index.ts` 导出模块级 `ref(visible)` + `toggleToolCollection()` / `closeToolCollection()`
+4. **清理**：`onunload()` 中 `app.unmount()` + `container.remove()` + 重置 `ref`
+
+**注册新工具到面板**：在 `toolCollection/index.vue` 的 `tools` computed 中添加条目 + 在 `<div class="tool-collection-content">` 中添加 `v-if` 组件引用。无需修改注册清单。
+
+### 快捷键注册
+
+通过 `plugin.addCommand()` 注册全局快捷键，在 `registerFeature()` 中调用：
+
+```ts
+plugin.addCommand({
+  langKey: "toggleToolCollection",   // i18n 键（命令名称，显示在快捷键设置界面）
+  langText: "工具合集",               // 回退文本（i18n 缺失时使用）
+  hotkey: "⌃⌥T",                    // macOS 风格：⌃=Ctrl ⌥=Alt ⌘=Cmd ⇧=Shift；Windows 自动转换
+  callback: () => {
+    toggleToolCollection()           // 回调函数
+  },
+})
+```
+
+**hotkey 格式**：
+| 符号 | 按键 | 示例 |
+|------|------|------|
+| `⌃` | Ctrl | `⌃T` = Ctrl+T |
+| `⌥` | Alt | `⌃⌥E` = Ctrl+Alt+E |
+| `⌘` | Cmd | `⌘K` = Cmd+K |
+| `⇧` | Shift | `⇧⌃P` = Ctrl+Shift+P |
+
+快捷键的 `langKey` 需要对应 i18n 分片文件中的翻译键。思源框架会自动将 macOS 符号转换为 Windows 键名显示。
+
+### 新增功能完整流程（8 步演练）
+
+以 `toolCollection` 为例，展示从零到一完整步骤：
+
+| 步骤 | 位置 | 操作 | toolCollection 实例 |
+|------|------|------|---------------------|
+| 1. **实现** | `src/features/<name>/index.ts` | 导出 `registerXxx(plugin)` + 公开 API（ref/函数） | `registerToolCollection()` + `toggleToolCollection`/`closeToolCollection`/`toolCollectionVisible` |
+| 2. **类型** | `src/features/<name>/types/index.ts` | 接口/类型定义（不放 register 逻辑） | `ToolMeta { id, label, icon }` |
+| 3. **导出** | `src/features/index.ts` | 添加 `export { ... } from "./<name>"` + 更新 `_Registered` 联合类型 | 新增 `registerToolCollection`, `toggleToolCollection` 等；`_Registered` 加 `"toolCollection"` |
+| 4. **注册** | `src/index.ts` | `registerFeatures()` 中 `if (s.enableXxx) registerXxx(this)` + `onunload()` 清理 | `if (s.enableToolCollection) registerToolCollection(this)` + 清理 app/container |
+| 5. **设置** | `src/config/settings.ts` | `PluginSettings` 接口 + `DEFAULT_SETTINGS` 默认值 | `enableToolCollection: boolean` 默认 `true` |
+| 6. **i18n** | `src/i18n/{zh_CN,en_US}/<name>.json` | 翻译键值对，运行 `pnpm i18n:verify` | `toolCollection.json`（面板标题、描述、tab 标签、快捷键标签） |
+| 7. **配置** | `src/features/config.ts` | `FEATURE_CONFIG` 数组条目；若纯配置型加 `_ConfigOnly` | 新增 `{ id: "toolCollection", defaultTitle: "工具合集", ... }` |
+| 8. **图标** | `src/config/icons.ts` | `FEATURE_ICONS` 条目，运行 `pnpm validate:icons` | `toolCollection: { icon: "mdi:toolbox-outline", color: "#6366f1" }` |
+
+**迁移现有功能为 Config-Only**：若功能不再独立注册（如 `base64Image` 迁移到 `toolCollection` 内），需：
+- 将 `register` 函数改为 no-op（保留导出以维持编译通过）
+- 在 `_ConfigOnly` 白名单中添加该功能 ID
+- 从 `_Registered` 联合类型中移除，保留其在 `FeatureId` 中的存在
+
+**验证链条**：完成全部 8 步后，必须通过以下 4 项检查：
+```bash
+pnpm lint           # ESLint 代码规范
+pnpm i18n:verify    # 中英文键对齐
+pnpm validate:icons # 图标注册有效性
+npx tsc --noEmit    # TypeScript 编译类型检查
+```
+
 ## i18n 国际化
 
 **分片架构**：源文件按 feature 模块拆分（`src/i18n/{zh_CN,en_US}/featureName.json`），构建时 `scripts/merge-i18n.mjs` 自动合并为思源框架所需的单一 `zh_CN.json` / `en_US.json`。

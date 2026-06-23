@@ -149,22 +149,19 @@ $status-colors: (
   flex-shrink: 0;
 }
 
-// ---- 操作按钮（推至卡片底部） ----
-.feature-actions {
+// ---- 操作按钮（与开关并排在标题行） ----
+.feature-header-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-top: auto;
-  padding-top: 6px;
-  border-top: 1px solid var(--b3-border-color-transparent);
-  opacity: 0;
-  transform: translateY(2px);
-  transition: opacity 0.15s, transform 0.15s, border-color 0.15s;
+  gap: 2px;
+  flex-shrink: 0;
+  margin-left: 6px;
 
-  .feature-card:hover & {
-    opacity: 1;
-    transform: translateY(0);
-    border-color: var(--b3-theme-surface-lighter);
+  button {
+    font-size: 11px;
+    padding: 2px 6px;
+    height: auto;
+    line-height: 1.4;
   }
 }
 

@@ -1,6 +1,6 @@
 import type { IconKey } from "@/config/icons"
 import type { PluginSettings } from "@/config/settings"
-import type { FeatureAction, SubFeatureMeta } from "@/features/config"
+import type { FeatureAction } from "@/features/config"
 import type { ModalAppInstance } from "@/utils/vueAppHelper"
 /**
  * 超级面板 - 类型定义

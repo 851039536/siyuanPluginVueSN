@@ -155,15 +155,12 @@ import type {
   Prompt,
   PromptCategory,
   PromptContent,
-
 } from "../types"
 
 import { showMessage } from "siyuan"
 import { reactive } from "vue"
-// watch for show change to init form
 import { watch } from "vue"
 import Button from "@/components/Button.vue"
-
 import IconWrapper from "@/components/IconWrapper.vue"
 
 const props = defineProps<{
@@ -190,7 +187,6 @@ const form = reactive<{
   category: "",
 })
 
-/** 每次打开弹窗时初始化表单数据 */
 function initForm() {
   if (props.editingPrompt) {
     const p = props.editingPrompt
@@ -239,7 +235,6 @@ function moveContentBlock(index: number, direction: -1 | 1) {
   const tmp = form.contents[index]
   form.contents[index] = form.contents[target]
   form.contents[target] = tmp
-  // 触发响应式更新
   form.contents = [...form.contents]
 }
 
@@ -273,5 +268,5 @@ function handleSave() {
 </script>
 
 <style lang="scss" scoped>
-@use '../styles/PromptsModal.scss';
+@use '../styles/index.scss';
 </style>

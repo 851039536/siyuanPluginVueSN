@@ -66,5 +66,5 @@ defineEmits<{
 </script>
 
 <style lang="scss" scoped>
-@use '../styles/PromptsModal.scss';
+@use '../styles/index.scss';
 </style>

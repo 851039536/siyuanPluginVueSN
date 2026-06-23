@@ -1,6 +1,5 @@
 // ==================== 共享 SCSS Mixins & Variables ====================
 // 由 _modal/_grid/_form/_category/_responsive 等 PromptsModal partial 共同引用
-// index.scss（工具栏样式）如有需要也可 @use 本文件
 
 @use "sass:color";
 @use "@/variables" as *;

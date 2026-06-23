@@ -16,3 +16,4 @@
 - 2026-06-13：dataBackup 模块全面审查重构（见当天日报）
 - 2026-06-11：flashcardReading 模块审查重构（见当天日报）
 - 2026-06-22：新增 skillLearning（技能学习）功能 — 代码片段练习库+闪卡记忆，Dock 右侧栏面板，C#/JS/TS/Vue 技术栈，支持自建/预设/Markdown导入三种内容来源，复用 useTypingQueue 加权复习算法
+- 2026-06-23：toolCollection 新增快捷键 Ctrl+T（⌃T），通过 plugin.addCommand() 注册，回调调用 toggleToolCollection() 切换面板显隐

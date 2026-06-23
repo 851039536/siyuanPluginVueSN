@@ -132,9 +132,10 @@
 }
 
 // ==================== 过渡动画 ====================
-// panel 使用 translateX(-50%) 居中，动画需叠加 translateY
+// panel 底部固定，scaleY 从 0→1 实现从下往上展开
 .tool-collection-panel {
-  transform: translateX(-50%) translateY(0);
+  transform-origin: bottom center;
+  transform: translateX(-50%) scaleY(1);
 }
 
 .slide-up-enter-active {
@@ -157,7 +158,7 @@
   opacity: 0;
 
   .tool-collection-panel {
-    transform: translateX(-50%) translateY(100%);
+    transform: translateX(-50%) scaleY(0);
   }
 }
 
@@ -165,7 +166,7 @@
   opacity: 0;
 
   .tool-collection-panel {
-    transform: translateX(-50%) translateY(100%);
+    transform: translateX(-50%) scaleY(0);
   }
 }
 

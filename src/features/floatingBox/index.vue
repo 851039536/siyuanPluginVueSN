@@ -83,7 +83,7 @@ const tools = computed<FloatingTool[]>(() => {
     createTextDiffTool(props.plugin),
   ]
 
-  if (props.plugin?.settings?.enableSkills !== false) {
+  if (props.plugin?.settings?.enablePrompts !== false) {
     desktopTools.push(createPromptsTool(props.plugin))
   }
 

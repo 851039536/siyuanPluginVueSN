@@ -94,7 +94,7 @@ import {
   hideImageCreation,
   hidePasswordVault,
   hideSkillsViewer,
-  showSkillsModal,
+  showPromptsModal,
   htmlViewerVisible,
   imageCreationInitialKeywords,
   imageCreationInitialTitle,
@@ -238,7 +238,7 @@ onMounted(() => {
 
   // 监听打开提示词库事件（来自悬浮框）
   window.addEventListener("openPrompts", () => {
-    showSkillsModal(plugin as any)
+    showPromptsModal(plugin as any)
   })
 
   // 监听工具合集面板切换事件

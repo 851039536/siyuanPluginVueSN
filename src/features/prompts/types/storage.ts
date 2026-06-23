@@ -9,30 +9,38 @@ import { TypedStorage } from "@/utils/typedStorage"
 /**
  * 提示词库存储管理类
  */
-export class SkillsStorage {
+export class PromptsStorage {
+  private static readonly KEY_PROMPTS = "siyuan-prompts"
+  private static readonly KEY_CATEGORIES = "siyuan-categories"
+  private static readonly LEGACY_KEY_PROMPTS = "siyuan-skills"
+
+  private _storage: PluginStorage
   readonly prompts: TypedStorage<Prompt[]>
   readonly categories: TypedStorage<PromptCategory[]>
 
   constructor(plugin: Plugin) {
-    const storage = new PluginStorage(plugin)
-    this.prompts = new TypedStorage<Prompt[]>(storage, "siyuan-skills", [])
+    this._storage = new PluginStorage(plugin)
+    this.prompts = new TypedStorage<Prompt[]>(this._storage, PromptsStorage.KEY_PROMPTS, [])
     this.categories = new TypedStorage<PromptCategory[]>(
-      storage,
-      "siyuan-categories",
+      this._storage,
+      PromptsStorage.KEY_CATEGORIES,
       [],
     )
   }
 
   /**
-   * 初始化存储（加载所有数据）
+   * 加载提示词数据：优先读取新 key，若为空则回退旧 key 并自动迁移
    */
-  async init(): Promise<{
-    prompts: Prompt[]
-    categories: PromptCategory[]
-  }> {
-    const prompts = await this.prompts.loadOrDefault()
-    const categories = await this.categories.loadOrDefault()
-    return { prompts, categories }
+  async loadPromptsWithMigration(): Promise<Prompt[]> {
+    let data = await this.prompts.loadOrDefault()
+    if (!data || data.length === 0) {
+      const oldData = await this._storage.load<Prompt[]>(PromptsStorage.LEGACY_KEY_PROMPTS)
+      if (oldData && Array.isArray(oldData) && oldData.length > 0) {
+        await this.prompts.save(oldData)
+        data = oldData
+      }
+    }
+    return data
   }
 
   /**

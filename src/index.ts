@@ -49,7 +49,7 @@ import {
   registerScriptLauncher,
   registerShortcut,
   registerSkillLearning,
-  registerSkills,
+  registerPrompts,
   registerSkillsViewer,
   registerStatistics,
   registerStatusBar,
@@ -284,7 +284,7 @@ export default class PluginSample extends Plugin {
     if (s.enableTextDiff) registerTextDiff(this)
     if (s.enableFlashcardReading) registerFlashcardReading(this)
     if (s.enablePasswordVault) registerPasswordVault(this)
-    if (s.enableSkills) registerSkills(this)
+    if (s.enablePrompts) registerPrompts(this)
     if (s.enableSkillsViewer) registerSkillsViewer(this)
     if (s.enableDocAnalysis) registerDocAnalysis(this)
     if (s.enableFormatAssistant) registerFormatAssistant(this)

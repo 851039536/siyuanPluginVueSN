@@ -81,7 +81,6 @@
 import type { PromptCategory } from "../types"
 import { reactive } from "vue"
 import Button from "@/components/Button.vue"
-import IconWrapper from "@/components/IconWrapper.vue"
 
 const props = defineProps<{
   show: boolean

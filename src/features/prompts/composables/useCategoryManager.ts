@@ -1,6 +1,6 @@
 import type { Ref } from "vue"
 import type { PromptCategory } from "../types"
-import type { SkillsStorage } from "../types/storage"
+import type { PromptsStorage } from "../types/storage"
 import {
   computed,
   ref,
@@ -12,21 +12,20 @@ const DEFAULT_CATEGORY: PromptCategory = {
   color: "#d97757",
 }
 
+const ALL_CATEGORY: PromptCategory = {
+  id: "all",
+  name: "全部",
+  color: "#d97757",
+}
+
 /**
  * 分类数据管理 composable
  * 负责 categories 列表的加载与增删
  */
-export function useCategoryManager(storageRef: Ref<SkillsStorage | null>) {
+export function useCategoryManager(storageRef: Ref<PromptsStorage | null>) {
   const categories = ref<PromptCategory[]>([{ ...DEFAULT_CATEGORY }])
 
-  const allCategories = computed(() => [
-    {
-      id: "all",
-      name: "全部",
-      color: "#d97757",
-    },
-    ...categories.value,
-  ])
+  const allCategories = computed(() => [ALL_CATEGORY, ...categories.value])
 
   async function load() {
     const s = storageRef.value

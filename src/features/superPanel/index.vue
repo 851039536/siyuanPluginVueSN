@@ -158,7 +158,7 @@ interface Emits {
   (e: "selectFeature", featureId: string, value: string): void
   (e: "statusFeature", featureId: string, status: string): void
   (e: "openVersions", featureId: string): void
-  (e: "toggleSubFeature", featureId: string, enabled: boolean): void
+  (e: "toggleSubFeature", featureId: string): void
 }
 
 const props = defineProps<Props>()

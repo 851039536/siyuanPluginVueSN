@@ -50,6 +50,24 @@
           </Transition>
         </span>
       </div>
+      <div
+        v-if="feature.actions.length > 0"
+        class="feature-header-actions"
+      >
+        <Button
+          v-for="action in feature.actions"
+          :key="action.key"
+          variant="ghost"
+          size="small"
+          @click.stop="handleAction(action.key)"
+        >
+          {{ action.label }}
+          <span
+            v-if="action.hotkey"
+            class="action-hotkey"
+          >{{ action.hotkey }}</span>
+        </Button>
+      </div>
       <Switch
         v-if="showToggle"
         :model-value="enabled"
@@ -105,24 +123,6 @@
         </button>
       </div>
     </div>
-    <div
-      v-if="feature.actions.length > 0"
-      class="feature-actions"
-    >
-      <Button
-        v-for="action in feature.actions"
-        :key="action.key"
-        variant="ghost"
-        size="small"
-        @click.stop="handleAction(action.key)"
-      >
-        {{ action.label }}
-        <span
-          v-if="action.hotkey"
-          class="action-hotkey"
-        >{{ action.hotkey }}</span>
-      </Button>
-    </div>
   </div>
 </template>
 
@@ -130,7 +130,6 @@
 import type {
   Feature,
   FeatureStatus,
-  SubFeature,
 } from "../types"
 import {
   computed,
@@ -181,7 +180,7 @@ const statusOptions = computed(() => [
     label: props.statusLabels?.[v] || v,
   })),
   {
-    value: "",
+    value: "" as FeatureStatus,
     label: "清空",
   },
 ])

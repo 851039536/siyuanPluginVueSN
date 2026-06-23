@@ -24,6 +24,10 @@
             :style="{ backgroundColor: cat.color }"
           />
           {{ cat.name }}
+          <span
+            v-if="cat.id !== 'all'"
+            class="vp-chip-count"
+          >{{ categoryCounts[cat.id] || 0 }}</span>
         </button>
       </div>
 
@@ -168,6 +172,7 @@ defineProps<{
   allCategories: PromptCategory[]
   selectedCategory: string
   searchQuery: string
+  categoryCounts: Record<string, number>
   loading: boolean
   i18n?: Record<string, string>
 }>()

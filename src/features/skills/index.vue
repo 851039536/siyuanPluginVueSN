@@ -87,7 +87,7 @@ import type { Plugin } from "siyuan"
 import type {
   Prompt,
   PromptCategory,
-} from "../types"
+} from "./types"
 import { showMessage } from "siyuan"
 import {
   computed,
@@ -97,13 +97,13 @@ import {
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { copyToClipboard } from "@/utils/domUtils"
-import { useCategoryManager } from "../composables/useCategoryManager"
-import { usePrompts } from "../composables/usePrompts"
-import { FloatingBoxStorage } from "../types/storage"
-import CategoryManageModal from "./CategoryManageModal.vue"
-import DeleteConfirmModal from "./DeleteConfirmModal.vue"
-import PromptFormModal from "./PromptFormModal.vue"
-import PromptsGrid from "./PromptsGrid.vue"
+import { useCategoryManager } from "./composables/useCategoryManager"
+import { usePrompts } from "./composables/usePrompts"
+import { SkillsStorage } from "./types/storage"
+import CategoryManageModal from "./components/CategoryManageModal.vue"
+import DeleteConfirmModal from "./components/DeleteConfirmModal.vue"
+import PromptFormModal from "./components/PromptFormModal.vue"
+import PromptsGrid from "./components/PromptsGrid.vue"
 
 const props = defineProps<{
   i18n?: Record<string, string>
@@ -125,7 +125,7 @@ const selectedCategory = ref<string>("all")
 const deleteConfirmTarget = ref<string | null>(null)
 
 // --- 数据层 ---
-const storage = ref<FloatingBoxStorage | null>(null)
+const storage = ref<SkillsStorage | null>(null)
 const {
   prompts,
   loading,
@@ -177,7 +177,7 @@ const filteredPrompts = computed(() => {
 // --- 初始化 ---
 onMounted(async () => {
   if (props.plugin) {
-    storage.value = new FloatingBoxStorage(props.plugin)
+    storage.value = new SkillsStorage(props.plugin)
     await Promise.all([loadPrompts(), loadCategories()])
   }
 })
@@ -237,5 +237,5 @@ function closeModal() {
 </script>
 
 <style lang="scss" scoped>
-@use '../styles/PromptsModal.scss';
+@use './styles/index.scss';
 </style>

@@ -94,6 +94,7 @@ import {
   hideImageCreation,
   hidePasswordVault,
   hideSkillsViewer,
+  showSkillsModal,
   htmlViewerVisible,
   imageCreationInitialKeywords,
   imageCreationInitialTitle,
@@ -233,6 +234,11 @@ onMounted(() => {
   // 监听打开单词阅读事件（来自悬浮框）
   window.addEventListener("openFlashcardReading", () => {
     toggleFlashcardDialog()
+  })
+
+  // 监听打开提示词库事件（来自悬浮框）
+  window.addEventListener("openPrompts", () => {
+    showSkillsModal(plugin as any)
   })
 
   // 监听工具合集面板切换事件

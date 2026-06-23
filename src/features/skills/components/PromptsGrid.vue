@@ -152,9 +152,7 @@ import type {
   Prompt,
   PromptCategory,
   PromptContent,
-
 } from "../types"
-
 
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
@@ -185,5 +183,5 @@ defineEmits<{
 </script>
 
 <style lang="scss" scoped>
-@use '../styles/PromptsModal.scss';
+@use '../styles/index.scss';
 </style>

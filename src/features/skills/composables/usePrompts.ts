@@ -1,13 +1,13 @@
 import type { Ref } from "vue"
 import type { Prompt } from "../types"
-import type { FloatingBoxStorage } from "../types/storage"
+import type { SkillsStorage } from "../types/storage"
 import { ref } from "vue"
 
 /**
  * 提示词数据管理 composable
  * 负责 prompts 列表的加载、增删改及旧格式迁移
  */
-export function usePrompts(storageRef: Ref<FloatingBoxStorage | null>) {
+export function usePrompts(storageRef: Ref<SkillsStorage | null>) {
   const prompts = ref<Prompt[]>([])
   const loading = ref(true)
 
@@ -16,7 +16,6 @@ export function usePrompts(storageRef: Ref<FloatingBoxStorage | null>) {
     if (!s) return
     const loaded = await s.prompts.loadOrDefault()
     if (Array.isArray(loaded)) {
-      // 旧格式迁移：单 content 字符串 → contents[] 数组
       const needMigration = loaded.some(
         (p) =>
           !p.contents

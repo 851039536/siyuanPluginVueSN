@@ -67,6 +67,7 @@
 .base64-image-panel {
   display: flex;
   flex-direction: column;
+  min-height: 0;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
 }

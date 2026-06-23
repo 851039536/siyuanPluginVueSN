@@ -30,7 +30,7 @@ export function createPromptsTool(plugin: Plugin): FloatingTool {
     id: "skills",
     label: skills.label || "Prompts",
     title: skills.title || "提示词库",
-    icon: `<path fill="currentColor" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/><circle cx="12" cy="12" r="3.2"/>`,
+    icon: "mdi:star",
     bgColor: "#667eea",
     action: () => showPromptsModal(plugin),
   }

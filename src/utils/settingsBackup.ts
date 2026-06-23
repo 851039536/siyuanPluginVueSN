@@ -74,7 +74,12 @@ export async function backupPluginData(plugin: Plugin, workspaceRoot: string): P
   const filePath = node.path.join(backupDir, fileName)
 
   node.fs.writeFileSync(filePath, content)
-  return { fileName, filePath, size: content.length, fileCount: Object.keys(zip.files).length }
+  return {
+    fileName,
+    filePath,
+    size: content.length,
+    fileCount: Object.keys(zip.files).length,
+  }
 }
 
 /**

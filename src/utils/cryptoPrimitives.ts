@@ -78,7 +78,10 @@ export async function deriveAESKey(
       hash: "SHA-256",
     },
     imported,
-    { name: AES_GCM, length: keyLength },
+    {
+      name: AES_GCM,
+      length: keyLength,
+    },
     false,
     usages as KeyUsage[],
   )
@@ -102,7 +105,12 @@ export async function deriveBits(
   )
 
   return crypto.subtle.deriveBits(
-    { name: "PBKDF2", salt: salt as BufferSource, iterations, hash: "SHA-256" },
+    {
+      name: "PBKDF2",
+      salt: salt as BufferSource,
+      iterations,
+      hash: "SHA-256",
+    },
     imported,
     bitLength,
   )
@@ -122,11 +130,17 @@ export async function aesGcmEncrypt(
 ): Promise<{ iv: Uint8Array, ciphertext: Uint8Array }> {
   const actualIV = iv ?? generateIV()
   const encrypted = await crypto.subtle.encrypt(
-    { name: AES_GCM, iv: actualIV as BufferSource },
+    {
+      name: AES_GCM,
+      iv: actualIV as BufferSource,
+    },
     key,
     data as BufferSource,
   )
-  return { iv: actualIV, ciphertext: new Uint8Array(encrypted) }
+  return {
+    iv: actualIV,
+    ciphertext: new Uint8Array(encrypted),
+  }
 }
 
 /**
@@ -138,7 +152,10 @@ export async function aesGcmDecrypt(
   iv: Uint8Array,
 ): Promise<Uint8Array> {
   const decrypted = await crypto.subtle.decrypt(
-    { name: AES_GCM, iv: iv as BufferSource },
+    {
+      name: AES_GCM,
+      iv: iv as BufferSource,
+    },
     key,
     ciphertext as BufferSource,
   )

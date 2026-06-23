@@ -91,7 +91,7 @@
   margin-top: $spacing-6;
 }
 
-// ==================== 响应式 ====================
+// ==================== 响应式（仅模态基座 + 公共样式） ====================
 
 @media (max-width: 768px) {
   .vp-modal {
@@ -116,53 +116,6 @@
 
   .vp-modal-body {
     padding: $spacing-4 $spacing-5;
-  }
-
-  .vp-category-filter {
-    gap: $spacing-1;
-
-    .vp-chip {
-      font-size: $font-size-xs;
-      padding: $spacing-1 $spacing-2;
-    }
-  }
-
-  .vp-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .vp-controls {
-    flex-direction: column;
-
-    .vp-search .vp-input--search {
-      padding: $spacing-2 $spacing-3 $spacing-2 36px;
-    }
-  }
-
-  .vp-content-editor-item {
-    flex-direction: column;
-    gap: $spacing-2;
-  }
-
-  .vp-content-editor-actions {
-    flex-direction: row;
-    justify-content: flex-end;
-  }
-
-  .vp-card {
-    .vp-card-icon {
-      width: 16px;
-      height: 16px;
-    }
-
-    h3 {
-      font-size: $font-size-base;
-    }
-
-    .vp-tag {
-      font-size: 10px;
-      padding: 0 $spacing-1;
-    }
   }
 
   .vp-input {

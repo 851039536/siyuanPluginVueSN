@@ -128,3 +128,17 @@
     background: var(--b3-theme-primary-lightest);
   }
 }
+
+// ==================== 响应式 ====================
+
+@media (max-width: 768px) {
+  .vp-content-editor-item {
+    flex-direction: column;
+    gap: $spacing-2;
+  }
+
+  .vp-content-editor-actions {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+}

@@ -100,11 +100,15 @@ const panelHeight = ref(DEFAULT_HEIGHT)
 
 const storage = new PluginStorage(props.plugin)
 
-const panelStyle = computed(() => ({
-  maxWidth: panelWidth.value + "px",
-  minHeight: `calc(${panelHeight.value}vh + 200px)`,
-  maxHeight: `calc(${Math.min(panelHeight.value + 25, 95)}vh - 36px)`,
-}))
+const panelStyle = computed(() => {
+  // minHeight 取用户设定的 vh 值；maxHeight 额外留 15vh 余量，封顶 88vh 防止溢出视口
+  const maxVh = Math.min(panelHeight.value + 15, 88)
+  return {
+    maxWidth: panelWidth.value + "px",
+    minHeight: `${panelHeight.value}vh`,
+    maxHeight: `calc(${maxVh}vh - 36px)`,
+  }
+})
 
 onMounted(async () => {
   const w = await storage.load<number>("toolCollection-width")

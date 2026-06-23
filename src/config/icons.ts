@@ -196,6 +196,12 @@ export const FEATURE_ICONS = {
     color: "#6366f1",
   },
 
+  // 工具合集
+  toolCollection: {
+    icon: "mdi:toolbox-outline",
+    color: "#6366f1",
+  },
+
   // 单词阅读
   flashcardReading: {
     icon: "mdi:card-bulleted",

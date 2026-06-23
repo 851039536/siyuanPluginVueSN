@@ -54,6 +54,7 @@ import {
   registerShortcut,
   registerSkillLearning,
   registerSkillsViewer,
+  registerToolCollection,
   registerStatistics,
   registerStatusBar,
   registerSuperPanel,
@@ -236,6 +237,12 @@ export default class PluginSample extends Plugin {
     // 清理统计数据资源
     getStatisticsInstance()?.destroy()
 
+    // 清理工具合集资源
+    if ((this as any).__toolCollection) {
+      ;(this as any).__toolCollection.app.unmount()
+      ;(this as any).__toolCollection.container.remove()
+    }
+
     destroyCommands()
     destroy()
   }
@@ -288,6 +295,7 @@ export default class PluginSample extends Plugin {
     if (s.enableDataSnapshot) registerDataSnapshot(this)
     if (s.enableGitPush) registerGitPush(this)
     if (s.enableSkillLearning) registerSkillLearning(this)
+    if (s.enableToolCollection) registerToolCollection(this)
   }
 
   /**

@@ -101,6 +101,7 @@ import {
   imageCreationInitialTitle,
   imageCreationVisible,
   hideImageCreation,
+  toggleToolCollection,
 } from "@/features"
 import CoverGenerator from "@/features/imageCreation/components/CoverGenerator.vue"
 import DecryptDialog from "@/features/encryption/components/DecryptDialog.vue"
@@ -226,6 +227,11 @@ onMounted(() => {
   // 监听打开文本对比事件（来自超级面板）
   window.addEventListener("openTextDiff", () => {
     getTextDiffManager()?.toggle()
+  })
+
+  // 监听工具合集面板切换事件
+  window.addEventListener("toggleToolCollection", () => {
+    toggleToolCollection()
   })
 })
 </script>

@@ -1388,6 +1388,10 @@
   "statsView": "Stats",
   "dueForReview": "Due",
   "practiceProgress": "Coverage",
+  "accuracyRate": "Accuracy",
+  "correctCountLabel": "Correct",
+  "wrongCountLabel": "Wrong",
+  "notPracticed": "Not Practiced",
   "skills": {
     "label": "Prompts",
     "title": "Prompts Library",

@@ -23,6 +23,8 @@ export interface SkillCard {
   difficulty: Difficulty
   tags: string[]
   practiceCount: number
+  correctCount?: number
+  wrongCount?: number
   reviewData?: ReviewData
   createdAt: number
   updatedAt: number
@@ -121,5 +123,9 @@ export interface SkillI18n {
   statsView?: string
   dueForReview?: string
   practiceProgress?: string
+  accuracyRate?: string
+  correctCountLabel?: string
+  wrongCountLabel?: string
+  notPracticed?: string
   [key: string]: string | undefined
 }

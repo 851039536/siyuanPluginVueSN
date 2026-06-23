@@ -51,10 +51,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue"
+import { computed } from "vue"
 import type { SkillCard, SkillI18n } from "../types"
 import CategoryFilter from "./CategoryFilter.vue"
 import DifficultyBadge from "./DifficultyBadge.vue"
+import { useFilteredCards } from "../composables/useFilteredCards"
 
 const props = defineProps<{
   cards: SkillCard[]
@@ -68,44 +69,20 @@ const emit = defineEmits<{
 
 const t = computed(() => props.i18n)
 
-const searchQuery = ref("")
-const selectedLanguage = ref("")
-const selectedCategory = ref("")
-const selectedDifficulty = ref("")
-const page = ref(1)
-const pageSize = 10
-
-const languageList = computed(() => [...new Set(props.cards.map((c) => c.language))].sort())
-const categoryList = computed(() => [...new Set(props.cards.map((c) => c.category))].sort())
-
-const filteredCards = computed(() => {
-  let result = props.cards
-  const q = searchQuery.value.toLowerCase()
-  if (q) {
-    result = result.filter(
-      (c) =>
-        c.title.toLowerCase().includes(q) ||
-        c.answer.toLowerCase().includes(q) ||
-        c.tags.some((t) => t.toLowerCase().includes(q)),
-    )
-  }
-  if (selectedLanguage.value) result = result.filter((c) => c.language === selectedLanguage.value)
-  if (selectedCategory.value) result = result.filter((c) => c.category === selectedCategory.value)
-  if (selectedDifficulty.value) result = result.filter((c) => c.difficulty === selectedDifficulty.value)
-  return result
-})
-
-// 筛选条件变化时重置页码
-watch([searchQuery, selectedLanguage, selectedCategory, selectedDifficulty], () => {
-  page.value = 1
-})
-
-const totalPages = computed(() => Math.max(1, Math.ceil(filteredCards.value.length / pageSize)))
-const paginated = computed(() => filteredCards.value.length > pageSize)
-const paginatedCards = computed(() => {
-  const start = (page.value - 1) * pageSize
-  return filteredCards.value.slice(start, start + pageSize)
-})
+const cardsRef = computed(() => props.cards)
+const {
+  searchQuery,
+  selectedLanguage,
+  selectedCategory,
+  selectedDifficulty,
+  page,
+  languageList,
+  categoryList,
+  filteredCards,
+  totalPages,
+  paginated,
+  paginatedCards,
+} = useFilteredCards(cardsRef, { pageSize: 10, enableSearch: true })
 </script>
 
 <style lang="scss" scoped>

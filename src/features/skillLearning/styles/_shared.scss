@@ -1,0 +1,75 @@
+/**
+ * 技能学习 - 共用 SCSS partial
+ * 提取多个组件中重复的样式定义
+ */
+@use "@/variables.scss" as *;
+
+// ---- 空状态 ----
+@mixin shared-empty {
+  text-align: center;
+  padding: 32px $spacing-4;
+  font-style: italic;
+  opacity: 0.35;
+  font-size: $font-size-sm;
+}
+
+// ---- 语言标签颜色 ----
+@mixin lang-tag-colors {
+  &.lang--csharp     { background: #a855f7; }
+  &.lang--javascript { background: #f59e0b; }
+  &.lang--typescript { background: #3b82f6; }
+  &.lang--vue        { background: #10b981; }
+  &.lang--other      { background: #94a3b8; }
+}
+
+// ---- 进度条 ----
+@mixin shared-progress-bar {
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: $spacing-3;
+    flex-shrink: 0;
+    padding: $spacing-1 0 $spacing-2;
+  }
+  &__progress-bar {
+    flex: 1;
+    height: $spacing-1;
+    background: rgba(99, 102, 241, 0.12);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  &__progress-fill {
+    height: 100%;
+    background: var(--b3-theme-primary);
+    border-radius: 2px;
+    transition: width 0.35s ease;
+  }
+  &__counter {
+    font-size: $font-size-xs;
+    color: #94a3b8;
+    font-feature-settings: "tnum";
+    font-family: $vp-mono;
+    flex-shrink: 0;
+  }
+}
+
+// ---- 代码块 ----
+@mixin shared-code-block {
+  &__code-block {
+    background: #1e293b;
+    border-radius: $radius-md;
+    padding: $spacing-3;
+    overflow-x: auto;
+    max-height: 200px;
+    overflow-y: auto;
+    pre { margin: 0; }
+    code {
+      font-family: $vp-mono;
+      font-size: $font-size-xs;
+      line-height: 1.7;
+      color: #e2e8f0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  }
+}

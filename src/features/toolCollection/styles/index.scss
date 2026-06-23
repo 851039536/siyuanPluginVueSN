@@ -27,6 +27,8 @@
   flex-direction: column;
   overflow: hidden;
   contain: layout paint;
+  transform-origin: bottom center;
+  transform: translateX(-50%) scaleY(1);
   z-index: 9998;
 }
 
@@ -177,11 +179,6 @@
 
 // ==================== 过渡动画 ====================
 // panel 底部固定，scaleY 从 0→1 实现从下往上展开
-.tool-collection-panel {
-  transform-origin: bottom center;
-  transform: translateX(-50%) scaleY(1);
-}
-
 .slide-up-enter-active {
   transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 

@@ -21,7 +21,7 @@ todos:
 `src/features/gitPush/types/storage.ts` 第 49 行：
 
 ```typescript
-const projects = this.projects.loadOrDefault()  // ❌ 缺少 await
+const projects = this.projects.loadOrDefault() // ❌ 缺少 await
 ```
 
 `loadOrDefault()` 是 async 方法，不加 `await` 返回 `Promise` 对象。`Array.isArray(Promise)` 永远为 `false`，导致每次都执行 `save(DEFAULT_PROJECTS)`（空数组），覆盖掉已持久化的项目数据。

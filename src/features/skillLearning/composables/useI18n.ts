@@ -72,6 +72,10 @@ export const DEFAULT_I18N: Required<SkillI18n> = {
   statsView: "统计",
   dueForReview: "待复习",
   practiceProgress: "练习覆盖",
+  accuracyRate: "正确率",
+  correctCountLabel: "正确",
+  wrongCountLabel: "错误",
+  notPracticed: "未练习",
 }
 
 export function useI18n(i18n: SkillI18n | undefined) {

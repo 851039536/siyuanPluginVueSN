@@ -77,19 +77,7 @@ export class SkillStorage {
     return deduped
   }
 
-  /** 获取唯一语言列表 */
-  async getLanguages(): Promise<string[]> {
-    const cards = await this.getAllCards()
-    return [...new Set(cards.map((c) => c.language))].sort()
-  }
-
-  /** 获取唯一分类列表 */
-  async getCategories(): Promise<string[]> {
-    const cards = await this.getAllCards()
-    return [...new Set(cards.map((c) => c.category))].sort()
-  }
-
-  /** 检查标题唯一性 */
+  /** 检查标题唯一性（内部校验） */
   async isTitleUnique(title: string, excludeId?: string): Promise<boolean> {
     const cards = await this.getAllCards()
     return !cards.some((c) => c.title === title && c.id !== excludeId)
@@ -164,6 +152,23 @@ export class SkillStorage {
     const idx = cards.findIndex((c) => c.id === id)
     if (idx === -1) return false
     cards[idx].reviewData = { ...data }
+    cards[idx].updatedAt = Date.now()
+    await this.storage.save(STORAGE_KEY, cards)
+    return true
+  }
+
+  /** 更新复习数据 + 练习计数（合并为单次存储操作） */
+  async updateReviewAndPractice(id: string, data: ReviewData, isCorrect?: boolean): Promise<boolean> {
+    const cards = await this.getAllCards()
+    const idx = cards.findIndex((c) => c.id === id)
+    if (idx === -1) return false
+    cards[idx].reviewData = { ...data }
+    cards[idx].practiceCount = (cards[idx].practiceCount || 0) + 1
+    if (isCorrect === true) {
+      cards[idx].correctCount = (cards[idx].correctCount || 0) + 1
+    } else if (isCorrect === false) {
+      cards[idx].wrongCount = (cards[idx].wrongCount || 0) + 1
+    }
     cards[idx].updatedAt = Date.now()
     await this.storage.save(STORAGE_KEY, cards)
     return true

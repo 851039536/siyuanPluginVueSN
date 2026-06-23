@@ -1,4 +1,5 @@
 @use "@/variables.scss" as *;
+@use "./shared" as *;
 
 .skill-list-view {
   &__search {
@@ -20,11 +21,7 @@
     }
   }
   &__empty {
-    text-align: center;
-    padding: 32px $spacing-4;
-    font-style: italic;
-    opacity: 0.35;
-    font-size: $font-size-sm;
+    @include shared-empty;
   }
   &__grid {
     display: grid;
@@ -82,11 +79,7 @@
     height: $spacing-2;
     border-radius: 50%;
     flex-shrink: 0;
-    &.lang--csharp { background: #a855f7; }
-    &.lang--javascript { background: #f59e0b; }
-    &.lang--typescript { background: #3b82f6; }
-    &.lang--vue { background: #10b981; }
-    &.lang--other { background: #94a3b8; }
+    @include lang-tag-colors;
   }
   &__card-title {
     font-size: $font-size-xs;

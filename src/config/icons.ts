@@ -88,12 +88,6 @@ export const FEATURE_ICONS = {
     color: "#6366f1",
   },
 
-  // 单位转换
-  unitConverter: {
-    icon: "mdi:calculator",
-    color: "#ec4899",
-  },
-
   // 快捷键面板
   shortcuts: {
     icon: "mdi:keyboard",

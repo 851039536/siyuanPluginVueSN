@@ -25,7 +25,6 @@ export interface PluginSettings {
   enableWordQuery: boolean // 是否启用单词查询功能
   enableGeneralSettings: boolean // 是否启用通用设置功能
   enableQRCode: boolean // 是否启用二维码生成功能
-  enableUnitConverter: boolean // 是否启用单位转换功能
   enableDiskBrowser: boolean // 是否启用本地磁盘浏览器功能
   enableAIContentGenerator: boolean // 是否启用AI信息生成功能
   enableStatistics: boolean // 是否启用数据统计功能
@@ -92,7 +91,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableWordQuery: true,
   enableGeneralSettings: true,
   enableQRCode: true,
-  enableUnitConverter: true,
   enableDiskBrowser: true,
   enableAIContentGenerator: true,
   enableStatistics: true,

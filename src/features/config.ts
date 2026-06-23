@@ -82,11 +82,6 @@ export const FEATURE_CONFIG = [
     defaultDesc: "生成文本或链接的二维码",
   },
   {
-    id: "unitConverter",
-    defaultTitle: "单位转换",
-    defaultDesc: "快速转换各种单位",
-  },
-  {
     id: "shortcuts",
     defaultTitle: "快捷键面板",
     defaultDesc: "查看和管理快捷键",

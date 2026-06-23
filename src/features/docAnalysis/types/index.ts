@@ -193,6 +193,14 @@ export interface BookmarkDetail {
   count: number
 }
 
+/** 平台元数据项 */
+export interface PlatformMeta {
+  id: string
+  matchers: string[]
+  name: string
+  url: string
+}
+
 // ============================================================
 // 工具函数（纯函数，无副作用）
 // ============================================================

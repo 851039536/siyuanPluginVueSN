@@ -190,7 +190,7 @@ defineExpose({
     border: none;
     outline: none;
     background: var(--b3-theme-surface, $brand-light-gray);
-    border-radius: 3px;
+    border-radius: $radius-sm;
     cursor: pointer;
     appearance: none;
     -webkit-appearance: none;
@@ -243,7 +243,7 @@ defineExpose({
       width: 100%;
       height: 6px;
       background: var(--b3-theme-surface, $brand-light-gray);
-      border-radius: 3px;
+      border-radius: $radius-sm;
     }
 
     // Firefox 轨道样式
@@ -251,7 +251,7 @@ defineExpose({
       width: 100%;
       height: 6px;
       background: var(--b3-theme-surface, $brand-light-gray);
-      border-radius: 3px;
+      border-radius: $radius-sm;
     }
 
     &:focus {
@@ -284,7 +284,7 @@ defineExpose({
     flex-shrink: 0;
     min-width: 40px;
     text-align: center;
-    font-size: 14px;
+    font-size: $font-size-sm;
     font-weight: 500;
     color: var(--b3-theme-primary, $brand-orange);
     font-family: $font-heading;
@@ -331,7 +331,7 @@ defineExpose({
     }
 
     .si-slider__value {
-      font-size: 12px;
+      font-size: $font-size-xs;
       min-width: 32px;
     }
   }
@@ -352,7 +352,7 @@ defineExpose({
     }
 
     .si-slider__value {
-      font-size: 14px;
+      font-size: $font-size-sm;
       min-width: 40px;
     }
   }

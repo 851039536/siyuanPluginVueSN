@@ -1,56 +1,46 @@
 <template>
   <div class="vp-options">
-    <!-- 区分大小写 -->
-    <label class="vp-options__item">
+    <!-- 行1：开关组 -->
+    <div class="vp-options__row">
       <Switch
         :model-value="options.matchCase"
         size="small"
         label="区分大小写"
+        label-before
         @update:model-value="updateOption('matchCase', $event)"
       />
-    </label>
-
-    <!-- 全词匹配 -->
-    <label class="vp-options__item">
       <Switch
         :model-value="options.matchWholeWord"
         size="small"
         label="全词匹配"
+        label-before
         @update:model-value="updateOption('matchWholeWord', $event)"
       />
-    </label>
-
-    <!-- 匹配路径 -->
-    <label class="vp-options__item">
       <Switch
         :model-value="options.matchPath"
         size="small"
         label="匹配路径"
+        label-before
         @update:model-value="updateOption('matchPath', $event)"
       />
-    </label>
-
-    <!-- 正则 -->
-    <label class="vp-options__item">
       <Switch
         :model-value="options.regex"
         size="small"
         label="正则"
+        label-before
         @update:model-value="updateOption('regex', $event)"
       />
-    </label>
+      <Switch
+        :model-value="options.advancedMode"
+        size="small"
+        label="高级模式"
+        label-before
+        @update:model-value="updateOption('advancedMode', $event)"
+      />
+    </div>
 
-    <!-- 配置选单组 -->
-    <div class="vp-options__group">
-      <div class="vp-options__item">
-        <Switch
-          :model-value="options.advancedMode"
-          size="small"
-          label="高级模式"
-          @update:model-value="updateOption('advancedMode', $event)"
-        />
-      </div>
-
+    <!-- 行2：配置选单 -->
+    <div class="vp-options__row">
       <div class="vp-options__item vp-options__item--select">
         <span class="vp-options__key">数量</span>
         <Select
@@ -60,7 +50,6 @@
           @update:model-value="updateOption('maxResults', $event as number)"
         />
       </div>
-
       <div class="vp-options__item vp-options__item--select">
         <span class="vp-options__key">延迟</span>
         <Select
@@ -70,7 +59,6 @@
           @update:model-value="updateOption('debounceDelay', $event as number)"
         />
       </div>
-
       <div class="vp-options__item vp-options__item--select">
         <span class="vp-options__key">排序</span>
         <Select
@@ -86,16 +74,17 @@
           @update:model-value="updateOption('ascending', $event)"
         />
       </div>
+    </div>
 
-      <!-- 文件大小过滤 -->
+    <!-- 行3：文件大小过滤 -->
+    <div class="vp-options__row">
       <div class="vp-options__item vp-options__item--size">
         <span class="vp-options__key">大小</span>
         <input
           type="number"
           class="vp-options__size-input"
-          :value="options.minSize || ''"
+          :value="options.minSize"
           min="0"
-          placeholder="≥"
           @input="onMinSizeInput"
         />
         <Select
@@ -108,9 +97,8 @@
         <input
           type="number"
           class="vp-options__size-input"
-          :value="options.maxSize || ''"
+          :value="options.maxSize"
           min="0"
-          placeholder="≤"
           @input="onMaxSizeInput"
         />
         <Select
@@ -120,7 +108,6 @@
           @update:model-value="updateOption('maxSizeUnit', $event as SearchOptions['maxSizeUnit'])"
         />
       </div>
-
     </div>
   </div>
 </template>

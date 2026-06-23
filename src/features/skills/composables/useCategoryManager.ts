@@ -1,6 +1,6 @@
 import type { Ref } from "vue"
 import type { PromptCategory } from "../types"
-import type { FloatingBoxStorage } from "../types/storage"
+import type { SkillsStorage } from "../types/storage"
 import {
   computed,
   ref,
@@ -16,7 +16,7 @@ const DEFAULT_CATEGORY: PromptCategory = {
  * 分类数据管理 composable
  * 负责 categories 列表的加载与增删
  */
-export function useCategoryManager(storageRef: Ref<FloatingBoxStorage | null>) {
+export function useCategoryManager(storageRef: Ref<SkillsStorage | null>) {
   const categories = ref<PromptCategory[]>([{ ...DEFAULT_CATEGORY }])
 
   const allCategories = computed(() => [

@@ -10,8 +10,6 @@ import FloatingBox from "./index.vue"
 export type {
   FloatingBoxOptions,
   FloatingTool,
-  Prompt,
-  PromptCategory,
 } from "./types"
 
 let vueApp: VueApp | null = null

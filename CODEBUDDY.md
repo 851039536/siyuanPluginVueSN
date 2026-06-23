@@ -224,7 +224,25 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 ### SCSS 规范
 
-所有样式必须放在独立的 `.scss` 文件中，禁止在 Vue SFC `<style>` 块中编写内联样式。Vue 文件中仅允许 `@use` 导入语句。每个组件对应一个 `styles/<ComponentName>.scss` 文件。
+所有样式必须放在独立的 `.scss` 文件中，禁止在 Vue SFC `<style>` 块中编写内联样式。Vue 文件中仅允许 `@use` 导入语句。
+
+**命名规则**：
+
+| 文件类型 | 命名 | 示例 |
+|---------|------|------|
+| 组件专属 | `styles/<ComponentName>.scss`（PascalCase，无 `_`） | `PromptsGrid.scss`、`CategoryManageModal.scss` |
+| 纯 mixins/变量（partial） | `styles/_mixins.scss`（仅此类可用 `_` 前缀） | `_mixins.scss` |
+| 主入口 + 共享基座 | `styles/index.scss` | `index.scss` |
+
+**导入规则**：
+
+- `index.vue`：单行导入 `@use './styles/index.scss'`
+- 子组件：双行导入——第一行组件专属，第二行共享 index.scss：
+  ```scss
+  @use '../styles/MyComponent.scss';
+  @use '../styles/index.scss';
+  ```
+- `_mixins.scss` 由各 SCSS 文件通过 `@use "./mixins" as m` 自行引用
 
 项目遵循 **Codex UI 风格**：基于边框的卡片（禁用 `box-shadow`），使用 `src/_variables.scss` 中的全局设计 Token（`$radius-*`/`$vp-radius`/`$spacing-1`~`$spacing-4`/`$font-size-*`/`$vp-mono`），大写标签 10px/700 字重 + 0.06em 字母间距，统一 0.12s 过渡。
 

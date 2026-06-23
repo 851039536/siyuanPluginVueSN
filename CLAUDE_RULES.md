@@ -518,22 +518,33 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 ```
 src/features/myFeature/
 ├── components/
-│   └── MyComponent.vue       # <style lang="scss" scoped> @use "../styles/MyComponent.scss"; </style>
+│   └── MyComponent.vue       # <style lang="scss" scoped>
+│                             #   @use "../styles/MyComponent.scss";   ← 组件专属
+│                             #   @use "../styles/index.scss";         ← 共享模态基座
+│                             # </style>
 ├── styles/
-│   ├── _variables.scss       # 共享变量/mixins（下划线前缀表示 partial）
-│   ├── MyComponent.scss      # 组件专属样式
-│   └── index.scss            # 主入口共享样式（可选）
-└── index.vue                 # <style lang="scss"> @use "./styles/variables"; @use "./styles/index.scss"; </style>
+│   ├── _mixins.scss          # 共享变量/mixins（_ 前缀 = partial，仅此用途）
+│   ├── MyComponent.scss      # 组件专属样式（PascalCase，无 _ 前缀）
+│   ├── index.scss            # 主入口 index.vue 的样式 + 共享基座样式
+│   └── ...                   # 其他组件对应 OtherComponent.scss
+└── index.vue                 # <style lang="scss" scoped>
+                              #   @use "./styles/index.scss";
+                              # </style>
 ```
 
 ### 规则
 
 1. **禁止在 `.vue` 文件中编写 SCSS 样式代码**。仅允许 `@use` 导入语句。
-2. 每个组件对应一个 `styles/<ComponentName>.scss` 文件。
-3. 共享的变量/mixins 放在 `styles/_variables.scss` 或 `styles/_mixins.scss`（以下划线前缀命名）。
-4. Feature 主入口 `index.vue` 的样式放在 `styles/index.scss`。
-5. 导入路径使用相对路径（`../styles/` 或 `./styles/`）。
-6. `@use` 导入的 SCSS 文件会自动参与 Vue 的 scoped 样式编译。
+2. 每个组件对应一个 `styles/<ComponentName>.scss` 文件（PascalCase，无 `_` 前缀）。
+3. **`_` 下划线前缀仅限纯 mixins/变量**（如 `_mixins.scss`、`_variables.scss`）。包含实际 CSS 选择器的样式文件**禁止**使用 `_` 前缀。
+4. Feature 主入口 `index.vue` 的样式放在 `styles/index.scss`。此文件同时作为**共享基座**（如 `.vp-overlay`、`.vp-modal-header` 等），子组件通过第二行 `@use "../styles/index.scss"` 导入。
+5. **子组件导入模式：双行导入**——第一行导入自身专属 SCSS，第二行导入共享的 `index.scss`：
+   ```scss
+   @use '../styles/MyComponent.scss';   // 组件专属样式
+   @use '../styles/index.scss';         // 共享模态基座 + 公共样式
+   ```
+6. 导入路径使用相对路径（`../styles/` 或 `./styles/`）。
+7. `@use` 导入的 SCSS 文件会自动参与 Vue 的 scoped 样式编译。
 
 ### 示例
 

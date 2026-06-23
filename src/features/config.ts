@@ -177,11 +177,6 @@ export const FEATURE_CONFIG = [
     descI18nKey: "enableTextDiffDesc",
   },
   {
-    id: "base64Image",
-    defaultTitle: "Base64图片转换",
-    defaultDesc: "图片与Base64编码相互转换",
-  },
-  {
     id: "passwordVault",
     defaultTitle: "密码箱",
     defaultDesc: "加密存储和管理密码条目，支持分类和搜索",

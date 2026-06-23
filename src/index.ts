@@ -29,7 +29,6 @@ import {
   registerAIContentGenerator,
   registerApiDebugger,
   registerImageCreation,
-  registerBase64Image,
   registerBookmarkMarker,
   registerDataBackup,
   registerDataSnapshot,
@@ -276,7 +275,6 @@ export default class PluginSample extends Plugin {
     if (s.enableFloatingToolbar) registerFloatingToolbar(this)
     if (s.enableFloatingBox) registerFloatingBox(this)
     if (s.enableTextDiff) registerTextDiff(this)
-    if (s.enableBase64Image) registerBase64Image(this)
     if (s.enableFlashcardReading) registerFlashcardReading(this)
     if (s.enablePasswordVault) registerPasswordVault(this)
     if (s.enableSkillsViewer) registerSkillsViewer(this)

@@ -22,7 +22,7 @@
     background: var(--b3-theme-surface);
     color: var(--b3-theme-on-surface);
     font-size: $font-size-xs;
-    font-weight: 500;
+    font-weight: $font-weight-medium;
     cursor: pointer;
     transition: border-color 0.12s;
 
@@ -116,7 +116,7 @@
     h3 {
       margin: 0;
       font-size: $font-size-base;
-      font-weight: 600;
+      font-weight: $font-weight-semibold;
       color: var(--b3-theme-on-background);
       flex: 1;
       overflow: hidden;
@@ -129,7 +129,7 @@
       padding: 2px $spacing-2;
       border-radius: $radius-sm;
       font-size: $font-size-xs;
-      font-weight: 500;
+      font-weight: $font-weight-medium;
       flex-shrink: 0;
     }
   }
@@ -159,8 +159,8 @@
 
   .vp-content-label {
     font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.06em;
     text-transform: uppercase;
     opacity: 0.45;
     color: var(--b3-theme-on-surface);
@@ -189,7 +189,7 @@
       white-space: pre-wrap;
       word-break: break-word;
       font-family: $vp-mono;
-      line-height: 1.4;
+      line-height: $line-height-normal;
     }
 
     .vp-copy-hint {

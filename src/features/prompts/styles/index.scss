@@ -44,8 +44,8 @@
 
     h2 {
       margin: 0;
-      font-size: $font-size-xl;
-      font-weight: 600;
+      font-size: $font-size-base;
+      font-weight: $font-weight-semibold;
       color: var(--b3-theme-on-background);
       font-family: $font-heading;
     }

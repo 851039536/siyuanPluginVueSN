@@ -37,8 +37,6 @@ interface Props {
   modelValue: string
   /** 是否正在搜索 */
   isSearching: boolean
-  /** 是否启用自动搜索 */
-  autoSearch?: boolean
   /** 输入框占位符 */
   placeholder?: string
 }
@@ -51,7 +49,6 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  autoSearch: true,
   placeholder: "输入关键词搜索本地文件...",
 })
 
@@ -69,7 +66,7 @@ const handleInput = (value: string | number | null) => {
 
 /** 处理键盘事件 */
 const handleKeydown = (event: KeyboardEvent) => {
-  if (event.key === "Enter" && !props.autoSearch) {
+  if (event.key === "Enter") {
     emit("search")
   } else if (event.key === "Escape") {
     emit("escape")

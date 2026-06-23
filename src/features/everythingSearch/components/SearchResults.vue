@@ -51,7 +51,6 @@ import type {
   EverythingSearchResult,
   SearchState,
 } from "../types"
-import { computed } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Loader from "@/components/Loader.vue"
 import ResultItem from "./ResultItem.vue"
@@ -59,8 +58,6 @@ import ResultItem from "./ResultItem.vue"
 interface Props {
   /** 搜索状态 */
   state: SearchState
-  /** 是否启用自动搜索 */
-  autoSearch?: boolean
 }
 
 interface Emits {
@@ -70,18 +67,11 @@ interface Emits {
   (e: "itemCopyPath", item: EverythingSearchResult): void
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  autoSearch: true,
-})
-
+defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 /** 空状态提示文本 */
-const emptyHintText = computed(() => {
-  return props.autoSearch
-    ? "输入关键词自动搜索本地文件"
-    : "输入关键词点击搜索按钮搜索本地文件"
-})
+const emptyHintText = "输入关键词自动搜索本地文件"
 
 /** 处理项目双击 */
 const handleItemDblClick = (item: EverythingSearchResult) => {

@@ -24,8 +24,6 @@ export interface SearchOptions {
   regex: boolean
   /** 最大结果数 */
   maxResults: number
-  /** 自动搜索 */
-  autoSearch: boolean
   /** 防抖延迟（毫秒） */
   debounceDelay: number
   /** 排序字段 */

@@ -1,15 +1,5 @@
 <template>
   <div class="vp-options">
-    <!-- 自动搜索 -->
-    <label class="vp-options__item">
-      <Switch
-        :model-value="options.autoSearch"
-        size="small"
-        label="自动搜索"
-        @update:model-value="updateOption('autoSearch', $event)"
-      />
-    </label>
-
     <!-- 区分大小写 -->
     <label class="vp-options__item">
       <Switch
@@ -71,7 +61,7 @@
         />
       </div>
 
-      <div v-if="options.autoSearch" class="vp-options__item vp-options__item--select">
+      <div class="vp-options__item vp-options__item--select">
         <span class="vp-options__key">延迟</span>
         <Select
           :model-value="options.debounceDelay"

@@ -51,13 +51,13 @@ todos:
 
 ```typescript
 function launchIde(cp: any, cmd: string, args: string[]): Promise<void> {
-    const child = cp.spawn(cmd, args, {
-      detached: true,
-      stdio: 'ignore',
-      windowsHide: false,
-    })
-    child.unref()
-    return Promise.resolve()
+  const child = cp.spawn(cmd, args, {
+    detached: true,
+    stdio: 'ignore',
+    windowsHide: false,
+  })
+  child.unref()
+  return Promise.resolve()
 }
 ```
 
@@ -67,23 +67,23 @@ function launchIde(cp: any, cmd: string, args: string[]): Promise<void> {
 
 ```typescript
 function isCmdAvailable(cp: any, cmd: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      try {
-        const child = cp.spawn(cmd, ['--version'], {
-          stdio: 'ignore',
-          windowsHide: true,
-        })
-        child.on('error', (err: any) => {
-          resolve(err?.code !== 'ENOENT')
-        })
-        child.on('close', (code: number | null) => {
-          resolve(code === 0 || code === null)
-        })
-        child.unref()
-      } catch {
-        resolve(false)
-      }
-    })
+  return new Promise((resolve) => {
+    try {
+      const child = cp.spawn(cmd, ['--version'], {
+        stdio: 'ignore',
+        windowsHide: true,
+      })
+      child.on('error', (err: any) => {
+        resolve(err?.code !== 'ENOENT')
+      })
+      child.on('close', (code: number | null) => {
+        resolve(code === 0 || code === null)
+      })
+      child.unref()
+    } catch {
+      resolve(false)
+    }
+  })
 }
 ```
 
@@ -93,17 +93,17 @@ function isCmdAvailable(cp: any, cmd: string): Promise<boolean> {
 
 ```typescript
 async function findSlnFile(dir: string): Promise<string | null> {
-    const nodeModules = getNodeModules()
-    if (!nodeModules) return null
-    try {
-      const entries = await nodeModules.fs.promises.readdir(dir, { withFileTypes: true })
-      for (const e of entries) {
-        if (e.isFile() && e.name.endsWith('.sln')) {
-          return nodeModules.path.join(dir, e.name)
-        }
+  const nodeModules = getNodeModules()
+  if (!nodeModules) return null
+  try {
+    const entries = await nodeModules.fs.promises.readdir(dir, { withFileTypes: true })
+    for (const e of entries) {
+      if (e.isFile() && e.name.endsWith('.sln')) {
+        return nodeModules.path.join(dir, e.name)
       }
-    } catch { /* ignore */ }
-    return null
+    }
+  } catch { /* ignore */ }
+  return null
 }
 ```
 
@@ -113,12 +113,12 @@ async function findSlnFile(dir: string): Promise<string | null> {
 
 ```typescript
 async function handleOpenCustomIde(projectPath: string, ideName: string, idePath: string) {
-    let target = projectPath
-    if (/rider|visual\s*studio/i.test(ideName)) {
-      const sln = await findSlnFile(projectPath)  // 改为 await
-      if (sln) target = sln
-    }
-    // ... 其余不变
+  let target = projectPath
+  if (/rider|visual\s*studio/i.test(ideName)) {
+    const sln = await findSlnFile(projectPath) // 改为 await
+    if (sln) target = sln
+  }
+  // ... 其余不变
 }
 ```
 

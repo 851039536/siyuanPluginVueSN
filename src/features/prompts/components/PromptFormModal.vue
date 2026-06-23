@@ -265,5 +265,6 @@ function handleSave() {
 </script>
 
 <style lang="scss" scoped>
+@use '../styles/PromptFormModal.scss';
 @use '../styles/index.scss';
 </style>

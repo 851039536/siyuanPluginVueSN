@@ -183,5 +183,6 @@ defineEmits<{
 </script>
 
 <style lang="scss" scoped>
+@use '../styles/PromptsGrid.scss';
 @use '../styles/index.scss';
 </style>

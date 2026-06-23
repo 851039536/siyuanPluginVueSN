@@ -5,6 +5,7 @@
       <Input
         v-model="textInput"
         type="textarea"
+        size="small"
         label="INPUT"
         placeholder="请输入要转换的文本"
         :rows="3"
@@ -25,6 +26,7 @@
       <Input
         v-model="asciiInput"
         type="textarea"
+        size="small"
         label="INPUT"
         placeholder="请输入ASCII码，用空格或逗号分隔"
         :rows="3"

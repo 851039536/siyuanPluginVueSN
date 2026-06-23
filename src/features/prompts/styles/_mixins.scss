@@ -41,7 +41,7 @@ $card-border-radius: $radius-md;
   border-radius: $vp-radius;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-background);
-  font-size: 14px;
+  font-size: $font-size-sm;
   font-family: inherit;
 
   &:focus {

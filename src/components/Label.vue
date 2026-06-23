@@ -190,7 +190,7 @@ const forAttr = computed(() => (props.tag === "label" ? props.for : undefined))
   // 内联模式（非 label 标签）
   &--inline {
     display: inline-flex;
-    padding: 4px 10px;
+    padding: $spacing-1 10px;
     border-radius: $radius-md;
     background: var(--b3-theme-surface-lighter, $brand-light-gray);
 
@@ -224,6 +224,6 @@ const forAttr = computed(() => (props.tag === "label" ? props.for : undefined))
 // 独立 Label 样式（用于表单标签）
 .si-label:not(.si-label--inline) {
   display: inline-flex;
-  margin-bottom: 4px;
+  margin-bottom: $spacing-1;
 }
 </style>

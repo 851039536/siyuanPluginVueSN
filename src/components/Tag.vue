@@ -132,7 +132,7 @@ const handleClose = (event: MouseEvent) => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
+  padding: $spacing-1 10px;
   border: 1px solid transparent;
   font-family: $font-body;
   font-weight: 500;
@@ -144,12 +144,12 @@ const handleClose = (event: MouseEvent) => {
   // 尺寸变体
   &--small {
     font-size: $font-size-xs;
-    padding: 2px 8px;
+    padding: 2px $spacing-2;
   }
 
   &--medium {
     font-size: $font-size-sm;
-    padding: 4px 10px;
+    padding: $spacing-1 10px;
   }
 
   &--large {

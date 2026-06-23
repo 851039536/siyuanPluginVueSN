@@ -56,12 +56,16 @@ App.vue onMounted 监听 ───────────────┘
 ```typescript
 // ===== Feature A（如 floatingToolbar/actions/passwordVault.ts）=====
 // 只用 createDialogAction 工厂 + emitCustomEvent 派发
+// ===== App.vue（中心调度）=====
+// 唯一允许同时导入两个 feature 的文件
+import { openPasswordVaultWithText } from "@/features"
+
 export function createPasswordVaultAction(plugin: Plugin): ToolbarAction {
   return createDialogAction({
     id: "passwordVault",
     icon: `<svg>...</svg>`,
     label: plugin.i18n.passwordVault.quickSave,
-    eventName: "openPasswordVaultAdd",  // 事件名
+    eventName: "openPasswordVaultAdd", // 事件名
     getContent: (selection) => ({ content: selection }),
   })
 }
@@ -73,10 +77,6 @@ export function openPasswordVaultWithText(text: string) {
   pendingEntryName.value = text
   passwordVaultVisible.value = true
 }
-
-// ===== App.vue（中心调度）=====
-// 唯一允许同时导入两个 feature 的文件
-import { openPasswordVaultWithText } from "@/features"
 
 onMounted(() => {
   window.addEventListener("openPasswordVaultAdd", ((event: any) => {
@@ -302,11 +302,11 @@ toolCollection/
 
 ```ts
 plugin.addCommand({
-  langKey: "toggleToolCollection",   // i18n 键（命令名称，显示在快捷键设置界面）
-  langText: "工具合集",               // 回退文本（i18n 缺失时使用）
-  hotkey: "⌃⌥T",                    // macOS 风格：⌃=Ctrl ⌥=Alt ⌘=Cmd ⇧=Shift；Windows 自动转换
+  langKey: "toggleToolCollection", // i18n 键（命令名称，显示在快捷键设置界面）
+  langText: "工具合集", // 回退文本（i18n 缺失时使用）
+  hotkey: "⌃⌥T", // macOS 风格：⌃=Ctrl ⌥=Alt ⌘=Cmd ⇧=Shift；Windows 自动转换
   callback: () => {
-    toggleToolCollection()           // 回调函数
+    toggleToolCollection() // 回调函数
   },
 })
 ```

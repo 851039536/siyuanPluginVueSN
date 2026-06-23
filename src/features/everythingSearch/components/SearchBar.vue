@@ -19,14 +19,13 @@
       :loading="isSearching"
       @click="handleSearch"
     >
-      {{ searchButtonText }}
+      {{ SEARCH_BUTTON_TEXT }}
     </Button>
   </div>
 </template>
 
 <script setup lang="ts">
 import {
-  computed,
   nextTick,
   ref,
 } from "vue"
@@ -61,9 +60,7 @@ const emit = defineEmits<Emits>()
 const inputRef = ref<InstanceType<typeof Input> | null>(null)
 
 /** 搜索按钮文本 */
-const searchButtonText = computed(() =>
-  props.autoSearch ? "搜索" : "搜索",
-)
+const SEARCH_BUTTON_TEXT = "搜索"
 
 /** 处理输入 */
 const handleInput = (value: string | number | null) => {
@@ -103,17 +100,5 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-@use "@/variables" as *;
-
-.vp-search {
-  display: flex;
-  gap: 8px;
-  padding: 10px 16px;
-  background: var(--b3-theme-surface);
-  border-bottom: 1px solid var(--b3-border-color);
-
-  .si-input {
-    flex: 1;
-  }
-}
+@use "../styles/SearchBar.scss";
 </style>

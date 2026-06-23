@@ -1,0 +1,54 @@
+/**
+ * DialogHeader — 标题栏
+ * 橙色品牌色标题 + 边框关闭按钮
+ */
+
+@use "@/variables" as *;
+
+.vp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--b3-border-color);
+  background: var(--b3-theme-surface);
+}
+
+.vp-title {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+
+  &__icon {
+    font-size: $font-size-sm;
+    color: $brand-orange;
+  }
+
+  &__text {
+    font-size: $font-size-sm;
+    font-weight: 600;
+    font-family: $font-heading;
+    color: $brand-orange;
+  }
+}
+
+.vp-header__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  cursor: pointer;
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-xs;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+  }
+}

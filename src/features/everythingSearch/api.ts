@@ -145,7 +145,8 @@ function formatDate(timestamp: number | string): string {
 
   if (isNaN(date.getTime())) return ""
 
-  return date.toLocaleString("zh-CN", {
+  const locale = (typeof navigator !== "undefined" && navigator.language) || "zh-CN"
+  return date.toLocaleString(locale, {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -265,14 +266,21 @@ export function getFileIconType(filename: string, isFolder: boolean): string {
   return iconMap[ext] || "file"
 }
 
+/** 获取 Electron shell 模块（懒加载单例） */
+let _shell: any = undefined
+function getElectronShell() {
+  if (!_shell) {
+    _shell = window.require("@electron/remote").shell
+  }
+  return _shell
+}
+
 /**
  * 用系统默认程序打开文件
  */
 export async function openFile(filePath: string): Promise<void> {
   try {
-    // 使用Electron的shell模块
-    const { shell } = window.require("@electron/remote")
-    await shell.openPath(filePath)
+    await getElectronShell().openPath(filePath)
   } catch (error) {
     console.error("打开文件失败:", error)
     throw error
@@ -282,10 +290,9 @@ export async function openFile(filePath: string): Promise<void> {
 /**
  * 在资源管理器中显示文件
  */
-export async function showInExplorer(filePath: string): Promise<void> {
+export function showInExplorer(filePath: string): void {
   try {
-    const { shell } = window.require("@electron/remote")
-    shell.showItemInFolder(filePath)
+    getElectronShell().showItemInFolder(filePath)
   } catch (error) {
     console.error("显示文件失败:", error)
     throw error

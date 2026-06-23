@@ -1,0 +1,99 @@
+/**
+ * SearchResults — 搜索结果区域
+ * 5 种状态：loading/error/idle/empty/success
+ */
+
+@use "@/variables" as *;
+
+.vp-results {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  &__loading {
+    flex: 1;
+    position: relative;
+  }
+
+  &__list {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  &__header {
+    padding: $spacing-1 16px;
+    background: var(--b3-theme-surface-light);
+    border-bottom: 1px solid var(--b3-border-color);
+  }
+
+  &__count {
+    font-size: $font-size-xs;
+    font-family: $font-body;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.5;
+  }
+
+  &__scroll {
+    flex: 1;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: $brand-light-gray;
+      border-radius: 3px;
+
+      &:hover {
+        background: $brand-mid-gray;
+      }
+    }
+  }
+}
+
+// 空/错误状态
+.vp-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+
+  &__emoji {
+    font-size: 32px;
+    margin-bottom: $spacing-2;
+  }
+
+  &__msg {
+    font-size: 13px;
+    font-family: $font-body;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.5;
+  }
+
+  &__hint {
+    font-size: $font-size-xs;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.35;
+    margin-top: $spacing-2;
+
+    code {
+      font-family: $vp-mono;
+      padding: 1px $spacing-1;
+      background: var(--b3-theme-surface);
+      border: 1px solid var(--b3-border-color);
+      border-radius: 2px;
+      font-size: 10px;
+      opacity: 0.7;
+    }
+  }
+}

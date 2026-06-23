@@ -60,54 +60,5 @@ const updateConfig = (
 </script>
 
 <style scoped lang="scss">
-@use "@/variables" as *;
-
-$vp-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
-
-.vp-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 16px;
-  background: var(--b3-theme-surface);
-  border-top: 1px solid var(--b3-border-color);
-
-  &__config {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  &__key {
-    font-size: 11px;
-    color: var(--b3-theme-on-surface);
-    opacity: 0.5;
-    white-space: nowrap;
-  }
-
-  &__hints {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  &__kbd {
-    font-size: 9px;
-    font-weight: 700;
-    font-family: $vp-mono;
-    letter-spacing: 0.06em;
-    color: var(--b3-theme-on-surface);
-    opacity: 0.5;
-    padding: 1px 5px;
-    border: 1px solid var(--b3-border-color);
-    border-radius: 3px;
-  }
-
-  &__sep {
-    font-size: 10px;
-    color: var(--b3-theme-on-surface);
-    opacity: 0.3;
-    margin: 0 2px;
-  }
-}
+@use "../styles/DialogFooter.scss";
 </style>

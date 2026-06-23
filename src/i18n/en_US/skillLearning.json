@@ -67,5 +67,14 @@
   "quizScore": "Accuracy",
   "showDetails": "Details",
   "hideDetails": "Hide Details",
-  "aiGenerate": "AI Generate"
+  "aiGenerate": "AI Generate",
+  "practiceTimes": "",
+  "emptyOption": "(empty)",
+  "aiGenerateFailed": "AI generation failed",
+  "nextReviewHint": "Next review round will appear when cards are due",
+  "tapToReveal": "Tap card to reveal answer",
+  "forgotHint": "Again in 1 day",
+  "statsView": "Stats",
+  "dueForReview": "Due",
+  "practiceProgress": "Coverage"
 }

@@ -38,6 +38,7 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import type { Language, Difficulty, SkillI18n } from "../types"
+import { langLabel } from "../composables/useLangLabel"
 
 const props = defineProps<{
   i18n: SkillI18n
@@ -55,16 +56,6 @@ const emit = defineEmits<{
 }>()
 
 const t = computed(() => props.i18n)
-
-function langLabel(lang: string): string {
-  const map: Record<string, string> = {
-    csharp: "C#",
-    javascript: "JavaScript",
-    typescript: "TypeScript",
-    vue: "Vue",
-  }
-  return map[lang] || lang
-}
 </script>
 
 <style lang="scss" scoped>

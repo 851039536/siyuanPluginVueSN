@@ -72,7 +72,7 @@
               <span class="flashcard-quiz__lang-tag" :class="`lang--${currentItem.card.language}`">
                 {{ langLabel(currentItem.card.language) }}
               </span>
-              <DifficultyBadge :difficulty="currentItem.card.difficulty" :i18n="fullI18n" />
+              <DifficultyBadge :difficulty="currentItem.card.difficulty" :i18n="t" />
             </div>
           </div>
         </div>
@@ -91,7 +91,7 @@
             @click="selectAnswer(oi)"
           >
             <span class="flashcard-quiz__option-letter">{{ optionLetter(oi) }}</span>
-            <span class="flashcard-quiz__option-text">{{ opt.text || '(空)' }}</span>
+            <span class="flashcard-quiz__option-text">{{ opt.text || t.emptyOption }}</span>
             <span v-if="phase === 'feedback' && opt.correct" class="flashcard-quiz__option-icon">✓</span>
             <span v-else-if="phase === 'feedback' && currentItem.selectedIndex === oi && !opt.correct" class="flashcard-quiz__option-icon">✗</span>
           </button>
@@ -128,10 +128,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from "vue"
+import { ref, computed, watch, onActivated, onDeactivated } from "vue"
 import type { SkillCard, SkillI18n } from "../types"
 import IconWrapper from "@/components/IconWrapper.vue"
 import DifficultyBadge from "./DifficultyBadge.vue"
+import { langLabel } from "../composables/useLangLabel"
 
 interface CardOption {
   text: string
@@ -149,17 +150,11 @@ const props = defineProps<{
   i18n: SkillI18n
 }>()
 
+const emit = defineEmits<{
+  practice: [cardId: string]
+}>()
+
 const t = computed(() => props.i18n)
-const fullI18n = computed<Required<SkillI18n>>(() => ({
-  ...({
-    beginner: "初级", intermediate: "中级", advanced: "高级",
-    noCards: "暂无卡片", correct: "正确", incorrect: "错误",
-    retry: "重来", viewCode: "查看代码", hideCode: "收起代码",
-    nextQuestion: "下一题", viewResult: "查看结果",
-    quizScore: "正确率", showDetails: "查看详情", hideDetails: "收起详情",
-  } as Required<SkillI18n>),
-  ...props.i18n,
-}))
 
 // --- 工具函数 ---
 function shuffle<T>(arr: T[]): T[] {
@@ -241,7 +236,8 @@ const accuracy = computed(() => {
   return Math.round((correctCount.value / quizItems.value.length) * 100)
 })
 
-watch(() => props.cards, () => {
+// 仅卡片数量变化时重置测验（新增/删除），单个卡片内容更新不影响进行中的测验
+watch(() => props.cards.length, () => {
   quizItems.value = buildQuiz(props.cards)
   currentIndex.value = 0
   phase.value = "question"
@@ -254,6 +250,8 @@ function selectAnswer(oi: number) {
   item.selectedIndex = oi
   item.isCorrect = item.options[oi].correct
   phase.value = "feedback"
+  // 记录练习（无论对错都计数）
+  emit("practice", item.card.id)
 }
 
 function goNext() {
@@ -300,19 +298,13 @@ function onKeydown(e: KeyboardEvent) {
   }
 }
 
-onMounted(() => {
+onActivated(() => {
   window.addEventListener("keydown", onKeydown)
 })
-onUnmounted(() => {
+onDeactivated(() => {
   window.removeEventListener("keydown", onKeydown)
 })
 
-function langLabel(lang: string): string {
-  const map: Record<string, string> = {
-    csharp: "C#", javascript: "JS", typescript: "TS", vue: "Vue",
-  }
-  return map[lang] || lang
-}
 </script>
 
 <style lang="scss" scoped>

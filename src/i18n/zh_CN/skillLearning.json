@@ -67,5 +67,14 @@
   "quizScore": "正确率",
   "showDetails": "查看详情",
   "hideDetails": "收起详情",
-  "aiGenerate": "AI 生成"
+  "aiGenerate": "AI 生成",
+  "practiceTimes": "次",
+  "emptyOption": "(空)",
+  "aiGenerateFailed": "AI 生成失败",
+  "nextReviewHint": "下一轮复习将在卡片到期后自动出现",
+  "tapToReveal": "点击卡片查看答案",
+  "forgotHint": "1天后重来",
+  "statsView": "统计",
+  "dueForReview": "待复习",
+  "practiceProgress": "练习覆盖"
 }

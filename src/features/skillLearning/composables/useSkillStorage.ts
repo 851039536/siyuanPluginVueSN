@@ -3,7 +3,7 @@
  */
 import { ref, type Ref } from "vue"
 import type { Plugin } from "siyuan"
-import type { SkillCard, CreateSkillDTO, UpdateSkillDTO } from "../types"
+import type { SkillCard, CreateSkillDTO, UpdateSkillDTO, ReviewData } from "../types"
 import { SkillStorage } from "../types/storage"
 
 export function useSkillStorage(plugin: Plugin) {
@@ -44,6 +44,15 @@ export function useSkillStorage(plugin: Plugin) {
     return ok
   }
 
+  async function updateReviewData(id: string, data: ReviewData): Promise<boolean> {
+    const ok = await storage.updateReviewData(id, data)
+    if (ok) {
+      const card = cards.value.find((c) => c.id === id)
+      if (card) card.reviewData = { ...data }
+    }
+    return ok
+  }
+
   return {
     storage,
     cards,
@@ -53,5 +62,6 @@ export function useSkillStorage(plugin: Plugin) {
     updateCard,
     deleteCard,
     incrementPracticeCount,
+    updateReviewData,
   }
 }

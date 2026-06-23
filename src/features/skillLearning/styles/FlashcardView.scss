@@ -18,7 +18,7 @@
   &__header {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: $spacing-3;
     flex-shrink: 0;
     padding: $spacing-1 0 $spacing-2;
   }
@@ -108,8 +108,8 @@
   &__option {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: $spacing-3 14px;
+    gap: $spacing-3;
+    padding: $spacing-3 $spacing-3;
     border: 1px solid var(--b3-border-color);
     border-radius: 10px;
     background: var(--b3-theme-background, #f8fafc);
@@ -163,7 +163,7 @@
   &__feedback-area {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: $spacing-3;
     margin-top: $spacing-4;
     padding-top: $spacing-4;
     border-top: 1px solid var(--b3-border-color);
@@ -172,7 +172,7 @@
   &__feedback-banner {
     font-size: $font-size-sm;
     font-weight: 600;
-    padding: 10px 14px;
+    padding: $spacing-2 $spacing-3;
     border-radius: $radius-md;
     border: 1px solid;
 
@@ -202,7 +202,7 @@
   &__code-block {
     background: #1e293b;
     border-radius: $radius-md;
-    padding: $spacing-3 14px;
+    padding: $spacing-3;
     overflow-x: auto;
     max-height: 200px;
     overflow-y: auto;
@@ -219,7 +219,7 @@
 
   // ---- buttons ----
   &__btn {
-    padding: 10px $spacing-6;
+    padding: $spacing-2 $spacing-6;
     border-radius: $radius-md;
     font-size: $font-size-sm;
     font-weight: 600;
@@ -272,7 +272,7 @@
 
   &__result-actions {
     display: flex;
-    gap: 10px;
+    gap: $spacing-3;
     margin-top: $spacing-5;
   }
 

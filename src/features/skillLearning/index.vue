@@ -14,6 +14,9 @@
         </button>
       </div>
       <div class="skill-learning-panel__actions">
+        <button class="skill-learning-panel__btn" @click="showImport = true" :title="fullI18n.importCards">
+          ⇧
+        </button>
         <button class="skill-learning-panel__btn" @click="openAddDialog" :title="t.addCard">
           +
         </button>
@@ -28,9 +31,22 @@
           :cards="cards"
           :i18n="fullI18n"
           @select="handleSelectCard"
+          @delete="handleDeleteCard"
         />
         <FlashcardView
           v-else-if="viewMode === 'flashcard'"
+          :cards="cards"
+          :i18n="fullI18n"
+          @practice="handlePractice"
+        />
+        <ReviewView
+          v-else-if="viewMode === 'review'"
+          :cards="cards"
+          :i18n="fullI18n"
+          @rate="handleRate"
+        />
+        <StatsView
+          v-else-if="viewMode === 'stats'"
           :cards="cards"
           :i18n="fullI18n"
         />
@@ -53,19 +69,30 @@
       @update="handleUpdate"
       @close="closeDialog"
     />
+
+    <!-- 批量导入弹窗 -->
+    <ImportDialog
+      v-if="showImport"
+      :i18n="fullI18n"
+      @import="handleBulkImport"
+      @close="showImport = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue"
 import type { Plugin } from "siyuan"
-import type { SkillCard, SkillI18n, ViewMode, CreateSkillDTO } from "./types"
+import type { SkillCard, SkillI18n, ViewMode, CreateSkillDTO, ReviewRating, ReviewData } from "./types"
 import { useSkillStorage } from "./composables/useSkillStorage"
 import { useI18n } from "./composables/useI18n"
 import { PRESET_CARDS } from "./data/presetData"
 import SkillListView from "./components/SkillListView.vue"
 import FlashcardView from "./components/FlashcardView.vue"
 import SkillDialog from "./components/SkillDialog.vue"
+import ReviewView from "./components/ReviewView.vue"
+import ImportDialog from "./components/ImportDialog.vue"
+import StatsView from "./components/StatsView.vue"
 
 const props = defineProps<{
   i18n: SkillI18n | undefined
@@ -74,11 +101,12 @@ const props = defineProps<{
 
 const t = computed(() => fullI18n.value as Record<string, string>)
 const fullI18n = useI18n(props.i18n)
-const { cards, loadCards, createCard, updateCard, deleteCard, storage } =
+const { cards, loadCards, createCard, updateCard, deleteCard, incrementPracticeCount, updateReviewData, storage } =
   useSkillStorage(props.plugin)
 
 const viewMode = ref<ViewMode>("list")
 const showDialog = ref(false)
+const showImport = ref(false)
 const editingCard = ref<SkillCard | null>(null)
 
 const practicedCount = computed(() => cards.value.filter((c) => c.practiceCount > 0).length)
@@ -86,6 +114,8 @@ const practicedCount = computed(() => cards.value.filter((c) => c.practiceCount 
 const tabs = computed(() => [
   { id: "list" as ViewMode, label: fullI18n.value.listView || "列表" },
   { id: "flashcard" as ViewMode, label: fullI18n.value.flashcardView || "闪卡" },
+  { id: "review" as ViewMode, label: fullI18n.value.reviewView || "复习" },
+  { id: "stats" as ViewMode, label: fullI18n.value.statsView || "统计" },
 ])
 
 onMounted(async () => {
@@ -126,6 +156,29 @@ async function handleCreate(dto: CreateSkillDTO) {
 async function handleUpdate(id: string, dto: CreateSkillDTO) {
   await updateCard(id, dto)
   closeDialog()
+}
+
+async function handleDeleteCard(cardId: string) {
+  if (!confirm(fullI18n.value.confirmDelete || "确定要删除这张卡片吗？")) return
+  const ok = await deleteCard(cardId)
+  if (ok) {
+    console.log(fullI18n.value.deleteSuccess || "卡片已删除")
+  }
+}
+
+async function handlePractice(cardId: string) {
+  await incrementPracticeCount(cardId)
+}
+
+async function handleRate(cardId: string, _rating: ReviewRating, data: ReviewData) {
+  await updateReviewData(cardId, data)
+  await incrementPracticeCount(cardId)
+}
+
+async function handleBulkImport(dtos: CreateSkillDTO[]) {
+  await storage.bulkCreate(dtos)
+  await loadCards()
+  showImport.value = false
 }
 </script>
 

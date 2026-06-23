@@ -10,7 +10,7 @@
             class="skill-dialog__ai-btn"
             :disabled="!form.title.trim() || aiGenerating"
             @click="aiGenerate"
-            :title="t.aiGenerate || 'AI 生成答案'"
+            :title="t.aiGenerate || 'AI 生成全部内容'"
           >
             <span v-if="aiGenerating" class="skill-dialog__ai-spinner" />
             <span v-else>✨</span>
@@ -119,21 +119,30 @@ async function aiGenerate() {
 
 请输出严格 JSON（不要任何前缀或解释）：
 {
+  "title": "润色后的题目（更清晰专业，保留原意）",
   "answer": "简洁准确的答案（1-3句话）",
+  "codeSnippet": "与题目相关的代表性代码示例（5-15行，语言根据题目推断）",
   "distractors": ["错误但看似合理的选项1", "错误选项2", "错误选项3"],
   "category": "所属分类（如：异步编程、基础语法、设计模式）",
   "tags": ["标签1", "标签2", "标签3"]
-}`
+}
+
+关键要求：
+- distractors 每条字符串长度必须与 answer 接近（±30%），避免因长度差异被轻易排除
+- codeSnippet 用真实可运行的代码，标注语言类型
+`
 
     const result = await callAI(prompt, aiConfig, {
-      systemPrompt: "你是编程技能导师，专门为技术学习卡片生成准确答案和高质量干扰项。只输出JSON，禁止任何解释。",
+      systemPrompt: "你是编程技能导师，专门为技术学习卡片生成高质量内容。题目润色要专业清晰，答案要简洁准确，代码要真实可运行，干扰项要看似合理且长度与答案匹配。只输出JSON，禁止任何解释。",
       temperature: 0.5,
-      maxTokens: 600,
+      maxTokens: 1000,
       responseFormat: { type: "json_object" },
     })
 
     const parsed = JSON.parse(result)
+    if (parsed.title) form.title = parsed.title
     if (parsed.answer) form.answer = parsed.answer
+    if (parsed.codeSnippet) form.codeSnippet = parsed.codeSnippet
     if (Array.isArray(parsed.distractors)) {
       form.distractor1 = parsed.distractors[0] || ""
       form.distractor2 = parsed.distractors[1] || ""

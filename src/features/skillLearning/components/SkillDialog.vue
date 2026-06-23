@@ -16,6 +16,7 @@
             <span v-else>✨</span>
           </button>
         </div>
+        <div v-if="aiError" class="skill-dialog__ai-error">{{ aiError }}</div>
 
         <label class="skill-dialog__label">{{ t.answer }}</label>
         <textarea v-model="form.answer" class="skill-dialog__textarea" rows="3" placeholder="输入正确答案..." />
@@ -90,6 +91,7 @@ const t = computed(() => props.i18n)
 
 const tagsInput = ref(props.editCard?.tags.join(", ") || "")
 const aiGenerating = ref(false)
+const aiError = ref("")
 
 const form = reactive({
   title: props.editCard?.title || "",
@@ -109,6 +111,7 @@ async function aiGenerate() {
   if (!title || aiGenerating.value) return
 
   aiGenerating.value = true
+  aiError.value = ""
   try {
     const aiConfig = getApiConfigFromPlugin(props.plugin)
     const prompt = `为以下技术题目生成学习卡片内容：
@@ -141,6 +144,7 @@ async function aiGenerate() {
       tagsInput.value = parsed.tags.join(", ")
     }
   } catch (err: any) {
+    aiError.value = t.value.aiGenerateFailed || "AI 生成失败，请检查 API 配置"
     console.warn("AI 生成失败:", err.message || err)
   } finally {
     aiGenerating.value = false

@@ -12,7 +12,7 @@
       v-model:selectedLanguage="selectedLanguage"
       v-model:selectedCategory="selectedCategory"
       v-model:selectedDifficulty="selectedDifficulty"
-      :i18n="fullI18n"
+      :i18n="t"
       :languages="languageList"
       :categories="categoryList"
     />
@@ -21,19 +21,24 @@
     </div>
     <div v-else class="skill-list-view__grid">
       <div
-        v-for="card in filteredCards"
+        v-for="card in paginatedCards"
         :key="card.id"
         class="skill-list-view__card"
         @click="$emit('select', card)"
       >
+        <button
+          class="skill-list-view__card-delete"
+          :title="t.deleteCard || '删除卡片'"
+          @click.stop="$emit('delete', card.id)"
+        >×</button>
         <div class="skill-list-view__card-top">
           <span class="skill-list-view__lang-dot" :class="`lang--${card.language}`" />
           <span class="skill-list-view__card-title">{{ card.title }}</span>
         </div>
         <div class="skill-list-view__card-bottom">
-          <DifficultyBadge :difficulty="card.difficulty" :i18n="fullI18n" />
+          <DifficultyBadge :difficulty="card.difficulty" :i18n="t" />
           <span class="skill-list-view__card-category">{{ card.category }}</span>
-          <span class="skill-list-view__card-count">{{ card.practiceCount }}次</span>
+          <span class="skill-list-view__card-count">{{ card.practiceCount }}{{ t.practiceTimes }}</span>
         </div>
       </div>
     </div>
@@ -46,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue"
+import { ref, computed, watch } from "vue"
 import type { SkillCard, SkillI18n } from "../types"
 import CategoryFilter from "./CategoryFilter.vue"
 import DifficultyBadge from "./DifficultyBadge.vue"
@@ -56,25 +61,12 @@ const props = defineProps<{
   i18n: SkillI18n
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   select: [card: SkillCard]
+  delete: [cardId: string]
 }>()
 
 const t = computed(() => props.i18n)
-const fullI18n = computed<Required<SkillI18n>>(() => ({
-  ...({
-    panelTitle: "技能学习",
-    beginer: "初级",
-    intermediate: "中级",
-    advanced: "高级",
-    allLanguages: "全部语言",
-    allCategories: "全部分类",
-    allDifficulties: "全部难度",
-    noCards: "暂无卡片",
-    searchPlaceholder: "搜索卡片...",
-  } as Required<SkillI18n>),
-  ...props.i18n,
-}))
 
 const searchQuery = ref("")
 const selectedLanguage = ref("")
@@ -103,8 +95,17 @@ const filteredCards = computed(() => {
   return result
 })
 
+// 筛选条件变化时重置页码
+watch([searchQuery, selectedLanguage, selectedCategory, selectedDifficulty], () => {
+  page.value = 1
+})
+
 const totalPages = computed(() => Math.max(1, Math.ceil(filteredCards.value.length / pageSize)))
 const paginated = computed(() => filteredCards.value.length > pageSize)
+const paginatedCards = computed(() => {
+  const start = (page.value - 1) * pageSize
+  return filteredCards.value.slice(start, start + pageSize)
+})
 </script>
 
 <style lang="scss" scoped>

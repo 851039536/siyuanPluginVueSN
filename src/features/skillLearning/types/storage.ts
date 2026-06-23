@@ -3,7 +3,7 @@
  */
 import { Plugin } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
-import type { SkillCard, CreateSkillDTO, UpdateSkillDTO } from "./index"
+import type { SkillCard, CreateSkillDTO, UpdateSkillDTO, ReviewData } from "./index"
 
 export const STORAGE_KEY = "skill-learning-cards"
 const PRESET_FLAG_KEY = "skill-learning-preset-loaded"
@@ -153,6 +153,17 @@ export class SkillStorage {
     const idx = cards.findIndex((c) => c.id === id)
     if (idx === -1) return false
     cards[idx].practiceCount = (cards[idx].practiceCount || 0) + 1
+    cards[idx].updatedAt = Date.now()
+    await this.storage.save(STORAGE_KEY, cards)
+    return true
+  }
+
+  /** 更新复习数据（SM-2 间隔重复） */
+  async updateReviewData(id: string, data: ReviewData): Promise<boolean> {
+    const cards = await this.getAllCards()
+    const idx = cards.findIndex((c) => c.id === id)
+    if (idx === -1) return false
+    cards[idx].reviewData = { ...data }
     cards[idx].updatedAt = Date.now()
     await this.storage.save(STORAGE_KEY, cards)
     return true

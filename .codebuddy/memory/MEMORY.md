@@ -16,4 +16,4 @@
 - 2026-06-13：dataBackup 模块全面审查重构（见当天日报）
 - 2026-06-11：flashcardReading 模块审查重构（见当天日报）
 - 2026-06-22：新增 skillLearning（技能学习）功能 — 代码片段练习库+闪卡记忆，Dock 右侧栏面板，C#/JS/TS/Vue 技术栈，支持自建/预设/Markdown导入三种内容来源，复用 useTypingQueue 加权复习算法
-- 2026-06-23：toolCollection 新增快捷键 Ctrl+T（⌃T），通过 plugin.addCommand() 注册，回调调用 toggleToolCollection() 切换面板显隐
+- 2026-06-23：toolCollection 新增快捷键 Ctrl+Alt+T（⌃⌥T），面板尺寸增加（宽 860→1060，高 60vh→calc(60vh+200px) min-height），移除背景遮罩改为 transparent。CODEBUDDY.md 新增"底部面板模式""快捷键注册""新增功能完整流程"三个规范章节。

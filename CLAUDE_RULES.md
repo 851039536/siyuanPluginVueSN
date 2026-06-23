@@ -545,6 +545,7 @@ src/features/myFeature/
    ```
 6. 导入路径使用相对路径（`../styles/` 或 `./styles/`）。
 7. `@use` 导入的 SCSS 文件会自动参与 Vue 的 scoped 样式编译。
+8. **响应式就近原则**：`@media` 查询放在对应基类所在文件末尾。组件专属选择器的响应式规则放入组件 SCSS，模态基座等公共类的响应式保留在 `index.scss`。
 
 ### 示例
 

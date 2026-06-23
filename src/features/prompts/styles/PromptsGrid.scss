@@ -226,3 +226,44 @@
     }
   }
 }
+
+// ==================== 响应式 ====================
+
+@media (max-width: 768px) {
+  .vp-category-filter {
+    gap: $spacing-1;
+
+    .vp-chip {
+      font-size: $font-size-xs;
+      padding: $spacing-1 $spacing-2;
+    }
+  }
+
+  .vp-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .vp-controls {
+    flex-direction: column;
+
+    .vp-search .vp-input--search {
+      padding: $spacing-2 $spacing-3 $spacing-2 36px;
+    }
+  }
+
+  .vp-card {
+    .vp-card-icon {
+      width: 16px;
+      height: 16px;
+    }
+
+    h3 {
+      font-size: $font-size-base;
+    }
+
+    .vp-tag {
+      font-size: 10px;
+      padding: 0 $spacing-1;
+    }
+  }
+}

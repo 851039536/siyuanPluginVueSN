@@ -22,10 +22,7 @@
         <!-- 搜索选项 -->
         <SearchOptions
           :options="options"
-          :available-drives="availableDrives"
           @update:options="handleOptionUpdate"
-          @drive-change="handleDriveChange"
-          @refresh-drives="refreshDrives"
         />
 
         <!-- 高级搜索语法帮助 -->
@@ -122,7 +119,6 @@ const storage = new EverythingSearchStorage(plugin)
 // 状态
 const searchQuery = ref("")
 const serviceAvailable = ref(true)
-const availableDrives = ref<string[]>([])
 const debounceTimer = ref<number | null>(null)
 const saveConfigTimer = ref<number | null>(null)
 
@@ -146,9 +142,6 @@ const loadConfig = async () => {
     const savedData = await storage.init()
     Object.assign(config, savedData.config)
     Object.assign(options, savedData.options)
-    if (typeof options.selectedDrive === "undefined") {
-      options.selectedDrive = ""
-    }
   } catch (error) {
     console.error("从插件存储加载配置失败:", error)
   }
@@ -177,24 +170,6 @@ const checkService = async () => {
   serviceAvailable.value = await checkEverythingService(config)
 }
 
-/** 列出所有可选盘符（A-Z） */
-const listAvailableDrives = () => {
-  const drives = Array.from({ length: 26 }, (_, i) => `${String.fromCharCode(65 + i)}:`)
-  availableDrives.value = drives
-}
-
-/** 刷新盘符列表 */
-const refreshDrives = () => {
-  listAvailableDrives()
-}
-
-/** 处理盘符变化 */
-const handleDriveChange = () => {
-  if (searchQuery.value.trim()) {
-    debouncedSearch()
-  }
-}
-
 /** 搜索 */
 const handleSearch = async () => {
   const query = searchQuery.value.trim()
@@ -206,12 +181,6 @@ const handleSearch = async () => {
     debounceTimer.value = null
   }
 
-  // 构建最终查询
-  let finalQuery = query
-  if (options.selectedDrive) {
-    finalQuery = `${options.selectedDrive}\\ ${query}`
-  }
-
   searchState.status = "loading"
   searchState.errorMessage = ""
   searchState.hasSearched = true
@@ -219,7 +188,7 @@ const handleSearch = async () => {
   try {
     const results = await searchFiles(
       {
-        query: finalQuery,
+        query,
         matchCase: options.matchCase,
         matchWholeWord: options.matchWholeWord,
         matchPath: options.matchPath,
@@ -365,7 +334,6 @@ watch(
 
 onMounted(async () => {
   await loadConfig()
-  listAvailableDrives()
 })
 
 onUnmounted(() => {

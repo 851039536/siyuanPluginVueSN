@@ -31,7 +31,6 @@ export const DEFAULT_OPTIONS: SearchOptions = {
   debounceDelay: 500,
   sort: "date_modified",
   ascending: false,
-  selectedDrive: "",
   advancedMode: false,
 }
 

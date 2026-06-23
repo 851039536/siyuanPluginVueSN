@@ -310,7 +310,7 @@ async function handlePlatformClick(platform: PlatformInfo) {
 async function markAsPublished(platformId: string) {
   if (!props.attrs || markingPlatform.value) return
 
-  const config = PLATFORM_META.find((p) => p.id === platformId)
+  const config = PLATFORM_META.value.find((p) => p.id === platformId)
   if (!config) return
 
   // eslint-disable-next-line no-alert
@@ -321,7 +321,7 @@ async function markAsPublished(platformId: string) {
   try {
     // 查找已有的匹配 YAML key
     const yamlKeys = Object.keys(props.attrs).filter((k) => k.endsWith("-yaml"))
-    const matchKey = yamlKeys.find((k) => getPlatformIdFromAttrKey(k) === platformId)
+    const matchKey = yamlKeys.find((k) => getPlatformIdFromAttrKey(k, PLATFORM_META.value) === platformId)
 
     const attrKey = matchKey || `custom-${config.matchers[0]}-yaml`
     const yamlValue = buildYamlTemplate()
@@ -340,7 +340,7 @@ async function markAsPublished(platformId: string) {
 async function unmarkAsPublished(platformId: string) {
   if (!props.attrs || markingPlatform.value) return
 
-  const config = PLATFORM_META.find((p) => p.id === platformId)
+  const config = PLATFORM_META.value.find((p) => p.id === platformId)
   if (!config) return
 
   // eslint-disable-next-line no-alert
@@ -350,7 +350,7 @@ async function unmarkAsPublished(platformId: string) {
 
   try {
     const yamlKeys = Object.keys(props.attrs).filter((k) => k.endsWith("-yaml"))
-    const matchKey = yamlKeys.find((k) => getPlatformIdFromAttrKey(k) === platformId)
+    const matchKey = yamlKeys.find((k) => getPlatformIdFromAttrKey(k, PLATFORM_META.value) === platformId)
     if (matchKey) {
       await setBlockAttrs(props.docId, { [matchKey]: null as unknown as string })
       emit("refresh")
@@ -395,9 +395,9 @@ function buildYamlTemplate(): string {
 }
 
 const platforms = computed<PlatformInfo[]>(() => {
-  const publishedIds = getPublishedPlatformIdsFromAttrs(props.attrs)
+  const publishedIds = getPublishedPlatformIdsFromAttrs(props.attrs, PLATFORM_META.value)
 
-  return PLATFORM_META.map((config) => ({
+  return PLATFORM_META.value.map((config) => ({
     id: config.id,
     name: config.name,
     published: publishedIds.has(config.id),

@@ -452,7 +452,7 @@ defineExpose({
     position: relative;
     background: var(--b3-theme-background, $brand-light);
     border: 1px solid var(--b3-border-color, $brand-subtle-gray);
-    border-radius: 6px;
+    border-radius: $vp-radius;
     outline: none;
 
     &:hover:not(.si-input--disabled .si-input__wrapper) {
@@ -480,9 +480,9 @@ defineExpose({
     outline: none;
     background: transparent;
     font-family: $font-body;
-    font-size: 14px;
+    font-size: $font-size-sm;
     color: var(--b3-theme-on-background, $brand-dark);
-    padding: 8px 12px;
+    padding: $spacing-2 $spacing-3;
 
     &::placeholder {
       color: var(--b3-theme-secondary, $brand-mid-gray);
@@ -522,7 +522,7 @@ defineExpose({
 
       &::-webkit-scrollbar-thumb {
         background: var(--b3-theme-surface-light, $brand-light-gray);
-        border-radius: 4px;
+        border-radius: $radius-sm;
 
         &:hover {
           background: var(--b3-theme-secondary, $brand-mid-gray);
@@ -536,11 +536,11 @@ defineExpose({
     color: var(--b3-theme-secondary, $brand-mid-gray);
 
     &--prefix {
-      margin-left: 12px;
+      margin-left: $spacing-3;
     }
 
     &--suffix {
-      margin-right: 12px;
+      margin-right: $spacing-3;
     }
   }
 
@@ -549,11 +549,11 @@ defineExpose({
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 4px;
-    margin-right: 8px;
+    padding: $spacing-1;
+    margin-right: $spacing-2;
     color: var(--b3-theme-secondary, $brand-mid-gray);
     cursor: pointer;
-    border-radius: 4px;
+    border-radius: $radius-sm;
 
     &:hover {
       color: var(--b3-theme-on-background, $brand-dark);
@@ -568,7 +568,7 @@ defineExpose({
     width: 16px;
     height: 16px;
     cursor: ns-resize;
-    border-radius: 4px;
+    border-radius: $radius-sm;
 
     &::before {
       content: '';
@@ -584,7 +584,6 @@ defineExpose({
         transparent 2px,
         transparent 4px
       );
-      border-radius: 1px;
     }
 
     &::after {
@@ -601,7 +600,6 @@ defineExpose({
         transparent 2px,
         transparent 4px
       );
-      border-radius: 1px;
     }
 
     &:hover::before,
@@ -627,23 +625,23 @@ defineExpose({
 
   &--small {
     .si-input__field {
-      padding: 6px 10px;
-      font-size: 13px;
+      padding: $spacing-1 $spacing-2;
+      font-size: $font-size-xs;
       min-height: 28px;
     }
   }
 
   &--medium {
     .si-input__field {
-      padding: 8px 12px;
-      font-size: 14px;
+      padding: $spacing-2 $spacing-3;
+      font-size: $font-size-sm;
       min-height: 36px;
     }
   }
 
   &--large {
     .si-input__field {
-      padding: 10px 14px;
+      padding: $spacing-3 $spacing-4;
       font-size: 15px;
       min-height: 44px;
     }

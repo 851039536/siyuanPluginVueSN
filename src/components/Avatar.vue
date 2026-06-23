@@ -168,25 +168,25 @@ const handleClick = (event: MouseEvent) => {
   &--small {
     width: 32px;
     height: 32px;
-    font-size: 12px;
+    font-size: $font-size-xs;
   }
 
   &--medium {
     width: 40px;
     height: 40px;
-    font-size: 14px;
+    font-size: $font-size-sm;
   }
 
   &--large {
     width: 48px;
     height: 48px;
-    font-size: 16px;
+    font-size: $font-size-base;
   }
 
   &--xlarge {
     width: 64px;
     height: 64px;
-    font-size: 20px;
+    font-size: $font-size-xl;
   }
 
   // 形状变体

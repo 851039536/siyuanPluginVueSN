@@ -101,17 +101,19 @@ defineExpose({
 <style scoped lang="scss">
 @use '@/variables.scss' as *;
 
-// 公共 hover/active mixin
-@mixin interactive-raised($shadow-color: rgba(0, 0, 0, 0.2), $active-shadow-color: rgba(0, 0, 0, 0.15)) {
+// 公共交互反馈 mixin（Codex 风格：使用 border-color + brightness，禁用 box-shadow）
+@mixin interactive-raised($border-color: var(--b3-theme-primary)) {
+  transition: all 0.12s;
+
   &:hover:not(.si-button--disabled):not(.si-button--loading) {
-    filter: brightness(1.1);
+    filter: brightness(1.08);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px $shadow-color;
+    border-color: $border-color;
   }
 
   &:active:not(.si-button--disabled):not(.si-button--loading) {
+    filter: brightness(0.95);
     transform: translateY(0);
-    box-shadow: 0 2px 6px $active-shadow-color;
   }
 }
 
@@ -120,9 +122,9 @@ defineExpose({
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: $spacing-2;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: $vp-radius;
   font-family: $font-body;
   font-weight: 500;
   cursor: pointer;
@@ -133,19 +135,19 @@ defineExpose({
 
   // 尺寸变体
   &--small {
-    padding: 6px 12px;
-    font-size: 13px;
+    padding: $spacing-2 $spacing-3;
+    font-size: $font-size-xs;
     min-height: 28px;
   }
 
   &--medium {
-    padding: 8px 16px;
-    font-size: 14px;
+    padding: $spacing-2 $spacing-4;
+    font-size: $font-size-sm;
     min-height: 36px;
   }
 
   &--large {
-    padding: 10px 20px;
+    padding: $spacing-3 $spacing-5;
     font-size: 15px;
     min-height: 44px;
   }
@@ -165,9 +167,9 @@ defineExpose({
   }
 
   &--success {
-    background: var(--b3-theme-success, #10b981);
-    color: var(--b3-theme-on-success, white);
-    @include interactive-raised(rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.2));
+    background: var(--b3-theme-success, $brand-success);
+    color: var(--b3-theme-on-primary, $brand-light);
+    @include interactive-raised(var(--b3-theme-success, $brand-success));
   }
 
   &--danger {
@@ -257,7 +259,7 @@ defineExpose({
     flex: 1;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: $spacing-1;
     line-height: 1.4;
   }
 

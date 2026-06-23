@@ -66,6 +66,13 @@
       >
         <Icon icon="mdi:close" />
       </button>
+      <button
+        class="platform-manage-btn"
+        title="管理平台"
+        @click="platformManageVisible = true"
+      >
+        <Icon icon="mdi:cog-outline" />
+      </button>
     </div>
     <div
       v-if="activePlatformFilter"
@@ -324,6 +331,14 @@
       @close="handleCloseAttrs"
       @refresh="handleRefreshAttrs"
     />
+
+    <!-- 平台管理弹窗 -->
+    <PlatformManageModal
+      :visible="platformManageVisible"
+      :save-platform-meta="savePlatformMeta"
+      @close="platformManageVisible = false"
+      @saved="onPlatformSaved"
+    />
   </div>
 </template>
 
@@ -346,6 +361,7 @@ import DocListItem from "./components/DocListItem.vue"
 import FilterSettings from "./components/FilterSettings.vue"
 
 import StatsOverview from "./components/StatsOverview.vue"
+import PlatformManageModal from "./components/PlatformManageModal.vue"
 import {
   PLATFORM_META,
   useDocAnalysis,
@@ -383,17 +399,30 @@ const {
   openDoc,
   updateSort,
   clearResults,
+  loadPlatformMeta,
+  savePlatformMeta,
   platformUnpublishedCounts,
 } = useDocAnalysis(props.plugin)
 
 const showPublishTip = ref(false)
+
+/** 平台管理弹窗可见性 */
+const platformManageVisible = ref(false)
+
+/** 平台配置保存后重新分析 */
+function onPlatformSaved() {
+  // 平台变更后清空旧分析结果，用户下次点击「分析」时使用新平台列表
+  if (hasAnalyzed.value) {
+    handleAnalyze()
+  }
+}
 
 /** 当前选中的平台过滤 */
 const activePlatformFilter = ref("")
 
 /** 当前过滤平台的显示名称 */
 const activePlatformName = computed(() => {
-  const meta = PLATFORM_META.find((p) => p.id === activePlatformFilter.value)
+  const meta = PLATFORM_META.value.find((p) => p.id === activePlatformFilter.value)
   return meta ? meta.name : activePlatformFilter.value
 })
 
@@ -570,6 +599,7 @@ function toggleSortOrder() {
 }
 
 onMounted(async () => {
+  await loadPlatformMeta()
   await loadNotebooks()
   await loadSavedOptions()
 })

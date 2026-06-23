@@ -601,7 +601,7 @@ const generateQrcode = async () => {
   if (!qrcodeInput.value) return
 
   try {
-    const options: QRCode.QRCodeToStringOptions = {
+    const options: QRCode.QRCodeToDataURLOptions = {
       width: qrcodeSize.value,
       margin: 2,
       color: {

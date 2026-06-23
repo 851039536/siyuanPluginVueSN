@@ -11,18 +11,18 @@
           <span class="header-title">{{ i18n.toolCollection || "工具合集" }}</span>
           <div class="header-resize">
             <button class="resize-btn" title="变窄" @click="adjustWidth(-80)">
-              <Icon icon="mdi:arrow-collapse-horizontal" :size="12" />
+              <Icon icon="mdi:chevron-left" :size="12" />
             </button>
             <span class="resize-label">{{ panelWidth }}px</span>
             <button class="resize-btn" title="变宽" @click="adjustWidth(80)">
-              <Icon icon="mdi:arrow-expand-horizontal" :size="12" />
+              <Icon icon="mdi:chevron-right" :size="12" />
             </button>
             <button class="resize-btn" title="变矮" @click="adjustHeight(-10)">
-              <Icon icon="mdi:arrow-collapse-vertical" :size="12" />
+              <Icon icon="mdi:chevron-down" :size="12" />
             </button>
             <span class="resize-label">{{ panelHeight }}vh</span>
             <button class="resize-btn" title="变高" @click="adjustHeight(10)">
-              <Icon icon="mdi:arrow-expand-vertical" :size="12" />
+              <Icon icon="mdi:chevron-up" :size="12" />
             </button>
           </div>
           <button

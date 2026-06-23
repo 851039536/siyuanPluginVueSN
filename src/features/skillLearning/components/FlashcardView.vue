@@ -44,6 +44,18 @@
 
     <!-- 答题页 -->
     <template v-else>
+      <!-- 分类筛选 -->
+      <div class="flashcard-quiz__filter">
+        <CategoryFilter
+          v-model:selectedLanguage="selectedLanguage"
+          v-model:selectedCategory="selectedCategory"
+          v-model:selectedDifficulty="selectedDifficulty"
+          :i18n="t"
+          :languages="languageList"
+          :categories="categoryList"
+        />
+      </div>
+
       <!-- 进度条 -->
       <div class="flashcard-quiz__header">
         <div class="flashcard-quiz__progress-bar">
@@ -132,6 +144,7 @@ import { ref, computed, watch, onActivated, onDeactivated } from "vue"
 import type { SkillCard, SkillI18n } from "../types"
 import IconWrapper from "@/components/IconWrapper.vue"
 import DifficultyBadge from "./DifficultyBadge.vue"
+import CategoryFilter from "./CategoryFilter.vue"
 import { langLabel } from "../composables/useLangLabel"
 
 interface CardOption {
@@ -155,6 +168,22 @@ const emit = defineEmits<{
 }>()
 
 const t = computed(() => props.i18n)
+
+// --- 分类筛选 ---
+const selectedLanguage = ref("")
+const selectedCategory = ref("")
+const selectedDifficulty = ref("")
+
+const languageList = computed(() => [...new Set(props.cards.map((c) => c.language))].sort())
+const categoryList = computed(() => [...new Set(props.cards.map((c) => c.category))].sort())
+
+const filteredCards = computed(() => {
+  let result = props.cards
+  if (selectedLanguage.value) result = result.filter((c) => c.language === selectedLanguage.value)
+  if (selectedCategory.value) result = result.filter((c) => c.category === selectedCategory.value)
+  if (selectedDifficulty.value) result = result.filter((c) => c.difficulty === selectedDifficulty.value)
+  return result
+})
 
 // --- 工具函数 ---
 function shuffle<T>(arr: T[]): T[] {
@@ -222,7 +251,7 @@ function buildQuiz(cards: SkillCard[]): QuizItem[] {
 }
 
 // --- 状态 ---
-const quizItems = ref<QuizItem[]>(buildQuiz(props.cards))
+const quizItems = ref<QuizItem[]>(buildQuiz(filteredCards.value))
 const currentIndex = ref(0)
 // phase: 'question' | 'feedback' | 'result'
 const phase = ref<"question" | "feedback" | "result">("question")
@@ -236,9 +265,9 @@ const accuracy = computed(() => {
   return Math.round((correctCount.value / quizItems.value.length) * 100)
 })
 
-// 仅卡片数量变化时重置测验（新增/删除），单个卡片内容更新不影响进行中的测验
-watch(() => props.cards.length, () => {
-  quizItems.value = buildQuiz(props.cards)
+// 筛选条件或卡片数量变化时重建测验
+watch([filteredCards, () => props.cards.length], () => {
+  quizItems.value = buildQuiz(filteredCards.value)
   currentIndex.value = 0
   phase.value = "question"
 })
@@ -265,7 +294,7 @@ function goNext() {
 }
 
 function resetQuiz() {
-  quizItems.value = buildQuiz(props.cards)
+  quizItems.value = buildQuiz(filteredCards.value)
   currentIndex.value = 0
   phase.value = "question"
   showCode.value = false

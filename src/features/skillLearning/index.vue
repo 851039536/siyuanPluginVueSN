@@ -14,9 +14,6 @@
         </button>
       </div>
       <div class="skill-learning-panel__actions">
-        <button class="skill-learning-panel__btn" @click="showImport = true" :title="fullI18n.importCards">
-          ⇧
-        </button>
         <button class="skill-learning-panel__btn" @click="openAddDialog" :title="t.addCard">
           +
         </button>
@@ -70,13 +67,7 @@
       @close="closeDialog"
     />
 
-    <!-- 批量导入弹窗 -->
-    <ImportDialog
-      v-if="showImport"
-      :i18n="fullI18n"
-      @import="handleBulkImport"
-      @close="showImport = false"
-    />
+
   </div>
 </template>
 
@@ -91,7 +82,6 @@ import SkillListView from "./components/SkillListView.vue"
 import FlashcardView from "./components/FlashcardView.vue"
 import SkillDialog from "./components/SkillDialog.vue"
 import ReviewView from "./components/ReviewView.vue"
-import ImportDialog from "./components/ImportDialog.vue"
 import StatsView from "./components/StatsView.vue"
 
 const props = defineProps<{
@@ -106,7 +96,6 @@ const { cards, loadCards, createCard, updateCard, deleteCard, incrementPracticeC
 
 const viewMode = ref<ViewMode>("list")
 const showDialog = ref(false)
-const showImport = ref(false)
 const editingCard = ref<SkillCard | null>(null)
 
 const practicedCount = computed(() => cards.value.filter((c) => c.practiceCount > 0).length)
@@ -173,12 +162,6 @@ async function handlePractice(cardId: string) {
 async function handleRate(cardId: string, _rating: ReviewRating, data: ReviewData) {
   await updateReviewData(cardId, data)
   await incrementPracticeCount(cardId)
-}
-
-async function handleBulkImport(dtos: CreateSkillDTO[]) {
-  await storage.bulkCreate(dtos)
-  await loadCards()
-  showImport.value = false
 }
 </script>
 

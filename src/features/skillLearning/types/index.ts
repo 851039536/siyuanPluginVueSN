@@ -72,7 +72,6 @@ export interface SkillI18n {
   addCard?: string
   editCard?: string
   deleteCard?: string
-  importCards?: string
   searchPlaceholder?: string
   allLanguages?: string
   allCategories?: string
@@ -103,22 +102,12 @@ export interface SkillI18n {
   saveSuccess?: string
   createSuccess?: string
   updateSuccess?: string
-  importSuccess?: string
   noCards?: string
   noReviewCards?: string
   reviewComplete?: string
   totalCards?: string
   practicedCards?: string
   presetDataLoaded?: string
-  importPreview?: string
-  importMarkdown?: string
-  importHint?: string
-  parseResult?: string
-  willImport?: string
-  cards?: string
-  close?: string
-  confirmImport?: string
-  noValidCards?: string
   distractors?: string
   distractor1?: string
   distractor2?: string

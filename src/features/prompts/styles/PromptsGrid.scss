@@ -142,7 +142,7 @@
 }
 
 .vp-card-desc {
-  font-size: $font-size-xs;
+  font-size: $font-size-sm;
   color: var(--b3-theme-on-surface);
   margin-bottom: $spacing-2;
   line-height: $line-height-normal;
@@ -158,7 +158,7 @@
   margin-bottom: $spacing-1;
 
   .vp-content-label {
-    font-size: 10px;
+    font-size: $font-size-xs;
   font-weight: $font-weight-bold;
   letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -184,7 +184,7 @@
 
     pre {
       margin: 0;
-      font-size: 10px;
+      font-size: $font-size-xs;
       color: var(--b3-theme-on-background);
       white-space: pre-wrap;
       word-break: break-word;
@@ -193,7 +193,7 @@
     }
 
     .vp-copy-hint {
-      font-size: 10px;
+      font-size: $font-size-xs;
       color: var(--b3-theme-on-surface-light);
       margin-top: $spacing-1;
       text-align: right;

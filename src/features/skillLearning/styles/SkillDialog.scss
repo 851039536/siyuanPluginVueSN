@@ -21,9 +21,12 @@
 
   &__title {
     margin: 0;
-    padding: $spacing-3 $spacing-4 $spacing-3 $spacing-5;
-    font-size: $font-size-base;
-    font-weight: 600;
+    padding: 14px $spacing-5;
+    font-size: $font-size-sm;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 0.02em;
+    color: var(--b3-theme-on-background);
     border-bottom: 1px solid var(--b3-border-color);
     background: var(--b3-theme-surface);
   }

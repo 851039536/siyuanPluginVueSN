@@ -177,11 +177,11 @@ export const FEATURE_CONFIG = [
     defaultDesc: "加密存储和管理密码条目，支持分类和搜索",
   },
   {
-    id: "skills",
+    id: "prompts",
     defaultTitle: "提示词库",
     defaultDesc: "管理常用的提示词模板",
-    titleI18nKey: "skills.title",
-    descI18nKey: "skills.description",
+    titleI18nKey: "prompts.title",
+    descI18nKey: "prompts.description",
   },
   {
     id: "flashcardReading",

@@ -1,20 +1,20 @@
 import type { Ref } from "vue"
 import type { Prompt } from "../types"
-import type { SkillsStorage } from "../types/storage"
+import type { PromptsStorage } from "../types/storage"
 import { ref } from "vue"
 
 /**
  * 提示词数据管理 composable
  * 负责 prompts 列表的加载、增删改及旧格式迁移
  */
-export function usePrompts(storageRef: Ref<SkillsStorage | null>) {
+export function usePrompts(storageRef: Ref<PromptsStorage | null>) {
   const prompts = ref<Prompt[]>([])
   const loading = ref(true)
 
   async function load() {
     const s = storageRef.value
     if (!s) return
-    const loaded = await s.prompts.loadOrDefault()
+    const loaded = await s.loadPromptsWithMigration()
     if (Array.isArray(loaded)) {
       const needMigration = loaded.some(
         (p) =>
@@ -22,11 +22,8 @@ export function usePrompts(storageRef: Ref<SkillsStorage | null>) {
           || !Array.isArray(p.contents)
           || (p.content && (!p.contents || p.contents.length === 0)),
       )
-      if (needMigration) {
-        const migrated = s.migratePrompts(loaded)
-        if (migrated) {
-          await s.prompts.save(loaded)
-        }
+      if (needMigration && s.migratePrompts(loaded)) {
+        await s.prompts.save(loaded)
       }
       prompts.value = loaded
     } else {

@@ -99,7 +99,7 @@ import IconWrapper from "@/components/IconWrapper.vue"
 import { copyToClipboard } from "@/utils/domUtils"
 import { useCategoryManager } from "./composables/useCategoryManager"
 import { usePrompts } from "./composables/usePrompts"
-import { SkillsStorage } from "./types/storage"
+import { PromptsStorage } from "./types/storage"
 import CategoryManageModal from "./components/CategoryManageModal.vue"
 import DeleteConfirmModal from "./components/DeleteConfirmModal.vue"
 import PromptFormModal from "./components/PromptFormModal.vue"
@@ -125,7 +125,7 @@ const selectedCategory = ref<string>("all")
 const deleteConfirmTarget = ref<string | null>(null)
 
 // --- 数据层 ---
-const storage = ref<SkillsStorage | null>(null)
+const storage = ref<PromptsStorage | null>(null)
 const {
   prompts,
   loading,
@@ -140,10 +140,18 @@ const {
   load: loadCategories,
   add: addCategory,
   remove: removeCategory,
-  getById: getCategoryById,
 } = useCategoryManager(storage)
 
 // --- 过滤计算 ---
+// 缓存分类元数据，仅在分类列表变化时重建
+const categoryMetaMap = computed(() => {
+  const map = new Map<string, { name: string; color: string; bg: string }>()
+  for (const cat of categoriesRaw.value) {
+    map.set(cat.id, { name: cat.name, color: cat.color, bg: `${cat.color}20` })
+  }
+  return map
+})
+
 const filteredPrompts = computed(() => {
   let result = prompts.value
 
@@ -163,13 +171,15 @@ const filteredPrompts = computed(() => {
     )
   }
 
+  const metaMap = categoryMetaMap.value
+  const defaultMeta = metaMap.get(categoriesRaw.value[0]?.id) || { name: "默认", color: "#d97757", bg: "#d9775720" }
   return result.map((prompt) => {
-    const cat = getCategoryById(prompt.category)
+    const cat = metaMap.get(prompt.category) || defaultMeta
     return {
       ...prompt,
       catName: cat.name,
       catColor: cat.color,
-      catBgColor: `${cat.color}20`,
+      catBgColor: cat.bg,
     }
   })
 })
@@ -177,7 +187,7 @@ const filteredPrompts = computed(() => {
 // --- 初始化 ---
 onMounted(async () => {
   if (props.plugin) {
-    storage.value = new SkillsStorage(props.plugin)
+    storage.value = new PromptsStorage(props.plugin)
     await Promise.all([loadPrompts(), loadCategories()])
   }
 })

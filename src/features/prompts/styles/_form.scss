@@ -1,5 +1,5 @@
 @use "@/variables" as *;
-@use "./mixins" as floatingBox;
+@use "./mixins" as m;
 
 // ==================== 表单/编辑器样式 ====================
 
@@ -21,7 +21,7 @@
     .vp-input,
     .vp-textarea,
     .vp-select {
-      @include floatingBox.form-input;
+      @include m.form-input;
       box-sizing: border-box;
     }
 
@@ -89,7 +89,7 @@
   min-width: 0;
 
   .vp-input--label {
-    @include floatingBox.form-input;
+    @include m.form-input;
     box-sizing: border-box;
     font-size: $font-size-xs;
     font-weight: 600;
@@ -102,7 +102,7 @@
   }
 
   .vp-textarea {
-    @include floatingBox.form-input;
+    @include m.form-input;
     box-sizing: border-box;
     resize: vertical;
     min-height: 80px;

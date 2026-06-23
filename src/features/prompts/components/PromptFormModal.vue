@@ -158,8 +158,7 @@ import type {
 } from "../types"
 
 import { showMessage } from "siyuan"
-import { reactive } from "vue"
-import { watch } from "vue"
+import { reactive, watch } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 
@@ -209,7 +208,6 @@ watch(
   (v) => {
     if (v) initForm()
   },
-  { immediate: true },
 )
 
 function createEmptyContentBlock(label?: string): PromptContent {
@@ -235,7 +233,6 @@ function moveContentBlock(index: number, direction: -1 | 1) {
   const tmp = form.contents[index]
   form.contents[index] = form.contents[target]
   form.contents[target] = tmp
-  form.contents = [...form.contents]
 }
 
 function handleSave() {

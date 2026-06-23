@@ -1,23 +1,23 @@
 @use "@/variables" as *;
-@use "./mixins" as floatingBox;
+@use "./mixins" as m;
 
 // ==================== Modal 基座样式 ====================
 
 .vp-overlay {
-  @include floatingBox.modal-overlay;
+  @include m.modal-overlay;
 }
 
 .vp-modal {
-  @include floatingBox.modal-base;
+  @include m.modal-base;
   width: 90%;
-  max-width: floatingBox.$modal-large-max-width;
+  max-width: m.$modal-large-max-width;
 
   &.vp-modal--small {
-    max-width: floatingBox.$modal-small-max-width;
+    max-width: m.$modal-small-max-width;
   }
 
   &.vp-modal--form {
-    max-width: floatingBox.$modal-form-max-width;
+    max-width: m.$modal-form-max-width;
   }
 }
 

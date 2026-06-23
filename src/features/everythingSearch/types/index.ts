@@ -2,8 +2,6 @@
  * Everything本地搜索功能 - 类型定义
  * 仅包含类型和常量，所有运行时逻辑在 ../index.ts
  */
-import type { EverythingSearchResult as _EverythingSearchResult } from "../api"
-
 export type {
   /** Everything 服务连接配置 */
   EverythingConfig,
@@ -12,6 +10,7 @@ export type {
   /** Everything 搜索结果项 */
   EverythingSearchResult,
 } from "../api"
+import type { EverythingSearchResult } from "../api"
 
 /** 搜索选项 */
 export interface SearchOptions {
@@ -47,7 +46,7 @@ export interface SearchState {
   /** 状态 */
   status: SearchStatus
   /** 结果列表 */
-  results: _EverythingSearchResult[]
+  results: EverythingSearchResult[]
   /** 错误信息 */
   errorMessage: string
   /** 是否已搜索过 */

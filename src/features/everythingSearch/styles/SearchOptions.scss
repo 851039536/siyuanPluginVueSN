@@ -1,0 +1,66 @@
+/**
+ * SearchOptions — 搜索选项面板
+ * 开关组 + 配置选单组（带分隔线）
+ */
+
+@use "@/variables" as *;
+
+.vp-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-2 $spacing-3;
+  padding: 6px 16px;
+  background: var(--b3-theme-surface-light);
+  border-bottom: 1px dashed var(--b3-border-color);
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: $spacing-1;
+
+    &--select {
+      gap: 6px;
+    }
+  }
+
+  &__group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: $spacing-2 $spacing-3;
+    padding-top: $spacing-1;
+    padding-left: $spacing-2;
+    border-left: 1px solid var(--b3-border-color);
+    margin-left: $spacing-1;
+  }
+
+  &__key {
+    font-size: $font-size-xs;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.5;
+    white-space: nowrap;
+  }
+
+  &__refresh {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $radius-sm;
+    cursor: pointer;
+    color: var(--b3-theme-on-surface);
+    font-size: 13px;
+    opacity: 0.5;
+
+    &:hover {
+      opacity: 1;
+      border-color: var(--b3-theme-primary);
+      color: var(--b3-theme-primary);
+    }
+  }
+}

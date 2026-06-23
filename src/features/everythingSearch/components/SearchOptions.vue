@@ -87,6 +87,40 @@
         />
       </div>
 
+      <!-- 文件大小过滤 -->
+      <div class="vp-options__item vp-options__item--size">
+        <span class="vp-options__key">大小</span>
+        <input
+          type="number"
+          class="vp-options__size-input"
+          :value="options.minSize || ''"
+          min="0"
+          placeholder="≥"
+          @input="onMinSizeInput"
+        />
+        <Select
+          :model-value="options.minSizeUnit"
+          :options="SIZE_UNIT_OPTIONS"
+          size="small"
+          @update:model-value="updateOption('minSizeUnit', $event as SearchOptions['minSizeUnit'])"
+        />
+        <span class="vp-options__size-sep">-</span>
+        <input
+          type="number"
+          class="vp-options__size-input"
+          :value="options.maxSize || ''"
+          min="0"
+          placeholder="≤"
+          @input="onMaxSizeInput"
+        />
+        <Select
+          :model-value="options.maxSizeUnit"
+          :options="SIZE_UNIT_OPTIONS"
+          size="small"
+          @update:model-value="updateOption('maxSizeUnit', $event as SearchOptions['maxSizeUnit'])"
+        />
+      </div>
+
     </div>
   </div>
 </template>
@@ -135,12 +169,31 @@ const SORT_OPTIONS = [
   { value: "size", label: "大小" },
 ]
 
+/** 文件大小单位选项 */
+const SIZE_UNIT_OPTIONS = [
+  { value: "KB", label: "KB" },
+  { value: "MB", label: "MB" },
+  { value: "GB", label: "GB" },
+]
+
 /** 更新选项 */
 const updateOption = (
   key: keyof SearchOptions,
   value: SearchOptions[keyof SearchOptions],
 ) => {
   emit("update:options", key, value)
+}
+
+/** 处理最小尺寸输入 */
+const onMinSizeInput = (event: Event) => {
+  const val = (event.target as HTMLInputElement).valueAsNumber
+  emit("update:options", "minSize", isNaN(val) || val < 0 ? 0 : val)
+}
+
+/** 处理最大尺寸输入 */
+const onMaxSizeInput = (event: Event) => {
+  const val = (event.target as HTMLInputElement).valueAsNumber
+  emit("update:options", "maxSize", isNaN(val) || val < 0 ? 0 : val)
 }
 </script>
 

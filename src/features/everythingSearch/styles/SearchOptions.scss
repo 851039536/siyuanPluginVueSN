@@ -63,4 +63,45 @@
       color: var(--b3-theme-primary);
     }
   }
+
+  // 文件大小过滤输入行
+  &__item--size {
+    gap: 3px;
+  }
+
+  &__size-input {
+    width: 52px;
+    height: 24px;
+    padding: 0 4px;
+    font-size: $font-size-xs;
+    font-family: $vp-mono;
+    color: var(--b3-theme-on-surface);
+    background: var(--b3-theme-background);
+    border: 1px solid var(--b3-border-color);
+    border-radius: $radius-xs;
+    outline: none;
+
+    &::placeholder {
+      color: var(--b3-theme-on-surface);
+      opacity: 0.3;
+    }
+
+    &:focus {
+      border-color: $brand-orange;
+    }
+
+    // 隐藏数字输入框的上下箭头
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    -moz-appearance: textfield;
+  }
+
+  &__size-sep {
+    font-size: 10px;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.35;
+  }
 }

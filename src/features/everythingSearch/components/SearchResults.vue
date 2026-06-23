@@ -40,6 +40,7 @@
           @open="handleItemOpen"
           @show-in-folder="handleItemShowInFolder"
           @copy-path="handleItemCopyPath"
+          @delete="handleItemDelete"
         />
       </div>
     </div>
@@ -65,6 +66,7 @@ interface Emits {
   (e: "itemOpen", item: EverythingSearchResult): void
   (e: "itemShowInFolder", item: EverythingSearchResult): void
   (e: "itemCopyPath", item: EverythingSearchResult): void
+  (e: "itemDelete", item: EverythingSearchResult): void
 }
 
 defineProps<Props>()
@@ -91,6 +93,11 @@ const handleItemShowInFolder = (item: EverythingSearchResult) => {
 /** 处理复制路径 */
 const handleItemCopyPath = (item: EverythingSearchResult) => {
   emit("itemCopyPath", item)
+}
+
+/** 处理删除 */
+const handleItemDelete = (item: EverythingSearchResult) => {
+  emit("itemDelete", item)
 }
 </script>
 

@@ -298,3 +298,15 @@ export function showInExplorer(filePath: string): void {
     throw error
   }
 }
+
+/**
+ * 删除文件（移入回收站）
+ */
+export function deleteFile(filePath: string): void {
+  try {
+    getElectronShell().moveItemToTrash(filePath)
+  } catch (error) {
+    console.error("删除文件失败:", error)
+    throw error
+  }
+}

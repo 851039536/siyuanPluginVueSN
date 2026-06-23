@@ -1,22 +1,24 @@
 @use '@/variables.scss' as *;
 
 // ==================== 遮罩层 ====================
+// 仅用于点击外部关闭，不参与面板定位
 .tool-collection-overlay {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: 9997;
   background: transparent;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
 }
 
 // ==================== 底部面板 ====================
+// 独立 fixed 定位（参考 FeatureDrawer 的 bottom: 36px），避让底部状态栏
 .tool-collection-panel {
+  position: fixed;
+  bottom: 36px;
+  left: 50%;
   width: 100%;
   max-width: 1060px;
   min-height: calc(60vh + 200px);
-  max-height: calc(85vh);
+  max-height: calc(85vh - 36px);
   background: var(--b3-theme-background);
   border-radius: $radius-lg $radius-lg 0 0;
   border: 1px solid var(--b3-border-color);
@@ -24,7 +26,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  margin: 0 auto;
+  z-index: 9998;
 }
 
 // ==================== Tab 标签栏 ====================
@@ -130,6 +132,11 @@
 }
 
 // ==================== 过渡动画 ====================
+// panel 使用 translateX(-50%) 居中，动画需叠加 translateY
+.tool-collection-panel {
+  transform: translateX(-50%) translateY(0);
+}
+
 .slide-up-enter-active {
   transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
@@ -150,7 +157,7 @@
   opacity: 0;
 
   .tool-collection-panel {
-    transform: translateY(100%);
+    transform: translateX(-50%) translateY(100%);
   }
 }
 
@@ -158,7 +165,7 @@
   opacity: 0;
 
   .tool-collection-panel {
-    transform: translateY(100%);
+    transform: translateX(-50%) translateY(100%);
   }
 }
 

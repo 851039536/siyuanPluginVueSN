@@ -1,3 +1,4 @@
+@use "@/variables.scss" as *;
 @use "./codex-tokens" as *;
 
 .date-input-wrapper {
@@ -9,11 +10,11 @@
     width: 100%;
     padding: 4px 38px 4px 6px;
     border: 1px solid var(--b3-border-color);
-    border-radius: $da-radius;
+    border-radius: $vp-radius;
     background: var(--b3-theme-background);
     color: var(--b3-theme-on-background);
     font-size: 11px;
-    font-family: $da-mono;
+    font-family: $vp-mono;
     outline: none;
     min-width: 0;
 
@@ -31,7 +32,7 @@
   .date-clear-btn {
     position: absolute;
     right: 18px;
-    font-size: 12px;
+    font-size: -size-xs;
     color: var(--b3-theme-on-surface-variant);
     opacity: 0.4;
     cursor: pointer;
@@ -64,7 +65,7 @@
   margin-top: 2px;
   width: 224px;
   padding: 6px;
-  border-radius: $da-radius;
+  border-radius: $vp-radius;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
 
@@ -81,11 +82,11 @@
       width: 24px;
       height: 24px;
       border: 1px solid var(--b3-border-color);
-      border-radius: $da-radius;
+      border-radius: $vp-radius;
       background: transparent;
       color: var(--b3-theme-on-surface-variant);
       cursor: pointer;
-      font-size: 16px;
+      font-size: -size-base;
 
       &:hover {
         background: var(--b3-list-hover);
@@ -93,9 +94,9 @@
     }
 
     &-title {
-      font-size: 12px;
+      font-size: -size-xs;
       font-weight: 600;
-      font-family: $da-mono;
+      font-family: $vp-mono;
       color: var(--b3-theme-on-background);
     }
   }
@@ -126,7 +127,7 @@
       height: 26px;
       margin: 0 auto;
       border: none;
-      border-radius: $da-radius;
+      border-radius: $vp-radius;
       background: transparent;
       color: var(--b3-theme-on-background);
       font-size: 11px;

@@ -832,23 +832,17 @@ function isSectionCollapsed(key: string): boolean {
   return collapsedSections.has(key)
 }
 
-/** 健康度百分比（0-100） */
-const healthPct = computed(() => {
+/** 健康度计算共享中间值（避免 healthPct / healthTooltip 重复计算） */
+const _healthBreakdown = computed(() => {
   const total = props.stats.totalDocs
-  if (!total) return 100
-
   const excessDupes = Math.max(0, props.stats.duplicateNameDocs - props.stats.duplicateNameGroups)
-  // 无书签但排除 0B 文档（0B 已单独扣分）
   const noBmExclude0B = Math.max(0, props.stats.noBookmarkDocs - props.stats.zeroByteDocs)
-  // 深度 > 7
   const depthGt7 = props.depthStats.depthDistribution
     .filter((d) => d.depth > 7)
     .reduce((sum, d) => sum + d.count, 0)
-  // 字数 > 2万
   const wcGt20000 = (props.stats.wordCountDistribution || [])
     .filter((d) => d.label === ">2万字")
     .reduce((sum, d) => sum + d.count, 0)
-
   const issues = props.stats.zeroByteDocs
     + excessDupes
     + props.stats.unusedDocs
@@ -856,32 +850,27 @@ const healthPct = computed(() => {
     + props.stats.partialPublishDocs
     + depthGt7
     + wcGt20000
+  return { total, excessDupes, noBmExclude0B, depthGt7, wcGt20000, issues }
+})
 
+/** 健康度百分比（0-100） */
+const healthPct = computed(() => {
+  const { total, issues } = _healthBreakdown.value
+  if (!total) return 100
   return Math.round(((total - Math.min(total, issues)) / total) * 100)
 })
 
 /** 健康度计算说明 tooltip */
 const healthTooltip = computed(() => {
-  const total = props.stats.totalDocs
+  const {
+    total,
+    excessDupes,
+    noBmExclude0B,
+    depthGt7,
+    wcGt20000,
+    issues,
+  } = _healthBreakdown.value
   if (!total) return "暂无数据"
-
-  const excessDupes = Math.max(0, props.stats.duplicateNameDocs - props.stats.duplicateNameGroups)
-  const noBmExclude0B = Math.max(0, props.stats.noBookmarkDocs - props.stats.zeroByteDocs)
-  const depthGt7 = props.depthStats.depthDistribution
-    .filter((d) => d.depth > 7)
-    .reduce((sum, d) => sum + d.count, 0)
-  const wcGt20000 = (props.stats.wordCountDistribution || [])
-    .filter((d) => d.label === ">2万字")
-    .reduce((sum, d) => sum + d.count, 0)
-
-  const issues = props.stats.zeroByteDocs
-    + excessDupes
-    + props.stats.unusedDocs
-    + noBmExclude0B
-    + props.stats.partialPublishDocs
-    + depthGt7
-    + wcGt20000
-
   const healthy = Math.max(0, total - Math.min(total, issues))
   return [
     `健康文档 ${healthy} / ${total}`,

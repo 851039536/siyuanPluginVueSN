@@ -492,12 +492,10 @@ function setupObserver() {
     },
     { rootMargin: "200px" },
   )
-  // 延迟观察，等 DOM 更新
-  requestAnimationFrame(() => {
-    if (sentinelRef.value && observer) {
-      observer.observe(sentinelRef.value)
-    }
-  })
+  // Vue watch 触发时 DOM 已更新，直接观察
+  if (sentinelRef.value) {
+    observer.observe(sentinelRef.value)
+  }
 }
 
 // 哨兵元素挂载后启动观察

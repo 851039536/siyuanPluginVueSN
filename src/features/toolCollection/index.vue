@@ -107,12 +107,11 @@ const panelHeight = ref(DEFAULT_HEIGHT)
 const storage = new PluginStorage(props.plugin)
 
 const panelStyle = computed(() => {
-  // minHeight 取用户设定的 vh 值；maxHeight 额外留 15vh 余量，封顶 88vh 防止溢出视口
-  const maxVh = Math.min(panelHeight.value + 15, 88)
+  // height 固定，内部内容通过 overflow-y: auto 滚动；maxHeight 硬封顶防止溢出视口
   return {
     maxWidth: panelWidth.value + "px",
-    minHeight: `${panelHeight.value}vh`,
-    maxHeight: `calc(${maxVh}vh - 36px)`,
+    height: `${panelHeight.value}vh`,
+    maxHeight: `calc(88vh - 36px)`,
   }
 })
 

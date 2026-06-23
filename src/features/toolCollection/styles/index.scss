@@ -17,7 +17,7 @@
   left: 50%;
   width: 100%;
   max-width: 1060px;
-  min-height: 60vh;
+  height: 60vh;
   max-height: calc(88vh - 36px);
   background: var(--b3-theme-background);
   border-radius: $radius-lg $radius-lg 0 0;
@@ -26,6 +26,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  contain: layout paint;
   z-index: 9998;
 }
 
@@ -36,6 +37,7 @@
   padding: $spacing-2 $spacing-3 0;
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
+  min-height: 0;
   overflow-x: auto;
 
   &::-webkit-scrollbar {
@@ -102,6 +104,7 @@
   padding: $spacing-2 $spacing-3;
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
+  min-height: 0;
 
   .header-title {
     font-size: $font-size-sm;

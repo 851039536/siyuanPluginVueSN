@@ -7,10 +7,10 @@
     <div class="platform-manage-panel">
       <!-- 头部 -->
       <div class="platform-manage-header">
-        <div class="header-title">
+        <div class="header-left">
           <Icon icon="mdi:cog-outline" class="header-icon" />
-          <span>平台管理</span>
-          <span class="header-subtitle">增删改平台，分析结果将同步更新</span>
+          <span class="header-title">平台管理</span>
+          <span class="platform-count">{{ localPlatforms.length }} 个平台</span>
         </div>
         <button class="close-btn" @click="$emit('close')">
           <Icon icon="mdi:close" />
@@ -25,94 +25,93 @@
           class="platform-row"
           :class="{ 'platform-row--hidden': p.hidden }"
         >
-          <!-- 拖拽排序手柄 -->
-          <span class="platform-row-drag" title="拖拽排序">
-            <Icon icon="mdi:drag-vertical" />
-          </span>
-
-          <!-- ID（不可编辑） -->
-          <div class="platform-row-field field-id">
-            <label class="field-label">ID</label>
-            <input
-              v-model="p.id"
-              type="text"
-              class="field-input"
-              :class="{ error: getError(idx, 'id') }"
-              placeholder="如 csdn"
-              @input="validate"
-            />
-          </div>
-
-          <!-- 名称 -->
-          <div class="platform-row-field field-name">
-            <label class="field-label">名称</label>
-            <input
-              v-model="p.name"
-              type="text"
-              class="field-input"
-              :class="{ error: getError(idx, 'name') }"
-              placeholder="如 CSDN"
-              @input="validate"
-            />
-          </div>
-
-          <!-- 匹配关键词 -->
-          <div class="platform-row-field field-matchers">
-            <label class="field-label">匹配关键词</label>
-            <input
-              :value="p.matchers.join(', ')"
-              type="text"
-              class="field-input"
-              placeholder="如 csdn, csdnblog"
-              @input="updateMatchers(idx, $event)"
-            />
-          </div>
-
-          <!-- URL -->
-          <div class="platform-row-field field-url">
-            <label class="field-label">发布URL</label>
-            <input
-              v-model="p.url"
-              type="text"
-              class="field-input"
-              placeholder="发布平台链接（可选）"
-            />
-          </div>
-
-          <!-- 操作按钮 -->
-          <div class="platform-row-actions">
+          <!-- 可见性切换 -->
+          <span class="cell-vis">
             <button
-              class="row-btn"
-              :class="{ 'row-btn--hidden': p.hidden }"
+              class="row-btn-icon"
               :title="p.hidden ? '取消隐藏' : '隐藏'"
               @click="toggleHidden(idx)"
             >
               <Icon :icon="p.hidden ? 'mdi:eye-off-outline' : 'mdi:eye-outline'" />
             </button>
+          </span>
+
+          <!-- 名称 -->
+          <span class="cell-field cell-name">
+            <label class="cell-label">名称</label>
+            <input
+              v-model="p.name"
+              type="text"
+              class="cell-input"
+              :class="{ error: getError(idx, 'name') }"
+              placeholder="CSDN"
+              @input="validate"
+            />
+          </span>
+
+          <!-- ID -->
+          <span class="cell-field cell-id">
+            <label class="cell-label">ID</label>
+            <input
+              v-model="p.id"
+              type="text"
+              class="cell-input cell-input--mono"
+              :class="{ error: getError(idx, 'id') }"
+              placeholder="csdn"
+              @input="validate"
+            />
+          </span>
+
+          <!-- 匹配关键词 -->
+          <span class="cell-field cell-matchers">
+            <label class="cell-label">匹配关键词</label>
+            <input
+              :value="p.matchers.join(', ')"
+              type="text"
+              class="cell-input cell-input--mono"
+              placeholder="csdn, csdnblog"
+              @input="updateMatchers(idx, $event)"
+            />
+          </span>
+
+          <!-- URL -->
+          <span class="cell-field cell-url">
+            <label class="cell-label">发布URL</label>
+            <input
+              v-model="p.url"
+              type="text"
+              class="cell-input cell-input--mono"
+              placeholder="https://mp.csdn.net/..."
+              :title="p.url"
+            />
+          </span>
+
+          <!-- 操作 -->
+          <span class="cell-actions">
             <button
-              class="row-btn"
+              class="row-btn-icon"
               :disabled="idx === 0"
               title="上移"
               @click="moveUp(idx)"
             >
-              <Icon icon="mdi:arrow-up" />
+              <Icon icon="mdi:chevron-up" />
             </button>
             <button
-              class="row-btn"
+              class="row-btn-icon"
               :disabled="idx === localPlatforms.length - 1"
               title="下移"
               @click="moveDown(idx)"
             >
-              <Icon icon="mdi:arrow-down" />
+              <Icon icon="mdi:chevron-down" />
             </button>
             <button
-              class="row-btn row-btn--danger"
+              class="row-btn-icon row-btn-icon--danger"
               title="删除"
               @click="removePlatform(idx)"
             >
               <Icon icon="mdi:delete-outline" />
             </button>
-          </div>
+          </span>
         </div>
 
         <!-- 空状态 -->
@@ -161,7 +160,6 @@ import { PLATFORM_META, DEFAULT_PLATFORM_META } from "../composables/useDocAnaly
 
 interface Props {
   visible: boolean
-  /** 平台保存回调：返回 true 表示持久化成功 */
   savePlatformMeta: (meta: PlatformMeta[]) => Promise<boolean>
 }
 
@@ -175,7 +173,6 @@ const emit = defineEmits<{
 const saving = ref(false)
 const localPlatforms = ref<PlatformMeta[]>([])
 
-// 打开时同步最新数据
 watch(() => props.visible, (v) => {
   if (v) {
     localPlatforms.value = PLATFORM_META.value.map((p) => ({
@@ -186,7 +183,6 @@ watch(() => props.visible, (v) => {
   }
 })
 
-// 校验
 const errors = ref<Set<string>>(new Set())
 
 function validate() {

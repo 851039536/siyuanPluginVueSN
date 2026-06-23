@@ -109,6 +109,47 @@
     color: var(--b3-theme-on-background);
   }
 
+  .header-resize {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: auto;
+    margin-right: $spacing-2;
+  }
+
+  .resize-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $radius-sm;
+    background: transparent;
+    color: var(--b3-theme-on-surface);
+    cursor: pointer;
+    font-size: 11px;
+    line-height: 1;
+    opacity: 0.5;
+    transition: opacity 0.12s, color 0.12s, border-color 0.12s;
+
+    &:hover {
+      opacity: 1;
+      color: var(--b3-theme-primary);
+      border-color: var(--b3-theme-primary);
+    }
+  }
+
+  .resize-label {
+    font-family: $vp-mono;
+    font-size: 10px;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.5;
+    min-width: 42px;
+    text-align: center;
+    user-select: none;
+  }
+
   .header-close {
     display: flex;
     align-items: center;

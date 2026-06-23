@@ -113,7 +113,6 @@ const ACTION_EVENT_MAP: Record<
     event: "dock-click",
     detail: { dockId: "doc-analysis-dock" },
   },
-  openBase64Image: { event: "openBase64Image" },
   openFormatAssistant: { event: "openFormatAssistant" },
   openBookmarkMarker: { event: "openBookmarkMarker" },
   openTextDiff: { event: "openTextDiff" },

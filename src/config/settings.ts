@@ -39,7 +39,6 @@ export interface PluginSettings {
   enableSkills: boolean // 是否启用技能库功能
   enableSkillsViewer: boolean // 是否启用 Skills 查看器功能
   enableTextDiff: boolean // 是否启用文本对比功能
-  enableBase64Image: boolean // 是否启用 Base64 图片转换器功能
   enableFlashcardReading: boolean // 是否启用单词阅读功能
   enableHeatmapMarker: boolean // 是否启用热力图标记功能
   enableTranslate: boolean // 是否启用翻译替换功能
@@ -107,7 +106,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableSkills: true,
   enableSkillsViewer: true,
   enableTextDiff: true,
-  enableBase64Image: true,
   enableFlashcardReading: true,
   enableHeatmapMarker: true,
   enableTranslate: true,

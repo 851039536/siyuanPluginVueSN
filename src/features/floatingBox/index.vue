@@ -36,78 +36,24 @@
 </template>
 
 <script setup lang="ts">
-import type { FloatingTool } from "./types"
+import type { Plugin } from "siyuan"
 import { Icon } from "@iconify/vue"
-import {
-  computed,
-  onMounted,
-  onUnmounted,
-  ref,
-} from "vue"
+import { computed, ref } from "vue"
 import ToolItem from "./components/ToolItem.vue"
-import {
-  createFlashcardReadingTool,
-  createPasswordVaultTool,
-  createPromptsTool,
-  createRefreshTool,
-  createSuperPanelTool,
-  createTextDiffTool,
-} from "./tools"
+import { getToolsForPlatform } from "./tools/registry"
+import { useMobileDetection } from "./composables/useMobileDetection"
 
 const props = defineProps<{
   plugin?: any
 }>()
 
+const { isMobile } = useMobileDetection()
+
 const isExpanded = ref(false)
-const isMobile = ref(false)
 
-const MOBILE_BREAKPOINT = 768
-let resizeTimer: ReturnType<typeof setTimeout> | null = null
-
-const tools = computed<FloatingTool[]>(() => {
-  const baseTools: FloatingTool[] = [
-    createSuperPanelTool(props.plugin),
-    createRefreshTool(props.plugin),
-  ]
-
-  if (isMobile.value) {
-    return [
-      ...baseTools,
-      createPasswordVaultTool(props.plugin),
-      createFlashcardReadingTool(props.plugin),
-    ]
-  }
-
-  const desktopTools: FloatingTool[] = [
-    ...baseTools,
-    createTextDiffTool(props.plugin),
-  ]
-
-  if (props.plugin?.settings?.enablePrompts !== false) {
-    desktopTools.push(createPromptsTool(props.plugin))
-  }
-
-  return desktopTools
-})
-
-const checkMobile = () => {
-  isMobile.value = window.innerWidth <= MOBILE_BREAKPOINT
-}
-
-const debouncedCheckMobile = () => {
-  if (resizeTimer) clearTimeout(resizeTimer)
-  resizeTimer = setTimeout(checkMobile, 150)
-}
-
-onMounted(() => {
-  checkMobile()
-  window.addEventListener("resize", debouncedCheckMobile)
-})
-
-onUnmounted(() => {
-  window.removeEventListener("resize", debouncedCheckMobile)
-  if (resizeTimer) clearTimeout(resizeTimer)
-})
+const tools = computed(() =>
+  getToolsForPlatform(props.plugin as Plugin, isMobile.value),
+)
 
 const handleMouseEnter = () => {
   if (!isMobile.value) isExpanded.value = true

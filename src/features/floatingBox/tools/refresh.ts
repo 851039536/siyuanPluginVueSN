@@ -1,3 +1,4 @@
+import type { Plugin } from "siyuan"
 import type {
   FloatingTool,
   FloatingToolChild,
@@ -9,12 +10,13 @@ import {
   reloadUI,
 } from "@/api"
 
-function makeChildren(plugin?: any): FloatingToolChild[] {
+function makeChildren(plugin: Plugin): FloatingToolChild[] {
+  const i18n = (plugin.i18n as any)?.floatingBox || {}
   return [
     {
       id: "refresh-filetree",
-      label: plugin?.i18n?.floatingBox?.refreshFiletree || "文件树",
-      title: plugin?.i18n?.floatingBox?.refreshFiletreeTitle || "重载文件树",
+      label: i18n.refreshFiletree || "文件树",
+      title: i18n.refreshFiletreeTitle || "重载文件树",
       action: async () => {
         try {
           await reloadFiletree()
@@ -26,8 +28,8 @@ function makeChildren(plugin?: any): FloatingToolChild[] {
     },
     {
       id: "refresh-tag",
-      label: plugin?.i18n?.floatingBox?.refreshTag || "标签树",
-      title: plugin?.i18n?.floatingBox?.refreshTagTitle || "重载标签树",
+      label: i18n.refreshTag || "标签树",
+      title: i18n.refreshTagTitle || "重载标签树",
       action: async () => {
         try {
           await reloadTag()
@@ -39,8 +41,8 @@ function makeChildren(plugin?: any): FloatingToolChild[] {
     },
     {
       id: "refresh-ui",
-      label: plugin?.i18n?.floatingBox?.refreshUI || "完整刷新",
-      title: plugin?.i18n?.floatingBox?.refreshUITitle || "重载整个界面",
+      label: i18n.refreshUI || "完整刷新",
+      title: i18n.refreshUITitle || "重载整个界面",
       action: async () => {
         try {
           await reloadUI()
@@ -52,13 +54,15 @@ function makeChildren(plugin?: any): FloatingToolChild[] {
   ]
 }
 
-export function createRefreshTool(plugin?: any): FloatingTool {
+export function createRefreshTool(plugin: Plugin): FloatingTool {
+  const i18n = (plugin.i18n as any)?.floatingBox || {}
   return {
     id: "refresh",
-    label: plugin?.i18n?.floatingBox?.refresh || "刷新",
-    title: plugin?.i18n?.floatingBox?.refreshTitle || "刷新界面",
+    label: i18n.refresh || "刷新",
+    title: i18n.refreshTitle || "刷新界面",
     icon: "mdi:refresh",
     bgColor: "linear-gradient(135deg, #4ade80 0%, #16a34a 100%)",
+    // 父级 action 与子项 "完整刷新" 相同，子菜单提供颗粒度控制
     action: async () => {
       try {
         await reloadUI()

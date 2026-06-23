@@ -752,8 +752,6 @@
     "enableDesc": "在屏幕右侧显示悬浮工具箱，包含超级面板、时间戳等快捷工具",
     "superPanel": "超级面板",
     "superPanelTitle": "打开超级面板",
-    "timestamp": "时间戳",
-    "timestampTitle": "插入当前时间",
     "refresh": "刷新",
     "refreshTitle": "刷新界面",
     "textDiff": "文本对比",

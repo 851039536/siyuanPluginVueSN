@@ -6,8 +6,6 @@
     "enableDesc": "Display floating toolbox on the right side with quick access to Super Panel, Timestamp, and other tools",
     "superPanel": "Super Panel",
     "superPanelTitle": "Open Super Panel",
-    "timestamp": "Timestamp",
-    "timestampTitle": "Insert Current Time",
     "refresh": "Refresh",
     "refreshTitle": "Refresh Interface",
     "textDiff": "Text Diff",

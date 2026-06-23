@@ -24,7 +24,7 @@
     font-size: $font-size-xs;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.12s;
+    transition: border-color 0.12s;
 
     .vp-chip-dot {
       width: 8px;
@@ -34,7 +34,6 @@
     }
 
     &:hover {
-      background: var(--b3-list-hover);
       border-color: var(--b3-theme-primary);
     }
 
@@ -79,34 +78,20 @@
   }
 }
 
-// 提示词网格
+// 瀑布流网格（CSS columns，零依赖）
 .vp-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: $spacing-2;
+  columns: 3;
+  column-gap: $spacing-3;
 }
 
 .vp-card {
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
   border-radius: m.$card-border-radius;
-  padding: $spacing-2;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.12s;
-  @include m.card-hover;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: var(--b3-theme-primary);
-    opacity: 0;
-    transition: opacity 0.12s;
-  }
+  padding: $spacing-3;
+  break-inside: avoid;
+  margin-bottom: $spacing-3;
+  transition: border-color 0.12s;
 }
 
 .vp-card-header {
@@ -160,12 +145,11 @@
   font-size: $font-size-xs;
   color: var(--b3-theme-on-surface);
   margin-bottom: $spacing-2;
-  line-height: 1.4;
+  line-height: $line-height-normal;
   font-family: $font-body;
 }
 
 .vp-card-body {
-  max-height: 310px;
   overflow-y: auto;
 }
 
@@ -192,11 +176,10 @@
     border-radius: $vp-radius;
     padding: $spacing-2;
     cursor: pointer;
-    transition: all 0.12s;
+    transition: border-color 0.12s;
 
     &:hover {
       border-color: var(--b3-theme-primary);
-      background: var(--b3-theme-surface-light);
     }
 
     pre {
@@ -240,7 +223,7 @@
   }
 
   .vp-grid {
-    grid-template-columns: repeat(2, 1fr);
+    columns: 2;
   }
 
   .vp-controls {

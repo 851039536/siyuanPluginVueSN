@@ -30,8 +30,6 @@ export interface SearchOptions {
   sort: "name" | "path" | "size" | "date_modified"
   /** 升序 */
   ascending: boolean
-  /** 选中的盘符 */
-  selectedDrive: string
   /** 高级搜索模式（显示语法帮助面板） */
   advancedMode: boolean
 }

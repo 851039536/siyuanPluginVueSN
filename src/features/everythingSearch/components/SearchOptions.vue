@@ -77,48 +77,28 @@
           :model-value="options.sort"
           :options="SORT_OPTIONS"
           size="small"
-          @update:model-value="updateOption('sort', $event as string)"
+          @update:model-value="updateOption('sort', ($event as unknown) as SearchOptions['sort'])"
         />
         <Switch
           :model-value="options.ascending"
           size="small"
-          label="↑"
+          :label="options.ascending ? '↑' : '↓'"
           @update:model-value="updateOption('ascending', $event)"
         />
       </div>
 
-      <div class="vp-options__item vp-options__item--select">
-        <span class="vp-options__key">盘符</span>
-        <Select
-          :model-value="options.selectedDrive"
-          :options="driveOptions"
-          size="small"
-          @update:model-value="handleDriveChange"
-        />
-        <button
-          class="vp-options__refresh"
-          title="刷新盘符列表"
-          aria-label="刷新盘符列表"
-          @click="handleRefreshDrives"
-        >
-          ↻
-        </button>
-      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { SearchOptions } from "../types"
-import { computed } from "vue"
 import Select from "@/components/Select.vue"
 import Switch from "@/components/Switch.vue"
 
 interface Props {
   /** 搜索选项 */
   options: SearchOptions
-  /** 可用盘符列表 */
-  availableDrives: string[]
 }
 
 interface Emits {
@@ -127,8 +107,6 @@ interface Emits {
     key: keyof SearchOptions,
     value: SearchOptions[keyof SearchOptions],
   ): void
-  (e: "driveChange", drive: string): void
-  (e: "refreshDrives"): void
 }
 
 const props = defineProps<Props>()
@@ -157,31 +135,12 @@ const SORT_OPTIONS = [
   { value: "size", label: "大小" },
 ]
 
-/** 盘符选项 */
-const driveOptions = computed(() => [
-  { value: "", label: "全部" },
-  ...props.availableDrives.map((drive) => ({
-    value: drive,
-    label: drive,
-  })),
-])
-
 /** 更新选项 */
 const updateOption = (
   key: keyof SearchOptions,
   value: SearchOptions[keyof SearchOptions],
 ) => {
   emit("update:options", key, value)
-}
-
-/** 处理盘符变化 */
-const handleDriveChange = (value: string | number | boolean | null) => {
-  emit("driveChange", String(value || ""))
-}
-
-/** 处理刷新盘符 */
-const handleRefreshDrives = () => {
-  emit("refreshDrives")
 }
 </script>
 

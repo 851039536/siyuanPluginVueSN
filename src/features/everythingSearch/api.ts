@@ -301,10 +301,27 @@ export function showInExplorer(filePath: string): void {
 
 /**
  * 删除文件（移入回收站）
+ * 优先使用 Electron shell.trashItem，不可用时通过 PowerShell 移入回收站
  */
-export function deleteFile(filePath: string): void {
+export async function deleteFile(filePath: string): Promise<void> {
   try {
-    getElectronShell().moveItemToTrash(filePath)
+    const shell = getElectronShell()
+    // Electron 22+ 标准 API
+    if (typeof shell.trashItem === "function") {
+      await shell.trashItem(filePath)
+      return
+    }
+    // 旧版 Electron 备选 API
+    if (typeof shell.moveItemToTrash === "function") {
+      shell.moveItemToTrash(filePath)
+      return
+    }
+    // 兜底：PowerShell 移入回收站
+    const { execSync } = window.require("child_process") as typeof import("child_process")
+    execSync(
+      `powershell -NoProfile -Command "Add-Type -AssemblyName Microsoft.VisualBasic;[Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile('${filePath.replace(/'/g, "''")}','OnlyErrorDialogs','SendToRecycleBin')"`,
+      { timeout: 5000 },
+    )
   } catch (error) {
     console.error("删除文件失败:", error)
     throw error

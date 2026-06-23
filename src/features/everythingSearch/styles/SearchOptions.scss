@@ -78,7 +78,7 @@
     color: var(--b3-theme-on-surface);
     background: var(--b3-theme-background);
     border: 1px solid var(--b3-border-color);
-    border-radius: $radius-xs;
+    border-radius: $radius-sm;
     outline: none;
 
     &::placeholder {

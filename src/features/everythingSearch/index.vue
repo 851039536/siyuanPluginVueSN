@@ -305,10 +305,10 @@ const handleItemCopyPath = async (item: EverythingSearchResult) => {
 }
 
 /** 删除文件 */
-const handleItemDelete = (item: EverythingSearchResult) => {
+const handleItemDelete = async (item: EverythingSearchResult) => {
   const fullPath = getFullPath(item)
   try {
-    deleteFile(fullPath)
+    await deleteFile(fullPath)
     searchState.results = searchState.results.filter((r) => r !== item)
     if (searchState.results.length === 0) {
       searchState.status = "empty"

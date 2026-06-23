@@ -1,9 +1,19 @@
+import type {
+  ComputedRef,
+  Ref
+} from "vue"
+import type { SkillCard } from "../types"
 /**
  * 技能学习 - 共用筛选逻辑 composable
  * 提取 SkillListView 和 FlashcardView 中重复的筛选/分页逻辑
  */
-import { ref, computed, watch, type Ref, type ComputedRef } from "vue"
-import type { SkillCard } from "../types"
+import {
+  computed,
+
+  ref,
+
+  watch,
+} from "vue"
 
 export interface FilteredCardsResult {
   searchQuery: Ref<string>
@@ -21,7 +31,7 @@ export interface FilteredCardsResult {
 
 export function useFilteredCards(
   cardsRef: Ref<SkillCard[]> | ComputedRef<SkillCard[]>,
-  options?: { pageSize?: number; enableSearch?: boolean },
+  options?: { pageSize?: number, enableSearch?: boolean },
 ): FilteredCardsResult {
   const pageSize = options?.pageSize ?? 10
   const enableSearch = options?.enableSearch ?? false
@@ -41,9 +51,9 @@ export function useFilteredCards(
     if (q) {
       result = result.filter(
         (c) =>
-          c.title.toLowerCase().includes(q) ||
-          c.answer.toLowerCase().includes(q) ||
-          c.tags.some((t) => t.toLowerCase().includes(q)),
+          c.title.toLowerCase().includes(q)
+          || c.answer.toLowerCase().includes(q)
+          || c.tags.some((t) => t.toLowerCase().includes(q)),
       )
     }
     if (selectedLanguage.value) result = result.filter((c) => c.language === selectedLanguage.value)

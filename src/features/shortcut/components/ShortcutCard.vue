@@ -105,7 +105,7 @@ defineEmits<{
 }>()
 
 const keyParts = computed(() => {
-  return props.shortcut.keys.split(", ").flatMap(seq =>
+  return props.shortcut.keys.split(", ").flatMap((seq) =>
     seq.split("+").map((k) => k.trim()),
   )
 })

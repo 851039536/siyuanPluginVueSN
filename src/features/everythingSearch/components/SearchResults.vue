@@ -1,33 +1,63 @@
 <template>
   <div class="vp-results">
     <!-- 加载状态 -->
-    <div v-if="state.status === 'loading'" class="vp-results__loading">
+    <div
+      v-if="state.status === 'loading'"
+      class="vp-results__loading"
+    >
       <Loader />
     </div>
 
     <!-- 错误状态 -->
-    <div v-else-if="state.status === 'error'" class="vp-empty">
-      <span class="vp-empty__emoji"><IconWrapper name="error" :size="32" /></span>
-      <p class="vp-empty__msg">{{ state.errorMessage }}</p>
+    <div
+      v-else-if="state.status === 'error'"
+      class="vp-empty"
+    >
+      <span class="vp-empty__emoji"><IconWrapper
+        name="error"
+        :size="32"
+      /></span>
+      <p class="vp-empty__msg">
+        {{ state.errorMessage }}
+      </p>
     </div>
 
     <!-- 空状态（未搜索） -->
-    <div v-else-if="state.status === 'idle'" class="vp-empty">
-      <span class="vp-empty__emoji"><IconWrapper name="folder" :size="32" /></span>
-      <p class="vp-empty__msg">{{ emptyHintText }}</p>
+    <div
+      v-else-if="state.status === 'idle'"
+      class="vp-empty"
+    >
+      <span class="vp-empty__emoji"><IconWrapper
+        name="folder"
+        :size="32"
+      /></span>
+      <p class="vp-empty__msg">
+        {{ emptyHintText }}
+      </p>
       <p class="vp-empty__hint">
         支持通配符：<code>*</code> 匹配任意字符 &nbsp; <code>?</code> 匹配单个字符
       </p>
     </div>
 
     <!-- 无结果 -->
-    <div v-else-if="state.status === 'empty'" class="vp-empty">
-      <span class="vp-empty__emoji"><IconWrapper name="search" :size="32" /></span>
-      <p class="vp-empty__msg">未找到匹配的文件</p>
+    <div
+      v-else-if="state.status === 'empty'"
+      class="vp-empty"
+    >
+      <span class="vp-empty__emoji"><IconWrapper
+        name="search"
+        :size="32"
+      /></span>
+      <p class="vp-empty__msg">
+        未找到匹配的文件
+      </p>
     </div>
 
     <!-- 结果列表 -->
-    <div v-else class="vp-results__list">
+    <div
+      v-else
+      class="vp-results__list"
+    >
       <div class="vp-results__header">
         <span class="vp-results__count">找到 {{ state.results.length }} 个结果</span>
       </div>

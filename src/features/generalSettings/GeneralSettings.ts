@@ -12,9 +12,12 @@ import type {
  * 提供模块化的通用配置功能，包括字体设置、外观设置等
  */
 import { Plugin } from "siyuan"
+import {
+  injectStyle,
+  removeStyle,
+} from "@/utils/domUtils"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { createVueDockApp } from "@/utils/vueAppHelper"
-import { injectStyle, removeStyle } from "@/utils/domUtils"
 import GeneralSettingsPanel from "./index.vue"
 import { DocCountManager } from "./modules/DocCountManager"
 import { HighlightManager } from "./modules/HighlightManager"
@@ -619,16 +622,16 @@ export class GeneralSettings {
         : ""
 
       const css = `${colorCss
-        }\n${
-          fontSizeCss
-        }\n${
-          levelCss
-        }\n${
-          centerAlignCss
-        }\n${
-          titleColorCss
-        }\n${
-          titleFontSizeCss}`
+      }\n${
+        fontSizeCss
+      }\n${
+        levelCss
+      }\n${
+        centerAlignCss
+      }\n${
+        titleColorCss
+      }\n${
+        titleFontSizeCss}`
 
       injectStyle("heading-colors-style", css)
     } catch (error) {

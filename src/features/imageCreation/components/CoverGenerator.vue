@@ -36,7 +36,10 @@
                 :class="{ active: activeTab === 'cover' }"
                 @click="switchTab('cover')"
               >
-                <IconWrapper name="image" :size="16" />
+                <IconWrapper
+                  name="image"
+                  :size="16"
+                />
                 <span>文章封面</span>
               </button>
               <button
@@ -44,7 +47,10 @@
                 :class="{ active: activeTab === 'codeImage' }"
                 @click="switchTab('codeImage')"
               >
-                <IconWrapper name="code" :size="16" />
+                <IconWrapper
+                  name="code"
+                  :size="16"
+                />
                 <span>代码图片</span>
               </button>
             </div>
@@ -309,7 +315,10 @@ import {
   triggerBlobDownload,
 } from "@/utils/domUtils"
 import { useCoverGenerator } from "../composables/useCoverGenerator"
-import { activeTab, switchTab } from "../composables/useImageCreationState"
+import {
+  activeTab,
+  switchTab,
+} from "../composables/useImageCreationState"
 import CodeImageTab from "./CodeImageTab.vue"
 
 interface Props {

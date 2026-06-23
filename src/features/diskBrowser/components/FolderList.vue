@@ -183,13 +183,13 @@ interface Props {
 
 const props = defineProps<Props>()
 defineEmits<{
-  "back": []
-  "refresh": []
-  "open": [path: string]
-  "copyPath": [path: string]
-  "itemDblclick": [item: FolderInfo]
-  "toggleFavorite": [path: string]
-  "navigate": [item: FolderInfo]
+  back: []
+  refresh: []
+  open: [path: string]
+  copyPath: [path: string]
+  itemDblclick: [item: FolderInfo]
+  toggleFavorite: [path: string]
+  navigate: [item: FolderInfo]
 }>()
 
 function isFavorite(path: string): boolean {

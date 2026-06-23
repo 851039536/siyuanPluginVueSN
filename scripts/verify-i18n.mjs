@@ -7,8 +7,15 @@
  *   node scripts/verify-i18n.mjs --split  # 校验拆分后的文件
  */
 
-import { readFileSync, readdirSync, existsSync } from 'node:fs'
-import { join, dirname } from 'node:path'
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+} from 'node:fs'
+import {
+  dirname,
+  join,
+} from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -28,7 +35,10 @@ function findLeafPaths(obj, prefix = '') {
     if (typeof v === 'object' && v !== null && !Array.isArray(v)) {
       result.push(...findLeafPaths(v, fullKey))
     } else {
-      result.push({ key: fullKey, value: String(v) })
+      result.push({
+        key: fullKey,
+        value: String(v),
+      })
     }
   }
   return result
@@ -74,7 +84,7 @@ function main() {
         errors++
         continue
       }
-      const files = readdirSync(dir).filter(f => f.endsWith('.json'))
+      const files = readdirSync(dir).filter((f) => f.endsWith('.json'))
       console.log(`  ${lang}: ${files.length} files`)
       for (const file of files) {
         const enFile = join(I18N_DIR, 'en_US', file)
@@ -111,11 +121,11 @@ function main() {
     const zhLeaves = findLeafPaths(zhCN)
     const enLeaves = findLeafPaths(enUS)
 
-    const zhKeySet = new Set(zhLeaves.map(l => l.key))
-    const enKeySet = new Set(enLeaves.map(l => l.key))
+    const zhKeySet = new Set(zhLeaves.map((l) => l.key))
+    const enKeySet = new Set(enLeaves.map((l) => l.key))
 
-    const missingInEN = [...zhKeySet].filter(k => !enKeySet.has(k))
-    const missingInZH = [...enKeySet].filter(k => !zhKeySet.has(k))
+    const missingInEN = [...zhKeySet].filter((k) => !enKeySet.has(k))
+    const missingInZH = [...enKeySet].filter((k) => !zhKeySet.has(k))
 
     if (missingInEN.length > 0) {
       console.error(`❌ ${missingInEN.length} key(s) in zh_CN but missing in en_US:`)

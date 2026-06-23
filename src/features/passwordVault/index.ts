@@ -2,8 +2,8 @@
  * 密码箱功能模块
  */
 import type { Plugin } from "siyuan"
-import { ref } from "vue"
 import type { PendingEntryData } from "./utils/parser"
+import { ref } from "vue"
 import { parsePasswordText } from "./utils/parser"
 
 // ============================================================

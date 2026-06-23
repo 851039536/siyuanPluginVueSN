@@ -1,7 +1,11 @@
 <template>
   <div class="highlight-settings">
     <label class="section-header setting-label">
-      <IconWrapper name="edit" :size="14" class="section-icon" />
+      <IconWrapper
+        name="edit"
+        :size="14"
+        class="section-icon"
+      />
       {{ i18n?.enableHighlight || '双击高亮功能' }}
     </label>
     <SiSwitch
@@ -15,7 +19,11 @@
     <!-- 功能说明 -->
     <div class="feature-description">
       <div class="section-header description-title">
-        <IconWrapper name="lightbulb" :size="14" class="section-icon" />
+        <IconWrapper
+          name="lightbulb"
+          :size="14"
+          class="section-icon"
+        />
         {{ i18n?.featureDescription || '功能说明' }}
       </div>
       <ul class="description-list">
@@ -27,7 +35,11 @@
     <template v-if="enableHighlight">
       <div class="style-settings">
         <div class="section-header style-settings-title">
-          <IconWrapper name="format" :size="14" class="section-icon" />
+          <IconWrapper
+            name="format"
+            :size="14"
+            class="section-icon"
+          />
           {{ i18n?.highlightStyleSettings || '高亮样式设置' }}
         </div>
 
@@ -164,8 +176,8 @@ import {
   onMounted,
   ref,
 } from "vue"
-import SiSwitch from "@/components/Switch.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import SiSwitch from "@/components/Switch.vue"
 import { GeneralSettingsStorage } from "@/features/generalSettings/types/storage"
 
 const props = defineProps<{

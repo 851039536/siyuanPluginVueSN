@@ -10,8 +10,18 @@
         class="status-card"
         :class="{ 'has-password': hasPassword }"
       >
-              <IconWrapper v-if="hasPassword" name="success" :size="14" class="status-icon" />
-              <IconWrapper v-else name="warning" :size="14" class="status-icon" />
+        <IconWrapper
+          v-if="hasPassword"
+          name="success"
+          :size="14"
+          class="status-icon"
+        />
+        <IconWrapper
+          v-else
+          name="warning"
+          :size="14"
+          class="status-icon"
+        />
         <span class="status-text">
           {{ hasPassword ? plugin.i18n.passwordSet : plugin.i18n.passwordNotSetYet }}
         </span>
@@ -48,7 +58,11 @@
 
       <!-- 提示信息 -->
       <div class="info-card">
-              <IconWrapper name="info" :size="13" class="info-icon" />
+        <IconWrapper
+          name="info"
+          :size="13"
+          class="info-icon"
+        />
         <div class="info-content">
           <span class="info-text">{{ plugin.i18n.encryptionTip }}</span>
           <span class="info-sub">{{ plugin.i18n.algorithmInfo }}</span>

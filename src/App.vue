@@ -91,19 +91,19 @@ import {
   everythingSearchVisible,
   getTextDiffManager,
   hideEverythingSearch,
+  hideImageCreation,
   hidePasswordVault,
   hideSkillsViewer,
   htmlViewerVisible,
-  openPasswordVaultWithText,
-  passwordVaultVisible,
-  skillsViewerVisible,
   imageCreationInitialKeywords,
   imageCreationInitialTitle,
   imageCreationVisible,
-  hideImageCreation,
+  openPasswordVaultWithText,
+  passwordVaultVisible,
+  skillsViewerVisible,
+  toggleFlashcardDialog,
   toggleToolCollection,
 } from "@/features"
-import CoverGenerator from "@/features/imageCreation/components/CoverGenerator.vue"
 import DecryptDialog from "@/features/encryption/components/DecryptDialog.vue"
 import { getEncryptionInstance } from "@/features/encryption/index"
 import EverythingSearchDialog from "@/features/everythingSearch/index.vue"
@@ -113,6 +113,7 @@ import {
 } from "@/features/floatingToolbar"
 import HtmlViewerDialog from "@/features/htmlViewer/index.vue"
 import ImageViewer from "@/features/imageCompressor/index.vue"
+import CoverGenerator from "@/features/imageCreation/components/CoverGenerator.vue"
 import PasswordVaultDialog from "@/features/passwordVault/index.vue"
 import SkillsViewerDialog from "@/features/skillsViewer/index.vue"
 import VideoManager from "@/features/video/index.vue"
@@ -224,9 +225,14 @@ onMounted(() => {
     htmlViewerVisible.value = true
   }) as EventListener)
 
-  // 监听打开文本对比事件（来自超级面板）
+  // 监听打开文本对比事件（来自超级面板 / 悬浮框）
   window.addEventListener("openTextDiff", () => {
     getTextDiffManager()?.toggle()
+  })
+
+  // 监听打开单词阅读事件（来自悬浮框）
+  window.addEventListener("openFlashcardReading", () => {
+    toggleFlashcardDialog()
   })
 
   // 监听工具合集面板切换事件

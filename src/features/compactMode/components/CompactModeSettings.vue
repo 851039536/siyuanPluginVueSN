@@ -3,7 +3,11 @@
     <!-- 主开关 -->
     <div class="master-row">
       <label class="section-header setting-label">
-        <IconWrapper name="formatSize" :size="14" class="section-icon" />
+        <IconWrapper
+          name="formatSize"
+          :size="14"
+          class="section-icon"
+        />
         {{ i18n?.compactModeSettings || '紧凑模式' }}
       </label>
       <SiSwitch
@@ -19,7 +23,11 @@
       <!-- 密度级别 -->
       <div class="sub-section">
         <div class="section-header sub-title">
-          <IconWrapper name="formatSize" :size="14" class="section-icon" />
+          <IconWrapper
+            name="formatSize"
+            :size="14"
+            class="section-icon"
+          />
           {{ i18n?.compactModeDensity || '密度级别' }}
         </div>
         <div class="options-row">
@@ -45,7 +53,11 @@
       <!-- 字号缩放 -->
       <div class="sub-section">
         <div class="section-header sub-title">
-          <IconWrapper name="code" :size="14" class="section-icon" />
+          <IconWrapper
+            name="code"
+            :size="14"
+            class="section-icon"
+          />
           {{ i18n?.compactModeFontScale || '字号缩放' }}
         </div>
         <div class="options-row">
@@ -71,7 +83,11 @@
       <!-- 区域独立开关 -->
       <div class="sub-section">
         <div class="section-header sub-title">
-          <IconWrapper name="forward" :size="14" class="section-icon" />
+          <IconWrapper
+            name="forward"
+            :size="14"
+            class="section-icon"
+          />
           {{ i18n?.compactModeAreas || '生效区域' }}
         </div>
         <div class="areas-grid">
@@ -93,12 +109,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue"
-import SiSwitch from "@/components/Switch.vue"
-import IconWrapper from "@/components/IconWrapper.vue"
-import { applyCompactMode } from "@/features/compactMode"
 import type { CompactModeSettings } from "@/features/compactMode"
+import {
+  computed,
+  reactive,
+  ref,
+} from "vue"
+import IconWrapper from "@/components/IconWrapper.vue"
+import SiSwitch from "@/components/Switch.vue"
 import { saveSettings } from "@/config/settings"
+import { applyCompactMode } from "@/features/compactMode"
 
 interface Props {
   i18n?: Record<string, string>
@@ -116,19 +136,46 @@ const compactMode = ref(s()?.compactMode ?? true)
 
 const density = ref(s()?.compactModeDensity ?? 'compact')
 const densityOptions = [
-  { value: 'moderate', desc: '适中' },
-  { value: 'compact',  desc: '紧凑' },
-  { value: 'extreme',  desc: '极简' },
+  {
+    value: 'moderate',
+    desc: '适中',
+  },
+  {
+    value: 'compact',
+    desc: '紧凑',
+  },
+  {
+    value: 'extreme',
+    desc: '极简',
+  },
 ]
 
 const fontScale = ref(s()?.compactModeFontScale ?? 94)
 const fontScaleOptions = [
-  { value: 100, desc: '100%' },
-  { value: 98,  desc: '98%' },
-  { value: 96,  desc: '96%' },
-  { value: 94,  desc: '94%' },
-  { value: 92,  desc: '92%' },
-  { value: 90,  desc: '90%' },
+  {
+    value: 100,
+    desc: '100%',
+  },
+  {
+    value: 98,
+    desc: '98%',
+  },
+  {
+    value: 96,
+    desc: '96%',
+  },
+  {
+    value: 94,
+    desc: '94%',
+  },
+  {
+    value: 92,
+    desc: '92%',
+  },
+  {
+    value: 90,
+    desc: '90%',
+  },
 ]
 
 const areas = reactive<Record<string, boolean>>({
@@ -140,11 +187,26 @@ const areas = reactive<Record<string, boolean>>({
 })
 
 const areaOptions = computed(() => [
-  { id: "sidebar",  label: props.i18n?.compactAreaSidebar  || "侧边栏与文件树" },
-  { id: "editor",   label: props.i18n?.compactAreaEditor   || "编辑区" },
-  { id: "tabs",     label: props.i18n?.compactAreaTabs     || "页签栏" },
-  { id: "dialogs",  label: props.i18n?.compactAreaDialogs  || "对话框" },
-  { id: "controls", label: props.i18n?.compactAreaControls || "按钮与菜单" },
+  {
+    id: "sidebar",
+    label: props.i18n?.compactAreaSidebar || "侧边栏与文件树",
+  },
+  {
+    id: "editor",
+    label: props.i18n?.compactAreaEditor || "编辑区",
+  },
+  {
+    id: "tabs",
+    label: props.i18n?.compactAreaTabs || "页签栏",
+  },
+  {
+    id: "dialogs",
+    label: props.i18n?.compactAreaDialogs || "对话框",
+  },
+  {
+    id: "controls",
+    label: props.i18n?.compactAreaControls || "按钮与菜单",
+  },
 ])
 
 function buildSettings(): CompactModeSettings {

@@ -50,7 +50,9 @@
         v-if="reviewResult.detailedScore"
         class="score-section"
       >
-        <div class="review-section-title">分项评分</div>
+        <div class="review-section-title">
+          分项评分
+        </div>
         <div
           v-for="(value, key) in reviewResult.detailedScore"
           :key="key"
@@ -60,8 +62,8 @@
           <div class="score-bar-bg">
             <div
               class="score-bar-fill"
-              :class="'score-fill-' + scoreLevel(value)"
-              :style="{ width: value * 10 + '%' }"
+              :class="`score-fill-${scoreLevel(value)}`"
+              :style="{ width: `${value * 10}%` }"
             ></div>
           </div>
           <span class="score-value">{{ value }}/10</span>
@@ -96,12 +98,12 @@
           v-for="(issue, idx) in filteredIssues"
           :key="idx"
           class="review-issue-item"
-          :class="'severity-' + issue.severity"
+          :class="`severity-${issue.severity}`"
         >
           <div class="issue-content">
             <span
               class="issue-severity"
-              :class="'severity-' + issue.severity"
+              :class="`severity-${issue.severity}`"
             >{{ issue.severity }}</span>
             <span class="issue-text">{{ issue.description }}</span>
           </div>
@@ -129,7 +131,9 @@
         v-if="reviewResult.suggestions.length > 0"
         class="review-suggestions"
       >
-        <div class="review-section-title">改进建议</div>
+        <div class="review-section-title">
+          改进建议
+        </div>
         <div
           v-for="(sug, idx) in reviewResult.suggestions"
           :key="idx"
@@ -185,12 +189,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue"
+import {
+  computed,
+  ref,
+} from "vue"
 
 interface ReviewResultData {
   rating: string
   summary: string
-  issues: Array<{ description: string; severity: string }>
+  issues: Array<{ description: string, severity: string }>
   suggestions: string[]
   reviewModel: string
   reviewedAt: number
@@ -241,7 +248,13 @@ const ratingClass = computed(() => {
 const issueFilter = ref<string>("all")
 
 const filterCounts = computed(() => {
-  if (!props.reviewResult) return { all: 0, 高: 0, 中: 0, 低: 0 }
+  if (!props.reviewResult) { return {
+    all: 0,
+    高: 0,
+    中: 0,
+    低: 0,
+  }
+  }
   const issues = props.reviewResult.issues
   return {
     all: issues.length,
@@ -252,10 +265,22 @@ const filterCounts = computed(() => {
 })
 
 const filterOptions = computed(() => [
-  { key: "all", label: "全部" },
-  { key: "高", label: "高" },
-  { key: "中", label: "中" },
-  { key: "低", label: "低" },
+  {
+    key: "all",
+    label: "全部",
+  },
+  {
+    key: "高",
+    label: "高",
+  },
+  {
+    key: "中",
+    label: "中",
+  },
+  {
+    key: "低",
+    label: "低",
+  },
 ])
 
 const filteredIssues = computed(() => {

@@ -1,84 +1,145 @@
 <template>
   <div class="gp-stats-panel">
     <!-- 总览卡片 -->
-    <div v-if="projectCount > 0" class="gp-stats-cards">
+    <div
+      v-if="projectCount > 0"
+      class="gp-stats-cards"
+    >
       <div class="gp-stat-card">
-        <div class="gp-stat-card-value">{{ projectCount }}</div>
-        <div class="gp-stat-card-label">{{ i18n.totalProjects || '项目总数' }}</div>
+        <div class="gp-stat-card-value">
+          {{ projectCount }}
+        </div>
+        <div class="gp-stat-card-label">
+          {{ i18n.totalProjects || '项目总数' }}
+        </div>
       </div>
       <div class="gp-stat-card gp-stat-card--info">
-        <div class="gp-stat-card-value">{{ remoteCoverage.hasRemote }}</div>
-        <div class="gp-stat-card-label">{{ i18n.remoteConfigured || '已配置远程' }}</div>
+        <div class="gp-stat-card-value">
+          {{ remoteCoverage.hasRemote }}
+        </div>
+        <div class="gp-stat-card-label">
+          {{ i18n.remoteConfigured || '已配置远程' }}
+        </div>
       </div>
       <div class="gp-stat-card gp-stat-card--warn">
-        <div class="gp-stat-card-value">{{ pushStatusStats.ahead }}</div>
-        <div class="gp-stat-card-label">{{ i18n.needsPush || '待推送' }}</div>
+        <div class="gp-stat-card-value">
+          {{ pushStatusStats.ahead }}
+        </div>
+        <div class="gp-stat-card-label">
+          {{ i18n.needsPush || '待推送' }}
+        </div>
       </div>
       <div class="gp-stat-card gp-stat-card--accent">
-        <div class="gp-stat-card-value">{{ uncommittedProjects.length }}</div>
-        <div class="gp-stat-card-label">{{ i18n.uncommitted || '未提交变更' }}</div>
+        <div class="gp-stat-card-value">
+          {{ uncommittedProjects.length }}
+        </div>
+        <div class="gp-stat-card-label">
+          {{ i18n.uncommitted || '未提交变更' }}
+        </div>
       </div>
     </div>
 
     <!-- 空状态 -->
-    <div v-if="projectCount === 0" class="gp-empty">
-      <div class="gp-empty-icon"><Icon icon="mdi:chart-bar" width="48" /></div>
-      <div class="gp-empty-text">{{ i18n.noProjectsStats || '暂无项目，请在列表视图中添加' }}</div>
+    <div
+      v-if="projectCount === 0"
+      class="gp-empty"
+    >
+      <div class="gp-empty-icon">
+        <Icon
+          icon="mdi:chart-bar"
+          width="48"
+        />
+      </div>
+      <div class="gp-empty-text">
+        {{ i18n.noProjectsStats || '暂无项目，请在列表视图中添加' }}
+      </div>
     </div>
 
     <template v-if="projectCount > 0">
       <!-- 远程覆盖率 -->
       <div class="gp-stats-section">
-        <div class="gp-stats-section-title">{{ i18n.remoteCoverage || '远程仓库覆盖率' }}</div>
+        <div class="gp-stats-section-title">
+          {{ i18n.remoteCoverage || '远程仓库覆盖率' }}
+        </div>
         <div class="gp-coverage-list">
           <div class="gp-coverage-item">
             <div class="gp-coverage-head">
-              <Icon icon="mdi:github" height="14" />
+              <Icon
+                icon="mdi:github"
+                height="14"
+              />
               <span>GitHub</span>
               <span class="gp-coverage-num">{{ remoteCoverage.github }} / {{ remoteCoverage.total }}</span>
             </div>
             <div class="gp-coverage-bar">
-              <div class="gp-coverage-fill" :style="{ width: pct(remoteCoverage.github) }" />
+              <div
+                class="gp-coverage-fill"
+                :style="{ width: pct(remoteCoverage.github) }"
+              />
             </div>
           </div>
           <div class="gp-coverage-item">
             <div class="gp-coverage-head">
-              <Icon icon="mdi:git" height="14" />
+              <Icon
+                icon="mdi:git"
+                height="14"
+              />
               <span>Gitee</span>
               <span class="gp-coverage-num">{{ remoteCoverage.gitee }} / {{ remoteCoverage.total }}</span>
             </div>
             <div class="gp-coverage-bar">
-              <div class="gp-coverage-fill gp-coverage-fill--gitee" :style="{ width: pct(remoteCoverage.gitee) }" />
+              <div
+                class="gp-coverage-fill gp-coverage-fill--gitee"
+                :style="{ width: pct(remoteCoverage.gitee) }"
+              />
             </div>
           </div>
           <div class="gp-coverage-item">
             <div class="gp-coverage-head">
-              <Icon icon="mdi:tea" height="14" />
+              <Icon
+                icon="mdi:tea"
+                height="14"
+              />
               <span>Gitea</span>
               <span class="gp-coverage-num">{{ remoteCoverage.gitea }} / {{ remoteCoverage.total }}</span>
             </div>
             <div class="gp-coverage-bar">
-              <div class="gp-coverage-fill gp-coverage-fill--gitea" :style="{ width: pct(remoteCoverage.gitea) }" />
+              <div
+                class="gp-coverage-fill gp-coverage-fill--gitea"
+                :style="{ width: pct(remoteCoverage.gitea) }"
+              />
             </div>
           </div>
           <div class="gp-coverage-item">
             <div class="gp-coverage-head">
-              <Icon icon="mdi:cloud-braces" height="14" />
+              <Icon
+                icon="mdi:cloud-braces"
+                height="14"
+              />
               <span>CNB</span>
               <span class="gp-coverage-num">{{ remoteCoverage.cnb }} / {{ remoteCoverage.total }}</span>
             </div>
             <div class="gp-coverage-bar">
-              <div class="gp-coverage-fill gp-coverage-fill--cnb" :style="{ width: pct(remoteCoverage.cnb) }" />
+              <div
+                class="gp-coverage-fill gp-coverage-fill--cnb"
+                :style="{ width: pct(remoteCoverage.cnb) }"
+              />
             </div>
           </div>
           <div class="gp-coverage-item">
             <div class="gp-coverage-head">
-              <Icon icon="mdi:layers" height="14" />
+              <Icon
+                icon="mdi:layers"
+                height="14"
+              />
               <span>{{ i18n.multipleRemotes || '多远程项目' }}</span>
               <span class="gp-coverage-num">{{ remoteCoverage.multiple }} / {{ remoteCoverage.total }}</span>
             </div>
             <div class="gp-coverage-bar">
-              <div class="gp-coverage-fill gp-coverage-fill--multi" :style="{ width: pct(remoteCoverage.multiple) }" />
+              <div
+                class="gp-coverage-fill gp-coverage-fill--multi"
+                :style="{ width: pct(remoteCoverage.multiple) }"
+              />
             </div>
           </div>
         </div>
@@ -93,24 +154,39 @@
         <!-- 推送状态概览 -->
         <div class="gp-status-bar">
           <div class="gp-status-chip gp-status-chip--ahead">
-            <Icon icon="mdi:cloud-upload-outline" height="13" />
+            <Icon
+              icon="mdi:cloud-upload-outline"
+              height="13"
+            />
             <span>{{ pushStatusStats.ahead }}</span>
           </div>
           <div class="gp-status-chip gp-status-chip--behind">
-            <Icon icon="mdi:cloud-download-outline" height="13" />
+            <Icon
+              icon="mdi:cloud-download-outline"
+              height="13"
+            />
             <span>{{ pushStatusStats.behind }}</span>
           </div>
           <div class="gp-status-chip gp-status-chip--synced">
-            <Icon icon="mdi:check-circle-outline" height="13" />
+            <Icon
+              icon="mdi:check-circle-outline"
+              height="13"
+            />
             <span>{{ pushStatusStats.synced }}</span>
           </div>
           <div class="gp-status-chip gp-status-chip--none">
-            <Icon icon="mdi:lan-disconnect" height="13" />
+            <Icon
+              icon="mdi:lan-disconnect"
+              height="13"
+            />
             <span>{{ pushStatusStats.noRemote }}</span>
           </div>
         </div>
         <!-- 待处理项目表格 -->
-        <div v-if="pendingProjects.length > 0" class="gp-table-wrap">
+        <div
+          v-if="pendingProjects.length > 0"
+          class="gp-table-wrap"
+        >
           <div class="gp-table-row gp-table-row--head">
             <span class="gp-table-cell gp-table-cell--name">{{ i18n.projectName || '项目' }}</span>
             <span class="gp-table-cell gp-table-cell--num">{{ i18n.needsPushShort || '待推送' }}</span>
@@ -125,7 +201,10 @@
             class="gp-table-row gp-table-row--clickable"
             @click="emit('viewProject', item.project.id)"
           >
-            <span class="gp-table-cell gp-table-cell--name" :title="item.project.path">
+            <span
+              class="gp-table-cell gp-table-cell--name"
+              :title="item.project.path"
+            >
               {{ item.project.name }}
             </span>
             <span class="gp-table-cell gp-table-cell--num">
@@ -134,33 +213,66 @@
                 :key="r.key"
                 class="gp-badge-ahead"
               >↑{{ r.ahead }}</span>
-              <span v-if="item.aheadByRemote.length === 0" class="gp-cell-empty">-</span>
+              <span
+                v-if="item.aheadByRemote.length === 0"
+                class="gp-cell-empty"
+              >-</span>
             </span>
             <span class="gp-table-cell gp-table-cell--num">
-              <span v-if="item.staged > 0" class="gp-badge-staged">{{ item.staged }}</span>
-              <span v-else class="gp-cell-empty">-</span>
+              <span
+                v-if="item.staged > 0"
+                class="gp-badge-staged"
+              >{{ item.staged }}</span>
+              <span
+                v-else
+                class="gp-cell-empty"
+              >-</span>
             </span>
             <span class="gp-table-cell gp-table-cell--num">
-              <span v-if="item.unstaged > 0" class="gp-badge-unstaged">{{ item.unstaged }}</span>
-              <span v-else class="gp-cell-empty">-</span>
+              <span
+                v-if="item.unstaged > 0"
+                class="gp-badge-unstaged"
+              >{{ item.unstaged }}</span>
+              <span
+                v-else
+                class="gp-cell-empty"
+              >-</span>
             </span>
             <span class="gp-table-cell gp-table-cell--num">
-              <span v-if="item.untracked > 0" class="gp-badge-untracked">{{ item.untracked }}</span>
-              <span v-else class="gp-cell-empty">-</span>
+              <span
+                v-if="item.untracked > 0"
+                class="gp-badge-untracked"
+              >{{ item.untracked }}</span>
+              <span
+                v-else
+                class="gp-cell-empty"
+              >-</span>
             </span>
             <span class="gp-table-cell gp-table-cell--act">
-              <Icon icon="mdi:arrow-right" height="12" />
+              <Icon
+                icon="mdi:arrow-right"
+                height="12"
+              />
             </span>
           </div>
         </div>
-        <div v-else class="gp-status-all-clear">
-          <Icon icon="mdi:check-all" height="14" />
+        <div
+          v-else
+          class="gp-status-all-clear"
+        >
+          <Icon
+            icon="mdi:check-all"
+            height="14"
+          />
           <span>{{ i18n.allClear || '所有项目状态正常' }}</span>
         </div>
       </div>
 
       <!-- 平台配置状态（显示每个项目各平台是否已配置） -->
-      <div v-if="platformStatusProjects.length > 0" class="gp-stats-section">
+      <div
+        v-if="platformStatusProjects.length > 0"
+        class="gp-stats-section"
+      >
         <div class="gp-stats-section-title">
           {{ i18n.platformStatus || '平台配置状态' }}
           <span class="gp-stats-section-count">{{ platformStatusProjects.length }}</span>
@@ -173,7 +285,10 @@
               :key="pm.key"
               class="gp-table-cell gp-table-cell--platform-status"
             >
-              <Icon :icon="pm.icon" height="11" />
+              <Icon
+                :icon="pm.icon"
+                height="11"
+              />
             </span>
             <span class="gp-table-cell gp-table-cell--act"></span>
           </div>
@@ -183,7 +298,10 @@
             class="gp-table-row gp-table-row--clickable"
             @click="emit('viewProject', item.project.id)"
           >
-            <span class="gp-table-cell gp-table-cell--name" :title="item.project.path">
+            <span
+              class="gp-table-cell gp-table-cell--name"
+              :title="item.project.path"
+            >
               {{ item.project.name }}
             </span>
             <span
@@ -206,7 +324,10 @@
               />
             </span>
             <span class="gp-table-cell gp-table-cell--act">
-              <Icon icon="mdi:arrow-right" height="12" />
+              <Icon
+                icon="mdi:arrow-right"
+                height="12"
+              />
             </span>
           </div>
         </div>
@@ -217,29 +338,41 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue"
-import { Icon } from "@iconify/vue"
 import type { GitProject } from "../types"
+import { Icon } from "@iconify/vue"
+import { computed } from "vue"
 import { PLATFORM_META } from "../types"
 
 export interface RemoteCoverage {
-  total: number; github: number; gitee: number; gitea: number; cnb: number
-  hasRemote: number; noRemote: number; multiple: number
+  total: number
+  github: number
+  gitee: number
+  gitea: number
+  cnb: number
+  hasRemote: number
+  noRemote: number
+  multiple: number
 }
 
 export interface PushStatusStats {
-  total: number; ahead: number; behind: number; synced: number; noRemote: number
+  total: number
+  ahead: number
+  behind: number
+  synced: number
+  noRemote: number
 }
 
 export interface NeedsPushItem {
   project: GitProject
-  aheadByRemote: { key: string; ahead: number }[]
+  aheadByRemote: { key: string, ahead: number }[]
   totalAhead: number
 }
 
 export interface UncommittedItem {
   project: GitProject
-  staged: number; unstaged: number; untracked: number
+  staged: number
+  unstaged: number
+  untracked: number
 }
 
 
@@ -280,7 +413,7 @@ function pct(count: number): string {
 /** 合并后的待处理项目（需要推送 + 有未提交变更） */
 interface PendingProjectItem {
   project: GitProject
-  aheadByRemote: { key: string; ahead: number }[]
+  aheadByRemote: { key: string, ahead: number }[]
   totalAhead: number
   staged: number
   unstaged: number

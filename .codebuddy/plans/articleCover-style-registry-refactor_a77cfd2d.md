@@ -42,7 +42,7 @@ todos:
 ```mermaid
 graph TD
     subgraph "重构前：6 个离散结构"
-        A[COVER_STYLE_PRESETS] 
+        A[COVER_STYLE_PRESETS]
         B[STYLE_COLORS_MAP]
         C[STYLE_DECOR_HTML]
         D[STYLE_DECOR_CSS]
@@ -73,7 +73,7 @@ export interface StyleDefinition {
   colors: StyleColors
   decorHtml: string
   /** 构建完整装饰 CSS（含标签样式），调用方传入 this.colors */
-  buildDecorCss(c: StyleColors): string
+  buildDecorCss: (c: StyleColors) => string
 }
 ```
 
@@ -82,8 +82,10 @@ export interface StyleDefinition {
 `COVER_STYLE_REGISTRY` 是一个 `StyleDefinition[]`，顺序即显示顺序。`COVER_STYLE_PRESETS` 从中派生：
 
 ```typescript
-export const COVER_STYLE_PRESETS: CoverStylePreset[] = COVER_STYLE_REGISTRY.map(s => ({
-  id: s.id, label: s.label, description: s.description,
+export const COVER_STYLE_PRESETS: CoverStylePreset[] = COVER_STYLE_REGISTRY.map((s) => ({
+  id: s.id,
+  label: s.label,
+  description: s.description,
 }))
 ```
 
@@ -105,7 +107,7 @@ const decorCss = STYLE_DECOR_CSS[config.styleId]?.(c) ?? STYLE_DECOR_CSS.minimal
 const decorHtml = STYLE_DECOR_HTML[config.styleId] ?? ""
 
 // 后：1 次 find + 直接取值
-const style = COVER_STYLE_REGISTRY.find(s => s.id === config.styleId) ?? COVER_STYLE_REGISTRY[0]
+const style = COVER_STYLE_REGISTRY.find((s) => s.id === config.styleId) ?? COVER_STYLE_REGISTRY[0]
 const c = style.colors
 const decorCss = style.buildDecorCss(c)
 const decorHtml = style.decorHtml

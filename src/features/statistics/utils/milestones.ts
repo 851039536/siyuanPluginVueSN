@@ -47,8 +47,17 @@ export function milestoneTargetOfWithRules(
  */
 export function generateDefaultRules(levels = 10): Record<string, number[]> {
   const types: MilestoneTypeKey[] = [
-    "notes", "words", "blocks", "tags", "backlinks", "assets", "images",
-    "notebooks", "code", "streak", "activeDays",
+    "notes",
+    "words",
+    "blocks",
+    "tags",
+    "backlinks",
+    "assets",
+    "images",
+    "notebooks",
+    "code",
+    "streak",
+    "activeDays",
   ]
   const rules: Record<string, number[]> = {}
   for (const type of types) {

@@ -346,7 +346,10 @@ import type {
   ImageInfo,
 } from "./types"
 import { showMessage } from "siyuan"
-import { computed, ref } from "vue"
+import {
+  computed,
+  ref,
+} from "vue"
 import * as api from "@/api"
 import SiButton from "@/components/Button.vue"
 import SiSelect from "@/components/Select.vue"
@@ -356,10 +359,10 @@ import { useImageCompress } from "./composables/useImageCompress"
 import { useImagePagination } from "./composables/useImagePagination"
 import { useImageScanner } from "./composables/useImageScanner"
 import { useImageSelection } from "./composables/useImageSelection"
+import { formatFileSize } from "./services/comparator"
 import {
   batchReplaceImages,
 } from "./services/compressor"
-import { formatFileSize } from "./services/comparator"
 import { revokeImageUrls } from "./services/scanner"
 
 interface Props {
@@ -426,13 +429,34 @@ const previewImageData = ref<ImageInfo | null>(null)
 // ── 下拉选项 ──────────────────────────────────────────────────
 
 const minFileSizeOptions = computed(() => [
-  { value: 0, label: props.i18n.allOption },
-  { value: 100, label: "100 KB" },
-  { value: 200, label: "200 KB" },
-  { value: 500, label: "500 KB" },
-  { value: 1024, label: "1 MB" },
-  { value: 2048, label: "2 MB" },
-  { value: 5120, label: "5 MB" },
+  {
+    value: 0,
+    label: props.i18n.allOption,
+  },
+  {
+    value: 100,
+    label: "100 KB",
+  },
+  {
+    value: 200,
+    label: "200 KB",
+  },
+  {
+    value: 500,
+    label: "500 KB",
+  },
+  {
+    value: 1024,
+    label: "1 MB",
+  },
+  {
+    value: 2048,
+    label: "2 MB",
+  },
+  {
+    value: 5120,
+    label: "5 MB",
+  },
 ])
 
 const pageSizeOptions = computed(() => {
@@ -467,7 +491,10 @@ const onReplaceImages = async () => {
   replacing.value = true
 
   try {
-    const { success, failed } = await batchReplaceImages(
+    const {
+      success,
+      failed,
+    } = await batchReplaceImages(
       compressResults.value,
       (current, total) => {
         scanProgressText.value = `替换中... ${current}/${total}`

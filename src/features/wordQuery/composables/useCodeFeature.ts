@@ -1,6 +1,9 @@
 import type { Plugin } from "siyuan"
 import type { Ref } from "vue"
-import { ref, watch } from "vue"
+import {
+  ref,
+  watch,
+} from "vue"
 import { getApiConfigFromPlugin } from "@/utils/aiApi"
 
 /**

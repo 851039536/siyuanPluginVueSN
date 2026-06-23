@@ -1,5 +1,8 @@
 import { ref } from "vue"
-import { getNodeProcessModules, getNodeModules } from "@/utils/nodeModules"
+import {
+  getNodeModules,
+  getNodeProcessModules,
+} from "@/utils/nodeModules"
 
 // Types
 export interface IdeEntry {
@@ -9,12 +12,13 @@ export interface IdeEntry {
   knownPaths: string[]
 }
 
-export interface CustomIde { name: string; path: string }
+export interface CustomIde { name: string, path: string }
 
 // Constants
 export const IDE_ENTRIES: IdeEntry[] = [
   {
-    name: "VSCode", icon: "mdi:microsoft-visual-studio-code",
+    name: "VSCode",
+    icon: "mdi:microsoft-visual-studio-code",
     cmds: ["code", "code.cmd"],
     knownPaths: [
       "%LOCALAPPDATA%/Programs/Microsoft VS Code/bin/code.cmd",
@@ -24,26 +28,59 @@ export const IDE_ENTRIES: IdeEntry[] = [
 ]
 
 export const IDE_PRESETS = [
-  { name: "Visual Studio", icon: "mdi:microsoft-visual-studio" },
-  { name: "JetBrains Rider", icon: "mdi:language-csharp" },
-  { name: "CodeBuddy", icon: "mdi:robot-outline" },
-  { name: "Trae CN", icon: "mdi:alpha-t-box" },
-  { name: "Qoder", icon: "mdi:code-json" },
-  { name: "JetBrains WebStorm", icon: "mdi:language-javascript" },
-  { name: "JetBrains PyCharm", icon: "mdi:language-python" },
-  { name: "JetBrains GoLand", icon: "mdi:language-go" },
-  { name: "JetBrains IntelliJ IDEA", icon: "mdi:language-java" },
-  { name: "其他", icon: "mdi:application-brackets" },
+  {
+    name: "Visual Studio",
+    icon: "mdi:microsoft-visual-studio",
+  },
+  {
+    name: "JetBrains Rider",
+    icon: "mdi:language-csharp",
+  },
+  {
+    name: "CodeBuddy",
+    icon: "mdi:robot-outline",
+  },
+  {
+    name: "Trae CN",
+    icon: "mdi:alpha-t-box",
+  },
+  {
+    name: "Qoder",
+    icon: "mdi:code-json",
+  },
+  {
+    name: "JetBrains WebStorm",
+    icon: "mdi:language-javascript",
+  },
+  {
+    name: "JetBrains PyCharm",
+    icon: "mdi:language-python",
+  },
+  {
+    name: "JetBrains GoLand",
+    icon: "mdi:language-go",
+  },
+  {
+    name: "JetBrains IntelliJ IDEA",
+    icon: "mdi:language-java",
+  },
+  {
+    name: "其他",
+    icon: "mdi:application-brackets",
+  },
 ]
 
 export const CUSTOM_IDE_KEY = "git-push-custom-ides"
 
 export function useIdeManagement(options: {
-  plugin: { loadData(key: string): Promise<any>; saveData(key: string, value: any): Promise<void> }
+  plugin: { loadData: (key: string) => Promise<any>, saveData: (key: string, value: any) => Promise<void> }
   /** 打开文件夹的回退函数 */
   openFolder: (path: string) => void
 }) {
-  const { plugin, openFolder } = options
+  const {
+    plugin,
+    openFolder,
+  } = options
 
   const detectedIdes = ref<IdeEntry[]>([])
   const customIdes = ref<CustomIde[]>([])
@@ -58,20 +95,23 @@ export function useIdeManagement(options: {
   const confirmingMgmtDelIdx = ref(-1)
 
   function getIdePresetIcon(name: string): string {
-    return IDE_PRESETS.find(p => p.name === name)?.icon ?? "mdi:application-brackets"
+    return IDE_PRESETS.find((p) => p.name === name)?.icon ?? "mdi:application-brackets"
   }
 
   function startEditIde(idx: number) {
     const c = customIdes.value[idx]
     if (!c) return
     editingIdeIdx.value = idx
-    editIdePreset.value = IDE_PRESETS.some(p => p.name === c.name) ? c.name : "其他"
+    editIdePreset.value = IDE_PRESETS.some((p) => p.name === c.name) ? c.name : "其他"
     editIdePath.value = c.path
   }
 
   function saveEditIde(idx: number) {
     const list = [...customIdes.value]
-    list[idx] = { name: editIdePreset.value.trim() || customIdes.value[idx].name, path: editIdePath.value.trim() }
+    list[idx] = {
+      name: editIdePreset.value.trim() || customIdes.value[idx].name,
+      path: editIdePath.value.trim(),
+    }
     customIdes.value = list
     editingIdeIdx.value = -1
     confirmingMgmtDelIdx.value = -1
@@ -93,7 +133,10 @@ export function useIdeManagement(options: {
   function addCustomIde() {
     const path = addIdePath.value.trim()
     if (!path) return
-    customIdes.value = [...customIdes.value, { name: addIdePreset.value, path }]
+    customIdes.value = [...customIdes.value, {
+      name: addIdePreset.value,
+      path,
+    }]
     saveCustomIdes()
     addIdePath.value = ""
   }

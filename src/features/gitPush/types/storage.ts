@@ -189,21 +189,51 @@ export interface ConflictFile {
 export interface CommitTemplate {
   id: string
   name: string
-  pattern: string  // 支持占位符 {branch} / {files}
+  pattern: string // 支持占位符 {branch} / {files}
   builtin?: boolean
 }
 
 const DEFAULT_TEMPLATES: CommitTemplate[] = [
-  { id: "tpl-feat", name: "新功能", pattern: "feat: ", builtin: true },
-  { id: "tpl-fix", name: "修复", pattern: "fix: ", builtin: true },
-  { id: "tpl-chore", name: "杂项", pattern: "chore: ", builtin: true },
-  { id: "tpl-refactor", name: "重构", pattern: "refactor: ", builtin: true },
-  { id: "tpl-docs", name: "文档", pattern: "docs: ", builtin: true },
+  {
+    id: "tpl-feat",
+    name: "新功能",
+    pattern: "feat: ",
+    builtin: true,
+  },
+  {
+    id: "tpl-fix",
+    name: "修复",
+    pattern: "fix: ",
+    builtin: true,
+  },
+  {
+    id: "tpl-chore",
+    name: "杂项",
+    pattern: "chore: ",
+    builtin: true,
+  },
+  {
+    id: "tpl-refactor",
+    name: "重构",
+    pattern: "refactor: ",
+    builtin: true,
+  },
+  {
+    id: "tpl-docs",
+    name: "文档",
+    pattern: "docs: ",
+    builtin: true,
+  },
 ]
 
 const DEFAULT_PROJECTS: GitProject[] = []
 
-const DEFAULT_UNGROUPED: ProjectCategory = { id: "__ungrouped__", name: "未分组", color: "#888888", order: 0 }
+const DEFAULT_UNGROUPED: ProjectCategory = {
+  id: "__ungrouped__",
+  name: "未分组",
+  color: "#888888",
+  order: 0,
+}
 
 export class GitPushStorage {
   readonly projects: TypedStorage<GitProject[]>
@@ -227,7 +257,7 @@ export class GitPushStorage {
     await this.projects.loadOrDefault()
     const cats = await this.categories.loadOrDefault()
     // 确保默认分类始终存在
-    if (!cats.some(c => c.id === "__ungrouped__")) {
+    if (!cats.some((c) => c.id === "__ungrouped__")) {
       cats.unshift(DEFAULT_UNGROUPED)
       await this.categories.save(cats)
     }
@@ -243,7 +273,7 @@ export class GitPushStorage {
       }
       // status 缺失时按活动时间推导：长时间未活动 → paused，否则 active
       if (!p.status) {
-        const last = p.lastActivity ? Date.parse(p.lastActivity) : NaN
+        const last = p.lastActivity ? Date.parse(p.lastActivity) : Number.NaN
         p.status = !isNaN(last) && (now - last) > NINETY_DAYS ? "paused" : "active"
         needsSave = true
       }

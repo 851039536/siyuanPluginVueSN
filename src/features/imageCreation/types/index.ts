@@ -47,7 +47,7 @@ export interface StyleDefinition {
   colors: StyleColors
   decorHtml: string
   /** 构建完整装饰 CSS（含标签样式），由注册表引擎传入 this.colors */
-  buildDecorCss(c: StyleColors): string
+  buildDecorCss: (c: StyleColors) => string
 }
 
 // ============================================================

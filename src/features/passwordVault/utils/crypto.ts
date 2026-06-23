@@ -61,7 +61,10 @@ export async function encryptPassword(
   password: string,
   key: CryptoKey,
 ): Promise<{ encryptedData: string, iv: string }> {
-  const { iv, ciphertext } = await aesGcmEncrypt(
+  const {
+    iv,
+    ciphertext,
+  } = await aesGcmEncrypt(
     new TextEncoder().encode(password),
     key,
   )
@@ -109,7 +112,10 @@ export async function encryptEntryPayload(
   key: CryptoKey,
 ): Promise<{ encryptedPayload: string, iv: string }> {
   const json = JSON.stringify(data)
-  const { iv, ciphertext } = await aesGcmEncrypt(
+  const {
+    iv,
+    ciphertext,
+  } = await aesGcmEncrypt(
     new TextEncoder().encode(json),
     key,
   )

@@ -10,7 +10,11 @@
           :class="{ active: modelValue === mode.value }"
           @click="$emit('update:modelValue', mode.value)"
         >
-          <IconWrapper v-if="mode.icon" :name="mode.icon" :size="12" />
+          <IconWrapper
+            v-if="mode.icon"
+            :name="mode.icon"
+            :size="12"
+          />
           {{ mode.label }}
         </button>
       </div>
@@ -160,25 +164,68 @@ function onRangeChange(mode: "day" | "month", value: number): void {
 }
 
 const periodModes = computed(() => [
-  { value: "day" as const, label: props.i18n.day || '日', icon: "list" as const },
-  { value: "week" as const, label: props.i18n.week || '周', icon: "format" as const },
-  { value: "month" as const, label: props.i18n.month || '月', icon: "list" as const },
-  { value: "year" as const, label: props.i18n.year || '年', icon: undefined },
+  {
+    value: "day" as const,
+    label: props.i18n.day || '日',
+    icon: "list" as const,
+  },
+  {
+    value: "week" as const,
+    label: props.i18n.week || '周',
+    icon: "format" as const,
+  },
+  {
+    value: "month" as const,
+    label: props.i18n.month || '月',
+    icon: "list" as const,
+  },
+  {
+    value: "year" as const,
+    label: props.i18n.year || '年',
+    icon: undefined,
+  },
 ])
 
 const dayRanges = computed(() => [
-  { value: 7 as const, label: props.i18n.days7 || '7天' },
-  { value: 15 as const, label: props.i18n.days15 || '15天' },
-  { value: 30 as const, label: props.i18n.days30 || '30天' },
-  { value: 90 as const, label: props.i18n.quarter || '季度' },
-  { value: 180 as const, label: props.i18n.halfYear || '半年' },
-  { value: 365 as const, label: props.i18n.fullYear || '整年' },
+  {
+    value: 7 as const,
+    label: props.i18n.days7 || '7天',
+  },
+  {
+    value: 15 as const,
+    label: props.i18n.days15 || '15天',
+  },
+  {
+    value: 30 as const,
+    label: props.i18n.days30 || '30天',
+  },
+  {
+    value: 90 as const,
+    label: props.i18n.quarter || '季度',
+  },
+  {
+    value: 180 as const,
+    label: props.i18n.halfYear || '半年',
+  },
+  {
+    value: 365 as const,
+    label: props.i18n.fullYear || '整年',
+  },
 ])
 
 const monthRanges = computed(() => [
-  { value: 1 as const, label: props.i18n.last1Year || '最近一年' },
-  { value: 2 as const, label: props.i18n.last2Years || '最近两年' },
-  { value: 3 as const, label: props.i18n.last3Years || '最近三年' },
+  {
+    value: 1 as const,
+    label: props.i18n.last1Year || '最近一年',
+  },
+  {
+    value: 2 as const,
+    label: props.i18n.last2Years || '最近两年',
+  },
+  {
+    value: 3 as const,
+    label: props.i18n.last3Years || '最近三年',
+  },
 ])
 
 const availableYears = computed(() => {

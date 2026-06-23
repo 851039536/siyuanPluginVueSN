@@ -41,7 +41,7 @@
           >
             <div
               class="hero-health-fill"
-              :style="{ width: healthPct + '%' }"
+              :style="{ width: `${healthPct}%` }"
             ></div>
           </div>
           <span
@@ -428,7 +428,7 @@
             <div class="platform-bar-track">
               <div
                 class="platform-bar-fill"
-                :style="{ width: entry.pct + '%' }"
+                :style="{ width: `${entry.pct}%` }"
               ></div>
             </div>
             <span class="platform-bar-count">{{ entry.count }}</span>
@@ -468,7 +468,7 @@
             <div class="platform-bar-track">
               <div
                 class="platform-bar-fill"
-                :style="{ width: wcBarPct(item.count) + '%' }"
+                :style="{ width: `${wcBarPct(item.count)}%` }"
               ></div>
             </div>
             <span class="platform-bar-count">{{ item.count }}</span>
@@ -504,7 +504,7 @@
             <div class="platform-bar-track">
               <div
                 class="platform-bar-fill custom-bm-fill"
-                :style="{ width: customBmBarPct(item.count) + '%' }"
+                :style="{ width: `${customBmBarPct(item.count)}%` }"
               ></div>
             </div>
             <span class="platform-bar-count">{{ item.count }}</span>
@@ -774,13 +774,13 @@ import type {
   DepthStats,
   DocStats,
 } from "../types/index"
-import { PLATFORM_META } from "../composables/useDocAnalysis"
 import { Icon } from "@iconify/vue"
 import {
   computed,
   reactive,
   ref,
 } from "vue"
+import { PLATFORM_META } from "../composables/useDocAnalysis"
 
 interface Props {
   stats: DocStats
@@ -930,12 +930,19 @@ const platformEntries = computed(() => {
     .map(([id, count]) => {
       // 从 PLATFORM_META 查找名称（静态导入会循环，直接用 id 推导）
       const meta = PLATFORM_META.find((p) => p.id === id)
-      return { id, name: meta?.name || id, count }
+      return {
+        id,
+        name: meta?.name || id,
+        count,
+      }
     })
     .filter((e) => e.count > 0)
     .sort((a, b) => b.count - a.count)
   const max = Math.max(...entries.map((e) => e.count), 1)
-  return entries.map((e) => ({ ...e, pct: Math.round((e.count / max) * 100) }))
+  return entries.map((e) => ({
+    ...e,
+    pct: Math.round((e.count / max) * 100),
+  }))
 })
 
 /** 进入发布体系的文档数（有任一平台发布属性） */

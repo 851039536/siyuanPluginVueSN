@@ -57,9 +57,9 @@ export interface DocCountSettings {
 /** 显示格式 → 渲染函数的映射 */
 export const DOC_COUNT_FORMATTERS: Record<DocCountFormat, (count: number) => string> = {
   bracket: (n) => ` (${n})`,
-  square:  (n) => ` [${n}]`,
-  plain:   (n) => ` ${n}`,
-  dot:     (n) => ` ·${n}`,
+  square: (n) => ` [${n}]`,
+  plain: (n) => ` ${n}`,
+  dot: (n) => ` ·${n}`,
 }
 
 export interface TabPinSettings {

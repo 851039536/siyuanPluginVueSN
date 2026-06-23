@@ -308,25 +308,65 @@
         :value="selectedModel"
         @change="$emit('update:selected-model', ($event.target as HTMLSelectElement).value)"
       >
-        <option value="">默认模型</option>
-        <optgroup v-if="availableModels.common.length > 0" label="常用">
-          <option v-for="m in availableModels.common" :key="m.value" :value="m.value">{{ m.label }}</option>
+        <option value="">
+          默认模型
+        </option>
+        <optgroup
+          v-if="availableModels.common.length > 0"
+          label="常用"
+        >
+          <option
+            v-for="m in availableModels.common"
+            :key="m.value"
+            :value="m.value"
+          >
+            {{ m.label }}
+          </option>
         </optgroup>
-        <optgroup v-if="availableModels.all.length > 0" label="全部">
-          <option v-for="m in availableModels.all" :key="m.value" :value="m.value">{{ m.label }}</option>
+        <optgroup
+          v-if="availableModels.all.length > 0"
+          label="全部"
+        >
+          <option
+            v-for="m in availableModels.all"
+            :key="m.value"
+            :value="m.value"
+          >
+            {{ m.label }}
+          </option>
         </optgroup>
-        <option value="custom">自定义...</option>
+        <option value="custom">
+          自定义...
+        </option>
       </select>
       <!-- 思考模式开关 -->
-      <label v-if="supportsThinking" class="thinking-toggle" title="思考模式">
-        <input type="checkbox" :checked="enableThinking" @change="$emit('update:enable-thinking', ($event.target as HTMLInputElement).checked)" />
+      <label
+        v-if="supportsThinking"
+        class="thinking-toggle"
+        title="思考模式"
+      >
+        <input
+          type="checkbox"
+          :checked="enableThinking"
+          @change="$emit('update:enable-thinking', ($event.target as HTMLInputElement).checked)"
+        />
         <span class="thinking-label">思考</span>
       </label>
       <!-- 审核开关 -->
-      <label class="review-toggle" title="生成后使用 V4 Pro 交叉审核">
-        <input type="checkbox" :checked="enableReview" @change="$emit('update:enable-review', ($event.target as HTMLInputElement).checked)" />
+      <label
+        class="review-toggle"
+        title="生成后使用 V4 Pro 交叉审核"
+      >
+        <input
+          type="checkbox"
+          :checked="enableReview"
+          @change="$emit('update:enable-review', ($event.target as HTMLInputElement).checked)"
+        />
         <span class="review-label">
-          <svg width="11" height="11"><use xlink:href="#iconCheck" /></svg>审核
+          <svg
+            width="11"
+            height="11"
+          ><use xlink:href="#iconCheck" /></svg>审核
         </span>
       </label>
     </div>
@@ -430,12 +470,12 @@
 </template>
 
 <script setup lang="ts">
+import type { ProviderModels } from "../config/models"
 import type {
   SavedPrompt,
   SkillItem,
   TargetDoc,
 } from "@/types/ai"
-import type { ProviderModels } from "../config/models"
 import {
   computed,
   nextTick,

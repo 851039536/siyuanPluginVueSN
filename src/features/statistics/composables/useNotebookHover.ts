@@ -1,5 +1,12 @@
-import type { InjectionKey, Ref } from "vue"
-import { inject, provide, ref } from "vue"
+import type {
+  InjectionKey,
+  Ref,
+} from "vue"
+import {
+  inject,
+  provide,
+  ref,
+} from "vue"
 
 interface NotebookHoverState {
   hoveredNotebook: Ref<string | null>
@@ -35,7 +42,10 @@ export function provideNotebookHover(): NotebookHoverState {
     }
   }
 
-  const state: NotebookHoverState = { hoveredNotebook, onHover }
+  const state: NotebookHoverState = {
+    hoveredNotebook,
+    onHover,
+  }
   provide(KEY, state)
   return state
 }

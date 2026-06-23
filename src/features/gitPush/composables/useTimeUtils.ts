@@ -8,7 +8,7 @@ export function useTimeUtils() {
     const t = Date.parse(iso)
     if (isNaN(t)) return ""
     const diff = Date.now() - t
-    const min = 60 * 1000, hour = 60 * min, day = 24 * hour
+    const min = 60 * 1000; const hour = 60 * min; const day = 24 * hour
     if (diff < min) return "刚刚"
     if (diff < hour) return `${Math.floor(diff / min)}分钟前`
     if (diff < day) return `${Math.floor(diff / hour)}小时前`
@@ -41,5 +41,9 @@ export function useTimeUtils() {
     })
   }
 
-  return { relativeTime, activityLevel, sortProjects }
+  return {
+    relativeTime,
+    activityLevel,
+    sortProjects,
+  }
 }

@@ -37,8 +37,13 @@
         v-else
         class="recent-docs-list"
       >
-        <template v-for="group in recentGroupedDocs" :key="group.label">
-          <div class="recent-group-header">{{ group.label }}</div>
+        <template
+          v-for="group in recentGroupedDocs"
+          :key="group.label"
+        >
+          <div class="recent-group-header">
+            {{ group.label }}
+          </div>
           <div
             v-for="doc in group.docs"
             :key="doc.id"
@@ -135,7 +140,10 @@
             class="changed-docs-group"
           >
             <div class="changed-docs-group-title">
-              <IconWrapper name="success" :size="12" /> {{ i18n.todayCreated || '新增' }}（{{ changedDocs.newDocs.length }}）
+              <IconWrapper
+                name="success"
+                :size="12"
+              /> {{ i18n.todayCreated || '新增' }}（{{ changedDocs.newDocs.length }}）
             </div>
             <div
               v-for="doc in changedDocs.newDocs"
@@ -146,7 +154,10 @@
             >
               <span class="changed-doc-icon">+</span>
               <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
-              <span v-if="doc.time" class="changed-doc-time">{{ doc.time }}</span>
+              <span
+                v-if="doc.time"
+                class="changed-doc-time"
+              >{{ doc.time }}</span>
             </div>
           </div>
           <div
@@ -154,7 +165,10 @@
             class="changed-docs-group"
           >
             <div class="changed-docs-group-title">
-              <IconWrapper name="edit" :size="12" /> {{ i18n.todayModified || '修改' }}（{{ changedDocs.modifiedDocs.length }}）
+              <IconWrapper
+                name="edit"
+                :size="12"
+              /> {{ i18n.todayModified || '修改' }}（{{ changedDocs.modifiedDocs.length }}）
             </div>
             <div
               v-for="doc in changedDocs.modifiedDocs"
@@ -165,7 +179,10 @@
             >
               <span class="changed-doc-icon">~</span>
               <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
-              <span v-if="doc.time" class="changed-doc-time">{{ doc.time }}</span>
+              <span
+                v-if="doc.time"
+                class="changed-doc-time"
+              >{{ doc.time }}</span>
             </div>
           </div>
         </div>
@@ -237,12 +254,30 @@ const changedDocsLoading = ref(false)
 type DocRangeType = 'today' | '3d' | '7d' | '1m' | '6m' | 'recent'
 const docRange = ref<DocRangeType>('today')
 const dateRangeOptions = computed<Array<{ value: DocRangeType, label: string }>>(() => [
-  { value: 'today', label: props.i18n.today || '今天' },
-  { value: '3d', label: props.i18n.days3 || '近3天' },
-  { value: '7d', label: props.i18n.days7 || '近7天' },
-  { value: '1m', label: props.i18n.oneMonth || '近1月' },
-  { value: '6m', label: props.i18n.halfYear || '近半年' },
-  { value: 'recent', label: props.i18n.recentUpdated || '最近更新' },
+  {
+    value: 'today',
+    label: props.i18n.today || '今天',
+  },
+  {
+    value: '3d',
+    label: props.i18n.days3 || '近3天',
+  },
+  {
+    value: '7d',
+    label: props.i18n.days7 || '近7天',
+  },
+  {
+    value: '1m',
+    label: props.i18n.oneMonth || '近1月',
+  },
+  {
+    value: '6m',
+    label: props.i18n.halfYear || '近半年',
+  },
+  {
+    value: 'recent',
+    label: props.i18n.recentUpdated || '最近更新',
+  },
 ])
 
 const rangeStats = ref<RangeStatItem[]>([])
@@ -306,7 +341,10 @@ const recentGroupedDocs = computed<DocGroup[]>(() => {
   const result: DocGroup[] = []
   for (const key of ['today', 'yesterday', 'thisWeek', 'earlier'] as TimeGroup[]) {
     if (groups[key].length > 0) {
-      result.push({ label: groupLabels[key], docs: groups[key] })
+      result.push({
+        label: groupLabels[key],
+        docs: groups[key],
+      })
     }
   }
   return result
@@ -390,7 +428,10 @@ function sortByDate(items: RangeStatItem[]) {
 async function switchDocRange(range: DocRangeType) {
   docRange.value = range
   selectedChartDate.value = null
-  changedDocs.value = { newDocs: [], modifiedDocs: [] }
+  changedDocs.value = {
+    newDocs: [],
+    modifiedDocs: [],
+  }
 
   if (range === 'recent') {
     await loadRecentDocs()
@@ -457,7 +498,10 @@ async function loadDateChangedDocs(dateStr: string) {
     changedDocs.value = await props.onGetDateChangedDocs(dateStr)
   } catch (error) {
     console.error("加载文档变化失败:", error)
-    changedDocs.value = { newDocs: [], modifiedDocs: [] }
+    changedDocs.value = {
+      newDocs: [],
+      modifiedDocs: [],
+    }
   } finally {
     changedDocsLoading.value = false
   }

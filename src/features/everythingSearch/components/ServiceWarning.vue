@@ -4,7 +4,10 @@
     role="alert"
     aria-live="polite"
   >
-    <span class="vp-warning__tag"><IconWrapper name="warning" :size="12" /> 服务未连接</span>
+    <span class="vp-warning__tag"><IconWrapper
+      name="warning"
+      :size="12"
+    /> 服务未连接</span>
     <span class="vp-warning__msg">{{ message }}</span>
     <button
       class="vp-warning__retry"

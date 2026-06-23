@@ -50,11 +50,11 @@ export interface CloudTestResult {
 
 /** 各云厂商 Provider 的公共接口 */
 interface CloudProvider {
-  upload(localPath: string, cloudKey: string, options?: CloudUploadOptions): Promise<void>
-  download(cloudKey: string, localPath: string): Promise<void>
-  list(prefix: string): Promise<CloudFileInfo[]>
-  delete(cloudKey: string): Promise<void>
-  test(): Promise<CloudTestResult>
+  upload: (localPath: string, cloudKey: string, options?: CloudUploadOptions) => Promise<void>
+  download: (cloudKey: string, localPath: string) => Promise<void>
+  list: (prefix: string) => Promise<CloudFileInfo[]>
+  delete: (cloudKey: string) => Promise<void>
+  test: () => Promise<CloudTestResult>
 }
 
 /** Provider 工厂签名 */
@@ -66,7 +66,7 @@ function requireCrypto() {
   const node = getNodeModules()
   if (!node) throw new TypeError("签名需要 Node.js 环境")
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  return require("crypto")
+  return require("node:crypto")
 }
 
 function base64UrlEncode(str: string): string {
@@ -76,7 +76,10 @@ function base64UrlEncode(str: string): string {
 function requireFsPath() {
   const node = getNodeModules()
   if (!node) throw new TypeError("无法访问文件系统，请使用桌面版思源笔记")
-  return { fs: node.fs.promises, path: node.path }
+  return {
+    fs: node.fs.promises,
+    path: node.path,
+  }
 }
 
 // ========== 七牛云 Provider ==========
@@ -140,7 +143,10 @@ class QiniuProvider implements CloudProvider {
   }
 
   async download(cloudKey: string, localPath: string): Promise<void> {
-    const { fs, path } = requireFsPath()
+    const {
+      fs,
+      path,
+    } = requireFsPath()
     const downloadUrl = this.getDownloadUrl(cloudKey)
     const response = await fetch(downloadUrl)
     if (!response.ok) {
@@ -196,9 +202,15 @@ class QiniuProvider implements CloudProvider {
   async test(): Promise<CloudTestResult> {
     try {
       await this.list(this.config.prefix || "siyuan-backup/")
-      return { success: true, message: "七牛云连接成功" }
+      return {
+        success: true,
+        message: "七牛云连接成功",
+      }
     } catch (err: any) {
-      return { success: false, message: `七牛云连接失败: ${err.message}` }
+      return {
+        success: false,
+        message: `七牛云连接失败: ${err.message}`,
+      }
     }
   }
 
@@ -238,8 +250,11 @@ class AlibabaProvider implements CloudProvider {
     const signature = this.sign(stringToSign)
 
     options?.onProgress?.({
-      phase: "uploading", currentFile: cloudKey,
-      filesProcessed: 0, totalFiles: 1, percent: 50,
+      phase: "uploading",
+      currentFile: cloudKey,
+      filesProcessed: 0,
+      totalFiles: 1,
+      percent: 50,
     })
 
     const response = await fetch(`https://${host}/${cloudKey}`, {
@@ -258,13 +273,19 @@ class AlibabaProvider implements CloudProvider {
     }
 
     options?.onProgress?.({
-      phase: "uploading", currentFile: cloudKey,
-      filesProcessed: 1, totalFiles: 1, percent: 100,
+      phase: "uploading",
+      currentFile: cloudKey,
+      filesProcessed: 1,
+      totalFiles: 1,
+      percent: 100,
     })
   }
 
   async download(cloudKey: string, localPath: string): Promise<void> {
-    const { fs, path } = requireFsPath()
+    const {
+      fs,
+      path,
+    } = requireFsPath()
     const host = this.getHost()
     const date = new Date().toUTCString()
     const stringToSign = `GET\n\n\n${date}\n/${this.config.bucket}/${cloudKey}`
@@ -323,9 +344,15 @@ class AlibabaProvider implements CloudProvider {
   async test(): Promise<CloudTestResult> {
     try {
       await this.list(this.config.prefix || "siyuan-backup/")
-      return { success: true, message: "阿里云 OSS 连接成功" }
+      return {
+        success: true,
+        message: "阿里云 OSS 连接成功",
+      }
     } catch (err: any) {
-      return { success: false, message: `阿里云 OSS 连接失败: ${err.message}` }
+      return {
+        success: false,
+        message: `阿里云 OSS 连接失败: ${err.message}`,
+      }
     }
   }
 }
@@ -376,8 +403,11 @@ class TencentProvider implements CloudProvider {
     const authorization = this.getAuthorization("put", cloudKey, date, contentType)
 
     options?.onProgress?.({
-      phase: "uploading", currentFile: cloudKey,
-      filesProcessed: 0, totalFiles: 1, percent: 50,
+      phase: "uploading",
+      currentFile: cloudKey,
+      filesProcessed: 0,
+      totalFiles: 1,
+      percent: 50,
     })
 
     const response = await fetch(`https://${host}/${cloudKey}`, {
@@ -396,19 +426,28 @@ class TencentProvider implements CloudProvider {
     }
 
     options?.onProgress?.({
-      phase: "uploading", currentFile: cloudKey,
-      filesProcessed: 1, totalFiles: 1, percent: 100,
+      phase: "uploading",
+      currentFile: cloudKey,
+      filesProcessed: 1,
+      totalFiles: 1,
+      percent: 100,
     })
   }
 
   async download(cloudKey: string, localPath: string): Promise<void> {
-    const { fs, path } = requireFsPath()
+    const {
+      fs,
+      path,
+    } = requireFsPath()
     const host = this.getHost()
     const date = new Date().toUTCString()
     const authorization = this.getAuthorization("get", cloudKey, date)
 
     const response = await fetch(`https://${host}/${cloudKey}`, {
-      headers: { Authorization: authorization, Date: date },
+      headers: {
+        Authorization: authorization,
+        Date: date,
+      },
     })
     if (!response.ok) {
       throw new Error(`腾讯云 COS 下载失败: ${response.status}`)
@@ -424,7 +463,10 @@ class TencentProvider implements CloudProvider {
     const authorization = this.getAuthorization("get", "", date)
 
     const response = await fetch(`https://${host}/?prefix=${prefix}&max-keys=100`, {
-      headers: { Authorization: authorization, Date: date },
+      headers: {
+        Authorization: authorization,
+        Date: date,
+      },
     })
     if (!response.ok) {
       throw new Error(`腾讯云 COS 列举失败: ${response.status}`)
@@ -439,7 +481,10 @@ class TencentProvider implements CloudProvider {
 
     const response = await fetch(`https://${host}/${cloudKey}`, {
       method: "DELETE",
-      headers: { Authorization: authorization, Date: date },
+      headers: {
+        Authorization: authorization,
+        Date: date,
+      },
     })
     if (!response.ok && response.status !== 204) {
       throw new Error(`腾讯云 COS 删除失败: ${response.status}`)
@@ -449,9 +494,15 @@ class TencentProvider implements CloudProvider {
   async test(): Promise<CloudTestResult> {
     try {
       await this.list(this.config.prefix || "siyuan-backup/")
-      return { success: true, message: "腾讯云 COS 连接成功" }
+      return {
+        success: true,
+        message: "腾讯云 COS 连接成功",
+      }
     } catch (err: any) {
-      return { success: false, message: `腾讯云 COS 连接失败: ${err.message}` }
+      return {
+        success: false,
+        message: `腾讯云 COS 连接失败: ${err.message}`,
+      }
     }
   }
 }
@@ -552,7 +603,10 @@ export class CloudBackupManager {
   async testConnection(config?: CloudProviderConfig): Promise<CloudTestResult> {
     const cfg = config || this.config
     if (!cfg) {
-      return { success: false, message: "未配置云存储" }
+      return {
+        success: false,
+        message: "未配置云存储",
+      }
     }
     const provider = this.createProvider(cfg)
     return provider.test()

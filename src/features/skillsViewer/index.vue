@@ -13,7 +13,11 @@
           >
             <div class="skills-viewer-header">
               <div class="sv-header-left">
-                <IconWrapper class="sv-header-icon" name="sparkles" :size="16" />
+                <IconWrapper
+                  class="sv-header-icon"
+                  name="sparkles"
+                  :size="16"
+                />
                 <span class="sv-header-title">{{ i18n.skillsViewerTitle || 'Skills 查看器' }}</span>
                 <span
                   v-if="skills.length > 0"
@@ -38,7 +42,10 @@
                 class="sv-unsupported"
               >
                 <div class="sv-unsupported-icon">
-                  <IconWrapper name="warning" :size="16" />
+                  <IconWrapper
+                    name="warning"
+                    :size="16"
+                  />
                 </div>
                 <div class="sv-unsupported-text">
                   {{ i18n.skillsViewerUnsupported || 'Skills 查看器需要桌面端 Electron 环境支持，当前环境不可用' }}
@@ -80,7 +87,10 @@
 
                 <div class="sv-project-path">
                   <div class="sv-path-label">
-                    <IconWrapper name="folder" :size="14" />
+                    <IconWrapper
+                      name="folder"
+                      :size="14"
+                    />
                     {{ i18n.projectPath || '项目路径' }}
                   </div>
                   <div class="sv-path-input-row">
@@ -152,7 +162,10 @@
                           :title="i18n.editSkill || '编辑'"
                           @click="startEdit(index)"
                         >
-                          <IconWrapper name="edit" :size="14" />
+                          <IconWrapper
+                            name="edit"
+                            :size="14"
+                          />
                         </button>
                         <button
                           v-if="editingSkill !== index"
@@ -160,7 +173,10 @@
                           :title="i18n.copySkill || '复制到其他工具'"
                           @click="confirmCopySkill(index)"
                         >
-                          <IconWrapper name="list" :size="14" />
+                          <IconWrapper
+                            name="list"
+                            :size="14"
+                          />
                         </button>
                         <template v-if="editingSkill === index">
                           <button
@@ -169,7 +185,11 @@
                             :disabled="savingSkill"
                             @click="saveEdit(index)"
                           >
-                            <IconWrapper v-if="!savingSkill" name="save" :size="14" />
+                            <IconWrapper
+                              v-if="!savingSkill"
+                              name="save"
+                              :size="14"
+                            />
                             <span v-else>...</span>
                           </button>
                           <button
@@ -186,7 +206,10 @@
                           :title="i18n.deleteSkill || '删除'"
                           @click="confirmDeleteSkill(index)"
                         >
-                          <IconWrapper name="delete" :size="14" />
+                          <IconWrapper
+                            name="delete"
+                            :size="14"
+                          />
                         </button>
                       </div>
                     </div>
@@ -239,7 +262,10 @@
                   class="sv-empty"
                 >
                   <div class="sv-empty-icon">
-                    <IconWrapper name="search" :size="16" />
+                    <IconWrapper
+                      name="search"
+                      :size="16"
+                    />
                   </div>
                   <div class="sv-empty-text">
                     {{ selectedTool === 'all'
@@ -264,10 +290,14 @@
       @click.self="cancelDeleteSkill"
     >
       <div class="sv-modal">
-          <div class="sv-modal-header">
-            <IconWrapper class="sv-modal-icon" name="warning" :size="16" />
-            <span class="sv-modal-title">{{ i18n.deleteSkillTitle || '确认删除 Skill' }}</span>
-          </div>
+        <div class="sv-modal-header">
+          <IconWrapper
+            class="sv-modal-icon"
+            name="warning"
+            :size="16"
+          />
+          <span class="sv-modal-title">{{ i18n.deleteSkillTitle || '确认删除 Skill' }}</span>
+        </div>
         <div class="sv-modal-body">
           <p>{{ i18n.deleteSkillConfirm || '确定要删除以下 Skill 吗？此操作不可恢复。' }}</p>
           <p class="sv-modal-skill-name">
@@ -303,10 +333,14 @@
       @click.self="cancelCopySkill"
     >
       <div class="sv-modal">
-          <div class="sv-modal-header">
-            <IconWrapper class="sv-modal-icon" name="list" :size="16" />
-            <span class="sv-modal-title">{{ i18n.copySkillTitle || '复制 Skill 到其他工具' }}</span>
-          </div>
+        <div class="sv-modal-header">
+          <IconWrapper
+            class="sv-modal-icon"
+            name="list"
+            :size="16"
+          />
+          <span class="sv-modal-title">{{ i18n.copySkillTitle || '复制 Skill 到其他工具' }}</span>
+        </div>
         <div class="sv-modal-body">
           <p>{{ i18n.copySkillConfirm || '选择目标 AI 编程工具，将当前 Skill 复制到对应 skills 目录' }}</p>
           <p class="sv-modal-skill-name">
@@ -364,8 +398,8 @@ import {
   ref,
   watch,
 } from "vue"
-import IconWrapper from "@/components/IconWrapper.vue"
 import SiButton from "@/components/Button.vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 import {
   AI_TOOLS,
   SkillsViewerManager,

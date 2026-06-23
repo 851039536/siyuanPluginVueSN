@@ -195,9 +195,9 @@ import {
   ref,
   watch,
 } from "vue"
-import { copyToClipboard } from "@/utils/domUtils"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import { copyToClipboard } from "@/utils/domUtils"
 import CardDialog from "./components/CardDialog.vue"
 import CardList from "./components/CardList.vue"
 import CategoryFilter from "./components/CategoryFilter.vue"
@@ -205,14 +205,14 @@ import PanelHeader from "./components/PanelHeader.vue"
 import SingleCardView from "./components/SingleCardView.vue"
 import StatisticsView from "./components/StatisticsView.vue"
 import TypingPractice from "./components/TypingPractice.vue"
+import { useFlashcardOperations } from "./composables/useFlashcardOperations"
 import {
   CARD_CONFIG,
   useFlashcardStorage,
 } from "./composables/useFlashcardStorage"
+import { useI18n } from "./composables/useI18n"
 import { usePlayWord } from "./composables/usePlayWord"
 import { useTypingQueue } from "./composables/useTypingQueue"
-import { useI18n } from "./composables/useI18n"
-import { useFlashcardOperations } from "./composables/useFlashcardOperations"
 
 interface Props {
   i18n: I18n

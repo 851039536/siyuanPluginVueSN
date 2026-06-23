@@ -76,14 +76,28 @@
         @click.stop
       >
         <div class="delete-modal-header">
-          <div class="delete-modal-title">{{ i18n.confirmDelete || '确认删除此快捷键？' }}</div>
+          <div class="delete-modal-title">
+            {{ i18n.confirmDelete || '确认删除此快捷键？' }}
+          </div>
         </div>
         <div class="delete-modal-body">
           <p>{{ i18n.confirmDeleteMsg || '此操作不可撤销。' }}</p>
         </div>
         <div class="delete-modal-footer">
-          <Button variant="secondary" size="small" @click="cancelDelete">{{ i18n.cancel || '取消' }}</Button>
-          <Button variant="danger" size="small" @click="confirmDelete">{{ i18n.delete || '删除' }}</Button>
+          <Button
+            variant="secondary"
+            size="small"
+            @click="cancelDelete"
+          >
+            {{ i18n.cancel || '取消' }}
+          </Button>
+          <Button
+            variant="danger"
+            size="small"
+            @click="confirmDelete"
+          >
+            {{ i18n.delete || '删除' }}
+          </Button>
         </div>
       </div>
     </div>
@@ -126,8 +140,8 @@ import {
   onMounted,
   ref,
 } from "vue"
-import { copyToClipboard } from "@/utils/domUtils"
 import Button from "@/components/Button.vue"
+import { copyToClipboard } from "@/utils/domUtils"
 import PanelHeader from "./components/PanelHeader.vue"
 import ShortcutDialog from "./components/ShortcutDialog.vue"
 import ShortcutGrid from "./components/ShortcutGrid.vue"

@@ -39,8 +39,15 @@ async function getOpenNotebooks(): Promise<OpenNotebooks> {
     idToName.set(nb.id, nb.name)
   }
 
-  const result: OpenNotebooks = { notebooks, idList, idToName }
-  _cache = { data: result, ts: now }
+  const result: OpenNotebooks = {
+    notebooks,
+    idList,
+    idToName,
+  }
+  _cache = {
+    data: result,
+    ts: now,
+  }
   return result
 }
 

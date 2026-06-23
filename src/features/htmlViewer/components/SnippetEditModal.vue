@@ -112,7 +112,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   (e: "update:visible", value: boolean): void
-  (e: "save", payload: { id?: string; name: string; category: string; content?: string }): void
+  (e: "save", payload: { id?: string, name: string, category: string, content?: string }): void
 }>()
 
 const form = reactive({

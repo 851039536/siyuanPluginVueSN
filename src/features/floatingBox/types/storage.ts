@@ -57,18 +57,30 @@ export class FloatingBoxStorage {
         continue
       }
 
-      const contents: { id: string; label: string; text: string }[] = []
+      const contents: { id: string, label: string, text: string }[] = []
       let idx = 1
       if (prompt.content) {
-        contents.push({ id: `${prompt.id}-c${idx}`, label: `内容${idx}`, text: prompt.content })
+        contents.push({
+          id: `${prompt.id}-c${idx}`,
+          label: `内容${idx}`,
+          text: prompt.content,
+        })
         idx++
       }
       if (prompt.content2) {
-        contents.push({ id: `${prompt.id}-c${idx}`, label: `内容${idx}`, text: prompt.content2 })
+        contents.push({
+          id: `${prompt.id}-c${idx}`,
+          label: `内容${idx}`,
+          text: prompt.content2,
+        })
         idx++
       }
       if (prompt.content3) {
-        contents.push({ id: `${prompt.id}-c${idx}`, label: `内容${idx}`, text: prompt.content3 })
+        contents.push({
+          id: `${prompt.id}-c${idx}`,
+          label: `内容${idx}`,
+          text: prompt.content3,
+        })
         idx++
       }
       prompt.contents = contents

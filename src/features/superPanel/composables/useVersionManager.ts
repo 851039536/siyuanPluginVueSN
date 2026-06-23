@@ -12,17 +12,17 @@ export interface VersionManager {
   /** 当前内存中的版本数据 */
   featureVersions: Record<string, FeatureVersionEntry[]>
   /** 从存储加载版本数据 */
-  loadVersions(): Promise<void>
+  loadVersions: () => Promise<void>
   /** 将版本数据持久化到存储 */
-  save(): Promise<void>
+  save: () => Promise<void>
   /** 获取存储文件路径（展示用） */
-  getStoragePath(): string
+  getStoragePath: () => string
   /** 新增版本记录 */
-  addVersion(featureId: string, entry: FeatureVersionEntry): Promise<void>
+  addVersion: (featureId: string, entry: FeatureVersionEntry) => Promise<void>
   /** 更新指定索引的版本记录 */
-  updateVersion(featureId: string, index: number, entry: FeatureVersionEntry): Promise<void>
+  updateVersion: (featureId: string, index: number, entry: FeatureVersionEntry) => Promise<void>
   /** 删除指定索引的版本记录 */
-  deleteVersion(featureId: string, index: number): Promise<void>
+  deleteVersion: (featureId: string, index: number) => Promise<void>
 }
 
 /**

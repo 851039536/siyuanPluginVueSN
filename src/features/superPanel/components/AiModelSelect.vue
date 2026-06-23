@@ -71,7 +71,10 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<Emits>()
 
-const EMPTY_MODELS = { common: [] as never[], all: [] as never[] }
+const EMPTY_MODELS = {
+  common: [] as never[],
+  all: [] as never[],
+}
 
 const showCustomInput = computed(() => props.modelValue === "custom")
 

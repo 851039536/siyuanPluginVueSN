@@ -6,8 +6,14 @@
         class="category-filter__select"
         @input="$emit('update:selectedLanguage', ($event.target as HTMLSelectElement).value)"
       >
-        <option value="">{{ t.allLanguages }}</option>
-        <option v-for="lang in languages" :key="lang" :value="lang">
+        <option value="">
+          {{ t.allLanguages }}
+        </option>
+        <option
+          v-for="lang in languages"
+          :key="lang"
+          :value="lang"
+        >
           {{ langLabel(lang) }}
         </option>
       </select>
@@ -17,8 +23,16 @@
         class="category-filter__select"
         @input="$emit('update:selectedCategory', ($event.target as HTMLSelectElement).value)"
       >
-        <option value="">{{ t.allCategories }}</option>
-        <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+        <option value="">
+          {{ t.allCategories }}
+        </option>
+        <option
+          v-for="cat in categories"
+          :key="cat"
+          :value="cat"
+        >
+          {{ cat }}
+        </option>
       </select>
 
       <select
@@ -26,18 +40,30 @@
         class="category-filter__select"
         @input="$emit('update:selectedDifficulty', ($event.target as HTMLSelectElement).value)"
       >
-        <option value="">{{ t.allDifficulties }}</option>
-        <option value="beginner">{{ t.beginner }}</option>
-        <option value="intermediate">{{ t.intermediate }}</option>
-        <option value="advanced">{{ t.advanced }}</option>
+        <option value="">
+          {{ t.allDifficulties }}
+        </option>
+        <option value="beginner">
+          {{ t.beginner }}
+        </option>
+        <option value="intermediate">
+          {{ t.intermediate }}
+        </option>
+        <option value="advanced">
+          {{ t.advanced }}
+        </option>
       </select>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import type {
+  Difficulty,
+  Language,
+  SkillI18n,
+} from "../types"
 import { computed } from "vue"
-import type { Language, Difficulty, SkillI18n } from "../types"
 import { langLabel } from "../composables/useLangLabel"
 
 const props = defineProps<{

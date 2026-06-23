@@ -121,11 +121,20 @@ Object.keys(alphabet.sorted)
 ```javascript
 const MODULE_RULES = [
   // 规则类型 1：嵌套对象直接用 key 名作为模块名
-  { pattern: 'imageCompressor', module: 'imageCompressor' },
+  {
+    pattern: 'imageCompressor',
+    module: 'imageCompressor',
+  },
 
   // 规则类型 2：平铺键按前缀/关键词归类到对应模块
-  { pattern: /^(lock|unlock|setPassword|password|pageLock|...)/, module: 'pageLock' },
-  { pattern: /^(font|heading|codeBlock|tableStyle|...)/, module: 'generalSettings' },
+  {
+    pattern: /^(lock|unlock|setPassword|password|pageLock|...)/,
+    module: 'pageLock',
+  },
+  {
+    pattern: /^(font|heading|codeBlock|tableStyle|...)/,
+    module: 'generalSettings',
+  },
   // ... 共 35 条规则
 ]
 ```
@@ -203,10 +212,10 @@ node scripts/verify-i18n.mjs --split  # 校验拆分文件完整性
 ```javascript
 // scripts/compare-i18n.mjs
 const original = JSON.parse(
-  execSync('git show HEAD:src/i18n/zh_CN.json', { encoding: 'utf-8' })
+  execSync('git show HEAD:src/i18n/zh_CN.json', { encoding: 'utf-8' }),
 )
 const merged = JSON.parse(
-  readFileSync(join(i18nDir, 'zh_CN.json'), 'utf-8')
+  readFileSync(join(i18nDir, 'zh_CN.json'), 'utf-8'),
 )
 
 // 逐键对比

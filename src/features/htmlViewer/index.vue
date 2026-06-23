@@ -362,21 +362,21 @@ function cleanAndInlineStyles(html: string): string {
   // 移除 <script> 标签（安全）
   result = result.replace(/<script[\s\S]*?<\/script>/gi, '')
   // 移除 SiYuan 专属包裹元素
-  result = result.replace(/<\/?protyle-[\w-]+[^>]*>/gi, '')
+  result = result.replace(/<\/?protyle-[\w-][^>]*>/gi, '')
   result = result.replace(/<\/?div[^>]*data-node-id[^>]*>/gi, '')
   // 移除所有 data-* 属性
   result = result.replace(/\s+data-[\w-]+="[^"]*"/gi, '')
   // 注入内联样式到各标签
   for (const [tag, styles] of Object.entries(INLINE_STYLE_MAP)) {
     result = result.replace(new RegExp(`<${tag}([^>]*?)>`, 'gi'), (_, attrs: string) => {
-      const existingMatch = attrs.match(/style="([^"]*?)"/i)
+      const existingMatch = attrs.match(/style="([^"]*)"/i)
       const cleaned = attrs.replace(/\s*style="[^"]*"/i, '')
       const combined = existingMatch ? `${styles};${existingMatch[1]}` : styles
       return `<${tag}${cleaned} style="${combined}">`
     })
   }
   // 给 table 注入 border/cellspacing 属性（兼容哔哩哔哩等不支持 inline style 的编辑器）
-  result = result.replace(/<table([^>]*?)>/gi, (_, attrs: string) => {
+  result = result.replace(/<table([^>]*)>/gi, (_, attrs: string) => {
     let cleaned = attrs.replace(/\s*border="[^"]*"/i, '').replace(/\s*cellspacing="[^"]*"/i, '')
     return `<table${cleaned} border="1" cellspacing="0">`
   })
@@ -425,7 +425,7 @@ const COPY_INTERCEPT_SCRIPT = `<script>
     }catch(ex){}
   });
 })();
-<` + '/script>'
+  <` + '/script>'
 
 function wrapWithBaseStyles(content: string): string {
   if (/<\/body>/i.test(content)) {
@@ -554,13 +554,13 @@ function getDisplayWidth(str: string): number {
     const code = char.codePointAt(0)!
     // CJK 全角字符宽度为 2
     if (
-      (code >= 0x4e00 && code <= 0x9fff) || // CJK Unified
-      (code >= 0x3000 && code <= 0x303f) || // CJK Punctuation
-      (code >= 0xff00 && code <= 0xffef) || // Fullwidth Forms
-      (code >= 0x3400 && code <= 0x4dbf) || // CJK Extension A
-      (code >= 0xac00 && code <= 0xd7af) || // Hangul
-      (code >= 0x3040 && code <= 0x30ff) || // Hiragana/Katakana
-      code >= 0x20000 // CJK Extension B+
+      (code >= 0x4E00 && code <= 0x9FFF) // CJK Unified
+      || (code >= 0x3000 && code <= 0x303F) // CJK Punctuation
+      || (code >= 0xFF00 && code <= 0xFFEF) // Fullwidth Forms
+      || (code >= 0x3400 && code <= 0x4DBF) // CJK Extension A
+      || (code >= 0xAC00 && code <= 0xD7AF) // Hangul
+      || (code >= 0x3040 && code <= 0x30FF) // Hiragana/Katakana
+      || code >= 0x20000 // CJK Extension B+
     ) {
       width += 2
     } else {
@@ -597,7 +597,7 @@ function htmlToTextTable(html: string): string {
     if (rows.length === 0 || maxCols === 0) continue
 
     // 计算每列最大显示宽度（最小 4）
-    const colWidths: number[] = Array(maxCols).fill(4)
+    const colWidths: number[] = new Array(maxCols).fill(4)
     for (const row of rows) {
       for (let c = 0; c < row.length; c++) {
         colWidths[c] = Math.max(colWidths[c], getDisplayWidth(row[c]))
@@ -621,12 +621,12 @@ function htmlToTextTable(html: string): string {
           let truncated = ""
           let tw = 0
           for (const ch of text) {
-            const cw = ch.codePointAt(0)! >= 0x4e00 ? 2 : 1
+            const cw = ch.codePointAt(0)! >= 0x4E00 ? 2 : 1
             if (tw + cw > w - 1) break
             truncated += ch
             tw += cw
           }
-          return ` ${padEndCJK(truncated + "…", w)} `
+          return ` ${padEndCJK(`${truncated}…`, w)} `
         }
         return ` ${padEndCJK(text, w)} `
       })
@@ -785,7 +785,7 @@ function editSnippet(snippet: HtmlSnippet) {
 }
 
 // 保存编辑（子组件回调）
-async function handleSaveEdit(payload: { id?: string; name: string; category: string; content?: string }) {
+async function handleSaveEdit(payload: { id?: string, name: string, category: string, content?: string }) {
   try {
     if (payload.id) {
       await storage.updateSnippet(payload.id, {
@@ -825,7 +825,7 @@ async function deleteSnippet(id: string) {
   }
 }
 
-async function addCategory(payload: { name: string; color: string }) {
+async function addCategory(payload: { name: string, color: string }) {
   if (categories.value.some((c) => c.name === payload.name)) {
     showMessage("分类已存在", 2000, "error")
     return

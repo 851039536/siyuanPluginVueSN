@@ -5,7 +5,11 @@
       <div class="setting-row">
         <div class="setting-item">
           <label class="setting-label">
-            <IconWrapper name="format" :size="13" class="label-icon" />
+            <IconWrapper
+              name="format"
+              :size="13"
+              class="label-icon"
+            />
             {{ i18n.headingStyle || '标题风格' }}
           </label>
           <select
@@ -51,7 +55,11 @@
       <div class="setting-row">
         <div class="setting-item">
           <label class="setting-label">
-            <IconWrapper name="listOrdered" :size="13" class="label-icon" />
+            <IconWrapper
+              name="listOrdered"
+              :size="13"
+              class="label-icon"
+            />
             {{ i18n.headingLevelDisplay || '标题层级显示' }}
           </label>
           <select
@@ -100,7 +108,11 @@
             v-if="levelDisplayStyle !== 'none'"
             class="level-display-hint"
           >
-              <IconWrapper name="info" :size="14" class="hint-icon" />
+            <IconWrapper
+              name="info"
+              :size="14"
+              class="hint-icon"
+            />
             <span class="hint-text">{{ i18n.levelDisplayHint || '注意:第三方主题可能会影响显示效果' }}</span>
           </div>
         </div>
@@ -110,7 +122,11 @@
       <div class="setting-row">
         <div class="setting-item">
           <label class="setting-label">
-            <IconWrapper name="chevronRight" :size="13" class="label-icon" />
+            <IconWrapper
+              name="chevronRight"
+              :size="13"
+              class="label-icon"
+            />
             {{ i18n.titleCenterAlign || '标题居中显示' }}
           </label>
           <div class="toggle-container">
@@ -132,7 +148,11 @@
       >
         <div class="setting-item">
           <label class="setting-label">
-            <IconWrapper name="format" :size="13" class="label-icon" />
+            <IconWrapper
+              name="format"
+              :size="13"
+              class="label-icon"
+            />
             {{ i18n.titleColor || '文档标题颜色' }}
           </label>
           <div class="title-color-input-group">
@@ -163,7 +183,11 @@
       <div class="setting-row">
         <div class="setting-item">
           <label class="setting-label">
-            <IconWrapper name="formatSize" :size="13" class="label-icon" />
+            <IconWrapper
+              name="formatSize"
+              :size="13"
+              class="label-icon"
+            />
             {{ i18n.titleFontSize || '文档标题字体大小' }}
           </label>
           <div class="input-group">
@@ -192,7 +216,11 @@
       >
         <div class="setting-item">
           <label class="setting-label">
-            <IconWrapper name="edit" :size="13" class="label-icon" />
+            <IconWrapper
+              name="edit"
+              :size="13"
+              class="label-icon"
+            />
             {{ i18n.customLevelMarkers || '自定义标记' }}
           </label>
           <div class="custom-level-inputs">
@@ -219,7 +247,11 @@
       <div class="setting-row">
         <div class="setting-item">
           <label class="setting-label">
-            <IconWrapper name="formatSize" :size="13" class="label-icon" />
+            <IconWrapper
+              name="formatSize"
+              :size="13"
+              class="label-icon"
+            />
             {{ i18n.headingFontSize || '标题字体大小' }}
           </label>
 
@@ -358,7 +390,11 @@
       <div class="setting-row">
         <div class="setting-item">
           <label class="setting-label">
-            <IconWrapper name="format" :size="13" class="label-icon" />
+            <IconWrapper
+              name="format"
+              :size="13"
+              class="label-icon"
+            />
             {{ i18n.headingColors || '标题颜色' }}
           </label>
           <div class="heading-colors">

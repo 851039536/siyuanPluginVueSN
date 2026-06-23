@@ -5,7 +5,11 @@
       <div class="setting-row">
         <div class="setting-item">
           <label class="setting-label">
-            <IconWrapper name="code" :size="13" class="label-icon" />
+            <IconWrapper
+              name="code"
+              :size="13"
+              class="label-icon"
+            />
             {{ i18n.documentFont || '文档字体设置' }}
           </label>
           <p class="setting-description">
@@ -18,7 +22,11 @@
       <div class="setting-row">
         <div class="setting-item">
           <label class="setting-label">
-            <IconWrapper name="sparkles" :size="13" class="label-icon" />
+            <IconWrapper
+              name="sparkles"
+              :size="13"
+              class="label-icon"
+            />
             {{ i18n.enableDocumentFont || '启用文档字体设置' }}
           </label>
           <div class="toggle-container">
@@ -108,7 +116,11 @@
       >
         <div class="setting-item">
           <label class="setting-label">
-            <IconWrapper name="formatSize" :size="13" class="label-icon" />
+            <IconWrapper
+              name="formatSize"
+              :size="13"
+              class="label-icon"
+            />
             {{ i18n.fontSize || '字体大小' }}
             <span class="setting-value">{{ settings.fontSize }}px</span>
           </label>
@@ -148,7 +160,11 @@
       >
         <div class="setting-item">
           <label class="setting-label">
-            <IconWrapper name="chevronDown" :size="13" class="label-icon" />
+            <IconWrapper
+              name="chevronDown"
+              :size="13"
+              class="label-icon"
+            />
             {{ i18n.lineHeight || '行高' }}
             <span class="setting-value">{{ settings.lineHeight }}</span>
           </label>
@@ -188,7 +204,11 @@
       >
         <div class="setting-item">
           <label class="setting-label">
-            <IconWrapper name="chevronRight" :size="13" class="label-icon" />
+            <IconWrapper
+              name="chevronRight"
+              :size="13"
+              class="label-icon"
+            />
             {{ i18n.letterSpacing || '字间距' }}
             <span class="setting-value">{{ settings.letterSpacing }}px</span>
           </label>
@@ -318,8 +338,8 @@ import {
   watch,
 } from "vue"
 
-import { GeneralSettingsStorage } from "../types/storage"
 import IconWrapper from "@/components/IconWrapper.vue"
+import { GeneralSettingsStorage } from "../types/storage"
 
 export interface DocumentFontSettingsData {
   enabled: boolean

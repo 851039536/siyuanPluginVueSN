@@ -179,11 +179,11 @@
 </template>
 
 <script setup lang="ts">
+import type { Plugin } from "siyuan"
 import type {
   CodeTranslationResult,
   NamingStyle,
 } from "../utils/codeTranslation"
-import type { Plugin } from "siyuan"
 import { showMessage } from "siyuan"
 import { ref } from "vue"
 import Button from "@/components/Button.vue"
@@ -209,7 +209,11 @@ const selectedStyle = ref<NamingStyle>(NAMING_STYLES[0])
 const translationResult = ref<CodeTranslationResult | null>(null)
 const isTranslating = ref(false)
 
-const { errorMessage, clearErrorOnInput, getApiConfig } = useCodeFeature(props.plugin)
+const {
+  errorMessage,
+  clearErrorOnInput,
+  getApiConfig,
+} = useCodeFeature(props.plugin)
 clearErrorOnInput(chineseInput)
 
 const namingStyles = NAMING_STYLES

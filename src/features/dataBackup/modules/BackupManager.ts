@@ -1,9 +1,9 @@
+import JSZip from "jszip"
 /**
  * 数据备份管理器
  * 支持：全量备份、备份恢复、进度回调
  */
 import { getNodeModules } from "@/utils/nodeModules"
-import JSZip from "jszip"
 
 // ========== 类型定义 ==========
 

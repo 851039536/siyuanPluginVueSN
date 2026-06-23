@@ -2,12 +2,20 @@
   <div class="data-backup-settings">
     <div class="data-backup-header">
       <span class="data-backup-header-title">{{ i18n.dataBackup || '数据备份' }}</span>
-      <button class="data-backup-close-btn" @click="handleClose">×</button>
+      <button
+        class="data-backup-close-btn"
+        @click="handleClose"
+      >
+        ×
+      </button>
     </div>
 
     <div class="settings-container">
       <!-- 移动端警告 -->
-      <div v-if="isMobile" class="mobile-warning">
+      <div
+        v-if="isMobile"
+        class="mobile-warning"
+      >
         <span class="warning-text">{{ i18n.mobileBackupDisabled || '检测到移动端环境，备份功能已自动禁用以节省流量和存储空间' }}</span>
       </div>
 
@@ -22,7 +30,10 @@
             <div class="workspace-path-row">
               <span class="info-value workspace-path">{{ workspacePath || i18n.notSet || '未设置' }}</span>
               <div class="path-actions">
-                <button class="select-path-btn" @click="selectWorkspacePath">
+                <button
+                  class="select-path-btn"
+                  @click="selectWorkspacePath"
+                >
                   {{ i18n.selectPath || '选择路径' }}
                 </button>
                 <button
@@ -42,18 +53,27 @@
       </section>
 
       <!-- 2. 备份进度（条件渲染） -->
-      <section v-if="isBackingUp" class="card-section progress-section">
+      <section
+        v-if="isBackingUp"
+        class="card-section progress-section"
+      >
         <div class="section-header">
           <h4>备份进度</h4>
         </div>
         <div class="progress-bar-container">
-          <div class="progress-bar" :style="{ width: `${backupProgress.percent}%` }" />
+          <div
+            class="progress-bar"
+            :style="{ width: `${backupProgress.percent}%` }"
+          />
         </div>
         <div class="progress-info">
           <span class="progress-phase">{{ phaseLabel }}</span>
           <span class="progress-percent">{{ backupProgress.percent }}%</span>
         </div>
-        <div v-if="backupProgress.currentFile" class="progress-current-file">
+        <div
+          v-if="backupProgress.currentFile"
+          class="progress-current-file"
+        >
           {{ backupProgress.currentFile }}
         </div>
       </section>
@@ -69,7 +89,10 @@
             :disabled="isBackingUp || isBackupAll"
             @click="performFullBackup"
           >
-            <span v-if="isBackingUp" class="vp-spin" />
+            <span
+              v-if="isBackingUp"
+              class="vp-spin"
+            />
             <span>全量备份</span>
           </button>
           <button
@@ -77,7 +100,10 @@
             :disabled="isBackingUp || isPluginBackup || isBackupAll"
             @click="exportPluginSettings"
           >
-            <span v-if="isPluginBackup" class="vp-spin" />
+            <span
+              v-if="isPluginBackup"
+              class="vp-spin"
+            />
             <span>{{ i18n.pluginSettingsBackup || '插件设置备份' }}</span>
           </button>
           <button
@@ -85,11 +111,18 @@
             :disabled="isBackingUp || isBackupAll"
             @click="performBackupAll"
           >
-            <span v-if="isBackupAll" class="vp-spin" />
+            <span
+              v-if="isBackupAll"
+              class="vp-spin"
+            />
             <span>备份所有</span>
           </button>
         </div>
-        <p v-if="pluginExportPath" class="export-path" :title="pluginExportPath">
+        <p
+          v-if="pluginExportPath"
+          class="export-path"
+          :title="pluginExportPath"
+        >
           <span class="export-path-label">备份路径：</span>
           <span class="export-path-value">{{ pluginExportPath }}</span>
         </p>
@@ -105,31 +138,67 @@
         </div>
         <div class="settings-row">
           <span class="inline-label">{{ i18n.autoBackup || '自动备份' }}</span>
-          <select v-model="autoBackupEnabled" class="form-select narrow" @change="saveSettings">
-            <option :value="false">{{ i18n.disabled || '禁用' }}</option>
-            <option :value="true">{{ i18n.enabled || '启用' }}</option>
+          <select
+            v-model="autoBackupEnabled"
+            class="form-select narrow"
+            @change="saveSettings"
+          >
+            <option :value="false">
+              {{ i18n.disabled || '禁用' }}
+            </option>
+            <option :value="true">
+              {{ i18n.enabled || '启用' }}
+            </option>
           </select>
           <template v-if="autoBackupEnabled">
             <span class="inline-label">{{ i18n.backupFrequency || '频率' }}</span>
-            <select v-model="backupFrequency" class="form-select narrow" @change="saveSettings">
-              <option value="minute">{{ i18n.everyMinute || '每分钟' }}</option>
-              <option value="hourly">{{ i18n.everyHour || '每小时' }}</option>
-              <option value="daily">{{ i18n.everyDay || '每天' }}</option>
+            <select
+              v-model="backupFrequency"
+              class="form-select narrow"
+              @change="saveSettings"
+            >
+              <option value="minute">
+                {{ i18n.everyMinute || '每分钟' }}
+              </option>
+              <option value="hourly">
+                {{ i18n.everyHour || '每小时' }}
+              </option>
+              <option value="daily">
+                {{ i18n.everyDay || '每天' }}
+              </option>
             </select>
             <template v-if="backupFrequency === 'daily'">
               <span class="inline-label">{{ i18n.backupTime || '时间' }}</span>
-              <input v-model="backupTime" type="time" class="form-input narrow" @change="saveSettings" />
+              <input
+                v-model="backupTime"
+                type="time"
+                class="form-input narrow"
+                @change="saveSettings"
+              />
             </template>
             <span class="inline-label">保留</span>
             <input
-              v-model="keepBackupCount" type="number" class="form-input narrow" style="width: 3rem;"
-              min="1" max="30" @change="saveSettings"
+              v-model="keepBackupCount"
+              type="number"
+              class="form-input narrow"
+              style="width: 3rem;"
+              min="1"
+              max="30"
+              @change="saveSettings"
             />
             <span class="inline-label">份</span>
             <span class="inline-label">含插件</span>
-            <select v-model="autoBackupPluginData" class="form-select narrow" @change="saveSettings">
-              <option :value="false">否</option>
-              <option :value="true">是</option>
+            <select
+              v-model="autoBackupPluginData"
+              class="form-select narrow"
+              @change="saveSettings"
+            >
+              <option :value="false">
+                否
+              </option>
+              <option :value="true">
+                是
+              </option>
             </select>
           </template>
         </div>
@@ -139,48 +208,79 @@
       <section class="card-section history-section">
         <div class="section-header">
           <h4>{{ i18n.backupHistory || '备份历史' }}</h4>
-          <button class="refresh-btn" :disabled="isLoading" @click="refreshBackupList">
+          <button
+            class="refresh-btn"
+            :disabled="isLoading"
+            @click="refreshBackupList"
+          >
             {{ i18n.refresh || '刷新' }}
           </button>
         </div>
-        <div v-if="backupList.length > 0" class="backup-list">
-          <div v-for="(backup, index) in backupList" :key="index" class="backup-item">
+        <div
+          v-if="backupList.length > 0"
+          class="backup-list"
+        >
+          <div
+            v-for="(backup, index) in backupList"
+            :key="index"
+            class="backup-item"
+          >
             <div class="backup-info">
               <span class="backup-name">{{ backup.name }}</span>
               <span class="backup-time">{{ backup.time }}</span>
               <span class="backup-size">{{ formatFileSize(backup.size) }}</span>
             </div>
             <div class="backup-actions">
-              <button class="action-btn delete" @click="deleteBackup(backup)">
+              <button
+                class="action-btn delete"
+                @click="deleteBackup(backup)"
+              >
                 {{ i18n.delete || '删除' }}
               </button>
             </div>
           </div>
         </div>
-        <div v-else class="empty-state">
+        <div
+          v-else
+          class="empty-state"
+        >
           <p>{{ i18n.noBackups || '暂无备份记录' }}</p>
         </div>
       </section>
     </div>
 
     <!-- 自定义输入对话框 -->
-    <div v-if="showInputDialog" class="input-dialog-overlay" @click.self="cancelInputDialog">
+    <div
+      v-if="showInputDialog"
+      class="input-dialog-overlay"
+      @click.self="cancelInputDialog"
+    >
       <div class="input-dialog">
         <div class="input-dialog-header">
           <h4>{{ i18n.enterWorkspacePath || '请输入思源工作区路径' }}</h4>
         </div>
         <div class="input-dialog-body">
           <input
-            ref="dialogInputRef" v-model="inputDialogValue" type="text"
-            class="input-dialog-field" :placeholder="inputDialogPlaceholder"
-            @keyup.enter="confirmInputDialog" @keyup.esc="cancelInputDialog"
+            ref="dialogInputRef"
+            v-model="inputDialogValue"
+            type="text"
+            class="input-dialog-field"
+            :placeholder="inputDialogPlaceholder"
+            @keyup.enter="confirmInputDialog"
+            @keyup.esc="cancelInputDialog"
           />
         </div>
         <div class="input-dialog-footer">
-          <button class="input-dialog-btn cancel" @click="cancelInputDialog">
+          <button
+            class="input-dialog-btn cancel"
+            @click="cancelInputDialog"
+          >
             {{ i18n.cancel || '取消' }}
           </button>
-          <button class="input-dialog-btn confirm" @click="confirmInputDialog">
+          <button
+            class="input-dialog-btn confirm"
+            @click="confirmInputDialog"
+          >
             {{ i18n.confirm || '确定' }}
           </button>
         </div>
@@ -190,13 +290,11 @@
 </template>
 
 <script setup lang="ts">
-import type { BackupProgress, BackupResult } from "./modules/BackupManager"
+import type {
+  BackupProgress,
+  BackupResult,
+} from "./modules/BackupManager"
 import { showMessage } from "siyuan"
-import { getWorkspaceDir } from "@/api"
-import { getNodeModules } from "@/utils/nodeModules"
-import { formatFileSize } from "@/utils/format"
-import { backupPluginData } from "@/utils/settingsBackup"
-import { useStatusBarTask } from "../statusBar/composables/useStatusBarTask"
 import {
   computed,
   nextTick,
@@ -205,9 +303,14 @@ import {
   ref,
   watch,
 } from "vue"
+import { getWorkspaceDir } from "@/api"
+import { formatFileSize } from "@/utils/format"
+import { getNodeModules } from "@/utils/nodeModules"
+import { backupPluginData } from "@/utils/settingsBackup"
+import { checkIsMobile } from "../generalSettings/utils/styles"
+import { useStatusBarTask } from "../statusBar/composables/useStatusBarTask"
 import { BackupManager } from "./modules/BackupManager"
 import { DataBackupStorage } from "./types"
-import { checkIsMobile } from "../generalSettings/utils/styles"
 
 // ========== Props ==========
 
@@ -559,7 +662,11 @@ async function performFullBackup() {
     const result = await backupManager.performFullBackup({
       onProgress: (p) => {
         backupProgress.value = { ...p }
-        backupTask.progress({ label: "备份中", percent: p.percent, phase: p.phase })
+        backupTask.progress({
+          label: "备份中",
+          percent: p.percent,
+          phase: p.phase,
+        })
       },
     })
 

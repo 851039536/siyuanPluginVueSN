@@ -52,10 +52,10 @@ import ToolItem from "./components/ToolItem.vue"
 import {
   createFlashcardReadingTool,
   createPasswordVaultTool,
+  createPromptsTool,
   createRefreshTool,
   createSuperPanelTool,
   createTextDiffTool,
-  promptsTool,
 } from "./tools"
 
 const props = defineProps<{
@@ -88,7 +88,7 @@ const tools = computed<FloatingTool[]>(() => {
   ]
 
   if (props.plugin?.settings?.enableSkills !== false) {
-    desktopTools.push(promptsTool(props.plugin))
+    desktopTools.push(createPromptsTool(props.plugin))
   }
 
   return desktopTools

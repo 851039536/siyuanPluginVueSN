@@ -159,10 +159,10 @@ export interface ReviewResult {
   reviewedAt: number
   /** 分项评分（可选，由模型返回时填充） */
   detailedScore?: {
-    accuracy: number    // 内容准确性 1-10
-    structure: number   // 结构完整性 1-10
-    quality: number     // 语言质量 1-10
-    format: number      // 格式规范 1-10
-    coverage: number    // 覆盖完整性 1-10
+    accuracy: number // 内容准确性 1-10
+    structure: number // 结构完整性 1-10
+    quality: number // 语言质量 1-10
+    format: number // 格式规范 1-10
+    coverage: number // 覆盖完整性 1-10
   }
 }

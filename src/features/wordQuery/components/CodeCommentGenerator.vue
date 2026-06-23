@@ -127,11 +127,11 @@
 </template>
 
 <script setup lang="ts">
+import type { Plugin } from "siyuan"
 import type {
   CodeCommentResult,
   CommentStyle,
 } from "../utils/codeUtils"
-import type { Plugin } from "siyuan"
 import { showMessage } from "siyuan"
 import { ref } from "vue"
 import Button from "@/components/Button.vue"
@@ -157,7 +157,11 @@ const selectedStyle = ref<CommentStyle>(COMMENT_STYLES[0])
 const result = ref<CodeCommentResult | null>(null)
 const isGenerating = ref(false)
 
-const { errorMessage, clearErrorOnInput, getApiConfig } = useCodeFeature(props.plugin)
+const {
+  errorMessage,
+  clearErrorOnInput,
+  getApiConfig,
+} = useCodeFeature(props.plugin)
 clearErrorOnInput(codeInput)
 
 const commentStyles = COMMENT_STYLES

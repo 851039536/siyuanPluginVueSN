@@ -1,5 +1,6 @@
 import type { Plugin } from "siyuan"
-import { createModalVueApp, type ModalAppInstance } from "@/utils/vueAppHelper"
+import type { ModalAppInstance } from "@/utils/vueAppHelper"
+import { createModalVueApp } from "@/utils/vueAppHelper"
 import WebsiteNavigationPanel from "../index.vue"
 
 export interface WebsiteEntry {

@@ -6,13 +6,13 @@ import type { ShortcutInfo } from "./types"
  */
 import { Plugin } from "siyuan"
 import { createVueDockApp } from "@/utils/vueAppHelper"
+import { PRESET_SHORTCUTS } from "./data/presets"
 import ShortcutPanel from "./index.vue"
 import {
   getShortcutManager,
   ShortcutManager,
 } from "./manager"
 import { ShortcutStorage } from "./types/storage"
-import { PRESET_SHORTCUTS } from "./data/presets"
 
 /**
  * 注册快捷键模块

@@ -1,7 +1,10 @@
 <template>
   <div class="doc-count-settings">
     <label class="setting-label">
-      <span class="label-icon"><IconWrapper name="statistics" :size="14" /></span>
+      <span class="label-icon"><IconWrapper
+        name="statistics"
+        :size="14"
+      /></span>
       {{ i18n?.enableDocCount || '笔记本文档数统计' }}
     </label>
     <SiSwitch
@@ -15,7 +18,10 @@
     <!-- 功能说明 -->
     <div class="feature-description">
       <div class="description-title">
-        <span class="title-icon"><IconWrapper name="lightbulb" :size="14" /></span>
+        <span class="title-icon"><IconWrapper
+          name="lightbulb"
+          :size="14"
+        /></span>
         {{ i18n?.featureDescription || '功能说明' }}
       </div>
       <ul class="description-list">
@@ -48,7 +54,10 @@
     <!-- 字体样式设置 -->
     <div class="font-style-settings">
       <div class="settings-title">
-        <span class="title-icon"><IconWrapper name="codeBlockColor" :size="14" /></span>
+        <span class="title-icon"><IconWrapper
+          name="codeBlockColor"
+          :size="14"
+        /></span>
         {{ i18n?.fontStyleSettings || '字体样式设置' }}
       </div>
 
@@ -171,6 +180,7 @@
 </template>
 
 <script setup lang="ts">
+import type { DocCountFormat } from "../types/storage"
 import { showMessage } from "siyuan"
 import {
   computed,
@@ -178,10 +188,14 @@ import {
   onUnmounted,
   ref,
 } from "vue"
-import SiSwitch from "@/components/Switch.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import SiSwitch from "@/components/Switch.vue"
 import { DocCountManager } from "../modules/DocCountManager"
-import { type DocCountFormat, DOC_COUNT_FORMATTERS, GeneralSettingsStorage } from "../types/storage"
+import {
+  DOC_COUNT_FORMATTERS,
+
+  GeneralSettingsStorage,
+} from "../types/storage"
 
 const props = defineProps<{
   i18n?: Record<string, string>
@@ -206,23 +220,63 @@ const opacity = ref(0.8)
 const fontSizeOptions = ["10px", "11px", "12px", "13px", "14px", "15px", "16px"] as const
 
 const intervalOptions = [
-  { value: "1800000", labelKey: "interval30min", fallback: "30分钟" },
-  { value: "3600000", labelKey: "interval1hour", fallback: "1小时" },
-  { value: "7200000", labelKey: "interval2hour", fallback: "2小时" },
-  { value: "14400000", labelKey: "interval4hour", fallback: "4小时" },
+  {
+    value: "1800000",
+    labelKey: "interval30min",
+    fallback: "30分钟",
+  },
+  {
+    value: "3600000",
+    labelKey: "interval1hour",
+    fallback: "1小时",
+  },
+  {
+    value: "7200000",
+    labelKey: "interval2hour",
+    fallback: "2小时",
+  },
+  {
+    value: "14400000",
+    labelKey: "interval4hour",
+    fallback: "4小时",
+  },
 ] as const
 
 const weightOptions = [
-  { value: "normal" as const, labelKey: "fontWeightNormal", fallback: "正常" },
-  { value: "bold" as const, labelKey: "fontWeightBold", fallback: "粗体" },
-  { value: "lighter" as const, labelKey: "fontWeightLighter", fallback: "细体" },
+  {
+    value: "normal" as const,
+    labelKey: "fontWeightNormal",
+    fallback: "正常",
+  },
+  {
+    value: "bold" as const,
+    labelKey: "fontWeightBold",
+    fallback: "粗体",
+  },
+  {
+    value: "lighter" as const,
+    labelKey: "fontWeightLighter",
+    fallback: "细体",
+  },
 ] as const
 
-const formatOptions: { value: DocCountFormat; label: string }[] = [
-  { value: "bracket", label: "(123)" },
-  { value: "square", label: "[123]" },
-  { value: "plain", label: "123" },
-  { value: "dot", label: "·123" },
+const formatOptions: { value: DocCountFormat, label: string }[] = [
+  {
+    value: "bracket",
+    label: "(123)",
+  },
+  {
+    value: "square",
+    label: "[123]",
+  },
+  {
+    value: "plain",
+    label: "123",
+  },
+  {
+    value: "dot",
+    label: "·123",
+  },
 ]
 
 /**

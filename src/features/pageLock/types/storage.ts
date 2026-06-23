@@ -56,7 +56,10 @@ export class PageLockStorage {
 
   async lockPage(docId: string, password: string): Promise<boolean> {
     try {
-      const { hash: passwordHash, salt } = await hashPassword(password)
+      const {
+        hash: passwordHash,
+        salt,
+      } = await hashPassword(password)
       const locks = await this.getAllLocks()
 
       locks[docId] = {
@@ -156,7 +159,10 @@ export class PageLockStorage {
         return false
       }
 
-      const { hash: newHash, salt: newSalt } = await hashPassword(newPassword)
+      const {
+        hash: newHash,
+        salt: newSalt,
+      } = await hashPassword(newPassword)
       locks[docId] = {
         ...lockInfo,
         passwordHash: newHash,
@@ -198,7 +204,10 @@ export class PageLockStorage {
   /** 保存全局密码（持久化哈希 + 盐值，同时缓存明文供会话使用） */
   async saveGlobalPassword(password: string): Promise<boolean> {
     try {
-      const { hash, salt } = await hashPassword(password)
+      const {
+        hash,
+        salt,
+      } = await hashPassword(password)
       const success = await this.storage.save(GLOBAL_PASSWORD_KEY, {
         hash,
         salt,
@@ -220,7 +229,7 @@ export class PageLockStorage {
     return !!(this.globalHash && this.globalSalt)
   }
 
-  /** 获取内存中的明文密码（仅当前会话，重启后需重新验证 */ 
+  /** 获取内存中的明文密码（仅当前会话，重启后需重新验证 */
   getGlobalPassword(): string | null {
     return this.globalPassword
   }

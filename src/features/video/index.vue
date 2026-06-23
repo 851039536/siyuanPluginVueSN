@@ -114,7 +114,10 @@
       @click.stop
     >
       <div class="dialog-header">
-        <h3><IconWrapper name="pageLock" :size="16" /> 批量加密视频</h3>
+        <h3><IconWrapper
+          name="pageLock"
+          :size="16"
+        /> 批量加密视频</h3>
         <Button
           icon="x"
           variant="ghost"
@@ -207,7 +210,10 @@
       @click.stop
     >
       <div class="dialog-header">
-        <h3><IconWrapper name="pageLock" :size="16" /> 批量解密视频</h3>
+        <h3><IconWrapper
+          name="pageLock"
+          :size="16"
+        /> 批量解密视频</h3>
         <Button
           icon="x"
           variant="ghost"
@@ -289,7 +295,10 @@
       @click.stop
     >
       <div class="dialog-header">
-        <h3><IconWrapper name="video" :size="16" /> 视频合并</h3>
+        <h3><IconWrapper
+          name="video"
+          :size="16"
+        /> 视频合并</h3>
         <Button
           icon="x"
           variant="ghost"
@@ -442,7 +451,10 @@
       @click.stop
     >
       <div class="dialog-header">
-        <h3><IconWrapper name="headphones" :size="16" /> 视频音频合并</h3>
+        <h3><IconWrapper
+          name="headphones"
+          :size="16"
+        /> 视频音频合并</h3>
         <Button
           icon="x"
           variant="ghost"
@@ -565,7 +577,10 @@
       @click.stop
     >
       <div class="dialog-header">
-        <h3><IconWrapper name="copy" :size="16" /> 视频压缩</h3>
+        <h3><IconWrapper
+          name="copy"
+          :size="16"
+        /> 视频压缩</h3>
         <Button
           icon="x"
           variant="ghost"
@@ -765,7 +780,10 @@
       @click.stop
     >
       <div class="dialog-header">
-        <h3><IconWrapper name="settings" :size="16" /> FFmpeg 路径设置</h3>
+        <h3><IconWrapper
+          name="settings"
+          :size="16"
+        /> FFmpeg 路径设置</h3>
         <Button
           icon="x"
           variant="ghost"
@@ -853,7 +871,6 @@
 
 <script setup lang="ts">
 import { showMessage } from "siyuan"
-import { getWorkspaceDir } from "@/api"
 import {
   computed,
   onMounted,
@@ -861,6 +878,7 @@ import {
   shallowRef,
   watch,
 } from "vue"
+import { getWorkspaceDir } from "@/api"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"

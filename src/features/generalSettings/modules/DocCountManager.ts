@@ -1,4 +1,7 @@
-import { type DocCountFormat, DOC_COUNT_FORMATTERS } from "../types/storage"
+import type { DocCountFormat } from "../types/storage"
+import {
+  DOC_COUNT_FORMATTERS,
+} from "../types/storage"
 
 /**
  * 笔记本文档数统计管理器

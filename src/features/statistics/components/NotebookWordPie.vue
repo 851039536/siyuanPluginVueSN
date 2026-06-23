@@ -75,8 +75,8 @@ import {
   ref,
   watch,
 } from "vue"
-import { formatNumber } from "../utils"
 import { useNotebookHover } from "../composables/useNotebookHover"
+import { formatNumber } from "../utils"
 
 interface Props {
   data?: NotebookWordStat[]
@@ -86,7 +86,10 @@ const props = withDefaults(defineProps<Props>(), {
   data: () => [],
 })
 
-const { hoveredNotebook, onHover } = useNotebookHover()
+const {
+  hoveredNotebook,
+  onHover,
+} = useNotebookHover()
 
 const SIZE = 160
 const RADIUS = 68
@@ -96,7 +99,7 @@ const localHover = ref(-1)
 const activeIndex = computed(() => {
   if (localHover.value >= 0) return localHover.value
   if (hoveredNotebook.value) {
-    const idx = props.data.findIndex(d => d.name === hoveredNotebook.value)
+    const idx = props.data.findIndex((d) => d.name === hoveredNotebook.value)
     if (idx >= 0) return idx
   }
   return -1
@@ -116,7 +119,7 @@ function onArcLeave() {
 }
 
 function truncateName(name: string): string {
-  return name.length > 6 ? name.slice(0, 5) + "…" : name
+  return name.length > 6 ? `${name.slice(0, 5)}…` : name
 }
 
 interface PieArc {

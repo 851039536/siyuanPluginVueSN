@@ -1,3 +1,20 @@
+import type {
+  CreateScriptDTO,
+  Script,
+  ScriptLanguage,
+  UpdateScriptDTO,
+} from "./index"
+import { Plugin } from "siyuan"
+import {
+  getFile,
+  getWorkspaceDir,
+  putFile,
+  removeFile,
+
+} from "@/api"
+import { getNodeFsPathOs } from "@/utils/nodeModules"
+import { PluginStorage } from "@/utils/pluginStorage"
+import { TypedStorage } from "@/utils/typedStorage"
 /**
  * 脚本启动器 - 文件驱动存储层（思源 API 版）
  *
@@ -6,29 +23,27 @@
  * 元数据通过 TypedStorage 持久化。
  */
 import {
+
+
   SCRIPT_LANGUAGE_CONFIG,
-  type CreateScriptDTO,
-  type Script,
-  type ScriptLanguage,
-  type UpdateScriptDTO,
+
+
 } from "./index"
-import { Plugin } from "siyuan"
-import { getFile, putFile, removeFile } from "@/api"
-import { PluginStorage } from "@/utils/pluginStorage"
-import { TypedStorage } from "@/utils/typedStorage"
-import { getNodeFsPathOs } from "@/utils/nodeModules"
-import { getWorkspaceDir } from "@/api"
 
 const SC_DIR = "data/storage/sc"
 
 function detectLanguage(fileName: string): ScriptLanguage {
   const ext = fileName.split(".").pop()?.toLowerCase() || ""
   const map: Record<string, ScriptLanguage> = {
-    py: "python", pyw: "python",
-    sh: "bash", bash: "bash",
+    py: "python",
+    pyw: "python",
+    sh: "bash",
+    bash: "bash",
     ps1: "powershell",
-    js: "nodejs", mjs: "nodejs",
-    bat: "batch", cmd: "batch",
+    js: "nodejs",
+    mjs: "nodejs",
+    bat: "batch",
+    cmd: "batch",
   }
   return map[ext] || "other"
 }
@@ -112,9 +127,14 @@ export class ScriptStorage {
     const fileName = `${data.name}${ext}`
 
     const script: Script = {
-      id: `script-${now}`, name: data.name, language: data.language,
-      category: data.category || "默认", description: data.description || "",
-      fileName, createdAt: now, updatedAt: now,
+      id: `script-${now}`,
+      name: data.name,
+      language: data.language,
+      category: data.category || "默认",
+      description: data.description || "",
+      fileName,
+      createdAt: now,
+      updatedAt: now,
     }
 
     await this.putContent(fileName, data.content || "")
@@ -138,7 +158,11 @@ export class ScriptStorage {
       await this.putContent(all[index].fileName, data.content)
     }
 
-    all[index] = { ...all[index], ...data, updatedAt: Date.now() }
+    all[index] = {
+      ...all[index],
+      ...data,
+      updatedAt: Date.now(),
+    }
     await this.scripts.save(all)
     return true
   }
@@ -172,8 +196,14 @@ export class ScriptStorage {
     const now = Date.now()
 
     const script: Script = {
-      id: `script-${now}`, name, language: lang, category: "默认",
-      description: `导入自 ${fileName}`, fileName, createdAt: now, updatedAt: now,
+      id: `script-${now}`,
+      name,
+      language: lang,
+      category: "默认",
+      description: `导入自 ${fileName}`,
+      fileName,
+      createdAt: now,
+      updatedAt: now,
     }
 
     const all = await this.getAll()

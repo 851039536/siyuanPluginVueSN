@@ -53,7 +53,7 @@ todos:
 ```ts
 watch(currentView, async (view) => {
   if (view !== "stats") return
-  const pending = projects.value.filter(p => !commitLogs.value[p.id])
+  const pending = projects.value.filter((p) => !commitLogs.value[p.id])
   if (pending.length === 0) return
   await batchProcess(pending, 3, async (p) => {
     await Promise.all([
@@ -72,7 +72,7 @@ watch(currentView, async (view) => {
 ```ts
 watch(currentView, async (view) => {
   if (view !== "stats") return
-  const pending = projects.value.filter(p => !pushStatuses.value[p.id] || !workingTrees.value[p.id])
+  const pending = projects.value.filter((p) => !pushStatuses.value[p.id] || !workingTrees.value[p.id])
   if (pending.length === 0) return
   await batchProcess(pending, 3, async (p) => {
     await Promise.all([

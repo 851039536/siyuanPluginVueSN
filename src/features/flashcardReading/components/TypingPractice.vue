@@ -7,7 +7,10 @@
     >
       <template #header>
         <div class="card-header">
-          <span class="card-title" :class="{ 'card-title--covered': coverMode }">
+          <span
+            class="card-title"
+            :class="{ 'card-title--covered': coverMode }"
+          >
             {{ coverMode ? '?' : currentCard?.title }}
           </span>
           <div class="card-actions">
@@ -84,9 +87,19 @@
 
     <div class="typing-session-config">
       <span class="typing-session-config__label">{{ t.sessionSizeLabel }}</span>
-      <button class="typing-session-config__btn" @click="changeSessionSize(-5)">−</button>
+      <button
+        class="typing-session-config__btn"
+        @click="changeSessionSize(-5)"
+      >
+        −
+      </button>
       <span class="typing-session-config__value">{{ sessionSize }}</span>
-      <button class="typing-session-config__btn" @click="changeSessionSize(5)">+</button>
+      <button
+        class="typing-session-config__btn"
+        @click="changeSessionSize(5)"
+      >
+        +
+      </button>
       <span class="typing-session-config__unit">张</span>
     </div>
 
@@ -129,7 +142,12 @@
             :size="20"
           />
           <span>{{ t.correct }}</span>
-          <IconWrapper v-if="streak >= 2" name="warning" :size="14" class="typing-streak" /> x{{ streak }}
+          <IconWrapper
+            v-if="streak >= 2"
+            name="warning"
+            :size="14"
+            class="typing-streak"
+          /> x{{ streak }}
         </template>
         <template v-else-if="resultState === 'incorrect'">
           <span>{{ coverMode ? currentCard?.title : typedWord }}</span>
@@ -175,19 +193,32 @@
       />
     </div>
 
-    <div v-if="sessionTotal > 0" class="typing-session-stats">
+    <div
+      v-if="sessionTotal > 0"
+      class="typing-session-stats"
+    >
       <span>{{ sessionCorrect }} / {{ sessionTotal }}</span>
       <span class="typing-session-stats__sep">·</span>
       <span>{{ sessionTotal > 0 ? Math.round(sessionCorrect / sessionTotal * 100) : 0 }}%</span>
-      <IconWrapper v-if="streak >= 2" name="warning" :size="12" class="typing-streak typing-streak--inline" /> x{{ streak }}
+      <IconWrapper
+        v-if="streak >= 2"
+        name="warning"
+        :size="12"
+        class="typing-streak typing-streak--inline"
+      /> x{{ streak }}
       <template v-if="timerEnabled">
         <span class="typing-session-stats__sep">·</span>
         <span class="typing-timer">⏱ {{ formatTime(elapsedSeconds) }}</span>
       </template>
     </div>
 
-    <div v-if="roundComplete" class="typing-round-summary">
-      <div class="typing-round-summary__title">{{ t.roundComplete }}</div>
+    <div
+      v-if="roundComplete"
+      class="typing-round-summary"
+    >
+      <div class="typing-round-summary__title">
+        {{ t.roundComplete }}
+      </div>
       <div class="typing-round-summary__stats">
         <span>{{ sessionCorrect }} / {{ sessionTotal }} 正确</span>
         <span class="typing-session-stats__sep">·</span>
@@ -197,7 +228,11 @@
           <span>⏱ {{ formatTime(elapsedSeconds) }}</span>
         </template>
       </div>
-      <Button variant="primary" size="small" @click="emit('restartRound')">
+      <Button
+        variant="primary"
+        size="small"
+        @click="emit('restartRound')"
+      >
         开始下一轮
       </Button>
     </div>
@@ -236,14 +271,14 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  play: [card: Flashcard | null]
-  previous: []
-  next: []
-  random: []
-  skip: []
-  correct: [card: Flashcard | null]
-  wrong: [card: Flashcard | null]
-  restartRound: []
+  "play": [card: Flashcard | null]
+  "previous": []
+  "next": []
+  "random": []
+  "skip": []
+  "correct": [card: Flashcard | null]
+  "wrong": [card: Flashcard | null]
+  "restartRound": []
   "update:caseInsensitive": [value: boolean]
   "update:instantReset": [value: boolean]
   "update:coverMode": [value: boolean]

@@ -207,7 +207,12 @@ function todayString(): string {
 
 /** 初始化导出进度条 */
 function startExportProgress(total: number) {
-  exportProgress.value = { show: true, current: 0, total, percent: 0 }
+  exportProgress.value = {
+    show: true,
+    current: 0,
+    total,
+    percent: 0,
+  }
 }
 
 /** 更新导出进度 */
@@ -249,7 +254,10 @@ async function callExportApi(
 
 /** 添加日志（最多保留 50 条） */
 function addLog(type: ExportLog["type"], message: string) {
-  exportLogs.value.push({ type, message })
+  exportLogs.value.push({
+    type,
+    message,
+  })
   if (exportLogs.value.length > 50) {
     exportLogs.value.shift()
   }
@@ -270,7 +278,7 @@ async function loadNotebooks() {
 
     if (data?.notebooks) {
       notebooks.value = data.notebooks.map(
-        (nb: { id: string; name: string; docCount?: number }) => ({
+        (nb: { id: string, name: string, docCount?: number }) => ({
           id: nb.id,
           name: nb.name,
           docCount: nb.docCount,

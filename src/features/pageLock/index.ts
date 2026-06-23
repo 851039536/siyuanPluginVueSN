@@ -1,12 +1,12 @@
 import type { Plugin } from "siyuan"
+import type { ProtyleLike } from "./types"
+import type { PageLockStorage } from "./types/storage"
 import { showMessage } from "siyuan"
 import { setBlockAttrs } from "@/api"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { createIconElement } from "@/utils/iconHelper"
 import { createModalVueApp } from "@/utils/vueAppHelper"
 import LockDialog from "./components/LockDialog.vue"
-import type { PageLockStorage } from "./types/storage"
-import type { ProtyleLike } from "./types"
 import { PageLockStorage as PageLockStorageClass } from "./types/storage"
 import {
   cleanupCache,

@@ -1,6 +1,9 @@
 import type { ChangedDoc } from "../types"
 import { lsNotebooks } from "@/api"
-import { executeSql, formatDateTime } from "./executeSql"
+import {
+  executeSql,
+  formatDateTime,
+} from "./executeSql"
 
 export type HeatmapMetric = 'docsModified' | 'docsCreated' | 'blockEdits'
 
@@ -90,7 +93,11 @@ export async function getHeatmapDailyDetail(dateStr: string): Promise<{
   newDocs: ChangedDoc[]
   modifiedDocs: ChangedDoc[]
 }> {
-  if (dateStr.length < 8) return { newDocs: [], modifiedDocs: [] }
+  if (dateStr.length < 8) { return {
+    newDocs: [],
+    modifiedDocs: [],
+  }
+  }
   const yyyymmdd = dateStr.replace(/-/g, "")
 
   const newDocsSql = `
@@ -132,7 +139,10 @@ export async function getHeatmapNotebooks(): Promise<Array<{ id: string, name: s
   try {
     const nbData = await lsNotebooks()
     const notebooks = nbData?.notebooks?.filter((nb: any) => !nb.closed) ?? []
-    return notebooks.map((nb: any) => ({ id: nb.id, name: nb.name }))
+    return notebooks.map((nb: any) => ({
+      id: nb.id,
+      name: nb.name,
+    }))
   } catch (e) {
     console.error("获取笔记本列表失败:", e)
     return []

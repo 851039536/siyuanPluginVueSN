@@ -4,12 +4,47 @@
     class="status__resUsage"
     :title="systemInfoTooltip"
   >
-    <MonitorItem v-if="visibleMonitors.has('monitor-notes')" item-class="statistics-item notes-item" :title="statisticsTooltip">{{ totalNotesDisplay }}</MonitorItem><!--
-    --><MonitorItem v-if="visibleMonitors.has('monitor-words')" item-class="statistics-item words-item" :title="statisticsTooltip">{{ totalWordsDisplay }}</MonitorItem><!--
-    --><MonitorItem v-if="visibleMonitors.has('monitor-today')" item-class="statistics-item today-activity-item" :title="todayTooltip">{{ todayActivityDisplay }}</MonitorItem><!--
-    --><MonitorItem v-if="visibleMonitors.has('monitor-cpu')" item-class="cpu-item" :level="cpuLevel">{{ cpuUsageDisplay }}</MonitorItem><!--
-    --><MonitorItem v-if="visibleMonitors.has('monitor-memory')" item-class="mem-item" :level="memLevel">{{ memoryUsageDisplay }}</MonitorItem><!--
-    --><MonitorItem v-if="visibleMonitors.has('monitor-uptime')" item-class="uptime-item">{{ uptimeDisplay }}</MonitorItem>
+    <MonitorItem
+      v-if="visibleMonitors.has('monitor-notes')"
+      item-class="statistics-item notes-item"
+      :title="statisticsTooltip"
+    >
+      {{ totalNotesDisplay }}
+    </MonitorItem><!--
+    --><MonitorItem
+v-if="visibleMonitors.has('monitor-words')"
+item-class="statistics-item words-item"
+:title="statisticsTooltip"
+>
+{{ totalWordsDisplay }}
+    </MonitorItem><!--
+    --><MonitorItem
+v-if="visibleMonitors.has('monitor-today')"
+item-class="statistics-item today-activity-item"
+:title="todayTooltip"
+>
+{{ todayActivityDisplay }}
+    </MonitorItem><!--
+    --><MonitorItem
+v-if="visibleMonitors.has('monitor-cpu')"
+item-class="cpu-item"
+:level="cpuLevel"
+>
+{{ cpuUsageDisplay }}
+    </MonitorItem><!--
+    --><MonitorItem
+v-if="visibleMonitors.has('monitor-memory')"
+item-class="mem-item"
+:level="memLevel"
+>
+{{ memoryUsageDisplay }}
+    </MonitorItem><!--
+    --><MonitorItem
+v-if="visibleMonitors.has('monitor-uptime')"
+item-class="uptime-item"
+>
+{{ uptimeDisplay }}
+</MonitorItem>
 
     <MonitorItem
       v-for="task in activeTasks"

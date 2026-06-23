@@ -97,6 +97,14 @@ import {
 import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 
+const props = defineProps<Props>()
+
+const emit = defineEmits<{
+  (e: "update:visible", value: boolean): void
+  (e: "add-category", payload: { name: string, color: string }): void
+  (e: "delete-category", id: string): void
+}>()
+
 const PRESET_COLORS = [
   "#d97757",
   "#6a9bcc",
@@ -110,14 +118,6 @@ interface Props {
   visible: boolean
   categories: HtmlCategory[]
 }
-
-const props = defineProps<Props>()
-
-const emit = defineEmits<{
-  (e: "update:visible", value: boolean): void
-  (e: "add-category", payload: { name: string; color: string }): void
-  (e: "delete-category", id: string): void
-}>()
 
 const newCategory = reactive({
   name: "",

@@ -974,7 +974,10 @@ export async function reloadProtyle(blockId: string): Promise<void> {
  */
 export async function uploadCloudSnapshot(id: string, tag: string): Promise<null> {
   const url = "/api/repo/uploadCloudSnapshot"
-  return request(url, { id, tag })
+  return request(url, {
+    id,
+    tag,
+  })
 }
 
 // **************************************** Repo / Snapshot ****************************************
@@ -1036,7 +1039,12 @@ export async function getRepoSnapshots(page: number = 1): Promise<SnapshotInfo[]
  */
 export async function getRepoSnapshotContent(id: string, tag?: string): Promise<SnapshotContentFile[]> {
   const url = "/api/repo/getRepoSnapshotContent"
-  const params = tag ? { id, tag } : { id }
+  const params = tag
+    ? {
+        id,
+        tag,
+      }
+    : { id }
   try {
     const resp = await fetch(url, {
       method: "POST",
@@ -1082,7 +1090,10 @@ export async function getCloudRepoTagSnapshots(page: number = 1): Promise<CloudS
     if (!grouped.has(tag)) grouped.set(tag, [])
     grouped.get(tag)!.push(snap)
   }
-  return Array.from(grouped.entries()).map(([tag, snaps]) => ({ tag, snapshots: snaps }))
+  return Array.from(grouped.entries()).map(([tag, snaps]) => ({
+    tag,
+    snapshots: snaps,
+  }))
 }
 
 /**
@@ -1092,7 +1103,10 @@ export async function getCloudRepoTagSnapshots(page: number = 1): Promise<CloudS
  */
 export async function downloadCloudSnapshot(tag: string, id: string): Promise<null> {
   const url = "/api/repo/downloadCloudSnapshot"
-  return request(url, { tag, id })
+  return request(url, {
+    tag,
+    id,
+  })
 }
 
 /**

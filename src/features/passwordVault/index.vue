@@ -466,7 +466,10 @@
               >
                 <div class="confirm-card">
                   <p class="confirm-warning">
-                    <IconWrapper name="warning" :size="16" />
+                    <IconWrapper
+                      name="warning"
+                      :size="16"
+                    />
                     确定要删除类别「<strong>{{ getCategoryById(pendingDeleteCategoryId)?.name }}</strong>」吗？
                   </p>
                   <p
@@ -634,9 +637,23 @@
                     stroke="currentColor"
                     stroke-width="2"
                   >
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="8" x2="12" y2="12" />
-                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="10"
+                    />
+                    <line
+                      x1="12"
+                      y1="8"
+                      x2="12"
+                      y2="12"
+                    />
+                    <line
+                      x1="12"
+                      y1="16"
+                      x2="12.01"
+                      y2="16"
+                    />
                   </svg>
                   <p class="warning-text">
                     导出数据为 <strong>明文 JSON 格式</strong>，包含所有密码、账号等敏感信息。
@@ -731,18 +748,21 @@ import {
   ref,
   watch,
 } from "vue"
-import { pendingEntryData } from "./index"
-import { copyToClipboard as copyToClipboardUtil, triggerBlobDownload } from "@/utils/domUtils"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
 import { usePlugin } from "@/main"
+import {
+  copyToClipboard as copyToClipboardUtil,
+  triggerBlobDownload,
+} from "@/utils/domUtils"
 import HelpDialog from "./components/HelpDialog.vue"
 import PasswordVaultLogin from "./components/PasswordVaultLogin.vue"
+import { pendingEntryData } from "./index"
 import {
-  PasswordVaultStorage,
   DATA_VERSION,
+  PasswordVaultStorage,
 } from "./types/storage"
 import {
   decryptEntryPayload,
@@ -1110,7 +1130,10 @@ async function handleChangePassword() {
     // 使用新密钥重新加密所有条目
     const reEncryptedEntries: StoredPasswordEntry[] = await Promise.all(
       entries.value.map(async (entry) => {
-        const { encryptedPayload, iv } = await encryptEntryPayload(
+        const {
+          encryptedPayload,
+          iv,
+        } = await encryptEntryPayload(
           {
             name: entry.name,
             account: entry.account,
@@ -1240,7 +1263,10 @@ async function saveEntries() {
   try {
     const storedEntries: StoredPasswordEntry[] = await Promise.all(
       entries.value.map(async (entry) => {
-        const { encryptedPayload, iv } = await encryptEntryPayload(
+        const {
+          encryptedPayload,
+          iv,
+        } = await encryptEntryPayload(
           {
             name: entry.name,
             account: entry.account,

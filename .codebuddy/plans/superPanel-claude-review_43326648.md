@@ -51,7 +51,7 @@ import { getTextDiffManager } from "@/features/textDiff"
 if (action === "openTextDiff") {
   getTextDiffManager()?.toggle()
   this.close()
-  return
+
 }
 ```
 

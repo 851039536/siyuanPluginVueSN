@@ -82,25 +82,25 @@ StatsPanel 接收的 Props 接口：
 
 ```typescript
 interface StatsPanelProps {
-  totalProjects: number              // 项目总数
-  categoryCount: number              // 分类数量
-  projectsWithRemote: number         // 有远程的项目数
-  remoteCoverage: {                  // 远程覆盖率
-    github: number                   // 配置 GitHub 的项目数
-    gitee: number                    // 配置 Gitee 的项目数
-    gitea: number                    // 配置 Gitea 的项目数
-    multi: number                    // 同时有 2+ 远程的项目数
+  totalProjects: number // 项目总数
+  categoryCount: number // 分类数量
+  projectsWithRemote: number // 有远程的项目数
+  remoteCoverage: { // 远程覆盖率
+    github: number // 配置 GitHub 的项目数
+    gitee: number // 配置 Gitee 的项目数
+    gitea: number // 配置 Gitea 的项目数
+    multi: number // 同时有 2+ 远程的项目数
   }
-  pushSummary: {                     // 推送状态汇总
-    ahead: number                    // 需要推送的项目数
-    behind: number                   // 落后于远程的项目数
-    synced: number                   // 已同步的项目数
-    noRemote: number                 // 无远程的项目数
+  pushSummary: { // 推送状态汇总
+    ahead: number // 需要推送的项目数
+    behind: number // 落后于远程的项目数
+    synced: number // 已同步的项目数
+    noRemote: number // 无远程的项目数
   }
-  unpushedProjects: { id: string; name: string; categoryName: string; remotes: { key: string; ahead: number }[] }[]  // 未及时推送列表
-  uncommittedProjects: { id: string; name: string; categoryName: string; staged: number; unstaged: number; untracked: number }[]  // 未提交变更列表
-  recentCommits: { projectId: string; projectName: string; hash: string; message: string; date: string }[]  // 最近提交摘要
-  onViewProject: (projectId: string) => void  // 点击项目跳转回调
+  unpushedProjects: { id: string, name: string, categoryName: string, remotes: { key: string, ahead: number }[] }[] // 未及时推送列表
+  uncommittedProjects: { id: string, name: string, categoryName: string, staged: number, unstaged: number, untracked: number }[] // 未提交变更列表
+  recentCommits: { projectId: string, projectName: string, hash: string, message: string, date: string }[] // 最近提交摘要
+  onViewProject: (projectId: string) => void // 点击项目跳转回调
 }
 ```
 

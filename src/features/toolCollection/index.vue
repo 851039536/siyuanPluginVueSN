@@ -5,31 +5,65 @@
       class="tool-collection-overlay"
       @click.self="close"
     >
-      <div class="tool-collection-panel" :style="panelStyle">
+      <div
+        class="tool-collection-panel"
+        :style="panelStyle"
+      >
         <!-- 头部 -->
         <div class="tool-collection-header">
           <span class="header-title">{{ i18n.toolCollection || "工具合集" }}</span>
           <div class="header-resize">
-            <button class="resize-btn" title="变窄" @click="adjustWidth(-80)">
-              <Icon icon="mdi:chevron-left" :size="12" />
+            <button
+              class="resize-btn"
+              title="变窄"
+              @click="adjustWidth(-80)"
+            >
+              <Icon
+                icon="mdi:chevron-left"
+                :size="12"
+              />
             </button>
             <span class="resize-label">{{ panelWidth }}px</span>
-            <button class="resize-btn" title="变宽" @click="adjustWidth(80)">
-              <Icon icon="mdi:chevron-right" :size="12" />
+            <button
+              class="resize-btn"
+              title="变宽"
+              @click="adjustWidth(80)"
+            >
+              <Icon
+                icon="mdi:chevron-right"
+                :size="12"
+              />
             </button>
-            <button class="resize-btn" title="变矮" @click="adjustHeight(-10)">
-              <Icon icon="mdi:chevron-down" :size="12" />
+            <button
+              class="resize-btn"
+              title="变矮"
+              @click="adjustHeight(-10)"
+            >
+              <Icon
+                icon="mdi:chevron-down"
+                :size="12"
+              />
             </button>
             <span class="resize-label">{{ panelHeight }}vh</span>
-            <button class="resize-btn" title="变高" @click="adjustHeight(10)">
-              <Icon icon="mdi:chevron-up" :size="12" />
+            <button
+              class="resize-btn"
+              title="变高"
+              @click="adjustHeight(10)"
+            >
+              <Icon
+                icon="mdi:chevron-up"
+                :size="12"
+              />
             </button>
           </div>
           <button
             class="header-close"
             @click="close"
           >
-            <Icon icon="mdi:close" :size="14" />
+            <Icon
+              icon="mdi:close"
+              :size="14"
+            />
           </button>
         </div>
 
@@ -67,10 +101,15 @@
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
 import type { Ref } from "vue"
-import { computed, onMounted, ref, watch } from "vue"
-import { Icon } from "@iconify/vue"
-import { PluginStorage } from "@/utils/pluginStorage"
 import type { ToolMeta } from "./types"
+import { Icon } from "@iconify/vue"
+import {
+  computed,
+  onMounted,
+  ref,
+  watch,
+} from "vue"
+import { PluginStorage } from "@/utils/pluginStorage"
 import Base64ImageTool from "./tools/base64Image/index.vue"
 import UnitConverterTool from "./tools/unitConverter/index.vue"
 
@@ -110,7 +149,7 @@ const storage = new PluginStorage(props.plugin)
 const panelStyle = computed(() => {
   // height 固定，内部内容通过 overflow-y: auto 滚动；maxHeight 硬封顶防止溢出视口
   return {
-    maxWidth: panelWidth.value + "px",
+    maxWidth: `${panelWidth.value}px`,
     height: `${panelHeight.value}vh`,
     maxHeight: `calc(88vh - 36px)`,
   }

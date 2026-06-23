@@ -1,9 +1,17 @@
 import type { Plugin } from "siyuan"
-import type { CloudSnapshotTag, SnapshotContentFile, SnapshotInfo } from "@/api"
+import type {
+  CloudSnapshotTag,
+  SnapshotContentFile,
+  SnapshotInfo,
+} from "@/api"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 
-export type { CloudSnapshotTag, SnapshotContentFile, SnapshotInfo }
+export type {
+  CloudSnapshotTag,
+  SnapshotContentFile,
+  SnapshotInfo,
+}
 
 export type SnapshotView = "local" | "cloud" | "detail" | "diff"
 

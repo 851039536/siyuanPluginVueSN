@@ -145,7 +145,9 @@
             </div>
 
             <!-- 高级样式 -->
-            <div class="deco-group-title">高级样式</div>
+            <div class="deco-group-title">
+              高级样式
+            </div>
             <div class="deco-slider-row">
               <span class="deco-slider-label">边框宽度</span>
               <input
@@ -254,7 +256,9 @@
                 <span class="window-btn minimize" />
                 <span class="window-btn maximize" />
               </div>
-              <div class="window-title">{{ getLanguageDisplay() }}</div>
+              <div class="window-title">
+                {{ getLanguageDisplay() }}
+              </div>
             </div>
             <div
               class="code-content"
@@ -341,9 +345,9 @@ import IconWrapper from "@/components/IconWrapper.vue"
 import Select from "@/components/Select.vue"
 import Switch from "@/components/Switch.vue"
 import {
-  useCodeImageGenerator,
   languageOptions,
   themeOptions,
+  useCodeImageGenerator,
 } from "../composables/useCodeImageGenerator"
 
 const {

@@ -43,7 +43,12 @@ const DELIMITERS = ["：", ":", "_", "-", "|", ",", "\t"] as const
 export function parsePasswordText(raw: string): ParsedPasswordEntry {
   const text = raw.trim()
   if (!text) {
-    return { name: "", account: "", password: "", description: "" }
+    return {
+      name: "",
+      account: "",
+      password: "",
+      description: "",
+    }
   }
 
   // 1. 尝试 1 字符分隔符（按优先级）
@@ -73,7 +78,12 @@ export function parsePasswordText(raw: string): ParsedPasswordEntry {
 
 function mapParts(parts: string[]): ParsedPasswordEntry {
   if (parts.length === 1) {
-    return { name: parts[0], account: "", password: "", description: "" }
+    return {
+      name: parts[0],
+      account: "",
+      password: "",
+      description: "",
+    }
   }
 
   if (parts.length === 2) {

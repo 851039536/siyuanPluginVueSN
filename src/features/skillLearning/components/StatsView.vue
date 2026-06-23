@@ -3,29 +3,58 @@
     <!-- 概览卡片 -->
     <div class="stats-view__summary">
       <div class="stats-view__stat">
-        <div class="stats-view__stat-value">{{ cards.length }}</div>
-        <div class="stats-view__stat-label">{{ t.totalCards }}</div>
+        <div class="stats-view__stat-value">
+          {{ cards.length }}
+        </div>
+        <div class="stats-view__stat-label">
+          {{ t.totalCards }}
+        </div>
       </div>
       <div class="stats-view__stat">
-        <div class="stats-view__stat-value">{{ practicedCount }}</div>
-        <div class="stats-view__stat-label">{{ t.practicedCards }}</div>
+        <div class="stats-view__stat-value">
+          {{ practicedCount }}
+        </div>
+        <div class="stats-view__stat-label">
+          {{ t.practicedCards }}
+        </div>
       </div>
       <div class="stats-view__stat">
-        <div class="stats-view__stat-value stats-view__stat-value--accent">{{ dueCount }}</div>
-        <div class="stats-view__stat-label">{{ t.dueForReview || '待复习' }}</div>
+        <div class="stats-view__stat-value stats-view__stat-value--accent">
+          {{ dueCount }}
+        </div>
+        <div class="stats-view__stat-label">
+          {{ t.dueForReview || '待复习' }}
+        </div>
       </div>
     </div>
 
     <!-- 练习进度环 + 正确率环 -->
-    <div v-if="cards.length > 0" class="stats-view__rings-row">
+    <div
+      v-if="cards.length > 0"
+      class="stats-view__rings-row"
+    >
       <!-- 练习进度环 -->
       <div class="stats-view__section stats-view__section--ring">
-        <div class="stats-view__section-title">{{ t.practiceProgress || '练习覆盖' }}</div>
+        <div class="stats-view__section-title">
+          {{ t.practiceProgress || '练习覆盖' }}
+        </div>
         <div class="stats-view__progress-ring">
-          <svg viewBox="0 0 100 100" class="stats-view__ring-svg">
-            <circle cx="50" cy="50" r="42" fill="none" stroke="var(--b3-border-color)" stroke-width="8" />
+          <svg
+            viewBox="0 0 100 100"
+            class="stats-view__ring-svg"
+          >
             <circle
-              cx="50" cy="50" r="42"
+              cx="50"
+              cy="50"
+              r="42"
+              fill="none"
+              stroke="var(--b3-border-color)"
+              stroke-width="8"
+            />
+            <circle
+              cx="50"
+              cy="50"
+              r="42"
               fill="none"
               stroke="var(--b3-theme-primary)"
               stroke-width="8"
@@ -43,13 +72,30 @@
       </div>
 
       <!-- 正确率环 -->
-      <div v-if="practicedCount > 0" class="stats-view__section stats-view__section--ring">
-        <div class="stats-view__section-title">{{ t.accuracyRate || '正确率' }}</div>
+      <div
+        v-if="practicedCount > 0"
+        class="stats-view__section stats-view__section--ring"
+      >
+        <div class="stats-view__section-title">
+          {{ t.accuracyRate || '正确率' }}
+        </div>
         <div class="stats-view__progress-ring">
-          <svg viewBox="0 0 100 100" class="stats-view__ring-svg">
-            <circle cx="50" cy="50" r="42" fill="none" stroke="var(--b3-border-color)" stroke-width="8" />
+          <svg
+            viewBox="0 0 100 100"
+            class="stats-view__ring-svg"
+          >
             <circle
-              cx="50" cy="50" r="42"
+              cx="50"
+              cy="50"
+              r="42"
+              fill="none"
+              stroke="var(--b3-border-color)"
+              stroke-width="8"
+            />
+            <circle
+              cx="50"
+              cy="50"
+              r="42"
               fill="none"
               :stroke="accuracyColor"
               stroke-width="8"
@@ -60,7 +106,10 @@
             />
           </svg>
           <div class="stats-view__ring-text">
-            <span class="stats-view__ring-pct" :style="{ color: accuracyColor }">{{ accuracyPct }}%</span>
+            <span
+              class="stats-view__ring-pct"
+              :style="{ color: accuracyColor }"
+            >{{ accuracyPct }}%</span>
             <span class="stats-view__ring-sub">{{ totalCorrect }}/{{ totalAttempts }}</span>
           </div>
         </div>
@@ -68,15 +117,23 @@
     </div>
 
     <!-- 对错分布条 -->
-    <div v-if="practicedCount > 0" class="stats-view__section">
-      <div class="stats-view__section-title">{{ t.accuracyRate || '正确率' }} {{ t.difficulty || '分布' }}</div>
+    <div
+      v-if="practicedCount > 0"
+      class="stats-view__section"
+    >
+      <div class="stats-view__section-title">
+        {{ t.accuracyRate || '正确率' }} {{ t.difficulty || '分布' }}
+      </div>
       <div class="stats-view__bars">
         <div class="stats-view__bar-row">
           <span class="stats-view__bar-label">{{ t.correctCountLabel || '正确' }}</span>
           <div class="stats-view__bar-track">
             <div
               class="stats-view__bar-fill"
-              :style="{ width: accuracyPct + '%', background: '#22c55e' }"
+              :style="{
+                width: `${accuracyPct}%`,
+                background: '#22c55e',
+              }"
             />
           </div>
           <span class="stats-view__bar-count">{{ totalCorrect }}</span>
@@ -86,7 +143,10 @@
           <div class="stats-view__bar-track">
             <div
               class="stats-view__bar-fill"
-              :style="{ width: wrongPct + '%', background: '#ef4444' }"
+              :style="{
+                width: `${wrongPct}%`,
+                background: '#ef4444',
+              }"
             />
           </div>
           <span class="stats-view__bar-count">{{ totalWrong }}</span>
@@ -95,15 +155,27 @@
     </div>
 
     <!-- 语言分布 -->
-    <div v-if="langStats.length > 0" class="stats-view__section">
-      <div class="stats-view__section-title">{{ t.language || '语言' }}</div>
+    <div
+      v-if="langStats.length > 0"
+      class="stats-view__section"
+    >
+      <div class="stats-view__section-title">
+        {{ t.language || '语言' }}
+      </div>
       <div class="stats-view__bars">
-        <div v-for="item in langStats" :key="item.label" class="stats-view__bar-row">
+        <div
+          v-for="item in langStats"
+          :key="item.label"
+          class="stats-view__bar-row"
+        >
           <span class="stats-view__bar-label">{{ item.label }}</span>
           <div class="stats-view__bar-track">
             <div
               class="stats-view__bar-fill"
-              :style="{ width: item.pct + '%', background: item.color }"
+              :style="{
+                width: `${item.pct}%`,
+                background: item.color,
+              }"
             />
           </div>
           <span class="stats-view__bar-count">{{ item.count }}</span>
@@ -112,15 +184,27 @@
     </div>
 
     <!-- 难度分布 -->
-    <div v-if="diffStats.length > 0" class="stats-view__section">
-      <div class="stats-view__section-title">{{ t.difficulty || '难度' }}</div>
+    <div
+      v-if="diffStats.length > 0"
+      class="stats-view__section"
+    >
+      <div class="stats-view__section-title">
+        {{ t.difficulty || '难度' }}
+      </div>
       <div class="stats-view__bars">
-        <div v-for="item in diffStats" :key="item.label" class="stats-view__bar-row">
+        <div
+          v-for="item in diffStats"
+          :key="item.label"
+          class="stats-view__bar-row"
+        >
           <span class="stats-view__bar-label">{{ item.label }}</span>
           <div class="stats-view__bar-track">
             <div
               class="stats-view__bar-fill"
-              :style="{ width: item.pct + '%', background: item.color }"
+              :style="{
+                width: `${item.pct}%`,
+                background: item.color,
+              }"
             />
           </div>
           <span class="stats-view__bar-count">{{ item.count }}</span>
@@ -129,8 +213,13 @@
     </div>
 
     <!-- 分类列表 -->
-    <div v-if="categoryStats.length > 0" class="stats-view__section">
-      <div class="stats-view__section-title">{{ t.category || '分类' }}</div>
+    <div
+      v-if="categoryStats.length > 0"
+      class="stats-view__section"
+    >
+      <div class="stats-view__section-title">
+        {{ t.category || '分类' }}
+      </div>
       <div class="stats-view__tags">
         <span
           v-for="item in categoryStats"
@@ -144,16 +233,25 @@
     </div>
 
     <!-- 空状态 -->
-    <div v-if="cards.length === 0" class="stats-view__empty">
+    <div
+      v-if="cards.length === 0"
+      class="stats-view__empty"
+    >
       {{ t.noCards }}
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import type {
+  SkillCard,
+  SkillI18n,
+} from "../types"
 import { computed } from "vue"
-import type { SkillCard, SkillI18n } from "../types"
-import { langLabel, LANG_COLORS } from "../composables/useLangLabel"
+import {
+  LANG_COLORS,
+  langLabel,
+} from "../composables/useLangLabel"
 
 const props = defineProps<{
   cards: SkillCard[]
@@ -219,7 +317,11 @@ const langStats = computed(() => {
 })
 
 // 难度分布
-const diffColors = { beginner: "#22c55e", intermediate: "#f59e0b", advanced: "#ef4444" }
+const diffColors = {
+  beginner: "#22c55e",
+  intermediate: "#f59e0b",
+  advanced: "#ef4444",
+}
 const diffLabels: Record<string, string> = {
   beginner: t.value.beginner || "初级",
   intermediate: t.value.intermediate || "中级",
@@ -246,7 +348,10 @@ const categoryStats = computed(() => {
   return [...map.entries()]
     .sort((a, b) => b[1] - a[1])
     .slice(0, 15)
-    .map(([cat, count]) => ({ label: cat, count }))
+    .map(([cat, count]) => ({
+      label: cat,
+      count,
+    }))
 })
 </script>
 

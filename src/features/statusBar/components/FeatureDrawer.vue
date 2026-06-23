@@ -59,7 +59,11 @@
           </div>
         </div>
         <div class="feature-drawer-search">
-          <Icon icon="ph:magnifying-glass" :width="14" class="search-icon" />
+          <Icon
+            icon="ph:magnifying-glass"
+            :width="14"
+            class="search-icon"
+          />
           <input
             v-model="searchQuery"
             type="text"
@@ -72,7 +76,11 @@
             class="search-clear"
             @click="searchQuery = ''"
           >
-            <svg width="12" height="12" viewBox="0 0 24 24">
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+            >
               <path
                 fill="currentColor"
                 d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
@@ -132,7 +140,10 @@
               title="标记为不常用"
               @click.stop="emit('toggleRarelyUsed', item.id)"
             >
-              <Icon icon="ph:eye-slash" :width="12" />
+              <Icon
+                icon="ph:eye-slash"
+                :width="12"
+              />
             </span>
           </div>
           <div
@@ -196,7 +207,10 @@
                 title="恢复为常用"
                 @click.stop="emit('toggleRarelyUsed', item.id)"
               >
-                <Icon icon="ph:eye-slash" :width="12" />
+                <Icon
+                  icon="ph:eye-slash"
+                  :width="12"
+                />
               </span>
             </div>
           </div>
@@ -208,7 +222,11 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
-import { computed, ref, watch } from "vue"
+import {
+  computed,
+  ref,
+  watch,
+} from "vue"
 
 export interface FeatureDrawerItem {
   id: string
@@ -280,11 +298,17 @@ const allGroups = computed(() => {
 
 // 标签栏选项
 const groupTabs = computed(() => {
-  const tabs: { key: string; label: string }[] = [
-    { key: "__all__", label: "全部" },
+  const tabs: { key: string, label: string }[] = [
+    {
+      key: "__all__",
+      label: "全部",
+    },
   ]
   for (const g of allGroups.value) {
-    tabs.push({ key: g, label: g })
+    tabs.push({
+      key: g,
+      label: g,
+    })
   }
   return tabs
 })

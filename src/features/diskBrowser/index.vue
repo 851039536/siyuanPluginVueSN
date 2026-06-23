@@ -59,11 +59,11 @@
 </template>
 
 <script setup lang="ts">
+import type { Plugin } from "siyuan"
 import type {
   DiskBrowserI18n,
 } from "./types"
 import type { DiskBrowserStorage } from "./types/storage"
-import type { Plugin } from "siyuan"
 import BreadcrumbNav from "./components/BreadcrumbNav.vue"
 import DiskCard from "./components/DiskCard.vue"
 import FavoritesSection from "./components/FavoritesSection.vue"

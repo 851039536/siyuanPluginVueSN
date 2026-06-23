@@ -1,6 +1,9 @@
 import type { ImageInfo } from "../types"
 import { showMessage } from "siyuan"
-import { ref, shallowRef } from "vue"
+import {
+  ref,
+  shallowRef,
+} from "vue"
 import {
   batchGetImageDetails,
   revokeImageUrls,

@@ -1,0 +1,74 @@
+@use "@/variables" as *;
+@use "./mixins" as floatingBox;
+
+// ==================== 分类管理样式 ====================
+
+.vp-category-form {
+  margin-bottom: $spacing-3;
+
+  .vp-form-row {
+    display: flex;
+    gap: $spacing-2;
+    align-items: center;
+
+    .vp-input {
+      flex: 1;
+      @include floatingBox.form-input;
+    }
+
+    .vp-color-input {
+      width: 40px;
+      height: 36px;
+      padding: 2px;
+      border: 1px solid var(--b3-border-color);
+      border-radius: $vp-radius;
+      cursor: pointer;
+      background: var(--b3-theme-surface);
+
+      &::-webkit-color-swatch-wrapper {
+        padding: 2px;
+      }
+
+      &::-webkit-color-swatch {
+        border: none;
+        border-radius: $radius-sm;
+      }
+    }
+  }
+}
+
+.vp-category-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  max-height: 300px;
+  overflow-y: auto;
+
+  .vp-category-item {
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+    padding: $spacing-2 $spacing-3;
+    background: var(--b3-theme-surface);
+    border: 1px solid var(--b3-border-color);
+    border-radius: $vp-radius;
+    transition: all 0.12s;
+
+    &:hover {
+      background: var(--b3-list-hover);
+    }
+
+    .vp-category-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .vp-category-name {
+      flex: 1;
+      font-size: $font-size-sm;
+      color: var(--b3-theme-on-background);
+    }
+  }
+}

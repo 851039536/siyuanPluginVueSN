@@ -4,7 +4,10 @@
 import type { Plugin } from "siyuan"
 import type { I18n } from "./types"
 import type { ModalAppInstance } from "@/utils/vueAppHelper"
-import { createModalVueApp, createVueDockApp } from "@/utils/vueAppHelper"
+import {
+  createModalVueApp,
+  createVueDockApp,
+} from "@/utils/vueAppHelper"
 import FlashcardDialog from "./components/FlashcardDialog.vue"
 import FlashcardReadingPanel from "./index.vue"
 import { FlashcardStorage } from "./types/storage"

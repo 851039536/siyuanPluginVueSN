@@ -87,7 +87,10 @@
                 @click="copyStoragePath"
               >
                 <span class="storage-path-text">{{ storagePath }}</span>
-                <span class="storage-path-action"><IconWrapper name="list" :size="14" /> 复制</span>
+                <span class="storage-path-action"><IconWrapper
+                  name="list"
+                  :size="14"
+                /> 复制</span>
               </div>
             </div>
           </div>
@@ -108,9 +111,9 @@
 
 <script setup lang="ts">
 import { showMessage } from "siyuan"
-import { copyToClipboard } from "@/utils/domUtils"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import { copyToClipboard } from "@/utils/domUtils"
 
 interface Props {
   visible: boolean

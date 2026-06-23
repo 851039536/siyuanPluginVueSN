@@ -16,10 +16,16 @@
       :languages="languageList"
       :categories="categoryList"
     />
-    <div v-if="filteredCards.length === 0" class="skill-list-view__empty">
+    <div
+      v-if="filteredCards.length === 0"
+      class="skill-list-view__empty"
+    >
       {{ t.noCards }}
     </div>
-    <div v-else class="skill-list-view__grid">
+    <div
+      v-else
+      class="skill-list-view__grid"
+    >
       <div
         v-for="card in paginatedCards"
         :key="card.id"
@@ -32,30 +38,52 @@
           @click.stop="$emit('delete', card.id)"
         >×</button>
         <div class="skill-list-view__card-top">
-          <span class="skill-list-view__lang-dot" :class="`lang--${card.language}`" />
+          <span
+            class="skill-list-view__lang-dot"
+            :class="`lang--${card.language}`"
+          />
           <span class="skill-list-view__card-title">{{ card.title }}</span>
         </div>
         <div class="skill-list-view__card-bottom">
-          <DifficultyBadge :difficulty="card.difficulty" :i18n="t" />
+          <DifficultyBadge
+            :difficulty="card.difficulty"
+            :i18n="t"
+          />
           <span class="skill-list-view__card-category">{{ card.category }}</span>
           <span class="skill-list-view__card-count">{{ card.practiceCount }}{{ t.practiceTimes }}</span>
         </div>
       </div>
     </div>
-    <div v-if="paginated" class="skill-list-view__pagination">
-      <button :disabled="page <= 1" @click="page--">&laquo;</button>
+    <div
+      v-if="paginated"
+      class="skill-list-view__pagination"
+    >
+      <button
+        :disabled="page <= 1"
+        @click="page--"
+      >
+        &laquo;
+      </button>
       <span>{{ page }} / {{ totalPages }}</span>
-      <button :disabled="page >= totalPages" @click="page++">&raquo;</button>
+      <button
+        :disabled="page >= totalPages"
+        @click="page++"
+      >
+        &raquo;
+      </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import type {
+  SkillCard,
+  SkillI18n,
+} from "../types"
 import { computed } from "vue"
-import type { SkillCard, SkillI18n } from "../types"
+import { useFilteredCards } from "../composables/useFilteredCards"
 import CategoryFilter from "./CategoryFilter.vue"
 import DifficultyBadge from "./DifficultyBadge.vue"
-import { useFilteredCards } from "../composables/useFilteredCards"
 
 const props = defineProps<{
   cards: SkillCard[]
@@ -82,7 +110,10 @@ const {
   totalPages,
   paginated,
   paginatedCards,
-} = useFilteredCards(cardsRef, { pageSize: 10, enableSearch: true })
+} = useFilteredCards(cardsRef, {
+  pageSize: 10,
+  enableSearch: true,
+})
 </script>
 
 <style lang="scss" scoped>

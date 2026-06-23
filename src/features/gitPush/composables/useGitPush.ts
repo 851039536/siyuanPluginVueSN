@@ -1,7 +1,25 @@
-import type { GitProject, PushStatusInfo, WorkingTreeInfo, ProjectCategory, CommitLogEntry, BranchInfo, ScannedGitRepo, StashEntry, TagInfo, ConflictFile, CommitTemplate } from "../types"
-import type { GitPushManager, PlatformKey } from "../types"
+import type {
+  BranchInfo,
+  CommitLogEntry,
+  CommitTemplate,
+  ConflictFile,
+  GitProject,
+  GitPushManager,
+  PlatformKey,
+  ProjectCategory,
+  PushStatusInfo,
+  ScannedGitRepo,
+  StashEntry,
+  TagInfo,
+  WorkingTreeInfo,
+
+} from "../types"
+
+import {
+  computed,
+  ref,
+} from "vue"
 import { PLATFORM_META } from "../types"
-import { ref, computed } from "vue"
 
 export function useGitPush(manager: GitPushManager) {
   const projects = ref<GitProject[]>([])
@@ -52,10 +70,13 @@ export function useGitPush(manager: GitPushManager) {
 
   /** 按分类分组后的项目列表 */
   const groupedProjects = computed(() => {
-    const map = new Map<string, { category: ProjectCategory; projects: GitProject[] }>()
+    const map = new Map<string, { category: ProjectCategory, projects: GitProject[] }>()
     // 初始化所有分类
     for (const cat of categories.value) {
-      map.set(cat.id, { category: cat, projects: [] })
+      map.set(cat.id, {
+        category: cat,
+        projects: [],
+      })
     }
     // 分配项目
     for (const p of projects.value) {
@@ -70,7 +91,7 @@ export function useGitPush(manager: GitPushManager) {
     }
     // 排序并过滤空分组
     return [...map.values()]
-      .filter(g => g.projects.length > 0)
+      .filter((g) => g.projects.length > 0)
       .sort((a, b) => a.category.order - b.category.order)
   })
 
@@ -82,8 +103,18 @@ export function useGitPush(manager: GitPushManager) {
   /** 远程仓库覆盖率统计 */
   const remoteCoverage = computed(() => {
     const total = projects.value.length
-    if (total === 0) return { total: 0, github: 0, gitee: 0, gitea: 0, cnb: 0, hasRemote: 0, noRemote: 0, multiple: 0 }
-    let github = 0, gitee = 0, gitea = 0, cnb = 0, hasRemote = 0, multiple = 0
+    if (total === 0) { return {
+      total: 0,
+      github: 0,
+      gitee: 0,
+      gitea: 0,
+      cnb: 0,
+      hasRemote: 0,
+      noRemote: 0,
+      multiple: 0,
+    }
+    }
+    let github = 0; let gitee = 0; let gitea = 0; let cnb = 0; let hasRemote = 0; let multiple = 0
     for (const p of projects.value) {
       const remotes = [p.githubUrl, p.giteeUrl, p.giteaUrl, p.cnbUrl].filter(Boolean).length
       if (p.githubUrl) github++
@@ -93,14 +124,30 @@ export function useGitPush(manager: GitPushManager) {
       if (remotes > 0) hasRemote++
       if (remotes >= 2) multiple++
     }
-    return { total, github, gitee, gitea, cnb, hasRemote, noRemote: total - hasRemote, multiple }
+    return {
+      total,
+      github,
+      gitee,
+      gitea,
+      cnb,
+      hasRemote,
+      noRemote: total - hasRemote,
+      multiple,
+    }
   })
 
   /** 推送状态分布统计 */
   const pushStatusStats = computed(() => {
     const total = projects.value.length
-    if (total === 0) return { total: 0, ahead: 0, behind: 0, synced: 0, noRemote: 0 }
-    let ahead = 0, behind = 0, synced = 0, noRemote = 0
+    if (total === 0) { return {
+      total: 0,
+      ahead: 0,
+      behind: 0,
+      synced: 0,
+      noRemote: 0,
+    }
+    }
+    let ahead = 0; let behind = 0; let synced = 0; let noRemote = 0
     for (const p of projects.value) {
       const status = pushStatuses.value[p.id]
       if (!status || Object.keys(status.remotes).length === 0) {
@@ -108,28 +155,37 @@ export function useGitPush(manager: GitPushManager) {
         continue
       }
       const remotes = Object.values(status.remotes)
-      if (remotes.some(r => r.ahead > 0)) {
+      if (remotes.some((r) => r.ahead > 0)) {
         ahead++
-      } else if (remotes.some(r => r.behind > 0)) {
+      } else if (remotes.some((r) => r.behind > 0)) {
         behind++
       } else {
         synced++
       }
     }
-    return { total, ahead, behind, synced, noRemote }
+    return {
+      total,
+      ahead,
+      behind,
+      synced,
+      noRemote,
+    }
   })
 
   /** 需要推送的项目列表（按 ahead 降序） */
   const needsPushProjects = computed(() => {
-    const result: { project: GitProject; aheadByRemote: { key: string; ahead: number }[]; totalAhead: number }[] = []
+    const result: { project: GitProject, aheadByRemote: { key: string, ahead: number }[], totalAhead: number }[] = []
     for (const p of projects.value) {
       const status = pushStatuses.value[p.id]
       if (!status) continue
-      const aheadByRemote: { key: string; ahead: number }[] = []
+      const aheadByRemote: { key: string, ahead: number }[] = []
       for (const pm of PLATFORM_META) {
         const rs = status.remotes[pm.key]
         if (rs && rs.ahead > 0) {
-          aheadByRemote.push({ key: pm.key, ahead: rs.ahead })
+          aheadByRemote.push({
+            key: pm.key,
+            ahead: rs.ahead,
+          })
         }
       }
       if (aheadByRemote.length > 0) {
@@ -146,8 +202,8 @@ export function useGitPush(manager: GitPushManager) {
   /** 有未提交变更的项目列表 */
   const uncommittedProjects = computed(() => {
     return projects.value
-      .filter(p => workingTrees.value[p.id]?.hasChanges)
-      .map(p => ({
+      .filter((p) => workingTrees.value[p.id]?.hasChanges)
+      .map((p) => ({
         project: p,
         staged: workingTrees.value[p.id]!.stagedCount,
         unstaged: workingTrees.value[p.id]!.unstagedCount,
@@ -155,8 +211,10 @@ export function useGitPush(manager: GitPushManager) {
       }))
   })
 
-  /** 平台配置状态明细（每个项目的各平台是否已配置）
-   *  包含所有「至少缺失一个平台」的项目，按 missingCount 降序排列 */
+  /**
+   * 平台配置状态明细（每个项目的各平台是否已配置）
+   *  包含所有「至少缺失一个平台」的项目，按 missingCount 降序排列
+   */
   interface PlatformStatusItem {
     project: GitProject
     github: boolean
@@ -174,7 +232,14 @@ export function useGitPush(manager: GitPushManager) {
       const cnb = !!p.cnbUrl
       const missingCount = (github ? 0 : 1) + (gitee ? 0 : 1) + (gitea ? 0 : 1) + (cnb ? 0 : 1)
       if (missingCount > 0) {
-        result.push({ project: p, github, gitee, gitea, cnb, missingCount })
+        result.push({
+          project: p,
+          github,
+          gitee,
+          gitea,
+          cnb,
+          missingCount,
+        })
       }
     }
     return result.sort((a, b) => b.missingCount - a.missingCount)
@@ -183,8 +248,8 @@ export function useGitPush(manager: GitPushManager) {
   /** @deprecated 使用 platformStatusProjects 替代 */
   const noPlatformProjects = computed(() => {
     return platformStatusProjects.value
-      .filter(item => item.missingCount === PLATFORM_META.length)
-      .map(item => item.project)
+      .filter((item) => item.missingCount === PLATFORM_META.length)
+      .map((item) => item.project)
   })
 
   /** 最近提交摘要（跨所有项目，含相对时间 + 文件差异信息） */
@@ -212,25 +277,33 @@ export function useGitPush(manager: GitPushManager) {
   })
 
   /** 收藏项目列表 */
-  const starredProjects = computed(() => projects.value.filter(p => p.starred))
+  const starredProjects = computed(() => projects.value.filter((p) => p.starred))
 
   /** 归档项目列表 */
-  const archivedProjects = computed(() => projects.value.filter(p => p.archived))
+  const archivedProjects = computed(() => projects.value.filter((p) => p.archived))
 
   /** 标签使用统计：tag → 项目数（按计数降序） */
-  const tagStats = computed<{ tag: string; count: number }[]>(() => {
+  const tagStats = computed<{ tag: string, count: number }[]>(() => {
     const map = new Map<string, number>()
     for (const p of projects.value) {
       if (!p.archived && p.tags) {
-        for (const t of p.tags) if (t) map.set(t, (map.get(t) || 0) + 1)
+        for (const t of p.tags) { if (t) map.set(t, (map.get(t) || 0) + 1)
+        }
       }
     }
-    return [...map.entries()].map(([tag, count]) => ({ tag, count })).sort((a, b) => b.count - a.count)
+    return [...map.entries()].map(([tag, count]) => ({
+      tag,
+      count,
+    })).sort((a, b) => b.count - a.count)
   })
 
   /** 状态分布统计：status → 项目数 */
   const statusStats = computed(() => {
-    const result = { active: 0, maintenance: 0, paused: 0 }
+    const result = {
+      active: 0,
+      maintenance: 0,
+      paused: 0,
+    }
     for (const p of projects.value) {
       if (p.archived) continue
       const s = p.status || "active"
@@ -274,7 +347,7 @@ export function useGitPush(manager: GitPushManager) {
   async function addProject(name: string, path: string, categoryId = "__ungrouped__", tags?: string[]) {
     // 检查重复：按规范化路径比对
     const normalized = normalizePathForDedup(path)
-    const dup = projects.value.find(p => normalizePathForDedup(p.path) === normalized)
+    const dup = projects.value.find((p) => normalizePathForDedup(p.path) === normalized)
     if (dup) {
       throw new Error(`项目路径已存在："${dup.name}"（${dup.path}）`)
     }
@@ -286,14 +359,14 @@ export function useGitPush(manager: GitPushManager) {
 
   async function removeProject(id: string) {
     await manager.removeProject(id)
-    projects.value = projects.value.filter(p => p.id !== id)
+    projects.value = projects.value.filter((p) => p.id !== id)
     allTags.value = await manager.getAllTags()
   }
 
   async function refreshRemotes(id: string) {
     const updated = await manager.refreshRemotes(id)
     if (updated) {
-      const idx = projects.value.findIndex(p => p.id === id)
+      const idx = projects.value.findIndex((p) => p.id === id)
       if (idx !== -1) {
         projects.value[idx] = updated
         projects.value = [...projects.value]
@@ -304,9 +377,12 @@ export function useGitPush(manager: GitPushManager) {
 
   /** 本地更新单个项目并触发响应式 */
   function patchProject(id: string, patch: Partial<GitProject>) {
-    const idx = projects.value.findIndex(p => p.id === id)
+    const idx = projects.value.findIndex((p) => p.id === id)
     if (idx === -1) return
-    projects.value[idx] = { ...projects.value[idx], ...patch }
+    projects.value[idx] = {
+      ...projects.value[idx],
+      ...patch,
+    }
     projects.value = [...projects.value]
   }
 
@@ -322,7 +398,7 @@ export function useGitPush(manager: GitPushManager) {
 
   /** 切换收藏（高频操作，即时反馈） */
   async function toggleStar(id: string) {
-    const project = projects.value.find(p => p.id === id)
+    const project = projects.value.find((p) => p.id === id)
     if (!project) return
     // 乐观更新：先改本地再持久化
     patchProject(id, { starred: !project.starred })
@@ -358,8 +434,10 @@ export function useGitPush(manager: GitPushManager) {
 
   /** 格式化 Git 操作输出文本（推送/拉取共用） */
   function formatGitOutput(
-    target: Record<string, string>, id: string, opName: string,
-    entries: { label: string; ok: boolean; stdout: string; stderr: string }[],
+    target: Record<string, string>,
+    id: string,
+    opName: string,
+    entries: { label: string, ok: boolean, stdout: string, stderr: string }[],
   ) {
     const lines: string[] = []
     for (const e of entries) {
@@ -372,14 +450,14 @@ export function useGitPush(manager: GitPushManager) {
 
   /** 从 target 字符串获取平台标签 */
   function platformLabel(target: string): string {
-    return PLATFORM_META.find(pm => pm.key === target)?.label ?? "Gitea"
+    return PLATFORM_META.find((pm) => pm.key === target)?.label ?? "Gitea"
   }
 
   /** 将 pushToAll/pullToAll 返回的 result 对象转为格式化 entries 数组（过滤跳过项） */
   function resultToEntries(result: { [key: string]: any }) {
     return PLATFORM_META
-      .filter(pm => (result[pm.key] as any)?.skipped !== true)
-      .map(pm => ({
+      .filter((pm) => (result[pm.key] as any)?.skipped !== true)
+      .map((pm) => ({
         label: pm.label,
         ok: result[pm.key]?.ok ?? false,
         stdout: result[pm.key]?.stdout ?? "",
@@ -404,7 +482,10 @@ export function useGitPush(manager: GitPushManager) {
     try {
       const result = await manager.pushSingle(id, target)
       formatGitOutput(pushOutputs.value, id, "推送", [{
-        label: platformLabel(target), ok: result.ok, stdout: result.stdout, stderr: result.stderr,
+        label: platformLabel(target),
+        ok: result.ok,
+        stdout: result.stdout,
+        stderr: result.stderr,
       }])
       loadPushStatus(id)
       return result
@@ -431,7 +512,10 @@ export function useGitPush(manager: GitPushManager) {
     try {
       const result = await manager.pullSingle(id, target)
       formatGitOutput(pullOutputs.value, id, "拉取", [{
-        label: platformLabel(target), ok: result.ok, stdout: result.stdout, stderr: result.stderr,
+        label: platformLabel(target),
+        ok: result.ok,
+        stdout: result.stdout,
+        stderr: result.stderr,
       }])
       loadPushStatus(id)
       checkConflicts(id) // 异步检测冲突
@@ -449,15 +533,19 @@ export function useGitPush(manager: GitPushManager) {
     pushStatuses.value[id] = await manager.checkPushStatus(id, opts ? { branch: opts.branch } : undefined)
   }
 
-  /** 加载工作区状态
+  /**
+   * 加载工作区状态
    *  @param skipRefresh 跳过 update-index --refresh（首屏/批量探测时传 true 提速；
    *                    stage/commit 等改写 index 的操作后刷新走默认 false，确保读准）
    *  @param branch 当前分支名，传入后节省一次 rev-parse
    */
   async function loadWorkingTree(id: string, skipRefresh = false, branch?: string) {
-    const project = projects.value.find(p => p.id === id)
+    const project = projects.value.find((p) => p.id === id)
     if (!project) return
-    workingTrees.value[id] = await manager.getWorkingTreeStatus(project.path, { skipRefresh, branch })
+    workingTrees.value[id] = await manager.getWorkingTreeStatus(project.path, {
+      skipRefresh,
+      branch,
+    })
   }
 
   /**
@@ -466,7 +554,7 @@ export function useGitPush(manager: GitPushManager) {
    * 专供统计视图批量探测使用。
    */
   async function loadStatsData(id: string) {
-    const project = projects.value.find(p => p.id === id)
+    const project = projects.value.find((p) => p.id === id)
     if (!project) return
 
     const branch = await manager.getBranch(project.path)
@@ -480,7 +568,7 @@ export function useGitPush(manager: GitPushManager) {
 
   /** 加载单个文件差异 */
   async function loadFileDiff(id: string, file: string, staged: boolean) {
-    const project = projects.value.find(p => p.id === id)
+    const project = projects.value.find((p) => p.id === id)
     if (!project) return ""
     const key = `${id}::${staged ? "s" : "u"}::${file}`
     const diff = await manager.getFileDiff(project.path, file, staged)
@@ -490,7 +578,7 @@ export function useGitPush(manager: GitPushManager) {
 
   /** 加载分支提交日志；同时把最近提交时间持久化为 lastActivity（首屏可直接读取展示） */
   async function loadCommitLog(id: string) {
-    const project = projects.value.find(p => p.id === id)
+    const project = projects.value.find((p) => p.id === id)
     if (!project) return
     const entries = await manager.getCommitLog(project.path)
     commitLogs.value[id] = entries
@@ -505,14 +593,14 @@ export function useGitPush(manager: GitPushManager) {
 
   /** 加载分支列表 */
   async function loadBranches(id: string) {
-    const project = projects.value.find(p => p.id === id)
+    const project = projects.value.find((p) => p.id === id)
     if (!project) return
     branches.value[id] = await manager.getBranches(project.path)
   }
 
   /** 切换分支 */
   async function switchBranch(id: string, branch: string) {
-    const project = projects.value.find(p => p.id === id)
+    const project = projects.value.find((p) => p.id === id)
     if (!project) throw new Error("项目未找到")
     // 有变更时 Manager 层已抛异常，此处直接执行
     await manager.switchBranch(project.path, branch)
@@ -525,7 +613,7 @@ export function useGitPush(manager: GitPushManager) {
 
   /** 通过项目路径执行 git 操作的通用包装 */
   async function withProjectPath(id: string, fn: (path: string) => Promise<void>) {
-    const project = projects.value.find(p => p.id === id)
+    const project = projects.value.find((p) => p.id === id)
     if (!project) return
     await fn(project.path)
     await loadWorkingTree(id)
@@ -535,7 +623,7 @@ export function useGitPush(manager: GitPushManager) {
   async function stageItem(id: string, file: string) {
     console.log(`[gitPush:stageItem] id=${id} file=${file}`)
     await withProjectPath(id, (path) => manager.stageFile(path, file))
-    console.log(`[gitPush:stageItem] 完成, files=`, workingTrees.value[id]?.files.map(f => `${f.path}(${f.staged ? "S" : "U"})`))
+    console.log(`[gitPush:stageItem] 完成, files=`, workingTrees.value[id]?.files.map((f) => `${f.path}(${f.staged ? "S" : "U"})`))
   }
 
   /** 暂存全部 */
@@ -547,7 +635,7 @@ export function useGitPush(manager: GitPushManager) {
   async function unstageItem(id: string, file: string) {
     console.log(`[gitPush:unstageItem] id=${id} file=${file}`)
     await withProjectPath(id, (path) => manager.unstageFile(path, file))
-    console.log(`[gitPush:unstageItem] 完成, files=`, workingTrees.value[id]?.files.map(f => `${f.path}(${f.staged ? "S" : "U"})`))
+    console.log(`[gitPush:unstageItem] 完成, files=`, workingTrees.value[id]?.files.map((f) => `${f.path}(${f.staged ? "S" : "U"})`))
   }
 
   /** 取消全部暂存 */
@@ -557,14 +645,14 @@ export function useGitPush(manager: GitPushManager) {
 
   /** 丢弃单个文件的更改 */
   async function discardFile(id: string, file: string, staged: boolean, status: string) {
-    const project = projects.value.find(p => p.id === id)
+    const project = projects.value.find((p) => p.id === id)
     if (!project) throw new Error("项目未找到")
     await manager.discardFile(project.path, file, staged, status)
   }
 
   /** 提交 */
   async function doCommit(id: string, message: string): Promise<string> {
-    const project = projects.value.find(p => p.id === id)
+    const project = projects.value.find((p) => p.id === id)
     if (!project) throw new Error("项目未找到")
     committing.value[id] = true
     try {
@@ -579,9 +667,13 @@ export function useGitPush(manager: GitPushManager) {
   }
 
   /** 自动生成提交信息 */
-  async function generateCommitMsg(id: string): Promise<{ message: string; source: "ai" | "heuristic" }> {
-    const project = projects.value.find(p => p.id === id)
-    if (!project) return { message: "chore: update files", source: "heuristic" }
+  async function generateCommitMsg(id: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
+    const project = projects.value.find((p) => p.id === id)
+    if (!project) { return {
+      message: "chore: update files",
+      source: "heuristic",
+    }
+    }
     return manager.generateCommitMessage(project.path)
   }
 
@@ -596,21 +688,31 @@ export function useGitPush(manager: GitPushManager) {
     return cat
   }
 
-  async function updateCategory(id: string, data: { name?: string; color?: string }) {
+  async function updateCategory(id: string, data: { name?: string, color?: string }) {
     await manager.updateCategory(id, data)
-    categories.value = categories.value.map(c => c.id === id ? { ...c, ...data } : c)
+    categories.value = categories.value.map((c) => c.id === id
+      ? {
+          ...c,
+          ...data,
+        }
+      : c)
   }
 
   async function deleteCategory(id: string) {
     await manager.deleteCategory(id)
-    categories.value = categories.value.filter(c => c.id !== id)
+    categories.value = categories.value.filter((c) => c.id !== id)
     // 受影响的项目 categoryId 已由 Manager 更新，重载项目
     projects.value = await manager.getProjects()
   }
 
   async function moveProject(projectId: string, categoryId: string) {
     await manager.moveProject(projectId, categoryId)
-    projects.value = projects.value.map(p => p.id === projectId ? { ...p, categoryId } : p)
+    projects.value = projects.value.map((p) => p.id === projectId
+      ? {
+          ...p,
+          categoryId,
+        }
+      : p)
   }
 
   async function checkIsGitRepo(path: string) {
@@ -631,7 +733,7 @@ export function useGitPush(manager: GitPushManager) {
   async function withProjectPathStash(id: string, fn: (path: string) => Promise<void>) {
     stashLoading.value[id] = true
     try {
-      const project = projects.value.find(p => p.id === id)
+      const project = projects.value.find((p) => p.id === id)
       if (!project) return
       await fn(project.path)
       await loadStashList(id)
@@ -642,7 +744,7 @@ export function useGitPush(manager: GitPushManager) {
   }
 
   async function loadStashList(id: string) {
-    const project = projects.value.find(p => p.id === id)
+    const project = projects.value.find((p) => p.id === id)
     if (!project) return
     stashEntries.value[id] = await manager.stashList(project.path)
   }
@@ -664,7 +766,7 @@ export function useGitPush(manager: GitPushManager) {
   }
 
   async function generateStashDesc(id: string): Promise<string> {
-    const project = projects.value.find(p => p.id === id)
+    const project = projects.value.find((p) => p.id === id)
     if (!project) return ""
     return manager.generateStashDescription(project.path)
   }
@@ -673,30 +775,33 @@ export function useGitPush(manager: GitPushManager) {
 
   /** 加载 Tag 列表 */
   async function loadTags(id: string): Promise<TagInfo[]> {
-    const project = projects.value.find(p => p.id === id)
+    const project = projects.value.find((p) => p.id === id)
     if (!project) return []
     const list = await manager.getTags(project.path)
-    tagsCache.value = { ...tagsCache.value, [id]: list }
+    tagsCache.value = {
+      ...tagsCache.value,
+      [id]: list,
+    }
     return list
   }
 
   /** 创建 Tag */
   async function createTagOp(id: string, name: string, message?: string) {
-    const project = projects.value.find(p => p.id === id)
+    const project = projects.value.find((p) => p.id === id)
     if (!project) throw new Error("项目未找到")
     await manager.createTag(project.path, name, message)
   }
 
   /** 删除 Tag */
   async function deleteTagOp(id: string, name: string) {
-    const project = projects.value.find(p => p.id === id)
+    const project = projects.value.find((p) => p.id === id)
     if (!project) throw new Error("项目未找到")
     await manager.deleteTag(project.path, name)
   }
 
   /** 推送 Tag 到远程 */
   async function pushTagOp(id: string, remoteName: string, tag: string): Promise<string> {
-    const project = projects.value.find(p => p.id === id)
+    const project = projects.value.find((p) => p.id === id)
     if (!project) throw new Error("项目未找到")
     return manager.pushTag(project.path, remoteName, tag)
   }
@@ -705,16 +810,19 @@ export function useGitPush(manager: GitPushManager) {
 
   /** 检查项目是否有冲突 */
   async function checkConflicts(id: string): Promise<ConflictFile[]> {
-    const project = projects.value.find(p => p.id === id)
+    const project = projects.value.find((p) => p.id === id)
     if (!project) return []
     const files = await manager.getConflictFiles(project.path)
-    conflicts.value = { ...conflicts.value, [id]: files }
+    conflicts.value = {
+      ...conflicts.value,
+      [id]: files,
+    }
     return files
   }
 
   /** 中止合并 */
   async function abortMergeOp(id: string) {
-    const project = projects.value.find(p => p.id === id)
+    const project = projects.value.find((p) => p.id === id)
     if (!project) throw new Error("项目未找到")
     await manager.abortMerge(project.path)
     delete conflicts.value[id]
@@ -723,7 +831,7 @@ export function useGitPush(manager: GitPushManager) {
 
   /** 解决单个冲突文件 */
   async function resolveConflictOp(id: string, file: string, strategy: "theirs" | "ours") {
-    const project = projects.value.find(p => p.id === id)
+    const project = projects.value.find((p) => p.id === id)
     if (!project) throw new Error("项目未找到")
     await manager.resolveConflictFile(project.path, file, strategy)
   }
@@ -755,7 +863,7 @@ export function useGitPush(manager: GitPushManager) {
 
   /** 添加远程仓库并刷新状态 */
   async function addRemoteOp(id: string, name: string, url: string) {
-    const project = projects.value.find(p => p.id === id)
+    const project = projects.value.find((p) => p.id === id)
     if (!project) throw new Error("项目未找到")
     await manager.addRemote(project.path, name, url)
     await refreshRemotes(id)
@@ -764,7 +872,7 @@ export function useGitPush(manager: GitPushManager) {
 
   /** 删除远程仓库并刷新状态 */
   async function removeRemoteOp(id: string, name: string) {
-    const project = projects.value.find(p => p.id === id)
+    const project = projects.value.find((p) => p.id === id)
     if (!project) throw new Error("项目未找到")
     await manager.removeRemote(project.path, name)
     await refreshRemotes(id)
@@ -773,7 +881,7 @@ export function useGitPush(manager: GitPushManager) {
 
   /** 编辑远程仓库 URL 并刷新状态 */
   async function editRemoteOp(id: string, name: string, url: string) {
-    const project = projects.value.find(p => p.id === id)
+    const project = projects.value.find((p) => p.id === id)
     if (!project) throw new Error("项目未找到")
     await manager.setRemoteUrl(project.path, name, url)
     await refreshRemotes(id)
@@ -787,12 +895,12 @@ export function useGitPush(manager: GitPushManager) {
     try {
       const repos = await manager.scanForGitRepos(dirPath)
       const existingPaths = new Set(
-        projects.value.map(p => p.path.replace(/\\/g, "/").replace(/\/+$/, ""))
+        projects.value.map((p) => p.path.replace(/\\/g, "/").replace(/\/+$/, "")),
       )
-      scanResults.value = repos.map(repo => ({
+      scanResults.value = repos.map((repo) => ({
         ...repo,
         alreadyImported: existingPaths.has(
-          repo.path.replace(/\\/g, "/").replace(/\/+$/, "")
+          repo.path.replace(/\\/g, "/").replace(/\/+$/, ""),
         ),
       }))
     } finally {

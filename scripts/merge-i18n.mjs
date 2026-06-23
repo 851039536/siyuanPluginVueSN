@@ -8,8 +8,16 @@
  *   2. 其他模块文件按字母顺序合并（后合并的 key 覆盖先合并的同名 key）
  */
 
-import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { join, dirname } from 'node:path'
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from 'node:fs'
+import {
+  dirname,
+  join,
+} from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -24,7 +32,7 @@ function mergeI18n(lang) {
   }
 
   const files = readdirSync(dir)
-    .filter(f => f.endsWith('.json'))
+    .filter((f) => f.endsWith('.json'))
     .sort((a, b) => {
       // common.json 永远排第一
       if (a === 'common.json') return -1
@@ -38,7 +46,7 @@ function mergeI18n(lang) {
   for (const file of files) {
     try {
       const content = JSON.parse(
-        readFileSync(join(dir, file), 'utf-8')
+        readFileSync(join(dir, file), 'utf-8'),
       )
       const keys = Object.keys(content)
       totalKeys += keys.length
@@ -51,21 +59,27 @@ function mergeI18n(lang) {
   }
 
   const outFile = join(I18N_DIR, `${lang}.json`)
-  const newContent = JSON.stringify(result, null, 2) + '\n'
+  const newContent = `${JSON.stringify(result, null, 2)}\n`
 
   // 产物无变化时跳过写入，避免触发 Vite 文件监听导致重复构建
   if (existsSync(outFile)) {
     const existing = readFileSync(outFile, 'utf-8')
     if (existing === newContent) {
       console.log(`⏭️  ${lang}: No changes (${Object.keys(result).length} top-level keys / ${totalKeys} total)\n`)
-      return { topLevelKeys: Object.keys(result).length, totalKeys }
+      return {
+        topLevelKeys: Object.keys(result).length,
+        totalKeys,
+      }
     }
   }
 
   writeFileSync(outFile, newContent, 'utf-8')
   console.log(`✅ ${lang}: ${Object.keys(result).length} top-level keys (${totalKeys} total including nested)\n`)
 
-  return { topLevelKeys: Object.keys(result).length, totalKeys }
+  return {
+    topLevelKeys: Object.keys(result).length,
+    totalKeys,
+  }
 }
 
 function main() {

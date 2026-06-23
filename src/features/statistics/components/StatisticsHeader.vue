@@ -34,14 +34,20 @@
     >
       <span class="storage-key">{{ item.key }}</span>
       <span class="storage-desc">{{ item.desc }}</span>
-      <span class="storage-path" :title="item.path">{{ item.path }}</span>
+      <span
+        class="storage-path"
+        :title="item.path"
+      >{{ item.path }}</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { IconKey } from "@/config/icons"
-import { computed, ref } from "vue"
+import {
+  computed,
+  ref,
+} from "vue"
 import Button from "@/components/Button.vue"
 
 interface StoragePathItem {

@@ -2,7 +2,12 @@
  * 单词阅读功能模块
  */
 import { Plugin } from "siyuan"
-import { FlashcardReading } from "./FlashcardReading"
+import {
+  FlashcardReading,
+  toggleFlashcardDialog,
+} from "./FlashcardReading"
+
+export { toggleFlashcardDialog }
 
 /**
  * 注册单词阅读功能

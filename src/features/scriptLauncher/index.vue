@@ -36,7 +36,7 @@
         variant="ghost"
         size="small"
         icon="folder"
-        :title="'打开 data/storage/sc/'"
+        title="打开 data/storage/sc/"
         @click="openScFolder"
       />
     </div>
@@ -65,10 +65,17 @@
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
-import type { CreateScriptDTO, Script, ScriptLanguage } from "./types"
+import type {
+  CreateScriptDTO,
+  Script,
+  ScriptLanguage,
+} from "./types"
 import type { I18n } from "./types/index"
-import { computed, ref } from "vue"
 import { showMessage } from "siyuan"
+import {
+  computed,
+  ref,
+} from "vue"
 import Button from "@/components/Button.vue"
 import ScriptEditor from "./components/ScriptEditor.vue"
 import ScriptList from "./components/ScriptList.vue"

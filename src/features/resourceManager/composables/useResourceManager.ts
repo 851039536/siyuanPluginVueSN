@@ -23,8 +23,8 @@ import {
   sql,
   updateBlock,
 } from "@/api"
-import { PluginStorage } from "@/utils/pluginStorage"
 import { copyToClipboard } from "@/utils/domUtils"
+import { PluginStorage } from "@/utils/pluginStorage"
 
 const IMAGE_EXT = /\.(?:png|jpg|jpeg|gif|svg|webp|bmp|ico|tiff|avif)$/i
 const BUILT_IN_CATEGORY_KEYS = new Set(["images", "net", "tool", "other"])
@@ -80,10 +80,10 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
   const totalAssetCount = computed(() => {
     const list = activeTab.value === "fileAssets" ? fileAssets.value : imageAssets.value
     if (!categoryFilter.value) {
-      const categoryKeys = quickCategories.value.map(c => c.key)
+      const categoryKeys = quickCategories.value.map((c) => c.key)
       return list.filter((item) => {
         const lower = item.path.toLowerCase()
-        return !categoryKeys.some(key => lower.startsWith(`assets/${key.toLowerCase()}/`))
+        return !categoryKeys.some((key) => lower.startsWith(`assets/${key.toLowerCase()}/`))
       }).length
     }
     const prefix = `assets/${categoryFilter.value}/`
@@ -93,11 +93,11 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
   const currentAssetList = computed(() => {
     const list = activeTab.value === "fileAssets" ? fileAssets.value : imageAssets.value
     if (!categoryFilter.value) {
-      const categoryKeys = quickCategories.value.map(c => c.key)
+      const categoryKeys = quickCategories.value.map((c) => c.key)
       return list
         .filter((item) => {
           const lower = item.path.toLowerCase()
-          return !categoryKeys.some(key => lower.startsWith(`assets/${key.toLowerCase()}/`))
+          return !categoryKeys.some((key) => lower.startsWith(`assets/${key.toLowerCase()}/`))
         })
         .slice(0, loadLimit.value)
     }
@@ -286,7 +286,7 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
 
     const shouldRemove = categoryFilter.value
       ? !newPath.startsWith(`assets/${categoryFilter.value}/`)
-      : quickCategories.value.some(cat => newPath.startsWith(`assets/${cat.key}/`))
+      : quickCategories.value.some((cat) => newPath.startsWith(`assets/${cat.key}/`))
 
     if (shouldRemove) {
       target.value = target.value.filter((item) => item.path !== oldPath)

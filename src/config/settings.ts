@@ -7,11 +7,11 @@
  * 此处仅保留插件全局配置（PluginSettings）。
  */
 import { Plugin } from "siyuan"
+import { getNodeModules } from "@/utils/nodeModules"
 import {
   decryptSetting,
   encryptSetting,
 } from "@/utils/settingsCrypto"
-import { getNodeModules } from "@/utils/nodeModules"
 
 /**
  * 插件配置接口

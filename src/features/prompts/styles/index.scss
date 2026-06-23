@@ -1,9 +1,171 @@
-// ==================== Skills 样式聚合入口 ====================
-// 按视觉区域拆分为 5 个 partial，均引用 _mixins.scss 共享模块
+@use "@/variables" as *;
+@use "./mixins" as m;
 
-@use "./mixins";
-@use "./modal";
-@use "./grid";
-@use "./form";
-@use "./category";
-@use "./responsive";
+// ==================== 模态基座 + 共享样式 — index.vue + 子组件共用 ====================
+
+.vp-overlay {
+  @include m.modal-overlay;
+}
+
+.vp-modal {
+  @include m.modal-base;
+  width: 90%;
+  max-width: m.$modal-large-max-width;
+
+  &.vp-modal--small {
+    max-width: m.$modal-small-max-width;
+  }
+
+  &.vp-modal--form {
+    max-width: m.$modal-form-max-width;
+  }
+}
+
+.vp-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-3 $spacing-4;
+  border-bottom: 1px solid var(--b3-border-color);
+
+  .vp-modal-title {
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+
+    .vp-modal-icon {
+      color: var(--b3-theme-primary);
+      flex-shrink: 0;
+
+      &--danger {
+        color: var(--b3-theme-error);
+      }
+    }
+
+    h2 {
+      margin: 0;
+      font-size: $font-size-xl;
+      font-weight: 600;
+      color: var(--b3-theme-on-background);
+      font-family: $font-heading;
+    }
+  }
+
+  .vp-modal-actions {
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+  }
+}
+
+.vp-modal-body {
+  padding: $spacing-3 $spacing-4;
+  overflow-y: auto;
+  flex: 1;
+}
+
+// Loading / Empty 状态
+.vp-loading {
+  text-align: center;
+  padding: $spacing-16 $spacing-4;
+  color: var(--b3-theme-on-surface-light);
+  font-size: $font-size-sm;
+  font-family: $font-body;
+}
+
+.vp-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: $spacing-10 $spacing-4;
+  color: var(--b3-theme-on-surface-light);
+  font-size: $font-size-sm;
+  font-style: italic;
+  opacity: 0.35;
+}
+
+// 表单操作栏（PromptFormModal + DeleteConfirmModal 共用）
+.vp-form-actions {
+  display: flex;
+  gap: $spacing-3;
+  justify-content: flex-end;
+  margin-top: $spacing-6;
+}
+
+// ==================== 响应式 ====================
+
+@media (max-width: 768px) {
+  .vp-modal {
+    width: 95%;
+    max-height: 95vh;
+  }
+
+  .vp-modal-header {
+    padding: $spacing-4 $spacing-5;
+
+    .vp-modal-title {
+      .vp-modal-icon {
+        width: 20px;
+        height: 20px;
+      }
+
+      h2 {
+        font-size: $font-size-base;
+      }
+    }
+  }
+
+  .vp-modal-body {
+    padding: $spacing-4 $spacing-5;
+  }
+
+  .vp-category-filter {
+    gap: $spacing-1;
+
+    .vp-chip {
+      font-size: $font-size-xs;
+      padding: $spacing-1 $spacing-2;
+    }
+  }
+
+  .vp-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .vp-controls {
+    flex-direction: column;
+
+    .vp-search .vp-input--search {
+      padding: $spacing-2 $spacing-3 $spacing-2 36px;
+    }
+  }
+
+  .vp-content-editor-item {
+    flex-direction: column;
+    gap: $spacing-2;
+  }
+
+  .vp-content-editor-actions {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+
+  .vp-card {
+    .vp-card-icon {
+      width: 16px;
+      height: 16px;
+    }
+
+    h3 {
+      font-size: $font-size-base;
+    }
+
+    .vp-tag {
+      font-size: 10px;
+      padding: 0 $spacing-1;
+    }
+  }
+
+  .vp-input {
+    font-size: $font-size-sm;
+  }
+}

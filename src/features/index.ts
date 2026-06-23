@@ -69,9 +69,9 @@ export {
   skillsViewerVisible,
 } from "./skillsViewer"
 export {
-  registerSkills,
-  showSkillsModal,
-} from "./skills"
+  registerPrompts,
+  showPromptsModal,
+} from "./prompts"
 export {
   getStatisticsInstance,
   registerStatistics,
@@ -114,7 +114,7 @@ type _Registered =
   | "flashcardReading" | "passwordVault" | "docAnalysis"
   | "formatAssistant" | "htmlViewer" | "rssReader" | "resourceManager"
   | "skillsViewer" | "themeColor" | "bookmarkMarker" | "apiDebugger"
-  | "scriptLauncher" | "websiteNavigation" | "dataBackup" | "dataSnapshot" | "gitPush" | "skillLearning" | "skills" | "toolCollection"
+  | "scriptLauncher" | "websiteNavigation" | "dataBackup" | "dataSnapshot" | "gitPush" | "skillLearning" | "prompts" | "toolCollection"
 
 // --- 编译时断言辅助 ---
 // 利用泛型接口约束 T extends true 产生 TypeScript 编译错误，无运行时开销

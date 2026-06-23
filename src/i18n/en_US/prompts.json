@@ -1,10 +1,10 @@
 {
-  "skills": {
+  "prompts": {
     "label": "Prompts",
     "title": "Prompts Library",
     "description": "Manage frequently used prompt templates",
-    "enableSkills": "Enable Prompts Library",
-    "enableSkillsDesc": "Add Prompts button to floating box, manage prompt templates",
+    "enablePrompts": "Enable Prompts Library",
+    "enablePromptsDesc": "Add Prompts button to floating box, manage prompt templates",
     "modal": {
       "title": "Prompts Library",
       "close": "Close",

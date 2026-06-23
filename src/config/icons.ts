@@ -160,8 +160,8 @@ export const FEATURE_ICONS = {
     color: "#06b6d4",
   },
 
-  // 技能库
-  skills: {
+  // 提示词库
+  prompts: {
     icon: "mdi:brain",
     color: "#a855f7",
   },

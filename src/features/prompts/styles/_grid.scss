@@ -1,5 +1,5 @@
 @use "@/variables" as *;
-@use "./mixins" as floatingBox;
+@use "./mixins" as m;
 
 // ==================== 网格/卡片/搜索样式 ====================
 
@@ -89,12 +89,12 @@
 .vp-card {
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: floatingBox.$card-border-radius;
+  border-radius: m.$card-border-radius;
   padding: $spacing-2;
   position: relative;
   overflow: hidden;
   transition: all 0.12s;
-  @include floatingBox.card-hover;
+  @include m.card-hover;
 
   &::before {
     content: '';

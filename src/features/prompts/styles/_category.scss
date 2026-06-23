@@ -1,5 +1,5 @@
 @use "@/variables" as *;
-@use "./mixins" as floatingBox;
+@use "./mixins" as m;
 
 // ==================== 分类管理样式 ====================
 
@@ -13,7 +13,7 @@
 
     .vp-input {
       flex: 1;
-      @include floatingBox.form-input;
+      @include m.form-input;
     }
 
     .vp-color-input {

@@ -3,11 +3,11 @@ import type { FloatingTool } from "../types"
 import { emitCustomEvent } from "@/utils/eventBus"
 
 export function createPromptsTool(plugin: Plugin): FloatingTool {
-  const skills = (plugin.i18n as any)?.skills || {}
+  const prompts = (plugin.i18n as any)?.prompts || {}
   return {
-    id: "skills",
-    label: skills.label || "Prompts",
-    title: skills.title || "提示词库",
+    id: "prompts",
+    label: prompts.label || "Prompts",
+    title: prompts.title || "提示词库",
     icon: "mdi:star",
     bgColor: "#667eea",
     action: () => {

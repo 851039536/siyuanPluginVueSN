@@ -8,7 +8,7 @@ $modal-z-index: 1000;
 $modal-small-max-width: 500px;
 $modal-form-max-width: 900px;
 $modal-large-max-width: 1200px;
-$card-border-radius: 8px;
+$card-border-radius: $radius-md;
 
 @mixin modal-overlay {
   position: fixed;

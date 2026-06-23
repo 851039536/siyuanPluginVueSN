@@ -15,6 +15,14 @@ export interface FeatureAction {
   hotkey: string
 }
 
+export interface SubFeatureMeta {
+  id: string
+  defaultLabel: string
+  labelI18nKey?: string
+  icon: string
+  color: string
+}
+
 export interface FeatureMeta {
   id: string
   defaultTitle: string
@@ -22,6 +30,7 @@ export interface FeatureMeta {
   titleI18nKey?: string
   descI18nKey?: string
   actions?: FeatureAction[]
+  subFeatures?: SubFeatureMeta[]
 }
 
 export const FEATURE_CONFIG = [
@@ -36,7 +45,7 @@ export const FEATURE_CONFIG = [
     defaultDesc: "批量压缩文档中的图片",
     actions: [{
       key: "openCompressor",
-      label: "打开压缩器",
+      label: "打开",
       hotkey: "Ctrl+Alt+C",
     }],
   },
@@ -98,15 +107,9 @@ export const FEATURE_CONFIG = [
     defaultDesc: "显示笔记数据统计和分析",
   },
   {
-    id: "pronunciation",
-    defaultTitle: "谐音翻译",
-    defaultDesc: "英文单词生成谐音记忆，中文词语翻译成英文后生成谐音",
-    titleI18nKey: "pronunciationHelp",
-  },
-  {
     id: "encryption",
     defaultTitle: "内容加密",
-    defaultDesc: "使用 AES-256-GCM 算法对选中文本进行加密和解密",
+    defaultDesc: "使用算法对选中文本进行加密和解密",
     descI18nKey: "enableEncryptionDesc",
   },
   {
@@ -115,7 +118,7 @@ export const FEATURE_CONFIG = [
     defaultDesc: "管理和播放文档中的视频文件",
     actions: [{
       key: "openVideoManager",
-      label: "打开管理器",
+      label: "打开",
       hotkey: "Ctrl+Alt+V",
     }],
   },
@@ -125,7 +128,7 @@ export const FEATURE_CONFIG = [
     defaultDesc: "本地文件快速搜索工具",
     actions: [{
       key: "openEverythingSearch",
-      label: "打开搜索",
+      label: "打开",
       hotkey: "Ctrl+Alt+E",
     }],
   },
@@ -142,6 +145,22 @@ export const FEATURE_CONFIG = [
     defaultDesc: "选中文字时显示包含多种操作的工具栏",
     titleI18nKey: "floatingToolbar.title",
     descI18nKey: "floatingToolbarDescription",
+    subFeatures: [
+      {
+        id: "translate",
+        defaultLabel: "英译中替换",
+        labelI18nKey: "floatingToolbar.translate",
+        icon: "mdi:translate",
+        color: "#0d9488",
+      },
+      {
+        id: "pronunciation",
+        defaultLabel: "谐音翻译",
+        labelI18nKey: "floatingToolbar.pronunciation",
+        icon: "mdi:volume-high",
+        color: "#f43f5e",
+      },
+    ],
   },
   {
     id: "floatingBox",
@@ -187,12 +206,6 @@ export const FEATURE_CONFIG = [
     defaultDesc: "自动标记文档中来自单词本的英文词汇，根据练习次数显示热力渐变",
   },
   {
-    id: "translate",
-    defaultTitle: "英译中替换",
-    defaultDesc: "在浮动工具栏中快速翻译英文并替换",
-    titleI18nKey: "floatingToolbar.translate",
-  },
-  {
     id: "docAnalysis",
     defaultTitle: "文档分析",
     defaultDesc: "分析文档内容大小，查找小文档",
@@ -205,7 +218,7 @@ export const FEATURE_CONFIG = [
     defaultDesc: "将Markdown文档转换为微信公众号等平台的富文本格式",
     actions: [{
       key: "openFormatAssistant",
-      label: "打开排版助手",
+      label: "打开",
       hotkey: "Ctrl+Alt+G",
     }],
   },

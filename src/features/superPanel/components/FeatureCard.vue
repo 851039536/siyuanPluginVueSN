@@ -60,6 +60,31 @@
     </div>
     <span class="feature-desc">{{ feature.desc }}</span>
       <div
+        v-if="feature.subFeatures?.length"
+        class="feature-sub-features"
+      >
+        <div
+          v-for="sub in feature.subFeatures"
+          :key="sub.id"
+          class="sub-feature-item"
+        >
+          <div class="sub-feature-icon">
+            <Icon
+              :icon="sub.icon"
+              :size="10"
+              :style="{ color: sub.color }"
+            />
+          </div>
+          <span class="sub-feature-label">{{ sub.label }}</span>
+          <Switch
+            :model-value="sub.enabled"
+            size="small"
+            class="sub-feature-toggle"
+            @update:model-value="emit('toggleSubFeature', sub.id)"
+          />
+        </div>
+      </div>
+      <div
         v-if="selectorOptions && selectorOptions.length > 0"
         class="feature-selector"
       >
@@ -105,6 +130,7 @@
 import type {
   Feature,
   FeatureStatus,
+  SubFeature,
 } from "../types"
 import {
   computed,
@@ -113,6 +139,7 @@ import {
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Switch from "@/components/Switch.vue"
+import { Icon } from "@iconify/vue"
 import { useClickOutside } from "../composables/useClickOutside"
 import { FEATURE_STATUSES } from "../types"
 
@@ -137,6 +164,7 @@ interface Emits {
   (e: "select", value: string): void
   (e: "statusChange", status: FeatureStatus): void
   (e: "openVersions"): void
+  (e: "toggleSubFeature", featureId: string): void
 }
 
 const props = defineProps<Props>()

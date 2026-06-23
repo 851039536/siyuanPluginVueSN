@@ -124,12 +124,6 @@ export const FEATURE_ICONS = {
     color: "#0ea5e9",
   },
 
-  // 谐音翻译
-  pronunciation: {
-    icon: "mdi:volume-high",
-    color: "#f43f5e",
-  },
-
   // 内容加密
   encryption: {
     icon: "mdi:lock",
@@ -216,12 +210,6 @@ export const FEATURE_ICONS = {
   flashcardQuery: {
     icon: "mdi:magnify",
     color: "#3b82f6",
-  },
-
-  // 翻译替换
-  translate: {
-    icon: "mdi:translate",
-    color: "#0d9488",
   },
 
   // 编程字段翻译

@@ -278,3 +278,47 @@ $status-colors: (
   opacity: 0;
   transform: translateY(-4px);
 }
+
+// ---- 子功能开关列表（浮动工具栏下方） ----
+.feature-sub-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sub-feature-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--b3-border-color);
+  background: var(--b3-theme-surface);
+  transition: border-color 0.12s;
+
+  &:hover {
+    border-color: var(--b3-theme-primary-lightest);
+  }
+}
+
+.sub-feature-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  background: var(--b3-theme-primary-lightest);
+}
+
+.sub-feature-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.75;
+  line-height: 1.4;
+}
+
+.sub-feature-toggle {
+  margin-left: auto;
+}

@@ -1,0 +1,175 @@
+@use '@/variables.scss' as *;
+
+// ==================== 遮罩层 ====================
+.tool-collection-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+// ==================== 底部面板 ====================
+.tool-collection-panel {
+  width: 100%;
+  max-width: 1060px;
+  min-height: calc(60vh + 200px);
+  max-height: calc(85vh);
+  background: var(--b3-theme-background);
+  border-radius: $radius-lg $radius-lg 0 0;
+  border: 1px solid var(--b3-border-color);
+  border-bottom: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+// ==================== Tab 标签栏 ====================
+.tool-collection-tabs {
+  display: flex;
+  gap: 0;
+  padding: $spacing-2 $spacing-3 0;
+  border-bottom: 1px solid var(--b3-border-color);
+  flex-shrink: 0;
+  overflow-x: auto;
+
+  &::-webkit-scrollbar {
+    height: 0;
+  }
+}
+
+.tab-btn {
+  position: relative;
+  padding: $spacing-2 $spacing-4;
+  border: none;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-sm;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s;
+  user-select: none;
+  flex-shrink: 0;
+
+  &:hover {
+    color: var(--b3-theme-primary);
+  }
+
+  &.active {
+    color: var(--b3-theme-primary);
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: $spacing-2;
+      right: $spacing-2;
+      height: 2px;
+      background: var(--b3-theme-primary);
+      border-radius: 2px 2px 0 0;
+    }
+  }
+}
+
+// ==================== 工具内容区 ====================
+.tool-collection-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: $spacing-3;
+  min-height: 0;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--b3-scrollbar-color);
+    border-radius: 3px;
+  }
+}
+
+// ==================== 面板头部 ====================
+.tool-collection-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-2 $spacing-3;
+  border-bottom: 1px solid var(--b3-border-color);
+  flex-shrink: 0;
+
+  .header-title {
+    font-size: $font-size-sm;
+    font-weight: 600;
+    color: var(--b3-theme-on-background);
+  }
+
+  .header-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $radius-sm;
+    background: transparent;
+    color: var(--b3-theme-on-surface);
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.12s, color 0.12s, border-color 0.12s;
+
+    &:hover {
+      opacity: 1;
+      color: var(--b3-theme-primary);
+      border-color: var(--b3-theme-primary);
+    }
+  }
+}
+
+// ==================== 过渡动画 ====================
+.slide-up-enter-active {
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  .tool-collection-panel {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+.slide-up-leave-active {
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  .tool-collection-panel {
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+.slide-up-enter-from {
+  opacity: 0;
+
+  .tool-collection-panel {
+    transform: translateY(100%);
+  }
+}
+
+.slide-up-leave-to {
+  opacity: 0;
+
+  .tool-collection-panel {
+    transform: translateY(100%);
+  }
+}
+
+// ==================== 响应式 ====================
+@media (max-width: 860px) {
+  .tool-collection-panel {
+    max-width: 100%;
+    border-radius: $radius-lg $radius-lg 0 0;
+  }
+
+  .tool-collection-content {
+    padding: $spacing-2;
+  }
+}

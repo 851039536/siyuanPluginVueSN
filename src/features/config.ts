@@ -304,6 +304,13 @@ export const FEATURE_CONFIG = [
     titleI18nKey: "skillLearning.title",
     descI18nKey: "skillLearning.description",
   },
+  {
+    id: "toolCollection",
+    defaultTitle: "工具合集",
+    defaultDesc: "底部面板集成多种实用小工具，支持 Tab 切换",
+    titleI18nKey: "toolCollection",
+    descI18nKey: "toolCollectionDesc",
+  },
 ] as const
 
 /**

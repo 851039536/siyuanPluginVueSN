@@ -1,0 +1,9 @@
+{
+  "toolCollection": "工具合集",
+  "toolCollectionDesc": "底部面板集成多种实用小工具",
+  "enableToolCollection": "启用工具合集",
+  "enableToolCollectionDesc": "在状态栏显示工具合集开关，点击从底部展开工具面板",
+  "toolCollection_tabs_base64Image": "Base64图片转换",
+  "toolCollection_defaultTitle": "工具合集",
+  "toggleToolCollection": "工具合集"
+}

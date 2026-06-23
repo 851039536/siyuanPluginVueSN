@@ -58,6 +58,7 @@ export interface PluginSettings {
   enableDataSnapshot: boolean // 是否启用数据快照功能
   enableGitPush: boolean // 是否启用Git推送功能
   enableSkillLearning: boolean // 是否启用技能学习功能
+  enableToolCollection: boolean // 是否启用工具合集功能
   featureStatus: Record<string, string> // 功能状态标识: featureId -> 'stable' | 'needsFix' | 'critical' | 'minor'
   themeColorScheme: string // 主题色方案: 'orange' | 'github'
   videoCategories?: string[] // 视频分类列表
@@ -125,6 +126,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableDataSnapshot: true,
   enableGitPush: true,
   enableSkillLearning: true,
+  enableToolCollection: true,
   featureStatus: {},
   themeColorScheme: "orange",
   videoCategories: ["默认分类", "教程", "演示", "其他"],

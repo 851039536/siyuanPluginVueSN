@@ -246,6 +246,18 @@ const FEATURES: FeatureRegistryEntry[] = [
     },
     action: () => emitCustomEvent("openImageCompressor"),
   },
+  {
+    id: "toolCollection",
+    icon: "mdi:toolbox-outline",
+    color: "#6366f1",
+    title: props.plugin?.i18n?.toolCollection || "工具合集",
+    pinnable: true,
+    shortcut: {
+      icon: "mdi:toolbox-outline",
+      itemClass: "action-item tool-collection-item",
+    },
+    action: () => emitCustomEvent("toggleToolCollection"),
+  },
   // ========== 状态栏监控项（可固定控制显隐） ==========
   {
     id: "monitor-notes",

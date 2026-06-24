@@ -1,0 +1,156 @@
+import type {
+  GitProject,
+  GitPushManager,
+  ProjectCategory,
+} from "../types"
+import { ref } from "vue"
+import { findProject, normalizePathForDedup } from "../utils"
+
+export function useProjectCrud(manager: GitPushManager) {
+  const projects = ref<GitProject[]>([])
+  const categories = ref<ProjectCategory[]>([])
+  const loading = ref(false)
+  const allTags = ref<string[]>([])
+
+  async function loadProjects() {
+    loading.value = true
+    try {
+      categories.value = await manager.getCategories()
+      projects.value = await manager.getProjects()
+      allTags.value = await manager.getAllTags()
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function addProject(name: string, path: string, categoryId = "__ungrouped__", tags?: string[]) {
+    const normalized = normalizePathForDedup(path)
+    const dup = projects.value.find((p) => normalizePathForDedup(p.path) === normalized)
+    if (dup) {
+      throw new Error(`项目路径已存在："${dup.name}"（${dup.path}）`)
+    }
+    const project = await manager.addProject(name, path, categoryId, tags)
+    projects.value = [...projects.value, project]
+    if (tags && tags.length > 0) allTags.value = await manager.getAllTags()
+    return project
+  }
+
+  async function removeProject(id: string) {
+    await manager.removeProject(id)
+    projects.value = projects.value.filter((p) => p.id !== id)
+    allTags.value = await manager.getAllTags()
+  }
+
+  /** 本地更新单个项目并触发响应式 */
+  function patchProject(id: string, patch: Partial<GitProject>) {
+    const idx = projects.value.findIndex((p) => p.id === id)
+    if (idx === -1) return
+    projects.value[idx] = { ...projects.value[idx], ...patch }
+    projects.value = [...projects.value]
+  }
+
+  async function updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "name" | "tags" | "starred" | "status" | "archived" | "note" | "githubUrl" | "giteeUrl" | "giteaUrl">>) {
+    const updated = await manager.updateProjectMeta(id, patch)
+    if (updated) {
+      patchProject(id, patch)
+      if (patch.tags !== undefined) allTags.value = await manager.getAllTags()
+    }
+    return updated
+  }
+
+  /** 切换收藏（高频操作，乐观更新） */
+  async function toggleStar(id: string) {
+    const project = findProject(projects, id)
+    if (!project) return
+    patchProject(id, { starred: !project.starred })
+    await manager.toggleStar(id)
+  }
+
+  async function setProjectStatus(id: string, status: GitProject["status"]) {
+    if (!status) return
+    patchProject(id, { status })
+    await manager.setProjectStatus(id, status)
+  }
+
+  async function appendTag(id: string, tag: string) {
+    const updated = await manager.appendTag(id, tag)
+    if (updated) {
+      patchProject(id, { tags: updated.tags })
+      allTags.value = await manager.getAllTags()
+    }
+    return updated
+  }
+
+  async function removeTag(id: string, tag: string) {
+    const updated = await manager.removeTag(id, tag)
+    if (updated) {
+      patchProject(id, { tags: updated.tags })
+      allTags.value = await manager.getAllTags()
+    }
+    return updated
+  }
+
+  async function refreshRemotes(id: string) {
+    const updated = await manager.refreshRemotes(id)
+    if (updated) {
+      const idx = projects.value.findIndex((p) => p.id === id)
+      if (idx !== -1) {
+        projects.value[idx] = updated
+        projects.value = [...projects.value]
+      }
+    }
+    return updated
+  }
+
+  // ── 分类操作 ──
+  async function loadCategories() {
+    categories.value = await manager.getCategories()
+  }
+
+  async function addCategory(name: string, color?: string) {
+    const cat = await manager.addCategory(name, color)
+    categories.value = [...categories.value, cat]
+    return cat
+  }
+
+  async function updateCategory(id: string, data: { name?: string, color?: string }) {
+    await manager.updateCategory(id, data)
+    categories.value = categories.value.map((c) =>
+      c.id === id ? { ...c, ...data } : c,
+    )
+  }
+
+  async function deleteCategory(id: string) {
+    await manager.deleteCategory(id)
+    categories.value = categories.value.filter((c) => c.id !== id)
+    projects.value = await manager.getProjects()
+  }
+
+  async function moveProject(projectId: string, categoryId: string) {
+    await manager.moveProject(projectId, categoryId)
+    projects.value = projects.value.map((p) =>
+      p.id === projectId ? { ...p, categoryId } : p,
+    )
+  }
+
+  return {
+    projects,
+    categories,
+    loading,
+    allTags,
+    loadProjects,
+    addProject,
+    removeProject,
+    updateProjectMeta,
+    toggleStar,
+    setProjectStatus,
+    appendTag,
+    removeTag,
+    refreshRemotes,
+    loadCategories,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+    moveProject,
+  }
+}

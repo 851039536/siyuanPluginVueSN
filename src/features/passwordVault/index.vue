@@ -107,17 +107,14 @@
                     size="small"
                     title="导出所有数据"
                     @click="openExportConfirm"
-                  >
-                    导出
-                  </Button>
+                  />
                   <Button
                     icon="add"
                     variant="primary"
                     size="small"
+                    title="添加密码"
                     @click="openAddModal"
-                  >
-                    添加密码
-                  </Button>
+                  />
                 </div>
 
                 <div class="entries-grid">
@@ -304,6 +301,7 @@
                       value: cat.id,
                       label: cat.name,
                     }))"
+                    size="small"
                     required
                   />
                 </div>
@@ -313,6 +311,7 @@
                     v-model="entryForm.name"
                     label="名称"
                     type="text"
+                    size="small"
                     placeholder="请输入名称（如：Google、GitHub等）"
                     required
                   />
@@ -323,6 +322,7 @@
                     v-model="entryForm.account"
                     label="账号"
                     type="text"
+                    size="small"
                     placeholder="请输入账号"
                     required
                   />
@@ -333,6 +333,7 @@
                     v-model="entryForm.password"
                     label="密码"
                     :type="showFormPassword ? 'text' : 'password'"
+                    size="small"
                     placeholder="请输入密码"
                     :show-password="true"
                     required
@@ -344,6 +345,7 @@
                     v-model="entryForm.description"
                     type="textarea"
                     label="描述"
+                    size="small"
                     placeholder="请输入描述信息"
                     :rows="3"
                   />
@@ -404,6 +406,7 @@
                   <Input
                     v-model="newCategory.name"
                     type="text"
+                    size="small"
                     placeholder="类别名称"
                     :maxlength="10"
                   />
@@ -542,6 +545,7 @@
                   v-model="oldPassword"
                   label="当前密码"
                   :type="showOldPassword ? 'text' : 'password'"
+                  size="small"
                   placeholder="请输入当前密码"
                   :show-password="true"
                   required
@@ -551,6 +555,7 @@
                   v-model="newPassword"
                   label="新密码"
                   :type="showNewPassword ? 'text' : 'password'"
+                  size="small"
                   placeholder="请输入新密码"
                   :show-password="true"
                   :minlength="6"
@@ -561,6 +566,7 @@
                   v-model="confirmPassword"
                   label="确认新密码"
                   :type="showConfirmPassword ? 'text' : 'password'"
+                  size="small"
                   placeholder="请再次输入新密码"
                   :show-password="true"
                   :minlength="6"

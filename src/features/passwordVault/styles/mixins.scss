@@ -1,22 +1,10 @@
 /**
  * PasswordVault 模块共享 Mixins
  * 提取公共样式，避免在多个文件中重复定义
+ * 全局 Token 来自 _variables.scss（font-size/weight/spacing/radius/vp- 系列）
  */
 
-@use '@/index.scss' as *;
 @use '@/variables.scss' as *;
-
-// ============================================================
-// 本模块未 import superPanel，以下 Codex Token 本地声明
-// 若有多个模块需要，后续可抽到共享 Codex partial 文件
-// ============================================================
-
-$vp-radius: 6px !default;
-$vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace !default;
-$spacing-xs: 4px !default;
-$spacing-sm: 8px !default;
-$spacing-md: 12px !default;
-$spacing-lg: 16px !default;
 
 // ============================================================
 // Flex 布局 Mixins
@@ -84,8 +72,8 @@ $spacing-lg: 16px !default;
 }
 
 @mixin heading-style {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-background);
   margin: 0;
   font-family: $font-heading;
@@ -126,8 +114,8 @@ $spacing-lg: 16px !default;
 
   .header-title {
     @include flex-row-gap(10px);
-    font-size: 18px;
-    font-weight: 600;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
     color: var(--b3-theme-on-background);
     font-family: $font-heading;
 
@@ -141,8 +129,8 @@ $spacing-lg: 16px !default;
     }
 
     .entry-count {
-      font-size: 11px;
-      font-weight: 600;
+      font-size: $font-size-xs;
+      font-weight: $font-weight-semibold;
       font-variant-numeric: tabular-nums;
       font-family: $vp-mono;
       color: var(--b3-theme-on-surface-light);
@@ -158,7 +146,7 @@ $spacing-lg: 16px !default;
 // ============================================================
 
 @mixin error-message {
-  @include flex-row-gap($spacing-sm);
+  @include flex-row-gap($spacing-2);
   padding: 10px 14px;
   background: rgba($brand-destructive, 0.1);
   color: $brand-destructive;

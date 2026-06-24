@@ -699,6 +699,7 @@
                   <Input
                     v-model="exportPassword"
                     type="password"
+                    size="small"
                     placeholder="请输入主密码"
                     :visible="showExportPwd"
                     @keyup.enter="verifyAndExport"

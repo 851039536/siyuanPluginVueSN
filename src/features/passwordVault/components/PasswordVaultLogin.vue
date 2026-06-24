@@ -43,6 +43,7 @@
             v-if="showHintInput"
             v-model="hint"
             type="text"
+            size="small"
             placeholder="例如：我的生日、最喜欢的颜色等"
             class="hint-input"
             :maxlength="50"

@@ -480,6 +480,21 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 }
 ```
 
+#### Input / Select 组件 size 强制规范
+
+> **强制规则**：所有 `<Input>` 和 `<Select>` 共享组件在弹窗/表单场景中**必须显式指定 `size="small"`**。默认 `size="medium"` 的输入框高度（36px）与 Codex 紧凑风格不匹配，会显得过大。
+>
+> ```html
+> <!-- ✅ 正确 -->
+> <Input v-model="name" size="small" placeholder="名称" />
+> <Select v-model="category" size="small" :options="opts" />
+>
+> <!-- ❌  错误 — 默认 medium，过大 -->
+> <Input v-model="name" placeholder="名称" />
+> ```
+>
+> **唯一例外**：全宽搜索栏等刻意需要更大视觉权重的场景可以使用 `medium`。
+
 #### 标签/徽章
 
 ```scss

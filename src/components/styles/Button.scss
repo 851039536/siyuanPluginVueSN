@@ -1,0 +1,155 @@
+// ========== Button.scss ==========
+@use './_mixins.scss' as m;
+@use '@/variables.scss' as *;
+
+.si-button {
+  // 基础样式
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  border: 1px solid transparent;
+  border-radius: $vp-radius;
+  font-family: $font-body;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  outline: none;
+  white-space: nowrap;
+  user-select: none;
+  position: relative;
+
+  // 尺寸变体
+  &--small {
+    padding: $spacing-2 $spacing-3;
+    font-size: $font-size-xs;
+    min-height: 28px; // 无对应 Token，尺寸级保留
+  }
+
+  &--medium {
+    padding: $spacing-2 $spacing-4;
+    font-size: $font-size-sm;
+    min-height: 36px;
+  }
+
+  &--large {
+    padding: $spacing-3 $spacing-5;
+    font-size: $font-size-base; // 原 15px → 统一为 base(16px)
+    min-height: 44px;
+  }
+
+  // 颜色变体
+  &--primary {
+    background: var(--b3-theme-primary, $brand-orange);
+    color: var(--b3-theme-on-primary, $brand-light);
+    @include m.interactive-raised;
+  }
+
+  &--secondary {
+    background: var(--b3-theme-background, $brand-blue);
+    color: var(--b3-theme-on-background, $brand-light);
+    border: 1px solid var(--b3-theme-border, rgba(0, 0, 0, 0.1));
+    @include m.interactive-raised;
+  }
+
+  &--success {
+    background: var(--b3-theme-success, $brand-success);
+    color: var(--b3-theme-on-primary, $brand-light);
+    @include m.interactive-raised(var(--b3-theme-success, $brand-success));
+  }
+
+  &--danger {
+    background: transparent;
+    color: var(--b3-theme-error, #ef4444);
+    border-color: var(--b3-theme-error, #ef4444);
+
+    &:hover:not(.si-button--disabled):not(.si-button--loading) {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: #dc2626;
+    }
+
+    &:active:not(.si-button--disabled):not(.si-button--loading) {
+      background: rgba(239, 68, 68, 0.15);
+    }
+  }
+
+  &--ghost {
+    background: transparent;
+    color: var(--b3-theme-on-surface, $brand-dark);
+    border-color: var(--b3-theme-surface-lighter, $brand-subtle-gray);
+
+    &:hover:not(.si-button--disabled):not(.si-button--loading) {
+      background: var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.05));
+      border-color: var(--b3-theme-on-surface-variant, $brand-mid-gray);
+    }
+
+    &:active:not(.si-button--disabled):not(.si-button--loading) {
+      background: rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  // 禁用状态
+  &--disabled {
+    opacity: m.$opacity-disabled;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  // 加载状态
+  &--loading {
+    cursor: wait;
+    pointer-events: none;
+
+    .si-button__text,
+    .si-button__icon {
+      opacity: m.$opacity-dimmed;
+    }
+  }
+
+  // 仅图标按钮
+  &--icon-only {
+    padding: 0;
+    width: var(--button-size, 36px);
+    height: var(--button-size, 36px);
+
+    &.si-button--small {
+      --button-size: 28px;
+    }
+
+    &.si-button--medium {
+      --button-size: 36px;
+    }
+
+    &.si-button--large {
+      --button-size: 44px;
+    }
+  }
+
+  // 块级按钮
+  &--block {
+    display: flex;
+    width: 100%;
+  }
+
+  // 图标右侧
+  &--icon-right {
+    flex-direction: row-reverse;
+  }
+
+  // 内部元素样式
+  &__icon {
+    flex-shrink: 0;
+  }
+
+  &__text {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: $spacing-1;
+    line-height: $line-height-tight; // 原 1.4 → 1.25
+  }
+
+  // 加载动画（使用 _mixins 中的 @include m.btn-spinner）
+  &__spinner {
+    @include m.btn-spinner;
+  }
+}

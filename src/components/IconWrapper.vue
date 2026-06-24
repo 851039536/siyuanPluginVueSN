@@ -60,12 +60,6 @@ const iconStyle = computed(() => {
 })
 </script>
 
-<style scoped>
-/* 图标默认样式 */
-svg {
-  display: inline-block;
-  vertical-align: middle;
-  width: 1em;
-  height: 1em;
-}
+<style scoped lang="scss">
+@use './styles/IconWrapper.scss';
 </style>

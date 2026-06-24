@@ -1,0 +1,101 @@
+// ========== Avatar.scss ==========
+@use './_mixins.scss' as m;
+@use '@/variables.scss' as *;
+
+.si-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background: var(--b3-theme-surface-lighter, $brand-light-gray);
+  color: var(--b3-theme-on-surface, $brand-dark);
+  font-family: $font-body;
+  font-weight: $font-weight-medium;
+  user-select: none;
+
+  // 尺寸变体
+  &--xsmall {
+    width: 24px;
+    height: 24px;
+    font-size: $font-size-xs; // 12px — 10px 无对应 Token，统一为最小标准字号
+  }
+
+  &--small {
+    width: 32px;
+    height: 32px;
+    font-size: $font-size-xs;
+  }
+
+  &--medium {
+    width: 40px;
+    height: 40px;
+    font-size: $font-size-sm;
+  }
+
+  &--large {
+    width: 48px;
+    height: 48px;
+    font-size: $font-size-base;
+  }
+
+  &--xlarge {
+    width: 64px;
+    height: 64px;
+    font-size: $font-size-xl;
+  }
+
+  // 形状变体
+  &--circle {
+    border-radius: $radius-full;
+  }
+
+  &--square {
+    border-radius: $radius-md;
+  }
+
+  // 交互状态
+  &--clickable {
+    cursor: pointer;
+
+    &:hover:not(.si-avatar--disabled) {
+      transform: scale(1.05);
+      border-color: var(--b3-theme-primary, $brand-orange);
+    }
+
+    &:active:not(.si-avatar--disabled) {
+      transform: scale(0.98);
+    }
+  }
+
+  // 激活态 — Codex 边框优先策略（替代原 box-shadow: 0 0 0 2px）
+  &--active {
+    outline: 2px solid var(--b3-theme-primary, $brand-orange);
+    outline-offset: 0;
+  }
+
+  &--disabled {
+    cursor: not-allowed;
+    opacity: m.$opacity-disabled;
+  }
+
+  // 图片
+  &__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  // 文本
+  &__text {
+    line-height: $line-height-tight;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  // 图标
+  &__icon {
+    flex-shrink: 0;
+  }
+}

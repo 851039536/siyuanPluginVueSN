@@ -1,0 +1,119 @@
+// ========== Label.scss ==========
+@use './_mixins.scss' as m;
+@use '@/variables.scss' as *;
+
+.si-label {
+  display: inline-flex;
+  align-items: center;
+  gap: m.$gap-xs; // 6px
+  font-family: $font-body;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-normal;
+  user-select: none;
+  white-space: nowrap;
+
+  // 尺寸变体
+  &--small {
+    font-size: $font-size-xs;
+  }
+
+  &--medium {
+    font-size: $font-size-sm;
+  }
+
+  &--large {
+    font-size: $font-size-base;
+  }
+
+  // 状态变体
+  &--default {
+    color: var(--b3-theme-on-background, $brand-dark);
+  }
+
+  &--error {
+    color: var(--b3-theme-destructive, $brand-destructive);
+  }
+
+  &--success {
+    color: var(--b3-theme-success, $brand-success);
+  }
+
+  &--warning {
+    color: var(--b3-theme-warning, $brand-warning);
+  }
+
+  // 禁用状态
+  &--disabled {
+    opacity: m.$opacity-disabled;
+    cursor: not-allowed;
+  }
+
+  // 必填标记
+  &__required {
+    color: var(--b3-theme-destructive, $brand-destructive);
+    margin-left: 2px; // 2px 无对应 Token，保留
+    font-weight: $font-weight-semibold;
+  }
+
+  // 文本
+  &__text {
+    flex: 1;
+  }
+
+  // 图标
+  &__icon {
+    flex-shrink: 0;
+  }
+
+  // 对齐方式
+  &--align-left {
+    justify-content: flex-start;
+  }
+
+  &--align-center {
+    justify-content: center;
+  }
+
+  &--align-right {
+    justify-content: flex-end;
+  }
+
+  // 内联模式（非 label 标签）
+  &--inline {
+    display: inline-flex;
+    padding: $spacing-1 m.$spacing-2_5; // 4px 10px
+    border-radius: $radius-md;
+    background: var(--b3-theme-surface-lighter, $brand-light-gray);
+
+    &.si-label--primary {
+      background: var(--b3-theme-primary, $brand-orange);
+      color: var(--b3-theme-on-primary, $brand-light);
+    }
+
+    &.si-label--success {
+      background: var(--b3-theme-success, $brand-success);
+      color: var(--b3-theme-on-primary, $brand-light);
+    }
+
+    &.si-label--warning {
+      background: var(--b3-theme-warning, $brand-warning);
+      color: var(--b3-theme-on-primary, $brand-light);
+    }
+
+    &.si-label--danger {
+      background: var(--b3-theme-destructive, $brand-destructive);
+      color: var(--b3-theme-on-primary, $brand-light);
+    }
+
+    &.si-label--info {
+      background: var(--b3-theme-info, $brand-info);
+      color: var(--b3-theme-on-primary, $brand-light);
+    }
+  }
+}
+
+// 独立 Label 样式（用于表单标签）
+.si-label:not(.si-label--inline) {
+  display: inline-flex;
+  margin-bottom: $spacing-1;
+}

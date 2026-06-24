@@ -1,0 +1,63 @@
+// ========== src/components/styles/_mixins.scss ==========
+// 共享 mixins 与局部 Token（仅限 src/components 范围使用）
+@use '@/variables.scss' as *;
+
+// ========== 语义化透明度变量 ==========
+$opacity-disabled: 0.5;
+$opacity-muted: 0.6;
+$opacity-dimmed: 0.7;
+$opacity-overlay: 0.8;
+$opacity-subtle: 0.9;
+
+// ========== 语义化 z-index ==========
+$z-local-overlay: 10;
+$z-select-dropdown: 1000;
+
+// ========== 非标准间距（无对应全局 Token 的本地值） ==========
+// 注：gap 6px 无直接 $spacing Token（$spacing-2=8px 偏大，$spacing-1=4px 偏小）
+$gap-xs: 6px;
+// 10px padding/gap 用于中等尺寸元素（介于 $spacing-2(8px) 和 $spacing-3(12px) 之间）
+$spacing-2_5: 10px;
+
+// ========== Codex 交互反馈 mixin（边框变色 + 亮度，禁用 box-shadow） ==========
+@mixin interactive-raised($border-color: var(--b3-theme-primary)) {
+  transition: all 0.12s;
+
+  &:hover:not(.si-button--disabled):not(.si-button--loading) {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+    border-color: $border-color;
+  }
+
+  &:active:not(.si-button--disabled):not(.si-button--loading) {
+    filter: brightness(0.95);
+    transform: translateY(0);
+  }
+}
+
+// ========== focus 环（Codex 边框优先策略，替代 box-shadow） ==========
+@mixin focus-ring($color: var(--b3-theme-primary)) {
+  border-color: $color;
+  outline: none;
+}
+
+// ========== 公共动画 keyframes（spin） ==========
+@keyframes si-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ========== 按钮 spinner（定位 + 动画） ==========
+@mixin btn-spinner {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: si-spin 0.6s linear infinite;
+}

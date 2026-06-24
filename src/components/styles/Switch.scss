@@ -1,0 +1,144 @@
+// ========== Switch.scss ==========
+@use './_mixins.scss' as m;
+@use '@/variables.scss' as *;
+
+.si-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-3;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  font-family: $font-body;
+  user-select: none;
+  vertical-align: middle;
+
+  &:focus-visible {
+    outline: 2px solid var(--b3-theme-primary, $brand-orange);
+    outline-offset: 2px;
+  }
+
+  // 禁用状态
+  &--disabled {
+    cursor: not-allowed;
+    opacity: m.$opacity-disabled;
+  }
+
+  // 标签在前
+  &--label-before {
+    flex-direction: row-reverse;
+  }
+
+  // 轨道
+  &__track {
+    position: relative;
+    display: inline-block;
+    background: var(--b3-theme-surface-lighter, #e5e5e5);
+    border-radius: $radius-full;
+    // 内凹效果 — 保留为设计需要（开关凹槽视觉层级）
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+
+    // 尺寸变体
+    .si-switch--small & {
+      width: 36px;
+      height: $spacing-5; // 20px
+    }
+
+    .si-switch--medium & {
+      width: 44px;
+      height: $spacing-6; // 24px
+    }
+
+    .si-switch--large & {
+      width: 52px;
+      height: 28px; // 无对应 Token
+    }
+
+    // 选中状态
+    .si-switch--checked & {
+      background: var(--b3-theme-primary, $brand-orange);
+    }
+  }
+
+  // 滑块
+  &__thumb {
+    position: absolute;
+    top: 2px; // 2px 无对应 Token，保留
+    left: 2px;
+    background: var(--b3-theme-on-primary, $brand-light);
+    border-radius: $radius-full;
+    // 滑块投影 — 保留为设计需要（thumb 视觉层级）
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+
+    // 尺寸变体
+    .si-switch--small & {
+      width: $spacing-4; // 16px
+      height: $spacing-4;
+    }
+
+    .si-switch--medium & {
+      width: $spacing-5; // 20px
+      height: $spacing-5;
+    }
+
+    .si-switch--large & {
+      width: $spacing-6; // 24px
+      height: $spacing-6;
+    }
+
+    // 选中状态 - 滑块位置
+    .si-switch--checked.si-switch--small & {
+      transform: translateX($spacing-4); // 16px
+    }
+
+    .si-switch--checked.si-switch--medium & {
+      transform: translateX($spacing-5); // 20px
+    }
+
+    .si-switch--checked.si-switch--large & {
+      transform: translateX($spacing-6); // 24px
+    }
+  }
+
+  // 加载动画
+  &__loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: $radius-full;
+
+    .si-switch--small & {
+      width: $spacing-4; // 16px
+      height: $spacing-4;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: var(--b3-theme-on-primary, $brand-light);
+    }
+
+    .si-switch--medium & {
+      width: $spacing-5; // 20px
+      height: $spacing-5;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: var(--b3-theme-on-primary, $brand-light);
+    }
+
+    .si-switch--large & {
+      width: $spacing-6; // 24px
+      height: $spacing-6;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: var(--b3-theme-on-primary, $brand-light);
+    }
+
+    .si-switch--checked & {
+      animation: si-spin 0.8s linear infinite;
+    }
+  }
+
+  // 标签
+  &__label {
+    font-size: $font-size-sm;
+    color: var(--b3-theme-on-background, $brand-dark);
+    line-height: $line-height-normal;
+  }
+}

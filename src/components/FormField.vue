@@ -57,50 +57,5 @@ withDefaults(defineProps<Props>(), {
 </script>
 
 <style scoped lang="scss">
-@use '@/variables.scss' as *;
-
-.si-form-field {
-  &__label {
-    display: flex;
-    align-items: center;
-    margin-bottom: $spacing-1;
-    font-weight: 500;
-    color: var(--b3-theme-on-background, $brand-dark);
-    font-family: $font-heading;
-
-    &--small {
-      font-size: $font-size-xs;
-    }
-
-    &--medium {
-      font-size: $font-size-sm;
-    }
-
-    &--large {
-      font-size: $font-size-base;
-    }
-  }
-
-  &__required {
-    color: var(--b3-theme-primary, $brand-orange);
-    margin-left: 2px;
-  }
-
-  &__hint {
-    margin-top: $spacing-1;
-    font-size: $font-size-xs;
-    color: var(--b3-theme-secondary, $brand-mid-gray);
-
-    &--error {
-      color: var(--b3-theme-error, $brand-orange);
-    }
-  }
-
-  &__count {
-    margin-top: $spacing-1;
-    font-size: $font-size-xs;
-    color: var(--b3-theme-secondary, $brand-mid-gray);
-    text-align: right;
-  }
-}
+@use './styles/FormField.scss';
 </style>

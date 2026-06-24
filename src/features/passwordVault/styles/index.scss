@@ -1,5 +1,4 @@
 // 使用项目品牌变量和共享 mixins
-@use '@/index.scss' as *;
 @use '@/variables.scss' as *;
 @use 'mixins' as *;
 
@@ -94,20 +93,20 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  padding: $spacing-md;
+  padding: $spacing-3;
 }
 
 // 分类筛选器
 .category-filter {
   @include flex-row-gap(10px);
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: $spacing-3;
 }
 
 .category-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: $spacing-2;
   flex: 1;
 }
 
@@ -117,8 +116,8 @@
   background: var(--b3-theme-surface-light);
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-full;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
   color: var(--b3-theme-on-surface);
   cursor: pointer;
   transition: all 0.12s;
@@ -164,8 +163,8 @@
 
 // 控制区域
 .entries-controls {
-  @include flex-row-gap($spacing-sm);
-  margin-bottom: $spacing-md;
+  @include flex-row-gap($spacing-2);
+  margin-bottom: $spacing-3;
 
   .search-icon {
     color: var(--b3-theme-on-surface-light);
@@ -179,12 +178,12 @@
   overflow-y: auto;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: $spacing-sm;
+  gap: $spacing-2;
 }
 
 .entry-card {
   @include card-base;
-  padding: $spacing-md;
+  padding: $spacing-3;
 
   &:hover {
     border-color: var(--b3-theme-primary);
@@ -195,11 +194,11 @@
   @include flex-row;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: $spacing-sm;
+  margin-bottom: $spacing-2;
 }
 
 .entry-title-wrapper {
-  @include flex-row-gap(8px);
+  @include flex-row-gap($spacing-2);
   flex: 1;
   min-width: 0;
 }
@@ -210,8 +209,8 @@
 }
 
 .entry-header h3 {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-background);
   margin: 0;
   white-space: nowrap;
@@ -224,8 +223,8 @@
   padding: 1px 6px;
   border-radius: $radius-sm;
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   flex-shrink: 0;
 }
@@ -240,8 +239,8 @@
     background: transparent;
     border: 1px solid var(--b3-border-color);
     border-radius: $radius-sm;
-    font-size: 11px;
-    font-weight: 600;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
     color: var(--b3-theme-on-surface);
     cursor: pointer;
     transition: all 0.12s;
@@ -270,7 +269,7 @@
   border: 1px solid var(--b3-border-color);
   border-radius: $vp-radius;
   cursor: pointer;
-  margin-bottom: $spacing-xs;
+  margin-bottom: $spacing-1;
 
   &:hover {
     background: var(--b3-theme-surface);
@@ -284,7 +283,7 @@
 
   .account-text {
     flex: 1;
-    font-size: 14px;
+    font-size: $font-size-sm;
     color: var(--b3-theme-on-background);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -292,22 +291,22 @@
   }
 
   .action-hint {
-    @include flex-row-gap(4px);
-    font-size: 11px;
+    @include flex-row-gap($spacing-1);
+    font-size: $font-size-xs;
     color: var(--b3-theme-on-surface-light);
     flex-shrink: 0;
   }
 }
 
 .entry-description {
-  font-size: 12px;
+  font-size: $font-size-xs;
   color: var(--b3-theme-on-surface-light);
-  margin-bottom: $spacing-sm;
-  line-height: 1.4;
+  margin-bottom: $spacing-2;
+  line-height: $line-height-tight;
 }
 
 .entry-field {
-  @include flex-row-gap($spacing-xs);
+  @include flex-row-gap($spacing-1);
   padding: 8px 10px;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
@@ -315,21 +314,21 @@
 }
 
 .field-label {
-  @include flex-row-gap(4px);
+  @include flex-row-gap($spacing-1);
   @include uppercase-label;
   flex-shrink: 0;
 }
 
 .field-value {
   flex: 1;
-  @include flex-row-gap(8px);
+  @include flex-row-gap($spacing-2);
   justify-content: space-between;
   cursor: pointer;
   min-width: 0;
 
   .password-mask {
     font-family: $vp-mono;
-    font-size: 14px;
+    font-size: $font-size-sm;
     color: var(--b3-theme-on-background);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -337,8 +336,8 @@
   }
 
   .action-hint {
-    @include flex-row-gap(4px);
-    font-size: 11px;
+    @include flex-row-gap($spacing-1);
+    font-size: $font-size-xs;
     color: var(--b3-theme-on-surface-light);
     flex-shrink: 0;
   }
@@ -348,7 +347,7 @@
 
 .no-entries {
   @include flex-center;
-  padding: 40px $spacing-md;
+  padding: 40px $spacing-3;
   font-size: 13px;
   color: var(--b3-theme-on-surface-light);
   font-style: italic;
@@ -360,9 +359,9 @@
 // ============================================================
 
 .dialog-footer {
-  @include flex-row-gap($spacing-sm);
+  @include flex-row-gap($spacing-2);
   justify-content: space-between;
-  padding: 10px $spacing-md;
+  padding: 10px $spacing-3;
   background: var(--b3-theme-surface);
   border-top: 1px solid var(--b3-border-color);
 }
@@ -374,8 +373,8 @@
 .storage-footer {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px $spacing-lg;
+  gap: $spacing-2;
+  padding: 8px $spacing-4;
   background: var(--b3-theme-surface);
   border-top: 1px solid var(--b3-border-color);
   cursor: pointer;
@@ -395,17 +394,17 @@
 .storage-footer-label {
   font-family: $vp-mono;
   font-size: 10px;
-  font-weight: 600;
+  font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-surface-light);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   flex-shrink: 0;
   opacity: 0.5;
 }
 
 .storage-footer-path {
   font-family: $vp-mono;
-  font-size: 11px;
+  font-size: $font-size-xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.45;
   overflow: hidden;
@@ -424,13 +423,13 @@
 .change-password-form {
   display: flex;
   flex-direction: column;
-  gap: $spacing-md;
+  gap: $spacing-3;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: $spacing-1;
 
   label {
     @include uppercase-label;
@@ -450,8 +449,8 @@
 }
 
 .form-actions {
-  @include flex-row-gap($spacing-sm);
-  margin-top: $spacing-xs;
+  @include flex-row-gap($spacing-2);
+  margin-top: $spacing-1;
 }
 
 // ============================================================
@@ -464,8 +463,8 @@
   .dialog-body {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    padding: $spacing-md;
+    gap: $spacing-4;
+    padding: $spacing-3;
   }
 }
 
@@ -473,9 +472,9 @@
 .category-list-section {
   h3 {
     font-size: 13px;
-    font-weight: 600;
+    font-weight: $font-weight-semibold;
     color: var(--b3-theme-on-background);
-    margin: 0 0 $spacing-md 0;
+    margin: 0 0 $spacing-3 0;
     font-family: $font-heading;
   }
 }
@@ -483,11 +482,11 @@
 .add-category-form {
   display: flex;
   flex-direction: column;
-  gap: $spacing-md;
+  gap: $spacing-3;
 }
 
 .color-picker-wrapper {
-  @include flex-row-gap($spacing-sm);
+  @include flex-row-gap($spacing-2);
   flex-wrap: wrap;
 }
 
@@ -512,13 +511,13 @@
 .category-list {
   display: flex;
   flex-direction: column;
-  gap: $spacing-sm;
+  gap: $spacing-2;
   max-height: 200px;
   overflow-y: auto;
 }
 
 .category-item {
-  @include flex-row-gap(8px);
+  @include flex-row-gap($spacing-2);
   padding: 8px 10px;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
@@ -548,23 +547,23 @@
   color: #fff;
   border-radius: $radius-sm;
   font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 // 类别删除确认卡片
 .category-delete-confirm {
-  margin-top: 12px;
+  margin-top: $spacing-3;
 
   .confirm-card {
-    padding: 12px;
+    padding: $spacing-3;
     background: var(--b3-theme-surface, #f8f8f8);
     border: 1px solid var(--b3-theme-warning, #f0ad4e);
     border-radius: $vp-radius;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: $spacing-2;
   }
 
   .confirm-warning {
@@ -575,7 +574,7 @@
   }
 
   .confirm-hint {
-    font-size: 12px;
+    font-size: $font-size-xs;
     color: var(--b3-theme-warning, #f0ad4e);
     margin: 0;
     text-align: center;
@@ -588,31 +587,31 @@
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  padding: 16px 0;
+  padding: $spacing-4 0;
   text-align: center;
 
   .warning-icon {
     width: 40px;
     height: 40px;
     color: var(--b3-theme-warning, #f0ad4e);
-    margin-bottom: 4px;
+    margin-bottom: $spacing-1;
   }
 
   .warning-text {
-    font-size: 14px;
+    font-size: $font-size-sm;
     color: var(--b3-theme-warning, #f0ad4e);
-    line-height: 1.5;
+    line-height: $line-height-normal;
     margin: 0;
   }
 
   .warning-sub {
-    font-size: 12px;
+    font-size: $font-size-xs;
     color: var(--b3-theme-on-surface, #888);
     margin: 0;
   }
 
   .warning-count {
-    font-size: 12px;
+    font-size: $font-size-xs;
     color: var(--b3-theme-on-background, #666);
     margin: 0;
   }

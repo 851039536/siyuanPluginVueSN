@@ -1,5 +1,4 @@
 // 使用说明对话框样式
-@use '@/index.scss' as *;
 @use '@/variables.scss' as *;
 @use 'mixins' as *;
 
@@ -27,7 +26,7 @@
 .help-dialog-header {
   @include flex-row-gap(10px);
   justify-content: space-between;
-  padding: $spacing-lg;
+  padding: $spacing-4;
   border-bottom: 1px solid var(--b3-border-color);
   background: var(--b3-theme-surface);
 
@@ -45,22 +44,22 @@
 .help-dialog-body {
   flex: 1;
   overflow-y: auto;
-  padding: $spacing-lg;
+  padding: $spacing-4;
 }
 
 .help-section {
-  margin-bottom: $spacing-lg;
+  margin-bottom: $spacing-4;
 
   &:last-child {
     margin-bottom: 0;
   }
 
   h4 {
-    font-size: 14px;
-    font-weight: 600;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
     color: var(--b3-theme-on-background);
     margin: 0 0 10px 0;
-    @include flex-row-gap($spacing-sm);
+    @include flex-row-gap($spacing-2);
     font-family: $font-heading;
 
     &::before {
@@ -97,7 +96,7 @@
 }
 
 .help-dialog-footer {
-  padding: $spacing-md $spacing-lg;
+  padding: $spacing-3 $spacing-4;
   border-top: 1px solid var(--b3-border-color);
   background: var(--b3-theme-surface);
   display: flex;
@@ -112,7 +111,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-sm;
+  gap: $spacing-2;
   padding: 10px 12px;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
@@ -131,7 +130,7 @@
 
 .storage-path-text {
   font-family: $vp-mono;
-  font-size: 11px;
+  font-size: $font-size-xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
   word-break: break-all;
@@ -141,8 +140,8 @@
 }
 
 .storage-path-action {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
   color: var(--b3-theme-primary);
   white-space: nowrap;
   flex-shrink: 0;

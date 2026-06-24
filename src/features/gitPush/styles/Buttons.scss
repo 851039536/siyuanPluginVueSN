@@ -1,14 +1,16 @@
+@use "./variables" as *;
+
 // Codex 风格按钮体系
 .vp-btn {
   display: inline-flex;
   align-items: center;
   gap: 3px;
   padding: 5px 10px;
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: all 0.15s;
+  transition: opacity 0.15s, border-color 0.15s, background 0.15s;
 
   &--sm {
     padding: 2px 5px;

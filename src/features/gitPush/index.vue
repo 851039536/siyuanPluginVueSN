@@ -2072,7 +2072,7 @@ async function selectScanDirectory() {
 @use "@/index.scss" as *;
 @use "./styles/variables" as *;
 @use "./styles/mixins" as *;
-@use "./styles/buttons";
-@use "./styles/shared";
+@use "./styles/Buttons";
+@use "./styles/Shared";
 @use "./styles/index.scss";
 </style>

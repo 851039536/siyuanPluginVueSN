@@ -39,14 +39,6 @@
                 </div>
                 <div class="header-actions">
                   <Button
-                    class="help-btn"
-                    icon="help"
-                    variant="ghost"
-                    size="small"
-                    title="使用说明"
-                    @click="showHelpDialog = true"
-                  />
-                  <Button
                     class="close-btn"
                     icon="close"
                     variant="ghost"
@@ -251,13 +243,6 @@
               <span class="storage-footer-label">数据文件:</span>
               <span class="storage-footer-path">{{ storagePath }}</span>
             </div>
-
-            <!-- 使用说明对话框 -->
-            <HelpDialog
-              :visible="showHelpDialog"
-              :storage-path="storagePath"
-              @close="showHelpDialog = false"
-            />
           </div>
         </Transition>
       </div>
@@ -764,7 +749,6 @@ import {
   copyToClipboard as copyToClipboardUtil,
   triggerBlobDownload,
 } from "@/utils/domUtils"
-import HelpDialog from "./components/HelpDialog.vue"
 import PasswordVaultLogin from "./components/PasswordVaultLogin.vue"
 import { pendingEntryData } from "./index"
 import {
@@ -823,7 +807,6 @@ const showOldPassword = ref(false)
 const showNewPassword = ref(false)
 const showConfirmPassword = ref(false)
 const changePasswordError = ref("")
-const showHelpDialog = ref(false)
 const showExportConfirm = ref(false)
 const showExportPassword = ref(false)
 const exportPassword = ref("")

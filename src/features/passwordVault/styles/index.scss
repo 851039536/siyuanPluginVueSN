@@ -52,8 +52,7 @@
     @include flex-row-gap(8px);
   }
 
-  .close-btn,
-  .help-btn {
+  .close-btn {
     @extend %icon-button;
     @extend %icon-button-hover-light;
 
@@ -65,10 +64,6 @@
   .close-btn:hover {
     background: var(--b3-theme-error);
     color: #fff;
-  }
-
-  .help-btn:hover {
-    color: var(--b3-theme-primary);
   }
 }
 

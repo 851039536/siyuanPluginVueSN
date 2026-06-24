@@ -32,11 +32,61 @@
   --spacing-4: 16px;
   --spacing-5: 20px;
   --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-12: 48px;
   --font-xs: 12px;
   --font-sm: 14px;
   --font-base: 16px;
   --font-lg: 18px;
   --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
+  --accent-amber: #d97706;
+}
+
+:root[data-theme="dark"] {
+  --b3-theme-background: #1c1c1e;
+  --b3-theme-surface: #2c2c2e;
+  --b3-theme-surface-lighter: #3a3a3c;
+  --b3-theme-on-background: #ffffff;
+  --b3-theme-on-surface: #e5e5ea;
+  --b3-theme-on-surface-light: #98989d;
+  --b3-theme-primary: #ffffff;
+  --b3-theme-primary-light: #e5e5ea;
+  --b3-theme-primary-lightest: rgba(255,255,255,0.12);
+  --b3-theme-on-primary: #1c1c1e;
+  --b3-theme-success: #4ade80;
+  --b3-theme-error: #f87171;
+  --b3-border-color: #3a3a3c;
+  --b3-scrollbar: rgba(255,255,255,0.15);
+}
+
+:root[data-theme="dark"] body { background: #1c1c1e; }
+:root[data-theme="dark"] .hero-card { background: linear-gradient(135deg, var(--b3-theme-surface) 0%, var(--b3-theme-background) 100%); }
+:root[data-theme="dark"] .connector-card__icon { background: var(--b3-theme-surface-lighter); }
+:root[data-theme="dark"] .tag-success { background: rgba(74, 222, 128, 0.15); }
+:root[data-theme="dark"] .tag-error { background: rgba(248, 113, 113, 0.15); }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --b3-theme-background: #1c1c1e;
+    --b3-theme-surface: #2c2c2e;
+    --b3-theme-surface-lighter: #3a3a3c;
+    --b3-theme-on-background: #ffffff;
+    --b3-theme-on-surface: #e5e5ea;
+    --b3-theme-on-surface-light: #98989d;
+    --b3-theme-primary: #ffffff;
+    --b3-theme-primary-light: #e5e5ea;
+    --b3-theme-primary-lightest: rgba(255,255,255,0.12);
+    --b3-theme-on-primary: #1c1c1e;
+    --b3-theme-success: #4ade80;
+    --b3-theme-error: #f87171;
+    --b3-border-color: #3a3a3c;
+    --b3-scrollbar: rgba(255,255,255,0.15);
+  }
+  :root:not([data-theme]) body { background: #1c1c1e; }
+  :root:not([data-theme]) .hero-card { background: linear-gradient(135deg, var(--b3-theme-surface) 0%, var(--b3-theme-background) 100%); }
+  :root:not([data-theme]) .connector-card__icon { background: var(--b3-theme-surface-lighter); }
+  :root:not([data-theme]) .tag-success { background: rgba(74, 222, 128, 0.15); }
+  :root:not([data-theme]) .tag-error { background: rgba(248, 113, 113, 0.15); }
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -161,25 +211,117 @@ body {
 .stat-card .label { font-size: var(--font-xs); color: var(--b3-theme-on-surface-light); margin-bottom: var(--spacing-1); }
 .stat-card .value { font-size: var(--font-lg); font-weight: 600; }
 
+/* ====== App Layout / Sidebar / Header ====== */
+.app-layout { display: flex; min-height: 360px; border: 1px solid var(--b3-border-color); border-radius: var(--radius-lg); overflow: hidden; background: var(--b3-theme-background); }
+.sidebar { width: 220px; flex-shrink: 0; background: var(--b3-theme-surface); border-right: 1px solid var(--b3-border-color); padding: var(--spacing-3) var(--spacing-2); display: flex; flex-direction: column; gap: var(--spacing-1); }
+.sidebar__item { display: flex; align-items: center; gap: var(--spacing-3); padding: var(--spacing-2) var(--spacing-3); border-radius: var(--radius-md); color: var(--b3-theme-on-surface); font-size: var(--font-sm); font-weight: 500; cursor: pointer; transition: background-color 0.12s, color 0.12s; }
+.sidebar__item:hover { background: var(--b3-theme-surface-lighter); color: var(--b3-theme-on-background); }
+.sidebar__item--active { background: var(--b3-theme-surface-lighter); color: var(--b3-theme-on-background); }
+.sidebar__item .icon { width: 18px; height: 18px; opacity: 0.8; }
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.topbar { height: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-3); padding: 0 var(--spacing-5); border-bottom: 1px solid var(--b3-border-color); background: var(--b3-theme-background); }
+.topbar__search { display: flex; align-items: center; gap: var(--spacing-2); padding: var(--spacing-2) var(--spacing-3); background: var(--b3-theme-surface); border: 1px solid var(--b3-border-color); border-radius: var(--radius-full); min-width: 160px; }
+.topbar__search input { border: none; background: transparent; outline: none; font-size: var(--font-sm); color: var(--b3-theme-on-background); width: 100%; }
+.topbar__search input::placeholder { color: var(--b3-theme-on-surface-light); }
+.topbar__add { display: flex; align-items: center; gap: var(--spacing-1); padding: var(--spacing-2) var(--spacing-3); background: var(--b3-theme-primary); color: var(--b3-theme-on-primary); border: 1px solid var(--b3-theme-primary); border-radius: var(--radius-full); font-size: var(--font-sm); font-weight: 500; cursor: pointer; transition: opacity 0.12s; }
+.topbar__add:hover { opacity: 0.9; }
+.content-area { flex: 1; padding: var(--spacing-8) var(--spacing-12); max-width: 960px; overflow-y: auto; }
+
+/* ====== Hero Card ====== */
+.hero-card { display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-8); background: var(--b3-theme-surface); border: 1px solid var(--b3-border-color); border-radius: var(--radius-xl); margin-bottom: var(--spacing-8); transition: border-color 0.12s; }
+.hero-card:hover { border-color: var(--b3-theme-primary); }
+.hero-card__content { max-width: 55%; }
+.hero-card__title { font-size: var(--font-lg); font-weight: 600; margin: 0 0 var(--spacing-2); }
+.hero-card__desc { font-size: var(--font-sm); color: var(--b3-theme-on-surface); margin: 0; }
+.hero-card__illustration { width: 220px; height: 120px; border-radius: var(--radius-md); background: var(--b3-theme-surface-lighter); border: 1px dashed var(--b3-border-color); display: flex; align-items: center; justify-content: center; color: var(--b3-theme-on-surface-light); font-size: var(--font-sm); }
+
+/* ====== Section Header ====== */
+.section-header-meta { display: flex; align-items: center; gap: var(--spacing-3); margin-bottom: var(--spacing-4); }
+.section-header-meta__title { font-size: var(--font-base); font-weight: 600; margin: 0; }
+.section-header-meta__badge { display: inline-flex; align-items: center; gap: var(--spacing-1); font-size: var(--font-sm); color: var(--b3-theme-on-surface); }
+.section-header-meta__badge-count { color: var(--b3-theme-on-surface-light); }
+
+/* ====== Tabs ====== */
+.tabs { display: flex; gap: var(--spacing-1); margin-bottom: var(--spacing-4); padding: var(--spacing-1); background: var(--b3-theme-surface); border: 1px solid var(--b3-border-color); border-radius: var(--radius-md); width: fit-content; }
+.tab { padding: var(--spacing-2) var(--spacing-3); border-radius: var(--radius-sm); font-size: var(--font-sm); font-weight: 500; color: var(--b3-theme-on-surface); cursor: pointer; transition: all 0.12s; border: 1px solid transparent; background: transparent; }
+.tab:hover { color: var(--b3-theme-on-background); }
+.tab--active { background: var(--b3-theme-background); color: var(--b3-theme-on-background); border-color: var(--b3-border-color); }
+
+/* ====== Connector Card ====== */
+.card-grid--2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--spacing-4); }
+.connector-card { display: flex; align-items: center; gap: var(--spacing-3); padding: var(--spacing-4); background: var(--b3-theme-surface); border: 1px solid var(--b3-border-color); border-radius: var(--radius-lg); transition: border-color 0.12s; }
+.connector-card:hover { border-color: var(--b3-theme-primary); }
+.connector-card__icon { width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-md); background: var(--b3-theme-background); border: 1px solid var(--b3-border-color); color: var(--b3-theme-on-background); font-size: var(--font-lg); }
+.connector-card__icon svg { width: 20px; height: 20px; }
+.connector-card__icon img { width: 24px; height: 24px; object-fit: contain; }
+.connector-card__body { flex: 1; min-width: 0; }
+.connector-card__title { font-size: var(--font-base); font-weight: 600; margin: 0 0 var(--spacing-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.connector-card__desc { font-size: var(--font-sm); color: var(--b3-theme-on-surface); margin: 0; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.connector-card__action { width: 32px; height: 32px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border: 1px solid var(--b3-border-color); border-radius: var(--radius-full); background: transparent; color: var(--b3-theme-on-surface); cursor: pointer; transition: all 0.12s; }
+.connector-card__action:hover { border-color: var(--b3-theme-primary); color: var(--b3-theme-primary); }
+.connector-card__action--installed { color: var(--b3-theme-success); border-color: var(--b3-theme-success); background: var(--b3-theme-surface-lighter); }
+
+/* ====== User Profile ====== */
+.user-profile { margin-top: auto; display: flex; align-items: center; gap: var(--spacing-3); padding: var(--spacing-3); border-radius: var(--radius-md); cursor: pointer; transition: background-color 0.12s; }
+.user-profile:hover { background: var(--b3-theme-surface-lighter); }
+.user-profile__avatar { width: 32px; height: 32px; border-radius: var(--radius-full); background: var(--b3-theme-primary); color: var(--b3-theme-on-primary); display: flex; align-items: center; justify-content: center; font-size: var(--font-xs); font-weight: 600; }
+.user-profile__info { flex: 1; min-width: 0; }
+.user-profile__name { font-size: var(--font-sm); font-weight: 500; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-profile__plan { font-size: var(--font-xs); color: var(--b3-theme-on-surface-light); margin: 0; }
+
+/* ====== Badge Variants ====== */
+.badge-v2 { display: inline-flex; align-items: center; padding: var(--spacing-1) var(--spacing-2); border-radius: var(--radius-full); font-size: var(--font-xs); font-weight: 500; }
+.badge-v2--primary { background: var(--b3-theme-primary); color: var(--b3-theme-on-primary); }
+.badge-v2--secondary { background: var(--b3-theme-surface); color: var(--b3-theme-on-surface); border: 1px solid var(--b3-border-color); }
+.badge-v2--success { background: rgba(22, 163, 74, 0.12); color: var(--b3-theme-success); }
+.badge-v2--warning { background: rgba(217, 119, 6, 0.12); color: var(--accent-amber); }
+.badge-v2--danger { background: rgba(220, 38, 38, 0.12); color: var(--b3-theme-error); }
+
+/* ====== Dark Mode Toggle ====== */
+.theme-toggle { position: fixed; top: var(--spacing-4); right: var(--spacing-4); display: flex; align-items: center; gap: var(--spacing-2); padding: var(--spacing-1) var(--spacing-2); background: var(--b3-theme-surface); border: 1px solid var(--b3-border-color); border-radius: var(--radius-full); font-size: var(--font-xs); color: var(--b3-theme-on-surface); cursor: pointer; z-index: 10; transition: all 0.12s; }
+.theme-toggle:hover { border-color: var(--b3-theme-primary); color: var(--b3-theme-on-background); }
+.theme-toggle svg { width: 16px; height: 16px; }
+
 /* ====== Responsive ====== */
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .content-area { padding: var(--spacing-4); }
+  .hero-card { flex-direction: column; align-items: flex-start; gap: var(--spacing-4); }
+  .hero-card__content { max-width: 100%; }
+  .hero-card__illustration { width: 100%; }
+  .card-grid--2 { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 640px) {
   .page { padding: var(--spacing-4) var(--spacing-3); }
   .card-grid { grid-template-columns: 1fr; }
   .stat-cards { grid-template-columns: repeat(2, 1fr); }
+  .topbar { padding: 0 var(--spacing-3); }
+  .topbar__search { display: none; }
+  .content-area { padding: var(--spacing-4) var(--spacing-3); }
 }
 </style>
 </head>
 <body>
+<button class="theme-toggle" id="themeToggle" title="切换明暗主题">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+  <span>Light / Dark</span>
+</button>
+
 <div class="page">
 
 <!-- ====== Header ====== -->
 <div class="header">
-  <h1>🎨 Codex UI 参考页面</h1>
+  <h1>Codex UI 参考页面</h1>
   <p>siyuan-plugin-vite-vue-sn · 所有组件均基于 superPanel 标准实现</p>
 </div>
 
 <div class="nav">
   <a href="#tokens">设计 Token</a>
+  <a href="#layout">应用布局</a>
+  <a href="#hero">Hero Card</a>
+  <a href="#tabs">Tabs</a>
+  <a href="#connector">Connector Card</a>
   <a href="#dialog">弹窗</a>
   <a href="#card">卡片</a>
   <a href="#button">按钮</a>
@@ -216,7 +358,7 @@ body {
     <tr><td><code>$spacing-5</code></td><td><code>--spacing-5</code></td><td>20px</td><td>大间距</td></tr>
     <tr><td><code>$spacing-6</code></td><td><code>--spacing-6</code></td><td>24px</td><td>特大间距（header 水平 padding 上限）</td></tr>
   </table>
-  <div class="form-hint" style="margin-top:var(--spacing-2)">⚠️ 注意：使用 <code>$spacing-1</code>~<code>$spacing-4</code>（数字后缀），不是 <code>$spacing-xs</code>~<code>$spacing-lg</code>。</div>
+  <div class="form-hint" style="margin-top:var(--spacing-2)">注意：使用 <code>$spacing-1</code>~<code>$spacing-4</code>（数字后缀），不是 <code>$spacing-xs</code>~<code>$spacing-lg</code>。</div>
 
   <div class="section-subtitle">字号 Font Size（全局：@/variables.scss）</div>
   <table class="token-table">
@@ -236,6 +378,192 @@ body {
 </div>
 
 <!-- ================================================================================== -->
+<!-- 应用布局 -->
+<!-- ================================================================================== -->
+<div class="section" id="layout">
+  <div class="section-title">应用布局（Sidebar + Header + Content）</div>
+
+  <div class="app-layout" style="margin-bottom:var(--spacing-3)">
+    <div class="sidebar">
+      <div class="sidebar__item sidebar__item--active">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+        <span>仪表盘</span>
+      </div>
+      <div class="sidebar__item">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        <span>连接器</span>
+      </div>
+      <div class="sidebar__item">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>设置</span>
+      </div>
+      <div class="user-profile">
+        <div class="user-profile__avatar">U</div>
+        <div class="user-profile__info">
+          <div class="user-profile__name">User Name</div>
+          <div class="user-profile__plan">Pro Plan</div>
+        </div>
+      </div>
+    </div>
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar__search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="搜索..." aria-label="搜索">
+        </div>
+        <button class="topbar__add" aria-label="新增">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>新增</span>
+        </button>
+      </div>
+      <div class="content-area">
+        <div style="color:var(--b3-theme-on-surface-light); font-size:var(--font-sm)">内容区域自适应，最大宽度 960px</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-block"><pre>// Sidebar + Header + Content（局部布局常量）
+$sidebar-width: 220px; $header-height: 56px; $content-max-width: 960px;
+.app-layout { display: flex; min-height: 100vh; }
+.sidebar { width: $sidebar-width; background: var(--b3-theme-surface); border-right: 1px solid var(--b3-border-color); }
+.sidebar__item { padding: $spacing-2 $spacing-3; border-radius: $radius-md; color: var(--b3-theme-on-surface); transition: 0.12s; }
+.sidebar__item--active, .sidebar__item:hover { background: var(--b3-theme-surface-lighter); color: var(--b3-theme-on-background); }
+.topbar { height: $header-height; display: flex; justify-content: space-between; padding: 0 $spacing-5; border-bottom: 1px solid var(--b3-border-color); }
+.content { flex: 1; padding: $spacing-8 $spacing-12; max-width: $content-max-width; }
+.user-profile { margin-top: auto; padding: $spacing-3; border-radius: $radius-md; transition: 0.12s; }
+.user-profile:hover { background: var(--b3-theme-surface-lighter); }</pre></div>
+</div>
+
+<!-- ================================================================================== -->
+<!-- Hero Card -->
+<!-- ================================================================================== -->
+<div class="section" id="hero">
+  <div class="section-title">Hero Card</div>
+
+  <div class="hero-card">
+    <div class="hero-card__content">
+      <div class="hero-card__title">连接你的工具</div>
+      <p class="hero-card__desc">在思源笔记中快速接入常用服务，保持工作流简洁一致。所有连接器均通过 Codex 卡片模式呈现。</p>
+    </div>
+    <div class="hero-card__illustration">260 x 140</div>
+  </div>
+
+  <div class="code-block"><pre>.hero-card {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: $spacing-8; margin-bottom: $spacing-8;
+  background: var(--b3-theme-surface); border: 1px solid var(--b3-border-color); border-radius: $radius-xl;
+  transition: border-color 0.12s;
+  &:hover { border-color: var(--b3-theme-primary); }
+}
+.hero-card__title { font-size: $font-size-lg; font-weight: 600; }
+.hero-card__desc { font-size: $font-size-sm; color: var(--b3-theme-on-surface); }
+.hero-card__illustration { width: 260px; height: 140px; border-radius: $radius-md; border: 1px dashed var(--b3-border-color); }</pre></div>
+</div>
+
+<!-- ================================================================================== -->
+<!-- Tabs -->
+<!-- ================================================================================== -->
+<div class="section" id="tabs">
+  <div class="section-title">Tabs 分段控制器</div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab tab--active" role="tab" aria-selected="true">全部</button>
+    <button class="tab" role="tab" aria-selected="false">文档</button>
+    <button class="tab" role="tab" aria-selected="false">图片</button>
+    <button class="tab" role="tab" aria-selected="false">附件</button>
+  </div>
+
+  <div class="code-block"><pre>.tabs {
+  display: flex; gap: $spacing-1; padding: $spacing-1;
+  background: var(--b3-theme-surface); border: 1px solid var(--b3-border-color); border-radius: $radius-md;
+}
+.tab {
+  padding: $spacing-2 $spacing-3; border-radius: $radius-sm;
+  font-size: $font-size-sm; font-weight: 500; color: var(--b3-theme-on-surface);
+  border: 1px solid transparent; background: transparent; transition: 0.12s; cursor: pointer;
+  &:hover { color: var(--b3-theme-on-background); }
+  &--active { background: var(--b3-theme-background); border-color: var(--b3-border-color); color: var(--b3-theme-on-background); }
+}</pre></div>
+</div>
+
+<!-- ================================================================================== -->
+<!-- Connector Card -->
+<!-- ================================================================================== -->
+<div class="section" id="connector">
+  <div class="section-title">Connector Card</div>
+
+  <div class="section-header-meta" style="margin-bottom:var(--spacing-3)">
+    <h2 class="section-header-meta__title">可用连接器</h2>
+    <div class="section-header-meta__badge">
+      <span>共</span>
+      <span class="section-header-meta__badge-count">4 个</span>
+    </div>
+  </div>
+
+  <div class="card-grid--2">
+    <div class="connector-card">
+      <div class="connector-card__icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </div>
+      <div class="connector-card__body">
+        <div class="connector-card__title">思源笔记</div>
+        <div class="connector-card__desc">同步文档、笔记本与块级引用，保持笔记与工作流一致。</div>
+      </div>
+      <button class="connector-card__action connector-card__action--installed" aria-label="已安装">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
+    </div>
+
+    <div class="connector-card">
+      <div class="connector-card__icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+      </div>
+      <div class="connector-card__body">
+        <div class="connector-card__title">Git 仓库</div>
+        <div class="connector-card__desc">将笔记项目与 Git 仓库关联，实现版本管理与一键推送。</div>
+      </div>
+      <button class="connector-card__action" aria-label="添加">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="code-block" style="margin-top:var(--spacing-3)"><pre>.connector-card {
+  display: flex; align-items: center; gap: $spacing-3; padding: $spacing-4;
+  background: var(--b3-theme-surface); border: 1px solid var(--b3-border-color); border-radius: $radius-lg;
+  transition: border-color 0.12s;
+  &:hover { border-color: var(--b3-theme-primary); }
+}
+.connector-card__icon { width: 44px; height: 44px; border-radius: $radius-md; background: var(--b3-theme-background); border: 1px solid var(--b3-border-color); }
+.connector-card__title { font-size: $font-size-base; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.connector-card__desc { font-size: $font-size-sm; color: var(--b3-theme-on-surface); -webkit-line-clamp: 2; }
+.connector-card__action { width: 32px; height: 32px; border-radius: $radius-full; border: 1px solid var(--b3-border-color); transition: 0.12s; }
+.connector-card__action--installed { color: var(--b3-theme-success); border-color: var(--b3-theme-success); }</pre></div>
+</div>
+
+<!-- ================================================================================== -->
+<!-- Badge 变体 -->
+<!-- ================================================================================== -->
+<div class="section" id="badge-v2">
+  <div class="section-title">Badge 变体</div>
+
+  <div class="btn-group" style="margin-top:var(--spacing-2)">
+    <span class="badge-v2 badge-v2--primary">Primary</span>
+    <span class="badge-v2 badge-v2--secondary">Secondary</span>
+    <span class="badge-v2 badge-v2--success">Success</span>
+    <span class="badge-v2 badge-v2--warning">Warning</span>
+    <span class="badge-v2 badge-v2--danger">Danger</span>
+  </div>
+
+  <div class="code-block" style="margin-top:var(--spacing-3)"><pre>.badge-v2 { display: inline-flex; align-items: center; padding: $spacing-1 $spacing-2; border-radius: $radius-full; font-size: $font-size-xs; font-weight: 500; }
+.badge-v2--primary { background: var(--b3-theme-primary); color: var(--b3-theme-on-primary); }
+.badge-v2--secondary { background: var(--b3-theme-surface); color: var(--b3-theme-on-surface); border: 1px solid var(--b3-border-color); }
+.badge-v2--success { background: rgba(22, 163, 74, 0.12); color: var(--b3-theme-success); }
+.badge-v2--warning { background: rgba(217, 119, 6, 0.12); color: #d97706; }
+.badge-v2--danger { background: rgba(220, 38, 38, 0.12); color: var(--b3-theme-error); }</pre></div>
+</div>
+
+<!-- ================================================================================== -->
 <!-- 弹窗 -->
 <!-- ================================================================================== -->
 <div class="section" id="dialog">
@@ -244,7 +572,7 @@ body {
   <div class="dialog-demo" style="margin-bottom:var(--spacing-3)">
     <div class="dialog-header">
       <h3>压缩设置</h3>
-      <button class="icon-btn" title="关闭"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <button class="icon-btn" aria-label="关闭" title="关闭"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div class="dialog-body">
       <div class="form-group"><label class="form-label">质量</label><input class="vp-input" value="80%" readonly></div>
@@ -289,7 +617,7 @@ body {
     </div>
 
     <div class="card">
-      <div class="card-header"><span class="card-title">另一张卡片</span><button class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button></div>
+      <div class="card-header"><span class="card-title">另一张卡片</span><button class="icon-btn" aria-label="更多" title="更多"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button></div>
       <div class="card-body">
         <p class="meta">Hover 时边框变色，视觉反馈清晰。</p>
         <p class="meta" style="margin-top:var(--spacing-2)">尺寸: 800 × 600</p>
@@ -298,7 +626,7 @@ body {
     </div>
 
     <div class="card" style="border-color:var(--b3-theme-primary); background:var(--b3-theme-surface-lighter)">
-      <div class="card-header"><span class="card-title">选中卡片</span><span class="badge">✓</span></div>
+      <div class="card-header"><span class="card-title">选中卡片</span><span class="badge">已选</span></div>
       <div class="card-body">
         <p class="meta">选中状态：border-color: primary, background: surface-lighter。</p>
         <p class="meta" style="margin-top:var(--spacing-2)">尺寸: 1920 × 1080</p>
@@ -335,14 +663,14 @@ body {
 
   <div class="section-subtitle">图标按钮（固定尺寸，无 padding）</div>
   <div class="btn-group">
-    <button class="icon-btn" title="关闭">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    <button class="icon-btn" aria-label="关闭" title="关闭">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
-    <button class="icon-btn" title="复制">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+    <button class="icon-btn" aria-label="复制" title="复制">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
     </button>
-    <button class="icon-btn" title="设置">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <button class="icon-btn" aria-label="设置" title="设置">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     </button>
   </div>
 
@@ -451,8 +779,8 @@ body {
 
   <div class="section-header">
     <div class="header-left"><h2>图片压缩</h2><span class="badge">12 张</span></div>
-    <button class="icon-btn" title="关闭">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    <button class="icon-btn" aria-label="关闭" title="关闭">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
   </div>
   <div class="toolbar">
@@ -502,7 +830,7 @@ body {
   <div class="section-subtitle">进度条</div>
   <div class="progress-bar">
     <div class="progress-fill" style="width:65%"></div>
-    <div class="progress-text">扫描中... 65 / 100</div>
+    <div class="progress-text">扫描中… 65 / 100</div>
   </div>
   <div class="progress-bar">
     <div class="progress-fill" style="width:100%; background:var(--b3-theme-success)"></div>
@@ -518,8 +846,8 @@ body {
 
   <div class="section-subtitle">空状态</div>
   <div class="empty-state" style="opacity:1; border:1px dashed var(--b3-border-color); border-radius:var(--radius-md)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-    <p>点击"扫描图片"开始查找资源文件中的图片</p>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+    <p>点击“扫描图片”开始查找资源文件中的图片</p>
   </div>
 
   <div class="section-subtitle">分割线</div>
@@ -538,7 +866,7 @@ body {
   <div class="section-subtitle">Hover hint（悬停提示）</div>
   <div style="position:relative; width:200px; height:100px; background:var(--b3-theme-surface); border:1px solid var(--b3-border-color); border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; cursor:pointer">
     <span>悬停查看</span>
-    <div style="position:absolute; bottom:8px; left:50%; transform:translateX(-50%); padding:4px 12px; background:rgba(0,0,0,0.7); color:#fff; border-radius:var(--radius-sm); font-size:var(--font-xs); opacity:0; transition:opacity 0.12s; display:flex; align-items:center; gap:4px" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0'">👁 点击预览</div>
+    <div style="position:absolute; bottom:8px; left:50%; transform:translateX(-50%); padding:4px 12px; background:rgba(0,0,0,0.7); color:#fff; border-radius:var(--radius-sm); font-size:var(--font-xs); opacity:0; transition:opacity 0.12s; display:flex; align-items:center; gap:4px" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0'">点击预览</div>
   </div>
 </div>
 
@@ -638,5 +966,24 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 </div>
 
 </div><!-- /.page -->
+<script>
+(function() {
+  var toggle = document.getElementById('themeToggle');
+  var html = document.documentElement;
+  var systemDark = window.matchMedia('(prefers-color-scheme: dark)');
+  function applyTheme() {
+    var dark = html.getAttribute('data-theme') === 'dark' || (!html.getAttribute('data-theme') && systemDark.matches);
+    html.setAttribute('data-theme', dark ? 'dark' : 'light');
+  }
+  applyTheme();
+  if (toggle) {
+    toggle.addEventListener('click', function() {
+      var current = html.getAttribute('data-theme');
+      html.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+    });
+  }
+  systemDark.addEventListener('change', function() { if (!html.getAttribute('data-theme')) applyTheme(); });
+})();
+</script>
 </body>
 </html>

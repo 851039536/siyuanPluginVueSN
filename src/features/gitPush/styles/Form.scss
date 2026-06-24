@@ -1,0 +1,65 @@
+@use "./variables" as *;
+@use "./mixins" as *;
+
+// ── 通用表单样式 ──
+.gp-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gp-label {
+  @include gp-label-base;
+}
+
+.gp-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 10px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: $vp-mono;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:focus {
+    @include focus-ring;
+  }
+
+  &::placeholder {
+    opacity: 0.35;
+  }
+}
+
+.gp-path-row {
+  display: flex;
+  gap: 4px;
+}
+
+.gp-error {
+  font-size: 11px;
+  color: var(--b3-theme-error);
+}
+
+.gp-checking {
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.6;
+}
+
+.gp-check-result {
+  font-size: 11px;
+
+  &.success {
+    color: var(--b3-theme-primary);
+  }
+
+  &:not(.success) {
+    opacity: 0.5;
+  }
+}

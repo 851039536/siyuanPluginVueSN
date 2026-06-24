@@ -686,116 +686,19 @@
             />
 
             <!-- Stash 暂存 -->
-            <div class="gp-stash-wrap">
-              <div class="gp-stash-header">
-                <span class="gp-stash-label">STASH</span>
-                <span
-                  class="gp-stash-help"
-                  title="暂存：把当前未提交的修改临时保存起来，方便切换到其他分支工作。之后可以随时'恢复'回来继续编辑，就像把工作进度先放进抽屉里一样。"
-                >
-                  <Icon
-                    icon="mdi:help-circle-outline"
-                    height="14"
-                  />
-                </span>
-                <template v-if="stashInputProject === project.id">
-                  <input
-                    v-model="stashInputMsg"
-                    class="gp-stash-msg-input"
-                    placeholder="暂存描述（可选）"
-                    @keyup.enter="handleStashConfirm(project.id)"
-                  />
-                  <button
-                    class="vp-btn vp-btn--ghost vp-btn--sm"
-                    title="AI 生成描述"
-                    :disabled="genStashDescLoading[project.id]"
-                    @click="handleGenStashDesc(project.id)"
-                  >
-                    <Icon
-                      v-if="genStashDescLoading[project.id]"
-                      icon="mdi:loading"
-                      class="gp-spin"
-                      height="14"
-                    />
-                    <Icon
-                      v-else
-                      icon="mdi:auto-fix"
-                      height="14"
-                    />
-                  </button>
-                  <button
-                    class="vp-btn vp-btn--primary vp-btn--sm"
-                    :disabled="stashLoading[project.id]"
-                    @click="handleStashConfirm(project.id)"
-                  >
-                    <Icon
-                      icon="mdi:check"
-                      height="14"
-                    /></button>
-                  <button
-                    class="vp-btn vp-btn--ghost vp-btn--sm"
-                    @click="stashInputProject = ''"
-                  >
-                    <Icon
-                      icon="mdi:close"
-                      height="14"
-                    /></button>
-                </template>
-                <button
-                  v-else
-                  class="vp-btn vp-btn--ghost vp-btn--sm"
-                  :disabled="!workingTrees[project.id]?.hasChanges || stashLoading[project.id]"
-                  @click="stashInputProject = project.id; stashInputMsg = ''"
-                >
-                  <Icon
-                    v-if="stashLoading[project.id]"
-                    icon="mdi:loading"
-                    class="gp-spin"
-                    height="13"
-                  />
-                  <Icon
-                    v-else
-                    icon="mdi:archive-outline"
-                    height="13"
-                  />
-                  {{ i18n.stashSave || '暂存变更' }}
-                </button>
-              </div>
-              <div
-                v-if="stashEntries[project.id]?.length"
-                class="gp-stash-list"
-              >
-                <div
-                  v-for="e in stashEntries[project.id]"
-                  :key="e.index"
-                  class="gp-stash-row"
-                >
-                  <span class="gp-stash-index">stash@{{ '{' + e.index + '}' }}</span>
-                  <span
-                    class="gp-stash-msg"
-                    :title="e.message"
-                  >{{ e.message }}</span>
-                  <button
-                    class="vp-btn vp-btn--ghost vp-btn--sm"
-                    title="恢复并删除 (pop)"
-                    :disabled="stashLoading[project.id]"
-                    @click="handleStashPop(project.id, e.index)"
-                  >{{ i18n.stashRestore || '恢复' }}</button>
-                  <button
-                    class="vp-btn vp-btn--ghost vp-btn--sm"
-                    title="应用但不删除 (apply)"
-                    :disabled="stashLoading[project.id]"
-                    @click="handleStashApply(project.id, e.index)"
-                  >{{ i18n.stashApply || '应用' }}</button>
-                  <button
-                    class="vp-btn vp-btn--ghost vp-btn--sm"
-                    title="删除 (drop)"
-                    :disabled="stashLoading[project.id]"
-                    @click="handleStashDrop(project.id, e.index)"
-                  >{{ i18n.stashDrop || '删除' }}</button>
-                </div>
-              </div>
-            </div>
+            <StashSection
+              :entries="stashEntries[project.id]"
+              :loading="stashLoading[project.id] || false"
+              :has-changes="!!workingTrees[project.id]?.hasChanges"
+              :gen-desc-loading="genStashDescLoading[project.id] || false"
+              :generated-msg="generatedStashMsg"
+              :i18n="i18n"
+              @stash-confirm="(msg) => handleStashConfirmMsg(project.id, msg)"
+              @gen-stash-desc="handleGenStashDesc(project.id)"
+              @stash-pop="(idx) => handleStashPop(project.id, idx)"
+              @stash-apply="(idx) => handleStashApply(project.id, idx)"
+              @stash-drop="(idx) => handleStashDrop(project.id, idx)"
+            />
 
             <!-- Tag 管理 -->
             <TagPanel
@@ -813,59 +716,12 @@
             />
 
             <!-- 冲突警告 -->
-            <div
-              v-if="conflicts[project.id]?.length"
-              class="gp-conflict-bar"
-            >
-              <div class="gp-conflict-header">
-                <Icon
-                  icon="mdi:alert-circle"
-                  height="14"
-                />
-                <span>{{ i18n.conflictDetected || '检测到合并冲突' }}（{{ conflicts[project.id].length }} 个文件）</span>
-              </div>
-              <div class="gp-conflict-files">
-                <span
-                  v-for="f in conflicts[project.id].slice(0, 5)"
-                  :key="f.path"
-                  class="gp-conflict-file"
-                >
-                  {{ f.path }}
-                  <button
-                    class="vp-btn vp-btn--ghost vp-btn--sm"
-                    :title="i18n.keepOurs || '保留本地版本'"
-                    @click="handleResolveConflict(project.id, f.path, 'ours')"
-                  >
-                    <Icon
-                      icon="mdi:file-document-check-outline"
-                      height="11"
-                    />
-                  </button>
-                  <button
-                    class="vp-btn vp-btn--ghost vp-btn--sm"
-                    :title="i18n.keepTheirs || '保留远程版本'"
-                    @click="handleResolveConflict(project.id, f.path, 'theirs')"
-                  >
-                    <Icon
-                      icon="mdi:file-download-outline"
-                      height="11"
-                    />
-                  </button>
-                </span>
-              </div>
-              <div class="gp-conflict-actions">
-                <button
-                  class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
-                  @click="handleAbortMerge(project.id)"
-                >
-                  <Icon
-                    icon="mdi:undo"
-                    height="12"
-                  />
-                  {{ i18n.abortMerge || '中止合并' }}
-                </button>
-              </div>
-            </div>
+            <ConflictSection
+              :conflicts="conflicts[project.id]"
+              :i18n="i18n"
+              @resolve-conflict="(file, strategy) => handleResolveConflict(project.id, file, strategy)"
+              @abort-merge="handleAbortMerge(project.id)"
+            />
 
             <!-- 拉取按钮组 -->
             <div class="gp-push-group">
@@ -1090,11 +946,13 @@ import {
 import { copyToClipboard } from "@/utils/domUtils"
 import AddProjectDialog from "./components/AddProjectDialog.vue"
 import CategoryDialog from "./components/CategoryDialog.vue"
+import ConflictSection from "./components/ConflictSection.vue"
 import EditProjectDialog from "./components/EditProjectDialog.vue"
 import IdeManagementDialog from "./components/IdeManagementDialog.vue"
 import RemoteConfigDialog from "./components/RemoteConfigDialog.vue"
 import ScanImportDialog from "./components/ScanImportDialog.vue"
 import SettingsDialog from "./components/SettingsDialog.vue"
+import StashSection from "./components/StashSection.vue"
 import StatsPanel from "./components/StatsPanel.vue"
 import TagPanel from "./components/TagPanel.vue"
 import WorkingTreePanel from "./components/WorkingTreePanel.vue"
@@ -1116,6 +974,14 @@ const props = defineProps<{
   plugin: any
   manager: GitPushManager
 }>()
+
+/** 限制 Record 缓存条目数 */
+function pruneCache(record: Record<string, any>, max = 30) {
+  const keys = Object.keys(record)
+  if (keys.length > max) {
+    for (const k of keys.slice(0, keys.length - max)) delete record[k]
+  }
+}
 
 /** 批次化并发处理：避免所有项目同时涌入 git 信号量导致排队拥堵 */
 async function batchProcess<T>(items: T[], batchSize: number, fn: (item: T) => Promise<void>) {
@@ -1822,6 +1688,7 @@ async function handleGitOp(label: string, fn: () => Promise<void>, id: string) {
     commitOutputs.value[id] = `${label}: ${e?.message || e}`
   } finally {
     delete gitOpLoading.value[id]
+    pruneCache(commitOutputs.value)
   }
 }
 
@@ -1842,9 +1709,8 @@ async function handleDiscard(id: string, file: string, staged: boolean, status: 
 
 // ---- Stash 操作 ----
 
-const stashInputProject = ref("")
-const stashInputMsg = ref("")
 const genStashDescLoading = ref<Record<string, boolean>>({})
+const generatedStashMsg = ref("")
 /** Tag 推送操作加载中 id → tagName */
 const tagPushLoading = ref<Record<string, string>>({})
 
@@ -1852,7 +1718,7 @@ async function handleGenStashDesc(id: string) {
   genStashDescLoading.value[id] = true
   try {
     const desc = await generateStashDesc(id)
-    if (desc) stashInputMsg.value = desc
+    if (desc) generatedStashMsg.value = desc
   } catch {
     // 失败则保持输入内容不变
   } finally {
@@ -1860,12 +1726,7 @@ async function handleGenStashDesc(id: string) {
   }
 }
 
-async function handleStashConfirm(id: string) {
-  const ts = new Date().toLocaleString()
-  const desc = stashInputMsg.value.trim()
-  const msg = desc ? `${ts} - ${desc}` : ts
-  stashInputProject.value = ""
-  stashInputMsg.value = ""
+async function handleStashConfirmMsg(id: string, msg: string) {
   try {
     await doStashSave(id, msg)
   } catch (e: any) {
@@ -1969,6 +1830,7 @@ async function handleCommit(id: string, message: string) {
   try {
     const result = await doCommit(id, message)
     commitOutputs.value[id] = result || "提交成功"
+    pruneCache(commitOutputs.value)
     await loadCommitLog(id)
   } catch (e: any) {
     commitOutputs.value[id] = `提交失败: ${e?.message || e}`

@@ -3,9 +3,10 @@ import type { GitProject } from "../types"
 import {
   computed,
   ref,
-
   watch,
 } from "vue"
+import { PluginStorage } from "@/utils/pluginStorage"
+import { TypedStorage } from "@/utils/typedStorage"
 
 interface UseProjectFiltersOptions {
   plugin: { loadData: (key: string) => Promise<any>, saveData: (key: string, value: any) => Promise<void> }
@@ -19,26 +20,11 @@ interface UseProjectFiltersOptions {
 
 /** 智能视图模式元数据（标签 + 命中数） */
 export const VIEW_MODE_META: Record<string, { label: string, icon: string }> = {
-  all: {
-    label: "全部",
-    icon: "mdi:view-grid-outline",
-  },
-  needsPush: {
-    label: "需推送",
-    icon: "mdi:cloud-upload-outline",
-  },
-  uncommitted: {
-    label: "有变更",
-    icon: "mdi:source-branch",
-  },
-  starred: {
-    label: "收藏",
-    icon: "mdi:star",
-  },
-  archived: {
-    label: "归档",
-    icon: "mdi:archive-outline",
-  },
+  all: { label: "全部", icon: "mdi:view-grid-outline" },
+  needsPush: { label: "需推送", icon: "mdi:cloud-upload-outline" },
+  uncommitted: { label: "有变更", icon: "mdi:source-branch" },
+  starred: { label: "收藏", icon: "mdi:star" },
+  archived: { label: "归档", icon: "mdi:archive-outline" },
 }
 
 export function useProjectFilters(options: UseProjectFiltersOptions) {
@@ -57,34 +43,27 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
   const showArchived = ref(false)
   const selectedTags = ref<Set<string>>(new Set())
 
-  const GIT_OPS_PAUSED_KEY = "git-push-ops-paused"
+  // ── 使用 TypedStorage 持久化状态（符合 CLAUDE.md 统一入口规则）──
+  const storage = new PluginStorage(plugin as any)
+  const gitOpsPausedStorage = new TypedStorage(storage, "git-push-ops-paused", false)
+  const showArchivedStorage = new TypedStorage(storage, "git-push-show-archived", false)
+
   const gitOpsPaused = ref(false)
 
-  /** 从持久化存储加载暂停状态（兼容布尔/字符串序列化） */
   async function loadGitOpsPaused() {
-    try {
-      const saved = await plugin.loadData(GIT_OPS_PAUSED_KEY)
-      gitOpsPaused.value = saved === true || saved === "true"
-    } catch { /* ignore */ }
+    gitOpsPaused.value = await gitOpsPausedStorage.loadOrDefault()
   }
 
-  /** 暂停状态变更时自动持久化 */
   watch(gitOpsPaused, (v) => {
-    plugin.saveData(GIT_OPS_PAUSED_KEY, v).catch(() => {})
+    gitOpsPausedStorage.save(v).catch(() => {})
   })
 
-  // 归档显示持久化
-  const SHOW_ARCHIVED_KEY = "git-push-show-archived"
-
   async function loadShowArchived() {
-    try {
-      const saved = await plugin.loadData(SHOW_ARCHIVED_KEY)
-      showArchived.value = saved === true || saved === "true"
-    } catch { /* ignore */ }
+    showArchived.value = await showArchivedStorage.loadOrDefault()
   }
 
   watch(showArchived, (v) => {
-    plugin.saveData(SHOW_ARCHIVED_KEY, v).catch(() => {})
+    showArchivedStorage.save(v).catch(() => {})
   })
 
   /** 智能视图模式下，命中条件的扁平项目列表 */
@@ -105,7 +84,7 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
     return []
   })
 
-  /** 统一筛选 + 分组管道：archived 过滤 → 标签交集 → 搜索词 → 分组/排序 */
+  /** 统一筛选 + 分组管道 */
   const filteredGroups = computed(() => {
     const q = searchQuery.value.trim().toLowerCase()
     const tags = selectedTags.value
@@ -113,10 +92,13 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
 
     const applyFilters = (list: GitProject[]) => {
       let r = list
-      // 归档视图已在 smartViewProjects 中预筛选，跳过 archived 过滤
       if (!isArchivedView && !showArchived.value) r = r.filter((p) => !p.archived)
       if (tags.size > 0) r = r.filter((p) => p.tags?.some((t) => tags.has(t)))
-      if (q) r = r.filter((p) => p.name.toLowerCase().includes(q) || p.path.toLowerCase().includes(q) || (p.tags?.some((t) => t.toLowerCase().includes(q))))
+      if (q) r = r.filter((p) =>
+        p.name.toLowerCase().includes(q)
+        || p.path.toLowerCase().includes(q)
+        || (p.tags?.some((t) => t.toLowerCase().includes(q))),
+      )
       return r
     }
 
@@ -136,14 +118,8 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
     }
 
     return visibleGroups.value
-      .map((g) => ({
-        ...g,
-        projects: applyFilters(g.projects),
-      }))
-      .map((g) => ({
-        ...g,
-        projects: sortProjects(g.projects),
-      }))
+      .map((g) => ({ ...g, projects: applyFilters(g.projects) }))
+      .map((g) => ({ ...g, projects: sortProjects(g.projects) }))
       .filter((g) => g.projects.length > 0)
   })
 

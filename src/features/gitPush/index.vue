@@ -1211,6 +1211,9 @@ const STATUS_CYCLE: ProjectStatus[] = ["active", "maintenance", "paused"]
 
 const newProjectPath = ref("") // 目录选择回填用
 const refreshing = ref<string | null>(null)
+/** 防抖：记录每个项目的最后刷新时间戳，避免短时间内重复刷新 */
+const lastRefreshTime = new Map<string, number>()
+const REFRESH_COOLDOWN_MS = 500
 
 /** 项目编辑弹窗状态 */
 const editDialogProject = ref<GitProject | null>(null)
@@ -1229,6 +1232,8 @@ const editEditingRemoteUrl = ref("")
 const editingNameId = ref("")
 const editingNameInput = ref("")
 const refreshingAll = ref(false)
+/** 全局刷新防抖时间戳 */
+let allRefreshLastTime = 0
 /** 远程仓库配置弹窗 */
 const remoteConfigProject = ref<GitProject | null>(null)
 const remoteList = ref<{ name: string, url: string }[]>([])
@@ -1419,8 +1424,11 @@ function handleCardClick(projectId: string, event: MouseEvent) {
   const target = event.target as HTMLElement
   // 点击按钮/输入框/选择框/标签/IDE 弹窗时不触发刷新
   if (target.closest("button, input, select, textarea, .gp-ide-popover, .gp-card-name, .gp-card-name-input")) return
-  // 避免短时间内重复刷新
+  // 防抖：正在刷新或冷却期内跳过
   if (refreshing.value === projectId) return
+  const lastTime = lastRefreshTime.get(projectId)
+  if (lastTime && Date.now() - lastTime < REFRESH_COOLDOWN_MS) return
+  lastRefreshTime.set(projectId, Date.now())
   handleRefresh(projectId)
 }
 
@@ -1445,6 +1453,9 @@ async function handleRefresh(id: string) {
 
 async function handleRefreshAll() {
   if (gitOpsPaused.value) return
+  // 防抖：全局刷新的冷却期内跳过
+  if (Date.now() - allRefreshLastTime < REFRESH_COOLDOWN_MS) return
+  allRefreshLastTime = Date.now()
   refreshingAll.value = true
   try {
     await silentRefreshAll()

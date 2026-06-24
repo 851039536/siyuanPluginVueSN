@@ -22,7 +22,7 @@
 .gp-header-left {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .gp-count-badge {
@@ -76,7 +76,7 @@
 .gp-header-sep {
   width: 1px;
   height: 18px;
-  margin: 0 5px;
+  margin: 0 3px;
   background: var(--b3-border-color);
   flex-shrink: 0;
 }

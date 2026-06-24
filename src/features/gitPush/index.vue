@@ -20,7 +20,7 @@
           >
             <Icon
               icon="mdi:view-list"
-              height="14"
+              height="12"
             />
           </button>
           <button
@@ -31,7 +31,7 @@
           >
             <Icon
               icon="mdi:chart-bar"
-              height="14"
+              height="12"
             />
           </button>
         </div>
@@ -46,7 +46,7 @@
         >
           <Icon
             :icon="pl.icon"
-            height="13"
+            height="12"
           />
           <span class="gp-platform-link-label">{{ pl.label }}</span>
         </button>
@@ -55,14 +55,14 @@
           class="vp-btn vp-btn--ghost vp-btn--sm"
           @click="showCatDialog = true"
         >
-          <Icon icon="mdi:tag-outline" />
+          <Icon icon="mdi:tag-outline" height="12" />
         </button>
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
           title="设置"
           @click="showSettings = true"
         >
-          <Icon icon="mdi:cog-outline" />
+          <Icon icon="mdi:cog-outline" height="12" />
         </button>
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
@@ -72,6 +72,7 @@
         >
           <Icon
             icon="mdi:sync"
+            height="12"
             :class="{ 'gp-spin': refreshingAll }"
           />
         </button>
@@ -80,7 +81,7 @@
             class="vp-btn vp-btn--ghost gp-add-dropdown-btn"
             @click.stop="showAddMenu = !showAddMenu"
           >
-            <Icon icon="mdi:plus" />
+            <Icon icon="mdi:plus" height="12" />
           </button>
           <div
             v-if="showAddMenu"
@@ -93,7 +94,7 @@
             >
               <Icon
                 icon="mdi:plus-circle-outline"
-                height="15"
+                height="12"
               />
               <span>{{ i18n.addProject || '添加单个项目' }}</span>
             </button>
@@ -103,7 +104,7 @@
             >
               <Icon
                 icon="mdi:file-find-outline"
-                height="15"
+                height="12"
               />
               <span>{{ i18n.importProject || '批量导入' }}</span>
             </button>
@@ -152,7 +153,7 @@
           >
             <Icon
               :icon="VIEW_MODE_META[vm].icon"
-              height="13"
+              height="12"
             />
             <span>{{ VIEW_MODE_META[vm].label }}</span>
           </button>
@@ -166,7 +167,7 @@
           >
             <Icon
               icon="mdi:archive-outline"
-              height="13"
+              height="12"
             />
             <span v-if="showArchived">含归档</span>
           </button>
@@ -178,7 +179,7 @@
           >
             <Icon
               :icon="gitOpsPaused ? 'mdi:pause-circle' : 'mdi:pause-circle-outline'"
-              height="13"
+              height="12"
             />
             <span v-if="gitOpsPaused">已暂停</span>
           </button>
@@ -242,7 +243,7 @@
         >
           <Icon
             icon="mdi:close"
-            height="14"
+            height="12"
           />
         </button>
       </div>
@@ -296,7 +297,7 @@
                   >
                     <Icon
                       :icon="project.starred ? 'mdi:star' : 'mdi:star-outline'"
-                      height="14"
+                      height="12"
                     />
                   </button>
                   <input
@@ -333,7 +334,7 @@
                   >
                     <Icon
                       icon="mdi:archive-outline"
-                      height="11"
+                      height="12"
                     />归档
                   </span>
                 </div>
@@ -370,7 +371,7 @@
                   >
                     <Icon
                       icon="mdi:clock-outline"
-                      height="10"
+                      height="12"
                     />
                     {{ relativeTime(project.lastActivity) }}
                   </span>
@@ -382,7 +383,7 @@
                 >
                   <Icon
                     icon="mdi:source-branch"
-                    height="11"
+                    height="12"
                   />
                   <button
                     v-for="b in branches[project.id]"
@@ -396,7 +397,7 @@
                     <Icon
                       v-if="b.current"
                       icon="mdi:check"
-                      height="9"
+                      height="12"
                     />
                   </button>
                 </div>
@@ -408,7 +409,7 @@
                 >
                   <Icon
                     icon="mdi:note-text-outline"
-                    height="11"
+                    height="12"
                   />
                   <span>{{ project.note }}</span>
                 </div>
@@ -438,7 +439,7 @@
                 >
                   <Icon
                     icon="mdi:github"
-                    height="14"
+                    height="12"
                   />
                 </button>
                 <button
@@ -450,7 +451,7 @@
                 >
                   <Icon
                     icon="mdi:git"
-                    height="14"
+                    height="12"
                   />
                 </button>
                 <button
@@ -462,7 +463,7 @@
                 >
                   <Icon
                     icon="mdi:tea"
-                    height="14"
+                    height="12"
                   />
                 </button>
                 <button
@@ -474,7 +475,7 @@
                 >
                   <Icon
                     icon="mdi:cloud-braces"
-                    height="14"
+                    height="12"
                   />
                 </button>
                 <div class="gp-ide-wrap">
@@ -485,11 +486,11 @@
                   >
                     <Icon
                       icon="mdi:folder-open"
-                      height="14"
+                      height="12"
                     />
                     <Icon
                       icon="mdi:unfold-more-horizontal"
-                      height="10"
+                      height="12"
                       style="margin-left:1px;opacity:0.5"
                     />
                   </button>
@@ -504,7 +505,7 @@
                     >
                       <Icon
                         icon="mdi:folder-open"
-                        height="14"
+                        height="12"
                       />
                       <span>打开文件夹</span>
                     </button>
@@ -516,7 +517,7 @@
                     >
                       <Icon
                         icon="mdi:information-outline"
-                        height="14"
+                        height="12"
                       />
                       <span>未检测到 IDE</span>
                     </button>
@@ -527,7 +528,7 @@
                     >
                       <Icon
                         icon="mdi:information-outline"
-                        height="14"
+                        height="12"
                       />
                       <span>未检测到已安装的 IDE</span>
                     </button>
@@ -539,7 +540,7 @@
                     >
                       <Icon
                         :icon="ide.icon"
-                        height="14"
+                        height="12"
                       />
                       <span>{{ ide.name }}</span>
                     </button>
@@ -551,7 +552,7 @@
                     >
                       <Icon
                         icon="mdi:application-brackets"
-                        height="14"
+                        height="12"
                       />
                       <span>{{ custom.name }}</span>
                       <template v-if="confirmingDelIdx === idx">
@@ -577,7 +578,7 @@
                       >
                         <Icon
                           icon="mdi:delete-outline"
-                          height="13"
+                          height="12"
                         />
                       </button>
                     </button>
@@ -588,7 +589,7 @@
                     >
                       <Icon
                         icon="mdi:cog-outline"
-                        height="14"
+                        height="12"
                       />
                       <span>管理 IDE...</span>
                     </button>
@@ -601,6 +602,7 @@
                 >
                   <Icon
                     icon="mdi:refresh"
+                    height="12"
                     :class="{ 'gp-spin': refreshing === project.id }"
                   />
                 </button>
@@ -611,14 +613,14 @@
                 >
                   <Icon
                     icon="mdi:pencil-outline"
-                    height="14"
+                    height="12"
                   />
                 </button>
                 <button
                   class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
                   @click="handleRemove(project)"
                 >
-                  <Icon icon="mdi:delete-outline" />
+                  <Icon icon="mdi:delete-outline" height="12" />
                 </button>
               </div>
             </div>
@@ -631,7 +633,7 @@
                 class="gp-remote-item"
                 :class="{ active: !!project[r.remoteProp] }"
               >
-                <Icon :icon="r.icon" />
+                <Icon :icon="r.icon" height="12" />
                 <span v-if="project[r.remoteProp]">{{ project[r.remoteProp] }}</span>
                 <span
                   v-else
@@ -654,7 +656,7 @@
             >
               <Icon
                 icon="mdi:alert-circle-outline"
-                height="14"
+                height="12"
               />
               <span>{{ i18n.conflictWarn || '远程有新的提交，建议先拉取再推送' }}</span>
             </div>
@@ -780,6 +782,7 @@
                 <Icon
                   v-else
                   :icon="r.icon"
+                  height="12"
                 />
                 <span v-if="isPushing(project.id, r.key)">{{ i18n.pushing || '推送中...' }}</span>
                 <span v-else>{{ r.label }}</span>

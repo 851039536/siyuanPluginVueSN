@@ -13,7 +13,7 @@
           class="vp-btn vp-btn--ghost vp-btn--sm"
           @click="$emit('close')"
         >
-          <Icon icon="mdi:close" />
+          <Icon icon="mdi:close" height="12" />
         </button>
       </div>
       <div class="gp-dialog-body">
@@ -65,7 +65,7 @@
             <template v-else>
               <Icon
                 :icon="getIcon(custom.name)"
-                height="14"
+                height="12"
               />
               <span class="gp-ide-mgmt-name">{{ custom.name }}</span>
               <span

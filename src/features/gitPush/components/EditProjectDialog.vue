@@ -13,7 +13,7 @@
           class="vp-btn vp-btn--ghost vp-btn--sm"
           @click="$emit('close')"
         >
-          <Icon icon="mdi:close" />
+          <Icon icon="mdi:close" height="12" />
         </button>
       </div>
       <div class="gp-dialog-body">
@@ -54,7 +54,7 @@
               >
                 <Icon
                   :icon="localStarred ? 'mdi:star' : 'mdi:star-outline'"
-                  height="13"
+                  height="12"
                 />收藏
               </button>
               <button
@@ -64,7 +64,7 @@
               >
                 <Icon
                   icon="mdi:archive-outline"
-                  height="13"
+                  height="12"
                 />归档
               </button>
             </div>
@@ -88,7 +88,7 @@
               >
                 <Icon
                   icon="mdi:close"
-                  height="11"
+                  height="12"
                 />
               </button>
             </span>
@@ -127,7 +127,7 @@
             >
               <Icon
                 :icon="pl.icon"
-                height="14"
+                height="12"
               />
               <input
                 v-model="urlInputs[pl.urlProp]"

@@ -13,7 +13,7 @@
           class="vp-btn vp-btn--ghost vp-btn--sm"
           @click="$emit('close')"
         >
-          <Icon icon="mdi:close" />
+          <Icon icon="mdi:close" height="12" />
         </button>
       </div>
       <div class="gp-dialog-body">
@@ -59,7 +59,7 @@
           >
             <Icon
               icon="mdi:plus"
-              height="13"
+              height="12"
             />
           </button>
         </div>

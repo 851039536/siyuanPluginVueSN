@@ -6,7 +6,7 @@
     <div class="gp-conflict-header">
       <Icon
         icon="mdi:alert-circle"
-        height="14"
+        height="12"
       />
       <span>{{ i18n.conflictDetected || '检测到合并冲突' }}（{{ conflicts.length }} 个文件）</span>
     </div>
@@ -24,7 +24,7 @@
         >
           <Icon
             icon="mdi:file-document-check-outline"
-            height="11"
+            height="12"
           />
         </button>
         <button
@@ -34,7 +34,7 @@
         >
           <Icon
             icon="mdi:file-download-outline"
-            height="11"
+            height="12"
           />
         </button>
       </span>

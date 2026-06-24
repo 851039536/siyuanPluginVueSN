@@ -8,7 +8,7 @@
       >
         <Icon
           icon="mdi:help-circle-outline"
-          height="14"
+          height="12"
         />
       </span>
       <template v-if="isInputVisible">
@@ -29,12 +29,12 @@
             v-if="genDescLoading"
             icon="mdi:loading"
             class="gp-spin"
-            height="14"
+            height="12"
           />
           <Icon
             v-else
             icon="mdi:auto-fix"
-            height="14"
+            height="12"
           />
         </button>
         <button
@@ -44,7 +44,7 @@
         >
           <Icon
             icon="mdi:check"
-            height="14"
+            height="12"
           />
         </button>
         <button
@@ -53,7 +53,7 @@
         >
           <Icon
             icon="mdi:close"
-            height="14"
+            height="12"
           />
         </button>
       </template>
@@ -67,12 +67,12 @@
           v-if="loading"
           icon="mdi:loading"
           class="gp-spin"
-          height="13"
+          height="12"
         />
         <Icon
           v-else
           icon="mdi:archive-outline"
-          height="13"
+          height="12"
         />
         {{ i18n.stashSave || '暂存变更' }}
       </button>

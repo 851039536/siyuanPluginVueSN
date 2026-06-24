@@ -23,7 +23,7 @@
         >
           <Icon
             icon="mdi:check"
-            height="14"
+            height="12"
           />
         </button>
         <button
@@ -32,7 +32,7 @@
         >
           <Icon
             icon="mdi:close"
-            height="14"
+            height="12"
           />
         </button>
       </template>
@@ -44,7 +44,7 @@
       >
         <Icon
           icon="mdi:tag-plus-outline"
-          height="13"
+          height="12"
         />
         <span>{{ i18n.createTag || '打 Tag' }}</span>
       </button>
@@ -87,11 +87,11 @@
               v-for="r in remotes"
               :key="r.key"
               :icon="r.icon"
-              height="11"
+              height="12"
             />
             <Icon
               icon="mdi:cloud-upload-outline"
-              height="11"
+              height="12"
               style="opacity:0.5"
             />
           </template>
@@ -115,7 +115,7 @@
     >
       <Icon
         icon="mdi:tag-off-outline"
-        height="13"
+        height="12"
       />
       <span>{{ i18n.noTags || '暂无 Tag' }}</span>
     </div>

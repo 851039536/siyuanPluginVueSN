@@ -5,7 +5,7 @@
 .gp-form-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: $spacing-1;
 }
 
 .gp-label {
@@ -17,8 +17,8 @@
   box-sizing: border-box;
   padding: 7px 10px;
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
-  font-size: 12px;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
   font-family: $vp-mono;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
@@ -36,7 +36,7 @@
 
 .gp-path-row {
   display: flex;
-  gap: 4px;
+  gap: $spacing-1;
 }
 
 .gp-error {

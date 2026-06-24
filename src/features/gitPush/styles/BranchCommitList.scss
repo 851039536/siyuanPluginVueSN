@@ -3,15 +3,15 @@
 .bcl-panel {
   border-top: 1px dashed var(--b3-border-color);
   margin-top: 6px;
-  padding-top: 4px;
+  padding-top: $spacing-1;
 }
 
 .bcl-header {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: $spacing-1;
   cursor: pointer;
-  padding: 4px 0;
+  padding: $spacing-1 0;
   font-size: 11px;
   opacity: 0.6;
   transition: opacity 0.15s;
@@ -28,7 +28,7 @@
 
 .bcl-title {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: $font-weight-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   opacity: 0.45;
@@ -36,19 +36,19 @@
 
 .bcl-count {
   font-size: 10px;
-  font-weight: 600;
+  font-weight: $font-weight-semibold;
   font-family: $vp-mono;
   opacity: 0.35;
 }
 
 .bcl-body {
-  margin-top: 4px;
+  margin-top: $spacing-1;
 }
 
 .bcl-search {
   display: flex;
   gap: 3px;
-  margin-bottom: 4px;
+  margin-bottom: $spacing-1;
   align-items: center;
 }
 
@@ -62,7 +62,7 @@
   min-width: 0;
   padding: 2px 6px;
   border: 1px solid var(--b3-border-color);
-  border-radius: 3px;
+  border-radius: $radius-sm;
   font-size: 10px;
   font-family: $vp-mono;
   background: var(--b3-theme-surface);
@@ -89,8 +89,8 @@
   opacity: 0.5;
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 0;
+  gap: $spacing-1;
+  padding: $spacing-1 0;
 }
 
 .bcl-list {
@@ -107,7 +107,7 @@
   gap: 6px;
   padding: 3px 4px;
   font-size: 10px;
-  border-radius: 3px;
+  border-radius: $radius-sm;
   transition: background 0.1s;
 
   &:hover {
@@ -117,7 +117,7 @@
 
 .bcl-hash {
   font-family: $vp-mono;
-  font-weight: 600;
+  font-weight: $font-weight-semibold;
   color: var(--b3-theme-primary);
   opacity: 0.7;
   flex-shrink: 0;
@@ -135,7 +135,7 @@
 
 .bcl-meta {
   display: flex;
-  gap: 4px;
+  gap: $spacing-1;
   flex-shrink: 0;
   opacity: 0.4;
   font-size: 9px;

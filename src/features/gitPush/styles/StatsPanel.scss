@@ -132,8 +132,8 @@
 .gp-status-chip {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
+  gap: $spacing-1;
+  padding: $spacing-1 10px;
   border-radius: $radius-sm;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
@@ -191,7 +191,7 @@
 .gp-table-row {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: $spacing-1;
   padding: 5px $spacing-2;
   font-size: 11px;
   border-bottom: 1px solid var(--b3-border-color);
@@ -233,7 +233,7 @@
   &--plat {
     width: 90px;
     display: flex;
-    gap: 4px;
+    gap: $spacing-1;
     flex-wrap: wrap;
   }
 
@@ -267,10 +267,10 @@
 .gp-badge-ahead {
   display: inline-block;
   font-size: 9px;
-  font-weight: 700;
+  font-weight: $font-weight-bold;
   font-family: $vp-mono;
   padding: 1px 5px;
-  border-radius: 3px;
+  border-radius: $radius-sm;
   background: var(--b3-theme-primary-lightest);
   color: var(--b3-theme-primary);
 }

@@ -1,0 +1,214 @@
+// ========== Slider.scss ==========
+@use './_mixins.scss' as m;
+@use '@/variables.scss' as *;
+
+.si-slider {
+  display: inline-flex;
+  flex-direction: column;
+  position: relative;
+  font-family: $font-body;
+  width: 100%;
+
+  &__wrapper {
+    display: flex;
+    align-items: center;
+    gap: $spacing-3;
+    position: relative;
+  }
+
+  &__field {
+    flex: 1;
+    width: 100%;
+    height: 6px; // 滑块轨道高度，无对应 Token
+    border: none;
+    outline: none;
+    background: var(--b3-theme-surface, $brand-light-gray);
+    border-radius: $radius-sm;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+
+    // Webkit (Chrome, Safari, Edge) 滑块拇指样式
+    // thumb box-shadow 保留 — range input 需要视觉层级区分拖拽手柄
+    &::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: $spacing-4; // 16px
+      height: $spacing-4;
+      background: var(--b3-theme-primary, $brand-orange);
+      border-radius: 50%;
+      cursor: grab;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+      &:hover {
+        transform: scale(1.2);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      &:active {
+        cursor: grabbing;
+        transform: scale(1.1);
+      }
+    }
+
+    // Firefox 滑块拇指样式
+    &::-moz-range-thumb {
+      width: $spacing-4; // 16px
+      height: $spacing-4;
+      background: var(--b3-theme-primary, $brand-orange);
+      border: none;
+      border-radius: 50%;
+      cursor: grab;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+      &:hover {
+        transform: scale(1.2);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      &:active {
+        cursor: grabbing;
+        transform: scale(1.1);
+      }
+    }
+
+    // Webkit 轨道样式
+    &::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 6px;
+      background: var(--b3-theme-surface, $brand-light-gray);
+      border-radius: $radius-sm;
+    }
+
+    // Firefox 轨道样式
+    &::-moz-range-track {
+      width: 100%;
+      height: 6px;
+      background: var(--b3-theme-surface, $brand-light-gray);
+      border-radius: $radius-sm;
+    }
+
+    &:focus {
+      &::-webkit-slider-thumb {
+        box-shadow: 0 0 0 4px rgba(var(--b3-theme-primary-rgb, $brand-orange), 0.2);
+      }
+
+      &::-moz-range-thumb {
+        box-shadow: 0 0 0 4px rgba(var(--b3-theme-primary-rgb, $brand-orange), 0.2);
+      }
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: m.$opacity-muted;
+
+      &::-webkit-slider-thumb {
+        cursor: not-allowed;
+        background: var(--b3-theme-secondary, $brand-mid-gray);
+      }
+
+      &::-moz-range-thumb {
+        cursor: not-allowed;
+        background: var(--b3-theme-secondary, $brand-mid-gray);
+      }
+    }
+  }
+
+  &__value {
+    flex-shrink: 0;
+    min-width: 40px; // 无对应 Token
+    text-align: center;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: var(--b3-theme-primary, $brand-orange);
+    font-family: $font-heading;
+  }
+
+  &--disabled {
+    .si-slider__field {
+      cursor: not-allowed;
+    }
+  }
+
+  &--readonly {
+    .si-slider__field {
+      cursor: default;
+    }
+  }
+
+  &--error {
+    .si-slider__field {
+      &::-webkit-slider-thumb {
+        background: var(--b3-theme-destructive, $brand-destructive);
+      }
+
+      &::-moz-range-thumb {
+        background: var(--b3-theme-destructive, $brand-destructive);
+      }
+    }
+  }
+
+  // 尺寸变体
+  &--small {
+    .si-slider__field {
+      height: $spacing-1; // 4px
+
+      &::-webkit-slider-thumb {
+        width: 14px; // 无对应 Token
+        height: 14px;
+      }
+
+      &::-moz-range-thumb {
+        width: 14px;
+        height: 14px;
+      }
+    }
+
+    .si-slider__value {
+      font-size: $font-size-xs;
+      min-width: 32px; // 无对应 Token
+    }
+  }
+
+  &--medium {
+    .si-slider__field {
+      height: 6px; // 无对应 Token
+
+      &::-webkit-slider-thumb {
+        width: $spacing-4; // 16px
+        height: $spacing-4;
+      }
+
+      &::-moz-range-thumb {
+        width: $spacing-4;
+        height: $spacing-4;
+      }
+    }
+
+    .si-slider__value {
+      font-size: $font-size-sm;
+      min-width: 40px;
+    }
+  }
+
+  &--large {
+    .si-slider__field {
+      height: $spacing-2; // 8px
+
+      &::-webkit-slider-thumb {
+        width: 18px; // 无对应 Token
+        height: 18px;
+      }
+
+      &::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+      }
+    }
+
+    .si-slider__value {
+      font-size: $font-size-base; // 原 15px → base(16px)
+      min-width: 48px; // 无对应 Token
+    }
+  }
+}

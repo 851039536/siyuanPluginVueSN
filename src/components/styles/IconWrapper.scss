@@ -1,0 +1,10 @@
+// ========== IconWrapper.scss ==========
+@use '@/variables.scss' as *;
+
+// 图标默认样式
+svg {
+  display: inline-block;
+  vertical-align: middle;
+  width: 1em;
+  height: 1em;
+}

@@ -1,0 +1,6 @@
+// ========== src/components/styles/index.scss ==========
+// 共享基座样式 — 公共动画 keyframes、通用 @media 响应式覆盖
+@use './_mixins.scss' as m;
+@use '@/variables.scss' as *;
+
+// 公共 spin 动画引用（_mixins.scss 中定义，各组件 SCSS 通过 @use 引用）

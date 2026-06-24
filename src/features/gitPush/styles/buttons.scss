@@ -2,7 +2,7 @@
 .vp-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   padding: 5px 10px;
   border-radius: 4px;
   font-size: 12px;
@@ -11,8 +11,8 @@
   transition: all 0.15s;
 
   &--sm {
-    padding: 3px 6px;
-    font-size: 11px;
+    padding: 2px 5px;
+    font-size: 10px;
   }
 
   &--primary {

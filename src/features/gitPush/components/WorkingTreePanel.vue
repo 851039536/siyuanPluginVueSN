@@ -8,7 +8,7 @@
     >
       <Icon
         :icon="expanded ? 'mdi:chevron-down' : 'mdi:chevron-right'"
-        height="14"
+        height="12"
       />
       <span class="wt-label">WORKING TREE</span>
       <template v-if="tree.hasChanges">
@@ -72,7 +72,7 @@
         >
           <Icon
             icon="mdi:information-outline"
-            height="11"
+            height="12"
           />
           <span>点击文件名或「差异」按钮查看带颜色的 diff 比对</span>
         </div>
@@ -94,17 +94,17 @@
               v-if="gitOpLoading"
               icon="mdi:loading"
               class="gp-spin"
-              height="14"
+              height="12"
             />
             <Icon
               v-else-if="file.staged"
               icon="mdi:checkbox-marked"
-              height="14"
+              height="12"
             />
             <Icon
               v-else
               icon="mdi:checkbox-blank-outline"
-              height="14"
+              height="12"
             />
           </button>
 
@@ -146,7 +146,7 @@
           >
             <Icon
               icon="mdi:file-compare"
-              height="13"
+              height="12"
             />
             <span class="wt-diff-btn-label">差异</span>
           </button>
@@ -159,7 +159,7 @@
           >
             <Icon
               icon="mdi:undo-variant"
-              height="13"
+              height="12"
             />
           </button>
         </div>
@@ -177,7 +177,7 @@
               <div class="wt-diff-title-row">
                 <Icon
                   icon="mdi:file-compare"
-                  height="14"
+                  height="12"
                 />
                 <span class="wt-diff-title">{{ activeDiffFile.path }}</span>
                 <span class="wt-diff-badge">{{ activeDiffFile.staged ? (i18n.staged || '暂存') : (i18n.unstaged || '未暂存') }}</span>
@@ -188,7 +188,7 @@
               >
                 <Icon
                   icon="mdi:close"
-                  height="14"
+                  height="12"
                 />
               </button>
             </div>
@@ -236,7 +236,7 @@
         >
           <Icon
             icon="mdi:file-document-outline"
-            height="13"
+            height="12"
           />
           <select
             class="wt-template-select"
@@ -270,12 +270,12 @@
               v-if="generating"
               icon="mdi:loading"
               class="gp-spin"
-              height="13"
+              height="12"
             />
             <Icon
               v-else
               icon="mdi:auto-fix"
-              height="13"
+              height="12"
             />
             <span>{{ generating ? (i18n.generating || '生成中...') : (i18n.generateMsg || '生成提交信息') }}</span>
           </button>
@@ -288,12 +288,12 @@
               v-if="committing"
               icon="mdi:loading"
               class="gp-spin"
-              height="13"
+              height="12"
             />
             <Icon
               v-else
               icon="mdi:source-commit"
-              height="13"
+              height="12"
             />
             <span>{{ committing ? (i18n.committing || '提交中...') : (i18n.commit || '提交') }}</span>
           </button>

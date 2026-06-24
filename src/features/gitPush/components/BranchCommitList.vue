@@ -7,7 +7,7 @@
     >
       <Icon
         :icon="expanded ? 'mdi:chevron-down' : 'mdi:chevron-right'"
-        height="14"
+        height="12"
       />
       <span class="bcl-title">COMMIT LOG</span>
       <span
@@ -44,10 +44,10 @@
           class="vp-btn vp-btn--ghost vp-btn--sm"
           @click.stop="searchKeyword = ''; searchAuthor = ''"
         >
-          <Icon
-            icon="mdi:close"
-            height="10"
-          />
+        <Icon
+          icon="mdi:close"
+          height="12"
+        />
         </button>
       </div>
 
@@ -58,7 +58,7 @@
         <Icon
           icon="mdi:loading"
           class="gp-spin"
-          height="14"
+          height="12"
         />
         <span>加载中...</span>
       </div>

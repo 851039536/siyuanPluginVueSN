@@ -66,7 +66,7 @@
             <div class="gp-coverage-head">
               <Icon
                 icon="mdi:github"
-                height="14"
+                height="12"
               />
               <span>GitHub</span>
               <span class="gp-coverage-num">{{ remoteCoverage.github }} / {{ remoteCoverage.total }}</span>
@@ -82,7 +82,7 @@
             <div class="gp-coverage-head">
               <Icon
                 icon="mdi:git"
-                height="14"
+                height="12"
               />
               <span>Gitee</span>
               <span class="gp-coverage-num">{{ remoteCoverage.gitee }} / {{ remoteCoverage.total }}</span>
@@ -98,7 +98,7 @@
             <div class="gp-coverage-head">
               <Icon
                 icon="mdi:tea"
-                height="14"
+                height="12"
               />
               <span>Gitea</span>
               <span class="gp-coverage-num">{{ remoteCoverage.gitea }} / {{ remoteCoverage.total }}</span>
@@ -114,7 +114,7 @@
             <div class="gp-coverage-head">
               <Icon
                 icon="mdi:cloud-braces"
-                height="14"
+                height="12"
               />
               <span>CNB</span>
               <span class="gp-coverage-num">{{ remoteCoverage.cnb }} / {{ remoteCoverage.total }}</span>
@@ -130,7 +130,7 @@
             <div class="gp-coverage-head">
               <Icon
                 icon="mdi:layers"
-                height="14"
+                height="12"
               />
               <span>{{ i18n.multipleRemotes || '多远程项目' }}</span>
               <span class="gp-coverage-num">{{ remoteCoverage.multiple }} / {{ remoteCoverage.total }}</span>
@@ -156,28 +156,28 @@
           <div class="gp-status-chip gp-status-chip--ahead">
             <Icon
               icon="mdi:cloud-upload-outline"
-              height="13"
+              height="12"
             />
             <span>{{ pushStatusStats.ahead }}</span>
           </div>
           <div class="gp-status-chip gp-status-chip--behind">
             <Icon
               icon="mdi:cloud-download-outline"
-              height="13"
+              height="12"
             />
             <span>{{ pushStatusStats.behind }}</span>
           </div>
           <div class="gp-status-chip gp-status-chip--synced">
             <Icon
               icon="mdi:check-circle-outline"
-              height="13"
+              height="12"
             />
             <span>{{ pushStatusStats.synced }}</span>
           </div>
           <div class="gp-status-chip gp-status-chip--none">
             <Icon
               icon="mdi:lan-disconnect"
-              height="13"
+              height="12"
             />
             <span>{{ pushStatusStats.noRemote }}</span>
           </div>
@@ -262,7 +262,7 @@
         >
           <Icon
             icon="mdi:check-all"
-            height="14"
+            height="12"
           />
           <span>{{ i18n.allClear || '所有项目状态正常' }}</span>
         </div>
@@ -287,7 +287,7 @@
             >
               <Icon
                 :icon="pm.icon"
-                height="11"
+                height="12"
               />
             </span>
             <span class="gp-table-cell gp-table-cell--act"></span>
@@ -313,13 +313,13 @@
               <Icon
                 v-if="(item as any)[pm.key]"
                 icon="mdi:check-circle"
-                height="13"
+                height="12"
                 class="gp-platform-ok"
               />
               <Icon
                 v-else
                 icon="mdi:close-circle-outline"
-                height="13"
+                height="12"
                 class="gp-platform-missing"
               />
             </span>

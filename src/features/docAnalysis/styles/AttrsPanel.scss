@@ -403,4 +403,15 @@
       animation: spin 1s linear infinite;
     }
   }
+
+  .doocs-btn {
+    color: #fff;
+    background: var(--b3-theme-success, #22c55e);
+    border-color: var(--b3-theme-success, #22c55e);
+
+    &:hover:not(:disabled) {
+      opacity: 0.85;
+      background: var(--b3-theme-success, #16a34a);
+    }
+  }
 }

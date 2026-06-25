@@ -214,10 +214,6 @@
         opacity: 0.6;
         cursor: wait;
       }
-
-      .spin-icon {
-        @include da-spin-icon;
-      }
     }
 
     .publish-format-btn {
@@ -400,7 +396,7 @@
     }
 
     .spin-icon {
-      animation: spin 1s linear infinite;
+      @include da-spin-icon;
     }
   }
 

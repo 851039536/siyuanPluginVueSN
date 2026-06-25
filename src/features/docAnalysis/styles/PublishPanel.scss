@@ -45,30 +45,6 @@
   white-space: nowrap;
 }
 
-.theme-select {
-  padding: 4px 22px 4px 8px;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  font-size: $font-size-xs;
-  outline: none;
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 6px center;
-
-  &:focus {
-    border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.12));
-  }
-
-  &:hover {
-    border-color: var(--b3-theme-primary);
-  }
-}
-
 .toolbar-btn {
   display: inline-flex;
   align-items: center;
@@ -81,7 +57,7 @@
   font-size: 11px;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.12s;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
 
   &:hover:not(:disabled) {
     border-color: var(--b3-theme-primary);
@@ -153,7 +129,6 @@
   font-size: 12px;
   color: var(--b3-theme-on-surface-variant);
   opacity: 0.55;
-  margin-top: 0;
 }
 
 .tip-text {

@@ -204,6 +204,40 @@ export interface PlatformMeta {
 }
 
 // ============================================================
+// 发布页相关类型
+// ============================================================
+
+/** 发布平台主题定义 */
+export interface PublishTheme {
+  /** 主题唯一标识 */
+  id: string
+  /** 显示名称 */
+  name: string
+  /** 预览包裹容器内联样式 */
+  container: Record<string, string>
+  /** 按标签的样式覆盖（标签 → CSS属性 → 值） */
+  elements: Record<string, Record<string, string>>
+  /** 默认代码高亮主题（highlight.js 主题名） */
+  codeTheme: CodeTheme
+}
+
+/** 代码高亮主题 */
+export type CodeTheme = "github" | "monokai" | "atom-one-dark" | "atom-one-light" | "vs"
+
+/** 导出格式 */
+export type ExportFormat = "html" | "markdown" | "htmlFile"
+
+/** 发布面板入口参数 */
+export interface PublishPanelParams {
+  /** 文档 ID（从文档列表打开时传入） */
+  docId?: string
+  /** 目标平台ID（从 AttrsPanel 的"前往发布"传入） */
+  targetPlatformId?: string
+  /** 初始 Markdown 内容（粘贴时传入） */
+  initialMd?: string
+}
+
+// ============================================================
 // 工具函数（纯函数，无副作用）
 // ============================================================
 

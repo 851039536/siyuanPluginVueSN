@@ -82,6 +82,14 @@
               <span class="status-text">{{ platform.published ? '已发布' : '未发布' }}</span>
               <button
                 v-if="!platform.published && platform.url"
+                class="publish-go-btn publish-format-btn"
+                title="排版发布：在编辑器内格式化后复制发布"
+                @click.stop="handlePublishFormat"
+              >
+                <Icon icon="mdi:brush" />
+              </button>
+              <button
+                v-if="!platform.published && platform.url"
                 class="publish-go-btn"
                 title="复制标题和内容后前往发布"
                 :disabled="publishGoLoading === platform.id"
@@ -213,6 +221,7 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   (e: "close"): void
   (e: "refresh"): void
+  (e: "publish", docId: string): void
 }>()
 
 const expandedYaml = ref(new Set<string>())
@@ -255,6 +264,11 @@ interface PlatformInfo {
 const markingPlatform = ref<string | null>(null)
 const mdCopyLoading = ref(false)
 const publishGoLoading = ref<string | null>(null)
+
+/** 排版发布：打开发布页 */
+function handlePublishFormat() {
+  emit("publish", props.docId)
+}
 
 /** 前往发布：先复制标题+Markdown 内容到剪贴板，再打开平台 URL（类似 SyncCaster） */
 async function handlePublishGo(platform: PlatformInfo) {

@@ -219,6 +219,15 @@
         @include da-spin-icon;
       }
     }
+
+    .publish-format-btn {
+      background: var(--b3-theme-success, #22c55e);
+      color: #fff;
+
+      &:hover:not(:disabled) {
+        background: var(--b3-theme-success, #16a34a);
+      }
+    }
   }
 
   .spin-icon {

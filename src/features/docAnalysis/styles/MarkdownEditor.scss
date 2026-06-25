@@ -1,0 +1,72 @@
+@use "@/variables.scss" as *;
+
+.md-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--b3-theme-surface, #1e1e1e);
+}
+
+.md-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-2 $spacing-3;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.md-editor-label {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.md-editor-hint {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.25);
+  font-family: $vp-mono;
+}
+
+.md-editor-textarea {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 14px 16px;
+  background: transparent;
+  color: #e0e0e0;
+  font-family: Consolas, Monaco, 'Courier New', $vp-mono, monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  tab-size: 2;
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.2);
+    font-style: italic;
+  }
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &:focus {
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.1);
+    }
+  }
+}

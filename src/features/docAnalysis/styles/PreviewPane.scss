@@ -1,0 +1,83 @@
+@use "@/variables.scss" as *;
+
+.preview-pane {
+  height: 100%;
+  overflow-y: auto;
+  background: #f0f0f0;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+.preview-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.preview-empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.preview-empty-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.preview-empty-desc {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.3);
+  line-height: 1.6;
+  max-width: 300px;
+}
+
+.preview-card-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 20px 12px;
+  min-height: 100%;
+}
+
+.preview-card {
+  width: 100%;
+  max-width: 480px;
+  background: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.preview-card-content {
+  min-height: 200px;
+}
+
+.preview-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-top: 1px solid #f0f0f0;
+  background: #fafafa;
+  font-size: 10px;
+  color: rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.04em;
+}

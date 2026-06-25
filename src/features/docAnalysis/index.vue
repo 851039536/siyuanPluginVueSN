@@ -18,6 +18,14 @@
         <Icon icon="mdi:format-list-bulleted" />
         文档列表
       </button>
+      <button
+        class="tab-btn"
+        :class="{ active: activeTab === 'publish' }"
+        @click="activeTab = 'publish'"
+      >
+        <Icon icon="mdi:brush" />
+        排版
+      </button>
       <div class="tab-bar-spacer" />
       <button
         class="analyze-btn"
@@ -321,6 +329,18 @@
       </ul>
     </div>
 
+    <!-- 发布面板 -->
+    <div
+      v-show="activeTab === 'publish'"
+      class="tab-panel publish-tab-panel"
+    >
+      <PublishPanel
+        :i18n="props.i18n?.docAnalysis || {}"
+        :plugin="props.plugin"
+        :doc-id="publishDocId"
+      />
+    </div>
+
     <!-- 属性面板 -->
     <AttrsPanel
       :visible="attrsPanelVisible"
@@ -330,6 +350,7 @@
       :error="attrsError"
       @close="handleCloseAttrs"
       @refresh="handleRefreshAttrs"
+      @publish="handlePublishDoc"
     />
 
     <!-- 平台管理弹窗 -->
@@ -359,6 +380,7 @@ import {
 import AttrsPanel from "./components/AttrsPanel.vue"
 import DocListItem from "./components/DocListItem.vue"
 import FilterSettings from "./components/FilterSettings.vue"
+import PublishPanel from "./components/PublishPanel.vue"
 
 import StatsOverview from "./components/StatsOverview.vue"
 import PlatformManageModal from "./components/PlatformManageModal.vue"
@@ -443,7 +465,17 @@ function handlePlatformFilter(matcher: string) {
 // ============================================================
 // Tab 切换
 // ============================================================
-const activeTab = ref<"stats" | "list">("stats")
+const activeTab = ref<"stats" | "list" | "publish">("stats")
+
+// ============================================================
+// 发布面板状态
+// ============================================================
+const publishDocId = ref<string | undefined>(undefined)
+
+function handlePublishDoc(docId: string) {
+  publishDocId.value = docId
+  activeTab.value = "publish"
+}
 
 // ============================================================
 // 属性面板状态

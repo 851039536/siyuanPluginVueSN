@@ -1,0 +1,273 @@
+@use "@/variables.scss" as *;
+
+.publish-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: var(--b3-theme-background);
+}
+
+// ============================================================
+// 顶部工具栏
+// ============================================================
+.publish-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-2 $spacing-3;
+  border-bottom: 2px solid var(--b3-border-color);
+  background: var(--b3-theme-background);
+  flex-shrink: 0;
+  gap: $spacing-2;
+  flex-wrap: nowrap;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+}
+
+.toolbar-label {
+  font-size: 10px;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface-variant);
+  opacity: 0.45;
+  white-space: nowrap;
+}
+
+.theme-select {
+  padding: 4px 22px 4px 8px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  font-size: $font-size-xs;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+
+  &:focus {
+    border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.12));
+  }
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+.toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  background: transparent;
+  color: var(--b3-theme-on-surface-variant);
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.12s;
+
+  &:hover:not(:disabled) {
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+    background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.06));
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  &.primary {
+    border-color: var(--b3-theme-primary);
+    background: var(--b3-theme-primary);
+    color: var(--b3-theme-on-primary);
+    font-weight: 500;
+
+    &:hover:not(:disabled) {
+      opacity: 0.85;
+    }
+
+    &:disabled {
+      opacity: 0.35;
+      background: var(--b3-theme-primary);
+    }
+  }
+
+  &.format-btn {
+    color: var(--b3-theme-primary);
+
+    &:hover:not(:disabled) {
+      background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.1));
+    }
+  }
+
+  &.publish-external-btn {
+    border-color: var(--b3-theme-success, #22c55e);
+    background: var(--b3-theme-success, #22c55e);
+    color: #fff;
+    font-weight: 500;
+
+    &:hover:not(:disabled) {
+      opacity: 0.85;
+    }
+
+    &:disabled {
+      opacity: 0.35;
+      background: var(--b3-theme-success, #22c55e);
+    }
+  }
+}
+
+// ============================================================
+// 提醒横幅
+// ============================================================
+.publish-tip-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: var(--b3-theme-surface, rgba(255, 255, 255, 0.04));
+  border-bottom: 1px solid var(--b3-border-color-transient, rgba(255, 255, 255, 0.06));
+  flex-shrink: 0;
+}
+
+.tip-icon {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--b3-theme-on-surface-variant);
+  opacity: 0.55;
+  margin-top: 0;
+}
+
+.tip-text {
+  flex: 1;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--b3-theme-on-surface-variant);
+  opacity: 0.65;
+
+  strong {
+    font-weight: $font-weight-semibold;
+    color: var(--b3-theme-on-surface-variant);
+    opacity: 0.9;
+  }
+}
+
+.tip-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--b3-theme-on-surface-variant);
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 10px;
+  opacity: 0.35;
+  transition: opacity 0.12s;
+
+  &:hover {
+    opacity: 0.7;
+  }
+}
+
+// ============================================================
+// 分屏编辑+预览区
+// ============================================================
+.publish-split {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.publish-editor-pane {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.publish-divider {
+  width: 1px;
+  background: var(--b3-border-color);
+  flex-shrink: 0;
+}
+
+.publish-preview-pane {
+  flex: 1.2;
+  min-width: 0;
+  overflow: hidden;
+}
+
+// ============================================================
+// 底部状态栏
+// ============================================================
+.publish-statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 12px;
+  border-top: 1px solid var(--b3-border-color);
+  background: var(--b3-theme-surface);
+  flex-shrink: 0;
+  height: 28px;
+}
+
+.statusbar-left {
+  font-size: 11px;
+  color: var(--b3-theme-on-surface-variant);
+  opacity: 0.6;
+  font-family: $vp-mono;
+}
+
+.statusbar-right {
+  font-size: 11px;
+  color: var(--b3-theme-on-surface-variant);
+  opacity: 0.45;
+}
+
+// ============================================================
+// 窄屏适配（Dock 面板 < 420px 时上下排列）
+// ============================================================
+@media (max-width: 420px) {
+  .publish-split {
+    flex-direction: column;
+  }
+
+  .publish-editor-pane {
+    flex: 1;
+  }
+
+  .publish-divider {
+    width: 100%;
+    height: 1px;
+  }
+
+  .publish-preview-pane {
+    flex: 1;
+  }
+
+  .toolbar-label {
+    display: none;
+  }
+}

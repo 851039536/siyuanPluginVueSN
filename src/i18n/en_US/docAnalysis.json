@@ -21,6 +21,25 @@
     "sizeUnit": "Size Unit",
     "sortOrder": "Sort Order",
     "ascending": "Ascending",
-    "descending": "Descending"
+    "descending": "Descending",
+    "publishTab": "Format",
+    "publishTabDesc": "WeChat Official Account Markdown formatting preview",
+    "themeLabel": "Theme",
+    "formatBtn": "Auto Format",
+    "copyHtml": "Copy HTML",
+    "copyMd": "Copy MD",
+    "downloadHtml": "Download HTML",
+    "editorPlaceholder": "Type or paste Markdown content here...",
+    "editorLoaded": "Document loaded, edit before publishing...",
+    "previewTitle": "Live Preview",
+    "previewDesc": "Enter Markdown in the editor to preview the formatted output",
+    "statusWordCount": "Words",
+    "statusTheme": "Current theme",
+    "copyHtmlSuccess": "HTML copied to clipboard, ready to paste into WeChat editor",
+    "copyMdSuccess": "Markdown source copied to clipboard",
+    "downloadSuccess": "HTML file downloading...",
+    "formatSuccess": "Formatting rules applied",
+    "renderError": "Render error",
+    "publishFromAttrs": "Format & Publish: format in editor then copy to publish"
   }
 }

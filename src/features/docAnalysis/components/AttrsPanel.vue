@@ -180,6 +180,14 @@
           复制全部
         </button>
         <button
+          class="footer-btn doocs-btn"
+          title="复制 Markdown 内容后跳转到 md.doocs.org"
+          @click="goToDoocs"
+        >
+          <Icon icon="mdi:open-in-new" />
+          doocs.org
+        </button>
+        <button
           class="footer-btn"
           @click="$emit('close')"
         >
@@ -485,6 +493,18 @@ async function copyAllAttrs() {
     .map(([k, v]) => `${k}: ${v}`)
     .join("\n")
   await copyToClipboard(text)
+}
+
+async function goToDoocs() {
+  const result = await exportMdContent(props.docId)
+  const title = props.attrs?.title || ""
+  const mdContent = result?.content || ""
+  const combined = `# ${title}\n\n${mdContent}`
+  await copyToClipboard(combined)
+  showMessage("内容已复制，即将跳转到 md.doocs.org", 2000, "info")
+  setTimeout(() => {
+    window.open("https://md.doocs.org/", "_blank")
+  }, 400)
 }
 </script>
 

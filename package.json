@@ -65,11 +65,11 @@
     "fast-glob": "^3.2.12",
     "minimist": "^1.2.8",
     "rollup-plugin-livereload": "^2.0.5",
-    "sass": "^1.62.1",
+    "sass": "^1.101.0",
     "siyuan": "1.2.1",
     "typescript": "^5.9.3",
     "vite": "^6.4.3",
-    "vite-plugin-static-copy": "^0.15.0",
+    "vite-plugin-static-copy": "^4.1.1",
     "vite-plugin-zip-pack": "^1.0.5"
   }
 }

@@ -67,7 +67,7 @@
     "rollup-plugin-livereload": "^2.0.5",
     "sass": "^1.62.1",
     "siyuan": "1.1.0",
-    "typescript": "^5.0.4",
+    "typescript": "^5.9.3",
     "vite": "^6.4.3",
     "vite-plugin-static-copy": "^0.15.0",
     "vite-plugin-zip-pack": "^1.0.5"

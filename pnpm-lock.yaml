@@ -100,8 +100,8 @@ importers:
         specifier: ^1.62.1
         version: 1.94.2
       siyuan:
-        specifier: 1.1.0
-        version: 1.1.0
+        specifier: 1.2.1
+        version: 1.2.1
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -2143,8 +2143,8 @@ packages:
   sisteransi@1.0.5:
     resolution: {integrity: sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg==}
 
-  siyuan@1.1.0:
-    resolution: {integrity: sha512-XZqoA+kiVSTJ/6LHcHenzMGzWJ1WfDvy/0DJEPLzj1sazGnrW5lwkuDIpR1LfEemUEf6jf0KUJgSUif2phEHPQ==}
+  siyuan@1.2.1:
+    resolution: {integrity: sha512-DM6XFh9trHy+wiDoTHEdr7mQF25ZqJBdSUFLBbfKpcwtS8MJDFdW4KUtum9sYWkRJ/Qe0czgFf8z/KT8mvE2+A==}
 
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
@@ -4561,7 +4561,7 @@ snapshots:
 
   sisteransi@1.0.5: {}
 
-  siyuan@1.1.0: {}
+  siyuan@1.2.1: {}
 
   source-map-js@1.2.1: {}
 

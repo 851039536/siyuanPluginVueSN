@@ -1,4 +1,12 @@
 /**
+ * 格式化时间戳为 HH:MM 字符串
+ */
+export function formatTime(ts: string | undefined): string {
+  if (!ts || ts.length < 12) return ""
+  return `${ts.substring(8, 10)}:${ts.substring(10, 12)}`
+}
+
+/**
  * 格式化数字，添加千分位分隔符
  */
 export function formatNumber(num: number): string {

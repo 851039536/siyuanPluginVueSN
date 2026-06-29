@@ -22,7 +22,6 @@ export function useGitPush(manager: GitPushManager) {
     projectCrud.categories,
     gitOps.pushStatuses,
     gitOps.workingTrees,
-    gitOps.commitLogs,
   )
 
   return {
@@ -115,10 +114,8 @@ export function useGitPush(manager: GitPushManager) {
     pushStatusStats: stats.pushStatusStats,
     needsPushProjects: stats.needsPushProjects,
     uncommittedProjects: stats.uncommittedProjects,
-    noPlatformProjects: stats.noPlatformProjects,
     platformStatusProjects: stats.platformStatusProjects,
     groupedProjects: stats.groupedProjects,
     starredProjects: stats.starredProjects,
-    archivedProjects: stats.archivedProjects,
   }
 }

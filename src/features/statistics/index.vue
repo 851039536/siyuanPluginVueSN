@@ -301,9 +301,25 @@ import {
   getReportData,
   getTrendPrediction,
 } from "./queries/reportStats"
-import { STORAGE_KEY_MILESTONE_RULES } from "./types/milestoneRules"
+import { MILESTONE_TYPES, STORAGE_KEY_MILESTONE_RULES } from "./types/milestoneRules"
 import { STATISTICS_STORAGE_KEYS } from "./types/storage"
 import { milestoneTargetOfWithRules } from "./utils/milestones"
+import type { StatisticsData } from "./types"
+
+/** Milestone 类型 → StatisticsData 字段名映射 */
+const MILESTONE_FIELD_MAP: Record<string, keyof StatisticsData> = {
+  notes: "totalNotes",
+  words: "totalWords",
+  blocks: "totalBlocks",
+  tags: "totalTags",
+  backlinks: "totalBacklinks",
+  assets: "totalAssets",
+  images: "totalImages",
+  notebooks: "notebookCount",
+  code: "codeBlocks",
+  streak: "writingStreak",
+  activeDays: "activeDays",
+}
 
 interface Props {
   plugin: Plugin
@@ -529,58 +545,10 @@ const distSummary = computed(() => {
 const milestonesAchievedCount = computed(() => {
   const s = stats.value
   if (!s) return 0
-  const fields: Array<{ type: string, val: number }> = [
-    {
-      type: 'notes',
-      val: s.totalNotes,
-    },
-    {
-      type: 'words',
-      val: s.totalWords,
-    },
-    {
-      type: 'blocks',
-      val: s.totalBlocks,
-    },
-    {
-      type: 'tags',
-      val: s.totalTags,
-    },
-    {
-      type: 'backlinks',
-      val: s.totalBacklinks,
-    },
-    {
-      type: 'assets',
-      val: s.totalAssets,
-    },
-    {
-      type: 'images',
-      val: s.totalImages,
-    },
-    {
-      type: 'notebooks',
-      val: s.notebookCount,
-    },
-    {
-      type: 'code',
-      val: s.codeBlocks,
-    },
-    {
-      type: 'streak',
-      val: s.writingStreak,
-    },
-    {
-      type: 'activeDays',
-      val: s.activeDays,
-    },
-  ]
-  return fields.reduce((sum, {
-    type,
-    val,
-  }) => {
+  return MILESTONE_TYPES.reduce((sum, mt) => {
+    const val = Number(s[MILESTONE_FIELD_MAP[mt.key]] ?? 0)
     let n = 0
-    while (n < 200 && milestoneTargetOfWithRules(type, n + 1, customRules.value) <= val) n++
+    while (n < 200 && milestoneTargetOfWithRules(mt.key, n + 1, customRules.value) <= val) n++
     return sum + n
   }, 0)
 })
@@ -605,32 +573,38 @@ watch([viewMode, dayRange, monthYearRange, selectedYear], () => {
   refreshData()
 })
 
-const notebookStatsLoaded = ref(false)
+let notebookStatsLoaded = false
+let refreshSeq = 0
 const heatmapNotebooks = ref<Array<{ id: string, name: string }>>([])
 
 async function refreshData(): Promise<void> {
+  const seq = ++refreshSeq
   loading.value = true
   try {
     await refreshCore()
+    if (seq !== refreshSeq) return
     await loadHistoricalData()
-    if (activeTab.value === 'notebookDistribution' && !notebookStatsLoaded.value) {
+    if (seq !== refreshSeq) return
+    if (activeTab.value === 'notebookDistribution' && !notebookStatsLoaded) {
       await loadNotebookStats()
     }
   } catch (error) {
     console.error("刷新统计数据失败:", error)
   } finally {
-    loading.value = false
+    if (seq === refreshSeq) {
+      loading.value = false
+    }
   }
 }
 
 async function loadNotebookStats(): Promise<void> {
-  if (notebookStatsLoaded.value) return
+  if (notebookStatsLoaded) return
   await Promise.all([
     loadNotebookDocStats(),
     loadNotebookWordStats(),
     loadNotebookBlockTypeStats(),
   ])
-  notebookStatsLoaded.value = true
+  notebookStatsLoaded = true
 }
 
 watch(activeTab, (tab) => {

@@ -4,15 +4,11 @@ import type {
 } from "../types"
 import { lsNotebooks } from "@/api"
 import {
+  formatTime,
   isValidDateStr,
   padZero,
 } from "../utils"
 import { executeSql } from "./executeSql"
-
-function formatTime(ts: string | undefined): string {
-  if (!ts || ts.length < 12) return ""
-  return `${ts.substring(8, 10)}:${ts.substring(10, 12)}`
-}
 
 export async function getDateChangedDocs(dateStr: string): Promise<{
   newDocs: ChangedDoc[]

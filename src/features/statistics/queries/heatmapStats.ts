@@ -1,16 +1,11 @@
-import type { ChangedDoc } from "../types"
+import type { ChangedDoc, HeatmapMetric } from "../types"
 import { lsNotebooks } from "@/api"
+import { isValidDateStr } from "../utils"
+import { formatTime } from "../utils"
 import {
   executeSql,
   formatDateTime,
 } from "./executeSql"
-
-export type HeatmapMetric = 'docsModified' | 'docsCreated' | 'blockEdits'
-
-function formatTime(ts: string | undefined): string {
-  if (!ts || ts.length < 12) return ""
-  return `${ts.substring(8, 10)}:${ts.substring(10, 12)}`
-}
 
 /**
  * 查询指定范围内每天的活动数据
@@ -29,7 +24,7 @@ export async function getHeatmapActivityData(
   startDate.setMonth(startDate.getMonth() - months)
   const startStr = formatDateTime(startDate).substring(0, 8)
 
-  const boxFilter = notebookId ? `AND box = '${notebookId}'` : ''
+  const boxFilter = notebookId ? `AND box = '${notebookId.replace(/'/g, "''")}'` : ''
 
   let sql: string
   switch (metric) {
@@ -99,6 +94,10 @@ export async function getHeatmapDailyDetail(dateStr: string): Promise<{
   }
   }
   const yyyymmdd = dateStr.replace(/-/g, "")
+  if (!isValidDateStr(yyyymmdd)) {
+    console.warn("getHeatmapDailyDetail: 无效的日期参数", dateStr)
+    return { newDocs: [], modifiedDocs: [] }
+  }
 
   const newDocsSql = `
     SELECT id, content, created FROM blocks

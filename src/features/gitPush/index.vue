@@ -130,7 +130,6 @@
       :push-status-stats="pushStatusStats"
       :needs-push-projects="needsPushProjects"
       :uncommitted-projects="uncommittedProjects"
-      :no-platform-projects="noPlatformProjects"
       :platform-status-projects="platformStatusProjects"
       @view-project="onViewProject"
     />
@@ -1127,7 +1126,6 @@ const {
   pushStatusStats,
   needsPushProjects,
   uncommittedProjects,
-  noPlatformProjects,
   platformStatusProjects,
   // 项目聚合管理
   allTags,

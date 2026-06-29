@@ -62,3 +62,19 @@ export const PLATFORM_META = [
 ]
 
 export type PlatformKey = typeof PLATFORM_META[number]["key"]
+
+// ── 统计视图类型 ──
+/** 平台配置状态明细项 */
+export interface PlatformStatusItem {
+  project: GitProject
+  github: boolean
+  gitee: boolean
+  gitea: boolean
+  cnb: boolean
+  missingCount: number
+}
+
+/** 类型安全地获取平台状态 */
+export function getPlatformStatus(item: PlatformStatusItem, key: PlatformKey): boolean {
+  return item[key]
+}

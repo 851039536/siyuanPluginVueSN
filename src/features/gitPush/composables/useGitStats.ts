@@ -1,6 +1,5 @@
 import type { Ref } from "vue"
 import type {
-  CommitLogEntry,
   GitProject,
   GitPushManager,
   ProjectCategory,
@@ -8,7 +7,7 @@ import type {
   WorkingTreeInfo,
 } from "../types"
 import { computed, ref } from "vue"
-import { PLATFORM_META } from "../types"
+import { PLATFORM_META, type PlatformStatusItem } from "../types"
 
 export function useGitStats(
   manager: GitPushManager,
@@ -16,7 +15,6 @@ export function useGitStats(
   categories: Ref<ProjectCategory[]>,
   pushStatuses: Ref<Record<string, PushStatusInfo>>,
   workingTrees: Ref<Record<string, WorkingTreeInfo>>,
-  commitLogs: Ref<Record<string, CommitLogEntry[]>>,
 ) {
   const gitConcurrency = ref(3)
 
@@ -52,8 +50,7 @@ export function useGitStats(
   const projectCount = computed(() => projects.value.length)
 
   const remoteCoverage = computed(() => {
-    const total = projects.value.length
-    if (total === 0) { return { total: 0, github: 0, gitee: 0, gitea: 0, cnb: 0, hasRemote: 0, noRemote: 0, multiple: 0 } }
+    if (projects.value.length === 0) { return { github: 0, gitee: 0, gitea: 0, cnb: 0, hasRemote: 0, multiple: 0 } }
     let github = 0; let gitee = 0; let gitea = 0; let cnb = 0; let hasRemote = 0; let multiple = 0
     for (const p of projects.value) {
       const remotes = [p.githubUrl, p.giteeUrl, p.giteaUrl, p.cnbUrl].filter(Boolean).length
@@ -64,12 +61,11 @@ export function useGitStats(
       if (remotes > 0) hasRemote++
       if (remotes >= 2) multiple++
     }
-    return { total, github, gitee, gitea, cnb, hasRemote, noRemote: total - hasRemote, multiple }
+    return { github, gitee, gitea, cnb, hasRemote, multiple }
   })
 
   const pushStatusStats = computed(() => {
-    const total = projects.value.length
-    if (total === 0) { return { total: 0, ahead: 0, behind: 0, synced: 0, noRemote: 0 } }
+    if (projects.value.length === 0) { return { ahead: 0, behind: 0, synced: 0, noRemote: 0 } }
     let ahead = 0; let behind = 0; let synced = 0; let noRemote = 0
     for (const p of projects.value) {
       const status = pushStatuses.value[p.id]
@@ -79,7 +75,7 @@ export function useGitStats(
       else if (remotes.some((r) => r.behind > 0)) behind++
       else synced++
     }
-    return { total, ahead, behind, synced, noRemote }
+    return { ahead, behind, synced, noRemote }
   })
 
   const needsPushProjects = computed(() => {
@@ -110,14 +106,6 @@ export function useGitStats(
       }))
   })
 
-  interface PlatformStatusItem {
-    project: GitProject
-    github: boolean
-    gitee: boolean
-    gitea: boolean
-    cnb: boolean
-    missingCount: number
-  }
   const platformStatusProjects = computed<PlatformStatusItem[]>(() => {
     const result: PlatformStatusItem[] = []
     for (const p of projects.value) {
@@ -133,48 +121,7 @@ export function useGitStats(
     return result.sort((a, b) => b.missingCount - a.missingCount)
   })
 
-  /** @deprecated 使用 platformStatusProjects 替代 */
-  const noPlatformProjects = computed(() => {
-    return platformStatusProjects.value
-      .filter((item) => item.missingCount === PLATFORM_META.length)
-      .map((item) => item.project)
-  })
-
-  const recentCommits = computed(() => {
-    const allEntries: { projectId: string, projectName: string, entry: CommitLogEntry }[] = []
-    for (const p of projects.value) {
-      const logs = commitLogs.value[p.id]
-      if (logs && logs.length > 0) {
-        allEntries.push({ projectId: p.id, projectName: p.name, entry: logs[0] })
-      }
-    }
-    return allEntries.sort((a, b) => (b.entry.date || "").localeCompare(a.entry.date || ""))
-  })
-
   const starredProjects = computed(() => projects.value.filter((p) => p.starred))
-  const archivedProjects = computed(() => projects.value.filter((p) => p.archived))
-
-  const tagStats = computed<{ tag: string, count: number }[]>(() => {
-    const map = new Map<string, number>()
-    for (const p of projects.value) {
-      if (!p.archived && p.tags) {
-        for (const t of p.tags) { if (t) map.set(t, (map.get(t) || 0) + 1) }
-      }
-    }
-    return [...map.entries()].map(([tag, count]) => ({ tag, count })).sort((a, b) => b.count - a.count)
-  })
-
-  const statusStats = computed(() => {
-    const result = { active: 0, maintenance: 0, paused: 0 }
-    for (const p of projects.value) {
-      if (p.archived) continue
-      const s = p.status || "active"
-      if (s === "maintenance") result.maintenance++
-      else if (s === "paused") result.paused++
-      else result.active++
-    }
-    return result
-  })
 
   return {
     gitConcurrency,
@@ -186,12 +133,7 @@ export function useGitStats(
     pushStatusStats,
     needsPushProjects,
     uncommittedProjects,
-    noPlatformProjects,
     platformStatusProjects,
-    recentCommits,
     starredProjects,
-    archivedProjects,
-    tagStats,
-    statusStats,
   }
 }

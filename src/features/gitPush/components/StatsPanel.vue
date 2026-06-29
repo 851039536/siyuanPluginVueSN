@@ -62,67 +62,24 @@
           {{ i18n.remoteCoverage || '远程仓库覆盖率' }}
         </div>
         <div class="gp-coverage-list">
-          <div class="gp-coverage-item">
+          <div
+            v-for="pm in PLATFORM_META"
+            :key="pm.key"
+            class="gp-coverage-item"
+          >
             <div class="gp-coverage-head">
               <Icon
-                icon="mdi:github"
+                :icon="pm.icon"
                 height="12"
               />
-              <span>GitHub</span>
-              <span class="gp-coverage-num">{{ remoteCoverage.github }} / {{ remoteCoverage.total }}</span>
+              <span>{{ pm.label }}</span>
+              <span class="gp-coverage-num">{{ remoteCoverage[pm.key] }} / {{ projectCount }}</span>
             </div>
             <div class="gp-coverage-bar">
               <div
                 class="gp-coverage-fill"
-                :style="{ width: pct(remoteCoverage.github) }"
-              />
-            </div>
-          </div>
-          <div class="gp-coverage-item">
-            <div class="gp-coverage-head">
-              <Icon
-                icon="mdi:git"
-                height="12"
-              />
-              <span>Gitee</span>
-              <span class="gp-coverage-num">{{ remoteCoverage.gitee }} / {{ remoteCoverage.total }}</span>
-            </div>
-            <div class="gp-coverage-bar">
-              <div
-                class="gp-coverage-fill gp-coverage-fill--gitee"
-                :style="{ width: pct(remoteCoverage.gitee) }"
-              />
-            </div>
-          </div>
-          <div class="gp-coverage-item">
-            <div class="gp-coverage-head">
-              <Icon
-                icon="mdi:tea"
-                height="12"
-              />
-              <span>Gitea</span>
-              <span class="gp-coverage-num">{{ remoteCoverage.gitea }} / {{ remoteCoverage.total }}</span>
-            </div>
-            <div class="gp-coverage-bar">
-              <div
-                class="gp-coverage-fill gp-coverage-fill--gitea"
-                :style="{ width: pct(remoteCoverage.gitea) }"
-              />
-            </div>
-          </div>
-          <div class="gp-coverage-item">
-            <div class="gp-coverage-head">
-              <Icon
-                icon="mdi:cloud-braces"
-                height="12"
-              />
-              <span>CNB</span>
-              <span class="gp-coverage-num">{{ remoteCoverage.cnb }} / {{ remoteCoverage.total }}</span>
-            </div>
-            <div class="gp-coverage-bar">
-              <div
-                class="gp-coverage-fill gp-coverage-fill--cnb"
-                :style="{ width: pct(remoteCoverage.cnb) }"
+                :class="`gp-coverage-fill--${pm.key}`"
+                :style="{ width: pct(remoteCoverage[pm.key]) }"
               />
             </div>
           </div>
@@ -133,7 +90,7 @@
                 height="12"
               />
               <span>{{ i18n.multipleRemotes || '多远程项目' }}</span>
-              <span class="gp-coverage-num">{{ remoteCoverage.multiple }} / {{ remoteCoverage.total }}</span>
+              <span class="gp-coverage-num">{{ remoteCoverage.multiple }} / {{ projectCount }}</span>
             </div>
             <div class="gp-coverage-bar">
               <div
@@ -308,10 +265,10 @@
               v-for="pm in PLATFORM_META"
               :key="pm.key"
               class="gp-table-cell gp-table-cell--platform-status"
-              :title="(item as any)[pm.key] ? (i18n.configured || '已配置') : (i18n.notConfigured || '未配置')"
+              :title="getPlatformStatus(item, pm.key) ? (i18n.configured || '已配置') : (i18n.notConfigured || '未配置')"
             >
               <Icon
-                v-if="(item as any)[pm.key]"
+                v-if="getPlatformStatus(item, pm.key)"
                 icon="mdi:check-circle"
                 height="12"
                 class="gp-platform-ok"
@@ -338,24 +295,21 @@
 </template>
 
 <script setup lang="ts">
-import type { GitProject } from "../types"
+import type { GitProject, PlatformStatusItem } from "../types"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
-import { PLATFORM_META } from "../types"
+import { PLATFORM_META, getPlatformStatus } from "../types"
 
 export interface RemoteCoverage {
-  total: number
   github: number
   gitee: number
   gitea: number
   cnb: number
   hasRemote: number
-  noRemote: number
   multiple: number
 }
 
 export interface PushStatusStats {
-  total: number
   ahead: number
   behind: number
   synced: number
@@ -375,18 +329,6 @@ export interface UncommittedItem {
   untracked: number
 }
 
-
-
-/** 平台配置状态明细项 */
-export interface PlatformStatusItem {
-  project: GitProject
-  github: boolean
-  gitee: boolean
-  gitea: boolean
-  cnb: boolean
-  missingCount: number
-}
-
 const props = defineProps<{
   i18n: Record<string, any>
   projectCount: number
@@ -394,9 +336,7 @@ const props = defineProps<{
   pushStatusStats: PushStatusStats
   needsPushProjects: NeedsPushItem[]
   uncommittedProjects: UncommittedItem[]
-  /** @deprecated 使用 platformStatusProjects 替代 */
-  noPlatformProjects: GitProject[]
-  /** 平台配置状态明细（每个项目的 GitHub/Gitee/Gitea 是否已配置） */
+  /** 平台配置状态明细（每个项目的 GitHub/Gitee/Gitea/CNB 是否已配置） */
   platformStatusProjects: PlatformStatusItem[]
 }>()
 
@@ -405,9 +345,8 @@ const emit = defineEmits<{
 }>()
 
 function pct(count: number): string {
-  const total = props.remoteCoverage.total
-  if (total === 0) return "0%"
-  return `${Math.round((count / total) * 100)}%`
+  if (props.projectCount === 0) return "0%"
+  return `${Math.round((count / props.projectCount) * 100)}%`
 }
 
 /** 合并后的待处理项目（需要推送 + 有未提交变更） */
@@ -418,7 +357,6 @@ interface PendingProjectItem {
   staged: number
   unstaged: number
   untracked: number
-  isPending: boolean
 }
 
 const pendingProjects = computed<PendingProjectItem[]>(() => {
@@ -432,7 +370,6 @@ const pendingProjects = computed<PendingProjectItem[]>(() => {
       staged: 0,
       unstaged: 0,
       untracked: 0,
-      isPending: true,
     })
   }
   // 再合并有未提交变更的项目
@@ -450,7 +387,6 @@ const pendingProjects = computed<PendingProjectItem[]>(() => {
         staged: uc.staged,
         unstaged: uc.unstaged,
         untracked: uc.untracked,
-        isPending: true,
       })
     }
   }

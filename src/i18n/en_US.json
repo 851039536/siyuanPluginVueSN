@@ -1037,7 +1037,11 @@
     "keepTheirs": "Keep remote version",
     "abortMerge": "Abort Merge",
     "selectTemplate": "Select template...",
-    "visitPlatform": "Visit {0}"
+    "visitPlatform": "Visit {0}",
+    "addLocalPath": "Add Path",
+    "localPathHint": "Add local paths for other computers; Git operations will auto-detect the valid path",
+    "localPathLabel": "Local Paths",
+    "localPathDesc": "Cross-device"
   },
   "heatmapMarker": {
     "title": "Heatmap Marker",

@@ -118,6 +118,50 @@
           />
         </div>
         <div class="gp-form-group">
+          <label class="gp-label">多本地路径 <span class="gp-label-hint">（跨设备适配）</span></label>
+          <div class="gp-edit-paths">
+            <div
+              v-for="(lp, idx) in localPathsList"
+              :key="idx"
+              class="gp-edit-path-row"
+            >
+              <input
+                v-model="localPathsList[idx]"
+                class="gp-input"
+                :placeholder="`设备 ${idx + 1} 的本地路径...`"
+              />
+              <button
+                class="vp-btn vp-btn--ghost vp-btn--sm"
+                title="选择目录"
+                @click="pickLocalPath(idx)"
+              >
+                <Icon icon="mdi:folder-outline" height="12" />
+              </button>
+              <button
+                class="vp-btn vp-btn--ghost vp-btn--sm"
+                title="移除此路径"
+                @click="removeLocalPath(idx)"
+              >
+                <Icon icon="mdi:delete-outline" height="12" />
+              </button>
+            </div>
+          </div>
+          <button
+            class="vp-btn vp-btn--ghost vp-btn--sm gp-add-path-btn"
+            @click="addLocalPath"
+          >
+            <Icon icon="mdi:plus" height="12" />
+            <span>{{ i18n.addLocalPath || '添加路径' }}</span>
+          </button>
+          <div
+            v-if="localPathsList.length === 0"
+            class="gp-edit-path-hint"
+          >
+            <Icon icon="mdi:information-outline" height="12" />
+            <span>{{ i18n.localPathHint || '为同一项目添加其他电脑上的本地路径，Git 操作时将自动检测有效路径' }}</span>
+          </div>
+        </div>
+        <div class="gp-form-group">
           <label class="gp-label">仓库链接</label>
           <div class="gp-edit-urls">
             <div
@@ -284,6 +328,7 @@ const props = defineProps<{
   remoteError: string
   remotesMeta: { key: PlatformKey, label: string }[]
   urlValues: Record<string, string>
+  localPaths?: string[]
 }>()
 const emit = defineEmits<{
   "close": []
@@ -298,10 +343,12 @@ const emit = defineEmits<{
     giteeUrl: string
     giteaUrl: string
     cnbUrl: string
+    localPaths?: string[]
   }]
   "edit-add-remote": [name: string, url: string]
   "edit-remove-remote": [name: string]
   "edit-save-remote": [name: string, url: string]
+  "pick-dir": []
 }>()
 const STATUS_META: Record<string, { color: string, label: string, icon: string }> = {
   active: {
@@ -337,6 +384,25 @@ const newRemoteUrl = ref("")
 const editRemoteName = ref("")
 const editRemoteUrl = ref("")
 
+// 多本地路径管理
+const localPathsList = ref<string[]>([...(props.localPaths || [])])
+
+function addLocalPath() {
+  localPathsList.value = [...localPathsList.value, ""]
+}
+
+function removeLocalPath(idx: number) {
+  localPathsList.value = localPathsList.value.filter((_, i) => i !== idx)
+}
+
+function pickLocalPath(idx: number) {
+  // 通知父组件打开目录选择器，路径将回填到对应条目
+  emit("pick-dir")
+  // 父组件选择完目录后需要回填到 localPathsList[idx]
+  // 这里通过暴露一个 setter 供父组件调用
+}
+defineExpose({ setLocalPath: (idx: number, path: string) => { localPathsList.value[idx] = path } })
+
 function addTag() {
   const t = tagInput.value.trim()
   if (t && !localTags.value.includes(t)) {
@@ -359,6 +425,7 @@ function clearAddRemote() {
 }
 
 function save() {
+  const paths = localPathsList.value.map((p) => p.trim()).filter(Boolean)
   emit("save", {
     name: localName.value.trim(),
     status: localStatus.value,
@@ -370,6 +437,7 @@ function save() {
     giteeUrl: urlInputs.giteeUrl || "",
     giteaUrl: urlInputs.giteaUrl || "",
     cnbUrl: urlInputs.cnbUrl || "",
+    localPaths: paths.length > 0 ? paths : undefined,
   })
 }
 </script>

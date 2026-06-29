@@ -343,6 +343,11 @@
                   :title="project.path"
                 >
                   {{ project.path }}
+                  <span
+                    v-if="project.localPaths?.length"
+                    class="gp-multi-path-badge"
+                    :title="'已配置 ' + (project.localPaths.length + 1) + ' 个设备路径'"
+                  >+{{ project.localPaths.length }}路径</span>
                 </div>
                 <!-- 标签 + 最后活动时间 -->
                 <div class="gp-card-meta">
@@ -501,7 +506,7 @@
                   >
                     <button
                       class="gp-ide-item"
-                      @click="handleOpenPath(project.path); openIdeMenu.delete(project.id)"
+                      @click="handleOpenPath(resolvedPath(project)); openIdeMenu.delete(project.id)"
                     >
                       <Icon
                         icon="mdi:folder-open"
@@ -536,7 +541,7 @@
                       v-for="ide in detectedIdes"
                       :key="`detected-${ide.name}`"
                       class="gp-ide-item"
-                      @click="handleOpenIde(project.path, ide); openIdeMenu.delete(project.id)"
+                      @click="handleOpenIde(resolvedPath(project), ide); openIdeMenu.delete(project.id)"
                     >
                       <Icon
                         :icon="ide.icon"
@@ -548,7 +553,7 @@
                       v-for="(custom, idx) in customIdes"
                       :key="`custom-${idx}`"
                       class="gp-ide-item gp-ide-item--custom"
-                      @click="handleOpenCustomIde(project.path, custom.name, custom.path); openIdeMenu.delete(project.id)"
+                      @click="handleOpenCustomIde(resolvedPath(project), custom.name, custom.path); openIdeMenu.delete(project.id)"
                     >
                       <Icon
                         icon="mdi:application-brackets"
@@ -909,6 +914,7 @@
     />
     <EditProjectDialog
       v-if="editDialogProject"
+      ref="editDialogRef"
       :project="editDialogProject"
       :i18n="i18n"
       :all-tags="allTags"
@@ -921,11 +927,13 @@
         giteaUrl: editGiteaUrl,
         cnbUrl: editCnbUrl,
       }"
+      :local-paths="editLocalPaths"
       @close="editDialogProject = null"
       @save="handleEditSaveFromDialog"
       @edit-add-remote="(name:string, url:string) => { editNewRemoteName = name; editNewRemoteUrl = url; handleEditAddRemote() }"
       @edit-remove-remote="handleEditRemoveRemote"
       @edit-save-remote="(name:string, url:string) => { editEditingRemote = name; editEditingRemoteUrl = url; handleEditRemoteSave(name) }"
+      @pick-dir="handlePickDirForLocalPath"
     />
   </div>
 </template>
@@ -960,6 +968,7 @@ import StatsPanel from "./components/StatsPanel.vue"
 import TagPanel from "./components/TagPanel.vue"
 import WorkingTreePanel from "./components/WorkingTreePanel.vue"
 import { pickDirectory } from "./composables/useDirectoryPicker"
+import { resolveValidPath } from "./utils"
 import { useGitPush } from "./composables/useGitPush"
 import {
   IDE_PRESETS,
@@ -1192,6 +1201,11 @@ const {
   plugin: props.plugin,
   openFolder: (path: string) => { handleOpenPath(path) },
 })
+/** 解析项目有效路径（模板辅助函数） */
+function resolvedPath(p: { path: string, localPaths?: string[] }): string {
+  return resolveValidPath(p as GitProject)
+}
+
 /** 项目状态徽章元数据（颜色 + 文案 + 循环顺序） */
 const STATUS_META: Record<string, { color: string, label: string, icon: string }> = {
   active: {
@@ -1220,10 +1234,12 @@ const REFRESH_COOLDOWN_MS = 500
 
 /** 项目编辑弹窗状态 */
 const editDialogProject = ref<GitProject | null>(null)
+const editDialogRef = ref<InstanceType<typeof EditProjectDialog> | null>(null)
 const editGithubUrl = ref("")
 const editGiteeUrl = ref("")
 const editGiteaUrl = ref("")
 const editCnbUrl = ref("")
+const editLocalPaths = ref<string[]>([])
 /** 编辑弹窗中的 Git 远程管理 */
 const editRemoteList = ref<GitRemoteInfo[]>([])
 const editNewRemoteName = ref("github")
@@ -1313,7 +1329,7 @@ async function silentRefreshAll() {
     const prev = headHashes.value[p.id] || ""
     const [, curr] = await Promise.all([
       loadPushStatus(p.id),
-      props.manager.getHeadHash(p.path),
+      props.manager.getHeadHash(resolveValidPath(p)),
     ])
 
     if (curr && curr !== prev) {
@@ -1595,13 +1611,15 @@ function openEditDialog(project: GitProject) {
   editGiteeUrl.value = project.giteeUrl || ""
   editGiteaUrl.value = project.giteaUrl || ""
   editCnbUrl.value = project.cnbUrl || ""
+  editLocalPaths.value = project.localPaths ? [...project.localPaths] : []
   // 加载 Git 远程
   editRemoteList.value = []
   editRemoteError.value = ""
   editEditingRemote.value = ""
   editNewRemoteName.value = "github"
   editNewRemoteUrl.value = ""
-  props.manager.detectRemotes(project.path).then((r) => { editRemoteList.value = r }).catch(() => {})
+  const projectPath = project.path
+  props.manager.detectRemotes(projectPath).then((r) => { editRemoteList.value = r }).catch(() => {})
 }
 
 /** 行内名称编辑：点击名称开始编辑 */
@@ -1632,6 +1650,7 @@ async function handleEditSaveFromDialog(data: {
   giteeUrl: string
   giteaUrl: string
   cnbUrl: string
+  localPaths?: string[]
 }) {
   const project = editDialogProject.value
   if (!project) return
@@ -1646,8 +1665,34 @@ async function handleEditSaveFromDialog(data: {
     giteeUrl: data.giteeUrl.trim() || undefined,
     giteaUrl: data.giteaUrl.trim() || undefined,
     cnbUrl: data.cnbUrl.trim() || undefined,
+    localPaths: data.localPaths && data.localPaths.length > 0 ? data.localPaths : undefined,
   })
   editDialogProject.value = null
+}
+
+/** 处理多路径编辑中的目录选择 */
+async function handlePickDirForLocalPath() {
+  // 选择的目录需要回填到编辑弹窗的 localPathsList 中
+  // 由于 pickDirectory 交互模式不确定选中哪条，这里先弹窗让用户通过下标指定
+  // 简化处理：选择一个目录然后提示用户粘贴
+  const dir = await pickDirectory("选择备选本地路径")
+  if (dir && editDialogRef.value) {
+    // 找到第一个空的条目或最后一个条目来填写
+    const comp = editDialogRef.value as any
+    if (comp.setLocalPath) {
+      const emptyIdx = editLocalPaths.value.findIndex((p) => !p.trim())
+      if (emptyIdx >= 0) {
+        comp.setLocalPath(emptyIdx, dir)
+        editLocalPaths.value[emptyIdx] = dir
+      } else {
+        // 如果没有空的，追加新条目
+        const newIdx = editLocalPaths.value.length
+        editLocalPaths.value = [...editLocalPaths.value, ""]
+        comp.setLocalPath(newIdx, dir)
+        editLocalPaths.value[newIdx] = dir
+      }
+    }
+  }
 }
 
 async function handleEditAddRemote() {
@@ -1658,7 +1703,7 @@ async function handleEditAddRemote() {
     await addRemoteOp(project.id, editNewRemoteName.value.trim(), editNewRemoteUrl.value.trim())
     editNewRemoteName.value = "github"
     editNewRemoteUrl.value = ""
-    const list = await props.manager.detectRemotes(project.path)
+    const list = await props.manager.detectRemotes(resolveValidPath(project))
     editRemoteList.value = list
   } catch (e: any) { editRemoteError.value = e?.message || "添加失败" }
 }
@@ -1669,7 +1714,7 @@ async function handleEditRemoveRemote(name: string) {
   editRemoteError.value = ""
   try {
     await removeRemoteOp(project.id, name)
-    const list = await props.manager.detectRemotes(project.path)
+    const list = await props.manager.detectRemotes(resolveValidPath(project))
     editRemoteList.value = list
   } catch (e: any) { editRemoteError.value = e?.message || "删除失败" }
 }
@@ -1682,7 +1727,7 @@ async function handleEditRemoteSave(name: string, url?: string) {
   try {
     await editRemoteOp(project.id, name, newUrl)
     editEditingRemote.value = ""
-    const list = await props.manager.detectRemotes(project.path)
+    const list = await props.manager.detectRemotes(resolveValidPath(project))
     editRemoteList.value = list
   } catch (e: any) { editRemoteError.value = e?.message || "修改失败" }
 }
@@ -1915,7 +1960,7 @@ async function openRemoteConfig(project: GitProject) {
   newRemoteName.value = "github"
   newRemoteUrl.value = ""
   try {
-    remoteList.value = await props.manager.detectRemotes(project.path)
+    remoteList.value = await props.manager.detectRemotes(resolveValidPath(project))
   } catch {
     remoteList.value = []
   }
@@ -1927,7 +1972,7 @@ async function handleAddRemote(id: string, name: string, url: string) {
   try {
     await addRemoteOp(id, name, url)
     const project = projects.value.find((p) => p.id === id)
-    if (project) remoteList.value = await props.manager.detectRemotes(project.path)
+    if (project) remoteList.value = await props.manager.detectRemotes(resolveValidPath(project))
   } catch (e: any) {
     remoteError.value = e?.message || "添加失败"
   }
@@ -1938,7 +1983,7 @@ async function handleRemoveRemote(id: string, name: string) {
   try {
     await removeRemoteOp(id, name)
     const project = projects.value.find((p) => p.id === id)
-    if (project) remoteList.value = await props.manager.detectRemotes(project.path)
+    if (project) remoteList.value = await props.manager.detectRemotes(resolveValidPath(project))
   } catch (e: any) {
     remoteError.value = e?.message || "删除失败"
   }
@@ -1953,7 +1998,7 @@ async function handleEditRemote(id: string, name: string, newUrl: string) {
     editingRemoteName.value = ""
     editingRemoteUrl.value = ""
     const project = projects.value.find((p) => p.id === id)
-    if (project) remoteList.value = await props.manager.detectRemotes(project.path)
+    if (project) remoteList.value = await props.manager.detectRemotes(resolveValidPath(project))
   } catch (e: any) {
     remoteError.value = e?.message || "修改失败"
   }

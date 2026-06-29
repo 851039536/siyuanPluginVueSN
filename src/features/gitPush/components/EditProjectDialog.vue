@@ -120,6 +120,15 @@
         <div class="gp-form-group">
           <label class="gp-label">多本地路径 <span class="gp-label-hint">（跨设备适配）</span></label>
           <div class="gp-edit-paths">
+            <div class="gp-edit-path-row gp-edit-path-primary">
+              <input
+                :value="project.path"
+                class="gp-input"
+                readonly
+                disabled
+              />
+              <span class="gp-primary-badge">主路径</span>
+            </div>
             <div
               v-for="(lp, idx) in localPathsList"
               :key="idx"

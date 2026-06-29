@@ -31,6 +31,7 @@ import {
   GitPushStorage,
 } from "./types/storage"
 import { PLATFORM_META } from "./types"
+import { resolveValidPath } from "./utils"
 
 /** 远程操作结果 */
 interface RemoteOpResult {
@@ -164,7 +165,7 @@ export class GitPushManager {
   /**
    * 更新项目元信息
    */
-  async updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "tags" | "starred" | "status" | "archived" | "note" | "name" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl">>): Promise<GitProject | null> {
+  async updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "tags" | "starred" | "status" | "archived" | "note" | "name" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl" | "localPaths">>): Promise<GitProject | null> {
     const projects = await this.getProjects()
     const project = projects.find((p) => p.id === id)
     if (!project) return null
@@ -248,7 +249,7 @@ export class GitPushManager {
     const projects = await this.getProjects()
     const project = projects.find((p) => p.id === id)
     if (!project) return null
-    this.applyRemotesToProject(project, await this.detectRemotes(project.path))
+    this.applyRemotesToProject(project, await this.detectRemotes(resolveValidPath(project)))
     await this.storage.projects.save(projects)
     return project
   }
@@ -368,10 +369,11 @@ export class GitPushManager {
     const project = projects.find((p) => p.id === id)
     if (!project) return this.notFoundResult
 
-    const github = await this.tryRemoteOp(project.path, project.githubRemote, action)
-    const gitee = await this.tryRemoteOp(project.path, project.giteeRemote, action)
-    const gitea = await this.tryRemoteOp(project.path, project.giteaRemote, action)
-    const cnb = await this.tryRemoteOp(project.path, project.cnbRemote, action)
+    const cwd = resolveValidPath(project)
+    const github = await this.tryRemoteOp(cwd, project.githubRemote, action)
+    const gitee = await this.tryRemoteOp(cwd, project.giteeRemote, action)
+    const gitea = await this.tryRemoteOp(cwd, project.giteaRemote, action)
+    const cnb = await this.tryRemoteOp(cwd, project.cnbRemote, action)
 
     return {
       success: github.ok || gitee.ok || gitea.ok || cnb.ok,
@@ -414,8 +416,9 @@ export class GitPushManager {
       return { ok: false, stdout: "", stderr: "项目未找到" }
     }
 
+    const cwd = resolveValidPath(project)
     const remoteName = this.getRemoteName(project, target)
-    const result = await this.tryRemoteOp(project.path, remoteName, action)
+    const result = await this.tryRemoteOp(cwd, remoteName, action)
     // tryRemoteOp 不跳过时返回 ok: true/false
     return {
       ok: result.ok,
@@ -438,6 +441,8 @@ export class GitPushManager {
 
     if (!project) return emptyResult
 
+    const cwd = resolveValidPath(project)
+
     const status: PushStatusInfo = {
       branch: "",
       remotes: {},
@@ -445,7 +450,7 @@ export class GitPushManager {
     }
 
     try {
-      status.branch = opts?.branch ?? await this.execGit(project.path, ["rev-parse", "--abbrev-ref", "HEAD"])
+      status.branch = opts?.branch ?? await this.execGit(cwd, ["rev-parse", "--abbrev-ref", "HEAD"])
     } catch {
       return emptyResult
     }
@@ -459,9 +464,9 @@ export class GitPushManager {
 
     const remoteChecks = remotesToCheck.map(async ({ key, remoteName }) => {
       try {
-        await this.execGit(project.path, ["rev-parse", "--verify", `${remoteName}/${status.branch}`])
+        await this.execGit(cwd, ["rev-parse", "--verify", `${remoteName}/${status.branch}`])
 
-        const counts = await this.execGit(project.path, [
+        const counts = await this.execGit(cwd, [
           "rev-list", "--left-right", "--count",
           `${remoteName}/${status.branch}...HEAD`,
         ])

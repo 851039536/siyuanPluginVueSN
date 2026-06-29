@@ -1300,6 +1300,73 @@
   svg { flex-shrink: 0; }
 }
 
+// 编辑弹窗：多本地路径编辑
+.gp-label-hint {
+  font-size: 10px;
+  font-weight: 400;
+  opacity: 0.45;
+  margin-left: 4px;
+}
+
+.gp-edit-paths {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  margin-bottom: 6px;
+}
+
+.gp-edit-path-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  input {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.gp-add-path-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  opacity: 0.6;
+  transition: opacity 0.12s;
+  &:hover { opacity: 1; }
+}
+
+.gp-edit-path-hint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--b3-theme-on-surface-light);
+  opacity: 0.55;
+  border: 1px dashed var(--b3-border-color);
+  border-radius: $radius-sm;
+  svg { flex-shrink: 0; opacity: 0.4; }
+}
+
+// 卡片上的多路径标记
+.gp-multi-path-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  padding: 0 5px;
+  font-size: 9px;
+  font-weight: 500;
+  line-height: 16px;
+  border-radius: 3px;
+  background: var(--b3-theme-primary-lightest);
+  color: var(--b3-theme-primary);
+  opacity: 0.7;
+  white-space: nowrap;
+  cursor: default;
+}
+
 // 按钮样式已提取到 styles/Buttons.scss
 
 // ── Tag 管理 ──

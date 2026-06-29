@@ -48,6 +48,8 @@ export interface GitProject {
   lastActivity?: string
   /** 项目备注（编辑弹窗可填，展开面板可显示） */
   note?: string
+  /** 多设备本地路径列表（不含主路径 path），用于跨电脑适配 */
+  localPaths?: string[]
 }
 
 /** 项目分类 */

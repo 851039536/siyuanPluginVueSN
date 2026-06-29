@@ -9,6 +9,7 @@ import type {
 } from "../types"
 import { ref } from "vue"
 import { findProject, normalizePathForDedup } from "../utils"
+import { resolveValidPath } from "../utils"
 
 export function useGitTagsConflicts(manager: GitPushManager, projects: Ref<GitProject[]>) {
   /** Tag 列表缓存 */
@@ -29,7 +30,7 @@ export function useGitTagsConflicts(manager: GitPushManager, projects: Ref<GitPr
   async function loadTags(id: string): Promise<TagInfo[]> {
     const project = findProject(projects, id)
     if (!project) return []
-    const list = await manager.getTags(project.path)
+    const list = await manager.getTags(resolveValidPath(project))
     tagsCache.value = { ...tagsCache.value, [id]: list }
     return list
   }
@@ -37,26 +38,26 @@ export function useGitTagsConflicts(manager: GitPushManager, projects: Ref<GitPr
   async function createTagOp(id: string, name: string, message?: string) {
     const project = findProject(projects, id)
     if (!project) throw new Error("项目未找到")
-    await manager.createTag(project.path, name, message)
+    await manager.createTag(resolveValidPath(project), name, message)
   }
 
   async function deleteTagOp(id: string, name: string) {
     const project = findProject(projects, id)
     if (!project) throw new Error("项目未找到")
-    await manager.deleteTag(project.path, name)
+    await manager.deleteTag(resolveValidPath(project), name)
   }
 
   async function pushTagOp(id: string, remoteName: string, tag: string): Promise<string> {
     const project = findProject(projects, id)
     if (!project) throw new Error("项目未找到")
-    return manager.pushTag(project.path, remoteName, tag)
+    return manager.pushTag(resolveValidPath(project), remoteName, tag)
   }
 
   // ── 冲突检测 ──
   async function checkConflicts(id: string): Promise<ConflictFile[]> {
     const project = findProject(projects, id)
     if (!project) return []
-    const files = await manager.getConflictFiles(project.path)
+    const files = await manager.getConflictFiles(resolveValidPath(project))
     conflicts.value = { ...conflicts.value, [id]: files }
     return files
   }
@@ -64,7 +65,7 @@ export function useGitTagsConflicts(manager: GitPushManager, projects: Ref<GitPr
   async function abortMergeOp(id: string) {
     const project = findProject(projects, id)
     if (!project) throw new Error("项目未找到")
-    await manager.abortMerge(project.path)
+    await manager.abortMerge(resolveValidPath(project))
     delete conflicts.value[id]
     conflicts.value = { ...conflicts.value }
   }
@@ -72,7 +73,7 @@ export function useGitTagsConflicts(manager: GitPushManager, projects: Ref<GitPr
   async function resolveConflictOp(id: string, file: string, strategy: "theirs" | "ours") {
     const project = findProject(projects, id)
     if (!project) throw new Error("项目未找到")
-    await manager.resolveConflictFile(project.path, file, strategy)
+    await manager.resolveConflictFile(resolveValidPath(project), file, strategy)
   }
 
   // ── 提交信息模板 ──

@@ -97,6 +97,7 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
       if (q) r = r.filter((p) =>
         p.name.toLowerCase().includes(q)
         || p.path.toLowerCase().includes(q)
+        || (p.localPaths?.some((lp) => lp.toLowerCase().includes(q)))
         || (p.tags?.some((t) => t.toLowerCase().includes(q))),
       )
       return r

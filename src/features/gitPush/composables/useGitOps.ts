@@ -12,6 +12,7 @@ import type {
 import { ref } from "vue"
 import { PLATFORM_META } from "../types"
 import { findProject } from "../utils"
+import { resolveValidPath, resolveValidPathWithSource } from "../utils"
 
 /** 限制 Record 缓存条目数，超过上限时删除最早的条目 */
 function pruneRecordCache(record: Record<string, string>, max = 30) {
@@ -69,6 +70,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     id: string,
     opName: string,
     entries: { label: string, ok: boolean, stdout: string, stderr: string }[],
+    usedPath?: string,
   ) {
     const lines: string[] = []
     for (const e of entries) {
@@ -76,8 +78,22 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
       if (e.stdout) lines.push(e.stdout)
       if (e.stderr) lines.push(`错误: ${e.stderr}`)
     }
+    if (usedPath) {
+      lines.push(`[使用本地路径: ${usedPath}]`)
+    }
     target[id] = lines.join("\n")
     pruneRecordCache(target)
+  }
+
+  /** 获取项目有效路径并生成路径提示信息 */
+  function getUsedPath(id: string): string | undefined {
+    const project = findProject(projects, id)
+    if (!project) return undefined
+    const resolved = resolveValidPathWithSource(project)
+    if (resolved.source === "primary") {
+      return resolved.path
+    }
+    return resolved.path
   }
 
   function platformLabel(target: string): string {
@@ -100,7 +116,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     pushingRemote.value[id] = "all"
     try {
       const result = await manager.pushToAll(id)
-      formatGitOutput(pushOutputs.value, id, "推送", resultToEntries(result))
+      formatGitOutput(pushOutputs.value, id, "推送", resultToEntries(result), getUsedPath(id))
       loadPushStatus(id)
       return result
     } finally {
@@ -114,7 +130,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
       const result = await manager.pushSingle(id, target)
       formatGitOutput(pushOutputs.value, id, "推送", [{
         label: platformLabel(target), ok: result.ok, stdout: result.stdout, stderr: result.stderr,
-      }])
+      }], getUsedPath(id))
       loadPushStatus(id)
       return result
     } finally {
@@ -126,7 +142,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     pullingRemote.value[id] = "all"
     try {
       const result = await manager.pullToAll(id)
-      formatGitOutput(pullOutputs.value, id, "拉取", resultToEntries(result))
+      formatGitOutput(pullOutputs.value, id, "拉取", resultToEntries(result), getUsedPath(id))
       loadPushStatus(id)
       return result
     } finally {
@@ -140,7 +156,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
       const result = await manager.pullSingle(id, target)
       formatGitOutput(pullOutputs.value, id, "拉取", [{
         label: platformLabel(target), ok: result.ok, stdout: result.stdout, stderr: result.stderr,
-      }])
+      }], getUsedPath(id))
       loadPushStatus(id)
       return result
     } finally {
@@ -155,13 +171,14 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
   async function loadWorkingTree(id: string, skipRefresh = false, branch?: string) {
     const project = findProject(projects, id)
     if (!project) return
-    workingTrees.value[id] = await manager.getWorkingTreeStatus(project.path, { skipRefresh, branch })
+    workingTrees.value[id] = await manager.getWorkingTreeStatus(resolveValidPath(project), { skipRefresh, branch })
   }
 
   async function loadStatsData(id: string) {
     const project = findProject(projects, id)
     if (!project) return
-    const branch = await manager.getBranch(project.path)
+    const cwd = resolveValidPath(project)
+    const branch = await manager.getBranch(cwd)
     if (!branch) return
     await Promise.all([
       pushStatuses.value[id] ? Promise.resolve() : loadPushStatus(id, { branch }),
@@ -173,7 +190,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     const project = findProject(projects, id)
     if (!project) return ""
     const key = `${id}::${staged ? "s" : "u"}::${file}`
-    const diff = await manager.getFileDiff(project.path, file, staged)
+    const diff = await manager.getFileDiff(resolveValidPath(project), file, staged)
     fileDiffs.value[key] = diff
     return diff
   }
@@ -181,7 +198,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
   async function loadCommitLog(id: string) {
     const project = findProject(projects, id)
     if (!project) return
-    const entries = await manager.getCommitLog(project.path)
+    const entries = await manager.getCommitLog(resolveValidPath(project))
     commitLogs.value[id] = entries
     const latest = entries[0]?.date
     if (latest && project.lastActivity !== latest) {
@@ -194,13 +211,13 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
   async function loadBranches(id: string) {
     const project = findProject(projects, id)
     if (!project) return
-    branches.value[id] = await manager.getBranches(project.path)
+    branches.value[id] = await manager.getBranches(resolveValidPath(project))
   }
 
   async function switchBranch(id: string, branch: string) {
     const project = findProject(projects, id)
     if (!project) throw new Error("项目未找到")
-    await manager.switchBranch(project.path, branch)
+    await manager.switchBranch(resolveValidPath(project), branch)
     await loadWorkingTree(id)
     await loadPushStatus(id)
     await loadCommitLog(id)
@@ -211,7 +228,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
   async function withProjectPath(id: string, fn: (path: string) => Promise<void>) {
     const project = findProject(projects, id)
     if (!project) return
-    await fn(project.path)
+    await fn(resolveValidPath(project))
     await loadWorkingTree(id)
   }
 
@@ -234,7 +251,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
   async function discardFile(id: string, file: string, staged: boolean, status: string) {
     const project = findProject(projects, id)
     if (!project) throw new Error("项目未找到")
-    await manager.discardFile(project.path, file, staged, status)
+    await manager.discardFile(resolveValidPath(project), file, staged, status)
   }
 
   async function doCommit(id: string, message: string): Promise<string> {
@@ -242,7 +259,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     if (!project) throw new Error("项目未找到")
     committing.value[id] = true
     try {
-      const result = await manager.commit(project.path, message)
+      const result = await manager.commit(resolveValidPath(project), message)
       await loadWorkingTree(id)
       await loadPushStatus(id)
       return result
@@ -254,7 +271,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
   async function generateCommitMsg(id: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
     const project = findProject(projects, id)
     if (!project) { return { message: "chore: update files", source: "heuristic" } }
-    return manager.generateCommitMessage(project.path)
+    return manager.generateCommitMessage(resolveValidPath(project))
   }
 
   // ── Stash 操作 ──
@@ -263,7 +280,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     try {
       const project = findProject(projects, id)
       if (!project) return
-      await fn(project.path)
+      await fn(resolveValidPath(project))
       await loadStashList(id)
       await loadWorkingTree(id)
     } finally {
@@ -274,7 +291,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
   async function loadStashList(id: string) {
     const project = findProject(projects, id)
     if (!project) return
-    stashEntries.value[id] = await manager.stashList(project.path)
+    stashEntries.value[id] = await manager.stashList(resolveValidPath(project))
   }
 
   async function doStashSave(id: string, message?: string) {
@@ -296,28 +313,28 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
   async function generateStashDesc(id: string): Promise<string> {
     const project = findProject(projects, id)
     if (!project) return ""
-    return manager.generateStashDescription(project.path)
+    return manager.generateStashDescription(resolveValidPath(project))
   }
 
   // ── 远程操作 ──
   async function addRemoteOp(id: string, name: string, url: string) {
     const project = findProject(projects, id)
     if (!project) throw new Error("项目未找到")
-    await manager.addRemote(project.path, name, url)
+    await manager.addRemote(resolveValidPath(project), name, url)
     await loadPushStatus(id)
   }
 
   async function removeRemoteOp(id: string, name: string) {
     const project = findProject(projects, id)
     if (!project) throw new Error("项目未找到")
-    await manager.removeRemote(project.path, name)
+    await manager.removeRemote(resolveValidPath(project), name)
     await loadPushStatus(id)
   }
 
   async function editRemoteOp(id: string, name: string, url: string) {
     const project = findProject(projects, id)
     if (!project) throw new Error("项目未找到")
-    await manager.setRemoteUrl(project.path, name, url)
+    await manager.setRemoteUrl(resolveValidPath(project), name, url)
     await loadPushStatus(id)
   }
 

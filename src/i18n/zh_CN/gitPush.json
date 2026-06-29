@@ -87,6 +87,10 @@
     "keepTheirs": "保留远程版本",
     "abortMerge": "中止合并",
     "selectTemplate": "选择模板...",
-    "visitPlatform": "访问 {0}"
+    "visitPlatform": "访问 {0}",
+    "addLocalPath": "添加路径",
+    "localPathHint": "为同一项目添加其他电脑上的本地路径，Git 操作时将自动检测有效路径",
+    "localPathLabel": "多本地路径",
+    "localPathDesc": "跨设备适配"
   }
 }

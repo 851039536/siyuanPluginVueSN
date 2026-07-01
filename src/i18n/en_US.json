@@ -1047,7 +1047,9 @@
     "pushingProjects": "Pushing ({0}/{1})",
     "pushBranchAll": "All Branches",
     "pushBranchHead": "Current Branch Only",
-    "pushBranchHint": "Current branch only mode is faster, skips other branches"
+    "pushBranchHint": "Current branch only mode is faster, skips other branches",
+    "pullConfirm": "Confirm Pull",
+    "pullConfirmBody": "Pull from {0}. This may overwrite local changes. Continue?"
   },
   "heatmapMarker": {
     "title": "Heatmap Marker",

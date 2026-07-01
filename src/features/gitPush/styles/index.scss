@@ -618,10 +618,74 @@
   }
 }
 
-.gp-push-group {
+// ── 操作栏（拉取/推送）──
+.gp-actions-bar {
   display: flex;
-  gap: $spacing-1;
-  margin-top: 4px;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 4px 0;
+}
+
+.gp-actions-section {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.gp-actions-label {
+  @include gp-label-base;
+  flex-shrink: 0;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface-light);
+  line-height: 1;
+  padding: 2px 0;
+}
+
+.gp-actions-btns {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.gp-actions-sep {
+  width: 1px;
+  align-self: stretch;
+  background: var(--b3-border-color);
+  flex-shrink: 0;
+}
+
+.gp-action-btn {
+  gap: 1px;
+  padding: 1px 1px;
+  font-size: 10px;
+  line-height: 1;
+  white-space: nowrap;
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  &--active {
+    border-color: var(--b3-theme-primary) !important;
+    color: var(--b3-theme-primary);
+  }
+
+  &--ok {
+    border-color: var(--b3-theme-success) !important;
+    color: var(--b3-theme-success);
+  }
+
+  &--fail {
+    border-color: var(--b3-theme-error) !important;
+    color: var(--b3-theme-error);
+  }
 }
 
 // Stash 暂存
@@ -703,21 +767,6 @@
   @include text-ellipsis;
 }
 
-.gp-push-btn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  font-size: 11px;
-  padding: 4px 2px;
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-}
-
 .gp-output {
   position: relative;
   margin-top: 8px;
@@ -758,17 +807,6 @@
     opacity: 1;
     background: var(--b3-list-hover);
   }
-}
-
-// ── 推送按钮状态颜色 ──
-.gp-push-btn--ok {
-  border-color: var(--b3-theme-success) !important;
-  color: var(--b3-theme-success);
-}
-
-.gp-push-btn--fail {
-  border-color: var(--b3-theme-error) !important;
-  color: var(--b3-theme-error);
 }
 
 // ── 结构化输出列表 ──

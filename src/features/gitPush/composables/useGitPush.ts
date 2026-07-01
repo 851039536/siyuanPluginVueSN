@@ -44,8 +44,13 @@ export function useGitPush(manager: GitPushManager) {
     moveProject: projectCrud.moveProject,
 
     // ── Git 操作 ──
+    pushProgress: gitOps.pushProgress,
+    getPushStatus: gitOps.getPushStatus,
     isPushing: gitOps.isPushing,
     pushOutputs: gitOps.pushOutputs,
+    entriesToText: gitOps.entriesToText,
+    pullProgress: gitOps.pullProgress,
+    getPullStatus: gitOps.getPullStatus,
     isPulling: gitOps.isPulling,
     pullOutputs: gitOps.pullOutputs,
     pushStatuses: gitOps.pushStatuses,
@@ -75,6 +80,8 @@ export function useGitPush(manager: GitPushManager) {
     pushSingle: gitOps.pushSingle,
     pullToAll: gitOps.pullToAll,
     pullSingle: gitOps.pullSingle,
+    cancelPush: gitOps.cancelPush,
+    cancelPull: gitOps.cancelPull,
     loadStashList: gitOps.loadStashList,
     doStashSave: gitOps.doStashSave,
     doStashPop: gitOps.doStashPop,

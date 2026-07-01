@@ -91,6 +91,12 @@
     "addLocalPath": "Add Path",
     "localPathHint": "Add local paths for other computers; Git operations will auto-detect the valid path",
     "localPathLabel": "Local Paths",
-    "localPathDesc": "Cross-device"
+    "localPathDesc": "Cross-device",
+    "cancelPush": "Cancel Push",
+    "pushAllProjects": "Push All Projects",
+    "pushingProjects": "Pushing ({0}/{1})",
+    "pushBranchAll": "All Branches",
+    "pushBranchHead": "Current Branch Only",
+    "pushBranchHint": "Current branch only mode is faster, skips other branches"
   }
 }

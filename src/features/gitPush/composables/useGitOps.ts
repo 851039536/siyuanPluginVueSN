@@ -13,13 +13,29 @@ import { ref } from "vue"
 import { PLATFORM_META } from "../types"
 import { findProject, pruneRecordCache, resolveValidPath } from "../utils"
 
+/** 推送/拉取进度项 */
+export interface PushOutputEntry {
+  platform: PlatformKey
+  label: string
+  ok: boolean
+  skipped: boolean
+  duration: number
+  summary: string
+  fullStdout: string
+  fullStderr: string
+}
+
+type ProgressStatus = "pending" | "pushing" | "ok" | "fail"
+
 export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) {
-  /** 正在推送的项目 id → platformKey|"all" */
-  const pushingRemote = ref<Record<string, string>>({})
-  const pushOutputs = ref<Record<string, string>>({})
-  /** 正在拉取的项目 id → platformKey|"all" */
-  const pullingRemote = ref<Record<string, string>>({})
-  const pullOutputs = ref<Record<string, string>>({})
+  /** 推送进度：projectId → platformKey → status */
+  const pushProgress = ref<Record<string, Record<string, ProgressStatus>>>({})
+  /** 推送结构化输出 */
+  const pushOutputs = ref<Record<string, PushOutputEntry[]>>({})
+  /** 拉取进度 */
+  const pullProgress = ref<Record<string, Record<string, ProgressStatus>>>({})
+  /** 拉取结构化输出 */
+  const pullOutputs = ref<Record<string, PushOutputEntry[]>>({})
   /** 项目推送状态缓存 */
   const pushStatuses = ref<Record<string, PushStatusInfo>>({})
   /** 工作区状态缓存 */
@@ -39,39 +55,88 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
   /** Stash 操作加载中 */
   const stashLoading = ref<Record<string, boolean>>({})
 
+  /** 检查是否有推送进行中 */
   function isPushing(projectId: string, target?: string): boolean {
-    const v = pushingRemote.value[projectId]
-    if (!v) return false
-    if (target) return v === target
-    return true
+    const prog = pushProgress.value[projectId]
+    if (!prog) return false
+    if (target) {
+      if (target === "all") {
+        return Object.values(prog).some((s) => s === "pushing" || s === "pending")
+      }
+      return prog[target] === "pushing" || prog[target] === "pending"
+    }
+    return Object.values(prog).some((s) => s === "pushing" || s === "pending")
   }
 
+  /** 获取指定项目指定远程的推送进度 */
+  function getPushStatus(projectId: string, target: PlatformKey): ProgressStatus {
+    return pushProgress.value[projectId]?.[target] ?? "pending"
+  }
+
+  /** 检查是否有拉取进行中 */
   function isPulling(projectId: string, target?: string): boolean {
-    const v = pullingRemote.value[projectId]
-    if (!v) return false
-    if (target) return v === target
-    return true
+    const prog = pullProgress.value[projectId]
+    if (!prog) return false
+    if (target) {
+      if (target === "all") {
+        return Object.values(prog).some((s) => s === "pushing" || s === "pending")
+      }
+      return prog[target] === "pushing" || prog[target] === "pending"
+    }
+    return Object.values(prog).some((s) => s === "pushing" || s === "pending")
+  }
+
+  /** 获取指定项目指定远程的拉取进度 */
+  function getPullStatus(projectId: string, target: PlatformKey): ProgressStatus {
+    return pullProgress.value[projectId]?.[target] ?? "pending"
   }
 
   // ── 工具函数 ──
-  function formatGitOutput(
-    target: Record<string, string>,
-    id: string,
-    opName: string,
-    entries: { label: string, ok: boolean, stdout: string, stderr: string }[],
+
+  /**
+   * 将 AllPlatformResult 转换为结构化 PushOutputEntry[]
+   */
+  function buildOutputEntries(
+    result: Record<string, any>,
+    durations: Record<string, number>,
     usedPath?: string,
-  ) {
-    const lines: string[] = []
-    for (const e of entries) {
-      lines.push(`[${e.label}] ${e.ok ? `${opName}成功` : `${opName}失败`}`)
-      if (e.stdout) lines.push(e.stdout)
-      if (e.stderr) lines.push(`错误: ${e.stderr}`)
+  ): PushOutputEntry[] {
+    const entries: PushOutputEntry[] = []
+    for (const pm of PLATFORM_META) {
+      const r = result[pm.key] as any
+      if (!r) continue
+      entries.push({
+        platform: pm.key,
+        label: pm.label,
+        ok: r.ok ?? false,
+        skipped: r.skipped ?? false,
+        duration: durations[pm.key] ?? 0,
+        summary: r.ok
+          ? (r.stdout?.split("\n")?.[0]?.trim() || "OK")
+          : (r.stderr?.split("\n")?.[0]?.trim() || "失败"),
+        fullStdout: r.stdout ?? "",
+        fullStderr: r.stderr ?? "",
+      })
     }
     if (usedPath) {
-      lines.push(`[使用本地路径: ${usedPath}]`)
+      // 路径信息附加在最后一个条目或新条目
+      const last = entries[entries.length - 1]
+      if (last) {
+        last.fullStdout += `\n\n[使用本地路径: ${usedPath}]`
+      }
     }
-    target[id] = lines.join("\n")
-    pruneRecordCache(target)
+    return entries
+  }
+
+  /** 从输出条目生成纯文本（用于复制） */
+  function entriesToText(entries: PushOutputEntry[]): string {
+    const lines: string[] = []
+    for (const e of entries) {
+      lines.push(`[${e.label}] ${e.ok ? "成功" : e.skipped ? "已跳过" : "失败"} (${e.duration}ms)`)
+      if (e.fullStdout) lines.push(e.fullStdout)
+      if (e.fullStderr) lines.push(`错误: ${e.fullStderr}`)
+    }
+    return lines.join("\n")
   }
 
   /** 获取项目有效路径并生成路径提示信息 */
@@ -81,72 +146,178 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     return resolveValidPath(project)
   }
 
-  function platformLabel(target: string): string {
-    return PLATFORM_META.find((pm) => pm.key === target)?.label ?? "Gitea"
-  }
-
-  function resultToEntries(result: { [key: string]: any }) {
-    return PLATFORM_META
-      .filter((pm) => (result[pm.key] as any)?.skipped !== true)
-      .map((pm) => ({
-        label: pm.label,
-        ok: result[pm.key]?.ok ?? false,
-        stdout: result[pm.key]?.stdout ?? "",
-        stderr: result[pm.key]?.stderr ?? "",
-      }))
-  }
-
   // ── 推送/拉取 ──
   async function pushToAll(id: string) {
-    pushingRemote.value[id] = "all"
+    // 初始化进度：标记所有已配置远程为 pending
+    const project = findProject(projects, id)
+    const initProg: Record<string, ProgressStatus> = {}
+    if (project) {
+      for (const pm of PLATFORM_META) {
+        const remoteName = project[pm.remoteProp]
+        if (remoteName) { initProg[pm.key] = "pending" }
+      }
+    }
+    pushProgress.value[id] = initProg
+
     try {
+      // 设置各远程为 pushing
+      const startedAt: Record<string, number> = {}
+      const durations: Record<string, number> = {}
+      for (const key of Object.keys(initProg)) {
+        pushProgress.value = { ...pushProgress.value, [id]: { ...pushProgress.value[id], [key]: "pushing" } }
+        startedAt[key] = Date.now()
+      }
+
       const result = await manager.pushToAll(id)
-      formatGitOutput(pushOutputs.value, id, "推送", resultToEntries(result), getUsedPath(id))
+
+      // 计算耗时并更新状态
+      for (const pm of PLATFORM_META) {
+        const key = pm.key
+        if (!initProg[key]) continue
+        durations[key] = Date.now() - (startedAt[key] || Date.now())
+        const r = result[key] as any
+        pushProgress.value = { ...pushProgress.value, [id]: { ...pushProgress.value[id], [key]: r?.ok ? "ok" : "fail" } }
+      }
+
+      pushOutputs.value[id] = buildOutputEntries(result, durations, getUsedPath(id))
+      pruneRecordCache(pushOutputs)
       loadPushStatus(id).catch((e) => console.warn("[gitPush] 刷新推送状态失败:", e?.message || e))
       return result
+    } catch {
+      // 异常情况：所有待处理远程标记 fail
+      const failProg: Record<string, ProgressStatus> = {}
+      for (const key of Object.keys(initProg)) { failProg[key] = "fail" }
+      pushProgress.value = { ...pushProgress.value, [id]: failProg }
     } finally {
-      delete pushingRemote.value[id]
+      // 延迟清理进度（让 UI 显示最终状态 3 秒）
+      setTimeout(() => {
+        const current = { ...pushProgress.value }
+        delete current[id]
+        pushProgress.value = current
+      }, 3000)
     }
   }
 
   async function pushSingle(id: string, target: PlatformKey) {
-    pushingRemote.value[id] = target
+    pushProgress.value = { ...pushProgress.value, [id]: { ...pushProgress.value[id], [target]: "pushing" } }
+    const startedAt = Date.now()
     try {
       const result = await manager.pushSingle(id, target)
-      formatGitOutput(pushOutputs.value, id, "推送", [{
-        label: platformLabel(target), ok: result.ok, stdout: result.stdout, stderr: result.stderr,
-      }], getUsedPath(id))
+      const duration = Date.now() - startedAt
+      pushProgress.value = { ...pushProgress.value, [id]: { ...pushProgress.value[id], [target]: result.ok ? "ok" : "fail" } }
+
+      const pm = PLATFORM_META.find((m) => m.key === target)
+      const entries: PushOutputEntry[] = [{
+        platform: target,
+        label: pm?.label ?? target,
+        ok: result.ok,
+        skipped: false,
+        duration,
+        summary: result.ok
+          ? (result.stdout?.split("\n")?.[0]?.trim() || "OK")
+          : (result.stderr?.split("\n")?.[0]?.trim() || "失败"),
+        fullStdout: result.stdout,
+        fullStderr: result.stderr,
+      }]
+      pushOutputs.value[id] = entries
       loadPushStatus(id).catch((e) => console.warn("[gitPush] 刷新推送状态失败:", e?.message || e))
       return result
     } finally {
-      delete pushingRemote.value[id]
+      setTimeout(() => {
+        const current = { ...pushProgress.value }
+        delete current[id]
+        pushProgress.value = current
+      }, 3000)
     }
   }
 
   async function pullToAll(id: string) {
-    pullingRemote.value[id] = "all"
+    const project = findProject(projects, id)
+    const initProg: Record<string, ProgressStatus> = {}
+    if (project) {
+      for (const pm of PLATFORM_META) {
+        const remoteName = project[pm.remoteProp]
+        if (remoteName) { initProg[pm.key] = "pending" }
+      }
+    }
+    pullProgress.value[id] = initProg
+
     try {
+      const startedAt: Record<string, number> = {}
+      const durations: Record<string, number> = {}
+      for (const key of Object.keys(initProg)) {
+        pullProgress.value = { ...pullProgress.value, [id]: { ...pullProgress.value[id], [key]: "pushing" } }
+        startedAt[key] = Date.now()
+      }
+
       const result = await manager.pullToAll(id)
-      formatGitOutput(pullOutputs.value, id, "拉取", resultToEntries(result), getUsedPath(id))
+
+      for (const pm of PLATFORM_META) {
+        const key = pm.key
+        if (!initProg[key]) continue
+        durations[key] = Date.now() - (startedAt[key] || Date.now())
+        const r = result[key] as any
+        pullProgress.value = { ...pullProgress.value, [id]: { ...pullProgress.value[id], [key]: r?.ok ? "ok" : "fail" } }
+      }
+
+      pullOutputs.value[id] = buildOutputEntries(result, durations, getUsedPath(id))
+      pruneRecordCache(pullOutputs)
       loadPushStatus(id).catch((e) => console.warn("[gitPush] 刷新推送状态失败:", e?.message || e))
       return result
+    } catch {
+      const failProg: Record<string, ProgressStatus> = {}
+      for (const key of Object.keys(initProg)) { failProg[key] = "fail" }
+      pullProgress.value = { ...pullProgress.value, [id]: failProg }
     } finally {
-      delete pullingRemote.value[id]
+      setTimeout(() => {
+        const current = { ...pullProgress.value }
+        delete current[id]
+        pullProgress.value = current
+      }, 3000)
     }
   }
 
   async function pullSingle(id: string, target: PlatformKey) {
-    pullingRemote.value[id] = target
+    pullProgress.value = { ...pullProgress.value, [id]: { ...pullProgress.value[id], [target]: "pushing" } }
+    const startedAt = Date.now()
     try {
       const result = await manager.pullSingle(id, target)
-      formatGitOutput(pullOutputs.value, id, "拉取", [{
-        label: platformLabel(target), ok: result.ok, stdout: result.stdout, stderr: result.stderr,
-      }], getUsedPath(id))
+      const duration = Date.now() - startedAt
+      pullProgress.value = { ...pullProgress.value, [id]: { ...pullProgress.value[id], [target]: result.ok ? "ok" : "fail" } }
+
+      const pm = PLATFORM_META.find((m) => m.key === target)
+      const entries: PushOutputEntry[] = [{
+        platform: target,
+        label: pm?.label ?? target,
+        ok: result.ok,
+        skipped: false,
+        duration,
+        summary: result.ok
+          ? (result.stdout?.split("\n")?.[0]?.trim() || "OK")
+          : (result.stderr?.split("\n")?.[0]?.trim() || "失败"),
+        fullStdout: result.stdout,
+        fullStderr: result.stderr,
+      }]
+      pullOutputs.value[id] = entries
       loadPushStatus(id).catch((e) => console.warn("[gitPush] 刷新推送状态失败:", e?.message || e))
       return result
     } finally {
-      delete pullingRemote.value[id]
+      setTimeout(() => {
+        const current = { ...pullProgress.value }
+        delete current[id]
+        pullProgress.value = current
+      }, 3000)
     }
+  }
+
+  /** 取消推送 */
+  function cancelPush(id: string) {
+    manager.cancelOp(id)
+  }
+
+  /** 取消拉取 */
+  function cancelPull(id: string) {
+    manager.cancelOp(id)
   }
 
   async function loadPushStatus(id: string, opts?: { branch?: string }) {
@@ -324,10 +495,13 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
   }
 
   return {
-    pushingRemote,
+    pushProgress,
+    getPushStatus,
     isPushing,
     pushOutputs,
-    pullingRemote,
+    entriesToText,
+    pullProgress,
+    getPullStatus,
     isPulling,
     pullOutputs,
     pushStatuses,
@@ -357,6 +531,8 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     pushSingle,
     pullToAll,
     pullSingle,
+    cancelPush,
+    cancelPull,
     loadStashList,
     doStashSave,
     doStashPop,

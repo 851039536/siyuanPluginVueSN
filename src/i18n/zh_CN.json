@@ -1041,7 +1041,13 @@
     "addLocalPath": "添加路径",
     "localPathHint": "为同一项目添加其他电脑上的本地路径，Git 操作时将自动检测有效路径",
     "localPathLabel": "多本地路径",
-    "localPathDesc": "跨设备适配"
+    "localPathDesc": "跨设备适配",
+    "cancelPush": "取消推送",
+    "pushAllProjects": "推送全部项目",
+    "pushingProjects": "推送中 ({0}/{1})",
+    "pushBranchAll": "全部分支",
+    "pushBranchHead": "仅当前分支",
+    "pushBranchHint": "仅当前分支模式更快，避免推送无变更的其他分支"
   },
   "heatmapMarker": {
     "title": "热力图标记",

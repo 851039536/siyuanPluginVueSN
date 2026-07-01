@@ -61,6 +61,14 @@ export class GitPushManager {
   private gitMaxConcurrent = 3
   /** 等待队列 */
   private gitWaitQueue: (() => void)[] = []
+  /** 记录当前正在执行的子进程引用（用于取消操作时 kill） */
+  private activeProcesses: Set<any> = new Set()
+  /** 项目 push/pull 的 AbortController 映射 */
+  private abortControllers: Map<string, AbortController> = new Map()
+  /** 推送分支模式：all=全部分支, head=仅当前分支 */
+  private pushBranchMode: "all" | "head" = "all"
+  /** 推送状态缓存（用于智能跳过） */
+  private pushStatusCache: Record<string, PushStatusInfo> = {}
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
@@ -77,6 +85,17 @@ export class GitPushManager {
     const clamped = Math.max(1, Math.min(10, n))
     this.gitMaxConcurrent = clamped
     await this.storage.gitConcurrency.save(clamped)
+  }
+
+  /** 获取推送分支模式 */
+  getPushBranchMode(): "all" | "head" {
+    return this.pushBranchMode
+  }
+
+  /** 设置推送分支模式并持久化 */
+  async setPushBranchMode(mode: "all" | "head"): Promise<void> {
+    this.pushBranchMode = mode
+    await this.storage.pushBranchMode.save(mode)
   }
 
   /** 获取 child_process 模块（简写） */
@@ -109,6 +128,7 @@ export class GitPushManager {
   async init() {
     await this.storage.init()
     this.gitMaxConcurrent = await this.storage.gitConcurrency.loadOrDefault()
+    this.pushBranchMode = await this.storage.pushBranchMode.loadOrDefault()
     const i18n = (this.plugin.i18n as any)?.gitPush || {}
 
     createVueDockApp(this.plugin, GitPushPanel, {
@@ -322,23 +342,60 @@ export class GitPushManager {
     skipped: true,
   }
 
-  /** 通用远程操作辅助函数（push/pull 共用） */
-  private tryRemoteOp(
+  /** 通用远程操作辅助函数（push/pull 共用，含失败重试） */
+  private async tryRemoteOp(
     projectPath: string,
     remoteName: string | undefined,
     action: "push" | "pull",
+    signal?: AbortSignal,
   ): Promise<RemoteOpResult> {
-    if (!remoteName) return Promise.resolve(GitPushManager.skippedResult)
-    const args = action === "push"
-      ? ["push", remoteName, "--all"]
-      : ["pull", remoteName, "--ff-only"]
-    return this.execGit(projectPath, args)
-      .then((stdout) => ({ ok: true, stdout: stdout || "", stderr: "" }))
-      .catch((e: any) => ({
-        ok: false,
-        stdout: "",
-        stderr: e?.message || String(e),
-      }))
+    if (!remoteName) return GitPushManager.skippedResult
+
+    let args: string[]
+    if (action === "push") {
+      args = this.pushBranchMode === "head"
+        ? ["push", remoteName, "HEAD"]
+        : ["push", remoteName, "--all"]
+    } else {
+      args = ["pull", remoteName, "--ff-only"]
+    }
+
+    const tryExec = async (): Promise<RemoteOpResult> => {
+      try {
+        const stdout = await this.execGit(projectPath, args, signal)
+        return { ok: true, stdout: stdout || "", stderr: "" }
+      } catch (e: any) {
+        const msg = e?.message || String(e)
+        // 判断是否为网络类错误（可重试）
+        const isNetworkErr = /(could not resolve|timed out|connection refused|connection reset|unable to access|early EOF|RPC failed|fetch first)/i.test(msg)
+        if (!isNetworkErr) {
+          return { ok: false, stdout: "", stderr: msg }
+        }
+        // 重试 1 次（1s 延迟）
+        if (signal?.aborted) {
+          return { ok: false, stdout: "", stderr: "操作已取消" }
+        }
+        await new Promise<void>((resolve, reject) => {
+          const timer = setTimeout(resolve, 1000)
+          const onAbort = () => {
+            clearTimeout(timer)
+            reject(new Error("操作已取消"))
+          }
+          if (signal) { signal.addEventListener("abort", onAbort, { once: true }) }
+        }).catch(() => {})
+        if (signal?.aborted) {
+          return { ok: false, stdout: "", stderr: "操作已取消" }
+        }
+        try {
+          const stdout = await this.execGit(projectPath, args, signal)
+          return { ok: true, stdout: stdout || "", stderr: "" }
+        } catch (e2: any) {
+          return { ok: false, stdout: "", stderr: e2?.message || String(e2) }
+        }
+      }
+    }
+
+    return tryExec()
   }
 
   /** "项目未找到" 错误结果模板 */
@@ -367,24 +424,86 @@ export class GitPushManager {
     return this.remoteOpAll(id, "pull")
   }
 
-  /** 全平台 push/pull 通用实现 */
+  /** 全平台 push/pull 通用实现（并行 + 智能跳过） */
   private async remoteOpAll(id: string, action: "push" | "pull"): Promise<AllPlatformResult> {
     const projects = await this.getProjects()
     const project = projects.find((p) => p.id === id)
     if (!project) return this.notFoundResult
 
     const cwd = resolveValidPath(project)
-    const github = await this.tryRemoteOp(cwd, project.githubRemote, action)
-    const gitee = await this.tryRemoteOp(cwd, project.giteeRemote, action)
-    const gitea = await this.tryRemoteOp(cwd, project.giteaRemote, action)
-    const cnb = await this.tryRemoteOp(cwd, project.cnbRemote, action)
 
-    return {
-      success: github.ok || gitee.ok || gitea.ok || cnb.ok,
-      github,
-      gitee,
-      gitea,
-      cnb,
+    // 智能跳过：推送前检查缓存，跳过 ahead===0 的远程
+    const cachedStatus = this.pushStatusCache[id]
+    function shouldSkip(key: PlatformKey): boolean {
+      if (action !== "push") return false
+      if (!cachedStatus) return false
+      const rs = cachedStatus.remotes[key]
+      if (!rs) return false
+      return rs.ahead === 0 && !rs.noUpstream
+    }
+
+    // 设置 AbortController
+    const ac = new AbortController()
+    this.abortControllers.set(id, ac)
+
+    try {
+      // 智能跳过的静态结果
+      const skippedResults: Record<string, RemoteOpResult> = {}
+      const entries: { key: PlatformKey, remoteName: string | undefined }[] = []
+      for (const pm of PLATFORM_META) {
+        const remoteName = project[pm.remoteProp]
+        if (!remoteName) {
+          skippedResults[pm.key] = GitPushManager.skippedResult
+        } else if (shouldSkip(pm.key)) {
+          skippedResults[pm.key] = { ok: true, stdout: "已同步（跳过）", stderr: "", skipped: true }
+        } else {
+          entries.push({ key: pm.key, remoteName: remoteName as string })
+        }
+      }
+
+      const results = await Promise.allSettled(
+        entries.map(({ key, remoteName }) =>
+          this.tryRemoteOp(cwd, remoteName, action, ac.signal).then((r) => ({ key, ...r })),
+        ),
+      )
+
+      const build = (key: PlatformKey): RemoteOpResult => {
+        // 优先返回跳过结果
+        if (skippedResults[key]) return skippedResults[key]
+        const entry = results.find(
+          (r) => r.status === "fulfilled" && r.value.key === key,
+        )
+        if (entry && entry.status === "fulfilled") {
+          const { key: _, ...rest } = entry.value
+          return rest
+        }
+        // 未配置 → skipped；已配置但 rejected → 错误
+        const wasConfigured = entries.some((e) => e.key === key)
+        if (!wasConfigured) return GitPushManager.skippedResult
+        const rej = results.find(
+          (r) => r.status === "rejected",
+        )
+        return {
+          ok: false,
+          stdout: "",
+          stderr: rej && rej.status === "rejected" ? String(rej.reason?.message || rej.reason || "未知错误") : "未知错误",
+        }
+      }
+
+      const github = build("github")
+      const gitee = build("gitee")
+      const gitea = build("gitea")
+      const cnb = build("cnb")
+
+      return {
+        success: github.ok || gitee.ok || gitea.ok || cnb.ok,
+        github,
+        gitee,
+        gitea,
+        cnb,
+      }
+    } finally {
+      this.abortControllers.delete(id)
     }
   }
 
@@ -422,12 +541,28 @@ export class GitPushManager {
 
     const cwd = resolveValidPath(project)
     const remoteName = this.getRemoteName(project, target)
-    const result = await this.tryRemoteOp(cwd, remoteName, action)
-    // tryRemoteOp 不跳过时返回 ok: true/false
-    return {
-      ok: result.ok,
-      stdout: result.stdout,
-      stderr: result.stderr,
+    const ac = new AbortController()
+    this.abortControllers.set(id, ac)
+    try {
+      const result = await this.tryRemoteOp(cwd, remoteName, action, ac.signal)
+      return {
+        ok: result.ok,
+        stdout: result.stdout,
+        stderr: result.stderr,
+      }
+    } finally {
+      this.abortControllers.delete(id)
+    }
+  }
+
+  /**
+   * 取消正在进行的推送/拉取操作
+   */
+  cancelOp(id: string): void {
+    const ac = this.abortControllers.get(id)
+    if (ac) {
+      ac.abort()
+      this.abortControllers.delete(id)
     }
   }
 
@@ -492,6 +627,8 @@ export class GitPushManager {
       if (ahead > 0) status.needsPush = true
     }
 
+    // 缓存用于智能跳过
+    this.pushStatusCache[id] = status
     return status
   }
 
@@ -795,22 +932,32 @@ export class GitPushManager {
 
   /**
    * 执行 git 命令（信号量限流）
+   * @param signal 可选 AbortSignal，触发后 kill 子进程并清等待队列
    */
-  private execGit(cwd: string, args: string[]): Promise<string> {
+  private execGit(cwd: string, args: string[], signal?: AbortSignal): Promise<string> {
     return new Promise<string>((resolve, reject) => {
+      let killed = false
+
       const run = () => {
+        if (signal?.aborted) {
+          reject(new Error("操作已取消"))
+          return
+        }
+
         const cp = this.getProcess()
         if (!cp) { reject(new Error("Node 环境不可用")); return }
         this.gitRunning++
 
-        cp.execFile(
+        const child = cp.execFile(
           "git", args,
           { cwd, timeout: 30000, encoding: "utf8", windowsHide: true },
           (error: any, stdout: string, stderr: string) => {
             this.gitRunning--
+            this.activeProcesses.delete(child)
             const next = this.gitWaitQueue.shift()
             if (next) next()
 
+            if (killed) { return }
             if (error) {
               reject(new Error(stderr || error.message))
             } else {
@@ -818,6 +965,21 @@ export class GitPushManager {
             }
           },
         )
+        this.activeProcesses.add(child)
+
+        const onAbort = () => {
+          killed = true
+          try { child.kill("SIGTERM") } catch {}
+          // 清空当前项目的排队操作
+          this.gitWaitQueue = this.gitWaitQueue.filter(() => false)
+        }
+        if (signal) {
+          if (signal.aborted) {
+            onAbort()
+            return
+          }
+          signal.addEventListener("abort", onAbort, { once: true })
+        }
       }
 
       if (this.gitRunning < this.gitMaxConcurrent) {
@@ -1072,6 +1234,11 @@ export class GitPushManager {
   }
 
   destroy() {
+    // 取消所有进行中的操作
+    for (const ac of this.abortControllers.values()) {
+      ac.abort()
+    }
+    this.abortControllers.clear()
     // 清理等待队列中所有闭包，防止插件卸载后僵尸 Promise 持有闭包引用导致内存泄漏
     this.gitWaitQueue.length = 0
   }

@@ -760,6 +760,137 @@
   }
 }
 
+// ── 推送按钮状态颜色 ──
+.gp-push-btn--ok {
+  border-color: var(--b3-theme-success) !important;
+  color: var(--b3-theme-success);
+}
+
+.gp-push-btn--fail {
+  border-color: var(--b3-theme-error) !important;
+  color: var(--b3-theme-error);
+}
+
+// ── 结构化输出列表 ──
+.gp-output-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gp-output-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  transition: background 0.12s;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+  }
+}
+
+.gp-output-status {
+  flex-shrink: 0;
+  width: 16px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 11px;
+
+  &--ok {
+    color: var(--b3-theme-success);
+  }
+
+  &--fail {
+    color: var(--b3-theme-error);
+  }
+
+  &--skipped {
+    color: var(--b3-theme-on-surface-light);
+    opacity: 0.5;
+  }
+}
+
+.gp-output-label {
+  font-weight: 600;
+  min-width: 40px;
+  color: var(--b3-theme-on-background);
+}
+
+.gp-output-duration {
+  font-family: $vp-mono;
+  font-size: 10px;
+  color: var(--b3-theme-on-surface-light);
+  opacity: 0.6;
+}
+
+.gp-output-summary {
+  flex: 1;
+  color: var(--b3-theme-on-surface);
+  @include text-ellipsis;
+}
+
+.gp-output-details {
+  width: 100%;
+  margin-top: 2px;
+
+  summary {
+    font-size: 10px;
+    color: var(--b3-theme-primary);
+    cursor: pointer;
+    padding: 2px 0;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
+  pre {
+    margin-top: 4px;
+    padding: $spacing-2;
+    border-radius: $radius-sm;
+    font-size: 10px;
+    font-family: $vp-mono;
+    line-height: 1.5;
+    max-height: 120px;
+    overflow: auto;
+    word-break: break-all;
+  }
+}
+
+.gp-output-stdout {
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+}
+
+.gp-output-stderr {
+  background: rgba(220, 38, 38, 0.08);
+  color: var(--b3-theme-error);
+}
+
+// ── 设置弹窗：分支模式 radio ──
+.gp-set-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+}
+
+.gp-set-radio {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-background);
+  cursor: pointer;
+  padding: 2px 0;
+
+  input[type="radio"] {
+    accent-color: var(--b3-theme-primary);
+  }
+}
+
 // dialog/form styles → Dialog.scss / Form.scss
 
 // 分类管理弹窗

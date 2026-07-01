@@ -5,11 +5,13 @@ import {
   ref,
   watch,
 } from "vue"
-import { PluginStorage } from "@/utils/pluginStorage"
-import { TypedStorage } from "@/utils/typedStorage"
+import type { TypedStorage } from "@/utils/typedStorage"
 
 interface UseProjectFiltersOptions {
-  plugin: { loadData: (key: string) => Promise<any>, saveData: (key: string, value: any) => Promise<void> }
+  /** git 操作暂停状态持久化槽位（由 GitPushStorage 提供） */
+  gitOpsPausedStorage: TypedStorage<boolean>
+  /** 显示已归档项目持久化槽位（由 GitPushStorage 提供） */
+  showArchivedStorage: TypedStorage<boolean>
   projects: Ref<GitProject[]>
   needsPushProjects: Ref<{ project: GitProject }[]>
   uncommittedProjects: Ref<{ project: GitProject }[]>
@@ -29,7 +31,8 @@ export const VIEW_MODE_META: Record<string, { label: string, icon: string }> = {
 
 export function useProjectFilters(options: UseProjectFiltersOptions) {
   const {
-    plugin,
+    gitOpsPausedStorage,
+    showArchivedStorage,
     projects,
     needsPushProjects,
     uncommittedProjects,
@@ -42,11 +45,6 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
   const viewMode = ref<"all" | "needsPush" | "uncommitted" | "starred" | "archived">("all")
   const showArchived = ref(false)
   const selectedTags = ref<Set<string>>(new Set())
-
-  // ── 使用 TypedStorage 持久化状态（符合 CLAUDE.md 统一入口规则）──
-  const storage = new PluginStorage(plugin as any)
-  const gitOpsPausedStorage = new TypedStorage(storage, "git-push-ops-paused", false)
-  const showArchivedStorage = new TypedStorage(storage, "git-push-show-archived", false)
 
   const gitOpsPaused = ref(false)
 

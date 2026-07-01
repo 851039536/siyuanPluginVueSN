@@ -12,6 +12,15 @@ export function normalizePathForDedup(p: string): string {
   return p.replace(/\\/g, "/").replace(/\/+$/, "").toLowerCase()
 }
 
+/** 限制 Record 缓存条目数，超过上限时删除最早的条目 */
+export function pruneRecordCache(record: Record<string, any>, max = 30) {
+  const keys = Object.keys(record)
+  if (keys.length <= max) return
+  for (const k of keys.slice(0, keys.length - max)) {
+    delete record[k]
+  }
+}
+
 /**
  * 解析项目的有效本地路径（跨电脑适配核心）
  * 按优先级依次检测：主路径 path → localPaths 列表

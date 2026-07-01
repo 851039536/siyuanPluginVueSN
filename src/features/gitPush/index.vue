@@ -526,17 +526,6 @@
                       <span>未检测到 IDE</span>
                     </button>
                     <button
-                      v-if="detectedIdes.length === 0 && customIdes.length === 0"
-                      class="gp-ide-item gp-ide-item--none"
-                      disabled
-                    >
-                      <Icon
-                        icon="mdi:information-outline"
-                        height="12"
-                      />
-                      <span>未检测到已安装的 IDE</span>
-                    </button>
-                    <button
                       v-for="ide in detectedIdes"
                       :key="`detected-${ide.name}`"
                       class="gp-ide-item"
@@ -900,17 +889,6 @@
       @toggle-item="toggleScanItem"
       @import-selected="handleImportSelected"
     />
-    <RemoteConfigDialog
-      v-if="remoteConfigProject"
-      :project="remoteConfigProject"
-      :remotes="remoteList"
-      :remotes-meta="REMOTES"
-      :error="remoteError"
-      @close="remoteConfigProject = null"
-      @add-remote="(name:string, url:string) => handleAddRemote(remoteConfigProject!.id, name, url)"
-      @remove-remote="(name:string) => handleRemoveRemote(remoteConfigProject!.id, name)"
-      @edit-remote="(name:string, url:string) => handleEditRemote(remoteConfigProject!.id, name, url)"
-    />
     <EditProjectDialog
       v-if="editDialogProject"
       ref="editDialogRef"
@@ -954,12 +932,12 @@ import {
   watch,
 } from "vue"
 import { copyToClipboard } from "@/utils/domUtils"
+import { showMessage } from "siyuan"
 import AddProjectDialog from "./components/AddProjectDialog.vue"
 import CategoryDialog from "./components/CategoryDialog.vue"
 import ConflictSection from "./components/ConflictSection.vue"
 import EditProjectDialog from "./components/EditProjectDialog.vue"
 import IdeManagementDialog from "./components/IdeManagementDialog.vue"
-import RemoteConfigDialog from "./components/RemoteConfigDialog.vue"
 import ScanImportDialog from "./components/ScanImportDialog.vue"
 import SettingsDialog from "./components/SettingsDialog.vue"
 import StashSection from "./components/StashSection.vue"
@@ -967,7 +945,7 @@ import StatsPanel from "./components/StatsPanel.vue"
 import TagPanel from "./components/TagPanel.vue"
 import WorkingTreePanel from "./components/WorkingTreePanel.vue"
 import { pickDirectory } from "./composables/useDirectoryPicker"
-import { resolveValidPath } from "./utils"
+import { pruneRecordCache, resolveValidPath } from "./utils"
 import { useGitPush } from "./composables/useGitPush"
 import {
   IDE_PRESETS,
@@ -985,14 +963,6 @@ const props = defineProps<{
   plugin: any
   manager: GitPushManager
 }>()
-
-/** 限制 Record 缓存条目数 */
-function pruneCache(record: Record<string, any>, max = 30) {
-  const keys = Object.keys(record)
-  if (keys.length > max) {
-    for (const k of keys.slice(0, keys.length - max)) delete record[k]
-  }
-}
 
 /** 批次化并发处理：避免所有项目同时涌入 git 信号量导致排队拥堵 */
 async function batchProcess<T>(items: T[], batchSize: number, fn: (item: T) => Promise<void>) {
@@ -1142,6 +1112,7 @@ const showAddMenu = ref(false)
 /** git 操作活跃数轮询 */
 const activeGitOps = ref(0)
 let opsPoller: ReturnType<typeof setInterval> | null = null
+let initTimer: ReturnType<typeof setTimeout> | null = null
 /** 当前视图: 'list' | 'stats' */
 const currentView = ref<"list" | "stats">("list")
 /** 当前选中的分类 ID（onMounted 中设为首个分类） */
@@ -1168,7 +1139,8 @@ const {
   loadGitOpsPaused,
   loadShowArchived,
 } = useProjectFilters({
-  plugin: props.plugin,
+  gitOpsPausedStorage: props.manager.storage.gitOpsPaused,
+  showArchivedStorage: props.manager.storage.showArchived,
   projects,
   needsPushProjects,
   uncommittedProjects,
@@ -1251,15 +1223,6 @@ const editingNameInput = ref("")
 const refreshingAll = ref(false)
 /** 全局刷新防抖时间戳 */
 let allRefreshLastTime = 0
-/** 远程仓库配置弹窗 */
-const remoteConfigProject = ref<GitProject | null>(null)
-const remoteList = ref<{ name: string, url: string }[]>([])
-const newRemoteName = ref("")
-const newRemoteUrl = ref("")
-const remoteError = ref("")
-/** 行内编辑远程 URL 状态 */
-const editingRemoteName = ref("")
-const editingRemoteUrl = ref("")
 /** IDE 打开菜单：当前打开的项目 id 集合 */
 const openIdeMenu = ref(new Set<string>())
 /** 提交输出 id → text */
@@ -1364,7 +1327,7 @@ onMounted(async () => {
   // 首屏只加载显示卡片所需的最小集：工作区变更摘要 + 推送状态。
   // commitLog/branches/stash 改为展开工作区面板时按需懒加载（见 @expand）。
   // getHeadHash 仅刷新去重用，首屏无历史值可对比，跳过。
-  setTimeout(async () => {
+  initTimer = setTimeout(async () => {
     if (gitOpsPaused.value) return
     const catId = activeCategory.value
     const projList = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
@@ -1380,6 +1343,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   if (opsPoller) { clearInterval(opsPoller); opsPoller = null }
+  if (initTimer) { clearTimeout(initTimer); initTimer = null }
   document.removeEventListener("click", closeIdeMenuOnOutside)
 })
 
@@ -1432,7 +1396,7 @@ async function handleAddFromDialog(data: { name: string, path: string, catId: st
     await addProject(data.name, data.path, data.catId, data.tags.length > 0 ? data.tags : undefined)
     showAddDialog.value = false
   } catch (e: any) {
-    alert(e?.message || "添加失败")
+    showMessage(e?.message || "添加失败", 5000, "error")
   }
 }
 
@@ -1573,6 +1537,8 @@ async function handleCopyOutput(text: string) {
 function handleRemove(project: any) {
   if (confirm(`确定要删除项目 "${project.name}" 吗？`)) {
     removeProject(project.id)
+    // 清理防抖缓存中已删除项目的条目，防止 Map 无限增长
+    lastRefreshTime.delete(project.id)
   }
 }
 
@@ -1580,7 +1546,7 @@ async function handleSwitchBranch(id: string, branch: string) {
   try {
     await switchBranch(id, branch)
   } catch (e: any) {
-    alert(`分支切换失败: ${e?.message || e}`)
+    showMessage(`分支切换失败: ${e?.message || e}`, 5000, "error")
   }
 }
 
@@ -1745,7 +1711,7 @@ async function handleGitOp(label: string, fn: () => Promise<void>, id: string) {
     commitOutputs.value[id] = `${label}: ${e?.message || e}`
   } finally {
     delete gitOpLoading.value[id]
-    pruneCache(commitOutputs.value)
+    pruneRecordCache(commitOutputs.value)
   }
 }
 
@@ -1787,7 +1753,7 @@ async function handleStashConfirmMsg(id: string, msg: string) {
   try {
     await doStashSave(id, msg)
   } catch (e: any) {
-    alert(`暂存失败: ${e?.message || e}`)
+    showMessage(`暂存失败: ${e?.message || e}`, 5000, "error")
   }
 }
 
@@ -1796,7 +1762,7 @@ async function handleStashPop(id: string, index: number) {
   try {
     await doStashPop(id, index)
   } catch (e: any) {
-    alert(`恢复失败: ${e?.message || e}`)
+    showMessage(`恢复失败: ${e?.message || e}`, 5000, "error")
   }
 }
 
@@ -1804,7 +1770,7 @@ async function handleStashApply(id: string, index: number) {
   try {
     await doStashApply(id, index)
   } catch (e: any) {
-    alert(`应用失败: ${e?.message || e}`)
+    showMessage(`应用失败: ${e?.message || e}`, 5000, "error")
   }
 }
 
@@ -1813,7 +1779,7 @@ async function handleStashDrop(id: string, index: number) {
   try {
     await doStashDrop(id, index)
   } catch (e: any) {
-    alert(`删除失败: ${e?.message || e}`)
+    showMessage(`删除失败: ${e?.message || e}`, 5000, "error")
   }
 }
 
@@ -1824,7 +1790,7 @@ async function handleCreateTag(id: string, name: string, message?: string) {
     await createTagOp(id, name, message)
     await loadTags(id)
   } catch (e: any) {
-    alert(`创建 Tag 失败: ${e?.message || e}`)
+    showMessage(`创建 Tag 失败: ${e?.message || e}`, 5000, "error")
   }
 }
 
@@ -1834,7 +1800,7 @@ async function handleDeleteTag(id: string, tag: string) {
     await deleteTagOp(id, tag)
     await loadTags(id)
   } catch (e: any) {
-    alert(`删除失败: ${e?.message || e}`)
+    showMessage(`删除失败: ${e?.message || e}`, 5000, "error")
   }
 }
 
@@ -1847,7 +1813,7 @@ async function handlePushTag(id: string, tag: string) {
     const name = project[pm.remoteProp] as string | undefined
     if (name) remoteNames.push(name)
   }
-  if (remoteNames.length === 0) { alert("未找到远程仓库"); return }
+  if (remoteNames.length === 0) { showMessage("未找到远程仓库", 3000, "error"); return }
   tagPushLoading.value = {
     ...tagPushLoading.value,
     [id]: tag,
@@ -1855,9 +1821,10 @@ async function handlePushTag(id: string, tag: string) {
   try {
     await Promise.all(remoteNames.map((name) => pushTagOp(id, name, tag)))
   } catch (e: any) {
-    alert(`推送 Tag 失败: ${e?.message || e}`)
+    showMessage(`推送 Tag 失败: ${e?.message || e}`, 5000, "error")
   } finally {
     delete tagPushLoading.value[id]
+    // ref<Record> 的 delete 不被 Vue 深层响应式追踪检测到，需手动触发浅拷贝
     tagPushLoading.value = { ...tagPushLoading.value }
   }
 }
@@ -1869,7 +1836,7 @@ async function handleAbortMerge(id: string) {
   try {
     await abortMergeOp(id)
   } catch (e: any) {
-    alert(`中止合并失败: ${e?.message || e}`)
+    showMessage(`中止合并失败: ${e?.message || e}`, 5000, "error")
   }
 }
 
@@ -1878,7 +1845,7 @@ async function handleResolveConflict(id: string, file: string, strategy: "theirs
     await resolveConflictOp(id, file, strategy)
     await checkConflicts(id) // 重新检查是否还有冲突
   } catch (e: any) {
-    alert(`解决冲突失败: ${e?.message || e}`)
+    showMessage(`解决冲突失败: ${e?.message || e}`, 5000, "error")
   }
 }
 
@@ -1887,7 +1854,7 @@ async function handleCommit(id: string, message: string) {
   try {
     const result = await doCommit(id, message)
     commitOutputs.value[id] = result || "提交成功"
-    pruneCache(commitOutputs.value)
+    pruneRecordCache(commitOutputs.value)
     await loadCommitLog(id)
   } catch (e: any) {
     commitOutputs.value[id] = `提交失败: ${e?.message || e}`
@@ -1951,55 +1918,6 @@ async function handleMoveProject(projectId: string, categoryId: string) {
 
 async function handleSaveConcurrency(value: number) {
   await setGitConcurrency(value)
-}
-
-async function openRemoteConfig(project: GitProject) {
-  remoteError.value = ""
-  newRemoteName.value = "github"
-  newRemoteUrl.value = ""
-  try {
-    remoteList.value = await props.manager.detectRemotes(resolveValidPath(project))
-  } catch {
-    remoteList.value = []
-  }
-  remoteConfigProject.value = project
-}
-
-async function handleAddRemote(id: string, name: string, url: string) {
-  remoteError.value = ""
-  try {
-    await addRemoteOp(id, name, url)
-    const project = projects.value.find((p) => p.id === id)
-    if (project) remoteList.value = await props.manager.detectRemotes(resolveValidPath(project))
-  } catch (e: any) {
-    remoteError.value = e?.message || "添加失败"
-  }
-}
-
-async function handleRemoveRemote(id: string, name: string) {
-  remoteError.value = ""
-  try {
-    await removeRemoteOp(id, name)
-    const project = projects.value.find((p) => p.id === id)
-    if (project) remoteList.value = await props.manager.detectRemotes(resolveValidPath(project))
-  } catch (e: any) {
-    remoteError.value = e?.message || "删除失败"
-  }
-}
-
-/** 保存行内编辑的远程 URL */
-async function handleEditRemote(id: string, name: string, newUrl: string) {
-  remoteError.value = ""
-  if (!newUrl.trim()) return
-  try {
-    await editRemoteOp(id, name, newUrl.trim())
-    editingRemoteName.value = ""
-    editingRemoteUrl.value = ""
-    const project = projects.value.find((p) => p.id === id)
-    if (project) remoteList.value = await props.manager.detectRemotes(resolveValidPath(project))
-  } catch (e: any) {
-    remoteError.value = e?.message || "修改失败"
-  }
 }
 
 /** 获取远程推送状态标签文案 */
@@ -2100,8 +2018,13 @@ async function handleImportSelected() {
     .filter((r) => scanSelection.value[r.path])
     .map((r) => r.path)
   const catId = activeCategory.value || "__ungrouped__"
-  await importScanResults(selected, catId)
+  const { imported, skipped } = await importScanResults(selected, catId)
+  // 刷新项目列表以显示新导入的项目
+  await loadProjects()
   handleCloseScan()
+  if (imported > 0 || skipped > 0) {
+    showMessage(`导入完成：成功 ${imported} 个${skipped > 0 ? `，跳过 ${skipped} 个` : ""}`, 3000, "info")
+  }
 }
 
 /** 扫描目录专用路径选择，结果写入 scanDirInput */

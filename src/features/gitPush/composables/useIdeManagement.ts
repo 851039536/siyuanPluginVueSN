@@ -3,6 +3,8 @@ import {
   getNodeModules,
   getNodeProcessModules,
 } from "@/utils/nodeModules"
+import { PluginStorage } from "@/utils/pluginStorage"
+import { TypedStorage } from "@/utils/typedStorage"
 
 // Types
 export interface IdeEntry {
@@ -82,6 +84,10 @@ export function useIdeManagement(options: {
     openFolder,
   } = options
 
+  // ── 使用 TypedStorage 持久化自定义 IDE（符合 CODEBUDDY.md 统一入口规则）──
+  const storage = new PluginStorage(plugin as any)
+  const customIdeStorage = new TypedStorage<CustomIde[]>(storage, CUSTOM_IDE_KEY, [])
+
   const detectedIdes = ref<IdeEntry[]>([])
   const customIdes = ref<CustomIde[]>([])
   const confirmingDelIdx = ref(-1)
@@ -120,13 +126,12 @@ export function useIdeManagement(options: {
 
   async function loadCustomIdes() {
     try {
-      const data = await plugin.loadData(CUSTOM_IDE_KEY)
-      if (Array.isArray(data)) customIdes.value = data
+      customIdes.value = await customIdeStorage.loadOrDefault()
     } catch { /* ignore */ }
   }
 
   async function saveCustomIdes() {
-    try { await plugin.saveData(CUSTOM_IDE_KEY, customIdes.value) }
+    try { await customIdeStorage.save(customIdes.value) }
     catch { /* ignore */ }
   }
 
@@ -209,10 +214,11 @@ export function useIdeManagement(options: {
           windowsHide: true,
           timeout: 3000,
         })
-        child.on("error", (err: any) => {
+        child.on("error", () => {
           if (!settled) {
             settled = true
-            resolve(err?.code !== "ENOENT")
+            // 任何 spawn 错误（ENOENT/EACCES/EPERM 等）都应视为命令不可用
+            resolve(false)
           }
         })
         child.on("close", (code: number | null) => {

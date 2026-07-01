@@ -1,5 +1,7 @@
 /** gitPush 模块类型定义入口 */
 
+import type { GitProject } from "./storage"
+
 // ── 重导出管理器（运行时逻辑已迁移至 ../GitPushManager.ts）──
 export { GitPushManager } from "../GitPushManager"
 
@@ -66,7 +68,8 @@ export type PlatformKey = typeof PLATFORM_META[number]["key"]
 // ── 统计视图类型 ──
 /** 平台配置状态明细项 */
 export interface PlatformStatusItem {
-  project: GitProject
+  /** 仅引用 id/name/path，避免完整 GitProject 导致类型依赖链循环 */
+  project: Pick<GitProject, "id" | "name" | "path">
   github: boolean
   gitee: boolean
   gitea: boolean

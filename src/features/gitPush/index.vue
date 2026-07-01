@@ -732,14 +732,14 @@
               @abort-merge="handleAbortMerge(project.id)"
             />
 
-            <!-- 拉取按钮组 -->
+            <!-- 拉取按钮组（仅单远程，已去除拉取全部） -->
             <div class="gp-push-group">
               <button
                 v-for="r in REMOTES"
                 :key="`pull-${r.key}`"
                 class="vp-btn vp-btn--ghost gp-push-btn"
                 :disabled="!project[r.remoteProp] || isPulling(project.id) || isPushing(project.id)"
-                @click="pullSingle(project.id, r.key)"
+                @click="confirmPullSingle(project.id, r.key)"
               >
                 <Icon
                   v-if="isPulling(project.id, r.key)"
@@ -752,23 +752,6 @@
                 />
                 <span v-if="isPulling(project.id, r.key)">{{ i18n.pulling || '拉取中...' }}</span>
                 <span v-else>&#8203;</span>
-              </button>
-              <button
-                class="vp-btn vp-btn--ghost gp-push-btn"
-                :disabled="(!project.githubRemote && !project.giteeRemote && !project.giteaRemote) || isPulling(project.id) || isPushing(project.id)"
-                @click="pullToAll(project.id)"
-              >
-                <Icon
-                  v-if="isPulling(project.id, 'all')"
-                  icon="mdi:loading"
-                  class="gp-spin"
-                />
-                <Icon
-                  v-else
-                  icon="mdi:source-pull"
-                />
-                <span v-if="isPulling(project.id, 'all')">{{ i18n.pulling || '拉取中...' }}</span>
-                <span v-else>{{ i18n.pullAll || '拉取全部' }}</span>
               </button>
             </div>
 
@@ -950,6 +933,38 @@
       @save="handleSaveConcurrency"
       @save-branch-mode="handleSaveBranchMode"
     />
+    <!-- 拉取确认弹窗 -->
+    <div
+      v-if="showPullConfirm"
+      class="gp-modal-mask"
+      @click.self="cancelPullConfirm"
+    >
+      <div class="gp-modal-dialog">
+        <div class="gp-modal-header">
+          <span>{{ i18n.pullConfirm || '确认拉取' }}</span>
+        </div>
+        <div class="gp-modal-body">
+          <p style="margin: 0; font-size: 13px;">
+            将从 <strong>{{ pendingPullLabel }}</strong> 拉取代码，可能覆盖本地修改。<br />
+            确定要继续吗？
+          </p>
+        </div>
+        <div class="gp-modal-footer">
+          <button
+            class="vp-btn vp-btn--ghost vp-btn--sm"
+            @click="cancelPullConfirm"
+          >
+            取消
+          </button>
+          <button
+            class="vp-btn vp-btn--primary vp-btn--sm"
+            @click="doPullSingle"
+          >
+            确认拉取
+          </button>
+        </div>
+      </div>
+    </div>
     <IdeManagementDialog
       v-if="showIdeDialog"
       :custom-ides="customIdes"
@@ -1043,6 +1058,7 @@ import {
 } from "./composables/useProjectFilters"
 import { useTimeUtils } from "./composables/useTimeUtils"
 import { PLATFORM_META } from "./types"
+import type { PlatformKey } from "./types"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -1135,7 +1151,6 @@ const {
   refreshRemotes,
   pushToAll,
   pushSingle,
-  pullToAll,
   pullSingle,
   cancelPush,
   addCategory: addCategoryFn,
@@ -1198,6 +1213,29 @@ const showAddDialog = ref(false)
 const showCatDialog = ref(false)
 const showSettings = ref(false)
 const showAddMenu = ref(false)
+/** 拉取确认状态 */
+const showPullConfirm = ref(false)
+interface PendingPull { id: string; key: PlatformKey }
+const pendingPull = ref<PendingPull | null>(null)
+const pendingPullLabel = computed(() => {
+  if (!pendingPull.value) return ""
+  return PLATFORM_META.find((pm) => pm.key === pendingPull.value!.key)?.label ?? pendingPull.value!.key
+})
+function confirmPullSingle(id: string, key: PlatformKey) {
+  pendingPull.value = { id, key }
+  showPullConfirm.value = true
+}
+function cancelPullConfirm() {
+  showPullConfirm.value = false
+  pendingPull.value = null
+}
+function doPullSingle() {
+  if (!pendingPull.value) return
+  const { id, key } = pendingPull.value
+  pullSingle(id, key)
+  showPullConfirm.value = false
+  pendingPull.value = null
+}
 /** git 操作活跃数轮询 */
 const activeGitOps = ref(0)
 let opsPoller: ReturnType<typeof setInterval> | null = null

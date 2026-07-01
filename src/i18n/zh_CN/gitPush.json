@@ -97,6 +97,8 @@
     "pushingProjects": "推送中 ({0}/{1})",
     "pushBranchAll": "全部分支",
     "pushBranchHead": "仅当前分支",
-    "pushBranchHint": "仅当前分支模式更快，避免推送无变更的其他分支"
+    "pushBranchHint": "仅当前分支模式更快，避免推送无变更的其他分支",
+    "pullConfirm": "确认拉取",
+    "pullConfirmBody": "将从 {0} 拉取代码，可能覆盖本地修改。确定要继续吗？"
   }
 }

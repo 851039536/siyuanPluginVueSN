@@ -732,82 +732,103 @@
               @abort-merge="handleAbortMerge(project.id)"
             />
 
-            <!-- 拉取按钮组（仅单远程，已去除拉取全部） -->
-            <div class="gp-push-group">
-              <button
-                v-for="r in REMOTES"
-                :key="`pull-${r.key}`"
-                class="vp-btn vp-btn--ghost gp-push-btn"
-                :disabled="!project[r.remoteProp] || isPulling(project.id) || isPushing(project.id)"
-                @click="confirmPullSingle(project.id, r.key)"
-              >
-                <Icon
-                  v-if="isPulling(project.id, r.key)"
-                  icon="mdi:loading"
-                  class="gp-spin"
-                />
-                <Icon
-                  v-else
-                  icon="mdi:source-pull"
-                />
-                <span v-if="isPulling(project.id, r.key)">{{ i18n.pulling || '拉取中...' }}</span>
-                <span v-else>&#8203;</span>
-              </button>
-            </div>
+            <!-- 操作栏：拉取 / 推送 -->
+            <div class="gp-actions-bar">
+              <!-- 拉取区 -->
+              <div class="gp-actions-section">
+                <span class="gp-actions-label">{{ i18n.pull || '拉取' }}</span>
+                <div class="gp-actions-btns">
+                  <button
+                    v-for="r in REMOTES"
+                    :key="`pull-${r.key}`"
+                    class="vp-btn vp-btn--ghost vp-btn--sm gp-action-btn"
+                    :class="{ 'gp-action-btn--active': isPulling(project.id, r.key) }"
+                    :disabled="!project[r.remoteProp] || isPulling(project.id) || isPushing(project.id)"
+                    :title="`${i18n.pull || 'Pull'} ${r.label}`"
+                    @click="confirmPullSingle(project.id, r.key)"
+                  >
+                    <Icon
+                      v-if="isPulling(project.id, r.key)"
+                      icon="mdi:loading"
+                      class="gp-spin"
+                      height="12"
+                    />
+                    <Icon
+                      v-else
+                      :icon="r.icon"
+                      height="12"
+                    />
+                    <span>{{ r.label }}</span>
+                  </button>
+                </div>
+              </div>
 
-            <!-- 推送按钮组（含逐远程进度） -->
-            <div class="gp-push-group">
-              <button
-                v-for="r in REMOTES"
-                :key="r.key"
-                class="vp-btn vp-btn--ghost gp-push-btn"
-                :class="{ 'gp-push-btn--ok': getPushStatus(project.id, r.key) === 'ok', 'gp-push-btn--fail': getPushStatus(project.id, r.key) === 'fail' }"
-                :disabled="!project[r.remoteProp] || isPushing(project.id) || isPulling(project.id) || !needsPushFor(project.id, r.key)"
-                @click="pushSingle(project.id, r.key)"
-              >
-                <Icon
-                  v-if="getPushStatus(project.id, r.key) === 'pushing'"
-                  icon="mdi:loading"
-                  class="gp-spin"
-                />
-                <Icon
-                  v-else-if="getPushStatus(project.id, r.key) === 'ok'"
-                  icon="mdi:check-circle"
-                  height="12"
-                />
-                <Icon
-                  v-else-if="getPushStatus(project.id, r.key) === 'fail'"
-                  icon="mdi:close-circle"
-                  height="12"
-                />
-                <Icon
-                  v-else
-                  :icon="r.icon"
-                  height="12"
-                />
-                <span v-if="getPushStatus(project.id, r.key) === 'pushing'">推送中...</span>
-                <span v-else-if="getPushStatus(project.id, r.key) === 'ok'">✓</span>
-                <span v-else-if="getPushStatus(project.id, r.key) === 'fail'">✗</span>
-                <span v-else>{{ r.label }}</span>
-              </button>
-              <!-- 推送全部 / 取消按钮 -->
-              <button
-                v-if="!isPushing(project.id)"
-                class="vp-btn vp-btn--primary gp-push-btn"
-                :disabled="(!project.githubRemote && !project.giteeRemote && !project.giteaRemote && !project.cnbRemote) || isPulling(project.id) || !pushStatuses[project.id]?.needsPush"
-                @click="pushToAll(project.id)"
-              >
-                <Icon icon="mdi:cloud-upload" />
-                <span>{{ i18n.pushAll || '推送全部' }}</span>
-              </button>
-              <button
-                v-else
-                class="vp-btn vp-btn--danger gp-push-btn"
-                @click="cancelPush(project.id)"
-              >
-                <Icon icon="mdi:close-circle" />
-                <span>取消推送</span>
-              </button>
+              <!-- 分隔线 -->
+              <div class="gp-actions-sep" />
+
+              <!-- 推送区 -->
+              <div class="gp-actions-section">
+                <span class="gp-actions-label">{{ i18n.push || '推送' }}</span>
+                <div class="gp-actions-btns">
+                  <button
+                    v-for="r in REMOTES"
+                    :key="`push-${r.key}`"
+                    class="vp-btn vp-btn--ghost vp-btn--sm gp-action-btn"
+                    :class="{
+                      'gp-action-btn--ok': getPushStatus(project.id, r.key) === 'ok',
+                      'gp-action-btn--fail': getPushStatus(project.id, r.key) === 'fail',
+                      'gp-action-btn--active': getPushStatus(project.id, r.key) === 'pushing',
+                    }"
+                    :disabled="!project[r.remoteProp] || isPushing(project.id) || isPulling(project.id) || !needsPushFor(project.id, r.key)"
+                    :title="`${i18n.push || 'Push'} ${r.label}`"
+                    @click="pushSingle(project.id, r.key)"
+                  >
+                    <Icon
+                      v-if="getPushStatus(project.id, r.key) === 'pushing'"
+                      icon="mdi:loading"
+                      class="gp-spin"
+                      height="12"
+                    />
+                    <Icon
+                      v-else-if="getPushStatus(project.id, r.key) === 'ok'"
+                      icon="mdi:check-circle"
+                      height="12"
+                    />
+                    <Icon
+                      v-else-if="getPushStatus(project.id, r.key) === 'fail'"
+                      icon="mdi:close-circle"
+                      height="12"
+                    />
+                    <Icon
+                      v-else
+                      :icon="r.icon"
+                      height="12"
+                    />
+                    <span>{{ getPushStatus(project.id, r.key) === 'pushing' ? i18n.pushing || '推送中…' : getPushStatus(project.id, r.key) === 'ok' ? i18n.done || '完成' : getPushStatus(project.id, r.key) === 'fail' ? i18n.failed || '失败' : r.label }}</span>
+                  </button>
+
+                  <!-- 推送全部 -->
+                  <button
+                    v-if="!isPushing(project.id)"
+                    class="vp-btn vp-btn--primary vp-btn--sm gp-action-btn"
+                    :disabled="(!project.githubRemote && !project.giteeRemote && !project.giteaRemote && !project.cnbRemote) || isPulling(project.id) || !pushStatuses[project.id]?.needsPush"
+                    @click="pushToAll(project.id)"
+                  >
+                    <Icon icon="mdi:cloud-upload" height="12" />
+                    <span>{{ i18n.pushAll || '推送全部' }}</span>
+                  </button>
+
+                  <!-- 取消推送 -->
+                  <button
+                    v-else
+                    class="vp-btn vp-btn--danger vp-btn--sm gp-action-btn"
+                    @click="cancelPush(project.id)"
+                  >
+                    <Icon icon="mdi:close-circle" height="12" />
+                    <span>{{ i18n.cancel || '取消' }}</span>
+                  </button>
+                </div>
+              </div>
             </div>
 
             <!-- 拉取输出 -->

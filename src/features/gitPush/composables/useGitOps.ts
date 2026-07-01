@@ -11,18 +11,7 @@ import type {
 } from "../types"
 import { ref } from "vue"
 import { PLATFORM_META } from "../types"
-import { findProject } from "../utils"
-import { resolveValidPath, resolveValidPathWithSource } from "../utils"
-
-/** 限制 Record 缓存条目数，超过上限时删除最早的条目 */
-function pruneRecordCache(record: Record<string, string>, max = 30) {
-  const keys = Object.keys(record)
-  if (keys.length <= max) return
-  // 删除前一半最老的条目
-  for (const k of keys.slice(0, keys.length - max)) {
-    delete record[k]
-  }
-}
+import { findProject, pruneRecordCache, resolveValidPath } from "../utils"
 
 export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) {
   /** 正在推送的项目 id → platformKey|"all" */
@@ -89,11 +78,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
   function getUsedPath(id: string): string | undefined {
     const project = findProject(projects, id)
     if (!project) return undefined
-    const resolved = resolveValidPathWithSource(project)
-    if (resolved.source === "primary") {
-      return resolved.path
-    }
-    return resolved.path
+    return resolveValidPath(project)
   }
 
   function platformLabel(target: string): string {
@@ -117,7 +102,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     try {
       const result = await manager.pushToAll(id)
       formatGitOutput(pushOutputs.value, id, "推送", resultToEntries(result), getUsedPath(id))
-      loadPushStatus(id)
+      loadPushStatus(id).catch((e) => console.warn("[gitPush] 刷新推送状态失败:", e?.message || e))
       return result
     } finally {
       delete pushingRemote.value[id]
@@ -131,7 +116,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
       formatGitOutput(pushOutputs.value, id, "推送", [{
         label: platformLabel(target), ok: result.ok, stdout: result.stdout, stderr: result.stderr,
       }], getUsedPath(id))
-      loadPushStatus(id)
+      loadPushStatus(id).catch((e) => console.warn("[gitPush] 刷新推送状态失败:", e?.message || e))
       return result
     } finally {
       delete pushingRemote.value[id]
@@ -143,7 +128,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     try {
       const result = await manager.pullToAll(id)
       formatGitOutput(pullOutputs.value, id, "拉取", resultToEntries(result), getUsedPath(id))
-      loadPushStatus(id)
+      loadPushStatus(id).catch((e) => console.warn("[gitPush] 刷新推送状态失败:", e?.message || e))
       return result
     } finally {
       delete pullingRemote.value[id]
@@ -157,7 +142,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
       formatGitOutput(pullOutputs.value, id, "拉取", [{
         label: platformLabel(target), ok: result.ok, stdout: result.stdout, stderr: result.stderr,
       }], getUsedPath(id))
-      loadPushStatus(id)
+      loadPushStatus(id).catch((e) => console.warn("[gitPush] 刷新推送状态失败:", e?.message || e))
       return result
     } finally {
       delete pullingRemote.value[id]

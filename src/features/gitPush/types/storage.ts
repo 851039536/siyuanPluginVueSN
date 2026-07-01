@@ -245,6 +245,10 @@ export class GitPushStorage {
   readonly tags: TypedStorage<string[]>
   /** 提交信息模板 */
   readonly commitTemplates: TypedStorage<CommitTemplate[]>
+  /** git 操作暂停状态（持久化） */
+  readonly gitOpsPaused: TypedStorage<boolean>
+  /** 是否显示已归档项目（持久化） */
+  readonly showArchived: TypedStorage<boolean>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
@@ -253,6 +257,8 @@ export class GitPushStorage {
     this.gitConcurrency = new TypedStorage(storage, "git-push-concurrency", 3)
     this.tags = new TypedStorage(storage, "git-push-tags", [])
     this.commitTemplates = new TypedStorage(storage, "git-push-commit-templates", DEFAULT_TEMPLATES)
+    this.gitOpsPaused = new TypedStorage(storage, "git-push-ops-paused", false)
+    this.showArchived = new TypedStorage(storage, "git-push-show-archived", false)
   }
 
   async init(): Promise<void> {

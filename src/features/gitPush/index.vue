@@ -76,6 +76,20 @@
             :class="{ 'gp-spin': refreshingAll }"
           />
         </button>
+        <button
+          class="vp-btn vp-btn--primary vp-btn--sm"
+          title="推送所有待推送项目"
+          :disabled="needsPushCount === 0 || pushingAllProjects"
+          @click="handlePushAllProjects"
+        >
+          <Icon
+            icon="mdi:cloud-upload"
+            height="12"
+            :class="{ 'gp-spin': pushingAllProjects }"
+          />
+          <span v-if="pushingAllProjects">推送中 ({{ pushAllDone }}/{{ pushAllTotal }})</span>
+          <span v-else>推送全部({{ needsPushCount }})</span>
+        </button>
         <div class="gp-add-wrap">
           <button
             class="vp-btn vp-btn--ghost gp-add-dropdown-btn"
@@ -758,81 +772,151 @@
               </button>
             </div>
 
-            <!-- 推送按钮组 -->
+            <!-- 推送按钮组（含逐远程进度） -->
             <div class="gp-push-group">
               <button
                 v-for="r in REMOTES"
                 :key="r.key"
                 class="vp-btn vp-btn--ghost gp-push-btn"
+                :class="{ 'gp-push-btn--ok': getPushStatus(project.id, r.key) === 'ok', 'gp-push-btn--fail': getPushStatus(project.id, r.key) === 'fail' }"
                 :disabled="!project[r.remoteProp] || isPushing(project.id) || isPulling(project.id) || !needsPushFor(project.id, r.key)"
                 @click="pushSingle(project.id, r.key)"
               >
                 <Icon
-                  v-if="isPushing(project.id, r.key)"
+                  v-if="getPushStatus(project.id, r.key) === 'pushing'"
                   icon="mdi:loading"
                   class="gp-spin"
+                />
+                <Icon
+                  v-else-if="getPushStatus(project.id, r.key) === 'ok'"
+                  icon="mdi:check-circle"
+                  height="12"
+                />
+                <Icon
+                  v-else-if="getPushStatus(project.id, r.key) === 'fail'"
+                  icon="mdi:close-circle"
+                  height="12"
                 />
                 <Icon
                   v-else
                   :icon="r.icon"
                   height="12"
                 />
-                <span v-if="isPushing(project.id, r.key)">{{ i18n.pushing || '推送中...' }}</span>
+                <span v-if="getPushStatus(project.id, r.key) === 'pushing'">推送中...</span>
+                <span v-else-if="getPushStatus(project.id, r.key) === 'ok'">✓</span>
+                <span v-else-if="getPushStatus(project.id, r.key) === 'fail'">✗</span>
                 <span v-else>{{ r.label }}</span>
               </button>
+              <!-- 推送全部 / 取消按钮 -->
               <button
+                v-if="!isPushing(project.id)"
                 class="vp-btn vp-btn--primary gp-push-btn"
-                :disabled="(!project.githubRemote && !project.giteeRemote && !project.giteaRemote) || isPushing(project.id) || isPulling(project.id) || !pushStatuses[project.id]?.needsPush"
+                :disabled="(!project.githubRemote && !project.giteeRemote && !project.giteaRemote && !project.cnbRemote) || isPulling(project.id) || !pushStatuses[project.id]?.needsPush"
                 @click="pushToAll(project.id)"
               >
-                <Icon
-                  v-if="isPushing(project.id, 'all')"
-                  icon="mdi:loading"
-                  class="gp-spin"
-                />
-                <Icon
-                  v-else
-                  icon="mdi:cloud-upload"
-                />
-                <span v-if="isPushing(project.id, 'all')">{{ i18n.pushing || '推送中...' }}</span>
-                <span v-else>{{ i18n.pushAll || '推送全部' }}</span>
+                <Icon icon="mdi:cloud-upload" />
+                <span>{{ i18n.pushAll || '推送全部' }}</span>
+              </button>
+              <button
+                v-else
+                class="vp-btn vp-btn--danger gp-push-btn"
+                @click="cancelPush(project.id)"
+              >
+                <Icon icon="mdi:close-circle" />
+                <span>取消推送</span>
               </button>
             </div>
 
             <!-- 拉取输出 -->
             <div
-              v-if="pullOutputs[project.id]"
+              v-if="pullOutputs[project.id]?.length"
               class="gp-output"
             >
               <button
                 class="gp-output-copy"
                 :title="i18n.copy || '复制'"
-                @click="handleCopyOutput(pullOutputs[project.id])"
+                @click="handleCopyOutput(entriesToText(pullOutputs[project.id]))"
               >
                 <Icon
                   icon="mdi:content-copy"
                   height="12"
                 />
               </button>
-              <pre>{{ pullOutputs[project.id] }}</pre>
+              <div class="gp-output-list">
+                <div
+                  v-for="entry in pullOutputs[project.id]"
+                  :key="entry.platform"
+                  class="gp-output-item"
+                >
+                  <span
+                    class="gp-output-status"
+                    :class="{ 'gp-output-status--ok': entry.ok, 'gp-output-status--fail': !entry.ok && !entry.skipped, 'gp-output-status--skipped': entry.skipped }"
+                  >{{ entry.ok ? '✓' : entry.skipped ? '—' : '✗' }}</span>
+                  <span class="gp-output-label">{{ entry.label }}</span>
+                  <span class="gp-output-duration">{{ entry.duration }}ms</span>
+                  <span class="gp-output-summary">{{ entry.summary }}</span>
+                  <details
+                    v-if="entry.fullStdout || entry.fullStderr"
+                    class="gp-output-details"
+                  >
+                    <summary>{{ entry.fullStdout || entry.fullStderr ? '详情' : '' }}</summary>
+                    <pre
+                      v-if="entry.fullStdout"
+                      class="gp-output-stdout"
+                    >{{ entry.fullStdout.length > 500 ? entry.fullStdout.slice(0, 500) + '...' : entry.fullStdout }}</pre>
+                    <pre
+                      v-if="entry.fullStderr"
+                      class="gp-output-stderr"
+                    >{{ entry.fullStderr }}</pre>
+                  </details>
+                </div>
+              </div>
             </div>
 
             <!-- 推送输出 -->
             <div
-              v-if="pushOutputs[project.id]"
+              v-if="pushOutputs[project.id]?.length"
               class="gp-output"
             >
               <button
                 class="gp-output-copy"
                 :title="i18n.copy || '复制'"
-                @click="handleCopyOutput(pushOutputs[project.id])"
+                @click="handleCopyOutput(entriesToText(pushOutputs[project.id]))"
               >
                 <Icon
                   icon="mdi:content-copy"
                   height="12"
                 />
               </button>
-              <pre>{{ pushOutputs[project.id] }}</pre>
+              <div class="gp-output-list">
+                <div
+                  v-for="entry in pushOutputs[project.id]"
+                  :key="entry.platform"
+                  class="gp-output-item"
+                >
+                  <span
+                    class="gp-output-status"
+                    :class="{ 'gp-output-status--ok': entry.ok, 'gp-output-status--fail': !entry.ok && !entry.skipped, 'gp-output-status--skipped': entry.skipped }"
+                  >{{ entry.ok ? '✓' : entry.skipped ? '—' : '✗' }}</span>
+                  <span class="gp-output-label">{{ entry.label }}</span>
+                  <span class="gp-output-duration">{{ entry.duration }}ms</span>
+                  <span class="gp-output-summary">{{ entry.summary }}</span>
+                  <details
+                    v-if="entry.fullStdout || entry.fullStderr"
+                    class="gp-output-details"
+                  >
+                    <summary>{{ entry.fullStdout || entry.fullStderr ? '详情' : '' }}</summary>
+                    <pre
+                      v-if="entry.fullStdout"
+                      class="gp-output-stdout"
+                    >{{ entry.fullStdout.length > 500 ? entry.fullStdout.slice(0, 500) + '...' : entry.fullStdout }}</pre>
+                    <pre
+                      v-if="entry.fullStderr"
+                      class="gp-output-stderr"
+                    >{{ entry.fullStderr }}</pre>
+                  </details>
+                </div>
+              </div>
             </div>
           </div>
         </template>
@@ -861,8 +945,10 @@
       v-if="showSettings"
       :i18n="i18n"
       :concurrency="gitConcurrency"
+      :push-branch-mode="pushBranchMode"
       @close="showSettings = false"
       @save="handleSaveConcurrency"
+      @save-branch-mode="handleSaveBranchMode"
     />
     <IdeManagementDialog
       v-if="showIdeDialog"
@@ -1021,8 +1107,10 @@ const {
   categories,
   groupedProjects,
   loading,
+  getPushStatus,
   isPushing,
   pushOutputs,
+  entriesToText,
   isPulling,
   pullOutputs,
   pushStatuses,
@@ -1049,6 +1137,7 @@ const {
   pushSingle,
   pullToAll,
   pullSingle,
+  cancelPush,
   addCategory: addCategoryFn,
   deleteCategory: deleteCategoryFn,
   moveProject,
@@ -1918,6 +2007,44 @@ async function handleMoveProject(projectId: string, categoryId: string) {
 
 async function handleSaveConcurrency(value: number) {
   await setGitConcurrency(value)
+}
+
+/** 推送分支模式 */
+const pushBranchMode = ref<"all" | "head">(props.manager.getPushBranchMode())
+
+async function handleSaveBranchMode(mode: "all" | "head") {
+  pushBranchMode.value = mode
+  await props.manager.setPushBranchMode(mode)
+}
+
+/** 推送所有项目状态 */
+const pushingAllProjects = ref(false)
+const pushAllDone = ref(0)
+const pushAllTotal = ref(0)
+
+/** 当前视图下需要推送的项目数 */
+const needsPushCount = computed(() => {
+  let count = 0
+  for (const p of projects.value) {
+    if (pushStatuses.value[p.id]?.needsPush) { count++ }
+  }
+  return count
+})
+
+async function handlePushAllProjects() {
+  pushingAllProjects.value = true
+  const allProjects = projects.value.filter((p) => pushStatuses.value[p.id]?.needsPush)
+  pushAllTotal.value = allProjects.length
+  pushAllDone.value = 0
+  try {
+    for (const p of allProjects) {
+      if (!pushingAllProjects.value) break
+      await pushToAll(p.id)
+      pushAllDone.value++
+    }
+  } finally {
+    pushingAllProjects.value = false
+  }
 }
 
 /** 获取远程推送状态标签文案 */

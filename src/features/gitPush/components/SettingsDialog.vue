@@ -39,6 +39,32 @@
         <div class="gp-set-hint">
           同时执行的 git 子进程数上限（1~10）
         </div>
+        <div class="gp-set-row" style="margin-top: 12px;">
+          <label class="gp-set-label">推送分支模式</label>
+          <div class="gp-set-radio-group">
+            <label class="gp-set-radio">
+              <input
+                v-model="localBranchMode"
+                type="radio"
+                value="all"
+                @change="$emit('saveBranchMode', 'all')"
+              />
+              <span>全部分支 (--all)</span>
+            </label>
+            <label class="gp-set-radio">
+              <input
+                v-model="localBranchMode"
+                type="radio"
+                value="head"
+                @change="$emit('saveBranchMode', 'head')"
+              />
+              <span>仅当前分支 (HEAD)</span>
+            </label>
+          </div>
+        </div>
+        <div class="gp-set-hint">
+          "仅当前分支"模式更快，避免推送无变更的其他分支
+        </div>
       </div>
     </div>
   </div>
@@ -51,12 +77,15 @@ import { ref } from "vue"
 const props = defineProps<{
   i18n: Record<string, any>
   concurrency: number
+  pushBranchMode: "all" | "head"
 }>()
 
 const emit = defineEmits<{
   close: []
   save: [value: number]
+  saveBranchMode: [mode: "all" | "head"]
 }>()
 
 const localConcurrency = ref(props.concurrency)
+const localBranchMode = ref<"all" | "head">(props.pushBranchMode)
 </script>

@@ -249,6 +249,8 @@ export class GitPushStorage {
   readonly gitOpsPaused: TypedStorage<boolean>
   /** 是否显示已归档项目（持久化） */
   readonly showArchived: TypedStorage<boolean>
+  /** 推送分支模式：all=全部分支, head=仅当前分支（持久化） */
+  readonly pushBranchMode: TypedStorage<"all" | "head">
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
@@ -259,6 +261,7 @@ export class GitPushStorage {
     this.commitTemplates = new TypedStorage(storage, "git-push-commit-templates", DEFAULT_TEMPLATES)
     this.gitOpsPaused = new TypedStorage(storage, "git-push-ops-paused", false)
     this.showArchived = new TypedStorage(storage, "git-push-show-archived", false)
+    this.pushBranchMode = new TypedStorage<"all" | "head">(storage, "git-push-branch-mode", "all")
   }
 
   async init(): Promise<void> {

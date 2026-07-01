@@ -113,14 +113,19 @@ export function useGitTagsConflicts(manager: GitPushManager, projects: Ref<GitPr
   }
 
   async function importScanResults(selectedPaths: string[], categoryId: string) {
+    let imported = 0
+    let skipped = 0
     for (const repo of scanResults.value) {
       if (!selectedPaths.includes(repo.path) || repo.alreadyImported) continue
       try {
         await manager.addProject(repo.name, repo.path, categoryId)
+        imported++
       } catch (e: any) {
+        skipped++
         console.warn(`[gitPush] 跳过重复项目: ${repo.path} — ${e?.message || e}`)
       }
     }
+    return { imported, skipped }
   }
 
   return {

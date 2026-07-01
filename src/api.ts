@@ -875,16 +875,10 @@ export async function getWorkspaceDir(): Promise<string> {
 
 /**
  * 重新加载 UI
- * v3.7.0+ 适配：/api/system/reloadUI → /api/ui/reloadUI
  */
 export async function reloadUI(): Promise<void> {
   try {
-    await fetch(`${SIYUAN_API_BASE_URL}/api/ui/reloadUI`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
+    await fetchSyncPost("/api/ui/reloadUI", {})
   } catch (error) {
     console.error("重新加载 UI 失败:", error)
     throw error
@@ -896,13 +890,7 @@ export async function reloadUI(): Promise<void> {
  */
 export async function reloadFiletree(): Promise<void> {
   try {
-    await fetch(`${SIYUAN_API_BASE_URL}/api/ui/reloadFiletree`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({}),
-    })
+    await fetchSyncPost("/api/ui/reloadFiletree", {})
   } catch (error) {
     console.error("重载文件树失败:", error)
     throw error
@@ -914,13 +902,7 @@ export async function reloadFiletree(): Promise<void> {
  */
 export async function reloadTag(): Promise<void> {
   try {
-    await fetch(`${SIYUAN_API_BASE_URL}/api/ui/reloadTag`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({}),
-    })
+    await fetchSyncPost("/api/ui/reloadTag", {})
   } catch (error) {
     console.error("重载标签树失败:", error)
     throw error
@@ -933,13 +915,7 @@ export async function reloadTag(): Promise<void> {
  */
 export async function reloadAttributeView(blockId: string): Promise<void> {
   try {
-    await fetch(`${SIYUAN_API_BASE_URL}/api/ui/reloadAttributeView`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ id: blockId }),
-    })
+    await fetchSyncPost("/api/ui/reloadAttributeView", { id: blockId })
   } catch (error) {
     console.error("重载属性面板失败:", error)
     throw error
@@ -952,13 +928,7 @@ export async function reloadAttributeView(blockId: string): Promise<void> {
  */
 export async function reloadProtyle(blockId: string): Promise<void> {
   try {
-    await fetch(`${SIYUAN_API_BASE_URL}/api/ui/reloadProtyle`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ id: blockId }),
-    })
+    await fetchSyncPost("/api/ui/reloadProtyle", { id: blockId })
   } catch (error) {
     console.error("重载 Protyle 编辑器失败:", error)
     throw error

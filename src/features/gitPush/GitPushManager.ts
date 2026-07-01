@@ -84,22 +84,26 @@ export class GitPushManager {
     return getNodeProcessModules()?.child_process
   }
 
-  /** 将检测到的远程仓库信息应用到项目对象 */
+  /** 将检测到的远程仓库信息应用到项目对象（批量赋值避免逐字段触发响应式） */
   private applyRemotesToProject(project: GitProject, remotes: GitRemoteInfo[]) {
-    project.githubRemote = undefined
-    project.giteeRemote = undefined
-    project.giteaRemote = undefined
-    project.cnbRemote = undefined
-    project.githubUrl = undefined
-    project.giteeUrl = undefined
-    project.giteaUrl = undefined
-    project.cnbUrl = undefined
-    for (const r of remotes) {
-      if (r.isGithub) { project.githubRemote = r.name; project.githubUrl = r.url }
-      if (r.isGitee) { project.giteeRemote = r.name; project.giteeUrl = r.url }
-      if (r.isGitea) { project.giteaRemote = r.name; project.giteaUrl = r.url }
-      if (r.isCnb) { project.cnbRemote = r.name; project.cnbUrl = r.url }
+    // 先构建完整 patch，再一次性 Object.assign，避免 8 次逐字段赋值触发响应式追踪
+    const patch: Partial<GitProject> = {
+      githubRemote: undefined,
+      giteeRemote: undefined,
+      giteaRemote: undefined,
+      cnbRemote: undefined,
+      githubUrl: undefined,
+      giteeUrl: undefined,
+      giteaUrl: undefined,
+      cnbUrl: undefined,
     }
+    for (const r of remotes) {
+      if (r.isGithub) { patch.githubRemote = r.name; patch.githubUrl = r.url }
+      if (r.isGitee) { patch.giteeRemote = r.name; patch.giteeUrl = r.url }
+      if (r.isGitea) { patch.giteaRemote = r.name; patch.giteaUrl = r.url }
+      if (r.isCnb) { patch.cnbRemote = r.name; patch.cnbUrl = r.url }
+    }
+    Object.assign(project, patch)
   }
 
   async init() {
@@ -311,7 +315,7 @@ export class GitPushManager {
   }
 
   /** 推送操作的单个远程结果（已跳过） */
-  private skippedResult: RemoteOpResult = {
+  private static readonly skippedResult: RemoteOpResult = {
     ok: false,
     stdout: "",
     stderr: "",
@@ -324,7 +328,7 @@ export class GitPushManager {
     remoteName: string | undefined,
     action: "push" | "pull",
   ): Promise<RemoteOpResult> {
-    if (!remoteName) return Promise.resolve(this.skippedResult)
+    if (!remoteName) return Promise.resolve(GitPushManager.skippedResult)
     const args = action === "push"
       ? ["push", remoteName, "--all"]
       : ["pull", remoteName, "--ff-only"]
@@ -476,7 +480,7 @@ export class GitPushManager {
 
         return { key, result: { ahead, behind, noUpstream: false }, ahead }
       } catch {
-        const totalCommits = await this.execGit(project.path, ["rev-list", "--count", "HEAD"]).catch(() => "0")
+        const totalCommits = await this.execGit(cwd, ["rev-list", "--count", "HEAD"]).catch(() => "0")
         const ahead = Number.parseInt(totalCommits, 10) || 0
         return { key, result: { ahead, behind: 0, noUpstream: true }, ahead }
       }
@@ -1012,7 +1016,7 @@ export class GitPushManager {
     else if (allPaths.includes("fix") || allPaths.includes("bug")) type = "fix"
     else if (allPaths.includes("readme") || allPaths.includes("doc")) type = "docs"
     else if (allPaths.includes("refactor") || allPaths.includes("rename")) type = "refactor"
-    else if (allPaths.includes(".d.ts") || allPaths.includes("types/")) type = "types"
+    else if (allPaths.includes(".d.ts") || allPaths.includes("types/")) type = "refactor"
     else if (files.length >= 5) type = "feat"
 
     const fileList = files.slice(0, 3).map((f) => f.split("/").pop() || f).join(", ")
@@ -1068,6 +1072,7 @@ export class GitPushManager {
   }
 
   destroy() {
-    // 清理资源
+    // 清理等待队列中所有闭包，防止插件卸载后僵尸 Promise 持有闭包引用导致内存泄漏
+    this.gitWaitQueue.length = 0
   }
 }

@@ -1715,7 +1715,7 @@ async function handleEditSaveFromDialog(data: {
 }) {
   const project = editDialogProject.value
   if (!project) return
-  await updateProjectMeta(project.id, {
+  const patch: Record<string, any> = {
     name: data.name.trim() || project.name,
     status: data.status as ProjectStatus,
     starred: data.starred,
@@ -1727,7 +1727,12 @@ async function handleEditSaveFromDialog(data: {
     giteaUrl: data.giteaUrl.trim() || undefined,
     cnbUrl: data.cnbUrl.trim() || undefined,
     localPaths: data.localPaths && data.localPaths.length > 0 ? data.localPaths : undefined,
-  })
+  }
+  // 过滤掉值为 undefined 的 URL 字段，避免 Object.assign 覆盖已有远程仓库链接
+  for (const key of ["githubUrl", "giteeUrl", "giteaUrl", "cnbUrl"]) {
+    if (patch[key] === undefined) { delete patch[key] }
+  }
+  await updateProjectMeta(project.id, patch as any)
   editDialogProject.value = null
 }
 

@@ -106,24 +106,17 @@ export class GitPushManager {
 
   /** 将检测到的远程仓库信息应用到项目对象（批量赋值避免逐字段触发响应式） */
   private applyRemotesToProject(project: GitProject, remotes: GitRemoteInfo[]) {
-    // 先构建完整 patch，再一次性 Object.assign，避免 8 次逐字段赋值触发响应式追踪
-    const patch: Partial<GitProject> = {
-      githubRemote: undefined,
-      giteeRemote: undefined,
-      giteaRemote: undefined,
-      cnbRemote: undefined,
-      githubUrl: undefined,
-      giteeUrl: undefined,
-      giteaUrl: undefined,
-      cnbUrl: undefined,
-    }
+    // 仅设置检测到的字段，不重置已有值（跨电脑场景下 git remote 未配置时已有 URL 不丢失）
+    const patch: Partial<GitProject> = {}
     for (const r of remotes) {
       if (r.isGithub) { patch.githubRemote = r.name; patch.githubUrl = r.url }
       if (r.isGitee) { patch.giteeRemote = r.name; patch.giteeUrl = r.url }
       if (r.isGitea) { patch.giteaRemote = r.name; patch.giteaUrl = r.url }
       if (r.isCnb) { patch.cnbRemote = r.name; patch.cnbUrl = r.url }
     }
-    Object.assign(project, patch)
+    if (Object.keys(patch).length > 0) {
+      Object.assign(project, patch)
+    }
   }
 
   async init() {

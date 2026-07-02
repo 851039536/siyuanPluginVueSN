@@ -44,7 +44,8 @@
             title="平台官网"
             @click.stop="showPlatformMenu = !showPlatformMenu"
           >
-            <Icon icon="mdi:compass" height="12" />
+            <Icon icon="mdi:web" height="12" />
+            <Icon icon="mdi:unfold-more-horizontal" height="12" style="margin-left:1px;opacity:0.5" />
           </button>
           <div
             v-if="showPlatformMenu"

@@ -1,6 +1,4 @@
-// Git 项目统计信息获取与状态轮询
-// Git 项目统计信息获取
-// Git 项目统计信息获取
+// Git 项目统计信息获取 — 单次遍历统一计算所有统计指标
 import type { Ref } from "vue"
 import type {
   GitProject,
@@ -30,101 +28,127 @@ export function useGitStats(
     gitConcurrency.value = n
   }
 
-  /** 按分类分组后的项目列表 */
-  const groupedProjects = computed(() => {
-    const map = new Map<string, { category: ProjectCategory, projects: GitProject[] }>()
+  /**
+   * 单次遍历计算所有统计指标，避免多个 computed 各自遍历 projects 数组。
+   * 派生 computed 仅从该对象取出对应字段，零额外遍历开销。
+   */
+  const projectStats = computed(() => {
+    const groupedMap = new Map<string, { category: ProjectCategory; projects: GitProject[] }>()
     for (const cat of categories.value) {
-      map.set(cat.id, { category: cat, projects: [] })
+      groupedMap.set(cat.id, { category: cat, projects: [] })
     }
+
+    let github = 0
+    let gitee = 0
+    let gitea = 0
+    let cnb = 0
+    let hasRemote = 0
+    let multipleRemote = 0
+    let ahead = 0
+    let behind = 0
+    let synced = 0
+    let noRemote = 0
+    const needsPush: { project: GitProject; aheadByRemote: { key: string; ahead: number }[]; totalAhead: number }[] = []
+    const uncommitted: { project: GitProject; staged: number; unstaged: number; untracked: number }[] = []
+    const platformMissing: PlatformStatusItem[] = []
+    const starred: GitProject[] = []
+
     for (const p of projects.value) {
-      const group = map.get(p.categoryId)
+      // ── 分组 ──
+      const group = groupedMap.get(p.categoryId)
       if (group) {
         group.projects.push(p)
       } else {
-        const ungrouped = map.get("__ungrouped__")
-        if (ungrouped) ungrouped.projects.push(p)
+        groupedMap.get("__ungrouped__")?.projects.push(p)
       }
-    }
-    return [...map.values()]
-      .filter((g) => g.projects.length > 0)
-      .sort((a, b) => a.category.order - b.category.order)
-  })
 
-  const projectCount = computed(() => projects.value.length)
-
-  const remoteCoverage = computed(() => {
-    if (projects.value.length === 0) { return { github: 0, gitee: 0, gitea: 0, cnb: 0, hasRemote: 0, multiple: 0 } }
-    let github = 0; let gitee = 0; let gitea = 0; let cnb = 0; let hasRemote = 0; let multiple = 0
-    for (const p of projects.value) {
-      const remotes = [p.githubUrl, p.giteeUrl, p.giteaUrl, p.cnbUrl].filter(Boolean).length
+      // ── 远程覆盖率 ──
+      const remoteCount = [p.githubUrl, p.giteeUrl, p.giteaUrl, p.cnbUrl].filter(Boolean).length
       if (p.githubUrl) github++
       if (p.giteeUrl) gitee++
       if (p.giteaUrl) gitea++
       if (p.cnbUrl) cnb++
-      if (remotes > 0) hasRemote++
-      if (remotes >= 2) multiple++
-    }
-    return { github, gitee, gitea, cnb, hasRemote, multiple }
-  })
+      if (remoteCount > 0) hasRemote++
+      if (remoteCount >= 2) multipleRemote++
 
-  const pushStatusStats = computed(() => {
-    if (projects.value.length === 0) { return { ahead: 0, behind: 0, synced: 0, noRemote: 0 } }
-    let ahead = 0; let behind = 0; let synced = 0; let noRemote = 0
-    for (const p of projects.value) {
+      // ── Push 状态统计 ──
       const status = pushStatuses.value[p.id]
-      if (!status || Object.keys(status.remotes).length === 0) { noRemote++; continue }
-      const remotes = Object.values(status.remotes)
-      if (remotes.some((r) => r.ahead > 0)) ahead++
-      else if (remotes.some((r) => r.behind > 0)) behind++
-      else synced++
-    }
-    return { ahead, behind, synced, noRemote }
-  })
-
-  const needsPushProjects = computed(() => {
-    const result: { project: GitProject, aheadByRemote: { key: string, ahead: number }[], totalAhead: number }[] = []
-    for (const p of projects.value) {
-      const status = pushStatuses.value[p.id]
-      if (!status) continue
-      const aheadByRemote: { key: string, ahead: number }[] = []
-      for (const pm of PLATFORM_META) {
-        const rs = status.remotes[pm.key]
-        if (rs && rs.ahead > 0) aheadByRemote.push({ key: pm.key, ahead: rs.ahead })
+      if (!status || Object.keys(status.remotes).length === 0) {
+        noRemote++
+      } else {
+        const vals = Object.values(status.remotes)
+        if (vals.some((r) => r.ahead > 0)) ahead++
+        else if (vals.some((r) => r.behind > 0)) behind++
+        else synced++
       }
-      if (aheadByRemote.length > 0) {
-        result.push({ project: p, aheadByRemote, totalAhead: aheadByRemote.reduce((s, r) => s + r.ahead, 0) })
+
+      // ── 待推送项目 ──
+      if (status) {
+        const aheadByRemote: { key: string; ahead: number }[] = []
+        for (const pm of PLATFORM_META) {
+          const rs = status.remotes[pm.key]
+          if (rs && rs.ahead > 0) aheadByRemote.push({ key: pm.key, ahead: rs.ahead })
+        }
+        if (aheadByRemote.length > 0) {
+          needsPush.push({
+            project: p,
+            aheadByRemote,
+            totalAhead: aheadByRemote.reduce((s, r) => s + r.ahead, 0),
+          })
+        }
       }
-    }
-    return result.sort((a, b) => b.totalAhead - a.totalAhead)
-  })
 
-  const uncommittedProjects = computed(() => {
-    return projects.value
-      .filter((p) => workingTrees.value[p.id]?.hasChanges)
-      .map((p) => ({
-        project: p,
-        staged: workingTrees.value[p.id]!.stagedCount,
-        unstaged: workingTrees.value[p.id]!.unstagedCount,
-        untracked: workingTrees.value[p.id]!.untrackedCount,
-      }))
-  })
-
-  const platformStatusProjects = computed<PlatformStatusItem[]>(() => {
-    const result: PlatformStatusItem[] = []
-    for (const p of projects.value) {
-      const github = !!p.githubUrl
-      const gitee = !!p.giteeUrl
-      const gitea = !!p.giteaUrl
-      const cnb = !!p.cnbUrl
-      const missingCount = (github ? 0 : 1) + (gitee ? 0 : 1) + (gitea ? 0 : 1) + (cnb ? 0 : 1)
-      if (missingCount > 0) {
-        result.push({ project: p, github, gitee, gitea, cnb, missingCount })
+      // ── 未提交变更 ──
+      const wt = workingTrees.value[p.id]
+      if (wt?.hasChanges) {
+        uncommitted.push({
+          project: p,
+          staged: wt.stagedCount,
+          unstaged: wt.unstagedCount,
+          untracked: wt.untrackedCount,
+        })
       }
+
+      // ── 平台缺失 ──
+      const hasGithub = !!p.githubUrl
+      const hasGitee = !!p.giteeUrl
+      const hasGitea = !!p.giteaUrl
+      const hasCnb = !!p.cnbUrl
+      const missCount = (hasGithub ? 0 : 1) + (hasGitee ? 0 : 1) + (hasGitea ? 0 : 1) + (hasCnb ? 0 : 1)
+      if (missCount > 0) {
+        platformMissing.push({ project: p, github: hasGithub, gitee: hasGitee, gitea: hasGitea, cnb: hasCnb, missingCount: missCount })
+      }
+
+      // ── 收藏 ──
+      if (p.starred) starred.push(p)
     }
-    return result.sort((a, b) => b.missingCount - a.missingCount)
+
+    // 分组排序
+    const grouped = [...groupedMap.values()]
+      .filter((g) => g.projects.length > 0)
+      .sort((a, b) => a.category.order - b.category.order)
+
+    return {
+      grouped,
+      count: projects.value.length,
+      remoteCoverage: { github, gitee, gitea, cnb, hasRemote, multiple: multipleRemote },
+      pushStatusStats: { ahead, behind, synced, noRemote },
+      needsPush: needsPush.sort((a, b) => b.totalAhead - a.totalAhead),
+      uncommitted,
+      platformMissing: platformMissing.sort((a, b) => b.missingCount - a.missingCount),
+      starred,
+    }
   })
 
-  const starredProjects = computed(() => projects.value.filter((p) => p.starred))
+  /** 按分类分组后的项目列表 */
+  const groupedProjects = computed(() => projectStats.value.grouped)
+  const projectCount = computed(() => projectStats.value.count)
+  const remoteCoverage = computed(() => projectStats.value.remoteCoverage)
+  const pushStatusStats = computed(() => projectStats.value.pushStatusStats)
+  const needsPushProjects = computed(() => projectStats.value.needsPush)
+  const uncommittedProjects = computed(() => projectStats.value.uncommitted)
+  const platformStatusProjects = computed(() => projectStats.value.platformMissing)
+  const starredProjects = computed(() => projectStats.value.starred)
 
   return {
     gitConcurrency,

@@ -1667,26 +1667,6 @@
   }
 }
 
-.gp-edit-path-primary {
-  margin-bottom: 4px;
-
-  input:disabled {
-    opacity: 0.5;
-    cursor: default;
-  }
-}
-
-.gp-primary-badge {
-  flex-shrink: 0;
-  font-size: 10px;
-  font-weight: 500;
-  color: var(--b3-theme-primary);
-  padding: 2px 6px;
-  border: 1px solid var(--b3-theme-primary-lighter);
-  border-radius: $radius-sm;
-  white-space: nowrap;
-}
-
 .gp-add-path-btn {
   display: inline-flex;
   align-items: center;
@@ -1695,20 +1675,6 @@
   opacity: 0.6;
   transition: opacity 0.12s;
   &:hover { opacity: 1; }
-}
-
-.gp-edit-path-hint {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 8px;
-  margin-top: 4px;
-  font-size: 11px;
-  color: var(--b3-theme-on-surface-light);
-  opacity: 0.55;
-  border: 1px dashed var(--b3-border-color);
-  border-radius: $radius-sm;
-  svg { flex-shrink: 0; opacity: 0.4; }
 }
 
 // 卡片上的多路径标记

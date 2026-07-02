@@ -132,7 +132,8 @@
       "Read(//tmp/**)",
       "Bash(pnpm i18n:verify)",
       "Bash(npx vue-tsc *)",
-      "Bash(npx eslint *)"
+      "Bash(npx eslint *)",
+      "Bash(npx tsc *)"
     ],
     "deny": [],
     "ask": [],

@@ -119,24 +119,15 @@
           />
         </div>
         <div class="gp-form-group">
-          <label class="gp-label">多本地路径 <span class="gp-label-hint">（跨设备适配）</span></label>
+          <label class="gp-label">本地路径 <span class="gp-label-hint">（跨设备适配）</span></label>
           <div class="gp-edit-paths">
-            <div class="gp-edit-path-row gp-edit-path-primary">
-              <input
-                :value="project.path"
-                class="gp-input"
-                readonly
-                disabled
-              />
-              <span class="gp-primary-badge">主路径</span>
-            </div>
             <div
-              v-for="(lp, idx) in localPathsList"
+              v-for="(lp, idx) in allPathsList"
               :key="idx"
               class="gp-edit-path-row"
             >
               <input
-                v-model="localPathsList[idx]"
+                v-model="allPathsList[idx]"
                 class="gp-input"
                 :placeholder="`设备 ${idx + 1} 的本地路径...`"
               />
@@ -150,6 +141,7 @@
               <button
                 class="vp-btn vp-btn--ghost vp-btn--sm"
                 title="移除此路径"
+                :disabled="allPathsList.length <= 1"
                 @click="removeLocalPath(idx)"
               >
                 <Icon icon="mdi:delete-outline" height="12" />
@@ -163,13 +155,6 @@
             <Icon icon="mdi:plus" height="12" />
             <span>{{ i18n.addLocalPath || '添加路径' }}</span>
           </button>
-          <div
-            v-if="localPathsList.length === 0"
-            class="gp-edit-path-hint"
-          >
-            <Icon icon="mdi:information-outline" height="12" />
-            <span>{{ i18n.localPathHint || '为同一项目添加其他电脑上的本地路径，Git 操作时将自动检测有效路径' }}</span>
-          </div>
         </div>
         <div class="gp-form-group">
           <label class="gp-label">仓库链接</label>
@@ -338,7 +323,7 @@ const props = defineProps<{
   remoteError: string
   remotesMeta: { key: PlatformKey, label: string }[]
   urlValues: Record<string, string>
-  localPaths?: string[]
+  allPaths: string[]
 }>()
 const emit = defineEmits<{
   "close": []
@@ -353,7 +338,7 @@ const emit = defineEmits<{
     giteeUrl: string
     giteaUrl: string
     cnbUrl: string
-    localPaths?: string[]
+    allPaths: string[]
   }]
   "edit-add-remote": [name: string, url: string]
   "edit-remove-remote": [name: string]
@@ -394,24 +379,23 @@ const newRemoteUrl = ref("")
 const editRemoteName = ref("")
 const editRemoteUrl = ref("")
 
-// 多本地路径管理
-const localPathsList = ref<string[]>([...(props.localPaths || [])])
+// 统一路径列表管理（所有路径平等，均可编辑删除，至少保留 1 个）
+const allPathsList = ref<string[]>([...props.allPaths])
 
 function addLocalPath() {
-  localPathsList.value = [...localPathsList.value, ""]
+  allPathsList.value = [...allPathsList.value, ""]
 }
 
 function removeLocalPath(idx: number) {
-  localPathsList.value = localPathsList.value.filter((_, i) => i !== idx)
+  if (allPathsList.value.length <= 1) return
+  allPathsList.value = allPathsList.value.filter((_, i) => i !== idx)
 }
 
 function pickLocalPath(idx: number) {
   // 通知父组件打开目录选择器，路径将回填到对应条目
   emit("pick-dir")
-  // 父组件选择完目录后需要回填到 localPathsList[idx]
-  // 这里通过暴露一个 setter 供父组件调用
 }
-defineExpose({ setLocalPath: (idx: number, path: string) => { localPathsList.value[idx] = path } })
+defineExpose({ setLocalPath: (idx: number, path: string) => { allPathsList.value[idx] = path } })
 
 function addTag() {
   const t = tagInput.value.trim()
@@ -435,7 +419,7 @@ function clearAddRemote() {
 }
 
 function save() {
-  const paths = localPathsList.value.map((p) => p.trim()).filter(Boolean)
+  const paths = allPathsList.value.map((p) => p.trim()).filter(Boolean)
   emit("save", {
     name: localName.value.trim(),
     status: localStatus.value,
@@ -447,7 +431,7 @@ function save() {
     giteeUrl: urlInputs.giteeUrl || "",
     giteaUrl: urlInputs.giteaUrl || "",
     cnbUrl: urlInputs.cnbUrl || "",
-    localPaths: paths.length > 0 ? paths : undefined,
+    allPaths: paths.length > 0 ? paths : [props.project.path],
   })
 }
 </script>

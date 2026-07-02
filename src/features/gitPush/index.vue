@@ -983,7 +983,7 @@
       :remote-error="editRemoteError"
       :remotes-meta="REMOTES"
       :url-values="editUrls"
-      :local-paths="editLocalPaths"
+      :all-paths="editAllPaths"
       @close="editDialogProject = null"
       @save="handleEditSaveFromDialog"
       @edit-add-remote="(name:string, url:string) => { editNewRemoteName = name; editNewRemoteUrl = url; handleEditAddRemote() }"
@@ -1302,7 +1302,8 @@ const editUrls = reactive<Record<string, string>>({
   giteaUrl: "",
   cnbUrl: "",
 })
-const editLocalPaths = ref<string[]>([])
+/** 编辑弹窗统一路径列表（第一个 = project.path，其余 = localPaths） */
+const editAllPaths = ref<string[]>([])
 /** 编辑弹窗中的 Git 远程管理 */
 const editRemoteList = ref<GitRemoteInfo[]>([])
 const editNewRemoteName = ref("github")
@@ -1672,14 +1673,15 @@ function openEditDialog(project: GitProject) {
     giteaUrl: project.giteaUrl || "",
     cnbUrl: project.cnbUrl || "",
   })
-  editLocalPaths.value = project.localPaths ? [...project.localPaths] : []
-  // 加载 Git 远程
+  // 统一路径列表：主路径 + 所有备选路径均可编辑
+  editAllPaths.value = [project.path, ...(project.localPaths || [])]
+  // 加载 Git 远程（使用多路径解析，避免主路径不存在时获取不到）
   editRemoteList.value = []
   editRemoteError.value = ""
   editEditingRemote.value = ""
   editNewRemoteName.value = "github"
   editNewRemoteUrl.value = ""
-  const projectPath = project.path
+  const projectPath = resolveValidPath(project)
   props.manager.detectRemotes(projectPath).then((r) => { editRemoteList.value = r }).catch(() => {})
 }
 
@@ -1711,10 +1713,13 @@ async function handleEditSaveFromDialog(data: {
   giteeUrl: string
   giteaUrl: string
   cnbUrl: string
-  localPaths?: string[]
+  allPaths: string[]
 }) {
   const project = editDialogProject.value
   if (!project) return
+  // allPaths[0] → project.path（主路径），其余 → localPaths
+  const firstPath = data.allPaths[0] || project.path
+  const restPaths = data.allPaths.slice(1)
   const patch: Record<string, any> = {
     name: data.name.trim() || project.name,
     status: data.status as ProjectStatus,
@@ -1726,7 +1731,8 @@ async function handleEditSaveFromDialog(data: {
     giteeUrl: data.giteeUrl.trim() || undefined,
     giteaUrl: data.giteaUrl.trim() || undefined,
     cnbUrl: data.cnbUrl.trim() || undefined,
-    localPaths: data.localPaths && data.localPaths.length > 0 ? data.localPaths : undefined,
+    path: firstPath,
+    localPaths: restPaths.length > 0 ? restPaths : undefined,
   }
   // 过滤掉值为 undefined 的 URL 字段，避免 Object.assign 覆盖已有远程仓库链接
   for (const key of ["githubUrl", "giteeUrl", "giteaUrl", "cnbUrl"]) {
@@ -1738,24 +1744,20 @@ async function handleEditSaveFromDialog(data: {
 
 /** 处理多路径编辑中的目录选择 */
 async function handlePickDirForLocalPath() {
-  // 选择的目录需要回填到编辑弹窗的 localPathsList 中
-  // 由于 pickDirectory 交互模式不确定选中哪条，这里先弹窗让用户通过下标指定
-  // 简化处理：选择一个目录然后提示用户粘贴
-  const dir = await pickDirectory("选择备选本地路径")
+  const dir = await pickDirectory("选择本地路径")
   if (dir && editDialogRef.value) {
-    // 找到第一个空的条目或最后一个条目来填写
     const comp = editDialogRef.value as any
     if (comp.setLocalPath) {
-      const emptyIdx = editLocalPaths.value.findIndex((p) => !p.trim())
+      const emptyIdx = editAllPaths.value.findIndex((p) => !p.trim())
       if (emptyIdx >= 0) {
         comp.setLocalPath(emptyIdx, dir)
-        editLocalPaths.value[emptyIdx] = dir
+        editAllPaths.value[emptyIdx] = dir
       } else {
         // 如果没有空的，追加新条目
-        const newIdx = editLocalPaths.value.length
-        editLocalPaths.value = [...editLocalPaths.value, ""]
+        const newIdx = editAllPaths.value.length
+        editAllPaths.value = [...editAllPaths.value, ""]
         comp.setLocalPath(newIdx, dir)
-        editLocalPaths.value[newIdx] = dir
+        editAllPaths.value[newIdx] = dir
       }
     }
   }

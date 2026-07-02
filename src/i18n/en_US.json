@@ -1049,7 +1049,12 @@
     "pushBranchHead": "Current Branch Only",
     "pushBranchHint": "Current branch only mode is faster, skips other branches",
     "pullConfirm": "Confirm Pull",
-    "pullConfirmBody": "Pull from {0}. This may overwrite local changes. Continue?"
+    "pullConfirmBody": "Pull from {0}. This may overwrite local changes. Continue?",
+    "fetch": "Fetch",
+    "fetchAll": "Fetch Remotes",
+    "fetchHint": "Fetch latest tracking branches from remotes (no merge)",
+    "fetchSuccess": "Fetched {0} remote(s)",
+    "fetchError": "Fetch failed: {0}"
   },
   "heatmapMarker": {
     "title": "Heatmap Marker",

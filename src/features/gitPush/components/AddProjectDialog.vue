@@ -57,36 +57,12 @@
           </select>
         </div>
         <div class="gp-form-group">
-          <label class="gp-label">标签（可选，逗号分隔）</label>
+          <label class="gp-label">{{ i18n.tagsLabel || '标签（可选，逗号分隔）' }}</label>
           <input
             v-model="tags"
             class="gp-input"
-            placeholder="如：前端, 个人作品, 长期维护"
+            :placeholder="i18n.tagsPlaceholder || '如：前端, 个人作品, 长期维护'"
           />
-        </div>
-        <div
-          v-if="error"
-          class="gp-error"
-        >
-          {{ error }}
-        </div>
-        <div
-          v-if="checking"
-          class="gp-checking"
-        >
-          <Icon
-            icon="mdi:loading"
-            class="gp-spin"
-            height="12"
-          />
-          {{ i18n.checkingGit || '正在检查 git 仓库...' }}
-        </div>
-        <div
-          v-if="result !== null && !checking"
-          class="gp-check-result"
-          :class="{ success: result }"
-        >
-          {{ result ? (i18n.gitRepoDetected || '已检测到 git 仓库') : (i18n.notGitRepo || '未检测到 git 仓库，将仅记录路径') }}
         </div>
       </div>
       <div class="gp-dialog-footer">
@@ -131,9 +107,6 @@ const name = ref("")
 const path = ref("")
 const catId = ref("__ungrouped__")
 const tags = ref("")
-const error = ref("")
-const checking = ref(false)
-const result = ref<boolean | null>(null)
 
 // 目录选择器回填路径
 watch(() => props.selectedPath, (p) => {

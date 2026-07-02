@@ -402,11 +402,23 @@
 }
 
 .gp-card-path {
+  display: flex;
+  align-items: center;
+  gap: 3px;
   font-size: 10px;
   font-family: $vp-mono;
   opacity: 0.5;
-  @include text-ellipsis;
   max-width: 280px;
+
+  .gp-path-icon {
+    flex-shrink: 0;
+    opacity: 0.55;
+  }
+
+  .gp-path-text {
+    @include text-ellipsis;
+    min-width: 0;
+  }
 }
 
 .gp-branch-row {

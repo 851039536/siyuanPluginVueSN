@@ -979,22 +979,13 @@
       @import-selected="handleImportSelected"
     />
     <EditProjectDialog
-      v-if="editDialogProject"
-      ref="editDialogRef"
-      :project="editDialogProject"
+      v-if="editDialogProjectId"
+      :project-id="editDialogProjectId"
+      :manager="manager"
       :i18n="i18n"
       :all-tags="allTags"
-      :remote-list="editRemoteList"
-      :remote-error="editRemoteError"
-      :remotes-meta="REMOTES"
-      :url-values="editUrls"
-      :all-paths="editAllPaths"
-      @close="editDialogProject = null"
-      @save="handleEditSaveFromDialog"
-      @edit-add-remote="(name:string, url:string) => { editNewRemoteName = name; editNewRemoteUrl = url; handleEditAddRemote() }"
-      @edit-remove-remote="handleEditRemoveRemote"
-      @edit-save-remote="(name:string, url:string) => { editEditingRemote = name; editEditingRemoteUrl = url; handleEditRemoteSave(name) }"
-      @pick-dir="handlePickDirForLocalPath"
+      @close="editDialogProjectId = ''"
+      @saved="editDialogProjectId = ''"
     />
   </div>
 </template>
@@ -1004,7 +995,6 @@ import type {
   CommitLogEntry,
   GitProject,
   GitPushManager,
-  GitRemoteInfo,
   PlatformKey,
   ProjectStatus,
 } from "./types"
@@ -1014,7 +1004,6 @@ import {
   computed,
   onMounted,
   onUnmounted,
-  reactive,
   ref,
   watch,
 } from "vue"
@@ -1064,13 +1053,8 @@ const {
   sortProjects,
 } = ut
 
-/** 远程平台元数据（从 types 导入共享定义） */
-const REMOTES = PLATFORM_META.map((pm) => ({
-  key: pm.key,
-  icon: pm.icon,
-  label: pm.label,
-  remoteProp: pm.remoteProp,
-}))
+
+
 
 
 const {
@@ -1298,24 +1282,14 @@ const lastRefreshTime = new Map<string, number>()
 const REFRESH_COOLDOWN_MS = 500
 
 /** 项目编辑弹窗状态 */
-const editDialogProject = ref<GitProject | null>(null)
-const editDialogRef = ref<InstanceType<typeof EditProjectDialog> | null>(null)
-/** 弹窗中平台 URL 编辑状态 */
-const editUrls = reactive<Record<string, string>>({
-  githubUrl: "",
-  giteeUrl: "",
-  giteaUrl: "",
-  cnbUrl: "",
-})
-/** 编辑弹窗统一路径列表（第一个 = project.path，其余 = localPaths） */
-const editAllPaths = ref<string[]>([])
-/** 编辑弹窗中的 Git 远程管理 */
-const editRemoteList = ref<GitRemoteInfo[]>([])
-const editNewRemoteName = ref("github")
-const editNewRemoteUrl = ref("")
-const editRemoteError = ref("")
-const editEditingRemote = ref("")
-const editEditingRemoteUrl = ref("")
+const editDialogProjectId = ref("")
+/** 远程平台元数据（卡片 + 状态栏使用） */
+const REMOTES = PLATFORM_META.map((pm) => ({
+  key: pm.key,
+  icon: pm.icon,
+  label: pm.label,
+  remoteProp: pm.remoteProp,
+}))
 /** 行内名称编辑状态 */
 const editingNameId = ref("")
 const editingNameInput = ref("")
@@ -1671,23 +1645,7 @@ async function cycleStatus(id: string, current?: ProjectStatus) {
 
 /** 打开项目编辑弹窗 */
 function openEditDialog(project: GitProject) {
-  editDialogProject.value = project
-  Object.assign(editUrls, {
-    githubUrl: project.githubUrl || "",
-    giteeUrl: project.giteeUrl || "",
-    giteaUrl: project.giteaUrl || "",
-    cnbUrl: project.cnbUrl || "",
-  })
-  // 统一路径列表：主路径 + 所有备选路径均可编辑
-  editAllPaths.value = [project.path, ...(project.localPaths || [])]
-  // 加载 Git 远程（使用多路径解析，避免主路径不存在时获取不到）
-  editRemoteList.value = []
-  editRemoteError.value = ""
-  editEditingRemote.value = ""
-  editNewRemoteName.value = "github"
-  editNewRemoteUrl.value = ""
-  const projectPath = resolveValidPath(project)
-  props.manager.detectRemotes(projectPath).then((r) => { editRemoteList.value = r }).catch(() => {})
+  editDialogProjectId.value = project.id
 }
 
 /** 行内名称编辑：点击名称开始编辑 */
@@ -1706,104 +1664,8 @@ async function handleNameEditSave(project: GitProject) {
 }
 
 
-/** 编辑弹窗：保存（接收子组件整理好的数据） */
-async function handleEditSaveFromDialog(data: {
-  name: string
-  status: string
-  starred: boolean
-  archived: boolean
-  note: string
-  tags: string[]
-  githubUrl?: string
-  giteeUrl?: string
-  giteaUrl?: string
-  cnbUrl?: string
-  allPaths: string[]
-}) {
-  const project = editDialogProject.value
-  if (!project) return
-  // allPaths[0] → project.path（主路径），其余 → localPaths
-  const firstPath = data.allPaths[0] || project.path
-  const restPaths = data.allPaths.slice(1)
-  const patch: Record<string, any> = {
-    name: data.name.trim() || project.name,
-    status: data.status as ProjectStatus,
-    starred: data.starred,
-    archived: data.archived,
-    note: data.note.trim() || undefined,
-    tags: data.tags.length > 0 ? data.tags : undefined,
-    githubUrl: data.githubUrl !== undefined ? data.githubUrl : undefined,
-    giteeUrl: data.giteeUrl !== undefined ? data.giteeUrl : undefined,
-    giteaUrl: data.giteaUrl !== undefined ? data.giteaUrl : undefined,
-    cnbUrl: data.cnbUrl !== undefined ? data.cnbUrl : undefined,
-    path: firstPath,
-    localPaths: restPaths.length > 0 ? restPaths : undefined,
-  }
-  // 过滤掉值为 undefined 的 URL 字段，避免覆盖已有远程仓库链接
-  for (const key of ["githubUrl", "giteeUrl", "giteaUrl", "cnbUrl"]) {
-    if (patch[key] === undefined) { delete patch[key] }
-  }
-  await updateProjectMeta(project.id, patch as any)
-  editDialogProject.value = null
-}
 
-/** 处理多路径编辑中的目录选择 */
-async function handlePickDirForLocalPath() {
-  const dir = await pickDirectory("选择本地路径")
-  if (dir && editDialogRef.value) {
-    const comp = editDialogRef.value as any
-    if (comp.setLocalPath) {
-      const emptyIdx = editAllPaths.value.findIndex((p) => !p.trim())
-      if (emptyIdx >= 0) {
-        comp.setLocalPath(emptyIdx, dir)
-        editAllPaths.value[emptyIdx] = dir
-      } else {
-        // 如果没有空的，追加新条目
-        const newIdx = editAllPaths.value.length
-        editAllPaths.value = [...editAllPaths.value, ""]
-        comp.setLocalPath(newIdx, dir)
-        editAllPaths.value[newIdx] = dir
-      }
-    }
-  }
-}
 
-async function handleEditAddRemote() {
-  const project = editDialogProject.value
-  if (!project) return
-  editRemoteError.value = ""
-  try {
-    await addRemoteOp(project.id, editNewRemoteName.value.trim(), editNewRemoteUrl.value.trim())
-    editNewRemoteName.value = "github"
-    editNewRemoteUrl.value = ""
-    const list = await props.manager.detectRemotes(resolveValidPath(project))
-    editRemoteList.value = list
-  } catch (e: any) { editRemoteError.value = e?.message || "添加失败" }
-}
-
-async function handleEditRemoveRemote(name: string) {
-  const project = editDialogProject.value
-  if (!project) return
-  editRemoteError.value = ""
-  try {
-    await removeRemoteOp(project.id, name)
-    const list = await props.manager.detectRemotes(resolveValidPath(project))
-    editRemoteList.value = list
-  } catch (e: any) { editRemoteError.value = e?.message || "删除失败" }
-}
-
-async function handleEditRemoteSave(name: string, url?: string) {
-  const project = editDialogProject.value
-  if (!project) return
-  const newUrl = url ?? editEditingRemoteUrl.value
-  editRemoteError.value = ""
-  try {
-    await editRemoteOp(project.id, name, newUrl)
-    editEditingRemote.value = ""
-    const list = await props.manager.detectRemotes(resolveValidPath(project))
-    editRemoteList.value = list
-  } catch (e: any) { editRemoteError.value = e?.message || "修改失败" }
-}
 
 /** 统一的异步操作错误处理包装器（含可选确认弹窗和 showMessage） */
 async function safeGitOp(label: string, fn: () => Promise<void>, options?: { confirmMsg?: string }) {

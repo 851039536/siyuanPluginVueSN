@@ -922,37 +922,15 @@
       @save-branch-mode="handleSaveBranchMode"
     />
     <!-- 拉取确认弹窗 -->
-    <div
-      v-if="showPullConfirm"
-      class="gp-modal-mask"
-      @click.self="cancelPullConfirm"
-    >
-      <div class="gp-modal-dialog">
-        <div class="gp-modal-header">
-          <span>{{ i18n.pullConfirm || '确认拉取' }}</span>
-        </div>
-        <div class="gp-modal-body">
-          <p style="margin: 0; font-size: 13px;">
-            将从 <strong>{{ pendingPullLabel }}</strong> 拉取代码，可能覆盖本地修改。<br />
-            确定要继续吗？
-          </p>
-        </div>
-        <div class="gp-modal-footer">
-          <button
-            class="vp-btn vp-btn--ghost vp-btn--sm"
-            @click="cancelPullConfirm"
-          >
-            取消
-          </button>
-          <button
-            class="vp-btn vp-btn--primary vp-btn--sm"
-            @click="doPullSingle"
-          >
-            确认拉取
-          </button>
-        </div>
-      </div>
-    </div>
+    <ConfirmDialog
+      :visible="showPullConfirm"
+      :title="i18n.pullConfirm || '确认拉取'"
+      :message="'将从 <strong>' + pendingPullLabel + '</strong> 拉取代码，可能覆盖本地修改。<br />确定要继续吗？'"
+      confirm-text="确认拉取"
+      cancel-text="取消"
+      @confirm="doPullSingle"
+      @cancel="cancelPullConfirm"
+    />
     <IdeManagementDialog
       v-if="showIdeDialog"
       :custom-ides="customIdes"
@@ -1010,6 +988,7 @@ import {
 import { copyToClipboard } from "@/utils/domUtils"
 import AddProjectDialog from "./components/AddProjectDialog.vue"
 import CategoryDialog from "./components/CategoryDialog.vue"
+import ConfirmDialog from "./components/ConfirmDialog.vue"
 import ConflictSection from "./components/ConflictSection.vue"
 import EditProjectDialog from "./components/EditProjectDialog.vue"
 import IdeManagementDialog from "./components/IdeManagementDialog.vue"

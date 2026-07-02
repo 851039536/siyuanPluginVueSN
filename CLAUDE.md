@@ -96,6 +96,39 @@ onMounted(() => {
 5. **事件名规范**：使用 camelCase 动词短语（如 `openPasswordVaultAdd`），在 eventBus 中保持唯一
 6. **数据透传**：事件 detail 中携带的数据由 App.vue 透传给响应方，双方不共享类型定义
 
+## 子组件数据流规则（强制）
+
+**对话框/编辑弹窗类子组件必须自包含，禁止父传全量 props + 子 emit 回父的中间人模式。**
+
+### 正确模式
+
+```
+父组件                             子组件（对话框）
+  │                                   │
+  │ props: id, manager/service        │ 接收最小标识符 + 服务实例
+  │                                   │
+  │                                   ▼
+  │                                 onMounted → 自行从 service 加载数据
+  │                                   │
+  │                                   ▼
+  │                                 save() → 直接调用 service 持久化
+  │                                   │
+  │  ◄── emit("saved" | "close") ──  emit 极简通知（无数据载荷）
+```
+
+### 禁止事项
+
+| 禁止 | 原因 |
+|------|------|
+| 父组件为子组件维护 `editXxx` 系列中间状态 ref | 冗余的数据拷贝，所有权混乱 |
+| 父传递完整 project + urlValues + remoteList 等 5+ 个 props | props 膨胀，子组件沦为渲染傀儡 |
+| 子组件 emit 全量表单数据 `emit("save", {name,status,...})` | 数据往返传递，逻辑分散在两处 |
+| 父通过 `ref.setLocalPath()` 回填子组件内部状态 | 跨组件操作内部状态，破坏封装 |
+| 子 `defineExpose({ setLocalPath })` 供父调用 | 暴露内部实现，紧耦合 |
+| 子组件有 manager 实例却 emit 事件让父调用 CRUD | 绕远路，应直接调 manager |
+
+> **核心**：子组件持有 manager/service 实例后，CRUD 全在内部完成。父只管开关弹窗 + 刷新列表，不关心编辑了什么字段。
+
 ## 硬规则
 
 - **功能注册完整性**：新功能必须在 8 处注册（见下方「添加新功能」清单）

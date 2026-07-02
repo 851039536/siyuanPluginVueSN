@@ -321,6 +321,7 @@
       <div
         v-else
         class="gp-list"
+        style="display: flex !important; flex-wrap: wrap !important; width: 100% !important; align-content: flex-start;"
       >
         <template
           v-for="group in filteredGroups"
@@ -330,6 +331,7 @@
             v-for="project in group.projects"
             :key="project.id"
             class="gp-card"
+            style="box-sizing: border-box !important; flex: 1 1 calc(50% - 10px) !important; min-width: 390px !important;"
             @click="handleCardClick(project.id, $event)"
           >
             <div class="gp-card-top">

@@ -20,6 +20,8 @@
     "gitRepoDetected": "✅ 已检测到 git 仓库",
     "notGitRepo": "❌ 未检测到 git 仓库，将仅记录路径",
     "refreshRemotes": "重新检测远程仓库",
+    "tagsLabel": "标签（可选，逗号分隔）",
+    "tagsPlaceholder": "如：前端, 个人作品, 长期维护",
     "pendingChanges": "个文件变更",
     "workingTreeClean": "工作区干净",
     "stageAll": "暂存全部",

@@ -49,6 +49,7 @@
         <Icon
           icon="mdi:chart-bar"
           width="48"
+          height="48"
         />
       </div>
       <div class="gp-empty-text">

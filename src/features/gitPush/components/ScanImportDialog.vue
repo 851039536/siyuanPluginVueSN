@@ -14,7 +14,7 @@
           class="vp-btn vp-btn--ghost vp-btn--sm"
           @click="$emit('close')"
         >
-          <Icon icon="mdi:close" />
+          <Icon icon="mdi:close" height="12" />
         </button>
       </div>
       <div class="gp-dialog-body">
@@ -31,7 +31,7 @@
               class="vp-btn vp-btn--ghost vp-btn--sm"
               @click="$emit('pick-scan-dir')"
             >
-              <Icon icon="mdi:folder-open" />
+              <Icon icon="mdi:folder-open" height="12" />
             </button>
           </div>
         </div>
@@ -45,10 +45,12 @@
               v-if="scanning"
               icon="mdi:loading"
               class="gp-spin"
+              height="12"
             />
             <Icon
               v-else
               icon="mdi:magnify"
+              height="12"
             />
             <span>{{ scanning ? (i18n.scanning || '扫描中...') : (i18n.startScan || '开始扫描') }}</span>
           </button>
@@ -101,6 +103,7 @@
           <Icon
             icon="mdi:folder-search-outline"
             width="36"
+            height="36"
           />
           <div class="gp-empty-text">
             {{ i18n.noScanResults || '未找到 Git 仓库' }}

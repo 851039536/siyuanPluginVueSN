@@ -1,3 +1,4 @@
+// Git 项目持久化存储与类型定义
 import type { Plugin } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"

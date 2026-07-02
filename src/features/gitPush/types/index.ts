@@ -1,4 +1,4 @@
-/** gitPush 模块类型定义入口 */
+// gitPush 模块类型定义入口
 
 import type { GitProject } from "./storage"
 

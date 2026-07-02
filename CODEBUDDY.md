@@ -253,7 +253,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 ### 文件头注释规则
 
-每个 `.ts` / `.vue` / `.scss` 文件顶部**必须**包含一行注释，简要说明文件功能。详细格式规范见 [CLAUDE_RULES.md § 强制规则：文件头注释](./CLAUDE_RULES.md#强制规则文件头注释)。
+每个 `.ts` / `.vue` 文件顶部**必须**包含一行注释，简要说明文件功能（`.scss` 不适用）。详细格式规范见 [CLAUDE_RULES.md § 强制规则：文件头注释](./CLAUDE_RULES.md#强制规则文件头注释)。
 
 ### 构建流程
 
@@ -282,5 +282,5 @@ Vite library 模式 → 从 `src/index.ts` 输出 CJS 格式。`vite.config.ts` 
 | 文件路径 | `getFile`/`putFile` 路径规则、工作区目录、插件数据目录、Vite 外部模块声明 |
 | UI 风格：Codex | 全局设计 Token 全表、核心规范速查表、`.vp-*` 组件模式库（弹窗/输入框/标签）、禁止事项清单 |
 | 强制规则：SCSS 分离 | 目录结构模式、正误示例对比 |
-| 强制规则：文件头注释 | .ts/.vue/.scss 文件头注释格式规范 |
+| 强制规则：文件头注释 | .ts/.vue 文件头注释格式规范 |
 | 构建与验证 | 常见 Vite 警告原因与处理方法 |

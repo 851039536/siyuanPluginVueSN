@@ -1732,14 +1732,14 @@ async function handleEditSaveFromDialog(data: {
     archived: data.archived,
     note: data.note.trim() || undefined,
     tags: data.tags.length > 0 ? data.tags : undefined,
-    githubUrl: data.githubUrl.trim() || undefined,
-    giteeUrl: data.giteeUrl.trim() || undefined,
-    giteaUrl: data.giteaUrl.trim() || undefined,
-    cnbUrl: data.cnbUrl.trim() || undefined,
+    githubUrl: data.githubUrl !== undefined ? data.githubUrl : undefined,
+    giteeUrl: data.giteeUrl !== undefined ? data.giteeUrl : undefined,
+    giteaUrl: data.giteaUrl !== undefined ? data.giteaUrl : undefined,
+    cnbUrl: data.cnbUrl !== undefined ? data.cnbUrl : undefined,
     path: firstPath,
     localPaths: restPaths.length > 0 ? restPaths : undefined,
   }
-  // 过滤掉值为 undefined 的 URL 字段，避免 Object.assign 覆盖已有远程仓库链接
+  // 过滤掉值为 undefined 的 URL 字段，避免覆盖已有远程仓库链接
   for (const key of ["githubUrl", "giteeUrl", "giteaUrl", "cnbUrl"]) {
     if (patch[key] === undefined) { delete patch[key] }
   }

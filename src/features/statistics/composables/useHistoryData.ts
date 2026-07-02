@@ -10,7 +10,6 @@ import {
   computed,
   ref,
 } from "vue"
-import { getStatistics } from "../queries"
 import {
   executeSql,
   formatDateTime,
@@ -229,31 +228,18 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
             avgWordsPerDoc: record.avgWordsPerDoc,
           }
         } else if (isToday) {
-          try {
-            const currentStats = await getStatistics("day", {
-              dayRange: 7,
-              monthYearRange: 1,
-              selectedYear: today.getFullYear(),
-            })
-            const record = createHistoryRecord(
-              date,
-              currentStats.totalNotes,
-              currentStats.totalWords,
-              currentStats.totalBlocks,
-              currentStats.todayCreated,
-              currentStats.todayModified,
-              currentStats.avgWordsPerDoc,
-            )
-            result.push(record)
-            lastKnownStats = {
-              totalNotes: record.totalNotes,
-              totalWords: record.totalWords,
-              totalBlocks: record.totalBlocks,
-              avgWordsPerDoc: record.avgWordsPerDoc,
-            }
-          } catch (error) {
-            console.error("获取今日实时数据失败:", error)
-            const record = lastKnownStats
+          const s = stats.value
+          const record = s
+            ? createHistoryRecord(
+                date,
+                s.totalNotes,
+                s.totalWords,
+                s.totalBlocks,
+                s.todayCreated,
+                s.todayModified,
+                s.avgWordsPerDoc,
+              )
+            : lastKnownStats
               ? createHistoryRecord(
                   date,
                   lastKnownStats.totalNotes,
@@ -264,7 +250,14 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
                   lastKnownStats.avgWordsPerDoc,
                 )
               : createHistoryRecord(date, 0, 0, 0, 0, 0, 0)
-            result.push(record)
+          result.push(record)
+          if (s) {
+            lastKnownStats = {
+              totalNotes: s.totalNotes,
+              totalWords: s.totalWords,
+              totalBlocks: s.totalBlocks,
+              avgWordsPerDoc: s.avgWordsPerDoc,
+            }
           }
         } else {
           const record = lastKnownStats

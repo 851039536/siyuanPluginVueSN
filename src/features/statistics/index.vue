@@ -302,7 +302,7 @@ import {
 } from "./queries/reportStats"
 import { MILESTONE_TYPES, STORAGE_KEY_MILESTONE_RULES } from "./types/milestoneRules"
 import { STATISTICS_STORAGE_KEYS } from "./types/storage"
-import { milestoneTargetOfWithRules } from "./utils/milestones"
+import { countMilestonesReached } from "./utils/milestones"
 import type { StatisticsData } from "./types"
 
 /** Milestone 类型 → StatisticsData 字段名映射 */
@@ -546,9 +546,7 @@ const milestonesAchievedCount = computed(() => {
   if (!s) return 0
   return MILESTONE_TYPES.reduce((sum, mt) => {
     const val = Number(s[MILESTONE_FIELD_MAP[mt.key]] ?? 0)
-    let n = 0
-    while (n < 200 && milestoneTargetOfWithRules(mt.key, n + 1, customRules.value) <= val) n++
-    return sum + n
+    return sum + countMilestonesReached(mt.key, val, customRules.value)
   }, 0)
 })
 

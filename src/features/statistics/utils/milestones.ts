@@ -43,6 +43,38 @@ export function milestoneTargetOfWithRules(
 }
 
 /**
+ * 二分查找某类型当前值已达到的里程碑数量。
+ * milestoneTargetOfWithRules 返回值随 n 单调递增，满足二分查找前置条件。
+ * @returns 0 ~ maxMilestones 之间的里程碑达成数
+ */
+export function countMilestonesReached(
+  type: string,
+  value: number,
+  customRules?: Record<string, number[]>,
+  maxMilestones = 200,
+): number {
+  if (value <= 0) return 0
+  // 第一个里程碑都无法达成
+  if (milestoneTargetOfWithRules(type, 1, customRules) > value) return 0
+  // 最后一个里程碑也能达成
+  if (milestoneTargetOfWithRules(type, maxMilestones, customRules) <= value) {
+    return maxMilestones
+  }
+  let lo = 1
+  let hi = maxMilestones
+  while (lo < hi) {
+    // 取上中位数，确保 lo 始终向前推进
+    const mid = Math.ceil((lo + hi) / 2)
+    if (milestoneTargetOfWithRules(type, mid, customRules) <= value) {
+      lo = mid
+    } else {
+      hi = mid - 1
+    }
+  }
+  return lo
+}
+
+/**
  * 生成所有类型的默认里程碑目标值（每种类型前 10 级），供编辑器初始化和重置使用。
  */
 export function generateDefaultRules(levels = 10): Record<string, number[]> {

@@ -1,4 +1,4 @@
-<!-- 编辑 Git 项目弹窗 -->
+<!-- 编辑 Git 项目弹窗（自包含：自行加载/保存/远程操作） -->
 <template>
   <div
     class="gp-mask"
@@ -9,7 +9,7 @@
       style="width: 580px;"
     >
       <div class="gp-dialog-header">
-        <span class="gp-dialog-title">编辑项目 — {{ project.name }}</span>
+        <span class="gp-dialog-title">编辑项目 — {{ project?.name }}</span>
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
           @click="$emit('close')"
@@ -98,12 +98,12 @@
             v-model="tagInput"
             class="gp-input"
             placeholder="输入标签后回车添加"
-            :list="`gp-tag-suggestions-${project.id}`"
+            :list="`gp-tag-suggestions-${projectId}`"
             @keyup.enter="addTag"
           />
-          <datalist :id="`gp-tag-suggestions-${project.id}`">
+          <datalist :id="`gp-tag-suggestions-${projectId}`">
             <option
-              v-for="t in allTags"
+              v-for="t in props.allTags"
               :key="t"
               :value="t"
             />
@@ -222,7 +222,7 @@
                 </button>
                 <button
                   class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
-                  @click="$emit('edit-remove-remote', r.name)"
+                  @click="handleRemoveRemote(r.name)"
                 >
                   删除
                 </button>
@@ -251,7 +251,7 @@
                 选择平台
               </option>
               <option
-                v-for="r in remotesMeta"
+                v-for="r in REMOTES"
                 :key="r.key"
                 :value="r.key"
               >
@@ -263,12 +263,12 @@
               class="gp-input"
               placeholder="远程 URL"
               style="flex:1"
-              @keyup.enter="$emit('edit-add-remote', newRemoteName.trim(), newRemoteUrl.trim()); clearAddRemote()"
+              @keyup.enter="handleAddRemote"
             />
             <button
               class="vp-btn vp-btn--primary vp-btn--sm"
               :disabled="!newRemoteName || !newRemoteUrl.trim()"
-              @click="$emit('edit-add-remote', newRemoteName.trim(), newRemoteUrl.trim()); clearAddRemote()"
+              @click="handleAddRemote"
             >
               添加
             </button>
@@ -347,49 +347,60 @@
 <script setup lang="ts">
 import type {
   GitProject,
+  GitPushManager,
   GitRemoteInfo,
-  PlatformKey,
   ProjectStatus,
 } from "../types"
 import { PLATFORM_META } from "../types"
 import { Icon } from "@iconify/vue"
 import {
   computed,
+  onMounted,
   reactive,
   ref,
 } from "vue"
+import { resolveValidPath } from "../utils"
+import { pickDirectory } from "../composables/useDirectoryPicker"
 
 
 const props = defineProps<{
-  project: GitProject
+  projectId: string
+  manager: GitPushManager
   i18n: Record<string, any>
   allTags: string[]
-  remoteList: GitRemoteInfo[]
-  remoteError: string
-  remotesMeta: { key: PlatformKey, label: string }[]
-  urlValues: Record<string, string>
-  allPaths: string[]
 }>()
 const emit = defineEmits<{
   "close": []
-  "save": [data: {
-    name: string
-    status: string
-    starred: boolean
-    archived: boolean
-    note: string
-    tags: string[]
-    githubUrl?: string
-    giteeUrl?: string
-    giteaUrl?: string
-    cnbUrl?: string
-    allPaths: string[]
-  }]
-  "edit-add-remote": [name: string, url: string]
-  "edit-remove-remote": [name: string]
-  "edit-save-remote": [name: string, url: string]
-  "pick-dir": []
+  "saved": [] // 通知父组件刷新列表
 }>()
+
+// ── 项目数据（从 manager 加载） ──
+const project = ref<GitProject | null>(null)
+const remoteList = ref<GitRemoteInfo[]>([])
+const remoteError = ref("")
+
+// ── 表单本地状态 ──
+const localName = ref("")
+const localStatus = ref("active")
+const localStarred = ref(false)
+const localArchived = ref(false)
+const localNote = ref("")
+const localTags = ref<string[]>([])
+const tagInput = ref("")
+const urlInputs = reactive<Record<string, string>>({
+  githubUrl: "",
+  giteeUrl: "",
+  giteaUrl: "",
+  cnbUrl: "",
+})
+const allPathsList = ref<string[]>([])
+const newRemoteName = ref("github")
+const newRemoteUrl = ref("")
+const editRemoteName = ref("")
+const editRemoteUrl = ref("")
+const showHelp = ref(false)
+
+// ── 状态元数据 ──
 const STATUS_META: Record<string, { color: string, label: string, icon: string }> = {
   active: {
     color: "var(--b3-theme-success)",
@@ -408,27 +419,16 @@ const STATUS_META: Record<string, { color: string, label: string, icon: string }
   },
 }
 const STATUS_CYCLE: ProjectStatus[] = ["active", "maintenance", "paused"]
+const REMOTES = PLATFORM_META.map((pm) => ({
+  key: pm.key,
+  icon: pm.icon,
+  label: pm.label,
+}))
 
-const localName = ref(props.project.name)
-const localStatus = ref<string>(props.project.status || "active")
-const localStarred = ref(!!props.project.starred)
-const localArchived = ref(!!props.project.archived)
-const localNote = ref(props.project.note || "")
-const localTags = ref<string[]>([...(props.project.tags || [])])
-const tagInput = ref("")
-
-const urlInputs = reactive<Record<string, string>>({ ...props.urlValues })
-
-const newRemoteName = ref("github")
-const newRemoteUrl = ref("")
-const editRemoteName = ref("")
-const editRemoteUrl = ref("")
-const showHelp = ref(false)
-
-// 语言检测：根据现有 i18n 文本判断
+// ── 语言检测 ──
 const isZh = computed(() => (props.i18n.cancel || '取消') === '取消')
 
-// 帮助项（硬编码，不依赖 i18n JSON）
+// ── 帮助项 ──
 const helpItems = [
   {
     icon: 'mdi:folder-outline',
@@ -452,24 +452,58 @@ const helpItems = [
   },
 ]
 
-// 统一路径列表管理（所有路径平等，均可编辑删除，至少保留 1 个）
-const allPathsList = ref<string[]>([...props.allPaths])
+// ── 初始化：从 manager 加载项目数据 ──
+onMounted(async () => {
+  const projects = await props.manager.getProjects()
+  const p = projects.find((pr) => pr.id === props.projectId)
+  if (!p) {
+    emit("close")
+    return
+  }
+  project.value = p
+  // 填充表单
+  localName.value = p.name
+  localStatus.value = p.status || "active"
+  localStarred.value = !!p.starred
+  localArchived.value = !!p.archived
+  localNote.value = p.note || ""
+  localTags.value = [...(p.tags || [])]
+  urlInputs.githubUrl = p.githubUrl || ""
+  urlInputs.giteeUrl = p.giteeUrl || ""
+  urlInputs.giteaUrl = p.giteaUrl || ""
+  urlInputs.cnbUrl = p.cnbUrl || ""
+  allPathsList.value = [p.path, ...(p.localPaths || [])]
+  // 检测远程仓库
+  await loadRemotes()
+})
 
+async function loadRemotes() {
+  if (!project.value) return
+  try {
+    const path = resolveValidPath(project.value)
+    remoteList.value = await props.manager.detectRemotes(path)
+    remoteError.value = ""
+  } catch (e: any) {
+    remoteError.value = e?.message || "检测远程仓库失败"
+  }
+}
+
+// ── 路径管理 ──
 function addLocalPath() {
   allPathsList.value = [...allPathsList.value, ""]
 }
 
 function removeLocalPath(idx: number) {
-  if (allPathsList.value.length <= 1) return
+  if (allPathsList.value.length <= 1) { return }
   allPathsList.value = allPathsList.value.filter((_, i) => i !== idx)
 }
 
-function pickLocalPath(idx: number) {
-  // 通知父组件打开目录选择器，路径将回填到对应条目
-  emit("pick-dir")
+async function pickLocalPath(idx: number) {
+  const dir = await pickDirectory("选择本地路径")
+  if (dir) { allPathsList.value[idx] = dir }
 }
-defineExpose({ setLocalPath: (idx: number, path: string) => { allPathsList.value[idx] = path } })
 
+// ── 标签管理 ──
 function addTag() {
   const t = tagInput.value.trim()
   if (t && !localTags.value.includes(t)) {
@@ -482,35 +516,64 @@ function removeTag(tag: string) {
   localTags.value = localTags.value.filter((t) => t !== tag)
 }
 
-function saveRemoteEdit(name: string) {
-  emit("edit-save-remote", name, editRemoteUrl.value)
-  editRemoteName.value = ""
+// ── 远程仓库操作 ──
+async function handleAddRemote() {
+  if (!project.value) { return }
+  remoteError.value = ""
+  try {
+    await props.manager.addRemote(
+      resolveValidPath(project.value),
+      newRemoteName.value.trim(),
+      newRemoteUrl.value.trim(),
+    )
+    newRemoteUrl.value = ""
+    await loadRemotes()
+  } catch (e: any) { remoteError.value = e?.message || "添加失败" }
 }
 
-function clearAddRemote() {
-  newRemoteUrl.value = ""
+async function handleRemoveRemote(name: string) {
+  if (!project.value) { return }
+  remoteError.value = ""
+  try {
+    await props.manager.removeRemote(resolveValidPath(project.value), name)
+    await loadRemotes()
+  } catch (e: any) { remoteError.value = e?.message || "删除失败" }
 }
 
-function save() {
+async function saveRemoteEdit(name: string) {
+  if (!project.value) { return }
+  remoteError.value = ""
+  try {
+    await props.manager.setRemoteUrl(
+      resolveValidPath(project.value),
+      name,
+      editRemoteUrl.value,
+    )
+    editRemoteName.value = ""
+    await loadRemotes()
+  } catch (e: any) { remoteError.value = e?.message || "修改失败" }
+}
+
+// ── 保存 ──
+async function save() {
+  if (!project.value) { return }
   const paths = allPathsList.value.map((p) => p.trim()).filter(Boolean)
-  // 只发送用户实际修改过的 URL 字段（与原始值比较）
-  const urlPatch: Record<string, string> = {}
-  for (const key of ["githubUrl", "giteeUrl", "giteaUrl", "cnbUrl"]) {
-    const original = (props.urlValues as Record<string, string>)[key] || ""
-    const current = urlInputs[key].trim()
-    if (current !== original) {
-      urlPatch[key] = current // 空字符串代表用户主动清空
-    }
-  }
-  emit("save", {
-    name: localName.value.trim(),
-    status: localStatus.value,
+  const firstPath = paths[0] || project.value.path
+  const restPaths = paths.slice(1)
+  await props.manager.updateProjectMeta(props.projectId, {
+    name: localName.value.trim() || project.value.name,
+    status: localStatus.value as ProjectStatus,
     starred: localStarred.value,
     archived: localArchived.value,
     note: localNote.value,
     tags: localTags.value,
-    allPaths: paths.length > 0 ? paths : [props.project.path],
-    ...urlPatch,
+    githubUrl: urlInputs.githubUrl,
+    giteeUrl: urlInputs.giteeUrl,
+    giteaUrl: urlInputs.giteaUrl,
+    cnbUrl: urlInputs.cnbUrl,
+    path: firstPath,
+    localPaths: restPaths.length > 0 ? restPaths : undefined,
   })
+  emit("saved")
 }
 </script>

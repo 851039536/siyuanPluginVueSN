@@ -1,3 +1,6 @@
+// Git 项目统计信息获取与状态轮询
+// Git 项目统计信息获取
+// Git 项目统计信息获取
 import type { Ref } from "vue"
 import type {
   GitProject,

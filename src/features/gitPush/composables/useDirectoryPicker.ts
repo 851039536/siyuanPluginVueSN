@@ -1,3 +1,5 @@
+// 目录选择 composable（原生 Electron + webkitdirectory 降级）
+// 目录选择 composable
 /**
  * 目录选择 composable
  * 封装 Electron 原生 + webkitdirectory 降级两种目录选择方案，

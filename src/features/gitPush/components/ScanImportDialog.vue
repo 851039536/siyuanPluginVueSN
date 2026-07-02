@@ -1,3 +1,4 @@
+<!-- 扫描导入 Git 项目弹窗 -->
 <template>
   <div
     class="gp-mask"

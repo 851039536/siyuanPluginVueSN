@@ -1,3 +1,4 @@
+<!-- Git 冲突信息展示区 -->
 <template>
   <div
     v-if="conflicts?.length"

@@ -1,3 +1,4 @@
+<!-- 远程仓库配置弹窗 -->
 <template>
   <div
     class="gp-mask"

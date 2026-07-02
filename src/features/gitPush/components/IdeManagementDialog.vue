@@ -1,3 +1,4 @@
+<!-- IDE 管理配置弹窗 -->
 <template>
   <div
     class="gp-mask"

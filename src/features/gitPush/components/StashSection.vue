@@ -1,3 +1,4 @@
+<!-- Git Stash 储藏管理区 -->
 <template>
   <div class="gp-stash-wrap">
     <div class="gp-stash-header">

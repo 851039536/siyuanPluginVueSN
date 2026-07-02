@@ -1,3 +1,5 @@
+// IDE 配置管理逻辑（打开项目/终端/资源管理器）
+// IDE 配置管理逻辑
 import { ref } from "vue"
 import {
   getNodeModules,

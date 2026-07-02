@@ -1,3 +1,5 @@
+// Git 项目增删改查与持久化存储
+// Git 项目增删改查操作
 import type {
   GitProject,
   GitPushManager,

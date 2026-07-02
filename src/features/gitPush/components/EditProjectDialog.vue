@@ -122,7 +122,7 @@
           <label class="gp-label">本地路径 <span class="gp-label-hint">（跨设备适配）</span></label>
           <div class="gp-edit-paths">
             <div
-              v-for="(lp, idx) in allPathsList"
+              v-for="(_lp, idx) in allPathsList"
               :key="idx"
               class="gp-edit-path-row"
             >

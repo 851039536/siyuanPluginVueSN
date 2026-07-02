@@ -1115,9 +1115,6 @@ const {
   doStashApply,
   doStashDrop,
   generateStashDesc,
-  addRemoteOp,
-  removeRemoteOp,
-  editRemoteOp,
   fetchAllRemotes,
   // Tag 管理
   tagsCache,

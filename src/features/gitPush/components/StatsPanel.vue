@@ -1,3 +1,4 @@
+<!-- Git 项目统计概览面板 -->
 <template>
   <div class="gp-stats-panel">
     <!-- 总览卡片 -->

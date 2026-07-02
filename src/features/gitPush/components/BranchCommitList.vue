@@ -1,3 +1,4 @@
+<!-- 分支与提交记录列表 -->
 <template>
   <div class="bcl-panel">
     <div

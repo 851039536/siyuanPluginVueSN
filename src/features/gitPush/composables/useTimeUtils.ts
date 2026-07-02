@@ -1,3 +1,4 @@
+// Git 项目时间格式化与排序工具
 import type { GitProject } from "../types"
 
 /** 与时间/排序相关的纯工具函数 */

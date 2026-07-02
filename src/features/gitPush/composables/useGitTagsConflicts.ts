@@ -1,3 +1,5 @@
+// Git 标签与提交模板冲突管理
+// Git 标签与冲突管理逻辑
 import type { Ref } from "vue"
 import type {
   CommitTemplate,

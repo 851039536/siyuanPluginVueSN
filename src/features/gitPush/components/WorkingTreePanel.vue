@@ -1,3 +1,4 @@
+<!-- Git 工作区文件变更面板 -->
 <template>
   <div class="wt-panel">
     <!-- 工作区摘要条（可点击展开） -->

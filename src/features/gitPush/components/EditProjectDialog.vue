@@ -286,7 +286,7 @@
         <div class="gp-help-wrap">
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm gp-help-btn"
-            :title="i18n.helpTitle || '帮助说明'"
+            :title="isZh ? '帮助说明' : 'Help'"
             @click="showHelp = !showHelp"
           >
             <Icon icon="mdi:help-circle-outline" height="14" />
@@ -298,7 +298,7 @@
           >
             <div class="gp-help-header">
               <Icon icon="mdi:information-outline" height="14" />
-              <span>{{ i18n.helpTitle || '帮助说明' }}</span>
+              <span>{{ isZh ? '帮助说明' : 'Help' }}</span>
               <button
                 class="vp-btn vp-btn--ghost vp-btn--sm"
                 style="margin-left:auto"
@@ -308,21 +308,13 @@
               </button>
             </div>
             <div class="gp-help-body">
-              <div class="gp-help-item">
-                <Icon icon="mdi:folder-outline" height="13" class="gp-help-item-icon" />
-                <p>{{ i18n.helpLocalPath || '本地路径说明' }}</p>
-              </div>
-              <div class="gp-help-item">
-                <Icon icon="mdi:link-variant" height="13" class="gp-help-item-icon" />
-                <p>{{ i18n.helpRepoUrl || '仓库链接说明' }}</p>
-              </div>
-              <div class="gp-help-item">
-                <Icon icon="mdi:source-repository" height="13" class="gp-help-item-icon" />
-                <p>{{ i18n.helpGitRemote || 'Git远程仓库说明' }}</p>
-              </div>
-              <div class="gp-help-item">
-                <Icon icon="mdi:database-outline" height="13" class="gp-help-item-icon" />
-                <p>{{ i18n.helpPersistence || '持久化说明' }}</p>
+              <div
+                v-for="item in helpItems"
+                :key="item.icon"
+                class="gp-help-item"
+              >
+                <Icon :icon="item.icon" height="13" class="gp-help-item-icon" />
+                <p>{{ isZh ? item.textZh : item.textEn }}</p>
               </div>
             </div>
             <div class="gp-help-footer">
@@ -330,7 +322,7 @@
                 class="vp-btn vp-btn--primary vp-btn--sm"
                 @click="showHelp = false"
               >
-                {{ i18n.helpSave || '知道了' }}
+                {{ isZh ? '知道了' : 'Got it' }}
               </button>
             </div>
           </div>
@@ -362,6 +354,7 @@ import type {
 import { PLATFORM_META } from "../types"
 import { Icon } from "@iconify/vue"
 import {
+  computed,
   reactive,
   ref,
 } from "vue"
@@ -431,6 +424,33 @@ const newRemoteUrl = ref("")
 const editRemoteName = ref("")
 const editRemoteUrl = ref("")
 const showHelp = ref(false)
+
+// 语言检测：根据现有 i18n 文本判断
+const isZh = computed(() => (props.i18n.cancel || '取消') === '取消')
+
+// 帮助项（硬编码，不依赖 i18n JSON）
+const helpItems = [
+  {
+    icon: 'mdi:folder-outline',
+    textZh: '🗂️ 本地路径（跨设备适配）\n为同一项目配置多台电脑上的本地路径。Git 操作时会按顺序检测，自动使用第一个存在的有效路径。例如：家里电脑路径 E:\\projects\\repo，公司电脑路径 D:\\work\\repo，无需手动切换。路径可随时编辑、删除、新增，至少保留一个。',
+    textEn: '🗂️ Local Paths (Cross-Device)\nConfigure multiple local paths for the same project across different computers. Git operations detect the first valid path automatically. Example: home PC at E:\\projects\\repo, office PC at D:\\work\\repo — no manual switching needed. Paths can be edited, deleted, or added anytime; keep at least one.',
+  },
+  {
+    icon: 'mdi:link-variant',
+    textZh: '🔗 仓库链接（持久化存储）\n手动填写的远程仓库 URL（GitHub/Gitee/Gitea/CNB），通过思源插件存储 API 持久化保存到 workspace/data/storage/petal/ 目录。即使本地 .git/config 中没有配置 remote，URL 也不会丢失。使用思源同步（S3/WebDAV）后，换电脑可自动恢复所有链接。',
+    textEn: '🔗 Repo URLs (Persistent Storage)\nManually entered remote repository URLs (GitHub/Gitee/Gitea/CNB), persisted via the SiYuan plugin storage API to workspace/data/storage/petal/. URLs are preserved even when the local .git/config has no remote configured. After workspace sync (S3/WebDAV), all URLs auto-recover on other devices.',
+  },
+  {
+    icon: 'mdi:source-repository',
+    textZh: '📦 Git 远程仓库（自动检测）\n从当前有效本地路径的 .git/config 中通过 git remote -v 自动检测。系统会自动识别平台类型（GitHub/Gitee 等）并映射到对应字段。点击「编辑」可修改 URL，点击「删除」移除 remote 配置。修改会同时作用于本地 git 仓库和持久化数据。若当前电脑路径不存在，将显示「暂无远程仓库」。',
+    textEn: '📦 Git Remotes (Auto-Detection)\nDetected from the valid local path\'s .git/config via git remote -v. The system auto-identifies platform types (GitHub/Gitee, etc.) and maps them to the correct fields. Click Edit to modify a URL, Delete to remove a remote. Changes apply to both the local git repo and persistent data. If no valid local path exists, "No remotes" will be shown.',
+  },
+  {
+    icon: 'mdi:database-outline',
+    textZh: '💾 数据持久化机制\n所有项目数据（名称、路径、标签、分类、状态、备注、远程仓库 URL 等）均通过思源原生 plugin.saveData() API 保存为 JSON 文件，存储于当前工作空间的 data/storage/petal/<插件名>/ 目录下。数据随工作空间同步（S3/WebDAV）自动跨设备可用，无需额外配置。',
+    textEn: '💾 Data Persistence\nAll project data (name, paths, tags, categories, status, notes, remote URLs, etc.) is saved via SiYuan\'s native plugin.saveData() API as JSON files under workspace/data/storage/petal/<plugin>/. Data syncs automatically with workspace sync (S3/WebDAV) for seamless cross-device access.',
+  },
+]
 
 // 统一路径列表管理（所有路径平等，均可编辑删除，至少保留 1 个）
 const allPathsList = ref<string[]>([...props.allPaths])

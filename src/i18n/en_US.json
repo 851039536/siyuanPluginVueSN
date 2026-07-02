@@ -1054,13 +1054,7 @@
     "fetchAll": "Fetch Remotes",
     "fetchHint": "Fetch latest tracking branches from remotes (no merge)",
     "fetchSuccess": "Fetched {0} remote(s)",
-    "fetchError": "Fetch failed: {0}",
-    "helpTitle": "Help",
-    "helpLocalPath": "Local Paths: Configure paths for the same project on different computers. Git operations auto-detect the first valid path, no manual switching needed.",
-    "helpRepoUrl": "Repo URLs: Manually entered remote URLs, persisted via SiYuan storage API. Auto-recovered after workspace sync (S3/WebDAV) across devices.",
-    "helpGitRemote": "Git Remotes: Auto-detected from local .git/config. Edit/add/delete operations execute on the valid local path; remote names and URLs auto-map to platforms.",
-    "helpPersistence": "Data Persistence: All project data (paths, URLs, tags, categories, etc.) is saved via the SiYuan plugin storage API to workspace/data/storage/petal/. Sync the workspace for cross-device access.",
-    "helpSave": "Got it"
+    "fetchError": "Fetch failed: {0}"
   },
   "heatmapMarker": {
     "title": "Heatmap Marker",

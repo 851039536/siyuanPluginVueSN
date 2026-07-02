@@ -106,6 +106,7 @@ onMounted(() => {
 - **全局样式**：`@use "@/index.scss" as *;`
 - **优先思源内置图标** 或 @iconify/vue
 - **图标规则**：禁止使用 emoji 表情作为图标。使用 `src/config/icons.ts` 中 `FEATURE_ICONS` / `COMMON_ICONS` 已注册的 Iconify 图标（`mdi:xxx`、`carbon:xxx` 等）。需要新图标时在 `icons.ts` 注册映射后引用，浏览图标 https://icon-sets.iconify.design/
+- **文件头注释**：每个 `.ts` / `.vue` / `.scss` 文件顶部必须包含简要功能说明注释，格式见 [CLAUDE_RULES.md § 强制规则：文件头注释](./CLAUDE_RULES.md#强制规则文件头注释)
 
 ## 关键文件速查
 

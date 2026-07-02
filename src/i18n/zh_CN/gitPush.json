@@ -99,6 +99,11 @@
     "pushBranchHead": "仅当前分支",
     "pushBranchHint": "仅当前分支模式更快，避免推送无变更的其他分支",
     "pullConfirm": "确认拉取",
-    "pullConfirmBody": "将从 {0} 拉取代码，可能覆盖本地修改。确定要继续吗？"
+    "pullConfirmBody": "将从 {0} 拉取代码，可能覆盖本地修改。确定要继续吗？",
+    "fetch": "Fetch",
+    "fetchAll": "更新远程状态",
+    "fetchHint": "从远程获取最新追踪分支（不合并代码），用于刷新推送状态",
+    "fetchSuccess": "已更新 {0} 个远程",
+    "fetchError": "更新失败: {0}"
   }
 }

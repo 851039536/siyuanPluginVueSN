@@ -320,8 +320,15 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     manager.cancelOp(id)
   }
 
-  async function loadPushStatus(id: string, opts?: { branch?: string }) {
-    pushStatuses.value[id] = await manager.checkPushStatus(id, opts ? { branch: opts.branch } : undefined)
+  /** Fetch 所有已配置远程（仅更新跟踪分支，不合并代码）+ 刷新推送状态 */
+  async function fetchAllRemotes(id: string) {
+    const result = await manager.fetchAllForProject(id)
+    await loadPushStatus(id)
+    return result
+  }
+
+  async function loadPushStatus(id: string, opts?: { branch?: string; fetchFirst?: boolean }) {
+    pushStatuses.value[id] = await manager.checkPushStatus(id, opts ? { branch: opts.branch, fetchFirst: opts.fetchFirst } : undefined)
   }
 
   async function loadWorkingTree(id: string, skipRefresh = false, branch?: string) {
@@ -542,5 +549,6 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     addRemoteOp,
     removeRemoteOp,
     editRemoteOp,
+    fetchAllRemotes,
   }
 }

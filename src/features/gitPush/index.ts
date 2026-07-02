@@ -1,3 +1,4 @@
+// gitPush 功能注册入口与图标注入
 import type { Plugin } from "siyuan"
 import { GitPushManager } from "./types"
 

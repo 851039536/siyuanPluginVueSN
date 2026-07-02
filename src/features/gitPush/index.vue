@@ -760,6 +760,27 @@
                     />
                     <span>{{ r.label }}</span>
                   </button>
+                  <!-- Fetch 按钮 -->
+                  <button
+                    class="vp-btn vp-btn--ghost vp-btn--sm gp-action-btn gp-fetch-btn"
+                    :class="{ 'gp-action-btn--active': fetching[project.id] }"
+                    :disabled="!hasAnyRemote(project) || isPulling(project.id) || isPushing(project.id) || fetching[project.id]"
+                    :title="i18n.fetchHint || '获取最新远程状态'"
+                    @click="handleFetchAll(project.id)"
+                  >
+                    <Icon
+                      v-if="fetching[project.id]"
+                      icon="mdi:loading"
+                      class="gp-spin"
+                      height="12"
+                    />
+                    <Icon
+                      v-else
+                      icon="mdi:cloud-download"
+                      height="12"
+                    />
+                    <span>{{ i18n.fetchAll || 'Fetch' }}</span>
+                  </button>
                 </div>
               </div>
 
@@ -1200,6 +1221,7 @@ const {
   addRemoteOp,
   removeRemoteOp,
   editRemoteOp,
+  fetchAllRemotes,
   // Tag 管理
   tagsCache,
   tagLoading,
@@ -1371,6 +1393,8 @@ const editingNameInput = ref("")
 const refreshingAll = ref(false)
 /** 全局刷新防抖时间戳 */
 let allRefreshLastTime = 0
+/** FETCH 操作加载中 id → true */
+const fetching = ref<Record<string, boolean>>({})
 /** IDE 打开菜单：当前打开的项目 id 集合 */
 const openIdeMenu = ref(new Set<string>())
 /** 提交输出 id → text */
@@ -1567,7 +1591,7 @@ async function handleRefresh(id: string) {
     // 并行执行：remote 检测 + push 状态一组，工作区/日志/分支/stash 一组
     await Promise.all([
       refreshRemotes(id),
-      loadPushStatus(id),
+      loadPushStatus(id, { fetchFirst: true }),
     ])
     await Promise.all([
       loadWorkingTree(id),
@@ -1680,6 +1704,24 @@ async function handleCopyUrl(url: string) {
 /** 复制推送/拉取输出文本 */
 async function handleCopyOutput(text: string) {
   await copyToClipboard(text)
+}
+
+/** 判断项目是否配置了任何远程 */
+function hasAnyRemote(project: GitProject): boolean {
+  return !!(project.githubRemote || project.giteeRemote || project.giteaRemote || project.cnbRemote)
+}
+
+/** Fetch 所有远程 + 刷新状态 */
+async function handleFetchAll(id: string) {
+  fetching.value = { ...fetching.value, [id]: true }
+  try {
+    await fetchAllRemotes(id)
+  } catch (e: any) {
+    showMessage(e?.message || "Fetch 失败", 5000, "error")
+  } finally {
+    delete fetching.value[id]
+    fetching.value = { ...fetching.value }
+  }
 }
 
 function handleRemove(project: any) {

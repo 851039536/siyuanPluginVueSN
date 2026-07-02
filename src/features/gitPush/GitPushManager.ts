@@ -1,3 +1,4 @@
+// Git 推送任务管理与同步调度
 import type { Plugin } from "siyuan"
 import type {
   BranchInfo,
@@ -567,9 +568,50 @@ export class GitPushManager {
   }
 
   /**
-   * 检查项目各远程的推送状态
+   * Fetch 单个远程（仅更新远程跟踪分支，不合并代码）
    */
-  async checkPushStatus(id: string, opts?: { branch?: string }): Promise<PushStatusInfo> {
+  private async fetchRemote(cwd: string, remoteName: string): Promise<string> {
+    return await this.execGit(cwd, ["fetch", remoteName])
+  }
+
+  /**
+   * Fetch 项目所有已配置远程，仅更新跟踪分支不合并代码
+   */
+  async fetchAllForProject(id: string): Promise<{ fetched: string[]; errors: string[] }> {
+    const projects = await this.getProjects()
+    const project = projects.find((p) => p.id === id)
+    if (!project) return { fetched: [], errors: [] }
+
+    const cwd = resolveValidPath(project)
+    const remotesToFetch: string[] = []
+    for (const pm of PLATFORM_META) {
+      const name = project[pm.remoteProp] as string | undefined
+      if (name) remotesToFetch.push(name)
+    }
+
+    if (remotesToFetch.length === 0) {
+      return { fetched: [], errors: [] }
+    }
+
+    const fetched: string[] = []
+    const errors: string[] = []
+    const results = await Promise.allSettled(
+      remotesToFetch.map((name) => this.fetchRemote(cwd, name).then(() => name)),
+    )
+
+    for (const r of results) {
+      if (r.status === "fulfilled") { fetched.push(r.value) }
+      else { errors.push(r.reason?.message || String(r.reason)) }
+    }
+
+    return { fetched, errors }
+  }
+
+  /**
+   * 检查项目各远程的推送状态
+   * @param opts.fetchFirst 是否先 fetch 远程再检查（默认 false，手动刷新时传 true）
+   */
+  async checkPushStatus(id: string, opts?: { branch?: string; fetchFirst?: boolean }): Promise<PushStatusInfo> {
     const projects = await this.getProjects()
     const project = projects.find((p) => p.id === id)
     const emptyResult: PushStatusInfo = {
@@ -592,6 +634,11 @@ export class GitPushManager {
       status.branch = opts?.branch ?? await this.execGit(cwd, ["rev-parse", "--abbrev-ref", "HEAD"])
     } catch {
       return emptyResult
+    }
+
+    // 如果指定 fetchFirst，先并行 fetch 所有已配置远程以更新跟踪分支
+    if (opts?.fetchFirst) {
+      await this.fetchAllForProject(id)
     }
 
     // 由 PLATFORM_META 驱动检查

@@ -91,6 +91,7 @@ export function useGitPush(manager: GitPushManager) {
     addRemoteOp: gitOps.addRemoteOp,
     removeRemoteOp: gitOps.removeRemoteOp,
     editRemoteOp: gitOps.editRemoteOp,
+    fetchAllRemotes: gitOps.fetchAllRemotes,
 
     // ── Tag + 冲突 + 模板 + 扫描 ──
     tagsCache: tagsConflicts.tagsCache,

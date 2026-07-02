@@ -259,6 +259,7 @@
         <Icon
           icon="mdi:magnify"
           class="gp-search-icon"
+          height="12"
         />
         <input
           v-model="searchQuery"
@@ -293,6 +294,7 @@
           <Icon
             icon="mdi:source-repository"
             width="48"
+            height="48"
           />
         </div>
         <div class="gp-empty-text">

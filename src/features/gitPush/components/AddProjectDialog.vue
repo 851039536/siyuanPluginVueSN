@@ -11,7 +11,7 @@
           class="vp-btn vp-btn--ghost vp-btn--sm"
           @click="$emit('close')"
         >
-          <Icon icon="mdi:close" />
+          <Icon icon="mdi:close" height="12" />
         </button>
       </div>
       <div class="gp-dialog-body">
@@ -37,7 +37,7 @@
               class="vp-btn vp-btn--ghost vp-btn--sm"
               @click="$emit('pick-dir')"
             >
-              <Icon icon="mdi:folder-open" />
+              <Icon icon="mdi:folder-open" height="12" />
             </button>
           </div>
         </div>
@@ -77,6 +77,7 @@
           <Icon
             icon="mdi:loading"
             class="gp-spin"
+            height="12"
           />
           {{ i18n.checkingGit || '正在检查 git 仓库...' }}
         </div>

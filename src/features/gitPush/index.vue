@@ -391,7 +391,12 @@
                   class="gp-card-path"
                   :title="project.path"
                 >
-                  {{ project.path }}
+                  <Icon
+                    icon="mdi:folder-outline"
+                    height="11"
+                    class="gp-path-icon"
+                  />
+                  <span class="gp-path-text">{{ project.path }}</span>
                   <span
                     v-if="project.localPaths?.length"
                     class="gp-multi-path-badge"

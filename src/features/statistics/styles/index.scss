@@ -1,15 +1,14 @@
 // Statistics Shared Variables, Mixins & Utility Classes
-// Container styles (.statistics-panel, .statistics-content) live in index.vue.
 
 @use '../../../variables' as *;
-@use '../../superPanel/styles/variables' as *;
+@forward '../../../variables';
 @use '../../superPanel/styles/mixins' as *;
 
 // ========== Variables ==========
-$stats-card-radius: 4px;
+$stats-card-radius: $radius-sm;
 
-// Codex monospace font
-$font-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+// Codex monospace font — delegates to global $vp-mono
+$font-mono: $vp-mono;
 
 $gradient-primary: linear-gradient(135deg, var(--b3-theme-primary) 0%, var(--b3-theme-primary-light, #5d87ff) 100%);
 $gradient-surface: linear-gradient(180deg, var(--b3-theme-surface) 0%, var(--b3-theme-background) 100%);
@@ -142,7 +141,7 @@ $color-rank-bronze: #cd7f32;
   .summary-card {
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
-    border-radius: 4px;
+    border-radius: $radius-sm;
     padding: 10px 8px;
     text-align: center;
 
@@ -166,9 +165,9 @@ $color-rank-bronze: #cd7f32;
 }
 
 @mixin small-action-btn {
-  padding: 4px 10px;
+  padding: $spacing-1 10px;
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: $radius-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-family: $font-mono;
@@ -210,4 +209,223 @@ $color-rank-bronze: #cd7f32;
   text-transform: uppercase;
   color: var(--b3-theme-on-surface);
   opacity: 0.65;
+}
+
+// ========== Main Container (index.vue) ==========
+
+.statistics-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  font-family: $font-body;
+
+  --stat-color-success: #2da44e;
+  --stat-color-danger: #cf222e;
+  --stat-color-warning: #d97706;
+}
+
+.statistics-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: $spacing-3;
+  background: var(--b3-theme-background);
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--b3-border-color);
+    border-radius: $radius-sm;
+    &:hover {
+      background: var(--b3-theme-on-surface);
+      opacity: 0.2;
+    }
+  }
+}
+
+.chart-section {
+  padding: 6px;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+
+  .section-title {
+    margin-bottom: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &::before {
+      content: '';
+      display: inline-block;
+      width: 3px;
+      height: 14px;
+      background: var(--b3-theme-primary);
+      border-radius: $radius-sm;
+    }
+  }
+}
+
+.tab-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  padding: 0 $spacing-3;
+  background: var(--b3-theme-surface);
+  border-bottom: 1px solid var(--b3-border-color);
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+
+.tab-item {
+  padding: $spacing-2 14px;
+  border: none;
+  background: transparent;
+  color: var(--b3-theme-on-surface-light);
+  font-family: $font-body;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s;
+
+  &:hover {
+    color: var(--b3-theme-on-surface);
+  }
+
+  &.active {
+    color: var(--b3-theme-primary);
+    font-weight: 700;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 8px;
+      right: 8px;
+      height: 2px;
+      background: var(--b3-theme-primary);
+      border-radius: 1px 1px 0 0;
+    }
+  }
+}
+
+.tab-badge {
+  font-family: $font-mono;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: $radius-sm;
+  background: rgba(var(--b3-theme-primary-rgb), 0.1);
+  color: var(--b3-theme-primary);
+  font-weight: 700;
+}
+
+.notebook-distribution-tab {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto 1fr auto auto auto;
+  gap: $spacing-3;
+  align-items: stretch;
+}
+
+.dist-summary-bar {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-3;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  flex-shrink: 0;
+}
+
+.dist-summary-item {
+  display: flex;
+  align-items: baseline;
+  gap: $spacing-1;
+}
+
+.dist-summary-label {
+  font-size: 11px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+}
+
+.dist-summary-value {
+  font-family: $font-mono;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--b3-theme-primary);
+}
+
+.dist-summary-sep {
+  color: var(--b3-border-color);
+  font-size: 14px;
+}
+
+.dist-left {
+  grid-row: 2 / 4;
+  grid-column: 1;
+}
+
+.dist-right-top {
+  grid-row: 2;
+  grid-column: 2;
+}
+
+.dist-right-bottom {
+  grid-row: 3;
+  grid-column: 2;
+}
+
+.dist-bottom {
+  grid-row: 4;
+  grid-column: 1 / -1;
+}
+
+.dist-table {
+  grid-row: 5;
+  grid-column: 1 / -1;
+  min-height: 200px;
+}
+
+.dist-section {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  padding: $spacing-3;
+}
+
+.dist-section-title {
+  margin: 0 0 10px 0;
+  font-family: $font-mono;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.loading-wrapper {
+  position: relative;
+  height: 200px;
 }

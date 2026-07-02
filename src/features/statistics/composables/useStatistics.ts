@@ -1,3 +1,5 @@
+// 核心统计数据管理（viewMode/dayRange/刷新）
+
 import type {
   ComputedRef,
   Ref,

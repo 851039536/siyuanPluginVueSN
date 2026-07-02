@@ -1,3 +1,5 @@
+// 热力图数据查询（按指标/笔记本筛选）
+
 import type { ChangedDoc, HeatmapMetric } from "../types"
 import { lsNotebooks } from "@/api"
 import { isValidDateStr } from "../utils"

@@ -1,3 +1,5 @@
+// 文档变更查询（指定日期/范围/最近更新）
+
 import type {
   ChangedDoc,
   RecentUpdatedDoc,

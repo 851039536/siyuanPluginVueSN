@@ -792,7 +792,7 @@ function getDiff(
   // ===== 趋势图表 =====
   .trend-chart-section {
     @include stats.stats-card-base;
-    border-radius: 4px;
+    border-radius: stats.$radius-sm;
     margin-bottom: 12px;
 
     .chart-header {
@@ -814,10 +814,10 @@ function getDiff(
 
       .metric-tab {
         padding: 3px 8px;
-        border-radius: 4px;
+        border-radius: stats.$radius-sm;
         border: 1px solid transparent;
         background: transparent;
-        font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+        font-family: stats.$font-mono;
         font-size: 10px;
         font-weight: 600;
         color: var(--b3-theme-on-surface);
@@ -861,14 +861,14 @@ function getDiff(
           font-size: 10px;
           fill: var(--b3-theme-on-surface);
           opacity: 0.45;
-          font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+          font-family: stats.$font-mono;
         }
 
         .chart-x-label {
           font-size: 10px;
           fill: var(--b3-theme-on-surface);
           opacity: 0.45;
-          font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+          font-family: stats.$font-mono;
         }
 
         .chart-area {
@@ -919,7 +919,7 @@ function getDiff(
         padding: 6px 10px;
         background: var(--b3-theme-surface);
         border: 1px solid var(--b3-theme-primary);
-        border-radius: 4px;
+        border-radius: stats.$radius-sm;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
         font-size: 11px;
         pointer-events: none;
@@ -927,7 +927,7 @@ function getDiff(
         white-space: nowrap;
 
         .tooltip-date {
-          font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+          font-family: stats.$font-mono;
           font-size: 9px;
           font-weight: 700;
           letter-spacing: 0.04em;
@@ -937,7 +937,7 @@ function getDiff(
         }
 
         .tooltip-value {
-          font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+          font-family: stats.$font-mono;
           font-weight: 700;
           color: var(--b3-theme-primary);
 
@@ -966,7 +966,7 @@ function getDiff(
 
     .comparison-card {
       @include stats.stats-card-base;
-      border-radius: 4px;
+      border-radius: stats.$radius-sm;
 
       .comparison-header {
         display: flex;
@@ -981,7 +981,7 @@ function getDiff(
         }
 
         .comparison-title {
-          font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+          font-family: stats.$font-mono;
           font-size: 11px;
           font-weight: 700;
           letter-spacing: 0.04em;
@@ -1006,7 +1006,7 @@ function getDiff(
           }
 
           .item-label {
-            font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+            font-family: stats.$font-mono;
             font-size: 10px;
             font-weight: 700;
             letter-spacing: 0.04em;
@@ -1039,8 +1039,8 @@ function getDiff(
 
           .change-tag {
             padding: 1px 4px;
-            border-radius: 4px;
-            font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+            border-radius: stats.$radius-sm;
+            font-family: stats.$font-mono;
             font-size: 10px;
             font-weight: 700;
 
@@ -1084,7 +1084,7 @@ function getDiff(
     .trend-stats-inline {
       display: flex;
       gap: 16px;
-      font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+      font-family: stats.$font-mono;
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.04em;
@@ -1110,13 +1110,13 @@ function getDiff(
       overflow-y: auto;
       overflow-x: hidden;
       border: 1px solid var(--b3-border-color);
-      border-radius: 4px;
+      border-radius: stats.$radius-sm;
       @include scrollbar-thin;
 
       .historical-table {
         width: 100%;
         border-collapse: collapse;
-        font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+        font-family: stats.$font-mono;
         font-size: 10px;
 
         thead {
@@ -1128,7 +1128,7 @@ function getDiff(
           th {
             padding: 5px 8px;
             text-align: left;
-            font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+            font-family: stats.$font-mono;
             font-size: 10px;
             font-weight: 700;
             letter-spacing: 0.04em;
@@ -1180,7 +1180,7 @@ function getDiff(
 
               &.col-date {
                 font-weight: 700;
-                font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+                font-family: stats.$font-mono;
                 color: var(--b3-theme-primary);
               }
 
@@ -1201,8 +1201,8 @@ function getDiff(
               .diff-tag {
                 display: inline-block;
                 padding: 1px 6px;
-                border-radius: 4px;
-                font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+                border-radius: stats.$radius-sm;
+                font-family: stats.$font-mono;
                 font-weight: 700;
                 font-size: 10px;
                 margin: 0 1px;

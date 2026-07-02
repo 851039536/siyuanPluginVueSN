@@ -124,7 +124,7 @@ $stats-header-height: 56px;
   }
 
   .last-update {
-    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-family: stats.$font-mono;
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.06em;
@@ -157,7 +157,7 @@ $stats-header-height: 56px;
   width: 28px;
   height: 28px;
   border: 1px solid transparent;
-  border-radius: $radius-sm;
+  border-radius: stats.$radius-sm;
   background: transparent;
   color: var(--b3-theme-on-surface);
   cursor: pointer;
@@ -199,7 +199,7 @@ $stats-header-height: 56px;
 }
 
 .storage-key {
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -218,7 +218,7 @@ $stats-header-height: 56px;
 
 .storage-path {
   flex: 1;
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   color: var(--b3-theme-on-surface);
   opacity: 0.4;
   font-size: 10px;

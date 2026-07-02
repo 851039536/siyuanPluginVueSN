@@ -165,7 +165,7 @@ function getBarWidth(count: number): string {
       align-items: center;
       gap: 6px;
       padding: 4px 6px;
-      border-radius: 4px;
+      border-radius: stats.$radius-sm;
       transition: background 0.15s, box-shadow 0.15s;
 
       &:hover {
@@ -194,14 +194,14 @@ function getBarWidth(count: number): string {
         flex: 1;
         height: 14px;
         background: rgba(var(--b3-theme-on-surface-rgb), 0.06);
-        border-radius: 4px;
+        border-radius: stats.$radius-sm;
         overflow: hidden;
         min-width: 20px;
 
         .row-bar {
           height: 100%;
           background: stats.$gradient-primary;
-          border-radius: 4px;
+          border-radius: stats.$radius-sm;
           transition: width 0.3s ease;
           min-width: 2px;
         }

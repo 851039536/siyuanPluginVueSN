@@ -1,3 +1,5 @@
+// 基础统计查询（总数/标签/图片/写作活跃度/块类型）
+
 import type {
   BlockTypeStat,
   StatisticsData,
@@ -11,6 +13,7 @@ import {
   IMAGE_EXTENSIONS,
   ZERO_STATISTICS,
 } from "../types/constants"
+import { padZero } from "../utils"
 import {
   executeSql,
   formatDateTime,
@@ -118,17 +121,16 @@ async function getWritingActivity(): Promise<{ activeDays: number, writingStreak
   const activeDays = activeDateSet.size
 
   // Calculate streak: count consecutive days ending today
-  const pad = (n: number) => n < 10 ? `0${n}` : `${n}`
   let streak = 0
   const checkDate = new Date(today)
   // Include today if active, otherwise start from yesterday
-  const todayKey = `${checkDate.getFullYear()}${pad(checkDate.getMonth() + 1)}${pad(checkDate.getDate())}`
+  const todayKey = `${checkDate.getFullYear()}${padZero(checkDate.getMonth() + 1)}${padZero(checkDate.getDate())}`
   if (!activeDateSet.has(todayKey)) {
     checkDate.setDate(checkDate.getDate() - 1)
   }
 
   while (true) {
-    const key = `${checkDate.getFullYear()}${pad(checkDate.getMonth() + 1)}${pad(checkDate.getDate())}`
+    const key = `${checkDate.getFullYear()}${padZero(checkDate.getMonth() + 1)}${padZero(checkDate.getDate())}`
     if (activeDateSet.has(key)) {
       streak++
       checkDate.setDate(checkDate.getDate() - 1)

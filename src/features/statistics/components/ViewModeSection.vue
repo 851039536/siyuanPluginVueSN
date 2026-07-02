@@ -269,7 +269,7 @@ const periodAvgLabel = computed(() => {
     padding: 3px;
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
-    border-radius: 4px;
+    border-radius: stats.$radius-sm;
     align-items: center;
   }
 
@@ -280,14 +280,14 @@ const periodAvgLabel = computed(() => {
     background: transparent;
     color: var(--b3-theme-on-surface);
     cursor: pointer;
-    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-family: stats.$font-mono;
     font-size: 11px;
     font-weight: 600;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 4px;
-    border-radius: 4px;
+    border-radius: stats.$radius-sm;
     white-space: nowrap;
 
     &:hover {
@@ -315,10 +315,10 @@ const periodAvgLabel = computed(() => {
     background: var(--b3-theme-surface);
     color: var(--b3-theme-on-surface);
     cursor: pointer;
-    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-family: stats.$font-mono;
     font-size: 10px;
     font-weight: 600;
-    border-radius: 4px;
+    border-radius: stats.$radius-sm;
 
     &:hover {
       border-color: var(--b3-theme-primary);
@@ -340,10 +340,10 @@ const periodAvgLabel = computed(() => {
       width: 100%;
       padding: 6px 12px;
       border: 1px solid var(--b3-border-color);
-      border-radius: 4px;
+      border-radius: stats.$radius-sm;
       background: var(--b3-theme-surface);
       color: var(--b3-theme-on-surface);
-      font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+      font-family: stats.$font-mono;
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
@@ -372,7 +372,7 @@ const periodAvgLabel = computed(() => {
     background: stats.$gradient-surface;
 
     .stat-label {
-      font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+      font-family: stats.$font-mono;
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.06em;
@@ -383,7 +383,7 @@ const periodAvgLabel = computed(() => {
     }
 
     .stat-value {
-      font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+      font-family: stats.$font-mono;
       font-size: 16px;
       font-weight: 700;
       color: var(--b3-theme-primary);

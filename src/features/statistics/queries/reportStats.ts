@@ -1,3 +1,5 @@
+// 报告查询（年度/月度 + 趋势预测线性回归 + 对比分析）
+
 import type {
   ComparisonData,
   DailyWordCount,

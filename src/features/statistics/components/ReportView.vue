@@ -280,7 +280,7 @@ async function generate() {
   gap: 4px;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   padding: 3px;
   width: fit-content;
   margin-bottom: 12px;
@@ -289,7 +289,7 @@ async function generate() {
 .mode-btn {
   padding: 4px 14px;
   border: none;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: transparent;
   color: var(--b3-theme-on-surface-light);
   font-family: stats.$font-mono;
@@ -323,7 +323,7 @@ async function generate() {
 .report-select {
   padding: 4px 8px;
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
@@ -379,7 +379,7 @@ async function generate() {
   cursor: pointer;
   font-size: 14px;
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   transition: opacity 0.15s, background 0.15s;
 
   &:hover {
@@ -401,7 +401,7 @@ async function generate() {
   align-items: center;
   padding: 8px 4px;
   background: var(--b3-theme-background);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
 }
 
 .stat-icon {
@@ -441,7 +441,7 @@ async function generate() {
   color: var(--b3-theme-on-surface);
   padding: 6px 8px;
   background: rgba(var(--b3-theme-primary-rgb), 0.05);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   margin-bottom: 6px;
 
   strong {

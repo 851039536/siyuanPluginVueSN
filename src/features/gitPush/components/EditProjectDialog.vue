@@ -379,10 +379,10 @@ const emit = defineEmits<{
     archived: boolean
     note: string
     tags: string[]
-    githubUrl: string
-    giteeUrl: string
-    giteaUrl: string
-    cnbUrl: string
+    githubUrl?: string
+    giteeUrl?: string
+    giteaUrl?: string
+    cnbUrl?: string
     allPaths: string[]
   }]
   "edit-add-remote": [name: string, url: string]
@@ -493,6 +493,15 @@ function clearAddRemote() {
 
 function save() {
   const paths = allPathsList.value.map((p) => p.trim()).filter(Boolean)
+  // 只发送用户实际修改过的 URL 字段（与原始值比较）
+  const urlPatch: Record<string, string> = {}
+  for (const key of ["githubUrl", "giteeUrl", "giteaUrl", "cnbUrl"]) {
+    const original = (props.urlValues as Record<string, string>)[key] || ""
+    const current = urlInputs[key].trim()
+    if (current !== original) {
+      urlPatch[key] = current // 空字符串代表用户主动清空
+    }
+  }
   emit("save", {
     name: localName.value.trim(),
     status: localStatus.value,
@@ -500,11 +509,8 @@ function save() {
     archived: localArchived.value,
     note: localNote.value,
     tags: localTags.value,
-    githubUrl: urlInputs.githubUrl || "",
-    giteeUrl: urlInputs.giteeUrl || "",
-    giteaUrl: urlInputs.giteaUrl || "",
-    cnbUrl: urlInputs.cnbUrl || "",
     allPaths: paths.length > 0 ? paths : [props.project.path],
+    ...urlPatch,
   })
 }
 </script>

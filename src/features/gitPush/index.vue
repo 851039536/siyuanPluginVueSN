@@ -1714,10 +1714,10 @@ async function handleEditSaveFromDialog(data: {
   archived: boolean
   note: string
   tags: string[]
-  githubUrl: string
-  giteeUrl: string
-  giteaUrl: string
-  cnbUrl: string
+  githubUrl?: string
+  giteeUrl?: string
+  giteaUrl?: string
+  cnbUrl?: string
   allPaths: string[]
 }) {
   const project = editDialogProject.value

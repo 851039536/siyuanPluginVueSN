@@ -6,7 +6,7 @@
   >
     <div
       class="gp-dialog"
-      style="width: 420px;"
+      style="width: 580px;"
     >
       <div class="gp-dialog-header">
         <span class="gp-dialog-title">编辑项目 — {{ project.name }}</span>
@@ -283,6 +283,58 @@
         </div>
       </div>
       <div class="gp-dialog-footer">
+        <div class="gp-help-wrap">
+          <button
+            class="vp-btn vp-btn--ghost vp-btn--sm gp-help-btn"
+            :title="i18n.helpTitle || '帮助说明'"
+            @click="showHelp = !showHelp"
+          >
+            <Icon icon="mdi:help-circle-outline" height="14" />
+          </button>
+          <div
+            v-if="showHelp"
+            class="gp-help-popover"
+            @click.stop
+          >
+            <div class="gp-help-header">
+              <Icon icon="mdi:information-outline" height="14" />
+              <span>{{ i18n.helpTitle || '帮助说明' }}</span>
+              <button
+                class="vp-btn vp-btn--ghost vp-btn--sm"
+                style="margin-left:auto"
+                @click="showHelp = false"
+              >
+                <Icon icon="mdi:close" height="12" />
+              </button>
+            </div>
+            <div class="gp-help-body">
+              <div class="gp-help-item">
+                <Icon icon="mdi:folder-outline" height="13" class="gp-help-item-icon" />
+                <p>{{ i18n.helpLocalPath || '本地路径说明' }}</p>
+              </div>
+              <div class="gp-help-item">
+                <Icon icon="mdi:link-variant" height="13" class="gp-help-item-icon" />
+                <p>{{ i18n.helpRepoUrl || '仓库链接说明' }}</p>
+              </div>
+              <div class="gp-help-item">
+                <Icon icon="mdi:source-repository" height="13" class="gp-help-item-icon" />
+                <p>{{ i18n.helpGitRemote || 'Git远程仓库说明' }}</p>
+              </div>
+              <div class="gp-help-item">
+                <Icon icon="mdi:database-outline" height="13" class="gp-help-item-icon" />
+                <p>{{ i18n.helpPersistence || '持久化说明' }}</p>
+              </div>
+            </div>
+            <div class="gp-help-footer">
+              <button
+                class="vp-btn vp-btn--primary vp-btn--sm"
+                @click="showHelp = false"
+              >
+                {{ i18n.helpSave || '知道了' }}
+              </button>
+            </div>
+          </div>
+        </div>
         <button
           class="vp-btn vp-btn--ghost"
           @click="$emit('close')"
@@ -378,6 +430,7 @@ const newRemoteName = ref("github")
 const newRemoteUrl = ref("")
 const editRemoteName = ref("")
 const editRemoteUrl = ref("")
+const showHelp = ref(false)
 
 // 统一路径列表管理（所有路径平等，均可编辑删除，至少保留 1 个）
 const allPathsList = ref<string[]>([...props.allPaths])

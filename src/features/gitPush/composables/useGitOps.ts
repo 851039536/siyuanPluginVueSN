@@ -14,7 +14,11 @@ import type {
 } from "../types"
 import { ref } from "vue"
 import { PLATFORM_META } from "../types"
-import { findProject, pruneRecordCache, resolveValidPath } from "../utils"
+import {
+  findProject,
+  pruneRecordCache,
+  resolveValidPath,
+} from "../utils"
 
 /** 推送/拉取进度项 */
 export interface PushOutputEntry {
@@ -132,7 +136,8 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
   }
 
   /** 从输出条目生成纯文本（用于复制） */
-  function entriesToText(entries: PushOutputEntry[]): string {
+  function entriesToText(entries?: PushOutputEntry[]): string {
+    if (!entries) return ""
     const lines: string[] = []
     for (const e of entries) {
       lines.push(`[${e.label}] ${e.ok ? "成功" : e.skipped ? "已跳过" : "失败"} (${e.duration}ms)`)
@@ -167,7 +172,13 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
       const startedAt: Record<string, number> = {}
       const durations: Record<string, number> = {}
       for (const key of Object.keys(initProg)) {
-        pushProgress.value = { ...pushProgress.value, [id]: { ...pushProgress.value[id], [key]: "pushing" } }
+        pushProgress.value = {
+          ...pushProgress.value,
+          [id]: {
+            ...pushProgress.value[id],
+            [key]: "pushing",
+          },
+        }
         startedAt[key] = Date.now()
       }
 
@@ -179,7 +190,13 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
         if (!initProg[key]) continue
         durations[key] = Date.now() - (startedAt[key] || Date.now())
         const r = result[key] as any
-        pushProgress.value = { ...pushProgress.value, [id]: { ...pushProgress.value[id], [key]: r?.ok ? "ok" : "fail" } }
+        pushProgress.value = {
+          ...pushProgress.value,
+          [id]: {
+            ...pushProgress.value[id],
+            [key]: r?.ok ? "ok" : "fail",
+          },
+        }
       }
 
       pushOutputs.value[id] = buildOutputEntries(result, durations, getUsedPath(id))
@@ -190,7 +207,10 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
       // 异常情况：所有待处理远程标记 fail
       const failProg: Record<string, ProgressStatus> = {}
       for (const key of Object.keys(initProg)) { failProg[key] = "fail" }
-      pushProgress.value = { ...pushProgress.value, [id]: failProg }
+      pushProgress.value = {
+        ...pushProgress.value,
+        [id]: failProg,
+      }
     } finally {
       // 延迟清理进度（让 UI 显示最终状态 3 秒）
       setTimeout(() => {
@@ -202,12 +222,24 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
   }
 
   async function pushSingle(id: string, target: PlatformKey) {
-    pushProgress.value = { ...pushProgress.value, [id]: { ...pushProgress.value[id], [target]: "pushing" } }
+    pushProgress.value = {
+      ...pushProgress.value,
+      [id]: {
+        ...pushProgress.value[id],
+        [target]: "pushing",
+      },
+    }
     const startedAt = Date.now()
     try {
       const result = await manager.pushSingle(id, target)
       const duration = Date.now() - startedAt
-      pushProgress.value = { ...pushProgress.value, [id]: { ...pushProgress.value[id], [target]: result.ok ? "ok" : "fail" } }
+      pushProgress.value = {
+        ...pushProgress.value,
+        [id]: {
+          ...pushProgress.value[id],
+          [target]: result.ok ? "ok" : "fail",
+        },
+      }
 
       const pm = PLATFORM_META.find((m) => m.key === target)
       const entries: PushOutputEntry[] = [{
@@ -249,7 +281,13 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
       const startedAt: Record<string, number> = {}
       const durations: Record<string, number> = {}
       for (const key of Object.keys(initProg)) {
-        pullProgress.value = { ...pullProgress.value, [id]: { ...pullProgress.value[id], [key]: "pushing" } }
+        pullProgress.value = {
+          ...pullProgress.value,
+          [id]: {
+            ...pullProgress.value[id],
+            [key]: "pushing",
+          },
+        }
         startedAt[key] = Date.now()
       }
 
@@ -260,7 +298,13 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
         if (!initProg[key]) continue
         durations[key] = Date.now() - (startedAt[key] || Date.now())
         const r = result[key] as any
-        pullProgress.value = { ...pullProgress.value, [id]: { ...pullProgress.value[id], [key]: r?.ok ? "ok" : "fail" } }
+        pullProgress.value = {
+          ...pullProgress.value,
+          [id]: {
+            ...pullProgress.value[id],
+            [key]: r?.ok ? "ok" : "fail",
+          },
+        }
       }
 
       pullOutputs.value[id] = buildOutputEntries(result, durations, getUsedPath(id))
@@ -270,7 +314,10 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     } catch {
       const failProg: Record<string, ProgressStatus> = {}
       for (const key of Object.keys(initProg)) { failProg[key] = "fail" }
-      pullProgress.value = { ...pullProgress.value, [id]: failProg }
+      pullProgress.value = {
+        ...pullProgress.value,
+        [id]: failProg,
+      }
     } finally {
       setTimeout(() => {
         const current = { ...pullProgress.value }
@@ -281,12 +328,24 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
   }
 
   async function pullSingle(id: string, target: PlatformKey) {
-    pullProgress.value = { ...pullProgress.value, [id]: { ...pullProgress.value[id], [target]: "pushing" } }
+    pullProgress.value = {
+      ...pullProgress.value,
+      [id]: {
+        ...pullProgress.value[id],
+        [target]: "pushing",
+      },
+    }
     const startedAt = Date.now()
     try {
       const result = await manager.pullSingle(id, target)
       const duration = Date.now() - startedAt
-      pullProgress.value = { ...pullProgress.value, [id]: { ...pullProgress.value[id], [target]: result.ok ? "ok" : "fail" } }
+      pullProgress.value = {
+        ...pullProgress.value,
+        [id]: {
+          ...pullProgress.value[id],
+          [target]: result.ok ? "ok" : "fail",
+        },
+      }
 
       const pm = PLATFORM_META.find((m) => m.key === target)
       const entries: PushOutputEntry[] = [{
@@ -330,14 +389,22 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     return result
   }
 
-  async function loadPushStatus(id: string, opts?: { branch?: string; fetchFirst?: boolean }) {
-    pushStatuses.value[id] = await manager.checkPushStatus(id, opts ? { branch: opts.branch, fetchFirst: opts.fetchFirst } : undefined)
+  async function loadPushStatus(id: string, opts?: { branch?: string, fetchFirst?: boolean }) {
+    pushStatuses.value[id] = await manager.checkPushStatus(id, opts
+      ? {
+          branch: opts.branch,
+          fetchFirst: opts.fetchFirst,
+        }
+      : undefined)
   }
 
   async function loadWorkingTree(id: string, skipRefresh = false, branch?: string) {
     const project = findProject(projects, id)
     if (!project) return
-    workingTrees.value[id] = await manager.getWorkingTreeStatus(resolveValidPath(project), { skipRefresh, branch })
+    workingTrees.value[id] = await manager.getWorkingTreeStatus(resolveValidPath(project), {
+      skipRefresh,
+      branch,
+    })
   }
 
   async function loadStatsData(id: string) {
@@ -436,7 +503,10 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
 
   async function generateCommitMsg(id: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
     const project = findProject(projects, id)
-    if (!project) { return { message: "chore: update files", source: "heuristic" } }
+    if (!project) { return {
+      message: "chore: update files",
+      source: "heuristic",
+    } }
     return manager.generateCommitMessage(resolveValidPath(project))
   }
 

@@ -39,6 +39,7 @@ export const PLATFORM_META = [
     label: "GitHub",
     remoteProp: "githubRemote" as const,
     urlProp: "githubUrl" as const,
+    webUrl: "https://github.com",
   },
   {
     key: "gitee" as const,
@@ -46,6 +47,7 @@ export const PLATFORM_META = [
     label: "Gitee",
     remoteProp: "giteeRemote" as const,
     urlProp: "giteeUrl" as const,
+    webUrl: "https://gitee.com",
   },
   {
     key: "gitea" as const,
@@ -53,6 +55,7 @@ export const PLATFORM_META = [
     label: "Gitea",
     remoteProp: "giteaRemote" as const,
     urlProp: "giteaUrl" as const,
+    webUrl: "https://about.gitea.com",
   },
   {
     key: "cnb" as const,
@@ -60,6 +63,7 @@ export const PLATFORM_META = [
     label: "CNB",
     remoteProp: "cnbRemote" as const,
     urlProp: "cnbUrl" as const,
+    webUrl: "https://cnb.cool",
   },
 ]
 

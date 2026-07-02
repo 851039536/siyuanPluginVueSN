@@ -74,6 +74,10 @@
   display: flex;
   align-items: center;
   gap: $spacing-1;
+
+  .vp-btn--sm {
+    padding: 4px 6px;
+  }
 }
 
 .gp-header-sep {
@@ -91,7 +95,7 @@
 
 .gp-add-dropdown-btn {
   border-radius: $radius-sm;
-  padding: 5px 8px;
+  padding: 4px 6px;
 }
 
 .gp-add-popover {
@@ -142,7 +146,7 @@
 
 .gp-platform-dropdown-btn {
   border-radius: $radius-sm;
-  padding: 5px 2px;
+  padding: 4px 6px;
 }
 
 .gp-platform-popover {

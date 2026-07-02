@@ -44,8 +44,15 @@
             title="平台官网"
             @click.stop="showPlatformMenu = !showPlatformMenu"
           >
-            <Icon icon="mdi:web" height="12" />
-            <Icon icon="mdi:unfold-more-horizontal" height="12" style="margin-left:1px;opacity:0.5" />
+            <Icon
+              icon="mdi:web"
+              height="12"
+            />
+            <Icon
+              icon="mdi:unfold-more-horizontal"
+              height="12"
+              style="margin-left:1px;opacity:0.5"
+            />
           </button>
           <div
             v-if="showPlatformMenu"
@@ -53,10 +60,10 @@
             @click.stop
           >
             <button
-              v-for="pl in PLATFORM_LINKS"
+              v-for="pl in PLATFORM_META"
               :key="pl.key"
               class="gp-platform-item"
-              @click="showPlatformMenu = false; handleOpenWeb(pl.url)"
+              @click="showPlatformMenu = false; handleOpenWeb(pl.webUrl)"
             >
               <Icon
                 :icon="pl.icon"
@@ -71,14 +78,20 @@
           class="vp-btn vp-btn--ghost vp-btn--sm"
           @click="showCatDialog = true"
         >
-          <Icon icon="mdi:tag-outline" height="12" />
+          <Icon
+            icon="mdi:tag-outline"
+            height="12"
+          />
         </button>
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
           title="设置"
           @click="showSettings = true"
         >
-          <Icon icon="mdi:cog-outline" height="12" />
+          <Icon
+            icon="mdi:cog-outline"
+            height="12"
+          />
         </button>
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
@@ -111,7 +124,10 @@
             class="vp-btn vp-btn--ghost gp-add-dropdown-btn"
             @click.stop="showAddMenu = !showAddMenu"
           >
-            <Icon icon="mdi:plus" height="12" />
+            <Icon
+              icon="mdi:plus"
+              height="12"
+            />
           </button>
           <div
             v-if="showAddMenu"
@@ -377,7 +393,7 @@
                   <span
                     v-if="project.localPaths?.length"
                     class="gp-multi-path-badge"
-                    :title="'已配置 ' + (project.localPaths.length + 1) + ' 个设备路径'"
+                    :title="`已配置 ${project.localPaths.length + 1} 个设备路径`"
                   >+{{ project.localPaths.length }}路径</span>
                 </div>
                 <!-- 标签 + 最后活动时间 -->
@@ -466,54 +482,23 @@
                     {{ cat.name }}
                   </option>
                 </select>
-                <button
-                  v-if="project.githubUrl"
-                  class="vp-btn vp-btn--ghost vp-btn--sm"
-                  title="打开 GitHub（右键复制链接）"
-                  @click="handleOpenWeb(project.githubUrl)"
-                  @contextmenu.prevent="handleCopyUrl(project.githubUrl)"
+                <template
+                  v-for="pm in PLATFORM_META"
+                  :key="pm.key"
                 >
-                  <Icon
-                    icon="mdi:github"
-                    height="12"
-                  />
-                </button>
-                <button
-                  v-if="project.giteeUrl"
-                  class="vp-btn vp-btn--ghost vp-btn--sm"
-                  title="打开 Gitee（右键复制链接）"
-                  @click="handleOpenWeb(project.giteeUrl)"
-                  @contextmenu.prevent="handleCopyUrl(project.giteeUrl)"
-                >
-                  <Icon
-                    icon="mdi:git"
-                    height="12"
-                  />
-                </button>
-                <button
-                  v-if="project.giteaUrl"
-                  class="vp-btn vp-btn--ghost vp-btn--sm"
-                  title="打开 Gitea（右键复制链接）"
-                  @click="handleOpenWeb(project.giteaUrl)"
-                  @contextmenu.prevent="handleCopyUrl(project.giteaUrl)"
-                >
-                  <Icon
-                    icon="mdi:tea"
-                    height="12"
-                  />
-                </button>
-                <button
-                  v-if="project.cnbUrl"
-                  class="vp-btn vp-btn--ghost vp-btn--sm"
-                  title="打开 CNB（右键复制链接）"
-                  @click="handleOpenWeb(project.cnbUrl)"
-                  @contextmenu.prevent="handleCopyUrl(project.cnbUrl)"
-                >
-                  <Icon
-                    icon="mdi:cloud-braces"
-                    height="12"
-                  />
-                </button>
+                  <button
+                    v-if="getProjectUrl(project, pm.urlProp)"
+                    class="vp-btn vp-btn--ghost vp-btn--sm"
+                    :title="`打开 ${pm.label}（右键复制链接）`"
+                    @click="handleOpenWeb(getProjectUrl(project, pm.urlProp)!)"
+                    @contextmenu.prevent="handleCopyUrl(getProjectUrl(project, pm.urlProp)!)"
+                  >
+                    <Icon
+                      :icon="pm.icon"
+                      height="12"
+                    />
+                  </button>
+                </template>
                 <div class="gp-ide-wrap">
                   <button
                     class="vp-btn vp-btn--ghost vp-btn--sm"
@@ -645,7 +630,10 @@
                   class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
                   @click="handleRemove(project)"
                 >
-                  <Icon icon="mdi:delete-outline" height="12" />
+                  <Icon
+                    icon="mdi:delete-outline"
+                    height="12"
+                  />
                 </button>
               </div>
             </div>
@@ -658,7 +646,10 @@
                 class="gp-remote-item"
                 :class="{ active: !!project[r.remoteProp] }"
               >
-                <Icon :icon="r.icon" height="12" />
+                <Icon
+                  :icon="r.icon"
+                  height="12"
+                />
                 <span v-if="project[r.remoteProp]">{{ project[r.remoteProp] }}</span>
                 <span
                   v-else
@@ -853,7 +844,10 @@
                     :disabled="(!project.githubRemote && !project.giteeRemote && !project.giteaRemote && !project.cnbRemote) || isPulling(project.id) || !pushStatuses[project.id]?.needsPush"
                     @click="pushToAll(project.id)"
                   >
-                    <Icon icon="mdi:cloud-upload" height="12" />
+                    <Icon
+                      icon="mdi:cloud-upload"
+                      height="12"
+                    />
                     <span>{{ i18n.pushAll || '推送全部' }}</span>
                   </button>
 
@@ -863,7 +857,10 @@
                     class="vp-btn vp-btn--danger vp-btn--sm gp-action-btn"
                     @click="cancelPush(project.id)"
                   >
-                    <Icon icon="mdi:close-circle" height="12" />
+                    <Icon
+                      icon="mdi:close-circle"
+                      height="12"
+                    />
                     <span>{{ i18n.cancel || '取消' }}</span>
                   </button>
                 </div>
@@ -871,96 +868,20 @@
             </div>
 
             <!-- 拉取输出 -->
-            <div
-              v-if="pullOutputs[project.id]?.length"
-              class="gp-output"
-            >
-              <button
-                class="gp-output-copy"
-                :title="i18n.copy || '复制'"
-                @click="handleCopyOutput(entriesToText(pullOutputs[project.id]))"
-              >
-                <Icon
-                  icon="mdi:content-copy"
-                  height="12"
-                />
-              </button>
-              <div class="gp-output-list">
-                <div
-                  v-for="entry in pullOutputs[project.id]"
-                  :key="entry.platform"
-                  class="gp-output-item"
-                >
-                  <span
-                    class="gp-output-status"
-                    :class="{ 'gp-output-status--ok': entry.ok, 'gp-output-status--fail': !entry.ok && !entry.skipped, 'gp-output-status--skipped': entry.skipped }"
-                  >{{ entry.ok ? '✓' : entry.skipped ? '—' : '✗' }}</span>
-                  <span class="gp-output-label">{{ entry.label }}</span>
-                  <span class="gp-output-duration">{{ entry.duration }}ms</span>
-                  <span class="gp-output-summary">{{ entry.summary }}</span>
-                  <details
-                    v-if="entry.fullStdout || entry.fullStderr"
-                    class="gp-output-details"
-                  >
-                    <summary>{{ entry.fullStdout || entry.fullStderr ? '详情' : '' }}</summary>
-                    <pre
-                      v-if="entry.fullStdout"
-                      class="gp-output-stdout"
-                    >{{ entry.fullStdout.length > 500 ? entry.fullStdout.slice(0, 500) + '...' : entry.fullStdout }}</pre>
-                    <pre
-                      v-if="entry.fullStderr"
-                      class="gp-output-stderr"
-                    >{{ entry.fullStderr }}</pre>
-                  </details>
-                </div>
-              </div>
-            </div>
+            <OutputPanel
+              :entries="pullOutputs[project.id]"
+              :copy-text="entriesToText(pullOutputs[project.id])"
+              :i18n="i18n"
+              @copy="handleCopyOutput"
+            />
 
             <!-- 推送输出 -->
-            <div
-              v-if="pushOutputs[project.id]?.length"
-              class="gp-output"
-            >
-              <button
-                class="gp-output-copy"
-                :title="i18n.copy || '复制'"
-                @click="handleCopyOutput(entriesToText(pushOutputs[project.id]))"
-              >
-                <Icon
-                  icon="mdi:content-copy"
-                  height="12"
-                />
-              </button>
-              <div class="gp-output-list">
-                <div
-                  v-for="entry in pushOutputs[project.id]"
-                  :key="entry.platform"
-                  class="gp-output-item"
-                >
-                  <span
-                    class="gp-output-status"
-                    :class="{ 'gp-output-status--ok': entry.ok, 'gp-output-status--fail': !entry.ok && !entry.skipped, 'gp-output-status--skipped': entry.skipped }"
-                  >{{ entry.ok ? '✓' : entry.skipped ? '—' : '✗' }}</span>
-                  <span class="gp-output-label">{{ entry.label }}</span>
-                  <span class="gp-output-duration">{{ entry.duration }}ms</span>
-                  <span class="gp-output-summary">{{ entry.summary }}</span>
-                  <details
-                    v-if="entry.fullStdout || entry.fullStderr"
-                    class="gp-output-details"
-                  >
-                    <summary>{{ entry.fullStdout || entry.fullStderr ? '详情' : '' }}</summary>
-                    <pre
-                      v-if="entry.fullStdout"
-                      class="gp-output-stdout"
-                    >{{ entry.fullStdout.length > 500 ? entry.fullStdout.slice(0, 500) + '...' : entry.fullStdout }}</pre>
-                    <pre
-                      v-if="entry.fullStderr"
-                      class="gp-output-stderr"
-                    >{{ entry.fullStderr }}</pre>
-                  </details>
-                </div>
-              </div>
-            </div>
+            <OutputPanel
+              :entries="pushOutputs[project.id]"
+              :copy-text="entriesToText(pushOutputs[project.id])"
+              :i18n="i18n"
+              @copy="handleCopyOutput"
+            />
           </div>
         </template>
       </div>
@@ -1059,12 +980,7 @@
       :remote-list="editRemoteList"
       :remote-error="editRemoteError"
       :remotes-meta="REMOTES"
-      :url-values="{
-        githubUrl: editGithubUrl,
-        giteeUrl: editGiteeUrl,
-        giteaUrl: editGiteaUrl,
-        cnbUrl: editCnbUrl,
-      }"
+      :url-values="editUrls"
       :local-paths="editLocalPaths"
       @close="editDialogProject = null"
       @save="handleEditSaveFromDialog"
@@ -1082,23 +998,26 @@ import type {
   GitProject,
   GitPushManager,
   GitRemoteInfo,
+  PlatformKey,
   ProjectStatus,
 } from "./types"
 import { Icon } from "@iconify/vue"
+import { showMessage } from "siyuan"
 import {
   computed,
   onMounted,
   onUnmounted,
+  reactive,
   ref,
   watch,
 } from "vue"
 import { copyToClipboard } from "@/utils/domUtils"
-import { showMessage } from "siyuan"
 import AddProjectDialog from "./components/AddProjectDialog.vue"
 import CategoryDialog from "./components/CategoryDialog.vue"
 import ConflictSection from "./components/ConflictSection.vue"
 import EditProjectDialog from "./components/EditProjectDialog.vue"
 import IdeManagementDialog from "./components/IdeManagementDialog.vue"
+import OutputPanel from "./components/OutputPanel.vue"
 import ScanImportDialog from "./components/ScanImportDialog.vue"
 import SettingsDialog from "./components/SettingsDialog.vue"
 import StashSection from "./components/StashSection.vue"
@@ -1106,7 +1025,6 @@ import StatsPanel from "./components/StatsPanel.vue"
 import TagPanel from "./components/TagPanel.vue"
 import WorkingTreePanel from "./components/WorkingTreePanel.vue"
 import { pickDirectory } from "./composables/useDirectoryPicker"
-import { pruneRecordCache, resolveValidPath } from "./utils"
 import { useGitPush } from "./composables/useGitPush"
 import {
   IDE_PRESETS,
@@ -1118,21 +1036,19 @@ import {
 } from "./composables/useProjectFilters"
 import { useTimeUtils } from "./composables/useTimeUtils"
 import { PLATFORM_META } from "./types"
-import type { PlatformKey } from "./types"
+import {
+  batchProcess,
+  gitUrlToWebUrl,
+  pruneRecordCache,
+  resolveValidPath,
+} from "./utils"
+
 
 const props = defineProps<{
   i18n: Record<string, any>
   plugin: any
   manager: GitPushManager
 }>()
-
-/** 批次化并发处理：避免所有项目同时涌入 git 信号量导致排队拥堵 */
-async function batchProcess<T>(items: T[], batchSize: number, fn: (item: T) => Promise<void>) {
-  for (let i = 0; i < items.length; i += batchSize) {
-    const batch = items.slice(i, i + batchSize)
-    await Promise.all(batch.map(fn))
-  }
-}
 
 const ut = useTimeUtils()
 const {
@@ -1148,34 +1064,6 @@ const REMOTES = PLATFORM_META.map((pm) => ({
   label: pm.label,
   remoteProp: pm.remoteProp,
 }))
-
-/** 平台官网快捷入口 */
-const PLATFORM_LINKS: { key: string, icon: string, label: string, url: string }[] = [
-  {
-    key: "github",
-    icon: "mdi:github",
-    label: "GitHub",
-    url: "https://github.com",
-  },
-  {
-    key: "gitee",
-    icon: "mdi:git",
-    label: "Gitee",
-    url: "https://gitee.com",
-  },
-  {
-    key: "gitea",
-    icon: "mdi:tea",
-    label: "Gitea",
-    url: "https://about.gitea.com",
-  },
-  {
-    key: "cnb",
-    icon: "mdi:cloud-braces",
-    label: "CNB",
-    url: "https://cnb.cool",
-  },
-]
 
 
 const {
@@ -1277,14 +1165,17 @@ const showAddMenu = ref(false)
 const showPlatformMenu = ref(false)
 /** 拉取确认状态 */
 const showPullConfirm = ref(false)
-interface PendingPull { id: string; key: PlatformKey }
+interface PendingPull { id: string, key: PlatformKey }
 const pendingPull = ref<PendingPull | null>(null)
 const pendingPullLabel = computed(() => {
   if (!pendingPull.value) return ""
   return PLATFORM_META.find((pm) => pm.key === pendingPull.value!.key)?.label ?? pendingPull.value!.key
 })
 function confirmPullSingle(id: string, key: PlatformKey) {
-  pendingPull.value = { id, key }
+  pendingPull.value = {
+    id,
+    key,
+  }
   showPullConfirm.value = true
 }
 function cancelPullConfirm() {
@@ -1293,7 +1184,10 @@ function cancelPullConfirm() {
 }
 function doPullSingle() {
   if (!pendingPull.value) return
-  const { id, key } = pendingPull.value
+  const {
+    id,
+    key,
+  } = pendingPull.value
   pullSingle(id, key)
   showPullConfirm.value = false
   pendingPull.value = null
@@ -1365,6 +1259,11 @@ function resolvedPath(p: { path: string, localPaths?: string[] }): string {
   return resolveValidPath(p as GitProject)
 }
 
+/** 获取项目平台 URL（模板中动态属性访问的辅助函数） */
+function getProjectUrl(project: GitProject, prop: "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl"): string | undefined {
+  return project[prop]
+}
+
 /** 项目状态徽章元数据（颜色 + 文案 + 循环顺序） */
 const STATUS_META: Record<string, { color: string, label: string, icon: string }> = {
   active: {
@@ -1394,10 +1293,13 @@ const REFRESH_COOLDOWN_MS = 500
 /** 项目编辑弹窗状态 */
 const editDialogProject = ref<GitProject | null>(null)
 const editDialogRef = ref<InstanceType<typeof EditProjectDialog> | null>(null)
-const editGithubUrl = ref("")
-const editGiteeUrl = ref("")
-const editGiteaUrl = ref("")
-const editCnbUrl = ref("")
+/** 弹窗中平台 URL 编辑状态 */
+const editUrls = reactive<Record<string, string>>({
+  githubUrl: "",
+  giteeUrl: "",
+  giteaUrl: "",
+  cnbUrl: "",
+})
 const editLocalPaths = ref<string[]>([])
 /** 编辑弹窗中的 Git 远程管理 */
 const editRemoteList = ref<GitRemoteInfo[]>([])
@@ -1677,20 +1579,6 @@ function toggleIdeMenu(id: string) {
   openIdeMenu.value = new Set(s)
 }
 
-/** 将 git URL 转为浏览器可访问的 web URL */
-function gitUrlToWebUrl(url: string): string {
-  // https://github.com/user/repo.git → https://github.com/user/repo
-  if (url.startsWith("https://") || url.startsWith("http://")) {
-    return url.replace(/\.git$/, "")
-  }
-  // git@github.com:user/repo.git → https://github.com/user/repo
-  const sshMatch = url.match(/^git@([^:]+):(.+?)(?:\.git)?$/)
-  if (sshMatch) {
-    return `https://${sshMatch[1]}/${sshMatch[2]}`
-  }
-  return url
-}
-
 /** 在浏览器中打开远程仓库网页 */
 async function handleOpenWeb(url: string) {
   const webUrl = gitUrlToWebUrl(url)
@@ -1713,13 +1601,7 @@ async function handleOpenWeb(url: string) {
 async function handleCopyUrl(url: string) {
   const ok = await copyToClipboard(url)
   if (ok) {
-    // 用临时 tooltip 提示已复制（无外部依赖，纯 DOM）
-    const el = document.activeElement as HTMLElement | null
-    if (el) {
-      const orig = el.title
-      el.title = "已复制链接"
-      setTimeout(() => { el.title = orig }, 1500)
-    }
+    showMessage("已复制链接", 1500, "info")
   }
 }
 
@@ -1735,7 +1617,10 @@ function hasAnyRemote(project: GitProject): boolean {
 
 /** Fetch 所有远程 + 刷新状态 */
 async function handleFetchAll(id: string) {
-  fetching.value = { ...fetching.value, [id]: true }
+  fetching.value = {
+    ...fetching.value,
+    [id]: true,
+  }
   try {
     await fetchAllRemotes(id)
   } catch (e: any) {
@@ -1755,11 +1640,7 @@ function handleRemove(project: any) {
 }
 
 async function handleSwitchBranch(id: string, branch: string) {
-  try {
-    await switchBranch(id, branch)
-  } catch (e: any) {
-    showMessage(`分支切换失败: ${e?.message || e}`, 5000, "error")
-  }
+  await safeGitOp("分支切换失败", () => switchBranch(id, branch))
 }
 
 // ---- 项目聚合管理操作 ----
@@ -1783,10 +1664,12 @@ async function cycleStatus(id: string, current?: ProjectStatus) {
 /** 打开项目编辑弹窗 */
 function openEditDialog(project: GitProject) {
   editDialogProject.value = project
-  editGithubUrl.value = project.githubUrl || ""
-  editGiteeUrl.value = project.giteeUrl || ""
-  editGiteaUrl.value = project.giteaUrl || ""
-  editCnbUrl.value = project.cnbUrl || ""
+  Object.assign(editUrls, {
+    githubUrl: project.githubUrl || "",
+    giteeUrl: project.giteeUrl || "",
+    giteaUrl: project.giteaUrl || "",
+    cnbUrl: project.cnbUrl || "",
+  })
   editLocalPaths.value = project.localPaths ? [...project.localPaths] : []
   // 加载 Git 远程
   editRemoteList.value = []
@@ -1908,6 +1791,16 @@ async function handleEditRemoteSave(name: string, url?: string) {
   } catch (e: any) { editRemoteError.value = e?.message || "修改失败" }
 }
 
+/** 统一的异步操作错误处理包装器（含可选确认弹窗和 showMessage） */
+async function safeGitOp(label: string, fn: () => Promise<void>, options?: { confirmMsg?: string }) {
+  if (options?.confirmMsg && !confirm(options.confirmMsg)) return
+  try {
+    await fn()
+  } catch (e: any) {
+    showMessage(`${label}: ${e?.message || e}`, 5000, "error")
+  }
+}
+
 // ---- 工作区操作 ----
 
 /** 统一的 git 操作错误处理包装（含 loading 状态和调试日志） */
@@ -1961,59 +1854,36 @@ async function handleGenStashDesc(id: string) {
   }
 }
 
-async function handleStashConfirmMsg(id: string, msg: string) {
-  try {
-    await doStashSave(id, msg)
-  } catch (e: any) {
-    showMessage(`暂存失败: ${e?.message || e}`, 5000, "error")
-  }
+function handleStashConfirmMsg(id: string, msg: string) {
+  safeGitOp("暂存失败", () => doStashSave(id, msg))
 }
 
-async function handleStashPop(id: string, index: number) {
-  if (!confirm(`确定恢复 stash@{${index}} 并删除该条目？恢复过程中如有冲突会保留该 stash。`)) return
-  try {
-    await doStashPop(id, index)
-  } catch (e: any) {
-    showMessage(`恢复失败: ${e?.message || e}`, 5000, "error")
-  }
+function handleStashPop(id: string, index: number) {
+  safeGitOp("恢复失败", () => doStashPop(id, index), {
+    confirmMsg: `确定恢复 stash@{${index}} 并删除该条目？恢复过程中如有冲突会保留该 stash。`,
+  })
 }
 
-async function handleStashApply(id: string, index: number) {
-  try {
-    await doStashApply(id, index)
-  } catch (e: any) {
-    showMessage(`应用失败: ${e?.message || e}`, 5000, "error")
-  }
+function handleStashApply(id: string, index: number) {
+  safeGitOp("应用失败", () => doStashApply(id, index))
 }
 
-async function handleStashDrop(id: string, index: number) {
-  if (!confirm(`确定删除 stash@{${index}}？此操作不可撤销。`)) return
-  try {
-    await doStashDrop(id, index)
-  } catch (e: any) {
-    showMessage(`删除失败: ${e?.message || e}`, 5000, "error")
-  }
+function handleStashDrop(id: string, index: number) {
+  safeGitOp("删除失败", () => doStashDrop(id, index), {
+    confirmMsg: `确定删除 stash@{${index}}？此操作不可撤销。`,
+  })
 }
 
 // ── Tag 操作 ──
 
-async function handleCreateTag(id: string, name: string, message?: string) {
-  try {
-    await createTagOp(id, name, message)
-    await loadTags(id)
-  } catch (e: any) {
-    showMessage(`创建 Tag 失败: ${e?.message || e}`, 5000, "error")
-  }
+function handleCreateTag(id: string, name: string, message?: string) {
+  safeGitOp("创建 Tag 失败", () => createTagOp(id, name, message).then(() => { loadTags(id) }))
 }
 
-async function handleDeleteTag(id: string, tag: string) {
-  if (!confirm(`确定删除 Tag "${tag}"？此操作不可撤销。`)) return
-  try {
-    await deleteTagOp(id, tag)
-    await loadTags(id)
-  } catch (e: any) {
-    showMessage(`删除失败: ${e?.message || e}`, 5000, "error")
-  }
+function handleDeleteTag(id: string, tag: string) {
+  safeGitOp("删除失败", () => deleteTagOp(id, tag).then(() => { loadTags(id) }), {
+    confirmMsg: `确定删除 Tag "${tag}"？此操作不可撤销。`,
+  })
 }
 
 async function handlePushTag(id: string, tag: string) {
@@ -2043,22 +1913,14 @@ async function handlePushTag(id: string, tag: string) {
 
 // ── 冲突操作 ──
 
-async function handleAbortMerge(id: string) {
-  if (!confirm("确定中止合并操作？所有合并进度将丢失。")) return
-  try {
-    await abortMergeOp(id)
-  } catch (e: any) {
-    showMessage(`中止合并失败: ${e?.message || e}`, 5000, "error")
-  }
+function handleAbortMerge(id: string) {
+  safeGitOp("中止合并失败", () => abortMergeOp(id), {
+    confirmMsg: "确定中止合并操作？所有合并进度将丢失。",
+  })
 }
 
-async function handleResolveConflict(id: string, file: string, strategy: "theirs" | "ours") {
-  try {
-    await resolveConflictOp(id, file, strategy)
-    await checkConflicts(id) // 重新检查是否还有冲突
-  } catch (e: any) {
-    showMessage(`解决冲突失败: ${e?.message || e}`, 5000, "error")
-  }
+function handleResolveConflict(id: string, file: string, strategy: "theirs" | "ours") {
+  safeGitOp("解决冲突失败", () => resolveConflictOp(id, file, strategy).then(() => { checkConflicts(id) }))
 }
 
 async function handleCommit(id: string, message: string) {
@@ -2170,10 +2032,14 @@ async function handlePushAllProjects() {
   }
 }
 
+/** 获取指定项目指定远程的推送状态 */
+function getRemoteStatus(projectId: string, remoteKey: string) {
+  return pushStatuses.value[projectId]?.remotes[remoteKey]
+}
+
 /** 获取远程推送状态标签文案 */
 function statusLabel(projectId: string, remoteKey: string): string {
-  const status = pushStatuses.value[projectId]
-  const rs = status?.remotes[remoteKey]
+  const rs = getRemoteStatus(projectId, remoteKey)
   if (!rs) return ""
   if (rs.noUpstream) return `+${rs.ahead}`
   if (rs.ahead > 0) return `↑${rs.ahead}`
@@ -2183,8 +2049,7 @@ function statusLabel(projectId: string, remoteKey: string): string {
 
 /** 获取状态 badge 的 CSS 类 */
 function statusBadgeClass(projectId: string, remoteKey: string): string {
-  const status = pushStatuses.value[projectId]
-  const rs = status?.remotes[remoteKey]
+  const rs = getRemoteStatus(projectId, remoteKey)
   if (!rs) return ""
   if (rs.noUpstream || rs.ahead > 0) return "gp-ahead"
   if (rs.behind > 0) return "gp-behind"
@@ -2193,8 +2058,7 @@ function statusBadgeClass(projectId: string, remoteKey: string): string {
 
 /** 判断某个远程是否需要推送（本地超前或从未推送） */
 function needsPushFor(projectId: string, remoteKey: string): boolean {
-  const status = pushStatuses.value[projectId]
-  const rs = status?.remotes[remoteKey]
+  const rs = getRemoteStatus(projectId, remoteKey)
   if (!rs) return true // 尚未检测，允许点击
   return rs.noUpstream || rs.ahead > 0
 }
@@ -2268,7 +2132,10 @@ async function handleImportSelected() {
     .filter((r) => scanSelection.value[r.path])
     .map((r) => r.path)
   const catId = activeCategory.value || "__ungrouped__"
-  const { imported, skipped } = await importScanResults(selected, catId)
+  const {
+    imported,
+    skipped,
+  } = await importScanResults(selected, catId)
   // 刷新项目列表以显示新导入的项目
   await loadProjects()
   handleCloseScan()

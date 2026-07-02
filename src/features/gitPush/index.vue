@@ -2,162 +2,25 @@
 <template>
   <div class="git-push-panel">
     <!-- 头部 -->
-    <div class="gp-header">
-      <div class="gp-header-left">
-        <span class="gp-title">{{ i18n.panelTitle || 'Git 推送' }}</span>
-        <span
-          v-if="projectCount > 0"
-          class="gp-count-badge"
-        >{{ projectCount }}</span>
-      </div>
-      <div class="gp-header-btns">
-        <!-- 视图切换 -->
-        <div class="gp-view-toggle">
-          <button
-            class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
-            :class="{ active: currentView === 'list' }"
-            title="列表视图"
-            @click="currentView = 'list'"
-          >
-            <Icon
-              icon="mdi:view-list"
-              height="12"
-            />
-          </button>
-          <button
-            class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
-            :class="{ active: currentView === 'stats' }"
-            title="统计视图"
-            @click="currentView = 'stats'"
-          >
-            <Icon
-              icon="mdi:chart-bar"
-              height="12"
-            />
-          </button>
-        </div>
-        <!-- 平台官网快捷入口 -->
-        <span class="gp-header-sep" />
-        <div class="gp-platform-wrap">
-          <button
-            class="vp-btn vp-btn--ghost vp-btn--sm gp-platform-dropdown-btn"
-            title="平台官网"
-            @click.stop="showPlatformMenu = !showPlatformMenu"
-          >
-            <Icon
-              icon="mdi:web"
-              height="12"
-            />
-            <Icon
-              icon="mdi:unfold-more-horizontal"
-              height="12"
-              style="margin-left:1px;opacity:0.5"
-            />
-          </button>
-          <div
-            v-if="showPlatformMenu"
-            class="gp-platform-popover"
-            @click.stop
-          >
-            <button
-              v-for="pl in PLATFORM_META"
-              :key="pl.key"
-              class="gp-platform-item"
-              @click="showPlatformMenu = false; handleOpenWeb(pl.webUrl)"
-            >
-              <Icon
-                :icon="pl.icon"
-                height="12"
-              />
-              <span>{{ pl.label }}</span>
-            </button>
-          </div>
-        </div>
-        <span class="gp-header-sep" />
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm"
-          @click="showCatDialog = true"
-        >
-          <Icon
-            icon="mdi:tag-outline"
-            height="12"
-          />
-        </button>
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm"
-          title="设置"
-          @click="showSettings = true"
-        >
-          <Icon
-            icon="mdi:cog-outline"
-            height="12"
-          />
-        </button>
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm"
-          title="手动刷新当前分类"
-          :disabled="refreshingAll"
-          @click="handleRefreshAll"
-        >
-          <Icon
-            icon="mdi:sync"
-            height="12"
-            :class="{ 'gp-spin': refreshingAll }"
-          />
-        </button>
-        <button
-          class="vp-btn vp-btn--primary vp-btn--sm"
-          title="推送所有待推送项目"
-          :disabled="needsPushCount === 0 || pushingAllProjects"
-          @click="handlePushAllProjects"
-        >
-          <Icon
-            icon="mdi:cloud-upload"
-            height="12"
-            :class="{ 'gp-spin': pushingAllProjects }"
-          />
-          <span v-if="pushingAllProjects">推送中 ({{ pushAllDone }}/{{ pushAllTotal }})</span>
-          <span v-else>推送全部({{ needsPushCount }})</span>
-        </button>
-        <div class="gp-add-wrap">
-          <button
-            class="vp-btn vp-btn--ghost gp-add-dropdown-btn"
-            @click.stop="showAddMenu = !showAddMenu"
-          >
-            <Icon
-              icon="mdi:plus"
-              height="12"
-            />
-          </button>
-          <div
-            v-if="showAddMenu"
-            class="gp-add-popover"
-            @click.stop
-          >
-            <button
-              class="gp-add-item"
-              @click="showAddMenu = false; showAddDialog = true"
-            >
-              <Icon
-                icon="mdi:plus-circle-outline"
-                height="12"
-              />
-              <span>{{ i18n.addProject || '添加单个项目' }}</span>
-            </button>
-            <button
-              class="gp-add-item"
-              @click="showAddMenu = false; handleOpenScan()"
-            >
-              <Icon
-                icon="mdi:file-find-outline"
-                height="12"
-              />
-              <span>{{ i18n.importProject || '批量导入' }}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <PanelHeader
+      v-model:currentView="currentView"
+      v-model:showPlatformMenu="showPlatformMenu"
+      v-model:showAddMenu="showAddMenu"
+      :i18n="i18n"
+      :project-count="projectCount"
+      :refreshing-all="refreshingAll"
+      :needs-push-count="needsPushCount"
+      :pushing-all-projects="pushingAllProjects"
+      :push-all-done="pushAllDone"
+      :push-all-total="pushAllTotal"
+      @open-category="showCatDialog = true"
+      @open-settings="showSettings = true"
+      @refresh-all="handleRefreshAll"
+      @push-all-projects="handlePushAllProjects"
+      @open-add-project="showAddDialog = true"
+      @open-scan="handleOpenScan"
+      @open-web="handleOpenWeb"
+    />
 
     <div class="gp-divider" />
 
@@ -993,6 +856,7 @@ import ConflictSection from "./components/ConflictSection.vue"
 import EditProjectDialog from "./components/EditProjectDialog.vue"
 import IdeManagementDialog from "./components/IdeManagementDialog.vue"
 import OutputPanel from "./components/OutputPanel.vue"
+import PanelHeader from "./components/PanelHeader.vue"
 import ScanImportDialog from "./components/ScanImportDialog.vue"
 import SettingsDialog from "./components/SettingsDialog.vue"
 import StashSection from "./components/StashSection.vue"

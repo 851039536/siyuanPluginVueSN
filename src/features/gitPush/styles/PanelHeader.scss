@@ -1,0 +1,178 @@
+// gitPush 面板头部工具栏样式
+@use "./variables" as *;
+
+.gp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gp-header-left {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+}
+
+.gp-title {
+  font-size: 14px;
+  font-weight: $font-weight-semibold;
+}
+
+.gp-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 10px;
+  font-weight: $font-weight-bold;
+  font-family: $vp-mono;
+  border-radius: 9px;
+  background: var(--b3-theme-primary-lightest);
+  color: var(--b3-theme-primary);
+}
+
+.gp-header-btns {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+
+  .vp-btn--sm {
+    padding: 4px 6px;
+  }
+}
+
+.gp-header-sep {
+  width: 1px;
+  height: 18px;
+  margin: 0 3px;
+  background: var(--b3-border-color);
+  flex-shrink: 0;
+}
+
+// 视图切换按钮组
+.gp-view-toggle {
+  display: flex;
+  gap: 2px;
+  margin-right: 8px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  overflow: hidden;
+}
+
+.gp-view-btn {
+  opacity: 0.35;
+
+  &.active {
+    opacity: 1;
+    background: var(--b3-theme-primary-lightest);
+    color: var(--b3-theme-primary);
+  }
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+.gp-view-toggle .vp-btn.gp-view-btn {
+  border-radius: 0;
+  border: none;
+  padding: 4px 6px;
+}
+
+// 平台官网下拉
+.gp-platform-wrap {
+  position: relative;
+}
+
+.gp-platform-dropdown-btn {
+  border-radius: $radius-sm;
+  padding: 4px 6px;
+}
+
+.gp-platform-popover {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  padding: $spacing-1;
+  min-width: 100px;
+  white-space: nowrap;
+}
+
+.gp-platform-item {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--b3-theme-on-surface);
+  background: none;
+  border: none;
+  border-radius: $radius-sm;
+  cursor: pointer;
+  transition: background 0.12s;
+  text-align: left;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+}
+
+.gp-platform-link-label {
+  font-size: 9px;
+  opacity: 0.55;
+  margin-left: 2px;
+}
+
+// 添加/导入合并下拉
+.gp-add-wrap {
+  position: relative;
+}
+
+.gp-add-dropdown-btn {
+  border-radius: $radius-sm;
+  padding: 4px 6px;
+}
+
+.gp-add-popover {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  padding: $spacing-1;
+  min-width: 150px;
+  white-space: nowrap;
+}
+
+.gp-add-item {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--b3-theme-on-surface);
+  background: none;
+  border: none;
+  border-radius: $radius-sm;
+  cursor: pointer;
+  transition: background 0.12s;
+  text-align: left;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+}

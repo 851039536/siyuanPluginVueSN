@@ -1,3 +1,5 @@
+// 笔记本悬浮联动（provide/inject 共享 hover 状态）
+
 import type {
   InjectionKey,
   Ref,

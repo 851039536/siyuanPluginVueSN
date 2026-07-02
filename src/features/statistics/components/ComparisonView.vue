@@ -341,7 +341,7 @@ async function compare() {
 .period-select {
   padding: 4px 6px;
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
@@ -389,7 +389,7 @@ async function compare() {
 .compare-table-wrap {
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   overflow: hidden;
 }
 
@@ -464,7 +464,7 @@ async function compare() {
 .compare-breakdown {
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   padding: 12px;
 }
 
@@ -564,7 +564,7 @@ async function compare() {
   display: inline-block;
   width: 10px;
   height: 10px;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   margin-right: 3px;
 
   &.legend-a {

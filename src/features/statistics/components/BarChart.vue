@@ -134,7 +134,7 @@ function formatChartLabel(label: string): string {
 
       .bar-value {
         position: absolute;
-        font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+        font-family: stats.$font-mono;
         font-size: 10px;
         font-weight: 700;
         color: var(--b3-theme-primary);
@@ -148,7 +148,7 @@ function formatChartLabel(label: string): string {
         width: 100%;
         min-height: 3px;
         background: stats.$gradient-primary;
-        border-radius: 4px;
+        border-radius: stats.$radius-sm;
         cursor: pointer;
 
         &.today {
@@ -161,7 +161,7 @@ function formatChartLabel(label: string): string {
       .bar-label {
         position: absolute;
         bottom: -18px;
-        font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+        font-family: stats.$font-mono;
         font-size: 10px;
         font-weight: 700;
         letter-spacing: 0.04em;

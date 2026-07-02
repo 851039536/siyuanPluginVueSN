@@ -1,3 +1,5 @@
+// 里程碑类型定义、成就/等级配置接口、存储键常量
+
 import type { IconKey } from "@/config/icons"
 
 /** 自定义里程碑规则持久化结构 */

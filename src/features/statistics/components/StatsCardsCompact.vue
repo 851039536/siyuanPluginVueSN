@@ -210,7 +210,7 @@ function formatDelta(change: number | null): string {
     width: 3px;
     height: 14px;
     background: var(--b3-theme-primary);
-    border-radius: 4px;
+    border-radius: stats.$radius-sm;
   }
 }
 
@@ -265,7 +265,7 @@ function formatDelta(change: number | null): string {
 
 .core-change {
   padding: 1px 3px;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   font-family: stats.$font-mono;
   font-size: 8px;
   font-weight: 700;
@@ -290,7 +290,7 @@ function formatDelta(change: number | null): string {
   gap: 1px;
   background: var(--b3-border-color);
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   overflow: hidden;
 }
 

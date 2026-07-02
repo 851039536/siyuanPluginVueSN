@@ -260,7 +260,7 @@ function degToRad(deg: number): number {
   align-items: center;
   gap: 6px;
   padding: 3px 6px;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   font-size: 11px;
   color: var(--b3-theme-on-surface);
   transition: background 0.15s;
@@ -274,7 +274,7 @@ function degToRad(deg: number): number {
 .legend-color {
   width: 10px;
   height: 10px;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   flex-shrink: 0;
 }
 

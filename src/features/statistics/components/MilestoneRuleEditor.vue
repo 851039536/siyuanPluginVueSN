@@ -620,7 +620,7 @@ function onSaveLevelConfig() {
   background: transparent;
   color: var(--b3-theme-on-surface-light);
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   &:hover {
     background: var(--b3-list-hover);
     color: var(--b3-theme-on-surface);
@@ -692,7 +692,7 @@ function onSaveLevelConfig() {
   width: 56px;
   padding: 2px 6px;
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
@@ -707,7 +707,7 @@ function onSaveLevelConfig() {
 .btn-reset-all {
   padding: 4px 12px;
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-size: 12px;
@@ -730,7 +730,7 @@ function onSaveLevelConfig() {
   margin-bottom: 10px;
   background: rgba(var(--b3-theme-primary-rgb), 0.04);
   border: 1px solid rgba(var(--b3-theme-primary-rgb), 0.12);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
 }
 
 .help-title {
@@ -830,7 +830,7 @@ function onSaveLevelConfig() {
   align-items: center;
   justify-content: center;
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: transparent;
   color: var(--b3-theme-on-surface-light);
   font-size: 12px;
@@ -854,7 +854,7 @@ function onSaveLevelConfig() {
   width: 64px;
   padding: 3px 6px;
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
@@ -880,7 +880,7 @@ function onSaveLevelConfig() {
 .btn-cancel {
   padding: 6px 16px;
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-size: 13px;
@@ -893,7 +893,7 @@ function onSaveLevelConfig() {
 .btn-save {
   padding: 6px 20px;
   border: none;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: var(--b3-theme-primary);
   color: var(--b3-theme-on-primary);
   font-size: 13px;
@@ -933,7 +933,7 @@ function onSaveLevelConfig() {
   gap: 8px;
   padding: 6px 10px;
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: var(--b3-theme-surface);
   font-size: 12px;
 
@@ -1000,7 +1000,7 @@ function onSaveLevelConfig() {
   opacity: 0.25;
   font-size: 14px;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   flex-shrink: 0;
 
   &:hover {
@@ -1018,7 +1018,7 @@ function onSaveLevelConfig() {
   padding: 6px 12px;
   margin-top: 10px;
   border: 1px dashed var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: transparent;
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
@@ -1042,7 +1042,7 @@ function onSaveLevelConfig() {
   margin-top: 8px;
   padding: 12px;
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: rgba(var(--b3-theme-surface-rgb), 0.5);
   display: flex;
   flex-direction: column;
@@ -1072,7 +1072,7 @@ function onSaveLevelConfig() {
   width: 160px;
   padding: 4px 8px;
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
@@ -1094,7 +1094,7 @@ function onSaveLevelConfig() {
 .ach-form-select {
   padding: 4px 6px;
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-size: 12px;
@@ -1122,7 +1122,7 @@ function onSaveLevelConfig() {
 .btn-ach-submit {
   padding: 5px 16px;
   border: none;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: var(--b3-theme-primary);
   color: var(--b3-theme-on-primary);
   font-size: 12px;
@@ -1147,7 +1147,7 @@ function onSaveLevelConfig() {
   margin-bottom: 12px;
   background: rgba(var(--b3-theme-primary-rgb), 0.04);
   border: 1px solid rgba(var(--b3-theme-primary-rgb), 0.12);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
 
   .help-title {
     margin: 0 0 6px 0;
@@ -1194,7 +1194,7 @@ function onSaveLevelConfig() {
   gap: 6px;
   padding: 6px 10px;
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: var(--b3-theme-surface);
 }
 
@@ -1217,7 +1217,7 @@ function onSaveLevelConfig() {
   width: 56px;
   padding: 3px 6px;
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
@@ -1248,7 +1248,7 @@ function onSaveLevelConfig() {
   width: 64px;
   padding: 4px 8px;
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
@@ -1319,7 +1319,7 @@ function onSaveLevelConfig() {
 .btn-save-level {
   padding: 5px 16px;
   border: none;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: var(--b3-theme-primary);
   color: var(--b3-theme-on-primary);
   font-size: 12px;

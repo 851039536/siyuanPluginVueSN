@@ -1,3 +1,5 @@
+// 时间维度统计（日/周/月/年聚合）
+
 import type { DailyWordCount } from "../types"
 import { padZero } from "../utils"
 import {

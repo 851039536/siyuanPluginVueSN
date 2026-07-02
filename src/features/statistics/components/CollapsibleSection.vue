@@ -49,7 +49,7 @@ function toggle() {
 
 .collapsible-section {
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   overflow: hidden;
   background: var(--b3-theme-surface);
 
@@ -78,7 +78,7 @@ function toggle() {
   }
 
   .collapse-title {
-    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-family: stats.$font-mono;
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.04em;
@@ -89,7 +89,7 @@ function toggle() {
 
   .collapse-badge {
     margin-left: auto;
-    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-family: stats.$font-mono;
     font-size: 10px;
     font-weight: 700;
     color: var(--b3-theme-primary);

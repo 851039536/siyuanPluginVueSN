@@ -1,3 +1,5 @@
+// SQL 查询执行工具 + 日期格式化
+
 import { sql } from "@/api"
 import { padZero } from "../utils"
 

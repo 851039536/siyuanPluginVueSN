@@ -250,7 +250,7 @@ const sortedRows = computed(() => {
 .nb-color-dot {
   width: 8px;
   height: 8px;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   flex-shrink: 0;
 }
 

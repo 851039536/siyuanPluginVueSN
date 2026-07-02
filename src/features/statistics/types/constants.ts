@@ -1,3 +1,5 @@
+// 统计模块常量（颜色/块类型标签/图片扩展名/零值）
+
 import type { StatisticsData } from "./index"
 
 export const NOTEBOOK_COLORS = [

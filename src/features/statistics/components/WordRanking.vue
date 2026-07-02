@@ -121,7 +121,7 @@ function getRankClass(index: number): string {
 
 .word-ranking-section {
   @include stats.stats-card-base;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   padding: 0;
   overflow: visible;
 
@@ -141,10 +141,10 @@ function getRankClass(index: number): string {
       .top-n-select {
         padding: 2px 8px;
         border: 1px solid var(--b3-border-color);
-        border-radius: 4px;
+        border-radius: stats.$radius-sm;
         background: var(--b3-theme-surface);
         color: var(--b3-theme-on-surface);
-        font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+        font-family: stats.$font-mono;
         font-size: 10px;
         font-weight: 700;
         cursor: pointer;
@@ -195,7 +195,7 @@ function getRankClass(index: number): string {
         display: flex;
         align-items: center;
         justify-content: center;
-        font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+        font-family: stats.$font-mono;
         font-size: 10px;
         font-weight: 700;
         background: rgba(var(--b3-theme-on-surface-rgb), 0.06);
@@ -229,7 +229,7 @@ function getRankClass(index: number): string {
         gap: 8px;
 
         .rank-date {
-          font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+          font-family: stats.$font-mono;
           font-size: 11px;
           font-weight: 700;
           color: var(--b3-theme-on-surface);
@@ -237,7 +237,7 @@ function getRankClass(index: number): string {
         }
 
         .rank-words {
-          font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+          font-family: stats.$font-mono;
           font-size: 10px;
           font-weight: 700;
           color: var(--b3-theme-primary);
@@ -250,13 +250,13 @@ function getRankClass(index: number): string {
         width: 60px;
         height: 6px;
         background: rgba(var(--b3-theme-on-surface-rgb), 0.06);
-        border-radius: 4px;
+        border-radius: stats.$radius-sm;
         overflow: hidden;
 
         .rank-bar {
           height: 100%;
           background: stats.$gradient-primary;
-          border-radius: 4px;
+          border-radius: stats.$radius-sm;
           transition: width 0.3s ease;
         }
       }

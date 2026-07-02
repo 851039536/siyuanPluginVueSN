@@ -20,4 +20,4 @@
 - 2026-06-13：dataBackup 模块全面审查重构（见当天日报）
 - 2026-06-11：flashcardReading 模块审查重构（见当天日报）
 - 2026-06-22：新增 skillLearning（技能学习）功能 — 代码片段练习库+闪卡记忆，Dock 右侧栏面板，C#/JS/TS/Vue 技术栈，支持自建/预设/Markdown导入三种内容来源，复用 useTypingQueue 加权复习算法
-- 2026-06-23：toolCollection 新增快捷键 Ctrl+Alt+T（⌃⌥T），面板尺寸增加（宽 860→1060，高 60vh→calc(60vh+200px) min-height），移除背景遮罩改为 transparent。CODEBUDDY.md 新增"底部面板模式""快捷键注册""新增功能完整流程"三个规范章节。
+- 2026-07-02：statistics 模块全面代码审查 — 6 类修复涵盖 37 个文件：①styles/index.scss 本地 `$font-mono` 改为委托全局 `$vp-mono`，`border-radius: 4px`→`$radius-sm`；②批量替换 7 个组件中 37 处硬编码 `font-family: "JetBrains Mono"...`→`stats.$font-mono`；③14 个组件 `border-radius: 4px`→`$radius-sm`（PowerShell 批量）；④index.vue 内联 SCSS（226行）提取到 styles/index.scss，消除 SCSS 分离违规；⑤移除 ViewModeSection `@refresh` 冗余事件消除 watch 双重刷新；⑥baseStats.ts 内联 pad 函数→padZero 消除重复；⑦useHistoryData.ts 移除顶层冗余异步调用归入 loadHistoricalData；⑧13 个 .ts 文件添加文件头注释。tsc + ESLint 零回归。

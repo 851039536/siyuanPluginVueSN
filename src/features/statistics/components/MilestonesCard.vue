@@ -1538,7 +1538,7 @@ function getTierCount(tierId: string): number {
   gap: 5px;
   padding: 5px 10px;
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
@@ -1706,14 +1706,14 @@ function getTierCount(tierId: string): number {
   flex: 1;
   height: 3px;
   background: rgba(var(--b3-theme-on-surface-rgb), 0.06);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   overflow: hidden;
 }
 
 .level-bar-fill {
   height: 100%;
   background: var(--b3-theme-primary);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   transition: width 0.6s ease;
 }
 
@@ -1770,7 +1770,7 @@ function getTierCount(tierId: string): number {
 .next-goal-bar {
   height: 6px;
   background: rgba(var(--b3-theme-primary-rgb), 0.1);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   overflow: hidden;
   margin-bottom: 6px;
 }
@@ -1778,7 +1778,7 @@ function getTierCount(tierId: string): number {
 .next-goal-bar-fill {
   height: 100%;
   background: var(--b3-theme-primary);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   transition: width 0.6s ease;
 }
 
@@ -1810,7 +1810,7 @@ function getTierCount(tierId: string): number {
 
 .category-card {
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   overflow: hidden;
   background: var(--b3-theme-surface);
 
@@ -1914,7 +1914,7 @@ function getTierCount(tierId: string): number {
   gap: 4px;
   padding: 4px 10px;
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: transparent;
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
@@ -1998,7 +1998,7 @@ function getTierCount(tierId: string): number {
   flex-direction: column;
   align-items: center;
   padding: 10px 8px;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   text-align: center;
   position: relative;
   transition: transform 0.15s ease;
@@ -2063,7 +2063,7 @@ function getTierCount(tierId: string): number {
   padding: 6px 10px;
   margin-top: 8px;
   border: 1px dashed var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: transparent;
   color: var(--b3-theme-on-surface);
   font-size: 11px;

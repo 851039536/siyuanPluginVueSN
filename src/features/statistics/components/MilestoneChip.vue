@@ -58,7 +58,7 @@ withDefaults(defineProps<Props>(), {
   gap: 2px;
   padding: 8px 10px;
   min-width: 68px;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   position: relative;
   background: rgba(var(--b3-theme-on-surface-rgb), 0.03);
   border: 1px solid transparent;
@@ -110,7 +110,7 @@ withDefaults(defineProps<Props>(), {
   width: 100%;
   height: 2px;
   background: rgba(var(--b3-theme-on-surface-rgb), 0.08);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   overflow: hidden;
   margin-top: 2px;
 }
@@ -118,7 +118,7 @@ withDefaults(defineProps<Props>(), {
 .chip-progress-fill {
   height: 100%;
   background: var(--b3-theme-primary);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   transition: width 0.6s ease;
 }
 </style>

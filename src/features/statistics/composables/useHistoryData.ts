@@ -1,3 +1,5 @@
+// 历史数据状态管理：快照保存/加载、环比计算
+
 import type { Plugin } from "siyuan"
 import type {
   ComputedRef,
@@ -95,9 +97,7 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
     previousSnapshotLoaded = true
   }
 
-  // 触发加载（不阻塞 computed 返回）
-  ensurePreviousActiveDayLoaded()
-  ensurePreviousSnapshotLoaded()
+  // 触发加载（在 loadHistoricalData 中显式调用，保证时序）
 
   const createdChange = computed(() => {
     const prev = previousCounts.value?.created ?? null

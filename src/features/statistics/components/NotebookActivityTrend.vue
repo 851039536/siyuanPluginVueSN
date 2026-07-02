@@ -540,7 +540,7 @@ defineExpose({ load })
   gap: 4px;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   padding: 3px;
   width: fit-content;
 }
@@ -548,7 +548,7 @@ defineExpose({ load })
 .range-btn {
   padding: 4px 12px;
   border: none;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: transparent;
   color: var(--b3-theme-on-surface-light);
   font-family: stats.$font-mono;
@@ -592,7 +592,7 @@ defineExpose({ load })
 .chart-card {
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   padding: 14px;
 }
 
@@ -611,7 +611,7 @@ defineExpose({ load })
   color: var(--b3-theme-on-surface);
   cursor: pointer;
   padding: 3px 6px;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   transition: opacity 0.15s, background 0.15s;
 
   &:hover {
@@ -689,7 +689,7 @@ defineExpose({ load })
   position: absolute;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   padding: 8px 10px;
   font-size: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
@@ -733,7 +733,7 @@ defineExpose({ load })
 .ranking-card {
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   padding: 14px;
 }
 
@@ -772,7 +772,7 @@ defineExpose({ load })
   padding: 8px 4px;
   font-size: 12px;
   color: var(--b3-theme-on-surface);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   transition: background 0.15s;
 
   &:hover {
@@ -841,13 +841,13 @@ defineExpose({ load })
   flex: 1;
   height: 6px;
   background: rgba(var(--b3-theme-on-surface-rgb), 0.06);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   overflow: hidden;
 }
 
 .bar-fill {
   height: 100%;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   transition: width 0.3s ease;
   min-width: 2px;
 }

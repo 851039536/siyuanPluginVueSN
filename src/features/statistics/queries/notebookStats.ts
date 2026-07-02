@@ -1,3 +1,5 @@
+// 笔记本分布查询（文档数/字数/活跃度/块类型）
+
 import type {
   DailyWordCount,
   NotebookActivityItem,

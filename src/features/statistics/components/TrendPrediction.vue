@@ -505,7 +505,7 @@ defineExpose({ load })
   position: absolute;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   padding: 4px 8px;
   font-size: 11px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -524,7 +524,7 @@ defineExpose({ load })
   color: #fff;
   font-size: 10px;
   padding: 1px 4px;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   margin-left: 4px;
 }
 
@@ -553,7 +553,7 @@ defineExpose({ load })
 .legend-dot {
   width: 12px;
   height: 3px;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
 
   &.history {
     background: var(--b3-theme-primary);

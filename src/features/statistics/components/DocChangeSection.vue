@@ -542,7 +542,7 @@ function setDocDateToday() {
 
 .recent-group-header {
   padding: 10px 12px 4px;
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 10px;
   font-weight: 700;
   color: var(--b3-theme-on-surface);
@@ -556,7 +556,7 @@ function setDocDateToday() {
   align-items: center;
   gap: 8px;
   padding: 6px 12px;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   cursor: pointer;
   transition: background 0.12s;
   font-size: 12px;
@@ -570,7 +570,7 @@ function setDocDateToday() {
 .recent-doc-badge {
   width: 18px;
   height: 18px;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -587,7 +587,7 @@ function setDocDateToday() {
 }
 
 .recent-doc-notebook {
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -610,7 +610,7 @@ function setDocDateToday() {
 }
 
 .recent-doc-time {
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -647,7 +647,7 @@ function setDocDateToday() {
   display: inline-block;
   width: 8px;
   height: 8px;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   margin-right: 3px;
   vertical-align: middle;
 
@@ -660,7 +660,7 @@ function setDocDateToday() {
   align-items: center;
   gap: 6px;
   padding: 2px 4px;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   cursor: pointer;
   transition: background 0.15s;
 
@@ -675,7 +675,7 @@ function setDocDateToday() {
 
 .range-chart-label {
   width: 32px;
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 10px;
   font-weight: 700;
   color: var(--b3-theme-on-surface);
@@ -694,8 +694,8 @@ function setDocDateToday() {
 
 .range-chart-bar {
   height: 16px;
-  border-radius: 4px;
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  border-radius: stats.$radius-sm;
+  font-family: stats.$font-mono;
   font-size: 10px;
   font-weight: 700;
   color: #fff;
@@ -719,10 +719,10 @@ function setDocDateToday() {
   flex: 1;
   padding: 4px 8px;
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 11px;
   font-weight: 600;
   outline: none;
@@ -769,7 +769,7 @@ function setDocDateToday() {
 }
 
 .changed-docs-group-title {
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  font-family: stats.$font-mono;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -784,7 +784,7 @@ function setDocDateToday() {
   align-items: center;
   gap: 6px;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   cursor: pointer;
   font-size: 12px;
   color: var(--b3-theme-on-surface);
@@ -797,7 +797,7 @@ function setDocDateToday() {
   .changed-doc-icon {
     width: 16px;
     height: 16px;
-    border-radius: 4px;
+    border-radius: stats.$radius-sm;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -824,7 +824,7 @@ function setDocDateToday() {
   }
 
   .changed-doc-time {
-    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-family: stats.$font-mono;
     font-size: 10px;
     font-weight: 700;
     color: var(--b3-theme-on-surface);

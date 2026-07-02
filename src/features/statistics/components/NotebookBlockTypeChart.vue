@@ -127,7 +127,7 @@ function totalCount(item: NotebookBlockTypeStat): number {
     align-items: center;
     gap: 6px;
     padding: 3px 6px;
-    border-radius: 4px;
+    border-radius: stats.$radius-sm;
     transition: background 0.15s, box-shadow 0.15s;
 
     &:hover {
@@ -155,7 +155,7 @@ function totalCount(item: NotebookBlockTypeStat): number {
     .nb-bar-wrap {
       flex: 1;
       height: 14px;
-      border-radius: 4px;
+      border-radius: stats.$radius-sm;
       overflow: hidden;
       display: flex;
       min-width: 40px;
@@ -203,7 +203,7 @@ function totalCount(item: NotebookBlockTypeStat): number {
     .legend-dot {
       width: 8px;
       height: 8px;
-      border-radius: 4px;
+      border-radius: stats.$radius-sm;
       flex-shrink: 0;
     }
   }

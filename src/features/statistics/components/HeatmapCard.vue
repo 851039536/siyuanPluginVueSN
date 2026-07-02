@@ -531,7 +531,7 @@ loadData()
   gap: 4px;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   padding: 3px;
   width: fit-content;
 }
@@ -539,7 +539,7 @@ loadData()
 .range-btn {
   padding: 4px 10px;
   border: none;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: transparent;
   color: var(--b3-theme-on-surface-light);
   font-family: stats.$font-mono;
@@ -564,7 +564,7 @@ loadData()
 .notebook-select {
   padding: 5px 8px;
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
@@ -590,7 +590,7 @@ loadData()
 .calendar-wrapper {
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   padding: 14px;
   overflow-x: auto;
 }
@@ -654,7 +654,7 @@ loadData()
 
 .calendar-cell {
   aspect-ratio: 1;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   min-width: 12px;
   min-height: 12px;
   cursor: pointer;
@@ -699,7 +699,7 @@ loadData()
   .legend-cell {
     width: 12px;
     height: 12px;
-    border-radius: 4px;
+    border-radius: stats.$radius-sm;
     @include stats.heatmap-level-colors;
   }
 }
@@ -708,7 +708,7 @@ loadData()
 .daily-detail {
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   padding: 12px;
 }
 
@@ -730,7 +730,7 @@ loadData()
   width: 22px;
   height: 22px;
   border: none;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   background: transparent;
   color: var(--b3-theme-on-surface-light);
   font-size: 16px;
@@ -780,7 +780,7 @@ loadData()
   align-items: center;
   gap: 6px;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   cursor: pointer;
   font-size: 12px;
   color: var(--b3-theme-on-surface);
@@ -792,7 +792,7 @@ loadData()
 .detail-icon {
   width: 16px;
   height: 16px;
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -831,7 +831,7 @@ loadData()
 .weekday-section {
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: stats.$radius-sm;
   padding: 14px;
 
   .section-title {
@@ -879,14 +879,14 @@ loadData()
     flex: 1;
     height: 18px;
     background: rgba(var(--b3-theme-on-surface-rgb), 0.05);
-    border-radius: 4px;
+    border-radius: stats.$radius-sm;
     overflow: hidden;
   }
 
   .bar-fill {
     height: 100%;
     background: var(--b3-theme-primary);
-    border-radius: 4px;
+    border-radius: stats.$radius-sm;
     transition: width 0.3s ease;
     min-width: 2px;
     opacity: 0.65;

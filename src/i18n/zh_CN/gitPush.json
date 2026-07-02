@@ -104,6 +104,12 @@
     "fetchAll": "更新远程状态",
     "fetchHint": "从远程获取最新追踪分支（不合并代码），用于刷新推送状态",
     "fetchSuccess": "已更新 {0} 个远程",
-    "fetchError": "更新失败: {0}"
+    "fetchError": "更新失败: {0}",
+    "helpTitle": "帮助说明",
+    "helpLocalPath": "本地路径：为同一项目配置多台电脑上的本地路径。Git 操作时将自动检测第一个存在的路径，跨设备无需手动切换。",
+    "helpRepoUrl": "仓库链接：手动填写的远程仓库 URL，通过思源 API 持久化存储。换电脑后若工作空间同步（S3/WebDAV），URL 会自动恢复。",
+    "helpGitRemote": "Git 远程仓库：从本地 .git/config 自动检测。编辑/增删操作仅在本地路径有效时执行，远程名称和 URL 会自动映射到对应平台。",
+    "helpPersistence": "数据持久化：所有项目数据（路径、URL、标签、分类等）均通过思源插件存储 API 保存到 workspace/data/storage/petal/ 目录。同步工作空间即可跨设备使用。",
+    "helpSave": "保存"
   }
 }

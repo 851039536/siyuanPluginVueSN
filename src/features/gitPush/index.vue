@@ -38,19 +38,33 @@
         </div>
         <!-- 平台官网快捷入口 -->
         <span class="gp-header-sep" />
-        <button
-          v-for="pl in PLATFORM_LINKS"
-          :key="pl.key"
-          class="vp-btn vp-btn--ghost vp-btn--sm gp-platform-link"
-          :title="i18n.visitPlatform?.replace('{0}', pl.label) || `访问 ${pl.label}`"
-          @click="handleOpenWeb(pl.url)"
-        >
-          <Icon
-            :icon="pl.icon"
-            height="12"
-          />
-          <span class="gp-platform-link-label">{{ pl.label }}</span>
-        </button>
+        <div class="gp-platform-wrap">
+          <button
+            class="vp-btn vp-btn--ghost vp-btn--sm gp-platform-dropdown-btn"
+            title="平台官网"
+            @click.stop="showPlatformMenu = !showPlatformMenu"
+          >
+            <Icon icon="mdi:compass" height="12" />
+          </button>
+          <div
+            v-if="showPlatformMenu"
+            class="gp-platform-popover"
+            @click.stop
+          >
+            <button
+              v-for="pl in PLATFORM_LINKS"
+              :key="pl.key"
+              class="gp-platform-item"
+              @click="showPlatformMenu = false; handleOpenWeb(pl.url)"
+            >
+              <Icon
+                :icon="pl.icon"
+                height="12"
+              />
+              <span>{{ pl.label }}</span>
+            </button>
+          </div>
+        </div>
         <span class="gp-header-sep" />
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
@@ -1257,6 +1271,7 @@ const showAddDialog = ref(false)
 const showCatDialog = ref(false)
 const showSettings = ref(false)
 const showAddMenu = ref(false)
+const showPlatformMenu = ref(false)
 /** 拉取确认状态 */
 const showPullConfirm = ref(false)
 interface PendingPull { id: string; key: PlatformKey }
@@ -1528,6 +1543,9 @@ function closeIdeMenuOnOutside(e: MouseEvent) {
   }
   if (target && !target.closest(".gp-add-wrap")) {
     showAddMenu.value = false
+  }
+  if (target && !target.closest(".gp-platform-wrap")) {
+    showPlatformMenu.value = false
   }
 }
 

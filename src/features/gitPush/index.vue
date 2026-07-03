@@ -1348,7 +1348,8 @@ function handleCardClick(projectId: string, event: MouseEvent) {
   const lastTime = lastRefreshTime.get(projectId)
   if (lastTime && Date.now() - lastTime < REFRESH_COOLDOWN_MS) return
   lastRefreshTime.set(projectId, Date.now())
-  handleRefresh(projectId)
+  // 已禁用点击卡片自动刷新 git 状态，用户需通过 Fetch/刷新全部按钮手动触发
+  // handleRefresh(projectId)
 }
 
 async function handleRefresh(id: string) {

@@ -846,11 +846,7 @@
 }
 
 .gp-scan-item {
-  border-bottom: 1px solid var(--b3-border-color);
-
-  &:last-child {
-    border-bottom: none;
-  }
+  @include row-divider;
 }
 
 .gp-scan-item-row {

@@ -60,12 +60,12 @@ export class GitPushManager {
   get activeGitOps(): number { return this.gitRunning }
   /** 最大并发 git 子进程数（从存储加载，可通过 setGitConcurrency 修改） */
   private gitMaxConcurrent = 3
-  /** 等待队列 */
-  private gitWaitQueue: (() => void)[] = []
+  /** 等待队列（关联 signal 以便 abort 时精准过滤） */
+  private gitWaitQueue: { run: () => void, signal?: AbortSignal }[] = []
   /** 记录当前正在执行的子进程引用（用于取消操作时 kill） */
   private activeProcesses: Set<any> = new Set()
-  /** 项目 push/pull 的 AbortController 映射 */
-  private abortControllers: Map<string, AbortController> = new Map()
+  /** 项目 push/pull 的 AbortController 数组（同项目多操作不覆盖） */
+  private abortControllers: Map<string, AbortController[]> = new Map()
   /** 推送分支模式：all=全部分支, head=仅当前分支 */
   private pushBranchMode: "all" | "head" = "all"
   /** 推送状态缓存（用于智能跳过） */
@@ -106,7 +106,15 @@ export class GitPushManager {
 
   /** 将检测到的远程仓库信息应用到项目对象（批量赋值避免逐字段触发响应式） */
   private applyRemotesToProject(project: GitProject, remotes: GitRemoteInfo[]) {
-    // 仅设置检测到的字段，不重置已有值（跨电脑场景下 git remote 未配置时已有 URL 不丢失）
+    // 先清空所有平台字段，再根据检测结果重新设置（避免已删除的远程残留旧值）
+    project.githubRemote = undefined
+    project.githubUrl = undefined
+    project.giteeRemote = undefined
+    project.giteeUrl = undefined
+    project.giteaRemote = undefined
+    project.giteaUrl = undefined
+    project.cnbRemote = undefined
+    project.cnbUrl = undefined
     const patch: Partial<GitProject> = {}
     for (const r of remotes) {
       if (r.isGithub) { patch.githubRemote = r.name; patch.githubUrl = r.url }
@@ -359,7 +367,11 @@ export class GitPushManager {
         const stdout = await this.execGit(projectPath, args, signal)
         return { ok: true, stdout: stdout || "", stderr: "" }
       } catch (e: any) {
-        const msg = e?.message || String(e)
+        let msg = e?.message || String(e)
+        // --ff-only 分叉时给用户更友好的提示
+        if (action === "pull" && /fast-forward|non-fast-forward/i.test(msg)) {
+          msg = `拉取失败（远程有新提交且与本地有分叉）。\n请先使用 Stash 暂存本地修改，然后重新拉取。\n原始错误: ${msg}`
+        }
         // 判断是否为网络类错误（可重试）
         const isNetworkErr = /(could not resolve|timed out|connection refused|connection reset|unable to access|early EOF|RPC failed|fetch first)/i.test(msg)
         if (!isNetworkErr) {
@@ -438,7 +450,9 @@ export class GitPushManager {
 
     // 设置 AbortController
     const ac = new AbortController()
-    this.abortControllers.set(id, ac)
+    const list = this.abortControllers.get(id) || []
+    list.push(ac)
+    this.abortControllers.set(id, list)
 
     try {
       // 智能跳过的静态结果
@@ -497,7 +511,15 @@ export class GitPushManager {
         cnb,
       }
     } finally {
-      this.abortControllers.delete(id)
+      const list = this.abortControllers.get(id)
+      if (list) {
+        const filtered = list.filter((a) => a !== ac)
+        if (filtered.length > 0) {
+          this.abortControllers.set(id, filtered)
+        } else {
+          this.abortControllers.delete(id)
+        }
+      }
     }
   }
 
@@ -536,7 +558,9 @@ export class GitPushManager {
     const cwd = resolveValidPath(project)
     const remoteName = this.getRemoteName(project, target)
     const ac = new AbortController()
-    this.abortControllers.set(id, ac)
+    const list = this.abortControllers.get(id) || []
+    list.push(ac)
+    this.abortControllers.set(id, list)
     try {
       const result = await this.tryRemoteOp(cwd, remoteName, action, ac.signal)
       return {
@@ -545,7 +569,15 @@ export class GitPushManager {
         stderr: result.stderr,
       }
     } finally {
-      this.abortControllers.delete(id)
+      const existing = this.abortControllers.get(id)
+      if (existing) {
+        const filtered = existing.filter((a) => a !== ac)
+        if (filtered.length > 0) {
+          this.abortControllers.set(id, filtered)
+        } else {
+          this.abortControllers.delete(id)
+        }
+      }
     }
   }
 
@@ -553,9 +585,9 @@ export class GitPushManager {
    * 取消正在进行的推送/拉取操作
    */
   cancelOp(id: string): void {
-    const ac = this.abortControllers.get(id)
-    if (ac) {
-      ac.abort()
+    const list = this.abortControllers.get(id)
+    if (list && list.length > 0) {
+      for (const ac of list) { ac.abort() }
       this.abortControllers.delete(id)
     }
   }
@@ -995,7 +1027,7 @@ export class GitPushManager {
             this.gitRunning--
             this.activeProcesses.delete(child)
             const next = this.gitWaitQueue.shift()
-            if (next) next()
+            if (next) next.run()
 
             if (killed) { return }
             if (error) {
@@ -1010,8 +1042,8 @@ export class GitPushManager {
         const onAbort = () => {
           killed = true
           try { child.kill("SIGTERM") } catch {}
-          // 清空当前项目的排队操作
-          this.gitWaitQueue = this.gitWaitQueue.filter(() => false)
+          // 仅清空与当前 signal 关联的排队项，不影响其他项目
+          this.gitWaitQueue = this.gitWaitQueue.filter((item) => item.signal !== signal)
         }
         if (signal) {
           if (signal.aborted) {
@@ -1025,7 +1057,7 @@ export class GitPushManager {
       if (this.gitRunning < this.gitMaxConcurrent) {
         run()
       } else {
-        this.gitWaitQueue.push(run)
+        this.gitWaitQueue.push({ run, signal })
       }
     })
   }
@@ -1275,8 +1307,8 @@ export class GitPushManager {
 
   destroy() {
     // 取消所有进行中的操作
-    for (const ac of this.abortControllers.values()) {
-      ac.abort()
+    for (const list of this.abortControllers.values()) {
+      for (const ac of list) { ac.abort() }
     }
     this.abortControllers.clear()
     // 清理等待队列中所有闭包，防止插件卸载后僵尸 Promise 持有闭包引用导致内存泄漏

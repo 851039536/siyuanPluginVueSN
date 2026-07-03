@@ -168,8 +168,8 @@
             v-if="getProjectUrl(project, pm.urlProp)"
             class="vp-btn vp-btn--ghost vp-btn--sm"
             :title="`打开 ${pm.label}（右键复制链接）`"
-            @click="handleOpenWeb(getProjectUrl(project, pm.urlProp)!)"
-            @contextmenu.prevent="handleCopyUrl(getProjectUrl(project, pm.urlProp)!)"
+            @click="$emit('openWeb', getProjectUrl(project, pm.urlProp)!)"
+            @contextmenu.prevent="$emit('copyUrl', getProjectUrl(project, pm.urlProp)!)"
           >
             <Icon
               :icon="pm.icon"
@@ -458,23 +458,19 @@
             v-for="r in remotes"
             :key="`push-${r.key}`"
             class="vp-btn vp-btn--ghost vp-btn--sm gp-action-btn"
-            :class="{
-              'gp-action-btn--ok': getPushStatus(project.id, r.key) === 'ok',
-              'gp-action-btn--fail': getPushStatus(project.id, r.key) === 'fail',
-              'gp-action-btn--active': getPushStatus(project.id, r.key) === 'pushing',
-            }"
+            :class="pushBtnClass(getPushStatus(project.id, r.key))"
             :disabled="!project[r.remoteProp] || isPushing(project.id) || isPulling(project.id) || !needsPushFor(project.id, r.key)"
             :title="`${i18n.push || 'Push'} ${r.label}`"
             @click="$emit('pushSingle', project.id, r.key)"
           >
-            <span>{{ getPushStatus(project.id, r.key) === 'pushing' ? i18n.pushing || '推送中…' : getPushStatus(project.id, r.key) === 'ok' ? i18n.done || '完成' : getPushStatus(project.id, r.key) === 'fail' ? i18n.failed || '失败' : r.label }}</span>
+            <span>{{ pushBtnText(getPushStatus(project.id, r.key), r.label, i18n) }}</span>
           </button>
 
           <!-- 推送全部 -->
           <button
             v-if="!isPushing(project.id)"
             class="vp-btn vp-btn--primary vp-btn--sm gp-action-btn"
-            :disabled="(!project.githubRemote && !project.giteeRemote && !project.giteaRemote && !project.cnbRemote) || isPulling(project.id) || !pushStatuses[project.id]?.needsPush"
+            :disabled="!hasAnyRemote(project) || isPulling(project.id) || !pushStatuses[project.id]?.needsPush"
             @click="$emit('pushToAll', project.id)"
           >
             <span>{{ i18n.pushAll || '推送全部' }}</span>
@@ -492,18 +488,12 @@
       </div>
     </div>
 
-    <!-- 拉取输出 -->
+    <!-- 拉取/推送输出 -->
     <OutputPanel
-      :entries="pullOutputs[project.id]"
-      :copy-text="entriesToText(pullOutputs[project.id])"
-      :i18n="i18n"
-      @copy="$emit('copyOutput')"
-    />
-
-    <!-- 推送输出 -->
-    <OutputPanel
-      :entries="pushOutputs[project.id]"
-      :copy-text="entriesToText(pushOutputs[project.id])"
+      v-for="panel in outputPanels"
+      :key="panel.key"
+      :entries="panel.entries"
+      :copy-text="panel.copyText"
       :i18n="i18n"
       @copy="$emit('copyOutput')"
     />
@@ -518,6 +508,7 @@ import type {
   ProjectStatus,
 } from "../types"
 import { Icon } from "@iconify/vue"
+import { computed } from "vue"
 import {
   PLATFORM_META,
   REMOTES,
@@ -530,7 +521,7 @@ import TagPanel from "./TagPanel.vue"
 import WorkingTreePanel from "./WorkingTreePanel.vue"
 
 // ── Props: 基础 ──
-defineProps<{
+const props = defineProps<{
   project: GitProject
   i18n: Record<string, any>
   // 共享数据
@@ -647,6 +638,26 @@ defineEmits<{
   "copyOutput": [text?: string]
 }>()
 
-function handleOpenWeb(url: string) { window.open(url, "_blank") }
-function handleCopyUrl(url: string) { navigator.clipboard.writeText(url) }
+/** 推送按钮状态 class 映射（消除模板中 3 次 getPushStatus 调用） */
+function pushBtnClass(status: string | undefined): Record<string, boolean> {
+  return {
+    'gp-action-btn--ok': status === 'ok',
+    'gp-action-btn--fail': status === 'fail',
+    'gp-action-btn--active': status === 'pushing',
+  }
+}
+
+/** 推送按钮文本映射（消除模板中 4 次三元判断） */
+function pushBtnText(status: string | undefined, label: string, i18n: Record<string, any>): string {
+  if (status === 'pushing') return i18n.pushing || '推送中…'
+  if (status === 'ok') return i18n.done || '完成'
+  if (status === 'fail') return i18n.failed || '失败'
+  return label
+}
+
+/** 拉取/推送输出面板列表（消除两个结构相同的 OutputPanel） */
+const outputPanels = computed(() => [
+  { key: 'pull', entries: props.pullOutputs[props.project.id], copyText: props.entriesToText(props.pullOutputs[props.project.id]) },
+  { key: 'push', entries: props.pushOutputs[props.project.id], copyText: props.entriesToText(props.pushOutputs[props.project.id]) },
+])
 </script>

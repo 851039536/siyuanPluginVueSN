@@ -319,6 +319,7 @@
       <BranchCommitList
         :entries="commitLogEntries"
         :loading="commitLogLoading"
+        @reload-commit-log="(count) => emit('reloadCommitLog', count)"
       />
     </div>
   </div>
@@ -368,6 +369,8 @@ const emit = defineEmits<{
   discardFile: [file: string, staged: boolean, status: string]
   /** 面板首次展开时触发，父组件按需懒加载 commitLog/branches/stash 等详情 */
   expand: []
+  /** 用户修改提交记录显示条数 */
+  reloadCommitLog: [count: number]
 }>()
 
 const COMMIT_TYPES = COMMIT_TYPE_VALUES.map((v) => ({

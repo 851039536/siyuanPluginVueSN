@@ -428,10 +428,10 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     return diff
   }
 
-  async function loadCommitLog(id: string) {
+  async function loadCommitLog(id: string, count?: number) {
     const project = findProject(projects, id)
     if (!project) return
-    const entries = await manager.getCommitLog(resolveValidPath(project))
+    const entries = await manager.getCommitLog(resolveValidPath(project), count)
     commitLogs.value[id] = entries
     const latest = entries[0]?.date
     if (latest && project.lastActivity !== latest) {

@@ -205,6 +205,7 @@
             @clear-output="(id: string) => commitOutputs[id] = ''"
             @discard-file="handleDiscard"
             @expand="handleExpand"
+            @reload-commit-log="handleReloadCommitLog"
             @stash-confirm-msg="handleStashConfirmMsg"
             @gen-stash-desc="handleGenStashDesc"
             @stash-pop="handleStashPop"
@@ -1194,6 +1195,16 @@ async function handleCommit(id: string, message: string) {
     await loadCommitLog(id)
   } catch (e: any) {
     commitOutputs.value[id] = `提交失败: ${e?.message || e}`
+  }
+}
+
+/** 用户选择不同提交记录显示条数时重新加载 */
+async function handleReloadCommitLog(id: string, count: number) {
+  commitLogLoading.value[id] = true
+  try {
+    await loadCommitLog(id, count)
+  } finally {
+    delete commitLogLoading.value[id]
   }
 }
 

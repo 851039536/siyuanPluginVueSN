@@ -435,17 +435,6 @@
             :title="`${i18n.pull || 'Pull'} ${r.label}`"
             @click="$emit('confirmPull', project.id, r.key)"
           >
-            <Icon
-              v-if="isPulling(project.id, r.key)"
-              icon="mdi:loading"
-              class="gp-spin"
-              height="12"
-            />
-            <Icon
-              v-else
-              :icon="r.icon"
-              height="12"
-            />
             <span>{{ r.label }}</span>
           </button>
           <!-- Fetch 按钮 -->
@@ -460,9 +449,6 @@
           </button>
         </div>
       </div>
-
-      <!-- 分隔线 -->
-      <div class="gp-actions-sep" />
 
       <!-- 推送区 -->
       <div class="gp-actions-section">
@@ -481,27 +467,6 @@
             :title="`${i18n.push || 'Push'} ${r.label}`"
             @click="$emit('pushSingle', project.id, r.key)"
           >
-            <Icon
-              v-if="getPushStatus(project.id, r.key) === 'pushing'"
-              icon="mdi:loading"
-              class="gp-spin"
-              height="12"
-            />
-            <Icon
-              v-else-if="getPushStatus(project.id, r.key) === 'ok'"
-              icon="mdi:check-circle"
-              height="12"
-            />
-            <Icon
-              v-else-if="getPushStatus(project.id, r.key) === 'fail'"
-              icon="mdi:close-circle"
-              height="12"
-            />
-            <Icon
-              v-else
-              :icon="r.icon"
-              height="12"
-            />
             <span>{{ getPushStatus(project.id, r.key) === 'pushing' ? i18n.pushing || '推送中…' : getPushStatus(project.id, r.key) === 'ok' ? i18n.done || '完成' : getPushStatus(project.id, r.key) === 'fail' ? i18n.failed || '失败' : r.label }}</span>
           </button>
 
@@ -512,10 +477,6 @@
             :disabled="(!project.githubRemote && !project.giteeRemote && !project.giteaRemote && !project.cnbRemote) || isPulling(project.id) || !pushStatuses[project.id]?.needsPush"
             @click="$emit('pushToAll', project.id)"
           >
-            <Icon
-              icon="mdi:cloud-upload"
-              height="12"
-            />
             <span>{{ i18n.pushAll || '推送全部' }}</span>
           </button>
 
@@ -525,10 +486,6 @@
             class="vp-btn vp-btn--danger vp-btn--sm gp-action-btn"
             @click="$emit('cancelPush', project.id)"
           >
-            <Icon
-              icon="mdi:close-circle"
-              height="12"
-            />
             <span>{{ i18n.cancel || '取消' }}</span>
           </button>
         </div>

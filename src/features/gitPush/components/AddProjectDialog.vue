@@ -15,23 +15,21 @@
         </button>
       </div>
       <div class="gp-dialog-body">
-        <div class="gp-form-group">
-          <label class="gp-label">{{ i18n.projectName || '项目名称' }}</label>
-          <input
-            v-model="name"
-            class="gp-input"
-            :placeholder="i18n.namePlaceholder || '输入项目名称...'"
-            @keyup.enter="submit"
-          />
-        </div>
+        <Input
+          v-model="name"
+          :label="i18n.projectName || '项目名称'"
+          size="small"
+          :placeholder="i18n.namePlaceholder || '输入项目名称...'"
+          @keydown="$event.key === 'Enter' && submit()"
+        />
         <div class="gp-form-group">
           <label class="gp-label">{{ i18n.projectPath || '项目路径' }}</label>
           <div class="gp-path-row">
-            <input
+            <Input
               v-model="path"
-              class="gp-input"
+              size="small"
               :placeholder="i18n.pathPlaceholder || '选择或输入项目路径...'"
-              @keyup.enter="submit"
+              @keydown="$event.key === 'Enter' && submit()"
             />
             <button
               class="vp-btn vp-btn--ghost vp-btn--sm"
@@ -41,29 +39,18 @@
             </button>
           </div>
         </div>
-        <div class="gp-form-group">
-          <label class="gp-label">{{ i18n.category || '分类' }}</label>
-          <select
-            v-model="catId"
-            class="gp-select"
-          >
-            <option
-              v-for="cat in categories"
-              :key="cat.id"
-              :value="cat.id"
-            >
-              {{ cat.name }}
-            </option>
-          </select>
-        </div>
-        <div class="gp-form-group">
-          <label class="gp-label">{{ i18n.tagsLabel || '标签（可选，逗号分隔）' }}</label>
-          <input
-            v-model="tags"
-            class="gp-input"
-            :placeholder="i18n.tagsPlaceholder || '如：前端, 个人作品, 长期维护'"
-          />
-        </div>
+        <Select
+          v-model="catId"
+          :label="i18n.category || '分类'"
+          size="small"
+          :options="categoryOptions"
+        />
+        <Input
+          v-model="tags"
+          :label="i18n.tagsLabel || '标签（可选，逗号分隔）'"
+          size="small"
+          :placeholder="i18n.tagsPlaceholder || '如：前端, 个人作品, 长期维护'"
+        />
       </div>
       <div class="gp-dialog-footer">
         <button
@@ -87,15 +74,23 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
 import {
+  computed,
   ref,
   watch,
 } from "vue"
+import Input from "@/components/Input.vue"
+import type { SelectOption } from "@/components/Select.vue"
+import Select from "@/components/Select.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
   categories: { id: string, name: string }[]
   selectedPath?: string
 }>()
+
+const categoryOptions = computed<SelectOption[]>(() =>
+  props.categories.map((c) => ({ value: c.id, label: c.name })),
+)
 
 const emit = defineEmits<{
   "close": []

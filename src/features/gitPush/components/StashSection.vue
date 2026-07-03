@@ -13,12 +13,13 @@
         />
       </span>
       <template v-if="isInputVisible">
-        <input
+        <Input
           ref="inputEl"
           v-model="localMsg"
-          class="gp-stash-msg-input"
+          size="small"
           placeholder="暂存描述（可选）"
-          @keyup.enter="confirm"
+          style="flex:1"
+          @keydown="$event.key === 'Enter' && confirm()"
         />
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
@@ -119,6 +120,7 @@
 import type { StashEntry } from "../types"
 import { Icon } from "@iconify/vue"
 import { nextTick, ref, watch } from "vue"
+import Input from "@/components/Input.vue"
 
 const props = defineProps<{
   entries: StashEntry[] | undefined
@@ -139,7 +141,7 @@ const emit = defineEmits<{
 
 const isInputVisible = ref(false)
 const localMsg = ref("")
-const inputEl = ref<HTMLInputElement | null>(null)
+const inputEl = ref<InstanceType<typeof Input>>()
 
 function showInput() {
   isInputVisible.value = true

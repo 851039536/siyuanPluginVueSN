@@ -21,11 +21,11 @@
         <div class="gp-form-group">
           <label class="gp-label">{{ i18n.scanDir || '扫描目录' }}</label>
           <div class="gp-path-row">
-            <input
+            <Input
               v-model="localScanDir"
-              class="gp-input"
+              size="small"
               :placeholder="i18n.scanDirPlaceholder || '选择要递归扫描的目录...'"
-              @keyup.enter="$emit('start-scan', localScanDir)"
+              @keydown="$event.key === 'Enter' && $emit('start-scan', localScanDir)"
             />
             <button
               class="vp-btn vp-btn--ghost vp-btn--sm"
@@ -142,6 +142,7 @@ import {
   ref,
   watch,
 } from "vue"
+import Input from "@/components/Input.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>

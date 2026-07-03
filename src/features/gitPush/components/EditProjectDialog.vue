@@ -264,7 +264,7 @@
             :title="isZh ? '帮助说明' : 'Help'"
             @click="showHelp = !showHelp"
           >
-            <Icon icon="mdi:help-circle-outline" height="14" />
+            <Icon icon="mdi:help-circle-outline" height="12" />
           </button>
           <div
             v-if="showHelp"
@@ -272,7 +272,7 @@
             @click.stop
           >
             <div class="gp-help-header">
-              <Icon icon="mdi:information-outline" height="14" />
+              <Icon icon="mdi:information-outline" height="12" />
               <span>{{ isZh ? '帮助说明' : 'Help' }}</span>
               <button
                 class="vp-btn vp-btn--ghost vp-btn--sm"
@@ -288,7 +288,7 @@
                 :key="item.icon"
                 class="gp-help-item"
               >
-                <Icon :icon="item.icon" height="13" class="gp-help-item-icon" />
+                <Icon :icon="item.icon" height="12" class="gp-help-item-icon" />
                 <p>{{ isZh ? item.textZh : item.textEn }}</p>
               </div>
             </div>

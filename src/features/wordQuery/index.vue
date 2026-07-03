@@ -1,3 +1,4 @@
+<!-- 单词查询主面板 — 集成单词查询、长文翻译、编程翻译、注释生成、代码解释、正则生成 -->
 <template>
   <div class="word-query-panel">
     <div class="query-header">
@@ -563,8 +564,6 @@ const LANGUAGE_OPTIONS = Object.entries(LANGUAGE_MAP).map(([value, label]) => ({
   label,
 }))
 
-const LANGUAGE_NAMES = LANGUAGE_MAP
-
 const TARGET_LANGUAGE_OPTIONS = LANGUAGE_OPTIONS.filter(
   (opt) => opt.value !== "auto",
 )
@@ -933,7 +932,7 @@ const getPanelConfig = (panel: string) => {
 }
 
 const getLanguageName = (code: string): string => {
-  return LANGUAGE_NAMES[code] || code
+  return LANGUAGE_MAP[code] || code
 }
 
 const swapLanguages = () => {

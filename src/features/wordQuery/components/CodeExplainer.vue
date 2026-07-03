@@ -1,3 +1,4 @@
+<!-- 代码解释器 — 分析代码功能、复杂度和优化建议 -->
 <template>
   <div class="code-explainer-panel">
     <div class="panel-header">
@@ -25,7 +26,7 @@
           class="code-textarea"
           :placeholder="i18n.codeInputPlaceholder || '粘贴需要解释的代码...'"
           :rows="8"
-          @input="handleInput"
+          @input="clearError"
         />
       </div>
 
@@ -141,7 +142,6 @@
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
 import type { CodeExplanationResult } from "../utils/codeUtils"
-import { showMessage } from "siyuan"
 import { ref } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
@@ -165,14 +165,12 @@ const isExplaining = ref(false)
 
 const {
   errorMessage,
+  clearError,
   clearErrorOnInput,
   getApiConfig,
+  copyText,
 } = useCodeFeature(props.plugin)
 clearErrorOnInput(codeInput)
-
-function handleInput() {
-  errorMessage.value = ""
-}
 
 async function handleExplain() {
   if (!codeInput.value.trim()) {
@@ -207,8 +205,7 @@ function handleClear() {
 function copyExplanation() {
   if (result.value) {
     const text = `代码解释：\n${result.value.explanation}\n\n语言：${result.value.language}\n复杂度：${result.value.complexity}\n\n优化建议：\n${result.value.suggestions.map((s, i) => `${i + 1}. ${s}`).join("\n")}`
-    navigator.clipboard.writeText(text)
-    showMessage(props.i18n.copied || "已复制", 1500, "info")
+    copyText(text)
   }
 }
 </script>

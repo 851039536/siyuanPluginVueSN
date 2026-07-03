@@ -1,3 +1,4 @@
+// 单词查询持久化存储 — 发音偏好设置
 import { Plugin } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"

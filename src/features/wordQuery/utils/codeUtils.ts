@@ -1,12 +1,6 @@
-import type { AiApiConfig } from "@/types/ai"
-import {
-  callAI,
-} from "@/utils/aiApi"
-
-/** 本地别名，保持内部代码一致 */
-const callAPI = callAI
-
-export type ApiConfig = AiApiConfig
+// 代码工具集 — 注释生成、代码解释、正则生成与测试
+import { callAI } from "@/utils/aiApi"
+import { parseJsonResponse, type ApiConfig } from "./api"
 
 // ========== 代码注释生成器 ==========
 
@@ -83,7 +77,7 @@ export async function generateCodeComments(
     throw new Error("请输入代码内容")
   }
 
-  const text = await callAPI(buildCommentPrompt(code, style), config, {
+  const text = await callAI(buildCommentPrompt(code, style), config, {
     systemPrompt:
       "你是一个专业的代码注释生成助手，擅长为各种编程语言生成清晰、准确的注释。",
     temperature: 0.3,
@@ -141,30 +135,30 @@ export async function explainCode(
     throw new Error("请输入代码内容")
   }
 
-  const text = await callAPI(buildExplanationPrompt(code), config, {
+  const text = await callAI(buildExplanationPrompt(code), config, {
     systemPrompt:
       "你是一个专业的代码分析助手，擅长解释代码、分析复杂度和提供优化建议。",
     temperature: 0.3,
     maxTokens: 2000,
   })
 
-  // 尝试解析 JSON
-  try {
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0])
-      return {
-        code,
-        explanation: parsed.explanation || text,
-        language: parsed.language || "未知",
-        complexity: parsed.complexity || "未分析",
-        suggestions: Array.isArray(parsed.suggestions)
-          ? parsed.suggestions
-          : [],
-      }
+  const parsed = parseJsonResponse<{
+    explanation?: string
+    language?: string
+    complexity?: string
+    suggestions?: string[]
+  }>(text)
+
+  if (parsed) {
+    return {
+      code,
+      explanation: parsed.explanation || text,
+      language: parsed.language || "未知",
+      complexity: parsed.complexity || "未分析",
+      suggestions: Array.isArray(parsed.suggestions)
+        ? parsed.suggestions
+        : [],
     }
-  } catch (error) {
-    console.error("解析解释结果失败:", error)
   }
 
   return {
@@ -239,30 +233,29 @@ export async function generateRegex(
     throw new Error("请输入正则描述或提供匹配示例")
   }
 
-  const text = await callAPI(buildRegexPrompt(description, examples), config, {
+  const text = await callAI(buildRegexPrompt(description, examples), config, {
     systemPrompt:
       "你是一个专业的正则表达式生成助手，擅长根据用户描述生成精准的正则表达式。",
     temperature: 0.3,
     maxTokens: 2000,
   })
 
-  // 尝试解析 JSON
-  try {
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0])
-      return {
-        description,
-        regex: parsed.regex || "",
-        examples: Array.isArray(parsed.examples) ? parsed.examples : [],
-        explanation: parsed.explanation || "",
-      }
+  const parsed = parseJsonResponse<{
+    regex?: string
+    examples?: string[]
+    explanation?: string
+  }>(text)
+
+  if (parsed) {
+    return {
+      description,
+      regex: parsed.regex || "",
+      examples: Array.isArray(parsed.examples) ? parsed.examples : [],
+      explanation: parsed.explanation || "",
     }
-  } catch (error) {
-    console.error("解析正则结果失败:", error)
   }
 
-  // 如果解析失败，尝试从文本中提取正则
+  // 如果 JSON 解析失败，尝试从文本中提取正则
   const regexMatch = text.match(/\/(.+?)\/[gimsu]*/)
   if (regexMatch) {
     return {

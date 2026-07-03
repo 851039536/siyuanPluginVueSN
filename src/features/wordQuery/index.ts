@@ -1,6 +1,4 @@
-/**
- * 单词查询功能模块
- */
+// 单词查询功能注册入口
 import { Plugin } from "siyuan"
 import { WordQueryManager } from "./types"
 

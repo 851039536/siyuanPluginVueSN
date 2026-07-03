@@ -1036,6 +1036,44 @@
   100% { background-position: -200% 0; }
 }
 
+// ── 批量加载进度条 ──
+.gp-load-progress {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: 8px 10px;
+  border-top: 1px solid var(--b3-border-color);
+  flex-shrink: 0;
+}
+.gp-load-progress-label {
+  font-size: 11px;
+  font-family: $vp-mono;
+  font-weight: $font-weight-bold;
+  opacity: 0.7;
+  white-space: nowrap;
+  color: var(--b3-theme-primary);
+}
+.gp-load-progress-bar {
+  flex: 1;
+  height: 5px;
+  background: var(--b3-border-color);
+  border-radius: $radius-sm;
+  overflow: hidden;
+}
+.gp-load-progress-fill {
+  height: 100%;
+  background: var(--b3-theme-primary);
+  border-radius: $radius-sm;
+  transition: width 0.3s ease;
+}
+.gp-load-progress-name {
+  font-size: 10px;
+  opacity: 0.5;
+  max-width: 120px;
+  @include text-ellipsis;
+  flex-shrink: 0;
+}
+
 // ========== 筛选工具栏 ==========
 .gp-filter-bar {
   display: flex;

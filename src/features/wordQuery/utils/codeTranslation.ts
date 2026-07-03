@@ -1,12 +1,6 @@
-import type { AiApiConfig } from "@/types/ai"
-import {
-  callAI,
-} from "@/utils/aiApi"
-
-/** 本地别名，保持内部代码一致 */
-const callAPI = callAI
-
-export type ApiConfig = AiApiConfig
+// 编程字段翻译工具 — 中文翻译为符合编程命名规范的英文
+import { callAI } from "@/utils/aiApi"
+import { parseJsonResponse, type ApiConfig } from "./api"
 
 export interface NamingStyle {
   id: string
@@ -71,31 +65,6 @@ function buildPrompt(chinese: string, namingStyle: NamingStyle): string {
 }`
 }
 
-function parseTranslationResult(text: string): {
-  translated: string
-  suggestions: string[]
-} {
-  try {
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (jsonMatch) {
-      const result = JSON.parse(jsonMatch[0])
-      return {
-        translated: result.translated || "",
-        suggestions: Array.isArray(result.suggestions)
-          ? result.suggestions
-          : [],
-      }
-    }
-  } catch (error) {
-    console.error("解析翻译结果失败:", error)
-  }
-
-  return {
-    translated: text.split("\n")[0] || text,
-    suggestions: [],
-  }
-}
-
 export async function translateCodeField(
   chinese: string,
   namingStyle: NamingStyle,
@@ -105,19 +74,22 @@ export async function translateCodeField(
     throw new Error("请输入中文内容")
   }
 
-  const text = await callAPI(buildPrompt(chinese, namingStyle), config, {
+  const text = await callAI(buildPrompt(chinese, namingStyle), config, {
     systemPrompt:
       "你是一个专业的编程翻译助手，擅长将中文翻译成符合编程命名规范的英文。",
     temperature: 0.3,
     maxTokens: 2000,
   })
 
-  const parsed = parseTranslationResult(text)
+  const parsed = parseJsonResponse<{
+    translated?: string
+    suggestions?: string[]
+  }>(text)
 
   return {
     original: chinese,
-    translated: parsed.translated,
+    translated: parsed?.translated || text.split("\n")[0] || text,
     namingStyle: namingStyle.id,
-    suggestions: parsed.suggestions,
+    suggestions: Array.isArray(parsed?.suggestions) ? parsed.suggestions : [],
   }
 }

@@ -1,6 +1,7 @@
+<!-- 编程字段翻译面板 — 中文翻译为符合编程命名规范的英文 -->
 <template>
   <div class="code-translation-panel">
-    <div class="translation-header">
+    <div class="panel-header">
       <h3 class="panel-title">
         <IconWrapper
           name="code"
@@ -10,7 +11,7 @@
       </h3>
     </div>
 
-    <div class="translation-content">
+    <div class="panel-content">
       <div class="input-section">
         <div class="input-label">
           <IconWrapper
@@ -25,7 +26,7 @@
           class="translation-textarea"
           :placeholder="i18n.enterChinesePlaceholder || '输入中文，如：获取用户信息、用户接口、计算总价...'"
           :rows="3"
-          @input="handleInput"
+          @input="clearError"
         />
       </div>
 
@@ -184,7 +185,6 @@ import type {
   CodeTranslationResult,
   NamingStyle,
 } from "../utils/codeTranslation"
-import { showMessage } from "siyuan"
 import { ref } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
@@ -211,8 +211,10 @@ const isTranslating = ref(false)
 
 const {
   errorMessage,
+  clearError,
   clearErrorOnInput,
   getApiConfig,
+  copyText,
 } = useCodeFeature(props.plugin)
 clearErrorOnInput(chineseInput)
 
@@ -220,10 +222,6 @@ const namingStyles = NAMING_STYLES
 
 function selectStyle(style: NamingStyle) {
   selectedStyle.value = style
-}
-
-function handleInput() {
-  errorMessage.value = ""
 }
 
 async function handleTranslate() {
@@ -262,14 +260,12 @@ function handleClear() {
 
 function copyResult() {
   if (translationResult.value) {
-    navigator.clipboard.writeText(translationResult.value.translated)
-    showMessage(props.i18n.copied || "已复制", 1500, "info")
+    copyText(translationResult.value.translated)
   }
 }
 
 function copySuggestion(suggestion: string) {
-  navigator.clipboard.writeText(suggestion)
-  showMessage(props.i18n.copied || "已复制", 1500, "info")
+  copyText(suggestion)
 }
 
 /**
@@ -301,12 +297,11 @@ function generateAbbreviation(text: string): string {
 function copyAbbreviation() {
   if (translationResult.value) {
     const abbr = generateAbbreviation(translationResult.value.translated)
-    navigator.clipboard.writeText(abbr)
-    showMessage(props.i18n.copied || "已复制", 1500, "info")
+    copyText(abbr)
   }
 }
 </script>
 
 <style scoped lang="scss">
-@use "../styles/codeTranslation.scss";
+@use "../styles/codeUtils.scss";
 </style>

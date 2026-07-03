@@ -1,0 +1,512 @@
+@use "./variables" as *;
+@use "./mixins" as *;
+@use "./Buttons";
+@use "./Shared";
+
+// ========== 卡片容器 ==========
+.gp-card {
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  padding: 10px 12px;
+  transition: border-color 0.15s;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+.gp-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $spacing-2;
+}
+
+.gp-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.gp-card-name {
+  font-size: 13px;
+  font-weight: $font-weight-semibold;
+  margin-bottom: 2px;
+  cursor: pointer;
+  border-radius: $radius-sm;
+  padding: 1px 4px;
+  transition: background 0.15s;
+
+  &:hover {
+    background: var(--b3-theme-primary-lightest);
+  }
+}
+
+.gp-card-name-input {
+  font-size: 13px;
+  font-weight: $font-weight-semibold;
+  margin-bottom: 2px;
+  padding: 1px 4px;
+  border: 1px solid var(--b3-theme-primary);
+  border-radius: $radius-sm;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  outline: none;
+  width: calc(100% - 10px);
+  max-width: 220px;
+  font-family: inherit;
+  box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+}
+
+.gp-card-note {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-1;
+  margin-top: 4px;
+  padding: 4px 6px;
+  font-size: 10px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.55;
+  background: var(--b3-theme-surface);
+  border-radius: $radius-sm;
+  line-height: $line-height-normal;
+  @include text-ellipsis;
+
+  span {
+    @include text-ellipsis;
+  }
+}
+
+.gp-card-path {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-family: $vp-mono;
+  opacity: 0.5;
+  max-width: 280px;
+
+  .gp-path-icon {
+    flex-shrink: 0;
+    opacity: 0.55;
+  }
+
+  .gp-path-text {
+    @include text-ellipsis;
+    min-width: 0;
+  }
+}
+
+// ========== 分支 ==========
+.gp-branch-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  margin-top: 3px;
+  flex-wrap: wrap;
+}
+
+.gp-branch-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 6px;
+  font-size: 9px;
+  font-family: $vp-mono;
+  font-weight: $font-weight-semibold;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+  cursor: pointer;
+  transition: opacity 0.15s, border-color 0.15s;
+
+  &:hover {
+    opacity: 0.8;
+    border-color: var(--b3-theme-primary);
+  }
+
+  &.current {
+    opacity: 1;
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+    background: var(--b3-theme-primary-lightest);
+  }
+}
+
+// ========== 卡片操作按钮 ==========
+.gp-card-actions {
+  display: flex;
+  gap: $spacing-1;
+  flex-shrink: 0;
+}
+
+// 分类选择框（卡片内联）
+.gp-cat-select {
+  background: transparent;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  color: var(--b3-theme-on-surface);
+  font-size: 10px;
+  padding: 1px 2px;
+  cursor: pointer;
+  max-width: 60px;
+  opacity: 0.5;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+// ========== IDE 菜单 ==========
+.gp-ide-wrap {
+  position: relative;
+}
+
+.gp-ide-popover {
+  @include popover-base;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 6px;
+  min-width: 160px;
+}
+
+.gp-ide-item {
+  @include popover-item;
+
+  &--none {
+    opacity: 0.5;
+    cursor: default;
+    &:hover { background: none; }
+  }
+
+  &--add {
+    color: var(--b3-theme-primary);
+    &:hover { background: var(--b3-theme-primary-lightest); }
+  }
+}
+
+.gp-ide-item--custom {
+  padding-right: 4px;
+}
+
+.gp-ide-item-del {
+  margin-left: auto;
+  padding: 2px 4px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0;
+  background: none;
+  border: none;
+  border-radius: $radius-sm;
+  cursor: pointer;
+  transition: opacity 0.12s;
+
+  .gp-ide-item--custom:hover & {
+    opacity: 0.35;
+  }
+}
+
+.gp-ide-item--custom .gp-ide-item-del {
+  &:hover {
+    opacity: 1;
+    color: #e74c3c;
+    background: rgba(231, 76, 60, 0.08);
+  }
+}
+
+.gp-ide-del-confirm {
+  margin-left: auto;
+  font-size: 10px;
+  opacity: 0.6;
+  white-space: nowrap;
+}
+
+.gp-ide-del-yes,
+.gp-ide-del-no {
+  padding: 1px 6px;
+  font-size: 10px;
+  border-radius: $radius-sm;
+  border: none;
+  cursor: pointer;
+  line-height: $line-height-normal;
+}
+
+.gp-ide-del-yes {
+  color: #fff;
+  background: #e74c3c;
+  &:hover { background: #c0392b; }
+}
+
+.gp-ide-del-no {
+  color: var(--b3-theme-on-surface);
+  background: var(--b3-list-hover);
+  &:hover { background: var(--b3-border-color); }
+}
+
+.gp-ide-divider {
+  height: 1px;
+  margin: $spacing-1 6px;
+  background: var(--b3-border-color);
+}
+
+// ========== 远程仓库状态 ==========
+.gp-remotes {
+  display: flex;
+  gap: $spacing-4;
+  margin: $spacing-2 0;
+}
+
+.gp-remote-item {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  font-size: 11px;
+  font-family: $vp-mono;
+  opacity: 0.35;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+
+  &.active {
+    opacity: 1;
+    color: var(--b3-theme-primary);
+  }
+}
+
+.gp-remote-none {
+  opacity: 0.35;
+}
+
+.gp-conflict-warn {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: 4px 8px;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--b3-theme-warning);
+  background: var(--b3-theme-warning-lightest);
+  border: 1px solid var(--b3-theme-warning-lighter, var(--b3-theme-warning));
+  border-radius: $radius-sm;
+}
+
+.gp-status-badge {
+  font-size: 10px;
+  font-weight: $font-weight-bold;
+  padding: 1px 5px;
+  border-radius: $radius-sm;
+  margin-left: 4px;
+  letter-spacing: 0;
+
+  &.gp-ahead {
+    background: var(--b3-theme-primary-lightest);
+    color: var(--b3-theme-primary);
+  }
+
+  &.gp-behind {
+    background: var(--b3-theme-warning-lightest);
+    color: var(--b3-theme-warning);
+  }
+
+  &.gp-synced {
+    background: var(--b3-theme-success-lightest);
+    color: var(--b3-theme-success);
+  }
+}
+
+// ========== 操作栏（拉取/推送）==========
+.gp-actions-bar {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 4px 0;
+}
+
+.gp-actions-section {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.gp-actions-label {
+  @include gp-label-base;
+  flex-shrink: 0;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface-light);
+  line-height: 1;
+  padding: 2px 0;
+}
+
+.gp-actions-btns {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.gp-actions-sep {
+  width: 1px;
+  align-self: stretch;
+  background: var(--b3-border-color);
+  flex-shrink: 0;
+}
+
+.gp-action-btn {
+  gap: 1px;
+  padding: 1px 1px;
+  font-size: 10px;
+  line-height: 1;
+  white-space: nowrap;
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  &--active {
+    border-color: var(--b3-theme-primary) !important;
+    color: var(--b3-theme-primary);
+  }
+
+  &--ok {
+    border-color: var(--b3-theme-success) !important;
+    color: var(--b3-theme-success);
+  }
+
+  &--fail {
+    border-color: var(--b3-theme-error) !important;
+    color: var(--b3-theme-error);
+  }
+}
+
+// ========== 卡片增强 ==========
+.gp-card-name-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  margin-bottom: 2px;
+}
+
+.gp-star-btn {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.3;
+  transition: opacity 0.15s, transform 0.1s;
+
+  &:hover { opacity: 0.7; }
+  &:active { transform: scale(0.9); }
+
+  &.active {
+    opacity: 1;
+    color: #f5a623;
+  }
+}
+
+.gp-project-status-btn {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.1s;
+
+  &:hover { transform: scale(1.2); }
+
+  &.gp-psb-active { color: var(--b3-theme-success); }
+  &.gp-psb-maintenance { color: var(--b3-theme-primary); }
+  &.gp-psb-paused { color: var(--b3-theme-on-surface); opacity: 0.4; }
+}
+
+.gp-archived-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 5px;
+  border-radius: $radius-sm;
+  font-size: 9px;
+  font-weight: $font-weight-semibold;
+  background: var(--b3-theme-on-surface);
+  color: var(--b3-theme-background);
+  opacity: 0.5;
+}
+
+.gp-card-meta {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin-top: 3px;
+  flex-wrap: wrap;
+}
+
+.gp-card-tags {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+
+.gp-card-tag {
+  padding: 1px 6px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  font-size: 9px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+
+  &:hover { border-color: var(--b3-theme-primary); color: var(--b3-theme-primary); }
+
+  &.active {
+    background: var(--b3-theme-primary-lightest);
+    color: var(--b3-theme-primary);
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+.gp-card-tag-more {
+  cursor: default;
+  opacity: 0.5;
+  &:hover { border-color: var(--b3-border-color); color: var(--b3-theme-on-surface); }
+}
+
+.gp-activity {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 9px;
+  font-family: $vp-mono;
+  white-space: nowrap;
+
+  &.gp-act-fresh { color: var(--b3-theme-success); opacity: 0.8; }
+  &.gp-act-recent { opacity: 0.55; }
+  &.gp-act-stale { opacity: 0.4; }
+  &.gp-act-dead { opacity: 0.3; color: var(--b3-theme-warning); }
+}
+
+// 卡片上的多路径标记
+.gp-multi-path-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  padding: 0 5px;
+  font-size: 9px;
+  font-weight: 500;
+  line-height: 16px;
+  border-radius: 3px;
+  background: var(--b3-theme-primary-lightest);
+  color: var(--b3-theme-primary);
+  opacity: 0.7;
+  white-space: nowrap;
+  cursor: default;
+}

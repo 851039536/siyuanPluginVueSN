@@ -65,117 +65,29 @@
 
     <!-- ========== 列表视图 ========== -->
     <template v-if="currentView === 'list'">
-      <!-- 筛选工具栏（智能视图 + 归档 toggle + 标签筛选） -->
-      <div
-        v-if="projects.length > 0"
-        class="gp-filter-bar"
-      >
-        <div class="gp-view-modes">
-          <button
-            v-for="vm in (['all', 'needsPush', 'uncommitted', 'starred', 'archived'] as const)"
-            :key="vm"
-            class="gp-vm-btn"
-            :class="{ active: viewMode === vm }"
-            :title="VIEW_MODE_META[vm].label"
-            @click="viewMode = vm"
-          >
-            <Icon
-              :icon="VIEW_MODE_META[vm].icon"
-              height="12"
-            />
-            <span>{{ VIEW_MODE_META[vm].label }}</span>
-          </button>
-        </div>
-        <div class="gp-filter-toggles">
-          <button
-            class="gp-ft-btn"
-            :class="{ active: showArchived }"
-            title="显示/隐藏归档项目"
-            @click="showArchived = !showArchived"
-          >
-            <Icon
-              icon="mdi:archive-outline"
-              height="12"
-            />
-            <span v-if="showArchived">含归档</span>
-          </button>
-          <button
-            class="gp-ft-btn"
-            :class="{ active: gitOpsPaused }"
-            :title="gitOpsPaused ? '已暂停 Git 状态加载' : '暂停 Git 状态加载'"
-            @click="gitOpsPaused = !gitOpsPaused"
-          >
-            <Icon
-              :icon="gitOpsPaused ? 'mdi:pause-circle' : 'mdi:pause-circle-outline'"
-              height="12"
-            />
-            <span v-if="gitOpsPaused">已暂停</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- 标签筛选条（有标签时显示） -->
-      <div
-        v-if="allTags.length > 0 && projects.length > 0"
-        class="gp-tag-filter"
-      >
-        <button
-          v-for="t in allTags"
-          :key="t"
-          class="gp-tag-chip"
-          :class="{ active: selectedTags.has(t) }"
-          @click="toggleTagFilter(t)"
-        >{{ t }}</button>
-      </div>
-
-      <!-- 分类 TAB 导航（仅 all 模式显示） -->
-      <div
-        v-if="viewMode === 'all' && groupedProjects.length > 0"
-        class="gp-tabs"
-      >
-        <button
-          v-for="g in groupedProjects"
-          :key="g.category.id"
-          class="gp-tab"
-          :class="{ active: activeCategory === g.category.id }"
-          :style="activeCategory === g.category.id ? { borderBottomColor: g.category.color } : {}"
-          @click="activeCategory = g.category.id"
-        >
-          <span
-            class="gp-tab-dot"
-            :style="{ background: g.category.color }"
-          />
-          <span>{{ g.category.name }}</span>
-          <span class="gp-tab-count">{{ g.projects.length }}</span>
-        </button>
-      </div>
+      <!-- 筛选工具栏 + 标签筛选 + 分类 TAB -->
+      <ListViewToolbar
+        :projects="projects"
+        :grouped-projects="groupedProjects"
+        :all-tags="allTags"
+        :selected-tags="selectedTags"
+        :view-mode="viewMode"
+        :active-category="activeCategory"
+        :show-archived="showArchived"
+        :git-ops-paused="gitOpsPaused"
+        @update:view-mode="viewMode = $event"
+        @update:active-category="activeCategory = $event"
+        @update:show-archived="showArchived = $event"
+        @update:git-ops-paused="gitOpsPaused = $event"
+        @toggle-tag-filter="toggleTagFilter"
+      />
 
       <!-- 搜索框 -->
-      <div
+      <SearchBox
         v-if="projects.length > 0"
-        class="gp-search-wrap"
-      >
-        <Icon
-          icon="mdi:magnify"
-          class="gp-search-icon"
-          height="12"
-        />
-        <input
-          v-model="searchQuery"
-          class="gp-search-input"
-          :placeholder="i18n.searchPlaceholder || '搜索项目...'"
-        />
-        <button
-          v-if="searchQuery"
-          class="gp-search-clear"
-          @click="searchQuery = ''"
-        >
-          <Icon
-            icon="mdi:close"
-            height="12"
-          />
-        </button>
-      </div>
+        v-model="searchQuery"
+        :placeholder="i18n.searchPlaceholder || '搜索项目...'"
+      />
 
       <!-- 项目列表 -->
       <div
@@ -210,569 +122,107 @@
           v-for="group in filteredGroups"
           :key="group.category.id"
         >
-          <div
+          <ProjectCard
             v-for="project in group.projects"
             :key="project.id"
-            class="gp-card"
-            style="box-sizing: border-box !important; flex: 1 1 calc(50% - 10px) !important; min-width: 390px !important;"
-            @click="handleCardClick(project.id, $event)"
-          >
-            <div class="gp-card-top">
-              <div class="gp-card-info">
-                <div class="gp-card-name-row">
-                  <!-- 收藏星标（高频，内联切换） -->
-                  <button
-                    class="gp-star-btn"
-                    :class="{ active: project.starred }"
-                    :title="project.starred ? '取消收藏' : '收藏置顶'"
-                    @click.stop="toggleStar(project.id)"
-                  >
-                    <Icon
-                      :icon="project.starred ? 'mdi:star' : 'mdi:star-outline'"
-                      height="12"
-                    />
-                  </button>
-                  <input
-                    v-if="editingNameId === project.id"
-                    v-model="editingNameInput"
-                    class="gp-card-name-input"
-                    @blur="handleNameEditSave(project)"
-                    @keyup.enter="($event.target as HTMLInputElement).blur()"
-                    @keyup.escape="editingNameId = ''"
-                    @click.stop
-                  />
-                  <span
-                    v-else
-                    class="gp-card-name"
-                    title="点击修改名称"
-                    @click.stop="startNameEdit(project)"
-                  >{{ project.name }}</span>
-                  <!-- 状态徽章（点击循环切换） -->
-                  <button
-                    class="gp-project-status-btn"
-                    :class="`gp-psb-${project.status || 'active'}`"
-                    :title="`状态: ${STATUS_META[project.status || 'active'].label}（点击切换）`"
-                    @click.stop="cycleStatus(project.id, project.status)"
-                  >
-                    <Icon
-                      :icon="STATUS_META[project.status || 'active'].icon"
-                      height="12"
-                    />
-                  </button>
-                  <span
-                    v-if="project.archived"
-                    class="gp-archived-tag"
-                    title="已归档"
-                  >
-                    <Icon
-                      icon="mdi:archive-outline"
-                      height="12"
-                    />归档
-                  </span>
-                </div>
-                <div
-                  class="gp-card-path"
-                  :title="project.path"
-                >
-                  <Icon
-                    icon="mdi:folder-outline"
-                    height="11"
-                    class="gp-path-icon"
-                  />
-                  <span class="gp-path-text">{{ project.path }}</span>
-                  <span
-                    v-if="project.localPaths?.length"
-                    class="gp-multi-path-badge"
-                    :title="`已配置 ${project.localPaths.length + 1} 个设备路径`"
-                  >+{{ project.localPaths.length }}路径</span>
-                </div>
-                <!-- 标签 + 最后活动时间 -->
-                <div class="gp-card-meta">
-                  <div
-                    v-if="project.tags?.length"
-                    class="gp-card-tags"
-                  >
-                    <span
-                      v-for="t in project.tags.slice(0, 3)"
-                      :key="t"
-                      class="gp-card-tag"
-                      :class="{ active: selectedTags.has(t) }"
-                      :title="`点击筛选标签: ${t}`"
-                      @click.stop="toggleTagFilter(t)"
-                    >{{ t }}</span>
-                    <span
-                      v-if="project.tags.length > 3"
-                      class="gp-card-tag gp-card-tag-more"
-                    >+{{ project.tags.length - 3 }}</span>
-                  </div>
-                  <span
-                    v-if="project.lastActivity"
-                    class="gp-activity"
-                    :class="`gp-act-${activityLevel(project.lastActivity)}`"
-                    :title="activityLevel(project.lastActivity) === 'dead' ? '长时间未活动，建议归档' : ''"
-                  >
-                    <Icon
-                      icon="mdi:clock-outline"
-                      height="12"
-                    />
-                    {{ relativeTime(project.lastActivity) }}
-                  </span>
-                </div>
-                <!-- 分支标签 -->
-                <div
-                  v-if="branches[project.id]?.length"
-                  class="gp-branch-row"
-                >
-                  <Icon
-                    icon="mdi:source-branch"
-                    height="12"
-                  />
-                  <button
-                    v-for="b in branches[project.id]"
-                    :key="b.name"
-                    class="gp-branch-tag"
-                    :class="{ current: b.current }"
-                    :title="b.current ? '当前分支' : `切换到 ${b.name}`"
-                    @click="handleSwitchBranch(project.id, b.name)"
-                  >
-                    {{ b.name }}
-                    <Icon
-                      v-if="b.current"
-                      icon="mdi:check"
-                      height="12"
-                    />
-                  </button>
-                </div>
-                <!-- 备注 -->
-                <div
-                  v-if="project.note"
-                  class="gp-card-note"
-                  :title="project.note"
-                >
-                  <Icon
-                    icon="mdi:note-text-outline"
-                    height="12"
-                  />
-                  <span>{{ project.note }}</span>
-                </div>
-              </div>
-              <div class="gp-card-actions">
-                <select
-                  class="gp-cat-select"
-                  :value="project.categoryId"
-                  :title="i18n.moveCategory || '移动分类'"
-                  @change.stop="handleMoveProject(project.id, ($event.target as HTMLSelectElement).value)"
-                >
-                  <option
-                    v-for="cat in categories"
-                    :key="cat.id"
-                    :value="cat.id"
-                    :selected="cat.id === project.categoryId"
-                  >
-                    {{ cat.name }}
-                  </option>
-                </select>
-                <template
-                  v-for="pm in PLATFORM_META"
-                  :key="pm.key"
-                >
-                  <button
-                    v-if="getProjectUrl(project, pm.urlProp)"
-                    class="vp-btn vp-btn--ghost vp-btn--sm"
-                    :title="`打开 ${pm.label}（右键复制链接）`"
-                    @click="handleOpenWeb(getProjectUrl(project, pm.urlProp)!)"
-                    @contextmenu.prevent="handleCopyUrl(getProjectUrl(project, pm.urlProp)!)"
-                  >
-                    <Icon
-                      :icon="pm.icon"
-                      height="12"
-                    />
-                  </button>
-                </template>
-                <div class="gp-ide-wrap">
-                  <button
-                    class="vp-btn vp-btn--ghost vp-btn--sm"
-                    title="打开项目"
-                    @click.stop="toggleIdeMenu(project.id)"
-                  >
-                    <Icon
-                      icon="mdi:folder-open"
-                      height="12"
-                    />
-                    <Icon
-                      icon="mdi:unfold-more-horizontal"
-                      height="12"
-                      style="margin-left:1px;opacity:0.5"
-                    />
-                  </button>
-                  <div
-                    v-if="openIdeMenu.has(project.id)"
-                    class="gp-ide-popover"
-                    @click.stop
-                  >
-                    <button
-                      class="gp-ide-item"
-                      @click="handleOpenPath(resolvedPath(project)); openIdeMenu.delete(project.id)"
-                    >
-                      <Icon
-                        icon="mdi:folder-open"
-                        height="12"
-                      />
-                      <span>打开文件夹</span>
-                    </button>
-                    <div class="gp-ide-divider" />
-                    <button
-                      v-if="detectedIdes.length === 0 && customIdes.length === 0"
-                      class="gp-ide-item gp-ide-item--none"
-                      disabled
-                    >
-                      <Icon
-                        icon="mdi:information-outline"
-                        height="12"
-                      />
-                      <span>未检测到 IDE</span>
-                    </button>
-                    <button
-                      v-for="ide in detectedIdes"
-                      :key="`detected-${ide.name}`"
-                      class="gp-ide-item"
-                      @click="handleOpenIde(resolvedPath(project), ide); openIdeMenu.delete(project.id)"
-                    >
-                      <Icon
-                        :icon="ide.icon"
-                        height="12"
-                      />
-                      <span>{{ ide.name }}</span>
-                    </button>
-                    <button
-                      v-for="(custom, idx) in customIdes"
-                      :key="`custom-${idx}`"
-                      class="gp-ide-item gp-ide-item--custom"
-                      @click="handleOpenCustomIde(resolvedPath(project), custom.name, custom.path); openIdeMenu.delete(project.id)"
-                    >
-                      <Icon
-                        icon="mdi:application-brackets"
-                        height="12"
-                      />
-                      <span>{{ custom.name }}</span>
-                      <template v-if="confirmingDelIdx === idx">
-                        <span class="gp-ide-del-confirm">确认删除?</span>
-                        <button
-                          class="gp-ide-del-yes"
-                          @click.stop="doRemoveCustomIde(idx)"
-                        >
-                          是
-                        </button>
-                        <button
-                          class="gp-ide-del-no"
-                          @click.stop="confirmingDelIdx = -1"
-                        >
-                          否
-                        </button>
-                      </template>
-                      <button
-                        v-else
-                        class="gp-ide-item-del"
-                        title="删除此自定义 IDE"
-                        @click.stop="confirmingDelIdx = idx"
-                      >
-                        <Icon
-                          icon="mdi:delete-outline"
-                          height="12"
-                        />
-                      </button>
-                    </button>
-                    <div class="gp-ide-divider" />
-                    <button
-                      class="gp-ide-item gp-ide-item--add"
-                      @click.stop="showIdeDialog = true; openIdeMenu.delete(project.id)"
-                    >
-                      <Icon
-                        icon="mdi:cog-outline"
-                        height="12"
-                      />
-                      <span>管理 IDE...</span>
-                    </button>
-                  </div>
-                </div>
-                <button
-                  class="vp-btn vp-btn--ghost vp-btn--sm"
-                  title="重新检测远程仓库"
-                  @click="handleRefresh(project.id)"
-                >
-                  <Icon
-                    icon="mdi:refresh"
-                    height="12"
-                    :class="{ 'gp-spin': refreshing === project.id }"
-                  />
-                </button>
-                <button
-                  class="vp-btn vp-btn--ghost vp-btn--sm"
-                  title="编辑项目（标签/状态/备注）"
-                  @click="openEditDialog(project)"
-                >
-                  <Icon
-                    icon="mdi:pencil-outline"
-                    height="12"
-                  />
-                </button>
-                <button
-                  class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
-                  @click="handleRemove(project)"
-                >
-                  <Icon
-                    icon="mdi:delete-outline"
-                    height="12"
-                  />
-                </button>
-              </div>
-            </div>
-
-            <!-- 远程仓库状态 -->
-            <div class="gp-remotes">
-              <div
-                v-for="r in REMOTES"
-                :key="r.key"
-                class="gp-remote-item"
-                :class="{ active: !!project[r.remoteProp] }"
-              >
-                <Icon
-                  :icon="r.icon"
-                  height="12"
-                />
-                <span v-if="project[r.remoteProp]">{{ project[r.remoteProp] }}</span>
-                <span
-                  v-else
-                  class="gp-remote-none"
-                >{{ i18n.notDetected || '未检测到' }}</span>
-                <span
-                  v-if="pushStatuses[project.id]?.remotes[r.key]"
-                  class="gp-status-badge"
-                  :class="statusBadgeClass(project.id, r.key)"
-                >
-                  {{ statusLabel(project.id, r.key) }}
-                </span>
-              </div>
-            </div>
-
-            <!-- 远程冲突警告 -->
-            <div
-              v-if="hasBehind(project.id)"
-              class="gp-conflict-warn"
-            >
-              <Icon
-                icon="mdi:alert-circle-outline"
-                height="12"
-              />
-              <span>{{ i18n.conflictWarn || '远程有新的提交，建议先拉取再推送' }}</span>
-            </div>
-
-            <!-- 工作区变更状态 -->
-            <WorkingTreePanel
-              v-if="workingTrees[project.id]"
-              :i18n="i18n"
-              :tree="workingTrees[project.id]"
-              :committing="committing[project.id] || false"
-              :generating="generatingMsgs[project.id]?.generating || false"
-              :commit-output="commitOutputs[project.id] || ''"
-              :generated-msg="generatingMsgs[project.id]?.text || ''"
-              :file-diffs="fileDiffsForProject(project.id)"
-              :git-op-loading="gitOpLoading[project.id] || false"
-              :commit-log-entries="commitLogForProject(project.id)"
-              :commit-log-loading="commitLogLoading[project.id] || false"
-              :commit-templates="commitTemplates"
-              @stage-file="(file) => handleGitOp('暂存失败', () => stageItem(project.id, file), project.id)"
-              @unstage-file="(file) => handleGitOp('取消暂存失败', () => unstageItem(project.id, file), project.id)"
-              @stage-all="handleGitOp('暂存失败', () => stageAllItems(project.id), project.id)"
-              @unstage-all="handleGitOp('取消暂存失败', () => unstageAllItems(project.id), project.id)"
-              @commit="(msg) => handleCommit(project.id, msg)"
-              @generate-msg="handleGenerateMsg(project.id)"
-              @load-diff="(file, staged) => loadFileDiff(project.id, file, staged)"
-              @clear-output="commitOutputs[project.id] = ''"
-              @discard-file="(file, staged, status) => handleDiscard(project.id, file, staged, status)"
-              @expand="handleExpand(project.id)"
-            />
-
-            <!-- Stash 暂存 -->
-            <StashSection
-              :entries="stashEntries[project.id]"
-              :loading="stashLoading[project.id] || false"
-              :has-changes="!!workingTrees[project.id]?.hasChanges"
-              :gen-desc-loading="genStashDescLoading[project.id] || false"
-              :generated-msg="generatedStashMsg"
-              :i18n="i18n"
-              @stash-confirm="(msg) => handleStashConfirmMsg(project.id, msg)"
-              @gen-stash-desc="handleGenStashDesc(project.id)"
-              @stash-pop="(idx) => handleStashPop(project.id, idx)"
-              @stash-apply="(idx) => handleStashApply(project.id, idx)"
-              @stash-drop="(idx) => handleStashDrop(project.id, idx)"
-            />
-
-            <!-- Tag 管理 -->
-            <TagPanel
-              :tags="tagsCache[project.id] || []"
-              :loading="tagLoading[project.id]"
-              :push-loaded="tagPushLoading[project.id]"
-              :remotes="PLATFORM_META.filter(pm => project[pm.remoteProp]).map(pm => ({
-                key: pm.key,
-                icon: pm.icon,
-              }))"
-              :i18n="i18n"
-              @create="(p) => handleCreateTag(project.id, p.name, p.message)"
-              @push="(p) => handlePushTag(project.id, p.tag)"
-              @delete="(p) => handleDeleteTag(project.id, p.tag)"
-            />
-
-            <!-- 冲突警告 -->
-            <ConflictSection
-              :conflicts="conflicts[project.id]"
-              :i18n="i18n"
-              @resolve-conflict="(file, strategy) => handleResolveConflict(project.id, file, strategy)"
-              @abort-merge="handleAbortMerge(project.id)"
-            />
-
-            <!-- 操作栏：拉取 / 推送 -->
-            <div class="gp-actions-bar">
-              <!-- 拉取区 -->
-              <div class="gp-actions-section">
-                <span class="gp-actions-label">{{ i18n.pull || '拉取' }}</span>
-                <div class="gp-actions-btns">
-                  <button
-                    v-for="r in REMOTES"
-                    :key="`pull-${r.key}`"
-                    class="vp-btn vp-btn--ghost vp-btn--sm gp-action-btn"
-                    :class="{ 'gp-action-btn--active': isPulling(project.id, r.key) }"
-                    :disabled="!project[r.remoteProp] || isPulling(project.id) || isPushing(project.id)"
-                    :title="`${i18n.pull || 'Pull'} ${r.label}`"
-                    @click="confirmPullSingle(project.id, r.key)"
-                  >
-                    <Icon
-                      v-if="isPulling(project.id, r.key)"
-                      icon="mdi:loading"
-                      class="gp-spin"
-                      height="12"
-                    />
-                    <Icon
-                      v-else
-                      :icon="r.icon"
-                      height="12"
-                    />
-                    <span>{{ r.label }}</span>
-                  </button>
-                  <!-- Fetch 按钮 -->
-                  <button
-                    class="vp-btn vp-btn--ghost vp-btn--sm gp-action-btn gp-fetch-btn"
-                    :class="{ 'gp-action-btn--active': fetching[project.id] }"
-                    :disabled="!hasAnyRemote(project) || isPulling(project.id) || isPushing(project.id) || fetching[project.id]"
-                    :title="i18n.fetchHint || '获取最新远程状态'"
-                    @click="handleFetchAll(project.id)"
-                  >
-                    <Icon
-                      v-if="fetching[project.id]"
-                      icon="mdi:loading"
-                      class="gp-spin"
-                      height="12"
-                    />
-                    <Icon
-                      v-else
-                      icon="mdi:cloud-download"
-                      height="12"
-                    />
-                    <span>{{ i18n.fetchAll || 'Fetch' }}</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- 分隔线 -->
-              <div class="gp-actions-sep" />
-
-              <!-- 推送区 -->
-              <div class="gp-actions-section">
-                <span class="gp-actions-label">{{ i18n.push || '推送' }}</span>
-                <div class="gp-actions-btns">
-                  <button
-                    v-for="r in REMOTES"
-                    :key="`push-${r.key}`"
-                    class="vp-btn vp-btn--ghost vp-btn--sm gp-action-btn"
-                    :class="{
-                      'gp-action-btn--ok': getPushStatus(project.id, r.key) === 'ok',
-                      'gp-action-btn--fail': getPushStatus(project.id, r.key) === 'fail',
-                      'gp-action-btn--active': getPushStatus(project.id, r.key) === 'pushing',
-                    }"
-                    :disabled="!project[r.remoteProp] || isPushing(project.id) || isPulling(project.id) || !needsPushFor(project.id, r.key)"
-                    :title="`${i18n.push || 'Push'} ${r.label}`"
-                    @click="pushSingle(project.id, r.key)"
-                  >
-                    <Icon
-                      v-if="getPushStatus(project.id, r.key) === 'pushing'"
-                      icon="mdi:loading"
-                      class="gp-spin"
-                      height="12"
-                    />
-                    <Icon
-                      v-else-if="getPushStatus(project.id, r.key) === 'ok'"
-                      icon="mdi:check-circle"
-                      height="12"
-                    />
-                    <Icon
-                      v-else-if="getPushStatus(project.id, r.key) === 'fail'"
-                      icon="mdi:close-circle"
-                      height="12"
-                    />
-                    <Icon
-                      v-else
-                      :icon="r.icon"
-                      height="12"
-                    />
-                    <span>{{ getPushStatus(project.id, r.key) === 'pushing' ? i18n.pushing || '推送中…' : getPushStatus(project.id, r.key) === 'ok' ? i18n.done || '完成' : getPushStatus(project.id, r.key) === 'fail' ? i18n.failed || '失败' : r.label }}</span>
-                  </button>
-
-                  <!-- 推送全部 -->
-                  <button
-                    v-if="!isPushing(project.id)"
-                    class="vp-btn vp-btn--primary vp-btn--sm gp-action-btn"
-                    :disabled="(!project.githubRemote && !project.giteeRemote && !project.giteaRemote && !project.cnbRemote) || isPulling(project.id) || !pushStatuses[project.id]?.needsPush"
-                    @click="pushToAll(project.id)"
-                  >
-                    <Icon
-                      icon="mdi:cloud-upload"
-                      height="12"
-                    />
-                    <span>{{ i18n.pushAll || '推送全部' }}</span>
-                  </button>
-
-                  <!-- 取消推送 -->
-                  <button
-                    v-else
-                    class="vp-btn vp-btn--danger vp-btn--sm gp-action-btn"
-                    @click="cancelPush(project.id)"
-                  >
-                    <Icon
-                      icon="mdi:close-circle"
-                      height="12"
-                    />
-                    <span>{{ i18n.cancel || '取消' }}</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- 拉取输出 -->
-            <OutputPanel
-              :entries="pullOutputs[project.id]"
-              :copy-text="entriesToText(pullOutputs[project.id])"
-              :i18n="i18n"
-              @copy="handleCopyOutput"
-            />
-
-            <!-- 推送输出 -->
-            <OutputPanel
-              :entries="pushOutputs[project.id]"
-              :copy-text="entriesToText(pushOutputs[project.id])"
-              :i18n="i18n"
-              @copy="handleCopyOutput"
-            />
-          </div>
+            :project="project"
+            :i18n="i18n"
+            :categories="categories"
+            :platform-meta="PLATFORM_META"
+            :remotes="REMOTES"
+            :status-meta="STATUS_META"
+            :detected-ides="detectedIdes"
+            :custom-ides="customIdes"
+            :editing-name-id="editingNameId"
+            :editing-name-input="editingNameInput"
+            :refreshing="refreshing"
+            :fetching="fetching"
+            :open-ide-menu="openIdeMenu"
+            :confirming-del-idx="confirmingDelIdx"
+            :branches="branches"
+            :push-statuses="pushStatuses"
+            :working-trees="workingTrees"
+            :stash-entries="stashEntries"
+            :stash-loading="stashLoading"
+            :conflicts="conflicts"
+            :commit-outputs="commitOutputs"
+            :pull-outputs="pullOutputs"
+            :push-outputs="pushOutputs"
+            :committing="committing"
+            :generating-msgs="generatingMsgs"
+            :git-op-loading="gitOpLoading"
+            :commit-log-loading="commitLogLoading"
+            :tags-cache="tagsCache"
+            :tag-loading="tagLoading"
+            :tag-push-loading="tagPushLoading"
+            :gen-stash-desc-loading="genStashDescLoading"
+            :generated-stash-msg="generatedStashMsg"
+            :commit-templates="commitTemplates"
+            :selected-tags="selectedTags"
+            :get-project-url="getProjectUrl"
+            :resolved-path="resolvedPath"
+            :relative-time="relativeTime"
+            :activity-level="activityLevel"
+            :status-badge-class="statusBadgeClass"
+            :status-label="statusLabel"
+            :has-behind="hasBehind"
+            :file-diffs-for-project="fileDiffsForProject"
+            :commit-log-for-project="commitLogForProject"
+            :has-any-remote="hasAnyRemote"
+            :is-pulling="isPulling"
+            :is-pushing="isPushing"
+            :needs-push-for="needsPushFor"
+            :get-push-status="getPushStatus"
+            :entries-to-text="entriesToText"
+            @card-click="handleCardClick"
+            @toggle-star="toggleStar"
+            @cycle-status="cycleStatus"
+            @start-name-edit="startNameEdit"
+            @name-edit-save="handleNameEditSave"
+            @toggle-tag-filter="toggleTagFilter"
+            @switch-branch="handleSwitchBranch"
+            @remove="handleRemove"
+            @open-edit-dialog="openEditDialog"
+            @move-project="handleMoveProject"
+            @open-web="handleOpenWeb"
+            @copy-url="handleCopyUrl"
+            @open-path="handleOpenPath"
+            @open-ide="handleOpenIde"
+            @open-custom-ide="handleOpenCustomIde"
+            @toggle-ide-menu="toggleIdeMenu"
+            @show-ide-dialog="showIdeDialog = true"
+            @do-remove-custom-ide="doRemoveCustomIde"
+            @update:editing-name-id="editingNameId = $event"
+            @update:editing-name-input="editingNameInput = $event"
+            @update:confirming-del-idx="confirmingDelIdx = $event"
+            @refresh="handleRefresh"
+            @stage-file="(id: string, file: string) => handleGitOp('暂存失败', () => stageItem(id, file), id)"
+            @unstage-file="(id: string, file: string) => handleGitOp('取消暂存失败', () => unstageItem(id, file), id)"
+            @stage-all="(id: string) => handleGitOp('暂存失败', () => stageAllItems(id), id)"
+            @unstage-all="(id: string) => handleGitOp('取消暂存失败', () => unstageAllItems(id), id)"
+            @commit="(id: string, msg: string) => handleCommit(id, msg)"
+            @generate-msg="handleGenerateMsg"
+            @load-diff="loadFileDiff"
+            @clear-output="(id: string) => commitOutputs[id] = ''"
+            @discard-file="handleDiscard"
+            @expand="handleExpand"
+            @stash-confirm-msg="handleStashConfirmMsg"
+            @gen-stash-desc="handleGenStashDesc"
+            @stash-pop="handleStashPop"
+            @stash-apply="handleStashApply"
+            @stash-drop="handleStashDrop"
+            @create-tag="handleCreateTag"
+            @push-tag="handlePushTag"
+            @delete-tag="handleDeleteTag"
+            @resolve-conflict="handleResolveConflict"
+            @abort-merge="handleAbortMerge"
+            @confirm-pull="confirmPullSingle"
+            @push-single="pushSingle"
+            @push-to-all="pushToAll"
+            @cancel-push="cancelPush"
+            @fetch-all="handleFetchAll"
+            @copy-output="handleCopyOutput"
+          />
         </template>
       </div>
     </template>
@@ -886,17 +336,15 @@ import { copyToClipboard } from "@/utils/domUtils"
 import AddProjectDialog from "./components/AddProjectDialog.vue"
 import CategoryDialog from "./components/CategoryDialog.vue"
 import ConfirmDialog from "./components/ConfirmDialog.vue"
-import ConflictSection from "./components/ConflictSection.vue"
 import EditProjectDialog from "./components/EditProjectDialog.vue"
 import IdeManagementDialog from "./components/IdeManagementDialog.vue"
-import OutputPanel from "./components/OutputPanel.vue"
+import ListViewToolbar from "./components/ListViewToolbar.vue"
 import PanelHeader from "./components/PanelHeader.vue"
+import ProjectCard from "./components/ProjectCard.vue"
+import SearchBox from "./components/SearchBox.vue"
 import ScanImportDialog from "./components/ScanImportDialog.vue"
 import SettingsDialog from "./components/SettingsDialog.vue"
-import StashSection from "./components/StashSection.vue"
 import StatsPanel from "./components/StatsPanel.vue"
-import TagPanel from "./components/TagPanel.vue"
-import WorkingTreePanel from "./components/WorkingTreePanel.vue"
 import { pickDirectory } from "./composables/useDirectoryPicker"
 import { useGitPush } from "./composables/useGitPush"
 import {
@@ -905,7 +353,6 @@ import {
 } from "./composables/useIdeManagement"
 import {
   useProjectFilters,
-  VIEW_MODE_META,
 } from "./composables/useProjectFilters"
 import { useTimeUtils } from "./composables/useTimeUtils"
 import { PLATFORM_META, REMOTES, STATUS_CYCLE, STATUS_META } from "./types"

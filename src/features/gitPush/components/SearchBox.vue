@@ -1,14 +1,16 @@
 <!-- gitPush 搜索框子组件 -->
 <template>
-  <Input
-    :model-value="modelValue"
-    size="small"
-    :placeholder="placeholder"
-    :prefix-icon="searchIcon"
-    clearable
-    autocomplete="off"
-    @update:model-value="$emit('update:modelValue', String($event ?? ''))"
-  />
+  <div class="gp-search-wrap">
+    <Input
+      :model-value="modelValue"
+      size="small"
+      :placeholder="placeholder"
+      :prefix-icon="searchIcon"
+      clearable
+      autocomplete="off"
+      @update:model-value="$emit('update:modelValue', String($event ?? ''))"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -26,3 +28,9 @@ defineEmits<{
 
 const searchIcon: IconKey = "mdi:magnify" as IconKey
 </script>
+
+<style lang="scss">
+.gp-search-wrap {
+  padding: 4px 10px 4px 0;
+}
+</style>

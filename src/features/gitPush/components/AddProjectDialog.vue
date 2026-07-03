@@ -81,6 +81,7 @@ import {
 import Input from "@/components/Input.vue"
 import type { SelectOption } from "@/components/Select.vue"
 import Select from "@/components/Select.vue"
+import { UNGROUPED_ID } from "../types"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -100,7 +101,7 @@ const emit = defineEmits<{
 
 const name = ref("")
 const path = ref("")
-const catId = ref("__ungrouped__")
+const catId = ref(UNGROUPED_ID)
 const tags = ref("")
 
 // 目录选择器回填路径

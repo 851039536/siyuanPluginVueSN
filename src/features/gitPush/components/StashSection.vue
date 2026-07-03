@@ -119,8 +119,9 @@
 <script setup lang="ts">
 import type { StashEntry } from "../types"
 import { Icon } from "@iconify/vue"
-import { nextTick, ref, watch } from "vue"
+import { nextTick, ref, toRef } from "vue"
 import Input from "@/components/Input.vue"
+import { useGeneratedMsgSync } from "../composables/useGeneratedMsgSync"
 
 const props = defineProps<{
   entries: StashEntry[] | undefined
@@ -163,9 +164,7 @@ function confirm() {
 }
 
 // 当父组件通过 genStashDesc 生成描述后，自动填入输入框
-watch(() => props.generatedMsg, (v) => {
-  if (v) localMsg.value = v
-})
+useGeneratedMsgSync(toRef(props, "generatedMsg"), localMsg)
 </script>
 
 <style lang="scss">

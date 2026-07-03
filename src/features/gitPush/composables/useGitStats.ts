@@ -8,7 +8,7 @@ import type {
   WorkingTreeInfo,
 } from "../types"
 import { computed, ref } from "vue"
-import { PLATFORM_META, type PlatformStatusItem } from "../types"
+import { PLATFORM_META, UNGROUPED_ID, type PlatformStatusItem } from "../types"
 
 export function useGitStats(
   manager: GitPushManager,
@@ -59,7 +59,7 @@ export function useGitStats(
       if (group) {
         group.projects.push(p)
       } else {
-        groupedMap.get("__ungrouped__")?.projects.push(p)
+        groupedMap.get(UNGROUPED_ID)?.projects.push(p)
       }
 
       // ── 远程覆盖率 ──

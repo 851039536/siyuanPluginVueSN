@@ -355,11 +355,12 @@ import {
 } from "./composables/useProjectFilters"
 import { useTimeUtils } from "./composables/useTimeUtils"
 import { useCommitLog } from "./composables/useCommitLog"
-import { PLATFORM_META, REMOTES, STATUS_CYCLE, STATUS_META } from "./types"
+import { PLATFORM_META, REMOTES, STATUS_CYCLE, STATUS_META, UNGROUPED_ID } from "./types"
 import {
   batchProcess,
   gitUrlToWebUrl,
   hasAnyRemote,
+  isAheadOfRemote,
   pruneRecordCache,
   resolveValidPath,
 } from "./utils"
@@ -1296,7 +1297,7 @@ function statusLabel(projectId: string, remoteKey: string): string {
 function statusBadgeClass(projectId: string, remoteKey: string): string {
   const rs = getRemoteStatus(projectId, remoteKey)
   if (!rs) return ""
-  if (rs.noUpstream || rs.ahead > 0) return "gp-ahead"
+  if (isAheadOfRemote(rs)) return "gp-ahead"
   if (rs.behind > 0) return "gp-behind"
   return "gp-synced"
 }
@@ -1305,7 +1306,7 @@ function statusBadgeClass(projectId: string, remoteKey: string): string {
 function needsPushFor(projectId: string, remoteKey: string): boolean {
   const rs = getRemoteStatus(projectId, remoteKey)
   if (!rs) return true // 尚未检测，允许点击
-  return rs.noUpstream || rs.ahead > 0
+  return isAheadOfRemote(rs)
 }
 
 /** 判断项目是否有远程落后（远程有新提交） */
@@ -1376,7 +1377,7 @@ async function handleImportSelected() {
   const selected = scanResults.value
     .filter((r) => scanSelection.value[r.path])
     .map((r) => r.path)
-  const catId = activeCategory.value || "__ungrouped__"
+  const catId = activeCategory.value || UNGROUPED_ID
   const {
     imported,
     skipped,

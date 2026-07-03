@@ -31,7 +31,7 @@ import {
   COMMIT_TYPE_VALUES,
   GitPushStorage,
 } from "./types/storage"
-import { PLATFORM_META } from "./types"
+import { PLATFORM_META, UNGROUPED_ID } from "./types"
 import { resolveValidPath } from "./utils"
 
 /** 远程操作结果 */
@@ -155,7 +155,7 @@ export class GitPushManager {
   /**
    * 添加项目映射
    */
-  async addProject(name: string, path: string, categoryId = "__ungrouped__", tags?: string[]): Promise<GitProject> {
+  async addProject(name: string, path: string, categoryId = UNGROUPED_ID, tags?: string[]): Promise<GitProject> {
     const projects = await this.getProjects()
     const project: GitProject = {
       id: Date.now().toString(),
@@ -1275,14 +1275,14 @@ export class GitPushManager {
   async updateCategory(id: string, data: Partial<Pick<ProjectCategory, "name" | "color">>): Promise<void> {
     const cats = await this.getCategories()
     const cat = cats.find((c) => c.id === id)
-    if (!cat || id === "__ungrouped__") return
+    if (!cat || id === UNGROUPED_ID) return
     if (data.name !== undefined) cat.name = data.name
     if (data.color !== undefined) cat.color = data.color
     await this.storage.categories.save(cats)
   }
 
   async deleteCategory(id: string): Promise<void> {
-    if (id === "__ungrouped__") return
+    if (id === UNGROUPED_ID) return
     const cats = await this.getCategories()
     const idx = cats.findIndex((c) => c.id === id)
     if (idx === -1) return
@@ -1292,7 +1292,7 @@ export class GitPushManager {
     const projs = await this.getProjects()
     let changed = false
     for (const p of projs) {
-      if (p.categoryId === id) { p.categoryId = "__ungrouped__"; changed = true }
+      if (p.categoryId === id) { p.categoryId = UNGROUPED_ID; changed = true }
     }
     if (changed) await this.storage.projects.save(projs)
   }

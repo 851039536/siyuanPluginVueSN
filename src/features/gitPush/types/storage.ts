@@ -3,6 +3,9 @@ import type { Plugin } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 
+/** 未分组分类的 ID（魔法字符串收敛为单一常量） */
+export const UNGROUPED_ID = "__ungrouped__"
+
 /** 项目状态（用于状态徽章；archived 是独立字段，不混入此处） */
 export type ProjectStatus = "active" | "maintenance" | "paused"
 
@@ -17,7 +20,7 @@ export interface GitProject {
   name: string
   /** 项目绝对路径 */
   path: string
-  /** 分类 ID（默认 "__ungrouped__"） */
+  /** 分类 ID（默认 UNGROUPED_ID） */
   categoryId: string
   /** GitHub 远程名称（自动检测） */
   githubRemote?: string
@@ -232,7 +235,7 @@ const DEFAULT_TEMPLATES: CommitTemplate[] = [
 const DEFAULT_PROJECTS: GitProject[] = []
 
 const DEFAULT_UNGROUPED: ProjectCategory = {
-  id: "__ungrouped__",
+  id: UNGROUPED_ID,
   name: "未分组",
   color: "#888888",
   order: 0,
@@ -269,7 +272,7 @@ export class GitPushStorage {
     await this.projects.loadOrDefault()
     const cats = await this.categories.loadOrDefault()
     // 确保默认分类始终存在
-    if (!cats.some((c) => c.id === "__ungrouped__")) {
+    if (!cats.some((c) => c.id === UNGROUPED_ID)) {
       cats.unshift(DEFAULT_UNGROUPED)
       await this.categories.save(cats)
     }
@@ -280,7 +283,7 @@ export class GitPushStorage {
     const NINETY_DAYS = 90 * 24 * 60 * 60 * 1000
     for (const p of projs) {
       if (!p.categoryId) {
-        p.categoryId = "__ungrouped__"
+        p.categoryId = UNGROUPED_ID
         needsSave = true
       }
       // status 缺失时按活动时间推导：长时间未活动 → paused，否则 active

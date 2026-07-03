@@ -74,6 +74,18 @@ feature/
 7. **配置** `src/features/config.ts` — 在 `FEATURE_CONFIG` 数组中添加条目；纯配置型功能（无 register 函数）还须加入 `_ConfigOnly` 白名单
 8. **图标** `src/config/icons.ts` — 添加到 `FEATURE_ICONS`，运行 `pnpm validate:icons`
 
+### 功能模块内代码分层（强制）
+
+模块内的 TypeScript 代码按职责分三层，杜绝复制粘贴：
+
+| 层级 | 文件 | 内容 | 示例 |
+|------|------|------|------|
+| 类型 + 共享常量 | `types/index.ts` | 类型定义 + 被多文件共用的元数据映射、枚举列表、配置表 | `STATUS_META`（状态徽章元数据）、`REMOTES`（PLATFORM_META 精简投影） |
+| 纯工具函数 | `utils.ts` | 不依赖 Vue 响应式的纯函数，可被任何文件导入 | `hasAnyRemote(project)`、`resolveValidPath(project)` |
+| 视图逻辑 | `.vue` 组件 / `composables/` | 模板相关状态、事件处理、composable 封装 | 组件本地 ref、watch、handleXxx 函数 |
+
+**强制规则**：同一常量/工具函数被 2 个以上文件使用时，必须提取到对应的 `types/` 或 `utils.ts`，禁止复制粘贴。参考实现：`src/features/gitPush/`。
+
 ### 编译时注册完整性校验
 
 `src/features/config.ts` 定义了 `FEATURE_CONFIG`（所有功能元数据的数组），并从中推导出 `FeatureId` 联合类型。`src/features/index.ts` 中有一个 `_Registered` 联合类型列出了所有有 `register` 导出的功能，并包含两个编译时断言：

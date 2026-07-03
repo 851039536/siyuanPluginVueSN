@@ -2,7 +2,6 @@
 <template>
   <div
     class="gp-card"
-    style="box-sizing: border-box !important; flex: 1 1 calc(50% - 10px) !important; min-width: 390px !important;"
     @click="$emit('cardClick', project.id, $event)"
   >
     <div class="gp-card-top">
@@ -703,7 +702,3 @@ defineEmits<{
 function handleOpenWeb(url: string) { window.open(url, "_blank") }
 function handleCopyUrl(url: string) { navigator.clipboard.writeText(url) }
 </script>
-
-<style lang="scss">
-@use "../styles/ProjectCard.scss";
-</style>

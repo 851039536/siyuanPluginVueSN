@@ -116,7 +116,6 @@
       <div
         v-else
         class="gp-list"
-        style="display: flex !important; flex-wrap: wrap !important; width: 100% !important; align-content: flex-start;"
       >
         <template
           v-for="group in filteredGroups"

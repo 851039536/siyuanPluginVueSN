@@ -117,6 +117,18 @@
         <span v-if="pushingAllProjects">推送中 ({{ pushAllDone }}/{{ pushAllTotal }})</span>
         <span v-else>推送全部({{ needsPushCount }})</span>
       </button>
+      <button
+        v-if="pushingAllProjects"
+        class="vp-btn vp-btn--danger vp-btn--sm"
+        title="取消全部推送"
+        @click="emit('cancelPushAll')"
+      >
+        <Icon
+          icon="mdi:close-circle"
+          height="12"
+        />
+        <span>取消</span>
+      </button>
       <div class="gp-add-wrap">
         <button
           class="vp-btn vp-btn--ghost gp-add-dropdown-btn"
@@ -194,6 +206,7 @@ const emit = defineEmits<{
   openSettings: []
   refreshAll: []
   pushAllProjects: []
+  cancelPushAll: []
   openAddProject: []
   openScan: []
   openWeb: [url: string]

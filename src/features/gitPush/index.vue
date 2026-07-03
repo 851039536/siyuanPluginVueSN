@@ -17,6 +17,7 @@
       @open-settings="showSettings = true"
       @refresh-all="handleRefreshAll"
       @push-all-projects="handlePushAllProjects"
+      @cancel-push-all="pushingAllProjects = false"
       @open-add-project="showAddDialog = true"
       @open-scan="handleOpenScan"
       @open-web="handleOpenWeb"
@@ -788,11 +789,25 @@
     <ConfirmDialog
       :visible="showPullConfirm"
       :title="i18n.pullConfirm || '确认拉取'"
-      :message="'将从 <strong>' + pendingPullLabel + '</strong> 拉取代码，可能覆盖本地修改。<br />确定要继续吗？'"
+      message=""
       confirm-text="确认拉取"
       cancel-text="取消"
       @confirm="doPullSingle"
       @cancel="cancelPullConfirm"
+    >
+      <template #message>
+        <p class="gp-confirm-message">将从 <strong>{{ pendingPullLabel }}</strong> 拉取代码，可能覆盖本地修改。<br>确定要继续吗？</p>
+      </template>
+    </ConfirmDialog>
+    <!-- 通用确认弹窗（删除/丢弃/恢复/分类等破坏性操作） -->
+    <ConfirmDialog
+      :visible="genericConfirm.visible"
+      :title="genericConfirm.title"
+      :message="genericConfirm.message"
+      :confirm-text="genericConfirm.confirmText || '确定'"
+      cancel-text="取消"
+      @confirm="doGenericConfirm"
+      @cancel="cancelGenericConfirm"
     />
     <IdeManagementDialog
       v-if="showIdeDialog"
@@ -826,7 +841,7 @@
       :i18n="i18n"
       :all-tags="allTags"
       @close="editDialogProjectId = ''"
-      @saved="editDialogProjectId = ''"
+      @saved="handleEditSaved"
     />
   </div>
 </template>
@@ -1024,6 +1039,37 @@ function doPullSingle() {
   showPullConfirm.value = false
   pendingPull.value = null
 }
+/** 通用确认弹窗状态 */
+interface ConfirmState {
+  visible: boolean
+  title: string
+  message: string
+  confirmText?: string
+  onConfirm: () => void
+}
+const genericConfirm = ref<ConfirmState>({
+  visible: false,
+  title: "",
+  message: "",
+  onConfirm: () => {},
+})
+
+/** 打开通用确认弹窗 */
+function showConfirm(title: string, message: string, onConfirm: () => void, confirmText?: string) {
+  genericConfirm.value = { visible: true, title, message, onConfirm, confirmText }
+}
+
+/** 执行确认回调并关闭 */
+function doGenericConfirm() {
+  genericConfirm.value.onConfirm()
+  genericConfirm.value.visible = false
+}
+
+/** 取消确认 */
+function cancelGenericConfirm() {
+  genericConfirm.value.visible = false
+}
+
 /** git 操作活跃数轮询 */
 const activeGitOps = ref(0)
 let opsPoller: ReturnType<typeof setInterval> | null = null
@@ -1423,11 +1469,11 @@ async function handleFetchAll(id: string) {
 }
 
 function handleRemove(project: any) {
-  if (confirm(`确定要删除项目 "${project.name}" 吗？`)) {
+  showConfirm("删除项目", `确定要删除项目 "${project.name}" 吗？此操作不可撤销。`, () => {
     removeProject(project.id)
     // 清理防抖缓存中已删除项目的条目，防止 Map 无限增长
     lastRefreshTime.delete(project.id)
-  }
+  })
 }
 
 async function handleSwitchBranch(id: string, branch: string) {
@@ -1457,6 +1503,12 @@ function openEditDialog(project: GitProject) {
   editDialogProjectId.value = project.id
 }
 
+/** 编辑弹窗保存后同步状态 */
+async function handleEditSaved() {
+  editDialogProjectId.value = ""
+  await loadProjects()
+}
+
 /** 行内名称编辑：点击名称开始编辑 */
 function startNameEdit(project: GitProject) {
   editingNameId.value = project.id
@@ -1466,19 +1518,25 @@ function startNameEdit(project: GitProject) {
 /** 行内名称编辑：失焦/回车保存 */
 async function handleNameEditSave(project: GitProject) {
   const newName = editingNameInput.value.trim()
-  if (newName && newName !== project.name) {
-    await updateProjectMeta(project.id, { name: newName })
+  try {
+    if (!newName) {
+      showMessage("项目名称不能为空", 2000, "error")
+    } else if (newName !== project.name) {
+      await updateProjectMeta(project.id, { name: newName })
+    }
+  } catch (e: any) {
+    showMessage(`名称修改失败: ${e?.message || e}`, 4000, "error")
+  } finally {
+    editingNameId.value = ""
   }
-  editingNameId.value = ""
 }
 
 
 
 
 
-/** 统一的异步操作错误处理包装器（含可选确认弹窗和 showMessage） */
-async function safeGitOp(label: string, fn: () => Promise<void>, options?: { confirmMsg?: string }) {
-  if (options?.confirmMsg && !confirm(options.confirmMsg)) return
+/** 统一的异步操作错误处理包装器 */
+async function safeGitOp(label: string, fn: () => Promise<void>) {
   try {
     await fn()
   } catch (e: any) {
@@ -1507,7 +1565,12 @@ async function handleGitOp(label: string, fn: () => Promise<void>, id: string) {
 
 async function handleDiscard(id: string, file: string, staged: boolean, status: string) {
   const label = status === "untracked" ? "删除未跟踪文件" : "丢弃更改"
-  if (!confirm(`确定要${label} "${file}" 吗？此操作不可撤销。`)) return
+  showConfirm("确认操作", `确定要${label} "${file}" 吗？此操作不可撤销。`, () => {
+    doDiscard(id, file, staged, status, label)
+  })
+}
+
+async function doDiscard(id: string, file: string, staged: boolean, status: string, label: string) {
   commitOutputs.value[id] = ""
   gitOpLoading.value[id] = true
   try {
@@ -1544,8 +1607,8 @@ function handleStashConfirmMsg(id: string, msg: string) {
 }
 
 function handleStashPop(id: string, index: number) {
-  safeGitOp("恢复失败", () => doStashPop(id, index), {
-    confirmMsg: `确定恢复 stash@{${index}} 并删除该条目？恢复过程中如有冲突会保留该 stash。`,
+  showConfirm("恢复 Stash", `确定恢复 stash@{${index}} 并删除该条目？恢复过程中如有冲突会保留该 stash。`, () => {
+    safeGitOp("恢复失败", () => doStashPop(id, index))
   })
 }
 
@@ -1554,8 +1617,8 @@ function handleStashApply(id: string, index: number) {
 }
 
 function handleStashDrop(id: string, index: number) {
-  safeGitOp("删除失败", () => doStashDrop(id, index), {
-    confirmMsg: `确定删除 stash@{${index}}？此操作不可撤销。`,
+  showConfirm("删除 Stash", `确定删除 stash@{${index}}？此操作不可撤销。`, () => {
+    safeGitOp("删除失败", () => doStashDrop(id, index))
   })
 }
 
@@ -1566,8 +1629,8 @@ function handleCreateTag(id: string, name: string, message?: string) {
 }
 
 function handleDeleteTag(id: string, tag: string) {
-  safeGitOp("删除失败", () => deleteTagOp(id, tag).then(() => { loadTags(id) }), {
-    confirmMsg: `确定删除 Tag "${tag}"？此操作不可撤销。`,
+  showConfirm("删除 Tag", `确定删除 Tag "${tag}"？此操作不可撤销。`, () => {
+    safeGitOp("删除失败", () => deleteTagOp(id, tag).then(() => { loadTags(id) }))
   })
 }
 
@@ -1599,8 +1662,8 @@ async function handlePushTag(id: string, tag: string) {
 // ── 冲突操作 ──
 
 function handleAbortMerge(id: string) {
-  safeGitOp("中止合并失败", () => abortMergeOp(id), {
-    confirmMsg: "确定中止合并操作？所有合并进度将丢失。",
+  showConfirm("中止合并", "确定中止合并操作？所有合并进度将丢失。", () => {
+    safeGitOp("中止合并失败", () => abortMergeOp(id))
   })
 }
 
@@ -1662,7 +1725,13 @@ async function handleAddCategory(name: string, color: string) {
 
 async function handleDeleteCategory(id: string) {
   const cat = categories.value.find((c) => c.id === id)
-  if (!cat || !confirm(`确定删除分类 "${cat.name}"？\n该分类下的项目将移至「未分组」。`)) return
+  if (!cat) return
+  showConfirm("删除分类", `确定删除分类 "${cat.name}"？\n该分类下的项目将移至「未分组」。`, () => {
+    doDeleteCategory(id)
+  })
+}
+
+async function doDeleteCategory(id: string) {
   // 如果删除的是当前选中分类，切到第一个可用分类
   if (activeCategory.value === id) {
     const others = groupedProjects.value.filter((g) => g.category.id !== id)

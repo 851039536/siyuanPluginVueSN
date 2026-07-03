@@ -235,7 +235,7 @@
 .wt-diff-title-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 2px;
   min-width: 0;
 }
 
@@ -250,7 +250,7 @@
 
 .wt-diff-badge {
   font-size: 9px;
-  padding: 1px 5px;
+  padding: 1px 2px;
   border-radius: $radius-sm;
   border: 1px solid var(--b3-border-color);
   opacity: 0.5;
@@ -260,7 +260,7 @@
 .wt-diff-legend {
   display: flex;
   gap: $spacing-3;
-  padding: 4px 12px;
+  padding: 4px 10px;
   font-size: 9px;
   font-family: $vp-mono;
   border-bottom: 1px solid var(--b3-border-color);

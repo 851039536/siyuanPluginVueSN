@@ -1073,6 +1073,15 @@
   @include text-ellipsis;
   flex-shrink: 0;
 }
+.gp-load-progress-time {
+  font-size: 11px;
+  font-family: $vp-mono;
+  opacity: 0.6;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: auto;
+  tabular-nums: tabular-nums;
+}
 
 // ========== 筛选工具栏 ==========
 .gp-filter-bar {

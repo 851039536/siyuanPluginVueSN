@@ -707,7 +707,7 @@ export class GitPushManager {
   /**
    * 获取当前分支最近 N 条提交记录
    */
-  async getCommitLog(projectPath: string, count = 5): Promise<CommitLogEntry[]> {
+  async getCommitLog(projectPath: string, count = 30): Promise<CommitLogEntry[]> {
     try {
       const format = "%h%n%s%n%an%n%ar%n%aI"
       const raw = await this.execGit(projectPath, ["log", `-${count}`, `--format=${format}`])

@@ -50,6 +50,17 @@
           height="12"
         />
         </button>
+        <select
+          v-model="displayCount"
+          class="bcl-count-select"
+          @change="onCountChange"
+        >
+          <option
+            v-for="n in countOptions"
+            :key="n"
+            :value="n"
+          >{{ n }}</option>
+        </select>
       </div>
 
       <div
@@ -114,9 +125,17 @@ const props = defineProps<{
   loading: boolean
 }>()
 
+const emit = defineEmits<{
+  reloadCommitLog: [count: number]
+}>()
+
+const COUNT_OPTIONS = [10, 20, 30, 50, 100]
 const expanded = ref(false)
 const searchKeyword = ref("")
 const searchAuthor = ref("")
+const displayCount = ref(30)
+
+const countOptions = COUNT_OPTIONS
 
 const filteredEntries = computed(() => {
   let list = props.entries
@@ -128,11 +147,15 @@ const filteredEntries = computed(() => {
     const au = searchAuthor.value.toLowerCase()
     list = list.filter((e) => e.author.toLowerCase().includes(au))
   }
-  return list
+  return list.slice(0, displayCount.value)
 })
 
 function toggleExpanded() {
   expanded.value = !expanded.value
+}
+
+function onCountChange() {
+  emit("reloadCommitLog", displayCount.value)
 }
 </script>
 

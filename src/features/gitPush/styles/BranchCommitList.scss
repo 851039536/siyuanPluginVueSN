@@ -80,6 +80,26 @@
   max-width: 70px;
 }
 
+.bcl-count-select {
+  width: 44px;
+  padding: 2px 2px 2px 4px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  font-size: 10px;
+  font-family: $vp-mono;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  outline: none;
+  cursor: pointer;
+  appearance: auto;
+  flex-shrink: 0;
+  transition: border-color 0.15s;
+
+  &:focus {
+    border-color: var(--b3-theme-primary);
+  }
+}
+
 .bcl-loading,
 .bcl-empty {
   font-size: 11px;

@@ -379,6 +379,7 @@
       @clear-output="$emit('clearOutput', project.id)"
       @discard-file="(file: string, staged: boolean, status: string) => $emit('discardFile', project.id, file, staged, status)"
       @expand="$emit('expand', project.id)"
+      @reload-commit-log="(count: number) => $emit('reloadCommitLog', project.id, count)"
     />
 
     <!-- Stash 暂存 -->
@@ -677,6 +678,7 @@ defineEmits<{
   "clearOutput": [id: string]
   "discardFile": [id: string, file: string, staged: boolean, status: string]
   "expand": [id: string]
+  "reloadCommitLog": [id: string, count: number]
   // Stash
   "stashConfirmMsg": [id: string, msg: string]
   "genStashDesc": [id: string]

@@ -317,7 +317,6 @@
 
 <script setup lang="ts">
 import type {
-  CommitLogEntry,
   GitProject,
   GitPushManager,
   PlatformKey,
@@ -355,6 +354,7 @@ import {
   useProjectFilters,
 } from "./composables/useProjectFilters"
 import { useTimeUtils } from "./composables/useTimeUtils"
+import { useCommitLog } from "./composables/useCommitLog"
 import { PLATFORM_META, REMOTES, STATUS_CYCLE, STATUS_META } from "./types"
 import {
   batchProcess,
@@ -470,6 +470,14 @@ const {
   toggleStar,
   setProjectStatus,
 } = useGitPush(props.manager)
+
+const { commitLogLoading, commitLogForProject, handleExpand, handleReloadCommitLog } = useCommitLog({
+  commitLogs,
+  loadCommitLog,
+  loadBranches,
+  loadStashList,
+  loadTags,
+})
 
 const showAddDialog = ref(false)
 const showCatDialog = ref(false)
@@ -688,38 +696,6 @@ function fileDiffsForProject(projectId: string): Record<string, string> {
     }
   }
   return result
-}
-
-/** 提取指定项目相关的 commitLog */
-function commitLogForProject(projectId: string): CommitLogEntry[] {
-  return commitLogs.value[projectId] || []
-}
-
-/** 提交日志加载状态 */
-const commitLogLoading = ref<Record<string, boolean>>({})
-
-/** 已展开过的项目集合（避免重复懒加载详情） */
-const expandedProjects = ref<Set<string>>(new Set())
-
-/**
- * 工作区面板首次展开时懒加载详情：commitLog + branches + stash
- *  首屏只加载了 workingTree/pushStatus，这三项延后到用户真正展开时才请求
- */
-async function handleExpand(projectId: string) {
-  if (expandedProjects.value.has(projectId)) return
-  expandedProjects.value.add(projectId)
-  // 展开后立刻显示 loading 态
-  commitLogLoading.value[projectId] = true
-  try {
-    await Promise.all([
-      loadCommitLog(projectId),
-      loadBranches(projectId),
-      loadStashList(projectId),
-      loadTags(projectId),
-    ])
-  } finally {
-    delete commitLogLoading.value[projectId]
-  }
 }
 
 /** HEAD hash 缓存，用于跳过无变动项目的 commit log / branches 刷新 */
@@ -1195,16 +1171,6 @@ async function handleCommit(id: string, message: string) {
     await loadCommitLog(id)
   } catch (e: any) {
     commitOutputs.value[id] = `提交失败: ${e?.message || e}`
-  }
-}
-
-/** 用户选择不同提交记录显示条数时重新加载 */
-async function handleReloadCommitLog(id: string, count: number) {
-  commitLogLoading.value[id] = true
-  try {
-    await loadCommitLog(id, count)
-  } finally {
-    delete commitLogLoading.value[id]
   }
 }
 

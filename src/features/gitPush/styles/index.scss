@@ -59,6 +59,8 @@
   &:hover {
     border-color: var(--b3-theme-primary);
   }
+
+  .vp-btn--sm { padding: 4px 6px; font-size: 12px; }
 }
 
 .gp-card-top {
@@ -387,17 +389,15 @@
 .gp-actions-bar {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  margin-top: 8px;
-  padding: 4px 0;
+  gap: 10px;
+  margin-top: 4px;
+  padding: 2px 0;
 }
 
 .gp-actions-section {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex: 1;
-  min-width: 0;
 }
 
 .gp-actions-label {
@@ -414,15 +414,12 @@
 .gp-actions-btns {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   flex-wrap: wrap;
 }
 
 .gp-actions-sep {
-  width: 1px;
-  align-self: stretch;
-  background: var(--b3-border-color);
-  flex-shrink: 0;
+  display: none;
 }
 
 .gp-action-btn {

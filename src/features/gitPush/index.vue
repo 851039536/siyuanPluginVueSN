@@ -31,6 +31,24 @@
       class="gp-progress-bar"
     />
 
+    <!-- 批量加载进度条 -->
+    <div
+      v-if="loadProgress.visible"
+      class="gp-load-progress"
+    >
+      <span class="gp-load-progress-label">{{ loadProgress.label }} {{ loadProgress.current }}/{{ loadProgress.total }}</span>
+      <div class="gp-load-progress-bar">
+        <div
+          class="gp-load-progress-fill"
+          :style="{ width: (loadProgress.current / loadProgress.total * 100) + '%' }"
+        />
+      </div>
+      <span
+        v-if="loadProgress.projectName"
+        class="gp-load-progress-name"
+      >{{ loadProgress.projectName }}</span>
+    </div>
+
     <!-- ========== 统计视图 ========== -->
     <StatsPanel
       v-if="currentView === 'stats'"
@@ -1070,6 +1088,51 @@ function cancelGenericConfirm() {
   genericConfirm.value.visible = false
 }
 
+// ── 批量加载进度条 ──
+interface LoadProgress {
+  visible: boolean
+  current: number
+  total: number
+  label: string
+  projectName?: string
+}
+const loadProgress = ref<LoadProgress>({ visible: false, current: 0, total: 0, label: "" })
+
+function startLoadProgress(total: number, label: string) {
+  loadProgress.value = { visible: true, current: 0, total, label }
+}
+
+function advanceLoadProgress(projectName?: string) {
+  loadProgress.value.current++
+  if (projectName) loadProgress.value.projectName = projectName
+}
+
+function endLoadProgress() {
+  loadProgress.value = { visible: false, current: 0, total: 0, label: "", projectName: undefined }
+}
+
+/** 批量处理 + 进度条包装 */
+async function runBatchWithProgress<T>(
+  items: T[], label: string, fn: (item: T) => Promise<void>, getName?: (item: T) => string,
+) {
+  if (items.length === 0) return
+  startLoadProgress(items.length, label)
+  const startTime = Date.now()
+  try {
+    await batchProcess(items, 3, async (item) => {
+      await fn(item)
+      advanceLoadProgress(getName?.(item))
+    })
+  } finally {
+    // 保证进度条至少展示 400ms，避免闪一下就消失
+    const elapsed = Date.now() - startTime
+    if (elapsed < 400) {
+      await new Promise((r) => setTimeout(r, 400 - elapsed))
+    }
+    endLoadProgress()
+  }
+}
+
 /** git 操作活跃数轮询 */
 const activeGitOps = ref(0)
 let opsPoller: ReturnType<typeof setInterval> | null = null
@@ -1217,11 +1280,10 @@ const headHashes = ref<Record<string, string>>({})
 async function silentRefreshAll() {
   if (gitOpsPaused.value) return
   const catId = activeCategory.value
-  if (!catId) return
-  const projList = projects.value.filter((p) => p.categoryId === catId)
+  const projList = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
   if (projList.length === 0) return
 
-  await batchProcess(projList, 3, async (p) => {
+  await runBatchWithProgress(projList, "刷新中", async (p) => {
     const prev = headHashes.value[p.id] || ""
     const [, curr] = await Promise.all([
       loadPushStatus(p.id),
@@ -1266,7 +1328,7 @@ onMounted(async () => {
     if (gitOpsPaused.value) return
     const catId = activeCategory.value
     const projList = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
-    await batchProcess(projList, 3, async (p) => {
+    await runBatchWithProgress(projList, "加载中", async (p) => {
       await Promise.all([
         // 首屏 index 未被本进程改动，跳过 update-index --refresh 提速
         loadWorkingTree(p.id, true),
@@ -1307,7 +1369,7 @@ watch(activeCategory, async (catId) => {
   // 只加载尚未缓存的
   const pending = projList.filter((p) => !workingTrees.value[p.id])
   if (pending.length === 0) return
-  await batchProcess(pending, 3, async (p) => {
+  await runBatchWithProgress(pending, "加载中", async (p) => {
     await Promise.all([
       loadWorkingTree(p.id, true),
       loadPushStatus(p.id),
@@ -1324,7 +1386,7 @@ watch(currentView, async (view) => {
   if (view !== "stats" || gitOpsPaused.value) return
   const pending = projects.value.filter((p) => !pushStatuses.value[p.id] || !workingTrees.value[p.id])
   if (pending.length === 0) return
-  await batchProcess(pending, 3, async (p) => {
+  await runBatchWithProgress(pending, "加载中", async (p) => {
     await loadStatsData(p.id)
   })
 })
@@ -1353,19 +1415,22 @@ function handleCardClick(projectId: string, event: MouseEvent) {
 }
 
 async function handleRefresh(id: string) {
+  const project = projects.value.find((p) => p.id === id)
+  if (!project) return
   refreshing.value = id
   try {
-    // 并行执行：remote 检测 + push 状态一组，工作区/日志/分支/stash 一组
-    await Promise.all([
-      refreshRemotes(id),
-      loadPushStatus(id, { fetchFirst: true }),
-    ])
-    await Promise.all([
-      loadWorkingTree(id),
-      loadCommitLog(id),
-      loadBranches(id),
-      loadStashList(id),
-    ])
+    await runBatchWithProgress([project], "刷新中", async (p) => {
+      await Promise.all([
+        refreshRemotes(p.id),
+        loadPushStatus(p.id, { fetchFirst: true }),
+      ])
+      await Promise.all([
+        loadWorkingTree(p.id),
+        loadCommitLog(p.id),
+        loadBranches(p.id),
+        loadStashList(p.id),
+      ])
+    }, (p) => p.name)
   } finally {
     refreshing.value = null
   }

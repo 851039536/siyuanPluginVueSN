@@ -3,6 +3,7 @@
 // ========== 通用面板样式 ==========
 .code-comment-panel,
 .code-explainer-panel,
+.code-translation-panel,
 .regex-generator-panel {
   display: flex;
   flex-direction: column;
@@ -180,6 +181,110 @@
     display: flex;
     gap: 8px;
     justify-content: flex-end;
+  }
+
+  // ===== 编程翻译特有样式 =====
+  .main-result {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .result-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--b3-theme-background);
+    border-radius: 4px;
+
+    .result-key {
+      min-width: 60px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--b3-theme-on-surface-light);
+    }
+
+    .result-value {
+      flex: 1;
+      font-size: 14px;
+      font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+      color: var(--b3-theme-on-background);
+      word-break: break-all;
+
+      &.abbreviation {
+        cursor: pointer;
+        font-weight: 600;
+        color: var(--b3-theme-primary);
+
+        &:hover {
+          opacity: 0.8;
+        }
+      }
+    }
+
+    .copy-icon {
+      opacity: 0.5;
+      cursor: pointer;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+
+    &.highlight {
+      background: var(--b3-theme-primary-light);
+
+      .result-key {
+        color: var(--b3-theme-primary);
+      }
+
+      .result-value {
+        font-weight: 600;
+        color: var(--b3-theme-primary);
+      }
+    }
+  }
+
+  .suggestions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--b3-border-color);
+
+    .suggestions-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--b3-theme-on-surface-light);
+    }
+
+    .suggestions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .suggestion-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 12px;
+      background: var(--b3-theme-background);
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+      font-size: 13px;
+      color: var(--b3-theme-on-background);
+
+      &:hover {
+        background: var(--b3-theme-surface-light);
+      }
+    }
   }
 }
 
@@ -394,6 +499,7 @@
 @media (max-width: 480px) {
   .code-comment-panel,
   .code-explainer-panel,
+  .code-translation-panel,
   .regex-generator-panel {
     padding: 12px;
     gap: 12px;

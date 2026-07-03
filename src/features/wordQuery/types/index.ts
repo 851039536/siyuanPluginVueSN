@@ -1,3 +1,4 @@
+// 单词查询 Manager 与语言映射
 import type { Plugin } from "siyuan"
 import { getApiConfigFromPlugin } from "@/utils/aiApi"
 import { createVueDockApp } from "@/utils/vueAppHelper"

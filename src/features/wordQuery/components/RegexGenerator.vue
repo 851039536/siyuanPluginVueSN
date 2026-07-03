@@ -1,3 +1,4 @@
+<!-- 正则表达式生成器 — 根据描述和示例生成并测试正则 -->
 <template>
   <div class="regex-generator-panel">
     <div class="panel-header">
@@ -25,7 +26,7 @@
           class="description-textarea"
           :placeholder="i18n.regexDescPlaceholder || '描述你想要的正则表达式，例如：匹配邮箱地址、匹配手机号码...'"
           :rows="3"
-          @input="handleInput"
+          @input="clearError"
         />
       </div>
 
@@ -247,7 +248,6 @@ import type {
   RegexExample,
   RegexResult,
 } from "../utils/codeUtils"
-import { showMessage } from "siyuan"
 import { ref } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
@@ -283,8 +283,10 @@ const isGenerating = ref(false)
 
 const {
   errorMessage,
+  clearError,
   clearErrorOnInput,
   getApiConfig,
+  copyText,
 } = useCodeFeature(props.plugin)
 clearErrorOnInput(description)
 
@@ -299,10 +301,6 @@ function removeExample(index: number) {
   if (examples.value.length > 1) {
     examples.value.splice(index, 1)
   }
-}
-
-function handleInput() {
-  errorMessage.value = ""
 }
 
 async function handleGenerate() {
@@ -356,8 +354,7 @@ function handleClear() {
 
 function copyRegex() {
   if (result.value) {
-    navigator.clipboard.writeText(result.value.regex)
-    showMessage(props.i18n.copied || "已复制", 1500, "info")
+    copyText(result.value.regex)
   }
 }
 </script>

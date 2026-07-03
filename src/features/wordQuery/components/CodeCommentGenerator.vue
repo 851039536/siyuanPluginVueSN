@@ -1,3 +1,4 @@
+<!-- 代码注释生成器 — 为代码生成多种风格的注释 -->
 <template>
   <div class="code-comment-panel">
     <div class="panel-header">
@@ -25,7 +26,7 @@
           class="code-textarea"
           :placeholder="i18n.codeInputPlaceholder || '粘贴需要添加注释的代码...'"
           :rows="8"
-          @input="handleInput"
+          @input="clearError"
         />
       </div>
 
@@ -132,7 +133,6 @@ import type {
   CodeCommentResult,
   CommentStyle,
 } from "../utils/codeUtils"
-import { showMessage } from "siyuan"
 import { ref } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
@@ -159,8 +159,10 @@ const isGenerating = ref(false)
 
 const {
   errorMessage,
+  clearError,
   clearErrorOnInput,
   getApiConfig,
+  copyText,
 } = useCodeFeature(props.plugin)
 clearErrorOnInput(codeInput)
 
@@ -168,10 +170,6 @@ const commentStyles = COMMENT_STYLES
 
 function selectStyle(style: CommentStyle) {
   selectedStyle.value = style
-}
-
-function handleInput() {
-  errorMessage.value = ""
 }
 
 async function handleGenerate() {
@@ -210,8 +208,7 @@ function handleClear() {
 
 function copyResult() {
   if (result.value) {
-    navigator.clipboard.writeText(result.value.commented)
-    showMessage(props.i18n.copied || "已复制", 1500, "info")
+    copyText(result.value.commented)
   }
 }
 </script>

@@ -47,6 +47,7 @@
         v-if="loadProgress.projectName"
         class="gp-load-progress-name"
       >{{ loadProgress.projectName }}</span>
+      <span class="gp-load-progress-time">{{ loadProgress.elapsedSeconds.toFixed(1) }}s</span>
     </div>
 
     <!-- ========== 统计视图 ========== -->
@@ -1095,11 +1096,17 @@ interface LoadProgress {
   total: number
   label: string
   projectName?: string
+  elapsedSeconds: number
 }
-const loadProgress = ref<LoadProgress>({ visible: false, current: 0, total: 0, label: "" })
+const loadProgress = ref<LoadProgress>({ visible: false, current: 0, total: 0, label: "", elapsedSeconds: 0 })
+let progressTimer: ReturnType<typeof setInterval> | null = null
 
 function startLoadProgress(total: number, label: string) {
-  loadProgress.value = { visible: true, current: 0, total, label }
+  loadProgress.value = { visible: true, current: 0, total, label, elapsedSeconds: 0 }
+  const start = Date.now()
+  progressTimer = setInterval(() => {
+    loadProgress.value.elapsedSeconds = (Date.now() - start) / 1000
+  }, 100)
 }
 
 function advanceLoadProgress(projectName?: string) {
@@ -1108,7 +1115,8 @@ function advanceLoadProgress(projectName?: string) {
 }
 
 function endLoadProgress() {
-  loadProgress.value = { visible: false, current: 0, total: 0, label: "", projectName: undefined }
+  if (progressTimer) { clearInterval(progressTimer); progressTimer = null }
+  loadProgress.value = { visible: false, current: 0, total: 0, label: "", projectName: undefined, elapsedSeconds: 0 }
 }
 
 /** 批量处理 + 进度条包装 */
@@ -1117,18 +1125,12 @@ async function runBatchWithProgress<T>(
 ) {
   if (items.length === 0) return
   startLoadProgress(items.length, label)
-  const startTime = Date.now()
   try {
     await batchProcess(items, 3, async (item) => {
       await fn(item)
       advanceLoadProgress(getName?.(item))
     })
   } finally {
-    // 保证进度条至少展示 400ms，避免闪一下就消失
-    const elapsed = Date.now() - startTime
-    if (elapsed < 400) {
-      await new Promise((r) => setTimeout(r, 400 - elapsed))
-    }
     endLoadProgress()
   }
 }

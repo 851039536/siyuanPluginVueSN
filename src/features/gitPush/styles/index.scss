@@ -53,21 +53,21 @@
   min-width: 390px !important;
   border: 1px solid var(--b3-border-color);
   border-radius: $vp-radius;
-  padding: 10px 12px;
+  padding: 8px 10px;
   transition: border-color 0.15s;
 
   &:hover {
     border-color: var(--b3-theme-primary);
   }
 
-  .vp-btn--sm { padding: 4px 6px; font-size: 12px; }
+  .vp-btn--sm { padding: 3px 5px; font-size: 10px; }
 }
 
 .gp-card-top {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: $spacing-2;
+  gap: 4px;
 }
 
 .gp-card-info {
@@ -78,7 +78,7 @@
 .gp-card-name {
   font-size: 13px;
   font-weight: $font-weight-semibold;
-  margin-bottom: 2px;
+  margin-bottom: 1px;
   cursor: pointer;
   border-radius: $radius-sm;
   padding: 1px 4px;
@@ -109,8 +109,8 @@
   display: flex;
   align-items: flex-start;
   gap: $spacing-1;
-  margin-top: 4px;
-  padding: 4px 6px;
+  margin-top: 3px;
+  padding: 3px 6px;
   font-size: 10px;
   color: var(--b3-theme-on-surface);
   opacity: 0.55;
@@ -324,15 +324,15 @@
 
 .gp-remotes {
   display: flex;
-  gap: $spacing-4;
-  margin: $spacing-2 0;
+  gap: $spacing-2;
+  margin: 3px 0;
 }
 
 .gp-remote-item {
   display: flex;
   align-items: center;
   gap: $spacing-1;
-  font-size: 11px;
+  font-size: 10px;
   font-family: $vp-mono;
   opacity: 0.35;
   text-transform: uppercase;
@@ -1021,7 +1021,7 @@
   display: flex;
   align-items: center;
   gap: $spacing-2;
-  margin-top: 3px;
+  margin-top: 2px;
   flex-wrap: wrap;
 }
 

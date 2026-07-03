@@ -456,17 +456,6 @@
             :title="i18n.fetchHint || '获取最新远程状态'"
             @click="$emit('fetchAll', project.id)"
           >
-            <Icon
-              v-if="fetching[project.id]"
-              icon="mdi:loading"
-              class="gp-spin"
-              height="12"
-            />
-            <Icon
-              v-else
-              icon="mdi:cloud-download"
-              height="12"
-            />
             <span>{{ i18n.fetchAll || 'Fetch' }}</span>
           </button>
         </div>

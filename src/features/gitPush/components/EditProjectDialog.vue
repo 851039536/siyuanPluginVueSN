@@ -503,6 +503,7 @@ async function handleAddRemote() {
     )
     newRemoteUrl.value = ""
     await loadRemotes()
+    await props.manager.refreshRemotes(props.projectId)
   } catch (e: any) { remoteError.value = e?.message || "添加失败" }
 }
 
@@ -512,6 +513,7 @@ async function handleRemoveRemote(name: string) {
   try {
     await props.manager.removeRemote(resolveValidPath(project.value), name)
     await loadRemotes()
+    await props.manager.refreshRemotes(props.projectId)
   } catch (e: any) { remoteError.value = e?.message || "删除失败" }
 }
 
@@ -526,6 +528,7 @@ async function saveRemoteEdit(name: string) {
     )
     editRemoteName.value = ""
     await loadRemotes()
+    await props.manager.refreshRemotes(props.projectId)
   } catch (e: any) { remoteError.value = e?.message || "修改失败" }
 }
 

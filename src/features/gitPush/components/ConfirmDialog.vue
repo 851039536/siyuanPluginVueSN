@@ -10,10 +10,9 @@
         <span>{{ title }}</span>
       </div>
       <div class="gp-confirm-body">
-        <p
-          class="gp-confirm-message"
-          v-html="message"
-        />
+        <slot name="message">
+          <p class="gp-confirm-message">{{ message }}</p>
+        </slot>
       </div>
       <div class="gp-confirm-footer">
         <button

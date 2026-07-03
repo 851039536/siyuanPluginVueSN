@@ -6,6 +6,7 @@ import type {
   ProjectCategory,
 } from "../types"
 import { ref } from "vue"
+import { showMessage } from "siyuan"
 import { findProject, normalizePathForDedup } from "../utils"
 
 export function useProjectCrud(manager: GitPushManager) {
@@ -60,18 +61,31 @@ export function useProjectCrud(manager: GitPushManager) {
     return updated
   }
 
-  /** 切换收藏（高频操作，乐观更新） */
+  /** 切换收藏（高频操作，乐观更新 + 失败回滚） */
   async function toggleStar(id: string) {
     const project = findProject(projects, id)
     if (!project) return
-    patchProject(id, { starred: !project.starred })
-    await manager.toggleStar(id)
+    const prev = project.starred
+    patchProject(id, { starred: !prev })
+    try {
+      await manager.toggleStar(id)
+    } catch (e: any) {
+      patchProject(id, { starred: prev })
+      showMessage(`收藏操作失败: ${e?.message || "未知错误"}`, 3000, "error")
+    }
   }
 
   async function setProjectStatus(id: string, status: GitProject["status"]) {
     if (!status) return
+    const project = findProject(projects, id)
+    const prev = project?.status
     patchProject(id, { status })
-    await manager.setProjectStatus(id, status)
+    try {
+      await manager.setProjectStatus(id, status)
+    } catch (e: any) {
+      if (prev) patchProject(id, { status: prev })
+      showMessage(`状态更新失败: ${e?.message || "未知错误"}`, 3000, "error")
+    }
   }
 
   async function appendTag(id: string, tag: string) {

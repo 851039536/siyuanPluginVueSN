@@ -772,6 +772,86 @@ src/features/myFeature/
 }
 ```
 
+## 强制规则：Composable 提取
+
+**当 feature 的 `index.vue` 中某块逻辑超过 3 个相关函数/ref，或被 2 个以上组件共享时，必须提取为独立 composable**，不得保留在组件内部，也不得下放到子组件中。
+
+### 判断标准
+
+| 场景 | 做法 |
+|------|------|
+| `index.vue` 中与某个子领域相关的 ref + 函数 ≥ 3 个 | 提取为 `composables/useXxx.ts` |
+| 同一逻辑被 2 个以上 `.vue` 组件复用 | 提取为 composable，各组件共享调用 |
+| 逻辑仅 1~2 个函数且仅 1 个 `.vue` 使用 | 可保留在组件内（或放到 `utils.ts` 如果是纯函数） |
+| 子组件需要引入父层状态管理（如 `useGitOps`）来自己处理逻辑 | ❌ **禁止**。子组件应保持纯展示，逻辑放在 composable 中由父层编排 |
+
+### 禁止将逻辑下放给子组件
+
+子组件（`components/` 下的 `.vue` 文件）应保持**纯展示组件**角色：接收 props、emit 事件。**禁止**在子组件内部导入 `useXxx` composable 来自行编排业务逻辑。
+
+**反面案例**（下放给子组件）：
+```
+BranchCommitList.vue 导入 useGitOps → 自己调用 loadCommitLog()
+  ↓ 后果：
+  · 组件从展示变为容器，职责越界
+  · 同一操作在父层和子层各有一份状态管理，产生冲突
+  · 破坏架构一致性（其他 git 操作全在父层编排，仅此一个例外）
+```
+
+**正确做法**（提取 composable，父层编排）：
+```
+useCommitLog.ts ← 封装状态 + 函数
+  ↑ index.vue 调用，将返回的 ref/函数通过 props 传给子组件
+  ↓ BranchCommitList.vue 仅 emit 事件 → 父层 composable 方法处理
+```
+
+### Composable 模式要求
+
+所有 composable 必须遵循**工厂函数 + 依赖注入**模式。禁止在 composable 内部直接导入其他 composable，所有外部依赖通过参数对象显式传入：
+
+```typescript
+// composables/useXxx.ts
+export function useXxx(deps: {
+  // 响应式状态（来自其他 composable 的返回值）
+  someRef: Ref<SomeType>
+  // 异步操作（来自其他 composable 的方法）
+  doSomething: (id: string) => Promise<void>
+  // 存储槽位（来自 TypedStorage）
+  storageSlot: TypedStorage<Type>
+}) {
+  const { someRef, doSomething, storageSlot } = deps
+
+  // 本 composable 私有的响应式状态
+  const localState = ref<Type>(initialValue)
+
+  // 本 composable 的方法
+  function handleXxx() { /* ... */ }
+
+  return { localState, handleXxx }
+}
+```
+
+**关键约束**：
+
+| 规则 | 说明 |
+|------|------|
+| 依赖注入 | 所有外部依赖必须通过 `deps` 对象传入，禁止在 composable 内部 `import` 其他 composable |
+| 返回值解构 | 调用方从返回对象中按需解构：`const { localState, handleXxx } = useXxx({ ... })` |
+| 纯函数优先 | 不依赖 Vue 响应式的工具函数放到 `utils.ts`（如 `relativeTime()`），仅在需要 `ref`/`computed`/`watch` 时才创建 composable |
+| 单文件单导出 | 一个 `useXxx.ts` 文件只导出一个 `useXxx` 函数 + 可能导出的公共常量 |
+| 文件位置 | 放在 feature 的 `composables/` 目录下 |
+| 命名规范 | 文件名 `useXxx.ts`，导出函数 `useXxx()` |
+
+### 参考实现
+
+`src/features/gitPush/composables/` 目录是标准模式集：
+
+| Composable | 行数 | 依赖数 | 类型 |
+|------------|------|--------|------|
+| `useCommitLog.ts` | 62 | 5 个（commitLogs/loadCommitLog/loadBranches/loadStashList/loadTags） | 从 index.vue 提取子领域状态 + 方法 |
+| `useProjectFilters.ts` | 139 | 10 个（含 TypedStorage + 多个 Ref） | 筛选/排序管道，options 对象注入 |
+| `useTimeUtils.ts` | 50 | 0（纯工具函数，但方便统一 import） | 无响应式依赖的工具集合 |
+
 ## 强制规则：文件头注释
 
 所有 `.ts` / `.vue` 文件顶部**必须**包含注释，简要说明文件功能。禁止遗漏或写"TODO"占位。`.scss` 文件不在此规则适用范围内。

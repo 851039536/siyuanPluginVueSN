@@ -30,6 +30,11 @@ export async function batchProcess<T>(items: T[], batchSize: number, fn: (item: 
   }
 }
 
+/** 判断项目是否配置了任何远程仓库 */
+export function hasAnyRemote(project: GitProject): boolean {
+  return !!(project.githubRemote || project.giteeRemote || project.giteaRemote || project.cnbRemote)
+}
+
 /** 将 git URL 转为浏览器可访问的 web URL */
 export function gitUrlToWebUrl(url: string): string {
   // https://github.com/user/repo.git → https://github.com/user/repo

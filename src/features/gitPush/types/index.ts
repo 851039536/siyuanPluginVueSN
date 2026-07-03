@@ -69,6 +69,34 @@ export const PLATFORM_META = [
 
 export type PlatformKey = typeof PLATFORM_META[number]["key"]
 
+// ── 项目状态徽章元数据（颜色 + 文案 + 图标 + 循环顺序）──
+export const STATUS_META: Record<string, { color: string, label: string, icon: string }> = {
+  active: {
+    color: "var(--b3-theme-success)",
+    label: "活跃",
+    icon: "mdi:circle-medium",
+  },
+  maintenance: {
+    color: "var(--b3-theme-primary)",
+    label: "维护中",
+    icon: "mdi:circle-medium",
+  },
+  paused: {
+    color: "var(--b3-theme-on-surface)",
+    label: "暂停",
+    icon: "mdi:pause-circle-outline",
+  },
+}
+export { PROJECT_STATUS_VALUES as STATUS_CYCLE } from "./storage"
+
+// ── 远程平台精简视图（PLATFORM_META 投影，供卡片 + 状态栏使用）──
+export const REMOTES = PLATFORM_META.map((pm) => ({
+  key: pm.key,
+  icon: pm.icon,
+  label: pm.label,
+  remoteProp: pm.remoteProp,
+}))
+
 // ── 统计视图类型 ──
 /** 平台配置状态明细项 */
 export interface PlatformStatusItem {

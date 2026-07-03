@@ -874,10 +874,11 @@ import {
   VIEW_MODE_META,
 } from "./composables/useProjectFilters"
 import { useTimeUtils } from "./composables/useTimeUtils"
-import { PLATFORM_META } from "./types"
+import { PLATFORM_META, REMOTES, STATUS_CYCLE, STATUS_META } from "./types"
 import {
   batchProcess,
   gitUrlToWebUrl,
+  hasAnyRemote,
   pruneRecordCache,
   resolveValidPath,
 } from "./utils"
@@ -1095,26 +1096,6 @@ function getProjectUrl(project: GitProject, prop: "githubUrl" | "giteeUrl" | "gi
   return project[prop]
 }
 
-/** 项目状态徽章元数据（颜色 + 文案 + 循环顺序） */
-const STATUS_META: Record<string, { color: string, label: string, icon: string }> = {
-  active: {
-    color: "var(--b3-theme-success)",
-    label: "活跃",
-    icon: "mdi:circle-medium",
-  },
-  maintenance: {
-    color: "var(--b3-theme-primary)",
-    label: "维护中",
-    icon: "mdi:circle-medium",
-  },
-  paused: {
-    color: "var(--b3-theme-on-surface)",
-    label: "暂停",
-    icon: "mdi:pause-circle-outline",
-  },
-}
-const STATUS_CYCLE: ProjectStatus[] = ["active", "maintenance", "paused"]
-
 const newProjectPath = ref("") // 目录选择回填用
 const refreshing = ref<string | null>(null)
 /** 防抖：记录每个项目的最后刷新时间戳，避免短时间内重复刷新 */
@@ -1123,13 +1104,6 @@ const REFRESH_COOLDOWN_MS = 500
 
 /** 项目编辑弹窗状态 */
 const editDialogProjectId = ref("")
-/** 远程平台元数据（卡片 + 状态栏使用） */
-const REMOTES = PLATFORM_META.map((pm) => ({
-  key: pm.key,
-  icon: pm.icon,
-  label: pm.label,
-  remoteProp: pm.remoteProp,
-}))
 /** 行内名称编辑状态 */
 const editingNameId = ref("")
 const editingNameInput = ref("")
@@ -1430,11 +1404,6 @@ async function handleCopyUrl(url: string) {
 /** 复制推送/拉取输出文本 */
 async function handleCopyOutput(text: string) {
   await copyToClipboard(text)
-}
-
-/** 判断项目是否配置了任何远程 */
-function hasAnyRemote(project: GitProject): boolean {
-  return !!(project.githubRemote || project.giteeRemote || project.giteaRemote || project.cnbRemote)
 }
 
 /** Fetch 所有远程 + 刷新状态 */

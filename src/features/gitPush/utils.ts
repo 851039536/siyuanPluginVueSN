@@ -1,6 +1,7 @@
 // gitPush 工具函数与多路径解析
 import type { Ref } from "vue"
-import type { GitProject } from "./types"
+import type { GitProject, RemotePushStatus } from "./types"
+import { PLATFORM_META } from "./types"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 
 /** 按 ID 查找项目（消除散落在各处的 projects.value.find 重复） */
@@ -32,7 +33,29 @@ export async function batchProcess<T>(items: T[], batchSize: number, fn: (item: 
 
 /** 判断项目是否配置了任何远程仓库 */
 export function hasAnyRemote(project: GitProject): boolean {
-  return !!(project.githubRemote || project.giteeRemote || project.giteaRemote || project.cnbRemote)
+  return PLATFORM_META.some((pm) => !!project[pm.remoteProp])
+}
+
+/** 判断远程是否需要推送（noUpstream 或 ahead > 0，消除多处 .noUpstream || .ahead > 0 重复） */
+export function isAheadOfRemote(rs: RemotePushStatus): boolean {
+  return rs.noUpstream || rs.ahead > 0
+}
+
+/** diff 文本行类型 */
+export type DiffLineType = "add" | "del" | "hunk" | "ctx"
+
+/** 带类型的 diff 行（用于着色渲染） */
+export interface DiffLine { text: string, type: DiffLineType }
+
+/** 将 diff 文本解析为带类型的行数组（用于着色渲染） */
+export function parseDiffLines(diffText: string): DiffLine[] {
+  if (!diffText) return []
+  return diffText.split("\n").map((line) => {
+    if (line.startsWith("+") && !line.startsWith("+++")) { return { text: line, type: "add" } }
+    if (line.startsWith("-") && !line.startsWith("---")) { return { text: line, type: "del" } }
+    if (line.startsWith("@@")) { return { text: line, type: "hunk" } }
+    return { text: line, type: "ctx" }
+  })
 }
 
 /** 将 git URL 转为浏览器可访问的 web URL */

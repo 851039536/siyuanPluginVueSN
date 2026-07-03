@@ -8,6 +8,7 @@ import type {
 import { ref } from "vue"
 import { showMessage } from "siyuan"
 import { findProject, normalizePathForDedup } from "../utils"
+import { UNGROUPED_ID } from "../types"
 
 export function useProjectCrud(manager: GitPushManager) {
   const projects = ref<GitProject[]>([])
@@ -26,7 +27,7 @@ export function useProjectCrud(manager: GitPushManager) {
     }
   }
 
-  async function addProject(name: string, path: string, categoryId = "__ungrouped__", tags?: string[]) {
+  async function addProject(name: string, path: string, categoryId = UNGROUPED_ID, tags?: string[]) {
     const normalized = normalizePathForDedup(path)
     const dup = projects.value.find((p) => normalizePathForDedup(p.path) === normalized)
     if (dup) {

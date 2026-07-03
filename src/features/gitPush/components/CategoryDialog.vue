@@ -29,7 +29,7 @@
           />
           <span class="gp-cat-name-sm">{{ cat.name }}</span>
           <button
-            v-if="cat.id !== '__ungrouped__'"
+            v-if="cat.id !== UNGROUPED_ID"
             class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
             @click="$emit('delete-category', cat.id)"
           >
@@ -73,6 +73,7 @@
 import { Icon } from "@iconify/vue"
 import { ref } from "vue"
 import Input from "@/components/Input.vue"
+import { UNGROUPED_ID } from "../types"
 
 defineProps<{
   i18n: Record<string, any>

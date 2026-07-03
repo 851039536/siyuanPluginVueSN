@@ -332,11 +332,14 @@ import type {
   FileChange,
   WorkingTreeInfo,
 } from "../types"
+import { FILE_STATUS_META } from "../types"
+import { parseDiffLines } from "../utils"
+import { useGeneratedMsgSync } from "../composables/useGeneratedMsgSync"
 import { Icon } from "@iconify/vue"
 import {
   computed,
   ref,
-  watch,
+  toRef,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { COMMIT_TYPE_VALUES } from "../types/storage"
@@ -384,9 +387,7 @@ const commitMessage = ref("")
 const activeDiffFile = ref<FileChange | null>(null)
 
 // 监听外部生成的消息，自动填充
-watch(() => props.generatedMsg, (msg) => {
-  if (msg) commitMessage.value = msg
-})
+useGeneratedMsgSync(toRef(props, "generatedMsg"), commitMessage)
 
 const sortedFiles = computed(() => {
   return [...props.tree.files].sort((a, b) => {
@@ -403,73 +404,15 @@ const activeDiffText = computed(() => {
   return props.fileDiffs[key] || ""
 })
 
-type DiffLineType = "add" | "del" | "hunk" | "ctx"
-interface DiffLine { text: string, type: DiffLineType }
-
 /** 将 diff 文本解析为带类型的行数组（用于着色渲染） */
-const coloredDiffLines = computed<DiffLine[]>(() => {
-  if (!activeDiffText.value) return []
-  return activeDiffText.value.split("\n").map((line) => {
-    if (line.startsWith("+") && !line.startsWith("+++")) { return {
-      text: line,
-      type: "add",
-    }
-    }
-    if (line.startsWith("-") && !line.startsWith("---")) { return {
-      text: line,
-      type: "del",
-    }
-    }
-    if (line.startsWith("@@")) { return {
-      text: line,
-      type: "hunk",
-    }
-    }
-    return {
-      text: line,
-      type: "ctx",
-    }
-  })
-})
-
-/** 文件状态元数据（图标 + 标题统一维护） */
-const STATUS_MAP: Record<string, { icon: string, title: string }> = {
-  modified: {
-    icon: "~",
-    title: "已修改",
-  },
-  added: {
-    icon: "+",
-    title: "新增",
-  },
-  deleted: {
-    icon: "−",
-    title: "已删除",
-  },
-  renamed: {
-    icon: "forward",
-    title: "重命名",
-  },
-  untracked: {
-    icon: "?",
-    title: "未跟踪",
-  },
-  copied: {
-    icon: "⇋",
-    title: "已复制",
-  },
-  unmerged: {
-    icon: "warning",
-    title: "冲突",
-  },
-}
+const coloredDiffLines = computed(() => parseDiffLines(activeDiffText.value))
 
 function statusIcon(file: FileChange): string {
-  return STATUS_MAP[file.status]?.icon || "·"
+  return FILE_STATUS_META[file.status]?.icon || "·"
 }
 
 function statusTitle(file: FileChange): string {
-  const title = STATUS_MAP[file.status]?.title || file.status
+  const title = FILE_STATUS_META[file.status]?.title || file.status
   return file.oldPath ? `${title}: ${file.oldPath} -> ${file.path}` : title
 }
 

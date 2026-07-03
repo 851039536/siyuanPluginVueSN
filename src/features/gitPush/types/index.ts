@@ -29,6 +29,7 @@ export {
   COMMIT_TYPE_VALUES,
   GitPushStorage,
   PROJECT_STATUS_VALUES,
+  UNGROUPED_ID,
 } from "./storage"
 
 // ── 远程平台元数据（共享常量）──
@@ -88,6 +89,17 @@ export const STATUS_META: Record<string, { color: string, label: string, icon: s
   },
 }
 export { PROJECT_STATUS_VALUES as STATUS_CYCLE } from "./storage"
+
+// ── 文件变更状态元数据（icon + 中文标题，供 WorkingTreePanel 使用）──
+export const FILE_STATUS_META: Record<string, { icon: string, title: string }> = {
+  modified: { icon: "~", title: "已修改" },
+  added: { icon: "+", title: "新增" },
+  deleted: { icon: "−", title: "已删除" },
+  renamed: { icon: "forward", title: "重命名" },
+  untracked: { icon: "?", title: "未跟踪" },
+  copied: { icon: "⇋", title: "已复制" },
+  unmerged: { icon: "warning", title: "冲突" },
+}
 
 // ── 远程平台精简视图（PLATFORM_META 投影，供卡片 + 状态栏使用）──
 export const REMOTES = PLATFORM_META.map((pm) => ({

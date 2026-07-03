@@ -29,12 +29,12 @@
           >
             <span class="gp-remote-name">{{ r.name }}</span>
             <template v-if="editingRemoteName === r.name">
-              <input
-                v-model.lazy="editingRemoteUrl"
-                class="gp-input"
+              <Input
+                v-model="editingRemoteUrl"
+                size="small"
                 style="flex:1"
-                @keyup.enter="saveRemoteEdit(r.name)"
-                @keyup.escape="editingRemoteName = ''"
+                @keydown="$event.key === 'Enter' && saveRemoteEdit(r.name)"
+                @keydown.escape="editingRemoteName = ''"
               />
               <button
                 class="vp-btn vp-btn--primary vp-btn--sm"
@@ -79,31 +79,19 @@
           暂无远程仓库
         </div>
         <div class="gp-remote-add">
-          <select
+          <Select
             v-model="newRemoteName"
-            class="gp-select"
-            style="width:110px"
-          >
-            <option
-              value=""
-              disabled
-            >
-              选择平台
-            </option>
-            <option
-              v-for="r in remotesMeta"
-              :key="r.key"
-              :value="r.key"
-            >
-              {{ r.label }}
-            </option>
-          </select>
-          <input
+            size="small"
+            style="width:130px"
+            :options="remoteMetaOptions"
+            placeholder="选择平台"
+          />
+          <Input
             v-model="newRemoteUrl"
-            class="gp-input"
+            size="small"
             placeholder="远程 URL"
             style="flex:1"
-            @keyup.enter="addRemote"
+            @keydown="$event.key === 'Enter' && addRemote()"
           />
           <button
             class="vp-btn vp-btn--primary vp-btn--sm"
@@ -126,14 +114,21 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
-import { ref } from "vue"
+import { computed, ref } from "vue"
+import Input from "@/components/Input.vue"
+import type { SelectOption } from "@/components/Select.vue"
+import Select from "@/components/Select.vue"
 
-defineProps<{
+const props = defineProps<{
   project: { id: string, name: string, path: string }
   remotes: { name: string, url: string }[]
   remotesMeta: { key: string, label: string }[]
   error: string
 }>()
+
+const remoteMetaOptions = computed<SelectOption[]>(() =>
+  props.remotesMeta.map((r) => ({ value: r.key, label: r.label })),
+)
 
 const emit = defineEmits<{
   "close": []

@@ -774,21 +774,7 @@
 }
 
 // 添加弹窗中的分类下拉
-.gp-select {
-  width: 100%;
-  padding: 7px 10px;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
-  font-size: 12px;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  outline: none;
-  cursor: pointer;
-
-  &:focus {
-    @include focus-ring;
-  }
-}
+// .gp-select 已被公共 Select 组件替代
 
 // 扫描导入弹窗
 .gp-remote-list {

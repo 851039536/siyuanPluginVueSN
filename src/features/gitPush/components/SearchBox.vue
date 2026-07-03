@@ -5,7 +5,7 @@
       :model-value="modelValue"
       size="small"
       :placeholder="placeholder"
-      :prefix-icon="searchIcon"
+      prefix-icon="search"
       clearable
       autocomplete="off"
       @update:model-value="$emit('update:modelValue', String($event ?? ''))"
@@ -14,7 +14,6 @@
 </template>
 
 <script setup lang="ts">
-import type { IconKey } from "@/config/icons"
 import Input from "@/components/Input.vue"
 
 defineProps<{
@@ -25,8 +24,6 @@ defineProps<{
 defineEmits<{
   "update:modelValue": [value: string]
 }>()
-
-const searchIcon: IconKey = "mdi:magnify" as IconKey
 </script>
 
 <style lang="scss">

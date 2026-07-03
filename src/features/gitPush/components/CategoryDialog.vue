@@ -40,12 +40,12 @@
           </button>
         </div>
         <div class="gp-cat-add-row">
-          <input
+          <Input
             v-model="newCatName"
-            class="gp-input"
+            size="small"
             :placeholder="i18n.catNamePlaceholder || '分类名称'"
             style="flex:1"
-            @keyup.enter="addCategory"
+            @keydown="$event.key === 'Enter' && addCategory()"
           />
           <input
             v-model="newCatColor"
@@ -72,6 +72,7 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
 import { ref } from "vue"
+import Input from "@/components/Input.vue"
 
 defineProps<{
   i18n: Record<string, any>

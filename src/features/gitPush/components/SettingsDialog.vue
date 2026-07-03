@@ -21,13 +21,12 @@
         <div class="gp-set-row">
           <label class="gp-set-label">Git 并发数</label>
           <div class="gp-set-input-row">
-            <input
-              v-model.number="localConcurrency"
+            <Input
+              :model-value="localConcurrency"
               type="number"
-              class="gp-input"
-              min="1"
-              max="10"
-              style="width: 50px; text-align: center;"
+              size="small"
+              style="width: 70px;"
+              @update:model-value="localConcurrency = Number($event) || 1"
             />
             <button
               class="vp-btn vp-btn--primary vp-btn--sm"
@@ -74,6 +73,7 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
 import { ref } from "vue"
+import Input from "@/components/Input.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>

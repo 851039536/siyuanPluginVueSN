@@ -1,32 +1,19 @@
 <!-- gitPush 搜索框子组件 -->
 <template>
-  <div class="gp-search-wrap">
-    <Icon
-      icon="mdi:magnify"
-      class="gp-search-icon"
-      height="12"
-    />
-    <input
-      :value="modelValue"
-      class="gp-search-input"
-      :placeholder="placeholder"
-      @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
-    />
-    <button
-      v-if="modelValue"
-      class="gp-search-clear"
-      @click="$emit('update:modelValue', '')"
-    >
-      <Icon
-        icon="mdi:close"
-        height="12"
-      />
-    </button>
-  </div>
+  <Input
+    :model-value="modelValue"
+    size="small"
+    :placeholder="placeholder"
+    :prefix-icon="searchIcon"
+    clearable
+    autocomplete="off"
+    @update:model-value="$emit('update:modelValue', String($event ?? ''))"
+  />
 </template>
 
 <script setup lang="ts">
-import { Icon } from "@iconify/vue"
+import type { IconKey } from "@/config/icons"
+import Input from "@/components/Input.vue"
 
 defineProps<{
   modelValue: string
@@ -36,8 +23,6 @@ defineProps<{
 defineEmits<{
   "update:modelValue": [value: string]
 }>()
-</script>
 
-<style lang="scss">
-@use "../styles/SearchBox.scss";
-</style>
+const searchIcon: IconKey = "mdi:magnify" as IconKey
+</script>

@@ -4,18 +4,18 @@
     <div class="gp-tag-header">
       <span class="gp-tag-label">TAG</span>
       <template v-if="addingTag">
-        <input
+        <Input
           v-model="newTagName"
-          class="gp-tag-input"
+          size="small"
           placeholder="Tag 名称（如 v1.2.0）"
-          @keyup.enter="handleCreate"
-          @keyup.escape="addingTag = false"
+          @keydown="$event.key === 'Enter' && handleCreate()"
+          @keydown.escape="addingTag = false"
         />
-        <input
+        <Input
           v-model="newTagMsg"
-          class="gp-tag-input"
+          size="small"
           placeholder="注解（可选）"
-          @keyup.enter="handleCreate"
+          @keydown="$event.key === 'Enter' && handleCreate()"
         />
         <button
           class="vp-btn vp-btn--primary vp-btn--sm"
@@ -127,6 +127,7 @@
 import type { TagInfo } from "../types"
 import { Icon } from "@iconify/vue"
 import { ref } from "vue"
+import Input from "@/components/Input.vue"
 
 const props = defineProps<{
   tags: TagInfo[]

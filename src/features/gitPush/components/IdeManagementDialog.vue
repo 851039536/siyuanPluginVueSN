@@ -28,26 +28,19 @@
             class="gp-ide-mgmt-row"
           >
             <template v-if="editingIdeIdx === idx">
-              <select
+              <Select
                 v-model="editIdePreset"
-                class="gp-select"
-                style="width:140px"
-              >
-                <option
-                  v-for="p in presetOptions"
-                  :key="p.name"
-                  :value="p.name"
-                >
-                  {{ p.name }}
-                </option>
-              </select>
-              <input
+                size="small"
+                style="width:150px"
+                :options="presetSelectOptions"
+              />
+              <Input
                 v-model="editIdePath"
-                class="gp-input"
+                size="small"
                 placeholder="可执行文件路径"
                 style="flex:1"
-                @keyup.enter="$emit('save-edit-ide', idx, editIdePreset, editIdePath)"
-                @keyup.escape="editingIdeIdx = -1"
+                @keydown="$event.key === 'Enter' && $emit('save-edit-ide', idx, editIdePreset, editIdePath)"
+                @keydown.escape="editingIdeIdx = -1"
               />
               <button
                 class="vp-btn vp-btn--primary vp-btn--sm"
@@ -99,25 +92,18 @@
           style="margin:8px 0"
         />
         <div class="gp-ide-mgmt-add">
-          <select
+          <Select
             v-model="addIdePreset"
-            class="gp-select"
-            style="width:140px"
-          >
-            <option
-              v-for="p in presetOptions"
-              :key="p.name"
-              :value="p.name"
-            >
-              {{ p.name }}
-            </option>
-          </select>
-          <input
+            size="small"
+            style="width:150px"
+            :options="presetSelectOptions"
+          />
+          <Input
             v-model="addIdePath"
-            class="gp-input"
+            size="small"
             placeholder="可执行文件路径（如 D:/Tools/devenv.exe）"
             style="flex:1"
-            @keyup.enter="addIde"
+            @keydown="$event.key === 'Enter' && addIde()"
           />
           <button
             class="vp-btn vp-btn--primary vp-btn--sm"
@@ -142,13 +128,20 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
-import { ref } from "vue"
+import { computed, ref } from "vue"
+import Input from "@/components/Input.vue"
+import type { SelectOption } from "@/components/Select.vue"
+import Select from "@/components/Select.vue"
 
 const props = defineProps<{
   customIdes: { name: string, path: string }[]
   presetOptions: { name: string, icon: string }[]
   getIcon: (name: string) => string
 }>()
+
+const presetSelectOptions = computed<SelectOption[]>(() =>
+  props.presetOptions.map((p) => ({ value: p.name, label: p.name })),
+)
 
 const emit = defineEmits<{
   "close": []

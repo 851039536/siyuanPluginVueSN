@@ -18,32 +18,20 @@
         </button>
       </div>
       <div class="gp-dialog-body">
-        <div class="gp-form-group">
-          <label class="gp-label">项目名称</label>
-          <input
-            v-model="localName"
-            class="gp-input"
-            @keyup.enter="save"
-          />
-        </div>
+        <Input
+          v-model="localName"
+          label="项目名称"
+          size="small"
+          @keydown="$event.key === 'Enter' && save()"
+        />
         <div class="gp-edit-row">
-          <div
-            class="gp-form-group"
-            style="flex:1"
-          >
-            <label class="gp-label">状态</label>
-            <select
+          <div style="flex:1">
+            <Select
               v-model="localStatus"
-              class="gp-select"
-            >
-              <option
-                v-for="s in STATUS_CYCLE"
-                :key="s"
-                :value="s"
-              >
-                {{ STATUS_META[s].label }}
-              </option>
-            </select>
+              label="状态"
+              size="small"
+              :options="statusOptions"
+            />
           </div>
           <div class="gp-form-group gp-edit-toggles">
             <label class="gp-label">标记</label>
@@ -109,15 +97,14 @@
             />
           </datalist>
         </div>
-        <div class="gp-form-group">
-          <label class="gp-label">备注</label>
-          <textarea
-            v-model="localNote"
-            class="gp-input"
-            rows="3"
-            placeholder="项目备注（可选）"
-          />
-        </div>
+        <Input
+          v-model="localNote"
+          type="textarea"
+          label="备注"
+          size="small"
+          :rows="3"
+          placeholder="项目备注（可选）"
+        />
         <div class="gp-form-group">
           <label class="gp-label">本地路径 <span class="gp-label-hint">（跨设备适配）</span></label>
           <div class="gp-edit-paths">
@@ -126,9 +113,9 @@
               :key="idx"
               class="gp-edit-path-row"
             >
-              <input
+              <Input
                 v-model="allPathsList[idx]"
-                class="gp-input"
+                size="small"
                 :placeholder="`设备 ${idx + 1} 的本地路径...`"
               />
               <button
@@ -168,9 +155,9 @@
                 :icon="pl.icon"
                 height="12"
               />
-              <input
+              <Input
                 v-model="urlInputs[pl.urlProp]"
-                class="gp-input"
+                size="small"
                 :placeholder="`${pl.label} 仓库 URL（可选）`"
               />
             </div>
@@ -189,12 +176,12 @@
             >
               <span class="gp-remote-name">{{ r.name }}</span>
               <template v-if="editRemoteName === r.name">
-                <input
+                <Input
                   v-model="editRemoteUrl"
-                  class="gp-input"
+                  size="small"
                   style="flex:1"
-                  @keyup.enter="saveRemoteEdit(r.name)"
-                  @keyup.escape="editRemoteName = ''"
+                  @keydown="$event.key === 'Enter' && saveRemoteEdit(r.name)"
+                  @keydown.escape="editRemoteName = ''"
                 />
                 <button
                   class="vp-btn vp-btn--primary vp-btn--sm"
@@ -239,31 +226,19 @@
             class="gp-remote-add"
             style="margin-top:4px"
           >
-            <select
+            <Select
               v-model="newRemoteName"
-              class="gp-select"
-              style="width:110px"
-            >
-              <option
-                value=""
-                disabled
-              >
-                选择平台
-              </option>
-              <option
-                v-for="r in REMOTES"
-                :key="r.key"
-                :value="r.key"
-              >
-                {{ r.label }}
-              </option>
-            </select>
-            <input
+              size="small"
+              style="width:130px"
+              :options="remoteOptions"
+              placeholder="选择平台"
+            />
+            <Input
               v-model="newRemoteUrl"
-              class="gp-input"
+              size="small"
               placeholder="远程 URL"
               style="flex:1"
-              @keyup.enter="handleAddRemote"
+              @keydown="$event.key === 'Enter' && handleAddRemote()"
             />
             <button
               class="vp-btn vp-btn--primary vp-btn--sm"
@@ -359,6 +334,9 @@ import {
   reactive,
   ref,
 } from "vue"
+import Input from "@/components/Input.vue"
+import type { SelectOption } from "@/components/Select.vue"
+import Select from "@/components/Select.vue"
 import { resolveValidPath } from "../utils"
 import { pickDirectory } from "../composables/useDirectoryPicker"
 
@@ -369,6 +347,14 @@ const props = defineProps<{
   i18n: Record<string, any>
   allTags: string[]
 }>()
+
+const statusOptions = computed<SelectOption[]>(() =>
+  STATUS_CYCLE.map((s) => ({ value: s, label: STATUS_META[s].label })),
+)
+
+const remoteOptions = computed<SelectOption[]>(() =>
+  REMOTES.map((r) => ({ value: r.key, label: r.label })),
+)
 const emit = defineEmits<{
   "close": []
   "saved": [] // 通知父组件刷新列表

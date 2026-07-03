@@ -90,12 +90,8 @@
   gap: $spacing-1;
   padding: 4px 6px;
   font-size: 11px;
-  border-bottom: 1px solid var(--b3-border-color);
+  @include row-divider;
   transition: background 0.1s;
-
-  &:last-child {
-    border-bottom: none;
-  }
 
   &:hover {
     background: var(--b3-list-hover);
@@ -355,7 +351,7 @@
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   cursor: pointer;
-  &:focus { border-color: var(--b3-theme-primary); outline: none; }
+  &:focus { @include focus-ring; outline: none; }
 }
 
 .wt-type-btn {
@@ -434,10 +430,6 @@
 }
 
 .wt-label {
-  font-size: 10px;
-  font-weight: $font-weight-bold;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.45;
+  @include gp-label-base;
   margin-right: 6px;
 }

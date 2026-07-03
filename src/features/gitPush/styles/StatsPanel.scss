@@ -1,4 +1,5 @@
 @use "./variables" as *;
+@use "./mixins" as *;
 
 .gp-stats-panel {
   flex: 1;
@@ -53,11 +54,8 @@
 }
 
 .gp-stats-section-title {
+  @include gp-label-base;
   font-size: 11px;
-  font-weight: $font-weight-bold;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  opacity: 0.45;
   margin-bottom: $spacing-2;
   display: flex;
   align-items: center;
@@ -194,11 +192,7 @@
   gap: $spacing-1;
   padding: 5px $spacing-2;
   font-size: 11px;
-  border-bottom: 1px solid var(--b3-border-color);
-
-  &:last-child {
-    border-bottom: none;
-  }
+  @include row-divider;
 
   &--head {
     background: var(--b3-theme-surface);

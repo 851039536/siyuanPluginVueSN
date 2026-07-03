@@ -351,7 +351,7 @@ import type {
   GitRemoteInfo,
   ProjectStatus,
 } from "../types"
-import { PLATFORM_META } from "../types"
+import { PLATFORM_META, REMOTES, STATUS_CYCLE, STATUS_META } from "../types"
 import { Icon } from "@iconify/vue"
 import {
   computed,
@@ -399,31 +399,6 @@ const newRemoteUrl = ref("")
 const editRemoteName = ref("")
 const editRemoteUrl = ref("")
 const showHelp = ref(false)
-
-// ── 状态元数据 ──
-const STATUS_META: Record<string, { color: string, label: string, icon: string }> = {
-  active: {
-    color: "var(--b3-theme-success)",
-    label: "活跃",
-    icon: "mdi:circle-medium",
-  },
-  maintenance: {
-    color: "var(--b3-theme-primary)",
-    label: "维护中",
-    icon: "mdi:circle-medium",
-  },
-  paused: {
-    color: "var(--b3-theme-on-surface)",
-    label: "暂停",
-    icon: "mdi:pause-circle-outline",
-  },
-}
-const STATUS_CYCLE: ProjectStatus[] = ["active", "maintenance", "paused"]
-const REMOTES = PLATFORM_META.map((pm) => ({
-  key: pm.key,
-  icon: pm.icon,
-  label: pm.label,
-}))
 
 // ── 语言检测 ──
 const isZh = computed(() => (props.i18n.cancel || '取消') === '取消')

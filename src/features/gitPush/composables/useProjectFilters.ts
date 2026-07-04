@@ -1,5 +1,4 @@
 // Git 项目筛选排序与分类过滤
-// Git 项目筛选与排序逻辑
 import type { Ref } from "vue"
 import type { GitProject } from "../types"
 import {
@@ -124,6 +123,18 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
       .filter((g) => g.projects.length > 0)
   })
 
+  /** 切换标签筛选（创建新 Set 确保 Vue 响应式） */
+  function toggleTag(tag: string) {
+    const next = new Set(selectedTags.value)
+    if (next.has(tag)) { next.delete(tag) } else { next.add(tag) }
+    selectedTags.value = next
+  }
+
+  /** 清除所有标签筛选 */
+  function clearTags() {
+    selectedTags.value = new Set()
+  }
+
   return {
     searchQuery,
     viewMode,
@@ -132,6 +143,8 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
     selectedTags,
     smartViewProjects,
     filteredGroups,
+    toggleTag,
+    clearTags,
     loadGitOpsPaused,
     loadShowArchived,
   }

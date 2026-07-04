@@ -16,6 +16,10 @@ export function useBatchProgress() {
   let progressTimer: ReturnType<typeof setInterval> | null = null
 
   function start(total: number, label: string) {
+    if (progressTimer) {
+      clearInterval(progressTimer)
+      progressTimer = null
+    }
     logEntries.value = []
     state.value = { visible: true, current: 0, total, label, elapsedSeconds: 0 }
     const startTime = Date.now()

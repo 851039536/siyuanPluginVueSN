@@ -1,5 +1,4 @@
 // IDE 配置管理逻辑（打开项目/终端/资源管理器）
-// IDE 配置管理逻辑
 import { ref } from "vue"
 import {
   getNodeModules,
@@ -180,7 +179,7 @@ export function useIdeManagement(options: {
         const nodeModules = getNodeModules()
         if (nodeModules) {
           const proc = (globalThis as any).process
-          if (proc?.env) Object.assign(env, proc.env)
+          if (proc?.env) { Object.assign(env, proc.env) }
         }
       } catch { /* ignore */ }
       for (const m of matches) {

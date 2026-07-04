@@ -139,7 +139,9 @@ export function useProjectCrud(manager: GitPushManager) {
   async function deleteCategory(id: string) {
     await manager.deleteCategory(id)
     categories.value = categories.value.filter((c) => c.id !== id)
-    projects.value = await manager.getProjects()
+    projects.value = projects.value.map((p) =>
+      p.categoryId === id ? { ...p, categoryId: UNGROUPED_ID } : p,
+    )
   }
 
   async function moveProject(projectId: string, categoryId: string) {

@@ -10,7 +10,7 @@ import type {
   StashEntry,
   WorkingTreeInfo,
 } from "../types"
-import { ref } from "vue"
+import { onUnmounted, ref } from "vue"
 import { PLATFORM_META } from "../types"
 import {
   findProject,
@@ -53,12 +53,23 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
   const commitLogs = ref<Record<string, CommitLogEntry[]>>({})
   /** 分支列表缓存 */
   const branches = ref<Record<string, BranchInfo[]>>({})
-  /** 提交输出 */
-  const commitOutputs = ref<Record<string, string>>({})
   /** Stash 条目缓存 */
   const stashEntries = ref<Record<string, StashEntry[]>>({})
   /** Stash 操作加载中 */
   const stashLoading = ref<Record<string, boolean>>({})
+
+  /** 待清理的 setTimeout ID，组件卸载时统一 clearTimeout */
+  const pendingTimers = new Set<ReturnType<typeof setTimeout>>()
+
+  /** 创建可追踪的超时，回调执行后自动清理，onUnmounted 时强制清除 */
+  function safeTimeout(fn: () => void, delay: number) {
+    const id = setTimeout(() => {
+      pendingTimers.delete(id)
+      fn()
+    }, delay)
+    pendingTimers.add(id)
+    return id
+  }
 
   /** 通用操作进度检查（isPushing / isPulling 共用实现） */
   function isOpInProgress(progressRef: ProgressRef, projectId: string, target?: string): boolean {
@@ -162,22 +173,21 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     progressRef.value[id] = initProg
 
     try {
-      const startedAt: Record<string, number> = {}
-      const durations: Record<string, number> = {}
+      // duration 为全平台总耗时（managerFn 内部串行/并行执行各平台，外层无法精确测量单平台耗时）
+      const totalStart = Date.now()
       for (const key of Object.keys(initProg)) {
         progressRef.value = {
           ...progressRef.value,
           [id]: { ...progressRef.value[id], [key]: "pushing" },
         }
-        startedAt[key] = Date.now()
       }
 
       const result = await managerFn(id)
 
+      const totalDuration = Date.now() - totalStart
       for (const pm of PLATFORM_META) {
         const key = pm.key
         if (!initProg[key]) continue
-        durations[key] = Date.now() - (startedAt[key] || Date.now())
         const r = result[key] as any
         progressRef.value = {
           ...progressRef.value,
@@ -185,16 +195,20 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
         }
       }
 
-      outputsRef.value[id] = buildOutputEntries(result, durations, getUsedPath(id))
-      pruneRecordCache(outputsRef)
+      // 所有平台共享总耗时
+      const sharedDurations: Record<string, number> = {}
+      for (const key of Object.keys(initProg)) { sharedDurations[key] = totalDuration }
+      outputsRef.value[id] = buildOutputEntries(result, sharedDurations, getUsedPath(id))
+      pruneRecordCache(outputsRef.value)
       loadPushStatus(id).catch((e) => console.warn(`[gitPush] 刷新${action === "push" ? "推送" : "拉取"}状态失败:`, e?.message || e))
       return result
-    } catch {
+    } catch (e) {
+      console.error(`[gitPush] ${action === "push" ? "推送" : "拉取"}失败:`, e)
       const failProg: Record<string, ProgressStatus> = {}
       for (const key of Object.keys(initProg)) { failProg[key] = "fail" }
       progressRef.value = { ...progressRef.value, [id]: failProg }
     } finally {
-      setTimeout(() => {
+      safeTimeout(() => {
         const current = { ...progressRef.value }
         delete current[id]
         progressRef.value = current
@@ -235,10 +249,11 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
         fullStderr: result.stderr,
       }]
       outputsRef.value[id] = entries
+      pruneRecordCache(outputsRef.value)
       loadPushStatus(id).catch((e) => console.warn(`[gitPush] 刷新${action === "push" ? "推送" : "拉取"}状态失败:`, e?.message || e))
       return result
     } finally {
-      setTimeout(() => {
+      safeTimeout(() => {
         const current = { ...progressRef.value }
         delete current[id]
         progressRef.value = current
@@ -260,9 +275,9 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     return remoteOpSingle("pull", pullProgress, pullOutputs, manager.pullSingle.bind(manager), id, target)
   }
 
-  /** 取消操作（push/pull 共用） */
-  function cancelPush(id: string) { manager.cancelOp(id) }
-  function cancelPull(id: string) { manager.cancelOp(id) }
+  /** 取消操作（区分 push/pull） */
+  function cancelPush(id: string) { manager.cancelOp(id, "push") }
+  function cancelPull(id: string) { manager.cancelOp(id, "pull") }
 
   /** Fetch 所有已配置远程（仅更新跟踪分支，不合并代码）+ 刷新推送状态 */
   async function fetchAllRemotes(id: string) {
@@ -473,6 +488,35 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     await loadPushStatus(id)
   }
 
+  // ── 缓存清理 ──
+
+  /** 项目删除时清理其所有缓存条目，避免陈旧数据残留 */
+  function clearProjectCache(id: string) {
+    const caches: Record<string, any>[] = [
+      pushStatuses.value,
+      workingTrees.value,
+      commitLogs.value,
+      branches.value,
+      stashEntries.value,
+      pushOutputs.value,
+      pullOutputs.value,
+    ]
+    for (const cache of caches) {
+      delete cache[id]
+    }
+    // fileDiffs 键格式为 "id::staged::file"，需按前缀过滤删除
+    const prefix = `${id}::`
+    for (const key of Object.keys(fileDiffs.value)) {
+      if (key.startsWith(prefix)) { delete fileDiffs.value[key] }
+    }
+    pruneRecordCache(fileDiffs.value, 50)
+  }
+
+  onUnmounted(() => {
+    pendingTimers.forEach(clearTimeout)
+    pendingTimers.clear()
+  })
+
   return {
     pushProgress,
     getPushStatus,
@@ -488,7 +532,6 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     committing,
     commitLogs,
     branches,
-    commitOutputs,
     stashEntries,
     stashLoading,
     loadPushStatus,
@@ -522,5 +565,6 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     removeRemoteOp,
     editRemoteOp,
     fetchAllRemotes,
+    clearProjectCache,
   }
 }

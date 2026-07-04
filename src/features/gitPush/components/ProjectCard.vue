@@ -495,7 +495,7 @@
       :entries="panel.entries"
       :copy-text="panel.copyText"
       :i18n="i18n"
-      @copy="$emit('copyOutput')"
+      @copy="(text) => $emit('copyOutput', text)"
     />
   </div>
 </template>

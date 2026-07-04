@@ -1,55 +1,50 @@
-<!-- Git 推送/拉取操作输出面板 -->
+<!-- Git 推送/拉取操作输出面板（控制台风格） -->
 <template>
   <div
     v-if="entries?.length"
     class="gp-output"
   >
-    <button
-      class="gp-output-copy"
-      :title="i18n.copy || '复制'"
-      @click="$emit('copy', copyText)"
-    >
-      <Icon
-        icon="mdi:content-copy"
-        height="12"
-      />
-    </button>
-    <div class="gp-output-list">
-      <div
+    <div class="gp-output-scroll">
+      <template
         v-for="entry in entries"
         :key="entry.platform"
-        class="gp-output-item"
       >
-        <span
-          class="gp-output-status"
+        <div
+          class="gp-output-line"
           :class="{
-            'gp-output-status--ok': entry.ok,
-            'gp-output-status--fail': !entry.ok && !entry.skipped,
-            'gp-output-status--skipped': entry.skipped,
+            'gp-output-line--ok': entry.ok,
+            'gp-output-line--fail': !entry.ok && !entry.skipped,
+            'gp-output-line--skipped': entry.skipped,
           }"
         >
-          <Icon v-if="entry.ok" icon="mdi:check" height="14" />
-          <Icon v-else-if="entry.skipped" icon="mdi:minus" height="14" />
-          <Icon v-else icon="mdi:close" height="14" />
-        </span>
-        <span class="gp-output-label">{{ entry.label }}</span>
-        <span class="gp-output-duration">{{ entry.duration }}ms</span>
-        <span class="gp-output-summary">{{ entry.summary }}</span>
-        <details
-          v-if="entry.fullStdout || entry.fullStderr"
-          class="gp-output-details"
-        >
-          <summary>详情</summary>
-          <pre
-            v-if="entry.fullStdout"
-            class="gp-output-stdout"
-          >{{ entry.fullStdout.length > MAX_STDOUT_PREVIEW ? `${entry.fullStdout.slice(0, MAX_STDOUT_PREVIEW)}...` : entry.fullStdout }}</pre>
-          <pre
-            v-if="entry.fullStderr"
-            class="gp-output-stderr"
-          >{{ entry.fullStderr }}</pre>
-        </details>
-      </div>
+          <Icon
+            v-if="entry.ok"
+            icon="mdi:check"
+            height="12"
+          />
+          <Icon
+            v-else-if="entry.skipped"
+            icon="mdi:minus"
+            height="12"
+          />
+          <Icon
+            v-else
+            icon="mdi:close"
+            height="12"
+          />
+          {{ entry.label }}
+          │ {{ entry.duration }}ms
+          │ {{ entry.summary }}
+        </div>
+        <pre
+          v-if="entry.fullStdout"
+          class="gp-output-stdout"
+        >{{ entry.fullStdout.length > MAX_STDOUT_PREVIEW ? `${entry.fullStdout.slice(0, MAX_STDOUT_PREVIEW)}...` : entry.fullStdout }}</pre>
+        <pre
+          v-if="entry.fullStderr"
+          class="gp-output-stderr"
+        >{{ entry.fullStderr }}</pre>
+      </template>
     </div>
   </div>
 </template>
@@ -62,11 +57,5 @@ const MAX_STDOUT_PREVIEW = 500
 
 defineProps<{
   entries: PushOutputEntry[]
-  copyText: string
-  i18n: Record<string, any>
-}>()
-
-defineEmits<{
-  copy: [text: string]
 }>()
 </script>

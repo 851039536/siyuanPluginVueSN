@@ -35,11 +35,11 @@
           v-if="entry.fullStdout || entry.fullStderr"
           class="gp-output-details"
         >
-          <summary>{{ entry.fullStdout || entry.fullStderr ? '详情' : '' }}</summary>
+          <summary>详情</summary>
           <pre
             v-if="entry.fullStdout"
             class="gp-output-stdout"
-          >{{ entry.fullStdout.length > 500 ? `${entry.fullStdout.slice(0, 500)}...` : entry.fullStdout }}</pre>
+          >{{ entry.fullStdout.length > MAX_STDOUT_PREVIEW ? `${entry.fullStdout.slice(0, MAX_STDOUT_PREVIEW)}...` : entry.fullStdout }}</pre>
           <pre
             v-if="entry.fullStderr"
             class="gp-output-stderr"
@@ -53,6 +53,8 @@
 <script setup lang="ts">
 import type { PushOutputEntry } from "../composables/useGitOps"
 import { Icon } from "@iconify/vue"
+
+const MAX_STDOUT_PREVIEW = 500
 
 defineProps<{
   entries: PushOutputEntry[]

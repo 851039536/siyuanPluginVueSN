@@ -452,6 +452,30 @@ export class GitPushManager {
     }
   }
 
+  /** 注册 AbortController 并在操作完成后自动清理（remoteOpAll/remoteOpSingle 共用） */
+  private async withAbortController<T>(
+    id: string,
+    fn: (signal: AbortSignal) => Promise<T>,
+  ): Promise<T> {
+    const ac = new AbortController()
+    const list = this.abortControllers.get(id) || []
+    list.push(ac)
+    this.abortControllers.set(id, list)
+    try {
+      return await fn(ac.signal)
+    } finally {
+      const existing = this.abortControllers.get(id)
+      if (existing) {
+        const filtered = existing.filter((a) => a !== ac)
+        if (filtered.length > 0) {
+          this.abortControllers.set(id, filtered)
+        } else {
+          this.abortControllers.delete(id)
+        }
+      }
+    }
+  }
+
   /**
    * 推送到全部已配置的远程
    */
@@ -483,13 +507,8 @@ export class GitPushManager {
       return rs.ahead === 0 && !rs.noUpstream
     }
 
-    // 设置 AbortController
-    const ac = new AbortController()
-    const list = this.abortControllers.get(id) || []
-    list.push(ac)
-    this.abortControllers.set(id, list)
 
-    try {
+    return this.withAbortController(id, async (signal) => {
       // 智能跳过的静态结果
       const skippedResults: Record<string, RemoteOpResult> = {}
       const entries: { key: PlatformKey, remoteName: string | undefined }[] = []
@@ -506,31 +525,32 @@ export class GitPushManager {
 
       const results = await Promise.allSettled(
         entries.map(({ key, remoteName }) =>
-          this.tryRemoteOp(cwd, remoteName, action, ac.signal).then((r) => ({ key, ...r })),
+          this.tryRemoteOp(cwd, remoteName, action, signal).then((r) => ({ key, ...r })),
         ),
       )
+
+      // 单次遍历建 Map，避免 4 次 results.find() O(4N) 开销
+      const resultMap = new Map<PlatformKey, RemoteOpResult>()
+      let rejectedError = ""
+      for (const r of results) {
+        if (r.status === "fulfilled") {
+          const val = r.value as any
+          const { key, ...rest } = val
+          resultMap.set(key, rest)
+        } else {
+          rejectedError = rejectedError || String(r.reason?.message || r.reason || "未知错误")
+        }
+      }
 
       const build = (key: PlatformKey): RemoteOpResult => {
         // 优先返回跳过结果
         if (skippedResults[key]) return skippedResults[key]
-        const entry = results.find(
-          (r) => r.status === "fulfilled" && r.value.key === key,
-        )
-        if (entry && entry.status === "fulfilled") {
-          const { key: _, ...rest } = entry.value
-          return rest
-        }
-        // 未配置 → skipped；已配置但 rejected → 错误
-        const wasConfigured = entries.some((e) => e.key === key)
-        if (!wasConfigured) return GitPushManager.skippedResult
-        const rej = results.find(
-          (r) => r.status === "rejected",
-        )
-        return {
-          ok: false,
-          stdout: "",
-          stderr: rej && rej.status === "rejected" ? String(rej.reason?.message || rej.reason || "未知错误") : "未知错误",
-        }
+        const mapped = resultMap.get(key)
+        if (mapped) return mapped
+        // 已配置但 rejected → 错误
+        return entries.some((e) => e.key === key)
+          ? { ok: false, stdout: "", stderr: rejectedError || "未知错误" }
+          : GitPushManager.skippedResult
       }
 
       const github = build("github")
@@ -545,17 +565,7 @@ export class GitPushManager {
         gitea,
         cnb,
       }
-    } finally {
-      const list = this.abortControllers.get(id)
-      if (list) {
-        const filtered = list.filter((a) => a !== ac)
-        if (filtered.length > 0) {
-          this.abortControllers.set(id, filtered)
-        } else {
-          this.abortControllers.delete(id)
-        }
-      }
-    }
+    })
   }
 
   /**
@@ -591,28 +601,15 @@ export class GitPushManager {
 
     const cwd = resolveValidPath(project)
     const remoteName = this.getRemoteName(project, target)
-    const ac = new AbortController()
-    const list = this.abortControllers.get(id) || []
-    list.push(ac)
-    this.abortControllers.set(id, list)
-    try {
-      const result = await this.tryRemoteOp(cwd, remoteName, action, ac.signal)
+
+    return this.withAbortController(id, async (signal) => {
+      const result = await this.tryRemoteOp(cwd, remoteName, action, signal)
       return {
         ok: result.ok,
         stdout: result.stdout,
         stderr: result.stderr,
       }
-    } finally {
-      const existing = this.abortControllers.get(id)
-      if (existing) {
-        const filtered = existing.filter((a) => a !== ac)
-        if (filtered.length > 0) {
-          this.abortControllers.set(id, filtered)
-        } else {
-          this.abortControllers.delete(id)
-        }
-      }
-    }
+    })
   }
 
   /**
@@ -688,7 +685,7 @@ export class GitPushManager {
     }
 
     try {
-      status.branch = opts?.branch ?? await this.execGit(cwd, ["rev-parse", "--abbrev-ref", "HEAD"])
+      status.branch = opts?.branch ?? await this.getBranch(cwd)
     } catch {
       return emptyResult
     }
@@ -705,10 +702,12 @@ export class GitPushManager {
       if (name) { remotesToCheck.push({ key: pm.key, remoteName: name as string }) }
     }
 
+    // 缓存 noUpstream 场景的 HEAD 提交数，多远程复用避免重复 rev-list --count HEAD
+    let headCommitCount: number | null = null
+
     const remoteChecks = remotesToCheck.map(async ({ key, remoteName }) => {
       try {
-        await this.execGit(cwd, ["rev-parse", "--verify", `${remoteName}/${status.branch}`])
-
+        // 直接 rev-list --left-right --count，失败则远程分支不存在（noUpstream）
         const counts = await this.execGit(cwd, [
           "rev-list", "--left-right", "--count",
           `${remoteName}/${status.branch}...HEAD`,
@@ -719,9 +718,12 @@ export class GitPushManager {
 
         return { key, result: { ahead, behind, noUpstream: false }, ahead }
       } catch {
-        const totalCommits = await this.execGit(cwd, ["rev-list", "--count", "HEAD"]).catch(() => "0")
-        const ahead = Number.parseInt(totalCommits, 10) || 0
-        return { key, result: { ahead, behind: 0, noUpstream: true }, ahead }
+        // 首次计算并缓存 HEAD 提交数，后续 noUpstream 远程直接复用
+        if (headCommitCount === null) {
+          const total = await this.execGit(cwd, ["rev-list", "--count", "HEAD"]).catch(() => "0")
+          headCommitCount = Number.parseInt(total, 10) || 0
+        }
+        return { key, result: { ahead: headCommitCount, behind: 0, noUpstream: true }, ahead: headCommitCount }
       }
     })
 
@@ -782,7 +784,7 @@ export class GitPushManager {
    * 切换分支
    */
   async switchBranch(projectPath: string, branch: string): Promise<string> {
-    const wtInfo = await this.getWorkingTreeStatus(projectPath)
+    const wtInfo = await this.getWorkingTreeStatus(projectPath, { skipRefresh: true })
     if (wtInfo.hasChanges) {
       throw new Error(
         `工作区有 ${wtInfo.stagedCount + wtInfo.unstagedCount + wtInfo.untrackedCount} 个未提交的变更，请先提交或暂存`,
@@ -861,7 +863,7 @@ export class GitPushManager {
 
   async getTags(projectPath: string, limit = 10): Promise<TagInfo[]> {
     try {
-      const raw = await this.execGit(projectPath, ["tag", "-l", `--sort=-creatordate`, `-n1`, `--format=%(refname:short)|%(subject)|%(creatordate:iso)`])
+      const raw = await this.execGit(projectPath, ["tag", "-l", `--sort=-creatordate`, `--format=%(refname:short)|%(subject)|%(creatordate:iso)`])
       return raw.trim().split("\n").filter(Boolean).slice(0, limit).map((line) => {
         const [name, message, date] = line.split("|")
         return { name, message: message || undefined, date: date || undefined }
@@ -886,10 +888,8 @@ export class GitPushManager {
   // ── 冲突检测 ──
 
   async hasConflict(projectPath: string): Promise<boolean> {
-    try {
-      const r = await this.execGit(projectPath, ["diff", "--name-only", "--diff-filter=U"])
-      return r.trim().length > 0
-    } catch { return false }
+    const conflicts = await this.getConflictFiles(projectPath)
+    return conflicts.length > 0
   }
 
   async getConflictFiles(projectPath: string): Promise<ConflictFile[]> {

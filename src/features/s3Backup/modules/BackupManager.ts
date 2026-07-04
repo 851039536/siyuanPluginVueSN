@@ -1,70 +1,36 @@
-import JSZip from "jszip"
 /**
  * 工作区文件备份管理器
  *
- * 负责扫描工作区文件、打包为 zip、压缩保存。
- * 与 dataBackup 的 BackupManager 逻辑类似但独立实现，避免跨功能模块导入。
- * 核心流程: 扫描文件 → 打包到 JSZip → 压缩保存 → 返回文件路径
+ * 负责扫描工作区文件列表，供直接上传到 S3 使用。
+ * 核心流程: 扫描文件 → 返回文件列表
  */
 import { getNodeModules } from "@/utils/nodeModules"
 
 // ========== 类型定义 ==========
 
 export interface BackupProgress {
-  phase: "scanning" | "packing" | "compressing" | "saving" | "uploading"
+  phase: "scanning" | "uploading"
   currentFile: string
   filesProcessed: number
   totalFiles: number
   percent: number
 }
 
-export interface BackupResult {
-  success: boolean
-  fileName: string
-  filePath: string
+export interface WorkspaceFile {
+  fullPath: string
+  relativePath: string
   size: number
-  totalFiles: number
-  zipBuffer?: Uint8Array
-}
-
-export interface BackupOptions {
-  /** 压缩级别 (1-9，默认 6) */
-  compressionLevel?: number
-  /** 排除的目录名 (默认排除 temp, .recycle) */
-  excludeDirs?: string[]
-  /** 进度回调 */
-  onProgress?: (progress: BackupProgress) => void
-}
-
-interface BackupInfo {
-  timestamp: number
-  backupTime: string
-  version: string
-  workspaceRoot: string
-  workspaceDataPath: string
-  backupDir: string
-  totalFiles: number
-}
-
-// ========== 工具函数 ==========
-
-function formatTimestamp(now: Date): string {
-  const pad = (n: number) => n.toString().padStart(2, "0")
-  const y = now.getFullYear().toString().slice(-2)
-  return `data-${y}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.zip`
 }
 
 // ========== BackupManager ==========
 
 export class BackupManager {
   private workspacePath: string
-  private workspaceRoot: string
   private fs: any
   private path: any
 
-  constructor(workspacePath: string, workspaceRoot: string) {
+  constructor(workspacePath: string, _workspaceRoot: string) {
     this.workspacePath = workspacePath
-    this.workspaceRoot = workspaceRoot
 
     const node = getNodeModules()
     if (!node) {
@@ -74,33 +40,23 @@ export class BackupManager {
     this.path = node.path
   }
 
-  get backupDir(): string {
-    return `${this.workspaceRoot}/data-backup`
-  }
-
   /** 更新工作区路径 */
-  updateWorkspacePaths(workspacePath: string, workspaceRoot: string): void {
+  updateWorkspacePaths(workspacePath: string, _workspaceRoot: string): void {
     this.workspacePath = workspacePath
-    this.workspaceRoot = workspaceRoot
   }
 
   /**
-   * 执行全量备份
-   * 返回 zip 文件路径和 buffer，调用方可选择上传到 S3 或本地保存
+   * 扫描工作区文件列表（不打包）
+   * 用于直接上传模式下遍历文件
    */
-  async performFullBackup(options: BackupOptions = {}): Promise<BackupResult> {
-    const {
-      compressionLevel = 6,
-      excludeDirs = [],
-      onProgress,
-    } = options
-
+  async getWorkspaceFiles(
+    onProgress?: (progress: BackupProgress) => void,
+  ): Promise<WorkspaceFile[]> {
     await this.validateWorkspace()
 
-    const skipDirs = new Set(["temp", ".recycle", ...excludeDirs])
-    const zip = new JSZip()
+    const skipDirs = new Set(["temp", ".recycle"])
+    const files: WorkspaceFile[] = []
 
-    // 阶段1：扫描文件
     onProgress?.({
       phase: "scanning",
       currentFile: "",
@@ -109,165 +65,32 @@ export class BackupManager {
       percent: 0,
     })
 
-    const allFiles: { fullPath: string; relativePath: string; mtime: number; size: number }[] = []
-    await this.scanDirectory(this.workspacePath, "", skipDirs, allFiles, onProgress)
+    const rawFiles: { fullPath: string; relativePath: string; size: number }[] = []
+    await this.scanDirectory(this.workspacePath, "", skipDirs, rawFiles, onProgress)
 
-    const totalFiles = allFiles.length
-
-    // 阶段2：打包文件
-    for (let i = 0; i < allFiles.length; i++) {
-      const file = allFiles[i]
-      onProgress?.({
-        phase: "packing",
-        currentFile: file.relativePath,
-        filesProcessed: i + 1,
-        totalFiles,
-        percent: Math.round(((i + 1) / totalFiles) * 70),
-      })
-      try {
-        const content = await this.fs.readFile(file.fullPath)
-        zip.file(file.relativePath, content)
-      } catch (err) {
-        console.warn(`无法读取文件: ${file.fullPath}`, err)
-      }
+    for (const f of rawFiles) {
+      files.push({ fullPath: f.fullPath, relativePath: f.relativePath, size: f.size })
     }
-
-    const backupInfo: BackupInfo = {
-      timestamp: Date.now(),
-      backupTime: new Date().toISOString(),
-      version: "2.0",
-      workspaceRoot: this.workspaceRoot,
-      workspaceDataPath: this.workspacePath,
-      backupDir: this.backupDir,
-      totalFiles,
-    }
-
-    return this.finalizeAndSaveBackup(zip, backupInfo, totalFiles, compressionLevel, onProgress)
-  }
-
-  /** 删除备份文件（移至 .trash 子目录，非永久删除） */
-  async deleteBackupFile(backupFilePath: string): Promise<void> {
-    const trashDir = this.path.join(this.backupDir, ".trash")
-    await this.fs.mkdir(trashDir, { recursive: true })
-    const fileName = this.path.basename(backupFilePath)
-    const trashPath = this.path.join(trashDir, `${Date.now()}-${fileName}`)
-    await this.fs.rename(backupFilePath, trashPath)
-  }
-
-  /** 获取本地备份文件列表 */
-  async scanBackupDir(): Promise<
-    Array<{ name: string; path: string; time: string; size: number }>
-  > {
-    const result: Array<{ name: string; path: string; time: string; size: number }> = []
-
-    try {
-      await this.fs.access(this.backupDir)
-    } catch {
-      return result
-    }
-
-    const files = await this.fs.readdir(this.backupDir)
-    const zipFiles = files
-      .filter((f: string) => (f.startsWith("data-") || f.startsWith("sn-plugin-")) && f.endsWith(".zip"))
-      .sort()
-      .reverse()
-
-    for (const name of zipFiles) {
-      const filePath = this.path.join(this.backupDir, name)
-      try {
-        const stats = await this.fs.stat(filePath)
-        result.push({
-          name,
-          path: filePath,
-          time: stats.mtime.toLocaleString(),
-          size: stats.size,
-        })
-      } catch {
-        // 跳过
-      }
-    }
-
-    return result
-  }
-
-  // ========== 私有方法 ==========
-
-  /** 压缩并保存备份 */
-  private async finalizeAndSaveBackup(
-    zip: JSZip,
-    backupInfo: BackupInfo,
-    totalFiles: number,
-    compressionLevel: number,
-    onProgress?: (progress: BackupProgress) => void,
-  ): Promise<BackupResult> {
-    zip.file("backup-info.json", JSON.stringify(backupInfo, null, 2))
-
-    // 阶段3：压缩
-    onProgress?.({
-      phase: "compressing",
-      currentFile: "",
-      filesProcessed: totalFiles,
-      totalFiles,
-      percent: 75,
-    })
-
-    const zipBuffer = await zip.generateAsync(
-      {
-        type: "uint8array",
-        compression: "DEFLATE",
-        compressionOptions: { level: compressionLevel },
-      },
-      (metadata) => {
-        onProgress?.({
-          phase: "compressing",
-          currentFile: "",
-          filesProcessed: totalFiles,
-          totalFiles,
-          percent: 75 + Math.round(metadata.percent * 0.2),
-        })
-      },
-    )
-
-    // 阶段4：保存文件
-    onProgress?.({
-      phase: "saving",
-      currentFile: "",
-      filesProcessed: totalFiles,
-      totalFiles,
-      percent: 95,
-    })
-
-    await this.fs.mkdir(this.backupDir, { recursive: true })
-    const fileName = formatTimestamp(new Date())
-    const zipFilePath = this.path.join(this.backupDir, fileName)
-    await this.fs.writeFile(zipFilePath, zipBuffer)
-
-    const stats = await this.fs.stat(zipFilePath)
 
     onProgress?.({
-      phase: "saving",
+      phase: "scanning",
       currentFile: "",
-      filesProcessed: totalFiles,
-      totalFiles,
+      filesProcessed: files.length,
+      totalFiles: files.length,
       percent: 100,
     })
 
-    return {
-      success: true,
-      fileName,
-      filePath: zipFilePath,
-      size: stats.size,
-      totalFiles,
-      zipBuffer,
-    }
+    return files
   }
+
+  // ========== 私有方法 ==========
 
   /** 验证工作区存在 */
   private async validateWorkspace(): Promise<void> {
     try {
       await this.fs.access(this.workspacePath)
     } catch {
-      throw new Error(`data 目录不存在: ${this.workspacePath}`)
+      throw new Error(`目录不存在: ${this.workspacePath}`)
     }
   }
 
@@ -276,7 +99,7 @@ export class BackupManager {
     dirPath: string,
     zipPath: string,
     skipDirs: Set<string>,
-    result: { fullPath: string; relativePath: string; mtime: number; size: number }[],
+    result: { fullPath: string; relativePath: string; size: number }[],
     onProgress?: (progress: BackupProgress) => void,
   ): Promise<void> {
     let entries
@@ -291,7 +114,9 @@ export class BackupManager {
       const relativePath = zipPath ? `${zipPath}/${entry.name}` : entry.name
 
       if (entry.isDirectory()) {
-        if (skipDirs.has(entry.name)) continue
+        if (skipDirs.has(entry.name)) {
+          continue
+        }
         await this.scanDirectory(fullPath, relativePath, skipDirs, result, onProgress)
       } else if (entry.isFile()) {
         try {
@@ -299,7 +124,6 @@ export class BackupManager {
           result.push({
             fullPath,
             relativePath,
-            mtime: stats.mtime.getTime(),
             size: stats.size,
           })
         } catch {

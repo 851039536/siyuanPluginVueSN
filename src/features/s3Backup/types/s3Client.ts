@@ -68,18 +68,21 @@ function payloadHash(body: Buffer | string | null): string {
   return sha256Hex(body)
 }
 
-/** 解析 S3 ListObjects XML 响应 */
+/** 解析 S3 ListObjects XML 响应（兼容 OpenList/Alist 等非标准 S3 代理） */
 function parseListObjectsXml(xml: string): S3FileInfo[] {
   const results: S3FileInfo[] = []
-  // 匹配 <Contents> 块中的 Key, LastModified, Size
-  const regex = /<Contents>\s*<Key>(.*?)<\/Key>\s*<LastModified>(.*?)<\/LastModified>\s*<Size>(\d+)<\/Size>\s*<\/Contents>/gs
-  let match
-  while ((match = regex.exec(xml)) !== null) {
+  // 按 <Contents> 块分割，逐块提取字段（兼容中间夹有 ETag/StorageClass 等额外元素）
+  const blocks = xml.split(/<\/Contents>/)
+  for (const block of blocks) {
+    const keyMatch = /<Key>([\s\S]*?)<\/Key>/.exec(block)
+    if (!keyMatch) continue
+    const lastModMatch = /<LastModified>([\s\S]*?)<\/LastModified>/.exec(block)
+    const sizeMatch = /<Size>(\d+)<\/Size>/.exec(block)
     results.push({
-      name: match[1].split("/").pop() || match[1],
-      key: match[1],
-      size: Number.parseInt(match[3], 10),
-      lastModified: match[2],
+      name: keyMatch[1].split("/").pop() || keyMatch[1],
+      key: keyMatch[1],
+      size: sizeMatch ? Number.parseInt(sizeMatch[1], 10) : 0,
+      lastModified: lastModMatch ? lastModMatch[1] : "",
     })
   }
   return results
@@ -173,8 +176,35 @@ export class S3Client {
 
   // ========== 公开 API ==========
 
-  /** 测试连接 (HeadBucket) */
+  /**
+   * 测试连接
+   *
+   * 先尝试 HeadBucket，若失败则回退为 ListObjects（OpenList/Alist 等代理通常不支持 HEAD）
+   */
   async testConnection(): Promise<{ success: boolean; message: string }> {
+    try {
+      // 第一步：尝试 HeadBucket
+      const headResult = await this.tryHeadBucket()
+      if (headResult.success) return headResult
+
+      // 第二步：降级为 ListObjects（OpenList 等代理通常只支持 GET/PUT）
+      const listResult = await this.tryListObjects()
+      if (listResult.success) {
+        return { success: true, message: "S3 连接成功（ListObjects 验证）" }
+      }
+
+      // 两个都失败，返回 HeadBucket 的详细错误
+      return {
+        success: false,
+        message: `${headResult.message}（ListObjects 也失败: ${listResult.message}）`,
+      }
+    } catch (err: any) {
+      return { success: false, message: `连接失败: ${err.message}` }
+    }
+  }
+
+  /** HeadBucket 测试 */
+  private async tryHeadBucket(): Promise<{ success: boolean; message: string }> {
     try {
       const protocol = this.config.useSSL ? "https" : "http"
       const url = this.config.pathStyle
@@ -187,21 +217,39 @@ export class S3Client {
         return { success: true, message: "S3 连接成功" }
       }
 
-      // 某些 S3 服务可能返回 403 等，也表示连通
-      const body = await response.text()
-      if (response.status === 403 || response.status === 404) {
-        // 能连上但无权限/桶不存在
-        try {
-          const errMsg = parseS3Error(body)
-          return { success: false, message: `连接可达但请求被拒: ${errMsg}` }
-        } catch {
-          return { success: false, message: `连接可达但请求被拒 (HTTP ${response.status})` }
-        }
+      if (response.status === 403) {
+        return { success: false, message: "认证失败 (403)，请检查 Access Key 和 Secret Key" }
+      }
+      if (response.status === 404) {
+        return { success: false, message: `存储桶 "${this.config.bucket}" 不存在 (404)` }
+      }
+      return { success: false, message: `HeadBucket 失败 (HTTP ${response.status})` }
+    } catch (err: any) {
+      return { success: false, message: `HeadBucket 异常: ${err.message}` }
+    }
+  }
+
+  /** ListObjects 测试（HeadBucket 不可用时的降级方案） */
+  private async tryListObjects(): Promise<{ success: boolean; message: string }> {
+    try {
+      const prefix = this.config.prefix || ""
+      const url = this.buildUrl("", `?prefix=${encodeURIComponent(prefix)}&max-keys=1`)
+      const response = await this.request(
+        "GET", "/", `prefix=${encodeURIComponent(prefix)}&max-keys=1`, url, null,
+      )
+
+      if (response.ok) {
+        return { success: true, message: "S3 连接成功" }
       }
 
-      return { success: false, message: `连接失败 (HTTP ${response.status})` }
+      const body = await response.text()
+      if (response.status === 403) {
+        const errMsg = parseS3Error(body)
+        return { success: false, message: `认证失败: ${errMsg}，请检查密钥是否正确` }
+      }
+      return { success: false, message: `ListObjects 失败 (HTTP ${response.status})` }
     } catch (err: any) {
-      return { success: false, message: `连接失败: ${err.message}` }
+      return { success: false, message: `ListObjects 异常: ${err.message}` }
     }
   }
 
@@ -330,12 +378,13 @@ export class S3Client {
 
     if (body) {
       fetchHeaders["Content-Type"] = "application/octet-stream"
+      fetchHeaders["Content-Length"] = String(body.length)
     }
 
     try {
       // Convert Buffer to Uint8Array for fetch BodyInit compatibility
       const fetchBody: BodyInit | undefined = body
-        ? new Uint8Array((body as any).buffer, (body as any).byteOffset ?? 0, (body as any).byteLength ?? body.length)
+        ? new Uint8Array(body.buffer, body.byteOffset, body.byteLength)
         : undefined
       return await fetch(url, {
         method: method.toUpperCase(),

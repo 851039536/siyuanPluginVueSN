@@ -5,6 +5,18 @@
 .gp-batch-progress {
   border-top: 1px solid var(--b3-border-color);
   flex-shrink: 0;
+
+  &--done {
+    .gp-batch-progress-fill {
+      background: var(--b3-theme-primary);
+      opacity: 0.5;
+    }
+  }
+}
+
+.gp-batch-progress-done-icon {
+  color: var(--b3-theme-primary);
+  flex-shrink: 0;
 }
 
 .gp-batch-progress-row {
@@ -83,6 +95,28 @@
   white-space: nowrap;
 }
 
+.gp-batch-progress-close {
+  @include m.btn-reset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: $radius-sm;
+  border: 1px solid var(--b3-border-color);
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+  transition: opacity 0.12s, border-color 0.12s, color 0.12s;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover {
+    opacity: 1;
+    border-color: var(--b3-theme-error);
+    color: var(--b3-theme-error);
+  }
+}
+
 // ── 可缩放日志输出区 ──
 .gp-batch-log {
   min-height: 60px;
@@ -106,6 +140,7 @@
 .gp-batch-log-line {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: $spacing-1;
   padding: 2px 0;
   font-size: 10px;
@@ -119,6 +154,20 @@
   &--fail {
     color: var(--b3-theme-error);
   }
+
+  &--pending {
+    color: var(--b3-theme-on-surface);
+    opacity: 0.6;
+  }
+}
+
+.gp-batch-log-spin {
+  animation: gp-batch-spin 1s linear infinite;
+}
+
+@keyframes gp-batch-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .gp-batch-log-name {
@@ -137,4 +186,38 @@
   opacity: 0.7;
   @include m.text-ellipsis;
   max-width: 160px;
+}
+
+// ── 分步骤耗时标签行 ──
+.gp-batch-log-steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  padding-left: 20px;
+  font-size: 9px;
+  font-family: $vp-mono;
+  opacity: 0.55;
+}
+
+.gp-batch-log-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.gp-batch-log-step-name {
+  opacity: 0.7;
+}
+
+.gp-batch-log-step-ms {
+  opacity: 0.5;
+  font-variant-numeric: tabular-nums;
+}
+
+.gp-batch-log-step-sep {
+  margin: 0 4px;
+  opacity: 0.3;
 }

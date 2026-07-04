@@ -147,7 +147,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from "vue"
+import { computed, onMounted, reactive, ref } from "vue"
 import { Icon } from "@iconify/vue"
 import type { S3Config } from "../types"
 import { DEFAULT_S3_CONFIG } from "../types"
@@ -186,17 +186,19 @@ const localConfig = reactive<S3Config>({ ...DEFAULT_S3_CONFIG })
 
 // ========== 计算属性 ==========
 
-const connectionStatus = !lastTestResult.value
-  ? ""
-  : lastTestResult.value.success
+const connectionStatus = computed(() => {
+  if (!lastTestResult.value) return ""
+  return lastTestResult.value.success
     ? (props.i18n.connectionSuccess || "已连接")
     : (props.i18n.connectionFailed || "未连接")
+})
 
-const connectionStatusClass = !lastTestResult.value
-  ? ""
-  : lastTestResult.value.success
+const connectionStatusClass = computed(() => {
+  if (!lastTestResult.value) return ""
+  return lastTestResult.value.success
     ? "status-connected"
     : "status-disconnected"
+})
 
 // ========== 方法 ==========
 

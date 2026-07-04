@@ -6,7 +6,6 @@
  * 被 index.vue 和子组件 S3ConfigForm.vue 共享使用。
  */
 import { computed, ref } from "vue"
-import type { BackupResult } from "../modules/BackupManager"
 import type { S3Config, S3FileInfo } from "../types"
 import { DEFAULT_S3_CONFIG } from "../types"
 import { S3Client } from "../types/s3Client"
@@ -30,18 +29,11 @@ export function useS3Backup() {
   })
 
   const backupList = ref<S3FileInfo[]>([])
-  const lastBackupResult = ref<BackupResult | null>(null)
   const error = ref<string | null>(null)
 
   let s3Client: S3Client | null = null
 
   // ========== 计算属性 ==========
-
-  const configSummary = computed(() => {
-    if (!isConfigured.value) return "未配置"
-    const { endpoint, bucket } = s3Config.value
-    return `${endpoint}/${bucket}`
-  })
 
   const phaseLabel = computed(() => {
     const labels: Record<string, string> = {
@@ -168,11 +160,6 @@ export function useS3Backup() {
     }
   }
 
-  /** 清除错误 */
-  function clearError(): void {
-    error.value = null
-  }
-
   return {
     // 状态
     s3Config,
@@ -183,10 +170,8 @@ export function useS3Backup() {
     isLoading,
     backupProgress,
     backupList,
-    lastBackupResult,
     error,
     // 计算属性
-    configSummary,
     phaseLabel,
     // 方法
     initClient,
@@ -197,6 +182,5 @@ export function useS3Backup() {
     downloadBackup,
     deleteBackup,
     loadConfig,
-    clearError,
   }
 }

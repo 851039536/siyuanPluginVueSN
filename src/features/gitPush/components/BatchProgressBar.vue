@@ -19,7 +19,6 @@
       >{{ state.projectName }}</span>
       <span class="gp-batch-progress-time">{{ state.elapsedSeconds.toFixed(1) }}s</span>
       <button
-        v-if="logEntries.length > 0"
         class="gp-batch-progress-toggle"
         :class="{ 'is-expanded': logExpanded }"
         @click="logExpanded = !logExpanded"

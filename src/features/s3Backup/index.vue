@@ -104,67 +104,7 @@
         </p>
       </section>
 
-      <!-- 5. 自动备份设置 -->
-      <section class="card-section auto-backup-section">
-        <div class="section-header">
-          <h4>{{ i18n.autoBackup || "自动备份" }}</h4>
-        </div>
-        <div class="settings-row">
-          <span class="inline-label">{{ i18n.autoBackup || "自动备份" }}</span>
-          <select
-            v-model="autoBackupEnabled"
-            class="form-select narrow"
-            @change="saveAutoBackupSettings"
-          >
-            <option :value="false">
-              {{ i18n.disabled || "禁用" }}
-            </option>
-            <option :value="true">
-              {{ i18n.enabled || "启用" }}
-            </option>
-          </select>
-          <template v-if="autoBackupEnabled">
-            <span class="inline-label">{{ i18n.backupFrequency || "频率" }}</span>
-            <select
-              v-model="backupFrequency"
-              class="form-select narrow"
-              @change="saveAutoBackupSettings"
-            >
-              <option value="minute">
-                {{ i18n.everyMinute || "每分钟" }}
-              </option>
-              <option value="hourly">
-                {{ i18n.everyHour || "每小时" }}
-              </option>
-              <option value="daily">
-                {{ i18n.everyDay || "每天" }}
-              </option>
-            </select>
-            <template v-if="backupFrequency === 'daily'">
-              <span class="inline-label">{{ i18n.backupTime || "时间" }}</span>
-              <input
-                v-model="backupTime"
-                type="time"
-                class="form-input narrow"
-                @change="saveAutoBackupSettings"
-              />
-            </template>
-            <span class="inline-label">{{ i18n.keepBackups || "保留" }}</span>
-            <input
-              v-model="keepBackupCount"
-              type="number"
-              class="form-input narrow"
-              style="width: 3rem;"
-              min="1"
-              max="30"
-              @change="saveAutoBackupSettings"
-            />
-            <span class="inline-label">{{ i18n.backupUnit || "份" }}</span>
-          </template>
-        </div>
-      </section>
-
-      <!-- 6. S3 备份列表 -->
+      <!-- 5. S3 备份列表 -->
       <section class="card-section history-section">
         <div class="section-header">
           <h4>{{ i18n.s3Backups || "云端备份列表" }}</h4>
@@ -224,10 +164,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from "vue"
+import { onMounted, ref } from "vue"
 import { showMessage } from "siyuan"
 import { getWorkspaceDir } from "@/api"
 import { formatFileSize } from "@/utils/format"
+import { pickDirectory, openFolderInExplorer } from "@/utils/electronDialog"
 import { getNodeModules } from "@/utils/nodeModules"
 import { useS3Backup } from "./composables/useS3Backup"
 import { BackupManager } from "./modules/BackupManager"
@@ -254,13 +195,10 @@ const props = withDefaults(defineProps<Props>(), {
 const {
   s3Config,
   isConfigured,
-  isConnected,
-  isConnecting,
   isBackingUp,
   isLoading,
   backupProgress,
   backupList,
-  error,
   phaseLabel,
   testConnection,
   saveConfig,
@@ -276,13 +214,8 @@ const {
 const workspacePath = ref("")
 const workspaceRoot = ref("")
 const lastBackupTime = ref("")
-const autoBackupEnabled = ref(false)
-const backupFrequency = ref("daily")
-const backupTime = ref("03:00")
-const keepBackupCount = ref(7)
 const s3ConfigLocal = ref<S3Config | null>(null)
 
-let lastBackupTimestamp = 0
 let backupManager: BackupManager | null = null
 
 // ========== 计算 ==========
@@ -307,7 +240,7 @@ function updateWorkspacePath(root: string, shouldSave = false): void {
     instance.setWorkspacePaths(root)
   }
   if (shouldSave) {
-    saveAutoBackupSettings()
+    saveWorkspaceSettings()
   }
 }
 
@@ -409,10 +342,16 @@ async function performManualBackup(): Promise<void> {
       }
     })
 
-    // 更新备份记录并同步到自动备份定时器
+    // 更新备份记录
     lastBackupTime.value = new Date().toLocaleString()
-    lastBackupTimestamp = Date.now()
-    await saveAutoBackupSettings()
+    const instance = getS3BackupInstance()
+    if (instance) {
+      await instance.saveWorkspaceSettings({
+        lastBackupTime: lastBackupTime.value,
+        workspacePath: workspacePath.value,
+        workspaceRoot: workspaceRoot.value,
+      })
+    }
 
     showMessage(`${props.i18n.backupSuccess || "备份上传成功"}: ${result.fileName}`, 3000, "info")
 
@@ -490,17 +429,12 @@ async function handleDelete(backup: S3FileInfo): Promise<void> {
 
 // ========== 自动备份设置 ==========
 
-async function loadAutoBackupSettings(): Promise<void> {
+async function loadWorkspaceSettings(): Promise<void> {
   try {
     const instance = getS3BackupInstance()
     if (instance) {
-      const data = await instance.loadAutoBackupSettings()
-      autoBackupEnabled.value = data.autoBackupEnabled
-      backupFrequency.value = data.backupFrequency
-      backupTime.value = data.backupTime
-      keepBackupCount.value = data.keepBackupCount
+      const data = await instance.loadWorkspaceSettings()
       lastBackupTime.value = data.lastBackupTime
-      lastBackupTimestamp = data.lastBackupTimestamp
 
       // 同步工作区路径
       const root = instance.getWorkspaceRoot()
@@ -510,55 +444,34 @@ async function loadAutoBackupSettings(): Promise<void> {
       }
     }
   } catch (err) {
-    console.error("加载自动备份设置失败:", err)
+    console.error("加载工作区设置失败:", err)
   }
 }
 
-async function saveAutoBackupSettings(): Promise<void> {
+async function saveWorkspaceSettings(): Promise<void> {
   try {
     const instance = getS3BackupInstance()
     if (instance) {
-      await instance.saveAutoBackupSettings({
-        autoBackupEnabled: autoBackupEnabled.value,
-        backupFrequency: backupFrequency.value,
-        backupTime: backupTime.value,
-        keepBackupCount: keepBackupCount.value,
-        lastBackupTimestamp,
+      await instance.saveWorkspaceSettings({
         lastBackupTime: lastBackupTime.value,
         workspacePath: workspacePath.value,
         workspaceRoot: workspaceRoot.value,
       })
-      // 立即重启定时器以应用新设置
-      instance.restartAutoBackupTimer(
-        autoBackupEnabled.value,
-        backupFrequency.value,
-        backupTime.value,
-      )
     }
   } catch (err) {
-    console.error("保存自动备份设置失败:", err)
+    console.error("保存工作区设置失败:", err)
   }
 }
 
 // ========== 文件夹操作 ==========
 
 async function openWorkspaceFolder(): Promise<void> {
-  if (!workspaceRoot.value) return
-  try {
-    const node = getNodeModules()
-    if (node) {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const { shell } = require("electron")
-        if (shell?.openPath) {
-          await shell.openPath(workspaceRoot.value)
-          return
-        }
-      } catch { /* ignore */ }
-    }
+  if (!workspaceRoot.value) {
+    return
+  }
+  const opened = await openFolderInExplorer(workspaceRoot.value)
+  if (!opened) {
     showMessage(`工作区路径: ${workspaceRoot.value}`, 3000, "info")
-  } catch (err) {
-    console.error("打开文件夹失败:", err)
   }
 }
 
@@ -572,23 +485,12 @@ async function selectWorkspacePath(): Promise<void> {
       return
     }
   }
-  // 尝试 Electron 文件夹选择器
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { dialog } = require("electron")
-    if (dialog?.showOpenDialog) {
-      const result = await dialog.showOpenDialog({
-        properties: ["openDirectory"],
-        title: "选择思源工作区",
-        defaultPath: workspaceRoot.value || undefined,
-      })
-      if (!result.canceled && result.filePaths[0]) {
-        updateWorkspacePath(result.filePaths[0], true)
-        showMessage("工作区路径已设置", 2000, "info")
-        return
-      }
-    }
-  } catch { /* ignore */ }
+  // Electron 原生文件夹选择器
+  const selectedPath = await pickDirectory("选择思源工作区")
+  if (selectedPath) {
+    updateWorkspacePath(selectedPath, true)
+    showMessage("工作区路径已设置", 2000, "info")
+  }
 }
 
 // ========== 对话框关闭 ==========
@@ -598,12 +500,6 @@ function handleClose(): void {
     if (!confirm("正在备份中，关闭窗口不会中断备份。确定要隐藏窗口吗？")) return
   }
   props.onClose?.()
-}
-
-// ========== 事件监听 ==========
-
-function onRefreshListEvent(): void {
-  refreshBackupList()
 }
 
 // ========== 初始化 ==========
@@ -623,24 +519,17 @@ onMounted(async () => {
     console.error("加载 S3 配置失败:", err)
   }
 
-  // 加载自动备份设置和工作区
-  await loadAutoBackupSettings()
+  // 加载工作区设置和路径
+  await loadWorkspaceSettings()
   await detectWorkspacePath()
 
   // 初始化备份管理器（用于手动备份）
   initBackupManager()
 
-  // 监听自动备份完成后的列表刷新事件
-  window.addEventListener("s3BackupRefreshList", onRefreshListEvent)
-
   // 自动刷新备份列表
   if (isConfigured.value) {
     await refreshBackupList()
   }
-})
-
-onUnmounted(() => {
-  window.removeEventListener("s3BackupRefreshList", onRefreshListEvent)
 })
 </script>
 

@@ -488,7 +488,7 @@
   "everyHour": "每小时",
   "everyDay": "每天",
   "backupTime": "备份时间",
-  "keepBackups": "保留份数",
+  "keepBackups": "保留备份数",
   "keepBackupsHint": "个备份文件，超出将自动删除最旧的",
   "backupHistory": "备份历史",
   "noBackups": "暂无云端备份",

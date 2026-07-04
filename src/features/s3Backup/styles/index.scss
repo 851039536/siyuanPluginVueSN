@@ -194,40 +194,6 @@
   margin-bottom: 0;
 }
 
-// ========== 自动备份设置 ==========
-
-.settings-row {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-  flex-wrap: wrap;
-}
-
-.inline-label {
-  font-size: $font-size-sm;
-  color: var(--b3-theme-on-surface);
-  white-space: nowrap;
-}
-
-.form-select,
-.form-input {
-  padding: $spacing-1 $spacing-2;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $vp-radius;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  font-size: $font-size-sm;
-
-  &:focus {
-    outline: none;
-    border-color: var(--b3-theme-primary);
-  }
-
-  &.narrow {
-    width: auto;
-  }
-}
-
 // ========== 备份列表 ==========
 
 .backup-list {

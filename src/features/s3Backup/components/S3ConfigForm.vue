@@ -203,7 +203,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue"
+import { computed, onMounted, reactive, ref, watch } from "vue"
 import { Icon } from "@iconify/vue"
 import type { S3Config } from "../types"
 import { DEFAULT_S3_CONFIG } from "../types"
@@ -293,6 +293,16 @@ onMounted(() => {
     Object.assign(localConfig, props.config)
   }
 })
+
+// 监听 props.config 异步加载（父组件 onMounted 是异步的，子组件挂载时可能还为 null）
+watch(
+  () => props.config,
+  (newConfig) => {
+    if (newConfig) {
+      Object.assign(localConfig, newConfig)
+    }
+  },
+)
 </script>
 
 <style scoped lang="scss">

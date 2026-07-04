@@ -27,7 +27,11 @@
             'gp-output-status--fail': !entry.ok && !entry.skipped,
             'gp-output-status--skipped': entry.skipped,
           }"
-        >{{ entry.ok ? '✓' : entry.skipped ? '—' : '✗' }}</span>
+        >
+          <Icon v-if="entry.ok" icon="mdi:check" height="14" />
+          <Icon v-else-if="entry.skipped" icon="mdi:minus" height="14" />
+          <Icon v-else icon="mdi:close" height="14" />
+        </span>
         <span class="gp-output-label">{{ entry.label }}</span>
         <span class="gp-output-duration">{{ entry.duration }}ms</span>
         <span class="gp-output-summary">{{ entry.summary }}</span>

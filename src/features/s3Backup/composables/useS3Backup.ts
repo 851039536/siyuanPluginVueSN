@@ -38,10 +38,7 @@ export function useS3Backup() {
   const phaseLabel = computed(() => {
     const labels: Record<string, string> = {
       scanning: "扫描文件",
-      packing: "打包文件",
-      compressing: "压缩数据",
-      saving: "保存备份",
-      uploading: "上传 S3",
+      uploading: "上传文件",
     }
     return labels[backupProgress.value.phase] || backupProgress.value.phase
   })
@@ -101,6 +98,12 @@ export function useS3Backup() {
     } finally {
       isBackingUp.value = false
     }
+  }
+
+  /** 直接上传文件内容到 S3（跳过本地打包，用于逐文件上传模式） */
+  async function uploadFileContent(buffer: Buffer, key: string): Promise<void> {
+    if (!s3Client) { throw new Error("S3 客户端未初始化") }
+    await s3Client.uploadBuffer(buffer, key)
   }
 
   /** 列举 S3 备份文件 */
@@ -178,6 +181,7 @@ export function useS3Backup() {
     testConnection,
     saveConfig,
     performBackup,
+    uploadFileContent,
     listBackups,
     downloadBackup,
     deleteBackup,

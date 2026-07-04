@@ -100,7 +100,7 @@
           </button>
         </div>
         <p class="backup-hint">
-          {{ i18n.backupHint || "备份将打包为 zip 后上传到 S3" }}
+          {{ i18n.backupHint || "备份将直接上传文件到 S3" }}
         </p>
       </section>
 
@@ -202,7 +202,7 @@ const {
   phaseLabel,
   testConnection,
   saveConfig,
-  performBackup: uploadToS3,
+  uploadFileContent,
   listBackups,
   downloadBackup,
   deleteBackup,
@@ -298,49 +298,62 @@ async function handleConfigSaved(): Promise<void> {
 // ========== 备份操作 ==========
 
 async function performManualBackup(): Promise<void> {
-  if (isBackingUp.value || !backupManager) return
+  if (isBackingUp.value || !backupManager) {
+    return
+  }
 
   if (!workspacePath.value) {
     showMessage(props.i18n.noWorkspace || "请先选择工作区路径", 3000, "info")
     await selectWorkspacePath()
-    if (!workspacePath.value) return
+    if (!workspacePath.value) {
+      return
+    }
   }
 
   isBackingUp.value = true
-  backupProgress.value = {
-    phase: "scanning",
-    currentFile: "",
-    filesProcessed: 0,
-    totalFiles: 0,
-    percent: 0,
-  }
 
   try {
-    // 阶段 1-4: 本地备份打包
-    const result = await backupManager.performFullBackup({
-      onProgress: (p) => {
-        backupProgress.value = { ...p }
-      },
+    // 阶段 1: 扫描文件
+    const files = await backupManager.getWorkspaceFiles((p) => {
+      backupProgress.value = { ...p }
     })
 
-    // 阶段 5: 上传到 S3
-    const prefix = s3Config.value.prefix || "siyuan-backup/"
-    const s3Key = `${prefix}${result.fileName}`
-
-    backupProgress.value = {
-      phase: "uploading",
-      currentFile: result.fileName,
-      filesProcessed: result.totalFiles,
-      totalFiles: result.totalFiles,
-      percent: 80,
+    if (files.length === 0) {
+      showMessage("工作区没有可备份的文件", 3000, "info")
+      return
     }
 
-    await uploadToS3(result.filePath, s3Key, (percent) => {
+    // 阶段 2: 逐文件上传到 S3
+    const prefix = s3Config.value.prefix || "siyuan-backup/"
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19)
+    const node = getNodeModules()
+    const fs = node!.fs.promises
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      const s3Key = `${prefix}${timestamp}/${file.relativePath}`
+      const percent = Math.round((i / files.length) * 100)
+
       backupProgress.value = {
-        ...backupProgress.value,
-        percent: 80 + Math.round(percent * 0.2),
+        phase: "uploading",
+        currentFile: file.relativePath,
+        filesProcessed: i + 1,
+        totalFiles: files.length,
+        percent,
       }
-    })
+
+      const content = await fs.readFile(file.fullPath)
+      await uploadFileContent(content, s3Key)
+    }
+
+    // 完成
+    backupProgress.value = {
+      phase: "uploading",
+      currentFile: "",
+      filesProcessed: files.length,
+      totalFiles: files.length,
+      percent: 100,
+    }
 
     // 更新备份记录
     lastBackupTime.value = new Date().toLocaleString()
@@ -353,7 +366,7 @@ async function performManualBackup(): Promise<void> {
       })
     }
 
-    showMessage(`${props.i18n.backupSuccess || "备份上传成功"}: ${result.fileName}`, 3000, "info")
+    showMessage(`${props.i18n.backupSuccess || "备份上传成功"}: ${files.length} 个文件`, 3000, "info")
 
     // 刷新列表
     await refreshBackupList()

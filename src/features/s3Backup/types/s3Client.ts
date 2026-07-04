@@ -253,7 +253,7 @@ export class S3Client {
     }
   }
 
-  /** 上传文件 */
+  /** 上传本地文件到 S3 */
   async upload(localPath: string, key: string, onProgress?: (percent: number) => void): Promise<void> {
     const { fs } = requireFsPath()
     const fileBuffer = await fs.readFile(localPath)
@@ -270,6 +270,18 @@ export class S3Client {
     }
 
     onProgress?.(100)
+  }
+
+  /** 直接上传 Buffer 内容到 S3（跳过本地文件读写） */
+  async uploadBuffer(buffer: Buffer, key: string): Promise<void> {
+    const url = this.buildUrl(key)
+    const response = await this.request("PUT", this.buildUri(key), "", url, buffer)
+
+    if (!response.ok) {
+      const body = await response.text()
+      const errMsg = parseS3Error(body)
+      throw new Error(`S3 上传失败: ${errMsg}`)
+    }
   }
 
   /** 下载文件到本地 */

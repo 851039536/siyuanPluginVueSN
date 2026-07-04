@@ -821,19 +821,6 @@
   white-space: nowrap;
 }
 
-// 底部 git 操作进度条
-.gp-progress-bar {
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--b3-theme-primary), transparent);
-  background-size: 200% 100%;
-  animation: gp-shimmer 1.2s linear infinite;
-}
-
-@keyframes gp-shimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
 // ── 批量加载进度条 ──
 .gp-load-progress {
   display: flex;

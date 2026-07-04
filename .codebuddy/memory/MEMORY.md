@@ -25,3 +25,4 @@
 - 2026-07-03：gitPush 按钮图标大小统一 — 以 PanelHeader.vue 为标准（所有按钮图标 `height="12"`），修复 EditProjectDialog.vue 中 3 处不一致：帮助按钮 14→12、帮助弹窗标题 14→12、帮助弹窗列表项 13→12。48px/36px 空状态插画不在范围。
 - 2026-07-03：修复 commit log 最多只显示 5 条 — `GitPushManager.getCommitLog` 默认 `count = 5` → `count = 30`。SCSS 已内置 `max-height: 160px; overflow-y: auto`，增加数量后自动触发滚动。无需改组件/CSS。
 - 2026-07-03：BranchCommitList 增加提交数量选择框 — 搜索栏右侧新增 `<select>`（选项 10/20/30/50/100，默认 30）。选择后 emit 事件链向上传递（BranchCommitList → WorkingTreePanel → ProjectCard → index.vue），index.vue 调用 `loadCommitLog(id, count)` 重新从 git 拉取指定条数。涉及 6 个文件：BranchCommitList.vue / WorkingTreePanel.vue / ProjectCard.vue / index.vue / useGitOps.ts / BranchCommitList.scss。lint 通过。
+- 2026-07-04：S3 备份功能集成到状态栏 — 在 statusBar/index.vue 的 FEATURES 数组中新增 s3Backup 条目（icon: mdi:cloud-upload, color: #f59e0b, action: emitCustomEvent("openS3Backup")），支持状态栏快捷图标和功能抽屉两种入口。lint 通过。

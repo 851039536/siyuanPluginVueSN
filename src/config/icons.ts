@@ -190,6 +190,12 @@ export const FEATURE_ICONS = {
     color: "#6366f1",
   },
 
+  // S3 备份
+  s3Backup: {
+    icon: "mdi:cloud-upload",
+    color: "#f59e0b",
+  },
+
   // 单词阅读
   flashcardReading: {
     icon: "mdi:card-bulleted",

@@ -133,7 +133,9 @@
       "Bash(pnpm i18n:verify)",
       "Bash(npx vue-tsc *)",
       "Bash(npx eslint *)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "Bash(pnpm lint *)"
     ],
     "deny": [],
     "ask": [],

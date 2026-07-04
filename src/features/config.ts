@@ -301,6 +301,13 @@ export const FEATURE_CONFIG = [
     titleI18nKey: "toolCollection",
     descI18nKey: "toolCollectionDesc",
   },
+  {
+    id: "s3Backup",
+    defaultTitle: "S3 备份",
+    defaultDesc: "将工作区备份到 S3 兼容存储",
+    titleI18nKey: "s3Backup",
+    descI18nKey: "s3BackupDesc",
+  },
 ] as const
 
 /**

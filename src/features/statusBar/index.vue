@@ -258,6 +258,18 @@ const FEATURES: FeatureRegistryEntry[] = [
     action: () => emitCustomEvent("openDataBackup"),
   },
   {
+    id: "s3Backup",
+    icon: "mdi:cloud-upload",
+    color: "#f59e0b",
+    title: props.plugin?.i18n?.s3Backup || "S3 备份",
+    pinnable: true,
+    shortcut: {
+      icon: "mdi:cloud-upload",
+      itemClass: "action-item s3-backup-item",
+    },
+    action: () => emitCustomEvent("openS3Backup"),
+  },
+  {
     id: "everythingSearch",
     icon: "ph:binoculars",
     color: "#d97706",

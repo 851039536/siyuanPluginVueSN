@@ -62,6 +62,14 @@ export class GitPushManager {
   private gitMaxConcurrent = 3
   /** 等待队列（关联 signal 以便 abort 时精准过滤） */
   private gitWaitQueue: { run: () => void, signal?: AbortSignal }[] = []
+  /** 识别网络 IO 类 git 命令，自动路由到独立并发池 */
+  private static readonly NETWORK_COMMANDS = new Set(["fetch", "push", "pull", "clone", "ls-remote"])
+  /** 网络命令最大并发（常量，避免被 GitHub/Gitee 限流） */
+  private readonly networkMaxConcurrent = 2
+  /** 当前正在执行的网络类 git 子进程数 */
+  private networkRunning = 0
+  /** 网络命令等待队列 */
+  private networkWaitQueue: { run: () => void, signal?: AbortSignal }[] = []
   /** 记录当前正在执行的子进程引用（用于取消操作时 kill） */
   private activeProcesses: Set<any> = new Set()
   /** 项目 push/pull 的 AbortController 数组（同项目多操作不覆盖） */
@@ -1046,10 +1054,12 @@ export class GitPushManager {
   }
 
   /**
-   * 执行 git 命令（信号量限流）
+   * 执行 git 命令（双池信号量限流：网络命令与本地命令独立并发池）
    * @param signal 可选 AbortSignal，触发后 kill 子进程并清等待队列
    */
   private execGit(cwd: string, args: string[], signal?: AbortSignal): Promise<string> {
+    const isNetwork = GitPushManager.NETWORK_COMMANDS.has(args[0])
+
     return new Promise<string>((resolve, reject) => {
       let killed = false
 
@@ -1061,16 +1071,24 @@ export class GitPushManager {
 
         const cp = this.getProcess()
         if (!cp) { reject(new Error("Node 环境不可用")); return }
-        this.gitRunning++
+        if (isNetwork) {
+          this.networkRunning++
+        } else {
+          this.gitRunning++
+        }
 
         const child = cp.execFile(
           "git", args,
           { cwd, timeout: 30000, encoding: "utf8", windowsHide: true },
           (error: any, stdout: string, stderr: string) => {
-            this.gitRunning--
+            if (isNetwork) {
+              this.networkRunning--
+            } else {
+              this.gitRunning--
+            }
             this.activeProcesses.delete(child)
-            const next = this.gitWaitQueue.shift()
-            if (next) next.run()
+            const next = isNetwork ? this.networkWaitQueue.shift() : this.gitWaitQueue.shift()
+            if (next) { next.run() }
 
             if (killed) { return }
             if (error) {
@@ -1085,8 +1103,9 @@ export class GitPushManager {
         const onAbort = () => {
           killed = true
           try { child.kill("SIGTERM") } catch {}
-          // 仅清空与当前 signal 关联的排队项，不影响其他项目
+          // 清空两个池中与当前 signal 关联的排队项，避免残留
           this.gitWaitQueue = this.gitWaitQueue.filter((item) => item.signal !== signal)
+          this.networkWaitQueue = this.networkWaitQueue.filter((item) => item.signal !== signal)
         }
         if (signal) {
           if (signal.aborted) {
@@ -1097,10 +1116,18 @@ export class GitPushManager {
         }
       }
 
-      if (this.gitRunning < this.gitMaxConcurrent) {
-        run()
+      if (isNetwork) {
+        if (this.networkRunning < this.networkMaxConcurrent) {
+          run()
+        } else {
+          this.networkWaitQueue.push({ run, signal })
+        }
       } else {
-        this.gitWaitQueue.push({ run, signal })
+        if (this.gitRunning < this.gitMaxConcurrent) {
+          run()
+        } else {
+          this.gitWaitQueue.push({ run, signal })
+        }
       }
     })
   }

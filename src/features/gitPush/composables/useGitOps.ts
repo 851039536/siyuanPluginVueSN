@@ -1,6 +1,4 @@
-// Git 底层操作封装（push/pull/fetch/commit）
-// Git 底层操作封装（push/pull/fetch/commit）
-// Git 底层操作封装（push/pull/fetch/commit）
+// Git 底层操作封装（push/pull/fetch/commit/stash/tag）
 import type { Ref } from "vue"
 import type {
   BranchInfo,
@@ -62,9 +60,9 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
   /** Stash 操作加载中 */
   const stashLoading = ref<Record<string, boolean>>({})
 
-  /** 检查是否有推送进行中 */
-  function isPushing(projectId: string, target?: string): boolean {
-    const prog = pushProgress.value[projectId]
+  /** 通用操作进度检查（isPushing / isPulling 共用实现） */
+  function isOpInProgress(progressRef: ProgressRef, projectId: string, target?: string): boolean {
+    const prog = progressRef.value[projectId]
     if (!prog) return false
     if (target) {
       if (target === "all") {
@@ -73,6 +71,10 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
       return prog[target] === "pushing" || prog[target] === "pending"
     }
     return Object.values(prog).some((s) => s === "pushing" || s === "pending")
+  }
+
+  function isPushing(projectId: string, target?: string): boolean {
+    return isOpInProgress(pushProgress, projectId, target)
   }
 
   /** 获取指定项目指定远程的推送进度 */
@@ -80,22 +82,8 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     return pushProgress.value[projectId]?.[target] ?? "pending"
   }
 
-  /** 检查是否有拉取进行中 */
   function isPulling(projectId: string, target?: string): boolean {
-    const prog = pullProgress.value[projectId]
-    if (!prog) return false
-    if (target) {
-      if (target === "all") {
-        return Object.values(prog).some((s) => s === "pushing" || s === "pending")
-      }
-      return prog[target] === "pushing" || prog[target] === "pending"
-    }
-    return Object.values(prog).some((s) => s === "pushing" || s === "pending")
-  }
-
-  /** 获取指定项目指定远程的拉取进度 */
-  function getPullStatus(projectId: string, target: PlatformKey): ProgressStatus {
-    return pullProgress.value[projectId]?.[target] ?? "pending"
+    return isOpInProgress(pullProgress, projectId, target)
   }
 
   // ── 工具函数 ──
@@ -154,9 +142,15 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     return resolveValidPath(project)
   }
 
-  // ── 推送/拉取 ──
-  async function pushToAll(id: string) {
-    // 初始化进度：标记所有已配置远程为 pending
+  // ── 通用推送/拉取实现（pushToAll 与 pullToAll 消除 60 行重复） ──
+  type ProgressRef = Ref<Record<string, Record<string, ProgressStatus>>>
+  type OutputsRef = Ref<Record<string, PushOutputEntry[]>>
+
+  /** 通用全平台 remote 操作（pushToAll / pullToAll 共用实现） */
+  async function remoteOpAll(
+    action: "push" | "pull", progressRef: ProgressRef, outputsRef: OutputsRef,
+    managerFn: (id: string) => Promise<Record<string, any>>, id: string,
+  ) {
     const project = findProject(projects, id)
     const initProg: Record<string, ProgressStatus> = {}
     if (project) {
@@ -165,80 +159,66 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
         if (remoteName) { initProg[pm.key] = "pending" }
       }
     }
-    pushProgress.value[id] = initProg
+    progressRef.value[id] = initProg
 
     try {
-      // 设置各远程为 pushing
       const startedAt: Record<string, number> = {}
       const durations: Record<string, number> = {}
       for (const key of Object.keys(initProg)) {
-        pushProgress.value = {
-          ...pushProgress.value,
-          [id]: {
-            ...pushProgress.value[id],
-            [key]: "pushing",
-          },
+        progressRef.value = {
+          ...progressRef.value,
+          [id]: { ...progressRef.value[id], [key]: "pushing" },
         }
         startedAt[key] = Date.now()
       }
 
-      const result = await manager.pushToAll(id)
+      const result = await managerFn(id)
 
-      // 计算耗时并更新状态
       for (const pm of PLATFORM_META) {
         const key = pm.key
         if (!initProg[key]) continue
         durations[key] = Date.now() - (startedAt[key] || Date.now())
         const r = result[key] as any
-        pushProgress.value = {
-          ...pushProgress.value,
-          [id]: {
-            ...pushProgress.value[id],
-            [key]: r?.ok ? "ok" : "fail",
-          },
+        progressRef.value = {
+          ...progressRef.value,
+          [id]: { ...progressRef.value[id], [key]: r?.ok ? "ok" : "fail" },
         }
       }
 
-      pushOutputs.value[id] = buildOutputEntries(result, durations, getUsedPath(id))
-      pruneRecordCache(pushOutputs)
-      loadPushStatus(id).catch((e) => console.warn("[gitPush] 刷新推送状态失败:", e?.message || e))
+      outputsRef.value[id] = buildOutputEntries(result, durations, getUsedPath(id))
+      pruneRecordCache(outputsRef)
+      loadPushStatus(id).catch((e) => console.warn(`[gitPush] 刷新${action === "push" ? "推送" : "拉取"}状态失败:`, e?.message || e))
       return result
     } catch {
-      // 异常情况：所有待处理远程标记 fail
       const failProg: Record<string, ProgressStatus> = {}
       for (const key of Object.keys(initProg)) { failProg[key] = "fail" }
-      pushProgress.value = {
-        ...pushProgress.value,
-        [id]: failProg,
-      }
+      progressRef.value = { ...progressRef.value, [id]: failProg }
     } finally {
-      // 延迟清理进度（让 UI 显示最终状态 3 秒）
       setTimeout(() => {
-        const current = { ...pushProgress.value }
+        const current = { ...progressRef.value }
         delete current[id]
-        pushProgress.value = current
+        progressRef.value = current
       }, 3000)
     }
   }
 
-  async function pushSingle(id: string, target: PlatformKey) {
-    pushProgress.value = {
-      ...pushProgress.value,
-      [id]: {
-        ...pushProgress.value[id],
-        [target]: "pushing",
-      },
+  /** 通用单平台 remote 操作（pushSingle / pullSingle 共用实现） */
+  async function remoteOpSingle(
+    action: "push" | "pull", progressRef: ProgressRef, outputsRef: OutputsRef,
+    managerFn: (id: string, target: PlatformKey) => Promise<{ ok: boolean, stdout: string, stderr: string }>,
+    id: string, target: PlatformKey,
+  ) {
+    progressRef.value = {
+      ...progressRef.value,
+      [id]: { ...progressRef.value[id], [target]: "pushing" },
     }
     const startedAt = Date.now()
     try {
-      const result = await manager.pushSingle(id, target)
+      const result = await managerFn(id, target)
       const duration = Date.now() - startedAt
-      pushProgress.value = {
-        ...pushProgress.value,
-        [id]: {
-          ...pushProgress.value[id],
-          [target]: result.ok ? "ok" : "fail",
-        },
+      progressRef.value = {
+        ...progressRef.value,
+        [id]: { ...progressRef.value[id], [target]: result.ok ? "ok" : "fail" },
       }
 
       const pm = PLATFORM_META.find((m) => m.key === target)
@@ -254,133 +234,35 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
         fullStdout: result.stdout,
         fullStderr: result.stderr,
       }]
-      pushOutputs.value[id] = entries
-      loadPushStatus(id).catch((e) => console.warn("[gitPush] 刷新推送状态失败:", e?.message || e))
+      outputsRef.value[id] = entries
+      loadPushStatus(id).catch((e) => console.warn(`[gitPush] 刷新${action === "push" ? "推送" : "拉取"}状态失败:`, e?.message || e))
       return result
     } finally {
       setTimeout(() => {
-        const current = { ...pushProgress.value }
+        const current = { ...progressRef.value }
         delete current[id]
-        pushProgress.value = current
+        progressRef.value = current
       }, 3000)
     }
   }
 
-  async function pullToAll(id: string) {
-    const project = findProject(projects, id)
-    const initProg: Record<string, ProgressStatus> = {}
-    if (project) {
-      for (const pm of PLATFORM_META) {
-        const remoteName = project[pm.remoteProp]
-        if (remoteName) { initProg[pm.key] = "pending" }
-      }
-    }
-    pullProgress.value[id] = initProg
-
-    try {
-      const startedAt: Record<string, number> = {}
-      const durations: Record<string, number> = {}
-      for (const key of Object.keys(initProg)) {
-        pullProgress.value = {
-          ...pullProgress.value,
-          [id]: {
-            ...pullProgress.value[id],
-            [key]: "pushing",
-          },
-        }
-        startedAt[key] = Date.now()
-      }
-
-      const result = await manager.pullToAll(id)
-
-      for (const pm of PLATFORM_META) {
-        const key = pm.key
-        if (!initProg[key]) continue
-        durations[key] = Date.now() - (startedAt[key] || Date.now())
-        const r = result[key] as any
-        pullProgress.value = {
-          ...pullProgress.value,
-          [id]: {
-            ...pullProgress.value[id],
-            [key]: r?.ok ? "ok" : "fail",
-          },
-        }
-      }
-
-      pullOutputs.value[id] = buildOutputEntries(result, durations, getUsedPath(id))
-      pruneRecordCache(pullOutputs)
-      loadPushStatus(id).catch((e) => console.warn("[gitPush] 刷新推送状态失败:", e?.message || e))
-      return result
-    } catch {
-      const failProg: Record<string, ProgressStatus> = {}
-      for (const key of Object.keys(initProg)) { failProg[key] = "fail" }
-      pullProgress.value = {
-        ...pullProgress.value,
-        [id]: failProg,
-      }
-    } finally {
-      setTimeout(() => {
-        const current = { ...pullProgress.value }
-        delete current[id]
-        pullProgress.value = current
-      }, 3000)
-    }
+  // ── 公开推送/拉取（委托通用实现） ──
+  function pushToAll(id: string) {
+    return remoteOpAll("push", pushProgress, pushOutputs, manager.pushToAll.bind(manager), id)
+  }
+  function pushSingle(id: string, target: PlatformKey) {
+    return remoteOpSingle("push", pushProgress, pushOutputs, manager.pushSingle.bind(manager), id, target)
+  }
+  function pullToAll(id: string) {
+    return remoteOpAll("pull", pullProgress, pullOutputs, manager.pullToAll.bind(manager), id)
+  }
+  function pullSingle(id: string, target: PlatformKey) {
+    return remoteOpSingle("pull", pullProgress, pullOutputs, manager.pullSingle.bind(manager), id, target)
   }
 
-  async function pullSingle(id: string, target: PlatformKey) {
-    pullProgress.value = {
-      ...pullProgress.value,
-      [id]: {
-        ...pullProgress.value[id],
-        [target]: "pushing",
-      },
-    }
-    const startedAt = Date.now()
-    try {
-      const result = await manager.pullSingle(id, target)
-      const duration = Date.now() - startedAt
-      pullProgress.value = {
-        ...pullProgress.value,
-        [id]: {
-          ...pullProgress.value[id],
-          [target]: result.ok ? "ok" : "fail",
-        },
-      }
-
-      const pm = PLATFORM_META.find((m) => m.key === target)
-      const entries: PushOutputEntry[] = [{
-        platform: target,
-        label: pm?.label ?? target,
-        ok: result.ok,
-        skipped: false,
-        duration,
-        summary: result.ok
-          ? (result.stdout?.split("\n")?.[0]?.trim() || "OK")
-          : (result.stderr?.split("\n")?.[0]?.trim() || "失败"),
-        fullStdout: result.stdout,
-        fullStderr: result.stderr,
-      }]
-      pullOutputs.value[id] = entries
-      loadPushStatus(id).catch((e) => console.warn("[gitPush] 刷新推送状态失败:", e?.message || e))
-      return result
-    } finally {
-      setTimeout(() => {
-        const current = { ...pullProgress.value }
-        delete current[id]
-        pullProgress.value = current
-      }, 3000)
-    }
-  }
-
-  /** 取消推送 */
-  function cancelPush(id: string) {
-    manager.cancelOp(id)
-  }
-
-  /** 取消拉取 */
-  function cancelPull(id: string) {
-    manager.cancelOp(id)
-  }
+  /** 取消操作（push/pull 共用） */
+  function cancelPush(id: string) { manager.cancelOp(id) }
+  function cancelPull(id: string) { manager.cancelOp(id) }
 
   /** Fetch 所有已配置远程（仅更新跟踪分支，不合并代码）+ 刷新推送状态 */
   async function fetchAllRemotes(id: string) {
@@ -405,6 +287,23 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
       skipRefresh,
       branch,
     })
+  }
+
+  /**
+   * 合并加载 pushStatus + workingTree：一次 rev-parse HEAD 共享给两个子调用。
+   * 消除 checkPushStatus 与 getWorkingTreeStatus 各自执行 rev-parse 的浪费。
+   * @param skipRefresh 是否跳过 update-index --refresh（首屏/静默刷新时传 true）
+   */
+  async function loadProjectGitStatus(id: string, skipRefresh = true) {
+    const project = findProject(projects, id)
+    if (!project) return
+    const cwd = resolveValidPath(project)
+    const branch = await manager.getBranch(cwd)
+    if (!branch) return
+    await Promise.all([
+      loadPushStatus(id, { branch }),
+      loadWorkingTree(id, skipRefresh, branch),
+    ])
   }
 
   async function loadStatsData(id: string) {
@@ -581,7 +480,6 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     pushOutputs,
     entriesToText,
     pullProgress,
-    getPullStatus,
     isPulling,
     pullOutputs,
     pushStatuses,
@@ -595,6 +493,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     stashLoading,
     loadPushStatus,
     loadWorkingTree,
+    loadProjectGitStatus,
     loadStatsData,
     loadFileDiff,
     loadCommitLog,

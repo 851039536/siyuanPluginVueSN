@@ -1,9 +1,6 @@
 <!-- gitPush 项目卡片子组件 -->
 <template>
-  <div
-    class="gp-card"
-    @click="$emit('cardClick', project.id, $event)"
-  >
+  <div class="gp-card">
     <div class="gp-card-top">
       <div class="gp-card-info">
         <div class="gp-card-name-row">
@@ -108,7 +105,7 @@
         </div>
         <!-- 分支标签 -->
         <div
-          v-if="branches[project.id]?.length"
+          v-if="branches?.length"
           class="gp-branch-row"
         >
           <Icon
@@ -116,7 +113,7 @@
             height="12"
           />
           <button
-            v-for="b in branches[project.id]"
+            v-for="b in branches"
             :key="b.name"
             class="gp-branch-tag"
             :class="{ current: b.current }"
@@ -334,7 +331,7 @@
           class="gp-remote-none"
         >{{ i18n.notDetected || '未检测到' }}</span>
         <span
-          v-if="pushStatuses[project.id]?.remotes[r.key]"
+          v-if="pushStatus?.remotes[r.key]"
           class="gp-status-badge"
           :class="statusBadgeClass(project.id, r.key)"
         >
@@ -357,17 +354,17 @@
 
     <!-- 工作区变更状态 -->
     <WorkingTreePanel
-      v-if="workingTrees[project.id]"
+      v-if="workingTree"
       :i18n="i18n"
-      :tree="workingTrees[project.id]"
-      :committing="committing[project.id] || false"
-      :generating="generatingMsgs[project.id]?.generating || false"
-      :commit-output="commitOutputs[project.id] || ''"
-      :generated-msg="generatingMsgs[project.id]?.text || ''"
-      :file-diffs="fileDiffsForProject(project.id)"
-      :git-op-loading="gitOpLoading[project.id] || false"
-      :commit-log-entries="commitLogForProject(project.id)"
-      :commit-log-loading="commitLogLoading[project.id] || false"
+      :tree="workingTree"
+      :committing="committing || false"
+      :generating="generatingMsg?.generating || false"
+      :commit-output="commitOutput || ''"
+      :generated-msg="generatingMsg?.text || ''"
+      :file-diffs="fileDiffs"
+      :git-op-loading="gitOpLoading || false"
+      :commit-log-entries="commitLogEntries"
+      :commit-log-loading="commitLogLoading || false"
       :commit-templates="commitTemplates"
       @stage-file="(file: string) => $emit('stageFile', project.id, file)"
       @unstage-file="(file: string) => $emit('unstageFile', project.id, file)"
@@ -384,10 +381,10 @@
 
     <!-- Stash 暂存 -->
     <StashSection
-      :entries="stashEntries[project.id]"
-      :loading="stashLoading[project.id] || false"
-      :has-changes="!!workingTrees[project.id]?.hasChanges"
-      :gen-desc-loading="genStashDescLoading[project.id] || false"
+      :entries="stashEntries"
+      :loading="stashLoading || false"
+      :has-changes="!!workingTree?.hasChanges"
+      :gen-desc-loading="genStashDescLoading || false"
       :generated-msg="generatedStashMsg"
       :i18n="i18n"
       @stash-confirm="(msg: string) => $emit('stashConfirmMsg', project.id, msg)"
@@ -399,9 +396,9 @@
 
     <!-- Tag 管理 -->
     <TagPanel
-      :tags="tagsCache[project.id] || []"
-      :loading="tagLoading[project.id]"
-      :push-loaded="tagPushLoading[project.id]"
+      :tags="tagsCache || []"
+      :loading="tagLoading"
+      :push-loaded="tagPushLoading"
       :remotes="platformMeta.filter(pm => project[pm.remoteProp]).map(pm => ({
         key: pm.key,
         icon: pm.icon,
@@ -414,7 +411,7 @@
 
     <!-- 冲突警告 -->
     <ConflictSection
-      :conflicts="conflicts[project.id]"
+      :conflicts="conflicts"
       :i18n="i18n"
       @resolve-conflict="(file: string, strategy: string) => $emit('resolveConflict', project.id, file, strategy)"
       @abort-merge="$emit('abortMerge', project.id)"
@@ -440,8 +437,8 @@
           <!-- Fetch 按钮 -->
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm gp-action-btn gp-fetch-btn"
-            :class="{ 'gp-action-btn--active': fetching[project.id] }"
-            :disabled="!hasAnyRemote(project) || isPulling(project.id) || isPushing(project.id) || fetching[project.id]"
+            :class="{ 'gp-action-btn--active': fetching }"
+            :disabled="!hasAnyRemote(project) || isPulling(project.id) || isPushing(project.id) || fetching"
             :title="i18n.fetchHint || '获取最新远程状态'"
             @click="$emit('fetchAll', project.id)"
           >
@@ -470,7 +467,7 @@
           <button
             v-if="!isPushing(project.id)"
             class="vp-btn vp-btn--primary vp-btn--sm gp-action-btn"
-            :disabled="!hasAnyRemote(project) || isPulling(project.id) || !pushStatuses[project.id]?.needsPush"
+            :disabled="!hasAnyRemote(project) || isPulling(project.id) || !pushStatus?.needsPush"
             @click="$emit('pushToAll', project.id)"
           >
             <span>{{ i18n.pushAll || '推送全部' }}</span>
@@ -532,30 +529,32 @@ const props = defineProps<{
   editingNameId: string
   editingNameInput: string
   refreshing: string | null
-  fetching: Record<string, boolean>
+  fetching: boolean
   openIdeMenu: Set<string>
   confirmingDelIdx: number
-  // 每项目响应式数据
-  branches: Record<string, any[]>
-  pushStatuses: Record<string, any>
-  workingTrees: Record<string, any>
-  stashEntries: Record<string, any[]>
-  stashLoading: Record<string, boolean>
-  conflicts: Record<string, any[]>
-  commitOutputs: Record<string, string>
-  pullOutputs: Record<string, any[]>
-  pushOutputs: Record<string, any[]>
-  committing: Record<string, boolean>
-  generatingMsgs: Record<string, { generating: boolean, text: string }>
-  gitOpLoading: Record<string, boolean>
-  commitLogLoading: Record<string, boolean>
-  tagsCache: Record<string, any[]>
-  tagLoading: Record<string, boolean>
-  tagPushLoading: Record<string, any>
-  genStashDescLoading: Record<string, boolean>
+  // 每项目响应式数据（单项目值，非全量 Record，避免跨卡片 re-render）
+  branches: any[]
+  pushStatus: any
+  workingTree: any
+  stashEntries: any[]
+  stashLoading: boolean
+  conflicts: any[]
+  commitOutput: string
+  pullOutputs: any[]
+  pushOutputs: any[]
+  committing: boolean
+  generatingMsg: { generating: boolean, text: string }
+  gitOpLoading: boolean
+  commitLogLoading: boolean
+  tagsCache: any[]
+  tagLoading: boolean
+  tagPushLoading: any
+  genStashDescLoading: boolean
   generatedStashMsg: string
   commitTemplates: { id: string, name: string, pattern: string, builtin?: boolean }[]
   selectedTags: Set<string>
+  fileDiffs: Record<string, string>
+  commitLogEntries: any[]
   // 计算辅助函数
   getProjectUrl: (project: GitProject, prop: string) => string | undefined
   resolvedPath: (project: GitProject) => string
@@ -564,8 +563,6 @@ const props = defineProps<{
   statusBadgeClass: (id: string, key: string) => string
   statusLabel: (id: string, key: string) => string
   hasBehind: (id: string) => boolean
-  fileDiffsForProject: (id: string) => any
-  commitLogForProject: (id: string) => any[]
   hasAnyRemote: (project: GitProject) => boolean
   isPulling: (id: string, key?: string) => boolean
   isPushing: (id: string) => boolean
@@ -575,8 +572,6 @@ const props = defineProps<{
 
 // ── Events ──
 defineEmits<{
-  "cardClick": [id: string, event: MouseEvent]
-  // 卡片交互
   "toggleStar": [id: string]
   "cycleStatus": [id: string, status: ProjectStatus | undefined]
   "startNameEdit": [project: GitProject]
@@ -652,7 +647,7 @@ function pushBtnText(status: string | undefined, label: string, i18n: Record<str
 
 /** 拉取/推送输出面板列表 */
 const outputPanels = computed(() => [
-  { key: 'pull', entries: props.pullOutputs[props.project.id] },
-  { key: 'push', entries: props.pushOutputs[props.project.id] },
+  { key: 'pull', entries: props.pullOutputs },
+  { key: 'push', entries: props.pushOutputs },
 ])
 </script>

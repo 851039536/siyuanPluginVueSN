@@ -116,26 +116,26 @@
             :editing-name-id="editingNameId"
             :editing-name-input="editingNameInput"
             :refreshing="refreshing"
-            :fetching="fetching"
+            :fetching="fetching[project.id]"
             :open-ide-menu="openIdeMenu"
             :confirming-del-idx="confirmingDelIdx"
-            :branches="branches"
-            :push-statuses="pushStatuses"
-            :working-trees="workingTrees"
-            :stash-entries="stashEntries"
-            :stash-loading="stashLoading"
-            :conflicts="conflicts"
-            :commit-outputs="commitOutputs"
-            :pull-outputs="pullOutputs"
-            :push-outputs="pushOutputs"
-            :committing="committing"
-            :generating-msgs="generatingMsgs"
-            :git-op-loading="gitOpLoading"
-            :commit-log-loading="commitLogLoading"
-            :tags-cache="tagsCache"
-            :tag-loading="tagLoading"
-            :tag-push-loading="tagPushLoading"
-            :gen-stash-desc-loading="genStashDescLoading"
+            :branches="branches[project.id]"
+            :push-status="pushStatuses[project.id]"
+            :working-tree="workingTrees[project.id]"
+            :stash-entries="stashEntries[project.id]"
+            :stash-loading="stashLoading[project.id]"
+            :conflicts="conflicts[project.id]"
+            :commit-output="commitOutputs[project.id]"
+            :pull-outputs="pullOutputs[project.id]"
+            :push-outputs="pushOutputs[project.id]"
+            :committing="committing[project.id]"
+            :generating-msg="generatingMsgs[project.id]"
+            :git-op-loading="gitOpLoading[project.id]"
+            :commit-log-loading="commitLogLoading[project.id]"
+            :tags-cache="tagsCache[project.id]"
+            :tag-loading="tagLoading[project.id]"
+            :tag-push-loading="tagPushLoading[project.id]"
+            :gen-stash-desc-loading="genStashDescLoading[project.id]"
             :generated-stash-msg="generatedStashMsg"
             :commit-templates="commitTemplates"
             :selected-tags="selectedTags"
@@ -146,14 +146,13 @@
             :status-badge-class="statusBadgeClass"
             :status-label="statusLabel"
             :has-behind="hasBehind"
-            :file-diffs-for-project="fileDiffsForProject"
-            :commit-log-for-project="commitLogForProject"
+            :file-diffs="fileDiffsForProject(project.id)"
+            :commit-log-entries="commitLogForProject(project.id)"
             :has-any-remote="hasAnyRemote"
             :is-pulling="isPulling"
             :is-pushing="isPushing"
             :needs-push-for="needsPushFor"
             :get-push-status="getPushStatus"
-            @card-click="handleCardClick"
             @toggle-star="toggleStar"
             @cycle-status="cycleStatus"
             @start-name-edit="startNameEdit"
@@ -382,6 +381,7 @@ const {
   loadProjects,
   loadPushStatus,
   loadWorkingTree,
+  loadProjectGitStatus,
   loadStatsData,
   loadFileDiff,
   stageItem,
@@ -671,23 +671,19 @@ async function silentRefreshAll() {
   await runBatchWithProgress(projList, "刷新中", async (p) => {
     const prev = headHashes.value[p.id] || ""
     const [, curr] = await Promise.all([
-      loadPushStatus(p.id),
+      loadProjectGitStatus(p.id, true),
       props.manager.getHeadHash(resolveValidPath(p)),
     ])
 
     if (curr && curr !== prev) {
       headHashes.value[p.id] = curr
       await Promise.all([
-        loadWorkingTree(p.id),
         loadCommitLog(p.id),
         loadBranches(p.id),
         loadStashList(p.id),
       ])
     } else if (curr) {
-      await Promise.all([
-        loadWorkingTree(p.id),
-        loadStashList(p.id),
-      ])
+      await loadStashList(p.id)
     }
   })
 }
@@ -707,16 +703,13 @@ onMounted(async () => {
   // 首屏只加载显示卡片所需的最小集：工作区变更摘要 + 推送状态。
   // commitLog/branches/stash 改为展开工作区面板时按需懒加载（见 @expand）。
   // getHeadHash 仅刷新去重用，首屏无历史值可对比，跳过。
+  // 使用 loadProjectGitStatus 合并 rev-parse HEAD，skipRefresh=true 跳过 update-index --refresh
   initTimer = setTimeout(async () => {
     if (gitOpsPaused.value) return
     const catId = activeCategory.value
     const projList = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
     await runBatchWithProgress(projList, "加载中", async (p) => {
-      await Promise.all([
-        // 首屏 index 未被本进程改动，跳过 update-index --refresh 提速
-        loadWorkingTree(p.id, true),
-        loadPushStatus(p.id),
-      ])
+      await loadProjectGitStatus(p.id, true)
     })
   }, 200)
 })
@@ -752,10 +745,7 @@ watch(activeCategory, async (catId) => {
   const pending = projList.filter((p) => !workingTrees.value[p.id])
   if (pending.length === 0) return
   await runBatchWithProgress(pending, "加载中", async (p) => {
-    await Promise.all([
-      loadWorkingTree(p.id, true),
-      loadPushStatus(p.id),
-    ])
+    await loadProjectGitStatus(p.id, true)
   })
 })
 
@@ -782,32 +772,19 @@ async function handleAddFromDialog(data: { name: string, path: string, catId: st
   }
 }
 
-/** 卡片点击：排除交互元素后，轻量刷新 git 状态 */
-function handleCardClick(projectId: string, event: MouseEvent) {
-  const target = event.target as HTMLElement
-  // 点击按钮/输入框/选择框/标签/IDE 弹窗时不触发刷新
-  if (target.closest("button, input, select, textarea, .gp-ide-popover, .gp-card-name, .gp-card-name-input")) return
-  // 防抖：正在刷新或冷却期内跳过
-  if (refreshing.value === projectId) return
-  const lastTime = lastRefreshTime.get(projectId)
-  if (lastTime && Date.now() - lastTime < REFRESH_COOLDOWN_MS) return
-  lastRefreshTime.set(projectId, Date.now())
-  // 已禁用点击卡片自动刷新 git 状态，用户需通过 Fetch/刷新全部按钮手动触发
-  // handleRefresh(projectId)
-}
-
 async function handleRefresh(id: string) {
   const project = projects.value.find((p) => p.id === id)
   if (!project) return
   refreshing.value = id
   try {
     await runBatchWithProgress([project], "刷新中", async (p) => {
+      // 一次 rev-parse 获取 branch，六项操作全部并行（git 信号量自动限流到 3）
+      const cwd = resolveValidPath(p)
+      const branch = await props.manager.getBranch(cwd)
       await Promise.all([
         refreshRemotes(p.id),
-        loadPushStatus(p.id, { fetchFirst: true }),
-      ])
-      await Promise.all([
-        loadWorkingTree(p.id),
+        loadPushStatus(p.id, { fetchFirst: true, branch }),
+        loadWorkingTree(p.id, false, branch),
         loadCommitLog(p.id),
         loadBranches(p.id),
         loadStashList(p.id),

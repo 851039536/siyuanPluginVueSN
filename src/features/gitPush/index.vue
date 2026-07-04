@@ -25,24 +25,11 @@
 
     <div class="gp-divider" />
 
-    <!-- 批量加载进度条 -->
-    <div
-      v-if="loadProgress.visible"
-      class="gp-load-progress"
-    >
-      <span class="gp-load-progress-label">{{ loadProgress.label }} {{ loadProgress.current }}/{{ loadProgress.total }}</span>
-      <div class="gp-load-progress-bar">
-        <div
-          class="gp-load-progress-fill"
-          :style="{ width: (loadProgress.current / loadProgress.total * 100) + '%' }"
-        />
-      </div>
-      <span
-        v-if="loadProgress.projectName"
-        class="gp-load-progress-name"
-      >{{ loadProgress.projectName }}</span>
-      <span class="gp-load-progress-time">{{ loadProgress.elapsedSeconds.toFixed(1) }}s</span>
-    </div>
+
+    <BatchProgressBar
+      :state="progressState"
+      :log-entries="progressLogEntries"
+    />
 
     <!-- ========== 统计视图 ========== -->
     <StatsPanel
@@ -336,8 +323,10 @@ import SearchBox from "./components/SearchBox.vue"
 import ScanImportDialog from "./components/ScanImportDialog.vue"
 import SettingsDialog from "./components/SettingsDialog.vue"
 import StatsPanel from "./components/StatsPanel.vue"
+import BatchProgressBar from "./components/BatchProgressBar.vue"
 import { pickDirectory } from "./composables/useDirectoryPicker"
 import { useGitPush } from "./composables/useGitPush"
+import { useBatchProgress } from "./composables/useBatchProgress"
 import {
   IDE_PRESETS,
   useIdeManagement,
@@ -537,48 +526,30 @@ function cancelGenericConfirm() {
 }
 
 // ── 批量加载进度条 ──
-interface LoadProgress {
-  visible: boolean
-  current: number
-  total: number
-  label: string
-  projectName?: string
-  elapsedSeconds: number
-}
-const loadProgress = ref<LoadProgress>({ visible: false, current: 0, total: 0, label: "", elapsedSeconds: 0 })
-let progressTimer: ReturnType<typeof setInterval> | null = null
+const { state: progressState, logEntries: progressLogEntries, start: progressStart, advance: progressAdvance, end: progressEnd, addLog: progressAddLog } = useBatchProgress()
 
-function startLoadProgress(total: number, label: string) {
-  loadProgress.value = { visible: true, current: 0, total, label, elapsedSeconds: 0 }
-  const start = Date.now()
-  progressTimer = setInterval(() => {
-    loadProgress.value.elapsedSeconds = (Date.now() - start) / 1000
-  }, 100)
-}
-
-function advanceLoadProgress(projectName?: string) {
-  loadProgress.value.current++
-  if (projectName) loadProgress.value.projectName = projectName
-}
-
-function endLoadProgress() {
-  if (progressTimer) { clearInterval(progressTimer); progressTimer = null }
-  loadProgress.value = { visible: false, current: 0, total: 0, label: "", projectName: undefined, elapsedSeconds: 0 }
-}
-
-/** 批量处理 + 进度条包装 */
+/** 批量处理 + 进度条包装（per-item 异常隔离，单项目失败不影响后续） */
 async function runBatchWithProgress<T>(
   items: T[], label: string, fn: (item: T) => Promise<void>, getName?: (item: T) => string,
 ) {
-  if (items.length === 0) return
-  startLoadProgress(items.length, label)
+  if (items.length === 0) { return }
+  progressStart(items.length, label)
   try {
     await batchProcess(items, 3, async (item) => {
-      await fn(item)
-      advanceLoadProgress(getName?.(item))
+      const name = getName?.(item) ?? ""
+      const start = Date.now()
+      try {
+        await fn(item)
+        progressAdvance(name)
+        progressAddLog({ projectName: name || `#${progressState.value.current + 1}`, status: "ok", elapsedSeconds: (Date.now() - start) / 1000 })
+      } catch (err) {
+        const elapsed = (Date.now() - start) / 1000
+        progressAdvance(name)
+        progressAddLog({ projectName: name || `#${progressState.value.current + 1}`, status: "fail", elapsedSeconds: elapsed, error: String(err) })
+      }
     })
   } finally {
-    endLoadProgress()
+    progressEnd()
   }
 }
 

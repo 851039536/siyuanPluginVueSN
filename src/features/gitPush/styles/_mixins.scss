@@ -33,6 +33,16 @@
   opacity: 0.45;
 }
 
+// 按钮重置样式
+@mixin btn-reset {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
 // 单行文本截断省略号
 @mixin text-ellipsis {
   white-space: nowrap;

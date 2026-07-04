@@ -53,10 +53,16 @@ export function useCommitLog(deps: {
     }
   }
 
+  /** 项目删除时清理已展开标记，允许重新懒加载 */
+  function clearExpanded(projectId: string) {
+    expandedProjects.value.delete(projectId)
+  }
+
   return {
     commitLogLoading,
     commitLogForProject,
     handleExpand,
     handleReloadCommitLog,
+    clearExpanded,
   }
 }

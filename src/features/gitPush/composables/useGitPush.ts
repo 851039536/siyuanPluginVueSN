@@ -25,6 +25,12 @@ export function useGitPush(manager: GitPushManager) {
     gitOps.workingTrees,
   )
 
+  /** 删除项目时同步清理所有关联缓存 */
+  async function removeProject(id: string) {
+    await projectCrud.removeProject(id)
+    gitOps.clearProjectCache(id)
+  }
+
   return {
     // ── 项目 CRUD ──
     projects: projectCrud.projects,
@@ -33,7 +39,7 @@ export function useGitPush(manager: GitPushManager) {
     allTags: projectCrud.allTags,
     loadProjects: projectCrud.loadProjects,
     addProject: projectCrud.addProject,
-    removeProject: projectCrud.removeProject,
+    removeProject,
     updateProjectMeta: projectCrud.updateProjectMeta,
     toggleStar: projectCrud.toggleStar,
     setProjectStatus: projectCrud.setProjectStatus,
@@ -58,7 +64,6 @@ export function useGitPush(manager: GitPushManager) {
     committing: gitOps.committing,
     commitLogs: gitOps.commitLogs,
     branches: gitOps.branches,
-    commitOutputs: gitOps.commitOutputs,
     stashEntries: gitOps.stashEntries,
     stashLoading: gitOps.stashLoading,
     loadPushStatus: gitOps.loadPushStatus,
@@ -78,6 +83,7 @@ export function useGitPush(manager: GitPushManager) {
     generateCommitMsg: gitOps.generateCommitMsg,
     pushToAll: gitOps.pushToAll,
     pushSingle: gitOps.pushSingle,
+    pullToAll: gitOps.pullToAll,
     pullSingle: gitOps.pullSingle,
     cancelPush: gitOps.cancelPush,
     cancelPull: gitOps.cancelPull,

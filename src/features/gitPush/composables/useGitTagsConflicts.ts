@@ -1,5 +1,4 @@
 // Git 标签与提交模板冲突管理
-// Git 标签与冲突管理逻辑
 import type { Ref } from "vue"
 import type {
   CommitTemplate,
@@ -68,8 +67,8 @@ export function useGitTagsConflicts(manager: GitPushManager, projects: Ref<GitPr
     const project = findProject(projects, id)
     if (!project) throw new Error("项目未找到")
     await manager.abortMerge(resolveValidPath(project))
-    delete conflicts.value[id]
-    conflicts.value = { ...conflicts.value }
+    const { [id]: _, ...rest } = conflicts.value
+    conflicts.value = rest
   }
 
   async function resolveConflictOp(id: string, file: string, strategy: "theirs" | "ours") {

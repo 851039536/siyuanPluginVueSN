@@ -455,22 +455,24 @@ export class GitPushManager {
   /** 注册 AbortController 并在操作完成后自动清理（remoteOpAll/remoteOpSingle 共用） */
   private async withAbortController<T>(
     id: string,
+    action: "push" | "pull",
     fn: (signal: AbortSignal) => Promise<T>,
   ): Promise<T> {
+    const key = `${id}:${action}`
     const ac = new AbortController()
-    const list = this.abortControllers.get(id) || []
+    const list = this.abortControllers.get(key) || []
     list.push(ac)
-    this.abortControllers.set(id, list)
+    this.abortControllers.set(key, list)
     try {
       return await fn(ac.signal)
     } finally {
-      const existing = this.abortControllers.get(id)
+      const existing = this.abortControllers.get(key)
       if (existing) {
         const filtered = existing.filter((a) => a !== ac)
         if (filtered.length > 0) {
-          this.abortControllers.set(id, filtered)
+          this.abortControllers.set(key, filtered)
         } else {
-          this.abortControllers.delete(id)
+          this.abortControllers.delete(key)
         }
       }
     }
@@ -508,7 +510,7 @@ export class GitPushManager {
     }
 
 
-    return this.withAbortController(id, async (signal) => {
+    return this.withAbortController(id, action, async (signal) => {
       // 智能跳过的静态结果
       const skippedResults: Record<string, RemoteOpResult> = {}
       const entries: { key: PlatformKey, remoteName: string | undefined }[] = []
@@ -602,7 +604,7 @@ export class GitPushManager {
     const cwd = resolveValidPath(project)
     const remoteName = this.getRemoteName(project, target)
 
-    return this.withAbortController(id, async (signal) => {
+    return this.withAbortController(id, action, async (signal) => {
       const result = await this.tryRemoteOp(cwd, remoteName, action, signal)
       return {
         ok: result.ok,
@@ -614,12 +616,22 @@ export class GitPushManager {
 
   /**
    * 取消正在进行的推送/拉取操作
+   * @param id 项目 ID
+   * @param action 操作类型，不传则取消该项目所有操作（用于插件卸载清理）
    */
-  cancelOp(id: string): void {
-    const list = this.abortControllers.get(id)
-    if (list && list.length > 0) {
-      for (const ac of list) { ac.abort() }
-      this.abortControllers.delete(id)
+  cancelOp(id: string, action?: "push" | "pull"): void {
+    if (action) {
+      const key = `${id}:${action}`
+      const list = this.abortControllers.get(key)
+      if (list && list.length > 0) {
+        for (const ac of list) { ac.abort() }
+        this.abortControllers.delete(key)
+      }
+    } else {
+      // 未指定 action 时取消该项目的所有操作
+      for (const a of ["push", "pull"] as const) {
+        this.cancelOp(id, a)
+      }
     }
   }
 

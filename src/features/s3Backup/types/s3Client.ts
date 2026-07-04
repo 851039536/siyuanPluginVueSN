@@ -77,6 +77,12 @@ function payloadHash(body: Buffer | string | null): string {
   return sha256Hex(body)
 }
 
+/** 对 query string 参数按字母序排序（SigV4 canonical request 强制要求） */
+function sortQueryString(qs: string): string {
+  if (!qs) return ""
+  return qs.split("&").sort().join("&")
+}
+
 /** 解析 S3 ListObjects XML 响应（兼容 OpenList/Alist 等非标准 S3 代理） */
 function parseListObjectsXml(xml: string): S3FileInfo[] {
   const results: S3FileInfo[] = []
@@ -371,23 +377,25 @@ export class S3Client {
 
   /** 构建请求 URL */
   private buildUrl(key: string, queryString = ""): string {
+    const safeKey = key.replace(/^\/+/, "")
     const protocol = this.config.useSSL ? "https" : "http"
     if (this.config.pathStyle) {
-      const encodedKey = key.split("/").map(encodeURIComponent).join("/")
+      const encodedKey = safeKey.split("/").map(encodeURIComponent).join("/")
       const qs = queryString ? queryString : ""
       return `${protocol}://${this.config.endpoint}/${this.config.bucket}/${encodedKey}${qs}`
     }
-    const encodedKey = key.split("/").map(encodeURIComponent).join("/")
+    const encodedKey = safeKey.split("/").map(encodeURIComponent).join("/")
     const qs = queryString ? queryString : ""
     return `${protocol}://${this.config.bucket}.${this.config.endpoint}/${encodedKey}${qs}`
   }
 
   /** 构建请求 URI (用于签名) */
   private buildUri(key: string): string {
+    const safeKey = key.replace(/^\/+/, "")
     if (this.config.pathStyle) {
-      return `/${this.config.bucket}/${key}`.replace(/\/+/g, "/")
+      return `/${this.config.bucket}/${safeKey}`.replace(/\/+/g, "/")
     }
-    return `/${key}`.replace(/\/+/g, "/")
+    return `/${safeKey}`.replace(/\/+/g, "/")
   }
 
   /** 执行带 AWS SigV4 签名的 HTTP 请求（使用 Node.js http/https 模块，绕过浏览器 Mixed Content 限制） */
@@ -403,7 +411,11 @@ export class S3Client {
     // 无 body 的请求使用 UNSIGNED-PAYLOAD（许多 S3 兼容服务不认空体 SHA256）
     const payloadHashValue = body === null ? "UNSIGNED-PAYLOAD" : payloadHash(body)
 
-    const parsedUrl = new URL(url)
+    // SigV4 canonical request 要求查询参数按字母序排列
+    const sortedQuery = sortQueryString(queryString)
+    const sortedUrl = sortedQuery ? url.replace(/\?.*$/, `?${sortedQuery}`) : url
+
+    const parsedUrl = new URL(sortedUrl)
     const hostname = parsedUrl.host
 
     // 构建签名所需的 headers（key 必须全小写，与 signedHeaders 一致）
@@ -416,7 +428,7 @@ export class S3Client {
     const signedHeaders = "host;x-amz-content-sha256;x-amz-date"
 
     const authorization = signRequest(
-      method, uri, queryString,
+      method, uri, sortedQuery,
       headers, signedHeaders, payloadHashValue,
       this.config.accessKey, this.config.secretKey,
       this.config.region, amzDateStr, dateStampStr,
@@ -533,7 +545,7 @@ export class S3Client {
         req.end()
       }
 
-      doRequest(transport, options, url, 0)
+      doRequest(transport, options, sortedUrl, 0)
     })
   }
 

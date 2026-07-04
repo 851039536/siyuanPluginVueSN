@@ -1,0 +1,402 @@
+/**
+ * S3 备份面板样式 (Codex 风格)
+ *
+ * 使用全局设计 Token ($vp-radius / $spacing-* / $font-size-*)
+ * 禁止 box-shadow，使用 border 代替
+ */
+@use '@/variables.scss' as *;
+
+.s3-backup-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+}
+
+// ========== 头部 ==========
+
+.s3-backup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-3 $spacing-4;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  flex-shrink: 0;
+
+  &-title {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+  }
+
+  .s3-backup-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid transparent;
+    border-radius: $vp-radius;
+    background: transparent;
+    color: var(--b3-theme-on-surface);
+    font-size: 18px;
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &:hover {
+      background: var(--b3-theme-surface-lighter);
+    }
+  }
+}
+
+// ========== 内容容器 ==========
+
+.settings-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: $spacing-4;
+}
+
+// ========== 卡片区块 ==========
+
+.card-section {
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $vp-radius;
+  padding: $spacing-4;
+  margin-bottom: $spacing-4;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-3;
+
+  h4 {
+    margin: 0;
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+// ========== 信息网格 ==========
+
+.info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+}
+
+.info-label {
+  font-size: $font-size-sm;
+  color: var(--b3-theme-on-surface-light);
+}
+
+.info-value {
+  font-size: $font-size-sm;
+  color: var(--b3-theme-on-surface);
+}
+
+.workspace-path-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  flex-wrap: wrap;
+}
+
+.workspace-path {
+  word-break: break-all;
+  flex: 1;
+  min-width: 0;
+}
+
+.path-actions {
+  display: flex;
+  gap: $spacing-1;
+  flex-shrink: 0;
+}
+
+.select-path-btn,
+.open-folder-btn {
+  padding: 2px $spacing-2;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $vp-radius;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-xs;
+  cursor: pointer;
+  transition: border-color 0.15s;
+
+  &:hover:not(:disabled) {
+    border-color: var(--b3-theme-primary);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// ========== 进度条 ==========
+
+.progress-section {
+  .progress-bar-container {
+    width: 100%;
+    height: 6px;
+    background: var(--b3-theme-surface-lighter);
+    border-radius: $vp-radius;
+    overflow: hidden;
+    margin-bottom: $spacing-2;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: var(--b3-theme-primary);
+    border-radius: $vp-radius;
+    transition: width 0.3s ease;
+  }
+
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: $font-size-sm;
+    color: var(--b3-theme-on-surface-light);
+  }
+
+  .progress-current-file {
+    font-size: $font-size-xs;
+    color: var(--b3-theme-on-surface-light);
+    margin-top: $spacing-1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+// ========== 备份按钮区 ==========
+
+.backup-actions-row {
+  display: flex;
+  gap: $spacing-2;
+  flex-wrap: wrap;
+}
+
+.backup-hint {
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface-light);
+  margin-top: $spacing-2;
+  margin-bottom: 0;
+}
+
+// ========== 自动备份设置 ==========
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  flex-wrap: wrap;
+}
+
+.inline-label {
+  font-size: $font-size-sm;
+  color: var(--b3-theme-on-surface);
+  white-space: nowrap;
+}
+
+.form-select,
+.form-input {
+  padding: $spacing-1 $spacing-2;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $vp-radius;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  font-size: $font-size-sm;
+
+  &:focus {
+    outline: none;
+    border-color: var(--b3-theme-primary);
+  }
+
+  &.narrow {
+    width: auto;
+  }
+}
+
+// ========== 备份列表 ==========
+
+.backup-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.backup-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-2 0;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  gap: $spacing-2;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.backup-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.backup-name {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--b3-theme-on-surface);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.backup-time {
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface-light);
+}
+
+.backup-size {
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface-light);
+}
+
+.backup-actions {
+  display: flex;
+  gap: $spacing-1;
+  flex-shrink: 0;
+}
+
+.action-btn {
+  padding: 2px $spacing-2;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $vp-radius;
+  background: transparent;
+  font-size: $font-size-xs;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &.download {
+    color: var(--b3-theme-primary);
+    &:hover { background: var(--b3-theme-primary-lightest); }
+  }
+
+  &.restore {
+    color: $brand-warning;
+    &:hover { background: hsl(35, 90%, 50%, 0.1); }
+  }
+
+  &.delete {
+    color: $brand-destructive;
+    &:hover { background: hsl(0, 72%, 51%, 0.1); }
+  }
+}
+
+.refresh-btn {
+  padding: 2px $spacing-2;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $vp-radius;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-xs;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    border-color: var(--b3-theme-primary);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// ========== 空状态 ==========
+
+.empty-state {
+  text-align: center;
+  padding: $spacing-8 0;
+  color: var(--b3-theme-on-surface-light);
+
+  p {
+    margin: 0;
+    font-size: $font-size-sm;
+  }
+}
+
+// ========== 按钮样式 ==========
+
+.vp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-3;
+  border-radius: $vp-radius;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+
+  &--sm {
+    padding: 4px $spacing-2;
+    font-size: $font-size-xs;
+  }
+
+  &--primary {
+    background: var(--b3-theme-primary);
+    color: var(--b3-theme-primary-foreground);
+    border-color: var(--b3-theme-primary);
+
+    &:hover:not(:disabled) {
+      opacity: 0.9;
+    }
+  }
+
+  &--ghost {
+    background: transparent;
+    color: var(--b3-theme-on-surface);
+    border-color: var(--b3-theme-surface-lighter);
+
+    &:hover:not(:disabled) {
+      background: var(--b3-theme-surface-lighter);
+    }
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// ========== 旋转动画 ==========
+
+.vp-spin {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: vp-spin-rotate 0.6s linear infinite;
+}
+
+@keyframes vp-spin-rotate {
+  to { transform: rotate(360deg); }
+}

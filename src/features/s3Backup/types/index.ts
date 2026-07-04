@@ -34,16 +34,6 @@ export interface S3Config {
 // ========== 备份设置接口 ==========
 
 export interface BackupSettings {
-  /** 是否启用自动备份 */
-  autoBackupEnabled: boolean
-  /** 备份频率: minute | hourly | daily */
-  backupFrequency: string
-  /** 自动备份时间 (daily 模式下使用，格式 HH:MM) */
-  backupTime: string
-  /** 保留备份数量上限 */
-  keepBackupCount: number
-  /** 上次备份时间戳 */
-  lastBackupTimestamp: number
   /** 上次备份时间文本 */
   lastBackupTime: string
   /** 工作区路径 */
@@ -78,11 +68,6 @@ export class S3BackupStorage {
     const storage = new PluginStorage(plugin)
     this.s3Config = new TypedStorage(storage, STORAGE_KEYS.S3_CONFIG)
     this.backupSettings = new TypedStorage(storage, STORAGE_KEYS.BACKUP_SETTINGS, {
-      autoBackupEnabled: false,
-      backupFrequency: "daily",
-      backupTime: "03:00",
-      keepBackupCount: 7,
-      lastBackupTimestamp: 0,
       lastBackupTime: "",
       workspacePath: "",
       workspaceRoot: "",

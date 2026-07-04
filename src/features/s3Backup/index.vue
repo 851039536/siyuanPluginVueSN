@@ -159,7 +159,7 @@
               max="30"
               @change="saveAutoBackupSettings"
             />
-            <span class="inline-label">份</span>
+            <span class="inline-label">{{ i18n.backupUnit || "份" }}</span>
           </template>
         </div>
       </section>
@@ -229,10 +229,9 @@ import { showMessage } from "siyuan"
 import { getWorkspaceDir } from "@/api"
 import { formatFileSize } from "@/utils/format"
 import { getNodeModules } from "@/utils/nodeModules"
-import { checkIsMobile } from "../generalSettings/utils/styles"
 import { useS3Backup } from "./composables/useS3Backup"
 import { BackupManager } from "./modules/BackupManager"
-import { S3BackupStorage } from "./types"
+import { getS3BackupInstance } from "./index"
 import type { S3Config, S3FileInfo } from "./types"
 import S3ConfigForm from "./components/S3ConfigForm.vue"
 
@@ -272,10 +271,6 @@ const {
   loadConfig,
 } = useS3Backup()
 
-// ========== 存储实例 ==========
-
-let dbStorage: S3BackupStorage | null = null
-
 // ========== 基础状态 ==========
 
 const workspacePath = ref("")
@@ -292,7 +287,7 @@ let backupManager: BackupManager | null = null
 
 // ========== 计算 ==========
 
-function initManagers(): void {
+function initBackupManager(): void {
   if (workspacePath.value) {
     backupManager = new BackupManager(workspacePath.value, workspaceRoot.value)
   }
@@ -303,10 +298,13 @@ function initManagers(): void {
 function updateWorkspacePath(root: string, shouldSave = false): void {
   workspaceRoot.value = root
   workspacePath.value = `${root}/data`
-  localStorage.setItem("siyuan-workspace-root-s3", root)
-  localStorage.setItem("siyuan-workspace-path-s3", `${root}/data`)
   if (backupManager) {
     backupManager.updateWorkspacePaths(workspacePath.value, workspaceRoot.value)
+  }
+  // 同步更新 S3Backup 类内部的工作区路径
+  const instance = getS3BackupInstance()
+  if (instance) {
+    instance.setWorkspacePaths(root)
   }
   if (shouldSave) {
     saveAutoBackupSettings()
@@ -324,25 +322,17 @@ async function fetchWorkspacePath(): Promise<string | null> {
 }
 
 async function detectWorkspacePath(): Promise<void> {
-  const envRoot = (window as any).__SIYUAN_WORKSPACE__ || (window as any).SIYUAN_WORKSPACE
-  if (envRoot) {
-    updateWorkspacePath(envRoot)
-    return
-  }
-
-  const savedRoot = localStorage.getItem("siyuan-workspace-root-s3")
-  if (savedRoot) {
-    updateWorkspacePath(savedRoot)
-    return
-  }
-
-  try {
-    if (props.plugin?.dataPath) {
-      updateWorkspacePath(props.plugin.dataPath)
+  // 优先使用 S3Backup 类已检测到的路径
+  const instance = getS3BackupInstance()
+  if (instance) {
+    const root = instance.getWorkspaceRoot()
+    if (root) {
+      updateWorkspacePath(root)
       return
     }
-  } catch { /* ignore */ }
+  }
 
+  // 兜底：直接尝试 API 获取
   const apiPath = await fetchWorkspacePath()
   if (apiPath) {
     updateWorkspacePath(apiPath)
@@ -364,9 +354,10 @@ async function handleConfigSaved(): Promise<void> {
   if (!s3ConfigLocal.value) return
   saveConfig(s3ConfigLocal.value)
 
-  // 持久化配置
-  if (dbStorage) {
-    await dbStorage.s3Config.save(s3ConfigLocal.value)
+  // 持久化配置（使用 S3Backup 类共享的存储实例）
+  const instance = getS3BackupInstance()
+  if (instance) {
+    await instance.getStorage().s3Config.save(s3ConfigLocal.value)
   }
   showMessage(props.i18n.configSaved || "配置已保存", 2000, "info")
 }
@@ -418,7 +409,7 @@ async function performManualBackup(): Promise<void> {
       }
     })
 
-    // 更新备份记录
+    // 更新备份记录并同步到自动备份定时器
     lastBackupTime.value = new Date().toLocaleString()
     lastBackupTimestamp = Date.now()
     await saveAutoBackupSettings()
@@ -448,10 +439,10 @@ async function refreshBackupList(): Promise<void> {
 
 async function handleDownload(backup: S3FileInfo): Promise<void> {
   try {
-    const { fs, path } = (() => {
-      const node = getNodeModules()
-      return { fs: node!.fs.promises, path: node!.path }
-    })()
+    const node = getNodeModules()
+    if (!node) throw new Error("无法访问文件系统，请使用桌面版思源笔记")
+    const fs = node.fs.promises
+    const path = node.path
 
     const downloadDir = `${workspaceRoot.value}/data-backup`
     await fs.mkdir(downloadDir, { recursive: true })
@@ -465,23 +456,23 @@ async function handleDownload(backup: S3FileInfo): Promise<void> {
 }
 
 async function handleRestore(backup: S3FileInfo): Promise<void> {
-  const confirmed = confirm(props.i18n.confirmRestore || "确定要恢复此备份吗？当前数据将被覆盖。")
+  const confirmed = confirm(props.i18n.confirmRestore || "确定要下载此备份到本地备份目录吗？如需恢复请手动解压替换。")
   if (!confirmed) return
 
   try {
-    const { fs, path } = (() => {
-      const node = getNodeModules()
-      return { fs: node!.fs.promises, path: node!.path }
-    })()
+    const node = getNodeModules()
+    if (!node) throw new Error("无法访问文件系统，请使用桌面版思源笔记")
+    const fs = node.fs.promises
+    const path = node.path
 
     const downloadDir = `${workspaceRoot.value}/data-backup`
     await fs.mkdir(downloadDir, { recursive: true })
     const localPath = path.join(downloadDir, backup.name)
 
     await downloadBackup(backup.key, localPath)
-    showMessage(props.i18n.restoreSuccess || "恢复完成，备份已下载到本地备份目录", 3000, "info")
+    showMessage(props.i18n.downloadToLocalSuccess || "备份已下载到本地备份目录，请手动解压恢复", 4000, "info")
   } catch (err: any) {
-    showMessage(`${props.i18n.restoreFailed || "恢复失败"}: ${err.message}`, 5000, "error")
+    showMessage(`${props.i18n.restoreFailed || "下载失败"}: ${err.message}`, 5000, "error")
   }
 }
 
@@ -501,17 +492,21 @@ async function handleDelete(backup: S3FileInfo): Promise<void> {
 
 async function loadAutoBackupSettings(): Promise<void> {
   try {
-    if (dbStorage) {
-      const data = await dbStorage.backupSettings.loadOrDefault()
-      autoBackupEnabled.value = data.autoBackupEnabled ?? false
-      backupFrequency.value = data.backupFrequency ?? "daily"
-      backupTime.value = data.backupTime ?? "03:00"
-      keepBackupCount.value = data.keepBackupCount ?? 7
-      lastBackupTime.value = data.lastBackupTime ?? ""
-      lastBackupTimestamp = data.lastBackupTimestamp ?? 0
-      if (data.workspacePath) {
-        workspacePath.value = data.workspacePath
-        workspaceRoot.value = data.workspaceRoot || data.workspacePath.replace(/\/data$/, "")
+    const instance = getS3BackupInstance()
+    if (instance) {
+      const data = await instance.loadAutoBackupSettings()
+      autoBackupEnabled.value = data.autoBackupEnabled
+      backupFrequency.value = data.backupFrequency
+      backupTime.value = data.backupTime
+      keepBackupCount.value = data.keepBackupCount
+      lastBackupTime.value = data.lastBackupTime
+      lastBackupTimestamp = data.lastBackupTimestamp
+
+      // 同步工作区路径
+      const root = instance.getWorkspaceRoot()
+      if (root && !workspaceRoot.value) {
+        workspaceRoot.value = root
+        workspacePath.value = instance.getWorkspacePath()
       }
     }
   } catch (err) {
@@ -521,8 +516,9 @@ async function loadAutoBackupSettings(): Promise<void> {
 
 async function saveAutoBackupSettings(): Promise<void> {
   try {
-    if (dbStorage) {
-      await dbStorage.backupSettings.save({
+    const instance = getS3BackupInstance()
+    if (instance) {
+      await instance.saveAutoBackupSettings({
         autoBackupEnabled: autoBackupEnabled.value,
         backupFrequency: backupFrequency.value,
         backupTime: backupTime.value,
@@ -532,6 +528,12 @@ async function saveAutoBackupSettings(): Promise<void> {
         workspacePath: workspacePath.value,
         workspaceRoot: workspaceRoot.value,
       })
+      // 立即重启定时器以应用新设置
+      instance.restartAutoBackupTimer(
+        autoBackupEnabled.value,
+        backupFrequency.value,
+        backupTime.value,
+      )
     }
   } catch (err) {
     console.error("保存自动备份设置失败:", err)
@@ -598,18 +600,20 @@ function handleClose(): void {
   props.onClose?.()
 }
 
+// ========== 事件监听 ==========
+
+function onRefreshListEvent(): void {
+  refreshBackupList()
+}
+
 // ========== 初始化 ==========
 
 onMounted(async () => {
-  // 初始化存储
-  if (props.plugin) {
-    dbStorage = new S3BackupStorage(props.plugin)
-  }
-
-  // 加载保存的 S3 配置
+  // 加载保存的 S3 配置（通过 S3Backup 类共享的存储实例）
+  const instance = getS3BackupInstance()
   try {
-    if (dbStorage) {
-      const savedConfig = await dbStorage.s3Config.load()
+    if (instance) {
+      const savedConfig = await instance.getStorage().s3Config.load()
       if (savedConfig) {
         loadConfig(savedConfig)
         s3ConfigLocal.value = savedConfig
@@ -623,8 +627,11 @@ onMounted(async () => {
   await loadAutoBackupSettings()
   await detectWorkspacePath()
 
-  // 初始化备份管理器
-  initManagers()
+  // 初始化备份管理器（用于手动备份）
+  initBackupManager()
+
+  // 监听自动备份完成后的列表刷新事件
+  window.addEventListener("s3BackupRefreshList", onRefreshListEvent)
 
   // 自动刷新备份列表
   if (isConfigured.value) {
@@ -633,7 +640,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  // 清理
+  window.removeEventListener("s3BackupRefreshList", onRefreshListEvent)
 })
 </script>
 

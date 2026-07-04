@@ -66,7 +66,6 @@ export interface S3FileInfo {
 const STORAGE_KEYS = {
   S3_CONFIG: "s3-backup-config",
   BACKUP_SETTINGS: "s3-backup-settings",
-  BACKUP_HISTORY: "s3-backup-history",
 } as const
 
 // ========== 存储类 ==========
@@ -74,7 +73,6 @@ const STORAGE_KEYS = {
 export class S3BackupStorage {
   readonly s3Config: TypedStorage<S3Config>
   readonly backupSettings: TypedStorage<BackupSettings>
-  readonly backupHistory: TypedStorage<Record<string, any>>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
@@ -89,7 +87,6 @@ export class S3BackupStorage {
       workspacePath: "",
       workspaceRoot: "",
     } as BackupSettings)
-    this.backupHistory = new TypedStorage(storage, STORAGE_KEYS.BACKUP_HISTORY)
   }
 }
 

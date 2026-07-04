@@ -145,9 +145,13 @@ export class BackupManager {
     return this.finalizeAndSaveBackup(zip, backupInfo, totalFiles, compressionLevel, onProgress)
   }
 
-  /** 删除备份文件 */
+  /** 删除备份文件（移至 .trash 子目录，非永久删除） */
   async deleteBackupFile(backupFilePath: string): Promise<void> {
-    await this.fs.unlink(backupFilePath)
+    const trashDir = this.path.join(this.backupDir, ".trash")
+    await this.fs.mkdir(trashDir, { recursive: true })
+    const fileName = this.path.basename(backupFilePath)
+    const trashPath = this.path.join(trashDir, `${Date.now()}-${fileName}`)
+    await this.fs.rename(backupFilePath, trashPath)
   }
 
   /** 获取本地备份文件列表 */

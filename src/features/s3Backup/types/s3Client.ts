@@ -30,6 +30,15 @@ function requireFsPath() {
   }
 }
 
+/** 获取 Node.js http/https 模块（绕过浏览器 Mixed Content 限制） */
+function requireHttp(): { http: any; https: any } {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const http = require("node:http")
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const https = require("node:https")
+  return { http, https }
+}
+
 /** SHA256 哈希，返回 hex 字符串 */
 function sha256Hex(data: string | Buffer): string {
   const crypto = requireCrypto()
@@ -88,13 +97,27 @@ function parseListObjectsXml(xml: string): S3FileInfo[] {
   return results
 }
 
-/** 解析 S3 错误响应 XML */
-function parseS3Error(xml: string): string {
+/** 解析 S3 错误响应 XML，附带 HTTP 状态码辅助诊断 */
+function parseS3Error(xml: string, httpStatus?: number): string {
   const codeMatch = /<Code>(.*?)<\/Code>/.exec(xml)
   const msgMatch = /<Message>(.*?)<\/Message>/.exec(xml)
   const code = codeMatch ? codeMatch[1] : "Unknown"
-  const msg = msgMatch ? msgMatch[1] : xml
-  return `${code}: ${msg}`
+  const msg = msgMatch ? msgMatch[1] : (xml || "(empty body)")
+  const prefix = httpStatus !== undefined ? `[HTTP ${httpStatus}] ` : ""
+  return `${prefix}${code}: ${msg}`
+}
+
+/**
+ * 格式化 S3 错误信息，附带响应头诊断（405 时显示 Allow 头）
+ * 用于 upload/download/list/delete 等非 ok 响应的统一错误构造
+ */
+function formatS3Error(response: NodeResponse, body: string, operation: string): string {
+  const errMsg = parseS3Error(body, response.status)
+  let extra = ""
+  if (response.status === 405 && response.headers?.["allow"]) {
+    extra = `（服务器允许的方法: ${response.headers["allow"]}）`
+  }
+  return `${operation}: ${errMsg}${extra}`
 }
 
 // ========== AWS Signature V4 签名实现 ==========
@@ -111,7 +134,7 @@ function signRequest(
   queryString: string,
   headers: Record<string, string>,
   signedHeaders: string,
-  payload: Buffer | string | null,
+  payloadHashStr: string,
   accessKey: string,
   secretKey: string,
   region: string,
@@ -124,15 +147,13 @@ function signRequest(
     .map((h) => `${h}:${headers[h]}`)
     .join("\n")
 
-  const payloadHashValue = payloadHash(payload)
-
   const canonicalRequest = [
     method.toUpperCase(),
     uri,
     queryString,
     `${canonicalHeaders}\n`,
     signedHeaders,
-    payloadHashValue,
+    payloadHashStr,
   ].join("\n")
 
   // 2. 构建 StringToSign
@@ -155,6 +176,24 @@ function signRequest(
 
   // 5. 组装 Authorization header
   return `AWS4-HMAC-SHA256 Credential=${accessKey}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`
+}
+
+// ========== NodeResponse 兼容接口 ==========
+
+/**
+ * Node http/https 响应的兼容接口（模拟浏览器 Response）
+ *
+ * S3Client 内部所有调用方（tryHeadBucket/tryListObjects/upload/uploadBuffer/
+ * download/list/delete）均通过鸭子类型访问 .ok/.status/.text()/.arrayBuffer()，
+ * 定义此接口后这些调用方零改动。
+ */
+interface NodeResponse {
+  ok: boolean
+  status: number
+  text(): Promise<string>
+  arrayBuffer(): Promise<ArrayBuffer>
+  /** 响应头（Node http 中 key 全小写） */
+  headers?: Record<string, string>
 }
 
 // ========== S3Client 类 ==========
@@ -210,8 +249,10 @@ export class S3Client {
       const url = this.config.pathStyle
         ? `${protocol}://${this.config.endpoint}/${this.config.bucket}`
         : `${protocol}://${this.config.bucket}.${this.config.endpoint}`
+      // 签名时 URI 必须与 URL 的路径部分一致：path-style → /bucket, virtual-host → /
+      const uri = this.config.pathStyle ? `/${this.config.bucket}` : "/"
 
-      const response = await this.request("HEAD", "/", "", url, null)
+      const response = await this.request("HEAD", uri, "", url, null)
 
       if (response.ok || response.status === 200) {
         return { success: true, message: "S3 连接成功" }
@@ -234,8 +275,10 @@ export class S3Client {
     try {
       const prefix = this.config.prefix || ""
       const url = this.buildUrl("", `?prefix=${encodeURIComponent(prefix)}&max-keys=1`)
+      // 签名用 buildUri("")：path-style → /bucket/, virtual-host → /
+      const uri = this.buildUri("")
       const response = await this.request(
-        "GET", "/", `prefix=${encodeURIComponent(prefix)}&max-keys=1`, url, null,
+        "GET", uri, `prefix=${encodeURIComponent(prefix)}&max-keys=1`, url, null,
       )
 
       if (response.ok) {
@@ -244,7 +287,7 @@ export class S3Client {
 
       const body = await response.text()
       if (response.status === 403) {
-        const errMsg = parseS3Error(body)
+        const errMsg = parseS3Error(body, response.status)
         return { success: false, message: `认证失败: ${errMsg}，请检查密钥是否正确` }
       }
       return { success: false, message: `ListObjects 失败 (HTTP ${response.status})` }
@@ -265,8 +308,7 @@ export class S3Client {
 
     if (!response.ok) {
       const body = await response.text()
-      const errMsg = parseS3Error(body)
-      throw new Error(`S3 上传失败: ${errMsg}`)
+      throw new Error(formatS3Error(response, body, "S3 上传失败"))
     }
 
     onProgress?.(100)
@@ -279,8 +321,7 @@ export class S3Client {
 
     if (!response.ok) {
       const body = await response.text()
-      const errMsg = parseS3Error(body)
-      throw new Error(`S3 上传失败: ${errMsg}`)
+      throw new Error(formatS3Error(response, body, "S3 上传失败"))
     }
   }
 
@@ -292,8 +333,7 @@ export class S3Client {
 
     if (!response.ok) {
       const body = await response.text()
-      const errMsg = parseS3Error(body)
-      throw new Error(`S3 下载失败: ${errMsg}`)
+      throw new Error(formatS3Error(response, body, "S3 下载失败"))
     }
 
     const buffer = await response.arrayBuffer()
@@ -304,13 +344,13 @@ export class S3Client {
   /** 列举指定前缀的文件 */
   async list(prefix: string): Promise<S3FileInfo[]> {
     const url = this.buildUrl("", `?prefix=${encodeURIComponent(prefix)}&max-keys=100`)
+    const uri = this.buildUri("")
 
-    const response = await this.request("GET", "/", `prefix=${encodeURIComponent(prefix)}&max-keys=100`, url, null)
+    const response = await this.request("GET", uri, `prefix=${encodeURIComponent(prefix)}&max-keys=100`, url, null)
 
     if (!response.ok) {
       const body = await response.text()
-      const errMsg = parseS3Error(body)
-      throw new Error(`S3 列举文件失败: ${errMsg}`)
+      throw new Error(formatS3Error(response, body, "S3 列举文件失败"))
     }
 
     return parseListObjectsXml(await response.text())
@@ -323,8 +363,7 @@ export class S3Client {
 
     if (!response.ok && response.status !== 204) {
       const body = await response.text()
-      const errMsg = parseS3Error(body)
-      throw new Error(`S3 删除失败: ${errMsg}`)
+      throw new Error(formatS3Error(response, body, "S3 删除失败"))
     }
   }
 
@@ -351,23 +390,25 @@ export class S3Client {
     return `/${key}`.replace(/\/+/g, "/")
   }
 
-  /** 执行带 AWS SigV4 签名的 HTTP 请求 */
+  /** 执行带 AWS SigV4 签名的 HTTP 请求（使用 Node.js http/https 模块，绕过浏览器 Mixed Content 限制） */
   private async request(
     method: string,
     uri: string,
     queryString: string,
     url: string,
     body: Buffer | null,
-  ): Promise<Response> {
+  ): Promise<NodeResponse> {
     const amzDateStr = amzDate()
     const dateStampStr = dateStamp()
-    const payloadHashValue = payloadHash(body)
+    // 无 body 的请求使用 UNSIGNED-PAYLOAD（许多 S3 兼容服务不认空体 SHA256）
+    const payloadHashValue = body === null ? "UNSIGNED-PAYLOAD" : payloadHash(body)
 
-    const hostname = new URL(url).host
+    const parsedUrl = new URL(url)
+    const hostname = parsedUrl.host
 
-    // 构建签名所需的 headers
+    // 构建签名所需的 headers（key 必须全小写，与 signedHeaders 一致）
     const headers: Record<string, string> = {
-      "Host": hostname,
+      "host": hostname,
       "x-amz-content-sha256": payloadHashValue,
       "x-amz-date": amzDateStr,
     }
@@ -376,12 +417,15 @@ export class S3Client {
 
     const authorization = signRequest(
       method, uri, queryString,
-      headers, signedHeaders, body,
+      headers, signedHeaders, payloadHashValue,
       this.config.accessKey, this.config.secretKey,
       this.config.region, amzDateStr, dateStampStr,
     )
 
-    const fetchHeaders: Record<string, string> = {
+    // 调试：输出签名参数（构建后可在开发者工具中查看）
+    console.log(`[S3] 签名 (${method} ${uri}): region=${this.config.region}, date=${amzDateStr}, payloadHash=${payloadHashValue}, accessKey=${this.config.accessKey.slice(0, 6)}..., endpoint=${this.config.endpoint}`)
+
+    const reqHeaders: Record<string, string> = {
       "Authorization": authorization,
       "x-amz-content-sha256": payloadHashValue,
       "x-amz-date": amzDateStr,
@@ -389,23 +433,108 @@ export class S3Client {
     }
 
     if (body) {
-      fetchHeaders["Content-Type"] = "application/octet-stream"
-      fetchHeaders["Content-Length"] = String(body.length)
+      reqHeaders["Content-Type"] = "application/octet-stream"
+      reqHeaders["Content-Length"] = String(body.length)
     }
 
-    try {
-      // Convert Buffer to Uint8Array for fetch BodyInit compatibility
-      const fetchBody: BodyInit | undefined = body
-        ? new Uint8Array(body.buffer, body.byteOffset, body.byteLength)
-        : undefined
-      return await fetch(url, {
-        method: method.toUpperCase(),
-        headers: fetchHeaders,
-        body: fetchBody,
-      })
-    } catch (err: any) {
-      throw new Error(`S3 请求失败: ${err.message}`)
+    const { http, https } = requireHttp()
+    const transport = parsedUrl.protocol === "https:" ? https : http
+
+    const options: any = {
+      method: method.toUpperCase(),
+      hostname: parsedUrl.hostname,
+      port: parsedUrl.port || (parsedUrl.protocol === "https:" ? 443 : 80),
+      path: parsedUrl.pathname + parsedUrl.search,
+      headers: reqHeaders,
     }
+
+    // HTTPS 自签名证书支持（MinIO/Ceph/OpenList 等 S3 兼容服务常用自签名证书）
+    if (parsedUrl.protocol === "https:") {
+      options.rejectUnauthorized = false
+    }
+
+    return new Promise<NodeResponse>((resolve, reject) => {
+      const doRequest = (reqTransport: any, reqOptions: any, currentUrl: string, redirectCount: number) => {
+        if (redirectCount > 5) {
+          reject(new Error("S3 请求失败: 重定向次数过多（超过 5 次），请检查 endpoint 配置"))
+          return
+        }
+        const req = reqTransport.request(reqOptions, (res: any) => {
+          const method = reqOptions.method.toUpperCase()
+          const isRedirect = res.statusCode === 301 || res.statusCode === 302 || res.statusCode === 303 ||
+            res.statusCode === 307 || res.statusCode === 308
+
+          // 仅对 GET/HEAD 跟随重定向（PUT/DELETE 重定向后签名失效，应报错而非盲从）
+          if (isRedirect && res.headers.location && (method === "GET" || method === "HEAD")) {
+            res.resume() // 消费掉当前响应体
+            const redirectUrl = new URL(res.headers.location, currentUrl)
+            console.warn(`[S3] 重定向 ${res.statusCode}: ${currentUrl} → ${redirectUrl.href}`)
+            const nextTransport = redirectUrl.protocol === "https:" ? https : http
+            const redirectOptions: any = {
+              method: reqOptions.method,
+              hostname: redirectUrl.hostname,
+              port: redirectUrl.port || (redirectUrl.protocol === "https:" ? 443 : 80),
+              path: redirectUrl.pathname + redirectUrl.search,
+              headers: reqOptions.headers,
+            }
+            if (redirectUrl.protocol === "https:") {
+              redirectOptions.rejectUnauthorized = false
+            }
+            doRequest(nextTransport, redirectOptions, redirectUrl.href, redirectCount + 1)
+            return
+          }
+
+          // PUT/DELETE 收到重定向但不跟随 — 记录诊断信息
+          if (isRedirect && res.headers.location) {
+            console.warn(`[S3] ${method} 收到重定向 ${res.statusCode} → ${res.headers.location}（PUT/DELETE 不跟随重定向，签名会失效）`)
+          }
+
+          const chunks: Buffer[] = []
+          res.on("data", (chunk: Buffer) => {
+            chunks.push(chunk)
+          })
+          res.on("end", () => {
+            const responseBody = Buffer.concat(chunks)
+            const ok = res.statusCode >= 200 && res.statusCode < 300
+            if (!ok) {
+              const allowHeader = res.headers["allow"] ? ` (Allow: ${res.headers["allow"]})` : ""
+              const bodyPreview = responseBody.toString("utf-8").slice(0, 300)
+              console.warn(`[S3] 请求失败 ${method} ${currentUrl} → HTTP ${res.statusCode}${allowHeader}`)
+              if (bodyPreview) {
+                console.warn(`[S3] 响应体: ${bodyPreview}`)
+              }
+            }
+            resolve({
+              ok,
+              status: res.statusCode,
+              text: async () => responseBody.toString("utf-8"),
+              arrayBuffer: async () => {
+                const ab = new ArrayBuffer(responseBody.length)
+                new Uint8Array(ab).set(responseBody)
+                return ab
+              },
+              headers: res.headers,
+            })
+          })
+        })
+
+        // 30 秒超时保护
+        req.setTimeout(30000, () => {
+          req.destroy(new Error("请求超时（30s）"))
+        })
+
+        req.on("error", (err: any) => {
+          reject(new Error(`S3 请求失败: ${err.message}`))
+        })
+
+        if (body) {
+          req.write(body)
+        }
+        req.end()
+      }
+
+      doRequest(transport, options, url, 0)
+    })
   }
 
   /** 标准化 endpoint（确保不包含协议前缀） */

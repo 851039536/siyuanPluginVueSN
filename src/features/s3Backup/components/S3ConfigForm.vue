@@ -2,14 +2,70 @@
   <div class="s3-config-form">
     <div class="section-header">
       <h4>{{ i18n.s3Config || "S3 配置" }}</h4>
-      <span
-        v-if="connectionStatus"
-        class="connection-status"
-        :class="connectionStatusClass"
-      >
-        {{ connectionStatus }}
-      </span>
+      <div class="header-actions">
+        <span
+          v-if="connectionStatus"
+          class="connection-status"
+          :class="connectionStatusClass"
+        >
+          {{ connectionStatus }}
+        </span>
+        <button
+          class="guide-toggle-btn"
+          type="button"
+          :title="i18n.configGuide || '配置指引'"
+          @click="showGuide = !showGuide"
+        >
+          <Icon :icon="showGuide ? 'mdi:help-circle' : 'mdi:help-circle-outline'" />
+        </button>
+      </div>
     </div>
+
+    <!-- 配置指引面板 -->
+    <Transition name="guide-fade">
+      <div
+        v-if="showGuide"
+        class="config-guide-panel"
+      >
+        <div class="guide-title">
+          <Icon icon="mdi:lightbulb-outline" />
+          <span>{{ i18n.configGuide || "配置指引" }}</span>
+          <button
+            class="guide-close-btn"
+            type="button"
+            @click="showGuide = false"
+          >
+            <Icon icon="mdi:close" />
+          </button>
+        </div>
+        <div class="guide-content">
+          <div class="guide-item">
+            <span class="guide-label">Endpoint</span>
+            <span class="guide-desc">{{ i18n.guideEndpoint || "S3 服务地址，不含 http:// 前缀。如 192.168.1.100:5244" }}</span>
+          </div>
+          <div class="guide-item">
+            <span class="guide-label">Access Key / Secret Key</span>
+            <span class="guide-desc">{{ i18n.guideKeys || "从 S3 服务管理后台获取。OpenList 在「对象存储」设置中生成" }}</span>
+          </div>
+          <div class="guide-item">
+            <span class="guide-label">Bucket</span>
+            <span class="guide-desc">{{ i18n.guideBucket || "存储桶名称，需与 S3 服务端创建的桶名一致" }}</span>
+          </div>
+          <div class="guide-item">
+            <span class="guide-label">Region</span>
+            <span class="guide-desc">{{ i18n.guideRegion || "区域标识。MinIO / OpenList 等自建服务通常填 us-east-1 即可" }}</span>
+          </div>
+          <div class="guide-item">
+            <span class="guide-label">Path Style</span>
+            <span class="guide-desc">{{ i18n.guidePathStyle || "自建服务（MinIO、OpenList、Ceph）必须勾选；AWS S3 / Cloudflare R2 通常不勾选" }}</span>
+          </div>
+          <div class="guide-item">
+            <span class="guide-label">{{ i18n.useSSL || "使用 HTTPS" }}</span>
+            <span class="guide-desc">{{ i18n.guideSSL || "服务端配了 HTTPS 证书或反代时勾选，本地服务通常不勾选" }}</span>
+          </div>
+        </div>
+      </div>
+    </Transition>
 
     <div class="form-grid">
       <!-- Endpoint -->
@@ -179,6 +235,7 @@ const emit = defineEmits<{
 // ========== 状态 ==========
 
 const showSecret = ref(false)
+const showGuide = ref(false)
 const isConnecting = ref(false)
 const lastTestResult = ref<{ success: boolean; message: string } | null>(null)
 
@@ -269,6 +326,115 @@ onMounted(() => {
         background: hsl(0, 72%, 51%, 0.1);
       }
     }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: $spacing-2;
+    }
+
+    .guide-toggle-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      padding: 0;
+      border: none;
+      border-radius: 50%;
+      background: none;
+      cursor: pointer;
+      color: var(--b3-theme-on-surface-light);
+      font-size: 18px;
+      transition: color 0.15s, background 0.15s;
+
+      &:hover {
+        color: var(--b3-theme-primary);
+        background: hsl(210, 80%, 50%, 0.08);
+      }
+    }
+  }
+
+  .config-guide-panel {
+    margin-bottom: $spacing-4;
+    padding: $spacing-3;
+    border: 1px solid var(--b3-theme-surface-lighter);
+    border-radius: $vp-radius;
+    background: hsl(45, 90%, 50%, 0.04);
+
+    .guide-title {
+      display: flex;
+      align-items: center;
+      gap: $spacing-1;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-semibold;
+      color: var(--b3-theme-on-surface);
+      margin-bottom: $spacing-2;
+
+      .guide-close-btn {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        padding: 0;
+        border: none;
+        border-radius: 50%;
+        background: none;
+        cursor: pointer;
+        color: var(--b3-theme-on-surface-light);
+        font-size: 14px;
+
+        &:hover {
+          color: var(--b3-theme-on-surface);
+          background: hsl(0, 0%, 50%, 0.1);
+        }
+      }
+    }
+
+    .guide-content {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-1;
+    }
+
+    .guide-item {
+      display: flex;
+      align-items: baseline;
+      gap: $spacing-2;
+      font-size: $font-size-xs;
+      line-height: 1.5;
+
+      .guide-label {
+        flex-shrink: 0;
+        min-width: 120px;
+        font-weight: $font-weight-medium;
+        color: var(--b3-theme-on-surface);
+      }
+
+      .guide-desc {
+        color: var(--b3-theme-on-surface-light);
+      }
+    }
+  }
+
+  .guide-fade-enter-active,
+  .guide-fade-leave-active {
+    transition: opacity 0.2s ease, max-height 0.25s ease;
+    overflow: hidden;
+  }
+
+  .guide-fade-enter-from,
+  .guide-fade-leave-to {
+    opacity: 0;
+    max-height: 0;
+  }
+
+  .guide-fade-enter-to,
+  .guide-fade-leave-from {
+    opacity: 1;
+    max-height: 400px;
   }
 
   .form-grid {

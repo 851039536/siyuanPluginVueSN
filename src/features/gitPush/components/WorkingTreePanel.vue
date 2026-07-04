@@ -258,7 +258,7 @@
         <textarea
           v-model="commitMessage"
           class="wt-commit-msg"
-          rows="10"
+          rows="4"
           :placeholder="i18n.commitMessagePlaceholder || '输入提交信息...'"
         />
         <div class="wt-commit-actions">

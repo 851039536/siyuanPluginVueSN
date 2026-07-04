@@ -531,8 +531,10 @@ export class S3Client {
         })
 
         // 30 秒超时保护
-        req.setTimeout(30000, () => {
-          req.destroy(new Error("请求超时（30s）"))
+        // 上传请求 120s 超时（大文件上传 + 服务端处理），其他请求 30s
+        const timeoutMs = body ? 120000 : 30000
+        req.setTimeout(timeoutMs, () => {
+          req.destroy(new Error(`请求超时（${timeoutMs / 1000}s）`))
         })
 
         req.on("error", (err: any) => {

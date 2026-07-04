@@ -6,5 +6,5 @@ import { watch } from "vue"
 export function useGeneratedMsgSync(generatedMsg: Ref<string>, target: Ref<string>) {
   watch(generatedMsg, (msg) => {
     if (msg) target.value = msg
-  })
+  }, { immediate: true })
 }

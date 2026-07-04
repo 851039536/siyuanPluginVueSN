@@ -1,10 +1,4 @@
 // 目录选择 composable（原生 Electron + webkitdirectory 降级）
-// 目录选择 composable
-/**
- * 目录选择 composable
- * 封装 Electron 原生 + webkitdirectory 降级两种目录选择方案，
- * 消除 selectDirectory / selectScanDirectory 约 60 行重复代码。
- */
 export async function pickDirectory(title: string): Promise<string | null> {
   // 优先使用 Electron 原生目录选择对话框（路径可靠）
   if (typeof window.require === "function") {
@@ -37,6 +31,16 @@ export async function pickDirectory(title: string): Promise<string | null> {
       input.type = "file"
       input.setAttribute("webkitdirectory", "")
       input.setAttribute("directory", "")
+
+      let settled = false
+      const done = (val: string | null) => {
+        if (settled) return
+        settled = true
+        clearTimeout(timeoutId)
+        resolve(val)
+      }
+      const timeoutId = setTimeout(() => done(null), 60000)
+
       input.onchange = (e: any) => {
         const files = e.target?.files
         if (files && files.length > 0) {
@@ -45,12 +49,13 @@ export async function pickDirectory(title: string): Promise<string | null> {
           if (files[0].path) {
             const fullPath = files[0].path
             const dirPath = fullPath.substring(0, fullPath.lastIndexOf(dirName) + dirName.length)
-            resolve(dirPath)
+            done(dirPath)
             return
           }
         }
-        resolve(null)
+        done(null)
       }
+      input.addEventListener("cancel", () => done(null))
       input.click()
     } catch {
       resolve(null)

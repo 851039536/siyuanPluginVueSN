@@ -230,7 +230,7 @@ function initBackupManager(): void {
 
 function updateWorkspacePath(root: string, shouldSave = false): void {
   workspaceRoot.value = root
-  workspacePath.value = `${root}/data`
+  workspacePath.value = root
   if (backupManager) {
     backupManager.updateWorkspacePaths(workspacePath.value, workspaceRoot.value)
   }

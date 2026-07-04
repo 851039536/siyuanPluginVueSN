@@ -140,7 +140,7 @@ export class S3Backup {
   /** 更新工作区路径（供 Vue 面板在用户手动选择路径后同步） */
   setWorkspacePaths(root: string): void {
     this.cachedWorkspaceRoot = root
-    this.cachedWorkspacePath = `${root}/data`
+    this.cachedWorkspacePath = root
   }
 
   // ========== 生命周期 ==========

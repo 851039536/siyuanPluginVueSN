@@ -57,6 +57,7 @@ export interface PluginSettings {
   enableGitPush: boolean // 是否启用Git推送功能
   enableSkillLearning: boolean // 是否启用技能学习功能
   enableToolCollection: boolean // 是否启用工具合集功能
+  enableS3Backup: boolean // 是否启用 S3 备份功能
   featureStatus: Record<string, string> // 功能状态标识: featureId -> 'stable' | 'needsFix' | 'critical' | 'minor'
   themeColorScheme: string // 主题色方案: 'orange' | 'github'
   videoCategories?: string[] // 视频分类列表
@@ -123,6 +124,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableGitPush: true,
   enableSkillLearning: true,
   enableToolCollection: true,
+  enableS3Backup: true,
   featureStatus: {},
   themeColorScheme: "orange",
   videoCategories: ["默认分类", "教程", "演示", "其他"],

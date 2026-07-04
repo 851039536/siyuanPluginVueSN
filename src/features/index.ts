@@ -61,6 +61,7 @@ export {
 export { registerResourceManager } from "./resourceManager"
 export { registerRssReader } from "./rssReader"
 export { registerScriptLauncher } from "./scriptLauncher"
+export { registerS3Backup } from "./s3Backup"
 export { registerShortcut } from "./shortcut"
 export { registerSkillLearning } from "./skillLearning"
 export {
@@ -114,7 +115,7 @@ type _Registered =
   | "flashcardReading" | "passwordVault" | "docAnalysis"
   | "formatAssistant" | "htmlViewer" | "rssReader" | "resourceManager"
   | "skillsViewer" | "themeColor" | "bookmarkMarker" | "apiDebugger"
-  | "scriptLauncher" | "websiteNavigation" | "dataBackup" | "dataSnapshot" | "gitPush" | "skillLearning" | "prompts" | "toolCollection"
+  | "scriptLauncher" | "websiteNavigation" | "dataBackup" | "dataSnapshot" | "gitPush" | "skillLearning" | "prompts" | "toolCollection" | "s3Backup"
 
 // --- 编译时断言辅助 ---
 // 利用泛型接口约束 T extends true 产生 TypeScript 编译错误，无运行时开销

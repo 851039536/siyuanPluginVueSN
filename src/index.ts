@@ -46,6 +46,7 @@ import {
   registerPasswordVault,
   registerResourceManager,
   registerRssReader,
+  registerS3Backup,
   registerScriptLauncher,
   registerShortcut,
   registerSkillLearning,
@@ -249,6 +250,11 @@ export default class PluginSample extends Plugin {
       ;(this as any).__toolCollection.container.remove()
     }
 
+    // 清理 S3 备份资源
+    if ((this as any).__s3Backup) {
+      ;(this as any).__s3Backup.destroy()
+    }
+
     destroyCommands()
     destroy()
   }
@@ -302,6 +308,7 @@ export default class PluginSample extends Plugin {
     if (s.enableGitPush) registerGitPush(this)
     if (s.enableSkillLearning) registerSkillLearning(this)
     if (s.enableToolCollection) registerToolCollection(this)
+    if (s.enableS3Backup) registerS3Backup(this)
   }
 
   /**

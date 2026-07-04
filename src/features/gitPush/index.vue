@@ -25,12 +25,6 @@
 
     <div class="gp-divider" />
 
-    <!-- git 操作进度条 -->
-    <div
-      v-if="activeGitOps > 0"
-      class="gp-progress-bar"
-    />
-
     <!-- 批量加载进度条 -->
     <div
       v-if="loadProgress.visible"
@@ -588,9 +582,6 @@ async function runBatchWithProgress<T>(
   }
 }
 
-/** git 操作活跃数轮询 */
-const activeGitOps = ref(0)
-let opsPoller: ReturnType<typeof setInterval> | null = null
 let initTimer: ReturnType<typeof setTimeout> | null = null
 /** 当前视图: 'list' | 'stats' */
 const currentView = ref<"list" | "stats">("list")
@@ -742,8 +733,6 @@ onMounted(async () => {
     activeCategory.value = groupedProjects.value[0].category.id
   }
   loadGitConcurrency()
-  // 轮询 git 操作活跃数
-  opsPoller = setInterval(() => { activeGitOps.value = props.manager.activeGitOps }, 120)
   // 首屏只加载显示卡片所需的最小集：工作区变更摘要 + 推送状态。
   // commitLog/branches/stash 改为展开工作区面板时按需懒加载（见 @expand）。
   // getHeadHash 仅刷新去重用，首屏无历史值可对比，跳过。
@@ -762,7 +751,6 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  if (opsPoller) { clearInterval(opsPoller); opsPoller = null }
   if (initTimer) { clearTimeout(initTimer); initTimer = null }
   document.removeEventListener("click", closeIdeMenuOnOutside)
 })

@@ -172,7 +172,6 @@
             :is-pushing="isPushing"
             :needs-push-for="needsPushFor"
             :get-push-status="getPushStatus"
-            :entries-to-text="entriesToText"
             @card-click="handleCardClick"
             @toggle-star="toggleStar"
             @cycle-status="cycleStatus"
@@ -221,7 +220,6 @@
             @push-to-all="pushToAll"
             @cancel-push="cancelPush"
             @fetch-all="handleFetchAll"
-            @copy-output="handleCopyOutput"
           />
         </template>
       </div>
@@ -391,7 +389,6 @@ const {
   getPushStatus,
   isPushing,
   pushOutputs,
-  entriesToText,
   isPulling,
   pullOutputs,
   pushStatuses,
@@ -939,10 +936,6 @@ async function handleCopyUrl(url: string) {
   }
 }
 
-/** 复制推送/拉取输出文本 */
-async function handleCopyOutput(text: string) {
-  await copyToClipboard(text)
-}
 
 /** Fetch 所有远程 + 刷新状态 */
 async function handleFetchAll(id: string) {

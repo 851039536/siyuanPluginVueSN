@@ -493,9 +493,6 @@
       v-for="panel in outputPanels"
       :key="panel.key"
       :entries="panel.entries"
-      :copy-text="panel.copyText"
-      :i18n="i18n"
-      @copy="(text) => $emit('copyOutput', text)"
     />
   </div>
 </template>
@@ -574,7 +571,6 @@ const props = defineProps<{
   isPushing: (id: string) => boolean
   needsPushFor: (id: string, key: string) => boolean
   getPushStatus: (id: string, key: string) => string | undefined
-  entriesToText: (entries?: any[]) => string
 }>()
 
 // ── Events ──
@@ -635,7 +631,6 @@ defineEmits<{
   "pushToAll": [id: string]
   "cancelPush": [id: string]
   "fetchAll": [id: string]
-  "copyOutput": [text?: string]
 }>()
 
 /** 推送按钮状态 class 映射（消除模板中 3 次 getPushStatus 调用） */
@@ -655,9 +650,9 @@ function pushBtnText(status: string | undefined, label: string, i18n: Record<str
   return label
 }
 
-/** 拉取/推送输出面板列表（消除两个结构相同的 OutputPanel） */
+/** 拉取/推送输出面板列表 */
 const outputPanels = computed(() => [
-  { key: 'pull', entries: props.pullOutputs[props.project.id], copyText: props.entriesToText(props.pullOutputs[props.project.id]) },
-  { key: 'push', entries: props.pushOutputs[props.project.id], copyText: props.entriesToText(props.pushOutputs[props.project.id]) },
+  { key: 'pull', entries: props.pullOutputs[props.project.id] },
+  { key: 'push', entries: props.pushOutputs[props.project.id] },
 ])
 </script>

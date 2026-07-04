@@ -70,6 +70,10 @@ export class GitPushManager {
   private pushBranchMode: "all" | "head" = "all"
   /** 推送状态缓存（用于智能跳过） */
   private pushStatusCache: Record<string, PushStatusInfo> = {}
+  /** 项目内存缓存：id → GitProject（避免每次全量反序列化） */
+  private projectCache: Map<string, GitProject> = new Map()
+  /** 全量项目列表缓存（null 表示未初始化） */
+  private projectsCache: GitProject[] | null = null
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
@@ -146,10 +150,34 @@ export class GitPushManager {
   }
 
   /**
-   * 获取所有已保存的项目
+   * 获取所有已保存的项目（带内存缓存）
    */
   async getProjects(): Promise<GitProject[]> {
-    return this.storage.projects.loadOrDefault()
+    if (this.projectsCache !== null) { return this.projectsCache }
+    const projects = await this.storage.projects.loadOrDefault()
+    this.projectsCache = projects
+    this.projectCache.clear()
+    for (const p of projects) { this.projectCache.set(p.id, p) }
+    return projects
+  }
+
+  /**
+   * 按 ID 获取单个项目（优先内存缓存，避免全量反序列化 + 遍历）
+   */
+  async getProjectById(id: string): Promise<GitProject | undefined> {
+    // 先查缓存
+    if (this.projectsCache !== null) {
+      return this.projectCache.get(id)
+    }
+    // 缓存未初始化则全量加载
+    await this.getProjects()
+    return this.projectCache.get(id)
+  }
+
+  /** 清空全部项目缓存（写操作后调用以保证一致性） */
+  invalidateProjectCache(): void {
+    this.projectsCache = null
+    this.projectCache.clear()
   }
 
   /**
@@ -171,6 +199,7 @@ export class GitPushManager {
     this.applyRemotesToProject(project, await this.detectRemotes(path))
     projects.push(project)
     await this.storage.projects.save(projects)
+    this.invalidateProjectCache()
     if (tags && tags.length > 0) await this.syncGlobalTags()
     return project
   }
@@ -184,6 +213,7 @@ export class GitPushManager {
     if (idx !== -1) {
       projects.splice(idx, 1)
       await this.storage.projects.save(projects)
+      this.invalidateProjectCache()
       await this.syncGlobalTags()
     }
   }
@@ -197,6 +227,7 @@ export class GitPushManager {
     if (!project) return null
     Object.assign(project, patch)
     await this.storage.projects.save(projects)
+    this.invalidateProjectCache()
     if (patch.tags !== undefined) await this.syncGlobalTags()
     return project
   }
@@ -208,6 +239,7 @@ export class GitPushManager {
     if (!project) return null
     project.starred = !project.starred
     await this.storage.projects.save(projects)
+    this.invalidateProjectCache()
     return project
   }
 
@@ -227,6 +259,7 @@ export class GitPushManager {
     if (!tags.includes(t)) {
       project.tags = [...tags, t]
       await this.storage.projects.save(projects)
+      this.invalidateProjectCache()
       await this.syncGlobalTags()
     }
     return project
@@ -241,6 +274,7 @@ export class GitPushManager {
       project.tags = project.tags.filter((t) => t !== tag)
       if (project.tags.length === 0) project.tags = undefined
       await this.storage.projects.save(projects)
+      this.invalidateProjectCache()
       await this.syncGlobalTags()
     }
     return project
@@ -253,6 +287,7 @@ export class GitPushManager {
     if (!project || project.lastActivity === isoTime) return
     project.lastActivity = isoTime
     await this.storage.projects.save(projects)
+    this.invalidateProjectCache()
   }
 
   /** 同步全局标签缓存 */
@@ -277,6 +312,7 @@ export class GitPushManager {
     if (!project) return null
     this.applyRemotesToProject(project, await this.detectRemotes(resolveValidPath(project)))
     await this.storage.projects.save(projects)
+    this.invalidateProjectCache()
     return project
   }
 
@@ -432,8 +468,7 @@ export class GitPushManager {
 
   /** 全平台 push/pull 通用实现（并行 + 智能跳过） */
   private async remoteOpAll(id: string, action: "push" | "pull"): Promise<AllPlatformResult> {
-    const projects = await this.getProjects()
-    const project = projects.find((p) => p.id === id)
+    const project = await this.getProjectById(id)
     if (!project) return this.notFoundResult
 
     const cwd = resolveValidPath(project)
@@ -549,8 +584,7 @@ export class GitPushManager {
     target: PlatformKey,
     action: "push" | "pull",
   ): Promise<{ ok: boolean, stdout: string, stderr: string }> {
-    const projects = await this.getProjects()
-    const project = projects.find((p) => p.id === id)
+    const project = await this.getProjectById(id)
     if (!project) {
       return { ok: false, stdout: "", stderr: "项目未找到" }
     }
@@ -603,8 +637,7 @@ export class GitPushManager {
    * Fetch 项目所有已配置远程，仅更新跟踪分支不合并代码
    */
   async fetchAllForProject(id: string): Promise<{ fetched: string[]; errors: string[] }> {
-    const projects = await this.getProjects()
-    const project = projects.find((p) => p.id === id)
+    const project = await this.getProjectById(id)
     if (!project) return { fetched: [], errors: [] }
 
     const cwd = resolveValidPath(project)
@@ -637,8 +670,7 @@ export class GitPushManager {
    * @param opts.fetchFirst 是否先 fetch 远程再检查（默认 false，手动刷新时传 true）
    */
   async checkPushStatus(id: string, opts?: { branch?: string; fetchFirst?: boolean }): Promise<PushStatusInfo> {
-    const projects = await this.getProjects()
-    const project = projects.find((p) => p.id === id)
+    const project = await this.getProjectById(id)
     const emptyResult: PushStatusInfo = {
       branch: "",
       remotes: {},
@@ -988,8 +1020,7 @@ export class GitPushManager {
     cnb: boolean
     remotes: GitRemoteInfo[]
   }> {
-    const projects = await this.getProjects()
-    const project = projects.find((p) => p.id === id)
+    const project = await this.getProjectById(id)
     if (!project) {
       return { canPush: false, github: false, gitee: false, gitea: false, cnb: false, remotes: [] }
     }
@@ -1294,7 +1325,10 @@ export class GitPushManager {
     for (const p of projs) {
       if (p.categoryId === id) { p.categoryId = UNGROUPED_ID; changed = true }
     }
-    if (changed) await this.storage.projects.save(projs)
+    if (changed) {
+      await this.storage.projects.save(projs)
+      this.invalidateProjectCache()
+    }
   }
 
   async moveProject(projectId: string, categoryId: string): Promise<void> {
@@ -1303,6 +1337,7 @@ export class GitPushManager {
     if (!p) return
     p.categoryId = categoryId
     await this.storage.projects.save(projs)
+    this.invalidateProjectCache()
   }
 
   destroy() {

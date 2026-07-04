@@ -78,22 +78,7 @@ export function gitUrlToWebUrl(url: string): string {
  * 返回当前设备上实际存在的第一个路径；若皆不可用则降级返回主路径
  */
 export function resolveValidPath(project: GitProject): string {
-  const modules = getNodeFsPathOs()
-  const { fs } = modules || {}
-  const allPaths = [project.path, ...(project.localPaths || [])]
-  if (fs) {
-    for (const p of allPaths) {
-      try {
-        if (fs.existsSync(p)) {
-          return p
-        }
-      } catch {
-        // 权限不足或非法路径，继续检测下一个
-      }
-    }
-  }
-  // 降级：无 fs 模块或所有路径均无效时返回主路径
-  return project.path
+  return resolveValidPathWithSource(project).path
 }
 
 /**

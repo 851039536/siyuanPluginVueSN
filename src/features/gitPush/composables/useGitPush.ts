@@ -1,6 +1,4 @@
-// Git 推送业务逻辑与多仓库状态管理
-// Git 推送业务逻辑与状态管理
-// Git 推送业务逻辑与状态管理
+// Git 推送领域 composable 聚合入口
 import type { GitPushManager } from "../types"
 import { useProjectCrud } from "./useProjectCrud"
 import { useGitOps } from "./useGitOps"
@@ -52,8 +50,6 @@ export function useGitPush(manager: GitPushManager) {
     isPushing: gitOps.isPushing,
     pushOutputs: gitOps.pushOutputs,
     entriesToText: gitOps.entriesToText,
-    pullProgress: gitOps.pullProgress,
-    getPullStatus: gitOps.getPullStatus,
     isPulling: gitOps.isPulling,
     pullOutputs: gitOps.pullOutputs,
     pushStatuses: gitOps.pushStatuses,
@@ -67,6 +63,7 @@ export function useGitPush(manager: GitPushManager) {
     stashLoading: gitOps.stashLoading,
     loadPushStatus: gitOps.loadPushStatus,
     loadWorkingTree: gitOps.loadWorkingTree,
+    loadProjectGitStatus: gitOps.loadProjectGitStatus,
     loadStatsData: gitOps.loadStatsData,
     loadFileDiff: gitOps.loadFileDiff,
     loadCommitLog: gitOps.loadCommitLog,
@@ -81,7 +78,6 @@ export function useGitPush(manager: GitPushManager) {
     generateCommitMsg: gitOps.generateCommitMsg,
     pushToAll: gitOps.pushToAll,
     pushSingle: gitOps.pushSingle,
-    pullToAll: gitOps.pullToAll,
     pullSingle: gitOps.pullSingle,
     cancelPush: gitOps.cancelPush,
     cancelPull: gitOps.cancelPull,

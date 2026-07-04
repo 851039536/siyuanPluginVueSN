@@ -216,18 +216,16 @@ export class S3Backup {
       // 上传到 S3
       await this.s3Client.upload(result.filePath, s3Key)
 
-      // 更新备份记录
+      // 更新备份记录（保留用户现有设置，只更新时间戳和路径）
       this.lastBackupTimestamp = Date.now()
       const lastBackupTime = new Date().toLocaleString()
+      const currentSettings = await this.storage.backupSettings.loadOrDefault()
       await this.storage.backupSettings.save({
+        ...currentSettings,
         lastBackupTimestamp: this.lastBackupTimestamp,
         lastBackupTime,
         workspacePath: this.cachedWorkspacePath,
         workspaceRoot: this.cachedWorkspaceRoot,
-        autoBackupEnabled: true,
-        backupFrequency: "daily",
-        backupTime: "03:00",
-        keepBackupCount: this.keepBackupCount,
       })
 
       // 清理本地临时 zip

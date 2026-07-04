@@ -3,10 +3,17 @@
   <div
     v-if="state.visible"
     class="gp-batch-progress"
+    :class="{ 'gp-batch-progress--done': state.done }"
   >
     <!-- 进度条区域 -->
     <div class="gp-batch-progress-row">
-      <span class="gp-batch-progress-label">{{ state.label }} {{ state.current }}/{{ state.total }}</span>
+      <Icon
+        v-if="state.done"
+        icon="mdi:check-circle-outline"
+        height="14"
+        class="gp-batch-progress-done-icon"
+      />
+      <span class="gp-batch-progress-label">{{ state.done ? '完成' : state.label }} {{ state.current }}/{{ state.total }}</span>
       <div class="gp-batch-progress-bar">
         <div
           class="gp-batch-progress-fill"
@@ -14,7 +21,7 @@
         />
       </div>
       <span
-        v-if="state.projectName"
+        v-if="state.projectName && !state.done"
         class="gp-batch-progress-name"
       >{{ state.projectName }}</span>
       <span class="gp-batch-progress-time">{{ state.elapsedSeconds.toFixed(1) }}s</span>
@@ -26,6 +33,17 @@
         <span class="gp-batch-progress-toggle-label">日志</span>
         <Icon
           :icon="logExpanded ? 'mdi:chevron-up' : 'mdi:chevron-down'"
+          height="14"
+        />
+      </button>
+      <button
+        v-if="state.done"
+        class="gp-batch-progress-close"
+        title="关闭"
+        @click="emit('close')"
+      >
+        <Icon
+          icon="mdi:close"
           height="14"
         />
       </button>
@@ -44,6 +62,7 @@
         :class="{
           'gp-batch-log-line--ok': entry.status === 'ok',
           'gp-batch-log-line--fail': entry.status === 'fail',
+          'gp-batch-log-line--pending': entry.status === 'pending',
         }"
       >
         <Icon
@@ -52,9 +71,15 @@
           height="12"
         />
         <Icon
-          v-else
+          v-else-if="entry.status === 'fail'"
           icon="mdi:close"
           height="12"
+        />
+        <Icon
+          v-else
+          icon="mdi:loading"
+          height="12"
+          class="gp-batch-log-spin"
         />
         <span class="gp-batch-log-name">{{ entry.projectName }}</span>
         <span class="gp-batch-log-time">{{ entry.elapsedSeconds.toFixed(1) }}s</span>
@@ -62,6 +87,24 @@
           v-if="entry.error"
           class="gp-batch-log-error"
         >{{ entry.error }}</span>
+        <!-- 分步骤耗时标签行 -->
+        <div
+          v-if="entry.steps && entry.steps.length > 0"
+          class="gp-batch-log-steps"
+        >
+          <span
+            v-for="(step, si) in entry.steps"
+            :key="si"
+            class="gp-batch-log-step"
+          >
+            <span class="gp-batch-log-step-name">{{ step.name }}</span>
+            <span class="gp-batch-log-step-ms">{{ step.ms }}ms</span>
+            <span
+              v-if="si < entry.steps.length - 1"
+              class="gp-batch-log-step-sep"
+            >·</span>
+          </span>
+        </div>
       </div>
     </div>
   </div>
@@ -77,6 +120,10 @@ const props = defineProps<{
   logEntries: LogEntry[]
 }>()
 
+const emit = defineEmits<{
+  (e: "close"): void
+}>()
+
 const logExpanded = ref(false)
 const logContainerRef = ref<HTMLElement>()
 
@@ -90,6 +137,20 @@ watch(
   () => props.logEntries.length,
   async (len) => {
     if (len > 0 && !logExpanded.value) {
+      logExpanded.value = true
+    }
+    await nextTick()
+    if (logContainerRef.value) {
+      logContainerRef.value.scrollTop = logContainerRef.value.scrollHeight
+    }
+  }
+)
+
+// 完成时确保日志展开，方便用户查看结果
+watch(
+  () => props.state.done,
+  async (done) => {
+    if (done && !logExpanded.value) {
       logExpanded.value = true
     }
     await nextTick()

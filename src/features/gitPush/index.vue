@@ -29,6 +29,7 @@
     <BatchProgressBar
       :state="progressState"
       :log-entries="progressLogEntries"
+      @close="progressHide"
     />
 
     <!-- ========== 统计视图 ========== -->
@@ -526,30 +527,54 @@ function cancelGenericConfirm() {
 }
 
 // ── 批量加载进度条 ──
-const { state: progressState, logEntries: progressLogEntries, start: progressStart, advance: progressAdvance, end: progressEnd, addLog: progressAddLog } = useBatchProgress()
+const { state: progressState, logEntries: progressLogEntries, start: progressStart, advance: progressAdvance, end: progressEnd, finish: progressFinish, hide: progressHide, beginLog: progressBeginLog, addStep: progressAddStep, completeLog: progressCompleteLog } = useBatchProgress()
 
-/** 批量处理 + 进度条包装（per-item 异常隔离，单项目失败不影响后续） */
+/** 步骤上下文：在 fn 内部用 ctx.step(name, fn) 测量并记录每个 git 操作的耗时 */
+interface StepCtx {
+  step<R>(name: string, fn: () => Promise<R>): Promise<R>
+}
+
+/** 批量处理 + 进度条包装（per-item 异常隔离，单项目失败不影响后续，支持分步骤计时） */
 async function runBatchWithProgress<T>(
-  items: T[], label: string, fn: (item: T) => Promise<void>, getName?: (item: T) => string,
+  items: T[], label: string, fn: (item: T, ctx: StepCtx) => Promise<void>, getName?: (item: T) => string, options?: { keepVisible?: boolean },
 ) {
   if (items.length === 0) { return }
   progressStart(items.length, label)
   try {
     await batchProcess(items, 3, async (item) => {
       const name = getName?.(item) ?? ""
+      const displayName = name || `#${progressState.value.current + 1}`
+      const logIdx = progressBeginLog(displayName)
       const start = Date.now()
+
+      // 构造步骤上下文：step() 测量耗时后追加到当前日志条目
+      const ctx: StepCtx = {
+        async step<R>(stepName: string, stepFn: () => Promise<R>): Promise<R> {
+          const stepStart = Date.now()
+          try {
+            return await stepFn()
+          } finally {
+            progressAddStep(logIdx, { name: stepName, ms: Date.now() - stepStart })
+          }
+        },
+      }
+
       try {
-        await fn(item)
+        await fn(item, ctx)
         progressAdvance(name)
-        progressAddLog({ projectName: name || `#${progressState.value.current + 1}`, status: "ok", elapsedSeconds: (Date.now() - start) / 1000 })
+        progressCompleteLog(logIdx, "ok", (Date.now() - start) / 1000)
       } catch (err) {
         const elapsed = (Date.now() - start) / 1000
         progressAdvance(name)
-        progressAddLog({ projectName: name || `#${progressState.value.current + 1}`, status: "fail", elapsedSeconds: elapsed, error: String(err) })
+        progressCompleteLog(logIdx, "fail", elapsed, String(err))
       }
     })
   } finally {
-    progressEnd()
+    if (options?.keepVisible) {
+      progressFinish()
+    } else {
+      progressEnd()
+    }
   }
 }
 
@@ -662,30 +687,30 @@ function fileDiffsForProject(projectId: string): Record<string, string> {
 const headHashes = ref<Record<string, string>>({})
 
 /** 静默刷新当前分类下的项目状态（批次处理，每批 3 个匹配 git 信号量上限） */
-async function silentRefreshAll() {
+async function silentRefreshAll(keepVisible = false) {
   if (gitOpsPaused.value) return
   const catId = activeCategory.value
   const projList = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
   if (projList.length === 0) return
 
-  await runBatchWithProgress(projList, "刷新中", async (p) => {
+  await runBatchWithProgress(projList, "刷新中", async (p, ctx) => {
     const prev = headHashes.value[p.id] || ""
     const [, curr] = await Promise.all([
-      loadProjectGitStatus(p.id, true),
-      props.manager.getHeadHash(resolveValidPath(p)),
+      ctx.step("状态", () => loadProjectGitStatus(p.id, true)),
+      ctx.step("HEAD", () => props.manager.getHeadHash(resolveValidPath(p))),
     ])
 
     if (curr && curr !== prev) {
       headHashes.value[p.id] = curr
       await Promise.all([
-        loadCommitLog(p.id),
-        loadBranches(p.id),
-        loadStashList(p.id),
+        ctx.step("日志", () => loadCommitLog(p.id)),
+        ctx.step("分支", () => loadBranches(p.id)),
+        ctx.step("Stash", () => loadStashList(p.id)),
       ])
     } else if (curr) {
-      await loadStashList(p.id)
+      await ctx.step("Stash", () => loadStashList(p.id))
     }
-  })
+  }, undefined, { keepVisible })
 }
 
 onMounted(async () => {
@@ -708,8 +733,8 @@ onMounted(async () => {
     if (gitOpsPaused.value) return
     const catId = activeCategory.value
     const projList = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
-    await runBatchWithProgress(projList, "加载中", async (p) => {
-      await loadProjectGitStatus(p.id, true)
+    await runBatchWithProgress(projList, "加载中", async (p, ctx) => {
+      await ctx.step("状态", () => loadProjectGitStatus(p.id, true))
     })
   }, 200)
 })
@@ -744,8 +769,8 @@ watch(activeCategory, async (catId) => {
   // 只加载尚未缓存的
   const pending = projList.filter((p) => !workingTrees.value[p.id])
   if (pending.length === 0) return
-  await runBatchWithProgress(pending, "加载中", async (p) => {
-    await loadProjectGitStatus(p.id, true)
+  await runBatchWithProgress(pending, "加载中", async (p, ctx) => {
+    await ctx.step("状态", () => loadProjectGitStatus(p.id, true))
   })
 })
 
@@ -758,8 +783,8 @@ watch(currentView, async (view) => {
   if (view !== "stats" || gitOpsPaused.value) return
   const pending = projects.value.filter((p) => !pushStatuses.value[p.id] || !workingTrees.value[p.id])
   if (pending.length === 0) return
-  await runBatchWithProgress(pending, "加载中", async (p) => {
-    await loadStatsData(p.id)
+  await runBatchWithProgress(pending, "加载中", async (p, ctx) => {
+    await ctx.step("统计", () => loadStatsData(p.id))
   })
 })
 
@@ -777,19 +802,19 @@ async function handleRefresh(id: string) {
   if (!project) return
   refreshing.value = id
   try {
-    await runBatchWithProgress([project], "刷新中", async (p) => {
+    await runBatchWithProgress([project], "刷新中", async (p, ctx) => {
       // 一次 rev-parse 获取 branch，六项操作全部并行（git 信号量自动限流到 3）
       const cwd = resolveValidPath(p)
       const branch = await props.manager.getBranch(cwd)
       await Promise.all([
-        refreshRemotes(p.id),
-        loadPushStatus(p.id, { fetchFirst: true, branch }),
-        loadWorkingTree(p.id, false, branch),
-        loadCommitLog(p.id),
-        loadBranches(p.id),
-        loadStashList(p.id),
+        ctx.step("远程", () => refreshRemotes(p.id)),
+        ctx.step("推送", () => loadPushStatus(p.id, { fetchFirst: true, branch })),
+        ctx.step("工作区", () => loadWorkingTree(p.id, false, branch)),
+        ctx.step("日志", () => loadCommitLog(p.id)),
+        ctx.step("分支", () => loadBranches(p.id)),
+        ctx.step("Stash", () => loadStashList(p.id)),
       ])
-    }, (p) => p.name)
+    }, (p) => p.name, { keepVisible: true })
   } finally {
     refreshing.value = null
   }
@@ -802,7 +827,7 @@ async function handleRefreshAll() {
   allRefreshLastTime = Date.now()
   refreshingAll.value = true
   try {
-    await silentRefreshAll()
+    await silentRefreshAll(true)
   } finally {
     refreshingAll.value = false
   }

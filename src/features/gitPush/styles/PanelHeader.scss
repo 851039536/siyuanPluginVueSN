@@ -14,9 +14,21 @@
   flex: 0 0 280px;
   min-width: 220px;
 
-  .si-input__field {
+  .si-input--small .si-input__field {
     padding-top: 2px;
     padding-bottom: 2px;
+    min-height: 24px;
+    font-size: 11px;
+  }
+
+  .si-input__prefix-icon,
+  .si-input__icon--prefix {
+    height: 12px;
+
+    svg {
+      width: 12px;
+      height: 12px;
+    }
   }
 }
 
@@ -137,7 +149,7 @@
 
 .gp-add-dropdown-btn {
   border-radius: $radius-sm;
-  padding: 4px 6px;
+  padding: 4px 4px;
 }
 
 .gp-add-popover {

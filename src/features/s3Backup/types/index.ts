@@ -40,6 +40,8 @@ export interface BackupSettings {
   workspacePath: string
   /** 工作区根目录 */
   workspaceRoot: string
+  /** 是否生成日期文件夹（默认 true） */
+  useDateFolder: boolean
 }
 
 // ========== S3 文件信息接口 ==========
@@ -71,6 +73,7 @@ export class S3BackupStorage {
       lastBackupTime: "",
       workspacePath: "",
       workspaceRoot: "",
+      useDateFolder: true,
     } as BackupSettings)
   }
 }

@@ -48,5 +48,7 @@
   "notSet": "Not Set",
   "selectPath": "Select Path",
   "refresh": "Refresh",
-  "s3BackupDesc": "Backup workspace to S3-compatible storage"
+  "s3BackupDesc": "Backup workspace to S3-compatible storage",
+  "useDateFolder": "Create date subfolder",
+  "useDateFolderHint": "When checked, files are stored under a date folder (e.g. siyuan-backup/20260706-012735/). When unchecked, files go directly under the prefix"
 }

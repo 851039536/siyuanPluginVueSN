@@ -1362,6 +1362,8 @@
   "uploading": "Uploading to S3",
   "noWorkspace": "Please select workspace path first",
   "s3BackupDesc": "Backup workspace to S3-compatible storage",
+  "useDateFolder": "Create date subfolder",
+  "useDateFolderHint": "When checked, files are stored under a date folder (e.g. siyuan-backup/20260706-012735/). When unchecked, files go directly under the prefix",
   "scriptLauncher": {
     "panelTitle": "Script Launcher",
     "description": "Manage and run custom scripts, supports Python, Bash, PowerShell, Node.js, Batch",

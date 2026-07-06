@@ -116,23 +116,19 @@ export class GitPushManager {
     return getNodeProcessModules()?.child_process
   }
 
-  /** 将检测到的远程仓库信息应用到项目对象（批量赋值避免逐字段触发响应式） */
+  /** 将检测到的远程仓库信息应用到项目对象（仅管理远程名称，不触碰用户手动输入的仓库链接） */
   private applyRemotesToProject(project: GitProject, remotes: GitRemoteInfo[]) {
-    // 先清空所有平台字段，再根据检测结果重新设置（避免已删除的远程残留旧值）
+    // 只清空远程名称字段（git 操作依赖），仓库链接 xxxUrl 由用户手动管理，不受检测覆盖
     project.githubRemote = undefined
-    project.githubUrl = undefined
     project.giteeRemote = undefined
-    project.giteeUrl = undefined
     project.giteaRemote = undefined
-    project.giteaUrl = undefined
     project.cnbRemote = undefined
-    project.cnbUrl = undefined
     const patch: Partial<GitProject> = {}
     for (const r of remotes) {
-      if (r.isGithub) { patch.githubRemote = r.name; patch.githubUrl = r.url }
-      if (r.isGitee) { patch.giteeRemote = r.name; patch.giteeUrl = r.url }
-      if (r.isGitea) { patch.giteaRemote = r.name; patch.giteaUrl = r.url }
-      if (r.isCnb) { patch.cnbRemote = r.name; patch.cnbUrl = r.url }
+      if (r.isGithub) { patch.githubRemote = r.name }
+      if (r.isGitee) { patch.giteeRemote = r.name }
+      if (r.isGitea) { patch.giteaRemote = r.name }
+      if (r.isCnb) { patch.cnbRemote = r.name }
     }
     if (Object.keys(patch).length > 0) {
       Object.assign(project, patch)

@@ -6,7 +6,6 @@ import type { FeatureId } from "./config"
 export { registerAIContentGenerator } from "./aiContentGenerator"
 export { registerApiDebugger } from "./apiDebugger"
 export { registerBookmarkMarker } from "./bookmarkMarker"
-export { registerDataBackup } from "./dataBackup"
 export { registerDataSnapshot } from "./dataSnapshot"
 export { registerDiskBrowser } from "./diskBrowser"
 export { registerDocAnalysis } from "./docAnalysis"
@@ -115,7 +114,7 @@ type _Registered =
   | "flashcardReading" | "passwordVault" | "docAnalysis"
   | "formatAssistant" | "htmlViewer" | "rssReader" | "resourceManager"
   | "skillsViewer" | "themeColor" | "bookmarkMarker" | "apiDebugger"
-  | "scriptLauncher" | "websiteNavigation" | "dataBackup" | "dataSnapshot" | "gitPush" | "skillLearning" | "prompts" | "toolCollection" | "s3Backup"
+  | "scriptLauncher" | "websiteNavigation" | "dataSnapshot" | "gitPush" | "skillLearning" | "prompts" | "toolCollection" | "s3Backup"
 
 // --- 编译时断言辅助 ---
 // 利用泛型接口约束 T extends true 产生 TypeScript 编译错误，无运行时开销

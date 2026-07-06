@@ -70,13 +70,6 @@ export const FEATURE_CONFIG = [
     defaultDesc: "字体、标题、代码块等通用配置",
   },
   {
-    id: "dataBackup",
-    defaultTitle: "数据备份",
-    defaultDesc: "工作区备份、自动备份和云同步",
-    titleI18nKey: "dataBackup",
-    descI18nKey: "dataBackupDesc",
-  },
-  {
     id: "qrCode",
     defaultTitle: "二维码生成",
     defaultDesc: "生成文本或链接的二维码",
@@ -304,7 +297,7 @@ export const FEATURE_CONFIG = [
   {
     id: "s3Backup",
     defaultTitle: "S3 备份",
-    defaultDesc: "将工作区备份到 S3 兼容存储",
+    defaultDesc: "本地 ZIP 压缩备份 + S3 兼容存储上传，支持自动备份定时调度",
     titleI18nKey: "s3Backup",
     descI18nKey: "s3BackupDesc",
   },

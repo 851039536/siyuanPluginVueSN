@@ -1,12 +1,13 @@
 /**
  * S3 备份功能模块
  *
- * 提供 S3 兼容存储的手动工作区备份功能。
- * 支持手动备份、备份列表管理、恢复和删除。
- * S3Backup 类管理持久化 Modal 和工作区路径，不涉及自动备份。
+ * 提供统一的备份功能：本地 ZIP 压缩备份 + S3 兼容存储上传。
+ * 支持手动备份、自动备份定时器、备份列表管理（本地 + 云端）。
+ * S3Backup 类管理 persistent Modal、工作区路径、自动备份调度。
  */
 import type { ModalAppInstance } from "@/utils/vueAppHelper"
 import { Plugin } from "siyuan"
+import { emitCustomEvent } from "@/utils/eventBus"
 import { createModalVueApp } from "@/utils/vueAppHelper"
 import { getWorkspaceDir } from "@/api"
 import S3BackupPanel from "./index.vue"
@@ -25,6 +26,8 @@ export class S3Backup {
   private storage: S3BackupStorage
   private modal: ModalAppInstance
   private _openHandler: (() => void) | null = null
+  private autoBackupTimer: number | null = null
+  private lastBackupTimestamp = 0
 
   private cachedWorkspaceRoot = ""
 
@@ -48,9 +51,14 @@ export class S3Backup {
 
   async init(): Promise<void> {
     await this.detectAndInitWorkspace()
+    await this.initAutoBackup()
 
     this._openHandler = () => this.open()
     window.addEventListener("openS3Backup", this._openHandler)
+
+    // 触发 Vue 组件 mount 以注册 autoBackupTrigger 事件监听器
+    this.modal.open()
+    this.modal.close()
   }
 
   open(): void {
@@ -66,7 +74,7 @@ export class S3Backup {
     return this.cachedWorkspaceRoot
   }
 
-  /** 获取当前工作区 data 路径（与 getWorkspaceRoot 相同，向后兼容） */
+  /** 获取当前工作区 data 路径 */
   getWorkspacePath(): string {
     return this.cachedWorkspaceRoot
   }
@@ -76,20 +84,129 @@ export class S3Backup {
     return this.storage
   }
 
+  // ========== 自动备份定时器 ==========
+
+  private async initAutoBackup() {
+    try {
+      const data = await this.storage.backupSettings.loadOrDefault()
+      this.lastBackupTimestamp = data.lastBackupTimestamp || 0
+
+      const autoBackupEnabled = data.autoBackupEnabled ?? false
+      const backupFrequency = data.backupFrequency ?? "daily"
+      const backupTime = data.backupTime ?? "03:00"
+
+      if (autoBackupEnabled) {
+        this.startAutoBackupTimer(backupFrequency, backupTime)
+      }
+    } catch (error) {
+      console.error("初始化自动备份失败:", error)
+    }
+  }
+
+  public startAutoBackupTimer(backupFrequency: string, backupTime: string) {
+    this.stopAutoBackupTimer()
+
+    const timerStartTime = Date.now()
+    let lastExecutedHour = -1
+    let lastExecutedDateStr = ""
+
+    const checkAndBackup = async () => {
+      const now = new Date()
+      const currentTime = now.getTime()
+      const currentHour = now.getHours()
+      const currentMinute = now.getMinutes()
+      const currentDateStr = now.toDateString()
+      const timeSinceTimerStart = currentTime - timerStartTime
+      const timeSinceLastBackup = currentTime - this.lastBackupTimestamp
+
+      let shouldBackup = false
+
+      switch (backupFrequency) {
+        case "minute":
+          if (timeSinceLastBackup >= 60 * 1000 && timeSinceTimerStart >= 60 * 1000) {
+            shouldBackup = true
+          }
+          break
+
+        case "hourly":
+          if (
+            currentMinute === 0
+            && lastExecutedHour !== currentHour
+            && timeSinceTimerStart >= 60 * 1000
+            && timeSinceLastBackup >= 60 * 60 * 1000
+          ) {
+            shouldBackup = true
+            lastExecutedHour = currentHour
+          }
+          break
+
+        case "daily": {
+          const [targetHour, targetMinute] = backupTime.split(":").map(Number)
+          if (
+            currentHour === targetHour
+            && currentMinute === targetMinute
+            && lastExecutedDateStr !== currentDateStr
+            && timeSinceTimerStart >= 60 * 1000
+          ) {
+            shouldBackup = true
+            lastExecutedDateStr = currentDateStr
+          }
+          break
+        }
+      }
+
+      if (shouldBackup) {
+        emitCustomEvent("autoBackupTrigger")
+      }
+    }
+
+    this.autoBackupTimer = window.setInterval(checkAndBackup, 60000)
+  }
+
+  public stopAutoBackupTimer() {
+    if (this.autoBackupTimer) {
+      clearInterval(this.autoBackupTimer)
+      this.autoBackupTimer = null
+    }
+  }
+
+  public updateLastBackupTime(timestamp: number) {
+    this.lastBackupTimestamp = timestamp
+  }
+
+  public restartAutoBackupTimer(enabled: boolean, frequency: string, backupTime: string = "03:00") {
+    this.stopAutoBackupTimer()
+    if (enabled) {
+      this.startAutoBackupTimer(frequency, backupTime)
+    }
+  }
+
   // ========== 工作区设置持久化 ==========
 
   async loadWorkspaceSettings(): Promise<{
     lastBackupTime: string
     useDateFolder: boolean
+    autoBackupEnabled: boolean
+    backupFrequency: string
+    backupTime: string
+    keepBackupCount: number
+    localBackupDir: string
+    s3SubPrefix: string
   }> {
     try {
       const data = await this.storage.backupSettings.loadOrDefault()
       return {
         lastBackupTime: data.lastBackupTime ?? "",
         useDateFolder: data.useDateFolder ?? true,
+        autoBackupEnabled: data.autoBackupEnabled ?? false,
+        backupFrequency: data.backupFrequency ?? "daily",
+        backupTime: data.backupTime ?? "03:00",
+        keepBackupCount: data.keepBackupCount ?? 7,
+        localBackupDir: data.localBackupDir ?? "data-backup",
+        s3SubPrefix: data.s3SubPrefix ?? "data-backup",
       }
     } catch {
-      return { lastBackupTime: "", useDateFolder: true }
+      return { lastBackupTime: "", useDateFolder: true, autoBackupEnabled: false, backupFrequency: "daily", backupTime: "03:00", keepBackupCount: 7, localBackupDir: "data-backup", s3SubPrefix: "data-backup" }
     }
   }
 
@@ -98,39 +215,37 @@ export class S3Backup {
     workspacePath: string
     workspaceRoot: string
     useDateFolder?: boolean
+    autoBackupEnabled?: boolean
+    backupFrequency?: string
+    backupTime?: string
+    keepBackupCount?: number
+    backupMode?: { localZip: boolean; s3Upload: boolean }
+    lastBackupTimestamp?: number
+    localBackupDir?: string
+    s3SubPrefix?: string
   }): Promise<void> {
-    await this.storage.backupSettings.save(settings as BackupSettings)
+    const existing = await this.storage.backupSettings.loadOrDefault()
+    await this.storage.backupSettings.save({ ...existing, ...settings } as BackupSettings)
   }
 
   // ========== 工作区检测 ==========
 
   private async detectAndInitWorkspace(): Promise<void> {
-    // 1. 环境变量
+    // 1. 环境变量（最高优先级）
     const envRoot = (window as any).__SIYUAN_WORKSPACE__ || (window as any).SIYUAN_WORKSPACE
     if (envRoot) {
       this.setWorkspacePaths(envRoot)
       return
     }
 
-    // 2. 持久化存储
-    try {
-      const data = await this.storage.backupSettings.loadOrDefault()
-      if (data.workspaceRoot) {
-        this.setWorkspacePaths(data.workspaceRoot)
-        return
-      }
-    } catch { /* ignore */ }
+    // 2. localStorage（旧 dataBackup 兼容）
+    const savedRoot = localStorage.getItem("siyuan-workspace-root")
+    if (savedRoot) {
+      this.setWorkspacePaths(savedRoot)
+      return
+    }
 
-    // 3. plugin.dataPath
-    try {
-      const dataPath = (this.plugin as any)?.dataPath as string | undefined
-      if (dataPath) {
-        this.setWorkspacePaths(dataPath)
-        return
-      }
-    } catch { /* ignore */ }
-
-    // 4. API
+    // 3. API 自动获取（最可靠的方式）
     try {
       const dir = await getWorkspaceDir()
       if (dir) {
@@ -138,9 +253,17 @@ export class S3Backup {
         return
       }
     } catch { /* ignore */ }
+
+    // 4. 持久化存储（兜底）
+    try {
+      const data = await this.storage.backupSettings.loadOrDefault()
+      if (data.workspaceRoot) {
+        this.setWorkspacePaths(data.workspaceRoot)
+        return
+      }
+    } catch { /* ignore */ }
   }
 
-  /** 更新工作区路径（供 Vue 面板在用户手动选择路径后同步） */
   setWorkspacePaths(root: string): void {
     this.cachedWorkspaceRoot = root
   }
@@ -148,6 +271,7 @@ export class S3Backup {
   // ========== 生命周期 ==========
 
   destroy(): void {
+    this.stopAutoBackupTimer()
     if (this._openHandler) {
       window.removeEventListener("openS3Backup", this._openHandler)
       this._openHandler = null

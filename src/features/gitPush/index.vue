@@ -23,9 +23,6 @@
       @open-web="handleOpenWeb"
     />
 
-    <div class="gp-divider" />
-
-
     <BatchProgressBar
       :state="progressState"
       :log-entries="progressLogEntries"

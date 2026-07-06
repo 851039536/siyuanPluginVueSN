@@ -350,12 +350,6 @@
                 {{ i18n.download || "下载" }}
               </button>
               <button
-                class="action-btn restore"
-                @click="handleRestore(backup)"
-              >
-                {{ i18n.restore || "恢复" }}
-              </button>
-              <button
                 class="action-btn delete"
                 @click="handleDelete(backup)"
               >
@@ -940,18 +934,6 @@ async function handleDownload(backup: S3FileInfo): Promise<void> {
     showMessage(props.i18n.downloadSuccess || "下载成功", 2000, "info")
   } catch (err: any) {
     showMessage(`${props.i18n.downloadFailed || "下载失败"}: ${err.message}`, 5000, "error")
-  }
-}
-
-async function handleRestore(backup: S3FileInfo): Promise<void> {
-  const confirmed = confirm(props.i18n.confirmRestore || "确定要下载此备份到本地备份目录吗？如需恢复请手动解压替换。")
-  if (!confirmed) { return }
-
-  try {
-    await downloadToLocalDir(backup)
-    showMessage(props.i18n.downloadToLocalSuccess || "备份已下载到本地备份目录，请手动解压恢复", 4000, "info")
-  } catch (err: any) {
-    showMessage(`${props.i18n.restoreFailed || "下载失败"}: ${err.message}`, 5000, "error")
   }
 }
 

@@ -1,0 +1,21 @@
+/**
+ * WorkspaceInfoCard 组件专属样式
+ */
+@use '@/variables.scss' as *;
+
+.workspace-info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.workspace-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+}
+
+.workspace-info-label {
+  font-size: $font-size-sm;
+  color: var(--b3-theme-on-surface-light);
+}

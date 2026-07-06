@@ -1,0 +1,19 @@
+/**
+ * AutoBackupCard 组件专属样式
+ */
+@use '@/variables.scss' as *;
+
+.auto-backup-section {
+  .settings-row {
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+    flex-wrap: wrap;
+  }
+
+  .inline-label {
+    font-size: $font-size-sm;
+    color: var(--b3-theme-on-surface);
+    white-space: nowrap;
+  }
+}

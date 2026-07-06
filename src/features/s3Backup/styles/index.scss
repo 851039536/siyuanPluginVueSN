@@ -78,7 +78,7 @@
   padding: $spacing-4;
 }
 
-// ========== 卡片区块 ==========
+// ========== 卡片区块（共享基座） ==========
 
 .card-section {
   border: 1px solid var(--b3-theme-surface-lighter);
@@ -100,29 +100,7 @@
   }
 }
 
-// ========== 信息网格 ==========
-
-.info-grid {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-3;
-}
-
-.info-item {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-1;
-}
-
-.info-label {
-  font-size: $font-size-sm;
-  color: var(--b3-theme-on-surface-light);
-}
-
-.info-value {
-  font-size: $font-size-sm;
-  color: var(--b3-theme-on-surface);
-}
+// ========== 路径/操作共享样式（WorkspaceInfoCard / ManualBackupCard 共用） ==========
 
 .workspace-path-row {
   display: flex;
@@ -143,43 +121,12 @@
   flex-shrink: 0;
 }
 
-// ========== 进度条 ==========
-
-.progress-section {
-  .progress-bar-container {
-    width: 100%;
-    height: 6px;
-    background: var(--b3-theme-surface-lighter);
-    border-radius: $vp-radius;
-    overflow: hidden;
-    margin-bottom: $spacing-2;
-  }
-
-  .progress-bar {
-    height: 100%;
-    background: var(--b3-theme-primary);
-    border-radius: $vp-radius;
-    transition: width 0.3s ease;
-  }
-
-  .progress-info {
-    display: flex;
-    justify-content: space-between;
-    font-size: $font-size-sm;
-    color: var(--b3-theme-on-surface-light);
-  }
-
-  .progress-current-file {
-    font-size: $font-size-xs;
-    color: var(--b3-theme-on-surface-light);
-    margin-top: $spacing-1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+.info-value {
+  font-size: $font-size-sm;
+  color: var(--b3-theme-on-surface);
 }
 
-// ========== 备份按钮区 ==========
+// ========== 备份按钮区（ManualBackupCard 共用） ==========
 
 .backup-actions-row {
   display: flex;
@@ -194,7 +141,7 @@
   margin-bottom: 0;
 }
 
-// ========== 表单控件 ==========
+// ========== 表单控件（共享） ==========
 
 .form-group-checkbox {
   margin-top: $spacing-3;
@@ -206,7 +153,7 @@
   margin-top: 2px;
 }
 
-// ========== 路径预览 ==========
+// ========== 路径预览（ManualBackupCard 共用） ==========
 
 .path-preview {
   display: flex;
@@ -237,105 +184,6 @@
   padding: 0;
   border: none;
   font-size: inherit;
-}
-
-// ========== 备份列表 ==========
-
-.backup-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  max-height: 320px;
-  overflow-y: auto;
-}
-
-.backup-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: $spacing-2 0;
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
-  gap: $spacing-2;
-
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-.backup-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.backup-name {
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
-  color: var(--b3-theme-on-surface);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.backup-time {
-  font-size: $font-size-xs;
-  color: var(--b3-theme-on-surface-light);
-}
-
-.backup-size {
-  font-size: $font-size-xs;
-  color: var(--b3-theme-on-surface-light);
-}
-
-.backup-actions {
-  display: flex;
-  gap: $spacing-1;
-  flex-shrink: 0;
-}
-
-// ========== 备份模式选择区 ==========
-
-.backup-mode-section {
-  .form-group-checkbox {
-    margin-bottom: $spacing-2;
-
-    &:last-of-type {
-      margin-bottom: 0;
-    }
-  }
-}
-
-// ========== 自动备份设置区 ==========
-
-.auto-backup-section {
-  .settings-row {
-    display: flex;
-    align-items: center;
-    gap: $spacing-2;
-    flex-wrap: wrap;
-  }
-
-  .inline-label {
-    font-size: $font-size-sm;
-    color: var(--b3-theme-on-surface);
-    white-space: nowrap;
-  }
-}
-
-// ========== 空状态 ==========
-
-.empty-state {
-  text-align: center;
-  padding: $spacing-8 0;
-  color: var(--b3-theme-on-surface-light);
-
-  p {
-    margin: 0;
-    font-size: $font-size-sm;
-  }
 }
 
 // ========== 公共组件紧凑覆盖 ==========

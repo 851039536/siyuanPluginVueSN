@@ -1362,6 +1362,8 @@
   "uploading": "上传 S3",
   "noWorkspace": "请先选择工作区路径",
   "s3BackupDesc": "将工作区备份到 S3 兼容存储",
+  "useDateFolder": "生成日期子文件夹",
+  "useDateFolderHint": "勾选后按日期（如 siyuan-backup/20260706-012735/）分类存储，不勾选则直接放在目录前缀下",
   "scriptLauncher": {
     "panelTitle": "脚本启动器",
     "description": "管理并运行自定义脚本，支持 Python、Bash、PowerShell、Node.js、Batch",

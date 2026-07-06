@@ -11,6 +11,7 @@ import { createModalVueApp } from "@/utils/vueAppHelper"
 import { getWorkspaceDir } from "@/api"
 import S3BackupPanel from "./index.vue"
 import { S3BackupStorage } from "./types"
+import type { BackupSettings } from "./types"
 
 let s3BackupInstance: S3Backup | null = null
 
@@ -79,14 +80,16 @@ export class S3Backup {
 
   async loadWorkspaceSettings(): Promise<{
     lastBackupTime: string
+    useDateFolder: boolean
   }> {
     try {
       const data = await this.storage.backupSettings.loadOrDefault()
       return {
         lastBackupTime: data.lastBackupTime ?? "",
+        useDateFolder: data.useDateFolder ?? true,
       }
     } catch {
-      return { lastBackupTime: "" }
+      return { lastBackupTime: "", useDateFolder: true }
     }
   }
 
@@ -94,8 +97,9 @@ export class S3Backup {
     lastBackupTime: string
     workspacePath: string
     workspaceRoot: string
+    useDateFolder?: boolean
   }): Promise<void> {
-    await this.storage.backupSettings.save(settings)
+    await this.storage.backupSettings.save(settings as BackupSettings)
   }
 
   // ========== 工作区检测 ==========

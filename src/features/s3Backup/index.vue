@@ -99,6 +99,18 @@
             <span>{{ i18n.backupNow || "立即备份" }}</span>
           </button>
         </div>
+        <div class="form-group form-group-checkbox">
+          <label class="form-checkbox-label">
+            <input
+              v-model="useDateFolder"
+              type="checkbox"
+              class="form-checkbox"
+              @change="saveWorkspaceSettings"
+            />
+            <span>{{ i18n.useDateFolder || "生成日期子文件夹" }}</span>
+          </label>
+          <span class="form-hint">{{ i18n.useDateFolderHint || "勾选后按日期分类存储" }}</span>
+        </div>
         <p class="backup-hint">
           {{ i18n.backupHint || "备份将直接上传文件到 S3" }}
         </p>
@@ -214,6 +226,7 @@ const {
 const workspacePath = ref("")
 const workspaceRoot = ref("")
 const lastBackupTime = ref("")
+const useDateFolder = ref(true)
 const s3ConfigLocal = ref<S3Config | null>(null)
 
 let backupManager: BackupManager | null = null
@@ -325,13 +338,17 @@ async function performManualBackup(): Promise<void> {
 
     // 阶段 2: 逐文件上传到 S3
     const prefix = s3Config.value.prefix || "siyuan-backup/"
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19)
+    const d = new Date()
+    const pad = (n: number) => String(n).padStart(2, "0")
+    const timestamp = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`
     const node = getNodeModules()
     const fs = node!.fs.promises
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
-      const s3Key = `${prefix}${timestamp}/${file.relativePath}`
+      const s3Key = useDateFolder.value
+        ? `${prefix}${timestamp}/${file.relativePath}`
+        : `${prefix}${file.relativePath}`
       const percent = Math.round((i / files.length) * 100)
 
       backupProgress.value = {
@@ -363,6 +380,7 @@ async function performManualBackup(): Promise<void> {
         lastBackupTime: lastBackupTime.value,
         workspacePath: workspacePath.value,
         workspaceRoot: workspaceRoot.value,
+        useDateFolder: useDateFolder.value,
       })
     }
 
@@ -448,6 +466,7 @@ async function loadWorkspaceSettings(): Promise<void> {
     if (instance) {
       const data = await instance.loadWorkspaceSettings()
       lastBackupTime.value = data.lastBackupTime
+      useDateFolder.value = data.useDateFolder ?? true
 
       // 同步工作区路径
       const root = instance.getWorkspaceRoot()
@@ -469,6 +488,7 @@ async function saveWorkspaceSettings(): Promise<void> {
         lastBackupTime: lastBackupTime.value,
         workspacePath: workspacePath.value,
         workspaceRoot: workspaceRoot.value,
+        useDateFolder: useDateFolder.value,
       })
     }
   } catch (err) {

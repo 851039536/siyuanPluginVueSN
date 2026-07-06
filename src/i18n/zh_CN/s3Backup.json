@@ -48,5 +48,7 @@
   "notSet": "未设置",
   "selectPath": "选择路径",
   "refresh": "刷新",
-  "s3BackupDesc": "将工作区备份到 S3 兼容存储"
+  "s3BackupDesc": "将工作区备份到 S3 兼容存储",
+  "useDateFolder": "生成日期子文件夹",
+  "useDateFolderHint": "勾选后按日期（如 siyuan-backup/20260706-012735/）分类存储，不勾选则直接放在目录前缀下"
 }

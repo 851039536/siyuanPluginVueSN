@@ -69,7 +69,7 @@ type Emits = (e: "click", event: MouseEvent) => void
 
 const props = withDefaults(defineProps<Props>(), {
   alt: "Avatar",
-  size: "medium",
+  size: "small",
   shape: "circle",
   maxTextLength: 2,
   clickable: false,

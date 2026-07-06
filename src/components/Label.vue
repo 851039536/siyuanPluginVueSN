@@ -74,7 +74,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   required: false,
-  size: "medium",
+  size: "small",
   variant: "default",
   state: "default",
   iconPosition: "left",

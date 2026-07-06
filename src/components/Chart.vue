@@ -112,7 +112,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   type: "bar",
-  size: "medium",
+  size: "small",
   loading: false,
   emptyText: "暂无数据",
   theme: "light",

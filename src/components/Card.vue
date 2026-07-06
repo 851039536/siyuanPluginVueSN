@@ -117,7 +117,7 @@ type Emits = (e: "click", event: MouseEvent) => void
 
 const props = withDefaults(defineProps<Props>(), {
   variant: "bordered",
-  size: "medium",
+  size: "small",
   coverFit: "cover",
   clickable: false,
   active: false,

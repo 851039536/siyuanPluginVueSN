@@ -223,7 +223,7 @@ interface Emits {
 const props = withDefaults(defineProps<Props>(), {
   placeholder: "请选择",
   disabled: false,
-  size: "medium",
+  size: "small",
   required: false,
   filterable: false,
   filterPlaceholder: "搜索...",

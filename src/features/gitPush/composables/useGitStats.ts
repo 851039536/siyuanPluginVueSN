@@ -62,12 +62,12 @@ export function useGitStats(
         groupedMap.get(UNGROUPED_ID)?.projects.push(p)
       }
 
-      // ── 远程覆盖率 ──
-      const remoteCount = [p.githubUrl, p.giteeUrl, p.giteaUrl, p.cnbUrl].filter(Boolean).length
-      if (p.githubUrl) github++
-      if (p.giteeUrl) gitee++
-      if (p.giteaUrl) gitea++
-      if (p.cnbUrl) cnb++
+      // ── 远程覆盖率（基于实际 git remote 配置，非手动输入的仓库链接）──
+      const remoteCount = [p.githubRemote, p.giteeRemote, p.giteaRemote, p.cnbRemote].filter(Boolean).length
+      if (p.githubRemote) github++
+      if (p.giteeRemote) gitee++
+      if (p.giteaRemote) gitea++
+      if (p.cnbRemote) cnb++
       if (remoteCount > 0) hasRemote++
       if (remoteCount >= 2) multipleRemote++
 
@@ -109,11 +109,11 @@ export function useGitStats(
         })
       }
 
-      // ── 平台缺失 ──
-      const hasGithub = !!p.githubUrl
-      const hasGitee = !!p.giteeUrl
-      const hasGitea = !!p.giteaUrl
-      const hasCnb = !!p.cnbUrl
+      // ── 平台缺失（基于实际 git remote 配置）──
+      const hasGithub = !!p.githubRemote
+      const hasGitee = !!p.giteeRemote
+      const hasGitea = !!p.giteaRemote
+      const hasCnb = !!p.cnbRemote
       const missCount = (hasGithub ? 0 : 1) + (hasGitee ? 0 : 1) + (hasGitea ? 0 : 1) + (hasCnb ? 0 : 1)
       if (missCount > 0) {
         platformMissing.push({ project: p, github: hasGithub, gitee: hasGitee, gitea: hasGitea, cnb: hasCnb, missingCount: missCount })

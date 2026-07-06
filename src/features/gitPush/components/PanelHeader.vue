@@ -8,6 +8,20 @@
         class="gp-count-badge"
       >{{ projectCount }}</span>
     </div>
+    <div
+      v-if="projectCount > 0"
+      class="gp-header-search"
+    >
+      <Input
+        :model-value="searchQuery"
+        size="small"
+        :placeholder="searchPlaceholder || '搜索项目...'"
+        prefix-icon="search"
+        clearable
+        autocomplete="off"
+        @update:model-value="emit('update:searchQuery', String($event ?? ''))"
+      />
+    </div>
     <div class="gp-header-btns">
       <!-- 视图切换 -->
       <div class="gp-view-toggle">
@@ -172,6 +186,7 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
+import Input from "@/components/Input.vue"
 import { PLATFORM_META } from "../types"
 
 interface Props {
@@ -185,6 +200,8 @@ interface Props {
   pushAllTotal?: number
   showPlatformMenu?: boolean
   showAddMenu?: boolean
+  searchQuery?: string
+  searchPlaceholder?: string
 }
 
 withDefaults(defineProps<Props>(), {
@@ -196,12 +213,15 @@ withDefaults(defineProps<Props>(), {
   pushAllTotal: 0,
   showPlatformMenu: false,
   showAddMenu: false,
+  searchQuery: "",
+  searchPlaceholder: "搜索项目...",
 })
 
 const emit = defineEmits<{
   "update:currentView": [value: "list" | "stats"]
   "update:showPlatformMenu": [value: boolean]
   "update:showAddMenu": [value: boolean]
+  "update:searchQuery": [value: string]
   openCategory: []
   openSettings: []
   refreshAll: []

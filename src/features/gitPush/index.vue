@@ -13,6 +13,9 @@
       :pushing-all-projects="pushingAllProjects"
       :push-all-done="pushAllDone"
       :push-all-total="pushAllTotal"
+      :search-query="searchQuery"
+      :search-placeholder="i18n.searchPlaceholder || '搜索项目...'"
+      @update:search-query="searchQuery = $event"
       @open-category="showCatDialog = true"
       @open-settings="showSettings = true"
       @refresh-all="handleRefreshAll"
@@ -57,13 +60,6 @@
         @update:show-archived="showArchived = $event"
         @update:git-ops-paused="gitOpsPaused = $event"
         @toggle-tag-filter="toggleTagFilter"
-      />
-
-      <!-- 搜索框 -->
-      <SearchBox
-        v-if="projects.length > 0"
-        v-model="searchQuery"
-        :placeholder="i18n.searchPlaceholder || '搜索项目...'"
       />
 
       <!-- 项目列表 -->
@@ -314,7 +310,6 @@ import IdeManagementDialog from "./components/IdeManagementDialog.vue"
 import ListViewToolbar from "./components/ListViewToolbar.vue"
 import PanelHeader from "./components/PanelHeader.vue"
 import ProjectCard from "./components/ProjectCard.vue"
-import SearchBox from "./components/SearchBox.vue"
 import ScanImportDialog from "./components/ScanImportDialog.vue"
 import SettingsDialog from "./components/SettingsDialog.vue"
 import StatsPanel from "./components/StatsPanel.vue"

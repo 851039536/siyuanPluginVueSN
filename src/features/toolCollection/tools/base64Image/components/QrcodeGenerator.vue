@@ -61,14 +61,14 @@
         <div class="output-controls">
           <Button
             variant="primary"
-            size="small"
+            size="xsmall"
             @click="$emit('download')"
           >
             {{ downloadText }}
           </Button>
           <Button
             variant="ghost"
-            size="small"
+            size="xsmall"
             icon="contentCopy"
             :icon-size="14"
             @click="$emit('copy')"

@@ -12,7 +12,7 @@
       <Button
         icon="add"
         variant="primary"
-        size="small"
+        size="xsmall"
         :title="i18n.addWebsite || '添加网站'"
         @click="emit('add')"
       />

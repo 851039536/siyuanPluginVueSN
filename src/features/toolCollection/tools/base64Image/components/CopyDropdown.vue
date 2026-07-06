@@ -3,7 +3,7 @@
     <Button
       class="dropdown-toggle"
       variant="ghost"
-      size="small"
+      size="xsmall"
       icon="contentCopy"
       :icon-size="14"
       @click="toggle"

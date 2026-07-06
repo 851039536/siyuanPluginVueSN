@@ -10,7 +10,7 @@
         :model-value="searchQuery"
         type="text"
         :placeholder="i18n.searchPlaceholder || '搜索网站名称或描述...'"
-        size="small"
+        size="xsmall"
         @update:model-value="emit('update:searchQuery', $event)"
       />
     </div>
@@ -33,7 +33,7 @@
       <Button
         icon="settings"
         variant="ghost"
-        size="small"
+        size="xsmall"
         :title="i18n.manageCategories || '管理类别'"
         @click="emit('manageCategories')"
       />

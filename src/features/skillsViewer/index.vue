@@ -107,7 +107,7 @@
                 <div class="sv-actions">
                   <SiButton
                     variant="primary"
-                    size="small"
+                    size="xsmall"
                     :loading="loading"
                     @click="refreshSkills"
                   >
@@ -115,7 +115,7 @@
                   </SiButton>
                   <SiButton
                     variant="ghost"
-                    size="small"
+                    size="xsmall"
                     @click="openCurrentToolDir"
                   >
                     {{ i18n.openDir || '打开目录' }}
@@ -310,14 +310,14 @@
         <div class="sv-modal-footer">
           <SiButton
             variant="ghost"
-            size="small"
+            size="xsmall"
             @click="cancelDeleteSkill"
           >
             {{ i18n.cancel || '取消' }}
           </SiButton>
           <SiButton
             variant="danger"
-            size="small"
+            size="xsmall"
             :loading="deletingSkill"
             @click="executeDeleteSkill"
           >
@@ -363,14 +363,14 @@
         <div class="sv-modal-footer">
           <SiButton
             variant="ghost"
-            size="small"
+            size="xsmall"
             @click="cancelCopySkill"
           >
             {{ i18n.cancel || '取消' }}
           </SiButton>
           <SiButton
             variant="primary"
-            size="small"
+            size="xsmall"
             :loading="copyingSkill"
             :disabled="!copyTargetToolId"
             @click="executeCopySkill"

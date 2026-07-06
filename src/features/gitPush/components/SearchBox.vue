@@ -3,7 +3,7 @@
   <div class="gp-search-wrap">
     <Input
       :model-value="modelValue"
-      size="small"
+      size="xsmall"
       :placeholder="placeholder"
       prefix-icon="search"
       clearable

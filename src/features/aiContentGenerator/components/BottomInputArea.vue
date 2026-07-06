@@ -10,7 +10,7 @@
         >
           <Button
             variant="ghost"
-            size="small"
+            size="xsmall"
             :title="editTargetDoc && !editTargetDoc.isBlock ? editTargetDoc.title : '选择文档'"
             @click="$emit('select-target-doc')"
           >
@@ -22,7 +22,7 @@
           </Button>
           <Button
             variant="ghost"
-            size="small"
+            size="xsmall"
             :title="editTargetDoc?.isBlock ? editTargetDoc.title : '选择块'"
             @click="$emit('select-target-block')"
           >
@@ -34,7 +34,7 @@
           </Button>
           <Tag
             v-if="editTargetDoc?.isBlock"
-            size="small"
+            size="xsmall"
             variant="primary"
           >
             块
@@ -42,7 +42,7 @@
           <Button
             v-if="editTargetDoc"
             variant="ghost"
-            size="small"
+            size="xsmall"
             class="clear-btn"
             title="清除"
             @click="$emit('clear-target-doc')"
@@ -179,7 +179,7 @@
         <div class="prompt-selector-wrapper">
           <Button
             variant="ghost"
-            size="small"
+            size="xsmall"
             :class="{ active: currentPromptName }"
             @click="$emit('toggle-prompt-selector')"
           >
@@ -196,7 +196,7 @@
           <Button
             v-if="currentPromptName"
             variant="ghost"
-            size="small"
+            size="xsmall"
             class="clear-btn"
             title="清除提示词"
             @click="$emit('clear-current-prompt')"
@@ -216,7 +216,7 @@
               <span>选择提示词</span>
               <Button
                 variant="ghost"
-                size="small"
+                size="xsmall"
                 @click="$emit('toggle-prompt-selector')"
               >
                 <svg
@@ -237,7 +237,7 @@
                   <div class="prompt-item-actions">
                     <Button
                       variant="ghost"
-                      size="small"
+                      size="xsmall"
                       title="编辑"
                       @click.stop="$emit('edit-prompt', getOriginalIndex(prompt))"
                     >
@@ -248,7 +248,7 @@
                     </Button>
                     <Button
                       variant="ghost"
-                      size="small"
+                      size="xsmall"
                       title="删除"
                       @click.stop="$emit('delete-prompt', getOriginalIndex(prompt))"
                     >
@@ -393,7 +393,7 @@
         :disabled="!canExecute"
         :title="executeButtonTitle"
         variant="primary"
-        size="small"
+        size="xsmall"
         class="execute-btn"
         @click="$emit('custom-edit')"
       >
@@ -406,7 +406,7 @@
         v-else
         title="停止生成"
         variant="danger"
-        size="small"
+        size="xsmall"
         class="execute-btn"
         @click="$emit('stop')"
       >

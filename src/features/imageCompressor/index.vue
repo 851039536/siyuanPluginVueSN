@@ -48,7 +48,7 @@
             :options="minFileSizeOptions"
             :model-value="scanMinFileSize"
             :label="i18n.scanFilterLabel"
-            size="small"
+            size="xsmall"
             @update:model-value="(v) => scanMinFileSize = Number(v)"
           />
         </div>
@@ -58,7 +58,7 @@
             :options="minFileSizeOptions"
             :model-value="minFileSize"
             :label="i18n.displayFilterLabel"
-            size="small"
+            size="xsmall"
             @update:model-value="(v) => minFileSize = Number(v)"
           />
         </div>
@@ -69,7 +69,7 @@
           <div class="pagination-controls">
             <SiButton
               variant="ghost"
-              size="small"
+              size="xsmall"
               :disabled="currentPage === 1"
               @click="currentPage = 1"
             >
@@ -77,7 +77,7 @@
             </SiButton>
             <SiButton
               variant="ghost"
-              size="small"
+              size="xsmall"
               :disabled="currentPage === 1"
               @click="currentPage--"
             >
@@ -86,7 +86,7 @@
             <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
             <SiButton
               variant="ghost"
-              size="small"
+              size="xsmall"
               :disabled="currentPage === totalPages"
               @click="currentPage++"
             >
@@ -94,7 +94,7 @@
             </SiButton>
             <SiButton
               variant="ghost"
-              size="small"
+              size="xsmall"
               :disabled="currentPage === totalPages"
               @click="currentPage = totalPages"
             >
@@ -103,7 +103,7 @@
             <SiSelect
               :options="pageSizeOptions"
               :model-value="pageSize"
-              size="small"
+              size="xsmall"
               @update:model-value="(v) => { pageSize = Number(v); currentPage = 1 }"
             />
           </div>
@@ -256,7 +256,7 @@
           <h3>{{ i18n.statistics }}</h3>
           <SiButton
             variant="ghost"
-            size="small"
+            size="xsmall"
             @click="compressResults = []"
           >
             {{ i18n.clearResults }}

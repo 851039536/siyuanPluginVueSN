@@ -2,7 +2,7 @@
   <div class="flashcard-dialog">
     <Button
       variant="ghost"
-      size="small"
+      size="xsmall"
       icon="close"
       class="close-btn"
       @click="emit('close')"

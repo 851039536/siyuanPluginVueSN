@@ -4,7 +4,7 @@
       <Input
         v-model="inputValue"
         type="number"
-        size="small"
+        size="xsmall"
         label="INPUT"
         placeholder="请输入数值"
       />
@@ -15,7 +15,7 @@
         <Select
           v-model="fromUnit"
           :options="unitOptions"
-          size="small"
+          size="xsmall"
           label="FROM"
         />
       </div>
@@ -42,7 +42,7 @@
         <Select
           v-model="toUnit"
           :options="unitOptions"
-          size="small"
+          size="xsmall"
           label="TO"
         />
       </div>

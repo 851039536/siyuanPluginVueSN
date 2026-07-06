@@ -4,7 +4,7 @@
       v-for="card in cards"
       :key="card.id"
       variant="bordered"
-      size="small"
+      size="xsmall"
       class="flashcard-item"
     >
       <template #header>
@@ -13,7 +13,7 @@
           <div class="card-actions">
             <Button
               variant="ghost"
-              size="small"
+              size="xsmall"
               icon="play"
               :iconSize="14"
               :title="t.play"
@@ -21,7 +21,7 @@
             />
             <Button
               variant="ghost"
-              size="small"
+              size="xsmall"
               icon="contentCopy"
               :iconSize="14"
               :title="t.copyTitle"
@@ -29,7 +29,7 @@
             />
             <Button
               variant="ghost"
-              size="small"
+              size="xsmall"
               icon="contentCopy"
               :iconSize="14"
               :title="t.copyContent"
@@ -37,7 +37,7 @@
             />
             <Button
               variant="ghost"
-              size="small"
+              size="xsmall"
               icon="edit"
               :iconSize="14"
               :title="t.editCard"
@@ -45,7 +45,7 @@
             />
             <Button
               variant="danger"
-              size="small"
+              size="xsmall"
               icon="delete"
               :iconSize="14"
               :title="t.deleteCard"

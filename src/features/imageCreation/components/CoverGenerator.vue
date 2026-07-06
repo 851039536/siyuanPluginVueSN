@@ -24,7 +24,7 @@
               <Button
                 icon="close"
                 variant="ghost"
-                size="small"
+                size="xsmall"
                 @click="close"
               />
             </div>
@@ -95,7 +95,7 @@
                     ></textarea>
                     <Button
                       variant="secondary"
-                      size="small"
+                      size="xsmall"
                       :disabled="!contentText.trim() || aiExtracting"
                       @click="aiExtractKeywords"
                     >
@@ -143,7 +143,7 @@
                           v-model="widthInput"
                           type="number"
                           placeholder="宽"
-                          size="small"
+                          size="xsmall"
                           @change="updateCustomSize"
                         />
                         <span class="size-x">×</span>
@@ -151,7 +151,7 @@
                           v-model="heightInput"
                           type="number"
                           placeholder="高"
-                          size="small"
+                          size="xsmall"
                           @change="updateCustomSize"
                         />
                         <span class="size-unit">px</span>
@@ -206,21 +206,21 @@
                     >
                       <Button
                         variant="ghost"
-                        size="small"
+                        size="xsmall"
                         icon="contentCopy"
                         title="复制为图片"
                         @click="copyCoverAsImage"
                       />
                       <Button
                         variant="ghost"
-                        size="small"
+                        size="xsmall"
                         icon="download"
                         title="下载为图片"
                         @click="downloadCoverAsImage"
                       />
                       <Button
                         variant="ghost"
-                        size="small"
+                        size="xsmall"
                         icon="eye"
                         title="全屏预览"
                         @click="openFullscreen"

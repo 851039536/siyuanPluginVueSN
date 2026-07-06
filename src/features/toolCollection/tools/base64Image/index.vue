@@ -57,7 +57,7 @@
                 v-model="outputFormat"
                 :label="i18n.base64Image_outputFormat || '输出格式'"
                 :options="formatOptions"
-                size="small"
+                size="xsmall"
                 @change="processImage"
               />
             </div>
@@ -133,7 +133,7 @@
             />
             <Button
               variant="primary"
-              size="small"
+              size="xsmall"
               @click="downloadBase64"
             >
               {{ i18n.base64Image_download || '下载' }}
@@ -195,14 +195,14 @@
           <div class="output-controls">
             <Button
               variant="primary"
-              size="small"
+              size="xsmall"
               @click="downloadDecodedImage"
             >
               {{ i18n.base64Image_downloadImage || '下载图片' }}
             </Button>
             <Button
               variant="ghost"
-              size="small"
+              size="xsmall"
               icon="contentCopy"
               :icon-size="14"
               @click="copyDecodedImageUrl"
@@ -264,7 +264,7 @@
             />
             <Button
               variant="primary"
-              size="small"
+              size="xsmall"
               @click="downloadUrlBase64"
             >
               {{ i18n.base64Image_download || '下载' }}

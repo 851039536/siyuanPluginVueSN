@@ -6,20 +6,20 @@
         :model-value="searchKeyword"
         :placeholder="placeholder"
         prefix-icon="search"
-        size="small"
+        size="xsmall"
         class="toolbar-search"
         @update:model-value="onSearchChange"
       />
       <Select
         :model-value="activeTab"
         :options="selectOptions"
-        size="small"
+        size="xsmall"
         class="toolbar-category"
         @update:model-value="$emit('update:activeTab', $event)"
       />
       <Button
         variant="primary"
-        size="small"
+        size="xsmall"
         icon="add"
         :title="addTitle"
         class="toolbar-add"
@@ -33,7 +33,7 @@
           v-for="filter in filters"
           :key="filter.key"
           :variant="activeFilter === filter.key ? 'primary' : 'ghost'"
-          size="small"
+          size="xsmall"
           @click="$emit('update:activeFilter', filter.key)"
         >
           {{ filter.label }}
@@ -42,7 +42,7 @@
       <div class="view-toggle">
         <Button
           :variant="viewMode === 'grid' ? 'primary' : 'ghost'"
-          size="small"
+          size="xsmall"
           title="网格视图"
           @click="$emit('update:viewMode', 'grid')"
         >

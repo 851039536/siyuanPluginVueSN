@@ -10,7 +10,7 @@
     <div class="header-actions">
       <Button
         variant="ghost"
-        size="small"
+        size="xsmall"
         icon="delete"
         :icon-size="16"
         :title="clearTitle"

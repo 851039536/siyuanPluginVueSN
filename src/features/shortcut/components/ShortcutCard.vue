@@ -21,7 +21,7 @@
       <div class="shortcut-actions">
         <Button
           variant="ghost"
-          size="small"
+          size="xsmall"
           :icon="isFavorite ? 'star' : 'starOutline'"
           :class="{ active: isFavorite }"
           :title="isFavorite ? unFavoriteTitle : favoriteTitle"
@@ -29,7 +29,7 @@
         />
         <Button
           variant="ghost"
-          size="small"
+          size="xsmall"
           icon="contentCopy"
           :title="copyTitle"
           @click="$emit('copy', shortcut)"
@@ -37,7 +37,7 @@
         <Button
           v-if="shortcut.category === 'custom'"
           variant="ghost"
-          size="small"
+          size="xsmall"
           icon="edit"
           :title="editTitle"
           @click="$emit('edit', shortcut)"
@@ -45,7 +45,7 @@
         <Button
           v-if="shortcut.category === 'custom'"
           variant="ghost"
-          size="small"
+          size="xsmall"
           icon="delete"
           :title="deleteTitle"
           @click="$emit('delete', shortcut.id)"

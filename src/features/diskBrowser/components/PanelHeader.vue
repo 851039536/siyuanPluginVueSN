@@ -18,7 +18,7 @@
       </span>
       <Button
         variant="ghost"
-        size="small"
+        size="xsmall"
         icon="refresh"
         :icon-size="14"
         :loading="loading"

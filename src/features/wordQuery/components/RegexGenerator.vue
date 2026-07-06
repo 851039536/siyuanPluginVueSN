@@ -41,7 +41,7 @@
           </span>
           <Button
             variant="ghost"
-            size="small"
+            size="xsmall"
             @click="addExample"
           >
             <IconWrapper
@@ -61,19 +61,19 @@
               <Input
                 v-model="example.match"
                 :placeholder="i18n.matchText || '匹配文本'"
-                size="small"
+                size="xsmall"
                 class="match-input"
               />
               <Input
                 v-model="example.notMatch"
                 :placeholder="i18n.notMatchText || '不匹配文本（可选）'"
-                size="small"
+                size="xsmall"
                 class="not-match-input"
               />
             </div>
             <Button
               variant="ghost"
-              size="small"
+              size="xsmall"
               @click="removeExample(index)"
             >
               <IconWrapper
@@ -88,7 +88,7 @@
       <div class="action-section">
         <Button
           variant="primary"
-          size="small"
+          size="xsmall"
           :disabled="isGenerating || (!description.trim() && examples.length === 0)"
           :loading="isGenerating"
           @click="handleGenerate"
@@ -101,7 +101,7 @@
         </Button>
         <Button
           variant="ghost"
-          size="small"
+          size="xsmall"
           @click="handleClear"
         >
           <IconWrapper
@@ -131,7 +131,7 @@
             <code class="regex-pattern">/{{ result.regex }}/</code>
             <Button
               variant="ghost"
-              size="small"
+              size="xsmall"
               @click="copyRegex"
             >
               <IconWrapper
@@ -181,11 +181,11 @@
             <Input
               v-model="testString"
               :placeholder="i18n.testStringPlaceholder || '输入测试文本...'"
-              size="small"
+              size="xsmall"
             />
             <Button
               variant="secondary"
-              size="small"
+              size="xsmall"
               @click="handleTest"
             >
               {{ i18n.test || '测试' }}

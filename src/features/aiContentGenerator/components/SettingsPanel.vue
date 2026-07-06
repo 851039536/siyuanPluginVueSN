@@ -16,7 +16,7 @@
             <span class="header-title">提示词配置</span>
             <Tag
               v-if="currentPromptName"
-              size="small"
+              size="xsmall"
               variant="info"
             >
               {{ currentPromptName }}
@@ -24,7 +24,7 @@
           </div>
           <Button
             variant="ghost"
-            size="small"
+            size="xsmall"
             @click="$emit('toggle-settings')"
           >
             <svg
@@ -71,7 +71,7 @@
                   :min="0"
                   :max="2"
                   :step="0.1"
-                  size="small"
+                  size="xsmall"
                   @update:model-value="$emit('update:temperature', $event)"
                 />
                 <div class="param-hint">
@@ -94,7 +94,7 @@
                   :min="100"
                   :max="50000"
                   :step="100"
-                  size="small"
+                  size="xsmall"
                   @update:model-value="$emit('update:maxTokens', Number($event))"
                 />
               </div>
@@ -114,7 +114,7 @@
               <Input
                 :model-value="newPromptName"
                 :placeholder="currentPromptName || '输入配置名称...'"
-                size="small"
+                size="xsmall"
                 @update:model-value="$emit('update:newPromptName', String($event))"
                 @keydown.enter="$emit('save-current-prompt')"
                 @focus="$emit('on-prompt-name-focus')"
@@ -122,7 +122,7 @@
               <Button
                 :disabled="!newPromptName.trim() && !currentPromptName"
                 variant="primary"
-                size="small"
+                size="xsmall"
                 @click="$emit('save-current-prompt')"
               >
                 <svg
@@ -164,7 +164,7 @@
                 <div class="prompt-manage-actions">
                   <Button
                     variant="ghost"
-                    size="small"
+                    size="xsmall"
                     title="应用"
                     @click.stop="$emit('load-prompt', index)"
                   >
@@ -175,7 +175,7 @@
                   </Button>
                   <Button
                     variant="ghost"
-                    size="small"
+                    size="xsmall"
                     title="删除"
                     @click.stop="$emit('delete-prompt', index)"
                   >

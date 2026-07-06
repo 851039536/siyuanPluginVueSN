@@ -22,7 +22,7 @@
           v-model="password"
           :type="showPassword ? 'text' : 'password'"
           placeholder="输入主密码"
-          size="small"
+          size="xsmall"
           @keydown.esc="$emit('close')"
         />
 
@@ -34,7 +34,7 @@
           <Button
             type="button"
             variant="ghost"
-            size="small"
+            size="xsmall"
             @click="showHintInput = !showHintInput"
           >
             {{ showHintInput ? '取消密码提示' : '设置密码提示（推荐）' }}
@@ -43,7 +43,7 @@
             v-if="showHintInput"
             v-model="hint"
             type="text"
-            size="small"
+            size="xsmall"
             placeholder="例如：我的生日、最喜欢的颜色等"
             class="hint-input"
             :maxlength="50"
@@ -60,7 +60,7 @@
         <Button
           type="submit"
           variant="primary"
-          size="small"
+          size="xsmall"
           :disabled="!password.trim()"
           class="submit-btn"
         >

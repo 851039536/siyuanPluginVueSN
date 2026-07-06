@@ -107,6 +107,20 @@ export class S3Backup {
     // A6 修复：重置实例字段而非闭包局部变量
     this.lastExecutedHour = -1
     this.lastExecutedDateStr = ""
+
+    // B17 修复：基于持久化的 lastBackupTimestamp 回填防重复标记
+    // 防止程序重启后因 lastExecutedDateStr="" 导致 daily/hourly 模式误触发
+    if (this.lastBackupTimestamp > 0) {
+      const lastBackupDate = new Date(this.lastBackupTimestamp)
+      const todayStr = new Date().toDateString()
+      if (lastBackupDate.toDateString() === todayStr) {
+        this.lastExecutedDateStr = todayStr
+        if (backupFrequency === "hourly") {
+          this.lastExecutedHour = lastBackupDate.getHours()
+        }
+      }
+    }
+
     const timerStartTime = Date.now()
 
     const checkAndBackup = async () => {

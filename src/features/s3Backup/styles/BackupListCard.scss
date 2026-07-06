@@ -1,0 +1,70 @@
+/**
+ * BackupListCard 组件专属样式 — 备份列表、备份项、空状态
+ */
+@use '@/variables.scss' as *;
+
+.backup-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.backup-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-2 0;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  gap: $spacing-2;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.backup-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.backup-name {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--b3-theme-on-surface);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.backup-time {
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface-light);
+}
+
+.backup-size {
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface-light);
+}
+
+.backup-actions {
+  display: flex;
+  gap: $spacing-1;
+  flex-shrink: 0;
+}
+
+.empty-state {
+  text-align: center;
+  padding: $spacing-8 0;
+  color: var(--b3-theme-on-surface-light);
+
+  p {
+    margin: 0;
+    font-size: $font-size-sm;
+  }
+}

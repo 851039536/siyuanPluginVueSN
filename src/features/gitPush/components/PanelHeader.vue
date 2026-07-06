@@ -8,20 +8,7 @@
         class="gp-count-badge"
       >{{ projectCount }}</span>
     </div>
-    <div
-      v-if="projectCount > 0"
-      class="gp-header-search"
-    >
-      <Input
-        :model-value="searchQuery"
-        size="small"
-        :placeholder="searchPlaceholder || '搜索项目...'"
-        prefix-icon="search"
-        clearable
-        autocomplete="off"
-        @update:model-value="emit('update:searchQuery', String($event ?? ''))"
-      />
-    </div>
+
     <div class="gp-header-btns">
       <!-- 视图切换 -->
       <div class="gp-view-toggle">
@@ -180,6 +167,21 @@
           </button>
         </div>
       </div>
+
+          <div
+      v-if="projectCount > 0"
+      class="gp-header-search"
+    >
+      <Input
+        :model-value="searchQuery"
+        size="small"
+        :placeholder="searchPlaceholder || '搜索项目...'"
+        prefix-icon="search"
+        clearable
+        autocomplete="off"
+        @update:model-value="emit('update:searchQuery', String($event ?? ''))"
+      />
+    </div>
     </div>
   </div>
 </template>

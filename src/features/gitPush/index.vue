@@ -881,7 +881,6 @@ async function handleCopyUrl(url: string) {
   }
 }
 
-
 /** Fetch 所有远程 + 刷新状态 */
 async function handleFetchAll(id: string) {
   fetching.value = {

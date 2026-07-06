@@ -71,36 +71,6 @@
   }
 }
 
-// ========== 标签筛选条 ==========
-.gp-tag-filter {
-  display: flex;
-  gap: $spacing-1;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  -webkit-overflow-scrolling: touch;
-  @include hide-h-scrollbar;
-}
-
-.gp-tag-chip {
-  flex-shrink: 0;
-  padding: 2px 8px;
-  border: 1px solid var(--b3-border-color);
-  border-radius: 10px;
-  background: transparent;
-  color: var(--b3-theme-on-surface);
-  font-size: 10px;
-  cursor: pointer;
-  transition: opacity 0.15s, border-color 0.15s;
-
-  &:hover { border-color: var(--b3-theme-primary); }
-
-  &.active {
-    background: var(--b3-theme-primary);
-    color: var(--b3-theme-background);
-    border-color: var(--b3-theme-primary);
-  }
-}
-
 // ========== 分类 TAB 导航栏 ==========
 .gp-tabs {
   display: flex;

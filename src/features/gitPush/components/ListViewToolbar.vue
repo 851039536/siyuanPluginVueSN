@@ -49,20 +49,6 @@
     </div>
   </div>
 
-  <!-- 标签筛选条（有标签时显示） -->
-  <div
-    v-if="allTags.length > 0 && projects.length > 0"
-    class="gp-tag-filter"
-  >
-    <button
-      v-for="t in allTags"
-      :key="t"
-      class="gp-tag-chip"
-      :class="{ active: selectedTags.has(t) }"
-      @click="$emit('toggleTagFilter', t)"
-    >{{ t }}</button>
-  </div>
-
   <!-- 分类 TAB 导航（仅 all 模式显示） -->
   <div
     v-if="viewMode === 'all' && groupedProjects.length > 0"
@@ -99,8 +85,6 @@ type ViewMode = "all" | "needsPush" | "uncommitted" | "starred" | "archived"
 defineProps<{
   projects: GitProject[]
   groupedProjects: { category: ProjectCategory, projects: GitProject[] }[]
-  allTags: string[]
-  selectedTags: Set<string>
   viewMode: ViewMode
   activeCategory: string
   showArchived: boolean
@@ -112,7 +96,6 @@ defineEmits<{
   "update:activeCategory": [id: string]
   "update:showArchived": [v: boolean]
   "update:gitOpsPaused": [v: boolean]
-  "toggleTagFilter": [tag: string]
 }>()
 
 const viewModes = ["all", "needsPush", "uncommitted", "starred", "archived"] as const

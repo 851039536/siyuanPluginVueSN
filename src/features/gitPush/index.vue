@@ -51,8 +51,6 @@
       <ListViewToolbar
         :projects="projects"
         :grouped-projects="groupedProjects"
-        :all-tags="allTags"
-        :selected-tags="selectedTags"
         :view-mode="viewMode"
         :active-category="activeCategory"
         :show-archived="showArchived"
@@ -346,7 +344,6 @@ import {
   resolveValidPath,
 } from "./utils"
 
-
 const props = defineProps<{
   i18n: Record<string, any>
   plugin: any
@@ -359,10 +356,6 @@ const {
   activityLevel,
   sortProjects,
 } = ut
-
-
-
-
 
 const {
   projects,
@@ -446,7 +439,6 @@ const {
   uncommittedProjects,
   platformStatusProjects,
   // 项目聚合管理
-  allTags,
   starredProjects,
   updateProjectMeta,
   toggleStar,
@@ -981,10 +973,6 @@ async function handleNameEditSave(project: GitProject) {
     editingNameId.value = ""
   }
 }
-
-
-
-
 
 /** 统一的异步操作错误处理包装器 */
 async function safeGitOp(label: string, fn: () => Promise<void>) {

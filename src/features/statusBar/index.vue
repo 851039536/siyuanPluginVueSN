@@ -246,18 +246,6 @@ const FEATURES: FeatureRegistryEntry[] = [
     action: () => showImageCreation(),
   },
   {
-    id: "dataBackup",
-    icon: "mdi:backup-restore",
-    color: "#10b981",
-    title: props.plugin?.i18n?.dataBackup || "数据备份",
-    pinnable: true,
-    shortcut: {
-      icon: "mdi:backup-restore",
-      itemClass: "action-item data-backup-item",
-    },
-    action: () => emitCustomEvent("openDataBackup"),
-  },
-  {
     id: "s3Backup",
     icon: "mdi:cloud-upload",
     color: "#f59e0b",

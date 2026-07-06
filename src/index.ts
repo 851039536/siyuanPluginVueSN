@@ -26,7 +26,6 @@ import {
   registerAIContentGenerator,
   registerApiDebugger,
   registerBookmarkMarker,
-  registerDataBackup,
   registerDataSnapshot,
   registerDiskBrowser,
   registerDocAnalysis,
@@ -201,11 +200,6 @@ export default class PluginSample extends Plugin {
       (this as any).__generalSettings.destroy()
     }
 
-    // 清理数据备份资源
-    if ((this as any).__dataBackup) {
-      (this as any).__dataBackup.destroy()
-    }
-
     // 清理排版助手资源
     if ((this as any).__formatAssistant) {
       (this as any).__formatAssistant.destroy()
@@ -267,7 +261,6 @@ export default class PluginSample extends Plugin {
     const s = this.settings
 
     registerSuperPanel(this)
-    registerDataBackup(this)
 
     if (s.enablePageLock) (this as any).__pageLock = registerPageLock(this)
     if (s.enableTableOfContents) registerTableOfContents(this)

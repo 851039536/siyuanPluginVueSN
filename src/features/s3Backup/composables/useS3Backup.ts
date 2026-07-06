@@ -9,6 +9,7 @@ import { computed, ref } from "vue"
 import type { S3Config, S3FileInfo } from "../types"
 import { DEFAULT_S3_CONFIG } from "../types"
 import { S3Client } from "../types/s3Client"
+import type { BackupProgress } from "../modules/BackupManager"
 
 export function useS3Backup() {
   // ========== 状态 ==========
@@ -20,8 +21,8 @@ export function useS3Backup() {
   const isBackingUp = ref(false)
   const isLoading = ref(false)
 
-  const backupProgress = ref({
-    phase: "" as string,
+  const backupProgress = ref<BackupProgress>({
+    phase: "scanning",
     currentFile: "",
     filesProcessed: 0,
     totalFiles: 0,
@@ -37,6 +38,9 @@ export function useS3Backup() {
   const phaseLabel = computed(() => {
     const labels: Record<string, string> = {
       scanning: "扫描文件",
+      packing: "打包文件",
+      compressing: "压缩数据",
+      saving: "保存备份",
       uploading: "上传文件",
     }
     return labels[backupProgress.value.phase] || backupProgress.value.phase
@@ -85,7 +89,7 @@ export function useS3Backup() {
 
   /** 列举 S3 备份文件 */
   async function listBackups(): Promise<S3FileInfo[]> {
-    if (!s3Client) throw new Error("S3 客户端未初始化")
+    if (!s3Client) { throw new Error("S3 客户端未初始化") }
 
     isLoading.value = true
 
@@ -104,7 +108,7 @@ export function useS3Backup() {
 
   /** 下载 S3 备份文件 */
   async function downloadBackup(s3Key: string, localPath: string): Promise<void> {
-    if (!s3Client) throw new Error("S3 客户端未初始化")
+    if (!s3Client) { throw new Error("S3 客户端未初始化") }
 
     try {
       await s3Client.download(s3Key, localPath)
@@ -115,7 +119,7 @@ export function useS3Backup() {
 
   /** 删除 S3 备份文件 */
   async function deleteBackup(s3Key: string): Promise<void> {
-    if (!s3Client) throw new Error("S3 客户端未初始化")
+    if (!s3Client) { throw new Error("S3 客户端未初始化") }
 
     try {
       await s3Client.delete(s3Key)

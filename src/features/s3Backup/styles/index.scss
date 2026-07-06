@@ -274,6 +274,8 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  max-height: 320px;
+  overflow-y: auto;
 }
 
 .backup-item {

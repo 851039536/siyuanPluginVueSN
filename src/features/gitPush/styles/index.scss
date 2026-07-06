@@ -1003,21 +1003,6 @@
   &:hover { opacity: 1; }
 }
 
-// 编辑弹窗：仓库链接输入
-.gp-edit-urls {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.gp-edit-url-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--b3-theme-on-surface-light);
-  svg { flex-shrink: 0; }
-}
-
 // 编辑弹窗：多本地路径编辑
 .gp-label-hint {
   font-size: 10px;

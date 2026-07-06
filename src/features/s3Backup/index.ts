@@ -128,9 +128,10 @@ export class S3Backup {
           break
 
         case "hourly":
+          // B12 修复：移除 currentMinute === 0 精确匹配，改用 lastExecutedHour 防重复
+          // setInterval(60000) 精度有限，tick 偏移到 :01 就会错过整小时
           if (
-            currentMinute === 0
-            && this.lastExecutedHour !== currentHour
+            this.lastExecutedHour !== currentHour
             && timeSinceTimerStart >= 60 * 1000
             && timeSinceLastBackup >= 60 * 60 * 1000
           ) {
@@ -192,6 +193,7 @@ export class S3Backup {
     backupFrequency: string
     backupTime: string
     keepBackupCount: number
+    lastBackupTimestamp: number
     localBackupDir: string
     s3SubPrefix: string
   }> {
@@ -204,11 +206,12 @@ export class S3Backup {
         backupFrequency: data.backupFrequency ?? "daily",
         backupTime: data.backupTime ?? "03:00",
         keepBackupCount: data.keepBackupCount ?? 7,
+        lastBackupTimestamp: data.lastBackupTimestamp ?? 0,
         localBackupDir: data.localBackupDir ?? "data-backup",
         s3SubPrefix: data.s3SubPrefix ?? "data-backup",
       }
     } catch {
-      return { lastBackupTime: "", useDateFolder: true, autoBackupEnabled: false, backupFrequency: "daily", backupTime: "03:00", keepBackupCount: 7, localBackupDir: "data-backup", s3SubPrefix: "data-backup" }
+      return { lastBackupTime: "", useDateFolder: true, autoBackupEnabled: false, backupFrequency: "daily", backupTime: "03:00", keepBackupCount: 7, lastBackupTimestamp: 0, localBackupDir: "data-backup", s3SubPrefix: "data-backup" }
     }
   }
 

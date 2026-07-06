@@ -10,10 +10,10 @@
         <div class="workspace-path-row">
           <span class="info-value workspace-path">{{ workspacePath || (i18n.notSet || "未设置") }}</span>
           <div class="path-actions">
-            <Button variant="ghost" size="small" @click="$emit('selectPath')">
+            <Button variant="ghost" size="xsmall" @click="$emit('selectPath')">
               {{ i18n.selectPath || "选择路径" }}
             </Button>
-            <Button variant="ghost" size="small" :disabled="!workspaceRoot" @click="$emit('openFolder')">
+            <Button variant="ghost" size="xsmall" :disabled="!workspaceRoot" @click="$emit('openFolder')">
               打开
             </Button>
           </div>

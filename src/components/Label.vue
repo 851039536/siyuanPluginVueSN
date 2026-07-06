@@ -35,7 +35,7 @@ import type { IconKey } from "@/config/icons"
 import { computed } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 
-type LabelSize = "small" | "medium" | "large"
+type LabelSize = "xsmall" | "small" | "medium" | "large"
 type LabelVariant =
   | "default"
   | "primary"

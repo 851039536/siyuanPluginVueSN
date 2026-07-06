@@ -35,7 +35,7 @@ import {
 import IconWrapper from "@/components/IconWrapper.vue"
 
 type ButtonVariant = "primary" | "secondary" | "success" | "danger" | "ghost"
-type ButtonSize = "small" | "medium" | "large"
+type ButtonSize = "xsmall" | "small" | "medium" | "large"
 
 interface Props {
   /** 按钮变体 */

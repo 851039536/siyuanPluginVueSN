@@ -44,7 +44,7 @@ import {
 } from "vue"
 import FormField from "@/components/FormField.vue"
 
-type SliderSize = "small" | "medium" | "large"
+type SliderSize = "xsmall" | "small" | "medium" | "large"
 
 interface Props {
   /** 绑定值 */

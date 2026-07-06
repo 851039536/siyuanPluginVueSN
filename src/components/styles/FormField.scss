@@ -11,6 +11,10 @@
     color: var(--b3-theme-on-background, $brand-dark);
     font-family: $font-heading;
 
+    &--xsmall {
+      font-size: 10px; // 特小号，无对应 Token，保留
+    }
+
     &--small {
       font-size: $font-size-xs;
     }

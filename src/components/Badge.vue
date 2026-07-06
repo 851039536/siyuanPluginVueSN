@@ -17,7 +17,7 @@
 <script setup lang="ts">
 import { computed } from "vue"
 
-type BadgeSize = "small" | "medium" | "large"
+type BadgeSize = "xsmall" | "small" | "medium" | "large"
 type BadgeVariant =
   | "default"
   | "primary"

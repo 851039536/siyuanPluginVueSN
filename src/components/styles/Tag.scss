@@ -16,6 +16,11 @@
   cursor: default;
 
   // 尺寸变体
+  &--xsmall {
+    font-size: 10px; // 特小号，无对应 Token，保留
+    padding: 1px 4px; // 无对应 Token
+  }
+
   &--small {
     font-size: $font-size-xs;
     padding: 2px $spacing-2; // 2px 无对应 Token，保留

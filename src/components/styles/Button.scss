@@ -19,6 +19,12 @@
   position: relative;
 
   // 尺寸变体
+  &--xsmall {
+    padding: 2px 6px; // 特小号，无对应 Token，保留
+    font-size: $font-size-xs;
+    min-height: 22px; // 无对应 Token
+  }
+
   &--small {
     padding: $spacing-2 $spacing-3;
     font-size: $font-size-xs;
@@ -110,6 +116,10 @@
     padding: 0;
     width: var(--button-size, 36px);
     height: var(--button-size, 36px);
+
+    &.si-button--xsmall {
+      --button-size: 22px;
+    }
 
     &.si-button--small {
       --button-size: 28px;

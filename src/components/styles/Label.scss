@@ -13,6 +13,10 @@
   white-space: nowrap;
 
   // 尺寸变体
+  &--xsmall {
+    font-size: 10px; // 特小号，无对应 Token，保留
+  }
+
   &--small {
     font-size: $font-size-xs;
   }

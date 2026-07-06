@@ -287,7 +287,6 @@
       :project-id="editDialogProjectId"
       :manager="manager"
       :i18n="i18n"
-      :all-tags="allTags"
       @close="editDialogProjectId = ''"
       @saved="handleEditSaved"
       @urls-updated="handleUrlsUpdated"
@@ -789,9 +788,9 @@ watch(currentView, async (view) => {
   })
 })
 
-async function handleAddFromDialog(data: { name: string, path: string, catId: string, tags: string[] }) {
+async function handleAddFromDialog(data: { name: string, path: string, catId: string }) {
   try {
-    await addProject(data.name, data.path, data.catId, data.tags.length > 0 ? data.tags : undefined)
+    await addProject(data.name, data.path, data.catId)
     showAddDialog.value = false
   } catch (e: any) {
     showMessage(e?.message || "添加失败", 5000, "error")

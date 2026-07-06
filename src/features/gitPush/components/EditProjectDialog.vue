@@ -59,44 +59,7 @@
             </div>
           </div>
         </div>
-        <div class="gp-form-group">
-          <label class="gp-label">标签</label>
-          <div
-            v-if="localTags.length"
-            class="gp-edit-tags"
-          >
-            <span
-              v-for="t in localTags"
-              :key="t"
-              class="gp-edit-tag"
-            >
-              {{ t }}
-              <button
-                class="gp-edit-tag-x"
-                @click="removeTag(t)"
-              >
-                <Icon
-                  icon="mdi:close"
-                  height="12"
-                />
-              </button>
-            </span>
-          </div>
-          <input
-            v-model="tagInput"
-            class="gp-input"
-            placeholder="输入标签后回车添加"
-            :list="`gp-tag-suggestions-${projectId}`"
-            @keyup.enter="addTag"
-          />
-          <datalist :id="`gp-tag-suggestions-${projectId}`">
-            <option
-              v-for="t in props.allTags"
-              :key="t"
-              :value="t"
-            />
-          </datalist>
-        </div>
+
         <Input
           v-model="localNote"
           type="textarea"
@@ -423,7 +386,6 @@ const props = defineProps<{
   projectId: string
   manager: GitPushManager
   i18n: Record<string, any>
-  allTags: string[]
 }>()
 
 const statusOptions = computed<SelectOption[]>(() =>
@@ -450,8 +412,6 @@ const localStatus = ref("active")
 const localStarred = ref(false)
 const localArchived = ref(false)
 const localNote = ref("")
-const localTags = ref<string[]>([])
-const tagInput = ref("")
 const urlInputs = reactive<Record<string, string>>({
   githubUrl: "",
   giteeUrl: "",
@@ -579,7 +539,6 @@ onMounted(async () => {
   localStarred.value = !!p.starred
   localArchived.value = !!p.archived
   localNote.value = p.note || ""
-  localTags.value = [...(p.tags || [])]
   urlInputs.githubUrl = p.githubUrl || ""
   urlInputs.giteeUrl = p.giteeUrl || ""
   urlInputs.giteaUrl = p.giteaUrl || ""
@@ -616,19 +575,6 @@ function removeLocalPath(idx: number) {
 async function pickLocalPath(idx: number) {
   const dir = await pickDirectory("选择本地路径")
   if (dir) { allPathsList.value[idx] = dir }
-}
-
-// ── 标签管理 ──
-function addTag() {
-  const t = tagInput.value.trim()
-  if (t && !localTags.value.includes(t)) {
-    localTags.value = [...localTags.value, t]
-  }
-  tagInput.value = ""
-}
-
-function removeTag(tag: string) {
-  localTags.value = localTags.value.filter((t) => t !== tag)
 }
 
 // ── 远程仓库操作 ──
@@ -684,7 +630,6 @@ async function save() {
     starred: localStarred.value,
     archived: localArchived.value,
     note: localNote.value,
-    tags: localTags.value,
     path: firstPath,
     localPaths: restPaths.length > 0 ? restPaths : undefined,
   })

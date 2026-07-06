@@ -40,6 +40,8 @@ export interface BackupInfo {
 export interface BackupOptions {
   compressionLevel?: number
   excludeDirs?: string[]
+  /** 是否按日期创建子文件夹（默认 false）*/
+  useDateFolder?: boolean
   onProgress?: (progress: BackupProgress) => void
 }
 
@@ -50,22 +52,24 @@ export interface WorkspaceFile {
 
 // ========== 工具函数 ==========
 
-function formatTimestamp(now: Date): string {
+/** B11 修复：生成备份文件名，支持日期子文件夹 */
+function formatTimestamp(now: Date, useDateFolder = false): string {
   const pad = (n: number) => n.toString().padStart(2, "0")
-  const y = now.getFullYear().toString().slice(-2)
-  return `data-${y}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.zip`
+  const y = now.getFullYear()
+  const datePart = `${y}${pad(now.getMonth() + 1)}${pad(now.getDate())}`
+  const timePart = `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
+  const prefix = useDateFolder ? `${datePart}/` : ""
+  return `data-${prefix}${datePart}-${timePart}.zip`
 }
 
 // ========== BackupManager ==========
 
 export class BackupManager {
-  private workspacePath: string
   private workspaceRoot: string
   private fs: any
   private path: any
 
-  constructor(workspacePath: string, workspaceRoot: string) {
-    this.workspacePath = workspacePath
+  constructor(_workspacePath: string, workspaceRoot: string) {
     this.workspaceRoot = workspaceRoot
 
     const node = getNodeModules()
@@ -91,15 +95,9 @@ export class BackupManager {
     return this.path.join(this.workspaceRoot, "data")
   }
 
-  /* 同时更新工作区路径和根目录 */
-  updateWorkspacePaths(workspacePath: string, workspaceRoot: string) {
-    this.workspacePath = workspacePath
+  /** 更新工作区根目录（同时同步 workspacePath 字段以维持接口兼容） */
+  updateWorkspacePaths(_workspacePath: string, workspaceRoot: string) {
     this.workspaceRoot = workspaceRoot
-  }
-
-  /* 向后兼容单参数更新 */
-  updateWorkspacePath(workspacePath: string) {
-    this.workspacePath = workspacePath
   }
 
   // ========== S3 模式：扫描文件列表（不打包） ==========
@@ -143,6 +141,7 @@ export class BackupManager {
     const {
       compressionLevel = 6,
       excludeDirs = [],
+      useDateFolder = false,
       onProgress,
     } = options
 
@@ -196,7 +195,7 @@ export class BackupManager {
       totalFiles,
     }
 
-    return this.finalizeAndSaveBackup(zip, backupInfo, totalFiles, compressionLevel, onProgress)
+    return this.finalizeAndSaveBackup(zip, backupInfo, totalFiles, compressionLevel, useDateFolder, onProgress)
   }
 
   /** 压缩、保存备份（公共逻辑） */
@@ -205,6 +204,7 @@ export class BackupManager {
     backupInfo: BackupInfo,
     totalFiles: number,
     compressionLevel: number,
+    useDateFolder: boolean,
     onProgress?: (progress: BackupProgress) => void,
   ): Promise<BackupResult> {
     zip.file("backup-info.json", JSON.stringify(backupInfo, null, 2))
@@ -244,9 +244,11 @@ export class BackupManager {
       percent: 95,
     })
 
-    await this.fs.mkdir(this.backupDir, { recursive: true })
-    const fileName = formatTimestamp(new Date())
+    // A2 修复：支持按日期创建子文件夹
+    const fileName = formatTimestamp(new Date(), useDateFolder)
     const zipFilePath = this.path.join(this.backupDir, fileName)
+    // recursive: true 自动创建中间目录（包括日期子文件夹）
+    await this.fs.mkdir(this.path.dirname(zipFilePath), { recursive: true })
     await this.fs.writeFile(zipFilePath, zipBuffer)
 
     const stats = await this.fs.stat(zipFilePath)

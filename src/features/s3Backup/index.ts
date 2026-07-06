@@ -28,6 +28,9 @@ export class S3Backup {
   private _openHandler: (() => void) | null = null
   private autoBackupTimer: number | null = null
   private lastBackupTimestamp = 0
+  /** A6 修复：防重复执行状态提升为实例字段，避免重启定时器时丢失 */
+  private lastExecutedHour = -1
+  private lastExecutedDateStr = ""
 
   private cachedWorkspaceRoot = ""
 
@@ -74,11 +77,6 @@ export class S3Backup {
     return this.cachedWorkspaceRoot
   }
 
-  /** 获取当前工作区 data 路径 */
-  getWorkspacePath(): string {
-    return this.cachedWorkspaceRoot
-  }
-
   /** 获取持久化存储实例（供 Vue 面板共用，避免重复创建） */
   getStorage(): S3BackupStorage {
     return this.storage
@@ -106,9 +104,10 @@ export class S3Backup {
   public startAutoBackupTimer(backupFrequency: string, backupTime: string) {
     this.stopAutoBackupTimer()
 
+    // A6 修复：重置实例字段而非闭包局部变量
+    this.lastExecutedHour = -1
+    this.lastExecutedDateStr = ""
     const timerStartTime = Date.now()
-    let lastExecutedHour = -1
-    let lastExecutedDateStr = ""
 
     const checkAndBackup = async () => {
       const now = new Date()
@@ -131,25 +130,28 @@ export class S3Backup {
         case "hourly":
           if (
             currentMinute === 0
-            && lastExecutedHour !== currentHour
+            && this.lastExecutedHour !== currentHour
             && timeSinceTimerStart >= 60 * 1000
             && timeSinceLastBackup >= 60 * 60 * 1000
           ) {
             shouldBackup = true
-            lastExecutedHour = currentHour
+            this.lastExecutedHour = currentHour
           }
           break
 
         case "daily": {
           const [targetHour, targetMinute] = backupTime.split(":").map(Number)
+          // A5 修复：用宽松窗口替代精确分钟匹配，避免因 setInterval 偏移错过备份
+          // 条件：当前时间已过目标时间（同一天）、今天尚未执行、距离上次备份 ≥ 1 分钟
+          const targetTotal = targetHour * 60 + targetMinute
+          const currentTotal = currentHour * 60 + currentMinute
           if (
-            currentHour === targetHour
-            && currentMinute === targetMinute
-            && lastExecutedDateStr !== currentDateStr
-            && timeSinceTimerStart >= 60 * 1000
+            currentTotal >= targetTotal
+            && this.lastExecutedDateStr !== currentDateStr
+            && timeSinceLastBackup >= 60 * 1000
           ) {
             shouldBackup = true
-            lastExecutedDateStr = currentDateStr
+            this.lastExecutedDateStr = currentDateStr
           }
           break
         }

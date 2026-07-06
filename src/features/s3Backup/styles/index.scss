@@ -220,6 +220,54 @@
   margin-top: 2px;
 }
 
+// ========== 路径预览 ==========
+
+.path-preview {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-1;
+  margin-top: $spacing-1;
+  padding: $spacing-1 $spacing-2;
+  background: var(--b3-theme-surface-lighter);
+  border-radius: $vp-radius;
+  font-size: $font-size-xs;
+}
+
+.path-preview-label {
+  color: var(--b3-theme-on-surface-light);
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  &::after {
+    content: "：";
+  }
+}
+
+.path-preview-value {
+  font-family: $vp-mono;
+  color: var(--b3-theme-primary);
+  word-break: break-all;
+  background: transparent;
+  padding: 0;
+  border: none;
+  font-size: inherit;
+}
+
+.form-label-desc {
+  display: block;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface-light);
+  margin-bottom: $spacing-1;
+}
+
+// ========== 输入框紧凑模式 ==========
+
+.form-input--sm {
+  padding: 4px $spacing-2;
+  font-size: $font-size-sm;
+  max-width: 320px;
+}
+
 // ========== 备份列表 ==========
 
 .backup-list {
@@ -316,6 +364,55 @@
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+}
+
+// ========== 备份模式选择区 ==========
+
+.backup-mode-section {
+  .form-group-checkbox {
+    margin-bottom: $spacing-2;
+
+    &:last-of-type {
+      margin-bottom: 0;
+    }
+  }
+}
+
+// ========== 自动备份设置区 ==========
+
+.auto-backup-section {
+  .settings-row {
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+    flex-wrap: wrap;
+  }
+
+  .inline-label {
+    font-size: $font-size-sm;
+    color: var(--b3-theme-on-surface);
+    white-space: nowrap;
+  }
+
+  .form-select.narrow {
+    padding: 2px $spacing-2;
+    border: 1px solid var(--b3-theme-surface-lighter);
+    border-radius: $vp-radius;
+    background: var(--b3-theme-background);
+    color: var(--b3-theme-on-surface);
+    font-size: $font-size-sm;
+    cursor: pointer;
+    min-width: 80px;
+  }
+
+  .form-input.narrow {
+    padding: 2px $spacing-2;
+    border: 1px solid var(--b3-theme-surface-lighter);
+    border-radius: $vp-radius;
+    background: var(--b3-theme-background);
+    color: var(--b3-theme-on-surface);
+    font-size: $font-size-sm;
   }
 }
 

@@ -55,7 +55,41 @@
         />
       </section>
 
-      <!-- 3. 备份进度 -->
+      <!-- 3. 备份模式选择 -->
+      <section class="card-section backup-mode-section">
+        <div class="section-header">
+          <h4>{{ i18n.backupMode || "备份模式" }}</h4>
+        </div>
+        <div class="form-group form-group-checkbox">
+          <label class="form-checkbox-label">
+            <input
+              v-model="backupModeLocal.localZip"
+              type="checkbox"
+              class="form-checkbox"
+              @change="saveWorkspaceSettings"
+            />
+            <span>{{ i18n.localZipBackup || "本地 ZIP 备份" }}</span>
+          </label>
+          <span class="form-hint">{{ i18n.localZipHint || "打包为 data-*.zip 保存到工作区 data-backup/ 目录" }}</span>
+        </div>
+        <div class="form-group form-group-checkbox">
+          <label class="form-checkbox-label">
+            <input
+              v-model="backupModeLocal.s3Upload"
+              type="checkbox"
+              class="form-checkbox"
+              @change="saveWorkspaceSettings"
+            />
+            <span>{{ i18n.s3Upload || "上传到 S3" }}</span>
+          </label>
+          <span class="form-hint">{{ i18n.s3UploadHint || "逐文件上传到 S3 兼容存储（需先完成 S3 配置）" }}</span>
+        </div>
+        <p class="backup-hint">
+          {{ i18n.backupModeHint || "可同时勾选两项，本地 ZIP 和 S3 上传将顺序执行" }}
+        </p>
+      </section>
+
+      <!-- 4. 备份进度 -->
       <section
         v-if="isBackingUp"
         class="card-section progress-section"
@@ -81,7 +115,7 @@
         </div>
       </section>
 
-      <!-- 4. 手动备份 -->
+      <!-- 5. 手动备份 -->
       <section class="card-section backup-section">
         <div class="section-header">
           <h4>{{ i18n.manualBackup || "手动备份" }}</h4>
@@ -89,7 +123,7 @@
         <div class="backup-actions-row">
           <button
             class="vp-btn vp-btn--primary vp-btn--sm"
-            :disabled="isBackingUp || !isConfigured || !workspacePath"
+            :disabled="isBackingUp || !canBackup || !workspacePath"
             @click="performManualBackup"
           >
             <span
@@ -97,6 +131,17 @@
               class="vp-spin"
             />
             <span>{{ i18n.backupNow || "立即备份" }}</span>
+          </button>
+          <button
+            class="vp-btn vp-btn--ghost vp-btn--sm"
+            :disabled="isBackingUp || !isConfigured || !workspacePath"
+            @click="performS3OnlyBackup"
+          >
+            <span
+              v-if="isS3OnlyBackingUp"
+              class="vp-spin"
+            />
+            <span>{{ i18n.uploadToS3 || "上传到 S3" }}</span>
           </button>
         </div>
         <div class="form-group form-group-checkbox">
@@ -111,12 +156,167 @@
           </label>
           <span class="form-hint">{{ i18n.useDateFolderHint || "勾选后按日期分类存储" }}</span>
         </div>
+        <!-- 本地备份目录 -->
+        <div class="form-group">
+          <label class="form-label">{{ i18n.localBackupDir || "本地备份目录" }}</label>
+          <span class="form-label-desc">{{ i18n.localBackupDirDesc || "ZIP 压缩包保存到本地的哪个文件夹" }}</span>
+          <div class="path-input-row">
+            <input
+              v-model="localBackupDir"
+              type="text"
+              class="form-input form-input--sm"
+              placeholder="data-backup"
+              @change="onLocalBackupDirChanged"
+            />
+          </div>
+          <div
+            v-if="resolvedLocalBackupPath"
+            class="path-preview"
+          >
+            <span class="path-preview-label">{{ i18n.pathPreview || "实际路径" }}</span>
+            <code class="path-preview-value">{{ resolvedLocalBackupPath }}</code>
+          </div>
+        </div>
+        <!-- S3 上传子路径 -->
+        <div class="form-group">
+          <label class="form-label">{{ i18n.s3SubPath || "S3 上传子路径" }}</label>
+          <span class="form-label-desc">{{ i18n.s3SubPathDesc || "上传到云存储时，在目录前缀之后追加的路径段" }}</span>
+          <input
+            v-model="s3SubPrefix"
+            type="text"
+            class="form-input form-input--sm"
+            placeholder="data-backup"
+            @change="saveWorkspaceSettings"
+          />
+          <div
+            v-if="resolvedS3Path"
+            class="path-preview"
+          >
+            <span class="path-preview-label">{{ i18n.pathPreview || "云存储路径" }}</span>
+            <code class="path-preview-value">{{ resolvedS3Path }}</code>
+          </div>
+        </div>
         <p class="backup-hint">
-          {{ i18n.backupHint || "备份将直接上传文件到 S3" }}
+          {{ backupModeLocal.localZip && backupModeLocal.s3Upload
+            ? (i18n.backupHintBoth || "将先打包本地 ZIP 再上传 S3")
+            : backupModeLocal.localZip
+              ? (i18n.backupHintLocal || "备份将打包为 data-*.zip 保存到本地备份目录")
+              : (i18n.backupHint || "备份将逐文件上传到 S3")
+          }}
         </p>
       </section>
 
-      <!-- 5. S3 备份列表 -->
+      <!-- 6. 自动备份设置 -->
+      <section class="card-section auto-backup-section">
+        <div class="section-header">
+          <h4>{{ i18n.autoBackupSettings || "自动备份设置" }}</h4>
+        </div>
+        <div class="settings-row">
+          <span class="inline-label">{{ i18n.autoBackup || "自动备份" }}</span>
+          <select
+            v-model="autoBackupEnabled"
+            class="form-select narrow"
+            @change="saveSettings"
+          >
+            <option :value="false">
+              {{ i18n.disabled || "禁用" }}
+            </option>
+            <option :value="true">
+              {{ i18n.enabled || "启用" }}
+            </option>
+          </select>
+          <template v-if="autoBackupEnabled">
+            <span class="inline-label">{{ i18n.backupFrequency || "频率" }}</span>
+            <select
+              v-model="backupFrequency"
+              class="form-select narrow"
+              @change="saveSettings"
+            >
+              <option value="minute">
+                {{ i18n.everyMinute || "每分钟" }}
+              </option>
+              <option value="hourly">
+                {{ i18n.everyHour || "每小时" }}
+              </option>
+              <option value="daily">
+                {{ i18n.everyDay || "每天" }}
+              </option>
+            </select>
+            <template v-if="backupFrequency === 'daily'">
+              <span class="inline-label">{{ i18n.backupTime || "时间" }}</span>
+              <input
+                v-model="backupTime"
+                type="time"
+                class="form-input narrow"
+                @change="saveSettings"
+              />
+            </template>
+            <span class="inline-label">{{ i18n.keepBackupCount || "保留" }}</span>
+            <input
+              v-model="keepBackupCount"
+              type="number"
+              class="form-input narrow"
+              style="width: 3rem;"
+              min="1"
+              max="30"
+              @change="saveSettings"
+            />
+            <span class="inline-label">{{ i18n.keepBackupCountHint || "份" }}</span>
+          </template>
+        </div>
+        <p class="backup-hint">
+          {{ autoBackupEnabled
+            ? (i18n.autoBackupEnabledHint || "自动备份已启用，将按设定频率自动执行")
+            : (i18n.autoBackupDisabledHint || "启用后按设定频率自动备份工作区")
+          }}
+        </p>
+      </section>
+
+      <!-- 7. 本地备份历史 -->
+      <section class="card-section history-section">
+        <div class="section-header">
+          <h4>{{ i18n.localBackups || "本地备份列表" }}</h4>
+          <button
+            class="refresh-btn"
+            :disabled="isLoadingLocal || !workspaceRoot"
+            @click="refreshLocalBackupList"
+          >
+            {{ i18n.refresh || "刷新" }}
+          </button>
+        </div>
+        <div
+          v-if="localBackupList.length > 0"
+          class="backup-list"
+        >
+          <div
+            v-for="(backup, index) in localBackupList"
+            :key="index"
+            class="backup-item"
+          >
+            <div class="backup-info">
+              <span class="backup-name">{{ backup.name }}</span>
+              <span class="backup-time">{{ backup.time }}</span>
+              <span class="backup-size">{{ formatFileSize(backup.size) }}</span>
+            </div>
+            <div class="backup-actions">
+              <button
+                class="action-btn delete"
+                @click="deleteLocalBackup(backup)"
+              >
+                {{ i18n.delete || "删除" }}
+              </button>
+            </div>
+          </div>
+        </div>
+        <div
+          v-else
+          class="empty-state"
+        >
+          <p>{{ i18n.noLocalBackups || "暂无本地备份" }}</p>
+        </div>
+      </section>
+
+      <!-- 8. S3 备份列表 -->
       <section class="card-section history-section">
         <div class="section-header">
           <h4>{{ i18n.s3Backups || "云端备份列表" }}</h4>
@@ -176,7 +376,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue"
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue"
 import { showMessage } from "siyuan"
 import { getWorkspaceDir } from "@/api"
 import { formatFileSize } from "@/utils/format"
@@ -184,8 +384,10 @@ import { pickDirectory, openFolderInExplorer } from "@/utils/electronDialog"
 import { getNodeModules } from "@/utils/nodeModules"
 import { useS3Backup } from "./composables/useS3Backup"
 import { BackupManager } from "./modules/BackupManager"
+import type { BackupProgress, BackupResult } from "./modules/BackupManager"
 import { getS3BackupInstance } from "./index"
-import type { S3Config, S3FileInfo } from "./types"
+import type { S3Config, S3FileInfo, LocalBackupInfo, BackupMode } from "./types"
+import { DEFAULT_BACKUP_MODE } from "./types"
 import S3ConfigForm from "./components/S3ConfigForm.vue"
 
 // ========== Props ==========
@@ -227,16 +429,78 @@ const workspacePath = ref("")
 const workspaceRoot = ref("")
 const lastBackupTime = ref("")
 const useDateFolder = ref(true)
+const localBackupDir = ref("data-backup")
+const s3SubPrefix = ref("data-backup")
+const isS3OnlyBackingUp = ref(false)
+
+// ========== 路径预览 ==========
+
+const node = getNodeModules()
+const pathModule = node?.path
+
+/** 本地备份 ZIP 文件保存的完整路径预览 */
+const resolvedLocalBackupPath = computed(() => {
+  if (!workspaceRoot.value || !localBackupDir.value) { return "" }
+  if (pathModule) {
+    return pathModule.join(workspaceRoot.value, localBackupDir.value)
+  }
+  return `${workspaceRoot.value}/${localBackupDir.value}`
+})
+
+/** S3 上传在桶中的完整路径预览 */
+const resolvedS3Path = computed(() => {
+  const prefix = s3Config.value?.prefix || "siyuan-backup/"
+  const sub = s3SubPrefix.value || "data-backup"
+  return `${prefix.replace(/\/+$/, "")}/${sub}/`
+})
+
+// ========== 备份模式 ==========
+
+const backupModeLocal = reactive<BackupMode>({ ...DEFAULT_BACKUP_MODE })
+
+// ========== 自动备份设置 ==========
+
+const autoBackupEnabled = ref(false)
+const backupFrequency = ref("daily")
+const backupTime = ref("03:00")
+const keepBackupCount = ref(7)
+
+// ========== 本地备份列表 ==========
+
+const localBackupList = ref<LocalBackupInfo[]>([])
+const isLoadingLocal = ref(false)
+
+let lastBackupTimestamp = 0
+
+// ========== S3 配置本地引用 ==========
+
 const s3ConfigLocal = ref<S3Config | null>(null)
+
+// ========== Manager 实例 ==========
 
 let backupManager: BackupManager | null = null
 
-// ========== 计算 ==========
+// ========== 计算属性 ==========
+
+/** 是否有任一备份模式被选中 */
+const canBackup = computed(() => {
+  return backupModeLocal.localZip || (backupModeLocal.s3Upload && isConfigured.value)
+})
+
+// ========== 备份管理器初始化 ==========
 
 function initBackupManager(): void {
   if (workspacePath.value) {
-    backupManager = new BackupManager(workspacePath.value)
+    backupManager = new BackupManager(workspacePath.value, workspaceRoot.value)
+    backupManager.setBackupDir(localBackupDir.value)
   }
+}
+
+function onLocalBackupDirChanged(): void {
+  if (backupManager) {
+    backupManager.setBackupDir(localBackupDir.value)
+  }
+  saveWorkspaceSettings()
 }
 
 // ========== 工作区路径管理 ==========
@@ -244,10 +508,11 @@ function initBackupManager(): void {
 function updateWorkspacePath(root: string, shouldSave = false): void {
   workspaceRoot.value = root
   workspacePath.value = root
+  // 同步写入 localStorage，便于下次启动快速恢复
+  localStorage.setItem("siyuan-workspace-root", root)
   if (backupManager) {
-    backupManager.updateWorkspacePath(workspacePath.value)
+    backupManager.updateWorkspacePaths(workspacePath.value, workspaceRoot.value)
   }
-  // 同步更新 S3Backup 类内部的工作区路径
   const instance = getS3BackupInstance()
   if (instance) {
     instance.setWorkspacePaths(root)
@@ -268,7 +533,6 @@ async function fetchWorkspacePath(): Promise<string | null> {
 }
 
 async function detectWorkspacePath(): Promise<void> {
-  // 优先使用 S3Backup 类已检测到的路径
   const instance = getS3BackupInstance()
   if (instance) {
     const root = instance.getWorkspaceRoot()
@@ -277,8 +541,6 @@ async function detectWorkspacePath(): Promise<void> {
       return
     }
   }
-
-  // 兜底：直接尝试 API 获取
   const apiPath = await fetchWorkspacePath()
   if (apiPath) {
     updateWorkspacePath(apiPath)
@@ -297,10 +559,9 @@ function handleConfigChanged(config: S3Config): void {
 }
 
 async function handleConfigSaved(): Promise<void> {
-  if (!s3ConfigLocal.value) return
+  if (!s3ConfigLocal.value) { return }
   saveConfig(s3ConfigLocal.value)
 
-  // 持久化配置（使用 S3Backup 类共享的存储实例）
   const instance = getS3BackupInstance()
   if (instance) {
     await instance.getStorage().s3Config.save(s3ConfigLocal.value)
@@ -311,95 +572,269 @@ async function handleConfigSaved(): Promise<void> {
 // ========== 备份操作 ==========
 
 async function performManualBackup(): Promise<void> {
-  if (isBackingUp.value || !backupManager) {
-    return
-  }
+  if (isBackingUp.value || !backupManager) { return }
 
   if (!workspacePath.value) {
     showMessage(props.i18n.noWorkspace || "请先选择工作区路径", 3000, "info")
     await selectWorkspacePath()
-    if (!workspacePath.value) {
-      return
-    }
+    if (!workspacePath.value) { return }
   }
 
   isBackingUp.value = true
 
   try {
-    // 阶段 1: 扫描文件
-    const files = await backupManager.getWorkspaceFiles((p) => {
-      backupProgress.value = { ...p }
-    })
-
-    if (files.length === 0) {
-      showMessage("工作区没有可备份的文件", 3000, "info")
-      return
+    // 根据备份模式分发
+    if (backupModeLocal.localZip) {
+      await performLocalBackup()
+    }
+    if (backupModeLocal.s3Upload) {
+      await performS3Backup()
     }
 
-    // 阶段 2: 逐文件上传到 S3
-    const prefix = s3Config.value.prefix || "siyuan-backup/"
-    const d = new Date()
-    const pad = (n: number) => String(n).padStart(2, "0")
-    const timestamp = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`
-    const node = getNodeModules()
-    const fs = node!.fs.promises
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
-      const s3Key = useDateFolder.value
-        ? `${prefix}${timestamp}/${file.relativePath}`
-        : `${prefix}${file.relativePath}`
-      const percent = Math.round((i / files.length) * 100)
-
-      backupProgress.value = {
-        phase: "uploading",
-        currentFile: file.relativePath,
-        filesProcessed: i + 1,
-        totalFiles: files.length,
-        percent,
-      }
-
-      const content = await fs.readFile(file.fullPath)
-      await uploadFileContent(content, s3Key)
-    }
-
-    // 完成
-    backupProgress.value = {
-      phase: "uploading",
-      currentFile: "",
-      filesProcessed: files.length,
-      totalFiles: files.length,
-      percent: 100,
-    }
-
-    // 更新备份记录
+    // 更新备份时间
     lastBackupTime.value = new Date().toLocaleString()
+    lastBackupTimestamp = Date.now()
     const instance = getS3BackupInstance()
     if (instance) {
+      instance.updateLastBackupTime(lastBackupTimestamp)
       await instance.saveWorkspaceSettings({
         lastBackupTime: lastBackupTime.value,
         workspacePath: workspacePath.value,
         workspaceRoot: workspaceRoot.value,
         useDateFolder: useDateFolder.value,
+        autoBackupEnabled: autoBackupEnabled.value,
+        backupFrequency: backupFrequency.value,
+        backupTime: backupTime.value,
+        keepBackupCount: keepBackupCount.value,
+        backupMode: { ...backupModeLocal },
+        lastBackupTimestamp,
+        localBackupDir: localBackupDir.value,
+        s3SubPrefix: s3SubPrefix.value,
       })
     }
-
-    showMessage(`${props.i18n.backupSuccess || "备份上传成功"}: ${files.length} 个文件`, 3000, "info")
-
-    // 刷新列表
-    await refreshBackupList()
   } catch (err: any) {
     console.error("备份失败:", err)
     showMessage(`${props.i18n.backupFailed || "备份失败"}: ${err.message}`, 5000, "error")
   } finally {
     isBackingUp.value = false
+    saveSettings()
+  }
+}
+
+/** 本地 ZIP 备份 */
+async function performLocalBackup(): Promise<void> {
+  if (!backupManager) { return }
+
+  backupProgress.value = {
+    phase: "scanning",
+    currentFile: "",
+    filesProcessed: 0,
+    totalFiles: 0,
+    percent: 0,
+  }
+
+  try {
+    const result = await backupManager.performFullBackup({
+      onProgress: (p) => {
+        backupProgress.value = { ...p }
+      },
+    })
+
+    localBackupList.value.unshift({
+      name: result.fileName,
+      path: result.filePath,
+      time: lastBackupTime.value || new Date().toLocaleString(),
+      size: result.size,
+    })
+
+    if (localBackupList.value.length > keepBackupCount.value) {
+      localBackupList.value = localBackupList.value.slice(0, keepBackupCount.value)
+    }
+
+    const instance = getS3BackupInstance()
+    if (instance) {
+      await instance.getStorage().backupHistory.save({ list: localBackupList.value })
+    }
+
+    showMessage(`本地备份成功: ${result.fileName}（${result.totalFiles} 文件）`, 3000, "info")
+  } catch (err: any) {
+    throw new Error(`本地备份: ${err.message}`)
+  }
+}
+
+/** S3 备份 */
+async function performS3Backup(): Promise<void> {
+  if (!backupManager) { return }
+
+  if (!isConfigured.value) {
+    throw new Error("S3 未配置，请先完成 S3 连接配置")
+  }
+
+  const files = await backupManager.getWorkspaceFiles((p) => {
+    backupProgress.value = { ...p }
+  })
+
+  if (files.length === 0) {
+    showMessage("工作区没有可备份的文件", 3000, "info")
+    return
+  }
+
+  const prefix = s3Config.value.prefix || "siyuan-backup/"
+  const d = new Date()
+  const pad = (n: number) => String(n).padStart(2, "0")
+  const timestamp = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`
+  const node = getNodeModules()
+  const fs = node!.fs.promises
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i]
+    const datePath = useDateFolder.value ? `${timestamp}/` : ""
+    const sub = s3SubPrefix.value || "data-backup"
+    // 使用路径段数组拼接，避免 prefix 缺少尾部 / 或 sub 为空导致的粘连/双斜杠问题
+    const keyParts: string[] = [prefix.replace(/\/+$/, ""), sub]
+    if (datePath) { keyParts.push(datePath.replace(/\/+$/, "")) }
+    keyParts.push(file.relativePath.replace(/^\/+/, ""))
+    const s3Key = keyParts.join("/")
+    const percent = Math.round((i / files.length) * 100)
+
+    backupProgress.value = {
+      phase: "uploading",
+      currentFile: file.relativePath,
+      filesProcessed: i + 1,
+      totalFiles: files.length,
+      percent,
+    }
+
+    let content
+    try {
+      content = await fs.readFile(file.fullPath)
+    } catch (readErr: any) {
+      console.warn(`跳过无法读取的文件: ${file.relativePath}`, readErr.message)
+      continue
+    }
+    await uploadFileContent(content, s3Key)
+  }
+
+  backupProgress.value = {
+    phase: "uploading",
+    currentFile: "",
+    filesProcessed: files.length,
+    totalFiles: files.length,
+    percent: 100,
+  }
+
+  showMessage(`${props.i18n.backupSuccess || "备份上传成功"}: ${files.length} 个文件`, 3000, "info")
+
+  await refreshBackupList()
+}
+
+/** 独立 S3 上传按钮（不依赖备份模式复选框，直接上传到 S3） */
+async function performS3OnlyBackup(): Promise<void> {
+  if (isS3OnlyBackingUp.value || !backupManager) { return }
+
+  if (!workspacePath.value) {
+    showMessage(props.i18n.noWorkspace || "请先选择工作区路径", 3000, "info")
+    await selectWorkspacePath()
+    if (!workspacePath.value) { return }
+  }
+
+  if (!isConfigured.value) {
+    showMessage("S3 未配置，请先完成 S3 连接配置", 3000, "info")
+    return
+  }
+
+  isS3OnlyBackingUp.value = true
+
+  try {
+    await performS3Backup()
+    showMessage("S3 上传完成", 2000, "info")
+  } catch (err: any) {
+    showMessage(`S3 上传失败: ${err.message}`, 5000, "error")
+  } finally {
+    isS3OnlyBackingUp.value = false
+  }
+}
+
+// ========== 自动备份触发 ==========
+
+async function handleAutoBackupTrigger(): Promise<void> {
+  await performManualBackup()
+}
+
+// ========== 定时器重启 ==========
+
+function handleTimerRestart(): void {
+  const s3Backup = props.plugin?.__s3Backup
+  if (s3Backup && typeof s3Backup.restartAutoBackupTimer === "function") {
+    s3Backup.restartAutoBackupTimer(autoBackupEnabled.value, backupFrequency.value, backupTime.value)
+  }
+}
+
+watch(
+  [backupFrequency, backupTime, autoBackupEnabled],
+  () => handleTimerRestart(),
+)
+
+// ========== 本地备份管理 ==========
+
+async function loadLocalBackupList(): Promise<void> {
+  localBackupList.value = []
+  try {
+    if (backupManager) {
+      const scanned = await backupManager.scanBackupDir()
+      if (scanned.length > 0) {
+        localBackupList.value = scanned
+        const instance = getS3BackupInstance()
+        if (instance) {
+          await instance.getStorage().backupHistory.save({ list: localBackupList.value })
+        }
+        return
+      }
+    }
+    const instance = getS3BackupInstance()
+    if (instance) {
+      const history = await instance.getStorage().backupHistory.load()
+      if (history?.list) {
+        localBackupList.value = history.list
+      }
+    }
+  } catch (error) {
+    console.error("加载本地备份列表失败:", error)
+  }
+}
+
+async function refreshLocalBackupList(): Promise<void> {
+  isLoadingLocal.value = true
+  try {
+    await loadLocalBackupList()
+  } finally {
+    isLoadingLocal.value = false
+  }
+}
+
+async function deleteLocalBackup(backup: { name: string; path: string }): Promise<void> {
+  try {
+    const confirmDelete = confirm(props.i18n.confirmDelete || "确定要删除此备份吗？")
+    if (!confirmDelete) { return }
+    if (backupManager) {
+      await backupManager.deleteBackupFile(backup.path)
+    }
+    localBackupList.value = localBackupList.value.filter((b) => b.name !== backup.name)
+    const instance = getS3BackupInstance()
+    if (instance) {
+      await instance.getStorage().backupHistory.save({ list: localBackupList.value })
+    }
+    showMessage(props.i18n.deleteSuccess || "删除成功", 2000, "info")
+  } catch (error) {
+    console.error("删除本地备份失败:", error)
+    showMessage(props.i18n.deleteFailed || "删除失败", 3000, "error")
   }
 }
 
 // ========== S3 备份管理 ==========
 
 async function refreshBackupList(): Promise<void> {
-  if (!isConfigured.value) return
+  if (!isConfigured.value) { return }
   try {
     await listBackups()
   } catch (err: any) {
@@ -410,7 +845,7 @@ async function refreshBackupList(): Promise<void> {
 async function handleDownload(backup: S3FileInfo): Promise<void> {
   try {
     const node = getNodeModules()
-    if (!node) throw new Error("无法访问文件系统，请使用桌面版思源笔记")
+    if (!node) { throw new Error("无法访问文件系统，请使用桌面版思源笔记") }
     const fs = node.fs.promises
     const path = node.path
 
@@ -427,11 +862,11 @@ async function handleDownload(backup: S3FileInfo): Promise<void> {
 
 async function handleRestore(backup: S3FileInfo): Promise<void> {
   const confirmed = confirm(props.i18n.confirmRestore || "确定要下载此备份到本地备份目录吗？如需恢复请手动解压替换。")
-  if (!confirmed) return
+  if (!confirmed) { return }
 
   try {
     const node = getNodeModules()
-    if (!node) throw new Error("无法访问文件系统，请使用桌面版思源笔记")
+    if (!node) { throw new Error("无法访问文件系统，请使用桌面版思源笔记") }
     const fs = node.fs.promises
     const path = node.path
 
@@ -448,7 +883,7 @@ async function handleRestore(backup: S3FileInfo): Promise<void> {
 
 async function handleDelete(backup: S3FileInfo): Promise<void> {
   const confirmed = confirm(props.i18n.confirmDelete || "确定要删除此备份吗？")
-  if (!confirmed) return
+  if (!confirmed) { return }
 
   try {
     await deleteBackup(backup.key)
@@ -458,7 +893,7 @@ async function handleDelete(backup: S3FileInfo): Promise<void> {
   }
 }
 
-// ========== 自动备份设置 ==========
+// ========== 设置持久化 ==========
 
 async function loadWorkspaceSettings(): Promise<void> {
   try {
@@ -467,8 +902,20 @@ async function loadWorkspaceSettings(): Promise<void> {
       const data = await instance.loadWorkspaceSettings()
       lastBackupTime.value = data.lastBackupTime
       useDateFolder.value = data.useDateFolder ?? true
+      autoBackupEnabled.value = data.autoBackupEnabled ?? false
+      backupFrequency.value = data.backupFrequency ?? "daily"
+      backupTime.value = data.backupTime ?? "03:00"
+      keepBackupCount.value = data.keepBackupCount ?? 7
+      localBackupDir.value = data.localBackupDir || "data-backup"
+      s3SubPrefix.value = data.s3SubPrefix || "data-backup"
 
-      // 同步工作区路径
+      // 加载备份模式
+      const bs = await instance.getStorage().backupSettings.loadOrDefault()
+      if (bs.backupMode) {
+        backupModeLocal.localZip = bs.backupMode.localZip ?? true
+        backupModeLocal.s3Upload = bs.backupMode.s3Upload ?? false
+      }
+
       const root = instance.getWorkspaceRoot()
       if (root && !workspaceRoot.value) {
         workspaceRoot.value = root
@@ -489,6 +936,14 @@ async function saveWorkspaceSettings(): Promise<void> {
         workspacePath: workspacePath.value,
         workspaceRoot: workspaceRoot.value,
         useDateFolder: useDateFolder.value,
+        autoBackupEnabled: autoBackupEnabled.value,
+        backupFrequency: backupFrequency.value,
+        backupTime: backupTime.value,
+        keepBackupCount: keepBackupCount.value,
+        backupMode: { ...backupModeLocal },
+        lastBackupTimestamp,
+        localBackupDir: localBackupDir.value,
+        s3SubPrefix: s3SubPrefix.value,
       })
     }
   } catch (err) {
@@ -496,12 +951,14 @@ async function saveWorkspaceSettings(): Promise<void> {
   }
 }
 
+async function saveSettings(): Promise<void> {
+  await saveWorkspaceSettings()
+}
+
 // ========== 文件夹操作 ==========
 
 async function openWorkspaceFolder(): Promise<void> {
-  if (!workspaceRoot.value) {
-    return
-  }
+  if (!workspaceRoot.value) { return }
   const opened = await openFolderInExplorer(workspaceRoot.value)
   if (!opened) {
     showMessage(`工作区路径: ${workspaceRoot.value}`, 3000, "info")
@@ -509,7 +966,6 @@ async function openWorkspaceFolder(): Promise<void> {
 }
 
 async function selectWorkspacePath(): Promise<void> {
-  // 尝试自动获取
   if (!workspaceRoot.value) {
     const wsPath = await fetchWorkspacePath()
     if (wsPath) {
@@ -518,7 +974,6 @@ async function selectWorkspacePath(): Promise<void> {
       return
     }
   }
-  // Electron 原生文件夹选择器
   const selectedPath = await pickDirectory("选择思源工作区")
   if (selectedPath) {
     updateWorkspacePath(selectedPath, true)
@@ -530,7 +985,7 @@ async function selectWorkspacePath(): Promise<void> {
 
 function handleClose(): void {
   if (isBackingUp.value) {
-    if (!confirm("正在备份中，关闭窗口不会中断备份。确定要隐藏窗口吗？")) return
+    if (!confirm("正在备份中，关闭窗口不会中断备份。确定要隐藏窗口吗？")) { return }
   }
   props.onClose?.()
 }
@@ -538,7 +993,7 @@ function handleClose(): void {
 // ========== 初始化 ==========
 
 onMounted(async () => {
-  // 加载保存的 S3 配置（通过 S3Backup 类共享的存储实例）
+  // 加载保存的 S3 配置
   const instance = getS3BackupInstance()
   try {
     if (instance) {
@@ -556,13 +1011,23 @@ onMounted(async () => {
   await loadWorkspaceSettings()
   await detectWorkspacePath()
 
-  // 初始化备份管理器（用于手动备份）
+  // 初始化备份管理器
   initBackupManager()
 
-  // 自动刷新备份列表
+  // 加载本地备份列表
+  await loadLocalBackupList()
+
+  // 自动刷新 S3 备份列表
   if (isConfigured.value) {
     await refreshBackupList()
   }
+
+  // 注册自动备份事件监听
+  window.addEventListener("autoBackupTrigger", handleAutoBackupTrigger)
+})
+
+onUnmounted(() => {
+  window.removeEventListener("autoBackupTrigger", handleAutoBackupTrigger)
 })
 </script>
 

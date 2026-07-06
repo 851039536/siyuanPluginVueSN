@@ -76,11 +76,7 @@ export const FEATURE_ICONS = {
     color: "#a855f7",
   },
 
-  // 数据备份
-  dataBackup: {
-    icon: "mdi:backup-restore",
-    color: "#10b981",
-  },
+  // 数据备份（已合并到 s3Backup）
 
   // 二维码生成
   qrCode: {

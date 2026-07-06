@@ -4,19 +4,19 @@
       <Select
         v-model="selectedLanguage"
         :options="languageOptions"
-        size="small"
+        size="xsmall"
         :placeholder="i18n.selectLanguage || '语言'"
       />
       <Select
         v-model="selectedCategory"
         :options="categoryOptions"
-        size="small"
+        size="xsmall"
         :placeholder="i18n.selectCategory || '分类'"
       />
       <Input
         v-model="localSearchQuery"
         type="search"
-        size="small"
+        size="xsmall"
         :placeholder="i18n.searchPlaceholder || '搜索脚本...'"
         prefix-icon="search"
       />
@@ -46,7 +46,7 @@
           >{{ group.label }}</span>
           <Badge
             variant="default"
-            size="small"
+            size="xsmall"
           >{{ group.scripts.length }}</Badge>
         </div>
 
@@ -55,7 +55,7 @@
             v-for="script in group.scripts"
             :key="script.id"
             variant="bordered"
-            size="small"
+            size="xsmall"
             class="script-list__card"
           >
             <template #header>
@@ -63,7 +63,7 @@
                 <span class="script-list__card-name">{{ script.name }}</span>
                 <Badge
                   :color="getLanguageColor(script.language)"
-                  size="small"
+                  size="xsmall"
                 >
                   {{ getLanguageLabel(script.language) }}
                 </Badge>
@@ -89,7 +89,7 @@
               <div class="script-list__card-actions">
                 <Button
                   variant="success"
-                  size="small"
+                  size="xsmall"
                   icon="play"
                   class="script-list__btn-run"
                   :title="i18n.runScript || '运行'"
@@ -97,14 +97,14 @@
                 />
                 <Button
                   variant="secondary"
-                  size="small"
+                  size="xsmall"
                   icon="edit"
                   :title="i18n.editScript || '编辑'"
                   @click="emit('edit', script)"
                 />
                 <Button
                   variant="danger"
-                  size="small"
+                  size="xsmall"
                   icon="delete"
                   :title="i18n.deleteScript || '删除'"
                   @click="emit('delete', script)"

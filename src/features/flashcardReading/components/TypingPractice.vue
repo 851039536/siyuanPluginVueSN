@@ -16,7 +16,7 @@
           <div class="card-actions">
             <Button
               variant="ghost"
-              size="small"
+              size="xsmall"
               icon="play"
               :iconSize="14"
               :title="t.play"
@@ -153,7 +153,7 @@
           <span>{{ coverMode ? currentCard?.title : typedWord }}</span>
           <Button
             variant="ghost"
-            size="small"
+            size="xsmall"
             icon="refreshLeft"
             :iconSize="14"
             title="重新输入"
@@ -230,7 +230,7 @@
       </div>
       <Button
         variant="primary"
-        size="small"
+        size="xsmall"
         @click="emit('restartRound')"
       >
         开始下一轮

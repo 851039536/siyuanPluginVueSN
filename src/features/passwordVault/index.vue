@@ -42,7 +42,7 @@
                     class="close-btn"
                     icon="close"
                     variant="ghost"
-                    size="small"
+                    size="xsmall"
                     @click="closeDialog"
                   />
                 </div>
@@ -75,7 +75,7 @@
                     class="manage-categories-btn"
                     icon="settings"
                     variant="ghost"
-                    size="small"
+                    size="xsmall"
                     title="管理类别"
                     @click="openCategoryManager"
                   />
@@ -91,19 +91,19 @@
                     v-model="searchQuery"
                     type="text"
                     placeholder="搜索名称、账号或描述..."
-                    size="small"
+                    size="xsmall"
                   />
                   <Button
                     icon="download"
                     variant="ghost"
-                    size="small"
+                    size="xsmall"
                     title="导出所有数据"
                     @click="openExportConfirm"
                   />
                   <Button
                     icon="add"
                     variant="primary"
-                    size="small"
+                    size="xsmall"
                     title="添加密码"
                     @click="openAddModal"
                   />
@@ -136,7 +136,7 @@
                       <div class="entry-actions">
                         <Button
                           variant="ghost"
-                          size="small"
+                          size="xsmall"
                           title="一键复制名称、账号、密码、描述"
                           @click="copyAllEntry(entry)"
                         >
@@ -144,7 +144,7 @@
                         </Button>
                         <Button
                           variant="ghost"
-                          size="small"
+                          size="xsmall"
                           title="编辑"
                           @click="editEntry(entry)"
                         >
@@ -153,7 +153,7 @@
                         <Button
                           icon="delete"
                           variant="ghost"
-                          size="small"
+                          size="xsmall"
                           title="删除"
                           @click="deleteEntry(entry.id)"
                         />
@@ -203,7 +203,7 @@
                       <Button
                         :icon="showPasswords[entry.id] ? 'eye' : 'eyeOff'"
                         variant="ghost"
-                        size="small"
+                        size="xsmall"
                         @click.stop="togglePasswordVisibility(entry.id)"
                       />
                     </div>
@@ -221,7 +221,7 @@
               <div class="dialog-footer">
                 <Button
                   variant="ghost"
-                  size="small"
+                  size="xsmall"
                   @click="openChangePasswordModal"
                 >
                   <IconWrapper
@@ -268,7 +268,7 @@
               <Button
                 icon="close"
                 variant="ghost"
-                size="small"
+                size="xsmall"
                 @click="closeAddModal"
               />
             </div>
@@ -286,7 +286,7 @@
                       value: cat.id,
                       label: cat.name,
                     }))"
-                    size="small"
+                    size="xsmall"
                     required
                   />
                 </div>
@@ -296,7 +296,7 @@
                     v-model="entryForm.name"
                     label="名称"
                     type="text"
-                    size="small"
+                    size="xsmall"
                     placeholder="请输入名称（如：Google、GitHub等）"
                     required
                   />
@@ -307,7 +307,7 @@
                     v-model="entryForm.account"
                     label="账号"
                     type="text"
-                    size="small"
+                    size="xsmall"
                     placeholder="请输入账号"
                     required
                   />
@@ -318,7 +318,7 @@
                     v-model="entryForm.password"
                     label="密码"
                     :type="showFormPassword ? 'text' : 'password'"
-                    size="small"
+                    size="xsmall"
                     placeholder="请输入密码"
                     :show-password="true"
                     required
@@ -330,7 +330,7 @@
                     v-model="entryForm.description"
                     type="textarea"
                     label="描述"
-                    size="small"
+                    size="xsmall"
                     placeholder="请输入描述信息"
                     :rows="3"
                   />
@@ -378,7 +378,7 @@
               <Button
                 icon="close"
                 variant="ghost"
-                size="small"
+                size="xsmall"
                 @click="closeCategoryManager"
               />
             </div>
@@ -391,7 +391,7 @@
                   <Input
                     v-model="newCategory.name"
                     type="text"
-                    size="small"
+                    size="xsmall"
                     placeholder="类别名称"
                     :maxlength="10"
                   />
@@ -408,7 +408,7 @@
                   <Button
                     icon="add"
                     variant="primary"
-                    size="small"
+                    size="xsmall"
                     :disabled="!newCategory.name.trim()"
                     @click="addCategory"
                   >
@@ -435,7 +435,7 @@
                       v-if="cat.id !== 'default'"
                       icon="close"
                       variant="ghost"
-                      size="small"
+                      size="xsmall"
                       title="删除类别"
                       @click="openCategoryDeleteConfirm(cat.id)"
                     />
@@ -475,14 +475,14 @@
                   <div class="form-actions">
                     <Button
                       variant="ghost"
-                      size="small"
+                      size="xsmall"
                       @click="showCategoryDeleteConfirm = false"
                     >
                       取消
                     </Button>
                     <Button
                       variant="primary"
-                      size="small"
+                      size="xsmall"
                       @click="executeDeleteCategory"
                     >
                       确认删除
@@ -516,7 +516,7 @@
               <Button
                 icon="close"
                 variant="ghost"
-                size="small"
+                size="xsmall"
                 @click="closeChangePasswordModal"
               />
             </div>
@@ -530,7 +530,7 @@
                   v-model="oldPassword"
                   label="当前密码"
                   :type="showOldPassword ? 'text' : 'password'"
-                  size="small"
+                  size="xsmall"
                   placeholder="请输入当前密码"
                   :show-password="true"
                   required
@@ -540,7 +540,7 @@
                   v-model="newPassword"
                   label="新密码"
                   :type="showNewPassword ? 'text' : 'password'"
-                  size="small"
+                  size="xsmall"
                   placeholder="请输入新密码"
                   :show-password="true"
                   :minlength="6"
@@ -551,7 +551,7 @@
                   v-model="confirmPassword"
                   label="确认新密码"
                   :type="showConfirmPassword ? 'text' : 'password'"
-                  size="small"
+                  size="xsmall"
                   placeholder="请再次输入新密码"
                   :show-password="true"
                   :minlength="6"
@@ -612,7 +612,7 @@
               <Button
                 icon="close"
                 variant="ghost"
-                size="small"
+                size="xsmall"
                 @click="showExportConfirm = false"
               />
             </div>
@@ -660,14 +660,14 @@
                 <div class="form-actions">
                   <Button
                     variant="ghost"
-                    size="small"
+                    size="xsmall"
                     @click="showExportConfirm = false"
                   >
                     取消
                   </Button>
                   <Button
                     variant="primary"
-                    size="small"
+                    size="xsmall"
                     @click="confirmExport"
                   >
                     确认导出
@@ -684,7 +684,7 @@
                   <Input
                     v-model="exportPassword"
                     type="password"
-                    size="small"
+                    size="xsmall"
                     placeholder="请输入主密码"
                     :visible="showExportPwd"
                     @keyup.enter="verifyAndExport"
@@ -701,14 +701,14 @@
                 <div class="form-actions">
                   <Button
                     variant="ghost"
-                    size="small"
+                    size="xsmall"
                     @click="cancelExportPassword"
                   >
                     返回
                   </Button>
                   <Button
                     variant="primary"
-                    size="small"
+                    size="xsmall"
                     :disabled="!exportPassword.trim()"
                     @click="verifyAndExport"
                   >

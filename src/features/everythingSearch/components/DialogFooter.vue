@@ -5,7 +5,7 @@
       <Input
         :model-value="config.host"
         type="text"
-        size="small"
+        size="xsmall"
         placeholder="localhost"
         aria-label="服务地址"
         @update:model-value="updateConfig('host', $event as string)"
@@ -14,7 +14,7 @@
       <Input
         :model-value="config.port"
         type="number"
-        size="small"
+        size="xsmall"
         placeholder="80"
         aria-label="服务端口"
         @update:model-value="updateConfig('port', Number($event))"

@@ -3,7 +3,7 @@
     <div class="stats-overview">
       <Card
         variant="bordered"
-        size="small"
+        size="xsmall"
         class="stat-item"
       >
         <div class="stat-item-inner">
@@ -25,7 +25,7 @@
       </Card>
       <Card
         variant="bordered"
-        size="small"
+        size="xsmall"
         class="stat-item"
       >
         <div class="stat-item-inner">
@@ -47,7 +47,7 @@
       </Card>
       <Card
         variant="bordered"
-        size="small"
+        size="xsmall"
         class="stat-item"
       >
         <div class="stat-item-inner">
@@ -72,7 +72,7 @@
     <Card
       v-if="statistics.totalCards > 0"
       variant="bordered"
-      size="small"
+      size="xsmall"
       class="progress-section"
     >
       <div class="progress-header">
@@ -90,7 +90,7 @@
     <Card
       v-if="statistics.categoryStats.length > 0"
       variant="bordered"
-      size="small"
+      size="xsmall"
       class="chart-card"
     >
       <template #header>
@@ -127,7 +127,7 @@
     <Card
       v-if="statistics.cardStats.length > 0"
       variant="bordered"
-      size="small"
+      size="xsmall"
       class="rank-card"
     >
       <template #header>

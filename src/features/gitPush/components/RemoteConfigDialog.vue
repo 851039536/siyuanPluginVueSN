@@ -31,7 +31,7 @@
             <template v-if="editingRemoteName === r.name">
               <Input
                 v-model="editingRemoteUrl"
-                size="small"
+                size="xsmall"
                 style="flex:1"
                 @keydown="$event.key === 'Enter' && saveRemoteEdit(r.name)"
                 @keydown.escape="editingRemoteName = ''"
@@ -81,14 +81,14 @@
         <div class="gp-remote-add">
           <Select
             v-model="newRemoteName"
-            size="small"
+            size="xsmall"
             style="width:130px"
             :options="remoteMetaOptions"
             placeholder="选择平台"
           />
           <Input
             v-model="newRemoteUrl"
-            size="small"
+            size="xsmall"
             placeholder="远程 URL"
             style="flex:1"
             @keydown="$event.key === 'Enter' && addRemote()"

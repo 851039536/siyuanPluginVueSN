@@ -23,7 +23,7 @@
           <div class="gp-path-row">
             <Input
               v-model="localScanDir"
-              size="small"
+              size="xsmall"
               :placeholder="i18n.scanDirPlaceholder || '选择要递归扫描的目录...'"
               @keydown="$event.key === 'Enter' && $emit('start-scan', localScanDir)"
             />

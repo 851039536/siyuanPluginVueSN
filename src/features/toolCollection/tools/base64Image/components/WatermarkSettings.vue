@@ -26,7 +26,7 @@
           :label="positionLabel"
           :options="positionOptions"
           :model-value="modelValue.position"
-          size="small"
+          size="xsmall"
           @update:model-value="update('position', $event)"
         />
       </div>

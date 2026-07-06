@@ -87,7 +87,7 @@
             v-if="isGenerating"
             title="停止生成"
             variant="danger"
-            size="small"
+            size="xsmall"
             @click="$emit('stop')"
           >
             <svg
@@ -100,7 +100,7 @@
             :disabled="!canApply"
             title="应用编辑"
             variant="primary"
-            size="small"
+            size="xsmall"
             @click="$emit('apply-edit')"
           >
             <div
@@ -119,7 +119,7 @@
             :disabled="!canInsertSubDoc"
             title="插入为子文档"
             variant="ghost"
-            size="small"
+            size="xsmall"
             @click="$emit('insert-subdoc')"
           >
             <div
@@ -137,7 +137,7 @@
             :disabled="isUndoing"
             title="撤回编辑"
             variant="ghost"
-            size="small"
+            size="xsmall"
             @click="$emit('undo-edit')"
           >
             <div
@@ -153,7 +153,7 @@
           <Button
             title="复制"
             variant="ghost"
-            size="small"
+            size="xsmall"
             @click="$emit('copy')"
           >
             <svg
@@ -166,7 +166,7 @@
             v-if="!isGenerating && generatedContent"
             title="重新审核内容"
             variant="ghost"
-            size="small"
+            size="xsmall"
             @click="$emit('re-review')"
           >
             <svg
@@ -179,7 +179,7 @@
             v-if="!isGenerating && (conversationCount || 0) > 0"
             :title="`清空对话历史（${conversationCount || 0} 轮）`"
             variant="ghost"
-            size="small"
+            size="xsmall"
             @click="$emit('clear-conversation')"
           >
             <svg
@@ -191,7 +191,7 @@
           <Button
             title="清除"
             variant="ghost"
-            size="small"
+            size="xsmall"
             @click="$emit('clear')"
           >
             <svg

@@ -40,21 +40,21 @@
         <Button
           icon="contentCopy"
           variant="ghost"
-          size="small"
+          size="xsmall"
           :title="i18n.copyUrl || '复制网址'"
           @click="emit('copyUrl', entry.url)"
         />
         <Button
           icon="edit"
           variant="ghost"
-          size="small"
+          size="xsmall"
           :title="i18n.editWebsite || '编辑'"
           @click="emit('edit', entry)"
         />
         <Button
           icon="delete"
           variant="ghost"
-          size="small"
+          size="xsmall"
           :title="i18n.deleteWebsite || '删除'"
           @click="emit('delete', entry.id)"
         />

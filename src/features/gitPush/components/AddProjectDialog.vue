@@ -18,7 +18,7 @@
         <Input
           v-model="name"
           :label="i18n.projectName || '项目名称'"
-          size="small"
+          size="xsmall"
           :placeholder="i18n.namePlaceholder || '输入项目名称...'"
           @keydown="$event.key === 'Enter' && submit()"
         />
@@ -27,7 +27,7 @@
           <div class="gp-path-row">
             <Input
               v-model="path"
-              size="small"
+              size="xsmall"
               :placeholder="i18n.pathPlaceholder || '选择或输入项目路径...'"
               @keydown="$event.key === 'Enter' && submit()"
             />
@@ -42,7 +42,7 @@
         <Select
           v-model="catId"
           :label="i18n.category || '分类'"
-          size="small"
+          size="xsmall"
           :options="categoryOptions"
         />
 

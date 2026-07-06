@@ -59,7 +59,7 @@
       <div class="action-section">
         <Button
           variant="primary"
-          size="small"
+          size="xsmall"
           :disabled="isGenerating || !codeInput.trim()"
           :loading="isGenerating"
           @click="handleGenerate"
@@ -72,7 +72,7 @@
         </Button>
         <Button
           variant="ghost"
-          size="small"
+          size="xsmall"
           :disabled="!codeInput.trim() && !result"
           @click="handleClear"
         >
@@ -98,7 +98,7 @@
           </span>
           <Button
             variant="ghost"
-            size="small"
+            size="xsmall"
             @click="copyResult"
           >
             <IconWrapper

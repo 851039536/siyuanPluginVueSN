@@ -42,7 +42,7 @@
         <div class="gp-cat-add-row">
           <Input
             v-model="newCatName"
-            size="small"
+            size="xsmall"
             :placeholder="i18n.catNamePlaceholder || '分类名称'"
             style="flex:1"
             @keydown="$event.key === 'Enter' && addCategory()"

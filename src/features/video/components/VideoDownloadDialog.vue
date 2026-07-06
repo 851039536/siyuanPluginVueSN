@@ -16,7 +16,7 @@
         <Button
           icon="x"
           variant="ghost"
-          size="small"
+          size="xsmall"
           :disabled="downloadProgress"
           @click="onClose"
         />
@@ -33,7 +33,7 @@
             />
             <Button
               variant="secondary"
-              size="small"
+              size="xsmall"
               :disabled="downloadProgress"
               title="测试路径"
               @click="testYtdlpPath"
@@ -42,7 +42,7 @@
             </Button>
             <Button
               variant="secondary"
-              size="small"
+              size="xsmall"
               :disabled="downloadProgress"
               title="保存路径"
               @click="saveYtdlpPath"

@@ -4,7 +4,7 @@
       ref="inputRef"
       :model-value="modelValue"
       type="text"
-      size="small"
+      size="xsmall"
       :placeholder="placeholder"
       prefix-icon="search"
       :clearable="true"
@@ -14,7 +14,7 @@
     />
     <Button
       variant="primary"
-      size="small"
+      size="xsmall"
       :disabled="isSearching || !modelValue?.trim()"
       :loading="isSearching"
       @click="handleSearch"

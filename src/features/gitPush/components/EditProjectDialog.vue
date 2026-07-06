@@ -21,7 +21,7 @@
         <Input
           v-model="localName"
           label="项目名称"
-          size="small"
+          size="xsmall"
           @keydown="$event.key === 'Enter' && save()"
         />
         <div class="gp-edit-row">
@@ -29,7 +29,7 @@
             <Select
               v-model="localStatus"
               label="状态"
-              size="small"
+              size="xsmall"
               :options="statusOptions"
             />
           </div>
@@ -64,7 +64,7 @@
           v-model="localNote"
           type="textarea"
           label="备注"
-          size="small"
+          size="xsmall"
           :rows="3"
           placeholder="项目备注（可选）"
         />
@@ -78,7 +78,7 @@
             >
               <Input
                 v-model="allPathsList[idx]"
-                size="small"
+                size="xsmall"
                 :placeholder="`设备 ${idx + 1} 的本地路径...`"
               />
               <button
@@ -125,7 +125,7 @@
               <template v-if="editLinkPlatform === link.key">
                 <Input
                   v-model="editLinkUrl"
-                  size="small"
+                  size="xsmall"
                   style="flex:1"
                   @keydown="$event.key === 'Enter' && saveRepoLinkEdit(link)"
                   @keydown.escape="cancelRepoLinkEdit()"
@@ -176,14 +176,14 @@
           >
             <Select
               v-model="newLinkPlatform"
-              size="small"
+              size="xsmall"
               style="width:130px"
               :options="linkAddOptions"
               placeholder="选择平台"
             />
             <Input
               v-model="newLinkUrl"
-              size="small"
+              size="xsmall"
               placeholder="仓库 URL"
               style="flex:1"
               @keydown="$event.key === 'Enter' && handleAddRepoLink()"
@@ -219,7 +219,7 @@
               <template v-if="editRemoteName === r.name">
                 <Input
                   v-model="editRemoteUrl"
-                  size="small"
+                  size="xsmall"
                   style="flex:1"
                   @keydown="$event.key === 'Enter' && saveRemoteEdit(r.name)"
                   @keydown.escape="editRemoteName = ''"
@@ -269,14 +269,14 @@
           >
             <Select
               v-model="newRemoteName"
-              size="small"
+              size="xsmall"
               style="width:130px"
               :options="remoteOptions"
               placeholder="选择平台"
             />
             <Input
               v-model="newRemoteUrl"
-              size="small"
+              size="xsmall"
               placeholder="远程 URL"
               style="flex:1"
               @keydown="$event.key === 'Enter' && handleAddRemote()"

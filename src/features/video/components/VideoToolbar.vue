@@ -3,7 +3,7 @@
     <!-- 主要操作按钮 -->
     <Button
       variant="primary"
-      size="small"
+      size="xsmall"
       @click="handleRefresh"
     >
       <template #icon>
@@ -16,7 +16,7 @@
     </Button>
     <Button
       variant="secondary"
-      size="small"
+      size="xsmall"
       @click="handleOpenFolder"
     >
       <template #icon>
@@ -32,7 +32,7 @@
     <Button
       v-if="showEncryptBtn"
       variant="ghost"
-      size="small"
+      size="xsmall"
       class="btn-encrypt"
       @click="handleBatchEncrypt"
     >
@@ -47,7 +47,7 @@
     <Button
       v-if="showDecryptBtn"
       variant="ghost"
-      size="small"
+      size="xsmall"
       class="btn-decrypt"
       @click="handleBatchDecrypt"
     >
@@ -64,7 +64,7 @@
     <div class="ffmpeg-tools">
       <Button
         variant="ghost"
-        size="small"
+        size="xsmall"
         class="btn-ffmpeg"
         title="下载视频"
         @click="handleDownloadVideo"
@@ -79,7 +79,7 @@
       </Button>
       <Button
         variant="ghost"
-        size="small"
+        size="xsmall"
         class="btn-ffmpeg"
         title="视频合并"
         @click="handleMergeVideos"
@@ -94,7 +94,7 @@
       </Button>
       <Button
         variant="ghost"
-        size="small"
+        size="xsmall"
         class="btn-ffmpeg"
         title="视频音频合并"
         @click="handleMergeAudio"
@@ -109,7 +109,7 @@
       </Button>
       <Button
         variant="ghost"
-        size="small"
+        size="xsmall"
         class="btn-ffmpeg"
         title="视频压缩"
         @click="handleCompress"
@@ -133,7 +133,7 @@
       <Select
         :model-value="selectedCategory"
         :options="categoryOptions"
-        size="small"
+        size="xsmall"
         @update:model-value="handleCategoryChange"
       />
     </div>
@@ -141,7 +141,7 @@
     <!-- FFmpeg 设置按钮 -->
     <Button
       variant="ghost"
-      size="small"
+      size="xsmall"
       @click="handleFFmpegSettings"
     >
       <template #icon>

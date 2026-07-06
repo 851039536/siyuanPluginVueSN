@@ -174,7 +174,7 @@
     >
       <Input
         :model-value="searchQuery"
-        size="small"
+        size="xsmall"
         :placeholder="searchPlaceholder || '搜索项目...'"
         prefix-icon="search"
         clearable

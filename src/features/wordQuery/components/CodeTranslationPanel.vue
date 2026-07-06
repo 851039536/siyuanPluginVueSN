@@ -59,7 +59,7 @@
       <div class="action-section">
         <Button
           variant="primary"
-          size="small"
+          size="xsmall"
           :disabled="isTranslating || !chineseInput.trim()"
           :loading="isTranslating"
           @click="handleTranslate"
@@ -72,7 +72,7 @@
         </Button>
         <Button
           variant="ghost"
-          size="small"
+          size="xsmall"
           :disabled="!chineseInput.trim() && !translationResult"
           @click="handleClear"
         >
@@ -98,7 +98,7 @@
           </span>
           <Button
             variant="ghost"
-            size="small"
+            size="xsmall"
             @click="copyResult"
           >
             <IconWrapper

@@ -4,7 +4,7 @@
       <Button
         :icon="refreshIcon"
         variant="ghost"
-        size="small"
+        size="xsmall"
         :loading="loading"
         :title="i18n.refresh"
         @click="handleRefresh"

@@ -17,7 +17,7 @@
               <Button
                 icon="close"
                 variant="ghost"
-                size="small"
+                size="xsmall"
                 @click="handleClose"
               />
             </div>

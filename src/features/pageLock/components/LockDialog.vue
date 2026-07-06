@@ -14,7 +14,7 @@
       <Button
         class="page-lock-dialog__close"
         variant="ghost"
-        size="small"
+        size="xsmall"
         @click="handleClose"
       >
         <template #icon>

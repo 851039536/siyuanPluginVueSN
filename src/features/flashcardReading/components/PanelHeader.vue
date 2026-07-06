@@ -11,21 +11,21 @@
       <div class="header-actions">
         <Button
           variant="ghost"
-          size="small"
+          size="xsmall"
           icon="add"
           :title="t.addCard"
           @click="$emit('addCard')"
         />
         <Button
           variant="ghost"
-          size="small"
+          size="xsmall"
           icon="refresh"
           :title="t.refresh"
           @click="$emit('refresh')"
         />
         <Button
           variant="ghost"
-          size="small"
+          size="xsmall"
           icon="info"
           :title="storagePath"
           @click="copyPath"

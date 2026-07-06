@@ -11,7 +11,7 @@
           <div class="card-actions">
             <Button
               variant="ghost"
-              size="small"
+              size="xsmall"
               icon="fileCopy"
               :iconSize="16"
               :title="t.copyTitle || '复制标题'"
@@ -19,7 +19,7 @@
             />
             <Button
               variant="ghost"
-              size="small"
+              size="xsmall"
               icon="contentCopy"
               :iconSize="16"
               :title="t.copyContent"
@@ -28,7 +28,7 @@
             <Button
               v-if="!hideActions"
               variant="ghost"
-              size="small"
+              size="xsmall"
               icon="edit"
               :iconSize="16"
               :title="t.editCard"
@@ -37,7 +37,7 @@
             <Button
               v-if="!hideActions"
               variant="danger"
-              size="small"
+              size="xsmall"
               icon="delete"
               :iconSize="16"
               :title="t.deleteCard"
@@ -57,7 +57,7 @@
           </div>
           <Button
             variant="primary"
-            size="small"
+            size="xsmall"
             icon="play"
             :iconSize="14"
             :title="t.play"

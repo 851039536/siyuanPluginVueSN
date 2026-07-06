@@ -5,7 +5,7 @@
       <Select
         :modelValue="selectedCategory"
         :options="categoryOptions"
-        size="small"
+        size="xsmall"
         @update:modelValue="(val) => $emit('update:selectedCategory', val as string)"
       />
     </div>
@@ -14,7 +14,7 @@
         :modelValue="searchQuery"
         :placeholder="t.searchPlaceholder"
         prefixIcon="search"
-        size="small"
+        size="xsmall"
         @update:modelValue="(val) => $emit('update:searchQuery', val as string)"
       />
       <div class="statistics">

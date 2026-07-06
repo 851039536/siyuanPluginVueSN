@@ -24,7 +24,7 @@
             <Input
               :model-value="localConcurrency"
               type="number"
-              size="small"
+              size="xsmall"
               style="width: 70px;"
               @update:model-value="localConcurrency = Number($event) || 1"
             />

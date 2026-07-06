@@ -17,7 +17,7 @@
               <Button
                 icon="close"
                 variant="ghost"
-                size="small"
+                size="xsmall"
                 @click="emit('update:visible', false)"
               />
             </div>
@@ -44,7 +44,7 @@
                   <Button
                     icon="add"
                     variant="primary"
-                    size="small"
+                    size="xsmall"
                     :disabled="!newCategory.name.trim()"
                     @click="handleAddCategory"
                   >
@@ -69,7 +69,7 @@
                       v-if="cat.id !== 'default'"
                       icon="close"
                       variant="ghost"
-                      size="small"
+                      size="xsmall"
                       title="删除分类"
                       @click="emit('delete-category', cat.id)"
                     />

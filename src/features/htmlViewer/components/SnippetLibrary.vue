@@ -23,7 +23,7 @@
               <Button
                 icon="close"
                 variant="ghost"
-                size="small"
+                size="xsmall"
                 @click="emit('update:visible', false)"
               />
             </div>
@@ -49,7 +49,7 @@
                 <Button
                   icon="settings"
                   variant="ghost"
-                  size="small"
+                  size="xsmall"
                   title="管理分类"
                   @click="emit('manage-categories')"
                 />
@@ -66,12 +66,12 @@
                   v-model="searchQuery"
                   type="text"
                   placeholder="搜索片段名称..."
-                  size="small"
+                  size="xsmall"
                 />
                 <Button
                   icon="add"
                   variant="primary"
-                  size="small"
+                  size="xsmall"
                   @click="emit('create-snippet')"
                 >
                   新建片段
@@ -110,14 +110,14 @@
                   <div class="snippet-actions">
                     <Button
                       variant="ghost"
-                      size="small"
+                      size="xsmall"
                       @click="emit('load-snippet', snippet)"
                     >
                       加载
                     </Button>
                     <Button
                       variant="ghost"
-                      size="small"
+                      size="xsmall"
                       @click="emit('edit-snippet', snippet)"
                     >
                       编辑
@@ -125,7 +125,7 @@
                     <Button
                       icon="delete"
                       variant="ghost"
-                      size="small"
+                      size="xsmall"
                       title="删除"
                       @click="emit('delete-snippet', snippet.id)"
                     />

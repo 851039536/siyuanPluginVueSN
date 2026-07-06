@@ -36,7 +36,7 @@
                 <Button
                   icon="add"
                   variant="primary"
-                  size="small"
+                  size="xsmall"
                   @click="openSaveModal"
                 >
                   保存片段
@@ -44,7 +44,7 @@
                 <Button
                   icon="close"
                   variant="ghost"
-                  size="small"
+                  size="xsmall"
                   @click="closeDialog"
                 />
               </div>
@@ -65,14 +65,14 @@
                     <div class="panel-actions">
                       <Button
                         variant="ghost"
-                        size="small"
+                        size="xsmall"
                         icon="contentCopy"
                         title="复制源码"
                         @click="copySource"
                       />
                       <Button
                         variant="ghost"
-                        size="small"
+                        size="xsmall"
                         icon="contentCopy"
                         title="复制渲染内容（带样式，适配公众号等平台）"
                         @click="copyRenderedContent"
@@ -81,7 +81,7 @@
                       </Button>
                       <Button
                         variant="ghost"
-                        size="small"
+                        size="xsmall"
                         icon="contentCopy"
                         title="复制为 Unicode 文本表格（适配B站等不支持table标签的平台）"
                         @click="copyAsTextTable"
@@ -90,21 +90,21 @@
                       </Button>
                       <Button
                         variant="ghost"
-                        size="small"
+                        size="xsmall"
                         icon="edit"
                         title="格式化HTML"
                         @click="formatHtml"
                       />
                       <Button
                         variant="ghost"
-                        size="small"
+                        size="xsmall"
                         icon="regex"
                         title="适配手机宽度"
                         @click="normalizeContentWidths"
                       />
                       <Button
                         variant="ghost"
-                        size="small"
+                        size="xsmall"
                         :class="{ 'json-btn-active': isJsonFormatted }"
                         title="格式化JSON（公众号浅色背景）"
                         @click="formatJsonContent"
@@ -133,14 +133,14 @@
                       <Button
                         v-if="isJsonFormatted"
                         variant="ghost"
-                        size="small"
+                        size="xsmall"
                         icon="contentCopy"
                         title="复制格式化JSON HTML"
                         @click="copyFormattedJsonHtml"
                       />
                       <Button
                         variant="ghost"
-                        size="small"
+                        size="xsmall"
                         icon="contentCopy"
                         title="复制渲染内容（带样式，适配哔哩哔哩等平台）"
                         @click="copyRenderedContent"
@@ -149,7 +149,7 @@
                       </Button>
                       <Button
                         variant="ghost"
-                        size="small"
+                        size="xsmall"
                         icon="contentCopy"
                         title="复制为 Unicode 文本表格（适配B站等不支持table标签的平台）"
                         @click="copyAsTextTable"
@@ -158,7 +158,7 @@
                       </Button>
                       <Button
                         variant="ghost"
-                        size="small"
+                        size="xsmall"
                         icon="contentCopy"
                         title="复制为图片"
                         @click="copyAsImage"
@@ -173,7 +173,7 @@
                     <span>JSON 格式化 · GitHub浅色主题 · 公众号可用</span>
                     <Button
                       variant="ghost"
-                      size="small"
+                      size="xsmall"
                       @click="isJsonFormatted = false"
                     >
                       还原
@@ -195,7 +195,7 @@
             <div class="dialog-footer">
               <Button
                 variant="ghost"
-                size="small"
+                size="xsmall"
                 @click="showSnippetLibrary = true"
               >
                 <IconWrapper

@@ -21,7 +21,7 @@
         <Button
           variant="ghost"
           icon="close"
-          size="small"
+          size="xsmall"
           @click="$emit('cancel')"
         />
       </div>
@@ -32,14 +32,14 @@
         <div class="vp-form-actions">
           <Button
             variant="secondary"
-            size="small"
+            size="xsmall"
             @click="$emit('cancel')"
           >
             {{ i18n?.cancel || '取消' }}
           </Button>
           <Button
             variant="danger"
-            size="small"
+            size="xsmall"
             @click="$emit('confirm')"
           >
             {{ i18n?.deleteConfirmOK || '确认删除' }}

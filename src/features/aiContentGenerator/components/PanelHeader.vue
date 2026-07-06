@@ -4,7 +4,7 @@
     <div class="header-actions">
       <Button
         variant="ghost"
-        size="small"
+        size="xsmall"
         title="对话设置"
         @click="$emit('toggle-settings')"
       >

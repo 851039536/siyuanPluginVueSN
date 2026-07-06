@@ -17,7 +17,7 @@
       <div class="vp-modal-actions">
         <Button
           variant="ghost"
-          size="small"
+          size="xsmall"
           icon="listBulleted"
           :title="i18n?.manageCategories || '管理分类'"
           @click="showCategoryManage = true"
@@ -25,7 +25,7 @@
         <Button
           variant="ghost"
           icon="close"
-          size="small"
+          size="xsmall"
           @click="closeModal"
         />
       </div>

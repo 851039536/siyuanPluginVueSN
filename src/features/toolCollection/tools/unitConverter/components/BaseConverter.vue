@@ -3,7 +3,7 @@
     <Input
       v-model="inputValue"
       type="text"
-      size="small"
+      size="xsmall"
       label="INPUT"
       placeholder="请输入数值"
     />
@@ -13,7 +13,7 @@
         <Select
           v-model="fromBase"
           :options="baseOptions"
-          size="small"
+          size="xsmall"
           label="FROM"
         />
       </div>
@@ -40,7 +40,7 @@
         <Select
           v-model="toBase"
           :options="baseOptions"
-          size="small"
+          size="xsmall"
           label="TO"
         />
       </div>

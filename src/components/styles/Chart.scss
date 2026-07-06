@@ -9,6 +9,11 @@
   border-radius: $radius-md;
   overflow: hidden;
 
+  &--xsmall {
+    width: 120px; // 图表尺寸无对应 Token，保留
+    height: 90px;
+  }
+
   &--small {
     width: 200px; // 图表尺寸无对应 Token，保留
     height: 150px;

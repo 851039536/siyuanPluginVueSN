@@ -78,7 +78,7 @@ import {
 } from "vue"
 
 type CardVariant = "bordered" | "elevated" | "flat" | "outlined"
-type CardSize = "small" | "medium" | "large"
+type CardSize = "xsmall" | "small" | "medium" | "large"
 
 interface Props {
   /** 卡片标题 */

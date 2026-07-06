@@ -133,7 +133,7 @@ type InputType =
   | "url"
   | "search"
   | "textarea"
-type InputSize = "small" | "medium" | "large"
+type InputSize = "xsmall" | "small" | "medium" | "large"
 type InputResize = "none" | "both" | "horizontal" | "vertical"
 type InputWrap = "hard" | "soft" | "off"
 

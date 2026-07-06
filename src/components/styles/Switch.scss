@@ -40,6 +40,11 @@
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
 
     // 尺寸变体
+    .si-switch--xsmall & {
+      width: 28px;
+      height: 14px; // 无对应 Token
+    }
+
     .si-switch--small & {
       width: 36px;
       height: $spacing-5; // 20px
@@ -72,6 +77,11 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 
     // 尺寸变体
+    .si-switch--xsmall & {
+      width: 10px; // 特小号，无对应 Token
+      height: 10px;
+    }
+
     .si-switch--small & {
       width: $spacing-4; // 16px
       height: $spacing-4;
@@ -88,6 +98,10 @@
     }
 
     // 选中状态 - 滑块位置
+    .si-switch--checked.si-switch--xsmall & {
+      transform: translateX(12px); // 28px track - 14px thumb - 2px border
+    }
+
     .si-switch--checked.si-switch--small & {
       transform: translateX($spacing-4); // 16px
     }
@@ -108,6 +122,13 @@
     left: 50%;
     transform: translate(-50%, -50%);
     border-radius: $radius-full;
+
+    .si-switch--xsmall & {
+      width: 10px; // 无对应 Token
+      height: 10px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: var(--b3-theme-on-primary, $brand-light);
+    }
 
     .si-switch--small & {
       width: $spacing-4; // 16px

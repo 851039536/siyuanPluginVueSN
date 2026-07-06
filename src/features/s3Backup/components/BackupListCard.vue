@@ -5,7 +5,7 @@
       <h4>{{ title }}</h4>
       <Button
         variant="ghost"
-        size="small"
+        size="xsmall"
         :disabled="disableRefresh"
         @click="$emit('refresh')"
       >

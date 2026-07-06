@@ -186,26 +186,9 @@
   font-size: inherit;
 }
 
-// ========== 公共组件紧凑覆盖 ==========
-// 用 !important 覆盖公共组件自身 scoped 样式的同优先级 selector
 
-:deep(.si-button--small) {
-  padding: 2px 6px !important;
-  font-size: $font-size-xs !important;
-  line-height: 1.3 !important;
-  min-height: auto !important;
-}
 
-:deep(.si-input--small .si-input__field) {
-  padding: 2px 6px !important;
-  font-size: $font-size-xs !important;
-}
 
-:deep(.si-select--small .si-select__trigger) {
-  padding: 2px 6px !important;
-  font-size: $font-size-xs !important;
-  min-height: auto !important;
-}
 
 
 

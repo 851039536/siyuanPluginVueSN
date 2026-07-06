@@ -5,7 +5,7 @@
       <span class="s3-backup-header-title">{{ i18n.s3Backup || "S3 备份" }}</span>
       <Button
         variant="ghost"
-        size="small"
+        size="xsmall"
         icon="close"
         @click="handleClose"
       />
@@ -86,7 +86,7 @@
         @refresh="refreshLocalBackupList"
       >
         <template #actions="{ item }">
-          <Button variant="danger" size="small" @click="deleteLocalBackup(item)">
+          <Button variant="danger" size="xsmall" @click="deleteLocalBackup(item)">
             {{ i18n.delete || "删除" }}
           </Button>
         </template>
@@ -103,10 +103,10 @@
         @refresh="refreshBackupList"
       >
         <template #actions="{ item }">
-          <Button size="small" @click="handleDownload(item)">
+          <Button size="xsmall" @click="handleDownload(item)">
             {{ i18n.download || "下载" }}
           </Button>
-          <Button variant="danger" size="small" @click="handleDelete(item)">
+          <Button variant="danger" size="xsmall" @click="handleDelete(item)">
             {{ i18n.delete || "删除" }}
           </Button>
         </template>

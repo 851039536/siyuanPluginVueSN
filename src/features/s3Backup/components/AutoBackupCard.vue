@@ -9,7 +9,7 @@
       <Select
         :model-value="autoBackupEnabled"
         :options="autoBackupOptions"
-        size="small"
+        size="xsmall"
         @update:model-value="$emit('update:autoBackupEnabled', $event as boolean)"
       />
       <template v-if="autoBackupEnabled">
@@ -17,7 +17,7 @@
         <Select
           :model-value="backupFrequency"
           :options="frequencyOptions"
-          size="small"
+          size="xsmall"
           @update:model-value="$emit('update:backupFrequency', $event as string)"
         />
         <template v-if="backupFrequency === 'daily'">
@@ -25,7 +25,7 @@
           <Input
             :model-value="backupTime"
             type="text"
-            size="small"
+            size="xsmall"
             @update:model-value="$emit('update:backupTime', $event as string)"
           />
         </template>
@@ -33,7 +33,7 @@
         <Input
           :model-value="keepBackupCount"
           type="number"
-          size="small"
+          size="xsmall"
           style="width: 3rem;"
           @update:model-value="$emit('update:keepBackupCount', Number($event))"
         />

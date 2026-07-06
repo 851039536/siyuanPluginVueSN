@@ -34,7 +34,7 @@ import type { IconKey } from "@/config/icons"
 import { computed } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 
-type TagSize = "small" | "medium" | "large"
+type TagSize = "xsmall" | "small" | "medium" | "large"
 type TagVariant =
   | "default"
   | "primary"

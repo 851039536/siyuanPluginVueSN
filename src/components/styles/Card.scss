@@ -39,6 +39,32 @@
   }
 
   // 尺寸变体
+  &--xsmall {
+    .si-card__header {
+      padding: $spacing-1 $spacing-2; // 4px 8px
+    }
+
+    .si-card__title {
+      font-size: $font-size-xs;
+    }
+
+    .si-card__subtitle {
+      font-size: 10px; // 特小号，无对应 Token，保留
+    }
+
+    .si-card__body {
+      padding: $spacing-2; // 8px
+    }
+
+    .si-card__footer {
+      padding: $spacing-1 $spacing-2;
+    }
+
+    .si-card__cover {
+      height: 60px; // 无对应 Token，封面尺寸保留
+    }
+  }
+
   &--small {
     .si-card__header {
       padding: m.$spacing-2_5 $spacing-3; // 10px 12px

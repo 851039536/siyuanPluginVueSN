@@ -152,7 +152,7 @@ import {
 import FormField from "@/components/FormField.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 
-type SelectSize = "small" | "medium" | "large"
+type SelectSize = "xsmall" | "small" | "medium" | "large"
 
 export interface SelectOption {
   /** 选项值 */

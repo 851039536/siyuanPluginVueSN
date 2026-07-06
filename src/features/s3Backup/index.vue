@@ -3,12 +3,12 @@
     <!-- 头部 -->
     <div class="s3-backup-header">
       <span class="s3-backup-header-title">{{ i18n.s3Backup || "S3 备份" }}</span>
-      <button
-        class="s3-backup-close-btn"
+      <Button
+        variant="ghost"
+        size="small"
+        icon="close"
         @click="handleClose"
-      >
-        ×
-      </button>
+      />
     </div>
 
     <div class="settings-container">
@@ -23,17 +23,19 @@
             <div class="workspace-path-row">
               <span class="info-value workspace-path">{{ workspacePath || (i18n.notSet || "未设置") }}</span>
               <div class="path-actions">
-                <button
-                  class="select-path-btn"
+                <Button
+                  variant="ghost"
+                  size="small"
                   @click="selectWorkspacePath"
                 >
                   {{ i18n.selectPath || "选择路径" }}
-                </button>
-                <button
-                  class="open-folder-btn"
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="small"
                   :disabled="!workspaceRoot"
                   @click="openWorkspaceFolder"
-                >打开</button>
+                >打开</Button>
               </div>
             </div>
           </div>
@@ -61,27 +63,21 @@
           <h4>{{ i18n.backupMode || "备份模式" }}</h4>
         </div>
         <div class="form-group form-group-checkbox">
-          <label class="form-checkbox-label">
-            <input
-              v-model="backupModeLocal.localZip"
-              type="checkbox"
-              class="form-checkbox"
-              @change="saveWorkspaceSettings"
-            />
-            <span>{{ i18n.localZipBackup || "本地 ZIP 备份" }}</span>
-          </label>
+          <Switch
+            :model-value="backupModeLocal.localZip"
+            size="small"
+            :label="i18n.localZipBackup || '本地 ZIP 备份'"
+            @update:model-value="backupModeLocal.localZip = $event; saveWorkspaceSettings()"
+          />
           <span class="form-hint">{{ i18n.localZipHint || "打包为 data-*.zip 保存到工作区 data-backup/ 目录" }}</span>
         </div>
         <div class="form-group form-group-checkbox">
-          <label class="form-checkbox-label">
-            <input
-              v-model="backupModeLocal.s3Upload"
-              type="checkbox"
-              class="form-checkbox"
-              @change="saveWorkspaceSettings"
-            />
-            <span>{{ i18n.s3Upload || "上传到 S3" }}</span>
-          </label>
+          <Switch
+            :model-value="backupModeLocal.s3Upload"
+            size="small"
+            :label="i18n.s3Upload || '上传到 S3'"
+            @update:model-value="backupModeLocal.s3Upload = $event; saveWorkspaceSettings()"
+          />
           <span class="form-hint">{{ i18n.s3UploadHint || "逐文件上传到 S3 兼容存储（需先完成 S3 配置）" }}</span>
         </div>
         <p class="backup-hint">
@@ -121,54 +117,44 @@
           <h4>{{ i18n.manualBackup || "手动备份" }}</h4>
         </div>
         <div class="backup-actions-row">
-          <button
-            class="vp-btn vp-btn--primary vp-btn--sm"
+          <Button
+            variant="primary"
+            size="small"
             :disabled="isBackingUp || !canBackup || !workspacePath"
+            :loading="isBackingUp"
             @click="performManualBackup"
           >
-            <span
-              v-if="isBackingUp"
-              class="vp-spin"
-            />
-            <span>{{ i18n.backupNow || "立即备份" }}</span>
-          </button>
-          <button
-            class="vp-btn vp-btn--ghost vp-btn--sm"
+            {{ i18n.backupNow || "立即备份" }}
+          </Button>
+          <Button
+            variant="ghost"
+            size="small"
             :disabled="isBackingUp || !isConfigured || !workspacePath"
+            :loading="isS3OnlyBackingUp"
             @click="triggerS3OnlyUpload"
           >
-            <span
-              v-if="isS3OnlyBackingUp"
-              class="vp-spin"
-            />
-            <span>{{ i18n.uploadToS3 || "上传到 S3" }}</span>
-          </button>
+            {{ i18n.uploadToS3 || "上传到 S3" }}
+          </Button>
         </div>
         <div class="form-group form-group-checkbox">
-          <label class="form-checkbox-label">
-            <input
-              v-model="useDateFolder"
-              type="checkbox"
-              class="form-checkbox"
-              @change="saveWorkspaceSettings"
-            />
-            <span>{{ i18n.useDateFolder || "生成日期子文件夹" }}</span>
-          </label>
+          <Switch
+            v-model="useDateFolder"
+            size="small"
+            :label="i18n.useDateFolder || '生成日期子文件夹'"
+            @change="saveWorkspaceSettings"
+          />
           <span class="form-hint">{{ i18n.useDateFolderHint || "勾选后按日期分类存储" }}</span>
         </div>
         <!-- 本地备份目录 -->
         <div class="form-group">
-          <label class="form-label">{{ i18n.localBackupDir || "本地备份目录" }}</label>
-          <span class="form-label-desc">{{ i18n.localBackupDirDesc || "ZIP 压缩包保存到本地的哪个文件夹" }}</span>
-          <div class="path-input-row">
-            <input
-              v-model="localBackupDir"
-              type="text"
-              class="form-input form-input--sm"
-              placeholder="data-backup"
-              @change="onLocalBackupDirChanged"
-            />
-          </div>
+          <Input
+            v-model="localBackupDir"
+            size="small"
+            :label="i18n.localBackupDir || '本地备份目录'"
+            :hint="i18n.localBackupDirDesc || 'ZIP 压缩包保存到本地的哪个文件夹'"
+            placeholder="data-backup"
+            @change="onLocalBackupDirChanged"
+          />
           <div
             v-if="resolvedLocalBackupPath"
             class="path-preview"
@@ -179,12 +165,11 @@
         </div>
         <!-- S3 上传子路径 -->
         <div class="form-group">
-          <label class="form-label">{{ i18n.s3SubPath || "S3 上传子路径" }}</label>
-          <span class="form-label-desc">{{ i18n.s3SubPathDesc || "上传到云存储时，在目录前缀之后追加的路径段" }}</span>
-          <input
+          <Input
             v-model="s3SubPrefix"
-            type="text"
-            class="form-input form-input--sm"
+            size="small"
+            :label="i18n.s3SubPath || 'S3 上传子路径'"
+            :hint="i18n.s3SubPathDesc || '上传到云存储时，在目录前缀之后追加的路径段'"
             placeholder="data-backup"
             @change="saveWorkspaceSettings"
           />
@@ -213,52 +198,35 @@
         </div>
         <div class="settings-row">
           <span class="inline-label">{{ i18n.autoBackup || "自动备份" }}</span>
-          <select
+          <Select
             v-model="autoBackupEnabled"
-            class="form-select narrow"
+            :options="autoBackupOptions"
+            size="small"
             @change="saveWorkspaceSettings"
-          >
-            <option :value="false">
-              {{ i18n.disabled || "禁用" }}
-            </option>
-            <option :value="true">
-              {{ i18n.enabled || "启用" }}
-            </option>
-          </select>
+          />
           <template v-if="autoBackupEnabled">
             <span class="inline-label">{{ i18n.backupFrequency || "频率" }}</span>
-            <select
+            <Select
               v-model="backupFrequency"
-              class="form-select narrow"
+              :options="frequencyOptions"
+              size="small"
               @change="saveWorkspaceSettings"
-            >
-              <option value="minute">
-                {{ i18n.everyMinute || "每分钟" }}
-              </option>
-              <option value="hourly">
-                {{ i18n.everyHour || "每小时" }}
-              </option>
-              <option value="daily">
-                {{ i18n.everyDay || "每天" }}
-              </option>
-            </select>
+            />
             <template v-if="backupFrequency === 'daily'">
               <span class="inline-label">{{ i18n.backupTime || "时间" }}</span>
-              <input
+              <Input
                 v-model="backupTime"
-                type="time"
-                class="form-input narrow"
+                type="text"
+                size="small"
                 @change="saveWorkspaceSettings"
               />
             </template>
             <span class="inline-label">{{ i18n.keepBackupCount || "保留" }}</span>
-            <input
-              v-model="keepBackupCount"
+            <Input
+              v-model.number="keepBackupCount"
               type="number"
-              class="form-input narrow"
+              size="small"
               style="width: 3rem;"
-              min="1"
-              max="30"
               @change="saveWorkspaceSettings"
             />
             <span class="inline-label">{{ i18n.keepBackupCountHint || "份" }}</span>
@@ -276,13 +244,14 @@
       <section class="card-section history-section">
         <div class="section-header">
           <h4>{{ i18n.localBackups || "本地备份列表" }}</h4>
-          <button
-            class="refresh-btn"
+          <Button
+            variant="ghost"
+            size="small"
             :disabled="isLoadingLocal || !workspaceRoot"
             @click="refreshLocalBackupList"
           >
             {{ i18n.refresh || "刷新" }}
-          </button>
+          </Button>
         </div>
         <div
           v-if="localBackupList.length > 0"
@@ -299,12 +268,13 @@
               <span class="backup-size">{{ formatFileSize(backup.size) }}</span>
             </div>
             <div class="backup-actions">
-              <button
-                class="action-btn delete"
+              <Button
+                variant="danger"
+                size="small"
                 @click="deleteLocalBackup(backup)"
               >
                 {{ i18n.delete || "删除" }}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -320,13 +290,14 @@
       <section class="card-section history-section">
         <div class="section-header">
           <h4>{{ i18n.s3Backups || "云端备份列表" }}</h4>
-          <button
-            class="refresh-btn"
+          <Button
+            variant="ghost"
+            size="small"
             :disabled="isLoading || !isConfigured"
             @click="refreshBackupList"
           >
             {{ i18n.refresh || "刷新" }}
-          </button>
+          </Button>
         </div>
         <div
           v-if="backupList.length > 0"
@@ -343,18 +314,19 @@
               <span class="backup-size">{{ formatFileSize(backup.size) }}</span>
             </div>
             <div class="backup-actions">
-              <button
-                class="action-btn download"
+              <Button
+                size="small"
                 @click="handleDownload(backup)"
               >
                 {{ i18n.download || "下载" }}
-              </button>
-              <button
-                class="action-btn delete"
+              </Button>
+              <Button
+                variant="danger"
+                size="small"
                 @click="handleDelete(backup)"
               >
                 {{ i18n.delete || "删除" }}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -384,6 +356,10 @@ import { getS3BackupInstance } from "./index"
 import type { S3Config, S3FileInfo, LocalBackupInfo, BackupMode } from "./types"
 import { DEFAULT_BACKUP_MODE } from "./types"
 import S3ConfigForm from "./components/S3ConfigForm.vue"
+import Button from "@/components/Button.vue"
+import Input from "@/components/Input.vue"
+import Select from "@/components/Select.vue"
+import Switch from "@/components/Switch.vue"
 
 // ========== Props ==========
 
@@ -482,6 +458,18 @@ let backupManager: BackupManager | null = null
 const canBackup = computed(() => {
   return backupModeLocal.localZip || (backupModeLocal.s3Upload && isConfigured.value)
 })
+
+/** Select 选项（响应式 i18n） */
+const autoBackupOptions = computed(() => [
+  { value: false, label: props.i18n.disabled || "禁用" },
+  { value: true, label: props.i18n.enabled || "启用" },
+])
+
+const frequencyOptions = computed(() => [
+  { value: "minute", label: props.i18n.everyMinute || "每分钟" },
+  { value: "hourly", label: props.i18n.everyHour || "每小时" },
+  { value: "daily", label: props.i18n.everyDay || "每天" },
+])
 
 // ========== 备份管理器初始化 ==========
 

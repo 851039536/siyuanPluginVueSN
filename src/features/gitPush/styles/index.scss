@@ -973,36 +973,6 @@
   }
 }
 
-.gp-edit-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $spacing-1;
-  margin-bottom: 6px;
-}
-
-.gp-edit-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 2px 4px 2px 8px;
-  border-radius: 10px;
-  font-size: 10px;
-  background: var(--b3-theme-primary-lightest);
-  color: var(--b3-theme-primary);
-}
-
-.gp-edit-tag-x {
-  display: inline-flex;
-  align-items: center;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  color: inherit;
-  opacity: 0.6;
-  &:hover { opacity: 1; }
-}
-
 // 编辑弹窗：多本地路径编辑
 .gp-label-hint {
   font-size: 10px;

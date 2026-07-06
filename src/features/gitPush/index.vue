@@ -290,6 +290,7 @@
       :all-tags="allTags"
       @close="editDialogProjectId = ''"
       @saved="handleEditSaved"
+      @urls-updated="handleUrlsUpdated"
     />
   </div>
 </template>
@@ -952,6 +953,11 @@ function openEditDialog(project: GitProject) {
 /** 编辑弹窗保存后同步状态 */
 async function handleEditSaved() {
   editDialogProjectId.value = ""
+  await loadProjects()
+}
+
+/** 仓库链接更新：仅刷新列表，不关闭弹窗 */
+async function handleUrlsUpdated() {
   await loadProjects()
 }
 

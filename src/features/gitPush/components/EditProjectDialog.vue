@@ -145,22 +145,100 @@
         </div>
         <div class="gp-form-group">
           <label class="gp-label">仓库链接</label>
-          <div class="gp-edit-urls">
+          <div
+            v-if="repoLinkList.length"
+            class="gp-remote-list"
+          >
             <div
-              v-for="pl in PLATFORM_META"
-              :key="pl.key"
-              class="gp-edit-url-row"
+              v-for="link in repoLinkList"
+              :key="link.key"
+              class="gp-remote-row"
             >
               <Icon
-                :icon="pl.icon"
+                :icon="link.icon"
                 height="12"
               />
-              <Input
-                v-model="urlInputs[pl.urlProp]"
-                size="small"
-                :placeholder="`${pl.label} 仓库 URL（可选）`"
-              />
+              <span class="gp-remote-name">{{ link.label }}</span>
+              <template v-if="editLinkPlatform === link.key">
+                <Input
+                  v-model="editLinkUrl"
+                  size="small"
+                  style="flex:1"
+                  @keydown="$event.key === 'Enter' && saveRepoLinkEdit(link)"
+                  @keydown.escape="cancelRepoLinkEdit()"
+                />
+                <button
+                  class="vp-btn vp-btn--primary vp-btn--sm"
+                  @click="saveRepoLinkEdit(link)"
+                >
+                  保存
+                </button>
+                <button
+                  class="vp-btn vp-btn--ghost vp-btn--sm"
+                  @click="cancelRepoLinkEdit()"
+                >
+                  取消
+                </button>
+              </template>
+              <template v-else>
+                <span
+                  class="gp-remote-url"
+                  :title="link.url"
+                >{{ link.url }}</span>
+                <button
+                  class="vp-btn vp-btn--ghost vp-btn--sm"
+                  @click="editLinkPlatform = link.key; editLinkUrl = link.url"
+                >
+                  编辑
+                </button>
+                <button
+                  class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
+                  @click="handleDeleteRepoLink(link.urlProp)"
+                >
+                  删除
+                </button>
+              </template>
             </div>
+          </div>
+          <div
+            v-else
+            class="gp-remote-empty"
+          >
+            暂无仓库链接
+          </div>
+          <div
+            v-if="linkAddOptions.length > 0"
+            class="gp-remote-add"
+            style="margin-top:4px"
+          >
+            <Select
+              v-model="newLinkPlatform"
+              size="small"
+              style="width:130px"
+              :options="linkAddOptions"
+              placeholder="选择平台"
+            />
+            <Input
+              v-model="newLinkUrl"
+              size="small"
+              placeholder="仓库 URL"
+              style="flex:1"
+              @keydown="$event.key === 'Enter' && handleAddRepoLink()"
+            />
+            <button
+              class="vp-btn vp-btn--primary vp-btn--sm"
+              :disabled="!newLinkPlatform || !newLinkUrl.trim()"
+              @click="handleAddRepoLink"
+            >
+              添加
+            </button>
+          </div>
+          <div
+            v-if="repoLinkError"
+            class="gp-error"
+            style="margin-top:4px"
+          >
+            {{ repoLinkError }}
           </div>
         </div>
         <div class="gp-form-group">
@@ -357,7 +435,8 @@ const remoteOptions = computed<SelectOption[]>(() =>
 )
 const emit = defineEmits<{
   "close": []
-  "saved": [] // 通知父组件刷新列表
+  "saved": [] // 通知父组件刷新列表并关闭弹窗
+  "urlsUpdated": [] // 通知父组件刷新列表（不关闭弹窗）
 }>()
 
 // ── 项目数据（从 manager 加载） ──
@@ -385,6 +464,78 @@ const newRemoteUrl = ref("")
 const editRemoteName = ref("")
 const editRemoteUrl = ref("")
 const showHelp = ref(false)
+
+// ── 仓库链接列表操作 ──
+const repoLinkError = ref("")
+const editLinkPlatform = ref("")
+const editLinkUrl = ref("")
+const newLinkPlatform = ref("")
+const newLinkUrl = ref("")
+
+const repoLinkList = computed(() =>
+  PLATFORM_META
+    .filter((pl) => urlInputs[pl.urlProp])
+    .map((pl) => ({
+      key: pl.key,
+      icon: pl.icon,
+      label: pl.label,
+      urlProp: pl.urlProp,
+      url: urlInputs[pl.urlProp],
+    })),
+)
+
+const availablePlatforms = computed(() =>
+  PLATFORM_META.filter((pl) => !urlInputs[pl.urlProp]),
+)
+
+const linkAddOptions = computed<SelectOption[]>(() =>
+  availablePlatforms.value.map((pl) => ({
+    value: pl.key,
+    label: `${pl.label}（未配置）`,
+  })),
+)
+
+async function persistUrls() {
+  if (!project.value) { return }
+  try {
+    await props.manager.updateProjectMeta(props.projectId, {
+      githubUrl: urlInputs.githubUrl || undefined,
+      giteeUrl: urlInputs.giteeUrl || undefined,
+      giteaUrl: urlInputs.giteaUrl || undefined,
+      cnbUrl: urlInputs.cnbUrl || undefined,
+    })
+    repoLinkError.value = ""
+    emit("urlsUpdated")
+  } catch (e: any) {
+    repoLinkError.value = e?.message || "保存仓库链接失败"
+  }
+}
+
+async function handleAddRepoLink() {
+  const pl = PLATFORM_META.find((p) => p.key === newLinkPlatform.value)
+  if (!pl) { return }
+  urlInputs[pl.urlProp] = newLinkUrl.value.trim()
+  await persistUrls()
+  newLinkPlatform.value = ""
+  newLinkUrl.value = ""
+  const next = availablePlatforms.value[0]
+  if (next) { newLinkPlatform.value = next.key }
+}
+
+async function handleDeleteRepoLink(urlProp: string) {
+  urlInputs[urlProp] = ""
+  await persistUrls()
+}
+
+async function saveRepoLinkEdit(link: { key: string; urlProp: string; url: string }) {
+  urlInputs[link.urlProp] = editLinkUrl.value
+  await persistUrls()
+  editLinkPlatform.value = ""
+}
+
+function cancelRepoLinkEdit() {
+  editLinkPlatform.value = ""
+}
 
 // ── 语言检测 ──
 const isZh = computed(() => (props.i18n.cancel || '取消') === '取消')
@@ -434,6 +585,9 @@ onMounted(async () => {
   urlInputs.giteaUrl = p.giteaUrl || ""
   urlInputs.cnbUrl = p.cnbUrl || ""
   allPathsList.value = [p.path, ...(p.localPaths || [])]
+  // 初始化添加行默认平台
+  const first = PLATFORM_META.find((pl) => !urlInputs[pl.urlProp])
+  if (first) { newLinkPlatform.value = first.key }
   // 检测远程仓库
   await loadRemotes()
 })
@@ -531,10 +685,6 @@ async function save() {
     archived: localArchived.value,
     note: localNote.value,
     tags: localTags.value,
-    githubUrl: urlInputs.githubUrl,
-    giteeUrl: urlInputs.giteeUrl,
-    giteaUrl: urlInputs.giteaUrl,
-    cnbUrl: urlInputs.cnbUrl,
     path: firstPath,
     localPaths: restPaths.length > 0 ? restPaths : undefined,
   })

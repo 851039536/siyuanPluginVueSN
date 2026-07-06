@@ -44,13 +44,6 @@
         @open-folder="openWorkspaceFolder"
       />
 
-      <!-- 备份模式选择 -->
-      <BackupModeSelector
-        :model-value="backupModeLocal"
-        :i18n="i18n"
-        @update:model-value="onBackupModeChanged"
-      />
-
       <!-- 备份进度 -->
       <BackupProgressSection
         v-if="isBackingUp"
@@ -136,6 +129,12 @@
       v-if="activeTab === 'config'"
       class="settings-container"
     >
+      <BackupModeSelector
+        :model-value="backupModeLocal"
+        :i18n="i18n"
+        @update:model-value="onBackupModeChanged"
+      />
+
       <section class="card-section config-section">
         <S3ConfigForm
           :config="s3ConfigLocal"

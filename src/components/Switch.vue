@@ -36,7 +36,7 @@ import {
   useSlots,
 } from "vue"
 
-type SwitchSize = "small" | "medium" | "large"
+type SwitchSize = "xsmall" | "small" | "medium" | "large"
 
 interface Props {
   /** 是否选中 */

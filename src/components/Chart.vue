@@ -78,7 +78,7 @@ import {
 } from "vue-chartjs"
 
 type ChartType = "line" | "bar" | "pie" | "doughnut" | "area"
-type ChartSize = "small" | "medium" | "large" | "full"
+type ChartSize = "xsmall" | "small" | "medium" | "large" | "full"
 
 export interface ChartData {
   label: string

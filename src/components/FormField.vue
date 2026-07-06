@@ -34,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-type FormFieldSize = "small" | "medium" | "large"
+type FormFieldSize = "xsmall" | "small" | "medium" | "large"
 
 interface Props {
   label?: string

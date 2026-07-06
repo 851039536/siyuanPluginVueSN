@@ -12,7 +12,7 @@
         </span>
         <Button
           variant="ghost"
-          size="small"
+          size="xsmall"
           icon="help"
           :title="i18n.configGuide || '配置指引'"
           @click="showGuide = !showGuide"
@@ -31,7 +31,7 @@
           <span>{{ i18n.configGuide || "配置指引" }}</span>
           <Button
             variant="ghost"
-            size="small"
+            size="xsmall"
             icon="close"
             @click="showGuide = false"
           />
@@ -70,7 +70,7 @@
       <div class="form-group">
         <Input
           v-model="localConfig.endpoint"
-          size="small"
+          size="xsmall"
           :label="i18n.endpoint || 'Endpoint'"
           :placeholder="i18n.endpointHint || 'S3 服务地址，如 http://localhost:9000'"
         />
@@ -80,7 +80,7 @@
       <div class="form-group">
         <Input
           v-model="localConfig.accessKey"
-          size="small"
+          size="xsmall"
           :label="i18n.accessKey || 'Access Key'"
           placeholder="AKIAIOSFODNN7EXAMPLE"
         />
@@ -92,7 +92,7 @@
           v-model="localConfig.secretKey"
           type="password"
           show-password
-          size="small"
+          size="xsmall"
           :label="i18n.secretKey || 'Secret Key'"
           placeholder="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
         />
@@ -102,7 +102,7 @@
       <div class="form-group">
         <Input
           v-model="localConfig.bucket"
-          size="small"
+          size="xsmall"
           :label="i18n.bucket || 'Bucket'"
           :placeholder="i18n.bucketHint || '存储桶名称'"
         />
@@ -112,7 +112,7 @@
       <div class="form-group">
         <Input
           v-model="localConfig.region"
-          size="small"
+          size="xsmall"
           :label="i18n.region || 'Region'"
           :placeholder="i18n.regionHint || '区域，如 us-east-1'"
         />
@@ -122,7 +122,7 @@
       <div class="form-group">
         <Input
           v-model="localConfig.prefix"
-          size="small"
+          size="xsmall"
           :label="i18n.prefix || '目录前缀'"
           :placeholder="i18n.prefixHint || 'siyuan-backup/'"
         />
@@ -132,7 +132,7 @@
       <div class="form-group form-group-checkbox">
         <Switch
           :model-value="localConfig.pathStyle"
-          size="small"
+          size="xsmall"
           :label="i18n.pathStyle || 'Path Style'"
           @update:model-value="localConfig.pathStyle = $event"
         />
@@ -143,7 +143,7 @@
       <div class="form-group form-group-checkbox">
         <Switch
           :model-value="localConfig.useSSL"
-          size="small"
+          size="xsmall"
           :label="i18n.useSSL || '使用 HTTPS'"
           @update:model-value="localConfig.useSSL = $event"
         />
@@ -154,7 +154,7 @@
     <div class="form-actions">
       <Button
         variant="ghost"
-        size="small"
+        size="xsmall"
         :disabled="isConnecting"
         :loading="isConnecting"
         @click="handleTestConnection"
@@ -163,7 +163,7 @@
       </Button>
       <Button
         variant="primary"
-        size="small"
+        size="xsmall"
         @click="handleSave"
       >
         {{ i18n.saveConfig || "保存配置" }}

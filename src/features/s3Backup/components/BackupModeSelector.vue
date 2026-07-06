@@ -7,7 +7,7 @@
     <div class="form-group form-group-checkbox">
       <Switch
         :model-value="modelValue.localZip"
-        size="small"
+        size="xsmall"
         :label="i18n.localZipBackup || '本地 ZIP 备份'"
         @update:model-value="$emit('update:modelValue', { ...modelValue, localZip: $event as boolean })"
       />
@@ -16,7 +16,7 @@
     <div class="form-group form-group-checkbox">
       <Switch
         :model-value="modelValue.s3Upload"
-        size="small"
+        size="xsmall"
         :label="i18n.s3Upload || '上传到 S3'"
         @update:model-value="$emit('update:modelValue', { ...modelValue, s3Upload: $event as boolean })"
       />

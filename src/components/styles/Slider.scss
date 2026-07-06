@@ -149,6 +149,27 @@
   }
 
   // 尺寸变体
+  &--xsmall {
+    .si-slider__field {
+      height: 3px; // 无对应 Token
+
+      &::-webkit-slider-thumb {
+        width: 10px; // 无对应 Token
+        height: 10px;
+      }
+
+      &::-moz-range-thumb {
+        width: 10px; // 无对应 Token
+        height: 10px;
+      }
+    }
+
+    .si-slider__value {
+      font-size: 10px; // 特小号，无对应 Token
+      min-width: 24px; // 无对应 Token
+    }
+  }
+
   &--small {
     .si-slider__field {
       height: $spacing-1; // 4px

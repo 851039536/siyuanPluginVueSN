@@ -457,6 +457,7 @@ watch(
     display: flex;
     flex-direction: column;
     gap: $spacing-1;
+    min-width: 0;
 
     &.form-group-checkbox {
       grid-column: 1 / -1;
@@ -477,6 +478,7 @@ watch(
     background: var(--b3-theme-background);
     color: var(--b3-theme-on-background);
     font-size: $font-size-sm;
+    box-sizing: border-box;
     transition: border-color 0.15s;
 
     &:focus {
@@ -487,6 +489,7 @@ watch(
 
   .password-input-wrapper {
     position: relative;
+    box-sizing: border-box;
 
     .form-input {
       padding-right: 36px;

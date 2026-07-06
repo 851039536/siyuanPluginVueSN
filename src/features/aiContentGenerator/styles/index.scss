@@ -86,17 +86,6 @@
   position: relative;
 }
 
-.panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 2px 4px;
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
-  background: var(--b3-theme-surface);
-}
-
-.header-actions { display: flex; gap: 6px; }
-
 .content-display-section {
   flex: 1;
   overflow-y: auto;
@@ -168,7 +157,6 @@
   }
 
   .clear-btn {
-    padding: 2px !important;
     opacity: 0.6;
     &:hover { opacity: 1; }
   }

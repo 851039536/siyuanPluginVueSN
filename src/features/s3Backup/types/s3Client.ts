@@ -73,7 +73,7 @@ function payloadHash(body: Buffer | string | null): string {
   if (body === null || body === undefined) {
     return "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" // 空字符串的 SHA256
   }
-  if (typeof body === "string") return sha256Hex(body)
+  // B14 修复：两个分支返回相同，合并为单行
   return sha256Hex(body)
 }
 

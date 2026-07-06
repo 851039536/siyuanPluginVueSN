@@ -1,7 +1,7 @@
 /**
  * S3 备份功能类型定义和存储
  *
- * 定义 S3Config 接口、BackupSettings 接口、AutoBackupSettings 接口、
+ * 定义 S3Config 接口、BackupSettings 接口、
  * BackupMode 接口、LocalBackupInfo 接口以及 S3BackupStorage 存储槽。
  * 使用 PluginStorage + TypedStorage 模式管理配置持久化。
  */
@@ -39,27 +39,6 @@ export interface BackupMode {
   localZip: boolean
   /** 是否启用 S3 上传 */
   s3Upload: boolean
-}
-
-// ========== 自动备份设置接口 ==========
-
-export interface AutoBackupSettings {
-  /** 是否启用自动备份 */
-  autoBackupEnabled: boolean
-  /** 备份频率：minute | hourly | daily */
-  backupFrequency: "minute" | "hourly" | "daily"
-  /** 每日备份时间（HH:mm 格式，仅 daily 模式使用） */
-  backupTime: string
-  /** 保留本地备份份数（超出自动删除最旧的） */
-  keepBackupCount: number
-  /** 备份模式选择（本地 ZIP / S3 上传） */
-  backupMode: BackupMode
-  /** 上次备份时间戳 */
-  lastBackupTimestamp: number
-  /** 本地备份目录名（相对于工作区根目录，默认 "data-backup"） */
-  localBackupDir: string
-  /** S3 上传子路径（拼在 prefix 之后，默认 "data-backup"） */
-  s3SubPrefix: string
 }
 
 // ========== 备份设置接口 ==========
@@ -116,21 +95,11 @@ export const DEFAULT_BACKUP_MODE: BackupMode = {
   s3Upload: false,
 }
 
-export const DEFAULT_AUTO_BACKUP_SETTINGS: AutoBackupSettings = {
-  autoBackupEnabled: false,
-  backupFrequency: "daily",
-  backupTime: "03:00",
-  keepBackupCount: 7,
-  backupMode: { ...DEFAULT_BACKUP_MODE },
-  lastBackupTimestamp: 0,
-}
-
 // ========== 存储键常量 ==========
 
 const STORAGE_KEYS = {
   S3_CONFIG: "s3-backup-config",
   BACKUP_SETTINGS: "s3-backup-settings",
-  AUTO_BACKUP_SETTINGS: "s3-auto-backup-settings",
   BACKUP_HISTORY: "s3-backup-history",
 } as const
 
@@ -139,7 +108,6 @@ const STORAGE_KEYS = {
 export class S3BackupStorage {
   readonly s3Config: TypedStorage<S3Config>
   readonly backupSettings: TypedStorage<BackupSettings>
-  readonly autoBackupSettings: TypedStorage<AutoBackupSettings>
   readonly backupHistory: TypedStorage<{ list: LocalBackupInfo[] }>
 
   constructor(plugin: Plugin) {
@@ -159,7 +127,6 @@ export class S3BackupStorage {
       localBackupDir: "data-backup",
       s3SubPrefix: "data-backup",
     } as BackupSettings)
-    this.autoBackupSettings = new TypedStorage(storage, STORAGE_KEYS.AUTO_BACKUP_SETTINGS, { ...DEFAULT_AUTO_BACKUP_SETTINGS })
     this.backupHistory = new TypedStorage(storage, STORAGE_KEYS.BACKUP_HISTORY, { list: [] })
   }
 }

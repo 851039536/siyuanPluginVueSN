@@ -135,7 +135,7 @@
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm"
             :disabled="isBackingUp || !isConfigured || !workspacePath"
-            @click="performS3OnlyBackup"
+            @click="triggerS3OnlyUpload"
           >
             <span
               v-if="isS3OnlyBackingUp"
@@ -382,9 +382,10 @@ import { getWorkspaceDir } from "@/api"
 import { formatFileSize } from "@/utils/format"
 import { pickDirectory, openFolderInExplorer } from "@/utils/electronDialog"
 import { getNodeModules } from "@/utils/nodeModules"
+import { encryptSetting, decryptSetting } from "@/utils/settingsCrypto"
 import { useS3Backup } from "./composables/useS3Backup"
 import { BackupManager } from "./modules/BackupManager"
-import type { BackupProgress, BackupResult } from "./modules/BackupManager"
+import type { BackupResult, WorkspaceFile } from "./modules/BackupManager"
 import { getS3BackupInstance } from "./index"
 import type { S3Config, S3FileInfo, LocalBackupInfo, BackupMode } from "./types"
 import { DEFAULT_BACKUP_MODE } from "./types"
@@ -564,7 +565,14 @@ async function handleConfigSaved(): Promise<void> {
 
   const instance = getS3BackupInstance()
   if (instance) {
-    await instance.getStorage().s3Config.save(s3ConfigLocal.value)
+    // A8 修复：S3 凭证加密存储，防止 accessKey/secretKey 明文暴露
+    const plain = s3ConfigLocal.value
+    const encrypted: S3Config = {
+      ...plain,
+      accessKey: await encryptSetting(plain.accessKey),
+      secretKey: await encryptSetting(plain.secretKey),
+    }
+    await instance.getStorage().s3Config.save(encrypted)
   }
   showMessage(props.i18n.configSaved || "配置已保存", 2000, "info")
 }
@@ -572,7 +580,12 @@ async function handleConfigSaved(): Promise<void> {
 // ========== 备份操作 ==========
 
 async function performManualBackup(): Promise<void> {
-  if (isBackingUp.value || !backupManager) { return }
+  // A7 修复：backupManager 为 null 时记录警告日志，避免静默失败
+  if (!backupManager) {
+    console.warn("[S3备份] backupManager 未初始化，无法执行备份")
+    return
+  }
+  if (isBackingUp.value) { return }
 
   if (!workspacePath.value) {
     showMessage(props.i18n.noWorkspace || "请先选择工作区路径", 3000, "info")
@@ -584,11 +597,13 @@ async function performManualBackup(): Promise<void> {
 
   try {
     // 根据备份模式分发
+    let localResult: BackupResult | null = null
     if (backupModeLocal.localZip) {
-      await performLocalBackup()
+      localResult = await performLocalBackup()
     }
     if (backupModeLocal.s3Upload) {
-      await performS3Backup()
+      // 同时勾选本地+S3 时，只上传本次生成的 ZIP，避免重复上传历史备份（A4 修复）
+      await performS3Backup(localResult)
     }
 
     // 更新备份时间
@@ -621,9 +636,9 @@ async function performManualBackup(): Promise<void> {
   }
 }
 
-/** 本地 ZIP 备份 */
-async function performLocalBackup(): Promise<void> {
-  if (!backupManager) { return }
+/** 本地 ZIP 备份，返回备份结果（含文件路径，供 S3 上传使用） */
+async function performLocalBackup(): Promise<BackupResult | null> {
+  if (!backupManager) { return null }
 
   backupProgress.value = {
     phase: "scanning",
@@ -635,19 +650,32 @@ async function performLocalBackup(): Promise<void> {
 
   try {
     const result = await backupManager.performFullBackup({
+      // A2 修复：传递 useDateFolder 配置，支持按日期创建子文件夹
+      useDateFolder: useDateFolder.value,
       onProgress: (p) => {
         backupProgress.value = { ...p }
       },
     })
 
+    // A3 修复：使用当前时间而非 lastBackupTime.value（后者尚未更新）
+    const backupTime = new Date().toLocaleString()
     localBackupList.value.unshift({
       name: result.fileName,
       path: result.filePath,
-      time: lastBackupTime.value || new Date().toLocaleString(),
+      time: backupTime,
       size: result.size,
     })
 
+    // A1 修复：超出保留数量时删除磁盘上的旧备份文件
     if (localBackupList.value.length > keepBackupCount.value) {
+      const toDelete = localBackupList.value.slice(keepBackupCount.value)
+      for (const old of toDelete) {
+        try {
+          await backupManager.deleteBackupFile(old.path)
+        } catch (err) {
+          console.warn(`删除旧备份失败: ${old.name}`, err)
+        }
+      }
       localBackupList.value = localBackupList.value.slice(0, keepBackupCount.value)
     }
 
@@ -657,22 +685,31 @@ async function performLocalBackup(): Promise<void> {
     }
 
     showMessage(`本地备份成功: ${result.fileName}（${result.totalFiles} 文件）`, 3000, "info")
+    return result
   } catch (err: any) {
     throw new Error(`本地备份: ${err.message}`)
   }
 }
 
-/** S3 备份 */
-async function performS3Backup(): Promise<void> {
+/** S3 备份
+ * @param latestZip 若提供则只上传该 ZIP 文件（用于本地+S3 同时备份场景，避免重复上传历史备份）
+ */
+async function performS3Backup(latestZip?: BackupResult | null): Promise<void> {
   if (!backupManager) { return }
 
   if (!isConfigured.value) {
     throw new Error("S3 未配置，请先完成 S3 连接配置")
   }
 
-  const files = await backupManager.getWorkspaceFiles((p) => {
-    backupProgress.value = { ...p }
-  })
+  let files: WorkspaceFile[]
+  if (latestZip) {
+    // A4 修复：仅上传刚生成的 ZIP 文件，避免每次重复上传 data-backup/ 中的全部历史备份
+    files = [{ fullPath: latestZip.filePath, relativePath: latestZip.fileName }]
+  } else {
+    files = await backupManager.getWorkspaceFiles((p) => {
+      backupProgress.value = { ...p }
+    })
+  }
 
   if (files.length === 0) {
     showMessage("工作区没有可备份的文件", 3000, "info")
@@ -683,7 +720,7 @@ async function performS3Backup(): Promise<void> {
   const d = new Date()
   const pad = (n: number) => String(n).padStart(2, "0")
   const timestamp = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`
-  const node = getNodeModules()
+  // B10 修复：复用顶层缓存的 node 实例
   const fs = node!.fs.promises
 
   for (let i = 0; i < files.length; i++) {
@@ -728,26 +765,17 @@ async function performS3Backup(): Promise<void> {
   await refreshBackupList()
 }
 
-/** 独立 S3 上传按钮（不依赖备份模式复选框，直接上传到 S3） */
-async function performS3OnlyBackup(): Promise<void> {
+/** 触发独立 S3 上传（按钮直接调用，无需额外包装） */
+async function triggerS3OnlyUpload(): Promise<void> {
   if (isS3OnlyBackingUp.value || !backupManager) { return }
-
   if (!workspacePath.value) {
     showMessage(props.i18n.noWorkspace || "请先选择工作区路径", 3000, "info")
     await selectWorkspacePath()
     if (!workspacePath.value) { return }
   }
-
-  if (!isConfigured.value) {
-    showMessage("S3 未配置，请先完成 S3 连接配置", 3000, "info")
-    return
-  }
-
   isS3OnlyBackingUp.value = true
-
   try {
     await performS3Backup()
-    showMessage("S3 上传完成", 2000, "info")
   } catch (err: any) {
     showMessage(`S3 上传失败: ${err.message}`, 5000, "error")
   } finally {
@@ -819,7 +847,8 @@ async function deleteLocalBackup(backup: { name: string; path: string }): Promis
     if (backupManager) {
       await backupManager.deleteBackupFile(backup.path)
     }
-    localBackupList.value = localBackupList.value.filter((b) => b.name !== backup.name)
+    // A11 修复：按 path 过滤而非 name，避免同名文件误删
+    localBackupList.value = localBackupList.value.filter((b) => b.path !== backup.path)
     const instance = getS3BackupInstance()
     if (instance) {
       await instance.getStorage().backupHistory.save({ list: localBackupList.value })
@@ -842,18 +871,23 @@ async function refreshBackupList(): Promise<void> {
   }
 }
 
+// B7 修复：提取公共方法，消除 handleDownload/handleRestore 核心逻辑重复
+async function downloadToLocalDir(backup: S3FileInfo): Promise<string> {
+  if (!node) { throw new Error("无法访问文件系统，请使用桌面版思源笔记") }
+  const fs = node.fs.promises
+  const pathModule = node.path
+
+  const downloadDir = `${workspaceRoot.value}/${localBackupDir.value || "data-backup"}`
+  await fs.mkdir(downloadDir, { recursive: true })
+  const localPath = pathModule.join(downloadDir, backup.name)
+
+  await downloadBackup(backup.key, localPath)
+  return localPath
+}
+
 async function handleDownload(backup: S3FileInfo): Promise<void> {
   try {
-    const node = getNodeModules()
-    if (!node) { throw new Error("无法访问文件系统，请使用桌面版思源笔记") }
-    const fs = node.fs.promises
-    const path = node.path
-
-    const downloadDir = `${workspaceRoot.value}/data-backup`
-    await fs.mkdir(downloadDir, { recursive: true })
-    const localPath = path.join(downloadDir, backup.name)
-
-    await downloadBackup(backup.key, localPath)
+    await downloadToLocalDir(backup)
     showMessage(props.i18n.downloadSuccess || "下载成功", 2000, "info")
   } catch (err: any) {
     showMessage(`${props.i18n.downloadFailed || "下载失败"}: ${err.message}`, 5000, "error")
@@ -865,16 +899,7 @@ async function handleRestore(backup: S3FileInfo): Promise<void> {
   if (!confirmed) { return }
 
   try {
-    const node = getNodeModules()
-    if (!node) { throw new Error("无法访问文件系统，请使用桌面版思源笔记") }
-    const fs = node.fs.promises
-    const path = node.path
-
-    const downloadDir = `${workspaceRoot.value}/data-backup`
-    await fs.mkdir(downloadDir, { recursive: true })
-    const localPath = path.join(downloadDir, backup.name)
-
-    await downloadBackup(backup.key, localPath)
+    await downloadToLocalDir(backup)
     showMessage(props.i18n.downloadToLocalSuccess || "备份已下载到本地备份目录，请手动解压恢复", 4000, "info")
   } catch (err: any) {
     showMessage(`${props.i18n.restoreFailed || "下载失败"}: ${err.message}`, 5000, "error")
@@ -919,7 +944,7 @@ async function loadWorkspaceSettings(): Promise<void> {
       const root = instance.getWorkspaceRoot()
       if (root && !workspaceRoot.value) {
         workspaceRoot.value = root
-        workspacePath.value = instance.getWorkspacePath()
+        workspacePath.value = root
       }
     }
   } catch (err) {
@@ -999,8 +1024,14 @@ onMounted(async () => {
     if (instance) {
       const savedConfig = await instance.getStorage().s3Config.load()
       if (savedConfig) {
-        loadConfig(savedConfig)
-        s3ConfigLocal.value = savedConfig
+        // A8 修复：解密 S3 凭证（旧数据无 enc: 前缀则原样返回，向后兼容）
+        const decrypted: S3Config = {
+          ...savedConfig,
+          accessKey: await decryptSetting(savedConfig.accessKey),
+          secretKey: await decryptSetting(savedConfig.secretKey),
+        }
+        loadConfig(decrypted)
+        s3ConfigLocal.value = decrypted
       }
     }
   } catch (err) {

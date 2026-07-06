@@ -14,7 +14,7 @@
         <Button
           variant="ghost"
           icon="close"
-          size="small"
+          size="xsmall"
           :title="i18n?.close || '关闭'"
           @click="$emit('close')"
         />
@@ -65,7 +65,7 @@
             <Button
               variant="danger"
               icon="delete"
-              size="small"
+              size="xsmall"
               @click="handleDelete(cat.id)"
             >
               {{ i18n?.delete || '删除' }}

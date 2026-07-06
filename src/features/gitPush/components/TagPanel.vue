@@ -6,14 +6,14 @@
       <template v-if="addingTag">
         <Input
           v-model="newTagName"
-          size="small"
+          size="xsmall"
           placeholder="Tag 名称（如 v1.2.0）"
           @keydown="$event.key === 'Enter' && handleCreate()"
           @keydown.escape="addingTag = false"
         />
         <Input
           v-model="newTagMsg"
-          size="small"
+          size="xsmall"
           placeholder="注解（可选）"
           @keydown="$event.key === 'Enter' && handleCreate()"
         />

@@ -21,7 +21,7 @@
         </div>
         <Button
           variant="ghost"
-          size="small"
+          size="xsmall"
           icon="x"
           :title="i18n.close || '关闭'"
           @click="closeDialog"
@@ -43,7 +43,7 @@
             :disabled="!inputWord || isGenerating"
             :title="isGenerating ? '生成中...' : '生成谐音'"
             variant="primary"
-            size="small"
+            size="xsmall"
             icon="refresh"
             :loading="isGenerating"
             @click="generatePronunciation"
@@ -62,7 +62,7 @@
             <div class="result-title">
               <Label
                 tag="span"
-                size="small"
+                size="xsmall"
                 icon="wordQuery"
                 class="result-label"
               >
@@ -80,7 +80,7 @@
               <Button
                 v-if="!isInFlashcard"
                 variant="ghost"
-                size="small"
+                size="xsmall"
                 icon="plus"
                 title="添加到单词本"
                 @click="openAddToCardDialog"
@@ -89,7 +89,7 @@
               </Button>
               <Button
                 variant="ghost"
-                size="small"
+                size="xsmall"
                 icon="copy"
                 :disabled="!generatedResult"
                 title="复制结果"
@@ -171,7 +171,7 @@
           <h4>添加到单词本</h4>
           <Button
             variant="ghost"
-            size="small"
+            size="xsmall"
             icon="x"
             @click="showAddToCardDialog = false"
           />

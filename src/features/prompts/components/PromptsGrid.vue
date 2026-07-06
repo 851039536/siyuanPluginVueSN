@@ -51,7 +51,7 @@
 
         <Button
           variant="primary"
-          size="small"
+          size="xsmall"
           icon="add"
           :title="i18n?.addPrompt || '添加提示词'"
           @click="$emit('addPrompt')"
@@ -89,13 +89,13 @@
               <Button
                 variant="ghost"
                 icon="edit"
-                size="small"
+                size="xsmall"
                 @click="$emit('editPrompt', prompt)"
               />
               <Button
                 variant="danger"
                 icon="delete"
-                size="small"
+                size="xsmall"
                 @click="$emit('requestDelete', prompt.id)"
               />
             </div>

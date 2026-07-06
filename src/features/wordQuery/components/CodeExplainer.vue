@@ -33,7 +33,7 @@
       <div class="action-section">
         <Button
           variant="primary"
-          size="small"
+          size="xsmall"
           :disabled="isExplaining || !codeInput.trim()"
           :loading="isExplaining"
           @click="handleExplain"
@@ -46,7 +46,7 @@
         </Button>
         <Button
           variant="ghost"
-          size="small"
+          size="xsmall"
           :disabled="!codeInput.trim() && !result"
           @click="handleClear"
         >
@@ -113,7 +113,7 @@
         <div class="result-actions">
           <Button
             variant="ghost"
-            size="small"
+            size="xsmall"
             @click="copyExplanation"
           >
             <IconWrapper

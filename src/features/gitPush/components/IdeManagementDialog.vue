@@ -30,13 +30,13 @@
             <template v-if="editingIdeIdx === idx">
               <Select
                 v-model="editIdePreset"
-                size="small"
+                size="xsmall"
                 style="width:150px"
                 :options="presetSelectOptions"
               />
               <Input
                 v-model="editIdePath"
-                size="small"
+                size="xsmall"
                 placeholder="可执行文件路径"
                 style="flex:1"
                 @keydown="$event.key === 'Enter' && $emit('save-edit-ide', idx, editIdePreset, editIdePath)"
@@ -94,13 +94,13 @@
         <div class="gp-ide-mgmt-add">
           <Select
             v-model="addIdePreset"
-            size="small"
+            size="xsmall"
             style="width:150px"
             :options="presetSelectOptions"
           />
           <Input
             v-model="addIdePath"
-            size="small"
+            size="xsmall"
             placeholder="可执行文件路径（如 D:/Tools/devenv.exe）"
             style="flex:1"
             @keydown="$event.key === 'Enter' && addIde()"

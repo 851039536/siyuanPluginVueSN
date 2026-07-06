@@ -17,7 +17,7 @@
               <Button
                 icon="close"
                 variant="ghost"
-                size="small"
+                size="xsmall"
                 @click="handleClose"
               />
             </div>
@@ -27,7 +27,7 @@
                   v-model="catName"
                   type="text"
                   :placeholder="i18n.categoryName || '类别名称'"
-                  size="small"
+                  size="xsmall"
                 />
                 <div class="color-picker">
                   <button
@@ -42,7 +42,7 @@
                 <Button
                   icon="add"
                   variant="primary"
-                  size="small"
+                  size="xsmall"
                   :disabled="!catName.trim()"
                   @click="handleAdd"
                 >
@@ -64,7 +64,7 @@
                     v-if="cat.id !== 'default'"
                     icon="delete"
                     variant="ghost"
-                    size="small"
+                    size="xsmall"
                     @click="emit('remove', cat.id)"
                   />
                   <span

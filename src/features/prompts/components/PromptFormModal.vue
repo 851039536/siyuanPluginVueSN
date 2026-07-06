@@ -14,7 +14,7 @@
         <Button
           variant="ghost"
           icon="close"
-          size="small"
+          size="xsmall"
           @click="$emit('close')"
         />
       </div>
@@ -96,7 +96,7 @@
                 <Button
                   variant="ghost"
                   icon="up"
-                  size="small"
+                  size="xsmall"
                   :title="i18n?.moveUp || '上移'"
                   :disabled="index === 0"
                   @click="moveContentBlock(index, -1)"
@@ -104,7 +104,7 @@
                 <Button
                   variant="ghost"
                   icon="down"
-                  size="small"
+                  size="xsmall"
                   :title="i18n?.moveDown || '下移'"
                   :disabled="index === form.contents.length - 1"
                   @click="moveContentBlock(index, 1)"
@@ -112,7 +112,7 @@
                 <Button
                   variant="danger"
                   icon="delete"
-                  size="small"
+                  size="xsmall"
                   :title="i18n?.removeContent || '删除内容块'"
                   :disabled="form.contents.length <= 1"
                   @click="removeContentBlock(index)"

@@ -8,7 +8,7 @@
     />
     <Button
       variant="ghost"
-      size="small"
+      size="xsmall"
       :icon="visible ? 'eyeOff' : 'eye'"
       :icon-size="14"
       :title="visible ? '隐藏密钥' : '显示密钥'"

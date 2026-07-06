@@ -47,7 +47,7 @@
           <Select
             v-model="selectedLanguage"
             :options="languageOptions"
-            size="small"
+            size="xsmall"
           />
         </div>
 
@@ -57,7 +57,7 @@
           <Select
             v-model="selectedStyle"
             :options="currentStyleOptions"
-            size="small"
+            size="xsmall"
           />
         </div>
 
@@ -67,7 +67,7 @@
           <Select
             v-model="selectedTheme"
             :options="themeOptions"
-            size="small"
+            size="xsmall"
           />
         </div>
 
@@ -109,7 +109,7 @@
               <Switch
                 :model-value="enableWatermark"
                 label="显示水印"
-                size="small"
+                size="xsmall"
                 @update:model-value="enableWatermark = $event"
               />
               <input
@@ -124,7 +124,7 @@
               <Switch
                 :model-value="enableAuthor"
                 label="显示作者"
-                size="small"
+                size="xsmall"
                 @update:model-value="enableAuthor = $event"
               />
               <input
@@ -139,7 +139,7 @@
               <Switch
                 :model-value="enableTimestamp"
                 label="显示时间"
-                size="small"
+                size="xsmall"
                 @update:model-value="enableTimestamp = $event"
               />
             </div>
@@ -224,7 +224,7 @@
           <div class="preview-actions">
             <Button
               variant="ghost"
-              size="small"
+              size="xsmall"
               icon="contentCopy"
               title="复制为图片"
               :disabled="!codeContent"
@@ -232,7 +232,7 @@
             />
             <Button
               variant="ghost"
-              size="small"
+              size="xsmall"
               icon="download"
               title="下载为图片"
               :disabled="!codeContent"

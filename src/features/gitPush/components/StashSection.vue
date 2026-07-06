@@ -16,7 +16,7 @@
         <Input
           ref="inputEl"
           v-model="localMsg"
-          size="small"
+          size="xsmall"
           placeholder="暂存描述（可选）"
           style="flex:1"
           @keydown="$event.key === 'Enter' && confirm()"

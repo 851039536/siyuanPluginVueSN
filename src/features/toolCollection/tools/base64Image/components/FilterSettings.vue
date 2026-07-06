@@ -64,7 +64,7 @@
     <div class="setting-group">
       <Button
         variant="ghost"
-        size="small"
+        size="xsmall"
         @click="$emit('reset')"
       >
         {{ resetText }}

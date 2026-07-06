@@ -7,7 +7,7 @@
       <span>{{ i18n.aiSettings || 'AI大模型配置' }}</span>
       <Button
         variant="ghost"
-        size="small"
+        size="xsmall"
         icon="close"
         :icon-size="14"
         @click="handleClose"

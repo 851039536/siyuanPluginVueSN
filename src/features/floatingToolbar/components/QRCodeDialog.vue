@@ -21,7 +21,7 @@
         </div>
         <Button
           variant="ghost"
-          size="small"
+          size="xsmall"
           icon="x"
           :title="i18n.close || '关闭'"
           @click="closeDialog"
@@ -46,7 +46,7 @@
         <div class="qrcode-section">
           <Label
             tag="span"
-            size="small"
+            size="xsmall"
           >{{ i18n.qrcodePreview || '二维码预览' }}</Label>
           <div
             ref="qrcodeContainer"
@@ -65,7 +65,7 @@
               :step="10"
               :showValue="true"
               :formatValue="v => `${v}px`"
-              size="small"
+              size="xsmall"
               @input="regenerateQRCode"
             />
           </div>

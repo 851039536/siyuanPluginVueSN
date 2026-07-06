@@ -13,7 +13,7 @@
       <Badge
         :content="favoriteFolders.length"
         variant="primary"
-        size="small"
+        size="xsmall"
       />
     </div>
     <div class="favorites-list-horizontal">
@@ -35,7 +35,7 @@
         </div>
         <Button
           variant="ghost"
-          size="small"
+          size="xsmall"
           icon="close"
           :icon-size="12"
           class="favorite-remove-btn"

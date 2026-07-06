@@ -14,7 +14,7 @@
         </div>
         <Button
           variant="ghost"
-          size="small"
+          size="xsmall"
           icon="close"
           @click="$emit('close')"
         />

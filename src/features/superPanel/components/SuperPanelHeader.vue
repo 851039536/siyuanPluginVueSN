@@ -30,7 +30,7 @@
         v-for="action in actions"
         :key="action.key"
         variant="ghost"
-        size="small"
+        size="xsmall"
         :icon="action.icon"
         :icon-size="16"
         :title="action.title"

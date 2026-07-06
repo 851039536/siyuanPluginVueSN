@@ -58,7 +58,7 @@
             v-for="action in feature.actions"
             :key="action.key"
             variant="ghost"
-            size="small"
+            size="xsmall"
             @click.stop="handleAction(action.key)"
           >
             {{ action.label }}
@@ -71,7 +71,7 @@
         <Switch
           v-if="showToggle"
           :model-value="enabled"
-          size="small"
+          size="xsmall"
           class="feature-toggle"
           @update:model-value="emit('toggle', $event)"
         />
@@ -96,7 +96,7 @@
           <span class="sub-feature-label">{{ sub.label }}</span>
           <Switch
             :model-value="sub.enabled"
-            size="small"
+            size="xsmall"
             class="sub-feature-toggle"
             @update:model-value="emit('toggleSubFeature', sub.id)"
           />

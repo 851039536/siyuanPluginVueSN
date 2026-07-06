@@ -24,7 +24,7 @@
       <div class="action-buttons">
         <Button
           variant="ghost"
-          size="small"
+          size="xsmall"
           icon="play"
           :icon-size="14"
           :title="playTitle"
@@ -33,7 +33,7 @@
         <template v-if="isEncrypted">
           <Button
             variant="ghost"
-            size="small"
+            size="xsmall"
             icon="encryption"
             :icon-size="14"
             title="解密"

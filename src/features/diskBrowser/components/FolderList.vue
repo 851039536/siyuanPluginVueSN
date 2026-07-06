@@ -5,7 +5,7 @@
         <Button
           v-if="currentPath"
           variant="ghost"
-          size="small"
+          size="xsmall"
           icon="back"
           :icon-size="14"
           class="back-btn"
@@ -31,7 +31,7 @@
         </span>
         <Button
           variant="ghost"
-          size="small"
+          size="xsmall"
           icon="refresh"
           :icon-size="13"
           :loading="loadingFolders"
@@ -40,7 +40,7 @@
         />
         <Button
           variant="ghost"
-          size="small"
+          size="xsmall"
           icon="openInNew"
           :icon-size="13"
           :title="i18n.openInExplorer || '在资源管理器中打开'"
@@ -48,7 +48,7 @@
         />
         <Button
           variant="ghost"
-          size="small"
+          size="xsmall"
           icon="contentCopy"
           :icon-size="13"
           :title="i18n.copyPath || '复制路径'"
@@ -99,7 +99,7 @@
           <Button
             v-if="!item.isFile"
             variant="ghost"
-            size="small"
+            size="xsmall"
             :icon="isFavorite(item.path) ? 'star' : 'starOutline'"
             :icon-size="13"
             class="folder-action-btn favorite-btn"
@@ -110,7 +110,7 @@
           <Button
             v-if="!item.isFile"
             variant="ghost"
-            size="small"
+            size="xsmall"
             icon="chevronRight"
             :icon-size="13"
             class="folder-action-btn"
@@ -119,7 +119,7 @@
           />
           <Button
             variant="ghost"
-            size="small"
+            size="xsmall"
             icon="openInNew"
             :icon-size="13"
             class="folder-action-btn"
@@ -128,7 +128,7 @@
           />
           <Button
             variant="ghost"
-            size="small"
+            size="xsmall"
             icon="contentCopy"
             :icon-size="13"
             class="folder-action-btn"

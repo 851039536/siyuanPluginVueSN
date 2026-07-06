@@ -3,7 +3,7 @@
     <div class="script-launcher__toolbar">
       <Button
         variant="primary"
-        size="small"
+        size="xsmall"
         icon="add"
         @click="openCreateDialog"
       >
@@ -11,7 +11,7 @@
       </Button>
       <Button
         variant="secondary"
-        size="small"
+        size="xsmall"
         icon="plus"
         @click="triggerImport"
       >
@@ -26,7 +26,7 @@
       >
       <Button
         variant="secondary"
-        size="small"
+        size="xsmall"
         icon="refresh"
         @click="handleRefresh"
       >
@@ -34,7 +34,7 @@
       </Button>
       <Button
         variant="ghost"
-        size="small"
+        size="xsmall"
         icon="folder"
         title="打开 data/storage/sc/"
         @click="openScFolder"

@@ -88,7 +88,7 @@
       >
         <Button
           variant="secondary"
-          size="small"
+          size="xsmall"
           :disabled="currentPage === 1"
           @click="currentPage--"
         >
@@ -97,7 +97,7 @@
         <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
         <Button
           variant="secondary"
-          size="small"
+          size="xsmall"
           :disabled="currentPage === totalPages"
           @click="currentPage++"
         >
@@ -130,28 +130,28 @@
     >
       <Button
         :variant="viewMode === 'list' ? 'primary' : 'secondary'"
-        size="small"
+        size="xsmall"
         @click="viewMode = 'list'"
       >
         {{ t.listView }}
       </Button>
       <Button
         :variant="viewMode === 'single' ? 'primary' : 'secondary'"
-        size="small"
+        size="xsmall"
         @click="switchMode('single')"
       >
         {{ t.singleView }}
       </Button>
       <Button
         :variant="viewMode === 'statistics' ? 'primary' : 'secondary'"
-        size="small"
+        size="xsmall"
         @click="viewMode = 'statistics'"
       >
         {{ t.statisticsView }}
       </Button>
       <Button
         :variant="viewMode === 'typing' ? 'primary' : 'secondary'"
-        size="small"
+        size="xsmall"
         @click="switchMode('typing')"
       >
         {{ t.typingView }}

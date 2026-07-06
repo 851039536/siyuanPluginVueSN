@@ -86,14 +86,14 @@
         <div class="delete-modal-footer">
           <Button
             variant="secondary"
-            size="small"
+            size="xsmall"
             @click="cancelDelete"
           >
             {{ i18n.cancel || '取消' }}
           </Button>
           <Button
             variant="danger"
-            size="small"
+            size="xsmall"
             @click="confirmDelete"
           >
             {{ i18n.delete || '删除' }}

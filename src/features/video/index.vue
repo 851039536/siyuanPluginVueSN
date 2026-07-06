@@ -23,7 +23,7 @@
           <Button
             icon="x"
             variant="ghost"
-            size="small"
+            size="xsmall"
             title="关闭"
             @click="onClose"
           />
@@ -121,7 +121,7 @@
         <Button
           icon="x"
           variant="ghost"
-          size="small"
+          size="xsmall"
           :disabled="encryptProgress"
           @click="closeEncryptDialog"
         />
@@ -217,7 +217,7 @@
         <Button
           icon="x"
           variant="ghost"
-          size="small"
+          size="xsmall"
           :disabled="decryptProgress"
           @click="closeDecryptDialog"
         />
@@ -302,7 +302,7 @@
         <Button
           icon="x"
           variant="ghost"
-          size="small"
+          size="xsmall"
           :disabled="mergeProgress"
           @click="closeMergeDialog"
         />
@@ -324,7 +324,7 @@
               <Button
                 icon="x"
                 variant="ghost"
-                size="small"
+                size="xsmall"
                 title="移除"
                 @click="removeMergeVideo(index)"
               />
@@ -458,7 +458,7 @@
         <Button
           icon="x"
           variant="ghost"
-          size="small"
+          size="xsmall"
           :disabled="mergeAudioProgress"
           @click="closeMergeAudioDialog"
         />
@@ -584,7 +584,7 @@
         <Button
           icon="x"
           variant="ghost"
-          size="small"
+          size="xsmall"
           :disabled="compressProgress"
           @click="closeCompressDialog"
         />
@@ -787,7 +787,7 @@
         <Button
           icon="x"
           variant="ghost"
-          size="small"
+          size="xsmall"
           @click="closeFFmpegPathDialog"
         />
       </div>

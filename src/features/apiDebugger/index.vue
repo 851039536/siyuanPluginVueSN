@@ -10,7 +10,7 @@
         :options="endpointGroups"
         :placeholder="i18n.endpointPlaceholder || '选择预设接口'"
         filterable
-        size="small"
+        size="xsmall"
         :max-height="420"
         @update:model-value="handleEndpointChange"
       />
@@ -23,7 +23,7 @@
           <Select
             :model-value="method"
             :options="methodOptions"
-            size="small"
+            size="xsmall"
             @update:model-value="handleMethodChange"
           />
         </div>
@@ -31,7 +31,7 @@
           <Input
             v-model="path"
             :placeholder="i18n.pathPlaceholder || '/api/system/version'"
-            size="small"
+            size="xsmall"
           />
         </div>
       </div>
@@ -51,20 +51,20 @@
           <Input
             v-model="header.key"
             :placeholder="i18n.headerKey || '键名'"
-            size="small"
+            size="xsmall"
           />
         </div>
         <div class="api-debugger__header-input">
           <Input
             v-model="header.value"
             :placeholder="i18n.headerValue || '值'"
-            size="small"
+            size="xsmall"
           />
         </div>
         <div class="api-debugger__header-remove">
           <Button
             variant="ghost"
-            size="small"
+            size="xsmall"
             icon="mdi:close"
             @click="removeHeader(index)"
           />
@@ -72,7 +72,7 @@
       </div>
       <Button
         variant="ghost"
-        size="small"
+        size="xsmall"
         icon="mdi:plus"
         @click="addHeader"
       >
@@ -90,7 +90,7 @@
         type="textarea"
         :placeholder="i18n.requestBodyPlaceholder || '输入JSON格式的请求体...'"
         :rows="6"
-        size="small"
+        size="xsmall"
         resize="vertical"
       />
     </div>
@@ -99,7 +99,7 @@
     <div class="api-debugger__actions">
       <Button
         variant="primary"
-        size="small"
+        size="xsmall"
         icon="mdi:send"
         :loading="loading"
         @click="sendRequest"
@@ -108,7 +108,7 @@
       </Button>
       <Button
         variant="ghost"
-        size="small"
+        size="xsmall"
         icon="mdi:eraser"
         @click="clearRequest"
       >
@@ -159,7 +159,7 @@
           <div style="flex: 1;" />
           <Button
             variant="ghost"
-            size="small"
+            size="xsmall"
             icon="mdi:content-copy"
             @click="handleCopyResponse"
           >
@@ -188,7 +188,7 @@
       >
         <Button
           variant="ghost"
-          size="small"
+          size="xsmall"
           icon="mdi:delete"
           @click="clearHistory"
         >

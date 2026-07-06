@@ -7,7 +7,7 @@
           class="mode-tab"
           :class="{ active: currentMode === 'word' }"
           variant="ghost"
-          size="small"
+          size="xsmall"
           @click="switchMode('word')"
         >
           <IconWrapper
@@ -20,7 +20,7 @@
           class="mode-tab"
           :class="{ active: currentMode === 'translate' }"
           variant="ghost"
-          size="small"
+          size="xsmall"
           @click="switchMode('translate')"
         >
           <IconWrapper
@@ -33,7 +33,7 @@
           class="mode-tab"
           :class="{ active: currentMode === 'codeTranslation' }"
           variant="ghost"
-          size="small"
+          size="xsmall"
           @click="switchMode('codeTranslation')"
         >
           <IconWrapper
@@ -46,7 +46,7 @@
           class="mode-tab"
           :class="{ active: currentMode === 'codeComment' }"
           variant="ghost"
-          size="small"
+          size="xsmall"
           @click="switchMode('codeComment')"
         >
           <IconWrapper
@@ -59,7 +59,7 @@
           class="mode-tab"
           :class="{ active: currentMode === 'codeExplain' }"
           variant="ghost"
-          size="small"
+          size="xsmall"
           @click="switchMode('codeExplain')"
         >
           <IconWrapper
@@ -72,7 +72,7 @@
           class="mode-tab"
           :class="{ active: currentMode === 'regex' }"
           variant="ghost"
-          size="small"
+          size="xsmall"
           @click="switchMode('regex')"
         >
           <IconWrapper
@@ -86,7 +86,7 @@
       <div class="api-key-toggle">
         <Button
           variant="ghost"
-          size="small"
+          size="xsmall"
           :title="props.i18n.wordQuery?.advancedOptions || '高级选项'"
           @click="togglePanel('advanced')"
         >
@@ -140,7 +140,7 @@
           <div class="panel-actions">
             <Button
               variant="ghost"
-              size="small"
+              size="xsmall"
               @click="togglePanel(null)"
             >
               <IconWrapper
@@ -230,7 +230,7 @@
             >
               <Button
                 variant="secondary"
-                size="small"
+                size="xsmall"
                 @click="toggleCopyOptions"
               >
                 <IconWrapper
@@ -249,7 +249,7 @@
               >
                 <Button
                   variant="ghost"
-                  size="small"
+                  size="xsmall"
                   class="dropdown-item"
                   @click="copyResult('all')"
                 >
@@ -257,7 +257,7 @@
                 </Button>
                 <Button
                   variant="ghost"
-                  size="small"
+                  size="xsmall"
                   class="dropdown-item"
                   @click="copyResult('phonetic')"
                 >
@@ -265,7 +265,7 @@
                 </Button>
                 <Button
                   variant="ghost"
-                  size="small"
+                  size="xsmall"
                   class="dropdown-item"
                   @click="copyResult('meaning')"
                 >
@@ -274,7 +274,7 @@
                 <Button
                   v-if="extractContentParts.english"
                   variant="ghost"
-                  size="small"
+                  size="xsmall"
                   class="dropdown-item"
                   @click="copyResult('english')"
                 >
@@ -282,7 +282,7 @@
                 </Button>
                 <Button
                   variant="ghost"
-                  size="small"
+                  size="xsmall"
                   class="dropdown-item"
                   @click="copyResult('pronunciation')"
                 >
@@ -290,7 +290,7 @@
                 </Button>
                 <Button
                   variant="ghost"
-                  size="small"
+                  size="xsmall"
                   class="dropdown-item"
                   @click="copyResult('example')"
                 >
@@ -301,7 +301,7 @@
 
             <Button
               variant="secondary"
-              size="small"
+              size="xsmall"
               @click="playPronunciation(searchWord)"
             >
               <IconWrapper
@@ -313,7 +313,7 @@
 
             <Button
               variant="secondary"
-              size="small"
+              size="xsmall"
               @click="exportToSiyuan"
             >
               <IconWrapper
@@ -325,7 +325,7 @@
 
             <Button
               variant="ghost"
-              size="small"
+              size="xsmall"
               @click="clearResult"
             >
               <IconWrapper
@@ -363,7 +363,7 @@
             <Select
               v-model="sourceLanguage"
               :options="LANGUAGE_OPTIONS"
-              size="small"
+              size="xsmall"
               class="language-select"
             />
           </div>
@@ -377,7 +377,7 @@
           <div class="input-actions">
             <Button
               variant="ghost"
-              size="small"
+              size="xsmall"
               @click="clearTranslateInput"
             >
               <IconWrapper
@@ -388,7 +388,7 @@
             </Button>
             <Button
               variant="primary"
-              size="small"
+              size="xsmall"
               :disabled="isTranslating"
               :loading="isTranslating"
               @click="handleTranslate"
@@ -406,7 +406,7 @@
           <div class="divider-line"></div>
           <Button
             variant="ghost"
-            size="small"
+            size="xsmall"
             class="swap-btn"
             :title="props.i18n.wordQuery?.swapLanguages || '交换语言'"
             @click="swapLanguages"
@@ -425,7 +425,7 @@
             <Select
               v-model="targetLanguage"
               :options="TARGET_LANGUAGE_OPTIONS"
-              size="small"
+              size="xsmall"
               class="language-select"
             />
           </div>
@@ -455,7 +455,7 @@
           >
             <Button
               variant="ghost"
-              size="small"
+              size="xsmall"
               @click="copyTranslation"
             >
               <IconWrapper
@@ -466,7 +466,7 @@
             </Button>
             <Button
               variant="ghost"
-              size="small"
+              size="xsmall"
               @click="exportTranslation"
             >
               <IconWrapper

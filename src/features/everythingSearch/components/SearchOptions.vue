@@ -4,35 +4,35 @@
     <div class="vp-options__row">
       <Switch
         :model-value="options.matchCase"
-        size="small"
+        size="xsmall"
         label="区分大小写"
         label-before
         @update:model-value="updateOption('matchCase', $event)"
       />
       <Switch
         :model-value="options.matchWholeWord"
-        size="small"
+        size="xsmall"
         label="全词匹配"
         label-before
         @update:model-value="updateOption('matchWholeWord', $event)"
       />
       <Switch
         :model-value="options.matchPath"
-        size="small"
+        size="xsmall"
         label="匹配路径"
         label-before
         @update:model-value="updateOption('matchPath', $event)"
       />
       <Switch
         :model-value="options.regex"
-        size="small"
+        size="xsmall"
         label="正则"
         label-before
         @update:model-value="updateOption('regex', $event)"
       />
       <Switch
         :model-value="options.advancedMode"
-        size="small"
+        size="xsmall"
         label="高级模式"
         label-before
         @update:model-value="updateOption('advancedMode', $event)"
@@ -46,7 +46,7 @@
         <Select
           :model-value="options.maxResults"
           :options="MAX_RESULTS_OPTIONS"
-          size="small"
+          size="xsmall"
           @update:model-value="updateOption('maxResults', $event as number)"
         />
       </div>
@@ -55,7 +55,7 @@
         <Select
           :model-value="options.debounceDelay"
           :options="DEBOUNCE_OPTIONS"
-          size="small"
+          size="xsmall"
           @update:model-value="updateOption('debounceDelay', $event as number)"
         />
       </div>
@@ -64,12 +64,12 @@
         <Select
           :model-value="options.sort"
           :options="SORT_OPTIONS"
-          size="small"
+          size="xsmall"
           @update:model-value="updateOption('sort', ($event as unknown) as SearchOptions['sort'])"
         />
         <Switch
           :model-value="options.ascending"
-          size="small"
+          size="xsmall"
           :label="options.ascending ? '↑' : '↓'"
           @update:model-value="updateOption('ascending', $event)"
         />
@@ -90,7 +90,7 @@
         <Select
           :model-value="options.minSizeUnit"
           :options="SIZE_UNIT_OPTIONS"
-          size="small"
+          size="xsmall"
           @update:model-value="updateOption('minSizeUnit', $event as SearchOptions['minSizeUnit'])"
         />
         <span class="vp-options__size-sep">-</span>
@@ -104,7 +104,7 @@
         <Select
           :model-value="options.maxSizeUnit"
           :options="SIZE_UNIT_OPTIONS"
-          size="small"
+          size="xsmall"
           @update:model-value="updateOption('maxSizeUnit', $event as SearchOptions['maxSizeUnit'])"
         />
       </div>

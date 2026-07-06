@@ -1367,6 +1367,8 @@
   "s3SubPathDesc": "上传到云存储时，在目录前缀之后追加的路径段",
   "s3SubPathHint": "上传到云存储时，在此路径段下组织备份文件",
   "pathPreview": "实际路径",
+  "backupTab": "备份",
+  "configTab": "配置",
   "scriptLauncher": {
     "panelTitle": "脚本启动器",
     "description": "管理并运行自定义脚本，支持 Python、Bash、PowerShell、Node.js、Batch",

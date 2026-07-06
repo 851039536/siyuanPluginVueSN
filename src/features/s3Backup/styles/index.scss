@@ -30,6 +30,46 @@
   }
 }
 
+// ========== Tab 栏 ==========
+
+.s3-tab-bar {
+  display: flex;
+  gap: 0;
+  padding: 0 $spacing-4;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  flex-shrink: 0;
+}
+
+.s3-tab-btn {
+  position: relative;
+  padding: $spacing-2 $spacing-3;
+  border: none;
+  background: transparent;
+  color: var(--b3-theme-on-surface-light);
+  font-size: $font-size-sm;
+  cursor: pointer;
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: var(--b3-theme-on-surface);
+  }
+
+  &.active {
+    color: var(--b3-theme-primary);
+
+    &::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: $spacing-1;
+      right: $spacing-1;
+      height: 2px;
+      background: var(--b3-theme-primary);
+      border-radius: 1px 1px 0 0;
+    }
+  }
+}
+
 // ========== 内容容器 ==========
 
 .settings-container {

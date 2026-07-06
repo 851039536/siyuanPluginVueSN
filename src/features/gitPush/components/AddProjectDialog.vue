@@ -45,12 +45,7 @@
           size="small"
           :options="categoryOptions"
         />
-        <Input
-          v-model="tags"
-          :label="i18n.tagsLabel || '标签（可选，逗号分隔）'"
-          size="small"
-          :placeholder="i18n.tagsPlaceholder || '如：前端, 个人作品, 长期维护'"
-        />
+
       </div>
       <div class="gp-dialog-footer">
         <button
@@ -96,13 +91,12 @@ const categoryOptions = computed<SelectOption[]>(() =>
 const emit = defineEmits<{
   "close": []
   "pick-dir": []
-  "add": [data: { name: string, path: string, catId: string, tags: string[] }]
+  "add": [data: { name: string, path: string, catId: string }]
 }>()
 
 const name = ref("")
 const path = ref("")
 const catId = ref(UNGROUPED_ID)
-const tags = ref("")
 
 // 目录选择器回填路径
 watch(() => props.selectedPath, (p) => {
@@ -114,7 +108,6 @@ function submit() {
     name: name.value.trim(),
     path: path.value.trim(),
     catId: catId.value,
-    tags: tags.value.split(",").map((t) => t.trim()).filter(Boolean),
   })
 }
 </script>

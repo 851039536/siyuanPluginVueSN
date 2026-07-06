@@ -74,18 +74,7 @@
         @update:s3-sub-prefix="s3SubPrefix = $event; saveWorkspaceSettings()"
       />
 
-      <!-- 自动备份设置 -->
-      <AutoBackupCard
-        :auto-backup-enabled="autoBackupEnabled"
-        :backup-frequency="backupFrequency"
-        :backup-time="backupTime"
-        :keep-backup-count="keepBackupCount"
-        :i18n="i18n"
-        @update:auto-backup-enabled="autoBackupEnabled = $event; saveWorkspaceSettings()"
-        @update:backup-frequency="backupFrequency = $event; saveWorkspaceSettings()"
-        @update:backup-time="backupTime = $event; saveWorkspaceSettings()"
-        @update:keep-backup-count="keepBackupCount = $event; saveWorkspaceSettings()"
-      />
+
 
       <!-- 本地备份列表 -->
       <BackupListCard
@@ -133,6 +122,18 @@
         :model-value="backupModeLocal"
         :i18n="i18n"
         @update:model-value="onBackupModeChanged"
+      />
+
+      <AutoBackupCard
+        :auto-backup-enabled="autoBackupEnabled"
+        :backup-frequency="backupFrequency"
+        :backup-time="backupTime"
+        :keep-backup-count="keepBackupCount"
+        :i18n="i18n"
+        @update:auto-backup-enabled="autoBackupEnabled = $event; saveWorkspaceSettings()"
+        @update:backup-frequency="backupFrequency = $event; saveWorkspaceSettings()"
+        @update:backup-time="backupTime = $event; saveWorkspaceSettings()"
+        @update:keep-backup-count="keepBackupCount = $event; saveWorkspaceSettings()"
       />
 
       <section class="card-section config-section">

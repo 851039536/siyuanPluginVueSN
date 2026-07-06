@@ -49,7 +49,7 @@
         <S3ConfigForm
           :config="s3ConfigLocal"
           :i18n="i18n"
-          :on-test-connection="handleTestConnection"
+          :on-test-connection="testConnection"
           @config-changed="handleConfigChanged"
           @saved="handleConfigSaved"
         />
@@ -216,7 +216,7 @@
           <select
             v-model="autoBackupEnabled"
             class="form-select narrow"
-            @change="saveSettings"
+            @change="saveWorkspaceSettings"
           >
             <option :value="false">
               {{ i18n.disabled || "禁用" }}
@@ -230,7 +230,7 @@
             <select
               v-model="backupFrequency"
               class="form-select narrow"
-              @change="saveSettings"
+              @change="saveWorkspaceSettings"
             >
               <option value="minute">
                 {{ i18n.everyMinute || "每分钟" }}
@@ -248,7 +248,7 @@
                 v-model="backupTime"
                 type="time"
                 class="form-input narrow"
-                @change="saveSettings"
+                @change="saveWorkspaceSettings"
               />
             </template>
             <span class="inline-label">{{ i18n.keepBackupCount || "保留" }}</span>
@@ -259,7 +259,7 @@
               style="width: 3rem;"
               min="1"
               max="30"
-              @change="saveSettings"
+              @change="saveWorkspaceSettings"
             />
             <span class="inline-label">{{ i18n.keepBackupCountHint || "份" }}</span>
           </template>
@@ -551,10 +551,6 @@ async function detectWorkspacePath(): Promise<void> {
 
 // ========== S3 配置管理 ==========
 
-function handleTestConnection(config: S3Config): Promise<{ success: boolean; message: string }> {
-  return testConnection(config)
-}
-
 function handleConfigChanged(config: S3Config): void {
   s3ConfigLocal.value = config
 }
@@ -632,7 +628,7 @@ async function performManualBackup(): Promise<void> {
     showMessage(`${props.i18n.backupFailed || "备份失败"}: ${err.message}`, 5000, "error")
   } finally {
     isBackingUp.value = false
-    saveSettings()
+    saveWorkspaceSettings()
   }
 }
 
@@ -974,10 +970,6 @@ async function saveWorkspaceSettings(): Promise<void> {
   } catch (err) {
     console.error("保存工作区设置失败:", err)
   }
-}
-
-async function saveSettings(): Promise<void> {
-  await saveWorkspaceSettings()
 }
 
 // ========== 文件夹操作 ==========

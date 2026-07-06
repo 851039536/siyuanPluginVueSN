@@ -419,6 +419,7 @@ const {
   saveConfig,
   uploadFileContent,
   listBackups,
+  listExistingKeys,
   downloadBackup,
   deleteBackup,
   loadConfig,
@@ -719,23 +720,67 @@ async function performS3Backup(latestZip?: BackupResult | null): Promise<void> {
   // B10 修复：复用顶层缓存的 node 实例
   const fs = node!.fs.promises
 
+  // 去重优化：上传前先获取 S3 已有文件列表，已存在的文件跳过上传
+  let existingKeys: Set<string> = new Set()
+  try {
+    existingKeys = await listExistingKeys()
+    console.log(`[S3备份] 去重检查：S3 已有 ${existingKeys.size} 个文件`)
+    if (existingKeys.size > 0 && files.length > 0) {
+      // 打印前 3 个已有 key 和前 3 个待上传 key 供诊断对比
+      const sampleExisting = [...existingKeys].slice(0, 3)
+      const sampleNew: string[] = []
+      const sub = s3SubPrefix.value || "data-backup"
+      const datePath = useDateFolder.value ? `${timestamp}/` : ""
+      for (let i = 0; i < Math.min(3, files.length); i++) {
+        const keyParts: string[] = [prefix.replace(/\/+$/, ""), sub.replace(/\/+$/, "")]
+          .filter(Boolean)
+        if (datePath) { keyParts.push(datePath.replace(/\/+$/, "")) }
+        keyParts.push(files[i].relativePath.replace(/^\/+/, ""))
+        sampleNew.push(keyParts.join("/"))
+      }
+      console.log("[S3备份] S3 已有 key 示例:", sampleExisting)
+      console.log("[S3备份] 待上传 key 示例:", sampleNew)
+    }
+  } catch (err: any) {
+    console.warn("[S3备份] 无法获取 S3 文件列表，将上传全部文件:", err.message || err)
+  }
+
+  let skippedCount = 0
+  let uploadedCount = 0
+  let processedCount = 0 // 已处理文件数（含跳过 + 上传）
+
   for (let i = 0; i < files.length; i++) {
     const file = files[i]
     const datePath = useDateFolder.value ? `${timestamp}/` : ""
     const sub = s3SubPrefix.value || "data-backup"
-    // 使用路径段数组拼接，避免 prefix 缺少尾部 / 或 sub 为空导致的粘连/双斜杠问题
-    const keyParts: string[] = [prefix.replace(/\/+$/, ""), sub]
+    // 使用路径段数组拼接，strip 首尾斜杠后过滤空段，避免产生 // 等无效前缀
+    const keyParts: string[] = [prefix.replace(/\/+$/, ""), sub.replace(/\/+$/, "")]
+      .filter(Boolean)
     if (datePath) { keyParts.push(datePath.replace(/\/+$/, "")) }
     keyParts.push(file.relativePath.replace(/^\/+/, ""))
     const s3Key = keyParts.join("/")
-    const percent = Math.round((i / files.length) * 100)
+
+    // 去重：S3 上已存在的文件跳过上传
+    if (existingKeys.has(s3Key)) {
+      skippedCount++
+      processedCount++
+      console.log(`[S3备份] 跳过已存在: ${s3Key}`)
+      backupProgress.value = {
+        phase: "uploading",
+        currentFile: `${file.relativePath} (已跳过)`,
+        filesProcessed: processedCount,
+        totalFiles: files.length,
+        percent: Math.round((processedCount / files.length) * 100),
+      }
+      continue
+    }
 
     backupProgress.value = {
       phase: "uploading",
       currentFile: file.relativePath,
-      filesProcessed: i + 1,
+      filesProcessed: processedCount + 1,
       totalFiles: files.length,
-      percent,
+      percent: Math.round((processedCount / files.length) * 100),
     }
 
     let content
@@ -743,20 +788,28 @@ async function performS3Backup(latestZip?: BackupResult | null): Promise<void> {
       content = await fs.readFile(file.fullPath)
     } catch (readErr: any) {
       console.warn(`跳过无法读取的文件: ${file.relativePath}`, readErr.message)
+      processedCount++
       continue
     }
     await uploadFileContent(content, s3Key)
+    uploadedCount++
+    processedCount++
   }
 
   backupProgress.value = {
     phase: "uploading",
     currentFile: "",
-    filesProcessed: files.length,
+    filesProcessed: processedCount,
     totalFiles: files.length,
     percent: 100,
   }
 
-  showMessage(`${props.i18n.backupSuccess || "备份上传成功"}: ${files.length} 个文件`, 3000, "info")
+  // 构建结果消息
+  let msg = `${props.i18n.backupSuccess || "备份上传成功"}: 上传 ${uploadedCount} 个文件`
+  if (skippedCount > 0) {
+    msg += `，跳过 ${skippedCount} 个已存在文件`
+  }
+  showMessage(msg, 3000, "info")
 
   await refreshBackupList()
 }

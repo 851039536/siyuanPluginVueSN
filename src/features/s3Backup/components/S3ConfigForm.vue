@@ -70,6 +70,7 @@
       <div class="form-group">
         <Input
           v-model="localConfig.endpoint"
+          size="small"
           :label="i18n.endpoint || 'Endpoint'"
           :placeholder="i18n.endpointHint || 'S3 服务地址，如 http://localhost:9000'"
         />
@@ -79,6 +80,7 @@
       <div class="form-group">
         <Input
           v-model="localConfig.accessKey"
+          size="small"
           :label="i18n.accessKey || 'Access Key'"
           placeholder="AKIAIOSFODNN7EXAMPLE"
         />
@@ -90,6 +92,7 @@
           v-model="localConfig.secretKey"
           type="password"
           show-password
+          size="small"
           :label="i18n.secretKey || 'Secret Key'"
           placeholder="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
         />
@@ -99,6 +102,7 @@
       <div class="form-group">
         <Input
           v-model="localConfig.bucket"
+          size="small"
           :label="i18n.bucket || 'Bucket'"
           :placeholder="i18n.bucketHint || '存储桶名称'"
         />
@@ -108,6 +112,7 @@
       <div class="form-group">
         <Input
           v-model="localConfig.region"
+          size="small"
           :label="i18n.region || 'Region'"
           :placeholder="i18n.regionHint || '区域，如 us-east-1'"
         />
@@ -117,6 +122,7 @@
       <div class="form-group">
         <Input
           v-model="localConfig.prefix"
+          size="small"
           :label="i18n.prefix || '目录前缀'"
           :placeholder="i18n.prefixHint || 'siyuan-backup/'"
         />
@@ -425,6 +431,19 @@ watch(
       color: $brand-destructive;
       background: hsl(0, 72%, 51%, 0.08);
     }
+  }
+
+  // 公共组件紧凑覆盖（!important 覆盖 scoped 同优先级 selector）
+  :deep(.si-button--small) {
+    padding: 2px 6px !important;
+    font-size: $font-size-xs !important;
+    line-height: 1.3 !important;
+    min-height: auto !important;
+  }
+
+  :deep(.si-input--small .si-input__field) {
+    padding: 2px 6px !important;
+    font-size: $font-size-xs !important;
   }
 }
 </style>

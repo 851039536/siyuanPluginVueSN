@@ -1,0 +1,6 @@
+/**
+ * ManualBackupCard 组件专属样式
+ */
+@use '@/variables.scss' as *;
+
+// 组件不需要额外专属样式，backup-actions-row / path-preview / backup-hint 等已在 index.scss 共享基座中

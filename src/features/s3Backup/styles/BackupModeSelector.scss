@@ -1,0 +1,14 @@
+/**
+ * BackupModeSelector 组件专属样式
+ */
+@use '@/variables.scss' as *;
+
+.backup-mode-section {
+  .form-group-checkbox {
+    margin-bottom: $spacing-2;
+
+    &:last-of-type {
+      margin-bottom: 0;
+    }
+  }
+}

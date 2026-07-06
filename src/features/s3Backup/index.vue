@@ -11,7 +11,29 @@
       />
     </div>
 
-    <div class="settings-container">
+    <!-- Tab 栏 -->
+    <div class="s3-tab-bar">
+      <button
+        class="s3-tab-btn"
+        :class="{ active: activeTab === 'backup' }"
+        @click="activeTab = 'backup'"
+      >
+        {{ i18n.backupTab || "备份" }}
+      </button>
+      <button
+        class="s3-tab-btn"
+        :class="{ active: activeTab === 'config' }"
+        @click="activeTab = 'config'"
+      >
+        {{ i18n.configTab || "配置" }}
+      </button>
+    </div>
+
+    <!-- Tab: 备份 -->
+    <div
+      v-if="activeTab === 'backup'"
+      class="settings-container"
+    >
       <!-- 1. 工作区信息 -->
       <section class="card-section info-section">
         <div class="section-header">
@@ -46,18 +68,7 @@
         </div>
       </section>
 
-      <!-- 2. S3 配置 -->
-      <section class="card-section config-section">
-        <S3ConfigForm
-          :config="s3ConfigLocal"
-          :i18n="i18n"
-          :on-test-connection="testConnection"
-          @config-changed="handleConfigChanged"
-          @saved="handleConfigSaved"
-        />
-      </section>
-
-      <!-- 3. 备份模式选择 -->
+      <!-- 2. 备份模式选择 -->
       <section class="card-section backup-mode-section">
         <div class="section-header">
           <h4>{{ i18n.backupMode || "备份模式" }}</h4>
@@ -338,6 +349,22 @@
         </div>
       </section>
     </div>
+
+    <!-- Tab: 配置 -->
+    <div
+      v-if="activeTab === 'config'"
+      class="settings-container"
+    >
+      <section class="card-section config-section">
+        <S3ConfigForm
+          :config="s3ConfigLocal"
+          :i18n="i18n"
+          :on-test-connection="testConnection"
+          @config-changed="handleConfigChanged"
+          @saved="handleConfigSaved"
+        />
+      </section>
+    </div>
   </div>
 </template>
 
@@ -397,6 +424,7 @@ const {
 
 // ========== 基础状态 ==========
 
+const activeTab = ref<"backup" | "config">("backup")
 const workspacePath = ref("")
 const workspaceRoot = ref("")
 const lastBackupTime = ref("")

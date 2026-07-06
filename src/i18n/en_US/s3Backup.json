@@ -84,5 +84,7 @@
   "s3SubPath": "S3 Sub Path",
   "s3SubPathDesc": "Path segment appended after the directory prefix when uploading to cloud",
   "s3SubPathHint": "Organize backup files under this path segment when uploading to cloud",
-  "pathPreview": "Resolved Path"
+  "pathPreview": "Resolved Path",
+  "backupTab": "Backup",
+  "configTab": "Config"
 }

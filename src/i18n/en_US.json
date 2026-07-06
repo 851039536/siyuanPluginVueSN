@@ -1367,6 +1367,8 @@
   "s3SubPathDesc": "Path segment appended after the directory prefix when uploading to cloud",
   "s3SubPathHint": "Organize backup files under this path segment when uploading to cloud",
   "pathPreview": "Resolved Path",
+  "backupTab": "Backup",
+  "configTab": "Config",
   "scriptLauncher": {
     "panelTitle": "Script Launcher",
     "description": "Manage and run custom scripts, supports Python, Bash, PowerShell, Node.js, Batch",

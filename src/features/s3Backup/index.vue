@@ -611,7 +611,7 @@ async function performManualBackup(): Promise<void> {
     showMessage(`${props.i18n.backupFailed || "备份失败"}: ${err.message}`, 5000, "error")
   } finally {
     isBackingUp.value = false
-    saveWorkspaceSettings()
+    // B13 修复：移除 finally 中重复的 saveWorkspaceSettings()，try 块已通过 instance 保存
   }
 }
 
@@ -822,7 +822,11 @@ async function handleAutoBackupTrigger(): Promise<void> {
 
 // ========== 定时器重启 ==========
 
+// B14 修复：初始化完成后才允许 watch 触发定时器重启，避免与 initAutoBackup 重复启动
+const isInitialLoad = ref(true)
+
 function handleTimerRestart(): void {
+  if (isInitialLoad.value) { return }
   const s3Backup = props.plugin?.__s3Backup
   if (s3Backup && typeof s3Backup.restartAutoBackupTimer === "function") {
     s3Backup.restartAutoBackupTimer(autoBackupEnabled.value, backupFrequency.value, backupTime.value)
@@ -950,6 +954,7 @@ async function loadWorkspaceSettings(): Promise<void> {
       backupFrequency.value = data.backupFrequency ?? "daily"
       backupTime.value = data.backupTime ?? "03:00"
       keepBackupCount.value = data.keepBackupCount ?? 7
+      lastBackupTimestamp = data.lastBackupTimestamp ?? 0
       localBackupDir.value = data.localBackupDir || "data-backup"
       s3SubPrefix.value = data.s3SubPrefix || "data-backup"
 
@@ -1053,9 +1058,10 @@ onMounted(async () => {
     console.error("加载 S3 配置失败:", err)
   }
 
-  // 加载工作区设置和路径
+  // 加载工作区设置和路径（加载完成后解除 watch 阻塞）
   await loadWorkspaceSettings()
   await detectWorkspacePath()
+  isInitialLoad.value = false
 
   // 初始化备份管理器
   initBackupManager()

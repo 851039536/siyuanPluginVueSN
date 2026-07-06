@@ -10,14 +10,13 @@
         >
           {{ connectionStatus }}
         </span>
-        <button
-          class="guide-toggle-btn"
-          type="button"
+        <Button
+          variant="ghost"
+          size="small"
+          icon="help"
           :title="i18n.configGuide || '配置指引'"
           @click="showGuide = !showGuide"
-        >
-          <Icon :icon="showGuide ? 'mdi:help-circle' : 'mdi:help-circle-outline'" />
-        </button>
+        />
       </div>
     </div>
 
@@ -30,13 +29,12 @@
         <div class="guide-title">
           <Icon icon="mdi:lightbulb-outline" />
           <span>{{ i18n.configGuide || "配置指引" }}</span>
-          <button
-            class="guide-close-btn"
-            type="button"
+          <Button
+            variant="ghost"
+            size="small"
+            icon="close"
             @click="showGuide = false"
-          >
-            <Icon icon="mdi:close" />
-          </button>
+          />
         </div>
         <div class="guide-content">
           <div class="guide-item">
@@ -70,125 +68,100 @@
     <div class="form-grid">
       <!-- Endpoint -->
       <div class="form-group">
-        <label class="form-label">{{ i18n.endpoint || "Endpoint" }}</label>
-        <input
+        <Input
           v-model="localConfig.endpoint"
-          type="text"
-          class="form-input"
+          :label="i18n.endpoint || 'Endpoint'"
           :placeholder="i18n.endpointHint || 'S3 服务地址，如 http://localhost:9000'"
         />
       </div>
 
       <!-- Access Key -->
       <div class="form-group">
-        <label class="form-label">{{ i18n.accessKey || "Access Key" }}</label>
-        <input
+        <Input
           v-model="localConfig.accessKey"
-          type="text"
-          class="form-input"
+          :label="i18n.accessKey || 'Access Key'"
           placeholder="AKIAIOSFODNN7EXAMPLE"
         />
       </div>
 
       <!-- Secret Key -->
       <div class="form-group">
-        <label class="form-label">{{ i18n.secretKey || "Secret Key" }}</label>
-        <div class="password-input-wrapper">
-          <input
-            v-model="localConfig.secretKey"
-            :type="showSecret ? 'text' : 'password'"
-            class="form-input"
-            placeholder="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
-          />
-          <button
-            class="toggle-password-btn"
-            type="button"
-            @click="showSecret = !showSecret"
-            :title="showSecret ? '隐藏' : '显示'"
-          >
-            <Icon :icon="showSecret ? 'mdi:eye-off' : 'mdi:eye'" />
-          </button>
-        </div>
+        <Input
+          v-model="localConfig.secretKey"
+          type="password"
+          show-password
+          :label="i18n.secretKey || 'Secret Key'"
+          placeholder="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+        />
       </div>
 
       <!-- Bucket -->
       <div class="form-group">
-        <label class="form-label">{{ i18n.bucket || "Bucket" }}</label>
-        <input
+        <Input
           v-model="localConfig.bucket"
-          type="text"
-          class="form-input"
+          :label="i18n.bucket || 'Bucket'"
           :placeholder="i18n.bucketHint || '存储桶名称'"
         />
       </div>
 
       <!-- Region -->
       <div class="form-group">
-        <label class="form-label">{{ i18n.region || "Region" }}</label>
-        <input
+        <Input
           v-model="localConfig.region"
-          type="text"
-          class="form-input"
+          :label="i18n.region || 'Region'"
           :placeholder="i18n.regionHint || '区域，如 us-east-1'"
         />
       </div>
 
       <!-- Prefix -->
       <div class="form-group">
-        <label class="form-label">{{ i18n.prefix || "目录前缀" }}</label>
-        <input
+        <Input
           v-model="localConfig.prefix"
-          type="text"
-          class="form-input"
+          :label="i18n.prefix || '目录前缀'"
           :placeholder="i18n.prefixHint || 'siyuan-backup/'"
         />
       </div>
 
       <!-- Path Style -->
       <div class="form-group form-group-checkbox">
-        <label class="form-checkbox-label">
-          <input
-            v-model="localConfig.pathStyle"
-            type="checkbox"
-            class="form-checkbox"
-          />
-          <span>{{ i18n.pathStyle || "Path Style" }}</span>
-        </label>
+        <Switch
+          :model-value="localConfig.pathStyle"
+          size="small"
+          :label="i18n.pathStyle || 'Path Style'"
+          @update:model-value="localConfig.pathStyle = $event"
+        />
         <span class="form-hint">{{ i18n.pathStyleHint || "使用路径风格访问 (bucket 在路径中而非域名中)" }}</span>
       </div>
 
       <!-- Use SSL -->
       <div class="form-group form-group-checkbox">
-        <label class="form-checkbox-label">
-          <input
-            v-model="localConfig.useSSL"
-            type="checkbox"
-            class="form-checkbox"
-          />
-          <span>{{ i18n.useSSL || "使用 HTTPS" }}</span>
-        </label>
+        <Switch
+          :model-value="localConfig.useSSL"
+          size="small"
+          :label="i18n.useSSL || '使用 HTTPS'"
+          @update:model-value="localConfig.useSSL = $event"
+        />
       </div>
     </div>
 
     <!-- 操作按钮 -->
     <div class="form-actions">
-      <button
-        class="vp-btn vp-btn--ghost vp-btn--sm"
+      <Button
+        variant="ghost"
+        size="small"
         :disabled="isConnecting"
+        :loading="isConnecting"
         @click="handleTestConnection"
       >
-        <span
-          v-if="isConnecting"
-          class="vp-spin"
-        />
-        <span>{{ i18n.testConnection || "测试连接" }}</span>
-      </button>
-      <button
-        class="vp-btn vp-btn--primary vp-btn--sm"
+        {{ i18n.testConnection || "测试连接" }}
+      </Button>
+      <Button
+        variant="primary"
+        size="small"
         @click="handleSave"
       >
         {{ i18n.saveConfig || "保存配置" }}
-      </button>
+      </Button>
     </div>
 
     <!-- 连接状态消息 -->
@@ -205,6 +178,9 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from "vue"
 import { Icon } from "@iconify/vue"
+import Button from "@/components/Button.vue"
+import Input from "@/components/Input.vue"
+import Switch from "@/components/Switch.vue"
 import type { S3Config } from "../types"
 import { DEFAULT_S3_CONFIG } from "../types"
 
@@ -234,7 +210,6 @@ const emit = defineEmits<{
 
 // ========== 状态 ==========
 
-const showSecret = ref(false)
 const showGuide = ref(false)
 const isConnecting = ref(false)
 const lastTestResult = ref<{ success: boolean; message: string } | null>(null)
@@ -342,27 +317,6 @@ watch(
       align-items: center;
       gap: $spacing-2;
     }
-
-    .guide-toggle-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 22px;
-      height: 22px;
-      padding: 0;
-      border: none;
-      border-radius: 50%;
-      background: none;
-      cursor: pointer;
-      color: var(--b3-theme-on-surface-light);
-      font-size: 18px;
-      transition: color 0.15s, background 0.15s;
-
-      &:hover {
-        color: var(--b3-theme-primary);
-        background: hsl(210, 80%, 50%, 0.08);
-      }
-    }
   }
 
   .config-guide-panel {
@@ -381,26 +335,6 @@ watch(
       color: var(--b3-theme-on-surface);
       margin-bottom: $spacing-2;
 
-      .guide-close-btn {
-        margin-left: auto;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 18px;
-        height: 18px;
-        padding: 0;
-        border: none;
-        border-radius: 50%;
-        background: none;
-        cursor: pointer;
-        color: var(--b3-theme-on-surface-light);
-        font-size: 14px;
-
-        &:hover {
-          color: var(--b3-theme-on-surface);
-          background: hsl(0, 0%, 50%, 0.1);
-        }
-      }
     }
 
     .guide-content {
@@ -461,70 +395,6 @@ watch(
 
     &.form-group-checkbox {
       grid-column: 1 / -1;
-    }
-  }
-
-  .form-label {
-    font-size: $font-size-sm;
-    font-weight: $font-weight-medium;
-    color: var(--b3-theme-on-surface);
-  }
-
-  .form-input {
-    width: 100%;
-    padding: $spacing-2 $spacing-3;
-    border: 1px solid var(--b3-theme-surface-lighter);
-    border-radius: $vp-radius;
-    background: var(--b3-theme-background);
-    color: var(--b3-theme-on-background);
-    font-size: $font-size-sm;
-    box-sizing: border-box;
-    transition: border-color 0.15s;
-
-    &:focus {
-      outline: none;
-      border-color: var(--b3-theme-primary);
-    }
-  }
-
-  .password-input-wrapper {
-    position: relative;
-    box-sizing: border-box;
-
-    .form-input {
-      padding-right: 36px;
-    }
-
-    .toggle-password-btn {
-      position: absolute;
-      right: $spacing-2;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: var(--b3-theme-on-surface-light);
-      padding: 2px;
-      display: flex;
-      align-items: center;
-
-      &:hover {
-        color: var(--b3-theme-on-surface);
-      }
-    }
-  }
-
-  .form-checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: $spacing-2;
-    font-size: $font-size-sm;
-    cursor: pointer;
-
-    .form-checkbox {
-      width: 16px;
-      height: 16px;
-      accent-color: var(--b3-theme-primary);
     }
   }
 

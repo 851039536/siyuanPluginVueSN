@@ -107,7 +107,7 @@
           </button>
         </div>
         <div class="gp-form-group">
-          <label class="gp-label">仓库链接</label>
+          <label class="gp-label">仓库链接 <span class="gp-label-hint">（手动输入，用于跨设备持久化）</span></label>
           <div
             v-if="repoLinkList.length"
             class="gp-remote-list"

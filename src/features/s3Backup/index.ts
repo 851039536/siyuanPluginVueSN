@@ -25,7 +25,6 @@ export class S3Backup {
   private modal: ModalAppInstance
   private _openHandler: (() => void) | null = null
 
-  private cachedWorkspacePath = ""
   private cachedWorkspaceRoot = ""
 
   constructor(plugin: Plugin) {
@@ -66,9 +65,9 @@ export class S3Backup {
     return this.cachedWorkspaceRoot
   }
 
-  /** 获取当前工作区 data 路径（供 Vue 面板读取） */
+  /** 获取当前工作区 data 路径（与 getWorkspaceRoot 相同，向后兼容） */
   getWorkspacePath(): string {
-    return this.cachedWorkspacePath
+    return this.cachedWorkspaceRoot
   }
 
   /** 获取持久化存储实例（供 Vue 面板共用，避免重复创建） */
@@ -140,7 +139,6 @@ export class S3Backup {
   /** 更新工作区路径（供 Vue 面板在用户手动选择路径后同步） */
   setWorkspacePaths(root: string): void {
     this.cachedWorkspaceRoot = root
-    this.cachedWorkspacePath = root
   }
 
   // ========== 生命周期 ==========

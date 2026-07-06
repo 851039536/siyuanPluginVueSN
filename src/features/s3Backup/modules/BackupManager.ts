@@ -19,7 +19,6 @@ export interface BackupProgress {
 export interface WorkspaceFile {
   fullPath: string
   relativePath: string
-  size: number
 }
 
 // ========== BackupManager ==========
@@ -29,7 +28,7 @@ export class BackupManager {
   private fs: any
   private path: any
 
-  constructor(workspacePath: string, _workspaceRoot: string) {
+  constructor(workspacePath: string) {
     this.workspacePath = workspacePath
 
     const node = getNodeModules()
@@ -41,7 +40,7 @@ export class BackupManager {
   }
 
   /** 更新工作区路径 */
-  updateWorkspacePaths(workspacePath: string, _workspaceRoot: string): void {
+  updateWorkspacePath(workspacePath: string): void {
     this.workspacePath = workspacePath
   }
 
@@ -65,12 +64,7 @@ export class BackupManager {
       percent: 0,
     })
 
-    const rawFiles: { fullPath: string; relativePath: string; size: number }[] = []
-    await this.scanDirectory(this.workspacePath, "", skipDirs, rawFiles, onProgress)
-
-    for (const f of rawFiles) {
-      files.push({ fullPath: f.fullPath, relativePath: f.relativePath, size: f.size })
-    }
+    await this.scanDirectory(this.workspacePath, "", skipDirs, files, onProgress)
 
     onProgress?.({
       phase: "scanning",
@@ -99,7 +93,7 @@ export class BackupManager {
     dirPath: string,
     zipPath: string,
     skipDirs: Set<string>,
-    result: { fullPath: string; relativePath: string; size: number }[],
+    result: WorkspaceFile[],
     onProgress?: (progress: BackupProgress) => void,
   ): Promise<void> {
     let entries
@@ -120,11 +114,9 @@ export class BackupManager {
         await this.scanDirectory(fullPath, relativePath, skipDirs, result, onProgress)
       } else if (entry.isFile()) {
         try {
-          const stats = await this.fs.stat(fullPath)
           result.push({
             fullPath,
             relativePath,
-            size: stats.size,
           })
         } catch {
           // 跳过无法读取的文件

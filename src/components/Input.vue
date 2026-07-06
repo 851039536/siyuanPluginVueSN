@@ -186,7 +186,7 @@ interface Emits {
 
 const props = withDefaults(defineProps<Props>(), {
   type: "text",
-  size: "medium",
+  size: "small",
   placeholder: "",
   disabled: false,
   readonly: false,

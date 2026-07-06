@@ -64,7 +64,7 @@ interface Emits {
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: false,
-  size: "medium",
+  size: "small",
   disabled: false,
   loading: false,
   labelBefore: false,

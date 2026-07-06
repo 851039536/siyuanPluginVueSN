@@ -75,7 +75,7 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  size: "medium",
+  size: "small",
   variant: "default",
   shape: "rounded",
   iconSize: 12,

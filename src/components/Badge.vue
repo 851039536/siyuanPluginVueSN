@@ -52,7 +52,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   dot: false,
-  size: "medium",
+  size: "small",
   variant: "danger",
   position: "top-right",
   hidden: false,

@@ -88,7 +88,7 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  size: "medium",
+  size: "small",
   min: 0,
   max: 100,
   step: 1,

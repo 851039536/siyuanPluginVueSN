@@ -60,7 +60,7 @@ type Emits = (e: "click", event: MouseEvent) => void
 
 const props = withDefaults(defineProps<Props>(), {
   variant: "primary",
-  size: "medium",
+  size: "small",
   iconSize: 16,
   iconPosition: "left",
   disabled: false,

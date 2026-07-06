@@ -1,0 +1,142 @@
+/**
+ * S3ConfigForm 组件专属样式
+ *
+ * 与 index.scss（共享基座）中的 .section-header / .form-hint / ::deep 公共组件覆盖配合使用。
+ * 本文件仅包含 S3ConfigForm 独有的布局与组件样式。
+ */
+@use '@/variables.scss' as *;
+
+.s3-config-form {
+  // section-header 扩展：覆盖 margin-bottom + 独有的连接状态/操作区
+  .section-header {
+    margin-bottom: $spacing-4;
+
+    .connection-status {
+      font-size: $font-size-xs;
+      padding: 2px $spacing-2;
+      border-radius: $vp-radius;
+
+      &.status-connected {
+        color: $brand-success;
+        background: hsl(142, 76%, 36%, 0.1);
+      }
+
+      &.status-disconnected {
+        color: $brand-destructive;
+        background: hsl(0, 72%, 51%, 0.1);
+      }
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: $spacing-2;
+    }
+  }
+
+  // 配置指引面板
+  .config-guide-panel {
+    margin-bottom: $spacing-4;
+    padding: $spacing-3;
+    border: 1px solid var(--b3-theme-surface-lighter);
+    border-radius: $vp-radius;
+    background: hsl(45, 90%, 50%, 0.04);
+
+    .guide-title {
+      display: flex;
+      align-items: center;
+      gap: $spacing-1;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-semibold;
+      color: var(--b3-theme-on-surface);
+      margin-bottom: $spacing-2;
+    }
+
+    .guide-content {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-1;
+    }
+
+    .guide-item {
+      display: flex;
+      align-items: baseline;
+      gap: $spacing-2;
+      font-size: $font-size-xs;
+      line-height: 1.5;
+
+      .guide-label {
+        flex-shrink: 0;
+        min-width: 120px;
+        font-weight: $font-weight-medium;
+        color: var(--b3-theme-on-surface);
+      }
+
+      .guide-desc {
+        color: var(--b3-theme-on-surface-light);
+      }
+    }
+  }
+
+  // 指引面板动画
+  .guide-fade-enter-active,
+  .guide-fade-leave-active {
+    transition: opacity 0.2s ease, max-height 0.25s ease;
+    overflow: hidden;
+  }
+
+  .guide-fade-enter-from,
+  .guide-fade-leave-to {
+    opacity: 0;
+    max-height: 0;
+  }
+
+  .guide-fade-enter-to,
+  .guide-fade-leave-from {
+    opacity: 1;
+    max-height: 400px;
+  }
+
+  // 表单网格（双列布局）
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $spacing-3;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-1;
+    min-width: 0;
+
+    &.form-group-checkbox {
+      grid-column: 1 / -1;
+    }
+  }
+
+  // 操作按钮区
+  .form-actions {
+    display: flex;
+    gap: $spacing-2;
+    margin-top: $spacing-4;
+  }
+
+  // 连接测试结果
+  .connection-result {
+    margin-top: $spacing-3;
+    padding: $spacing-2 $spacing-3;
+    border-radius: $vp-radius;
+    font-size: $font-size-sm;
+
+    &.success {
+      color: $brand-success;
+      background: hsl(142, 76%, 36%, 0.08);
+    }
+
+    &.error {
+      color: $brand-destructive;
+      background: hsl(0, 72%, 51%, 0.08);
+    }
+  }
+}

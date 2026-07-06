@@ -4,7 +4,7 @@
  * 使用 AWS Signature V4 签名算法，通过 Node.js crypto 模块直接签名 HTTP 请求。
  * 不依赖任何外部 SDK，支持所有 S3 兼容存储（MinIO、Ceph、LocalStack 等）。
  *
- * 支持操作：HeadBucket(测试连接)、PutObject(上传)、GetObject(下载)、
+ * 支持操作：HeadBucket(测试连接)、PutObject(上传Buffer)、GetObject(下载)、
  * ListObjects(列举)、DeleteObject(删除)
  */
 import type { S3Config, S3FileInfo } from "./index"
@@ -213,12 +213,6 @@ export class S3Client {
     this.config.endpoint = this.normalizeEndpoint(config.endpoint)
   }
 
-  /** 更新配置（用于连接测试） */
-  updateConfig(config: S3Config): void {
-    this.config = { ...config }
-    this.config.endpoint = this.normalizeEndpoint(config.endpoint)
-  }
-
   // ========== 公开 API ==========
 
   /**
@@ -300,24 +294,6 @@ export class S3Client {
     } catch (err: any) {
       return { success: false, message: `ListObjects 异常: ${err.message}` }
     }
-  }
-
-  /** 上传本地文件到 S3 */
-  async upload(localPath: string, key: string, onProgress?: (percent: number) => void): Promise<void> {
-    const { fs } = requireFsPath()
-    const fileBuffer = await fs.readFile(localPath)
-
-    onProgress?.(30)
-
-    const url = this.buildUrl(key)
-    const response = await this.request("PUT", this.buildUri(key), "", url, fileBuffer)
-
-    if (!response.ok) {
-      const body = await response.text()
-      throw new Error(formatS3Error(response, body, "S3 上传失败"))
-    }
-
-    onProgress?.(100)
   }
 
   /** 直接上传 Buffer 内容到 S3（跳过本地文件读写） */
@@ -433,9 +409,6 @@ export class S3Client {
       this.config.accessKey, this.config.secretKey,
       this.config.region, amzDateStr, dateStampStr,
     )
-
-    // 调试：输出签名参数（构建后可在开发者工具中查看）
-    console.log(`[S3] 签名 (${method} ${uri}): region=${this.config.region}, date=${amzDateStr}, payloadHash=${payloadHashValue}, accessKey=${this.config.accessKey.slice(0, 6)}..., endpoint=${this.config.endpoint}`)
 
     const reqHeaders: Record<string, string> = {
       "Authorization": authorization,

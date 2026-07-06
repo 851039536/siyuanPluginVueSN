@@ -222,7 +222,7 @@ let backupManager: BackupManager | null = null
 
 function initBackupManager(): void {
   if (workspacePath.value) {
-    backupManager = new BackupManager(workspacePath.value, workspaceRoot.value)
+    backupManager = new BackupManager(workspacePath.value)
   }
 }
 
@@ -232,7 +232,7 @@ function updateWorkspacePath(root: string, shouldSave = false): void {
   workspaceRoot.value = root
   workspacePath.value = root
   if (backupManager) {
-    backupManager.updateWorkspacePaths(workspacePath.value, workspaceRoot.value)
+    backupManager.updateWorkspacePath(workspacePath.value)
   }
   // 同步更新 S3Backup 类内部的工作区路径
   const instance = getS3BackupInstance()

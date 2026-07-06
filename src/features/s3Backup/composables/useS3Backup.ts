@@ -29,7 +29,6 @@ export function useS3Backup() {
   })
 
   const backupList = ref<S3FileInfo[]>([])
-  const error = ref<string | null>(null)
 
   let s3Client: S3Client | null = null
 
@@ -56,7 +55,6 @@ export function useS3Backup() {
   async function testConnection(config?: S3Config): Promise<{ success: boolean; message: string }> {
     const cfg = config || s3Config.value
     isConnecting.value = true
-    error.value = null
 
     try {
       const client = initClient(cfg)
@@ -79,27 +77,6 @@ export function useS3Backup() {
     initClient(config)
   }
 
-  /** 执行备份：本地打包 → S3 上传 */
-  async function performBackup(
-    localZipPath: string,
-    s3Key: string,
-    onProgress?: (percent: number) => void,
-  ): Promise<void> {
-    if (!s3Client) throw new Error("S3 客户端未初始化")
-
-    isBackingUp.value = true
-    error.value = null
-
-    try {
-      await s3Client.upload(localZipPath, s3Key, onProgress)
-    } catch (err: any) {
-      error.value = err.message
-      throw err
-    } finally {
-      isBackingUp.value = false
-    }
-  }
-
   /** 直接上传文件内容到 S3（跳过本地打包，用于逐文件上传模式） */
   async function uploadFileContent(buffer: Buffer, key: string): Promise<void> {
     if (!s3Client) { throw new Error("S3 客户端未初始化") }
@@ -111,15 +88,13 @@ export function useS3Backup() {
     if (!s3Client) throw new Error("S3 客户端未初始化")
 
     isLoading.value = true
-    error.value = null
 
     try {
       const prefix = s3Config.value.prefix || "siyuan-backup/"
       const files = await s3Client.list(prefix)
       backupList.value = files
       return files
-    } catch (err: any) {
-      error.value = err.message
+    } catch (_err: any) {
       backupList.value = []
       return []
     } finally {
@@ -130,12 +105,10 @@ export function useS3Backup() {
   /** 下载 S3 备份文件 */
   async function downloadBackup(s3Key: string, localPath: string): Promise<void> {
     if (!s3Client) throw new Error("S3 客户端未初始化")
-    error.value = null
 
     try {
       await s3Client.download(s3Key, localPath)
     } catch (err: any) {
-      error.value = err.message
       throw err
     }
   }
@@ -143,13 +116,11 @@ export function useS3Backup() {
   /** 删除 S3 备份文件 */
   async function deleteBackup(s3Key: string): Promise<void> {
     if (!s3Client) throw new Error("S3 客户端未初始化")
-    error.value = null
 
     try {
       await s3Client.delete(s3Key)
       backupList.value = backupList.value.filter((f) => f.key !== s3Key)
     } catch (err: any) {
-      error.value = err.message
       throw err
     }
   }
@@ -167,20 +138,15 @@ export function useS3Backup() {
     // 状态
     s3Config,
     isConfigured,
-    isConnected,
-    isConnecting,
     isBackingUp,
     isLoading,
     backupProgress,
     backupList,
-    error,
     // 计算属性
     phaseLabel,
     // 方法
-    initClient,
     testConnection,
     saveConfig,
-    performBackup,
     uploadFileContent,
     listBackups,
     downloadBackup,

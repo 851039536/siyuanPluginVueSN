@@ -16,8 +16,6 @@ export function useS3Backup() {
 
   const s3Config = ref<S3Config>({ ...DEFAULT_S3_CONFIG })
   const isConfigured = ref(false)
-  const isConnected = ref(false)
-  const isConnecting = ref(false)
   const isBackingUp = ref(false)
   const isLoading = ref(false)
 
@@ -58,18 +56,12 @@ export function useS3Backup() {
   /** 测试 S3 连接 */
   async function testConnection(config?: S3Config): Promise<{ success: boolean; message: string }> {
     const cfg = config || s3Config.value
-    isConnecting.value = true
 
     try {
       const client = initClient(cfg)
-      const result = await client.testConnection()
-      isConnected.value = result.success
-      return result
+      return await client.testConnection()
     } catch (err: any) {
-      isConnected.value = false
       return { success: false, message: `连接测试异常: ${err.message}` }
-    } finally {
-      isConnecting.value = false
     }
   }
 
@@ -77,7 +69,6 @@ export function useS3Backup() {
   function saveConfig(config: S3Config): void {
     s3Config.value = { ...config }
     isConfigured.value = true
-    isConnected.value = false // 重置连接状态，需要重新测试
     initClient(config)
   }
 

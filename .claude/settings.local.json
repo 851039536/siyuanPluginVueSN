@@ -135,7 +135,8 @@
       "Bash(npx eslint *)",
       "Bash(npx tsc *)",
       "Bash(npm run *)",
-      "Bash(pnpm lint *)"
+      "Bash(pnpm lint *)",
+      "mcp__filesystem__write_file"
     ],
     "deny": [],
     "ask": [],

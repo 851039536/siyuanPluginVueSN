@@ -1,16 +1,6 @@
 <!-- 正则表达式生成器 — 根据描述和示例生成并测试正则 -->
 <template>
   <div class="regex-generator-panel">
-    <div class="panel-header">
-      <h3 class="panel-title">
-        <IconWrapper
-          name="regex"
-          :size="18"
-        />
-        {{ i18n.regexGenerator || '正则生成器' }}
-      </h3>
-    </div>
-
     <div class="panel-content">
       <div class="input-section">
         <div class="input-label">

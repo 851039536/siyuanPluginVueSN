@@ -388,15 +388,13 @@
             <Button
               variant="primary"
               size="xsmall"
-              :disabled="isTranslating"
-              :loading="isTranslating"
               @click="handleTranslate"
             >
               <IconWrapper
                 name="translate"
                 :size="16"
               />
-              {{ isTranslating ? (props.i18n.wordQuery?.translating || '翻译中...') : (props.i18n.wordQuery?.translate || '翻译') }}
+              {{ props.i18n.wordQuery?.translate || '翻译' }}
             </Button>
           </div>
         </div>
@@ -426,14 +424,35 @@
               class="language-select"
             />
           </div>
-          <div
-            v-if="translateResult"
-            class="translate-result"
-          >
-            <div class="result-text">
+          <template v-if="translateResult">
+            <div class="translate-result">
               {{ translateResult }}
             </div>
-          </div>
+            <div class="output-actions">
+              <Button
+                variant="ghost"
+                size="xsmall"
+                @click="copyTranslation"
+              >
+                <IconWrapper
+                  name="contentCopy"
+                  :size="16"
+                />
+                {{ props.i18n.wordQuery?.copy || '复制' }}
+              </Button>
+              <Button
+                variant="ghost"
+                size="xsmall"
+                @click="exportTranslation"
+              >
+                <IconWrapper
+                  name="up"
+                  :size="16"
+                />
+                {{ props.i18n.wordQuery?.export || '导出' }}
+              </Button>
+            </div>
+          </template>
           <div
             v-else
             class="translate-empty"
@@ -445,33 +464,6 @@
               />
             </div>
             <p>{{ props.i18n.wordQuery?.translationWillAppearHere || '翻译结果将显示在这里' }}</p>
-          </div>
-          <div
-            v-if="translateResult"
-            class="output-actions"
-          >
-            <Button
-              variant="ghost"
-              size="xsmall"
-              @click="copyTranslation"
-            >
-              <IconWrapper
-                name="contentCopy"
-                :size="16"
-              />
-              {{ props.i18n.wordQuery?.copy || '复制' }}
-            </Button>
-            <Button
-              variant="ghost"
-              size="xsmall"
-              @click="exportTranslation"
-            >
-              <IconWrapper
-                name="up"
-                :size="16"
-              />
-              {{ props.i18n.wordQuery?.export || '导出' }}
-            </Button>
           </div>
         </div>
       </div>
@@ -633,7 +625,6 @@ const showCopyOptions = ref(false)
 
 const translateText = ref("")
 const translateResult = ref("")
-const isTranslating = ref(false)
 const sourceLanguage = ref("auto")
 const targetLanguage = ref("zh")
 
@@ -827,7 +818,7 @@ const setupAutoTranslate = () => {
   clearTimer(autoTranslateTimer)
 
   const text = translateText.value.trim()
-  if (text && !isTranslating.value) {
+  if (text) {
     autoTranslateTimer.value = setTimeout(() => {
       handleTranslate()
     }, AUTO_OPERATION_DELAY)
@@ -889,9 +880,6 @@ const handleTranslate = async () => {
     return
   }
 
-  isTranslating.value = true
-  translateResult.value = ""
-
   try {
     const config = getApiConfigFromPlugin(props.plugin)
     const prompt = buildTranslatePrompt(
@@ -904,8 +892,6 @@ const handleTranslate = async () => {
   } catch (error) {
     console.error("Translation error:", error)
     showMessage(`翻译失败: ${(error as Error).message}`, 3000, "error")
-  } finally {
-    isTranslating.value = false
   }
 }
 

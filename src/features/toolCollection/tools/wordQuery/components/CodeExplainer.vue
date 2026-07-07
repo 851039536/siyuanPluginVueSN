@@ -1,16 +1,6 @@
 <!-- 代码解释器 — 分析代码功能、复杂度和优化建议 -->
 <template>
   <div class="code-explainer-panel">
-    <div class="panel-header">
-      <h3 class="panel-title">
-        <IconWrapper
-          name="code"
-          :size="18"
-        />
-        {{ i18n.codeExplainer || '代码解释器' }}
-      </h3>
-    </div>
-
     <div class="panel-content">
       <div class="input-section">
         <div class="input-label">

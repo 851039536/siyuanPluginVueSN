@@ -522,6 +522,9 @@ export const COMMON_ICONS = {
   play: {
     icon: "mdi:play",
   },
+  pronunciation: {
+    icon: "mdi:volume-high",
+  },
 } as const
 
 /**

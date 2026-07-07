@@ -1,10 +1,57 @@
 @use '@/variables.scss' as *;
 
-// ===== Codex 风格变量 =====
-$rr-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+// ===== 本地变量 =====
 $rr-accent: $brand-accent;
+$rr-transition: all 0.12s;
 
-// ===== RSS 阅读器排版（针对右侧边栏窄屏优化） =====
+// ===== 可复用 Mixins =====
+
+// 图标按钮基础结构（不含颜色，由各按钮自行设置）
+@mixin btn-icon-base($size) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: $size;
+  height: $size;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: $rr-transition;
+}
+
+// 标准按钮 hover 效果
+@mixin btn-hover {
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+  }
+}
+
+// 输入框聚焦环（功能性 outline 替代，非装饰性阴影）
+@mixin input-focus-ring {
+  &:focus {
+    border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+  }
+}
+
+// 未读/计数徽章
+@mixin badge($line-h: 16px, $min-w: 16px, $pad-h: 5px) {
+  font-size: 10px;
+  font-family: $vp-mono;
+  font-weight: 600;
+  padding: 0 $pad-h;
+  line-height: $line-h;
+  border-radius: $radius-full;
+  min-width: $min-w;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+// ===== RSS 阅读器面板 =====
 
 .rss-reader-panel {
   display: flex;
@@ -36,39 +83,16 @@ $rr-accent: $brand-accent;
       .rss-title-icon { color: $rr-accent; }
 
       .unread-badge {
+        @include badge(16px, 16px, 5px);
         background: $rr-accent;
         color: #fff;
-        font-size: 10px;
-        font-family: $rr-mono;
-        font-weight: 600;
-        padding: 0 5px;
-        line-height: 16px;
-        border-radius: $radius-full;
-        min-width: 16px;
-        text-align: center;
-        flex-shrink: 0;
       }
     }
 
     .rss-toolbar-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 26px;
-      height: 26px;
-      border: 1px solid var(--b3-border-color);
-      border-radius: $radius-sm;
-      background: transparent;
+      @include btn-icon-base(26px);
       color: var(--b3-theme-on-surface);
-      cursor: pointer;
-      flex-shrink: 0;
-      transition: all 0.12s;
-
-      &:hover {
-        background: var(--b3-theme-surface-lighter);
-        border-color: var(--b3-theme-primary);
-        color: var(--b3-theme-primary);
-      }
+      @include btn-hover;
     }
   }
 
@@ -87,11 +111,8 @@ $rr-accent: $brand-accent;
       font-size: $font-size-sm;
       outline: none;
       box-sizing: border-box;
+      @include input-focus-ring;
 
-      &:focus {
-        border-color: var(--b3-theme-primary);
-        box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
-      }
       &::placeholder { color: var(--b3-theme-on-surface-muted); font-size: $font-size-xs; }
     }
   }
@@ -184,7 +205,7 @@ $rr-accent: $brand-accent;
 
       .group-count {
         font-size: 10px;
-        font-family: $rr-mono;
+        font-family: $vp-mono;
         color: var(--b3-theme-on-surface-muted);
         background: var(--b3-theme-background);
         padding: 0 5px;
@@ -194,17 +215,9 @@ $rr-accent: $brand-accent;
       }
 
       .group-unread {
-        font-size: 10px;
-        font-family: $rr-mono;
-        font-weight: 600;
-        color: #fff;
+        @include badge(14px, 14px, 5px);
         background: $rr-accent;
-        padding: 0 5px;
-        line-height: 14px;
-        border-radius: $radius-full;
-        min-width: 14px;
-        text-align: center;
-        flex-shrink: 0;
+        color: #fff;
 
         &:empty { display: none; }
       }
@@ -220,26 +233,13 @@ $rr-accent: $brand-accent;
         font-weight: 600;
         outline: none;
         min-width: 0;
-
-        &:focus {
-          box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
-        }
+        @include input-focus-ring;
       }
 
       .group-action-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 20px;
-        height: 20px;
-        border: 1px solid var(--b3-border-color);
-        border-radius: $radius-sm;
-        background: transparent;
+        @include btn-icon-base(20px);
         color: var(--b3-theme-on-surface-muted);
-        cursor: pointer;
-        flex-shrink: 0;
         opacity: 0;
-        transition: all 0.12s;
 
         &:hover {
           background: var(--b3-theme-background);
@@ -258,7 +258,7 @@ $rr-accent: $brand-accent;
       padding: $spacing-2 $spacing-3 $spacing-2 28px;
       cursor: pointer;
       border-bottom: 1px solid var(--b3-border-color);
-      transition: all 0.12s;
+      transition: $rr-transition;
       min-height: 40px;
       position: relative;
 
@@ -292,7 +292,7 @@ $rr-accent: $brand-accent;
         }
         .feed-url {
           font-size: 11px;
-          font-family: $rr-mono;
+          font-family: $vp-mono;
           color: var(--b3-theme-on-surface-muted);
           overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
           line-height: 1.3; margin-top: 1px;
@@ -301,29 +301,17 @@ $rr-accent: $brand-accent;
       }
 
       .feed-unread {
-        font-size: 10px;
-        font-family: $rr-mono;
-        font-weight: 600;
-        background: $rr-accent; color: #fff;
-        padding: 0 6px; line-height: 16px;
-        border-radius: $radius-full; flex-shrink: 0;
-        min-width: 16px; text-align: center;
+        @include badge(16px, 16px, 6px);
+        background: $rr-accent;
+        color: #fff;
       }
 
       .feed-actions {
         display: flex; gap: 2px; opacity: 0; transition: opacity 0.12s;
         button {
-          display: flex; align-items: center; justify-content: center;
-          width: 22px; height: 22px;
-          border: 1px solid var(--b3-border-color); border-radius: $radius-sm;
-          background: transparent; cursor: pointer;
+          @include btn-icon-base(22px);
           color: var(--b3-theme-on-surface-muted);
-          transition: all 0.12s;
-          &:hover {
-            background: var(--b3-theme-surface-lighter);
-            border-color: var(--b3-theme-primary);
-            color: var(--b3-theme-primary);
-          }
+          @include btn-hover;
         }
       }
 
@@ -333,9 +321,8 @@ $rr-accent: $brand-accent;
         top: 100%;
         z-index: 10;
         background: var(--b3-theme-background);
-        border: 1px solid var(--b3-theme-surface-lighter);
+        border: 1px solid var(--b3-theme-surface);
         border-radius: $radius-sm;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
         min-width: 140px;
         padding: 4px 0;
 
@@ -365,11 +352,8 @@ $rr-accent: $brand-accent;
             font-size: $font-size-xs;
             outline: none;
             box-sizing: border-box;
+            @include input-focus-ring;
 
-            &:focus {
-              border-color: var(--b3-theme-primary);
-              box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
-            }
             &::placeholder { color: var(--b3-theme-on-surface-muted); }
           }
         }
@@ -386,7 +370,7 @@ $rr-accent: $brand-accent;
       padding: $spacing-2 $spacing-3;
       cursor: pointer;
       border-bottom: 1px solid var(--b3-border-color);
-      transition: all 0.12s;
+      transition: $rr-transition;
 
       &:hover {
         background: var(--b3-theme-surface-lighter);
@@ -412,7 +396,7 @@ $rr-accent: $brand-accent;
         }
         .item-date {
           font-size: 10px;
-          font-family: $rr-mono;
+          font-family: $vp-mono;
           color: var(--b3-theme-on-surface-muted);
           margin-left: auto; flex-shrink: 0;
           opacity: 0.6;
@@ -443,6 +427,7 @@ $rr-accent: $brand-accent;
           background: transparent; cursor: pointer;
           color: var(--b3-theme-on-surface-muted);
           font-size: 14px;
+          transition: $rr-transition;
           &.starred { color: #f59e0b; }
           &:hover { background: var(--b3-theme-surface-lighter); }
         }
@@ -461,17 +446,9 @@ $rr-accent: $brand-accent;
       flex-shrink: 0; min-height: 36px;
 
       .back-btn {
-        display: flex; align-items: center; justify-content: center;
-        width: 26px; height: 26px;
-        border: 1px solid var(--b3-border-color); border-radius: $radius-sm;
-        background: transparent; color: var(--b3-theme-on-surface);
-        cursor: pointer; flex-shrink: 0;
-        transition: all 0.12s;
-        &:hover {
-          background: var(--b3-theme-surface-lighter);
-          border-color: var(--b3-theme-primary);
-          color: var(--b3-theme-primary);
-        }
+        @include btn-icon-base(26px);
+        color: var(--b3-theme-on-surface);
+        @include btn-hover;
       }
 
       .detail-actions {
@@ -483,7 +460,7 @@ $rr-accent: $brand-accent;
           border-radius: $radius-sm;
           background: transparent; cursor: pointer;
           color: var(--b3-theme-on-surface); font-size: $font-size-xs;
-          transition: all 0.12s;
+          transition: $rr-transition;
           .btn-label { font-size: $font-size-xs; }
           &:hover {
             background: var(--b3-theme-surface-lighter);
@@ -548,19 +525,10 @@ $rr-accent: $brand-accent;
     flex-shrink: 0;
 
     .font-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 22px;
-      height: 22px;
-      border: 1px solid var(--b3-border-color);
-      border-radius: $radius-sm;
-      background: transparent;
+      @include btn-icon-base(22px);
       color: var(--b3-theme-on-surface);
-      cursor: pointer;
       font-size: 11px;
       line-height: 1;
-      transition: all 0.12s;
 
       sup { font-size: 9px; }
 
@@ -572,7 +540,7 @@ $rr-accent: $brand-accent;
 
     .font-size-label {
       font-size: 10px;
-      font-family: $rr-mono;
+      font-family: $vp-mono;
       color: var(--b3-theme-on-surface-muted);
       min-width: 18px;
       text-align: center;
@@ -609,7 +577,7 @@ $rr-accent: $brand-accent;
       color: $rr-accent;
       font-size: $font-size-sm;
       cursor: pointer;
-      transition: all 0.12s;
+      transition: $rr-transition;
 
       &:hover {
         background: rgba($rr-accent, 0.1);
@@ -648,7 +616,7 @@ $rr-accent: $brand-accent;
     }
   }
 
-  // --- 添加订阅对话框 ---
+  // --- 添加订阅对话框 / 设置面板（共享布局） ---
   .rss-add-dialog,
   .rss-settings-panel {
     position: absolute; inset: 0;
@@ -669,17 +637,9 @@ $rr-accent: $brand-accent;
       }
 
       .close-btn {
-        display: flex; align-items: center; justify-content: center;
-        width: 26px; height: 26px;
-        border: 1px solid var(--b3-border-color); border-radius: $radius-sm;
-        background: transparent; color: var(--b3-theme-on-surface);
-        cursor: pointer; flex-shrink: 0;
-        transition: all 0.12s;
-        &:hover {
-          background: var(--b3-theme-surface-lighter);
-          border-color: var(--b3-theme-primary);
-          color: var(--b3-theme-primary);
-        }
+        @include btn-icon-base(26px);
+        color: var(--b3-theme-on-surface);
+        @include btn-hover;
       }
     }
 
@@ -702,15 +662,12 @@ $rr-accent: $brand-accent;
         input, select {
           width: 100%; padding: 7px 10px;
           border: 1px solid var(--b3-border-color);
-          border-radius: 4px;
+          border-radius: $radius-sm;
           background: var(--b3-theme-background);
           color: var(--b3-theme-on-background);
           font-size: $font-size-sm; outline: none; box-sizing: border-box;
           transition: border-color 0.12s;
-          &:focus {
-            border-color: var(--b3-theme-primary);
-            box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
-          }
+          @include input-focus-ring;
         }
       }
     }
@@ -721,9 +678,9 @@ $rr-accent: $brand-accent;
       display: flex; justify-content: flex-end; gap: $spacing-2;
 
       button {
-        padding: 5px 12px; border-radius: 4px;
+        padding: 5px 12px; border-radius: $radius-sm;
         font-size: $font-size-sm; font-weight: 600; cursor: pointer;
-        transition: all 0.12s;
+        transition: $rr-transition;
         border: 1px solid var(--b3-border-color);
         background: transparent; color: var(--b3-theme-on-surface);
 
@@ -755,17 +712,16 @@ $rr-accent: $brand-accent;
     .empty-action {
       margin-top: $spacing-2;
       padding: $spacing-1 $spacing-3;
-      border: 1px solid $rr-accent; border-radius: 4px;
+      border: 1px solid $rr-accent; border-radius: $radius-sm;
       background: transparent; color: $rr-accent;
       font-size: $font-size-sm; font-weight: 600; cursor: pointer;
-      transition: all 0.12s;
+      transition: $rr-transition;
       &:hover {
         background: rgba($rr-accent, 0.1);
         border-color: $rr-accent;
       }
     }
   }
-
 }
 
 @keyframes spin {

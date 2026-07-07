@@ -23,7 +23,7 @@
                 :size="12"
               />
             </button>
-            <span class="resize-label">{{ panelWidth }}px</span>
+            <span class="resize-label">宽{{ panelWidth }}</span>
             <button
               class="resize-btn"
               title="变宽"
@@ -34,6 +34,7 @@
                 :size="12"
               />
             </button>
+            <span class="resize-divider" />
             <button
               class="resize-btn"
               title="变矮"
@@ -44,7 +45,7 @@
                 :size="12"
               />
             </button>
-            <span class="resize-label">{{ panelHeight }}vh</span>
+            <span class="resize-label">高{{ panelHeight }}</span>
             <button
               class="resize-btn"
               title="变高"
@@ -71,11 +72,11 @@
         <div class="tool-collection-tab-bar">
           <button
             class="tab-nav-btn tab-nav-left"
-            title="上一个工具"
+            title="上一个工具 (←)"
             @click="prevTool"
           >
             <Icon
-              icon="mdi:chevron-left"
+              icon="mdi:arrow-left"
               :size="12"
             />
           </button>
@@ -87,19 +88,24 @@
               :class="{ active: currentTool === tool.id }"
               @click="currentTool = tool.id"
             >
+              <Icon
+                :icon="tool.icon"
+                :size="14"
+              />
               {{ tool.label }}
             </button>
           </div>
           <button
             class="tab-nav-btn tab-nav-right"
-            title="下一个工具"
+            title="下一个工具 (→)"
             @click="nextTool"
           >
             <Icon
-              icon="mdi:chevron-right"
+              icon="mdi:arrow-right"
               :size="12"
             />
           </button>
+          <span class="tab-keyhint">← →</span>
         </div>
 
         <!-- 工具内容区 -->
@@ -189,6 +195,7 @@ onMounted(async () => {
   if (w && w >= 500 && w <= 1200) panelWidth.value = w
   const h = await storage.load<number>("toolCollection-height")
   if (h && h >= 30 && h <= 85) panelHeight.value = h
+  window.addEventListener("keydown", handleKeydown)
 })
 
 const adjustWidth = async (delta: number) => {
@@ -257,10 +264,6 @@ const handleKeydown = (e: KeyboardEvent) => {
     nextTool()
   }
 }
-
-onMounted(() => {
-  window.addEventListener("keydown", handleKeydown)
-})
 
 onBeforeUnmount(() => {
   window.removeEventListener("keydown", handleKeydown)

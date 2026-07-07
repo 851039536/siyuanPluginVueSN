@@ -86,6 +86,9 @@
 
 .tab-btn {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
   padding: $spacing-2 $spacing-4;
   border: none;
   background: transparent;
@@ -114,8 +117,34 @@
       height: 2px;
       background: var(--b3-theme-primary);
       border-radius: 2px 2px 0 0;
+      transform: scaleX(1);
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
   }
+
+  &:not(.active)::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: $spacing-2;
+    right: $spacing-2;
+    height: 2px;
+    background: var(--b3-theme-primary);
+    border-radius: 2px 2px 0 0;
+    transform: scaleX(0);
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+// Tab 栏键盘提示
+.tab-keyhint {
+  flex-shrink: 0;
+  padding: 0 $spacing-2;
+  font-family: $vp-mono;
+  font-size: 10px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.35;
+  user-select: none;
 }
 
 // ==================== 工具内容区 ====================
@@ -186,10 +215,18 @@
     font-family: $vp-mono;
     font-size: 10px;
     color: var(--b3-theme-on-surface);
-    opacity: 0.5;
+    opacity: 0.6;
     min-width: 42px;
     text-align: center;
     user-select: none;
+  }
+
+  .resize-divider {
+    width: 1px;
+    height: 14px;
+    margin: 0 2px;
+    background: var(--b3-border-color);
+    flex-shrink: 0;
   }
 
   .header-close {

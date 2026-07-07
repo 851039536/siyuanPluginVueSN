@@ -391,7 +391,7 @@ function formatLastRun(timestamp: number): string {
 
   &__card-path {
     font-size: 10px;
-    font-family: "JetBrains Mono", "Consolas", monospace;
+    font-family: $vp-mono;
     color: var(--b3-theme-secondary, $brand-mid-gray);
     opacity: 0.5;
     margin: 2px 0 0;
@@ -410,12 +410,12 @@ function formatLastRun(timestamp: number): string {
   }
 
   &__btn-run {
-    background: rgba(16, 185, 129, 0.15) !important;
-    color: #10b981 !important;
-    border: 1px solid rgba(16, 185, 129, 0.3) !important;
+    background: rgba($brand-success, 0.15) !important;
+    color: $brand-success !important;
+    border: 1px solid rgba($brand-success, 0.3) !important;
 
     &:hover {
-      background: rgba(16, 185, 129, 0.25) !important;
+      background: rgba($brand-success, 0.25) !important;
     }
   }
 

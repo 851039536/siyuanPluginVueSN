@@ -253,8 +253,8 @@ watch(
   max-width: 90vw;
   max-height: 90vh;
   background: var(--b3-theme-background, $brand-light);
+  border: 1px solid var(--b3-theme-surface-lighter);
   border-radius: $radius-lg;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -285,7 +285,7 @@ watch(
 
     /* 脚本内容区域使用等宽字体（Codex 风格） */
     :deep(.si-input__field--textarea) {
-      font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+      font-family: $vp-mono;
       font-size: 13px;
       line-height: 1.5;
     }

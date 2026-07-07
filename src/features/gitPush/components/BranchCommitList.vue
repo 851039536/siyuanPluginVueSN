@@ -11,6 +11,15 @@
         height="12"
       />
       <span class="bcl-title">COMMIT LOG</span>
+      <button
+        class="vp-btn vp-btn--ghost vp-btn--sm bcl-refresh-btn"
+        :class="{ 'gp-spin': loading }"
+        :disabled="loading"
+        title="刷新提交日志"
+        @click.stop="$emit('refreshCommitLog')"
+      >
+        <Icon icon="mdi:refresh" height="12" />
+      </button>
       <span
         v-if="!loading && entries.length"
         class="bcl-count"
@@ -127,6 +136,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   reloadCommitLog: [count: number]
+  refreshCommitLog: []
 }>()
 
 const COUNT_OPTIONS = [10, 20, 30, 50, 100]

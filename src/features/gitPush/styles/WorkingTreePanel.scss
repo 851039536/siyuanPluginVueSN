@@ -439,3 +439,16 @@
   @include gp-label-base;
   margin-right: 6px;
 }
+
+.wt-section-refresh {
+  margin-left: auto;
+  flex-shrink: 0;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+

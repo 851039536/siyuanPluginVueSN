@@ -1007,7 +1007,12 @@
     "fetchAll": "Fetch Remotes",
     "fetchHint": "Fetch latest tracking branches from remotes (no merge)",
     "fetchSuccess": "Fetched {0} remote(s)",
-    "fetchError": "Fetch failed: {0}"
+    "fetchError": "Fetch failed: {0}",
+    "refreshWorkingTree": "Refresh Working Tree",
+    "refreshCommitLog": "Refresh Commit Log",
+    "refreshTags": "Refresh Tags",
+    "refreshRemoteStatus": "Refresh Remote Status",
+    "refreshAll": "Refresh All"
   },
   "heatmapMarker": {
     "title": "Heatmap Marker",

@@ -12,7 +12,7 @@
         height="12"
       />
       <span class="wt-label">WORKING TREE</span>
-      <template v-if="tree.hasChanges">
+      <template v-if="tree?.hasChanges">
         <span class="wt-count">
           <span
             v-if="tree.stagedCount"
@@ -31,9 +31,21 @@
           {{ i18n.pendingChanges || '个文件变更' }}
         </span>
       </template>
-      <template v-else>
+      <template v-else-if="tree">
         <span class="wt-clean">{{ i18n.workingTreeClean || '工作区干净' }}</span>
       </template>
+      <template v-else>
+        <span class="wt-clean">{{ i18n.loadingWorkingTree || '加载中...' }}</span>
+      </template>
+      <button
+        class="vp-btn vp-btn--ghost vp-btn--sm wt-section-refresh"
+        :class="{ 'gp-spin': workingTreeLoading }"
+        :disabled="workingTreeLoading"
+        title="刷新工作空间"
+        @click.stop="$emit('refreshWorkingTree')"
+      >
+        <Icon icon="mdi:refresh" height="12" />
+      </button>
     </div>
 
     <!-- 展开的工作区详情 -->
@@ -43,19 +55,19 @@
     >
       <!-- 工具栏 -->
       <div
-        v-if="tree.hasChanges"
+        v-if="tree?.hasChanges"
         class="wt-toolbar"
       >
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
-          :disabled="(tree.unstagedCount === 0 && tree.untrackedCount === 0) || gitOpLoading"
+          :disabled="((tree?.unstagedCount ?? 0) === 0 && (tree?.untrackedCount ?? 0) === 0) || gitOpLoading"
           @click.stop="$emit('stageAll')"
         >
           {{ i18n.stageAll || '暂存全部' }}
         </button>
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
-          :disabled="tree.stagedCount === 0 || gitOpLoading"
+          :disabled="(tree?.stagedCount ?? 0) === 0 || gitOpLoading"
           @click.stop="$emit('unstageAll')"
         >
           {{ i18n.unstageAll || '取消暂存全部' }}
@@ -64,7 +76,7 @@
 
       <!-- 文件列表 -->
       <div
-        v-if="tree.files.length"
+        v-if="tree?.files.length"
         class="wt-files"
       >
         <div
@@ -215,7 +227,7 @@
 
       <!-- 提交表单 -->
       <div
-        v-if="tree.stagedCount > 0"
+        v-if="(tree?.stagedCount ?? 0) > 0"
         class="wt-commit-form"
       >
         <!-- 常规提交类型快速选择 -->
@@ -320,6 +332,7 @@
         :entries="commitLogEntries"
         :loading="commitLogLoading"
         @reload-commit-log="(count) => emit('reloadCommitLog', count)"
+        @refresh-commit-log="$emit('refreshCommitLog')"
       />
     </div>
   </div>
@@ -347,7 +360,7 @@ import BranchCommitList from "./BranchCommitList.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
-  tree: WorkingTreeInfo
+  tree?: WorkingTreeInfo
   committing: boolean
   generating: boolean
   commitOutput: string
@@ -356,6 +369,8 @@ const props = defineProps<{
   gitOpLoading: boolean
   commitLogEntries: CommitLogEntry[]
   commitLogLoading: boolean
+  /** 工作区刷新加载中 */
+  workingTreeLoading?: boolean
   /** 提交信息模板 */
   commitTemplates?: CommitTemplate[]
 }>()
@@ -374,6 +389,10 @@ const emit = defineEmits<{
   expand: []
   /** 用户修改提交记录显示条数 */
   reloadCommitLog: [count: number]
+  /** 单独刷新工作区 */
+  refreshWorkingTree: []
+  /** 单独刷新提交日志 */
+  refreshCommitLog: []
 }>()
 
 const COMMIT_TYPES = COMMIT_TYPE_VALUES.map((v) => ({
@@ -390,6 +409,7 @@ const activeDiffFile = ref<FileChange | null>(null)
 useGeneratedMsgSync(toRef(props, "generatedMsg"), commitMessage)
 
 const sortedFiles = computed(() => {
+  if (!props.tree) return []
   return [...props.tree.files].sort((a, b) => {
     // 已暂存的排前面
     if (a.staged !== b.staged) return a.staged ? -1 : 1
@@ -425,6 +445,7 @@ function toggleStage(file: FileChange) {
 }
 
 function toggleExpanded() {
+  if (!props.tree) return // 数据未加载时不展开
   expanded.value = !expanded.value
   // 首次展开时通知父组件懒加载详情数据（commitLog/branches/stash）
   if (expanded.value) emit("expand")
@@ -456,8 +477,8 @@ function handleSelectTemplate(tplId: string) {
   if (!tpl) return
   // 填充模板，支持 {branch}/{files} 占位符
   commitMessage.value = tpl.pattern
-    .replace(/\{branch\}/g, props.tree.branch || "")
-    .replace(/\{files\}/g, String(props.tree.files.length))
+    .replace(/\{branch\}/g, props.tree?.branch || "")
+    .replace(/\{files\}/g, String(props.tree?.files.length ?? 0))
 }
 
 async function handleGenerate() {

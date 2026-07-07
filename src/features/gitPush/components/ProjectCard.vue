@@ -280,17 +280,46 @@
             </button>
           </div>
         </div>
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm"
-          title="重新检测远程仓库"
-          @click="$emit('refresh', project.id)"
-        >
-          <Icon
-            icon="mdi:refresh"
-            height="12"
-            :class="{ 'gp-spin': refreshing === project.id }"
-          />
-        </button>
+        <div class="gp-refresh-wrap">
+          <button
+            class="vp-btn vp-btn--ghost vp-btn--sm"
+            title="刷新选项"
+            @click.stop="$emit('toggleRefreshMenu', project.id)"
+          >
+            <Icon
+              icon="mdi:refresh"
+              height="12"
+              :class="{ 'gp-spin': isRefreshing }"
+            />
+          </button>
+          <div
+            v-if="openRefreshMenu.has(project.id)"
+            class="gp-refresh-popover"
+            @click.stop
+          >
+            <button class="gp-refresh-item" @click="$emit('refreshWorkingTree', project.id); openRefreshMenu.delete(project.id)">
+              <Icon icon="mdi:file-tree" height="12" />
+              <span>{{ i18n.refreshWorkingTree || '刷新工作空间' }}</span>
+            </button>
+            <button class="gp-refresh-item" @click="$emit('refreshCommitLog', project.id); openRefreshMenu.delete(project.id)">
+              <Icon icon="mdi:history" height="12" />
+              <span>{{ i18n.refreshCommitLog || '刷新提交日志' }}</span>
+            </button>
+            <button class="gp-refresh-item" @click="$emit('refreshTags', project.id); openRefreshMenu.delete(project.id)">
+              <Icon icon="mdi:tag-outline" height="12" />
+              <span>{{ i18n.refreshTags || '刷新标签' }}</span>
+            </button>
+            <button class="gp-refresh-item" @click="$emit('refreshRemoteStatus', project.id); openRefreshMenu.delete(project.id)">
+              <Icon icon="mdi:cloud-refresh-outline" height="12" />
+              <span>{{ i18n.refreshRemoteStatus || '刷新远程状态' }}</span>
+            </button>
+            <div class="gp-refresh-divider" />
+            <button class="gp-refresh-item gp-refresh-item--all" @click="$emit('refresh', project.id); openRefreshMenu.delete(project.id)">
+              <Icon icon="mdi:refresh-circle" height="12" />
+              <span>{{ i18n.refreshAll || '全部刷新' }}</span>
+            </button>
+          </div>
+        </div>
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
           title="编辑项目（标签/状态/备注）"
@@ -315,6 +344,16 @@
 
     <!-- 远程仓库状态 -->
     <div class="gp-remotes">
+      <span class="gp-remotes-label">REMOTES</span>
+      <button
+        class="vp-btn vp-btn--ghost vp-btn--sm gp-section-refresh"
+        :class="{ 'gp-spin': remoteStatusLoading }"
+        :disabled="remoteStatusLoading"
+        title="刷新远程状态"
+        @click.stop="$emit('refreshRemoteStatus', project.id)"
+      >
+        <Icon icon="mdi:refresh" height="12" />
+      </button>
       <div
         v-for="r in remotes"
         :key="r.key"
@@ -354,7 +393,6 @@
 
     <!-- 工作区变更状态 -->
     <WorkingTreePanel
-      v-if="workingTree"
       :i18n="i18n"
       :tree="workingTree"
       :committing="committing || false"
@@ -365,6 +403,7 @@
       :git-op-loading="gitOpLoading || false"
       :commit-log-entries="commitLogEntries"
       :commit-log-loading="commitLogLoading || false"
+      :working-tree-loading="workingTreeLoading || false"
       :commit-templates="commitTemplates"
       @stage-file="(file: string) => $emit('stageFile', project.id, file)"
       @unstage-file="(file: string) => $emit('unstageFile', project.id, file)"
@@ -377,6 +416,8 @@
       @discard-file="(file: string, staged: boolean, status: string) => $emit('discardFile', project.id, file, staged, status)"
       @expand="$emit('expand', project.id)"
       @reload-commit-log="(count: number) => $emit('reloadCommitLog', project.id, count)"
+      @refresh-working-tree="$emit('refreshWorkingTree', project.id)"
+      @refresh-commit-log="$emit('refreshCommitLog', project.id)"
     />
 
     <!-- Stash 暂存 -->
@@ -407,6 +448,7 @@
       @create="(p: { name: string, message: string }) => $emit('createTag', project.id, p.name, p.message)"
       @push="(p: { tag: string }) => $emit('pushTag', project.id, p.tag)"
       @delete="(p: { tag: string }) => $emit('deleteTag', project.id, p.tag)"
+      @refresh="$emit('refreshTags', project.id)"
     />
 
     <!-- 冲突警告 -->
@@ -531,6 +573,9 @@ const props = defineProps<{
   refreshing: string | null
   fetching: boolean
   openIdeMenu: Set<string>
+  workingTreeLoading?: boolean
+  remoteStatusLoading?: boolean
+  openRefreshMenu: Set<string>
   confirmingDelIdx: number
   // 每项目响应式数据（单项目值，非全量 Record，避免跨卡片 re-render）
   branches: any[]
@@ -596,6 +641,11 @@ defineEmits<{
   "update:confirmingDelIdx": [idx: number]
   // 工作区
   "refresh": [id: string]
+  "toggleRefreshMenu": [id: string]
+  "refreshWorkingTree": [id: string]
+  "refreshCommitLog": [id: string]
+  "refreshTags": [id: string]
+  "refreshRemoteStatus": [id: string]
   "stageFile": [id: string, file: string]
   "unstageFile": [id: string, file: string]
   "stageAll": [id: string]
@@ -650,4 +700,7 @@ const outputPanels = computed(() => [
   { key: 'pull', entries: props.pullOutputs },
   { key: 'push', entries: props.pushOutputs },
 ])
+
+/** 仅"全部刷新"时转动下拉菜单按钮 */
+const isRefreshing = computed(() => props.refreshing === props.project.id)
 </script>

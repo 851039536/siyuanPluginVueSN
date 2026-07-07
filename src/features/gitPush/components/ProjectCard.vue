@@ -71,25 +71,8 @@
             :title="`已配置 ${project.localPaths.length + 1} 个设备路径`"
           >+{{ project.localPaths.length }}路径</span>
         </div>
-        <!-- 标签 + 最后活动时间 -->
+        <!-- 最后活动时间 -->
         <div class="gp-card-meta">
-          <div
-            v-if="project.tags?.length"
-            class="gp-card-tags"
-          >
-            <span
-              v-for="t in project.tags.slice(0, 3)"
-              :key="t"
-              class="gp-card-tag"
-              :class="{ active: selectedTags.has(t) }"
-              :title="`点击筛选标签: ${t}`"
-              @click.stop="$emit('toggleTagFilter', t)"
-            >{{ t }}</span>
-            <span
-              v-if="project.tags.length > 3"
-              class="gp-card-tag gp-card-tag-more"
-            >+{{ project.tags.length - 3 }}</span>
-          </div>
           <span
             v-if="project.lastActivity"
             class="gp-activity"

@@ -6,9 +6,12 @@
       v-model:currentView="currentView"
       v-model:showPlatformMenu="showPlatformMenu"
       v-model:showAddMenu="showAddMenu"
+      v-model:showRefreshMenu="showRefreshMenu"
       :i18n="i18n"
       :project-count="projectCount"
       :refreshing-all="refreshingAll"
+      :refreshing-all-local="refreshingAllLocal"
+      :refreshing-all-remote="refreshingAllRemote"
       :needs-push-count="needsPushCount"
       :pushing-all-projects="pushingAllProjects"
       :push-all-done="pushAllDone"
@@ -19,6 +22,8 @@
       @open-category="showCatDialog = true"
       @open-settings="showSettings = true"
       @refresh-all="handleRefreshAll"
+      @refresh-all-local="handleRefreshAllLocal"
+      @refresh-all-remote="handleRefreshAllRemote"
       @push-all-projects="handlePushAllProjects"
       @cancel-push-all="pushingAllProjects = false"
       @open-add-project="showAddDialog = true"
@@ -649,10 +654,18 @@ const editDialogProjectId = ref("")
 const editingNameId = ref("")
 const editingNameInput = ref("")
 const refreshingAll = ref(false)
+/** 本地状态刷新 loading（不 fetch） */
+const refreshingAllLocal = ref(false)
+/** 远程状态刷新 loading（含 fetch） */
+const refreshingAllRemote = ref(false)
+/** Header 刷新下拉菜单开关 */
+const showRefreshMenu = ref(false)
 /** 全局刷新防抖冷却时间（毫秒） */
 const REFRESH_COOLDOWN_MS = 500
 /** 全局刷新防抖时间戳 */
 let allRefreshLastTime = 0
+/** 远程刷新防抖时间戳 */
+let remoteRefreshLastTime = 0
 /** FETCH 操作加载中 id → true */
 const fetching = ref<Record<string, boolean>>({})
 /** IDE 打开菜单：当前打开的项目 id 集合 */
@@ -756,6 +769,9 @@ function closeIdeMenuOnOutside(e: MouseEvent) {
   }
   if (target && !target.closest(".gp-refresh-wrap")) {
     openRefreshMenu.value = new Set()
+  }
+  if (target && !target.closest(".gp-header-refresh-wrap")) {
+    showRefreshMenu.value = false
   }
 }
 
@@ -882,6 +898,39 @@ async function handleRefreshAll() {
     await silentRefreshAll(true)
   } finally {
     refreshingAll.value = false
+  }
+}
+
+/** Header 下拉：刷新本地状态（不含 git fetch，快） */
+async function handleRefreshAllLocal() {
+  if (gitOpsPaused.value) return
+  if (Date.now() - allRefreshLastTime < REFRESH_COOLDOWN_MS) return
+  allRefreshLastTime = Date.now()
+  showRefreshMenu.value = false
+  refreshingAllLocal.value = true
+  try {
+    await silentRefreshAll(true)
+  } finally {
+    refreshingAllLocal.value = false
+  }
+}
+
+/** Header 下拉：刷新远程状态（含 git fetch，慢） */
+async function handleRefreshAllRemote() {
+  if (gitOpsPaused.value) return
+  if (Date.now() - remoteRefreshLastTime < REFRESH_COOLDOWN_MS) return
+  remoteRefreshLastTime = Date.now()
+  showRefreshMenu.value = false
+  refreshingAllRemote.value = true
+  try {
+    const catId = activeCategory.value
+    const projList = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
+    if (projList.length === 0) return
+    await runBatchWithProgress(projList, "更新远程状态", async (p) => {
+      await fetchAllRemotes(p.id)
+    }, undefined, { keepVisible: true })
+  } finally {
+    refreshingAllRemote.value = false
   }
 }
 

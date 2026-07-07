@@ -26,7 +26,6 @@
           class="translation-textarea"
           :placeholder="i18n.enterChinesePlaceholder || '输入中文，如：获取用户信息、用户接口、计算总价...'"
           :rows="3"
-          @input="clearError"
         />
       </div>
 
@@ -40,7 +39,7 @@
         </div>
         <div class="style-options">
           <div
-            v-for="style in namingStyles"
+            v-for="style in NAMING_STYLES"
             :key="style.id"
             class="style-option"
             :class="{ active: selectedStyle.id === style.id }"
@@ -180,7 +179,6 @@
 </template>
 
 <script setup lang="ts">
-import type { Plugin } from "siyuan"
 import type {
   CodeTranslationResult,
   NamingStyle,
@@ -191,18 +189,13 @@ import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
 import { useCodeFeature } from "../composables/useCodeFeature"
 import {
-
+  generateAbbreviation,
   NAMING_STYLES,
-
   translateCodeField,
 } from "../utils/codeTranslation"
+import type { WordQueryComponentProps } from "../types"
 
-interface Props {
-  i18n: Record<string, any>
-  plugin?: Plugin
-}
-
-const props = defineProps<Props>()
+const props = defineProps<WordQueryComponentProps>()
 
 const chineseInput = ref("")
 const selectedStyle = ref<NamingStyle>(NAMING_STYLES[0])
@@ -211,14 +204,11 @@ const isTranslating = ref(false)
 
 const {
   errorMessage,
-  clearError,
   clearErrorOnInput,
   getApiConfig,
   copyText,
 } = useCodeFeature(props.plugin)
 clearErrorOnInput(chineseInput)
-
-const namingStyles = NAMING_STYLES
 
 function selectStyle(style: NamingStyle) {
   selectedStyle.value = style
@@ -266,32 +256,6 @@ function copyResult() {
 
 function copySuggestion(suggestion: string) {
   copyText(suggestion)
-}
-
-/**
- * 根据命名风格生成缩写
- * 例如: getUserInfo -> GUI, get_user_info -> GUI
- */
-function generateAbbreviation(text: string): string {
-  if (!text) return ""
-
-  let words: string[] = []
-
-  // 根据命名风格分割单词
-  if (text.includes("_")) {
-    // snake_case 或 SCREAMING_SNAKE_CASE
-    words = text.split("_").filter((w) => w.length > 0)
-  } else if (text.includes("-")) {
-    // kebab-case
-    words = text.split("-").filter((w) => w.length > 0)
-  } else {
-    // camelCase 或 PascalCase - 按大写字母分割
-    const matches = text.match(/[A-Z]?[a-z]+|[A-Z]+(?=[A-Z][a-z]|\b)/g)
-    words = matches || [text]
-  }
-
-  // 取每个单词的首字母并转为大写
-  return words.map((w) => w.charAt(0).toUpperCase()).join("")
 }
 
 function copyAbbreviation() {

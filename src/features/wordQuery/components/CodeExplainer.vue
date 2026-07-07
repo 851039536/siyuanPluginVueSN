@@ -26,7 +26,6 @@
           class="code-textarea"
           :placeholder="i18n.codeInputPlaceholder || '粘贴需要解释的代码...'"
           :rows="8"
-          @input="clearError"
         />
       </div>
 
@@ -140,24 +139,16 @@
 </template>
 
 <script setup lang="ts">
-import type { Plugin } from "siyuan"
 import type { CodeExplanationResult } from "../utils/codeUtils"
 import { ref } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
 import { useCodeFeature } from "../composables/useCodeFeature"
-import {
+import { explainCode } from "../utils/codeUtils"
+import type { WordQueryComponentProps } from "../types"
 
-  explainCode,
-} from "../utils/codeUtils"
-
-interface Props {
-  i18n: Record<string, any>
-  plugin?: Plugin
-}
-
-const props = defineProps<Props>()
+const props = defineProps<WordQueryComponentProps>()
 
 const codeInput = ref("")
 const result = ref<CodeExplanationResult | null>(null)
@@ -165,7 +156,6 @@ const isExplaining = ref(false)
 
 const {
   errorMessage,
-  clearError,
   clearErrorOnInput,
   getApiConfig,
   copyText,

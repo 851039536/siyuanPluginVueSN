@@ -7,10 +7,10 @@
 .regex-generator-panel {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 16px;
+  gap: $spacing-4;
+  padding: $spacing-4;
   background: var(--b3-theme-background);
-  border-radius: 8px;
+  border-radius: $radius-md;
   height: 100%;
   overflow-y: auto;
 }
@@ -19,10 +19,10 @@
   .panel-title {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: $spacing-2;
     margin: 0;
-    font-size: 16px;
-    font-weight: 600;
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
     color: var(--b3-theme-on-background);
   }
 }
@@ -30,29 +30,29 @@
 .panel-content {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: $spacing-4;
 }
 
 // ========== 输入区域 ==========
 .input-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: $spacing-2;
 
   .input-label {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 14px;
-    font-weight: 500;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
     color: var(--b3-theme-on-surface);
   }
 
   .code-textarea,
   .description-textarea {
     width: 100%;
-    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
-    font-size: 14px;
+    font-family: $vp-mono;
+    font-size: $font-size-sm;
     line-height: 1.6;
     resize: vertical;
   }
@@ -62,31 +62,31 @@
 .style-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: $spacing-2;
 
   .style-label {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 14px;
-    font-weight: 500;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
     color: var(--b3-theme-on-surface);
   }
 
   .style-options {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 8px;
+    gap: $spacing-2;
   }
 
   .style-option {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    padding: 12px;
+    gap: $spacing-1;
+    padding: $spacing-3;
     background: var(--b3-theme-surface);
     border: 2px solid transparent;
-    border-radius: 6px;
+    border-radius: $radius-base;
     cursor: pointer;
 
     &.active {
@@ -96,13 +96,13 @@
 
     .style-name {
       font-size: 13px;
-      font-weight: 600;
+      font-weight: $font-weight-semibold;
       color: var(--b3-theme-on-surface);
     }
 
     .style-example {
-      font-size: 12px;
-      font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+      font-size: $font-size-xs;
+      font-family: $vp-mono;
       color: var(--b3-theme-on-surface-light);
     }
   }
@@ -111,42 +111,42 @@
 // ========== 操作按钮区域 ==========
 .action-section {
   display: flex;
-  gap: 8px;
+  gap: $spacing-2;
 }
 
 // ========== 结果展示区域 ==========
 .result-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px;
+  gap: $spacing-3;
+  padding: $spacing-4;
   background: var(--b3-theme-surface);
-  border-radius: 8px;
+  border-radius: $radius-md;
 
   .result-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: $spacing-3;
 
     .result-label {
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 14px;
-      font-weight: 600;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-semibold;
       color: var(--b3-theme-on-surface);
     }
 
     .meta-info {
       display: flex;
-      gap: 8px;
+      gap: $spacing-2;
 
       .meta-tag {
-        padding: 2px 8px;
+        padding: 2px $spacing-2;
         background: var(--b3-theme-primary-light);
-        border-radius: 4px;
-        font-size: 12px;
+        border-radius: $radius-sm;
+        font-size: $font-size-xs;
         color: var(--b3-theme-primary);
 
         &.complexity {
@@ -160,15 +160,15 @@
   .result-content {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: $spacing-3;
   }
 
   .code-result {
     margin: 0;
-    padding: 12px;
+    padding: $spacing-3;
     background: var(--b3-theme-background);
-    border-radius: 6px;
-    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    border-radius: $radius-base;
+    font-family: $vp-mono;
     font-size: 13px;
     line-height: 1.6;
     overflow-x: auto;
@@ -179,7 +179,7 @@
 
   .result-actions {
     display: flex;
-    gap: 8px;
+    gap: $spacing-2;
     justify-content: flex-end;
   }
 
@@ -187,34 +187,34 @@
   .main-result {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: $spacing-2;
   }
 
   .result-item {
     display: flex;
     align-items: flex-start;
-    gap: 8px;
-    padding: 8px 12px;
+    gap: $spacing-2;
+    padding: $spacing-2 $spacing-3;
     background: var(--b3-theme-background);
-    border-radius: 4px;
+    border-radius: $radius-sm;
 
     .result-key {
       min-width: 60px;
       font-size: 13px;
-      font-weight: 500;
+      font-weight: $font-weight-medium;
       color: var(--b3-theme-on-surface-light);
     }
 
     .result-value {
       flex: 1;
-      font-size: 14px;
-      font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+      font-size: $font-size-sm;
+      font-family: $vp-mono;
       color: var(--b3-theme-on-background);
       word-break: break-all;
 
       &.abbreviation {
         cursor: pointer;
-        font-weight: 600;
+        font-weight: $font-weight-semibold;
         color: var(--b3-theme-primary);
 
         &:hover {
@@ -240,7 +240,7 @@
       }
 
       .result-value {
-        font-weight: 600;
+        font-weight: $font-weight-semibold;
         color: var(--b3-theme-primary);
       }
     }
@@ -249,8 +249,8 @@
   .suggestions {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding-top: 12px;
+    gap: $spacing-2;
+    padding-top: $spacing-3;
     border-top: 1px solid var(--b3-border-color);
 
     .suggestions-title {
@@ -258,7 +258,7 @@
       align-items: center;
       gap: 6px;
       font-size: 13px;
-      font-weight: 600;
+      font-weight: $font-weight-semibold;
       color: var(--b3-theme-on-surface-light);
     }
 
@@ -272,12 +272,12 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
-      padding: 8px 12px;
+      gap: $spacing-2;
+      padding: $spacing-2 $spacing-3;
       background: var(--b3-theme-background);
-      border-radius: 4px;
+      border-radius: $radius-sm;
       cursor: pointer;
-      font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+      font-family: $vp-mono;
       font-size: 13px;
       color: var(--b3-theme-on-background);
 
@@ -293,23 +293,23 @@
 .suggestions-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: $spacing-2;
 
   .section-title {
     display: flex;
     align-items: center;
     gap: 6px;
     margin: 0;
-    font-size: 14px;
-    font-weight: 600;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
     color: var(--b3-theme-on-surface);
   }
 
   .explanation-text {
-    padding: 12px;
+    padding: $spacing-3;
     background: var(--b3-theme-background);
-    border-radius: 6px;
-    font-size: 14px;
+    border-radius: $radius-base;
+    font-size: $font-size-sm;
     line-height: 1.6;
     color: var(--b3-theme-on-background);
   }
@@ -317,7 +317,7 @@
 
 .suggestions-section {
   border-top: 1px solid var(--b3-border-color);
-  padding-top: 12px;
+  padding-top: $spacing-3;
 
   .suggestions-list {
     display: flex;
@@ -328,16 +328,16 @@
   .suggestion-item {
     display: flex;
     align-items: flex-start;
-    gap: 8px;
-    padding: 8px 12px;
+    gap: $spacing-2;
+    padding: $spacing-2 $spacing-3;
     background: var(--b3-theme-background);
-    border-radius: 4px;
-    font-size: 14px;
+    border-radius: $radius-sm;
+    font-size: $font-size-sm;
     color: var(--b3-theme-on-background);
 
     .suggestion-index {
       color: var(--b3-theme-primary);
-      font-weight: 600;
+      font-weight: $font-weight-semibold;
     }
   }
 }
@@ -346,7 +346,7 @@
 .examples-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: $spacing-2;
 
   .examples-header {
     display: flex;
@@ -357,8 +357,8 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 14px;
-      font-weight: 500;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-medium;
       color: var(--b3-theme-on-surface);
     }
   }
@@ -366,18 +366,18 @@
   .examples-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: $spacing-2;
   }
 
   .example-item {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: $spacing-2;
 
     .example-inputs {
       display: flex;
       flex: 1;
-      gap: 8px;
+      gap: $spacing-2;
 
       .match-input,
       .not-match-input {
@@ -391,16 +391,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 12px;
+  gap: $spacing-2;
+  padding: $spacing-3;
   background: var(--b3-theme-background);
-  border-radius: 6px;
+  border-radius: $radius-base;
 
   .regex-pattern {
     flex: 1;
-    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
-    font-size: 16px;
-    font-weight: 600;
+    font-family: $vp-mono;
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
     color: var(--b3-theme-primary);
     word-break: break-all;
   }
@@ -408,20 +408,20 @@
 
 .examples-result-section {
   border-top: 1px solid var(--b3-border-color);
-  padding-top: 12px;
+  padding-top: $spacing-3;
 
   .examples-result-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: $spacing-2;
   }
 
   .example-result-item {
-    padding: 4px 8px;
+    padding: $spacing-1 $spacing-2;
     background: var(--b3-theme-surface-light);
-    border-radius: 4px;
-    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
-    font-size: 12px;
+    border-radius: $radius-sm;
+    font-family: $vp-mono;
+    font-size: $font-size-xs;
     color: var(--b3-theme-on-surface);
   }
 }
@@ -430,24 +430,24 @@
 .test-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: $spacing-2;
   border-top: 1px solid var(--b3-border-color);
-  padding-top: 12px;
+  padding-top: $spacing-3;
 
   .test-input-area {
     display: flex;
-    gap: 8px;
+    gap: $spacing-2;
   }
 
   .test-result {
-    padding: 8px 12px;
+    padding: $spacing-2 $spacing-3;
     background: var(--b3-theme-background);
-    border-radius: 6px;
+    border-radius: $radius-base;
 
     .matches-info {
       .match-count {
         font-size: 13px;
-        font-weight: 500;
+        font-weight: $font-weight-medium;
         color: var(--b3-theme-success, #22c55e);
       }
 
@@ -455,15 +455,15 @@
         display: flex;
         flex-wrap: wrap;
         gap: 6px;
-        margin-top: 8px;
+        margin-top: $spacing-2;
       }
 
       .match-item {
-        padding: 2px 8px;
+        padding: 2px $spacing-2;
         background: var(--b3-theme-success-light, #dcfce7);
-        border-radius: 4px;
-        font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
-        font-size: 12px;
+        border-radius: $radius-sm;
+        font-family: $vp-mono;
+        font-size: $font-size-xs;
         color: var(--b3-theme-success, #16a34a);
       }
     }
@@ -487,11 +487,11 @@
 .error-section {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
+  gap: $spacing-2;
+  padding: $spacing-3 $spacing-4;
   background: var(--b3-theme-error-light);
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: $radius-base;
+  font-size: $font-size-sm;
   color: var(--b3-theme-error);
 }
 
@@ -501,8 +501,8 @@
   .code-explainer-panel,
   .code-translation-panel,
   .regex-generator-panel {
-    padding: 12px;
-    gap: 12px;
+    padding: $spacing-3;
+    gap: $spacing-3;
   }
 
   .style-section .style-options {

@@ -1007,7 +1007,12 @@
     "fetchAll": "更新远程状态",
     "fetchHint": "从远程获取最新追踪分支（不合并代码），用于刷新推送状态",
     "fetchSuccess": "已更新 {0} 个远程",
-    "fetchError": "更新失败: {0}"
+    "fetchError": "更新失败: {0}",
+    "refreshWorkingTree": "刷新工作空间",
+    "refreshCommitLog": "刷新提交日志",
+    "refreshTags": "刷新标签",
+    "refreshRemoteStatus": "刷新远程状态",
+    "refreshAll": "全部刷新"
   },
   "heatmapMarker": {
     "title": "热力图标记",

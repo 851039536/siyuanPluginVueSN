@@ -3,6 +3,15 @@
   <div class="gp-tag-panel">
     <div class="gp-tag-header">
       <span class="gp-tag-label">TAG</span>
+      <button
+        class="vp-btn vp-btn--ghost vp-btn--sm gp-tag-refresh-btn"
+        :class="{ 'gp-spin': loading }"
+        :disabled="loading"
+        title="刷新标签"
+        @click="$emit('refresh')"
+      >
+        <Icon icon="mdi:refresh" height="12" />
+      </button>
       <template v-if="addingTag">
         <Input
           v-model="newTagName"
@@ -129,6 +138,7 @@ const emit = defineEmits<{
   create: [payload: { name: string, message?: string }]
   push: [payload: { tag: string }]
   delete: [payload: { tag: string }]
+  refresh: []
 }>()
 
 const addingTag = ref(false)

@@ -31,6 +31,16 @@
   @include gp-label-base;
 }
 
+.bcl-refresh-btn {
+  margin-left: auto;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
 .bcl-count {
   font-size: 10px;
   font-weight: $font-weight-semibold;

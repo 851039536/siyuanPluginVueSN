@@ -126,6 +126,9 @@
             :commit-log-loading="commitLogLoading[project.id]"
             :tags-cache="tagsCache[project.id]"
             :tag-loading="tagLoading[project.id]"
+            :working-tree-loading="workingTreeLoading[project.id]"
+            :remote-status-loading="remoteStatusLoading[project.id]"
+            :open-refresh-menu="openRefreshMenu"
             :tag-push-loading="tagPushLoading[project.id]"
             :gen-stash-desc-loading="genStashDescLoading[project.id]"
             :generated-stash-msg="generatedStashMsg"
@@ -160,12 +163,17 @@
             @open-ide="handleOpenIde"
             @open-custom-ide="handleOpenCustomIde"
             @toggle-ide-menu="toggleIdeMenu"
+            @toggle-refresh-menu="toggleRefreshMenu"
             @show-ide-dialog="showIdeDialog = true"
             @do-remove-custom-ide="doRemoveCustomIde"
             @update:editing-name-id="editingNameId = $event"
             @update:editing-name-input="editingNameInput = $event"
             @update:confirming-del-idx="confirmingDelIdx = $event"
             @refresh="handleRefresh"
+            @refresh-working-tree="handleRefreshWorkingTree"
+            @refresh-commit-log="handleRefreshCommitLog"
+            @refresh-tags="handleRefreshTags"
+            @refresh-remote-status="handleRefreshRemoteStatus"
             @stage-file="(id: string, file: string) => handleGitOp('暂存失败', () => stageItem(id, file), id)"
             @unstage-file="(id: string, file: string) => handleGitOp('取消暂存失败', () => unstageItem(id, file), id)"
             @stage-all="(id: string) => handleGitOp('暂存失败', () => stageAllItems(id), id)"
@@ -655,6 +663,12 @@ const commitOutputs = ref<Record<string, string>>({})
 const generatingMsgs = ref<Record<string, { generating: boolean, text: string }>>({})
 /** 暂存/取消操作加载中 id → true */
 const gitOpLoading = ref<Record<string, boolean>>({})
+/** 工作区刷新加载中 id → true */
+const workingTreeLoading = ref<Record<string, boolean>>({})
+/** 远程状态刷新加载中 id → true */
+const remoteStatusLoading = ref<Record<string, boolean>>({})
+/** 刷新下拉菜单：当前打开的项目 id 集合 */
+const openRefreshMenu = ref(new Set<string>())
 /** 提取指定项目相关的 fileDiffs（按前缀过滤） */
 function fileDiffsForProject(projectId: string): Record<string, string> {
   const result: Record<string, string> = {}
@@ -728,7 +742,7 @@ onUnmounted(() => {
   document.removeEventListener("click", closeIdeMenuOnOutside)
 })
 
-/** 点击外部关闭 IDE 菜单 / 添加菜单 */
+/** 点击外部关闭 IDE 菜单 / 添加菜单 / 刷新菜单 */
 function closeIdeMenuOnOutside(e: MouseEvent) {
   const target = e.target as HTMLElement | null
   if (target && !target.closest(".gp-ide-wrap")) {
@@ -739,6 +753,9 @@ function closeIdeMenuOnOutside(e: MouseEvent) {
   }
   if (target && !target.closest(".gp-platform-wrap")) {
     showPlatformMenu.value = false
+  }
+  if (target && !target.closest(".gp-refresh-wrap")) {
+    openRefreshMenu.value = new Set()
   }
 }
 
@@ -804,6 +821,57 @@ async function handleRefresh(id: string) {
   }
 }
 
+// ---- 细分刷新操作 ----
+
+async function handleRefreshWorkingTree(id: string) {
+  const project = projects.value.find((p) => p.id === id)
+  if (!project) return
+  workingTreeLoading.value = { ...workingTreeLoading.value, [id]: true }
+  try {
+    const branch = await props.manager.getBranch(resolveValidPath(project))
+    await loadWorkingTree(id, false, branch)
+  } finally {
+    delete workingTreeLoading.value[id]
+    workingTreeLoading.value = { ...workingTreeLoading.value }
+  }
+}
+
+async function handleRefreshCommitLog(id: string) {
+  commitLogLoading.value = { ...commitLogLoading.value, [id]: true }
+  try {
+    await loadCommitLog(id)
+  } finally {
+    delete commitLogLoading.value[id]
+    commitLogLoading.value = { ...commitLogLoading.value }
+  }
+}
+
+async function handleRefreshTags(id: string) {
+  tagLoading.value = { ...tagLoading.value, [id]: true }
+  try {
+    await loadTags(id)
+  } finally {
+    delete tagLoading.value[id]
+    tagLoading.value = { ...tagLoading.value }
+  }
+}
+
+async function handleRefreshRemoteStatus(id: string) {
+  const project = projects.value.find((p) => p.id === id)
+  if (!project) return
+  remoteStatusLoading.value = { ...remoteStatusLoading.value, [id]: true }
+  try {
+    const branch = await props.manager.getBranch(resolveValidPath(project))
+    await Promise.all([
+      refreshRemotes(id),
+      loadPushStatus(id, { fetchFirst: true, branch }),
+    ])
+  } finally {
+    delete remoteStatusLoading.value[id]
+    remoteStatusLoading.value = { ...remoteStatusLoading.value }
+  }
+}
+
 async function handleRefreshAll() {
   if (gitOpsPaused.value) return
   // 防抖：全局刷新的冷却期内跳过
@@ -853,6 +921,13 @@ function toggleIdeMenu(id: string) {
   const s = openIdeMenu.value
   if (s.has(id)) { s.delete(id) } else { s.add(id) }
   openIdeMenu.value = new Set(s)
+}
+
+/** 切换刷新下拉菜单 */
+function toggleRefreshMenu(id: string) {
+  const s = openRefreshMenu.value
+  if (s.has(id)) { s.delete(id) } else { s.add(id) }
+  openRefreshMenu.value = new Set(s)
 }
 
 /** 在浏览器中打开远程仓库网页 */

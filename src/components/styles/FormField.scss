@@ -49,4 +49,29 @@
     color: var(--b3-theme-secondary, $brand-mid-gray);
     text-align: right;
   }
+
+  // 利用 label 的 size 变体选择器缩放 hint/count/required
+  &__label--xsmall ~ &__hint,
+  &__label--xsmall ~ &__count {
+    margin-top: 0;
+    font-size: 10px;
+  }
+
+  &__label--small ~ &__hint,
+  &__label--small ~ &__count {
+    margin-top: $spacing-1;
+    font-size: 10px;
+  }
+
+  &__label--medium ~ &__hint,
+  &__label--medium ~ &__count {
+    margin-top: $spacing-1;
+    font-size: $font-size-xs;
+  }
+
+  &__label--large ~ &__hint,
+  &__label--large ~ &__count {
+    margin-top: $spacing-2;
+    font-size: $font-size-xs;
+  }
 }

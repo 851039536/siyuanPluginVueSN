@@ -193,6 +193,20 @@
       font-size: $font-size-xs;
       min-height: 22px; // 无对应 Token
     }
+
+    .si-input__icon--prefix {
+      margin-left: $spacing-1;
+    }
+
+    .si-input__icon--suffix {
+      margin-right: $spacing-1;
+    }
+
+    .si-input__clear,
+    .si-input__password-toggle {
+      padding: 1px;
+      margin-right: $spacing-1;
+    }
   }
 
   &--small {
@@ -200,6 +214,20 @@
       padding: $spacing-1 $spacing-2;
       font-size: $font-size-xs;
       min-height: 28px; // 无对应 Token
+    }
+
+    .si-input__icon--prefix {
+      margin-left: $spacing-2;
+    }
+
+    .si-input__icon--suffix {
+      margin-right: $spacing-2;
+    }
+
+    .si-input__clear,
+    .si-input__password-toggle {
+      padding: $spacing-1;
+      margin-right: $spacing-1;
     }
   }
 
@@ -209,6 +237,20 @@
       font-size: $font-size-sm;
       min-height: 36px;
     }
+
+    .si-input__icon--prefix {
+      margin-left: $spacing-3;
+    }
+
+    .si-input__icon--suffix {
+      margin-right: $spacing-3;
+    }
+
+    .si-input__clear,
+    .si-input__password-toggle {
+      padding: $spacing-1;
+      margin-right: $spacing-2;
+    }
   }
 
   &--large {
@@ -216,6 +258,20 @@
       padding: $spacing-3 $spacing-4;
       font-size: $font-size-base; // 原 15px → base(16px)
       min-height: 44px;
+    }
+
+    .si-input__icon--prefix {
+      margin-left: $spacing-4;
+    }
+
+    .si-input__icon--suffix {
+      margin-right: $spacing-4;
+    }
+
+    .si-input__clear,
+    .si-input__password-toggle {
+      padding: $spacing-2;
+      margin-right: $spacing-3;
     }
   }
 

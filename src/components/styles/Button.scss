@@ -23,24 +23,48 @@
     padding: 2px 6px; // 特小号，无对应 Token，保留
     font-size: $font-size-xs;
     min-height: 22px; // 无对应 Token
+    gap: 2px;
+
+    .si-button__spinner {
+      width: 12px;
+      height: 12px;
+    }
   }
 
   &--small {
     padding: $spacing-2 $spacing-3;
     font-size: $font-size-xs;
     min-height: 28px; // 无对应 Token，尺寸级保留
+    gap: $spacing-1;
+
+    .si-button__spinner {
+      width: 14px;
+      height: 14px;
+    }
   }
 
   &--medium {
     padding: $spacing-2 $spacing-4;
     font-size: $font-size-sm;
     min-height: 36px;
+    gap: $spacing-2;
+
+    .si-button__spinner {
+      width: 16px;
+      height: 16px;
+    }
   }
 
   &--large {
     padding: $spacing-3 $spacing-5;
     font-size: $font-size-base; // 原 15px → 统一为 base(16px)
     min-height: 44px;
+    gap: $spacing-3;
+
+    .si-button__spinner {
+      width: 18px;
+      height: 18px;
+    }
   }
 
   // 颜色变体

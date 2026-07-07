@@ -5,12 +5,11 @@
       <span class="gp-tag-label">TAG</span>
       <button
         class="vp-btn vp-btn--ghost vp-btn--sm gp-tag-refresh-btn"
-        :class="{ 'gp-spin': loading }"
         :disabled="loading"
         title="刷新标签"
         @click="$emit('refresh')"
       >
-        <Icon icon="mdi:refresh" height="12" />
+        <Icon icon="mdi:refresh" height="12" :class="{ 'gp-spin': loading }" />
       </button>
       <template v-if="addingTag">
         <Input

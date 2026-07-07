@@ -1012,7 +1012,9 @@
     "refreshCommitLog": "刷新提交日志",
     "refreshTags": "刷新标签",
     "refreshRemoteStatus": "刷新远程状态",
-    "refreshAll": "全部刷新"
+    "refreshAll": "全部刷新",
+    "headerRefreshLocal": "刷新本地状态",
+    "headerRefreshRemote": "刷新远程状态"
   },
   "heatmapMarker": {
     "title": "热力图标记",

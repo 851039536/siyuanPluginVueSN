@@ -156,3 +156,30 @@
 .gp-add-item {
   @include popover-item;
 }
+
+// Header 刷新下拉菜单
+.gp-header-refresh-wrap {
+  position: relative;
+
+  .gp-refresh-popover {
+    @include popover-base;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    min-width: 140px;
+  }
+
+  .gp-refresh-item {
+    @include popover-item;
+  }
+
+  .gp-refresh-divider {
+    height: 1px;
+    margin: 4px 8px;
+    background: var(--b3-border-color);
+  }
+
+  .gp-refresh-item--all {
+    color: var(--b3-theme-primary);
+  }
+}

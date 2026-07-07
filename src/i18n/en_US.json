@@ -1012,7 +1012,9 @@
     "refreshCommitLog": "Refresh Commit Log",
     "refreshTags": "Refresh Tags",
     "refreshRemoteStatus": "Refresh Remote Status",
-    "refreshAll": "Refresh All"
+    "refreshAll": "Refresh All",
+    "headerRefreshLocal": "Refresh Local",
+    "headerRefreshRemote": "Refresh Remote"
   },
   "heatmapMarker": {
     "title": "Heatmap Marker",

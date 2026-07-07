@@ -92,18 +92,63 @@
           height="12"
         />
       </button>
-      <button
-        class="vp-btn vp-btn--ghost vp-btn--sm"
-        title="手动刷新当前分类"
-        :disabled="refreshingAll"
-        @click="emit('refreshAll')"
-      >
-        <Icon
-          icon="mdi:sync"
-          height="12"
-          :class="{ 'gp-spin': refreshingAll }"
-        />
-      </button>
+      <div class="gp-header-refresh-wrap">
+        <button
+          class="vp-btn vp-btn--ghost vp-btn--sm"
+          title="刷新选项"
+          :disabled="refreshingAllLocal || refreshingAllRemote || refreshingAll"
+          @click.stop="emit('update:showRefreshMenu', !showRefreshMenu)"
+        >
+          <Icon
+            icon="mdi:sync"
+            height="12"
+            :class="{ 'gp-spin': refreshingAllLocal || refreshingAllRemote || refreshingAll }"
+          />
+        </button>
+        <div
+          v-if="showRefreshMenu"
+          class="gp-refresh-popover"
+          @click.stop
+        >
+          <button
+            class="gp-refresh-item"
+            :disabled="refreshingAllLocal"
+            @click="emit('refreshAllLocal')"
+          >
+            <Icon
+              :icon="refreshingAllLocal ? 'mdi:loading' : 'mdi:file-document-outline'"
+              height="12"
+              :class="{ 'gp-spin': refreshingAllLocal }"
+            />
+            <span>{{ i18n.headerRefreshLocal || '刷新本地状态' }}</span>
+          </button>
+          <button
+            class="gp-refresh-item"
+            :disabled="refreshingAllRemote"
+            @click="emit('refreshAllRemote')"
+          >
+            <Icon
+              :icon="refreshingAllRemote ? 'mdi:loading' : 'mdi:cloud-refresh-outline'"
+              height="12"
+              :class="{ 'gp-spin': refreshingAllRemote }"
+            />
+            <span>{{ i18n.headerRefreshRemote || '刷新远程状态' }}</span>
+          </button>
+          <div class="gp-refresh-divider" />
+          <button
+            class="gp-refresh-item gp-refresh-item--all"
+            :disabled="refreshingAll"
+            @click="emit('refreshAll')"
+          >
+            <Icon
+              icon="mdi:refresh-circle"
+              height="12"
+              :class="{ 'gp-spin': refreshingAll }"
+            />
+            <span>{{ i18n.refreshAll || '全部刷新' }}</span>
+          </button>
+        </div>
+      </div>
       <button
         class="vp-btn vp-btn--primary vp-btn--sm"
         title="推送所有待推送项目"
@@ -196,12 +241,15 @@ interface Props {
   projectCount?: number
   currentView: "list" | "stats"
   refreshingAll?: boolean
+  refreshingAllLocal?: boolean
+  refreshingAllRemote?: boolean
   needsPushCount?: number
   pushingAllProjects?: boolean
   pushAllDone?: number
   pushAllTotal?: number
   showPlatformMenu?: boolean
   showAddMenu?: boolean
+  showRefreshMenu?: boolean
   searchQuery?: string
   searchPlaceholder?: string
 }
@@ -209,12 +257,15 @@ interface Props {
 withDefaults(defineProps<Props>(), {
   projectCount: 0,
   refreshingAll: false,
+  refreshingAllLocal: false,
+  refreshingAllRemote: false,
   needsPushCount: 0,
   pushingAllProjects: false,
   pushAllDone: 0,
   pushAllTotal: 0,
   showPlatformMenu: false,
   showAddMenu: false,
+  showRefreshMenu: false,
   searchQuery: "",
   searchPlaceholder: "搜索项目...",
 })
@@ -223,10 +274,13 @@ const emit = defineEmits<{
   "update:currentView": [value: "list" | "stats"]
   "update:showPlatformMenu": [value: boolean]
   "update:showAddMenu": [value: boolean]
+  "update:showRefreshMenu": [value: boolean]
   "update:searchQuery": [value: string]
   openCategory: []
   openSettings: []
   refreshAll: []
+  refreshAllLocal: []
+  refreshAllRemote: []
   pushAllProjects: []
   cancelPushAll: []
   openAddProject: []

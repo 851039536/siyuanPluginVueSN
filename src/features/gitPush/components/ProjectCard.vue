@@ -70,9 +70,6 @@
             class="gp-multi-path-badge"
             :title="`已配置 ${project.localPaths.length + 1} 个设备路径`"
           >+{{ project.localPaths.length }}路径</span>
-        </div>
-        <!-- 最后活动时间 -->
-        <div class="gp-card-meta">
           <span
             v-if="project.lastActivity"
             class="gp-activity"

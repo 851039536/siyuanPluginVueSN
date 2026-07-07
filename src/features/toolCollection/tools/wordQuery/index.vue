@@ -14,7 +14,7 @@
             name="wordQuery"
             :size="16"
           />
-          {{ props.i18n.wordQuery?.title || '单词查询' }}
+          {{ props.i18n.wordQuery?.title }}
         </Button>
         <Button
           class="mode-tab"
@@ -27,7 +27,7 @@
             name="translate"
             :size="16"
           />
-          {{ props.i18n.wordQuery?.translation || '长文翻译' }}
+          {{ props.i18n.wordQuery?.translation }}
         </Button>
         <Button
           class="mode-tab"
@@ -40,7 +40,7 @@
             name="codeTranslation"
             :size="16"
           />
-          {{ props.i18n.wordQuery?.codeTranslation || '编程翻译' }}
+          {{ props.i18n.wordQuery?.codeTranslation }}
         </Button>
         <Button
           class="mode-tab"
@@ -53,7 +53,7 @@
             name="codeComment"
             :size="16"
           />
-          {{ props.i18n.wordQuery?.codeComment || '注释生成' }}
+          {{ props.i18n.wordQuery?.codeComment }}
         </Button>
         <Button
           class="mode-tab"
@@ -66,7 +66,7 @@
             name="search"
             :size="16"
           />
-          {{ props.i18n.wordQuery?.codeExplain || '代码解释' }}
+          {{ props.i18n.wordQuery?.codeExplain}}
         </Button>
         <Button
           class="mode-tab"
@@ -79,7 +79,7 @@
             name="regex"
             :size="16"
           />
-          {{ props.i18n.wordQuery?.regexGenerator || '正则生成' }}
+          {{ props.i18n.wordQuery?.regexGenerator }}
         </Button>
       </div>
 

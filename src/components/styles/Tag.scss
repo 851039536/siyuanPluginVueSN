@@ -19,21 +19,41 @@
   &--xsmall {
     font-size: 10px; // 特小号，无对应 Token，保留
     padding: 1px 4px; // 无对应 Token
+
+    .si-tag__close {
+      width: 10px;
+      height: 10px;
+    }
   }
 
   &--small {
     font-size: $font-size-xs;
     padding: 2px $spacing-2; // 2px 无对应 Token，保留
+
+    .si-tag__close {
+      width: 12px;
+      height: 12px;
+    }
   }
 
   &--medium {
     font-size: $font-size-sm;
     padding: $spacing-1 m.$spacing-2_5; // 4px 10px
+
+    .si-tag__close {
+      width: 14px;
+      height: 14px;
+    }
   }
 
   &--large {
     font-size: $font-size-base;
     padding: 6px 14px; // 6px/14px 无对应 Token，保留
+
+    .si-tag__close {
+      width: 16px;
+      height: 16px;
+    }
   }
 
   // 形状变体

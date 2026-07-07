@@ -13,12 +13,11 @@
       <span class="bcl-title">COMMIT LOG</span>
       <button
         class="vp-btn vp-btn--ghost vp-btn--sm bcl-refresh-btn"
-        :class="{ 'gp-spin': loading }"
         :disabled="loading"
         title="刷新提交日志"
         @click.stop="$emit('refreshCommitLog')"
       >
-        <Icon icon="mdi:refresh" height="12" />
+        <Icon icon="mdi:refresh" height="12" :class="{ 'gp-spin': loading }" />
       </button>
       <span
         v-if="!loading && entries.length"

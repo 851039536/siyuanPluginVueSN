@@ -39,12 +39,11 @@
       </template>
       <button
         class="vp-btn vp-btn--ghost vp-btn--sm wt-section-refresh"
-        :class="{ 'gp-spin': workingTreeLoading }"
         :disabled="workingTreeLoading"
         title="刷新工作空间"
         @click.stop="$emit('refreshWorkingTree')"
       >
-        <Icon icon="mdi:refresh" height="12" />
+        <Icon icon="mdi:refresh" height="12" :class="{ 'gp-spin': workingTreeLoading }" />
       </button>
     </div>
 

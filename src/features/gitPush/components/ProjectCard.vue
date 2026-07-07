@@ -347,12 +347,11 @@
       <span class="gp-remotes-label">REMOTES</span>
       <button
         class="vp-btn vp-btn--ghost vp-btn--sm gp-section-refresh"
-        :class="{ 'gp-spin': remoteStatusLoading }"
         :disabled="remoteStatusLoading"
         title="刷新远程状态"
         @click.stop="$emit('refreshRemoteStatus', project.id)"
       >
-        <Icon icon="mdi:refresh" height="12" />
+        <Icon icon="mdi:refresh" height="12" :class="{ 'gp-spin': remoteStatusLoading }" />
       </button>
       <div
         v-for="r in remotes"

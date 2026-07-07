@@ -83,7 +83,7 @@
         </Button>
       </div>
 
-      <div class="api-key-toggle">
+      <div>
         <Button
           variant="ghost"
           size="xsmall"
@@ -106,7 +106,6 @@
         <div class="input-wrapper">
           <Input
             v-model="searchWord"
-            class="query-input"
             :placeholder="props.i18n.wordQuery?.enterWordPlaceholder || '输入单词或词语，2秒后自动查询...'"
             @keydown.enter="handleQuery"
           />
@@ -126,11 +125,10 @@
 
       <div
         v-if="activePanel"
-        :class="`${activePanel}-panel`"
         class="common-panel"
       >
         <div class="panel-header">
-          <span class="panel-header-title">
+          <span>
             <IconWrapper
               :name="getPanelConfig(activePanel).iconKey"
               :size="16"
@@ -204,7 +202,6 @@
           v-if="isLoading"
           class="query-loading"
         >
-          <div class="loading-spinner-large"></div>
           <p>{{ props.i18n.wordQuery?.querying || '正在查询...' }}</p>
         </div>
 
@@ -224,10 +221,7 @@
             v-html="formattedResult"
           ></div>
           <div class="result-actions">
-            <div
-              class="dropdown"
-              :class="{ active: showCopyOptions }"
-            >
+            <div ref="copyDropdownRef">
               <Button
                 variant="secondary"
                 size="xsmall"
@@ -245,12 +239,10 @@
               </Button>
               <div
                 v-show="showCopyOptions"
-                class="dropdown-menu"
               >
                 <Button
                   variant="ghost"
                   size="xsmall"
-                  class="dropdown-item"
                   @click="copyResult('all')"
                 >
                   {{ props.i18n.wordQuery?.copyAll || '复制全部' }}
@@ -258,7 +250,6 @@
                 <Button
                   variant="ghost"
                   size="xsmall"
-                  class="dropdown-item"
                   @click="copyResult('phonetic')"
                 >
                   {{ props.i18n.wordQuery?.copyPhonetic || '复制音标' }}
@@ -266,7 +257,6 @@
                 <Button
                   variant="ghost"
                   size="xsmall"
-                  class="dropdown-item"
                   @click="copyResult('meaning')"
                 >
                   {{ props.i18n.wordQuery?.copyMeaning || '复制释义' }}
@@ -275,7 +265,6 @@
                   v-if="extractContentParts.english"
                   variant="ghost"
                   size="xsmall"
-                  class="dropdown-item"
                   @click="copyResult('english')"
                 >
                   {{ props.i18n.wordQuery?.copyEnglish || '复制英文' }}
@@ -283,7 +272,6 @@
                 <Button
                   variant="ghost"
                   size="xsmall"
-                  class="dropdown-item"
                   @click="copyResult('pronunciation')"
                 >
                   {{ props.i18n.wordQuery?.copyPronunciation || '复制谐音' }}
@@ -291,7 +279,6 @@
                 <Button
                   variant="ghost"
                   size="xsmall"
-                  class="dropdown-item"
                   @click="copyResult('example')"
                 >
                   {{ props.i18n.wordQuery?.copyExample || '复制例句' }}
@@ -624,6 +611,7 @@ const queryResult = ref("")
 const isLoading = ref(false)
 const errorMessage = ref("")
 const showCopyOptions = ref(false)
+const copyDropdownRef = ref<HTMLElement | null>(null)
 
 const translateText = ref("")
 const translateResult = ref("")
@@ -972,7 +960,7 @@ const handleKeyDown = (event: KeyboardEvent) => {
 
 const handleClickOutside = (event: Event) => {
   const target = event.target as HTMLElement
-  if (!target.closest(".dropdown")) {
+  if (!copyDropdownRef.value?.contains(target)) {
     showCopyOptions.value = false
   }
 }

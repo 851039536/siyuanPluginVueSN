@@ -6,7 +6,6 @@
         <Input
           v-model="chineseInput"
           type="textarea"
-          class="translation-textarea"
           :placeholder="i18n.enterChinesePlaceholder || '输入中文，如：获取用户信息、用户接口、计算总价...'"
           :rows="3"
         />

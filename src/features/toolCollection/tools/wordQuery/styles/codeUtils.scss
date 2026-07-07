@@ -37,18 +37,6 @@ $compact-gap: 6px;
   overflow-y: auto;
 }
 
-.panel-header {
-  .panel-title {
-    display: flex;
-    align-items: center;
-    gap: $spacing-2;
-    margin: 0;
-    font-size: $font-size-base;
-    font-weight: $font-weight-semibold;
-    color: var(--b3-theme-on-background);
-  }
-}
-
 .panel-content {
   display: flex;
   flex-direction: column;
@@ -60,10 +48,6 @@ $compact-gap: 6px;
   display: flex;
   flex-direction: column;
   gap: $spacing-2;
-
-  .input-label {
-    @include label-row;
-  }
 
   .code-textarea,
   .description-textarea {

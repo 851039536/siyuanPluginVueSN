@@ -30,6 +30,11 @@
   transform-origin: bottom center;
   transform: translateX(-50%) scaleY(1);
   z-index: 9998;
+
+  // 面板程序化聚焦用于接收键盘事件，但不需要可见的焦点环
+  &:focus {
+    outline: none;
+  }
 }
 
 // ==================== Tab 标签栏 ====================

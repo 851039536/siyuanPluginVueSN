@@ -6,7 +6,9 @@
       @click.self="close"
     >
       <div
+        ref="panelRef"
         class="tool-collection-panel"
+        tabindex="-1"
         :style="panelStyle"
       >
         <!-- 头部 -->
@@ -138,6 +140,7 @@ import type { ToolMeta } from "./types"
 import { Icon } from "@iconify/vue"
 import {
   computed,
+  nextTick,
   onBeforeUnmount,
   onMounted,
   ref,
@@ -160,10 +163,17 @@ const i18n = (props.plugin.i18n as Record<string, any>) || {}
 // 本地 visible 同步（用于 Transition 动画）
 const visibleRef = ref(false)
 
+// 面板容器 ref（用于打开时聚焦，确保键盘左右键立即可用）
+const panelRef = ref<HTMLElement | null>(null)
+
 watch(
   () => props.visible.value,
   (val) => {
     visibleRef.value = val
+    if (val) {
+      // 打开后将焦点移入面板，使键盘监听立即生效
+      nextTick(() => panelRef.value?.focus())
+    }
   },
   { immediate: true },
 )

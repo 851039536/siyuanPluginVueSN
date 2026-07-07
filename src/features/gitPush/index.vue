@@ -329,6 +329,7 @@ import { useCommitLog } from "./composables/useCommitLog"
 import { PLATFORM_META, REMOTES, STATUS_CYCLE, STATUS_META, UNGROUPED_ID } from "./types"
 import {
   batchProcess,
+  getProjectRemoteNames,
   gitUrlToWebUrl,
   hasAnyRemote,
   isAheadOfRemote,
@@ -586,6 +587,7 @@ const {
   gitOpsPaused,
   selectedTags,
   filteredGroups,
+  toggleTag: toggleTagFilter,
   loadGitOpsPaused,
   loadShowArchived,
 } = useProjectFilters({
@@ -633,16 +635,14 @@ function getProjectUrl(project: GitProject, prop: "githubUrl" | "giteeUrl" | "gi
 
 const newProjectPath = ref("") // 目录选择回填用
 const refreshing = ref<string | null>(null)
-/** 防抖：记录每个项目的最后刷新时间戳，避免短时间内重复刷新 */
-const lastRefreshTime = new Map<string, number>()
-const REFRESH_COOLDOWN_MS = 500
-
 /** 项目编辑弹窗状态 */
 const editDialogProjectId = ref("")
 /** 行内名称编辑状态 */
 const editingNameId = ref("")
 const editingNameInput = ref("")
 const refreshingAll = ref(false)
+/** 全局刷新防抖冷却时间（毫秒） */
+const REFRESH_COOLDOWN_MS = 500
 /** 全局刷新防抖时间戳 */
 let allRefreshLastTime = 0
 /** FETCH 操作加载中 id → true */
@@ -900,8 +900,8 @@ async function handleFetchAll(id: string) {
 function handleRemove(project: any) {
   showConfirm("删除项目", `确定要删除项目 "${project.name}" 吗？此操作不可撤销。`, () => {
     removeProject(project.id)
-    // 清理防抖缓存中已删除项目的条目，防止 Map 无限增长
-    lastRefreshTime.delete(project.id)
+    // 清理 HEAD hash 缓存中已删除项目的条目
+    delete headHashes.value[project.id]
   })
 }
 
@@ -910,14 +910,6 @@ async function handleSwitchBranch(id: string, branch: string) {
 }
 
 // ---- 项目聚合管理操作 ----
-
-/** 切换标签筛选（多选交集） */
-function toggleTagFilter(tag: string) {
-  const next = new Set(selectedTags.value)
-  if (next.has(tag)) next.delete(tag)
-  else next.add(tag)
-  selectedTags.value = next
-}
 
 /** 状态徽章循环切换 active → maintenance → paused → active */
 async function cycleStatus(id: string, current?: ProjectStatus) {
@@ -976,14 +968,12 @@ async function safeGitOp(label: string, fn: () => Promise<void>) {
 
 // ---- 工作区操作 ----
 
-/** 统一的 git 操作错误处理包装（含 loading 状态和调试日志） */
+/** 统一的 git 操作错误处理包装（含 loading 状态） */
 async function handleGitOp(label: string, fn: () => Promise<void>, id: string) {
   commitOutputs.value[id] = ""
   gitOpLoading.value[id] = true
-  console.log(`[gitPush] ${label} 操作开始`)
   try {
     await fn()
-    console.log(`[gitPush] ${label} 操作成功`)
   } catch (e: any) {
     console.error(`[gitPush] ${label} 失败:`, e)
     commitOutputs.value[id] = `${label}: ${e?.message || e}`
@@ -1068,11 +1058,7 @@ async function handlePushTag(id: string, tag: string) {
   const project = projects.value.find((p) => p.id === id)
   if (!project) return
   // 收集所有已配置的远程
-  const remoteNames: string[] = []
-  for (const pm of PLATFORM_META) {
-    const name = project[pm.remoteProp] as string | undefined
-    if (name) remoteNames.push(name)
-  }
+  const remoteNames = getProjectRemoteNames(project).map((r) => r.name)
   if (remoteNames.length === 0) { showMessage("未找到远程仓库", 3000, "error"); return }
   tagPushLoading.value = {
     ...tagPushLoading.value,

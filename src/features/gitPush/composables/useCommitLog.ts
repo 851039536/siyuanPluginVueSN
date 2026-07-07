@@ -29,7 +29,6 @@ export function useCommitLog(deps: {
    */
   async function handleExpand(projectId: string) {
     if (expandedProjects.value.has(projectId)) return
-    expandedProjects.value.add(projectId)
     commitLogLoading.value[projectId] = true
     try {
       await Promise.all([
@@ -38,6 +37,9 @@ export function useCommitLog(deps: {
         loadStashList(projectId),
         loadTags(projectId),
       ])
+      expandedProjects.value.add(projectId)
+    } catch {
+      // 加载失败不标记为已展开，下次展开时可重试
     } finally {
       delete commitLogLoading.value[projectId]
     }

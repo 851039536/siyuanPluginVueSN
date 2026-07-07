@@ -1,6 +1,6 @@
 // gitPush 工具函数与多路径解析
 import type { Ref } from "vue"
-import type { GitProject, RemotePushStatus } from "./types"
+import type { GitProject, PlatformKey, RemotePushStatus } from "./types"
 import { PLATFORM_META } from "./types"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 
@@ -31,9 +31,19 @@ export async function batchProcess<T>(items: T[], batchSize: number, fn: (item: 
   }
 }
 
-/** 判断项目是否配置了任何远程仓库 */
+/** 向则项目是否配置了任何远程仓库 */
 export function hasAnyRemote(project: GitProject): boolean {
   return PLATFORM_META.some((pm) => !!project[pm.remoteProp])
+}
+
+/** 获取项目已配置的远程名称列表（消除 4 处 for PLATFORM_META + project[pm.remoteProp] 重复模式） */
+export function getProjectRemoteNames(project: GitProject): { key: PlatformKey, name: string }[] {
+  const result: { key: PlatformKey, name: string }[] = []
+  for (const pm of PLATFORM_META) {
+    const name = project[pm.remoteProp] as string | undefined
+    if (name) { result.push({ key: pm.key, name }) }
+  }
+  return result
 }
 
 /** 判断远程是否需要推送（noUpstream 或 ahead > 0，消除多处 .noUpstream || .ahead > 0 重复） */

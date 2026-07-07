@@ -67,16 +67,38 @@
           </button>
         </div>
 
-        <!-- Tab 标签栏 -->
-        <div class="tool-collection-tabs">
+        <!-- Tab 标签栏（左右箭头 + 可滚动 Tab 条） -->
+        <div class="tool-collection-tab-bar">
           <button
-            v-for="tool in tools"
-            :key="tool.id"
-            class="tab-btn"
-            :class="{ active: currentTool === tool.id }"
-            @click="currentTool = tool.id"
+            class="tab-nav-btn tab-nav-left"
+            title="上一个工具"
+            @click="prevTool"
           >
-            {{ tool.label }}
+            <Icon
+              icon="mdi:chevron-left"
+              :size="12"
+            />
+          </button>
+          <div class="tool-collection-tabs">
+            <button
+              v-for="tool in tools"
+              :key="tool.id"
+              class="tab-btn"
+              :class="{ active: currentTool === tool.id }"
+              @click="currentTool = tool.id"
+            >
+              {{ tool.label }}
+            </button>
+          </div>
+          <button
+            class="tab-nav-btn tab-nav-right"
+            title="下一个工具"
+            @click="nextTool"
+          >
+            <Icon
+              icon="mdi:chevron-right"
+              :size="12"
+            />
           </button>
         </div>
 
@@ -110,6 +132,7 @@ import type { ToolMeta } from "./types"
 import { Icon } from "@iconify/vue"
 import {
   computed,
+  onBeforeUnmount,
   onMounted,
   ref,
   watch,
@@ -198,6 +221,50 @@ const tools = computed<ToolMeta[]>(() => [
 ])
 
 const currentTool = ref("base64Image")
+
+// ==================== Tab 循环切换 ====================
+const currentIndex = computed(() =>
+  tools.value.findIndex((t) => t.id === currentTool.value)
+)
+
+const prevTool = () => {
+  const list = tools.value
+  const idx = currentIndex.value
+  const prev = idx <= 0 ? list.length - 1 : idx - 1
+  currentTool.value = list[prev].id
+}
+
+const nextTool = () => {
+  const list = tools.value
+  const idx = currentIndex.value
+  const next = idx >= list.length - 1 ? 0 : idx + 1
+  currentTool.value = list[next].id
+}
+
+// ==================== 键盘左右切换 ====================
+const handleKeydown = (e: KeyboardEvent) => {
+  // 仅在面板可见时响应，且焦点不在输入框内时切换 Tab
+  if (!visibleRef.value) return
+  const target = e.target as HTMLElement
+  const tagName = target.tagName
+  if (tagName === "INPUT" || tagName === "TEXTAREA" || target.isContentEditable) return
+
+  if (e.key === "ArrowLeft") {
+    e.preventDefault()
+    prevTool()
+  } else if (e.key === "ArrowRight") {
+    e.preventDefault()
+    nextTool()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener("keydown", handleKeydown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", handleKeydown)
+})
 </script>
 
 <style lang="scss" scoped>

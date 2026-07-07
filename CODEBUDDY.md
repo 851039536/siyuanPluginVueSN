@@ -214,13 +214,14 @@ plugin.addCommand({
 - 在 `_ConfigOnly` 白名单中添加该功能 ID
 - 从 `_Registered` 联合类型中移除，保留其在 `FeatureId` 中的存在
 
-**验证链条**：完成全部 8 步后，必须通过以下 4 项检查：
+**验证链条**：完成全部 8 步后，由用户自行验证以下 4 项检查：
 ```bash
-pnpm lint           # ESLint 代码规范
+pnpm lint           # ESLint 代码规范（用户自行执行，AI 不运行）
 pnpm i18n:verify    # 中英文键对齐
 pnpm validate:icons # 图标注册有效性
 npx tsc --noEmit    # TypeScript 编译类型检查
 ```
+> **重要**：AI 不得执行 `pnpm vite build` 和 `pnpm lint`。这些验证由用户自行完成。
 
 ### 设置架构
 

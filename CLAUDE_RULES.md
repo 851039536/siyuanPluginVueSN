@@ -886,10 +886,7 @@ export function useXxx(deps: {
 
 ## 构建与验证
 
-```bash
-pnpm vite build       # 构建，关注有无警告/错误
-# pnpm vue-tsc --noEmit   # 仅类型检查（更快）
-```
+> **重要**：AI 不得执行 `pnpm vite build` 和 `pnpm lint`。这些验证由用户自行完成。AI 仅负责编写代码，用户自行验证构建和 lint。
 
 常见 Vite 警告：
 

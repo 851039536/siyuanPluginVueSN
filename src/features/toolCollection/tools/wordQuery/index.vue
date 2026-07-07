@@ -372,7 +372,6 @@
             type="textarea"
             class="translate-textarea"
             :placeholder="props.i18n.wordQuery?.enterTextToTranslate || '输入要翻译的文本，2秒后自动翻译...'"
-            :rows="8"
           />
           <div class="input-actions">
             <Button
@@ -403,7 +402,6 @@
         </div>
 
         <div class="translate-divider">
-          <div class="divider-line"></div>
           <Button
             variant="ghost"
             size="xsmall"
@@ -412,11 +410,10 @@
             @click="swapLanguages"
           >
             <IconWrapper
-              name="shuffle"
+              name="swapVertical"
               :size="16"
             />
           </Button>
-          <div class="divider-line"></div>
         </div>
 
         <div class="translate-output-section">
@@ -444,7 +441,7 @@
             <div class="empty-icon">
               <IconWrapper
                 name="translate"
-                :size="48"
+                :size="24"
               />
             </div>
             <p>{{ props.i18n.wordQuery?.translationWillAppearHere || '翻译结果将显示在这里' }}</p>

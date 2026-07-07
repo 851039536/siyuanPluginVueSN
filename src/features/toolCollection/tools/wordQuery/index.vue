@@ -387,20 +387,7 @@
           </div>
         </div>
 
-        <div class="translate-divider">
-          <Button
-            variant="ghost"
-            size="xsmall"
-            class="swap-btn"
-            :title="props.i18n.wordQuery?.swapLanguages || '交换语言'"
-            @click="swapLanguages"
-          >
-            <IconWrapper
-              name="swapVertical"
-              :size="16"
-            />
-          </Button>
-        </div>
+
 
         <div class="translate-output-section">
           <div class="section-header">
@@ -889,20 +876,6 @@ const getPanelConfig = (panel: string) => {
       title: "",
     }
   )
-}
-
-const swapLanguages = () => {
-  if (sourceLanguage.value === "auto") {
-    showMessage("自动检测模式无法交换", 2000, "info")
-    return
-  }
-  const temp = sourceLanguage.value
-  sourceLanguage.value = targetLanguage.value
-  targetLanguage.value = temp
-
-  const tempText = translateText.value
-  translateText.value = translateResult.value
-  translateResult.value = tempText
 }
 
 const clearTranslateInput = () => {

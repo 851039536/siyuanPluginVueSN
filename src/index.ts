@@ -59,9 +59,9 @@ import {
   registerThemeColor,
   registerToolCollection,
   // unitConverter 已迁移至 toolCollection/tools/unitConverter/
+  // wordQuery 已迁移至 toolCollection/tools/wordQuery/
   registerVideo,
   registerWebsiteNavigation,
-  registerWordQuery,
 } from "@/features"
 import { applyCompactMode } from "@/features/compactMode"
 
@@ -220,11 +220,6 @@ export default class PluginSample extends Plugin {
       (this as any).__bookmarkMarker.destroy()
     }
 
-    // 清理单词查询资源
-    if ((this as any).__wordQuery) {
-      (this as any).__wordQuery.destroy()
-    }
-
     // 清理脚本启动器资源
     if ((this as any).__scriptLauncher) {
       (this as any).__scriptLauncher.destroy()
@@ -267,7 +262,7 @@ export default class PluginSample extends Plugin {
     if (s.enableImageCompressor) registerImageCompressor(this)
     if (s.enableDocNavigation) registerDocNavigation(this)
     if (s.enableShortcuts) registerShortcut(this)
-    if (s.enableWordQuery) registerWordQuery(this)
+    // wordQuery 已迁移至 toolCollection/tools/wordQuery/
     if (s.enableGeneralSettings) registerGeneralSettings(this)
     // unitConverter 已迁移至 toolCollection/tools/unitConverter/
     if (s.enableDiskBrowser) registerDiskBrowser(this)

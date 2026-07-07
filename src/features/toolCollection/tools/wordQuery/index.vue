@@ -538,6 +538,7 @@ import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
+import { getApiConfigFromPlugin } from "@/utils/aiApi"
 import { copyToClipboard as copyToClipboardUtil } from "@/utils/domUtils"
 import CodeCommentGenerator from "./components/CodeCommentGenerator.vue"
 import CodeExplainer from "./components/CodeExplainer.vue"
@@ -545,16 +546,15 @@ import CodeTranslationPanel from "./components/CodeTranslationPanel.vue"
 import RegexGenerator from "./components/RegexGenerator.vue"
 import { LANGUAGE_MAP } from "./types"
 import { WordQueryStorage } from "./types/storage"
+import {
+  buildQueryPrompt,
+  buildTranslatePrompt,
+  callWordQueryAPI,
+} from "./utils/api"
 
 interface Props {
   i18n: Record<string, any> & { wordQuery?: Record<string, string> }
   plugin?: Plugin
-  onQuery: (word: string) => Promise<string>
-  onTranslate?: (
-    text: string,
-    sourceLang: string,
-    targetLang: string,
-  ) => Promise<string>
 }
 
 const props = defineProps<Props>()
@@ -740,7 +740,8 @@ const handleQuery = async () => {
   errorMessage.value = ""
 
   try {
-    const result = await props.onQuery(word)
+    const config = getApiConfigFromPlugin(props.plugin)
+    const result = await callWordQueryAPI(buildQueryPrompt(word), config)
     if (result) {
       queryResult.value = result
       if (autoPlayPronunciation.value) {
@@ -895,18 +896,14 @@ const handleTranslate = async () => {
   translateResult.value = ""
 
   try {
-    if (props.onTranslate) {
-      const result = await props.onTranslate(
-        text,
-        sourceLanguage.value,
-        targetLanguage.value,
-      )
-      translateResult.value = result
-    } else {
-      const prompt = `请将以下${sourceLanguage.value === "auto" ? "" : getLanguageName(sourceLanguage.value)}文本翻译成${getLanguageName(targetLanguage.value)}，只输出翻译结果，不要有其他说明：\n\n${text}`
-      const result = await props.onQuery(prompt)
-      translateResult.value = result
-    }
+    const config = getApiConfigFromPlugin(props.plugin)
+    const prompt = buildTranslatePrompt(
+      text,
+      sourceLanguage.value,
+      targetLanguage.value,
+    )
+    const result = await callWordQueryAPI(prompt, config)
+    translateResult.value = result
   } catch (error) {
     console.error("Translation error:", error)
     showMessage(`翻译失败: ${(error as Error).message}`, 3000, "error")

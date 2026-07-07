@@ -92,6 +92,11 @@
             :plugin="plugin"
             :i18n="plugin.i18n"
           />
+          <WordQueryTool
+            v-if="currentTool === 'wordQuery'"
+            :plugin="plugin"
+            :i18n="plugin.i18n"
+          />
         </div>
       </div>
     </div>
@@ -112,6 +117,7 @@ import {
 import { PluginStorage } from "@/utils/pluginStorage"
 import Base64ImageTool from "./tools/base64Image/index.vue"
 import UnitConverterTool from "./tools/unitConverter/index.vue"
+import WordQueryTool from "./tools/wordQuery/index.vue"
 
 interface Props {
   plugin: Plugin
@@ -120,7 +126,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const i18n = (props.plugin.i18n as Record<string, string>) || {}
+const i18n = (props.plugin.i18n as Record<string, any>) || {}
 
 // 本地 visible 同步（用于 Transition 动画）
 const visibleRef = ref(false)
@@ -183,6 +189,11 @@ const tools = computed<ToolMeta[]>(() => [
     id: "unitConverter",
     label: i18n.unitConverter || "单位转换",
     icon: "mdi:swap-horizontal",
+  },
+  {
+    id: "wordQuery",
+    label: i18n.wordQuery?.title || "单词查询",
+    icon: "mdi:book",
   },
 ])
 

@@ -17,7 +17,7 @@
               class="resize-btn"
               title="变窄"
               :disabled="panelWidth <= 500"
-              @click="adjustDimension('width', -80, 500, 1200)"
+              @click="adjustDimension('width', -80, 500, 1600)"
             >
               <Icon
                 icon="mdi:chevron-left"
@@ -28,8 +28,8 @@
             <button
               class="resize-btn"
               title="变宽"
-              :disabled="panelWidth >= 1200"
-              @click="adjustDimension('width', 80, 500, 1200)"
+              :disabled="panelWidth >= 1600"
+              @click="adjustDimension('width', 80, 500, 1600)"
             >
               <Icon
                 icon="mdi:chevron-right"
@@ -41,7 +41,7 @@
               class="resize-btn"
               title="变矮"
               :disabled="panelHeight <= 30"
-              @click="adjustDimension('height', -10, 30, 85)"
+              @click="adjustDimension('height', -10, 30, 100)"
             >
               <Icon
                 icon="mdi:chevron-down"
@@ -52,8 +52,8 @@
             <button
               class="resize-btn"
               title="变高"
-              :disabled="panelHeight >= 85"
-              @click="adjustDimension('height', 10, 30, 85)"
+              :disabled="panelHeight >= 100"
+              @click="adjustDimension('height', 10, 30, 100)"
             >
               <Icon
                 icon="mdi:chevron-up"
@@ -206,9 +206,9 @@ const panelStyle = computed(() => {
 onMounted(async () => {
   // 仅在值未被用户调整过（仍为默认值）时应用持久化尺寸，避免异步加载覆盖用户操作
   const w = await storage.load<number>("toolCollection-width")
-  if (w && w >= 500 && w <= 1200 && panelWidth.value === DEFAULT_WIDTH) panelWidth.value = w
+  if (w && w >= 500 && w <= 1600 && panelWidth.value === DEFAULT_WIDTH) panelWidth.value = w
   const h = await storage.load<number>("toolCollection-height")
-  if (h && h >= 30 && h <= 85 && panelHeight.value === DEFAULT_HEIGHT) panelHeight.value = h
+  if (h && h >= 30 && h <= 100 && panelHeight.value === DEFAULT_HEIGHT) panelHeight.value = h
   window.addEventListener("keydown", handleKeydown)
 })
 

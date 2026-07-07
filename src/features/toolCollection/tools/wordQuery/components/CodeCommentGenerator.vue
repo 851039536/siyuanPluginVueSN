@@ -3,13 +3,6 @@
   <div class="code-comment-panel">
     <div class="panel-content">
       <div class="input-section">
-        <div class="input-label">
-          <IconWrapper
-            name="code"
-            :size="14"
-          />
-          {{ i18n.enterCode || '输入代码' }}
-        </div>
         <Input
           v-model="codeInput"
           type="textarea"

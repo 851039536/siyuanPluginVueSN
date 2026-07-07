@@ -71,7 +71,7 @@ $compact-gap: 6px;
 
   .style-options {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
     gap: $spacing-2;
   }
 
@@ -79,7 +79,7 @@ $compact-gap: 6px;
     display: flex;
     flex-direction: column;
     gap: $spacing-1;
-    padding: $spacing-3;
+    padding: $spacing-2;
     background: var(--b3-theme-surface);
     border: 2px solid transparent;
     border-radius: $radius-base;
@@ -180,10 +180,18 @@ $compact-gap: 6px;
   }
 
   // ===== 编程翻译特有样式 =====
+  .code-translation-panel .result-content {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: $spacing-4;
+  }
+
   .main-result {
     display: flex;
     flex-direction: column;
     gap: $spacing-2;
+    flex: 1;
+    min-width: 0;
   }
 
   .result-item {
@@ -246,8 +254,10 @@ $compact-gap: 6px;
     display: flex;
     flex-direction: column;
     gap: $spacing-2;
-    padding-top: $spacing-3;
-    border-top: 1px solid var(--b3-border-color);
+    flex: 1;
+    min-width: 0;
+    padding-left: $spacing-4;
+    border-left: 1px solid var(--b3-border-color);
 
     .suggestions-title {
       display: flex;

@@ -364,6 +364,7 @@
               v-model="sourceLanguage"
               :options="LANGUAGE_OPTIONS"
               size="xsmall"
+              placement="bottom"
               class="language-select"
             />
           </div>
@@ -421,6 +422,7 @@
               v-model="targetLanguage"
               :options="TARGET_LANGUAGE_OPTIONS"
               size="xsmall"
+              placement="bottom"
               class="language-select"
             />
           </div>

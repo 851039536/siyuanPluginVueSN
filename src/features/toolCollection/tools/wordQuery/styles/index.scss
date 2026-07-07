@@ -10,7 +10,7 @@
   color: var(--b3-theme-on-background);
   font-family: $font-body;
   font-size: $font-size-sm;
-  line-height: 1.5;
+  line-height: $line-height-normal;
   overflow: hidden;
 
   .query-header {
@@ -126,12 +126,6 @@
             min-width: 50px;
           }
 
-          br {
-            display: block;
-            margin-bottom: $spacing-2;
-            content: "";
-          }
-
           .result-wrapper {
             padding: $spacing-4 0;
           }
@@ -143,7 +137,7 @@
             border: 1px solid var(--b3-border-color, $brand-subtle-gray);
             border-radius: $radius-base;
             border-left: 3px solid;
-            line-height: 1.5;
+            line-height: $line-height-normal;
             font-size: $font-size-sm;
 
             &:last-child {
@@ -473,7 +467,7 @@
       }
 
       .result-actions {
-        gap: 6px;
+        gap: $spacing-1;
       }
     }
 

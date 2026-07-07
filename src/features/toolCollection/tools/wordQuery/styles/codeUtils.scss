@@ -1,5 +1,27 @@
 @use '@/variables.scss' as *;
 
+// 局部变量：替代无法精确映射到全局 Token 的硬编码值，保持零视觉回归
+$code-font-size: 13px;
+$code-line-height: 1.6;
+$compact-gap: 6px;
+
+/// label 行统一模式：图标 + 标签文字
+@mixin label-row {
+  display: flex;
+  align-items: center;
+  gap: $compact-gap;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--b3-theme-on-surface);
+}
+
+/// suggestions-list 通用布局（重复声明合并）
+@mixin suggestions-list-base {
+  display: flex;
+  flex-direction: column;
+  gap: $compact-gap;
+}
+
 // ========== 通用面板样式 ==========
 .code-comment-panel,
 .code-explainer-panel,
@@ -40,12 +62,7 @@
   gap: $spacing-2;
 
   .input-label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-medium;
-    color: var(--b3-theme-on-surface);
+    @include label-row;
   }
 
   .code-textarea,
@@ -53,7 +70,7 @@
     width: 100%;
     font-family: $vp-mono;
     font-size: $font-size-sm;
-    line-height: 1.6;
+    line-height: $code-line-height;
     resize: vertical;
   }
 }
@@ -65,12 +82,7 @@
   gap: $spacing-2;
 
   .style-label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-medium;
-    color: var(--b3-theme-on-surface);
+    @include label-row;
   }
 
   .style-options {
@@ -95,7 +107,7 @@
     }
 
     .style-name {
-      font-size: 13px;
+      font-size: $code-font-size;
       font-weight: $font-weight-semibold;
       color: var(--b3-theme-on-surface);
     }
@@ -132,7 +144,7 @@
     .result-label {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: $compact-gap;
       font-size: $font-size-sm;
       font-weight: $font-weight-semibold;
       color: var(--b3-theme-on-surface);
@@ -169,8 +181,8 @@
     background: var(--b3-theme-background);
     border-radius: $radius-base;
     font-family: $vp-mono;
-    font-size: 13px;
-    line-height: 1.6;
+    font-size: $code-font-size;
+    line-height: $code-line-height;
     overflow-x: auto;
     white-space: pre-wrap;
     word-break: break-all;
@@ -200,7 +212,7 @@
 
     .result-key {
       min-width: 60px;
-      font-size: 13px;
+      font-size: $code-font-size;
       font-weight: $font-weight-medium;
       color: var(--b3-theme-on-surface-light);
     }
@@ -256,16 +268,14 @@
     .suggestions-title {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 13px;
+      gap: $compact-gap;
+      font-size: $code-font-size;
       font-weight: $font-weight-semibold;
       color: var(--b3-theme-on-surface-light);
     }
 
     .suggestions-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+      @include suggestions-list-base;
     }
 
     .suggestion-item {
@@ -278,7 +288,7 @@
       border-radius: $radius-sm;
       cursor: pointer;
       font-family: $vp-mono;
-      font-size: 13px;
+      font-size: $code-font-size;
       color: var(--b3-theme-on-background);
 
       &:hover {
@@ -298,7 +308,7 @@
   .section-title {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: $compact-gap;
     margin: 0;
     font-size: $font-size-sm;
     font-weight: $font-weight-semibold;
@@ -310,7 +320,7 @@
     background: var(--b3-theme-background);
     border-radius: $radius-base;
     font-size: $font-size-sm;
-    line-height: 1.6;
+    line-height: $code-line-height;
     color: var(--b3-theme-on-background);
   }
 }
@@ -320,9 +330,7 @@
   padding-top: $spacing-3;
 
   .suggestions-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    @include suggestions-list-base;
   }
 
   .suggestion-item {
@@ -354,12 +362,7 @@
     justify-content: space-between;
 
     .examples-label {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: $font-size-sm;
-      font-weight: $font-weight-medium;
-      color: var(--b3-theme-on-surface);
+      @include label-row;
     }
   }
 
@@ -446,7 +449,7 @@
 
     .matches-info {
       .match-count {
-        font-size: 13px;
+        font-size: $code-font-size;
         font-weight: $font-weight-medium;
         color: var(--b3-theme-success, #22c55e);
       }
@@ -454,7 +457,7 @@
       .matches-list {
         display: flex;
         flex-wrap: wrap;
-        gap: 6px;
+        gap: $compact-gap;
         margin-top: $spacing-2;
       }
 
@@ -469,15 +472,15 @@
     }
 
     .no-match {
-      font-size: 13px;
+      font-size: $code-font-size;
       color: var(--b3-theme-on-surface-light);
     }
 
     .error-info {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 13px;
+      gap: $compact-gap;
+      font-size: $code-font-size;
       color: var(--b3-theme-error);
     }
   }

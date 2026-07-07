@@ -73,7 +73,7 @@
         >{{ t.date?.slice(0, 10) }}</span>
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm gp-tag-push-btn"
-          title="推送到全部远程"
+          title="推送"
           :disabled="pushLoaded === t.name"
           @click="emit('push', { tag: t.name })"
         >
@@ -83,19 +83,7 @@
             class="gp-spin"
             height="12"
           />
-          <template v-else>
-            <Icon
-              v-for="r in remotes"
-              :key="r.key"
-              :icon="r.icon"
-              height="12"
-            />
-            <Icon
-              icon="mdi:cloud-upload-outline"
-              height="12"
-              style="opacity:0.5"
-            />
-          </template>
+          <template v-else>推送</template>
         </button>
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"

@@ -2,36 +2,31 @@
 <template>
   <div class="code-translation-panel">
     <div class="panel-content">
-      <div class="input-section">
-        <Input
-          v-model="chineseInput"
-          type="textarea"
-          :placeholder="i18n.enterChinesePlaceholder || '输入中文，如：获取用户信息、用户接口、计算总价...'"
-          :rows="3"
-        />
-      </div>
-
-      <div class="style-section">
-        <div class="style-label">
-          <IconWrapper
-            name="format"
-            :size="14"
+      <div class="input-row">
+        <div class="input-section">
+          <Input
+            v-model="chineseInput"
+            type="textarea"
+            :placeholder="i18n.enterChinesePlaceholder || '输入中文，如：获取用户信息、用户接口、计算总价...'"
+            :rows="2"
           />
-          {{ i18n.namingStyle || '命名风格' }}
         </div>
-        <div class="style-options">
-          <div
-            v-for="style in NAMING_STYLES"
-            :key="style.id"
-            class="style-option"
-            :class="{ active: selectedStyle.id === style.id }"
-            @click="selectStyle(style)"
-          >
-            <div class="style-name">
-              {{ style.label }}
-            </div>
-            <div class="style-example">
-              {{ style.example }}
+
+        <div class="style-section">
+          <div class="style-options">
+            <div
+              v-for="style in NAMING_STYLES"
+              :key="style.id"
+              class="style-option"
+              :class="{ active: selectedStyle.id === style.id }"
+              @click="selectStyle(style)"
+            >
+              <div class="style-name">
+                {{ style.label }}
+              </div>
+              <div class="style-example">
+                {{ style.example }}
+              </div>
             </div>
           </div>
         </div>
@@ -89,59 +84,52 @@
             {{ i18n.copy || '复制' }}
           </Button>
         </div>
-        <div class="result-content">
-          <div class="main-result">
-            <div class="result-item">
-              <span class="result-key">{{ i18n.original || '原文' }}:</span>
-              <span class="result-value">{{ translationResult.original }}</span>
-            </div>
-            <div class="result-item highlight">
-              <span class="result-key">{{ i18n.translated || '译文' }}:</span>
-              <span class="result-value">{{ translationResult.translated }}</span>
-            </div>
-            <div class="result-item">
-              <span class="result-key">{{ i18n.abbreviation || '缩写' }}:</span>
-              <span
-                class="result-value abbreviation"
-                @click="copyAbbreviation"
-              >{{ generateAbbreviation(translationResult.translated) }}</span>
+        <div class="result-rows">
+          <div class="result-row">
+            <span class="row-label">{{ i18n.original || '原文' }}</span>
+            <span class="row-value">{{ translationResult.original }}</span>
+          </div>
+          <div class="result-row">
+            <span class="row-label">{{ i18n.style || '风格' }}</span>
+            <span class="row-value">{{ selectedStyle.label }}</span>
+          </div>
+          <div class="result-row highlight">
+            <span class="row-label">{{ i18n.translated || '译文' }}</span>
+            <span class="row-value">{{ translationResult.translated }}</span>
+            <span
+              class="row-abbr"
+              @click="copyAbbreviation"
+              title="复制缩写"
+            >
+              {{ generateAbbreviation(translationResult.translated) }}
               <IconWrapper
                 name="contentCopy"
-                :size="12"
+                :size="11"
                 class="copy-icon"
               />
-            </div>
-            <div class="result-item">
-              <span class="result-key">{{ i18n.style || '风格' }}:</span>
-              <span class="result-value">{{ selectedStyle.label }}</span>
-            </div>
+            </span>
           </div>
-
           <div
             v-if="translationResult.suggestions.length > 0"
-            class="suggestions"
+            class="result-row"
           >
-            <div class="suggestions-title">
+            <span class="row-label">
               <IconWrapper
                 name="lightbulb"
-                :size="14"
+                :size="12"
               />
-              {{ i18n.suggestions || '备选方案' }}
-            </div>
-            <div class="suggestions-list">
-              <div
+              {{ i18n.suggestions || '备选' }}
+            </span>
+            <span class="row-tags">
+              <span
                 v-for="(suggestion, index) in translationResult.suggestions"
                 :key="index"
-                class="suggestion-item"
+                class="suggestion-tag"
                 @click="copySuggestion(suggestion)"
               >
                 {{ suggestion }}
-                <IconWrapper
-                  name="contentCopy"
-                  :size="12"
-                />
-              </div>
-            </div>
+              </span>
+            </span>
           </div>
         </div>
       </div>

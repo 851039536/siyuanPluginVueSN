@@ -65,6 +65,30 @@ function buildPrompt(chinese: string, namingStyle: NamingStyle): string {
 }`
 }
 
+/**
+ * 根据命名风格生成缩写
+ * 例如: getUserInfo → GUI, get_user_info → GUI
+ */
+export function generateAbbreviation(text: string): string {
+  if (!text) return ""
+
+  let words: string[] = []
+
+  if (text.includes("_")) {
+    // snake_case 或 SCREAMING_SNAKE_CASE
+    words = text.split("_").filter((w) => w.length > 0)
+  } else if (text.includes("-")) {
+    // kebab-case
+    words = text.split("-").filter((w) => w.length > 0)
+  } else {
+    // camelCase 或 PascalCase
+    const matches = text.match(/[A-Z]?[a-z]+|[A-Z]+(?=[A-Z][a-z]|\b)/g)
+    words = matches || [text]
+  }
+
+  return words.map((w) => w.charAt(0).toUpperCase()).join("")
+}
+
 export async function translateCodeField(
   chinese: string,
   namingStyle: NamingStyle,

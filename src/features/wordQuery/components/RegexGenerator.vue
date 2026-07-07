@@ -26,7 +26,6 @@
           class="description-textarea"
           :placeholder="i18n.regexDescPlaceholder || '描述你想要的正则表达式，例如：匹配邮箱地址、匹配手机号码...'"
           :rows="3"
-          @input="clearError"
         />
       </div>
 
@@ -243,7 +242,6 @@
 </template>
 
 <script setup lang="ts">
-import type { Plugin } from "siyuan"
 import type {
   RegexExample,
   RegexResult,
@@ -253,19 +251,10 @@ import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
 import { useCodeFeature } from "../composables/useCodeFeature"
-import {
-  generateRegex,
+import { generateRegex, testRegex } from "../utils/codeUtils"
+import type { WordQueryComponentProps } from "../types"
 
-
-  testRegex,
-} from "../utils/codeUtils"
-
-interface Props {
-  i18n: Record<string, any>
-  plugin?: Plugin
-}
-
-const props = defineProps<Props>()
+const props = defineProps<WordQueryComponentProps>()
 
 const description = ref("")
 const examples = ref<RegexExample[]>([{
@@ -283,7 +272,6 @@ const isGenerating = ref(false)
 
 const {
   errorMessage,
-  clearError,
   clearErrorOnInput,
   getApiConfig,
   copyText,

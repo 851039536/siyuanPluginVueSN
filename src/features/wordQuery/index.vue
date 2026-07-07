@@ -1044,6 +1044,7 @@ onUnmounted(() => {
   document.removeEventListener("keydown", handleKeyDown)
   document.removeEventListener("click", handleClickOutside)
 
+  speechSynthesis.cancel()
   autoQueryTimer.value && clearTimeout(autoQueryTimer.value)
   autoTranslateTimer.value && clearTimeout(autoTranslateTimer.value)
 })

@@ -26,7 +26,6 @@
           class="code-textarea"
           :placeholder="i18n.codeInputPlaceholder || '粘贴需要添加注释的代码...'"
           :rows="8"
-          @input="clearError"
         />
       </div>
 
@@ -40,7 +39,7 @@
         </div>
         <div class="style-options">
           <div
-            v-for="style in commentStyles"
+            v-for="style in COMMENT_STYLES"
             :key="style.id"
             class="style-option"
             :class="{ active: selectedStyle.id === style.id }"
@@ -128,7 +127,6 @@
 </template>
 
 <script setup lang="ts">
-import type { Plugin } from "siyuan"
 import type {
   CodeCommentResult,
   CommentStyle,
@@ -139,18 +137,12 @@ import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
 import { useCodeFeature } from "../composables/useCodeFeature"
 import {
-
   COMMENT_STYLES,
-
   generateCodeComments,
 } from "../utils/codeUtils"
+import type { WordQueryComponentProps } from "../types"
 
-interface Props {
-  i18n: Record<string, any>
-  plugin?: Plugin
-}
-
-const props = defineProps<Props>()
+const props = defineProps<WordQueryComponentProps>()
 
 const codeInput = ref("")
 const selectedStyle = ref<CommentStyle>(COMMENT_STYLES[0])
@@ -159,14 +151,11 @@ const isGenerating = ref(false)
 
 const {
   errorMessage,
-  clearError,
   clearErrorOnInput,
   getApiConfig,
   copyText,
 } = useCodeFeature(props.plugin)
 clearErrorOnInput(codeInput)
-
-const commentStyles = COMMENT_STYLES
 
 function selectStyle(style: CommentStyle) {
   selectedStyle.value = style

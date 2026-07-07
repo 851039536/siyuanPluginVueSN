@@ -9,23 +9,23 @@
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   font-family: $font-body;
-  font-size: 14px;
+  font-size: $font-size-sm;
   line-height: 1.5;
   overflow: hidden;
 
   .query-header {
-    padding: 16px;
+    padding: $spacing-4;
     border-bottom: 1px solid var(--b3-border-color, $brand-subtle-gray);
     flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
     background: var(--b3-theme-background, $brand-light);
-    gap: 16px;
+    gap: $spacing-4;
 
     .mode-tabs {
       display: flex;
-      gap: 8px;
+      gap: $spacing-2;
       border-bottom: 1px solid var(--b3-border-color, $brand-subtle-gray);
       padding: 0;
     }
@@ -47,13 +47,13 @@
     overflow: hidden;
 
     .input-section {
-      padding: 16px;
+      padding: $spacing-4;
       border-bottom: 1px solid var(--b3-border-color, $brand-subtle-gray);
       flex-shrink: 0;
 
       .input-wrapper {
         display: flex;
-        gap: 8px;
+        gap: $spacing-2;
         width: 100%;
       }
 
@@ -64,7 +64,7 @@
 
     .query-content {
       flex: 1;
-      padding: 16px;
+      padding: $spacing-4;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
@@ -98,53 +98,53 @@
         .result-content {
           flex: 1;
           overflow-y: auto;
-          margin-bottom: 16px;
-          padding: 16px;
+          margin-bottom: $spacing-4;
+          padding: $spacing-4;
           background: var(--b3-theme-background, $brand-light);
           border: 1px solid var(--b3-border-color, $brand-subtle-gray);
-          border-radius: 6px;
+          border-radius: $radius-base;
           min-height: 100px;
           max-height: 300px;
           word-wrap: break-word;
 
           .result-title {
-            margin: 0 0 16px 0;
+            margin: 0 0 $spacing-4 0;
             color: var(--b3-theme-on-background, $brand-dark);
             font-family: $font-heading;
-            font-size: 16px;
-            font-weight: 600;
+            font-size: $font-size-base;
+            font-weight: $font-weight-semibold;
             text-align: center;
-            padding-bottom: 16px;
+            padding-bottom: $spacing-4;
             border-bottom: 1px solid var(--b3-border-color, $brand-subtle-gray);
           }
 
           .result-label {
             display: inline-block;
-            font-weight: 600;
+            font-weight: $font-weight-semibold;
             color: var(--b3-theme-on-background, $brand-dark);
-            margin-right: 8px;
+            margin-right: $spacing-2;
             min-width: 60px;
           }
 
           br {
             display: block;
-            margin-bottom: 12px;
+            margin-bottom: $spacing-3;
             content: "";
           }
 
           .result-wrapper {
-            padding: 16px 0;
+            padding: $spacing-4 0;
           }
 
           .result-section {
-            margin-bottom: 16px;
-            padding: 16px;
+            margin-bottom: $spacing-4;
+            padding: $spacing-4;
             background: var(--b3-theme-background, $brand-light);
             border: 1px solid var(--b3-border-color, $brand-subtle-gray);
-            border-radius: 6px;
+            border-radius: $radius-base;
             border-left: 3px solid;
             line-height: 1.5;
-            font-size: 14px;
+            font-size: $font-size-sm;
 
             &:last-child {
               margin-bottom: 0;
@@ -152,11 +152,11 @@
 
             strong {
               color: var(--b3-theme-on-background, $brand-dark);
-              font-weight: 600;
+              font-weight: $font-weight-semibold;
             }
 
             .result-label {
-              font-weight: 600;
+              font-weight: $font-weight-semibold;
             }
 
             &.word-section { border-left-color: var(--b3-theme-primary, $brand-orange); }
@@ -171,7 +171,7 @@
 
         .result-actions {
           display: flex;
-          gap: 8px;
+          gap: $spacing-2;
           flex-wrap: wrap;
           flex-shrink: 0;
         }
@@ -189,7 +189,7 @@
 
         .empty-icon {
           font-size: 48px;
-          margin-bottom: 16px;
+          margin-bottom: $spacing-4;
           opacity: 0.6;
         }
       }
@@ -206,9 +206,9 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 12px 16px;
-        font-weight: 600;
-        font-size: 14px;
+        padding: $spacing-3 $spacing-4;
+        font-weight: $font-weight-semibold;
+        font-size: $font-size-sm;
         font-family: $font-heading;
         color: var(--b3-theme-on-background, $brand-dark);
         background: var(--b3-theme-background, $brand-light);
@@ -216,22 +216,22 @@
 
         .panel-actions {
           display: flex;
-          gap: 8px;
+          gap: $spacing-2;
           align-items: center;
         }
       }
 
       .panel-content {
-        padding: 8px;
+        padding: $spacing-2;
         max-height: 240px;
         overflow-y: auto;
       }
 
       .advanced-content {
-        padding: 16px;
+        padding: $spacing-4;
 
         .option-group {
-          margin-bottom: 16px;
+          margin-bottom: $spacing-4;
 
           &:last-child {
             margin-bottom: 0;
@@ -239,16 +239,16 @@
 
           .option-label {
             display: block;
-            font-weight: 500;
-            font-size: 14px;
+            font-weight: $font-weight-medium;
+            font-size: $font-size-sm;
             font-family: $font-heading;
-            margin-bottom: 8px;
+            margin-bottom: $spacing-2;
             color: var(--b3-theme-on-background, $brand-dark);
           }
 
           .option-row {
             display: flex;
-            gap: 16px;
+            gap: $spacing-4;
             flex-wrap: wrap;
           }
 
@@ -256,12 +256,12 @@
           .checkbox-label {
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 14px;
+            gap: $spacing-2;
+            font-size: $font-size-sm;
             color: var(--b3-theme-on-background, $brand-dark);
             cursor: pointer;
-            padding: 8px;
-            border-radius: 6px;
+            padding: $spacing-2;
+            border-radius: $radius-base;
 
             &:hover {
               background-color: var(--b3-theme-surface-lighter, $brand-light-gray);
@@ -280,13 +280,13 @@
   }
 
   .translate-mode {
-    padding: 16px;
+    padding: $spacing-4;
 
     .translate-container {
       display: flex;
       flex-direction: column;
       height: 100%;
-      gap: 16px;
+      gap: $spacing-4;
 
       .translate-input-section,
       .translate-output-section {
@@ -299,13 +299,13 @@
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 8px;
-          padding-bottom: 8px;
+          margin-bottom: $spacing-2;
+          padding-bottom: $spacing-2;
           border-bottom: 1px solid var(--b3-border-color, $brand-subtle-gray);
 
           .section-title {
-            font-weight: 600;
-            font-size: 14px;
+            font-weight: $font-weight-semibold;
+            font-size: $font-size-sm;
             font-family: $font-heading;
             color: var(--b3-theme-on-background, $brand-dark);
           }
@@ -322,14 +322,14 @@
         }
 
         .translate-result {
-          padding: 12px;
+          padding: $spacing-3;
           background: var(--b3-theme-background, $brand-light);
           border: 1px solid var(--b3-border-color, $brand-subtle-gray);
-          border-radius: 6px;
+          border-radius: $radius-base;
           overflow-y: auto;
 
           .result-text {
-            font-size: 14px;
+            font-size: $font-size-sm;
             line-height: 1.5;
             color: var(--b3-theme-on-background, $brand-dark);
             white-space: pre-wrap;
@@ -348,7 +348,7 @@
 
           .empty-icon {
             font-size: 48px;
-            margin-bottom: 16px;
+            margin-bottom: $spacing-4;
             opacity: 0.6;
           }
         }
@@ -356,8 +356,8 @@
         .input-actions,
         .output-actions {
           display: flex;
-          gap: 8px;
-          margin-top: 8px;
+          gap: $spacing-2;
+          margin-top: $spacing-2;
           justify-content: flex-end;
         }
       }
@@ -365,8 +365,8 @@
       .translate-divider {
         display: flex;
         align-items: center;
-        gap: 12px;
-        margin: 8px 0;
+        gap: $spacing-3;
+        margin: $spacing-2 0;
 
         .divider-line {
           flex: 1;
@@ -385,20 +385,20 @@
 @media (max-width: 480px) {
   .word-query-panel {
     .query-header {
-      padding: 12px;
-      gap: 12px;
+      padding: $spacing-3;
+      gap: $spacing-3;
     }
 
     .mode-tabs {
-      gap: 4px;
+      gap: $spacing-1;
     }
 
     .query-content {
-      padding: 12px;
+      padding: $spacing-3;
 
       .result-content {
-        padding: 12px;
-        margin-bottom: 12px;
+        padding: $spacing-3;
+        margin-bottom: $spacing-3;
       }
 
       .result-actions {
@@ -407,14 +407,14 @@
     }
 
     .translate-container {
-      gap: 12px;
+      gap: $spacing-3;
     }
 
     .translate-textarea,
     .translate-result {
       min-height: 100px;
       padding: 10px;
-      font-size: 12px;
+      font-size: $font-size-xs;
     }
   }
 }
@@ -424,12 +424,12 @@
     .query-content {
       .empty-icon {
         font-size: 32px;
-        margin-bottom: 8px;
+        margin-bottom: $spacing-2;
       }
 
       .result-content {
-        padding: 12px;
-        margin-bottom: 8px;
+        padding: $spacing-3;
+        margin-bottom: $spacing-2;
       }
     }
   }

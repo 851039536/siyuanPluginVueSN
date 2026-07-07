@@ -71,7 +71,7 @@ $compact-gap: 6px;
 
   .style-options {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
     gap: $spacing-2;
   }
 
@@ -493,7 +493,7 @@ $compact-gap: 6px;
   }
 
   .style-section .style-options {
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   }
 
   .example-item .example-inputs {

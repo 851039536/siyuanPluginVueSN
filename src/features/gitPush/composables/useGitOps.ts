@@ -207,6 +207,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
       const failProg: Record<string, ProgressStatus> = {}
       for (const key of Object.keys(initProg)) { failProg[key] = "fail" }
       progressRef.value = { ...progressRef.value, [id]: failProg }
+      return { success: false }
     } finally {
       safeTimeout(() => {
         const current = { ...progressRef.value }
@@ -252,6 +253,25 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
       pruneRecordCache(outputsRef.value)
       loadPushStatus(id).catch((e) => console.warn(`[gitPush] 刷新${action === "push" ? "推送" : "拉取"}状态失败:`, e?.message || e))
       return result
+    } catch (e) {
+      const duration = Date.now() - startedAt
+      progressRef.value = {
+        ...progressRef.value,
+        [id]: { ...progressRef.value[id], [target]: "fail" },
+      }
+      const pm = PLATFORM_META.find((m) => m.key === target)
+      outputsRef.value[id] = [{
+        platform: target,
+        label: pm?.label ?? target,
+        ok: false,
+        skipped: false,
+        duration,
+        summary: String(e?.message || e).split("\n")[0]?.trim() || "失败",
+        fullStdout: "",
+        fullStderr: String(e?.message || e),
+      }]
+      pruneRecordCache(outputsRef.value)
+      throw e
     } finally {
       safeTimeout(() => {
         const current = { ...progressRef.value }

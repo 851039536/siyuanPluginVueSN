@@ -118,8 +118,7 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
     }
 
     return visibleGroups.value
-      .map((g) => ({ ...g, projects: applyFilters(g.projects) }))
-      .map((g) => ({ ...g, projects: sortProjects(g.projects) }))
+      .map((g) => ({ ...g, projects: sortProjects(applyFilters(g.projects)) }))
       .filter((g) => g.projects.length > 0)
   })
 

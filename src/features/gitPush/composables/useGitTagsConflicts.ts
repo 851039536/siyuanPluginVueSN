@@ -9,8 +9,7 @@ import type {
   TagInfo,
 } from "../types"
 import { ref } from "vue"
-import { findProject, normalizePathForDedup } from "../utils"
-import { resolveValidPath } from "../utils"
+import { findProject, normalizePathForDedup, resolveValidPath } from "../utils"
 
 export function useGitTagsConflicts(manager: GitPushManager, projects: Ref<GitProject[]>) {
   /** Tag 列表缓存 */
@@ -116,8 +115,9 @@ export function useGitTagsConflicts(manager: GitPushManager, projects: Ref<GitPr
   async function importScanResults(selectedPaths: string[], categoryId: string) {
     let imported = 0
     let skipped = 0
+    const pathSet = new Set(selectedPaths)
     for (const repo of scanResults.value) {
-      if (!selectedPaths.includes(repo.path) || repo.alreadyImported) continue
+      if (!pathSet.has(repo.path) || repo.alreadyImported) continue
       try {
         await manager.addProject(repo.name, repo.path, categoryId)
         imported++

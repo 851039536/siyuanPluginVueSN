@@ -32,7 +32,7 @@ import {
   GitPushStorage,
 } from "./types/storage"
 import { PLATFORM_META, UNGROUPED_ID } from "./types"
-import { resolveValidPath } from "./utils"
+import { getProjectRemoteNames, resolveValidPath } from "./utils"
 
 /** 远程操作结果 */
 interface RemoteOpResult {
@@ -518,14 +518,17 @@ export class GitPushManager {
       // 智能跳过的静态结果
       const skippedResults: Record<string, RemoteOpResult> = {}
       const entries: { key: PlatformKey, remoteName: string | undefined }[] = []
-      for (const pm of PLATFORM_META) {
-        const remoteName = project[pm.remoteProp]
-        if (!remoteName) {
-          skippedResults[pm.key] = GitPushManager.skippedResult
-        } else if (shouldSkip(pm.key)) {
-          skippedResults[pm.key] = { ok: true, stdout: "已同步（跳过）", stderr: "", skipped: true }
+      for (const { key, name } of getProjectRemoteNames(project)) {
+        if (shouldSkip(key)) {
+          skippedResults[key] = { ok: true, stdout: "已同步（跳过）", stderr: "", skipped: true }
         } else {
-          entries.push({ key: pm.key, remoteName: remoteName as string })
+          entries.push({ key, remoteName: name })
+        }
+      }
+      // 处理未配置的远程：标记为 skipped
+      for (const pm of PLATFORM_META) {
+        if (skippedResults[pm.key] === undefined && !entries.some((e) => e.key === pm.key)) {
+          skippedResults[pm.key] = GitPushManager.skippedResult
         }
       }
 
@@ -654,11 +657,7 @@ export class GitPushManager {
     if (!project) return { fetched: [], errors: [] }
 
     const cwd = resolveValidPath(project)
-    const remotesToFetch: string[] = []
-    for (const pm of PLATFORM_META) {
-      const name = project[pm.remoteProp] as string | undefined
-      if (name) remotesToFetch.push(name)
-    }
+    const remotesToFetch = getProjectRemoteNames(project).map((r) => r.name)
 
     if (remotesToFetch.length === 0) {
       return { fetched: [], errors: [] }
@@ -712,11 +711,7 @@ export class GitPushManager {
     }
 
     // 由 PLATFORM_META 驱动检查
-    const remotesToCheck: { key: string, remoteName: string }[] = []
-    for (const pm of PLATFORM_META) {
-      const name = project[pm.remoteProp]
-      if (name) { remotesToCheck.push({ key: pm.key, remoteName: name as string }) }
-    }
+    const remotesToCheck = getProjectRemoteNames(project).map((r) => ({ key: r.key, remoteName: r.name }))
 
     // 缓存 noUpstream 场景的 HEAD 提交数，多远程复用避免重复 rev-list --count HEAD
     let headCommitCount: number | null = null
@@ -1012,7 +1007,7 @@ export class GitPushManager {
           const fullPath = path.join(currentDir, entry.name)
           if (entry.name === ".git" && entry.isDirectory()) {
             hasGitDir = true
-          } else if (entry.isDirectory() && !SKIP_DIRS.has(entry.name)) {
+          } else if (entry.isDirectory() && !entry.isSymbolicLink() && !SKIP_DIRS.has(entry.name)) {
             queue.push(fullPath)
           }
         }
@@ -1041,7 +1036,7 @@ export class GitPushManager {
       return { canPush: false, github: false, gitee: false, gitea: false, cnb: false, remotes: [] }
     }
 
-    const remotes = await this.detectRemotes(project.path)
+    const remotes = await this.detectRemotes(resolveValidPath(project))
     const github = remotes.some((r) => this.isKnownRemote(r, "github"))
     const gitee = remotes.some((r) => this.isKnownRemote(r, "gitee"))
     const gitea = remotes.some((r) => this.isKnownRemote(r, "gitea"))
@@ -1383,5 +1378,6 @@ export class GitPushManager {
     this.abortControllers.clear()
     // 清理等待队列中所有闭包，防止插件卸载后僵尸 Promise 持有闭包引用导致内存泄漏
     this.gitWaitQueue.length = 0
+    this.networkWaitQueue.length = 0
   }
 }

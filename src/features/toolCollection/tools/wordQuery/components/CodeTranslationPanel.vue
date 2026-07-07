@@ -3,13 +3,6 @@
   <div class="code-translation-panel">
     <div class="panel-content">
       <div class="input-section">
-        <div class="input-label">
-          <IconWrapper
-            name="translate"
-            :size="14"
-          />
-          {{ i18n.enterChinese || '输入中文' }}
-        </div>
         <Input
           v-model="chineseInput"
           type="textarea"

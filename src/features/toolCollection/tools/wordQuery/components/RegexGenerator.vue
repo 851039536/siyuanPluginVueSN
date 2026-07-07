@@ -3,13 +3,6 @@
   <div class="regex-generator-panel">
     <div class="panel-content">
       <div class="input-section">
-        <div class="input-label">
-          <IconWrapper
-            name="edit"
-            :size="14"
-          />
-          {{ i18n.regexDescription || '正则描述' }}
-        </div>
         <Input
           v-model="description"
           type="textarea"

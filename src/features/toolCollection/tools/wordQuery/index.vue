@@ -429,17 +429,7 @@
                 />
                 {{ props.i18n.wordQuery?.copy || '复制' }}
               </Button>
-              <Button
-                variant="ghost"
-                size="xsmall"
-                @click="exportTranslation"
-              >
-                <IconWrapper
-                  name="up"
-                  :size="16"
-                />
-                {{ props.i18n.wordQuery?.export || '导出' }}
-              </Button>
+
             </div>
           </template>
           <div
@@ -901,10 +891,6 @@ const getPanelConfig = (panel: string) => {
   )
 }
 
-const getLanguageName = (code: string): string => {
-  return LANGUAGE_MAP[code] || code
-}
-
 const swapLanguages = () => {
   if (sourceLanguage.value === "auto") {
     showMessage("自动检测模式无法交换", 2000, "info")
@@ -931,17 +917,6 @@ const copyTranslation = async () => {
   }
   const ok = await copyToClipboardUtil(translateResult.value)
   if (!ok) showMessage("复制失败", 3000, "error")
-}
-
-const exportTranslation = async () => {
-  if (!translateResult.value) {
-    showMessage("没有可导出的内容", 2000, "error")
-    return
-  }
-
-  const content = `## 翻译结果\n\n### 原文 (${getLanguageName(sourceLanguage.value)})\n${translateText.value}\n\n### 译文 (${getLanguageName(targetLanguage.value)})\n${translateResult.value}`
-  const ok = await copyToClipboardUtil(content)
-  if (!ok) showMessage("导出失败", 3000, "error")
 }
 
 const handleKeyDown = (event: KeyboardEvent) => {

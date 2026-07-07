@@ -53,7 +53,6 @@
     <div
       v-show="logExpanded"
       class="gp-batch-log"
-      ref="logContainerRef"
     >
       <div
         v-for="(entry, i) in logEntries"
@@ -111,7 +110,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, nextTick } from "vue"
+import { computed, ref } from "vue"
 import { Icon } from "@iconify/vue"
 import type { LoadProgress, LogEntry } from "../types/batchProgress"
 
@@ -125,40 +124,12 @@ const emit = defineEmits<{
 }>()
 
 const logExpanded = ref(false)
-const logContainerRef = ref<HTMLElement>()
 
 const progressPercent = computed(() => {
   if (props.state.total === 0) return 0
   return (props.state.current / props.state.total) * 100
 })
 
-// 首次有日志时自动展开 + 自动滚动到底部
-watch(
-  () => props.logEntries.length,
-  async (len) => {
-    if (len > 0 && !logExpanded.value) {
-      logExpanded.value = true
-    }
-    await nextTick()
-    if (logContainerRef.value) {
-      logContainerRef.value.scrollTop = logContainerRef.value.scrollHeight
-    }
-  }
-)
-
-// 完成时确保日志展开，方便用户查看结果
-watch(
-  () => props.state.done,
-  async (done) => {
-    if (done && !logExpanded.value) {
-      logExpanded.value = true
-    }
-    await nextTick()
-    if (logContainerRef.value) {
-      logContainerRef.value.scrollTop = logContainerRef.value.scrollHeight
-    }
-  }
-)
 </script>
 
 <style lang="scss">

@@ -16,8 +16,7 @@
   bottom: 32px;
   left: 50%;
   width: 100%;
-  max-width: 1060px;
-  height: 60vh;
+  // max-width / height 由内联 panelStyle 动态控制（默认值定义于 JS）
   max-height: calc(88vh - 32px);
   background: var(--b3-theme-background);
   border-radius: $radius-lg $radius-lg 0 0;
@@ -30,11 +29,6 @@
   transform-origin: bottom center;
   transform: translateX(-50%) scaleY(1);
   z-index: 9998;
-
-  // 面板程序化聚焦用于接收键盘事件，但不需要可见的焦点环
-  &:focus {
-    outline: none;
-  }
 }
 
 // ==================== Tab 标签栏 ====================
@@ -213,6 +207,12 @@
       opacity: 1;
       color: var(--b3-theme-primary);
       border-color: var(--b3-theme-primary);
+    }
+
+    &:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      pointer-events: none;
     }
   }
 

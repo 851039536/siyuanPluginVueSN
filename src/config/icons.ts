@@ -419,6 +419,9 @@ export const COMMON_ICONS = {
   swapVertical: {
     icon: "mdi:swap-vertical",
   },
+  translate: {
+    icon: "mdi:translate",
+  },
   skipNext: {
     icon: "mdi:skip-next",
   },

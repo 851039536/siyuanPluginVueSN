@@ -1,16 +1,6 @@
 <!-- 编程字段翻译面板 — 中文翻译为符合编程命名规范的英文 -->
 <template>
   <div class="code-translation-panel">
-    <div class="panel-header">
-      <h3 class="panel-title">
-        <IconWrapper
-          name="code"
-          :size="18"
-        />
-        {{ i18n.codeTranslation || '编程字段翻译' }}
-      </h3>
-    </div>
-
     <div class="panel-content">
       <div class="input-section">
         <div class="input-label">

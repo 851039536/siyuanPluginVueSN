@@ -343,14 +343,11 @@
         border-radius: $vp-radius;
         overflow-y: auto;
         min-height: 160px;
-
-        .result-text {
-          font-size: $font-size-sm;
-          line-height: $line-height-normal;
-          color: var(--b3-theme-on-background, $brand-dark);
-          white-space: pre-wrap;
-          word-wrap: break-word;
-        }
+        font-size: $font-size-sm;
+        line-height: $line-height-normal;
+        color: var(--b3-theme-on-background, $brand-dark);
+        white-space: pre-wrap;
+        word-wrap: break-word;
       }
 
       .translate-empty {

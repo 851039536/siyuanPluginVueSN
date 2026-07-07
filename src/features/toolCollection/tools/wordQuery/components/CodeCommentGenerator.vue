@@ -1,16 +1,6 @@
 <!-- 代码注释生成器 — 为代码生成多种风格的注释 -->
 <template>
   <div class="code-comment-panel">
-    <div class="panel-header">
-      <h3 class="panel-title">
-        <IconWrapper
-          name="code"
-          :size="18"
-        />
-        {{ i18n.codeCommentGenerator || '代码注释生成' }}
-      </h3>
-    </div>
-
     <div class="panel-content">
       <div class="input-section">
         <div class="input-label">

@@ -199,11 +199,21 @@
       padding: 2px 6px; // 特小号，无对应 Token，保留
       font-size: $font-size-xs;
     }
+
+    .si-select__option {
+      padding: $spacing-1 $spacing-2;
+      font-size: $font-size-xs;
+    }
   }
 
   &--small {
     .si-select__trigger {
       min-height: 28px;
+      padding: $spacing-1 $spacing-2;
+      font-size: $font-size-xs;
+    }
+
+    .si-select__option {
       padding: $spacing-1 $spacing-2;
       font-size: $font-size-xs;
     }
@@ -215,6 +225,11 @@
       padding: $spacing-2 $spacing-3;
       font-size: $font-size-sm;
     }
+
+    .si-select__option {
+      padding: $spacing-2 $spacing-3;
+      font-size: $font-size-sm;
+    }
   }
 
   &--large {
@@ -222,6 +237,11 @@
       min-height: 44px;
       padding: $spacing-2 $spacing-4;
       font-size: $font-size-base; // 原 15px → base(16px)
+    }
+
+    .si-select__option {
+      padding: $spacing-2 $spacing-4;
+      font-size: $font-size-sm;
     }
   }
 

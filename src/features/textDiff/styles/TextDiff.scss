@@ -1,0 +1,362 @@
+// textDiff 功能样式：差异对比主界面（从 index.vue 提取，遵循 SCSS 分离规则）
+@use '@/variables.scss' as *;
+
+// ==================== Codex Design System ====================
+
+@mixin codex-meta-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.45;
+  color: var(--b3-theme-on-surface);
+}
+
+@mixin codex-border-card {
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  background: var(--b3-theme-surface);
+  transition: border-color 0.12s;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+// 按钮基础样式：toggle-btn / action-btn / file-btn 共用（hover 由各按钮自行定义）
+@mixin codex-btn-base {
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+// 横向 flex 布局：header-left / header-right 共用
+@mixin flex-row($gap: $spacing-2) {
+  display: flex;
+  align-items: center;
+  gap: $gap;
+}
+
+// ==================== Container ====================
+
+.text-diff-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  overflow: hidden;
+}
+
+// ==================== Toolbar ====================
+
+.diff-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--b3-theme-surface);
+  border-bottom: 1px solid var(--b3-border-color);
+  gap: $spacing-4;
+  flex-shrink: 0;
+}
+
+.toolbar-left {
+  display: flex;
+  gap: $spacing-4;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.toolbar-right {
+  display: flex;
+  gap: $spacing-2;
+  flex-shrink: 0;
+}
+
+.option-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.option-label {
+  @include codex-meta-label;
+  white-space: nowrap;
+}
+
+// ==================== Toggle Buttons ====================
+
+.toggle-btn {
+  @include codex-btn-base;
+  padding: $spacing-1 10px;
+  font-size: $font-size-xs;
+  white-space: nowrap;
+
+  &.active {
+    background: var(--b3-theme-primary);
+    color: #fff;
+    border-color: var(--b3-theme-primary);
+
+    &:hover {
+      opacity: 0.9;
+    }
+  }
+
+  &:hover:not(.active) {
+    background: var(--b3-theme-surface-lighter);
+  }
+}
+
+// ==================== Font Select ====================
+
+.font-select {
+  padding: 6px 10px;
+  font-size: $font-size-xs;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.12s;
+
+  &:focus {
+    border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+    outline: none;
+  }
+}
+
+// ==================== Action Buttons ====================
+
+.action-btn {
+  @include codex-btn-base;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: $spacing-1 10px;
+  font-size: $font-size-xs;
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+  }
+}
+
+// ==================== Main Content ====================
+
+.diff-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+// ==================== Input Section ====================
+
+.input-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-2;
+  padding: $spacing-2;
+  flex-shrink: 0;
+  max-height: 35vh;
+}
+
+.input-panel {
+  display: flex;
+  flex-direction: column;
+  @include codex-border-card;
+  overflow: hidden;
+  min-height: 150px;
+  position: relative;
+
+  &.drag-over {
+    border-color: var(--b3-theme-primary);
+    background: var(--b3-theme-surface-lighter);
+  }
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  background: var(--b3-theme-surface);
+  border-bottom: 1px solid var(--b3-border-color);
+  flex-shrink: 0;
+}
+
+.header-left {
+  @include flex-row($spacing-2);
+  overflow: hidden;
+}
+
+.header-right {
+  @include flex-row($spacing-2);
+  flex-shrink: 0;
+}
+
+.panel-title {
+  @include codex-meta-label;
+  flex-shrink: 0;
+}
+
+.file-name {
+  font-family: $vp-mono;
+  font-size: 11px;
+  color: var(--b3-theme-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.char-count {
+  font-family: $vp-mono;
+  font-size: 11px;
+  color: var(--b3-theme-on-surface-variant);
+}
+
+.file-btn {
+  @include codex-btn-base;
+  background: var(--b3-theme-background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+  }
+}
+
+.input-textarea {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: var(--diff-font-size, 14px);
+  font-family: inherit;
+  border: none;
+  background: transparent;
+  color: var(--b3-theme-on-background);
+  resize: none;
+  outline: none;
+  line-height: $line-height-normal;
+
+  &:focus {
+    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+  }
+
+  &::placeholder {
+    color: var(--b3-theme-on-surface-variant);
+    opacity: 0.6;
+  }
+}
+
+// ==================== Drag Overlay ====================
+
+.drag-overlay {
+  position: absolute;
+  inset: 0;
+  top: 29px; // header height
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  background: rgba(var(--b3-theme-primary-rgb, 235, 94, 42), 0.1);
+  border: 2px dashed var(--b3-theme-primary);
+  border-radius: 0 0 5px 5px;
+  color: var(--b3-theme-primary);
+  pointer-events: none;
+  z-index: 10;
+
+  span {
+    font-size: 13px;
+    font-weight: $font-weight-medium;
+  }
+}
+
+// ==================== Divider ====================
+
+.divider {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: $spacing-1;
+  background: var(--b3-theme-surface);
+  border-top: 1px dashed var(--b3-border-color);
+  border-bottom: 1px dashed var(--b3-border-color);
+  color: var(--b3-theme-on-surface-variant);
+  flex-shrink: 0;
+}
+
+// ==================== Result Section ====================
+
+.result-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 200px;
+  @include codex-border-card;
+  margin: 0 $spacing-2 $spacing-2;
+}
+
+.diff-viewer {
+  flex: 1;
+  overflow: auto;
+  font-size: var(--diff-font-size, 14px);
+
+  :deep(.vue-diff) {
+    height: 100%;
+    overflow: auto;
+  }
+
+  // :deep(.vue-diff *) 已匹配全部后代，下方冗余的 .d2h-* 具体选择器已删除
+  :deep(.vue-diff *) {
+    font-size: inherit !important;
+  }
+}
+
+// ==================== Responsive ====================
+
+@media (max-width: 900px) {
+  .diff-toolbar {
+    flex-wrap: wrap;
+    padding: $spacing-2;
+  }
+
+  .toolbar-left {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .toolbar-right {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .input-section {
+    grid-template-columns: 1fr;
+    max-height: 45vh;
+  }
+
+  .input-panel {
+    min-height: 120px;
+  }
+
+  .result-section {
+    margin: 0 $spacing-1 $spacing-1;
+  }
+}

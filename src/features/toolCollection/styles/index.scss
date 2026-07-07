@@ -13,12 +13,12 @@
 // 独立 fixed 定位（参考 FeatureDrawer 的 bottom: 36px），避让底部状态栏
 .tool-collection-panel {
   position: fixed;
-  bottom: 36px;
+  bottom: 32px;
   left: 50%;
   width: 100%;
   max-width: 1060px;
   height: 60vh;
-  max-height: calc(88vh - 36px);
+  max-height: calc(88vh - 32px);
   background: var(--b3-theme-background);
   border-radius: $radius-lg $radius-lg 0 0;
   border: 1px solid var(--b3-border-color);

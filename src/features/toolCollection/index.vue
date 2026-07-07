@@ -6,30 +6,30 @@
       @click.self="close"
     >
       <div
-        ref="panelRef"
         class="tool-collection-panel"
-        tabindex="-1"
         :style="panelStyle"
       >
         <!-- 头部 -->
         <div class="tool-collection-header">
-          <span class="header-title">{{ i18n.toolCollection || "工具合集" }}</span>
+          <span class="header-title">{{ i18n.toolCollection }}</span>
           <div class="header-resize">
             <button
               class="resize-btn"
               title="变窄"
-              @click="adjustWidth(-80)"
+              :disabled="panelWidth <= 500"
+              @click="adjustDimension('width', -80, 500, 1200)"
             >
               <Icon
                 icon="mdi:chevron-left"
                 :size="12"
               />
             </button>
-            <span class="resize-label">宽{{ panelWidth }}</span>
+            <span class="resize-label">{{ panelWidth }}</span>
             <button
               class="resize-btn"
               title="变宽"
-              @click="adjustWidth(80)"
+              :disabled="panelWidth >= 1200"
+              @click="adjustDimension('width', 80, 500, 1200)"
             >
               <Icon
                 icon="mdi:chevron-right"
@@ -40,18 +40,20 @@
             <button
               class="resize-btn"
               title="变矮"
-              @click="adjustHeight(-10)"
+              :disabled="panelHeight <= 30"
+              @click="adjustDimension('height', -10, 30, 85)"
             >
               <Icon
                 icon="mdi:chevron-down"
                 :size="12"
               />
             </button>
-            <span class="resize-label">高{{ panelHeight }}</span>
+            <span class="resize-label">{{ panelHeight }}</span>
             <button
               class="resize-btn"
               title="变高"
-              @click="adjustHeight(10)"
+              :disabled="panelHeight >= 85"
+              @click="adjustDimension('height', 10, 30, 85)"
             >
               <Icon
                 icon="mdi:chevron-up"
@@ -88,6 +90,7 @@
               :key="tool.id"
               class="tab-btn"
               :class="{ active: currentTool === tool.id }"
+              :ref="(el) => { if (currentTool === tool.id) activeTabRef = el as HTMLButtonElement | null }"
               @click="currentTool = tool.id"
             >
               <Icon
@@ -163,16 +166,16 @@ const i18n = (props.plugin.i18n as Record<string, any>) || {}
 // 本地 visible 同步（用于 Transition 动画）
 const visibleRef = ref(false)
 
-// 面板容器 ref（用于打开时聚焦，确保键盘左右键立即可用）
-const panelRef = ref<HTMLElement | null>(null)
+// 当前激活的 Tab 按钮 ref（打开时聚焦于此，兼顾键盘上下文与无障碍）
+const activeTabRef = ref<HTMLButtonElement | null>(null)
 
 watch(
   () => props.visible.value,
   (val) => {
     visibleRef.value = val
     if (val) {
-      // 打开后将焦点移入面板，使键盘监听立即生效
-      nextTick(() => panelRef.value?.focus())
+      // 打开后将焦点移到激活的 Tab 按钮，使键盘监听立即生效
+      nextTick(() => activeTabRef.value?.focus())
     }
   },
   { immediate: true },
@@ -201,38 +204,40 @@ const panelStyle = computed(() => {
 })
 
 onMounted(async () => {
+  // 仅在值未被用户调整过（仍为默认值）时应用持久化尺寸，避免异步加载覆盖用户操作
   const w = await storage.load<number>("toolCollection-width")
-  if (w && w >= 500 && w <= 1200) panelWidth.value = w
+  if (w && w >= 500 && w <= 1200 && panelWidth.value === DEFAULT_WIDTH) panelWidth.value = w
   const h = await storage.load<number>("toolCollection-height")
-  if (h && h >= 30 && h <= 85) panelHeight.value = h
+  if (h && h >= 30 && h <= 85 && panelHeight.value === DEFAULT_HEIGHT) panelHeight.value = h
   window.addEventListener("keydown", handleKeydown)
 })
 
-const adjustWidth = async (delta: number) => {
-  panelWidth.value = Math.max(500, Math.min(1200, panelWidth.value + delta))
-  await storage.save("toolCollection-width", panelWidth.value)
-}
-
-const adjustHeight = async (delta: number) => {
-  panelHeight.value = Math.max(30, Math.min(85, panelHeight.value + delta))
-  await storage.save("toolCollection-height", panelHeight.value)
+const adjustDimension = async (
+  key: "width" | "height",
+  delta: number,
+  min: number,
+  max: number
+) => {
+  const target = key === "width" ? panelWidth : panelHeight
+  target.value = Math.max(min, Math.min(max, target.value + delta))
+  await storage.save(`toolCollection-${key}`, target.value)
 }
 
 // ==================== 工具注册表 ====================
 const tools = computed<ToolMeta[]>(() => [
   {
     id: "base64Image",
-    label: i18n.base64Image || "Base64图片转换",
+    label: i18n.base64Image,
     icon: "mdi:code-brackets",
   },
   {
     id: "unitConverter",
-    label: i18n.unitConverter || "单位转换",
+    label: i18n.unitConverter,
     icon: "mdi:swap-horizontal",
   },
   {
     id: "wordQuery",
-    label: i18n.wordQuery?.title || "单词查询",
+    label: i18n.wordQuery?.title,
     icon: "mdi:book",
   },
 ])
@@ -258,15 +263,18 @@ const nextTool = () => {
   currentTool.value = list[next].id
 }
 
-// ==================== 键盘左右切换 ====================
+// ==================== 键盘交互（Escape 关闭 / 左右切换 Tab） ====================
 const handleKeydown = (e: KeyboardEvent) => {
-  // 仅在面板可见时响应，且焦点不在输入框内时切换 Tab
-  if (!visibleRef.value) return
+  // 读取同步源 props.visible，避免 watch 异步刷新 visibleRef 导致首键丢失
+  if (!props.visible.value) return
   const target = e.target as HTMLElement
   const tagName = target.tagName
   if (tagName === "INPUT" || tagName === "TEXTAREA" || target.isContentEditable) return
 
-  if (e.key === "ArrowLeft") {
+  if (e.key === "Escape") {
+    e.preventDefault()
+    close()
+  } else if (e.key === "ArrowLeft") {
     e.preventDefault()
     prevTool()
   } else if (e.key === "ArrowRight") {

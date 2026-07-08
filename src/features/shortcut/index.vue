@@ -1,3 +1,4 @@
+<!-- 快捷键面板主组件：搜索、分类筛选、快捷过滤、网格展示、增删改查 -->
 <template>
   <div class="shortcut-panel">
     <!-- 顶部操作栏 -->
@@ -136,6 +137,10 @@ import type {
   ViewMode,
 } from "./types"
 import {
+  CATEGORY_LABEL_I18N_KEYS,
+  TOOL_CATEGORIES,
+} from "./types"
+import {
   computed,
   onMounted,
   ref,
@@ -147,6 +152,7 @@ import ShortcutDialog from "./components/ShortcutDialog.vue"
 import ShortcutGrid from "./components/ShortcutGrid.vue"
 import { getShortcutManager } from "./manager"
 import {
+  SHORTCUTS_ALL_KEY,
   SHORTCUTS_FAVORITES_KEY,
   SHORTCUTS_RECENT_KEY,
   ShortcutStorage,
@@ -159,15 +165,15 @@ const props = withDefaults(defineProps<Props>(), {
 const QUICK_FILTERS: QuickFilter[] = [
   {
     key: "all",
-    label: "全部",
+    label: props.i18n.filterAll || "全部",
   },
   {
     key: "favorite",
-    label: "收藏",
+    label: props.i18n.filterFavorite || "收藏",
   },
   {
     key: "recent",
-    label: "最近使用",
+    label: props.i18n.filterRecent || "最近使用",
   },
 ]
 
@@ -185,7 +191,7 @@ const viewMode = ref<ViewMode>("grid")
 const showDialog = ref(false)
 const dialogType = ref<DialogType>(null)
 const favorites = ref<Set<string>>(new Set())
-const recentUsed = ref<string[]>([])
+const recentUsedMap = ref<Map<string, number>>(new Map())
 
 // 表单数据
 const formData = ref<ShortcutFormData>({
@@ -197,7 +203,7 @@ const formData = ref<ShortcutFormData>({
 })
 
 // 数据存储路径
-const STORAGE_KEYS = [SHORTCUTS_FAVORITES_KEY, SHORTCUTS_RECENT_KEY]
+const STORAGE_KEYS = [SHORTCUTS_ALL_KEY, SHORTCUTS_FAVORITES_KEY, SHORTCUTS_RECENT_KEY]
 const storageDir = computed(() => {
   if (props.plugin) {
     return (props.plugin as any).dataDir || "data/storage/petals/siyuan-plugin-vite-vue-sn"
@@ -227,11 +233,16 @@ onMounted(async () => {
         storage.value.loadRecent(),
       ])
       favorites.value = new Set(loadedFavorites)
-      recentUsed.value = loadedRecent
+      // recentUsed 使用 Map<id, timestamp> 实现 O(1) 查找
+      recentUsedMap.value = new Map()
+      const now = Date.now()
+      loadedRecent.forEach((id, idx) => {
+        recentUsedMap.value.set(id, now - (loadedRecent.length - idx) * 1000)
+      })
     } catch (error) {
       console.error("初始化数据失败:", error)
       favorites.value = new Set()
-      recentUsed.value = []
+      recentUsedMap.value = new Map()
     }
   }
 })
@@ -248,25 +259,17 @@ function getTabCount(category: string): number {
   return manager.getByCategory(category).length
 }
 
-const categoryLabels = computed(() => ({
-  "all": props.i18n.allShortcuts || "全部",
-  "siyuan": props.i18n.siyuanShortcuts || "思源笔记",
-  "plugin": props.i18n.pluginShortcuts || "插件快捷键",
-  "claude": props.i18n.claudeShortcuts || "Claude Code",
-  "openspec": props.i18n.openspecShortcuts || "OpenSpec",
-  "npm": props.i18n.npmShortcuts || "NPM",
-  "nvm": props.i18n.nvmShortcuts || "NVM",
-  "cmd": props.i18n.cmdShortcuts || "Windows CMD",
-  "vscode": props.i18n.vscodeShortcuts || "VS Code",
-  "visual-studio": props.i18n.visualStudioShortcuts || "Visual Studio",
-  "custom": props.i18n.customShortcuts || "自定义",
-}))
+const categoryLabels = computed(() => {
+  const result: Record<string, string> = {}
+  for (const [cat, i18nKey] of Object.entries(CATEGORY_LABEL_I18N_KEYS)) {
+    result[cat] = props.i18n[i18nKey] || cat
+  }
+  return result
+})
 
 function getCategoryLabel(category: string): string {
   return categoryLabels.value[category] || category
 }
-
-const TOOL_CATEGORIES = ["npm", "nvm", "cmd", "vscode", "visual-studio"] as const
 
 function showToolBadge(category: string): boolean {
   return (TOOL_CATEGORIES as readonly string[]).includes(category)
@@ -285,7 +288,7 @@ const filteredShortcuts = computed(() => {
   if (activeFilter.value === "favorite") {
     shortcuts = shortcuts.filter((s) => favorites.value.has(s.id))
   } else if (activeFilter.value === "recent") {
-    shortcuts = shortcuts.filter((s) => recentUsed.value.includes(s.id))
+    shortcuts = shortcuts.filter((s) => recentUsedMap.value.has(s.id))
   }
 
   return shortcuts
@@ -312,18 +315,26 @@ async function toggleFavorite(id: string) {
 }
 
 function isRecent(id: string): boolean {
-  return recentUsed.value.includes(id)
+  return recentUsedMap.value.has(id)
 }
 
 async function addToRecent(id: string) {
-  const index = recentUsed.value.indexOf(id)
-  if (index > -1) recentUsed.value.splice(index, 1)
-  recentUsed.value.unshift(id)
-  if (recentUsed.value.length > 10) recentUsed.value.pop()
+  recentUsedMap.value.set(id, Date.now())
+  // 保持最多 10 条：超过时清理最旧条目
+  if (recentUsedMap.value.size > 10) {
+    const sorted = Array.from(recentUsedMap.value.entries())
+      .sort(([, a], [, b]) => a - b)
+    for (let i = 0; i < sorted.length - 10; i++) {
+      recentUsedMap.value.delete(sorted[i][0])
+    }
+  }
 
   if (storage.value) {
     try {
-      await storage.value.saveRecent(recentUsed.value)
+      const ordered = Array.from(recentUsedMap.value.entries())
+        .sort(([, a], [, b]) => b - a)
+        .map(([id]) => id)
+      await storage.value.saveRecent(ordered)
     } catch (error) {
       console.error("保存最近使用失败:", error)
     }
@@ -389,15 +400,21 @@ function cancelDelete() {
 async function confirmDelete() {
   const id = deleteConfirmId.value
   if (!id) return
-  await manager.removeShortcut(id)
+  const removed = await manager.removeShortcut(id)
+  if (!removed) {
+    deleteConfirmId.value = null
+    return
+  }
   favorites.value.delete(id)
-  const index = recentUsed.value.indexOf(id)
-  if (index > -1) recentUsed.value.splice(index, 1)
+  recentUsedMap.value.delete(id)
   if (storage.value) {
     try {
-      await storage.value.saveFavorites(Array.from(favorites.value))
+      await Promise.all([
+        storage.value.saveFavorites(Array.from(favorites.value)),
+        storage.value.saveRecent(Array.from(recentUsedMap.value.keys())),
+      ])
     } catch (error) {
-      console.error("更新收藏数据失败:", error)
+      console.error("更新存储数据失败:", error)
     }
   }
   deleteConfirmId.value = null
@@ -406,52 +423,5 @@ async function confirmDelete() {
 
 <style scoped lang="scss">
 @use "./styles/index.scss";
-
-/* 全屏删除确认遮罩 -- 与 ShortcutDialog 一致的 fixed 定位 */
-.delete-confirm-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.delete-confirm-dialog {
-  background: var(--b3-theme-background);
-  border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  max-width: 360px;
-  width: 90%;
-}
-
-.delete-modal-header {
-  padding: 16px 16px 0;
-}
-
-.delete-modal-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--b3-theme-on-background);
-}
-
-.delete-modal-body {
-  padding: 12px 16px;
-  font-size: 13px;
-  color: var(--b3-theme-on-surface-variant);
-  line-height: 1.4;
-}
-
-.delete-modal-footer {
-  display: flex;
-  gap: 8px;
-  padding: 12px 16px;
-  border-top: 1px solid var(--b3-theme-surface-lighter);
-  background: var(--b3-theme-surface);
-  justify-content: flex-end;
-}
+@use "./styles/DeleteConfirmDialog.scss";
 </style>

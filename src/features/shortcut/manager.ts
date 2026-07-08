@@ -11,8 +11,16 @@ export class ShortcutManager {
   private shortcuts: ShortcutInfo[] = []
   private onSave?: (shortcuts: ShortcutInfo[]) => Promise<void>
 
-  constructor() {
-    this.shortcuts = []
+  /**
+   * 内部 upsert 方法：按 id 查找并替换，不存在则追加
+   */
+  private _upsertOne(shortcut: ShortcutInfo): void {
+    const index = this.shortcuts.findIndex((s) => s.id === shortcut.id)
+    if (index !== -1) {
+      this.shortcuts[index] = shortcut
+    } else {
+      this.shortcuts.push(shortcut)
+    }
   }
 
   /**
@@ -50,16 +58,10 @@ export class ShortcutManager {
    * 添加快捷键
    */
   async addShortcut(shortcut: ShortcutInfo): Promise<void> {
-    // 检查ID是否已存在
-    const existing = this.shortcuts.find((s) => s.id === shortcut.id)
-    if (existing) {
+    if (this.shortcuts.find((s) => s.id === shortcut.id)) {
       console.warn(`快捷键 ${shortcut.id} 已存在，将被覆盖`)
-      const index = this.shortcuts.indexOf(existing)
-      this.shortcuts[index] = shortcut
-    } else {
-      this.shortcuts.push(shortcut)
     }
-    // 触发保存
+    this._upsertOne(shortcut)
     await this.triggerSave()
   }
 
@@ -68,15 +70,8 @@ export class ShortcutManager {
    */
   async addShortcuts(shortcuts: ShortcutInfo[]): Promise<void> {
     for (const s of shortcuts) {
-      const existing = this.shortcuts.find((item) => item.id === s.id)
-      if (existing) {
-        const index = this.shortcuts.indexOf(existing)
-        this.shortcuts[index] = s
-      } else {
-        this.shortcuts.push(s)
-      }
+      this._upsertOne(s)
     }
-    // 触发保存
     await this.triggerSave()
   }
 
@@ -112,6 +107,7 @@ export class ShortcutManager {
    * 搜索快捷键
    */
   search(keyword: string): ShortcutInfo[] {
+    if (!keyword) return []
     const lowerKeyword = keyword.toLowerCase()
     return this.shortcuts.filter(
       (s) =>

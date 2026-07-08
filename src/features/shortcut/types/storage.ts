@@ -1,8 +1,8 @@
-import type { ShortcutInfo } from "./index"
 /**
  * 快捷键模块 - 持久化存储
  * 使用 PluginStorage + TypedStorage 统一存储模式
  */
+import type { ShortcutInfo } from "./index"
 import { Plugin } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
@@ -27,6 +27,17 @@ export const SHORTCUTS_FAVORITES_KEY = "plugin-shortcuts-favorites"
 export const SHORTCUTS_RECENT_KEY = "plugin-shortcuts-recent"
 
 /**
+ * 清洗数组数据，过滤掉非字符串元素
+ * 模块级纯函数，不依赖实例状态
+ */
+function sanitizeStringArray(data: unknown): string[] {
+  if (!data || !Array.isArray(data)) {
+    return []
+  }
+  return data.filter((item): item is string => typeof item === "string")
+}
+
+/**
  * 快捷键存储管理类
  */
 export class ShortcutStorage {
@@ -46,21 +57,14 @@ export class ShortcutStorage {
    */
   async loadFavorites(): Promise<string[]> {
     const data = await this.favorites.load()
-    if (!data || !Array.isArray(data)) {
-      return []
-    }
-    // 过滤掉非字符串类型的值，确保数据格式正确
-    return data.filter((item) => typeof item === "string")
+    return sanitizeStringArray(data)
   }
 
   /**
    * 保存快捷键收藏数据
    */
   async saveFavorites(favorites: string[]): Promise<boolean> {
-    const validFavorites = favorites.filter(
-      (item) => typeof item === "string",
-    )
-    return this.favorites.save(validFavorites)
+    return this.favorites.save(sanitizeStringArray(favorites))
   }
 
   /**
@@ -75,18 +79,14 @@ export class ShortcutStorage {
    */
   async loadRecent(): Promise<string[]> {
     const data = await this.recent.load()
-    if (!data || !Array.isArray(data)) {
-      return []
-    }
-    return data.filter((item) => typeof item === "string")
+    return sanitizeStringArray(data)
   }
 
   /**
    * 保存最近使用数据
    */
   async saveRecent(recent: string[]): Promise<boolean> {
-    const validRecent = recent.filter((item) => typeof item === "string")
-    return this.recent.save(validRecent)
+    return this.recent.save(sanitizeStringArray(recent))
   }
 
   /**

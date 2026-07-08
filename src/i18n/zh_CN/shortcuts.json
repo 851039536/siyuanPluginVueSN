@@ -25,5 +25,8 @@
   "unFavorite": "取消收藏",
   "dataPath": "数据路径",
   "searchCategory": "搜索分类...",
-  "noCategoryFound": "未找到匹配的分类"
+  "noCategoryFound": "未找到匹配的分类",
+  "filterAll": "全部",
+  "filterFavorite": "收藏",
+  "filterRecent": "最近使用"
 }

@@ -48,13 +48,6 @@ export interface ShortcutGroup {
 }
 
 /**
- * 快捷键管理器配置
- */
-export interface ShortcutManagerConfig {
-  shortcuts: ShortcutInfo[]
-}
-
-/**
  * 视图模式类型
  */
 export type ViewMode = "grid" | "list" | "three-col"
@@ -87,3 +80,25 @@ export interface ShortcutFormData {
  * 分类标签映射类型
  */
 export type CategoryLabels = Record<string, string>
+
+/**
+ * 工具类分类（需要显示工具徽章的分类）
+ */
+export const TOOL_CATEGORIES: readonly ShortcutCategory[] = ["npm", "nvm", "cmd", "vscode", "visual-studio"]
+
+/**
+ * 分类 i18n 键映射（key: 分类标识 → value: i18n 键名）
+ */
+export const CATEGORY_LABEL_I18N_KEYS: Record<ShortcutCategory | "all", string> = {
+  all: "allShortcuts",
+  siyuan: "siyuanShortcuts",
+  plugin: "pluginShortcuts",
+  claude: "claudeShortcuts",
+  openspec: "openspecShortcuts",
+  custom: "customShortcuts",
+  npm: "npmShortcuts",
+  nvm: "nvmShortcuts",
+  cmd: "cmdShortcuts",
+  vscode: "vscodeShortcuts",
+  "visual-studio": "visualStudioShortcuts",
+}

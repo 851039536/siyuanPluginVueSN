@@ -199,6 +199,25 @@ emitCustomEvent("openDialog", { content }, { useMicrotask: true })
 // 默认值: bubbles=true, cancelable=true, target=window, useMicrotask=false
 ```
 
+### Markdown 渲染
+
+```typescript
+import { parseMarkdown, convertHljsToInlineStyles } from '@/utils/mdRenderer'
+
+// 基础渲染（GFM + breaks）
+const html = parseMarkdown(md)
+
+// 带代码高亮
+const html = parseMarkdown(md, { codeHighlight: true })
+
+// 带内联样式（微信等不支持 class 的平台）
+const html = parseMarkdown(md, { codeHighlight: true, inlineStyles: true })
+
+// 通过代码获得标记后的 HTML，再转为内联样式
+const highlighted = hljs.highlight(code, { language: lang }).value
+const styled = convertHljsToInlineStyles(highlighted)
+```
+
 ### 状态栏后台任务
 
 任何需要后台执行并显示进度的功能，使用 `useStatusBarTask` 在状态栏展示进度，完成后自动消失。

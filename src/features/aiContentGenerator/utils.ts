@@ -2,25 +2,8 @@ import type { SkillItem } from "@/types/ai"
 /**
  * AI 内容生成器共享工具函数
  */
-import { marked } from "marked"
+import { parseMarkdown } from "@/utils/mdRenderer"
 import { AI_TOOLS } from "@/features/skillsViewer/modules/SkillsViewerManager"
-
-// 配置 marked 选项（只需配置一次）
-marked.setOptions({
-  breaks: true,
-  gfm: true,
-})
-
-/** 截断文本用于预览显示 */
-export function truncateText(text: string, maxLength = 50): string {
-  if (text.length <= maxLength) return text
-  return `${text.substring(0, maxLength)}...`
-}
-
-/** 获取提示词预览文本 */
-export function getPromptPreview(text: string): string {
-  return truncateText(text, 50)
-}
 
 /**
  * 统一的 Markdown 渲染函数
@@ -41,11 +24,20 @@ export function renderMarkdown(content: string, stripHeadingBold = true): string
       )
     }
 
-    return marked.parse(processedContent) as string
+    return parseMarkdown(processedContent)
   } catch (error) {
     console.error("Markdown渲染失败:", error)
     return `<pre>${content}</pre>`
   }
+}
+export function truncateText(text: string, maxLength = 50): string {
+  if (text.length <= maxLength) return text
+  return `${text.substring(0, maxLength)}...`
+}
+
+/** 获取提示词预览文本 */
+export function getPromptPreview(text: string): string {
+  return truncateText(text, 50)
 }
 
 /** 截断标题用于UI显示 */

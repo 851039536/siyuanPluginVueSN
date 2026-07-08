@@ -123,6 +123,7 @@ feature/
 | SQL 查询 | `sql()` | `@/api` |
 | 思源 API | 对应的 `@/api` 封装函数 | `@/api` |
 | 状态栏任务 | `useStatusBarTask` | `@/features/statusBar/composables/useStatusBarTask` |
+| Markdown 渲染 | `parseMarkdown` / `convertHljsToInlineStyles` | `@/utils/mdRenderer` |
 | 全局 `siyuan` | Props 传入的 `Plugin` 实例 | 禁止使用 `(window as any).siyuan` |
 
 唯一例外：`src/config/settings.ts` 允许直接调用 `plugin.loadData/saveData`，仅用于单一的 `plugin-settings` 键。

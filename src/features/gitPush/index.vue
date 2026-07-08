@@ -141,6 +141,7 @@
             :selected-tags="selectedTags"
             :get-project-url="getProjectUrl"
             :resolved-path="resolvedPath"
+            :md-files="mdFilesForProject(project.id)"
             :relative-time="relativeTime"
             :activity-level="activityLevel"
             :status-badge-class="statusBadgeClass"
@@ -161,6 +162,7 @@
             @switch-branch="handleSwitchBranch"
             @remove="handleRemove"
             @open-edit-dialog="openEditDialog"
+            @open-markdown-preview="openMarkdownPreview"
             @move-project="handleMoveProject"
             @open-web="handleOpenWeb"
             @copy-url="handleCopyUrl"
@@ -295,6 +297,14 @@
       @saved="handleEditSaved"
       @urls-updated="handleUrlsUpdated"
     />
+    <MarkdownPreviewDialog
+      v-if="markdownPreviewProject"
+      :project="markdownPreviewProject"
+      :manager="manager"
+      :i18n="i18n"
+      :initial-file="markdownPreviewInitialFile"
+      @close="closeMarkdownPreview"
+    />
   </div>
 </template>
 
@@ -321,6 +331,7 @@ import ConfirmDialog from "./components/ConfirmDialog.vue"
 import EditProjectDialog from "./components/EditProjectDialog.vue"
 import IdeManagementDialog from "./components/IdeManagementDialog.vue"
 import ListViewToolbar from "./components/ListViewToolbar.vue"
+import MarkdownPreviewDialog from "./components/MarkdownPreviewDialog.vue"
 import PanelHeader from "./components/PanelHeader.vue"
 import ProjectCard from "./components/ProjectCard.vue"
 import ScanImportDialog from "./components/ScanImportDialog.vue"
@@ -349,6 +360,7 @@ import {
   pruneRecordCache,
   resolveValidPath,
 } from "./utils"
+import { scanMarkdownFiles } from "./composables/useMarkdownFiles"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -650,6 +662,11 @@ const newProjectPath = ref("") // 目录选择回填用
 const refreshing = ref<string | null>(null)
 /** 项目编辑弹窗状态 */
 const editDialogProjectId = ref("")
+/** Markdown 文档预览弹窗状态 */
+const markdownPreviewProject = ref<GitProject | null>(null)
+const markdownPreviewInitialFile = ref<string | undefined>(undefined)
+/** 项目 Markdown 文件缓存（项目 id → 文件元数据数组，避免每次 readdirSync） */
+const projectMdFiles = ref<Record<string, ReturnType<typeof scanMarkdownFiles>>>({})
 /** 行内名称编辑状态 */
 const editingNameId = ref("")
 const editingNameInput = ref("")
@@ -682,6 +699,28 @@ const workingTreeLoading = ref<Record<string, boolean>>({})
 const remoteStatusLoading = ref<Record<string, boolean>>({})
 /** 刷新下拉菜单：当前打开的项目 id 集合 */
 const openRefreshMenu = ref(new Set<string>())
+/** 获取指定项目的 Markdown 文件列表（懒扫描 + 缓存） */
+function mdFilesForProject(projectId: string): ReturnType<typeof scanMarkdownFiles> {
+  if (projectMdFiles.value[projectId]) return projectMdFiles.value[projectId]
+  const project = projects.value.find((p) => p.id === projectId)
+  if (!project) return []
+  const files = scanMarkdownFiles(resolveValidPath(project))
+  projectMdFiles.value = { ...projectMdFiles.value, [projectId]: files }
+  return files
+}
+
+/** 打开 Markdown 文档预览弹窗 */
+function openMarkdownPreview(project: GitProject, fileName: string) {
+  markdownPreviewProject.value = project
+  markdownPreviewInitialFile.value = fileName
+}
+
+/** 关闭 Markdown 文档预览弹窗 */
+function closeMarkdownPreview() {
+  markdownPreviewProject.value = null
+  markdownPreviewInitialFile.value = undefined
+}
+
 /** 提取指定项目相关的 fileDiffs（按前缀过滤） */
 function fileDiffsForProject(projectId: string): Record<string, string> {
   const result: Record<string, string> = {}
@@ -726,6 +765,7 @@ async function silentRefreshAll(keepVisible = false) {
 
 onMounted(async () => {
   await loadProjects()
+  projectMdFiles.value = {}
   loadCommitTemplates()
   loadCustomIdes()
   scanIdes() // 扫描已安装的 IDE

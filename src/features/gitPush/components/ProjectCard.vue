@@ -83,6 +83,20 @@
             {{ relativeTime(project.lastActivity) }}
           </span>
         </div>
+        <!-- Markdown 文件标识 -->
+        <div
+          v-if="mdFiles.length"
+          class="gp-md-files"
+        >
+          <MarkdownFileBadge
+            v-for="f in mdFiles"
+            :key="f.name"
+            :filename="f.name"
+            :label="f.label"
+            :variant="f.variant"
+            @select="$emit('openMarkdownPreview', project, f.name)"
+          />
+        </div>
         <!-- 分支标签 -->
         <div
           v-if="branches?.length"
@@ -529,7 +543,9 @@ import {
   REMOTES,
   STATUS_META,
 } from "../types"
+import type { MdFileEntry } from "../composables/useMarkdownFiles"
 import ConflictSection from "./ConflictSection.vue"
+import MarkdownFileBadge from "./MarkdownFileBadge.vue"
 import OutputPanel from "./OutputPanel.vue"
 import StashSection from "./StashSection.vue"
 import TagPanel from "./TagPanel.vue"
@@ -579,6 +595,8 @@ const props = defineProps<{
   selectedTags: Set<string>
   fileDiffs: Record<string, string>
   commitLogEntries: any[]
+  // Markdown 文件列表
+  mdFiles: MdFileEntry[]
   // 计算辅助函数
   getProjectUrl: (project: GitProject, prop: string) => string | undefined
   resolvedPath: (project: GitProject) => string
@@ -655,6 +673,8 @@ defineEmits<{
   "pushToAll": [id: string]
   "cancelPush": [id: string]
   "fetchAll": [id: string]
+  // Markdown 预览
+  "openMarkdownPreview": [project: GitProject, fileName: string]
 }>()
 
 /** 推送按钮状态 class 映射（消除模板中 3 次 getPushStatus 调用） */

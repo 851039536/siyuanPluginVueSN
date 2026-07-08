@@ -113,6 +113,11 @@
     "refreshRemoteStatus": "刷新远程状态",
     "refreshAll": "全部刷新",
     "headerRefreshLocal": "刷新本地状态",
-    "headerRefreshRemote": "刷新远程状态"
+    "headerRefreshRemote": "刷新远程状态",
+    "previewMarkdown": "文档预览",
+    "noMarkdownFiles": "未找到 Markdown 文件",
+    "copyRaw": "复制原文",
+    "copied": "已复制",
+    "fileOversized": "文件过大，仅显示前 1000 行"
   }
 }

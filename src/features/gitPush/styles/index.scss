@@ -124,6 +124,14 @@
   }
 }
 
+// Markdown 文件标识行（位于路径行下方、分支行上方）
+.gp-md-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 3px;
+}
+
 .gp-card-path {
   display: flex;
   align-items: center;

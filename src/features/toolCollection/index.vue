@@ -117,7 +117,6 @@
         <div class="tool-collection-content">
           <Base64ImageTool
             v-if="currentTool === 'base64Image'"
-            :plugin="plugin"
             :i18n="plugin.i18n"
           />
           <UnitConverterTool

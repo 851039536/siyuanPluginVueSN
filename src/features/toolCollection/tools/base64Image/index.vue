@@ -345,17 +345,16 @@ import {
   copyToClipboard,
   triggerDownload,
 } from "@/utils/domUtils"
+import { formatFileSize } from "@/utils/format"
 import CopyDropdown from "./components/CopyDropdown.vue"
 import FilterSettings from "./components/FilterSettings.vue"
 import QrcodeGenerator from "./components/QrcodeGenerator.vue"
 import StatsSection from "./components/StatsSection.vue"
 import UploadArea from "./components/UploadArea.vue"
 import WatermarkSettings from "./components/WatermarkSettings.vue"
-import { formatFileSize } from "./utils/format"
 
 interface Props {
   i18n: Record<string, string>
-  plugin: any
 }
 
 const props = defineProps<Props>()
@@ -717,7 +716,7 @@ const decodeBase64 = () => {
   }
 }
 
-// 处理复制选择
+// 复制结果反馈
 const showCopyResult = async (content: string) => {
   const ok = await copyToClipboard(content)
   showMessage(
@@ -727,69 +726,50 @@ const showCopyResult = async (content: string) => {
   )
 }
 
-const handleCopySelect = (type: string) => {
-  const altText = selectedFile.value?.name || "image"
+/**
+ * 按类型格式化并复制输出内容。
+ * @param type      输出格式：base64 / html / markdown / css
+ * @param raw       原始 dataURL
+ * @param alt       图片 alt 文案
+ * @param withCss   是否提供 CSS 格式选项（encode 模式含 CSS，url 模式不含）
+ */
+const copyFormatted = (type: string, raw: string, alt: string, withCss: boolean) => {
+  const MIME_RE = /^data:image\/.*;base64,/
   let content = ""
 
   switch (type) {
     case "base64":
-      content = base64Output.value.replace(/^data:image\/.*;base64,/, "")
+      content = raw.replace(MIME_RE, "")
       break
     case "html":
-      content = `<img src="${base64Output.value}" alt="${altText}">`
+      content = `<img src="${raw}" alt="${alt}">`
       break
     case "markdown":
-      content = `![${altText}](${base64Output.value})`
+      content = `![${alt}](${raw})`
       break
     case "css":
-      content = `background-image: url('${base64Output.value}');`
+      if (withCss) content = `background-image: url('${raw}');`
       break
   }
 
   showCopyResult(content)
 }
 
-const handleUrlCopySelect = (type: string) => {
-  let content = ""
+const handleCopySelect = (type: string) =>
+  copyFormatted(type, base64Output.value, selectedFile.value?.name || "image", true)
 
-  switch (type) {
-    case "base64":
-      content = urlBase64Output.value.replace(/^data:image\/.*;base64,/, "")
-      break
-    case "html":
-      content = `<img src="${urlBase64Output.value}" alt="image">`
-      break
-    case "markdown":
-      content = `![image](${urlBase64Output.value})`
-      break
-  }
-
-  showCopyResult(content)
-}
+const handleUrlCopySelect = (type: string) =>
+  copyFormatted(type, urlBase64Output.value, "image", false)
 
 const copyDecodedImageUrl = () => showCopyResult(decodedImageUrl.value)
 const copyQrcodeBase64 = () =>
-  copyToClipboard(qrcodeOutput.value.replace(/^data:image\/.*;base64,/, ""))
+  showCopyResult(qrcodeOutput.value.replace(/^data:image\/.*;base64,/, ""))
 
 // 下载函数
-const downloadFile = (url: string, filename: string) => triggerDownload(url, filename)
-
-const downloadBase64 = () => {
-  const blob = new Blob([base64Output.value], { type: "text/plain" })
-  const url = URL.createObjectURL(blob)
-  downloadFile(url, `${selectedFile.value?.name || "base64"}.txt`)
-  URL.revokeObjectURL(url)
-}
-
-const downloadDecodedImage = () =>
-  downloadFile(decodedImageUrl.value, "decoded-image.png")
-const downloadUrlBase64 = () => {
-  const blob = new Blob([urlBase64Output.value], { type: "text/plain" })
-  const url = URL.createObjectURL(blob)
-  downloadFile(url, "url-base64.txt")
-  URL.revokeObjectURL(url)
-}
-const downloadQrcode = () => downloadFile(qrcodeOutput.value, "qrcode.png")
+const downloadBase64 = () => triggerDownload(base64Output.value, `${selectedFile.value?.name || "base64"}.txt`)
+const downloadDecodedImage = () => triggerDownload(decodedImageUrl.value, "decoded-image.png")
+const downloadUrlBase64 = () => triggerDownload(urlBase64Output.value, "url-base64.txt")
+const downloadQrcode = () => triggerDownload(qrcodeOutput.value, "qrcode.png")
 
 // 清空所有
 const clearAll = () => {

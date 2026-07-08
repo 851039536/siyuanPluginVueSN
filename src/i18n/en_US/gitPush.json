@@ -118,6 +118,10 @@
     "noMarkdownFiles": "No Markdown files found",
     "copyRaw": "Copy Raw",
     "copied": "Copied",
-    "fileOversized": "File too large, showing first 1000 lines only"
+    "fileOversized": "File too large, showing first 1000 lines only",
+    "gitConfigTitle": "Git Global Config",
+    "gitConfigLoading": "Querying...",
+    "gitConfigEmpty": "No global Git config found",
+    "gitConfigCopyAll": "Copy All"
   }
 }

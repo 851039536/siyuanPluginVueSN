@@ -29,6 +29,7 @@
       @open-add-project="showAddDialog = true"
       @open-scan="handleOpenScan"
       @open-web="handleOpenWeb"
+      @open-git-config="handleOpenGitConfig"
     />
 
     <BatchProgressBar
@@ -305,6 +306,14 @@
       :initial-file="markdownPreviewInitialFile"
       @close="closeMarkdownPreview"
     />
+    <GitConfigDialog
+      v-if="showGitConfig"
+      :config-text="gitConfigText"
+      :loading="gitConfigLoading"
+      :error="gitConfigError"
+      :i18n="i18n"
+      @close="closeGitConfig"
+    />
   </div>
 </template>
 
@@ -338,6 +347,7 @@ import ScanImportDialog from "./components/ScanImportDialog.vue"
 import SettingsDialog from "./components/SettingsDialog.vue"
 import StatsPanel from "./components/StatsPanel.vue"
 import BatchProgressBar from "./components/BatchProgressBar.vue"
+import GitConfigDialog from "./components/GitConfigDialog.vue"
 import { pickDirectory } from "./composables/useDirectoryPicker"
 import { useGitPush } from "./composables/useGitPush"
 import { useBatchProgress } from "./composables/useBatchProgress"
@@ -665,6 +675,11 @@ const editDialogProjectId = ref("")
 /** Markdown 文档预览弹窗状态 */
 const markdownPreviewProject = ref<GitProject | null>(null)
 const markdownPreviewInitialFile = ref<string | undefined>(undefined)
+/** Git 全局配置弹窗状态 */
+const showGitConfig = ref(false)
+const gitConfigText = ref("")
+const gitConfigLoading = ref(false)
+const gitConfigError = ref("")
 /** 项目 Markdown 文件缓存（项目 id → 文件元数据数组，避免每次 readdirSync） */
 const projectMdFiles = ref<Record<string, ReturnType<typeof scanMarkdownFiles>>>({})
 /** 行内名称编辑状态 */
@@ -719,6 +734,27 @@ function openMarkdownPreview(project: GitProject, fileName: string) {
 function closeMarkdownPreview() {
   markdownPreviewProject.value = null
   markdownPreviewInitialFile.value = undefined
+}
+
+/** 打开 Git 全局配置弹窗并查询 */
+async function handleOpenGitConfig() {
+  showGitConfig.value = true
+  gitConfigLoading.value = true
+  gitConfigError.value = ""
+  gitConfigText.value = ""
+  try {
+    const text = await props.manager.getGitGlobalConfig()
+    gitConfigText.value = text
+  } catch (e: any) {
+    gitConfigError.value = e?.message || "查询失败"
+  } finally {
+    gitConfigLoading.value = false
+  }
+}
+
+/** 关闭 Git 全局配置弹窗 */
+function closeGitConfig() {
+  showGitConfig.value = false
 }
 
 /** 提取指定项目相关的 fileDiffs（按前缀过滤） */

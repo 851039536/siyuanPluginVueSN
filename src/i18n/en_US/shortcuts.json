@@ -25,5 +25,8 @@
   "unFavorite": "Unfavorite",
   "dataPath": "Data Path",
   "searchCategory": "Search category...",
-  "noCategoryFound": "No matching category found"
+  "noCategoryFound": "No matching category found",
+  "filterAll": "All",
+  "filterFavorite": "Favorites",
+  "filterRecent": "Recently Used"
 }

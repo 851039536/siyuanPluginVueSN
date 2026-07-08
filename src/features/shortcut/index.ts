@@ -85,3 +85,8 @@ export type {
   ShortcutInfo,
   ViewMode,
 } from "./types"
+
+export {
+  CATEGORY_LABEL_I18N_KEYS,
+  TOOL_CATEGORIES,
+} from "./types"

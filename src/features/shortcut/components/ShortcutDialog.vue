@@ -1,3 +1,4 @@
+<!-- 添加快捷键或编辑快捷键的全屏模态对话框，含名称/描述/按键/分组四个输入字段 -->
 <template>
   <div
     v-if="visible"
@@ -24,21 +25,25 @@
           v-model="localFormData.name"
           :label="nameLabel"
           :placeholder="namePlaceholder"
+          size="small"
         />
         <Input
           v-model="localFormData.description"
           :label="descLabel"
           :placeholder="descPlaceholder"
+          size="small"
         />
         <Input
           v-model="localFormData.keys"
           :label="keysLabel"
           :placeholder="keysPlaceholder"
+          size="small"
         />
         <Input
           v-model="localFormData.group"
           :label="groupLabel"
           :placeholder="groupPlaceholder"
+          size="small"
         />
       </div>
       <div class="dialog-footer">

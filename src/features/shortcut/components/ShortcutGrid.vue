@@ -1,3 +1,4 @@
+<!-- 快捷键网格容器：按 group 分组渲染，组名+数量徽章，2列网格布局，空数据提示 -->
 <template>
   <div class="shortcut-content">
     <div

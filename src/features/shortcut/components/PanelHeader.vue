@@ -1,3 +1,4 @@
+<!-- 快捷键面板头部工具栏：搜索框、分类下拉、添加按钮、筛选按钮组、视图切换 -->
 <template>
   <div class="shortcut-header">
     <!-- Row 1: Search + Category + Add -->

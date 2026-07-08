@@ -129,8 +129,12 @@ const filteredUnits = computed(() =>
   props.units.filter((u: UnitDefinition) => u.key !== fromUnit.value),
 )
 
-// 转换结果
-const result = computed(() => convertToUnit(toUnit.value))
+// 转换结果（空输入时不渲染结果区）
+const result = computed(() => {
+  const value = Number.parseFloat(inputValue.value)
+  if (isNaN(value)) return ""
+  return convertToUnit(toUnit.value)
+})
 
 // 转换到指定单位
 function convertToUnit(targetUnit: string): string {

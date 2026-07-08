@@ -98,16 +98,16 @@
 </template>
 
 <script setup lang="ts">
+// 进制转换器组件：支持 2/8/10/16/32/36 进制互转，含快速参考和有效字符集说明
 import {
   computed,
   ref,
-  shallowRef,
 } from "vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
 
-// 进制配置（合并名称与有效字符集）
-const BASES = shallowRef([
+// 进制配置（静态常量）
+const BASES = [
   {
     value: 2,
     name: "二进制",
@@ -138,12 +138,11 @@ const BASES = shallowRef([
     name: "三十六进制",
     chars: "0-9, A-Z",
   },
-])
+] as const
 
 const inputValue = ref("10")
 const fromBase = ref(10)
 const toBase = ref(2)
-const error = ref("")
 
 // 互换进制
 function swapBases() {
@@ -153,14 +152,14 @@ function swapBases() {
 }
 
 const baseOptions = computed(() =>
-  BASES.value.map((base) => ({
+  BASES.map((base) => ({
     value: base.value,
     label: `${base.name} (${base.value})`,
   })),
 )
 
 const filteredBases = computed(() =>
-  BASES.value.filter((b) => b.value !== fromBase.value),
+  BASES.filter((b) => b.value !== fromBase.value),
 )
 
 // 预计算有效字符集
@@ -181,24 +180,25 @@ function isValidInput(value: string, base: number): boolean {
   return true
 }
 
-function convertToBase(targetBase: number): string {
-  if (!isValidInput(inputValue.value, fromBase.value)) return "无效输入"
+// 错误校验（纯 computed，无副作用）
+const error = computed(() => {
+  if (!inputValue.value) return ""
+  if (!isValidInput(inputValue.value, fromBase.value)) {
+    return `无效的${fromBase.value}进制输入`
+  }
+  return ""
+})
 
+// 转换指定进制（输入已由 error 校验）
+function convertToBase(targetBase: number): string {
   const decimalValue = Number.parseInt(inputValue.value, fromBase.value)
   if (isNaN(decimalValue)) return "无效输入"
-
   return decimalValue.toString(targetBase).toUpperCase()
 }
 
 const result = computed(() => {
-  error.value = ""
   if (!inputValue.value) return ""
-
-  if (!isValidInput(inputValue.value, fromBase.value)) {
-    error.value = `无效的${fromBase.value}进制输入`
-    return ""
-  }
-
+  if (error.value) return ""
   return convertToBase(toBase.value)
 })
 </script>

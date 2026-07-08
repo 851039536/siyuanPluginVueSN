@@ -23,6 +23,7 @@
 </template>
 
 <script setup lang="ts">
+// 单位转换器主容器：Tab 切换 + 动态组件，整合 8 类物理单位 + 进制 + ASCII 转换
 import type { Plugin } from "siyuan"
 import {
   computed,

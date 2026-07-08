@@ -79,6 +79,7 @@
 </template>
 
 <script setup lang="ts">
+// 通用物理单位转换器组件：基于 factor 的任意单位互转，被长度/面积/体积等 8 类复用
 import type { UnitDefinition } from "../utils/converter"
 import {
   computed,
@@ -106,8 +107,8 @@ const props = withDefaults(defineProps<Props>(), {
   showQuickResults: true,
 })
 
-// 创建查找器（只创建一次）
-const lookup = computed(() => createUnitLookup(props.units))
+// 创建查找器（units 为父组件常量引用，不会变化，同步计算即可）
+const lookup = createUnitLookup(props.units)
 
 const inputValue = ref("1")
 const fromUnit = ref(props.defaultFrom || props.units[0]?.key || "")
@@ -136,8 +137,8 @@ function convertToUnit(targetUnit: string): string {
   const value = Number.parseFloat(inputValue.value)
   if (isNaN(value)) return "0"
 
-  const fromFactor = lookup.value.getFactor(fromUnit.value)
-  const toFactor = lookup.value.getFactor(targetUnit)
+  const fromFactor = lookup.getFactor(fromUnit.value)
+  const toFactor = lookup.getFactor(targetUnit)
   const converted = convertUnit(value, fromFactor, toFactor)
 
   return formatResult(converted)

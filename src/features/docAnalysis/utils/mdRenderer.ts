@@ -14,5 +14,5 @@ import { parseMarkdown as sharedParseMarkdown } from "@/utils/mdRenderer"
  * 保持原有签名不变，内部调用共享模块
  */
 export function parseMarkdown(mdText: string): string {
-  return sharedParseMarkdown(mdText, { codeHighlight: true, inlineStyles: true })
+  return sharedParseMarkdown(mdText, "wechat")
 }

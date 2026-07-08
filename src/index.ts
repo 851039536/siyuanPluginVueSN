@@ -20,6 +20,7 @@ import {
   saveSettings,
   setFeatureFlagsDir,
 } from "@/config/settings"
+import { clearRendererCache } from "@/utils/mdRenderer"
 
 import {
   getStatisticsInstance,
@@ -174,6 +175,8 @@ export default class PluginSample extends Plugin {
   onunload() {
     // 清除缓存的加密密钥（内存安全）
     clearCachedKey()
+    // 清除 Markdown 渲染器缓存
+    clearRendererCache()
 
     // 清理页面锁定资源（interval + 事件监听器）
     if ((this as any).__pageLock) {

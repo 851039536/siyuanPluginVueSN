@@ -39,7 +39,7 @@ defineEmits<{
   padding: 1px 6px;
   font-size: 9px;
   font-family: $vp-mono;
-  font-weight: 600;
+  font-weight: $font-weight-semibold;
   letter-spacing: 0.03em;
   line-height: 1.4;
   border: 1px solid transparent;

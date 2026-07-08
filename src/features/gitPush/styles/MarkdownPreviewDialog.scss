@@ -74,7 +74,7 @@
   padding: 6px 10px;
   font-size: $font-size-xs;
   font-family: $vp-mono;
-  font-weight: 500;
+  font-weight: $font-weight-medium;
   color: var(--b3-theme-on-surface);
   white-space: nowrap;
   border-bottom: 2px solid transparent;
@@ -136,7 +136,7 @@
   max-width: 720px;
   margin: 0 auto;
   // 与思源侧栏 420px 宽度协调的阅读字号
-  font-size: 14px;
+  font-size: $font-size-sm;
   line-height: 1.65;
   color: var(--b3-theme-on-background);
   word-wrap: break-word;

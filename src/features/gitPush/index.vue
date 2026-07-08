@@ -164,6 +164,7 @@
             @remove="handleRemove"
             @open-edit-dialog="openEditDialog"
             @open-markdown-preview="openMarkdownPreview"
+            @open-project-git-config="handleOpenProjectGitConfig"
             @move-project="handleMoveProject"
             @open-web="handleOpenWeb"
             @copy-url="handleCopyUrl"
@@ -312,6 +313,8 @@
       :loading="gitConfigLoading"
       :error="gitConfigError"
       :i18n="i18n"
+      :file-path="gitConfigFilePath"
+      :title="gitConfigTitle"
       @close="closeGitConfig"
     />
   </div>
@@ -680,6 +683,8 @@ const showGitConfig = ref(false)
 const gitConfigText = ref("")
 const gitConfigLoading = ref(false)
 const gitConfigError = ref("")
+const gitConfigFilePath = ref("")
+const gitConfigTitle = ref("")
 /** 项目 Markdown 文件缓存（项目 id → 文件元数据数组，避免每次 readdirSync） */
 const projectMdFiles = ref<Record<string, ReturnType<typeof scanMarkdownFiles>>>({})
 /** 行内名称编辑状态 */
@@ -742,8 +747,32 @@ async function handleOpenGitConfig() {
   gitConfigLoading.value = true
   gitConfigError.value = ""
   gitConfigText.value = ""
+  gitConfigFilePath.value = props.manager.getGitConfigFilePath()
+  gitConfigTitle.value = ""
   try {
     const text = await props.manager.getGitGlobalConfig()
+    gitConfigText.value = text
+  } catch (e: any) {
+    gitConfigError.value = e?.message || "查询失败"
+  } finally {
+    gitConfigLoading.value = false
+  }
+}
+
+/** 打开项目级 Git 配置弹窗并查询 */
+async function handleOpenProjectGitConfig(projectId: string) {
+  const index = projects.value.findIndex((p) => p.id === projectId)
+  if (index === -1) return
+  const project = projects.value[index]
+  const path = resolvedPath(project)
+  showGitConfig.value = true
+  gitConfigLoading.value = true
+  gitConfigError.value = ""
+  gitConfigText.value = ""
+  gitConfigFilePath.value = props.manager.getProjectGitConfigFilePath(path)
+  gitConfigTitle.value = `📁 ${project.name}`
+  try {
+    const text = await props.manager.getProjectGitConfig(path)
     gitConfigText.value = text
   } catch (e: any) {
     gitConfigError.value = e?.message || "查询失败"

@@ -1023,7 +1023,10 @@
     "gitConfigTitle": "Git 全局配置",
     "gitConfigLoading": "查询中...",
     "gitConfigEmpty": "暂未配置全局 Git 信息",
-    "gitConfigCopyAll": "复制全部"
+    "gitConfigCopyAll": "复制全部",
+    "gitConfigOpenFile": "打开配置文件",
+    "gitConfigProjectTitle": "项目 Git 配置",
+    "gitConfigTitleProject": "项目 Git 配置"
   },
   "heatmapMarker": {
     "title": "热力图标记",

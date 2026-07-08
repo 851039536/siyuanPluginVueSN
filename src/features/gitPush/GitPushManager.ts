@@ -116,6 +116,13 @@ export class GitPushManager {
     return getNodeProcessModules()?.child_process
   }
 
+  /** 获取本机全局 Git 配置（git config --global --list） */
+  async getGitGlobalConfig(): Promise<string> {
+    const modules = getNodeFsPathOs()
+    const home = modules?.os?.homedir() || process.cwd()
+    return this.execGit(home, ["config", "--global", "--list"])
+  }
+
   /** 将检测到的远程仓库信息应用到项目对象（仅管理远程名称，不触碰用户手动输入的仓库链接） */
   private applyRemotesToProject(project: GitProject, remotes: GitRemoteInfo[]) {
     // 只清空远程名称字段（git 操作依赖），仓库链接 xxxUrl 由用户手动管理，不受检测覆盖

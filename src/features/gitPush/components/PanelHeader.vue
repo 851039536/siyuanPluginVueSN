@@ -84,6 +84,16 @@
       </button>
       <button
         class="vp-btn vp-btn--ghost vp-btn--sm"
+        title="Git 配置"
+        @click="emit('openGitConfig')"
+      >
+        <Icon
+          icon="mdi:information-outline"
+          height="12"
+        />
+      </button>
+      <button
+        class="vp-btn vp-btn--ghost vp-btn--sm"
         title="设置"
         @click="emit('openSettings')"
       >
@@ -277,6 +287,7 @@ const emit = defineEmits<{
   "update:showRefreshMenu": [value: boolean]
   "update:searchQuery": [value: string]
   openCategory: []
+  openGitConfig: []
   openSettings: []
   refreshAll: []
   refreshAllLocal: []

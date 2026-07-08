@@ -5,6 +5,7 @@
 import hljs from "highlight.js"
 import {
   marked,
+  type TokenizerAndRendererExtension,
   Renderer,
 } from "marked"
 import { escapeHtml } from "@/utils/stringUtils"
@@ -88,6 +89,22 @@ export interface ParseMarkdownOptions {
   breaks?: boolean
   /** GFM 表格/任务列表等（默认 true） */
   gfm?: boolean
+  /** marked 自定义扩展（透传给 marked.parse()） */
+  extensions?: TokenizerAndRendererExtension[]
+}
+
+// ============================================================
+// 命名预设
+// ============================================================
+
+/** 常用渲染预设 */
+export type MarkdownPreset = "basic" | "highlight" | "wechat"
+
+/** 预设 → 选项映射 */
+const PRESETS: Record<MarkdownPreset, ParseMarkdownOptions> = {
+  basic: {},
+  highlight: { codeHighlight: true },
+  wechat: { codeHighlight: true, inlineStyles: true },
 }
 
 // ============================================================
@@ -101,7 +118,7 @@ function createCodeRenderer(inlineStyles = false): Renderer {
   const renderer = new Renderer()
 
   renderer.code = function ({ text, lang }: { text: string, lang?: string }) {
-    const langAttr = lang ? ` class="language-${lang}"` : ""
+    const langAttr = lang ? ` class="language-${escapeHtml(lang)}"` : ""
     let highlighted: string
     if (lang) {
       try {
@@ -131,6 +148,13 @@ function getRenderer(codeHighlight: boolean, inlineStyles: boolean): Renderer | 
   return cachedRenderers[key]
 }
 
+/**
+ * 清除缓存的 Renderer 实例（HMR / 测试 / onunload 时调用）
+ */
+export function clearRendererCache(): void {
+  cachedRenderers = {}
+}
+
 // ============================================================
 // 核心渲染函数
 // ============================================================
@@ -138,21 +162,29 @@ function getRenderer(codeHighlight: boolean, inlineStyles: boolean): Renderer | 
 /**
  * 解析 Markdown 为 HTML
  * @param mdText Markdown 原始文本
- * @param options 渲染选项
+ * @param options 渲染选项或预设名称
  * @returns HTML 字符串
  */
-export function parseMarkdown(mdText: string, options: ParseMarkdownOptions = {}): string {
+export function parseMarkdown(mdText: string, options?: ParseMarkdownOptions | MarkdownPreset): string {
+  const resolved: ParseMarkdownOptions = typeof options === "string"
+    ? (PRESETS[options] ?? {})
+    : (options ?? {})
+
   const {
     codeHighlight = false,
     inlineStyles = false,
     breaks = true,
     gfm = true,
-  } = options
+    extensions,
+  } = resolved
 
   if (!mdText) return ""
 
-  marked.setOptions({ breaks, gfm })
-
   const renderer = getRenderer(codeHighlight, inlineStyles)
-  return marked.parse(mdText, renderer ? { renderer } : undefined) as string
+  return marked.parse(mdText, {
+    breaks,
+    gfm,
+    ...(extensions ? { extensions } : {}),
+    ...(renderer ? { renderer } : {}),
+  }) as string
 }

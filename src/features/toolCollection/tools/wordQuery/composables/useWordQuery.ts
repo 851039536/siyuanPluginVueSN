@@ -4,6 +4,7 @@ import type { Ref } from "vue"
 import { showMessage } from "siyuan"
 import { computed, ref, watch } from "vue"
 import { getApiConfigFromPlugin } from "@/utils/aiApi"
+import { copyToClipboard } from "@/utils/domUtils"
 import { buildQueryPrompt, callWordQueryAPI } from "../utils/api"
 
 const AUTO_OPERATION_DELAY = 2000
@@ -88,6 +89,12 @@ export function useWordQuery(
   const autoQueryTimer = ref<NodeJS.Timeout | null>(null)
 
   // ========== 计算属性 ==========
+
+  // 从 AI 返回结果中提取单词（处理 AI 修正拼写的情况），fallback 到用户输入
+  const extractWord = computed(() => {
+    const match = queryResult.value.match(/^####\s*(?:单词|词语)：(.+)$/m)
+    return match ? match[1].trim() : searchWord.value.trim()
+  })
 
   const formattedResult = computed(() => {
     if (!queryResult.value) return ""
@@ -224,7 +231,6 @@ export function useWordQuery(
       return
     }
 
-    const { copyToClipboard } = await import("@/utils/domUtils")
     const ok = await copyToClipboard(textToCopy)
     if (ok) {
       showCopyOptions.value = false
@@ -243,7 +249,6 @@ export function useWordQuery(
 
     const word = searchWord.value.trim()
     const content = `## ${word}\n\n${queryResult.value}`
-    const { copyToClipboard } = await import("@/utils/domUtils")
     const ok = await copyToClipboard(content)
     if (!ok) {
       showMessage(i18n?.exportFailed || "导出失败", 3000, "error")
@@ -294,6 +299,7 @@ export function useWordQuery(
     showCopyOptions,
     autoQueryTimer,
     // 计算属性
+    extractWord,
     formattedResult,
     extractContentParts,
     // 方法

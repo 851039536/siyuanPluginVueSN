@@ -1886,6 +1886,11 @@
     "found": "Found",
     "matches": "matches",
     "noMatchFound": "No match found",
-    "enterDescOrExample": "Please enter description or provide match examples"
+    "enterDescOrExample": "Please enter description or provide match examples",
+    "wordLabel": "Word",
+    "phoneticLabel": "Phonetic",
+    "meaningLabel": "Meaning",
+    "homophonicLabel": "Homophonic",
+    "exampleLabel": "Example"
   }
 }

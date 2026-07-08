@@ -1019,7 +1019,11 @@
     "noMarkdownFiles": "未找到 Markdown 文件",
     "copyRaw": "复制原文",
     "copied": "已复制",
-    "fileOversized": "文件过大，仅显示前 1000 行"
+    "fileOversized": "文件过大，仅显示前 1000 行",
+    "gitConfigTitle": "Git 全局配置",
+    "gitConfigLoading": "查询中...",
+    "gitConfigEmpty": "暂未配置全局 Git 信息",
+    "gitConfigCopyAll": "复制全部"
   },
   "heatmapMarker": {
     "title": "热力图标记",

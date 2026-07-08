@@ -136,51 +136,13 @@ import {
   watch,
 } from "vue"
 import { Icon } from "@iconify/vue"
-import {
-  marked,
-  Renderer,
-} from "marked"
-import hljs from "highlight.js"
+import { parseMarkdown } from "@/utils/mdRenderer"
 import { copyToClipboard } from "@/utils/domUtils"
-import { escapeHtml } from "@/utils/stringUtils"
 import {
   readMarkdownFile,
   scanMarkdownFiles,
 } from "../composables/useMarkdownFiles"
 import { resolveValidPath } from "../utils"
-
-type MdRenderer = Renderer<string, string>
-
-let cachedRenderer: MdRenderer | null = null
-
-function getRenderer(): MdRenderer {
-  if (cachedRenderer) return cachedRenderer
-  const renderer = new Renderer() as MdRenderer
-  renderer.code = function ({ text, lang }: { text: string, lang?: string }) {
-    const langAttr = lang ? ` class="language-${lang}"` : ""
-    let highlighted: string
-    if (lang) {
-      try {
-        highlighted = hljs.getLanguage(lang)
-          ? hljs.highlight(text, { language: lang }).value
-          : escapeHtml(text)
-      } catch {
-        highlighted = escapeHtml(text)
-      }
-    } else {
-      highlighted = escapeHtml(text)
-    }
-    return `<pre><code${langAttr}>${highlighted}</code></pre>`
-  }
-  cachedRenderer = renderer
-  return renderer
-}
-
-marked.setOptions({ breaks: true, gfm: true })
-
-function renderMarkdown(md: string): string {
-  return marked.parse(md, { renderer: getRenderer() }) as string
-}
 
 const props = defineProps<{
   project: GitProject
@@ -214,7 +176,7 @@ const copied = ref(false)
 const renderedHtml = computed(() => {
   if (!rawContent.value) return ""
   try {
-    return renderMarkdown(rawContent.value)
+    return parseMarkdown(rawContent.value, { codeHighlight: true })
   } catch (e) {
     console.error("[MarkdownPreviewDialog] 渲染失败:", e)
     return `<p style="color:var(--b3-theme-error)">渲染失败</p>`

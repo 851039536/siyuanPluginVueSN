@@ -136,7 +136,8 @@
       "Bash(npx tsc *)",
       "Bash(npm run *)",
       "Bash(pnpm lint *)",
-      "mcp__filesystem__write_file"
+      "mcp__filesystem__write_file",
+      "mcp__DeepGraph_Vue_MCP__nodes-semantic-search"
     ],
     "deny": [],
     "ask": [],

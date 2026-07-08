@@ -325,6 +325,16 @@
           />
         </button>
         <button
+          class="vp-btn vp-btn--ghost vp-btn--sm"
+          title="查看项目 Git 配置"
+          @click="$emit('openProjectGitConfig', project.id)"
+        >
+          <Icon
+            icon="mdi:file-document-outline"
+            height="12"
+          />
+        </button>
+        <button
           class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
           @click="$emit('remove', project)"
         >
@@ -675,6 +685,8 @@ defineEmits<{
   "fetchAll": [id: string]
   // Markdown 预览
   "openMarkdownPreview": [project: GitProject, fileName: string]
+  "openProjectGitConfig": [id: string]
+  "openProjectGitConfig": [id: string]
 }>()
 
 /** 推送按钮状态 class 映射（消除模板中 3 次 getPushStatus 调用） */

@@ -76,11 +76,10 @@
 import type {
   GitProject,
   ProjectCategory,
+  ViewMode,
 } from "../types"
 import { Icon } from "@iconify/vue"
 import { VIEW_MODE_META } from "../composables/useProjectFilters"
-
-type ViewMode = "all" | "needsPush" | "uncommitted" | "starred" | "archived"
 
 defineProps<{
   projects: GitProject[]

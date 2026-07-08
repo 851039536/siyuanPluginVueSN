@@ -1,6 +1,6 @@
 // Git 项目筛选排序与分类过滤
 import type { Ref } from "vue"
-import type { GitProject } from "../types"
+import type { GitProject, ViewMode } from "../types"
 import {
   computed,
   ref,
@@ -43,7 +43,7 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
   } = options
 
   const searchQuery = ref("")
-  const viewMode = ref<"all" | "needsPush" | "uncommitted" | "starred" | "archived">("all")
+  const viewMode = ref<ViewMode>("all")
   const showArchived = ref(false)
   const selectedTags = ref<Set<string>>(new Set())
 

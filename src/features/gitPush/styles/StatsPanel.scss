@@ -11,13 +11,13 @@
 .gp-stats-cards {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: $spacing-2;
-  margin-bottom: $spacing-4;
+  gap: $spacing-1;
+  margin-bottom: $spacing-3;
 }
 
 .gp-stat-card {
   text-align: center;
-  padding: $spacing-3 $spacing-2;
+  padding: $spacing-2 $spacing-1;
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-base;
   background: var(--b3-theme-surface);
@@ -29,11 +29,11 @@
 }
 
 .gp-stat-card-value {
-  font-size: $font-size-2xl;
+  font-size: $font-size-xl;
   font-weight: $font-weight-bold;
   font-family: $vp-mono;
   line-height: 1.2;
-  margin-bottom: 2px;
+  margin-bottom: 1px;
   color: var(--b3-theme-on-surface);
 }
 
@@ -224,13 +224,6 @@
     text-overflow: ellipsis;
   }
 
-  &--plat {
-    width: 90px;
-    display: flex;
-    gap: $spacing-1;
-    flex-wrap: wrap;
-  }
-
   &--num {
     width: 40px;
     text-align: center;
@@ -241,14 +234,6 @@
   &--act {
     width: 24px;
     text-align: center;
-  }
-
-  &--time {
-    width: 90px;
-    text-align: center;
-    font-size: 10px;
-    opacity: 0.55;
-    font-family: $vp-mono;
   }
 
   // 平台状态列（三列等宽居中）
@@ -271,12 +256,6 @@
 
 .gp-cell-empty {
   opacity: 0.2;
-}
-
-.gp-badge-staged {
-  @extend .gp-badge-ahead;
-  background: var(--b3-theme-primary-lightest);
-  color: var(--b3-theme-primary);
 }
 
 .gp-badge-unstaged {

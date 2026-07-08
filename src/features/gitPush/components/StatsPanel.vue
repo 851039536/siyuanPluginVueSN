@@ -180,7 +180,7 @@
             <span class="gp-table-cell gp-table-cell--num">
               <span
                 v-if="item.staged > 0"
-                class="gp-badge-staged"
+                class="gp-badge-ahead"
               >{{ item.staged }}</span>
               <span
                 v-else

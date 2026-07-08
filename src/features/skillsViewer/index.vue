@@ -389,7 +389,7 @@ import type {
   AIToolType,
   SkillInfo,
 } from "./modules/SkillsViewerManager"
-import { marked } from "marked"
+import { parseMarkdown } from "@/utils/mdRenderer"
 import { showMessage } from "siyuan"
 import {
   computed,
@@ -482,10 +482,7 @@ const filteredSkills = computed(() => {
 
 function renderMarkdown(content: string): string {
   try {
-    return marked.parse(content, {
-      breaks: true,
-      gfm: true,
-    }) as string
+    return parseMarkdown(content)
   } catch {
     return content
   }

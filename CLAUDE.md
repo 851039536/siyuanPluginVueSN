@@ -22,6 +22,7 @@
 | 系统 API | `fetch("/api/...")` 直调 | 对应 `@/api` 封装函数（找不到则新增） |
 | API 导入 | `await import("@/api")` 动态导入 | `import { ... } from "@/api"` 静态导入（api.ts 已被多文件静态引用，动态导入产生 Vite 分块警告） |
 | 状态栏任务 | 绕过状态栏直接弹通知 | `useStatusBarTask` from `@/features/statusBar/composables/useStatusBarTask` |
+| Markdown 渲染 | 各自 `marked.parse()` + 自定义 Renderer | `parseMarkdown / convertHljsToInlineStyles` from `@/utils/mdRenderer` |
 | 全局 siyuan | `(window as any).siyuan` | props 传入 Plugin 实例 |
 
 ## 跨功能联动规则（强制）
@@ -162,6 +163,7 @@ src/
 │   ├── settingsCrypto.ts   # encryptSetting / decryptSetting — 配置加密
 │   ├── cryptoPrimitives.ts # deriveAESKey / aesGcmEncrypt / aesGcmDecrypt — 加密基元
 │   ├── iconHelper.ts       # replaceTopBarIcon / createIconElement
+│   ├── mdRenderer.ts       # parseMarkdown / convertHljsToInlineStyles — Markdown 渲染统一入口
 │   └── settingsBackup.ts   # backupPluginData / restoreFromUpload
 ├── components/             # 共享 shadcn-vue 组件（Button/Input/Select/Switch/Tag 等）
 ├── features/

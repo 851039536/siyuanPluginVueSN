@@ -9,74 +9,8 @@ import type { CodeWrapMode } from "../types/storage"
 import hljs from "highlight.js"
 import { marked } from "marked"
 import { escapeHtml } from "@/utils/stringUtils"
+import { convertHljsToInlineStyles } from "@/utils/mdRenderer"
 import { normalizeWidths } from "../../htmlViewer/utils/normalizeWidths"
-
-/**
- * hljs class → inline style 映射（微信不支持 class，需转为内联样式）
- */
-const HLJS_INLINE_COLORS: Record<string, string> = {
-  "hljs-keyword": "#d73a49",
-  "hljs-built_in": "#e36209",
-  "hljs-type": "#d73a49",
-  "hljs-literal": "#d73a49",
-  "hljs-number": "#005cc5",
-  "hljs-string": "#032f62",
-  "hljs-template-variable": "#005cc5",
-  "hljs-regexp": "#032f62",
-  "hljs-symbol": "#005cc5",
-  "hljs-variable": "#e36209",
-  "hljs-title": "#6f42c1",
-  "hljs-title.class_": "#6f42c1",
-  "hljs-title.function_": "#6f42c1",
-  "hljs-params": "#24292e",
-  "hljs-comment": "#6a737d",
-  "hljs-doctag": "#d73a49",
-  "hljs-meta": "#6a737d",
-  "hljs-meta-keyword": "#d73a49",
-  "hljs-meta-string": "#032f62",
-  "hljs-section": "#005cc5",
-  "hljs-selector-tag": "#005cc5",
-  "hljs-selector-id": "#6f42c1",
-  "hljs-selector-class": "#6f42c1",
-  "hljs-selector-attr": "#6f42c1",
-  "hljs-selector-pseudo": "#6f42c1",
-  "hljs-attr": "#6f42c1",
-  "hljs-attribute": "#005cc5",
-  "hljs-name": "#005cc5",
-  "hljs-tag": "#22863a",
-  "hljs-link": "#005cc5",
-  "hljs-addition": "#22863a",
-  "hljs-deletion": "#b31d28",
-  "hljs-emphasis": "font-style: italic",
-  "hljs-strong": "font-weight: bold",
-  "hljs-property": "#005cc5",
-  "hljs-punctuation": "#24292e",
-  "hljs-operator": "#d73a49",
-}
-
-/**
- * 将 hljs 输出的 class-based spans 转换为 inline style spans（兼容微信）
- */
-function convertHljsToInlineStyles(highlighted: string): string {
-  return highlighted.replace(
-    /<span class="([^"]+)">/g,
-    (_, classes: string) => {
-      const classList = classes.split(/\s+/)
-      const styles: string[] = []
-      for (const cls of classList) {
-        const mapped = HLJS_INLINE_COLORS[cls]
-        if (mapped) {
-          if (mapped.includes(":")) {
-            styles.push(mapped)
-          } else {
-            styles.push(`color: ${mapped}`)
-          }
-        }
-      }
-      return styles.length ? `<span style="${styles.join("; ")};">` : "<span>"
-    },
-  )
-}
 
 /**
  * 基础主题颜色（所有平台共有字段）

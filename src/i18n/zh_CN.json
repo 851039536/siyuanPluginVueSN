@@ -1891,6 +1891,12 @@
     "phoneticLabel": "音标",
     "meaningLabel": "释义",
     "homophonicLabel": "谐音",
-    "exampleLabel": "例句"
+    "exampleLabel": "例句",
+    "languageLabel": "语言",
+    "complexityLabel": "复杂度",
+    "explanationShortLabel": "解释",
+    "suggestionsLabel": "建议",
+    "patternLabel": "正则表达式",
+    "examplesLabel": "示例"
   }
 }

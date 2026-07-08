@@ -188,13 +188,16 @@ $compact-gap: 6px;
     align-items: flex-start;
 
     .input-section,
+    
     .style-section {
       flex: 1 1 50%;
       min-width: 0;
     }
   }
 
-  .code-translation-panel .result-section {
+  .code-translation-panel .result-section,
+  .code-explainer-panel .result-section,
+  .regex-generator-panel .result-section {
     // 去掉卡片壳
     padding: 0;
     background: none;

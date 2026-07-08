@@ -125,3 +125,6 @@ export interface PlatformStatusItem {
 export function getPlatformStatus(item: PlatformStatusItem, key: PlatformKey): boolean {
   return item[key]
 }
+
+/** 项目列表视图模式 */
+export type ViewMode = "all" | "needsPush" | "uncommitted" | "starred" | "archived"

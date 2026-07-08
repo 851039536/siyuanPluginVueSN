@@ -12,7 +12,7 @@
             icon="mdi:information-outline"
             height="14"
           />
-          <span>{{ i18n.gitConfigTitle || 'Git 全局配置' }}</span>
+          <span>{{ title || i18n.gitConfigTitle || 'Git 全局配置' }}</span>
         </div>
         <button
           class="gp-gc-close"
@@ -97,6 +97,16 @@
             height="12"
           />
           <span>{{ copied ? (i18n.copied || '已复制') : (i18n.gitConfigCopyAll || '复制全部') }}</span>
+        </button>
+        <button
+          class="vp-btn vp-btn--ghost vp-btn--sm"
+          @click="handleOpenFile"
+        >
+          <Icon
+            icon="mdi:file-document-edit-outline"
+            height="12"
+          />
+          <span>{{ i18n.gitConfigOpenFile || '打开配置文件' }}</span>
         </button>
       </div>
     </div>
@@ -288,6 +298,8 @@ interface Props {
   loading: boolean
   error: string
   i18n: Record<string, any>
+  filePath: string
+  title?: string
 }
 
 const props = defineProps<Props>()
@@ -326,6 +338,17 @@ async function handleCopy() {
   if (ok) {
     copied.value = true
     setTimeout(() => { copied.value = false }, 2000)
+  }
+}
+
+/** 打开系统默认编辑器编辑 .gitconfig */
+async function handleOpenFile() {
+  if (!props.filePath) return
+  try {
+    const { shell } = window.require("electron")
+    await shell.openPath(props.filePath)
+  } catch {
+    // 忽略打开失败
   }
 }
 </script>

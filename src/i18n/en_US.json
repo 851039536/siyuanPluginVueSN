@@ -1023,7 +1023,9 @@
     "gitConfigTitle": "Git Global Config",
     "gitConfigLoading": "Querying...",
     "gitConfigEmpty": "No global Git config found",
-    "gitConfigCopyAll": "Copy All"
+    "gitConfigCopyAll": "Copy All",
+    "gitConfigOpenFile": "Open Config File",
+    "gitConfigProjectTitle": "Project Git Config"
   },
   "heatmapMarker": {
     "title": "Heatmap Marker",

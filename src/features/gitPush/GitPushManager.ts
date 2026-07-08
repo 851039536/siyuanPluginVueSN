@@ -123,6 +123,53 @@ export class GitPushManager {
     return this.execGit(home, ["config", "--global", "--list"])
   }
 
+  /** 获取全局 Git 配置文件路径（~/.gitconfig） */
+  getGitConfigFilePath(): string {
+    const modules = getNodeFsPathOs()
+    const home = modules?.os?.homedir() || process.cwd()
+    return modules?.path?.join(home, ".gitconfig") || ""
+  }
+
+  /** 获取项目级 Git 配置（git config --local --list） */
+  async getProjectGitConfig(projectPath: string): Promise<string> {
+    return this.execGit(projectPath, ["config", "--local", "--list"])
+  }
+
+  /** 获取项目 Git 配置文件路径（<projectPath>/.git/config） */
+  getProjectGitConfigFilePath(projectPath: string): string {
+    const modules = getNodeFsPathOs()
+    return modules?.path?.join(projectPath, ".git", "config") || ""
+  }
+
+  /** 获取项目本地 Git 配置（git config --local --list） */
+  async getProjectGitConfig(cwd: string): Promise<string> {
+    return this.execGit(cwd, ["config", "--local", "--list"])
+  }
+
+  /** 获取项目 Git 配置文件路径（<cwd>/.git/config） */
+  getProjectGitConfigFilePath(cwd: string): string {
+    const modules = getNodeFsPathOs()
+    return modules?.path?.join(cwd, ".git", "config") || ""
+  }
+
+  /** 用系统默认编辑器打开全局 Git 配置文件 */
+  async openGitConfigFile(): Promise<boolean> {
+    const filePath = this.getGitConfigFilePath()
+    if (!filePath) {
+      return false
+    }
+    if (typeof window.require === "function") {
+      try {
+        const { shell } = window.require("electron")
+        const result = await shell.openPath(filePath)
+        return !result // openPath 成功返回空字符串，失败返回错误描述
+      } catch {
+        return false
+      }
+    }
+    return false
+  }
+
   /** 将检测到的远程仓库信息应用到项目对象（仅管理远程名称，不触碰用户手动输入的仓库链接） */
   private applyRemotesToProject(project: GitProject, remotes: GitRemoteInfo[]) {
     // 只清空远程名称字段（git 操作依赖），仓库链接 xxxUrl 由用户手动管理，不受检测覆盖

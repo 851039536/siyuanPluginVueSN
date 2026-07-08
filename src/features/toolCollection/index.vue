@@ -226,6 +226,11 @@ const adjustDimension = async (
 // ==================== 工具注册表 ====================
 const tools = computed<ToolMeta[]>(() => [
   {
+    id: "wordQuery",
+    label: i18n.wordQuery?.title,
+    icon: "mdi:book",
+  },
+  {
     id: "base64Image",
     label: i18n.base64Image,
     icon: "mdi:code-brackets",
@@ -235,14 +240,9 @@ const tools = computed<ToolMeta[]>(() => [
     label: i18n.unitConverter,
     icon: "mdi:swap-horizontal",
   },
-  {
-    id: "wordQuery",
-    label: i18n.wordQuery?.title,
-    icon: "mdi:book",
-  },
 ])
 
-const currentTool = ref("base64Image")
+const currentTool = ref("wordQuery")
 
 // ==================== Tab 循环切换 ====================
 const currentIndex = computed(() =>

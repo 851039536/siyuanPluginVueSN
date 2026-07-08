@@ -106,51 +106,42 @@
             />
             {{ i18n.regexResult || '生成结果' }}
           </span>
+          <Button
+            variant="ghost"
+            size="xsmall"
+            @click="copyRegex"
+          >
+            <IconWrapper
+              name="contentCopy"
+              :size="14"
+            />
+            {{ i18n.copy || '复制' }}
+          </Button>
         </div>
-
-        <div class="result-content">
-          <div class="regex-display">
-            <code class="regex-pattern">/{{ result.regex }}/</code>
-            <Button
-              variant="ghost"
-              size="xsmall"
-              @click="copyRegex"
-            >
-              <IconWrapper
-                name="contentCopy"
-                :size="14"
-              />
-            </Button>
+        <div class="result-rows">
+          <div class="result-row highlight">
+            <span class="row-label">{{ i18n.patternLabel || '正则表达式' }}</span>
+            <span class="row-value">/{{ result.regex }}/</span>
           </div>
-
           <div
             v-if="result.explanation"
-            class="explanation-section"
+            class="result-row"
           >
-            <h4 class="section-title">
-              {{ i18n.regexExplanation || '正则解释' }}
-            </h4>
-            <div class="explanation-text">
-              {{ result.explanation }}
-            </div>
+            <span class="row-label">{{ i18n.explanationShortLabel || '解释' }}</span>
+            <span class="row-value">{{ result.explanation }}</span>
           </div>
-
           <div
             v-if="result.examples.length > 0"
-            class="examples-result-section"
+            class="result-row"
           >
-            <h4 class="section-title">
-              {{ i18n.matchExamples || '匹配示例' }}
-            </h4>
-            <div class="examples-result-list">
-              <div
+            <span class="row-label">{{ i18n.examplesLabel || '示例' }}</span>
+            <span class="row-tags">
+              <span
                 v-for="(example, index) in result.examples"
                 :key="index"
-                class="example-result-item"
-              >
-                {{ example }}
-              </div>
-            </div>
+                class="suggestion-tag"
+              >{{ example }}</span>
+            </span>
           </div>
         </div>
 

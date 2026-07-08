@@ -113,6 +113,12 @@
     "phoneticLabel": "Phonetic",
     "meaningLabel": "Meaning",
     "homophonicLabel": "Homophonic",
-    "exampleLabel": "Example"
+    "exampleLabel": "Example",
+    "languageLabel": "Language",
+    "complexityLabel": "Complexity",
+    "explanationShortLabel": "Explanation",
+    "suggestionsLabel": "Suggestions",
+    "patternLabel": "Pattern",
+    "examplesLabel": "Examples"
   }
 }

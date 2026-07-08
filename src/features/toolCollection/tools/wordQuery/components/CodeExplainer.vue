@@ -52,47 +52,6 @@
             />
             {{ i18n.analysisResult || '分析结果' }}
           </span>
-          <div class="meta-info">
-            <span class="meta-tag">{{ result.language }}</span>
-            <span class="meta-tag complexity">{{ result.complexity }}</span>
-          </div>
-        </div>
-
-        <div class="result-content">
-          <div class="explanation-section">
-            <h4 class="section-title">
-              {{ i18n.codeExplanation || '代码解释' }}
-            </h4>
-            <div class="explanation-text">
-              {{ result.explanation }}
-            </div>
-          </div>
-
-          <div
-            v-if="result.suggestions.length > 0"
-            class="suggestions-section"
-          >
-            <h4 class="section-title">
-              <IconWrapper
-                name="lightbulb"
-                :size="14"
-              />
-              {{ i18n.optimizationSuggestions || '优化建议' }}
-            </h4>
-            <div class="suggestions-list">
-              <div
-                v-for="(suggestion, index) in result.suggestions"
-                :key="index"
-                class="suggestion-item"
-              >
-                <span class="suggestion-index">{{ index + 1 }}.</span>
-                {{ suggestion }}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="result-actions">
           <Button
             variant="ghost"
             size="xsmall"
@@ -104,6 +63,36 @@
             />
             {{ i18n.copyExplanation || '复制解释' }}
           </Button>
+        </div>
+        <div class="result-rows">
+          <div class="result-row">
+            <span class="row-label">{{ i18n.languageLabel || '语言' }}</span>
+            <span class="row-value">{{ result.language }}</span>
+          </div>
+          <div class="result-row">
+            <span class="row-label">{{ i18n.complexityLabel || '复杂度' }}</span>
+            <span class="row-value">{{ result.complexity }}</span>
+          </div>
+          <div class="result-row">
+            <span class="row-label">{{ i18n.explanationShortLabel || '解释' }}</span>
+            <span class="row-value">{{ result.explanation }}</span>
+          </div>
+          <div
+            v-if="result.suggestions.length > 0"
+            class="result-row"
+          >
+            <span class="row-label">{{ i18n.suggestionsLabel || '建议' }}</span>
+            <span class="row-tags">
+              <span
+                v-for="(suggestion, index) in result.suggestions"
+                :key="index"
+                class="suggestion-tag"
+                @click="copySuggestion(suggestion)"
+              >
+                {{ suggestion }}
+              </span>
+            </span>
+          </div>
         </div>
       </div>
 
@@ -180,6 +169,10 @@ function copyExplanation() {
     const text = `代码解释：\n${result.value.explanation}\n\n语言：${result.value.language}\n复杂度：${result.value.complexity}\n\n优化建议：\n${result.value.suggestions.map((s, i) => `${i + 1}. ${s}`).join("\n")}`
     copyText(text)
   }
+}
+
+function copySuggestion(suggestion: string) {
+  copyText(suggestion)
 }
 </script>
 

@@ -131,6 +131,7 @@ import type { GitProject, GitPushManager } from "../types"
 import {
   computed,
   onMounted,
+  onUnmounted,
   ref,
   watch,
 } from "vue"
@@ -141,6 +142,7 @@ import {
 } from "marked"
 import hljs from "highlight.js"
 import { copyToClipboard } from "@/utils/domUtils"
+import { escapeHtml } from "@/utils/stringUtils"
 import {
   readMarkdownFile,
   scanMarkdownFiles,
@@ -174,16 +176,9 @@ function getRenderer(): MdRenderer {
   return renderer
 }
 
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-}
+marked.setOptions({ breaks: true, gfm: true })
 
 function renderMarkdown(md: string): string {
-  marked.setOptions({ breaks: true, gfm: true })
   return marked.parse(md, { renderer: getRenderer() }) as string
 }
 
@@ -240,34 +235,31 @@ function loadFile(file: typeof currentFile.value) {
   loading.value = true
   loadError.value = ""
   truncated.value = false
-  try {
-    const maxLines = file.oversized ? 1000 : 0
-    const content = readMarkdownFile(file.path, maxLines)
-    if (content === null) {
-      loadError.value = "读取文件失败"
-      rawContent.value = ""
-    } else {
-      rawContent.value = content
-      truncated.value = file.oversized
-    }
-  } catch (e: any) {
-    loadError.value = e?.message || "读取失败"
+  const maxLines = file.oversized ? 1000 : 0
+  const content = readMarkdownFile(file.path, maxLines)
+  if (content === null) {
+    loadError.value = "读取文件失败"
     rawContent.value = ""
-  } finally {
-    loading.value = false
+  } else {
+    rawContent.value = content
+    truncated.value = file.oversized
   }
+  loading.value = false
 }
 
 function close() {
   emit("close")
 }
 
+/** 复制成功反馈定时器 */
+let copiedTimer: ReturnType<typeof setTimeout> | undefined
+
 async function handleCopy() {
   if (!rawContent.value) return
   const ok = await copyToClipboard(rawContent.value)
   if (ok) {
     copied.value = true
-    setTimeout(() => { copied.value = false }, 2000)
+    copiedTimer = setTimeout(() => { copied.value = false }, 2000)
   }
 }
 
@@ -284,6 +276,10 @@ onMounted(() => {
     }
   }
   loadFile(currentFile.value)
+})
+
+onUnmounted(() => {
+  if (copiedTimer) clearTimeout(copiedTimer)
 })
 
 /** 项目变化时重新扫描 */

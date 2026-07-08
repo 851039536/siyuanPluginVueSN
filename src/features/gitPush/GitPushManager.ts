@@ -141,17 +141,6 @@ export class GitPushManager {
     return modules?.path?.join(projectPath, ".git", "config") || ""
   }
 
-  /** 获取项目本地 Git 配置（git config --local --list） */
-  async getProjectGitConfig(cwd: string): Promise<string> {
-    return this.execGit(cwd, ["config", "--local", "--list"])
-  }
-
-  /** 获取项目 Git 配置文件路径（<cwd>/.git/config） */
-  getProjectGitConfigFilePath(cwd: string): string {
-    const modules = getNodeFsPathOs()
-    return modules?.path?.join(cwd, ".git", "config") || ""
-  }
-
   /** 用系统默认编辑器打开全局 Git 配置文件 */
   async openGitConfigFile(): Promise<boolean> {
     const filePath = this.getGitConfigFilePath()

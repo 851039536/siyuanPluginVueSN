@@ -25,8 +25,8 @@
 </template>
 
 <script setup lang="ts">
+import { formatFileSize } from "@/utils/format"
 import { computed } from "vue"
-import { formatFileSize } from "../utils/format"
 
 interface Props {
   title: string

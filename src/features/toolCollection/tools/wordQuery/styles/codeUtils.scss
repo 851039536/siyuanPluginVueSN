@@ -1,9 +1,9 @@
 @use '@/variables.scss' as *;
 
 // 局部变量：替代无法精确映射到全局 Token 的硬编码值，保持零视觉回归
-$code-font-size: 13px;
-$code-line-height: 1.6;
-$compact-gap: 6px;
+// $code-font-size 已替换为全局 Token $codeblock-font-size（值同为 13px）
+$code-line-height: 1.6;    // 代码行高 — 无全局精确对应（$line-height-normal=1.5, $line-height-relaxed=1.75）
+$compact-gap: 6px;          // 紧凑间距 — 无全局精确对应（$spacing-1=4px, $spacing-2=8px）
 
 /// label 行统一模式：图标 + 标签文字
 @mixin label-row {
@@ -20,6 +20,58 @@ $compact-gap: 6px;
   display: flex;
   flex-direction: column;
   gap: $compact-gap;
+}
+
+/// result-table 通用布局（代码解释器/代码翻译/正则生成器/单词查询共用）
+@mixin result-table {
+  .result-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $radius-base;
+    overflow: hidden;
+  }
+
+  .result-row {
+    display: flex;
+    align-items: baseline;
+    padding: $spacing-2 $spacing-3;
+    border-bottom: 1px solid var(--b3-border-color);
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &.highlight {
+      // no background — keep table-flat style
+    }
+  }
+
+  .row-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 52px;
+    flex-shrink: 0;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    color: var(--b3-theme-on-surface-light);
+  }
+
+  .row-value {
+    flex: 1;
+    min-width: 0;
+    font-family: $vp-mono;
+    font-size: $font-size-xs;
+    color: var(--b3-theme-on-surface);
+    overflow-wrap: break-word;
+
+    .highlight & {
+      font-weight: $font-weight-semibold;
+      color: var(--b3-theme-primary);
+    }
+  }
 }
 
 // ========== 通用面板样式 ==========
@@ -91,7 +143,7 @@ $compact-gap: 6px;
     }
 
     .style-name {
-      font-size: $code-font-size;
+      font-size: $codeblock-font-size;
       font-weight: $font-weight-semibold;
       color: var(--b3-theme-on-surface);
     }
@@ -165,11 +217,11 @@ $compact-gap: 6px;
     background: var(--b3-theme-background);
     border-radius: $radius-base;
     font-family: $vp-mono;
-    font-size: $code-font-size;
+    font-size: $codeblock-font-size;
     line-height: $code-line-height;
     overflow-x: auto;
     white-space: pre-wrap;
-    word-break: break-all;
+    overflow-wrap: break-word;
     color: var(--b3-theme-on-background);
   }
 
@@ -205,58 +257,7 @@ $compact-gap: 6px;
     gap: $spacing-2;
   }
 
-  // 结果行容器
-  .result-rows {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    border: 1px solid var(--b3-border-color);
-    border-radius: $radius-base;
-    overflow: hidden;
-  }
-
-  // 单行
-  .result-row {
-    display: flex;
-    align-items: baseline;
-    padding: $spacing-2 $spacing-3;
-    border-bottom: 1px solid var(--b3-border-color);
-
-    &:last-child {
-      border-bottom: none;
-    }
-
-    &.highlight {
-      // no background — keep table-flat style
-    }
-  }
-
-  // 行标签（左列固定宽度）
-  .row-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    min-width: 52px;
-    flex-shrink: 0;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-medium;
-    color: var(--b3-theme-on-surface-light);
-  }
-
-  // 行值（右列伸缩）
-  .row-value {
-    flex: 1;
-    min-width: 0;
-    font-family: $vp-mono;
-    font-size: $font-size-xs;
-    color: var(--b3-theme-on-surface);
-    word-break: break-all;
-
-    .highlight & {
-      font-weight: $font-weight-semibold;
-      color: var(--b3-theme-primary);
-    }
-  }
+  @include result-table;
 
   // 行内缩写标签
   .row-abbr {
@@ -270,7 +271,7 @@ $compact-gap: 6px;
     border-radius: $radius-sm;
     font-family: $vp-mono;
     font-size: $font-size-xs;
-    color: #fff;
+    color: var(--b3-theme-on-primary);
     cursor: pointer;
     white-space: nowrap;
 
@@ -416,7 +417,7 @@ $compact-gap: 6px;
     font-size: $font-size-base;
     font-weight: $font-weight-semibold;
     color: var(--b3-theme-primary);
-    word-break: break-all;
+    overflow-wrap: break-word;
   }
 }
 
@@ -460,7 +461,7 @@ $compact-gap: 6px;
 
     .matches-info {
       .match-count {
-        font-size: $code-font-size;
+        font-size: $codeblock-font-size;
         font-weight: $font-weight-medium;
         color: var(--b3-theme-success, #22c55e);
       }
@@ -483,7 +484,7 @@ $compact-gap: 6px;
     }
 
     .no-match {
-      font-size: $code-font-size;
+      font-size: $codeblock-font-size;
       color: var(--b3-theme-on-surface-light);
     }
 
@@ -491,7 +492,7 @@ $compact-gap: 6px;
       display: flex;
       align-items: center;
       gap: $compact-gap;
-      font-size: $code-font-size;
+      font-size: $codeblock-font-size;
       color: var(--b3-theme-error);
     }
   }

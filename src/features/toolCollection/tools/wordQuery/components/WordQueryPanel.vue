@@ -126,10 +126,40 @@
         v-else-if="queryResult"
         class="query-result"
       >
-        <div
-          class="result-content"
-          v-html="formattedResult"
-        ></div>
+        <div class="result-rows">
+          <div class="result-row">
+            <span class="row-label">{{ i18n.wordLabel || '单词' }}</span>
+            <span class="row-value">{{ extractWord }}</span>
+          </div>
+          <div
+            v-if="extractContentParts.phonetic"
+            class="result-row"
+          >
+            <span class="row-label">{{ i18n.phoneticLabel || '音标' }}</span>
+            <span class="row-value">{{ extractContentParts.phonetic }}</span>
+          </div>
+          <div
+            v-if="extractContentParts.meaning"
+            class="result-row"
+          >
+            <span class="row-label">{{ i18n.meaningLabel || '释义' }}</span>
+            <span class="row-value">{{ extractContentParts.meaning }}</span>
+          </div>
+          <div
+            v-if="extractContentParts.pronunciation"
+            class="result-row"
+          >
+            <span class="row-label">{{ i18n.homophonicLabel || '谐音' }}</span>
+            <span class="row-value">{{ extractContentParts.pronunciation }}</span>
+          </div>
+          <div
+            v-if="extractContentParts.example"
+            class="result-row"
+          >
+            <span class="row-label">{{ i18n.exampleLabel || '例句' }}</span>
+            <span class="row-value">{{ extractContentParts.example }}</span>
+          </div>
+        </div>
         <div class="result-actions">
           <div ref="copyDropdownRef">
             <Button
@@ -275,7 +305,7 @@ const {
   isLoading,
   errorMessage,
   showCopyOptions,
-  formattedResult,
+  extractWord,
   extractContentParts,
   handleQuery,
   clearResult,
@@ -396,73 +426,46 @@ onUnmounted(() => {
     flex-direction: column;
     height: 100%;
     min-height: 0;
+    gap: $spacing-3;
 
-    .result-content {
-      flex: 1;
-      overflow-y: auto;
-      margin-bottom: $spacing-4;
-      padding: $spacing-4;
-      background: var(--b3-theme-background, $brand-light);
-      border: 1px solid var(--b3-border-color, $brand-subtle-gray);
+    .result-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border: 1px solid var(--b3-border-color);
       border-radius: $radius-base;
-      min-height: 100px;
-      max-height: 300px;
-      word-wrap: break-word;
+      overflow: hidden;
+    }
 
-      :deep(.result-title) {
-        margin: 0 0 $spacing-4 0;
-        color: var(--b3-theme-on-background, $brand-dark);
-        font-family: $font-heading;
-        font-size: $font-size-base;
-        font-weight: $font-weight-semibold;
-        text-align: center;
-        padding-bottom: $spacing-4;
-        border-bottom: 1px solid var(--b3-border-color, $brand-subtle-gray);
+    .result-row {
+      display: flex;
+      align-items: baseline;
+      padding: $spacing-2 $spacing-3;
+      border-bottom: 1px solid var(--b3-border-color);
+
+      &:last-child {
+        border-bottom: none;
       }
+    }
 
-      :deep(.result-label) {
-        display: inline-block;
-        font-weight: $font-weight-semibold;
-        color: var(--b3-theme-on-background, $brand-dark);
-        margin-right: $spacing-2;
-        min-width: 50px;
-      }
+    .row-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      min-width: 52px;
+      flex-shrink: 0;
+      font-size: $font-size-xs;
+      font-weight: $font-weight-medium;
+      color: var(--b3-theme-on-surface-light);
+    }
 
-      :deep(.result-wrapper) {
-        padding: $spacing-4 0;
-      }
-
-      :deep(.result-section) {
-        margin-bottom: $spacing-4;
-        padding: $spacing-4;
-        background: var(--b3-theme-background, $brand-light);
-        border: 1px solid var(--b3-border-color, $brand-subtle-gray);
-        border-radius: $radius-base;
-        border-left: 3px solid;
-        line-height: $line-height-normal;
-        font-size: $font-size-sm;
-
-        &:last-child {
-          margin-bottom: 0;
-        }
-
-        strong {
-          color: var(--b3-theme-on-background, $brand-dark);
-          font-weight: $font-weight-semibold;
-        }
-
-        .result-label {
-          font-weight: $font-weight-semibold;
-        }
-
-        &.word-section { border-left-color: var(--b3-theme-primary, $brand-orange); }
-        &.phonetic-section { border-left-color: var(--b3-theme-primary, $brand-orange); .result-label { color: var(--b3-theme-primary, $brand-orange); } }
-        &.english-section { border-left-color: var(--b3-theme-success, $brand-green); .result-label { color: var(--b3-theme-success, $brand-green); } }
-        &.meaning-section { border-left-color: var(--b3-theme-warning, $brand-orange); .result-label { color: var(--b3-theme-warning, $brand-orange); } }
-        &.pronunciation-section { border-left-color: var(--b3-theme-primary, $brand-blue); .result-label { color: var(--b3-theme-primary, $brand-blue); } }
-        &.tip-section { border-left-color: var(--b3-theme-primary, $brand-orange); .result-label { color: var(--b3-theme-primary, $brand-orange); } }
-        &.example-section { border-left-color: var(--b3-theme-secondary, $brand-mid-gray); .result-label { color: var(--b3-theme-secondary, $brand-mid-gray); } }
-      }
+    .row-value {
+      flex: 1;
+      min-width: 0;
+      font-family: $vp-mono;
+      font-size: $font-size-xs;
+      color: var(--b3-theme-on-surface);
+      word-break: break-all;
     }
 
     .result-actions {

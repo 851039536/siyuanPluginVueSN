@@ -108,6 +108,11 @@
     "found": "找到",
     "matches": "个匹配",
     "noMatchFound": "未找到匹配",
-    "enterDescOrExample": "请输入描述或提供匹配示例"
+    "enterDescOrExample": "请输入描述或提供匹配示例",
+    "wordLabel": "单词",
+    "phoneticLabel": "音标",
+    "meaningLabel": "释义",
+    "homophonicLabel": "谐音",
+    "exampleLabel": "例句"
   }
 }

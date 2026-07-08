@@ -1,12 +1,14 @@
 // 单位转换器 — Codex 风格
 $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
-$label-style: (
-  font-size: 10px,
-  font-weight: 700,
-  letter-spacing: 0.06em,
-  text-transform: uppercase,
-  opacity: 0.45,
-);
+
+@mixin label-style {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.45;
+  color: var(--b3-theme-on-surface);
+}
 
 .unit-converter {
   min-height: 0;
@@ -110,11 +112,8 @@ $label-style: (
   margin-top: 4px;
 
   h4 {
-    @each $k, $v in $label-style {
-      #{$k}: $v;
-    }
+    @include label-style;
     margin: 0 0 8px;
-    color: var(--b3-theme-on-surface);
   }
 
   .quick-results-grid {
@@ -140,10 +139,7 @@ $label-style: (
 
     .unit-name,
     .base-name {
-      @each $k, $v in $label-style {
-        #{$k}: $v;
-      }
-      color: var(--b3-theme-on-surface);
+      @include label-style;
       font-family: $mono;
     }
 
@@ -178,11 +174,8 @@ $label-style: (
   margin-top: 4px;
 
   h4 {
-    @each $k, $v in $label-style {
-      #{$k}: $v;
-    }
+    @include label-style;
     margin: 0 0 8px;
-    color: var(--b3-theme-on-surface);
   }
 
   ul {
@@ -207,11 +200,8 @@ $label-style: (
   background: var(--b3-theme-surface);
 
   h4 {
-    @each $k, $v in $label-style {
-      #{$k}: $v;
-    }
+    @include label-style;
     margin: 0 0 10px;
-    color: var(--b3-theme-on-surface);
   }
 }
 
@@ -223,10 +213,7 @@ $label-style: (
   margin-top: 10px;
 
   label {
-    @each $k, $v in $label-style {
-      #{$k}: $v;
-    }
-    color: var(--b3-theme-on-surface);
+    @include label-style;
   }
 
   .ascii-output,

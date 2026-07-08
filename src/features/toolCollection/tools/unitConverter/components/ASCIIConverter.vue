@@ -94,12 +94,14 @@
 </template>
 
 <script setup lang="ts">
+// ASCII 码转换器组件：文本↔ASCII 互转 + 可调范围 ASCII 对照表
 import {
   computed,
   ref,
 } from "vue"
 import Input from "@/components/Input.vue"
 
+const ASCII_MAX = 127
 const textInput = ref("")
 const asciiInput = ref("")
 const tableStart = ref(32)
@@ -158,7 +160,7 @@ const textResult = computed(() => {
       .split(/[\s,]+/)
       .filter((code) => code.trim())
       .map((code) => Number.parseInt(code.trim()))
-      .filter((code) => !isNaN(code) && code >= 0 && code <= 127)
+      .filter((code) => !isNaN(code) && code >= 0 && code <= ASCII_MAX)
 
     return String.fromCharCode(...codes)
   } catch {
@@ -168,8 +170,8 @@ const textResult = computed(() => {
 
 // ASCII码表数据
 const asciiTableData = computed(() => {
-  const start = Math.max(0, Math.min(127, tableStart.value))
-  const end = Math.max(start, Math.min(127, tableEnd.value))
+  const start = Math.max(0, Math.min(ASCII_MAX, tableStart.value))
+  const end = Math.max(start, Math.min(ASCII_MAX, tableEnd.value))
 
   return Array.from({ length: end - start + 1 }, (_, i) => {
     const code = start + i
@@ -184,7 +186,7 @@ const asciiTableData = computed(() => {
 
 function getCharForDisplay(code: number): string {
   if (code < 32) return CONTROL_CHARS[code] || ""
-  if (code === 127) return "DEL"
+  if (code === ASCII_MAX) return "DEL"
   return String.fromCharCode(code)
 }
 </script>
@@ -204,12 +206,7 @@ function getCharForDisplay(code: number): string {
     margin-bottom: 10px;
 
     label {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      opacity: 0.45;
-      color: var(--b3-theme-on-surface);
+      @include index.label-style;
     }
 
     .range-controls {
@@ -236,12 +233,7 @@ function getCharForDisplay(code: number): string {
       grid-template-columns: 1fr 1fr 1.5fr 1.5fr;
       background: var(--b3-theme-surface);
       border-bottom: 1px solid var(--b3-border-color);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--b3-theme-on-surface);
-      opacity: 0.45;
+      @include index.label-style;
       padding: 6px 10px;
 
       span {

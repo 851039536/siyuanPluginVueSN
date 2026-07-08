@@ -173,8 +173,12 @@ function isValidInput(value: string, base: number): boolean {
   const validChars = VALID_CHARS_MAP.get(base)
   if (!validChars) return false
 
-  const upperValue = value.toUpperCase()
-  for (const char of upperValue) {
+  // 允许首位可选的负号
+  const startIndex = value.startsWith("-") ? 1 : 0
+  if (startIndex >= value.length) return false // 单独的 "-" 不合法
+
+  for (let i = startIndex; i < value.length; i++) {
+    const char = value[i].toUpperCase()
     if (!validChars.includes(char)) return false
   }
   return true

@@ -422,6 +422,8 @@ $radius-lg: 0.75rem;    // 12px 弹窗/对话框
 $radius-full: 9999px;   // 胶囊/药丸形状
 
 // 间距 — 禁止硬编码 padding/gap/margin（注意：使用数字后缀，非 xs/sm/md/lg）
+$spacing-2px: 2px; // 超微间距（极窄分隔线间距、图标紧贴）
+$spacing-px: 3px; // 微间距（密集 grid gap、极窄 tab padding，小于 $spacing-1 时使用）
 $spacing-1: 4px;   // 紧密间距（icon 间距、微型间隙）
 $spacing-2: 8px;   // 元素内间距（按钮 padding、小 gap）
 $spacing-3: 12px;  // 中等间距（卡片 padding、列表 gap）

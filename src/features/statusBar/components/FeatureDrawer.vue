@@ -314,9 +314,10 @@ const groupTabs = computed(() => {
 })
 
 // 按 activeGroup 过滤（非搜索模式），搜索时忽略分组
+// "全部"Tab 排除监控项（监控项有独立 Tab）
 const displayItems = computed(() => {
   if (searchQuery.value) return filteredItems.value
-  if (activeGroup.value === "__all__") return props.items
+  if (activeGroup.value === "__all__") return props.items.filter((item) => item.group !== "监控")
   return props.items.filter((item) => item.group === activeGroup.value)
 })
 

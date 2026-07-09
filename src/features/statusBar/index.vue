@@ -46,6 +46,11 @@ item-class="uptime-item"
 {{ uptimeDisplay }}
 </MonitorItem>
 
+    <span
+      v-if="showSeparator"
+      class="status-bar-separator"
+    />
+
     <MonitorItem
       v-for="task in activeTasks"
       :key="task.id"
@@ -364,6 +369,12 @@ const visibleShortcuts = computed(() => {
   }
   return result
 })
+
+// 分隔线显隐：监控项有可见 且 快捷入口或后台任务有可见时才显示
+const showSeparator = computed(() =>
+  visibleMonitors.size > 0
+  && (statusBarShortcuts.value.length > 0 || activeTasks.value.length > 0),
+)
 
 // 合并快捷方式 + 监控项可见性，供 FeatureDrawer 显示 pin 状态
 const statusBarVisible = computed(() => [

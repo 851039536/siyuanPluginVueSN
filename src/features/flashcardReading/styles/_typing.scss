@@ -5,13 +5,13 @@
   .typing-practice {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: $spacing-4;
     overflow: hidden;
 
     .typing-options {
       display: flex;
       justify-content: center;
-      gap: 8px;
+      gap: $spacing-2;
       flex-wrap: wrap;
     }
 
@@ -20,7 +20,7 @@
       align-items: center;
       justify-content: center;
       gap: 6px;
-      font-size: 11px;
+      font-size: $font-size-xs;
 
       &__label {
         @include fc-label;
@@ -34,11 +34,11 @@
         width: 22px;
         height: 22px;
         border: 1px solid var(--b3-border-color);
-        border-radius: $fc-radius;
+        border-radius: $vp-radius;
         background: var(--b3-theme-surface-lighter);
         color: var(--b3-theme-on-surface);
         cursor: pointer;
-        font-size: 13px;
+        font-size: $font-size-sm;
         font-weight: 600;
         line-height: 1;
         transition: all $fc-transition;
@@ -50,8 +50,8 @@
       }
 
       &__value {
-        font-family: $fc-mono;
-        font-size: 13px;
+        font-family: $vp-mono;
+        font-size: $font-size-sm;
         font-weight: 700;
         min-width: 24px;
         text-align: center;
@@ -67,13 +67,13 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 4px 10px;
+      padding: $spacing-1 10px;
       border: 1px solid var(--b3-border-color);
-      border-radius: $fc-radius;
+      border-radius: $vp-radius;
       background: var(--b3-theme-surface-lighter);
       color: var(--b3-theme-on-surface);
       cursor: pointer;
-      font-size: 11px;
+      font-size: $font-size-xs;
       font-weight: 600;
       transition: all $fc-transition;
       opacity: 0.65;
@@ -91,9 +91,13 @@
       }
 
       &__label {
-        font-family: $fc-mono;
-        font-size: 12px;
+        font-family: $vp-mono;
+        font-size: $font-size-xs;
         font-weight: 700;
+      }
+
+      &__icon {
+        flex-shrink: 0;
       }
 
       &__text {
@@ -108,30 +112,30 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 16px;
-      padding: 8px 0;
+      gap: $spacing-4;
+      padding: $spacing-2 0;
       flex-shrink: 0;
     }
 
     .typing-detail {
       width: 100%;
-      font-size: 14px;
+      font-size: $font-size-sm;
       line-height: 1.6;
       color: var(--b3-theme-on-background);
       opacity: 0.85;
       word-break: break-word;
       white-space: pre-wrap;
-      padding: 0 8px;
+      padding: 0 $spacing-2;
     }
 
     .typing-hint {
       @include fc-label;
-      font-size: 11px;
+      font-size: $font-size-xs;
     }
 
     .typing-target {
       display: flex;
-      gap: 4px;
+      gap: $spacing-1;
       flex-wrap: wrap;
       justify-content: center;
 
@@ -141,10 +145,10 @@
         justify-content: center;
         width: 32px;
         height: 40px;
-        font-size: 20px;
+        font-size: $font-size-xl;
         font-weight: 600;
-        font-family: $fc-mono;
-        border-radius: $fc-radius;
+        font-family: $vp-mono;
+        border-radius: $vp-radius;
         background: var(--b3-theme-surface-lighter);
         color: var(--b3-theme-on-background);
         border: 1px solid var(--b3-border-color);
@@ -172,12 +176,12 @@
     .typing-input {
       width: 100%;
       padding: 10px 14px;
-      font-size: 18px;
-      font-family: $fc-mono;
+      font-size: $font-size-lg;
+      font-family: $vp-mono;
       text-align: center;
-      letter-spacing: 4px;
+      letter-spacing: $spacing-1;
       border: 1px solid var(--b3-border-color);
-      border-radius: $fc-radius;
+      border-radius: $vp-radius;
       background: var(--b3-theme-background);
       color: var(--b3-theme-on-background);
       outline: none;
@@ -190,7 +194,7 @@
 
       &::placeholder {
         color: var(--b3-theme-secondary);
-        font-size: 14px;
+        font-size: $font-size-sm;
         letter-spacing: normal;
       }
     }
@@ -198,12 +202,12 @@
     .typing-result {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 13px;
+      gap: $spacing-2;
+      font-size: $font-size-sm;
       font-weight: 600;
-      font-family: $fc-mono;
+      font-family: $vp-mono;
       padding: 6px 14px;
-      border-radius: $fc-radius;
+      border-radius: $vp-radius;
       border: 1px solid transparent;
 
       &--correct {
@@ -220,10 +224,10 @@
     }
 
     .typing-streak {
-      font-size: 13px;
+      font-size: $font-size-sm;
       font-weight: 700;
       color: $brand-accent;
-      font-family: $fc-mono;
+      font-family: $vp-mono;
       animation: streak-pulse 0.4s ease;
 
       &--inline {
@@ -236,10 +240,10 @@
       align-items: center;
       justify-content: center;
       gap: 6px;
-      padding: 6px 12px;
-      font-size: 12px;
+      padding: 6px $spacing-3;
+      font-size: $font-size-xs;
       font-weight: 600;
-      font-family: $fc-mono;
+      font-family: $vp-mono;
       color: var(--b3-theme-on-surface);
       opacity: 0.6;
       border-top: 1px solid var(--b3-border-color);
@@ -252,9 +256,14 @@
     }
 
     .typing-timer {
-      font-family: $fc-mono;
+      font-family: $vp-mono;
       font-weight: 600;
       color: var(--b3-theme-primary);
+
+      &__icon {
+        vertical-align: -2px;
+        margin-right: 2px;
+      }
     }
 
     .typing-round-summary {
@@ -262,13 +271,13 @@
       flex-direction: column;
       align-items: center;
       gap: 10px;
-      padding: 16px;
+      padding: $spacing-4;
       border: 1px solid var(--b3-border-color);
-      border-radius: $fc-radius;
+      border-radius: $vp-radius;
       background: var(--b3-theme-surface-lighter);
 
       &__title {
-        font-size: 14px;
+        font-size: $font-size-sm;
         font-weight: 700;
         color: var(--b3-theme-primary);
       }
@@ -276,9 +285,9 @@
       &__stats {
         display: flex;
         align-items: center;
-        gap: 8px;
-        font-size: 12px;
-        font-family: $fc-mono;
+        gap: $spacing-2;
+        font-size: $font-size-xs;
+        font-family: $vp-mono;
         color: var(--b3-theme-on-surface);
       }
     }

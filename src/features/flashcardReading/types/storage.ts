@@ -1,12 +1,12 @@
+/**
+ * 单词阅读功能 - 数据存储层
+ */
 import type {
   CreateFlashcardDTO,
   Flashcard,
   TypingSettings,
   UpdateFlashcardDTO,
 } from "./index"
-/**
- * 单词阅读功能 - 数据存储层
- */
 import { Plugin } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
 

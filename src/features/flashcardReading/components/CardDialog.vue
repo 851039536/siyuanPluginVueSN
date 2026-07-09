@@ -1,3 +1,4 @@
+<!-- 单词阅读功能 - 卡片创建/编辑弹窗 -->
 <template>
   <div
     v-if="visible"
@@ -23,6 +24,7 @@
           :label="t.title"
           :placeholder="t.titlePlaceholder"
           :error="formErrors.title"
+          size="small"
           required
           @update:modelValue="updateField('title', $event)"
           @input="$emit('inputTitle')"
@@ -36,6 +38,7 @@
           :maxlength="1000"
           :showCount="true"
           :rows="8"
+          size="small"
           @update:modelValue="updateField('content', $event)"
         />
         <div class="form-group">
@@ -44,6 +47,7 @@
             <Select
               :modelValue="localFormData.category"
               :options="categoryOptions"
+              size="small"
               @update:modelValue="updateField('category', $event)"
               @change="$emit('changeCategory')"
             />
@@ -52,6 +56,7 @@
               :modelValue="localCustomCategory"
               :placeholder="t.customCategoryPlaceholder"
               class="custom-category-input"
+              size="small"
               @update:modelValue="emit('update:customCategory', String($event))"
             />
           </div>

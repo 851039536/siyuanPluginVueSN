@@ -1,3 +1,4 @@
+<!-- 单词阅读功能 - 单卡视图 -->
 <template>
   <div class="single-card-view">
     <Card

@@ -1,9 +1,7 @@
 // 单词阅读 - 局部变量和 mixin
 @forward '../../../_variables.scss';
+// 全局 Token 已在 _variables.scss 中定义，$vp-mono/$vp-radius/$font-size-* 等直接可用
 
-// Codex 风格变量
-$fc-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
-$fc-radius: 6px;
 $fc-transition: 0.12s;
 
 // Codex 大写标签 mixin

@@ -1,3 +1,4 @@
+// 单词阅读功能 - 卡片发音 composable
 import type { Ref } from "vue"
 import type {
   Flashcard,
@@ -5,6 +6,7 @@ import type {
 } from "../types"
 import type { FlashcardStorage } from "../types/storage"
 import { showMessage } from "siyuan"
+import { syncIncrementPractice } from "../utils"
 
 export function usePlayWord(
   storage: FlashcardStorage,
@@ -20,12 +22,7 @@ export function usePlayWord(
       utterance.rate = 0.8
 
       utterance.onend = async () => {
-        await storage.incrementPracticeCount(card.id)
-        const index = cards.value.findIndex((c) => c.id === card.id)
-        if (index !== -1) {
-          cards.value[index].practiceCount =
-            (cards.value[index].practiceCount || 0) + 1
-        }
+        await syncIncrementPractice(storage, cards, card.id)
       }
 
       speechSynthesis.speak(utterance)

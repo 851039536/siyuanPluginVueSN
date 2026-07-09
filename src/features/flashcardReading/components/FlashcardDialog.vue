@@ -1,3 +1,4 @@
+<!-- 单词阅读功能 - 弹窗式快速浏览 -->
 <template>
   <div class="flashcard-dialog">
     <Button
@@ -37,6 +38,7 @@
         <Select
           v-model="selectedCategory"
           :options="categoryOptions"
+          size="small"
           @change="currentIndex = 0"
         />
       </div>
@@ -71,7 +73,6 @@
 import type { Plugin } from "siyuan"
 import type { I18n } from "../types"
 import type { SelectOption } from "@/components/Select.vue"
-import { showMessage } from "siyuan"
 import {
   computed,
   onMounted,
@@ -80,10 +81,10 @@ import {
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Select from "@/components/Select.vue"
-import { copyToClipboard } from "@/utils/domUtils"
 import { useFlashcardStorage } from "../composables/useFlashcardStorage"
 import { useI18n } from "../composables/useI18n"
 import { usePlayWord } from "../composables/usePlayWord"
+import { copyAndNotify } from "../utils"
 import SingleCardView from "./SingleCardView.vue"
 
 interface Props {
@@ -129,15 +130,15 @@ const categoryOptions = computed<SelectOption[]>(() => [
 const previousCard = () => {
   if (currentIndex.value > 0) {
     currentIndex.value--
+    playWord(currentCard.value)
   }
-  playWord(currentCard.value)
 }
 
 const nextCard = () => {
   if (currentIndex.value < filteredCards.value.length - 1) {
     currentIndex.value++
+    playWord(currentCard.value)
   }
-  playWord(currentCard.value)
 }
 
 const randomCard = () => {
@@ -151,9 +152,7 @@ const randomCard = () => {
 }
 
 const handleCopy = async (text?: string) => {
-  if (!text) return
-  const ok = await copyToClipboard(text)
-  showMessage(ok ? "已复制" : "复制失败", 2000, ok ? "info" : "error")
+  await copyAndNotify(text || "", "已复制")
 }
 
 onMounted(() => {
@@ -162,32 +161,6 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-@use '../styles/index.scss' as *;
-
-.flashcard-dialog {
-  width: 100%;
-  max-height: 85vh;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  overflow-y: auto;
-
-  .close-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 1;
-  }
-}
-
-.card-counter {
-  font-size: 13px;
-  font-weight: 600;
-  font-family: $fc-mono;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.7;
-  min-width: 60px;
-  text-align: center;
-}
+@use '../styles/FlashcardDialog.scss';
+@use '../styles/index.scss';
 </style>

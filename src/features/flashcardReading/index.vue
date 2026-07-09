@@ -1,3 +1,4 @@
+<!-- 单词阅读功能 - 主面板组件 -->
 <template>
   <div class="flashcard-reading-panel">
     <PanelHeader
@@ -197,7 +198,6 @@ import {
 } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { copyToClipboard } from "@/utils/domUtils"
 import CardDialog from "./components/CardDialog.vue"
 import CardList from "./components/CardList.vue"
 import CategoryFilter from "./components/CategoryFilter.vue"
@@ -213,6 +213,7 @@ import {
 import { useI18n } from "./composables/useI18n"
 import { usePlayWord } from "./composables/usePlayWord"
 import { useTypingQueue } from "./composables/useTypingQueue"
+import { copyAndNotify, syncIncrementPractice } from "./utils"
 
 interface Props {
   i18n: I18n
@@ -398,8 +399,7 @@ const navigateAndPlay = (action: "previous" | "next" | "random") => {
 }
 
 const handleCopy = async (text: string, message: string) => {
-  const ok = await copyToClipboard(text)
-  showMessage(ok ? message : "复制失败", 2000, ok ? "info" : "error")
+  await copyAndNotify(text, message)
 }
 
 const onTypingCorrect = async (card: Flashcard | null) => {
@@ -407,12 +407,7 @@ const onTypingCorrect = async (card: Flashcard | null) => {
   sessionTotal.value++
   sessionCorrect.value++
   try {
-    await storage.incrementPracticeCount(card.id)
-    const index = cards.value.findIndex((c) => c.id === card.id)
-    if (index !== -1) {
-      cards.value[index].practiceCount =
-        (cards.value[index].practiceCount || 0) + 1
-    }
+    await syncIncrementPractice(storage, cards, card.id)
   } catch {
     // 静默处理
   }
@@ -451,6 +446,7 @@ onMounted(async () => {
 
 watch([searchQuery, selectedCategory], () => {
   currentPage.value = 1
+  typingQueue.rebuild()
   typingQueue.currentIndex.value = 0
 })
 </script>

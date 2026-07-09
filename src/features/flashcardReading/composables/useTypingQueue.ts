@@ -1,3 +1,4 @@
+// 单词阅读功能 - 打字练习加权队列
 import type { Ref } from "vue"
 import type { Flashcard } from "../types"
 import {
@@ -13,17 +14,6 @@ function computeWeights(list: Flashcard[]): number[] {
   )
 }
 
-/** 根据权重随机选取一个索引 */
-function weightedRandomIndex(cards: Flashcard[]): number {
-  const weights = computeWeights(cards)
-  const totalWeight = weights.reduce((sum, w) => sum + w, 0)
-  let rand = Math.random() * totalWeight
-  for (let i = 0; i < weights.length; i++) {
-    rand -= weights[i]
-    if (rand <= 0) return i
-  }
-  return cards.length - 1
-}
 
 export function useTypingQueue(cards: Ref<Flashcard[]>) {
   const currentIndex = ref(0)
@@ -85,21 +75,19 @@ export function useTypingQueue(cards: Ref<Flashcard[]>) {
   }
 
   const next = () => {
-    rebuild()
     if (currentIndex.value < queue.value.length - 1) {
       currentIndex.value++
     }
   }
 
   const random = () => {
-    rebuild()
     if (queue.value.length <= 1) return
     let newIndex: number
     do {
-      newIndex = weightedRandomIndex(cards.value)
+      newIndex = Math.floor(Math.random() * queue.value.length)
     } while (
       newIndex === currentIndex.value
-      && cards.value.length > 1
+      && queue.value.length > 1
     )
     currentIndex.value = newIndex
   }

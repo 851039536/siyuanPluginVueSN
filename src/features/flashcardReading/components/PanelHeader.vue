@@ -25,7 +25,7 @@
           size="xsmall"
           icon="folder-open-outline"
           :title="storagePath"
-          @click="copyPath"
+          @click="openPath"
         />
       </div>
     </div>
@@ -38,7 +38,6 @@ import type { I18n } from "../types"
 import { showMessage } from "siyuan"
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
-import { copyToClipboard } from "@/utils/domUtils"
 import { useI18n } from "../composables/useI18n"
 import { STORAGE_KEY } from "../types/storage"
 
@@ -61,8 +60,14 @@ const storagePath = computed(() => {
     : `storage/petal/siyuan-plugin-vite-vue-sn/${STORAGE_KEY}.json`
 })
 
-const copyPath = async () => {
-  const ok = await copyToClipboard(storagePath.value)
-  showMessage(ok ? "已复制存储路径" : "复制失败", 2000, ok ? "info" : "error")
+const openPath = async () => {
+  if (typeof window.require === "function") {
+    try {
+      const { shell } = window.require("electron")
+      await shell.openPath(storagePath.value)
+    } catch {
+      showMessage("打开文件失败", 2000, "error")
+    }
+  }
 }
 </script>

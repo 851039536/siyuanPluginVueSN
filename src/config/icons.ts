@@ -361,6 +361,9 @@ export const COMMON_ICONS = {
   refreshLeft: {
     icon: "mdi:undo",
   },
+  "folder-open-outline": {
+    icon: "mdi:folder-open-outline",
+  },
   loading: {
     icon: "mdi:loading",
   },

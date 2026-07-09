@@ -432,6 +432,11 @@ $spacing-5: 20px;  // 大间距
 $spacing-6: 24px;  // 特大间距（header 水平 padding 上限）
 // ... $spacing-8 ~ $spacing-16 通常用于布局级间距，UI 组件少用
 
+// 外内原则 — 严格区分 padding（内）与 margin/gap（外）
+//   内间距 padding：元素自身内部的留白（按钮内边距、卡片内边距、弹窗 header/body/footer padding）
+//   外间距 margin/gap：同级元素之间、框与框之间的分隔间距（section 之间 margin-bottom、grid 列表 gap、header 与内容之间 margin-bottom）
+//   禁止混用：不要在元素之间用 padding 撑开间距，也不要在容器内部用 margin 替代 padding
+
 // 字体 — 禁止硬编码 font-size
 $font-size-2xs: 0.625rem;  // 10px  仅用于大写标签
 $font-size-xs: 0.75rem;   // 12px  小号文字（meta、hint、label）

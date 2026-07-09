@@ -1,4 +1,4 @@
-// 单词阅读 - 弹窗样式
+// 单词阅读 - 卡片弹窗样式
 @use 'variables' as *;
 
 .flashcard-reading-panel {
@@ -31,7 +31,7 @@
       h4 {
         margin: 0;
         font-size: $font-size-sm;
-        font-weight: 700;
+        font-weight: $font-weight-bold;
         letter-spacing: 0.02em;
       }
     }

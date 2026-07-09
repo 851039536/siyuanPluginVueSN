@@ -20,7 +20,7 @@
 
 .card-counter {
   font-size: $font-size-sm;
-  font-weight: 600;
+  font-weight: $font-weight-semibold;
   font-family: $vp-mono;
   color: var(--b3-theme-on-surface);
   opacity: 0.7;

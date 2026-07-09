@@ -1,0 +1,47 @@
+// 单词阅读功能 - 单卡视图组件样式（被 index.vue 和 FlashcardDialog 共用）
+@use 'variables' as *;
+
+.single-card-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  min-height: 0;
+  overflow: hidden;
+  padding: $spacing-2 0;
+
+  > .flashcard-item {
+    flex: 1;
+    max-height: 350px;
+    display: flex;
+    flex-direction: column;
+
+    :deep(.si-card) {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    :deep(.si-card__body) {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+    }
+  }
+}
+
+.flashcard-item--single {
+  .card-title--single {
+    font-size: $font-size-xl;
+    font-weight: 700;
+  }
+
+  .card-actions {
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  &:hover .card-actions {
+    opacity: 1;
+  }
+}

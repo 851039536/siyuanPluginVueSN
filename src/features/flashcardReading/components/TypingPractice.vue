@@ -1,119 +1,82 @@
 <!-- 单词阅读功能 - 打字练习组件 -->
 <template>
   <div class="typing-practice">
-    <Card
-      variant="bordered"
-      size="medium"
-      class="flashcard-item flashcard-item--single"
-    >
-      <template #header>
-        <div class="card-header">
-          <span
-            class="card-title"
-            :class="{ 'card-title--covered': coverMode }"
-          >
-            {{ coverMode ? '?' : currentCard?.title }}
+    <div class="typing-controls">
+      <div class="typing-controls__options">
+        <button
+          class="typing-case-toggle"
+          :class="{ 'typing-case-toggle--active': caseInsensitive }"
+          :title="caseInsensitive ? '当前：不区分大小写' : '当前：区分大小写'"
+          @click="emit('update:caseInsensitive', !caseInsensitive)"
+        >
+          <span class="typing-case-toggle__label">Aa</span>
+          <span class="typing-case-toggle__text">
+            {{ caseInsensitive ? t.caseInsensitive : t.caseSensitive }}
           </span>
-          <div class="card-actions">
-            <Button
-              variant="ghost"
-              size="xsmall"
-              icon="play"
-              :iconSize="14"
-              :title="t.play"
-              @click="$emit('play', currentCard)"
-            />
-          </div>
-        </div>
-      </template>
-      <div class="typing-detail">
-        {{ currentCard?.content }}
+        </button>
+        <button
+          class="typing-case-toggle"
+          :class="{ 'typing-case-toggle--active': instantReset }"
+          :title="instantReset ? '当前：输错立即重试' : '当前：输错稍后重试'"
+          @click="emit('update:instantReset', !instantReset)"
+        >
+          <IconWrapper
+            name="refresh"
+            :size="14"
+            class="typing-case-toggle__icon"
+          />
+          <span class="typing-case-toggle__text">
+            {{ instantReset ? t.instantReset : t.delayedReset }}
+          </span>
+        </button>
+        <button
+          class="typing-case-toggle"
+          :class="{ 'typing-case-toggle--active': coverMode }"
+          :title="coverMode ? '当前：盲打模式' : '当前：看打模式'"
+          @click="emit('update:coverMode', !coverMode)"
+        >
+          <IconWrapper
+            :name="coverMode ? 'eyeOff' : 'eye'"
+            :size="14"
+            class="typing-case-toggle__icon"
+          />
+          <span class="typing-case-toggle__text">
+            {{ coverMode ? t.coverMode : t.revealMode }}
+          </span>
+        </button>
+        <button
+          class="typing-case-toggle"
+          :class="{ 'typing-case-toggle--active': timerEnabled }"
+          :title="timerEnabled ? '当前：计时开启' : '当前：计时关闭'"
+          @click="emit('update:timerEnabled', !timerEnabled)"
+        >
+          <IconWrapper
+            name="timerOutline"
+            :size="14"
+            class="typing-case-toggle__icon"
+          />
+          <span class="typing-case-toggle__text">
+            {{ timerEnabled ? '计时' : '计时关' }}
+          </span>
+        </button>
       </div>
-      <template #footer>
-        <div class="card-footer card-footer--single">
-          <div class="card-footer__meta">
-            <span class="tag tag-small tag-info">{{ currentCard?.category }}</span>
-            <span class="tag tag-small tag-contrast">{{ t.practiceCount }}: {{ currentCard?.practiceCount || 0 }}</span>
-          </div>
-        </div>
-      </template>
-    </Card>
-
-    <div class="typing-options">
-      <button
-        class="typing-case-toggle"
-        :class="{ 'typing-case-toggle--active': caseInsensitive }"
-        :title="caseInsensitive ? '当前：不区分大小写' : '当前：区分大小写'"
-        @click="emit('update:caseInsensitive', !caseInsensitive)"
-      >
-        <span class="typing-case-toggle__label">Aa</span>
-        <span class="typing-case-toggle__text">
-          {{ caseInsensitive ? t.caseInsensitive : t.caseSensitive }}
-        </span>
-      </button>
-      <button
-        class="typing-case-toggle"
-        :class="{ 'typing-case-toggle--active': instantReset }"
-        :title="instantReset ? '当前：输错立即重试' : '当前：输错稍后重试'"
-        @click="emit('update:instantReset', !instantReset)"
-      >
-        <IconWrapper
-          name="refresh"
-          :size="14"
-          class="typing-case-toggle__icon"
-        />
-        <span class="typing-case-toggle__text">
-          {{ instantReset ? t.instantReset : t.delayedReset }}
-        </span>
-      </button>
-      <button
-        class="typing-case-toggle"
-        :class="{ 'typing-case-toggle--active': coverMode }"
-        :title="coverMode ? '当前：盲打模式' : '当前：看打模式'"
-        @click="emit('update:coverMode', !coverMode)"
-      >
-        <IconWrapper
-          :name="coverMode ? 'eyeOff' : 'eye'"
-          :size="14"
-          class="typing-case-toggle__icon"
-        />
-        <span class="typing-case-toggle__text">
-          {{ coverMode ? t.coverMode : t.revealMode }}
-        </span>
-      </button>
-      <button
-        class="typing-case-toggle"
-        :class="{ 'typing-case-toggle--active': timerEnabled }"
-        :title="timerEnabled ? '当前：计时开启' : '当前：计时关闭'"
-        @click="emit('update:timerEnabled', !timerEnabled)"
-      >
-        <IconWrapper
-          name="timerOutline"
-          :size="14"
-          class="typing-case-toggle__icon"
-        />
-        <span class="typing-case-toggle__text">
-          {{ timerEnabled ? '计时' : '计时关' }}
-        </span>
-      </button>
-    </div>
-
-    <div class="typing-session-config">
-      <span class="typing-session-config__label">{{ t.sessionSizeLabel }}</span>
-      <button
-        class="typing-session-config__btn"
-        @click="changeSessionSize(-5)"
-      >
-        −
-      </button>
-      <span class="typing-session-config__value">{{ sessionSize }}</span>
-      <button
-        class="typing-session-config__btn"
-        @click="changeSessionSize(5)"
-      >
-        +
-      </button>
-      <span class="typing-session-config__unit">张</span>
+      <div class="typing-controls__config">
+        <span class="typing-session-config__label">{{ t.sessionSizeLabel }}</span>
+        <button
+          class="typing-session-config__btn"
+          @click="changeSessionSize(-5)"
+        >
+          −
+        </button>
+        <span class="typing-session-config__value">{{ sessionSize }}</span>
+        <button
+          class="typing-session-config__btn"
+          @click="changeSessionSize(5)"
+        >
+          +
+        </button>
+        <span class="typing-session-config__unit">张</span>
+      </div>
     </div>
 
     <div class="typing-area">
@@ -174,6 +137,27 @@
           />
         </template>
       </div>
+    </div>
+
+    <div
+      v-if="currentCard"
+      class="typing-reference"
+    >
+      <div class="typing-reference__header">
+        <span class="typing-reference__meta">
+          <span class="tag tag-small tag-info">{{ currentCard.category }}</span>
+          <span class="tag tag-small tag-contrast">{{ t.practiceCount }}: {{ currentCard.practiceCount || 0 }}</span>
+        </span>
+        <Button
+          variant="ghost"
+          size="xsmall"
+          icon="play"
+          :iconSize="12"
+          :title="t.play"
+          @click="$emit('play', currentCard)"
+        />
+      </div>
+      <p class="typing-reference__content">{{ currentCard.content }}</p>
     </div>
 
     <div class="card-navigation">
@@ -264,7 +248,6 @@ import {
   watch,
 } from "vue"
 import Button from "@/components/Button.vue"
-import Card from "@/components/Card.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { useI18n } from "../composables/useI18n"
 

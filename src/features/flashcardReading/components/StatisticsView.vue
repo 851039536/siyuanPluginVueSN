@@ -1,3 +1,4 @@
+<!-- 单词阅读功能 - 练习统计视图 -->
 <template>
   <div class="statistics-view">
     <div class="stats-overview">

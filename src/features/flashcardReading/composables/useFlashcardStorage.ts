@@ -1,3 +1,4 @@
+// 单词阅读功能 - 卡片存储状态管理与监听
 import type { Plugin } from "siyuan"
 import type { Flashcard } from "../types"
 import {

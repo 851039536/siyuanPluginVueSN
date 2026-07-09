@@ -1,3 +1,4 @@
+<!-- 单词阅读功能 - 打字练习组件 -->
 <template>
   <div class="typing-practice">
     <Card
@@ -56,7 +57,11 @@
         :title="instantReset ? '当前：输错立即重试' : '当前：输错稍后重试'"
         @click="emit('update:instantReset', !instantReset)"
       >
-        <span class="typing-case-toggle__label">↻</span>
+        <IconWrapper
+          name="refresh"
+          :size="14"
+          class="typing-case-toggle__icon"
+        />
         <span class="typing-case-toggle__text">
           {{ instantReset ? t.instantReset : t.delayedReset }}
         </span>
@@ -67,7 +72,11 @@
         :title="coverMode ? '当前：盲打模式' : '当前：看打模式'"
         @click="emit('update:coverMode', !coverMode)"
       >
-        <span class="typing-case-toggle__label">{{ coverMode ? '◌' : '◉' }}</span>
+        <IconWrapper
+          :name="coverMode ? 'eyeOff' : 'eye'"
+          :size="14"
+          class="typing-case-toggle__icon"
+        />
         <span class="typing-case-toggle__text">
           {{ coverMode ? t.coverMode : t.revealMode }}
         </span>
@@ -78,7 +87,11 @@
         :title="timerEnabled ? '当前：计时开启' : '当前：计时关闭'"
         @click="emit('update:timerEnabled', !timerEnabled)"
       >
-        <span class="typing-case-toggle__label">⏱</span>
+        <IconWrapper
+          name="timerOutline"
+          :size="14"
+          class="typing-case-toggle__icon"
+        />
         <span class="typing-case-toggle__text">
           {{ timerEnabled ? '计时' : '计时关' }}
         </span>
@@ -208,7 +221,7 @@
       /> x{{ streak }}
       <template v-if="timerEnabled">
         <span class="typing-session-stats__sep">·</span>
-        <span class="typing-timer">⏱ {{ formatTime(elapsedSeconds) }}</span>
+        <span class="typing-timer"><IconWrapper name="timerOutline" :size="12" class="typing-timer__icon" /> {{ formatTime(elapsedSeconds) }}</span>
       </template>
     </div>
 
@@ -225,7 +238,7 @@
         <span>{{ sessionTotal > 0 ? Math.round(sessionCorrect / sessionTotal * 100) : 0 }}%</span>
         <template v-if="timerEnabled">
           <span class="typing-session-stats__sep">·</span>
-          <span>⏱ {{ formatTime(elapsedSeconds) }}</span>
+          <span><IconWrapper name="timerOutline" :size="12" class="typing-timer__icon" /> {{ formatTime(elapsedSeconds) }}</span>
         </template>
       </div>
       <Button

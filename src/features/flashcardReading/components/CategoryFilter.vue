@@ -1,3 +1,4 @@
+<!-- 单词阅读功能 - 分类筛选与搜索 -->
 <template>
   <div class="category-filter">
     <div class="filter-left">

@@ -1,3 +1,4 @@
+<!-- 单词阅读功能 - 卡片列表视图 -->
 <template>
   <div class="card-list">
     <Card

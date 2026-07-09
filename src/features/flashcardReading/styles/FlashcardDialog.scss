@@ -1,0 +1,29 @@
+// 单词阅读 - 弹窗式快速浏览样式
+@use 'variables' as *;
+
+.flashcard-dialog {
+  width: 100%;
+  max-height: 85vh;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  overflow-y: auto;
+
+  .close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1;
+  }
+}
+
+.card-counter {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  font-family: $vp-mono;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+  min-width: 60px;
+  text-align: center;
+}

@@ -1,3 +1,4 @@
+<!-- 单词阅读功能 - 面板标题栏 -->
 <template>
   <div class="panel-header-wrapper">
     <div class="panel-header">

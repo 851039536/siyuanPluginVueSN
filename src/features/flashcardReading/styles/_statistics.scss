@@ -5,16 +5,16 @@
   .statistics-view {
     flex: 1;
     overflow-y: auto;
-    padding: 4px 4px;
+    padding: $spacing-1 $spacing-1;
     min-height: 0;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: $spacing-3;
 
     .stats-overview {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
+      gap: $spacing-2;
 
       .stat-item-inner {
         display: flex;
@@ -33,9 +33,9 @@
           min-width: 0;
 
           .stat-value {
-            font-size: 20px;
+            font-size: $font-size-xl;
             font-weight: 700;
-            font-family: $fc-mono;
+            font-family: $vp-mono;
             color: var(--b3-theme-on-background);
             line-height: 1.2;
           }
@@ -58,13 +58,13 @@
 
         .progress-title {
           @include fc-label;
-          font-size: 11px;
+          font-size: $font-size-xs;
         }
 
         .progress-percent {
-          font-size: 12px;
+          font-size: $font-size-xs;
           font-weight: 600;
-          font-family: $fc-mono;
+          font-family: $vp-mono;
           color: var(--b3-theme-primary);
         }
       }
@@ -88,7 +88,7 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 12px;
+      font-size: $font-size-xs;
       font-weight: 700;
       letter-spacing: 0.04em;
       color: var(--b3-theme-on-surface);
@@ -98,18 +98,18 @@
     .bar-chart {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: $spacing-2;
 
       .bar-item {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: $spacing-2;
 
         .bar-label {
           min-width: 50px;
           max-width: 70px;
           @include fc-label;
-          font-size: 11px;
+          font-size: $font-size-xs;
           text-align: right;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -122,7 +122,7 @@
           flex: 1;
           height: 22px;
           background: var(--b3-theme-surface-lighter);
-          border-radius: $fc-radius;
+          border-radius: $vp-radius;
           overflow: hidden;
 
           .bar-fill {
@@ -130,8 +130,8 @@
             display: flex;
             align-items: center;
             justify-content: flex-end;
-            padding-right: 8px;
-            border-radius: $fc-radius;
+            padding-right: $spacing-2;
+            border-radius: $vp-radius;
             min-width: 24px;
             transition: width 0.3s ease;
 
@@ -141,9 +141,9 @@
             &--3 { background: $brand-accent; }
 
             .bar-value {
-              font-size: 11px;
+              font-size: $font-size-xs;
               font-weight: 600;
-              font-family: $fc-mono;
+              font-family: $vp-mono;
               color: $brand-light;
             }
           }
@@ -160,10 +160,10 @@
         display: flex;
         align-items: center;
         gap: 10px;
-        padding: 8px 10px;
+        padding: $spacing-2 10px;
         background: var(--b3-theme-surface-lighter);
         border: 1px solid var(--b3-border-color);
-        border-radius: $fc-radius;
+        border-radius: $vp-radius;
         transition: border-color $fc-transition;
 
         &:hover {
@@ -181,10 +181,10 @@
           display: flex;
           align-items: center;
           justify-content: center;
-          border-radius: $fc-radius;
-          font-size: 11px;
+          border-radius: $vp-radius;
+          font-size: $font-size-xs;
           font-weight: 700;
-          font-family: $fc-mono;
+          font-family: $vp-mono;
           flex-shrink: 0;
           background: var(--b3-theme-surface);
           color: var(--b3-theme-secondary);
@@ -203,7 +203,7 @@
           gap: 6px;
 
           .rank-title {
-            font-size: 13px;
+            font-size: $font-size-sm;
             font-weight: 500;
             color: var(--b3-theme-on-background);
             overflow: hidden;
@@ -223,9 +223,9 @@
         }
 
         .rank-count {
-          font-size: 13px;
+          font-size: $font-size-sm;
           font-weight: 700;
-          font-family: $fc-mono;
+          font-family: $vp-mono;
           color: var(--b3-theme-primary);
           flex-shrink: 0;
         }

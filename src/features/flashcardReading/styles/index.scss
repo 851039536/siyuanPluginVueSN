@@ -262,23 +262,8 @@
     white-space: pre-wrap;
   }
 
-  .single-card-view {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: $spacing-4;
-    min-height: 0;
-    overflow: hidden;
-    padding: $spacing-2 0;
-  }
-
   .flashcard-item--single {
-    .card-title--single {
-      font-size: $font-size-xl;
-      font-weight: 700;
-    }
-
-    // 盲打模式: 模糊标题
+    // 盲打模式: 模糊标题（TypingPractice 使用）
     .card-title--covered {
       filter: blur(8px);
       user-select: none;
@@ -297,19 +282,8 @@
         gap: $spacing-2;
       }
     }
-
-    // 单卡视图也支持 hover 显示操作按钮
-    .card-actions {
-      opacity: 0;
-      transition: opacity 0.15s;
-    }
-
-    &:hover .card-actions {
-      opacity: 1;
-    }
   }
 
-  .single-card-view,
   .typing-practice {
     > .flashcard-item {
       flex: 1;

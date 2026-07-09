@@ -136,3 +136,7 @@ defineEmits<{
 
 const t = useI18n(props.i18n)
 </script>
+
+<style scoped lang="scss">
+@use '../styles/SingleCardView.scss';
+</style>

@@ -162,5 +162,6 @@ onMounted(() => {
 
 <style scoped lang="scss">
 @use '../styles/FlashcardDialog.scss';
+@use '../styles/SingleCardView.scss';
 @use '../styles/index.scss';
 </style>

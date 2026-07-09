@@ -157,11 +157,13 @@ export class S3Backup {
         case "daily": {
           const [targetHour, targetMinute] = backupTime.split(":").map(Number)
           // A5 修复：用宽松窗口替代精确分钟匹配，避免因 setInterval 偏移错过备份
-          // 条件：当前时间已过目标时间（同一天）、今天尚未执行、距离上次备份 ≥ 1 分钟
+          // B18 修复：增加 timeSinceTimerStart 守卫，防止程序重启时第一 tick 立即误触发
+          // 条件：当前时间已过目标时间、定时器已运行 ≥ 60s、今天尚未执行、距离上次备份 ≥ 1 分钟
           const targetTotal = targetHour * 60 + targetMinute
           const currentTotal = currentHour * 60 + currentMinute
           if (
             currentTotal >= targetTotal
+            && timeSinceTimerStart >= 60 * 1000
             && this.lastExecutedDateStr !== currentDateStr
             && timeSinceLastBackup >= 60 * 1000
           ) {

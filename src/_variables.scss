@@ -149,6 +149,8 @@ $shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
 
 // ========== 间距变量（Spacing） ==========
 
+$spacing-2px: 2px;          // 2px 超微间距（极窄分隔线间距、图标紧贴）
+$spacing-px: 3px;           // 3px 微间距（密集布局专用，如 grid gap、tiny padding）
 $spacing-0: 0;
 $spacing-1: 0.25rem;    // 4px
 $spacing-2: 0.5rem;     // 8px
@@ -162,6 +164,7 @@ $spacing-12: 3rem;      // 48px
 $spacing-16: 4rem;      // 64px
 
 // 注：$spacing-1 ~ $spacing-4 是全局标准（数字后缀），等价于 superPanel 本地别名 $spacing-xs ~ $spacing-lg
+// 注：$spacing-px 用于极小值场景（3px），如 grid 紧凑 gap、tab 内边距等，避免硬编码 3px
 
 
 

@@ -19,7 +19,7 @@
       .stat-item-inner {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: $spacing-3;
 
         .stat-icon {
           flex-shrink: 0;
@@ -42,7 +42,6 @@
 
           .stat-label {
             @include fc-label;
-            font-size: $font-size-2xs;
             margin-top: 2px;
           }
         }
@@ -54,7 +53,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 10px;
+        margin-bottom: $spacing-3;
 
         .progress-title {
           @include fc-label;
@@ -87,7 +86,7 @@
     .chart-card-title {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: $spacing-2;
       font-size: $font-size-xs;
       font-weight: $font-weight-bold;
       letter-spacing: 0.04em;
@@ -154,13 +153,13 @@
     .rank-list {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: $spacing-2;
 
       .rank-item {
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding: $spacing-2 10px;
+        gap: $spacing-3;
+        padding: $spacing-2 $spacing-3;
         background: var(--b3-theme-surface-lighter);
         border: 1px solid var(--b3-border-color);
         border-radius: $vp-radius;
@@ -200,7 +199,7 @@
           min-width: 0;
           display: flex;
           align-items: center;
-          gap: 6px;
+          gap: $spacing-2;
 
           .rank-title {
             font-size: $font-size-sm;
@@ -213,10 +212,9 @@
 
           .category-tag {
             @include fc-label;
-            padding: 1px 6px;
-            font-size: $font-size-2xs;
+            padding: 1px $spacing-2;
             background: var(--b3-theme-surface-lighter);
-            border-radius: 3px;
+            border-radius: $vp-radius;
             flex-shrink: 0;
             opacity: 0.7;
           }

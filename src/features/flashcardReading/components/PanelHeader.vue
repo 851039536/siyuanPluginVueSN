@@ -3,10 +3,6 @@
   <div class="panel-header-wrapper">
     <div class="panel-header">
       <h4 class="panel-title">
-        <IconWrapper
-          name="headphones"
-          :size="18"
-        />
         <span>{{ t.panelTitle }}</span>
       </h4>
       <div class="header-actions">
@@ -27,15 +23,11 @@
         <Button
           variant="ghost"
           size="xsmall"
-          icon="info"
+          icon="folder-open-outline"
           :title="storagePath"
           @click="copyPath"
         />
       </div>
-    </div>
-    <div class="panel-meta">
-      <span class="panel-meta-key">STORE</span>
-      <code class="panel-meta-val">{{ storagePath }}</code>
     </div>
   </div>
 </template>
@@ -46,7 +38,6 @@ import type { I18n } from "../types"
 import { showMessage } from "siyuan"
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
-import IconWrapper from "@/components/IconWrapper.vue"
 import { copyToClipboard } from "@/utils/domUtils"
 import { useI18n } from "../composables/useI18n"
 import { STORAGE_KEY } from "../types/storage"

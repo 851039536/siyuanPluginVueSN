@@ -1,6 +1,8 @@
 // 单词阅读 - 打字练习样式
 @use 'variables' as *;
 
+$fc-gap-tight: 6px; // 6px 紧密间距（无匹配全局Token）
+
 .flashcard-reading-panel {
   .typing-practice {
     display: flex;
@@ -24,7 +26,7 @@
       &__config {
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: $fc-gap-tight;
         flex-shrink: 0;
       }
 
@@ -48,7 +50,7 @@
           font-size: $font-size-sm;
           font-weight: $font-weight-semibold;
           line-height: 1;
-          transition: all $fc-transition;
+          transition: border-color $fc-transition, color $fc-transition;
 
           &:hover {
             border-color: var(--b3-theme-primary);
@@ -74,7 +76,7 @@
     .typing-case-toggle {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: $fc-gap-tight;
       padding: $spacing-1 10px;
       border: 1px solid var(--b3-border-color);
       border-radius: $vp-radius;
@@ -83,7 +85,7 @@
       cursor: pointer;
       font-size: $font-size-xs;
       font-weight: $font-weight-semibold;
-      transition: all $fc-transition;
+      transition: border-color $fc-transition, opacity $fc-transition, background-color $fc-transition, color $fc-transition;
       opacity: 0.65;
 
       &:hover {
@@ -100,7 +102,6 @@
 
       &__label {
         font-family: $vp-mono;
-        font-size: $font-size-xs;
         font-weight: $font-weight-bold;
       }
 
@@ -185,7 +186,7 @@
         background: var(--b3-theme-surface-lighter);
         color: var(--b3-theme-on-background);
         border: 1px solid var(--b3-border-color);
-        transition: all 0.12s;
+        transition: background-color $fc-transition, border-color $fc-transition, color $fc-transition;
 
         &--correct {
           background: rgba($brand-success, 0.12);
@@ -272,7 +273,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: $fc-gap-tight;
       padding: 6px $spacing-3;
       font-size: $font-size-xs;
       font-weight: $font-weight-semibold;

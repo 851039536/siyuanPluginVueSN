@@ -24,7 +24,7 @@
 
       &__label {
         @include fc-label;
-        font-size: 10px;
+        font-size: $font-size-2xs;
       }
 
       &__btn {
@@ -39,7 +39,7 @@
         color: var(--b3-theme-on-surface);
         cursor: pointer;
         font-size: $font-size-sm;
-        font-weight: 600;
+        font-weight: $font-weight-semibold;
         line-height: 1;
         transition: all $fc-transition;
 
@@ -52,14 +52,14 @@
       &__value {
         font-family: $vp-mono;
         font-size: $font-size-sm;
-        font-weight: 700;
+        font-weight: $font-weight-bold;
         min-width: 24px;
         text-align: center;
       }
 
       &__unit {
         @include fc-label;
-        font-size: 10px;
+        font-size: $font-size-2xs;
       }
     }
 
@@ -74,7 +74,7 @@
       color: var(--b3-theme-on-surface);
       cursor: pointer;
       font-size: $font-size-xs;
-      font-weight: 600;
+      font-weight: $font-weight-semibold;
       transition: all $fc-transition;
       opacity: 0.65;
 
@@ -93,7 +93,7 @@
       &__label {
         font-family: $vp-mono;
         font-size: $font-size-xs;
-        font-weight: 700;
+        font-weight: $font-weight-bold;
       }
 
       &__icon {
@@ -102,7 +102,7 @@
 
       &__text {
         @include fc-label;
-        font-size: 10px;
+        font-size: $font-size-2xs;
         opacity: 1;
         color: inherit;
       }
@@ -120,7 +120,7 @@
     .typing-detail {
       width: 100%;
       font-size: $font-size-sm;
-      line-height: 1.6;
+      line-height: $line-height-normal;
       color: var(--b3-theme-on-background);
       opacity: 0.85;
       word-break: break-word;
@@ -204,7 +204,7 @@
       align-items: center;
       gap: $spacing-2;
       font-size: $font-size-sm;
-      font-weight: 600;
+      font-weight: $font-weight-semibold;
       font-family: $vp-mono;
       padding: 6px 14px;
       border-radius: $vp-radius;
@@ -225,13 +225,13 @@
 
     .typing-streak {
       font-size: $font-size-sm;
-      font-weight: 700;
+      font-weight: $font-weight-bold;
       color: $brand-accent;
       font-family: $vp-mono;
       animation: streak-pulse 0.4s ease;
 
       &--inline {
-        margin-left: 6px;
+        margin-left: $spacing-2;
       }
     }
 
@@ -242,7 +242,7 @@
       gap: 6px;
       padding: 6px $spacing-3;
       font-size: $font-size-xs;
-      font-weight: 600;
+      font-weight: $font-weight-semibold;
       font-family: $vp-mono;
       color: var(--b3-theme-on-surface);
       opacity: 0.6;
@@ -257,7 +257,7 @@
 
     .typing-timer {
       font-family: $vp-mono;
-      font-weight: 600;
+      font-weight: $font-weight-semibold;
       color: var(--b3-theme-primary);
 
       &__icon {
@@ -278,7 +278,7 @@
 
       &__title {
         font-size: $font-size-sm;
-        font-weight: 700;
+        font-weight: $font-weight-bold;
         color: var(--b3-theme-primary);
       }
 

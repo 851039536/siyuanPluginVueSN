@@ -1,9 +1,6 @@
 @use '@/variables.scss' as *;
 
 // ==================== 本地变量 & 基础设施 ====================
-// 微间距变量（全局 token 体系最小 4px，无法覆盖）
-$_gap-xs: 3px;
-$_pad-tab-y: 3px;
 $_pad-tab-x: 10px;
 $_grid-title-size: 0.625rem; // 10px — 网格模式下标题字号
 $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
@@ -316,7 +313,7 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
 
 .feature-drawer-tab {
   @extend %flex-shrink-0;
-  padding: $_pad-tab-y $_pad-tab-x;
+  padding: $spacing-px $_pad-tab-x;
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-lg;
   background: transparent;
@@ -416,7 +413,7 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
     .feature-drawer-item {
       flex-direction: column;
       align-items: center;
-      gap: $_gap-xs;
+      gap: $spacing-px;
       padding: $spacing-1;
       border-radius: $vp-radius;
       position: relative;

@@ -9,17 +9,17 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
-    gap: $spacing-3;
+    gap: $spacing-2;
 
     .stats-overview {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: $spacing-2;
+      gap: $spacing-1;
 
       .stat-item-inner {
         display: flex;
         align-items: center;
-        gap: $spacing-3;
+        gap: $spacing-2;
 
         .stat-icon {
           flex-shrink: 0;
@@ -33,7 +33,7 @@
           min-width: 0;
 
           .stat-value {
-            font-size: $font-size-lg;
+            font-size: $font-size-base;
             font-weight: $font-weight-bold;
             font-family: $vp-mono;
             color: var(--b3-theme-on-background);
@@ -42,6 +42,7 @@
 
           .stat-label {
             @include fc-label;
+            font-size: $font-size-2xs;
             margin-top: 2px;
           }
         }
@@ -53,15 +54,15 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: $spacing-3;
+        margin-bottom: $spacing-2;
 
         .progress-title {
           @include fc-label;
-          font-size: $font-size-xs;
+          font-size: $font-size-2xs;
         }
 
         .progress-percent {
-          font-size: $font-size-xs;
+          font-size: $font-size-2xs;
           font-weight: $font-weight-semibold;
           font-family: $vp-mono;
           color: var(--b3-theme-primary);
@@ -69,25 +70,41 @@
       }
 
       .progress-bar {
-        height: 6px;
+        height: 4px;
         background: var(--b3-theme-surface-lighter);
-        border-radius: 3px;
+        border-radius: 2px;
         overflow: hidden;
 
         .progress-fill {
           height: 100%;
           background: linear-gradient(90deg, var(--b3-theme-primary), $brand-info);
-          border-radius: 3px;
+          border-radius: 2px;
           transition: width 0.3s ease;
         }
       }
     }
 
+    .chart-card {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .rank-card {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
     .chart-card-title {
       display: flex;
       align-items: center;
-      gap: $spacing-2;
-      font-size: $font-size-xs;
+      gap: $spacing-1;
+      font-size: $font-size-2xs;
       font-weight: $font-weight-bold;
       letter-spacing: 0.04em;
       color: var(--b3-theme-on-surface);
@@ -95,20 +112,23 @@
     }
 
     .bar-chart {
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
       display: flex;
       flex-direction: column;
-      gap: $spacing-2;
+      gap: $spacing-1;
 
       .bar-item {
         display: flex;
         align-items: center;
-        gap: $spacing-2;
+        gap: $spacing-1;
 
         .bar-label {
-          min-width: 50px;
-          max-width: 70px;
+          min-width: 40px;
+          max-width: 60px;
           @include fc-label;
-          font-size: $font-size-xs;
+          font-size: $font-size-2xs;
           text-align: right;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -119,7 +139,7 @@
 
         .bar-container {
           flex: 1;
-          height: 22px;
+          height: 18px;
           background: var(--b3-theme-surface-lighter);
           border-radius: $vp-radius;
           overflow: hidden;
@@ -140,7 +160,7 @@
             &--3 { background: $brand-accent; }
 
             .bar-value {
-              font-size: $font-size-xs;
+              font-size: $font-size-2xs;
               font-weight: $font-weight-semibold;
               font-family: $vp-mono;
               color: $brand-light;
@@ -151,15 +171,18 @@
     }
 
     .rank-list {
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
       display: flex;
       flex-direction: column;
-      gap: $spacing-2;
+      gap: $spacing-1;
 
       .rank-item {
         display: flex;
         align-items: center;
-        gap: $spacing-3;
-        padding: $spacing-2 $spacing-3;
+        gap: $spacing-2;
+        padding: $spacing-1 $spacing-2;
         background: var(--b3-theme-surface-lighter);
         border: 1px solid var(--b3-border-color);
         border-radius: $vp-radius;
@@ -175,13 +198,13 @@
         }
 
         .rank-number {
-          width: 22px;
-          height: 22px;
+          width: 18px;
+          height: 18px;
           display: flex;
           align-items: center;
           justify-content: center;
           border-radius: $vp-radius;
-          font-size: $font-size-xs;
+          font-size: $font-size-2xs;
           font-weight: $font-weight-bold;
           font-family: $vp-mono;
           flex-shrink: 0;
@@ -199,10 +222,10 @@
           min-width: 0;
           display: flex;
           align-items: center;
-          gap: $spacing-2;
+          gap: $spacing-1;
 
           .rank-title {
-            font-size: $font-size-sm;
+            font-size: $font-size-xs;
             font-weight: $font-weight-medium;
             color: var(--b3-theme-on-background);
             overflow: hidden;
@@ -212,7 +235,8 @@
 
           .category-tag {
             @include fc-label;
-            padding: 1px $spacing-2;
+            padding: 1px $spacing-1;
+            font-size: $font-size-2xs;
             background: var(--b3-theme-surface-lighter);
             border-radius: $vp-radius;
             flex-shrink: 0;
@@ -221,7 +245,7 @@
         }
 
         .rank-count {
-          font-size: $font-size-sm;
+          font-size: $font-size-xs;
           font-weight: $font-weight-bold;
           font-family: $vp-mono;
           color: var(--b3-theme-primary);

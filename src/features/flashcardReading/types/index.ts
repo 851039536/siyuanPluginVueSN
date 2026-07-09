@@ -44,7 +44,7 @@ export interface TypingSettings {
 /**
  * 视图模式类型
  */
-export type ViewMode = "list" | "single" | "statistics" | "typing"
+export type ViewMode = "list" | "statistics" | "typing"
 
 /**
  * 统计数据类型
@@ -73,7 +73,6 @@ export interface I18n {
   total?: string
   filtered?: string
   listView?: string
-  singleView?: string
   statisticsView?: string
   play?: string
   copyTitle?: string

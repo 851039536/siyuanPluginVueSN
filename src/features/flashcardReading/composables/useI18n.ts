@@ -15,7 +15,6 @@ export const DEFAULT_I18N: Required<I18n> = {
   total: "总计",
   filtered: "筛选",
   listView: "列表",
-  singleView: "单卡",
   statisticsView: "统计",
   play: "播放",
   copyTitle: "复制单词",

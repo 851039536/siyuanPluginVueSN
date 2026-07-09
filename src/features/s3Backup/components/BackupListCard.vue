@@ -16,7 +16,7 @@
       <div v-for="(item, index) in items" :key="index" class="backup-item">
         <div class="backup-info">
           <span class="backup-name">{{ item.name }}</span>
-          <span class="backup-time">{{ item[timeKey] }}</span>
+          <span class="backup-time">{{ formatTime(item[timeKey]) }}</span>
           <span class="backup-size">{{ formatFileSize(item.size) }}</span>
         </div>
         <div class="backup-actions">
@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { formatFileSize } from "@/utils/format"
+import { formatFileSize, formatTime } from "@/utils/format"
 import Button from "@/components/Button.vue"
 
 withDefaults(defineProps<{

@@ -69,6 +69,13 @@
   background: var(--b3-theme-surface-lighter);
   border-radius: $vp-radius;
   border: 1px solid var(--b3-border-color);
+
+  .tag {
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 52px;
+    text-align: center;
+  }
 }
 
 .flashcard-reading-panel {

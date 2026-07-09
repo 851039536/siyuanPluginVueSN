@@ -32,22 +32,6 @@
         @delete="deleteCard"
       />
 
-      <SingleCardView
-        v-else-if="viewMode === 'single'"
-        :currentCard="typingQueue.currentCard.value"
-        :currentIndex="typingQueue.currentIndex.value"
-        :totalCards="typingQueue.queue.value.length"
-        :i18n="i18n"
-        @play="playWord"
-        @previous="() => navigateAndPlay('previous')"
-        @next="() => navigateAndPlay('next')"
-        @random="() => navigateAndPlay('random')"
-        @copyTitle="(c: Flashcard) => handleCopy(c.title, '已复制单词')"
-        @copyContent="(c: Flashcard) => handleCopy(c.content, '已复制内容')"
-        @edit="editCard"
-        @delete="deleteCard"
-      />
-
       <StatisticsView
         v-else-if="viewMode === 'statistics'"
         :statistics="statisticsData"
@@ -135,13 +119,6 @@
         @click="viewMode = 'list'"
       >
         {{ t.listView }}
-      </Button>
-      <Button
-        :variant="viewMode === 'single' ? 'primary' : 'secondary'"
-        size="xsmall"
-        @click="switchMode('single')"
-      >
-        {{ t.singleView }}
       </Button>
       <Button
         :variant="viewMode === 'statistics' ? 'primary' : 'secondary'"
@@ -387,7 +364,7 @@ const statisticsData = computed<StatisticsData>(() => {
   }
 })
 
-const switchMode = (mode: "single" | "typing") => {
+const switchMode = (mode: "typing") => {
   viewMode.value = mode
   typingQueue.rebuild()
   typingQueue.currentIndex.value = 0

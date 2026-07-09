@@ -145,8 +145,8 @@
         justify-content: center;
         width: 32px;
         height: 40px;
-        font-size: $font-size-xl;
-        font-weight: 600;
+        font-size: $font-size-lg;
+        font-weight: $font-weight-semibold;
         font-family: $vp-mono;
         border-radius: $vp-radius;
         background: var(--b3-theme-surface-lighter);

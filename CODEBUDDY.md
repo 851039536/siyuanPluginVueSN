@@ -259,7 +259,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 - `_mixins.scss` 由各 SCSS 文件通过 `@use "./mixins" as m` 自行引用
 - 响应式 `@media` 查询就近放置：组件专属放在组件 SCSS 末尾，公共基座类放在 `index.scss` 末尾
 
-项目遵循 **Codex UI 风格**：基于边框的卡片（禁用 `box-shadow`），使用 `src/_variables.scss` 中的全局设计 Token（`$radius-*`/`$vp-radius`/`$spacing-2px`/`$spacing-px`/`$spacing-1`~`$spacing-4`/`$font-size-*`/`$vp-mono`），大写标签 10px/700 字重 + 0.06em 字母间距，统一 0.12s 过渡。**所有 `<Input>`/`<Select>` 在弹窗表单中必须指定 `size="small"`**，默认 `medium` 与紧凑风格不匹配。
+项目遵循 **Codex UI 风格**：基于边框的卡片（禁用 `box-shadow`），使用 `src/_variables.scss` 中的全局设计 Token（`$radius-*`/`$vp-radius`/`$spacing-2px`/`$spacing-px`/`$spacing-1`~`$spacing-4`/`$font-size-*`/`$font-weight-*`/`$line-height-*`/`$vp-mono`），大写标签 `$font-size-2xs`/`$font-weight-bold` 字重 + 0.06em 字母间距，统一 0.12s 过渡。**字体三要素 `font-size`/`font-weight`/`line-height` 禁止硬编码 px 或数字值**，必须使用对应的 `$font-size-*`/`$font-weight-*`/`$line-height-*` Token。**所有 `<Input>`/`<Select>` 在弹窗表单中必须指定 `size="small"`**，默认 `medium` 与紧凑风格不匹配。
 
 > 完整设计 Token 表、核心规范速查表、`.vp-*` 组件模式库（弹窗/输入框/标签）、禁止事项清单见 [CLAUDE_RULES.md § UI 风格：Codex](./CLAUDE_RULES.md#ui-风格codex)
 >

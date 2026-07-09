@@ -185,7 +185,7 @@ src/
 
 ## UI 风格：Codex
 
-**强制规则**：所有新增 feature 的 UI 必须遵循 Codex 风格。禁止硬编码尺寸——使用全局设计 Token（`src/_variables.scss` 提供 `$vp-radius` / `$spacing-*` / `$vp-mono` / `$radius-*`），禁止 `box-shadow`（改用边框）。
+**强制规则**：所有新增 feature 的 UI 必须遵循 Codex 风格。禁止硬编码尺寸——使用全局设计 Token（`src/_variables.scss` 提供 `$vp-radius` / `$spacing-*` / `$vp-mono` / `$radius-*`），禁止 `box-shadow`（改用边框）。字体三要素（`font-size` / `font-weight` / `line-height`）同样禁止硬编码 px/数字值，必须使用 `$font-size-*` / `$font-weight-*` / `$line-height-*` Token。
 
 > 完整 Token 表、组件模式库、禁止事项见 [CLAUDE_RULES.md § UI 风格：Codex](./CLAUDE_RULES.md#ui-风格codex)
 

@@ -94,6 +94,16 @@ export function useStatusBarTask(taskId: string, icon: string): TaskHandle {
     tasks.delete(taskId)
   }
 
+  /** 标记任务结束（完成或失败）— complete() 与 fail() 的共享实现 */
+  const finish = (label: string, level: ResourceLevel, delayMs: number, tooltip?: string) => {
+    cancelTimer()
+    const info = ensureTask()
+    info.display = label
+    info.tooltip = tooltip || label
+    info.level = level
+    clearTimers.set(taskId, setTimeout(remove, delayMs))
+  }
+
   return {
     progress(opts: TaskProgressOpts) {
       cancelTimer()
@@ -105,21 +115,11 @@ export function useStatusBarTask(taskId: string, icon: string): TaskHandle {
     },
 
     complete(label: string, detail?: string) {
-      cancelTimer()
-      const info = ensureTask()
-      info.display = label
-      info.tooltip = detail || label
-      info.level = "normal"
-      clearTimers.set(taskId, setTimeout(remove, AUTO_CLEAR_MS))
+      finish(label, "normal", AUTO_CLEAR_MS, detail)
     },
 
     fail(label: string) {
-      cancelTimer()
-      const info = ensureTask()
-      info.display = label
-      info.tooltip = label
-      info.level = "high"
-      clearTimers.set(taskId, setTimeout(remove, FAIL_CLEAR_MS))
+      finish(label, "high", FAIL_CLEAR_MS)
     },
 
     clear: remove,

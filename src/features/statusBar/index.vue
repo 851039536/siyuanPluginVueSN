@@ -1,3 +1,4 @@
+<!-- 状态栏主面板：监控项展示、快捷入口、功能抽屉容器 -->
 <template>
   <div
     v-show="state.showMonitor"
@@ -406,34 +407,38 @@ const toggleMembership = (target: Ref<string[]>, id: string) =>
     ? target.value.filter((s) => s !== id)
     : [...target.value, id]
 
+// 按分类（监控/功能）保存状态，消除 handleToggleStatusBar 与 handleToggleRarelyUsed 中的重复 save 模式
+const saveCategory = async (id: string) => {
+  if (MONITOR_IDS.has(id)) {
+    await storage.save("statusBar-monitors", [...visibleMonitors])
+  } else {
+    await storage.save("statusBar-shortcuts", statusBarShortcuts.value)
+  }
+}
+
 const handleToggleStatusBar = async (id: string) => {
   if (MONITOR_IDS.has(id)) {
-    // 监控项：切换 visibleMonitors Set
     if (visibleMonitors.has(id)) {
       visibleMonitors.delete(id)
     } else {
       visibleMonitors.add(id)
     }
-    await storage.save("statusBar-monitors", [...visibleMonitors])
   } else {
-    // 功能快捷方式：原有逻辑
     statusBarShortcuts.value = toggleMembership(statusBarShortcuts, id)
-    await storage.save("statusBar-shortcuts", statusBarShortcuts.value)
   }
+  await saveCategory(id)
 }
 
 const handleToggleRarelyUsed = async (id: string) => {
   const wasRare = rarelyUsedFeatures.value.includes(id)
   rarelyUsedFeatures.value = toggleMembership(rarelyUsedFeatures, id)
   if (!wasRare) {
-    // 标记为不常用后，从可见列表中移除
     if (MONITOR_IDS.has(id)) {
       visibleMonitors.delete(id)
-      await storage.save("statusBar-monitors", [...visibleMonitors])
     } else {
       statusBarShortcuts.value = statusBarShortcuts.value.filter((s) => s !== id)
-      await storage.save("statusBar-shortcuts", statusBarShortcuts.value)
     }
+    await saveCategory(id)
   }
   await storage.save("statusBar-rarelyUsed", rarelyUsedFeatures.value)
 }

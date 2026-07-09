@@ -1,3 +1,6 @@
+/**
+ * 状态栏核心监控逻辑：CPU/内存/运行时间采集、文档统计查询、显示格式化
+ */
 import type {
   ResourceLevel,
   StatusBarState,
@@ -21,6 +24,13 @@ import {
 
 const TOTAL_MEMORY_BYTES = DEFAULT_TOTAL_MEMORY_GB * 1024 * 1024 * 1024
 const TOTAL_MEMORY_MB = DEFAULT_TOTAL_MEMORY_GB * 1024
+
+// 字数格式化阈值（按从大到小排列），避免 computed 中重复创建
+const WORD_COUNT_THRESHOLDS: [number, string][] = [
+  [100000000, "亿"],
+  [10000, "万"],
+  [1000, "k"],
+]
 
 function formatUptime(seconds: number): { hours: number, minutes: number } {
   return {
@@ -58,6 +68,7 @@ export function useStatusBar() {
   let lastCPU: NodeJS.CpuUsage | null = null
   let lastTime: number | null = null
   let lastMemPercent = -1
+  let lastUptimeDisplayMinutes = -1 // 缓存 uptime 显示值，仅分钟级变化时更新
 
   const cpuUsageDisplay = computed(() => `${Math.round(state.cpuPercent)}%`)
 
@@ -77,11 +88,7 @@ export function useStatusBar() {
   const totalNotesDisplay = computed(() => String(state.totalNotes))
 
   const totalWordsDisplay = computed(() =>
-    formatCount(state.totalWords, [
-      [100000000, "亿"],
-      [10000, "万"],
-      [1000, "k"],
-    ]),
+    formatCount(state.totalWords, WORD_COUNT_THRESHOLDS),
   )
 
   const statisticsTooltip = computed(() => {
@@ -199,7 +206,13 @@ export function useStatusBar() {
       state.memPercent = rawMem
       lastMemPercent = rawMem
     }
-    state.uptimeSeconds = Math.floor(process.uptime())
+    // 仅运行时间分钟级变化时写入，避免每 3 秒无效响应式更新
+    const uptime = Math.floor(process.uptime())
+    const displayMinutes = Math.floor(uptime / 60)
+    if (displayMinutes !== lastUptimeDisplayMinutes) {
+      state.uptimeSeconds = uptime
+      lastUptimeDisplayMinutes = displayMinutes
+    }
   }
 
   function start() {

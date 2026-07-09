@@ -2,7 +2,7 @@
 
 // 状态栏面板样式
 .status__resUsage {
-  font-size: 11px;
+  font-size: $font-size-xs;
   display: flex;
   align-items: center;
   gap: 0;
@@ -136,7 +136,7 @@
   .status-bar-task-item {
     color: var(--b3-theme-primary);
     font-family: $vp-mono;
-    font-size: 11px;
+    font-size: $font-size-xs;
 
     &[data-level="medium"] {
       will-change: opacity;
@@ -305,7 +305,7 @@
   border-radius: $radius-lg;
   background: transparent;
   color: var(--b3-theme-on-surface);
-  font-size: 11px;
+  font-size: $font-size-xs;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;

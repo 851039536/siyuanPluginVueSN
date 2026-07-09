@@ -1,3 +1,4 @@
+<!-- 功能抽屉面板：网格/列表展示所有功能入口，支持搜索、分组、固定角标 -->
 <template>
   <Teleport to="body">
     <div
@@ -45,16 +46,10 @@
               class="feature-drawer-close"
               @click="emit('close')"
             >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  fill="currentColor"
-                  d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-                />
-              </svg>
+              <Icon
+                icon="ph:x"
+                :width="14"
+              />
             </button>
           </div>
         </div>
@@ -76,16 +71,10 @@
             class="search-clear"
             @click="searchQuery = ''"
           >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-            >
-              <path
-                fill="currentColor"
-                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-              />
-            </svg>
+            <Icon
+              icon="ph:x"
+              :width="12"
+            />
           </button>
         </div>
         <!-- 分类标签栏 -->
@@ -107,45 +96,15 @@
           class="feature-drawer-list"
           :class="{ 'grid-mode': gridMode }"
         >
-          <div
+          <DrawerFeatureItem
             v-for="item in displayItems"
             :key="item.id"
-            class="feature-drawer-item"
-            @click="handleClick(item.id)"
-          >
-            <div
-              class="feature-drawer-item-icon"
-              :style="{ color: item.color }"
-            >
-              <Icon
-                :icon="item.icon"
-                :width="25"
-              />
-            </div>
-            <span class="feature-drawer-item-title">{{ item.title }}</span>
-            <span
-              v-if="item.pinnable"
-              class="feature-drawer-item-badge badge-pin"
-              :class="{ active: statusBarVisible.includes(item.id) }"
-              :title="statusBarVisible.includes(item.id) ? '取消固定' : '固定到状态栏'"
-              @click.stop="emit('toggleStatusBar', item.id)"
-            >
-              <Icon
-                :icon="statusBarVisible.includes(item.id) ? 'ph:push-pin-simple-fill' : 'ph:push-pin-simple'"
-                :width="12"
-              />
-            </span>
-            <span
-              class="feature-drawer-item-badge badge-rarely"
-              title="标记为不常用"
-              @click.stop="emit('toggleRarelyUsed', item.id)"
-            >
-              <Icon
-                icon="ph:eye-slash"
-                :width="12"
-              />
-            </span>
-          </div>
+            :item="item"
+            :status-bar-visible="statusBarVisible"
+            @select="handleClick"
+            @toggle-status-bar="emit('toggleStatusBar', $event)"
+            @toggle-rarely-used="emit('toggleRarelyUsed', $event)"
+          />
           <div
             v-if="displayItems.length === 0"
             class="feature-drawer-empty"
@@ -174,45 +133,16 @@
             class="feature-drawer-list rarely-list"
             :class="{ 'grid-mode': gridMode }"
           >
-            <div
+            <DrawerFeatureItem
               v-for="item in filteredRarelyItems"
               :key="item.id"
-              class="feature-drawer-item"
-              @click="handleClick(item.id)"
-            >
-              <div
-                class="feature-drawer-item-icon"
-                :style="{ color: item.color }"
-              >
-                <Icon
-                  :icon="item.icon"
-                  :width="25"
-                />
-              </div>
-              <span class="feature-drawer-item-title">{{ item.title }}</span>
-              <span
-                v-if="item.pinnable"
-                class="feature-drawer-item-badge badge-pin"
-                :class="{ active: statusBarVisible.includes(item.id) }"
-                :title="statusBarVisible.includes(item.id) ? '取消固定' : '固定到状态栏'"
-                @click.stop="emit('toggleStatusBar', item.id)"
-              >
-                <Icon
-                  :icon="statusBarVisible.includes(item.id) ? 'ph:push-pin-simple-fill' : 'ph:push-pin-simple'"
-                  :width="12"
-                />
-              </span>
-              <span
-                class="feature-drawer-item-badge badge-rarely active"
-                title="恢复为常用"
-                @click.stop="emit('toggleRarelyUsed', item.id)"
-              >
-                <Icon
-                  icon="ph:eye-slash"
-                  :width="12"
-                />
-              </span>
-            </div>
+              :item="item"
+              :status-bar-visible="statusBarVisible"
+              mode="rarely"
+              @select="handleClick"
+              @toggle-status-bar="emit('toggleStatusBar', $event)"
+              @toggle-rarely-used="emit('toggleRarelyUsed', $event)"
+            />
           </div>
         </div>
       </div>
@@ -227,6 +157,7 @@ import {
   ref,
   watch,
 } from "vue"
+import DrawerFeatureItem from "./DrawerFeatureItem.vue"
 
 export interface FeatureDrawerItem {
   id: string
@@ -271,10 +202,21 @@ watch(hasRarelyUsed, (val) => {
   }
 })
 
+// 关闭抽屉时重置搜索状态和分组，避免残留状态导致下次打开时显示不完整
+watch(() => props.visible, (val) => {
+  if (!val) {
+    searchQuery.value = ""
+    activeGroup.value = "__all__"
+  }
+})
+
+// 缓存小写搜索词，避免 matchSearch 每次过滤时重复 toLowerCase()
+const searchQueryLower = computed(() => searchQuery.value.toLowerCase())
+
 // 搜索过滤
 const matchSearch = (item: FeatureDrawerItem) => {
   if (!searchQuery.value) return true
-  const q = searchQuery.value.toLowerCase()
+  const q = searchQueryLower.value
   return item.title.toLowerCase().includes(q)
     || (item.group && item.group.toLowerCase().includes(q))
 }

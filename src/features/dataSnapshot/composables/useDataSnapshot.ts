@@ -1,3 +1,6 @@
+/**
+ * 数据快照模块 composable：本地/云端快照的 CRUD 操作与状态栏任务集成
+ */
 import type { Plugin } from "siyuan"
 import type {
   CloudSnapshotTag,

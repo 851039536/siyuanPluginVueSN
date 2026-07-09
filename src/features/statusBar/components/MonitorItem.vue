@@ -1,3 +1,4 @@
+<!-- 状态栏监控项组件：图标、数值、级别颜色的统一容器 -->
 <template>
   <div
     class="monitor-item"

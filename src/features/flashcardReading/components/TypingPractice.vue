@@ -93,6 +93,27 @@
         >{{ coverMode && typedWord.length <= i ? '_' : char }}</span>
       </div>
 
+      <div
+        v-if="currentCard"
+        class="typing-reference"
+      >
+        <p class="typing-reference__content">{{ currentCard.content }}</p>
+        <div class="typing-reference__footer">
+          <span class="typing-reference__meta">
+            <span class="tag tag-small tag-info">{{ currentCard.category }}</span>
+            <span class="tag tag-small tag-contrast">{{ t.practiceCount }}: {{ currentCard.practiceCount || 0 }}</span>
+          </span>
+          <Button
+            variant="ghost"
+            size="xsmall"
+            icon="play"
+            :iconSize="12"
+            :title="t.play"
+            @click="$emit('play', currentCard)"
+          />
+        </div>
+      </div>
+
       <div class="typing-input-wrapper">
         <input
           ref="inputEl"
@@ -137,27 +158,6 @@
           />
         </template>
       </div>
-    </div>
-
-    <div
-      v-if="currentCard"
-      class="typing-reference"
-    >
-      <div class="typing-reference__header">
-        <span class="typing-reference__meta">
-          <span class="tag tag-small tag-info">{{ currentCard.category }}</span>
-          <span class="tag tag-small tag-contrast">{{ t.practiceCount }}: {{ currentCard.practiceCount || 0 }}</span>
-        </span>
-        <Button
-          variant="ghost"
-          size="xsmall"
-          icon="play"
-          :iconSize="12"
-          :title="t.play"
-          @click="$emit('play', currentCard)"
-        />
-      </div>
-      <p class="typing-reference__content">{{ currentCard.content }}</p>
     </div>
 
     <div class="card-navigation">

@@ -1,18 +1,40 @@
 @use '@/variables.scss' as *;
 
-// 状态栏面板样式
-.status__resUsage {
-  font-size: $font-size-xs;
+// ==================== 本地变量 & 基础设施 ====================
+// 微间距变量（全局 token 体系最小 4px，无法覆盖）
+$_gap-xs: 3px;
+$_pad-tab-y: 3px;
+$_pad-tab-x: 10px;
+$_grid-title-size: 0.625rem; // 10px — 网格模式下标题字号
+$_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+// 占位选择器：编译后不产生额外 CSS 选择器，仅消除源码重复
+%flex-center {
   display: flex;
   align-items: center;
+}
+
+%flex-shrink-0 {
+  flex-shrink: 0;
+}
+
+// Mixin：hover 时提升 opacity 到目标值
+@mixin hover-lift($rest: 0.7, $hover: 1) {
+  opacity: $rest;
+  &:hover { opacity: $hover; }
+}
+
+// 状态栏面板样式
+.status__resUsage {
+  @extend %flex-center;
+  font-size: $font-size-xs;
   gap: 0;
   padding: 0;
   height: 29px;
   user-select: none;
 
   .monitor-item {
-    display: flex;
-    align-items: center;
+    @extend %flex-center;
     gap: 0;
     height: 100%;
     padding: 0 3px;
@@ -27,30 +49,24 @@
       font-variant-numeric: tabular-nums;
     }
 
-    // 状态级别颜色
+    // 状态级别颜色（图标可见性合并到各颜色块，消除冗余选择器块）
     &[data-level="high"] {
       color: var(--b3-theme-error);
       background: var(--b3-theme-error-lighter);
+      .monitor-icon { opacity: 1; }
     }
 
     &[data-level="medium"] {
       color: var(--b3-theme-warning);
       background: var(--b3-theme-warning-lighter);
-    }
-
-    // 高/中级别下图标完整可见
-    &[data-level="high"],
-    &[data-level="medium"] {
       .monitor-icon { opacity: 1; }
     }
   }
 
   // 统计项样式
   .statistics-item {
-    opacity: 0.7;
+    @include hover-lift(0.7);
     cursor: default;
-
-    &:hover { opacity: 1; }
   }
 
   .notes-item { color: var(--b3-theme-primary); }
@@ -73,13 +89,13 @@
 
   // 监控与功能分隔线
   .status-bar-separator {
+    @extend %flex-shrink-0;
     display: inline-block;
     width: 1px;
     height: 18px;
     margin: 0 2px;
     background: var(--b3-theme-border);
     align-self: center;
-    flex-shrink: 0;
   }
 
   // 可点击项目通用样式
@@ -101,16 +117,24 @@
     padding-left: 6px;
   }
 
+  // 功能快捷入口颜色（硬编码色值提取为 CSS 自定义属性，便于主题化）
+  --status-color-html: #e67e22;
+  --status-color-image-compressor: #ef4444;
+  --status-color-format: #07c160;
+  --status-color-website: #8b5cf6;
+  --status-color-backup: #10b981;
+  --status-color-tool: #6366f1;
+
   .video-manager-item {
     color: var(--b3-theme-primary);
   }
 
   .html-viewer-item {
-    color: #e67e22;
+    color: var(--status-color-html);
   }
 
   .image-compressor-item {
-    color: #ef4444;
+    color: var(--status-color-image-compressor);
   }
 
   .skills-viewer-item {
@@ -118,19 +142,19 @@
   }
 
   .format-assistant-item {
-    color: #07c160;
+    color: var(--status-color-format);
   }
 
   .website-navigation-item {
-    color: #8b5cf6;
+    color: var(--status-color-website);
   }
 
   .data-backup-item {
-    color: #10b981;
+    color: var(--status-color-backup);
   }
 
   .tool-collection-item {
-    color: #6366f1;
+    color: var(--status-color-tool);
   }
 
   .status-bar-task-item {
@@ -188,12 +212,10 @@
 }
 
 .feature-drawer-header {
-  display: flex;
-  align-items: center;
+  @extend %flex-center, %flex-shrink-0;
   justify-content: space-between;
   padding: $spacing-2 $spacing-3;
   border-bottom: 1px dashed var(--b3-border-color);
-  flex-shrink: 0;
 }
 
 .feature-drawer-title {
@@ -203,8 +225,7 @@
 }
 
 .feature-drawer-header-actions {
-  display: flex;
-  align-items: center;
+  @extend %flex-center;
   gap: $spacing-1;
 }
 
@@ -221,7 +242,7 @@
   color: var(--b3-theme-on-surface);
   cursor: pointer;
   opacity: 0.6;
-  transition: border-color 0.12s, color 0.12s, opacity 0.12s;
+  transition: border-color 0.12s, color 0.12s; // 移除多余 opacity transition（hover 时 opacity 恒定）
 
   &:hover {
     border-color: var(--b3-theme-primary);
@@ -232,17 +253,15 @@
 
 // 搜索栏
 .feature-drawer-search {
-  display: flex;
-  align-items: center;
+  @extend %flex-center, %flex-shrink-0;
   gap: $spacing-1;
   padding: $spacing-1 $spacing-2;
   border-bottom: 1px solid var(--b3-border-color);
-  flex-shrink: 0;
 
   .search-icon {
+    @extend %flex-shrink-0;
     color: var(--b3-theme-on-surface);
     opacity: 0.4;
-    flex-shrink: 0;
   }
 
   .search-input {
@@ -261,6 +280,8 @@
   }
 
   .search-clear {
+    @extend %flex-shrink-0;
+    @include hover-lift(0.5);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -271,13 +292,7 @@
     background: var(--b3-theme-surface-lighter);
     color: var(--b3-theme-on-surface);
     cursor: pointer;
-    opacity: 0.5;
-    flex-shrink: 0;
     transition: opacity 0.12s;
-
-    &:hover {
-      opacity: 1;
-    }
   }
 }
 
@@ -291,16 +306,17 @@
 
 // 分类标签栏
 .feature-drawer-tabs {
+  @extend %flex-shrink-0;
   display: flex;
   gap: $spacing-1;
   padding: $spacing-1 $spacing-2;
   border-bottom: 1px solid var(--b3-border-color);
-  flex-shrink: 0;
   overflow-x: auto;
 }
 
 .feature-drawer-tab {
-  padding: 3px 10px;
+  @extend %flex-shrink-0;
+  padding: $_pad-tab-y $_pad-tab-x;
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-lg;
   background: transparent;
@@ -308,8 +324,7 @@
   font-size: $font-size-xs;
   cursor: pointer;
   white-space: nowrap;
-  flex-shrink: 0;
-  transition: background 0.12s, color 0.12s, border-color 0.12s;
+  transition: background 0.12s, color 0.12s; // 移除多余 border-color transition（active 是瞬间切换）
 
   &:hover {
     background: var(--b3-theme-surface-lighter);
@@ -329,8 +344,7 @@
 
   // 列表模式
   .feature-drawer-item {
-    display: flex;
-    align-items: center;
+    @extend %flex-center;
     gap: $spacing-2;
     padding: $spacing-2 $spacing-3;
     cursor: pointer;
@@ -341,14 +355,12 @@
   }
 
   .feature-drawer-item-icon {
+    @extend %flex-center, %flex-shrink-0;
+    justify-content: center;
     width: 25px;
     height: 25px;
     border-radius: $vp-radius;
     background: var(--b3-theme-surface);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
   }
 
   .feature-drawer-item-title {
@@ -360,14 +372,12 @@
 
   // 角标（无边框，hover 显示）
   .feature-drawer-item-badge {
-    display: flex;
-    align-items: center;
+    @extend %flex-center, %flex-shrink-0;
     justify-content: center;
     width: 16px;
     height: 16px;
     cursor: pointer;
     opacity: 0;
-    flex-shrink: 0;
     transition: opacity 0.12s, color 0.12s;
     color: var(--b3-theme-on-surface);
 
@@ -406,14 +416,14 @@
     .feature-drawer-item {
       flex-direction: column;
       align-items: center;
-      gap: 3px;
+      gap: $_gap-xs;
       padding: $spacing-1;
       border-radius: $vp-radius;
       position: relative;
     }
 
     .feature-drawer-item-title {
-      font-size: 10px;
+      font-size: $_grid-title-size;
       text-align: center;
       flex: none;
     }
@@ -434,14 +444,22 @@
 
 // 不常用分组
 .feature-drawer-rarely {
-  flex-shrink: 0;
+  @extend %flex-shrink-0;
   border-top: 1px dashed var(--b3-border-color);
   background: var(--b3-theme-surface);
+
+  .rarely-list {
+    padding-top: 0;
+
+    .feature-drawer-item-title {
+      opacity: 0.7;
+    }
+  }
 }
 
 .feature-drawer-rarely-header {
-  display: flex;
-  align-items: center;
+  @extend %flex-center;
+  @include hover-lift(0.8);
   gap: $spacing-1;
   width: 100%;
   padding: $spacing-2 $spacing-3;
@@ -451,10 +469,7 @@
   font-size: $font-size-xs;
   font-weight: 500;
   cursor: pointer;
-  opacity: 0.8;
   transition: opacity 0.12s;
-
-  &:hover { opacity: 1; }
 
   .feature-drawer-rarely-caret {
     transition: transform 0.2s;
@@ -465,21 +480,13 @@
   }
 }
 
-.rarely-list {
-  padding-top: 0;
-
-  .feature-drawer-item-title {
-    opacity: 0.7;
-  }
-}
-
 // 抽屉滑入动画
 .drawer-slide-enter-active {
-  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 0.25s $_ease-out, transform 0.25s $_ease-out;
 }
 
 .drawer-slide-leave-active {
-  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 0.2s $_ease-out, transform 0.2s $_ease-out;
 }
 
 .drawer-slide-enter-from {

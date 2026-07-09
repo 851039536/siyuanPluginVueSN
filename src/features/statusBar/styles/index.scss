@@ -71,6 +71,17 @@
     }
   }
 
+  // 监控与功能分隔线
+  .status-bar-separator {
+    display: inline-block;
+    width: 1px;
+    height: 18px;
+    margin: 0 2px;
+    background: var(--b3-theme-border);
+    align-self: center;
+    flex-shrink: 0;
+  }
+
   // 可点击项目通用样式
   .action-item {
     cursor: pointer;

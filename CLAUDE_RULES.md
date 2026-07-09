@@ -433,11 +433,23 @@ $spacing-6: 24px;  // 特大间距（header 水平 padding 上限）
 // ... $spacing-8 ~ $spacing-16 通常用于布局级间距，UI 组件少用
 
 // 字体 — 禁止硬编码 font-size
+$font-size-2xs: 0.625rem;  // 10px  仅用于大写标签
 $font-size-xs: 0.75rem;   // 12px  小号文字（meta、hint、label）
 $font-size-sm: 0.875rem;  // 14px  次要文字
 $font-size-base: 1rem;    // 16px  正文、标题（标准字号）
 $font-size-lg: 1.125rem;  // 18px  大标题（少用）
-$font-size-xl: 1.25rem;   // 20px  超大标题（极少用）
+
+// 字重 — 禁止硬编码 font-weight
+$font-weight-light: 300;
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// 行高 — 禁止硬编码 line-height
+$line-height-tight: 1.25;
+$line-height-normal: 1.5;
+$line-height-relaxed: 1.75;
 ```
 
 > ⚠️ **重要**：上述变量名是 `$spacing-1`~`$spacing-4`（数字后缀），**不是** `$spacing-xs`~`$spacing-lg`。`$spacing-xs/sm/md/lg` 是 superPanel 模块的本地别名，**不存在于全局 `_variables.scss` 中**。错误使用会导致 `Undefined variable` 编译错误。
@@ -459,7 +471,7 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 |------|------|---------|
 | **卡片** | 边框优先，禁用阴影 | `border: 1px solid var(--b3-border-color); border-radius: $vp-radius; background: var(--b3-theme-surface);` |
 | **卡片 hover** | 边框变色 | `&:hover { border-color: var(--b3-theme-primary); }` |
-| **大写标签** | 元信息 key / form label | `font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.45;` |
+| **大写标签** | 元信息 key / form label | `font-size: $font-size-2xs; font-weight: $font-weight-bold; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.45;` |
 | **等宽字段** | 路径/版本号/日期/密码 | `font-family: $vp-mono; font-size: $font-size-xs;` |
 | **focus 发光** | 输入框/控件聚焦 | `box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);` |
 | **分割线** | section 间 | `border-bottom: 1px solid var(--b3-border-color);` 或 `1px dashed` |
@@ -721,6 +733,8 @@ $content-max-width: 960px;
 | `border-radius: 6px` / `12px` 等硬编码 | `$vp-radius` / `$radius-base` / `$radius-lg` 等全局 Token |
 | `padding: 8px` / `16px` 等硬编码 | `$spacing-2` / `$spacing-4` 等全局 Token（数字后缀！） |
 | `font-size: 14px` / `16px` 等硬编码 | `$font-size-sm` / `$font-size-base` 等全局 Token |
+| `font-weight: 500` / `600` / `700` 等硬编码 | `$font-weight-medium` / `$font-weight-semibold` / `$font-weight-bold` |
+| `line-height: 1.25` / `1.5` 等硬编码 | `$line-height-tight` / `$line-height-normal` / `$line-height-relaxed` |
 | `font-family: monospace` / `"Consolas"` | `font-family: $vp-mono`（全局可用） |
 | `$spacing-xs` / `$spacing-sm` / `$spacing-md` / `$spacing-lg` | `$spacing-1` / `$spacing-2` / `$spacing-3` / `$spacing-4`（数字后缀是全局标准） |
 | emoji 表情作为图标 | `<IconWrapper name="iconName">` |

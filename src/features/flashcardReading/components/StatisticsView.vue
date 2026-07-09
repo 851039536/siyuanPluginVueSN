@@ -11,7 +11,7 @@
           <div class="stat-icon stat-icon--primary">
             <IconWrapper
               name="refresh"
-              :size="22"
+              :size="18"
             />
           </div>
           <div class="stat-body">
@@ -55,7 +55,7 @@
           <div class="stat-icon stat-icon--info">
             <IconWrapper
               name="listBulleted"
-              :size="22"
+              :size="18"
             />
           </div>
           <div class="stat-body">
@@ -166,7 +166,7 @@
     >
       <IconWrapper
         name="statistics"
-        :size="48"
+        :size="40"
       />
       <p>{{ t.noPracticeData }}</p>
       <p class="empty-state-hint">

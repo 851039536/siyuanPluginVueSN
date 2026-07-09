@@ -33,7 +33,7 @@ export function registerStatusBar(plugin: Plugin) {
 /**
  * 注销状态栏功能
  */
-function unregisterStatusBar() {
+export function unregisterStatusBar() {
   if (statusBarElement) {
     statusBarElement.remove()
     statusBarElement = null

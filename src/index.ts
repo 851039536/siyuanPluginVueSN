@@ -54,6 +54,7 @@ import {
   registerSkillsViewer,
   registerStatistics,
   registerStatusBar,
+  unregisterStatusBar,
   registerSuperPanel,
   registerTableOfContents,
   registerTextDiff,
@@ -246,6 +247,9 @@ export default class PluginSample extends Plugin {
     if ((this as any).__s3Backup) {
       ;(this as any).__s3Backup.destroy()
     }
+
+    // 清理状态栏资源
+    unregisterStatusBar()
 
     destroyCommands()
     destroy()

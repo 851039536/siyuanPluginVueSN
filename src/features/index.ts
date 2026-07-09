@@ -76,7 +76,10 @@ export {
   getStatisticsInstance,
   registerStatistics,
 } from "./statistics"
-export { registerStatusBar } from "./statusBar"
+export {
+  registerStatusBar,
+  unregisterStatusBar,
+} from "./statusBar"
 export { registerSuperPanel } from "./superPanel"
 export { registerTableOfContents } from "./tableOfContents"
 export {

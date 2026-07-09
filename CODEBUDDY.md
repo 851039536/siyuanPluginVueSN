@@ -94,22 +94,88 @@ feature/
 
 如果注册链条两端任一断裂，TypeScript 将拒绝编译。
 
-### 跨功能通信：事件总线 + App.vue 调度
+---
 
-**功能模块之间禁止直接相互导入。** 唯一允许同时导入多个功能的文件是 `App.vue`，它充当中枢调度器：
+## 跨功能联动规则（强制）
 
-1. **功能 A**（发起方）从 `@/utils/eventBus` 调用 `emitCustomEvent("eventName", { detail })`
-2. **App.vue** 在 `onMounted` 中监听 `window`，接收到事件后调用**功能 B**的公开 API（从其 `index.ts` 导出的函数/ref）
-3. **功能 B**（响应方）从其 `index.ts` 导出公开 API 函数/ref
+**功能模块之间禁止直接相互导入**。跨功能联动必须通过事件总线 + App.vue 中心调度实现零依赖解耦。
 
-这种零直接依赖的模式确保各功能保持独立可启停。功能 B 的公开 API 仅由 `App.vue` 消费，作为唯一的集成点。
+### 正确模式（唯一允许）
 
-### 统一入口点（强制）
+```
+Feature A（发起方）                 Feature B（响应方）
+  │                                   ▲
+  │ emitCustomEvent("eventName",      │
+  │   { detail })                     │ 导出 public API
+  │                                   │ (ref / function)
+  ▼                                   │
+App.vue onMounted 监听 ───────────────┘
+  window.addEventListener("eventName",
+    handler → 调用 Feature B 的 public API
+  )
+```
 
-所有跨切面操作必须通过统一 API。在功能代码中直接调用思源框架（`plugin.loadData`、`fetch`、`new CustomEvent` 等）属于违规。
+### 错误模式
 
-| 关注点 | 必须使用的 API | 位置 |
-|---------|-------------|----------|
+| 禁止行为 | 原因 |
+|----------|------|
+| Feature A 直接 `import { xxx } from "@/features/FeatureB"` | 产生硬依赖，破坏模块独立性 |
+| Feature A 直接修改 Feature B 的 ref | 跨越模块边界，状态归属混乱 |
+| Feature A 通过全局变量 `(window as any).xxx` 访问 Feature B | 类型不安全，无契约约束 |
+
+### 正确示例
+
+```typescript
+// ===== Feature A（如 floatingToolbar/actions/passwordVault.ts）=====
+// 只用 createDialogAction 工厂 + emitCustomEvent 派发
+// ===== App.vue（中心调度）=====
+// 唯一允许同时导入两个 feature 的文件
+import { openPasswordVaultWithText } from "@/features"
+
+export function createPasswordVaultAction(plugin: Plugin): ToolbarAction {
+  return createDialogAction({
+    id: "passwordVault",
+    icon: `<svg>...</svg>`,
+    label: plugin.i18n.passwordVault.quickSave,
+    eventName: "openPasswordVaultAdd", // 事件名
+    getContent: (selection) => ({ content: selection }),
+  })
+}
+
+// ===== Feature B（如 passwordVault/index.ts）=====
+// 导出 public API，不导入任何其他 feature
+export const pendingEntryName = ref("")
+export function openPasswordVaultWithText(text: string) {
+  pendingEntryName.value = text
+  passwordVaultVisible.value = true
+}
+
+onMounted(() => {
+  window.addEventListener("openPasswordVaultAdd", ((event: any) => {
+    if (event.detail?.content) {
+      openPasswordVaultWithText(event.detail.content)
+    }
+  }) as EventListener)
+})
+```
+
+### 规则清单
+
+1. **Feature 间零直接导入**：任何 feature 目录下的文件不得 `import` 其他 feature（`@/features/*` 的子目录）
+2. **单向数据流**：发起方只负责 `emitCustomEvent`，绝不触碰响应方的状态
+3. **App.vue 是唯一调度中心**：所有跨功能的事件监听统一在 App.vue 的 `onMounted` 中注册
+4. **Public API 契约**：响应方 feature 的 `index.ts` 导出的函数/ref 即为它的 public API，其他 feature 不直接调用
+5. **事件名规范**：使用 camelCase 动词短语（如 `openPasswordVaultAdd`），在 eventBus 中保持唯一
+6. **数据透传**：事件 detail 中携带的数据由 App.vue 透传给响应方，双方不共享类型定义
+
+---
+
+## 统一入口原则（强制）
+
+所有跨功能的通用操作必须通过统一定义的入口。在功能代码中直接调用思源框架（`plugin.loadData`、`fetch`、`new CustomEvent` 等）属于违规。
+
+| 场景 | 必须使用的 API | 位置 |
+|------|-------------|----------|
 | 存储 | `PluginStorage` / `TypedStorage<T>` | `@/utils/pluginStorage` / `@/utils/typedStorage` |
 | AI 调用 | `callAI` / `callAIStream` | `@/utils/aiApi` |
 | 自定义事件 | `emitCustomEvent` | `@/utils/eventBus` |
@@ -130,7 +196,75 @@ feature/
 
 > 上述各 API 的详细代码示例见 [CLAUDE_RULES.md § API 参考](./CLAUDE_RULES.md#api-参考)
 
-### 持久化 Modal 模式
+---
+
+## 子组件数据流规则（强制）
+
+**对话框/编辑弹窗类子组件必须自包含，禁止父传全量 props + 子 emit 回父的中间人模式。**
+
+### 正确模式
+
+```
+父组件                             子组件（对话框）
+  │                                   │
+  │ props: id, manager/service        │ 接收最小标识符 + 服务实例
+  │                                   │
+  │                                   ▼
+  │                                 onMounted → 自行从 service 加载数据
+  │                                   │
+  │                                   ▼
+  │                                 save() → 直接调用 service 持久化
+  │                                   │
+  │  ◄── emit("saved" | "close") ──  emit 极简通知（无数据载荷）
+```
+
+### 禁止事项
+
+| 禁止 | 原因 |
+|------|------|
+| 父组件为子组件维护 `editXxx` 系列中间状态 ref | 冗余的数据拷贝，所有权混乱 |
+| 父传递完整 project + urlValues + remoteList 等 5+ 个 props | props 膨胀，子组件沦为渲染傀儡 |
+| 子组件 emit 全量表单数据 `emit("save", {name,status,...})` | 数据往返传递，逻辑分散在两处 |
+| 父通过 `ref.setLocalPath()` 回填子组件内部状态 | 跨组件操作内部状态，破坏封装 |
+| 子 `defineExpose({ setLocalPath })` 供父调用 | 暴露内部实现，紧耦合 |
+| 子组件有 manager 实例却 emit 事件让父调用 CRUD | 绕远路，应直接调 manager |
+
+> **核心**：子组件持有 manager/service 实例后，CRUD 全在内部完成。父只管开关弹窗 + 刷新列表，不关心编辑了什么字段。
+
+---
+
+## 硬规则
+
+- **功能注册完整性**：新功能必须在 8 处注册（见上方「功能注册清单」）
+- **Composable 复用**：Dock 面板与弹窗共享逻辑时抽取 `composables/use*.ts`，禁止两个组件各自实例化 Storage。参考 `flashcardReading/composables/`
+- **Vue 事件命名**：emit 事件必须 camelCase，禁止 kebab-case 或 `input:title` 格式
+- **图标注册**：`FEATURE_ICONS` 中添加映射 + 运行 `pnpm validate:icons`
+- **README 文档**：每个 `src/features/*/` 目录下必须有 `README.md`
+- **全局样式**：`@use "@/index.scss" as *;`
+- **优先思源内置图标** 或 @iconify/vue
+- **图标规则**：禁止使用 emoji 表情作为图标。使用 `src/config/icons.ts` 中 `FEATURE_ICONS` / `COMMON_ICONS` 已注册的 Iconify 图标（`mdi:xxx`、`carbon:xxx` 等）。需要新图标时在 `icons.ts` 注册映射后引用，浏览图标 https://icon-sets.iconify.design/
+- **文件头注释**：每个 `.ts` / `.vue` 文件顶部必须包含简要功能说明注释（`.scss` 不适用），格式见 [CLAUDE_RULES.md § 强制规则：文件头注释](./CLAUDE_RULES.md#强制规则文件头注释)
+- **功能模块内代码分层**：模块内被多个文件共用的常量/工具函数不得在多处重复定义。共享常量（元数据映射、枚举值列表、配置表等）→ 提取到 `types/index.ts`；不依赖 Vue 响应式的纯工具函数 → 提取到 `utils.ts`。禁止 `.vue` 组件间复制粘贴相同的常量定义
+
+---
+
+## 文件头注释规则
+
+每个 `.ts` / `.vue` 文件顶部**必须**包含一行注释，简要说明文件功能（`.scss` 不适用）。详细格式规范见 [CLAUDE_RULES.md § 强制规则：文件头注释](./CLAUDE_RULES.md#强制规则文件头注释)。
+
+---
+
+## 设置架构
+
+双层持久化策略：
+
+1. **功能开关**（`feature-flags.json`）：通过 `fs.writeFileSync` 同步写入，在 `onload()` 中由 `loadFeatureFlagsSync()` 同步读取。这使得 `addDock()`（需要同步 API）能够立即检查开关。降级到 `localStorage`。
+
+2. **完整设置**（`plugin-settings` 键，通过 `plugin.loadData/saveData`）：异步加载，在注册之后执行。敏感字段（`aiApiKeys`、`searchBochaApiKey`）在存储前使用嵌入的应用密钥进行 AES-GCM 加密。
+
+---
+
+## 持久化 Modal 模式
 
 对于需要后台运行的功能（如自动备份），项目使用"持久化 Modal + CustomEvent"模式：
 
@@ -142,7 +276,9 @@ feature/
 
 > 完整实现步骤与关键点速查表见 [CLAUDE_RULES.md § Vue 实例常驻模式](./CLAUDE_RULES.md#vue-实例常驻模式persistent-modal--customevent--定时器)
 
-### 底部面板模式（Tab 切换）
+---
+
+## 底部面板模式（Tab 切换）
 
 部分工具类功能不需要独立 Dock 面板，适合整合到统一的"底部面板 + Tab 切换"容器中。参考实现：`src/features/toolCollection/`。
 
@@ -170,7 +306,9 @@ toolCollection/
 
 **注册新工具到面板**：在 `toolCollection/index.vue` 的 `tools` computed 中添加条目 + 在 `<div class="tool-collection-content">` 中添加 `v-if` 组件引用。无需修改注册清单。
 
-### 快捷键注册
+---
+
+## 快捷键注册
 
 通过 `plugin.addCommand()` 注册全局快捷键，在 `registerFeature()` 中调用：
 
@@ -195,7 +333,9 @@ plugin.addCommand({
 
 快捷键的 `langKey` 需要对应 i18n 分片文件中的翻译键。思源框架会自动将 macOS 符号转换为 Windows 键名显示。
 
-### 新增功能完整流程（8 步演练）
+---
+
+## 新增功能完整流程（8 步演练）
 
 以 `toolCollection` 为例，展示从零到一完整步骤：
 
@@ -224,19 +364,17 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 ```
 > **重要**：AI 不得执行 `pnpm vite build` 和 `pnpm lint`。这些验证由用户自行完成。
 
-### 设置架构
+---
 
-双层持久化策略：
+## UI 风格：Codex
 
-1. **功能开关**（`feature-flags.json`）：通过 `fs.writeFileSync` 同步写入，在 `onload()` 中由 `loadFeatureFlagsSync()` 同步读取。这使得 `addDock()`（需要同步 API）能够立即检查开关。降级到 `localStorage`。
+**强制规则**：所有新增 feature 的 UI 必须遵循 Codex 风格。禁止硬编码尺寸——使用全局设计 Token（`src/_variables.scss` 提供 `$vp-radius` / `$spacing-*` / `$vp-mono` / `$radius-*`），禁止 `box-shadow`（改用边框）。字体三要素（`font-size` / `font-weight` / `line-height`）同样禁止硬编码 px/数字值，必须使用 `$font-size-*` / `$font-weight-*` / `$line-height-*` Token。
 
-2. **完整设置**（`plugin-settings` 键，通过 `plugin.loadData/saveData`）：异步加载，在注册之后执行。敏感字段（`aiApiKeys`、`searchBochaApiKey`）在存储前使用嵌入的应用密钥进行 AES-GCM 加密。
+> 完整 Token 表、组件模式库、禁止事项见 [CLAUDE_RULES.md § UI 风格：Codex](./CLAUDE_RULES.md#ui-风格codex)
 
-### i18n 架构
+---
 
-源翻译**按功能分片**存储在 `src/i18n/{zh_CN,en_US}/<feature>.json` 中。合并后的 `zh_CN.json` / `en_US.json` 是**构建产物**，由 `scripts/merge-i18n.mjs` 生成（作为 Vite `buildStart` 插件调用）。**禁止直接编辑合并后的文件。** 添加/修改翻译的流程：定位正确的功能分片文件 → 添加键值 → 运行 `pnpm i18n:verify` → 构建时自动合并。
-
-### SCSS 规范
+## SCSS 规范
 
 所有样式必须放在独立的 `.scss` 文件中，禁止在 Vue SFC `<style>` 块中编写内联样式。Vue 文件中仅允许 `@use` 导入语句。
 
@@ -265,11 +403,68 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 >
 > SCSS 分离的强制规则与正误示例见 [CLAUDE_RULES.md § 强制规则：SCSS 必须分离到 styles/ 目录](./CLAUDE_RULES.md#强制规则scss-必须分离到-styles-目录)
 
-### 文件头注释规则
+---
 
-每个 `.ts` / `.vue` 文件顶部**必须**包含一行注释，简要说明文件功能（`.scss` 不适用）。详细格式规范见 [CLAUDE_RULES.md § 强制规则：文件头注释](./CLAUDE_RULES.md#强制规则文件头注释)。
+## i18n 国际化
+
+**分片架构**：源文件按 feature 模块拆分（`src/i18n/{zh_CN,en_US}/featureName.json`），构建时 `scripts/merge-i18n.mjs` 自动合并为思源框架所需的单一 `zh_CN.json` / `en_US.json`。
+
+> ⛔ **硬规则：禁止直接写入 `zh_CN.json` 和 `en_US.json`**
+>
+> 这两个文件是构建产物，由 `merge-i18n.mjs` 自动生成。**新增或修改 i18n 文本时，必须定位到对应功能的分片文件**（`src/i18n/{zh_CN,en_US}/<feature>.json`），而非直接改大文件。
+>
+> - 不确定 key 属于哪个分片？→ 在 `zh_CN/` 目录下 grep 搜索
+> - 全新增模块？→ 新建 `zh_CN/<feature>.json` + `en_US/<feature>.json`
+> - 修改完成后 → 运行 `pnpm i18n:merge` 重新生成大文件（构建时自动执行）
+
+### 文件规则
+
+| 分片 | 内容 |
+|------|------|
+| `common.json` | 全局通用键（save/cancel/confirm/delete/copy/edit/close/refresh 等） |
+| `pageLock.json` | 页面锁定模块的所有键（含嵌套 `pageLock.*` 和顶层 `enablePageLock*`） |
+| `<feature>.json` | 每个功能模块一个文件（命名与 `src/features/` 目录名对应） |
+
+### 命名约定
+
+```
+✅ 推荐 — 统一按 feature 模块组织
+  src/i18n/zh_CN/wordQuery.json     → plugin.i18n.wordQuery.title
+  src/i18n/zh_CN/imageCompressor.json → plugin.i18n.imageCompressor.quality
+
+⚠️ 遗留 — base64Image 使用下划线前缀，暂不重构
+  src/i18n/zh_CN/base64Image.json   → plugin.i18n.base64Image_encode
+```
+
+### 日常操作
+
+```bash
+pnpm i18n:merge    # 手动合并（构建时自动执行，通常无需手动调用）
+pnpm i18n:verify   # 校验 zh_CN 与 en_US 键完全对齐 + 检测重复键
+pnpm i18n:split    # 从单体 JSON 重新拆分（极少需要，仅在分片损坏时使用）
+```
+
+### 新增 i18n 文本
+
+1. 找到对应 feature 的分片文件（如 `src/i18n/zh_CN/wordQuery.json`）
+2. 添加键值对
+3. 同样在 `src/i18n/en_US/<feature>.json` 添加英文翻译
+4. 提交前运行 `pnpm i18n:verify` 确保键对齐
 
 ### 构建流程
+
+```
+vite buildStart
+  → execSync("node scripts/merge-i18n.mjs")
+    → 读取 src/i18n/zh_CN/*.json → 合并 → 写入 src/i18n/zh_CN.json
+    → 读取 src/i18n/en_US/*.json → 合并 → 写入 src/i18n/en_US.json
+  → viteStaticCopy 复制产出的 .json 到 dist/i18n/
+  → 思源框架读取 dist/i18n/{zh_CN,en_US}.json
+```
+
+---
+
+## 构建流程
 
 Vite library 模式 → 从 `src/index.ts` 输出 CJS 格式。`vite.config.ts` 配置：
 - `@/` 别名解析为 `src/`
@@ -279,9 +474,61 @@ Vite library 模式 → 从 `src/index.ts` 输出 CJS 格式。`vite.config.ts` 
 - 生产模式：输出到 `./dist/` + `zipPack` 生成 `package.zip`
 - 外部化模块：`siyuan`、`process`、`node:fs`、`node:path`、`node:child_process`、`node:os`
 
-### 图标系统
+---
+
+## 图标系统
 
 使用 `@iconify/vue`，离线预加载 MDI 和 Phosphor 图标集（在 `iconifySetup.ts` 中配置）。所有功能图标必须在 `src/config/icons.ts` 的 `FEATURE_ICONS` 映射中注册。验证脚本（`scripts/validate-icons.mjs`）检查所有已注册图标是否存在于预加载的图标集中。禁止使用 emoji 作为图标。可在 https://icon-sets.iconify.design/ 浏览可用图标。
+
+---
+
+## 关键文件速查
+
+```
+src/
+├── api.ts                  # 所有思源 API 封装（sql/getFile/putFile/getConf 等 60+ 函数）
+├── index.ts                # 插件入口（同步读开关 → 条件注册各功能）
+├── config/
+│   ├── settings.ts         # PluginSettings 接口 + 功能开关持久化
+│   └── icons.ts            # FEATURE_ICONS + COMMON_ICONS
+├── utils/
+│   ├── aiApi.ts            # callAI / callAIStream — 所有 AI 调用唯一入口
+│   ├── eventBus.ts         # emitCustomEvent — 所有自定义事件唯一入口
+│   ├── pluginStorage.ts    # PluginStorage — 统一存储抽象层
+│   ├── typedStorage.ts     # TypedStorage<T> — 类型安全存储槽
+│   ├── vueAppHelper.ts     # createVueDockApp / createModalVueApp
+│   ├── domUtils.ts         # copyToClipboard / triggerDownload / injectStyle
+│   ├── nodeModules.ts      # getNodeModules / getNodeProcessModules / getNodeFsPathOs
+│   ├── settingsCrypto.ts   # encryptSetting / decryptSetting — 配置加密
+│   ├── cryptoPrimitives.ts # deriveAESKey / aesGcmEncrypt / aesGcmDecrypt — 加密基元
+│   ├── iconHelper.ts       # replaceTopBarIcon / createIconElement
+│   ├── mdRenderer.ts       # parseMarkdown / convertHljsToInlineStyles — Markdown 渲染统一入口
+│   └── settingsBackup.ts   # backupPluginData / restoreFromUpload
+├── components/             # 共享 shadcn-vue 组件（Button/Input/Select/Switch/Tag 等）
+├── features/
+│   ├── statusBar/
+│   │   └── composables/
+│   │       └── useStatusBarTask.ts  # 状态栏后台任务（task.progress/complete/fail）
+│   ├── config.ts           # FEATURE_CONFIG — 单一数据源，推导 FeatureId 类型
+│   ├── index.ts            # 功能注册函数统一导出 + 编译时双向断言
+│   └── <feature>/          # 各功能模块（index.ts + index.vue + types/ + composables/）
+├── types/
+│   ├── ai.ts               # AI API 类型
+│   └── api.d.ts            # API 请求/响应类型
+└── i18n/
+    ├── zh_CN/                 # 中文分片（源文件，按 feature 模块拆分）
+    ├── en_US/                 # 英文分片（源文件，结构与中文对应）
+    ├── zh_CN.json             # 构建产物（自动合并，思源框架读取）
+    └── en_US.json             # 构建产物（自动合并）
+```
+
+---
+
+## 构建与验证
+
+> **重要**：AI 不得执行 `pnpm vite build` 和 `pnpm lint`。这些验证由用户自行完成。AI 仅负责编写代码，用户自行验证构建和 lint。
+
+常见 Vite 警告：`is dynamically imported by ... but also statically imported` → 改为统一静态 `import`。
 
 ---
 
@@ -297,4 +544,5 @@ Vite library 模式 → 从 `src/index.ts` 输出 CJS 格式。`vite.config.ts` 
 | UI 风格：Codex | 全局设计 Token 全表、核心规范速查表、`.vp-*` 组件模式库（弹窗/输入框/标签）、禁止事项清单 |
 | 强制规则：SCSS 分离 | 目录结构模式、正误示例对比 |
 | 强制规则：文件头注释 | .ts/.vue 文件头注释格式规范 |
+| 强制规则：Composable 提取 | 工厂函数 + 依赖注入模式、判断标准、禁止事项 |
 | 构建与验证 | 常见 Vite 警告原因与处理方法 |

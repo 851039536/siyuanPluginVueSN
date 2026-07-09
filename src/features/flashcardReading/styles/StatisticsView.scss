@@ -90,6 +90,12 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
+
+      .si-card__body {
+        overflow-y: auto;
+        flex: 1;
+        min-height: 0;
+      }
     }
 
     .rank-card {
@@ -98,6 +104,12 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
+
+      .si-card__body {
+        overflow-y: auto;
+        flex: 1;
+        min-height: 0;
+      }
     }
 
     .chart-card-title {
@@ -112,9 +124,6 @@
     }
 
     .bar-chart {
-      overflow-y: auto;
-      flex: 1;
-      min-height: 0;
       display: flex;
       flex-direction: column;
       gap: $spacing-1;
@@ -171,9 +180,6 @@
     }
 
     .rank-list {
-      overflow-y: auto;
-      flex: 1;
-      min-height: 0;
       display: flex;
       flex-direction: column;
       gap: $spacing-1;

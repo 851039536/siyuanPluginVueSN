@@ -8,7 +8,6 @@
 export type ShortcutCategory =
   | "siyuan"
   | "plugin"
-  | "claude"
   | "openspec"
   | "custom"
   | "npm"
@@ -93,7 +92,6 @@ export const CATEGORY_LABEL_I18N_KEYS: Record<ShortcutCategory | "all", string> 
   all: "allShortcuts",
   siyuan: "siyuanShortcuts",
   plugin: "pluginShortcuts",
-  claude: "claudeShortcuts",
   openspec: "openspecShortcuts",
   custom: "customShortcuts",
   npm: "npmShortcuts",

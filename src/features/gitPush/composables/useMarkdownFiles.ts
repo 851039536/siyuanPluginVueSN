@@ -7,7 +7,7 @@
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 
 /** Markdown 文件变体类型 — 决定 badge 视觉样式 */
-export type MdFileVariant = "readme" | "claude" | "codebuddy" | "other"
+export type MdFileVariant = "readme" | "agents" | "claude" | "codebuddy" | "other"
 
 /** 单个 Markdown 文件元数据 */
 export interface MdFileEntry {
@@ -31,9 +31,10 @@ const OVERSIZE_THRESHOLD = 1024 * 1024
 /** 变体优先级（升序排列） */
 const VARIANT_ORDER: Record<MdFileVariant, number> = {
   readme: 0,
-  claude: 1,
-  codebuddy: 2,
-  other: 3,
+  agents: 1,
+  claude: 2,
+  codebuddy: 3,
+  other: 4,
 }
 
 /** 小写文件名 → 变体的映射表 */

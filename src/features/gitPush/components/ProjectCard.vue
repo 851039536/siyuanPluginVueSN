@@ -686,7 +686,6 @@ defineEmits<{
   // Markdown 预览
   "openMarkdownPreview": [project: GitProject, fileName: string]
   "openProjectGitConfig": [id: string]
-  "openProjectGitConfig": [id: string]
 }>()
 
 /** 推送按钮状态 class 映射（消除模板中 3 次 getPushStatus 调用） */

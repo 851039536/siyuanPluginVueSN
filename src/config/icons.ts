@@ -528,6 +528,9 @@ export const COMMON_ICONS = {
   pronunciation: {
     icon: "mdi:volume-high",
   },
+  timerOutline: {
+    icon: "mdi:timer-outline",
+  },
 } as const
 
 /**

@@ -7,7 +7,7 @@
 @use "@/variables.scss" as g;
 
 // 本地 Codex Token（NOT in @/variables.scss）
-$vp-radius: 6px;
+// $vp-radius 已移至全局 @/variables.scss，此处不再重复定义
 
 // ========================================
 // 遮罩层和对话框主体
@@ -61,7 +61,7 @@ $vp-radius: 6px;
   @include ft.flex-column(g.$spacing-3);
   padding: g.$spacing-4;
   background: var(--b3-theme-surface);
-  border-radius: ft.$radius-md;
+  border-radius: g.$radius-base;
   border: 1px solid var(--b3-theme-surface-lighter);
 }
 
@@ -202,7 +202,7 @@ $vp-radius: 6px;
 
 .add-card-info {
   background: var(--b3-theme-surface);
-  border-radius: ft.$radius-sm;
+  border-radius: g.$radius-sm;
   padding: g.$spacing-3;
   border: 1px solid var(--b3-theme-surface-lighter);
 }

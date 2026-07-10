@@ -1,6 +1,6 @@
 /**
- * QRCode Dialog 样式 - 优化版本
- * 使用公共样式变量和混合宏
+ * QRCode Dialog 样式 - Codex 合规版本
+ * 使用全局设计 Token 和公共混合宏，禁止硬编码间距
  */
 
 @use "../styles" as ft;
@@ -15,7 +15,7 @@
 
 .qrcode-dialog {
   @include ft.dialog-container(420px);
-  border-radius: ft.$radius-md;
+  // 使用 mixin 默认 $radius-xl (12px)，符合 Codex 弹窗圆角规范
 
   @media (max-width: ft.$breakpoint-md) {
     max-height: 90vh;
@@ -27,17 +27,17 @@
 // ========================================
 .dialog-header {
   @include ft.dialog-header(false);
-  padding: 12px 14px;
+  padding: g.$spacing-3 g.$spacing-4;
 
   @media (max-width: ft.$breakpoint-md) {
-    padding: 10px 12px;
+    padding: g.$spacing-2 g.$spacing-3;
   }
 }
 
 .dialog-title {
   @include ft.dialog-title(false);
   font-size: g.$font-size-sm;
-  gap: 6px;
+  gap: g.$spacing-1;
 
   @media (max-width: ft.$breakpoint-md) {
     font-size: g.$font-size-sm;
@@ -54,11 +54,11 @@
 .dialog-body {
   @include ft.dialog-body;
   padding: g.$spacing-3;
-  gap: 10px;
+  gap: g.$spacing-2;
   @include ft.custom-scrollbar;
 
   @media (max-width: ft.$breakpoint-md) {
-    padding: 10px;
+    padding: g.$spacing-2;
     gap: g.$spacing-2;
   }
 }
@@ -67,24 +67,15 @@
 // 输入区域
 // ========================================
 .input-section {
-  @include ft.flex-column(6px);
+  @include ft.flex-column(g.$spacing-1);
 }
 
 // ========================================
 // 二维码区域
 // ========================================
 .qrcode-section {
-  @include ft.flex-column(6px);
+  @include ft.flex-column(g.$spacing-1);
   align-items: center;
-}
-
-.qrcode-label {
-  font-size: g.$font-size-2xs;
-  font-weight: g.$font-weight-semibold;
-  color: var(--b3-theme-on-surface);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  width: 100%;
 }
 
 .qrcode-preview {
@@ -93,9 +84,9 @@
   min-height: 180px;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: ft.$radius-sm;
+  border-radius: g.$radius-sm;
   @include ft.flex-center;
-  padding: 12px;
+  padding: g.$spacing-3;
 
   canvas {
     max-width: 100%;
@@ -104,7 +95,7 @@
 
   @media (max-width: ft.$breakpoint-md) {
     min-height: 160px;
-    padding: 8px;
+    padding: g.$spacing-2;
   }
 }
 
@@ -113,17 +104,17 @@
 // ========================================
 .settings-section {
   @include ft.flex-column(g.$spacing-2);
-  padding: 10px;
+  padding: g.$spacing-3;
   background: var(--b3-theme-surface);
-  border-radius: ft.$radius-sm;
+  border-radius: g.$radius-sm;
 
   @media (max-width: ft.$breakpoint-md) {
-    padding: 8px;
+    padding: g.$spacing-2;
   }
 }
 
 .setting-item {
-  @include ft.flex-column(4px);
+  @include ft.flex-column(g.$spacing-1);
 }
 
 // ========================================
@@ -135,6 +126,6 @@
   @media (max-width: ft.$breakpoint-md) {
     flex-direction: column;
     gap: g.$spacing-2;
-    padding: 8px 10px;
+    padding: g.$spacing-2 g.$spacing-3;
   }
 }

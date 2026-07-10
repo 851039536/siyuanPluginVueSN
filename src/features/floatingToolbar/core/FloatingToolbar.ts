@@ -26,6 +26,12 @@ export class FloatingToolbar {
   private readonly debouncedHandleMouseUp: () => void
   private readonly styleId = "floating-toolbar-enhanced-styles"
   private readonly notebookHighlightClass = "word-from-notebook"
+  /** 单词本标题缓存（小写），避免每次 mouseup 都全量 I/O 查询 */
+  private wordSetCache: Set<string> = new Set()
+  /** 缓存时间戳，用于 TTL 过期刷新 */
+  private wordCacheTimestamp: number = 0
+  /** 缓存 TTL（毫秒），与 HeatmapMarker 保持一致 */
+  private readonly WORD_CACHE_TTL_MS = 30000
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
@@ -132,14 +138,39 @@ export class FloatingToolbar {
    * 处理选择变化（防抖后调用）
    */
   private handleSelectionChange() {
-    // 防止重复处理
-    if (this.isProcessing) return
-
     const selectedText = this.lastSelectionText
 
-    // 选择内容与上次一致且有效，开始处理
+    // 选择内容有效，开始处理
     if (selectedText) {
       this.processSelection()
+    }
+  }
+
+  /**
+   * 刷新单词本缓存
+   * 仅在缓存过期或首次使用时调用
+   */
+  private async refreshWordCache(): Promise<void> {
+    try {
+      const allCards = await this.flashcardStorage.getAllCards()
+      this.wordSetCache.clear()
+      for (const card of allCards) {
+        if (card.title) {
+          this.wordSetCache.add(card.title.toLowerCase())
+        }
+      }
+      this.wordCacheTimestamp = Date.now()
+    } catch {
+      // 缓存刷新失败，下次重试
+    }
+  }
+
+  /**
+   * 确保单词缓存有效
+   */
+  private async ensureWordCacheFresh(): Promise<void> {
+    if (Date.now() - this.wordCacheTimestamp > this.WORD_CACHE_TTL_MS) {
+      await this.refreshWordCache()
     }
   }
 
@@ -154,10 +185,8 @@ export class FloatingToolbar {
     }
 
     try {
-      const allCards = await this.flashcardStorage.getAllCards()
-      const found = allCards.some(
-        (card) => card.title.toLowerCase() === selectedText.toLowerCase(),
-      )
+      await this.ensureWordCacheFresh()
+      const found = this.wordSetCache.has(selectedText.toLowerCase())
 
       if (found) {
         document.body.classList.add(this.notebookHighlightClass)
@@ -234,7 +263,7 @@ export class FloatingToolbar {
    */
   private processToolbar(protyle: Element) {
     const toolbar = protyle.querySelector(".protyle-toolbar") as HTMLElement
-    if (!toolbar || toolbar.dataset.customButtonsAdded === "true") return
+    if (!toolbar) return
 
     // 使用 requestAnimationFrame 在下一帧添加按钮
     requestAnimationFrame(() => {
@@ -318,7 +347,7 @@ export class FloatingToolbar {
       button.setAttribute("data-hotkey", action.hotkey)
     }
 
-    // 使用一次性事件监听器，避免内存泄漏
+    // 绑定点击事件（按钮随工具栏 DOM 重建，监听器自动释放）
     button.addEventListener(
       "click",
       async (clickEvent) => {
@@ -334,7 +363,6 @@ export class FloatingToolbar {
           console.error(`Action ${action.id} failed:`, error)
         }
       },
-      { once: false },
     )
 
     return button
@@ -446,31 +474,13 @@ export class FloatingToolbar {
     // 移除事件监听
     document.removeEventListener("mouseup", this.handleDocumentMouseUp)
 
-    // 断开所有 observers
-    this.observers.forEach((observer) => {
-      observer.disconnect()
-    })
-    this.observers.clear()
-
-    // 移除单词本高亮
-    this.removeNotebookHighlight()
+    // 复用统一的清理逻辑
+    this.cleanupAllToolbars()
 
     // 销毁热力图标记
     this.heatmapMarker.destroy()
 
-    // 移除所有自定义按钮
-    document.querySelectorAll(".custom-toolbar-button").forEach((button) => {
-      button.remove()
-    })
-
-    // 清理标记
-    document
-      .querySelectorAll("[data-custom-buttons-added]")
-      .forEach((toolbar) => {
-        toolbar.removeAttribute("data-custom-buttons-added")
-      })
-
-    // 移除样式
+    // 移除注入的样式
     document.getElementById(this.styleId)?.remove()
 
     // 清理功能管理器

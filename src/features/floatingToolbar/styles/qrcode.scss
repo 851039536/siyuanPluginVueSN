@@ -4,6 +4,7 @@
  */
 
 @use "../styles" as ft;
+@use "@/variables.scss" as g;
 
 // ========================================
 // 遮罩层和对话框主体
@@ -35,11 +36,11 @@
 
 .dialog-title {
   @include ft.dialog-title(false);
-  font-size: 14px;
+  font-size: g.$font-size-sm;
   gap: 6px;
 
   @media (max-width: ft.$breakpoint-md) {
-    font-size: 13px;
+    font-size: g.$font-size-sm;
   }
 }
 
@@ -52,13 +53,13 @@
 // ========================================
 .dialog-body {
   @include ft.dialog-body;
-  padding: 12px;
+  padding: g.$spacing-3;
   gap: 10px;
   @include ft.custom-scrollbar;
 
   @media (max-width: ft.$breakpoint-md) {
     padding: 10px;
-    gap: 8px;
+    gap: g.$spacing-2;
   }
 }
 
@@ -78,8 +79,8 @@
 }
 
 .qrcode-label {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: g.$font-size-2xs;
+  font-weight: g.$font-weight-semibold;
   color: var(--b3-theme-on-surface);
   text-transform: uppercase;
   letter-spacing: 0.4px;
@@ -111,7 +112,7 @@
 // 设置区域
 // ========================================
 .settings-section {
-  @include ft.flex-column(8px);
+  @include ft.flex-column(g.$spacing-2);
   padding: 10px;
   background: var(--b3-theme-surface);
   border-radius: ft.$radius-sm;
@@ -129,16 +130,11 @@
 // 对话框底部
 // ========================================
 .dialog-footer {
-  display: flex;
-  gap: 6px;
-  padding: 10px 12px;
-  border-top: 1px solid var(--b3-theme-surface);
-  background: var(--b3-theme-surface);
-  flex-shrink: 0;
+  @include ft.dialog-footer;
 
   @media (max-width: ft.$breakpoint-md) {
     flex-direction: column;
-    gap: 8px;
+    gap: g.$spacing-2;
     padding: 8px 10px;
   }
 }

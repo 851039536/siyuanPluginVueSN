@@ -175,7 +175,7 @@ export const PRESET_SHORTCUTS: ShortcutInfo[] = [
   {
     id: "claude_init",
     name: "初始化项目",
-    description: "初始化项目，生成 CLAUDE.md 全局记忆",
+    description: "初始化项目，生成 AGENTS.md 全局记忆",
     keys: "/init",
     category: "claude",
     group: "快捷命令",

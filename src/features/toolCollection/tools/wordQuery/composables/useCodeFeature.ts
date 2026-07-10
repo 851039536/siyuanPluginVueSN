@@ -14,7 +14,7 @@ import { copyToClipboard } from "@/utils/domUtils"
  * - errorMessage 状态管理 + clearError 快捷方法
  * - 输入变化时自动清除错误
  * - 统一的 API 配置获取
- * - 统一的剪贴板操作（遵循 CLAUDE.md 统一入口原则）
+ * - 统一的剪贴板操作（遵循 AGENTS.md 统一入口原则）
  */
 export function useCodeFeature(plugin?: Plugin) {
   const errorMessage = ref("")

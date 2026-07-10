@@ -39,7 +39,7 @@ const VARIANT_ORDER: Record<MdFileVariant, number> = {
 /** 小写文件名 → 变体的映射表 */
 const MD_VARIANT_MAP: Record<string, MdFileVariant> = {
   "readme.md": "readme",
-  "claude.md": "claude",
+  "agents.md": "agents",
   "codebuddy.md": "codebuddy",
 }
 

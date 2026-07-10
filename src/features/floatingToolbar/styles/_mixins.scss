@@ -43,11 +43,11 @@
   pointer-events: auto;
 
   @media (max-width: $breakpoint-md) {
-    padding: 10px;
+    padding: g.$spacing-2;
   }
 
   @media (max-width: $breakpoint-sm) {
-    padding: 5px;
+    padding: g.$spacing-1;
   }
 }
 
@@ -102,7 +102,7 @@
 
   @media (max-width: $breakpoint-sm) {
     font-size: g.$font-size-sm;
-    gap: 6px;
+    gap: g.$spacing-1;
   }
 }
 
@@ -137,7 +137,7 @@
 
   @media (max-width: $breakpoint-sm) {
     padding: g.$spacing-3;
-    gap: 10px;
+    gap: g.$spacing-2;
   }
 }
 
@@ -162,9 +162,9 @@
 
 @mixin input-base {
   width: 100%;
-  padding: 10px 12px;
+  padding: g.$spacing-2 g.$spacing-3;
   border: 1px solid var(--b3-theme-outline);
-  border-radius: $radius-md;
+  border-radius: g.$radius-base;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   font-size: g.$font-size-sm;
@@ -172,7 +172,7 @@
 
   &:focus {
     border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
   }
 }
 
@@ -189,16 +189,16 @@
 // ========================================
 
 @mixin btn-base {
-  padding: 10px 16px;
+  padding: g.$spacing-2 g.$spacing-4;
   border: 1px solid var(--b3-theme-outline);
-  border-radius: $radius-md;
+  border-radius: g.$radius-base;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   font-size: g.$font-size-sm;
   font-weight: g.$font-weight-semibold;
   cursor: pointer;
   @include flex-center;
-  gap: 6px;
+  gap: g.$spacing-1;
 
   &:hover:not(:disabled) {
     background: var(--b3-theme-primary);
@@ -215,7 +215,7 @@
 @mixin btn-primary {
   @include btn-base;
   border: none;
-  background: linear-gradient(to right, var(--b3-theme-primary), var(--b3-theme-primary-light));
+  background: var(--b3-theme-primary);
   color: var(--b3-theme-on-primary);
 
   &:hover:not(:disabled) {
@@ -295,10 +295,10 @@
   text-align: center;
   color: var(--b3-theme-on-surface-variant);
   background: var(--b3-theme-surface);
-  border-radius: $radius-md;
+  border-radius: g.$radius-base;
   border: 1px dashed var(--b3-theme-surface-lighter);
 
   @media (max-width: $breakpoint-sm) {
-    padding: 24px 16px;
+    padding: g.$spacing-6 g.$spacing-4;
   }
 }

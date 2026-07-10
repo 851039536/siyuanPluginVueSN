@@ -63,6 +63,16 @@ defineEmits<{
     }
   }
 
+  &--agents {
+    color: #ea580c;
+    border-color: color-mix(in srgb, #ea580c 30%, transparent);
+
+    &:hover {
+      background: color-mix(in srgb, #ea580c 10%, transparent);
+      border-color: #ea580c;
+    }
+  }
+
   &--claude {
     color: #7c3aed;
     border-color: color-mix(in srgb, #7c3aed 30%, transparent);

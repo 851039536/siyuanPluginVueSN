@@ -1,5 +1,5 @@
 import { Plugin } from "siyuan"
-import { FlashcardStorage } from "@/features/flashcardReading/types/storage"
+import { FlashcardStorage } from "@/utils/sharedStorage/flashcardStorage"
 
 const HEATMAP_STYLE_ID = "heatmap-marker-styles"
 const HEATMAP_WORD_CLASS = "heatmap-word"

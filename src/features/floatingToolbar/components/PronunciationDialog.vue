@@ -53,7 +53,6 @@
           </Button>
         </div>
 
-
         <!-- 结果展示 -->
         <div
           v-if="generatedResult"
@@ -190,7 +189,7 @@
               :label="t('selectCategory', '选择类别')"
               :placeholder="t('selectCategoryPlaceholder', '请选择类别')"
               :options="categoryOptions"
-              @change="handleCategorySelect"
+
             />
             <Input
               v-if="selectedCategory === '__custom__'"
@@ -312,7 +311,6 @@ const inputWord = ref(props.content || "")
 const isGenerating = ref(false)
 const generatedResult = ref("")
 const resultSource = ref<"local" | "api" | "">("")
-const matchedCard = ref<Flashcard | null>(null)
 const showAddToCardDialog = ref(false)
 const selectedCategory = ref("")
 const customCategoryInput = ref("")
@@ -333,11 +331,11 @@ const categoryOptions = computed<SelectOption[]>(() => {
   const options: SelectOption[] = [
     {
       value: "",
-      label: "请选择类别",
+      label: t("selectCategoryPlaceholder", "请选择类别"),
     },
     {
       value: "__custom__",
-      label: "自定义...",
+      label: t("customCategory", "自定义..."),
     },
   ]
   availableCategories.value.forEach((cat) => {
@@ -378,6 +376,13 @@ watch(
   },
 )
 
+// 选择"自定义..."时清空输入框
+watch(selectedCategory, (val) => {
+  if (val === "__custom__") {
+    customCategoryInput.value = ""
+  }
+})
+
 // 检测是否为中文
 function isChinese(text: string): boolean {
   return /[\u4E00-\u9FA5]/.test(text)
@@ -386,6 +391,13 @@ function isChinese(text: string): boolean {
 // 谐音生成的系统提示词
 const PRONUNCIATION_SYSTEM_PROMPT =
   "你是一个专业的英语教学助手，擅长用中文谐音帮助学习者记忆英语单词发音，也能准确翻译中文词语为英文。"
+
+// 中英文分支公共后缀（注意事项后 4 行）
+const PROMPT_SUFFIX = `
+- 谐音要贴近实际发音，便于记忆
+- 拼音必须带声调
+- 发音说明要包含音节、重音、元音特点等
+- 只输出格式化内容，不要有其他说明文字`
 
 // 构建提示词（根据输入语言自动选择）
 function buildPrompt(text: string): string {
@@ -406,11 +418,7 @@ function buildPrompt(text: string): string {
 
 注意事项：
 - 提供最常用的英文翻译
-- 音标使用英式标准
-- 谐音要贴近实际发音，便于记忆
-- 拼音必须带声调
-- 发音说明要包含音节、重音、元音特点等
-- 只输出格式化内容，不要有其他说明文字`
+- 音标使用英式标准${PROMPT_SUFFIX}`
   }
 
   return `请为英文单词 "${text}" 生成谐音记忆，要求：
@@ -426,11 +434,7 @@ function buildPrompt(text: string): string {
 发音：[发音要点说明]
 
 注意事项：
-- 音标必须是英式音标
-- 谐音要贴近实际发音，便于记忆
-- 拼音必须带声调
-- 发音说明要包含音节、重音、元音特点等
-- 只输出格式化内容，不要有其他说明文字`
+- 音标必须是英式音标${PROMPT_SUFFIX}`
 }
 
 // 生成谐音翻译/中文翻译（使用统一 AI API 模块）
@@ -443,7 +447,7 @@ async function generatePronunciation() {
   isGenerating.value = true
   generatedResult.value = ""
   resultSource.value = ""
-  matchedCard.value = null
+
 
   try {
     // 优先从本地 FlashcardStorage 查询
@@ -452,7 +456,6 @@ async function generatePronunciation() {
       if (localResult) {
         generatedResult.value = localResult.content
         resultSource.value = "local"
-        matchedCard.value = localResult
         showMessage(t("msgLoadFromLocal", "从单词本加载"), { timeout: 2000, type: "info" })
         isGenerating.value = false
         return
@@ -519,15 +522,6 @@ function openAddToCardDialog() {
 }
 
 /**
- * 处理类别选择
- */
-function handleCategorySelect() {
-  if (selectedCategory.value === "__custom__") {
-    customCategoryInput.value = ""
-  }
-}
-
-/**
  * 加载单词本中的类别
  */
 async function loadCategories() {
@@ -572,6 +566,12 @@ async function addToFlashcard() {
     resultSource.value = "local"
     showAddToCardDialog.value = false
     showMessage(t("msgAdded", "已添加到单词本"), { timeout: 2000, type: "info" })
+
+    // 立即刷新缓存，避免下次翻译同一单词时重复调用 API
+    if (flashcardStorage) {
+      cardsCache = await flashcardStorage.getAllCards()
+      cardsCacheTimestamp = Date.now()
+    }
 
     emitCustomEvent("flashcardDataChanged")
   } catch (error: any) {

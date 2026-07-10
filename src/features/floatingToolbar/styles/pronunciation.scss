@@ -47,7 +47,7 @@ $vp-radius: 6px;
 // 输入区域
 // ========================================
 .input-section {
-  @include ft.flex-column(8px);
+  @include ft.flex-column(g.$spacing-2);
 }
 
 .btn-generate-small {
@@ -116,12 +116,12 @@ $vp-radius: 6px;
   padding: g.$spacing-2 0;
 
   :deep(h4) {
-    margin: 0 0 12px 0;
+    margin: 0 0 g.$spacing-3 0;
     font-size: g.$font-size-lg;
     color: var(--b3-theme-primary);
     font-weight: g.$font-weight-semibold;
     border-bottom: 1px solid var(--b3-theme-surface-lighter);
-    padding-bottom: 8px;
+    padding-bottom: g.$spacing-2;
   }
 
   :deep(strong) {
@@ -147,7 +147,7 @@ $vp-radius: 6px;
 }
 
 .empty-icon {
-  margin-bottom: 16px;
+  margin-bottom: g.$spacing-4;
   color: var(--b3-theme-primary-lighter);
   width: 48px;
   height: 48px;

@@ -1,3 +1,4 @@
+<!-- 二维码生成对话框：输入内容生成二维码，支持复制和下载 -->
 <template>
   <div
     v-if="visible"
@@ -38,7 +39,7 @@
             :label="i18n.qrcodeContent || '内容'"
             :placeholder="i18n.qrcodePlaceholder || '输入或选择内容生成二维码...'"
             :rows="3"
-            @input="regenerateQRCode"
+            @input="debouncedRegenerate"
           />
         </div>
 
@@ -59,14 +60,14 @@
           <div class="setting-item">
             <Slider
               v-model="qrcodeSize"
-              label="大小"
+              :label="i18n.qrcodeSize || '大小'"
               :min="100"
               :max="500"
               :step="10"
               :showValue="true"
               :formatValue="v => `${v}px`"
               size="xsmall"
-              @input="regenerateQRCode"
+              @input="debouncedRegenerate"
             />
           </div>
 
@@ -75,7 +76,7 @@
               v-model="errorCorrection"
               :label="i18n.qrcodeErrorCorrection || '纠错级别'"
               :options="errorCorrectionOptions"
-              @change="regenerateQRCode"
+              @change="debouncedRegenerate"
             />
           </div>
         </div>
@@ -128,7 +129,7 @@ import Label from "@/components/Label.vue"
 import Select from "@/components/Select.vue"
 import Slider from "@/components/Slider.vue"
 import { triggerBlobDownload } from "@/utils/domUtils"
-import { showMessage } from "../core/utils"
+import { debounce, showMessage } from "../core/utils"
 
 interface Props {
   visible: boolean
@@ -152,26 +153,24 @@ const inputContent = ref(props.content || "")
 const qrcodeSize = ref(180)
 const errorCorrection = ref<"L" | "M" | "Q" | "H">("M")
 const qrcodeContainer = ref<HTMLDivElement>()
-const isGenerating = ref(false)
-const errorMessage = ref("")
-let lastGeneratedContent = ""
+const lastGeneratedContent = ref("")
 
 const errorCorrectionOptions = computed<SelectOption[]>(() => [
   {
     value: "L",
-    label: "L (7%)",
+    label: props.i18n.qrcodeErrorL || "L (7%)",
   },
   {
     value: "M",
-    label: "M (15%)",
+    label: props.i18n.qrcodeErrorM || "M (15%)",
   },
   {
     value: "Q",
-    label: "Q (25%)",
+    label: props.i18n.qrcodeErrorQ || "Q (25%)",
   },
   {
     value: "H",
-    label: "H (30%)",
+    label: props.i18n.qrcodeErrorH || "H (30%)",
   },
 ])
 
@@ -179,9 +178,9 @@ const errorCorrectionOptions = computed<SelectOption[]>(() => [
 watch(
   () => props.content,
   (newContent) => {
-    if (newContent && newContent !== lastGeneratedContent) {
+    if (newContent && newContent !== lastGeneratedContent.value) {
       inputContent.value = newContent
-      lastGeneratedContent = newContent
+      lastGeneratedContent.value = newContent
       nextTick(() => {
         regenerateQRCode()
       })
@@ -189,17 +188,16 @@ watch(
   },
 )
 
+// 竞态保护序号
+let generateSeq = 0
+
 // 生成二维码
 async function regenerateQRCode() {
   if (!inputContent.value || !qrcodeContainer.value) return
 
+  const seq = ++generateSeq
+
   try {
-    isGenerating.value = true
-    errorMessage.value = ""
-
-    // 清空容器
-    qrcodeContainer.value.innerHTML = ""
-
     // 生成二维码
     const canvas = await QRCode.toCanvas(inputContent.value, {
       width: qrcodeSize.value,
@@ -211,89 +209,65 @@ async function regenerateQRCode() {
       },
     })
 
+    // 竞态保护：只保留最新一次结果
+    if (seq !== generateSeq) return
+
+    // 清空容器并追加
+    qrcodeContainer.value.innerHTML = ""
     qrcodeContainer.value.appendChild(canvas)
-    isGenerating.value = false
   } catch (error) {
-    errorMessage.value = props.i18n.qrcodeGenerateFailed || "生成二维码失败"
-    showMessage(errorMessage.value, { timeout: 3000, type: "error" })
-    isGenerating.value = false
+    if (seq !== generateSeq) return
+    showMessage(props.i18n.qrcodeGenerateFailed || "生成二维码失败", { timeout: 3000, type: "error" })
   }
 }
+
+// 防抖版本（300ms）
+const debouncedRegenerate = debounce(regenerateQRCode, 300)
 
 // 复制二维码到剪贴板
 async function copyQRCode() {
   if (!qrcodeContainer.value) return
 
+  const canvas = qrcodeContainer.value.querySelector("canvas")
+  if (!canvas) {
+    showMessage(props.i18n.qrcodeNotGenerated || "请先生成二维码", { timeout: 3000, type: "info" })
+    return
+  }
+
   try {
-    const canvas = qrcodeContainer.value.querySelector("canvas")
-    if (!canvas) {
-      showMessage(
-        props.i18n.qrcodeNotGenerated || "请先生成二维码",
-        { timeout: 3000, type: "info" },
-      )
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve))
+    if (!blob) {
+      showMessage(props.i18n.qrcodeCopyFailed || "复制失败", { timeout: 3000, type: "error" })
       return
     }
 
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        showMessage(props.i18n.qrcodeCopyFailed || "复制失败", { timeout: 3000, type: "error" })
-        return
-      }
-
-      try {
-        const item = new ClipboardItem({ "image/png": blob })
-        navigator.clipboard
-          .write([item])
-          .then(() => {
-            showMessage(
-              props.i18n.qrcodeCopied || "二维码已复制到剪贴板",
-              { timeout: 3000, type: "info" },
-            )
-          })
-          .catch(() => {
-            showMessage(
-              props.i18n.qrcodeCopyFailed || "复制失败",
-              { timeout: 3000, type: "error" },
-            )
-          })
-      } catch (err) {
-        showMessage(props.i18n.qrcodeCopyFailed || "复制失败", { timeout: 3000, type: "error" })
-      }
-    })
+    const item = new ClipboardItem({ "image/png": blob })
+    await navigator.clipboard.write([item])
+    showMessage(props.i18n.qrcodeCopied || "二维码已复制到剪贴板", { timeout: 3000, type: "info" })
   } catch (error) {
     showMessage(props.i18n.qrcodeCopyFailed || "复制失败", { timeout: 3000, type: "error" })
   }
 }
 
 // 下载二维码
-function downloadQRCode() {
+async function downloadQRCode() {
   if (!qrcodeContainer.value) return
 
+  const canvas = qrcodeContainer.value.querySelector("canvas")
+  if (!canvas) {
+    showMessage(props.i18n.qrcodeNotGenerated || "请先生成二维码", { timeout: 3000, type: "info" })
+    return
+  }
+
   try {
-    const canvas = qrcodeContainer.value.querySelector("canvas")
-    if (!canvas) {
-      showMessage(
-        props.i18n.qrcodeNotGenerated || "请先生成二维码",
-        { timeout: 3000, type: "info" },
-      )
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve))
+    if (!blob) {
+      showMessage(props.i18n.qrcodeDownloadFailed || "下载失败", { timeout: 3000, type: "error" })
       return
     }
 
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        showMessage(
-          props.i18n.qrcodeDownloadFailed || "下载失败",
-          { timeout: 3000, type: "error" },
-        )
-        return
-      }
-
-      triggerBlobDownload(blob, `qrcode-${Date.now()}.png`)
-      showMessage(
-        props.i18n.qrcodeDownloaded || "二维码已下载",
-        { timeout: 3000, type: "info" },
-      )
-    })
+    triggerBlobDownload(blob, `qrcode-${Date.now()}.png`)
+    showMessage(props.i18n.qrcodeDownloaded || "二维码已下载", { timeout: 3000, type: "info" })
   } catch (error) {
     showMessage(props.i18n.qrcodeDownloadFailed || "下载失败", { timeout: 3000, type: "error" })
   }

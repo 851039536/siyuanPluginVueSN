@@ -6,7 +6,7 @@
         <button
           class="typing-case-toggle"
           :class="{ 'typing-case-toggle--active': caseInsensitive }"
-          :title="caseInsensitive ? '当前：不区分大小写' : '当前：区分大小写'"
+          :title="caseInsensitive ? t.typingTitleCaseInsensitive : t.typingTitleCaseSensitive"
           @click="emit('update:caseInsensitive', !caseInsensitive)"
         >
           <span class="typing-case-toggle__label">Aa</span>
@@ -32,7 +32,7 @@
         <button
           class="typing-case-toggle"
           :class="{ 'typing-case-toggle--active': coverMode }"
-          :title="coverMode ? '当前：盲打模式' : '当前：看打模式'"
+          :title="coverMode ? t.typingTitleCoverMode : t.typingTitleRevealMode"
           @click="emit('update:coverMode', !coverMode)"
         >
           <IconWrapper
@@ -47,7 +47,7 @@
         <button
           class="typing-case-toggle"
           :class="{ 'typing-case-toggle--active': timerEnabled }"
-          :title="timerEnabled ? '当前：计时开启' : '当前：计时关闭'"
+          :title="timerEnabled ? t.typingTitleTimerOn : t.typingTitleTimerOff"
           @click="emit('update:timerEnabled', !timerEnabled)"
         >
           <IconWrapper
@@ -75,7 +75,7 @@
         >
           +
         </button>
-        <span class="typing-session-config__unit">张</span>
+        <span class="typing-session-config__unit">{{ t.typingCardUnit }}</span>
       </div>
     </div>
 
@@ -125,6 +125,7 @@
           spellcheck="false"
           @keydown="handleKeydown"
           @focus="onFocus"
+          @blur="onBlur"
         />
       </div>
 
@@ -153,7 +154,7 @@
             size="xsmall"
             icon="refreshLeft"
             :iconSize="14"
-            title="重新输入"
+            :title="t.retryTyping"
             @click="resetTyping"
           />
         </template>
@@ -196,7 +197,7 @@
     >
       <span>{{ sessionCorrect }} / {{ sessionTotal }}</span>
       <span class="typing-session-stats__sep">·</span>
-      <span>{{ sessionTotal > 0 ? Math.round(sessionCorrect / sessionTotal * 100) : 0 }}%</span>
+      <span>{{ Math.round(sessionCorrect / sessionTotal * 100) }}%</span>
       <IconWrapper
         v-if="streak >= 2"
         name="warning"
@@ -217,9 +218,9 @@
         {{ t.roundComplete }}
       </div>
       <div class="typing-round-summary__stats">
-        <span>{{ sessionCorrect }} / {{ sessionTotal }} 正确</span>
+        <span>{{ sessionCorrect }} / {{ sessionTotal }} {{ t.summaryCorrect }}</span>
         <span class="typing-session-stats__sep">·</span>
-        <span>{{ sessionTotal > 0 ? Math.round(sessionCorrect / sessionTotal * 100) : 0 }}%</span>
+        <span>{{ Math.round(sessionCorrect / sessionTotal * 100) }}%</span>
         <template v-if="timerEnabled">
           <span class="typing-session-stats__sep">·</span>
           <span><IconWrapper name="timerOutline" :size="12" class="typing-timer__icon" /> {{ formatTime(elapsedSeconds) }}</span>
@@ -230,7 +231,7 @@
         size="xsmall"
         @click="emit('restartRound')"
       >
-        开始下一轮
+        {{ t.startNextRound }}
       </Button>
     </div>
   </div>
@@ -244,6 +245,7 @@ import type {
 import {
   computed,
   nextTick,
+  onUnmounted,
   ref,
   watch,
 } from "vue"
@@ -284,6 +286,10 @@ const emit = defineEmits<{
 
 const t = useI18n(props.i18n)
 
+/** 会话大小合法范围 */
+const MIN_SESSION_SIZE = 5
+const MAX_SESSION_SIZE = 100
+
 const inputEl = ref<HTMLInputElement | null>(null)
 const typedWord = ref("")
 const isFocused = ref(false)
@@ -291,6 +297,8 @@ const resultState = ref<"idle" | "correct" | "incorrect">("idle")
 const streak = ref(0)
 const elapsedSeconds = ref(0)
 let timerInterval: ReturnType<typeof setInterval> | null = null
+let correctTimeout: ReturnType<typeof setTimeout> | null = null
+let resetTimeout: ReturnType<typeof setTimeout> | null = null
 
 function startTimer() {
   if (timerInterval) return
@@ -318,7 +326,7 @@ function formatTime(totalSec: number): string {
 }
 
 function changeSessionSize(delta: number) {
-  const next = Math.max(5, Math.min(100, props.sessionSize + delta))
+  const next = Math.max(MIN_SESSION_SIZE, Math.min(MAX_SESSION_SIZE, props.sessionSize + delta))
   emit("update:sessionSize", next)
 }
 
@@ -359,6 +367,10 @@ function onFocus() {
   isFocused.value = true
 }
 
+function onBlur() {
+  isFocused.value = false
+}
+
 function checkCompletion() {
   if (!typedWord.value) return
   const typed = props.caseInsensitive ? typedWord.value.toLowerCase() : typedWord.value
@@ -368,14 +380,16 @@ function checkCompletion() {
     stopTimer()
     resultState.value = "correct"
     emit("correct", props.currentCard)
-    setTimeout(() => {
+    if (correctTimeout) clearTimeout(correctTimeout)
+    correctTimeout = setTimeout(() => {
       emit("skip")
     }, 600)
   } else {
     streak.value = 0
     emit("wrong", props.currentCard)
     resultState.value = "incorrect"
-    setTimeout(() => {
+    if (resetTimeout) clearTimeout(resetTimeout)
+    resetTimeout = setTimeout(() => {
       resetTyping()
     }, 1200)
   }
@@ -410,6 +424,13 @@ watch(
     if (val === 0) resetTimer()
   },
 )
+
+// 组件卸载时清理所有定时器，防止内存泄漏与悬空回调
+onUnmounted(() => {
+  stopTimer()
+  if (correctTimeout) clearTimeout(correctTimeout)
+  if (resetTimeout) clearTimeout(resetTimeout)
+})
 
 watch(typedWord, (val) => {
   if (resultState.value !== "idle") {

@@ -46,7 +46,7 @@ export function registerFloatingToolbar(plugin: Plugin): void {
   }
 
   // 将实例保存到插件对象中，以便在插件卸载时清理资源
-  (plugin as any).__floatingToolbar = floatingToolbar
+  ;(plugin as PluginSample).__floatingToolbar = floatingToolbar
 }
 
 export { default as PronunciationDialog } from "./components/PronunciationDialog.vue"

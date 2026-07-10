@@ -19,7 +19,6 @@ export class HeatmapMarker {
   private flashcardStorage: FlashcardStorage
   private active = false
   private isScanning = false
-  private isMarking = false
   private styleAdded = false
   private wordHeatMap = new Map<string, number>()
   private bodyObserver: MutationObserver | null = null
@@ -182,7 +181,7 @@ export class HeatmapMarker {
     if (!wysiwyg) return
 
     const observer = new MutationObserver((mutations) => {
-      if (this.isScanning || this.isMarking) return
+      if (this.isScanning) return
 
       for (const m of mutations) {
         if (m.type === "childList") {
@@ -211,11 +210,11 @@ export class HeatmapMarker {
   }
 
   private debounceScan() {
-    if (this.isScanning || this.isMarking) return
+    if (this.isScanning) return
     if (this.scanTimer) clearTimeout(this.scanTimer)
     this.scanTimer = setTimeout(() => {
       this.scanTimer = null
-      if (!this.active || this.isMarking) return
+      if (!this.active || this.isScanning) return
       if (Date.now() - this.lastScanTime < this.MIN_SCAN_INTERVAL_MS) return
       if (this.wordHeatMap.size === 0) {
         this.refreshWordCache().then(() => {
@@ -240,7 +239,6 @@ export class HeatmapMarker {
     await this.ensureCacheFresh()
 
     this.isScanning = true
-    this.isMarking = true
 
     try {
       const documents = document.querySelectorAll<HTMLElement>(
@@ -270,7 +268,6 @@ export class HeatmapMarker {
       }
     } finally {
       this.isScanning = false
-      this.isMarking = false
       this.lastScanTime = Date.now()
     }
   }
@@ -306,6 +303,7 @@ export class HeatmapMarker {
       },
     })
 
+    // 收集文本节点后反向遍历（避免 DOM 修改影响 TreeWalker 游标）
     const textNodes: Text[] = []
     let node: Node | null
     while ((node = textWalker.nextNode())) {
@@ -374,7 +372,11 @@ export class HeatmapMarker {
     return matches.length
   }
 
-  private clearDocumentMarks(root: HTMLElement) {
+  /**
+   * 批量移除 heatmap-word 标记节点，还原为原始文本
+   * @param root 搜索根节点（Document 或 HTMLElement）
+   */
+  private unwrapMarkNodes(root: Document | HTMLElement) {
     const marks = root.querySelectorAll(`.${HEATMAP_WORD_CLASS}`)
     for (const mark of marks) {
       const parent = mark.parentNode
@@ -384,21 +386,20 @@ export class HeatmapMarker {
         frag.appendChild(mark.firstChild)
       }
       parent.replaceChild(frag, mark)
-      parent.normalize()
     }
   }
 
+  private clearDocumentMarks(root: HTMLElement) {
+    this.unwrapMarkNodes(root)
+    root.normalize()
+  }
+
   private clearAllMarks() {
-    const marks = document.querySelectorAll(`.${HEATMAP_WORD_CLASS}`)
-    for (const mark of marks) {
-      const parent = mark.parentNode
-      if (!parent) continue
-      const frag = document.createDocumentFragment()
-      while (mark.firstChild) {
-        frag.appendChild(mark.firstChild)
-      }
-      parent.replaceChild(frag, mark)
-      parent.normalize()
+    this.unwrapMarkNodes(document)
+    // 全局清理后对每个文档做 normalize，确保文本节点合并
+    const docs = document.querySelectorAll<HTMLElement>(".protyle-wysiwyg")
+    for (const doc of docs) {
+      doc.normalize()
     }
   }
 

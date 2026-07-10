@@ -224,7 +224,6 @@
 import type { SelectOption } from "@/components/Select.vue"
 import type { Flashcard } from "@/features/flashcardReading/types"
 import type PluginSample from "@/index"
-import { showMessage } from "siyuan"
 import {
   computed,
   nextTick,
@@ -241,7 +240,9 @@ import {
   callAI,
   getApiConfigFromPlugin,
 } from "@/utils/aiApi"
+import { copyToClipboard } from "@/utils/domUtils"
 import { emitCustomEvent } from "@/utils/eventBus"
+import { showMessage } from "../core/utils"
 
 interface Props {
   visible: boolean
@@ -304,14 +305,19 @@ const flashcardStorage = props.plugin
   ? new FlashcardStorage(props.plugin)
   : null
 
+/** 模块级卡片缓存，避免每次查询都全量 I/O 加载 */
+let cardsCache: Flashcard[] | null = null
+let cardsCacheTimestamp = 0
+const CARDS_CACHE_TTL_MS = 30000
+
 // 检查结果是否已在单词本中
 const isInFlashcard = computed(() => resultSource.value === "local")
 
-// 监听props变化，自动触发翻译
+// 监听props变化，弹窗可见时自动触发翻译
 watch(
   () => props.content,
   async (newContent) => {
-    if (newContent) {
+    if (newContent && props.visible) {
       inputWord.value = newContent
       generatedResult.value = ""
       await nextTick()
@@ -389,7 +395,7 @@ function buildPrompt(text: string): string {
 // 生成谐音翻译/中文翻译（使用统一 AI API 模块）
 async function generatePronunciation() {
   if (!inputWord.value) {
-    showMessage("请输入内容", 3000, "error")
+    showMessage("请输入内容", { timeout: 3000, type: "error" })
     return
   }
 
@@ -406,7 +412,7 @@ async function generatePronunciation() {
         generatedResult.value = localResult.content
         resultSource.value = "local"
         matchedCard.value = localResult
-        showMessage("从单词本加载", 2000, "info")
+        showMessage("从单词本加载", { timeout: 2000, type: "info" })
         isGenerating.value = false
         return
       }
@@ -425,28 +431,33 @@ async function generatePronunciation() {
     if (result) {
       generatedResult.value = result
       resultSource.value = "api"
-      showMessage("谐音记忆已生成", 2000, "info")
+      showMessage("谐音记忆已生成", { timeout: 2000, type: "info" })
     } else {
-      showMessage("生成失败，请重试", 3000, "error")
+      showMessage("生成失败，请重试", { timeout: 3000, type: "error" })
     }
   } catch (error) {
     console.error("Pronunciation generation error:", error)
     const errorMsg = (error as Error).message || "未知错误"
-    showMessage(`生成失败: ${errorMsg}`, 5000, "error")
+    showMessage(`生成失败: ${errorMsg}`, { timeout: 5000, type: "error" })
   } finally {
     isGenerating.value = false
   }
 }
 
 /**
- * 从本地 FlashcardStorage 查询单词
+ * 从本地 FlashcardStorage 查询单词（含缓存）
  */
 async function queryFromLocalStorage(word: string): Promise<Flashcard | null> {
   if (!flashcardStorage) return null
 
   try {
-    const allCards = await flashcardStorage.getAllCards()
-    const exactMatch = allCards.find(
+    // 缓存过期或未初始化时刷新
+    if (!cardsCache || Date.now() - cardsCacheTimestamp > CARDS_CACHE_TTL_MS) {
+      cardsCache = await flashcardStorage.getAllCards()
+      cardsCacheTimestamp = Date.now()
+    }
+
+    const exactMatch = cardsCache.find(
       (card) => card.title.toLowerCase() === word.toLowerCase(),
     )
     return exactMatch || null
@@ -505,7 +516,7 @@ async function loadCategories() {
  */
 async function addToFlashcard() {
   if (!flashcardStorage || !inputWord.value || !generatedResult.value) {
-    showMessage("数据不完整", 2000, "error")
+    showMessage("数据不完整", { timeout: 2000, type: "error" })
     return
   }
 
@@ -515,7 +526,7 @@ async function addToFlashcard() {
       : selectedCategory.value
 
   if (!categoryToUse) {
-    showMessage("请选择类别", 2000, "error")
+    showMessage("请选择类别", { timeout: 2000, type: "error" })
     return
   }
 
@@ -528,14 +539,14 @@ async function addToFlashcard() {
 
     resultSource.value = "local"
     showAddToCardDialog.value = false
-    showMessage("已添加到单词本", 2000, "info")
+    showMessage("已添加到单词本", { timeout: 2000, type: "info" })
 
     emitCustomEvent("flashcardDataChanged")
   } catch (error: any) {
     if (error.message === "Title already exists") {
-      showMessage("该单词已存在于单词本中", 3000, "error")
+      showMessage("该单词已存在于单词本中", { timeout: 3000, type: "error" })
     } else {
-      showMessage(`添加失败: ${error.message || "未知错误"}`, 3000, "error")
+      showMessage(`添加失败: ${error.message || "未知错误"}`, { timeout: 3000, type: "error" })
     }
   }
 }
@@ -552,12 +563,11 @@ function formatResult(result: string): string {
 async function copyResult() {
   if (!generatedResult.value) return
 
-  try {
-    await navigator.clipboard.writeText(generatedResult.value)
-    showMessage("已复制到剪贴板", 2000, "info")
-  } catch (error) {
-    console.error("复制失败:", error)
-    showMessage("复制失败", 3000, "error")
+  const success = await copyToClipboard(generatedResult.value)
+  if (success) {
+    showMessage("已复制到剪贴板", { timeout: 2000, type: "info" })
+  } else {
+    showMessage("复制失败", { timeout: 3000, type: "error" })
   }
 }
 

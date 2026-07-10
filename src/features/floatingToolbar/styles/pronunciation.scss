@@ -4,6 +4,7 @@
  */
 
 @use "../styles" as ft;
+@use "@/variables.scss" as g;
 
 // ========================================
 // 遮罩层和对话框主体
@@ -54,23 +55,22 @@
 // 结果区域
 // ========================================
 .result-section {
-  @include ft.flex-column(12px);
-  padding: 16px;
+  @include ft.flex-column(g.$spacing-3);
+  padding: g.$spacing-4;
   background: var(--b3-theme-surface);
   border-radius: ft.$radius-md;
   border: 1px solid var(--b3-theme-surface-lighter);
-  box-shadow: ft.$shadow-md;
 }
 
 .result-header {
   @include ft.flex-between;
-  gap: 12px;
+  gap: g.$spacing-3;
 }
 
 .result-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: g.$spacing-2;
   flex-wrap: wrap;
 
   .result-label {
@@ -85,17 +85,17 @@
 .result-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: g.$spacing-2;
 }
 
 // 来源标识徽章
 .source-badge {
-  font-size: 11px;
+  font-size: g.$font-size-2xs;
   padding: 4px 8px;
   border-radius: 12px;
   background: var(--b3-theme-surface-lighter);
   color: var(--b3-theme-on-surface-variant);
-  font-weight: 500;
+  font-weight: g.$font-weight-medium;
   white-space: nowrap;
 
   &.local {
@@ -105,8 +105,8 @@
 }
 
 .result-content {
-  font-size: 14px;
-  line-height: 1.7;
+  font-size: g.$font-size-sm;
+  line-height: g.$line-height-relaxed;
   color: var(--b3-theme-on-background);
   white-space: pre-wrap;
   word-break: break-word;
@@ -114,24 +114,24 @@
 
   :deep(h4) {
     margin: 0 0 12px 0;
-    font-size: 18px;
+    font-size: g.$font-size-lg;
     color: var(--b3-theme-primary);
-    font-weight: 600;
+    font-weight: g.$font-weight-semibold;
     border-bottom: 1px solid var(--b3-theme-surface-lighter);
     padding-bottom: 8px;
   }
 
   :deep(strong) {
     color: var(--b3-theme-on-background);
-    font-weight: 600;
+    font-weight: g.$font-weight-semibold;
   }
 
   @media (max-width: ft.$breakpoint-sm) {
-    font-size: 13px;
-    line-height: 1.6;
+    font-size: g.$font-size-sm;
+    line-height: g.$line-height-normal;
 
     :deep(h4) {
-      font-size: 16px;
+      font-size: g.$font-size-base;
     }
   }
 }
@@ -152,10 +152,10 @@
 }
 
 .empty-text {
-  font-size: 14px;
+  font-size: g.$font-size-sm;
   margin: 0;
   color: var(--b3-theme-on-surface);
-  line-height: 1.5;
+  line-height: g.$line-height-normal;
 }
 
 
@@ -186,39 +186,39 @@
 
   h4 {
     margin: 0;
-    font-size: 15px;
-    font-weight: 600;
+    font-size: g.$font-size-sm;
+    font-weight: g.$font-weight-semibold;
     color: var(--b3-theme-on-background);
   }
 }
 
 .add-card-body {
   padding: 18px;
-  @include ft.flex-column(14px);
+  @include ft.flex-column(g.$spacing-3);
 }
 
 .add-card-info {
   background: var(--b3-theme-surface);
   border-radius: ft.$radius-sm;
-  padding: 12px;
+  padding: g.$spacing-3;
   border: 1px solid var(--b3-theme-surface-lighter);
 }
 
 .info-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: g.$spacing-2;
 
   .info-label {
-    font-size: 12px;
+    font-size: g.$font-size-xs;
     color: var(--b3-theme-on-surface-variant);
-    font-weight: 500;
+    font-weight: g.$font-weight-medium;
   }
 
   .info-value {
-    font-size: 14px;
+    font-size: g.$font-size-sm;
     color: var(--b3-theme-on-background);
-    font-weight: 600;
+    font-weight: g.$font-weight-semibold;
   }
 }
 

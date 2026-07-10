@@ -100,6 +100,8 @@ export default class PluginSample extends Plugin {
   public readonly version = version
   // 插件配置
   public settings: PluginSettings
+  /** 浮动工具栏实例（由 floatingToolbar 功能模块注入） */
+  public __floatingToolbar?: import("@/features/floatingToolbar/core/FloatingToolbar").FloatingToolbar
 
   onload() {
     setupIconifyOffline() // 预加载 mdi + ph 图标数据，确保断网可用
@@ -195,8 +197,8 @@ export default class PluginSample extends Plugin {
     }
 
     // 清理浮动工具栏资源
-    if ((this as any).__floatingToolbar) {
-      (this as any).__floatingToolbar.destroy()
+    if (this.__floatingToolbar) {
+      this.__floatingToolbar.destroy()
     }
 
     // 清理通用设置资源

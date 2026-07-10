@@ -71,6 +71,20 @@ export const DEFAULT_I18N: Required<I18n> = {
   timerLabel: "计时",
   sessionSizeLabel: "每组",
   roundComplete: "本轮完成!",
+  typingTitleCaseInsensitive: "当前：不区分大小写",
+  typingTitleCaseSensitive: "当前：区分大小写",
+  typingTitleInstantReset: "当前：输错立即重试",
+  typingTitleDelayedReset: "当前：输错稍后重试",
+  typingTitleCoverMode: "当前：盲打模式",
+  typingTitleRevealMode: "当前：看打模式",
+  typingTitleTimerOn: "当前：计时开启",
+  typingTitleTimerOff: "当前：计时关闭",
+  typingTimerOn: "计时",
+  typingTimerOff: "计时关",
+  typingCardUnit: "张",
+  retryTyping: "重新输入",
+  summaryCorrect: "正确",
+  startNextRound: "开始下一轮",
 }
 
 /**

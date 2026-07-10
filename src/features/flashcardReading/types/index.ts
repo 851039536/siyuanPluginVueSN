@@ -129,5 +129,20 @@ export interface I18n {
   timerLabel?: string
   sessionSizeLabel?: string
   roundComplete?: string
+  /** 打字练习标题提示 */
+  typingTitleCaseInsensitive?: string
+  typingTitleCaseSensitive?: string
+  typingTitleInstantReset?: string
+  typingTitleDelayedReset?: string
+  typingTitleCoverMode?: string
+  typingTitleRevealMode?: string
+  typingTitleTimerOn?: string
+  typingTitleTimerOff?: string
+  typingTimerOn?: string
+  typingTimerOff?: string
+  typingCardUnit?: string
+  retryTyping?: string
+  summaryCorrect?: string
+  startNextRound?: string
 }
 

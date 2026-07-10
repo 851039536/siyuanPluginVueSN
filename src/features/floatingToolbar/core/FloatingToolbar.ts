@@ -1,5 +1,5 @@
 import { Plugin } from "siyuan"
-import { FlashcardStorage } from "@/features/flashcardReading/types/storage"
+import { FlashcardStorage } from "@/utils/sharedStorage/flashcardStorage"
 import { copyToClipboard } from "@/utils/domUtils"
 import {
   ToolbarAction,

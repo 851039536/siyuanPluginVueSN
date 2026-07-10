@@ -2,44 +2,13 @@
  * 单词阅读功能 - 类型定义
  */
 
-/**
- * Flashcard 数据模型
- */
-export interface Flashcard {
-  id: string
-  title: string
-  content: string
-  category: string
-  createdAt: number
-  updatedAt: number
-  practiceCount: number
-}
-
-/**
- * 创建卡片数据传输对象
- */
-export interface CreateFlashcardDTO {
-  title: string
-  content: string
-  category: string
-}
-
-/**
- * 更新卡片数据传输对象（所有字段可选）
- */
-export interface UpdateFlashcardDTO {
-  title?: string
-  content?: string
-  category?: string
-}
-
-/**
- * 打字练习设置
- */
-export interface TypingSettings {
-  sessionSize: number
-  timerEnabled: boolean
-}
+// 共享类型从公共模块重导出
+export type {
+  Flashcard,
+  CreateFlashcardDTO,
+  UpdateFlashcardDTO,
+  TypingSettings,
+} from "@/utils/sharedStorage/flashcardStorage"
 
 /**
  * 视图模式类型

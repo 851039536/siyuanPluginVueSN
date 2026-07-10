@@ -137,3 +137,18 @@ export async function copyImageToClipboard(blob: Blob): Promise<boolean> {
     return false
   }
 }
+
+/**
+ * 简单 HTML 转义，防止 XSS 注入
+ * 将 < > & " ' 转为对应的 HTML 实体
+ * @param text 原始文本
+ * @returns 转义后的安全文本
+ */
+export function simpleHtmlEscape(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;")
+}

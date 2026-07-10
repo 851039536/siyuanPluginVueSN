@@ -6,6 +6,9 @@
 @use "../styles" as ft;
 @use "@/variables.scss" as g;
 
+// 本地 Codex Token（NOT in @/variables.scss）
+$vp-radius: 6px;
+
 // ========================================
 // 遮罩层和对话框主体
 // ========================================
@@ -48,7 +51,7 @@
 }
 
 .btn-generate-small {
-  margin-top: 8px;
+  margin-top: g.$spacing-2;
 }
 
 // ========================================
@@ -77,7 +80,7 @@
     @include ft.input-label;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: g.$spacing-1;
     margin: 0;
   }
 }
@@ -91,16 +94,16 @@
 // 来源标识徽章
 .source-badge {
   font-size: g.$font-size-2xs;
-  padding: 4px 8px;
-  border-radius: 12px;
+  padding: g.$spacing-1 g.$spacing-2;
+  border-radius: g.$radius-lg;
   background: var(--b3-theme-surface-lighter);
   color: var(--b3-theme-on-surface-variant);
   font-weight: g.$font-weight-medium;
   white-space: nowrap;
 
   &.local {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: #fff;
+    background: var(--b3-theme-primary);
+    color: var(--b3-theme-on-primary);
   }
 }
 
@@ -110,7 +113,7 @@
   color: var(--b3-theme-on-background);
   white-space: pre-wrap;
   word-break: break-word;
-  padding: 8px 0;
+  padding: g.$spacing-2 0;
 
   :deep(h4) {
     margin: 0 0 12px 0;
@@ -180,7 +183,7 @@
 
 .add-card-header {
   @include ft.flex-between;
-  padding: 14px 18px;
+  padding: g.$spacing-3 g.$spacing-4;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
   background: var(--b3-theme-surface);
 
@@ -193,7 +196,7 @@
 }
 
 .add-card-body {
-  padding: 18px;
+  padding: g.$spacing-4;
   @include ft.flex-column(g.$spacing-3);
 }
 
@@ -223,13 +226,13 @@
 }
 
 .form-group {
-  @include ft.flex-column(6px);
+  @include ft.flex-column(g.$spacing-2);
 }
 
 .add-card-footer {
   display: flex;
-  gap: 10px;
-  padding: 14px 18px;
+  gap: g.$spacing-3;
+  padding: g.$spacing-3 g.$spacing-4;
   border-top: 1px solid var(--b3-theme-surface-lighter);
   background: var(--b3-theme-surface);
 }

@@ -7,12 +7,10 @@ $floating-z-index: 100;
 $trigger-size: 30px;
 $trigger-size-mobile: 44px;
 $toolbar-gap: 4px;
-$trigger-hover-scale: 1.08;
-$trigger-active-scale: 0.98;
 
 .floating-box-wrapper {
   position: fixed;
-  right: 20px;
+  right: $spacing-5;
   top: 50%;
   transform: translateY(-50%);
   z-index: $floating-z-index;
@@ -33,7 +31,7 @@ $trigger-active-scale: 0.98;
   position: relative;
   width: $trigger-size;
   height: $trigger-size;
-  border-radius: 50%;
+  border-radius: $radius-full;
   background: var(--b3-theme-primary);
   color: var(--b3-theme-on-primary);
   display: flex;
@@ -61,10 +59,10 @@ $trigger-active-scale: 0.98;
   right: 36px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 4px;
+  gap: $spacing-2px;
+  padding: $spacing-1;
   background: var(--b3-theme-background);
-  border-radius: 10px;
+  border-radius: $radius-lg;
   border: 1px solid var(--b3-border-color);
   backdrop-filter: blur(10px);
 }
@@ -72,11 +70,11 @@ $trigger-active-scale: 0.98;
 .tool-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px 8px;
+  gap: $spacing-2;
+  padding: $spacing-1 $spacing-2;
   border-radius: $vp-radius;
   cursor: pointer;
-  min-width: 80px;
+  min-width: 5rem;
 
   &:hover {
     background: var(--b3-list-hover);
@@ -90,7 +88,7 @@ $trigger-active-scale: 0.98;
 .tool-icon {
   width: 22px;
   height: 22px;
-  border-radius: 6px;
+  border-radius: $radius-base;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -100,8 +98,8 @@ $trigger-active-scale: 0.98;
 }
 
 .tool-label {
-  font-size: 11px;
-  font-weight: 400;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-normal;
   color: var(--b3-theme-on-background);
   white-space: nowrap;
 }
@@ -122,7 +120,7 @@ $trigger-active-scale: 0.98;
     position: absolute;
     top: 0;
     right: 100%;
-    width: 8px;
+    width: $spacing-2;
     height: 100%;
     z-index: 0;
   }
@@ -135,11 +133,11 @@ $trigger-active-scale: 0.98;
     transform: translateY(-50%);
     flex-direction: column;
     gap: 1px;
-    padding: 3px;
+    padding: $spacing-px;
     background: var(--b3-theme-background);
-    border-radius: 8px;
+    border-radius: $radius-md;
     border: 1px solid var(--b3-border-color);
-    min-width: 90px;
+    min-width: 5.625rem;
     z-index: calc($floating-z-index + 1);
   }
 
@@ -149,10 +147,10 @@ $trigger-active-scale: 0.98;
 }
 
 .submenu-item {
-  padding: 4px 10px;
-  border-radius: 4px;
+  padding: $spacing-1 0.625rem;
+  border-radius: $radius-sm;
   cursor: pointer;
-  font-size: 11px;
+  font-size: $font-size-2xs;
   color: var(--b3-theme-on-background);
   white-space: nowrap;
 
@@ -171,9 +169,9 @@ $trigger-active-scale: 0.98;
   opacity: 0;
 }
 
-@media (max-width: 768px) {
+@media (max-width: $mobile-breakpoint) {
   .floating-box-wrapper {
-    right: 6px;
+    right: $spacing-3;
   }
 
   .floating-box-trigger {
@@ -191,8 +189,8 @@ $trigger-active-scale: 0.98;
   }
 
   .tool-item {
-    padding: 8px 12px;
-    min-width: 80px;
+    padding: $spacing-2 $spacing-3;
+    min-width: 5rem;
   }
 
   .tool-icon {
@@ -201,11 +199,11 @@ $trigger-active-scale: 0.98;
   }
 
   .tool-label {
-    font-size: 12px;
+    font-size: $font-size-xs;
   }
 
   .submenu-item {
-    padding: 8px 14px;
-    font-size: 13px;
+    padding: $spacing-2 0.875rem;
+    font-size: $font-size-sm;
   }
 }

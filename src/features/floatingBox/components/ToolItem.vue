@@ -1,7 +1,8 @@
+<!-- 悬浮框工具项按钮：图标+标签+可选子菜单 -->
 <template>
   <div
     class="tool-item"
-    :class="{ 'has-children': tool.children?.length }"
+    :class="{ 'has-children': hasChildren }"
     :title="tool.title"
     @click="handleClick"
   >
@@ -17,7 +18,7 @@
     </div>
     <span class="tool-label">{{ tool.label }}</span>
     <Icon
-      v-if="tool.children?.length"
+      v-if="hasChildren"
       icon="mdi:chevron-right"
       class="tool-arrow"
       width="10"
@@ -26,7 +27,7 @@
 
     <!-- 子菜单 -->
     <div
-      v-if="tool.children?.length"
+      v-if="hasChildren"
       class="tool-submenu"
     >
       <div
@@ -43,7 +44,9 @@
 </template>
 
 <script setup lang="ts">
+import type { Plugin } from "siyuan"
 import { Icon } from "@iconify/vue"
+import { computed } from "vue"
 import type {
   FloatingTool,
   FloatingToolChild,
@@ -51,8 +54,10 @@ import type {
 
 const props = defineProps<{
   tool: FloatingTool
-  plugin?: any
+  plugin?: Plugin
 }>()
+
+const hasChildren = computed(() => (props.tool.children?.length ?? 0) > 0)
 
 const handleClick = () => {
   props.tool.action(props.plugin)

@@ -12,6 +12,10 @@ export type {
   FloatingTool,
 } from "./types"
 
+interface FloatingBoxInstance {
+  destroy: () => void
+}
+
 let vueApp: VueApp | null = null
 let container: HTMLElement | null = null
 
@@ -52,7 +56,7 @@ export function registerFloatingBox(plugin: Plugin): void {
     console.error("悬浮框挂载失败:", error)
   }
 
-  ;(plugin as any).__floatingBox = {
+  ;(plugin as Plugin & { __floatingBox: FloatingBoxInstance }).__floatingBox = {
     destroy: () => {
       if (vueApp && container) {
         vueApp.unmount()

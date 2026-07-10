@@ -1,17 +1,18 @@
+/**
+ * 超级面板工具 — 悬浮框快捷入口，点击派发 toggleSuperPanel 事件
+ */
 import type { Plugin } from "siyuan"
 import type { FloatingTool } from "../types"
-import { emitCustomEvent } from "@/utils/eventBus"
+import { createEventDispatchTool } from "./utils"
 
 export function createSuperPanelTool(plugin: Plugin): FloatingTool {
-  const i18n = (plugin.i18n as any)?.floatingBox || {}
-  return {
+  return createEventDispatchTool(plugin, {
     id: "superPanel",
-    label: i18n.superPanel || "超级面板",
-    title: i18n.superPanelTitle || "打开超级面板",
+    i18nKey: "superPanel",
+    defaultLabel: "超级面板",
+    defaultTitle: "打开超级面板",
     icon: "mdi:view-dashboard",
     bgColor: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
-    action: () => {
-      emitCustomEvent("toggleSuperPanel")
-    },
-  }
+    eventName: "toggleSuperPanel",
+  })
 }

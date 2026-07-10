@@ -1,6 +1,6 @@
+<!-- 悬浮框主组件：右侧居中触发器 + 展开/折叠工具栏 -->
 <template>
   <div
-    ref="wrapperRef"
     class="floating-box-wrapper"
     :class="{ collapsed: !isExpanded }"
     @mouseenter="handleMouseEnter"
@@ -9,7 +9,7 @@
     <div
       class="floating-box-trigger"
       :class="{ expanded: isExpanded }"
-      @click="isMobile && toggleExpanded()"
+      @click="() => isMobile && toggleExpanded()"
     >
       <Icon
         icon="mdi:apps"
@@ -44,7 +44,7 @@ import { getToolsForPlatform } from "./tools/registry"
 import { useMobileDetection } from "./composables/useMobileDetection"
 
 const props = defineProps<{
-  plugin?: any
+  plugin?: Plugin
 }>()
 
 const { isMobile } = useMobileDetection()
@@ -56,11 +56,15 @@ const tools = computed(() =>
 )
 
 const handleMouseEnter = () => {
-  if (!isMobile.value) isExpanded.value = true
+  if (!isMobile.value) {
+    isExpanded.value = true
+  }
 }
 
 const handleMouseLeave = () => {
-  if (!isMobile.value) isExpanded.value = false
+  if (!isMobile.value) {
+    isExpanded.value = false
+  }
 }
 
 const toggleExpanded = () => {

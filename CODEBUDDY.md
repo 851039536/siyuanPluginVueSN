@@ -194,7 +194,7 @@ onMounted(() => {
 
 唯一例外：`src/config/settings.ts` 允许直接调用 `plugin.loadData/saveData`，仅用于单一的 `plugin-settings` 键。
 
-> 上述各 API 的详细代码示例见 [CLAUDE_RULES.md § API 参考](./CLAUDE_RULES.md#api-参考)
+> 上述各 API 的详细代码示例见 [AGENTS_RULES.md § API 参考](./AGENTS_RULES.md#api-参考)
 
 ---
 
@@ -243,7 +243,7 @@ onMounted(() => {
 - **全局样式**：`@use "@/index.scss" as *;`
 - **优先思源内置图标** 或 @iconify/vue
 - **图标规则**：禁止使用 emoji 表情作为图标。使用 `src/config/icons.ts` 中 `FEATURE_ICONS` / `COMMON_ICONS` 已注册的 Iconify 图标（`mdi:xxx`、`carbon:xxx` 等）。需要新图标时在 `icons.ts` 注册映射后引用，浏览图标 https://icon-sets.iconify.design/
-- **文件头注释**：每个 `.ts` / `.vue` 文件顶部必须包含简要功能说明注释（`.scss` 不适用），格式见 [CLAUDE_RULES.md § 强制规则：文件头注释](./CLAUDE_RULES.md#强制规则文件头注释)
+- **文件头注释**：每个 `.ts` / `.vue` 文件顶部必须包含简要功能说明注释（`.scss` 不适用），格式见 [AGENTS_RULES.md § 强制规则：文件头注释](./AGENTS_RULES.md#强制规则文件头注释)
 - **功能模块内代码分层**：模块内被多个文件共用的常量/工具函数不得在多处重复定义。共享常量（元数据映射、枚举值列表、配置表等）→ 提取到 `types/index.ts`；不依赖 Vue 响应式的纯工具函数 → 提取到 `utils.ts`。禁止 `.vue` 组件间复制粘贴相同的常量定义
 - **规则文件同步**：`AGENTS.md` 与 `CODEBUDDY.md` 必须保持内容一致（仅首行标题可不同）。修改任一方后，必须立即同步到另一方，禁止出现差异。
 
@@ -251,7 +251,7 @@ onMounted(() => {
 
 ## 文件头注释规则
 
-每个 `.ts` / `.vue` 文件顶部**必须**包含一行注释，简要说明文件功能（`.scss` 不适用）。详细格式规范见 [CLAUDE_RULES.md § 强制规则：文件头注释](./CLAUDE_RULES.md#强制规则文件头注释)。
+每个 `.ts` / `.vue` 文件顶部**必须**包含一行注释，简要说明文件功能（`.scss` 不适用）。详细格式规范见 [AGENTS_RULES.md § 强制规则：文件头注释](./AGENTS_RULES.md#强制规则文件头注释)。
 
 ---
 
@@ -275,7 +275,7 @@ onMounted(() => {
 - `destroy()` 调用 `modal.destroy()` + `clearInterval()` → `onUnmounted` 清理监听器
 - 参考实现：`src/features/dataBackup/`
 
-> 完整实现步骤与关键点速查表见 [CLAUDE_RULES.md § Vue 实例常驻模式](./CLAUDE_RULES.md#vue-实例常驻模式persistent-modal--customevent--定时器)
+> 完整实现步骤与关键点速查表见 [AGENTS_RULES.md § Vue 实例常驻模式](./AGENTS_RULES.md#vue-实例常驻模式persistent-modal--customevent--定时器)
 
 ---
 
@@ -371,7 +371,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 **强制规则**：所有新增 feature 的 UI 必须遵循 Codex 风格。禁止硬编码尺寸——使用全局设计 Token（`src/_variables.scss` 提供 `$vp-radius` / `$spacing-*` / `$vp-mono` / `$radius-*`），禁止 `box-shadow`（改用边框）。字体三要素（`font-size` / `font-weight` / `line-height`）同样禁止硬编码 px/数字值，必须使用 `$font-size-*` / `$font-weight-*` / `$line-height-*` Token。
 
-> 完整 Token 表、组件模式库、禁止事项见 [CLAUDE_RULES.md § UI 风格：Codex](./CLAUDE_RULES.md#ui-风格codex)
+> 完整 Token 表、组件模式库、禁止事项见 [AGENTS_RULES.md § UI 风格：Codex](./AGENTS_RULES.md#ui-风格codex)
 
 ---
 
@@ -400,9 +400,9 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 项目遵循 **Codex UI 风格**：基于边框的卡片（禁用 `box-shadow`），使用 `src/_variables.scss` 中的全局设计 Token（`$radius-*`/`$vp-radius`/`$spacing-2px`/`$spacing-px`/`$spacing-1`~`$spacing-4`/`$font-size-*`/`$font-weight-*`/`$line-height-*`/`$vp-mono`），大写标签 `$font-size-2xs`/`$font-weight-bold` 字重 + 0.06em 字母间距，统一 0.12s 过渡。**字体三要素 `font-size`/`font-weight`/`line-height` 禁止硬编码 px 或数字值**，必须使用对应的 `$font-size-*`/`$font-weight-*`/`$line-height-*` Token。**所有 `<Input>`/`<Select>` 在弹窗表单中必须指定 `size="small"`**，默认 `medium` 与紧凑风格不匹配。
 
-> 完整设计 Token 表、核心规范速查表、`.vp-*` 组件模式库（弹窗/输入框/标签）、禁止事项清单见 [CLAUDE_RULES.md § UI 风格：Codex](./CLAUDE_RULES.md#ui-风格codex)
+> 完整设计 Token 表、核心规范速查表、`.vp-*` 组件模式库（弹窗/输入框/标签）、禁止事项清单见 [AGENTS_RULES.md § UI 风格：Codex](./AGENTS_RULES.md#ui-风格codex)
 >
-> SCSS 分离的强制规则与正误示例见 [CLAUDE_RULES.md § 强制规则：SCSS 必须分离到 styles/ 目录](./CLAUDE_RULES.md#强制规则scss-必须分离到-styles-目录)
+> SCSS 分离的强制规则与正误示例见 [AGENTS_RULES.md § 强制规则：SCSS 必须分离到 styles/ 目录](./AGENTS_RULES.md#强制规则scss-必须分离到-styles-目录)
 
 ---
 
@@ -535,7 +535,7 @@ src/
 
 ## 参考文件
 
-本文件提供架构"大图"和规则要点。**详细代码示例、完整 API 参数说明、组件模式库请查阅 [CLAUDE_RULES.md](./CLAUDE_RULES.md)**，其内容组织如下：
+本文件提供架构"大图"和规则要点。**详细代码示例、完整 API 参数说明、组件模式库请查阅 [AGENTS_RULES.md](./AGENTS_RULES.md)**，其内容组织如下：
 
 | 章节 | 内容 |
 |------|------|

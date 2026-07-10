@@ -1,4 +1,4 @@
-# CLAUDE_RULES.md
+# AGENTS_RULES.md
 
 思源笔记插件 — 详细 API 参考、代码示例、UI 规范。
 

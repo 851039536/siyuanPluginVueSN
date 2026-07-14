@@ -12,14 +12,20 @@ import { getNodeModules } from "@/utils/nodeModules"
 
 // ========== 工具函数 ==========
 
+/** 缓存的 crypto 模块引用（模块级单例，与 requireHttp 风格统一） */
+let _crypto: any = null
+
 /** 获取 crypto 模块 (仅 Electron/Node.js 环境可用) */
 function requireCrypto(): any {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require("node:crypto")
-  } catch {
-    throw new Error("签名需要 Node.js 环境，请使用桌面版思源笔记")
+  if (!_crypto) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      _crypto = require("node:crypto")
+    } catch {
+      throw new Error("签名需要 Node.js 环境，请使用桌面版思源笔记")
+    }
   }
+  return _crypto
 }
 
 /** 获取 fs/path 模块 */
@@ -75,12 +81,11 @@ function dateStamp(d: Date): string {
   return d.toISOString().slice(0, 10).replace(/-/g, "")
 }
 
-/** 生成 Payload 的 SHA256 哈希 (hex) */
+/** 生成 Payload 的 SHA256 哈希 (hex)，null/undefined 返回空体 SHA256 常量避免 sha256Hex(null) 报错 */
 function payloadHash(body: Buffer | string | null): string {
   if (body === null || body === undefined) {
     return "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" // 空字符串的 SHA256
   }
-  // B14 修复：两个分支返回相同，合并为单行
   return sha256Hex(body)
 }
 
@@ -260,12 +265,8 @@ export class S3Client {
   /** HeadBucket 测试 */
   private async tryHeadBucket(): Promise<{ success: boolean; message: string }> {
     try {
-      const protocol = this.config.useSSL ? "https" : "http"
-      const url = this.config.pathStyle
-        ? `${protocol}://${this.config.endpoint}/${this.config.bucket}`
-        : `${protocol}://${this.config.bucket}.${this.config.endpoint}`
-      // 签名时 URI 必须与 URL 的路径部分一致：path-style → /bucket, virtual-host → /
-      const uri = this.config.pathStyle ? `/${this.config.bucket}` : "/"
+      const url = this.buildUrl("")
+      const uri = this.buildUri("")
 
       const response = await this.request("HEAD", uri, "", url, null)
 
@@ -366,9 +367,14 @@ export class S3Client {
 
   // ========== 私有方法 ==========
 
+  /** 标准化 S3 key：去除首部斜杠 */
+  private normKey(key: string): string {
+    return key.replace(/^\/+/, "")
+  }
+
   /** 构建请求 URL */
   private buildUrl(key: string, queryString = ""): string {
-    const safeKey = key.replace(/^\/+/, "")
+    const safeKey = this.normKey(key)
     const protocol = this.config.useSSL ? "https" : "http"
     const encodedKey = safeKey.split("/").map(encodeURIComponent).join("/")
     const host = this.config.pathStyle
@@ -379,7 +385,7 @@ export class S3Client {
 
   /** 构建请求 URI (用于签名) */
   private buildUri(key: string): string {
-    const safeKey = key.replace(/^\/+/, "")
+    const safeKey = this.normKey(key)
     if (this.config.pathStyle) {
       return `/${this.config.bucket}/${safeKey}`.replace(/\/+/g, "/")
     }

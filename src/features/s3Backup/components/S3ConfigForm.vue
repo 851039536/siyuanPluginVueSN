@@ -253,9 +253,7 @@ async function handleTestConnection(): Promise<void> {
   lastTestResult.value = null
 
   try {
-    // 先保存配置再测试
-    emit("configChanged", { ...localConfig })
-
+    // 仅测试连接，不修改父组件状态（父组件仅在用户点击"保存配置"时更新）
     if (props.onTestConnection) {
       lastTestResult.value = await props.onTestConnection({ ...localConfig })
     } else {

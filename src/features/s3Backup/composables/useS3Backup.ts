@@ -67,46 +67,21 @@ export function useS3Backup() {
 
   /** 保存 S3 配置 */
   function saveConfig(config: S3Config): void {
-    s3Config.value = { ...config }
-    isConfigured.value = true
-    initClient(config)
+    applyConfig(config)
   }
 
-  /** 直接上传文件内容到 S3（跳过本地打包，用于逐文件上传模式） */
-  async function uploadFileContent(buffer: Buffer, key: string): Promise<void> {
-    if (!s3Client) { throw new Error("S3 客户端未初始化") }
-    await s3Client.uploadBuffer(buffer, key)
-  }
-
-  /** 获取 S3 列举前缀（统一默认值，消除 listBackups/listExistingKeys 重复构造） */
-  function getListPrefix(): string {
-    return s3Config.value.prefix || "siyuan-backup/"
-  }
-
-  /** 列举 S3 备份文件（失败不抛异常，返回空数组；供 UI 刷新列表使用） */
-  async function listBackups(): Promise<S3FileInfo[]> {
-    if (!s3Client) { throw new Error("S3 客户端未初始化") }
-
-    isLoading.value = true
-
-    try {
-      const files = await s3Client.list(getListPrefix())
-      backupList.value = files
-      return files
-    } catch (_err: any) {
-      backupList.value = []
-      return []
-    } finally {
-      isLoading.value = false
+  /** 加载已保存的配置（仅在 endpoint 有效时应用） */
+  function loadConfig(config: S3Config): void {
+    if (config && config.endpoint) {
+      applyConfig(config)
     }
   }
 
-  /** 获取 S3 已有 Key 集合（失败抛异常，供去重判断使用） */
-  async function listExistingKeys(): Promise<Set<string>> {
-    if (!s3Client) { throw new Error("S3 客户端未初始化") }
-    const files = await s3Client.list(getListPrefix())
-    backupList.value = files
-    return new Set(files.map((f) => f.key))
+  /** 应用 S3 配置（消除 saveConfig/loadConfig 重复逻辑） */
+  function applyConfig(config: S3Config): void {
+    s3Config.value = { ...config }
+    isConfigured.value = true
+    initClient(config)
   }
 
   /** 下载 S3 备份文件 */
@@ -122,13 +97,42 @@ export function useS3Backup() {
     backupList.value = backupList.value.filter((f) => f.key !== s3Key)
   }
 
-  /** 加载已保存的配置 */
-  function loadConfig(config: S3Config): void {
-    if (config && config.endpoint) {
-      s3Config.value = { ...config }
-      isConfigured.value = true
-      initClient(config)
+  /** 直接上传文件内容到 S3（跳过本地打包，用于逐文件上传模式） */
+  async function uploadFileContent(buffer: Buffer, key: string): Promise<void> {
+    if (!s3Client) { throw new Error("S3 客户端未初始化") }
+    await s3Client.uploadBuffer(buffer, key)
+  }
+
+  /** 获取 S3 列举前缀（统一默认值，消除 listBackups/listExistingKeys 重复构造） */
+  function getListPrefix(): string {
+    return s3Config.value.prefix || "siyuan-backup/"
+  }
+
+  /** 从 S3 拉取文件列表（消除 listBackups/listExistingKeys 重复的 list 调用和 backupList 赋值） */
+  async function fetchBackupList(): Promise<S3FileInfo[]> {
+    if (!s3Client) { throw new Error("S3 客户端未初始化") }
+    const files = await s3Client.list(getListPrefix())
+    backupList.value = files
+    return files
+  }
+
+  /** 列举 S3 备份文件（失败不抛异常，返回空数组；供 UI 刷新列表使用） */
+  async function listBackups(): Promise<S3FileInfo[]> {
+    isLoading.value = true
+    try {
+      return await fetchBackupList()
+    } catch (_err: any) {
+      backupList.value = []
+      return []
+    } finally {
+      isLoading.value = false
     }
+  }
+
+  /** 获取 S3 已有 Key 集合（失败抛异常，供去重判断使用） */
+  async function listExistingKeys(): Promise<Set<string>> {
+    const files = await fetchBackupList()
+    return new Set(files.map((f) => f.key))
   }
 
   return {

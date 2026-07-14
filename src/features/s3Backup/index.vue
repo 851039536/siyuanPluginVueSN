@@ -158,7 +158,7 @@ import { pickDirectory, openFolderInExplorer } from "@/utils/electronDialog"
 import { getNodeModules } from "@/utils/nodeModules"
 import { encryptSetting, decryptSetting } from "@/utils/settingsCrypto"
 import { useS3Backup } from "./composables/useS3Backup"
-import { BackupManager } from "./modules/BackupManager"
+import { BackupManager, padNum } from "./modules/BackupManager"
 import type { BackupResult, WorkspaceFile } from "./modules/BackupManager"
 import { getS3BackupInstance } from "./index"
 import type { S3Config, LocalBackupInfo, BackupMode } from "./types"
@@ -503,8 +503,7 @@ async function performS3Backup(latestZip?: BackupResult | null): Promise<void> {
   }
 
   const d = new Date()
-  const pad = (n: number) => String(n).padStart(2, "0")
-  const timestamp = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`
+  const timestamp = `${d.getFullYear()}${padNum(d.getMonth() + 1)}${padNum(d.getDate())}-${padNum(d.getHours())}${padNum(d.getMinutes())}${padNum(d.getSeconds())}`
   // B10 修复：复用顶层缓存的 node 实例
   if (!node) {
     throw new Error("无法访问文件系统，请使用桌面版思源笔记")

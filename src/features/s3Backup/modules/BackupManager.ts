@@ -52,12 +52,16 @@ export interface WorkspaceFile {
 
 // ========== 工具函数 ==========
 
+/** 数字补零（如 padNum(3) → "03"），供模块内 formatTimestamp 和 index.vue 的 timestamp 生成共用 */
+export function padNum(n: number): string {
+  return n.toString().padStart(2, "0")
+}
+
 /** B11 修复：生成备份文件名，支持日期子文件夹 */
 function formatTimestamp(now: Date, useDateFolder = false): string {
-  const pad = (n: number) => n.toString().padStart(2, "0")
   const y = now.getFullYear()
-  const datePart = `${y}${pad(now.getMonth() + 1)}${pad(now.getDate())}`
-  const timePart = `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
+  const datePart = `${y}${padNum(now.getMonth() + 1)}${padNum(now.getDate())}`
+  const timePart = `${padNum(now.getHours())}${padNum(now.getMinutes())}${padNum(now.getSeconds())}`
   const prefix = useDateFolder ? `${datePart}/` : ""
   return `data-${prefix}${datePart}-${timePart}.zip`
 }

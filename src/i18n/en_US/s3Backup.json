@@ -86,5 +86,11 @@
   "s3SubPathHint": "Organize backup files under this path segment when uploading to cloud",
   "pathPreview": "Resolved Path",
   "backupTab": "Backup",
-  "configTab": "Config"
+  "configTab": "Config",
+  "logTab": "Log",
+  "backupLogs": "Operation Log",
+  "noLogs": "No operation records",
+  "clearAll": "Clear All",
+  "success": "Success",
+  "failed": "Failed"
 }

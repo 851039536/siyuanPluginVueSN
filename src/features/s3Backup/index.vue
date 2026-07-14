@@ -28,6 +28,13 @@
       >
         {{ i18n.configTab || "配置" }}
       </button>
+      <button
+        class="s3-tab-btn"
+        :class="{ active: activeTab === 'log' }"
+        @click="activeTab = 'log'"
+      >
+        {{ i18n.logTab || "日志" }}
+      </button>
     </div>
 
     <!-- Tab: 备份 -->
@@ -147,6 +154,18 @@
         />
       </section>
     </div>
+
+    <!-- Tab: 日志 -->
+    <div
+      v-if="activeTab === 'log'"
+      class="settings-container"
+    >
+      <BackupLogCard
+        :logs="backupLogs"
+        :i18n="i18n"
+        @clear="clearLogs"
+      />
+    </div>
   </div>
 </template>
 
@@ -163,6 +182,8 @@ import type { BackupResult, WorkspaceFile } from "./modules/BackupManager"
 import { getS3BackupInstance } from "./index"
 import type { S3Config, LocalBackupInfo, BackupMode } from "./types"
 import { DEFAULT_BACKUP_MODE } from "./types"
+import type { BackupLog } from "./types"
+import { MAX_LOG_COUNT } from "./types"
 import S3ConfigForm from "./components/S3ConfigForm.vue"
 import WorkspaceInfoCard from "./components/WorkspaceInfoCard.vue"
 import BackupModeSelector from "./components/BackupModeSelector.vue"
@@ -170,6 +191,7 @@ import BackupProgressSection from "./components/BackupProgressSection.vue"
 import ManualBackupCard from "./components/ManualBackupCard.vue"
 import AutoBackupCard from "./components/AutoBackupCard.vue"
 import BackupListCard from "./components/BackupListCard.vue"
+import BackupLogCard from "./components/BackupLogCard.vue"
 import Button from "@/components/Button.vue"
 
 // ========== Props ==========
@@ -208,7 +230,7 @@ const {
 
 // ========== 基础状态 ==========
 
-const activeTab = ref<"backup" | "config">("backup")
+const activeTab = ref<"backup" | "config" | "log">("backup")
 const workspacePath = ref("")
 const workspaceRoot = ref("")
 const lastBackupTime = ref("")
@@ -216,6 +238,7 @@ const useDateFolder = ref(true)
 const localBackupDir = ref("data-backup")
 const s3SubPrefix = ref("data-backup")
 const isS3OnlyBackingUp = ref(false)
+const backupLogs = ref<BackupLog[]>([])
 
 // ========== 路径预览 ==========
 
@@ -455,8 +478,23 @@ async function performLocalBackup(): Promise<BackupResult | null> {
     }
 
     showMessage(`本地备份成功: ${result.fileName}（${result.totalFiles} 文件）`, 3000, "info")
+    addLog({
+      type: "localZip",
+      action: props.i18n.localZipBackup || "本地压缩备份",
+      fileName: result.fileName,
+      fileSize: result.size,
+      success: true,
+      message: `${result.totalFiles} 文件`,
+    })
     return result
   } catch (err: any) {
+    addLog({
+      type: "localZip",
+      action: props.i18n.localZipBackup || "本地压缩备份",
+      fileName: "",
+      success: false,
+      message: err.message,
+    })
     throw new Error(`本地备份: ${err.message}`)
   }
 }
@@ -588,6 +626,14 @@ async function performS3Backup(latestZip?: BackupResult | null): Promise<void> {
   }
   showMessage(msg, 3000, "info")
 
+  addLog({
+    type: "s3Upload",
+    action: props.i18n.s3Upload || "S3 上传",
+    fileName: uploadedCount > 1 ? `${uploadedCount} 个文件` : (files[0]?.relativePath || ""),
+    success: true,
+    message: skippedCount > 0 ? `跳过 ${skippedCount}` : undefined,
+  })
+
   await refreshBackupList()
 }
 
@@ -718,8 +764,21 @@ async function downloadToLocalDir(backup: Record<string, any>): Promise<string> 
 async function handleDownload(backup: Record<string, any>): Promise<void> {
   try {
     await downloadToLocalDir(backup)
+    addLog({
+      type: "s3Download",
+      action: props.i18n.download || "下载",
+      fileName: backup.name,
+      success: true,
+    })
     showMessage(props.i18n.downloadSuccess || "下载成功", 2000, "info")
   } catch (err: any) {
+    addLog({
+      type: "s3Download",
+      action: props.i18n.download || "下载",
+      fileName: backup.name,
+      success: false,
+      message: err.message,
+    })
     showMessage(`${props.i18n.downloadFailed || "下载失败"}: ${err.message}`, 5000, "error")
   }
 }
@@ -730,9 +789,52 @@ async function handleDelete(backup: Record<string, any>): Promise<void> {
 
   try {
     await deleteBackup(backup.key)
+    addLog({
+      type: "s3Delete",
+      action: props.i18n.delete || "删除",
+      fileName: backup.name,
+      success: true,
+    })
     showMessage(props.i18n.deleteSuccess || "删除成功", 2000, "info")
   } catch (err: any) {
+    addLog({
+      type: "s3Delete",
+      action: props.i18n.delete || "删除",
+      fileName: backup.name,
+      success: false,
+      message: err.message,
+    })
     showMessage(`${props.i18n.deleteFailed || "删除失败"}: ${err.message}`, 5000, "error")
+  }
+}
+
+// ========== 日志管理 ==========
+
+function addLog(entry: Omit<BackupLog, "id" | "time">): void {
+  const log: BackupLog = {
+    ...entry,
+    id: Date.now().toString(),
+    time: new Date().toISOString(),
+  }
+  backupLogs.value.unshift(log)
+  if (backupLogs.value.length > MAX_LOG_COUNT) {
+    backupLogs.value = backupLogs.value.slice(0, MAX_LOG_COUNT)
+  }
+  saveLogs()
+}
+
+async function saveLogs(): Promise<void> {
+  const instance = getS3BackupInstance()
+  if (instance) {
+    await instance.getStorage().backupLogs.save({ logs: backupLogs.value })
+  }
+}
+
+async function clearLogs(): Promise<void> {
+  backupLogs.value = []
+  const instance = getS3BackupInstance()
+  if (instance) {
+    await instance.getStorage().backupLogs.save({ logs: [] })
   }
 }
 
@@ -873,6 +975,17 @@ onMounted(async () => {
   if (isConfigured.value) {
     await refreshBackupList()
   }
+
+  // 加载操作日志
+  try {
+    const instance2 = getS3BackupInstance()
+    if (instance2) {
+      const data = await instance2.getStorage().backupLogs.load()
+      if (data?.logs) {
+        backupLogs.value = data.logs
+      }
+    }
+  } catch { /* ignore */ }
 
   // 注册自动备份事件监听
   window.addEventListener("autoBackupTrigger", handleAutoBackupTrigger)

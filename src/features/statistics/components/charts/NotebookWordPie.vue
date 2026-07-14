@@ -69,14 +69,14 @@
 </template>
 
 <script setup lang="ts">
-import type { NotebookWordStat } from "../types"
+import type { NotebookWordStat } from "../../types"
 import {
   computed,
   ref,
   watch,
 } from "vue"
-import { useNotebookHover } from "../composables/useNotebookHover"
-import { formatNumber } from "../utils"
+import { useNotebookHover } from "../../composables/useNotebookHover"
+import { formatNumber } from "../../utils"
 
 interface Props {
   data?: NotebookWordStat[]
@@ -189,7 +189,7 @@ function degToRad(deg: number): number {
 
 <style scoped lang="scss">
 @use "@/variables" as *;
-@use "../styles/index.scss" as stats;
+@use "../../styles/index.scss" as stats;
 
 .notebook-word-pie {
   padding: 8px 0;

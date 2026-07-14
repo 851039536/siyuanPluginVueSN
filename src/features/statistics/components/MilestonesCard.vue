@@ -177,17 +177,36 @@
           class="category-body"
         >
           <div class="milestone-grid">
-            <MilestoneChip
+            <div
               v-for="m in category.allItems"
               :key="m.id"
-              :icon="m.icon"
-              :label="m.label"
-              :tier="m.tier"
-              :achieved="m.achieved"
-              :progress="m.progress"
-              :is-next="m.isNext"
-              :tier-label="tierLabels[m.tier]"
-            />
+              class="milestone-chip"
+              :class="[`tier-${m.tier}`, {
+                achieved: m.achieved,
+                locked: !m.achieved && !m.isNext,
+                next: !m.achieved && m.isNext,
+              }]"
+            >
+              <IconWrapper
+                class="chip-icon"
+                :name="(m.achieved ? m.icon : (m.isNext ? 'star' : 'pageLock')) as any"
+                :size="14"
+              />
+              <span class="chip-label">{{ m.label }}</span>
+              <span
+                v-if="m.achieved"
+                class="chip-tier"
+              >{{ tierLabels[m.tier] }}</span>
+              <div
+                v-if="!m.achieved"
+                class="chip-progress"
+              >
+                <div
+                  class="chip-progress-fill"
+                  :style="{ width: `${m.progress}%` }"
+                />
+              </div>
+            </div>
           </div>
         </div>
         <!-- collapsed preview: show last 3 achieved + 1 next -->
@@ -195,17 +214,36 @@
           v-else
           class="category-preview"
         >
-          <MilestoneChip
+          <div
             v-for="m in category.previewItems"
             :key="m.id"
-            :icon="m.icon"
-            :label="m.label"
-            :tier="m.tier"
-            :achieved="m.achieved"
-            :progress="m.progress"
-            :is-next="m.isNext"
-            :tier-label="tierLabels[m.tier]"
-          />
+            class="milestone-chip"
+            :class="[`tier-${m.tier}`, {
+              achieved: m.achieved,
+              locked: !m.achieved && !m.isNext,
+              next: !m.achieved && m.isNext,
+            }]"
+          >
+            <IconWrapper
+              class="chip-icon"
+              :name="(m.achieved ? m.icon : (m.isNext ? 'star' : 'pageLock')) as any"
+              :size="14"
+            />
+            <span class="chip-label">{{ m.label }}</span>
+            <span
+              v-if="m.achieved"
+              class="chip-tier"
+            >{{ tierLabels[m.tier] }}</span>
+            <div
+              v-if="!m.achieved"
+              class="chip-progress"
+            >
+              <div
+                class="chip-progress-fill"
+                :style="{ width: `${m.progress}%` }"
+              />
+            </div>
+          </div>
           <span
             v-if="category.hiddenCount > 0"
             class="more-hint"
@@ -359,7 +397,6 @@ import {
 import {
   milestoneTargetOfWithRules,
 } from "../utils/milestones"
-import MilestoneChip from "./MilestoneChip.vue"
 import MilestoneRuleEditor from "./MilestoneRuleEditor.vue"
 
 type Tier = "common" | "rare" | "epic" | "legendary"
@@ -2114,5 +2151,77 @@ function getTierCount(tierId: string): number {
     color: var(--stat-color-danger, #cf222e);
     background: rgba(207, 34, 46, 0.08);
   }
+}
+
+// ===== Milestone Chip（从 MilestoneChip.vue 合并） =====
+.milestone-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 10px;
+  min-width: 68px;
+  border-radius: stats.$radius-sm;
+  position: relative;
+  background: rgba(var(--b3-theme-on-surface-rgb), 0.03);
+  border: 1px solid transparent;
+  transition: background 0.15s, border-color 0.15s;
+
+  &.achieved {
+    @include stats.tier-chip-achieved;
+  }
+
+  &.next {
+    background: rgba(var(--b3-theme-primary-rgb), 0.06);
+    border: 1px dashed rgba(var(--b3-theme-primary-rgb), 0.3);
+    opacity: 1;
+
+    .chip-label {
+      color: var(--b3-theme-primary);
+      font-weight: 600;
+    }
+  }
+
+  &.locked {
+    opacity: 0.3;
+    filter: grayscale(0.5);
+  }
+}
+
+.chip-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.chip-label {
+  font-family: stats.$font-mono;
+  font-size: 10px;
+  text-align: center;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+.chip-tier {
+  font-size: 9px;
+  padding: 0 4px;
+  border-radius: 3px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.chip-progress {
+  width: 100%;
+  height: 2px;
+  background: rgba(var(--b3-theme-on-surface-rgb), 0.08);
+  border-radius: stats.$radius-sm;
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.chip-progress-fill {
+  height: 100%;
+  background: var(--b3-theme-primary);
+  border-radius: stats.$radius-sm;
+  transition: width 0.6s ease;
 }
 </style>

@@ -1,0 +1,154 @@
+// 字数排行组件样式：排行列表、金/银/铜排名徽章、进度条、Top N 下拉选择器
+@use "@/variables" as *;
+@use "../../superPanel/styles/shared" as *;
+@use "index.scss" as stats;
+
+.word-ranking-section {
+  @include stats.stats-card-base;
+  border-radius: stats.$radius-sm;
+  padding: 0;
+  overflow: visible;
+
+  .ranking-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $spacing-2 $spacing-3;
+    background: rgba(var(--b3-theme-primary-rgb), 0.04);
+    border-bottom: 1px solid var(--b3-border-color);
+
+    .subsection-title {
+      margin: 0;
+    }
+
+    .ranking-controls {
+      .top-n-select {
+        padding: 2px $spacing-2;
+        border: 1px solid var(--b3-border-color);
+        border-radius: stats.$radius-sm;
+        background: var(--b3-theme-surface);
+        color: var(--b3-theme-on-surface);
+        font-family: stats.$font-mono;
+        font-size: $font-size-2xs;
+        font-weight: $font-weight-bold;
+        cursor: pointer;
+        outline: none;
+
+        @include stats.codex-focus-glow;
+      }
+    }
+  }
+
+  .ranking-empty {
+    text-align: center;
+    padding: $spacing-5;
+    font-size: 11px; // 无精确 Token（介于 $font-size-2xs 10px 与 $font-size-xs 12px 之间）
+    color: var(--b3-theme-on-surface);
+    opacity: 0.5;
+  }
+
+  .ranking-list {
+    max-height: 400px;
+    overflow-y: auto;
+    @include scrollbar-thin;
+
+    .ranking-item {
+      display: flex;
+      align-items: center;
+      gap: $spacing-2;
+      padding: 6px $spacing-3; // 6px 无精确 Token
+      border-bottom: 1px solid var(--b3-border-color);
+      transition: background 0.12s;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &:hover {
+        background: rgba(var(--b3-theme-primary-rgb), 0.03);
+      }
+
+      .rank-badge {
+        flex-shrink: 0;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: stats.$font-mono;
+        font-size: $font-size-2xs;
+        font-weight: $font-weight-bold;
+        background: rgba(var(--b3-theme-on-surface-rgb), 0.06);
+        color: var(--b3-theme-on-surface);
+        opacity: 0.6;
+      }
+
+      &.rank-gold .rank-badge {
+        background: linear-gradient(135deg, stats.$color-rank-gold, #ffb800);
+        color: stats.$color-rank-gold-text;
+        opacity: 1;
+      }
+
+      &.rank-silver .rank-badge {
+        background: linear-gradient(135deg, stats.$color-rank-silver, #a8a8a8);
+        color: #555;
+        opacity: 1;
+      }
+
+      &.rank-bronze .rank-badge {
+        background: linear-gradient(135deg, stats.$color-rank-bronze, #b8722d);
+        color: #fff;
+        opacity: 1;
+      }
+
+      .rank-info {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: $spacing-2;
+
+        .rank-date {
+          font-family: stats.$font-mono;
+          font-size: 11px; // 无精确 Token
+          font-weight: $font-weight-bold;
+          color: var(--b3-theme-on-surface);
+          white-space: nowrap;
+        }
+
+        .rank-words {
+          font-family: stats.$font-mono;
+          font-size: $font-size-2xs;
+          font-weight: $font-weight-bold;
+          color: var(--b3-theme-primary);
+          white-space: nowrap;
+        }
+      }
+
+      .rank-bar-wrapper {
+        flex-shrink: 0;
+        width: 60px;
+        height: 6px;
+        background: rgba(var(--b3-theme-on-surface-rgb), 0.06);
+        border-radius: stats.$radius-sm;
+        overflow: hidden;
+
+        .rank-bar {
+          height: 100%;
+          background: stats.$gradient-primary;
+          border-radius: stats.$radius-sm;
+          transition: width 0.3s ease; // 柱状图动画保留
+        }
+      }
+    }
+  }
+}
+
+@include mobile-only {
+  .word-ranking-section {
+    .ranking-list {
+      max-height: 300px;
+    }
+  }
+}

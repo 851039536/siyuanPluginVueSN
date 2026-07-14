@@ -251,24 +251,10 @@ async function onDrop(e: DragEvent): Promise<void> {
 
   for (let i = 0; i < fileList.length; i++) {
     const file = fileList[i]
-    const filePath = await resolveDropPath(file)
-    if (!filePath) { continue }
+    const resolved = await resolveDropPath(file)
+    if (!resolved) { continue }
 
-    let fileSize = file.size
-    let fileName = file.name
-
-    // 文件选择器兜底后 file.size 可能不准确，按实际文件大小更新
-    if (filePath !== (file as any).path) {
-      try {
-        const node = getNodeModules()
-        if (node) {
-          const stats = await node.fs.promises.stat(filePath)
-          fileSize = stats.size
-          const pathModule = node.path
-          fileName = pathModule.basename(filePath)
-        }
-      } catch { /* use original */ }
-    }
+    const { filePath, fileName, fileSize } = resolved
 
     try {
       const hash = await manager.computeFileHash(filePath)
@@ -284,26 +270,70 @@ async function onDrop(e: DragEvent): Promise<void> {
   }
 }
 
+interface ResolvedDropPath {
+  filePath: string
+  fileName: string
+  fileSize: number
+}
+
 /**
  * 解析拖放文件的真实路径
- * Electron 环境下 file.path 可能不可用（contextIsolation 阻断），
- * 或路径不存在（文件已移动），此时弹出文件选择对话框让用户重新定位
+ * 优先级：webUtils.getPathForFile → file.path → 文件选择器兜底
  */
-async function resolveDropPath(file: File): Promise<string | null> {
-  const rawPath = (file as any).path as string | undefined
+async function resolveDropPath(file: File): Promise<ResolvedDropPath | null> {
+  let filePath: string | null = null
 
-  // 检查原始路径是否存在
-  if (rawPath) {
-    try {
-      const node = getNodeModules()
-      if (node) {
-        await node.fs.promises.access(rawPath)
-        return rawPath
+  // 1. Electron webUtils API（最可靠，不受 contextIsolation 影响）
+  try {
+    if (typeof window.require === "function") {
+      const electron = window.require("electron")
+      const webPath = electron?.webUtils?.getPathForFile?.(file)
+      if (webPath) {
+        const node = getNodeModules()
+        if (node) {
+          await node.fs.promises.access(webPath)
+          filePath = webPath
+        }
       }
-    } catch { /* fall through to picker */ }
+    }
+  } catch { /* webUtils 不可用 */ }
+
+  // 2. file.path 属性（兼容旧版 / contextIsolation 关闭的环境）
+  if (!filePath) {
+    const rawPath = (file as any).path as string | undefined
+    if (rawPath) {
+      try {
+        const node = getNodeModules()
+        if (node) { await node.fs.promises.access(rawPath); filePath = rawPath }
+      } catch { /* fall through */ }
+    }
   }
 
-  return pickFile(rawPath ? `原始路径失效，请重新选择: ${rawPath}` : `拖放失败，请手动选择: ${file.name}`)
+  // 3. 文件选择器兜底
+  if (!filePath) {
+    filePath = await pickFile(`请手动选择文件: ${file.name}`)
+  }
+
+  if (!filePath) { return null }
+
+  // 获取实际文件名和大小（兜底路径可能来自选择器，与原始 file 对象不一致）
+  try {
+    const node = getNodeModules()
+    if (node) {
+      const stats = await node.fs.promises.stat(filePath)
+      return {
+        filePath,
+        fileName: node.path.basename(filePath),
+        fileSize: stats.size,
+      }
+    }
+  } catch { /* use fallback values */ }
+
+  return {
+    filePath,
+    fileName: file.name,
+    fileSize: file.size,
+  }
 }
 
 /** 使用 Electron 原生对话框选择单个文件 */

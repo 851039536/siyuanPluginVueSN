@@ -1,0 +1,359 @@
+// DocChangeSection 组件专属样式：文档变化统计区块（新增/修改列表、柱状图、最近更新）
+
+@use '../../../variables' as *;
+@use './index.scss' as stats;
+
+.collapsible-section {
+  border: 1px solid var(--b3-border-color);
+  border-radius: stats.$radius-sm;
+  overflow: hidden;
+  background: var(--b3-theme-surface);
+
+  .collapse-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: $spacing-2 $spacing-3;
+    background: rgba(var(--b3-theme-primary-rgb), 0.03);
+    border: none;
+    cursor: pointer;
+    font-family: $font-body;
+    color: var(--b3-theme-on-surface);
+
+    &:hover {
+      background: rgba(var(--b3-theme-primary-rgb), 0.06);
+    }
+  }
+
+  .collapse-icon {
+    font-size: 9px;
+    color: var(--b3-theme-primary);
+    opacity: 0.7;
+    transition: transform 0.2s;
+  }
+
+  .collapse-title {
+    @include stats.codex-label;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.7;
+  }
+
+  .collapse-badge {
+    margin-left: auto;
+    font-family: stats.$font-mono;
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-bold;
+    color: var(--b3-theme-primary);
+    opacity: 0.5;
+  }
+
+  .collapse-body {
+    padding: $spacing-2;
+    border-top: 1px solid var(--b3-border-color);
+  }
+}
+
+.changed-range-picker {
+  display: flex;
+  gap: $spacing-1;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.changed-range-btn {
+  @include stats.small-action-btn;
+}
+
+// ---- 最近更新列表 ----
+.recent-docs-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.recent-group-header {
+  padding: $spacing-3 $spacing-3 $spacing-1;
+  @include stats.codex-label;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.35;
+}
+
+.recent-doc-item {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: 6px $spacing-3;
+  border-radius: stats.$radius-sm;
+  cursor: pointer;
+  transition: background 0.12s;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface);
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+}
+
+.recent-doc-badge {
+  width: 18px;
+  height: 18px;
+  border-radius: stats.$radius-sm;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: $font-weight-bold;
+  flex-shrink: 0;
+  background: rgba(stats.$color-warning, 0.12);
+  color: stats.$color-warning;
+}
+
+.recent-doc-item.new .recent-doc-badge {
+  background: rgba(stats.$color-success, 0.12);
+  color: stats.$color-success;
+}
+
+.recent-doc-notebook {
+  font-family: stats.$font-mono;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.4;
+  white-space: nowrap;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+
+.recent-doc-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: $font-weight-medium;
+}
+
+.recent-doc-time {
+  font-family: stats.$font-mono;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.06em;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.35;
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+// ---- 范围柱状图 ----
+.range-chart-section {
+  margin-bottom: $spacing-2;
+}
+
+.range-chart-bar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.range-chart-legend {
+  display: flex;
+  gap: $spacing-3;
+  padding: 2px $spacing-1 6px;
+  font-size: 11px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: stats.$radius-sm;
+  margin-right: 3px;
+  vertical-align: middle;
+
+  &.new { background: stats.$color-success; }
+  &.modified { background: stats.$color-warning; }
+}
+
+.range-chart-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px $spacing-1;
+  border-radius: stats.$radius-sm;
+  cursor: pointer;
+  transition: background 0.12s;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+
+  &.active {
+    background: var(--b3-theme-primary-lightest, rgba(59, 130, 246, 0.08));
+  }
+}
+
+.range-chart-label {
+  width: 32px;
+  font-family: stats.$font-mono;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.range-chart-bars {
+  flex: 1;
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  height: 18px;
+}
+
+.range-chart-bar {
+  height: 16px;
+  border-radius: stats.$radius-sm;
+  font-family: stats.$font-mono;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  padding-left: $spacing-1;
+  min-width: 20px;
+
+  &.new { background: stats.$color-success; }
+  &.modified { background: stats.$color-warning; }
+}
+
+.changed-date-picker {
+  display: flex;
+  gap: $spacing-2;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.changed-date-input {
+  flex: 1;
+  padding: $spacing-1 $spacing-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: stats.$radius-sm;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-family: stats.$font-mono;
+  font-size: 11px;
+  font-weight: $font-weight-semibold;
+  outline: none;
+
+  @include stats.codex-focus-glow;
+}
+
+.changed-date-today {
+  @include stats.small-action-btn;
+  white-space: nowrap;
+  padding: $spacing-1 $spacing-3;
+}
+
+.changed-docs-loading {
+  text-align: center;
+  padding: $spacing-4;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+}
+
+.changed-docs-empty {
+  text-align: center;
+  padding: $spacing-4;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+}
+
+.changed-docs-content {
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.changed-docs-group {
+  margin-bottom: $spacing-3;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.changed-docs-group-title {
+  font-family: stats.$font-mono;
+  font-size: 11px;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface);
+  margin-bottom: 6px;
+  padding: 0 $spacing-1;
+}
+
+.changed-doc-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: $spacing-1 $spacing-2;
+  border-radius: stats.$radius-sm;
+  cursor: pointer;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface);
+  transition: background 0.12s;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+
+  .changed-doc-icon {
+    width: 16px;
+    height: 16px;
+    border-radius: stats.$radius-sm;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: $font-weight-bold;
+    flex-shrink: 0;
+  }
+
+  &.new .changed-doc-icon {
+    background: rgba(stats.$color-success, 0.15);
+    color: stats.$color-success;
+  }
+
+  &.modified .changed-doc-icon {
+    background: rgba(stats.$color-warning, 0.15);
+    color: stats.$color-warning;
+  }
+
+  .changed-doc-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .changed-doc-time {
+    font-family: stats.$font-mono;
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-bold;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.35;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+  }
+}

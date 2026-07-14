@@ -17,6 +17,7 @@
         <div class="backup-info">
           <span class="backup-name">{{ item.name }}</span>
           <span class="backup-time">{{ formatTime(item[timeKey]) }}</span>
+          <span class="backup-sep">·</span>
           <span class="backup-size">{{ formatFileSize(item.size) }}</span>
         </div>
         <div class="backup-actions">

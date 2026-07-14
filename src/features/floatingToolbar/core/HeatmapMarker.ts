@@ -46,9 +46,6 @@ export class HeatmapMarker {
       console.warn("[HeatmapMarker] 单词本为空，热力图标记已启用，添加单词后自动生效")
       return
     }
-
-    console.log(`[HeatmapMarker] 已启用，加载了 ${this.wordHeatMap.size} 个单词`)
-
     setTimeout(() => {
       if (this.active) {
         this.scanVisibleDocuments()
@@ -95,7 +92,6 @@ export class HeatmapMarker {
         }
       }
       this.cacheTimestamp = Date.now()
-      console.log(`[HeatmapMarker] 单词缓存已刷新，共 ${this.wordHeatMap.size} 个词汇`)
     } catch (error) {
       console.error("[HeatmapMarker] 刷新单词缓存失败:", error)
     }
@@ -254,7 +250,7 @@ export class HeatmapMarker {
 
       if (visibleDocs.length === 0) return
 
-      console.log(`[HeatmapMarker] 扫描 ${visibleDocs.length} 个可见文档`)
+      // console.log(`[HeatmapMarker] 扫描 ${visibleDocs.length} 个可见文档`)
 
       let totalMarks = 0
       for (const doc of visibleDocs) {
@@ -264,7 +260,7 @@ export class HeatmapMarker {
       }
 
       if (totalMarks > 0) {
-        console.log(`[HeatmapMarker] 标记了 ${totalMarks} 个单词`)
+        // console.log(`[HeatmapMarker] 标记了 ${totalMarks} 个单词`)
       }
     } finally {
       this.isScanning = false

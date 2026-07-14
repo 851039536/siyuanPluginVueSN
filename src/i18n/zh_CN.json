@@ -1439,6 +1439,12 @@
   "pathPreview": "实际路径",
   "backupTab": "备份",
   "configTab": "配置",
+  "logTab": "日志",
+  "backupLogs": "操作日志",
+  "noLogs": "暂无操作记录",
+  "clearAll": "清空",
+  "success": "成功",
+  "failed": "失败",
   "scriptLauncher": {
     "panelTitle": "脚本启动器",
     "description": "管理并运行自定义脚本，支持 Python、Bash、PowerShell、Node.js、Batch",

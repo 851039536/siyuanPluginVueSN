@@ -31,6 +31,13 @@ export function padZero(num: number): string {
 }
 
 /**
+ * 计算进度条百分比宽度（最小 1%）
+ */
+export function barPct(val: number, max: number): string {
+  return `${Math.max((val / max) * 100, 1)}%`
+}
+
+/**
  * 格式化日期为 YYYY-MM-DD
  */
 export function formatDate(date: Date): string {

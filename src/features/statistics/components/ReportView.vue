@@ -206,7 +206,7 @@ import {
   ref,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { formatNumber } from "../utils"
+import { barPct, formatNumber } from "../utils"
 import ComparisonView from "./ComparisonView.vue"
 
 interface Props {
@@ -245,10 +245,6 @@ const maxBreakWords = computed(() => {
   }
   return max
 })
-
-function barPct(val: number, max: number): string {
-  return `${Math.max((val / max) * 100, 1)}%`
-}
 
 async function generate() {
   if (!props.onGetReportData) return

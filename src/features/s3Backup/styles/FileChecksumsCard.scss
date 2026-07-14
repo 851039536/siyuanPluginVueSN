@@ -1,0 +1,188 @@
+/** 文件校验卡片样式 (Codex) */
+@use '@/variables.scss' as *;
+
+.checksums-container {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+}
+
+// ========== 校验值列表 ==========
+
+.checksum-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2px;
+}
+
+.checksum-item {
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-sm;
+  padding: $spacing-2;
+  transition: border-color 0.12s ease, background 0.12s ease;
+
+  &.verify-match {
+    border-color: var(--b3-theme-success);
+    background: rgba(var(--b3-theme-success-rgb, 45, 170, 78), 0.04);
+  }
+
+  &.verify-mismatch {
+    border-color: var(--b3-theme-error);
+    background: rgba(var(--b3-theme-error-rgb, 212, 59, 59), 0.04);
+  }
+}
+
+.checksum-main {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin-bottom: $spacing-1;
+}
+
+.checksum-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: $vp-mono;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  min-width: 0;
+}
+
+.checksum-path-icon {
+  flex-shrink: 0;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface-light);
+  cursor: help;
+  line-height: 1;
+  transition: color 0.12s ease;
+
+  &:hover {
+    color: var(--b3-theme-primary);
+  }
+}
+
+.checksum-meta {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  flex-shrink: 0;
+  color: var(--b3-theme-on-surface-light);
+  font-size: $font-size-2xs;
+  white-space: nowrap;
+}
+
+.checksum-hash {
+  margin-bottom: $spacing-1;
+}
+
+.checksum-hash-value {
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light);
+  background: var(--b3-theme-surface-lighter);
+  padding: 1px $spacing-1;
+  border-radius: 3px;
+  word-break: break-all;
+}
+
+.checksum-actions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+}
+
+.verify-badge {
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  padding: 1px $spacing-1;
+  border-radius: 3px;
+
+  &.verify-ok {
+    color: var(--b3-theme-success);
+    background: rgba(var(--b3-theme-success-rgb, 45, 170, 78), 0.1);
+  }
+
+  &.verify-fail {
+    color: var(--b3-theme-error);
+    background: rgba(var(--b3-theme-error-rgb, 212, 59, 59), 0.1);
+  }
+}
+
+// ========== 拖放区域 ==========
+
+.drop-zone {
+  border: 2px dashed var(--b3-theme-surface-lighter);
+  border-radius: $vp-radius;
+  padding: $spacing-4;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+  margin-bottom: $spacing-3;
+
+  &.drop-active {
+    border-color: var(--b3-theme-primary);
+    background: var(--b3-theme-primary-lightest);
+  }
+}
+
+.drop-zone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: $font-size-sm;
+  color: var(--b3-theme-on-surface-light);
+}
+
+.drop-zone-icon {
+  font-size: 28px;
+  opacity: 0.6;
+}
+
+// ========== 拖放结果 ==========
+
+.drop-results {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2px;
+}
+
+.drop-result-item {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-2;
+  padding: $spacing-2;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-sm;
+}
+
+.drop-result-info {
+  flex-shrink: 0;
+  min-width: 140px;
+}
+
+.drop-result-name {
+  display: block;
+  font-family: $vp-mono;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+.drop-result-hash {
+  flex: 1;
+  min-width: 0;
+
+  .checksum-hash-value {
+    display: block;
+  }
+}
+
+.drop-result-copy {
+  flex-shrink: 0;
+}

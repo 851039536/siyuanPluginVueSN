@@ -245,6 +245,7 @@ onMounted(() => {
 - **图标规则**：禁止使用 emoji 表情作为图标。使用 `src/config/icons.ts` 中 `FEATURE_ICONS` / `COMMON_ICONS` 已注册的 Iconify 图标（`mdi:xxx`、`carbon:xxx` 等）。需要新图标时在 `icons.ts` 注册映射后引用，浏览图标 https://icon-sets.iconify.design/
 - **文件头注释**：每个 `.ts` / `.vue` 文件顶部必须包含简要功能说明注释（`.scss` 不适用），格式见 [AGENTS_RULES.md § 强制规则：文件头注释](./AGENTS_RULES.md#强制规则文件头注释)
 - **功能模块内代码分层**：模块内被多个文件共用的常量/工具函数不得在多处重复定义。共享常量（元数据映射、枚举值列表、配置表等）→ 提取到 `types/index.ts`；不依赖 Vue 响应式的纯工具函数 → 提取到 `utils.ts`。禁止 `.vue` 组件间复制粘贴相同的常量定义
+- **单文件行数上限**：300 行警戒线，500 行硬阈值，≥1000 行必须重构。单一函数 ≤ 30 行最佳（Rule of 30），≤ 50 行可接受。详见 [AGENTS_RULES.md § 强制规则：单文件行数上限](./AGENTS_RULES.md#强制规则单文件行数上限)
 - **规则文件同步**：`AGENTS.md` 与 `CODEBUDDY.md` 必须保持内容一致（仅首行标题可不同）。修改任一方后，必须立即同步到另一方，禁止出现差异。
 
 ---

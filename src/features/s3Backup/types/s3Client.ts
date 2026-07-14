@@ -90,6 +90,14 @@ function sortQueryString(qs: string): string {
   return qs.split("&").sort().join("&")
 }
 
+/** 将 S3 UTC ISO 时间字符串转为 UTC 时间字符串（避免 formatTime 二次转本地时区） */
+function utcToUtcString(utcIso: string): string {
+  const d = new Date(utcIso)
+  if (isNaN(d.getTime())) return utcIso
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`
+}
+
 /** 解析 S3 ListObjects XML 响应（兼容 OpenList/Alist 等非标准 S3 代理） */
 function parseListObjectsXml(xml: string): S3FileInfo[] {
   const results: S3FileInfo[] = []
@@ -104,7 +112,7 @@ function parseListObjectsXml(xml: string): S3FileInfo[] {
       name: keyMatch[1].split("/").pop() || keyMatch[1],
       key: keyMatch[1],
       size: sizeMatch ? Number.parseInt(sizeMatch[1], 10) : 0,
-      lastModified: lastModMatch ? lastModMatch[1] : "",
+      lastModified: lastModMatch ? utcToUtcString(lastModMatch[1]) : "",
     })
   }
   return results

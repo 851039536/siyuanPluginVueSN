@@ -39,7 +39,6 @@
         :model-value="localBackupDir"
         size="xsmall"
         :label="i18n.localBackupDir || '本地备份目录'"
-        :hint="i18n.localBackupDirDesc || 'ZIP 压缩包保存到本地的哪个文件夹'"
         placeholder="data-backup"
         @update:model-value="$emit('update:localBackupDir', $event as string)"
       />
@@ -54,7 +53,6 @@
         :model-value="s3SubPrefix"
         size="xsmall"
         :label="i18n.s3SubPath || 'S3 上传子路径'"
-        :hint="i18n.s3SubPathDesc || '上传到云存储时，在目录前缀之后追加的路径段'"
         placeholder="data-backup"
         @update:model-value="$emit('update:s3SubPrefix', $event as string)"
       />

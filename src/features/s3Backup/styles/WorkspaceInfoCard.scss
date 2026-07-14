@@ -5,17 +5,29 @@
 
 .workspace-info-grid {
   display: flex;
-  flex-direction: column;
-  gap: $spacing-3;
+  flex-direction: row;
+  align-items: center;
+  gap: $spacing-4;
 }
 
 .workspace-info-item {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
   gap: $spacing-1;
+  flex: 1;
+  min-width: 0;
+
+  &:last-child {
+    flex: 0 0 auto;
+  }
 }
 
 .workspace-info-label {
   font-size: $font-size-sm;
   color: var(--b3-theme-on-surface-light);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
+
+

@@ -62,6 +62,7 @@
 
         <!-- 文档变化详情（日期范围 + 柱状图 + 详情列表 + 最近更新） -->
         <DocChangeSection
+          class="doc-change-section"
           :on-get-date-changed-docs="getDateChangedDocs"
           :on-get-date-range-change-stats="getDateRangeChangeStats"
           :on-get-recent-updated-docs="getRecentUpdatedDocs"

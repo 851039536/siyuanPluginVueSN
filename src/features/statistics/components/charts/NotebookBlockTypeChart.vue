@@ -53,10 +53,10 @@
 </template>
 
 <script setup lang="ts">
-import type { NotebookBlockTypeStat } from "../types"
+import type { NotebookBlockTypeStat } from "../../types"
 import { computed } from "vue"
-import { useNotebookHover } from "../composables/useNotebookHover"
-import { NOTEBOOK_COLORS } from "../types/constants"
+import { useNotebookHover } from "../../composables/useNotebookHover"
+import { NOTEBOOK_COLORS } from "../../types/constants"
 
 interface Props {
   data?: NotebookBlockTypeStat[]
@@ -94,8 +94,8 @@ function totalCount(item: NotebookBlockTypeStat): number {
 
 <style scoped lang="scss">
 @use "@/variables" as *;
-@use "../../superPanel/styles/shared" as *;
-@use "../styles/index.scss" as stats;
+@use "../../../superPanel/styles/shared" as *;
+@use "../../styles/index.scss" as stats;
 
 .notebook-blocktype-chart {
   display: flex;

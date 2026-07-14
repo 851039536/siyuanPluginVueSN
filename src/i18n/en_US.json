@@ -1438,6 +1438,12 @@
   "pathPreview": "Resolved Path",
   "backupTab": "Backup",
   "configTab": "Config",
+  "logTab": "Log",
+  "backupLogs": "Operation Log",
+  "noLogs": "No operation records",
+  "clearAll": "Clear All",
+  "success": "Success",
+  "failed": "Failed",
   "scriptLauncher": {
     "panelTitle": "Script Launcher",
     "description": "Manage and run custom scripts, supports Python, Bash, PowerShell, Node.js, Batch",

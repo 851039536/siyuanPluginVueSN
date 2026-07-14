@@ -1,0 +1,100 @@
+/** 备份日志列表样式 (Codex) */
+@use '@/variables.scss' as *;
+
+.log-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2px;
+}
+
+.log-item {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-1 $spacing-2;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+
+  &.log-fail {
+    background: rgba(var(--b3-theme-error-rgb, 212, 59, 59), 0.06);
+  }
+}
+
+.log-type {
+  flex-shrink: 0;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  padding: 1px $spacing-1;
+  border-radius: 3px;
+  letter-spacing: 0.04em;
+  min-width: 28px;
+  text-align: center;
+
+  &.log-type-localZip {
+    color: var(--b3-theme-primary);
+    background: var(--b3-theme-primary-lightest);
+  }
+
+  &.log-type-s3Upload {
+    color: #6366f1;
+    background: rgba(99, 102, 241, 0.1);
+  }
+
+  &.log-type-s3Download {
+    color: #0ea5e9;
+    background: rgba(14, 165, 233, 0.1);
+  }
+
+  &.log-type-s3Delete {
+    color: var(--b3-theme-error);
+    background: rgba(var(--b3-theme-error-rgb, 212, 59, 59), 0.1);
+  }
+}
+
+.log-filename {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: $vp-mono;
+  font-size: $font-size-xs;
+  min-width: 0;
+}
+
+.log-meta {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  flex-shrink: 0;
+  color: var(--b3-theme-on-surface-light);
+  font-size: $font-size-2xs;
+  white-space: nowrap;
+}
+
+.log-status {
+  flex-shrink: 0;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  padding: 1px $spacing-1;
+  border-radius: 3px;
+
+  &.status-ok {
+    color: var(--b3-theme-success);
+    background: rgba(var(--b3-theme-success-rgb, 45, 170, 78), 0.1);
+  }
+
+  &.status-fail {
+    color: var(--b3-theme-error);
+    background: rgba(var(--b3-theme-error-rgb, 212, 59, 59), 0.1);
+  }
+}
+
+.log-msg {
+  flex-shrink: 0;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 160px;
+}

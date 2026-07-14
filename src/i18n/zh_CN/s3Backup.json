@@ -86,5 +86,11 @@
   "s3SubPathHint": "上传到云存储时，在此路径段下组织备份文件",
   "pathPreview": "实际路径",
   "backupTab": "备份",
-  "configTab": "配置"
+  "configTab": "配置",
+  "logTab": "日志",
+  "backupLogs": "操作日志",
+  "noLogs": "暂无操作记录",
+  "clearAll": "清空",
+  "success": "成功",
+  "failed": "失败"
 }

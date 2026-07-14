@@ -90,10 +90,36 @@ export interface LocalBackupInfo {
 
 // ========== 默认值常量 ==========
 
+// ========== 备份日志接口 ==========
+
+export interface BackupLog {
+  /** 唯一 ID（时间戳） */
+  id: string
+  /** 操作类型 */
+  type: "localZip" | "s3Upload" | "s3Download" | "s3Delete"
+  /** 操作描述文字 */
+  action: string
+  /** 相关文件名 */
+  fileName: string
+  /** 文件大小（字节） */
+  fileSize?: number
+  /** 操作时间（ISO 字符串） */
+  time: string
+  /** 是否成功 */
+  success: boolean
+  /** 附加消息 */
+  message?: string
+}
+
+// ========== 默认值常量 ==========
+
 export const DEFAULT_BACKUP_MODE: BackupMode = {
   localZip: true,
   s3Upload: false,
 }
+
+/** 日志最大保留条数 */
+export const MAX_LOG_COUNT = 200
 
 // ========== 存储键常量 ==========
 
@@ -101,6 +127,7 @@ const STORAGE_KEYS = {
   S3_CONFIG: "s3-backup-config",
   BACKUP_SETTINGS: "s3-backup-settings",
   BACKUP_HISTORY: "s3-backup-history",
+  BACKUP_LOG: "s3-backup-log",
 } as const
 
 // ========== 存储类 ==========
@@ -109,6 +136,7 @@ export class S3BackupStorage {
   readonly s3Config: TypedStorage<S3Config>
   readonly backupSettings: TypedStorage<BackupSettings>
   readonly backupHistory: TypedStorage<{ list: LocalBackupInfo[] }>
+  readonly backupLogs: TypedStorage<{ logs: BackupLog[] }>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
@@ -128,6 +156,7 @@ export class S3BackupStorage {
       s3SubPrefix: "data-backup",
     } as BackupSettings)
     this.backupHistory = new TypedStorage(storage, STORAGE_KEYS.BACKUP_HISTORY, { list: [] })
+    this.backupLogs = new TypedStorage(storage, STORAGE_KEYS.BACKUP_LOG, { logs: [] })
   }
 }
 

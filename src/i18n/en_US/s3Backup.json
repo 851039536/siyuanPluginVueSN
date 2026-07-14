@@ -102,5 +102,6 @@
   "mismatch": "Mismatch",
   "dropVerify": "Drop File to Verify",
   "dropHint": "Drop files here to compute SHA-256",
-  "clearResults": "Clear Results"
+  "clearResults": "Clear Results",
+  "compareWith": "Compare..."
 }

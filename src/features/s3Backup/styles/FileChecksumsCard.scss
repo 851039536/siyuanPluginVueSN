@@ -186,3 +186,57 @@
 .drop-result-copy {
   flex-shrink: 0;
 }
+
+// ========== 拖放结果比对 ==========
+
+.drop-result-item {
+  &.drop-compare-match {
+    border-color: var(--b3-theme-success);
+    background: rgba(var(--b3-theme-success-rgb, 45, 170, 78), 0.04);
+  }
+
+  &.drop-compare-mismatch {
+    border-color: var(--b3-theme-error);
+    background: rgba(var(--b3-theme-error-rgb, 212, 59, 59), 0.04);
+  }
+}
+
+.drop-result-compare {
+  flex-shrink: 0;
+  min-width: 120px;
+}
+
+.compare-select {
+  width: 100%;
+  max-width: 160px;
+  padding: 2px $spacing-1;
+  font-size: $font-size-2xs;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-sm;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  outline: none;
+  cursor: pointer;
+
+  &:focus {
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+.compare-badge {
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  padding: 1px $spacing-1;
+  border-radius: 3px;
+  white-space: nowrap;
+
+  &.compare-ok {
+    color: var(--b3-theme-success);
+    background: rgba(var(--b3-theme-success-rgb, 45, 170, 78), 0.1);
+  }
+
+  &.compare-fail {
+    color: var(--b3-theme-error);
+    background: rgba(var(--b3-theme-error-rgb, 212, 59, 59), 0.1);
+  }
+}

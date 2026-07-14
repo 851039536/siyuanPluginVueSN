@@ -62,15 +62,7 @@ this.modal.destroy() // 彻底销毁（persistent 模式卸载时必调）
 // this.modal.visible → boolean
 ```
 
-**persistent 模式注意事项**：Vue 组件在首次 `open()` 时才创建挂载（`onMounted` 触发）。如果组件需要在后台响应自定义事件，必须在 `init()` 中先 open 再 close 以触发 mount 注册监听器——就像定时备份：程序启动后虽然面板没打开，但 `autoBackupTrigger` 监听器已在后台待命，到点自动执行。
-
-```typescript
-async init() {
-  // ... 初始化逻辑
-  this.modal.open()   // 触发 Vue mount，注册事件监听
-  this.modal.close()  // 隐藏 DOM，保留 Vue 实例和事件监听
-}
-```
+**persistent 模式**：详见下方「Vue 实例常驻模式」章节，包含完整的 4 步实现步骤与关键点速查表。
 
 ## Vue 实例常驻模式（Persistent Modal + CustomEvent + 定时器）
 
@@ -1027,13 +1019,7 @@ export function useXxx(deps: {
 
 ### 三、Composable 提取判定（`composables/` 目录）
 
-引用已有完备规则（见上方「强制规则：Composable 提取」）：
-
-| 条件 | 判定 |
-|------|------|
-| ≥3 个相关 `ref`/函数 | **必须提取** |
-| 被 2+ 组件共享 | **必须提取** |
-| 1~2 个函数且仅 1 处使用 | **保留在组件内** |
+详见「强制规则：Composable 提取」章节，核心标准：≥3 个相关 `ref`/函数必须提取，2+ 组件共享必须提取，1~2 个函数仅 1 处使用保留在组件内。
 
 ### 四、组件文件夹组织标准（`components/` 子目录）
 

@@ -26,8 +26,9 @@
 
 .backup-info {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  flex-direction: row;
+  align-items: center;
+  gap: $spacing-2;
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -40,16 +41,22 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 
 .backup-time {
   font-size: $font-size-xs;
   color: var(--b3-theme-on-surface-light);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .backup-size {
   font-size: $font-size-xs;
   color: var(--b3-theme-on-surface-light);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .backup-actions {

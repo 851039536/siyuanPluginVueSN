@@ -78,6 +78,11 @@ export function useS3Backup() {
     await s3Client.uploadBuffer(buffer, key)
   }
 
+  /** 获取 S3 列举前缀（统一默认值，消除 listBackups/listExistingKeys 重复构造） */
+  function getListPrefix(): string {
+    return s3Config.value.prefix || "siyuan-backup/"
+  }
+
   /** 列举 S3 备份文件（失败不抛异常，返回空数组；供 UI 刷新列表使用） */
   async function listBackups(): Promise<S3FileInfo[]> {
     if (!s3Client) { throw new Error("S3 客户端未初始化") }
@@ -85,8 +90,7 @@ export function useS3Backup() {
     isLoading.value = true
 
     try {
-      const prefix = s3Config.value.prefix || "siyuan-backup/"
-      const files = await s3Client.list(prefix)
+      const files = await s3Client.list(getListPrefix())
       backupList.value = files
       return files
     } catch (_err: any) {
@@ -100,8 +104,7 @@ export function useS3Backup() {
   /** 获取 S3 已有 Key 集合（失败抛异常，供去重判断使用） */
   async function listExistingKeys(): Promise<Set<string>> {
     if (!s3Client) { throw new Error("S3 客户端未初始化") }
-    const prefix = s3Config.value.prefix || "siyuan-backup/"
-    const files = await s3Client.list(prefix)
+    const files = await s3Client.list(getListPrefix())
     backupList.value = files
     return new Set(files.map((f) => f.key))
   }

@@ -281,7 +281,7 @@ const canBackup = computed(() => {
 
 function initBackupManager(): void {
   if (workspacePath.value) {
-    backupManager = new BackupManager(workspacePath.value, workspaceRoot.value)
+    backupManager = new BackupManager(workspaceRoot.value)
     backupManager.setBackupDir(localBackupDir.value)
   }
 }
@@ -299,7 +299,7 @@ function updateWorkspacePath(root: string, shouldSave = false): void {
   workspaceRoot.value = root
   workspacePath.value = root
   if (backupManager) {
-    backupManager.updateWorkspacePaths(workspacePath.value, workspaceRoot.value)
+    backupManager.updateWorkspacePaths(workspaceRoot.value)
   }
   const instance = getS3BackupInstance()
   if (instance) {
@@ -395,20 +395,7 @@ async function performManualBackup(): Promise<void> {
     const instance = getS3BackupInstance()
     if (instance) {
       instance.updateLastBackupTime(lastBackupTimestamp)
-      await instance.saveWorkspaceSettings({
-        lastBackupTime: lastBackupTime.value,
-        workspacePath: workspacePath.value,
-        workspaceRoot: workspaceRoot.value,
-        useDateFolder: useDateFolder.value,
-        autoBackupEnabled: autoBackupEnabled.value,
-        backupFrequency: backupFrequency.value,
-        backupTime: backupTime.value,
-        keepBackupCount: keepBackupCount.value,
-        backupMode: { ...backupModeLocal },
-        lastBackupTimestamp,
-        localBackupDir: localBackupDir.value,
-        s3SubPrefix: s3SubPrefix.value,
-      })
+      await instance.saveWorkspaceSettings(buildWorkspaceSettings())
     }
   } catch (err: any) {
     console.error("备份失败:", err)
@@ -474,6 +461,22 @@ async function performLocalBackup(): Promise<BackupResult | null> {
   }
 }
 
+/**
+ * 构建 S3 对象 key
+ * 将 prefix/subPrefix/datePath/relativePath 多段拼接为规范 S3 key，
+ * 自动 strip 首尾斜杠、过滤空段，避免产生 // 等无效前缀
+ */
+function buildS3Key(relativePath: string, timestamp: string): string {
+  const prefix = s3Config.value.prefix || "siyuan-backup/"
+  const sub = s3SubPrefix.value || "data-backup"
+  const datePath = useDateFolder.value ? `${timestamp}/` : ""
+  const parts: string[] = [prefix.replace(/\/+$/, ""), sub.replace(/\/+$/, "")]
+    .filter(Boolean)
+  if (datePath) { parts.push(datePath.replace(/\/+$/, "")) }
+  parts.push(relativePath.replace(/^\/+/, ""))
+  return parts.join("/")
+}
+
 /** S3 备份
  * @param latestZip 若提供则只上传该 ZIP 文件（用于本地+S3 同时备份场景，避免重复上传历史备份）
  */
@@ -499,12 +502,14 @@ async function performS3Backup(latestZip?: BackupResult | null): Promise<void> {
     return
   }
 
-  const prefix = s3Config.value.prefix || "siyuan-backup/"
   const d = new Date()
   const pad = (n: number) => String(n).padStart(2, "0")
   const timestamp = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`
   // B10 修复：复用顶层缓存的 node 实例
-  const fs = node!.fs.promises
+  if (!node) {
+    throw new Error("无法访问文件系统，请使用桌面版思源笔记")
+  }
+  const fs = node.fs.promises
 
   // 去重优化：上传前先获取 S3 已有文件列表，已存在的文件跳过上传
   let existingKeys: Set<string> = new Set()
@@ -515,14 +520,8 @@ async function performS3Backup(latestZip?: BackupResult | null): Promise<void> {
       // 打印前 3 个已有 key 和前 3 个待上传 key 供诊断对比
       const sampleExisting = [...existingKeys].slice(0, 3)
       const sampleNew: string[] = []
-      const sub = s3SubPrefix.value || "data-backup"
-      const datePath = useDateFolder.value ? `${timestamp}/` : ""
       for (let i = 0; i < Math.min(3, files.length); i++) {
-        const keyParts: string[] = [prefix.replace(/\/+$/, ""), sub.replace(/\/+$/, "")]
-          .filter(Boolean)
-        if (datePath) { keyParts.push(datePath.replace(/\/+$/, "")) }
-        keyParts.push(files[i].relativePath.replace(/^\/+/, ""))
-        sampleNew.push(keyParts.join("/"))
+        sampleNew.push(buildS3Key(files[i].relativePath, timestamp))
       }
       console.log("[S3备份] S3 已有 key 示例:", sampleExisting)
       console.log("[S3备份] 待上传 key 示例:", sampleNew)
@@ -537,14 +536,7 @@ async function performS3Backup(latestZip?: BackupResult | null): Promise<void> {
 
   for (let i = 0; i < files.length; i++) {
     const file = files[i]
-    const datePath = useDateFolder.value ? `${timestamp}/` : ""
-    const sub = s3SubPrefix.value || "data-backup"
-    // 使用路径段数组拼接，strip 首尾斜杠后过滤空段，避免产生 // 等无效前缀
-    const keyParts: string[] = [prefix.replace(/\/+$/, ""), sub.replace(/\/+$/, "")]
-      .filter(Boolean)
-    if (datePath) { keyParts.push(datePath.replace(/\/+$/, "")) }
-    keyParts.push(file.relativePath.replace(/^\/+/, ""))
-    const s3Key = keyParts.join("/")
+    const s3Key = buildS3Key(file.relativePath, timestamp)
 
     // 去重：S3 上已存在的文件跳过上传
     if (existingKeys.has(s3Key)) {
@@ -631,8 +623,8 @@ const isInitialLoad = ref(true)
 
 function handleTimerRestart(): void {
   if (isInitialLoad.value) { return }
-  const s3Backup = props.plugin?.__s3Backup
-  if (s3Backup && typeof s3Backup.restartAutoBackupTimer === "function") {
+  const s3Backup = getS3BackupInstance()
+  if (s3Backup) {
     s3Backup.restartAutoBackupTimer(autoBackupEnabled.value, backupFrequency.value, backupTime.value)
   }
 }
@@ -780,24 +772,29 @@ async function loadWorkspaceSettings(): Promise<void> {
   }
 }
 
+/** 构建持久化设置对象（消除 performManualBackup 与 saveWorkspaceSettings 的参数重复构造） */
+function buildWorkspaceSettings() {
+  return {
+    lastBackupTime: lastBackupTime.value,
+    workspacePath: workspacePath.value,
+    workspaceRoot: workspaceRoot.value,
+    useDateFolder: useDateFolder.value,
+    autoBackupEnabled: autoBackupEnabled.value,
+    backupFrequency: backupFrequency.value,
+    backupTime: backupTime.value,
+    keepBackupCount: keepBackupCount.value,
+    backupMode: { ...backupModeLocal },
+    lastBackupTimestamp,
+    localBackupDir: localBackupDir.value,
+    s3SubPrefix: s3SubPrefix.value,
+  }
+}
+
 async function saveWorkspaceSettings(): Promise<void> {
   try {
     const instance = getS3BackupInstance()
     if (instance) {
-      await instance.saveWorkspaceSettings({
-        lastBackupTime: lastBackupTime.value,
-        workspacePath: workspacePath.value,
-        workspaceRoot: workspaceRoot.value,
-        useDateFolder: useDateFolder.value,
-        autoBackupEnabled: autoBackupEnabled.value,
-        backupFrequency: backupFrequency.value,
-        backupTime: backupTime.value,
-        keepBackupCount: keepBackupCount.value,
-        backupMode: { ...backupModeLocal },
-        lastBackupTimestamp,
-        localBackupDir: localBackupDir.value,
-        s3SubPrefix: s3SubPrefix.value,
-      })
+      await instance.saveWorkspaceSettings(buildWorkspaceSettings())
     }
   } catch (err) {
     console.error("保存工作区设置失败:", err)

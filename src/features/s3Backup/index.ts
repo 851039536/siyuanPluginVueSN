@@ -259,14 +259,7 @@ export class S3Backup {
       return
     }
 
-    // 2. localStorage（旧 dataBackup 兼容）
-    const savedRoot = localStorage.getItem("siyuan-workspace-root")
-    if (savedRoot) {
-      this.setWorkspacePaths(savedRoot)
-      return
-    }
-
-    // 3. API 自动获取（最可靠的方式）
+    // 2. API 自动获取（最可靠的方式）
     try {
       const dir = await getWorkspaceDir()
       if (dir) {

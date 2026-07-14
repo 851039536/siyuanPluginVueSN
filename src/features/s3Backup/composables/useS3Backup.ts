@@ -109,24 +109,14 @@ export function useS3Backup() {
   /** 下载 S3 备份文件 */
   async function downloadBackup(s3Key: string, localPath: string): Promise<void> {
     if (!s3Client) { throw new Error("S3 客户端未初始化") }
-
-    try {
-      await s3Client.download(s3Key, localPath)
-    } catch (err: any) {
-      throw err
-    }
+    await s3Client.download(s3Key, localPath)
   }
 
   /** 删除 S3 备份文件 */
   async function deleteBackup(s3Key: string): Promise<void> {
     if (!s3Client) { throw new Error("S3 客户端未初始化") }
-
-    try {
-      await s3Client.delete(s3Key)
-      backupList.value = backupList.value.filter((f) => f.key !== s3Key)
-    } catch (err: any) {
-      throw err
-    }
+    await s3Client.delete(s3Key)
+    backupList.value = backupList.value.filter((f) => f.key !== s3Key)
   }
 
   /** 加载已保存的配置 */

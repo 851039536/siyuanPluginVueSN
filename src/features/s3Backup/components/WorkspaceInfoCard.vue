@@ -14,7 +14,7 @@
               {{ i18n.selectPath || "选择路径" }}
             </Button>
             <Button variant="ghost" size="xsmall" :disabled="!workspaceRoot" @click="$emit('openFolder')">
-              打开
+              {{ i18n.openFolder || "打开文件夹" }}
             </Button>
           </div>
         </div>

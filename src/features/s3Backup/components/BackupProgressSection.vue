@@ -18,10 +18,10 @@
 </template>
 
 <script setup lang="ts">
-import type { ProgressInfo } from "../types"
+import type { BackupProgress } from "../modules/BackupManager"
 
 defineProps<{
-  progress: ProgressInfo
+  progress: BackupProgress
   phaseLabel: string
   i18n: Record<string, string>
 }>()

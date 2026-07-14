@@ -1454,6 +1454,7 @@
   "dropVerify": "Drop File to Verify",
   "dropHint": "Drop files here to compute SHA-256",
   "clearResults": "Clear Results",
+  "compareWith": "Compare...",
   "scriptLauncher": {
     "panelTitle": "Script Launcher",
     "description": "Manage and run custom scripts, supports Python, Bash, PowerShell, Node.js, Batch",

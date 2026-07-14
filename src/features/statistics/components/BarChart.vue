@@ -1,3 +1,4 @@
+<!-- 柱状图组件：每日写作字数可视化 -->
 <template>
   <div class="bar-chart-section">
     <div class="bar-chart-container">
@@ -12,14 +13,14 @@
           <div
             v-if="item.words > 0"
             class="bar-value"
-            :style="{ bottom: `${getBarHeight(item.words)}px` }"
+            :style="{ bottom: `${barHeights.get(item.date) ?? 0}px` }"
           >
             {{ formatShortNumber(item.words) }}
           </div>
           <div
             class="bar"
             :class="{ today: isToday(item.date) }"
-            :style="{ height: `${getBarHeight(item.words)}px` }"
+            :style="{ height: `${barHeights.get(item.date) ?? 0}px` }"
             :title="`${item.dateLabel}: ${formatNumber(item.words)} ${i18n.wordsUnit || '字'}`"
           ></div>
           <div
@@ -31,9 +32,6 @@
         </div>
       </div>
     </div>
-
-
-
   </div>
 </template>
 
@@ -52,41 +50,43 @@ interface ChartDataItem {
 }
 
 interface Props {
-  title?: string
   chartData?: ChartDataItem[]
   i18n?: Record<string, any>
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  title: "",
   chartData: () => [],
   i18n: () => ({
     wordsUnit: "字",
   }),
 })
 
+const MAX_BAR_HEIGHT = 150
+const MIN_BAR_HEIGHT = 5
+
 const maxWords = computed(() => {
   if (!props.chartData.length) return 0
-  return Math.max(...props.chartData.map((item) => item.words))
+  return props.chartData.reduce((max, item) => Math.max(max, item.words), 0)
 })
 
-function getBarHeight(words: number): number {
+const barHeights = computed(() => {
   const max = maxWords.value
-  if (max === 0) return 0
-  const maxHeight = 150
-  const height = (words / max) * maxHeight
-  return Math.max(height, words > 0 ? 5 : 0)
-}
+  if (max === 0) return new Map<string, number>()
+  return new Map(
+    props.chartData.map(item => {
+      const rawHeight = (item.words / max) * MAX_BAR_HEIGHT
+      const height = item.words > 0 ? Math.max(rawHeight, MIN_BAR_HEIGHT) : 0
+      return [item.date, height]
+    })
+  )
+})
 
 function formatChartLabel(label: string): string {
   // "5/21 周四" → "5/21"；纯 "/" 格式保留原样
-  if (label.includes(" ")) {
-    return label.split(" ")[0]
-  }
-  return label
+  const spaceIndex = label.indexOf(" ")
+  return spaceIndex !== -1 ? label.slice(0, spaceIndex) : label
 }
 </script>
-
 
 <style scoped lang="scss">
 @use "@/variables" as *;
@@ -96,8 +96,8 @@ function formatChartLabel(label: string): string {
 .bar-chart-section {
   .bar-chart-container {
     overflow-x: auto;
-    margin-bottom: 16px;
-    padding-bottom: 6px;
+    margin-bottom: $spacing-4;
+    padding-bottom: $spacing-2;
     @include scrollbar-thin;
 
     &::-webkit-scrollbar {
@@ -108,7 +108,7 @@ function formatChartLabel(label: string): string {
   .chart-viewport {
     display: flex;
     align-items: flex-end;
-    gap: 8px;
+    gap: $spacing-2;
     min-height: 160px;
     padding: 15px 5px 35px 5px;
     position: relative;
@@ -123,20 +123,21 @@ function formatChartLabel(label: string): string {
       &:hover {
         .bar {
           filter: brightness(1.1);
-          box-shadow: 0 0 8px rgba(var(--b3-theme-primary-rgb), 0.3);
+          outline: 2px solid var(--b3-theme-primary-lightest);
+          outline-offset: 1px;
         }
 
         .bar-value {
           opacity: 1;
-          transform: translateX(-50%) translateY(-3px);
+          transform: translateX(-50%) translateY(-$spacing-1);
         }
       }
 
       .bar-value {
         position: absolute;
         font-family: stats.$font-mono;
-        font-size: 10px;
-        font-weight: 700;
+        font-size: $font-size-2xs;
+        font-weight: $font-weight-bold;
         color: var(--b3-theme-primary);
         white-space: nowrap;
         transform: translateX(-50%);
@@ -146,7 +147,6 @@ function formatChartLabel(label: string): string {
 
       .bar {
         width: 100%;
-        min-height: 3px;
         background: stats.$gradient-primary;
         border-radius: stats.$radius-sm;
         cursor: pointer;
@@ -154,17 +154,18 @@ function formatChartLabel(label: string): string {
         &.today {
           background: var(--b3-theme-secondary);
           border: 1.5px solid var(--b3-theme-primary);
-          box-shadow: 0 0 10px rgba(var(--b3-theme-secondary-rgb), 0.2);
+          outline: 2px solid rgba(var(--b3-theme-secondary-rgb), 0.2);
+          outline-offset: 1px;
         }
       }
 
       .bar-label {
         position: absolute;
-        bottom: -18px;
+        bottom: -$spacing-4;
         font-family: stats.$font-mono;
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 0.04em;
+        font-size: $font-size-2xs;
+        font-weight: $font-weight-bold;
+        letter-spacing: 0.06em;
         color: var(--b3-theme-on-surface);
         opacity: 0.45;
         white-space: nowrap;
@@ -180,18 +181,12 @@ function formatChartLabel(label: string): string {
   }
 }
 
-
-
 // Responsive design
 @include mobile-only {
   .bar-chart-section {
     .chart-viewport {
       min-width: 500px;
     }
-  }
-
-  .data-list {
-    grid-template-columns: 1fr 1fr;
   }
 }
 </style>

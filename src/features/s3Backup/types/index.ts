@@ -88,8 +88,6 @@ export interface LocalBackupInfo {
   size: number
 }
 
-// ========== 默认值常量 ==========
-
 // ========== 备份日志接口 ==========
 
 export interface BackupLog {
@@ -121,6 +119,21 @@ export const DEFAULT_BACKUP_MODE: BackupMode = {
 /** 日志最大保留条数 */
 export const MAX_LOG_COUNT = 200
 
+// ========== 备份校验值接口 ==========
+
+export interface FileChecksum {
+  /** 文件名（key） */
+  fileName: string
+  /** 完整路径（验证时需要） */
+  filePath: string
+  /** SHA-256 十六进制摘要 */
+  checksum: string
+  /** 文件大小（字节） */
+  fileSize: number
+  /** 计算时间（ISO 字符串） */
+  time: string
+}
+
 // ========== 存储键常量 ==========
 
 const STORAGE_KEYS = {
@@ -128,6 +141,7 @@ const STORAGE_KEYS = {
   BACKUP_SETTINGS: "s3-backup-settings",
   BACKUP_HISTORY: "s3-backup-history",
   BACKUP_LOG: "s3-backup-log",
+  CHECKSUMS: "s3-backup-checksums",
 } as const
 
 // ========== 存储类 ==========
@@ -137,6 +151,7 @@ export class S3BackupStorage {
   readonly backupSettings: TypedStorage<BackupSettings>
   readonly backupHistory: TypedStorage<{ list: LocalBackupInfo[] }>
   readonly backupLogs: TypedStorage<{ logs: BackupLog[] }>
+  readonly checksums: TypedStorage<{ items: FileChecksum[] }>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
@@ -157,6 +172,7 @@ export class S3BackupStorage {
     } as BackupSettings)
     this.backupHistory = new TypedStorage(storage, STORAGE_KEYS.BACKUP_HISTORY, { list: [] })
     this.backupLogs = new TypedStorage(storage, STORAGE_KEYS.BACKUP_LOG, { logs: [] })
+    this.checksums = new TypedStorage(storage, STORAGE_KEYS.CHECKSUMS, { items: [] })
   }
 }
 

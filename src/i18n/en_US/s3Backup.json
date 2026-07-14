@@ -92,5 +92,15 @@
   "noLogs": "No operation records",
   "clearAll": "Clear All",
   "success": "Success",
-  "failed": "Failed"
+  "failed": "Failed",
+  "checksumsTab": "Verify",
+  "storedChecksums": "Stored Checksums",
+  "noChecksums": "No checksums",
+  "verify": "Verify",
+  "verifyAll": "Verify All",
+  "match": "Match",
+  "mismatch": "Mismatch",
+  "dropVerify": "Drop File to Verify",
+  "dropHint": "Drop files here to compute SHA-256",
+  "clearResults": "Clear Results"
 }

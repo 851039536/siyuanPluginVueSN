@@ -35,6 +35,13 @@
       >
         {{ i18n.logTab || "日志" }}
       </button>
+      <button
+        class="s3-tab-btn"
+        :class="{ active: activeTab === 'checksums' }"
+        @click="activeTab = 'checksums'"
+      >
+        {{ i18n.checksumsTab || "校验" }}
+      </button>
     </div>
 
     <!-- Tab: 备份 -->
@@ -166,6 +173,19 @@
         @clear="clearLogs"
       />
     </div>
+
+    <!-- Tab: 校验 -->
+    <div
+      v-if="activeTab === 'checksums'"
+      class="settings-container"
+    >
+      <FileChecksumsCard
+        :stored-items="checksums"
+        :workspace-root="workspaceRoot"
+        :i18n="i18n"
+        @clear="clearChecksums"
+      />
+    </div>
   </div>
 </template>
 
@@ -183,6 +203,7 @@ import { getS3BackupInstance } from "./index"
 import type { S3Config, LocalBackupInfo, BackupMode } from "./types"
 import { DEFAULT_BACKUP_MODE } from "./types"
 import type { BackupLog } from "./types"
+import type { FileChecksum } from "./types"
 import { MAX_LOG_COUNT } from "./types"
 import S3ConfigForm from "./components/S3ConfigForm.vue"
 import WorkspaceInfoCard from "./components/WorkspaceInfoCard.vue"
@@ -192,6 +213,7 @@ import ManualBackupCard from "./components/ManualBackupCard.vue"
 import AutoBackupCard from "./components/AutoBackupCard.vue"
 import BackupListCard from "./components/BackupListCard.vue"
 import BackupLogCard from "./components/BackupLogCard.vue"
+import FileChecksumsCard from "./components/FileChecksumsCard.vue"
 import Button from "@/components/Button.vue"
 
 // ========== Props ==========
@@ -230,7 +252,7 @@ const {
 
 // ========== 基础状态 ==========
 
-const activeTab = ref<"backup" | "config" | "log">("backup")
+const activeTab = ref<"backup" | "config" | "log" | "checksums">("backup")
 const workspacePath = ref("")
 const workspaceRoot = ref("")
 const lastBackupTime = ref("")
@@ -239,6 +261,7 @@ const localBackupDir = ref("data-backup")
 const s3SubPrefix = ref("data-backup")
 const isS3OnlyBackingUp = ref(false)
 const backupLogs = ref<BackupLog[]>([])
+const checksums = ref<FileChecksum[]>([])
 
 // ========== 路径预览 ==========
 
@@ -486,6 +509,13 @@ async function performLocalBackup(): Promise<BackupResult | null> {
       success: true,
       message: `${result.totalFiles} 文件`,
     })
+    // 计算 ZIP 文件校验值并持久化
+    try {
+      const hash = await backupManager.computeFileHash(result.filePath)
+      saveChecksum(result.fileName, result.filePath, result.size, hash)
+    } catch (hashErr: any) {
+      console.warn("计算文件校验值失败:", hashErr.message)
+    }
     return result
   } catch (err: any) {
     addLog({
@@ -607,6 +637,13 @@ async function performS3Backup(latestZip?: BackupResult | null): Promise<void> {
       continue
     }
     await uploadFileContent(content, s3Key)
+    // 上传成功后计算并保存校验值
+    try {
+      const hash = await backupManager.computeFileHash(file.fullPath)
+      saveChecksum(file.relativePath, file.fullPath, content.length, hash)
+    } catch (hashErr: any) {
+      console.warn("计算校验值失败:", file.relativePath, hashErr.message)
+    }
     uploadedCount++
     processedCount++
   }
@@ -838,6 +875,41 @@ async function clearLogs(): Promise<void> {
   }
 }
 
+// ========== 校验值管理 ==========
+
+function saveChecksum(fileName: string, filePath: string, fileSize: number, checksum: string): void {
+  const item: FileChecksum = {
+    fileName,
+    filePath,
+    checksum,
+    fileSize,
+    time: new Date().toISOString(),
+  }
+  // 同名覆盖
+  const idx = checksums.value.findIndex((c) => c.fileName === fileName)
+  if (idx >= 0) {
+    checksums.value[idx] = item
+  } else {
+    checksums.value.unshift(item)
+  }
+  saveChecksums()
+}
+
+async function saveChecksums(): Promise<void> {
+  const instance = getS3BackupInstance()
+  if (instance) {
+    await instance.getStorage().checksums.save({ items: checksums.value })
+  }
+}
+
+async function clearChecksums(): Promise<void> {
+  checksums.value = []
+  const instance = getS3BackupInstance()
+  if (instance) {
+    await instance.getStorage().checksums.save({ items: [] })
+  }
+}
+
 // ========== 设置持久化 ==========
 
 async function loadWorkspaceSettings(): Promise<void> {
@@ -983,6 +1055,17 @@ onMounted(async () => {
       const data = await instance2.getStorage().backupLogs.load()
       if (data?.logs) {
         backupLogs.value = data.logs
+      }
+    }
+  } catch { /* ignore */ }
+
+  // 加载校验值
+  try {
+    const instance3 = getS3BackupInstance()
+    if (instance3) {
+      const data = await instance3.getStorage().checksums.load()
+      if (data?.items) {
+        checksums.value = data.items
       }
     }
   } catch { /* ignore */ }

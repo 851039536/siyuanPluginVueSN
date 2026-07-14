@@ -30,13 +30,13 @@
           />
         </template>
         <span class="inline-label">{{ i18n.keepBackupCount || "保留" }}</span>
-        <Input
-          :model-value="keepBackupCount"
-          type="number"
-          size="xsmall"
-          style="width: 3rem;"
-          @update:model-value="$emit('update:keepBackupCount', Number($event))"
-        />
+          <Input
+            :model-value="keepBackupCount"
+            type="number"
+            size="xsmall"
+            class="keep-count-input"
+            @update:model-value="$emit('update:keepBackupCount', Number($event))"
+          />
         <span class="inline-label">{{ i18n.keepBackupCountHint || "份" }}</span>
       </template>
     </div>

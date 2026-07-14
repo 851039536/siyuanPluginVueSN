@@ -1,3 +1,4 @@
+<!-- S3 备份主面板 — 备份/配置双 Tab 视图，编排子组件、自动备份触发、事件监听 -->
 <template>
   <div class="s3-backup-panel">
     <!-- 头部 -->
@@ -151,7 +152,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue"
-import { showMessage } from "siyuan"
+import { Plugin, showMessage } from "siyuan"
 import { getWorkspaceDir } from "@/api"
 import { pickDirectory, openFolderInExplorer } from "@/utils/electronDialog"
 import { getNodeModules } from "@/utils/nodeModules"
@@ -174,8 +175,8 @@ import Button from "@/components/Button.vue"
 // ========== Props ==========
 
 interface Props {
-  i18n?: any
-  plugin?: any
+  i18n?: Record<string, string>
+  plugin?: Plugin | null
   onClose?: () => void
 }
 
@@ -297,8 +298,6 @@ function onLocalBackupDirChanged(): void {
 function updateWorkspacePath(root: string, shouldSave = false): void {
   workspaceRoot.value = root
   workspacePath.value = root
-  // 同步写入 localStorage，便于下次启动快速恢复
-  localStorage.setItem("siyuan-workspace-root", root)
   if (backupManager) {
     backupManager.updateWorkspacePaths(workspacePath.value, workspaceRoot.value)
   }

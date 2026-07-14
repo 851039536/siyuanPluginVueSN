@@ -63,7 +63,7 @@
       align-items: baseline;
       gap: $spacing-2;
       font-size: $font-size-xs;
-      line-height: 1.5;
+      line-height: $line-height-normal;
 
       .guide-label {
         flex-shrink: 0;

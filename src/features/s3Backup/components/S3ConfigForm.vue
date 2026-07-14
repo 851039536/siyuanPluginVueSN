@@ -1,3 +1,4 @@
+<!-- S3 配置表单组件 — Endpoint/AccessKey/SecretKey/Bucket 等字段输入、连接测试、配置保存 -->
 <template>
   <div class="s3-config-form">
     <div class="section-header">

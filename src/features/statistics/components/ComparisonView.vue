@@ -1,68 +1,25 @@
+/**
+ * ComparisonView — 期间对比视图
+ * 选择两个时间段（年/月），对比统计指标（字数、笔记数、活跃天数等），
+ * 展示差异表格和各时段明细柱状图。
+ */
 <template>
   <div class="comparison-view">
     <!-- Period selectors -->
     <div class="comparison-controls">
-      <div class="period-picker">
-        <span class="period-label">A</span>
-        <select
-          v-model="yearA"
-          class="period-select"
-        >
-          <option
-            v-for="y in yearOptions"
-            :key="y"
-            :value="y"
-          >
-            {{ y }}年
-          </option>
-        </select>
-        <select
-          v-model="monthA"
-          class="period-select"
-        >
-          <option :value="0">
-            全年
-          </option>
-          <option
-            v-for="m in 12"
-            :key="m"
-            :value="m"
-          >
-            {{ m }}月
-          </option>
-        </select>
-      </div>
+      <PeriodPicker
+        v-model:year="yearA"
+        v-model:month="monthA"
+        label="A"
+        :year-options="yearOptions"
+      />
       <span class="vs-text">vs</span>
-      <div class="period-picker">
-        <span class="period-label">B</span>
-        <select
-          v-model="yearB"
-          class="period-select"
-        >
-          <option
-            v-for="y in yearOptions"
-            :key="y"
-            :value="y"
-          >
-            {{ y }}年
-          </option>
-        </select>
-        <select
-          v-model="monthB"
-          class="period-select"
-        >
-          <option :value="0">
-            全年
-          </option>
-          <option
-            v-for="m in 12"
-            :key="m"
-            :value="m"
-          >
-            {{ m }}月
-          </option>
-        </select>
-      </div>
+      <PeriodPicker
+        v-model:year="yearB"
+        v-model:month="monthB"
+        label="B"
+        :year-options="yearOptions"
+      />
       <button
         class="compare-btn"
         @click="compare"
@@ -186,7 +143,9 @@ import {
   computed,
   ref,
 } from "vue"
-import { formatNumber } from "../utils"
+import { barPct, formatNumber } from "../utils"
+import PeriodPicker from "./PeriodPicker.vue"
+import "../styles/comparison-view.scss"
 
 interface Props {
   onGetComparisonData?: (yearA: number, monthA: number | undefined, yearB: number, monthB: number | undefined) => Promise<ComparisonData>
@@ -286,10 +245,6 @@ const maxBreakVal = computed(() => {
   return max
 })
 
-function barPct(val: number, max: number): string {
-  return `${Math.max((val / max) * 100, 1)}%`
-}
-
 function fmtN(n: number): string {
   return formatNumber(n)
 }
@@ -310,270 +265,4 @@ async function compare() {
 }
 </script>
 
-<style scoped lang="scss">
-@use "../styles/index.scss" as stats;
-.comparison-view {
-  padding: 4px 0;
-}
 
-.comparison-controls {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-}
-
-.period-picker {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-
-.period-label {
-  font-family: stats.$font-mono;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--b3-theme-primary);
-  width: 14px;
-}
-
-.period-select {
-  padding: 4px 6px;
-  border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  font-family: stats.$font-mono;
-  font-size: 12px;
-  outline: none;
-
-  @include stats.codex-focus-glow;
-}
-
-.vs-text {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--b3-theme-on-surface-light);
-  opacity: 0.5;
-}
-
-.compare-btn {
-  @include stats.small-action-btn;
-  background: var(--b3-theme-primary);
-  color: var(--b3-theme-on-primary);
-  border-color: var(--b3-theme-primary);
-
-  &:hover {
-    opacity: 0.85;
-    background: var(--b3-theme-primary);
-    border-color: var(--b3-theme-primary);
-  }
-}
-
-.compare-loading,
-.compare-empty {
-  text-align: center;
-  padding: 20px;
-  font-size: 12px;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.5;
-}
-
-.compare-result {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.compare-table-wrap {
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
-  overflow: hidden;
-}
-
-.compare-table {
-  width: 100%;
-  table-layout: fixed;
-  border-collapse: collapse;
-  font-size: 12px;
-
-  .col-metric {
-    width: 25%;
-  }
-
-  .col-value {
-    width: 25%;
-  }
-
-  .col-delta {
-    width: 25%;
-  }
-
-  th, td {
-    padding: 8px 10px;
-    text-align: right;
-
-    &.col-metric {
-      text-align: left;
-    }
-  }
-
-  th {
-    background: var(--b3-theme-background);
-    color: var(--b3-theme-on-surface-light);
-    font-family: stats.$font-mono;
-    font-weight: 700;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    border-bottom: 1px solid var(--b3-border-color);
-  }
-
-  td {
-    border-bottom: 1px solid rgba(var(--b3-theme-on-surface-rgb), 0.04);
-    color: var(--b3-theme-on-surface);
-    font-family: stats.$font-mono;
-    font-weight: 500;
-  }
-
-  .col-metric {
-    color: var(--b3-theme-on-surface-light);
-    font-weight: 400;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-  }
-
-  .delta-up {
-    color: stats.$color-success;
-    font-weight: 700;
-  }
-
-  .delta-down {
-    color: stats.$color-danger;
-    font-weight: 700;
-  }
-
-  .delta-flat {
-    color: var(--b3-theme-on-surface-light);
-  }
-}
-
-.compare-breakdown {
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
-  padding: 12px;
-}
-
-.breakdown-title {
-  font-family: stats.$font-mono;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--b3-theme-on-surface);
-  margin: 0 0 8px 0;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-}
-
-.breakdown-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.breakdown-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.breakdown-label {
-  width: 56px;
-  flex-shrink: 0;
-  text-align: right;
-  font-family: stats.$font-mono;
-  font-size: 11px;
-  color: var(--b3-theme-on-surface-light);
-}
-
-.breakdown-bars-wrap {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.bar-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.bar-track {
-  position: relative;
-  flex: 1;
-  height: 20px;
-  background: rgba(var(--b3-theme-on-surface-rgb), 0.04);
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.bar-fill {
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  border-radius: 6px;
-  min-width: 4px;
-
-  &.bar-a {
-    background: var(--b3-theme-primary);
-    opacity: 0.6;
-  }
-
-  &.bar-b {
-    background: var(--b3-theme-primary);
-  }
-}
-
-.bar-value {
-  width: 44px;
-  flex-shrink: 0;
-  font-family: stats.$font-mono;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--b3-theme-on-surface);
-  text-align: right;
-  white-space: nowrap;
-}
-
-.breakdown-legend {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  margin-top: 8px;
-  font-family: stats.$font-mono;
-  font-size: 10px;
-  color: var(--b3-theme-on-surface-light);
-}
-
-.legend-dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: stats.$radius-sm;
-  margin-right: 3px;
-
-  &.legend-a {
-    background: var(--b3-theme-primary);
-    opacity: 0.6;
-  }
-
-  &.legend-b {
-    background: var(--b3-theme-primary);
-  }
-}
-</style>

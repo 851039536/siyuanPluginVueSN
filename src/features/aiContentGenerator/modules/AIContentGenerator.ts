@@ -145,7 +145,7 @@ export class AIContentGenerator {
       return ""
     } catch (error) {
       const errorMsg = (error as Error).message || "未知错误"
-      showMessage(`🚫 生成失败: ${errorMsg}`, 5000, "error")
+      showMessage(`生成失败: ${errorMsg}`, 5000, "error")
       throw error
     }
   }

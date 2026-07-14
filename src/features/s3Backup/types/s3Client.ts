@@ -14,10 +14,12 @@ import { getNodeModules } from "@/utils/nodeModules"
 
 /** 获取 crypto 模块 (仅 Electron/Node.js 环境可用) */
 function requireCrypto(): any {
-  const node = getNodeModules()
-  if (!node) throw new Error("签名需要 Node.js 环境，请使用桌面版思源笔记")
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  return require("node:crypto")
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require("node:crypto")
+  } catch {
+    throw new Error("签名需要 Node.js 环境，请使用桌面版思源笔记")
+  }
 }
 
 /** 获取 fs/path 模块 */
@@ -30,13 +32,19 @@ function requireFsPath() {
   }
 }
 
+/** 缓存的 http/https 模块引用（模块级单例，避免每次请求重复 require） */
+let _httpModule: any = null
+let _httpsModule: any = null
+
 /** 获取 Node.js http/https 模块（绕过浏览器 Mixed Content 限制） */
 function requireHttp(): { http: any; https: any } {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const http = require("node:http")
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const https = require("node:https")
-  return { http, https }
+  if (!_httpModule || !_httpsModule) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    _httpModule = require("node:http")
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    _httpsModule = require("node:https")
+  }
+  return { http: _httpModule, https: _httpsModule }
 }
 
 /** SHA256 哈希，返回 hex 字符串 */
@@ -58,14 +66,13 @@ function hmacSha256Hex(key: Buffer | string, data: string): string {
 }
 
 /** 生成 ISO 8601 时间戳 (YYYYMMDDTHHMMSSZ) */
-function amzDate(): string {
-  const d = new Date()
+function amzDate(d: Date): string {
   return d.toISOString().replace(/[:-]|\.\d{3}/g, "")
 }
 
 /** 生成日期戳 (YYYYMMDD) */
-function dateStamp(): string {
-  return new Date().toISOString().slice(0, 10).replace(/-/g, "")
+function dateStamp(d: Date): string {
+  return d.toISOString().slice(0, 10).replace(/-/g, "")
 }
 
 /** 生成 Payload 的 SHA256 哈希 (hex) */
@@ -325,10 +332,10 @@ export class S3Client {
 
   /** 列举指定前缀的文件 */
   async list(prefix: string): Promise<S3FileInfo[]> {
-    const url = this.buildUrl("", `?prefix=${encodeURIComponent(prefix)}&max-keys=100`)
+    const url = this.buildUrl("", `?prefix=${encodeURIComponent(prefix)}&max-keys=1000`)
     const uri = this.buildUri("")
 
-    const response = await this.request("GET", uri, `prefix=${encodeURIComponent(prefix)}&max-keys=100`, url, null)
+    const response = await this.request("GET", uri, `prefix=${encodeURIComponent(prefix)}&max-keys=1000`, url, null)
 
     if (!response.ok) {
       const body = await response.text()
@@ -355,14 +362,11 @@ export class S3Client {
   private buildUrl(key: string, queryString = ""): string {
     const safeKey = key.replace(/^\/+/, "")
     const protocol = this.config.useSSL ? "https" : "http"
-    if (this.config.pathStyle) {
-      const encodedKey = safeKey.split("/").map(encodeURIComponent).join("/")
-      const qs = queryString ? queryString : ""
-      return `${protocol}://${this.config.endpoint}/${this.config.bucket}/${encodedKey}${qs}`
-    }
     const encodedKey = safeKey.split("/").map(encodeURIComponent).join("/")
-    const qs = queryString ? queryString : ""
-    return `${protocol}://${this.config.bucket}.${this.config.endpoint}/${encodedKey}${qs}`
+    const host = this.config.pathStyle
+      ? `${this.config.endpoint}/${this.config.bucket}`
+      : `${this.config.bucket}.${this.config.endpoint}`
+    return `${protocol}://${host}/${encodedKey}${queryString}`
   }
 
   /** 构建请求 URI (用于签名) */
@@ -382,8 +386,9 @@ export class S3Client {
     url: string,
     body: Buffer | null,
   ): Promise<NodeResponse> {
-    const amzDateStr = amzDate()
-    const dateStampStr = dateStamp()
+    const now = new Date()
+    const amzDateStr = amzDate(now)
+    const dateStampStr = dateStamp(now)
     // 无 body 的请求使用 UNSIGNED-PAYLOAD（许多 S3 兼容服务不认空体 SHA256）
     const payloadHashValue = body === null ? "UNSIGNED-PAYLOAD" : payloadHash(body)
 

@@ -155,7 +155,14 @@ export class S3Backup {
           break
 
         case "daily": {
-          const [targetHour, targetMinute] = backupTime.split(":").map(Number)
+          const parts = backupTime.split(":")
+          // B19 修复：校验 backupTime 格式，防止异常输入产生 NaN 导致 daily 模式永不触发
+          if (parts.length < 2 || parts.some((p) => Number.isNaN(Number(p)))) {
+            console.warn(`[S3备份] backupTime 格式异常: "${backupTime}"，跳过本次检查`)
+            break
+          }
+          const targetHour = Number(parts[0])
+          const targetMinute = Number(parts[1])
           // A5 修复：用宽松窗口替代精确分钟匹配，避免因 setInterval 偏移错过备份
           // B18 修复：增加 timeSinceTimerStart 守卫，防止程序重启时第一 tick 立即误触发
           // 条件：当前时间已过目标时间、定时器已运行 ≥ 60s、今天尚未执行、距离上次备份 ≥ 1 分钟
@@ -268,7 +275,7 @@ export class S3Backup {
       }
     } catch { /* ignore */ }
 
-    // 4. 持久化存储（兜底）
+    // 3. 持久化存储（兜底）
     try {
       const data = await this.storage.backupSettings.loadOrDefault()
       if (data.workspaceRoot) {
@@ -302,5 +309,4 @@ export function registerS3Backup(plugin: Plugin): void {
   s3BackupInstance.init().catch((err) => {
     console.error("S3 备份初始化失败:", err)
   })
-  ;(plugin as any).__s3Backup = s3BackupInstance
 }

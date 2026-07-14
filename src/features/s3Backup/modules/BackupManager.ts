@@ -69,7 +69,7 @@ export class BackupManager {
   private fs: any
   private path: any
 
-  constructor(_workspacePath: string, workspaceRoot: string) {
+  constructor(workspaceRoot: string) {
     this.workspaceRoot = workspaceRoot
 
     const node = getNodeModules()
@@ -95,8 +95,8 @@ export class BackupManager {
     return this.path.join(this.workspaceRoot, "data")
   }
 
-  /** 更新工作区根目录（同时同步 workspacePath 字段以维持接口兼容） */
-  updateWorkspacePaths(_workspacePath: string, workspaceRoot: string) {
+  /** 更新工作区根目录 */
+  updateWorkspacePaths(workspaceRoot: string) {
     this.workspaceRoot = workspaceRoot
   }
 

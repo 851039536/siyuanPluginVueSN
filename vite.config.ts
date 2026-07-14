@@ -151,7 +151,7 @@ export default defineConfig(({
 
         // make sure to externalize deps that shouldn't be bundled
         // into your library
-        external: ["siyuan", "process", "node:fs", "node:path", "node:child_process", "node:os", "node:http", "node:https"],
+        external: ["siyuan", "process", "node:fs", "node:path", "node:child_process", "node:os", "node:http", "node:https", "node:crypto"],
 
         output: {
           entryFileNames: "[name].js",

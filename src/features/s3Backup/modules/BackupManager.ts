@@ -315,6 +315,38 @@ export class BackupManager {
     return result
   }
 
+  // ========== 文件校验 ==========
+
+  /**
+   * 计算文件的 SHA-256 校验值
+   * 流式读取，不阻塞 UI，支持大文件
+   */
+  async computeFileHash(filePath: string): Promise<string> {
+    let crypto: any
+    let fsRaw: any
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      crypto = require("node:crypto")
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      fsRaw = require("node:fs")
+    } catch {
+      throw new Error("哈希计算需要 Node.js 环境，请使用桌面版思源笔记")
+    }
+    const hash = crypto.createHash("sha256")
+    return new Promise((resolve, reject) => {
+      let stream: any
+      try {
+        stream = fsRaw.createReadStream(filePath)
+      } catch (err) {
+        reject(err)
+        return
+      }
+      stream.on("data", (chunk: Buffer) => hash.update(chunk))
+      stream.on("end", () => resolve(hash.digest("hex")))
+      stream.on("error", reject)
+    })
+  }
+
   // ========== 私有方法 ==========
 
   private async validatePath(p: string) {

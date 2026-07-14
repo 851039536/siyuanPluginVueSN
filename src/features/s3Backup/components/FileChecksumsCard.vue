@@ -309,14 +309,9 @@ async function resolveDropPath(file: File): Promise<ResolvedDropPath | null> {
     }
   }
 
-  // 3. 文件选择器兜底
-  if (!filePath) {
-    filePath = await pickFile(`请手动选择文件: ${file.name}`)
-  }
-
   if (!filePath) { return null }
 
-  // 获取实际文件名和大小（兜底路径可能来自选择器，与原始 file 对象不一致）
+  // 获取实际文件名和大小
   try {
     const node = getNodeModules()
     if (node) {
@@ -334,30 +329,6 @@ async function resolveDropPath(file: File): Promise<ResolvedDropPath | null> {
     fileName: file.name,
     fileSize: file.size,
   }
-}
-
-/** 使用 Electron 原生对话框选择单个文件 */
-async function pickFile(title: string): Promise<string | null> {
-  if (typeof window.require !== "function") { return null }
-  try {
-    let remote: any
-    try {
-      remote = window.require("@electron/remote")
-    } catch {
-      const electron = window.require("electron")
-      remote = electron.remote || electron
-    }
-    if (remote?.dialog?.showOpenDialog) {
-      const result = await remote.dialog.showOpenDialog({
-        properties: ["openFile"],
-        title,
-      })
-      if (!result.canceled && result.filePaths[0]) {
-        return result.filePaths[0]
-      }
-    }
-  } catch { /* fallback */ }
-  return null
 }
 
 function copyHash(hash: string): void {

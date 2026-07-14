@@ -41,7 +41,7 @@ import {
   formatNumber,
   formatShortNumber,
   isToday,
-} from "../utils"
+} from "../../utils"
 
 interface ChartDataItem {
   date: string
@@ -90,8 +90,8 @@ function formatChartLabel(label: string): string {
 
 <style scoped lang="scss">
 @use "@/variables" as *;
-@use "../../superPanel/styles/shared" as *;
-@use "../styles/index.scss" as stats;
+@use "../../../superPanel/styles/shared" as *;
+@use "../../styles/index.scss" as stats;
 
 .bar-chart-section {
   .bar-chart-container {

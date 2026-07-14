@@ -1035,6 +1035,58 @@ export function useXxx(deps: {
 | 被 2+ 组件共享 | **必须提取** |
 | 1~2 个函数且仅 1 处使用 | **保留在组件内** |
 
+### 四、组件文件夹组织标准（`components/` 子目录）
+
+当 feature 的 `components/` 目录文件达到 **≥15 个**时，允许按**组件类型**创建子文件夹。但不是"设了子文件夹就一定要用完"——必须遵循以下分级标准：
+
+#### 可以创建子文件夹（高置信度）
+
+| 条件 | 说明 | 示例 |
+|------|------|------|
+| 同一类型组件 **≥3 个** | Rule of Three 的文件夹版。3+ 个组件职责高度同质（如都是纯渲染图表），创建子文件夹提升导航效率 | `charts/`（BarChart + DocBarChart + NotebookBlockTypeChart + NotebookWordPie） |
+
+#### 不应创建子文件夹（过度碎片化）
+
+| 条件 | 说明 |
+|------|------|
+| 同一类型组件 **< 3 个** | 2 个组件放同一个文件夹与平铺无本质区别，反而增加 1 层导航成本 |
+| 按 Tab/页面分组 | 会产生大量文件夹且多数仅 1-3 文件，属于"按位置分"而非"按职责分"。如 `overview/`、`trend/`、`heatmap/` 这种按页面拆分——每个 Tab 的组件已通过 `index.vue` 的 `v-show` 组织，不需要文件夹重复表达 |
+| 紧密耦合组件已通过**命名**体现关系 | `MilestoneChip` / `MilestoneRuleEditor` 已有 `Milestone` 前缀表明父子关系，无需额外子文件夹（Vue 官方风格指南推荐） |
+| feature 总文件 < 15 | 扁平结构即可，导航成本低 |
+
+#### 子文件夹命名规范
+
+- 使用**职责类型**而非页面/Tab 名：`charts/` ✅、`overview/` ❌
+- 保持小写（遵循项目目录命名惯例）
+- 每个 feature 的 `components/` 下**最多 3 个子文件夹**，避免碎片化
+
+#### 正面案例
+
+```
+# ✅ statistics/components/（20 个文件 → 可建子文件夹）
+components/
+├── charts/                          # 4 个同质图表组件 → 达到阈值
+│   ├── BarChart.vue
+│   ├── DocBarChart.vue
+│   ├── NotebookBlockTypeChart.vue
+│   └── NotebookWordPie.vue
+└── (其余 16 个保持平铺)
+```
+
+#### 反面案例
+
+```
+# ❌ 按 Tab 分组 — 7 个子文件夹，多数仅 1-2 文件
+components/
+├── overview/          # 5 个文件
+├── trend/             # 2 个文件 ← 不够 3 个
+├── notebook/          # 4 个文件
+├── report/            # 1 个文件 ← 不够 3 个
+├── milestones/        # 1 个文件 ← 不够 3 个
+├── heatmap/           # 1 个文件 ← 不够 3 个
+└── activity/          # 1 个文件 ← 不够 3 个
+```
+
 ### 快速自检清单
 
 提取前问自己：

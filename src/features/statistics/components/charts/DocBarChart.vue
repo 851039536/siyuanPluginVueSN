@@ -52,11 +52,11 @@ import {
   computed,
 } from "vue"
 import Loader from "@/components/Loader.vue"
-import { useNotebookHover } from "../composables/useNotebookHover"
+import { useNotebookHover } from "../../composables/useNotebookHover"
 import {
   formatNumber,
   formatShortNumber,
-} from "../utils"
+} from "../../utils"
 
 interface NotebookDocCount {
   name: string
@@ -117,8 +117,8 @@ function getBarWidth(count: number): string {
 
 <style scoped lang="scss">
 @use "@/variables" as *;
-@use "../../superPanel/styles/shared" as *;
-@use "../styles/index.scss" as stats;
+@use "../../../superPanel/styles/shared" as *;
+@use "../../styles/index.scss" as stats;
 
 .doc-bar-chart-section {
   display: flex;

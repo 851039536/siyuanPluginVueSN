@@ -100,9 +100,10 @@
       </div>
       <div v-if="droppedResults.length > 0" class="drop-results">
         <div
-          v-for="result in droppedResults"
+          v-for="(result, index) in droppedResults"
           :key="result.name + result.path"
           class="drop-result-item"
+          :class="{ 'drop-compare-match': compareResults[index] === true, 'drop-compare-mismatch': compareResults[index] === false }"
         >
           <div class="drop-result-info">
             <span class="drop-result-name">{{ result.name }}</span>
@@ -112,6 +113,25 @@
           </div>
           <div class="drop-result-hash">
             <code class="checksum-hash-value">{{ result.hash }}</code>
+          </div>
+          <div class="drop-result-compare">
+            <select
+              v-if="storedItems.length > 0"
+              v-model="compareSelects[index]"
+              class="compare-select"
+              @change="onCompareChange(index)"
+            >
+              <option value="">{{ i18n.compareWith || "比对..." }}</option>
+              <option v-for="item in storedItems" :key="item.fileName" :value="item.fileName">
+                {{ item.fileName }}
+              </option>
+            </select>
+            <span v-if="compareResults[index] === true" class="compare-badge compare-ok">
+              &#10003; {{ i18n.match || "匹配" }}
+            </span>
+            <span v-else-if="compareResults[index] === false" class="compare-badge compare-fail">
+              &#10007; {{ i18n.mismatch || "不匹配" }}
+            </span>
           </div>
           <div class="drop-result-copy">
             <Button variant="ghost" size="xsmall" @click="copyHash(result.hash)">
@@ -189,6 +209,21 @@ interface DropResult {
 
 const droppedResults = ref<DropResult[]>([])
 const isDragging = ref(false)
+const compareSelects = ref<Record<number, string>>({})
+const compareResults = ref<Record<number, boolean | undefined>>({})
+
+function onCompareChange(index: number): void {
+  const targetName = compareSelects.value[index]
+  if (!targetName) {
+    compareResults.value[index] = undefined
+    return
+  }
+  const target = props.storedItems.find((c) => c.fileName === targetName)
+  const dropped = droppedResults.value[index]
+  if (target && dropped) {
+    compareResults.value[index] = dropped.hash === target.checksum
+  }
+}
 
 function onDragEnter(e: DragEvent): void {
   e.dataTransfer!.dropEffect = "copy"

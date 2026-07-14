@@ -102,5 +102,6 @@
   "mismatch": "不匹配",
   "dropVerify": "拖放文件校验",
   "dropHint": "拖放文件到此区域进行校验",
-  "clearResults": "清空结果"
+  "clearResults": "清空结果",
+  "compareWith": "比对..."
 }

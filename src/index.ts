@@ -298,7 +298,9 @@ export default class PluginSample extends Plugin {
     if (s.enableThemeColor) {
       (this as any).__themeColor = registerThemeColor(this, s.themeColorScheme)
     }
-    if (s.enableBookmarkMarker) registerBookmarkMarker(this)
+    if (s.enableBookmarkMarker) {
+      ;(this as any).__bookmarkMarker = registerBookmarkMarker(this)
+    }
     if (s.enableApiDebugger) registerApiDebugger(this)
     if (s.enableWebsiteNavigation) registerWebsiteNavigation(this)
     if (s.enableScriptLauncher) registerScriptLauncher(this)

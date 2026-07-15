@@ -5,11 +5,11 @@
 import type { Plugin } from "siyuan"
 import type { ModalAppInstance } from "@/utils/vueAppHelper"
 import { createModalVueApp } from "@/utils/vueAppHelper"
-import BookmarkMarkerPanel from "./index.vue"
 import { BookmarkMarker } from "./modules/BookmarkMarker"
 import { BookmarkMarkerStorage } from "./types/storage"
+import BookmarkMarkerPanel from "./index.vue"
 
-class BookmarkMarkerManager {
+export class BookmarkMarkerManager {
   private storage: BookmarkMarkerStorage
   private bookmarkMarker: BookmarkMarker | null = null
   private modal: ModalAppInstance
@@ -98,8 +98,8 @@ class BookmarkMarkerManager {
   }
 }
 
-export function registerBookmarkMarker(plugin: Plugin) {
+export function registerBookmarkMarker(plugin: Plugin): BookmarkMarkerManager {
   const manager = new BookmarkMarkerManager(plugin)
   manager.init()
-  ;(plugin as any).__bookmarkMarker = manager
+  return manager
 }

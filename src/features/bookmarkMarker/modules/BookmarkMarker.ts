@@ -100,6 +100,14 @@ export class BookmarkMarker {
   }
 
   // ============================================================
+  // 规则匹配
+  // ============================================================
+
+  private findRuleForBookmark(bookmark: string): BookmarkRule | undefined {
+    return this.options.rules.find((r) => matchesBookmarkName(bookmark, r))
+  }
+
+  // ============================================================
   // DOM 标记应用 — 文件树
   // ============================================================
 
@@ -114,9 +122,6 @@ export class BookmarkMarker {
 
   private applyMarkersToDOM(): void {
     if (!this.active || !this.cacheLoaded) return
-
-    const findRule = (bookmark: string) =>
-      this.options.rules.find((r) => matchesBookmarkName(bookmark, r))
 
     for (const container of document.querySelectorAll("ul[data-url]")) {
       const docItems = container.querySelectorAll(
@@ -133,7 +138,7 @@ export class BookmarkMarker {
           continue
         }
 
-        const rule = findRule(bookmarkName)
+        const rule = this.findRuleForBookmark(bookmarkName)
         if (rule) {
           this.applyMarkerToItem(el, bookmarkName, rule)
         } else {
@@ -176,9 +181,6 @@ export class BookmarkMarker {
   private applyMarkersToProtyle(): void {
     if (!this.active || !this.cacheLoaded) return
 
-    const findRule = (bookmark: string) =>
-      this.options.rules.find((r) => matchesBookmarkName(bookmark, r))
-
     for (const title of document.querySelectorAll(".protyle-title[data-node-id]")) {
       const el = title as HTMLElement
       const nodeId = el.dataset.nodeId
@@ -190,7 +192,7 @@ export class BookmarkMarker {
         continue
       }
 
-      const rule = findRule(bookmarkName)
+      const rule = this.findRuleForBookmark(bookmarkName)
       if (rule) {
         this.applyMarkerToProtyle(el, bookmarkName, rule)
       } else {

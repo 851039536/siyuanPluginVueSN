@@ -1,3 +1,4 @@
+<!-- 交叉审核面板：分项评分条形图 / 严重度过滤 / 问题清单 / 改进建议 / 自动修复 -->
 <template>
   <div class="review-section">
     <!-- 审核头部（始终可见） -->
@@ -225,8 +226,6 @@ defineEmits<{
 
 const showReviewPanel = ref(true)
 const showScores = ref(true)
-const showIssues = ref(true)
-const showSuggestions = ref(true)
 
 type ScoreKey = keyof NonNullable<ReviewResult["detailedScore"]>
 
@@ -252,16 +251,15 @@ const ratingClass = computed(() => {
   return "rating-needs-fix"
 })
 
-// 严重程度过滤
-const issueFilter = ref<string>("all")
+/** 严重程度过滤键的联合类型 */
+type SeverityFilterKey = "all" | "高" | "中" | "低"
 
-const filterCounts = computed(() => {
-  if (!props.reviewResult) { return {
-    all: 0,
-    高: 0,
-    中: 0,
-    低: 0,
-  }
+// 严重程度过滤
+const issueFilter = ref<SeverityFilterKey>("all")
+
+const filterCounts = computed<Record<SeverityFilterKey, number>>(() => {
+  if (!props.reviewResult) {
+    return { all: 0, 高: 0, 中: 0, 低: 0 }
   }
   const issues = props.reviewResult.issues
   return {
@@ -272,24 +270,12 @@ const filterCounts = computed(() => {
   }
 })
 
-const filterOptions = computed(() => [
-  {
-    key: "all",
-    label: "全部",
-  },
-  {
-    key: "高",
-    label: "高",
-  },
-  {
-    key: "中",
-    label: "中",
-  },
-  {
-    key: "低",
-    label: "低",
-  },
-])
+const filterOptions: { key: SeverityFilterKey; label: string }[] = [
+  { key: "all", label: "全部" },
+  { key: "高", label: "高" },
+  { key: "中", label: "中" },
+  { key: "低", label: "低" },
+]
 
 const filteredIssues = computed(() => {
   if (!props.reviewResult) return []
@@ -315,341 +301,6 @@ const formatTime = (ts: number): string => {
 </script>
 
 <style scoped lang="scss">
+@use "../styles/ReviewPanel.scss" as *;
 @use "../styles/index.scss" as *;
-
-.review-section {
-  @include collapsible-section;
-}
-
-.review-toggle-btn {
-  @include collapsible-toggle(var(--b3-theme-success));
-}
-
-.review-chevron {
-  @include collapsible-chevron;
-}
-
-.review-loading-dot {
-  @include collapsible-status-dot(var(--b3-theme-success));
-  margin-left: auto;
-}
-
-.review-rating-badge {
-  margin-left: auto;
-  font-size: 10px;
-  font-weight: 600;
-  padding: 1px 6px;
-  border-radius: 3px;
-
-  &.rating-good {
-    color: #fff;
-    background: var(--b3-theme-success);
-  }
-
-  &.rating-ok {
-    color: #fff;
-    background: var(--b3-theme-primary);
-  }
-
-  &.rating-needs-fix {
-    color: #fff;
-    background: var(--b3-theme-error);
-  }
-}
-
-.review-body {
-  @include collapsible-body;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.review-summary {
-  display: flex;
-  align-items: flex-start;
-  gap: 5px;
-  font-size: 11px;
-  color: var(--b3-theme-on-surface);
-  line-height: 1.6;
-
-  svg {
-    color: var(--b3-theme-primary);
-    flex-shrink: 0;
-    margin-top: 2px;
-  }
-}
-
-.review-section-title {
-  @include codex-meta-label;
-  margin-bottom: 4px;
-}
-
-// ============ 分项评分条形图 ============
-.score-section {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.score-bar-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 10px;
-}
-
-.score-label {
-  width: 56px;
-  flex-shrink: 0;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.7;
-  text-align: right;
-}
-
-.score-bar-bg {
-  flex: 1;
-  height: 6px;
-  background: var(--b3-theme-surface-lighter);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.score-bar-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 0.4s ease;
-}
-
-.score-fill-high {
-  background: var(--b3-theme-success);
-}
-
-.score-fill-mid {
-  background: var(--b3-theme-warning, #e6a23c);
-}
-
-.score-fill-low {
-  background: var(--b3-theme-error);
-}
-
-.score-value {
-  width: 28px;
-  flex-shrink: 0;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.5;
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
-  font-size: 9px;
-}
-
-// ============ 严重程度过滤 Tabs ============
-.issue-filter {
-  display: flex;
-  gap: 3px;
-}
-
-.issue-filter-btn {
-  padding: 2px 7px;
-  font-size: 10px;
-  font-weight: 500;
-  color: var(--b3-theme-on-surface);
-  background: var(--b3-theme-surface-lighter);
-  border: 1px solid transparent;
-  border-radius: 3px;
-  cursor: pointer;
-  opacity: 0.6;
-
-  &:hover {
-    opacity: 0.8;
-  }
-
-  &.active {
-    opacity: 1;
-    background: var(--b3-theme-surface);
-    border-color: var(--b3-theme-primary);
-    color: var(--b3-theme-primary);
-  }
-}
-
-// ============ 问题清单 ============
-.review-issues {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.review-issue-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 5px;
-  font-size: 11px;
-  color: var(--b3-theme-on-surface);
-  line-height: 1.5;
-  padding: 4px 6px;
-  border-radius: 3px;
-  border-left: 3px solid transparent;
-
-  &.severity-高 {
-    border-left-color: var(--b3-theme-error);
-    background: var(--b3-theme-error-background);
-  }
-
-  &.severity-中 {
-    border-left-color: var(--b3-theme-warning);
-  }
-
-  &.severity-低 {
-    border-left-color: var(--b3-theme-surface-lighter);
-  }
-
-  .issue-content {
-    flex: 1;
-    display: flex;
-    align-items: baseline;
-    gap: 5px;
-  }
-}
-
-.issue-severity {
-  font-size: 9px;
-  font-weight: 600;
-  padding: 0 4px;
-  border-radius: 2px;
-  flex-shrink: 0;
-
-  &.severity-高 {
-    color: var(--b3-theme-error);
-    background: var(--b3-theme-error-background);
-  }
-
-  &.severity-中 {
-    color: var(--b3-theme-warning);
-    background: var(--b3-theme-warning-background);
-  }
-
-  &.severity-低 {
-    color: var(--b3-theme-on-surface);
-    background: var(--b3-theme-surface-lighter);
-    opacity: 0.7;
-  }
-}
-
-.issue-text {
-  flex: 1;
-  word-break: break-word;
-}
-
-.issue-actions {
-  flex-shrink: 0;
-}
-
-.fix-issue-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 2px 6px;
-  font-size: 9px;
-  color: var(--b3-theme-primary);
-  background: rgba(var(--b3-theme-primary-rgb, 53, 125, 221), 0.08);
-  border: 1px solid rgba(var(--b3-theme-primary-rgb, 53, 125, 221), 0.2);
-  border-radius: 3px;
-  cursor: pointer;
-  white-space: nowrap;
-
-  &:hover {
-    background: rgba(var(--b3-theme-primary-rgb, 53, 125, 221), 0.15);
-  }
-}
-
-// ============ 改进建议 ============
-.review-suggestions {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.review-suggestion-item {
-  font-size: 11px;
-  color: var(--b3-theme-on-surface);
-  line-height: 1.5;
-}
-
-.suggestion-num {
-  font-weight: 600;
-  color: var(--b3-theme-primary);
-  margin-right: 3px;
-}
-
-// ============ 底部操作栏 ============
-.review-footer {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding-top: 4px;
-  border-top: 1px dashed var(--b3-theme-surface-lighter);
-  flex-wrap: wrap;
-}
-
-.review-model {
-  @include codex-meta-label;
-  font-size: 9px;
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
-}
-
-.review-time {
-  font-size: 9px;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.4;
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
-}
-
-.review-footer-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: auto;
-}
-
-.review-footer-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 2px 7px;
-  font-size: 10px;
-  color: var(--b3-theme-on-surface);
-  background: var(--b3-theme-surface-lighter);
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-  white-space: nowrap;
-
-  &:hover {
-    background: var(--b3-theme-surface-light);
-    color: var(--b3-theme-primary);
-  }
-
-  &.auto-fix-btn {
-    color: #fff;
-    background: var(--b3-theme-warning, #e6a23c);
-
-    &:hover {
-      opacity: 0.9;
-    }
-  }
-}
-
-.auto-fixing-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 10px;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.7;
-}
-
-.dot-flashing {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--b3-theme-primary);
-}
 </style>

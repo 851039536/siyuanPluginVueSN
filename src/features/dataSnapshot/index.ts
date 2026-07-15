@@ -1,3 +1,4 @@
+// dataSnapshot 功能注册入口与 Dock 面板创建
 import type { Plugin } from "siyuan"
 import { createVueDockApp } from "@/utils/vueAppHelper"
 import DataSnapshotPanel from "./index.vue"

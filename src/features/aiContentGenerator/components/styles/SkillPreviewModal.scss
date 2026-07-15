@@ -1,0 +1,133 @@
+// 技能预览弹窗样式
+@use "@/variables" as *;
+
+.skill-preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.skill-preview-modal {
+  width: 480px;
+  max-height: 75vh;
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-theme-surface-light);
+  border-radius: $radius-lg;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.skill-preview-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: $spacing-3 16px;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  gap: $spacing-3;
+}
+
+.skill-preview-title {
+  display: block;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-background);
+  margin-bottom: 2px;
+}
+
+.skill-preview-desc {
+  display: block;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+  line-height: $line-height-tight;
+}
+
+.skill-preview-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: $radius-sm;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+  }
+}
+
+.skill-preview-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.skill-preview-content {
+  font-size: $font-size-sm;
+  line-height: 1.6;
+  color: var(--b3-theme-on-surface);
+
+  :deep(h2), :deep(h3) {
+    margin-top: 0.8em;
+    margin-bottom: 0.4em;
+    font-weight: $font-weight-medium;
+  }
+  :deep(p) { margin: 0.4em 0; }
+  :deep(ul), :deep(ol) { margin: 0.3em 0; padding-left: 1.4em; }
+  :deep(code) {
+    padding: 1px 4px;
+    background: var(--b3-theme-surface-lighter);
+    border-radius: 2px;
+    font-size: 0.85em;
+  }
+  :deep(pre) {
+    padding: $spacing-2;
+    background: var(--b3-theme-surface-lighter);
+    border-radius: $radius-sm;
+    overflow-x: auto;
+    margin: 0.4em 0;
+  }
+  :deep(blockquote) {
+    margin: 0.4em 0;
+    padding-left: 0.5em;
+    border-left: 2px solid var(--b3-theme-primary);
+    opacity: 0.8;
+  }
+}
+
+.skill-preview-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-top: 1px solid var(--b3-theme-surface-lighter);
+}
+
+.skill-preview-tool {
+  font-size: 9px;
+}
+
+.skill-preview-btn-close {
+  padding: $spacing-1 $spacing-3;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: var(--b3-theme-on-surface);
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-sm;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--b3-theme-surface-light);
+  }
+}

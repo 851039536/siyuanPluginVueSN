@@ -114,6 +114,13 @@ interface Props {
       tool: string; sources: Array<{ id: string; tool: string; content: string }>; id: string
     },
   ) => Promise<ReviewResult>
+  scanSkills: (projectPath?: string) => Promise<Array<{
+    filePath: string
+    name: string
+    description: string
+    content: string
+    tool: string
+  }>>
 }
 
 const props = withDefaults(defineProps<Props>(), {})
@@ -140,7 +147,7 @@ const editCustomInput = ref("")
 const {
   skills, currentSkillIndex, currentSkill, loadSkills,
   skillSearchQuery, filteredSkills,
-} = useSkillsLoader(props.plugin)
+} = useSkillsLoader(props.plugin, props.scanSkills)
 
 // ============ 生成管道 ============
 

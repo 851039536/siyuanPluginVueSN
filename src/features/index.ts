@@ -66,6 +66,8 @@ export { registerSkillLearning } from "./skillLearning"
 export {
   hideSkillsViewer,
   registerSkillsViewer,
+  scanSkills,
+  type SkillInfo,
   skillsViewerVisible,
 } from "./skillsViewer"
 export {

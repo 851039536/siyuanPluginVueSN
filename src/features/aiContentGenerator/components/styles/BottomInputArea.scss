@@ -1,0 +1,129 @@
+// 底部输入区域专属样式（RAG开关 + 选项栏）
+@use "@/variables" as *;
+
+// ============ RAG 联网搜索开关 ============
+.rag-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface);
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-sm;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  svg {
+    opacity: 0.5;
+  }
+
+  input[type="checkbox"] {
+    display: none;
+  }
+
+  span {
+    opacity: 0.7;
+  }
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
+
+  &.active {
+    color: var(--b3-theme-primary);
+    background: rgba(var(--b3-theme-primary-rgb, 53, 125, 221), 0.08);
+    border-color: var(--b3-theme-primary);
+
+    svg {
+      opacity: 1;
+      color: var(--b3-theme-primary);
+    }
+
+    span {
+      opacity: 1;
+      font-weight: $font-weight-medium;
+    }
+  }
+}
+
+// ============ 选项行（模型选择 + 思考 + 审核） ============
+.options-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: $spacing-1 10px;
+  border-top: 1px solid var(--b3-theme-surface-lighter);
+}
+
+.model-select {
+  padding: 2px 6px;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-background);
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-sm;
+  cursor: pointer;
+  max-width: 120px;
+  outline: none;
+
+  &:hover { border-color: var(--b3-theme-primary); }
+  &:focus { border-color: var(--b3-theme-primary); box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest); }
+}
+
+.model-custom-input {
+  padding: 2px 6px;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-background);
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-sm;
+  outline: none;
+  max-width: 100px;
+
+  &:hover { border-color: var(--b3-theme-primary); }
+  &:focus { border-color: var(--b3-theme-primary); box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest); }
+  &::placeholder { color: var(--b3-theme-on-surface); opacity: 0.4; }
+}
+
+.thinking-toggle, .review-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 5px;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface);
+  border-radius: $radius-sm;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+
+  input[type="checkbox"] { width: 12px; height: 12px; cursor: pointer; }
+  &:hover { background: var(--b3-theme-surface); }
+}
+
+.thinking-toggle input[type="checkbox"] { accent-color: var(--b3-theme-primary); }
+.review-toggle input[type="checkbox"] { accent-color: var(--b3-theme-success); }
+
+.thinking-label {
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+}
+.thinking-toggle input:checked + .thinking-label {
+  color: var(--b3-theme-primary); opacity: 1; font-weight: $font-weight-medium;
+}
+
+.review-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+  svg { color: var(--b3-theme-success); }
+}
+.review-toggle input:checked + .review-label {
+  color: var(--b3-theme-success); opacity: 1; font-weight: $font-weight-medium;
+}

@@ -84,41 +84,6 @@
   line-height: $line-height-normal;
 }
 
-// ========== 功能说明 ==========
-
-.feature-description {
-  margin-top: $spacing-5;
-  padding: $spacing-3 $spacing-3;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  border-radius: $radius-md;
-}
-
-.description-title {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  color: var(--b3-theme-on-surface);
-  margin-bottom: $spacing-2;
-}
-
-.description-list {
-  margin: 0;
-  padding-left: 18px;
-  font-size: $font-size-xs;
-  color: var(--b3-theme-on-surface-variant);
-  line-height: $line-height-relaxed;
-
-  li {
-    margin-bottom: $spacing-1;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-}
 
 // ========== 规则设置区 ==========
 

@@ -3,11 +3,7 @@
     "title": "Bookmark Marker",
     "enableBookmarkMarker": "Bookmark Marker",
     "bookmarkMarkerDescription": "Display color markers in the file tree based on document bookmarks",
-    "featureDescription": "Feature Description",
-    "bookmarkFeature1": "Display color labels for bookmarked documents in the file tree",
-    "bookmarkFeature2": "Empty bookmarks will not show markers",
-    "bookmarkFeature3": "Customizable bookmark names and corresponding colors",
-    "bookmarkFeature4": "Supports mobile and desktop",
+
     "bookmarkRules": "Marker Rules",
     "refreshNow": "Refresh Now",
     "bookmarkName": "Bookmark Name",

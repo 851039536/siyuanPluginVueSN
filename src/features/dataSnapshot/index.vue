@@ -1,3 +1,4 @@
+<!-- dataSnapshot 数据快照管理面板 -->
 <template>
   <div class="data-snapshot-panel">
     <!-- Header -->
@@ -146,7 +147,7 @@
           >
             <div class="ds-cloud-tag__header">
               <span>{{ tag.tag }}</span>
-              <div style="display:flex;align-items:center;gap:6px;">
+              <div class="ds-cloud-tag__actions">
                 <span class="ds-cloud-tag__count">{{ tag.snapshots?.length || 0 }}</span>
                 <button
                   class="ds-btn ds-btn--small ds-btn--danger"
@@ -223,7 +224,6 @@
         <div v-if="selectedSnapshot.typesCount && selectedSnapshot.typesCount.length > 0">
           <div
             class="ds-detail__section-title"
-            style="padding: 0 12px;"
           >
             文件类型分布
           </div>
@@ -248,7 +248,7 @@
       <div class="ds-confirm__box">
         <div class="ds-confirm__text">
           {{ i18n.restoreConfirm || "确定要恢复此快照吗？当前数据将被覆盖。" }}
-          <div style="margin-top:8px;padding:8px;background:var(--b3-theme-surface);border-radius:4px;font-size:12px;">
+          <div class="ds-confirm__info">
             <div><strong>{{ i18n.memo || "备注" }}:</strong> {{ restoreTarget.memo || restoreTarget.id }}</div>
             <div><strong>{{ i18n.createdAt || "时间" }}:</strong> {{ formatTime(restoreTarget) }}</div>
           </div>

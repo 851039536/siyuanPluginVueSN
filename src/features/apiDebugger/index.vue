@@ -65,7 +65,7 @@
           <Button
             variant="ghost"
             size="xsmall"
-            icon="mdi:close"
+            icon="close"
             @click="removeHeader(index)"
           />
         </div>
@@ -73,7 +73,7 @@
       <Button
         variant="ghost"
         size="xsmall"
-        icon="mdi:plus"
+        icon="plus"
         @click="addHeader"
       >
         {{ i18n.addHeader || '添加请求头' }}
@@ -100,7 +100,7 @@
       <Button
         variant="primary"
         size="xsmall"
-        icon="mdi:send"
+        icon="send"
         :loading="loading"
         @click="sendRequest"
       >
@@ -109,7 +109,7 @@
       <Button
         variant="ghost"
         size="xsmall"
-        icon="mdi:eraser"
+        icon="eraser"
         @click="clearRequest"
       >
         {{ i18n.clear || '清空' }}
@@ -160,7 +160,7 @@
           <Button
             variant="ghost"
             size="xsmall"
-            icon="mdi:content-copy"
+            icon="copy"
             @click="handleCopyResponse"
           >
             {{ i18n.copyResponse || '复制' }}
@@ -189,7 +189,7 @@
         <Button
           variant="ghost"
           size="xsmall"
-          icon="mdi:delete"
+          icon="delete"
           @click="clearHistory"
         >
           {{ i18n.clearHistory || '清空历史' }}

@@ -346,6 +346,12 @@ export const COMMON_ICONS = {
   delete: {
     icon: "mdi:delete",
   },
+  send: {
+    icon: "mdi:send",
+  },
+  eraser: {
+    icon: "mdi:eraser",
+  },
   add: {
     icon: "mdi:plus",
   },

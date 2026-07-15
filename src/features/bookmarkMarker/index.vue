@@ -47,16 +47,7 @@
               :size="14"
             />
             {{ i18n?.bookmarkRules || "标记规则" }}
-            <button
-              class="refresh-btn"
-              @click="handleRefresh"
-            >
-              <IconWrapper
-                name="refresh"
-                :size="12"
-              />
-              {{ i18n?.refreshNow || "立即刷新" }}
-            </button>
+
           </div>
 
           <div
@@ -538,10 +529,6 @@ const handleTagBackspace = (ruleIndex: number, event: KeyboardEvent) => {
   }
 }
 
-const handleRefresh = () => {
-  props.onBookmarkMarkerChange?.("refresh")
-  showMessage("书签标记已刷新", 2000, "info")
-}
 </script>
 
 <style scoped lang="scss">

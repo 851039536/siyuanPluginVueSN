@@ -139,14 +139,14 @@ const editTargetDoc = ref<TargetDoc | null>(null)
 const originalContent = ref("")
 const editCustomInput = ref("")
 
-// ============ 1. 技能加载 ============
+// ============ 技能加载 ============
 
 const {
   skills, currentSkillIndex, currentSkill, loadSkills,
   skillSearchQuery, filteredSkills,
 } = useSkillsLoader(props.plugin)
 
-// ============ 1. 生成管道 ============
+// ============ 生成管道 ============
 
 // 审核后回调（需要在 useGeneration 创建后传递给 useReview，此处预声明）
 let onAfterGenerateCallback: (() => void) | null = null
@@ -190,9 +190,9 @@ const docTarget = useDocumentTarget({
   onClearCustomInput: () => { editCustomInput.value = "" },
 })
 
-const { selectTargetDocument, selectTargetBlock, loadTargetDocument } = docTarget
+const { selectTargetDocument, selectTargetBlock } = docTarget
 
-// ============ 6. 审核系统 ============
+// ============ 审核系统 ============
 
 const reviewDeps = {
   generatedContent,
@@ -222,7 +222,7 @@ const canInsertSubDoc = computed(() =>
   !!editTargetDoc.value && !isInsertingSubDoc.value && !isGenerating.value,
 )
 
-// ============ 2. 视图层逻辑 ============
+// ============ 视图层逻辑 ============
 
 // Markdown 渲染
 const renderedDisplayedMarkdown = computed(() => renderMarkdown(displayedContent.value))

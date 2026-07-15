@@ -1,7 +1,6 @@
 .panel-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: 2px 4px;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
   background: var(--b3-theme-surface);
@@ -12,9 +11,4 @@
   font-weight: 600;
   color: var(--b3-theme-on-background);
   padding: 0 6px;
-}
-
-.header-actions {
-  display: flex;
-  gap: 6px;
 }

@@ -260,7 +260,6 @@ const inputPlaceholder = computed(() => {
   return "输入编辑指令，或选择AI快捷操作..."
 })
 
-
 </script>
 
 <style scoped lang="scss">

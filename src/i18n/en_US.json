@@ -369,7 +369,6 @@
     "enableBookmarkMarker": "Bookmark Marker",
     "bookmarkMarkerDescription": "Display color markers in the file tree based on document bookmarks",
     "bookmarkRules": "Marker Rules",
-    "refreshNow": "Refresh Now",
     "bookmarkName": "Bookmark Name",
     "bookmarkNamePlaceholder": "Enter bookmark name, press Enter to add",
     "markerIcon": "Icon",

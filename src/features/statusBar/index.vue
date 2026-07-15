@@ -299,6 +299,18 @@ const FEATURES: FeatureRegistryEntry[] = [
     },
     action: () => emitCustomEvent("toggleToolCollection"),
   },
+  {
+    id: "bookmarkMarker",
+    icon: "mdi:bookmark-multiple",
+    color: "#10b981",
+    title: props.plugin?.i18n?.bookmarkMarker?.title || "书签标记",
+    pinnable: true,
+    shortcut: {
+      icon: "ph:bookmark-simple",
+      itemClass: "action-item bookmark-marker-item",
+    },
+    action: () => emitCustomEvent("openBookmarkMarker"),
+  },
   // ========== 状态栏监控项（可固定控制显隐） ==========
   {
     id: "monitor-notes",

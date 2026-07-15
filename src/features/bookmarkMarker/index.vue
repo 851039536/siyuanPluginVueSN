@@ -110,7 +110,6 @@
                     >×</span>
                   </div>
                   <input
-                    :ref="(el) => { if (el) tagInputRefs[index] = el as HTMLInputElement }"
                     type="text"
                     class="tag-input"
                     :placeholder="i18n?.bookmarkNamePlaceholder || '输入书签名，回车添加'"
@@ -390,7 +389,6 @@
 
 <script setup lang="ts">
 import { showMessage } from "siyuan"
-import { ref } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import type { BookmarkRule } from "./types"
 import SiSwitch from "@/components/Switch.vue"
@@ -405,7 +403,6 @@ const props = defineProps<{
 }>()
 
 const settings = useBookmarkMarkerSettings(props.plugin)
-const tagInputRefs = ref<Record<number, HTMLInputElement | null>>({})
 
 const presetIcons = [
   "🔖",

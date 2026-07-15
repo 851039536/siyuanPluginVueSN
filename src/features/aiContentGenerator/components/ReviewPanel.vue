@@ -207,20 +207,11 @@ import {
   computed,
   ref,
 } from "vue"
-
-interface ReviewResultData {
-  rating: string
-  summary: string
-  issues: Array<{ description: string, severity: string }>
-  suggestions: string[]
-  reviewModel: string
-  reviewedAt: number
-  detailedScore?: Record<string, number>
-}
+import type { ReviewResult } from "@/types/ai"
 
 interface Props {
   isReviewing: boolean
-  reviewResult: ReviewResultData | null
+  reviewResult: ReviewResult | null
   isAutoFixing: boolean
 }
 
@@ -237,7 +228,7 @@ const showScores = ref(true)
 const showIssues = ref(true)
 const showSuggestions = ref(true)
 
-type ScoreKey = keyof NonNullable<ReviewResultData["detailedScore"]>
+type ScoreKey = keyof NonNullable<ReviewResult["detailedScore"]>
 
 const scoreLabelMap: Record<ScoreKey, string> = {
   accuracy: "准确性",

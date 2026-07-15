@@ -1,0 +1,79 @@
+@use "../../../variables" as *;
+@use "./index.scss" as *;
+
+// ============ RAG 搜索来源 ============
+.search-results-section {
+  @include collapsible-section;
+}
+
+.search-results-toggle {
+  @include collapsible-toggle;
+}
+
+.search-chevron {
+  @include collapsible-chevron;
+}
+
+.search-status-text {
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-normal;
+  opacity: 0.5;
+  margin-left: auto;
+}
+
+.search-results-body {
+  @include collapsible-body;
+  padding-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.search-result-item {
+  padding: 5px 0;
+
+  & + & {
+    border-top: 1px solid var(--b3-theme-surface-lighter);
+  }
+}
+
+.search-result-header {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.search-result-index {
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-primary);
+  flex-shrink: 0;
+}
+
+.search-result-link {
+  font-size: $font-size-xs;
+  color: var(--b3-theme-primary);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.search-result-content {
+  margin-top: 3px;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.65;
+  line-height: $line-height-normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}

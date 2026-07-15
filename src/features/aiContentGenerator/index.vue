@@ -16,7 +16,6 @@
         :rendered-markdown="renderedDisplayedMarkdown"
         :original-content="originalContent"
         :search-results="searchResults"
-        :show-search-results="showSearchResults"
         :search-status="searchStatus"
         :reasoning-content="reasoningContent"
         :show-reasoning="showReasoning"
@@ -36,7 +35,6 @@
         @toggle-reasoning="showReasoning = !showReasoning"
         @auto-fix="handleAutoFix"
         :conversation-count="conversationHistory.length"
-        :has-content="hasContent"
         :generation-tip="generationTip"
         @re-review="handleReReview"
         @fix-issue="handleFixIssue"
@@ -98,8 +96,6 @@ import { useReview } from "./composables/useReview"
 import { useEditOperations } from "./composables/useEditOperations"
 import { useDocumentTarget } from "./composables/useDocumentTarget"
 import { renderMarkdown } from "./utils"
-
-// 组件
 import PanelHeader from "./components/PanelHeader.vue"
 import MainContentArea from "./components/MainContentArea.vue"
 import BottomInputArea from "./components/BottomInputArea.vue"
@@ -162,12 +158,10 @@ const gen = useGeneration({
 const {
   generatedContent, displayedContent, isGenerating, errorMessage,
   generationElapsed, generationTip, reasoningContent, showReasoning,
-  searchStatus, searchResults, showSearchResults, conversationHistory,
+  searchStatus, searchResults, conversationHistory,
   availableModels, supportsThinking,
   handleStop, buildGenerateOptions, executeGeneration, clearConversation, cleanupRaf,
 } = gen
-
-const hasContent = computed(() => !!generatedContent.value)
 
 // ============ 4. 编辑操作 ============
 

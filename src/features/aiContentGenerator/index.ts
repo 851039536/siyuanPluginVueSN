@@ -4,11 +4,13 @@
 import { Plugin } from "siyuan"
 import { AIContentGenerator } from "./modules/AIContentGenerator"
 
-/**
- * 注册AI内容生成模块
- */
-export function registerAIContentGenerator(plugin: Plugin) {
-  const generator = new AIContentGenerator(plugin)
+export function registerAIContentGenerator(
+  plugin: Plugin,
+  options?: { scanSkills?: (projectPath?: string) => Promise<Array<{
+    filePath: string; name: string; description: string; content: string; tool: string
+  }>> },
+) {
+  const generator = new AIContentGenerator(plugin, options as any)
   generator.init();
 
   (plugin as any).__aiContentGenerator = generator

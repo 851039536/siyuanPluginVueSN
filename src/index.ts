@@ -25,6 +25,7 @@ import { clearRendererCache } from "@/utils/mdRenderer"
 import {
   getStatisticsInstance,
   registerAIContentGenerator,
+  scanSkills as scanSkillsFromViewer,
   registerApiDebugger,
   registerBookmarkMarker,
   registerDataSnapshot,
@@ -275,7 +276,7 @@ export default class PluginSample extends Plugin {
     if (s.enableGeneralSettings) registerGeneralSettings(this)
     // unitConverter 已迁移至 toolCollection/tools/unitConverter/
     if (s.enableDiskBrowser) registerDiskBrowser(this)
-    if (s.enableAIContentGenerator) registerAIContentGenerator(this)
+    if (s.enableAIContentGenerator) registerAIContentGenerator(this, { scanSkills: scanSkillsFromViewer })
     if (s.enableImageCreation) registerImageCreation(this)
     if (s.enableStatistics) registerStatistics(this)
     if (s.enableEncryption) registerEncryption(this)

@@ -2,7 +2,7 @@
  * 文档/块目标选择 Composable
  * 封装 selectTargetDocument/selectTargetBlock/loadTargetDocument/setTargetDocState 逻辑
  */
-import { ref, type Ref } from "vue"
+import { type Ref } from "vue"
 import { showMessage } from "siyuan"
 import type { TargetDoc } from "@/types/ai"
 import * as api from "@/api"

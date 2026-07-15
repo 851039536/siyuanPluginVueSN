@@ -73,9 +73,17 @@ function validateRating(rating: unknown): "优秀" | "良好" | "需改进" {
 
 export class AIContentGenerator {
   private plugin: Plugin
+  private scanSkills: ((projectPath?: string) => Promise<Array<{
+    filePath: string
+    name: string
+    description: string
+    content: string
+    tool: string
+  }>>) | null
 
-  constructor(plugin: Plugin) {
+  constructor(plugin: Plugin, options?: { scanSkills?: AIContentGenerator["scanSkills"] }) {
     this.plugin = plugin
+    this.scanSkills = options?.scanSkills ?? null
   }
 
   private getApiConfig(): AiApiConfig {
@@ -105,6 +113,7 @@ export class AIContentGenerator {
         ): Promise<ReviewResult> => {
           return await this.reviewContent(userRequest, generatedContent, skill)
         },
+        ...(this.scanSkills ? { scanSkills: this.scanSkills } : {}),
       },
     })
   }

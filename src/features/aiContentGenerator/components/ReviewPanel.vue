@@ -50,23 +50,37 @@
         v-if="reviewResult.detailedScore"
         class="score-section"
       >
-        <div class="review-section-title">
-          分项评分
-        </div>
-        <div
-          v-for="(value, key) in reviewResult.detailedScore"
-          :key="key"
-          class="score-bar-row"
+        <button
+          class="subsection-toggle"
+          @click="showScores = !showScores"
         >
-          <span class="score-label">{{ scoreLabelMap[key as ScoreKey] || key }}</span>
-          <div class="score-bar-bg">
-            <div
-              class="score-bar-fill"
-              :class="`score-fill-${scoreLevel(value)}`"
-              :style="{ width: `${value * 10}%` }"
-            ></div>
+          <svg
+            width="10"
+            height="10"
+            class="subsection-chevron"
+            :class="{ expanded: showScores }"
+          ><use xlink:href="#iconRight"></use></svg>
+          <span>分项评分</span>
+        </button>
+        <div
+          v-if="showScores"
+          class="subsection-body"
+        >
+          <div
+            v-for="(value, key) in reviewResult.detailedScore"
+            :key="key"
+            class="score-bar-row"
+          >
+            <span class="score-label">{{ scoreLabelMap[key as ScoreKey] || key }}</span>
+            <div class="score-bar-bg">
+              <div
+                class="score-bar-fill"
+                :class="`score-fill-${scoreLevel(value)}`"
+                :style="{ width: `${value * 10}%` }"
+              ></div>
+            </div>
+            <span class="score-value">{{ value }}/10</span>
           </div>
-          <span class="score-value">{{ value }}/10</span>
         </div>
       </div>
 
@@ -219,6 +233,9 @@ defineEmits<{
 }>()
 
 const showReviewPanel = ref(true)
+const showScores = ref(true)
+const showIssues = ref(true)
+const showSuggestions = ref(true)
 
 type ScoreKey = keyof NonNullable<ReviewResultData["detailedScore"]>
 

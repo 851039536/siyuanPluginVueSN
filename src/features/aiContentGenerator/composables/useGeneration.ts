@@ -335,14 +335,10 @@ export function useGeneration(opts: UseGenerationOptions) {
     searchResults,
     showSearchResults,
     conversationHistory,
-    abortController,
     // computed
-    currentProvider,
     availableModels,
     supportsThinking,
     // 函数
-    startGeneration,
-    resetAllGenerationStates,
     handleStop,
     cleanupRaf,
     buildGenerateOptions,

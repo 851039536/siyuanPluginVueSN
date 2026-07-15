@@ -537,6 +537,9 @@ export const COMMON_ICONS = {
   timerOutline: {
     icon: "mdi:timer-outline",
   },
+  tagOutline: {
+    icon: "mdi:tag-outline",
+  },
 } as const
 
 /**

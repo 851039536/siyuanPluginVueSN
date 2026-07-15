@@ -2,60 +2,81 @@
   <div class="bookmark-marker-panel">
     <div class="panel-header">
       <h3 class="panel-title">
-        🔖 {{ i18n?.title || '书签标记' }}
+        <IconWrapper
+          name="bookmarkMarker"
+          :size="18"
+          class="panel-title__icon"
+        />
+        {{ i18n?.title || "书签标记" }}
       </h3>
       <button
         class="close-btn"
         @click="props.onClose?.()"
       >
-        ✕
+        <IconWrapper
+          name="close"
+          :size="16"
+        />
       </button>
     </div>
 
     <div class="panel-content">
       <!-- 功能开关 -->
       <label class="setting-label">
-        <span class="label-icon">🔖</span>
-        {{ i18n?.enableBookmarkMarker || '书签标记' }}
+        <IconWrapper
+          name="bookmarkMarker"
+          :size="14"
+        />
+        {{ i18n?.enableBookmarkMarker || "书签标记" }}
       </label>
       <SiSwitch
-        v-model="enableBookmarkMarker"
+        v-model="settings.enableBookmarkMarker.value"
         @change="handleToggleChange"
       />
       <p class="toggle-description">
-        {{ i18n?.bookmarkMarkerDescription || '根据文档书签内容在文件树中显示颜色标记' }}
+        {{ i18n?.bookmarkMarkerDescription || "根据文档书签内容在文件树中显示颜色标记" }}
       </p>
 
       <!-- 功能说明 -->
       <div class="feature-description">
         <div class="description-title">
-          <span class="title-icon">💡</span>
-          {{ i18n?.featureDescription || '功能说明' }}
+          <IconWrapper
+            name="lightbulb"
+            :size="14"
+          />
+          {{ i18n?.featureDescription || "功能说明" }}
         </div>
         <ul class="description-list">
-          <li>{{ i18n?.bookmarkFeature1 || '在文件树中为有书签的文档显示颜色标签' }}</li>
-          <li>{{ i18n?.bookmarkFeature2 || '书签为空则不显示标记' }}</li>
-          <li>{{ i18n?.bookmarkFeature3 || '可自定义书签名称与对应颜色' }}</li>
-          <li>{{ i18n?.bookmarkFeature4 || '支持手机端和桌面端' }}</li>
+          <li>{{ i18n?.bookmarkFeature1 || "在文件树中为有书签的文档显示颜色标签" }}</li>
+          <li>{{ i18n?.bookmarkFeature2 || "书签为空则不显示标记" }}</li>
+          <li>{{ i18n?.bookmarkFeature3 || "可自定义书签名称与对应颜色" }}</li>
+          <li>{{ i18n?.bookmarkFeature4 || "支持手机端和桌面端" }}</li>
         </ul>
       </div>
 
       <!-- 标记规则设置 -->
-      <template v-if="enableBookmarkMarker">
+      <template v-if="settings.enableBookmarkMarker.value">
         <div class="rules-settings">
           <div class="settings-title">
-            <span class="title-icon">🏷️</span>
-            {{ i18n?.bookmarkRules || '标记规则' }}
+            <IconWrapper
+              name="bookmarkMarker"
+              :size="14"
+            />
+            {{ i18n?.bookmarkRules || "标记规则" }}
             <button
               class="refresh-btn"
               @click="handleRefresh"
             >
-              🔄 {{ i18n?.refreshNow || '立即刷新' }}
+              <IconWrapper
+                name="refresh"
+                :size="12"
+              />
+              {{ i18n?.refreshNow || "立即刷新" }}
             </button>
           </div>
 
           <div
-            v-for="(rule, index) in rules"
+            v-for="(rule, index) in settings.rules.value"
             :key="index"
             class="rule-item"
           >
@@ -65,13 +86,16 @@
                 class="rule-remove-btn"
                 @click="removeRule(index)"
               >
-                ✕
+                <IconWrapper
+                  name="close"
+                  :size="12"
+                />
               </button>
             </div>
             <div class="rule-fields">
               <div class="rule-row">
                 <label class="rule-label">
-                  {{ i18n?.bookmarkName || '书签名称' }}
+                  {{ i18n?.bookmarkName || "书签名称" }}
                 </label>
                 <div class="tags-input-wrapper">
                   <div
@@ -99,7 +123,7 @@
               </div>
               <div class="rule-row">
                 <label class="rule-label">
-                  {{ i18n?.markerIcon || '图标' }}
+                  {{ i18n?.markerIcon || "图标" }}
                 </label>
                 <div class="icon-input-wrapper">
                   <input
@@ -126,7 +150,7 @@
                 class="rule-row icon-picker-row"
               >
                 <label class="rule-label">
-                  {{ i18n?.presetIcons || '预设图标' }}
+                  {{ i18n?.presetIcons || "预设图标" }}
                 </label>
                 <div class="icon-picker-grid">
                   <span
@@ -140,7 +164,7 @@
               </div>
               <div class="rule-row">
                 <label class="rule-label">
-                  {{ i18n?.markerTextColor || '文字颜色' }}
+                  {{ i18n?.markerTextColor || "文字颜色" }}
                 </label>
                 <div class="color-input-wrapper">
                   <input
@@ -160,7 +184,7 @@
               </div>
               <div class="rule-row">
                 <label class="rule-label">
-                  {{ i18n?.markerBgColor || '背景颜色' }}
+                  {{ i18n?.markerBgColor || "背景颜色" }}
                 </label>
                 <div class="color-input-wrapper">
                   <input
@@ -181,7 +205,7 @@
               <!-- 显示模式 -->
               <div class="rule-row">
                 <label class="rule-label">
-                  {{ i18n?.displayMode || '显示模式' }}
+                  {{ i18n?.displayMode || "显示模式" }}
                 </label>
                 <div class="display-mode-group">
                   <label
@@ -194,7 +218,11 @@
                       value="bg"
                       @change="handleRulesChange"
                     />
-                    📄 {{ i18n?.modeTextLabel || '文字标签' }}
+                    <IconWrapper
+                      name="file"
+                      :size="14"
+                    />
+                    {{ i18n?.modeTextLabel || "文字标签" }}
                   </label>
                   <label
                     class="mode-option"
@@ -206,7 +234,11 @@
                       value="icon"
                       @change="handleRulesChange"
                     />
-                    🎨 {{ i18n?.modeIconOnly || '仅图标' }}
+                    <IconWrapper
+                      name="image"
+                      :size="14"
+                    />
+                    {{ i18n?.modeIconOnly || "仅图标" }}
                   </label>
                   <label
                     class="mode-option"
@@ -218,7 +250,11 @@
                       value="icon-bg"
                       @change="handleRulesChange"
                     />
-                    🖼️ {{ i18n?.modeIconBg || '图标+背景' }}
+                    <IconWrapper
+                      name="image"
+                      :size="14"
+                    />
+                    {{ i18n?.modeIconBg || "图标+背景" }}
                   </label>
                   <label
                     class="mode-option"
@@ -230,14 +266,18 @@
                       value="row"
                       @change="handleRulesChange"
                     />
-                    🎯 {{ i18n?.modeRow || '字体背景' }}
+                    <IconWrapper
+                      name="format"
+                      :size="14"
+                    />
+                    {{ i18n?.modeRow || "字体背景" }}
                   </label>
                 </div>
               </div>
               <!-- 透明度 -->
               <div class="rule-row">
                 <label class="rule-label">
-                  {{ i18n?.bgAlpha || '背景透明度' }}
+                  {{ i18n?.bgAlpha || "背景透明度" }}
                 </label>
                 <div class="slider-container">
                   <input
@@ -255,7 +295,7 @@
               <!-- 匹配模式 -->
               <div class="rule-row">
                 <label class="rule-label">
-                  {{ i18n?.matchMode || '匹配模式' }}
+                  {{ i18n?.matchMode || "匹配模式" }}
                 </label>
                 <div class="match-mode-group">
                   <label
@@ -268,7 +308,7 @@
                       value="exact"
                       @change="handleRulesChange"
                     />
-                    🎯 {{ i18n?.matchExact || '精确' }}
+                    {{ i18n?.matchExact || "精确" }}
                   </label>
                   <label
                     class="mode-option"
@@ -280,7 +320,7 @@
                       value="prefix"
                       @change="handleRulesChange"
                     />
-                    🔤 {{ i18n?.matchPrefix || '前缀' }}
+                    {{ i18n?.matchPrefix || "前缀" }}
                   </label>
                   <label
                     class="mode-option"
@@ -292,7 +332,7 @@
                       value="contains"
                       @change="handleRulesChange"
                     />
-                    🔍 {{ i18n?.matchContains || '包含' }}
+                    {{ i18n?.matchContains || "包含" }}
                   </label>
                 </div>
               </div>
@@ -311,31 +351,35 @@
             class="add-rule-btn"
             @click="addRule"
           >
-            + {{ i18n?.addRule || '添加规则' }}
+            <IconWrapper
+              name="plus"
+              :size="14"
+            />
+            {{ i18n?.addRule || "添加规则" }}
           </button>
         </div>
 
         <!-- 更新间隔设置 -->
         <div class="update-interval">
           <label class="interval-label">
-            {{ i18n?.updateInterval || '更新间隔' }}
+            {{ i18n?.updateInterval || "更新间隔" }}
           </label>
           <select
-            v-model="updateInterval"
+            v-model="settings.updateInterval.value"
             class="interval-select"
             @change="handleIntervalChange"
           >
             <option value="1800000">
-              {{ i18n?.interval30min || '30分钟' }}
+              {{ i18n?.interval30min || "30分钟" }}
             </option>
             <option value="3600000">
-              {{ i18n?.interval1hour || '1小时' }}
+              {{ i18n?.interval1hour || "1小时" }}
             </option>
             <option value="7200000">
-              {{ i18n?.interval2hour || '2小时' }}
+              {{ i18n?.interval2hour || "2小时" }}
             </option>
             <option value="14400000">
-              {{ i18n?.interval4hour || '4小时' }}
+              {{ i18n?.interval4hour || "4小时" }}
             </option>
           </select>
         </div>
@@ -345,18 +389,13 @@
 </template>
 
 <script setup lang="ts">
-import type { BookmarkRule } from "./modules/BookmarkMarker"
 import { showMessage } from "siyuan"
-import {
-  onMounted,
-  ref,
-} from "vue"
+import { ref } from "vue"
+import IconWrapper from "@/components/IconWrapper.vue"
+import type { BookmarkRule } from "./types"
 import SiSwitch from "@/components/Switch.vue"
-import { hexToRgba } from "./modules/BookmarkMarker"
-import {
-  BookmarkMarkerStorage,
-  DEFAULT_BOOKMARK_MARKER_SETTINGS,
-} from "./types/storage"
+import { hexToRgba } from "./utils"
+import { useBookmarkMarkerSettings } from "./composables/useBookmarkMarkerSettings"
 
 const props = defineProps<{
   i18n?: Record<string, string>
@@ -365,9 +404,7 @@ const props = defineProps<{
   onClose?: () => void
 }>()
 
-const enableBookmarkMarker = ref(true)
-const rules = ref<BookmarkRule[]>([...DEFAULT_BOOKMARK_MARKER_SETTINGS.rules])
-const updateInterval = ref(DEFAULT_BOOKMARK_MARKER_SETTINGS.updateInterval.toString())
+const settings = useBookmarkMarkerSettings(props.plugin)
 const tagInputRefs = ref<Record<number, HTMLInputElement | null>>({})
 
 const presetIcons = [
@@ -382,26 +419,18 @@ const presetIcons = [
   "🔄",
   "📝",
   "⭐",
-  "🌟",
-  "💎",
   "🏆",
-  "🎯",
   "🚀",
   "🔥",
   "⚡",
   "🎉",
   "💡",
-  "📋",
   "📄",
-  "📊",
-  "📈",
   "📁",
   "🖊️",
   "✏️",
-  "📝",
   "📎",
   "🔗",
-  "🎨",
   "🌈",
   "✨",
   "💫",
@@ -416,82 +445,39 @@ const presetIcons = [
   "🔑",
   "🛡️",
   "🔍",
-  "📂",
   "🗂️",
   "📚",
   "📦",
-  "🧩",
 ]
 
-let _storage: BookmarkMarkerStorage | null = null
-
-const getStorage = () => {
-  if (!_storage && props.plugin) {
-    _storage = new BookmarkMarkerStorage(props.plugin)
-  }
-  return _storage
-}
-
-const saveSettings = async () => {
-  const storage = getStorage()
-  if (!storage) return
-  try {
-    await storage.settings.save({
-      enableBookmarkMarker: enableBookmarkMarker.value,
-      rules: rules.value,
-      updateInterval: Number(updateInterval.value),
-    })
-  } catch (e) {
-    console.error("保存书签标记设置失败:", e)
-  }
-}
-
-const loadSettings = async () => {
-  const storage = getStorage()
-  if (!storage) return
-  try {
-    const data = await storage.settings.loadOrDefault()
-    enableBookmarkMarker.value = data.enableBookmarkMarker ?? true
-    rules.value = data.rules?.length
-      ? data.rules.map((r: any) => ({
-          ...r,
-          bookmarkNames: r.bookmarkNames || (r.bookmarkName ? [r.bookmarkName] : []),
-        }))
-      : [...DEFAULT_BOOKMARK_MARKER_SETTINGS.rules]
-    updateInterval.value = (data.updateInterval ?? DEFAULT_BOOKMARK_MARKER_SETTINGS.updateInterval).toString()
-  } catch (e) {
-    console.error("加载书签标记设置失败:", e)
-  }
-}
-
 const handleToggleChange = async () => {
-  await saveSettings()
+  await settings.save()
   props.onBookmarkMarkerChange?.("toggle", {
-    enabled: enableBookmarkMarker.value,
-    rules: rules.value,
-    updateInterval: Number(updateInterval.value),
+    enabled: settings.enableBookmarkMarker.value,
+    rules: settings.rules.value,
+    updateInterval: Number(settings.updateInterval.value),
   })
   showMessage(
-    enableBookmarkMarker.value ? "书签标记已启用" : "书签标记已禁用",
+    settings.enableBookmarkMarker.value ? "书签标记已启用" : "书签标记已禁用",
     2000,
     "info",
   )
 }
 
 const handleRulesChange = async () => {
-  await saveSettings()
-  props.onBookmarkMarkerChange?.("rulesChanged", { rules: rules.value })
+  await settings.save()
+  props.onBookmarkMarkerChange?.("rulesChanged", { rules: settings.rules.value })
   showMessage("标记规则已更新", 2000, "info")
 }
 
 const handleIntervalChange = async () => {
-  await saveSettings()
-  props.onBookmarkMarkerChange?.("intervalChanged", { updateInterval: Number(updateInterval.value) })
+  await settings.save()
+  props.onBookmarkMarkerChange?.("intervalChanged", { updateInterval: Number(settings.updateInterval.value) })
   showMessage("更新间隔已修改", 2000, "info")
 }
 
 const addRule = () => {
-  rules.value.push({
+  settings.rules.value.push({
     bookmarkNames: [],
     color: "#ffffff",
     backgroundColor: "#1890ff",
@@ -503,12 +489,12 @@ const addRule = () => {
 }
 
 const removeRule = (index: number) => {
-  rules.value.splice(index, 1)
+  settings.rules.value.splice(index, 1)
   handleRulesChange()
 }
 
 const selectIcon = (index: number, icon: string) => {
-  const rule = rules.value[index]
+  const rule = settings.rules.value[index]
   rule.icon = rule.icon === icon ? "" : icon
   handleRulesChange()
 }
@@ -547,7 +533,7 @@ const addTag = (ruleIndex: number, event: KeyboardEvent) => {
   const input = event.target as HTMLInputElement
   const value = input.value.trim()
   if (!value) return
-  const rule = rules.value[ruleIndex]
+  const rule = settings.rules.value[ruleIndex]
   if (!rule.bookmarkNames.includes(value)) {
     rule.bookmarkNames.push(value)
     input.value = ""
@@ -556,14 +542,14 @@ const addTag = (ruleIndex: number, event: KeyboardEvent) => {
 }
 
 const removeTag = (ruleIndex: number, tagIndex: number) => {
-  rules.value[ruleIndex].bookmarkNames.splice(tagIndex, 1)
+  settings.rules.value[ruleIndex].bookmarkNames.splice(tagIndex, 1)
   handleRulesChange()
 }
 
 const handleTagBackspace = (ruleIndex: number, event: KeyboardEvent) => {
   const input = event.target as HTMLInputElement
   if (input.value === "") {
-    const tags = rules.value[ruleIndex].bookmarkNames
+    const tags = settings.rules.value[ruleIndex].bookmarkNames
     if (tags.length > 0) {
       tags.pop()
       handleRulesChange()
@@ -575,560 +561,8 @@ const handleRefresh = () => {
   props.onBookmarkMarkerChange?.("refresh")
   showMessage("书签标记已刷新", 2000, "info")
 }
-
-onMounted(async () => {
-  await loadSettings()
-})
 </script>
 
-<style scoped>
-.bookmark-marker-panel {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
-  flex-shrink: 0;
-}
-
-.panel-title {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--b3-theme-on-surface);
-}
-
-.close-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--b3-theme-on-surface-variant);
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.15s;
-}
-
-.close-btn:hover {
-  background: var(--b3-theme-surface-lighter);
-  color: var(--b3-theme-on-surface);
-}
-
-.panel-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px;
-}
-
-.setting-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--b3-theme-on-surface);
-  margin-bottom: 12px;
-}
-
-.label-icon {
-  font-size: 14px;
-  opacity: 0.8;
-}
-
-.toggle-description {
-  font-size: 12px;
-  color: var(--b3-theme-on-surface-variant);
-  margin-top: 8px;
-  line-height: 1.4;
-}
-
-.feature-description {
-  margin-top: 20px;
-  padding: 12px 14px;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 8px;
-}
-
-.description-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--b3-theme-on-surface);
-  margin-bottom: 10px;
-}
-
-.title-icon {
-  font-size: 14px;
-}
-
-.description-list {
-  margin: 0;
-  padding-left: 18px;
-  font-size: 12px;
-  color: var(--b3-theme-on-surface-variant);
-  line-height: 1.8;
-}
-
-.description-list li {
-  margin-bottom: 4px;
-}
-
-.description-list li:last-child {
-  margin-bottom: 0;
-}
-
-.rules-settings {
-  margin-top: 20px;
-  padding: 12px 14px;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 8px;
-}
-
-.settings-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--b3-theme-on-surface);
-  margin-bottom: 14px;
-}
-
-.refresh-btn {
-  margin-left: auto;
-  padding: 3px 10px;
-  font-size: 11px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 4px;
-  background: transparent;
-  color: var(--b3-theme-on-surface-variant);
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.refresh-btn:hover {
-  border-color: var(--b3-theme-primary);
-  color: var(--b3-theme-primary);
-  background: rgba(var(--b3-theme-primary-rgb), 0.05);
-}
-
-.rule-item {
-  padding: 12px;
-  background: var(--b3-theme-background);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 6px;
-  margin-bottom: 10px;
-}
-
-.rule-item:last-of-type {
-  margin-bottom: 14px;
-}
-
-.rule-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.rule-index {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--b3-theme-on-surface-variant);
-}
-
-.rule-remove-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--b3-theme-on-surface-variant);
-  cursor: pointer;
-  font-size: 12px;
-  opacity: 0.6;
-  transition: all 0.2s;
-}
-
-.rule-remove-btn:hover {
-  background: rgba(255, 77, 79, 0.1);
-  color: #ff4d4f;
-  opacity: 1;
-}
-
-.rule-fields {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.rule-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.rule-label {
-  flex-shrink: 0;
-  width: 70px;
-  font-size: 12px;
-  color: var(--b3-theme-on-surface-variant);
-}
-
-.rule-input {
-  flex: 1;
-  padding: 6px 10px;
-  font-size: 13px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 6px;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-background);
-}
-
-.tags-input-wrapper {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  align-items: center;
-  flex: 1;
-  padding: 3px 6px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 6px;
-  background: var(--b3-theme-surface);
-  min-height: 32px;
-}
-
-.tag-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 2px 6px;
-  font-size: 11px;
-  background: rgba(var(--b3-theme-primary-rgb), 0.12);
-  color: var(--b3-theme-primary);
-  border-radius: 4px;
-  white-space: nowrap;
-  line-height: 1.4;
-}
-
-.tag-text {
-  max-width: 80px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.tag-remove {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 14px;
-  height: 14px;
-  font-size: 10px;
-  border-radius: 50%;
-  cursor: pointer;
-  opacity: 0.6;
-  transition: all 0.15s;
-  flex-shrink: 0;
-}
-
-.tag-remove:hover {
-  opacity: 1;
-  background: rgba(var(--b3-theme-primary-rgb), 0.2);
-}
-
-.tag-input {
-  flex: 1;
-  min-width: 80px;
-  padding: 3px 4px;
-  font-size: 12px;
-  border: none;
-  outline: none;
-  background: transparent;
-  color: var(--b3-theme-on-background);
-}
-
-.tag-input::placeholder {
-  color: var(--b3-theme-on-surface-variant);
-  opacity: 0.5;
-}
-
-.color-input-wrapper {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex: 1;
-}
-
-.color-picker {
-  width: 40px;
-  height: 32px;
-  padding: 2px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 6px;
-  cursor: pointer;
-  background: var(--b3-theme-background);
-}
-
-.color-picker::-webkit-color-swatch-wrapper {
-  padding: 2px;
-}
-
-.color-picker::-webkit-color-swatch {
-  border: none;
-  border-radius: 4px;
-}
-
-.color-text {
-  flex: 1;
-  padding: 6px 10px;
-  font-size: 13px;
-  font-family: monospace;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 6px;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-}
-
-.icon-input-wrapper {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex: 1;
-}
-
-.icon-input {
-  flex: 1;
-  min-width: 0;
-}
-
-.icon-preview-tag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  font-size: 18px;
-  border-radius: 6px;
-  flex-shrink: 0;
-}
-
-.icon-picker-row {
-  margin-top: 4px;
-}
-
-.icon-picker-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  flex: 1;
-}
-
-.icon-option {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  font-size: 17px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s;
-  background: var(--b3-theme-background);
-  user-select: none;
-}
-
-.icon-option:hover {
-  border-color: var(--b3-theme-primary);
-  background: rgba(var(--b3-theme-primary-rgb), 0.08);
-  transform: scale(1.15);
-}
-
-.icon-option.selected {
-  border-color: var(--b3-theme-primary);
-  background: rgba(var(--b3-theme-primary-rgb), 0.15);
-  box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.2);
-}
-
-.display-mode-group {
-  display: flex;
-  gap: 6px;
-  flex: 1;
-  flex-wrap: wrap;
-}
-
-.mode-option {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  font-size: 12px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-surface-variant);
-  user-select: none;
-  white-space: nowrap;
-}
-
-.mode-option input {
-  display: none;
-}
-
-.mode-option:hover {
-  border-color: var(--b3-theme-primary);
-  color: var(--b3-theme-primary);
-}
-
-.mode-option.active {
-  border-color: var(--b3-theme-primary);
-  background: rgba(var(--b3-theme-primary-rgb), 0.1);
-  color: var(--b3-theme-primary);
-  font-weight: 600;
-}
-
-.slider-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-}
-
-.alpha-slider {
-  flex: 1;
-  height: 4px;
-  cursor: pointer;
-  accent-color: var(--b3-theme-primary);
-}
-
-.alpha-value {
-  font-size: 12px;
-  color: var(--b3-theme-primary);
-  font-weight: 600;
-  min-width: 36px;
-  text-align: right;
-}
-
-.match-mode-group {
-  display: flex;
-  gap: 6px;
-  flex: 1;
-  flex-wrap: wrap;
-}
-
-.rule-input:hover,
-.color-text:hover,
-.interval-select:hover {
-  border-color: var(--b3-theme-primary);
-}
-
-.rule-input:focus,
-.color-text:focus,
-.interval-select:focus {
-  outline: none;
-  border-color: var(--b3-theme-primary);
-  box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
-}
-
-.rule-preview {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid var(--b3-theme-surface-lighter);
-}
-
-.preview-label-text {
-  font-size: 12px;
-  color: var(--b3-theme-on-surface-variant);
-}
-
-.preview-tag {
-  display: inline-block;
-  font-size: 10px;
-  line-height: 1;
-  padding: 2px 5px;
-  border-radius: 3px;
-  font-weight: 500;
-}
-
-.add-rule-btn {
-  display: block;
-  width: 100%;
-  padding: 8px;
-  font-size: 13px;
-  border: 1px dashed var(--b3-theme-surface-lighter);
-  border-radius: 6px;
-  background: transparent;
-  color: var(--b3-theme-primary);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.add-rule-btn:hover {
-  border-color: var(--b3-theme-primary);
-  background: rgba(var(--b3-theme-primary-rgb), 0.05);
-}
-
-.update-interval {
-  margin-top: 20px;
-  padding: 12px 14px;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 8px;
-}
-
-.interval-label {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--b3-theme-on-surface);
-  margin-bottom: 8px;
-}
-
-.interval-select {
-  width: 100%;
-  padding: 8px 12px;
-  font-size: 13px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 6px;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  cursor: pointer;
-}
-
-.interval-select:hover {
-  border-color: var(--b3-theme-primary);
-}
-
-.interval-select:focus {
-  outline: none;
-  border-color: var(--b3-theme-primary);
-  box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.1);
-}
+<style scoped lang="scss">
+@use "./styles/index.scss";
 </style>

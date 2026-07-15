@@ -2,120 +2,23 @@
  * 书签标记管理器
  * 根据文档的书签内容，在文件树中对文档名称进行颜色标记
  */
-const BOOKMARK_MARKER_CLASS = "bookmark-marker-tag"
-const BOOKMARK_PROTYLE_CLASS = "bookmark-marker-protyle"
-const BOOKMARK_MARKER_STYLE_ID = "bookmark-marker-styles"
-
-export function hexToRgba(hex: string, alpha: number): string {
-  const r = Number.parseInt(hex.slice(1, 3), 16)
-  const g = Number.parseInt(hex.slice(3, 5), 16)
-  const b = Number.parseInt(hex.slice(5, 7), 16)
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
-}
-
-export interface BookmarkMarkerOptions {
-  rules: BookmarkRule[]
-  updateInterval: number
-}
-
-export interface BookmarkRule {
-  bookmarkNames: string[]
-  color: string
-  backgroundColor: string
-  icon?: string
-  displayMode?: "bg" | "icon" | "icon-bg" | "row"
-  /** 背景透明度 0~1，默认 0.25 */
-  alpha?: number
-  /** 匹配模式：exact=精确, prefix=前缀, contains=包含，默认 exact */
-  matchMode?: "exact" | "prefix" | "contains"
-}
-
-interface AttrRow {
-  id: string
-  bookmark: string
-}
-
-/** row 模式应用的样式集合 */
-interface RowStyleProps {
-  backgroundColor: string
-  color: string
-  borderRadius: string
-  padding: string
-}
-
-function resolveMode(rule: BookmarkRule): string {
-  return rule.displayMode || "bg"
-}
-
-function resolveAlpha(rule: BookmarkRule): number {
-  return rule.alpha ?? 0.25
-}
-
-/**
- * 检查书签名是否匹配规则
- */
-function matchesBookmarkName(bookmarkName: string, rule: BookmarkRule): boolean {
-  const mode = rule.matchMode || "exact"
-  return rule.bookmarkNames.some((name) => {
-    if (mode === "exact") return name === bookmarkName
-    if (mode === "prefix") return bookmarkName.startsWith(name)
-    return bookmarkName.includes(name)
-  })
-}
-
-function buildRowStyle(rule: BookmarkRule): RowStyleProps {
-  return {
-    backgroundColor: hexToRgba(rule.backgroundColor, resolveAlpha(rule)),
-    color: rule.color,
-    borderRadius: "3px",
-    padding: "0 4px",
-  }
-}
-
-function applyRowStyle(el: HTMLElement, style: RowStyleProps, bookmarkName: string): void {
-  el.style.backgroundColor = style.backgroundColor
-  el.style.color = style.color
-  el.style.borderRadius = style.borderRadius
-  el.style.padding = style.padding
-  el.dataset.bookmarkRow = bookmarkName
-}
-
-function clearRowStyle(el: HTMLElement): void {
-  el.style.backgroundColor = ""
-  el.style.color = ""
-  el.style.borderRadius = ""
-  el.style.padding = ""
-  delete el.dataset.bookmarkRow
-}
-
-function clearAllRowMarkers(selector: string): void {
-  document.querySelectorAll(selector).forEach((el) => clearRowStyle(el as HTMLElement))
-}
-
-function createMarkerElement(
-  className: string,
-  bookmarkName: string,
-  rule: BookmarkRule,
-): HTMLSpanElement {
-  const mode = resolveMode(rule)
-  const marker = document.createElement("span")
-  marker.className = className
-  marker.dataset.bookmark = bookmarkName
-  marker.style.color = rule.color
-
-  if (mode === "icon" && rule.icon) {
-    marker.style.backgroundColor = "transparent"
-    marker.textContent = rule.icon
-  } else if (mode === "icon-bg" && rule.icon) {
-    marker.style.backgroundColor = rule.backgroundColor
-    marker.textContent = rule.icon
-  } else {
-    marker.style.backgroundColor = hexToRgba(rule.backgroundColor, resolveAlpha(rule))
-    marker.textContent = rule.icon ? `${rule.icon} ${bookmarkName}` : bookmarkName
-  }
-
-  return marker
-}
+import { sql } from "@/api"
+import { injectStyle, removeStyle } from "@/utils/domUtils"
+import type { AttrRow, BookmarkMarkerOptions, BookmarkRule } from "../types"
+import {
+  BOOKMARK_MARKER_CLASS,
+  BOOKMARK_MARKER_STYLE_ID,
+  BOOKMARK_PROTYLE_CLASS,
+} from "../types"
+import {
+  applyRowStyle,
+  buildRowStyle,
+  clearAllRowMarkers,
+  clearRowStyle,
+  createMarkerElement,
+  matchesBookmarkName,
+  resolveMode,
+} from "../utils"
 
 export class BookmarkMarker {
   private updateTimer: number | null = null
@@ -179,16 +82,12 @@ export class BookmarkMarker {
     return this.options.rules
   }
 
-  getUpdateInterval(): number {
-    return this.options.updateInterval
-  }
-
   // ============================================================
   // 书签数据查询
   // ============================================================
 
   private async loadBookmarkCache(): Promise<void> {
-    const result = await this.query(
+    const result = await sql(
       `SELECT block_id as id, value as bookmark FROM attributes WHERE name = 'bookmark' AND block_id = root_id LIMIT 999999`,
     )
     this.bookmarkCache.clear()
@@ -476,14 +375,8 @@ export class BookmarkMarker {
   // ============================================================
 
   private addStyles(): void {
-    if (this.styleAdded || document.getElementById(BOOKMARK_MARKER_STYLE_ID)) {
-      this.styleAdded = true
-      return
-    }
-
-    const style = document.createElement("style")
-    style.id = BOOKMARK_MARKER_STYLE_ID
-    style.textContent = `
+    if (this.styleAdded) return
+    injectStyle(BOOKMARK_MARKER_STYLE_ID, `
       .${BOOKMARK_MARKER_CLASS} {
         display: inline-block;
         font-size: 10px;
@@ -511,13 +404,12 @@ export class BookmarkMarker {
         top: -1px;
         cursor: default;
       }
-    `
-    document.head.appendChild(style)
+    `)
     this.styleAdded = true
   }
 
   private removeStyles(): void {
-    document.getElementById(BOOKMARK_MARKER_STYLE_ID)?.remove()
+    removeStyle(BOOKMARK_MARKER_STYLE_ID)
     this.styleAdded = false
   }
 
@@ -533,38 +425,6 @@ export class BookmarkMarker {
     if (this.updateTimer) {
       clearInterval(this.updateTimer)
       this.updateTimer = null
-    }
-  }
-
-  // ============================================================
-  // SQL 查询
-  // ============================================================
-
-  private async query(sql: string): Promise<any[]> {
-    const result = await this.fetchPost("/api/query/sql", { stmt: sql })
-    if (result.code !== 0) {
-      console.error("[BookmarkMarker] 查询数据库出错:", result.msg)
-      return []
-    }
-    return result.data
-  }
-
-  private async fetchPost(url: string, data: unknown, returnType: "json" | "text" = "json"): Promise<any> {
-    const init: RequestInit = { method: "POST" }
-    if (data) init.body = data instanceof FormData ? data : JSON.stringify(data)
-
-    try {
-      const res = await fetch(url, init)
-      return returnType === "json" ? await res.json() : await res.text()
-    } catch (e: any) {
-      console.error("[BookmarkMarker] 请求失败:", e)
-      return returnType === "json"
-        ? {
-            code: e.code || 1,
-            msg: e.message || "",
-            data: null,
-          }
-        : ""
     }
   }
 }

@@ -1,0 +1,38 @@
+@use "../../../variables" as *;
+@use "./index.scss" as *;
+
+.loading-wrapper {
+  position: relative;
+  height: 200px;
+}
+
+// ============ 耗时徽章 ============
+.elapsed-badge {
+  @include codex-meta-label;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: $vp-mono;
+  font-variant-numeric: tabular-nums;
+
+  svg {
+    color: var(--b3-theme-primary);
+    opacity: 0.65;
+  }
+}
+
+// ============ 流式输出提示 ============
+.generation-tip {
+  margin-left: 8px;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-normal;
+  opacity: 0.5;
+  font-family: $vp-mono;
+}
+
+// ============ 对话计数徽章 ============
+.conv-count {
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  font-family: $vp-mono;
+}

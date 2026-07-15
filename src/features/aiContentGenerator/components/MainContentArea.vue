@@ -1,3 +1,4 @@
+<!-- AI内容生成器主内容展示区：加载态 / 空状态 / 错误提示 / Markdown预览 / Diff对比 / 流式输出 -->
 <template>
   <div class="main-content-area">
     <!-- 加载状态（仅在没有内容时显示） -->
@@ -203,87 +204,18 @@
       </div>
 
       <!-- 思考过程（可折叠） -->
-      <div
-        v-if="reasoningContent"
-        class="reasoning-section"
-      >
-        <button
-          class="reasoning-toggle"
-          @click="$emit('toggle-reasoning')"
-        >
-          <svg
-            width="12"
-            height="12"
-            class="reasoning-chevron"
-            :class="{ expanded: showReasoning }"
-          >
-            <use xlink:href="#iconRight"></use>
-          </svg>
-          <svg
-            width="14"
-            height="14"
-          ><use xlink:href="#iconSparkles"></use></svg>
-          <span>思考过程</span>
-          <span
-            v-if="isGenerating"
-            class="reasoning-dot"
-          ></span>
-        </button>
-        <div
-          v-if="showReasoning"
-          class="reasoning-content"
-        >{{ reasoningContent }}</div>
-      </div>
+      <ReasoningSection
+        :reasoning-content="reasoningContent"
+        :show-reasoning="showReasoning"
+        :is-generating="isGenerating"
+        @toggle="$emit('toggle-reasoning')"
+      />
 
       <!-- RAG 联网搜索结果（可折叠） -->
-      <div
-        v-if="searchStatus || searchResults.length > 0"
-        class="search-results-section"
-      >
-        <button
-          class="search-results-toggle"
-          @click="showSearchPanel = !showSearchPanel"
-        >
-          <svg
-            width="12"
-            height="12"
-            class="search-chevron"
-            :class="{ expanded: showSearchPanel }"
-          >
-            <use xlink:href="#iconRight"></use>
-          </svg>
-          <svg
-            width="14"
-            height="14"
-          ><use xlink:href="#iconSearch"></use></svg>
-          <span>搜索来源</span>
-          <span class="search-status-text">{{ searchStatus }}</span>
-        </button>
-        <div
-          v-if="showSearchPanel && searchResults.length > 0"
-          class="search-results-body"
-        >
-          <div
-            v-for="(result, idx) in searchResults"
-            :key="idx"
-            class="search-result-item"
-          >
-            <div class="search-result-header">
-              <span class="search-result-index">{{ idx + 1 }}.</span>
-              <a
-                :href="result.url"
-                class="search-result-link"
-                target="_blank"
-                :title="result.url"
-              >{{ result.title || result.url }}</a>
-            </div>
-            <div
-              v-if="result.content"
-              class="search-result-content"
-            >{{ result.content }}</div>
-          </div>
-        </div>
-      </div>
+      <SearchResultsSection
+        :search-results="searchResults"
+        :search-status="searchStatus"
+      />
 
       <!-- 审核结果（独立组件） -->
       <ReviewPanel
@@ -313,35 +245,9 @@
     </div>
 
     <!-- 空状态 -->
-    <div
+    <ContentAreaEmpty
       v-else
-      class="empty-state"
-    >
-      <svg
-        width="48"
-        height="48"
-        class="empty-icon"
-      >
-        <use xlink:href="#iconSparkles"></use>
-      </svg>
-      <p class="empty-title">
-        AI 内容编辑助手
-      </p>
-      <div class="empty-steps">
-        <div class="empty-step">
-          <span class="step-num">1</span>
-          <span>点击下方「选择文档」或「选择块」</span>
-        </div>
-        <div class="empty-step">
-          <span class="step-num">2</span>
-          <span>选择 AI 快捷操作或输入自定义指令</span>
-        </div>
-        <div class="empty-step">
-          <span class="step-num">3</span>
-          <span>预览结果后应用到文档</span>
-        </div>
-      </div>
-    </div>
+    />
   </div>
 </template>
 
@@ -351,10 +257,14 @@ import {
   ref,
   watch,
 } from "vue"
+import type { ReviewResult } from "@/types/ai"
 import Button from "@/components/Button.vue"
 import Loader from "@/components/Loader.vue"
 import DiffPreview from "./DiffPreview.vue"
 import ReviewPanel from "./ReviewPanel.vue"
+import ContentAreaEmpty from "./ContentAreaEmpty.vue"
+import ReasoningSection from "./ReasoningSection.vue"
+import SearchResultsSection from "./SearchResultsSection.vue"
 
 interface Props {
   // 状态
@@ -376,7 +286,6 @@ interface Props {
 
   // 搜索来源
   searchResults?: Array<{ title: string, url: string, content: string, score?: number }>
-  showSearchResults?: boolean
   searchStatus?: string
 
   // 耗时
@@ -384,14 +293,7 @@ interface Props {
 
   // 审核
   isReviewing?: boolean
-  reviewResult?: {
-    rating: string
-    summary: string
-    issues: Array<{ description: string, severity: string }>
-    suggestions: string[]
-    reviewModel: string
-    reviewedAt: number
-  } | null
+  reviewResult?: ReviewResult | null
 
   // 操作可用性
   canApply: boolean
@@ -403,7 +305,6 @@ interface Props {
 
   // 对话
   conversationCount?: number
-  hasContent?: boolean
 
   // 流式输出增强
   generationTip?: string
@@ -413,7 +314,6 @@ const props = withDefaults(defineProps<Props>(), {
   searchResults: () => [],
   showReasoning: false,
   searchStatus: "",
-  showSearchResults: false,
   generationElapsed: "",
 })
 
@@ -432,7 +332,6 @@ defineEmits<{
 }>()
 
 const viewMode = ref<"preview" | "diff">("preview")
-const showSearchPanel = ref(true)
 
 // 是否存在差异（有原文且有生成内容且不同）
 const hasDiff = computed(() => {
@@ -449,295 +348,6 @@ watch(() => props.isGenerating, (newVal, oldVal) => {
 </script>
 
 <style scoped lang="scss">
+@use "../styles/MainContentArea.scss" as *;
 @use "../styles/index.scss" as *;
-
-.loading-wrapper {
-  position: relative;
-  height: 200px;
-}
-
-// ============ 思考过程 ============
-.reasoning-section {
-  @include collapsible-section;
-}
-
-.reasoning-toggle {
-  @include collapsible-toggle;
-}
-
-.reasoning-chevron {
-  @include collapsible-chevron;
-}
-
-.reasoning-dot {
-  @include collapsible-status-dot;
-}
-
-.reasoning-content {
-  @include collapsible-body;
-  font-size: 11px;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.7;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  word-break: break-word;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-// ============ 耗时徽章 ============
-.elapsed-badge {
-  @include codex-meta-label;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
-  font-variant-numeric: tabular-nums;
-
-  svg {
-    color: var(--b3-theme-primary);
-    opacity: 0.65;
-  }
-}
-
-// ============ RAG 搜索来源 ============
-.search-results-section {
-  @include collapsible-section;
-}
-
-.search-results-toggle {
-  @include collapsible-toggle;
-}
-
-.search-chevron {
-  @include collapsible-chevron;
-}
-
-.search-status-text {
-  font-size: 10px;
-  font-weight: 400;
-  opacity: 0.5;
-  margin-left: auto;
-}
-
-.search-results-body {
-  @include collapsible-body;
-  padding-top: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-height: 220px;
-  overflow-y: auto;
-}
-
-.search-result-item {
-  padding: 5px 0;
-
-  & + & {
-    border-top: 1px solid var(--b3-theme-surface-lighter);
-  }
-}
-
-.search-result-header {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-}
-
-.search-result-index {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--b3-theme-primary);
-  flex-shrink: 0;
-}
-
-.search-result-link {
-  font-size: 11px;
-  color: var(--b3-theme-primary);
-  text-decoration: none;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-
-  &:hover {
-    text-decoration: underline;
-  }
-}
-
-.search-result-content {
-  margin-top: 3px;
-  font-size: 10px;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.65;
-  line-height: 1.5;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-// ============ 审核结果 ============
-.review-section {
-  @include collapsible-section;
-}
-
-.review-toggle-btn {
-  @include collapsible-toggle(var(--b3-theme-success));
-}
-
-.review-chevron {
-  @include collapsible-chevron;
-}
-
-.review-loading-dot {
-  @include collapsible-status-dot(var(--b3-theme-success));
-  margin-left: auto;
-}
-
-.review-rating-badge {
-  margin-left: auto;
-  font-size: 10px;
-  font-weight: 600;
-  padding: 1px 6px;
-  border-radius: 3px;
-
-  &.rating-good {
-    color: #fff;
-    background: var(--b3-theme-success);
-  }
-
-  &.rating-ok {
-    color: #fff;
-    background: var(--b3-theme-primary);
-  }
-
-  &.rating-needs-fix {
-    color: #fff;
-    background: var(--b3-theme-error);
-  }
-}
-
-.review-body {
-  @include collapsible-body;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.review-summary {
-  display: flex;
-  align-items: flex-start;
-  gap: 5px;
-  font-size: 11px;
-  color: var(--b3-theme-on-surface);
-  line-height: 1.6;
-
-  svg {
-    color: var(--b3-theme-primary);
-    flex-shrink: 0;
-    margin-top: 2px;
-  }
-}
-
-.review-section-title {
-  @include codex-meta-label;
-  margin-bottom: 4px;
-}
-
-.review-issues {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.review-issue-item {
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
-  font-size: 11px;
-  color: var(--b3-theme-on-surface);
-  line-height: 1.5;
-}
-
-.issue-severity {
-  font-size: 9px;
-  font-weight: 600;
-  padding: 0 4px;
-  border-radius: 2px;
-  flex-shrink: 0;
-
-  &.severity-高 {
-    color: var(--b3-theme-error);
-    background: var(--b3-theme-error-background);
-  }
-
-  &.severity-中 {
-    color: var(--b3-theme-warning);
-    background: var(--b3-theme-warning-background);
-  }
-
-  &.severity-低 {
-    color: var(--b3-theme-on-surface);
-    background: var(--b3-theme-surface-lighter);
-    opacity: 0.7;
-  }
-}
-
-.review-suggestions {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.review-suggestion-item {
-  font-size: 11px;
-  color: var(--b3-theme-on-surface);
-  line-height: 1.5;
-}
-
-.suggestion-num {
-  font-weight: 600;
-  color: var(--b3-theme-primary);
-  margin-right: 3px;
-}
-
-.review-footer {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding-top: 4px;
-  border-top: 1px dashed var(--b3-theme-surface-lighter);
-}
-
-.review-model {
-  @include codex-meta-label;
-  font-size: 9px;
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
-}
-
-.auto-fixing-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 10px;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.7;
-}
-
-// ============ 流式输出提示 ============
-.generation-tip {
-  margin-left: 8px;
-  font-size: 10px;
-  font-weight: 400;
-  opacity: 0.5;
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
-}
-
-// ============ 对话计数徽章 ============
-.conv-count {
-  font-size: 10px;
-  font-weight: 600;
-  font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
-}
 </style>

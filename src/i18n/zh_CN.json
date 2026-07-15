@@ -369,7 +369,6 @@
     "enableBookmarkMarker": "书签标记",
     "bookmarkMarkerDescription": "根据文档书签内容在文件树中显示颜色标记",
     "bookmarkRules": "标记规则",
-    "refreshNow": "立即刷新",
     "bookmarkName": "书签名称",
     "bookmarkNamePlaceholder": "输入书签名，回车添加",
     "markerIcon": "图标",

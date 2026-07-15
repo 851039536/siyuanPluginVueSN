@@ -87,11 +87,6 @@ export class BookmarkMarkerManager {
       case "intervalChanged":
         this.bookmarkMarker?.setUpdateInterval(data.updateInterval)
         break
-      case "refresh":
-        if (this.bookmarkMarker?.isActive) {
-          this.bookmarkMarker.updateOptions({ rules: this.bookmarkMarker.getRules() })
-        }
-        break
       case "settingsChanged":
         break
     }

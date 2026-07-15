@@ -105,27 +105,7 @@
   margin-bottom: $spacing-3;
 }
 
-.refresh-btn {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-px $spacing-2;
-  font-size: $font-size-xs;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
-  background: transparent;
-  color: var(--b3-theme-on-surface-variant);
-  cursor: pointer;
-  transition: all 0.12s;
-  white-space: nowrap;
 
-  &:hover {
-    border-color: var(--b3-theme-primary);
-    color: var(--b3-theme-primary);
-    background: rgba(var(--b3-theme-primary-rgb), 0.05);
-  }
-}
 
 // ========== 规则项卡片 ==========
 

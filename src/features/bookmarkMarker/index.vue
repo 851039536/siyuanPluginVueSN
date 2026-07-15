@@ -37,22 +37,6 @@
         {{ i18n?.bookmarkMarkerDescription || "根据文档书签内容在文件树中显示颜色标记" }}
       </p>
 
-      <!-- 功能说明 -->
-      <div class="feature-description">
-        <div class="description-title">
-          <IconWrapper
-            name="lightbulb"
-            :size="14"
-          />
-          {{ i18n?.featureDescription || "功能说明" }}
-        </div>
-        <ul class="description-list">
-          <li>{{ i18n?.bookmarkFeature1 || "在文件树中为有书签的文档显示颜色标签" }}</li>
-          <li>{{ i18n?.bookmarkFeature2 || "书签为空则不显示标记" }}</li>
-          <li>{{ i18n?.bookmarkFeature3 || "可自定义书签名称与对应颜色" }}</li>
-          <li>{{ i18n?.bookmarkFeature4 || "支持手机端和桌面端" }}</li>
-        </ul>
-      </div>
 
       <!-- 标记规则设置 -->
       <template v-if="settings.enableBookmarkMarker.value">

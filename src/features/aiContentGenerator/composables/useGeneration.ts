@@ -16,10 +16,11 @@ interface ConversationTurn {
   timestamp: number
 }
 
+/** 硬编码的默认生成参数 */
+const DEFAULT_TEMPERATURE = 0.7
+const DEFAULT_MAX_TOKENS = 10000
+
 interface UseGenerationOptions {
-  systemPrompt: Ref<string>
-  temperature: Ref<number>
-  maxTokens: Ref<number>
   enableThinking: Ref<boolean>
   webSearch: Ref<boolean>
   selectedModel: Ref<string>
@@ -259,8 +260,8 @@ export function useGeneration(opts: UseGenerationOptions) {
   ): GenerateOptions => ({
     userInput,
     systemPrompt,
-    temperature: opts.temperature.value,
-    maxTokens: opts.maxTokens.value,
+    temperature: DEFAULT_TEMPERATURE,
+    maxTokens: DEFAULT_MAX_TOKENS,
     signal: abortController.value?.signal,
     onChunk: defaultOnChunk,
     ...(opts.enableThinking.value ? { onReasoningChunk: defaultOnReasoningChunk } : {}),

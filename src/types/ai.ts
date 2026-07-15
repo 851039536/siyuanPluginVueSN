@@ -79,16 +79,6 @@ export interface TargetDoc {
   isBlock?: boolean
 }
 
-/** AI 提示词配置接口 */
-export interface SavedPrompt {
-  id: string
-  name: string
-  systemPrompt: string
-  temperature: number
-  maxTokens: number
-  createdAt: number
-}
-
 // ============ 技能相关类型 ============
 
 /** AI 技能来源信息 */

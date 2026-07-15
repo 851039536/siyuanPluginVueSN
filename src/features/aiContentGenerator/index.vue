@@ -1,23 +1,7 @@
 <template>
   <div class="ai-content-panel">
     <!-- 顶部工具栏 -->
-    <PanelHeader @toggle-settings="toggleSettings" />
-
-    <!-- 提示词配置面板 -->
-    <SettingsPanel
-      :showSettings="showSettings"
-      v-model:systemPrompt="systemPrompt"
-      v-model:temperature="temperature"
-      v-model:maxTokens="maxTokens"
-      :currentPromptName="currentPromptName"
-      v-model:newPromptName="newPromptName"
-      :savedPrompts="savedPrompts"
-      @toggle-settings="toggleSettings"
-      @save-current-prompt="saveCurrentPrompt"
-      @on-prompt-name-focus="onPromptNameFocus"
-      @load-prompt="loadPrompt"
-      @delete-prompt="deletePrompt"
-    />
+    <PanelHeader />
 
     <!-- 内容显示区域 -->
     <div class="content-display-section">
@@ -64,10 +48,6 @@
     <BottomInputArea
       :is-generating="isGenerating"
       :edit-target-doc="editTargetDoc"
-      :show-prompt-selector="showPromptSelector"
-      :current-prompt-name="currentPromptName"
-      :saved-prompts="savedPrompts"
-      :paginated-prompts="paginatedPrompts"
       :edit-custom-input="editCustomInput"
       :skills="skills"
       :current-skill="currentSkill"
@@ -83,11 +63,6 @@
       :enable-review="enableReview"
       @ai-edit="aiEditAction"
       @stop="handleStop"
-      @toggle-prompt-selector="showPromptSelector = !showPromptSelector"
-      @clear-current-prompt="clearCurrentPrompt"
-      @load-prompt="loadPrompt"
-      @edit-prompt="editPrompt"
-      @delete-prompt="deletePrompt"
       @select-target-doc="selectTargetDocument"
       @select-target-block="selectTargetBlock"
       @clear-target-doc="clearTargetDocument"
@@ -122,12 +97,10 @@ import { useGeneration, buildSkillSystemPrompt } from "./composables/useGenerati
 import { useReview } from "./composables/useReview"
 import { useEditOperations } from "./composables/useEditOperations"
 import { useDocumentTarget } from "./composables/useDocumentTarget"
-import { usePromptManager } from "./composables/usePromptManager"
 import { renderMarkdown } from "./utils"
 
 // 组件
 import PanelHeader from "./components/PanelHeader.vue"
-import SettingsPanel from "./components/SettingsPanel.vue"
 import MainContentArea from "./components/MainContentArea.vue"
 import BottomInputArea from "./components/BottomInputArea.vue"
 
@@ -152,9 +125,6 @@ const storage = ref<AIGeneratorStorage | null>(null)
 
 // ============ 顶层独立状态（供多个 composable 共享）============
 
-const systemPrompt = ref("你是一个专业的内容创作助手，擅长生成结构清晰、格式规范的Markdown文档。请确保输出内容使用标准的Markdown语法。")
-const temperature = ref(0.7)
-const maxTokens = ref(10000)
 const selectedModel = ref("")
 const customModel = ref("")
 const enableThinking = ref(false)
@@ -176,25 +146,12 @@ const {
   skillSearchQuery, filteredSkills,
 } = useSkillsLoader(props.plugin)
 
-// ============ 提示词管理状态 ============
-
-const currentPromptName = ref("")
-
-const promptMgr = usePromptManager({ systemPrompt, temperature, maxTokens, currentPromptName })
-const {
-  savedPrompts, showPromptSelector, newPromptName, paginatedPrompts,
-  showSettings, initStorage: initPromptStorage,
-  loadPromptsFromStorage, saveCurrentPrompt, loadPrompt, editPrompt, deletePrompt,
-  clearCurrentPrompt, onPromptNameFocus,
-} = promptMgr
-
-// ============ 3. 生成管道 ============
+// ============ 1. 生成管道 ============
 
 // 审核后回调（需要在 useGeneration 创建后传递给 useReview，此处预声明）
 let onAfterGenerateCallback: (() => void) | null = null
 
 const gen = useGeneration({
-  systemPrompt, temperature, maxTokens,
   enableThinking, webSearch, selectedModel, customModel, resolvedModel,
   currentSkill, editTargetDoc, editCustomInput,
   plugin: props.plugin,
@@ -265,11 +222,7 @@ const canInsertSubDoc = computed(() =>
   !!editTargetDoc.value && !isInsertingSubDoc.value && !isGenerating.value,
 )
 
-// ============ 7. 视图层逻辑 ============
-
-const toggleSettings = () => {
-  showSettings.value = !showSettings.value
-}
+// ============ 2. 视图层逻辑 ============
 
 // Markdown 渲染
 const renderedDisplayedMarkdown = computed(() => renderMarkdown(displayedContent.value))
@@ -328,7 +281,7 @@ const handleCustomEdit = async () => {
   }
 
   if (!editCustomInput.value.trim()) {
-    if (!(editTargetDoc.value && currentSkill.value) && !(editTargetDoc.value && currentPromptName.value)) {
+    if (!(editTargetDoc.value && currentSkill.value)) {
       showMessage("请输入提问内容", 2000, "info")
       return
     }
@@ -345,8 +298,6 @@ const handleCustomEdit = async () => {
       let baseSystemPrompt: string
       if (currentSkill.value) {
         baseSystemPrompt = currentSkill.value.content
-      } else if (currentPromptName.value) {
-        baseSystemPrompt = systemPrompt.value
       } else {
         baseSystemPrompt = "你是一个专业的文档编辑助手，擅长根据用户指令优化Markdown文档。请直接输出编辑后的完整文档，不要添加任何解释性文字。"
       }
@@ -379,9 +330,6 @@ const SETTINGS_SAVE_DEBOUNCE_MS = 300
 const saveSettings = async () => {
   if (!storage.value || !isSettingsLoaded) return
   const settings = {
-    systemPrompt: systemPrompt.value,
-    temperature: temperature.value,
-    maxTokens: maxTokens.value,
     model: selectedModel.value,
     customModel: customModel.value,
     enableThinking: enableThinking.value,
@@ -399,9 +347,6 @@ const loadSettings = async () => {
   try {
     const settings = await storage.value.settings.load()
     if (settings) {
-      systemPrompt.value = settings.systemPrompt || systemPrompt.value
-      temperature.value = settings.temperature ?? temperature.value
-      maxTokens.value = settings.maxTokens || maxTokens.value
       selectedModel.value = settings.model || ""
       customModel.value = settings.customModel || ""
       enableThinking.value = settings.enableThinking ?? false
@@ -414,7 +359,7 @@ const loadSettings = async () => {
 }
 
 watch(
-  [systemPrompt, temperature, maxTokens, selectedModel, customModel, enableThinking, webSearch],
+  [selectedModel, customModel, enableThinking, webSearch],
   () => {
     if (settingsSaveTimer) clearTimeout(settingsSaveTimer)
     settingsSaveTimer = window.setTimeout(() => saveSettings(), SETTINGS_SAVE_DEBOUNCE_MS)
@@ -427,8 +372,6 @@ onMounted(async () => {
   if (props.plugin) {
     storage.value = new AIGeneratorStorage(props.plugin)
     await storage.value.init()
-    initPromptStorage(storage.value)
-    await loadPromptsFromStorage()
     await loadSettings()
   }
   loadSkills()

@@ -1,4 +1,4 @@
-<!-- 底部输入区域组件：文档选择器、技能选择、提示词、快捷操作、模型选项、自定义输入 -->
+<!-- 底部输入区域组件：文档选择器、技能选择、快捷操作、模型选项、自定义输入 -->
 <template>
   <div class="bottom-input-section">
     <!-- 第一行：文档选择 + 技能 + 提示词 -->
@@ -59,67 +59,13 @@
         />
       </div>
 
-      <!-- 提示词选择 -->
+      <!-- RAG 联网搜索 -->
       <div class="top-bar-right">
         <label class="rag-toggle" :class="{ active: webSearch }" title="RAG联网搜索：先搜后答，获取最新信息">
           <svg width="12" height="12"><use xlink:href="#iconSearch"></use></svg>
           <input type="checkbox" :checked="webSearch" @change="$emit('update:webSearch', ($event.target as HTMLInputElement).checked)" />
           <span>联网</span>
         </label>
-
-        <div class="prompt-selector-wrapper">
-          <Button
-            variant="ghost"
-            size="xsmall"
-            :class="{ active: currentPromptName }"
-            @click="$emit('toggle-prompt-selector')"
-          >
-            <svg width="14" height="14"><use xlink:href="#iconList"></use></svg>
-            <span>{{ currentPromptName || '提示词' }}</span>
-            <span v-if="savedPrompts.length > 0 && !currentPromptName" class="badge">{{ savedPrompts.length }}</span>
-          </Button>
-          <Button
-            v-if="currentPromptName"
-            variant="ghost"
-            size="xsmall"
-            class="clear-btn"
-            title="清除提示词"
-            @click="$emit('clear-current-prompt')"
-          >
-            <svg width="12" height="12"><use xlink:href="#iconClose"></use></svg>
-          </Button>
-
-          <!-- 提示词选择面板 -->
-          <div v-if="showPromptSelector" class="prompt-selector-panel">
-            <div class="prompt-selector-header">
-              <span>选择提示词</span>
-              <Button variant="ghost" size="xsmall" @click="$emit('toggle-prompt-selector')">
-                <svg width="12" height="12"><use xlink:href="#iconClose"></use></svg>
-              </Button>
-            </div>
-            <div class="prompt-list">
-              <div
-                v-for="(prompt, index) in paginatedPrompts"
-                :key="prompt.id || index"
-                class="prompt-item"
-                @click="$emit('load-prompt', getOriginalIndex(prompt))"
-              >
-                <div class="prompt-item-header">
-                  <span class="prompt-name">{{ prompt.name }}</span>
-                  <div class="prompt-item-actions">
-                    <Button variant="ghost" size="xsmall" title="编辑" @click.stop="$emit('edit-prompt', getOriginalIndex(prompt))">
-                      <svg width="12" height="12"><use xlink:href="#iconEdit"></use></svg>
-                    </Button>
-                    <Button variant="ghost" size="xsmall" title="删除" @click.stop="$emit('delete-prompt', getOriginalIndex(prompt))">
-                      <svg width="12" height="12"><use xlink:href="#iconTrashcan"></use></svg>
-                    </Button>
-                  </div>
-                </div>
-                <div class="prompt-item-preview">{{ getPromptPreview(prompt.systemPrompt) }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -209,9 +155,6 @@
       </Button>
     </div>
 
-    <!-- 点击遮罩关闭提示词面板 -->
-    <div v-if="showPromptSelector" class="dropdown-overlay" @click="$emit('toggle-prompt-selector')"></div>
-
     <!-- 技能细则预览弹窗 -->
     <SkillPreviewModal
       v-if="showSkillPreview"
@@ -223,14 +166,14 @@
 
 <script setup lang="ts">
 import type { ProviderModels } from "../config/models"
-import type { SavedPrompt, SkillItem, TargetDoc } from "@/types/ai"
+import type { SkillItem, TargetDoc } from "@/types/ai"
 import { computed, ref } from "vue"
 import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 import Tag from "@/components/Tag.vue"
 import SkillSection from "./SkillSection.vue"
 import SkillPreviewModal from "./SkillPreviewModal.vue"
-import { getPromptPreview, truncateTitle } from "../utils"
+import { truncateTitle } from "../utils"
 
 interface QuickAction {
   key: "polish" | "expand" | "condense" | "fix" | "rewrite" | "summary"
@@ -241,10 +184,6 @@ interface QuickAction {
 interface Props {
   isGenerating: boolean
   editTargetDoc: TargetDoc | null
-  showPromptSelector: boolean
-  currentPromptName: string
-  savedPrompts: SavedPrompt[]
-  paginatedPrompts: SavedPrompt[]
   editCustomInput: string
   skills: SkillItem[]
   currentSkill: SkillItem | null
@@ -265,11 +204,6 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   'ai-edit': [action: "polish" | "expand" | "condense" | "fix" | "rewrite" | "summary"]
   'stop': []
-  'toggle-prompt-selector': []
-  'clear-current-prompt': []
-  'load-prompt': [index: number]
-  'edit-prompt': [index: number]
-  'delete-prompt': [index: number]
   'select-target-doc': []
   'select-target-block': []
   'clear-target-doc': []
@@ -311,16 +245,14 @@ const onEditCustomInputChange = (value: string | null) => {
 const canExecute = computed(() => {
   if (props.currentSkillIndex >= 0) return true
   if (props.editTargetDoc) {
-    return !!(props.editCustomInput.trim() || props.currentPromptName)
+    return !!props.editCustomInput.trim()
   }
   return false
 })
 
 const executeButtonTitle = computed(() => {
   if (!props.editTargetDoc && props.currentSkillIndex >= 0) return "发送提问"
-  return !props.editCustomInput.trim() && props.currentPromptName
-    ? "使用当前提示词生成"
-    : "执行"
+  return "执行"
 })
 
 const inputPlaceholder = computed(() => {
@@ -328,9 +260,7 @@ const inputPlaceholder = computed(() => {
   return "输入编辑指令，或选择AI快捷操作..."
 })
 
-const getOriginalIndex = (prompt: SavedPrompt) => {
-  return props.savedPrompts.findIndex((p) => p.id === prompt.id)
-}
+
 </script>
 
 <style scoped lang="scss">

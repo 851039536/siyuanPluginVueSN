@@ -205,12 +205,6 @@
   }
 }
 
-.dropdown-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-}
-
 .input-row {
   display: flex;
   align-items: flex-end;
@@ -218,88 +212,6 @@
 
   .input-field { flex: 1; min-width: 0; }
   .execute-btn { flex-shrink: 0; padding: 6px 10px !important; }
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  font-size: 10px;
-  font-weight: 500;
-  color: var(--b3-theme-on-primary);
-  background: var(--b3-theme-primary);
-  border-radius: 8px;
-}
-
-.prompt-selector-wrapper { position: relative; }
-
-.prompt-selector-panel {
-  position: absolute;
-  bottom: 100%;
-  right: 0;
-  margin-bottom: 4px;
-  background: var(--b3-theme-background);
-  border: 1px solid var(--b3-theme-surface-light);
-  border-radius: 6px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-  width: 280px;
-  max-height: 300px;
-  display: flex;
-  flex-direction: column;
-  z-index: 100;
-}
-
-.prompt-selector-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--b3-theme-on-surface);
-}
-
-.prompt-list {
-  overflow-y: auto;
-  padding: 4px;
-  max-height: 240px;
-}
-
-.prompt-item {
-  padding: 8px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  &:hover { background: var(--b3-theme-surface-light); }
-}
-
-.prompt-item-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 2px;
-}
-
-.prompt-name { font-size: 12px; font-weight: 500; color: var(--b3-theme-on-background); }
-
-.prompt-item-actions {
-  display: flex;
-  gap: 2px;
-  opacity: 0;
-}
-
-.prompt-item:hover .prompt-item-actions { opacity: 1; }
-
-.prompt-item-preview {
-  font-size: 11px;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.6;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .error-state,

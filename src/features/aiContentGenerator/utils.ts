@@ -50,10 +50,6 @@ export function truncateText(text: string, maxLength = 50): string {
   return `${text.substring(0, maxLength)}...`
 }
 
-export function getPromptPreview(text: string): string {
-  return truncateText(text, 50)
-}
-
 export function truncateTitle(title: string, maxLen = 12): string {
   return truncateText(title, maxLen)
 }

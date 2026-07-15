@@ -1,3 +1,4 @@
+// dataSnapshot 模块类型定义与存储类
 import type { Plugin } from "siyuan"
 import type {
   CloudSnapshotTag,

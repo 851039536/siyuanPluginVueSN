@@ -1,19 +1,29 @@
-import type { SkillInfo } from "@/features/skillsViewer/modules/SkillsViewerManager"
-import type {
-  SkillItem,
-} from "@/types/ai"
 /**
  * 技能加载 Composable
  * 统一 index.vue 中的 loadSkills 逻辑
  * 支持同名技能去重（合并来源提示）和搜索过滤
+ * scanSkills 由调用方通过依赖注入传入（遵循零跨 Feature 直接导入规则）
  */
+import type {
+  SkillItem,
+} from "@/types/ai"
 import {
   computed,
   ref,
 } from "vue"
-import { SkillsViewerManager } from "@/features/skillsViewer/modules/SkillsViewerManager"
 
-export function useSkillsLoader(plugin: any) {
+interface RawSkillEntry {
+  filePath: string
+  name: string
+  description: string
+  content: string
+  tool: string
+}
+
+export function useSkillsLoader(
+  plugin: any,
+  scanSkills: (projectPath?: string) => Promise<RawSkillEntry[]>,
+) {
   /** 去重后的技能列表 */
   const skills = ref<SkillItem[]>([])
   const currentSkillIndex = ref(-1)
@@ -78,12 +88,6 @@ export function useSkillsLoader(plugin: any) {
   /** 扫描加载 AI 技能 */
   async function loadSkills() {
     try {
-      const manager = new SkillsViewerManager()
-      if (!manager.isAvailable()) {
-        managerAvailable.value = false
-        return
-      }
-
       let projectPath = ""
       try {
         if (plugin?.dataPath) {
@@ -91,8 +95,8 @@ export function useSkillsLoader(plugin: any) {
         }
       } catch { /* 忽略，只扫全局 */ }
 
-      const skillInfos = await manager.scanAllSkills(projectPath || undefined)
-      const rawSkills = skillInfos.map((s: SkillInfo) => ({
+      const skillInfos = await scanSkills(projectPath || undefined)
+      const rawSkills = skillInfos.map((s) => ({
         id: s.filePath,
         name: s.name,
         description: s.description,

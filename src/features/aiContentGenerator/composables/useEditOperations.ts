@@ -229,7 +229,6 @@ export function useEditOperations(deps: UseEditOperationsDeps) {
         throw new Error("创建子文档失败")
       }
     } catch (error) {
-      console.error("插入子文档失败:", error)
       showMessage("插入子文档失败: " + (error as Error).message, 3000, "error")
     } finally {
       isInsertingSubDoc.value = false

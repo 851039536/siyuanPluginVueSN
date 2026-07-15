@@ -200,13 +200,12 @@ const reviewDeps = {
 
 const review = useReview(reviewDeps)
 
-const {
-  enableReview, isReviewing, reviewResult, isAutoFixing,
-  performReview, handleAutoFix, handleReReview, handleFixIssue,
-} = review
+const { enableReview, isReviewing, reviewResult, isAutoFixing,
+  performReview: rawPerformReview, handleAutoFix, handleReReview, handleFixIssue } = review
 
-// 连接审核后回调
-onAfterGenerateCallback = () => performReview()
+// 连接审核后回调（deps 始终传入，performReview 必定存在）
+const performReviewFn = rawPerformReview!
+onAfterGenerateCallback = performReviewFn
 
 // 编辑可用性计算（依赖审核状态，须在 useReview 之后定义）
 const canApplyEdit = computed(() =>

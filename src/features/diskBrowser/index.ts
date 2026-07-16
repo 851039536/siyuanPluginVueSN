@@ -18,13 +18,12 @@ export { DiskBrowserStorage } from "./types/storage"
 
 export function registerDiskBrowser(plugin: Plugin) {
   const storage = new DiskBrowserStorage(plugin)
-  storage.init()
 
   const i18n = plugin.i18n.diskBrowser as DiskBrowserI18n
 
   createVueDockApp(plugin, DiskBrowserPanel, {
     icon: "iconFiles",
-    title: i18n?.panelTitle || "本地磁盘",
+    title: i18n.panelTitle || "本地磁盘",
     type: "disk-browser-dock",
     width: 380,
     i18n,

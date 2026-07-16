@@ -46,7 +46,6 @@ export interface DiskBrowserI18n {
   browse?: string
   open?: string
   emptyFolder?: string
-  loading?: string
   cacheExpired?: string
   cacheExpiredTooltip?: string
   cacheValidTooltip?: string
@@ -66,6 +65,9 @@ export interface DiskBrowserI18n {
   today?: string
   yesterday?: string
   daysAgo?: string
+  name?: string
+  size?: string
+  date?: string
 }
 
 export const STORAGE_KEY = "disk-browser-settings"

@@ -27,15 +27,4 @@ export class DiskBrowserStorage {
   async saveFavorites(favorites: string[]): Promise<boolean> {
     return this.settings.save({ favoriteFolders: favorites })
   }
-
-  async init(): Promise<void> {
-    try {
-      const settings = await this.settings.load()
-      if (!settings) {
-        await this.settings.save(DEFAULT_SETTINGS)
-      }
-    } catch (error) {
-      console.error("初始化磁盘浏览器存储失败:", error)
-    }
-  }
 }

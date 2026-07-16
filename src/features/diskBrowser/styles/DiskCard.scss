@@ -30,18 +30,18 @@
 }
 
 .disk-name {
-  font-family: $mono;
-  font-size: 12px;
-  font-weight: 700;
+  font-family: $vp-mono;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
   color: var(--b3-theme-on-background);
-  line-height: 1.2;
+  line-height: $line-height-tight;
 }
 
 .disk-label {
   @include meta-label;
   color: var(--b3-theme-on-surface);
   @include text-ellipsis;
-  line-height: 1.2;
+  line-height: $line-height-tight;
 }
 
 .expand-indicator {
@@ -54,8 +54,8 @@
 .disk-card-body {
   display: flex;
   flex-direction: column;
-  margin-top: 4px;
-  padding-top: 4px;
+  margin-top: $spacing-1;
+  padding-top: $spacing-1;
   border-top: 1px dashed $border;
 }
 
@@ -65,7 +65,7 @@
   background: var(--b3-theme-surface-lighter);
   border-radius: 1px;
   overflow: hidden;
-  margin-bottom: 3px;
+  margin-bottom: $spacing-px;
 }
 
 .usage-fill {
@@ -76,10 +76,10 @@
 }
 
 .disk-space {
-  font-family: $mono;
-  font-size: 10px;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface-light);
   text-align: center;
   white-space: nowrap;
-  line-height: 1.2;
+  line-height: $line-height-tight;
 }

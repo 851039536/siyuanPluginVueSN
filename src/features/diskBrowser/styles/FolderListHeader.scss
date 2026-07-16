@@ -17,9 +17,9 @@
   }
 
   .header-path {
-    font-family: $mono;
-    font-size: 12px;
-    font-weight: 600;
+    font-family: $vp-mono;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
     color: var(--b3-theme-on-background);
     @include text-ellipsis;
   }
@@ -27,13 +27,13 @@
 
 .folder-header-actions {
   @include flex-align-center;
-  gap: 4px;
+  gap: $spacing-1;
 }
 
 .item-count {
-  font-family: $mono;
-  font-size: 10px;
-  font-weight: 600;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
   padding: 1px 6px;

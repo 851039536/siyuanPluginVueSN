@@ -22,7 +22,7 @@
 .favorites-list-horizontal {
   @include flex-align-center;
   gap: 6px;
-  padding: 8px;
+  padding: $spacing-2;
   overflow-x: auto;
   overflow-y: hidden;
   @include scrollbar(4px, 4px);
@@ -53,9 +53,9 @@
 .favorite-name {
   flex: 1;
   min-width: 0;
-  font-family: $mono;
+  font-family: $vp-mono;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: $font-weight-medium;
   color: var(--b3-theme-on-background);
   @include text-ellipsis;
 }

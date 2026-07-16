@@ -17,24 +17,24 @@
 }
 
 .breadcrumb-sep {
-  font-family: $mono;
-  font-size: 10px;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface-light);
   opacity: 0.3;
-  margin: 0 2px;
+  margin: 0 $spacing-2px;
 }
 
 .breadcrumb-item {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: $spacing-1;
   padding: 2px 6px;
   border: none;
   background: transparent;
   border-radius: 3px;
-  font-family: $mono;
+  font-family: $vp-mono;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: $font-weight-medium;
   color: var(--b3-theme-on-surface);
   cursor: pointer;
   transition: all 0.12s;

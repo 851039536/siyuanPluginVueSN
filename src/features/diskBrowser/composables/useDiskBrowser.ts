@@ -15,16 +15,14 @@ import {
   ref,
 } from "vue"
 import { copyToClipboard } from "@/utils/domUtils"
-import { getElectronModules, getNodeProcessModules } from "@/utils/nodeModules"
+import { getElectronModules } from "@/utils/nodeModules"
 import {
   CACHE_EXPIRY_TIME,
   computeCacheStatus,
-  createExecRunner,
   formatDate,
   getDefaultDisks,
+  getDiskInfo,
   isCacheValid,
-  processFolderList,
-  processItemList,
   readDirectoryContents,
 } from "../utils"
 
@@ -44,8 +42,6 @@ export function useDiskBrowser(
   const diskCache = ref<CacheData<DiskInfo[]> | null>(null)
   const folderCacheMap = ref<Map<string, CacheData<FolderInfo[]>>>(new Map())
   const cacheExpiryTime = CACHE_EXPIRY_TIME
-
-  const { retryExec } = createExecRunner()
 
   const pathSegments = computed(() => {
     if (!currentPath.value || currentPath.value === expandedDisk.value)
@@ -112,30 +108,10 @@ export function useDiskBrowser(
 
     loading.value = true
     try {
-      if (getNodeProcessModules()) {
-        const command = `powershell -NoProfile -ExecutionPolicy Bypass -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-WmiObject Win32_LogicalDisk | Select-Object DeviceID, VolumeName, Size, FreeSpace | ConvertTo-Json -Compress"`
-        const { stdout } = await retryExec(command, 2, 3000, "获取磁盘列表")
-
-        const diskData = JSON.parse(stdout)
-        const diskArray = Array.isArray(diskData) ? diskData : [diskData]
-
-        const diskList: DiskInfo[] = diskArray
-          .filter((disk: any) => disk.Size)
-          .map((disk: any) => {
-            const totalSpace = Number.parseInt(disk.Size) || 0
-            const freeSpace = Number.parseInt(disk.FreeSpace) || 0
-            const used = totalSpace - freeSpace
-            return {
-              drive: disk.DeviceID,
-              label: disk.VolumeName ? String(disk.VolumeName).trim() : "",
-              total: totalSpace,
-              used,
-              usagePercent: Math.round((used / totalSpace) * 100),
-            }
-          })
-
-        disks.value = diskList
-        diskCache.value = { data: diskList, timestamp: Date.now() }
+      const info = getDiskInfo()
+      if (info && info.length > 0) {
+        disks.value = info
+        diskCache.value = { data: info, timestamp: Date.now() }
       } else {
         disks.value = getDefaultDisks()
       }
@@ -180,20 +156,7 @@ export function useDiskBrowser(
 
     try {
       const displayPath = /^[A-Z]:$/.test(path) ? `${path}\\` : path
-      let itemList = readDirectoryContents(displayPath)
-
-      if (!itemList) {
-        const isDriveRoot = /^[A-Z]:$/.test(path)
-        const command = isDriveRoot
-          ? `powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -Path '${path}\\' -Directory -ErrorAction SilentlyContinue | Where-Object { -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) } | Select-Object -ExpandProperty Name | ForEach-Object { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Write-Output $_ }"`
-          : `powershell -NoProfile -ExecutionPolicy Bypass -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-ChildItem -Path '${path}' -ErrorAction SilentlyContinue | Where-Object { -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) } | Select-Object Name, @{Name='IsFile';Expression={-not $_.PSIsContainer}}, Length, LastWriteTime | ConvertTo-Json -Compress"`
-
-        const { stdout } = await retryExec(command, 1, 5000, "获取文件夹列表")
-        itemList = isDriveRoot
-          ? processFolderList(stdout, path)
-          : processItemList(stdout, path)
-      }
-
+      const itemList = readDirectoryContents(displayPath)
       if (itemList) {
         folders.value = itemList
         folderCacheMap.value.set(path, { data: itemList, timestamp: Date.now() })

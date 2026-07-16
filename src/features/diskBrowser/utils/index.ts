@@ -1,4 +1,4 @@
-// 磁盘浏览器纯工具函数 — 大小格式化、路径构建、缓存状态计算、日期格式化
+// 磁盘浏览器纯工具函数 — 大小格式化、路径构建、缓存状态计算、日期格式化、目录读取
 import type {
   CacheData,
   CacheStatus,
@@ -8,118 +8,41 @@ import type {
 } from "../types"
 import { getNodeModules, getNodeProcessModules } from "@/utils/nodeModules"
 
-const DEBOUNCE_DELAY = 500
-
-let _execAsync: ((cmd: string, opts?: any) => Promise<{ stdout: string, stderr: string }>) | null = null
-
-function getExecAsync() {
-  if (_execAsync) return _execAsync
+/** 读取本地磁盘信息（wmic 比 PowerShell 快 10x+） */
+export function getDiskInfo(): DiskInfo[] | null {
   const node = getNodeProcessModules()
   if (!node) return null
-  _execAsync = node.util.promisify(node.child_process.exec)
-  return _execAsync
-}
 
-/** 创建带防抖和重试机制的 exec 执行器 */
-export function createExecRunner() {
-  let execQueue = Promise.resolve()
-  let lastExecutionTime = 0
-
-  async function execWithTimeout(
-    command: string,
-    timeout = 3000,
-  ): Promise<{ stdout: string, stderr: string }> {
-    const exec = getExecAsync()
-    if (!exec) throw new Error("当前环境不支持执行命令")
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error("执行超时")), timeout)
-    })
-    return Promise.race([exec(command), timeoutPromise])
-  }
-
-  async function retryExec(
-    command: string,
-    retries = 2,
-    timeout = 3000,
-    operationType = "unknown",
-  ): Promise<{ stdout: string, stderr: string }> {
-    const currentTask = execQueue.then(async () => {
-      const waitTime = DEBOUNCE_DELAY - (Date.now() - lastExecutionTime)
-      if (waitTime > 0) {
-        await new Promise((resolve) => setTimeout(resolve, waitTime))
-      }
-      lastExecutionTime = Date.now()
-
-      let lastError: Error | null = null
-      for (let i = 0; i <= retries; i++) {
-        try {
-          return await execWithTimeout(command, timeout)
-        } catch (error) {
-          lastError = error as Error
-          if (i < retries) {
-            const delay = Math.min(1000 * 2 ** i, 3000)
-            await new Promise((resolve) => setTimeout(resolve, delay))
-          }
-        }
-      }
-      throw new Error(
-        `${operationType}失败，重试${retries}次后仍失败: ${lastError?.message || "未知错误"}`,
-      )
-    })
-
-    execQueue = currentTask.then(() => {}, () => {}) as Promise<void>
-    return currentTask
-  }
-
-  return { retryExec }
-}
-
-/** 解析 PowerShell 目录列表输出（纯文件夹名） */
-export function processFolderList(stdout: string, basePath: string): FolderInfo[] {
-  return stdout
-    .trim()
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((name) => name && name !== "." && name !== "..")
-    .map((name) => ({
-      name,
-      path: buildPath(basePath, name),
-    }))
-}
-
-/** 解析 PowerShell 文件/文件夹列表输出（含大小、修改时间） */
-export function processItemList(stdout: string, path: string): FolderInfo[] {
-  const itemList: FolderInfo[] = []
   try {
-    const itemData = JSON.parse(stdout)
-    const itemArray = Array.isArray(itemData) ? itemData : [itemData]
+    const stdout = node.child_process.execSync(
+      "wmic logicaldisk get DeviceID,VolumeName,Size,FreeSpace /format:csv",
+      { timeout: 3000, encoding: "utf8" },
+    ) as string
 
-    for (const item of itemArray) {
-      if (item?.Name) {
-        const itemName = String(item.Name).trim()
-        itemList.push({
-          name: itemName,
-          path: buildPath(path, itemName),
-          isFile: item.IsFile || false,
-          size: item.Length ? Number.parseInt(item.Length) : undefined,
-          modifiedTime: item.LastWriteTime || undefined,
-        })
-      }
-    }
-
-    itemList.sort((a, b) => {
-      if (a.isFile === b.isFile) {
-        return a.name.localeCompare(b.name, "zh-CN")
-      }
-      return a.isFile ? 1 : -1
-    })
+    return stdout
+      .split("\n")
+      .slice(2)
+      .filter((line) => line.trim())
+      .map((line) => {
+        const [, deviceId, volumeName, size, freeSpace] = line.split(",")
+        if (!deviceId) return null
+        const total = Number.parseInt(size) || 0
+        const free = Number.parseInt(freeSpace) || 0
+        return {
+          drive: deviceId,
+          label: volumeName?.trim() || "",
+          total,
+          used: total - free,
+          usagePercent: total > 0 ? Math.round(((total - free) / total) * 100) : 0,
+        }
+      })
+      .filter((d): d is NonNullable<typeof d> => d !== null && d.total > 0)
   } catch {
-    // 解析失败返回空列表
+    return null
   }
-  return itemList
 }
 
-/** 使用 Node.js fs 模块读取目录内容（比 PowerShell 快 10x+） */
+/** 使用 Node.js fs 模块读取目录内容 */
 export function readDirectoryContents(dirPath: string): FolderInfo[] | null {
   const node = getNodeModules()
   if (!node) return null
@@ -150,9 +73,7 @@ export function readDirectoryContents(dirPath: string): FolderInfo[] | null {
     }
 
     items.sort((a, b) => {
-      if (a.isFile === b.isFile) {
-        return a.name.localeCompare(b.name, "zh-CN")
-      }
+      if (a.isFile === b.isFile) return a.name.localeCompare(b.name, "zh-CN")
       return a.isFile ? 1 : -1
     })
   } catch {
@@ -182,35 +103,24 @@ export function computeCacheStatus<T>(
   cacheExpiryTime: number,
   labelType: "full" | "short" = "full",
 ): CacheStatus {
-  if (!cacheData) {
-    return {
-      text: "",
-      isExpired: false,
-      tooltip: "",
-    }
-  }
+  if (!cacheData) return { text: "", isExpired: false, tooltip: "" }
 
   const elapsed = Date.now() - cacheData.timestamp
   const remaining = cacheExpiryTime - elapsed
 
   if (remaining <= 0) {
     return {
-      text:
-        labelType === "full"
-          ? i18n.cacheExpired || "缓存已过期"
-          : i18n.expired || "已过期",
+      text: labelType === "full" ? i18n.cacheExpired || "缓存已过期" : i18n.expired || "已过期",
       isExpired: true,
-      tooltip:
-        i18n.cacheExpiredTooltip || "缓存已过期，点击刷新按钮获取最新数据",
+      tooltip: i18n.cacheExpiredTooltip || "缓存已过期，点击刷新按钮获取最新数据",
     }
   }
 
   const minutes = Math.floor(remaining / 60000)
   return {
-    text:
-      labelType === "full"
-        ? `${minutes}${i18n.minutesRemaining || "分钟"}`
-        : `${minutes}${i18n.min || "分"}`,
+    text: labelType === "full"
+      ? `${minutes}${i18n.minutesRemaining || "分钟"}`
+      : `${minutes}${i18n.min || "分"}`,
     isExpired: false,
     tooltip: i18n.cacheValidTooltip || `缓存有效期剩余 ${minutes}分钟`,
   }
@@ -250,7 +160,6 @@ export function formatDate(dateString: string, i18n: DiskBrowserI18n): string {
 
 const DEFAULT_DISKS = ["C:", "D:", "E:", "F:", "G:", "H:"]
 
-/** 获取默认磁盘驱动器列表 */
 export function getDefaultDisks(): DiskInfo[] {
   return DEFAULT_DISKS.map((drive) => ({ drive }))
 }

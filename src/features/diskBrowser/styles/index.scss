@@ -1,8 +1,6 @@
 @use "@/index.scss" as *;
 
-// ==================== Codex Variables ====================
-$mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
-$radius: 6px;
+// ==================== Local Convenience ====================
 $border: var(--b3-border-color);
 
 // ==================== Mixins ====================
@@ -46,15 +44,15 @@ $border: var(--b3-border-color);
   justify-content: center;
   width: $size;
   height: $size;
-  border-radius: 4px;
+  border-radius: $radius-sm;
   background: $bg;
   color: $color;
 }
 
 /// Codex 大写元信息标签
 @mixin meta-label {
-  font-size: 10px;
-  font-weight: 700;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   opacity: 0.45;
@@ -63,7 +61,7 @@ $border: var(--b3-border-color);
 /// Codex 边框卡片
 @mixin border-card {
   border: 1px solid $border;
-  border-radius: $radius;
+  border-radius: $vp-radius;
   transition: border-color 0.15s;
 
   &:hover {
@@ -82,12 +80,12 @@ $border: var(--b3-border-color);
 
 /// 缓存标签基础样式（共享于 PanelHeader + FolderList）
 @mixin cache-tag-base {
-  font-family: $mono;
-  font-size: 10px;
-  font-weight: 600;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
   letter-spacing: 0.04em;
   white-space: nowrap;
-  padding: 2px 8px;
+  padding: $spacing-2px $spacing-2;
   background: var(--b3-theme-primary-lightest);
   border-radius: 3px;
 
@@ -105,7 +103,7 @@ $border: var(--b3-border-color);
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   font-size: 13px;
-  line-height: 1.5;
+  line-height: $line-height-normal;
   overflow: hidden;
   @include contain-layout;
 }
@@ -114,7 +112,7 @@ $border: var(--b3-border-color);
   @include flex-align-center;
   flex-wrap: wrap;
   gap: 6px;
-  padding: 8px;
+  padding: $spacing-2;
   max-height: 140px;
   overflow-y: auto;
   overflow-x: hidden;

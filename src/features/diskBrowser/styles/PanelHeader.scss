@@ -12,10 +12,10 @@
 .header-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: $spacing-2;
   margin: 0;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-background);
 }
 

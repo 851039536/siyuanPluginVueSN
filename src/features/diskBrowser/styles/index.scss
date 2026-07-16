@@ -1,4 +1,4 @@
-@use "@/index.scss" as *;
+@use "@/variables.scss" as *;
 
 // ==================== Local Convenience ====================
 $border: var(--b3-border-color);
@@ -69,33 +69,11 @@ $border: var(--b3-border-color);
   }
 }
 
-@mixin gpu-accelerate {
-  will-change: transform;
-  transform: translateZ(0);
-}
-
 @mixin contain-layout {
   contain: layout style;
 }
 
-/// 缓存标签基础样式（共享于 PanelHeader + FolderList）
-@mixin cache-tag-base {
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-  padding: $spacing-2px $spacing-2;
-  background: var(--b3-theme-primary-lightest);
-  border-radius: 3px;
-
-  &.expired {
-    color: var(--b3-theme-error);
-    background: rgba(var(--b3-theme-error-rgb, 220, 38, 38), 0.08);
-  }
-}
-
-// ==================== Base Styles ====================
+// ==================== Panel Root ====================
 .disk-browser-panel {
   display: flex;
   flex-direction: column;
@@ -105,18 +83,135 @@ $border: var(--b3-border-color);
   font-size: 13px;
   line-height: $line-height-normal;
   overflow: hidden;
-  @include contain-layout;
 }
 
-.disk-list-horizontal {
+// ==================== Two-Pane Layout ====================
+.db-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+// ==================== All Drives View (no disk selected) ====================
+.db-all-drives {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.db-all-drives-header {
   @include flex-align-center;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: $spacing-2;
-  max-height: 140px;
-  overflow-y: auto;
-  overflow-x: hidden;
+  gap: $spacing-2;
+  padding: 10px 14px;
+  border-bottom: 1px solid $border;
   flex-shrink: 0;
-  align-content: flex-start;
-  @include scrollbar;
+
+  span {
+    flex: 1;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: var(--b3-theme-on-background);
+  }
+}
+
+.db-all-drives-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding: 10px;
+  overflow-y: auto;
+  flex-shrink: 0;
+  max-height: 280px;
+}
+
+.db-all-drive-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  background: var(--b3-theme-surface);
+  cursor: pointer;
+  @include border-card;
+}
+
+.db-all-drive-icon {
+  color: var(--b3-theme-primary);
+}
+
+.db-all-drive-label {
+  font-family: $vp-mono;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-background);
+}
+
+.db-all-drive-name {
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light);
+  opacity: 0.6;
+  min-height: 1em;
+  @include text-ellipsis;
+  max-width: 100%;
+}
+
+.db-all-drive-bar {
+  width: 60%;
+  height: 3px;
+  background: var(--b3-theme-surface-lighter);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.db-all-drive-fill {
+  height: 100%;
+  background: var(--b3-theme-primary);
+  opacity: 0.5;
+  transition: width 0.3s ease;
+}
+
+.db-all-drive-space {
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light);
+  opacity: 0.5;
+}
+
+.db-all-favorites {
+  flex: 1;
+  overflow-y: auto;
+  border-top: 1px solid $border;
+}
+
+.db-all-fav-header {
+  @include flex-align-center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-bottom: 1px dashed $border;
+
+  span {
+    @include meta-label;
+    color: var(--b3-theme-on-surface);
+  }
+}
+
+.db-all-fav-row {
+  @include flex-align-center;
+  gap: 8px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: background-color 0.12s;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+  }
+
+  span {
+    font-family: $vp-mono;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    color: var(--b3-theme-on-background);
+    @include text-ellipsis;
+  }
 }

@@ -1,42 +1,109 @@
 @use "./index.scss" as *;
-@use "@/index.scss" as *;
+@use "@/variables.scss" as *;
 
-.folder-list {
+.db-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-top: 1px solid $border;
-  @include contain-layout;
+  min-width: 0;
 }
 
-.folder-items {
+.db-column-headers {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 4px 8px;
+  border-bottom: 1px solid $border;
+  background: var(--b3-theme-surface);
+  flex-shrink: 0;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.db-col-name {
+  flex: 1;
+  min-width: 0;
+  padding-left: 22px;
+}
+
+.db-col-size {
+  width: 55px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.db-col-date {
+  width: 52px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.db-col-actions {
+  width: 0;
+}
+
+.db-folder-items {
   flex: 1;
   overflow-y: auto;
-  padding: 6px;
   @include scrollbar;
 }
 
-.empty-state {
+.db-empty {
   @include flex-center;
   flex-direction: column;
-  padding: 48px 20px;
+  padding: 32px 20px;
   color: var(--b3-theme-on-surface-light);
 
   svg, :deep(svg) {
-    opacity: 0.25;
-    margin-bottom: 12px;
+    opacity: 0.2;
+    margin-bottom: 8px;
   }
 
   p {
     margin: 0;
     font-size: $font-size-xs;
-    opacity: 0.5;
+    opacity: 0.45;
     font-style: italic;
   }
 }
 
-.loading-wrapper {
+.db-loading {
   position: relative;
   height: 200px;
+}
+
+.db-status-bar {
+  @include flex-align-center;
+  justify-content: space-between;
+  padding: 3px 8px;
+  border-top: 1px solid $border;
+  background: var(--b3-theme-surface);
+  flex-shrink: 0;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light);
+  opacity: 0.7;
+}
+
+.db-status-left {
+  @include flex-align-center;
+  gap: 6px;
+}
+
+.db-status-cache {
+  font-size: $font-size-2xs;
+  padding: 0 4px;
+  border-radius: 2px;
+  color: var(--b3-theme-primary);
+  background: var(--b3-theme-primary-lightest);
+
+  &.expired {
+    color: var(--b3-theme-error);
+    background: rgba(var(--b3-theme-error-rgb, 220, 38, 38), 0.08);
+  }
 }

@@ -1,45 +1,32 @@
-<!-- 文件夹/文件列表项 — 单行展示，支持收藏、导航、打开、复制路径 -->
+<!-- 文件夹/文件列表项 — 三列布局（名称 / 大小 / 日期），hover 显示操作 -->
 <template>
   <div
-    class="folder-item"
+    class="db-item-row"
     :class="{ 'is-file': item.isFile }"
     @dblclick="$emit('itemDblclick', item)"
   >
-    <div class="folder-icon">
+    <div class="db-item-name">
       <IconWrapper
         :name="item.isFile ? 'file' : 'folder'"
-        :size="18"
+        :size="16"
+        class="db-item-icon"
       />
+      <span class="db-item-label" :title="item.name">{{ item.name }}</span>
     </div>
-    <div class="folder-info">
-      <div
-        class="folder-name"
-        :title="item.name"
-      >
-        {{ item.name }}
-      </div>
-      <div
-        v-if="item.size !== undefined || item.modifiedTime"
-        class="folder-meta"
-      >
-        <span
-          v-if="item.isFile && item.size !== undefined"
-          class="file-size"
-        >{{ formatSize(item.size) }}</span>
-        <span
-          v-if="item.modifiedTime"
-          class="modified-time"
-        >{{ formatDate(item.modifiedTime) }}</span>
-      </div>
-    </div>
-    <div class="folder-actions">
+    <span class="db-item-size">{{
+      item.isFile && item.size ? formatSize(item.size) : '\u2014'
+    }}</span>
+    <span class="db-item-date">{{
+      item.modifiedTime ? formatDate(item.modifiedTime) : ''
+    }}</span>
+    <div class="db-item-actions">
       <Button
         v-if="!item.isFile"
         variant="ghost"
         size="xsmall"
         :icon="isFavorite ? 'star' : 'starOutline'"
-        :icon-size="13"
-        class="folder-action-btn favorite-btn"
+        :icon-size="12"
+        class="db-action-btn"
         :class="{ 'is-favorite': isFavorite }"
         :title="isFavorite ? (i18n.removeFavorite || '取消收藏') : (i18n.addFavorite || '添加收藏')"
         @click.stop="$emit('toggleFavorite', item.path)"
@@ -49,8 +36,8 @@
         variant="ghost"
         size="xsmall"
         icon="chevronRight"
-        :icon-size="13"
-        class="folder-action-btn"
+        :icon-size="12"
+        class="db-action-btn"
         :title="i18n.browse || '浏览'"
         @click.stop="$emit('navigate', item)"
       />
@@ -58,8 +45,8 @@
         variant="ghost"
         size="xsmall"
         icon="openInNew"
-        :icon-size="13"
-        class="folder-action-btn"
+        :icon-size="12"
+        class="db-action-btn"
         :title="i18n.open || '打开'"
         @click.stop="$emit('open', item.path)"
       />
@@ -67,8 +54,8 @@
         variant="ghost"
         size="xsmall"
         icon="contentCopy"
-        :icon-size="13"
-        class="folder-action-btn"
+        :icon-size="12"
+        class="db-action-btn"
         :title="i18n.copyPath || '复制路径'"
         @click.stop="$emit('copyPath', item.path)"
       />

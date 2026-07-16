@@ -1,0 +1,87 @@
+@use "./index.scss" as *;
+@use "@/variables.scss" as *;
+
+.db-address-bar {
+  @include flex-align-center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  background: var(--b3-theme-surface);
+  border-bottom: 1px solid $border;
+  flex-shrink: 0;
+}
+
+.db-address-left {
+  @include flex-align-center;
+  gap: $spacing-1;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.db-back-btn {
+  flex-shrink: 0;
+}
+
+.db-breadcrumb {
+  @include flex-align-center;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+  @include scrollbar(3px, 3px);
+}
+
+.db-crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 5px;
+  border: none;
+  background: transparent;
+  border-radius: 3px;
+  font-family: $vp-mono;
+  font-size: 11px;
+  font-weight: $font-weight-medium;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  transition: all 0.12s;
+  flex-shrink: 0;
+
+  &:hover {
+    color: var(--b3-theme-primary);
+    background: var(--b3-theme-primary-lightest);
+  }
+
+  &:last-child {
+    color: var(--b3-theme-on-background);
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.db-crumb-sep {
+  flex-shrink: 0;
+  font-size: 9px;
+  color: var(--b3-theme-on-surface-light);
+  opacity: 0.35;
+  margin: 0 1px;
+}
+
+.db-toolbar-actions {
+  @include flex-align-center;
+  gap: 2px;
+  flex-shrink: 0;
+  margin-left: $spacing-1;
+}
+
+.db-item-count {
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+  padding: 1px 5px;
+  background: var(--b3-theme-surface-lighter);
+  border-radius: 3px;
+  white-space: nowrap;
+  margin-right: 2px;
+}

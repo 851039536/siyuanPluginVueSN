@@ -1,23 +1,34 @@
-<!-- 文件夹/文件列表组件 — 展示当前目录内容，支持导航、收藏、打开、复制路径 -->
+<!-- 文件列表内容区 — 地址栏 + 列标题 + 列表项 + 加载/空状态 + 底栏 -->
 <template>
-  <div class="folder-list">
-    <FolderListHeader
+  <div class="db-content">
+    <AddressBar
       :current-path="currentPath"
       :expanded-disk="expandedDisk"
-      :current-display-path="currentDisplayPath"
+      :path-segments="pathSegments"
       :loading-folders="loadingFolders"
-      :cache-status="currentFolderCache"
       :item-count="folders.length"
       :i18n="i18n"
       @back="$emit('back')"
-      @refresh="$emit('refresh')"
+      @navigate-root="$emit('navigateRoot')"
+      @navigate-path="$emit('navigatePath', $event)"
       @open="$emit('open', $event)"
       @copy-path="$emit('copyPath', $event)"
+      @refresh="$emit('refresh')"
     />
 
     <div
+      v-if="folders.length > 0"
+      class="db-column-headers"
+    >
+      <span class="db-col-name">{{ i18n.name || '名称' }}</span>
+      <span class="db-col-size">{{ i18n.size || '大小' }}</span>
+      <span class="db-col-date">{{ i18n.date || '修改日期' }}</span>
+      <span class="db-col-actions" />
+    </div>
+
+    <div
       v-if="!loadingFolders"
-      class="folder-items"
+      class="db-folder-items"
     >
       <FolderListItem
         v-for="item in folders"
@@ -34,11 +45,11 @@
       />
       <div
         v-if="folders.length === 0"
-        class="empty-state"
+        class="db-empty"
       >
         <IconWrapper
           name="folder"
-          :size="40"
+          :size="36"
           color="var(--b3-theme-on-surface-light)"
         />
         <p>{{ i18n.emptyFolder || '此文件夹为空' }}</p>
@@ -46,16 +57,31 @@
     </div>
     <div
       v-else
-      class="loading-wrapper"
+      class="db-loading"
     >
       <Loader />
+    </div>
+
+    <div class="db-status-bar">
+      <span class="db-status-left">
+        <span
+          v-if="currentFolderCache.text"
+          class="db-status-cache"
+          :class="{ expired: currentFolderCache.isExpired }"
+          :title="currentFolderCache.tooltip"
+        >{{ currentFolderCache.text }}</span>
+        <span v-if="expandedDisk">{{ expandedDisk }}</span>
+      </span>
+      <span class="db-status-right">
+        {{ folders.length }} {{ i18n.items || '项' }}
+      </span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { CacheStatus, DiskBrowserI18n, FolderInfo } from "../types"
-import FolderListHeader from "./FolderListHeader.vue"
+import AddressBar from "./AddressBar.vue"
 import FolderListItem from "./FolderListItem.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Loader from "@/components/Loader.vue"
@@ -64,7 +90,7 @@ interface Props {
   folders: FolderInfo[]
   currentPath: string
   expandedDisk: string
-  currentDisplayPath: string
+  pathSegments: string[]
   loadingFolders: boolean
   currentFolderCache: CacheStatus
   favoriteSet: Set<string>
@@ -75,9 +101,11 @@ interface Props {
 defineProps<Props>()
 defineEmits<{
   back: []
-  refresh: []
+  navigateRoot: []
+  navigatePath: [index: number]
   open: [path: string]
   copyPath: [path: string]
+  refresh: []
   itemDblclick: [item: FolderInfo]
   toggleFavorite: [path: string]
   navigate: [item: FolderInfo]

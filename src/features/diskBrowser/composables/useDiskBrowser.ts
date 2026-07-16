@@ -25,6 +25,7 @@ import {
   isCacheValid,
   processFolderList,
   processItemList,
+  readDirectoryContents,
 } from "../utils"
 
 export function useDiskBrowser(
@@ -178,23 +179,24 @@ export function useDiskBrowser(
     folders.value = []
 
     try {
-      if (getNodeProcessModules()) {
+      const displayPath = /^[A-Z]:$/.test(path) ? `${path}\\` : path
+      let itemList = readDirectoryContents(displayPath)
+
+      if (!itemList) {
         const isDriveRoot = /^[A-Z]:$/.test(path)
         const command = isDriveRoot
           ? `powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -Path '${path}\\' -Directory -ErrorAction SilentlyContinue | Where-Object { -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) } | Select-Object -ExpandProperty Name | ForEach-Object { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Write-Output $_ }"`
           : `powershell -NoProfile -ExecutionPolicy Bypass -Command "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-ChildItem -Path '${path}' -ErrorAction SilentlyContinue | Where-Object { -not $_.Attributes.HasFlag([System.IO.FileAttributes]::Hidden) } | Select-Object Name, @{Name='IsFile';Expression={-not $_.PSIsContainer}}, Length, LastWriteTime | ConvertTo-Json -Compress"`
 
         const { stdout } = await retryExec(command, 1, 5000, "获取文件夹列表")
-
-        const itemList = isDriveRoot
+        itemList = isDriveRoot
           ? processFolderList(stdout, path)
           : processItemList(stdout, path)
+      }
 
+      if (itemList) {
         folders.value = itemList
-        folderCacheMap.value.set(path, {
-          data: itemList,
-          timestamp: Date.now(),
-        })
+        folderCacheMap.value.set(path, { data: itemList, timestamp: Date.now() })
       }
     } catch (error) {
       console.error("加载文件夹失败:", error)

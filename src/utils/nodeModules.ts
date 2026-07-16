@@ -50,3 +50,13 @@ export function getNodeFsPathOs(): { fs: any, path: any, os: any } | null {
     return null
   }
 }
+
+/** 获取 Electron 模块（shell） */
+export function getElectronModules(): { shell: any } | null {
+  try {
+    const { shell } = (window as any).require("electron")
+    return { shell }
+  } catch {
+    return null
+  }
+}

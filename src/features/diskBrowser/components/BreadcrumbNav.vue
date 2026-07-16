@@ -1,3 +1,4 @@
+<!-- 面包屑导航组件 — 显示当前路径层级，支持点击跳转任意层级 -->
 <template>
   <div
     v-if="currentPath"
@@ -50,49 +51,6 @@ defineEmits<{
 </script>
 
 <style scoped lang="scss">
-@use "../styles/index.scss" as *;
-
-.breadcrumb-nav {
-  @include flex-align-center;
-  padding: 6px 14px;
-  background: var(--b3-theme-surface);
-  border-bottom: 1px solid $border;
-  overflow-x: auto;
-  white-space: nowrap;
-  flex-shrink: 0;
-  @include scrollbar(3px, 3px);
-}
-
-.breadcrumb-segment {
-  @include flex-align-center;
-}
-
-.breadcrumb-sep {
-  font-family: $mono;
-  font-size: 10px;
-  color: var(--b3-theme-on-surface-light);
-  opacity: 0.3;
-  margin: 0 2px;
-}
-
-.breadcrumb-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 6px;
-  border: none;
-  background: transparent;
-  border-radius: 3px;
-  font-family: $mono;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--b3-theme-on-surface);
-  cursor: pointer;
-  transition: all 0.12s;
-
-  &:hover {
-    color: var(--b3-theme-primary);
-    background: var(--b3-theme-primary-lightest);
-  }
-}
+@use "../styles/BreadcrumbNav.scss";
+@use "../styles/index.scss";
 </style>

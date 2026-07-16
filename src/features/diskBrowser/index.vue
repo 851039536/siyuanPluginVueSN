@@ -1,3 +1,4 @@
+<!-- 磁盘浏览器 Dock 面板根组件 — 磁盘卡片、面包屑导航、文件夹列表容器 -->
 <template>
   <div class="disk-browser-panel">
     <PanelHeader
@@ -106,7 +107,7 @@ const {
   navigateToFavorite,
   copyPathToClipboard,
   formatDate,
-} = useDiskBrowser(props.plugin, props.i18n, props.storage)
+} = useDiskBrowser(props.i18n, props.storage)
 </script>
 
 <style scoped lang="scss">

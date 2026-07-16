@@ -526,7 +526,6 @@
     "openDiskFailed": "Failed to open",
     "loadFoldersFailed": "Failed to load folders",
     "opened": "Opened",
-    "loading": "Loading...",
     "refreshing": "Refreshing...",
     "cacheExpired": "Cache expired",
     "minutesRemaining": "min",
@@ -549,7 +548,10 @@
     "daysAgo": "days ago",
     "invalidPath": "Invalid path",
     "navigatedToFavorite": "Navigated to favorite",
-    "navigationFailed": "Navigation failed"
+    "navigationFailed": "Navigation failed",
+    "name": "Name",
+    "size": "Size",
+    "date": "Date Modified"
   },
   "docAnalysis": {
     "title": "Document Analysis",

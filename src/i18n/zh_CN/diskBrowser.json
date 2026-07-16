@@ -16,7 +16,6 @@
     "openDiskFailed": "打开失败",
     "loadFoldersFailed": "加载文件夹失败",
     "opened": "已打开",
-    "loading": "加载中...",
     "refreshing": "正在刷新...",
     "cacheExpired": "缓存已过期",
     "minutesRemaining": "分钟",
@@ -39,6 +38,9 @@
     "daysAgo": "天前",
     "invalidPath": "无效路径",
     "navigatedToFavorite": "已跳转到收藏夹",
-    "navigationFailed": "导航失败"
+    "navigationFailed": "导航失败",
+    "name": "名称",
+    "size": "大小",
+    "date": "修改日期"
   }
 }

@@ -56,16 +56,15 @@ export function createExecRunner() {
           return await execWithTimeout(command, timeout)
         } catch (error) {
           lastError = error as Error
-          if (i === retries) {
-            throw new Error(
-              `${operationType}失败，重试${retries}次后仍失败: ${lastError.message}`,
-            )
+          if (i < retries) {
+            const delay = Math.min(1000 * 2 ** i, 3000)
+            await new Promise((resolve) => setTimeout(resolve, delay))
           }
-          const delay = Math.min(1000 * 2 ** i, 3000)
-          await new Promise((resolve) => setTimeout(resolve, delay))
         }
       }
-      throw lastError || new Error("未知错误")
+      throw new Error(
+        `${operationType}失败，重试${retries}次后仍失败: ${lastError?.message || "未知错误"}`,
+      )
     })
 
     execQueue = currentTask.then(() => {}, () => {}) as Promise<void>
@@ -77,17 +76,15 @@ export function createExecRunner() {
 
 /** 解析 PowerShell 目录列表输出（纯文件夹名） */
 export function processFolderList(stdout: string, basePath: string): FolderInfo[] {
-  return (
-    stdout
-      ?.trim()
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((name) => name && name !== "." && name !== "..")
-      .map((name) => ({
-        name,
-        path: buildPath(basePath, name),
-      })) || []
-  )
+  return stdout
+    .trim()
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((name) => name && name !== "." && name !== "..")
+    .map((name) => ({
+      name,
+      path: buildPath(basePath, name),
+    }))
 }
 
 /** 解析 PowerShell 文件/文件夹列表输出（含大小、修改时间） */
@@ -176,9 +173,7 @@ export function computeCacheStatus<T>(
   }
 }
 
-export function getCacheExpiryTime(): number {
-  return 60 * 60 * 1000
-}
+export const CACHE_EXPIRY_TIME = 60 * 60 * 1000
 
 export function isCacheValid<T>(
   cacheData: CacheData<T> | null | undefined,
@@ -189,8 +184,7 @@ export function isCacheValid<T>(
 }
 
 export function buildPath(basePath: string, name: string): string {
-  const separator =
-    basePath.endsWith("\\") || basePath.endsWith(":") ? "" : "\\"
+  const separator = basePath.endsWith("\\") ? "" : "\\"
   return `${basePath}${separator}${name}`.replace(/\\\\/g, "\\")
 }
 

@@ -1,0 +1,75 @@
+@use "./index.scss" as *;
+@use "@/index.scss" as *;
+
+.folder-item {
+  @include flex-align-center;
+  gap: 10px;
+  padding: 8px 10px;
+  margin-bottom: 3px;
+  background: var(--b3-theme-surface);
+  cursor: pointer;
+  @include border-card;
+
+  &:hover {
+    .folder-actions {
+      opacity: 1;
+    }
+  }
+
+  &.is-file {
+    .folder-icon {
+      color: var(--b3-theme-on-surface-light);
+    }
+
+    .folder-name {
+      font-family: $mono;
+    }
+  }
+}
+
+.folder-icon {
+  flex-shrink: 0;
+  @include flex-center;
+  color: var(--b3-theme-primary);
+}
+
+.folder-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.folder-name {
+  font-size: 12px;
+  color: var(--b3-theme-on-background);
+  @include text-ellipsis;
+}
+
+.folder-meta {
+  @include flex-align-center;
+  gap: 10px;
+}
+
+.file-size,
+.modified-time {
+  font-family: $mono;
+  font-size: 10px;
+  color: var(--b3-theme-on-surface-light);
+  opacity: 0.6;
+}
+
+.folder-actions {
+  flex-shrink: 0;
+  @include flex-align-center;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.folder-action-btn {
+  &.is-favorite {
+    color: var(--b3-theme-primary);
+  }
+}

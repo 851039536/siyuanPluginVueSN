@@ -1,4 +1,4 @@
-import type { Plugin } from "siyuan"
+// 磁盘浏览器核心逻辑 composable — 磁盘加载、文件夹浏览、缓存管理、收藏夹操作
 import type {
   CacheData,
   CacheStatus,
@@ -15,45 +15,19 @@ import {
   ref,
 } from "vue"
 import { copyToClipboard } from "@/utils/domUtils"
-import { getNodeProcessModules } from "@/utils/nodeModules"
-import { getDefaultDisks } from "../types"
+import { getElectronModules, getNodeProcessModules } from "@/utils/nodeModules"
 import {
-  buildPath,
   computeCacheStatus,
+  createExecRunner,
   formatDate,
   getCacheExpiryTime,
+  getDefaultDisks,
   isCacheValid,
+  processFolderList,
+  processItemList,
 } from "../utils"
 
-const DEBOUNCE_DELAY = 500
-
-// 缓存 promisify(exec)，避免每次调用都重新创建
-let _execAsync: ((cmd: string, opts?: any) => Promise<{ stdout: string, stderr: string }>) | null = null
-
-function getExecAsync() {
-  if (_execAsync) return _execAsync
-  const node = getNodeProcessModules()
-  if (!node) return null
-  _execAsync = node.util.promisify(node.child_process.exec)
-  return _execAsync
-}
-
-async function execWithTimeout(
-  command: string,
-  timeout = 3000,
-): Promise<{ stdout: string, stderr: string }> {
-  const exec = getExecAsync()
-  if (!exec) throw new Error("当前环境不支持执行命令")
-
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    setTimeout(() => reject(new Error("执行超时")), timeout)
-  })
-
-  return Promise.race([exec(command), timeoutPromise])
-}
-
 export function useDiskBrowser(
-  plugin: Plugin,
   i18n: DiskBrowserI18n,
   storage: DiskBrowserStorage,
 ) {
@@ -72,46 +46,7 @@ export function useDiskBrowser(
 
   const cacheExpiryTime = getCacheExpiryTime()
 
-  // 并发控制 — Promise 链式队列替代 spin-wait 忙等待
-  let execQueue = Promise.resolve()
-  let lastExecutionTime = 0
-
-  async function retryExec(
-    command: string,
-    retries = 2,
-    timeout = 3000,
-    operationType = "unknown",
-  ): Promise<{ stdout: string, stderr: string }> {
-    const currentTask = execQueue.then(async () => {
-      // 防抖延迟
-      const waitTime = DEBOUNCE_DELAY - (Date.now() - lastExecutionTime)
-      if (waitTime > 0) {
-        await new Promise((resolve) => setTimeout(resolve, waitTime))
-      }
-      lastExecutionTime = Date.now()
-
-      let lastError: Error | null = null
-      for (let i = 0; i <= retries; i++) {
-        try {
-          return await execWithTimeout(command, timeout)
-        } catch (error) {
-          lastError = error as Error
-          if (i === retries) {
-            throw new Error(
-              `${operationType}失败，重试${retries}次后仍失败: ${lastError.message}`,
-            )
-          }
-          const delay = Math.min(1000 * 2 ** i, 3000)
-          await new Promise((resolve) => setTimeout(resolve, delay))
-        }
-      }
-      throw lastError || new Error("未知错误")
-    })
-
-    // 链入队列（即使前序任务失败也不阻断后续任务）
-    execQueue = currentTask.then(() => {}, () => {}) as Promise<void>
-    return currentTask
-  }
+  const { retryExec } = createExecRunner()
 
   const pathSegments = computed(() => {
     if (!currentPath.value || currentPath.value === expandedDisk.value)
@@ -244,54 +179,6 @@ export function useDiskBrowser(
     }
   }
 
-  function processFolderList(
-    stdout: string,
-    basePath: string,
-  ): FolderInfo[] {
-    return (
-      stdout
-        ?.trim()
-        .split("\n")
-        .map((line) => line.trim())
-        .filter((name) => name && name !== "." && name !== "..")
-        .map((name) => ({
-          name,
-          path: buildPath(basePath, name),
-        })) || []
-    )
-  }
-
-  function processItemList(stdout: string, path: string): FolderInfo[] {
-    const itemList: FolderInfo[] = []
-    try {
-      const itemData = JSON.parse(stdout)
-      const itemArray = Array.isArray(itemData) ? itemData : [itemData]
-
-      for (const item of itemArray) {
-        if (item?.Name) {
-          const itemName = String(item.Name).trim()
-          itemList.push({
-            name: itemName,
-            path: buildPath(path, itemName),
-            isFile: item.IsFile || false,
-            size: item.Length ? Number.parseInt(item.Length) : undefined,
-            modifiedTime: item.LastWriteTime || undefined,
-          })
-        }
-      }
-
-      itemList.sort((a, b) => {
-        if (a.isFile === b.isFile) {
-          return a.name.localeCompare(b.name, "zh-CN")
-        }
-        return a.isFile ? 1 : -1
-      })
-    } catch {
-      // 解析失败返回空列表
-    }
-    return itemList
-  }
-
   /**
    * 统一的文件夹加载函数（合并原 loadFolders / loadFoldersFromPath）
    * @param path 磁盘根路径（如 C:）或子目录路径
@@ -338,7 +225,8 @@ export function useDiskBrowser(
   }
 
   function openPath(path: string): void {
-    if (!window.require) {
+    const electron = getElectronModules()
+    if (!electron) {
       showMessage(
         i18n.openDiskNotSupported || "当前环境不支持打开文件夹",
         3000,
@@ -347,8 +235,7 @@ export function useDiskBrowser(
       return
     }
     try {
-      const { shell } = window.require("electron")
-      shell.openPath(path)
+      electron.shell.openPath(path)
       showMessage(i18n.opened || "已打开", 2000, "info")
     } catch (error) {
       console.error("打开失败:", error)

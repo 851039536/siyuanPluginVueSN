@@ -1,3 +1,4 @@
+// 磁盘浏览器类型定义 — DiskInfo、FolderInfo、缓存数据结构及默认磁盘列表
 export interface DiskInfo {
   drive: string
   label?: string
@@ -68,9 +69,3 @@ export interface DiskBrowserI18n {
 }
 
 export const STORAGE_KEY = "disk-browser-settings"
-
-const DEFAULT_DISKS = ["C:", "D:", "E:", "F:", "G:", "H:"]
-
-export function getDefaultDisks(): DiskInfo[] {
-  return DEFAULT_DISKS.map((drive) => ({ drive }))
-}

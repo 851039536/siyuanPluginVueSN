@@ -1,3 +1,4 @@
+<!-- 面板头部组件 — 标题、缓存状态标签、刷新按钮 -->
 <template>
   <div class="disk-browser-header">
     <h3 class="header-title">
@@ -50,37 +51,6 @@ defineEmits<{
 </script>
 
 <style scoped lang="scss">
-@use "../styles/index.scss" as *;
-
-.disk-browser-header {
-  @include flex-align-center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  border-bottom: 1px solid $border;
-  flex-shrink: 0;
-}
-
-.header-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--b3-theme-on-background);
-}
-
-.header-actions {
-  @include flex-align-center;
-  gap: 6px;
-}
-
-.cache-tag {
-  color: var(--b3-theme-primary);
-  @include cache-tag-base;
-
-  &.expired {
-    animation: pulse 2s ease-in-out infinite;
-  }
-}
+@use "../styles/PanelHeader.scss";
+@use "../styles/index.scss";
 </style>

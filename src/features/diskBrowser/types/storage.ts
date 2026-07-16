@@ -1,3 +1,4 @@
+// 磁盘浏览器存储层 — 收藏夹持久化（PluginStorage + TypedStorage）
 import type { Plugin } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"

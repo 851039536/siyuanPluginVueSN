@@ -1,3 +1,4 @@
+<!-- 收藏夹区域组件 — 横向滚动展示已收藏文件夹，支持导航和移除 -->
 <template>
   <div
     v-if="favoriteFolders.length > 0"
@@ -67,73 +68,6 @@ defineEmits<{
 </script>
 
 <style scoped lang="scss">
-@use "../styles/index.scss" as *;
-
-.favorites-section {
-  border-top: 1px solid $border;
-  flex-shrink: 0;
-}
-
-.favorites-header {
-  @include flex-align-center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-bottom: 1px dashed $border;
-
-  span {
-    @include meta-label;
-    flex: 1;
-    color: var(--b3-theme-on-surface);
-  }
-}
-
-.favorites-list-horizontal {
-  @include flex-align-center;
-  gap: 6px;
-  padding: 8px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  @include scrollbar(4px, 4px);
-}
-
-.favorite-card {
-  @include flex-align-center;
-  gap: 6px;
-  min-width: 110px;
-  max-width: 170px;
-  padding: 5px 10px;
-  background: var(--b3-theme-surface);
-  cursor: pointer;
-  flex-shrink: 0;
-  @include border-card;
-
-  &:hover {
-    .favorite-remove-btn {
-      opacity: 1;
-    }
-  }
-}
-
-.favorite-icon {
-  @include icon-container(22px);
-}
-
-.favorite-name {
-  flex: 1;
-  min-width: 0;
-  font-family: $mono;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--b3-theme-on-background);
-  @include text-ellipsis;
-}
-
-.favorite-remove-btn {
-  opacity: 0;
-  flex-shrink: 0;
-
-  &:hover {
-    color: var(--b3-theme-error) !important;
-  }
-}
+@use "../styles/FavoritesSection.scss";
+@use "../styles/index.scss";
 </style>

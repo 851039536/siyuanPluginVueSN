@@ -192,81 +192,7 @@
 }
 
 // ============ 分割线 ============
-.section-divider {
-  border-top: 1px dashed var(--b3-border-color);
-  margin: 6px 0;
-}
-
-// ============ 分区 ============
-.stat-section {
-  padding: 2px 0;
-  border-bottom: 1px solid var(--b3-border-color-light, rgba(0,0,0,0.04));
-
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.45;
-  margin-bottom: 6px;
-  cursor: pointer;
-  user-select: none;
-
-  &:hover {
-    color: var(--b3-theme-primary);
-  }
-
-  .section-toggle-icon {
-    font-size: $font-size-sm;
-    color: var(--b3-theme-on-surface-variant);
-    flex-shrink: 0;
-    transition: transform 0.15s ease;
-  }
-
-  .section-hint {
-    font-weight: $font-weight-normal;
-    font-size: $font-size-2xs;
-    color: var(--b3-theme-on-surface-variant);
-    margin-left: auto;
-  }
-
-  .toolbar-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    padding: 2px 8px;
-    border: 1px solid var(--b3-border-color);
-    border-radius: $vp-radius;
-    background: transparent;
-    color: var(--b3-theme-on-surface-variant);
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-normal;
-    letter-spacing: 0;
-    text-transform: none;
-    opacity: 1;
-    cursor: pointer;
-    white-space: nowrap;
-    margin-left: auto;
-
-    &:hover {
-      background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
-    }
-
-    &.active {
-      border-color: var(--b3-theme-primary);
-      color: var(--b3-theme-primary);
-      background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
-    }
-  }
-}
+// （已移除，所有分区统一直铺）
 
 // ============ 卡片行 ============
 .section-cards {
@@ -275,50 +201,31 @@
   flex-wrap: wrap;
 }
 
-// ============ 深度分析网格 ============
-.advanced-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.advanced-group {
+// ============ 工具栏按钮 ============
+.toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
   border: 1px solid var(--b3-border-color);
   border-radius: $vp-radius;
-  padding: 8px;
+  background: transparent;
+  color: var(--b3-theme-on-surface-variant);
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-normal;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+  white-space: nowrap;
 
-  &--full {
-    grid-column: 1 / -1;
+  &:hover {
+    background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
   }
 
-  .advanced-group-title {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-bold;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    opacity: 0.45;
-  margin-bottom: 2px;
-  }
-
-  .advanced-group-hint {
-    font-weight: $font-weight-normal;
-    font-size: $font-size-2xs;
-    color: var(--b3-theme-on-surface-variant);
-    margin-left: auto;
-    letter-spacing: 0;
-    text-transform: none;
-  }
-
-  .section-cards {
-    gap: 4px;
-  }
-
-  .stat-card {
-    min-width: 48px;
-    padding: 6px 4px 5px;
+  &.active {
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+    background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
   }
 }
 
@@ -419,10 +326,34 @@
 }
 
 // ============ 深度分布图（水平条） ============
+.depth-chart-title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.45;
+  margin-bottom: 6px;
+
+  .depth-chart-hint {
+    font-weight: $font-weight-normal;
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-on-surface-variant);
+    margin-left: auto;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+}
+
 .depth-chart-v2 {
   display: flex;
   flex-direction: column;
   gap: 3px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--b3-border-color);
 }
 
 .depth-bar-v2 {

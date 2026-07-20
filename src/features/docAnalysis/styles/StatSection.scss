@@ -5,27 +5,19 @@
   align-items: center;
   gap: 4px;
   padding: 8px 14px;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-  color: var(--b3-theme-on-surface);
-  cursor: pointer;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface-variant);
+  opacity: 0.45;
   user-select: none;
-
-  &:hover {
-    background: var(--b3-theme-surface-light, rgba(0, 0, 0, .03));
-  }
-
-  .section-toggle-icon {
-    font-size: $font-size-sm;
-  }
-
-  .section-hint {
-    font-size: $font-size-2xs;
-    color: var(--b3-theme-on-surface-variant);
-    font-weight: $font-weight-normal;
-  }
 
   .section-header-spacer {
     flex: 1;
   }
+}
+
+.section-body {
+  padding: 0 12px;
 }

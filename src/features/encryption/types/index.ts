@@ -10,13 +10,11 @@ import {
   deriveAESKey,
 } from "@/utils/cryptoPrimitives"
 
+const SALT = "siyuan-encryption-salt-v1"
+
 export const CONSTANTS = {
-  STORAGE_KEY: "encryption_password.json",
   ENCRYPTED_PATTERN: /^\[encrypted\](.*)\[\/encrypted\]$/,
   ENCRYPTED_WRAPPER: (text: string) => `[encrypted]${text}[/encrypted]`,
-  SALT: "siyuan-encryption-salt-v1",
-  PBKDF2_ITERATIONS: 100000,
-  KEY_LENGTH: 256,
 } as const
 
 /**
@@ -24,8 +22,8 @@ export const CONSTANTS = {
  */
 export async function deriveKey(password: string): Promise<CryptoKey> {
   const passwordData = new TextEncoder().encode(password)
-  const salt = new TextEncoder().encode(CONSTANTS.SALT)
-  return deriveAESKey(passwordData, salt, CONSTANTS.PBKDF2_ITERATIONS, CONSTANTS.KEY_LENGTH)
+  const salt = new TextEncoder().encode(SALT)
+  return deriveAESKey(passwordData, salt)
 }
 
 /**

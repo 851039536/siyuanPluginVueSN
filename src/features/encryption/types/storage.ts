@@ -5,7 +5,8 @@
 import { Plugin } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
-import { CONSTANTS } from "./index"
+
+const STORAGE_KEY = "encryption_password.json"
 
 /**
  * 加密密码存储结构
@@ -24,7 +25,7 @@ export class EncryptionStorage {
 
   constructor(plugin: Plugin) {
     this.storage = new PluginStorage(plugin)
-    this.passwordData = new TypedStorage(this.storage, CONSTANTS.STORAGE_KEY)
+    this.passwordData = new TypedStorage(this.storage, STORAGE_KEY)
   }
 
   /**

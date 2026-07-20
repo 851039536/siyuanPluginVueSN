@@ -1,5 +1,5 @@
 @use "@/variables.scss" as *;
-@use "./codex-tokens" as *;
+@use "./mixins" as *;
 
 .doc-analysis-filter {
   padding: 6px 10px;
@@ -30,13 +30,12 @@
     border-radius: $vp-radius;
     background: var(--b3-theme-background);
     color: var(--b3-theme-on-background);
-    font-size: -size-xs;
+    font-size: $font-size-xs;
     outline: none;
     min-width: 0;
 
     &:focus {
       border-color: var(--b3-theme-primary);
-      box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
     }
   }
 
@@ -74,14 +73,13 @@
     border-radius: $vp-radius;
     background: var(--b3-theme-background);
     color: var(--b3-theme-on-background);
-    font-size: -size-xs;
+    font-size: $font-size-xs;
     outline: none;
     cursor: pointer;
     min-width: 0;
 
     &:focus {
       border-color: var(--b3-theme-primary);
-      box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
     }
   }
 
@@ -91,7 +89,7 @@
   }
 
   .filter-separator {
-    font-size: -size-xs;
+    font-size: $font-size-xs;
     color: var(--b3-theme-on-surface-variant);
     flex-shrink: 0;
   }
@@ -124,7 +122,7 @@
     border-radius: $vp-radius;
     background: var(--b3-theme-primary);
     color: var(--b3-theme-on-primary);
-    font-size: -size-xs;
+    font-size: $font-size-xs;
     cursor: pointer;
     flex-shrink: 0;
     white-space: nowrap;
@@ -139,7 +137,7 @@
     }
 
     .btn-icon {
-      font-size: -size-sm;
+      font-size: $font-size-sm;
     }
   }
 }

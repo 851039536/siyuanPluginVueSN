@@ -1,3 +1,4 @@
+<!-- 文档分析功能 - Dock 侧边栏主面板，含统计/列表/排版三 Tab -->
 <template>
   <div class="doc-analysis-panel">
     <!-- Tab 切换栏 -->
@@ -104,7 +105,6 @@
         :bookmark-details="bookmarkDetails"
         :bookmark-detail-visible="bookmarkDetailVisible"
         :bookmark-detail-loading="bookmarkDetailLoading"
-        :collapsible="false"
         @selectCategory="handleSelectCategory"
         @showBookmarkDetails="fetchBookmarkDetails"
         @selectBookmark="queryByBookmark"
@@ -335,7 +335,6 @@
       class="tab-panel publish-tab-panel"
     >
       <PublishPanel
-        :i18n="props.i18n?.docAnalysis || {}"
         :plugin="props.plugin"
         :doc-id="publishDocId"
       />
@@ -389,7 +388,7 @@ import {
   useDocAnalysis,
 } from "./composables/useDocAnalysis"
 import { getCategoryLabel } from "./types/index"
-import { DEFAULT_FILTER_OPTIONS } from "./types/storage"
+import { DEFAULT_FILTER_OPTIONS } from "./types/index"
 
 interface Props {
   i18n: Record<string, Record<string, string>>

@@ -1,3 +1,4 @@
+<!-- 平台管理弹窗 - 平台列表的增删改/排序/隐藏 -->
 <template>
   <div
     v-if="visible"
@@ -156,7 +157,8 @@
 import { computed, ref, watch } from "vue"
 import { Icon } from "@iconify/vue"
 import type { PlatformMeta } from "../types/index"
-import { PLATFORM_META, DEFAULT_PLATFORM_META } from "../composables/useDocAnalysis"
+import { DEFAULT_PLATFORM_META } from "../types/index"
+import { PLATFORM_META } from "../composables/useDocAnalysis"
 
 interface Props {
   visible: boolean

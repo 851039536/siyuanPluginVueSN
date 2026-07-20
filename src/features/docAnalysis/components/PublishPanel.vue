@@ -1,3 +1,4 @@
+<!-- 发布面板组件 - Markdown 编辑器 + 微信排版预览 + 导出 -->
 <template>
   <div class="publish-panel">
     <!-- 顶部工具栏 -->
@@ -76,14 +77,12 @@
         <MarkdownEditor
           v-model="mdText"
           :placeholder="placeholderText"
-          @scroll="onEditorScroll"
         />
       </div>
       <div class="publish-divider" />
       <div class="publish-preview-pane">
         <PreviewPane
           :html="renderedHtml"
-          @scroll="onPreviewScroll"
         />
       </div>
     </div>
@@ -116,11 +115,11 @@ import type { PublishTheme } from "../types/index"
 import { parseMarkdown } from "../utils/mdRenderer"
 import { applyTheme, buildExportableHtml } from "../utils/themeApplicator"
 import { DEFAULT_THEME } from "../utils/themes"
+import { copyDocForPublish, openExternalPublish } from "../utils/publishActions"
 import MarkdownEditor from "./MarkdownEditor.vue"
 import PreviewPane from "./PreviewPane.vue"
 
 interface Props {
-  i18n: Record<string, string>
   plugin: Plugin
   docId?: string
   initialMd?: string
@@ -134,7 +133,6 @@ const props = defineProps<Props>()
 const mdText = ref("")
 const currentTheme = ref<PublishTheme>(DEFAULT_THEME)
 const renderedHtml = ref("")
-const isRendering = ref(false)
 const showTip = ref(true)
 
 // ============================================================
@@ -206,19 +204,14 @@ function render() {
     return
   }
 
-  isRendering.value = true
   try {
-    // 1. marked + highlight.js 解析 Markdown
     const rawHtml = parseMarkdown(md)
-    // 2. 注入主题样式
     const themedHtml = applyTheme(rawHtml, theme)
     renderedHtml.value = themedHtml
     lastRenderedMd = md
   } catch (e) {
     console.error("渲染 Markdown 失败:", e)
     renderedHtml.value = `<p style="color:red;">渲染失败: ${e instanceof Error ? e.message : "未知错误"}</p>`
-  } finally {
-    isRendering.value = false
   }
 }
 
@@ -262,22 +255,8 @@ function downloadHtml() {
 
 async function publishToDoocs() {
   if (!mdText.value) return
-  await copyToClipboard(mdText.value)
-  showMessage("Markdown 内容已复制，即将跳转到 md.doocs.org", 2000, "info")
-  setTimeout(() => {
-    window.open("https://md.doocs.org/", "_blank")
-  }, 400)
-}
-
-// ============================================================
-// 编辑器和预览滚动同步占位（后续可扩展）
-// ============================================================
-function onEditorScroll(_scrollTop: number) {
-  // 后续可在此实现双栏滚动同步
-}
-
-function onPreviewScroll(_scrollTop: number) {
-  // 后续可在此实现双栏滚动同步
+  const ok = await copyDocForPublish(props.docId || "", "")
+  if (ok) openExternalPublish("https://md.doocs.org/", "md.doocs.org", 400)
 }
 
 // ============================================================

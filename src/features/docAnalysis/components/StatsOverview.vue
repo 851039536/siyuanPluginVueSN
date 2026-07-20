@@ -456,6 +456,7 @@ import {
   ref,
 } from "vue"
 import { PLATFORM_META } from "../composables/useDocAnalysis"
+import { filterDuplicateGroups } from "../utils"
 import StatCard from "./StatCard.vue"
 import StatSection from "./StatSection.vue"
 import BarRow from "./BarRow.vue"
@@ -512,12 +513,9 @@ function cancelDupDialog() {
 // 重名过滤
 // ============================================================
 
-const effectiveDupGroups = computed(() => {
-  if (!props.duplicateNameFilter?.length) return props.duplicateGroups
-  const excludes = props.duplicateNameFilter.map((s) => s.trim().toLowerCase()).filter(Boolean)
-  if (!excludes.length) return props.duplicateGroups
-  return props.duplicateGroups.filter((g) => !excludes.some((e) => g.title.toLowerCase().includes(e)))
-})
+const effectiveDupGroups = computed(() =>
+  filterDuplicateGroups(props.duplicateGroups, props.duplicateNameFilter),
+)
 
 const effectiveDupDocs = computed(() =>
   effectiveDupGroups.value.reduce((sum, g) => sum + g.count, 0),

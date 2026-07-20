@@ -54,6 +54,7 @@ import {
   analyzeUpdateTime,
   analyzeWordCount,
 } from "../utils/docStatsAnalyzer"
+import { filterDuplicateGroups } from "../utils"
 
 /** 平台元数据（模块级响应式单例） */
 export const PLATFORM_META = ref<PlatformMeta[]>([...DEFAULT_PLATFORM_META])
@@ -397,11 +398,7 @@ export function useDocAnalysis(plugin: Plugin) {
 
     // 重名
     if (category === "duplicate") {
-      let groups = duplicateGroups.value
-      const excludes = duplicateNameFilter.value.map((s) => s.trim().toLowerCase()).filter(Boolean)
-      if (excludes.length) {
-        groups = groups.filter((g) => !excludes.some((e) => g.title.toLowerCase().includes(e)))
-      }
+      const groups = filterDuplicateGroups(duplicateGroups.value, duplicateNameFilter.value)
       const titles = groups.map((g) => g.title)
       if (titles.length === 0) { queryState.status = "empty"; queryState.hasQueried = true; setResults([]); return }
       await runDocQuery({ extraWhere: `AND b.content IN (${quoteSqlList(titles)})`, orderBy: "b.content ASC, content_size ASC" })

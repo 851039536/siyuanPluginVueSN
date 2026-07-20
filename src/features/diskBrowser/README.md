@@ -15,5 +15,5 @@
 
 - **Dock 面板** — `createVueDockApp` 注册为右侧边栏
 - **缓存策略** — 磁盘列表和文件夹内容分别缓存，1 小时过期
-- **并发控制** — PowerShell 命令通过防抖队列顺序执行
+- **读取方式** — wmic 获取磁盘信息，Node.js fs 同步读取目录内容
 - **持久化** — 收藏夹路径通过 PluginStorage / TypedStorage 保存

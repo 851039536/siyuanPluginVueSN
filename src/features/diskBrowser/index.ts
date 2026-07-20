@@ -23,7 +23,7 @@ export function registerDiskBrowser(plugin: Plugin) {
 
   createVueDockApp(plugin, DiskBrowserPanel, {
     icon: "iconFiles",
-    title: i18n.panelTitle || "本地磁盘",
+    title: i18n.panelTitle || "磁盘浏览器",
     type: "disk-browser-dock",
     width: 380,
     i18n,

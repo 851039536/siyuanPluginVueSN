@@ -122,7 +122,6 @@
 </template>
 
 <script setup lang="ts">
-import type { Plugin } from "siyuan"
 import type { DiskBrowserI18n } from "./types"
 import type { DiskBrowserStorage } from "./types/storage"
 import Button from "@/components/Button.vue"
@@ -134,7 +133,6 @@ import { formatSize, getFolderName } from "./utils"
 
 interface Props {
   i18n: DiskBrowserI18n
-  plugin: Plugin
   storage: DiskBrowserStorage
 }
 

@@ -76,7 +76,7 @@
   }
 
   .hero-value {
-    font-size: $font-size-2xl;
+    font-size: $font-size-lg;
     font-weight: 800;
     font-family: $vp-mono;
     color: var(--b3-theme-on-background);
@@ -199,7 +199,7 @@
 
 // ============ 分区 ============
 .stat-section {
-  padding: 8px 0;
+  padding: 2px 0;
   border-bottom: 1px solid var(--b3-border-color-light, rgba(0,0,0,0.04));
 
   &:last-child {
@@ -300,7 +300,7 @@
     letter-spacing: 0.06em;
     text-transform: uppercase;
     opacity: 0.45;
-    margin-bottom: 6px;
+  margin-bottom: 2px;
   }
 
   .advanced-group-hint {

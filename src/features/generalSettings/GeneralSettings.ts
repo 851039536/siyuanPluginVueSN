@@ -26,6 +26,8 @@ import {
   applyCodeBlockCollapse,
   applyCodeBlockEnhancedStyles,
   applyCodeBlockStyle,
+  applyDocumentFontStyles,
+  generateLevelDisplayCss,
   generateTabPinCSS,
   HEADING_LEVEL_MAPPINGS,
 } from "./utils/styles"
@@ -80,16 +82,12 @@ export class GeneralSettings {
   }
 
   private handleSettingsChange(settings: { moduleId: string, settings: Record<string, unknown> }) {
-    if (settings.moduleId === "font") {
-      this.applyGlobalFontStyles(settings.settings as unknown as FontSettings)
-    } else if (settings.moduleId === "codeblock") {
+    if (settings.moduleId === "codeblock") {
       this.applyCodeBlockStyleFromSettings(settings.settings as unknown as CodeBlockSettings)
     } else if (settings.moduleId === "heading") {
       this.applyHeadingStyles(settings.settings as unknown as HeadingSettings)
-    } else if (settings.moduleId === "list") {
-      this.applyListStyles(settings.settings as unknown as ListSettings)
     } else if (settings.moduleId === "documentFont") {
-      this.applyDocumentFontStyles(settings.settings as unknown as DocumentFontSettings)
+      applyDocumentFontStyles(settings.settings as unknown as DocumentFontSettings)
     } else if (settings.moduleId === "tableStyle") {
       this.applyTableStyles(settings.settings as unknown as TableStyleSettings)
     } else if (settings.moduleId === "listStyle") {
@@ -222,103 +220,8 @@ export class GeneralSettings {
     try {
       const settings = await this.storage.documentFont.load()
       if (settings) {
-        this.applyDocumentFontStyles(settings)
+        applyDocumentFontStyles(settings)
       }
-    } catch (error) {
-      console.error("应用文档字体样式失败:", error)
-    }
-  }
-
-  private applyDocumentFontStyles(fontSettings: DocumentFontSettings) {
-    try {
-      if (!fontSettings.enabled) {
-        removeStyle("document-font-settings")
-        return
-      }
-
-      const fontFamily = fontSettings.fontFamily
-        ? `'${fontSettings.fontFamily}', `
-        : ""
-
-      const css = `
-        /* 编辑器内容区域 - 基础样式 */
-        .protyle-wysiwyg {
-          font-family: ${fontFamily}var(--b3-font-family) !important;
-          font-size: ${fontSettings.fontSize}px !important;
-          letter-spacing: ${fontSettings.letterSpacing}px !important;
-          font-weight: ${fontSettings.fontWeight} !important;
-        }
-
-        /* 行高 - 需要应用到具体元素 */
-        .protyle-wysiwyg [data-node-id][data-type="NodeParagraph"],
-        .protyle-wysiwyg [data-node-id][data-type="NodeParagraph"] p,
-        .protyle-wysiwyg [data-node-id][data-type="NodeParagraph"] div,
-        .protyle-wysiwyg [data-node-id][data-type="NodeHeading"],
-        .protyle-wysiwyg [data-node-id][data-type="NodeHeading"] div,
-        .protyle-wysiwyg [data-node-id][data-type="NodeList"],
-        .protyle-wysiwyg [data-node-id][data-type="NodeList"] li,
-        .protyle-wysiwyg [data-node-id][data-type="NodeList"] p,
-        .protyle-wysiwyg [data-node-id][data-type="NodeBlockquote"],
-        .protyle-wysiwyg [data-node-id][data-type="NodeBlockquote"] p {
-          line-height: ${fontSettings.lineHeight} !important;
-        }
-
-        /* 段落间距 */
-        .protyle-wysiwyg [data-node-id][data-type="NodeParagraph"] {
-          margin-bottom: ${fontSettings.paragraphSpacing}px !important;
-        }
-
-        /* 预览区域 - 基础样式 */
-        .b3-typography {
-          font-family: ${fontFamily}var(--b3-font-family) !important;
-          font-size: ${fontSettings.fontSize}px !important;
-          letter-spacing: ${fontSettings.letterSpacing}px !important;
-          font-weight: ${fontSettings.fontWeight} !important;
-        }
-
-        /* 预览区域行高 */
-        .b3-typography p,
-        .b3-typography div,
-        .b3-typography li,
-        .b3-typography h1,
-        .b3-typography h2,
-        .b3-typography h3,
-        .b3-typography h4,
-        .b3-typography h5,
-        .b3-typography h6 {
-          line-height: ${fontSettings.lineHeight} !important;
-        }
-
-        .b3-typography p {
-          margin-bottom: ${fontSettings.paragraphSpacing}px !important;
-        }
-
-        /* 导出预览 - 基础样式 */
-        .render-node {
-          font-family: ${fontFamily}var(--b3-font-family) !important;
-          font-size: ${fontSettings.fontSize}px !important;
-          letter-spacing: ${fontSettings.letterSpacing}px !important;
-          font-weight: ${fontSettings.fontWeight} !important;
-        }
-
-        /* 导出预览行高 */
-        .render-node p,
-        .render-node div,
-        .render-node li {
-          line-height: ${fontSettings.lineHeight} !important;
-        }
-
-        /* 代码块保持原字体和行高 */
-        .protyle-wysiwyg .code-block,
-        .protyle-wysiwyg .code-block *,
-        .b3-typography pre,
-        .b3-typography pre code {
-          font-family: var(--b3-font-family-code) !important;
-          line-height: 1.5 !important;
-        }
-      `
-
-      injectStyle("document-font-settings", css)
     } catch (error) {
       console.error("应用文档字体样式失败:", error)
     }
@@ -591,7 +494,7 @@ export class GeneralSettings {
 
       let levelCss = ""
       if (settings.levelDisplay && settings.levelDisplay !== "none") {
-        levelCss = this.generateLevelDisplayCss(
+        levelCss = generateLevelDisplayCss(
           settings.levelDisplay,
           settings.customMarkers || [],
         )
@@ -637,38 +540,6 @@ export class GeneralSettings {
     } catch (error) {
       console.error("应用标题样式失败:", error)
     }
-  }
-
-  private generateLevelDisplayCss(
-    style: string,
-    customMarkers: string[],
-  ): string {
-    const levels =
-      style === "custom"
-        ? customMarkers
-        : HEADING_LEVEL_MAPPINGS[style] || HEADING_LEVEL_MAPPINGS.number
-
-    return levels
-      .map((label, index) => {
-        const level = index + 1
-        const tagStyles =
-          style === "tag"
-            ? "background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.15); padding: 2px 6px; border-radius: 4px; font-weight: 600; opacity: 0.7;"
-            : ""
-
-        return `
-        .protyle-wysiwyg div[data-subtype="h${level}"][data-node-id]:not([type]) > div[contenteditable]:first-child::after,
-        .protyle-wysiwyg div[data-subtype="h${level}"][data-node-id] > div.h${level}[contenteditable]::after {
-          content: "  ${label}";
-          font-size: 0.7em;
-          opacity: 0.4;
-          margin-left: 6px;
-          vertical-align: middle;
-          ${tagStyles}
-        }
-      `
-      })
-      .join("\n")
   }
 
   private applyListStyles(settings: ListSettings) {

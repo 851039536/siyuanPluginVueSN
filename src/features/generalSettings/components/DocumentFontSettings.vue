@@ -339,17 +339,8 @@ import {
 } from "vue"
 
 import IconWrapper from "@/components/IconWrapper.vue"
-import { GeneralSettingsStorage } from "../types/storage"
-
-export interface DocumentFontSettingsData {
-  enabled: boolean
-  fontFamily: string
-  fontSize: number
-  lineHeight: number
-  letterSpacing: number
-  paragraphSpacing: number
-  fontWeight: string
-}
+import { DocumentFontSettings, GeneralSettingsStorage } from "../types/storage"
+import { applyDocumentFontStyles } from "../utils/styles"
 
 interface Props {
   i18n?: any
@@ -357,7 +348,7 @@ interface Props {
 }
 
 interface Emits {
-  (e: "change", settings: DocumentFontSettingsData): void
+  (e: "change", settings: DocumentFontSettings): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -367,7 +358,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
-const DEFAULT_SETTINGS: DocumentFontSettingsData = {
+const DEFAULT_SETTINGS: DocumentFontSettings = {
   enabled: false,
   fontFamily: "",
   fontSize: 12,
@@ -377,7 +368,7 @@ const DEFAULT_SETTINGS: DocumentFontSettingsData = {
   fontWeight: "normal",
 }
 
-const settings = ref<DocumentFontSettingsData>({ ...DEFAULT_SETTINGS })
+const settings = ref<DocumentFontSettings>({ ...DEFAULT_SETTINGS })
 const showPreview = ref(true)
 const presetFont = ref("")
 
@@ -450,113 +441,6 @@ function resetSettings() {
   settings.value = { ...DEFAULT_SETTINGS }
   presetFont.value = ""
   applySettings()
-}
-
-function applyDocumentFontStyles(fontSettings: DocumentFontSettingsData) {
-  try {
-    // 移除现有样式
-    const existingStyle = document.getElementById("document-font-settings")
-    if (existingStyle) {
-      existingStyle.remove()
-    }
-
-    if (!fontSettings.enabled) {
-      return
-    }
-
-    // 创建新的样式元素
-    const style = document.createElement("style")
-    style.id = "document-font-settings"
-
-    // 处理字体族：如果包含逗号则直接使用，否则加引号
-    let fontFamily = ""
-    if (fontSettings.fontFamily) {
-      const fonts = fontSettings.fontFamily.split(",").map((f) => f.trim())
-      fontFamily = `${fonts.map((f) => `'${f}'`).join(", ")}, `
-    }
-
-    style.textContent = `
-      /* 编辑器内容区域 - 基础样式 */
-      .protyle-wysiwyg {
-        font-family: ${fontFamily}var(--b3-font-family) !important;
-        font-size: ${fontSettings.fontSize}px !important;
-        letter-spacing: ${fontSettings.letterSpacing}px !important;
-        font-weight: ${fontSettings.fontWeight} !important;
-      }
-
-      /* 行高 - 需要应用到具体元素 */
-      .protyle-wysiwyg [data-node-id][data-type="NodeParagraph"],
-      .protyle-wysiwyg [data-node-id][data-type="NodeParagraph"] p,
-      .protyle-wysiwyg [data-node-id][data-type="NodeParagraph"] div,
-      .protyle-wysiwyg [data-node-id][data-type="NodeHeading"],
-      .protyle-wysiwyg [data-node-id][data-type="NodeHeading"] div,
-      .protyle-wysiwyg [data-node-id][data-type="NodeList"],
-      .protyle-wysiwyg [data-node-id][data-type="NodeList"] li,
-      .protyle-wysiwyg [data-node-id][data-type="NodeList"] p,
-      .protyle-wysiwyg [data-node-id][data-type="NodeBlockquote"],
-      .protyle-wysiwyg [data-node-id][data-type="NodeBlockquote"] p {
-        line-height: ${fontSettings.lineHeight} !important;
-      }
-
-      /* 段落间距 */
-      .protyle-wysiwyg [data-node-id][data-type="NodeParagraph"] {
-        margin-bottom: ${fontSettings.paragraphSpacing}px !important;
-      }
-
-      /* 预览区域 - 基础样式 */
-      .b3-typography {
-        font-family: ${fontFamily}var(--b3-font-family) !important;
-        font-size: ${fontSettings.fontSize}px !important;
-        letter-spacing: ${fontSettings.letterSpacing}px !important;
-        font-weight: ${fontSettings.fontWeight} !important;
-      }
-
-      /* 预览区域行高 */
-      .b3-typography p,
-      .b3-typography div,
-      .b3-typography li,
-      .b3-typography h1,
-      .b3-typography h2,
-      .b3-typography h3,
-      .b3-typography h4,
-      .b3-typography h5,
-      .b3-typography h6 {
-        line-height: ${fontSettings.lineHeight} !important;
-      }
-
-      .b3-typography p {
-        margin-bottom: ${fontSettings.paragraphSpacing}px !important;
-      }
-
-      /* 导出预览 - 基础样式 */
-      .render-node {
-        font-family: ${fontFamily}var(--b3-font-family) !important;
-        font-size: ${fontSettings.fontSize}px !important;
-        letter-spacing: ${fontSettings.letterSpacing}px !important;
-        font-weight: ${fontSettings.fontWeight} !important;
-      }
-
-      /* 导出预览行高 */
-      .render-node p,
-      .render-node div,
-      .render-node li {
-        line-height: ${fontSettings.lineHeight} !important;
-      }
-
-      /* 代码块保持原字体和行高 */
-      .protyle-wysiwyg .code-block,
-      .protyle-wysiwyg .code-block *,
-      .b3-typography pre,
-      .b3-typography pre code {
-        font-family: var(--b3-font-family-code) !important;
-        line-height: 1.5 !important;
-      }
-    `
-
-    document.head.appendChild(style)
-  } catch (error) {
-    console.error("应用文档字体样式失败:", error)
-  }
 }
 
 const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null)

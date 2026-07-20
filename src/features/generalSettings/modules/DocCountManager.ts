@@ -1,3 +1,4 @@
+import { sql } from "@/api"
 import type { DocCountFormat } from "../types/storage"
 import {
   DOC_COUNT_FORMATTERS,
@@ -183,46 +184,17 @@ export class DocCountManager {
   /**
    * 查询SQL函数
    */
-  private async query(sql: string): Promise<any[]> {
-    const result = await this.fetchSyncPost("/api/query/sql", { stmt: sql })
-    if (result.code !== 0) {
-      console.error("查询数据库出错", result.msg)
-      return []
-    }
-    return result.data
-  }
-
-  /**
-   * 发送同步POST请求
-   */
-  private async fetchSyncPost(
-    url: string,
-    data: any,
-    returnType: "json" | "text" = "json",
-  ): Promise<any> {
-    const init: RequestInit = {
-      method: "POST",
-    }
-    if (data) {
-      if (data instanceof FormData) {
-        init.body = data
-      } else {
-        init.body = JSON.stringify(data)
-      }
-    }
+  private async query<T = any>(stmt: string): Promise<T[]> {
     try {
-      const res = await fetch(url, init)
-      const res2 = returnType === "json" ? await res.json() : await res.text()
-      return res2
-    } catch (e: any) {
-      console.log(e)
-      return returnType === "json"
-        ? {
-            code: e.code || 1,
-            msg: e.message || "",
-            data: null,
-          }
-        : ""
+      const result = await sql(stmt)
+      if (Array.isArray(result)) {
+        return result as T[]
+      }
+      console.warn("[DocCountManager] SQL 查询返回异常结果:", result)
+      return []
+    } catch (error) {
+      console.error("[DocCountManager] SQL 查询失败:", error)
+      return []
     }
   }
 }

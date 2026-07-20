@@ -537,6 +537,7 @@ const healthTooltip = computed(() => {
   const healthy = Math.max(0, total - Math.min(total, issues))
   return [
     `健康文档 ${healthy} / ${total}`,
+    `（同一文档可能有多类问题，故百分比可能偏低）`,
     `扣分项:`,
     `  0B空 ${props.stats.zeroByteDocs}`,
     `  重名超出 ${excessDupes}`,

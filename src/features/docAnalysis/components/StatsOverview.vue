@@ -1,4 +1,4 @@
-<!-- 文档统计概览组件 - 多维度统计卡片 + 分区折叠 + 深度/书签详情 -->
+<!-- 文档统计概览组件 - 统一平铺面板（Hero + 问题条 + 分区卡片 + 图表） -->
 <template>
   <div class="stats-overview">
     <template v-if="hasAnalyzed">
@@ -74,15 +74,10 @@
       <StatSection
         v-for="section in statSections"
         :key="section.key"
-        :section-key="section.key"
         :title="section.title"
         :icon="section.icon"
-        :is-collapsed="collapsedSections.has(section.key)"
-        :summary="sectionSummary(section)"
-        @toggle="handleSectionToggle"
       >
         <template #headerExtra>
-          <!-- 大小分布：隐藏零值 -->
           <button
             v-if="section.key === 'size'"
             class="toolbar-btn"
@@ -96,7 +91,6 @@
             />
             {{ hideZero ? '已隐藏' : '隐藏零值' }}
           </button>
-          <!-- 书签：详情按钮 -->
           <button
             v-if="section.key === 'bookmark'"
             class="bookmark-detail-btn"
@@ -122,9 +116,9 @@
         </div>
       </StatSection>
 
-      <!-- 发布状态附加：平台分布柱状图 -->
+      <!-- 平台分布柱状图 -->
       <div
-        v-if="!collapsedSections.has('publish') && platformEntries.length > 0"
+        v-if="platformEntries.length > 0"
         class="platform-distro"
       >
         <div class="platform-distro-title">
@@ -143,28 +137,12 @@
       </div>
 
       <!-- 字数分布 -->
-      <div
+      <StatSection
         v-if="stats.wordCountDistribution.length > 0"
-        class="stat-section"
+        title="字数分布"
+        icon="mdi:text-short"
       >
-        <div
-          class="section-header"
-          @click="handleSectionToggle('wordcount')"
-        >
-          <Icon
-            :icon="collapsedSections.has('wordcount') ? 'mdi:chevron-right' : 'mdi:chevron-down'"
-            class="section-toggle-icon"
-          />
-          <Icon icon="mdi:text-short" />字数分布
-          <span
-            v-if="collapsedSections.has('wordcount')"
-            class="section-hint"
-          >{{ wordCountSummary }}</span>
-        </div>
-        <div
-          v-show="!collapsedSections.has('wordcount')"
-          class="wordcount-chart"
-        >
+        <div class="wordcount-chart">
           <BarRow
             v-for="item in stats.wordCountDistribution"
             :key="item.label"
@@ -173,27 +151,15 @@
             :pct="wcBarPct(item.count)"
           />
         </div>
-      </div>
+      </StatSection>
 
       <!-- 自定义书签 -->
-      <div
+      <StatSection
         v-if="stats.customBookmarkTop.length > 0"
-        class="stat-section"
+        title="书签分类 Top-{{ stats.customBookmarkTop.length }}"
+        icon="mdi:tag-outline"
       >
-        <div
-          class="section-header"
-          @click="handleSectionToggle('customBm')"
-        >
-          <Icon
-            :icon="collapsedSections.has('customBm') ? 'mdi:chevron-right' : 'mdi:chevron-down'"
-            class="section-toggle-icon"
-          />
-          <Icon icon="mdi:tag-outline" />书签分类 Top-{{ stats.customBookmarkTop.length }}
-        </div>
-        <div
-          v-show="!collapsedSections.has('customBm')"
-          class="wordcount-chart"
-        >
+        <div class="wordcount-chart">
           <BarRow
             v-for="item in stats.customBookmarkTop"
             :key="item.value"
@@ -202,171 +168,124 @@
             :pct="customBmBarPct(item.count)"
           />
         </div>
-      </div>
+      </StatSection>
 
-      <!-- 分割线 -->
-      <div class="section-divider" />
-
-      <!-- 深度分析（合并折叠区） -->
-      <div class="stat-section">
-        <div
-          class="section-header"
-          @click="handleSectionToggle('advanced')"
-        >
-          <Icon
-            :icon="collapsedSections.has('advanced') ? 'mdi:chevron-right' : 'mdi:chevron-down'"
-            class="section-toggle-icon"
+      <!-- 文档质量 -->
+      <StatSection
+        title="文档质量"
+        icon="mdi:chart-box-outline"
+      >
+        <div class="section-cards">
+          <StatCard
+            v-if="!hideZero || stats.deepDocs !== 0"
+            card-id="deep"
+            :value="stats.deepDocs"
+            label="深层≥5"
+            color-class="depth-color"
+            :active="activeFilter === 'deep'"
+            :pct="pctStr(stats.deepDocs)"
+            @select="(id) => $emit('selectCategory', id)"
           />
-          <Icon icon="mdi:chart-box-outline" />深度分析
-          <span
-            v-if="collapsedSections.has('advanced')"
-            class="section-hint"
-          >{{ advancedSummary }}</span>
+          <StatCard
+            v-if="!hideZero || stats.imageDocs !== 0"
+            card-id="hasImage"
+            :value="stats.imageDocs"
+            :label="`图片(${stats.totalImages})`"
+            color-class="img-color"
+            :active="activeFilter === 'hasImage'"
+            :pct="pctStr(stats.imageDocs)"
+            @select="(id) => $emit('selectCategory', id)"
+          />
+          <StatCard
+            v-if="!hideZero || stats.taggedDocs !== 0"
+            card-id="hasTag"
+            :value="stats.taggedDocs"
+            label="有标签"
+            color-class="time-green"
+            :active="activeFilter === 'hasTag'"
+            :pct="pctStr(stats.taggedDocs)"
+            @select="(id) => $emit('selectCategory', id)"
+          />
+          <StatCard
+            v-if="!hideZero || stats.taggedDocs !== stats.totalDocs"
+            card-id="noTag"
+            :value="stats.totalDocs - stats.taggedDocs"
+            label="无标签"
+            color-class="time-red"
+            :active="activeFilter === 'noTag'"
+            :pct="pctStr(stats.totalDocs - stats.taggedDocs)"
+            @select="(id) => $emit('selectCategory', id)"
+          />
+          <StatCard
+            v-if="!hideZero || stats.aliasedDocs !== 0"
+            card-id="hasAlias"
+            :value="stats.aliasedDocs"
+            label="有别名"
+            color-class="time-cyan"
+            :active="activeFilter === 'hasAlias'"
+            :pct="pctStr(stats.aliasedDocs)"
+            @select="(id) => $emit('selectCategory', id)"
+          />
+          <StatCard
+            v-if="!hideZero || stats.memoedDocs !== 0"
+            card-id="hasMemo"
+            :value="stats.memoedDocs"
+            label="有备注"
+            color-class="time-purple"
+            :active="activeFilter === 'hasMemo'"
+            :pct="pctStr(stats.memoedDocs)"
+            @select="(id) => $emit('selectCategory', id)"
+          />
+          <StatCard
+            v-if="!hideZero || stats.refDocs !== 0"
+            card-id="hasRef"
+            :value="stats.refDocs"
+            :label="`含引用(${stats.totalRefs})`"
+            color-class="ref-color"
+            :active="activeFilter === 'hasRef'"
+            :pct="pctStr(stats.refDocs)"
+            @select="(id) => $emit('selectCategory', id)"
+          />
+          <StatCard
+            v-if="!hideZero || stats.incomingRefDocs !== 0"
+            card-id="incomingRef"
+            :value="stats.incomingRefDocs"
+            label="被引用"
+            color-class="time-cyan"
+            :active="activeFilter === 'incomingRef'"
+            :pct="pctStr(stats.incomingRefDocs)"
+            @select="(id) => $emit('selectCategory', id)"
+          />
+          <StatCard
+            v-if="!hideZero || stats.orphanDocs !== 0"
+            card-id="orphanDoc"
+            :value="stats.orphanDocs"
+            label="孤文档"
+            color-class="zero"
+            :active="activeFilter === 'orphanDoc'"
+            :pct="pctStr(stats.orphanDocs)"
+            @select="(id) => $emit('selectCategory', id)"
+          />
         </div>
         <div
-          v-show="!collapsedSections.has('advanced')"
-          class="advanced-grid"
+          v-if="depthStats.depthDistribution.length > 0"
+          class="depth-chart-v2"
         >
-          <!-- 结构 -->
-          <div class="advanced-group">
-            <div class="advanced-group-title">
-              <Icon icon="mdi:sitemap-outline" :size="13" />结构
-            </div>
-            <div class="section-cards">
-              <StatCard
-                v-if="!hideZero || stats.deepDocs !== 0"
-                card-id="deep"
-                :value="stats.deepDocs"
-                label="深层≥5"
-                color-class="depth-color"
-                :active="activeFilter === 'deep'"
-                :pct="pctStr(stats.deepDocs)"
-                @select="(id) => $emit('selectCategory', id)"
-              />
-              <StatCard
-                v-if="!hideZero || stats.imageDocs !== 0"
-                card-id="hasImage"
-                :value="stats.imageDocs"
-                :label="`图片(${stats.totalImages})`"
-                color-class="img-color"
-                :active="activeFilter === 'hasImage'"
-                :pct="pctStr(stats.imageDocs)"
-                @select="(id) => $emit('selectCategory', id)"
-              />
-            </div>
+          <div class="depth-chart-title">
+            <Icon icon="mdi:chart-bar" :size="13" />深度分布
+            <span class="depth-chart-hint">均 {{ depthStats.avgDepth }} 层 · 最深 {{ depthStats.maxDepth }} 层</span>
           </div>
-
-          <!-- 内容质量 -->
-          <div class="advanced-group">
-            <div class="advanced-group-title">
-              <Icon icon="mdi:star-outline" :size="13" />内容质量
-            </div>
-            <div class="section-cards">
-              <StatCard
-                v-if="!hideZero || stats.taggedDocs !== 0"
-                card-id="hasTag"
-                :value="stats.taggedDocs"
-                label="有标签"
-                color-class="time-green"
-                :active="activeFilter === 'hasTag'"
-                :pct="pctStr(stats.taggedDocs)"
-                @select="(id) => $emit('selectCategory', id)"
-              />
-              <StatCard
-                v-if="!hideZero || stats.taggedDocs !== stats.totalDocs"
-                card-id="noTag"
-                :value="stats.totalDocs - stats.taggedDocs"
-                label="无标签"
-                color-class="time-red"
-                :active="activeFilter === 'noTag'"
-                :pct="pctStr(stats.totalDocs - stats.taggedDocs)"
-                @select="(id) => $emit('selectCategory', id)"
-              />
-              <StatCard
-                v-if="!hideZero || stats.aliasedDocs !== 0"
-                card-id="hasAlias"
-                :value="stats.aliasedDocs"
-                label="有别名"
-                color-class="time-cyan"
-                :active="activeFilter === 'hasAlias'"
-                :pct="pctStr(stats.aliasedDocs)"
-                @select="(id) => $emit('selectCategory', id)"
-              />
-              <StatCard
-                v-if="!hideZero || stats.memoedDocs !== 0"
-                card-id="hasMemo"
-                :value="stats.memoedDocs"
-                label="有备注"
-                color-class="time-purple"
-                :active="activeFilter === 'hasMemo'"
-                :pct="pctStr(stats.memoedDocs)"
-                @select="(id) => $emit('selectCategory', id)"
-              />
-            </div>
-          </div>
-
-          <!-- 引用拓扑 -->
-          <div class="advanced-group">
-            <div class="advanced-group-title">
-              <Icon icon="mdi:graph-outline" :size="13" />引用拓扑
-            </div>
-            <div class="section-cards">
-              <StatCard
-                v-if="!hideZero || stats.refDocs !== 0"
-                card-id="hasRef"
-                :value="stats.refDocs"
-                :label="`含引用(${stats.totalRefs})`"
-                color-class="ref-color"
-                :active="activeFilter === 'hasRef'"
-                :pct="pctStr(stats.refDocs)"
-                @select="(id) => $emit('selectCategory', id)"
-              />
-              <StatCard
-                v-if="!hideZero || stats.incomingRefDocs !== 0"
-                card-id="incomingRef"
-                :value="stats.incomingRefDocs"
-                label="被引用"
-                color-class="time-cyan"
-                :active="activeFilter === 'incomingRef'"
-                :pct="pctStr(stats.incomingRefDocs)"
-                @select="(id) => $emit('selectCategory', id)"
-              />
-              <StatCard
-                v-if="!hideZero || stats.orphanDocs !== 0"
-                card-id="orphanDoc"
-                :value="stats.orphanDocs"
-                label="孤文档"
-                color-class="zero"
-                :active="activeFilter === 'orphanDoc'"
-                :pct="pctStr(stats.orphanDocs)"
-                @select="(id) => $emit('selectCategory', id)"
-              />
-            </div>
-          </div>
-
-          <!-- 深度分布（跨列） -->
-          <div
-            v-if="depthStats.depthDistribution.length > 0"
-            class="advanced-group advanced-group--full"
-          >
-            <div class="advanced-group-title">
-              <Icon icon="mdi:chart-bar" :size="13" />深度分布
-              <span class="advanced-group-hint">均 {{ depthStats.avgDepth }} 层 · 最深 {{ depthStats.maxDepth }} 层</span>
-            </div>
-            <div class="depth-chart-v2">
-              <BarRow
-                v-for="item in depthStats.depthDistribution"
-                :key="item.depth"
-                :label="String(item.depth)"
-                :count="item.count"
-                :pct="getBarPercent(item.count)"
-                clickable
-                @click="$emit('selectDepth', item.depth)"
-              />
-            </div>
-          </div>
+          <BarRow
+            v-for="item in depthStats.depthDistribution"
+            :key="item.depth"
+            :label="String(item.depth)"
+            :count="item.count"
+            :pct="getBarPercent(item.count)"
+            clickable
+            @click="$emit('selectDepth', item.depth)"
+          />
         </div>
-      </div>
+      </StatSection>
     </template>
 
     <div
@@ -450,7 +369,6 @@ import { STAT_SECTIONS } from "../types/index"
 import { Icon } from "@iconify/vue"
 import {
   computed,
-  reactive,
   ref,
 } from "vue"
 import { PLATFORM_META } from "../composables/useDocAnalysis"
@@ -481,16 +399,6 @@ defineEmits<{
 const statSections = STAT_SECTIONS as readonly StatSectionDef[]
 
 const hideZero = ref(false)
-const collapsedSections = reactive(new Set<string>(["advanced"]))
-
-function handleSectionToggle(key: string) {
-  if (collapsedSections.has(key)) {
-    collapsedSections.delete(key)
-  }
-  else {
-    collapsedSections.add(key)
-  }
-}
 
 // ============================================================
 // 健康度
@@ -579,14 +487,6 @@ function pctStr(count: number): string {
   return `${Math.min(100, Math.round((count / props.stats.totalDocs) * 100))}%`
 }
 
-function sectionSummary(section: StatSectionDef): string {
-  const parts = section.cards
-    .filter((c) => getCardValue(c) > 0 && !c.iconValue)
-    .map((c) => `${c.shortLabel} ${getCardValue(c)}`)
-    .slice(0, 4)
-  return parts.join(" · ")
-}
-
 // ============================================================
 // 平台分布
 // ============================================================
@@ -623,12 +523,6 @@ const coveragePct = computed(() => {
 // 字数分布 / 书签分类柱状图
 // ============================================================
 
-const wordCountSummary = computed(() => {
-  const dist = props.stats.wordCountDistribution || []
-  if (dist.length === 0) return ""
-  return dist.map((d) => `${d.label.split("字")[0]} ${d.count}`).join(" · ")
-})
-
 const maxWordCount = computed(() => {
   const counts = props.stats.wordCountDistribution.map((d) => d.count)
   return Math.max(...counts, 1)
@@ -660,21 +554,6 @@ function getBarPercent(count: number): string {
   return `${Math.round((count / maxDepthCount.value) * 100)}%`
 }
 
-// ============================================================
-// 深度分析摘要
-// ============================================================
-
-const advancedSummary = computed(() => {
-  const s = props.stats
-  const d = props.depthStats
-  const parts: string[] = []
-  if (s.deepDocs) parts.push(`深层 ${s.deepDocs}`)
-  if (s.imageDocs) parts.push(`有图 ${s.imageDocs}`)
-  if (s.taggedDocs) parts.push(`有标签 ${s.taggedDocs}`)
-  if (s.orphanDocs) parts.push(`孤文档 ${s.orphanDocs}`)
-  if (d.avgDepth) parts.push(`均深 ${d.avgDepth}`)
-  return parts.join(" · ")
-})
 </script>
 
 <style lang="scss" scoped>

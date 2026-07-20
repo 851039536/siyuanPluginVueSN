@@ -41,7 +41,6 @@ export function useDiskBrowser(
 
   const diskCache = ref<CacheData<DiskInfo[]> | null>(null)
   const folderCacheMap = ref<Map<string, CacheData<FolderInfo[]>>>(new Map())
-  const cacheExpiryTime = CACHE_EXPIRY_TIME
 
   const pathSegments = computed(() => {
     if (!currentPath.value || currentPath.value === expandedDisk.value)
@@ -54,7 +53,7 @@ export function useDiskBrowser(
   })
 
   const cacheStatus = computed(() =>
-    computeCacheStatus(diskCache.value, i18n, cacheExpiryTime, "full"),
+    computeCacheStatus(diskCache.value, i18n, CACHE_EXPIRY_TIME, "full"),
   )
 
   const currentFolderCache = computed((): CacheStatus => {
@@ -67,7 +66,7 @@ export function useDiskBrowser(
       }
     }
     const cached = folderCacheMap.value.get(path)
-    return computeCacheStatus(cached, i18n, cacheExpiryTime, "short")
+    return computeCacheStatus(cached, i18n, CACHE_EXPIRY_TIME, "short")
   })
 
   function toggleFavorite(folderPath: string): void {
@@ -101,7 +100,7 @@ export function useDiskBrowser(
   }
 
   async function fetchDisks(forceRefresh = false): Promise<void> {
-    if (!forceRefresh && isCacheValid(diskCache.value, cacheExpiryTime)) {
+    if (!forceRefresh && isCacheValid(diskCache.value, CACHE_EXPIRY_TIME)) {
       disks.value = diskCache.value.data
       return
     }
@@ -146,7 +145,7 @@ export function useDiskBrowser(
     forceRefresh = false,
   ): Promise<void> {
     const cached = folderCacheMap.value.get(path)
-    if (!forceRefresh && isCacheValid(cached, cacheExpiryTime)) {
+    if (!forceRefresh && isCacheValid(cached, CACHE_EXPIRY_TIME)) {
       folders.value = cached.data
       return
     }

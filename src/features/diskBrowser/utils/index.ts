@@ -24,7 +24,7 @@ export function getDiskInfo(): DiskInfo[] | null {
       .slice(2)
       .filter((line) => line.trim())
       .map((line) => {
-        const [, deviceId, volumeName, size, freeSpace] = line.split(",")
+        const [, deviceId, volumeName, size, freeSpace] = line.split(",").map((s) => s.trim())
         if (!deviceId) return null
         const total = Number.parseInt(size) || 0
         const free = Number.parseInt(freeSpace) || 0

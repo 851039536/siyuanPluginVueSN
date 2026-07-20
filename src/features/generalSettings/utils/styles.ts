@@ -465,6 +465,152 @@ export function applyCodeBlockCollapse(
   document.head.appendChild(script)
 }
 
+export function generateLevelDisplayCss(
+  style: string,
+  customMarkers: string[],
+): string {
+  const levels =
+    style === "custom"
+      ? customMarkers
+      : HEADING_LEVEL_MAPPINGS[style] || HEADING_LEVEL_MAPPINGS.number
+
+  return levels
+    .map((label, index) => {
+      const level = index + 1
+      const tagStyles =
+        style === "tag"
+          ? "background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.15); padding: 2px 6px; border-radius: 4px; font-weight: 600; opacity: 0.7;"
+          : ""
+
+      return `
+        .protyle-wysiwyg div[data-subtype="h${level}"][data-node-id]:not([type]) > div[contenteditable]:first-child::after,
+        .protyle-wysiwyg div[data-subtype="h${level}"][data-node-id] > div.h${level}[contenteditable]::after {
+          content: "  ${label}";
+          font-size: 0.7em;
+          opacity: 0.4;
+          margin-left: 6px;
+          vertical-align: middle;
+          ${tagStyles}
+        }
+      `
+    })
+    .join("\n")
+}
+
+export interface DocumentFontSettingsData {
+  enabled: boolean
+  fontFamily: string
+  fontSize: number
+  lineHeight: number
+  letterSpacing: number
+  paragraphSpacing: number
+  fontWeight: string
+}
+
+export function applyDocumentFontStyles(fontSettings: DocumentFontSettingsData): void {
+  try {
+    const existingStyle = document.getElementById("document-font-settings")
+    if (existingStyle) {
+      existingStyle.remove()
+    }
+
+    if (!fontSettings.enabled) {
+      return
+    }
+
+    const style = document.createElement("style")
+    style.id = "document-font-settings"
+
+    let fontFamily = ""
+    if (fontSettings.fontFamily) {
+      const fonts = fontSettings.fontFamily.split(",").map((f) => f.trim())
+      fontFamily = `${fonts.map((f) => `'${f}'`).join(", ")}, `
+    }
+
+    style.textContent = `
+      /* 编辑器内容区域 - 基础样式 */
+      .protyle-wysiwyg {
+        font-family: ${fontFamily}var(--b3-font-family) !important;
+        font-size: ${fontSettings.fontSize}px !important;
+        letter-spacing: ${fontSettings.letterSpacing}px !important;
+        font-weight: ${fontSettings.fontWeight} !important;
+      }
+
+      /* 行高 */
+      .protyle-wysiwyg [data-node-id][data-type="NodeParagraph"],
+      .protyle-wysiwyg [data-node-id][data-type="NodeParagraph"] p,
+      .protyle-wysiwyg [data-node-id][data-type="NodeParagraph"] div,
+      .protyle-wysiwyg [data-node-id][data-type="NodeHeading"],
+      .protyle-wysiwyg [data-node-id][data-type="NodeHeading"] div,
+      .protyle-wysiwyg [data-node-id][data-type="NodeList"],
+      .protyle-wysiwyg [data-node-id][data-type="NodeList"] li,
+      .protyle-wysiwyg [data-node-id][data-type="NodeList"] p,
+      .protyle-wysiwyg [data-node-id][data-type="NodeBlockquote"],
+      .protyle-wysiwyg [data-node-id][data-type="NodeBlockquote"] p {
+        line-height: ${fontSettings.lineHeight} !important;
+      }
+
+      /* 段落间距 */
+      .protyle-wysiwyg [data-node-id][data-type="NodeParagraph"] {
+        margin-bottom: ${fontSettings.paragraphSpacing}px !important;
+      }
+
+      /* 预览区域 - 基础样式 */
+      .b3-typography {
+        font-family: ${fontFamily}var(--b3-font-family) !important;
+        font-size: ${fontSettings.fontSize}px !important;
+        letter-spacing: ${fontSettings.letterSpacing}px !important;
+        font-weight: ${fontSettings.fontWeight} !important;
+      }
+
+      /* 预览区域行高 */
+      .b3-typography p,
+      .b3-typography div,
+      .b3-typography li,
+      .b3-typography h1,
+      .b3-typography h2,
+      .b3-typography h3,
+      .b3-typography h4,
+      .b3-typography h5,
+      .b3-typography h6 {
+        line-height: ${fontSettings.lineHeight} !important;
+      }
+
+      .b3-typography p {
+        margin-bottom: ${fontSettings.paragraphSpacing}px !important;
+      }
+
+      /* 导出预览 - 基础样式 */
+      .render-node {
+        font-family: ${fontFamily}var(--b3-font-family) !important;
+        font-size: ${fontSettings.fontSize}px !important;
+        letter-spacing: ${fontSettings.letterSpacing}px !important;
+        font-weight: ${fontSettings.fontWeight} !important;
+      }
+
+      /* 导出预览行高 */
+      .render-node p,
+      .render-node div,
+      .render-node li {
+        line-height: ${fontSettings.lineHeight} !important;
+      }
+
+      /* 代码块保持原字体和行高 */
+      .protyle-wysiwyg .code-block,
+      .protyle-wysiwyg .code-block *,
+      .b3-typography pre,
+      .b3-typography pre code {
+        font-family: var(--b3-font-family-code) !important;
+        line-height: 1.5 !important;
+      }
+    `
+
+    document.head.appendChild(style)
+  } catch (error) {
+    console.error("应用文档字体样式失败:", error)
+  }
+}
+
 export function generateTabPinCSS(settings: { enabled: boolean, displayMode: string, backgroundColor: string }): string {
   const defaultBackgroundColor = "rgba(var(--b3-theme-primary-rgb), 0.1)"
 

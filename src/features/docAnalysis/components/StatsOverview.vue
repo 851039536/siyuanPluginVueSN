@@ -45,11 +45,11 @@
           <span class="issue-label">0B空</span>
         </div>
         <div
-          v-if="stats.duplicateNameDocs"
+          v-if="effectiveDupDocs > 0"
           class="issue-item warn"
           @click="$emit('selectCategory', 'duplicate')"
         >
-          <span class="issue-value">{{ stats.duplicateNameDocs }}</span>
+          <span class="issue-value">{{ effectiveDupDocs }}</span>
           <span class="issue-label">重名</span>
         </div>
         <div
@@ -68,6 +68,42 @@
           <span class="issue-value">{{ stats.orphanDocs }}</span>
           <span class="issue-label">孤文档</span>
         </div>
+      </div>
+
+      <!-- 重名文档名称排除 -->
+      <div
+        v-if="stats.duplicateNameDocs > 0"
+        class="dup-filter-bar"
+      >
+        <Icon
+          icon="mdi:filter-remove-outline"
+          class="dup-filter-icon"
+        />
+        <span class="dup-filter-label">名称排除</span>
+        <span
+          v-if="duplicateNameFilter.length > 0"
+          class="dup-filter-count"
+        >{{ duplicateNameFilter.length }}项</span>
+        <button
+          v-if="duplicateNameFilter.length > 0"
+          class="dup-filter-clear-mini"
+          title="清除全部"
+          @click="$emit('update:duplicateNameFilter', [])"
+        >
+          <Icon
+            icon="mdi:close"
+            :size="12"
+          />
+        </button>
+        <button
+          class="dup-filter-manage-btn"
+          @click="openDupDialog"
+        >
+          <Icon
+            icon="mdi:cog-outline"
+            :size="12"
+          />管理
+        </button>
       </div>
 
       <!-- 元数据驱动分区 -->
@@ -355,6 +391,53 @@
       </div>
     </div>
   </Teleport>
+
+  <!-- 重名排除管理弹窗 -->
+  <Teleport to="body">
+    <div
+      v-if="dupDialogVisible"
+      class="dup-manage-overlay"
+      @click.self="cancelDupDialog"
+    >
+      <div class="dup-manage-panel">
+        <div class="dup-manage-header">
+          <span class="dup-manage-title">
+            <Icon icon="mdi:filter-remove-outline" />
+            排除重名文档
+          </span>
+          <button
+            class="close-btn"
+            @click="cancelDupDialog"
+          >
+            <Icon icon="mdi:close" />
+          </button>
+        </div>
+        <div class="dup-manage-body">
+          <p class="dup-manage-hint">每行一个文档名称，包含该名称的文档将被排除（不区分大小写）</p>
+          <textarea
+            v-model="dupDialogText"
+            class="dup-manage-textarea"
+            rows="8"
+            placeholder="输入要排除的名称，每行一个..."
+          />
+        </div>
+        <div class="dup-manage-footer">
+          <button
+            class="dup-manage-cancel"
+            @click="cancelDupDialog"
+          >
+            取消
+          </button>
+          <button
+            class="dup-manage-save"
+            @click="saveDupDialog"
+          >
+            保存
+          </button>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -362,6 +445,7 @@ import type {
   BookmarkDetail,
   DepthStats,
   DocStats,
+  DuplicateNameGroup,
   StatCardDef,
   StatSectionDef,
 } from "../types/index"
@@ -385,20 +469,63 @@ interface Props {
   bookmarkDetails: BookmarkDetail[]
   bookmarkDetailVisible: boolean
   bookmarkDetailLoading: boolean
+  duplicateGroups: DuplicateNameGroup[]
+  duplicateNameFilter: string[]
 }
 
 const props = defineProps<Props>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: "selectCategory", category: string): void
   (e: "showBookmarkDetails"): void
   (e: "selectBookmark", bookmark: string): void
   (e: "selectDepth", depth: number): void
+  (e: "update:duplicateNameFilter", value: string[]): void
 }>()
 
 const statSections = STAT_SECTIONS as readonly StatSectionDef[]
 
 const hideZero = ref(false)
+
+const dupDialogVisible = ref(false)
+const dupDialogText = ref("")
+
+function openDupDialog() {
+  dupDialogText.value = (props.duplicateNameFilter || []).join("\n")
+  dupDialogVisible.value = true
+}
+
+function saveDupDialog() {
+  const names = dupDialogText.value
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean)
+  emit("update:duplicateNameFilter", names)
+  dupDialogVisible.value = false
+}
+
+function cancelDupDialog() {
+  dupDialogVisible.value = false
+}
+
+// ============================================================
+// 重名过滤
+// ============================================================
+
+const effectiveDupGroups = computed(() => {
+  if (!props.duplicateNameFilter?.length) return props.duplicateGroups
+  const excludes = props.duplicateNameFilter.map((s) => s.trim().toLowerCase()).filter(Boolean)
+  if (!excludes.length) return props.duplicateGroups
+  return props.duplicateGroups.filter((g) => !excludes.some((e) => g.title.toLowerCase().includes(e)))
+})
+
+const effectiveDupDocs = computed(() =>
+  effectiveDupGroups.value.reduce((sum, g) => sum + g.count, 0),
+)
+
+const effectiveDupGroupCount = computed(() =>
+  effectiveDupGroups.value.length,
+)
 
 // ============================================================
 // 健康度
@@ -407,7 +534,7 @@ const hideZero = ref(false)
 const _healthBreakdown = computed(() => {
   const s = props.stats
   const total = s.totalDocs
-  const excessDupes = Math.max(0, s.duplicateNameDocs - s.duplicateNameGroups)
+  const excessDupes = Math.max(0, effectiveDupDocs.value - effectiveDupGroupCount.value)
   const noBmExclude0B = Math.max(0, s.noBookmarkDocs - s.zeroByteDocs)
   const depthGt7 = props.depthStats.depthDistribution
     .filter((d) => d.depth > 7)
@@ -456,7 +583,7 @@ const healthTooltip = computed(() => {
 })
 
 const hasIssues = computed(() =>
-  props.stats.zeroByteDocs > 0 || props.stats.duplicateNameDocs > 0
+  props.stats.zeroByteDocs > 0 || effectiveDupDocs.value > 0
   || props.stats.pendingPublishDocs > 0 || props.stats.orphanDocs > 0,
 )
 
@@ -465,15 +592,13 @@ const hasIssues = computed(() =>
 // ============================================================
 
 function getCardValue(card: StatCardDef): number {
+  if (card.id === "duplicate") return effectiveDupDocs.value
   if (card.resolveValue) return card.resolveValue(props.stats)
   return (props.stats[card.statKey] as number) || 0
 }
 
 function cardLabel(card: StatCardDef): string {
-  if (card.suffixStatKey) {
-    const suffixVal = (props.stats[card.suffixStatKey] as number) || 0
-    if (card.id === "duplicate") return `重名(${suffixVal}组)`
-  }
+  if (card.id === "duplicate") return `重名(${effectiveDupGroupCount.value}组)`
   return card.shortLabel
 }
 

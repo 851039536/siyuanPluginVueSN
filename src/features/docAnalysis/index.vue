@@ -105,10 +105,13 @@
         :bookmark-details="bookmarkDetails"
         :bookmark-detail-visible="bookmarkDetailVisible"
         :bookmark-detail-loading="bookmarkDetailLoading"
+        :duplicate-groups="duplicateGroups"
+        :duplicate-name-filter="duplicateNameFilter"
         @selectCategory="handleSelectCategory"
         @showBookmarkDetails="fetchBookmarkDetails"
         @selectBookmark="queryByBookmark"
         @selectDepth="handleSelectDepth"
+        @update:duplicate-name-filter="(val: string[]) => duplicateNameFilter = val"
       />
     </div>
 
@@ -409,8 +412,11 @@ const {
   bookmarkDetails,
   bookmarkDetailVisible,
   bookmarkDetailLoading,
+  duplicateGroups,
+  duplicateNameFilter,
   loadNotebooks,
   loadSavedOptions,
+  loadDuplicateNameFilter,
   queryDocs,
   analyzeDocStats,
   queryByStatsCategory,
@@ -601,6 +607,7 @@ function handleSelectDepth(depth: number) {
 /** 清除统计过滤 */
 function clearStatsFilter() {
   statsFilter.value = ""
+  duplicateNameFilter.value = []
   queryState.hasQueried = false
   clearResults()
   queryState.status = "idle"
@@ -636,6 +643,7 @@ onMounted(async () => {
   await loadPlatformMeta()
   await loadNotebooks()
   await loadSavedOptions()
+  await loadDuplicateNameFilter()
 })
 </script>
 

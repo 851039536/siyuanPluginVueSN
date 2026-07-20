@@ -26,7 +26,7 @@
 }
 
 .md-editor-hint {
-  font-size: 10px;
+  font-size: $font-size-2xs;
   color: rgba(255, 255, 255, 0.25);
   font-family: $vp-mono;
 }
@@ -42,7 +42,7 @@
   background: transparent;
   color: #e0e0e0;
   font-family: Consolas, Monaco, 'Courier New', $vp-mono, monospace;
-  font-size: 13px;
+  font-size: $font-size-sm;
   line-height: 1.7;
   tab-size: 2;
 

@@ -1,3 +1,4 @@
+<!-- 文档属性面板 - 属性查看 + 平台发布状态标记 + 前往发布 -->
 <template>
   <div
     v-if="visible"
@@ -206,7 +207,6 @@ import {
   ref,
 } from "vue"
 import {
-  exportMdContent,
   setBlockAttrs,
 } from "@/api"
 import { copyToClipboard } from "@/utils/domUtils"
@@ -215,6 +215,7 @@ import {
   getPlatformIdFromAttrKey,
   getPublishedPlatformIdsFromAttrs,
 } from "../utils/platformPublish"
+import { copyDocForPublish, openExternalPublish } from "../utils/publishActions"
 
 interface Props {
   visible: boolean
@@ -282,43 +283,16 @@ function handlePublishFormat() {
 async function handlePublishGo(platform: PlatformInfo) {
   if (publishGoLoading.value) return
   publishGoLoading.value = platform.id
-  try {
-    // 1. 获取文档 Markdown 内容
-    const result = await exportMdContent(props.docId)
-    const title = props.attrs?.title || ""
-    const mdContent = result?.content || ""
-
-    // 2. 组合"标题 + 空行 + 正文"到剪贴板（模仿 SyncCaster 行为）
-    const combined = `# ${title}\n\n${mdContent}`
-    await copyToClipboard(combined)
-
-    // 3. 提示用户
-    showMessage(`标题和内容已复制，即将跳转到 ${platform.name}`, 3000, "info")
-
-    // 4. 稍微延迟后打开平台 URL
-    setTimeout(() => {
-      window.open(platform.url, "_blank")
-    }, 300)
-  } catch (e) {
-    console.error("前往发布失败:", e)
-    showMessage("获取文档内容失败，请重试", 3000, "error")
-  } finally {
-    publishGoLoading.value = null
-  }
+  const ok = await copyDocForPublish(props.docId, props.attrs?.title || "")
+  if (ok) openExternalPublish(platform.url, platform.name)
+  publishGoLoading.value = null
 }
 
 async function copyMdContent() {
   if (mdCopyLoading.value) return
   mdCopyLoading.value = true
-  try {
-    const result = await exportMdContent(props.docId)
-    if (result?.content) {
-      await copyToClipboard(result.content)
-    }
-  }
-  finally {
-    mdCopyLoading.value = false
-  }
+  await copyDocForPublish(props.docId, props.attrs?.title || "")
+  mdCopyLoading.value = false
 }
 
 async function handlePlatformClick(platform: PlatformInfo) {
@@ -496,15 +470,8 @@ async function copyAllAttrs() {
 }
 
 async function goToDoocs() {
-  const result = await exportMdContent(props.docId)
-  const title = props.attrs?.title || ""
-  const mdContent = result?.content || ""
-  const combined = `# ${title}\n\n${mdContent}`
-  await copyToClipboard(combined)
-  showMessage("内容已复制，即将跳转到 md.doocs.org", 2000, "info")
-  setTimeout(() => {
-    window.open("https://md.doocs.org/", "_blank")
-  }, 400)
+  const ok = await copyDocForPublish(props.docId, props.attrs?.title || "")
+  if (ok) openExternalPublish("https://md.doocs.org/", "md.doocs.org", 400)
 }
 </script>
 

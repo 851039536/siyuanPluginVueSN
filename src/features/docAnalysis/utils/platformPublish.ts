@@ -1,4 +1,7 @@
-import type { DocInfo, PlatformMeta } from "../types/index"
+/**
+ * 文档分析功能 - 平台发布状态工具
+ */
+import type { PlatformMeta } from "../types/index"
 
 /** 从 YAML 属性 key 中提取发布平台名（如 custom-csdn-yaml → "csdn"），格式不符或无匹配返回 null */
 export function getPlatformIdFromAttrKey(key: string, platformMeta: PlatformMeta[]): string | null {
@@ -29,11 +32,4 @@ export function computeUnpublishedPlatformNames(publishedIds: Set<string>, platf
     .filter((m) => !publishedIds.has(m.id))
     .map((m) => m.name)
   return names.length > 0 ? names : undefined
-}
-
-/** 用 publishedNames 填充 DocInfo.unpublishedPlatforms */
-export function enrichDocsWithUnpublished(docs: DocInfo[], platformMeta: PlatformMeta[], getPublishedIds: (docId: string) => Set<string>) {
-  for (const doc of docs) {
-    doc.unpublishedPlatforms = computeUnpublishedPlatformNames(getPublishedIds(doc.id), platformMeta)
-  }
 }

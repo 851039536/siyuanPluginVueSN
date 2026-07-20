@@ -1,3 +1,4 @@
+<!-- 文档列表项组件 - 标题/元信息/徽章/发布状态 -->
 <template>
   <div
     class="doc-list-item"
@@ -127,7 +128,7 @@ import { computed } from "vue"
 import {
   formatBytes,
   formatWordCount,
-} from "../types/storage"
+} from "../utils/format"
 
 interface Props {
   doc: DocInfo

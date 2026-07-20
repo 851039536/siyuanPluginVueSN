@@ -1,3 +1,4 @@
+<!-- 排版预览窗格 - 渲染 Markdown 为 HTML 实时预览 -->
 <template>
   <div
     ref="previewRef"
@@ -5,7 +6,7 @@
     @scroll="handleScroll"
   >
     <div v-if="!html" class="preview-empty">
-      <span class="preview-empty-icon">📄</span>
+      <Icon icon="mdi:file-document-outline" class="preview-empty-icon" />
       <p class="preview-empty-title">实时预览</p>
       <p class="preview-empty-desc">在左侧编辑器中输入 Markdown，即可在此预览排版效果</p>
     </div>
@@ -29,6 +30,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue"
+import { Icon } from "@iconify/vue"
 
 interface Props {
   html: string

@@ -1,5 +1,5 @@
 @use "@/variables.scss" as *;
-@use "./codex-tokens" as *;
+@use "./mixins" as *;
 
 .date-input-wrapper {
   position: relative;
@@ -13,14 +13,13 @@
     border-radius: $vp-radius;
     background: var(--b3-theme-background);
     color: var(--b3-theme-on-background);
-    font-size: 11px;
+    font-size: $font-size-xs;
     font-family: $vp-mono;
     outline: none;
     min-width: 0;
 
     &:focus {
       border-color: var(--b3-theme-primary);
-      box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
     }
 
     &::placeholder {
@@ -32,7 +31,7 @@
   .date-clear-btn {
     position: absolute;
     right: 18px;
-    font-size: -size-xs;
+    font-size: $font-size-xs;
     color: var(--b3-theme-on-surface-variant);
     opacity: 0.4;
     cursor: pointer;
@@ -45,7 +44,7 @@
   .date-calendar-btn {
     position: absolute;
     right: 4px;
-    font-size: 13px;
+    font-size: $font-size-sm;
     color: var(--b3-theme-on-surface-variant);
     opacity: 0.5;
     cursor: pointer;
@@ -86,7 +85,7 @@
       background: transparent;
       color: var(--b3-theme-on-surface-variant);
       cursor: pointer;
-      font-size: -size-base;
+      font-size: $font-size-base;
 
       &:hover {
         background: var(--b3-list-hover);
@@ -94,8 +93,8 @@
     }
 
     &-title {
-      font-size: -size-xs;
-      font-weight: 600;
+      font-size: $font-size-xs;
+      font-weight: $font-weight-semibold;
       font-family: $vp-mono;
       color: var(--b3-theme-on-background);
     }
@@ -108,7 +107,7 @@
 
     .picker-wd {
       text-align: center;
-      font-size: 10px;
+      font-size: $font-size-2xs;
       color: var(--b3-theme-on-surface-variant);
       padding: 2px 0;
     }
@@ -130,7 +129,7 @@
       border-radius: $vp-radius;
       background: transparent;
       color: var(--b3-theme-on-background);
-      font-size: 11px;
+      font-size: $font-size-xs;
       cursor: pointer;
 
       &:hover {
@@ -142,7 +141,7 @@
       }
 
       &.today {
-        font-weight: 700;
+        font-weight: $font-weight-bold;
         color: var(--b3-theme-primary);
       }
 

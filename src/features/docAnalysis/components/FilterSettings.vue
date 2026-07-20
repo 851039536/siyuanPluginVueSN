@@ -1,3 +1,4 @@
+<!-- 文档过滤设置组件 - 标题/全文搜索 + 字数/笔记本/书签/日期过滤 -->
 <template>
   <div class="doc-analysis-filter">
     <!-- 第一行：主搜索 -->
@@ -108,7 +109,7 @@
 </template>
 
 <script setup lang="ts">
-import type { NotebookInfo } from "../composables/useDocAnalysis"
+import type { NotebookInfo } from "../types/index"
 import type { FilterOptions } from "../types/index"
 import { Icon } from "@iconify/vue"
 import {

@@ -1,6 +1,6 @@
 // 文档分析面板样式（Dock 侧边栏）
 @use "@/variables.scss" as *;
-@use "./codex-tokens" as *;
+@use "./mixins" as *;
 
 .doc-analysis-panel {
   display: flex;
@@ -29,7 +29,7 @@
     border-radius: 6px 6px 0 0;
     background: transparent;
     color: var(--b3-theme-on-surface-variant);
-    font-size: 13px;
+    font-size: $font-size-sm;
     cursor: pointer;
     transition: background 0.15s, color 0.15s;
 
@@ -41,7 +41,7 @@
     &.active {
       background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
       color: var(--b3-theme-primary);
-      font-weight: 600;
+      font-weight: $font-weight-semibold;
       border-bottom: 2px solid var(--b3-theme-primary);
       margin-bottom: -2px;
     }
@@ -60,7 +60,7 @@
     border-radius: $vp-radius;
     background: var(--b3-theme-primary);
     color: var(--b3-theme-on-primary);
-    font-size: -size-xs;
+    font-size: $font-size-xs;
     cursor: pointer;
     flex-shrink: 0;
 
@@ -110,7 +110,7 @@
   border-bottom: 1px solid var(--b3-border-color);
 
   .result-count {
-    font-size: 13px;
+    font-size: $font-size-sm;
     color: var(--b3-theme-on-surface-variant);
 
     strong {
@@ -129,7 +129,7 @@
       display: inline-flex;
       align-items: center;
       gap: 2px;
-      font-size: -size-xs;
+      font-size: $font-size-xs;
       background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.1));
       color: var(--b3-theme-primary);
       padding: 1px 6px;
@@ -146,7 +146,7 @@
         background: transparent;
         color: var(--b3-theme-primary);
         cursor: pointer;
-        font-size: -size-sm;
+        font-size: $font-size-sm;
         line-height: 1;
         padding: 0;
         border-radius: 50%;
@@ -171,13 +171,12 @@
     border-radius: $vp-radius;
     background: var(--b3-theme-background);
     color: var(--b3-theme-on-background);
-    font-size: -size-xs;
+    font-size: $font-size-xs;
     outline: none;
     cursor: pointer;
 
     &:focus {
       border-color: var(--b3-theme-primary);
-      box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
     }
   }
 
@@ -198,7 +197,7 @@
     }
 
     color: var(--b3-theme-on-surface-variant);
-    font-size: 18px;
+    font-size: $font-size-lg;
   }
 }
 
@@ -210,16 +209,16 @@
   justify-content: center;
   padding: 40px 20px;
   color: var(--b3-theme-on-surface-variant);
-  font-size: -size-sm;
+  font-size: $font-size-sm;
   gap: 8px;
 
   .loading-icon {
-    font-size: 32px;
+    font-size: $font-size-4xl;
     color: var(--b3-theme-primary);
   }
 
   .empty-icon {
-    font-size: 48px;
+    font-size: $font-size-4xl;
     opacity: 0.4;
 
     &.error {
@@ -232,7 +231,7 @@
   }
 
   .empty-desc {
-    font-size: -size-xs;
+    font-size: $font-size-xs;
     opacity: 0.7;
   }
 }
@@ -246,7 +245,7 @@
 
   p {
     color: var(--b3-theme-success, #16a34a);
-    font-weight: 500;
+    font-weight: $font-weight-medium;
   }
 }
 
@@ -256,10 +255,10 @@
   justify-content: center;
   padding: 12px 16px;
   color: var(--b3-theme-on-surface-variant);
-  font-size: -size-xs;
+  font-size: $font-size-xs;
 
   .loading-icon {
-    font-size: 18px;
+    font-size: $font-size-lg;
     color: var(--b3-theme-primary);
   }
 
@@ -286,8 +285,8 @@
   }
 
   .platform-filter-label {
-    font-size: 10px;
-    font-weight: 700;
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-bold;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     opacity: 0.35;
@@ -304,7 +303,7 @@
     border-radius: 12px;
     background: transparent;
     color: var(--b3-theme-on-surface-variant);
-    font-size: 11px;
+    font-size: $font-size-xs;
     cursor: pointer;
     white-space: nowrap;
     flex-shrink: 0;
@@ -337,8 +336,8 @@
       border-radius: 7px;
       background: var(--b3-theme-on-surface-variant, #6b7280);
       color: var(--b3-theme-on-primary, #fff);
-      font-size: 9px;
-      font-weight: 700;
+      font-size: $font-size-2xs;
+      font-weight: $font-weight-bold;
     font-family: $vp-mono;
     margin-left: 3px;
     line-height: 1;
@@ -356,7 +355,7 @@
     background: var(--b3-theme-surface-light);
     color: var(--b3-theme-on-surface-variant);
     cursor: pointer;
-    font-size: -size-sm;
+    font-size: $font-size-sm;
     flex-shrink: 0;
 
     &:hover {
@@ -376,7 +375,7 @@
     background: transparent;
     color: var(--b3-theme-on-surface-variant);
     cursor: pointer;
-    font-size: 12px;
+    font-size: $font-size-xs;
     flex-shrink: 0;
     margin-left: auto;
 
@@ -393,7 +392,7 @@
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  font-size: -size-xs;
+  font-size: $font-size-xs;
   color: var(--b3-theme-on-surface-variant);
   background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.05));
   border-bottom: 1px solid var(--b3-border-color);
@@ -414,7 +413,7 @@
   flex-shrink: 0;
 
   .footer-hint {
-    font-size: -size-xs;
+    font-size: $font-size-xs;
     color: var(--b3-theme-on-surface-variant);
   }
 
@@ -424,7 +423,7 @@
     border-radius: $vp-radius;
     background: transparent;
     color: var(--b3-theme-primary);
-    font-size: 11px;
+    font-size: $font-size-xs;
     cursor: pointer;
     white-space: nowrap;
 
@@ -442,8 +441,8 @@
 
   h4 {
     margin: 0 0 10px;
-    font-size: 13px;
-    font-weight: 600;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
     color: var(--b3-theme-on-surface);
   }
 
@@ -460,16 +459,16 @@
     display: flex;
     align-items: baseline;
     gap: 10px;
-    font-size: -size-xs;
+    font-size: $font-size-xs;
     color: var(--b3-theme-on-surface-variant);
-    line-height: 1.5;
+    line-height: $line-height-normal;
 
     code {
       padding: 1px 5px;
       border-radius: 3px;
       background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
       color: var(--b3-theme-primary);
-      font-size: 11px;
+      font-size: $font-size-xs;
       font-family: $vp-mono;
     }
   }
@@ -480,8 +479,8 @@
     min-width: 52px;
     padding: 1px 8px;
     border-radius: $vp-radius;
-    font-size: 11px;
-    font-weight: 600;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
     flex-shrink: 0;
     justify-content: center;
 

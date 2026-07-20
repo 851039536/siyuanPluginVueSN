@@ -6,7 +6,6 @@
       <div class="stats-hero">
         <div class="hero-left">
           <span class="hero-value">{{ stats.totalDocs }}</span>
-          <span class="hero-label">总文档</span>
         </div>
         <div class="hero-right">
           <span class="hero-health-label">健康度</span>

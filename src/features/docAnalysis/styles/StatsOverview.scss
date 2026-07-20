@@ -69,8 +69,9 @@
 
   .hero-left {
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 6px;
     flex-shrink: 0;
   }
 
@@ -80,15 +81,6 @@
     font-family: $vp-mono;
     color: var(--b3-theme-on-background);
     line-height: 1;
-  }
-
-  .hero-label {
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-bold;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    opacity: 0.45;
-    margin-top: 2px;
   }
 
   .hero-right {

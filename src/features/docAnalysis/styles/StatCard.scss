@@ -1,0 +1,66 @@
+@use "@/variables.scss" as *;
+
+.stat-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 6px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: var(--b3-border-radius, 6px);
+  background: var(--b3-theme-background);
+  cursor: pointer;
+  transition: border-color .12s, background .12s;
+  overflow: hidden;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
+
+  &.active {
+    border-color: var(--b3-theme-primary);
+    background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, .08));
+  }
+
+  .card-value {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+    line-height: $line-height-tight;
+    margin-bottom: 2px;
+
+    &.zero { color: var(--b3-theme-error, #ef4444); }
+    &.small, &.time-yellow { color: var(--b3-theme-warning, #eab308); }
+    &.medium, &.large, &.xlarge, &.time-cyan { color: var(--b3-theme-info, #3b82f6); }
+    &.dup, &.time-orange { color: var(--b3-theme-warning-dark, #ea580c); }
+    &.time-green { color: var(--b3-theme-success, #22c55e); }
+    &.time-red { color: var(--b3-theme-error, #ef4444); }
+    &.time-purple { color: var(--b3-theme-on-surface-variant, #8b5cf6); }
+    &.depth-color { color: var(--b3-theme-primary, #6366f1); }
+    &.ref-color { color: var(--b3-theme-info-dark, #1d4ed8); }
+    &.img-color { color: var(--b3-theme-success-dark, #059669); }
+    &.bookmark-color, &.pending-color { color: var(--b3-theme-warning-dark, #b45309); }
+    &.no-bookmark-color, &.none-bookmark-color { color: var(--b3-theme-on-surface-variant); }
+    &.published-color { color: var(--b3-theme-info-dark, #1d4ed8); }
+    &.unused-color { color: var(--b3-theme-error-dark, #991b1b); }
+    &.full-publish-color { color: var(--b3-theme-success, #22c55e); }
+    &.partial-publish-color { color: var(--b3-theme-warning, #eab308); }
+    &.no-publish-color { color: var(--b3-theme-on-surface-variant); }
+  }
+
+  .card-unit {
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-on-surface-variant);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    font-weight: $font-weight-bold;
+  }
+
+  .card-percent {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 2px;
+    background: var(--b3-theme-primary-light, rgba(53, 120, 226, .12));
+    transition: width .3s ease;
+  }
+}

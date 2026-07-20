@@ -1,3 +1,4 @@
+<!-- Markdown 编辑器组件 - 纯文本输入框 -->
 <template>
   <div class="md-editor">
     <div class="md-editor-header">

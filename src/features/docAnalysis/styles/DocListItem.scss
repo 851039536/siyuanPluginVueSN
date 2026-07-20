@@ -1,5 +1,5 @@
 @use "@/variables.scss" as *;
-@use "./codex-tokens" as *;
+@use "./mixins" as *;
 
 .doc-list-item {
   display: flex;
@@ -22,12 +22,12 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: -size-sm;
+    font-size: $font-size-sm;
     color: var(--b3-theme-on-background);
-    font-weight: 500;
+    font-weight: $font-weight-medium;
 
     .doc-icon {
-      font-size: -size-base;
+      font-size: $font-size-base;
       color: var(--b3-theme-primary);
       flex-shrink: 0;
     }
@@ -44,7 +44,7 @@
     align-items: center;
     gap: 8px;
     margin-top: 4px;
-    font-size: 10px;
+    font-size: $font-size-2xs;
     color: var(--b3-theme-on-surface-variant);
     opacity: 0.6;
 
@@ -56,7 +56,7 @@
     }
 
     .meta-icon {
-      font-size: -size-xs;
+      font-size: $font-size-xs;
     }
 
     .meta-path {
@@ -79,7 +79,7 @@
     display: inline-flex;
     align-items: center;
     gap: 2px;
-    font-size: 11px;
+    font-size: $font-size-xs;
     padding: 2px 6px;
     border-radius: $vp-radius;
     background: var(--b3-theme-surface-light);
@@ -87,7 +87,7 @@
     white-space: nowrap;
 
     .badge-icon {
-      font-size: 11px;
+      font-size: $font-size-xs;
     }
 
     &.time-green {
@@ -148,7 +148,6 @@
       border-radius: 6px;
       background: var(--b3-theme-background);
       border: 1px solid var(--b3-border-color);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
       z-index: 100;
       white-space: nowrap;
 
@@ -161,8 +160,8 @@
       }
 
       .tooltip-header {
-        font-size: 10px;
-        font-weight: 700;
+        font-size: $font-size-2xs;
+        font-weight: $font-weight-bold;
         letter-spacing: 0.06em;
         text-transform: uppercase;
         opacity: 0.45;
@@ -172,7 +171,7 @@
       }
 
       .tooltip-item {
-        font-size: -size-xs;
+        font-size: $font-size-xs;
         padding: 3px 0;
         color: var(--b3-theme-on-background);
         display: flex;
@@ -181,7 +180,7 @@
 
         &::before {
           content: "✕";
-          font-size: 10px;
+          font-size: $font-size-2xs;
           color: var(--b3-theme-error, #ef4444);
           opacity: 0.7;
         }
@@ -209,7 +208,7 @@
     background: transparent;
     color: var(--b3-theme-on-surface-variant);
     cursor: pointer;
-    font-size: -size-base;
+    font-size: $font-size-base;
 
     &:hover {
       background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
@@ -226,7 +225,7 @@
     gap: 2px;
 
     .wordcount-value {
-      font-size: -size-xs;
+      font-size: $font-size-xs;
       font-family: $vp-mono;
       color: var(--b3-theme-on-surface-variant);
       background: var(--b3-theme-surface-light);
@@ -236,7 +235,7 @@
     }
 
     .size-value {
-      font-size: 11px;
+      font-size: $font-size-xs;
       font-family: $vp-mono;
       color: var(--b3-theme-on-surface-variant);
       opacity: 0.7;

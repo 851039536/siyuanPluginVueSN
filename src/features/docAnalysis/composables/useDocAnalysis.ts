@@ -1,3 +1,6 @@
+/**
+ * 文档分析功能 - 核心业务逻辑
+ */
 import type { Plugin } from "siyuan"
 import type {
   BookmarkDetail,
@@ -6,13 +9,10 @@ import type {
   DocStats,
   DuplicateNameGroup,
   FilterOptions,
+  NotebookInfo,
   PlatformMeta,
   QueryState,
 } from "../types/index"
-
-/**
- * 文档分析功能 - 核心业务逻辑
- */
 import {
   reactive,
   ref,
@@ -22,11 +22,9 @@ import {
   sql,
 } from "@/api"
 import {
-  DEFAULT_FILTER_OPTIONS,
-  DEFAULT_PLATFORM_META,
   DocAnalysisStorage,
 } from "../types/storage"
-import { DEFAULT_DOC_STATS } from "../utils/defaults"
+import { DEFAULT_DOC_STATS, DEFAULT_FILTER_OPTIONS, DEFAULT_PLATFORM_META } from "../types/index"
 import {
   computeUnpublishedPlatformNames,
   getPlatformIdFromAttrKey,
@@ -38,12 +36,6 @@ import {
   quoteSql,
   quoteSqlList,
 } from "../utils/sqlHelpers"
-
-/** 笔记本信息 */
-export interface NotebookInfo {
-  id: string
-  name: string
-}
 
 /**
  * 子查询：统计每个文档的内容大小和字数（合并减少扫描次数）
@@ -58,8 +50,6 @@ const SIZE_WORDCOUNT_SUBQUERY = `
   WHERE type != 'd'
   GROUP BY root_id
 `
-
-export { DEFAULT_PLATFORM_META }
 
 /** 平台元数据（响应式，支持用户动态增删改） */
 export const PLATFORM_META = ref<PlatformMeta[]>([...DEFAULT_PLATFORM_META])
@@ -192,8 +182,6 @@ export function useDocAnalysis(plugin: Plugin) {
   let noPublishDocIds: Set<string> = new Set()
   /** 各平台未发布文档数（有任一发布但缺该平台的文档数），响应式供模板消费 */
   const platformUnpublishedCounts = ref<Record<string, number>>({})
-  /** 含任一平台发布属性的文档总数，供覆盖率计算 */
-  const docsInPublishSystem = ref(0)
 
   // 深度分析详情
   const depthStats = ref<DepthStats>({
@@ -834,7 +822,6 @@ export function useDocAnalysis(plugin: Plugin) {
       docStats.partialPublishDocs = partial
       docStats.noPublishDocs = no
       docStats.platformCounts = pCounts
-      docsInPublishSystem.value = inSystem
       platformUnpublishedCounts.value = unpubCounts
       fullPublishDocIds = fullSet
       noPublishDocIds = noSet
@@ -1320,6 +1307,5 @@ export function useDocAnalysis(plugin: Plugin) {
     loadPlatformMeta,
     savePlatformMeta,
     platformUnpublishedCounts,
-    docsInPublishSystem,
   }
 }

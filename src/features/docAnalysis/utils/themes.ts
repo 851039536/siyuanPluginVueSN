@@ -1,10 +1,8 @@
 /**
- * 发布平台主题预设
- * 微信公众号排版主题（单套）
+ * 发布平台主题预设 - 微信公众号排版
  */
-import type { CodeTheme, PublishTheme } from "../types/index"
+import type { PublishTheme } from "../types/index"
 
-/** 微信主题 - 简洁清新风格 */
 const wechatTheme: PublishTheme = {
   id: "wechat",
   name: "微信公众号",
@@ -133,23 +131,6 @@ const wechatTheme: PublishTheme = {
   codeTheme: "github",
 }
 
-/** 主题映射表 */
-export const THEME_MAP: Record<string, PublishTheme> = {
-  wechat: wechatTheme,
-}
-
-/** 主题列表 */
-export const THEME_LIST: PublishTheme[] = [wechatTheme]
-
 /** 默认主题 */
 export const DEFAULT_THEME = wechatTheme
-
-/** 代码高亮主题名 → highlight.js CSS 文件路径映射 */
-export const CODE_THEME_URLS: Record<CodeTheme, string> = {
-  "github": "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css",
-  "monokai": "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/monokai.min.css",
-  "atom-one-dark": "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css",
-  "atom-one-light": "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-light.min.css",
-  "vs": "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs.min.css",
-}
 

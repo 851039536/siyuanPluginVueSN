@@ -1,3 +1,4 @@
+<!-- 日期选择器组件 - 文本框输入 + 日历弹出选择 -->
 <template>
   <div
     ref="containerRef"

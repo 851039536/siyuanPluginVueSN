@@ -170,20 +170,12 @@ export interface DocStats {
   /** 字数分布 */
   wordCountDistribution: WordCountBin[]
   /** 自定义书签 Top-N（排除系统书签：待发布/已发布/不使用/无） */
-  customBookmarkTop: BookmarkBin[]
-  /** 命中去重扣分条件的文档数（去重后） */
-  distinctIssueCount: number
+  customBookmarkTop: BookmarkDetail[]
 }
 
 /** 字数分档 */
 export interface WordCountBin {
   label: string
-  count: number
-}
-
-/** 书签分档（复用，也用于自定义书签） */
-export interface BookmarkBin {
-  value: string
   count: number
 }
 
@@ -203,10 +195,6 @@ export interface PlatformMeta {
   hidden?: boolean
 }
 
-// ============================================================
-// 发布页相关类型
-// ============================================================
-
 /** 发布平台主题定义 */
 export interface PublishTheme {
   /** 主题唯一标识 */
@@ -224,57 +212,205 @@ export interface PublishTheme {
 /** 代码高亮主题 */
 export type CodeTheme = "github" | "monokai" | "atom-one-dark" | "atom-one-light" | "vs"
 
-/** 导出格式 */
-export type ExportFormat = "html" | "markdown" | "htmlFile"
 
-/** 发布面板入口参数 */
-export interface PublishPanelParams {
-  /** 文档 ID（从文档列表打开时传入） */
-  docId?: string
-  /** 目标平台ID（从 AttrsPanel 的"前往发布"传入） */
-  targetPlatformId?: string
-  /** 初始 Markdown 内容（粘贴时传入） */
-  initialMd?: string
+// ============================================================
+// 常量
+// ============================================================
+
+/** 笔记本简要信息 */
+export interface NotebookInfo {
+  id: string
+  name: string
+}
+
+/** 默认过滤选项 */
+export const DEFAULT_FILTER_OPTIONS: FilterOptions = {
+  titleKeyword: "",
+  contentKeyword: "",
+  notebookId: "",
+  sortField: "wordCount",
+  sortOrder: "asc",
+  wordCountMin: 0,
+  wordCountMax: 30000,
+  bookmarkName: "",
+  updatedAfter: "",
+  updatedBefore: "",
+}
+
+/** 默认平台元数据（用户未自定义时使用） */
+export const DEFAULT_PLATFORM_META: PlatformMeta[] = [
+  { id: "csdn",         matchers: ["csdn"],                    name: "CSDN",    url: "https://mp.csdn.net/mp_blog/creation/editor" },
+  { id: "zhihu",        matchers: ["zhihu"],                   name: "知乎",    url: "https://zhuanlan.zhihu.com/write" },
+  { id: "juejin",       matchers: ["juejin"],                  name: "掘金",    url: "https://juejin.cn/editor/drafts/new" },
+  { id: "cnblogs",      matchers: ["cnblogs", "blog"],         name: "博客园",  url: "https://i.cnblogs.com/posts/edit" },
+  { id: "bili",         matchers: ["bili", "bibi"],            name: "B站",     url: "https://www.bilibili.com/" },
+  { id: "gzh",          matchers: ["gzh"],                     name: "公众号",  url: "" },
+  { id: "jianshu",      matchers: ["jianshu"],                 name: "简书",    url: "https://www.jianshu.com/writer" },
+  { id: "cto51",        matchers: ["cto51"],                   name: "51CTO",   url: "https://blog.51cto.com/writer" },
+  { id: "segmentfault", matchers: ["segmentfault", "sifou"],   name: "思否",    url: "https://segmentfault.com/write" },
+  { id: "oschina",      matchers: ["oschina"],                 name: "开源中国", url: "https://oschina.net/writer" },
+  { id: "infoq",        matchers: ["infoq"],                   name: "InfoQ",   url: "https://www.infoq.com/" },
+]
+
+/** 默认文档统计零值 */
+export const DEFAULT_DOC_STATS: DocStats = {
+  totalDocs: 0,
+  zeroByteDocs: 0,
+  smallDocs: 0,
+  mediumDocs: 0,
+  largeDocs: 0,
+  xlargeDocs: 0,
+  duplicateNameGroups: 0,
+  duplicateNameDocs: 0,
+  updatedIn7Days: 0,
+  updatedIn30Days: 0,
+  updatedIn1To2Months: 0,
+  updatedIn2To3Months: 0,
+  updatedOverHalfYear: 0,
+  deepDocs: 0,
+  refDocs: 0,
+  totalRefs: 0,
+  imageDocs: 0,
+  totalImages: 0,
+  bookmarkedDocs: 0,
+  noBookmarkDocs: 0,
+  pendingPublishDocs: 0,
+  publishedDocs: 0,
+  unusedDocs: 0,
+  noneBookmarkDocs: 0,
+  fullPublishDocs: 0,
+  partialPublishDocs: 0,
+  noPublishDocs: 0,
+  taggedDocs: 0,
+  aliasedDocs: 0,
+  memoedDocs: 0,
+  incomingRefDocs: 0,
+  orphanDocs: 0,
+  platformCounts: {},
+  wordCountDistribution: [],
+  customBookmarkTop: [],
 }
 
 // ============================================================
-// 工具函数（纯函数，无副作用）
+// 类别标签
 // ============================================================
+
+const CATEGORY_LABELS: Record<string, string> = {
+  "0B": "0B 空文档",
+  "small": "< 1KB",
+  "medium": "1~10KB",
+  "large": "10~100KB",
+  "xlarge": ">100KB",
+  "duplicate": "重名文档",
+  "7days": "7天内更新",
+  "30days": "7~30天更新",
+  "1to2month": "1~2月更新",
+  "2to3month": "2~3月更新",
+  "halfYear": "半年以上未更新",
+  "customTime": "自定义时间",
+  "deep": "深层文档(≥5层)",
+  "hasRef": "含引用",
+  "hasImage": "含图片",
+  "hasBookmark": "有书签",
+  "noBookmark": "无书签",
+  "pendingPublish": "待发布",
+  "published": "已发布",
+  "unused": "不使用",
+  "noneBookmark": "书签「无」",
+  "fullPublish": "完整发布",
+  "partialPublish": "部分发布",
+  "noPublish": "未发布",
+  "hasTag": "有标签",
+  "noTag": "无标签",
+  "hasAlias": "有别名",
+  "hasMemo": "有备注",
+  "incomingRef": "被引用",
+  "orphanDoc": "孤文档",
+}
 
 /** 获取统计类别的中文标签 */
 export function getCategoryLabel(category: string): string {
-  switch (category) {
-    case "0B": return "0B 空文档"
-    case "small": return "< 1KB"
-    case "medium": return "1~10KB"
-    case "duplicate": return "重名文档"
-    case "7days": return "7天内更新"
-    case "30days": return "7~30天更新"
-    case "1to2month": return "1~2月更新"
-    case "2to3month": return "2~3月更新"
-    case "halfYear": return "半年以上未更新"
-    case "customTime": return "自定义时间"
-    case "deep": return "深层文档(≥5层)"
-    case "hasRef": return "含引用"
-    case "hasImage": return "含图片"
-    case "hasBookmark": return "有书签"
-    case "noBookmark": return "无书签"
-    case "pendingPublish": return "待发布"
-    case "published": return "已发布"
-    case "unused": return "不使用"
-    case "noneBookmark": return "书签「无」"
-    case "fullPublish": return "完整发布"
-    case "partialPublish": return "部分发布"
-    case "noPublish": return "未发布"
-    case "hasTag": return "有标签"
-    case "noTag": return "无标签"
-    case "hasAlias": return "有别名"
-    case "hasMemo": return "有备注"
-    case "incomingRef": return "被引用"
-    case "orphanDoc": return "孤文档"
-    case "large": return "10~100KB"
-    case "xlarge": return ">100KB"
-    default: return category
-  }
+  return CATEGORY_LABELS[category] || category
 }
+
+// ============================================================
+// StatsOverview 元数据驱动渲染
+// ============================================================
+
+/** 统计卡片颜色类名 */
+export type CardColorClass =
+  | "zero" | "small" | "medium" | "large" | "xlarge" | "dup"
+  | "time-green" | "time-yellow" | "time-red" | "time-cyan" | "time-orange" | "time-purple"
+  | "depth-color" | "ref-color" | "img-color"
+  | "bookmark-color" | "no-bookmark-color" | "none-bookmark-color"
+  | "pending-color" | "published-color" | "unused-color"
+  | "full-publish-color" | "partial-publish-color" | "no-publish-color"
+
+/** 单个统计卡片定义 */
+export interface StatCardDef {
+  id: string
+  shortLabel: string
+  statKey: keyof DocStats
+  colorClass: CardColorClass
+  /** 卡片后缀（如重名卡片显示 "(N组)"）：对应 DocStats 字段 */
+  suffixStatKey?: keyof DocStats
+  /** 函数计算值（如无标签 = totalDocs - taggedDocs），优先级高于 statKey */
+  resolveValue?: (stats: DocStats) => number
+  /** 图标名（仅图标卡片，如自定义时间） */
+  iconValue?: string
+}
+
+/** 统计分区定义 */
+export interface StatSectionDef {
+  key: string
+  title: string
+  icon: string
+  cards: StatCardDef[]
+  /** 默认折叠 */
+  collapsed?: boolean
+}
+
+export const STAT_SECTIONS: StatSectionDef[] = [
+  {
+    key: "size", title: "大小分布", icon: "mdi:harddisk",
+    cards: [
+      { id: "0B", shortLabel: "0B空", statKey: "zeroByteDocs", colorClass: "zero" },
+      { id: "small", shortLabel: "<1KB", statKey: "smallDocs", colorClass: "small" },
+      { id: "medium", shortLabel: "1~10KB", statKey: "mediumDocs", colorClass: "medium" },
+      { id: "large", shortLabel: "10~100KB", statKey: "largeDocs", colorClass: "large" },
+      { id: "xlarge", shortLabel: ">100KB", statKey: "xlargeDocs", colorClass: "xlarge" },
+      { id: "duplicate", shortLabel: "重名", statKey: "duplicateNameDocs", colorClass: "dup", suffixStatKey: "duplicateNameGroups" },
+    ],
+  },
+  {
+    key: "time", title: "更新时间", icon: "mdi:clock-outline",
+    cards: [
+      { id: "7days", shortLabel: "7天内", statKey: "updatedIn7Days", colorClass: "time-green" },
+      { id: "30days", shortLabel: "7~30天", statKey: "updatedIn30Days", colorClass: "time-yellow" },
+      { id: "1to2month", shortLabel: "1~2月", statKey: "updatedIn1To2Months", colorClass: "time-cyan" },
+      { id: "2to3month", shortLabel: "2~3月", statKey: "updatedIn2To3Months", colorClass: "time-orange" },
+      { id: "halfYear", shortLabel: "半年+", statKey: "updatedOverHalfYear", colorClass: "time-red" },
+      { id: "customTime", shortLabel: "自定义", statKey: "updatedIn7Days", colorClass: "time-purple", iconValue: "mdi:calendar-range" },
+    ],
+  },
+  {
+    key: "bookmark", title: "书签", icon: "mdi:bookmark-outline",
+    cards: [
+      { id: "pendingPublish", shortLabel: "待发布", statKey: "pendingPublishDocs", colorClass: "pending-color" },
+      { id: "published", shortLabel: "已发布", statKey: "publishedDocs", colorClass: "published-color" },
+      { id: "unused", shortLabel: "不使用", statKey: "unusedDocs", colorClass: "unused-color" },
+      { id: "noneBookmark", shortLabel: "无", statKey: "noneBookmarkDocs", colorClass: "none-bookmark-color" },
+      { id: "hasBookmark", shortLabel: "有书签", statKey: "bookmarkedDocs", colorClass: "bookmark-color" },
+      { id: "noBookmark", shortLabel: "无书签", statKey: "noBookmarkDocs", colorClass: "no-bookmark-color" },
+    ],
+  },
+  {
+    key: "publish", title: "发布状态", icon: "mdi:cloud-check-outline",
+    cards: [
+      { id: "fullPublish", shortLabel: "完整发布", statKey: "fullPublishDocs", colorClass: "full-publish-color" },
+      { id: "partialPublish", shortLabel: "部分发布", statKey: "partialPublishDocs", colorClass: "partial-publish-color" },
+      { id: "noPublish", shortLabel: "未发布", statKey: "noPublishDocs", colorClass: "no-publish-color" },
+    ],
+  },
+]
 

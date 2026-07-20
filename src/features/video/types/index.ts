@@ -1,7 +1,7 @@
 /**
  * 视频管理器模块 - 类型定义
  */
-import { Plugin } from "siyuan"
+import { Plugin, showMessage } from "siyuan"
 import { emitCustomEvent } from "@/utils/eventBus"
 // @ts-expect-error
 
@@ -94,9 +94,7 @@ export class VideoManager {
       const { detail } = event
       if (detail.type === "video") {
         // 处理视频相关操作
-        import("siyuan").then(({ showMessage }) => {
-          showMessage("视频功能已触发", 2000, "info")
-        })
+        showMessage("视频功能已触发", 2000, "info")
       }
     })
   }
@@ -107,9 +105,7 @@ export class VideoManager {
   public openVideoManager() {
     // 触发全局事件，由主插件处理
     emitCustomEvent("openVideoManager")
-    import("siyuan").then(({ showMessage }) => {
-      showMessage("打开视频管理器", 2000, "info")
-    })
+    showMessage("打开视频管理器", 2000, "info")
   }
 
   /**

@@ -11,12 +11,12 @@
       <!-- 头部 -->
       <div class="video-header">
         <div class="header-left">
-          <h2>视频管理器</h2>
+          <h2>{{ t("title") }}</h2>
           <span
             v-if="videos.length > 0"
             class="video-count"
           >
-            {{ filteredVideos.length }} / {{ videos.length }} 个视频
+            {{ t("xVideos", { count: filteredVideos.length, total: videos.length }) }}
           </span>
         </div>
         <div class="header-right">
@@ -24,7 +24,7 @@
             icon="x"
             variant="ghost"
             size="xsmall"
-            title="关闭"
+            :title="t('close')"
             @click="onClose"
           />
         </div>
@@ -77,9 +77,9 @@
             :size="64"
             class="empty-icon"
           />
-          <p>暂无视频</p>
+          <p>{{ t("noVideos") }}</p>
           <p class="empty-hint">
-            请将视频文件放入 data/video 目录
+            {{ t("emptyHint") }}
           </p>
         </div>
       </div>
@@ -91,7 +91,7 @@
     :visible="playerVisible"
     :video="currentVideo"
     :video-url="currentVideoUrl"
-    title="视频播放"
+    :title="t('title')"
     @close="closePlayer"
     @error="handlePlayerError"
   />
@@ -104,768 +104,105 @@
   />
 
   <!-- 批量加密对话框 -->
-  <div
-    v-if="encryptDialogVisible"
-    class="dialog-overlay"
-    @click="closeEncryptDialog"
-  >
-    <div
-      class="dialog"
-      @click.stop
-    >
-      <div class="dialog-header">
-        <h3><IconWrapper
-          name="pageLock"
-          :size="16"
-        /> 批量加密视频</h3>
-        <Button
-          icon="x"
-          variant="ghost"
-          size="xsmall"
-          :disabled="encryptProgress"
-          @click="closeEncryptDialog"
-        />
-      </div>
-      <div class="dialog-body">
-        <div class="form-group">
-          <label>待加密视频数量</label>
-          <div class="file-info">
-            {{ unencryptedCount }} 个未加密视频
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="checkbox-label">
-            <input
-              v-model="encryptDoubleCompress"
-              type="checkbox"
-              :disabled="encryptProgress"
-            />
-            <span>双重压缩（更小体积，更慢速度）</span>
-          </label>
-          <div class="form-hint">
-            单重压缩：生成 .sn 格式，速度快<br>
-            双重压缩：生成 .sn2 格式，体积更小但速度较慢
-          </div>
-        </div>
-
-        <div
-          v-if="encryptProgress"
-          class="form-group"
-        >
-          <label>加密进度</label>
-          <div class="progress-info">
-            <div class="progress-bar">
-              <div
-                class="progress-fill"
-                :style="{ width: `${encryptProgressPercent}%` }"
-              ></div>
-            </div>
-            <div class="progress-text">
-              {{ encryptCurrentFile }} ({{ encryptCurrentIndex }}/{{ encryptTotalCount }})
-            </div>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <div class="encrypt-info">
-            <div class="info-item">
-              <span class="info-label">加密后格式：</span>
-              <span class="info-value">{{ encryptDoubleCompress ? '.sn2' : '.sn' }}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">原文件处理：</span>
-              <span class="info-value">加密后自动删除</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="dialog-footer">
-        <Button
-          variant="secondary"
-          :disabled="encryptProgress"
-          @click="closeEncryptDialog"
-        >
-          取消
-        </Button>
-        <Button
-          variant="primary"
-          :disabled="encryptProgress"
-          @click="handleBatchEncrypt"
-        >
-          {{ encryptProgress ? '加密中...' : '开始加密' }}
-        </Button>
-      </div>
-    </div>
-  </div>
+  <EncryptDialog
+    :visible="encryptDialogVisible"
+    :unencrypted-count="unencryptedCount"
+    :double-compress="encryptDoubleCompress"
+    @update:double-compress="encryptDoubleCompress = $event"
+    :progress="encryptProgress"
+    :progress-percent="encryptProgressPercent"
+    :current-file="encryptCurrentFile"
+    :current-index="encryptCurrentIndex"
+    :total-count="encryptTotalCount"
+    @close="closeEncryptDialog"
+    @start="handleBatchEncrypt"
+  />
 
   <!-- 批量解密对话框 -->
-  <div
-    v-if="decryptDialogVisible"
-    class="dialog-overlay"
-    @click="closeDecryptDialog"
-  >
-    <div
-      class="dialog"
-      @click.stop
-    >
-      <div class="dialog-header">
-        <h3><IconWrapper
-          name="pageLock"
-          :size="16"
-        /> 批量解密视频</h3>
-        <Button
-          icon="x"
-          variant="ghost"
-          size="xsmall"
-          :disabled="decryptProgress"
-          @click="closeDecryptDialog"
-        />
-      </div>
-      <div class="dialog-body">
-        <div class="form-group">
-          <label>待解密视频数量</label>
-          <div class="file-info">
-            {{ encryptedCount }} 个加密视频
-          </div>
-        </div>
-
-        <div
-          v-if="decryptProgress"
-          class="form-group"
-        >
-          <label>解密进度</label>
-          <div class="progress-info">
-            <div class="progress-bar">
-              <div
-                class="progress-fill"
-                :style="{ width: `${decryptProgressPercent}%` }"
-              ></div>
-            </div>
-            <div class="progress-text">
-              {{ decryptCurrentFile }} ({{ decryptCurrentIndex }}/{{ decryptTotalCount }})
-            </div>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <div class="encrypt-info">
-            <div class="info-item">
-              <span class="info-label">解密后格式：</span>
-              <span class="info-value">原始视频格式（.mp4 等）</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">加密文件处理：</span>
-              <span class="info-value">解密后自动删除</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">用途：</span>
-              <span class="info-value">方便迁移到其他平台</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="dialog-footer">
-        <Button
-          variant="secondary"
-          :disabled="decryptProgress"
-          @click="closeDecryptDialog"
-        >
-          取消
-        </Button>
-        <Button
-          variant="primary"
-          :disabled="decryptProgress"
-          @click="handleBatchDecrypt"
-        >
-          {{ decryptProgress ? '解密中...' : '开始解密' }}
-        </Button>
-      </div>
-    </div>
-  </div>
+  <DecryptDialog
+    :visible="decryptDialogVisible"
+    :encrypted-count="encryptedCount"
+    :progress="decryptProgress"
+    :progress-percent="decryptProgressPercent"
+    :current-file="decryptCurrentFile"
+    :current-index="decryptCurrentIndex"
+    :total-count="decryptTotalCount"
+    @close="closeDecryptDialog"
+    @start="handleBatchDecrypt"
+  />
 
   <!-- 视频合并对话框 -->
-  <div
-    v-if="mergeDialogVisible"
-    class="dialog-overlay"
-    @click="closeMergeDialog"
-  >
-    <div
-      class="dialog"
-      @click.stop
-    >
-      <div class="dialog-header">
-        <h3><IconWrapper
-          name="video"
-          :size="16"
-        /> 视频合并</h3>
-        <Button
-          icon="x"
-          variant="ghost"
-          size="xsmall"
-          :disabled="mergeProgress"
-          @click="closeMergeDialog"
-        />
-      </div>
-      <div class="dialog-body">
-        <div class="form-group">
-          <label>选择要合并的视频（按顺序）</label>
-          <div class="video-selector">
-            <div
-              v-for="(video, index) in mergeSelectedVideos"
-              :key="index"
-              class="selected-video-item"
-            >
-              <span class="video-index">{{ index + 1 }}</span>
-              <span
-                class="video-name"
-                :title="video.name"
-              >{{ video.name }}</span>
-              <Button
-                icon="x"
-                variant="ghost"
-                size="xsmall"
-                title="移除"
-                @click="removeMergeVideo(index)"
-              />
-            </div>
-            <div
-              v-if="mergeSelectedVideos.length === 0"
-              class="empty-selection"
-            >
-              请选择视频文件
-            </div>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>可选视频列表</label>
-          <div class="video-list-select">
-            <div
-              v-for="video in videos"
-              :key="video.path"
-              class="video-option"
-              :class="{ selected: isVideoSelected(video) }"
-              @click="toggleMergeVideo(video)"
-            >
-              <span class="video-name">{{ video.name }}</span>
-              <span class="video-size">{{ formatFileSize(video.size) }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>输出文件名</label>
-          <Input
-            v-model="mergeOutputName"
-            placeholder="merged_video.mp4"
-          />
-        </div>
-
-        <div
-          v-if="mergeProgress"
-          class="form-group"
-        >
-          <label>合并进度</label>
-          <div class="progress-info">
-            <div class="progress-bar">
-              <div
-                class="progress-fill"
-                :style="{ width: `${mergeProgressPercent}%` }"
-              ></div>
-            </div>
-            <div class="progress-text">
-              {{ mergeProgressPercent }}%
-            </div>
-          </div>
-        </div>
-
-        <div
-          v-if="mergeResult"
-          class="form-group"
-        >
-          <div class="encrypt-info">
-            <div class="info-item">
-              <span class="info-label">状态：</span>
-              <span
-                class="info-value"
-                :style="{ color: mergeResult.success ? '#788c5d' : '#d97757' }"
-              >
-                <IconWrapper
-                  v-if="mergeResult.success"
-                  name="success"
-                  :size="14"
-                />
-                <IconWrapper
-                  v-else
-                  name="error"
-                  :size="14"
-                />
-                {{ mergeResult.success ? '合并成功' : '合并失败' }}
-              </span>
-            </div>
-            <div
-              v-if="mergeResult.outputPath"
-              class="info-item"
-            >
-              <span class="info-label">输出路径：</span>
-              <span class="info-value">{{ mergeResult.outputPath }}</span>
-            </div>
-            <div
-              v-if="mergeResult.error"
-              class="info-item"
-            >
-              <span class="info-label">错误信息：</span>
-              <span class="info-value">{{ mergeResult.error }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="dialog-footer">
-        <Button
-          variant="secondary"
-          :disabled="mergeProgress"
-          @click="closeMergeDialog"
-        >
-          {{ mergeResult ? '关闭' : '取消' }}
-        </Button>
-        <Button
-          variant="primary"
-          :disabled="mergeProgress || mergeSelectedVideos.length < 2"
-          @click="handleMergeVideos"
-        >
-          {{ mergeProgress ? '合并中...' : '开始合并' }}
-        </Button>
-      </div>
-    </div>
-  </div>
+  <MergeDialog
+    :visible="mergeDialogVisible"
+    :selected-videos="mergeSelectedVideos"
+    :videos="videos"
+    :output-name="mergeOutputName"
+    :progress="mergeProgress"
+    :progress-percent="mergeProgressPercent"
+    :result="mergeResult"
+    :is-selected="isVideoSelected"
+    @close="closeMergeDialog"
+    @remove="removeMergeVideo"
+    @toggle="toggleMergeVideo"
+    @start="handleMergeVideos"
+    @update:output-name="mergeOutputName = $event"
+  />
 
   <!-- 视频音频合并对话框 -->
-  <div
-    v-if="mergeAudioDialogVisible"
-    class="dialog-overlay"
-    @click="closeMergeAudioDialog"
-  >
-    <div
-      class="dialog"
-      @click.stop
-    >
-      <div class="dialog-header">
-        <h3><IconWrapper
-          name="headphones"
-          :size="16"
-        /> 视频音频合并</h3>
-        <Button
-          icon="x"
-          variant="ghost"
-          size="xsmall"
-          :disabled="mergeAudioProgress"
-          @click="closeMergeAudioDialog"
-        />
-      </div>
-      <div class="dialog-body">
-        <div class="form-group">
-          <label>选择视频文件</label>
-          <Select
-            v-model="selectedVideoForMerge"
-            :options="videoOptions"
-          />
-        </div>
-
-        <div class="form-group">
-          <label>选择音频文件</label>
-          <Select
-            v-model="selectedAudioForMerge"
-            :options="audioOptions"
-          />
-        </div>
-
-        <div class="form-group">
-          <label>输出文件名</label>
-          <Input
-            v-model="mergeAudioOutputName"
-            placeholder="video_with_audio.mp4"
-          />
-        </div>
-
-        <div
-          v-if="mergeAudioProgress"
-          class="form-group"
-        >
-          <label>合并进度</label>
-          <div class="progress-info">
-            <div class="progress-bar">
-              <div
-                class="progress-fill"
-                :style="{ width: `${mergeAudioProgressPercent}%` }"
-              ></div>
-            </div>
-            <div class="progress-text">
-              {{ mergeAudioProgressPercent }}%
-            </div>
-          </div>
-        </div>
-
-        <div
-          v-if="mergeAudioResult"
-          class="form-group"
-        >
-          <div class="encrypt-info">
-            <div class="info-item">
-              <span class="info-label">状态：</span>
-              <span
-                class="info-value"
-                :style="{ color: mergeAudioResult.success ? '#788c5d' : '#d97757' }"
-              >
-                <IconWrapper
-                  v-if="mergeAudioResult.success"
-                  name="success"
-                  :size="14"
-                />
-                <IconWrapper
-                  v-else
-                  name="error"
-                  :size="14"
-                />
-                {{ mergeAudioResult.success ? '合并成功' : '合并失败' }}
-              </span>
-            </div>
-            <div
-              v-if="mergeAudioResult.outputPath"
-              class="info-item"
-            >
-              <span class="info-label">输出路径：</span>
-              <span class="info-value">{{ mergeAudioResult.outputPath }}</span>
-            </div>
-            <div
-              v-if="mergeAudioResult.error"
-              class="info-item"
-            >
-              <span class="info-label">错误信息：</span>
-              <span class="info-value">{{ mergeAudioResult.error }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="dialog-footer">
-        <Button
-          variant="secondary"
-          :disabled="mergeAudioProgress"
-          @click="closeMergeAudioDialog"
-        >
-          {{ mergeAudioResult ? '关闭' : '取消' }}
-        </Button>
-        <Button
-          variant="primary"
-          :disabled="mergeAudioProgress || !selectedVideoForMerge || !selectedAudioForMerge"
-          @click="handleMergeVideoAudio"
-        >
-          {{ mergeAudioProgress ? '合并中...' : '开始合并' }}
-        </Button>
-      </div>
-    </div>
-  </div>
+  <MergeAudioDialog
+    :visible="mergeAudioDialogVisible"
+    :video-options="videoOptions"
+    :audio-options="audioOptions"
+    :selected-video="selectedVideoForMerge"
+    :selected-audio="selectedAudioForMerge"
+    :output-name="mergeAudioOutputName"
+    :progress="mergeAudioProgress"
+    :progress-percent="mergeAudioProgressPercent"
+    :result="mergeAudioResult"
+    @close="closeMergeAudioDialog"
+    @start="handleMergeVideoAudio"
+    @update:selected-video="selectedVideoForMerge = $event"
+    @update:selected-audio="selectedAudioForMerge = $event"
+    @update:output-name="mergeAudioOutputName = $event"
+  />
 
   <!-- 视频压缩对话框 -->
-  <div
-    v-if="compressDialogVisible"
-    class="dialog-overlay"
-    @click="closeCompressDialog"
-  >
-    <div
-      class="dialog"
-      @click.stop
-    >
-      <div class="dialog-header">
-        <h3><IconWrapper
-          name="copy"
-          :size="16"
-        /> 视频压缩</h3>
-        <Button
-          icon="x"
-          variant="ghost"
-          size="xsmall"
-          :disabled="compressProgress"
-          @click="closeCompressDialog"
-        />
-      </div>
-      <div class="dialog-body">
-        <div class="form-group">
-          <label>选择要压缩的视频</label>
-          <Select
-            v-model="selectedVideoForCompress"
-            :options="videoOptions"
-          />
-        </div>
-
-        <div class="form-group">
-          <label>压缩模式</label>
-          <div class="compress-mode-selector">
-            <label class="radio-label">
-              <input
-                v-model="compressMode"
-                type="radio"
-                value="crf"
-              />
-              <span>CRF 质量模式（推荐）</span>
-            </label>
-            <label class="radio-label">
-              <input
-                v-model="compressMode"
-                type="radio"
-                value="bitrate"
-              />
-              <span>比特率模式</span>
-            </label>
-          </div>
-        </div>
-
-        <div
-          v-if="compressMode === 'crf'"
-          class="form-group"
-        >
-          <label>CRF 值（越小质量越好，推荐 23-28）</label>
-          <Input
-            v-model="compressCRF"
-            type="number"
-          />
-          <div class="form-hint">
-            18-23: 高质量（文件较大）<br>
-            23-28: 平衡（推荐）<br>
-            28-51: 高压缩（文件较小）
-          </div>
-        </div>
-
-        <div
-          v-if="compressMode === 'bitrate'"
-          class="form-group"
-        >
-          <label>目标比特率</label>
-          <Input
-            v-model="compressBitrate"
-            placeholder="1000k"
-          />
-          <div class="form-hint">
-            例如：500k, 1000k, 2000k, 5M
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>输出文件名</label>
-          <Input
-            v-model="compressOutputName"
-            placeholder="compressed_video.mp4"
-          />
-        </div>
-
-        <div
-          v-if="selectedVideoForCompress"
-          class="form-group"
-        >
-          <div class="encrypt-info">
-            <div class="info-item">
-              <span class="info-label">原始大小：</span>
-              <span class="info-value">{{ formatFileSize(getVideoSize(selectedVideoForCompress)) }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div
-          v-if="compressProgress"
-          class="form-group"
-        >
-          <label>压缩进度</label>
-          <div class="progress-info">
-            <div class="progress-bar">
-              <div
-                class="progress-fill"
-                :style="{ width: `${compressProgressPercent}%` }"
-              ></div>
-            </div>
-            <div class="progress-text">
-              {{ compressProgressPercent }}%
-            </div>
-          </div>
-        </div>
-
-        <div
-          v-if="compressResult"
-          class="form-group"
-        >
-          <div class="encrypt-info">
-            <div class="info-item">
-              <span class="info-label">状态：</span>
-              <span
-                class="info-value"
-                :style="{ color: compressResult.success ? '#788c5d' : '#d97757' }"
-              >
-                <IconWrapper
-                  v-if="compressResult.success"
-                  name="success"
-                  :size="14"
-                />
-                <IconWrapper
-                  v-else
-                  name="error"
-                  :size="14"
-                />
-                {{ compressResult.success ? '压缩成功' : '压缩失败' }}
-              </span>
-            </div>
-            <div
-              v-if="compressResult.outputPath"
-              class="info-item"
-            >
-              <span class="info-label">输出路径：</span>
-              <span class="info-value">{{ compressResult.outputPath }}</span>
-            </div>
-            <div
-              v-if="compressOriginalSize && compressResult.success"
-              class="info-item"
-            >
-              <span class="info-label">原始大小：</span>
-              <span class="info-value">{{ formatFileSize(compressOriginalSize) }}</span>
-            </div>
-            <div
-              v-if="compressNewSize && compressResult.success"
-              class="info-item"
-            >
-              <span class="info-label">压缩后：</span>
-              <span class="info-value">{{ formatFileSize(compressNewSize) }}</span>
-            </div>
-            <div
-              v-if="compressNewSize && compressResult.success"
-              class="info-item"
-            >
-              <span class="info-label">压缩率：</span>
-              <span class="info-value">{{ calculateCompressionRate(compressOriginalSize, compressNewSize) }}</span>
-            </div>
-            <div
-              v-if="compressResult.error"
-              class="info-item"
-            >
-              <span class="info-label">错误信息：</span>
-              <span class="info-value">{{ compressResult.error }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="dialog-footer">
-        <Button
-          variant="secondary"
-          :disabled="compressProgress"
-          @click="closeCompressDialog"
-        >
-          {{ compressResult ? '关闭' : '取消' }}
-        </Button>
-        <Button
-          variant="primary"
-          :disabled="compressProgress || !selectedVideoForCompress"
-          @click="handleCompressVideo"
-        >
-          {{ compressProgress ? '压缩中...' : '开始压缩' }}
-        </Button>
-      </div>
-    </div>
-  </div>
+  <CompressDialog
+    :visible="compressDialogVisible"
+    :video-options="videoOptions"
+    :selected-video="selectedVideoForCompress"
+    :mode="compressMode"
+    :crf="compressCRF"
+    :bitrate="compressBitrate"
+    :output-name="compressOutputName"
+    :original-size="formatFileSize(getVideoSize(selectedVideoForCompress))"
+    :progress="compressProgress"
+    :progress-percent="compressProgressPercent"
+    :result="compressResult"
+    :original-size-result="formatFileSize(compressOriginalSize)"
+    :new-size="formatFileSize(compressNewSize)"
+    :compression-rate="calculateCompressionRate(compressOriginalSize, compressNewSize)"
+    @close="closeCompressDialog"
+    @start="handleCompressVideo"
+    @update:selected-video="selectedVideoForCompress = $event"
+    @update:mode="compressMode = $event"
+    @update:crf="compressCRF = Number($event)"
+    @update:bitrate="compressBitrate = $event"
+    @update:output-name="compressOutputName = $event"
+  />
 
   <!-- FFmpeg 路径设置对话框 -->
-  <div
-    v-if="ffmpegPathDialogVisible"
-    class="dialog-overlay"
-    @click="closeFFmpegPathDialog"
-  >
-    <div
-      class="dialog"
-      @click.stop
-    >
-      <div class="dialog-header">
-        <h3><IconWrapper
-          name="settings"
-          :size="16"
-        /> FFmpeg 路径设置</h3>
-        <Button
-          icon="x"
-          variant="ghost"
-          size="xsmall"
-          @click="closeFFmpegPathDialog"
-        />
-      </div>
-      <div class="dialog-body">
-        <div class="form-group">
-          <label>当前 FFmpeg 路径</label>
-          <div
-            class="file-info"
-            :title="currentFFmpegPath"
-          >
-            {{ currentFFmpegPath }}
-          </div>
-          <div class="form-hint">
-            系统自动检测到的 FFmpeg 路径
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>自定义 FFmpeg 路径</label>
-          <Input
-            v-model="customFFmpegPath"
-            placeholder="例如：E:\\Program\\ffmpeg-8.0.1-essentials_build\\bin\\ffmpeg.exe"
-          />
-          <div class="form-hint">
-            请输入 FFmpeg 可执行文件的完整路径（包含 ffmpeg.exe）
-          </div>
-        </div>
-
-        <div
-          v-if="ffmpegTestResult"
-          class="form-group"
-        >
-          <label>测试结果</label>
-          <div class="encrypt-info">
-            <div class="info-item">
-              <span class="info-label">状态：</span>
-              <span
-                class="info-value"
-                :style="{ color: ffmpegTestResult === 'success' ? '#788c5d' : '#d97757' }"
-              >
-                <IconWrapper
-                  v-if="ffmpegTestResult === 'success'"
-                  name="success"
-                  :size="14"
-                />
-                <IconWrapper
-                  v-else
-                  name="error"
-                  :size="14"
-                />
-                {{ ffmpegTestResult === 'success' ? '路径有效' : '路径无效' }}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="dialog-footer">
-        <Button
-          variant="secondary"
-          @click="resetFFmpegPath"
-        >
-          重置
-        </Button>
-        <Button
-          variant="secondary"
-          @click="testFFmpegPath"
-        >
-          测试路径
-        </Button>
-        <Button
-          variant="primary"
-          @click="saveFFmpegPath"
-        >
-          保存
-        </Button>
-      </div>
-    </div>
-  </div>
+  <FFmpegPathDialog
+    :visible="ffmpegPathDialogVisible"
+    :current-path="currentFFmpegPath"
+    :custom-path="customFFmpegPath"
+    :test-result="ffmpegTestResult"
+    @close="closeFFmpegPathDialog"
+    @reset="resetFFmpegPath"
+    @test="testFFmpegPath"
+    @save="saveFFmpegPath"
+    @update:custom-path="customFFmpegPath = $event"
+  />
 
 </template>
 
@@ -881,13 +218,17 @@ import {
 import { getWorkspaceDir } from "@/api"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import Input from "@/components/Input.vue"
-import Select from "@/components/Select.vue"
 import { usePlugin } from "@/main"
 import VideoDownloadDialog from "./components/VideoDownloadDialog.vue"
 import VideoListItem from "./components/VideoListItem.vue"
 import VideoPlayerDialog from "./components/VideoPlayerDialog.vue"
 import VideoToolbar from "./components/VideoToolbar.vue"
+import EncryptDialog from "./components/EncryptDialog.vue"
+import DecryptDialog from "./components/DecryptDialog.vue"
+import MergeDialog from "./components/MergeDialog.vue"
+import MergeAudioDialog from "./components/MergeAudioDialog.vue"
+import CompressDialog from "./components/CompressDialog.vue"
+import FFmpegPathDialog from "./components/FFmpegPathDialog.vue"
 import { isEncryptedVideo } from "./utils/crypto"
 import {
   buildVideoPath,
@@ -922,6 +263,18 @@ const emit = defineEmits<{
 }>()
 
 const plugin = usePlugin()
+
+// i18n 辅助函数：支持 {var} 插值
+function t(key: string, vars?: Record<string, string | number>): string {
+  const i18n = (plugin as any).i18n?.video
+  let text = i18n?.[key] ?? key
+  if (vars) {
+    for (const [k, v] of Object.entries(vars)) {
+      text = text.replace(new RegExp(`\\{${k}\\}`, "g"), String(v))
+    }
+  }
+  return text
+}
 
 // ==================== 核心状态 ====================
 // 使用 shallowRef 优化大数组性能
@@ -1047,7 +400,7 @@ const decryptProgressPercent = computed(() => {
 const videoOptions = computed(() => [
   {
     value: "",
-    label: "请选择视频...",
+    label: t("selectVideoOption"),
   },
   ...videos.value.map((video) => ({
     value: video.path,
@@ -1059,7 +412,7 @@ const videoOptions = computed(() => [
 const audioOptions = computed(() => [
   {
     value: "",
-    label: "请选择音频...",
+    label: t("selectAudioOption"),
   },
   ...audioFiles.value.map((audio) => ({
     value: audio.path,
@@ -1145,10 +498,10 @@ async function playVideo(video: any) {
     if (currentVideoUrl.value) {
       playerVisible.value = true
     } else {
-      showMessage("视频加载失败", 3000, "error")
+      showMessage(t("videoLoadFailed"), 3000, "error")
     }
   } catch (error) {
-    showMessage(`视频播放失败: ${(error as Error).message}`, 3000, "error")
+    showMessage(t("videoPlayFailed", { msg: (error as Error).message }), 3000, "error")
   }
 }
 
@@ -1166,7 +519,7 @@ function closePlayer() {
 // 处理播放器错误
 function handlePlayerError(error: any) {
   console.error("Video player error:", error)
-  showMessage("视频播放出错", 3000, "error")
+  showMessage(t("videoPlayError"), 3000, "error")
 }
 
 // 处理分类变化
@@ -1176,7 +529,7 @@ function handleCategoryChange(category: string) {
 
 function showBatchEncryptDialog() {
   if (unencryptedCount.value === 0) {
-    showMessage("没有需要加密的视频", 2000, "info")
+    showMessage(t("noVideosToEncrypt"), 2000, "info")
     return
   }
   encryptDoubleCompress.value = false
@@ -1282,7 +635,7 @@ async function handleBatchDecrypt() {
     closeDecryptDialog()
   } catch (error) {
     console.error("批量解密失败:", error)
-    showMessage(`批量解密失败: ${(error as Error).message}`, 3000, "error")
+    showMessage(t("batchDecryptFailed", { msg: (error as Error).message }), 3000, "error")
   } finally {
     decryptProgress.value = false
   }
@@ -1301,7 +654,7 @@ async function handleSingleDecrypt(video: any) {
     await loadCategories()
   } catch (error) {
     console.error("解密失败:", error)
-    showMessage(`解密失败: ${(error as Error).message}`, 3000, "error")
+    showMessage(t("decryptFailed", { msg: (error as Error).message }), 3000, "error")
   }
 }
 
@@ -1310,7 +663,7 @@ async function handleSingleDecrypt(video: any) {
 // 视频合并相关方法
 function showMergeDialog() {
   if (!hasFFmpeg.value) {
-    showMessage("FFmpeg 未安装，无法使用视频合并功能", 3000, "error")
+    showMessage(t("ffmpegNotAvailableMerge"), 3000, "error")
     return
   }
   mergeSelectedVideos.value = []
@@ -1323,7 +676,7 @@ function showMergeDialog() {
 
 function closeMergeDialog() {
   if (mergeProgress.value) {
-    showMessage("合并进行中，请稍候...", 2000, "info")
+    showMessage(t("mergeInProgress"), 2000, "info")
     return
   }
   mergeDialogVisible.value = false
@@ -1350,7 +703,7 @@ function removeMergeVideo(index: number) {
 
 async function handleMergeVideos() {
   if (mergeSelectedVideos.value.length < 2) {
-    showMessage("请至少选择2个视频进行合并", 2000, "error")
+    showMessage(t("needTwoVideos"), 2000, "error")
     return
   }
 
@@ -1371,7 +724,7 @@ async function handleMergeVideos() {
     })
 
     if (result.success) {
-      showMessage("视频合并成功！", 3000, "info")
+      showMessage(t("mergeSuccessMsg"), 3000, "info")
       mergeResult.value = {
         success: true,
         outputPath: mergeOutputName.value,
@@ -1380,7 +733,7 @@ async function handleMergeVideos() {
       await loadVideos()
       await loadCategories()
     } else {
-      showMessage(`视频合并失败: ${result.error}`, 5000, "error")
+      showMessage(t("mergeFailedMsg", { msg: result.error }), 5000, "error")
       mergeResult.value = {
         success: false,
         error: result.error,
@@ -1388,7 +741,7 @@ async function handleMergeVideos() {
     }
   } catch (error: any) {
     console.error("视频合并失败:", error)
-    showMessage(`视频合并失败: ${error.message}`, 5000, "error")
+    showMessage(t("mergeFailedMsg", { msg: error.message }), 5000, "error")
     mergeResult.value = {
       success: false,
       error: error.message,
@@ -1401,7 +754,7 @@ async function handleMergeVideos() {
 // 视频音频合并相关方法
 function showMergeAudioDialog() {
   if (!hasFFmpeg.value) {
-    showMessage("FFmpeg 未安装，无法使用视频音频合并功能", 3000, "error")
+    showMessage(t("ffmpegNotAvailableAudioMerge"), 3000, "error")
     return
   }
 
@@ -1419,7 +772,7 @@ function showMergeAudioDialog() {
 
 function closeMergeAudioDialog() {
   if (mergeAudioProgress.value) {
-    showMessage("合并进行中，请稍候...", 2000, "info")
+    showMessage(t("mergeInProgress"), 2000, "info")
     return
   }
   mergeAudioDialogVisible.value = false
@@ -1463,7 +816,7 @@ async function loadAudioFiles() {
 
 async function handleMergeVideoAudio() {
   if (!selectedVideoForMerge.value || !selectedAudioForMerge.value) {
-    showMessage("请选择视频和音频文件", 2000, "error")
+    showMessage(t("needVideoAudioFiles"), 2000, "error")
     return
   }
 
@@ -1484,7 +837,7 @@ async function handleMergeVideoAudio() {
     })
 
     if (result.success) {
-      showMessage("视频音频合并成功！", 3000, "info")
+      showMessage(t("audioMergeSuccessMsg"), 3000, "info")
       mergeAudioResult.value = {
         success: true,
         outputPath: mergeAudioOutputName.value,
@@ -1493,7 +846,7 @@ async function handleMergeVideoAudio() {
       await loadVideos()
       await loadCategories()
     } else {
-      showMessage(`视频音频合并失败: ${result.error}`, 5000, "error")
+      showMessage(t("audioMergeFailedMsg", { msg: result.error }), 5000, "error")
       mergeAudioResult.value = {
         success: false,
         error: result.error,
@@ -1501,7 +854,7 @@ async function handleMergeVideoAudio() {
     }
   } catch (error: any) {
     console.error("视频音频合并失败:", error)
-    showMessage(`视频音频合并失败: ${error.message}`, 5000, "error")
+    showMessage(t("audioMergeFailedMsg", { msg: error.message }), 5000, "error")
     mergeAudioResult.value = {
       success: false,
       error: error.message,
@@ -1514,7 +867,7 @@ async function handleMergeVideoAudio() {
 // 视频压缩相关方法
 function showCompressDialog() {
   if (!hasFFmpeg.value) {
-    showMessage("FFmpeg 未安装，无法使用视频压缩功能", 3000, "error")
+    showMessage(t("ffmpegNotAvailableCompress"), 3000, "error")
     return
   }
 
@@ -1533,7 +886,7 @@ function showCompressDialog() {
 
 function closeCompressDialog() {
   if (compressProgress.value) {
-    showMessage("压缩进行中，请稍候...", 2000, "info")
+    showMessage(t("compressInProgress"), 2000, "info")
     return
   }
   compressDialogVisible.value = false
@@ -1546,7 +899,7 @@ function getVideoSize(videoPath: string): number {
 
 async function handleCompressVideo() {
   if (!selectedVideoForCompress.value) {
-    showMessage("请选择要压缩的视频", 2000, "error")
+    showMessage(t("needVideoToCompressFile"), 2000, "error")
     return
   }
 
@@ -1585,7 +938,7 @@ async function handleCompressVideo() {
         console.error("获取压缩后文件大小失败:", e)
       }
 
-      showMessage("视频压缩成功！", 3000, "info")
+      showMessage(t("compressSuccessMsg"), 3000, "info")
       compressResult.value = {
         success: true,
         outputPath: compressOutputName.value,
@@ -1594,7 +947,7 @@ async function handleCompressVideo() {
       await loadVideos()
       await loadCategories()
     } else {
-      showMessage(`视频压缩失败: ${result.error}`, 5000, "error")
+      showMessage(t("compressFailedMsg", { msg: result.error }), 5000, "error")
       compressResult.value = {
         success: false,
         error: result.error,
@@ -1602,7 +955,7 @@ async function handleCompressVideo() {
     }
   } catch (error: any) {
     console.error("视频压缩失败:", error)
-    showMessage(`视频压缩失败: ${error.message}`, 5000, "error")
+    showMessage(t("compressFailedMsg", { msg: error.message }), 5000, "error")
     compressResult.value = {
       success: false,
       error: error.message,
@@ -1627,7 +980,7 @@ function closeFFmpegPathDialog() {
 
 async function testFFmpegPath() {
   if (!customFFmpegPath.value) {
-    showMessage("请输入 FFmpeg 路径", 2000, "error")
+    showMessage(t("enterFFmpegPath"), 2000, "error")
     return
   }
 
@@ -1635,31 +988,31 @@ async function testFFmpegPath() {
     const fs = (window as any).require("fs")
     if (fs.existsSync(customFFmpegPath.value)) {
       ffmpegTestResult.value = "success"
-      showMessage("FFmpeg 路径有效！", 2000, "info")
+      showMessage(t("ffmpegPathValid"), 2000, "info")
     } else {
       ffmpegTestResult.value = "failed"
-      showMessage("FFmpeg 路径不存在", 2000, "error")
+      showMessage(t("ffmpegPathInvalid"), 2000, "error")
     }
   } catch (error) {
     ffmpegTestResult.value = "failed"
-    showMessage(`测试失败: ${(error as Error).message}`, 2000, "error")
+    showMessage(t("testFailed", { msg: (error as Error).message }), 2000, "error")
   }
 }
 
 function saveFFmpegPath() {
   if (!customFFmpegPath.value) {
-    showMessage("请输入 FFmpeg 路径", 2000, "error")
+    showMessage(t("enterFFmpegPath"), 2000, "error")
     return
   }
 
   const success = setFFmpegPath(customFFmpegPath.value)
   if (success) {
-    showMessage("FFmpeg 路径已保存！", 2000, "info")
+    showMessage(t("ffmpegPathSaved"), 2000, "info")
     currentFFmpegPath.value = getCurrentFFmpegPath()
     hasFFmpeg.value = isFFmpegAvailable()
     closeFFmpegPathDialog()
   } else {
-    showMessage("保存失败：路径不存在", 2000, "error")
+    showMessage(t("ffmpegPathSaveFailed"), 2000, "error")
   }
 }
 
@@ -1667,7 +1020,7 @@ function resetFFmpegPath() {
   clearFFmpegPath()
   currentFFmpegPath.value = getCurrentFFmpegPath()
   hasFFmpeg.value = isFFmpegAvailable()
-  showMessage("已重置为默认路径", 2000, "info")
+  showMessage(t("ffmpegPathReset"), 2000, "info")
 }
 
 // ==================== yt-dlp 下载方法 ====================

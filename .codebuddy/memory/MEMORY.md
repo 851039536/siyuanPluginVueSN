@@ -1,34 +1,35 @@
 # 项目记忆
 
 ## 编码规范偏好
-- 严格遵守 CLAUDE.md 中的统一入口原则：存储用 PluginStorage/TypedStorage、Node 模块用 getNodeModules、事件用 emitCustomEvent 等
+- 严格遵守统一入口原则：存储用 PluginStorage/TypedStorage、Node 模块用 getNodeModules、事件用 emitCustomEvent、SQL 用 @/api
 - UI 风格使用 Codex 设计语言（等宽字体、大写标签、边框卡片、focus 发光）
 - Vue emit 事件必须 camelCase，禁止 kebab-case
 - 新功能必须在 8 处注册（index.ts + types + features/index.ts + src/index.ts + settings + i18n + config + icons）
 - 优先思源内置图标或 @iconify/vue
+- if 语句必须有花括号 `{}`，即使只有一行
 
-## 最近重构记录
-- 2026-06-24：passwordVault 样式合规审查 — 对 `src/features/passwordVault/styles/` 4 个文件（mixins.scss/index.scss/login.scss/help.scss）进行全面 Codex 规范修复。关键变更：①mixins.scss 删除 `$spacing-xs/sm/md/lg` 本地别名（改用全局 `$spacing-1/2/3/4`），删除重复的 `$vp-radius`/`$vp-mono` 声明（全局 `_variables.scss` 已定义），3 个 SCSS 文件的 `@use '@/index.scss'` 改为 `@use '@/variables.scss'`；②~20 处 font-size 硬编码→`$font-size-xs/$font-size-sm/$font-size-lg`（13px/15px/10px 保留）；③~10 处 font-weight 硬编码→`$font-weight-medium/$font-weight-semibold/$font-weight-bold`；④~30 处间距引用从 `$spacing-xs/sm/md/lg` 迁移到 `$spacing-1/2/3/4`；⑤letter-spacing: 0.04em/0.05em→0.06em（3处）；⑥line-height: 1.4→$line-height-tight、1.5→$line-height-normal。ESLint + tsc + build 三重验证通过。
-- 2026-06-24：dataBackup 样式合规审查 — 对 `src/features/dataBackup/styles/index.scss`（646行）进行全面 Codex 规范修复。6 类违规：①添加 `@use '@/variables.scss' as *;` 导入全局 Token，删除本地重复的 `$radius-sm/md/lg` 声明；②~25 处 font-size/font-weight 硬编码替换为 `$font-size-xs/$font-size-sm` / `$font-weight-medium/$font-weight-semibold`（0.8125rem/0.625rem 保留）；③~35 处间距硬编码替换为 `$spacing-1`~`$spacing-6`（0.375rem/0.6875rem 无 Token 映射保留）；④`.input-dialog` box-shadow→border + `%input-base:focus` 添加 focus glow box-shadow；⑤3 处 font-family 硬编码→`$vp-mono`、`line-height: 1.3`→`$line-height-tight`、`letter-spacing: 0.04em`→`0.06em`、`transition: 0.3s`→`0.12s`；⑥`.vp-btn` 内部精细值保留。ESLint + tsc 零新增错误。
-- 2026-06-24：src/components 样式合规审查与 SCSS 分离 — 14 个共享 Vue 组件全部通过审查，内联样式 100% 提取至 `src/components/styles/` 目录（16 个文件：14 个组件 SCSS + _mixins.scss + index.scss）。Token 替换：font-size（15px→$font-size-base、10px/11px→$font-size-xs）、font-weight（500/600/700→$font-weight-*）、line-height（1/1.4/1.5→$line-height-*）、opacity（语义化变量）、z-index。box-shadow 消除：Avatar/Card 改用 outline/border-width、Input/Select focus 改用 focus-ring mixin（border-color）、Switch/Slider track/thumb 保留并加注释。Loader→SCSS 转换 + @use 导入。14 个 Vue 文件从 2071 行内联样式缩减为 18 行 @use 导入。构建+lint 双重验证通过。
-- 2026-06-24：gitPush 模块全面审查重构 — **巨型文件拆分**：`types/index.ts`（1453行）→ 提取 GitPushManager 至独立文件（`GitPushManager.ts`）+ types/index.ts 重出口；`useGitPush.ts`（1025行）→ 按领域拆为 4 个 composable（`useProjectCrud`/`useGitOps`/`useGitTagsConflicts`/`useGitStats`）+ `utils.ts` 共享工具函数。**冗余合并**：pushToAll/pullToAll/pushSingle/pullSingle 提取通用 `tryRemoteOp`/`remoteOpAll`/`remoteOpSingle` 函数消除 ~100 行重复。**组件提取**：新增 `ConflictSection.vue`、`StashSection.vue`（减少 index.vue ~150 行）。**规范修复**：SCSS 文件去 `_` 前缀（`_buttons/_shared/_variables` → 无前缀）；`useProjectFilters.ts` 改用 TypedStorage；硬编码 `line-height: 1.4` → `$line-height-normal`。**性能优化**：pushOutputs/pullOutputs/commitOutputs 缓存添加 30 条上限自动裁剪。**验证**：tsc 零新增错误、lint 通过。
-- 2026-06-17：MarkdownExportSettings 代码审查重构 — **CLAUDE.md 违规**：手动 `a.click()` 下载 → `triggerBlobDownload`（domUtils 统一入口）；4 处 emoji（📁📦💡📓）→ Iconify 图标（Button `icon` prop + `<Icon>` 组件）；SCSS 硬编码 → 设计 Token。**冗余消除**：`callExportApi`/`startExportProgress`/`todayString` 提取公共函数（3 处 API 调用合并，净减 ~45 行）；`exportAll`/`exportNotebookMd`/`exportAllNotebooks` 复用公共函数。**死代码**：移除未使用的 `emit`/`i18n`/`plugin` props、内联单用的 `selectedNotebookIds` computed。**修复**：`deselectAll` 的 `.clear()`→`new Set()`（Set ref 响应式）；`<div>`→`<label>` 语义化（消除冗余 click+change 双处理）。构建验证通过。
-- 2026-06-17：CodeBlockSettings 全面审查重构 — **Vue 组件**：emoji 图标替换为 Iconify 图标（12 处，CLAUDE.md 硬规则）；`getStyleName/getStyleDesc` 改为 `computed` 预计算映射（消除 v-for 内每次渲染重建 Record）；watch 存储保存添加 300ms 防抖；颜色字段改用 `colorFields` 数据驱动 `v-for` 渲染（原 6 个重复块的 54 行→17 行）；字体选项列表提取为 `presetFonts` 常量 + `v-for`。**SCSS**：移除 ~500 行死代码（预览区/语法高亮类无对应模板元素）；硬编码值替换为设计 Token（`$spacing-*/$radius-*/$font-size-*/$font-weight-*`）；响应式媒体查询合并为单一位置；`.toggle-slider::before` box-shadow→border。**icons.ts**：新增 12 个代码块图标注册。构建验证通过。
-- 2026-06-17：代码块样式模块化迁移 — 将 `src/index.scss` 第13-222行代码块美化样式移至新文件 `src/features/generalSettings/styles/codeblockThemes.scss`，index.scss 改为 `@use` 引入。审查了静态 SCSS 与动态 JS 注入样式（`styles.ts` → `applyCodeBlockEnhancedStyles()`）的冲突，产出 `docs/codeblock-styles-conflict-review.md`。发现 3 个严重问题：动态 `!important` 覆盖 hover 边框变色、静态/动态两套行号机制共存（CSS counter vs `.ln`）、动态层滥用 20+ 处 `!important` 破坏 CSS 级联。架构校验通过 6 大原则。
-- 2026-06-16：紧凑模式功能抽取并增强 — 将 index.scss 中紧凑模式 CSS 抽取为独立模块 `src/features/compactMode/`。**细调增强**：3 档间距密度（适中/紧凑/极简）+ 5 档字号缩放（80%/85%/90%/95%/100%）独立控制、5 个区域独立开关。全部通过 Sass @each 编译期乘法计算固定值，零 calc()/var()，CSS 类体系：siyuan-compact-mode + compact-density-* + compact-font-* + compact-area-*。
-- 2026-06-16：index.scss 审查修复 — 移除 6 处 box-shadow（Codex 违规→替换为 border），紧凑模式块硬编码值替换为 $spacing-*/$font-size-* Token，移除废弃的 $codeblock-shadow 变量，修复格式问题。唯一保留的 box-shadow：Mac 代码块 ::before 伪元素的红黄绿按钮（纯 CSS 渲染技术，非页面阴影效果）
-- 2026-06-13：dataBackup 模块全面审查重构（见当天日报）
-- 2026-06-11：flashcardReading 模块审查重构（见当天日报）
-- 2026-06-22：新增 skillLearning（技能学习）功能 — 代码片段练习库+闪卡记忆，Dock 右侧栏面板，C#/JS/TS/Vue 技术栈，支持自建/预设/Markdown导入三种内容来源，复用 useTypingQueue 加权复习算法
-- 2026-07-02：statistics 模块全面代码审查 — 6 类修复涵盖 37 个文件：①styles/index.scss 本地 `$font-mono` 改为委托全局 `$vp-mono`，`border-radius: 4px`→`$radius-sm`；②批量替换 7 个组件中 37 处硬编码 `font-family: "JetBrains Mono"...`→`stats.$font-mono`；③14 个组件 `border-radius: 4px`→`$radius-sm`（PowerShell 批量）；④index.vue 内联 SCSS（226行）提取到 styles/index.scss，消除 SCSS 分离违规；⑤移除 ViewModeSection `@refresh` 冗余事件消除 watch 双重刷新；⑥baseStats.ts 内联 pad 函数→padZero 消除重复；⑦useHistoryData.ts 移除顶层冗余异步调用归入 loadHistoricalData；⑧13 个 .ts 文件添加文件头注释。tsc + ESLint 零回归。
-- 2026-07-02：gitPush 响应式双列布局 — 最终采用纯 CSS `flex-wrap` 方案：`.gp-list` 从 `flex-direction: column` 改为 `display: flex; flex-wrap: wrap; align-content: flex-start`，`.gp-card` 新增 `flex: 1 1 390px; min-width: 0`。容器宽度 ≥ ~790px 时自动换行为两列，<790px 回退单列。零 JS 零 Vue 改动，lint 通过。前两次尝试（CSS Container Queries / ResizeObserver）均失败。
-- 2026-07-03：gitPush 按钮图标大小统一 — 以 PanelHeader.vue 为标准（所有按钮图标 `height="12"`），修复 EditProjectDialog.vue 中 3 处不一致：帮助按钮 14→12、帮助弹窗标题 14→12、帮助弹窗列表项 13→12。48px/36px 空状态插画不在范围。
-- 2026-07-03：修复 commit log 最多只显示 5 条 — `GitPushManager.getCommitLog` 默认 `count = 5` → `count = 30`。SCSS 已内置 `max-height: 160px; overflow-y: auto`，增加数量后自动触发滚动。无需改组件/CSS。
-- 2026-07-03：BranchCommitList 增加提交数量选择框 — 搜索栏右侧新增 `<select>`（选项 10/20/30/50/100，默认 30）。选择后 emit 事件链向上传递（BranchCommitList → WorkingTreePanel → ProjectCard → index.vue），index.vue 调用 `loadCommitLog(id, count)` 重新从 git 拉取指定条数。涉及 6 个文件：BranchCommitList.vue / WorkingTreePanel.vue / ProjectCard.vue / index.vue / useGitOps.ts / BranchCommitList.scss。lint 通过。
-- 2026-07-04：S3 备份功能集成到状态栏 — 在 statusBar/index.vue 的 FEATURES 数组中新增 s3Backup 条目（icon: mdi:cloud-upload, color: #f59e0b, action: emitCustomEvent("openS3Backup")），支持状态栏快捷图标和功能抽屉两种入口。lint 通过。
-- 2026-07-04：S3 备份持久化审查与精简修复 — 4 项变更：①移除全部自动备份逻辑（S3Backup 类从 ~400 行→~167 行，删除 timer/executeAutoBackup/pruneOldBackups 等 9 个方法和 5 个字段）；②修复工作区路径选择按钮（提取 `pickDirectory()/openFolderInExplorer()` 到新建的 `@/utils/electronDialog.ts`，使用 `@electron/remote` 替代失效的 `require("electron").dialog`）；③修复 S3 配置保存（S3ConfigForm.vue 新增 `watch(props.config)` 解决父组件异步加载晚于子组件 onMounted 导致表单永不回填的 Bug）；④清理冗余（双 S3Client/BackupManager 实例随自动备份移除自动消除，删除死代码 refreshCloudBackupList、s3BackupRefreshList 事件监听、9 个中英 i18n 键、SCSS 自动备份样式区）。修改 6 个文件 + 新建 1 个文件，四重验证通过（lint/tsc/i18n:verify/validate:icons）。
-- 2026-07-04：S3 备份改为直接上传模式 — 移除 zip 打包：①S3Client 新增 `uploadBuffer(buffer, key)` 方法直接上传 Buffer；②BackupManager 移除 JSZip 依赖和 performFullBackup/deleteBackupFile/scanBackupDir 等打包相关方法，新增 `getWorkspaceFiles()` 仅扫描返回文件列表（311→126 行）；③useS3Backup 新增 `uploadFileContent(buffer, key)` 方法；④index.vue 的 performManualBackup 重写为「扫描→逐文件读取→逐文件上传 S3」流程，S3 key 格式为 `{prefix}{timestamp}/{relativePath}`；⑤提示文案从"打包为 zip"更新为"直接上传文件"。修改 4 个文件，lint 零警告，i18n 验证通过。
-- 2026-07-07：wordQuery 样式修复 + 审查 — ①增大 codeUtils.scss 中 .style-options 的 minmax 最小列宽（桌面 120→145px，响应式 100→120px），解决命名风格卡片中文标签显示宽度不足；②审查 CodeCommentGenerator.vue 发现 3 个问题：生成中可清除导致 stale result、props.i18n 无默认值可能崩溃、selectStyle 冗余包装、clearError 死代码。
-- 2026-07-08：unitConverter 模块代码审查 — 修复 5 类问题（4 个 .vue + 1 个 .scss）：①**逻辑漏洞**：BaseConverter.vue 中 `result` computed 内部设置 `error.value`（副作用）→ 改为 error 独立 computed 纯函数；②**冗余**：BASES 常量 `shallowRef`→`const`、BaseUnitConverter 的 `lookup` computed 包装→直接调用 `createUnitLookup`；③**魔法数字**：ASCIIConverter.vue 中 4 处 `127`→`ASCII_MAX` 常量；④**SCSS 重复**：`$label-style` map 的 5 处 `@each` 块→`@mixin label-style`（含 color 属性），ASCIIConverter 的 `.table-header` 和 `.ascii-table-controls label` 也改用 `@include index.label-style`；⑤**合规**：4 个 .vue 文件添加文件头注释。lint + tsc 待用户验证。
-- 2026-07-08：unitConverter 转换逻辑 Bug 修复 — 逐条核算了 8 类 ~100 个物理单位 factor 值、`convertUnit`/`formatResult` 公式、进制转换 `parseInt`/`toString`、ASCII `charCodeAt`/`fromCharCode`，核心数学逻辑全部正确。发现并修复 2 个边界逻辑 Bug：①**BaseConverter.vue** `isValidInput` 拒绝负数（`-` 不在有效字符集中）→ 允许首位可选负号，单独的 `-` 仍不合法；②**BaseUnitConverter.vue** 空输入显示 "0"（`NaN`→`"0"` 且 `"0"` 为 truthy）→ `result` computed 提前检测 `isNaN` 返回空字符串。2 个文件，各改动 ~5 行。
-- 2026-07-10：PronunciationDialog.vue 全面审查修复 — 7 类问题修复涉及 7 个文件：①**架构违规**：将 Flashcard 类型 + FlashcardStorage 类提取到 `src/utils/sharedStorage/flashcardStorage.ts`（新建），flashcardReading/types 改为重导出，3 个 floatingToolbar 文件解除跨 feature 直接导入；②**XSS 修复**：domUtils 新增 `simpleHtmlEscape()`，`formatResult()` 先转义再替换 markdown 为安全标签；③**i18n 补全**：zh_CN/en_US pronunciation.json 各新增 30+ 键，模板 20+ 处 + 脚本 10+ 处硬编码中文全部改用 `t()` helper + `PronunciationI18n` 接口；④**重复 watch**：合并 content/visible 为 `[content, visible]` 单一 watcher；⑤**类别去重**：提取 `DEFAULT_CATEGORIES` 常量；⑥**SCSS Codex**：8 处硬编码修复（spacing/radius/颜色）+ 补充 `$vp-radius` 本地 Token；⑦**代码质量**：文件头注释、onUnmounted 清理缓存、showMessage 导入路径统一为 @/ 别名。lint 零错误。
+## 代码风格硬规则
+- 单文件行数：300 行警戒，500 行硬阈值，≥1000 行必须重构
+- SCSS 分离：样式必须从 .vue 提取到独立 SCSS 文件
+- 文件头注释：每个 .ts/.vue 顶部必须有功能说明（10~30字）
+- 模块内代码分层：共享常量→types/index.ts，纯工具函数→utils.ts，禁止复制粘贴
+- 禁止 emoji 图标，使用 Iconify 图标
+- 禁止硬编码 font-size/font-weight/line-height，使用设计 Token
+
+## 重构模式（已验证可复用）
+- **巨型文件拆分**：Manager 类独立文件 + composable 按领域拆分 + 子组件提取
+- **样式合规**：硬编码值→设计 Token、box-shadow→border、SCSS 提取到独立文件
+- **冗余消除**：公共函数提取、watch 合并、computed 预计算映射
+- **响应式布局**：纯 CSS flex-wrap 替代 JS 监听
+
+## 功能模块状态
+- gitPush：已完成多本地路径配置、响应式双列、commit log 数量选择
+- S3 备份：已改为直接上传模式（无 zip 打包），状态栏集成
+- toolCollection：底部面板 + Tab 切换，首个工具 base64Image
+- compactMode：独立模块，3 档密度 + 5 档字号 + 5 区域开关
+- skillLearning：代码片段练习库 + 闪卡记忆
+
+## 禁止事项
+- 禁止私自执行 `dotnet build`（太慢太卡）
+- 禁止执行 `pnpm vite build` 和 `pnpm lint`（用户自行验证）
+- 禁止跨 feature 直接导入（必须通过事件总线 + App.vue 调度）

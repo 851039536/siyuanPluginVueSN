@@ -77,10 +77,7 @@
 }
 
 .db-drive-usage {
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-surface-light);
-  opacity: 0.6;
+  @include small-mono-dimmed;
 }
 
 .db-drive-bar {
@@ -174,4 +171,9 @@
     background: rgba(var(--b3-theme-error-rgb, 220, 38, 38), 0.08);
     animation: pulse 2s ease-in-out infinite;
   }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }

@@ -52,20 +52,14 @@
   width: 55px;
   flex-shrink: 0;
   text-align: right;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-surface-light);
-  opacity: 0.6;
+  @include small-mono-dimmed;
 }
 
 .db-item-date {
   width: 52px;
   flex-shrink: 0;
   text-align: right;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-surface-light);
-  opacity: 0.6;
+  @include small-mono-dimmed;
 }
 
 .db-item-actions {

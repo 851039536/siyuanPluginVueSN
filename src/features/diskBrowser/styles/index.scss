@@ -69,8 +69,11 @@ $border: var(--b3-border-color);
   }
 }
 
-@mixin contain-layout {
-  contain: layout style;
+@mixin small-mono-dimmed {
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light);
+  opacity: 0.6;
 }
 
 // ==================== Panel Root ====================

@@ -16,6 +16,7 @@ import type {
 import {
   reactive,
   ref,
+  watch,
 } from "vue"
 import {
   lsNotebooks,
@@ -96,6 +97,7 @@ export function useDocAnalysis(plugin: Plugin) {
   const statsLoading = ref(false)
   const hasAnalyzed = ref(false)
   const duplicateGroups = ref<DuplicateNameGroup[]>([])
+  const duplicateNameFilter = ref<string[]>([])
 
   let orphanDocIds: Set<string> = new Set()
   let incomingRefDocIds: Set<string> = new Set()
@@ -238,6 +240,15 @@ export function useDocAnalysis(plugin: Plugin) {
     try { await storage.options.save({ ...filterOptions }) }
     catch (e) { console.error("保存文档分析配置失败:", e) }
   }
+
+  async function loadDuplicateNameFilter() {
+    try { duplicateNameFilter.value = await storage.duplicateNameFilter.load() || [] }
+    catch { duplicateNameFilter.value = [] }
+  }
+
+  watch(duplicateNameFilter, async (val) => {
+    await storage.duplicateNameFilter.save(val)
+  })
 
   /** 生成思源时间格式的 N 天前字符串 */
   function daysAgoStr(days: number): string {
@@ -386,7 +397,12 @@ export function useDocAnalysis(plugin: Plugin) {
 
     // 重名
     if (category === "duplicate") {
-      const titles = duplicateGroups.value.map((g) => g.title)
+      let groups = duplicateGroups.value
+      const excludes = duplicateNameFilter.value.map((s) => s.trim().toLowerCase()).filter(Boolean)
+      if (excludes.length) {
+        groups = groups.filter((g) => !excludes.some((e) => g.title.toLowerCase().includes(e)))
+      }
+      const titles = groups.map((g) => g.title)
       if (titles.length === 0) { queryState.status = "empty"; queryState.hasQueried = true; setResults([]); return }
       await runDocQuery({ extraWhere: `AND b.content IN (${quoteSqlList(titles)})`, orderBy: "b.content ASC, content_size ASC" })
       return
@@ -535,7 +551,8 @@ export function useDocAnalysis(plugin: Plugin) {
     notebooks, queryState, filterOptions, docStats, depthStats,
     statsLoading, hasAnalyzed, statsFilter,
     bookmarkDetails, bookmarkDetailVisible, bookmarkDetailLoading,
-    loadNotebooks, loadSavedOptions, queryDocs, analyzeDocStats,
+    duplicateGroups, duplicateNameFilter,
+    loadNotebooks, loadSavedOptions, loadDuplicateNameFilter, queryDocs, analyzeDocStats,
     queryByStatsCategory, fetchBookmarkDetails, queryByBookmark, queryByMissingPlatform,
     openDoc, updateSort, clearResults,
     loadPlatformMeta, savePlatformMeta, platformUnpublishedCounts,

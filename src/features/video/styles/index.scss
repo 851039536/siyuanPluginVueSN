@@ -1,4 +1,6 @@
 // 视频管理器样式
+@use "@/variables.scss" as *;
+
 .video-manager-overlay {
   position: fixed;
   top: 0;
@@ -16,7 +18,7 @@
 .video-manager {
   background: var(--b3-theme-background);
   border-radius: var(--b3-border-radius);
-  box-shadow: var(--b3-dialog-shadow);
+  border: 1px solid var(--b3-border-color);
   width: 90vw;
   max-width: 1200px;
   height: 80vh;
@@ -39,12 +41,12 @@
       h2 {
         margin: 0;
         color: var(--b3-theme-on-background);
-        font-size: 16px;
-        font-weight: 600;
+        font-size: $font-size-base;
+        font-weight: $font-weight-semibold;
       }
 
       .video-count {
-        font-size: 13px;
+        font-size: $font-size-sm;
         color: var(--b3-theme-on-surface-light);
       }
     }
@@ -85,11 +87,11 @@
 
       p {
         margin: 4px 0;
-        font-size: 14px;
+        font-size: $font-size-sm;
       }
 
       .empty-hint {
-        font-size: 12px;
+        font-size: $font-size-xs;
         opacity: 0.7;
       }
     }
@@ -114,7 +116,7 @@
 .dialog {
   background: var(--b3-theme-background);
   border-radius: var(--b3-border-radius);
-  box-shadow: var(--b3-dialog-shadow);
+  border: 1px solid var(--b3-border-color);
   width: 90vw;
   max-width: 500px;
   max-height: 80vh;
@@ -134,8 +136,8 @@
 
     h3 {
       margin: 0;
-      font-size: 16px;
-      font-weight: 600;
+      font-size: $font-size-base;
+      font-weight: $font-weight-semibold;
       color: var(--b3-theme-on-background);
     }
   }
@@ -162,8 +164,8 @@
   label {
     display: block;
     margin-bottom: 8px;
-    font-size: 13px;
-    font-weight: 500;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
     color: var(--b3-theme-on-background);
   }
 
@@ -172,7 +174,7 @@
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
     border-radius: var(--b3-border-radius);
-    font-size: 13px;
+    font-size: $font-size-sm;
     color: var(--b3-theme-on-surface);
   }
 
@@ -181,7 +183,7 @@
     align-items: center;
     gap: 8px;
     cursor: pointer;
-    font-weight: normal;
+    font-weight: $font-weight-normal;
 
     input[type="checkbox"] {
       cursor: pointer;
@@ -192,16 +194,16 @@
     }
 
     span {
-      font-size: 13px;
+      font-size: $font-size-sm;
       color: var(--b3-theme-on-surface);
     }
   }
 
   .form-hint {
     margin-top: 6px;
-    font-size: 12px;
+    font-size: $font-size-xs;
     color: var(--b3-theme-on-surface-light);
-    line-height: 1.5;
+    line-height: $line-height-normal;
   }
 }
 
@@ -215,7 +217,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 13px;
+    font-size: $font-size-sm;
 
     &:not(:last-child) {
       margin-bottom: 8px;
@@ -228,7 +230,7 @@
 
     .info-value {
       color: var(--b3-theme-on-surface);
-      font-weight: 500;
+      font-weight: $font-weight-medium;
     }
   }
 }
@@ -239,7 +241,7 @@
     height: 8px;
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
-    border-radius: 4px;
+    border-radius: $radius-sm;
     overflow: hidden;
     margin-bottom: 8px;
 
@@ -250,7 +252,7 @@
   }
 
   .progress-text {
-    font-size: 12px;
+    font-size: $font-size-xs;
     color: var(--b3-theme-on-surface-light);
     text-align: center;
   }
@@ -273,11 +275,11 @@
     padding: 6px 8px;
     margin-bottom: 4px;
     background: var(--b3-theme-background);
-    border-radius: 4px;
+    border-radius: $radius-sm;
     border: 1px solid var(--b3-border-color);
 
     .video-index {
-      font-weight: bold;
+      font-weight: $font-weight-bold;
       color: var(--b3-theme-primary);
       min-width: 20px;
     }
@@ -287,14 +289,14 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      font-size: 13px;
+      font-size: $font-size-sm;
     }
   }
 
   .empty-selection {
     text-align: center;
     color: var(--b3-theme-on-surface-light);
-    font-size: 13px;
+    font-size: $font-size-sm;
     padding: 12px;
     font-style: italic;
   }
@@ -328,18 +330,18 @@
       border-left: 3px solid var(--b3-theme-primary);
 
       .video-name {
-        font-weight: 600;
+        font-weight: $font-weight-semibold;
         color: var(--b3-theme-primary);
       }
     }
 
     .video-name {
-      font-size: 13px;
+      font-size: $font-size-sm;
       color: var(--b3-theme-on-surface);
     }
 
     .video-size {
-      font-size: 12px;
+      font-size: $font-size-xs;
       color: var(--b3-theme-on-surface-light);
     }
   }
@@ -357,7 +359,7 @@
     gap: 8px;
     cursor: pointer;
     padding: 6px 8px;
-    border-radius: 4px;
+    border-radius: $radius-sm;
 
     &:hover {
       background: var(--b3-theme-primary-lightest);
@@ -368,7 +370,7 @@
     }
 
     span {
-      font-size: 13px;
+      font-size: $font-size-sm;
       color: var(--b3-theme-on-surface);
     }
   }
@@ -394,23 +396,23 @@
     h4 {
       margin: 0 0 8px 0;
       color: var(--b3-theme-on-background);
-      font-size: 15px;
-      font-weight: 500;
+      font-size: $font-size-base;
+      font-weight: $font-weight-medium;
     }
 
     .video-meta {
       display: flex;
       align-items: center;
       gap: 12px;
-      font-size: 13px;
+      font-size: $font-size-sm;
       color: var(--b3-theme-on-surface-light);
 
       .video-category {
         padding: 2px 8px;
         background: var(--b3-theme-primary-lightest);
         color: var(--b3-theme-primary);
-        border-radius: 4px;
-        font-size: 12px;
+        border-radius: $radius-sm;
+        font-size: $font-size-xs;
       }
     }
   }
@@ -430,11 +432,11 @@
         gap: 8px;
 
         h2 {
-          font-size: 14px;
+          font-size: $font-size-sm;
         }
 
         .video-count {
-          font-size: 12px;
+          font-size: $font-size-xs;
         }
       }
     }
@@ -460,7 +462,7 @@
       padding: 12px 16px;
 
       h3 {
-        font-size: 14px;
+        font-size: $font-size-sm;
       }
     }
 
@@ -471,11 +473,11 @@
         margin-bottom: 12px;
 
         label {
-          font-size: 12px;
+          font-size: $font-size-xs;
         }
 
         .form-hint {
-          font-size: 11px;
+          font-size: 0.6875rem; // 11px - 极小值，无对应 Token
         }
       }
     }
@@ -494,15 +496,15 @@
 
     .video-details {
       h4 {
-        font-size: 14px;
+        font-size: $font-size-sm;
       }
 
       .video-meta {
-        font-size: 12px;
+        font-size: $font-size-xs;
         flex-wrap: wrap;
 
         .video-category {
-          font-size: 11px;
+          font-size: 0.6875rem; // 11px - 极小值，无对应 Token
         }
       }
     }

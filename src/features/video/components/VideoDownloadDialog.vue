@@ -12,7 +12,7 @@
         <h3><IconWrapper
           name="download"
           :size="16"
-        /> 视频下载</h3>
+        /> {{ t("downloadTitle") }}</h3>
         <Button
           icon="x"
           variant="ghost"
@@ -24,7 +24,7 @@
       <div class="dialog-body">
         <!-- yt-dlp 路径设置 -->
         <div class="form-group">
-          <label>yt-dlp 路径</label>
+          <label>{{ t("ytdlpPath") }}</label>
           <div class="path-input-group">
             <Input
               v-model="currentYtdlpPath"
@@ -35,19 +35,19 @@
               variant="secondary"
               size="xsmall"
               :disabled="downloadProgress"
-              title="测试路径"
+              :title="t('testPath')"
               @click="testYtdlpPath"
             >
-              测试
+              {{ t("test") }}
             </Button>
             <Button
               variant="secondary"
               size="xsmall"
               :disabled="downloadProgress"
-              title="保存路径"
+              :title="t('savePath')"
               @click="saveYtdlpPath"
             >
-              保存
+              {{ t("save") }}
             </Button>
           </div>
           <div
@@ -65,25 +65,25 @@
                 name="error"
                 :size="14"
               />
-              {{ ytdlpTestResult === 'success' ? '路径有效' : '路径无效' }}
+              {{ ytdlpTestResult === 'success' ? t("pathValid") : t("pathInvalid") }}
             </span>
           </div>
         </div>
 
         <div class="form-group">
-          <label>视频链接</label>
+          <label>{{ t("videoUrlLabel") }}</label>
           <Input
             v-model="downloadUrl"
-            placeholder="请输入视频 URL（支持 YouTube、Bilibili 等）"
+            :placeholder="t('videoUrlPlaceholder')"
             :disabled="downloadProgress"
           />
           <div class="form-hint">
-            支持的网站：YouTube、Bilibili、Twitter/X、Vimeo、Instagram、Facebook、TikTok 等
+            {{ t("supportedSites") }}
           </div>
         </div>
 
         <div class="form-group">
-          <label>下载质量</label>
+          <label>{{ t("downloadQuality") }}</label>
           <Select
             v-model="downloadQuality"
             :options="qualityOptions"
@@ -92,7 +92,7 @@
         </div>
 
         <div class="form-group">
-          <label>输出格式</label>
+          <label>{{ t("outputFormat") }}</label>
           <Select
             v-model="downloadFormat"
             :options="formatOptions"
@@ -107,10 +107,10 @@
               type="checkbox"
               :disabled="downloadProgress"
             />
-            <span>下载字幕（如果可用）</span>
+            <span>{{ t("downloadSubtitle") }}</span>
           </label>
           <div class="form-hint">
-            自动下载中文和英文字幕，并嵌入视频中
+            {{ t("subtitleHint") }}
           </div>
         </div>
 
@@ -121,10 +121,10 @@
               type="checkbox"
               :disabled="downloadProgress"
             />
-            <span>下载完成自动合并音视频</span>
+            <span>{{ t("autoMergeVideoAudio") }}</span>
           </label>
           <div class="form-hint">
-            如果下载产生分离的视频和音频文件，自动使用 FFmpeg 合并
+            {{ t("autoMergeHint") }}
           </div>
         </div>
 
@@ -132,7 +132,7 @@
           v-if="downloadProgress"
           class="form-group"
         >
-          <label>下载进度</label>
+          <label>{{ t("downloadProgress") }}</label>
           <div class="progress-info">
             <div class="progress-bar">
               <div
@@ -152,7 +152,7 @@
         >
           <div class="encrypt-info">
             <div class="info-item">
-              <span class="info-label">状态：</span>
+              <span class="info-label">{{ t("status") }}：</span>
               <span
                 class="info-value"
                 :style="{ color: downloadResult.success ? '#788c5d' : '#d97757' }"
@@ -167,21 +167,21 @@
                   name="error"
                   :size="14"
                 />
-                {{ downloadResult.success ? '下载成功' : '下载失败' }}
+                {{ downloadResult.success ? t("downloadSuccessStatus") : t("downloadFailedStatus") }}
               </span>
             </div>
             <div
               v-if="downloadResult.fileName"
               class="info-item"
             >
-              <span class="info-label">文件名：</span>
+              <span class="info-label">{{ t("fileName") }}</span>
               <span class="info-value">{{ downloadResult.fileName }}</span>
             </div>
             <div
               v-if="downloadResult.error"
               class="info-item"
             >
-              <span class="info-label">错误信息：</span>
+              <span class="info-label">{{ t("errorMessage") }}</span>
               <span class="info-value">{{ downloadResult.error }}</span>
             </div>
           </div>
@@ -193,14 +193,14 @@
           :disabled="downloadProgress"
           @click="onClose"
         >
-          {{ downloadResult ? '关闭' : '取消' }}
+          {{ downloadResult ? t("close") : t("cancel") }}
         </Button>
         <Button
           variant="primary"
           :disabled="downloadProgress || !downloadUrl"
           @click="handleDownloadVideo"
         >
-          {{ downloadProgress ? '下载中...' : '开始下载' }}
+          {{ downloadProgress ? t("downloading") : t("startDownload") }}
         </Button>
       </div>
     </div>
@@ -219,6 +219,7 @@ import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
+import { usePlugin } from "@/main"
 import {
   buildVideoPath,
   isFFmpegAvailable,
@@ -243,6 +244,19 @@ const emit = defineEmits<{
   success: []
 }>()
 
+// i18n
+const plugin = usePlugin()
+function t(key: string, vars?: Record<string, string | number>): string {
+  const i18n = (plugin as any).i18n?.video
+  let text = i18n?.[key] ?? key
+  if (vars) {
+    for (const [k, v] of Object.entries(vars)) {
+      text = text.replace(new RegExp(`\\{${k}\\}`, "g"), String(v))
+    }
+  }
+  return text
+}
+
 // 响应式数据
 const downloadUrl = ref("")
 const downloadQuality = ref<"best" | "1080p" | "720p" | "480p" | "360p">(
@@ -254,7 +268,7 @@ const downloadFormat = ref<"mp4" | "webm" | "mkv" | "best">("mp4")
 const qualityOptions = computed(() => [
   {
     value: "best",
-    label: "最佳质量",
+    label: t("bestQuality"),
   },
   {
     value: "1080p",
@@ -277,7 +291,7 @@ const qualityOptions = computed(() => [
 const formatOptions = computed(() => [
   {
     value: "mp4",
-    label: "MP4（推荐）",
+    label: t("mp4Recommended"),
   },
   {
     value: "webm",
@@ -289,7 +303,7 @@ const formatOptions = computed(() => [
   },
   {
     value: "best",
-    label: "最佳格式",
+    label: t("bestFormat"),
   },
 ])
 const downloadSubtitle = ref(false)
@@ -328,7 +342,7 @@ watch(
 // 方法
 function onClose() {
   if (downloadProgress.value) {
-    showMessage("下载进行中，请稍候...", 2000, "info")
+    showMessage(t("downloadInProgress"), 2000, "info")
     return
   }
   emit("close")
@@ -336,7 +350,7 @@ function onClose() {
 
 function testYtdlpPath() {
   if (!currentYtdlpPath.value) {
-    showMessage("请输入 yt-dlp 路径", 2000, "error")
+    showMessage(t("enterYtdlpPath"), 2000, "error")
     return
   }
 
@@ -344,47 +358,47 @@ function testYtdlpPath() {
     const fs = (window as any).require("fs")
     if (fs.existsSync(currentYtdlpPath.value)) {
       ytdlpTestResult.value = "success"
-      showMessage("yt-dlp 路径有效！", 2000, "info")
+      showMessage(t("ytdlpPathValid"), 2000, "info")
     } else {
       ytdlpTestResult.value = "failed"
-      showMessage("yt-dlp 路径不存在", 2000, "error")
+      showMessage(t("ytdlpPathInvalid"), 2000, "error")
     }
   } catch (error) {
     ytdlpTestResult.value = "failed"
-    showMessage(`测试失败: ${(error as Error).message}`, 2000, "error")
+    showMessage(t("testFailed", { msg: (error as Error).message }), 2000, "error")
   }
 }
 
 function saveYtdlpPath() {
   if (!currentYtdlpPath.value) {
-    showMessage("请输入 yt-dlp 路径", 2000, "error")
+    showMessage(t("enterYtdlpPath"), 2000, "error")
     return
   }
 
   const success = setYtdlpPath(currentYtdlpPath.value)
   if (success) {
-    showMessage("yt-dlp 路径已保存！", 2000, "info")
+    showMessage(t("ytdlpPathSaved"), 2000, "info")
     ytdlpTestResult.value = null
   } else {
-    showMessage("保存失败：路径不存在", 2000, "error")
+    showMessage(t("ytdlpPathSaveFailed"), 2000, "error")
   }
 }
 
 async function handleDownloadVideo() {
   if (!downloadUrl.value) {
-    showMessage("请输入视频 URL", 2000, "error")
+    showMessage(t("enterVideoUrl"), 2000, "error")
     return
   }
 
   // 检查 FFmpeg 是否可用（如果启用了自动合并）
   if (autoMergeVideoAudio.value && !isFFmpegAvailable()) {
-    showMessage("自动合并需要 FFmpeg，请先安装并配置 FFmpeg", 3000, "error")
+    showMessage(t("needFFmpegForAutoMerge"), 3000, "error")
     return
   }
 
   downloadProgress.value = true
   downloadProgressPercent.value = 0
-  downloadStatus.value = "准备下载..."
+  downloadStatus.value = t("preparingDownload")
   downloadResult.value = null
   mergeProgress.value = false
   mergeStatus.value = ""
@@ -404,7 +418,7 @@ async function handleDownloadVideo() {
     downloadResult.value = result
 
     if (result.success) {
-      showMessage(`视频下载成功！${result.fileName || ""}`, 3000, "info")
+      showMessage(t("videoDownloadSuccess", { msg: result.fileName || "" }), 3000, "info")
 
       // 自动合并音视频
       if (autoMergeVideoAudio.value && result.fileName) {
@@ -413,15 +427,15 @@ async function handleDownloadVideo() {
 
       emit("success")
     } else {
-      showMessage(`视频下载失败: ${result.error || "未知错误"}`, 5000, "error")
+      showMessage(t("videoDownloadFailed", { msg: result.error || t("unknownError") }), 5000, "error")
     }
   } catch (error: any) {
     console.error("下载视频失败:", error)
     downloadResult.value = {
       success: false,
-      error: error.message || "下载失败",
+      error: error.message || t("downloadFailedGeneric"),
     }
-    showMessage(`视频下载失败: ${error.message}`, 5000, "error")
+    showMessage(t("videoDownloadFailed", { msg: error.message }), 5000, "error")
   } finally {
     downloadProgress.value = false
     mergeProgress.value = false
@@ -437,13 +451,13 @@ async function handleAutoMerge(fileName: string) {
 
   try {
     mergeProgress.value = true
-    mergeStatus.value = "检查是否需要合并..."
-    downloadStatus.value = "检查音视频文件..."
+    mergeStatus.value = t("checkingMerge")
+    downloadStatus.value = t("checkingAudioVideoFiles")
 
     // 获取视频目录
     const workspacePath = await getWorkspacePath()
     if (!workspacePath) {
-      showMessage("无法获取工作区路径", 2000, "error")
+      showMessage(t("cannotGetWorkspacePath"), 2000, "error")
       return
     }
 
@@ -598,13 +612,13 @@ async function handleAutoMerge(fileName: string) {
     }
 
     if (!videoFile || !audioFile) {
-      showMessage("未发现分离的音视频文件，无需合并", 2000, "info")
+      showMessage(t("noSeparateFiles"), 2000, "info")
       return
     }
 
     // 执行合并
-    downloadStatus.value = "正在合并音视频..."
-    mergeStatus.value = "合并中..."
+    downloadStatus.value = t("mergingAudioVideo")
+    mergeStatus.value = t("mergingStatus")
 
     // 构建输出文件名（使用视频文件的基础部分，移除所有格式代码）
     const videoFileName = path.basename(videoFile)
@@ -643,7 +657,7 @@ async function handleAutoMerge(fileName: string) {
           fs.unlinkSync(audioFile)
         } catch (e) {
           showMessage(
-            `音视频合并成功！已保存为 ${tempOutputFileName}（原始文件未删除）`,
+            t("audioVideoMergeSuccessKeepOriginal", { msg: tempOutputFileName }),
             3000,
             "info",
           )
@@ -653,20 +667,20 @@ async function handleAutoMerge(fileName: string) {
         try {
           fs.renameSync(tempOutputPath, outputPath)
           showMessage(
-            `音视频合并成功！已保存为 ${outputFileName}`,
+            t("audioVideoMergeSuccess", { msg: outputFileName }),
             3000,
             "info",
           )
         } catch (e) {
           showMessage(
-            `音视频合并成功！已保存为 ${tempOutputFileName}`,
+            t("audioVideoMergeSuccess", { msg: tempOutputFileName }),
             3000,
             "info",
           )
         }
         return
       } else {
-        showMessage(`音视频合并失败: ${mergeResult.error}`, 5000, "error")
+        showMessage(t("audioVideoMergeFailed", { msg: mergeResult.error }), 5000, "error")
         return
       }
     }
@@ -681,26 +695,26 @@ async function handleAutoMerge(fileName: string) {
     })
 
     if (mergeResult.success) {
-      downloadStatus.value = "合并完成！"
-      mergeStatus.value = "合并成功"
+      downloadStatus.value = t("mergeComplete")
+      mergeStatus.value = t("mergeSuccessStatusAudio")
 
       // 删除原始分离文件
       try {
         fs.unlinkSync(videoFile)
         fs.unlinkSync(audioFile)
-        showMessage(`音视频合并成功！已保存为 ${outputFileName}`, 3000, "info")
+        showMessage(t("audioVideoMergeSuccess", { msg: outputFileName }), 3000, "info")
       } catch (e) {
         showMessage(
-          `音视频合并成功！已保存为 ${outputFileName}（原始文件未删除）`,
+          t("audioVideoMergeSuccessKeepOriginal", { msg: outputFileName }),
           3000,
           "info",
         )
       }
     } else {
-      showMessage(`音视频合并失败: ${mergeResult.error}`, 5000, "error")
+      showMessage(t("audioVideoMergeFailed", { msg: mergeResult.error }), 5000, "error")
     }
   } catch (error: any) {
-    showMessage(`自动合并失败: ${error.message}`, 5000, "error")
+    showMessage(t("autoMergeFailed", { msg: error.message }), 5000, "error")
   } finally {
     mergeProgress.value = false
   }

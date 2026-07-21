@@ -1,3 +1,4 @@
+<!-- 技能学习 - 卡片列表视图（搜索/筛选/分页） -->
 <template>
   <div class="skill-list-view">
     <div class="skill-list-view__search">

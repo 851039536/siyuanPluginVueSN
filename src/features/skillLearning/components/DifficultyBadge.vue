@@ -1,3 +1,4 @@
+<!-- 技能学习 - 难度徽章组件 -->
 <template>
   <span
     class="difficulty-badge"
@@ -12,6 +13,7 @@ import type {
   Difficulty,
   SkillI18n,
 } from "../types"
+import { DIFFICULTY_CHINESE } from "../types"
 import { computed } from "vue"
 
 const props = defineProps<{
@@ -20,12 +22,8 @@ const props = defineProps<{
 }>()
 
 const label = computed(() => {
-  const map: Record<Difficulty, string> = {
-    beginner: props.i18n.beginner || "初级",
-    intermediate: props.i18n.intermediate || "中级",
-    advanced: props.i18n.advanced || "高级",
-  }
-  return map[props.difficulty] || props.difficulty
+  const i18nKey = props.difficulty as keyof SkillI18n
+  return props.i18n[i18nKey] || DIFFICULTY_CHINESE[props.difficulty] || props.difficulty
 })
 </script>
 

@@ -1,3 +1,6 @@
+/**
+ * 技能学习 - 存储响应式封装
+ */
 import type { Plugin } from "siyuan"
 import type { Ref } from "vue"
 import type {
@@ -6,9 +9,6 @@ import type {
   SkillCard,
   UpdateSkillDTO,
 } from "../types"
-/**
- * 技能学习 - 存储响应式封装
- */
 import { ref } from "vue"
 import { SkillStorage } from "../types/storage"
 

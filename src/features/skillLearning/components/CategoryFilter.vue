@@ -1,3 +1,4 @@
+<!-- 技能学习 - 分类筛选栏（语言/分类/难度下拉框） -->
 <template>
   <div class="category-filter">
     <div class="category-filter__row">

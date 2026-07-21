@@ -8,6 +8,20 @@ export type Language = "csharp" | "javascript" | "typescript" | "vue" | "other"
 /** 难度等级 */
 export type Difficulty = "beginner" | "intermediate" | "advanced"
 
+/** 难度颜色映射 */
+export const DIFFICULTY_COLORS: Record<Difficulty, string> = {
+  beginner: "#22c55e",
+  intermediate: "#f59e0b",
+  advanced: "#ef4444",
+}
+
+/** 难度中文回退标签 */
+export const DIFFICULTY_CHINESE: Record<Difficulty, string> = {
+  beginner: "初级",
+  intermediate: "中级",
+  advanced: "高级",
+}
+
 /** 视图模式 */
 export type ViewMode = "list" | "flashcard" | "review" | "stats"
 

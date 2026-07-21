@@ -1,12 +1,12 @@
+/**
+ * 技能学习功能 - 数据存储层
+ */
 import type {
   CreateSkillDTO,
   ReviewData,
   SkillCard,
   UpdateSkillDTO,
 } from "./index"
-/**
- * 技能学习功能 - 数据存储层
- */
 import { Plugin } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
 

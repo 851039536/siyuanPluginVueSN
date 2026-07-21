@@ -1,3 +1,4 @@
+<!-- 技能学习 - SM-2 间隔重复复习视图 -->
 <template>
   <div class="review-view">
     <!-- 空状态：没有卡片 -->

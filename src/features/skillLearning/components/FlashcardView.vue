@@ -1,3 +1,4 @@
+<!-- 技能学习 - 闪卡选择题测验视图 -->
 <template>
   <div class="flashcard-quiz">
     <!-- 空状态 -->
@@ -191,19 +192,10 @@ import {
 import IconWrapper from "@/components/IconWrapper.vue"
 import { useFilteredCards } from "../composables/useFilteredCards"
 import { langLabel } from "../composables/useLangLabel"
+import { buildQuiz } from "../utils"
+import type { QuizItem } from "../utils"
 import CategoryFilter from "./CategoryFilter.vue"
 import DifficultyBadge from "./DifficultyBadge.vue"
-
-interface CardOption {
-  text: string
-  correct: boolean
-}
-interface QuizItem {
-  card: SkillCard
-  options: CardOption[]
-  selectedIndex: number | null
-  isCorrect: boolean | null
-}
 
 const props = defineProps<{
   cards: SkillCard[]
@@ -227,91 +219,6 @@ const {
   filteredCards,
 } = useFilteredCards(cardsRef)
 
-
-// --- 工具函数 ---
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[a[i], a[j]] = [a[j], a[i]]
-  }
-  return a
-}
-
-function buildQuiz(cards: SkillCard[]): QuizItem[] {
-  if (cards.length === 0) return []
-
-  // 1. 随机打乱卡片顺序
-  const shuffled = shuffle([...cards])
-
-  // 2. 预建按语言分组的答案池（避免 O(n²) 嵌套查找）
-  const answersByLang = new Map<string, { id: string, text: string }[]>()
-  for (const c of shuffled) {
-    if (c.answer && c.answer.trim()) {
-      if (!answersByLang.has(c.language)) answersByLang.set(c.language, [])
-      answersByLang.get(c.language)!.push({
-        id: c.id,
-        text: c.answer,
-      })
-    }
-  }
-
-  // 所有答案的平铺池（跨语言回退）
-  const allPool = [...answersByLang.values()].flat()
-
-  return shuffled.map((card) => {
-    const correctOpt: CardOption = {
-      text: card.answer,
-      correct: true,
-    }
-    let distractors: CardOption[] = []
-
-    // 优先使用手动指定的干扰项
-    if (card.distractors && card.distractors.length > 0) {
-      distractors = card.distractors
-        .filter(Boolean)
-        .slice(0, 3)
-        .map((d) => ({
-          text: d.trim(),
-          correct: false,
-        }))
-    } else {
-      // 从同语言池中抽取 + 跨语言池补充
-      const sameLang = (answersByLang.get(card.language) || [])
-        .filter((a) => a.id !== card.id)
-      const rest = allPool.filter((a) => a.id !== card.id && !sameLang.some((s) => s.id === a.id))
-
-      const pool = [...shuffle(sameLang), ...shuffle(rest)]
-      const seen = new Set<string>()
-      pool.forEach((a) => {
-        if (distractors.length >= 3) return
-        if (!seen.has(a.text) && a.text !== card.answer) {
-          seen.add(a.text)
-          distractors.push({
-            text: a.text,
-            correct: false,
-          })
-        }
-      })
-    }
-
-    // 不够 3 个时用占位补足
-    while (distractors.length < 3) {
-      distractors.push({
-        text: `——`,
-        correct: false,
-      })
-    }
-
-    const options = shuffle([correctOpt, ...distractors])
-    return {
-      card,
-      options,
-      selectedIndex: null,
-      isCorrect: null,
-    }
-  })
-}
 
 // --- 状态 ---
 const quizItems = ref<QuizItem[]>(buildQuiz(filteredCards.value))

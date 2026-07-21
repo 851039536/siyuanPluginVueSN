@@ -1,3 +1,4 @@
+<!-- 技能学习 - 新建/编辑卡片弹窗 -->
 <template>
   <div
     class="skill-dialog-overlay"
@@ -76,20 +77,12 @@
               v-model="form.language"
               class="skill-dialog__select"
             >
-              <option value="csharp">
-                C#
-              </option>
-              <option value="javascript">
-                JavaScript
-              </option>
-              <option value="typescript">
-                TypeScript
-              </option>
-              <option value="vue">
-                Vue
-              </option>
-              <option value="other">
-                Other
+              <option
+                v-for="opt in languageOptions"
+                :key="opt.key"
+                :value="opt.key"
+              >
+                {{ opt.label }}
               </option>
             </select>
           </div>
@@ -162,6 +155,7 @@ import {
   callAI,
   getApiConfigFromPlugin,
 } from "@/utils/aiApi"
+import { LANGUAGE_OPTIONS } from "../composables/useLangLabel"
 
 const props = defineProps<{
   i18n: SkillI18n
@@ -177,6 +171,7 @@ const emit = defineEmits<{
 
 const isEdit = computed(() => !!props.editCard)
 const t = computed(() => props.i18n)
+const languageOptions = LANGUAGE_OPTIONS
 
 const tagsInput = ref(props.editCard?.tags.join(", ") || "")
 const aiGenerating = ref(false)

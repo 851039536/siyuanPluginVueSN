@@ -1,3 +1,4 @@
+<!-- 技能学习 - 主面板（Dock 容器），Tab 切换 4 个子视图 -->
 <template>
   <div class="skill-learning-panel">
     <!-- 顶部工具栏 -->
@@ -93,6 +94,7 @@ import ReviewView from "./components/ReviewView.vue"
 import SkillDialog from "./components/SkillDialog.vue"
 import SkillListView from "./components/SkillListView.vue"
 import StatsView from "./components/StatsView.vue"
+import { useCardStats } from "./composables/useCardStats"
 import { useI18n } from "./composables/useI18n"
 import { useSkillStorage } from "./composables/useSkillStorage"
 import { PRESET_CARDS } from "./data/presetData"
@@ -116,11 +118,11 @@ const {
 } =
   useSkillStorage(props.plugin)
 
+const { practicedCount } = useCardStats(cards)
+
 const viewMode = ref<ViewMode>("list")
 const showDialog = ref(false)
 const editingCard = ref<SkillCard | null>(null)
-
-const practicedCount = computed(() => cards.value.filter((c) => c.practiceCount > 0).length)
 
 const tabs = computed(() => [
   {

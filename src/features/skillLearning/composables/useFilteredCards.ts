@@ -1,12 +1,12 @@
+/**
+ * 技能学习 - 共用筛选逻辑 composable
+ * 提取 SkillListView 和 FlashcardView 中重复的筛选/分页逻辑
+ */
 import type {
   ComputedRef,
   Ref
 } from "vue"
 import type { SkillCard } from "../types"
-/**
- * 技能学习 - 共用筛选逻辑 composable
- * 提取 SkillListView 和 FlashcardView 中重复的筛选/分页逻辑
- */
 import {
   computed,
 

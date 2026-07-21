@@ -106,111 +106,131 @@
         </button>
       </div>
 
-      <!-- 元数据驱动分区 -->
-      <StatSection
-        v-for="section in statSections"
-        :key="section.key"
-        :title="section.title"
-        :icon="section.icon"
-      >
-        <template #headerExtra>
-          <button
-            v-if="section.key === 'size'"
-            class="toolbar-btn"
-            :class="{ active: hideZero }"
-            title="隐藏零值卡片"
-            @click.stop="hideZero = !hideZero"
-          >
-            <Icon
-              :icon="hideZero ? 'mdi:eye-off-outline' : 'mdi:eye-outline'"
-              :size="13"
-            />
-            {{ hideZero ? '已隐藏' : '隐藏零值' }}
-          </button>
-          <button
-            v-if="section.key === 'bookmark'"
-            class="bookmark-detail-btn"
-            title="查看全部书签"
-            @click.stop="$emit('showBookmarkDetails')"
-          >
-            <Icon icon="mdi:format-list-bulleted" :size="13" />详情
-          </button>
-        </template>
-        <div class="section-cards">
-          <StatCard
-            v-for="card in getVisibleCards(section)"
-            :key="card.id"
-            :card-id="card.id"
-            :value="getCardValue(card)"
-            :label="cardLabel(card)"
-            :color-class="card.colorClass"
-            :active="activeFilter === card.id"
-            :pct="pctStr(getCardValue(card))"
-            :icon-only="card.iconValue"
-            @select="(id) => $emit('selectCategory', id)"
+      <!-- 统计 Tab 切换栏 -->
+      <div class="stats-tab-bar">
+        <button
+          v-for="tab in statsTabs"
+          :key="tab.key"
+          class="stats-tab-btn"
+          :class="{ active: activeStatsTab === tab.key }"
+          @click="activeStatsTab = tab.key"
+        >
+          <Icon
+            :icon="tab.icon"
+            :size="13"
           />
-        </div>
-      </StatSection>
-
-      <!-- 平台分布柱状图 -->
-      <div
-        v-if="platformEntries.length > 0"
-        class="platform-distro"
-      >
-        <div class="platform-distro-title">
-          <span>平台分布</span>
-          <span class="platform-metrics">
-            人均 {{ avgPlatformsPerDoc }} 平台 · 覆盖率 {{ coveragePct }}%
-          </span>
-        </div>
-        <BarRow
-          v-for="entry in platformEntries"
-          :key="entry.id"
-          :label="entry.name"
-          :count="entry.count"
-          :pct="entry.pct"
-        />
+          {{ tab.label }}
+        </button>
       </div>
 
-      <!-- 字数分布 -->
-      <StatSection
-        v-if="stats.wordCountDistribution.length > 0"
-        title="字数分布"
-        icon="mdi:text-short"
-      >
-        <div class="wordcount-chart">
+      <!-- Tab: 概览 — 元数据驱动分区 -->
+      <div v-show="activeStatsTab === 'overview'">
+        <StatSection
+          v-for="section in statSections"
+          :key="section.key"
+          :title="section.title"
+          :icon="section.icon"
+        >
+          <template #headerExtra>
+            <button
+              v-if="section.key === 'size'"
+              class="toolbar-btn"
+              :class="{ active: hideZero }"
+              title="隐藏零值卡片"
+              @click.stop="hideZero = !hideZero"
+            >
+              <Icon
+                :icon="hideZero ? 'mdi:eye-off-outline' : 'mdi:eye-outline'"
+                :size="13"
+              />
+              {{ hideZero ? '已隐藏' : '隐藏零值' }}
+            </button>
+            <button
+              v-if="section.key === 'bookmark'"
+              class="bookmark-detail-btn"
+              title="查看全部书签"
+              @click.stop="$emit('showBookmarkDetails')"
+            >
+              <Icon icon="mdi:format-list-bulleted" :size="13" />详情
+            </button>
+          </template>
+          <div class="section-cards">
+            <StatCard
+              v-for="card in getVisibleCards(section)"
+              :key="card.id"
+              :card-id="card.id"
+              :value="getCardValue(card)"
+              :label="cardLabel(card)"
+              :color-class="card.colorClass"
+              :active="activeFilter === card.id"
+              :pct="pctStr(getCardValue(card))"
+              :icon-only="card.iconValue"
+              @select="(id) => $emit('selectCategory', id)"
+            />
+          </div>
+        </StatSection>
+      </div>
+
+      <!-- Tab: 分布 — 平台 + 字数 + 书签分类 -->
+      <div v-show="activeStatsTab === 'distribution'">
+        <!-- 平台分布柱状图 -->
+        <div
+          v-if="platformEntries.length > 0"
+          class="platform-distro"
+        >
+          <div class="platform-distro-title">
+            <span>平台分布</span>
+            <span class="platform-metrics">
+              人均 {{ avgPlatformsPerDoc }} 平台 · 覆盖率 {{ coveragePct }}%
+            </span>
+          </div>
           <BarRow
-            v-for="item in stats.wordCountDistribution"
-            :key="item.label"
-            :label="item.label"
-            :count="item.count"
-            :pct="wcBarPct(item.count)"
+            v-for="entry in platformEntries"
+            :key="entry.id"
+            :label="entry.name"
+            :count="entry.count"
+            :pct="entry.pct"
           />
         </div>
-      </StatSection>
 
-      <!-- 自定义书签 -->
-      <StatSection
-        v-if="stats.customBookmarkTop.length > 0"
-        title="书签分类 Top-{{ stats.customBookmarkTop.length }}"
-        icon="mdi:tag-outline"
-      >
-        <div class="wordcount-chart">
-          <BarRow
-            v-for="item in stats.customBookmarkTop"
-            :key="item.value"
-            :label="item.value"
-            :count="item.count"
-            :pct="customBmBarPct(item.count)"
-          />
-        </div>
-      </StatSection>
+        <!-- 字数分布 -->
+        <StatSection
+          v-if="stats.wordCountDistribution.length > 0"
+          title="字数分布"
+          icon="mdi:text-short"
+        >
+          <div class="wordcount-chart">
+            <BarRow
+              v-for="item in stats.wordCountDistribution"
+              :key="item.label"
+              :label="item.label"
+              :count="item.count"
+              :pct="wcBarPct(item.count)"
+            />
+          </div>
+        </StatSection>
 
-      <!-- 文档质量 -->
-      <StatSection
-        title="文档质量"
-        icon="mdi:chart-box-outline"
-      >
+        <!-- 自定义书签 -->
+        <StatSection
+          v-if="stats.customBookmarkTop.length > 0"
+          title="书签分类 Top-{{ stats.customBookmarkTop.length }}"
+          icon="mdi:tag-outline"
+        >
+          <div class="wordcount-chart">
+            <BarRow
+              v-for="item in stats.customBookmarkTop"
+              :key="item.value"
+              :label="item.value"
+              :count="item.count"
+              :pct="customBmBarPct(item.count)"
+            />
+          </div>
+        </StatSection>
+      </div>
+
+      <!-- Tab: 质量 — 文档质量 + 深度分布 -->
+      <div v-show="activeStatsTab === 'quality'">
+        <!-- 文档质量 -->
         <div class="section-cards">
           <StatCard
             v-if="!hideZero || stats.deepDocs !== 0"
@@ -321,7 +341,7 @@
             @click="$emit('selectDepth', item.depth)"
           />
         </div>
-      </StatSection>
+      </div>
     </template>
 
     <div
@@ -487,6 +507,13 @@ const emit = defineEmits<{
 const statSections = STAT_SECTIONS as readonly StatSectionDef[]
 
 const hideZero = ref(false)
+
+const activeStatsTab = ref("overview")
+const statsTabs = [
+  { key: "overview", label: "概览", icon: "mdi:view-dashboard-outline" },
+  { key: "distribution", label: "分布", icon: "mdi:chart-bar" },
+  { key: "quality", label: "质量", icon: "mdi:chart-box-outline" },
+]
 
 const dupDialogVisible = ref(false)
 const dupDialogText = ref("")

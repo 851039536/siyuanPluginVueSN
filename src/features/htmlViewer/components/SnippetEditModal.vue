@@ -1,3 +1,4 @@
+<!-- HTML展示 - 片段新建/编辑弹窗 -->
 <template>
   <Teleport to="body">
     <Transition name="fade">
@@ -157,3 +158,7 @@ function handleSubmit() {
   emit("update:visible", false)
 }
 </script>
+
+<style lang="scss">
+@use '../styles/index.scss';
+</style>

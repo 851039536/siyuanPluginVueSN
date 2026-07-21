@@ -10,7 +10,7 @@ import hljs from "highlight.js"
 import { marked } from "marked"
 import { escapeHtml } from "@/utils/stringUtils"
 import { convertHljsToInlineStyles } from "@/utils/mdRenderer"
-import { normalizeWidths } from "../../htmlViewer/utils/normalizeWidths"
+import { normalizeWidths } from "@/utils/htmlNormalizer"
 
 /**
  * 基础主题颜色（所有平台共有字段）

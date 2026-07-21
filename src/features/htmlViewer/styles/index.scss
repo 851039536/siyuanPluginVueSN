@@ -1,3 +1,4 @@
+@use "@/variables.scss" as *;
 @use './transitions';
 
 // HTML展示功能样式（非 scoped，子组件共享类名）
@@ -28,7 +29,7 @@
   max-height: 750px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   overflow: hidden;
 
   &.small {
@@ -310,7 +311,7 @@
 
   &:hover {
     border-color: var(--b3-theme-primary);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    background: color-mix(in srgb, var(--b3-theme-primary) 4%, transparent);
   }
 
   .snippet-header {

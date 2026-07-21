@@ -1,3 +1,4 @@
+<!-- HTML展示 - 片段库浏览弹窗（分类筛选/搜索/卡片网格） -->
 <template>
   <Teleport to="body">
     <Transition name="fade">
@@ -227,3 +228,7 @@ function getPreviewHtml(content: string): string {
   return `<style>body{margin:0;padding:4px;overflow:hidden;pointer-events:none;font-size:12px;}</style>${content}`
 }
 </script>
+
+<style lang="scss">
+@use '../styles/index.scss';
+</style>

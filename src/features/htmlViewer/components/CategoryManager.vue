@@ -1,3 +1,4 @@
+<!-- HTML展示 - 分类管理弹窗 -->
 <template>
   <Teleport to="body">
     <Transition name="fade">
@@ -97,6 +98,11 @@ import {
 import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 
+interface Props {
+  visible: boolean
+  categories: HtmlCategory[]
+}
+
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
@@ -113,11 +119,6 @@ const PRESET_COLORS = [
   "#e8a04c",
   "#9b6bb5",
 ]
-
-interface Props {
-  visible: boolean
-  categories: HtmlCategory[]
-}
 
 const newCategory = reactive({
   name: "",
@@ -141,3 +142,7 @@ function handleAddCategory() {
   newCategory.color = PRESET_COLORS[0]
 }
 </script>
+
+<style lang="scss">
+@use '../styles/index.scss';
+</style>

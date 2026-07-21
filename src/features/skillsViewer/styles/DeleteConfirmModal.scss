@@ -1,0 +1,22 @@
+/**
+ * SkillsViewer — DeleteConfirmModal 组件特定样式
+ */
+@use "@/variables" as *;
+
+.sv-modal-body {
+  .sv-modal-skill-name {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: var(--b3-theme-on-surface);
+    margin-top: $spacing-2;
+  }
+
+  .sv-modal-skill-path {
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-on-surface-variant);
+    opacity: 0.6;
+    font-family: $vp-mono;
+    margin-top: $spacing-1;
+    word-break: break-all;
+  }
+}

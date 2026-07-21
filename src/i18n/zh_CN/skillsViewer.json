@@ -21,5 +21,19 @@
   "editSkillPlaceholder": "编辑 Skill 内容...",
   "editSkillHint": "修改完成后点击保存按钮写入文件",
   "saveSkillSuccess": "Skill 保存成功",
-  "saveSkillFailed": "Skill 保存失败"
+  "saveSkillFailed": "Skill 保存失败",
+  "deleteSkill": "删除",
+  "copySkill": "复制到其他工具",
+  "expand": "展开",
+  "refresh": "刷新扫描",
+  "deleteSkillTitle": "确认删除 Skill",
+  "deleteSkillConfirm": "确定要删除以下 Skill 吗？此操作不可恢复。",
+  "confirmDelete": "确认删除",
+  "deleteSkillSuccess": "Skill 删除成功",
+  "deleteSkillFailed": "Skill 删除失败",
+  "copySkillTitle": "复制 Skill 到其他工具",
+  "copySkillConfirm": "选择目标 AI 编程工具，将当前 Skill 复制到对应 skills 目录",
+  "copyTo": "复制到",
+  "copySkillSuccess": "Skill 复制成功",
+  "copySkillFailed": "复制失败（目标已存在或权限不足）"
 }

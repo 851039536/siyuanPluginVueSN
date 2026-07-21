@@ -106,7 +106,6 @@ import { PluginStorage } from "@/utils/pluginStorage"
 import { showEverythingSearch } from "../everythingSearch"
 import { showImageCreation } from "../imageCreation"
 import { showPasswordVault } from "../passwordVault"
-import { showSkillsViewer } from "../skillsViewer/types"
 import { showWebsiteNavigation } from "../websiteNavigation/types"
 import FeatureDrawer from "./components/FeatureDrawer.vue"
 import MonitorItem from "./components/MonitorItem.vue"
@@ -201,7 +200,7 @@ const FEATURES: FeatureRegistryEntry[] = [
       icon: "ph:puzzle-piece",
       itemClass: "action-item skills-viewer-item",
     },
-    action: () => showSkillsViewer(),
+    action: () => emitCustomEvent("toggleSkillsViewer"),
   },
   {
     id: "htmlViewer",

@@ -21,5 +21,19 @@
   "editSkillPlaceholder": "Edit Skill content...",
   "editSkillHint": "Click save button after editing to write to file",
   "saveSkillSuccess": "Skill saved successfully",
-  "saveSkillFailed": "Failed to save Skill"
+  "saveSkillFailed": "Failed to save Skill",
+  "deleteSkill": "Delete",
+  "copySkill": "Copy to Other Tool",
+  "expand": "Expand",
+  "refresh": "Refresh Scan",
+  "deleteSkillTitle": "Confirm Delete Skill",
+  "deleteSkillConfirm": "Are you sure you want to delete this Skill? This action cannot be undone.",
+  "confirmDelete": "Confirm Delete",
+  "deleteSkillSuccess": "Skill deleted successfully",
+  "deleteSkillFailed": "Failed to delete Skill",
+  "copySkillTitle": "Copy Skill to Other Tool",
+  "copySkillConfirm": "Select target AI coding tool to copy the current Skill to its skills directory",
+  "copyTo": "Copy to",
+  "copySkillSuccess": "Skill copied successfully",
+  "copySkillFailed": "Copy failed (target already exists or permission denied)"
 }

@@ -1,16 +1,13 @@
 /**
- * SkillsViewer — Codex-inspired UI
+ * SkillsViewer — 核心弹窗样式
  */
+@use "@/variables" as *;
 
-$ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-$ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
-$ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+// 自定义缓动（全局 Token 中无等价项）
+$sv-ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+$sv-ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-// Codex 设计 tokens
-$sv-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
-$sv-radius: 6px;
-
-@mixin custom-scrollbar {
+@mixin sv-custom-scrollbar {
   &::-webkit-scrollbar {
     width: 5px;
     height: 5px;
@@ -27,27 +24,17 @@ $sv-radius: 6px;
   }
 }
 
-@mixin text-ellipsis {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+/* ── overlay & dialog ─────────────────────────────────── */
 
-@mixin modal-overlay($z-index: 9999) {
+.skills-viewer-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: $z-index;
+  z-index: 9999;
   backdrop-filter: blur(4px) saturate(0.8);
-}
-
-/* ── overlay & dialog ─────────────────────────────────── */
-
-.skills-viewer-overlay {
-  @include modal-overlay;
 }
 
 .skills-viewer-dialog {
@@ -56,7 +43,7 @@ $sv-radius: 6px;
   max-height: 86vh;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: $sv-radius;
+  border-radius: $vp-radius;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -68,7 +55,7 @@ $sv-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: $spacing-3 $spacing-4;
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
   background: var(--b3-theme-surface);
@@ -77,28 +64,28 @@ $sv-radius: 6px;
   .sv-header-left {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: $spacing-3;
 
     .sv-header-icon {
-      font-size: 16px;
-      line-height: 1;
+      font-size: $font-size-base;
+      line-height: $line-height-tight;
     }
 
     .sv-header-title {
-      font-size: 15px;
-      font-weight: 600;
+      font-size: $font-size-base;
+      font-weight: $font-weight-semibold;
       color: var(--b3-theme-on-surface);
       letter-spacing: -0.01em;
     }
 
     .sv-header-badge {
-      font-size: 10.5px;
-      padding: 3px 9px;
-      border-radius: 99px;
+      font-size: $font-size-2xs;
+      padding: $spacing-px $spacing-2;
+      border-radius: $radius-full;
       background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.1);
       color: var(--b3-theme-primary);
-      font-weight: 600;
-      line-height: 1;
+      font-weight: $font-weight-semibold;
+      line-height: $line-height-tight;
     }
   }
 
@@ -109,12 +96,12 @@ $sv-radius: 6px;
     align-items: center;
     justify-content: center;
     border: 1px solid var(--b3-border-color);
-    border-radius: $sv-radius;
+    border-radius: $vp-radius;
     cursor: pointer;
     background: transparent;
     color: var(--b3-theme-on-surface-variant);
-    font-size: 13px;
-    transition: border-color 0.15s $ease-in-out, color 0.15s $ease-in-out, background 0.15s $ease-in-out;
+    font-size: $font-size-sm;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
 
     &:hover {
       border-color: var(--b3-theme-primary);
@@ -129,16 +116,16 @@ $sv-radius: 6px;
 .skills-viewer-body {
   flex: 1;
   overflow-y: auto;
-  padding: 18px 20px 20px;
+  padding: $spacing-5 $spacing-5 $spacing-5;
 
-  @include custom-scrollbar;
+  @include sv-custom-scrollbar;
 
   .sv-description {
-    font-size: 12px;
+    font-size: $font-size-xs;
     color: var(--b3-theme-on-surface-variant);
-    line-height: 1.5;
-    margin-bottom: 16px;
-    padding-bottom: 14px;
+    line-height: $line-height-normal;
+    margin-bottom: $spacing-4;
+    padding-bottom: $spacing-3;
     border-bottom: 1px dashed var(--b3-border-color);
     opacity: 0.75;
   }
@@ -148,22 +135,19 @@ $sv-radius: 6px;
   .sv-tools-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 8px;
-    margin-bottom: 16px;
-    padding-bottom: 16px;
+    gap: $spacing-2;
+    margin-bottom: $spacing-4;
+    padding-bottom: $spacing-4;
     border-bottom: 1px dashed var(--b3-border-color);
 
     .sv-tool-card {
-      padding: 10px 10px 8px;
+      padding: $spacing-3 $spacing-3 $spacing-2;
       border: 1px solid var(--b3-border-color);
-      border-radius: $sv-radius;
+      border-radius: $vp-radius;
       cursor: pointer;
       background: var(--b3-theme-surface);
       position: relative;
-      transition:
-        border-color 0.2s $ease-in-out,
-        background 0.2s $ease-in-out,
-        box-shadow 0.2s $ease-in-out;
+      transition: border-color 0.2s ease, background 0.2s ease;
 
       &::after {
         content: "";
@@ -175,7 +159,7 @@ $sv-radius: 6px;
         background: var(--tool-color);
         border-radius: 3px 0 0 3px;
         opacity: 0;
-        transition: opacity 0.2s $ease-in-out;
+        transition: opacity 0.2s ease;
       }
 
       &:hover {
@@ -186,7 +170,7 @@ $sv-radius: 6px;
       &.active {
         border-color: var(--tool-color);
         background: color-mix(in srgb, var(--tool-color) 8%, var(--b3-theme-surface));
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--tool-color) 15%, transparent);
+        border-width: 2px;
 
         &::after {
           opacity: 1;
@@ -197,30 +181,30 @@ $sv-radius: 6px;
         display: flex;
         align-items: center;
         gap: 6px;
-        margin-bottom: 4px;
+        margin-bottom: $spacing-1;
 
         .sv-tool-icon {
-          font-size: 14px;
-          line-height: 1;
+          font-size: $font-size-sm;
+          line-height: $line-height-tight;
         }
 
         .sv-tool-name {
-          font-size: 12px;
-          font-weight: 600;
+          font-size: $font-size-xs;
+          font-weight: $font-weight-semibold;
           color: var(--b3-theme-on-surface);
         }
       }
 
       .sv-tool-status {
-        font-size: 10.5px;
-        font-family: $sv-mono;
+        font-size: $font-size-2xs;
+        font-family: $vp-mono;
         color: var(--b3-theme-on-surface-variant);
-        padding-left: 20px;
-        line-height: 1.3;
+        padding-left: $spacing-5;
+        line-height: $line-height-tight;
 
         .sv-count {
           color: var(--tool-color);
-          font-weight: 700;
+          font-weight: $font-weight-bold;
           font-variant-numeric: tabular-nums;
         }
 
@@ -236,18 +220,18 @@ $sv-radius: 6px;
   /* ── project path ───────────────────────────── */
 
   .sv-project-path {
-    margin-bottom: 16px;
-    padding: 10px 12px;
+    margin-bottom: $spacing-4;
+    padding: $spacing-3 $spacing-3;
     background: var(--b3-theme-surface-lighter);
     border: 1px solid var(--b3-border-color);
-    border-radius: $sv-radius;
+    border-radius: $vp-radius;
 
     .sv-path-label {
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 10px;
-      font-weight: 700;
+      font-size: $font-size-2xs;
+      font-weight: $font-weight-bold;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       color: var(--b3-theme-on-surface-variant);
@@ -257,23 +241,23 @@ $sv-radius: 6px;
 
     .sv-path-input-row {
       display: flex;
-      gap: 8px;
+      gap: $spacing-2;
 
       .sv-path-input {
         flex: 1;
-        padding: 7px 10px;
-        font-size: 11.5px;
+        padding: 7px $spacing-3;
+        font-size: $font-size-xs;
         border: 1px solid var(--b3-border-color);
-        border-radius: 4px;
+        border-radius: $radius-sm;
         background: var(--b3-theme-surface);
         color: var(--b3-theme-on-surface);
         outline: none;
-        font-family: $sv-mono;
-        transition: border-color 0.15s $ease-in-out, box-shadow 0.15s $ease-in-out;
+        font-family: $vp-mono;
+        transition: border-color 0.15s ease;
 
         &:focus {
           border-color: var(--b3-theme-primary);
-          box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+          border-width: 2px;
         }
       }
     }
@@ -283,396 +267,45 @@ $sv-radius: 6px;
 
   .sv-actions {
     display: flex;
-    gap: 8px;
-    margin-bottom: 14px;
-    padding-bottom: 14px;
+    gap: $spacing-2;
+    margin-bottom: $spacing-3;
+    padding-bottom: $spacing-3;
     border-bottom: 1px dashed var(--b3-border-color);
   }
 
-  /* ── skill card ─────────────────────────────── */
+  /* ── skills list ────────────────────────────── */
 
   .sv-skills-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-  }
-
-  .sv-skill-card {
-    padding: 12px 14px;
-    background: var(--b3-theme-surface);
-    border: 1px solid var(--b3-border-color);
-    border-radius: $sv-radius;
-    position: relative;
-    transition:
-      border-color 0.15s $ease-in-out,
-      box-shadow 0.15s $ease-in-out;
-
-    &::before {
-      content: "";
-      position: absolute;
-      left: 0;
-      top: 5px;
-      bottom: 5px;
-      width: 3px;
-      background: var(--tool-color, var(--b3-theme-primary));
-      border-radius: 0 2px 2px 0;
-    }
-
-    &:hover {
-      border-color: var(--b3-theme-surface-variant);
-      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
-    }
-
-    &--editing {
-      border-color: var(--b3-theme-primary);
-      background: var(--b3-theme-primary-lightest);
-    }
-
-    .sv-skill-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 5px;
-
-      .sv-skill-header-left {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex: 1;
-        min-width: 0;
-
-        .sv-skill-name {
-          font-size: 13px;
-          font-weight: 600;
-          color: var(--b3-theme-on-surface);
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-      }
-
-      .sv-skill-header-actions {
-        display: flex;
-        align-items: center;
-        gap: 1px;
-        flex-shrink: 0;
-        opacity: 0;
-        transition: opacity 0.15s $ease-in-out;
-      }
-    }
-
-    &:hover .sv-skill-header-actions {
-      opacity: 1;
-    }
-
-    .sv-skill-tool-badge {
-      font-size: 10px;
-      font-family: $sv-mono;
-      padding: 2px 7px;
-      border-radius: 3px;
-      font-weight: 600;
-      flex-shrink: 0;
-      line-height: 1.3;
-    }
-
-    .sv-skill-size {
-      font-size: 10px;
-      font-family: $sv-mono;
-      color: var(--b3-theme-on-surface-variant);
-      opacity: 0.45;
-      flex-shrink: 0;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .sv-skill-action-btn {
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid var(--b3-border-color);
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-      background: var(--b3-theme-background);
-      color: var(--b3-theme-on-surface-variant);
-      transition: background 0.12s $ease-in-out, color 0.12s $ease-in-out, border-color 0.12s $ease-in-out;
-
-      &--edit:hover {
-        border-color: var(--b3-theme-primary);
-        color: var(--b3-theme-primary);
-        background: var(--b3-theme-surface-lighter);
-      }
-
-      &--save {
-        &:hover:not(:disabled) {
-          border-color: #22c55e;
-          color: #22c55e;
-          background: var(--b3-theme-surface-lighter);
-        }
-        &:disabled {
-          opacity: 0.4;
-          cursor: not-allowed;
-        }
-      }
-
-      &--cancel:hover {
-        background: var(--b3-theme-surface-lighter);
-      }
-
-      &--delete:hover {
-        border-color: #ef4444;
-        color: #ef4444;
-        background: var(--b3-theme-surface-lighter);
-      }
-
-      &--copy:hover {
-        border-color: var(--b3-theme-primary);
-        color: var(--b3-theme-primary);
-        background: var(--b3-theme-surface-lighter);
-      }
-    }
-
-    .sv-skill-desc {
-      font-size: 12px;
-      color: var(--b3-theme-on-surface-variant);
-      line-height: 1.45;
-      margin-bottom: 6px;
-      opacity: 0.8;
-    }
-
-    .sv-skill-path {
-      font-size: 10.5px;
-      color: var(--b3-theme-on-surface-variant);
-      opacity: 0.45;
-      font-family: $sv-mono;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      padding: 3px 7px;
-      background: var(--b3-theme-background);
-      border-radius: 4px;
-      display: inline-block;
-      max-width: 100%;
-    }
-
-    .sv-skill-expand-btn {
-      margin-top: 8px;
-      font-size: 11.5px;
-      color: var(--b3-theme-primary);
-      cursor: pointer;
-      background: none;
-      border: none;
-      padding: 4px 0;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-weight: 500;
-      transition: opacity 0.15s;
-      opacity: 0.75;
-
-      &:hover {
-        opacity: 1;
-      }
-
-      .sv-expand-arrow {
-        display: inline-block;
-        transition: transform 0.2s $ease-out-expo;
-        font-size: 10px;
-      }
-    }
-
-    .sv-skill-content {
-      margin-top: 10px;
-      padding: 12px 14px;
-      background: var(--b3-theme-background);
-      border: 1px solid var(--b3-border-color);
-      border-radius: $sv-radius;
-      max-height: 320px;
-      overflow-y: auto;
-      font-size: 12.5px;
-      line-height: 1.6;
-      color: var(--b3-theme-on-background);
-      word-break: break-word;
-
-      @include custom-scrollbar;
-
-      :deep(h1),
-      :deep(h2),
-      :deep(h3),
-      :deep(h4),
-      :deep(h5),
-      :deep(h6) {
-        color: var(--b3-theme-on-surface);
-        margin: 12px 0 6px;
-        font-weight: 650;
-        line-height: 1.3;
-        letter-spacing: -0.01em;
-
-        &:first-child {
-          margin-top: 0;
-        }
-      }
-
-      :deep(h1) { font-size: 15px; }
-      :deep(h2) { font-size: 14px; }
-      :deep(h3) { font-size: 13px; }
-
-      :deep(p) {
-        margin: 5px 0;
-      }
-
-      :deep(ul),
-      :deep(ol) {
-        margin: 5px 0;
-        padding-left: 18px;
-      }
-
-      :deep(li) {
-        margin: 3px 0;
-      }
-
-      :deep(code) {
-        font-family: $sv-mono;
-        font-size: 11.5px;
-        padding: 1.5px 5px;
-        border-radius: 3px;
-        background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.08);
-        color: var(--b3-theme-primary);
-      }
-
-      :deep(pre) {
-        margin: 8px 0;
-        padding: 10px 12px;
-        border-radius: $sv-radius;
-        background: var(--b3-theme-surface);
-        border: 1px solid var(--b3-border-color);
-        overflow-x: auto;
-
-        code {
-          padding: 0;
-          background: none;
-          color: var(--b3-theme-on-surface);
-          font-size: 11.5px;
-        }
-      }
-
-      :deep(blockquote) {
-        margin: 8px 0;
-        padding: 4px 12px;
-        border-left: 3px solid var(--b3-theme-primary);
-        background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.04);
-        color: var(--b3-theme-on-surface-variant);
-      }
-
-      :deep(a) {
-        color: var(--b3-theme-primary);
-        text-decoration: none;
-        &:hover {
-          text-decoration: underline;
-        }
-      }
-
-      :deep(table) {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 8px 0;
-        font-size: 11.5px;
-
-        th,
-        td {
-          padding: 6px 10px;
-          border: 1px solid var(--b3-border-color);
-          text-align: left;
-        }
-
-        th {
-          background: var(--b3-theme-surface);
-          font-weight: 650;
-        }
-      }
-
-      :deep(hr) {
-        margin: 12px 0;
-        border: none;
-        border-top: 1px dashed var(--b3-border-color);
-      }
-
-      :deep(strong) {
-        font-weight: 650;
-        color: var(--b3-theme-on-surface);
-      }
-
-      :deep(em) {
-        font-style: italic;
-      }
-    }
-
-    .sv-skill-editor {
-      margin-top: 10px;
-
-      .sv-skill-editor-textarea {
-        width: 100%;
-        min-height: 140px;
-        max-height: 300px;
-        padding: 10px 12px;
-        font-size: 11.5px;
-        font-family: $sv-mono;
-        line-height: 1.6;
-        color: var(--b3-theme-on-background);
-        background: var(--b3-theme-background);
-        border: 1px solid var(--b3-border-color);
-        border-radius: $sv-radius;
-        outline: none;
-        resize: vertical;
-        box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
-
-        &::placeholder {
-          color: var(--b3-theme-on-surface-variant);
-          opacity: 0.4;
-        }
-      }
-
-      .sv-skill-editor-footer {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-top: 6px;
-
-        .sv-skill-editor-hint {
-          font-size: 11px;
-          color: var(--b3-theme-on-surface-variant);
-          opacity: 0.5;
-        }
-      }
-    }
+    gap: $spacing-2;
   }
 
   /* ── empty state ────────────────────────────── */
 
   .sv-empty {
     text-align: center;
-    padding: 40px 16px;
+    padding: $spacing-10 $spacing-4;
 
     .sv-empty-icon {
       font-size: 32px;
-      margin-bottom: 10px;
+      margin-bottom: $spacing-3;
       opacity: 0.35;
-      line-height: 1;
+      line-height: $line-height-tight;
     }
 
     .sv-empty-text {
-      font-size: 13px;
+      font-size: $font-size-sm;
       color: var(--b3-theme-on-surface-variant);
-      line-height: 1.5;
+      line-height: $line-height-normal;
     }
 
     .sv-empty-hint {
-      font-size: 11.5px;
+      font-size: $font-size-xs;
       color: var(--b3-theme-on-surface-variant);
       opacity: 0.5;
-      margin-top: 8px;
-      font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+      margin-top: $spacing-2;
+      font-family: $vp-mono;
     }
   }
 
@@ -682,8 +315,8 @@ $sv-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 40px;
-    gap: 10px;
+    padding: $spacing-10;
+    gap: $spacing-3;
 
     .sv-loading-spinner {
       width: 18px;
@@ -695,155 +328,99 @@ $sv-radius: 6px;
     }
 
     .sv-loading-text {
-      font-size: 12.5px;
+      font-size: $font-size-xs;
       color: var(--b3-theme-on-surface-variant);
       opacity: 0.7;
     }
   }
 
   @keyframes sv-spin {
-    to {
-      transform: rotate(360deg);
-    }
+    to { transform: rotate(360deg); }
   }
 
   /* ── unsupported ────────────────────────────── */
 
   .sv-unsupported {
-    padding: 24px;
+    padding: $spacing-6;
     text-align: center;
 
     .sv-unsupported-icon {
       font-size: 26px;
-      margin-bottom: 10px;
+      margin-bottom: $spacing-3;
       opacity: 0.4;
     }
 
     .sv-unsupported-text {
-      font-size: 12.5px;
+      font-size: $font-size-xs;
       color: var(--b3-theme-on-surface-variant);
-      line-height: 1.5;
+      line-height: $line-height-normal;
     }
   }
 }
 
-/* ── delete confirm modal ─────────────────────────────── */
+/* ── modal base (shared by DeleteConfirmModal / CopySkillModal) ── */
 
 .sv-modal-overlay {
-  @include modal-overlay(10000);
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(4px) saturate(0.8);
+}
 
-  .sv-modal {
-    width: 380px;
-    max-width: 90vw;
-    background: var(--b3-theme-surface);
-    border: 1px solid var(--b3-border-color);
-    border-radius: $sv-radius;
-    box-shadow:
-      0 4px 12px rgba(0, 0, 0, 0.12),
-      0 16px 48px rgba(0, 0, 0, 0.18);
-    overflow: hidden;
+.sv-modal {
+  width: 380px;
+  max-width: 90vw;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  overflow: hidden;
 
-    .sv-modal-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 16px 18px 0;
+  .sv-modal-header {
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+    padding: $spacing-4 $spacing-5 0;
 
-      .sv-modal-icon {
-        font-size: 16px;
-        line-height: 1;
-      }
-
-      .sv-modal-title {
-        font-size: 13.5px;
-        font-weight: 650;
-        color: var(--b3-theme-on-surface);
-        border-bottom: 1px dashed var(--b3-border-color);
-        padding-bottom: 12px;
-      }
+    .sv-modal-icon {
+      font-size: $font-size-base;
+      line-height: $line-height-tight;
     }
 
-    .sv-modal-body {
-      padding: 12px 18px;
-      font-size: 12.5px;
-      color: var(--b3-theme-on-surface-variant);
-      line-height: 1.5;
-
-      .sv-modal-skill-name {
-        font-size: 14px;
-        font-weight: 650;
-        color: var(--b3-theme-on-surface);
-        margin-top: 8px;
-      }
-
-      .sv-modal-skill-path {
-        font-size: 11px;
-        color: var(--b3-theme-on-surface-variant);
-        opacity: 0.6;
-        font-family: $sv-mono;
-        margin-top: 4px;
-        word-break: break-all;
-      }
-
-      .sv-modal-tool-select {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        margin-top: 12px;
-
-        .sv-modal-tool-option {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 10px 12px;
-          border: 1px solid var(--b3-border-color);
-          border-radius: $sv-radius;
-          cursor: pointer;
-          transition:
-            border-color 0.15s $ease-in-out,
-            background 0.15s $ease-in-out,
-            box-shadow 0.15s $ease-in-out;
-
-          &:hover {
-            border-color: var(--tool-color);
-          }
-
-          &.active {
-            border-color: var(--tool-color);
-            background: color-mix(in srgb, var(--tool-color) 8%, var(--b3-theme-surface));
-            box-shadow: 0 0 0 2.5px color-mix(in srgb, var(--tool-color) 15%, transparent);
-          }
-
-          .sv-modal-tool-option-icon {
-            font-size: 16px;
-            line-height: 1;
-          }
-
-          .sv-modal-tool-option-name {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--b3-theme-on-surface);
-          }
-        }
-      }
+    .sv-modal-title {
+      font-size: $font-size-sm;
+      font-weight: $font-weight-semibold;
+      color: var(--b3-theme-on-surface);
+      border-bottom: 1px dashed var(--b3-border-color);
+      padding-bottom: $spacing-3;
     }
+  }
 
-    .sv-modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      padding: 12px 18px 16px;
-    }
+  .sv-modal-body {
+    padding: $spacing-3 $spacing-5;
+    font-size: $font-size-xs;
+    color: var(--b3-theme-on-surface-variant);
+    line-height: $line-height-normal;
+  }
+
+  .sv-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: $spacing-2;
+    padding: $spacing-3 $spacing-5 $spacing-4;
   }
 }
 
 /* ── transitions ──────────────────────────────────────── */
 
 .fade-enter-active {
-  transition: opacity 0.18s $ease-out-expo;
+  transition: opacity 0.18s $sv-ease-out-expo;
 }
 .fade-leave-active {
-  transition: opacity 0.14s $ease-in-out;
+  transition: opacity 0.14s ease;
 }
 .fade-enter-from,
 .fade-leave-to {
@@ -851,10 +428,10 @@ $sv-radius: 6px;
 }
 
 .scale-enter-active {
-  transition: transform 0.25s $ease-out-back, opacity 0.18s $ease-out-expo;
+  transition: transform 0.25s $sv-ease-out-back, opacity 0.18s $sv-ease-out-expo;
 }
 .scale-leave-active {
-  transition: transform 0.15s $ease-in-out, opacity 0.12s $ease-in-out;
+  transition: transform 0.15s ease, opacity 0.12s ease;
 }
 .scale-enter-from {
   transform: scale(0.96) translateY(4px);

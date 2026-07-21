@@ -245,6 +245,11 @@ onMounted(() => {
   window.addEventListener("toggleToolCollection", () => {
     toggleToolCollection()
   })
+
+  // 监听 Skills 查看器切换事件
+  window.addEventListener("toggleSkillsViewer", () => {
+    skillsViewerVisible.value = true
+  })
 })
 </script>
 

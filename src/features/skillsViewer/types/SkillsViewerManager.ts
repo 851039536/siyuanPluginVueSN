@@ -4,6 +4,8 @@
  * 兼容 Claude, CodeBuddy, Qoder, Trae, Opencode
  */
 
+import type { IconKey } from "@/config/icons"
+
 export interface SkillInfo {
   name: string
   description: string
@@ -18,7 +20,7 @@ export type AIToolType = "claude" | "codebuddy" | "qoder" | "trae" | "opencode"
 export interface AIToolConfig {
   id: AIToolType
   name: string
-  icon: string
+  icon: IconKey
   color: string
   skillPaths: string[]
   projectPaths: string[]
@@ -28,7 +30,7 @@ export const AI_TOOLS: AIToolConfig[] = [
   {
     id: "claude",
     name: "Claude",
-    icon: "🟠",
+    icon: "claudeTool",
     color: "#D97757",
     skillPaths: [".claude/skills"],
     projectPaths: [".claude/skills"],
@@ -36,7 +38,7 @@ export const AI_TOOLS: AIToolConfig[] = [
   {
     id: "codebuddy",
     name: "CodeBuddy",
-    icon: "🔵",
+    icon: "codeBraces",
     color: "#4A90D9",
     skillPaths: [".codebuddy/skills"],
     projectPaths: [".codebuddy/skills"],
@@ -44,7 +46,7 @@ export const AI_TOOLS: AIToolConfig[] = [
   {
     id: "qoder",
     name: "Qoder",
-    icon: "🟣",
+    icon: "qoderTool",
     color: "#9B59B6",
     skillPaths: [".qoder/skills"],
     projectPaths: [".qoder/skills"],
@@ -52,7 +54,7 @@ export const AI_TOOLS: AIToolConfig[] = [
   {
     id: "trae",
     name: "Trae",
-    icon: "🟢",
+    icon: "traeTool",
     color: "#27AE60",
     skillPaths: [".trae/skills"],
     projectPaths: [".trae/skills"],
@@ -60,7 +62,7 @@ export const AI_TOOLS: AIToolConfig[] = [
   {
     id: "opencode",
     name: "Opencode",
-    icon: "💎",
+    icon: "opencodeTool",
     color: "#00ACC1",
     skillPaths: [".config/opencode/skills", ".agents/skills"],
     projectPaths: [".opencode/skills"],

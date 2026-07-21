@@ -540,6 +540,23 @@ export const COMMON_ICONS = {
   tagOutline: {
     icon: "mdi:tag-outline",
   },
+
+  // Skills 查看器 — AI 工具徽标图标
+  claudeTool: {
+    icon: "mdi:chat-processing-outline",
+  },
+  codeBraces: {
+    icon: "mdi:code-braces",
+  },
+  qoderTool: {
+    icon: "mdi:creation-outline",
+  },
+  traeTool: {
+    icon: "mdi:flash-outline",
+  },
+  opencodeTool: {
+    icon: "mdi:cube-outline",
+  },
 } as const
 
 /**

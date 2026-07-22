@@ -27,6 +27,7 @@ import {
 export function useRssReader(plugin: Plugin) {
   // ========== 存储 ==========
   const storage = new RssStorage(plugin)
+  const rssI18n = (plugin.i18n as any)?.rssReader || {}
 
   // ========== 响应式状态 ==========
   const settings = ref<RssSettings>({ ...DEFAULT_RSS_SETTINGS })
@@ -80,7 +81,7 @@ export function useRssReader(plugin: Plugin) {
     for (const key of sortedKeys) {
       result.push({
         group: key,
-        label: key || "未分组",
+        label: key || rssI18n.ungrouped || "Ungrouped",
         feeds: map.get(key)!,
       })
     }
@@ -176,7 +177,7 @@ export function useRssReader(plugin: Plugin) {
   async function addFeed(url: string, group?: string) {
     url = url.trim()
     if (!url) {
-      showMessage("请输入RSS订阅地址", 3000, "error")
+      showMessage(rssI18n.feedUrlRequired || "Please enter RSS feed URL", 3000, "error")
       return false
     }
 
@@ -187,7 +188,7 @@ export function useRssReader(plugin: Plugin) {
 
     // 检查重复
     if (feeds.value.some((f) => f.url === url)) {
-      showMessage("该订阅源已存在", 3000, "error")
+      showMessage(rssI18n.feedAddFailed || "该订阅源已存在", 3000, "error")
       return false
     }
 
@@ -214,7 +215,7 @@ export function useRssReader(plugin: Plugin) {
       }
 
       const newItems: RssItem[] = parsedItems.map((pi) => ({
-        title: pi.title || "无标题",
+        title: pi.title || rssI18n.untitled || "Untitled",
         link: pi.link || "",
         description: pi.description,
         pubDate: pi.pubDate,
@@ -233,11 +234,11 @@ export function useRssReader(plugin: Plugin) {
 
       await saveData()
       loadingStatus.value = "success"
-      showMessage(`已添加订阅源: ${newFeed.title}`, 3000, "info")
+      showMessage(`${rssI18n.feedAddedDetail || "Feed added"}: ${newFeed.title}`, 3000, "info")
       return true
     } catch (err: any) {
       loadingStatus.value = "error"
-      showMessage(err.message || "添加订阅源失败", 5000, "error")
+      showMessage(err.message || rssI18n.feedAddFailed || "Failed to add feed", 5000, "error")
       return false
     }
   }
@@ -254,7 +255,7 @@ export function useRssReader(plugin: Plugin) {
     }
 
     await saveData()
-    showMessage("已删除订阅源", 2000, "info")
+    showMessage(rssI18n.feedDeleted || "Feed deleted", 2000, "info")
   }
 
   /**
@@ -292,7 +293,7 @@ export function useRssReader(plugin: Plugin) {
         const link = pi.link || ""
         if (link && !existingLinks.has(link)) {
           newItems.push({
-            title: pi.title || "无标题",
+            title: pi.title || rssI18n.untitled || "Untitled",
             link,
             description: pi.description,
             pubDate: pi.pubDate,
@@ -311,9 +312,9 @@ export function useRssReader(plugin: Plugin) {
 
       if (newItems.length > 0) {
         items.value.push(...newItems)
-        showMessage(`${feed.title}: ${newItems.length}篇新文章`, 3000, "info")
+        showMessage(`${feed.title}: ${newItems.length}${rssI18n.newArticlesDetail || "new articles"}`, 3000, "info")
       } else {
-        showMessage(`${feed.title}: 暂无新文章`, 2000, "info")
+        showMessage(`${feed.title}: ${rssI18n.noNewArticlesDetail || "No new articles"}`, 2000, "info")
       }
 
       // 限制每个源的文章数
@@ -321,7 +322,7 @@ export function useRssReader(plugin: Plugin) {
 
       await saveData()
     } catch (err: any) {
-      showMessage(`刷新失败: ${err.message}`, 5000, "error")
+      showMessage(`${rssI18n.refreshDetailFailed || "Refresh failed"}: ${err.message}`, 5000, "error")
     } finally {
       refreshingFeedIds.value.delete(feedId)
     }
@@ -356,7 +357,7 @@ export function useRssReader(plugin: Plugin) {
   async function importOpml(xml: string): Promise<{ success: number, failed: number }> {
     const outlines = parseOpml(xml)
     if (outlines.length === 0) {
-      showMessage("未找到有效的 RSS 订阅源", 3000, "error")
+      showMessage(rssI18n.noValidFeeds || "No valid RSS feeds found", 3000, "error")
       return {
         success: 0,
         failed: 0,
@@ -374,7 +375,7 @@ export function useRssReader(plugin: Plugin) {
         failed++
       }
     }
-    showMessage(`OPML 导入完成: ${success} 个成功, ${failed} 个失败`, 4000, "info")
+    showMessage(`${rssI18n.opmlImportResult || "OPML import complete"}: ${success} succeeded, ${failed} failed`, 4000, "info")
     return {
       success,
       failed,
@@ -417,7 +418,7 @@ export function useRssReader(plugin: Plugin) {
       i.read = true
     })
     await saveData()
-    showMessage("已全部标记为已读", 2000, "info")
+    showMessage(rssI18n.markAllRead || "All marked as read", 2000, "info")
   }
 
   /**
@@ -506,7 +507,7 @@ export function useRssReader(plugin: Plugin) {
       collapsedGroups.value.add(trimmed)
     }
     await saveData()
-    showMessage(`分组已重命名为: ${trimmed}`, 2000, "info")
+    showMessage(`${rssI18n.groupRenamedTo || "Group renamed to"}: ${trimmed}`, 2000, "info")
   }
 
   // ========== 内部方法 ==========

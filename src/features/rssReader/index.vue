@@ -1,3 +1,6 @@
+<!--
+  RSS 订阅主面板 — Dock 侧栏，管理订阅源分组/文章列表/详情阅读/OPML 导入导出
+-->
 <template>
   <div class="rss-reader-panel">
     <!-- 文章详情视图 -->
@@ -6,7 +9,7 @@
         <div class="detail-header">
           <button
             class="back-btn"
-            title="返回"
+            :title="i18n.back"
             @click="closeItemDetail"
           >
             <Icon icon="mdi:arrow-left" />
@@ -14,7 +17,7 @@
           <div class="detail-font-controls">
             <button
               class="font-btn"
-              title="缩小字体"
+              :title="i18n.zoomOut"
               @click="changeDetailFontSize(-2)"
             >
               A<sup>-</sup>
@@ -22,7 +25,7 @@
             <span class="font-size-label">{{ settings.detailFontSize }}</span>
             <button
               class="font-btn"
-              title="放大字体"
+              :title="i18n.zoomIn"
               @click="changeDetailFontSize(2)"
             >
               A<sup>+</sup>
@@ -31,7 +34,7 @@
           <span style="flex:1" />
           <div class="detail-actions">
             <button
-              :title="ttsPlaying ? (i18n.ttsStop || '停止朗读') : (i18n.ttsStart || '朗读')"
+              :title="ttsPlaying ? i18n.ttsStop : i18n.ttsStart"
               @click="speakArticle(selectedItem!)"
             >
               <Icon :icon="ttsPlaying ? 'mdi:stop-circle-outline' : 'mdi:volume-high'" />
@@ -41,7 +44,7 @@
             </button>
             <button @click="openInBrowser(selectedItem!)">
               <Icon icon="mdi:open-in-new" />
-              <span class="btn-label">{{ i18n.openInBrowser || '打开' }}</span>
+              <span class="btn-label">{{ i18n.openInBrowser }}</span>
             </button>
           </div>
         </div>
@@ -76,7 +79,7 @@
     <template v-else-if="showAddFeedDialog">
       <div class="rss-add-dialog">
         <div class="dialog-header">
-          <span class="dialog-title">{{ i18n.addFeed || '添加订阅源' }}</span>
+          <span class="dialog-title">{{ i18n.addFeed }}</span>
           <button
             class="close-btn"
             @click="showAddFeedDialog = false"
@@ -86,34 +89,34 @@
         </div>
         <div class="dialog-body">
           <div class="form-group">
-            <label>{{ i18n.feedUrl || '订阅地址' }}</label>
-            <input
-              v-model="newFeedUrl"
-              :placeholder="i18n.feedUrlPlaceholder || '输入RSS/Atom订阅地址...'"
+              <label>{{ i18n.feedUrl }}</label>
+              <input
+                v-model="newFeedUrl"
+                :placeholder="i18n.feedUrlPlaceholder"
               @keydown.enter="handleAddFeed"
             >
             <div class="hint">
-              {{ i18n.feedUrlHint || '支持RSS 2.0和Atom格式，例如 https://example.com/feed 或 https://example.com/rss' }}
+              {{ i18n.feedUrlHint }}
             </div>
           </div>
           <div class="form-group">
-            <label>{{ i18n.feedGroup || '分组' }}</label>
-            <input
-              v-model="newFeedGroup"
-              :placeholder="i18n.feedGroupPlaceholder || '输入分组名称（可选）'"
+              <label>{{ i18n.feedGroup }}</label>
+              <input
+                v-model="newFeedGroup"
+                :placeholder="i18n.feedGroupPlaceholder"
             >
           </div>
         </div>
         <div class="dialog-footer">
           <button @click="showAddFeedDialog = false">
-            {{ i18n.cancel || '取消' }}
+            {{ i18n.cancel }}
           </button>
           <button
             class="primary"
             :disabled="!newFeedUrl.trim() || addingFeed"
             @click="handleAddFeed"
           >
-            {{ addingFeed ? (i18n.adding || '添加中...') : (i18n.add || '添加') }}
+            {{ addingFeed ? i18n.adding : i18n.add }}
           </button>
         </div>
       </div>
@@ -123,7 +126,7 @@
     <template v-else-if="showSettingsDialog">
       <div class="rss-settings-panel">
         <div class="settings-header">
-          <span class="settings-title">{{ i18n.settings || '设置' }}</span>
+          <span class="settings-title">{{ i18n.settings }}</span>
           <button
             class="close-btn"
             @click="showSettingsDialog = false"
@@ -134,41 +137,41 @@
         <div class="settings-body">
           <div class="setting-item">
             <div class="setting-label">
-              {{ i18n.refreshInterval || '自动刷新间隔' }}
+              {{ i18n.refreshInterval }}
             </div>
             <div class="setting-desc">
-              {{ i18n.refreshIntervalDesc || '0表示不自动刷新' }}
+              {{ i18n.refreshIntervalDesc }}
             </div>
             <select
               :value="settings.refreshInterval"
               @change="handleSettingChange('refreshInterval', Number(($event.target as HTMLSelectElement).value))"
             >
               <option :value="0">
-                {{ i18n.disabled || '禁用' }}
+                {{ i18n.disabled }}
               </option>
               <option :value="15">
-                15 {{ i18n.minutes || '分钟' }}
+                15 {{ i18n.minutes }}
               </option>
               <option :value="30">
-                30 {{ i18n.minutes || '分钟' }}
+                30 {{ i18n.minutes }}
               </option>
               <option :value="60">
-                1 {{ i18n.hour || '小时' }}
+                1 {{ i18n.hour }}
               </option>
               <option :value="120">
-                2 {{ i18n.hours || '小时' }}
+                2 {{ i18n.hours }}
               </option>
               <option :value="360">
-                6 {{ i18n.hours || '小时' }}
+                6 {{ i18n.hours }}
               </option>
             </select>
           </div>
           <div class="setting-item">
             <div class="setting-label">
-              {{ i18n.maxItems || '每源最大文章数' }}
+              {{ i18n.maxItems }}
             </div>
             <div class="setting-desc">
-              {{ i18n.maxItemsDesc || '超过此数量将自动删除最旧的非收藏文章' }}
+              {{ i18n.maxItemsDesc }}
             </div>
             <input
               type="number"
@@ -180,41 +183,41 @@
           </div>
           <div class="setting-item">
             <div class="setting-label">
-              {{ i18n.sortOrder || '排序方式' }}
+              {{ i18n.sortOrder }}
             </div>
             <select
               :value="settings.sortOrder"
               @change="handleSettingChange('sortOrder', ($event.target as HTMLSelectElement).value)"
             >
               <option value="newest">
-                {{ i18n.newestFirst || '最新优先' }}
+                {{ i18n.newestFirst }}
               </option>
               <option value="oldest">
-                {{ i18n.oldestFirst || '最早优先' }}
+                {{ i18n.oldestFirst }}
               </option>
             </select>
           </div>
           <div class="opml-section">
             <div class="setting-label">
-              {{ i18n.opmlExport || 'OPML 导出' }}
+              {{ i18n.opmlExport }}
             </div>
             <div class="setting-desc">
-              {{ i18n.opmlExportDesc || '将当前订阅源列表导出为 OPML 文件，用于备份或迁移' }}
+              {{ i18n.opmlExportDesc }}
             </div>
             <button
               class="opml-btn"
               @click="handleExportOpml"
             >
               <Icon icon="mdi:export-variant" />
-              {{ i18n.exportOpml || '导出订阅源列表' }}
+              {{ i18n.exportFeedList }}
             </button>
           </div>
           <div class="opml-section">
             <div class="setting-label">
-              {{ i18n.opmlImport || 'OPML 导入' }}
+              {{ i18n.opmlImport }}
             </div>
             <div class="setting-desc">
-              {{ i18n.opmlImportDesc || '从 OPML 文件导入订阅源（会逐个添加）' }}
+              {{ i18n.opmlImportDesc }}
             </div>
             <div class="opml-import-row">
               <input
@@ -232,7 +235,7 @@
                   icon="mdi:loading"
                   class="loading-icon"
                 />
-                {{ i18n.importing || '导入中...' }}
+                {{ i18n.importing }}
               </span>
             </div>
           </div>
@@ -249,7 +252,7 @@
             icon="mdi:rss"
             class="rss-title-icon"
           />
-          {{ i18n.title || 'RSS订阅' }}
+          {{ i18n.title }}
           <span
             v-if="unreadCount > 0"
             class="unread-badge"
@@ -257,7 +260,7 @@
         </div>
         <button
           class="rss-toolbar-btn"
-          :title="i18n.refreshAll || '刷新全部'"
+          :title="i18n.refreshAll"
           @click="refreshAllFeeds"
         >
           <Icon
@@ -267,21 +270,21 @@
         </button>
         <button
           class="rss-toolbar-btn"
-          :title="i18n.addFeed || '添加订阅'"
+          :title="i18n.addFeed"
           @click="showAddFeedDialog = true"
         >
           <Icon icon="mdi:plus" />
         </button>
         <button
           class="rss-toolbar-btn"
-          :title="i18n.exportOpml || '导出OPML'"
+          :title="i18n.exportOpml"
           @click="handleExportOpml"
         >
           <Icon icon="mdi:export-variant" />
         </button>
         <button
           class="rss-toolbar-btn"
-          :title="i18n.settings || '设置'"
+          :title="i18n.settings"
           @click="showSettingsDialog = true"
         >
           <Icon icon="mdi:cog" />
@@ -292,7 +295,7 @@
       <div class="rss-search-bar">
         <input
           v-model="searchKeyword"
-          :placeholder="i18n.searchPlaceholder || '搜索文章...'"
+          :placeholder="i18n.searchPlaceholder"
         >
       </div>
 
@@ -303,21 +306,21 @@
           :class="{ active: currentFeedFilter === 'all' && currentGroupFilter === 'all' && !showStarredOnly && !showUnreadOnly }"
           @click="resetFilters"
         >
-          {{ i18n.all || '全部' }}
+          {{ i18n.all }}
         </button>
         <button
           class="filter-tag"
           :class="{ active: showUnreadOnly }"
           @click="showUnreadOnly = !showUnreadOnly; showStarredOnly = false"
         >
-          {{ i18n.unread || '未读' }}
+          {{ i18n.unread }}
         </button>
         <button
           class="filter-tag"
           :class="{ active: showStarredOnly }"
           @click="showStarredOnly = !showStarredOnly; showUnreadOnly = false"
         >
-          {{ i18n.starred || '收藏' }}
+          {{ i18n.starred }}
         </button>
         <template
           v-for="group in groups"
@@ -372,7 +375,7 @@
                   <button
                     v-if="groupItem.group"
                     class="group-action-btn"
-                    title="重命名分组"
+                    :title="i18n.renameGroup"
                     @click.stop="startRenameGroup(groupItem.group, groupItem.label)"
                   >
                     <Icon icon="mdi:pencil-outline" />
@@ -409,24 +412,24 @@
                       class="feed-unread"
                     >{{ feedUnreadCounts[feed.id] }}</span>
                     <div class="feed-actions">
-                      <button
-                        :title="i18n.refresh || '刷新'"
-                        @click.stop="refreshFeed(feed.id)"
+                  <button
+                    :title="i18n.refresh"
+                    @click.stop="refreshFeed(feed.id)"
                       >
                         <Icon
                           :icon="refreshingFeedIds.has(feed.id) ? 'mdi:loading' : 'mdi:refresh'"
                           :class="{ 'loading-icon': refreshingFeedIds.has(feed.id) }"
                         />
                       </button>
-                      <button
-                        title="移动到分组"
-                        @click.stop="toggleMoveMenu(feed.id)"
+                  <button
+                    :title="i18n.moveToGroup"
+                    @click.stop="toggleMoveMenu(feed.id)"
                       >
                         <Icon icon="mdi:folder-outline" />
                       </button>
-                      <button
-                        :title="i18n.delete || '删除'"
-                        @click.stop="removeFeed(feed.id)"
+                  <button
+                    :title="i18n.delete"
+                    @click.stop="removeFeed(feed.id)"
                       >
                         <Icon icon="mdi:delete-outline" />
                       </button>
@@ -442,7 +445,7 @@
                         :class="{ active: !feed.group }"
                         @click="handleMoveFeed(feed.id, '')"
                       >
-                        未分组
+                        {{ i18n.ungrouped }}
                       </div>
                       <div
                         v-for="g in groups"
@@ -456,7 +459,7 @@
                       <div class="move-option new-group-option">
                         <input
                           v-model="newGroupOnMove"
-                          placeholder="新建分组..."
+                          :placeholder="i18n.newGroup"
                           @keydown.enter="handleMoveToNewGroup(feed.id)"
                         >
                       </div>
@@ -482,7 +485,7 @@
               </div>
               <button
                 class="rss-toolbar-btn"
-                :title="i18n.markAllRead || '全部已读'"
+                :title="i18n.markAllRead"
                 @click="markAllAsRead"
               >
                 <Icon icon="mdi:check-all" />
@@ -498,10 +501,10 @@
                 class="empty-icon"
               />
               <div class="empty-title">
-                {{ i18n.noItems || '暂无文章' }}
+                {{ i18n.noItems }}
               </div>
               <div class="empty-desc">
-                {{ i18n.noItemsDesc || '尝试刷新订阅源或调整过滤条件' }}
+                {{ i18n.noItemsDesc }}
               </div>
             </div>
 
@@ -553,16 +556,16 @@
             class="empty-icon"
           />
           <div class="empty-title">
-            {{ i18n.noFeeds || '暂无订阅源' }}
+            {{ i18n.noFeeds }}
           </div>
           <div class="empty-desc">
-            {{ i18n.noFeedsDesc || '点击右上角 + 按钮添加RSS订阅源' }}
+            {{ i18n.noFeedsDesc }}
           </div>
           <button
             class="empty-action"
             @click="showAddFeedDialog = true"
           >
-            {{ i18n.addFeed || '添加订阅源' }}
+            {{ i18n.addFeed }}
           </button>
         </div>
       </div>
@@ -641,7 +644,7 @@ const renamingGroupValue = ref("")
 
 function startRenameGroup(groupKey: string, currentLabel: string) {
   renamingGroupKey.value = groupKey
-  renamingGroupValue.value = currentLabel === "未分组" ? "" : currentLabel
+  renamingGroupValue.value = currentLabel === props.i18n.ungrouped ? "" : currentLabel
 }
 
 function confirmRenameGroup(oldKey: string) {
@@ -711,7 +714,7 @@ const importingOpml = ref(false)
 function handleExportOpml() {
   const xml = exportOpml()
   if (!xml) {
-    showMessage("暂无订阅源可导出", 2000, "info")
+    showMessage(props.i18n.noFeedsToExport, 2000, "info")
     return
   }
   const blob = new Blob([xml], { type: "application/xml" })
@@ -731,7 +734,7 @@ async function handleOpmlFile(e: Event) {
     const text = await file.text()
     await importOpml(text)
   } catch (err: any) {
-    showMessage(`OPML 导入失败: ${err.message}`, 5000, "error")
+    showMessage(`${props.i18n.opmlImportFailed}: ${err.message}`, 5000, "error")
   } finally {
     importingOpml.value = false
     if (opmlFileInput.value) opmlFileInput.value.value = ""
@@ -776,8 +779,8 @@ function resetFilters() {
 }
 
 function getFilterTitle(): string {
-  if (showStarredOnly.value) return props.i18n.starred || "收藏"
-  if (showUnreadOnly.value) return props.i18n.unread || "未读"
+  if (showStarredOnly.value) return props.i18n.starred
+  if (showUnreadOnly.value) return props.i18n.unread
   if (currentGroupFilter.value !== "all") return currentGroupFilter.value
   if (currentFeedFilter.value !== "all") {
     const feed = feeds.value.find((f) => f.id === currentFeedFilter.value)
@@ -795,10 +798,10 @@ function formatDate(dateStr?: string): string {
     const diffMins = Math.floor(diffMs / 60000)
     const diffHours = Math.floor(diffMs / 3600000)
     const diffDays = Math.floor(diffMs / 86400000)
-    if (diffMins < 1) return props.i18n.justNow || "刚刚"
-    if (diffMins < 60) return `${diffMins}${props.i18n.minutesAgo || "分钟前"}`
-    if (diffHours < 24) return `${diffHours}${props.i18n.hoursAgo || "小时前"}`
-    if (diffDays < 7) return `${diffDays}${props.i18n.daysAgo || "天前"}`
+    if (diffMins < 1) return props.i18n.justNow
+    if (diffMins < 60) return `${diffMins}${props.i18n.minutesAgo}`
+    if (diffHours < 24) return `${diffHours}${props.i18n.hoursAgo}`
+    if (diffDays < 7) return `${diffDays}${props.i18n.daysAgo}`
     return date.toLocaleDateString()
   } catch {
     return dateStr

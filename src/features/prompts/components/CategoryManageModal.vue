@@ -1,3 +1,6 @@
+<!--
+  提示词库 — 分类管理弹窗
+-->
 <template>
   <div
     v-if="show"
@@ -10,12 +13,12 @@
       @click.stop
     >
       <div class="vp-modal-header">
-        <h2>{{ i18n?.manageCategories || '管理分类' }}</h2>
+        <h2>{{ i18n?.manageCategories }}</h2>
         <Button
           variant="ghost"
           icon="close"
           size="xsmall"
-          :title="i18n?.close || '关闭'"
+          :title="i18n?.close"
           @click="$emit('close')"
         />
       </div>
@@ -27,7 +30,7 @@
               v-model="form.name"
               type="text"
               class="vp-input"
-              :placeholder="i18n?.categoryName || '分类名称'"
+              :placeholder="i18n?.categoryName"
               aria-label="分类名称"
               @keyup.enter="handleAdd"
             />
@@ -42,7 +45,7 @@
               icon="add"
               @click="handleAdd"
             >
-              {{ i18n?.add || '添加' }}
+              {{ i18n?.add }}
             </Button>
           </div>
         </div>
@@ -68,7 +71,7 @@
               size="xsmall"
               @click="handleDelete(cat.id)"
             >
-              {{ i18n?.delete || '删除' }}
+              {{ i18n?.delete }}
             </Button>
           </div>
         </div>

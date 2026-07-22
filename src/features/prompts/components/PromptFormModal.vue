@@ -1,3 +1,6 @@
+<!--
+  提示词库 — 添加/编辑表单弹窗，支持动态内容块管理
+-->
 <template>
   <div
     v-if="show"
@@ -10,7 +13,7 @@
       @click.stop
     >
       <div class="vp-modal-header">
-        <h2>{{ editingPrompt ? i18n?.editPrompt || '编辑提示词' : i18n?.addPrompt || '添加提示词' }}</h2>
+        <h2>{{ editingPrompt ? i18n?.editPrompt : i18n?.addPrompt }}</h2>
         <Button
           variant="ghost"
           icon="close"
@@ -25,31 +28,31 @@
           @submit.prevent="handleSave"
         >
           <div class="vp-form-group">
-            <label for="prompt-title">{{ i18n?.titleLabel || '标题' }}</label>
-            <input
-              id="prompt-title"
-              v-model="form.title"
-              type="text"
-              class="vp-input"
-              :placeholder="i18n?.titlePlaceholder || '请输入提示词标题'"
+              <label for="prompt-title">{{ i18n?.titleLabel }}</label>
+              <input
+                id="prompt-title"
+                v-model="form.title"
+                type="text"
+                class="vp-input"
+                :placeholder="i18n?.titlePlaceholder"
               required
               aria-required="true"
             />
           </div>
 
           <div class="vp-form-group">
-            <label for="prompt-description">{{ i18n?.description || '描述' }}</label>
-            <textarea
-              id="prompt-description"
-              v-model="form.description"
-              class="vp-textarea"
-              :placeholder="i18n?.descriptionPlaceholder || '请输入提示词描述'"
+              <label for="prompt-description">{{ i18n?.description }}</label>
+              <textarea
+                id="prompt-description"
+                v-model="form.description"
+                class="vp-textarea"
+                :placeholder="i18n?.descriptionPlaceholder"
               rows="3"
             />
           </div>
 
           <div class="vp-form-group">
-            <label for="prompt-category">{{ i18n?.category || '分类' }}</label>
+              <label for="prompt-category">{{ i18n?.category }}</label>
             <select
               id="prompt-category"
               v-model="form.category"
@@ -69,7 +72,7 @@
 
           <!-- 动态内容块编辑区 -->
           <div class="vp-content-editor">
-            <label class="vp-form-label">{{ i18n?.contents || '内容块' }}</label>
+            <label class="vp-form-label">{{ i18n?.contents }}</label>
             <div
               v-for="(block, index) in form.contents"
               :key="block.id"
@@ -80,13 +83,13 @@
                   v-model="block.label"
                   type="text"
                   class="vp-input vp-input--label"
-                  :placeholder="i18n?.contentLabelPlaceholder || '内容标签'"
-                  :aria-label="`${i18n?.contentLabel || '内容标签'} ${index + 1}`"
+                  :placeholder="i18n?.contentLabelPlaceholder"
+                  :aria-label="`${i18n?.contentLabel} ${index + 1}`"
                 />
                 <textarea
                   v-model="block.text"
                   class="vp-textarea"
-                  :placeholder="i18n?.contentPlaceholder || '请输入提示词内容'"
+                  :placeholder="i18n?.contentPlaceholder"
                   rows="5"
                   required
                   :aria-label="`${i18n?.content || '内容'} ${index + 1}`"
@@ -97,7 +100,7 @@
                   variant="ghost"
                   icon="up"
                   size="xsmall"
-                  :title="i18n?.moveUp || '上移'"
+                  :title="i18n?.moveUp"
                   :disabled="index === 0"
                   @click="moveContentBlock(index, -1)"
                 />
@@ -105,7 +108,7 @@
                   variant="ghost"
                   icon="down"
                   size="xsmall"
-                  :title="i18n?.moveDown || '下移'"
+                  :title="i18n?.moveDown"
                   :disabled="index === form.contents.length - 1"
                   @click="moveContentBlock(index, 1)"
                 />
@@ -113,7 +116,7 @@
                   variant="danger"
                   icon="delete"
                   size="xsmall"
-                  :title="i18n?.removeContent || '删除内容块'"
+                  :title="i18n?.removeContent"
                   :disabled="form.contents.length <= 1"
                   @click="removeContentBlock(index)"
                 />
@@ -125,7 +128,7 @@
               class="vp-content-editor-add"
               @click="addContentBlock"
             >
-              {{ i18n?.addContentBlock || '添加内容块' }}
+              {{ i18n?.addContentBlock }}
             </Button>
           </div>
 
@@ -135,13 +138,13 @@
               variant="secondary"
               @click="$emit('close')"
             >
-              {{ i18n?.cancel || '取消' }}
+              {{ i18n?.cancel }}
             </Button>
             <Button
               type="submit"
               variant="primary"
             >
-              {{ i18n?.save || '保存' }}
+              {{ i18n?.save }}
             </Button>
           </div>
         </form>
@@ -237,12 +240,12 @@ function moveContentBlock(index: number, direction: -1 | 1) {
 
 function handleSave() {
   if (!form.title.trim()) {
-    showMessage("标题是必填项", 2000, "error")
+    showMessage(props.i18n?.titleRequired, 2000, "error")
     return
   }
   const validContents = form.contents.filter((c) => c.text.trim())
   if (validContents.length === 0) {
-    showMessage("至少需要一个非空内容块", 2000, "error")
+    showMessage(props.i18n?.contentRequired, 2000, "error")
     return
   }
 
@@ -254,7 +257,7 @@ function handleSave() {
       .filter((c) => c.text.trim())
       .map((c) => ({
         id: c.id,
-        label: c.label.trim() || "内容",
+        label: c.label.trim() || (props.i18n?.contentBlockLabel || "内容"),
         text: c.text.trim(),
       })),
     category: form.category,

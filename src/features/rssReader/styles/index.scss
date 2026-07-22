@@ -34,15 +34,15 @@ $rr-transition: all 0.12s;
 @mixin input-focus-ring {
   &:focus {
     border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+    outline: 2px solid var(--b3-theme-primary-lightest);
   }
 }
 
 // 未读/计数徽章
 @mixin badge($line-h: 16px, $min-w: 16px, $pad-h: 5px) {
-  font-size: 10px;
+  font-size: $font-size-2xs;
   font-family: $vp-mono;
-  font-weight: 600;
+  font-weight: $font-weight-semibold;
   padding: 0 $pad-h;
   line-height: $line-h;
   border-radius: $radius-full;
@@ -73,7 +73,7 @@ $rr-transition: all 0.12s;
 
     .rss-toolbar-title {
       font-size: $font-size-sm;
-      font-weight: 600;
+      font-weight: $font-weight-semibold;
       flex: 1;
       display: flex;
       align-items: center;
@@ -135,7 +135,7 @@ $rr-transition: all 0.12s;
       align-items: center;
       padding: 2px 8px;
       border-radius: $radius-full;
-      font-size: 11px;
+      font-size: $font-size-xs;
       cursor: pointer;
       border: 1px solid var(--b3-theme-surface-lighter);
       background: transparent;
@@ -185,14 +185,14 @@ $rr-transition: all 0.12s;
       }
 
       .group-collapse-icon {
-        font-size: 16px;
+        font-size: $font-size-base;
         color: var(--b3-theme-on-surface-muted);
         flex-shrink: 0;
       }
 
       .group-label {
-        font-size: 10px;
-        font-weight: 700;
+        font-size: $font-size-2xs;
+        font-weight: $font-weight-bold;
         letter-spacing: 0.06em;
         color: var(--b3-theme-on-surface);
         text-transform: uppercase;
@@ -204,7 +204,7 @@ $rr-transition: all 0.12s;
       }
 
       .group-count {
-        font-size: 10px;
+        font-size: $font-size-2xs;
         font-family: $vp-mono;
         color: var(--b3-theme-on-surface-muted);
         background: var(--b3-theme-background);
@@ -230,7 +230,7 @@ $rr-transition: all 0.12s;
         background: var(--b3-theme-background);
         color: var(--b3-theme-on-background);
         font-size: $font-size-xs;
-        font-weight: 600;
+        font-weight: $font-weight-semibold;
         outline: none;
         min-width: 0;
         @include input-focus-ring;
@@ -276,7 +276,7 @@ $rr-transition: all 0.12s;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 14px;
+        font-size: $font-size-sm;
         background: rgba($rr-accent, 0.08);
         color: $rr-accent;
         overflow: hidden;
@@ -286,12 +286,12 @@ $rr-transition: all 0.12s;
       .feed-info {
         flex: 1; min-width: 0;
         .feed-title {
-          font-size: $font-size-sm; font-weight: 500;
+          font-size: $font-size-sm; font-weight: $font-weight-medium;
           overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
           line-height: 1.4;
         }
         .feed-url {
-          font-size: 11px;
+          font-size: $font-size-xs;
           font-family: $vp-mono;
           color: var(--b3-theme-on-surface-muted);
           overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -334,7 +334,7 @@ $rr-transition: all 0.12s;
           white-space: nowrap;
 
           &:hover { background: var(--b3-theme-surface-lighter); }
-          &.active { color: $rr-accent; font-weight: 500; }
+          &.active { color: $rr-accent; font-weight: $font-weight-medium; }
         }
 
         .new-group-option {
@@ -378,16 +378,16 @@ $rr-transition: all 0.12s;
       }
 
       &.unread {
-        .item-title { font-weight: 600; }
-        .item-feed-tag { font-weight: 500; }
+        .item-title { font-weight: $font-weight-semibold; }
+        .item-feed-tag { font-weight: $font-weight-medium; }
       }
 
       .item-header {
         display: flex; align-items: center; gap: $spacing-1;
         min-height: 18px;
         .item-feed-tag {
-          font-size: 10px;
-          font-weight: 700;
+          font-size: $font-size-2xs;
+          font-weight: $font-weight-bold;
           letter-spacing: 0.04em;
           text-transform: uppercase;
           color: $rr-accent; flex-shrink: 0;
@@ -395,7 +395,7 @@ $rr-transition: all 0.12s;
           overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
         .item-date {
-          font-size: 10px;
+          font-size: $font-size-2xs;
           font-family: $vp-mono;
           color: var(--b3-theme-on-surface-muted);
           margin-left: auto; flex-shrink: 0;
@@ -426,7 +426,7 @@ $rr-transition: all 0.12s;
           border: none; border-radius: $radius-sm;
           background: transparent; cursor: pointer;
           color: var(--b3-theme-on-surface-muted);
-          font-size: 14px;
+          font-size: $font-size-sm;
           transition: $rr-transition;
           &.starred { color: #f59e0b; }
           &:hover { background: var(--b3-theme-surface-lighter); }
@@ -474,7 +474,7 @@ $rr-transition: all 0.12s;
       flex: 1; overflow-y: auto; padding: $spacing-3;
 
       .detail-title {
-        font-size: $font-size-base; font-weight: 600;
+        font-size: $font-size-base; font-weight: $font-weight-semibold;
         margin: 0 0 $spacing-2; line-height: 1.4;
       }
       .detail-meta {
@@ -483,14 +483,14 @@ $rr-transition: all 0.12s;
         margin-bottom: $spacing-3;
 
         .meta-chip {
-          font-size: 11px;
+          font-size: $font-size-xs;
           color: var(--b3-theme-on-surface);
           opacity: 0.7;
         }
 
         .meta-key {
-          font-size: 10px;
-          font-weight: 700;
+          font-size: $font-size-2xs;
+          font-weight: $font-weight-bold;
           letter-spacing: 0.06em;
           text-transform: uppercase;
           color: var(--b3-theme-on-surface);
@@ -527,10 +527,10 @@ $rr-transition: all 0.12s;
     .font-btn {
       @include btn-icon-base(22px);
       color: var(--b3-theme-on-surface);
-      font-size: 11px;
+      font-size: $font-size-xs;
       line-height: 1;
 
-      sup { font-size: 9px; }
+      sup { font-size: $font-size-2xs; }
 
       &:hover {
         background: var(--b3-theme-surface-lighter);
@@ -539,7 +539,7 @@ $rr-transition: all 0.12s;
     }
 
     .font-size-label {
-      font-size: 10px;
+      font-size: $font-size-2xs;
       font-family: $vp-mono;
       color: var(--b3-theme-on-surface-muted);
       min-width: 18px;
@@ -556,7 +556,7 @@ $rr-transition: all 0.12s;
 
     .setting-label {
       font-size: $font-size-sm;
-      font-weight: 500;
+      font-weight: $font-weight-medium;
       margin-bottom: $spacing-1;
     }
 
@@ -633,7 +633,7 @@ $rr-transition: all 0.12s;
 
       .dialog-title,
       .settings-title {
-        font-size: $font-size-sm; font-weight: 600; flex: 1;
+        font-size: $font-size-sm; font-weight: $font-weight-semibold; flex: 1;
       }
 
       .close-btn {
@@ -651,7 +651,7 @@ $rr-transition: all 0.12s;
       .setting-item {
         margin-bottom: $spacing-3;
         label, .setting-label {
-          display: block; font-size: $font-size-sm; font-weight: 500;
+          display: block; font-size: $font-size-sm; font-weight: $font-weight-medium;
           margin-bottom: $spacing-1;
         }
         .setting-desc, .hint {
@@ -679,7 +679,7 @@ $rr-transition: all 0.12s;
 
       button {
         padding: 5px 12px; border-radius: $radius-sm;
-        font-size: $font-size-sm; font-weight: 600; cursor: pointer;
+        font-size: $font-size-sm; font-weight: $font-weight-semibold; cursor: pointer;
         transition: $rr-transition;
         border: 1px solid var(--b3-border-color);
         background: transparent; color: var(--b3-theme-on-surface);
@@ -705,8 +705,8 @@ $rr-transition: all 0.12s;
     color: var(--b3-theme-on-surface-muted);
     text-align: center; gap: $spacing-2;
 
-    .empty-icon { font-size: 36px; opacity: 0.4; }
-    .empty-title { font-size: $font-size-base; font-weight: 500; color: var(--b3-theme-on-surface); }
+    .empty-icon { font-size: $font-size-4xl; opacity: 0.4; }
+    .empty-title { font-size: $font-size-base; font-weight: $font-weight-medium; color: var(--b3-theme-on-surface); }
     .empty-desc { font-size: $font-size-sm; max-width: 220px; }
 
     .empty-action {
@@ -714,7 +714,7 @@ $rr-transition: all 0.12s;
       padding: $spacing-1 $spacing-3;
       border: 1px solid $rr-accent; border-radius: $radius-sm;
       background: transparent; color: $rr-accent;
-      font-size: $font-size-sm; font-weight: 600; cursor: pointer;
+      font-size: $font-size-sm; font-weight: $font-weight-semibold; cursor: pointer;
       transition: $rr-transition;
       &:hover {
         background: rgba($rr-accent, 0.1);

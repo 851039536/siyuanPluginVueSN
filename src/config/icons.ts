@@ -225,9 +225,16 @@ export const FEATURE_ICONS = {
     icon: "mdi:flask",
     color: "#0ea5e9",
   },
+  // 网站导航
   websiteNavigation: {
     icon: "mdi:web",
     color: "#6366f1",
+  },
+
+  // RSS 订阅
+  rssReader: {
+    icon: "mdi:rss",
+    color: "#f97316",
   },
   scriptLauncher: {
     icon: "mdi:script-text-outline",

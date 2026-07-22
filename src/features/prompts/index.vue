@@ -1,3 +1,6 @@
+<!--
+  提示词库主面板 — Modal 容器，管理提示词 CRUD + 分类 + 删除确认
+-->
 <template>
   <!-- 主弹窗 -->
   <div
@@ -12,14 +15,14 @@
           :size="24"
           class="vp-modal-icon"
         />
-        <h2>{{ i18n?.title || '提示词库' }}</h2>
+        <h2>{{ i18n?.title }}</h2>
       </div>
       <div class="vp-modal-actions">
         <Button
           variant="ghost"
           size="xsmall"
           icon="listBulleted"
-          :title="i18n?.manageCategories || '管理分类'"
+          :title="i18n?.manageCategories"
           @click="showCategoryManage = true"
         />
         <Button
@@ -135,7 +138,7 @@ const {
   load: loadCategories,
   add: addCategory,
   remove: removeCategory,
-} = useCategoryManager(storage)
+} = useCategoryManager(storage, props.i18n)
 
 // --- 分类统计 ---
 const categoryCounts = computed(() => {
@@ -176,7 +179,7 @@ const filteredPrompts = computed(() => {
   }
 
   const metaMap = categoryMetaMap.value
-  const defaultMeta = metaMap.get(categoriesRaw.value[0]?.id) || { name: "默认", color: "#d97757", bg: "#d9775720" }
+  const defaultMeta = metaMap.get(categoriesRaw.value[0]?.id) || { name: i18n?.defaultCategory || "默认", color: "#d97757", bg: "#d9775720" }
   return result.map((prompt) => {
     const cat = metaMap.get(prompt.category) || defaultMeta
     return {
@@ -219,7 +222,7 @@ function handleCategoryAdd(category: PromptCategory) {
 async function handleCategoryDelete(id: string) {
   const hasPrompts = prompts.value.some((p) => p.category === id)
   if (hasPrompts) {
-    showMessage("无法删除：该分类下还有提示词", 3000, "error")
+    showMessage(props.i18n?.categoryNotEmpty, 3000, "error")
     return
   }
   await removeCategory(id)
@@ -234,13 +237,13 @@ async function confirmDelete() {
   if (!id) return
   await removePrompt(id)
   deleteConfirmTarget.value = null
-  showMessage("提示词已删除", 2000, "info")
+  showMessage(props.i18n?.promptDeleted, 2000, "info")
 }
 
 // --- 工具函数 ---
 async function copyContent(content: string) {
   const ok = await copyToClipboard(content)
-  if (!ok) showMessage("复制失败，请手动复制", 2000, "error")
+  if (!ok) showMessage(props.i18n?.copyFailed, 2000, "error")
 }
 
 function closeModal() {

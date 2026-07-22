@@ -36,7 +36,7 @@ $card-border-radius: $radius-md;
 
 @mixin form-input {
   width: 100%;
-  padding: 8px 12px;
+  padding: $spacing-2 $spacing-3;
   border: 1px solid var(--b3-border-color);
   border-radius: $vp-radius;
   background: var(--b3-theme-surface);
@@ -47,6 +47,6 @@ $card-border-radius: $radius-md;
   &:focus {
     outline: none;
     border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+    outline: 2px solid var(--b3-theme-primary-lightest);
   }
 }

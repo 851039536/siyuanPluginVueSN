@@ -209,10 +209,16 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
       progressRef.value = { ...progressRef.value, [id]: failProg }
       return { success: false }
     } finally {
+      const snapshot = { ...progressRef.value }
       safeTimeout(() => {
-        const current = { ...progressRef.value }
-        delete current[id]
-        progressRef.value = current
+        const current = progressRef.value[id]
+        const old = snapshot[id]
+        // 仅当项目进度与完成时完全一致才清理（避免擦除新操作刚设置的进度）
+        if (current && old && JSON.stringify(current) === JSON.stringify(old)) {
+          const next = { ...progressRef.value }
+          delete next[id]
+          progressRef.value = next
+        }
       }, 3000)
     }
   }
@@ -273,10 +279,15 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
       pruneRecordCache(outputsRef.value)
       throw e
     } finally {
+      const snapshot = { ...progressRef.value }
       safeTimeout(() => {
-        const current = { ...progressRef.value }
-        delete current[id]
-        progressRef.value = current
+        const current = progressRef.value[id]
+        const old = snapshot[id]
+        if (current && old && JSON.stringify(current) === JSON.stringify(old)) {
+          const next = { ...progressRef.value }
+          delete next[id]
+          progressRef.value = next
+        }
       }, 3000)
     }
   }
@@ -368,10 +379,13 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     const entries = await manager.getCommitLog(resolveValidPath(project), count)
     commitLogs.value[id] = entries
     const latest = entries[0]?.date
-    if (latest && project.lastActivity !== latest) {
-      project.lastActivity = latest
-      projects.value = [...projects.value]
-      manager.recordLastActivity(id, latest).catch(() => {})
+    if (latest) {
+      // 先持久化再更新本地视图，避免共享可变引用导致 manager 端变更检测守卫失效
+      await manager.recordLastActivity(id, latest).catch(() => {})
+      if (project.lastActivity !== latest) {
+        project.lastActivity = latest
+        projects.value = [...projects.value]
+      }
     }
   }
 

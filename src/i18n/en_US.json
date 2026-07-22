@@ -1240,7 +1240,15 @@
       "loading": "Loading...",
       "deleteConfirmTitle": "Confirm Delete",
       "deleteConfirmMsg": "Are you sure you want to delete this prompt? This action cannot be undone.",
-      "deleteConfirmOK": "Confirm Delete"
+      "deleteConfirmOK": "Confirm Delete",
+      "categoryNotEmpty": "Cannot delete: category has prompts",
+      "promptDeleted": "Prompt deleted",
+      "copyFailed": "Copy failed, please copy manually",
+      "titleRequired": "Title is required",
+      "contentRequired": "At least one non-empty content block is required",
+      "defaultCategory": "Default",
+      "allCategory": "All",
+      "contentBlockLabel": "Content Block"
     }
   },
   "pronunciation": "Pronunciation",

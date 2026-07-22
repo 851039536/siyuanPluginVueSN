@@ -34,7 +34,7 @@
     }
 
     .vp-chip-count {
-      font-size: 10px;
+      font-size: $font-size-2xs;
       font-weight: $font-weight-medium;
       min-width: 18px;
       height: 18px;
@@ -87,7 +87,7 @@
       padding-left: 36px;
 
       &:focus {
-        box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+        outline: 2px solid var(--b3-theme-primary-lightest);
       }
     }
   }
@@ -141,7 +141,7 @@
     }
 
     .vp-tag {
-      padding: 2px $spacing-2;
+      padding: $spacing-2px $spacing-2;
       border-radius: $radius-sm;
       font-size: $font-size-xs;
       font-weight: $font-weight-medium;
@@ -174,8 +174,8 @@
 
   .vp-content-label {
     font-size: $font-size-xs;
-  font-weight: $font-weight-bold;
-  letter-spacing: 0.06em;
+    font-weight: $font-weight-bold;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     opacity: 0.45;
     color: var(--b3-theme-on-surface);
@@ -260,7 +260,7 @@
     }
 
     .vp-tag {
-      font-size: 10px;
+      font-size: $font-size-2xs;
       padding: 0 $spacing-1;
     }
   }

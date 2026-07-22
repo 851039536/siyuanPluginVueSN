@@ -9,7 +9,7 @@
 
     label {
       display: block;
-      font-size: 10px;
+      font-size: $font-size-2xs;
       font-weight: $font-weight-bold;
       letter-spacing: 0.06em;
       text-transform: uppercase;
@@ -45,7 +45,7 @@
 // 通用表单标签
 .vp-form-label {
   display: block;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   font-weight: $font-weight-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -108,7 +108,7 @@
   flex-direction: column;
   gap: $spacing-1;
   flex-shrink: 0;
-  padding-top: 2px;
+  padding-top: $spacing-2px;
 }
 
 .vp-content-editor-add {

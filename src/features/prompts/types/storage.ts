@@ -62,7 +62,7 @@ export class PromptsStorage {
       if (prompt.content) {
         contents.push({
           id: `${prompt.id}-c${idx}`,
-          label: `内容${idx}`,
+          label: `Block ${idx}`,
           text: prompt.content,
         })
         idx++
@@ -70,7 +70,7 @@ export class PromptsStorage {
       if (prompt.content2) {
         contents.push({
           id: `${prompt.id}-c${idx}`,
-          label: `内容${idx}`,
+          label: `Block ${idx}`,
           text: prompt.content2,
         })
         idx++
@@ -78,7 +78,7 @@ export class PromptsStorage {
       if (prompt.content3) {
         contents.push({
           id: `${prompt.id}-c${idx}`,
-          label: `内容${idx}`,
+          label: `Block ${idx}`,
           text: prompt.content3,
         })
         idx++

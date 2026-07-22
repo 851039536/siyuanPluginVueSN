@@ -1,3 +1,6 @@
+<!--
+  提示词库 — 网格视图：分类筛选 + 搜索 + 提示词卡片 + 内容复制
+-->
 <template>
   <div class="vp-modal-body">
     <div
@@ -5,7 +8,7 @@
       class="vp-loading"
       role="status"
     >
-      {{ i18n?.loading || '加载中...' }}
+      {{ i18n?.loading }}
     </div>
 
     <template v-else>
@@ -42,7 +45,7 @@
           <input
             :value="searchQuery"
             type="text"
-            :placeholder="i18n?.search || '搜索提示词...'"
+            :placeholder="i18n?.search"
             class="vp-input vp-input--search"
             aria-label="搜索提示词"
             @input="$emit('update:searchQuery', ($event.target as HTMLInputElement).value)"
@@ -53,7 +56,7 @@
           variant="primary"
           size="xsmall"
           icon="add"
-          :title="i18n?.addPrompt || '添加提示词'"
+          :title="i18n?.addPrompt"
           @click="$emit('addPrompt')"
         />
       </div>
@@ -132,7 +135,7 @@
                     name="contentCopy"
                     :size="14"
                   />
-                  {{ i18n?.clickToCopy || '复制' }}
+                  {{ i18n?.clickToCopy }}
                 </div>
               </div>
             </div>
@@ -144,7 +147,7 @@
           class="vp-empty"
           role="status"
         >
-          {{ searchQuery ? i18n?.noPromptsFound || '未找到匹配的提示词' : i18n?.noPrompts || '暂无提示词，点击添加' }}
+          {{ searchQuery ? i18n?.noPromptsFound : i18n?.noPrompts }}
         </div>
       </div>
     </template>

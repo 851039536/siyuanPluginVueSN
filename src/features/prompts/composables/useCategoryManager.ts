@@ -6,23 +6,26 @@ import {
   ref,
 } from "vue"
 
-const DEFAULT_CATEGORY: PromptCategory = {
-  id: "default",
-  name: "默认",
-  color: "#d97757",
-}
-
-const ALL_CATEGORY: PromptCategory = {
-  id: "all",
-  name: "全部",
-  color: "#d97757",
-}
-
 /**
  * 分类数据管理 composable
  * 负责 categories 列表的加载与增删
  */
-export function useCategoryManager(storageRef: Ref<PromptsStorage | null>) {
+export function useCategoryManager(storageRef: Ref<PromptsStorage | null>, i18n?: Record<string, string>) {
+  const defName = i18n?.defaultCategory || "默认"
+  const allName = i18n?.allCategory || "全部"
+
+  const DEFAULT_CATEGORY: PromptCategory = {
+    id: "default",
+    name: defName,
+    color: "#d97757",
+  }
+
+  const ALL_CATEGORY: PromptCategory = {
+    id: "all",
+    name: allName,
+    color: "#d97757",
+  }
+
   const categories = ref<PromptCategory[]>([{ ...DEFAULT_CATEGORY }])
 
   const allCategories = computed(() => [ALL_CATEGORY, ...categories.value])

@@ -1,3 +1,6 @@
+<!--
+  提示词库 — 删除确认弹窗
+-->
 <template>
   <div
     v-if="targetId"
@@ -16,7 +19,7 @@
             :size="20"
             class="vp-modal-icon vp-modal-icon--danger"
           />
-          <h2>{{ i18n?.deleteConfirmTitle || '确认删除' }}</h2>
+          <h2>{{ i18n?.deleteConfirmTitle }}</h2>
         </div>
         <Button
           variant="ghost"
@@ -27,7 +30,7 @@
       </div>
       <div class="vp-modal-body">
         <p class="vp-delete-msg">
-          {{ i18n?.deleteConfirmMsg || '确定要删除此提示词吗？此操作不可撤销。' }}
+          {{ i18n?.deleteConfirmMsg }}
         </p>
         <div class="vp-form-actions">
           <Button
@@ -35,14 +38,14 @@
             size="xsmall"
             @click="$emit('cancel')"
           >
-            {{ i18n?.cancel || '取消' }}
+            {{ i18n?.cancel }}
           </Button>
           <Button
             variant="danger"
             size="xsmall"
             @click="$emit('confirm')"
           >
-            {{ i18n?.deleteConfirmOK || '确认删除' }}
+            {{ i18n?.deleteConfirmOK }}
           </Button>
         </div>
       </div>

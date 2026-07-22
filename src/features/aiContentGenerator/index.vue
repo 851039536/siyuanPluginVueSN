@@ -27,18 +27,18 @@
         :can-insert-sub-doc="canInsertSubDoc"
         :can-undo="canUndoEdit"
         @stop="handleStop"
-        @apply-edit="applyEdit"
-        @insert-subdoc="insertSubDocument"
-        @undo-edit="undoEdit"
+        @applyEdit="applyEdit"
+        @insertSubdoc="insertSubDocument"
+        @undoEdit="undoEdit"
         @copy="copyContent"
         @clear="clearContent"
-        @toggle-reasoning="showReasoning = !showReasoning"
-        @auto-fix="handleAutoFix"
+        @toggleReasoning="showReasoning = !showReasoning"
+        @autoFix="handleAutoFix"
         :conversation-count="conversationHistory.length"
         :generation-tip="generationTip"
-        @re-review="handleReReview"
-        @fix-issue="handleFixIssue"
-        @clear-conversation="clearConversation"
+        @reReview="handleReReview"
+        @fixIssue="handleFixIssue"
+        @clearConversation="clearConversation"
       />
     </div>
 
@@ -59,20 +59,20 @@
       :supports-thinking="supportsThinking"
       :enable-thinking="enableThinking"
       :enable-review="enableReview"
-      @ai-edit="aiEditAction"
+      @aiEdit="aiEditAction"
       @stop="handleStop"
-      @select-target-doc="selectTargetDocument"
-      @select-target-block="selectTargetBlock"
-      @clear-target-doc="clearTargetDocument"
-      @custom-edit="handleCustomEdit"
-      @update:edit-custom-input="editCustomInput = $event"
-      @update:current-skill-index="currentSkillIndex = $event"
-      @update:skill-search-query="skillSearchQuery = $event"
-      @update:web-search="webSearch = $event"
-      @update:selected-model="selectedModel = $event"
-      @update:custom-model="customModel = $event"
-      @update:enable-thinking="enableThinking = $event"
-      @update:enable-review="enableReview = $event"
+      @selectTargetDoc="selectTargetDocument"
+      @selectTargetBlock="selectTargetBlock"
+      @clearTargetDoc="clearTargetDocument"
+      @customEdit="handleCustomEdit"
+      @update:editCustomInput="editCustomInput = $event"
+      @update:currentSkillIndex="currentSkillIndex = $event"
+      @update:skillSearchQuery="skillSearchQuery = $event"
+      @update:webSearch="webSearch = $event"
+      @update:selectedModel="selectedModel = $event"
+      @update:customModel="customModel = $event"
+      @update:enableThinking="enableThinking = $event"
+      @update:enableReview="enableReview = $event"
     />
   </div>
 </template>
@@ -86,7 +86,8 @@ import hljs from "highlight.js"
 import "highlight.js/styles/github.css"
 
 // 类型
-import type { GenerateOptions, ReviewResult, TargetDoc } from "@/types/ai"
+import type { GenerateOptions, ReviewResult, SkillItem, TargetDoc } from "@/types/ai"
+import type { SkillScanEntry } from "./types"
 
 // 模块内部导入
 import { AIGeneratorStorage } from "./types/storage"
@@ -106,21 +107,8 @@ interface Props {
   i18n: Record<string, string>
   plugin: Plugin
   onGenerate: (options: GenerateOptions) => Promise<string>
-  onReview?: (
-    userRequest: string,
-    generatedContent: string,
-    skill?: {
-      name: string; description: string; content: string
-      tool: string; sources: Array<{ id: string; tool: string; content: string }>; id: string
-    },
-  ) => Promise<ReviewResult>
-  scanSkills: (projectPath?: string) => Promise<Array<{
-    filePath: string
-    name: string
-    description: string
-    content: string
-    tool: string
-  }>>
+  onReview?: (userRequest: string, generatedContent: string, skill?: SkillItem) => Promise<ReviewResult>
+  scanSkills: (projectPath?: string) => Promise<SkillScanEntry[]>
 }
 
 const props = withDefaults(defineProps<Props>(), {})
@@ -205,14 +193,10 @@ const reviewDeps = {
   onReview: props.onReview || (async () => ({ rating: "良好" as const, summary: "", issues: [], suggestions: [], reviewModel: "", reviewedAt: Date.now() })),
 }
 
-const review = useReview(reviewDeps)
-
 const { enableReview, isReviewing, reviewResult, isAutoFixing,
-  performReview: rawPerformReview, handleAutoFix, handleReReview, handleFixIssue } = review
+  performReview, handleAutoFix, handleReReview, handleFixIssue } = useReview(reviewDeps)
 
-// 连接审核后回调（deps 始终传入，performReview 必定存在）
-const performReviewFn = rawPerformReview!
-onAfterGenerateCallback = performReviewFn
+onAfterGenerateCallback = performReview
 
 // 编辑可用性计算（依赖审核状态，须在 useReview 之后定义）
 const canApplyEdit = computed(() =>

@@ -129,7 +129,7 @@
             <button
               class="fix-issue-btn"
               title="定向修复此问题"
-              @click="$emit('fix-issue', filteredIssueIndices[idx])"
+              @click="$emit('fixIssue', filteredIssueIndices[idx])"
             >
               <svg
                 width="10"
@@ -168,7 +168,7 @@
             v-if="!isReviewing"
             class="review-footer-btn"
             title="重新审核"
-            @click="$emit('re-review')"
+            @click="$emit('reReview')"
           >
             <svg
               width="10"
@@ -188,7 +188,7 @@
               v-else
               class="review-footer-btn auto-fix-btn"
               title="自动修复所有问题"
-              @click="$emit('auto-fix')"
+              @click="$emit('autoFix')"
             >
               <svg
                 width="10"
@@ -219,9 +219,9 @@ interface Props {
 const props = defineProps<Props>()
 
 defineEmits<{
-  (e: "re-review"): void
-  (e: "auto-fix"): void
-  (e: "fix-issue", issueIndex: number): void
+  (e: "reReview"): void
+  (e: "autoFix"): void
+  (e: "fixIssue", issueIndex: number): void
 }>()
 
 const showReviewPanel = ref(true)

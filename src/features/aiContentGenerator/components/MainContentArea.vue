@@ -102,7 +102,7 @@
             title="应用编辑"
             variant="primary"
             size="xsmall"
-            @click="$emit('apply-edit')"
+            @click="$emit('applyEdit')"
           >
             <div
               v-if="isApplying"
@@ -121,7 +121,7 @@
             title="插入为子文档"
             variant="ghost"
             size="xsmall"
-            @click="$emit('insert-subdoc')"
+            @click="$emit('insertSubdoc')"
           >
             <div
               v-if="isInsertingSubDoc"
@@ -139,7 +139,7 @@
             title="撤回编辑"
             variant="ghost"
             size="xsmall"
-            @click="$emit('undo-edit')"
+            @click="$emit('undoEdit')"
           >
             <div
               v-if="isUndoing"
@@ -181,7 +181,7 @@
             :title="`清空对话历史（${conversationCount || 0} 轮）`"
             variant="ghost"
             size="xsmall"
-            @click="$emit('clear-conversation')"
+            @click="$emit('clearConversation')"
           >
             <svg
               width="14"
@@ -208,7 +208,7 @@
         :reasoning-content="reasoningContent"
         :show-reasoning="showReasoning"
         :is-generating="isGenerating"
-        @toggle="$emit('toggle-reasoning')"
+        @toggle="$emit('toggleReasoning')"
       />
 
       <!-- RAG 联网搜索结果（可折叠） -->
@@ -223,9 +223,9 @@
         :is-reviewing="isReviewing"
         :review-result="reviewResult || null"
         :is-auto-fixing="isAutoFixing"
-        @re-review="$emit('re-review')"
-        @auto-fix="$emit('auto-fix')"
-        @fix-issue="$emit('fix-issue', $event)"
+        @reReview="$emit('reReview')"
+        @autoFix="$emit('autoFix')"
+        @fixIssue="$emit('fixIssue', $event)"
       />
 
       <div class="result-content">
@@ -257,7 +257,7 @@ import {
   ref,
   watch,
 } from "vue"
-import type { ReviewResult } from "@/types/ai"
+import type { ReviewResult, SearchResult } from "@/types/ai"
 import Button from "@/components/Button.vue"
 import Loader from "@/components/Loader.vue"
 import DiffPreview from "./DiffPreview.vue"
@@ -285,7 +285,7 @@ interface Props {
   showReasoning?: boolean
 
   // 搜索来源
-  searchResults?: Array<{ title: string, url: string, content: string, score?: number }>
+  searchResults?: SearchResult[]
   searchStatus?: string
 
   // 耗时
@@ -319,16 +319,16 @@ const props = withDefaults(defineProps<Props>(), {
 
 defineEmits<{
   (e: "stop"): void
-  (e: "apply-edit"): void
-  (e: "insert-subdoc"): void
-  (e: "undo-edit"): void
+  (e: "applyEdit"): void
+  (e: "insertSubdoc"): void
+  (e: "undoEdit"): void
   (e: "copy"): void
   (e: "clear"): void
-  (e: "toggle-reasoning"): void
-  (e: "auto-fix"): void
-  (e: "re-review"): void
-  (e: "fix-issue", issueIndex: number): void
-  (e: "clear-conversation"): void
+  (e: "toggleReasoning"): void
+  (e: "autoFix"): void
+  (e: "reReview"): void
+  (e: "fixIssue", issueIndex: number): void
+  (e: "clearConversation"): void
 }>()
 
 const viewMode = ref<"preview" | "diff">("preview")

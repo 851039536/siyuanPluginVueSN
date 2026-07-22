@@ -52,9 +52,10 @@
 
 <script setup lang="ts">
 import { ref } from "vue"
+import type { SearchResult } from "@/types/ai"
 
 defineProps<{
-  searchResults: Array<{ title: string, url: string, content: string, score?: number }>
+  searchResults: SearchResult[]
   searchStatus?: string
 }>()
 

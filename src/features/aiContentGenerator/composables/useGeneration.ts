@@ -5,8 +5,8 @@
 import { ref, computed, type Ref, type ComputedRef } from "vue"
 import { showMessage } from "siyuan"
 import type { Plugin } from "siyuan"
-import type { GenerateOptions, SkillItem, TargetDoc } from "@/types/ai"
-import { AI_MODELS_CONFIG } from "../config/models"
+import type { GenerateOptions, SearchResult, SkillItem, TargetDoc } from "@/types/ai"
+import { PROVIDER_MODELS } from "@/config/aiModels"
 
 // ============ 类型定义 ============
 
@@ -76,8 +76,7 @@ export function useGeneration(opts: UseGenerationOptions) {
 
   // ===== 搜索 =====
   const searchStatus = ref("")
-  const searchResults = ref<Array<{ title: string; url: string; content: string; score?: number }>>([])
-  const showSearchResults = ref(false)
+  const searchResults = ref<SearchResult[]>([])
 
   // ===== 多轮对话 =====
   const conversationHistory = ref<ConversationTurn[]>([])
@@ -88,7 +87,7 @@ export function useGeneration(opts: UseGenerationOptions) {
     (opts.plugin as any)?.settings?.aiApiProvider || "tongyi",
   )
   const availableModels = computed(() => {
-    return AI_MODELS_CONFIG[currentProvider.value] || { common: [], all: [] }
+    return PROVIDER_MODELS[currentProvider.value] || { common: [], all: [] }
   })
   const supportsThinking = computed(() =>
     currentProvider.value === "deepseek"
@@ -100,9 +99,8 @@ export function useGeneration(opts: UseGenerationOptions) {
   const stableSearchStart = () => {
     searchStatus.value = "正在搜索网络..."
   }
-  const stableSearchResults = (results: Array<{ title: string; url: string; content: string; score?: number }>) => {
+  const stableSearchResults = (results: SearchResult[]) => {
     searchResults.value = results
-    showSearchResults.value = true
     searchStatus.value = `已获取 ${results.length} 条搜索结果`
   }
   const stableSearchError = (error: string) => {
@@ -134,7 +132,6 @@ export function useGeneration(opts: UseGenerationOptions) {
     errorMessage.value = ""
     searchStatus.value = ""
     searchResults.value = []
-    showSearchResults.value = false
   }
 
   /** 重置生成相关状态（生成结束后调用） */
@@ -333,7 +330,6 @@ export function useGeneration(opts: UseGenerationOptions) {
     showReasoning,
     searchStatus,
     searchResults,
-    showSearchResults,
     conversationHistory,
     // computed
     availableModels,
@@ -344,6 +340,5 @@ export function useGeneration(opts: UseGenerationOptions) {
     buildGenerateOptions,
     executeGeneration,
     clearConversation,
-    buildConversationContext,
   }
 }

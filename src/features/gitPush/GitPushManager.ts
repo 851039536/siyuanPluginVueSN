@@ -16,7 +16,7 @@ import type {
   TagInfo,
   WorkingTreeInfo,
 } from "./types/storage"
-import type { PlatformKey } from "./types"
+import type { PlatformKey } from "./types/meta"
 import {
   callAI,
   getApiConfigFromPlugin,
@@ -30,9 +30,13 @@ import GitPushPanel from "./index.vue"
 import {
   COMMIT_TYPE_VALUES,
   GitPushStorage,
+  UNGROUPED_ID,
 } from "./types/storage"
-import { PLATFORM_META, UNGROUPED_ID } from "./types"
+import { PLATFORM_META } from "./types/meta"
 import { getProjectRemoteNames, resolveValidPath } from "./utils"
+
+/** 递增计数器（与时间戳组合成唯一 ID，避免同毫秒碰撞） */
+let idCounter = 0
 
 /** 远程操作结果 */
 interface RemoteOpResult {
@@ -168,10 +172,10 @@ export class GitPushManager {
     project.cnbRemote = undefined
     const patch: Partial<GitProject> = {}
     for (const r of remotes) {
-      if (r.isGithub) { patch.githubRemote = r.name }
-      if (r.isGitee) { patch.giteeRemote = r.name }
-      if (r.isGitea) { patch.giteaRemote = r.name }
-      if (r.isCnb) { patch.cnbRemote = r.name }
+      if (r.isGithub && !patch.githubRemote) { patch.githubRemote = r.name }
+      if (r.isGitee && !patch.giteeRemote) { patch.giteeRemote = r.name }
+      if (r.isGitea && !patch.giteaRemote) { patch.giteaRemote = r.name }
+      if (r.isCnb && !patch.cnbRemote) { patch.cnbRemote = r.name }
     }
     if (Object.keys(patch).length > 0) {
       Object.assign(project, patch)
@@ -232,8 +236,9 @@ export class GitPushManager {
    */
   async addProject(name: string, path: string, categoryId = UNGROUPED_ID, tags?: string[]): Promise<GitProject> {
     const projects = await this.getProjects()
+    idCounter++
     const project: GitProject = {
-      id: Date.now().toString(),
+      id: `${Date.now().toString(36)}-${idCounter}`,
       name,
       path,
       categoryId,
@@ -331,7 +336,7 @@ export class GitPushManager {
   async recordLastActivity(id: string, isoTime: string): Promise<void> {
     const projects = await this.getProjects()
     const project = projects.find((p) => p.id === id)
-    if (!project || project.lastActivity === isoTime) return
+    if (!project) return
     project.lastActivity = isoTime
     await this.storage.projects.save(projects)
     this.invalidateProjectCache()
@@ -402,13 +407,14 @@ export class GitPushManager {
             const isGithub = lowerUrl.includes("github.com") || lowerName === "github"
             const isGitee = lowerUrl.includes("gitee.com") || lowerUrl.includes("gitcode.com") || lowerName === "gitee"
             const isCnb = lowerUrl.includes("cnb.cool") || lowerName === "cnb"
+            const isGitea = lowerUrl.includes("gitea.") || lowerName === "gitea"
             result.push({
               name,
               url,
               isGithub,
               isGitee,
               isCnb,
-              isGitea: !isGithub && !isGitee && !isCnb,
+              isGitea: isGitea && !isGithub && !isGitee && !isCnb,
             })
           }
         }
@@ -455,8 +461,8 @@ export class GitPushManager {
         if (action === "pull" && /fast-forward|non-fast-forward/i.test(msg)) {
           msg = `拉取失败（远程有新提交且与本地有分叉）。\n请先使用 Stash 暂存本地修改，然后重新拉取。\n原始错误: ${msg}`
         }
-        // 判断是否为网络类错误（可重试）
-        const isNetworkErr = /(could not resolve|timed out|connection refused|connection reset|unable to access|early EOF|RPC failed|fetch first)/i.test(msg)
+        // 判断是否为瞬态网络错误（可重试）
+        const isNetworkErr = /(could not resolve|timed out|connection refused|connection reset|unable to access|early EOF|RPC failed)/i.test(msg)
         if (!isNetworkErr) {
           return { ok: false, stdout: "", stderr: msg }
         }
@@ -464,14 +470,11 @@ export class GitPushManager {
         if (signal?.aborted) {
           return { ok: false, stdout: "", stderr: "操作已取消" }
         }
-        await new Promise<void>((resolve, reject) => {
+        await new Promise<void>((resolve) => {
           const timer = setTimeout(resolve, 1000)
-          const onAbort = () => {
-            clearTimeout(timer)
-            reject(new Error("操作已取消"))
-          }
+          const onAbort = () => { clearTimeout(timer); resolve() }
           if (signal) { signal.addEventListener("abort", onAbort, { once: true }) }
-        }).catch(() => {})
+        })
         if (signal?.aborted) {
           return { ok: false, stdout: "", stderr: "操作已取消" }
         }
@@ -756,8 +759,8 @@ export class GitPushManager {
     // 由 PLATFORM_META 驱动检查
     const remotesToCheck = getProjectRemoteNames(project).map((r) => ({ key: r.key, remoteName: r.name }))
 
-    // 缓存 noUpstream 场景的 HEAD 提交数，多远程复用避免重复 rev-list --count HEAD
-    let headCommitCount: number | null = null
+    // 缓存 noUpstream 场景的 HEAD 提交数（Promise），多远程并发复用，避免重复 rev-list --count HEAD
+    let headCommitCountPromise: Promise<number> | null = null
 
     const remoteChecks = remotesToCheck.map(async ({ key, remoteName }) => {
       try {
@@ -771,13 +774,22 @@ export class GitPushManager {
         const ahead = Number.parseInt(parts[1] || "0", 10)
 
         return { key, result: { ahead, behind, noUpstream: false }, ahead }
-      } catch {
-        // 首次计算并缓存 HEAD 提交数，后续 noUpstream 远程直接复用
-        if (headCommitCount === null) {
-          const total = await this.execGit(cwd, ["rev-list", "--count", "HEAD"]).catch(() => "0")
-          headCommitCount = Number.parseInt(total, 10) || 0
+      } catch (e: any) {
+        const errMsg = e?.message || String(e)
+        // 真正的"远程分支不存在"（fatal: ambiguous argument 或 no such branch）→ noUpstream
+        const isNoUpstream = /no upstream|no such branch|ambiguous argument|does not have any commits|doesn't have any commits/i.test(errMsg)
+        if (!isNoUpstream) {
+          return { key, result: { ahead: 0, behind: 0, noUpstream: false, error: errMsg }, ahead: 0 }
         }
-        return { key, result: { ahead: headCommitCount, behind: 0, noUpstream: true }, ahead: headCommitCount }
+        // 首次计算并缓存 HEAD 提交数 Promise，后续 noUpstream 远程直接复用
+        if (headCommitCountPromise === null) {
+          headCommitCountPromise = this.execGit(cwd, ["rev-list", "--count", "HEAD"]).then(
+            (t) => Number.parseInt(t, 10) || 0,
+            () => 0,
+          )
+        }
+        const count = await headCommitCountPromise
+        return { key, result: { ahead: count, behind: 0, noUpstream: true }, ahead: count }
       }
     })
 
@@ -1039,12 +1051,14 @@ export class GitPushManager {
 
     const results: ScannedGitRepo[] = []
     const queue: string[] = [dirPath]
+    let head = 0
 
-    while (queue.length > 0) {
-      const currentDir = queue.shift()!
+    while (head < queue.length) {
+      const currentDir = queue[head++]
       try {
         const entries = fs.readdirSync(currentDir, { withFileTypes: true })
         let hasGitDir = false
+        const queueLenBefore = queue.length
 
         for (const entry of entries) {
           const fullPath = path.join(currentDir, entry.name)
@@ -1057,6 +1071,8 @@ export class GitPushManager {
 
         if (hasGitDir) {
           results.push({ name: path.basename(currentDir), path: currentDir })
+          // 不深入已找到 .git 的目录的子目录，避免递归扫描仓库内部
+          queue.length = queueLenBefore
         }
       } catch {
         continue
@@ -1124,7 +1140,7 @@ export class GitPushManager {
             const next = isNetwork ? this.networkWaitQueue.shift() : this.gitWaitQueue.shift()
             if (next) { next.run() }
 
-            if (killed) { return }
+            if (killed) { reject(new Error("操作已取消")); return }
             if (error) {
               reject(new Error(stderr || error.message))
             } else {
@@ -1144,6 +1160,7 @@ export class GitPushManager {
         if (signal) {
           if (signal.aborted) {
             onAbort()
+            reject(new Error("操作已取消"))
             return
           }
           signal.addEventListener("abort", onAbort, { once: true })
@@ -1419,7 +1436,12 @@ export class GitPushManager {
       for (const ac of list) { ac.abort() }
     }
     this.abortControllers.clear()
-    // 清理等待队列中所有闭包，防止插件卸载后僵尸 Promise 持有闭包引用导致内存泄漏
+    // kill 所有活跃子进程（无 signal 的 execGit 不会被 abortController 覆盖）
+    for (const child of this.activeProcesses) {
+      try { child.kill("SIGTERM") } catch {}
+    }
+    this.activeProcesses.clear()
+    // 清空等待队列中所有闭包，防止插件卸载后僵尸 Promise 持有闭包引用导致内存泄漏
     this.gitWaitQueue.length = 0
     this.networkWaitQueue.length = 0
   }

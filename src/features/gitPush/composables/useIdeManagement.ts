@@ -193,17 +193,23 @@ export function useIdeManagement(options: {
   }
 
   function launchIde(cp: any, cmd: string, args: string[]): Promise<void> {
-    try {
-      const child = cp.spawn(cmd, args, {
-        detached: true,
-        stdio: "ignore",
-        windowsHide: false,
-      })
-      child.unref()
-      return Promise.resolve()
-    } catch (e) {
-      return Promise.reject(e)
-    }
+    return new Promise((resolve, reject) => {
+      try {
+        const child = cp.spawn(cmd, args, {
+          detached: true,
+          stdio: "ignore",
+          windowsHide: false,
+        })
+        child.on("error", (err: Error) => { reject(err) })
+        child.on("spawn", () => {
+          child.unref()
+          resolve()
+        })
+        child.on("close", () => {})
+      } catch (e) {
+        reject(e)
+      }
+    })
   }
 
   function isCmdAvailable(cp: any, cmd: string): Promise<boolean> {

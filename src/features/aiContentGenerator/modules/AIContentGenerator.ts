@@ -1,13 +1,14 @@
+/**
+ * AI内容生成类
+ * 仅负责 Dock 注册和 UI 编排，API 调用使用 @/utils/aiApi 统一模块
+ */
 import type {
   GenerateOptions,
   ReviewResult,
   SkillItem,
 } from "@/types/ai"
-/**
- * AI内容生成类
- * 仅负责 Dock 注册和 UI 编排，API 调用使用 @/utils/aiApi 统一模块
- */
 import type { AiApiConfig } from "@/utils/aiApi"
+import type { ScanSkillsFn } from "../types"
 import {
   Plugin,
   showMessage,
@@ -73,15 +74,9 @@ function validateRating(rating: unknown): "优秀" | "良好" | "需改进" {
 
 export class AIContentGenerator {
   private plugin: Plugin
-  private scanSkills: ((projectPath?: string) => Promise<Array<{
-    filePath: string
-    name: string
-    description: string
-    content: string
-    tool: string
-  }>>) | null
+  private scanSkills: ScanSkillsFn | null
 
-  constructor(plugin: Plugin, options?: { scanSkills?: AIContentGenerator["scanSkills"] }) {
+  constructor(plugin: Plugin, options?: { scanSkills?: ScanSkillsFn }) {
     this.plugin = plugin
     this.scanSkills = options?.scanSkills ?? null
   }
@@ -291,6 +286,4 @@ ${options.userInput}`
 
     return sections.join("\n")
   }
-
-  public destroy() {}
 }

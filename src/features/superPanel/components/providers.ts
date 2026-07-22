@@ -1,18 +1,13 @@
 /**
  * AI 供应商常量（单一数据源）
  *
- * 消除 AiProviderSelect / AiSettingsPanel / ApiKeyInput / AiModelSelect 间的重复定义
+ * ProviderMeta/PROVIDERS/PROVIDER_MAP 等 superPanel 特有元数据
+ * 模型清单来自项目级共享配置 @/config/aiModels
  */
+import type { ProviderModels } from "@/config/aiModels"
+import { PROVIDER_MODELS } from "@/config/aiModels"
 
-export interface ModelOption {
-  value: string
-  label: string
-}
-
-export interface ProviderModels {
-  common: ModelOption[]
-  all: ModelOption[]
-}
+export { PROVIDER_MODELS }
 
 export interface ProviderMeta {
   id: string
@@ -26,142 +21,6 @@ export interface ProviderMeta {
   models: ProviderModels
 }
 
-const tongyiModels: ProviderModels = {
-  common: [
-    {
-      value: "qwen-plus",
-      label: "Qwen Plus (推荐)",
-    },
-    {
-      value: "qwen-turbo",
-      label: "Qwen Turbo (快速)",
-    },
-    {
-      value: "qwen-max",
-      label: "Qwen Max (最强)",
-    },
-  ],
-  all: [
-    {
-      value: "qwen-long",
-      label: "Qwen Long (长文本)",
-    },
-    {
-      value: "qwen-vl-plus",
-      label: "Qwen VL Plus (视觉)",
-    },
-    {
-      value: "qwen-vl-max",
-      label: "Qwen VL Max (视觉最强)",
-    },
-  ],
-}
-
-const openaiModels: ProviderModels = {
-  common: [
-    {
-      value: "gpt-3.5-turbo",
-      label: "GPT-3.5 Turbo (推荐)",
-    },
-    {
-      value: "gpt-4",
-      label: "GPT-4",
-    },
-    {
-      value: "gpt-4-turbo",
-      label: "GPT-4 Turbo",
-    },
-  ],
-  all: [
-    {
-      value: "gpt-4o",
-      label: "GPT-4o",
-    },
-    {
-      value: "gpt-4o-mini",
-      label: "GPT-4o Mini",
-    },
-  ],
-}
-
-const deepseekModels: ProviderModels = {
-  common: [
-    {
-      value: "deepseek-v4-flash",
-      label: "V4 Flash (快速)",
-    },
-    {
-      value: "deepseek-v4-pro",
-      label: "V4 Pro (最强)",
-    },
-  ],
-  all: [
-    {
-      value: "deepseek-chat",
-      label: "Chat (旧版，将停用)",
-    },
-    {
-      value: "deepseek-reasoner",
-      label: "Reasoner (旧版思考，将停用)",
-    },
-    {
-      value: "deepseek-coder",
-      label: "Coder (代码)",
-    },
-  ],
-}
-
-const zhipuModels: ProviderModels = {
-  common: [
-    {
-      value: "glm-4-flash",
-      label: "GLM-4-Flash (推荐)",
-    },
-    {
-      value: "glm-4-air",
-      label: "GLM-4-Air",
-    },
-    {
-      value: "glm-4-plus",
-      label: "GLM-4-Plus",
-    },
-  ],
-  all: [
-    {
-      value: "glm-4-long",
-      label: "GLM-4-Long (长文本)",
-    },
-    {
-      value: "glm-4.5",
-      label: "GLM-4.5",
-    },
-    {
-      value: "glm-4.6",
-      label: "GLM-4.6",
-    },
-  ],
-}
-
-const xiaomiModels: ProviderModels = {
-  common: [
-    {
-      value: "mimo-v2-flash",
-      label: "MiMo-V2-Flash (推荐)",
-    },
-  ],
-  all: [
-    {
-      value: "mimo-v2-pro",
-      label: "MiMo-V2-Pro",
-    },
-  ],
-}
-
-const customModels: ProviderModels = {
-  common: [],
-  all: [],
-}
-
 /**
  * 供应商元数据列表（有序）
  */
@@ -171,42 +30,42 @@ export const PROVIDERS: ProviderMeta[] = [
     i18nKey: "tongyiQianwen",
     fallbackName: "通义千问",
     defaultModel: "qwen-plus",
-    models: tongyiModels,
+    models: PROVIDER_MODELS.tongyi,
   },
   {
     id: "openai",
     i18nKey: "openAI",
     fallbackName: "OpenAI",
     defaultModel: "gpt-3.5-turbo",
-    models: openaiModels,
+    models: PROVIDER_MODELS.openai,
   },
   {
     id: "deepseek",
     i18nKey: "deepSeek",
     fallbackName: "DeepSeek",
     defaultModel: "deepseek-v4-flash",
-    models: deepseekModels,
+    models: PROVIDER_MODELS.deepseek,
   },
   {
     id: "zhipu",
     i18nKey: "zhipuAI",
     fallbackName: "智谱AI",
     defaultModel: "glm-4-flash",
-    models: zhipuModels,
+    models: PROVIDER_MODELS.zhipu,
   },
   {
     id: "xiaomi",
     i18nKey: "xiaomiMiMo",
     fallbackName: "小米MiMo",
     defaultModel: "mimo-v2-flash",
-    models: xiaomiModels,
+    models: PROVIDER_MODELS.xiaomi,
   },
   {
     id: "custom",
     i18nKey: "customApi",
     fallbackName: "自定义API",
     defaultModel: "",
-    models: customModels,
+    models: PROVIDER_MODELS.custom,
   },
 ]
 

@@ -46,7 +46,7 @@ export interface UseReviewDeps {
 
 // ============ Composable ============
 
-export function useReview(deps?: UseReviewDeps) {
+export function useReview(deps: UseReviewDeps) {
   const enableReview = ref(false)
   const isReviewing = ref(false)
   const reviewResult = ref<ReviewResult | null>(null)
@@ -75,16 +75,7 @@ export function useReview(deps?: UseReviewDeps) {
     })
   }
 
-  // ===== 审核逻辑（依赖 deps）=====
-
-  if (!deps) {
-    // 纯状态模式：仅提供状态管理，不包含审核逻辑
-    return {
-      enableReview, isReviewing, reviewResult, isAutoFixing,
-      autoFixCount, fixHistory, MAX_AUTO_FIX_ITERATIONS,
-      needsFix, resetReview, recordFixEntry,
-    }
-  }
+  // ===== 审核逻辑 =====
 
   const { generatedContent, currentSkill, editTargetDoc,
     editCustomInput, executeGeneration, buildGenerateOptions, onReview } = deps

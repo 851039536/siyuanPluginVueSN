@@ -1,5 +1,6 @@
 {
   "websiteNavigation": {
+    "title": "Website Navigation",
     "panelTitle": "Website Navigation",
     "description": "Description",
     "addWebsite": "Add Website",
@@ -23,6 +24,9 @@
     "openUrl": "Open Website",
     "copyUrl": "Copy URL",
     "noWebsites": "No websites yet. Click to add one.",
+    "notFound": "No matching websites found",
+    "categoryExists": "Category already exists",
+    "categoryNotEmpty": "Cannot delete category with existing websites",
     "loadFailed": "Load failed",
     "saveSuccess": "Saved successfully",
     "createSuccess": "Website added",
@@ -30,6 +34,9 @@
     "deleteSuccess": "Website deleted",
     "saveFailed": "Save failed",
     "deleteFailed": "Delete failed",
-    "urlCopied": "URL copied"
-  }
+    "urlCopied": "URL copied",
+    "defaultBadge": "Default"
+  },
+  "enableWebsiteNavigation": "Enable Website Navigation",
+  "enableWebsiteNavigationDesc": "Manage frequently-used website links with categories and quick access"
 }

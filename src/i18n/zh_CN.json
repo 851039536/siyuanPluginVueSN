@@ -2035,6 +2035,7 @@
     "savePath": "保存路径"
   },
   "websiteNavigation": {
+    "title": "网站导航",
     "panelTitle": "网站导航",
     "description": "描述",
     "addWebsite": "添加网站",
@@ -2058,6 +2059,9 @@
     "openUrl": "打开网站",
     "copyUrl": "复制网址",
     "noWebsites": "暂无网站，点击添加",
+    "notFound": "未找到匹配的网站",
+    "categoryExists": "类别已存在",
+    "categoryNotEmpty": "该类别下有网站，无法删除",
     "loadFailed": "加载失败",
     "saveSuccess": "保存成功",
     "createSuccess": "网站已添加",
@@ -2065,8 +2069,11 @@
     "deleteSuccess": "网站已删除",
     "saveFailed": "保存失败",
     "deleteFailed": "删除失败",
-    "urlCopied": "网址已复制"
+    "urlCopied": "网址已复制",
+    "defaultBadge": "默认"
   },
+  "enableWebsiteNavigation": "启用网站导航功能",
+  "enableWebsiteNavigationDesc": "管理常用网站链接，支持分类筛选和快捷访问",
   "wordQuery": {
     "title": "单词查询",
     "enable": "启用单词查询功能",

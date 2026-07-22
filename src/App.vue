@@ -95,6 +95,7 @@ import {
   hidePasswordVault,
   hideSkillsViewer,
   showPromptsModal,
+  showWebsiteNavigation,
   htmlViewerVisible,
   imageCreationInitialKeywords,
   imageCreationInitialTitle,
@@ -249,6 +250,11 @@ onMounted(() => {
   // 监听 Skills 查看器切换事件
   window.addEventListener("toggleSkillsViewer", () => {
     skillsViewerVisible.value = true
+  })
+
+  // 监听网站导航切换事件（来自状态栏）
+  window.addEventListener("toggleWebsiteNavigation", () => {
+    showWebsiteNavigation(plugin as any)
   })
 })
 </script>

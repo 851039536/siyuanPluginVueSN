@@ -1,3 +1,6 @@
+<!--
+  网站导航筛选栏 — 搜索输入 + 分类标签切换
+-->
 <template>
   <div>
     <div class="filter-bar">
@@ -9,7 +12,7 @@
       <Input
         :model-value="searchQuery"
         type="text"
-        :placeholder="i18n.searchPlaceholder || '搜索网站名称或描述...'"
+        :placeholder="i18n.searchPlaceholder"
         size="xsmall"
         @update:model-value="emit('update:searchQuery', $event)"
       />
@@ -34,7 +37,7 @@
         icon="settings"
         variant="ghost"
         size="xsmall"
-        :title="i18n.manageCategories || '管理类别'"
+        :title="i18n.manageCategories"
         @click="emit('manageCategories')"
       />
     </div>
@@ -67,7 +70,7 @@ const emit = defineEmits<{
 const allCategories = computed(() => [
   {
     id: "all",
-    name: props.i18n.allCategories || "全部",
+    name: props.i18n.allCategories,
     color: "#b0aea5",
   },
   ...props.categories,

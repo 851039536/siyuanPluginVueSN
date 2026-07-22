@@ -1,3 +1,6 @@
+/**
+ * 网站导航 — 类型定义 + Manager 类 + 公开 API
+ */
 import type { Plugin } from "siyuan"
 import type { ModalAppInstance } from "@/utils/vueAppHelper"
 import { createModalVueApp } from "@/utils/vueAppHelper"
@@ -35,6 +38,7 @@ export interface WebsiteCategory {
 
 export interface I18n {
   panelTitle?: string
+  title?: string
   addWebsite?: string
   editWebsite?: string
   deleteWebsite?: string
@@ -57,6 +61,10 @@ export interface I18n {
   openUrl?: string
   copyUrl?: string
   noWebsites?: string
+  notFound?: string
+  categoryExists?: string
+  categoryNotEmpty?: string
+  defaultBadge?: string
   loadFailed?: string
   saveSuccess?: string
   createSuccess?: string

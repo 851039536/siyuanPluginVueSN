@@ -99,6 +99,7 @@ export {
 // wordQuery 已迁移至 toolCollection/tools/wordQuery/
 export { registerVideo } from "./video"
 export { registerWebsiteNavigation } from "./websiteNavigation"
+export { showWebsiteNavigation } from "./websiteNavigation/types"
 
 /**
  * 白名单：仅用于 UI 配置展示、不需要 register 函数的功能

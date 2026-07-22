@@ -1,3 +1,6 @@
+<!--
+  网站导航 — 添加/编辑弹窗
+-->
 <template>
   <Teleport to="body">
     <Transition name="fade">
@@ -13,7 +16,7 @@
             @click.stop
           >
             <div class="dialog-header">
-              <h3>{{ isEdit ? i18n.editWebsite || '编辑网站' : i18n.addWebsite || '添加网站' }}</h3>
+              <h3>{{ isEdit ? i18n.editWebsite : i18n.addWebsite }}</h3>
               <Button
                 icon="close"
                 variant="ghost"
@@ -23,36 +26,36 @@
             </div>
             <div class="dialog-body">
               <div class="form-group">
-                <label>{{ i18n.name || '名称' }}</label>
+                <label>{{ i18n.name }}</label>
                 <Input
                   v-model="form.name"
                   type="text"
-                  :placeholder="i18n.namePlaceholder || '网站名称'"
+                  :placeholder="i18n.namePlaceholder"
                   required
                 />
               </div>
               <div class="form-group">
-                <label>{{ i18n.url || '网址' }}</label>
+                <label>{{ i18n.url }}</label>
                 <Input
                   v-model="form.url"
                   type="text"
-                  :placeholder="i18n.urlPlaceholder || 'https://example.com'"
+                  :placeholder="i18n.urlPlaceholder"
                   required
                 />
               </div>
               <div class="form-group">
-                <label>{{ i18n.category || '类别' }}</label>
+                <label>{{ i18n.category }}</label>
                 <Select
                   v-model="form.category"
                   :options="categoryOptions"
                 />
               </div>
               <div class="form-group">
-                <label>{{ i18n.description || '描述' }}</label>
+                <label>{{ i18n.description }}</label>
                 <Input
                   v-model="form.description"
                   type="text"
-                  :placeholder="i18n.descriptionPlaceholder || '备注描述'"
+                  :placeholder="i18n.descriptionPlaceholder"
                 />
               </div>
             </div>
@@ -61,14 +64,14 @@
                 variant="ghost"
                 @click="handleClose"
               >
-                {{ i18n.cancel || '取消' }}
+                {{ i18n.cancel }}
               </Button>
               <Button
                 variant="primary"
                 :disabled="!form.name.trim() || !form.url.trim()"
                 @click="handleSave"
               >
-                {{ i18n.save || '保存' }}
+                {{ i18n.save }}
               </Button>
             </div>
           </div>

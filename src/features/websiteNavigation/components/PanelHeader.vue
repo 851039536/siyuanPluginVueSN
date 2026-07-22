@@ -1,3 +1,6 @@
+<!--
+  网站导航面板头部 — 标题 + 条目计数 + 添加按钮
+-->
 <template>
   <div class="panel-header">
     <div class="header-title">
@@ -5,7 +8,7 @@
         name="browser"
         :size="20"
       />
-      <h2>{{ i18n.panelTitle || '网站导航' }}</h2>
+      <h2>{{ i18n.panelTitle }}</h2>
       <span class="entry-count">{{ count }}/{{ totalCount }}</span>
     </div>
     <div class="header-actions">
@@ -13,7 +16,7 @@
         icon="add"
         variant="primary"
         size="xsmall"
-        :title="i18n.addWebsite || '添加网站'"
+        :title="i18n.addWebsite"
         @click="emit('add')"
       />
     </div>

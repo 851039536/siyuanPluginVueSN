@@ -255,6 +255,8 @@ export const FEATURE_CONFIG = [
     id: "websiteNavigation",
     defaultTitle: "网站导航",
     defaultDesc: "管理常用网站链接，支持分类筛选和快捷访问",
+    titleI18nKey: "websiteNavigation.title",
+    descI18nKey: "enableWebsiteNavigationDesc",
   },
   {
     id: "scriptLauncher",

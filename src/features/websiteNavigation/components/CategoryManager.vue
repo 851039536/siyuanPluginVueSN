@@ -1,3 +1,6 @@
+<!--
+  网站导航 — 分类管理弹窗
+-->
 <template>
   <Teleport to="body">
     <Transition name="fade">
@@ -13,7 +16,7 @@
             @click.stop
           >
             <div class="dialog-header">
-              <h3>{{ i18n.manageCategories || '管理类别' }}</h3>
+              <h3>{{ i18n.manageCategories }}</h3>
               <Button
                 icon="close"
                 variant="ghost"
@@ -26,7 +29,7 @@
                 <Input
                   v-model="catName"
                   type="text"
-                  :placeholder="i18n.categoryName || '类别名称'"
+                  :placeholder="i18n.categoryName"
                   size="xsmall"
                 />
                 <div class="color-picker">
@@ -46,7 +49,7 @@
                   :disabled="!catName.trim()"
                   @click="handleAdd"
                 >
-                  {{ i18n.add || '添加' }}
+                  {{ i18n.add }}
                 </Button>
               </div>
               <div class="category-list">
@@ -70,7 +73,7 @@
                   <span
                     v-else
                     class="default-badge"
-                  >默认</span>
+                  >{{ i18n.defaultBadge }}</span>
                 </div>
               </div>
             </div>

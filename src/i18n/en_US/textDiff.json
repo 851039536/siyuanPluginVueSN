@@ -16,7 +16,9 @@
     "unifiedMode": "Unified",
     "theme": "Theme",
     "lightTheme": "Light",
-    "darkTheme": "Dark"
+    "darkTheme": "Dark",
+    "selectFile": "Select File",
+    "dropFile": "Drop File to Import"
   },
   "enableTextDiff": "Enable Text Diff Feature",
   "enableTextDiffDesc": "Provide text difference comparison functionality, supporting character, word, line, and patch modes"

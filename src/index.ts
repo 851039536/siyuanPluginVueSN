@@ -251,6 +251,11 @@ export default class PluginSample extends Plugin {
       ;(this as any).__s3Backup.destroy()
     }
 
+    // 清理文本对比资源
+    if ((this as any).__textDiff) {
+      ;(this as any).__textDiff.destroy()
+    }
+
     // 清理状态栏资源
     unregisterStatusBar()
 
@@ -285,7 +290,7 @@ export default class PluginSample extends Plugin {
     if (s.enableStatusBar) registerStatusBar(this)
     if (s.enableFloatingToolbar) registerFloatingToolbar(this)
     if (s.enableFloatingBox) registerFloatingBox(this)
-    if (s.enableTextDiff) registerTextDiff(this)
+    if (s.enableTextDiff) (this as any).__textDiff = registerTextDiff(this)
     if (s.enableFlashcardReading) registerFlashcardReading(this)
     if (s.enablePasswordVault) registerPasswordVault(this)
     if (s.enablePrompts) registerPrompts(this)

@@ -45,13 +45,9 @@ export function renderMarkdown(content: string, stripHeadingBold = true): string
   }
 }
 
-export function truncateText(text: string, maxLength = 50): string {
-  if (text.length <= maxLength) return text
-  return `${text.substring(0, maxLength)}...`
-}
-
 export function truncateTitle(title: string, maxLen = 12): string {
-  return truncateText(title, maxLen)
+  if (title.length <= maxLen) return title
+  return `${title.substring(0, maxLen)}...`
 }
 
 // ============ 技能来源展示 ============
@@ -62,15 +58,6 @@ export function getSourceDotColors(skill: SkillItem): string[] {
     const tool = TOOL_META.find((t) => t.id === s.tool)
     return tool?.color || "#999"
   })
-}
-
-export function getSourceHintText(skill: SkillItem): string {
-  if (!skill.sources || skill.sources.length === 0) return ""
-  const toolNames = skill.sources.map((s) => {
-    const tool = TOOL_META.find((t) => t.id === s.tool)
-    return tool ? tool.name : s.tool
-  })
-  return toolNames.join("、")
 }
 
 // ============ 内容处理 ============
@@ -159,32 +146,6 @@ export function splitMarkdownBlocks(content: string): string[] {
   }
 
   return blocks
-}
-
-// ============ 审核问题位置匹配 ============
-
-export function extractIssueLocations(
-  issues: Array<{ description: string; severity: string }>,
-  content: string,
-): Array<{ issueIndex: number; excerpt: string }> {
-  const locations: Array<{ issueIndex: number; excerpt: string }> = []
-
-  issues.forEach((issue, idx) => {
-    const sentences = issue.description.split(/[。；]/).filter((s) => s.length > 5)
-    for (const sentence of sentences) {
-      const pos = content.indexOf(sentence)
-      if (pos >= 0) {
-        const excerpt = content.slice(
-          Math.max(0, pos - 10),
-          pos + sentence.length + 10,
-        )
-        locations.push({ issueIndex: idx, excerpt })
-        break
-      }
-    }
-  })
-
-  return locations
 }
 
 // ============ DOM 操作 ============

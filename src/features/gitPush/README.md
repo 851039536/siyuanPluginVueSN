@@ -25,11 +25,24 @@
 src/features/gitPush/
 ├── index.ts                         # registerGitPush() 入口
 ├── index.vue                        # 主面板（Dock，列表+统计双视图）
+├── GitPushManager.ts                # 门面：组合 managers/ 协作者，对外暴露统一 API
+├── managers/
+│   ├── GitExecutor.ts               # git 子进程执行器（双池信号量限流 + abort 生命周期）
+│   ├── ProjectStore.ts              # 项目/分类/标签 CRUD 与内存缓存
+│   ├── RemoteOps.ts                 # push/pull/fetch 全平台与单平台、推送状态检查
+│   ├── WorktreeOps.ts               # 工作区状态/差异/暂存/提交/stash/分支/提交日志
+│   ├── RepoOps.ts                   # Tag 管理、冲突检测、远程配置、Git 配置查看、仓库扫描
+│   └── CommitMsgGenerator.ts        # AI 提交信息与 stash 描述生成（含启发式降级）
 ├── types/
-│   ├── index.ts                     # GitPushManager 业务逻辑 + PLATFORM_META 共享常量
+│   ├── index.ts                     # 类型桶（重导出 meta/storage + GitPushManager）
+│   ├── meta.ts                      # PLATFORM_META/STATUS_META 等共享常量（独立模块切断循环引用）
 │   └── storage.ts                   # 类型定义 + TypedStorage 持久化
 ├── composables/
-│   ├── useGitPush.ts                # Vue 3 响应式状态层
+│   ├── useGitPush.ts                # Vue 3 响应式状态层（聚合入口）
+│   ├── useProjectCrud.ts            # 项目 CRUD 响应式封装
+│   ├── useGitOps.ts                 # 推送/拉取/工作区/stash 响应式封装
+│   ├── useGitTagsConflicts.ts       # Tag/冲突/模板/扫描导入
+│   ├── useGitStats.ts               # 统计视图 computed
 │   └── useDirectoryPicker.ts        # 目录选择封装（Electron + webkitdirectory 降级）
 ├── components/
 │   ├── StatsPanel.vue               # 统计视图（覆盖率/待处理项目/平台状态）
@@ -45,6 +58,22 @@ src/features/gitPush/
     ├── _buttons.scss                # .vp-btn 按钮体系
     └── _shared.scss                 # .gp-spin 旋转动画
 ```
+
+## 架构
+
+`GitPushManager` 为**门面（Facade）**，自身不含业务逻辑，按职责委托给 6 个协作者：
+
+```
+GitPushManager (facade)
+  ├── GitExecutor      ← 唯一接触 child_process 的类；execGit 双池并发 + abort/destroy
+  ├── ProjectStore     ← 依赖 Executor（detectRemotes）+ Storage；项目/分类/标签 CRUD
+  ├── RemoteOps        ← 依赖 Executor + Store + Storage；push/pull/fetch/checkPushStatus
+  ├── WorktreeOps      ← 依赖 Executor；工作区/stash/分支/提交日志
+  ├── RepoOps          ← 依赖 Executor；Tag/冲突/远程配置/Git 配置/扫描
+  └── CommitMsgGenerator ← 依赖 Executor + WorktreeOps + Storage；AI 提交信息
+```
+
+外部调用方（composables / 组件）只与门面交互，协作者不对外暴露。
 
 ## API
 

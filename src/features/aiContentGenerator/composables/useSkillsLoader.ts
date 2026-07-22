@@ -7,27 +7,20 @@
 import type {
   SkillItem,
 } from "@/types/ai"
+import type { ScanSkillsFn } from "../types"
+import { toSkillItem } from "../types"
 import {
   computed,
   ref,
 } from "vue"
 
-interface RawSkillEntry {
-  filePath: string
-  name: string
-  description: string
-  content: string
-  tool: string
-}
-
 export function useSkillsLoader(
   plugin: any,
-  scanSkills: (projectPath?: string) => Promise<RawSkillEntry[]>,
+  scanSkills: ScanSkillsFn,
 ) {
   /** 去重后的技能列表 */
   const skills = ref<SkillItem[]>([])
   const currentSkillIndex = ref(-1)
-  const managerAvailable = ref(true)
   /** 技能搜索关键词 */
   const skillSearchQuery = ref("")
 
@@ -96,18 +89,7 @@ export function useSkillsLoader(
       } catch { /* 忽略，只扫全局 */ }
 
       const skillInfos = await scanSkills(projectPath || undefined)
-      const rawSkills = skillInfos.map((s) => ({
-        id: s.filePath,
-        name: s.name,
-        description: s.description,
-        content: s.content,
-        tool: s.tool,
-        sources: [{
-          id: s.filePath,
-          tool: s.tool,
-          content: s.content,
-        }],
-      }))
+      const rawSkills = skillInfos.map(toSkillItem)
 
       // 去重
       skills.value = deduplicateSkills(rawSkills)
@@ -118,7 +100,6 @@ export function useSkillsLoader(
       }
     } catch (err) {
       console.error("扫描技能失败:", err)
-      managerAvailable.value = false
     }
   }
 
@@ -126,7 +107,6 @@ export function useSkillsLoader(
     skills,
     currentSkillIndex,
     currentSkill,
-    managerAvailable,
     loadSkills,
     skillSearchQuery,
     filteredSkills,

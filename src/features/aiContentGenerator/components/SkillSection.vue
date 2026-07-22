@@ -34,7 +34,7 @@
       v-if="currentSkillIndex >= 0 && currentSkill"
       class="skill-preview-btn"
       title="预览技能细则"
-      @click="$emit('show-preview')"
+      @click="$emit('showPreview')"
     >
       <svg
         width="11"
@@ -114,8 +114,8 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:skillSearchQuery': [value: string]
-  'select-skill': [index: number]
-  'show-preview': []
+  'selectSkill': [index: number]
+  'showPreview': []
 }>()
 
 const showSkillDropdown = ref(false)
@@ -131,14 +131,14 @@ const toggleSkillDropdown = () => {
 }
 
 const selectSkill = (index: number) => {
-  emit("select-skill", index)
+  emit("selectSkill", index)
   showSkillDropdown.value = false
 }
 
 /** 通过技能对象选择（在原始 skills 中找到索引） */
 const selectSkillByItem = (skill: SkillItem) => {
   const index = props.skills.findIndex((s) => s.id === skill.id)
-  emit("select-skill", index)
+  emit("selectSkill", index)
   showSkillDropdown.value = false
 }
 

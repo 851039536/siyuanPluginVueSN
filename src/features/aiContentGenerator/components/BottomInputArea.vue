@@ -13,7 +13,7 @@
             variant="ghost"
             size="xsmall"
             :title="editTargetDoc && !editTargetDoc.isBlock ? editTargetDoc.title : '选择文档'"
-            @click="$emit('select-target-doc')"
+            @click="$emit('selectTargetDoc')"
           >
             <svg width="14" height="14"><use xlink:href="#iconFile"></use></svg>
             <span class="doc-name">{{ editTargetDoc && !editTargetDoc.isBlock ? truncateTitle(editTargetDoc.title) : '选择文档' }}</span>
@@ -22,7 +22,7 @@
             variant="ghost"
             size="xsmall"
             :title="editTargetDoc?.isBlock ? editTargetDoc.title : '选择块'"
-            @click="$emit('select-target-block')"
+            @click="$emit('selectTargetBlock')"
           >
             <svg width="14" height="14"><use xlink:href="#iconEdit"></use></svg>
             <span class="doc-name">{{ editTargetDoc?.isBlock ? truncateTitle(editTargetDoc.title) : '选择块' }}</span>
@@ -38,7 +38,7 @@
             size="xsmall"
             class="clear-btn"
             title="清除"
-            @click="$emit('clear-target-doc')"
+            @click="$emit('clearTargetDoc')"
           >
             <svg width="12" height="12"><use xlink:href="#iconClose"></use></svg>
           </Button>
@@ -53,9 +53,9 @@
           :skills="skills"
           :filtered-skills="filteredSkills"
           :skill-search-query="skillSearchQuery"
-          @select-skill="onSkillSelect"
-          @update:skill-search-query="(v: string) => $emit('update:skillSearchQuery', v)"
-          @show-preview="showSkillPreview = true"
+          @selectSkill="onSkillSelect"
+          @update:skillSearchQuery="(v: string) => $emit('update:skillSearchQuery', v)"
+          @showPreview="showSkillPreview = true"
         />
       </div>
 
@@ -78,7 +78,7 @@
         :class="{ active: isGenerating }"
         :disabled="isGenerating"
         :title="action.label"
-        @click="$emit('ai-edit', action.key)"
+        @click="$emit('aiEdit', action.key)"
       >
         <svg width="12" height="12"><use :xlink:href="action.icon"></use></svg>
         <span>{{ action.label }}</span>
@@ -92,13 +92,13 @@
         class="model-custom-input"
         :value="customModel"
         placeholder="输入模型名..."
-        @input="$emit('update:custom-model', ($event.target as HTMLInputElement).value)"
+        @input="$emit('update:customModel', ($event.target as HTMLInputElement).value)"
       />
       <select
         v-else
         class="model-select"
         :value="selectedModel"
-        @change="$emit('update:selected-model', ($event.target as HTMLSelectElement).value)"
+        @change="$emit('update:selectedModel', ($event.target as HTMLSelectElement).value)"
       >
         <option value="">默认模型</option>
         <optgroup v-if="availableModels.common.length > 0" label="常用">
@@ -110,11 +110,11 @@
         <option value="custom">自定义...</option>
       </select>
       <label v-if="supportsThinking" class="thinking-toggle" title="思考模式">
-        <input type="checkbox" :checked="enableThinking" @change="$emit('update:enable-thinking', ($event.target as HTMLInputElement).checked)" />
+        <input type="checkbox" :checked="enableThinking" @change="$emit('update:enableThinking', ($event.target as HTMLInputElement).checked)" />
         <span class="thinking-label">思考</span>
       </label>
       <label class="review-toggle" title="生成后使用 V4 Pro 交叉审核">
-        <input type="checkbox" :checked="enableReview" @change="$emit('update:enable-review', ($event.target as HTMLInputElement).checked)" />
+        <input type="checkbox" :checked="enableReview" @change="$emit('update:enableReview', ($event.target as HTMLInputElement).checked)" />
         <span class="review-label"><svg width="11" height="11"><use xlink:href="#iconCheck" /></svg>审核</span>
       </label>
     </div>
@@ -139,7 +139,7 @@
         variant="primary"
         size="xsmall"
         class="execute-btn"
-        @click="$emit('custom-edit')"
+        @click="$emit('customEdit')"
       >
         <svg width="16" height="16"><use xlink:href="#iconSparkles"></use></svg>
       </Button>
@@ -165,7 +165,7 @@
 </template>
 
 <script setup lang="ts">
-import type { ProviderModels } from "../config/models"
+import type { ProviderModels } from "@/config/aiModels"
 import type { SkillItem, TargetDoc } from "@/types/ai"
 import { computed, ref } from "vue"
 import Button from "@/components/Button.vue"
@@ -202,20 +202,20 @@ interface Props {
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
-  'ai-edit': [action: "polish" | "expand" | "condense" | "fix" | "rewrite" | "summary"]
+  'aiEdit': [action: "polish" | "expand" | "condense" | "fix" | "rewrite" | "summary"]
   'stop': []
-  'select-target-doc': []
-  'select-target-block': []
-  'clear-target-doc': []
-  'custom-edit': []
+  'selectTargetDoc': []
+  'selectTargetBlock': []
+  'clearTargetDoc': []
+  'customEdit': []
   'update:editCustomInput': [value: string]
   'update:currentSkillIndex': [value: number]
   'update:skillSearchQuery': [value: string]
   'update:webSearch': [value: boolean]
-  'update:selected-model': [value: string]
-  'update:custom-model': [value: string]
-  'update:enable-thinking': [value: boolean]
-  'update:enable-review': [value: boolean]
+  'update:selectedModel': [value: string]
+  'update:customModel': [value: string]
+  'update:enableThinking': [value: boolean]
+  'update:enableReview': [value: boolean]
 }>()
 
 const quickActions: QuickAction[] = [

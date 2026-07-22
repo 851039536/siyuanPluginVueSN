@@ -1,3 +1,6 @@
+/**
+ * 文本对比功能类型定义 + 管理器类
+ */
 import type { Plugin } from "siyuan"
 import type { ModalAppInstance } from "@/utils/vueAppHelper"
 import { createModalVueApp } from "@/utils/vueAppHelper"

@@ -1,3 +1,6 @@
+<!--
+  网站导航条目卡片 — 展示网站名称/URL/描述 + 操作按钮
+-->
 <template>
   <div class="entry-card">
     <div class="entry-main">
@@ -16,7 +19,7 @@
               color: categoryColor || '#b0aea5',
             }"
           >
-            {{ categoryName || '未分类' }}
+            {{ categoryName }}
           </span>
         </div>
         <div
@@ -41,21 +44,21 @@
           icon="contentCopy"
           variant="ghost"
           size="xsmall"
-          :title="i18n.copyUrl || '复制网址'"
+          :title="i18n.copyUrl"
           @click="emit('copyUrl', entry.url)"
         />
         <Button
           icon="edit"
           variant="ghost"
           size="xsmall"
-          :title="i18n.editWebsite || '编辑'"
+          :title="i18n.editWebsite"
           @click="emit('edit', entry)"
         />
         <Button
           icon="delete"
           variant="ghost"
           size="xsmall"
-          :title="i18n.deleteWebsite || '删除'"
+          :title="i18n.deleteWebsite"
           @click="emit('delete', entry.id)"
         />
       </div>

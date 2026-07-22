@@ -1,3 +1,6 @@
+<!--
+  网站导航主面板 — 网站书签管理，支持分类筛选、搜索、拖拽排序与一键打开
+-->
 <template>
   <div class="website-navigation-panel">
     <PanelHeader
@@ -39,7 +42,7 @@
           name="browser"
           :size="48"
         />
-        <p>{{ searchQuery ? '未找到匹配的网站' : i18n.noWebsites || '暂无网站，点击添加' }}</p>
+        <p>{{ searchQuery ? i18n.notFound : i18n.noWebsites }}</p>
       </div>
     </div>
 
@@ -141,7 +144,7 @@ const reloadAfterMutation = async () => {
   try {
     await loadData()
   } catch {
-    showMessage(props.i18n.loadFailed || "加载失败", 3000, "error")
+    showMessage(props.i18n.loadFailed, 3000, "error")
   }
 }
 
@@ -164,15 +167,15 @@ const saveEntry = async (data: { name: string, url: string, category: string, de
   try {
     if (editingEntry.value) {
       await storage.updateEntry(editingEntry.value.id, data)
-      showMessage(props.i18n.updateSuccess || "网站已更新", 2000, "info")
+      showMessage(props.i18n.updateSuccess, 2000, "info")
     } else {
       await storage.createEntry(data)
-      showMessage(props.i18n.createSuccess || "网站已添加", 2000, "info")
+      showMessage(props.i18n.createSuccess, 2000, "info")
     }
     closeDialog()
     await reloadAfterMutation()
   } catch {
-    showMessage(props.i18n.saveFailed || "保存失败", 3000, "error")
+    showMessage(props.i18n.saveFailed, 3000, "error")
   }
 }
 
@@ -181,16 +184,16 @@ const deleteEntry = async (id: string) => {
   if (!entry) return
 
   // eslint-disable-next-line no-alert
-  if (!window.confirm(props.i18n.confirmDelete || `确定删除「${entry.name}」吗？`)) {
+  if (!window.confirm(props.i18n.confirmDelete)) {
     return
   }
 
   try {
     await storage.deleteEntry(id)
-    showMessage(props.i18n.deleteSuccess || "网站已删除", 2000, "info")
+    showMessage(props.i18n.deleteSuccess, 2000, "info")
     await reloadAfterMutation()
   } catch {
-    showMessage(props.i18n.deleteFailed || "删除失败", 3000, "error")
+    showMessage(props.i18n.deleteFailed, 3000, "error")
   }
 }
 
@@ -201,15 +204,15 @@ const openUrl = (url: string) => {
 const copyUrl = async (url: string) => {
   try {
     await copyToClipboard(url)
-    showMessage(props.i18n.urlCopied || "网址已复制", 2000, "info")
+    showMessage(props.i18n.urlCopied, 2000, "info")
   } catch {
-    showMessage(props.i18n.copyUrl || "复制失败", 2000, "error")
+    showMessage(props.i18n.copyUrl, 2000, "error")
   }
 }
 
 const addCategory = async (name: string, color: string) => {
   if (categories.value.some((c) => c.name === name)) {
-    showMessage("类别已存在", 2000, "error")
+    showMessage(props.i18n.categoryExists, 2000, "error")
     return
   }
 
@@ -225,7 +228,7 @@ const addCategory = async (name: string, color: string) => {
 const removeCategory = async (catId: string) => {
   const hasEntries = entries.value.some((e) => e.category === catId)
   if (hasEntries) {
-    showMessage("该类别下有网站，无法删除", 2000, "error")
+    showMessage(props.i18n.categoryNotEmpty, 2000, "error")
     return
   }
 

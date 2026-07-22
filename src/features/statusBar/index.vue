@@ -106,7 +106,6 @@ import { PluginStorage } from "@/utils/pluginStorage"
 import { showEverythingSearch } from "../everythingSearch"
 import { showImageCreation } from "../imageCreation"
 import { showPasswordVault } from "../passwordVault"
-import { showWebsiteNavigation } from "../websiteNavigation/types"
 import FeatureDrawer from "./components/FeatureDrawer.vue"
 import MonitorItem from "./components/MonitorItem.vue"
 import { useStatusBar } from "./composables/useStatusBar"
@@ -236,7 +235,7 @@ const FEATURES: FeatureRegistryEntry[] = [
       icon: "ph:link",
       itemClass: "action-item website-navigation-item",
     },
-    action: () => showWebsiteNavigation(props.plugin),
+    action: () => emitCustomEvent("toggleWebsiteNavigation"),
   },
   {
     id: "imageCreation",

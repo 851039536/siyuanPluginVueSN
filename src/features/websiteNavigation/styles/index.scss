@@ -1,8 +1,5 @@
 @use '../../../_variables.scss' as *;
 
-// Codex 标准 Token（非 superPanel 模块本地声明）
-$vp-radius: $radius-base;
-
 .website-navigation-panel {
   display: flex;
   flex-direction: column;
@@ -28,15 +25,15 @@ $vp-radius: $radius-base;
 
       h2 {
         margin: 0;
-        font-size: 18px;
-        font-weight: 600;
+        font-size: $font-size-lg;
+        font-weight: $font-weight-semibold;
       }
 
       .entry-count {
-        font-size: 12px;
+        font-size: $font-size-xs;
         color: var(--b3-theme-secondary);
         background: var(--b3-theme-surface);
-        padding: 2px $spacing-2;
+        padding: $spacing-2px $spacing-2;
         border-radius: $radius-base;
       }
     }
@@ -75,9 +72,9 @@ $vp-radius: $radius-base;
       display: inline-flex;
       align-items: center;
       gap: $spacing-1;
-      padding: 2px 8px;
+      padding: $spacing-2px $spacing-2;
       border-radius: $vp-radius;
-      font-size: 12px;
+      font-size: $font-size-xs;
       border: 1px solid var(--b3-border-color);
       background: var(--b3-theme-background);
       color: var(--b3-theme-on-background);
@@ -108,14 +105,14 @@ $vp-radius: $radius-base;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: $spacing-2;
     min-height: 0;
 
     .entry-card {
       background: var(--b3-theme-surface);
       border: 1px solid var(--b3-border-color);
       border-radius: $vp-radius;
-      padding: 10px $spacing-3;
+      padding: $spacing-3 $spacing-3;
       transition: border-color 0.12s;
 
       &:hover {
@@ -134,7 +131,7 @@ $vp-radius: $radius-base;
           .entry-name-row {
             display: flex;
             align-items: center;
-            gap: 6px;
+    gap: $spacing-2;
             margin-bottom: $spacing-1;
 
             .entry-icon {
@@ -143,8 +140,8 @@ $vp-radius: $radius-base;
             }
 
             .entry-name {
-              font-size: 14px;
-              font-weight: 600;
+              font-size: $font-size-sm;
+              font-weight: $font-weight-semibold;
               color: var(--b3-theme-on-background);
               overflow: hidden;
               text-overflow: ellipsis;
@@ -152,8 +149,8 @@ $vp-radius: $radius-base;
             }
 
             .entry-category-tag {
-              font-size: 10px;
-              font-weight: 700;
+              font-size: $font-size-2xs;
+              font-weight: $font-weight-bold;
               letter-spacing: 0.04em;
               text-transform: uppercase;
               padding: 1px 6px;
@@ -166,10 +163,10 @@ $vp-radius: $radius-base;
             display: flex;
             align-items: center;
             gap: $spacing-1;
-            margin-bottom: 2px;
+            margin-bottom: $spacing-2px;
             cursor: pointer;
             color: var(--b3-theme-primary);
-            font-size: 12px;
+            font-size: $font-size-xs;
 
             .url-text {
               overflow: hidden;
@@ -184,7 +181,7 @@ $vp-radius: $radius-base;
           }
 
           .entry-desc {
-            font-size: 12px;
+            font-size: $font-size-xs;
             color: var(--b3-theme-secondary);
             overflow: hidden;
             text-overflow: ellipsis;
@@ -194,7 +191,7 @@ $vp-radius: $radius-base;
 
         .entry-actions {
           display: flex;
-          gap: 2px;
+          gap: $spacing-2px;
           flex-shrink: 0;
           align-items: flex-start;
         }
@@ -213,7 +210,7 @@ $vp-radius: $radius-base;
       opacity: 0.35;
 
       p {
-        font-size: 14px;
+        font-size: $font-size-sm;
         margin: 0;
       }
     }
@@ -246,14 +243,14 @@ $vp-radius: $radius-base;
     padding: $spacing-4;
     border-bottom: 1px solid var(--b3-border-color);
 
-    h3 { margin: 0; font-size: 16px; }
+    h3 { margin: 0; font-size: $font-size-base; }
   }
 
   .dialog-body {
     padding: $spacing-4;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: $spacing-4;
   }
 
   .dialog-footer {
@@ -270,8 +267,8 @@ $vp-radius: $radius-base;
     gap: $spacing-1;
 
     label {
-      font-size: 10px;
-      font-weight: 700;
+      font-size: $font-size-2xs;
+      font-weight: $font-weight-bold;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       opacity: 0.45;
@@ -310,13 +307,13 @@ $vp-radius: $radius-base;
     .category-list {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: $spacing-2;
 
       .category-row {
         display: flex;
         align-items: center;
         gap: $spacing-2;
-        padding: 6px $spacing-2;
+        padding: $spacing-1 $spacing-2;
         border-radius: $vp-radius;
         background: var(--b3-theme-surface);
 
@@ -329,11 +326,11 @@ $vp-radius: $radius-base;
 
         .cat-name {
           flex: 1;
-          font-size: 13px;
+          font-size: $font-size-sm;
         }
 
         .default-badge {
-          font-size: 11px;
+          font-size: $font-size-xs;
           color: var(--b3-theme-secondary);
         }
       }

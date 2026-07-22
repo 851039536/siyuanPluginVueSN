@@ -1823,7 +1823,9 @@
     "unifiedMode": "统一",
     "theme": "主题",
     "lightTheme": "浅色",
-    "darkTheme": "深色"
+    "darkTheme": "深色",
+    "selectFile": "选择文件",
+    "dropFile": "释放文件以导入"
   },
   "enableTextDiff": "启用文本对比功能",
   "enableTextDiffDesc": "提供文本差异对比功能，支持字符、词语、行和补丁模式对比",

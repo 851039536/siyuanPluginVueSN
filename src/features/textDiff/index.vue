@@ -1,3 +1,6 @@
+<!--
+  文本对比功能主面板 — 并排输入 + diff 查看器，支持拖拽导入与主题/模式/字号切换
+-->
 <template>
   <div class="text-diff-container">
     <!-- 工具栏 -->
@@ -31,6 +34,19 @@
               {{ opt.label }}
             </option>
           </select>
+        </div>
+
+        <div class="option-group">
+          <span class="option-label">{{ $t('theme') }}</span>
+          <button
+            v-for="t in themeOptions"
+            :key="t.value"
+            class="toggle-btn"
+            :class="{ active: diffTheme === t.value }"
+            @click="updateTheme(t.value)"
+          >
+            {{ t.label }}
+          </button>
         </div>
       </div>
 
@@ -260,6 +276,7 @@ const modifiedText = ref("")
 const originalFileName = ref("")
 const modifiedFileName = ref("")
 const diffMode = ref<"split" | "unified">("split")
+const diffTheme = ref<"light" | "dark">("light")
 const fontSize = ref<number>(14)
 
 // 拖拽状态
@@ -267,9 +284,6 @@ const dragState = reactive({
   original: false,
   modified: false,
 })
-
-// 固定使用浅色主题
-const diffTheme = "light"
 
 // 内联 SVG 图标路径（模板复用去重）
 const ICONS = {
@@ -319,6 +333,17 @@ const modeOptions = computed(() => [
   },
 ])
 
+const themeOptions = computed(() => [
+  {
+    value: "light" as const,
+    label: $t("lightTheme"),
+  },
+  {
+    value: "dark" as const,
+    label: $t("darkTheme"),
+  },
+])
+
 // 设置字体大小
 const setFontSize = (size: number) => {
   document.documentElement.style.setProperty("--diff-font-size", `${size}px`)
@@ -330,6 +355,7 @@ const loadSettings = async () => {
   try {
     const settings = await storage.settings.loadOrDefault()
     diffMode.value = settings.diffMode
+    diffTheme.value = settings.theme
     fontSize.value = settings.fontSize
     setFontSize(settings.fontSize)
   } catch (error) {
@@ -344,7 +370,7 @@ const saveSettings = async () => {
     const settings: TextDiffSettings = {
       fontSize: fontSize.value,
       diffMode: diffMode.value,
-      theme: "light",
+      theme: diffTheme.value,
     }
     await storage.settings.save(settings)
   } catch (error) {
@@ -354,6 +380,11 @@ const saveSettings = async () => {
 
 const updateMode = (mode: "split" | "unified") => {
   diffMode.value = mode
+  saveSettings()
+}
+
+const updateTheme = (theme: "light" | "dark") => {
+  diffTheme.value = theme
   saveSettings()
 }
 
@@ -438,26 +469,7 @@ const readFile = (file: File, target: "original" | "modified") => {
 
 // 国际化
 const $t = (key: string): string => {
-  if (props.i18n?.textDiff?.[key]) {
-    return props.i18n.textDiff[key]
-  }
-  const translations: Record<string, string> = {
-    clear: "清空",
-    swap: "交换",
-    original: "原文本",
-    modified: "修改后文本",
-    diffResult: "差异结果",
-    chars: "字符",
-    originalPlaceholder: "输入原始文本或拖拽文件到此处...",
-    modifiedPlaceholder: "输入修改后文本或拖拽文件到此处...",
-    displayMode: "显示模式",
-    splitMode: "分栏",
-    unifiedMode: "统一",
-    fontSize: "字体",
-    selectFile: "选择文件",
-    dropFile: "释放文件以导入",
-  }
-  return translations[key] || key
+  return props.i18n?.textDiff?.[key] || key
 }
 
 onMounted(() => {

@@ -4,8 +4,8 @@
 // ==================== Codex Design System ====================
 
 @mixin codex-meta-label {
-  font-size: 10px;
-  font-weight: 700;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   opacity: 0.45;
@@ -57,7 +57,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 14px;
+  padding: $spacing-3 $spacing-3;
   background: var(--b3-theme-surface);
   border-bottom: 1px solid var(--b3-border-color);
   gap: $spacing-4;
@@ -80,7 +80,7 @@
 .option-group {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: $spacing-2;
 }
 
 .option-label {
@@ -92,7 +92,7 @@
 
 .toggle-btn {
   @include codex-btn-base;
-  padding: $spacing-1 10px;
+  padding: $spacing-1 $spacing-3;
   font-size: $font-size-xs;
   white-space: nowrap;
 
@@ -114,7 +114,7 @@
 // ==================== Font Select ====================
 
 .font-select {
-  padding: 6px 10px;
+  padding: $spacing-1 $spacing-3;
   font-size: $font-size-xs;
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
@@ -126,8 +126,7 @@
 
   &:focus {
     border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
-    outline: none;
+    outline: 2px solid var(--b3-theme-primary-lightest);
   }
 }
 
@@ -137,8 +136,8 @@
   @include codex-btn-base;
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: $spacing-1 10px;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-3;
   font-size: $font-size-xs;
 
   svg {
@@ -189,7 +188,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 10px;
+  padding: $spacing-1 $spacing-3;
   background: var(--b3-theme-surface);
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
@@ -212,7 +211,7 @@
 
 .file-name {
   font-family: $vp-mono;
-  font-size: 11px;
+  font-size: $font-size-2xs;
   color: var(--b3-theme-primary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -221,7 +220,7 @@
 
 .char-count {
   font-family: $vp-mono;
-  font-size: 11px;
+  font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface-variant);
 }
 
@@ -243,10 +242,10 @@
 
 .input-textarea {
   flex: 1;
-  padding: 6px 10px;
+  padding: $spacing-1 $spacing-3;
   font-size: var(--diff-font-size, 14px);
   font-family: inherit;
-  border: none;
+  border: 1px solid transparent;
   background: transparent;
   color: var(--b3-theme-on-background);
   resize: none;
@@ -254,7 +253,7 @@
   line-height: $line-height-normal;
 
   &:focus {
-    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+    border-color: var(--b3-theme-primary);
   }
 
   &::placeholder {
@@ -276,13 +275,13 @@
   gap: $spacing-2;
   background: rgba(var(--b3-theme-primary-rgb, 235, 94, 42), 0.1);
   border: 2px dashed var(--b3-theme-primary);
-  border-radius: 0 0 5px 5px;
+  border-radius: 0 0 $vp-radius $vp-radius;
   color: var(--b3-theme-primary);
   pointer-events: none;
   z-index: 10;
 
   span {
-    font-size: 13px;
+    font-size: $font-size-sm;
     font-weight: $font-weight-medium;
   }
 }

@@ -861,6 +861,8 @@ function fileDiffsForProject(projectId: string): Record<string, string> {
 
 onMounted(async () => {
   document.addEventListener("click", closeIdeMenuOnOutside)
+  // 先恢复工作区展开状态，确保首屏 ProjectCard 挂载时 initialExpanded 已就绪
+  await loadExpandedWorkingTrees()
   await loadProjects()
   projectMdFiles.value = {}
   loadCommitTemplates()
@@ -868,7 +870,6 @@ onMounted(async () => {
   scanIdes() // 扫描已安装的 IDE
   await loadGitOpsPaused() // 从持久化存储恢复暂停状态
   await loadShowArchived() // 从持久化存储恢复归档显示状态
-  await loadExpandedWorkingTrees() // 从持久化存储恢复工作区展开状态
   // 默认选中第一个分类
   if (!activeCategory.value && groupedProjects.value.length > 0) {
     activeCategory.value = groupedProjects.value[0].category.id

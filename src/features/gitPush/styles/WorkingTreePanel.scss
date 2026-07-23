@@ -58,6 +58,8 @@
 
 .wt-body {
   margin-top: 6px;
+  max-height: 420px;
+  overflow-y: auto;
 }
 
 .wt-toolbar {
@@ -66,16 +68,6 @@
   margin-bottom: 6px;
 
   .vp-btn { font-size: 10px; padding: 1px 6px; }
-}
-
-.wt-diff-hint {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  padding: 3px 8px;
-  font-size: 10px;
-  opacity: 0.35;
-  border-bottom: 1px solid var(--b3-border-color);
 }
 
 .wt-files {

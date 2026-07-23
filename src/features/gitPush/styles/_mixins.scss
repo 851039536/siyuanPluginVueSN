@@ -1,10 +1,11 @@
 // gitPush 共享 mixin 混入（focus 发光、按钮重置等）
 @use "./variables" as *;
 
-// 输入框/选择框 focus 发光效果（Codex 风格规范）
+// 输入框/选择框 focus 发光效果（Codex 风格规范，用 outline 避免 box-shadow）
 @mixin focus-ring {
   border-color: var(--b3-theme-primary);
-  box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+  outline: 2px solid var(--b3-theme-primary-lightest);
+  outline-offset: 0;
 }
 
 // 输出区通用样式（推送输出、提交输出等共享）

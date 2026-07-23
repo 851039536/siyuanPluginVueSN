@@ -3,6 +3,7 @@ import type { Ref } from "vue"
 import type { GitProject, ViewMode } from "../types"
 import {
   computed,
+  onUnmounted,
   ref,
   watch,
 } from "vue"
@@ -43,6 +44,16 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
   } = options
 
   const searchQuery = ref("")
+  /** 防抖后的搜索词（300ms），用于过滤计算，避免每次按键都重算 computed 与 DOM diff */
+  const debouncedQuery = ref("")
+  let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null
+  watch(searchQuery, (v) => {
+    if (searchDebounceTimer) { clearTimeout(searchDebounceTimer) }
+    searchDebounceTimer = setTimeout(() => { debouncedQuery.value = v }, 300)
+  })
+  onUnmounted(() => {
+    if (searchDebounceTimer) { clearTimeout(searchDebounceTimer) }
+  })
   const viewMode = ref<ViewMode>("all")
   const showArchived = ref(false)
   const selectedTags = ref<Set<string>>(new Set())
@@ -85,7 +96,7 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
 
   /** 统一筛选 + 分组管道 */
   const filteredGroups = computed(() => {
-    const q = searchQuery.value.trim().toLowerCase()
+    const q = debouncedQuery.value.trim().toLowerCase()
     const tags = selectedTags.value
     const isArchivedView = viewMode.value === "archived"
 

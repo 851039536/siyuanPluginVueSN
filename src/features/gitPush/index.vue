@@ -73,7 +73,8 @@
         v-if="loading"
         class="gp-loading"
       >
-        {{ i18n.loading || '加载中...' }}
+        <Loader />
+        <span class="gp-loading-text">{{ i18n.loading || '加载中...' }}</span>
       </div>
 
       <div
@@ -113,6 +114,7 @@
             :custom-ides="customIdes"
             :editing-name-id="editingNameId"
             :editing-name-input="editingNameInput"
+            :search-query="searchQuery"
             :refreshing="refreshing"
             :fetching="fetching[project.id]"
             :open-ide-menu="openIdeMenu"
@@ -133,6 +135,7 @@
             :tags-cache="tagsCache[project.id]"
             :tag-loading="tagLoading[project.id]"
             :working-tree-loading="workingTreeLoading[project.id]"
+            :working-tree-expanded="expandedWorkingTrees[project.id]"
             :remote-status-loading="remoteStatusLoading[project.id]"
             :open-refresh-menu="openRefreshMenu"
             :tag-push-loading="tagPushLoading[project.id]"
@@ -193,6 +196,7 @@
             @clear-output="(id: string) => commitOutputs[id] = ''"
             @discard-file="handleDiscard"
             @expand="handleExpand"
+            @update:working-tree-expanded="handleWorkingTreeExpanded"
             @reload-commit-log="handleReloadCommitLog"
             @stash-confirm-msg="handleStashConfirmMsg"
             @gen-stash-desc="handleGenStashDesc"
@@ -215,32 +219,38 @@
     </template>
     <!-- 列表视图结束 -->
 
-    <AddProjectDialog
-      v-if="showAddDialog"
-      :i18n="i18n"
-      :categories="categories"
-      :selected-path="newProjectPath"
-      @close="showAddDialog = false"
-      @pick-dir="selectDirectory"
-      @add="handleAddFromDialog"
-    />
-    <CategoryDialog
-      v-if="showCatDialog"
-      :i18n="i18n"
-      :categories="categories"
-      @close="showCatDialog = false"
-      @add-category="handleAddCategory"
-      @delete-category="handleDeleteCategory"
-    />
-    <SettingsDialog
-      v-if="showSettings"
-      :i18n="i18n"
-      :concurrency="gitConcurrency"
-      :push-branch-mode="pushBranchMode"
-      @close="showSettings = false"
-      @save="handleSaveConcurrency"
-      @save-branch-mode="handleSaveBranchMode"
-    />
+    <Transition name="gp-dialog-fade">
+      <AddProjectDialog
+        v-if="showAddDialog"
+        :i18n="i18n"
+        :categories="categories"
+        :selected-path="newProjectPath"
+        @close="showAddDialog = false"
+        @pick-dir="selectDirectory"
+        @add="handleAddFromDialog"
+      />
+    </Transition>
+    <Transition name="gp-dialog-fade">
+      <CategoryDialog
+        v-if="showCatDialog"
+        :i18n="i18n"
+        :categories="categories"
+        @close="showCatDialog = false"
+        @add-category="handleAddCategory"
+        @delete-category="handleDeleteCategory"
+      />
+    </Transition>
+    <Transition name="gp-dialog-fade">
+      <SettingsDialog
+        v-if="showSettings"
+        :i18n="i18n"
+        :concurrency="gitConcurrency"
+        :push-branch-mode="pushBranchMode"
+        @close="showSettings = false"
+        @save="handleSaveConcurrency"
+        @save-branch-mode="handleSaveBranchMode"
+      />
+    </Transition>
     <!-- 拉取确认弹窗 -->
     <ConfirmDialog
       :visible="showPullConfirm"
@@ -265,58 +275,69 @@
       @confirm="doGenericConfirm"
       @cancel="cancelGenericConfirm"
     />
-    <IdeManagementDialog
-      v-if="showIdeDialog"
-      :custom-ides="customIdes"
-      :preset-options="IDE_PRESETS"
-      :get-icon="getIdePresetIcon"
-      @close="showIdeDialog = false"
-      @add-ide="(preset: string, path: string) => { addIdePreset = preset; addIdePath = path; addCustomIde() }"
-      @save-edit-ide="(idx: number, preset: string, path: string) => { editingIdeIdx = idx; editIdePreset = preset; editIdePath = path; saveEditIde(idx) }"
-      @delete-ide="doRemoveCustomIde"
-    />
-    <ScanImportDialog
-      v-if="showScanDialog"
-      :i18n="i18n"
-      :scanning="scanning"
-      :error="scanError"
-      :results="scanResults"
-      :selection="scanSelection"
-      :scan-dir="scanDirInput"
-      @close="handleCloseScan"
-      @pick-scan-dir="selectScanDirectory"
-      @start-scan="handleStartScan"
-      @toggle-select-all="handleToggleSelectAll"
-      @toggle-item="toggleScanItem"
-      @import-selected="handleImportSelected"
-    />
-    <EditProjectDialog
-      v-if="editDialogProjectId"
-      :project-id="editDialogProjectId"
-      :manager="manager"
-      :i18n="i18n"
-      @close="editDialogProjectId = ''"
-      @saved="handleEditSaved"
-      @urls-updated="handleUrlsUpdated"
-    />
-    <MarkdownPreviewDialog
-      v-if="markdownPreviewProject"
-      :project="markdownPreviewProject"
-      :manager="manager"
-      :i18n="i18n"
-      :initial-file="markdownPreviewInitialFile"
-      @close="closeMarkdownPreview"
-    />
-    <GitConfigDialog
-      v-if="showGitConfig"
-      :config-text="gitConfigText"
-      :loading="gitConfigLoading"
-      :error="gitConfigError"
-      :i18n="i18n"
-      :file-path="gitConfigFilePath"
-      :title="gitConfigTitle"
-      @close="closeGitConfig"
-    />
+    <Transition name="gp-dialog-fade">
+      <IdeManagementDialog
+        v-if="showIdeDialog"
+        :i18n="i18n"
+        :custom-ides="customIdes"
+        :preset-options="IDE_PRESETS"
+        :get-icon="getIdePresetIcon"
+        @close="showIdeDialog = false"
+        @add-ide="(preset: string, path: string) => { addIdePreset = preset; addIdePath = path; addCustomIde() }"
+        @save-edit-ide="(idx: number, preset: string, path: string) => { editingIdeIdx = idx; editIdePreset = preset; editIdePath = path; saveEditIde(idx) }"
+        @delete-ide="doRemoveCustomIde"
+      />
+    </Transition>
+    <Transition name="gp-dialog-fade">
+      <ScanImportDialog
+        v-if="showScanDialog"
+        :i18n="i18n"
+        :scanning="scanning"
+        :error="scanError"
+        :results="scanResults"
+        :selection="scanSelection"
+        :scan-dir="scanDirInput"
+        @close="handleCloseScan"
+        @pick-scan-dir="selectScanDirectory"
+        @start-scan="handleStartScan"
+        @toggle-select-all="handleToggleSelectAll"
+        @toggle-item="toggleScanItem"
+        @import-selected="handleImportSelected"
+      />
+    </Transition>
+    <Transition name="gp-dialog-fade">
+      <EditProjectDialog
+        v-if="editDialogProjectId"
+        :project-id="editDialogProjectId"
+        :manager="manager"
+        :i18n="i18n"
+        @close="editDialogProjectId = ''"
+        @saved="handleEditSaved"
+        @urls-updated="handleUrlsUpdated"
+      />
+    </Transition>
+    <Transition name="gp-dialog-fade">
+      <MarkdownPreviewDialog
+        v-if="markdownPreviewProject"
+        :project="markdownPreviewProject"
+        :manager="manager"
+        :i18n="i18n"
+        :initial-file="markdownPreviewInitialFile"
+        @close="closeMarkdownPreview"
+      />
+    </Transition>
+    <Transition name="gp-dialog-fade">
+      <GitConfigDialog
+        v-if="showGitConfig"
+        :config-text="gitConfigText"
+        :loading="gitConfigLoading"
+        :error="gitConfigError"
+        :i18n="i18n"
+        :file-path="gitConfigFilePath"
+        :title="gitConfigTitle"
+        @close="closeGitConfig"
+      />
+    </Transition>
   </div>
 </template>
 
@@ -352,6 +373,7 @@ import SettingsDialog from "./components/SettingsDialog.vue"
 import StatsPanel from "./components/StatsPanel.vue"
 import BatchProgressBar from "./components/BatchProgressBar.vue"
 import GitConfigDialog from "./components/GitConfigDialog.vue"
+import Loader from "@/components/Loader.vue"
 import { pickDirectory } from "./composables/useDirectoryPicker"
 import { useGitPush } from "./composables/useGitPush"
 import { useBatchProgress } from "./composables/useBatchProgress"
@@ -493,6 +515,24 @@ const { commitLogLoading, commitLogForProject, handleExpand, handleReloadCommitL
   loadStashList,
   loadTags,
 })
+
+/** 各项目工作区面板展开状态（按 projectId 持久化，跨会话记忆） */
+const expandedWorkingTrees = ref<Record<string, boolean>>({})
+
+/** 从持久化存储恢复工作区展开状态 */
+async function loadExpandedWorkingTrees() {
+  expandedWorkingTrees.value = await props.manager.storage.workingTreeExpanded.loadOrDefault()
+}
+
+/** 工作区展开状态变化：更新内存并持久化 */
+function handleWorkingTreeExpanded(id: string, value: boolean) {
+  if (value) {
+    expandedWorkingTrees.value[id] = true
+  } else {
+    delete expandedWorkingTrees.value[id]
+  }
+  props.manager.storage.workingTreeExpanded.save({ ...expandedWorkingTrees.value }).catch(() => {})
+}
 
 const showAddDialog = ref(false)
 const showCatDialog = ref(false)
@@ -828,6 +868,7 @@ onMounted(async () => {
   scanIdes() // 扫描已安装的 IDE
   await loadGitOpsPaused() // 从持久化存储恢复暂停状态
   await loadShowArchived() // 从持久化存储恢复归档显示状态
+  await loadExpandedWorkingTrees() // 从持久化存储恢复工作区展开状态
   // 默认选中第一个分类
   if (!activeCategory.value && groupedProjects.value.length > 0) {
     activeCategory.value = groupedProjects.value[0].category.id
@@ -1108,11 +1149,12 @@ async function handlePushAllProjects() {
   pushAllTotal.value = allProjects.length
   pushAllDone.value = 0
   try {
-    for (const p of allProjects) {
-      if (!pushingAllProjects.value) break
+    // 批次并发推送（复用 gitConcurrency）；取消后不再启动新批次，进行中的批次自然完成
+    await batchProcess(allProjects, gitConcurrency.value || 3, async (p) => {
+      if (!pushingAllProjects.value) return
       await pushToAll(p.id)
       pushAllDone.value++
-    }
+    })
   } finally {
     pushingAllProjects.value = false
   }

@@ -1,7 +1,10 @@
 <!-- 项目分类管理弹窗 -->
 <template>
   <div
+    ref="rootRef"
+    tabindex="-1"
     class="gp-mask"
+    @keydown.escape="$emit('close')"
     @click.self="$emit('close')"
   >
     <div
@@ -74,6 +77,7 @@ import { Icon } from "@iconify/vue"
 import { ref } from "vue"
 import Input from "@/components/Input.vue"
 import { UNGROUPED_ID } from "../types"
+import { useDialogKeyboard } from "../composables/useDialogKeyboard"
 
 defineProps<{
   i18n: Record<string, any>
@@ -85,6 +89,8 @@ const emit = defineEmits<{
   "add-category": [name: string, color: string]
   "delete-category": [id: string]
 }>()
+
+const { rootRef } = useDialogKeyboard()
 
 const newCatName = ref("")
 const newCatColor = ref("#3b82f6")

@@ -183,6 +183,11 @@ onMounted(() => {
     showVideoManager.value = true
   })
 
+  // 监听打开图片生成事件（来自状态栏功能抽屉）
+  window.addEventListener("openImageCreation", () => {
+    imageCreationVisible.value = true
+  })
+
   // 监听打开Everything搜索事件
   window.addEventListener("openEverythingSearch", () => {
     everythingSearchVisible.value = true

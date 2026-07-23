@@ -8,7 +8,7 @@
           <button
             class="gp-star-btn"
             :class="{ active: project.starred }"
-            :title="project.starred ? '取消收藏' : '收藏置顶'"
+            :title="project.starred ? (i18n.unstar || '取消收藏') : (i18n.starPin || '收藏置顶')"
             @click.stop="$emit('toggleStar', project.id)"
           >
             <Icon
@@ -29,14 +29,20 @@
           <span
             v-else
             class="gp-card-name"
-            title="点击修改名称"
+            :title="i18n.clickToRename || '点击修改名称'"
             @click.stop="$emit('startNameEdit', project)"
-          >{{ project.name }}</span>
+          ><template
+            v-for="(seg, i) in nameSegments"
+            :key="i"
+          ><span
+            v-if="seg.hit"
+            class="gp-hl"
+          >{{ seg.text }}</span><template v-else>{{ seg.text }}</template></template></span>
           <!-- 状态徽章 -->
           <button
             class="gp-project-status-btn"
             :class="`gp-psb-${project.status || 'active'}`"
-            :title="`状态: ${statusMeta[project.status || 'active'].label}（点击切换）`"
+            :title="(i18n.statusTitle || '状态: {0}（点击切换）').replace('{0}', statusMeta[project.status || 'active'].label)"
             @click.stop="$emit('cycleStatus', project.id, project.status)"
           >
             <Icon
@@ -47,12 +53,12 @@
           <span
             v-if="project.archived"
             class="gp-archived-tag"
-            title="已归档"
+            :title="i18n.archivedTitle || '已归档'"
           >
             <Icon
               icon="mdi:archive-outline"
               height="12"
-            />归档
+            />{{ i18n.archivedShort || '归档' }}
           </span>
         </div>
         <div
@@ -68,13 +74,13 @@
           <span
             v-if="project.localPaths?.length"
             class="gp-multi-path-badge"
-            :title="`已配置 ${project.localPaths.length + 1} 个设备路径`"
-          >+{{ project.localPaths.length }}路径</span>
+            :title="(i18n.devicePathsCount || '已配置 {0} 个设备路径').replace('{0}', String(project.localPaths.length + 1))"
+          >+{{ project.localPaths.length }}{{ i18n.pathsSuffix || '路径' }}</span>
           <span
             v-if="project.lastActivity"
             class="gp-activity"
             :class="`gp-act-${activityLevel(project.lastActivity)}`"
-            :title="activityLevel(project.lastActivity) === 'dead' ? '长时间未活动，建议归档' : ''"
+            :title="activityLevel(project.lastActivity) === 'dead' ? (i18n.inactiveHint || '长时间未活动，建议归档') : ''"
           >
             <Icon
               icon="mdi:clock-outline"
@@ -111,7 +117,7 @@
             :key="b.name"
             class="gp-branch-tag"
             :class="{ current: b.current }"
-            :title="b.current ? '当前分支' : `切换到 ${b.name}`"
+            :title="b.current ? (i18n.currentBranch || '当前分支') : (i18n.switchToBranch || '切换到 {0}').replace('{0}', b.name)"
             @click="$emit('switchBranch', project.id, b.name)"
           >
             {{ b.name }}
@@ -158,7 +164,7 @@
           <button
             v-if="getProjectUrl(project, pm.urlProp)"
             class="vp-btn vp-btn--ghost vp-btn--sm"
-            :title="`打开 ${pm.label}（右键复制链接）`"
+            :title="(i18n.openPlatformHint || '打开 {0}（右键复制链接）').replace('{0}', pm.label)"
             @click="$emit('openWeb', getProjectUrl(project, pm.urlProp)!)"
             @contextmenu.prevent="$emit('copyUrl', getProjectUrl(project, pm.urlProp)!)"
           >
@@ -171,7 +177,7 @@
         <div class="gp-ide-wrap">
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm"
-            title="打开项目"
+            :title="i18n.openProject || '打开项目'"
             @click.stop="$emit('toggleIdeMenu', project.id)"
           >
             <Icon
@@ -197,7 +203,7 @@
                 icon="mdi:folder-open"
                 height="12"
               />
-              <span>打开文件夹</span>
+              <span>{{ i18n.openFolder || '打开文件夹' }}</span>
             </button>
             <div class="gp-ide-divider" />
             <button
@@ -209,7 +215,7 @@
                 icon="mdi:information-outline"
                 height="12"
               />
-              <span>未检测到 IDE</span>
+              <span>{{ i18n.noIdeDetected || '未检测到 IDE' }}</span>
             </button>
             <button
               v-for="ide in detectedIdes"
@@ -235,24 +241,24 @@
               />
               <span>{{ custom.name }}</span>
               <template v-if="confirmingDelIdx === idx">
-                <span class="gp-ide-del-confirm">确认删除?</span>
+                <span class="gp-ide-del-confirm">{{ i18n.confirmDeleteShort || '确认删除?' }}</span>
                 <button
                   class="gp-ide-del-yes"
                   @click.stop="$emit('doRemoveCustomIde', idx)"
                 >
-                  是
+                  {{ i18n.yes || '是' }}
                 </button>
                 <button
                   class="gp-ide-del-no"
                   @click.stop="$emit('update:confirmingDelIdx', -1)"
                 >
-                  否
+                  {{ i18n.no || '否' }}
                 </button>
               </template>
               <button
                 v-else
                 class="gp-ide-item-del"
-                title="删除此自定义 IDE"
+                :title="i18n.deleteCustomIde || '删除此自定义 IDE'"
                 @click.stop="$emit('update:confirmingDelIdx', idx)"
               >
                 <Icon
@@ -270,14 +276,14 @@
                 icon="mdi:cog-outline"
                 height="12"
               />
-              <span>管理 IDE...</span>
+              <span>{{ i18n.manageIde || '管理 IDE...' }}</span>
             </button>
           </div>
         </div>
         <div class="gp-refresh-wrap">
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm"
-            title="刷新选项"
+            :title="i18n.refreshOptions || '刷新选项'"
             @click.stop="$emit('toggleRefreshMenu', project.id)"
           >
             <Icon
@@ -316,7 +322,7 @@
         </div>
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
-          title="编辑项目（标签/状态/备注）"
+          :title="i18n.editProjectBtn || '编辑项目（标签/状态/备注）'"
           @click="$emit('openEditDialog', project)"
         >
           <Icon
@@ -326,7 +332,7 @@
         </button>
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
-          title="查看项目 Git 配置"
+          :title="i18n.viewProjectGitConfig || '查看项目 Git 配置'"
           @click="$emit('openProjectGitConfig', project.id)"
         >
           <Icon
@@ -352,7 +358,7 @@
       <button
         class="vp-btn vp-btn--ghost vp-btn--sm gp-section-refresh"
         :disabled="remoteStatusLoading"
-        title="刷新远程状态"
+        :title="i18n.refreshRemoteStatus || '刷新远程状态'"
         @click.stop="$emit('refreshRemoteStatus', project.id)"
       >
         <Icon icon="mdi:refresh" height="12" :class="{ 'gp-spin': remoteStatusLoading }" />
@@ -408,6 +414,7 @@
       :commit-log-loading="commitLogLoading || false"
       :working-tree-loading="workingTreeLoading || false"
       :commit-templates="commitTemplates"
+      :initial-expanded="workingTreeExpanded || false"
       @stage-file="(file: string) => $emit('stageFile', project.id, file)"
       @unstage-file="(file: string) => $emit('unstageFile', project.id, file)"
       @stage-all="$emit('stageAll', project.id)"
@@ -418,6 +425,7 @@
       @clear-output="$emit('clearOutput', project.id)"
       @discard-file="(file: string, staged: boolean, status: string) => $emit('discardFile', project.id, file, staged, status)"
       @expand="$emit('expand', project.id)"
+      @update:expanded="(v: boolean) => $emit('update:workingTreeExpanded', project.id, v)"
       @reload-commit-log="(count: number) => $emit('reloadCommitLog', project.id, count)"
       @refresh-working-tree="$emit('refreshWorkingTree', project.id)"
       @refresh-commit-log="$emit('refreshCommitLog', project.id)"
@@ -553,6 +561,7 @@ import {
   REMOTES,
   STATUS_META,
 } from "../types"
+import { highlightSegments } from "../utils"
 import type { MdFileEntry } from "../composables/useMarkdownFiles"
 import ConflictSection from "./ConflictSection.vue"
 import MarkdownFileBadge from "./MarkdownFileBadge.vue"
@@ -575,10 +584,13 @@ const props = defineProps<{
   // 编辑状态
   editingNameId: string
   editingNameInput: string
+  searchQuery?: string
   refreshing: string | null
   fetching: boolean
   openIdeMenu: Set<string>
   workingTreeLoading?: boolean
+  /** 工作区面板展开状态（按 projectId 持久化） */
+  workingTreeExpanded?: boolean
   remoteStatusLoading?: boolean
   openRefreshMenu: Set<string>
   confirmingDelIdx: number
@@ -663,6 +675,7 @@ defineEmits<{
   "clearOutput": [id: string]
   "discardFile": [id: string, file: string, staged: boolean, status: string]
   "expand": [id: string]
+  "update:workingTreeExpanded": [id: string, value: boolean]
   "reloadCommitLog": [id: string, count: number]
   // Stash
   "stashConfirmMsg": [id: string, msg: string]
@@ -687,6 +700,9 @@ defineEmits<{
   "openMarkdownPreview": [project: GitProject, fileName: string]
   "openProjectGitConfig": [id: string]
 }>()
+
+/** 项目名搜索高亮分段（按当前 searchQuery 切分） */
+const nameSegments = computed(() => highlightSegments(props.project.name, props.searchQuery || ""))
 
 /** 推送按钮状态 class 映射（消除模板中 3 次 getPushStatus 调用） */
 function pushBtnClass(status: string | undefined): Record<string, boolean> {

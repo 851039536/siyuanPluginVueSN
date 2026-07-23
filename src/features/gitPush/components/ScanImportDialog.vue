@@ -1,7 +1,10 @@
 <!-- 扫描导入 Git 项目弹窗 -->
 <template>
   <div
+    ref="rootRef"
+    tabindex="-1"
     class="gp-mask"
+    @keydown.escape="$emit('close')"
     @click.self="$emit('close')"
   >
     <div
@@ -143,6 +146,7 @@ import {
   watch,
 } from "vue"
 import Input from "@/components/Input.vue"
+import { useDialogKeyboard } from "../composables/useDialogKeyboard"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -163,6 +167,8 @@ const emit = defineEmits<{
 }>()
 
 const localScanDir = ref(props.scanDir)
+
+const { rootRef } = useDialogKeyboard()
 
 // 目录选择器回填路径
 watch(() => props.scanDir, (v) => {

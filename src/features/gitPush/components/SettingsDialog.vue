@@ -1,7 +1,10 @@
 <!-- gitPush 设置弹窗 -->
 <template>
   <div
+    ref="rootRef"
+    tabindex="-1"
     class="gp-mask"
+    @keydown.escape="$emit('close')"
     @click.self="$emit('close')"
   >
     <div
@@ -19,7 +22,7 @@
       </div>
       <div class="gp-dialog-body">
         <div class="gp-set-row">
-          <label class="gp-set-label">Git 并发数</label>
+          <label class="gp-set-label">{{ i18n.gitConcurrency || 'Git 并发数' }}</label>
           <div class="gp-set-input-row">
             <Input
               :model-value="localConcurrency"
@@ -32,15 +35,15 @@
               class="vp-btn vp-btn--primary vp-btn--sm"
               @click="$emit('save', localConcurrency); $emit('close')"
             >
-              保存
+              {{ i18n.save || '保存' }}
             </button>
           </div>
         </div>
         <div class="gp-set-hint">
-          同时执行的 git 子进程数上限（1~10）
+          {{ i18n.concurrencyHint || '同时执行的 git 子进程数上限（1~10）' }}
         </div>
         <div class="gp-set-row" style="margin-top: 12px;">
-          <label class="gp-set-label">推送分支模式</label>
+          <label class="gp-set-label">{{ i18n.pushBranchModeLabel || '推送分支模式' }}</label>
           <div class="gp-set-radio-group">
             <label class="gp-set-radio">
               <input
@@ -49,7 +52,7 @@
                 value="all"
                 @change="$emit('saveBranchMode', 'all')"
               />
-              <span>全部分支 (--all)</span>
+              <span>{{ i18n.pushBranchAllOpt || '全部分支 (--all)' }}</span>
             </label>
             <label class="gp-set-radio">
               <input
@@ -58,12 +61,12 @@
                 value="head"
                 @change="$emit('saveBranchMode', 'head')"
               />
-              <span>仅当前分支 (HEAD)</span>
+              <span>{{ i18n.pushBranchHeadOpt || '仅当前分支 (HEAD)' }}</span>
             </label>
           </div>
         </div>
         <div class="gp-set-hint">
-          "仅当前分支"模式更快，避免推送无变更的其他分支
+          {{ i18n.pushBranchHint || '“仅当前分支”模式更快，避免推送无变更的其他分支' }}
         </div>
       </div>
     </div>
@@ -74,6 +77,7 @@
 import { Icon } from "@iconify/vue"
 import { ref } from "vue"
 import Input from "@/components/Input.vue"
+import { useDialogKeyboard } from "../composables/useDialogKeyboard"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -89,4 +93,5 @@ const emit = defineEmits<{
 
 const localConcurrency = ref(props.concurrency)
 const localBranchMode = ref<"all" | "head">(props.pushBranchMode)
+const { rootRef } = useDialogKeyboard()
 </script>

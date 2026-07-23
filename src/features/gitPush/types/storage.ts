@@ -255,6 +255,8 @@ export class GitPushStorage {
   readonly showArchived: TypedStorage<boolean>
   /** 推送分支模式：all=全部分支, head=仅当前分支（持久化） */
   readonly pushBranchMode: TypedStorage<"all" | "head">
+  /** 各项目工作区面板展开状态（按 projectId 记忆） */
+  readonly workingTreeExpanded: TypedStorage<Record<string, boolean>>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
@@ -266,6 +268,7 @@ export class GitPushStorage {
     this.gitOpsPaused = new TypedStorage(storage, "git-push-ops-paused", false)
     this.showArchived = new TypedStorage(storage, "git-push-show-archived", false)
     this.pushBranchMode = new TypedStorage<"all" | "head">(storage, "git-push-branch-mode", "all")
+    this.workingTreeExpanded = new TypedStorage<Record<string, boolean>>(storage, "git-push-worktree-expanded", {})
   }
 
   async init(): Promise<void> {

@@ -98,14 +98,14 @@ import type { Ref } from "vue"
 import type { FeatureDrawerItem } from "./components/FeatureDrawer.vue"
 import {
   computed,
+  onBeforeUnmount,
+  onMounted,
   reactive,
   ref,
 } from "vue"
+import { featureIdToSettingKey } from "@/config/settings"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { PluginStorage } from "@/utils/pluginStorage"
-import { showEverythingSearch } from "../everythingSearch"
-import { showImageCreation } from "../imageCreation"
-import { showPasswordVault } from "../passwordVault"
 import FeatureDrawer from "./components/FeatureDrawer.vue"
 import MonitorItem from "./components/MonitorItem.vue"
 import { useStatusBar } from "./composables/useStatusBar"
@@ -187,7 +187,7 @@ const FEATURES: FeatureRegistryEntry[] = [
       icon: "ph:lock-key",
       itemClass: "action-item password-vault-item",
     },
-    action: () => showPasswordVault(),
+    action: () => emitCustomEvent("openPasswordVault"),
   },
   {
     id: "skillsViewer",
@@ -247,7 +247,7 @@ const FEATURES: FeatureRegistryEntry[] = [
       icon: "ph:image-square",
       itemClass: "action-item image-creation-item",
     },
-    action: () => showImageCreation(),
+    action: () => emitCustomEvent("openImageCreation"),
   },
   {
     id: "s3Backup",
@@ -271,7 +271,7 @@ const FEATURES: FeatureRegistryEntry[] = [
       icon: "ph:binoculars",
       itemClass: "action-item everything-search-item",
     },
-    action: () => showEverythingSearch(),
+    action: () => emitCustomEvent("openEverythingSearch"),
   },
   {
     id: "imageCompressor",
@@ -363,10 +363,20 @@ const FEATURES: FeatureRegistryEntry[] = [
 // id → 功能映射，用于点击分发（O(1) 取代 `id in SHORTCUT_DISPLAY` + superPanel 特判）
 const featureMap = new Map(FEATURES.map((f) => [f.id, f]))
 
+// 功能开关快照：superPanel 关闭某功能后，抽屉与快捷入口应同步隐藏
+const enabledSettings = ref<Record<string, any>>({ ...(props.plugin as any).settings })
+
+// superPanel 恒启用；监控项无功能开关恒显示；其余按 enableXxx 判定（缺省视为启用）
+const isFeatureEnabled = (id: string): boolean => {
+  if (id === "superPanel" || MONITOR_IDS.has(id)) return true
+  return enabledSettings.value[featureIdToSettingKey(id)] !== false
+}
+
 // 状态栏快捷：按 statusBarShortcuts 顺序映射出可渲染项（含 title / handler）
 const visibleShortcuts = computed(() => {
   const result: { id: string, icon: string, title: string, itemClass: string, handler: (() => void) | undefined }[] = []
   for (const id of statusBarShortcuts.value) {
+    if (!isFeatureEnabled(id)) continue
     const f = featureMap.get(id)
     if (f?.shortcut) {
       result.push({
@@ -384,7 +394,7 @@ const visibleShortcuts = computed(() => {
 // 分隔线显隐：监控项有可见 且 快捷入口或后台任务有可见时才显示
 const showSeparator = computed(() =>
   visibleMonitors.size > 0
-  && (statusBarShortcuts.value.length > 0 || activeTasks.value.length > 0),
+  && (visibleShortcuts.value.length > 0 || activeTasks.value.length > 0),
 )
 
 // 合并快捷方式 + 监控项可见性，供 FeatureDrawer 显示 pin 状态
@@ -403,6 +413,7 @@ const drawerPartition = computed(() => {
     action: __,
     ...drawerItem
   } of FEATURES) {
+    if (!isFeatureEnabled(drawerItem.id)) continue
     ;(rareSet.has(drawerItem.id) ? rarely : frequent).push(drawerItem)
   }
   return {
@@ -480,4 +491,11 @@ const handleSelectFeature = (id: string) => {
   showFeatureDrawer.value = false
   featureMap.get(id)?.action?.()
 }
+
+// 监听设置变更事件，同步功能开关快照（statusBar 为独立挂载 app，需自行清理监听）
+const syncEnabled = () => {
+  enabledSettings.value = { ...(props.plugin as any).settings }
+}
+onMounted(() => window.addEventListener("settingsUpdated", syncEnabled))
+onBeforeUnmount(() => window.removeEventListener("settingsUpdated", syncEnabled))
 </script>

@@ -1,7 +1,10 @@
 <!-- IDE 管理配置弹窗 -->
 <template>
   <div
+    ref="rootRef"
+    tabindex="-1"
     class="gp-mask"
+    @keydown.escape="$emit('close')"
     @click.self="$emit('close')"
   >
     <div
@@ -9,7 +12,7 @@
       style="width: 460px;"
     >
       <div class="gp-dialog-header">
-        <span class="gp-dialog-title">管理自定义 IDE</span>
+        <span class="gp-dialog-title">{{ i18n.manageCustomIde || '管理自定义 IDE' }}</span>
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
           @click="$emit('close')"
@@ -37,23 +40,23 @@
               <Input
                 v-model="editIdePath"
                 size="xsmall"
-                placeholder="可执行文件路径"
+                :placeholder="i18n.exePathPlaceholder || '可执行文件路径'"
                 style="flex:1"
                 @keydown="$event.key === 'Enter' && $emit('save-edit-ide', idx, editIdePreset, editIdePath)"
-                @keydown.escape="editingIdeIdx = -1"
+                @keydown.escape.stop="editingIdeIdx = -1"
               />
               <button
                 class="vp-btn vp-btn--primary vp-btn--sm"
                 :disabled="!editIdePath.trim()"
                 @click="$emit('save-edit-ide', idx, editIdePreset, editIdePath)"
               >
-                保存
+                {{ i18n.save || '保存' }}
               </button>
               <button
                 class="vp-btn vp-btn--ghost vp-btn--sm"
                 @click="editingIdeIdx = -1"
               >
-                取消
+                {{ i18n.cancel || '取消' }}
               </button>
             </template>
             <template v-else>
@@ -70,13 +73,13 @@
                 class="vp-btn vp-btn--ghost vp-btn--sm"
                 @click="startEdit(idx, custom.name, custom.path)"
               >
-                编辑
+                {{ i18n.edit || '编辑' }}
               </button>
               <button
                 class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
                 @click="confirmDelete(idx)"
               >
-                {{ confirmingMgmtDelIdx === idx ? '确认?' : '删除' }}
+                {{ confirmingMgmtDelIdx === idx ? (i18n.confirmShort || '确认?') : (i18n.delete || '删除') }}
               </button>
             </template>
           </div>
@@ -85,7 +88,7 @@
           v-else
           class="gp-ide-mgmt-empty"
         >
-          暂无自定义 IDE，在下方添加
+          {{ i18n.noCustomIde || '暂无自定义 IDE，在下方添加' }}
         </div>
         <div
           class="gp-ide-divider"
@@ -101,7 +104,7 @@
           <Input
             v-model="addIdePath"
             size="xsmall"
-            placeholder="可执行文件路径（如 D:/Tools/devenv.exe）"
+            :placeholder="i18n.exePathExample || '可执行文件路径（如 D:/Tools/devenv.exe）'"
             style="flex:1"
             @keydown="$event.key === 'Enter' && addIde()"
           />
@@ -110,7 +113,7 @@
             :disabled="!addIdePath.trim()"
             @click="addIde"
           >
-            添加
+            {{ i18n.add || '添加' }}
           </button>
         </div>
       </div>
@@ -119,7 +122,7 @@
           class="vp-btn vp-btn--ghost"
           @click="$emit('close')"
         >
-          关闭
+          {{ i18n.close || '关闭' }}
         </button>
       </div>
     </div>
@@ -132,8 +135,10 @@ import { computed, ref } from "vue"
 import Input from "@/components/Input.vue"
 import type { SelectOption } from "@/components/Select.vue"
 import Select from "@/components/Select.vue"
+import { useDialogKeyboard } from "../composables/useDialogKeyboard"
 
 const props = defineProps<{
+  i18n: Record<string, any>
   customIdes: { name: string, path: string }[]
   presetOptions: { name: string, icon: string }[]
   getIcon: (name: string) => string
@@ -149,6 +154,8 @@ const emit = defineEmits<{
   "save-edit-ide": [idx: number, preset: string, path: string]
   "delete-ide": [idx: number]
 }>()
+
+const { rootRef } = useDialogKeyboard()
 
 const addIdePreset = ref("Visual Studio")
 const addIdePath = ref("")

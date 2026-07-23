@@ -1,7 +1,10 @@
 <!-- 添加 Git 项目弹窗 -->
 <template>
   <div
+    ref="rootRef"
+    tabindex="-1"
     class="gp-mask"
+    @keydown.escape="$emit('close')"
     @click.self="$emit('close')"
   >
     <div class="gp-dialog">
@@ -77,6 +80,7 @@ import Input from "@/components/Input.vue"
 import type { SelectOption } from "@/components/Select.vue"
 import Select from "@/components/Select.vue"
 import { UNGROUPED_ID } from "../types"
+import { useDialogKeyboard } from "../composables/useDialogKeyboard"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -93,6 +97,8 @@ const emit = defineEmits<{
   "pick-dir": []
   "add": [data: { name: string, path: string, catId: string }]
 }>()
+
+const { rootRef } = useDialogKeyboard()
 
 const name = ref("")
 const path = ref("")

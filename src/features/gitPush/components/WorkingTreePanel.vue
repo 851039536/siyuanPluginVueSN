@@ -340,6 +340,7 @@ import { useGeneratedMsgSync } from "../composables/useGeneratedMsgSync"
 import { Icon } from "@iconify/vue"
 import {
   computed,
+  onMounted,
   ref,
   toRef,
 } from "vue"
@@ -397,6 +398,11 @@ const expanded = ref(props.initialExpanded ?? false)
 const commitType = ref("chore")
 const commitMessage = ref("")
 const activeDiffFile = ref<FileChange | null>(null)
+
+// 恢复为展开状态时，触发一次懒加载（commitLog/branches/stash）使面板内容完整
+onMounted(() => {
+  if (expanded.value) emit("expand")
+})
 
 // 监听外部生成的消息，自动填充
 useGeneratedMsgSync(toRef(props, "generatedMsg"), commitMessage)

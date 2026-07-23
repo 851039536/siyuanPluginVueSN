@@ -20,6 +20,7 @@ import {
   saveSettings,
   setFeatureFlagsDir,
 } from "@/config/settings"
+import { emitCustomEvent } from "@/utils/eventBus"
 import { clearRendererCache } from "@/utils/mdRenderer"
 
 import {
@@ -323,6 +324,8 @@ export default class PluginSample extends Plugin {
     this.settings = newSettings
     const success = await saveSettings(this, newSettings)
     if (success) {
+      // 广播设置变更，供 statusBar 等独立挂载模块同步功能开关状态
+      emitCustomEvent("settingsUpdated")
     }
     return success
   }

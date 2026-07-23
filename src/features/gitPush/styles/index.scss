@@ -36,6 +36,23 @@
   margin-bottom: 8px;
 }
 
+// loading 态：为常驻动画 Loader 提供受限的定位容器，避免其绝对定位逃逸到视口中心
+.gp-loading {
+  position: relative;
+  min-height: 180px;
+  overflow: hidden;
+}
+
+.gp-loading-text {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: var(--b3-theme-on-surface-light);
+  font-size: $font-size-sm;
+}
+
 .gp-list {
   flex: 1;
   display: flex !important;
@@ -87,6 +104,13 @@
   &:hover {
     background: var(--b3-theme-primary-lightest);
   }
+
+  // 搜索关键词高亮片段
+  .gp-hl {
+    background: var(--b3-theme-primary-lightest);
+    color: var(--b3-theme-primary);
+    border-radius: $radius-sm;
+  }
 }
 
 .gp-card-name-input {
@@ -98,11 +122,11 @@
   border-radius: $radius-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
-  outline: none;
   width: calc(100% - 10px);
   max-width: 220px;
   font-family: inherit;
-  box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+  outline: 2px solid var(--b3-theme-primary-lightest);
+  outline-offset: 0;
 }
 
 .gp-card-note {
@@ -275,8 +299,8 @@
 .gp-ide-item--custom .gp-ide-item-del {
   &:hover {
     opacity: 1;
-    color: #e74c3c;
-    background: rgba(231, 76, 60, 0.08);
+    color: var(--b3-theme-error);
+    background: var(--b3-theme-error-lightest, rgba(231, 76, 60, 0.08));
   }
 }
 
@@ -298,9 +322,9 @@
 }
 
 .gp-ide-del-yes {
-  color: #fff;
-  background: #e74c3c;
-  &:hover { background: #c0392b; }
+  color: var(--b3-theme-on-primary, #fff);
+  background: var(--b3-theme-error);
+  &:hover { filter: brightness(0.92); }
 }
 
 .gp-ide-del-no {
@@ -898,7 +922,7 @@
 
   &.active {
     opacity: 1;
-    color: #f5a623;
+    color: var(--b3-theme-warning, #f5a623);
   }
 }
 

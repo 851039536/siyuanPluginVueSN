@@ -1,6 +1,29 @@
 @use "./variables" as *;
 @use "./mixins" as *;
 
+// 弹窗进出场过渡（fade + 轻微 scale，时长 0.12s 契合 Codex 规范）
+.gp-dialog-fade-enter-active,
+.gp-dialog-fade-leave-active {
+  transition: opacity 0.12s ease;
+
+  .gp-dialog,
+  .gp-confirm-dialog,
+  .gp-gc-dialog {
+    transition: transform 0.12s ease;
+  }
+}
+
+.gp-dialog-fade-enter-from,
+.gp-dialog-fade-leave-to {
+  opacity: 0;
+
+  .gp-dialog,
+  .gp-confirm-dialog,
+  .gp-gc-dialog {
+    transform: scale(0.98);
+  }
+}
+
 // ── 通用弹窗样式 ──
 .gp-mask {
   position: fixed;
@@ -13,6 +36,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+
+  &:focus { outline: none; }
 }
 
 .gp-dialog {
@@ -75,7 +100,6 @@
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-md;
   z-index: 11000;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
 .gp-help-header {

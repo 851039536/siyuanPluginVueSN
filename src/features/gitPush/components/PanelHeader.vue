@@ -15,7 +15,7 @@
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
           :class="{ active: currentView === 'list' }"
-          title="列表视图"
+          :title="i18n.listView || '列表视图'"
           @click="emit('update:currentView', 'list')"
         >
           <Icon
@@ -26,7 +26,7 @@
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
           :class="{ active: currentView === 'stats' }"
-          title="统计视图"
+          :title="i18n.statsView || '统计视图'"
           @click="emit('update:currentView', 'stats')"
         >
           <Icon
@@ -40,7 +40,7 @@
       <div class="gp-platform-wrap">
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm gp-platform-dropdown-btn"
-          title="平台官网"
+          :title="i18n.platformSites || '平台官网'"
           @click.stop="emit('update:showPlatformMenu', !showPlatformMenu)"
         >
           <Icon
@@ -84,7 +84,7 @@
       </button>
       <button
         class="vp-btn vp-btn--ghost vp-btn--sm"
-        title="Git 配置"
+        :title="i18n.gitConfigLabel || 'Git 配置'"
         @click="emit('openGitConfig')"
       >
         <Icon
@@ -94,7 +94,7 @@
       </button>
       <button
         class="vp-btn vp-btn--ghost vp-btn--sm"
-        title="设置"
+        :title="i18n.settings || '设置'"
         @click="emit('openSettings')"
       >
         <Icon
@@ -105,7 +105,7 @@
       <div class="gp-header-refresh-wrap">
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
-          title="刷新选项"
+          :title="i18n.refreshOptions || '刷新选项'"
           :disabled="refreshingAllLocal || refreshingAllRemote || refreshingAll"
           @click.stop="emit('update:showRefreshMenu', !showRefreshMenu)"
         >
@@ -161,7 +161,7 @@
       </div>
       <button
         class="vp-btn vp-btn--primary vp-btn--sm"
-        title="推送所有待推送项目"
+        :title="i18n.pushAllPending || '推送所有待推送项目'"
         :disabled="needsPushCount === 0 || pushingAllProjects"
         @click="emit('pushAllProjects')"
       >
@@ -170,20 +170,20 @@
           height="12"
           :class="{ 'gp-spin': pushingAllProjects }"
         />
-        <span v-if="pushingAllProjects">推送中 ({{ pushAllDone }}/{{ pushAllTotal }})</span>
-        <span v-else>推送全部({{ needsPushCount }})</span>
+        <span v-if="pushingAllProjects">{{ (i18n.pushingProjects || '推送中 ({0}/{1})').replace('{0}', String(pushAllDone)).replace('{1}', String(pushAllTotal)) }}</span>
+        <span v-else>{{ i18n.pushAll || '推送全部' }}({{ needsPushCount }})</span>
       </button>
       <button
         v-if="pushingAllProjects"
         class="vp-btn vp-btn--danger vp-btn--sm"
-        title="取消全部推送"
+        :title="i18n.cancelAllPush || '取消全部推送'"
         @click="emit('cancelPushAll')"
       >
         <Icon
           icon="mdi:close-circle"
           height="12"
         />
-        <span>取消</span>
+        <span>{{ i18n.cancel || '取消' }}</span>
       </button>
       <div class="gp-add-wrap">
         <button

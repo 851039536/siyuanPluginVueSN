@@ -40,7 +40,7 @@
       <button
         class="vp-btn vp-btn--ghost vp-btn--sm wt-section-refresh"
         :disabled="workingTreeLoading"
-        title="刷新工作空间"
+        :title="i18n.refreshWorkingTree || '刷新工作空间'"
         @click.stop="$emit('refreshWorkingTree')"
       >
         <Icon icon="mdi:refresh" height="12" :class="{ 'gp-spin': workingTreeLoading }" />
@@ -89,7 +89,7 @@
             class="wt-checkbox"
             :class="{ checked: file.staged }"
             :disabled="gitOpLoading"
-            :title="gitOpLoading ? '处理中...' : file.staged ? (i18n.unstageFile || '取消暂存') : (i18n.stageFile || '暂存')"
+            :title="gitOpLoading ? (i18n.processing || '处理中...') : file.staged ? (i18n.unstageFile || '取消暂存') : (i18n.stageFile || '暂存')"
             @click.stop="toggleStage(file)"
           >
             <Icon
@@ -136,27 +136,27 @@
           <!-- 文件名（点击查看差异） -->
           <span
             class="wt-file-path"
-            :title="`点击查看差异 — ${file.path}`"
+            :title="(i18n.clickViewDiff || '点击查看差异') + ' — ' + file.path"
             @click="toggleDiff(file)"
           >{{ file.path }}</span>
 
           <!-- 查看差异 -->
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm wt-diff-btn"
-            :title="activeDiffFile?.path === file.path ? '关闭差异' : '查看差异（带增/删/改着色）'"
+            :title="activeDiffFile?.path === file.path ? (i18n.closeDiff || '关闭差异') : (i18n.viewDiffColored || '查看差异（带增/删/改着色）')"
             @click.stop="toggleDiff(file)"
           >
             <Icon
               icon="mdi:file-compare"
               height="12"
             />
-            <span class="wt-diff-btn-label">差异</span>
+            <span class="wt-diff-btn-label">{{ i18n.diff || '差异' }}</span>
           </button>
 
           <!-- 丢弃更改 -->
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm wt-discard-btn"
-            :title="file.staged ? '取消暂存并丢弃更改' : file.status === 'untracked' ? '删除未跟踪文件' : '丢弃更改'"
+            :title="file.staged ? (i18n.unstageDiscard || '取消暂存并丢弃更改') : file.status === 'untracked' ? (i18n.discardUntracked || '删除未跟踪文件') : (i18n.discardChanges || '丢弃更改')"
             @click.stop="$emit('discardFile', file.path, file.staged, file.status)"
           >
             <Icon
@@ -195,9 +195,9 @@
               </button>
             </div>
             <div class="wt-diff-legend">
-              <span class="wt-legend-add">+ 新增</span>
-              <span class="wt-legend-del">− 删除</span>
-              <span class="wt-legend-ctx">⋯ 未变</span>
+              <span class="wt-legend-add">+ {{ i18n.legendAdd || '新增' }}</span>
+              <span class="wt-legend-del">− {{ i18n.legendDel || '删除' }}</span>
+              <span class="wt-legend-ctx">⋯ {{ i18n.legendCtx || '未变' }}</span>
             </div>
             <div class="wt-diff-content">
               <div
@@ -308,7 +308,7 @@
       >
         <button
           class="wt-output-close"
-          title="关闭"
+          :title="i18n.close || '关闭'"
           @click.stop="$emit('clearOutput')"
         >
           ×
@@ -362,6 +362,8 @@ const props = defineProps<{
   workingTreeLoading?: boolean
   /** 提交信息模板 */
   commitTemplates?: CommitTemplate[]
+  /** 面板初始展开状态（按 projectId 持久化后回传） */
+  initialExpanded?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -376,6 +378,8 @@ const emit = defineEmits<{
   discardFile: [file: string, staged: boolean, status: string]
   /** 面板首次展开时触发，父组件按需懒加载 commitLog/branches/stash 等详情 */
   expand: []
+  /** 展开状态变化（供父级按 projectId 持久化） */
+  "update:expanded": [value: boolean]
   /** 用户修改提交记录显示条数 */
   reloadCommitLog: [count: number]
   /** 单独刷新工作区 */
@@ -389,7 +393,7 @@ const COMMIT_TYPES = COMMIT_TYPE_VALUES.map((v) => ({
   label: v,
 }))
 
-const expanded = ref(false)
+const expanded = ref(props.initialExpanded ?? false)
 const commitType = ref("chore")
 const commitMessage = ref("")
 const activeDiffFile = ref<FileChange | null>(null)
@@ -436,6 +440,7 @@ function toggleStage(file: FileChange) {
 function toggleExpanded() {
   if (!props.tree) return // 数据未加载时不展开
   expanded.value = !expanded.value
+  emit("update:expanded", expanded.value)
   // 首次展开时通知父组件懒加载详情数据（commitLog/branches/stash）
   if (expanded.value) emit("expand")
 }

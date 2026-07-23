@@ -79,16 +79,6 @@
         class="wt-files"
       >
         <div
-          v-if="!activeDiffFile"
-          class="wt-diff-hint"
-        >
-          <Icon
-            icon="mdi:information-outline"
-            height="12"
-          />
-          <span>点击文件名或「差异」按钮查看带颜色的 diff 比对</span>
-        </div>
-        <div
           v-for="file in sortedFiles"
           :key="file.path"
           class="wt-file-row"

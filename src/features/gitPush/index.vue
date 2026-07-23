@@ -183,10 +183,10 @@
             @refresh-commit-log="handleRefreshCommitLog"
             @refresh-tags="handleRefreshTags"
             @refresh-remote-status="handleRefreshRemoteStatus"
-            @stage-file="(id: string, file: string) => handleGitOp('暂存失败', () => stageItem(id, file), id)"
-            @unstage-file="(id: string, file: string) => handleGitOp('取消暂存失败', () => unstageItem(id, file), id)"
-            @stage-all="(id: string) => handleGitOp('暂存失败', () => stageAllItems(id), id)"
-            @unstage-all="(id: string) => handleGitOp('取消暂存失败', () => unstageAllItems(id), id)"
+            @stage-file="(id: string, file: string) => handleGitOp(tf('stageFailed', '暂存失败'), () => stageItem(id, file), id)"
+            @unstage-file="(id: string, file: string) => handleGitOp(tf('unstageFailed', '取消暂存失败'), () => unstageItem(id, file), id)"
+            @stage-all="(id: string) => handleGitOp(tf('stageFailed', '暂存失败'), () => stageAllItems(id), id)"
+            @unstage-all="(id: string) => handleGitOp(tf('unstageFailed', '取消暂存失败'), () => unstageAllItems(id), id)"
             @commit="(id: string, msg: string) => handleCommit(id, msg)"
             @generate-msg="handleGenerateMsg"
             @load-diff="loadFileDiff"
@@ -246,13 +246,13 @@
       :visible="showPullConfirm"
       :title="i18n.pullConfirm || '确认拉取'"
       message=""
-      confirm-text="确认拉取"
-      cancel-text="取消"
+      :confirm-text="i18n.pullConfirm || '确认拉取'"
+      :cancel-text="i18n.cancel || '取消'"
       @confirm="doPullSingle"
       @cancel="cancelPullConfirm"
     >
       <template #message>
-        <p class="gp-confirm-message">将从 <strong>{{ pendingPullLabel }}</strong> 拉取代码，可能覆盖本地修改。<br>确定要继续吗？</p>
+        <p class="gp-confirm-message">{{ pullConfirmMessage }}</p>
       </template>
     </ConfirmDialog>
     <!-- 通用确认弹窗（删除/丢弃/恢复/分类等破坏性操作） -->
@@ -261,7 +261,7 @@
       :title="genericConfirm.title"
       :message="genericConfirm.message"
       :confirm-text="genericConfirm.confirmText || '确定'"
-      cancel-text="取消"
+      :cancel-text="i18n.cancel || '取消'"
       @confirm="doGenericConfirm"
       @cancel="cancelGenericConfirm"
     />
@@ -327,6 +327,7 @@ import type {
   PlatformKey,
   ProjectStatus,
 } from "./types"
+import type { Plugin } from "siyuan"
 import { Icon } from "@iconify/vue"
 import { showMessage } from "siyuan"
 import {
@@ -363,23 +364,32 @@ import {
 } from "./composables/useProjectFilters"
 import { useTimeUtils } from "./composables/useTimeUtils"
 import { useCommitLog } from "./composables/useCommitLog"
-import { PLATFORM_META, REMOTES, STATUS_CYCLE, STATUS_META, UNGROUPED_ID } from "./types"
+import { useScanImport } from "./composables/useScanImport"
+import { useGitConfigDialog } from "./composables/useGitConfigDialog"
+import { useGitHandlers } from "./composables/useGitHandlers"
+import { useRefreshOps } from "./composables/useRefreshOps"
+import { PLATFORM_META, REMOTES, STATUS_CYCLE, STATUS_META } from "./types"
 import {
   batchProcess,
-  getProjectRemoteNames,
   gitUrlToWebUrl,
   hasAnyRemote,
   isAheadOfRemote,
-  pruneRecordCache,
   resolveValidPath,
 } from "./utils"
 import { scanMarkdownFiles } from "./composables/useMarkdownFiles"
 
 const props = defineProps<{
   i18n: Record<string, any>
-  plugin: any
+  plugin: Plugin
   manager: GitPushManager
 }>()
+
+/** i18n 取值 + {n} 占位替换，缺失时降级为 fallback */
+function tf(key: string, fallback: string, ...args: (string | number)[]): string {
+  let s: string = props.i18n[key] || fallback
+  args.forEach((a, i) => { s = s.replace(`{${i}}`, String(a)) })
+  return s
+}
 
 const ut = useTimeUtils()
 const {
@@ -497,6 +507,10 @@ const pendingPullLabel = computed(() => {
   if (!pendingPull.value) return ""
   return PLATFORM_META.find((pm) => pm.key === pendingPull.value!.key)?.label ?? pendingPull.value!.key
 })
+/** 拉取确认弹窗正文（复用 i18n pullConfirmBody，{0} 填充平台名） */
+const pullConfirmMessage = computed(() =>
+  (props.i18n.pullConfirmBody || "将从 {0} 拉取代码，可能覆盖本地修改。确定要继续吗？").replace("{0}", pendingPullLabel.value),
+)
 function confirmPullSingle(id: string, key: PlatformKey) {
   pendingPull.value = {
     id,
@@ -608,9 +622,6 @@ const currentView = ref<"list" | "stats">("list")
 const activeCategory = ref<string>("")
 
 /** 扫描导入弹窗状态 */
-const showScanDialog = ref(false)
-const scanError = ref("")
-const scanSelection = ref<Record<string, boolean>>({})
 
 /** 按分类 TAB 过滤后的分组 */
 const visibleGroups = computed(() => {
@@ -661,6 +672,94 @@ const {
   plugin: props.plugin,
   openFolder: (path: string) => { handleOpenPath(path) },
 })
+
+// ── 扫描导入 ──
+const {
+  showScanDialog,
+  scanError,
+  scanSelection,
+  handleOpenScan,
+  handleCloseScan,
+  handleStartScan,
+  handleToggleSelectAll,
+  toggleScanItem,
+  handleImportSelected,
+  selectScanDirectory,
+} = useScanImport({
+  scanResults, scanDirInput, activeCategory, startScan, importScanResults, loadProjects, tf,
+})
+
+// ── Git 配置弹窗 ──
+const {
+  showGitConfig,
+  gitConfigText,
+  gitConfigLoading,
+  gitConfigError,
+  gitConfigFilePath,
+  gitConfigTitle,
+  handleOpenGitConfig,
+  handleOpenProjectGitConfig,
+  closeGitConfig,
+} = useGitConfigDialog({ manager: props.manager, projects, tf })
+
+// ── Git 操作 handler 集群 ──
+const {
+  commitOutputs,
+  generatingMsgs,
+  gitOpLoading,
+  genStashDescLoading,
+  generatedStashMsg,
+  tagPushLoading,
+  handleGitOp,
+  handleDiscard,
+  handleGenStashDesc,
+  handleStashConfirmMsg,
+  handleStashPop,
+  handleStashApply,
+  handleStashDrop,
+  handleCreateTag,
+  handleDeleteTag,
+  handlePushTag,
+  handleAbortMerge,
+  handleResolveConflict,
+  handleCommit,
+  handleGenerateMsg,
+} = useGitHandlers({
+  projects, showConfirm, safeGitOp, tf,
+  discardFile, doCommit, generateCommitMsg,
+  doStashSave, doStashPop, doStashApply, doStashDrop, generateStashDesc,
+  createTagOp, deleteTagOp, pushTagOp,
+  abortMergeOp, resolveConflictOp, checkConflicts,
+  loadTags, loadCommitLog, loadWorkingTree,
+})
+
+// ── 刷新操作集群 ──
+const {
+  refreshing,
+  refreshingAll,
+  refreshingAllLocal,
+  refreshingAllRemote,
+  showRefreshMenu,
+  fetching,
+  workingTreeLoading,
+  remoteStatusLoading,
+  headHashes,
+  silentRefreshAll,
+  handleRefresh,
+  handleRefreshWorkingTree,
+  handleRefreshCommitLog,
+  handleRefreshTags,
+  handleRefreshRemoteStatus,
+  handleRefreshAll,
+  handleRefreshAllLocal,
+  handleRefreshAllRemote,
+  handleFetchAll,
+} = useRefreshOps({
+  manager: props.manager, projects, activeCategory, gitOpsPaused, runBatchWithProgress, tf,
+  commitLogLoading, tagLoading,
+  loadProjectGitStatus, loadPushStatus, loadWorkingTree, loadCommitLog,
+  loadBranches, loadStashList, loadTags, refreshRemotes, fetchAllRemotes,
+})
 /** 解析项目有效路径（模板辅助函数） */
 function resolvedPath(p: { path: string, localPaths?: string[] }): string {
   return resolveValidPath(p as GitProject)
@@ -672,51 +771,18 @@ function getProjectUrl(project: GitProject, prop: "githubUrl" | "giteeUrl" | "gi
 }
 
 const newProjectPath = ref("") // 目录选择回填用
-const refreshing = ref<string | null>(null)
 /** 项目编辑弹窗状态 */
 const editDialogProjectId = ref("")
 /** Markdown 文档预览弹窗状态 */
 const markdownPreviewProject = ref<GitProject | null>(null)
 const markdownPreviewInitialFile = ref<string | undefined>(undefined)
-/** Git 全局配置弹窗状态 */
-const showGitConfig = ref(false)
-const gitConfigText = ref("")
-const gitConfigLoading = ref(false)
-const gitConfigError = ref("")
-const gitConfigFilePath = ref("")
-const gitConfigTitle = ref("")
 /** 项目 Markdown 文件缓存（项目 id → 文件元数据数组，避免每次 readdirSync） */
 const projectMdFiles = ref<Record<string, ReturnType<typeof scanMarkdownFiles>>>({})
 /** 行内名称编辑状态 */
 const editingNameId = ref("")
 const editingNameInput = ref("")
-const refreshingAll = ref(false)
-/** 本地状态刷新 loading（不 fetch） */
-const refreshingAllLocal = ref(false)
-/** 远程状态刷新 loading（含 fetch） */
-const refreshingAllRemote = ref(false)
-/** Header 刷新下拉菜单开关 */
-const showRefreshMenu = ref(false)
-/** 全局刷新防抖冷却时间（毫秒） */
-const REFRESH_COOLDOWN_MS = 500
-/** 全局刷新防抖时间戳 */
-let allRefreshLastTime = 0
-/** 远程刷新防抖时间戳 */
-let remoteRefreshLastTime = 0
-/** FETCH 操作加载中 id → true */
-const fetching = ref<Record<string, boolean>>({})
 /** IDE 打开菜单：当前打开的项目 id 集合 */
 const openIdeMenu = ref(new Set<string>())
-/** 提交输出 id → text */
-const commitOutputs = ref<Record<string, string>>({})
-/** AI 生成状态 id → { generating, text } */
-const generatingMsgs = ref<Record<string, { generating: boolean, text: string }>>({})
-/** 暂存/取消操作加载中 id → true */
-const gitOpLoading = ref<Record<string, boolean>>({})
-/** 工作区刷新加载中 id → true */
-const workingTreeLoading = ref<Record<string, boolean>>({})
-/** 远程状态刷新加载中 id → true */
-const remoteStatusLoading = ref<Record<string, boolean>>({})
 /** 刷新下拉菜单：当前打开的项目 id 集合 */
 const openRefreshMenu = ref(new Set<string>())
 /** 获取指定项目的 Markdown 文件列表（懒扫描 + 缓存） */
@@ -741,51 +807,6 @@ function closeMarkdownPreview() {
   markdownPreviewInitialFile.value = undefined
 }
 
-/** 打开 Git 全局配置弹窗并查询 */
-async function handleOpenGitConfig() {
-  showGitConfig.value = true
-  gitConfigLoading.value = true
-  gitConfigError.value = ""
-  gitConfigText.value = ""
-  gitConfigFilePath.value = props.manager.getGitConfigFilePath()
-  gitConfigTitle.value = ""
-  try {
-    const text = await props.manager.getGitGlobalConfig()
-    gitConfigText.value = text
-  } catch (e: any) {
-    gitConfigError.value = e?.message || "查询失败"
-  } finally {
-    gitConfigLoading.value = false
-  }
-}
-
-/** 打开项目级 Git 配置弹窗并查询 */
-async function handleOpenProjectGitConfig(projectId: string) {
-  const index = projects.value.findIndex((p) => p.id === projectId)
-  if (index === -1) return
-  const project = projects.value[index]
-  const path = resolvedPath(project)
-  showGitConfig.value = true
-  gitConfigLoading.value = true
-  gitConfigError.value = ""
-  gitConfigText.value = ""
-  gitConfigFilePath.value = props.manager.getProjectGitConfigFilePath(path)
-  gitConfigTitle.value = `📁 ${project.name}`
-  try {
-    const text = await props.manager.getProjectGitConfig(path)
-    gitConfigText.value = text
-  } catch (e: any) {
-    gitConfigError.value = e?.message || "查询失败"
-  } finally {
-    gitConfigLoading.value = false
-  }
-}
-
-/** 关闭 Git 全局配置弹窗 */
-function closeGitConfig() {
-  showGitConfig.value = false
-}
-
 /** 提取指定项目相关的 fileDiffs（按前缀过滤） */
 function fileDiffsForProject(projectId: string): Record<string, string> {
   const result: Record<string, string> = {}
@@ -798,37 +819,8 @@ function fileDiffsForProject(projectId: string): Record<string, string> {
   return result
 }
 
-/** HEAD hash 缓存，用于跳过无变动项目的 commit log / branches 刷新 */
-const headHashes = ref<Record<string, string>>({})
-
-/** 静默刷新当前分类下的项目状态（批次处理，每批 3 个匹配 git 信号量上限） */
-async function silentRefreshAll(keepVisible = false) {
-  if (gitOpsPaused.value) return
-  const catId = activeCategory.value
-  const projList = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
-  if (projList.length === 0) return
-
-  await runBatchWithProgress(projList, "刷新中", async (p, ctx) => {
-    const prev = headHashes.value[p.id] || ""
-    const [, curr] = await Promise.all([
-      ctx.step("状态", () => loadProjectGitStatus(p.id, true)),
-      ctx.step("HEAD", () => props.manager.getHeadHash(resolveValidPath(p))),
-    ])
-
-    if (curr && curr !== prev) {
-      headHashes.value[p.id] = curr
-      await Promise.all([
-        ctx.step("日志", () => loadCommitLog(p.id)),
-        ctx.step("分支", () => loadBranches(p.id)),
-        ctx.step("Stash", () => loadStashList(p.id)),
-      ])
-    } else if (curr) {
-      await ctx.step("Stash", () => loadStashList(p.id))
-    }
-  }, undefined, { keepVisible })
-}
-
 onMounted(async () => {
+  document.addEventListener("click", closeIdeMenuOnOutside)
   await loadProjects()
   projectMdFiles.value = {}
   loadCommitTemplates()
@@ -849,8 +841,8 @@ onMounted(async () => {
     if (gitOpsPaused.value) return
     const catId = activeCategory.value
     const projList = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
-    await runBatchWithProgress(projList, "加载中", async (p, ctx) => {
-      await ctx.step("状态", () => loadProjectGitStatus(p.id, true))
+    await runBatchWithProgress(projList, tf("loadingLabel", "加载中"), async (p, ctx) => {
+      await ctx.step(tf("stepStatus", "状态"), () => loadProjectGitStatus(p.id, true))
     })
   }, 200)
 })
@@ -880,9 +872,6 @@ function closeIdeMenuOnOutside(e: MouseEvent) {
   }
 }
 
-// 挂载时注册，卸载时清理
-document.addEventListener("click", closeIdeMenuOnOutside)
-
 /** 切换分类时懒加载该分类下项目的数据（首屏最小集，详情展开时再补） */
 watch(activeCategory, async (catId) => {
   if (!catId || gitOpsPaused.value) return
@@ -891,8 +880,8 @@ watch(activeCategory, async (catId) => {
   // 只加载尚未缓存的
   const pending = projList.filter((p) => !workingTrees.value[p.id])
   if (pending.length === 0) return
-  await runBatchWithProgress(pending, "加载中", async (p, ctx) => {
-    await ctx.step("状态", () => loadProjectGitStatus(p.id, true))
+  await runBatchWithProgress(pending, tf("loadingLabel", "加载中"), async (p, ctx) => {
+    await ctx.step(tf("stepStatus", "状态"), () => loadProjectGitStatus(p.id, true))
   })
 })
 
@@ -905,8 +894,8 @@ watch(currentView, async (view) => {
   if (view !== "stats" || gitOpsPaused.value) return
   const pending = projects.value.filter((p) => !pushStatuses.value[p.id] || !workingTrees.value[p.id])
   if (pending.length === 0) return
-  await runBatchWithProgress(pending, "加载中", async (p, ctx) => {
-    await ctx.step("统计", () => loadStatsData(p.id))
+  await runBatchWithProgress(pending, tf("loadingLabel", "加载中"), async (p, ctx) => {
+    await ctx.step(tf("stepStats", "统计"), () => loadStatsData(p.id))
   })
 })
 
@@ -915,127 +904,7 @@ async function handleAddFromDialog(data: { name: string, path: string, catId: st
     await addProject(data.name, data.path, data.catId)
     showAddDialog.value = false
   } catch (e: any) {
-    showMessage(e?.message || "添加失败", 5000, "error")
-  }
-}
-
-async function handleRefresh(id: string) {
-  const project = projects.value.find((p) => p.id === id)
-  if (!project) return
-  refreshing.value = id
-  try {
-    await runBatchWithProgress([project], "刷新中", async (p, ctx) => {
-      // 一次 rev-parse 获取 branch，六项操作全部并行（git 信号量自动限流到 3）
-      const cwd = resolveValidPath(p)
-      const branch = await props.manager.getBranch(cwd)
-      await Promise.all([
-        ctx.step("远程", () => refreshRemotes(p.id)),
-        ctx.step("推送", () => loadPushStatus(p.id, { fetchFirst: true, branch })),
-        ctx.step("工作区", () => loadWorkingTree(p.id, false, branch)),
-        ctx.step("日志", () => loadCommitLog(p.id)),
-        ctx.step("分支", () => loadBranches(p.id)),
-        ctx.step("Stash", () => loadStashList(p.id)),
-      ])
-    }, (p) => p.name, { keepVisible: true })
-  } finally {
-    refreshing.value = null
-  }
-}
-
-// ---- 细分刷新操作 ----
-
-async function handleRefreshWorkingTree(id: string) {
-  const project = projects.value.find((p) => p.id === id)
-  if (!project) return
-  workingTreeLoading.value = { ...workingTreeLoading.value, [id]: true }
-  try {
-    const branch = await props.manager.getBranch(resolveValidPath(project))
-    await loadWorkingTree(id, false, branch)
-  } finally {
-    delete workingTreeLoading.value[id]
-    workingTreeLoading.value = { ...workingTreeLoading.value }
-  }
-}
-
-async function handleRefreshCommitLog(id: string) {
-  commitLogLoading.value = { ...commitLogLoading.value, [id]: true }
-  try {
-    await loadCommitLog(id)
-  } finally {
-    delete commitLogLoading.value[id]
-    commitLogLoading.value = { ...commitLogLoading.value }
-  }
-}
-
-async function handleRefreshTags(id: string) {
-  tagLoading.value = { ...tagLoading.value, [id]: true }
-  try {
-    await loadTags(id)
-  } finally {
-    delete tagLoading.value[id]
-    tagLoading.value = { ...tagLoading.value }
-  }
-}
-
-async function handleRefreshRemoteStatus(id: string) {
-  const project = projects.value.find((p) => p.id === id)
-  if (!project) return
-  remoteStatusLoading.value = { ...remoteStatusLoading.value, [id]: true }
-  try {
-    const branch = await props.manager.getBranch(resolveValidPath(project))
-    await Promise.all([
-      refreshRemotes(id),
-      loadPushStatus(id, { fetchFirst: true, branch }),
-    ])
-  } finally {
-    delete remoteStatusLoading.value[id]
-    remoteStatusLoading.value = { ...remoteStatusLoading.value }
-  }
-}
-
-async function handleRefreshAll() {
-  if (gitOpsPaused.value) return
-  // 防抖：全局刷新的冷却期内跳过
-  if (Date.now() - allRefreshLastTime < REFRESH_COOLDOWN_MS) return
-  allRefreshLastTime = Date.now()
-  refreshingAll.value = true
-  try {
-    await silentRefreshAll(true)
-  } finally {
-    refreshingAll.value = false
-  }
-}
-
-/** Header 下拉：刷新本地状态（不含 git fetch，快） */
-async function handleRefreshAllLocal() {
-  if (gitOpsPaused.value) return
-  if (Date.now() - allRefreshLastTime < REFRESH_COOLDOWN_MS) return
-  allRefreshLastTime = Date.now()
-  showRefreshMenu.value = false
-  refreshingAllLocal.value = true
-  try {
-    await silentRefreshAll(true)
-  } finally {
-    refreshingAllLocal.value = false
-  }
-}
-
-/** Header 下拉：刷新远程状态（含 git fetch，慢） */
-async function handleRefreshAllRemote() {
-  if (gitOpsPaused.value) return
-  if (Date.now() - remoteRefreshLastTime < REFRESH_COOLDOWN_MS) return
-  remoteRefreshLastTime = Date.now()
-  showRefreshMenu.value = false
-  refreshingAllRemote.value = true
-  try {
-    const catId = activeCategory.value
-    const projList = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
-    if (projList.length === 0) return
-    await runBatchWithProgress(projList, "更新远程状态", async (p) => {
-      await fetchAllRemotes(p.id)
-    }, undefined, { keepVisible: true })
-  } finally {
-    refreshingAllRemote.value = false
+    showMessage(e?.message || tf("addFailed", "添加失败"), 5000, "error")
   }
 }
 
@@ -1106,28 +975,12 @@ async function handleOpenWeb(url: string) {
 async function handleCopyUrl(url: string) {
   const ok = await copyToClipboard(url)
   if (ok) {
-    showMessage("已复制链接", 1500, "info")
-  }
-}
-
-/** Fetch 所有远程 + 刷新状态 */
-async function handleFetchAll(id: string) {
-  fetching.value = {
-    ...fetching.value,
-    [id]: true,
-  }
-  try {
-    await fetchAllRemotes(id)
-  } catch (e: any) {
-    showMessage(e?.message || "Fetch 失败", 5000, "error")
-  } finally {
-    delete fetching.value[id]
-    fetching.value = { ...fetching.value }
+    showMessage(tf("copiedLink", "已复制链接"), 1500, "info")
   }
 }
 
 function handleRemove(project: any) {
-  showConfirm("删除项目", `确定要删除项目 "${project.name}" 吗？此操作不可撤销。`, () => {
+  showConfirm(tf("deleteProjectTitle", "删除项目"), tf("deleteProjectConfirm", "确定要删除项目 \"{0}\" 吗？此操作不可撤销。", project.name), () => {
     removeProject(project.id)
     // 清理 HEAD hash 缓存中已删除项目的条目
     delete headHashes.value[project.id]
@@ -1135,7 +988,7 @@ function handleRemove(project: any) {
 }
 
 async function handleSwitchBranch(id: string, branch: string) {
-  await safeGitOp("分支切换失败", () => switchBranch(id, branch))
+  await safeGitOp(tf("switchBranchFailed", "分支切换失败"), () => switchBranch(id, branch))
 }
 
 // ---- 项目聚合管理操作 ----
@@ -1175,12 +1028,12 @@ async function handleNameEditSave(project: GitProject) {
   const newName = editingNameInput.value.trim()
   try {
     if (!newName) {
-      showMessage("项目名称不能为空", 2000, "error")
+      showMessage(tf("nameEmpty", "项目名称不能为空"), 2000, "error")
     } else if (newName !== project.name) {
       await updateProjectMeta(project.id, { name: newName })
     }
   } catch (e: any) {
-    showMessage(`名称修改失败: ${e?.message || e}`, 4000, "error")
+    showMessage(tf("nameUpdateFailed", "名称修改失败: {0}", e?.message || e), 4000, "error")
   } finally {
     editingNameId.value = ""
   }
@@ -1195,172 +1048,6 @@ async function safeGitOp(label: string, fn: () => Promise<void>) {
   }
 }
 
-// ---- 工作区操作 ----
-
-/** 统一的 git 操作错误处理包装（含 loading 状态） */
-async function handleGitOp(label: string, fn: () => Promise<void>, id: string) {
-  commitOutputs.value[id] = ""
-  gitOpLoading.value[id] = true
-  try {
-    await fn()
-  } catch (e: any) {
-    console.error(`[gitPush] ${label} 失败:`, e)
-    commitOutputs.value[id] = `${label}: ${e?.message || e}`
-  } finally {
-    delete gitOpLoading.value[id]
-    pruneRecordCache(commitOutputs.value)
-  }
-}
-
-async function handleDiscard(id: string, file: string, staged: boolean, status: string) {
-  const label = status === "untracked" ? "删除未跟踪文件" : "丢弃更改"
-  showConfirm("确认操作", `确定要${label} "${file}" 吗？此操作不可撤销。`, () => {
-    doDiscard(id, file, staged, status, label)
-  })
-}
-
-async function doDiscard(id: string, file: string, staged: boolean, status: string, label: string) {
-  commitOutputs.value[id] = ""
-  gitOpLoading.value[id] = true
-  try {
-    await discardFile(id, file, staged, status)
-    await loadWorkingTree(id)
-  } catch (e: any) {
-    commitOutputs.value[id] = `${label}失败: ${e?.message || e}`
-  } finally {
-    delete gitOpLoading.value[id]
-  }
-}
-
-// ---- Stash 操作 ----
-
-const genStashDescLoading = ref<Record<string, boolean>>({})
-const generatedStashMsg = ref("")
-/** Tag 推送操作加载中 id → tagName */
-const tagPushLoading = ref<Record<string, string>>({})
-
-async function handleGenStashDesc(id: string) {
-  genStashDescLoading.value[id] = true
-  try {
-    const desc = await generateStashDesc(id)
-    if (desc) generatedStashMsg.value = desc
-  } catch {
-    // 失败则保持输入内容不变
-  } finally {
-    delete genStashDescLoading.value[id]
-  }
-}
-
-function handleStashConfirmMsg(id: string, msg: string) {
-  safeGitOp("暂存失败", () => doStashSave(id, msg))
-}
-
-function handleStashPop(id: string, index: number) {
-  showConfirm("恢复 Stash", `确定恢复 stash@{${index}} 并删除该条目？恢复过程中如有冲突会保留该 stash。`, () => {
-    safeGitOp("恢复失败", () => doStashPop(id, index))
-  })
-}
-
-function handleStashApply(id: string, index: number) {
-  safeGitOp("应用失败", () => doStashApply(id, index))
-}
-
-function handleStashDrop(id: string, index: number) {
-  showConfirm("删除 Stash", `确定删除 stash@{${index}}？此操作不可撤销。`, () => {
-    safeGitOp("删除失败", () => doStashDrop(id, index))
-  })
-}
-
-// ── Tag 操作 ──
-
-function handleCreateTag(id: string, name: string, message?: string) {
-  safeGitOp("创建 Tag 失败", () => createTagOp(id, name, message).then(() => { loadTags(id) }))
-}
-
-function handleDeleteTag(id: string, tag: string) {
-  showConfirm("删除 Tag", `确定删除 Tag "${tag}"？此操作不可撤销。`, () => {
-    safeGitOp("删除失败", () => deleteTagOp(id, tag).then(() => { loadTags(id) }))
-  })
-}
-
-async function handlePushTag(id: string, tag: string) {
-  const project = projects.value.find((p) => p.id === id)
-  if (!project) return
-  // 收集所有已配置的远程
-  const remoteNames = getProjectRemoteNames(project).map((r) => r.name)
-  if (remoteNames.length === 0) { showMessage("未找到远程仓库", 3000, "error"); return }
-  tagPushLoading.value = {
-    ...tagPushLoading.value,
-    [id]: tag,
-  }
-  try {
-    await Promise.all(remoteNames.map((name) => pushTagOp(id, name, tag)))
-  } catch (e: any) {
-    showMessage(`推送 Tag 失败: ${e?.message || e}`, 5000, "error")
-  } finally {
-    delete tagPushLoading.value[id]
-    // ref<Record> 的 delete 不被 Vue 深层响应式追踪检测到，需手动触发浅拷贝
-    tagPushLoading.value = { ...tagPushLoading.value }
-  }
-}
-
-// ── 冲突操作 ──
-
-function handleAbortMerge(id: string) {
-  showConfirm("中止合并", "确定中止合并操作？所有合并进度将丢失。", () => {
-    safeGitOp("中止合并失败", () => abortMergeOp(id))
-  })
-}
-
-function handleResolveConflict(id: string, file: string, strategy: "theirs" | "ours") {
-  safeGitOp("解决冲突失败", () => resolveConflictOp(id, file, strategy).then(() => { checkConflicts(id) }))
-}
-
-async function handleCommit(id: string, message: string) {
-  commitOutputs.value[id] = ""
-  try {
-    const result = await doCommit(id, message)
-    commitOutputs.value[id] = result || "提交成功"
-    pruneRecordCache(commitOutputs.value)
-    await loadCommitLog(id)
-  } catch (e: any) {
-    commitOutputs.value[id] = `提交失败: ${e?.message || e}`
-  }
-}
-
-async function handleGenerateMsg(id: string) {
-  generatingMsgs.value = {
-    ...generatingMsgs.value,
-    [id]: {
-      generating: true,
-      text: "",
-    },
-  }
-  commitOutputs.value[id] = ""
-  try {
-    const result = await generateCommitMsg(id)
-    generatingMsgs.value = {
-      ...generatingMsgs.value,
-      [id]: {
-        generating: false,
-        text: result.message,
-      },
-    }
-    if (result.source === "heuristic") {
-      commitOutputs.value[id] = "AI 未返回有效信息，已使用启发式生成。"
-    }
-  } catch (e: any) {
-    commitOutputs.value[id] = `生成失败: ${e?.message || e}`
-    generatingMsgs.value = {
-      ...generatingMsgs.value,
-      [id]: {
-        generating: false,
-        text: "",
-      },
-    }
-  }
-}
-
 // ---- 分类管理 ----
 
 async function handleAddCategory(name: string, color: string) {
@@ -1371,7 +1058,7 @@ async function handleAddCategory(name: string, color: string) {
 async function handleDeleteCategory(id: string) {
   const cat = categories.value.find((c) => c.id === id)
   if (!cat) return
-  showConfirm("删除分类", `确定删除分类 "${cat.name}"？\n该分类下的项目将移至「未分组」。`, () => {
+  showConfirm(tf("deleteCategoryTitle", "删除分类"), tf("deleteCategoryConfirm", "确定删除分类 \"{0}\"？\n该分类下的项目将移至「未分组」。", cat.name), () => {
     doDeleteCategory(id)
   })
 }
@@ -1470,83 +1157,8 @@ function hasBehind(projectId: string): boolean {
 }
 
 async function selectDirectory() {
-  const path = await pickDirectory("选择项目目录")
+  const path = await pickDirectory(tf("selectProjectDirTitle", "选择项目目录"))
   if (path) newProjectPath.value = path
-}
-
-// ---- 扫描导入 ----
-
-function handleOpenScan() {
-  scanError.value = ""
-  scanDirInput.value = ""
-  scanResults.value = []
-  scanSelection.value = {}
-  showScanDialog.value = true
-}
-
-function handleCloseScan() {
-  showScanDialog.value = false
-  scanError.value = ""
-}
-
-async function handleStartScan() {
-  scanError.value = ""
-  try {
-    await startScan(scanDirInput.value.trim())
-    // 扫描成功 → 自动全选未导入项
-    const sel: Record<string, boolean> = {}
-    for (const repo of scanResults.value) {
-      if (!repo.alreadyImported) {
-        sel[repo.path] = true
-      }
-    }
-    scanSelection.value = sel
-  } catch (e: any) {
-    scanError.value = e?.message || (props.i18n.scanError || '扫描失败')
-  }
-}
-
-function handleToggleSelectAll() {
-  const allSelected = scanResults.value.every(
-    (r) => r.alreadyImported || scanSelection.value[r.path],
-  )
-  const sel: Record<string, boolean> = {}
-  for (const repo of scanResults.value) {
-    if (!repo.alreadyImported) {
-      sel[repo.path] = !allSelected
-    }
-  }
-  scanSelection.value = sel
-}
-
-function toggleScanItem(path: string) {
-  scanSelection.value = {
-    ...scanSelection.value,
-    [path]: !scanSelection.value[path],
-  }
-}
-
-async function handleImportSelected() {
-  const selected = scanResults.value
-    .filter((r) => scanSelection.value[r.path])
-    .map((r) => r.path)
-  const catId = activeCategory.value || UNGROUPED_ID
-  const {
-    imported,
-    skipped,
-  } = await importScanResults(selected, catId)
-  // 刷新项目列表以显示新导入的项目
-  await loadProjects()
-  handleCloseScan()
-  if (imported > 0 || skipped > 0) {
-    showMessage(`导入完成：成功 ${imported} 个${skipped > 0 ? `，跳过 ${skipped} 个` : ""}`, 3000, "info")
-  }
-}
-
-/** 扫描目录专用路径选择，结果写入 scanDirInput */
-async function selectScanDirectory() {
-  const path = await pickDirectory("选择要扫描的目录")
-  if (path) scanDirInput.value = path
 }
 </script>
 

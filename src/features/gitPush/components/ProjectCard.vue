@@ -475,6 +475,12 @@
       <!-- 拉取区 -->
       <div class="gp-actions-section">
         <span class="gp-actions-label">{{ i18n.pull || '拉取' }}</span>
+        <Icon
+          icon="mdi:information-outline"
+          height="12"
+          class="gp-actions-hint-icon"
+          :title="i18n.pullVsFetchHint || '拉取(Pull)：下载并合并远程新提交到本地（会改动本地代码）；Fetch：只刷新远程状态，不改动本地代码'"
+        />
         <div class="gp-actions-btns">
           <button
             v-for="r in remotes"
@@ -482,9 +488,13 @@
             class="vp-btn vp-btn--ghost vp-btn--sm gp-action-btn"
             :class="{ 'gp-action-btn--active': isPulling(project.id, r.key) }"
             :disabled="!project[r.remoteProp] || isPulling(project.id) || isPushing(project.id)"
-            :title="`${i18n.pull || 'Pull'} ${r.label}`"
+            :title="`${i18n.pull || 'Pull'} ${r.label} — ${i18n.pullBtnHint || '下载并合并远程新提交到本地（会改动本地代码）'}`"
             @click="$emit('confirmPull', project.id, r.key)"
           >
+            <Icon
+              icon="mdi:arrow-down"
+              height="12"
+            />
             <span>{{ r.label }}</span>
           </button>
           <!-- Fetch 按钮 -->
@@ -492,9 +502,13 @@
             class="vp-btn vp-btn--ghost vp-btn--sm gp-action-btn gp-fetch-btn"
             :class="{ 'gp-action-btn--active': fetching }"
             :disabled="!hasAnyRemote(project) || isPulling(project.id) || isPushing(project.id) || fetching"
-            :title="i18n.fetchHint || '获取最新远程状态'"
+            :title="i18n.fetchHint || '从远程获取最新追踪分支（不合并代码），用于刷新推送/拉取状态'"
             @click="$emit('fetchAll', project.id)"
           >
+            <Icon
+              icon="mdi:cloud-refresh-outline"
+              height="12"
+            />
             <span>{{ i18n.fetchAll || 'Fetch' }}</span>
           </button>
         </div>
@@ -513,6 +527,10 @@
             :title="`${i18n.push || 'Push'} ${r.label}`"
             @click="$emit('pushSingle', project.id, r.key)"
           >
+            <Icon
+              icon="mdi:arrow-up"
+              height="12"
+            />
             <span>{{ pushBtnText(getPushStatus(project.id, r.key), r.label, i18n) }}</span>
           </button>
 

@@ -102,6 +102,8 @@
     "pushBranchHint": "Current branch only mode is faster, skips other branches",
     "pullConfirm": "Confirm Pull",
     "pullConfirmBody": "Pull from {0}. This may overwrite local changes. Continue?",
+    "pullVsFetchHint": "Pull: download & merge remote commits into local (modifies local code); Fetch: only refresh remote status (no local change)",
+    "pullBtnHint": "Download & merge remote commits into local (modifies local code)",
     "fetch": "Fetch",
     "fetchAll": "Fetch Remotes",
     "fetchHint": "Fetch latest tracking branches from remotes (no merge)",

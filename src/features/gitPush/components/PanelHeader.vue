@@ -159,32 +159,6 @@
           </button>
         </div>
       </div>
-      <button
-        class="vp-btn vp-btn--primary vp-btn--sm"
-        :title="i18n.pushAllPending || '推送所有待推送项目'"
-        :disabled="needsPushCount === 0 || pushingAllProjects"
-        @click="emit('pushAllProjects')"
-      >
-        <Icon
-          icon="mdi:cloud-upload"
-          height="12"
-          :class="{ 'gp-spin': pushingAllProjects }"
-        />
-        <span v-if="pushingAllProjects">{{ (i18n.pushingProjects || '推送中 ({0}/{1})').replace('{0}', String(pushAllDone)).replace('{1}', String(pushAllTotal)) }}</span>
-        <span v-else>{{ i18n.pushAll || '推送全部' }}({{ needsPushCount }})</span>
-      </button>
-      <button
-        v-if="pushingAllProjects"
-        class="vp-btn vp-btn--danger vp-btn--sm"
-        :title="i18n.cancelAllPush || '取消全部推送'"
-        @click="emit('cancelPushAll')"
-      >
-        <Icon
-          icon="mdi:close-circle"
-          height="12"
-        />
-        <span>{{ i18n.cancel || '取消' }}</span>
-      </button>
       <div class="gp-add-wrap">
         <button
           class="vp-btn vp-btn--ghost gp-add-dropdown-btn"
@@ -253,10 +227,7 @@ interface Props {
   refreshingAll?: boolean
   refreshingAllLocal?: boolean
   refreshingAllRemote?: boolean
-  needsPushCount?: number
-  pushingAllProjects?: boolean
-  pushAllDone?: number
-  pushAllTotal?: number
+
   showPlatformMenu?: boolean
   showAddMenu?: boolean
   showRefreshMenu?: boolean
@@ -269,10 +240,7 @@ withDefaults(defineProps<Props>(), {
   refreshingAll: false,
   refreshingAllLocal: false,
   refreshingAllRemote: false,
-  needsPushCount: 0,
-  pushingAllProjects: false,
-  pushAllDone: 0,
-  pushAllTotal: 0,
+
   showPlatformMenu: false,
   showAddMenu: false,
   showRefreshMenu: false,
@@ -292,8 +260,7 @@ const emit = defineEmits<{
   refreshAll: []
   refreshAllLocal: []
   refreshAllRemote: []
-  pushAllProjects: []
-  cancelPushAll: []
+
   openAddProject: []
   openScan: []
   openWeb: [url: string]

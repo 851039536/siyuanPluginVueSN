@@ -12,10 +12,7 @@
       :refreshing-all="refreshingAll"
       :refreshing-all-local="refreshingAllLocal"
       :refreshing-all-remote="refreshingAllRemote"
-      :needs-push-count="needsPushCount"
-      :pushing-all-projects="pushingAllProjects"
-      :push-all-done="pushAllDone"
-      :push-all-total="pushAllTotal"
+
       :search-query="searchQuery"
       :search-placeholder="i18n.searchPlaceholder || '搜索项目...'"
       @update:search-query="searchQuery = $event"
@@ -24,8 +21,7 @@
       @refresh-all="handleRefreshAll"
       @refresh-all-local="handleRefreshAllLocal"
       @refresh-all-remote="handleRefreshAllRemote"
-      @push-all-projects="handlePushAllProjects"
-      @cancel-push-all="pushingAllProjects = false"
+
       @open-add-project="showAddDialog = true"
       @open-scan="handleOpenScan"
       @open-web="handleOpenWeb"
@@ -1131,36 +1127,7 @@ async function handleSaveBranchMode(mode: "all" | "head") {
   await props.manager.setPushBranchMode(mode)
 }
 
-/** 推送所有项目状态 */
-const pushingAllProjects = ref(false)
-const pushAllDone = ref(0)
-const pushAllTotal = ref(0)
 
-/** 当前视图下需要推送的项目数 */
-const needsPushCount = computed(() => {
-  let count = 0
-  for (const p of projects.value) {
-    if (pushStatuses.value[p.id]?.needsPush) { count++ }
-  }
-  return count
-})
-
-async function handlePushAllProjects() {
-  pushingAllProjects.value = true
-  const allProjects = projects.value.filter((p) => pushStatuses.value[p.id]?.needsPush)
-  pushAllTotal.value = allProjects.length
-  pushAllDone.value = 0
-  try {
-    // 批次并发推送（复用 gitConcurrency）；取消后不再启动新批次，进行中的批次自然完成
-    await batchProcess(allProjects, gitConcurrency.value || 3, async (p) => {
-      if (!pushingAllProjects.value) return
-      await pushToAll(p.id)
-      pushAllDone.value++
-    })
-  } finally {
-    pushingAllProjects.value = false
-  }
-}
 
 /** 获取指定项目指定远程的推送状态 */
 function getRemoteStatus(projectId: string, remoteKey: string) {

@@ -56,7 +56,12 @@
           class="btn-del-ach"
           title="删除此成就"
           @click="emit('deleteCustom', ach.id)"
-        >×</button>
+        >
+          <IconWrapper
+            name="close"
+            :size="12"
+          />
+        </button>
         <IconWrapper
           class="ach-icon"
           :name="ach.icon as IconKey"
@@ -76,19 +81,11 @@
         name="pageLock"
         :size="12"
       /> 未获得 ({{ filteredLocked.length }})</span>
-      <svg
-        width="10"
-        height="10"
-        viewBox="0 0 10 10"
+      <IconWrapper
+        name="chevronDown"
+        :size="10"
         :class="{ rotated: showLocked }"
-      ><path
-        d="M2 3l3 3 3-3"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      /></svg>
+      />
     </button>
     <div
       v-if="showLocked"
@@ -105,7 +102,12 @@
           class="btn-del-ach"
           title="删除此成就"
           @click="emit('deleteCustom', ach.id)"
-        >×</button>
+        >
+          <IconWrapper
+            name="close"
+            :size="12"
+          />
+        </button>
         <IconWrapper
           class="ach-icon"
           name="pageLock"

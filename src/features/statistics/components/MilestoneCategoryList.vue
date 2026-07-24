@@ -23,18 +23,10 @@
           class="category-toggle"
           :class="{ expanded: category.expanded }"
         >
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 12 12"
-          ><path
-            d="M4 2l4 4-4 4"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          /></svg>
+          <IconWrapper
+            name="chevronRight"
+            :size="12"
+          />
         </span>
       </button>
       <div

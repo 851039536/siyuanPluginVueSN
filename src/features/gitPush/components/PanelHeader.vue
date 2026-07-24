@@ -2,7 +2,7 @@
 <template>
   <div class="gp-header">
     <div class="gp-header-left">
-      <span class="gp-title">{{ i18n.panelTitle || 'Git 推送' }}</span>
+      <span class="gp-title">{{ i18n.panelTitle }}</span>
       <span
         v-if="projectCount > 0"
         class="gp-count-badge"
@@ -15,7 +15,7 @@
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
           :class="{ active: currentView === 'list' }"
-          :title="i18n.listView || '列表视图'"
+          :title="i18n.listView "
           @click="emit('update:currentView', 'list')"
         >
           <Icon
@@ -26,7 +26,7 @@
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
           :class="{ active: currentView === 'stats' }"
-          :title="i18n.statsView || '统计视图'"
+          :title="i18n.statsView"
           @click="emit('update:currentView', 'stats')"
         >
           <Icon
@@ -40,7 +40,7 @@
       <div class="gp-platform-wrap">
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm gp-platform-dropdown-btn"
-          :title="i18n.platformSites || '平台官网'"
+          :title="i18n.platformSites"
           @click.stop="emit('update:showPlatformMenu', !showPlatformMenu)"
         >
           <Icon

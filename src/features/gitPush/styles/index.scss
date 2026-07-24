@@ -247,12 +247,12 @@
   background: var(--b3-border-color);
 }
 
-// 拉取下拉菜单
-.gp-pull-wrap {
+// 拉取/推送内联下拉菜单
+.gp-inline-menu-wrap {
   position: relative;
 }
 
-.gp-pull-popover {
+.gp-inline-menu-popover {
   @include popover-base;
   top: 100%;
   left: 0;
@@ -260,7 +260,7 @@
   min-width: 140px;
 }
 
-.gp-pull-item {
+.gp-inline-menu-item {
   @include popover-item;
 
   &:disabled {
@@ -273,12 +273,12 @@
     color: var(--b3-theme-primary);
   }
 
-  &--fetch {
+  &--muted {
     color: var(--b3-theme-on-surface-light);
   }
 }
 
-.gp-pull-divider {
+.gp-inline-menu-divider {
   height: 1px;
   margin: $spacing-1 6px;
   background: var(--b3-border-color);

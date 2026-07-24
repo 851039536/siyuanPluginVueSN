@@ -52,7 +52,8 @@ export class GitPushManager {
     await this.storage.init()
     await this.executor.loadGitConcurrency()
     await this.remoteOps.loadPushBranchMode()
-    const i18n = (this.plugin.i18n as any)?.gitPush || {}
+    const pluginI18n = (this.plugin.i18n as Record<string, any>) || {}
+    const i18n = pluginI18n.gitPush || pluginI18n
 
     createVueDockApp(this.plugin, GitPushPanel, {
       icon: "iconGitPush",

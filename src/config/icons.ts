@@ -186,6 +186,36 @@ export const FEATURE_ICONS = {
     color: "#6366f1",
   },
 
+  // 密码箱
+  passwordVault: {
+    icon: "mdi:shield-key",
+    color: "#f59e0b",
+  },
+
+  // 热力图标记
+  heatmapMarker: {
+    icon: "mdi:map-marker-radius",
+    color: "#ef4444",
+  },
+
+  // 排版助手
+  formatAssistant: {
+    icon: "mdi:format-align-left",
+    color: "#10b981",
+  },
+
+  // HTML 展示
+  htmlViewer: {
+    icon: "mdi:code-tags",
+    color: "#f97316",
+  },
+
+  // 资源管理
+  resourceManager: {
+    icon: "mdi:folder-cog",
+    color: "#06b6d4",
+  },
+
   // S3 备份
   s3Backup: {
     icon: "mdi:cloud-upload",

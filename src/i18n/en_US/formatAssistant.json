@@ -1,0 +1,25 @@
+{
+  "formatAssistant": {
+    "title": "Format Assistant",
+    "description": "Convert Markdown documents to rich text formats for platforms like WeChat",
+    "enableFormatAssistant": "Enable Format Assistant",
+    "enableFormatAssistantDesc": "Convert Markdown to rich text format, supporting WeChat, Bilibili and other platform themes",
+    "target": "Target Platform",
+    "theme": "Theme",
+    "fontSize": "Font Size",
+    "lineHeight": "Line Height",
+    "codeHighlight": "Code Highlight",
+    "codeWrap": "Code Wrap",
+    "convert": "Convert",
+    "chars": "Chars",
+    "htmlChars": "HTML Chars",
+    "preview": "Preview",
+    "inputPlaceholder": "Enter Markdown content here...\n\nSupports headings, paragraphs, bold, italic, quotes, code blocks, lists, tables and more",
+    "previewPlaceholder": "Conversion result will be previewed here",
+    "copyHtml": "Copy HTML",
+    "wechat": "WeChat",
+    "bilibili": "Bilibili",
+    "scrollX": "Horizontal Scroll",
+    "wrap": "Wrap"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "themeColor": {
+    "title": "主题色",
+    "description": "覆盖思源笔记 CSS 变量实现全局主题色切换",
+    "enableThemeColor": "启用主题色",
+    "enableThemeColorDesc": "应用暖橙色全局主题色",
+    "orange": "暖橙色",
+    "github": "GitHub 蓝",
+    "sakura": "樱花动漫",
+    "codex": "Codex"
+  }
+}

@@ -14,17 +14,10 @@
           class="rule-editor-close"
           @click="$emit('close')"
         >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-          ><path
-            d="M4 4l8 8M12 4l-8 8"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-          /></svg>
+          <IconWrapper
+            name="close"
+            :size="16"
+          />
         </button>
       </div>
 
@@ -170,7 +163,10 @@
                 title="删除此成就"
                 @click="onDeleteAchievement(ach.id)"
               >
-                ×
+                <IconWrapper
+                  name="close"
+                  :size="14"
+                />
               </button>
             </div>
           </div>

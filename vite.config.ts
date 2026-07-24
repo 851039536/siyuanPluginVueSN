@@ -131,6 +131,7 @@ export default defineConfig(({
                   async buildStart() {
                     const files = await fg([
                       "src/i18n/*.json",
+                      "src/i18n/**/*.json",
                       "./README*.md",
                       "./plugin.json",
                     ])

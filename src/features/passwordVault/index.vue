@@ -1,3 +1,4 @@
+<!-- 密码箱主弹窗 — 登录/主列表容器 + 编排各子弹窗（表单/类别/改密/导出） -->
 <template>
   <Teleport to="body">
     <Transition name="fade">
@@ -77,7 +78,7 @@
                     variant="ghost"
                     size="xsmall"
                     title="管理类别"
-                    @click="openCategoryManager"
+                    @click="showCategoryManager = true"
                   />
                 </div>
 
@@ -110,104 +111,13 @@
                 </div>
 
                 <div class="entries-grid">
-                  <div
+                  <EntryCard
                     v-for="entry in filteredEntries"
                     :key="entry.id"
-                    class="entry-card"
-                  >
-                    <div class="entry-header">
-                      <div class="entry-title-wrapper">
-                        <IconWrapper
-                          name="file"
-                          :size="18"
-                          class="entry-icon"
-                        />
-                        <h3>{{ entry.name }}</h3>
-                        <span
-                          class="entry-category-tag"
-                          :style="{
-                            backgroundColor: `${getCategoryById(entry.category)?.color}20`,
-                            color: getCategoryById(entry.category)?.color,
-                          }"
-                        >
-                          {{ getCategoryById(entry.category)?.name || '未分类' }}
-                        </span>
-                      </div>
-                      <div class="entry-actions">
-                        <Button
-                          variant="ghost"
-                          size="xsmall"
-                          title="一键复制名称、账号、密码、描述"
-                          @click="copyAllEntry(entry)"
-                        >
-                          一键复制
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="xsmall"
-                          title="编辑"
-                          @click="editEntry(entry)"
-                        >
-                          编辑
-                        </Button>
-                        <Button
-                          icon="delete"
-                          variant="ghost"
-                          size="xsmall"
-                          title="删除"
-                          @click="deleteEntry(entry.id)"
-                        />
-                      </div>
-                    </div>
-                    <div
-                      class="entry-account"
-                      @click="copyAccount(entry.account)"
-                    >
-                      <IconWrapper
-                        name="file"
-                        :size="14"
-                      />
-                      <span class="account-text">{{ entry.account }}</span>
-                      <div class="action-hint">
-                        <IconWrapper
-                          name="contentCopy"
-                          :size="12"
-                        />
-                        点击复制
-                      </div>
-                    </div>
-                    <div class="entry-description">
-                      {{ entry.description }}
-                    </div>
-                    <div class="entry-field">
-                      <div class="field-label">
-                        <IconWrapper
-                          name="pageLock"
-                          :size="14"
-                        />
-                        密码
-                      </div>
-                      <div
-                        class="field-value"
-                        @click="copyPassword(entry.password)"
-                      >
-                        <span class="password-mask">{{ showPasswords[entry.id] ? entry.password : '••••••••' }}</span>
-                        <div class="action-hint">
-                          <IconWrapper
-                            name="contentCopy"
-                            :size="12"
-                          />
-                          点击复制
-                        </div>
-                      </div>
-                      <Button
-                        :icon="showPasswords[entry.id] ? 'eye' : 'eyeOff'"
-                        variant="ghost"
-                        size="xsmall"
-                        @click.stop="togglePasswordVisibility(entry.id)"
-                      />
-                    </div>
-                  </div>
+                    :entry="entry"
+                    @edit="editEntry"
+                    @delete="deleteEntry"
+                  />
 
                   <div
                     v-if="filteredEntries.length === 0"
@@ -222,7 +132,7 @@
                 <Button
                   variant="ghost"
                   size="xsmall"
-                  @click="openChangePasswordModal"
+                  @click="showChangePasswordModal = true"
                 >
                   <IconWrapper
                     name="pageLock"
@@ -249,715 +159,142 @@
     </Transition>
   </Teleport>
 
-  <!-- Add/Edit Entry Modal -->
-  <Teleport to="body">
-    <Transition name="fade">
-      <div
-        v-if="showAddModal"
-        class="password-vault-overlay modal-overlay"
-        @click="closeAddModal"
-      >
-        <Transition name="scale">
-          <div
-            v-if="showAddModal"
-            class="password-vault-dialog small"
-            @click.stop
-          >
-            <div class="dialog-header">
-              <h2>{{ editingEntry ? '编辑密码' : '添加密码' }}</h2>
-              <Button
-                icon="close"
-                variant="ghost"
-                size="xsmall"
-                @click="closeAddModal"
-              />
-            </div>
+  <!-- 添加/编辑条目弹窗 -->
+  <EntryFormModal
+    v-if="showAddModal"
+    :visible="showAddModal"
+    :editing-entry="editingEntry"
+    :prefill="prefillData"
+    @saved="closeAddModal"
+    @close="closeAddModal"
+  />
 
-            <div class="dialog-body">
-              <form
-                class="entry-form"
-                @submit.prevent="saveEntry"
-              >
-                <div class="form-group">
-                  <Select
-                    v-model="entryForm.category"
-                    label="类别"
-                    :options="categories.map(cat => ({
-                      value: cat.id,
-                      label: cat.name,
-                    }))"
-                    size="xsmall"
-                    required
-                  />
-                </div>
+  <!-- 类别管理弹窗 -->
+  <CategoryManagerModal
+    v-if="showCategoryManager"
+    :visible="showCategoryManager"
+    @deleted="onCategoryDeleted"
+    @close="showCategoryManager = false"
+  />
 
-                <div class="form-group">
-                  <Input
-                    v-model="entryForm.name"
-                    label="名称"
-                    type="text"
-                    size="xsmall"
-                    placeholder="请输入名称（如：Google、GitHub等）"
-                    required
-                  />
-                </div>
+  <!-- 修改主密码弹窗 -->
+  <ChangePasswordModal
+    v-if="showChangePasswordModal"
+    :visible="showChangePasswordModal"
+    @close="showChangePasswordModal = false"
+  />
 
-                <div class="form-group">
-                  <Input
-                    v-model="entryForm.account"
-                    label="账号"
-                    type="text"
-                    size="xsmall"
-                    placeholder="请输入账号"
-                    required
-                  />
-                </div>
-
-                <div class="form-group">
-                  <Input
-                    v-model="entryForm.password"
-                    label="密码"
-                    :type="showFormPassword ? 'text' : 'password'"
-                    size="xsmall"
-                    placeholder="请输入密码"
-                    :show-password="true"
-                    required
-                  />
-                </div>
-
-                <div class="form-group">
-                  <Input
-                    v-model="entryForm.description"
-                    type="textarea"
-                    label="描述"
-                    size="xsmall"
-                    placeholder="请输入描述信息"
-                    :rows="3"
-                  />
-                </div>
-
-                <div class="form-actions">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    @click="closeAddModal"
-                  >
-                    取消
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                  >
-                    保存
-                  </Button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </Transition>
-      </div>
-    </Transition>
-  </Teleport>
-
-  <!-- Category Manager Modal -->
-  <Teleport to="body">
-    <Transition name="fade">
-      <div
-        v-if="showCategoryManager"
-        class="password-vault-overlay modal-overlay"
-        @click="closeCategoryManager"
-      >
-        <Transition name="scale">
-          <div
-            v-if="showCategoryManager"
-            class="password-vault-dialog category-manager"
-            @click.stop
-          >
-            <div class="dialog-header">
-              <h2>管理类别</h2>
-              <Button
-                icon="close"
-                variant="ghost"
-                size="xsmall"
-                @click="closeCategoryManager"
-              />
-            </div>
-
-            <div class="dialog-body">
-              <!-- 添加新类别 -->
-              <div class="add-category-section">
-                <h3>添加新类别</h3>
-                <div class="add-category-form">
-                  <Input
-                    v-model="newCategory.name"
-                    type="text"
-                    size="xsmall"
-                    placeholder="类别名称"
-                    :maxlength="10"
-                  />
-                  <div class="color-picker-wrapper">
-                    <button
-                      v-for="color in presetColors"
-                      :key="color"
-                      class="color-option"
-                      :class="{ selected: newCategory.color === color }"
-                      :style="{ backgroundColor: color }"
-                      @click="newCategory.color = color"
-                    ></button>
-                  </div>
-                  <Button
-                    icon="add"
-                    variant="primary"
-                    size="xsmall"
-                    :disabled="!newCategory.name.trim()"
-                    @click="addCategory"
-                  >
-                    添加
-                  </Button>
-                </div>
-              </div>
-
-              <!-- 类别列表 -->
-              <div class="category-list-section">
-                <h3>现有类别</h3>
-                <div class="category-list">
-                  <div
-                    v-for="cat in categories"
-                    :key="cat.id"
-                    class="category-item"
-                  >
-                    <span
-                      class="category-dot"
-                      :style="{ backgroundColor: cat.color }"
-                    ></span>
-                    <span class="category-name">{{ cat.name }}</span>
-                    <Button
-                      v-if="cat.id !== 'default'"
-                      icon="close"
-                      variant="ghost"
-                      size="xsmall"
-                      title="删除类别"
-                      @click="openCategoryDeleteConfirm(cat.id)"
-                    />
-                    <span
-                      v-else
-                      class="default-badge"
-                    >默认</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 删除确认 -->
-              <div
-                v-if="showCategoryDeleteConfirm"
-                class="category-delete-confirm"
-              >
-                <div class="confirm-card">
-                  <p class="confirm-warning">
-                    <IconWrapper
-                      name="warning"
-                      :size="16"
-                    />
-                    确定要删除类别「<strong>{{ getCategoryById(pendingDeleteCategoryId)?.name }}</strong>」吗？
-                  </p>
-                  <p
-                    v-if="getCategoryEntryCount(pendingDeleteCategoryId) > 0"
-                    class="confirm-hint"
-                  >
-                    该类别下 <strong>{{ getCategoryEntryCount(pendingDeleteCategoryId) }} 条</strong>条目将被移至默认类别。
-                  </p>
-                  <p
-                    v-else
-                    class="confirm-hint"
-                  >
-                    此操作不可撤销。
-                  </p>
-                  <div class="form-actions">
-                    <Button
-                      variant="ghost"
-                      size="xsmall"
-                      @click="showCategoryDeleteConfirm = false"
-                    >
-                      取消
-                    </Button>
-                    <Button
-                      variant="primary"
-                      size="xsmall"
-                      @click="executeDeleteCategory"
-                    >
-                      确认删除
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Transition>
-      </div>
-    </Transition>
-  </Teleport>
-
-  <!-- Change Password Modal -->
-  <Teleport to="body">
-    <Transition name="fade">
-      <div
-        v-if="showChangePasswordModal"
-        class="password-vault-overlay modal-overlay"
-        @click="closeChangePasswordModal"
-      >
-        <Transition name="scale">
-          <div
-            v-if="showChangePasswordModal"
-            class="password-vault-dialog small"
-            @click.stop
-          >
-            <div class="dialog-header">
-              <h2>修改主密码</h2>
-              <Button
-                icon="close"
-                variant="ghost"
-                size="xsmall"
-                @click="closeChangePasswordModal"
-              />
-            </div>
-
-            <div class="dialog-body">
-              <form
-                class="change-password-form"
-                @submit.prevent="handleChangePassword"
-              >
-                <Input
-                  v-model="oldPassword"
-                  label="当前密码"
-                  :type="showOldPassword ? 'text' : 'password'"
-                  size="xsmall"
-                  placeholder="请输入当前密码"
-                  :show-password="true"
-                  required
-                />
-
-                <Input
-                  v-model="newPassword"
-                  label="新密码"
-                  :type="showNewPassword ? 'text' : 'password'"
-                  size="xsmall"
-                  placeholder="请输入新密码"
-                  :show-password="true"
-                  :minlength="6"
-                  required
-                />
-
-                <Input
-                  v-model="confirmPassword"
-                  label="确认新密码"
-                  :type="showConfirmPassword ? 'text' : 'password'"
-                  size="xsmall"
-                  placeholder="请再次输入新密码"
-                  :show-password="true"
-                  :minlength="6"
-                  required
-                />
-
-                <div
-                  v-if="changePasswordError"
-                  class="error-message"
-                >
-                  <IconWrapper
-                    name="error"
-                    :size="16"
-                  />
-                  {{ changePasswordError }}
-                </div>
-
-                <div class="form-actions">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    @click="closeChangePasswordModal"
-                  >
-                    取消
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    :disabled="!oldPassword.trim() || !newPassword.trim() || !confirmPassword.trim()"
-                  >
-                    确认修改
-                  </Button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </Transition>
-      </div>
-    </Transition>
-  </Teleport>
-
-  <!-- Export Confirmation Modal -->
-  <Teleport to="body">
-    <Transition name="fade">
-      <div
-        v-if="showExportConfirm"
-        class="password-vault-overlay modal-overlay"
-        @click="showExportConfirm = false"
-      >
-        <Transition name="scale">
-          <div
-            v-if="showExportConfirm"
-            class="password-vault-dialog small"
-            @click.stop
-          >
-            <div class="dialog-header">
-              <h2>导出确认</h2>
-              <Button
-                icon="close"
-                variant="ghost"
-                size="xsmall"
-                @click="showExportConfirm = false"
-              />
-            </div>
-
-            <div class="dialog-body">
-              <!-- Step 1: 警告提示 + 确认 -->
-              <template v-if="!showExportPassword">
-                <div class="export-warning">
-                  <svg
-                    class="warning-icon"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="10"
-                    />
-                    <line
-                      x1="12"
-                      y1="8"
-                      x2="12"
-                      y2="12"
-                    />
-                    <line
-                      x1="12"
-                      y1="16"
-                      x2="12.01"
-                      y2="16"
-                    />
-                  </svg>
-                  <p class="warning-text">
-                    导出数据为 <strong>明文 JSON 格式</strong>，包含所有密码、账号等敏感信息。
-                  </p>
-                  <p class="warning-sub">
-                    请确保将文件保存在安全位置，使用完毕后及时删除。
-                  </p>
-                  <p class="warning-count">
-                    当前共 <strong>{{ entries.length }} 条</strong>密码记录将被导出。
-                  </p>
-                </div>
-
-                <div class="form-actions">
-                  <Button
-                    variant="ghost"
-                    size="xsmall"
-                    @click="showExportConfirm = false"
-                  >
-                    取消
-                  </Button>
-                  <Button
-                    variant="primary"
-                    size="xsmall"
-                    @click="confirmExport"
-                  >
-                    确认导出
-                  </Button>
-                </div>
-              </template>
-
-              <!-- Step 2: 密码验证 -->
-              <template v-else>
-                <div class="export-verify">
-                  <p class="verify-hint">
-                    请输入主密码以确认身份并导出数据
-                  </p>
-                  <Input
-                    v-model="exportPassword"
-                    type="password"
-                    size="xsmall"
-                    placeholder="请输入主密码"
-                    :visible="showExportPwd"
-                    @keyup.enter="verifyAndExport"
-                    @toggle="showExportPwd = $event"
-                  />
-                  <p
-                    v-if="exportPasswordError"
-                    class="error-text"
-                  >
-                    {{ exportPasswordError }}
-                  </p>
-                </div>
-
-                <div class="form-actions">
-                  <Button
-                    variant="ghost"
-                    size="xsmall"
-                    @click="cancelExportPassword"
-                  >
-                    返回
-                  </Button>
-                  <Button
-                    variant="primary"
-                    size="xsmall"
-                    :disabled="!exportPassword.trim()"
-                    @click="verifyAndExport"
-                  >
-                    验证并导出
-                  </Button>
-                </div>
-              </template>
-            </div>
-          </div>
-        </Transition>
-      </div>
-    </Transition>
-  </Teleport>
+  <!-- 导出确认弹窗 -->
+  <ExportModal
+    v-if="showExportConfirm"
+    :visible="showExportConfirm"
+    @close="showExportConfirm = false"
+  />
 </template>
 
 <script setup lang="ts">
-import type {
-  LegacyStoredPasswordEntry,
-  PasswordCategory,
-  PasswordEntry,
-  StoredPasswordEntry,
-} from "./types"
+import type { PasswordEntry } from "./types"
+import type { PendingEntryData } from "./utils/parser"
 import { showMessage } from "siyuan"
 import {
   computed,
   onMounted,
   onUnmounted,
-  reactive,
   ref,
   watch,
 } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
-import Select from "@/components/Select.vue"
 import { usePlugin } from "@/main"
-import {
-  copyToClipboard as copyToClipboardUtil,
-  triggerBlobDownload,
-} from "@/utils/domUtils"
+import { copyToClipboard as copyToClipboardUtil } from "@/utils/domUtils"
+import CategoryManagerModal from "./components/CategoryManagerModal.vue"
+import ChangePasswordModal from "./components/ChangePasswordModal.vue"
+import EntryCard from "./components/EntryCard.vue"
+import EntryFormModal from "./components/EntryFormModal.vue"
+import ExportModal from "./components/ExportModal.vue"
 import PasswordVaultLogin from "./components/PasswordVaultLogin.vue"
+import { usePasswordVaultAuth } from "./composables/usePasswordVaultAuth"
+import { usePasswordVaultData } from "./composables/usePasswordVaultData"
 import { pendingEntryData } from "./index"
-import {
-  DATA_VERSION,
-  PasswordVaultStorage,
-} from "./types/storage"
-import {
-  decryptEntryPayload,
-  decryptPassword,
-  deriveKey,
-  encryptEntryPayload,
-  generateSalt,
-  hashMasterPassword,
-} from "./utils/crypto"
 
-// Props
 interface Props {
   visible: boolean
 }
 
 const props = defineProps<Props>()
 
-// Emits
 const emit = defineEmits<{
   (e: "update:visible", value: boolean): void
   (e: "close"): void
 }>()
 
-// 获取插件实例
 const plugin = usePlugin()
 
-// 存储管理器
-const storage = new PasswordVaultStorage(plugin)
+// 共享状态与逻辑（数据层首次调用初始化 Storage，认证层复用同一状态）
+const {
+  isLoggedIn,
+  entries,
+  categories,
+  storagePath,
+  isEntryDuplicate,
+  removeEntry,
+} = usePasswordVaultData(plugin)
+const {
+  isFirstTime,
+  passwordHint,
+  loadMasterPasswordHash,
+  login,
+} = usePasswordVaultAuth()
 
-// 状态
-const isLoggedIn = ref(false)
+// 视图状态
 const loginError = ref("")
-const isFirstTime = ref(false)
-const savedHash = ref("")
-const encryptionKey = ref<CryptoKey | null>(null) // 当前会话的加密密钥
-const passwordHint = ref<string>("") // 密码提示
-
 const searchQuery = ref("")
 const selectedCategory = ref<string>("all")
+
+// 弹窗开关
 const showAddModal = ref(false)
-const editingEntry = ref<PasswordEntry | null>(null)
-const showFormPassword = ref(false)
-const showPasswords = ref<Record<string, boolean>>({})
-
-// 修改密码状态
-const showChangePasswordModal = ref(false)
-const oldPassword = ref("")
-const newPassword = ref("")
-const confirmPassword = ref("")
-const showOldPassword = ref(false)
-const showNewPassword = ref(false)
-const showConfirmPassword = ref(false)
-const changePasswordError = ref("")
-const showExportConfirm = ref(false)
-const showExportPassword = ref(false)
-const exportPassword = ref("")
-const exportPasswordError = ref("")
-const showExportPwd = ref(false)
-
-// 数据存储路径（展示给用户）
-const storagePath = computed(() => {
-  const dataDir = (plugin as any).dataDir || ""
-  const name = plugin.name || ""
-  return dataDir && name
-    ? `${dataDir}/storage/petal/${name}/password-vault-entries.json`
-    : `data/storage/petal/{plugin}/password-vault-entries.json`
-})
-
-const copyStoragePath = async () => {
-  if (!storagePath.value) return
-  const ok = await copyToClipboardUtil(storagePath.value)
-  showMessage(ok ? "路径已复制" : "复制失败", 2000, ok ? "info" : "error")
-}
-
-const entries = ref<PasswordEntry[]>([])
-const categories = ref<PasswordCategory[]>([
-  {
-    id: "default",
-    name: "默认",
-    color: "#b0aea5",
-  }, // 使用品牌中灰色
-])
-
-const entryForm = reactive({
-  category: "",
-  name: "",
-  account: "",
-  password: "",
-  description: "",
-})
-
-// 类别管理
 const showCategoryManager = ref(false)
-const showCategoryDeleteConfirm = ref(false)
-const pendingDeleteCategoryId = ref("")
-const newCategory = reactive({
-  name: "",
-  color: "#d97757", // 使用品牌橙色作为默认
+const showChangePasswordModal = ref(false)
+const showExportConfirm = ref(false)
+
+// 添加/编辑弹窗上下文
+const editingEntry = ref<PasswordEntry | null>(null)
+const prefillData = ref<PendingEntryData | null>(null)
+
+// 过滤条目
+const filteredEntries = computed(() => {
+  const allEntries = entries.value
+  const category = selectedCategory.value
+  const query = searchQuery.value
+
+  if (category === "all" && !query) {
+    return allEntries
+  }
+
+  let result = allEntries
+  if (category !== "all") {
+    result = result.filter((entry) => entry.category === category)
+  }
+  if (query) {
+    const lowerQuery = query.toLowerCase()
+    result = result.filter(
+      (entry) =>
+        entry.name.toLowerCase().includes(lowerQuery)
+        || entry.account.toLowerCase().includes(lowerQuery)
+        || entry.description.toLowerCase().includes(lowerQuery),
+    )
+  }
+  return result
 })
 
-// 预设颜色 (Anthropic 品牌色)
-const presetColors = [
-  "#d97757", // 橙色 - Primary accent
-  "#6a9bcc", // 蓝色 - Secondary accent
-  "#788c5d", // 绿色 - Tertiary accent
-  "#b0aea5", // 中灰 - Secondary
-  "#141413", // 深色 - Primary text
-  "#e8e6dc", // 浅灰 - Subtle backgrounds
-]
-
-// 使用 Map 缓存类别查找，优化性能 (O(n) -> O(1))
-const categoriesMap = computed(() => {
-  const map = new Map<string, PasswordCategory>()
-  for (const cat of categories.value) {
-    map.set(cat.id, cat)
-  }
-  return map
-})
-
-// 加载保存的密码验证信息
-async function loadMasterPasswordHash() {
-  try {
-    const {
-      hash,
-      verifySalt,
-      encryptionSalt: encSalt,
-      hint,
-    } = await storage.loadVerificationData()
-
-    if (hash && verifySalt && encSalt) {
-      savedHash.value = hash
-      passwordHint.value = hint || ""
-      isFirstTime.value = false
-    } else {
-      isFirstTime.value = true
-    }
-  } catch (error) {
-    console.error("Failed to load master password:", error)
-    isFirstTime.value = true
-  }
-}
-
-// 处理登录
+// 登录
 async function handleLogin(inputPassword: string, hint?: string) {
-  if (!inputPassword.trim()) return
-
-  if (isFirstTime.value) {
-    // 首次创建密码 - 生成盐值并保存
-    const verifySalt = generateSalt()
-    const encryptSalt = generateSalt()
-    const hash = await hashMasterPassword(inputPassword, verifySalt)
-
-    // 更新密码提示
-    if (hint) {
-      passwordHint.value = hint
-    }
-
-    // 保存验证信息和加密盐值
-    await storage.saveInitData({
-      hash,
-      verifySalt,
-      encryptionSalt: encryptSalt,
-      hint: passwordHint.value,
-    })
-
-    savedHash.value = hash
-    isFirstTime.value = false
-
-    // 派生加密密钥
-    encryptionKey.value = await deriveKey(inputPassword, encryptSalt)
-
-    // 先加载数据，再标记登录（避免 watch 触发时 entries 空数组）
-    await Promise.all([loadEntries(), loadCategories()])
-    isLoggedIn.value = true
-  } else {
-    // 验证密码 - 获取保存的盐值
-    const verifySalt = await storage.verifySalt.load()
-    const encryptSalt = await storage.encryptionSalt.load()
-
-    if (!verifySalt || !encryptSalt) {
-      loginError.value = "数据损坏，请联系开发者"
-      return
-    }
-
-    const hash = await hashMasterPassword(inputPassword, verifySalt)
-
-    if (hash === savedHash.value) {
-      loginError.value = ""
-
-      // 派生加密密钥
-      encryptionKey.value = await deriveKey(inputPassword, encryptSalt)
-
-      // 先加载数据，再标记登录（避免 watch 触发时 entries 空数组）
-      await Promise.all([loadEntries(), loadCategories()])
-      isLoggedIn.value = true
-    } else {
-      loginError.value = "密码错误，请重试"
-    }
-  }
+  loginError.value = await login(inputPassword, hint)
 }
 
-// 显示忘记密码选项
-async function showForgotPasswordOptions() {
-  // 直接显示密码提示
+// 忘记密码 → 显示提示
+function showForgotPasswordOptions() {
   if (passwordHint.value) {
     showMessage(`密码提示：${passwordHint.value}`, 5000, "info")
   } else {
@@ -969,525 +306,23 @@ async function showForgotPasswordOptions() {
   }
 }
 
-// 导出所有数据（JSON格式，明文）
-async function exportAllData() {
-  if (!entries.value.length) {
-    showMessage("没有数据可导出", 2000, "info")
-    return
-  }
-
-  try {
-    const exportData = {
-      version: "2.0",
-      exportDate: new Date().toISOString(),
-      entries: entries.value,
-      categories: categories.value,
-    }
-
-    const json = JSON.stringify(exportData, null, 2)
-    const blob = new Blob([json], { type: "application/json" })
-    triggerBlobDownload(blob, `password-vault-backup-${new Date().toISOString().split("T")[0]}.json`)
-
-    showMessage("数据已导出，请妥善保管", 3000, "info")
-  } catch (error) {
-    console.error("Export failed:", error)
-    showMessage("导出失败", 2000, "error")
-  }
-}
-
-// 打开导出确认弹窗
-function openExportConfirm() {
-  if (!entries.value.length) {
-    showMessage("没有数据可导出", 2000, "info")
-    return
-  }
-  showExportConfirm.value = true
-}
-
-// 确认导出 → 进入密码验证步骤
-function confirmExport() {
-  showExportPassword.value = true
-  exportPassword.value = ""
-  exportPasswordError.value = ""
-}
-
-// 取消密码验证，返回警告步骤
-function cancelExportPassword() {
-  showExportPassword.value = false
-  exportPassword.value = ""
-  exportPasswordError.value = ""
-}
-
-// 密码验证通过后执行导出
-async function verifyAndExport() {
-  const pwd = exportPassword.value.trim()
-  if (!pwd) return
-
-  exportPasswordError.value = ""
-
-  const verifySalt = await storage.verifySalt.load()
-  if (!verifySalt) {
-    exportPasswordError.value = "数据异常，无法验证"
-    return
-  }
-
-  const hash = await hashMasterPassword(pwd, verifySalt)
-  if (hash !== savedHash.value) {
-    exportPasswordError.value = "密码错误"
-    return
-  }
-
-  showExportConfirm.value = false
-  showExportPassword.value = false
-  exportPassword.value = ""
-  exportAllData()
-}
-
-// 打开修改密码弹窗
-function openChangePasswordModal() {
-  oldPassword.value = ""
-  newPassword.value = ""
-  confirmPassword.value = ""
-  showOldPassword.value = false
-  showNewPassword.value = false
-  showConfirmPassword.value = false
-  changePasswordError.value = ""
-  showChangePasswordModal.value = true
-}
-
-// 关闭修改密码弹窗
-function closeChangePasswordModal() {
-  showChangePasswordModal.value = false
-  oldPassword.value = ""
-  newPassword.value = ""
-  confirmPassword.value = ""
-  changePasswordError.value = ""
-}
-
-// 处理修改密码
-async function handleChangePassword() {
-  changePasswordError.value = ""
-
-  // 验证输入
-  if (
-    !oldPassword.value.trim()
-    || !newPassword.value.trim()
-    || !confirmPassword.value.trim()
-  ) {
-    changePasswordError.value = "请填写所有字段"
-    return
-  }
-
-  if (newPassword.value !== confirmPassword.value) {
-    changePasswordError.value = "两次输入的新密码不一致"
-    return
-  }
-
-  if (newPassword.value.length < 6) {
-    changePasswordError.value = "新密码至少需要6个字符"
-    return
-  }
-
-  if (oldPassword.value === newPassword.value) {
-    changePasswordError.value = "新密码不能与当前密码相同"
-    return
-  }
-
-  try {
-    // 获取当前验证盐值
-    const verifySalt = await storage.verifySalt.load()
-    if (!verifySalt) {
-      changePasswordError.value = "数据损坏"
-      return
-    }
-
-    const oldHash = await hashMasterPassword(oldPassword.value, verifySalt)
-
-    // 验证旧密码
-    if (oldHash !== savedHash.value) {
-      changePasswordError.value = "当前密码错误"
-      return
-    }
-
-    // 生成新的盐值和哈希
-    const newVerifySalt = generateSalt()
-    const newEncryptSalt = generateSalt()
-    const newHash = await hashMasterPassword(newPassword.value, newVerifySalt)
-
-    // 使用新密码派生新密钥
-    const newKey = await deriveKey(newPassword.value, newEncryptSalt)
-
-    // 使用新密钥重新加密所有条目
-    const reEncryptedEntries: StoredPasswordEntry[] = await Promise.all(
-      entries.value.map(async (entry) => {
-        const {
-          encryptedPayload,
-          iv,
-        } = await encryptEntryPayload(
-          {
-            name: entry.name,
-            account: entry.account,
-            password: entry.password,
-            description: entry.description,
-          },
-          newKey,
-        )
-        return {
-          id: entry.id,
-          category: entry.category,
-          encryptedPayload,
-          iv,
-          createdAt: entry.createdAt,
-          updatedAt: Date.now(),
-          version: DATA_VERSION,
-        }
-      }),
-    )
-
-    // 保存所有新数据
-    await Promise.all([
-      storage.masterPassword.save(newHash),
-      storage.verifySalt.save(newVerifySalt),
-      storage.encryptionSalt.save(newEncryptSalt),
-      storage.entries.save(reEncryptedEntries),
-    ])
-
-    // 更新状态
-    savedHash.value = newHash
-    encryptionKey.value = newKey
-
-    showMessage("密码修改成功，请记住新密码", 3000, "info")
-    closeChangePasswordModal()
-  } catch (error) {
-    console.error("Change password failed:", error)
-    changePasswordError.value = "密码修改失败，请重试"
-  }
-}
-
-// 加载条目（解密所有敏感字段，自动迁移旧格式）
-async function loadEntries() {
-  if (!encryptionKey.value) return
-
-  try {
-    const stored = await storage.entries.load()
-    if (!stored || stored.length === 0) {
-      entries.value = []
-      return
-    }
-
-    let needsMigration = false
-    const decrypted: PasswordEntry[] = await Promise.all(
-      stored.map(async (entry: StoredPasswordEntry | LegacyStoredPasswordEntry) => {
-        // 检测旧格式（v1：有 encryptedPassword 字段，仅 password 加密）
-        if ("encryptedPassword" in entry && entry.encryptedPassword) {
-          needsMigration = true
-          const legacy = entry as LegacyStoredPasswordEntry
-          const password = await decryptPassword(
-            legacy.encryptedPassword,
-            legacy.iv,
-            encryptionKey.value!,
-          )
-          return {
-            id: legacy.id,
-            category: legacy.category,
-            name: legacy.name,
-            account: legacy.account,
-            password,
-            description: legacy.description ?? "",
-            createdAt: legacy.createdAt,
-            updatedAt: legacy.updatedAt,
-          }
-        }
-
-        // 新格式（v2）：所有敏感字段整体加密
-        const v2 = entry as StoredPasswordEntry
-        const payload = await decryptEntryPayload(
-          v2.encryptedPayload,
-          v2.iv,
-          encryptionKey.value!,
-        )
-        return {
-          id: v2.id,
-          category: v2.category,
-          name: payload.name,
-          account: payload.account,
-          password: payload.password,
-          description: payload.description,
-          createdAt: v2.createdAt,
-          updatedAt: v2.updatedAt,
-        }
-      }),
-    )
-
-    entries.value = decrypted
-
-    // 有旧数据时静默迁移回写新格式
-    if (needsMigration) {
-      await saveEntries()
-      console.info("[PasswordVault] 旧格式数据已自动迁移至 v2 加密格式")
-    }
-  } catch (error) {
-    console.error("Failed to load entries:", error)
-    entries.value = []
-  }
-}
-
-// 加载分类
-async function loadCategories() {
-  try {
-    const stored = await storage.categories.load()
-    if (stored) {
-      categories.value = stored
-    }
-  } catch (error) {
-    console.error("Failed to load categories:", error)
-  }
-}
-
-// 保存条目（加密所有敏感字段）
-async function saveEntries() {
-  if (!encryptionKey.value) {
-    console.error("No encryption key available")
-    return
-  }
-  try {
-    const storedEntries: StoredPasswordEntry[] = await Promise.all(
-      entries.value.map(async (entry) => {
-        const {
-          encryptedPayload,
-          iv,
-        } = await encryptEntryPayload(
-          {
-            name: entry.name,
-            account: entry.account,
-            password: entry.password,
-            description: entry.description,
-          },
-          encryptionKey.value!,
-        )
-        return {
-          id: entry.id,
-          category: entry.category,
-          encryptedPayload,
-          iv,
-          createdAt: entry.createdAt,
-          updatedAt: entry.updatedAt,
-          version: DATA_VERSION,
-        }
-      }),
-    )
-    await storage.entries.save(storedEntries)
-  } catch (error) {
-    console.error("Failed to save entries:", error)
-  }
-}
-
-// 保存分类
-async function saveCategories() {
-  try {
-    await storage.categories.save(categories.value)
-  } catch (error) {
-    console.error("Failed to save categories:", error)
-  }
-}
-
-// 过滤条目 - 使用缓存策略优化性能
-const filteredEntries = computed(() => {
-  const allEntries = entries.value
-  const category = selectedCategory.value
-  const query = searchQuery.value
-
-  // 无过滤条件时直接返回原数组，避免创建新数组
-  if (category === "all" && !query) {
-    return allEntries
-  }
-
-  let result = allEntries
-
-  // 先按分类过滤
-  if (category !== "all") {
-    result = result.filter((entry) => entry.category === category)
-  }
-
-  // 再按搜索词过滤
-  if (query) {
-    const lowerQuery = query.toLowerCase()
-    result = result.filter(
-      (entry) =>
-        entry.name.toLowerCase().includes(lowerQuery)
-        || entry.account.toLowerCase().includes(lowerQuery)
-        || entry.description.toLowerCase().includes(lowerQuery),
-    )
-  }
-
-  return result
-})
-
-// 获取分类对象 - 使用 Map 缓存实现 O(1) 查找
-const getCategoryById = (id: string): PasswordCategory | undefined => {
-  return categoriesMap.value.get(id)
-}
-
-// 获取某类别下的条目数量
-const getCategoryEntryCount = (categoryId: string): number => {
-  let count = 0
-  for (const e of entries.value) {
-    if (e.category === categoryId) count++
-  }
-  return count
-}
-
-// 打开添加弹窗
+// 添加/编辑
 const openAddModal = () => {
   editingEntry.value = null
-  entryForm.category = categories.value[0]?.id || ""
-  entryForm.name = ""
-  entryForm.account = ""
-  entryForm.password = ""
-  entryForm.description = ""
-  showFormPassword.value = false
+  prefillData.value = null
   showAddModal.value = true
 }
 
-// 编辑条目
 const editEntry = (entry: PasswordEntry) => {
   editingEntry.value = entry
-  entryForm.category = entry.category
-  entryForm.name = entry.name
-  entryForm.account = entry.account
-  entryForm.password = entry.password
-  entryForm.description = entry.description
-  showFormPassword.value = false
+  prefillData.value = null
   showAddModal.value = true
 }
 
-// 关闭添加弹窗
 const closeAddModal = () => {
   showAddModal.value = false
   editingEntry.value = null
-}
-
-// 类别管理方法
-const openCategoryManager = () => {
-  showCategoryManager.value = true
-}
-
-const closeCategoryManager = () => {
-  showCategoryManager.value = false
-  showCategoryDeleteConfirm.value = false
-  pendingDeleteCategoryId.value = ""
-  newCategory.name = ""
-  newCategory.color = "#3b82f6"
-}
-
-const addCategory = async () => {
-  if (!newCategory.name.trim()) return
-
-  // 检查是否已存在同名类别
-  if (categories.value.some((c) => c.name === newCategory.name.trim())) {
-    showMessage("类别已存在", 2000, "error")
-    return
-  }
-
-  const category: PasswordCategory = {
-    id: Date.now().toString(),
-    name: newCategory.name.trim(),
-    color: newCategory.color,
-  }
-
-  categories.value.push(category)
-  await saveCategories()
-
-  // 重置表单
-  newCategory.name = ""
-  newCategory.color = presetColors[0]
-
-  showMessage("类别已添加", 2000, "info")
-}
-
-// 打开删除确认
-const openCategoryDeleteConfirm = (categoryId: string) => {
-  pendingDeleteCategoryId.value = categoryId
-  showCategoryDeleteConfirm.value = true
-}
-
-// 确认后执行删除
-const executeDeleteCategory = async () => {
-  const categoryId = pendingDeleteCategoryId.value
-  if (categoryId === "default") {
-    showMessage("默认类别不能删除", 2000, "error")
-    showCategoryDeleteConfirm.value = false
-    return
-  }
-
-  // 将该类别下的条目迁移到默认类别
-  const affectedEntries = entries.value.filter((e) => e.category === categoryId)
-  for (const entry of affectedEntries) {
-    entry.category = "default"
-  }
-
-  // 如果有条目被迁移，需要重新加密保存
-  if (affectedEntries.length > 0) {
-    await saveEntries()
-  }
-
-  // 删除类别
-  categories.value = categories.value.filter((c) => c.id !== categoryId)
-  await saveCategories()
-
-  // 如果当前选中的是被删除的类别，重置为全部
-  if (selectedCategory.value === categoryId) {
-    selectedCategory.value = "all"
-  }
-
-  const hint = affectedEntries.length > 0
-    ? `类别已删除，${affectedEntries.length} 条条目已移至默认类别`
-    : "类别已删除"
-  showMessage(hint, 2000, "info")
-
-  showCategoryDeleteConfirm.value = false
-  pendingDeleteCategoryId.value = ""
-}
-
-// 保存条目
-async function saveEntry() {
-  try {
-    if (editingEntry.value) {
-      // 更新
-      const index = entries.value.findIndex(
-        (e) => e.id === editingEntry.value!.id,
-      )
-      if (index !== -1) {
-        entries.value[index] = {
-          ...entries.value[index],
-          category: entryForm.category,
-          name: entryForm.name,
-          account: entryForm.account,
-          password: entryForm.password,
-          description: entryForm.description,
-          updatedAt: Date.now(),
-        }
-      }
-    } else {
-      // 新增
-      const newEntry: PasswordEntry = {
-        id: Date.now().toString(),
-        category: entryForm.category,
-        name: entryForm.name,
-        account: entryForm.account,
-        password: entryForm.password,
-        description: entryForm.description,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      }
-      entries.value.push(newEntry)
-    }
-
-    await saveEntries()
-    closeAddModal()
-  } catch (error) {
-    console.error("Failed to save entry:", error)
-  }
+  prefillData.value = null
 }
 
 // 删除条目
@@ -1500,151 +335,92 @@ async function deleteEntry(id: string) {
   )
   if (!confirmed) return
 
-  entries.value = entries.value.filter((e) => e.id !== id)
-  // 清理密码可见性状态，避免内存泄漏
-  if (id in showPasswords.value) {
-    delete showPasswords.value[id]
-  }
-  await saveEntries()
+  await removeEntry(id)
   showMessage("密码条目已删除", 2000, "info")
 }
 
-// 切换密码可见性
-const togglePasswordVisibility = (id: string) => {
-  showPasswords.value[id] = !showPasswords.value[id]
-}
-
-// 通用复制函数 — 统一使用 domUtils.copyToClipboard
-const copyAndNotify = async (text: string, label: string) => {
-  const ok = await copyToClipboardUtil(text)
-  showMessage(ok ? `${label}已复制` : "复制失败", 2000, ok ? "info" : "error")
-}
-
-// 复制账号
-const copyAccount = (account: string) => copyAndNotify(account, "账号")
-
-// 复制密码
-const copyPassword = (password: string) => copyAndNotify(password, "密码")
-
-// 一键复制：名称 + 账号 + 密码 + 描述
-const copyAllEntry = async (entry: PasswordEntry) => {
-  const lines = [
-    entry.name,
-    `账号：${entry.account}`,
-    `密码：${entry.password}`,
-  ]
-  if (entry.description) {
-    lines.push(`描述：${entry.description}`)
+// 导出
+function openExportConfirm() {
+  if (!entries.value.length) {
+    showMessage("没有数据可导出", 2000, "info")
+    return
   }
-  const ok = await copyToClipboardUtil(lines.join("\n"))
-  showMessage(ok ? "条目信息已复制" : "复制失败", 2000, ok ? "info" : "error")
+  showExportConfirm.value = true
 }
 
-// 关闭弹窗（保持登录状态，仅清理 UI 状态）
+// 类别删除后：若当前筛选被删除则回退到全部
+function onCategoryDeleted(categoryId: string) {
+  if (selectedCategory.value === categoryId) {
+    selectedCategory.value = "all"
+  }
+}
+
+// 复制存储路径
+const copyStoragePath = async () => {
+  if (!storagePath.value) return
+  const ok = await copyToClipboardUtil(storagePath.value)
+  showMessage(ok ? "路径已复制" : "复制失败", 2000, ok ? "info" : "error")
+}
+
+// 关闭主弹窗（保持登录状态）
 const closeDialog = () => {
   loginError.value = ""
-  // 清理密码可见性状态
-  Object.keys(showPasswords.value).forEach((key) => {
-    delete showPasswords.value[key]
-  })
   emit("update:visible", false)
   emit("close")
 }
 
-// 键盘事件
+// 键盘事件：Esc 关闭最上层弹窗
 const handleKeyDown = (event: KeyboardEvent) => {
   if (!props.visible) return
+  if (event.key !== "Escape") return
 
-  if (event.key === "Escape") {
-    if (showCategoryManager.value) {
-      closeCategoryManager()
-    } else if (showAddModal.value) {
-      closeAddModal()
-    } else {
-      closeDialog()
-    }
-  }
-
-  // Ctrl+K 搜索
-  if ((event.ctrlKey || event.metaKey) && event.key === "k") {
-    event.preventDefault()
-    if (isLoggedIn.value) {
-      // 聚焦搜索框
-    }
+  if (showCategoryManager.value) {
+    showCategoryManager.value = false
+  } else if (showChangePasswordModal.value) {
+    showChangePasswordModal.value = false
+  } else if (showExportConfirm.value) {
+    showExportConfirm.value = false
+  } else if (showAddModal.value) {
+    closeAddModal()
+  } else {
+    closeDialog()
   }
 }
 
-// 监听 visible 变化
+// 打开弹窗时加载验证信息
 watch(
   () => props.visible,
   async (newVal) => {
-    if (newVal) {
-      await loadMasterPasswordHash()
-    }
+    if (newVal) await loadMasterPasswordHash()
   },
 )
 
-// 检查条目是否已存在（名称 + 账号 均一致）
-function isEntryDuplicate(data: { name: string, account: string }): boolean {
-  if (!data.account) return false // 无账号字段无法判断重复
-  return entries.value.some(
-    (e) => e.name === data.name && e.account === data.account,
-  )
-}
-
-/** 去重命中：搜索定位到已有条目，不打开添加表单 */
-function locateExistingEntry(data: { name: string }): void {
-  searchQuery.value = "" // 先清空触发一次更新
-  selectedCategory.value = "all"
-  // 下一 tick 设置搜索词，触发列表过滤定位
-  setTimeout(() => {
-    searchQuery.value = data.name
-  }, 50)
-  showMessage(`「${data.name}」已存在，已定位到该条目`, 2000, "info")
+// 预填：去重命中则搜索定位，否则打开添加表单
+function prefillFromPending(data: PendingEntryData) {
+  if (isEntryDuplicate(data)) {
+    searchQuery.value = ""
+    selectedCategory.value = "all"
+    setTimeout(() => {
+      searchQuery.value = data.name
+    }, 50)
+    showMessage(`「${data.name}」已存在，已定位到该条目`, 2000, "info")
+    pendingEntryData.value = null
+    return
+  }
+  editingEntry.value = null
+  prefillData.value = data
+  showAddModal.value = true
   pendingEntryData.value = null
 }
 
-// 监听外部预填数据（来自浮动工具栏"存密码"等外部调用）
+// 监听外部预填数据（登录后才处理）
 watch(pendingEntryData, (data) => {
-  if (data && isLoggedIn.value) {
-    // 去重检查：名称+账号已存在 → 搜索定位
-    if (isEntryDuplicate(data)) {
-      locateExistingEntry(data)
-      return
-    }
-    // 打开添加表单并预填所有字段
-    editingEntry.value = null
-    entryForm.category = categories.value[0]?.id || ""
-    entryForm.name = data.name
-    entryForm.account = data.account
-    entryForm.password = data.password
-    entryForm.description = data.description
-    showFormPassword.value = false
-    showAddModal.value = true
-    // 清空 pending 状态，避免重复触发
-    pendingEntryData.value = null
-  }
+  if (data && isLoggedIn.value) prefillFromPending(data)
 }, { immediate: true })
 
-// 登录完成后检测是否有待处理的预填数据
+// 登录完成后检测待处理的预填数据
 watch(isLoggedIn, (loggedIn) => {
-  if (loggedIn && pendingEntryData.value) {
-    const data = pendingEntryData.value
-    // 去重检查：名称+账号已存在 → 搜索定位
-    if (isEntryDuplicate(data)) {
-      locateExistingEntry(data)
-      return
-    }
-    editingEntry.value = null
-    entryForm.category = categories.value[0]?.id || ""
-    entryForm.name = data.name
-    entryForm.account = data.account
-    entryForm.password = data.password
-    entryForm.description = data.description
-    showFormPassword.value = false
-    showAddModal.value = true
-    pendingEntryData.value = null
-  }
+  if (loggedIn && pendingEntryData.value) prefillFromPending(pendingEntryData.value)
 }, { immediate: true })
 
 onMounted(() => {

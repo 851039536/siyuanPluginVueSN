@@ -1,0 +1,165 @@
+// 密码箱 - 条目卡片样式
+@use '@/variables.scss' as *;
+@use 'mixins' as *;
+
+.entry-card {
+  @include card-base;
+  padding: $spacing-3;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+.entry-header {
+  @include flex-row;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: $spacing-2;
+}
+
+.entry-title-wrapper {
+  @include flex-row-gap($spacing-2);
+  flex: 1;
+  min-width: 0;
+}
+
+.entry-icon {
+  color: var(--b3-theme-primary);
+  flex-shrink: 0;
+}
+
+.entry-header h3 {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-background);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: $font-heading;
+}
+
+.entry-category-tag {
+  padding: 1px 6px;
+  border-radius: $radius-sm;
+  font-size: 10px;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.entry-actions {
+  @include flex-row-gap($vp-radius);
+  opacity: 0;
+  transition: opacity 0.12s;
+
+  button {
+    padding: 3px 8px;
+    background: transparent;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $radius-sm;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    color: var(--b3-theme-on-surface);
+    cursor: pointer;
+    transition: all 0.12s;
+
+    &:hover {
+      background: var(--b3-theme-primary);
+      border-color: var(--b3-theme-primary);
+      color: #fff;
+    }
+
+    &:last-child {
+      padding: 3px 6px;
+    }
+  }
+}
+
+.entry-card:hover .entry-actions {
+  opacity: 1;
+}
+
+.entry-account {
+  @include flex-row-gap(6px);
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  cursor: pointer;
+  margin-bottom: $spacing-1;
+
+  &:hover {
+    background: var(--b3-theme-surface);
+    border-color: var(--b3-theme-primary);
+  }
+
+  svg {
+    color: var(--b3-theme-primary);
+    flex-shrink: 0;
+  }
+
+  .account-text {
+    flex: 1;
+    font-size: $font-size-sm;
+    color: var(--b3-theme-on-background);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .action-hint {
+    @include flex-row-gap($spacing-1);
+    font-size: $font-size-xs;
+    color: var(--b3-theme-on-surface-light);
+    flex-shrink: 0;
+  }
+}
+
+.entry-description {
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface-light);
+  margin-bottom: $spacing-2;
+  line-height: $line-height-tight;
+}
+
+.entry-field {
+  @include flex-row-gap($spacing-1);
+  padding: 8px 10px;
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+}
+
+.field-label {
+  @include flex-row-gap($spacing-1);
+  @include uppercase-label;
+  flex-shrink: 0;
+}
+
+.field-value {
+  flex: 1;
+  @include flex-row-gap($spacing-2);
+  justify-content: space-between;
+  cursor: pointer;
+  min-width: 0;
+
+  .password-mask {
+    font-family: $vp-mono;
+    font-size: $font-size-sm;
+    color: var(--b3-theme-on-background);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .action-hint {
+    @include flex-row-gap($spacing-1);
+    font-size: $font-size-xs;
+    color: var(--b3-theme-on-surface-light);
+    flex-shrink: 0;
+  }
+}

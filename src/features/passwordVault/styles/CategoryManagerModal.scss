@@ -1,0 +1,127 @@
+// 密码箱 - 类别管理弹窗样式
+@use '@/variables.scss' as *;
+@use 'mixins' as *;
+
+.password-vault-dialog.category-manager {
+  width: 500px;
+
+  .dialog-body {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-4;
+    padding: $spacing-3;
+  }
+}
+
+.add-category-section,
+.category-list-section {
+  h3 {
+    font-size: 13px;
+    font-weight: $font-weight-semibold;
+    color: var(--b3-theme-on-background);
+    margin: 0 0 $spacing-3 0;
+    font-family: $font-heading;
+  }
+}
+
+.add-category-form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.color-picker-wrapper {
+  @include flex-row-gap($spacing-2);
+  flex-wrap: wrap;
+}
+
+.color-option {
+  width: 28px;
+  height: 28px;
+  border-radius: $vp-radius;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.12s;
+
+  &:hover {
+    transform: scale(1.15);
+  }
+
+  &.selected {
+    border-color: var(--b3-theme-on-background);
+    box-shadow: 0 0 0 2px var(--b3-theme-primary);
+  }
+}
+
+.category-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.category-item {
+  @include flex-row-gap($spacing-2);
+  padding: 8px 10px;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+.category-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.category-name {
+  flex: 1;
+  font-size: 13px;
+  color: var(--b3-theme-on-background);
+}
+
+.default-badge {
+  padding: 2px 8px;
+  background: var(--b3-theme-primary);
+  color: #fff;
+  border-radius: $radius-sm;
+  font-size: 10px;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+// 类别删除确认卡片
+.category-delete-confirm {
+  margin-top: $spacing-3;
+
+  .confirm-card {
+    padding: $spacing-3;
+    background: var(--b3-theme-surface, #f8f8f8);
+    border: 1px solid var(--b3-theme-warning, #f0ad4e);
+    border-radius: $vp-radius;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-2;
+  }
+
+  .confirm-warning {
+    font-size: 13px;
+    color: var(--b3-theme-on-background, #333);
+    margin: 0;
+    text-align: center;
+  }
+
+  .confirm-hint {
+    font-size: $font-size-xs;
+    color: var(--b3-theme-warning, #f0ad4e);
+    margin: 0;
+    text-align: center;
+  }
+}

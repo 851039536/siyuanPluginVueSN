@@ -68,6 +68,7 @@
           :on-get-date-range-change-stats="getDateRangeChangeStats"
           :on-get-recent-updated-docs="getRecentUpdatedDocs"
           :on-get-deleted-docs="getDeletedDocs"
+          :on-get-deleted-docs-in-range="getDeletedDocsInRange"
           :i18n="i18n"
         />
 
@@ -291,6 +292,7 @@ import {
   getDateChangedDocs,
   getDateRangeChangeStats,
   getDeletedDocs,
+  getDeletedDocsInRange,
   getRecentUpdatedDocs,
 } from "./queries/docChangeStats"
 import {

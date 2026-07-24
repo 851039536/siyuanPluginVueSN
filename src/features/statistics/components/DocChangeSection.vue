@@ -225,7 +225,7 @@
               <IconWrapper
                 name="delete"
                 :size="12"
-              /> {{ i18n.todayDeleted || '删除' }}（{{ deletedDocs.length }}）
+              /> {{ i18n.deletedTitle || '删除' }}（{{ deletedDocs.length }}）
             </div>
             <div
               v-for="(doc, idx) in deletedDocs"
@@ -262,6 +262,42 @@
         {{ rangeStatsLoading ? (i18n.loading || '加载中...') : (i18n.noDocChanges || '该范围无变更') }}
       </div>
     </template>
+
+    <!-- 范围/最近模式：删除记录（数据历史） -->
+    <div
+      v-if="!selectedChartDate && rangeDeletedDocs.length > 0"
+      class="changed-docs-group range-deleted-group"
+    >
+      <div class="changed-docs-group-title">
+        <IconWrapper
+          name="delete"
+          :size="12"
+        /> {{ i18n.deletedTitle || '删除' }}（{{ rangeDeletedDocs.length }}）
+      </div>
+      <div class="range-deleted-list">
+        <div
+          v-for="(doc, idx) in rangeDeletedDocs"
+          :key="idx"
+          class="changed-doc-item deleted"
+        >
+          <span class="changed-doc-icon">
+            <IconWrapper
+              name="delete"
+              :size="11"
+            />
+          </span>
+          <span
+            v-if="doc.date"
+            class="range-deleted-date"
+          >{{ doc.date }}</span>
+          <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
+          <span
+            v-if="doc.time"
+            class="changed-doc-time"
+          >{{ doc.time }}</span>
+        </div>
+      </div>
+    </div>
     </div>
   </div>
 </template>
@@ -287,6 +323,7 @@ interface Props {
   onGetDateRangeChangeStats?: (startStr: string, endStr: string) => Promise<RangeStatItem[]>
   onGetRecentUpdatedDocs?: (limit: number) => Promise<RecentUpdatedDoc[]>
   onGetDeletedDocs?: (dateStr: string) => Promise<DeletedDoc[]>
+  onGetDeletedDocsInRange?: (startStr: string, endStr: string) => Promise<DeletedDoc[]>
   i18n?: Record<string, any>
 }
 
@@ -317,6 +354,7 @@ const changedDocs = ref<{ newDocs: ChangedDoc[], modifiedDocs: ChangedDoc[] }>({
 })
 const changedDocsLoading = ref(false)
 const deletedDocs = ref<DeletedDoc[]>([])
+const rangeDeletedDocs = ref<DeletedDoc[]>([])
 
 type DocRangeType = 'today' | '3d' | '7d' | '1m' | '6m' | 'recent'
 const docRange = ref<DocRangeType>('today')
@@ -500,9 +538,14 @@ async function switchDocRange(range: DocRangeType) {
     modifiedDocs: [],
   }
   deletedDocs.value = []
+  rangeDeletedDocs.value = []
 
   if (range === 'recent') {
     await loadRecentDocs()
+    // 最近更新：展示最近 30 天的删除记录
+    const recentStart = new Date()
+    recentStart.setDate(recentStart.getDate() - 29)
+    await loadRangeDeletedDocs(formatYmd(recentStart), getTodayStr())
     return
   }
 
@@ -533,6 +576,8 @@ async function switchDocRange(range: DocRangeType) {
   } finally {
     rangeStatsLoading.value = false
   }
+
+  await loadRangeDeletedDocs(startStr, endStr)
 }
 
 async function loadRecentDocs() {
@@ -545,6 +590,19 @@ async function loadRecentDocs() {
     recentDocs.value = []
   } finally {
     recentDocsLoading.value = false
+  }
+}
+
+async function loadRangeDeletedDocs(startStr: string, endStr: string) {
+  if (!props.onGetDeletedDocsInRange) {
+    rangeDeletedDocs.value = []
+    return
+  }
+  try {
+    rangeDeletedDocs.value = await props.onGetDeletedDocsInRange(startStr, endStr)
+  } catch (e) {
+    console.error("加载范围删除文档失败:", e)
+    rangeDeletedDocs.value = []
   }
 }
 

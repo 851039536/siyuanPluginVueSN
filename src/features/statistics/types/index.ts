@@ -27,7 +27,10 @@ export interface ChangedDoc {
  */
 export interface DeletedDoc {
   title: string
+  /** 删除时间 HH:MM */
   time?: string
+  /** 所属日期 MM/DD（范围模式下展示） */
+  date?: string
 }
 
 /** 热力图指标类型 */

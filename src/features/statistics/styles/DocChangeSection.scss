@@ -303,6 +303,34 @@
   padding: 0 $spacing-1;
 }
 
+.range-deleted-group {
+  margin-top: $spacing-2;
+}
+
+.range-deleted-list {
+  max-height: 200px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--b3-border-color);
+    border-radius: 2px;
+  }
+}
+
+.range-deleted-date {
+  font-family: stats.$font-mono;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.45;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 .changed-doc-item {
   display: flex;
   align-items: center;

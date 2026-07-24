@@ -122,7 +122,7 @@ export const STATS_DEFAULT_LABELS: Record<string, string> = {
   docBarChartTitle: "各笔记本文档数",
   docChanges: "文档变化",
   noDocChanges: "当天无新增或修改",
-  todayDeleted: "今日删除",
+  deletedTitle: "删除",
   noRecentDocs: "暂无最近更新的文档",
   recentUpdatedDocs: "最近更新",
   today: "今天",

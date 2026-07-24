@@ -2,6 +2,19 @@
  * 通用字符串工具函数
  */
 
+/**
+ * 从 unknown 类型的捕获错误中提取可读消息（配合 catch (e: unknown) 使用）
+ * 优先取 Error.message，其次字符串本身，否则返回空串
+ */
+export function getErrorMessage(e: unknown): string {
+  if (e instanceof Error) return e.message
+  if (typeof e === "string") return e
+  if (e && typeof e === "object" && "message" in e) {
+    return String((e as { message: unknown }).message)
+  }
+  return ""
+}
+
 export function escapeHtml(str: string): string {
   return str
     .replace(/&/g, "&amp;")

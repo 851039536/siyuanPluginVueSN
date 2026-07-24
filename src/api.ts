@@ -10,6 +10,7 @@ import {
   fetchSyncPost,
   IWebSocketData,
 } from "siyuan"
+import { getErrorMessage } from "@/utils/stringUtils"
 
 /**
  * 思源笔记 API 基础 URL
@@ -30,8 +31,8 @@ async function requestOrThrow(url: string, data: any) {
   let response: IWebSocketData
   try {
     response = await fetchSyncPost(url, data)
-  } catch (e: any) {
-    throw new Error(e?.message || `API request failed: ${url}`)
+  } catch (e: unknown) {
+    throw new Error(getErrorMessage(e) || `API request failed: ${url}`)
   }
   if (response.code !== 0) {
     throw new Error(response.msg || `API error: ${url}`)
@@ -1028,8 +1029,8 @@ export async function getRepoSnapshotContent(id: string, tag?: string): Promise<
     const data = json.data
     if (Array.isArray(data)) return data
     return data?.files ?? data?.content ?? data?.diff ?? []
-  } catch (e: any) {
-    console.error("[dataSnapshot] getRepoSnapshotContent error:", e?.message)
+  } catch (e: unknown) {
+    console.error("[dataSnapshot] getRepoSnapshotContent error:", getErrorMessage(e))
     return []
   }
 }

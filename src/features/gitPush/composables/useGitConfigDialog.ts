@@ -3,6 +3,7 @@ import type { Ref } from "vue"
 import { ref } from "vue"
 import type { GitProject, GitPushManager } from "../types"
 import { resolveValidPath } from "../utils"
+import { getErrorMessage } from "@/utils/stringUtils"
 
 export function useGitConfigDialog(deps: {
   manager: GitPushManager
@@ -29,8 +30,8 @@ export function useGitConfigDialog(deps: {
     try {
       const text = await manager.getGitGlobalConfig()
       gitConfigText.value = text
-    } catch (e: any) {
-      gitConfigError.value = e?.message || tf("queryFailed", "查询失败")
+    } catch (e: unknown) {
+      gitConfigError.value = getErrorMessage(e) || tf("queryFailed", "查询失败")
     } finally {
       gitConfigLoading.value = false
     }
@@ -51,8 +52,8 @@ export function useGitConfigDialog(deps: {
     try {
       const text = await manager.getProjectGitConfig(path)
       gitConfigText.value = text
-    } catch (e: any) {
-      gitConfigError.value = e?.message || tf("queryFailed", "查询失败")
+    } catch (e: unknown) {
+      gitConfigError.value = getErrorMessage(e) || tf("queryFailed", "查询失败")
     } finally {
       gitConfigLoading.value = false
     }

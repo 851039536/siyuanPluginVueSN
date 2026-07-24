@@ -379,6 +379,7 @@ import Input from "@/components/Input.vue"
 import type { SelectOption } from "@/components/Select.vue"
 import Select from "@/components/Select.vue"
 import { resolveValidPath } from "../utils"
+import { getErrorMessage } from "@/utils/stringUtils"
 import { pickDirectory } from "../composables/useDirectoryPicker"
 
 
@@ -466,8 +467,8 @@ async function persistUrls() {
     })
     repoLinkError.value = ""
     emit("urlsUpdated")
-  } catch (e: any) {
-    repoLinkError.value = e?.message || "保存仓库链接失败"
+  } catch (e: unknown) {
+    repoLinkError.value = getErrorMessage(e) || "保存仓库链接失败"
   }
 }
 
@@ -557,8 +558,8 @@ async function loadRemotes() {
     const path = resolveValidPath(project.value)
     remoteList.value = await props.manager.detectRemotes(path)
     remoteError.value = ""
-  } catch (e: any) {
-    remoteError.value = e?.message || "检测远程仓库失败"
+  } catch (e: unknown) {
+    remoteError.value = getErrorMessage(e) || "检测远程仓库失败"
   }
 }
 
@@ -590,7 +591,7 @@ async function handleAddRemote() {
     newRemoteUrl.value = ""
     await loadRemotes()
     await props.manager.refreshRemotes(props.projectId)
-  } catch (e: any) { remoteError.value = e?.message || "添加失败" }
+  } catch (e: unknown) { remoteError.value = getErrorMessage(e) || "添加失败" }
 }
 
 async function handleRemoveRemote(name: string) {
@@ -600,7 +601,7 @@ async function handleRemoveRemote(name: string) {
     await props.manager.removeRemote(resolveValidPath(project.value), name)
     await loadRemotes()
     await props.manager.refreshRemotes(props.projectId)
-  } catch (e: any) { remoteError.value = e?.message || "删除失败" }
+  } catch (e: unknown) { remoteError.value = getErrorMessage(e) || "删除失败" }
 }
 
 async function saveRemoteEdit(name: string) {
@@ -615,7 +616,7 @@ async function saveRemoteEdit(name: string) {
     editRemoteName.value = ""
     await loadRemotes()
     await props.manager.refreshRemotes(props.projectId)
-  } catch (e: any) { remoteError.value = e?.message || "修改失败" }
+  } catch (e: unknown) { remoteError.value = getErrorMessage(e) || "修改失败" }
 }
 
 // ── 保存 ──

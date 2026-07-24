@@ -208,6 +208,7 @@
 
 <script setup lang="ts">
 import { showMessage } from "siyuan"
+import { getErrorMessage } from "@/utils/stringUtils"
 import {
   computed,
   onMounted,
@@ -739,12 +740,12 @@ async function handleMergeVideos() {
         error: result.error,
       }
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("视频合并失败:", error)
-    showMessage(t("mergeFailedMsg", { msg: error.message }), 5000, "error")
+    showMessage(t("mergeFailedMsg", { msg: getErrorMessage(error) }), 5000, "error")
     mergeResult.value = {
       success: false,
-      error: error.message,
+      error: getErrorMessage(error),
     }
   } finally {
     mergeProgress.value = false
@@ -852,12 +853,12 @@ async function handleMergeVideoAudio() {
         error: result.error,
       }
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("视频音频合并失败:", error)
-    showMessage(t("audioMergeFailedMsg", { msg: error.message }), 5000, "error")
+    showMessage(t("audioMergeFailedMsg", { msg: getErrorMessage(error) }), 5000, "error")
     mergeAudioResult.value = {
       success: false,
-      error: error.message,
+      error: getErrorMessage(error),
     }
   } finally {
     mergeAudioProgress.value = false
@@ -953,12 +954,12 @@ async function handleCompressVideo() {
         error: result.error,
       }
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("视频压缩失败:", error)
-    showMessage(t("compressFailedMsg", { msg: error.message }), 5000, "error")
+    showMessage(t("compressFailedMsg", { msg: getErrorMessage(error) }), 5000, "error")
     compressResult.value = {
       success: false,
-      error: error.message,
+      error: getErrorMessage(error),
     }
   } finally {
     compressProgress.value = false

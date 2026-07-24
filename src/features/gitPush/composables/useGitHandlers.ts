@@ -4,6 +4,7 @@ import { ref } from "vue"
 import { showMessage } from "siyuan"
 import type { GitProject } from "../types"
 import { getProjectRemoteNames, pruneRecordCache } from "../utils"
+import { getErrorMessage } from "@/utils/stringUtils"
 
 export function useGitHandlers(deps: {
   projects: Ref<GitProject[]>
@@ -60,9 +61,9 @@ export function useGitHandlers(deps: {
     gitOpLoading.value[id] = true
     try {
       await fn()
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(`[gitPush] ${label} 失败:`, e)
-      commitOutputs.value[id] = `${label}: ${e?.message || e}`
+      commitOutputs.value[id] = `${label}: ${getErrorMessage(e)}`
     } finally {
       delete gitOpLoading.value[id]
       pruneRecordCache(commitOutputs.value)
@@ -82,8 +83,8 @@ export function useGitHandlers(deps: {
     try {
       await discardFile(id, file, staged, status)
       await loadWorkingTree(id)
-    } catch (e: any) {
-      commitOutputs.value[id] = tf("discardOpFailed", "{0}失败: {1}", label, e?.message || e)
+    } catch (e: unknown) {
+      commitOutputs.value[id] = tf("discardOpFailed", "{0}失败: {1}", label, getErrorMessage(e))
     } finally {
       delete gitOpLoading.value[id]
     }
@@ -147,8 +148,8 @@ export function useGitHandlers(deps: {
     }
     try {
       await Promise.all(remoteNames.map((name) => pushTagOp(id, name, tag)))
-    } catch (e: any) {
-      showMessage(tf("pushTagFailed", "推送 Tag 失败: {0}", e?.message || e), 5000, "error")
+    } catch (e: unknown) {
+      showMessage(tf("pushTagFailed", "推送 Tag 失败: {0}", getErrorMessage(e)), 5000, "error")
     } finally {
       delete tagPushLoading.value[id]
       // ref<Record> 的 delete 不被 Vue 深层响应式追踪检测到，需手动触发浅拷贝
@@ -175,8 +176,8 @@ export function useGitHandlers(deps: {
       commitOutputs.value[id] = result || tf("commitSuccess", "提交成功")
       pruneRecordCache(commitOutputs.value)
       await loadCommitLog(id)
-    } catch (e: any) {
-      commitOutputs.value[id] = tf("commitFailed", "提交失败: {0}", e?.message || e)
+    } catch (e: unknown) {
+      commitOutputs.value[id] = tf("commitFailed", "提交失败: {0}", getErrorMessage(e))
     }
   }
 
@@ -201,8 +202,8 @@ export function useGitHandlers(deps: {
       if (result.source === "heuristic") {
         commitOutputs.value[id] = tf("aiHeuristic", "AI 未返回有效信息，已使用启发式生成。")
       }
-    } catch (e: any) {
-      commitOutputs.value[id] = tf("generateFailed", "生成失败: {0}", e?.message || e)
+    } catch (e: unknown) {
+      commitOutputs.value[id] = tf("generateFailed", "生成失败: {0}", getErrorMessage(e))
       generatingMsgs.value = {
         ...generatingMsgs.value,
         [id]: {

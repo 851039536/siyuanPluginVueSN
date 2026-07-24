@@ -1,0 +1,25 @@
+{
+  "formatAssistant": {
+    "title": "排版助手",
+    "description": "将Markdown文档转换为微信公众号等平台的富文本格式",
+    "enableFormatAssistant": "启用排版助手",
+    "enableFormatAssistantDesc": "提供 Markdown 到富文本格式转换，支持微信、B站等平台主题",
+    "target": "目标平台",
+    "theme": "主题",
+    "fontSize": "字号",
+    "lineHeight": "行高",
+    "codeHighlight": "代码高亮",
+    "codeWrap": "代码换行",
+    "convert": "转换",
+    "chars": "字符",
+    "htmlChars": "HTML字符",
+    "preview": "预览",
+    "inputPlaceholder": "在此输入 Markdown 内容...\n\n支持标题、段落、加粗、斜体、引用、代码块、列表、表格等语法",
+    "previewPlaceholder": "转换结果将在这里预览",
+    "copyHtml": "复制HTML",
+    "wechat": "微信公众号",
+    "bilibili": "哔哩哔哩",
+    "scrollX": "横向滚动",
+    "wrap": "自动换行"
+  }
+}

@@ -5,13 +5,7 @@
  * 采用多主题方案架构，扩展新主题只需在 THEMES 中注册。
  */
 import type { Plugin } from "siyuan"
-
-export interface ThemeColorScheme {
-  /** 主题显示名称 */
-  name: string
-  /** 主色 hex 值，如 "#d97757"，RGB 由 hexToRgb() 自动推导 */
-  primary: string
-}
+import type { ThemeColorScheme } from "./types"
 
 /** 将 #RRGGBB 格式转为 "R, G, B" 格式的 RGB 字符串 */
 function hexToRgb(hex: string): string {

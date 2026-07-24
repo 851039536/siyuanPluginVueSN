@@ -104,8 +104,10 @@
         </div>
       </div>
 
+      <!-- 双列布局：待处理项目 + 平台配置状态 -->
+      <div class="gp-stats-duo">
       <!-- 待处理项目（推送状态概览 + 待处理表格合并） -->
-      <div class="gp-stats-section">
+      <div class="gp-stats-section gp-stats-section--half">
         <div class="gp-stats-section-title">
           {{ i18n.pendingProjects || '待处理项目' }}
           <span class="gp-stats-section-count">{{ pendingProjects.length }}</span>
@@ -230,7 +232,7 @@
       <!-- 平台配置状态（显示每个项目各平台是否已配置） -->
       <div
         v-if="platformStatusProjects.length > 0"
-        class="gp-stats-section"
+        class="gp-stats-section gp-stats-section--half"
       >
         <div class="gp-stats-section-title">
           {{ i18n.platformStatus || '平台配置状态' }}
@@ -290,6 +292,7 @@
             </span>
           </div>
         </div>
+      </div>
       </div>
 
     </template>

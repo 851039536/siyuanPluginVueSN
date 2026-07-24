@@ -340,6 +340,24 @@
     color: stats.$color-warning;
   }
 
+  &.deleted {
+    cursor: default;
+
+    &:hover {
+      background: transparent;
+    }
+
+    .changed-doc-icon {
+      background: rgba(stats.$color-danger, 0.15);
+      color: stats.$color-danger;
+    }
+
+    .changed-doc-title {
+      opacity: 0.6;
+      text-decoration: line-through;
+    }
+  }
+
   .changed-doc-title {
     flex: 1;
     overflow: hidden;

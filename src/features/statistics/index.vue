@@ -67,6 +67,7 @@
           :on-get-date-changed-docs="getDateChangedDocs"
           :on-get-date-range-change-stats="getDateRangeChangeStats"
           :on-get-recent-updated-docs="getRecentUpdatedDocs"
+          :on-get-deleted-docs="getDeletedDocs"
           :i18n="i18n"
         />
 
@@ -289,6 +290,7 @@ import { useStatistics } from "./composables/useStatistics"
 import {
   getDateChangedDocs,
   getDateRangeChangeStats,
+  getDeletedDocs,
   getRecentUpdatedDocs,
 } from "./queries/docChangeStats"
 import {

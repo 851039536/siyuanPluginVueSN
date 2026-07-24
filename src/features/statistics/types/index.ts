@@ -22,6 +22,14 @@ export interface ChangedDoc {
   time?: string
 }
 
+/**
+ * 被删除的文档（来源：思源数据历史，无法再打开）
+ */
+export interface DeletedDoc {
+  title: string
+  time?: string
+}
+
 /** 热力图指标类型 */
 export type HeatmapMetric = 'docsModified' | 'docsCreated' | 'blockEdits'
 

@@ -69,6 +69,13 @@ export function formatDate(date: Date): string {
 }
 
 /**
+ * 格式化日期为紧凑的 YYYYMMDD 字符串（用于 SQL 日期匹配 / 日期键）
+ */
+export function formatYmd(date: Date): string {
+  return `${date.getFullYear()}${padZero(date.getMonth() + 1)}${padZero(date.getDate())}`
+}
+
+/**
  * 判断日期字符串（格式 YYYY-MM-DD）是否为今天
  */
 export function isToday(dateStr: string): boolean {

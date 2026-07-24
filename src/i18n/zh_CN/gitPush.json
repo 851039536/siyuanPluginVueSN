@@ -102,6 +102,8 @@
     "pushBranchHint": "仅当前分支模式更快，避免推送无变更的其他分支",
     "pullConfirm": "确认拉取",
     "pullConfirmBody": "将从 {0} 拉取代码，可能覆盖本地修改。确定要继续吗？",
+    "pullVsFetchHint": "拉取(Pull)：下载并合并远程新提交到本地（会改动本地代码）；Fetch：只刷新远程状态，不改动本地代码",
+    "pullBtnHint": "下载并合并远程新提交到本地（会改动本地代码）",
     "fetch": "Fetch",
     "fetchAll": "更新远程状态",
     "fetchHint": "从远程获取最新追踪分支（不合并代码），用于刷新推送状态",

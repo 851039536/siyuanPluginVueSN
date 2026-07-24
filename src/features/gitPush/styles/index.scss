@@ -492,6 +492,19 @@
   padding: 2px 0;
 }
 
+.gp-actions-hint-icon {
+  flex-shrink: 0;
+  color: var(--b3-theme-on-surface-light);
+  cursor: help;
+  opacity: 0.7;
+  transition: opacity 0.12s;
+
+  &:hover {
+    opacity: 1;
+    color: var(--b3-theme-primary);
+  }
+}
+
 .gp-actions-btns {
   display: flex;
   align-items: center;

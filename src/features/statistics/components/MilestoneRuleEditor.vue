@@ -393,6 +393,7 @@ import {
   STAT_TYPE_DESCRIPTIONS,
 } from "../types/milestoneRules"
 import { generateDefaultRules } from "../utils/milestones"
+import { useMilestoneStorage } from "../composables/useMilestoneStorage"
 
 interface Row {
   key: MilestoneTypeKey
@@ -403,19 +404,22 @@ interface Row {
 
 interface Props {
   visible: boolean
-  rules: Record<string, number[]>
-  customAchievements: CustomAchievement[]
-  levelConfig: LevelConfig
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<{
   close: []
-  save: [rules: Record<string, number[]>]
-  addAchievement: [achievement: CustomAchievement]
-  deleteAchievement: [id: string]
-  saveLevelConfig: [config: LevelConfig]
 }>()
+
+const {
+  customRules,
+  customAchievements,
+  levelConfig,
+  saveRules,
+  addAchievement,
+  deleteAchievement,
+  saveLevelConfig,
+} = useMilestoneStorage()
 
 const TIER_LABELS: Record<string, string> = {
   common: "普通",
@@ -448,9 +452,9 @@ function buildRows(rules: Record<string, number[]>): Row[] {
   }))
 }
 
-watch(() => [props.visible, props.rules], () => {
+watch(() => [props.visible, customRules.value], () => {
   if (props.visible) {
-    editableRows.value = buildRows(props.rules)
+    editableRows.value = buildRows(customRules.value)
     activeTab.value = "milestones"
   }
 }, { immediate: true })
@@ -499,7 +503,8 @@ function onSave() {
   for (const row of editableRows.value) {
     rules[row.key] = [...row.targets]
   }
-  emit("save", rules)
+  saveRules(rules)
+  emit("close")
 }
 
 // ── Achievements state ──
@@ -521,7 +526,7 @@ function generateAchievementId(): string {
 function onAddAchievement() {
   const a = newAchievement.value
   if (!a.title.trim() || a.threshold <= 0) return
-  emit("addAchievement", {
+  addAchievement({
     ...a,
     id: generateAchievementId(),
   })
@@ -538,15 +543,15 @@ function onAddAchievement() {
 }
 
 function onDeleteAchievement(id: string) {
-  emit("deleteAchievement", id)
+  deleteAchievement(id)
 }
 
 // ── Level config state ──
 const editableLevelConfig = ref<LevelConfig>({ ...DEFAULT_LEVEL_CONFIG })
 
-watch(() => [props.visible, props.levelConfig], () => {
+watch(() => [props.visible, levelConfig.value], () => {
   if (props.visible) {
-    editableLevelConfig.value = { ...props.levelConfig }
+    editableLevelConfig.value = { ...levelConfig.value }
   }
 }, { immediate: true })
 
@@ -565,7 +570,7 @@ function pointsForLevelPreview(level: number): number {
 }
 
 function onSaveLevelConfig() {
-  emit("saveLevelConfig", { ...editableLevelConfig.value })
+  saveLevelConfig({ ...editableLevelConfig.value })
 }
 </script>
 

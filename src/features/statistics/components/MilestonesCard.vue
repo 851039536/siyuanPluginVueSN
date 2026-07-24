@@ -28,14 +28,7 @@
 
     <MilestoneRuleEditor
       :visible="showRuleEditor"
-      :rules="customRules"
-      :custom-achievements="customAchievements"
-      :level-config="levelConfig"
       @close="showRuleEditor = false"
-      @save="onSaveRules"
-      @add-achievement="onAddAchievement"
-      @delete-achievement="onDeleteAchievement"
-      @save-level-config="onSaveLevelConfig"
     />
 
     <!-- ====== 1. Hero Rank Banner ====== -->
@@ -136,249 +129,32 @@
     </div>
 
     <!-- ====== 3. Category Sections ====== -->
-    <div class="categories-section">
-      <div class="section-label">
-        里程碑分类
-      </div>
-      <div
-        v-for="category in categoryViews"
-        :key="category.id"
-        class="category-card"
-      >
-        <button
-          class="category-header"
-          @click="toggleCategory(category.id)"
-        >
-          <IconWrapper
-            class="category-icon"
-            :name="category.icon as IconKey"
-          />
-          <span class="category-name">{{ category.name }}</span>
-          <span class="category-count">{{ category.achievedCount }}/{{ category.totalCount }}</span>
-          <span
-            class="category-toggle"
-            :class="{ expanded: category.expanded }"
-          >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 12 12"
-            ><path
-              d="M4 2l4 4-4 4"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            /></svg>
-          </span>
-        </button>
-        <div
-          v-if="category.expanded"
-          class="category-body"
-        >
-          <div class="milestone-grid">
-            <div
-              v-for="m in category.allItems"
-              :key="m.id"
-              class="milestone-chip"
-              :class="[`tier-${m.tier}`, {
-                achieved: m.achieved,
-                locked: !m.achieved && !m.isNext,
-                next: !m.achieved && m.isNext,
-              }]"
-            >
-              <IconWrapper
-                class="chip-icon"
-                :name="(m.achieved ? m.icon : (m.isNext ? 'star' : 'pageLock')) as any"
-                :size="14"
-              />
-              <span class="chip-label">{{ m.label }}</span>
-              <span
-                v-if="m.achieved"
-                class="chip-tier"
-              >{{ tierLabels[m.tier] }}</span>
-              <div
-                v-if="!m.achieved"
-                class="chip-progress"
-              >
-                <div
-                  class="chip-progress-fill"
-                  :style="{ width: `${m.progress}%` }"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- collapsed preview: show last 3 achieved + 1 next -->
-        <div
-          v-else
-          class="category-preview"
-        >
-          <div
-            v-for="m in category.previewItems"
-            :key="m.id"
-            class="milestone-chip"
-            :class="[`tier-${m.tier}`, {
-              achieved: m.achieved,
-              locked: !m.achieved && !m.isNext,
-              next: !m.achieved && m.isNext,
-            }]"
-          >
-            <IconWrapper
-              class="chip-icon"
-              :name="(m.achieved ? m.icon : (m.isNext ? 'star' : 'pageLock')) as any"
-              :size="14"
-            />
-            <span class="chip-label">{{ m.label }}</span>
-            <span
-              v-if="m.achieved"
-              class="chip-tier"
-            >{{ tierLabels[m.tier] }}</span>
-            <div
-              v-if="!m.achieved"
-              class="chip-progress"
-            >
-              <div
-                class="chip-progress-fill"
-                :style="{ width: `${m.progress}%` }"
-              />
-            </div>
-          </div>
-          <span
-            v-if="category.hiddenCount > 0"
-            class="more-hint"
-          >+{{ category.hiddenCount }} 更多</span>
-        </div>
-      </div>
-    </div>
+    <MilestoneCategoryList
+      :category-views="categoryViews"
+      :tier-labels="tierLabels"
+      @toggle="toggleCategory"
+    />
 
     <!-- ====== 4. Achievement Wall ====== -->
-    <div class="achievement-section">
-      <div class="section-label">
-        成就
-      </div>
-
-      <!-- 成就分类 Tab -->
-      <div class="ach-category-bar">
-        <button
-          v-for="cat in achCategories"
-          :key="cat.id"
-          class="ach-category-tab"
-          :class="{ active: activeAchCategory === cat.id }"
-          @click="activeAchCategory = cat.id"
-        >
-          <IconWrapper
-            class="ach-cat-icon"
-            :name="cat.icon as IconKey"
-          />
-          <span class="ach-cat-name">{{ cat.name }}</span>
-          <span class="ach-cat-count">{{ getCategoryCount(cat.id) }}</span>
-        </button>
-      </div>
-
-      <!-- 稀有度筛选 Tab -->
-      <div class="ach-category-bar ach-tier-bar">
-        <button
-          v-for="tier in achTiers"
-          :key="tier.id"
-          class="ach-category-tab ach-tier-tab"
-          :class="{
-            active: activeAchTier === tier.id,
-            [`tier-active-${tier.id}`]: activeAchTier === tier.id,
-          }"
-          @click="activeAchTier = tier.id"
-        >
-          <IconWrapper
-            class="ach-cat-icon"
-            :name="tier.icon as IconKey"
-          />
-          <span class="ach-cat-name">{{ tier.name }}</span>
-          <span class="ach-cat-count">{{ getTierCount(tier.id) }}</span>
-        </button>
-      </div>
-
-      <div class="achievement-grid">
-        <div
-          v-for="ach in filteredUnlocked"
-          :key="ach.id"
-          class="achievement-card"
-          :class="[`tier-${ach.tier}`, { 'custom-ach': ach._custom }]"
-        >
-          <button
-            v-if="ach._custom"
-            class="btn-del-ach"
-            title="删除此成就"
-            @click="deleteCustomAchievement(ach.id)"
-          >×</button>
-          <IconWrapper
-            class="ach-icon"
-            :name="ach.icon as IconKey"
-          />
-          <span class="ach-title">{{ ach.title }}</span>
-          <span class="ach-desc">{{ ach.description }}</span>
-        </div>
-      </div>
-
-      <!-- locked toggle -->
-      <button
-        v-if="filteredLocked.length > 0"
-        class="locked-toggle"
-        @click="showLocked = !showLocked"
-      >
-        <span><IconWrapper
-          name="pageLock"
-          :size="12"
-        /> 未获得 ({{ filteredLocked.length }})</span>
-        <svg
-          width="10"
-          height="10"
-          viewBox="0 0 10 10"
-          :class="{ rotated: showLocked }"
-        ><path
-          d="M2 3l3 3 3-3"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        /></svg>
-      </button>
-      <div
-        v-if="showLocked"
-        class="achievement-grid locked"
-      >
-        <div
-          v-for="ach in filteredLocked"
-          :key="ach.id"
-          class="achievement-card locked-card"
-          :class="[`tier-${ach.tier}`, { 'custom-ach': ach._custom }]"
-        >
-          <button
-            v-if="ach._custom"
-            class="btn-del-ach"
-            title="删除此成就"
-            @click="deleteCustomAchievement(ach.id)"
-          >×</button>
-          <IconWrapper
-            class="ach-icon"
-            name="pageLock"
-            :size="18"
-          />
-          <span class="ach-title">{{ ach.title }}</span>
-          <span class="ach-desc">{{ ach.description }}</span>
-        </div>
-      </div>
-    </div>
+    <AchievementWall
+      :unlocked="unlockedAchievements"
+      :locked="lockedAchievements"
+      :tier-labels="tierLabels"
+      @delete-custom="deleteCustomAchievement"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
 import type {
-  CustomAchievement,
-  LevelConfig,
-} from "../types/milestoneRules"
+  AchievementDef,
+  CategoryDef,
+  CategoryView,
+  MilestoneDef,
+  MilestoneState,
+  Tier,
+} from "../types/milestoneData"
 import type { IconKey } from "@/config/icons"
 import {
   computed,
@@ -386,37 +162,23 @@ import {
   ref,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { PluginStorage } from "@/utils/pluginStorage"
 import {
-  DEFAULT_LEVEL_CONFIG,
-  MILESTONE_LABEL_FNS,
-  MILESTONE_TYPES,
-  STORAGE_KEY_CUSTOM_ACHIEVEMENTS,
-  STORAGE_KEY_LEVEL_CONFIG,
-  STORAGE_KEY_MILESTONE_RULES,
-} from "../types/milestoneRules"
+  CATEGORY_DEFS,
+  META_ACHIEVEMENTS,
+} from "../types/milestoneData"
 import {
-  milestoneTargetOfWithRules,
+  buildThresholdAchievements,
+  getLevelInfo,
+  pointsForLevel,
+} from "../utils/achievements"
+import {
+  generateMilestones,
+  TYPE_META,
 } from "../utils/milestones"
+import { useMilestoneStorage } from "../composables/useMilestoneStorage"
+import AchievementWall from "./AchievementWall.vue"
+import MilestoneCategoryList from "./MilestoneCategoryList.vue"
 import MilestoneRuleEditor from "./MilestoneRuleEditor.vue"
-
-type Tier = "common" | "rare" | "epic" | "legendary"
-
-interface MilestoneDef {
-  id: string
-  icon: string
-  label: string
-  target: number
-  type: string
-  tier: Tier
-}
-
-interface CategoryDef {
-  id: string
-  icon: string
-  name: string
-  types: string[]
-}
 
 interface Props {
   plugin?: Plugin
@@ -465,65 +227,24 @@ const props = withDefaults(defineProps<Props>(), {
   }),
 })
 
-const showLocked = ref(false)
 const showRuleEditor = ref(false)
-const customRules = ref<Record<string, number[]>>({})
 
-onMounted(async () => {
-  if (props.plugin) {
-    const storage = new PluginStorage(props.plugin)
-    const data = await storage.load<Record<string, number[]>>(STORAGE_KEY_MILESTONE_RULES)
-    if (data) customRules.value = data
-    const achData = await storage.load<CustomAchievement[]>(STORAGE_KEY_CUSTOM_ACHIEVEMENTS)
-    if (achData) customAchievements.value = achData
-    const lcData = await storage.load<LevelConfig>(STORAGE_KEY_LEVEL_CONFIG)
-    if (lcData) levelConfig.value = lcData
-  }
+const {
+  customRules,
+  customAchievements,
+  levelConfig,
+  initMilestoneStorage,
+  deleteAchievement,
+} = useMilestoneStorage()
+
+onMounted(() => {
+  initMilestoneStorage(props.plugin)
 })
 
-async function onSaveRules(rules: Record<string, number[]>) {
-  customRules.value = rules
-  showRuleEditor.value = false
-  if (props.plugin) {
-    const storage = new PluginStorage(props.plugin)
-    await storage.save(STORAGE_KEY_MILESTONE_RULES, rules)
-  }
-}
-
-// ===== Custom Achievements =====
-const customAchievements = ref<CustomAchievement[]>([])
-
-function onAddAchievement(achievement: CustomAchievement) {
-  customAchievements.value.push(achievement)
-  saveCustomAchievements()
-}
-
-function onDeleteAchievement(id: string) {
-  customAchievements.value = customAchievements.value.filter((a) => a.id !== id)
-  saveCustomAchievements()
-}
-
 function deleteCustomAchievement(id: string) {
-  onDeleteAchievement(id)
+  deleteAchievement(id)
 }
 
-async function saveCustomAchievements() {
-  if (props.plugin) {
-    const storage = new PluginStorage(props.plugin)
-    await storage.save(STORAGE_KEY_CUSTOM_ACHIEVEMENTS, customAchievements.value)
-  }
-}
-
-// ===== Level Config =====
-const levelConfig = ref<LevelConfig>({ ...DEFAULT_LEVEL_CONFIG })
-
-async function onSaveLevelConfig(config: LevelConfig) {
-  levelConfig.value = config
-  if (props.plugin) {
-    const storage = new PluginStorage(props.plugin)
-    await storage.save(STORAGE_KEY_LEVEL_CONFIG, config)
-  }
-}
 const expandedCategories = ref<Set<string>>(new Set())
 
 const tierLabels: Record<Tier, string> = {
@@ -533,32 +254,14 @@ const tierLabels: Record<Tier, string> = {
   legendary: props.i18n.tierLegendary || "传说",
 }
 
-const categories: CategoryDef[] = [
-  {
-    id: "writing",
-    icon: "edit",
-    name: props.i18n.catWriting || "写作达人",
-    types: ["notes", "words", "notebooks"],
-  },
-  {
-    id: "knowledge",
-    icon: "lightbulb",
-    name: props.i18n.catKnowledge || "知识管理",
-    types: ["tags", "backlinks"],
-  },
-  {
-    id: "rich",
-    icon: "folder",
-    name: props.i18n.catRich || "内容丰富",
-    types: ["blocks", "assets", "images", "code"],
-  },
-  {
-    id: "persistence",
-    icon: "star",
-    name: props.i18n.catPersistence || "坚持不懈",
-    types: ["streak", "activeDays"],
-  },
-]
+const categories = computed<CategoryDef[]>(() =>
+  CATEGORY_DEFS.map((c) => ({
+    id: c.id,
+    icon: c.icon,
+    name: props.i18n[c.i18nKey] || c.fallback,
+    types: c.types,
+  })),
+)
 
 // ===== 统一统计值 =====
 const statCounts = computed<Record<string, number>>(() => ({
@@ -575,206 +278,19 @@ const statCounts = computed<Record<string, number>>(() => ({
   activeDays: props.activeDays,
 }))
 
-// ===== 公式化无限里程碑（从 MILESTONE_TYPES 派生，消除数据源重复） =====
-const TYPE_META = Object.fromEntries(
-  MILESTONE_TYPES.map((t) => [
-    t.key,
-    {
-      icon: t.icon,
-      labelFn: MILESTONE_LABEL_FNS[t.key] ?? ((v: number) => `${v}`),
-    },
-  ]),
-) as Record<string, { icon: IconKey, labelFn: (v: number) => string }>
-
-function tierOf(idx: number, total: number): Tier {
-  const r = idx / total
-  if (r < 0.4) return "common"
-  if (r < 0.7) return "rare"
-  if (r < 0.9) return "epic"
-  return "legendary"
-}
-
-function generateMilestones(type: string, current: number, extra = 20): MilestoneDef[] {
-  const meta = TYPE_META[type]
-  if (!meta) return []
-  const result: MilestoneDef[] = []
-  const baseTarget = milestoneTargetOfWithRules(type, 1, customRules.value)
-  if (!isFinite(baseTarget) || baseTarget <= 0) return result
-  const upperBound = current + extra * baseTarget
-  let n = 1
-  while (n <= 200) {
-    const target = milestoneTargetOfWithRules(type, n, customRules.value)
-    if (!isFinite(target) || target > upperBound) break
-    result.push({
-      id: `${type}-${n}`,
-      icon: meta.icon,
-      label: meta.labelFn(target),
-      target,
-      type,
-      tier: tierOf(n - 1, 50),
-    })
-    n++
-  }
-  return result
-}
-
+// ===== 公式化无限里程碑（TYPE_META / generateMilestones 见 utils/milestones） =====
 const allMilestones = computed((): MilestoneDef[] => {
   const result: MilestoneDef[] = []
   for (const type of Object.keys(TYPE_META)) {
-    result.push(...generateMilestones(type, statCounts.value[type] ?? 0))
+    result.push(...generateMilestones(type, statCounts.value[type] ?? 0, customRules.value))
   }
   return result
 })
 
-// ===== 等级系统 =====
+// ===== 等级系统（pointsForLevel / getLevelInfo 见 utils/achievements） =====
 const tierPoints = computed(() => levelConfig.value.tierPoints)
 
-function pointsForLevel(level: number): number {
-  const m = levelConfig.value.curveMultiplier
-  if (level <= 1) return 0
-  return Math.floor(m * (level - 1) * Math.sqrt(level - 1))
-}
-
-const TIER_SIZE = 20
-
-const BASE_TITLES = [
-  {
-    icon: "edit",
-    title: "笔墨新秀",
-  },
-  {
-    icon: "edit",
-    title: "码字练手",
-  },
-  {
-    icon: "file",
-    title: "日记录者",
-  },
-  {
-    icon: "edit",
-    title: "摘抄达人",
-  },
-  {
-    icon: "file",
-    title: "读书笔记",
-  },
-  {
-    icon: "list",
-    title: "知识收集",
-  },
-  {
-    icon: "folder",
-    title: "整理能手",
-  },
-  {
-    icon: "format",
-    title: "归档达人",
-  },
-  {
-    icon: "forward",
-    title: "双链编织",
-  },
-  {
-    icon: "list",
-    title: "标签管理",
-  },
-  {
-    icon: "lightbulb",
-    title: "思维导图",
-  },
-  {
-    icon: "format",
-    title: "结构设计",
-  },
-  {
-    icon: "search",
-    title: "深度检索",
-  },
-  {
-    icon: "lightbulb",
-    title: "灵感捕手",
-  },
-  {
-    icon: "star",
-    title: "精准表达",
-  },
-  {
-    icon: "star",
-    title: "妙笔生花",
-  },
-  {
-    icon: "file",
-    title: "长篇大论",
-  },
-  {
-    icon: "star",
-    title: "笔耕不辍",
-  },
-  {
-    icon: "star",
-    title: "字字珠玑",
-  },
-  {
-    icon: "star",
-    title: "万字长城",
-  },
-]
-
-const TIER_PREFIXES = [
-  "初窥·",
-  "入门·",
-  "进阶·",
-  "精通·",
-  "熟手·",
-  "高手·",
-  "精英·",
-  "大师·",
-  "传说·",
-  "神话·",
-  "超凡·",
-  "入圣·",
-  "登峰·",
-  "造极·",
-  "通天·",
-  "破界·",
-  "无双·",
-  "绝世·",
-  "独步·",
-  "万古·",
-  "永恒·",
-  "不朽·",
-  "天道·",
-  "轮回·",
-  "混沌·",
-  "鸿蒙·",
-  "太初·",
-  "无极·",
-  "至尊·",
-  "超越·",
-]
-
-function getLevelInfo(level: number) {
-  const tierIdx = Math.min(Math.floor((level - 1) / TIER_SIZE), TIER_PREFIXES.length - 1)
-  const stage = (level - 1) % TIER_SIZE
-  const base = BASE_TITLES[stage % BASE_TITLES.length]
-  return {
-    icon: base.icon,
-    title: TIER_PREFIXES[tierIdx] + base.title,
-  }
-}
-
-// ===== 特殊成就卡片 =====
-interface AchievementDef {
-  id: string
-  icon: string
-  title: string
-  description: string
-  tier: Tier
-  check: () => boolean
-  _custom?: boolean
-}
-
-const milestonesWithState = computed(() => {
+const milestonesWithState = computed<MilestoneState[]>(() => {
   return allMilestones.value.map((m) => {
     const current = statCounts.value[m.type] ?? 0
     const achieved = current >= m.target
@@ -816,20 +332,8 @@ function toggleCategory(catId: string) {
 }
 
 // Per-category views with independent expansion
-interface CategoryView {
-  id: string
-  icon: string
-  name: string
-  expanded: boolean
-  achievedCount: number
-  totalCount: number
-  allItems: typeof milestonesWithState.value
-  previewItems: typeof milestonesWithState.value
-  hiddenCount: number
-}
-
 const categoryViews = computed<CategoryView[]>(() => {
-  return categories.map((cat) => {
+  return categories.value.map((cat) => {
     const catItems = milestonesWithState.value.filter((m) =>
       cat.types.includes(m.type),
     )
@@ -874,12 +378,12 @@ const totalPoints = computed(() => {
 
 const currentLevel = computed(() => {
   let level = 1
-  while (pointsForLevel(level + 1) <= totalPoints.value) level++
+  while (pointsForLevel(level + 1, levelConfig.value.curveMultiplier) <= totalPoints.value) level++
   const info = getLevelInfo(level)
   return {
     level,
     ...info,
-    pointsRequired: pointsForLevel(level),
+    pointsRequired: pointsForLevel(level, levelConfig.value.curveMultiplier),
   }
 })
 
@@ -889,7 +393,7 @@ const nextLevel = computed(() => {
   return {
     level: lv,
     ...info,
-    pointsRequired: pointsForLevel(lv),
+    pointsRequired: pointsForLevel(lv, levelConfig.value.curveMultiplier),
   }
 })
 
@@ -901,504 +405,9 @@ const levelProgress = computed(() => {
   return Math.min(((totalPoints.value - cur) / range) * 100, 100)
 })
 
-// ===== 阈值型成就配置（数据驱动，替代 48 个硬编码对象） =====
-interface ThresholdItem { v: number, icon: string, title: string, desc: string, tier: Tier }
-interface ThresholdGroup { prefix: string, type: string, items: ThresholdItem[] }
+// ===== 阈值成就构建见 utils/achievements（数据见 types/milestoneData） =====
 
-const THRESHOLD_ACHIEVEMENTS: ThresholdGroup[] = [
-  {
-    prefix: "ach",
-    type: "notes",
-    items: [
-      {
-        v: 1,
-        icon: "star",
-        title: "破冰之旅",
-        desc: "创建第一篇笔记",
-        tier: "common",
-      },
-      {
-        v: 30,
-        icon: "star",
-        title: "小有积累",
-        desc: "累计30篇笔记",
-        tier: "common",
-      },
-      {
-        v: 100,
-        icon: "star",
-        title: "百篇大关",
-        desc: "累计100篇笔记",
-        tier: "rare",
-      },
-      {
-        v: 300,
-        icon: "star",
-        title: "三百篇成集",
-        desc: "累计300篇笔记",
-        tier: "rare",
-      },
-      {
-        v: 500,
-        icon: "star",
-        title: "五百篇山丘",
-        desc: "累计500篇笔记",
-        tier: "epic",
-      },
-      {
-        v: 1000,
-        icon: "star",
-        title: "千篇一律",
-        desc: "累计1000篇笔记",
-        tier: "epic",
-      },
-      {
-        v: 3000,
-        icon: "star",
-        title: "三千篇帝国",
-        desc: "累计3000篇笔记",
-        tier: "legendary",
-      },
-    ],
-
-  },
-  {
-    prefix: "ach",
-    type: "blocks",
-    items: [
-      {
-        v: 100,
-        icon: "format",
-        title: "积累起步",
-        desc: "累计100个内容块",
-        tier: "common",
-      },
-      {
-        v: 500,
-        icon: "format",
-        title: "五百块基石",
-        desc: "累计500个内容块",
-        tier: "common",
-      },
-      {
-        v: 2000,
-        icon: "format",
-        title: "内容大厦",
-        desc: "累计2000个内容块",
-        tier: "rare",
-      },
-      {
-        v: 5000,
-        icon: "format",
-        title: "内容工厂",
-        desc: "累计5000个内容块",
-        tier: "rare",
-      },
-      {
-        v: 10000,
-        icon: "format",
-        title: "万块之城",
-        desc: "累计10000个内容块",
-        tier: "epic",
-      },
-      {
-        v: 30000,
-        icon: "format",
-        title: "三万块都市",
-        desc: "累计30000个内容块",
-        tier: "legendary",
-      },
-    ],
-
-  },
-  {
-    prefix: "ach",
-    type: "words",
-    items: [
-      {
-        v: 10000,
-        icon: "edit",
-        title: "万字起步",
-        desc: "累计写作1万字",
-        tier: "common",
-      },
-      {
-        v: 50000,
-        icon: "edit",
-        title: "五万字小成",
-        desc: "累计写作5万字",
-        tier: "common",
-      },
-      {
-        v: 100000,
-        icon: "list",
-        title: "十万字成书",
-        desc: "累计写作10万字",
-        tier: "rare",
-      },
-      {
-        v: 300000,
-        icon: "list",
-        title: "三十万字著述",
-        desc: "累计写作30万字",
-        tier: "rare",
-      },
-      {
-        v: 1000000,
-        icon: "star",
-        title: "百万字巨著",
-        desc: "累计写作100万字",
-        tier: "epic",
-      },
-      {
-        v: 3000000,
-        icon: "star",
-        title: "三百万字殿堂",
-        desc: "累计写作300万字",
-        tier: "epic",
-      },
-      {
-        v: 10000000,
-        icon: "star",
-        title: "千万字传说",
-        desc: "累计写作1000万字",
-        tier: "legendary",
-      },
-    ],
-
-  },
-  {
-    prefix: "ach",
-    type: "notebooks",
-    items: [
-      {
-        v: 1,
-        icon: "file",
-        title: "知识启航",
-        desc: "创建第一个笔记本",
-        tier: "common",
-      },
-      {
-        v: 5,
-        icon: "file",
-        title: "知识花园",
-        desc: "拥有5个笔记本",
-        tier: "common",
-      },
-      {
-        v: 10,
-        icon: "list",
-        title: "知识殿堂",
-        desc: "拥有10个笔记本",
-        tier: "rare",
-      },
-      {
-        v: 20,
-        icon: "star",
-        title: "知识帝国",
-        desc: "拥有20个笔记本",
-        tier: "epic",
-      },
-    ],
-
-  },
-  {
-    prefix: "ach",
-    type: "streak",
-    items: [
-      {
-        v: 3,
-        icon: "star",
-        title: "三天打鱼",
-        desc: "连续写作3天",
-        tier: "common",
-      },
-      {
-        v: 7,
-        icon: "star",
-        title: "一周坚持",
-        desc: "连续写作7天",
-        tier: "common",
-      },
-      {
-        v: 14,
-        icon: "star",
-        title: "两周不辍",
-        desc: "连续写作14天",
-        tier: "rare",
-      },
-      {
-        v: 30,
-        icon: "star",
-        title: "月度坚持",
-        desc: "连续写作30天",
-        tier: "rare",
-      },
-      {
-        v: 60,
-        icon: "star",
-        title: "双月毅力",
-        desc: "连续写作60天",
-        tier: "epic",
-      },
-      {
-        v: 100,
-        icon: "star",
-        title: "百日如一",
-        desc: "连续写作100天",
-        tier: "epic",
-      },
-      {
-        v: 200,
-        icon: "star",
-        title: "两百日征程",
-        desc: "连续写作200天",
-        tier: "legendary",
-      },
-      {
-        v: 365,
-        icon: "star",
-        title: "年度传奇",
-        desc: "连续写作365天",
-        tier: "legendary",
-      },
-    ],
-
-  },
-  {
-    prefix: "ach",
-    type: "activeDays",
-    items: [
-      {
-        v: 30,
-        icon: "list",
-        title: "月度活跃",
-        desc: "累计活跃30天",
-        tier: "common",
-      },
-      {
-        v: 100,
-        icon: "list",
-        title: "百日活跃",
-        desc: "累计活跃100天",
-        tier: "rare",
-      },
-      {
-        v: 365,
-        icon: "list",
-        title: "年度活跃",
-        desc: "累计活跃365天",
-        tier: "epic",
-      },
-    ],
-
-  },
-  {
-    prefix: "ach",
-    type: "tags",
-    items: [
-      {
-        v: 1,
-        icon: "list",
-        title: "标签初体验",
-        desc: "使用第一个标签",
-        tier: "common",
-      },
-      {
-        v: 10,
-        icon: "list",
-        title: "标签入门",
-        desc: "使用10个标签",
-        tier: "common",
-      },
-      {
-        v: 50,
-        icon: "star",
-        title: "标签达人",
-        desc: "使用50个标签",
-        tier: "rare",
-      },
-    ],
-
-  },
-  {
-    prefix: "ach",
-    type: "backlinks",
-    items: [
-      {
-        v: 1,
-        icon: "forward",
-        title: "链接世界",
-        desc: "建立第一条双链",
-        tier: "common",
-      },
-      {
-        v: 100,
-        icon: "forward",
-        title: "知识织网",
-        desc: "建立100条双链",
-        tier: "common",
-      },
-      {
-        v: 500,
-        icon: "forward",
-        title: "知识网络",
-        desc: "建立500条双链",
-        tier: "rare",
-      },
-      {
-        v: 1000,
-        icon: "forward",
-        title: "知识图谱",
-        desc: "建立1000条双链",
-        tier: "epic",
-      },
-    ],
-
-  },
-  {
-    prefix: "ach",
-    type: "assets",
-    items: [
-      {
-        v: 1,
-        icon: "folder",
-        title: "资源收集者",
-        desc: "添加第一个附件",
-        tier: "common",
-      },
-      {
-        v: 30,
-        icon: "folder",
-        title: "资源小仓",
-        desc: "积累30个附件",
-        tier: "common",
-      },
-      {
-        v: 100,
-        icon: "folder",
-        title: "资源宝库",
-        desc: "积累100个附件",
-        tier: "rare",
-      },
-    ],
-
-  },
-  {
-    prefix: "ach",
-    type: "images",
-    items: [
-      {
-        v: 50,
-        icon: "image",
-        title: "图片收藏家",
-        desc: "积累50张图片",
-        tier: "common",
-      },
-      {
-        v: 200,
-        icon: "image",
-        title: "影像达人",
-        desc: "积累200张图片",
-        tier: "rare",
-      },
-      {
-        v: 1000,
-        icon: "image",
-        title: "万图之王",
-        desc: "积累1000张图片",
-        tier: "epic",
-      },
-    ],
-
-  },
-  {
-    prefix: "ach",
-    type: "code",
-    items: [
-      {
-        v: 1,
-        icon: "code",
-        title: "代码新秀",
-        desc: "创建第一个代码块",
-        tier: "common",
-      },
-      {
-        v: 10,
-        icon: "code",
-        title: "代码初试",
-        desc: "创建10个代码块",
-        tier: "common",
-      },
-      {
-        v: 50,
-        icon: "code",
-        title: "编程爱好者",
-        desc: "创建50个代码块",
-        tier: "rare",
-      },
-      {
-        v: 200,
-        icon: "code",
-        title: "代码工匠",
-        desc: "创建200个代码块",
-        tier: "epic",
-      },
-    ],
-
-  },
-]
-
-/** 从阈值配置生成 AchievementDef 数组 */
-function buildThresholdAchievements(): AchievementDef[] {
-  const result: AchievementDef[] = []
-  for (const group of THRESHOLD_ACHIEVEMENTS) {
-    for (const item of group.items) {
-      result.push({
-        id: `${group.prefix}-${group.type}-${item.v}`,
-        icon: item.icon,
-        title: item.title,
-        description: item.desc,
-        tier: item.tier,
-        check: () => (statCounts.value[group.type] ?? 0) >= item.v,
-      })
-    }
-  }
-  return result
-}
-
-// ===== 特殊（meta）成就 =====
-const META_ACHIEVEMENTS: Omit<AchievementDef, "check">[] = [
-  {
-    id: "ach-all-common",
-    icon: "star",
-    title: "全面初成",
-    description: "解锁全部普通里程碑",
-    tier: "epic",
-  },
-  {
-    id: "ach-half-all",
-    icon: "star",
-    title: "半程里程碑",
-    description: "达成一半里程碑",
-    tier: "epic",
-  },
-  {
-    id: "ach-all-rare",
-    icon: "star",
-    title: "稀有全解锁",
-    description: "解锁全部稀有里程碑",
-    tier: "legendary",
-  },
-  {
-    id: "ach-level-10",
-    icon: "star",
-    title: "登峰造极",
-    description: "达到 Lv.10",
-    tier: "legendary",
-  },
-]
-
+// ===== 成就 partition（数据见 milestoneData，构建见 achievements） =====
 /** 一次性 partition：避免 unlocked/locked 双重遍历 */
 const achievementPartition = computed(() => {
   const metaChecks: (() => boolean)[] = [
@@ -1418,10 +427,10 @@ const achievementPartition = computed(() => {
     description: a.description,
     tier: a.tier,
     // Mark as custom so template can show delete button
-    _custom: true as any,
+    _custom: true,
     check: () => (statCounts.value[a.type] ?? 0) >= a.threshold,
   }))
-  const all: AchievementDef[] = [...buildThresholdAchievements(), ...metaDefs, ...customDefs]
+  const all: AchievementDef[] = [...buildThresholdAchievements(statCounts.value), ...metaDefs, ...customDefs]
   const unlocked: AchievementDef[] = []
   const locked: AchievementDef[] = []
   for (const a of all) {
@@ -1436,121 +445,6 @@ const achievementPartition = computed(() => {
 
 const unlockedAchievements = computed(() => achievementPartition.value.unlocked)
 const lockedAchievements = computed(() => achievementPartition.value.locked)
-
-// ===== 成就分类筛选 =====
-const activeAchCategory = ref('all')
-const activeAchTier = ref('all')
-
-const achCategories = [
-  {
-    id: 'all',
-    icon: 'star',
-    name: '全部',
-  },
-  {
-    id: 'writing',
-    icon: 'edit',
-    name: '写作达人',
-    types: ['notes', 'words', 'notebooks'],
-  },
-  {
-    id: 'knowledge',
-    icon: 'lightbulb',
-    name: '知识管理',
-    types: ['tags', 'backlinks'],
-  },
-  {
-    id: 'rich',
-    icon: 'folder',
-    name: '内容丰富',
-    types: ['blocks', 'assets', 'images', 'code'],
-  },
-  {
-    id: 'persistence',
-    icon: 'star',
-    name: '坚持不懈',
-    types: ['streak', 'activeDays'],
-  },
-  {
-    id: 'meta',
-    icon: 'star',
-    name: '特殊',
-    types: ['meta', 'custom'],
-  },
-]
-
-const achTiers = [
-  {
-    id: 'all',
-    icon: 'star',
-    name: '全部',
-  },
-  {
-    id: 'common',
-    icon: 'star',
-    name: tierLabels.common,
-  },
-  {
-    id: 'rare',
-    icon: 'star',
-    name: tierLabels.rare,
-  },
-  {
-    id: 'epic',
-    icon: 'star',
-    name: tierLabels.epic,
-  },
-  {
-    id: 'legendary',
-    icon: 'star',
-    name: tierLabels.legendary,
-  },
-]
-
-function getAchType(ach: AchievementDef): string {
-  if ((ach as any)._custom) return 'custom'
-  // meta achievements have ids like ach-all-*, ach-half-*, ach-level-*
-  if (ach.id.startsWith('ach-all-') || ach.id.startsWith('ach-half-') || ach.id.startsWith('ach-level-')) return 'meta'
-  // threshold: id format is ach-{type}-{value}
-  const parts = ach.id.split('-')
-  return parts[1] || ''
-}
-
-function matchCategory(ach: AchievementDef, catId: string): boolean {
-  if (catId === 'all') return true
-  const cat = achCategories.find((c) => c.id === catId)
-  if (!cat || !cat.types) return false
-  return cat.types.includes(getAchType(ach))
-}
-
-function matchTier(ach: AchievementDef, tierId: string): boolean {
-  if (tierId === 'all') return true
-  return ach.tier === tierId
-}
-
-function matchFilters(ach: AchievementDef): boolean {
-  return matchCategory(ach, activeAchCategory.value) && matchTier(ach, activeAchTier.value)
-}
-
-const filteredUnlocked = computed(() =>
-  unlockedAchievements.value.filter(matchFilters),
-)
-
-const filteredLocked = computed(() =>
-  lockedAchievements.value.filter(matchFilters),
-)
-
-function getCategoryCount(catId: string): number {
-  if (catId === 'all') return unlockedAchievements.value.filter((a) => matchTier(a, activeAchTier.value)).length
-  const cat = achCategories.find((c) => c.id === catId)
-  if (!cat || !cat.types) return 0
-  return unlockedAchievements.value.filter((a) => cat.types!.includes(getAchType(a)) && matchTier(a, activeAchTier.value)).length
-}
-
-function getTierCount(tierId: string): number {
-  if (tierId === 'all') return unlockedAchievements.value.filter((a) => matchCategory(a, activeAchCategory.value)).length
-  return unlockedAchievements.value.filter((a) => a.tier === tierId && matchCategory(a, activeAchCategory.value)).length
-}
 </script>
 
 <style scoped lang="scss">

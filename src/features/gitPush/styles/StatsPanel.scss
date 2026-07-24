@@ -48,6 +48,21 @@
 .gp-stat-card--warn .gp-stat-card-value { color: var(--b3-theme-warning); }
 .gp-stat-card--accent .gp-stat-card-value { color: #f58742; }
 
+// ── 双列布局 ──
+.gp-stats-duo {
+  display: flex;
+  gap: $spacing-3;
+  margin-bottom: 14px;
+}
+
+.gp-stats-section--half {
+  flex: 1 1 0;
+  min-width: 0;
+  margin-bottom: 0;
+  height: 450px;
+  overflow-y: auto;
+}
+
 // ── 区块标题 ──
 .gp-stats-section {
   margin-bottom: 14px;

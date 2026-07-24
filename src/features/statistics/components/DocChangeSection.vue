@@ -88,7 +88,7 @@
     <!-- ========== 范围模式：柱状图 ========== -->
     <template v-else>
       <div
-        v-if="docRange !== 'today' && rangeStats.length > 0"
+        v-if="docRange !== 'today' && visibleRangeStats.length > 0"
         class="range-chart-section"
       >
         <div class="range-chart-bar-group">
@@ -98,7 +98,7 @@
             <span class="legend-dot deleted"></span>{{ i18n.deletedTitle || '删除' }}
           </div>
           <div
-            v-for="item in sortByDate(rangeStats)"
+            v-for="item in visibleRangeStats"
             :key="item.date"
             class="range-chart-row"
             :class="{ active: selectedChartDate === item.date }"
@@ -264,7 +264,7 @@
 
       <!-- 范围模式下无数据 -->
       <div
-        v-if="docRange !== 'today' && !selectedChartDate && rangeStats.length === 0"
+        v-if="docRange !== 'today' && !selectedChartDate && visibleRangeStats.length === 0"
         class="changed-docs-empty"
       >
         {{ rangeStatsLoading ? (i18n.loading || '加载中...') : (i18n.noDocChanges || '该范围无变更') }}
@@ -319,6 +319,7 @@ import type {
 } from "../types"
 import {
   computed,
+  onMounted,
   ref,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
@@ -365,7 +366,7 @@ const deletedDocs = ref<DeletedDoc[]>([])
 const rangeDeletedDocs = ref<DeletedDoc[]>([])
 
 type DocRangeType = 'today' | '3d' | '7d' | '1m' | '6m' | 'recent'
-const docRange = ref<DocRangeType>('today')
+const docRange = ref<DocRangeType>('3d')
 const dateRangeOptions = computed<Array<{ value: DocRangeType, label: string }>>(() => [
   {
     value: 'today',
@@ -540,6 +541,13 @@ function deletedCountForDate(dateStr: string): number {
   return deletedCountByDate.value.get(formatChartDate(dateStr)) || 0
 }
 
+/** 仅保留有新增/修改/删除的日期行（空数据日期不显示） */
+const visibleRangeStats = computed(() =>
+  sortByDate(rangeStats.value).filter(
+    (item) => item.newCount > 0 || item.modifiedCount > 0 || deletedCountForDate(item.date) > 0,
+  ),
+)
+
 function formatChartDate(dateStr: string): string {
   return `${dateStr.substring(4, 6)}/${dateStr.substring(6, 8)}`
 }
@@ -662,6 +670,11 @@ function setDocDateToday() {
   docChangeDate.value = getTodayStr()
   loadDateChangedDocs(docChangeDate.value)
 }
+
+// 首次加载：默认选中“近3天”并加载其数据
+onMounted(() => {
+  switchDocRange('3d')
+})
 </script>
 
 <style lang="scss" scoped>

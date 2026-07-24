@@ -18,7 +18,7 @@
       v-model="monthModel"
       class="period-select"
     >
-      <option :value="0">
+      <option :value="MONTH_ALL">
         全年
       </option>
       <option
@@ -33,31 +33,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue"
-
 interface Props {
   label: string
   yearOptions: number[]
-  year: number
-  month: number
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 
-const emit = defineEmits<{
-  "update:year": [value: number]
-  "update:month": [value: number]
-}>()
+/** 月份取 0 表示整年（全年统计） */
+const MONTH_ALL = 0
 
-const yearModel = computed({
-  get: () => props.year,
-  set: (val: number) => emit("update:year", val),
-})
-
-const monthModel = computed({
-  get: () => props.month,
-  set: (val: number) => emit("update:month", val),
-})
+const yearModel = defineModel<number>("year", { required: true })
+const monthModel = defineModel<number>("month", { required: true })
 </script>
 
 <style scoped lang="scss">

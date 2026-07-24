@@ -1,8 +1,4 @@
-/**
- * ComparisonView — 期间对比视图
- * 选择两个时间段（年/月），对比统计指标（字数、笔记数、活跃天数等），
- * 展示差异表格和各时段明细柱状图。
- */
+<!-- ComparisonView — 期间对比视图：选择两个时间段对比统计指标，展示差异表格与明细柱状图 -->
 <template>
   <div class="comparison-view">
     <!-- Period selectors -->
@@ -145,7 +141,7 @@ import {
 } from "vue"
 import { barPct, formatNumber } from "../utils"
 import PeriodPicker from "./PeriodPicker.vue"
-import "../styles/comparison-view.scss"
+import "../styles/ComparisonView.scss"
 
 interface Props {
   onGetComparisonData?: (yearA: number, monthA: number | undefined, yearB: number, monthB: number | undefined) => Promise<ComparisonData>

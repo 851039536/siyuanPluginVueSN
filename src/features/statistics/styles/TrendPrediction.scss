@@ -1,0 +1,221 @@
+// 趋势预测组件样式：线性回归预测图（历史/预测线、tooltip、图例）
+@use "../styles/index.scss" as stats;
+
+.trend-prediction {
+  padding: 4px 0;
+}
+
+.pred-loading,
+.pred-empty {
+  text-align: center;
+  padding: 20px;
+  font-size: 12px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+}
+
+.pred-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pred-header {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.confidence-label {
+  @include stats.codex-label;
+}
+
+.confidence-value {
+  font-family: stats.$font-mono;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--b3-theme-primary);
+  margin-left: 4px;
+}
+
+.pred-projections {
+  display: flex;
+  gap: 10px;
+}
+
+.projection-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.proj-icon {
+  font-size: 12px;
+}
+
+.proj-label {
+  @include stats.codex-label;
+  opacity: 0.6;
+}
+
+.proj-value {
+  font-family: stats.$font-mono;
+  font-weight: 600;
+  color: var(--b3-theme-primary);
+}
+
+.pred-trend-label {
+  font-family: stats.$font-mono;
+  font-size: 11px;
+  color: var(--b3-theme-on-surface);
+
+  .trend-up {
+    color: stats.$color-success;
+  }
+
+  .trend-pos {
+    color: stats.$color-success;
+  }
+
+  .trend-neg {
+    color: stats.$color-danger;
+  }
+}
+
+.pred-chart-container {
+  position: relative;
+  width: 100%;
+}
+
+.pred-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.chart-grid-line {
+  stroke: var(--b3-border-color);
+  stroke-width: 0.5;
+  stroke-dasharray: 3 3;
+}
+
+.chart-y-label {
+  font-family: stats.$font-mono;
+  font-size: 9px;
+  fill: var(--b3-theme-on-surface);
+  opacity: 0.5;
+}
+
+.chart-sep-line {
+  stroke: var(--b3-theme-primary);
+  stroke-width: 1;
+  stroke-dasharray: 6 3;
+  opacity: 0.4;
+}
+
+.pred-line {
+  stroke-width: 2;
+
+  &.history {
+    stroke: var(--b3-theme-primary);
+  }
+
+  &.predict {
+    stroke: stats.$color-warning;
+    stroke-dasharray: 6 3;
+  }
+}
+
+.pred-area {
+  opacity: 0.08;
+
+  &.history {
+    fill: var(--b3-theme-primary);
+  }
+
+  &.predict {
+    fill: stats.$color-warning;
+  }
+}
+
+.dot-history {
+  fill: var(--b3-theme-primary);
+}
+
+.dot-predict {
+  fill: stats.$color-warning;
+}
+
+.chart-hit-area {
+  fill: transparent;
+}
+
+.chart-hover-line {
+  stroke: var(--b3-theme-primary);
+  stroke-width: 1;
+  stroke-dasharray: 4 2;
+}
+
+.pred-tooltip {
+  position: absolute;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: stats.$radius-sm;
+  padding: 4px 8px;
+  font-size: 11px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.tooltip-label {
+  font-family: stats.$font-mono;
+  font-weight: 500;
+  color: var(--b3-theme-on-surface);
+}
+
+.tooltip-pred-badge {
+  display: inline-block;
+  background: stats.$color-warning;
+  color: #fff;
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: stats.$radius-sm;
+  margin-left: 4px;
+}
+
+.tooltip-val {
+  font-family: stats.$font-mono;
+  font-weight: 700;
+  color: var(--b3-theme-on-surface);
+}
+
+.pred-legend {
+  display: flex;
+  gap: 12px;
+  padding: 2px 0;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: stats.$font-mono;
+  font-size: 10px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+}
+
+.legend-dot {
+  width: 12px;
+  height: 3px;
+  border-radius: stats.$radius-sm;
+
+  &.history {
+    background: var(--b3-theme-primary);
+  }
+
+  &.predict {
+    background: stats.$color-warning;
+  }
+}

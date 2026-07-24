@@ -2,7 +2,7 @@
 
 @use '../../../variables' as *;
 @forward '../../../variables';
-@use '../../superPanel/styles/mixins' as *;
+@use './mixins' as *;
 
 // ========== Variables ==========
 $stats-card-radius: $radius-sm;

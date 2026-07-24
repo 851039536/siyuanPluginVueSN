@@ -1,3 +1,4 @@
+// 里程碑工具函数：目标值计算 + 已达成数量统计
 import type { MilestoneTypeKey } from "../types/milestoneRules"
 
 /**

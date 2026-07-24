@@ -1,0 +1,672 @@
+// 里程碑卡片样式：Hero 横幅 + 下一目标 + 分类里程碑 + 成就墙 + 里程碑 chip
+@use "@/variables" as *;
+@use "../styles/index.scss" as stats;
+
+// ===== Panel =====
+.milestones-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+// ===== 0. Top Bar =====
+.milestones-top-bar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-settings {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: stats.$radius-sm;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-family: stats.$font-mono;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+
+  &:hover {
+    background: var(--b3-list-hover);
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+  }
+
+  svg {
+    flex-shrink: 0;
+    opacity: 0.7;
+  }
+}
+
+// ===== 1. Hero Banner =====
+.hero-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, rgba(var(--b3-theme-primary-rgb), 0.1) 0%, rgba(var(--b3-theme-primary-rgb), 0.03) 100%);
+  border: 1px solid rgba(var(--b3-theme-primary-rgb), 0.15);
+}
+
+.hero-icon-wrap {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(var(--b3-theme-primary-rgb), 0.12);
+  flex-shrink: 0;
+}
+
+.hero-icon {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.hero-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.hero-level {
+  font-family: stats.$font-mono;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--b3-theme-primary);
+  letter-spacing: 0.02em;
+}
+
+.hero-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--b3-theme-on-surface);
+  margin-top: 1px;
+}
+
+.hero-meta {
+  font-family: stats.$font-mono;
+  font-size: 11px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+  margin-top: 2px;
+}
+
+.hero-stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.hero-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.hero-stat-num {
+  font-family: stats.$font-mono;
+  font-weight: 700;
+  color: var(--b3-theme-primary);
+}
+
+.hero-stat-key {
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.hero-stat-divider {
+  color: var(--b3-theme-on-surface);
+  opacity: 0.2;
+}
+
+// Progress ring
+.hero-progress {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+}
+
+.progress-ring {
+  width: 56px;
+  height: 56px;
+  transform: rotate(-90deg);
+}
+
+.ring-bg {
+  fill: none;
+  stroke: rgba(var(--b3-theme-on-surface-rgb), 0.08);
+  stroke-width: 4;
+}
+
+.ring-fill {
+  fill: none;
+  stroke: var(--b3-theme-primary);
+  stroke-width: 4;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.6s ease;
+}
+
+.ring-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: stats.$font-mono;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--b3-theme-primary);
+}
+
+// ===== Level next row =====
+.level-next-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+.level-next-label {
+  font-size: 10px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.45;
+  white-space: nowrap;
+  font-family: stats.$font-mono;
+}
+
+.level-bar {
+  flex: 1;
+  height: 3px;
+  background: rgba(var(--b3-theme-on-surface-rgb), 0.06);
+  border-radius: stats.$radius-sm;
+  overflow: hidden;
+}
+
+.level-bar-fill {
+  height: 100%;
+  background: var(--b3-theme-primary);
+  border-radius: stats.$radius-sm;
+  transition: width 0.6s ease;
+}
+
+// ===== 2. Next Goal =====
+.next-goal-card {
+  padding: 12px;
+  border-radius: 6px;
+  background: rgba(var(--b3-theme-primary-rgb), 0.04);
+  border: 1px dashed rgba(var(--b3-theme-primary-rgb), 0.2);
+}
+
+.next-goal-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.next-goal-prefix {
+  font-family: stats.$font-mono;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.45;
+}
+
+.next-goal-percent {
+  font-family: stats.$font-mono;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--b3-theme-primary);
+}
+
+.next-goal-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.next-goal-icon {
+  font-size: 20px;
+}
+
+.next-goal-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--b3-theme-on-surface);
+  font-family: stats.$font-mono;
+}
+
+.next-goal-bar {
+  height: 6px;
+  background: rgba(var(--b3-theme-primary-rgb), 0.1);
+  border-radius: stats.$radius-sm;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.next-goal-bar-fill {
+  height: 100%;
+  background: var(--b3-theme-primary);
+  border-radius: stats.$radius-sm;
+  transition: width 0.6s ease;
+}
+
+.next-goal-encourage {
+  font-size: 11px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.55;
+  font-style: italic;
+}
+
+// ===== 3. Categories =====
+.categories-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.section-label {
+  font-family: stats.$font-mono;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.45;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--b3-border-color);
+}
+
+.category-card {
+  border: 1px solid var(--b3-border-color);
+  border-radius: stats.$radius-sm;
+  overflow: hidden;
+  background: var(--b3-theme-surface);
+
+  &:hover {
+    border-color: rgba(var(--b3-theme-primary-rgb), 0.3);
+  }
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(var(--b3-theme-on-surface-rgb), 0.03);
+  }
+}
+
+.category-icon {
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.category-name {
+  font-weight: 600;
+  flex: 1;
+  text-align: left;
+}
+
+.category-count {
+  font-family: stats.$font-mono;
+  font-size: 11px;
+  color: var(--b3-theme-primary);
+  opacity: 0.6;
+}
+
+.category-toggle {
+  display: flex;
+  align-items: center;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.35;
+  transition: transform 0.2s;
+
+  &.expanded {
+    transform: rotate(90deg);
+  }
+}
+
+.category-body,
+.category-preview {
+  padding: 8px 12px 10px;
+  border-top: 1px solid var(--b3-border-color);
+}
+
+// ===== Milestone chips grid =====
+.milestone-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.category-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.more-hint {
+  font-family: stats.$font-mono;
+  font-size: 10px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.35;
+  padding: 4px 8px;
+}
+
+// ===== 4. Achievement Wall =====
+.achievement-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.ach-category-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 8px 0;
+}
+
+.ach-category-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: stats.$radius-sm;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  font-family: stats.$font-mono;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: rgba(var(--b3-theme-primary-rgb), 0.3);
+    background: rgba(var(--b3-theme-primary-rgb), 0.04);
+  }
+
+  &.active {
+    border-color: var(--b3-theme-primary);
+    background: rgba(var(--b3-theme-primary-rgb), 0.08);
+    color: var(--b3-theme-primary);
+    font-weight: 700;
+  }
+}
+
+.ach-cat-icon {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.ach-cat-name {
+  font-weight: 600;
+}
+
+.ach-cat-count {
+  font-size: 10px;
+  opacity: 0.5;
+  font-weight: 700;
+}
+
+// Tier bar active colors
+.ach-tier-bar {
+  margin-top: 0;
+  margin-bottom: 4px;
+}
+
+.ach-tier-tab {
+  &.tier-active-common {
+    border-color: stats.$color-success;
+    background: rgba(stats.$color-success, 0.08);
+    color: stats.$color-success;
+  }
+
+  &.tier-active-rare {
+    border-color: var(--b3-theme-primary);
+    background: rgba(var(--b3-theme-primary-rgb), 0.08);
+    color: var(--b3-theme-primary);
+  }
+
+  &.tier-active-epic {
+    border-color: stats.$color-tier-epic;
+    background: rgba(stats.$color-tier-epic, 0.08);
+    color: stats.$color-tier-epic;
+  }
+
+  &.tier-active-legendary {
+    border-color: stats.$color-tier-legendary;
+    background: rgba(stats.$color-tier-legendary, 0.08);
+    color: stats.$color-tier-legendary;
+  }
+}
+
+.achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 6px;
+  margin-top: 8px;
+
+  &.locked {
+    margin-top: 6px;
+  }
+}
+
+.achievement-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 8px;
+  border-radius: stats.$radius-sm;
+  text-align: center;
+  position: relative;
+  transition: transform 0.15s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  &.tier-common {
+    background: rgba(stats.$color-success, 0.06);
+    border: 1px solid rgba(stats.$color-success, 0.15);
+  }
+
+  &.tier-rare {
+    background: rgba(var(--b3-theme-primary-rgb), 0.06);
+    border: 1px solid rgba(var(--b3-theme-primary-rgb), 0.15);
+  }
+
+  &.tier-epic {
+    background: linear-gradient(135deg, rgba(stats.$color-tier-epic, 0.08), rgba(var(--b3-theme-primary-rgb), 0.04));
+    border: 1px solid rgba(stats.$color-tier-epic, 0.2);
+  }
+
+  &.tier-legendary {
+    background: linear-gradient(135deg, rgba(stats.$color-tier-legendary, 0.1), rgba(234, 88, 12, 0.04));
+    border: 1px solid rgba(stats.$color-tier-legendary, 0.3);
+  }
+
+  .ach-icon {
+    font-size: 22px;
+    margin-bottom: 4px;
+  }
+
+  .ach-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--b3-theme-on-surface);
+    line-height: 1.3;
+  }
+
+  .ach-desc {
+    font-size: 10px;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.4;
+    line-height: 1.3;
+    margin-top: 2px;
+  }
+
+  &.locked-card {
+    opacity: 0.35;
+    filter: grayscale(0.5);
+
+    .ach-icon { font-size: 18px; }
+  }
+}
+
+.locked-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 6px 10px;
+  margin-top: 8px;
+  border: 1px dashed var(--b3-border-color);
+  border-radius: stats.$radius-sm;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  font-size: 11px;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.8;
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+  }
+
+  svg {
+    transition: transform 0.2s;
+
+    &.rotated {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+// ===== Custom achievement card =====
+.achievement-card.custom-ach {
+  position: relative;
+  padding-top: 14px;
+}
+
+.btn-del-ach {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.25;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 2px;
+  padding: 0;
+
+  &:hover {
+    opacity: 1;
+    color: var(--stat-color-danger, #cf222e);
+    background: rgba(207, 34, 46, 0.08);
+  }
+}
+
+// ===== Milestone Chip（从 MilestoneChip.vue 合并） =====
+.milestone-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 10px;
+  min-width: 68px;
+  border-radius: stats.$radius-sm;
+  position: relative;
+  background: rgba(var(--b3-theme-on-surface-rgb), 0.03);
+  border: 1px solid transparent;
+  transition: background 0.15s, border-color 0.15s;
+
+  &.achieved {
+    @include stats.tier-chip-achieved;
+  }
+
+  &.next {
+    background: rgba(var(--b3-theme-primary-rgb), 0.06);
+    border: 1px dashed rgba(var(--b3-theme-primary-rgb), 0.3);
+    opacity: 1;
+
+    .chip-label {
+      color: var(--b3-theme-primary);
+      font-weight: 600;
+    }
+  }
+
+  &.locked {
+    opacity: 0.3;
+    filter: grayscale(0.5);
+  }
+}
+
+.chip-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.chip-label {
+  font-family: stats.$font-mono;
+  font-size: 10px;
+  text-align: center;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+.chip-tier {
+  font-size: 9px;
+  padding: 0 4px;
+  border-radius: 3px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.chip-progress {
+  width: 100%;
+  height: 2px;
+  background: rgba(var(--b3-theme-on-surface-rgb), 0.08);
+  border-radius: stats.$radius-sm;
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.chip-progress-fill {
+  height: 100%;
+  background: var(--b3-theme-primary);
+  border-radius: stats.$radius-sm;
+  transition: width 0.6s ease;
+}

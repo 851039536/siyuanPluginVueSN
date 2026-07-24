@@ -1,0 +1,105 @@
+// 横向文档柱状图组件样式：各笔记本文档数排行（行标签/进度条/计数/滚动）
+@use "@/variables" as *;
+@use "../styles/shared" as *;
+@use "../styles/index.scss" as stats;
+
+.doc-bar-chart-section {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
+  .section-title {
+    margin: 0 0 10px 0;
+    font-family: stats.$font-mono;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.6;
+  }
+
+  .loading-wrapper {
+    position: relative;
+    height: 100px;
+  }
+
+  .empty-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100px;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.4;
+    font-size: 12px;
+  }
+
+  .horizontal-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    @include scrollbar-thin;
+
+    .chart-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 6px;
+      border-radius: stats.$radius-sm;
+      transition: background 0.15s, box-shadow 0.15s;
+
+      &:hover {
+        background: var(--b3-list-hover);
+      }
+
+      &.row-highlight {
+        background: rgba(var(--b3-theme-primary-rgb), 0.1);
+        box-shadow: inset 3px 0 0 var(--b3-theme-primary);
+      }
+
+      .row-label {
+        flex-shrink: 0;
+        width: 80px;
+        font-family: $font-body;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--b3-theme-on-surface);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-align: right;
+      }
+
+      .row-bar-wrap {
+        flex: 1;
+        height: 14px;
+        background: rgba(var(--b3-theme-on-surface-rgb), 0.06);
+        border-radius: stats.$radius-sm;
+        overflow: hidden;
+        min-width: 20px;
+
+        .row-bar {
+          height: 100%;
+          background: stats.$gradient-primary;
+          border-radius: stats.$radius-sm;
+          transition: width 0.3s ease;
+          min-width: 2px;
+        }
+      }
+
+      .row-count {
+        flex-shrink: 0;
+        width: 36px;
+        font-family: stats.$font-mono;
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--b3-theme-primary);
+        text-align: right;
+        white-space: nowrap;
+      }
+    }
+  }
+}

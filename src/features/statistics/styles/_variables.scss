@@ -1,0 +1,27 @@
+// Statistics 模块专属变量（本地副本，解耦对 superPanel 的跨功能依赖）
+
+// 面板尺寸
+$panel-width: 640px !default;
+$panel-border-radius: 8px !default;
+
+// Z-index 层级
+$z-overlay: 9998 !default;
+$z-panel: 9999 !default;
+
+// 间距规范（对齐全局 $spacing-1 ~ $spacing-4）
+$spacing-xs: 4px !default;
+$spacing-sm: 8px !default;
+$spacing-md: 12px !default;
+$spacing-lg: 16px !default;
+
+// 等宽字体栈（Codex 规范）
+$vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace !default;
+
+// Codex 圆角
+$vp-radius: 6px !default;
+
+// 状态色（与 _variables.scss $success-light / $warning-light / $info-light / $brand-destructive 对齐）
+$status-stable: #22c55e !default;
+$status-needsFix: #d97706 !default;
+$status-critical: #ef4444 !default;
+$status-minor: #3b82f6 !default;

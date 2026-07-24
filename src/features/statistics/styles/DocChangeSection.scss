@@ -180,6 +180,7 @@
 
   &.new { background: stats.$color-success; }
   &.modified { background: stats.$color-warning; }
+  &.deleted { background: stats.$color-danger; }
 }
 
 .range-chart-row {
@@ -233,6 +234,7 @@
 
   &.new { background: stats.$color-success; }
   &.modified { background: stats.$color-warning; }
+  &.deleted { background: stats.$color-danger; }
 }
 
 .changed-date-picker {

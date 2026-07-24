@@ -292,7 +292,10 @@
           class="preview-toggle"
           @click="togglePreview"
         >
-          <span class="preview-icon">{{ showPreview ? '👁️' : '👁️‍🗨️' }}</span>
+          <IconWrapper
+            class="preview-icon"
+            :name="showPreview ? 'eye' : 'eyeOff'"
+          />
           <span>{{ i18n.preview || '预览效果' }}</span>
           <span
             class="toggle-arrow"
@@ -320,7 +323,10 @@
             class="reset-btn"
             @click="resetSettings"
           >
-            <span class="btn-icon">🔄</span>
+            <IconWrapper
+              class="btn-icon"
+              name="refresh"
+            />
             {{ i18n.resetToDefault || '恢复默认设置' }}
           </button>
         </div>

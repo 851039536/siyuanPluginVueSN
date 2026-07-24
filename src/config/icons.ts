@@ -365,6 +365,9 @@ export const COMMON_ICONS = {
   close: {
     icon: "mdi:close",
   },
+  check: {
+    icon: "mdi:check",
+  },
   x: {
     icon: "mdi:close",
   },

@@ -8,6 +8,7 @@ import { ref } from "vue"
 import { showMessage } from "siyuan"
 import { findProject, normalizePathForDedup } from "../utils"
 import { UNGROUPED_ID } from "../types"
+import { getErrorMessage } from "@/utils/stringUtils"
 
 export function useProjectCrud(manager: GitPushManager) {
   const projects = ref<GitProject[]>([])
@@ -69,9 +70,9 @@ export function useProjectCrud(manager: GitPushManager) {
     patchProject(id, { starred: !prev })
     try {
       await manager.toggleStar(id)
-    } catch (e: any) {
+    } catch (e: unknown) {
       patchProject(id, { starred: prev })
-      showMessage(`收藏操作失败: ${e?.message || "未知错误"}`, 3000, "error")
+      showMessage(`收藏操作失败: ${getErrorMessage(e) || "未知错误"}`, 3000, "error")
     }
   }
 
@@ -82,9 +83,9 @@ export function useProjectCrud(manager: GitPushManager) {
     patchProject(id, { status })
     try {
       await manager.setProjectStatus(id, status)
-    } catch (e: any) {
+    } catch (e: unknown) {
       if (prev) patchProject(id, { status: prev })
-      showMessage(`状态更新失败: ${e?.message || "未知错误"}`, 3000, "error")
+      showMessage(`状态更新失败: ${getErrorMessage(e) || "未知错误"}`, 3000, "error")
     }
   }
 

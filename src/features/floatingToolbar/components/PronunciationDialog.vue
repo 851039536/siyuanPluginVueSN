@@ -243,6 +243,7 @@ import {
 } from "@/utils/aiApi"
 import { copyToClipboard, simpleHtmlEscape } from "@/utils/domUtils"
 import { emitCustomEvent } from "@/utils/eventBus"
+import { getErrorMessage } from "@/utils/stringUtils"
 import { showMessage } from "@/features/floatingToolbar/core/utils"
 
 interface PronunciationI18n {
@@ -574,11 +575,12 @@ async function addToFlashcard() {
     }
 
     emitCustomEvent("flashcardDataChanged")
-  } catch (error: any) {
-    if (error.message === "Title already exists") {
+  } catch (error: unknown) {
+    const msg = getErrorMessage(error)
+    if (msg === "Title already exists") {
       showMessage(t("msgTitleExists", "该单词已存在于单词本中"), { timeout: 3000, type: "error" })
     } else {
-      showMessage(`${t("msgAddFailed", "添加失败: ")}${error.message || t("msgUnknownError", "未知错误")}`, { timeout: 3000, type: "error" })
+      showMessage(`${t("msgAddFailed", "添加失败: ")}${msg || t("msgUnknownError", "未知错误")}`, { timeout: 3000, type: "error" })
     }
   }
 }

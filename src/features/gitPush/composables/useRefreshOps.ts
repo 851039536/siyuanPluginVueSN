@@ -4,6 +4,7 @@ import { ref } from "vue"
 import { showMessage } from "siyuan"
 import type { GitProject, GitPushManager } from "../types"
 import { resolveValidPath } from "../utils"
+import { getErrorMessage } from "@/utils/stringUtils"
 
 /** 步骤上下文：测量并记录每个 git 操作的耗时 */
 interface StepCtx {
@@ -224,8 +225,8 @@ export function useRefreshOps(deps: {
     }
     try {
       await fetchAllRemotes(id)
-    } catch (e: any) {
-      showMessage(e?.message || tf("fetchFailed", "Fetch 失败"), 5000, "error")
+    } catch (e: unknown) {
+      showMessage(getErrorMessage(e) || tf("fetchFailed", "Fetch 失败"), 5000, "error")
     } finally {
       delete fetching.value[id]
       fetching.value = { ...fetching.value }

@@ -10,6 +10,7 @@ import { PLATFORM_META } from "../types/meta"
 import type { GitExecutor } from "./GitExecutor"
 import type { ProjectStore } from "./ProjectStore"
 import { getProjectRemoteNames, resolveValidPath } from "../utils"
+import { getErrorMessage } from "@/utils/stringUtils"
 
 /** 远程操作结果 */
 export interface RemoteOpResult {
@@ -107,8 +108,8 @@ export class RemoteOps {
       try {
         const stdout = await this.executor.execGit(projectPath, args, signal)
         return { ok: true, stdout: stdout || "", stderr: "" }
-      } catch (e: any) {
-        let msg = e?.message || String(e)
+      } catch (e: unknown) {
+        let msg = getErrorMessage(e) || String(e)
         // --ff-only 分叉时给用户更友好的提示
         if (action === "pull" && /fast-forward|non-fast-forward/i.test(msg)) {
           msg = `拉取失败（远程有新提交且与本地有分叉）。\n请先使用 Stash 暂存本地修改，然后重新拉取。\n原始错误: ${msg}`
@@ -133,8 +134,8 @@ export class RemoteOps {
         try {
           const stdout = await this.executor.execGit(projectPath, args, signal)
           return { ok: true, stdout: stdout || "", stderr: "" }
-        } catch (e2: any) {
-          return { ok: false, stdout: "", stderr: e2?.message || String(e2) }
+        } catch (e2: unknown) {
+          return { ok: false, stdout: "", stderr: getErrorMessage(e2) || String(e2) }
         }
       }
     }
@@ -378,8 +379,8 @@ export class RemoteOps {
         const ahead = Number.parseInt(parts[1] || "0", 10)
 
         return { key, result: { ahead, behind, noUpstream: false }, ahead }
-      } catch (e: any) {
-        const errMsg = e?.message || String(e)
+      } catch (e: unknown) {
+        const errMsg = getErrorMessage(e) || String(e)
         // 真正的"远程分支不存在"（fatal: ambiguous argument 或 no such branch）→ noUpstream
         const isNoUpstream = /no upstream|no such branch|ambiguous argument|does not have any commits|doesn't have any commits/i.test(errMsg)
         if (!isNoUpstream) {

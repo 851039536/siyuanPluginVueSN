@@ -13,6 +13,7 @@ import {
   ref,
 } from "vue"
 import { CARD_CONFIG } from "./useFlashcardStorage"
+import { getErrorMessage } from "@/utils/stringUtils"
 
 export function useFlashcardOperations(
   storage: FlashcardStorage,
@@ -127,9 +128,9 @@ export function useFlashcardOperations(
 
       closeDialog()
       await reload()
-    } catch (error: any) {
+    } catch (error: unknown) {
       showMessage(
-        error.message || t.value.saveFailed,
+        getErrorMessage(error) || t.value.saveFailed,
         3000,
         "error",
       )
@@ -159,9 +160,9 @@ export function useFlashcardOperations(
       await storage.deleteCard(card.id)
       showMessage(t.value.deleteSuccess, 2000, "info")
       await reload()
-    } catch (error: any) {
+    } catch (error: unknown) {
       showMessage(
-        error.message || t.value.deleteFailed,
+        getErrorMessage(error) || t.value.deleteFailed,
         3000,
         "error",
       )

@@ -195,6 +195,7 @@ import { Plugin, showMessage } from "siyuan"
 import { getWorkspaceDir } from "@/api"
 import { pickDirectory, openFolderInExplorer } from "@/utils/electronDialog"
 import { getNodeModules } from "@/utils/nodeModules"
+import { getErrorMessage } from "@/utils/stringUtils"
 import { encryptSetting, decryptSetting } from "@/utils/settingsCrypto"
 import { useS3Backup } from "./composables/useS3Backup"
 import { BackupManager, padNum } from "./modules/BackupManager"
@@ -443,9 +444,9 @@ async function performManualBackup(): Promise<void> {
       instance.updateLastBackupTime(lastBackupTimestamp)
       await instance.saveWorkspaceSettings(buildWorkspaceSettings())
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("备份失败:", err)
-    showMessage(`${props.i18n.backupFailed || "备份失败"}: ${err.message}`, 5000, "error")
+    showMessage(`${props.i18n.backupFailed || "备份失败"}: ${getErrorMessage(err)}`, 5000, "error")
   } finally {
     isBackingUp.value = false
     // B13 修复：移除 finally 中重复的 saveWorkspaceSettings()，try 块已通过 instance 保存
@@ -513,19 +514,19 @@ async function performLocalBackup(): Promise<BackupResult | null> {
     try {
       const hash = await backupManager.computeFileHash(result.filePath)
       saveChecksum(result.fileName, result.filePath, result.size, hash)
-    } catch (hashErr: any) {
-      console.warn("计算文件校验值失败:", hashErr.message)
+    } catch (hashErr: unknown) {
+      console.warn("计算文件校验值失败:", getErrorMessage(hashErr))
     }
     return result
-  } catch (err: any) {
+  } catch (err: unknown) {
     addLog({
       type: "localZip",
       action: props.i18n.localZipBackup || "本地压缩备份",
       fileName: "",
       success: false,
-      message: err.message,
+      message: getErrorMessage(err),
     })
-    throw new Error(`本地备份: ${err.message}`)
+    throw new Error(`本地备份: ${getErrorMessage(err)}`)
   }
 }
 
@@ -593,8 +594,8 @@ async function performS3Backup(latestZip?: BackupResult | null): Promise<void> {
       console.log("[S3备份] S3 已有 key 示例:", sampleExisting)
       console.log("[S3备份] 待上传 key 示例:", sampleNew)
     }
-  } catch (err: any) {
-    console.warn("[S3备份] 无法获取 S3 文件列表，将上传全部文件:", err.message || err)
+  } catch (err: unknown) {
+    console.warn("[S3备份] 无法获取 S3 文件列表，将上传全部文件:", err)
   }
 
   let skippedCount = 0
@@ -631,8 +632,8 @@ async function performS3Backup(latestZip?: BackupResult | null): Promise<void> {
     let content
     try {
       content = await fs.readFile(file.fullPath)
-    } catch (readErr: any) {
-      console.warn(`跳过无法读取的文件: ${file.relativePath}`, readErr.message)
+    } catch (readErr: unknown) {
+      console.warn(`跳过无法读取的文件: ${file.relativePath}`, getErrorMessage(readErr))
       processedCount++
       continue
     }
@@ -641,8 +642,8 @@ async function performS3Backup(latestZip?: BackupResult | null): Promise<void> {
     try {
       const hash = await backupManager.computeFileHash(file.fullPath)
       saveChecksum(file.relativePath, file.fullPath, content.length, hash)
-    } catch (hashErr: any) {
-      console.warn("计算校验值失败:", file.relativePath, hashErr.message)
+    } catch (hashErr: unknown) {
+      console.warn("计算校验值失败:", file.relativePath, getErrorMessage(hashErr))
     }
     uploadedCount++
     processedCount++
@@ -685,8 +686,8 @@ async function triggerS3OnlyUpload(): Promise<void> {
   isS3OnlyBackingUp.value = true
   try {
     await performS3Backup()
-  } catch (err: any) {
-    showMessage(`S3 上传失败: ${err.message}`, 5000, "error")
+  } catch (err: unknown) {
+    showMessage(`S3 上传失败: ${getErrorMessage(err)}`, 5000, "error")
   } finally {
     isS3OnlyBackingUp.value = false
   }
@@ -779,7 +780,7 @@ async function refreshBackupList(): Promise<void> {
   if (!isConfigured.value) { return }
   try {
     await listBackups()
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("刷新备份列表失败:", err)
   }
 }
@@ -808,15 +809,15 @@ async function handleDownload(backup: Record<string, any>): Promise<void> {
       success: true,
     })
     showMessage(props.i18n.downloadSuccess || "下载成功", 2000, "info")
-  } catch (err: any) {
+  } catch (err: unknown) {
     addLog({
       type: "s3Download",
       action: props.i18n.download || "下载",
       fileName: backup.name,
       success: false,
-      message: err.message,
+      message: getErrorMessage(err),
     })
-    showMessage(`${props.i18n.downloadFailed || "下载失败"}: ${err.message}`, 5000, "error")
+    showMessage(`${props.i18n.downloadFailed || "下载失败"}: ${getErrorMessage(err)}`, 5000, "error")
   }
 }
 
@@ -833,15 +834,15 @@ async function handleDelete(backup: Record<string, any>): Promise<void> {
       success: true,
     })
     showMessage(props.i18n.deleteSuccess || "删除成功", 2000, "info")
-  } catch (err: any) {
+  } catch (err: unknown) {
     addLog({
       type: "s3Delete",
       action: props.i18n.delete || "删除",
       fileName: backup.name,
       success: false,
-      message: err.message,
+      message: getErrorMessage(err),
     })
-    showMessage(`${props.i18n.deleteFailed || "删除失败"}: ${err.message}`, 5000, "error")
+    showMessage(`${props.i18n.deleteFailed || "删除失败"}: ${getErrorMessage(err)}`, 5000, "error")
   }
 }
 

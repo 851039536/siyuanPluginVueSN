@@ -584,6 +584,7 @@ import {
   ref,
 } from "vue"
 import { useRssReader } from "./composables/useRssReader"
+import { getErrorMessage } from "@/utils/stringUtils"
 
 interface Props {
   i18n: Record<string, string>
@@ -733,8 +734,8 @@ async function handleOpmlFile(e: Event) {
   try {
     const text = await file.text()
     await importOpml(text)
-  } catch (err: any) {
-    showMessage(`${props.i18n.opmlImportFailed}: ${err.message}`, 5000, "error")
+  } catch (err: unknown) {
+    showMessage(`${props.i18n.opmlImportFailed}: ${getErrorMessage(err)}`, 5000, "error")
   } finally {
     importingOpml.value = false
     if (opmlFileInput.value) opmlFileInput.value.value = ""

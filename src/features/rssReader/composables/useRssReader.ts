@@ -23,6 +23,7 @@ import {
   generateId,
   parseRssXml,
 } from "../utils/parser"
+import { getErrorMessage } from "@/utils/stringUtils"
 
 export function useRssReader(plugin: Plugin) {
   // ========== 存储 ==========
@@ -236,9 +237,9 @@ export function useRssReader(plugin: Plugin) {
       loadingStatus.value = "success"
       showMessage(`${rssI18n.feedAddedDetail || "Feed added"}: ${newFeed.title}`, 3000, "info")
       return true
-    } catch (err: any) {
+    } catch (err: unknown) {
       loadingStatus.value = "error"
-      showMessage(err.message || rssI18n.feedAddFailed || "Failed to add feed", 5000, "error")
+      showMessage(getErrorMessage(err) || rssI18n.feedAddFailed || "Failed to add feed", 5000, "error")
       return false
     }
   }
@@ -321,8 +322,8 @@ export function useRssReader(plugin: Plugin) {
       trimItemsPerFeed()
 
       await saveData()
-    } catch (err: any) {
-      showMessage(`${rssI18n.refreshDetailFailed || "Refresh failed"}: ${err.message}`, 5000, "error")
+    } catch (err: unknown) {
+      showMessage(`${rssI18n.refreshDetailFailed || "Refresh failed"}: ${getErrorMessage(err)}`, 5000, "error")
     } finally {
       refreshingFeedIds.value.delete(feedId)
     }
@@ -613,8 +614,8 @@ export function useRssReader(plugin: Plugin) {
         } else {
           errors.push(`${attempt.label}: HTTP ${response.status}`)
         }
-      } catch (err: any) {
-        errors.push(`${attempt.label}: ${err.name || err.message || "超时/失败"}`)
+      } catch (err: unknown) {
+        errors.push(`${attempt.label}: ${getErrorMessage(err) || "超时/失败"}`)
       }
     }
 

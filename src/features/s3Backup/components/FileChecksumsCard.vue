@@ -149,6 +149,7 @@ import { ref } from "vue"
 import { formatFileSize, formatTime } from "@/utils/format"
 import { copyToClipboard } from "@/utils/domUtils"
 import { getNodeModules } from "@/utils/nodeModules"
+import { getErrorMessage } from "@/utils/stringUtils"
 import { showMessage } from "siyuan"
 import Button from "@/components/Button.vue"
 import { BackupManager } from "../modules/BackupManager"
@@ -182,9 +183,9 @@ async function verifyOne(item: FileChecksum): Promise<void> {
   try {
     const hash = await manager.computeFileHash(item.filePath)
     verifyResults.value = { ...verifyResults.value, [item.fileName]: hash === item.checksum }
-  } catch (err: any) {
+  } catch (err: unknown) {
     verifyResults.value = { ...verifyResults.value, [item.fileName]: false }
-    showMessage(`${item.fileName}: ${err.message}`, 3000, "error")
+    showMessage(`${item.fileName}: ${getErrorMessage(err)}`, 3000, "error")
   } finally {
     verifyingItems.value = { ...verifyingItems.value, [item.fileName]: false }
   }
@@ -264,8 +265,8 @@ async function onDrop(e: DragEvent): Promise<void> {
         size: fileSize,
         hash,
       })
-    } catch (err: any) {
-      showMessage(`${fileName}: ${err.message}`, 3000, "error")
+    } catch (err: unknown) {
+      showMessage(`${fileName}: ${getErrorMessage(err)}`, 3000, "error")
     }
   }
 }

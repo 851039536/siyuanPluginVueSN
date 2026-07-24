@@ -57,8 +57,8 @@ export class CommitMsgGenerator {
           return { message: `${match[1]}: ${match[2].trim()}`, source: "ai" }
         }
         console.warn("[gitPush] AI 未返回有效 commit 格式，降级启发式:", trimmed.substring(0, 80))
-      } catch (e: any) {
-        console.error("[gitPush] AI 调用失败:", e?.message || e)
+      } catch (e: unknown) {
+        console.error("[gitPush] AI 调用失败:", e)
       }
 
       return { message: this.heuristicCommitMessage(diffText), source: "heuristic" }

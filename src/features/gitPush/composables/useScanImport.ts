@@ -5,6 +5,7 @@ import { showMessage } from "siyuan"
 import type { ScannedGitRepo } from "../types/storage"
 import { UNGROUPED_ID } from "../types"
 import { pickDirectory } from "./useDirectoryPicker"
+import { getErrorMessage } from "@/utils/stringUtils"
 
 type ScanRepo = ScannedGitRepo & { alreadyImported: boolean }
 
@@ -48,8 +49,8 @@ export function useScanImport(deps: {
         }
       }
       scanSelection.value = sel
-    } catch (e: any) {
-      scanError.value = e?.message || tf("scanError", "扫描失败")
+    } catch (e: unknown) {
+      scanError.value = getErrorMessage(e) || tf("scanError", "扫描失败")
     }
   }
 

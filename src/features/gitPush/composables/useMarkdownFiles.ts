@@ -56,48 +56,41 @@ export function scanMarkdownFiles(dir: string): MdFileEntry[] {
 
   try {
     if (!fs.existsSync(dir)) return []
+
+    return fs.readdirSync(dir, { withFileTypes: true })
+      .filter(e => e.isFile() && e.name.toLowerCase().endsWith(".md"))
+      .map((e) => {
+        const lowerName = e.name.toLowerCase()
+        const variant = MD_VARIANT_MAP[lowerName] ?? ("other" as MdFileVariant)
+        const filePath = path.join(dir, e.name)
+        const baseName = e.name.replace(/\.md$/i, "")
+        const label = variant === "other" ? e.name : baseName.toUpperCase()
+
+        let size = 0
+        try {
+          size = fs.statSync(filePath).size
+        } catch {
+          size = 0
+        }
+
+        return {
+          name: e.name,
+          path: filePath,
+          variant,
+          label,
+          size,
+          oversized: size > OVERSIZE_THRESHOLD,
+        } satisfies MdFileEntry
+      })
+      .sort((a, b) => {
+        const va = VARIANT_ORDER[a.variant] ?? 3
+        const vb = VARIANT_ORDER[b.variant] ?? 3
+        if (va !== vb) return va - vb
+        return a.name.localeCompare(b.name)
+      })
   } catch {
     return []
   }
-
-  let entries: ReturnType<typeof fs.readdirSync>
-  try {
-    entries = fs.readdirSync(dir, { withFileTypes: true })
-  } catch {
-    return []
-  }
-
-  return entries
-    .filter(e => e.isFile() && e.name.toLowerCase().endsWith(".md"))
-    .map((e) => {
-      const lowerName = e.name.toLowerCase()
-      const variant = MD_VARIANT_MAP[lowerName] ?? ("other" as MdFileVariant)
-      const filePath = path.join(dir, e.name)
-      const baseName = e.name.replace(/\.md$/i, "")
-      const label = variant === "other" ? e.name : baseName.toUpperCase()
-
-      let size = 0
-      try {
-        size = fs.statSync(filePath).size
-      } catch {
-        size = 0
-      }
-
-      return {
-        name: e.name,
-        path: filePath,
-        variant,
-        label,
-        size,
-        oversized: size > OVERSIZE_THRESHOLD,
-      } satisfies MdFileEntry
-    })
-    .sort((a, b) => {
-      const va = VARIANT_ORDER[a.variant] ?? 3
-      const vb = VARIANT_ORDER[b.variant] ?? 3
-      if (va !== vb) return va - vb
-      return a.name.localeCompare(b.name)
-    })
 }
 
 /**

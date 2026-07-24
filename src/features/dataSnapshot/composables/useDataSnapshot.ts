@@ -23,6 +23,7 @@ import {
   removeCloudRepoTag,
 } from "@/api"
 import { useStatusBarTask } from "@/features/statusBar/composables/useStatusBarTask"
+import { getErrorMessage } from "@/utils/stringUtils"
 
 export function useDataSnapshot(plugin: Plugin) {
   const snapshotTask = useStatusBarTask("dataSnapshot", "mdi:camera-marker")
@@ -86,9 +87,9 @@ export function useDataSnapshot(plugin: Plugin) {
     try {
       await importRepo(id)
       snapshotTask.complete(i18n.value.restoreSuccess || "快照恢复成功")
-    } catch (e: any) {
-      console.error("[dataSnapshot] restore error:", e?.message || e)
-      snapshotTask.fail(e?.message || i18n.value.restoreFailed || "快照恢复失败")
+    } catch (e: unknown) {
+      console.error("[dataSnapshot] restore error:", e)
+      snapshotTask.fail(getErrorMessage(e) || i18n.value.restoreFailed || "快照恢复失败")
     } finally {
       op.restoring = null
     }
@@ -113,9 +114,9 @@ export function useDataSnapshot(plugin: Plugin) {
       await downloadCloudSnapshot(tag, id)
       await loadLocalSnapshots()
       snapshotTask.complete(i18n.value.downloadSuccess || "快照下载成功")
-    } catch (e: any) {
-      console.error("[dataSnapshot] download error:", e?.message || e)
-      snapshotTask.fail(e?.message || i18n.value.downloadFailed || "快照下载失败")
+    } catch (e: unknown) {
+      console.error("[dataSnapshot] download error:", e)
+      snapshotTask.fail(getErrorMessage(e) || i18n.value.downloadFailed || "快照下载失败")
     } finally {
       op.downloading = null
     }

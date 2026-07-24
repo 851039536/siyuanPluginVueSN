@@ -188,6 +188,7 @@ import { Icon } from "@iconify/vue"
 import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 import Switch from "@/components/Switch.vue"
+import { getErrorMessage } from "@/utils/stringUtils"
 import type { S3Config } from "../types"
 import { DEFAULT_S3_CONFIG } from "../types"
 
@@ -259,8 +260,8 @@ async function handleTestConnection(): Promise<void> {
     } else {
       lastTestResult.value = { success: false, message: "未提供连接测试功能" }
     }
-  } catch (err: any) {
-    lastTestResult.value = { success: false, message: `测试异常: ${err.message}` }
+  } catch (err: unknown) {
+    lastTestResult.value = { success: false, message: `测试异常: ${getErrorMessage(err)}` }
   } finally {
     isConnecting.value = false
   }

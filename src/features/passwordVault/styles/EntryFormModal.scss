@@ -1,0 +1,31 @@
+// 密码箱 - 添加/编辑条目弹窗样式
+@use '@/variables.scss' as *;
+@use 'mixins' as *;
+
+.entry-form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+
+  label {
+    @include uppercase-label;
+  }
+
+  input,
+  .form-select,
+  .form-textarea {
+    @include input-base;
+  }
+
+  .form-textarea {
+    resize: vertical;
+    min-height: 70px;
+    font-family: inherit;
+  }
+}

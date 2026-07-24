@@ -455,6 +455,11 @@
     color: var(--b3-theme-warning);
   }
 
+  &.gp-diverged {
+    background: var(--b3-theme-error-lightest);
+    color: var(--b3-theme-error);
+  }
+
   &.gp-synced {
     background: var(--b3-theme-success-lightest);
     color: var(--b3-theme-success);

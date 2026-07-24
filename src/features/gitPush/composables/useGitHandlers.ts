@@ -25,7 +25,7 @@ export function useGitHandlers(deps: {
   generateStashDesc: (id: string) => Promise<string>
   createTagOp: (id: string, name: string, message?: string) => Promise<void>
   deleteTagOp: (id: string, tag: string) => Promise<void>
-  pushTagOp: (id: string, remote: string, tag: string) => Promise<void>
+  pushTagOp: (id: string, remote: string, tag: string) => Promise<string>
   abortMergeOp: (id: string) => Promise<void>
   resolveConflictOp: (id: string, file: string, strategy: "theirs" | "ours") => Promise<void>
   checkConflicts: (id: string) => Promise<void>

@@ -1172,15 +1172,19 @@ function statusLabel(projectId: string, remoteKey: string): string {
   const rs = getRemoteStatus(projectId, remoteKey)
   if (!rs) return ""
   if (rs.noUpstream) return `+${rs.ahead}`
-  if (rs.ahead > 0) return `↑${rs.ahead}`
-  if (rs.behind > 0) return `↓${rs.behind}`
-  return ""
+  // 分叉（既领先又落后）时同时展示上传与下拉数量
+  const parts: string[] = []
+  if (rs.ahead > 0) parts.push(`↑${rs.ahead}`)
+  if (rs.behind > 0) parts.push(`↓${rs.behind}`)
+  return parts.join(" ")
 }
 
 /** 获取状态 badge 的 CSS 类 */
 function statusBadgeClass(projectId: string, remoteKey: string): string {
   const rs = getRemoteStatus(projectId, remoteKey)
   if (!rs) return ""
+  // 分叉优先判断，避免被 ahead 抢先归类为 gp-ahead
+  if (!rs.noUpstream && rs.ahead > 0 && rs.behind > 0) return "gp-diverged"
   if (isAheadOfRemote(rs)) return "gp-ahead"
   if (rs.behind > 0) return "gp-behind"
   return "gp-synced"

@@ -26,7 +26,7 @@
               v-if="aiGenerating"
               class="skill-dialog__ai-spinner"
             />
-            <span v-else>✨</span>
+            <span v-else><IconWrapper name="sparkles" /></span>
           </button>
         </div>
         <div
@@ -155,6 +155,7 @@ import {
   callAI,
   getApiConfigFromPlugin,
 } from "@/utils/aiApi"
+import IconWrapper from "@/components/IconWrapper.vue"
 import { LANGUAGE_OPTIONS } from "../composables/useLangLabel"
 
 const props = defineProps<{
@@ -236,9 +237,9 @@ async function aiGenerate() {
     if (Array.isArray(parsed.tags) && parsed.tags.length > 0) {
       tagsInput.value = parsed.tags.join(", ")
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     aiError.value = t.value.aiGenerateFailed || "AI 生成失败，请检查 API 配置"
-    console.warn("AI 生成失败:", err.message || err)
+    console.warn("AI 生成失败:", err)
   } finally {
     aiGenerating.value = false
   }

@@ -3,7 +3,11 @@
 import type {
   ComparisonData,
   DailyWordCount,
+  DateOnlyRow,
+  DateWordsRow,
+  MonthWordsRow,
   ReportData,
+  ScalarRow,
   TrendPrediction,
 } from "../types"
 import { padZero } from "../utils"
@@ -12,7 +16,7 @@ import { getMostProductiveNotebook } from "./notebookStats"
 
 async function calcLongestStreak(startStr: string, endStr: string): Promise<number> {
   try {
-    const rows = await executeSql(`
+    const rows = await executeSql<DateOnlyRow>(`
       SELECT DISTINCT substr(created, 1, 8) as date
       FROM blocks
       WHERE type = 'p' AND length > 0
@@ -23,7 +27,7 @@ async function calcLongestStreak(startStr: string, endStr: string): Promise<numb
 
     if (!rows || rows.length === 0) return 0
 
-    const activeDates = new Set(rows.map((r: any) => String(r.date)))
+    const activeDates = new Set(rows.map((r) => String(r.date)))
     const sorted = [...activeDates].sort()
     let longest = 1
     let current = 1
@@ -67,13 +71,13 @@ export async function getReportData(year?: number, month?: number): Promise<Repo
       const yearEndStr = `${reportYear}1231235959`
 
       const [wordRows, createdRows] = await Promise.all([
-        executeSql(`
+        executeSql<ScalarRow>(`
           SELECT SUM(length) as total_words
           FROM blocks
           WHERE type = 'p' AND length > 0
             AND created >= '${yearStartStr}' AND created <= '${yearEndStr}'
         `),
-        executeSql(`
+        executeSql<ScalarRow>(`
           SELECT COUNT(*) as cnt
           FROM blocks
           WHERE type = 'd'
@@ -84,7 +88,7 @@ export async function getReportData(year?: number, month?: number): Promise<Repo
       const totalWords = Number(wordRows[0]?.total_words || 0)
       const totalNotesCreated = Number(createdRows[0]?.cnt || 0)
 
-      const activeRows = await executeSql(`
+      const activeRows = await executeSql<ScalarRow>(`
         SELECT COUNT(DISTINCT substr(created, 1, 8)) as active_days
         FROM blocks
         WHERE type = 'p' AND length > 0
@@ -92,7 +96,7 @@ export async function getReportData(year?: number, month?: number): Promise<Repo
       `)
       const activeDays = Number(activeRows[0]?.active_days || 0)
 
-      const maxDayRows = await executeSql(`
+      const maxDayRows = await executeSql<DateWordsRow>(`
         SELECT substr(created, 1, 8) as date, SUM(length) as words
         FROM blocks
         WHERE type = 'p' AND length > 0
@@ -117,7 +121,7 @@ export async function getReportData(year?: number, month?: number): Promise<Repo
       const mostProductiveNotebook = await getMostProductiveNotebook(yearStartStr, yearEndStr)
       const longestStreak = await calcLongestStreak(yearStartStr, yearEndStr)
 
-      const monthlyRows = await executeSql(`
+      const monthlyRows = await executeSql<MonthWordsRow>(`
         SELECT substr(created, 1, 6) as month,
           SUM(length) as words,
           COUNT(DISTINCT CASE WHEN type='d' THEN root_id END) as created
@@ -131,7 +135,7 @@ export async function getReportData(year?: number, month?: number): Promise<Repo
       const monthlyBreakdown: Array<{ month: string, words: number, created: number }> = []
       for (let m = 1; m <= 12; m++) {
         const monthKey = `${reportYear}${padZero(m)}`
-        const row = (monthlyRows || []).find((r: any) => String(r.month) === monthKey)
+        const row = (monthlyRows || []).find((r) => String(r.month) === monthKey)
         monthlyBreakdown.push({
           month: `${reportYear}/${padZero(m)}`,
           words: Number(row?.words || 0),
@@ -161,13 +165,13 @@ export async function getReportData(year?: number, month?: number): Promise<Repo
       const monthEndStr = `${reportYear}${padZero(reportMonth)}${padZero(lastDay)}235959`
 
       const [wordRows, createdRows] = await Promise.all([
-        executeSql(`
+        executeSql<ScalarRow>(`
           SELECT SUM(length) as total_words
           FROM blocks
           WHERE type = 'p' AND length > 0
             AND created >= '${monthStartStr}' AND created <= '${monthEndStr}'
         `),
-        executeSql(`
+        executeSql<ScalarRow>(`
           SELECT COUNT(*) as cnt
           FROM blocks
           WHERE type = 'd'
@@ -178,7 +182,7 @@ export async function getReportData(year?: number, month?: number): Promise<Repo
       const totalWords = Number(wordRows[0]?.total_words || 0)
       const totalNotesCreated = Number(createdRows[0]?.cnt || 0)
 
-      const activeRows = await executeSql(`
+      const activeRows = await executeSql<ScalarRow>(`
         SELECT COUNT(DISTINCT substr(created, 1, 8)) as active_days
         FROM blocks
         WHERE type = 'p' AND length > 0
@@ -186,7 +190,7 @@ export async function getReportData(year?: number, month?: number): Promise<Repo
       `)
       const activeDays = Number(activeRows[0]?.active_days || 0)
 
-      const maxDayRows = await executeSql(`
+      const maxDayRows = await executeSql<DateWordsRow>(`
         SELECT substr(created, 1, 8) as date, SUM(length) as words
         FROM blocks
         WHERE type = 'p' AND length > 0
@@ -211,7 +215,7 @@ export async function getReportData(year?: number, month?: number): Promise<Repo
       const mostProductiveNotebook = await getMostProductiveNotebook(monthStartStr, monthEndStr)
       const longestStreak = await calcLongestStreak(monthStartStr, monthEndStr)
 
-      const weeklyRows = await executeSql(`
+      const weeklyRows = await executeSql<DateWordsRow>(`
         SELECT substr(created, 1, 8) as date,
           SUM(length) as words,
           COUNT(DISTINCT CASE WHEN type='d' THEN root_id END) as created
@@ -222,7 +226,7 @@ export async function getReportData(year?: number, month?: number): Promise<Repo
         ORDER BY date ASC
       `)
 
-      const monthlyBreakdown = (weeklyRows || []).map((r: any) => {
+      const monthlyBreakdown = (weeklyRows || []).map((r) => {
         const d = String(r.date)
         return {
           month: `${d.substring(4, 6)}/${d.substring(6, 8)}`,
@@ -275,7 +279,7 @@ export async function getTrendPrediction(): Promise<TrendPrediction> {
   const endStr = `${today.getFullYear()}${padZero(today.getMonth() + 1)}${padZero(today.getDate())}${padZero(today.getHours())}${padZero(today.getMinutes())}${padZero(today.getSeconds())}`
 
   try {
-    const rows = await executeSql(`
+    const rows = await executeSql<DateWordsRow>(`
       SELECT substr(created, 1, 8) as date, SUM(length) as words
       FROM blocks
       WHERE type = 'p' AND length > 0

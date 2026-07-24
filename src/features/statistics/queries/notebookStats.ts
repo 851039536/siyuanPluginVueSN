@@ -3,22 +3,30 @@
 import type {
   DailyWordCount,
   NotebookActivityItem,
+  NotebookActivityRow,
+  NotebookBlockTypeRow,
   NotebookBlockTypeStat,
+  NotebookDocCountRow,
+  NotebookWordRow,
   NotebookWordStat,
+  NotebookWordSumRow,
 } from "../types"
 import { lsNotebooks } from "@/api"
 import {
   BLOCK_TYPE_LABELS,
   NOTEBOOK_COLORS,
 } from "../types/constants"
-import { padZero } from "../utils"
+import {
+  filterActiveNotebooks,
+  padZero,
+} from "../utils"
 import {
   executeSql,
   formatDateTime,
 } from "./executeSql"
 
 interface OpenNotebooks {
-  notebooks: any[]
+  notebooks: Notebook[]
   idList: string
   idToName: Map<string, string>
 }
@@ -32,9 +40,9 @@ async function getOpenNotebooks(): Promise<OpenNotebooks> {
   if (_cache && now - _cache.ts < CACHE_TTL) return _cache.data
 
   const data = await lsNotebooks()
-  const notebooks = data?.notebooks?.filter((nb: any) => !nb.closed) ?? []
+  const notebooks = filterActiveNotebooks(data?.notebooks ?? [])
   const idList = notebooks
-    .map((nb: any) => `'${(nb.id as string).replace(/'/g, "''")}'`)
+    .map((nb) => `'${nb.id.replace(/'/g, "''")}'`)
     .join(",")
   const idToName = new Map<string, string>()
   for (const nb of notebooks) {
@@ -62,7 +70,7 @@ export async function getNotebookDocStats(): Promise<Array<{ name: string, count
     } = await getOpenNotebooks()
     if (notebooks.length === 0) return []
 
-    const rows = await executeSql(`
+    const rows = await executeSql<NotebookDocCountRow>(`
       SELECT box as notebook_id, COUNT(*) as doc_count
       FROM blocks
       WHERE type = 'd' AND box IN (${idList})
@@ -109,7 +117,7 @@ export async function getNotebookWordStats(): Promise<NotebookWordStat[]> {
     } = await getOpenNotebooks()
     if (notebooks.length === 0) return []
 
-    const rows = await executeSql(`
+    const rows = await executeSql<NotebookWordRow>(`
       SELECT box as notebook_id, SUM(length) as total_words
       FROM blocks
       WHERE type = 'p' AND length > 0 AND box IN (${idList})
@@ -178,7 +186,7 @@ export async function getNotebookActivityTrend(days: number): Promise<NotebookAc
     const startStr = formatDateTime(startDate)
     const endStr = formatDateTime(today)
 
-    const rows = await executeSql(`
+    const rows = await executeSql<NotebookActivityRow>(`
       SELECT box as notebook_id, substr(created, 1, 8) as date, SUM(length) as words
       FROM blocks
       WHERE type = 'p'
@@ -205,7 +213,7 @@ export async function getNotebookActivityTrend(days: number): Promise<NotebookAc
     }
 
     const result: NotebookActivityItem[] = []
-    notebooks.forEach((nb: any, idx) => {
+    notebooks.forEach((nb, idx) => {
       const dayMap = pivot.get(nb.id) || new Map()
       const dailyData: DailyWordCount[] = []
 
@@ -253,7 +261,7 @@ export async function getMostProductiveNotebook(
     }
     }
 
-    const rows = await executeSql(`
+    const rows = await executeSql<NotebookWordSumRow>(`
       SELECT box as notebook_id, SUM(length) as words
       FROM blocks
       WHERE type = 'p' AND length > 0 AND box IN (${idList})
@@ -291,7 +299,7 @@ export async function getNotebookBlockTypeStats(): Promise<NotebookBlockTypeStat
     } = await getOpenNotebooks()
     if (notebooks.length === 0) return []
 
-    const rows = await executeSql(`
+    const rows = await executeSql<NotebookBlockTypeRow>(`
       SELECT box as notebook_id, type, COUNT(*) as cnt
       FROM blocks
       WHERE box IN (${idList})

@@ -4,6 +4,7 @@
  */
 
 import { getWorkspacePath } from "./utils"
+import { getErrorMessage } from "@/utils/stringUtils"
 
 /**
  * yt-dlp 下载结果
@@ -324,11 +325,11 @@ export async function downloadVideo(
         })
       })
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("下载视频失败:", error)
     return {
       success: false,
-      error: error.message || "下载失败",
+      error: getErrorMessage(error) || "下载失败",
     }
   }
 }

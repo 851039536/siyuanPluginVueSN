@@ -94,7 +94,10 @@
           class="review-view__rating review-view__rating--forgot"
           @click="rate('forgot')"
         >
-          <span class="review-view__rating-icon">✗</span>
+          <IconWrapper
+            name="close"
+            class="review-view__rating-icon"
+          />
           <span class="review-view__rating-label">{{ t.forgot }}</span>
           <span class="review-view__rating-hint">{{ t.forgotHint || '1天后重来' }}</span>
         </button>
@@ -110,7 +113,10 @@
           class="review-view__rating review-view__rating--remembered"
           @click="rate('remembered')"
         >
-          <span class="review-view__rating-icon">✓</span>
+          <IconWrapper
+            name="check"
+            class="review-view__rating-icon"
+          />
           <span class="review-view__rating-label">{{ t.remembered }}</span>
           <span class="review-view__rating-hint">{{ rememberedHint }}</span>
         </button>

@@ -1,6 +1,9 @@
 // 时间维度统计（日/周/月/年聚合）
 
-import type { DailyWordCount } from "../types"
+import type {
+  AggregationRow,
+  DailyWordCount,
+} from "../types"
 import { padZero } from "../utils"
 import {
   executeSql,
@@ -12,7 +15,7 @@ export async function getWordCountAggregation(
   endDate: string,
   subStrLen: number,
   groupField: string,
-): Promise<any[]> {
+): Promise<AggregationRow[]> {
   const sql = `
     SELECT
       substr(created, 1, ${subStrLen}) as ${groupField},
@@ -27,7 +30,7 @@ export async function getWordCountAggregation(
     ORDER BY ${groupField}
     LIMIT 1024
   `
-  return await executeSql(sql)
+  return await executeSql<AggregationRow>(sql)
 }
 
 export async function getDailyStats(days: number): Promise<DailyWordCount[]> {

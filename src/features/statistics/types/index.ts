@@ -2,6 +2,7 @@
  * 统计模块类型导出
  */
 export * from "./storage"
+export * from "./rows"
 
 /**
  * 每日字数统计

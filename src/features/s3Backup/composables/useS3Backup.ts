@@ -10,6 +10,7 @@ import type { S3Config, S3FileInfo } from "../types"
 import { DEFAULT_S3_CONFIG } from "../types"
 import { S3Client } from "../types/s3Client"
 import type { BackupProgress } from "../modules/BackupManager"
+import { getErrorMessage } from "@/utils/stringUtils"
 
 export function useS3Backup() {
   // ========== 状态 ==========
@@ -60,8 +61,8 @@ export function useS3Backup() {
     try {
       const client = initClient(cfg)
       return await client.testConnection()
-    } catch (err: any) {
-      return { success: false, message: `连接测试异常: ${err.message}` }
+    } catch (err: unknown) {
+      return { success: false, message: `连接测试异常: ${getErrorMessage(err)}` }
     }
   }
 
@@ -121,7 +122,7 @@ export function useS3Backup() {
     isLoading.value = true
     try {
       return await fetchBackupList()
-    } catch (_err: any) {
+    } catch (_err: unknown) {
       backupList.value = []
       return []
     } finally {

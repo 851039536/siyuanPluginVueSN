@@ -549,10 +549,17 @@
 
 <script setup lang="ts">
 import type {
+  BranchInfo,
+  CommitLogEntry,
+  ConflictFile,
   GitProject,
   PlatformKey,
   ProjectCategory,
   ProjectStatus,
+  PushStatusInfo,
+  StashEntry,
+  TagInfo,
+  WorkingTreeInfo,
 } from "../types"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
@@ -563,6 +570,7 @@ import {
 } from "../types"
 import { highlightSegments } from "../utils"
 import type { MdFileEntry } from "../composables/useMarkdownFiles"
+import type { PushOutputEntry } from "../composables/useGitOps"
 import ConflictSection from "./ConflictSection.vue"
 import MarkdownFileBadge from "./MarkdownFileBadge.vue"
 import OutputPanel from "./OutputPanel.vue"
@@ -595,28 +603,28 @@ const props = defineProps<{
   openRefreshMenu: Set<string>
   confirmingDelIdx: number
   // 每项目响应式数据（单项目值，非全量 Record，避免跨卡片 re-render）
-  branches: any[]
-  pushStatus: any
-  workingTree: any
-  stashEntries: any[]
+  branches: BranchInfo[]
+  pushStatus: PushStatusInfo
+  workingTree: WorkingTreeInfo
+  stashEntries: StashEntry[]
   stashLoading: boolean
-  conflicts: any[]
+  conflicts: ConflictFile[]
   commitOutput: string
-  pullOutputs: any[]
-  pushOutputs: any[]
+  pullOutputs: PushOutputEntry[]
+  pushOutputs: PushOutputEntry[]
   committing: boolean
   generatingMsg: { generating: boolean, text: string }
   gitOpLoading: boolean
   commitLogLoading: boolean
-  tagsCache: any[]
+  tagsCache: TagInfo[]
   tagLoading: boolean
-  tagPushLoading: any
+  tagPushLoading: string
   genStashDescLoading: boolean
   generatedStashMsg: string
   commitTemplates: { id: string, name: string, pattern: string, builtin?: boolean }[]
   selectedTags: Set<string>
   fileDiffs: Record<string, string>
-  commitLogEntries: any[]
+  commitLogEntries: CommitLogEntry[]
   // Markdown 文件列表
   mdFiles: MdFileEntry[]
   // 计算辅助函数

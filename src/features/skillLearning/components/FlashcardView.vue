@@ -36,7 +36,10 @@
               'flashcard-quiz__result-item--fail': !item.isCorrect,
             }"
           >
-            <span class="flashcard-quiz__result-mark">{{ item.isCorrect ? '✓' : '✗' }}</span>
+            <IconWrapper
+              :name="item.isCorrect ? 'check' : 'close'"
+              class="flashcard-quiz__result-mark"
+            />
             <span class="flashcard-quiz__result-title">{{ qi + 1 }}. {{ item.card.title }}</span>
           </div>
         </div>
@@ -127,14 +130,16 @@
           >
             <span class="flashcard-quiz__option-letter">{{ optionLetter(oi) }}</span>
             <span class="flashcard-quiz__option-text">{{ opt.text || t.emptyOption }}</span>
-            <span
+            <IconWrapper
               v-if="phase === 'feedback' && opt.correct"
+              name="check"
               class="flashcard-quiz__option-icon"
-            >✓</span>
-            <span
+            />
+            <IconWrapper
               v-else-if="phase === 'feedback' && currentItem.selectedIndex === oi && !opt.correct"
+              name="close"
               class="flashcard-quiz__option-icon"
-            >✗</span>
+            />
           </button>
         </div>
 
@@ -147,7 +152,8 @@
             class="flashcard-quiz__feedback-banner"
             :class="currentItem.isCorrect ? 'flashcard-quiz__feedback-banner--ok' : 'flashcard-quiz__feedback-banner--fail'"
           >
-            {{ currentItem.isCorrect ? `✓ ${t.correct || '正确'}` : `✗ ${t.incorrect || '错误'}` }}
+            <IconWrapper :name="currentItem.isCorrect ? 'check' : 'close'" />
+            {{ currentItem.isCorrect ? (t.correct || '正确') : (t.incorrect || '错误') }}
           </div>
 
           <button

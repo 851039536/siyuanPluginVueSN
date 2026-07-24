@@ -481,13 +481,13 @@
           class="gp-actions-hint-icon"
           :title="i18n.pullVsFetchHint || '拉取(Pull)：下载并合并远程新提交到本地（会改动本地代码）；Fetch：只刷新远程状态，不改动本地代码'"
         />
-        <div class="gp-pull-wrap">
+        <div class="gp-inline-menu-wrap">
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm gp-action-btn"
             :class="{ 'gp-action-btn--active': isPulling(project.id) || fetching }"
             :disabled="!hasAnyRemote(project) || isPulling(project.id) || isPushing(project.id)"
             :title="i18n.pull || '拉取'"
-            @click.stop="pullMenuOpen = !pullMenuOpen"
+            @click.stop="toggleMenu('pull')"
           >
             <Icon
               icon="mdi:arrow-down"
@@ -502,18 +502,18 @@
             />
           </button>
           <div
-            v-if="pullMenuOpen"
-            class="gp-pull-popover"
+            v-if="openMenu === 'pull'"
+            class="gp-inline-menu-popover"
             @click.stop
           >
             <button
               v-for="r in remotes"
               :key="`pull-${r.key}`"
-              class="gp-pull-item"
-              :class="{ 'gp-pull-item--active': isPulling(project.id, r.key) }"
+              class="gp-inline-menu-item"
+              :class="{ 'gp-inline-menu-item--active': isPulling(project.id, r.key) }"
               :disabled="!project[r.remoteProp] || isPulling(project.id) || isPushing(project.id)"
               :title="`${i18n.pull || 'Pull'} ${r.label} — ${i18n.pullBtnHint || '下载并合并远程新提交到本地（会改动本地代码）'}`"
-              @click="$emit('confirmPull', project.id, r.key); pullMenuOpen = false"
+              @click="$emit('confirmPull', project.id, r.key); openMenu = null"
             >
               <Icon
                 icon="mdi:arrow-down"
@@ -521,14 +521,14 @@
               />
               <span>{{ r.label }}</span>
             </button>
-            <div class="gp-pull-divider" />
+            <div class="gp-inline-menu-divider" />
             <!-- Fetch 项 -->
             <button
-              class="gp-pull-item gp-pull-item--fetch"
-              :class="{ 'gp-pull-item--active': fetching }"
+              class="gp-inline-menu-item gp-inline-menu-item--muted"
+              :class="{ 'gp-inline-menu-item--active': fetching }"
               :disabled="!hasAnyRemote(project) || isPulling(project.id) || isPushing(project.id) || fetching"
               :title="i18n.fetchHint || '从远程获取最新追踪分支（不合并代码），用于刷新推送/拉取状态'"
-              @click="$emit('fetchAll', project.id); pullMenuOpen = false"
+              @click="$emit('fetchAll', project.id); openMenu = null"
             >
               <Icon
                 icon="mdi:cloud-refresh-outline"
@@ -544,21 +544,49 @@
       <div class="gp-actions-section">
         <span class="gp-actions-label">{{ i18n.push || '推送' }}</span>
         <div class="gp-actions-btns">
-          <button
-            v-for="r in remotes"
-            :key="`push-${r.key}`"
-            class="vp-btn vp-btn--ghost vp-btn--sm gp-action-btn"
-            :class="pushBtnClass(getPushStatus(project.id, r.key))"
-            :disabled="!project[r.remoteProp] || isPushing(project.id) || isPulling(project.id) || !needsPushFor(project.id, r.key)"
-            :title="`${i18n.push || 'Push'} ${r.label}`"
-            @click="$emit('pushSingle', project.id, r.key)"
-          >
-            <Icon
-              icon="mdi:arrow-up"
-              height="12"
-            />
-            <span>{{ pushBtnText(getPushStatus(project.id, r.key), r.label, i18n) }}</span>
-          </button>
+          <!-- 单远程推送（下拉菜单） -->
+          <div class="gp-inline-menu-wrap">
+            <button
+              class="vp-btn vp-btn--ghost vp-btn--sm gp-action-btn"
+              :class="{ 'gp-action-btn--active': isPushing(project.id) }"
+              :disabled="!hasAnyRemote(project) || isPushing(project.id) || isPulling(project.id)"
+              :title="i18n.push || '推送'"
+              @click.stop="toggleMenu('push')"
+            >
+              <Icon
+                icon="mdi:arrow-up"
+                height="12"
+                :class="{ 'gp-spin': isPushing(project.id) }"
+              />
+              <span>{{ i18n.push || '推送' }}</span>
+              <Icon
+                icon="mdi:unfold-more-horizontal"
+                height="12"
+                style="margin-left:1px;opacity:0.5"
+              />
+            </button>
+            <div
+              v-if="openMenu === 'push'"
+              class="gp-inline-menu-popover"
+              @click.stop
+            >
+              <button
+                v-for="r in remotes"
+                :key="`push-${r.key}`"
+                class="gp-inline-menu-item"
+                :class="pushBtnClass(getPushStatus(project.id, r.key))"
+                :disabled="!project[r.remoteProp] || isPushing(project.id) || isPulling(project.id) || !needsPushFor(project.id, r.key)"
+                :title="`${i18n.push || 'Push'} ${r.label}`"
+                @click="$emit('pushSingle', project.id, r.key); openMenu = null"
+              >
+                <Icon
+                  icon="mdi:arrow-up"
+                  height="12"
+                />
+                <span>{{ pushBtnText(getPushStatus(project.id, r.key), r.label, i18n) }}</span>
+              </button>
+            </div>
+          </div>
 
           <!-- 推送全部 -->
           <button
@@ -782,27 +810,32 @@ const outputPanels = computed(() => [
 /** 仅"全部刷新"时转动下拉菜单按钮 */
 const isRefreshing = computed(() => props.refreshing === props.project.id)
 
-/** 拉取下拉菜单开关（组件本地状态） */
-const pullMenuOpen = ref(false)
+/** 拉取/推送内联下拉菜单开关（同时只允许一个展开） */
+const openMenu = ref<"pull" | "push" | null>(null)
 
-/** 点击卡片外部时关闭拉取下拉菜单 */
-function closePullOnOutside(e: MouseEvent) {
+/** 切换内联下拉菜单（再次点击同一菜单则关闭） */
+function toggleMenu(name: "pull" | "push") {
+  openMenu.value = openMenu.value === name ? null : name
+}
+
+/** 点击卡片外部时关闭内联下拉菜单 */
+function closeMenuOnOutside(e: MouseEvent) {
   const target = e.target as HTMLElement | null
-  if (target && !target.closest(".gp-pull-wrap")) {
-    pullMenuOpen.value = false
+  if (target && !target.closest(".gp-inline-menu-wrap")) {
+    openMenu.value = null
   }
 }
 
 // 菜单打开时才挂载全局点击监听，关闭时移除，避免多卡片常驻监听
-watch(pullMenuOpen, (open) => {
+watch(openMenu, (open) => {
   if (open) {
-    document.addEventListener("click", closePullOnOutside)
+    document.addEventListener("click", closeMenuOnOutside)
   } else {
-    document.removeEventListener("click", closePullOnOutside)
+    document.removeEventListener("click", closeMenuOnOutside)
   }
 })
 
 onBeforeUnmount(() => {
-  document.removeEventListener("click", closePullOnOutside)
+  document.removeEventListener("click", closeMenuOnOutside)
 })
 </script>

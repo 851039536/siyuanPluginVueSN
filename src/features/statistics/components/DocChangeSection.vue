@@ -95,6 +95,7 @@
           <div class="range-chart-legend">
             <span class="legend-dot new"></span>{{ i18n.todayCreated || '新增' }}
             <span class="legend-dot modified"></span>{{ i18n.todayModified || '修改' }}
+            <span class="legend-dot deleted"></span>{{ i18n.deletedTitle || '删除' }}
           </div>
           <div
             v-for="item in sortByDate(rangeStats)"
@@ -118,6 +119,13 @@
                 :style="{ width: barWidth(item.modifiedCount) }"
               >
                 {{ item.modifiedCount }}
+              </div>
+              <div
+                v-if="deletedCountForDate(item.date) > 0"
+                class="range-chart-bar deleted"
+                :style="{ width: barWidth(deletedCountForDate(item.date)) }"
+              >
+                {{ deletedCountForDate(item.date) }}
               </div>
             </div>
           </div>
@@ -263,9 +271,9 @@
       </div>
     </template>
 
-    <!-- 范围/最近模式：删除记录（数据历史） -->
+    <!-- 最近更新模式：删除记录（无柱状图可合并，以列表展示） -->
     <div
-      v-if="!selectedChartDate && rangeDeletedDocs.length > 0"
+      v-if="docRange === 'recent' && rangeDeletedDocs.length > 0"
       class="changed-docs-group range-deleted-group"
     >
       <div class="changed-docs-group-title">
@@ -513,10 +521,24 @@ const changedDocsCount = computed(() =>
 const maxBarCount = computed(() => {
   let max = 1
   for (const item of rangeStats.value) {
-    max = Math.max(max, item.newCount, item.modifiedCount)
+    max = Math.max(max, item.newCount, item.modifiedCount, deletedCountForDate(item.date))
   }
   return max
 })
+
+/** 按日期(MM/DD)聚合的删除数量，用于合并到范围柱状图 */
+const deletedCountByDate = computed(() => {
+  const map = new Map<string, number>()
+  for (const doc of rangeDeletedDocs.value) {
+    if (!doc.date) continue
+    map.set(doc.date, (map.get(doc.date) || 0) + 1)
+  }
+  return map
+})
+
+function deletedCountForDate(dateStr: string): number {
+  return deletedCountByDate.value.get(formatChartDate(dateStr)) || 0
+}
 
 function formatChartDate(dateStr: string): string {
   return `${dateStr.substring(4, 6)}/${dateStr.substring(6, 8)}`

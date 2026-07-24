@@ -1088,3 +1088,82 @@ export async function removeCloudRepoTag(tag: string): Promise<null> {
   const url = "/api/repo/removeCloudRepoTag"
   return request(url, { tag })
 }
+
+// **************************************** History（数据历史） ****************************************
+
+/** 数据历史操作类型 */
+export type HistoryOp =
+  | "all"
+  | "clean"
+  | "update"
+  | "delete"
+  | "format"
+  | "sync"
+  | "replace"
+  | "outline"
+
+/** 单条历史记录项（来自 getHistoryItems） */
+export interface HistoryItem {
+  title: string
+  path: string
+  op: HistoryOp
+  notebook: string
+}
+
+/** searchHistory 返回：histories 为快照时间点（unix 秒）字符串数组，具体条目需再调用 getHistoryItems */
+export interface SearchHistoryResult {
+  histories: string[]
+  pageCount?: number
+  totalCount?: number
+}
+
+/** getHistoryItems 返回：某时间点下的具体历史条目 */
+export interface HistoryItemsResult {
+  items: HistoryItem[]
+}
+
+/**
+ * 搜索数据历史时间点（回收站/快照历史），按操作类型过滤。
+ * 注意：内核内部接口，非公开 API。返回 histories 为快照时间点（unix 秒）字符串数组，
+ * 具体删除/变更条目需再对每个时间点调用 getHistoryItems 获取。依赖「数据历史」功能开启。
+ * @param op 操作类型，如 "delete"
+ * @param type 历史类型：0=文档，2=资源，4=数据库
+ * @param options 可选筛选：query 关键词 / notebook 笔记本 / page 页码（1 起）
+ */
+export async function searchHistory(
+  op: HistoryOp = "all",
+  type: number = 0,
+  options: { query?: string, notebook?: string, page?: number } = {},
+): Promise<SearchHistoryResult | null> {
+  const url = "/api/history/searchHistory"
+  return request(url, {
+    op,
+    type,
+    query: options.query ?? "",
+    notebook: options.notebook ?? "",
+    page: options.page ?? 1,
+  })
+}
+
+/**
+ * 获取某个历史时间点下的具体条目（配合 searchHistory 使用）。
+ * @param created searchHistory 返回的时间点字符串（unix 秒）
+ * @param op 操作类型过滤，如 "delete"
+ * @param type 历史类型：0=文档，2=资源，4=数据库
+ * @param options 可选筛选：query 关键词 / notebook 笔记本
+ */
+export async function getHistoryItems(
+  created: string,
+  op: HistoryOp = "all",
+  type: number = 0,
+  options: { query?: string, notebook?: string } = {},
+): Promise<HistoryItemsResult | null> {
+  const url = "/api/history/getHistoryItems"
+  return request(url, {
+    created,
+    op,
+    type,
+    query: options.query ?? "",
+    notebook: options.notebook ?? "",
+  })
+}

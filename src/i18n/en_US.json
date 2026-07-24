@@ -2081,6 +2081,7 @@
     "docBarChartTitle": "Documents per Notebook",
     "docChanges": "Document Changes",
     "noDocChanges": "No new or modified documents today",
+    "todayDeleted": "Deleted Today",
     "noRecentDocs": "No recently updated documents",
     "recentUpdatedDocs": "Recently Updated",
     "today": "Today",

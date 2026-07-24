@@ -3,17 +3,73 @@
 import type {
   ChangedDoc,
   DateCountRow,
+  DeletedDoc,
   DocBlockRow,
   RecentUpdatedDoc,
 } from "../types"
-import { lsNotebooks } from "@/api"
+import {
+  getHistoryItems,
+  lsNotebooks,
+  searchHistory,
+} from "@/api"
 import {
   filterActiveNotebooks,
+  formatYmd,
   isValidDateStr,
   mapChangedDocs,
   padZero,
 } from "../utils"
 import { executeSql } from "./executeSql"
+
+/**
+ * 通过思源数据历史获取指定日期被删除的文档。
+ * 删除文档的块已从 blocks 表移除、无法 SQL 查询，故改用内核数据历史（op=delete）：
+ * 1) searchHistory 拿到当日的快照时间点；2) 逐时间点 getHistoryItems 拿被删除条目。
+ * 依赖「数据历史」功能开启；时间为快照时间，为近似值。
+ * @param dateStr 紧凑日期字符串 YYYYMMDD
+ */
+export async function getDeletedDocs(dateStr: string): Promise<DeletedDoc[]> {
+  if (!isValidDateStr(dateStr)) return []
+  try {
+    const result = await searchHistory("delete", 0, { page: 1 })
+    const timestamps = result?.histories ?? []
+
+    // 仅保留目标日期的快照时间点
+    const matched: Array<{ created: string, hm: string }> = []
+    for (const ts of timestamps) {
+      const sec = Number.parseInt(ts, 10)
+      if (!Number.isFinite(sec)) continue
+      const date = new Date(sec * 1000)
+      if (formatYmd(date) !== dateStr) continue
+      matched.push({
+        created: ts,
+        hm: `${padZero(date.getHours())}:${padZero(date.getMinutes())}`,
+      })
+    }
+    if (matched.length === 0) return []
+
+    // 逐时间点拉取被删除条目
+    const itemsList = await Promise.all(
+      matched.map((m) => getHistoryItems(m.created, "delete", 0)),
+    )
+
+    const deleted: DeletedDoc[] = []
+    itemsList.forEach((res, i) => {
+      for (const item of res?.items ?? []) {
+        if (item.op && item.op !== "delete") continue
+        const title = (item.title || "").replace(/<[^>]*>/g, "").trim()
+        deleted.push({
+          title: title || "无标题",
+          time: matched[i].hm,
+        })
+      }
+    })
+    return deleted
+  } catch (e) {
+    console.error("获取删除文档失败:", e)
+    return []
+  }
+}
 
 export async function getDateChangedDocs(dateStr: string): Promise<{
   newDocs: ChangedDoc[]

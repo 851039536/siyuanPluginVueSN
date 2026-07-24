@@ -5,7 +5,12 @@
       class="collapse-header"
       @click="toggleExpanded"
     >
-      <span class="collapse-icon">{{ expanded ? '▼' : '▶' }}</span>
+      <span class="collapse-icon">
+        <IconWrapper
+          :name="expanded ? 'chevronDown' : 'chevronRight'"
+          :size="10"
+        />
+      </span>
       <span class="collapse-title">{{ `${i18n.docChanges || '文档变化'} — ${rangeLabel}` }}</span>
       <span
         v-if="badgeText"
@@ -63,7 +68,12 @@
             :class="{ new: isDocCreatedToday(doc) }"
             @click="openDoc(doc.id)"
           >
-            <span class="recent-doc-badge">{{ isDocCreatedToday(doc) ? '+' : '~' }}</span>
+            <span class="recent-doc-badge">
+              <IconWrapper
+                :name="isDocCreatedToday(doc) ? 'plus' : 'edit'"
+                :size="11"
+              />
+            </span>
             <span
               v-if="doc.notebookName"
               class="recent-doc-notebook"
@@ -144,7 +154,7 @@
         </div>
 
         <div
-          v-else-if="changedDocs.newDocs.length > 0 || changedDocs.modifiedDocs.length > 0"
+          v-else-if="changedDocs.newDocs.length > 0 || changedDocs.modifiedDocs.length > 0 || deletedDocs.length > 0"
           class="changed-docs-content"
         >
           <div
@@ -164,7 +174,12 @@
               title="点击打开文档"
               @click="openDoc(doc.id)"
             >
-              <span class="changed-doc-icon">+</span>
+              <span class="changed-doc-icon">
+                <IconWrapper
+                  name="plus"
+                  :size="11"
+                />
+              </span>
               <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
               <span
                 v-if="doc.time"
@@ -189,7 +204,40 @@
               title="点击打开文档"
               @click="openDoc(doc.id)"
             >
-              <span class="changed-doc-icon">~</span>
+              <span class="changed-doc-icon">
+                <IconWrapper
+                  name="edit"
+                  :size="11"
+                />
+              </span>
+              <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
+              <span
+                v-if="doc.time"
+                class="changed-doc-time"
+              >{{ doc.time }}</span>
+            </div>
+          </div>
+          <div
+            v-if="deletedDocs.length > 0"
+            class="changed-docs-group"
+          >
+            <div class="changed-docs-group-title">
+              <IconWrapper
+                name="delete"
+                :size="12"
+              /> {{ i18n.todayDeleted || '删除' }}（{{ deletedDocs.length }}）
+            </div>
+            <div
+              v-for="(doc, idx) in deletedDocs"
+              :key="idx"
+              class="changed-doc-item deleted"
+            >
+              <span class="changed-doc-icon">
+                <IconWrapper
+                  name="delete"
+                  :size="11"
+                />
+              </span>
               <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
               <span
                 v-if="doc.time"
@@ -221,6 +269,7 @@
 <script setup lang="ts">
 import type {
   ChangedDoc,
+  DeletedDoc,
   RangeStatItem,
   RecentUpdatedDoc,
 } from "../types"
@@ -229,7 +278,7 @@ import {
   ref,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { padZero } from "../utils"
+import { formatYmd } from "../utils"
 interface Props {
   onGetDateChangedDocs?: (dateStr: string) => Promise<{
     newDocs: ChangedDoc[]
@@ -237,6 +286,7 @@ interface Props {
   }>
   onGetDateRangeChangeStats?: (startStr: string, endStr: string) => Promise<RangeStatItem[]>
   onGetRecentUpdatedDocs?: (limit: number) => Promise<RecentUpdatedDoc[]>
+  onGetDeletedDocs?: (dateStr: string) => Promise<DeletedDoc[]>
   i18n?: Record<string, any>
 }
 
@@ -257,8 +307,7 @@ function openDoc(docId: string) {
 }
 
 function getTodayStr(): string {
-  const d = new Date()
-  return `${d.getFullYear()}${padZero(d.getMonth() + 1)}${padZero(d.getDate())}`
+  return formatYmd(new Date())
 }
 
 const docChangeDate = ref(getTodayStr())
@@ -267,6 +316,7 @@ const changedDocs = ref<{ newDocs: ChangedDoc[], modifiedDocs: ChangedDoc[] }>({
   modifiedDocs: [],
 })
 const changedDocsLoading = ref(false)
+const deletedDocs = ref<DeletedDoc[]>([])
 
 type DocRangeType = 'today' | '3d' | '7d' | '1m' | '6m' | 'recent'
 const docRange = ref<DocRangeType>('today')
@@ -314,7 +364,7 @@ type TimeGroup = 'today' | 'yesterday' | 'thisWeek' | 'earlier'
 function getYesterdayStr(): string {
   const d = new Date()
   d.setDate(d.getDate() - 1)
-  return `${d.getFullYear()}${padZero(d.getMonth() + 1)}${padZero(d.getDate())}`
+  return formatYmd(d)
 }
 
 function getTimeGroup(updated: string): TimeGroup {
@@ -449,6 +499,7 @@ async function switchDocRange(range: DocRangeType) {
     newDocs: [],
     modifiedDocs: [],
   }
+  deletedDocs.value = []
 
   if (range === 'recent') {
     await loadRecentDocs()
@@ -470,7 +521,7 @@ async function switchDocRange(range: DocRangeType) {
     case '1m': start.setMonth(today.getMonth() - 1); break
     case '6m': start.setMonth(today.getMonth() - 6); break
   }
-  const startStr = `${start.getFullYear()}${padZero(start.getMonth() + 1)}${padZero(start.getDate())}`
+  const startStr = formatYmd(start)
 
   rangeStatsLoading.value = true
   try {
@@ -498,14 +549,8 @@ async function loadRecentDocs() {
 }
 
 async function drillIntoDate(dateStr: string) {
-  if (!props.onGetDateChangedDocs) return
   selectedChartDate.value = dateStr
-  changedDocsLoading.value = true
-  try {
-    changedDocs.value = await props.onGetDateChangedDocs(dateStr)
-  } finally {
-    changedDocsLoading.value = false
-  }
+  await loadDateChangedDocs(dateStr)
 }
 
 async function loadDateChangedDocs(dateStr: string) {
@@ -513,12 +558,14 @@ async function loadDateChangedDocs(dateStr: string) {
   changedDocsLoading.value = true
   try {
     changedDocs.value = await props.onGetDateChangedDocs(dateStr)
+    deletedDocs.value = (await props.onGetDeletedDocs?.(dateStr)) ?? []
   } catch (error) {
     console.error("加载文档变化失败:", error)
     changedDocs.value = {
       newDocs: [],
       modifiedDocs: [],
     }
+    deletedDocs.value = []
   } finally {
     changedDocsLoading.value = false
   }

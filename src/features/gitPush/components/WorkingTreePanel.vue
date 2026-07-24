@@ -28,19 +28,19 @@
           >○{{ tree.untrackedCount }}</span>
         </span>
         <span class="wt-summary-text">
-          {{ i18n.pendingChanges || '个文件变更' }}
+          {{ i18n.pendingChanges }}
         </span>
       </template>
       <template v-else-if="tree">
-        <span class="wt-clean">{{ i18n.workingTreeClean || '工作区干净' }}</span>
+        <span class="wt-clean">{{ i18n.workingTreeClean }}</span>
       </template>
       <button
         class="vp-btn vp-btn--ghost vp-btn--sm wt-section-refresh"
         :disabled="workingTreeLoading"
-        :title="i18n.refreshWorkingTree || '刷新工作空间'"
         @click.stop="$emit('refreshWorkingTree')"
       >
         <Icon icon="mdi:refresh" height="12" :class="{ 'gp-spin': workingTreeLoading }" />
+        <span class="wt-refresh-label">{{ i18n.refreshWorkingTree }}</span>
       </button>
     </div>
 
@@ -59,14 +59,14 @@
           :disabled="((tree?.unstagedCount ?? 0) === 0 && (tree?.untrackedCount ?? 0) === 0) || gitOpLoading"
           @click.stop="$emit('stageAll')"
         >
-          {{ i18n.stageAll || '暂存全部' }}
+          {{ i18n.stageAll }}
         </button>
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
           :disabled="(tree?.stagedCount ?? 0) === 0 || gitOpLoading"
           @click.stop="$emit('unstageAll')"
         >
-          {{ i18n.unstageAll || '取消暂存全部' }}
+          {{ i18n.unstageAll }}
         </button>
       </div>
 
@@ -86,7 +86,7 @@
             class="wt-checkbox"
             :class="{ checked: file.staged }"
             :disabled="gitOpLoading"
-            :title="gitOpLoading ? (i18n.processing || '处理中...') : file.staged ? (i18n.unstageFile || '取消暂存') : (i18n.stageFile || '暂存')"
+            :title="gitOpLoading ? i18n.processing : file.staged ? i18n.unstageFile : i18n.stageFile"
             @click.stop="toggleStage(file)"
           >
             <Icon
@@ -133,27 +133,27 @@
           <!-- 文件名（点击查看差异） -->
           <span
             class="wt-file-path"
-            :title="(i18n.clickViewDiff || '点击查看差异') + ' — ' + file.path"
+            :title="i18n.clickViewDiff + ' — ' + file.path"
             @click="toggleDiff(file)"
           >{{ file.path }}</span>
 
           <!-- 查看差异 -->
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm wt-diff-btn"
-            :title="activeDiffFile?.path === file.path ? (i18n.closeDiff || '关闭差异') : (i18n.viewDiffColored || '查看差异（带增/删/改着色）')"
+            :title="activeDiffFile?.path === file.path ? i18n.closeDiff : i18n.viewDiffColored"
             @click.stop="toggleDiff(file)"
           >
             <Icon
               icon="mdi:file-compare"
               height="12"
             />
-            <span class="wt-diff-btn-label">{{ i18n.diff || '差异' }}</span>
+            <span class="wt-diff-btn-label">{{ i18n.diff }}</span>
           </button>
 
           <!-- 丢弃更改 -->
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm wt-discard-btn"
-            :title="file.staged ? (i18n.unstageDiscard || '取消暂存并丢弃更改') : file.status === 'untracked' ? (i18n.discardUntracked || '删除未跟踪文件') : (i18n.discardChanges || '丢弃更改')"
+            :title="file.staged ? i18n.unstageDiscard : file.status === 'untracked' ? i18n.discardUntracked : i18n.discardChanges"
             @click.stop="$emit('discardFile', file.path, file.staged, file.status)"
           >
             <Icon
@@ -179,7 +179,7 @@
                   height="12"
                 />
                 <span class="wt-diff-title">{{ activeDiffFile.path }}</span>
-                <span class="wt-diff-badge">{{ activeDiffFile.staged ? (i18n.staged || '暂存') : (i18n.unstaged || '未暂存') }}</span>
+                <span class="wt-diff-badge">{{ activeDiffFile.staged ? i18n.staged : i18n.unstaged }}</span>
               </div>
               <button
                 class="vp-btn vp-btn--ghost vp-btn--sm"
@@ -192,9 +192,9 @@
               </button>
             </div>
             <div class="wt-diff-legend">
-              <span class="wt-legend-add">+ {{ i18n.legendAdd || '新增' }}</span>
-              <span class="wt-legend-del">− {{ i18n.legendDel || '删除' }}</span>
-              <span class="wt-legend-ctx">⋯ {{ i18n.legendCtx || '未变' }}</span>
+              <span class="wt-legend-add">+ {{ i18n.legendAdd }}</span>
+              <span class="wt-legend-del">− {{ i18n.legendDel }}</span>
+              <span class="wt-legend-ctx">⋯ {{ i18n.legendCtx }}</span>
             </div>
             <div class="wt-diff-content">
               <div
@@ -242,7 +242,7 @@
             @change="handleSelectTemplate(($event.target as HTMLSelectElement).value)"
           >
             <option value="">
-              {{ i18n.selectTemplate || '选择模板...' }}
+              {{ i18n.selectTemplate }}
             </option>
             <option
               v-for="tpl in commitTemplates"
@@ -257,7 +257,7 @@
           v-model="commitMessage"
           class="wt-commit-msg"
           rows="4"
-          :placeholder="i18n.commitMessagePlaceholder || '输入提交信息...'"
+          :placeholder="i18n.commitMessagePlaceholder"
         />
         <div class="wt-commit-actions">
           <button
@@ -276,7 +276,7 @@
               icon="mdi:auto-fix"
               height="12"
             />
-            <span>{{ generating ? (i18n.generating || '生成中...') : (i18n.generateMsg || '生成提交信息') }}</span>
+            <span>{{ generating ? i18n.generating : i18n.generateMsg }}</span>
           </button>
           <button
             class="vp-btn vp-btn--primary vp-btn--sm"
@@ -294,7 +294,7 @@
               icon="mdi:source-commit"
               height="12"
             />
-            <span>{{ committing ? (i18n.committing || '提交中...') : (i18n.commit || '提交') }}</span>
+            <span>{{ committing ? i18n.committing : i18n.commit }}</span>
           </button>
         </div>
       </div>
@@ -305,7 +305,7 @@
       >
         <button
           class="wt-output-close"
-          :title="i18n.close || '关闭'"
+          :title="i18n.close"
           @click.stop="$emit('clearOutput')"
         >
           ×

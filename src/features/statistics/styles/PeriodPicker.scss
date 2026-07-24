@@ -9,8 +9,8 @@
 
 .period-label {
   font-family: stats.$font-mono;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: stats.$font-size-2xs;
+  font-weight: stats.$font-weight-bold;
   color: var(--b3-theme-primary);
   width: 14px;
 }
@@ -22,7 +22,7 @@
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
-  font-size: 12px;
+  font-size: stats.$font-size-xs;
   outline: none;
 
   @include stats.codex-focus-glow;

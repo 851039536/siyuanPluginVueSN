@@ -72,6 +72,7 @@ import type {
 } from "./types"
 import type { I18n } from "./types/index"
 import { showMessage } from "siyuan"
+import { getErrorMessage } from "@/utils/stringUtils"
 import {
   computed,
   ref,
@@ -188,9 +189,9 @@ const handleSave = async (data: {
       showMessage(props.i18n.createSuccess || "脚本已创建", 2000, "info")
     }
     closeEditor()
-  } catch (error: any) {
+  } catch (error: unknown) {
     showMessage(
-      error.message || props.i18n.saveFailed || "保存失败",
+      getErrorMessage(error) || props.i18n.saveFailed || "保存失败",
       3000,
       "error",
     )
@@ -205,9 +206,9 @@ const handleDelete = async (script: Script) => {
   try {
     await deleteScript(script.id)
     showMessage(props.i18n.deleteSuccess || "脚本已删除", 2000, "info")
-  } catch (error: any) {
+  } catch (error: unknown) {
     showMessage(
-      error.message || props.i18n.deleteFailed || "删除失败",
+      getErrorMessage(error) || props.i18n.deleteFailed || "删除失败",
       3000,
       "error",
     )
@@ -222,8 +223,8 @@ const handleRename = async (id: string, newName: string) => {
   try {
     await updateScript(id, { name: newName })
     await loadScripts()
-  } catch (error: any) {
-    showMessage(error.message || "重命名失败", 3000, "error")
+  } catch (error: unknown) {
+    showMessage(getErrorMessage(error) || "重命名失败", 3000, "error")
   }
 }
 
@@ -236,8 +237,8 @@ const handleImportFile = async (event: Event) => {
     await storage.importFileContent(file.name, content)
     await loadScripts()
     showMessage("脚本已导入", 2000, "info")
-  } catch (error: any) {
-    showMessage(error.message || "导入失败", 3000, "error")
+  } catch (error: unknown) {
+    showMessage(getErrorMessage(error) || "导入失败", 3000, "error")
   } finally {
     input.value = ""
   }

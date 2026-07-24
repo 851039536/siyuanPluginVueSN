@@ -9,6 +9,7 @@
  */
 import type { S3Config, S3FileInfo } from "./index"
 import { getNodeModules } from "@/utils/nodeModules"
+import { getErrorMessage } from "@/utils/stringUtils"
 
 // ========== 工具函数 ==========
 
@@ -257,8 +258,8 @@ export class S3Client {
         success: false,
         message: `${headResult.message}（ListObjects 也失败: ${listResult.message}）`,
       }
-    } catch (err: any) {
-      return { success: false, message: `连接失败: ${err.message}` }
+    } catch (err: unknown) {
+      return { success: false, message: `连接失败: ${getErrorMessage(err)}` }
     }
   }
 
@@ -281,8 +282,8 @@ export class S3Client {
         return { success: false, message: `存储桶 "${this.config.bucket}" 不存在 (404)` }
       }
       return { success: false, message: `HeadBucket 失败 (HTTP ${response.status})` }
-    } catch (err: any) {
-      return { success: false, message: `HeadBucket 异常: ${err.message}` }
+    } catch (err: unknown) {
+      return { success: false, message: `HeadBucket 异常: ${getErrorMessage(err)}` }
     }
   }
 
@@ -307,8 +308,8 @@ export class S3Client {
         return { success: false, message: `认证失败: ${errMsg}，请检查密钥是否正确` }
       }
       return { success: false, message: `ListObjects 失败 (HTTP ${response.status})` }
-    } catch (err: any) {
-      return { success: false, message: `ListObjects 异常: ${err.message}` }
+    } catch (err: unknown) {
+      return { success: false, message: `ListObjects 异常: ${getErrorMessage(err)}` }
     }
   }
 

@@ -1,11 +1,12 @@
 // SQL 查询执行工具 + 日期格式化
 
+import type { SqlRow } from "../types"
 import { sql } from "@/api"
 import { padZero } from "../utils"
 
-export async function executeSql(stmt: string): Promise<any[]> {
+export async function executeSql<T = SqlRow>(stmt: string): Promise<T[]> {
   try {
-    return (await sql(stmt)) || []
+    return ((await sql(stmt)) as T[]) || []
   } catch (error) {
     console.error("SQL 查询异常:", error)
     return []

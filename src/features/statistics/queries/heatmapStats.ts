@@ -1,9 +1,17 @@
 // 热力图数据查询（按指标/笔记本筛选）
 
-import type { ChangedDoc, HeatmapMetric } from "../types"
+import type {
+  ChangedDoc,
+  DateCountRow,
+  DocBlockRow,
+  HeatmapMetric,
+} from "../types"
 import { lsNotebooks } from "@/api"
-import { isValidDateStr } from "../utils"
-import { formatTime } from "../utils"
+import {
+  filterActiveNotebooks,
+  isValidDateStr,
+  mapChangedDocs,
+} from "../utils"
 import {
   executeSql,
   formatDateTime,
@@ -71,7 +79,7 @@ export async function getHeatmapActivityData(
       `
   }
 
-  const rows = await executeSql(sql)
+  const rows = await executeSql<DateCountRow>(sql)
   const activityMap = new Map<string, number>()
   for (const row of rows) {
     const dateStr = String(row.date || "")
@@ -117,21 +125,13 @@ export async function getHeatmapDailyDetail(dateStr: string): Promise<{
   `
 
   const [newRows, modifiedRows] = await Promise.all([
-    executeSql(newDocsSql),
-    executeSql(modifiedDocsSql),
+    executeSql<DocBlockRow>(newDocsSql),
+    executeSql<DocBlockRow>(modifiedDocsSql),
   ])
 
   return {
-    newDocs: (newRows || []).map((r: any) => ({
-      id: r.id,
-      title: (r.content || "").replace(/<[^>]*>/g, ""),
-      time: formatTime(r.created),
-    })),
-    modifiedDocs: (modifiedRows || []).map((r: any) => ({
-      id: r.id,
-      title: (r.content || "").replace(/<[^>]*>/g, ""),
-      time: formatTime(r.updated),
-    })),
+    newDocs: mapChangedDocs(newRows || [], "created"),
+    modifiedDocs: mapChangedDocs(modifiedRows || [], "updated"),
   }
 }
 
@@ -139,8 +139,8 @@ export async function getHeatmapDailyDetail(dateStr: string): Promise<{
 export async function getHeatmapNotebooks(): Promise<Array<{ id: string, name: string }>> {
   try {
     const nbData = await lsNotebooks()
-    const notebooks = nbData?.notebooks?.filter((nb: any) => !nb.closed) ?? []
-    return notebooks.map((nb: any) => ({
+    const notebooks = filterActiveNotebooks(nbData?.notebooks ?? [])
+    return notebooks.map((nb) => ({
       id: nb.id,
       name: nb.name,
     }))

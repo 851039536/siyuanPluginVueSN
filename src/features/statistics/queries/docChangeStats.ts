@@ -2,12 +2,15 @@
 
 import type {
   ChangedDoc,
+  DateCountRow,
+  DocBlockRow,
   RecentUpdatedDoc,
 } from "../types"
 import { lsNotebooks } from "@/api"
 import {
-  formatTime,
+  filterActiveNotebooks,
   isValidDateStr,
+  mapChangedDocs,
   padZero,
 } from "../utils"
 import { executeSql } from "./executeSql"
@@ -40,21 +43,13 @@ export async function getDateChangedDocs(dateStr: string): Promise<{
   `
 
   const [newRows, modifiedRows] = await Promise.all([
-    executeSql(newDocsSql),
-    executeSql(modifiedDocsSql),
+    executeSql<DocBlockRow>(newDocsSql),
+    executeSql<DocBlockRow>(modifiedDocsSql),
   ])
 
   return {
-    newDocs: (newRows || []).map((r: any) => ({
-      id: r.id,
-      title: (r.content || "").replace(/<[^>]*>/g, ""),
-      time: formatTime(r.created),
-    })),
-    modifiedDocs: (modifiedRows || []).map((r: any) => ({
-      id: r.id,
-      title: (r.content || "").replace(/<[^>]*>/g, ""),
-      time: formatTime(r.updated),
-    })),
+    newDocs: mapChangedDocs(newRows || [], "created"),
+    modifiedDocs: mapChangedDocs(modifiedRows || [], "updated"),
   }
 }
 
@@ -92,8 +87,8 @@ export async function getDateRangeChangeStats(startStr: string, endStr: string):
   `
 
   const [newRows, modifiedRows] = await Promise.all([
-    executeSql(newSql),
-    executeSql(modifiedSql),
+    executeSql<DateCountRow>(newSql),
+    executeSql<DateCountRow>(modifiedSql),
   ])
 
   const result: Array<{ date: string, newCount: number, modifiedCount: number }> = []
@@ -110,8 +105,8 @@ export async function getDateRangeChangeStats(startStr: string, endStr: string):
 
   const newMap = new Map<string, number>()
   const modifiedMap = new Map<string, number>()
-  ;(newRows || []).forEach((r: any) => newMap.set(r.date, Number(r.cnt || 0)))
-  ;(modifiedRows || []).forEach((r: any) => modifiedMap.set(r.date, Number(r.cnt || 0)))
+  ;(newRows || []).forEach((r) => newMap.set(r.date, Number(r.cnt || 0)))
+  ;(modifiedRows || []).forEach((r) => modifiedMap.set(r.date, Number(r.cnt || 0)))
 
   for (
     let d = new Date(startDate);
@@ -138,7 +133,7 @@ export async function getRecentUpdatedDocs(limit: number = 20): Promise<RecentUp
   const idToName = new Map<string, string>()
   try {
     const nbData = await lsNotebooks()
-    const notebooks = nbData?.notebooks?.filter((nb: any) => !nb.closed) ?? []
+    const notebooks = filterActiveNotebooks(nbData?.notebooks ?? [])
     for (const nb of notebooks) {
       idToName.set(nb.id, nb.name)
     }
@@ -153,14 +148,14 @@ export async function getRecentUpdatedDocs(limit: number = 20): Promise<RecentUp
     LIMIT ${limit}
   `
 
-  const rows = await executeSql(sql)
+  const rows = await executeSql<DocBlockRow>(sql)
   if (!rows || rows.length === 0) return []
 
-  return rows.map((r: any) => ({
+  return rows.map((r) => ({
     id: r.id,
     title: (r.content || "").replace(/<[^>]*>/g, ""),
     created: r.created || "",
     updated: r.updated || "",
-    notebookName: idToName.get(r.box) || "",
+    notebookName: idToName.get(r.box || "") || "",
   }))
 }

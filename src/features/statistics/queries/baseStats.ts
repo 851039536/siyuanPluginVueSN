@@ -1,7 +1,9 @@
 // 基础统计查询（总数/标签/图片/写作活跃度/块类型）
 
 import type {
+  BlockTypeCountRow,
   BlockTypeStat,
+  DailyWordCount,
   StatisticsData,
 } from "../types"
 import {
@@ -13,7 +15,10 @@ import {
   IMAGE_EXTENSIONS,
   ZERO_STATISTICS,
 } from "../types/constants"
-import { padZero } from "../utils"
+import {
+  filterActiveNotebooks,
+  padZero,
+} from "../utils"
 import {
   executeSql,
   formatDateTime,
@@ -78,7 +83,7 @@ async function getNotebookCount(): Promise<number> {
   try {
     const data = await lsNotebooks()
     if (!data || !data.notebooks) return 0
-    return data.notebooks.filter((nb: any) => !nb.closed).length
+    return filterActiveNotebooks(data.notebooks).length
   } catch {
     return 0
   }
@@ -153,10 +158,10 @@ export async function getBlockTypeStats(): Promise<BlockTypeStat[]> {
       GROUP BY type
       ORDER BY cnt DESC
     `
-    const rows = await executeSql(sqlStmt)
+    const rows = await executeSql<BlockTypeCountRow>(sqlStmt)
     if (!rows || rows.length === 0) return []
 
-    return rows.map((row: any) => ({
+    return rows.map((row) => ({
       name: row.type,
       count: Number(row.cnt || 0),
       label: BLOCK_TYPE_LABELS[row.type] || row.type,
@@ -208,10 +213,10 @@ export async function getStatistics(viewMode: string, options: {
 
     const avgWordsPerDoc = totalNotes > 0 ? Math.round(totalWords / totalNotes) : 0
 
-    let dailyStats = [] as any[]
+    let dailyStats: DailyWordCount[] = []
     let currentPeriod = ""
     let periodTotalWords = 0
-    const sumWords = (items: any[]) => items.reduce((sum: number, item: any) => sum + item.words, 0)
+    const sumWords = (items: DailyWordCount[]) => items.reduce((sum, item) => sum + item.words, 0)
 
     const DAY_PERIOD_MAP: Record<number, string> = {
       7: "最近一周每日字数",

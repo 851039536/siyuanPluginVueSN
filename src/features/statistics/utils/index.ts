@@ -1,9 +1,32 @@
 /**
  * 格式化时间戳为 HH:MM 字符串
  */
+import type { ChangedDoc, DocBlockRow } from "../types"
+
 export function formatTime(ts: string | undefined): string {
   if (!ts || ts.length < 12) return ""
   return `${ts.substring(8, 10)}:${ts.substring(10, 12)}`
+}
+
+/**
+ * 过滤出未关闭（打开）的笔记本
+ */
+export function filterActiveNotebooks(notebooks: Notebook[]): Notebook[] {
+  return notebooks.filter((nb) => !nb.closed)
+}
+
+/**
+ * 将文档块查询行映射为 ChangedDoc（去除 HTML 标签，格式化时间）
+ */
+export function mapChangedDocs(
+  rows: DocBlockRow[],
+  timeField: "created" | "updated",
+): ChangedDoc[] {
+  return rows.map((r) => ({
+    id: r.id,
+    title: (r.content || "").replace(/<[^>]*>/g, ""),
+    time: formatTime(r[timeField]),
+  }))
 }
 
 /**

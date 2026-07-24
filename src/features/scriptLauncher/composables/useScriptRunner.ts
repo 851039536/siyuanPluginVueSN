@@ -24,7 +24,8 @@ export function useScriptLauncher() {
     }
 
     try {
-      node.child_process.exec(command, { shell: true })
+      // exec 默认通过系统 shell 执行，无需额外 shell 选项
+      node.child_process.exec(command)
       return true
     } catch {
       return false

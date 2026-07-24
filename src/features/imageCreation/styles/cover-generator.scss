@@ -44,9 +44,7 @@
   max-height: 800px;
   display: flex;
   flex-direction: column;
-  box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.25),
-    0 0 0 1px rgb(from var(--b3-theme-primary) r g b / 0.06);
+  border: 1px solid var(--b3-border-color);
   overflow: hidden;
   // 顶部细条点缀
   &::before {
@@ -403,10 +401,9 @@
 
 .cover-preview-iframe {
   display: block;
-  border: none;
+  border: 1px solid var(--b3-border-color);
   // 尺寸由内联 style 控制（与封面实际尺寸一致）
   background: #fff;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
 .preview-meta {

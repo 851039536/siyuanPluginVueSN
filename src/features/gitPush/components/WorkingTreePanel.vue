@@ -34,9 +34,6 @@
       <template v-else-if="tree">
         <span class="wt-clean">{{ i18n.workingTreeClean || '工作区干净' }}</span>
       </template>
-      <template v-else>
-        <span class="wt-clean">{{ i18n.loadingWorkingTree || '加载中...' }}</span>
-      </template>
       <button
         class="vp-btn vp-btn--ghost vp-btn--sm wt-section-refresh"
         :disabled="workingTreeLoading"

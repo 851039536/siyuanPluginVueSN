@@ -247,6 +247,43 @@
   background: var(--b3-border-color);
 }
 
+// 拉取下拉菜单
+.gp-pull-wrap {
+  position: relative;
+}
+
+.gp-pull-popover {
+  @include popover-base;
+  top: 100%;
+  left: 0;
+  margin-top: 6px;
+  min-width: 140px;
+}
+
+.gp-pull-item {
+  @include popover-item;
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    &:hover { background: none; }
+  }
+
+  &--active {
+    color: var(--b3-theme-primary);
+  }
+
+  &--fetch {
+    color: var(--b3-theme-on-surface-light);
+  }
+}
+
+.gp-pull-divider {
+  height: 1px;
+  margin: $spacing-1 6px;
+  background: var(--b3-border-color);
+}
+
 .gp-ide-wrap {
   position: relative;
 }

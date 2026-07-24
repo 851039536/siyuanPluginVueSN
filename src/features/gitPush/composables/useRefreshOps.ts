@@ -38,8 +38,8 @@ export function useRefreshOps(deps: {
   loadBranches: (id: string) => Promise<void>
   loadStashList: (id: string) => Promise<void>
   loadTags: (id: string) => Promise<unknown>
-  refreshRemotes: (id: string) => Promise<void>
-  fetchAllRemotes: (id: string) => Promise<void>
+  refreshRemotes: (id: string) => Promise<unknown>
+  fetchAllRemotes: (id: string) => Promise<unknown>
 }) {
   const {
     manager, projects, activeCategory, gitOpsPaused, runBatchWithProgress, tf,

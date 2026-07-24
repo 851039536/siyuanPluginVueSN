@@ -121,9 +121,9 @@ export function useGitTagsConflicts(manager: GitPushManager, projects: Ref<GitPr
       try {
         await manager.addProject(repo.name, repo.path, categoryId)
         imported++
-      } catch (e: any) {
+      } catch (e: unknown) {
         skipped++
-        console.warn(`[gitPush] 跳过重复项目: ${repo.path} — ${e?.message || e}`)
+        console.warn(`[gitPush] 跳过重复项目: ${repo.path} —`, e)
       }
     }
     return { imported, skipped }

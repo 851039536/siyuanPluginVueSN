@@ -9,6 +9,7 @@ import {
   formatFileSize,
   getWorkspacePath,
 } from "./utils"
+import { getErrorMessage } from "@/utils/stringUtils"
 
 // 重新导出供外部使用
 export {
@@ -264,11 +265,11 @@ export async function mergeVideos(
       success: true,
       outputPath,
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("视频合并失败:", error)
     return {
       success: false,
-      error: error.message || "视频合并失败",
+      error: getErrorMessage(error) || "视频合并失败",
     }
   }
 }
@@ -329,11 +330,11 @@ export async function mergeVideoAudio(
       success: true,
       outputPath,
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("视频音频合并失败:", error)
     return {
       success: false,
-      error: error.message || "视频音频合并失败",
+      error: getErrorMessage(error) || "视频音频合并失败",
     }
   }
 }
@@ -413,11 +414,11 @@ export async function compressVideo(
       success: true,
       outputPath,
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("视频压缩失败:", error)
     return {
       success: false,
-      error: error.message || "视频压缩失败",
+      error: getErrorMessage(error) || "视频压缩失败",
     }
   }
 }

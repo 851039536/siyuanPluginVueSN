@@ -359,6 +359,7 @@ import {
   watch,
 } from "vue"
 import { copyToClipboard } from "@/utils/domUtils"
+import { getErrorMessage } from "@/utils/stringUtils"
 import AddProjectDialog from "./components/AddProjectDialog.vue"
 import CategoryDialog from "./components/CategoryDialog.vue"
 import ConfirmDialog from "./components/ConfirmDialog.vue"
@@ -945,8 +946,8 @@ async function handleAddFromDialog(data: { name: string, path: string, catId: st
   try {
     await addProject(data.name, data.path, data.catId)
     showAddDialog.value = false
-  } catch (e: any) {
-    showMessage(e?.message || tf("addFailed", "添加失败"), 5000, "error")
+  } catch (e: unknown) {
+    showMessage(getErrorMessage(e) || tf("addFailed", "添加失败"), 5000, "error")
   }
 }
 
@@ -1074,8 +1075,8 @@ async function handleNameEditSave(project: GitProject) {
     } else if (newName !== project.name) {
       await updateProjectMeta(project.id, { name: newName })
     }
-  } catch (e: any) {
-    showMessage(tf("nameUpdateFailed", "名称修改失败: {0}", e?.message || e), 4000, "error")
+  } catch (e: unknown) {
+    showMessage(tf("nameUpdateFailed", "名称修改失败: {0}", getErrorMessage(e)), 4000, "error")
   } finally {
     editingNameId.value = ""
   }
@@ -1085,8 +1086,8 @@ async function handleNameEditSave(project: GitProject) {
 async function safeGitOp(label: string, fn: () => Promise<void>) {
   try {
     await fn()
-  } catch (e: any) {
-    showMessage(`${label}: ${e?.message || e}`, 5000, "error")
+  } catch (e: unknown) {
+    showMessage(`${label}: ${getErrorMessage(e)}`, 5000, "error")
   }
 }
 

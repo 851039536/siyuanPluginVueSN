@@ -210,6 +210,7 @@
 <script setup lang="ts">
 import type { YtdlpResult } from "../utils/ytdlp"
 import { showMessage } from "siyuan"
+import { getErrorMessage } from "@/utils/stringUtils"
 import {
   computed,
   ref,
@@ -429,13 +430,13 @@ async function handleDownloadVideo() {
     } else {
       showMessage(t("videoDownloadFailed", { msg: result.error || t("unknownError") }), 5000, "error")
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("下载视频失败:", error)
     downloadResult.value = {
       success: false,
-      error: error.message || t("downloadFailedGeneric"),
+      error: getErrorMessage(error) || t("downloadFailedGeneric"),
     }
-    showMessage(t("videoDownloadFailed", { msg: error.message }), 5000, "error")
+    showMessage(t("videoDownloadFailed", { msg: getErrorMessage(error) }), 5000, "error")
   } finally {
     downloadProgress.value = false
     mergeProgress.value = false
@@ -713,8 +714,8 @@ async function handleAutoMerge(fileName: string) {
     } else {
       showMessage(t("audioVideoMergeFailed", { msg: mergeResult.error }), 5000, "error")
     }
-  } catch (error: any) {
-    showMessage(t("autoMergeFailed", { msg: error.message }), 5000, "error")
+  } catch (error: unknown) {
+    showMessage(t("autoMergeFailed", { msg: getErrorMessage(error) }), 5000, "error")
   } finally {
     mergeProgress.value = false
   }

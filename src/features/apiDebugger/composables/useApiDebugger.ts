@@ -13,6 +13,7 @@ import {
 } from "vue"
 import { SIYUAN_API_BASE_URL } from "@/api"
 import { copyToClipboard as _copyToClipboard } from "@/utils/domUtils"
+import { getErrorMessage } from "@/utils/stringUtils"
 
 import { ApiDebuggerStorage } from "../types/storage"
 
@@ -155,12 +156,12 @@ export function useApiDebugger(plugin: Plugin) {
       const data = await storage.settings.loadOrDefault()
       history.value = data.history
       activeTab.value = "response"
-    } catch (err: any) {
+    } catch (err: unknown) {
       responseTime.value = Math.round(performance.now() - startTime)
-      errorMessage.value = err.message || "请求失败"
+      errorMessage.value = getErrorMessage(err) || "请求失败"
       statusCode.value = 0
 
-      await storage.addRecord(createRecord(false, 0, "", err.message))
+      await storage.addRecord(createRecord(false, 0, "", getErrorMessage(err)))
       const data = await storage.settings.loadOrDefault()
       history.value = data.history
       activeTab.value = "response"

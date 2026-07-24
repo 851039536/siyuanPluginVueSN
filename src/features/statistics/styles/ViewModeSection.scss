@@ -1,0 +1,169 @@
+// 视图模式切换区样式：日/周/月/年 Tab + 范围按钮 + 时段统计卡
+@use "@/variables" as *;
+@use "../styles/shared" as *;
+@use "../styles/index.scss" as stats;
+
+.view-mode-section {
+  .mode-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .mode-tabs {
+    display: flex;
+    flex: 1;
+    gap: 4px;
+    padding: 3px;
+    background: var(--b3-theme-surface);
+    border: 1px solid var(--b3-border-color);
+    border-radius: stats.$radius-sm;
+    align-items: center;
+  }
+
+  .mode-tab {
+    flex: 1;
+    padding: 6px 4px;
+    border: none;
+    background: transparent;
+    color: var(--b3-theme-on-surface);
+    cursor: pointer;
+    font-family: stats.$font-mono;
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border-radius: stats.$radius-sm;
+    white-space: nowrap;
+
+    &:hover {
+      background: var(--b3-theme-background);
+      color: var(--b3-theme-primary);
+    }
+
+    &.active {
+      background: var(--b3-theme-primary);
+      color: var(--b3-theme-on-primary);
+    }
+  }
+
+  .range-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+    justify-content: center;
+  }
+
+  .range-btn {
+    padding: 5px 12px;
+    border: 1px solid var(--b3-border-color);
+    background: var(--b3-theme-surface);
+    color: var(--b3-theme-on-surface);
+    cursor: pointer;
+    font-family: stats.$font-mono;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: stats.$radius-sm;
+
+    &:hover {
+      border-color: var(--b3-theme-primary);
+      color: var(--b3-theme-primary);
+      background: var(--b3-theme-primary-lighter, rgba(var(--b3-theme-primary-rgb), 0.05));
+    }
+
+    &.active {
+      border-color: var(--b3-theme-primary);
+      background: var(--b3-theme-primary);
+      color: var(--b3-theme-on-primary);
+    }
+  }
+
+  .year-selector {
+
+    margin-top: 10px;
+    .year-select {
+      width: 100%;
+      padding: 6px 12px;
+      border: 1px solid var(--b3-border-color);
+      border-radius: stats.$radius-sm;
+      background: var(--b3-theme-surface);
+      color: var(--b3-theme-on-surface);
+      font-family: stats.$font-mono;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+
+      &:focus {
+        border-color: var(--b3-theme-primary);
+        box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest, rgba(var(--b3-theme-primary-rgb), 0.12));
+      }
+    }
+  }
+
+  .period-stats-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .period-stat-card {
+    @include stats.stats-card-base;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px 12px;
+    background: stats.$gradient-surface;
+
+    .stat-label {
+      font-family: stats.$font-mono;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--b3-theme-on-surface);
+      opacity: 0.45;
+      margin-bottom: 2px;
+    }
+
+    .stat-value {
+      font-family: stats.$font-mono;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--b3-theme-primary);
+    }
+  }
+}
+
+
+// Responsive design
+@include mobile-only {
+  .view-mode-section {
+    .mode-tabs {
+      overflow-x: auto;
+      padding-bottom: 4px;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
+    }
+
+    .mode-tab {
+      flex: none;
+      padding: 8px 16px;
+    }
+
+    .range-selector {
+      justify-content: center;
+    }
+
+    .period-stats-cards {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+  }
+}

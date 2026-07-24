@@ -1,6 +1,6 @@
 // 字数排行组件样式：排行列表、金/银/铜排名徽章、进度条、Top N 下拉选择器
 @use "@/variables" as *;
-@use "../../superPanel/styles/shared" as *;
+@use "./shared" as *;
 @use "index.scss" as stats;
 
 .word-ranking-section {

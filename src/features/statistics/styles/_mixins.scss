@@ -1,0 +1,42 @@
+// Statistics 模块专属 Mixins（本地副本，解耦对 superPanel 的跨功能依赖）
+@use "./variables" as *;
+
+// 滚动条样式
+@mixin scrollbar-thin {
+  &::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--b3-theme-surface-lighter);
+    border-radius: 3px;
+
+    &:hover {
+      background: var(--b3-theme-on-surface);
+    }
+  }
+}
+
+// 文本省略
+@mixin text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// 响应式断点
+@mixin tablet-only {
+  @media (max-width: 768px) {
+    @content;
+  }
+}
+
+@mixin mobile-only {
+  @media (max-width: 480px) {
+    @content;
+  }
+}

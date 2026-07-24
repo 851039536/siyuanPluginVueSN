@@ -1,3 +1,4 @@
+// 统计功能核心：Statistics 类（注册 Dock 面板、绑定事件、手动刷新）
 import { Plugin } from "siyuan"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { createVueDockApp } from "@/utils/vueAppHelper"

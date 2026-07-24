@@ -1,0 +1,137 @@
+// 统计面板头部样式：标题栏 + 刷新按钮 + 存储路径展示
+@use "@/variables" as *;
+@use "../styles/shared" as *;
+@use "../styles/index.scss" as stats;
+
+$stats-header-height: 56px;
+
+.statistics-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--b3-border-color);
+  background: var(--b3-theme-surface);
+  flex-shrink: 0;
+  height: $stats-header-height;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  @include stats.stats-glass-effect;
+
+  .header-left {
+    display: flex;
+    gap: $spacing-sm;
+    align-items: center;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .last-update {
+    font-family: stats.$font-mono;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.45;
+  }
+}
+
+// Responsive design
+@include mobile-only {
+  .statistics-header {
+    height: auto;
+    padding: 12px 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+
+    .header-right {
+      width: 100%;
+      justify-content: space-between;
+      gap: 8px;
+    }
+  }
+}
+
+.storage-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid transparent;
+  border-radius: stats.$radius-sm;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, background 0.2s, border-color 0.2s;
+
+  .statistics-header:hover & {
+    opacity: 0.5;
+  }
+
+  &:hover {
+    opacity: 1 !important;
+    background: var(--b3-theme-hover);
+    border-color: var(--b3-border-color);
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.storage-paths {
+  padding: 6px 12px;
+  background: var(--b3-theme-background);
+  border-bottom: 1px solid var(--b3-border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-family: $font-body;
+  user-select: all;
+}
+
+.storage-path-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.storage-key {
+  font-family: stats.$font-mono;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b3-theme-primary);
+  white-space: nowrap;
+  min-width: 130px;
+}
+
+.storage-desc {
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+  white-space: nowrap;
+  min-width: 60px;
+}
+
+.storage-path {
+  flex: 1;
+  font-family: stats.$font-mono;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.4;
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: default;
+}

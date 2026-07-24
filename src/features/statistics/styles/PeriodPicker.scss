@@ -1,0 +1,29 @@
+// 期间选择器组件样式：年份/月份下拉选择
+@use "../styles/index.scss" as stats;
+
+.period-picker {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.period-label {
+  font-family: stats.$font-mono;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--b3-theme-primary);
+  width: 14px;
+}
+
+.period-select {
+  padding: 4px 6px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: stats.$radius-sm;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-family: stats.$font-mono;
+  font-size: 12px;
+  outline: none;
+
+  @include stats.codex-focus-glow;
+}

@@ -1,0 +1,153 @@
+// 核心指标卡片样式：概览总览卡片（核心大卡 + 次要紧凑网格）
+@use "@/variables" as *;
+@use "../styles/shared" as *;
+@use "../styles/index.scss" as stats;
+
+.stats-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.stats-title {
+  margin: 0;
+  font-family: stats.$font-mono;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  &::before {
+    content: "";
+    display: inline-block;
+    width: 3px;
+    height: 14px;
+    background: var(--b3-theme-primary);
+    border-radius: stats.$radius-sm;
+  }
+}
+
+// 核心指标：4 列大卡片
+.core-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.core-card {
+  @include stats.stats-card-base;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 4px;
+  text-align: center;
+}
+
+.core-label {
+  font-family: stats.$font-mono;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.45;
+  margin-bottom: 2px;
+}
+
+.core-value-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px;
+}
+
+.core-value {
+  font-family: stats.$font-mono;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--b3-theme-primary);
+  line-height: 1.2;
+}
+
+.core-unit {
+  font-family: stats.$font-mono;
+  font-size: 9px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.4;
+  white-space: nowrap;
+}
+
+.core-change {
+  padding: 1px 3px;
+  border-radius: stats.$radius-sm;
+  font-family: stats.$font-mono;
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.core-change.up {
+  background: rgba(stats.$color-success, 0.15);
+  color: stats.$color-success;
+}
+
+.core-change.down {
+  background: rgba(stats.$color-danger, 0.15);
+  color: stats.$color-danger;
+}
+
+// 次要指标：紧凑网格
+.secondary-grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 1px;
+  background: var(--b3-border-color);
+  border: 1px solid var(--b3-border-color);
+  border-radius: stats.$radius-sm;
+  overflow: hidden;
+}
+
+.secondary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 2px;
+  background: var(--b3-theme-surface);
+  text-align: center;
+}
+
+.secondary-value {
+  font-family: stats.$font-mono;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--b3-theme-on-surface);
+  line-height: 1.2;
+}
+
+.secondary-label {
+  font-family: stats.$font-mono;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.45;
+  margin-top: 2px;
+}
+
+@include mobile-only {
+  .core-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .secondary-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

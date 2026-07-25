@@ -225,6 +225,29 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     return manager.generateStashDescription(resolveValidPath(project))
   }
 
+  // ── 远程仓库 CRUD ──
+
+  async function addRemoteOp(id: string, name: string, url: string) {
+    const project = findProject(projects, id)
+    if (!project) throw new Error("项目未找到")
+    await manager.addRemote(resolveValidPath(project), name, url)
+    await loadPushStatus(id)
+  }
+
+  async function removeRemoteOp(id: string, name: string) {
+    const project = findProject(projects, id)
+    if (!project) throw new Error("项目未找到")
+    await manager.removeRemote(resolveValidPath(project), name)
+    await loadPushStatus(id)
+  }
+
+  async function editRemoteOp(id: string, name: string, url: string) {
+    const project = findProject(projects, id)
+    if (!project) throw new Error("项目未找到")
+    await manager.setRemoteUrl(resolveValidPath(project), name, url)
+    await loadPushStatus(id)
+  }
+
   // ── 缓存清理 ──
 
   function clearProjectCache(id: string) {
@@ -298,6 +321,10 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     doStashApply,
     doStashDrop,
     generateStashDesc,
+    // 远程 CRUD
+    addRemoteOp,
+    removeRemoteOp,
+    editRemoteOp,
     // 清理
     clearProjectCache,
   }

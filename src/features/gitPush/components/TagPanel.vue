@@ -2,7 +2,6 @@
 <template>
   <div class="gp-tag-panel">
     <div class="gp-tag-header">
-      <span class="gp-tag-label">TAG</span>
       <button
         class="vp-btn vp-btn--ghost vp-btn--sm gp-tag-refresh-btn"
         :disabled="loading"
@@ -55,7 +54,7 @@
           icon="mdi:tag-plus-outline"
           height="12"
         />
-        <span>{{ i18n.createTag || '打 Tag' }}</span>
+        <span>{{ i18n.createTag }}</span>
       </button>
     </div>
     <div
@@ -114,7 +113,7 @@
         icon="mdi:tag-off-outline"
         height="12"
       />
-      <span>{{ i18n.noTags || '暂无 Tag' }}</span>
+      <span>{{ i18n.noTags }}</span>
     </div>
   </div>
 </template>

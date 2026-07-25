@@ -23,6 +23,22 @@
         <span class="wt-summary-text">
           {{ i18n.pendingChanges }}
         </span>
+        <span class="wt-summary-actions">
+          <button
+            class="vp-btn vp-btn--ghost vp-btn--sm"
+            :disabled="((tree?.unstagedCount ?? 0) === 0 && (tree?.untrackedCount ?? 0) === 0) || gitOpLoading"
+            @click.stop="$emit('stageAll')"
+          >
+            {{ i18n.stageAll }}
+          </button>
+          <button
+            class="vp-btn vp-btn--ghost vp-btn--sm"
+            :disabled="(tree?.stagedCount ?? 0) === 0 || gitOpLoading"
+            @click.stop="$emit('unstageAll')"
+          >
+            {{ i18n.unstageAll }}
+          </button>
+        </span>
       </template>
       <template v-else-if="tree">
         <span class="wt-clean">{{ i18n.workingTreeClean }}</span>
@@ -31,26 +47,6 @@
 
     <!-- 工作区详情 -->
     <div class="wt-body">
-      <!-- 工具栏 -->
-      <div
-        v-if="tree?.hasChanges"
-        class="wt-toolbar"
-      >
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm"
-          :disabled="((tree?.unstagedCount ?? 0) === 0 && (tree?.untrackedCount ?? 0) === 0) || gitOpLoading"
-          @click.stop="$emit('stageAll')"
-        >
-          {{ i18n.stageAll }}
-        </button>
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm"
-          :disabled="(tree?.stagedCount ?? 0) === 0 || gitOpLoading"
-          @click.stop="$emit('unstageAll')"
-        >
-          {{ i18n.unstageAll }}
-        </button>
-      </div>
 
       <!-- 文件列表 -->
       <div
@@ -310,7 +306,6 @@ import { useGeneratedMsgSync } from "../composables/useGeneratedMsgSync"
 import { Icon } from "@iconify/vue"
 import {
   computed,
-  onMounted,
   ref,
   toRef,
 } from "vue"
@@ -340,8 +335,6 @@ const emit = defineEmits<{
   loadDiff: [file: string, staged: boolean]
   clearOutput: []
   discardFile: [file: string, staged: boolean, status: string]
-  /** 面板首次展开时触发，父组件按需懒加载详情 */
-  expand: []
   /** 单独刷新工作区 */
   refreshWorkingTree: []
 }>()
@@ -354,11 +347,6 @@ const COMMIT_TYPES = COMMIT_TYPE_VALUES.map((v) => ({
 const commitType = ref("chore")
 const commitMessage = ref("")
 const activeDiffFile = ref<FileChange | null>(null)
-
-// 挂载时通知父组件懒加载详情数据
-onMounted(() => {
-  emit("expand")
-})
 
 // 监听外部生成的消息，自动填充
 useGeneratedMsgSync(toRef(props, "generatedMsg"), commitMessage)

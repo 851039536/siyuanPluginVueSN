@@ -40,23 +40,22 @@
   margin-left: 2px;
 }
 
+.wt-summary-actions {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+
+  .vp-btn { font-size: $font-size-2xs; padding: 1px 6px; }
+}
+
 .wt-clean {
   color: var(--b3-theme-success);
   font-weight: $font-weight-semibold;
 }
 
 .wt-body {
-  margin-top: 6px;
   max-height: 420px;
   overflow-y: auto;
-}
-
-.wt-toolbar {
-  display: flex;
-  gap: $spacing-1;
-  margin-bottom: 6px;
-
-  .vp-btn { font-size: $font-size-2xs; padding: 1px 6px; }
 }
 
 .wt-files {

@@ -7,7 +7,7 @@
         v-if="logs.length > 0"
         variant="ghost"
         size="xsmall"
-        @click="$emit('clear')"
+        @click="confirmClear"
       >
         {{ i18n.clearAll || "清空" }}
       </Button>
@@ -46,14 +46,20 @@ import { formatFileSize, formatTime } from "@/utils/format"
 import Button from "@/components/Button.vue"
 import type { BackupLog } from "../types"
 
-defineProps<{
+const props = defineProps<{
   logs: BackupLog[]
   i18n: Record<string, string>
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: "clear"): void
 }>()
+
+function confirmClear(): void {
+  const confirmed = confirm(props.i18n.confirmClearLogs || "确定要清空全部日志吗？")
+  if (!confirmed) { return }
+  emit("clear")
+}
 
 function typeLabel(type: BackupLog["type"]): string {
   const map: Record<string, string> = {

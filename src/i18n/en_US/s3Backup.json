@@ -106,5 +106,6 @@
   "compareWith": "Compare...",
   "removeChecksum": "Delete",
   "confirmRemoveChecksum": "Are you sure you want to delete this checksum?",
-  "confirmClearAll": "Are you sure you want to clear all checksums?"
+  "confirmClearAll": "Are you sure you want to clear all checksums?",
+  "confirmClearLogs": "Are you sure you want to clear all logs?"
 }

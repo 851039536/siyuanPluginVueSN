@@ -12,6 +12,7 @@
             icon="mdi:information-outline"
             height="14"
           />
+          <!-- 弹窗标题：默认"Git 全局配置" -->
           <span>{{ title || i18n.gitConfigTitle}}</span>
         </div>
         <button
@@ -37,6 +38,7 @@
             height="16"
             class="gp-spin"
           />
+          <!-- 加载提示文案："查询中..." -->
           <span>{{ i18n.gitConfigLoading }}</span>
         </div>
 
@@ -59,6 +61,7 @@
             icon="mdi:file-document-outline"
             height="32"
           />
+          <!-- 空状态文案："暂未配置全局 Git 信息" -->
           <span>{{ i18n.gitConfigEmpty }}</span>
         </div>
 
@@ -96,6 +99,7 @@
             :icon="copied ? 'mdi:check' : 'mdi:content-copy'"
             height="12"
           />
+          <!-- 按钮文案："复制全部"，点击后短暂变为"已复制" -->
           <span>{{ copied ? (i18n.copied || '已复制') : (i18n.gitConfigCopyAll || '复制全部') }}</span>
         </button>
         <button
@@ -106,6 +110,7 @@
             icon="mdi:file-document-edit-outline"
             height="12"
           />
+          <!-- 按钮文案："打开配置文件"（用系统编辑器打开 .gitconfig） -->
           <span>{{ i18n.gitConfigOpenFile || '打开配置文件' }}</span>
         </button>
       </div>

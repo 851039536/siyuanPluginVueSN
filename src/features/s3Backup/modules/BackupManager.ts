@@ -292,12 +292,13 @@ export class BackupManager {
     }
 
     const files = await this.fs.readdir(this.backupDir)
-    const zipFiles = files
-      .filter((f: string) => (f.startsWith("data-") || f.startsWith("sn-plugin-")) && f.endsWith(".zip"))
+    const ARCHIVE_EXTS = [".zip", ".7z", ".tar", ".tar.gz", ".tgz", ".tar.bz2", ".rar"]
+    const archiveFiles = files
+      .filter((f: string) => ARCHIVE_EXTS.some((ext) => f.toLowerCase().endsWith(ext)))
       .sort()
       .reverse()
 
-    for (const name of zipFiles) {
+    for (const name of archiveFiles) {
       const filePath = this.path.join(this.backupDir, name)
       try {
         const stats = await this.fs.stat(filePath)

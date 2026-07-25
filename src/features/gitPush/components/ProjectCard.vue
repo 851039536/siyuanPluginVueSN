@@ -1,6 +1,6 @@
 <!-- gitPush 项目卡片子组件 -->
 <template>
-  <div class="gp-card">
+  <div class="gp-card" @click.capture="handleCardClick">
     <div class="gp-card-top">
       <div class="gp-card-info">
         <div class="gp-card-name-row">
@@ -850,6 +850,15 @@ watch(stashTagTab, (val) => {
     emit("expand", props.project.id)
   }
 })
+
+/** 点击卡片任意位置时加载当前项目数据（仅首次触发） */
+let cardDataLoaded = false
+function handleCardClick() {
+  if (cardDataLoaded) return
+  cardDataLoaded = true
+  emit("refreshWorkingTree", props.project.id)
+  emit("expand", props.project.id)
+}
 
 /** 推送按钮状态 class 映射（消除模板中 3 次 getPushStatus 调用） */
 function pushBtnClass(status: string | undefined): Record<string, boolean> {

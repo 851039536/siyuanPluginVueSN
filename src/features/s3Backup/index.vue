@@ -103,10 +103,10 @@
         <template #actions="{ item }">
           <Button
             size="xsmall"
-            :disabled="!isConfigured || uploadingItems[item.path]"
+            :disabled="!isConfigured || uploadingItems[item.path] || isAlreadyUploaded(item.name)"
             @click="uploadLocalBackup(item)"
           >
-            {{ i18n.uploadToS3 }}
+            {{ isAlreadyUploaded(item.name) ? (i18n.alreadyUploaded || '已上传') : i18n.uploadToS3 }}
           </Button>
           <Button variant="danger" size="xsmall" @click="deleteLocalBackup(item)">
             {{ i18n.delete }}
@@ -122,6 +122,7 @@
         time-key="lastModified"
         :disable-refresh="isLoading || !isConfigured"
         :i18n="i18n"
+        :host-map="uploadHostMap"
         @refresh="refreshBackupList"
       >
         <template #actions="{ item }">
@@ -271,7 +272,7 @@ const s3SubPrefix = ref("data-backup")
 const isS3OnlyBackingUp = ref(false)
 const backupLogs = ref<BackupLog[]>([])
 const checksums = ref<FileChecksum[]>([])
-
+const uploadHostMap = ref<Record<string, string>>({})
 // ========== 路径预览 ==========
 
 const node = getNodeModules()
@@ -681,6 +682,20 @@ async function performS3Backup(latestZip?: BackupResult | null): Promise<void> {
     message: skippedCount > 0 ? `跳过 ${skippedCount}` : undefined,
   })
 
+  // 批量记录上传来源：以时间戳前缀为 key 标记本机上传
+  const osModule = getNodeProcessModules()?.os
+  const batchHostname = osModule?.hostname() || ""
+  if (batchHostname && uploadedCount > 0) {
+    for (const file of files) {
+      const fileName = file.relativePath.split("/").pop() || file.relativePath
+      uploadHostMap.value[fileName] = batchHostname
+    }
+    const instance = getS3BackupInstance()
+    if (instance) {
+      await instance.getStorage().uploadHostMap.save({ map: uploadHostMap.value })
+    }
+  }
+
   await refreshBackupList()
 }
 
@@ -728,13 +743,16 @@ watch(
 
 // ========== 本地备份管理 ==========
 
+/** 本地备份列表最大显示条数 */
+const MAX_LOCAL_BACKUP_COUNT = 50
+
 async function loadLocalBackupList(): Promise<void> {
   localBackupList.value = []
   try {
     if (backupManager) {
       const scanned = await backupManager.scanBackupDir()
       if (scanned.length > 0) {
-        localBackupList.value = scanned
+        localBackupList.value = scanned.slice(0, MAX_LOCAL_BACKUP_COUNT)
         const instance = getS3BackupInstance()
         if (instance) {
           await instance.getStorage().backupHistory.save({ list: localBackupList.value })
@@ -746,7 +764,7 @@ async function loadLocalBackupList(): Promise<void> {
     if (instance) {
       const history = await instance.getStorage().backupHistory.load()
       if (history?.list) {
-        localBackupList.value = history.list
+        localBackupList.value = history.list.slice(0, MAX_LOCAL_BACKUP_COUNT)
       }
     }
   } catch (error) {
@@ -785,6 +803,11 @@ async function deleteLocalBackup(backup: Record<string, any>): Promise<void> {
 
 async function uploadLocalBackup(backup: Record<string, any>): Promise<void> {
   if (!node || !isConfigured.value) { return }
+  // 检查 S3 上是否已存在同名文件，已存在则提示并跳过
+  if (isAlreadyUploaded(backup.name)) {
+    showMessage(props.i18n.alreadyUploaded || "该文件已上传过，无需重复上传", 3000, "info")
+    return
+  }
   uploadingItems.value = { ...uploadingItems.value, [backup.path]: true }
   try {
     const content = await node.fs.promises.readFile(backup.path)
@@ -792,6 +815,7 @@ async function uploadLocalBackup(backup: Record<string, any>): Promise<void> {
     const sub = (s3SubPrefix.value || "data-backup").replace(/\/+$/, "")
     const s3Key = [prefix, sub, backup.name].filter(Boolean).join("/")
     await uploadFileContent(content, s3Key)
+    await recordUploadHost(backup.name)
     addLog({ type: "s3Upload", action: props.i18n.uploadToS3 || "上传到 S3", fileName: backup.name, success: true })
     showMessage(props.i18n.uploadSuccess || "上传成功", 2000, "info")
     await refreshBackupList()
@@ -800,6 +824,23 @@ async function uploadLocalBackup(backup: Record<string, any>): Promise<void> {
     showMessage(`${props.i18n.uploadFailed || "上传失败"}: ${getErrorMessage(err)}`, 5000, "error")
   } finally {
     uploadingItems.value = { ...uploadingItems.value, [backup.path]: false }
+  }
+}
+
+/** 检查文件名是否已存在于 S3 备份列表 */
+function isAlreadyUploaded(fileName: string): boolean {
+  return backupList.value.some((f) => f.name === fileName || f.key.endsWith(`/${fileName}`))
+}
+
+/** 记录文件上传来源设备名并持久化 */
+async function recordUploadHost(fileName: string): Promise<void> {
+  const osModule = getNodeProcessModules()?.os
+  const hostname = osModule?.hostname() || ""
+  if (!hostname) { return }
+  uploadHostMap.value = { ...uploadHostMap.value, [fileName]: hostname }
+  const instance = getS3BackupInstance()
+  if (instance) {
+    await instance.getStorage().uploadHostMap.save({ map: uploadHostMap.value })
   }
 }
 
@@ -1106,6 +1147,17 @@ onMounted(async () => {
       const data = await instance3.getStorage().checksums.load()
       if (data?.items) {
         checksums.value = data.items
+      }
+    }
+  } catch { /* ignore */ }
+
+  // 加载上传来源映射
+  try {
+    const instance4 = getS3BackupInstance()
+    if (instance4) {
+      const data = await instance4.getStorage().uploadHostMap.load()
+      if (data?.map) {
+        uploadHostMap.value = data.map
       }
     }
   } catch { /* ignore */ }

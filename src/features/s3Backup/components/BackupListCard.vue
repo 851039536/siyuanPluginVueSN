@@ -19,6 +19,10 @@
           <span class="backup-time">{{ formatTime(item[timeKey]) }}</span>
           <span class="backup-sep">·</span>
           <span class="backup-size">{{ formatFileSize(item.size) }}</span>
+          <template v-if="hostMap && hostMap[item.name]">
+            <span class="backup-sep">·</span>
+            <span class="backup-host">{{ hostMap[item.name] }}</span>
+          </template>
         </div>
         <div class="backup-actions">
           <slot name="actions" :item="item" />
@@ -42,6 +46,7 @@ withDefaults(defineProps<{
   timeKey?: string
   disableRefresh: boolean
   i18n: Record<string, string>
+  hostMap?: Record<string, string>
 }>(), {
   timeKey: "time",
 })

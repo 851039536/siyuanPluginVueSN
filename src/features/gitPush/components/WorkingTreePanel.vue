@@ -312,21 +312,12 @@
         </button>
         <pre>{{ commitOutput }}</pre>
       </div>
-
-      <!-- 提交历史 -->
-      <BranchCommitList
-        :entries="commitLogEntries"
-        :loading="commitLogLoading"
-        @reload-commit-log="(count) => emit('reloadCommitLog', count)"
-        @refresh-commit-log="$emit('refreshCommitLog')"
-      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type {
-  CommitLogEntry,
   CommitTemplate,
   FileChange,
   WorkingTreeInfo,
@@ -343,7 +334,6 @@ import {
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { COMMIT_TYPE_VALUES } from "../types/storage"
-import BranchCommitList from "./BranchCommitList.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -354,8 +344,6 @@ const props = defineProps<{
   fileDiffs: Record<string, string>
   generatedMsg: string
   gitOpLoading: boolean
-  commitLogEntries: CommitLogEntry[]
-  commitLogLoading: boolean
   /** 工作区刷新加载中 */
   workingTreeLoading?: boolean
   /** 提交信息模板 */
@@ -374,16 +362,12 @@ const emit = defineEmits<{
   loadDiff: [file: string, staged: boolean]
   clearOutput: []
   discardFile: [file: string, staged: boolean, status: string]
-  /** 面板首次展开时触发，父组件按需懒加载 commitLog/branches/stash 等详情 */
+  /** 面板首次展开时触发，父组件按需懒加载详情 */
   expand: []
   /** 展开状态变化（供父级按 projectId 持久化） */
   "update:expanded": [value: boolean]
-  /** 用户修改提交记录显示条数 */
-  reloadCommitLog: [count: number]
   /** 单独刷新工作区 */
   refreshWorkingTree: []
-  /** 单独刷新提交日志 */
-  refreshCommitLog: []
 }>()
 
 const COMMIT_TYPES = COMMIT_TYPE_VALUES.map((v) => ({

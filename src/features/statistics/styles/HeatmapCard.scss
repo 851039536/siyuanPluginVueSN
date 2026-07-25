@@ -12,7 +12,7 @@
 @include stats.summary-cards-base;
 
 .summary-card .summary-value {
-  font-size: 20px; // 无精确 Token，保留醒目数值展示
+  font-size: $font-size-lg; // 数据突出展示（摘要卡数值，与活跃度页对齐）
   font-family: stats.$font-mono;
 }
 
@@ -42,7 +42,7 @@
   background: transparent;
   color: var(--b3-theme-on-surface-light);
   font-family: stats.$font-mono;
-  font-size: $font-size-sm; // 11px → 14px via token
+  font-size: $font-size-2xs; // 辅助控件文字（两级字号制）
   font-weight: $font-weight-semibold;
   cursor: pointer;
   transition: all 0.12s;
@@ -67,7 +67,7 @@
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
-  font-size: $font-size-sm; // 11px → 14px via token
+  font-size: $font-size-2xs; // 辅助控件文字（两级字号制）
   font-weight: $font-weight-semibold;
   outline: none;
   max-width: 140px;
@@ -232,7 +232,7 @@
   border-radius: stats.$radius-sm;
   background: transparent;
   color: var(--b3-theme-on-surface-light);
-  font-size: $font-size-base;
+  font-size: $font-size-base; // 图标字形尺寸（关闭按钮 × 符号，非正文文字）
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -291,7 +291,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: $font-size-sm; // 11px → 14px via token
+  font-size: $font-size-2xs; // 图标字形尺寸（16px 容器内 +/~ 符号）
   font-weight: $font-weight-bold;
   flex-shrink: 0;
 }
@@ -391,7 +391,7 @@
   .bar-total {
     width: 36px;
     font-family: stats.$font-mono;
-    font-size: $font-size-sm; // 11px → 14px via token
+    font-size: $font-size-2xs; // 辅助数值（两级字号制）
     font-weight: $font-weight-bold;
     color: var(--b3-theme-on-surface);
     text-align: right;

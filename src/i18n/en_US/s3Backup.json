@@ -103,5 +103,8 @@
   "dropVerify": "Drop File to Verify",
   "dropHint": "Drop files here to compute SHA-256",
   "clearResults": "Clear Results",
-  "compareWith": "Compare..."
+  "compareWith": "Compare...",
+  "removeChecksum": "Delete",
+  "confirmRemoveChecksum": "Are you sure you want to delete this checksum?",
+  "confirmClearAll": "Are you sure you want to clear all checksums?"
 }

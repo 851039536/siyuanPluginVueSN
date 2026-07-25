@@ -25,7 +25,7 @@
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
-  font-size: 11px;
+  font-size: $font-size-2xs;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 
@@ -64,8 +64,8 @@
 }
 
 .hero-icon {
-  font-size: 28px;
-  line-height: 1;
+  font-size: 28px; // 无精确 Token（英雄区大图标字形）
+  line-height: $line-height-tight;
 }
 
 .hero-body {
@@ -75,22 +75,22 @@
 
 .hero-level {
   font-family: stats.$font-mono;
-  font-size: 15px;
-  font-weight: 800;
+  font-size: $font-size-sm; // 数据突出展示（等级数值）
+  font-weight: $font-weight-bold;
   color: var(--b3-theme-primary);
   letter-spacing: 0.02em;
 }
 
 .hero-title {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
   color: var(--b3-theme-on-surface);
   margin-top: 1px;
 }
 
 .hero-meta {
   font-family: stats.$font-mono;
-  font-size: 11px;
+  font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
   margin-top: 2px;
@@ -107,19 +107,19 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
+  font-size: $font-size-2xs;
 }
 
 .hero-stat-num {
   font-family: stats.$font-mono;
-  font-weight: 700;
+  font-weight: $font-weight-bold;
   color: var(--b3-theme-primary);
 }
 
 .hero-stat-key {
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -164,8 +164,8 @@
   align-items: center;
   justify-content: center;
   font-family: stats.$font-mono;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
   color: var(--b3-theme-primary);
 }
 
@@ -178,7 +178,7 @@
 }
 
 .level-next-label {
-  font-size: 10px;
+  font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.45;
   white-space: nowrap;
@@ -217,8 +217,8 @@
 
 .next-goal-prefix {
   font-family: stats.$font-mono;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--b3-theme-on-surface);
@@ -227,8 +227,8 @@
 
 .next-goal-percent {
   font-family: stats.$font-mono;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
   color: var(--b3-theme-primary);
 }
 
@@ -240,12 +240,12 @@
 }
 
 .next-goal-icon {
-  font-size: 20px;
+  font-size: 20px; // 无精确 Token（下一目标大图标字形）
 }
 
 .next-goal-name {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
 }
@@ -266,7 +266,7 @@
 }
 
 .next-goal-encourage {
-  font-size: 11px;
+  font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.55;
   font-style: italic;
@@ -281,8 +281,8 @@
 
 .section-label {
   font-family: stats.$font-mono;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--b3-theme-on-surface);
@@ -312,7 +312,7 @@
   background: transparent;
   color: var(--b3-theme-on-surface);
   cursor: pointer;
-  font-size: 12px;
+  font-size: $font-size-xs;
   transition: background 0.15s;
 
   &:hover {
@@ -321,19 +321,19 @@
 }
 
 .category-icon {
-  font-size: 13px;
+  font-size: $font-size-xs;
   flex-shrink: 0;
 }
 
 .category-name {
-  font-weight: 600;
+  font-weight: $font-weight-semibold;
   flex: 1;
   text-align: left;
 }
 
 .category-count {
   font-family: stats.$font-mono;
-  font-size: 11px;
+  font-size: $font-size-2xs;
   color: var(--b3-theme-primary);
   opacity: 0.6;
 }
@@ -372,7 +372,7 @@
 
 .more-hint {
   font-family: stats.$font-mono;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.35;
   padding: 4px 8px;
@@ -401,7 +401,7 @@
   background: transparent;
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
-  font-size: 11px;
+  font-size: $font-size-2xs;
   cursor: pointer;
   transition: all 0.15s;
 
@@ -414,23 +414,23 @@
     border-color: var(--b3-theme-primary);
     background: rgba(var(--b3-theme-primary-rgb), 0.08);
     color: var(--b3-theme-primary);
-    font-weight: 700;
+    font-weight: $font-weight-bold;
   }
 }
 
 .ach-cat-icon {
-  font-size: 12px;
+  font-size: $font-size-xs;
   flex-shrink: 0;
 }
 
 .ach-cat-name {
-  font-weight: 600;
+  font-weight: $font-weight-semibold;
 }
 
 .ach-cat-count {
-  font-size: 10px;
+  font-size: $font-size-2xs;
   opacity: 0.5;
-  font-weight: 700;
+  font-weight: $font-weight-bold;
 }
 
 // Tier bar active colors
@@ -511,22 +511,22 @@
   }
 
   .ach-icon {
-    font-size: 22px;
+    font-size: 22px; // 无精确 Token（成就大图标字形）
     margin-bottom: 4px;
   }
 
   .ach-title {
-    font-size: 11px;
-    font-weight: 700;
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-bold;
     color: var(--b3-theme-on-surface);
-    line-height: 1.3;
+    line-height: $line-height-tight;
   }
 
   .ach-desc {
-    font-size: 10px;
+    font-size: $font-size-2xs;
     color: var(--b3-theme-on-surface);
     opacity: 0.4;
-    line-height: 1.3;
+    line-height: $line-height-tight;
     margin-top: 2px;
   }
 
@@ -534,7 +534,7 @@
     opacity: 0.35;
     filter: grayscale(0.5);
 
-    .ach-icon { font-size: 18px; }
+    .ach-icon { font-size: $font-size-lg; } // 图标字形尺寸（非正文文字）
   }
 }
 
@@ -549,7 +549,7 @@
   border-radius: stats.$radius-sm;
   background: transparent;
   color: var(--b3-theme-on-surface);
-  font-size: 11px;
+  font-size: $font-size-2xs;
   cursor: pointer;
 
   &:hover {
@@ -586,8 +586,8 @@
   background: transparent;
   color: var(--b3-theme-on-surface);
   opacity: 0.25;
-  font-size: 12px;
-  line-height: 1;
+  font-size: $font-size-xs;
+  line-height: $line-height-tight;
   cursor: pointer;
   border-radius: 2px;
   padding: 0;
@@ -624,7 +624,7 @@
 
     .chip-label {
       color: var(--b3-theme-primary);
-      font-weight: 600;
+      font-weight: $font-weight-semibold;
     }
   }
 
@@ -635,24 +635,24 @@
 }
 
 .chip-icon {
-  font-size: 14px;
-  line-height: 1;
+  font-size: $font-size-sm; // 图标字形尺寸（非正文文字）
+  line-height: $line-height-tight;
 }
 
 .chip-label {
   font-family: stats.$font-mono;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   text-align: center;
   white-space: nowrap;
-  line-height: 1.3;
+  line-height: $line-height-tight;
 }
 
 .chip-tier {
-  font-size: 9px;
+  font-size: $font-size-2xs;
   padding: 0 4px;
   border-radius: 3px;
-  font-weight: 700;
-  line-height: 1.6;
+  font-weight: $font-weight-bold;
+  line-height: $line-height-normal;
 }
 
 .chip-progress {

@@ -11,8 +11,8 @@
   .section-title {
     margin: 0 0 10px 0;
     font-family: stats.$font-mono;
-    font-size: 11px;
-    font-weight: 700;
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-bold;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--b3-theme-on-surface);
@@ -31,7 +31,7 @@
     height: 100px;
     color: var(--b3-theme-on-surface);
     opacity: 0.4;
-    font-size: 12px;
+    font-size: $font-size-xs;
   }
 
   .horizontal-chart {
@@ -64,8 +64,8 @@
         flex-shrink: 0;
         width: 80px;
         font-family: $font-body;
-        font-size: 11px;
-        font-weight: 500;
+        font-size: $font-size-2xs;
+        font-weight: $font-weight-medium;
         color: var(--b3-theme-on-surface);
         white-space: nowrap;
         overflow: hidden;
@@ -94,8 +94,8 @@
         flex-shrink: 0;
         width: 36px;
         font-family: stats.$font-mono;
-        font-size: 10px;
-        font-weight: 700;
+        font-size: $font-size-2xs;
+        font-weight: $font-weight-bold;
         color: var(--b3-theme-primary);
         text-align: right;
         white-space: nowrap;

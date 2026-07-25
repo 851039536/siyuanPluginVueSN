@@ -12,7 +12,7 @@
       />
       <button
         class="storage-toggle-btn"
-        :title="showStorage ? '隐藏存储路径' : '查看存储路径'"
+        :title="showStorage ? i18n.hideStoragePath : i18n.showStoragePath"
         @click="showStorage = !showStorage"
       >
         <svg><use xlink:href="#iconFolder"></use></svg>
@@ -72,10 +72,7 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false,
   lastUpdateTime: "",
   storagePaths: () => [],
-  i18n: () => ({
-    refresh: "刷新",
-    lastUpdate: "最后更新",
-  }),
+  i18n: () => ({}),
 })
 
 const emit = defineEmits<Emits>()
@@ -93,5 +90,6 @@ function handleRefresh() {
 
 <style scoped lang="scss">
 @use "../styles/StatisticsHeader.scss";
+@use '../styles/index.scss' as stats;
 </style>
 

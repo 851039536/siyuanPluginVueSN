@@ -8,7 +8,8 @@
           {{ activeDays }}
         </div>
         <div class="summary-label">
-          {{ i18n.activeDaysLabel || '活跃天数' }}
+          <!-- 摘要标签："活跃天数" -->
+          {{ i18n.activeDaysLabel }}
         </div>
       </div>
       <div class="summary-card">
@@ -16,7 +17,8 @@
           {{ writingStreak }}
         </div>
         <div class="summary-label">
-          {{ i18n.currentStreak || '当前连续' }}
+          <!-- 摘要标签："当前连续" -->
+          {{ i18n.currentStreak }}
         </div>
       </div>
       <div class="summary-card">
@@ -24,7 +26,8 @@
           {{ longestStreak }}
         </div>
         <div class="summary-label">
-          {{ i18n.longestStreak || '最长连续' }}
+          <!-- 摘要标签："最长连续" -->
+          {{ i18n.longestStreak }}
         </div>
       </div>
       <div class="summary-card">
@@ -70,7 +73,8 @@
         @change="switchNotebook(($event.target as HTMLSelectElement).value)"
       >
         <option value="">
-          {{ i18n.allNotebooks || '全部笔记本' }}
+          <!-- 下拉默认项："全部笔记本" -->
+          {{ i18n.allNotebooks }}
         </option>
         <option
           v-for="nb in notebooks"
@@ -85,7 +89,8 @@
       v-if="loading"
       class="hm-loading"
     >
-      {{ i18n.loading || '加载中...' }}
+      <!-- 加载提示："加载中..." -->
+      {{ i18n.loading }}
     </div>
 
     <!-- 日历网格 -->
@@ -106,9 +111,10 @@
 
       <div class="calendar-body">
         <div class="weekday-labels">
-          <span class="weekday-label">{{ i18n.mon || '一' }}</span>
-          <span class="weekday-label">{{ i18n.wed || '三' }}</span>
-          <span class="weekday-label">{{ i18n.fri || '五' }}</span>
+          <!-- 星期标签："一" / "三" / "五" -->
+          <span class="weekday-label">{{ i18n.mon }}</span>
+          <span class="weekday-label">{{ i18n.wed }}</span>
+          <span class="weekday-label">{{ i18n.fri }}</span>
         </div>
 
         <div class="calendar-grid">
@@ -124,103 +130,33 @@
       </div>
 
       <div class="legend-bar">
-        <span class="legend-text">{{ i18n.less || '少' }}</span>
+        <!-- 图例两端："少" / "多" -->
+        <span class="legend-text">{{ i18n.less }}</span>
         <span class="legend-cell level-0"></span>
         <span class="legend-cell level-1"></span>
         <span class="legend-cell level-2"></span>
         <span class="legend-cell level-3"></span>
         <span class="legend-cell level-4"></span>
-        <span class="legend-text">{{ i18n.more || '多' }}</span>
+        <span class="legend-text">{{ i18n.more }}</span>
       </div>
     </div>
 
     <!-- 日详情面板 -->
-    <div
+    <HeatmapDailyDetail
       v-if="selectedDate"
-      class="daily-detail"
-    >
-      <div class="daily-detail-header">
-        <span class="daily-detail-title">{{ selectedDate }}</span>
-        <button
-          class="daily-detail-close"
-          @click="selectedDate = null"
-        >&times;</button>
-      </div>
-
-      <div
-        v-if="detailLoading"
-        class="daily-detail-status"
-      >
-        {{ i18n.loading || '加载中...' }}
-      </div>
-
-      <div
-        v-else-if="detailNewDocs.length === 0 && detailModifiedDocs.length === 0"
-        class="daily-detail-status"
-      >
-        {{ i18n.noDocChanges || '当天无新增或修改' }}
-      </div>
-
-      <div
-        v-else
-        class="daily-detail-list"
-      >
-        <div
-          v-if="detailNewDocs.length > 0"
-          class="detail-group"
-        >
-          <div class="detail-group-title">
-            <IconWrapper
-              name="success"
-              :size="12"
-            /> {{ i18n.todayCreated || '新增' }}（{{ detailNewDocs.length }}）
-          </div>
-          <div
-            v-for="doc in detailNewDocs"
-            :key="doc.id"
-            class="detail-item new"
-            @click="openDoc(doc.id)"
-          >
-            <span class="detail-icon">+</span>
-            <span class="detail-title">{{ doc.title || '无标题' }}</span>
-            <span
-              v-if="doc.time"
-              class="detail-time"
-            >{{ doc.time }}</span>
-          </div>
-        </div>
-
-        <div
-          v-if="detailModifiedDocs.length > 0"
-          class="detail-group"
-        >
-          <div class="detail-group-title">
-            <IconWrapper
-              name="edit"
-              :size="12"
-            /> {{ i18n.todayModified || '修改' }}（{{ detailModifiedDocs.length }}）
-          </div>
-          <div
-            v-for="doc in detailModifiedDocs"
-            :key="doc.id"
-            class="detail-item modified"
-            @click="openDoc(doc.id)"
-          >
-            <span class="detail-icon">~</span>
-            <span class="detail-title">{{ doc.title || '无标题' }}</span>
-            <span
-              v-if="doc.time"
-              class="detail-time"
-            >{{ doc.time }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
+      :date="selectedDate"
+      :loading="detailLoading"
+      :new-docs="detailNewDocs"
+      :modified-docs="detailModifiedDocs"
+      :i18n="i18n"
+      @close="selectedDate = null"
+    />
 
     <!-- 星期分布 -->
     <div class="weekday-section">
       <div class="section-title">
-        {{ i18n.weekdayDistribution || '星期分布' }}
+        <!-- 区块标题："星期分布" -->
+        {{ i18n.weekdayDistribution }}
       </div>
       <div class="weekday-bars">
         <div
@@ -254,8 +190,8 @@ import {
   computed,
   ref,
 } from "vue"
-import IconWrapper from "@/components/IconWrapper.vue"
 import { formatDate } from "../utils"
+import HeatmapDailyDetail from "./HeatmapDailyDetail.vue"
 
 interface Props {
   onGetActivityData?: (
@@ -288,39 +224,41 @@ const selectedMetric = ref<HeatmapMetric>('docsModified')
 const selectedNotebook = ref('')
 const loading = ref(false)
 
+// 时间范围选项（3个月/6个月/1年）
 const rangeOptions = computed(() => [
   {
     value: 3,
-    label: props.i18n.months3 || '3个月',
+    label: props.i18n.months3,
   },
   {
     value: 6,
-    label: props.i18n.months6 || '6个月',
+    label: props.i18n.months6,
   },
   {
     value: 12,
-    label: props.i18n.year1 || '1年',
+    label: props.i18n.year1,
   },
 ])
 
+// 指标选项（修改文档/新增文档/编辑块）
 const metricOptions = computed(() => [
   {
     value: 'docsModified' as HeatmapMetric,
-    label: props.i18n.metricDocsModified || '修改文档',
+    label: props.i18n.metricDocsModified,
   },
   {
     value: 'docsCreated' as HeatmapMetric,
-    label: props.i18n.metricDocsCreated || '新增文档',
+    label: props.i18n.metricDocsCreated,
   },
   {
     value: 'blockEdits' as HeatmapMetric,
-    label: props.i18n.metricBlockEdits || '编辑块',
+    label: props.i18n.metricBlockEdits,
   },
 ])
 
 function metricLabel(m: HeatmapMetric): string {
   const found = metricOptions.value.find((o) => o.value === m)
-  return found ? `总${found.label}` : ''
+  return found ? String(props.i18n.totalMetricLabel || "").replace("{label}", found.label) : ''
 }
 
 // ---- 数据 ----
@@ -371,10 +309,6 @@ async function clickCell(cell: { date: string, level: string }) {
   }
 }
 
-function openDoc(docId: string) {
-  if (docId) window.open(`siyuan://blocks/${docId}`)
-}
-
 // ---- 日历网格 ----
 function getActivity(dateStr: string): number {
   return activityMap.value.get(dateStr) || 0
@@ -401,11 +335,23 @@ const calendarCells = computed(() => {
   while (cursor <= now) {
     const dateStr = formatDate(cursor)
     const activity = getActivity(dateStr)
-    const dayNames = ['日', '一', '二', '三', '四', '五', '六']
+    // 单元格 tooltip："{日期} ({星期}): {次数}次"
+    const dayNames = [
+      props.i18n.sunday,
+      props.i18n.monday,
+      props.i18n.tuesday,
+      props.i18n.wednesday,
+      props.i18n.thursday,
+      props.i18n.friday,
+      props.i18n.saturday,
+    ]
     cells.push({
       date: dateStr,
       level: getLevel(activity),
-      tooltip: `${dateStr} (周${dayNames[cursor.getDay()]}): ${activity}次`,
+      tooltip: String(props.i18n.cellTooltip || "")
+        .replace("{date}", dateStr)
+        .replace("{weekday}", dayNames[cursor.getDay()])
+        .replace("{count}", String(activity)),
     })
     cursor.setDate(cursor.getDate() + 1)
   }
@@ -470,13 +416,13 @@ const totalOperations = computed(() => {
 // ---- 星期分布 ----
 const weekdayDistribution = computed(() => {
   const dayLabels = [
-    props.i18n.sunday || '周日',
-    props.i18n.monday || '周一',
-    props.i18n.tuesday || '周二',
-    props.i18n.wednesday || '周三',
-    props.i18n.thursday || '周四',
-    props.i18n.friday || '周五',
-    props.i18n.saturday || '周六',
+    props.i18n.sunday,
+    props.i18n.monday,
+    props.i18n.tuesday,
+    props.i18n.wednesday,
+    props.i18n.thursday,
+    props.i18n.friday,
+    props.i18n.saturday,
   ]
   const totals: number[] = Array.from({ length: 7 }).fill(0) as number[]
 
@@ -503,4 +449,5 @@ loadData()
 
 <style lang="scss" scoped>
 @use '../styles/HeatmapCard.scss';
+@use '../styles/index.scss' as stats;
 </style>

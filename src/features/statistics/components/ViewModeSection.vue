@@ -30,7 +30,8 @@
         v-if="periodAvgWords > 0"
         class="period-stat-card"
       >
-        <span class="stat-value">{{ formatNumber(periodAvgWords) }} {{ i18n.wordsUnit || '字' }}</span>
+        <!-- 日均字数值 + 单位："字" -->
+        <span class="stat-value">{{ formatNumber(periodAvgWords) }} {{ i18n.wordsUnit }}</span>
         <span class="stat-label">{{ periodAvgLabel }}</span>
       </div>
       <div
@@ -38,7 +39,8 @@
         class="period-stat-card"
       >
         <span class="stat-value">{{ formatNumber(periodTotalWords) }} {{ i18n.wordsUnit }}</span>
-        <span class="stat-label">{{ i18n.totalLabel || '总字数' }}</span>
+        <!-- 统计卡标签："总字数" -->
+        <span class="stat-label">{{ i18n.totalLabel }}</span>
       </div>
     </div>
 
@@ -164,68 +166,71 @@ function onRangeChange(mode: "day" | "month", value: number): void {
   emit("refresh")
 }
 
+// 视图模式选项（日/周/月/年）
 const periodModes = computed(() => [
   {
     value: "day" as const,
-    label: props.i18n.day || '日',
+    label: props.i18n.day,
     icon: "list" as const,
   },
   {
     value: "week" as const,
-    label: props.i18n.week || '周',
+    label: props.i18n.week,
     icon: "format" as const,
   },
   {
     value: "month" as const,
-    label: props.i18n.month || '月',
+    label: props.i18n.month,
     icon: "list" as const,
   },
   {
     value: "year" as const,
-    label: props.i18n.year || '年',
+    label: props.i18n.year,
     icon: undefined,
   },
 ])
 
+// 日视图范围选项（7天/15天/30天/季度/半年/整年）
 const dayRanges = computed(() => [
   {
     value: 7 as const,
-    label: props.i18n.days7 || '7天',
+    label: props.i18n.days7,
   },
   {
     value: 15 as const,
-    label: props.i18n.days15 || '15天',
+    label: props.i18n.days15,
   },
   {
     value: 30 as const,
-    label: props.i18n.days30 || '30天',
+    label: props.i18n.days30,
   },
   {
     value: 90 as const,
-    label: props.i18n.quarter || '季度',
+    label: props.i18n.quarter,
   },
   {
     value: 180 as const,
-    label: props.i18n.halfYear || '半年',
+    label: props.i18n.halfYear,
   },
   {
     value: 365 as const,
-    label: props.i18n.fullYear || '整年',
+    label: props.i18n.fullYear,
   },
 ])
 
+// 月视图范围选项（最近一年/两年/三年）
 const monthRanges = computed(() => [
   {
     value: 1 as const,
-    label: props.i18n.last1Year || '最近一年',
+    label: props.i18n.last1Year,
   },
   {
     value: 2 as const,
-    label: props.i18n.last2Years || '最近两年',
+    label: props.i18n.last2Years,
   },
   {
     value: 3 as const,
-    label: props.i18n.last3Years || '最近三年',
+    label: props.i18n.last3Years,
   },
 ])
 
@@ -238,14 +243,15 @@ const availableYears = computed(() => {
   return years
 })
 
+// 时段均值标签：随视图模式切换（日均/周均/月均/年均字数）
 const periodAvgLabel = computed(() => {
   const labels: Record<string, string> = {
-    day: props.i18n.avgLabel || '日均字数',
-    week: props.i18n.weekAvg || '周均字数',
-    month: props.i18n.monthAvg || '月均字数',
-    year: props.i18n.yearAvg || '年均字数',
+    day: props.i18n.avgLabel,
+    week: props.i18n.weekAvg,
+    month: props.i18n.monthAvg,
+    year: props.i18n.yearAvg,
   }
-  return labels[props.modelValue] || props.i18n.avgLabel || '日均字数'
+  return labels[props.modelValue] || props.i18n.avgLabel
 })
 
 
@@ -253,4 +259,5 @@ const periodAvgLabel = computed(() => {
 
 <style scoped lang="scss">
 @use "../styles/ViewModeSection.scss";
+@use '../styles/index.scss' as stats;
 </style>

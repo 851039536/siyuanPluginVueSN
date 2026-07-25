@@ -1,6 +1,30 @@
 // 里程碑类型定义、成就/等级配置接口、存储键常量
 
 import type { IconKey } from "@/config/icons"
+import type { StatisticsData } from "./index"
+
+/** Milestone 类型 → StatisticsData 字段名映射 */
+export const MILESTONE_FIELD_MAP: Record<string, keyof StatisticsData> = {
+  notes: "totalNotes",
+  words: "totalWords",
+  blocks: "totalBlocks",
+  tags: "totalTags",
+  backlinks: "totalBacklinks",
+  assets: "totalAssets",
+  images: "totalImages",
+  notebooks: "notebookCount",
+  code: "codeBlocks",
+  streak: "writingStreak",
+  activeDays: "activeDays",
+}
+
+/** 稀有度中文标签（规则编辑弹窗各 Tab 共用） */
+export const TIER_LABELS: Record<string, string> = {
+  common: "普通",
+  rare: "稀有",
+  epic: "史诗",
+  legendary: "传说",
+}
 
 /** 自定义里程碑规则持久化结构 */
 export interface MilestoneRulesData {

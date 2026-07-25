@@ -20,15 +20,15 @@
 .notebook-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 11px;
+  font-size: $font-size-2xs;
 }
 
 .nb-th {
   padding: 6px 8px;
   text-align: left;
   font-family: stats.$font-mono;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--b3-theme-on-surface);
@@ -54,7 +54,7 @@
 
 .sort-arrow {
   margin-left: 2px;
-  font-size: 10px;
+  font-size: $font-size-2xs;
 }
 
 .nb-tr {
@@ -76,7 +76,7 @@
 }
 
 .nb-td-name {
-  font-weight: 500;
+  font-weight: $font-weight-medium;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -95,7 +95,7 @@
 
 .nb-td-num {
   font-family: stats.$font-mono;
-  font-weight: 600;
+  font-weight: $font-weight-semibold;
   text-align: right;
   white-space: nowrap;
 }

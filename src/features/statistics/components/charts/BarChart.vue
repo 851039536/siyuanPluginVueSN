@@ -21,7 +21,7 @@
             class="bar"
             :class="{ today: isToday(item.date) }"
             :style="{ height: `${barHeights.get(item.date) ?? 0}px` }"
-            :title="`${item.dateLabel}: ${formatNumber(item.words)} ${i18n.wordsUnit || '字'}`"
+            :title="`${item.dateLabel}: ${formatNumber(item.words)} ${i18n.wordsUnit}`"
           ></div>
           <div
             class="bar-label"
@@ -90,4 +90,5 @@ function formatChartLabel(label: string): string {
 
 <style scoped lang="scss">
 @use "../../styles/BarChart.scss";
+@use '../../styles/index.scss' as stats;
 </style>

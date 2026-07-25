@@ -13,8 +13,8 @@
 .stats-title {
   margin: 0;
   font-family: stats.$font-mono;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--b3-theme-on-surface);
@@ -50,8 +50,8 @@
 
 .core-label {
   font-family: stats.$font-mono;
-  font-size: 9px;
-  font-weight: 700;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--b3-theme-on-surface);
@@ -68,15 +68,15 @@
 
 .core-value {
   font-family: stats.$font-mono;
-  font-size: 16px;
-  font-weight: 700;
+  font-size: $font-size-base; // 数据突出展示（核心指标数值）
+  font-weight: $font-weight-bold;
   color: var(--b3-theme-primary);
-  line-height: 1.2;
+  line-height: $line-height-tight;
 }
 
 .core-unit {
   font-family: stats.$font-mono;
-  font-size: 9px;
+  font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.4;
   white-space: nowrap;
@@ -86,9 +86,9 @@
   padding: 1px 3px;
   border-radius: stats.$radius-sm;
   font-family: stats.$font-mono;
-  font-size: 8px;
-  font-weight: 700;
-  line-height: 1.4;
+  font-size: 8px; // 无精确 Token（小于 $font-size-2xs 的涨跌角标）
+  font-weight: $font-weight-bold;
+  line-height: $line-height-normal;
 }
 
 .core-change.up {
@@ -125,16 +125,16 @@
 
 .secondary-value {
   font-family: stats.$font-mono;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
   color: var(--b3-theme-on-surface);
-  line-height: 1.2;
+  line-height: $line-height-tight;
 }
 
 .secondary-label {
   font-family: stats.$font-mono;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--b3-theme-on-surface);

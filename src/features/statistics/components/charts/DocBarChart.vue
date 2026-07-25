@@ -31,7 +31,7 @@
         :key="item.name"
         class="chart-row"
         :class="{ 'row-highlight': hoveredNotebook === item.name }"
-        :title="`${item.name}: ${formatNumber(item.count)} ${i18n.docsUnit || '篇'}`"
+        :title="`${item.name}: ${formatNumber(item.count)} ${i18n.docsUnit}`"
         @mouseenter="onHover(item.name)"
         @mouseleave="onHover(null)"
       >
@@ -118,4 +118,5 @@ function getBarWidth(count: number): string {
 
 <style scoped lang="scss">
 @use "../../styles/DocBarChart.scss";
+@use '../../styles/index.scss' as stats;
 </style>

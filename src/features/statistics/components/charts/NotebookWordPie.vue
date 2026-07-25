@@ -190,4 +190,5 @@ function degToRad(deg: number): number {
 
 <style scoped lang="scss">
 @use "../../styles/NotebookWordPie.scss";
+@use '../../styles/index.scss' as stats;
 </style>

@@ -460,9 +460,7 @@
         :generated-msg="generatingMsg?.text || ''"
         :file-diffs="fileDiffs"
         :git-op-loading="gitOpLoading || false"
-        :working-tree-loading="workingTreeLoading || false"
         :commit-templates="commitTemplates"
-        :initial-expanded="workingTreeExpanded || false"
         @stage-file="(file: string) => $emit('stageFile', project.id, file)"
         @unstage-file="(file: string) => $emit('unstageFile', project.id, file)"
         @stage-all="$emit('stageAll', project.id)"
@@ -473,7 +471,6 @@
         @clear-output="$emit('clearOutput', project.id)"
         @discard-file="(file: string, staged: boolean, status: string) => $emit('discardFile', project.id, file, staged, status)"
         @expand="$emit('expand', project.id)"
-        @update:expanded="(v: boolean) => $emit('update:workingTreeExpanded', project.id, v)"
         @refresh-working-tree="$emit('refreshWorkingTree', project.id)"
       />
 

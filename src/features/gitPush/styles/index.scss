@@ -61,7 +61,7 @@
   right: 0;
   text-align: center;
   color: var(--b3-theme-on-surface-light);
-  font-size: $font-size-sm;
+  font-size: $font-size-xs;
 }
 
 .gp-list {
@@ -404,7 +404,7 @@
 
 .gp-ide-mgmt-name {
   font-weight: $font-weight-semibold;
-  font-size: 12px;
+  font-size: $font-size-xs;
   min-width: 100px;
 }
 
@@ -416,7 +416,7 @@
 }
 
 .gp-ide-mgmt-empty {
-  font-size: 12px;
+  font-size: $font-size-xs;
   opacity: 0.4;
   font-style: italic;
   text-align: center;
@@ -806,7 +806,7 @@
 }
 
 .gp-set-label {
-  font-size: 12px;
+  font-size: $font-size-xs;
   white-space: nowrap;
 }
 

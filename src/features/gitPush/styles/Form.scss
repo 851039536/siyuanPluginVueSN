@@ -41,12 +41,12 @@
 }
 
 .gp-error {
-  font-size: 11px;
+  font-size: $font-size-2xs;
   color: var(--b3-theme-error);
 }
 
 .gp-checking {
-  font-size: 11px;
+  font-size: $font-size-2xs;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -54,7 +54,7 @@
 }
 
 .gp-check-result {
-  font-size: 11px;
+  font-size: $font-size-2xs;
 
   &.success {
     color: var(--b3-theme-primary);

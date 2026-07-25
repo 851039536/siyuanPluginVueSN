@@ -26,7 +26,7 @@
   border: none;
   background: transparent;
   color: var(--b3-theme-on-surface);
-  font-size: 10px;
+  font-size: $font-size-2xs;
   opacity: 0.45;
   cursor: pointer;
   transition: opacity 0.15s, background 0.15s;
@@ -56,7 +56,7 @@
   border-radius: $radius-sm;
   background: transparent;
   color: var(--b3-theme-on-surface);
-  font-size: 10px;
+  font-size: $font-size-2xs;
   opacity: 0.45;
   cursor: pointer;
   transition: opacity 0.15s, border-color 0.15s, background 0.15s;
@@ -92,7 +92,7 @@
   border-radius: $radius-sm $radius-sm 0 0;
   background: transparent;
   color: var(--b3-theme-on-surface);
-  font-size: 11px;
+  font-size: $font-size-2xs;
   opacity: 0.5;
   cursor: pointer;
   transition: opacity 0.15s, border-color 0.15s;
@@ -118,7 +118,7 @@
 }
 
 .gp-tab-count {
-  font-size: 9px;
+  font-size: $font-size-2xs;
   font-family: $vp-mono;
   opacity: 0.4;
 }

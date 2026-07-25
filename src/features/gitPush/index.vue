@@ -14,7 +14,7 @@
       :refreshing-all-remote="refreshingAllRemote"
 
       :search-query="searchQuery"
-      :search-placeholder="i18n.searchPlaceholder || '搜索项目...'"
+      :search-placeholder="i18n.searchPlaceholder"
       @update:search-query="searchQuery = $event"
       @open-category="showCatDialog = true"
       @open-settings="showSettings = true"
@@ -70,7 +70,7 @@
         class="gp-loading"
       >
         <Loader />
-        <span class="gp-loading-text">{{ i18n.loading || '加载中...' }}</span>
+        <span class="gp-loading-text">{{ i18n.loading }}</span>
       </div>
 
       <div
@@ -85,7 +85,7 @@
           />
         </div>
         <div class="gp-empty-text">
-          {{ i18n.noProjects || '暂无项目，点击上方添加' }}
+          {{ i18n.noProjects }}
         </div>
       </div>
 
@@ -250,10 +250,10 @@
     <!-- 拉取确认弹窗 -->
     <ConfirmDialog
       :visible="showPullConfirm"
-      :title="i18n.pullConfirm || '确认拉取'"
+      :title="i18n.pullConfirm"
       message=""
-      :confirm-text="i18n.pullConfirm || '确认拉取'"
-      :cancel-text="i18n.cancel || '取消'"
+      :confirm-text="i18n.pullConfirm"
+      :cancel-text="i18n.cancel"
       @confirm="doPullSingle"
       @cancel="cancelPullConfirm"
     >
@@ -266,8 +266,8 @@
       :visible="genericConfirm.visible"
       :title="genericConfirm.title"
       :message="genericConfirm.message"
-      :confirm-text="genericConfirm.confirmText || '确定'"
-      :cancel-text="i18n.cancel || '取消'"
+      :confirm-text="genericConfirm.confirmText"
+      :cancel-text="i18n.cancel"
       @confirm="doGenericConfirm"
       @cancel="cancelGenericConfirm"
     />
@@ -546,7 +546,7 @@ const pendingPullLabel = computed(() => {
 })
 /** 拉取确认弹窗正文（复用 i18n pullConfirmBody，{0} 填充平台名） */
 const pullConfirmMessage = computed(() =>
-  (props.i18n.pullConfirmBody || "将从 {0} 拉取代码，可能覆盖本地修改。确定要继续吗？").replace("{0}", pendingPullLabel.value),
+  props.i18n.pullConfirmBody.replace("{0}", pendingPullLabel.value),
 )
 function confirmPullSingle(id: string, key: PlatformKey) {
   pendingPull.value = {

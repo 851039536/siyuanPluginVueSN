@@ -77,6 +77,7 @@
     "noPlatformProjects": "Projects with Missing Platforms",
     "pendingProjects": "Pending Projects",
     "allClear": "All projects up to date",
+    "noProjectsStats": "No projects, add in list view",
     "needsPushShort": "Ahead",
     "needsPushList": "Projects Needing Push",
     "recentCommits": "Recent Commits",

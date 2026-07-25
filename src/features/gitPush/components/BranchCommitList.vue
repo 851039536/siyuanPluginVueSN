@@ -1,15 +1,8 @@
 <!-- 分支与提交记录列表 -->
 <template>
   <div class="bcl-panel">
-    <div
-      class="bcl-header"
-      :class="{ expanded }"
-      @click="toggleExpanded"
-    >
-      <Icon
-        :icon="expanded ? 'mdi:chevron-down' : 'mdi:chevron-right'"
-        height="12"
-      />
+    <!-- 头部：标题 + 刷新按钮 + 提交数 -->
+    <div class="bcl-header">
       <span class="bcl-title">COMMIT LOG</span>
       <button
         class="vp-btn vp-btn--ghost vp-btn--sm bcl-refresh-btn"
@@ -25,10 +18,7 @@
       >{{ entries.length }}</span>
     </div>
 
-    <div
-      v-if="expanded"
-      class="bcl-body"
-    >
+    <div class="bcl-body">
       <!-- 搜索栏 -->
       <div class="bcl-search">
         <Icon
@@ -139,7 +129,6 @@ const emit = defineEmits<{
 }>()
 
 const COUNT_OPTIONS = [10, 20, 30, 50, 100]
-const expanded = ref(false)
 const searchKeyword = ref("")
 const searchAuthor = ref("")
 const displayCount = ref(30)
@@ -158,10 +147,6 @@ const filteredEntries = computed(() => {
   }
   return list.slice(0, displayCount.value)
 })
-
-function toggleExpanded() {
-  expanded.value = !expanded.value
-}
 
 function onCountChange() {
   emit("reloadCommitLog", displayCount.value)

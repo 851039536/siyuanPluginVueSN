@@ -93,11 +93,35 @@ export function useRemoteProgress(
 
   // ── 通用推送/拉取实现 ──
 
+  /** 每项目操作序号（3s 清理时校验，防止清理定时器误删后续操作的进度） */
+  const opSeq: Record<string, number> = {}
+
+  /** 递增并返回项目的操作序号 */
+  function nextOpSeq(id: string): number {
+    opSeq[id] = (opSeq[id] ?? 0) + 1
+    return opSeq[id]
+  }
+
+  /** 3s 后清理进度显示（仅当期间无新操作时执行） */
+  function scheduleProgressCleanup(progressRef: ProgressRef, id: string, seq: number) {
+    opts.safeTimeout(() => {
+      if (opSeq[id] !== seq) return
+      const next = { ...progressRef.value }
+      delete next[id]
+      progressRef.value = next
+    }, 3000)
+  }
+
   /** 通用全平台 remote 操作（pushToAll / pullToAll 共用实现） */
   async function remoteOpAll(
     action: "push" | "pull", progressRef: ProgressRef, outputsRef: OutputsRef,
     managerFn: (id: string) => Promise<Record<string, any>>, id: string,
   ) {
+    // 入口守卫：同一项目的同类操作进行中时拒绝重复触发（防双击竞态）
+    if (isOpInProgress(progressRef, id)) {
+      return { success: false }
+    }
+    const seq = nextOpSeq(id)
     const project = findProject(projects, id)
     const initProg: Record<string, ProgressStatus> = {}
     if (project) {
@@ -143,16 +167,7 @@ export function useRemoteProgress(
       progressRef.value = { ...progressRef.value, [id]: failProg }
       return { success: false }
     } finally {
-      const snapshot = { ...progressRef.value }
-      opts.safeTimeout(() => {
-        const current = progressRef.value[id]
-        const old = snapshot[id]
-        if (current && old && JSON.stringify(current) === JSON.stringify(old)) {
-          const next = { ...progressRef.value }
-          delete next[id]
-          progressRef.value = next
-        }
-      }, 3000)
+      scheduleProgressCleanup(progressRef, id, seq)
     }
   }
 
@@ -162,6 +177,11 @@ export function useRemoteProgress(
     managerFn: (id: string, target: PlatformKey) => Promise<{ ok: boolean, stdout: string, stderr: string }>,
     id: string, target: PlatformKey,
   ) {
+    // 入口守卫：该项目该平台的同类操作进行中时拒绝重复触发（防双击竞态）
+    if (isOpInProgress(progressRef, id, target)) {
+      return { ok: false, stdout: "", stderr: "操作进行中" }
+    }
+    const seq = nextOpSeq(id)
     progressRef.value = {
       ...progressRef.value,
       [id]: { ...progressRef.value[id], [target]: "pushing" },
@@ -199,29 +219,22 @@ export function useRemoteProgress(
         [id]: { ...progressRef.value[id], [target]: "fail" },
       }
       const pm = PLATFORM_META.find((m) => m.key === target)
+      const errMsg = String(e?.message || e)
       outputsRef.value[id] = [{
         platform: target,
         label: pm?.label ?? target,
         ok: false,
         skipped: false,
         duration,
-        summary: String(e?.message || e).split("\n")[0]?.trim() || "失败",
+        summary: errMsg.split("\n")[0]?.trim() || "失败",
         fullStdout: "",
-        fullStderr: String(e?.message || e),
+        fullStderr: errMsg,
       }]
       pruneRecordCache(outputsRef.value)
-      throw e
+      // 与 remoteOpAll 策略统一：不重抛（调用方为模板事件处理器，无 catch），返回结构化错误
+      return { ok: false, stdout: "", stderr: errMsg }
     } finally {
-      const snapshot = { ...progressRef.value }
-      opts.safeTimeout(() => {
-        const current = progressRef.value[id]
-        const old = snapshot[id]
-        if (current && old && JSON.stringify(current) === JSON.stringify(old)) {
-          const next = { ...progressRef.value }
-          delete next[id]
-          progressRef.value = next
-        }
-      }, 3000)
+      scheduleProgressCleanup(progressRef, id, seq)
     }
   }
 

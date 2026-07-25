@@ -156,6 +156,11 @@ export class GitPushManager {
     return this.remoteOps.checkPushStatus(id, opts)
   }
 
+  /** 失效推送状态缓存（commit 后调用，防止智能跳过误判） */
+  invalidatePushStatusCache(id: string): void {
+    this.remoteOps.invalidatePushStatusCache(id)
+  }
+
   async checkCanPushToCloud(id: string): Promise<{
     canPush: boolean
     github: boolean

@@ -18,9 +18,10 @@ export class RepoOps {
 
   async getTags(projectPath: string, limit = 10): Promise<TagInfo[]> {
     try {
-      const raw = await this.executor.execGit(projectPath, ["tag", "-l", `--sort=-creatordate`, `--format=%(refname:short)|%(subject)|%(creatordate:iso)`])
+      // 用不可见分隔符 %x1f（Unit Separator）替代 |，避免 subject 含 | 时解析错乱
+      const raw = await this.executor.execGit(projectPath, ["tag", "-l", `--sort=-creatordate`, `--format=%(refname:short)%x1f%(subject)%x1f%(creatordate:iso)`])
       return raw.trim().split("\n").filter(Boolean).slice(0, limit).map((line) => {
-        const [name, message, date] = line.split("|")
+        const [name, message, date] = line.split("\x1F")
         return { name, message: message || undefined, date: date || undefined }
       })
     } catch { return [] }

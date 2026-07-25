@@ -168,6 +168,8 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     committing.value[id] = true
     try {
       const result = await manager.commit(resolveValidPath(project), message)
+      // 立即失效推送状态缓存，防止 loadPushStatus 完成前的智能跳过用到陈旧的 ahead=0
+      manager.invalidatePushStatusCache(id)
       await loadWorkingTree(id)
       await loadPushStatus(id)
       return result

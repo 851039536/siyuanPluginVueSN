@@ -70,8 +70,9 @@ export class WorktreeOps {
         else if (xy.includes("C")) { status = "copied" }
         else if (xy.includes("U")) { status = "unmerged" }
 
-        if (staged && status !== "untracked") stagedCount++
-        if (unstaged && status !== "untracked") unstagedCount++
+        // unmerged（如 UU）状态码两位都非空格，避免同一冲突文件重复计入两个计数（冲突由 ConflictSection 单独呈现）
+        if (staged && status !== "untracked" && status !== "unmerged") stagedCount++
+        if (unstaged && status !== "untracked" && status !== "unmerged") unstagedCount++
 
         let actualPath = filePath
         let oldPath: string | undefined

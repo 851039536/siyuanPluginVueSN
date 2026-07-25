@@ -2,7 +2,6 @@
 <template>
   <div class="gp-stash-wrap">
     <div class="gp-stash-header">
-      <span class="gp-stash-label">STASH</span>
       <span
         class="gp-stash-help"
         title="暂存：把当前未提交的修改临时保存起来，方便切换到其他分支工作。之后可以随时'恢复'回来继续编辑，就像把工作进度先放进抽屉里一样。"
@@ -76,7 +75,7 @@
           icon="mdi:archive-outline"
           height="12"
         />
-        {{ i18n.stashSave || '暂存变更' }}
+        {{ i18n.stashSave }}
       </button>
     </div>
     <div
@@ -98,19 +97,19 @@
           title="恢复并删除 (pop)"
           :disabled="loading"
           @click="$emit('stashPop', e.index)"
-        >{{ i18n.stashRestore || '恢复' }}</button>
+        >{{ i18n.stashRestore }}</button>
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
           title="应用但不删除 (apply)"
           :disabled="loading"
           @click="$emit('stashApply', e.index)"
-        >{{ i18n.stashApply || '应用' }}</button>
+        >{{ i18n.stashApply }}</button>
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
           title="删除 (drop)"
           :disabled="loading"
           @click="$emit('stashDrop', e.index)"
-        >{{ i18n.stashDrop || '删除' }}</button>
+        >{{ i18n.stashDrop }}</button>
       </div>
     </div>
   </div>

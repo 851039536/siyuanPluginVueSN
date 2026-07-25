@@ -431,36 +431,62 @@
       @refresh-commit-log="$emit('refreshCommitLog', project.id)"
     />
 
-    <!-- Stash 暂存 -->
-    <StashSection
-      :entries="stashEntries"
-      :loading="stashLoading || false"
-      :has-changes="!!workingTree?.hasChanges"
-      :gen-desc-loading="genStashDescLoading || false"
-      :generated-msg="generatedStashMsg"
-      :i18n="i18n"
-      @stash-confirm="(msg: string) => $emit('stashConfirmMsg', project.id, msg)"
-      @gen-stash-desc="$emit('genStashDesc', project.id)"
-      @stash-pop="(idx: number) => $emit('stashPop', project.id, idx)"
-      @stash-apply="(idx: number) => $emit('stashApply', project.id, idx)"
-      @stash-drop="(idx: number) => $emit('stashDrop', project.id, idx)"
-    />
-
-    <!-- Tag 管理 -->
-    <TagPanel
-      :tags="tagsCache || []"
-      :loading="tagLoading"
-      :push-loaded="tagPushLoading"
-      :remotes="platformMeta.filter(pm => project[pm.remoteProp]).map(pm => ({
-        key: pm.key,
-        icon: pm.icon,
-      }))"
-      :i18n="i18n"
-      @create="(p: { name: string, message: string }) => $emit('createTag', project.id, p.name, p.message)"
-      @push="(p: { tag: string }) => $emit('pushTag', project.id, p.tag)"
-      @delete="(p: { tag: string }) => $emit('deleteTag', project.id, p.tag)"
-      @refresh="$emit('refreshTags', project.id)"
-    />
+    <!-- Stash + Tag（Tab 切换） -->
+    <div class="gp-stash-tag-tabs">
+      <div class="gp-stash-tag-tab-bar">
+        <button
+          class="gp-stash-tag-tab"
+          :class="{ active: stashTagTab === 'stash' }"
+          @click="stashTagTab = 'stash'"
+        >
+          STASH
+          <span
+            v-if="stashEntries?.length"
+            class="gp-stash-tag-tab-count"
+          >{{ stashEntries.length }}</span>
+        </button>
+        <button
+          class="gp-stash-tag-tab"
+          :class="{ active: stashTagTab === 'tag' }"
+          @click="stashTagTab = 'tag'"
+        >
+          TAG
+          <span
+            v-if="tagsCache?.length"
+            class="gp-stash-tag-tab-count"
+          >{{ tagsCache.length }}</span>
+        </button>
+      </div>
+      <StashSection
+        v-if="stashTagTab === 'stash'"
+        :entries="stashEntries"
+        :loading="stashLoading || false"
+        :has-changes="!!workingTree?.hasChanges"
+        :gen-desc-loading="genStashDescLoading || false"
+        :generated-msg="generatedStashMsg"
+        :i18n="i18n"
+        @stash-confirm="(msg: string) => $emit('stashConfirmMsg', project.id, msg)"
+        @gen-stash-desc="$emit('genStashDesc', project.id)"
+        @stash-pop="(idx: number) => $emit('stashPop', project.id, idx)"
+        @stash-apply="(idx: number) => $emit('stashApply', project.id, idx)"
+        @stash-drop="(idx: number) => $emit('stashDrop', project.id, idx)"
+      />
+      <TagPanel
+        v-if="stashTagTab === 'tag'"
+        :tags="tagsCache || []"
+        :loading="tagLoading"
+        :push-loaded="tagPushLoading"
+        :remotes="platformMeta.filter(pm => project[pm.remoteProp]).map(pm => ({
+          key: pm.key,
+          icon: pm.icon,
+        }))"
+        :i18n="i18n"
+        @create="(p: { name: string, message: string }) => $emit('createTag', project.id, p.name, p.message)"
+        @push="(p: { tag: string }) => $emit('pushTag', project.id, p.tag)"
+        @delete="(p: { tag: string }) => $emit('deleteTag', project.id, p.tag)"
+        @refresh="$emit('refreshTags', project.id)"
+      />
+    </div>
 
     <!-- 冲突警告 -->
     <ConflictSection
@@ -783,6 +809,9 @@ defineEmits<{
 
 /** 项目名搜索高亮分段（按当前 searchQuery 切分） */
 const nameSegments = computed(() => highlightSegments(props.project.name, props.searchQuery || ""))
+
+/** Stash / Tag 面板 Tab 切换 */
+const stashTagTab = ref<"stash" | "tag">("stash")
 
 /** 推送按钮状态 class 映射（消除模板中 3 次 getPushStatus 调用） */
 function pushBtnClass(status: string | undefined): Record<string, boolean> {

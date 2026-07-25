@@ -355,9 +355,8 @@ const commitType = ref("chore")
 const commitMessage = ref("")
 const activeDiffFile = ref<FileChange | null>(null)
 
-// 进入页面自动刷新工作区
+// 挂载时通知父组件懒加载详情数据
 onMounted(() => {
-  emit("refreshWorkingTree")
   emit("expand")
 })
 

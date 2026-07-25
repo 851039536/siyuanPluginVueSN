@@ -771,7 +771,7 @@ const props = defineProps<{
 }>()
 
 // ── Events ──
-defineEmits<{
+const emit = defineEmits<{
   "toggleStar": [id: string]
   "cycleStatus": [id: string, status: ProjectStatus | undefined]
   "startNameEdit": [project: GitProject]
@@ -842,6 +842,13 @@ const nameSegments = computed(() => highlightSegments(props.project.name, props.
 
 /** Stash / Tag 面板 Tab 切换 */
 const stashTagTab = ref<"worktree" | "log" | "stash" | "tag">("worktree")
+
+// 从其他 Tab 切换回 worktree 时自动刷新当前项目工作区（跳过初始值）
+let tabSwitchInitialized = false
+watch(stashTagTab, (val) => {
+  if (!tabSwitchInitialized) { tabSwitchInitialized = true; return }
+  if (val === "worktree") emit("refreshWorkingTree", props.project.id)
+})
 
 /** 推送按钮状态 class 映射（消除模板中 3 次 getPushStatus 调用） */
 function pushBtnClass(status: string | undefined): Record<string, boolean> {

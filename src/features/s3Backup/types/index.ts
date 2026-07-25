@@ -144,6 +144,7 @@ const STORAGE_KEYS = {
   BACKUP_HISTORY: "s3-backup-history",
   BACKUP_LOG: "s3-backup-log",
   CHECKSUMS: "s3-backup-checksums",
+  UPLOAD_HOST_MAP: "s3-backup-upload-host-map",
 } as const
 
 // ========== 存储类 ==========
@@ -154,6 +155,8 @@ export class S3BackupStorage {
   readonly backupHistory: TypedStorage<{ list: LocalBackupInfo[] }>
   readonly backupLogs: TypedStorage<{ logs: BackupLog[] }>
   readonly checksums: TypedStorage<{ items: FileChecksum[] }>
+  /** 文件名 → 上传来源设备名映射 */
+  readonly uploadHostMap: TypedStorage<{ map: Record<string, string> }>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
@@ -175,6 +178,7 @@ export class S3BackupStorage {
     this.backupHistory = new TypedStorage(storage, STORAGE_KEYS.BACKUP_HISTORY, { list: [] })
     this.backupLogs = new TypedStorage(storage, STORAGE_KEYS.BACKUP_LOG, { logs: [] })
     this.checksums = new TypedStorage(storage, STORAGE_KEYS.CHECKSUMS, { items: [] })
+    this.uploadHostMap = new TypedStorage(storage, STORAGE_KEYS.UPLOAD_HOST_MAP, { map: {} })
   }
 }
 

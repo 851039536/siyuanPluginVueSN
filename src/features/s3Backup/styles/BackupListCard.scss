@@ -73,6 +73,14 @@
   flex-shrink: 0;
 }
 
+.backup-host {
+  font-size: $font-size-xs;
+  font-family: $vp-mono;
+  color: var(--b3-theme-on-surface-light);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .backup-actions {
   display: flex;
   gap: $spacing-1;

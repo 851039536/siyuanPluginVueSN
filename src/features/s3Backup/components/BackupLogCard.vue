@@ -25,6 +25,8 @@
           <span v-if="log.fileSize" class="log-size">{{ formatFileSize(log.fileSize) }}</span>
           <span class="log-sep" v-if="log.fileSize && log.fileSize">·</span>
           <span class="log-time">{{ formatTime(log.time) }}</span>
+          <span v-if="log.hostname" class="log-sep">·</span>
+          <span v-if="log.hostname" class="log-hostname">{{ log.hostname }}</span>
         </span>
         <span
           class="log-status"

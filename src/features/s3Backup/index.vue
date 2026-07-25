@@ -202,7 +202,7 @@ import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue"
 import { Plugin, showMessage } from "siyuan"
 import { getWorkspaceDir } from "@/api"
 import { pickDirectory, openFolderInExplorer } from "@/utils/electronDialog"
-import { getNodeModules } from "@/utils/nodeModules"
+import { getNodeModules, getNodeProcessModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import { encryptSetting, decryptSetting } from "@/utils/settingsCrypto"
 import { useS3Backup } from "./composables/useS3Backup"
@@ -877,11 +877,13 @@ async function handleDelete(backup: Record<string, any>): Promise<void> {
 
 // ========== 日志管理 ==========
 
-function addLog(entry: Omit<BackupLog, "id" | "time">): void {
+function addLog(entry: Omit<BackupLog, "id" | "time" | "hostname">): void {
+  const osModule = getNodeProcessModules()?.os
   const log: BackupLog = {
     ...entry,
     id: Date.now().toString(),
     time: new Date().toISOString(),
+    hostname: osModule?.hostname() || "",
   }
   backupLogs.value.unshift(log)
   if (backupLogs.value.length > MAX_LOG_COUNT) {

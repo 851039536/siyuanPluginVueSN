@@ -107,6 +107,8 @@ export interface BackupLog {
   success: boolean
   /** 附加消息 */
   message?: string
+  /** 操作来源设备名 */
+  hostname?: string
 }
 
 // ========== 默认值常量 ==========

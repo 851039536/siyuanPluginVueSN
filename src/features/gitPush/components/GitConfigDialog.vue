@@ -12,7 +12,7 @@
             icon="mdi:information-outline"
             height="14"
           />
-          <span>{{ title || i18n.gitConfigTitle || 'Git 全局配置' }}</span>
+          <span>{{ title || i18n.gitConfigTitle}}</span>
         </div>
         <button
           class="gp-gc-close"
@@ -37,7 +37,7 @@
             height="16"
             class="gp-spin"
           />
-          <span>{{ i18n.gitConfigLoading || '查询中...' }}</span>
+          <span>{{ i18n.gitConfigLoading }}</span>
         </div>
 
         <div
@@ -59,7 +59,7 @@
             icon="mdi:file-document-outline"
             height="32"
           />
-          <span>{{ i18n.gitConfigEmpty || '暂未配置全局 Git 信息' }}</span>
+          <span>{{ i18n.gitConfigEmpty }}</span>
         </div>
 
         <div

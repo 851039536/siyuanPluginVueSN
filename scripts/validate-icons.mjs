@@ -33,10 +33,15 @@ async function validateIcons() {
 
     const invalidIcons = []
     const validIcons = []
+    const skippedIcons = []
 
     for (const match of iconMatches) {
       const iconName = match[1]
-      // 移除 mdi: 前缀，因为数据集中的图标名称不带前缀
+      // 仅验证 mdi: 前缀的图标，其他图标集（如 carbon:、ph:）暂不校验
+      if (!iconName.startsWith('mdi:')) {
+        skippedIcons.push(iconName)
+        continue
+      }
       const iconKey = iconName.replace(/^mdi:/, '')
       if (availableIcons.has(iconKey)) {
         validIcons.push(iconName)
@@ -59,6 +64,9 @@ async function validateIcons() {
     } else {
       console.log('✅ 所有图标都有效!')
       console.log(`\n共验证 ${validIcons.length} 个图标`)
+      if (skippedIcons.length > 0) {
+        console.log(`⏭️  跳过 ${skippedIcons.length} 个非 MDI 图标（暂不校验）`)
+      }
       console.log('\n常用图标列表:')
       validIcons.slice(0, 10).forEach((icon) => {
         console.log(`  - ${icon}`)

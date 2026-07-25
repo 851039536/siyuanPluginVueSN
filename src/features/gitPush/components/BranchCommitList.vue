@@ -1,25 +1,8 @@
 <!-- 分支与提交记录列表 -->
 <template>
   <div class="bcl-panel">
-    <!-- 头部：标题 + 刷新按钮 + 提交数 -->
-    <div class="bcl-header">
-      <span class="bcl-title">COMMIT LOG</span>
-      <button
-        class="vp-btn vp-btn--ghost vp-btn--sm bcl-refresh-btn"
-        :disabled="loading"
-        title="刷新提交日志"
-        @click.stop="$emit('refreshCommitLog')"
-      >
-        <Icon icon="mdi:refresh" height="12" :class="{ 'gp-spin': loading }" />
-      </button>
-      <span
-        v-if="!loading && entries.length"
-        class="bcl-count"
-      >{{ entries.length }}</span>
-    </div>
-
     <div class="bcl-body">
-      <!-- 搜索栏 -->
+      <!-- 搜索栏：搜索 + 作者 + 条数 + 刷新 -->
       <div class="bcl-search">
         <Icon
           icon="mdi:magnify"
@@ -59,6 +42,18 @@
             :value="n"
           >{{ n }}</option>
         </select>
+        <button
+          class="vp-btn vp-btn--ghost vp-btn--sm bcl-refresh-btn"
+          :disabled="loading"
+          title="刷新提交日志"
+          @click.stop="$emit('refreshCommitLog')"
+        >
+          <Icon icon="mdi:refresh" height="12" :class="{ 'gp-spin': loading }" />
+        </button>
+        <span
+          v-if="!loading && entries.length"
+          class="bcl-count"
+        >{{ entries.length }}</span>
       </div>
 
       <div

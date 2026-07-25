@@ -2,7 +2,8 @@
 <template>
   <div class="achievement-section">
     <div class="section-label">
-      成就
+      <!-- 区块标题："成就" -->
+      {{ i18n.achievementsLabel }}
     </div>
 
     <!-- 成就分类 Tab -->
@@ -54,7 +55,7 @@
         <button
           v-if="ach._custom"
           class="btn-del-ach"
-          title="删除此成就"
+          :title="i18n.deleteAchievementHint"
           @click="emit('deleteCustom', ach.id)"
         >
           <IconWrapper
@@ -77,10 +78,11 @@
       class="locked-toggle"
       @click="showLocked = !showLocked"
     >
+      <!-- 折叠按钮："未获得 (N)" -->
       <span><IconWrapper
         name="pageLock"
         :size="12"
-      /> 未获得 ({{ filteredLocked.length }})</span>
+      /> {{ i18n.lockedLabel }} ({{ filteredLocked.length }})</span>
       <IconWrapper
         name="chevronDown"
         :size="10"
@@ -100,7 +102,7 @@
         <button
           v-if="ach._custom"
           class="btn-del-ach"
-          title="删除此成就"
+          :title="i18n.deleteAchievementHint"
           @click="emit('deleteCustom', ach.id)"
         >
           <IconWrapper
@@ -132,6 +134,7 @@ interface Props {
   unlocked: AchievementDef[]
   locked: AchievementDef[]
   tierLabels: Record<Tier, string>
+  i18n: Record<string, any>
 }
 
 const props = defineProps<Props>()
@@ -175,4 +178,5 @@ function getTierCount(tierId: string): number {
 
 <style scoped lang="scss">
 @use "../styles/MilestonesCard.scss";
+@use '../styles/index.scss' as stats;
 </style>

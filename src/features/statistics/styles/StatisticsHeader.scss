@@ -9,7 +9,7 @@ $stats-header-height: 56px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 0 $spacing-4;
   border-bottom: 1px solid var(--b3-border-color);
   background: var(--b3-theme-surface);
   flex-shrink: 0;
@@ -21,7 +21,7 @@ $stats-header-height: 56px;
 
   .header-left {
     display: flex;
-    gap: $spacing-sm;
+    gap: $spacing-2;
     align-items: center;
   }
 
@@ -33,8 +33,8 @@ $stats-header-height: 56px;
 
   .last-update {
     font-family: stats.$font-mono;
-    font-size: 10px;
-    font-weight: 700;
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-bold;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--b3-theme-on-surface);
@@ -103,13 +103,13 @@ $stats-header-height: 56px;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
+  font-size: $font-size-2xs;
 }
 
 .storage-key {
   font-family: stats.$font-mono;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--b3-theme-primary);
@@ -129,7 +129,7 @@ $stats-header-height: 56px;
   font-family: stats.$font-mono;
   color: var(--b3-theme-on-surface);
   opacity: 0.4;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

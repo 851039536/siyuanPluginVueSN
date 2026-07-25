@@ -162,4 +162,5 @@ const sortedRows = computed(() => {
 
 <style scoped lang="scss">
 @use "../styles/NotebookTable.scss";
+@use '../styles/index.scss' as stats;
 </style>

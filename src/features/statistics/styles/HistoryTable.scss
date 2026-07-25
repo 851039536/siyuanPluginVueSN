@@ -1,0 +1,140 @@
+// 历史数据表格样式：粘性表头 + 差值标签
+@use "@/variables" as *;
+@use "../styles/shared" as *;
+@use "../styles/index.scss" as stats;
+
+.historical-data-list {
+  margin: 0;
+
+  .historical-table-container {
+    max-height: 380px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border: 1px solid var(--b3-border-color);
+    border-radius: stats.$radius-sm;
+    @include scrollbar-thin;
+
+    .historical-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: stats.$font-mono;
+      font-size: $font-size-2xs;
+
+      thead {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: var(--b3-theme-surface);
+
+        th {
+          padding: 5px $spacing-2;
+          text-align: left;
+          font-family: stats.$font-mono;
+          font-size: $font-size-2xs;
+          font-weight: $font-weight-bold;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          color: var(--b3-theme-on-surface);
+          opacity: 0.6;
+          border-bottom: 1px solid var(--b3-border-color);
+          background: var(--b3-theme-surface);
+
+          .th-icon {
+            margin-right: 3px;
+          }
+
+          &.col-date {
+            width: 70px;
+          }
+
+          &.col-notes,
+          &.col-words,
+          &.col-blocks,
+          &.col-created,
+          &.col-modified {
+            width: 50px;
+            text-align: right;
+          }
+
+          &.col-change {
+            width: 90px;
+            text-align: center;
+          }
+        }
+      }
+
+      tbody {
+        .historical-row {
+          border-bottom: 1px solid var(--b3-border-color);
+
+          &:last-child {
+            border-bottom: none;
+          }
+
+          &.today {
+            background: rgba(var(--b3-theme-primary-rgb), 0.05);
+          }
+
+          td {
+            padding: 5px $spacing-2;
+            color: var(--b3-theme-on-surface);
+
+            &.col-date {
+              font-weight: $font-weight-bold;
+              font-family: stats.$font-mono;
+              color: var(--b3-theme-primary);
+            }
+
+            &.col-notes,
+            &.col-words,
+            &.col-blocks,
+            &.col-created,
+            &.col-modified {
+              text-align: right;
+              font-variant-numeric: tabular-nums;
+              opacity: 0.9;
+            }
+
+            &.col-change {
+              text-align: center;
+            }
+
+            .diff-tag {
+              display: inline-block;
+              padding: 1px 6px;
+              border-radius: stats.$radius-sm;
+              font-family: stats.$font-mono;
+              font-weight: $font-weight-bold;
+              font-size: $font-size-2xs;
+              margin: 0 1px;
+
+              &.success {
+                background: rgba(stats.$color-success, 0.12);
+                color: stats.$color-success;
+              }
+
+              &.danger {
+                background: rgba(stats.$color-danger, 0.12);
+                color: stats.$color-danger;
+              }
+
+              &.secondary {
+                background: rgba(var(--b3-theme-on-surface-rgb), 0.05);
+                color: var(--b3-theme-on-surface);
+                opacity: 0.5;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Responsive design
+@include mobile-only {
+  .historical-data-list {
+    margin-left: $spacing-1;
+    margin-right: $spacing-1;
+  }
+}

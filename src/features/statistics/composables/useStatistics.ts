@@ -20,7 +20,6 @@ export function useStatistics(): {
   monthYearRange: Ref<1 | 2 | 3>
   selectedYear: Ref<number>
   periodAvgWords: ComputedRef<number>
-  chartTitle: ComputedRef<string>
   refreshData: () => Promise<void>
 } {
   const loading = ref(false)
@@ -36,10 +35,6 @@ export function useStatistics(): {
     if (!dailyStats || dailyStats.length === 0) return 0
     const totalWords = dailyStats.reduce((sum, item) => sum + item.words, 0)
     return Math.round(totalWords / dailyStats.length)
-  })
-
-  const chartTitle = computed(() => {
-    return stats.value?.currentPeriod || ""
   })
 
   async function refreshData(): Promise<void> {
@@ -60,7 +55,6 @@ export function useStatistics(): {
     monthYearRange,
     selectedYear,
     periodAvgWords,
-    chartTitle,
     refreshData,
   }
 }

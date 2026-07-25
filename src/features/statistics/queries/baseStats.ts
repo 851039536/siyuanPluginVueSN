@@ -218,39 +218,40 @@ export async function getStatistics(viewMode: string, options: {
     let periodTotalWords = 0
     const sumWords = (items: DailyWordCount[]) => items.reduce((sum, item) => sum + item.words, 0)
 
-    const DAY_PERIOD_MAP: Record<number, string> = {
-      7: "最近一周每日字数",
-      15: "最近15天每日字数",
-      30: "最近30天每日字数",
-      90: "最近一季度每日字数",
-      180: "最近半年每日字数",
-      365: "最近一年每日字数",
+    // 周期标题返回 i18n 键，由视图层（index.vue chartTitle）映射为文案
+    const DAY_PERIOD_KEYS: Record<number, string> = {
+      7: "periodDays7",
+      15: "periodDays15",
+      30: "periodDays30",
+      90: "periodDays90",
+      180: "periodDays180",
+      365: "periodDays365",
     }
-    const MONTH_PERIOD_MAP: Record<number, string> = {
-      1: "最近一年每月字数",
-      2: "最近两年每月字数",
-      3: "最近三年每月字数",
+    const MONTH_PERIOD_KEYS: Record<number, string> = {
+      1: "periodMonths1",
+      2: "periodMonths2",
+      3: "periodMonths3",
     }
 
     switch (viewMode) {
       case "day":
         dailyStats = await getDailyStats(options.dayRange)
-        currentPeriod = DAY_PERIOD_MAP[options.dayRange] || "每日字数统计"
+        currentPeriod = DAY_PERIOD_KEYS[options.dayRange] || "periodDaysDefault"
         periodTotalWords = sumWords(dailyStats)
         break
       case "week":
         dailyStats = await getWeeklyStats(4)
-        currentPeriod = "最近4周每周字数"
+        currentPeriod = "periodWeeks4"
         periodTotalWords = sumWords(dailyStats)
         break
       case "month":
         dailyStats = await getMonthlyStatsRange(options.monthYearRange)
-        currentPeriod = MONTH_PERIOD_MAP[options.monthYearRange] || "每月字数统计"
+        currentPeriod = MONTH_PERIOD_KEYS[options.monthYearRange] || "periodMonthsDefault"
         periodTotalWords = sumWords(dailyStats)
         break
       case "year":
         dailyStats = await getYearlyStats(options.selectedYear)
-        currentPeriod = `${options.selectedYear - 4} - ${options.selectedYear} 每年字数`
+        currentPeriod = "periodYears"
         periodTotalWords = sumWords(dailyStats)
         break
     }

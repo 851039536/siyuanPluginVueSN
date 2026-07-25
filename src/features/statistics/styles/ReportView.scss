@@ -1,4 +1,5 @@
 // 报告视图组件样式：年度/月度报告卡片 + 对比切换 + 明细条形图
+@use "@/variables" as *;
 @use "../styles/index.scss" as stats;
 
 .report-view {
@@ -23,8 +24,8 @@
   background: transparent;
   color: var(--b3-theme-on-surface-light);
   font-family: stats.$font-mono;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
   cursor: pointer;
   transition: all 0.15s;
 
@@ -36,7 +37,7 @@
   &.active {
     background: var(--b3-theme-primary);
     color: var(--b3-theme-on-primary);
-    font-weight: 700;
+    font-weight: $font-weight-bold;
   }
 }
 
@@ -57,8 +58,8 @@
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
   outline: none;
 
   &:focus {
@@ -69,14 +70,14 @@
 
 .report-generate-btn {
   @include stats.small-action-btn;
-  font-weight: 600;
+  font-weight: $font-weight-semibold;
 }
 
 .report-prompt,
 .report-loading {
   text-align: center;
   padding: 20px;
-  font-size: 12px;
+  font-size: $font-size-xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
 }
@@ -96,8 +97,8 @@
 
 .report-title {
   margin: 0;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-surface);
 }
 
@@ -107,7 +108,7 @@
   color: var(--b3-theme-on-surface);
   opacity: 0.4;
   cursor: pointer;
-  font-size: 14px;
+  font-size: $font-size-sm; // 图标字形尺寸（非正文文字）
   padding: 2px 6px;
   border-radius: stats.$radius-sm;
   transition: opacity 0.15s, background 0.15s;
@@ -135,21 +136,21 @@
 }
 
 .stat-icon {
-  font-size: 16px;
+  font-size: $font-size-base; // 图标字形尺寸（非正文文字）
   margin-bottom: 2px;
 }
 
 .stat-value {
   font-family: stats.$font-mono;
-  font-size: 16px;
-  font-weight: 700;
+  font-size: $font-size-base; // 数据突出展示（报告统计数值）
+  font-weight: $font-weight-bold;
   color: var(--b3-theme-on-surface);
 }
 
 .stat-label {
   font-family: stats.$font-mono;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--b3-theme-on-surface);
@@ -159,15 +160,15 @@
 
 .stat-sub {
   font-family: stats.$font-mono;
-  font-size: 9px;
-  font-weight: 700;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
   color: var(--b3-theme-on-surface);
   opacity: 0.4;
   margin-top: 1px;
 }
 
 .report-highlight {
-  font-size: 12px;
+  font-size: $font-size-xs;
   color: var(--b3-theme-on-surface);
   padding: 6px 8px;
   background: rgba(var(--b3-theme-primary-rgb), 0.05);
@@ -184,8 +185,8 @@
 }
 
 .breakdown-title {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-surface);
   margin: 0 0 6px 0;
 }
@@ -202,7 +203,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: $font-size-xs;
 }
 
 .breakdown-month {
@@ -210,8 +211,8 @@
   flex-shrink: 0;
   text-align: right;
   font-family: stats.$font-mono;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
   letter-spacing: 0.04em;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
@@ -239,8 +240,8 @@
   width: 48px;
   flex-shrink: 0;
   font-family: stats.$font-mono;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-surface);
   text-align: right;
   white-space: nowrap;
@@ -251,7 +252,7 @@
   padding-left: 8px;
   flex-shrink: 0;
   font-family: stats.$font-mono;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
   color: stats.$color-success;
 }

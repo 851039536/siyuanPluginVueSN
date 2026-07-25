@@ -1,4 +1,5 @@
 // 期间选择器组件样式：年份/月份下拉选择
+@use "@/variables" as *;
 @use "../styles/index.scss" as stats;
 
 .period-picker {

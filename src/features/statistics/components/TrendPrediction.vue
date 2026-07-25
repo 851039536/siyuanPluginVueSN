@@ -339,10 +339,9 @@ async function load() {
 onMounted(() => {
   load()
 })
-
-defineExpose({ load })
 </script>
 
 <style scoped lang="scss">
 @use "../styles/TrendPrediction.scss";
+@use '../styles/index.scss' as stats;
 </style>

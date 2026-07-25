@@ -1,0 +1,118 @@
+// 周期对比卡样式：日/周/月环比三卡片
+@use "@/variables" as *;
+@use "../styles/shared" as *;
+@use "../styles/index.scss" as stats;
+
+.comparison-section {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $spacing-2;
+  margin-bottom: $spacing-4;
+
+  .comparison-card {
+    @include stats.stats-card-base;
+    border-radius: stats.$radius-sm;
+
+    .comparison-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: $spacing-2 10px;
+      background: rgba(var(--b3-theme-primary-rgb), 0.06);
+      border-bottom: 1px solid var(--b3-border-color);
+
+      .comparison-icon {
+        font-size: $font-size-sm; // 图标字形尺寸（非正文文字）
+      }
+
+      .comparison-title {
+        font-family: stats.$font-mono;
+        font-size: $font-size-2xs;
+        font-weight: $font-weight-bold;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--b3-theme-primary);
+      }
+    }
+
+    .comparison-body {
+      padding: 6px $spacing-2;
+
+      .comparison-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: $spacing-1 0;
+        border-bottom: 1px dashed var(--b3-border-color);
+        opacity: 0.9;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        .item-label {
+          font-family: stats.$font-mono;
+          font-size: $font-size-2xs;
+          font-weight: $font-weight-bold;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          color: var(--b3-theme-on-surface);
+          opacity: 0.6;
+          min-width: 24px;
+        }
+
+        .item-values {
+          display: flex;
+          align-items: center;
+          gap: 3px;
+          font-size: $font-size-2xs;
+
+          .current-value {
+            font-weight: $font-weight-bold;
+            color: var(--b3-theme-primary);
+          }
+
+          .vs-label {
+            font-size: $font-size-2xs;
+            opacity: 0.4;
+          }
+
+          .prev-value {
+            opacity: 0.6;
+          }
+        }
+
+        .change-tag {
+          padding: 1px $spacing-1;
+          border-radius: stats.$radius-sm;
+          font-family: stats.$font-mono;
+          font-size: $font-size-2xs;
+          font-weight: $font-weight-bold;
+
+          &.positive {
+            background: rgba(stats.$color-success, 0.15);
+            color: stats.$color-success;
+          }
+
+          &.negative {
+            background: rgba(stats.$color-danger, 0.15);
+            color: stats.$color-danger;
+          }
+
+          &.neutral {
+            background: rgba(var(--b3-theme-on-surface-rgb), 0.08);
+            color: var(--b3-theme-on-surface);
+            opacity: 0.5;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Responsive design
+@include tablet-only {
+  .comparison-section {
+    grid-template-columns: 1fr;
+  }
+}

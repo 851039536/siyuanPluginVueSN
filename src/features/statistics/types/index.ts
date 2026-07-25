@@ -80,6 +80,7 @@ export interface StatisticsData {
   todayModified: number
   avgWordsPerDoc: number
   dailyStats: DailyWordCount[]
+  /** 当前周期的 i18n 键（periodDays7 等），由视图层映射为文案 */
   currentPeriod: string
   periodTotalWords: number
   blockTypeStats: BlockTypeStat[]
@@ -87,6 +88,19 @@ export interface StatisticsData {
   codeBlocks: number
   writingStreak: number
   activeDays: number
+}
+
+/**
+ * 历史快照数据项（趋势视图/对比卡/历史表格共用）
+ */
+export interface HistoricalDataItem {
+  date: string
+  dateLabel: string
+  totalNotes: number
+  totalWords: number
+  totalBlocks: number
+  todayCreated: number
+  todayModified: number
 }
 
 /**

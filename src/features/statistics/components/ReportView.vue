@@ -19,6 +19,7 @@
     <ComparisonView
       v-if="reportMode === 'compare'"
       :on-get-comparison-data="onGetComparisonData"
+      :i18n="i18n"
     />
 
     <!-- Single report view -->
@@ -213,6 +214,7 @@ import ComparisonView from "./ComparisonView.vue"
 interface Props {
   onGetReportData?: (year?: number, month?: number) => Promise<ReportData>
   onGetComparisonData?: (yearA: number, monthA: number | undefined, yearB: number, monthB: number | undefined) => Promise<ComparisonData>
+  i18n?: Record<string, any>
 }
 
 const props = defineProps<Props>()
@@ -267,4 +269,5 @@ async function generate() {
 
 <style scoped lang="scss">
 @use "../styles/ReportView.scss";
+@use '../styles/index.scss' as stats;
 </style>

@@ -37,7 +37,6 @@ export interface CategoryI18nDef {
   icon: string
   types: string[]
   i18nKey: string
-  fallback: string
 }
 
 /** 分类视图（每分类独立展开状态） */
@@ -235,10 +234,10 @@ export const META_ACHIEVEMENTS: Omit<AchievementDef, "check">[] = [
 
 /** 里程碑分类基础定义（名称由组件侧注入 i18n） */
 export const CATEGORY_DEFS: CategoryI18nDef[] = [
-  { id: "writing", icon: "edit", types: ["notes", "words", "notebooks"], i18nKey: "catWriting", fallback: "写作达人" },
-  { id: "knowledge", icon: "lightbulb", types: ["tags", "backlinks"], i18nKey: "catKnowledge", fallback: "知识管理" },
-  { id: "rich", icon: "folder", types: ["blocks", "assets", "images", "code"], i18nKey: "catRich", fallback: "内容丰富" },
-  { id: "persistence", icon: "star", types: ["streak", "activeDays"], i18nKey: "catPersistence", fallback: "坚持不懈" },
+  { id: "writing", icon: "edit", types: ["notes", "words", "notebooks"], i18nKey: "catWriting" },
+  { id: "knowledge", icon: "lightbulb", types: ["tags", "backlinks"], i18nKey: "catKnowledge" },
+  { id: "rich", icon: "folder", types: ["blocks", "assets", "images", "code"], i18nKey: "catRich" },
+  { id: "persistence", icon: "star", types: ["streak", "activeDays"], i18nKey: "catPersistence" },
 ]
 
 /** 成就墙分类 Tab 定义 */

@@ -49,4 +49,5 @@ const monthModel = defineModel<number>("month", { required: true })
 
 <style scoped lang="scss">
 @use "../styles/PeriodPicker.scss";
+@use '../styles/index.scss' as stats;
 </style>

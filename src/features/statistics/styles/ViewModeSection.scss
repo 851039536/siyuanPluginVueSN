@@ -29,8 +29,8 @@
     color: var(--b3-theme-on-surface);
     cursor: pointer;
     font-family: stats.$font-mono;
-    font-size: 11px;
-    font-weight: 600;
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-semibold;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -64,8 +64,8 @@
     color: var(--b3-theme-on-surface);
     cursor: pointer;
     font-family: stats.$font-mono;
-    font-size: 10px;
-    font-weight: 600;
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-semibold;
     border-radius: stats.$radius-sm;
 
     &:hover {
@@ -92,8 +92,8 @@
       background: var(--b3-theme-surface);
       color: var(--b3-theme-on-surface);
       font-family: stats.$font-mono;
-      font-size: 12px;
-      font-weight: 600;
+      font-size: $font-size-xs;
+      font-weight: $font-weight-semibold;
       cursor: pointer;
       outline: none;
 
@@ -121,8 +121,8 @@
 
     .stat-label {
       font-family: stats.$font-mono;
-      font-size: 10px;
-      font-weight: 700;
+      font-size: $font-size-2xs;
+      font-weight: $font-weight-bold;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       color: var(--b3-theme-on-surface);
@@ -132,8 +132,8 @@
 
     .stat-value {
       font-family: stats.$font-mono;
-      font-size: 16px;
-      font-weight: 700;
+      font-size: $font-size-base; // 数据突出展示（时段统计数值）
+      font-weight: $font-weight-bold;
       color: var(--b3-theme-primary);
     }
   }

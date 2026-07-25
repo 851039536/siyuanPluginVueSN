@@ -68,13 +68,13 @@ export class RemoteOps {
     return remote.isGitea
   }
 
-  /** 获取项目的远程名称（按平台类型） */
-  private getRemoteName(project: GitProject, target: PlatformKey): string {
+  /** 获取项目的远程名称（按平台类型，未配置时返回 undefined） */
+  private getRemoteName(project: GitProject, target: PlatformKey): string | undefined {
     switch (target) {
-      case "github": return project.githubRemote || "github"
-      case "gitee": return project.giteeRemote || "gitee"
-      case "cnb": return project.cnbRemote || "cnb"
-      default: return project.giteaRemote || "gitea"
+      case "github": return project.githubRemote
+      case "gitee": return project.giteeRemote
+      case "cnb": return project.cnbRemote
+      default: return project.giteaRemote
     }
   }
 
@@ -94,6 +94,14 @@ export class RemoteOps {
     } catch {
       return ""
     }
+  }
+
+  /** pull --ff-only 分叉失败时增强错误提示（首次失败与重试失败统一应用） */
+  private enhancePullError(action: "push" | "pull", msg: string): string {
+    if (action === "pull" && /fast-forward|non-fast-forward/i.test(msg)) {
+      return `拉取失败（本地与远程提交历史已分叉，无法快进合并）。\n请在终端使用 git pull --rebase 或手动 merge 解决。\n原始错误: ${msg}`
+    }
+    return msg
   }
 
   /** 通用远程操作辅助函数（push/pull 共用，含失败重试） */
@@ -123,11 +131,7 @@ export class RemoteOps {
         const stdout = await this.executor.execGit(projectPath, args, signal)
         return { ok: true, stdout: stdout || "", stderr: "" }
       } catch (e: unknown) {
-        let msg = getErrorMessage(e) || String(e)
-        // --ff-only 分叉时给用户更友好的提示
-        if (action === "pull" && /fast-forward|non-fast-forward/i.test(msg)) {
-          msg = `拉取失败（远程有新提交且与本地有分叉）。\n请先使用 Stash 暂存本地修改，然后重新拉取。\n原始错误: ${msg}`
-        }
+        const msg = this.enhancePullError(action, getErrorMessage(e) || String(e))
         // 判断是否为瞬态网络错误（可重试）
         const isNetworkErr = /(could not resolve|timed out|connection refused|connection reset|unable to access|early EOF|RPC failed)/i.test(msg)
         if (!isNetworkErr) {
@@ -138,7 +142,11 @@ export class RemoteOps {
           return { ok: false, stdout: "", stderr: "操作已取消" }
         }
         await new Promise<void>((resolve) => {
-          const timer = setTimeout(resolve, 1000)
+          const timer = setTimeout(() => {
+            // timer 自然到期后移除 abort listener，避免残留
+            if (signal) { signal.removeEventListener("abort", onAbort) }
+            resolve()
+          }, 1000)
           const onAbort = () => { clearTimeout(timer); resolve() }
           if (signal) { signal.addEventListener("abort", onAbort, { once: true }) }
         })
@@ -149,7 +157,7 @@ export class RemoteOps {
           const stdout = await this.executor.execGit(projectPath, args, signal)
           return { ok: true, stdout: stdout || "", stderr: "" }
         } catch (e2: unknown) {
-          return { ok: false, stdout: "", stderr: getErrorMessage(e2) || String(e2) }
+          return { ok: false, stdout: "", stderr: this.enhancePullError(action, getErrorMessage(e2) || String(e2)) }
         }
       }
     }
@@ -298,6 +306,10 @@ export class RemoteOps {
 
     const cwd = resolveValidPath(project)
     const remoteName = this.getRemoteName(project, target)
+    // 纵深防御：未配置该平台远程时直接返回，避免对不存在的远程执行 git 命令
+    if (!remoteName) {
+      return { ok: false, stdout: "", stderr: "该平台远程未配置" }
+    }
 
     return this.executor.withAbortController(id, action, async (signal) => {
       // pull 时预解析当前分支，显式指定拉取分支
@@ -374,6 +386,11 @@ export class RemoteOps {
       return emptyResult
     }
 
+    // detached HEAD 时 rev-parse 返回字面量 "HEAD"，归一化为空并提前返回，
+    // 避免构造 remote/HEAD...HEAD 触发 ambiguous argument 被误判为 noUpstream（虚假 needsPush）
+    if (status.branch === "HEAD") { status.branch = "" }
+    if (!status.branch) { return emptyResult }
+
     // 如果指定 fetchFirst，先并行 fetch 所有已配置远程以更新跟踪分支
     if (opts?.fetchFirst) {
       await this.fetchAllForProject(id)
@@ -425,6 +442,11 @@ export class RemoteOps {
     // 缓存用于智能跳过
     this.pushStatusCache[id] = status
     return status
+  }
+
+  /** 失效推送状态缓存（commit 等改变本地提交的操作后调用，防止智能跳过用到陈旧的 ahead=0） */
+  invalidatePushStatusCache(id: string): void {
+    delete this.pushStatusCache[id]
   }
 
   async checkCanPushToCloud(id: string): Promise<{

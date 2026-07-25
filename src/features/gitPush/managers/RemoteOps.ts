@@ -86,12 +86,23 @@ export class RemoteOps {
     skipped: true,
   }
 
+  /** 获取当前分支名（detached HEAD 或失败时返回空串） */
+  private async getCurrentBranch(cwd: string): Promise<string> {
+    try {
+      const branch = await this.executor.execGit(cwd, ["rev-parse", "--abbrev-ref", "HEAD"])
+      return branch === "HEAD" ? "" : branch
+    } catch {
+      return ""
+    }
+  }
+
   /** 通用远程操作辅助函数（push/pull 共用，含失败重试） */
   private async tryRemoteOp(
     projectPath: string,
     remoteName: string | undefined,
     action: "push" | "pull",
     signal?: AbortSignal,
+    pullBranch?: string,
   ): Promise<RemoteOpResult> {
     if (!remoteName) return RemoteOps.skippedResult
 
@@ -101,7 +112,10 @@ export class RemoteOps {
         ? ["push", remoteName, "HEAD"]
         : ["push", remoteName, "--all"]
     } else {
-      args = ["pull", remoteName, "--ff-only"]
+      // 显式指定分支，避免非默认上游远程时 Git 报 "did not specify a branch" 错误
+      args = pullBranch
+        ? ["pull", remoteName, pullBranch, "--ff-only"]
+        : ["pull", remoteName, "--ff-only"]
     }
 
     const tryExec = async (): Promise<RemoteOpResult> => {
@@ -187,6 +201,8 @@ export class RemoteOps {
     }
 
     return this.executor.withAbortController(id, action, async (signal) => {
+      // pull 时预解析当前分支，供 tryRemoteOp 显式指定拉取分支
+      const pullBranch = action === "pull" ? await this.getCurrentBranch(cwd) : undefined
       // 智能跳过的静态结果
       const skippedResults: Record<string, RemoteOpResult> = {}
       const entries: { key: PlatformKey, remoteName: string | undefined }[] = []
@@ -206,7 +222,7 @@ export class RemoteOps {
 
       const results = await Promise.allSettled(
         entries.map(({ key, remoteName }) =>
-          this.tryRemoteOp(cwd, remoteName, action, signal).then((r) => ({ key, ...r })),
+          this.tryRemoteOp(cwd, remoteName, action, signal, pullBranch).then((r) => ({ key, ...r })),
         ),
       )
 
@@ -284,7 +300,9 @@ export class RemoteOps {
     const remoteName = this.getRemoteName(project, target)
 
     return this.executor.withAbortController(id, action, async (signal) => {
-      const result = await this.tryRemoteOp(cwd, remoteName, action, signal)
+      // pull 时预解析当前分支，显式指定拉取分支
+      const pullBranch = action === "pull" ? await this.getCurrentBranch(cwd) : undefined
+      const result = await this.tryRemoteOp(cwd, remoteName, action, signal, pullBranch)
       return {
         ok: result.ok,
         stdout: result.stdout,

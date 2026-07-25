@@ -1843,6 +1843,8 @@
   "confirmRemoveChecksum": "Are you sure you want to delete this checksum?",
   "confirmClearAll": "Are you sure you want to clear all checksums?",
   "confirmClearLogs": "Are you sure you want to clear all logs?",
+  "uploadSuccess": "Upload successful",
+  "uploadFailed": "Upload failed",
   "scriptLauncher": {
     "panelTitle": "Script Launcher",
     "description": "Manage and run custom scripts, supports Python, Bash, PowerShell, Node.js, Batch",

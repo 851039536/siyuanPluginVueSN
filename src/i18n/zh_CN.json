@@ -1843,6 +1843,8 @@
   "confirmRemoveChecksum": "确定要删除该校验值吗？",
   "confirmClearAll": "确定要清空全部校验值吗？",
   "confirmClearLogs": "确定要清空全部日志吗？",
+  "uploadSuccess": "上传成功",
+  "uploadFailed": "上传失败",
   "scriptLauncher": {
     "panelTitle": "脚本启动器",
     "description": "管理并运行自定义脚本，支持 Python、Bash、PowerShell、Node.js、Batch",

@@ -101,8 +101,15 @@
         @refresh="refreshLocalBackupList"
       >
         <template #actions="{ item }">
+          <Button
+            size="xsmall"
+            :disabled="!isConfigured || uploadingItems[item.path]"
+            @click="uploadLocalBackup(item)"
+          >
+            {{ i18n.uploadToS3 }}
+          </Button>
           <Button variant="danger" size="xsmall" @click="deleteLocalBackup(item)">
-            {{ i18n.delete || "删除" }}
+            {{ i18n.delete }}
           </Button>
         </template>
       </BackupListCard>
@@ -307,6 +314,7 @@ const keepBackupCount = ref(7)
 
 const localBackupList = ref<LocalBackupInfo[]>([])
 const isLoadingLocal = ref(false)
+const uploadingItems = ref<Record<string, boolean>>({})
 
 let lastBackupTimestamp = 0
 
@@ -772,6 +780,26 @@ async function deleteLocalBackup(backup: Record<string, any>): Promise<void> {
   } catch (error) {
     console.error("删除本地备份失败:", error)
     showMessage(props.i18n.deleteFailed || "删除失败", 3000, "error")
+  }
+}
+
+async function uploadLocalBackup(backup: Record<string, any>): Promise<void> {
+  if (!node || !isConfigured.value) { return }
+  uploadingItems.value = { ...uploadingItems.value, [backup.path]: true }
+  try {
+    const content = await node.fs.promises.readFile(backup.path)
+    const prefix = (s3Config.value.prefix || "siyuan-backup/").replace(/\/+$/, "")
+    const sub = (s3SubPrefix.value || "data-backup").replace(/\/+$/, "")
+    const s3Key = [prefix, sub, backup.name].filter(Boolean).join("/")
+    await uploadFileContent(content, s3Key)
+    addLog({ type: "s3Upload", action: props.i18n.uploadToS3 || "上传到 S3", fileName: backup.name, success: true })
+    showMessage(props.i18n.uploadSuccess || "上传成功", 2000, "info")
+    await refreshBackupList()
+  } catch (err: unknown) {
+    addLog({ type: "s3Upload", action: props.i18n.uploadToS3 || "上传到 S3", fileName: backup.name, success: false, message: getErrorMessage(err) })
+    showMessage(`${props.i18n.uploadFailed || "上传失败"}: ${getErrorMessage(err)}`, 5000, "error")
+  } finally {
+    uploadingItems.value = { ...uploadingItems.value, [backup.path]: false }
   }
 }
 

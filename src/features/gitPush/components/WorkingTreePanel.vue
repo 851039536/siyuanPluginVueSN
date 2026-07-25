@@ -11,7 +11,6 @@
         :icon="expanded ? 'mdi:chevron-down' : 'mdi:chevron-right'"
         height="12"
       />
-      <span class="wt-label">WORKING TREE</span>
       <template v-if="tree?.hasChanges">
         <span class="wt-count">
           <span
@@ -375,7 +374,7 @@ const COMMIT_TYPES = COMMIT_TYPE_VALUES.map((v) => ({
   label: v,
 }))
 
-const expanded = ref(props.initialExpanded ?? false)
+const expanded = ref(props.initialExpanded ?? true)
 const commitType = ref("chore")
 const commitMessage = ref("")
 const activeDiffFile = ref<FileChange | null>(null)

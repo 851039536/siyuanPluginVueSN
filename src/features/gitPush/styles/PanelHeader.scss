@@ -40,7 +40,7 @@
 }
 
 .gp-title {
-  font-size: $font-size-sm;
+  font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
 }
 
@@ -130,7 +130,7 @@
 }
 
 .gp-platform-link-label {
-  font-size: 9px;
+  font-size: $font-size-2xs;
   opacity: 0.55;
   margin-left: 2px;
 }

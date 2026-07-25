@@ -57,7 +57,7 @@
 }
 
 .gp-dialog-title {
-  font-size: $font-size-sm;
+  font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
 }
 
@@ -108,7 +108,7 @@
   gap: 6px;
   padding: 10px 12px;
   border-bottom: 1px solid var(--b3-border-color);
-  font-size: 12px;
+  font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-surface);
 }
@@ -134,7 +134,7 @@
 
   p {
     margin: 0;
-    font-size: 11px;
+    font-size: $font-size-2xs;
     line-height: 1.55;
     color: var(--b3-theme-on-surface-light);
     white-space: pre-line;

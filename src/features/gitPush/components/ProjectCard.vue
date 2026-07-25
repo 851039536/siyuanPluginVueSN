@@ -470,7 +470,6 @@
         @load-diff="(file: string, staged: boolean) => $emit('loadDiff', project.id, file, staged)"
         @clear-output="$emit('clearOutput', project.id)"
         @discard-file="(file: string, staged: boolean, status: string) => $emit('discardFile', project.id, file, staged, status)"
-        @expand="$emit('expand', project.id)"
         @refresh-working-tree="$emit('refreshWorkingTree', project.id)"
       />
 
@@ -843,11 +842,13 @@ const nameSegments = computed(() => highlightSegments(props.project.name, props.
 /** Stash / Tag 面板 Tab 切换 */
 const stashTagTab = ref<"worktree" | "log" | "stash" | "tag">("worktree")
 
-// 从其他 Tab 切换回 worktree 时自动刷新当前项目工作区（跳过初始值）
-let tabSwitchInitialized = false
+// 切换回 worktree 时自动刷新工作区；切到 log/stash/tag 时懒加载次要数据
 watch(stashTagTab, (val) => {
-  if (!tabSwitchInitialized) { tabSwitchInitialized = true; return }
-  if (val === "worktree") emit("refreshWorkingTree", props.project.id)
+  if (val === "worktree") {
+    emit("refreshWorkingTree", props.project.id)
+  } else {
+    emit("expand", props.project.id)
+  }
 })
 
 /** 推送按钮状态 class 映射（消除模板中 3 次 getPushStatus 调用） */

@@ -6,7 +6,9 @@
         <IconWrapper
           name="star"
           :size="16"
-        /> {{ i18n.title }}
+        />
+        <!-- 区块标题："字数排行" -->
+        {{ i18n.wordRanking }}
       </h4>
       <div class="ranking-controls">
         <select
@@ -80,11 +82,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   chartData: () => [],
-  i18n: () => ({
-    title: "字数排行",
-    wordsUnit: "字",
-    emptyText: "暂无数据",
-  }),
+  i18n: () => ({}),
 })
 
 const topNOptions = [10, 50, 100] as const
@@ -117,4 +115,5 @@ function getRankClass(index: number): string {
 
 <style lang="scss" scoped>
 @use '../styles/WordRanking.scss';
+@use '../styles/index.scss' as stats;
 </style>

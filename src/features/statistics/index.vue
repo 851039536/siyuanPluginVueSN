@@ -203,6 +203,7 @@
         <ReportView
           :on-get-report-data="getReportData"
           :on-get-comparison-data="getComparisonData"
+          :i18n="i18n"
         />
       </div>
 
@@ -267,7 +268,6 @@ import {
   watch,
 } from "vue"
 import Loader from "@/components/Loader.vue"
-import { PluginStorage } from "@/utils/pluginStorage"
 import BarChart from "./components/charts/BarChart.vue"
 import DocBarChart from "./components/charts/DocBarChart.vue"
 import DocChangeSection from "./components/DocChangeSection.vue"
@@ -285,6 +285,7 @@ import TrendView from "./components/TrendView.vue"
 import ViewModeSection from "./components/ViewModeSection.vue"
 import WordRanking from "./components/WordRanking.vue"
 import { useHistoryData } from "./composables/useHistoryData"
+import { useMilestoneStorage } from "./composables/useMilestoneStorage"
 import { provideNotebookHover } from "./composables/useNotebookHover"
 import { useNotebookStats } from "./composables/useNotebookStats"
 import { useStatistics } from "./composables/useStatistics"
@@ -306,26 +307,9 @@ import {
   getReportData,
   getTrendPrediction,
 } from "./queries/reportStats"
-import { STATS_DEFAULT_LABELS } from "./types/constants"
-import { MILESTONE_TYPES, STORAGE_KEY_MILESTONE_RULES } from "./types/milestoneRules"
+import { MILESTONE_FIELD_MAP, MILESTONE_TYPES } from "./types/milestoneRules"
 import { STATISTICS_STORAGE_KEYS } from "./types/storage"
 import { countMilestonesReached } from "./utils/milestones"
-import type { StatisticsData } from "./types"
-
-/** Milestone 类型 → StatisticsData 字段名映射 */
-const MILESTONE_FIELD_MAP: Record<string, keyof StatisticsData> = {
-  notes: "totalNotes",
-  words: "totalWords",
-  blocks: "totalBlocks",
-  tags: "totalTags",
-  backlinks: "totalBacklinks",
-  assets: "totalAssets",
-  images: "totalImages",
-  notebooks: "notebookCount",
-  code: "codeBlocks",
-  streak: "writingStreak",
-  activeDays: "activeDays",
-}
 
 interface Props {
   plugin: Plugin
@@ -335,10 +319,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const i18n = computed(() => ({
-  ...STATS_DEFAULT_LABELS,
-  ...(props.i18n || {}),
-}))
+const i18n = computed(() => props.i18n || {})
 
 const TAB_CONFIGS = [
   {
@@ -384,9 +365,20 @@ const {
   monthYearRange,
   selectedYear,
   periodAvgWords,
-  chartTitle,
   refreshData: refreshCore,
 } = useStatistics()
+
+// 图表标题：查询层返回周期 i18n 键，此处映射为文案（年视图带年份占位符）
+const chartTitle = computed(() => {
+  const key = stats.value?.currentPeriod
+  if (!key) return ""
+  if (key === "periodYears") {
+    return String(i18n.value.periodYears || "")
+      .replace("{start}", String(selectedYear.value - 4))
+      .replace("{end}", String(selectedYear.value))
+  }
+  return i18n.value[key] || ""
+})
 
 const {
   historicalData,
@@ -433,7 +425,8 @@ const milestonesAchievedCount = computed(() => {
   }, 0)
 })
 
-const customRules = ref<Record<string, number[]>>({})
+// 里程碑自定义规则：与编辑弹窗共享同一份 composable 状态
+const { customRules, initMilestoneStorage } = useMilestoneStorage()
 
 const storagePaths = computed(() => {
   const dataDir = (props.plugin as any).dataDir || ""
@@ -442,7 +435,7 @@ const storagePaths = computed(() => {
   return [
     {
       key: STATISTICS_STORAGE_KEYS.HISTORY,
-      desc: "每日快照 · 概览(日环比) 趋势 热力图",
+      desc: i18n.value.historyStorageDesc,
       path: `${baseDir}/${STATISTICS_STORAGE_KEYS.HISTORY}.json`,
     },
   ]
@@ -497,17 +490,10 @@ onMounted(async () => {
   refreshData()
   props.onRegisterRefresh?.(refreshData)
   heatmapNotebooks.value = await getHeatmapNotebooks()
-  const storage = new PluginStorage(props.plugin)
-  const rules = await storage.load<Record<string, number[]>>(STORAGE_KEY_MILESTONE_RULES)
-  if (rules) customRules.value = rules
-})
-
-defineExpose({
-  refreshData,
+  await initMilestoneStorage(props.plugin)
 })
 </script>
 
 <style scoped lang="scss">
-@use '@/variables' as *;
 @use "./styles/index.scss" as stats;
 </style>

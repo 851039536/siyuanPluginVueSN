@@ -26,13 +26,16 @@ export class Statistics {
   }
 
   private registerDock(): void {
+    // 取 statistics 分片，使组件内可用扁平键（i18n.wordsUnit 等）访问
+    const pluginI18n = (this.plugin.i18n as Record<string, any>) || {}
+    const i18n = pluginI18n.statistics || pluginI18n
     createVueDockApp(this.plugin, StatisticsPanel, {
       position: "RightBottom",
       width: 350,
       icon: "iconDatabase",
-      title: "数据统计",
+      title: i18n.title || "数据统计",
       type: "statistics-dock",
-      i18n: this.plugin.i18n,
+      i18n,
       extraProps: {
         onRegisterRefresh: (fn: () => Promise<void>) => {
           this.panelRefreshFn = fn

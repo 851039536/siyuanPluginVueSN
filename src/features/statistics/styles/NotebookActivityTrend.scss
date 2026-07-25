@@ -1,4 +1,5 @@
 // 笔记本写作活跃度趋势样式：范围选择/多线折线图/tooltip/排行表
+@use "@/variables" as *;
 @use '../styles/index.scss' as stats;
 
 .activity-page {
@@ -25,7 +26,7 @@
   background: transparent;
   color: var(--b3-theme-on-surface-light);
   font-family: stats.$font-mono;
-  font-size: 12px;
+  font-size: $font-size-xs;
   cursor: pointer;
   transition: all 0.15s;
 
@@ -37,7 +38,7 @@
   &.active {
     background: var(--b3-theme-primary);
     color: var(--b3-theme-on-primary);
-    font-weight: 600;
+    font-weight: $font-weight-semibold;
   }
 }
 
@@ -45,7 +46,7 @@
 @include stats.summary-cards-base;
 
 .summary-card .summary-value {
-  font-size: 18px;
+  font-size: $font-size-lg; // 数据突出展示（摘要卡数值）
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -56,7 +57,7 @@
 .trend-empty {
   text-align: center;
   padding: 40px 20px;
-  font-size: 13px;
+  font-size: $font-size-xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
 }
@@ -80,7 +81,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 12px;
+  font-size: $font-size-xs;
   color: var(--b3-theme-on-surface);
   cursor: pointer;
   padding: 3px 6px;
@@ -126,14 +127,14 @@
 
 .y-label {
   font-family: stats.$font-mono;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   fill: var(--b3-theme-on-surface);
   opacity: 0.5;
 }
 
 .x-label {
   font-family: stats.$font-mono;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   fill: var(--b3-theme-on-surface);
   opacity: 0.4;
 }
@@ -164,15 +165,14 @@
   border: 1px solid var(--b3-border-color);
   border-radius: stats.$radius-sm;
   padding: 8px 10px;
-  font-size: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  font-size: $font-size-xs;
   min-width: 120px;
   z-index: 10;
 }
 
 .tooltip-date {
   font-family: stats.$font-mono;
-  font-weight: 600;
+  font-weight: $font-weight-semibold;
   margin-bottom: 4px;
   color: var(--b3-theme-on-surface);
 }
@@ -199,7 +199,7 @@
 
 .tooltip-val {
   font-family: stats.$font-mono;
-  font-weight: 600;
+  font-weight: $font-weight-semibold;
 }
 
 // ========== Ranking Table ==========
@@ -212,8 +212,8 @@
 
 .ranking-title {
   font-family: stats.$font-mono;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-surface);
   margin-bottom: 12px;
   text-transform: uppercase;
@@ -231,8 +231,8 @@
   align-items: center;
   padding: 6px 4px;
   font-family: stats.$font-mono;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--b3-theme-on-surface-light);
@@ -243,7 +243,7 @@
   display: flex;
   align-items: center;
   padding: 8px 4px;
-  font-size: 12px;
+  font-size: $font-size-xs;
   color: var(--b3-theme-on-surface);
   border-radius: stats.$radius-sm;
   transition: background 0.15s;
@@ -257,7 +257,7 @@
   width: 28px;
   text-align: center;
   flex-shrink: 0;
-  font-size: 11px;
+  font-size: $font-size-2xs;
   opacity: 0.5;
 }
 
@@ -284,7 +284,7 @@
   text-align: right;
   flex-shrink: 0;
   font-family: stats.$font-mono;
-  font-weight: 600;
+  font-weight: $font-weight-semibold;
 }
 
 .col-days {
@@ -328,7 +328,7 @@
 .bar-label {
   width: 32px;
   font-family: stats.$font-mono;
-  font-size: 11px;
+  font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface-light);
   text-align: right;
 }

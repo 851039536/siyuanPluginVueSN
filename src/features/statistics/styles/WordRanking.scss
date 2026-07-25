@@ -42,7 +42,7 @@
   .ranking-empty {
     text-align: center;
     padding: $spacing-5;
-    font-size: 11px; // 无精确 Token（介于 $font-size-2xs 10px 与 $font-size-xs 12px 之间）
+    font-size: $font-size-2xs; // 无精确 Token（介于 $font-size-2xs 10px 与 $font-size-xs 12px 之间）
     color: var(--b3-theme-on-surface);
     opacity: 0.5;
   }
@@ -111,7 +111,7 @@
 
         .rank-date {
           font-family: stats.$font-mono;
-          font-size: 11px; // 无精确 Token
+          font-size: $font-size-2xs; // 无精确 Token
           font-weight: $font-weight-bold;
           color: var(--b3-theme-on-surface);
           white-space: nowrap;

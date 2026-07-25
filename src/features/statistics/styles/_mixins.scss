@@ -1,5 +1,4 @@
 // Statistics 模块专属 Mixins（本地副本，解耦对 superPanel 的跨功能依赖）
-@use "./variables" as *;
 
 // 滚动条样式
 @mixin scrollbar-thin {

@@ -11,7 +11,8 @@
           :size="10"
         />
       </span>
-      <span class="collapse-title">{{ `${i18n.docChanges || '文档变化'} — ${rangeLabel}` }}</span>
+      <!-- 折叠区标题："文档变化 — {范围}" -->
+      <span class="collapse-title">{{ `${i18n.docChanges} — ${rangeLabel}` }}</span>
       <span
         v-if="badgeText"
         class="collapse-badge"
@@ -36,53 +37,11 @@
 
     <!-- ========== 最近更新模式 ========== -->
     <template v-if="docRange === 'recent'">
-      <div
-        v-if="recentDocsLoading"
-        class="changed-docs-loading"
-      >
-        {{ i18n.loading || '加载中...' }}
-      </div>
-
-      <div
-        v-else-if="recentDocs.length === 0"
-        class="changed-docs-empty"
-      >
-        {{ i18n.noDocChanges || '暂无最近更新的文档' }}
-      </div>
-
-      <div
-        v-else
-        class="recent-docs-list"
-      >
-        <template
-          v-for="group in recentGroupedDocs"
-          :key="group.label"
-        >
-          <div class="recent-group-header">
-            {{ group.label }}
-          </div>
-          <div
-            v-for="doc in group.docs"
-            :key="doc.id"
-            class="recent-doc-item"
-            :class="{ new: isDocCreatedToday(doc) }"
-            @click="openDoc(doc.id)"
-          >
-            <span class="recent-doc-badge">
-              <IconWrapper
-                :name="isDocCreatedToday(doc) ? 'plus' : 'edit'"
-                :size="11"
-              />
-            </span>
-            <span
-              v-if="doc.notebookName"
-              class="recent-doc-notebook"
-            >{{ doc.notebookName }}</span>
-            <span class="recent-doc-title">{{ doc.title || '无标题' }}</span>
-            <span class="recent-doc-time">{{ formatRelativeTime(doc.updated) }}</span>
-          </div>
-        </template>
-      </div>
+      <RecentUpdatedList
+        :docs="recentDocs"
+        :loading="recentDocsLoading"
+        :i18n="i18n"
+      />
     </template>
 
     <!-- ========== 范围模式：柱状图 ========== -->
@@ -92,10 +51,11 @@
         class="range-chart-section"
       >
         <div class="range-chart-bar-group">
+          <!-- 图例："新增" / "修改" / "删除" -->
           <div class="range-chart-legend">
-            <span class="legend-dot new"></span>{{ i18n.todayCreated || '新增' }}
-            <span class="legend-dot modified"></span>{{ i18n.todayModified || '修改' }}
-            <span class="legend-dot deleted"></span>{{ i18n.deletedTitle || '删除' }}
+            <span class="legend-dot new"></span>{{ i18n.todayCreated }}
+            <span class="legend-dot modified"></span>{{ i18n.todayModified }}
+            <span class="legend-dot deleted"></span>{{ i18n.deletedTitle }}
           </div>
           <div
             v-for="item in visibleRangeStats"
@@ -150,116 +110,18 @@
             :class="{ active: docChangeDate === todayDateStr }"
             @click="setDocDateToday"
           >
-            {{ i18n.today || '今天' }}
+            <!-- 快捷按钮："今天" -->
+            {{ i18n.today }}
           </button>
         </div>
 
-        <div
-          v-if="changedDocsLoading"
-          class="changed-docs-loading"
-        >
-          {{ i18n.loading || '加载中...' }}
-        </div>
-
-        <div
-          v-else-if="changedDocs.newDocs.length > 0 || changedDocs.modifiedDocs.length > 0 || deletedDocs.length > 0"
-          class="changed-docs-content"
-        >
-          <div
-            v-if="changedDocs.newDocs.length > 0"
-            class="changed-docs-group"
-          >
-            <div class="changed-docs-group-title">
-              <IconWrapper
-                name="success"
-                :size="12"
-              /> {{ i18n.todayCreated || '新增' }}（{{ changedDocs.newDocs.length }}）
-            </div>
-            <div
-              v-for="doc in changedDocs.newDocs"
-              :key="doc.id"
-              class="changed-doc-item new"
-              title="点击打开文档"
-              @click="openDoc(doc.id)"
-            >
-              <span class="changed-doc-icon">
-                <IconWrapper
-                  name="plus"
-                  :size="11"
-                />
-              </span>
-              <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
-              <span
-                v-if="doc.time"
-                class="changed-doc-time"
-              >{{ doc.time }}</span>
-            </div>
-          </div>
-          <div
-            v-if="changedDocs.modifiedDocs.length > 0"
-            class="changed-docs-group"
-          >
-            <div class="changed-docs-group-title">
-              <IconWrapper
-                name="edit"
-                :size="12"
-              /> {{ i18n.todayModified || '修改' }}（{{ changedDocs.modifiedDocs.length }}）
-            </div>
-            <div
-              v-for="doc in changedDocs.modifiedDocs"
-              :key="doc.id"
-              class="changed-doc-item modified"
-              title="点击打开文档"
-              @click="openDoc(doc.id)"
-            >
-              <span class="changed-doc-icon">
-                <IconWrapper
-                  name="edit"
-                  :size="11"
-                />
-              </span>
-              <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
-              <span
-                v-if="doc.time"
-                class="changed-doc-time"
-              >{{ doc.time }}</span>
-            </div>
-          </div>
-          <div
-            v-if="deletedDocs.length > 0"
-            class="changed-docs-group"
-          >
-            <div class="changed-docs-group-title">
-              <IconWrapper
-                name="delete"
-                :size="12"
-              /> {{ i18n.deletedTitle || '删除' }}（{{ deletedDocs.length }}）
-            </div>
-            <div
-              v-for="(doc, idx) in deletedDocs"
-              :key="idx"
-              class="changed-doc-item deleted"
-            >
-              <span class="changed-doc-icon">
-                <IconWrapper
-                  name="delete"
-                  :size="11"
-                />
-              </span>
-              <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
-              <span
-                v-if="doc.time"
-                class="changed-doc-time"
-              >{{ doc.time }}</span>
-            </div>
-          </div>
-        </div>
-        <div
-          v-else
-          class="changed-docs-empty"
-        >
-          {{ i18n.noDocChanges || '当天无新增或修改' }}
-        </div>
+        <!-- 单日变更列表（新增/修改/删除三分组） -->
+        <DocChangeList
+          :changed-docs="changedDocs"
+          :deleted-docs="deletedDocs"
+          :loading="changedDocsLoading"
+          :i18n="i18n"
+        />
       </div>
 
       <!-- 范围模式下无数据 -->
@@ -267,7 +129,8 @@
         v-if="docRange !== 'today' && !selectedChartDate && visibleRangeStats.length === 0"
         class="changed-docs-empty"
       >
-        {{ rangeStatsLoading ? (i18n.loading || '加载中...') : (i18n.noDocChanges || '该范围无变更') }}
+        <!-- 加载中："加载中..." / 空状态："该范围无变更" -->
+        {{ rangeStatsLoading ? i18n.loading : i18n.noRangeChanges }}
       </div>
     </template>
 
@@ -280,7 +143,9 @@
         <IconWrapper
           name="delete"
           :size="12"
-        /> {{ i18n.deletedTitle || '删除' }}（{{ rangeDeletedDocs.length }}）
+        />
+        <!-- 分组标题："删除（N）" -->
+        {{ i18n.deletedTitle }}（{{ rangeDeletedDocs.length }}）
       </div>
       <div class="range-deleted-list">
         <div
@@ -298,7 +163,8 @@
             v-if="doc.date"
             class="range-deleted-date"
           >{{ doc.date }}</span>
-          <span class="changed-doc-title">{{ doc.title || '无标题' }}</span>
+          <!-- 文档标题（空标题显示"无标题"） -->
+          <span class="changed-doc-title">{{ doc.title || i18n.untitled }}</span>
           <span
             v-if="doc.time"
             class="changed-doc-time"
@@ -324,6 +190,8 @@ import {
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { formatYmd } from "../utils"
+import DocChangeList from "./DocChangeList.vue"
+import RecentUpdatedList from "./RecentUpdatedList.vue"
 interface Props {
   onGetDateChangedDocs?: (dateStr: string) => Promise<{
     newDocs: ChangedDoc[]
@@ -346,12 +214,6 @@ function toggleExpanded() {
   expanded.value = !expanded.value
 }
 
-function openDoc(docId: string) {
-  if (docId) {
-    window.open(`siyuan://blocks/${docId}`)
-  }
-}
-
 function getTodayStr(): string {
   return formatYmd(new Date())
 }
@@ -367,30 +229,31 @@ const rangeDeletedDocs = ref<DeletedDoc[]>([])
 
 type DocRangeType = 'today' | '3d' | '7d' | '1m' | '6m' | 'recent'
 const docRange = ref<DocRangeType>('3d')
+// 范围选项（今天/近3天/近7天/近1月/近半年/最近更新）
 const dateRangeOptions = computed<Array<{ value: DocRangeType, label: string }>>(() => [
   {
     value: 'today',
-    label: props.i18n.today || '今天',
+    label: props.i18n.today,
   },
   {
     value: '3d',
-    label: props.i18n.days3 || '近3天',
+    label: props.i18n.days3,
   },
   {
     value: '7d',
-    label: props.i18n.days7 || '近7天',
+    label: props.i18n.last7Days,
   },
   {
     value: '1m',
-    label: props.i18n.oneMonth || '近1月',
+    label: props.i18n.oneMonth,
   },
   {
     value: '6m',
-    label: props.i18n.halfYear || '近半年',
+    label: props.i18n.halfYear,
   },
   {
     value: 'recent',
-    label: props.i18n.recentUpdated || '最近更新',
+    label: props.i18n.recentUpdatedDocs,
   },
 ])
 
@@ -398,96 +261,9 @@ const rangeStats = ref<RangeStatItem[]>([])
 const rangeStatsLoading = ref(false)
 const selectedChartDate = ref<string | null>(null)
 
-// ---- 最近更新模式 ----
+// ---- 最近更新模式（分组/相对时间逻辑见 RecentUpdatedList.vue） ----
 const recentDocs = ref<RecentUpdatedDoc[]>([])
 const recentDocsLoading = ref(false)
-
-function isDocCreatedToday(doc: RecentUpdatedDoc): boolean {
-  return doc.created.substring(0, 8) === getTodayStr()
-}
-
-type TimeGroup = 'today' | 'yesterday' | 'thisWeek' | 'earlier'
-
-function getYesterdayStr(): string {
-  const d = new Date()
-  d.setDate(d.getDate() - 1)
-  return formatYmd(d)
-}
-
-function getTimeGroup(updated: string): TimeGroup {
-  if (!updated || updated.length < 8) return 'earlier'
-  const date8 = updated.substring(0, 8)
-  if (date8 === getTodayStr()) return 'today'
-  if (date8 === getYesterdayStr()) return 'yesterday'
-
-  const today = new Date()
-  const y = Number.parseInt(updated.substring(0, 4))
-  const mo = Number.parseInt(updated.substring(4, 6)) - 1
-  const d = Number.parseInt(updated.substring(6, 8))
-  const docDate = new Date(y, mo, d)
-  const diffDay = Math.floor((today.getTime() - docDate.getTime()) / 86400000)
-  if (diffDay < 7) return 'thisWeek'
-  return 'earlier'
-}
-
-const groupLabels: Record<TimeGroup, string> = {
-  today: '今天',
-  yesterday: '昨天',
-  thisWeek: '本周',
-  earlier: '更早',
-}
-
-interface DocGroup {
-  label: string
-  docs: RecentUpdatedDoc[]
-}
-
-const recentGroupedDocs = computed<DocGroup[]>(() => {
-  const groups: Record<TimeGroup, RecentUpdatedDoc[]> = {
-    today: [],
-    yesterday: [],
-    thisWeek: [],
-    earlier: [],
-  }
-  for (const doc of recentDocs.value) {
-    groups[getTimeGroup(doc.updated)].push(doc)
-  }
-  const result: DocGroup[] = []
-  for (const key of ['today', 'yesterday', 'thisWeek', 'earlier'] as TimeGroup[]) {
-    if (groups[key].length > 0) {
-      result.push({
-        label: groupLabels[key],
-        docs: groups[key],
-      })
-    }
-  }
-  return result
-})
-
-function formatRelativeTime(updated: string): string {
-  if (!updated || updated.length < 8) return ""
-
-  const y = Number.parseInt(updated.substring(0, 4))
-  const mo = Number.parseInt(updated.substring(4, 6)) - 1
-  const d = Number.parseInt(updated.substring(6, 8))
-  const h = updated.length >= 10 ? Number.parseInt(updated.substring(8, 10)) : 0
-  const mi = updated.length >= 12 ? Number.parseInt(updated.substring(10, 12)) : 0
-
-  const docDate = new Date(y, mo, d, h, mi)
-  const now = new Date()
-  const diffMs = now.getTime() - docDate.getTime()
-  const diffMin = Math.floor(diffMs / 60000)
-  const diffHour = Math.floor(diffMs / 3600000)
-  const diffDay = Math.floor(diffMs / 86400000)
-
-  if (diffMin < 1) return "刚刚"
-  if (diffMin < 60) return `${diffMin} 分钟前`
-  if (diffHour < 24) return `${diffHour} 小时前`
-  if (diffDay < 7) return `${diffDay} 天前`
-  if (diffDay < 30) return `${Math.floor(diffDay / 7)} 周前`
-  if (diffDay < 365) return `${Math.floor(diffDay / 30)} 个月前`
-  return `${Math.floor(diffDay / 365)} 年前`
-}
 
 // ---- 现有逻辑 ----
 

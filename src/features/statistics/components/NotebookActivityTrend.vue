@@ -21,7 +21,8 @@
           {{ summary.activeNotebooks }}
         </div>
         <div class="summary-label">
-          {{ i18n.activeNotebooks || '活跃笔记本' }}
+          <!-- 摘要标签："活跃笔记本" -->
+          {{ i18n.activeNotebooks }}
         </div>
       </div>
       <div class="summary-card">
@@ -29,7 +30,8 @@
           {{ summary.mostActive }}
         </div>
         <div class="summary-label">
-          {{ i18n.mostActive || '最活跃' }}
+          <!-- 摘要标签："最活跃" -->
+          {{ i18n.mostActive }}
         </div>
       </div>
       <div class="summary-card">
@@ -37,7 +39,8 @@
           {{ formatNumber(summary.totalWords) }}
         </div>
         <div class="summary-label">
-          {{ i18n.periodTotalWords || '期间总字数' }}
+          <!-- 摘要标签："期间总字数" -->
+          {{ i18n.periodTotalWords }}
         </div>
       </div>
       <div class="summary-card">
@@ -45,7 +48,8 @@
           {{ formatNumber(summary.dailyAvg) }}
         </div>
         <div class="summary-label">
-          {{ i18n.dailyAvgWords || '日均字数' }}
+          <!-- 摘要标签："日均字数" -->
+          {{ i18n.dailyAvgWords }}
         </div>
       </div>
     </div>
@@ -55,13 +59,15 @@
       v-if="loading"
       class="trend-loading"
     >
-      {{ i18n.loading || '加载中...' }}
+      <!-- 加载提示："加载中..." -->
+      {{ i18n.loading }}
     </div>
     <div
       v-else-if="notebooks.length === 0"
       class="trend-empty"
     >
-      {{ i18n.noData || '暂无数据' }}
+      <!-- 空状态："暂无数据" -->
+      {{ i18n.noData }}
     </div>
 
     <template v-else>
@@ -183,57 +189,18 @@
                 :style="{ background: nb.color }"
               ></span>
               <span class="tooltip-name">{{ nb.notebook }}</span>
-              <span class="tooltip-val">{{ formatNumber(nb.data[hoveredX]?.words || 0) }} {{ i18n.wordsUnit || '字' }}</span>
+              <!-- tooltip 值："{字数} 字" -->
+              <span class="tooltip-val">{{ formatNumber(nb.data[hoveredX]?.words || 0) }} {{ i18n.wordsUnit }}</span>
             </div>
           </div>
         </div>
       </div>
 
       <!-- 笔记本排行表 -->
-      <div class="ranking-card">
-        <div class="ranking-title">
-          {{ i18n.notebookRanking || '笔记本排行' }}
-        </div>
-        <div class="ranking-table">
-          <div class="ranking-header">
-            <span class="col-rank">#</span>
-            <span class="col-name">{{ i18n.notebookName || '笔记本' }}</span>
-            <span class="col-total">{{ i18n.totalWords || '总字数' }}</span>
-            <span class="col-days">{{ i18n.activeDaysLabel || '活跃天数' }}</span>
-            <span class="col-avg">{{ i18n.dailyAvg || '日均' }}</span>
-            <span class="col-bar">{{ i18n.proportion || '占比' }}</span>
-          </div>
-          <div
-            v-for="(item, idx) in rankingData"
-            :key="item.notebook"
-            class="ranking-row"
-          >
-            <span class="col-rank">{{ idx + 1 }}</span>
-            <span class="col-name">
-              <span
-                class="rank-dot"
-                :style="{ background: item.color }"
-              ></span>
-              {{ item.notebook }}
-            </span>
-            <span class="col-total">{{ formatNumber(item.totalWords) }}</span>
-            <span class="col-days">{{ item.activeDays }}</span>
-            <span class="col-avg">{{ formatNumber(item.dailyAvg) }}</span>
-            <span class="col-bar">
-              <span class="bar-track">
-                <span
-                  class="bar-fill"
-                  :style="{
-                    width: `${item.percent}%`,
-                    background: item.color,
-                  }"
-                ></span>
-              </span>
-              <span class="bar-label">{{ item.percent }}%</span>
-            </span>
-          </div>
-        </div>
-      </div>
+      <NotebookRankingTable
+        :notebooks="activeNotebooks"
+        :i18n="i18n"
+      />
     </template>
   </div>
 </template>
@@ -246,6 +213,7 @@ import {
   ref,
 } from "vue"
 import { formatNumber } from "../utils"
+import NotebookRankingTable from "./NotebookRankingTable.vue"
 
 interface Props {
   onGetNotebookActivityTrend?: (days: number) => Promise<NotebookActivityItem[]>
@@ -263,29 +231,30 @@ const PAD_T = 14
 const POINT_SPACING = 40
 
 const days = ref(30)
+// 时间范围选项（30/60/90/180/200天/1年）
 const periodOptions = computed(() => [
   {
-    label: props.i18n.days30 || '30天',
+    label: props.i18n.days30,
     value: 30,
   },
   {
-    label: props.i18n.days60 || '60天',
+    label: props.i18n.days60,
     value: 60,
   },
   {
-    label: props.i18n.days90 || '90天',
+    label: props.i18n.days90,
     value: 90,
   },
   {
-    label: props.i18n.days180 || '180天',
+    label: props.i18n.days180,
     value: 180,
   },
   {
-    label: props.i18n.days200 || '200天',
+    label: props.i18n.days200,
     value: 200,
   },
   {
-    label: props.i18n.days365 || '1年',
+    label: props.i18n.year1,
     value: 365,
   },
 ])
@@ -481,28 +450,6 @@ function dateAt(idx: number): string {
   return activeNotebooks.value[0]?.data[idx]?.date ?? ''
 }
 
-// ========== Ranking ==========
-const rankingData = computed(() => {
-  const totalAll = activeNotebooks.value.reduce((sum, nb) => {
-    return sum + nb.data.reduce((s, d) => s + d.words, 0)
-  }, 0)
-
-  return activeNotebooks.value
-    .map((nb) => {
-      const totalWords = nb.data.reduce((s, d) => s + d.words, 0)
-      const activeDays = nb.data.filter((d) => d.words > 0).length
-      return {
-        notebook: nb.notebook,
-        color: nb.color,
-        totalWords,
-        activeDays,
-        dailyAvg: activeDays > 0 ? Math.round(totalWords / activeDays) : 0,
-        percent: totalAll > 0 ? Math.round((totalWords / totalAll) * 100) : 0,
-      }
-    })
-    .sort((a, b) => b.totalWords - a.totalWords)
-})
-
 // ========== Actions ==========
 async function switchPeriod(d: number) {
   days.value = d
@@ -522,10 +469,9 @@ async function load() {
 onMounted(() => {
   load()
 })
-
-defineExpose({ load })
 </script>
 
 <style scoped lang="scss">
 @use '../styles/NotebookActivityTrend.scss';
+@use '../styles/index.scss' as stats;
 </style>

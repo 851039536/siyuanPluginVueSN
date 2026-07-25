@@ -95,4 +95,5 @@ function totalCount(item: NotebookBlockTypeStat): number {
 
 <style scoped lang="scss">
 @use "../../styles/NotebookBlockTypeChart.scss";
+@use '../../styles/index.scss' as stats;
 </style>

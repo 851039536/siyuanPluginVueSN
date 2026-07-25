@@ -1,3 +1,4 @@
+@use "@/variables" as *;
 @use "../styles/index.scss" as stats;
 
 .comparison-view {
@@ -13,8 +14,8 @@
 }
 
 .vs-text {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-surface-light);
   opacity: 0.5;
 }
@@ -36,7 +37,7 @@
 .compare-empty {
   text-align: center;
   padding: 20px;
-  font-size: 12px;
+  font-size: $font-size-xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
 }
@@ -58,7 +59,7 @@
   width: 100%;
   table-layout: fixed;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: $font-size-xs;
 
   .col-metric {
     width: 25%;
@@ -85,8 +86,8 @@
     background: var(--b3-theme-background);
     color: var(--b3-theme-on-surface-light);
     font-family: stats.$font-mono;
-    font-weight: 700;
-    font-size: 10px;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-2xs;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     border-bottom: 1px solid var(--b3-border-color);
@@ -96,25 +97,25 @@
     border-bottom: 1px solid rgba(var(--b3-theme-on-surface-rgb), 0.04);
     color: var(--b3-theme-on-surface);
     font-family: stats.$font-mono;
-    font-weight: 500;
+    font-weight: $font-weight-medium;
   }
 
   .col-metric {
     color: var(--b3-theme-on-surface-light);
-    font-weight: 400;
-    font-size: 11px;
+    font-weight: $font-weight-normal;
+    font-size: $font-size-2xs;
     text-transform: uppercase;
     letter-spacing: 0.02em;
   }
 
   .delta-up {
     color: stats.$color-success;
-    font-weight: 700;
+    font-weight: $font-weight-bold;
   }
 
   .delta-down {
     color: stats.$color-danger;
-    font-weight: 700;
+    font-weight: $font-weight-bold;
   }
 
   .delta-flat {
@@ -131,8 +132,8 @@
 
 .breakdown-title {
   font-family: stats.$font-mono;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-surface);
   margin: 0 0 8px 0;
   text-transform: uppercase;
@@ -156,7 +157,7 @@
   flex-shrink: 0;
   text-align: right;
   font-family: stats.$font-mono;
-  font-size: 11px;
+  font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface-light);
 }
 
@@ -204,8 +205,8 @@
   width: 44px;
   flex-shrink: 0;
   font-family: stats.$font-mono;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-surface);
   text-align: right;
   white-space: nowrap;
@@ -217,7 +218,7 @@
   align-items: center;
   margin-top: 8px;
   font-family: stats.$font-mono;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface-light);
 }
 

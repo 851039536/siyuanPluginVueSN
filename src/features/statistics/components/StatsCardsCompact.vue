@@ -2,7 +2,8 @@
 <template>
   <div class="stats-section">
     <h3 class="stats-title">
-      {{ i18n.overview || '总览' }}
+      <!-- 区块标题："总览" -->
+      {{ i18n.overview }}
     </h3>
 
     <!-- 核心指标：3 列大卡片 -->
@@ -182,4 +183,5 @@ function formatDelta(change: number | null): string {
 
 <style scoped lang="scss">
 @use "../styles/StatsCardsCompact.scss";
+@use '../styles/index.scss' as stats;
 </style>

@@ -20,7 +20,8 @@
         class="compare-btn"
         @click="compare"
       >
-        对比
+        <!-- 按钮："对比" -->
+        {{ i18n.compareBtn }}
       </button>
     </div>
 
@@ -28,7 +29,8 @@
       v-if="loading"
       class="compare-loading"
     >
-      对比中...
+      <!-- 加载提示："对比中..." -->
+      {{ i18n.comparing }}
     </div>
 
     <!-- Comparison result -->
@@ -42,7 +44,8 @@
           <thead>
             <tr>
               <th class="col-metric">
-                指标
+                <!-- 表头："指标" -->
+                {{ i18n.metricLabel }}
               </th>
               <th class="col-value">
                 {{ data.periodALabel }}
@@ -51,7 +54,8 @@
                 {{ data.periodBLabel }}
               </th>
               <th class="col-delta">
-                变化
+                <!-- 表头："变化" -->
+                {{ i18n.change }}
               </th>
             </tr>
           </thead>
@@ -86,7 +90,8 @@
         class="compare-breakdown"
       >
         <h4 class="breakdown-title">
-          各时段明细对比
+          <!-- 区块标题："各时段明细对比" -->
+          {{ i18n.breakdownTitle }}
         </h4>
         <div class="breakdown-list">
           <div
@@ -128,7 +133,8 @@
       v-else-if="!loading"
       class="compare-empty"
     >
-      选择两个期间并点击"对比"
+      <!-- 空状态提示："选择两个期间并点击"对比"" -->
+      {{ i18n.comparisonHint }}
     </div>
   </div>
 </template>
@@ -141,13 +147,18 @@ import {
 } from "vue"
 import { barPct, formatNumber } from "../utils"
 import PeriodPicker from "./PeriodPicker.vue"
-import "../styles/ComparisonView.scss"
 
 interface Props {
   onGetComparisonData?: (yearA: number, monthA: number | undefined, yearB: number, monthB: number | undefined) => Promise<ComparisonData>
+  i18n?: Record<string, any>
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  onGetComparisonData: undefined,
+  i18n: () => ({}),
+})
+
+const i18n = computed(() => props.i18n || {})
 
 const now = new Date()
 const curYear = now.getFullYear()
@@ -173,33 +184,34 @@ interface MetricDef {
   format: (r: ComparisonData['a']) => string
 }
 
-const metrics: MetricDef[] = [
+// 对比指标定义（标签走 i18n：总字数/新增笔记/日均字数/活跃天数/最长连续）
+const metrics = computed<MetricDef[]>(() => [
   {
     key: 'totalWords',
-    label: '总字数',
+    label: i18n.value.totalWords,
     format: (r) => formatNumber(r.totalWords),
   },
   {
     key: 'totalNotesCreated',
-    label: '新增笔记',
+    label: i18n.value.notesCreated,
     format: (r) => String(r.totalNotesCreated),
   },
   {
     key: 'avgDailyWords',
-    label: '日均字数',
+    label: i18n.value.dailyAvgWords,
     format: (r) => r.avgDailyWords.toLocaleString(),
   },
   {
     key: 'activeDays',
-    label: '活跃天数',
+    label: i18n.value.activeDaysLabel,
     format: (r) => String(r.activeDays),
   },
   {
     key: 'longestStreak',
-    label: '最长连续',
+    label: i18n.value.longestStreak,
     format: (r) => String(r.longestStreak),
   },
-]
+])
 
 function deltaClass(key: string): string {
   const d = data.value?.deltas?.[key as keyof typeof data.value.deltas] ?? 0
@@ -261,4 +273,7 @@ async function compare() {
 }
 </script>
 
-
+<style scoped lang="scss">
+@use '../styles/ComparisonView.scss';
+@use '../styles/index.scss';
+</style>

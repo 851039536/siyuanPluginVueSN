@@ -96,7 +96,8 @@
       class="next-goal-card"
     >
       <div class="next-goal-top">
-        <span class="next-goal-prefix">{{ i18n.nextGoal || '下一目标' }}</span>
+        <!-- 卡片前缀："下一目标" -->
+        <span class="next-goal-prefix">{{ i18n.nextGoal }}</span>
         <span class="next-goal-percent">{{ nextMilestone.progress.toFixed(0) }}%</span>
       </div>
       <div class="next-goal-main">
@@ -129,6 +130,7 @@
       :unlocked="unlockedAchievements"
       :locked="lockedAchievements"
       :tier-labels="tierLabels"
+      :i18n="i18n"
       @delete-custom="deleteCustomAchievement"
     />
   </div>
@@ -236,18 +238,19 @@ function deleteCustomAchievement(id: string) {
 
 const expandedCategories = ref<Set<string>>(new Set())
 
+// 稀有度标签（普通/稀有/史诗/传说）
 const tierLabels: Record<Tier, string> = {
-  common: props.i18n.tierCommon || "普通",
-  rare: props.i18n.tierRare || "稀有",
-  epic: props.i18n.tierEpic || "史诗",
-  legendary: props.i18n.tierLegendary || "传说",
+  common: props.i18n.tierCommon,
+  rare: props.i18n.tierRare,
+  epic: props.i18n.tierEpic,
+  legendary: props.i18n.tierLegendary,
 }
 
 const categories = computed<CategoryDef[]>(() =>
   CATEGORY_DEFS.map((c) => ({
     id: c.id,
     icon: c.icon,
-    name: props.i18n[c.i18nKey] || c.fallback,
+    name: props.i18n[c.i18nKey],
     types: c.types,
   })),
 )
@@ -302,12 +305,13 @@ const nextMilestone = computed(() => {
   return milestonesWithState.value.find((m) => !m.achieved) ?? null
 })
 
+// 鼓励文案：按进度分档（只差一点点/已过半/千里之行）
 const encourageText = computed(() => {
   if (!nextMilestone.value) return ""
   const p = nextMilestone.value.progress
-  if (p >= 80) return props.i18n.encourageAlmost || "只差一点点，加油！"
-  if (p >= 40) return props.i18n.encourageHalfway || "已完成过半，继续努力！"
-  return props.i18n.encourageStart || "千里之行，始于足下"
+  if (p >= 80) return props.i18n.encourageAlmost
+  if (p >= 40) return props.i18n.encourageHalfway
+  return props.i18n.encourageStart
 })
 
 function toggleCategory(catId: string) {
@@ -438,4 +442,5 @@ const lockedAchievements = computed(() => achievementPartition.value.locked)
 
 <style scoped lang="scss">
 @use "../styles/MilestonesCard.scss";
+@use '../styles/index.scss' as stats;
 </style>

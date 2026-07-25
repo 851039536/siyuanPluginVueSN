@@ -13,7 +13,7 @@
   gap: $spacing-1;
   cursor: pointer;
   padding: $spacing-1 0;
-  font-size: 11px;
+  font-size: $font-size-xs;
   opacity: 0.6;
   transition: opacity 0.15s;
   user-select: none;
@@ -30,7 +30,7 @@
 .wt-count {
   display: flex;
   gap: $spacing-1;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   font-weight: $font-weight-bold;
 }
 
@@ -67,7 +67,7 @@
   gap: $spacing-1;
   margin-bottom: 6px;
 
-  .vp-btn { font-size: 10px; padding: 1px 6px; }
+  .vp-btn { font-size: $font-size-2xs; padding: 1px 6px; }
 }
 
 .wt-files {
@@ -83,7 +83,7 @@
   align-items: center;
   gap: $spacing-1;
   padding: 4px 6px;
-  font-size: 11px;
+  font-size: $font-size-xs;
   @include row-divider;
   transition: background 0.1s;
 
@@ -127,7 +127,7 @@
   width: 18px;
   flex-shrink: 0;
   text-align: center;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   font-weight: $font-weight-bold;
   font-family: $vp-mono;
   overflow: hidden;
@@ -135,9 +135,9 @@
   &.wt-s-modified { color: var(--b3-theme-warning); }
   &.wt-s-added    { color: var(--b3-theme-success); }
   &.wt-s-deleted  { color: var(--b3-theme-error); }
-  &.wt-s-renamed  { color: #9b59b6; }
+  &.wt-s-renamed  { color: var(--gp-file-renamed-color); }
   &.wt-s-untracked { color: var(--b3-theme-error); opacity: 0.6; }
-  &.wt-s-copied   { color: #9b59b6; }
+  &.wt-s-copied   { color: var(--gp-file-renamed-color); }
   &.wt-s-unmerged { color: var(--b3-theme-error); }
 }
 
@@ -145,7 +145,7 @@
   flex: 1;
   min-width: 0;
   font-family: $vp-mono;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   @include text-ellipsis;
   cursor: pointer;
 
@@ -158,7 +158,7 @@
   flex-shrink: 0;
   opacity: 0.45;
   gap: 2px;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   padding: 1px 6px;
   transition: opacity 0.15s;
 
@@ -173,14 +173,14 @@
 }
 
 .wt-diff-btn-label {
-  font-size: 9px;
+  font-size: $font-size-2xs;
   font-weight: $font-weight-semibold;
 }
 
 .wt-discard-btn {
   flex-shrink: 0;
   opacity: 0.3;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   padding: 1px 6px;
   transition: opacity 0.15s;
   color: var(--b3-theme-error, #cf222e);
@@ -238,7 +238,7 @@
 }
 
 .wt-diff-title {
-  font-size: 12px;
+  font-size: $font-size-xs;
   font-family: $vp-mono;
   font-weight: $font-weight-semibold;
   white-space: nowrap;
@@ -247,7 +247,7 @@
 }
 
 .wt-diff-badge {
-  font-size: 9px;
+  font-size: $font-size-2xs;
   padding: 1px 2px;
   border-radius: $radius-sm;
   border: 1px solid var(--b3-border-color);
@@ -259,19 +259,19 @@
   display: flex;
   gap: $spacing-3;
   padding: 4px 10px;
-  font-size: 9px;
+  font-size: $font-size-2xs;
   font-family: $vp-mono;
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
 }
 
-.wt-legend-add { color: #1a7f37; }
-.wt-legend-del { color: #cf222e; }
+.wt-legend-add { color: var(--gp-diff-add-color); }
+.wt-legend-del { color: var(--gp-diff-del-color); }
 .wt-legend-ctx { opacity: 0.35; }
 
 .wt-diff-content {
   margin: 0;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   font-family: $vp-mono;
   max-height: calc(80vh - 100px);
   overflow: auto;
@@ -285,16 +285,16 @@
   line-height: 1.6;
 
   &.wt-dl-add {
-    background: #e6ffec;
+    background: var(--gp-diff-add-bg);
   }
 
   &.wt-dl-del {
-    background: #ffebe9;
+    background: var(--gp-diff-del-bg);
   }
 
   &.wt-dl-hunk {
-    color: #0969da;
-    .wt-dl-sign { color: #0969da; }
+    color: var(--gp-diff-hunk-color);
+    .wt-dl-sign { color: var(--gp-diff-hunk-color); }
   }
 
   &.wt-dl-ctx {
@@ -336,14 +336,14 @@
   gap: 6px;
   padding: 4px 0;
   color: var(--b3-theme-on-surface-light);
-  font-size: 11px;
+  font-size: $font-size-xs;
 }
 
 .wt-template-select {
   flex: 1;
   height: 26px;
   padding: 0 6px;
-  font-size: 11px;
+  font-size: $font-size-xs;
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
   background: var(--b3-theme-surface);
@@ -354,7 +354,7 @@
 
 .wt-type-btn {
   padding: 1px 6px;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   font-family: $vp-mono;
   font-weight: $font-weight-semibold;
   border: 1px solid var(--b3-border-color);
@@ -383,7 +383,7 @@
   padding: 6px 8px;
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
-  font-size: 11px;
+  font-size: $font-size-xs;
   font-family: $vp-mono;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);

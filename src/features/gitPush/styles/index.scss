@@ -6,6 +6,17 @@
 @use "./Form";
 
 .git-push-panel {
+  // ── 本地 CSS 颜色变量（diff / 文件状态 / accent）──
+  --gp-diff-add-color: #1a7f37;
+  --gp-diff-del-color: #cf222e;
+  --gp-diff-hunk-color: #0969da;
+  --gp-diff-add-bg: #e6ffec;
+  --gp-diff-del-bg: #ffebe9;
+  --gp-file-renamed-color: #9b59b6;
+  --gp-accent-color: #f58742;
+  --gp-badge-untracked-bg: #fde68a;
+  --gp-badge-untracked-color: #92400e;
+
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -28,7 +39,7 @@
   justify-content: center;
   flex: 1;
   color: var(--b3-theme-on-surface-light);
-  font-size: 13px;
+  font-size: $font-size-xs;
 }
 
 .gp-empty-icon {
@@ -77,7 +88,7 @@
     border-color: var(--b3-theme-primary);
   }
 
-  .vp-btn--sm { padding: 3px 5px; font-size: 10px; }
+  .vp-btn--sm { padding: 3px 5px; font-size: $font-size-2xs; }
 }
 
 .gp-card-top {
@@ -93,7 +104,7 @@
 }
 
 .gp-card-name {
-  font-size: 13px;
+  font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   margin-bottom: 1px;
   cursor: pointer;
@@ -114,7 +125,7 @@
 }
 
 .gp-card-name-input {
-  font-size: 13px;
+  font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   margin-bottom: 2px;
   padding: 1px 4px;
@@ -135,7 +146,7 @@
   gap: $spacing-1;
   margin-top: 3px;
   padding: 3px 6px;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.55;
   background: var(--b3-theme-surface);
@@ -160,7 +171,7 @@
   display: flex;
   align-items: center;
   gap: 3px;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   font-family: $vp-mono;
   opacity: 0.5;
   max-width: 280px;
@@ -189,7 +200,7 @@
   align-items: center;
   gap: 2px;
   padding: 1px 6px;
-  font-size: 9px;
+  font-size: $font-size-2xs;
   font-family: $vp-mono;
   font-weight: $font-weight-semibold;
   border: 1px solid var(--b3-border-color);
@@ -343,7 +354,7 @@
 
 .gp-ide-del-confirm {
   margin-left: auto;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   opacity: 0.6;
   white-space: nowrap;
 }
@@ -351,7 +362,7 @@
 .gp-ide-del-yes,
 .gp-ide-del-no {
   padding: 1px 6px;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   border-radius: $radius-sm;
   border: none;
   cursor: pointer;
@@ -399,7 +410,7 @@
 
 .gp-ide-mgmt-path {
   flex: 1;
-  font-size: 11px;
+  font-size: $font-size-xs;
   opacity: 0.5;
   @include text-ellipsis;
 }
@@ -445,7 +456,7 @@
   display: flex;
   align-items: center;
   gap: $spacing-1;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   font-family: $vp-mono;
   opacity: 0.35;
   text-transform: uppercase;
@@ -467,7 +478,7 @@
   gap: $spacing-1;
   padding: 4px 8px;
   margin-top: 6px;
-  font-size: 11px;
+  font-size: $font-size-xs;
   color: var(--b3-theme-warning);
   background: var(--b3-theme-warning-lightest);
   border: 1px solid var(--b3-theme-warning-lighter, var(--b3-theme-warning));
@@ -475,7 +486,7 @@
 }
 
 .gp-status-badge {
-  font-size: 10px;
+  font-size: $font-size-2xs;
   font-weight: $font-weight-bold;
   padding: 1px 5px;
   border-radius: $radius-sm;
@@ -521,7 +532,7 @@
 .gp-actions-label {
   @include gp-label-base;
   flex-shrink: 0;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--b3-theme-on-surface-light);
@@ -556,7 +567,7 @@
 .gp-action-btn {
   gap: 1px;
   padding: 1px 1px;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   line-height: 1;
   white-space: nowrap;
 
@@ -589,7 +600,7 @@
 
   .vp-btn--sm {
     padding: 2px 5px;
-    font-size: 10px;
+    font-size: $font-size-2xs;
   }
 }
 
@@ -618,7 +629,7 @@
   padding: 3px 6px;
   border: 1px solid var(--b3-theme-primary);
   border-radius: $radius-sm;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   font-family: $vp-mono;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
@@ -640,7 +651,7 @@
   align-items: center;
   gap: 3px;
   padding: 2px 0;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   @include row-divider;
 }
 
@@ -660,11 +671,11 @@
 .gp-output {
   margin-top: 8px;
   max-height: 200px;
-  border-radius: 4px;
+  border-radius: $radius-sm;
   background: var(--b3-theme-surface);
   overflow: hidden;
   font-family: $vp-mono;
-  font-size: 11px;
+  font-size: $font-size-xs;
   line-height: 1.6;
   color: var(--b3-theme-on-surface);
   user-select: text;
@@ -699,7 +710,7 @@
   margin: 2px 0 2px 12px;
   padding: 2px 0;
   font-family: $vp-mono;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   line-height: 1.4;
   color: var(--b3-theme-on-surface-light);
   white-space: pre-wrap;
@@ -711,7 +722,7 @@
   margin: 2px 0 2px 12px;
   padding: 2px 0;
   font-family: $vp-mono;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   line-height: 1.4;
   color: var(--b3-theme-error);
   white-space: pre-wrap;
@@ -762,7 +773,7 @@
 }
 
 .gp-set-hint {
-  font-size: 10px;
+  font-size: $font-size-2xs;
   opacity: 0.4;
 }
 
@@ -787,7 +798,7 @@
 
 .gp-cat-name-sm {
   flex: 1;
-  font-size: 11px;
+  font-size: $font-size-xs;
 }
 
 .gp-cat-add-row {
@@ -812,7 +823,7 @@
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
   color: var(--b3-theme-on-surface);
-  font-size: 10px;
+  font-size: $font-size-2xs;
   padding: 1px 2px;
   cursor: pointer;
   max-width: 60px;
@@ -839,7 +850,7 @@
   align-items: center;
   gap: 6px;
   padding: 4px 6px;
-  font-size: 11px;
+  font-size: $font-size-xs;
   @include row-divider;
 }
 
@@ -852,7 +863,7 @@
 .gp-remote-url {
   flex: 1;
   font-family: $vp-mono;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   opacity: 0.5;
   @include text-ellipsis;
 }
@@ -860,7 +871,7 @@
 .gp-remote-empty {
   padding: $spacing-3;
   text-align: center;
-  font-size: 11px;
+  font-size: $font-size-xs;
   opacity: 0.4;
 }
 
@@ -890,7 +901,7 @@
 }
 
 .gp-scan-count {
-  font-size: 11px;
+  font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   opacity: 0.6;
 }
@@ -931,19 +942,19 @@
 }
 
 .gp-scan-item-name {
-  font-size: 11px;
+  font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
 }
 
 .gp-scan-item-path {
-  font-size: 9px;
+  font-size: $font-size-2xs;
   font-family: $vp-mono;
   opacity: 0.5;
   @include text-ellipsis;
 }
 
 .gp-scan-badge {
-  font-size: 9px;
+  font-size: $font-size-2xs;
   font-weight: $font-weight-bold;
   padding: 2px 6px;
   border-radius: $radius-sm;
@@ -1003,7 +1014,7 @@
   gap: 2px;
   padding: 1px 5px;
   border-radius: $radius-sm;
-  font-size: 9px;
+  font-size: $font-size-2xs;
   font-weight: $font-weight-semibold;
   background: var(--b3-theme-on-surface);
   color: var(--b3-theme-background);
@@ -1028,8 +1039,8 @@
   padding: 1px 6px;
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
-  font-size: 9px;
-  font-weight: 500;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-medium;
   cursor: pointer;
   transition: opacity 0.15s, border-color 0.15s, color 0.15s;
   white-space: nowrap;
@@ -1053,7 +1064,7 @@
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  font-size: 9px;
+  font-size: $font-size-2xs;
   font-family: $vp-mono;
   white-space: nowrap;
 
@@ -1089,7 +1100,7 @@
   border-radius: $radius-sm;
   background: transparent;
   color: var(--b3-theme-on-surface);
-  font-size: 11px;
+  font-size: $font-size-xs;
   cursor: pointer;
   transition: opacity 0.15s, border-color 0.15s, background 0.15s;
   opacity: 0.55;
@@ -1106,8 +1117,8 @@
 
 // 编辑弹窗：多本地路径编辑
 .gp-label-hint {
-  font-size: 10px;
-  font-weight: 400;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-normal;
   opacity: 0.45;
   margin-left: 4px;
 }
@@ -1134,7 +1145,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
+  font-size: $font-size-xs;
   opacity: 0.6;
   transition: opacity 0.12s;
   &:hover { opacity: 1; }
@@ -1146,10 +1157,10 @@
   align-items: center;
   margin-left: 6px;
   padding: 0 5px;
-  font-size: 9px;
-  font-weight: 500;
-  line-height: 16px;
-  border-radius: 3px;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-tight;
+  border-radius: $radius-sm;
   background: var(--b3-theme-primary-lightest);
   color: var(--b3-theme-primary);
   opacity: 0.7;
@@ -1183,7 +1194,7 @@
     min-width: 0;
     height: 22px;
     padding: 0 5px;
-    font-size: 10px;
+    font-size: $font-size-2xs;
     font-family: $vp-mono;
     border: 1px solid var(--b3-border-color);
     border-radius: $radius-sm;
@@ -1194,7 +1205,7 @@
 
   .vp-btn--sm {
     padding: 2px 5px;
-    font-size: 10px;
+    font-size: $font-size-2xs;
   }
 }
 
@@ -1208,7 +1219,7 @@
   align-items: center;
   gap: $spacing-1;
   padding: 2px 0;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   @include row-divider;
 }
 
@@ -1223,12 +1234,12 @@
 .gp-tag-msg {
   flex: 1;
   opacity: 0.45;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   @include text-ellipsis;
 }
 
 .gp-tag-date {
-  font-size: 9px;
+  font-size: $font-size-2xs;
   opacity: 0.35;
   font-family: $vp-mono;
 }
@@ -1238,7 +1249,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 0;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   opacity: 0.35;
   font-style: italic;
 }
@@ -1256,7 +1267,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   color: var(--b3-theme-error);
   margin-bottom: 6px;
@@ -1274,7 +1285,7 @@
   align-items: center;
   gap: $spacing-1;
   padding: 2px 6px;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   font-family: $vp-mono;
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
@@ -1284,4 +1295,9 @@
 .gp-conflict-actions {
   display: flex;
   gap: 6px;
+}
+
+// ── 搜索框 ──
+.gp-search-wrap {
+  padding: 4px 10px 4px 0;
 }

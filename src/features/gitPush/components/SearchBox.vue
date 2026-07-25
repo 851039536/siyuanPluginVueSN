@@ -25,9 +25,3 @@ defineEmits<{
   "update:modelValue": [value: string]
 }>()
 </script>
-
-<style lang="scss">
-.gp-search-wrap {
-  padding: 4px 10px 4px 0;
-}
-</style>

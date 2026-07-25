@@ -1049,6 +1049,7 @@
     "noPlatformProjects": "Projects with Missing Platforms",
     "pendingProjects": "Pending Projects",
     "allClear": "All projects up to date",
+    "noProjectsStats": "No projects, add in list view",
     "needsPushShort": "Ahead",
     "needsPushList": "Projects Needing Push",
     "recentCommits": "Recent Commits",
@@ -1845,6 +1846,7 @@
   "confirmClearLogs": "Are you sure you want to clear all logs?",
   "uploadSuccess": "Upload successful",
   "uploadFailed": "Upload failed",
+  "alreadyUploaded": "Uploaded",
   "scriptLauncher": {
     "panelTitle": "Script Launcher",
     "description": "Manage and run custom scripts, supports Python, Bash, PowerShell, Node.js, Batch",

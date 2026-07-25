@@ -9,7 +9,7 @@
       style="width: 580px;"
     >
       <div class="gp-dialog-header">
-        <span class="gp-dialog-title">{{ i18n.editProjectTitlePrefix || '编辑项目' }} — {{ project?.name }}</span>
+        <span class="gp-dialog-title">{{ i18n.editProjectTitlePrefix }} — {{ project?.name }}</span>
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
           @click="$emit('close')"
@@ -20,7 +20,7 @@
       <div class="gp-dialog-body">
         <Input
           v-model="localName"
-          :label="i18n.projectName || '项目名称'"
+          :label="i18n.projectName"
           size="xsmall"
           @keydown="$event.key === 'Enter' && save()"
         />
@@ -28,13 +28,13 @@
           <div style="flex:1">
             <Select
               v-model="localStatus"
-              :label="i18n.statusLabel || '状态'"
+              :label="i18n.statusLabel"
               size="xsmall"
               :options="statusOptions"
             />
           </div>
           <div class="gp-form-group gp-edit-toggles">
-            <label class="gp-label">{{ i18n.markLabel || '标记' }}</label>
+            <label class="gp-label">{{ i18n.markLabel }}</label>
             <div class="gp-toggle-row">
               <button
                 class="gp-toggle-chip"
@@ -44,7 +44,7 @@
                 <Icon
                   :icon="localStarred ? 'mdi:star' : 'mdi:star-outline'"
                   height="12"
-                />{{ i18n.favorite || '收藏' }}
+                />{{ i18n.favorite }}
               </button>
               <button
                 class="gp-toggle-chip"
@@ -54,7 +54,7 @@
                 <Icon
                   icon="mdi:archive-outline"
                   height="12"
-                />{{ i18n.archivedShort || '归档' }}
+                />{{ i18n.archivedShort }}
               </button>
             </div>
           </div>
@@ -63,13 +63,13 @@
         <Input
           v-model="localNote"
           type="textarea"
-          :label="i18n.noteLabel || '备注'"
+          :label="i18n.noteLabel"
           size="xsmall"
           :rows="3"
-          :placeholder="i18n.notePlaceholder || '项目备注（可选）'"
+          :placeholder="i18n.notePlaceholder"
         />
         <div class="gp-form-group">
-          <label class="gp-label">{{ i18n.localPathTitle || '本地路径' }} <span class="gp-label-hint">{{ i18n.crossDeviceHint || '（跨设备适配）' }}</span></label>
+          <label class="gp-label">{{ i18n.localPathTitle }} <span class="gp-label-hint">{{ i18n.crossDeviceHint }}</span></label>
           <div class="gp-edit-paths">
             <div
               v-for="(_lp, idx) in allPathsList"
@@ -79,18 +79,18 @@
               <Input
                 v-model="allPathsList[idx]"
                 size="xsmall"
-                :placeholder="(i18n.devicePathPlaceholder || '设备 {0} 的本地路径...').replace('{0}', String(idx + 1))"
+                :placeholder="i18n.devicePathPlaceholder.replace('{0}', String(idx + 1))"
               />
               <button
                 class="vp-btn vp-btn--ghost vp-btn--sm"
-                :title="i18n.selectDir || '选择目录'"
+                :title="i18n.selectDir"
                 @click="pickLocalPath(idx)"
               >
                 <Icon icon="mdi:folder-outline" height="12" />
               </button>
               <button
                 class="vp-btn vp-btn--ghost vp-btn--sm"
-                :title="i18n.removePath || '移除此路径'"
+                :title="i18n.removePath"
                 :disabled="allPathsList.length <= 1"
                 @click="removeLocalPath(idx)"
               >
@@ -103,11 +103,11 @@
             @click="addLocalPath"
           >
             <Icon icon="mdi:plus" height="12" />
-            <span>{{ i18n.addLocalPath || '添加路径' }}</span>
+            <span>{{ i18n.addLocalPath }}</span>
           </button>
         </div>
         <div class="gp-form-group">
-          <label class="gp-label">{{ i18n.repoLinkLabel || '仓库链接' }} <span class="gp-label-hint">{{ i18n.repoLinkHint || '（手动输入，用于跨设备持久化）' }}</span></label>
+          <label class="gp-label">{{ i18n.repoLinkLabel }} <span class="gp-label-hint">{{ i18n.repoLinkHint }}</span></label>
           <div
             v-if="repoLinkList.length"
             class="gp-remote-list"
@@ -134,13 +134,13 @@
                   class="vp-btn vp-btn--primary vp-btn--sm"
                   @click="saveRepoLinkEdit(link)"
                 >
-                  {{ i18n.save || '保存' }}
+                  {{ i18n.save }}
                 </button>
                 <button
                   class="vp-btn vp-btn--ghost vp-btn--sm"
                   @click="cancelRepoLinkEdit()"
                 >
-                  {{ i18n.cancel || '取消' }}
+                  {{ i18n.cancel }}
                 </button>
               </template>
               <template v-else>
@@ -152,13 +152,13 @@
                   class="vp-btn vp-btn--ghost vp-btn--sm"
                   @click="editLinkPlatform = link.key; editLinkUrl = link.url"
                 >
-                  {{ i18n.edit || '编辑' }}
+                  {{ i18n.edit }}
                 </button>
                 <button
                   class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
                   @click="handleDeleteRepoLink(link.urlProp)"
                 >
-                  {{ i18n.delete || '删除' }}
+                  {{ i18n.delete }}
                 </button>
               </template>
             </div>
@@ -167,7 +167,7 @@
             v-else
             class="gp-remote-empty"
           >
-            {{ i18n.noRepoLinks || '暂无仓库链接' }}
+            {{ i18n.noRepoLinks }}
           </div>
           <div
             v-if="linkAddOptions.length > 0"
@@ -179,12 +179,12 @@
               size="xsmall"
               style="width:130px"
               :options="linkAddOptions"
-              :placeholder="i18n.selectPlatform || '选择平台'"
+              :placeholder="i18n.selectPlatform"
             />
             <Input
               v-model="newLinkUrl"
               size="xsmall"
-              :placeholder="i18n.repoUrlPlaceholder || '仓库 URL'"
+              :placeholder="i18n.repoUrlPlaceholder"
               style="flex:1"
               @keydown="$event.key === 'Enter' && handleAddRepoLink()"
             />
@@ -193,7 +193,7 @@
               :disabled="!newLinkPlatform || !newLinkUrl.trim()"
               @click="handleAddRepoLink"
             >
-              {{ i18n.add || '添加' }}
+              {{ i18n.add }}
             </button>
           </div>
           <div
@@ -205,7 +205,7 @@
           </div>
         </div>
         <div class="gp-form-group">
-          <label class="gp-label">{{ i18n.gitRemoteLabel || 'Git 远程仓库（编辑/增删）' }}</label>
+          <label class="gp-label">{{ i18n.gitRemoteLabel }}</label>
           <div
             v-if="remoteList.length"
             class="gp-remote-list"
@@ -228,13 +228,13 @@
                   class="vp-btn vp-btn--primary vp-btn--sm"
                   @click="saveRemoteEdit(r.name)"
                 >
-                  {{ i18n.save || '保存' }}
+                  {{ i18n.save }}
                 </button>
                 <button
                   class="vp-btn vp-btn--ghost vp-btn--sm"
                   @click="editRemoteName = ''"
                 >
-                  {{ i18n.cancel || '取消' }}
+                  {{ i18n.cancel }}
                 </button>
               </template>
               <template v-else>
@@ -246,13 +246,13 @@
                   class="vp-btn vp-btn--ghost vp-btn--sm"
                   @click="editRemoteName = r.name; editRemoteUrl = r.url"
                 >
-                  {{ i18n.edit || '编辑' }}
+                  {{ i18n.edit }}
                 </button>
                 <button
                   class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
                   @click="handleRemoveRemote(r.name)"
                 >
-                  {{ i18n.delete || '删除' }}
+                  {{ i18n.delete }}
                 </button>
               </template>
             </div>
@@ -261,7 +261,7 @@
             v-else
             class="gp-remote-empty"
           >
-            {{ i18n.noRemotes || '暂无远程仓库' }}
+            {{ i18n.noRemotes }}
           </div>
           <div
             class="gp-remote-add"
@@ -272,12 +272,12 @@
               size="xsmall"
               style="width:130px"
               :options="remoteOptions"
-              :placeholder="i18n.selectPlatform || '选择平台'"
+              :placeholder="i18n.selectPlatform"
             />
             <Input
               v-model="newRemoteUrl"
               size="xsmall"
-              :placeholder="i18n.remoteUrlPlaceholder || '远程 URL'"
+              :placeholder="i18n.remoteUrlPlaceholder"
               style="flex:1"
               @keydown="$event.key === 'Enter' && handleAddRemote()"
             />
@@ -286,7 +286,7 @@
               :disabled="!newRemoteName || !newRemoteUrl.trim()"
               @click="handleAddRemote"
             >
-              {{ i18n.add || '添加' }}
+              {{ i18n.add }}
             </button>
           </div>
           <div
@@ -302,7 +302,7 @@
         <div class="gp-help-wrap">
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm gp-help-btn"
-            :title="i18n.help || '帮助说明'"
+            :title="i18n.help"
             @click="showHelp = !showHelp"
           >
             <Icon icon="mdi:help-circle-outline" height="12" />
@@ -314,7 +314,7 @@
           >
             <div class="gp-help-header">
               <Icon icon="mdi:information-outline" height="12" />
-              <span>{{ i18n.help || '帮助说明' }}</span>
+              <span>{{ i18n.help }}</span>
               <button
                 class="vp-btn vp-btn--ghost vp-btn--sm"
                 style="margin-left:auto"
@@ -338,7 +338,7 @@
                 class="vp-btn vp-btn--primary vp-btn--sm"
                 @click="showHelp = false"
               >
-                {{ i18n.gotIt || '知道了' }}
+                {{ i18n.gotIt }}
               </button>
             </div>
           </div>
@@ -347,13 +347,13 @@
           class="vp-btn vp-btn--ghost"
           @click="$emit('close')"
         >
-          {{ i18n.cancel || '取消' }}
+          {{ i18n.cancel }}
         </button>
         <button
           class="vp-btn vp-btn--primary"
           @click="save"
         >
-          {{ i18n.save || '保存' }}
+          {{ i18n.save }}
         </button>
       </div>
     </div>

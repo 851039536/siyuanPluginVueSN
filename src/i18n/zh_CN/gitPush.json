@@ -77,6 +77,7 @@
     "noPlatformProjects": "平台未完整配置的项目",
     "pendingProjects": "待处理项目",
     "allClear": "所有项目状态正常",
+    "noProjectsStats": "暂无项目，请在列表视图中添加",
     "needsPushShort": "待推送",
     "needsPushList": "未及时推送项目",
     "recentCommits": "最近提交",

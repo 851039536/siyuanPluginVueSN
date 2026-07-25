@@ -193,6 +193,8 @@
   justify-content: center;
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(2px);
+  // 基准字号：弹窗内未显式声明字号的文字继承内容级 12px
+  font-size: $font-size-xs;
 }
 
 .wt-diff-dialog {

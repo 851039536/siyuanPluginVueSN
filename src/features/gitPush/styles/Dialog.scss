@@ -36,6 +36,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  // 基准字号：弹窗内未显式声明字号的描述/提示文字继承内容级 12px
+  font-size: $font-size-xs;
 
   &:focus { outline: none; }
 }

@@ -38,6 +38,12 @@
           >
             {{ i18n.unstageAll }}
           </button>
+          <button
+            class="vp-btn vp-btn--ghost vp-btn--sm"
+            @click.stop="$emit('refreshWorkingTree')"
+          >
+            <Icon icon="mdi:refresh" height="12" />
+          </button>
         </span>
       </template>
       <template v-else-if="tree">

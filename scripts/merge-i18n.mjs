@@ -26,7 +26,7 @@ const I18N_DIR = join(__dirname, '..', 'src', 'i18n')
 function mergeI18n(lang) {
   const dir = join(I18N_DIR, lang)
 
-  if (!readdirSync(dir)) {
+  if (!existsSync(dir)) {
     console.error(`❌ Directory not found: ${dir}`)
     process.exit(1)
   }

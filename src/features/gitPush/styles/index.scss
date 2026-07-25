@@ -721,7 +721,8 @@
   background: var(--b3-theme-surface);
   overflow: hidden;
   font-family: $vp-mono;
-  font-size: $font-size-xs;
+  // 拉取/推送结果头行与 stdout/stderr 详情（2xs）保持一致
+  font-size: $font-size-2xs;
   line-height: 1.6;
   color: var(--b3-theme-on-surface);
   user-select: text;

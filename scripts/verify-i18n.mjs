@@ -45,21 +45,25 @@ function findLeafPaths(obj, prefix = '') {
 }
 
 /**
- * 检测 JSON 对象中重复的顶层键
+ * 检测 JSON 文件原文中的重复顶层键（JS 对象解析后重复键会被覆盖，需从原始文本检测）
  */
-function detectDuplicateKeys(obj) {
+function detectDuplicateKeys(filePath) {
+  const text = readFileSync(filePath, 'utf-8')
   const seen = new Map()
   const duplicates = []
-
-  for (const [key, value] of Object.entries(obj)) {
+  // 匹配 JSON 顶层键（紧跟在行首 2 空格缩进的双引号键名）
+  const keyRegex = /^ {2}"([^"]+)":/gm
+  let match
+  while ((match = keyRegex.exec(text)) !== null) {
+    const key = match[1]
     if (seen.has(key)) {
       duplicates.push({
         key,
-        firstValue: String(seen.get(key)),
-        lastValue: String(value),
+        firstLine: seen.get(key),
+        duplicateLine: text.substring(0, match.index).split('\n').length,
       })
     } else {
-      seen.set(key, value)
+      seen.set(key, text.substring(0, match.index).split('\n').length)
     }
   }
   return duplicates
@@ -101,18 +105,20 @@ function main() {
 
     // 1. 检测重复键
     console.log('--- Duplicate Keys ---')
-    const zhDupes = detectDuplicateKeys(zhCN)
-    const enDupes = detectDuplicateKeys(enUS)
+    const zhFile = join(I18N_DIR, 'zh_CN.json')
+    const enFile = join(I18N_DIR, 'en_US.json')
+    const zhDupes = detectDuplicateKeys(zhFile)
+    const enDupes = detectDuplicateKeys(enFile)
     if (zhDupes.length > 0) {
       console.warn(`⚠️  zh_CN has ${zhDupes.length} duplicate top-level key(s):`)
       for (const d of zhDupes) {
-        console.warn(`   "${d.key}" — first: "${d.firstValue}", last: "${d.lastValue}"`)
+        console.warn(`   "${d.key}" — first at line ${d.firstLine}, duplicate at line ${d.duplicateLine}`)
       }
     }
     if (enDupes.length > 0) {
       console.warn(`⚠️  en_US has ${enDupes.length} duplicate top-level key(s):`)
       for (const d of enDupes) {
-        console.warn(`   "${d.key}" — first: "${d.firstValue}", last: "${d.lastValue}"`)
+        console.warn(`   "${d.key}" — first at line ${d.firstLine}, duplicate at line ${d.duplicateLine}`)
       }
     }
 

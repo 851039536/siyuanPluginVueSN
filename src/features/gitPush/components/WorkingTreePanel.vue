@@ -1,16 +1,10 @@
 <!-- Git 工作区文件变更面板 -->
 <template>
   <div class="wt-panel">
-    <!-- 工作区摘要条（可点击展开） -->
+    <!-- 工作区摘要条 -->
     <div
       class="wt-summary"
-      :class="{ expanded }"
-      @click="toggleExpanded"
     >
-      <Icon
-        :icon="expanded ? 'mdi:chevron-down' : 'mdi:chevron-right'"
-        height="12"
-      />
       <template v-if="tree?.hasChanges">
         <span class="wt-count">
           <span
@@ -33,21 +27,10 @@
       <template v-else-if="tree">
         <span class="wt-clean">{{ i18n.workingTreeClean }}</span>
       </template>
-      <button
-        class="vp-btn vp-btn--ghost vp-btn--sm wt-section-refresh"
-        :disabled="workingTreeLoading"
-        @click.stop="$emit('refreshWorkingTree')"
-      >
-        <Icon icon="mdi:refresh" height="12" :class="{ 'gp-spin': workingTreeLoading }" />
-        <span class="wt-refresh-label">{{ i18n.refreshWorkingTree }}</span>
-      </button>
     </div>
 
-    <!-- 展开的工作区详情 -->
-    <div
-      v-if="expanded"
-      class="wt-body"
-    >
+    <!-- 工作区详情 -->
+    <div class="wt-body">
       <!-- 工具栏 -->
       <div
         v-if="tree?.hasChanges"
@@ -343,12 +326,8 @@ const props = defineProps<{
   fileDiffs: Record<string, string>
   generatedMsg: string
   gitOpLoading: boolean
-  /** 工作区刷新加载中 */
-  workingTreeLoading?: boolean
   /** 提交信息模板 */
   commitTemplates?: CommitTemplate[]
-  /** 面板初始展开状态（按 projectId 持久化后回传） */
-  initialExpanded?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -363,8 +342,6 @@ const emit = defineEmits<{
   discardFile: [file: string, staged: boolean, status: string]
   /** 面板首次展开时触发，父组件按需懒加载详情 */
   expand: []
-  /** 展开状态变化（供父级按 projectId 持久化） */
-  "update:expanded": [value: boolean]
   /** 单独刷新工作区 */
   refreshWorkingTree: []
 }>()
@@ -374,14 +351,14 @@ const COMMIT_TYPES = COMMIT_TYPE_VALUES.map((v) => ({
   label: v,
 }))
 
-const expanded = ref(props.initialExpanded ?? true)
 const commitType = ref("chore")
 const commitMessage = ref("")
 const activeDiffFile = ref<FileChange | null>(null)
 
-// 恢复为展开状态时，触发一次懒加载（commitLog/branches/stash）使面板内容完整
+// 进入页面自动刷新工作区
 onMounted(() => {
-  if (expanded.value) emit("expand")
+  emit("refreshWorkingTree")
+  emit("expand")
 })
 
 // 监听外部生成的消息，自动填充
@@ -421,14 +398,6 @@ function toggleStage(file: FileChange) {
   } else {
     emit("stageFile", file.path)
   }
-}
-
-function toggleExpanded() {
-  if (!props.tree) return // 数据未加载时不展开
-  expanded.value = !expanded.value
-  emit("update:expanded", expanded.value)
-  // 首次展开时通知父组件懒加载详情数据（commitLog/branches/stash）
-  if (expanded.value) emit("expand")
 }
 
 function toggleDiff(file: FileChange) {

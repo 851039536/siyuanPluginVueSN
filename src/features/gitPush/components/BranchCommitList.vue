@@ -1,105 +1,106 @@
 <!-- 分支与提交记录列表 -->
 <template>
   <div class="bcl-panel">
-    <div class="bcl-body">
-      <!-- 搜索栏：搜索 + 作者 + 条数 + 刷新 -->
-      <div class="bcl-search">
-        <Icon
-          icon="mdi:magnify"
-          height="12"
-          class="bcl-search-icon"
-        />
-        <input
-          v-model="searchKeyword"
-          class="bcl-search-input"
-          placeholder="搜索提交信息..."
-          @keyup.escape="searchKeyword = ''"
-        />
-        <input
-          v-model="searchAuthor"
-          class="bcl-search-input bcl-search-author"
-          placeholder="作者..."
-          @keyup.escape="searchAuthor = ''"
-        />
-        <button
-          v-if="searchKeyword || searchAuthor"
-          class="vp-btn vp-btn--ghost vp-btn--sm"
-          @click.stop="searchKeyword = ''; searchAuthor = ''"
-        >
+    <!-- 搜索栏：搜索 + 作者 + 条数 + 刷新 -->
+    <div class="bcl-search">
+      <Icon
+        icon="mdi:magnify"
+        height="12"
+        class="bcl-search-icon"
+      />
+      <input
+        v-model="searchKeyword"
+        class="bcl-search-input"
+        placeholder="搜索提交信息..."
+        @keyup.escape="searchKeyword = ''"
+      />
+      <input
+        v-model="searchAuthor"
+        class="bcl-search-input bcl-search-author"
+        placeholder="作者..."
+        @keyup.escape="searchAuthor = ''"
+      />
+      <button
+        v-if="searchKeyword || searchAuthor"
+        class="vp-btn vp-btn--ghost vp-btn--sm"
+        @click.stop="searchKeyword = ''; searchAuthor = ''"
+      >
         <Icon
           icon="mdi:close"
           height="12"
         />
-        </button>
-        <select
-          v-model="displayCount"
-          class="bcl-count-select"
-          @change="onCountChange"
-        >
-          <option
-            v-for="n in countOptions"
-            :key="n"
-            :value="n"
-          >{{ n }}</option>
-        </select>
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm bcl-refresh-btn"
-          :disabled="loading"
-          title="刷新提交日志"
-          @click.stop="$emit('refreshCommitLog')"
-        >
-          <Icon icon="mdi:refresh" height="12" :class="{ 'gp-spin': loading }" />
-        </button>
+      </button>
+      <select
+        v-model="displayCount"
+        class="bcl-count-select"
+        @change="onCountChange"
+      >
+        <option
+          v-for="n in countOptions"
+          :key="n"
+          :value="n"
+        >{{ n }}</option>
+      </select>
+      <button
+        class="vp-btn vp-btn--ghost vp-btn--sm bcl-refresh-btn"
+        :disabled="loading"
+        title="刷新提交日志"
+        @click.stop="$emit('refreshCommitLog')"
+      >
+        <Icon icon="mdi:refresh" height="12" :class="{ 'gp-spin': loading }" />
+      </button>
+      <span
+        v-if="!loading && entries.length"
+        class="bcl-count"
+      >{{ entries.length }}</span>
+    </div>
+
+    <!-- 加载中提示 -->
+    <div
+      v-if="loading"
+      class="bcl-loading"
+    >
+      <Icon
+        icon="mdi:loading"
+        class="gp-spin"
+        height="12"
+      />
+      <span>加载中...</span>
+    </div>
+
+    <!-- 空状态 -->
+    <div
+      v-else-if="filteredEntries.length === 0"
+      class="bcl-empty"
+    >
+      {{ (searchKeyword || searchAuthor) ? '无匹配结果' : '暂无提交记录' }}
+    </div>
+
+    <!-- 提交记录列表 -->
+    <div
+      v-else
+      class="bcl-list"
+    >
+      <div
+        v-for="entry in filteredEntries"
+        :key="entry.hash"
+        class="bcl-entry"
+      >
         <span
-          v-if="!loading && entries.length"
-          class="bcl-count"
-        >{{ entries.length }}</span>
-      </div>
-
-      <div
-        v-if="loading"
-        class="bcl-loading"
-      >
-        <Icon
-          icon="mdi:loading"
-          class="gp-spin"
-          height="12"
-        />
-        <span>加载中...</span>
-      </div>
-
-      <div
-        v-else-if="filteredEntries.length === 0"
-        class="bcl-empty"
-      >
-        {{ (searchKeyword || searchAuthor) ? '无匹配结果' : '暂无提交记录' }}
-      </div>
-
-      <div
-        v-else
-        class="bcl-list"
-      >
-        <div
-          v-for="entry in filteredEntries"
-          :key="entry.hash"
-          class="bcl-entry"
-        >
+          class="bcl-hash"
+          :title="entry.hash"
+        >{{ entry.hash }}</span>
+        <span
+          class="bcl-msg"
+          :title="entry.message"
+        >{{ entry.message }}</span>
+        <span class="bcl-meta">
+          <span class="bcl-author">{{ entry.author }}</span>
           <span
-            class="bcl-hash"
-            :title="entry.hash"
-          >{{ entry.hash }}</span>
-          <span
-            class="bcl-msg"
-            :title="entry.message"
-          >{{ entry.message }}</span>
-          <span class="bcl-meta">
-            <span class="bcl-author">{{ entry.author }}</span>
-            <span
-              class="bcl-date"
-              :title="entry.date"
-            >{{ entry.relativeDate }}</span>
-          </span>
-        </div>
+            class="bcl-date"
+            :title="entry.date"
+          >{{ entry.relativeDate }}</span>
+        </span>
       </div>
     </div>
   </div>
@@ -123,12 +124,10 @@ const emit = defineEmits<{
   refreshCommitLog: []
 }>()
 
-const COUNT_OPTIONS = [10, 20, 30, 50, 100]
+const countOptions = [10, 20, 30, 50, 100]
 const searchKeyword = ref("")
 const searchAuthor = ref("")
 const displayCount = ref(30)
-
-const countOptions = COUNT_OPTIONS
 
 const filteredEntries = computed(() => {
   let list = props.entries
@@ -150,6 +149,5 @@ function onCountChange() {
 
 <style lang="scss">
 @use "@/index.scss" as *;
-@use "../styles/variables" as *;
 @use "../styles/BranchCommitList.scss";
 </style>

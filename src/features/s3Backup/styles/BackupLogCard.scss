@@ -71,6 +71,12 @@
   white-space: nowrap;
 }
 
+.log-hostname {
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light);
+}
+
 .log-status {
   flex-shrink: 0;
   font-size: $font-size-2xs;

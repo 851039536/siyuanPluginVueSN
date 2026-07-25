@@ -23,6 +23,8 @@
   height: 100%;
   padding: 5px 3px;
   overflow: hidden;
+  // 基准字号：未显式声明字号的文字继承内容级 12px，而非思源默认的更大字号
+  font-size: $font-size-xs;
 }
 
 .gp-divider {

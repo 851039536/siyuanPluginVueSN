@@ -184,6 +184,7 @@
         :workspace-root="workspaceRoot"
         :i18n="i18n"
         @clear="clearChecksums"
+        @remove-one="removeOneChecksum"
       />
     </div>
   </div>
@@ -908,6 +909,14 @@ async function clearChecksums(): Promise<void> {
   const instance = getS3BackupInstance()
   if (instance) {
     await instance.getStorage().checksums.save({ items: [] })
+  }
+}
+
+async function removeOneChecksum(fileName: string): Promise<void> {
+  checksums.value = checksums.value.filter((c) => c.fileName !== fileName)
+  const instance = getS3BackupInstance()
+  if (instance) {
+    await instance.getStorage().checksums.save({ items: checksums.value })
   }
 }
 

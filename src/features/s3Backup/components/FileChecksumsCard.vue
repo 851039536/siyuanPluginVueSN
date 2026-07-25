@@ -1,10 +1,62 @@
 <!-- 文件校验卡片 — 已存储校验值列表 + 拖放文件即时校验 -->
 <template>
   <div class="checksums-container">
+
+    <!-- 拖放文件校验 -->
+    <section class="card-section">
+      <div class="section-header">
+        <h4>{{ i18n.dropVerify }}</h4>
+        <Button v-if="droppedResults.length > 0" variant="ghost" size="xsmall" @click="droppedResults = []">
+          {{ i18n.clearResults }}
+        </Button>
+      </div>
+      <div class="drop-zone" :class="{ 'drop-active': isDragging }" @dragover.prevent="onDragOver"
+        @dragleave="onDragLeave" @drop.prevent="onDrop" @dragenter.prevent="onDragEnter">
+        <div class="drop-zone-content">
+          <span class="drop-zone-icon">📂</span>
+          <span>{{ i18n.dropHint }}</span>
+        </div>
+      </div>
+      <div v-if="droppedResults.length > 0" class="drop-results">
+        <div v-for="(result, index) in droppedResults" :key="result.name + result.path" class="drop-result-item"
+          :class="{ 'drop-compare-match': compareResults[index] === true, 'drop-compare-mismatch': compareResults[index] === false }">
+          <div class="drop-result-info">
+            <span class="drop-result-name">{{ result.name }}</span>
+            <span class="checksum-meta">
+              <span class="checksum-size">{{ formatFileSize(result.size) }}</span>
+            </span>
+          </div>
+          <div class="drop-result-hash">
+            <code class="checksum-hash-value">{{ result.hash }}</code>
+          </div>
+          <div class="drop-result-compare">
+            <select v-if="storedItems.length > 0" v-model="compareSelects[index]" class="compare-select"
+              @change="onCompareChange(index)">
+              <option value="">{{ i18n.compareWith }}</option>
+              <option v-for="item in storedItems" :key="item.fileName" :value="item.fileName">
+                {{ item.fileName }}
+              </option>
+            </select>
+            <span v-if="compareResults[index] === true" class="compare-badge compare-ok">
+              &#10003; {{ i18n.match }}
+            </span>
+            <span v-else-if="compareResults[index] === false" class="compare-badge compare-fail">
+              &#10007; {{ i18n.mismatch }}
+            </span>
+          </div>
+          <div class="drop-result-copy">
+            <Button variant="ghost" size="xsmall" @click="copyHash(result.hash)">
+              {{ i18n.copy }}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- 已存储校验值 -->
     <section class="card-section">
       <div class="section-header">
-        <h4>{{ i18n.storedChecksums || "已存储校验值" }}</h4>
+        <h4>{{ i18n.storedChecksums}}</h4>
         <div class="section-header-actions">
           <Button
             v-if="storedItems.length > 0"
@@ -13,15 +65,15 @@
             :disabled="isVerifyingAll"
             @click="verifyAll"
           >
-            {{ i18n.verifyAll || "验证全部" }}
+            {{ i18n.verifyAll}}
           </Button>
           <Button
             v-if="storedItems.length > 0"
             variant="ghost"
             size="xsmall"
-            @click="$emit('clear')"
+            @click="confirmClearAll"
           >
-            {{ i18n.clearAll || "清空" }}
+            {{ i18n.clearAll}}
           </Button>
         </div>
       </div>
@@ -40,107 +92,46 @@
               <span class="log-sep">·</span>
               <span class="checksum-time">{{ formatTime(item.time) }}</span>
             </span>
+            <div class="checksum-actions">
+              <span v-if="verifyResults[item.fileName] === undefined" class="verify-badge">
+                <Button
+                  variant="ghost"
+                  size="xsmall"
+                  :disabled="verifyingItems[item.fileName]"
+                  @click="verifyOne(item)"
+                >
+                  {{ i18n.verify || "验证" }}
+                </Button>
+              </span>
+              <span
+                v-else-if="verifyResults[item.fileName] === true"
+                class="verify-badge verify-ok"
+              >
+                {{ i18n.match || "匹配" }}
+              </span>
+              <span v-else class="verify-badge verify-fail">
+                {{ i18n.mismatch || "不匹配" }}
+              </span>
+              <Button
+                variant="ghost"
+                size="xsmall"
+                @click="confirmRemoveOne(item.fileName)"
+              >
+                {{ i18n.removeChecksum || "删除" }}
+              </Button>
+            </div>
           </div>
           <div class="checksum-hash">
             <code class="checksum-hash-value">{{ item.checksum.slice(0, 16) }}...</code>
           </div>
-          <div class="checksum-actions">
-            <span v-if="verifyResults[item.fileName] === undefined" class="verify-badge">
-              <Button
-                variant="ghost"
-                size="xsmall"
-                :disabled="verifyingItems[item.fileName]"
-                @click="verifyOne(item)"
-              >
-                {{ i18n.verify || "验证" }}
-              </Button>
-            </span>
-            <span
-              v-else-if="verifyResults[item.fileName] === true"
-              class="verify-badge verify-ok"
-            >
-              {{ i18n.match || "匹配" }}
-            </span>
-            <span v-else class="verify-badge verify-fail">
-              {{ i18n.mismatch || "不匹配" }}
-            </span>
-          </div>
         </div>
       </div>
       <div v-else class="empty-state">
-        <p>{{ i18n.noChecksums || "暂无校验值" }}</p>
+        <p>{{ i18n.noChecksums}}</p>
       </div>
     </section>
 
-    <!-- 拖放文件校验 -->
-    <section class="card-section">
-      <div class="section-header">
-        <h4>{{ i18n.dropVerify || "拖放文件校验" }}</h4>
-        <Button
-          v-if="droppedResults.length > 0"
-          variant="ghost"
-          size="xsmall"
-          @click="droppedResults = []"
-        >
-          {{ i18n.clearResults || "清空结果" }}
-        </Button>
-      </div>
-      <div
-        class="drop-zone"
-        :class="{ 'drop-active': isDragging }"
-        @dragover.prevent="onDragOver"
-        @dragleave="onDragLeave"
-        @drop.prevent="onDrop"
-        @dragenter.prevent="onDragEnter"
-      >
-        <div class="drop-zone-content">
-          <span class="drop-zone-icon">📂</span>
-          <span>{{ i18n.dropHint || "拖放文件到此区域进行校验" }}</span>
-        </div>
-      </div>
-      <div v-if="droppedResults.length > 0" class="drop-results">
-        <div
-          v-for="(result, index) in droppedResults"
-          :key="result.name + result.path"
-          class="drop-result-item"
-          :class="{ 'drop-compare-match': compareResults[index] === true, 'drop-compare-mismatch': compareResults[index] === false }"
-        >
-          <div class="drop-result-info">
-            <span class="drop-result-name">{{ result.name }}</span>
-            <span class="checksum-meta">
-              <span class="checksum-size">{{ formatFileSize(result.size) }}</span>
-            </span>
-          </div>
-          <div class="drop-result-hash">
-            <code class="checksum-hash-value">{{ result.hash }}</code>
-          </div>
-          <div class="drop-result-compare">
-            <select
-              v-if="storedItems.length > 0"
-              v-model="compareSelects[index]"
-              class="compare-select"
-              @change="onCompareChange(index)"
-            >
-              <option value="">{{ i18n.compareWith || "比对..." }}</option>
-              <option v-for="item in storedItems" :key="item.fileName" :value="item.fileName">
-                {{ item.fileName }}
-              </option>
-            </select>
-            <span v-if="compareResults[index] === true" class="compare-badge compare-ok">
-              &#10003; {{ i18n.match || "匹配" }}
-            </span>
-            <span v-else-if="compareResults[index] === false" class="compare-badge compare-fail">
-              &#10007; {{ i18n.mismatch || "不匹配" }}
-            </span>
-          </div>
-          <div class="drop-result-copy">
-            <Button variant="ghost" size="xsmall" @click="copyHash(result.hash)">
-              {{ i18n.copy || "复制" }}
-            </Button>
-          </div>
-        </div>
-      </div>
-    </section>
+
   </div>
 </template>
 
@@ -161,8 +152,9 @@ const props = defineProps<{
   i18n: Record<string, string>
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: "clear"): void
+  (e: "removeOne", fileName: string): void
 }>()
 
 // ========== 存储校验值验证状态 ==========
@@ -197,6 +189,18 @@ async function verifyAll(): Promise<void> {
     await verifyOne(item)
   }
   isVerifyingAll.value = false
+}
+
+function confirmRemoveOne(fileName: string): void {
+  const confirmed = confirm(props.i18n.confirmRemoveChecksum || "确定要删除该校验值吗？")
+  if (!confirmed) { return }
+  emit("removeOne", fileName)
+}
+
+function confirmClearAll(): void {
+  const confirmed = confirm(props.i18n.confirmClearAll || "确定要清空全部校验值吗？")
+  if (!confirmed) { return }
+  emit("clear")
 }
 
 // ========== 拖放校验 ==========

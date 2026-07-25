@@ -46,7 +46,7 @@
 
 .gp-stat-card--info .gp-stat-card-value { color: var(--b3-theme-primary); }
 .gp-stat-card--warn .gp-stat-card-value { color: var(--b3-theme-warning); }
-.gp-stat-card--accent .gp-stat-card-value { color: #f58742; }
+.gp-stat-card--accent .gp-stat-card-value { color: var(--gp-accent-color); }
 
 // ── 双列布局 ──
 .gp-stats-duo {
@@ -70,7 +70,7 @@
 
 .gp-stats-section-title {
   @include gp-label-base;
-  font-size: 11px;
+  font-size: $font-size-xs;
   margin-bottom: $spacing-2;
   display: flex;
   align-items: center;
@@ -78,7 +78,7 @@
 }
 
 .gp-stats-section-count {
-  font-size: 10px;
+  font-size: $font-size-2xs;
   font-family: $vp-mono;
   padding: 0 6px;
   border-radius: $radius-sm;
@@ -105,14 +105,14 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: $font-size-xs;
   opacity: 0.7;
 }
 
 .gp-coverage-num {
   margin-left: auto;
   font-family: $vp-mono;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   opacity: 0.5;
 }
 
@@ -150,13 +150,13 @@
   border-radius: $radius-sm;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  font-size: 11px;
+  font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-surface);
 
   span {
     font-family: $vp-mono;
-    font-size: 13px;
+    font-size: $font-size-xs;
   }
 
   &--ahead {
@@ -187,7 +187,7 @@
   align-items: center;
   gap: 6px;
   padding: 10px $spacing-2;
-  font-size: 11px;
+  font-size: $font-size-xs;
   opacity: 0.45;
   font-style: italic;
 }
@@ -206,12 +206,12 @@
   align-items: center;
   gap: $spacing-1;
   padding: 5px $spacing-2;
-  font-size: 11px;
+  font-size: $font-size-xs;
   @include row-divider;
 
   &--head {
     background: var(--b3-theme-surface);
-    font-size: 9px;
+    font-size: $font-size-2xs;
     font-weight: $font-weight-bold;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -243,7 +243,7 @@
     width: 40px;
     text-align: center;
     font-family: $vp-mono;
-    font-size: 10px;
+    font-size: $font-size-2xs;
   }
 
   &--act {
@@ -260,7 +260,7 @@
 
 .gp-badge-ahead {
   display: inline-block;
-  font-size: 9px;
+  font-size: $font-size-2xs;
   font-weight: $font-weight-bold;
   font-family: $vp-mono;
   padding: 1px 5px;
@@ -281,8 +281,8 @@
 
 .gp-badge-untracked {
   @extend .gp-badge-ahead;
-  background: #fde68a;
-  color: #92400e;
+  background: var(--gp-badge-untracked-bg);
+  color: var(--gp-badge-untracked-color);
 }
 
 // ── 平台状态图标 ──

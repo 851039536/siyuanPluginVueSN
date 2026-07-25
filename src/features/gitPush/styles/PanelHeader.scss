@@ -40,7 +40,7 @@
 }
 
 .gp-title {
-  font-size: 14px;
+  font-size: $font-size-sm;
   font-weight: $font-weight-semibold;
 }
 
@@ -51,10 +51,10 @@
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   font-weight: $font-weight-bold;
   font-family: $vp-mono;
-  border-radius: 9px;
+  border-radius: $radius-full;
   background: var(--b3-theme-primary-lightest);
   color: var(--b3-theme-primary);
 }

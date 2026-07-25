@@ -84,7 +84,7 @@
       </button>
       <button
         class="vp-btn vp-btn--ghost vp-btn--sm"
-        :title="i18n.gitConfigLabel || 'Git 配置'"
+        :title="i18n.gitConfigLabel"
         @click="emit('openGitConfig')"
       >
         <Icon
@@ -94,7 +94,7 @@
       </button>
       <button
         class="vp-btn vp-btn--ghost vp-btn--sm"
-        :title="i18n.settings || '设置'"
+        :title="i18n.settings"
         @click="emit('openSettings')"
       >
         <Icon
@@ -105,7 +105,7 @@
       <div class="gp-header-refresh-wrap">
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
-          :title="i18n.refreshOptions || '刷新选项'"
+          :title="i18n.refreshOptions"
           :disabled="refreshingAllLocal || refreshingAllRemote || refreshingAll"
           @click.stop="emit('update:showRefreshMenu', !showRefreshMenu)"
         >
@@ -130,7 +130,7 @@
               height="12"
               :class="{ 'gp-spin': refreshingAllLocal }"
             />
-            <span>{{ i18n.headerRefreshLocal || '刷新本地状态' }}</span>
+            <span>{{ i18n.headerRefreshLocal }}</span>
           </button>
           <button
             class="gp-refresh-item"
@@ -142,7 +142,7 @@
               height="12"
               :class="{ 'gp-spin': refreshingAllRemote }"
             />
-            <span>{{ i18n.headerRefreshRemote || '刷新远程状态' }}</span>
+            <span>{{ i18n.headerRefreshRemote }}</span>
           </button>
           <div class="gp-refresh-divider" />
           <button
@@ -155,7 +155,7 @@
               height="12"
               :class="{ 'gp-spin': refreshingAll }"
             />
-            <span>{{ i18n.refreshAll || '全部刷新' }}</span>
+            <span>{{ i18n.refreshAll }}</span>
           </button>
         </div>
       </div>
@@ -182,7 +182,7 @@
               icon="mdi:plus-circle-outline"
               height="12"
             />
-            <span>{{ i18n.addProject || '添加单个项目' }}</span>
+            <span>{{ i18n.addProject }}</span>
           </button>
           <button
             class="gp-add-item"
@@ -192,7 +192,7 @@
               icon="mdi:file-find-outline"
               height="12"
             />
-            <span>{{ i18n.importProject || '批量导入' }}</span>
+            <span>{{ i18n.importProject }}</span>
           </button>
         </div>
       </div>
@@ -204,7 +204,7 @@
       <Input
         :model-value="searchQuery"
         size="xsmall"
-        :placeholder="searchPlaceholder || '搜索项目...'"
+        :placeholder="searchPlaceholder"
         prefix-icon="search"
         clearable
         autocomplete="off"

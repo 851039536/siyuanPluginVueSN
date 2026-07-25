@@ -8,7 +8,7 @@
           <button
             class="gp-star-btn"
             :class="{ active: project.starred }"
-            :title="project.starred ? (i18n.unstar || '取消收藏') : (i18n.starPin || '收藏置顶')"
+            :title="project.starred ? i18n.unstar : i18n.starPin"
             @click.stop="$emit('toggleStar', project.id)"
           >
             <Icon
@@ -29,7 +29,7 @@
           <span
             v-else
             class="gp-card-name"
-            :title="i18n.clickToRename || '点击修改名称'"
+            :title="i18n.clickToRename"
             @click.stop="$emit('startNameEdit', project)"
           ><template
             v-for="(seg, i) in nameSegments"
@@ -42,7 +42,7 @@
           <button
             class="gp-project-status-btn"
             :class="`gp-psb-${project.status || 'active'}`"
-            :title="(i18n.statusTitle || '状态: {0}（点击切换）').replace('{0}', statusMeta[project.status || 'active'].label)"
+            :title="i18n.statusTitle.replace('{0}', statusMeta[project.status || 'active'].label)"
             @click.stop="$emit('cycleStatus', project.id, project.status)"
           >
             <Icon
@@ -53,12 +53,12 @@
           <span
             v-if="project.archived"
             class="gp-archived-tag"
-            :title="i18n.archivedTitle || '已归档'"
+            :title="i18n.archivedTitle"
           >
             <Icon
               icon="mdi:archive-outline"
               height="12"
-            />{{ i18n.archivedShort || '归档' }}
+            />{{ i18n.archivedShort }}
           </span>
         </div>
         <div
@@ -74,13 +74,13 @@
           <span
             v-if="project.localPaths?.length"
             class="gp-multi-path-badge"
-            :title="(i18n.devicePathsCount || '已配置 {0} 个设备路径').replace('{0}', String(project.localPaths.length + 1))"
-          >+{{ project.localPaths.length }}{{ i18n.pathsSuffix || '路径' }}</span>
+            :title="i18n.devicePathsCount.replace('{0}', String(project.localPaths.length + 1))"
+          >+{{ project.localPaths.length }}{{ i18n.pathsSuffix }}</span>
           <span
             v-if="project.lastActivity"
             class="gp-activity"
             :class="`gp-act-${activityLevel(project.lastActivity)}`"
-            :title="activityLevel(project.lastActivity) === 'dead' ? (i18n.inactiveHint || '长时间未活动，建议归档') : ''"
+            :title="activityLevel(project.lastActivity) === 'dead' ? i18n.inactiveHint : ''"
           >
             <Icon
               icon="mdi:clock-outline"
@@ -117,7 +117,7 @@
             :key="b.name"
             class="gp-branch-tag"
             :class="{ current: b.current }"
-            :title="b.current ? (i18n.currentBranch || '当前分支') : (i18n.switchToBranch || '切换到 {0}').replace('{0}', b.name)"
+            :title="b.current ? i18n.currentBranch : i18n.switchToBranch.replace('{0}', b.name)"
             @click="$emit('switchBranch', project.id, b.name)"
           >
             {{ b.name }}
@@ -145,7 +145,7 @@
         <select
           class="gp-cat-select"
           :value="project.categoryId"
-          :title="i18n.moveCategory || '移动分类'"
+          :title="i18n.moveCategory"
           @change.stop="$emit('moveProject', project.id, ($event.target as HTMLSelectElement).value)"
         >
           <option
@@ -164,7 +164,7 @@
           <button
             v-if="getProjectUrl(project, pm.urlProp)"
             class="vp-btn vp-btn--ghost vp-btn--sm"
-            :title="(i18n.openPlatformHint || '打开 {0}（右键复制链接）').replace('{0}', pm.label)"
+            :title="i18n.openPlatformHint.replace('{0}', pm.label)"
             @click="$emit('openWeb', getProjectUrl(project, pm.urlProp)!)"
             @contextmenu.prevent="$emit('copyUrl', getProjectUrl(project, pm.urlProp)!)"
           >
@@ -177,7 +177,7 @@
         <div class="gp-ide-wrap">
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm"
-            :title="i18n.openProject || '打开项目'"
+            :title="i18n.openProject"
             @click.stop="$emit('toggleIdeMenu', project.id)"
           >
             <Icon
@@ -203,7 +203,7 @@
                 icon="mdi:folder-open"
                 height="12"
               />
-              <span>{{ i18n.openFolder || '打开文件夹' }}</span>
+              <span>{{ i18n.openFolder }}</span>
             </button>
             <div class="gp-ide-divider" />
             <button

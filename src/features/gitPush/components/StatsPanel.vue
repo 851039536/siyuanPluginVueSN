@@ -11,7 +11,7 @@
           {{ projectCount }}
         </div>
         <div class="gp-stat-card-label">
-          {{ i18n.totalProjects || '项目总数' }}
+          {{ i18n.totalProjects }}
         </div>
       </div>
       <div class="gp-stat-card gp-stat-card--info">
@@ -19,7 +19,7 @@
           {{ remoteCoverage.hasRemote }}
         </div>
         <div class="gp-stat-card-label">
-          {{ i18n.remoteConfigured || '已配置远程' }}
+          {{ i18n.remoteConfigured }}
         </div>
       </div>
       <div class="gp-stat-card gp-stat-card--warn">
@@ -27,7 +27,7 @@
           {{ pushStatusStats.ahead }}
         </div>
         <div class="gp-stat-card-label">
-          {{ i18n.needsPush || '待推送' }}
+          {{ i18n.needsPush }}
         </div>
       </div>
       <div class="gp-stat-card gp-stat-card--accent">
@@ -35,7 +35,7 @@
           {{ uncommittedProjects.length }}
         </div>
         <div class="gp-stat-card-label">
-          {{ i18n.uncommitted || '未提交变更' }}
+          {{ i18n.uncommitted }}
         </div>
       </div>
     </div>
@@ -53,7 +53,7 @@
         />
       </div>
       <div class="gp-empty-text">
-        {{ i18n.noProjectsStats || '暂无项目，请在列表视图中添加' }}
+        {{ i18n.noProjectsStats }}
       </div>
     </div>
 
@@ -61,7 +61,7 @@
       <!-- 远程覆盖率 -->
       <div class="gp-stats-section">
         <div class="gp-stats-section-title">
-          {{ i18n.remoteCoverage || '远程仓库覆盖率' }}
+          {{ i18n.remoteCoverage }}
         </div>
         <div class="gp-coverage-list">
           <div
@@ -91,7 +91,7 @@
                 icon="mdi:layers"
                 height="12"
               />
-              <span>{{ i18n.multipleRemotes || '多远程项目' }}</span>
+              <span>{{ i18n.multipleRemotes }}</span>
               <span class="gp-coverage-num">{{ remoteCoverage.multiple }} / {{ projectCount }}</span>
             </div>
             <div class="gp-coverage-bar">
@@ -109,7 +109,7 @@
       <!-- 待处理项目（推送状态概览 + 待处理表格合并） -->
       <div class="gp-stats-section gp-stats-section--half">
         <div class="gp-stats-section-title">
-          {{ i18n.pendingProjects || '待处理项目' }}
+          {{ i18n.pendingProjects }}
           <span class="gp-stats-section-count">{{ pendingProjects.length }}</span>
         </div>
         <!-- 推送状态概览 -->
@@ -149,11 +149,11 @@
           class="gp-table-wrap"
         >
           <div class="gp-table-row gp-table-row--head">
-            <span class="gp-table-cell gp-table-cell--name">{{ i18n.projectName || '项目' }}</span>
-            <span class="gp-table-cell gp-table-cell--num">{{ i18n.needsPushShort || '待推送' }}</span>
-            <span class="gp-table-cell gp-table-cell--num">{{ i18n.staged || '暂存' }}</span>
-            <span class="gp-table-cell gp-table-cell--num">{{ i18n.unstaged || '未暂存' }}</span>
-            <span class="gp-table-cell gp-table-cell--num">{{ i18n.untracked || '未跟踪' }}</span>
+            <span class="gp-table-cell gp-table-cell--name">{{ i18n.projectName }}</span>
+            <span class="gp-table-cell gp-table-cell--num">{{ i18n.needsPushShort }}</span>
+            <span class="gp-table-cell gp-table-cell--num">{{ i18n.staged }}</span>
+            <span class="gp-table-cell gp-table-cell--num">{{ i18n.unstaged }}</span>
+            <span class="gp-table-cell gp-table-cell--num">{{ i18n.untracked }}</span>
             <span class="gp-table-cell gp-table-cell--act"></span>
           </div>
           <div
@@ -225,7 +225,7 @@
             icon="mdi:check-all"
             height="12"
           />
-          <span>{{ i18n.allClear || '所有项目状态正常' }}</span>
+          <span>{{ i18n.allClear }}</span>
         </div>
       </div>
 
@@ -235,12 +235,12 @@
         class="gp-stats-section gp-stats-section--half"
       >
         <div class="gp-stats-section-title">
-          {{ i18n.platformStatus || '平台配置状态' }}
+          {{ i18n.platformStatus }}
           <span class="gp-stats-section-count">{{ platformStatusProjects.length }}</span>
         </div>
         <div class="gp-table-wrap">
           <div class="gp-table-row gp-table-row--head">
-            <span class="gp-table-cell gp-table-cell--name">{{ i18n.projectName || '项目' }}</span>
+            <span class="gp-table-cell gp-table-cell--name">{{ i18n.projectName }}</span>
             <span
               v-for="pm in PLATFORM_META"
               :key="pm.key"
@@ -269,7 +269,7 @@
               v-for="pm in PLATFORM_META"
               :key="pm.key"
               class="gp-table-cell gp-table-cell--platform-status"
-              :title="getPlatformStatus(item, pm.key) ? (i18n.configured || '已配置') : (i18n.notConfigured || '未配置')"
+              :title="getPlatformStatus(item, pm.key) ? i18n.configured : i18n.notConfigured"
             >
               <Icon
                 v-if="getPlatformStatus(item, pm.key)"

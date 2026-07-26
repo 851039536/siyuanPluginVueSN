@@ -96,7 +96,7 @@ export class GitPushManager {
 
   async removeProject(id: string): Promise<void> { return this.store.removeProject(id) }
 
-  async updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "path" | "tags" | "starred" | "status" | "archived" | "note" | "name" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl" | "localPaths">>): Promise<GitProject | null> {
+  async updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "path" | "tags" | "starred" | "status" | "archived" | "note" | "name" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl" | "localPaths" | "pathDevices">>): Promise<GitProject | null> {
     return this.store.updateProjectMeta(id, patch)
   }
 

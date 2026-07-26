@@ -6,7 +6,7 @@
   >
     <div
       class="gp-dialog"
-      style="width: 580px;"
+      style="width: 754px;"
     >
       <div class="gp-dialog-header">
         <span class="gp-dialog-title">{{ i18n.editProjectTitlePrefix }} — {{ project?.name }}</span>
@@ -271,7 +271,9 @@
           >
             {{ i18n.noRemotes }}
           </div>
+          <!-- 添加远程仓库行：已添加的平台不可重复选择，全部平台配齐后隐藏 -->
           <div
+            v-if="remoteOptions.length > 0"
             class="gp-remote-add"
             style="margin-top:4px"
           >
@@ -382,11 +384,12 @@ import {
   onMounted,
   reactive,
   ref,
+  watch,
 } from "vue"
 import Input from "@/components/Input.vue"
 import type { SelectOption } from "@/components/Select.vue"
 import Select from "@/components/Select.vue"
-import { getCurrentDeviceName, resolveValidPath } from "../utils"
+import { getCurrentDeviceName, hasPlatformRemote, resolveValidPath } from "../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
 import { pickDirectory } from "../composables/useDirectoryPicker"
 
@@ -401,9 +404,6 @@ const statusOptions = computed<SelectOption[]>(() =>
   STATUS_CYCLE.map((s) => ({ value: s, label: STATUS_META[s].label })),
 )
 
-const remoteOptions = computed<SelectOption[]>(() =>
-  REMOTES.map((r) => ({ value: r.key, label: r.label })),
-)
 const emit = defineEmits<{
   "close": []
   "saved": [] // 通知父组件刷新列表并关闭弹窗
@@ -434,6 +434,20 @@ const newRemoteUrl = ref("")
 const editRemoteName = ref("")
 const editRemoteUrl = ref("")
 const showHelp = ref(false)
+
+// 平台下拉仅列出尚未添加的平台（已存在的远程如 GitHub 不允许重复添加）
+const remoteOptions = computed<SelectOption[]>(() =>
+  REMOTES
+    .filter((r) => !hasPlatformRemote(remoteList.value, r.key))
+    .map((r) => ({ value: r.key, label: r.label })),
+)
+
+// 当前选中平台被占用后自动切换到第一个可用平台
+watch(remoteOptions, (opts) => {
+  if (!opts.some((o) => o.value === newRemoteName.value)) {
+    newRemoteName.value = String(opts[0]?.value ?? "")
+  }
+}, { immediate: true })
 
 // ── 仓库链接列表操作 ──
 const repoLinkError = ref("")

@@ -76,7 +76,8 @@ export const IDE_PRESETS = [
 export const CUSTOM_IDE_KEY = "git-push-custom-ides"
 
 export function useIdeManagement(options: {
-  plugin: { loadData: (key: string) => Promise<any>, saveData: (key: string, value: any) => Promise<void> }
+  // saveData 返回值声明为 unknown：思源 Plugin.saveData 实际返回 Promise<IWebSocketData>，调用方不消费返回值
+  plugin: { loadData: (key: string) => Promise<any>, saveData: (key: string, value: any) => Promise<unknown> }
   /** 打开文件夹的回退函数 */
   openFolder: (path: string) => void
 }) {

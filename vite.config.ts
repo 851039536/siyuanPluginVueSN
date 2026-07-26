@@ -83,8 +83,11 @@ export default defineConfig(({
             dest: "./",
           },
           {
-            src: "./src/i18n/**",
+            // 仅复制合并产物 zh_CN.json / en_US.json（分片子目录无需部署）
+            // v4 起插件默认保留完整目录结构，需 stripBase 去掉 src/i18n/ 前缀
+            src: "./src/i18n/*.json",
             dest: "./i18n/",
+            rename: { stripBase: true },
           },
         ],
       }),

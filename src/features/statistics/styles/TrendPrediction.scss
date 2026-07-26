@@ -9,7 +9,7 @@
 .pred-loading,
 .pred-empty {
   text-align: center;
-  padding: 20px;
+  padding: $spacing-4;
   font-size: $font-size-xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
@@ -18,61 +18,61 @@
 .pred-content {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: $spacing-2;
 }
 
-.pred-header {
+// 指标卡行：三卡等宽（拟合度 / 下周预计 / 下月预计），对齐概览核心指标卡
+.pred-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $spacing-1;
+}
+
+.pred-stat-card {
+  @include stats.stats-card-base;
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: center;
+  padding: $spacing-2 $spacing-1;
+  text-align: center;
 }
 
-.confidence-label {
+.pred-stat-label {
   @include stats.codex-label;
+  margin-bottom: $spacing-2px;
 }
 
-.confidence-value {
+.pred-stat-value {
   font-family: stats.$font-mono;
-  font-size: $font-size-sm; // 数据突出展示（拟合度数值）
+  font-size: $font-size-sm; // 数据突出展示（预测数值）
   font-weight: $font-weight-bold;
   color: var(--b3-theme-primary);
-  margin-left: 4px;
+  line-height: $line-height-tight;
 }
 
-.pred-projections {
-  display: flex;
-  gap: 10px;
-}
-
-.projection-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: $font-size-2xs;
-}
-
-.proj-icon {
-  font-size: $font-size-xs;
-}
-
-.proj-label {
-  @include stats.codex-label;
-  opacity: 0.6;
-}
-
-.proj-value {
+.pred-stat-unit {
   font-family: stats.$font-mono;
-  font-weight: $font-weight-semibold;
-  color: var(--b3-theme-primary);
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-normal;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.4;
 }
 
 .pred-trend-label {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
   font-family: stats.$font-mono;
   font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface);
 
-  .trend-up {
-    color: stats.$color-success;
+  .trend-icon {
+    display: inline-flex;
+    align-items: center;
+
+    &.trend-pos { color: stats.$color-success; }
+    &.trend-neg { color: stats.$color-danger; }
+    &.trend-flat { color: var(--b3-theme-on-surface); opacity: 0.5; }
   }
 
   .trend-pos {
@@ -81,6 +81,10 @@
 
   .trend-neg {
     color: stats.$color-danger;
+  }
+
+  .trend-flat {
+    color: var(--b3-theme-on-surface);
   }
 }
 
@@ -192,8 +196,8 @@
 
 .pred-legend {
   display: flex;
-  gap: 12px;
-  padding: 2px 0;
+  gap: $spacing-3;
+  padding: $spacing-2px 0;
 }
 
 .legend-item {

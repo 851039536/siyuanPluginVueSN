@@ -468,6 +468,15 @@ export const COMMON_ICONS = {
   swapVertical: {
     icon: "mdi:swap-vertical",
   },
+  trendingUp: {
+    icon: "mdi:trending-up",
+  },
+  trendingDown: {
+    icon: "mdi:trending-down",
+  },
+  trendingNeutral: {
+    icon: "mdi:trending-neutral",
+  },
   translate: {
     icon: "mdi:translate",
   },

@@ -112,6 +112,7 @@
         />
         <TrendPrediction
           :on-get-trend-prediction="getTrendPrediction"
+          :i18n="i18n"
         />
       </div>
 

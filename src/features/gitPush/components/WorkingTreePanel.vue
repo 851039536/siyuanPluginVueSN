@@ -26,14 +26,14 @@
         <span class="wt-summary-actions">
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm"
-            :disabled="((tree?.unstagedCount ?? 0) === 0 && (tree?.untrackedCount ?? 0) === 0) || gitOpLoading"
+            :disabled="!hasUnstaged || gitOpLoading"
             @click.stop="$emit('stageAll')"
           >
             {{ i18n.stageAll }}
           </button>
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm"
-            :disabled="(tree?.stagedCount ?? 0) === 0 || gitOpLoading"
+            :disabled="!hasStaged || gitOpLoading"
             @click.stop="$emit('unstageAll')"
           >
             {{ i18n.unstageAll }}
@@ -73,20 +73,10 @@
             :title="gitOpLoading ? i18n.processing : file.staged ? i18n.unstageFile : i18n.stageFile"
             @click.stop="toggleStage(file)"
           >
+            <!-- 加载中显示旋转图标，否则按暂存状态显示勾选框 -->
             <Icon
-              v-if="gitOpLoading"
-              icon="mdi:loading"
-              class="gp-spin"
-              height="12"
-            />
-            <Icon
-              v-else-if="file.staged"
-              icon="mdi:checkbox-marked"
-              height="12"
-            />
-            <Icon
-              v-else
-              icon="mdi:checkbox-blank-outline"
+              :icon="gitOpLoading ? 'mdi:loading' : file.staged ? 'mdi:checkbox-marked' : 'mdi:checkbox-blank-outline'"
+              :class="{ 'gp-spin': gitOpLoading }"
               height="12"
             />
           </button>
@@ -97,18 +87,12 @@
             :class="`wt-s-${file.status}`"
             :title="statusTitle(file)"
           >
-            <template v-if="file.status === 'renamed'">
-              <IconWrapper
-                name="forward"
-                :size="12"
-              />
-            </template>
-            <template v-else-if="file.status === 'unmerged'">
-              <IconWrapper
-                name="warning"
-                :size="12"
-              />
-            </template>
+            <!-- renamed/unmerged 用 IconWrapper 图标渲染，其余状态用字符标记（图标名与字符均来自 FILE_STATUS_META） -->
+            <IconWrapper
+              v-if="isIconStatus(file)"
+              :name="statusIconKey(file)"
+              :size="12"
+            />
             <template v-else>
               {{ statusIcon(file) }}
             </template>
@@ -187,7 +171,7 @@
                 class="wt-diff-line"
                 :class="`wt-dl-${line.type}`"
               >
-                <span class="wt-dl-sign">{{ line.type === 'add' ? '+' : line.type === 'del' ? '−' : line.type === 'hunk' ? '@' : ' ' }}</span>
+                <span class="wt-dl-sign">{{ DIFF_SIGN[line.type] }}</span>
                 <span class="wt-dl-text">{{ line.text }}</span>
               </div>
             </div>
@@ -197,19 +181,19 @@
 
       <!-- 提交表单 -->
       <div
-        v-if="(tree?.stagedCount ?? 0) > 0"
+        v-if="hasStaged"
         class="wt-commit-form"
       >
         <!-- 常规提交类型快速选择 -->
         <div class="wt-commit-types">
           <button
-            v-for="ct in COMMIT_TYPES"
-            :key="ct.value"
+            v-for="ct in COMMIT_TYPE_VALUES"
+            :key="ct"
             class="wt-type-btn"
-            :class="{ active: commitType === ct.value }"
-            @click.stop="commitType = ct.value; updateCommitMessage()"
+            :class="{ active: commitType === ct }"
+            @click.stop="commitType = ct; updateCommitMessage()"
           >
-            {{ ct.label }}
+            {{ ct }}
           </button>
         </div>
         <!-- 提交信息模板 -->
@@ -247,17 +231,11 @@
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm"
             :disabled="generating"
-            @click.stop="handleGenerate"
+            @click.stop="$emit('generateMsg')"
           >
             <Icon
-              v-if="generating"
-              icon="mdi:loading"
-              class="gp-spin"
-              height="12"
-            />
-            <Icon
-              v-else
-              icon="mdi:auto-fix"
+              :icon="generating ? 'mdi:loading' : 'mdi:auto-fix'"
+              :class="{ 'gp-spin': generating }"
               height="12"
             />
             <span>{{ generating ? i18n.generating : i18n.generateMsg }}</span>
@@ -268,14 +246,8 @@
             @click.stop="handleCommit"
           >
             <Icon
-              v-if="committing"
-              icon="mdi:loading"
-              class="gp-spin"
-              height="12"
-            />
-            <Icon
-              v-else
-              icon="mdi:source-commit"
+              :icon="committing ? 'mdi:loading' : 'mdi:source-commit'"
+              :class="{ 'gp-spin': committing }"
               height="12"
             />
             <span>{{ committing ? i18n.committing : i18n.commit }}</span>
@@ -306,7 +278,8 @@ import type {
   FileChange,
   WorkingTreeInfo,
 } from "../types"
-import { FILE_STATUS_META } from "../types"
+import { COMMIT_TYPE_VALUES, FILE_STATUS_META } from "../types"
+import type { DiffLineType } from "../utils"
 import { parseDiffLines } from "../utils"
 import { useGeneratedMsgSync } from "../composables/useGeneratedMsgSync"
 import { Icon } from "@iconify/vue"
@@ -316,7 +289,7 @@ import {
   toRef,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { COMMIT_TYPE_VALUES } from "../types/storage"
+import type { IconKey } from "@/config/icons"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -345,10 +318,13 @@ const emit = defineEmits<{
   refreshWorkingTree: []
 }>()
 
-const COMMIT_TYPES = COMMIT_TYPE_VALUES.map((v) => ({
-  value: v,
-  label: v,
-}))
+// diff 行类型 → 行首符号（替代模板中的三元链）
+const DIFF_SIGN: Record<DiffLineType, string> = {
+  add: "+",
+  del: "−",
+  hunk: "@",
+  ctx: " ",
+}
 
 const commitType = ref("chore")
 const commitMessage = ref("")
@@ -356,6 +332,10 @@ const activeDiffFile = ref<FileChange | null>(null)
 
 // 监听外部生成的消息，自动填充
 useGeneratedMsgSync(toRef(props, "generatedMsg"), commitMessage)
+
+// 摘要按钮与提交表单共用的暂存状态判断（消除模板中多处 ?? 0 空值守卫）
+const hasStaged = computed(() => (props.tree?.stagedCount ?? 0) > 0)
+const hasUnstaged = computed(() => ((props.tree?.unstagedCount ?? 0) + (props.tree?.untrackedCount ?? 0)) > 0)
 
 const sortedFiles = computed(() => {
   if (!props.tree) return []
@@ -378,6 +358,16 @@ const coloredDiffLines = computed(() => parseDiffLines(activeDiffText.value))
 
 function statusIcon(file: FileChange): string {
   return FILE_STATUS_META[file.status]?.icon || "·"
+}
+
+/** renamed/unmerged 状态用 IconWrapper 渲染，其余为字符标记 */
+function isIconStatus(file: FileChange): boolean {
+  return file.status === "renamed" || file.status === "unmerged"
+}
+
+/** isIconStatus 守卫下取图标键（forward/warning 均为已注册 IconKey） */
+function statusIconKey(file: FileChange): IconKey {
+  return statusIcon(file) as IconKey
 }
 
 function statusTitle(file: FileChange): string {
@@ -421,10 +411,6 @@ function handleSelectTemplate(tplId: string) {
   commitMessage.value = tpl.pattern
     .replace(/\{branch\}/g, props.tree?.branch || "")
     .replace(/\{files\}/g, String(props.tree?.files.length ?? 0))
-}
-
-async function handleGenerate() {
-  emit("generateMsg")
 }
 
 function handleCommit() {

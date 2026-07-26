@@ -216,7 +216,7 @@ export const FEATURE_CONFIG = [
   {
     id: "resourceManager",
     defaultTitle: "资源管理",
-    defaultDesc: "管理思源笔记资源文件：查看、重命名、插入、清理资源",
+    defaultDesc: "管理思源笔记资源文件：查看、分类、移动、清理资源",
     titleI18nKey: "resourceManager.panelTitle",
     descI18nKey: "resourceManager.description",
   },

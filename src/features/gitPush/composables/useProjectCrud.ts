@@ -53,7 +53,7 @@ export function useProjectCrud(manager: GitPushManager) {
     projects.value = [...projects.value]
   }
 
-  async function updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "name" | "tags" | "starred" | "status" | "archived" | "note" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl" | "localPaths">>) {
+  async function updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "name" | "tags" | "starred" | "status" | "archived" | "note" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl" | "localPaths" | "pathDevices">>) {
     const updated = await manager.updateProjectMeta(id, patch)
     if (updated) {
       patchProject(id, patch)

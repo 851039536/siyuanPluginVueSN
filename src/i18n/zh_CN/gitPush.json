@@ -249,6 +249,7 @@
     "notePlaceholder": "项目备注（可选）",
     "localPathTitle": "本地路径",
     "devicePathPlaceholder": "设备 {0} 的本地路径...",
+    "deviceNamePlaceholder": "电脑名（可选）",
     "selectDir": "选择目录",
     "removePath": "移除此路径",
     "repoLinkLabel": "仓库链接",

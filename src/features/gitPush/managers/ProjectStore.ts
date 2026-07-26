@@ -99,7 +99,7 @@ export class ProjectStore {
   /**
    * 更新项目元信息
    */
-  async updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "path" | "tags" | "starred" | "status" | "archived" | "note" | "name" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl" | "localPaths">>): Promise<GitProject | null> {
+  async updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "path" | "tags" | "starred" | "status" | "archived" | "note" | "name" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl" | "localPaths" | "pathDevices">>): Promise<GitProject | null> {
     const projects = await this.getProjects()
     const project = projects.find((p) => p.id === id)
     if (!project) return null

@@ -54,6 +54,8 @@ export interface GitProject {
   note?: string
   /** 多设备本地路径列表（不含主路径 path），用于跨电脑适配 */
   localPaths?: string[]
+  /** 路径 → 设备电脑名映射（可选标注，键为路径原文；旧数据无此字段，向后兼容） */
+  pathDevices?: Record<string, string>
 }
 
 /** 项目分类 */

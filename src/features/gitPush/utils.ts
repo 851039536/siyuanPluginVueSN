@@ -104,6 +104,15 @@ export function gitUrlToWebUrl(url: string): string {
   return url
 }
 
+/** 获取当前设备电脑名（os.hostname），非 Electron 环境降级返回空串 */
+export function getCurrentDeviceName(): string {
+  try {
+    return getNodeFsPathOs()?.os.hostname() || ""
+  } catch {
+    return ""
+  }
+}
+
 /**
  * 解析项目的有效本地路径（跨电脑适配核心）
  * 按优先级依次检测：主路径 path → localPaths 列表

@@ -72,15 +72,23 @@
           <label class="gp-label">{{ i18n.localPathTitle }} <span class="gp-label-hint">{{ i18n.crossDeviceHint }}</span></label>
           <div class="gp-edit-paths">
             <div
-              v-for="(_lp, idx) in allPathsList"
+              v-for="(entry, idx) in allPathsList"
               :key="idx"
               class="gp-edit-path-row"
             >
               <Input
-                v-model="allPathsList[idx]"
+                v-model="entry.path"
                 size="xsmall"
                 :placeholder="i18n.devicePathPlaceholder.replace('{0}', String(idx + 1))"
               />
+              <!-- 设备电脑名（可选）：占位符“电脑名（可选）”，新增路径时自动填入当前主机名 -->
+              <div class="gp-path-device">
+                <Input
+                  v-model="entry.device"
+                  size="xsmall"
+                  :placeholder="i18n.deviceNamePlaceholder"
+                />
+              </div>
               <button
                 class="vp-btn vp-btn--ghost vp-btn--sm"
                 :title="i18n.selectDir"
@@ -378,7 +386,7 @@ import {
 import Input from "@/components/Input.vue"
 import type { SelectOption } from "@/components/Select.vue"
 import Select from "@/components/Select.vue"
-import { resolveValidPath } from "../utils"
+import { getCurrentDeviceName, resolveValidPath } from "../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
 import { pickDirectory } from "../composables/useDirectoryPicker"
 
@@ -419,7 +427,8 @@ const urlInputs = reactive<Record<string, string>>({
   giteaUrl: "",
   cnbUrl: "",
 })
-const allPathsList = ref<string[]>([])
+// 本地路径行：path 为路径，device 为可选的设备电脑名标注（旧数据无映射时为空串，向后兼容）
+const allPathsList = ref<{ path: string, device: string }[]>([])
 const newRemoteName = ref("github")
 const newRemoteUrl = ref("")
 const editRemoteName = ref("")
@@ -544,7 +553,10 @@ onMounted(async () => {
   urlInputs.giteeUrl = p.giteeUrl || ""
   urlInputs.giteaUrl = p.giteaUrl || ""
   urlInputs.cnbUrl = p.cnbUrl || ""
-  allPathsList.value = [p.path, ...(p.localPaths || [])]
+  allPathsList.value = [p.path, ...(p.localPaths || [])].map((path) => ({
+    path,
+    device: p.pathDevices?.[path] || "",
+  }))
   // 初始化添加行默认平台
   const first = PLATFORM_META.find((pl) => !urlInputs[pl.urlProp])
   if (first) { newLinkPlatform.value = first.key }
@@ -565,7 +577,8 @@ async function loadRemotes() {
 
 // ── 路径管理 ──
 function addLocalPath() {
-  allPathsList.value = [...allPathsList.value, ""]
+  // 新增路径时自动填入当前设备电脑名
+  allPathsList.value = [...allPathsList.value, { path: "", device: getCurrentDeviceName() }]
 }
 
 function removeLocalPath(idx: number) {
@@ -575,7 +588,7 @@ function removeLocalPath(idx: number) {
 
 async function pickLocalPath(idx: number) {
   const dir = await pickDirectory("选择本地路径")
-  if (dir) { allPathsList.value[idx] = dir }
+  if (dir) { allPathsList.value[idx].path = dir }
 }
 
 // ── 远程仓库操作 ──
@@ -622,9 +635,16 @@ async function saveRemoteEdit(name: string) {
 // ── 保存 ──
 async function save() {
   if (!project.value) { return }
-  const paths = allPathsList.value.map((p) => p.trim()).filter(Boolean)
-  const firstPath = paths[0] || project.value.path
-  const restPaths = paths.slice(1)
+  const entries = allPathsList.value
+    .map((e) => ({ path: e.path.trim(), device: e.device.trim() }))
+    .filter((e) => e.path)
+  const firstPath = entries[0]?.path || project.value.path
+  const restPaths = entries.slice(1).map((e) => e.path)
+  // 重建 路径→电脑名 映射（仅保留非空标注；路径被编辑后键自动跟随）
+  const pathDevices: Record<string, string> = {}
+  for (const e of entries) {
+    if (e.device) { pathDevices[e.path] = e.device }
+  }
   await props.manager.updateProjectMeta(props.projectId, {
     name: localName.value.trim() || project.value.name,
     status: localStatus.value as ProjectStatus,
@@ -633,6 +653,7 @@ async function save() {
     note: localNote.value,
     path: firstPath,
     localPaths: restPaths.length > 0 ? restPaths : undefined,
+    pathDevices: Object.keys(pathDevices).length > 0 ? pathDevices : undefined,
   })
   emit("saved")
 }

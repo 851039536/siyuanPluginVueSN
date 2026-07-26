@@ -28,7 +28,8 @@ export function useGitHandlers(deps: {
   pushTagOp: (id: string, remote: string, tag: string) => Promise<string>
   abortMergeOp: (id: string) => Promise<void>
   resolveConflictOp: (id: string, file: string, strategy: "theirs" | "ours") => Promise<void>
-  checkConflicts: (id: string) => Promise<void>
+  // 返回值声明为 unknown：实际实现返回 ConflictFile[]，此处仅触发不消费结果
+  checkConflicts: (id: string) => Promise<unknown>
   loadTags: (id: string) => Promise<unknown>
   loadCommitLog: (id: string, count?: number) => Promise<void>
   loadWorkingTree: (id: string, skipRefresh?: boolean, branch?: string) => Promise<void>

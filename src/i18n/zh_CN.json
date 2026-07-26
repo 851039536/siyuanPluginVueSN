@@ -1071,6 +1071,7 @@
     "manageCategories": "管理分类",
     "moveCategory": "移动分类",
     "catNamePlaceholder": "分类名称",
+    "catColorTitle": "颜色",
     "generateMsg": "生成提交信息",
     "generating": "生成中...",
     "commit": "提交",

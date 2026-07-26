@@ -32,6 +32,21 @@ export interface StatisticsData {
 export type FormErrors = Record<string, string>
 
 /**
+ * 卡片列表/表单共享配置（分页大小与预设类别）
+ */
+export const CARD_CONFIG = {
+  PAGE_SIZE: 10,
+  PRESET_CATEGORIES: [
+    "C#",
+    "编程单词",
+    "JavaScript",
+    "TypeScript",
+    "Vue",
+    "Rust",
+  ] as string[],
+}
+
+/**
  * 国际化文本类型
  */
 export interface I18n {
@@ -46,6 +61,11 @@ export interface I18n {
   play?: string
   copyTitle?: string
   copyContent?: string
+  copiedTitle?: string
+  copiedContent?: string
+  copied?: string
+  copyFailed?: string
+  openFileFailed?: string
   editCard?: string
   deleteCard?: string
   addCard?: string

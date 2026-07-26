@@ -7,17 +7,18 @@
 ```
 src/features/flashcardReading/
 ├── index.ts                         # 功能注册入口 → FlashcardReading
-├── FlashcardReading.ts              # 注册类 + 弹窗控制（showFlashcardDialog 等）
+├── FlashcardReading.ts              # 注册类 + 弹窗控制（showFlashcardDialog 等）+ destroy 清理
 ├── index.vue                        # 主面板组件
+├── utils.ts                         # 纯工具函数（syncIncrementPractice / copyAndNotify）
 ├── README.md
 ├── types/
-│   ├── index.ts                     # 纯类型定义（Flashcard, I18n, ViewMode 等）
+│   ├── index.ts                     # 类型定义（Flashcard, I18n, ViewMode 等）+ CARD_CONFIG 共享常量
 │   └── storage.ts                   # FlashcardStorage 存储层（导出 STORAGE_KEY）
 ├── composables/
-│   ├── useFlashcardStorage.ts       # 存储 composable（cards ref + loadCards）
-│   ├── useFlashcardOperations.ts    # CRUD 操作 composable
+│   ├── useFlashcardStorage.ts       # 存储 composable（模块级共享单例：storage + cards/categories）
+│   ├── useFlashcardOperations.ts    # 列表侧操作 composable（弹窗开关 + 删除）
 │   ├── useI18n.ts                   # 国际化统一 fallback composable
-│   ├── usePlayWord.ts               # 发音 composable（SpeechSynthesis）
+│   ├── usePlayWord.ts               # 发音 composable（SpeechSynthesis，卸载时自动取消）
 │   └── useTypingQueue.ts            # 打字练习加权队列（Fisher-Yates 优化）
 ├── components/
 │   ├── PanelHeader.vue              # 面板标题栏 + 存储路径
@@ -26,15 +27,23 @@ src/features/flashcardReading/
 │   ├── SingleCardView.vue           # 单卡视图
 │   ├── StatisticsView.vue           # 统计视图
 │   ├── TypingPractice.vue           # 打字练习
-│   ├── CardDialog.vue               # 卡片创建/编辑弹窗
+│   ├── CardDialog.vue               # 卡片创建/编辑弹窗（自包含：内部持有表单状态并直接调 storage）
 │   └── FlashcardDialog.vue          # 弹窗式快速浏览
 └── styles/
     ├── _variables.scss              # 局部 SCSS 变量和 mixin
-    ├── index.scss                   # 主样式入口（引用 _dialog/_typing/_statistics）
-    ├── _dialog.scss                 # 弹窗样式
-    ├── _typing.scss                 # 打字练习样式
-    └── _statistics.scss             # 统计视图样式
+    ├── index.scss                   # 主样式入口（引用 CardDialog/TypingPractice/StatisticsView）
+    ├── CardDialog.scss              # 卡片弹窗样式
+    ├── TypingPractice.scss          # 打字练习样式
+    ├── StatisticsView.scss          # 统计视图样式
+    ├── SingleCardView.scss          # 单卡视图样式（index.vue 与 FlashcardDialog 共用）
+    └── FlashcardDialog.scss         # 弹窗式快速浏览样式
 ```
+
+## 数据流说明
+
+- **存储单例**：`useFlashcardStorage` 内部维护模块级共享 `FlashcardStorage` 实例与 `cards`/`categories` 响应式状态，Dock 面板与浮动弹窗复用同一份数据；`resetFlashcardStorage()` 在插件卸载时重置。
+- **数据同步事件**：任何入口（CardDialog 保存、列表删除、浮动工具栏收藏）写入后均通过 `emitCustomEvent("flashcardDataChanged")` 广播，监听侧统一刷新共享状态。
+- **弹窗自包含**：CardDialog 只接收 `visible` + `editingCard` + `i18n` + `plugin`，表单校验与持久化全部在弹窗内部完成，仅 emit `saved`/`close` 极简通知。
 
 ## 扩展建议
 

@@ -4,10 +4,14 @@
 @use 'TypingPractice';
 @use 'StatisticsView';
 
+$fc-gap-tight: 6px; // 6px 紧密间距（无匹配全局Token）
+$fc-pad-h: 10px; // 10px 水平内边距（无匹配全局Token）
+$fc-pad-nav: 14px; // 14px 导航水平内边距（无匹配全局Token）
+
 .tag {
   display: inline-flex;
   align-items: center;
-  padding: $spacing-1 10px;
+  padding: $spacing-1 $fc-pad-h;
   border-radius: $radius-sm;
   font-size: $font-size-xs;
   font-weight: $font-weight-medium;
@@ -15,7 +19,7 @@
   color: var(--b3-theme-on-surface);
 
   &.tag-small {
-    padding: 2px $spacing-2;
+    padding: $spacing-2px $spacing-2;
     font-size: $font-size-xs;
   }
 
@@ -45,19 +49,19 @@
   align-items: center;
   justify-content: center;
   gap: $spacing-4;
-  padding: 40px 20px;
+  padding: $spacing-10 $spacing-5;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
 
   p {
-    font-size: $font-size-sm;
+    font-size: $font-size-xs;
   }
 }
 
 .empty-state-hint {
   font-size: $font-size-xs;
   opacity: 0.7;
-  margin-top: -8px;
+  margin-top: -$spacing-2;
 }
 
 .card-navigation {
@@ -65,7 +69,7 @@
   align-items: center;
   justify-content: center;
   gap: $spacing-3;
-  padding: $spacing-2 14px;
+  padding: $spacing-2 $fc-pad-nav;
   background: var(--b3-theme-surface-lighter);
   border-radius: $vp-radius;
   border: 1px solid var(--b3-border-color);
@@ -87,6 +91,8 @@
   padding: $spacing-4;
   gap: $spacing-2;
   overflow: hidden;
+  // Dock 面板根容器基准字号（硬规则：防止继承思源全局默认字号）
+  font-size: $font-size-xs;
 
   .panel-header-wrapper {
     flex-shrink: 0;
@@ -102,7 +108,7 @@
       align-items: center;
       gap: $spacing-2;
       margin: 0;
-      font-size: $font-size-base;
+      font-size: $font-size-xs;
       font-weight: $font-weight-semibold;
       color: var(--b3-theme-on-background);
     }
@@ -118,7 +124,7 @@
     align-items: baseline;
     gap: $spacing-2;
     margin-top: $spacing-2;
-    padding: 6px 10px;
+    padding: $fc-gap-tight $fc-pad-h;
     background: var(--b3-theme-surface-lighter);
     border: 1px solid var(--b3-border-color);
     border-radius: $vp-radius;
@@ -210,14 +216,13 @@
   .flashcard-item {
     transition: border-color $fc-transition;
 
-    :deep(.si-card) {
+    // .si-card 与 .flashcard-item 是同一元素（Card 根节点），须用复合选择器
+    &.si-card {
       border-left: 3px solid var(--b3-theme-primary);
     }
 
-    &:hover {
-      :deep(.si-card--bordered) {
-        border-color: var(--b3-theme-primary);
-      }
+    &:hover.si-card--bordered {
+      border-color: var(--b3-theme-primary);
     }
 
     .card-header {
@@ -228,7 +233,7 @@
       width: 100%;
 
       .card-title {
-        font-size: $font-size-base;
+        font-size: $font-size-xs;
         font-weight: $font-weight-semibold;
         color: var(--b3-theme-on-background);
         flex: 1;
@@ -241,7 +246,7 @@
         gap: $spacing-1;
         flex-shrink: 0;
         opacity: 0;
-        transition: opacity 0.15s;
+        transition: opacity $fc-transition;
       }
     }
 
@@ -255,13 +260,13 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 6px;
+      gap: $fc-gap-tight;
       width: 100%;
     }
   }
 
   .flashcard-item .card-content {
-    font-size: $font-size-sm;
+    font-size: $font-size-xs;
     line-height: $line-height-normal;
     color: var(--b3-theme-on-background);
     opacity: 0.85;
@@ -298,13 +303,14 @@
       display: flex;
       flex-direction: column;
 
-      :deep(.si-card) {
+      // .si-card 与 .flashcard-item 同元素，复合选择器才能命中
+      &.si-card {
         height: 100%;
         display: flex;
         flex-direction: column;
       }
 
-      :deep(.si-card__body) {
+      .si-card__body {
         flex: 1;
         min-height: 0;
         overflow-y: auto;
@@ -319,7 +325,7 @@
     gap: $spacing-3;
 
     .page-info {
-      font-size: $font-size-sm;
+      font-size: $font-size-xs;
       font-weight: $font-weight-semibold;
       font-family: $vp-mono;
       color: var(--b3-theme-on-surface);
@@ -329,7 +335,7 @@
 
   .view-mode-toggle {
     display: flex;
-    gap: 6px;
+    gap: $fc-gap-tight;
     flex-shrink: 0;
     padding-top: $spacing-3;
     margin-bottom: $spacing-4;

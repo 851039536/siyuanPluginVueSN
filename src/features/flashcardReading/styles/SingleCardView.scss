@@ -16,7 +16,8 @@
     display: flex;
     flex-direction: column;
 
-    :deep(.si-card) {
+    // .si-card 与 .flashcard-item 同元素（Card 根节点），复合选择器才能命中
+    &.si-card {
       height: 100%;
       display: flex;
       flex-direction: column;
@@ -32,13 +33,14 @@
 
 .flashcard-item--single {
   .card-title--single {
+    // 字号白名单：单卡单词为数据突出展示，允许超出两级字号制
     font-size: $font-size-lg;
     font-weight: $font-weight-bold;
   }
 
   .card-actions {
     opacity: 0;
-    transition: opacity 0.15s;
+    transition: opacity $fc-transition;
   }
 
   &:hover .card-actions {

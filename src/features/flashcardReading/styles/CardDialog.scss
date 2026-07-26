@@ -1,6 +1,8 @@
 // 单词阅读 - 卡片弹窗样式
 @use 'variables' as *;
 
+$fc-gap-tight: 6px; // 6px 紧密间距（无匹配全局Token）
+
 .flashcard-reading-panel {
   .dialog-overlay {
     position: fixed;
@@ -10,6 +12,8 @@
     align-items: center;
     justify-content: center;
     z-index: 1000;
+    // 弹窗遮罩层基准字号（硬规则：防止继承思源全局默认字号）
+    font-size: $font-size-xs;
   }
 
   .dialog {
@@ -30,7 +34,7 @@
 
       h4 {
         margin: 0;
-        font-size: $font-size-sm;
+        font-size: $font-size-xs;
         font-weight: $font-weight-bold;
         letter-spacing: 0.02em;
       }
@@ -55,7 +59,7 @@
   .form-group {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: $fc-gap-tight;
 
     label {
       @include fc-label;
@@ -66,7 +70,7 @@
   .category-input-group {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: $fc-gap-tight;
 
     .si-select { width: 100%; }
     .custom-category-input { margin-top: $spacing-1; }

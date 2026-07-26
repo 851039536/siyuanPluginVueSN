@@ -22,7 +22,7 @@
           v-model="localName"
           :label="i18n.projectName"
           size="xsmall"
-          @keydown="$event.key === 'Enter' && save()"
+          @keydown.enter="save()"
         />
         <div class="gp-edit-row">
           <div style="flex:1">
@@ -135,7 +135,7 @@
                   v-model="editLinkUrl"
                   size="xsmall"
                   style="flex:1"
-                  @keydown="$event.key === 'Enter' && saveRepoLinkEdit(link)"
+                  @keydown.enter="saveRepoLinkEdit(link)"
                   @keydown.escape="cancelRepoLinkEdit()"
                 />
                 <button
@@ -194,7 +194,7 @@
               size="xsmall"
               :placeholder="i18n.repoUrlPlaceholder"
               style="flex:1"
-              @keydown="$event.key === 'Enter' && handleAddRepoLink()"
+              @keydown.enter="handleAddRepoLink()"
             />
             <button
               class="vp-btn vp-btn--primary vp-btn--sm"
@@ -229,7 +229,7 @@
                   v-model="editRemoteUrl"
                   size="xsmall"
                   style="flex:1"
-                  @keydown="$event.key === 'Enter' && saveRemoteEdit(r.name)"
+                  @keydown.enter="saveRemoteEdit(r.name)"
                   @keydown.escape="editRemoteName = ''"
                 />
                 <button
@@ -289,7 +289,7 @@
               size="xsmall"
               :placeholder="i18n.remoteUrlPlaceholder"
               style="flex:1"
-              @keydown="$event.key === 'Enter' && handleAddRemote()"
+              @keydown.enter="handleAddRemote()"
             />
             <button
               class="vp-btn vp-btn--primary vp-btn--sm"
@@ -421,12 +421,10 @@ const localStatus = ref("active")
 const localStarred = ref(false)
 const localArchived = ref(false)
 const localNote = ref("")
-const urlInputs = reactive<Record<string, string>>({
-  githubUrl: "",
-  giteeUrl: "",
-  giteaUrl: "",
-  cnbUrl: "",
-})
+// 平台 URL 输入（键由 PLATFORM_META.urlProp 单一数据源驱动，避免四处硬编码键名）
+const urlInputs = reactive<Record<string, string>>(
+  Object.fromEntries(PLATFORM_META.map((pl) => [pl.urlProp, ""])),
+)
 // 本地路径行：path 为路径，device 为可选的设备电脑名标注（旧数据无映射时为空串，向后兼容）
 const allPathsList = ref<{ path: string, device: string }[]>([])
 const newRemoteName = ref("github")
@@ -482,12 +480,9 @@ const linkAddOptions = computed<SelectOption[]>(() =>
 async function persistUrls() {
   if (!project.value) { return }
   try {
-    await props.manager.updateProjectMeta(props.projectId, {
-      githubUrl: urlInputs.githubUrl || undefined,
-      giteeUrl: urlInputs.giteeUrl || undefined,
-      giteaUrl: urlInputs.giteaUrl || undefined,
-      cnbUrl: urlInputs.cnbUrl || undefined,
-    })
+    const patch: Partial<Pick<GitProject, "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl">> = {}
+    for (const pl of PLATFORM_META) { patch[pl.urlProp] = urlInputs[pl.urlProp] || undefined }
+    await props.manager.updateProjectMeta(props.projectId, patch)
     repoLinkError.value = ""
     emit("urlsUpdated")
   } catch (e: unknown) {
@@ -500,10 +495,8 @@ async function handleAddRepoLink() {
   if (!pl) { return }
   urlInputs[pl.urlProp] = newLinkUrl.value.trim()
   await persistUrls()
-  newLinkPlatform.value = ""
   newLinkUrl.value = ""
-  const next = availablePlatforms.value[0]
-  if (next) { newLinkPlatform.value = next.key }
+  newLinkPlatform.value = availablePlatforms.value[0]?.key ?? ""
 }
 
 async function handleDeleteRepoLink(urlProp: string) {
@@ -511,7 +504,7 @@ async function handleDeleteRepoLink(urlProp: string) {
   await persistUrls()
 }
 
-async function saveRepoLinkEdit(link: { key: string; urlProp: string; url: string }) {
+async function saveRepoLinkEdit(link: { urlProp: string }) {
   urlInputs[link.urlProp] = editLinkUrl.value
   await persistUrls()
   editLinkPlatform.value = ""
@@ -563,17 +556,14 @@ onMounted(async () => {
   localStarred.value = !!p.starred
   localArchived.value = !!p.archived
   localNote.value = p.note || ""
-  urlInputs.githubUrl = p.githubUrl || ""
-  urlInputs.giteeUrl = p.giteeUrl || ""
-  urlInputs.giteaUrl = p.giteaUrl || ""
-  urlInputs.cnbUrl = p.cnbUrl || ""
+  // 平台 URL 由 PLATFORM_META 单一数据源驱动回填
+  for (const pl of PLATFORM_META) { urlInputs[pl.urlProp] = p[pl.urlProp] || "" }
   allPathsList.value = [p.path, ...(p.localPaths || [])].map((path) => ({
     path,
     device: p.pathDevices?.[path] || "",
   }))
   // 初始化添加行默认平台
-  const first = PLATFORM_META.find((pl) => !urlInputs[pl.urlProp])
-  if (first) { newLinkPlatform.value = first.key }
+  newLinkPlatform.value = availablePlatforms.value[0]?.key ?? ""
   // 检测远程仓库
   await loadRemotes()
 })
@@ -606,44 +596,33 @@ async function pickLocalPath(idx: number) {
 }
 
 // ── 远程仓库操作 ──
-async function handleAddRemote() {
+/** 统一远程操作骨架：清错 → 执行 → 重新检测 + 刷新项目远程映射，失败写入 remoteError */
+async function runRemoteOp(fallbackMsg: string, op: (repoPath: string) => Promise<void>) {
   if (!project.value) { return }
   remoteError.value = ""
   try {
-    await props.manager.addRemote(
-      resolveValidPath(project.value),
-      newRemoteName.value.trim(),
-      newRemoteUrl.value.trim(),
-    )
-    newRemoteUrl.value = ""
+    await op(resolveValidPath(project.value))
     await loadRemotes()
     await props.manager.refreshRemotes(props.projectId)
-  } catch (e: unknown) { remoteError.value = getErrorMessage(e) || "添加失败" }
+  } catch (e: unknown) { remoteError.value = getErrorMessage(e) || fallbackMsg }
+}
+
+async function handleAddRemote() {
+  await runRemoteOp("添加失败", async (repoPath) => {
+    await props.manager.addRemote(repoPath, newRemoteName.value.trim(), newRemoteUrl.value.trim())
+    newRemoteUrl.value = ""
+  })
 }
 
 async function handleRemoveRemote(name: string) {
-  if (!project.value) { return }
-  remoteError.value = ""
-  try {
-    await props.manager.removeRemote(resolveValidPath(project.value), name)
-    await loadRemotes()
-    await props.manager.refreshRemotes(props.projectId)
-  } catch (e: unknown) { remoteError.value = getErrorMessage(e) || "删除失败" }
+  await runRemoteOp("删除失败", (repoPath) => props.manager.removeRemote(repoPath, name))
 }
 
 async function saveRemoteEdit(name: string) {
-  if (!project.value) { return }
-  remoteError.value = ""
-  try {
-    await props.manager.setRemoteUrl(
-      resolveValidPath(project.value),
-      name,
-      editRemoteUrl.value,
-    )
+  await runRemoteOp("修改失败", async (repoPath) => {
+    await props.manager.setRemoteUrl(repoPath, name, editRemoteUrl.value)
     editRemoteName.value = ""
-    await loadRemotes()
-    await props.manager.refreshRemotes(props.projectId)
-  } catch (e: unknown) { remoteError.value = getErrorMessage(e) || "修改失败" }
+  })
 }
 
 // ── 保存 ──

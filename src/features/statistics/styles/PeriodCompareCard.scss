@@ -7,7 +7,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: $spacing-2;
-  margin-bottom: $spacing-4;
+  margin-bottom: $spacing-1; // 模块上下间距统一 4px
 
   .comparison-card {
     @include stats.stats-card-base;

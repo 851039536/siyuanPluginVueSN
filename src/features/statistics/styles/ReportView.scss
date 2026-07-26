@@ -14,7 +14,7 @@
   border-radius: stats.$radius-sm;
   padding: 3px;
   width: fit-content;
-  margin-bottom: 12px;
+  margin-bottom: $spacing-1; // 模块上下间距统一 4px
 }
 
 .mode-btn {
@@ -42,7 +42,7 @@
 }
 
 .report-controls {
-  margin-bottom: 10px;
+  margin-bottom: $spacing-1; // 模块上下间距统一 4px
 }
 
 .report-selector {
@@ -85,7 +85,7 @@
 .report-card {
   @include stats.stats-card-base;
   padding: 12px;
-  margin-bottom: 10px;
+  margin-bottom: $spacing-1; // 模块上下间距统一 4px
 }
 
 .report-card-header {

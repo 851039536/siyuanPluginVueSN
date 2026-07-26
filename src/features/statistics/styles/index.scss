@@ -260,6 +260,7 @@ $color-rank-bronze: #cd7f32;
 }
 
 .chart-section {
+  margin: $spacing-1 0;
   padding: 6px;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
@@ -345,7 +346,7 @@ $color-rank-bronze: #cd7f32;
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: auto 1fr auto auto auto;
-  gap: $spacing-3;
+  gap: $spacing-1 $spacing-3; // 模块上下间距统一 4px，列间距保持 12px
   align-items: stretch;
 }
 

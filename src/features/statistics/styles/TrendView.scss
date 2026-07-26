@@ -8,7 +8,7 @@
   .trend-chart-section {
     @include stats.stats-card-base;
     border-radius: stats.$radius-sm;
-    margin-bottom: 12px;
+    margin-bottom: $spacing-1; // 模块上下间距统一 4px
 
     .chart-header {
       display: flex;
@@ -178,8 +178,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 12px;
-    padding-bottom: 8px;
+    margin-bottom: 4px;
+    padding-bottom: 6px;
     border-bottom: 1px solid var(--b3-border-color);
 
     .section-title {

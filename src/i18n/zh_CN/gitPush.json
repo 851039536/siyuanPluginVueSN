@@ -89,6 +89,8 @@
     "addedDate": "添加日期",
     "untracked": "未跟踪",
     "createTag": "打 Tag",
+    "tagNamePlaceholder": "Tag 名称（如 v1.2.0）",
+    "tagMsgPlaceholder": "注解（可选）",
     "noTags": "暂无 Tag",
     "conflictDetected": "检测到合并冲突",
     "keepOurs": "保留本地版本",

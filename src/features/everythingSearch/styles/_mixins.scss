@@ -1,0 +1,26 @@
+// everythingSearch 模块共享 mixins — 区块容器与大写标签（消除多文件重复声明）
+
+@use "@/variables" as *;
+
+// 实底区块容器（标题栏/搜索栏）：surface 背景 + 实线下边框
+@mixin section-solid($padding-y: 10px) {
+  padding: $padding-y $spacing-4;
+  background: var(--b3-theme-surface);
+  border-bottom: 1px solid var(--b3-border-color);
+}
+
+// 虚线区块容器（选项/帮助/警告）：surface-light 背景 + 虚线下边框
+@mixin section-dashed($padding-y: $spacing-2) {
+  padding: $padding-y $spacing-4;
+  background: var(--b3-theme-surface-light);
+  border-bottom: 1px dashed var(--b3-border-color);
+}
+
+// 大写小标签：加粗 + 大写 + 0.06em 字距
+@mixin uppercase-label {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--b3-theme-on-surface);
+}

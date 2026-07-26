@@ -4,17 +4,20 @@
     role="alert"
     aria-live="polite"
   >
+    <!-- 警告标签："服务未连接" -->
     <span class="vp-warning__tag"><IconWrapper
       name="warning"
       :size="12"
-    /> 服务未连接</span>
-    <span class="vp-warning__msg">{{ message }}</span>
+    /> {{ i18n.serviceNotConnected }}</span>
+    <!-- 警告消息："Everything HTTP 服务未启动…" -->
+    <span class="vp-warning__msg">{{ i18n.serviceNotRunning }}</span>
+    <!-- 重试按钮："重试"（aria："重试连接服务"） -->
     <button
       class="vp-warning__retry"
-      aria-label="重试连接服务"
+      :aria-label="i18n.retryConnect"
       @click="handleRetry"
     >
-      重试
+      {{ i18n.retry }}
     </button>
   </div>
 </template>
@@ -23,18 +26,15 @@
 import IconWrapper from "@/components/IconWrapper.vue"
 
 interface Props {
-  /** 警告消息 */
-  message?: string
+  /** everythingSearch 命名空间的 i18n 文案 */
+  i18n: Record<string, string>
 }
 
 interface Emits {
   (e: "retry"): void
 }
 
-withDefaults(defineProps<Props>(), {
-  message:
-    "Everything HTTP 服务未启动。请确保 Everything 已安装并启用 HTTP 服务器（工具 → 选项 → HTTP 服务器）。",
-})
+defineProps<Props>()
 
 const emit = defineEmits<Emits>()
 

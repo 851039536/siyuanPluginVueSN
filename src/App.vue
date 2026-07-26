@@ -35,7 +35,6 @@
     <EverythingSearchDialog
       :visible="everythingSearchVisible"
       @update:visible="(v) => everythingSearchVisible = v"
-      @close="hideEverythingSearch"
     />
 
     <!-- 密码箱弹窗 -->
@@ -90,7 +89,6 @@ import {
 import {
   everythingSearchVisible,
   getTextDiffManager,
-  hideEverythingSearch,
   hideImageCreation,
   hidePasswordVault,
   hideSkillsViewer,

@@ -21,11 +21,6 @@ export function hideEverythingSearch() {
   everythingSearchVisible.value = false
 }
 
-/** 切换 Everything 搜索弹窗显示状态 */
-export function toggleEverythingSearch() {
-  everythingSearchVisible.value = !everythingSearchVisible.value
-}
-
 // ============================================================
 // 功能注册
 // ============================================================

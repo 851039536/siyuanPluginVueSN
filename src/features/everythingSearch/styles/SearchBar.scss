@@ -4,13 +4,13 @@
  */
 
 @use "@/variables" as *;
+@use "./mixins" as m;
 
 .vp-search {
+  @include m.section-solid;
+
   display: flex;
   gap: $spacing-2;
-  padding: 10px 16px;
-  background: var(--b3-theme-surface);
-  border-bottom: 1px solid var(--b3-border-color);
 
   .si-input {
     flex: 1;

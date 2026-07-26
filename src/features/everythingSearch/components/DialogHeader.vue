@@ -5,11 +5,13 @@
         class="vp-title__icon"
         aria-hidden="true"
       >⌘</span>
-      <span class="vp-title__text">{{ title }}</span>
+      <!-- 弹窗标题："Everything搜索" -->
+      <span class="vp-title__text">{{ i18n.title }}</span>
     </div>
+    <!-- 关闭按钮（aria："关闭对话框"） -->
     <button
       class="vp-header__close"
-      aria-label="关闭对话框"
+      :aria-label="i18n.closeDialog"
       @click="handleClose"
     >
       <span aria-hidden="true">✕</span>
@@ -19,17 +21,15 @@
 
 <script setup lang="ts">
 interface Props {
-  /** 标题文本 */
-  title?: string
+  /** everythingSearch 命名空间的 i18n 文案 */
+  i18n: Record<string, string>
 }
 
 interface Emits {
   (e: "close"): void
 }
 
-withDefaults(defineProps<Props>(), {
-  title: "Everything 本地搜索",
-})
+defineProps<Props>()
 
 const emit = defineEmits<Emits>()
 

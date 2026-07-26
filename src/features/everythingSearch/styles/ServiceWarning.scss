@@ -4,14 +4,15 @@
  */
 
 @use "@/variables" as *;
+@use "./mixins" as m;
 
 .vp-warning {
+  @include m.section-dashed;
+
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: $spacing-2 16px;
-  background: var(--b3-theme-surface-light);
-  border-bottom: 1px dashed var(--b3-theme-primary);
+  border-bottom-color: var(--b3-theme-primary);
   font-family: $font-body;
 
   &__tag {

@@ -9,12 +9,12 @@
 
 @mixin custom-scrollbar {
   &::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
+    width: $spacing-1;
+    height: $spacing-1;
   }
   &::-webkit-scrollbar-thumb {
     background: var(--b3-theme-surface-lighter);
-    border-radius: 2px;
+    border-radius: $radius-sm;
   }
   &::-webkit-scrollbar-track {
     background: transparent;
@@ -22,14 +22,14 @@
 }
 
 @mixin form-input {
-  padding: 4px 6px;
+  padding: $spacing-1 $spacing-2;
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
   font-size: $font-size-xs;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.12s;
 
   &:focus {
     border-color: $brand-primary;
@@ -48,20 +48,21 @@
   overflow: hidden;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
-  font-size: $font-size-sm;
+  // Dock 面板根容器基准字号，防止继承思源全局默认字号
+  font-size: $font-size-xs;
 
   // ── Header ──
   .rm-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 12px;
+    padding: $spacing-2 $spacing-3;
     border-bottom: 1px solid var(--b3-border-color);
     flex-shrink: 0;
     gap: $spacing-2;
 
     &__title {
-      font-size: $font-size-base;
+      font-size: $font-size-xs;
       font-weight: $font-weight-semibold;
     }
 
@@ -82,13 +83,13 @@
     @include custom-scrollbar;
 
     &__item {
-      padding: 7px 10px;
+      padding: $spacing-2;
       font-size: $font-size-xs;
       cursor: pointer;
       white-space: nowrap;
       color: var(--b3-theme-on-surface);
       border-bottom: 2px solid transparent;
-      transition: color 0.15s, border-color 0.15s, background 0.15s;
+      transition: color 0.12s, border-color 0.12s, background 0.12s;
       user-select: none;
 
       &:hover {
@@ -108,7 +109,7 @@
   .rm-content {
     flex: 1;
     overflow-y: auto;
-    padding: 10px;
+    padding: $spacing-2;
     @include custom-scrollbar;
   }
 
@@ -119,9 +120,9 @@
       font-weight: $font-weight-semibold;
       color: var(--b3-theme-on-surface-light);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.06em;
       margin-bottom: $spacing-2;
-      padding: 0 2px;
+      padding: 0 $spacing-2px;
     }
 
     &__actions {
@@ -135,7 +136,7 @@
   // ── 空状态 ──
   .rm-empty {
     text-align: center;
-    padding: 32px 16px;
+    padding: $spacing-8 $spacing-4;
     color: var(--b3-theme-on-surface-light);
     font-size: $font-size-xs;
   }
@@ -151,7 +152,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 7px 6px;
+    padding: $spacing-2 $spacing-1;
     border-radius: $radius-sm;
     font-size: $font-size-xs;
     gap: $spacing-2;
@@ -171,68 +172,20 @@
     &__name {
       font-weight: $font-weight-medium;
       @include text-ellipsis;
-      line-height: 1.35;
-    }
-
-    &__docs {
-      margin-top: 3px;
-      font-size: $font-size-xs;
-      color: var(--b3-theme-on-surface-light);
-      @include text-ellipsis;
-
-      &--empty {
-        font-style: italic;
-        opacity: 0.5;
-      }
-    }
-
-    &__docs-label {
-      font-weight: $font-weight-medium;
-    }
-
-    &__docs-list {
-      color: var(--b3-theme-on-surface);
-    }
-
-    &__meta {
-      color: var(--b3-theme-on-surface-light);
-      font-size: $font-size-xs;
-      margin-top: 1px;
-      @include text-ellipsis;
+      line-height: $line-height-tight;
     }
 
     &__actions {
       display: flex;
-      gap: 4px;
+      gap: $spacing-1;
       flex-shrink: 0;
-    }
-  }
-
-  // ── 输入行 ──
-  .rm-input-row {
-    display: flex;
-    gap: $spacing-2;
-    margin-bottom: $spacing-2;
-    align-items: center;
-
-    label {
-      font-size: $font-size-xs;
-      flex-shrink: 0;
-      min-width: 56px;
-      color: var(--b3-theme-on-surface-light);
-    }
-
-    input {
-      @include form-input;
-      flex: 1;
-      padding: 5px 8px;
     }
   }
 
   // ── 过滤栏 ──
   .rm-filter-bar {
     display: flex;
-    gap: 4px;
+    gap: $spacing-1;
     margin-bottom: $spacing-2;
     flex-wrap: wrap;
 
@@ -244,7 +197,7 @@
 
     &--limit {
       align-items: center;
-      gap: 6px;
+      gap: $spacing-2;
 
       .rm-filter-bar__label {
         font-size: $font-size-xs;
@@ -254,17 +207,17 @@
 
       .rm-limit-input {
         @include form-input;
-        width: 64px;
+        width: $spacing-16;
         text-align: center;
       }
     }
 
     &--category {
-      margin-top: -4px;
+      margin-top: -$spacing-1;
 
       .rm-btn {
         font-size: $font-size-xs;
-        padding: 1px 6px;
+        padding: $spacing-2px $spacing-2;
         opacity: 0.8;
       }
 
@@ -279,14 +232,14 @@
     font-size: $font-size-xs;
     color: var(--b3-theme-on-surface-light);
     margin-bottom: $spacing-2;
-    padding: 0 2px;
+    padding: 0 $spacing-2px;
   }
 
   // ── 移动表单 ──
   .rm-move-form {
     width: 100%;
-    padding: 8px 6px;
-    margin-top: 4px;
+    padding: $spacing-2;
+    margin-top: $spacing-1;
     background: var(--b3-theme-surface-light);
     border-radius: $radius-sm;
     border: 1px solid var(--b3-border-color);
@@ -295,13 +248,13 @@
       display: flex;
       align-items: center;
       gap: $spacing-2;
-      margin-bottom: 4px;
+      margin-bottom: $spacing-1;
       font-size: $font-size-xs;
     }
 
     &__label {
       flex-shrink: 0;
-      min-width: 56px;
+      min-width: $spacing-12;
       color: var(--b3-theme-on-surface-light);
     }
 
@@ -318,20 +271,20 @@
 
     &__categories {
       display: flex;
-      gap: 4px;
+      gap: $spacing-1;
       flex-wrap: wrap;
     }
 
     &__category-input {
       @include form-input;
-      width: 72px;
-      padding: 2px 4px;
+      width: $spacing-16;
+      padding: $spacing-2px $spacing-1;
     }
 
     &__actions {
       display: flex;
-      gap: 4px;
-      margin-top: 4px;
+      gap: $spacing-1;
+      margin-top: $spacing-1;
     }
   }
 
@@ -339,8 +292,8 @@
   .rm-btn {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px 10px;
+    gap: $spacing-1;
+    padding: $spacing-1 $spacing-2;
     border: 1px solid var(--b3-border-color);
     border-radius: $radius-sm;
     font-size: $font-size-xs;
@@ -365,7 +318,7 @@
       background: $brand-primary;
       color: var(--b3-theme-on-primary);
       border-color: $brand-primary;
-      padding: 6px 14px;
+      padding: $spacing-2 $spacing-3;
 
       &:hover:not(:disabled) {
         opacity: 0.88;
@@ -385,7 +338,7 @@
 
     // 小号按钮（列表项）
     &.small {
-      padding: 2px 7px;
+      padding: $spacing-2px $spacing-2;
       font-size: $font-size-xs;
     }
 
@@ -397,14 +350,14 @@
 
   // ── 结果展示 ──
   .rm-result {
-    padding: 8px 10px;
+    padding: $spacing-2;
     background: var(--b3-theme-surface-light);
     border-radius: $radius-sm;
     margin-top: $spacing-2;
     font-size: $font-size-xs;
     word-break: break-all;
-    line-height: 1.45;
-    max-height: 100px;
+    line-height: $line-height-normal;
+    max-height: $spacing-16 + $spacing-8;
     overflow-y: auto;
     border: 1px solid var(--b3-border-color);
   }

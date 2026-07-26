@@ -1,3 +1,5 @@
+// 资源管理模块类型定义：资源条目与国际化文案接口
+
 /** 图片资源信息 */
 export interface ImageAssetInfo {
   path: string
@@ -28,10 +30,10 @@ export interface ResourceManagerI18n {
   copyPath: string
   pathCopied: string
   newPath: string
-  allAssets: string
   allCategories: string
-  currentDoc: string
+  uncategorized: string
   assetCount: string
+  loadLimit: string
   moveAsset: string
   moveSuccess: string
   moveFailed: string
@@ -40,6 +42,8 @@ export interface ResourceManagerI18n {
   category: string
   confirmMove: string
   cancel: string
+  invalidPath: string
+  refUpdateFailed: string
   loadFailed: string
   categoryImages: string
   categoryNet: string
@@ -47,9 +51,6 @@ export interface ResourceManagerI18n {
   categoryOther: string
   customCategoryPlaceholder: string
   apply: string
-  locateDoc: string
-  referencingDocs: string
-  noReferencingDocs: string
   copyFailed: string
   updatedRefs: string
 }

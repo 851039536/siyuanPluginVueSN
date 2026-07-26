@@ -1186,6 +1186,16 @@
     flex: 1;
     min-width: 0;
   }
+
+  // 设备电脑名输入（可选标注）：固定窄列，不参与路径输入的 flex 伸展
+  .gp-path-device {
+    flex: 0 0 110px;
+
+    input {
+      flex: none;
+      width: 100%;
+    }
+  }
 }
 
 .gp-add-path-btn {

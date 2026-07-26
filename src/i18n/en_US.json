@@ -1279,6 +1279,7 @@
     "notePlaceholder": "Project note (optional)",
     "localPathTitle": "Local path",
     "devicePathPlaceholder": "Device {0} local path...",
+    "deviceNamePlaceholder": "PC name (optional)",
     "selectDir": "Select directory",
     "removePath": "Remove this path",
     "repoLinkLabel": "Repository links",

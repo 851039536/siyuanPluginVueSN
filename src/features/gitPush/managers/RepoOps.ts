@@ -18,8 +18,9 @@ export class RepoOps {
 
   async getTags(projectPath: string, limit = 10): Promise<TagInfo[]> {
     try {
-      // 用不可见分隔符 %x1f（Unit Separator）替代 |，避免 subject 含 | 时解析错乱
-      const raw = await this.executor.execGit(projectPath, ["tag", "-l", `--sort=-creatordate`, `--format=%(refname:short)%x1f%(subject)%x1f%(creatordate:iso)`])
+      // 用不可见分隔符 0x1F（Unit Separator）替代 |，避免 subject 含 | 时解析错乱
+      // 注意：git tag --format 是 for-each-ref 语法，十六进制转义为 %1f；%x1f 是 git log --pretty 专属，在此会被原样输出导致切分失败
+      const raw = await this.executor.execGit(projectPath, ["tag", "-l", `--sort=-creatordate`, `--format=%(refname:short)%1f%(subject)%1f%(creatordate:iso)`])
       return raw.trim().split("\n").filter(Boolean).slice(0, limit).map((line) => {
         const [name, message, date] = line.split("\x1F")
         return { name, message: message || undefined, date: date || undefined }

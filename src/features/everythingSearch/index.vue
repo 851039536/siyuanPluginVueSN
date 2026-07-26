@@ -7,12 +7,16 @@
     >
       <div class="vp-dialog">
         <!-- 头部 -->
-        <DialogHeader @close="closeDialog" />
+        <DialogHeader
+          :i18n="i18n"
+          @close="closeDialog"
+        />
 
         <!-- 搜索栏 -->
         <SearchBar
           ref="searchBarRef"
           v-model="searchQuery"
+          :i18n="i18n"
           :is-searching="searchState.status === 'loading'"
           @search="handleSearch"
           @clear="handleClear"
@@ -22,12 +26,14 @@
         <!-- 搜索选项 -->
         <SearchOptions
           :options="options"
+          :i18n="i18n"
           @update:options="handleOptionUpdate"
         />
 
         <!-- 常用关键字 -->
         <FrequentKeywords
           :keywords="options.frequentKeywords"
+          :i18n="i18n"
           @insert="handleKeywordInsert"
           @add="handleKeywordAdd"
           @delete="handleKeywordDelete"
@@ -36,19 +42,21 @@
         <!-- 高级搜索语法帮助 -->
         <AdvancedHelpPanel
           v-if="options.advancedMode"
+          :i18n="i18n"
           @insert="handleSyntaxInsert"
         />
 
         <!-- 服务状态提示 -->
         <ServiceWarning
           v-if="!serviceAvailable"
+          :i18n="i18n"
           @retry="checkService"
         />
 
         <!-- 结果区域 -->
         <SearchResults
           :state="searchState"
-          @item-dbl-click="handleItemOpen"
+          :i18n="i18n"
           @item-open="handleItemOpen"
           @item-show-in-folder="handleItemShowInFolder"
           @item-copy-path="handleItemCopyPath"
@@ -58,6 +66,7 @@
         <!-- 底部配置 -->
         <DialogFooter
           :config="config"
+          :i18n="i18n"
           @update:config="handleConfigUpdate"
         />
       </div>
@@ -74,8 +83,8 @@ import type {
 } from "./types"
 import { showMessage } from "siyuan"
 import {
+  computed,
   nextTick,
-  onMounted,
   onUnmounted,
   reactive,
   ref,
@@ -115,7 +124,6 @@ const props = defineProps<Props>()
 // Emits
 const emit = defineEmits<{
   (e: "update:visible", value: boolean): void
-  (e: "close"): void
 }>()
 
 // Refs
@@ -123,6 +131,9 @@ const searchBarRef = ref<InstanceType<typeof SearchBar> | null>(null)
 
 // 获取插件实例
 const plugin = usePlugin()
+
+// everythingSearch 命名空间的 i18n 文案（传递给各子组件）
+const i18n = computed(() => plugin.i18n.everythingSearch as unknown as Record<string, string>)
 
 // 存储管理
 const storage = new EverythingSearchStorage(plugin)
@@ -132,6 +143,8 @@ const searchQuery = ref("")
 const serviceAvailable = ref(true)
 const debounceTimer = ref<number | null>(null)
 const saveConfigTimer = ref<number | null>(null)
+// 正在从存储加载配置（避免加载触发 deep watch 回写）
+let isLoadingConfig = false
 
 // 配置
 const config = reactive<EverythingConfig>({ ...DEFAULT_CONFIG })
@@ -149,12 +162,17 @@ const searchState = reactive<SearchState>({
 
 /** 从插件存储加载配置 */
 const loadConfig = async () => {
+  isLoadingConfig = true
   try {
     const savedData = await storage.init()
     Object.assign(config, savedData.config)
     Object.assign(options, savedData.options)
   } catch (error) {
     console.error("从插件存储加载配置失败:", error)
+  } finally {
+    // 延迟一个 tick 重置，确保 deep watch 已跳过本次加载触发的回调
+    await nextTick()
+    isLoadingConfig = false
   }
 }
 
@@ -223,10 +241,19 @@ const handleSearch = async () => {
     searchState.results = results
     searchState.status = results.length === 0 ? "empty" : "success"
   } catch (error) {
-    searchState.errorMessage = (error as Error).message || "搜索失败"
+    // 搜索失败提示："搜索失败"
+    searchState.errorMessage = (error as Error).message || i18n.value.searchFailed
     searchState.status = "error"
     searchState.results = []
   }
+}
+
+/** 重置搜索状态 */
+const resetSearchState = () => {
+  searchState.results = []
+  searchState.status = "idle"
+  searchState.hasSearched = false
+  searchState.errorMessage = ""
 }
 
 /** 防抖搜索 */
@@ -237,10 +264,7 @@ const debouncedSearch = () => {
 
   const query = searchQuery.value.trim()
   if (!query) {
-    searchState.results = []
-    searchState.status = "idle"
-    searchState.hasSearched = false
-    searchState.errorMessage = ""
+    resetSearchState()
     return
   }
 
@@ -252,17 +276,13 @@ const debouncedSearch = () => {
 /** 清除搜索 */
 const handleClear = () => {
   searchQuery.value = ""
-  searchState.results = []
-  searchState.status = "idle"
-  searchState.hasSearched = false
-  searchState.errorMessage = ""
+  resetSearchState()
   searchBarRef.value?.focus()
 }
 
 /** 关闭弹窗 */
 const closeDialog = () => {
   emit("update:visible", false)
-  emit("close")
 }
 
 /** 处理选项更新 */
@@ -317,7 +337,8 @@ const handleItemOpen = async (item: EverythingSearchResult) => {
   try {
     await openFile(getFullPath(item))
   } catch (error) {
-    showMessage(`打开失败: ${(error as Error).message}`, 3000, "error")
+    // 错误提示："打开失败"
+    showMessage(`${i18n.value.openFailed}: ${(error as Error).message}`, 3000, "error")
   }
 }
 
@@ -326,14 +347,16 @@ const handleItemShowInFolder = (item: EverythingSearchResult) => {
   try {
     showInExplorer(getFullPath(item))
   } catch (error) {
-    showMessage(`操作失败: ${(error as Error).message}`, 3000, "error")
+    // 错误提示："操作失败"
+    showMessage(`${i18n.value.operationFailed}: ${(error as Error).message}`, 3000, "error")
   }
 }
 
 /** 复制路径 */
 const handleItemCopyPath = async (item: EverythingSearchResult) => {
   const ok = await copyToClipboard(getFullPath(item))
-  showMessage(ok ? "路径已复制" : "复制失败", 2000, ok ? "info" : "error")
+  // 提示："路径已复制" / "复制失败"
+  showMessage(ok ? i18n.value.pathCopied : i18n.value.copyFailed, 2000, ok ? "info" : "error")
 }
 
 /** 删除文件 */
@@ -345,9 +368,11 @@ const handleItemDelete = async (item: EverythingSearchResult) => {
     if (searchState.results.length === 0) {
       searchState.status = "empty"
     }
-    showMessage("文件已移入回收站", 2000, "info")
+    // 提示："文件已移入回收站"
+    showMessage(i18n.value.deletedToTrash, 2000, "info")
   } catch (error) {
-    showMessage(`删除失败: ${(error as Error).message}`, 3000, "error")
+    // 错误提示："删除失败"
+    showMessage(`${i18n.value.deleteFailed}: ${(error as Error).message}`, 3000, "error")
   }
 }
 
@@ -383,16 +408,14 @@ watch(searchQuery, () => {
 watch(
   [config, options],
   () => {
+    // 加载配置触发的变更不回写存储（消除"读后即写"）
+    if (isLoadingConfig) return
     saveConfigToPlugin().catch((error) => {
       console.error("保存配置时出错:", error)
     })
   },
   { deep: true },
 )
-
-onMounted(async () => {
-  await loadConfig()
-})
 
 onUnmounted(() => {
   if (debounceTimer.value) {
@@ -401,6 +424,8 @@ onUnmounted(() => {
   if (saveConfigTimer.value) {
     clearTimeout(saveConfigTimer.value)
   }
+  // 弹窗打开状态下卸载时防止监听器泄漏
+  document.removeEventListener("keydown", handleKeyDown)
 })
 
 </script>

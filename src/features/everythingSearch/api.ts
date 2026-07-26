@@ -156,19 +156,6 @@ function formatDate(timestamp: number | string): string {
 }
 
 /**
- * 格式化文件大小
- */
-export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return "0 B"
-
-  const units = ["B", "KB", "MB", "GB", "TB"]
-  const k = 1024
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-
-  return `${Number.parseFloat((bytes / k ** i).toFixed(2))} ${units[i]}`
-}
-
-/**
  * 拼接搜索结果项的完整路径（path\\name）
  */
 export function getFullPath(item: EverythingSearchResult): string {
@@ -178,10 +165,82 @@ export function getFullPath(item: EverythingSearchResult): string {
 /**
  * 获取文件扩展名
  */
-export function getFileExtension(filename: string): string {
+function getFileExtension(filename: string): string {
   const lastDot = filename.lastIndexOf(".")
   if (lastDot === -1 || lastDot === 0) return ""
   return filename.substring(lastDot + 1).toLowerCase()
+}
+
+/** 扩展名 → 文件图标类型映射（模块级常量，避免每次调用重建） */
+const EXT_ICON_MAP: Record<string, string> = {
+  // 文档
+  "pdf": "pdf",
+  "doc": "word",
+  "docx": "word",
+  "xls": "excel",
+  "xlsx": "excel",
+  "ppt": "ppt",
+  "pptx": "ppt",
+  "txt": "text",
+  "md": "markdown",
+  // 图片
+  "jpg": "image",
+  "jpeg": "image",
+  "png": "image",
+  "gif": "image",
+  "svg": "image",
+  "webp": "image",
+  "bmp": "image",
+  "ico": "image",
+  // 视频
+  "mp4": "video",
+  "avi": "video",
+  "mkv": "video",
+  "mov": "video",
+  "wmv": "video",
+  "flv": "video",
+  // 音频
+  "mp3": "audio",
+  "wav": "audio",
+  "flac": "audio",
+  "aac": "audio",
+  "ogg": "audio",
+  // 压缩包
+  "zip": "archive",
+  "rar": "archive",
+  "7z": "archive",
+  "tar": "archive",
+  "gz": "archive",
+  // 代码
+  "js": "code",
+  "ts": "code",
+  "jsx": "code",
+  "tsx": "code",
+  "vue": "code",
+  "html": "code",
+  "css": "code",
+  "scss": "code",
+  "less": "code",
+  "json": "code",
+  "xml": "code",
+  "py": "code",
+  "java": "code",
+  "c": "code",
+  "cpp": "code",
+  "h": "code",
+  "go": "code",
+  "rs": "code",
+  "rb": "code",
+  "php": "code",
+  "sql": "code",
+  "sh": "code",
+  "bat": "code",
+  // 可执行文件
+  "exe": "executable",
+  "msi": "executable",
+  "dll": "executable",
+  // 思源笔记
+  "sy": "siyuan",
 }
 
 /**
@@ -189,81 +248,7 @@ export function getFileExtension(filename: string): string {
  */
 export function getFileIconType(filename: string, isFolder: boolean): string {
   if (isFolder) return "folder"
-
-  const ext = getFileExtension(filename)
-
-  const iconMap: Record<string, string> = {
-    // 文档
-    "pdf": "pdf",
-    "doc": "word",
-    "docx": "word",
-    "xls": "excel",
-    "xlsx": "excel",
-    "ppt": "ppt",
-    "pptx": "ppt",
-    "txt": "text",
-    "md": "markdown",
-    // 图片
-    "jpg": "image",
-    "jpeg": "image",
-    "png": "image",
-    "gif": "image",
-    "svg": "image",
-    "webp": "image",
-    "bmp": "image",
-    "ico": "image",
-    // 视频
-    "mp4": "video",
-    "avi": "video",
-    "mkv": "video",
-    "mov": "video",
-    "wmv": "video",
-    "flv": "video",
-    // 音频
-    "mp3": "audio",
-    "wav": "audio",
-    "flac": "audio",
-    "aac": "audio",
-    "ogg": "audio",
-    // 压缩包
-    "zip": "archive",
-    "rar": "archive",
-    "7z": "archive",
-    "tar": "archive",
-    "gz": "archive",
-    // 代码
-    "js": "code",
-    "ts": "code",
-    "jsx": "code",
-    "tsx": "code",
-    "vue": "code",
-    "html": "code",
-    "css": "code",
-    "scss": "code",
-    "less": "code",
-    "json": "code",
-    "xml": "code",
-    "py": "code",
-    "java": "code",
-    "c": "code",
-    "cpp": "code",
-    "h": "code",
-    "go": "code",
-    "rs": "code",
-    "rb": "code",
-    "php": "code",
-    "sql": "code",
-    "sh": "code",
-    "bat": "code",
-    // 可执行文件
-    "exe": "executable",
-    "msi": "executable",
-    "dll": "executable",
-    // 思源笔记
-    "sy": "siyuan",
-  }
-
-  return iconMap[ext] || "file"
+  return EXT_ICON_MAP[getFileExtension(filename)] || "file"
 }
 
 /** 获取 Electron shell 模块（懒加载单例） */

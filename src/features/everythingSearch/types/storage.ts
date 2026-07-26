@@ -9,12 +9,6 @@ import { Plugin } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 
-/** 存储的设置数据 */
-export interface EverythingSearchSettings {
-  config: EverythingConfig
-  options: SearchOptions
-}
-
 /** 默认配置 */
 export const DEFAULT_CONFIG: EverythingConfig = {
   host: "localhost",

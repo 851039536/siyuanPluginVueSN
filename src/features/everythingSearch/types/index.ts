@@ -7,8 +7,6 @@ import type { EverythingSearchResult } from "../api"
 export type {
   /** Everything 服务连接配置 */
   EverythingConfig,
-  /** Everything HTTP API 搜索参数 */
-  EverythingSearchOptions,
   /** Everything 搜索结果项 */
   EverythingSearchResult,
 } from "../api"

@@ -2,38 +2,43 @@
   <div class="vp-options">
     <!-- 行1：开关组 -->
     <div class="vp-options__row">
+      <!-- 开关标签："区分大小写" -->
       <Switch
         :model-value="options.matchCase"
         size="xsmall"
-        label="区分大小写"
+        :label="i18n.caseSensitive"
         label-before
         @update:model-value="updateOption('matchCase', $event)"
       />
+      <!-- 开关标签："全词匹配" -->
       <Switch
         :model-value="options.matchWholeWord"
         size="xsmall"
-        label="全词匹配"
+        :label="i18n.wholeWord"
         label-before
         @update:model-value="updateOption('matchWholeWord', $event)"
       />
+      <!-- 开关标签："匹配路径" -->
       <Switch
         :model-value="options.matchPath"
         size="xsmall"
-        label="匹配路径"
+        :label="i18n.matchPath"
         label-before
         @update:model-value="updateOption('matchPath', $event)"
       />
+      <!-- 开关标签："正则" -->
       <Switch
         :model-value="options.regex"
         size="xsmall"
-        label="正则"
+        :label="i18n.regex"
         label-before
         @update:model-value="updateOption('regex', $event)"
       />
+      <!-- 开关标签："高级模式" -->
       <Switch
         :model-value="options.advancedMode"
         size="xsmall"
-        label="高级模式"
+        :label="i18n.advancedMode"
         label-before
         @update:model-value="updateOption('advancedMode', $event)"
       />
@@ -42,7 +47,8 @@
     <!-- 行2：配置选单 -->
     <div class="vp-options__row">
       <div class="vp-options__item vp-options__item--select">
-        <span class="vp-options__key">数量</span>
+        <!-- 选项标签："数量" -->
+        <span class="vp-options__key">{{ i18n.maxResultsLabel }}</span>
         <Select
           :model-value="options.maxResults"
           :options="MAX_RESULTS_OPTIONS"
@@ -51,7 +57,8 @@
         />
       </div>
       <div class="vp-options__item vp-options__item--select">
-        <span class="vp-options__key">延迟</span>
+        <!-- 选项标签："延迟" -->
+        <span class="vp-options__key">{{ i18n.debounceLabel }}</span>
         <Select
           :model-value="options.debounceDelay"
           :options="DEBOUNCE_OPTIONS"
@@ -60,10 +67,11 @@
         />
       </div>
       <div class="vp-options__item vp-options__item--select">
-        <span class="vp-options__key">排序</span>
+        <!-- 选项标签："排序" -->
+        <span class="vp-options__key">{{ i18n.sortLabel }}</span>
         <Select
           :model-value="options.sort"
-          :options="SORT_OPTIONS"
+          :options="sortOptions"
           size="xsmall"
           @update:model-value="updateOption('sort', ($event as unknown) as SearchOptions['sort'])"
         />
@@ -79,7 +87,8 @@
     <!-- 行3：文件大小过滤 -->
     <div class="vp-options__row">
       <div class="vp-options__item vp-options__item--size">
-        <span class="vp-options__key">大小</span>
+        <!-- 选项标签："大小" -->
+        <span class="vp-options__key">{{ i18n.sizeLabel }}</span>
         <input
           type="number"
           class="vp-options__size-input"
@@ -114,12 +123,15 @@
 
 <script setup lang="ts">
 import type { SearchOptions } from "../types"
+import { computed } from "vue"
 import Select from "@/components/Select.vue"
 import Switch from "@/components/Switch.vue"
 
 interface Props {
   /** 搜索选项 */
   options: SearchOptions
+  /** everythingSearch 命名空间的 i18n 文案 */
+  i18n: Record<string, string>
 }
 
 interface Emits {
@@ -169,25 +181,25 @@ const DEBOUNCE_OPTIONS = [
   },
 ]
 
-/** 排序选项 */
-const SORT_OPTIONS = [
+/** 排序选项（label 走 i18n：修改时间/名称/路径/大小） */
+const sortOptions = computed(() => [
   {
     value: "date_modified",
-    label: "修改时间",
+    label: props.i18n.sortByModTime,
   },
   {
     value: "name",
-    label: "名称",
+    label: props.i18n.sortByName,
   },
   {
     value: "path",
-    label: "路径",
+    label: props.i18n.sortByPath,
   },
   {
     value: "size",
-    label: "大小",
+    label: props.i18n.sortBySize,
   },
-]
+])
 
 /** 文件大小单位选项 */
 const SIZE_UNIT_OPTIONS = [

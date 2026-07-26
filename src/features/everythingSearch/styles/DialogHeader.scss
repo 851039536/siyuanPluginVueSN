@@ -4,14 +4,14 @@
  */
 
 @use "@/variables" as *;
+@use "./mixins" as m;
 
 .vp-header {
+  @include m.section-solid;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--b3-border-color);
-  background: var(--b3-theme-surface);
 }
 
 .vp-title {
@@ -26,7 +26,7 @@
 
   &__text {
     font-size: $font-size-sm;
-    font-weight: 600;
+    font-weight: $font-weight-semibold;
     font-family: $font-heading;
     color: $brand-orange;
   }

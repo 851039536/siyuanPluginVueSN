@@ -5,13 +5,14 @@
       :model-value="modelValue"
       type="text"
       size="xsmall"
-      :placeholder="placeholder"
+      :placeholder="i18n.searchPlaceholder"
       prefix-icon="search"
       :clearable="true"
       @update:model-value="handleInput"
       @keydown="handleKeydown"
       @clear="handleClear"
     />
+    <!-- 搜索按钮："搜索" -->
     <Button
       variant="primary"
       size="xsmall"
@@ -19,7 +20,7 @@
       :loading="isSearching"
       @click="handleSearch"
     >
-      {{ SEARCH_BUTTON_TEXT }}
+      {{ i18n.search }}
     </Button>
   </div>
 </template>
@@ -37,8 +38,8 @@ interface Props {
   modelValue: string
   /** 是否正在搜索 */
   isSearching: boolean
-  /** 输入框占位符 */
-  placeholder?: string
+  /** everythingSearch 命名空间的 i18n 文案 */
+  i18n: Record<string, string>
 }
 
 interface Emits {
@@ -48,16 +49,11 @@ interface Emits {
   (e: "escape"): void
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  placeholder: "输入关键词搜索本地文件...",
-})
+defineProps<Props>()
 
 const emit = defineEmits<Emits>()
 
 const inputRef = ref<InstanceType<typeof Input> | null>(null)
-
-/** 搜索按钮文本 */
-const SEARCH_BUTTON_TEXT = "搜索"
 
 /** 处理输入 */
 const handleInput = (value: string | number | null) => {

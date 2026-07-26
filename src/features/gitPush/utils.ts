@@ -1,6 +1,6 @@
 // gitPush 工具函数与多路径解析
 import type { Ref } from "vue"
-import type { GitProject, PlatformKey, RemotePushStatus } from "./types"
+import type { GitProject, GitRemoteInfo, PlatformKey, RemotePushStatus } from "./types"
 import { PLATFORM_META } from "./types"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 
@@ -51,6 +51,20 @@ export function highlightSegments(text: string, query: string): HighlightSegment
   }
   if (idx < text.length) { segments.push({ text: text.slice(idx), hit: false }) }
   return segments
+}
+
+/** 平台 key → GitRemoteInfo 检测标志属性名映射 */
+const PLATFORM_FLAG_BY_KEY: Record<PlatformKey, "isGithub" | "isGitee" | "isGitea" | "isCnb"> = {
+  github: "isGithub",
+  gitee: "isGitee",
+  gitea: "isGitea",
+  cnb: "isCnb",
+}
+
+/** 判断指定平台是否已存在于远程列表（远程名等于平台 key，或平台检测标志命中） */
+export function hasPlatformRemote(remotes: GitRemoteInfo[], key: PlatformKey): boolean {
+  const flagProp = PLATFORM_FLAG_BY_KEY[key]
+  return remotes.some((r) => r.name === key || r[flagProp])
 }
 
 /** 向则项目是否配置了任何远程仓库 */

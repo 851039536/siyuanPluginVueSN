@@ -9,7 +9,7 @@
   display: flex;
   gap: 8px;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: $spacing-1; // 模块上下间距统一 4px
   flex-wrap: wrap;
 }
 
@@ -45,7 +45,7 @@
 .compare-result {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: $spacing-1; // 模块上下间距统一 4px
 }
 
 .compare-table-wrap {

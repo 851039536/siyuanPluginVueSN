@@ -5,7 +5,7 @@
 .activity-page {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: $spacing-1; // 模块上下间距统一 4px
 }
 
 // ========== Range Selector ==========

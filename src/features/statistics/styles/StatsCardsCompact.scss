@@ -10,29 +10,6 @@
   padding-top: 4px;
 }
 
-.stats-title {
-  margin: 0;
-  font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.6;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-
-  &::before {
-    content: "";
-    display: inline-block;
-    width: 3px;
-    height: 14px;
-    background: var(--b3-theme-primary);
-    border-radius: stats.$radius-sm;
-  }
-}
-
 // 核心指标：4 列大卡片
 .core-cards {
   display: grid;

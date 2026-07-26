@@ -4,14 +4,14 @@
  */
 
 @use "@/variables" as *;
+@use "./mixins" as m;
 
 .vp-options {
+  @include m.section-dashed;
+
   display: flex;
   flex-direction: column;
   gap: $spacing-1;
-  padding: $spacing-2 $spacing-4;
-  background: var(--b3-theme-surface-light);
-  border-bottom: 1px dashed var(--b3-border-color);
 
   // 行容器：水平 flex，元素等距排列
   &__row {
@@ -28,23 +28,20 @@
     gap: $spacing-1;
 
     &--select {
-      gap: 6px;
+      gap: $spacing-1;
     }
 
     &--size {
-      gap: 4px;
+      gap: $spacing-1;
     }
   }
 
   // 选项标签（数量/延迟/排序/大小）
   &__key {
-    font-size: $font-size-xs;
-    color: var(--b3-theme-on-surface);
+    @include m.uppercase-label;
+
     opacity: 0.5;
     white-space: nowrap;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    font-weight: 700;
   }
 
   // 文件大小数值输入框

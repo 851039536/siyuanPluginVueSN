@@ -1,30 +1,33 @@
 <template>
   <div class="vp-footer">
     <div class="vp-footer__config">
-      <span class="vp-footer__key">地址</span>
+      <!-- 配置标签："地址" -->
+      <span class="vp-footer__key">{{ i18n.host }}</span>
       <Input
         :model-value="config.host"
         type="text"
         size="xsmall"
         placeholder="localhost"
-        aria-label="服务地址"
+        :aria-label="i18n.host"
         @update:model-value="updateConfig('host', $event as string)"
       />
-      <span class="vp-footer__key">端口</span>
+      <!-- 配置标签："端口" -->
+      <span class="vp-footer__key">{{ i18n.port }}</span>
       <Input
         :model-value="config.port"
         type="number"
         size="xsmall"
         placeholder="80"
-        aria-label="服务端口"
+        :aria-label="i18n.port"
         @update:model-value="updateConfig('port', Number($event))"
       />
     </div>
     <div class="vp-footer__hints">
+      <!-- 快捷键提示："ESC 关闭" / "ENTER 搜索" -->
       <span class="vp-footer__kbd">ESC</span>
-      <span class="vp-footer__sep">关闭</span>
+      <span class="vp-footer__sep">{{ i18n.close }}</span>
       <span class="vp-footer__kbd">ENTER</span>
-      <span class="vp-footer__sep">搜索</span>
+      <span class="vp-footer__sep">{{ i18n.search }}</span>
     </div>
   </div>
 </template>
@@ -36,6 +39,8 @@ import Input from "@/components/Input.vue"
 interface Props {
   /** 配置 */
   config: EverythingConfig
+  /** everythingSearch 命名空间的 i18n 文案 */
+  i18n: Record<string, string>
 }
 
 interface Emits {

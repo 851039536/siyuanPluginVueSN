@@ -1,4 +1,5 @@
-@use "../../../variables" as *;
+@use "@/variables" as *;
+@use "./mixins" as m;
 
 .vp-freq-keywords {
   padding: $spacing-1 $spacing-3 $spacing-2;
@@ -11,11 +12,8 @@
   }
 
   &__label {
-    font-size: $font-size-xs;
-    font-weight: $font-weight-bold;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--b3-theme-on-surface);
+    @include m.uppercase-label;
+
     opacity: 0.55;
     margin-right: $spacing-1;
     flex-shrink: 0;

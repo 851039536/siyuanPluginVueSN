@@ -3,14 +3,19 @@
  */
 import type { Plugin } from "siyuan"
 import type { I18n } from "./types"
+import type { FlashcardStorage } from "./types/storage"
 import type { ModalAppInstance } from "@/utils/vueAppHelper"
 import {
   createModalVueApp,
   createVueDockApp,
 } from "@/utils/vueAppHelper"
 import FlashcardDialog from "./components/FlashcardDialog.vue"
+import {
+  getSharedFlashcardStorage,
+  resetFlashcardStorage,
+} from "./composables/useFlashcardStorage"
+import { DEFAULT_I18N } from "./composables/useI18n"
 import FlashcardReadingPanel from "./index.vue"
-import { FlashcardStorage } from "./types/storage"
 
 let flashcardModal: ModalAppInstance | null = null
 let dialogPlugin: Plugin | null = null
@@ -60,7 +65,8 @@ export class FlashcardReading {
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
-    this.storage = new FlashcardStorage(plugin)
+    // 复用模块级共享 storage 单例，避免与 Dock/弹窗重复实例化
+    this.storage = getSharedFlashcardStorage(plugin)
   }
 
   public async init() {
@@ -77,12 +83,20 @@ export class FlashcardReading {
       width: 400,
       icon: "iconBookmark",
       title:
-        (this.plugin.i18n as any)?.flashcardReading?.panelTitle || "单词阅读",
+        (this.plugin.i18n?.flashcardReading as I18n)?.panelTitle
+        || DEFAULT_I18N.panelTitle,
       type: "flashcardreading-dock",
       i18n:
         (this.plugin.i18n?.flashcardReading as I18n) || ({} as I18n),
     })
   }
 
-  public destroy() {}
+  /** 插件卸载时清理：销毁浮动弹窗 + 重置模块级引用，dock 交由思源框架回收 */
+  public destroy() {
+    flashcardModal?.destroy()
+    flashcardModal = null
+    dialogPlugin = null
+    dialogI18n = null
+    resetFlashcardStorage()
+  }
 }

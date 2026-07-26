@@ -14,10 +14,11 @@
             {{ caseInsensitive ? t.caseInsensitive : t.caseSensitive }}
           </span>
         </button>
+        <!-- 切换按钮提示："当前：输错立即重试" / "当前：输错稍后重试" -->
         <button
           class="typing-case-toggle"
           :class="{ 'typing-case-toggle--active': instantReset }"
-          :title="instantReset ? '当前：输错立即重试' : '当前：输错稍后重试'"
+          :title="instantReset ? t.typingTitleInstantReset : t.typingTitleDelayedReset"
           @click="emit('update:instantReset', !instantReset)"
         >
           <IconWrapper
@@ -55,8 +56,9 @@
             :size="14"
             class="typing-case-toggle__icon"
           />
+          <!-- 计时开关文案："计时" / "计时关" -->
           <span class="typing-case-toggle__text">
-            {{ timerEnabled ? '计时' : '计时关' }}
+            {{ timerEnabled ? t.typingTimerOn : t.typingTimerOff }}
           </span>
         </button>
       </div>
@@ -334,9 +336,10 @@ const targetWord = computed(() => props.currentCard?.title || "")
 
 const targetChars = computed(() => targetWord.value.split(""))
 
-/** 根据大小写敏感设置返回用于比较的字符 */
-function normalizeChar(ch: string): string {
-  return props.caseInsensitive ? ch.toLowerCase() : ch
+/** 根据大小写敏感设置返回用于比较的字符（对越界取到的 undefined 容错） */
+function normalizeChar(ch: string | undefined): string {
+  const c = ch ?? ""
+  return props.caseInsensitive ? c.toLowerCase() : c
 }
 
 const typingPlaceholder = computed(() => {
@@ -441,7 +444,8 @@ watch(typedWord, (val) => {
     startTimer()
   }
   // instantReset: 每个字符输入时立即校验，错误则清空重来
-  if (props.instantReset && val.length > 0) {
+  // 边界守卫：答对后跳卡延迟窗口内继续输入可能超过目标长度，越界不校验
+  if (props.instantReset && val.length > 0 && val.length <= targetChars.value.length) {
     if (normalizeChar(val[val.length - 1]) !== normalizeChar(targetChars.value[val.length - 1])) {
       streak.value = 0
       emit("wrong", props.currentCard)
@@ -449,7 +453,8 @@ watch(typedWord, (val) => {
       return
     }
   }
-  if (val.length >= targetWord.value.length) {
+  // 目标词为空（队列空）时不触发判定，避免污染统计
+  if (targetWord.value.length > 0 && val.length >= targetWord.value.length) {
     checkCompletion()
   }
 })

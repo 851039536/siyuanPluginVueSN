@@ -26,8 +26,8 @@
         :cards="paginatedCards"
         :i18n="i18n"
         @play="playWord"
-        @copyTitle="(c: Flashcard) => handleCopy(c.title, '已复制单词')"
-        @copyContent="(c: Flashcard) => handleCopy(c.content, '已复制内容')"
+        @copyTitle="(c: Flashcard) => handleCopy(c.title, t.copiedTitle)"
+        @copyContent="(c: Flashcard) => handleCopy(c.content, t.copiedContent)"
         @edit="editCard"
         @delete="deleteCard"
       />
@@ -38,8 +38,9 @@
         :i18n="i18n"
       />
 
+      <!-- 打字练习视图（筛选结果为空时显示空态） -->
       <TypingPractice
-        v-else-if="viewMode === 'typing'"
+        v-else-if="viewMode === 'typing' && filteredCards.length > 0"
         :currentCard="typingQueue.currentCard.value"
         :currentIndex="typingQueue.currentIndex.value"
         :totalCards="typingQueue.queue.value.length"
@@ -67,6 +68,18 @@
         @update:sessionSize="onSessionSizeChange"
       />
 
+      <!-- 空态：筛选后无卡片可练习（文案："暂无卡片"） -->
+      <div
+        v-else-if="viewMode === 'typing'"
+        class="empty-state"
+      >
+        <IconWrapper
+          name="file"
+          :size="48"
+        />
+        <p>{{ t.noCards }}</p>
+      </div>
+
       <div
         v-if="viewMode === 'list' && totalPages > 1"
         class="pagination"
@@ -91,6 +104,7 @@
       </div>
     </div>
 
+    <!-- 空态：无任何卡片（文案："暂无卡片" + "添加卡片"按钮） -->
     <div
       v-else
       class="empty-state"
@@ -109,6 +123,7 @@
       </Button>
     </div>
 
+    <!-- 底部视图切换栏（文案："列表" / "统计" / "边学边写"） -->
     <div
       v-if="cards.length > 0"
       class="view-mode-toggle"
@@ -136,22 +151,14 @@
       </Button>
     </div>
 
+    <!-- 卡片创建/编辑弹窗（自包含：内部持有表单状态并直接调 storage） -->
     <CardDialog
       :visible="showCreateDialog"
       :editingCard="editingCard"
-      :formData="formData"
-      :formErrors="formErrors"
-      :customCategory="customCategory"
-      :categoryOptions="formCategoryOptions"
-      :isValid="isFormValid"
       :i18n="i18n"
+      :plugin="plugin"
       @close="closeDialog"
-      @save="saveCard"
-      @inputTitle="handleTitleInput"
-      @validateTitle="validateTitle"
-      @changeCategory="handleCategorySelect"
-      @update:formData="formData = $event"
-      @update:customCategory="customCategory = $event"
+      @saved="onCardSaved"
     />
   </div>
 </template>
@@ -179,7 +186,6 @@ import CardDialog from "./components/CardDialog.vue"
 import CardList from "./components/CardList.vue"
 import CategoryFilter from "./components/CategoryFilter.vue"
 import PanelHeader from "./components/PanelHeader.vue"
-import SingleCardView from "./components/SingleCardView.vue"
 import StatisticsView from "./components/StatisticsView.vue"
 import TypingPractice from "./components/TypingPractice.vue"
 import { useFlashcardOperations } from "./composables/useFlashcardOperations"
@@ -207,7 +213,7 @@ const {
   categories,
   loadCards,
 } = useFlashcardStorage(props.plugin)
-const { playWord } = usePlayWord(storage, cards, props.i18n)
+const { playWord } = usePlayWord(storage, cards, t)
 
 const reload = async () => {
   try {
@@ -220,19 +226,17 @@ const reload = async () => {
 const {
   showCreateDialog,
   editingCard,
-  formData,
-  formErrors,
-  customCategory,
-  isFormValid,
   openCreateDialog,
   closeDialog,
-  handleTitleInput,
-  validateTitle,
-  handleCategorySelect,
-  saveCard,
   editCard,
   deleteCard,
 } = useFlashcardOperations(storage, reload, t)
+
+// 保存成功：关闭弹窗并刷新列表（存储写入由 CardDialog 内部完成）
+const onCardSaved = async () => {
+  closeDialog()
+  await reload()
+}
 
 const selectedCategory = ref<string>("all")
 const searchQuery = ref<string>("")
@@ -256,29 +260,6 @@ const categoryOptions = computed<SelectOption[]>(() => [
     label: t.value.allCategories,
   },
   ...categories.value.map((cat) => ({
-    value: cat,
-    label: cat,
-  })),
-])
-
-const allCategories = computed(() => {
-  const uniqueCategories = new Set([
-    ...CARD_CONFIG.PRESET_CATEGORIES,
-    ...categories.value,
-  ])
-  return Array.from(uniqueCategories).sort()
-})
-
-const formCategoryOptions = computed<SelectOption[]>(() => [
-  {
-    value: "",
-    label: t.value.selectCategory,
-  },
-  {
-    value: "__custom__",
-    label: t.value.customCategory,
-  },
-  ...allCategories.value.map((cat) => ({
     value: cat,
     label: cat,
   })),
@@ -376,7 +357,7 @@ const navigateAndPlay = (action: "previous" | "next" | "random") => {
 }
 
 const handleCopy = async (text: string, message: string) => {
-  await copyAndNotify(text, message)
+  await copyAndNotify(text, message, t.value.copyFailed)
 }
 
 const onTypingCorrect = async (card: Flashcard | null) => {

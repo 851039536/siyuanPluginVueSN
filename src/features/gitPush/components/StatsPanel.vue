@@ -1,46 +1,7 @@
 <!-- Git 项目统计概览面板 -->
 <template>
   <div class="gp-stats-panel">
-    <!-- 总览卡片 -->
-    <div
-      v-if="projectCount > 0"
-      class="gp-stats-cards"
-    >
-      <div class="gp-stat-card">
-        <div class="gp-stat-card-value">
-          {{ projectCount }}
-        </div>
-        <div class="gp-stat-card-label">
-          {{ i18n.totalProjects }}
-        </div>
-      </div>
-      <div class="gp-stat-card gp-stat-card--info">
-        <div class="gp-stat-card-value">
-          {{ remoteCoverage.hasRemote }}
-        </div>
-        <div class="gp-stat-card-label">
-          {{ i18n.remoteConfigured }}
-        </div>
-      </div>
-      <div class="gp-stat-card gp-stat-card--warn">
-        <div class="gp-stat-card-value">
-          {{ pushStatusStats.ahead }}
-        </div>
-        <div class="gp-stat-card-label">
-          {{ i18n.needsPush }}
-        </div>
-      </div>
-      <div class="gp-stat-card gp-stat-card--accent">
-        <div class="gp-stat-card-value">
-          {{ uncommittedProjects.length }}
-        </div>
-        <div class="gp-stat-card-label">
-          {{ i18n.uncommitted }}
-        </div>
-      </div>
-    </div>
-
-    <!-- 空状态 -->
+    <!-- 空状态：无项目时显示“暂无项目统计” -->
     <div
       v-if="projectCount === 0"
       class="gp-empty"
@@ -57,7 +18,24 @@
       </div>
     </div>
 
-    <template v-if="projectCount > 0">
+    <template v-else>
+      <!-- 总览卡片：总项目数 / 已配远程 / 待推送 / 未提交（配置驱动） -->
+      <div class="gp-stats-cards">
+        <div
+          v-for="(card, i) in overviewCards"
+          :key="i"
+          class="gp-stat-card"
+          :class="card.cls"
+        >
+          <div class="gp-stat-card-value">
+            {{ card.value }}
+          </div>
+          <div class="gp-stat-card-label">
+            {{ card.label }}
+          </div>
+        </div>
+      </div>
+
       <!-- 远程覆盖率 -->
       <div class="gp-stats-section">
         <div class="gp-stats-section-title">
@@ -112,35 +90,19 @@
           {{ i18n.pendingProjects }}
           <span class="gp-stats-section-count">{{ pendingProjects.length }}</span>
         </div>
-        <!-- 推送状态概览 -->
+        <!-- 推送状态概览：待推送/待拉取/已同步/无远程（配置驱动） -->
         <div class="gp-status-bar">
-          <div class="gp-status-chip gp-status-chip--ahead">
+          <div
+            v-for="chip in STATUS_CHIPS"
+            :key="chip.field"
+            class="gp-status-chip"
+            :class="`gp-status-chip--${chip.cls}`"
+          >
             <Icon
-              icon="mdi:cloud-upload-outline"
+              :icon="chip.icon"
               height="12"
             />
-            <span>{{ pushStatusStats.ahead }}</span>
-          </div>
-          <div class="gp-status-chip gp-status-chip--behind">
-            <Icon
-              icon="mdi:cloud-download-outline"
-              height="12"
-            />
-            <span>{{ pushStatusStats.behind }}</span>
-          </div>
-          <div class="gp-status-chip gp-status-chip--synced">
-            <Icon
-              icon="mdi:check-circle-outline"
-              height="12"
-            />
-            <span>{{ pushStatusStats.synced }}</span>
-          </div>
-          <div class="gp-status-chip gp-status-chip--none">
-            <Icon
-              icon="mdi:lan-disconnect"
-              height="12"
-            />
-            <span>{{ pushStatusStats.noRemote }}</span>
+            <span>{{ pushStatusStats[chip.field] }}</span>
           </div>
         </div>
         <!-- 待处理项目表格 -->
@@ -151,9 +113,12 @@
           <div class="gp-table-row gp-table-row--head">
             <span class="gp-table-cell gp-table-cell--name">{{ i18n.projectName }}</span>
             <span class="gp-table-cell gp-table-cell--num">{{ i18n.needsPushShort }}</span>
-            <span class="gp-table-cell gp-table-cell--num">{{ i18n.staged }}</span>
-            <span class="gp-table-cell gp-table-cell--num">{{ i18n.unstaged }}</span>
-            <span class="gp-table-cell gp-table-cell--num">{{ i18n.untracked }}</span>
+            <!-- 表头三列：已暂存/未暂存/未跟踪（field 同时作为 i18n 键） -->
+            <span
+              v-for="col in COUNT_COLUMNS"
+              :key="col.field"
+              class="gp-table-cell gp-table-cell--num"
+            >{{ i18n[col.field] }}</span>
             <span class="gp-table-cell gp-table-cell--act"></span>
           </div>
           <div
@@ -179,31 +144,16 @@
                 class="gp-cell-empty"
               >-</span>
             </span>
-            <span class="gp-table-cell gp-table-cell--num">
+            <!-- 已暂存/未暂存/未跟踪三列计数徽章（列配置驱动，0 时显示占位符 -） -->
+            <span
+              v-for="col in COUNT_COLUMNS"
+              :key="col.field"
+              class="gp-table-cell gp-table-cell--num"
+            >
               <span
-                v-if="item.staged > 0"
-                class="gp-badge-ahead"
-              >{{ item.staged }}</span>
-              <span
-                v-else
-                class="gp-cell-empty"
-              >-</span>
-            </span>
-            <span class="gp-table-cell gp-table-cell--num">
-              <span
-                v-if="item.unstaged > 0"
-                class="gp-badge-unstaged"
-              >{{ item.unstaged }}</span>
-              <span
-                v-else
-                class="gp-cell-empty"
-              >-</span>
-            </span>
-            <span class="gp-table-cell gp-table-cell--num">
-              <span
-                v-if="item.untracked > 0"
-                class="gp-badge-untracked"
-              >{{ item.untracked }}</span>
+                v-if="item[col.field] > 0"
+                :class="col.badge"
+              >{{ item[col.field] }}</span>
               <span
                 v-else
                 class="gp-cell-empty"
@@ -348,6 +298,29 @@ const props = defineProps<{
 const emit = defineEmits<{
   viewProject: [projectId: string]
 }>()
+
+// 总览卡片配置：总项目数 / 已配远程 / 待推送 / 未提交
+const overviewCards = computed(() => [
+  { value: props.projectCount, label: props.i18n.totalProjects, cls: "" },
+  { value: props.remoteCoverage.hasRemote, label: props.i18n.remoteConfigured, cls: "gp-stat-card--info" },
+  { value: props.pushStatusStats.ahead, label: props.i18n.needsPush, cls: "gp-stat-card--warn" },
+  { value: props.uncommittedProjects.length, label: props.i18n.uncommitted, cls: "gp-stat-card--accent" },
+])
+
+// 推送状态 chip 配置：待推送/待拉取/已同步/无远程
+const STATUS_CHIPS = [
+  { field: "ahead", icon: "mdi:cloud-upload-outline", cls: "ahead" },
+  { field: "behind", icon: "mdi:cloud-download-outline", cls: "behind" },
+  { field: "synced", icon: "mdi:check-circle-outline", cls: "synced" },
+  { field: "noRemote", icon: "mdi:lan-disconnect", cls: "none" },
+] as const
+
+// 变更计数列配置：已暂存/未暂存/未跟踪（field 同时作为表头 i18n 键）
+const COUNT_COLUMNS = [
+  { field: "staged", badge: "gp-badge-ahead" },
+  { field: "unstaged", badge: "gp-badge-unstaged" },
+  { field: "untracked", badge: "gp-badge-untracked" },
+] as const
 
 function pct(count: number): string {
   if (props.projectCount === 0) return "0%"

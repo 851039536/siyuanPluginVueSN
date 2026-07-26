@@ -504,14 +504,10 @@
         :tags="tagsCache || []"
         :loading="tagLoading"
         :push-loaded="tagPushLoading"
-        :remotes="platformMeta.filter(pm => project[pm.remoteProp]).map(pm => ({
-          key: pm.key,
-          icon: pm.icon,
-        }))"
         :i18n="i18n"
-        @create="(p: { name: string, message: string }) => $emit('createTag', project.id, p.name, p.message)"
-        @push="(p: { tag: string }) => $emit('pushTag', project.id, p.tag)"
-        @delete="(p: { tag: string }) => $emit('deleteTag', project.id, p.tag)"
+        @create="(name: string, message?: string) => $emit('createTag', project.id, name, message)"
+        @push="(tag: string) => $emit('pushTag', project.id, tag)"
+        @delete="(tag: string) => $emit('deleteTag', project.id, tag)"
         @refresh="$emit('refreshTags', project.id)"
       />
     </div>
@@ -819,7 +815,7 @@ const emit = defineEmits<{
   "stashApply": [id: string, idx: number]
   "stashDrop": [id: string, idx: number]
   // Tag
-  "createTag": [id: string, name: string, message: string]
+  "createTag": [id: string, name: string, message?: string]
   "pushTag": [id: string, tag: string]
   "deleteTag": [id: string, tag: string]
   // 冲突

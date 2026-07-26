@@ -89,6 +89,8 @@
     "addedDate": "Date Added",
     "untracked": "Untracked",
     "createTag": "Create Tag",
+    "tagNamePlaceholder": "Tag name (e.g. v1.2.0)",
+    "tagMsgPlaceholder": "Annotation (optional)",
     "noTags": "No Tags",
     "conflictDetected": "Merge conflict detected",
     "keepOurs": "Keep local version",

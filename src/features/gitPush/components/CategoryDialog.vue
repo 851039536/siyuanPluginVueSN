@@ -12,7 +12,8 @@
       style="width: 340px;"
     >
       <div class="gp-dialog-header">
-        <span class="gp-dialog-title">{{ i18n.manageCategories || '管理分类' }}</span>
+        <!-- 弹窗标题：“管理分类” -->
+        <span class="gp-dialog-title">{{ i18n.manageCategories }}</span>
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
           @click="$emit('close')"
@@ -34,7 +35,7 @@
           <button
             v-if="cat.id !== UNGROUPED_ID"
             class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
-            @click="$emit('delete-category', cat.id)"
+            @click="$emit('deleteCategory', cat.id)"
           >
             <Icon
               icon="mdi:delete-outline"
@@ -43,18 +44,20 @@
           </button>
         </div>
         <div class="gp-cat-add-row">
+          <!-- 新分类名称输入：占位符“分类名称” -->
           <Input
             v-model="newCatName"
             size="xsmall"
-            :placeholder="i18n.catNamePlaceholder || '分类名称'"
+            :placeholder="i18n.catNamePlaceholder"
             style="flex:1"
-            @keydown="$event.key === 'Enter' && addCategory()"
+            @keydown.enter="addCategory()"
           />
+          <!-- 分类颜色拾取器：提示“颜色” -->
           <input
             v-model="newCatColor"
             type="color"
             class="gp-color-input"
-            title="颜色"
+            :title="i18n.catColorTitle"
           />
           <button
             class="vp-btn vp-btn--primary vp-btn--sm"
@@ -76,30 +79,34 @@
 import { Icon } from "@iconify/vue"
 import { ref } from "vue"
 import Input from "@/components/Input.vue"
+import type { ProjectCategory } from "../types"
 import { UNGROUPED_ID } from "../types"
 import { useDialogKeyboard } from "../composables/useDialogKeyboard"
 
 defineProps<{
   i18n: Record<string, any>
-  categories: { id: string, name: string, color: string }[]
+  categories: ProjectCategory[]
 }>()
 
 const emit = defineEmits<{
   "close": []
-  "add-category": [name: string, color: string]
-  "delete-category": [id: string]
+  "addCategory": [name: string, color: string]
+  "deleteCategory": [id: string]
 }>()
 
 const { rootRef } = useDialogKeyboard()
 
+/** 新分类默认颜色 */
+const DEFAULT_CAT_COLOR = "#3b82f6"
+
 const newCatName = ref("")
-const newCatColor = ref("#3b82f6")
+const newCatColor = ref(DEFAULT_CAT_COLOR)
 
 function addCategory() {
   const n = newCatName.value.trim()
   if (!n) return
-  emit("add-category", n, newCatColor.value)
+  emit("addCategory", n, newCatColor.value)
   newCatName.value = ""
-  newCatColor.value = "#3b82f6"
+  newCatColor.value = DEFAULT_CAT_COLOR
 }
 </script>

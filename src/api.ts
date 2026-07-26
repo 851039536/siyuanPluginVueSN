@@ -300,7 +300,7 @@ export async function upload(
  */
 export async function fullReindexAssetContent(): Promise<null> {
   const url = "/api/asset/fullReindexAssetContent"
-  return request(url, {})
+  return requestOrThrow(url, {})
 }
 
 /**
@@ -385,7 +385,7 @@ export async function insertLocalAssets(
  */
 export async function getMissingAssets(): Promise<string[]> {
   const url = "/api/asset/getMissingAssets"
-  return request(url, {})
+  return requestOrThrow(url, {})
 }
 
 /**
@@ -393,7 +393,7 @@ export async function getMissingAssets(): Promise<string[]> {
  */
 export async function getUnusedAssets(): Promise<string[]> {
   const url = "/api/asset/getUnusedAssets"
-  return request(url, {})
+  return requestOrThrow(url, {})
 }
 
 /**
@@ -402,7 +402,7 @@ export async function getUnusedAssets(): Promise<string[]> {
  */
 export async function removeUnusedAsset(path: string): Promise<null> {
   const url = "/api/asset/removeUnusedAsset"
-  return request(url, { path })
+  return requestOrThrow(url, { path })
 }
 
 /**
@@ -410,7 +410,7 @@ export async function removeUnusedAsset(path: string): Promise<null> {
  */
 export async function removeUnusedAssets(): Promise<null> {
   const url = "/api/asset/removeUnusedAssets"
-  return request(url, {})
+  return requestOrThrow(url, {})
 }
 
 // **************************************** Block ****************************************

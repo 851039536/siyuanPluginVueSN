@@ -1,3 +1,4 @@
+// 资源管理业务逻辑 composable：资源加载与缓存、分类筛选、移动/删除/重建索引
 import type { Plugin } from "siyuan"
 import type {
   ImageAssetInfo,
@@ -9,6 +10,7 @@ import {
   onMounted,
   onUnmounted,
   ref,
+  shallowRef,
   watch,
 } from "vue"
 import {
@@ -16,7 +18,6 @@ import {
   getMissingAssets,
   getUnusedAssets,
   putFile,
-  readDir,
   removeUnusedAsset,
   removeUnusedAssets,
   renameFile,
@@ -25,24 +26,41 @@ import {
 } from "@/api"
 import { copyToClipboard } from "@/utils/domUtils"
 import { PluginStorage } from "@/utils/pluginStorage"
+import {
+  BUILT_IN_CATEGORY_KEYS,
+  buildAssetList,
+  escapeSqlLike,
+  isValidAssetMovePath,
+  scanAssetDir,
+  STORAGE_KEY,
+} from "../utils"
 
-const IMAGE_EXT = /\.(?:png|jpg|jpeg|gif|svg|webp|bmp|ico|tiff|avif)$/i
-const BUILT_IN_CATEGORY_KEYS = new Set(["images", "net", "tool", "other"])
-const STORAGE_KEY = "resourceManager-customCategories"
+/** 引用更新分批并发大小 */
+const UPDATE_BATCH_SIZE = 10
+/** 加载数量输入非法时的默认值 */
+const DEFAULT_LOAD_LIMIT = 30
+
+// 存储实例模块级单例，避免组件重建时重复实例化
+let sharedStorage: PluginStorage | null = null
+
+function getStorage(plugin: Plugin): PluginStorage {
+  if (!sharedStorage) sharedStorage = new PluginStorage(plugin)
+  return sharedStorage
+}
 
 export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
-  const storage = new PluginStorage(plugin)
+  const storage = getStorage(plugin)
   const isMounted = ref(false)
   const activeTab = ref("imageAssets")
   const loading = ref(false)
   const rebuildingIndex = ref(false)
-  const imageAssets = ref<ImageAssetInfo[]>([])
-  const fileAssets = ref<ImageAssetInfo[]>([])
+  // 图片/文件页签共享的全量资源路径缓存（大数组无需深层响应式）
+  const allAssetPaths = shallowRef<string[]>([])
   const missingAssets = ref<string[]>([])
   const unusedAssets = ref<string[]>([])
 
   const categoryFilter = ref("")
-  const loadLimit = ref(30)
+  const loadLimit = ref<number | string>(DEFAULT_LOAD_LIMIT)
 
   const movingAsset = ref<string | null>(null)
   const moveNewPath = ref("")
@@ -51,24 +69,18 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
 
   const rebuildResult = ref("")
 
+  // 请求代际令牌：快速切换页签时丢弃过期响应
+  let requestToken = 0
+
+  const imageAssets = computed(() => buildAssetList(allAssetPaths.value, true))
+  const fileAssets = computed(() => buildAssetList(allAssetPaths.value, false))
+
   const quickCategories = computed(() => {
     const builtIn = [
-      {
-        key: "images",
-        label: i18n.categoryImages || "图片",
-      },
-      {
-        key: "net",
-        label: i18n.categoryNet || "NET",
-      },
-      {
-        key: "tool",
-        label: i18n.categoryTool || "tool",
-      },
-      {
-        key: "other",
-        label: i18n.categoryOther || "其他",
-      },
+      { key: "images", label: i18n.categoryImages },
+      { key: "net", label: i18n.categoryNet },
+      { key: "tool", label: i18n.categoryTool },
+      { key: "other", label: i18n.categoryOther },
     ]
     const custom = customCategories.value.map((cat) => ({
       key: cat,
@@ -77,35 +89,36 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     return [...builtIn, ...custom]
   })
 
-  const totalAssetCount = computed(() => {
-    const list = activeTab.value === "fileAssets" ? fileAssets.value : imageAssets.value
-    if (!categoryFilter.value) {
-      const categoryKeys = quickCategories.value.map((c) => c.key)
-      return list.filter((item) => {
-        const lower = item.path.toLowerCase()
-        return !categoryKeys.some((key) => lower.startsWith(`assets/${key.toLowerCase()}/`))
-      }).length
-    }
-    const prefix = `assets/${categoryFilter.value}/`
-    return list.filter((item) => item.path.toLowerCase().startsWith(prefix.toLowerCase())).length
+  // 加载数量兜底：空串/NaN/小于 1 时回退默认值
+  const effectiveLimit = computed(() => {
+    const n = Number(loadLimit.value)
+    return Number.isFinite(n) && n >= 1 ? Math.floor(n) : DEFAULT_LOAD_LIMIT
   })
 
-  const currentAssetList = computed(() => {
+  // 单次过滤同时产出总数与截断列表，避免重复遍历
+  const filteredAssets = computed(() => {
     const list = activeTab.value === "fileAssets" ? fileAssets.value : imageAssets.value
+    let matched: ImageAssetInfo[]
     if (!categoryFilter.value) {
-      const categoryKeys = quickCategories.value.map((c) => c.key)
-      return list
-        .filter((item) => {
-          const lower = item.path.toLowerCase()
-          return !categoryKeys.some((key) => lower.startsWith(`assets/${key.toLowerCase()}/`))
-        })
-        .slice(0, loadLimit.value)
+      // 空筛选 = 待分类视图：排除所有已归入分类目录的资源
+      const prefixes = quickCategories.value.map((c) => `assets/${c.key.toLowerCase()}/`)
+      matched = list.filter((item) => {
+        const lower = item.path.toLowerCase()
+        return !prefixes.some((prefix) => lower.startsWith(prefix))
+      })
     }
-    const prefix = `assets/${categoryFilter.value}/`
-    return list
-      .filter((item) => item.path.toLowerCase().startsWith(prefix.toLowerCase()))
-      .slice(0, loadLimit.value)
+    else {
+      const prefix = `assets/${categoryFilter.value.toLowerCase()}/`
+      matched = list.filter((item) => item.path.toLowerCase().startsWith(prefix))
+    }
+    return {
+      total: matched.length,
+      list: matched.slice(0, effectiveLimit.value),
+    }
   })
+
+  const totalAssetCount = computed(() => filteredAssets.value.total)
+  const currentAssetList = computed(() => filteredAssets.value.list)
 
   // ── Helpers ──
 
@@ -114,105 +127,74 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     catch { /* ignore */ }
   }
 
-  function escapeSqlLike(str: string): string {
-    return str.replace(/'/g, "''")
-  }
-
   async function copyPathToClipboard(path: string) {
     const ok = await copyToClipboard(path)
-    showMsg(ok ? i18n.pathCopied : i18n.copyFailed || "复制失败")
+    showMsg(ok ? i18n.pathCopied : i18n.copyFailed)
   }
 
   // ── Data Loading ──
 
-  function buildAssetList(paths: string[], isImage: boolean): ImageAssetInfo[] {
-    const extFilter = isImage
-      ? (p: string) => IMAGE_EXT.test(p)
-      : (p: string) => !IMAGE_EXT.test(p)
-    return paths.filter(extFilter).map((path) => ({ path }))
-  }
-
-  async function scanAssetDir(dirPath: string): Promise<string[]> {
-    const paths: string[] = []
+  async function loadAssets(token: number) {
     try {
-      const entries = await readDir(dirPath)
-      const files = Array.isArray(entries) ? entries : [entries]
-      for (const entry of files) {
-        const fullPath = `${dirPath}/${entry.name}`
-        if (entry.isDir) {
-          const sub = await scanAssetDir(fullPath)
-          paths.push(...sub)
-        }
-        else {
-          const relPath = fullPath.replace(/^\/data\//, "")
-          paths.push(relPath)
-        }
-      }
-    }
-    catch { /* ignore scan errors */ }
-    return paths
-  }
-
-  async function loadAllAssets(isImage: boolean) {
-    const target = isImage ? imageAssets : fileAssets
-    try {
-      const referenced = await sql("SELECT DISTINCT path FROM assets WHERE path LIKE 'assets/%'")
+      // 三个数据源相互独立，并行请求
+      const [referenced, unused, fsPaths] = await Promise.all([
+        sql("SELECT DISTINCT path FROM assets WHERE path LIKE 'assets/%' LIMIT 102400"),
+        getUnusedAssets(),
+        scanAssetDir("/data/assets"),
+      ])
       const refPaths = (referenced || [])
         .map((r: { path: string }) => r.path)
         .filter((p: unknown): p is string => typeof p === "string")
-
-      const unused = await getUnusedAssets()
       const unusedPaths = (unused || [])
         .filter((p: unknown): p is string => typeof p === "string")
 
-      const fsPaths = await scanAssetDir("/data/assets")
-
-      const allPaths = [...new Set([...refPaths, ...unusedPaths, ...fsPaths])].sort()
-      target.value = buildAssetList(allPaths, isImage)
+      if (!isMounted.value || token !== requestToken) return
+      allAssetPaths.value = [...new Set([...refPaths, ...unusedPaths, ...fsPaths])].sort()
     }
     catch (e: unknown) {
-      console.error(`加载全部${isImage ? "图片" : "文件"}资源失败:`, e)
-      showMsg(i18n.loadFailed || "加载失败")
+      console.error("加载资源列表失败:", e)
+      showMsg(i18n.loadFailed)
     }
   }
 
-  async function loadMissingAssets() {
+  async function loadMissingAssets(token: number) {
     try {
       const result = await getMissingAssets()
-      if (isMounted.value) missingAssets.value = result || []
+      if (isMounted.value && token === requestToken) missingAssets.value = result || []
     }
     catch (e: unknown) {
       console.error("加载丢失资源失败:", e)
-      showMsg(i18n.loadFailed || "加载失败")
+      showMsg(i18n.loadFailed)
     }
   }
 
-  async function loadUnusedAssets() {
+  async function loadUnusedAssets(token: number) {
     try {
       const result = await getUnusedAssets()
-      if (isMounted.value) unusedAssets.value = result || []
+      if (isMounted.value && token === requestToken) unusedAssets.value = result || []
     }
     catch (e: unknown) {
       console.error("加载未使用资源失败:", e)
-      showMsg(i18n.loadFailed || "加载失败")
+      showMsg(i18n.loadFailed)
     }
   }
 
   async function refresh() {
+    const token = ++requestToken
     loading.value = true
     try {
       if (activeTab.value === "imageAssets" || activeTab.value === "fileAssets") {
-        await loadAllAssets(activeTab.value === "imageAssets")
+        await loadAssets(token)
       }
       else if (activeTab.value === "missingAssets") {
-        await loadMissingAssets()
+        await loadMissingAssets(token)
       }
       else if (activeTab.value === "unusedAssets") {
-        await loadUnusedAssets()
+        await loadUnusedAssets(token)
       }
     }
     finally {
-      if (isMounted.value) loading.value = false
+      if (isMounted.value && token === requestToken) loading.value = false
     }
   }
 
@@ -224,7 +206,7 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
       await removeUnusedAsset(path)
       if (!isMounted.value) return
       showMsg(i18n.deleteSuccess)
-      await loadUnusedAssets()
+      await loadUnusedAssets(requestToken)
     }
     catch {
       if (isMounted.value) showMsg(i18n.deleteFailed)
@@ -232,12 +214,12 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
   }
 
   async function handleDeleteAllUnused() {
-    if (!confirm(`${i18n.deleteConfirm}?`)) return
+    if (!confirm(`${i18n.deleteConfirm} (${unusedAssets.value.length})?`)) return
     try {
       await removeUnusedAssets()
       if (!isMounted.value) return
       showMsg(i18n.deleteSuccess)
-      await loadUnusedAssets()
+      await loadUnusedAssets(requestToken)
     }
     catch {
       if (isMounted.value) showMsg(i18n.deleteFailed)
@@ -274,35 +256,71 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     customCategory.value = ""
   }
 
-  function updateAssetItemAfterMove(oldPath: string, newPath: string) {
-    const target = activeTab.value === "fileAssets" ? fileAssets : imageAssets
-    const idx = target.value.findIndex((item) => item.path === oldPath)
-    if (idx === -1) return
+  function updateAssetPathAfterMove(oldPath: string, newPath: string) {
+    allAssetPaths.value = allAssetPaths.value
+      .map((p) => (p === oldPath ? newPath : p))
+      .sort()
+  }
 
-    const updated: ImageAssetInfo = {
-      ...target.value[idx],
-      path: newPath,
+  /**
+   * 更新全库中对资源的引用，同时匹配原始与 URL 编码两种形态
+   * （含空格/中文文件名的链接在 markdown 中以编码形式存储）
+   * @returns 成功更新的块数量
+   */
+  async function updateAssetReferences(oldPath: string, newPath: string): Promise<number> {
+    const variants = [{ from: oldPath, to: newPath }]
+    const encodedOld = encodeURI(oldPath)
+    if (encodedOld !== oldPath) variants.push({ from: encodedOld, to: encodeURI(newPath) })
+
+    // 两种形态各查一次，按块 id 去重
+    const blockMap = new Map<string, string>()
+    for (const variant of variants) {
+      const rows = await sql(
+        `SELECT id, markdown FROM blocks WHERE markdown LIKE '%${escapeSqlLike(variant.from)}%' ESCAPE '\\' LIMIT 1000`,
+      ) as { id: string, markdown: string }[] | null
+      if (!rows) {
+        // sql 静默失败返回 null：文件已移动但引用未更新，明确提示用户
+        showMsg(i18n.refUpdateFailed)
+        return 0
+      }
+      for (const row of rows) {
+        if (!blockMap.has(row.id)) blockMap.set(row.id, row.markdown)
+      }
     }
 
-    const shouldRemove = categoryFilter.value
-      ? !newPath.startsWith(`assets/${categoryFilter.value}/`)
-      : quickCategories.value.some((cat) => newPath.startsWith(`assets/${cat.key}/`))
+    const updates = [...blockMap.entries()]
+      .map(([id, markdown]) => {
+        let next = markdown
+        for (const variant of variants) next = next.split(variant.from).join(variant.to)
+        return { id, next, changed: next !== markdown }
+      })
+      .filter((u) => u.changed)
 
-    if (shouldRemove) {
-      target.value = target.value.filter((item) => item.path !== oldPath)
+    // 分批并行更新，避免串行等待与瞬时请求风暴
+    let updatedCount = 0
+    for (let i = 0; i < updates.length; i += UPDATE_BATCH_SIZE) {
+      const batch = updates.slice(i, i + UPDATE_BATCH_SIZE)
+      const results = await Promise.all(batch.map(async (u) => {
+        try {
+          return (await updateBlock("markdown", u.next, u.id)) !== null
+        }
+        catch {
+          return false
+        }
+      }))
+      updatedCount += results.filter(Boolean).length
     }
-    else {
-      const next = [...target.value]
-      next.splice(idx, 1, updated)
-      next.sort((a, b) => a.path.localeCompare(b.path))
-      target.value = next
-    }
+    return updatedCount
   }
 
   async function handleMoveAsset(oldPath: string) {
     const newPath = moveNewPath.value.trim()
     if (!newPath || newPath === oldPath) {
       cancelMove()
+      return
+    }
+    if (!isValidAssetMovePath(newPath)) {
+      showMsg(i18n.invalidPath)
       return
     }
     try {
@@ -313,31 +331,15 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
       }
 
       await renameFile(`/data/${oldPath}`, `/data/${newPath}`)
-
-      const escapedOldPath = escapeSqlLike(oldPath)
-      const blocks = await sql(
-        `SELECT id, markdown FROM blocks WHERE markdown LIKE '%${escapedOldPath}%' LIMIT 1000`,
-      ) as { id: string, markdown: string }[]
-
-      let updatedCount = 0
-      for (const block of blocks) {
-        try {
-          const newMarkdown = block.markdown.split(oldPath).join(newPath)
-          if (newMarkdown !== block.markdown) {
-            await updateBlock("markdown", newMarkdown, block.id)
-            updatedCount++
-          }
-        }
-        catch { /* skip single block failure */ }
-      }
+      const updatedCount = await updateAssetReferences(oldPath, newPath)
 
       try { await fullReindexAssetContent() }
-      catch { /* ignore */ }
+      catch { /* 索引重建失败不影响移动结果 */ }
 
       if (!isMounted.value) return
-      const refMsg = updatedCount > 0 ? `（${i18n.updatedRefs?.replace("{count}", String(updatedCount)) || `已更新 ${updatedCount} 处引用`}）` : ""
+      const refMsg = updatedCount > 0 ? `（${i18n.updatedRefs.replace("{count}", String(updatedCount))}）` : ""
       showMsg(`${i18n.moveSuccess}${refMsg}（${i18n.newPath}: ${newPath}）`)
-      updateAssetItemAfterMove(oldPath, newPath)
+      updateAssetPathAfterMove(oldPath, newPath)
       cancelMove()
     }
     catch (e: unknown) {
@@ -388,8 +390,16 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     isMounted.value = false
   })
 
-  watch(activeTab, () => {
+  watch(activeTab, (tab, prevTab) => {
     categoryFilter.value = ""
+    // 图片/文件页签共享同一份资源缓存，互切时无需重新加载
+    const assetTabs = ["imageAssets", "fileAssets"]
+    if (
+      assetTabs.includes(tab) && prevTab !== undefined
+      && assetTabs.includes(prevTab) && allAssetPaths.value.length > 0
+    ) {
+      return
+    }
     refresh()
   }, { immediate: true })
 

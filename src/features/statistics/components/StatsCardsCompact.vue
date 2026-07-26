@@ -1,11 +1,6 @@
 <!-- 核心指标卡片：概览总览（核心大卡 + 次要紧凑网格） -->
 <template>
   <div class="stats-section">
-    <h3 class="stats-title">
-      <!-- 区块标题："总览" -->
-      {{ i18n.overview }}
-    </h3>
-
     <!-- 核心指标：3 列大卡片 -->
     <div class="core-cards">
       <div
@@ -84,7 +79,6 @@ const props = withDefaults(defineProps<Props>(), {
   notesChange: null,
   wordsChange: null,
   i18n: () => ({
-    overview: "总览",
     totalNotes: "笔记总数",
     totalWords: "总字数",
     totalBlocks: "内容块",

@@ -168,7 +168,7 @@
             title="重新审核内容"
             variant="ghost"
             size="xsmall"
-            @click="$emit('re-review')"
+            @click="$emit('reReview')"
           >
             <svg
               width="14"

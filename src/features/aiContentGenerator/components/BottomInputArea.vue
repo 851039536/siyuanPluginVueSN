@@ -130,7 +130,7 @@
         :disabled="isGenerating"
         class="input-field"
         @update:model-value="onEditCustomInputChange"
-        @keydown.ctrl.enter="$emit('custom-edit')"
+        @keydown.ctrl.enter="$emit('customEdit')"
       />
       <Button
         v-if="!isGenerating"

@@ -2,9 +2,11 @@
 <template>
   <div class="panel-header-wrapper">
     <div class="panel-header">
+      <!-- 面板标题："单词阅读" -->
       <h4 class="panel-title">
         <span>{{ t.panelTitle }}</span>
       </h4>
+      <!-- 头部操作区：添加/刷新/打开存储文件 -->
       <div class="header-actions">
         <Button
           variant="ghost"
@@ -66,7 +68,7 @@ const openPath = async () => {
       const { shell } = window.require("electron")
       await shell.openPath(storagePath.value)
     } catch {
-      showMessage("打开文件失败", 2000, "error")
+      showMessage(t.value.openFileFailed, 2000, "error")
     }
   }
 }

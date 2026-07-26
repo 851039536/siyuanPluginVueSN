@@ -9,6 +9,7 @@
       @click="emit('close')"
     />
 
+    <!-- 空态：暂无卡片（文案："暂无卡片"） -->
     <div
       v-if="filteredCards.length === 0"
       class="empty-state"
@@ -33,6 +34,7 @@
         @copyContent="(card) => handleCopy(card?.content)"
       />
 
+      <!-- 类别筛选（标签文案："类别"） -->
       <div class="category-filter">
         <label>{{ t.category }}:</label>
         <Select
@@ -104,7 +106,7 @@ const {
   categories,
   loadCards,
 } = useFlashcardStorage(props.plugin)
-const { playWord } = usePlayWord(storage, cards, props.i18n)
+const { playWord } = usePlayWord(storage, cards, t)
 
 const filteredCards = computed(() => {
   if (selectedCategory.value === "all") return cards.value
@@ -152,7 +154,7 @@ const randomCard = () => {
 }
 
 const handleCopy = async (text?: string) => {
-  await copyAndNotify(text || "", "已复制")
+  await copyAndNotify(text || "", t.value.copied, t.value.copyFailed)
 }
 
 onMounted(() => {

@@ -21,12 +21,12 @@ export async function syncIncrementPractice(
 }
 
 /**
- * 复制文本到剪贴板并显示通知消息
+ * 复制文本到剪贴板并显示通知消息（文案由调用方从 i18n 传入，禁止硬编码兜底）
  */
 export async function copyAndNotify(
   text: string,
   successMsg: string,
-  errorMsg = "复制失败",
+  errorMsg: string,
 ): Promise<void> {
   if (!text) return
   const ok = await copyToClipboard(text)

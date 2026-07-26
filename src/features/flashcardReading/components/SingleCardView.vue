@@ -10,12 +10,13 @@
         <div class="card-header">
           <span class="card-title card-title--single">{{ currentCard?.title }}</span>
           <div class="card-actions">
+            <!-- 按钮提示："复制单词" -->
             <Button
               variant="ghost"
               size="xsmall"
               icon="fileCopy"
               :iconSize="16"
-              :title="t.copyTitle || '复制标题'"
+              :title="t.copyTitle"
               @click="$emit('copyTitle', currentCard)"
             />
             <Button

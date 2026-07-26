@@ -66,7 +66,10 @@ export function useTypingQueue(cards: Ref<Flashcard[]>) {
     }
   }
 
-  const currentCard = computed(() => queue.value[currentIndex.value])
+  // 队列为空或索引越界时显式归一为 null，避免下游拿到 undefined
+  const currentCard = computed<Flashcard | null>(
+    () => queue.value[currentIndex.value] ?? null,
+  )
 
   const previous = () => {
     if (currentIndex.value > 0) {

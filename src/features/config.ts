@@ -176,7 +176,7 @@ export const FEATURE_CONFIG = [
     id: "flashcardReading",
     defaultTitle: "单词阅读",
     defaultDesc: "闪卡式阅读工具，支持分类和翻转",
-    titleI18nKey: "flashcardReading.title",
+    titleI18nKey: "flashcardReading.panelTitle",
     descI18nKey: "flashcardReading.description",
   },
   {

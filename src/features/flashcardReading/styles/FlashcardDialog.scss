@@ -1,25 +1,29 @@
 // 单词阅读 - 弹窗式快速浏览样式
 @use 'variables' as *;
 
+$fc-pad-h: 10px; // 10px 定位偏移（无匹配全局Token）
+
 .flashcard-dialog {
   width: 100%;
   max-height: 85vh;
-  padding: 20px;
+  padding: $spacing-5;
   display: flex;
   flex-direction: column;
   gap: $spacing-4;
   overflow-y: auto;
+  // 弹窗容器基准字号（硬规则：防止继承思源全局默认字号）
+  font-size: $font-size-xs;
 
   .close-btn {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: $fc-pad-h;
+    right: $fc-pad-h;
     z-index: 1;
   }
 }
 
 .card-counter {
-  font-size: $font-size-sm;
+  font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   font-family: $vp-mono;
   color: var(--b3-theme-on-surface);

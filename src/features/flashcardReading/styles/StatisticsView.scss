@@ -33,17 +33,18 @@
           min-width: 0;
 
           .stat-value {
+            // 字号白名单：统计数值为数据突出展示，允许超出两级字号制
             font-size: $font-size-base;
             font-weight: $font-weight-bold;
             font-family: $vp-mono;
             color: var(--b3-theme-on-background);
-            line-height: 1.2;
+            line-height: $line-height-tight;
           }
 
           .stat-label {
             @include fc-label;
             font-size: $font-size-2xs;
-            margin-top: 2px;
+            margin-top: $spacing-2px;
           }
         }
       }

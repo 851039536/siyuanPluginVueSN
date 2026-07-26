@@ -5,50 +5,58 @@
       v-if="loading"
       class="pred-loading"
     >
-      分析中...
+      <!-- 加载提示："分析中..." -->
+      {{ i18n.predAnalyzing }}
     </div>
 
     <div
       v-else-if="prediction && prediction.historical.length > 0"
       class="pred-content"
     >
-      <div class="pred-header">
-        <div class="pred-confidence">
-          <span class="confidence-label">拟合度 R²</span>
-          <span class="confidence-value">{{ (prediction.rSquared * 100).toFixed(1) }}%</span>
+      <!-- 指标卡行：拟合度 / 下周预计 / 下月预计（对齐概览核心指标卡样式） -->
+      <div class="pred-stats-row">
+        <div class="pred-stat-card">
+          <!-- 指标标签："拟合度 R²" -->
+          <span class="pred-stat-label">{{ i18n.predFitLabel }}</span>
+          <span class="pred-stat-value">{{ (prediction.rSquared * 100).toFixed(1) }}%</span>
         </div>
-        <div class="pred-projections">
-          <div class="projection-item">
-            <IconWrapper
-              name="file"
-              :size="14"
-              class="proj-icon"
-            />
-            <span class="proj-label">下周预计</span>
-            <span class="proj-value">{{ formatNumber(prediction.weeklyProjection) }} 字</span>
-          </div>
-          <div class="projection-item">
-            <IconWrapper
-              name="file"
-              :size="14"
-              class="proj-icon"
-            />
-            <span class="proj-label">下月预计</span>
-            <span class="proj-value">{{ formatNumber(prediction.monthlyProjection) }} 字</span>
-          </div>
+        <div class="pred-stat-card">
+          <!-- 指标标签："下周预计" -->
+          <span class="pred-stat-label">{{ i18n.predNextWeek }}</span>
+          <span class="pred-stat-value">
+            {{ formatNumber(prediction.weeklyProjection) }}
+            <!-- 单位："字" -->
+            <span class="pred-stat-unit">{{ i18n.wordsUnit }}</span>
+          </span>
+        </div>
+        <div class="pred-stat-card">
+          <!-- 指标标签："下月预计" -->
+          <span class="pred-stat-label">{{ i18n.predNextMonth }}</span>
+          <span class="pred-stat-value">
+            {{ formatNumber(prediction.monthlyProjection) }}
+            <!-- 单位："字" -->
+            <span class="pred-stat-unit">{{ i18n.wordsUnit }}</span>
+          </span>
         </div>
       </div>
 
+      <!-- 趋势方向行："趋势：上升/下降/平稳（±X 字/天）" -->
       <div class="pred-trend-label">
-        <span class="trend-up">▲</span> 趋势：
-        <strong
-          :class="{
-            'trend-pos': prediction.slope > 0,
-            'trend-neg': prediction.slope < 0,
-          }"
+        <span
+          class="trend-icon"
+          :class="trendClass"
         >
-          {{ prediction.slope > 0 ? '上升' : prediction.slope < 0 ? '下降' : '平稳' }}
-          （{{ prediction.slope > 0 ? '+' : '' }}{{ prediction.slope.toFixed(1) }} 字/天）
+          <IconWrapper
+            :name="trendIcon"
+            :size="12"
+          />
+        </span>
+        <!-- 标签："趋势" -->
+        <span>{{ i18n.predTrendLabel }}：</span>
+        <strong :class="trendClass">
+          {{ trendText }}
+          <!-- 斜率单位："字/天" -->
+          （{{ prediction.slope > 0 ? '+' : '' }}{{ prediction.slope.toFixed(1) }} {{ i18n.predSlopeUnit }}）
         </strong>
       </div>
 
@@ -150,23 +158,26 @@
         >
           <div class="tooltip-label">
             {{ allPoints[hoveredIndex].label }}
+            <!-- 预测点徽章："预测" -->
             <span
               v-if="allPoints[hoveredIndex].isPred"
               class="tooltip-pred-badge"
-            >预测</span>
+            >{{ i18n.predBadge }}</span>
           </div>
           <div class="tooltip-val">
-            {{ formatNumber(allPoints[hoveredIndex].value) }} 字
+            <!-- 数值 + 单位："X 字" -->
+            {{ formatNumber(allPoints[hoveredIndex].value) }} {{ i18n.wordsUnit }}
           </div>
         </div>
       </div>
 
+      <!-- 图例："历史30天" / "预测7天" -->
       <div class="pred-legend">
         <span class="legend-item">
-          <span class="legend-dot history"></span> 历史30天
+          <span class="legend-dot history"></span> {{ i18n.predLegendHistory }}
         </span>
         <span class="legend-item">
-          <span class="legend-dot predict"></span> 预测7天
+          <span class="legend-dot predict"></span> {{ i18n.predLegendFuture }}
         </span>
       </div>
     </div>
@@ -175,7 +186,8 @@
       v-else
       class="pred-empty"
     >
-      暂无足够数据生成预测（需要至少2天数据）
+      <!-- 空状态："暂无足够数据生成预测（需要至少2天数据）" -->
+      {{ i18n.predEmpty }}
     </div>
   </div>
 </template>
@@ -192,9 +204,12 @@ import { formatNumber } from "../utils"
 
 interface Props {
   onGetTrendPrediction?: () => Promise<TrendPrediction>
+  i18n?: Record<string, any>
 }
 
 const props = defineProps<Props>()
+
+const i18n = computed(() => props.i18n || {})
 
 const CHART_W = 600
 const CHART_H = 180
@@ -205,6 +220,22 @@ const PAD_T = 10
 const loading = ref(false)
 const prediction = ref<TrendPrediction | null>(null)
 const hoveredIndex = ref(-1)
+
+// 趋势方向：图标 / 样式类 / 文案均由斜率符号推导
+const trendIcon = computed(() => {
+  const slope = prediction.value?.slope ?? 0
+  return slope > 0 ? "trendingUp" : slope < 0 ? "trendingDown" : "trendingNeutral"
+})
+
+const trendClass = computed(() => {
+  const slope = prediction.value?.slope ?? 0
+  return slope > 0 ? "trend-pos" : slope < 0 ? "trend-neg" : "trend-flat"
+})
+
+const trendText = computed(() => {
+  const slope = prediction.value?.slope ?? 0
+  return slope > 0 ? i18n.value.predTrendUp : slope < 0 ? i18n.value.predTrendDown : i18n.value.predTrendFlat
+})
 
 const allData = computed(() => {
   if (!prediction.value) return []

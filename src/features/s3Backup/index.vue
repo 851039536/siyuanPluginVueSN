@@ -59,9 +59,9 @@
         @open-folder="openWorkspaceFolder"
       />
 
-      <!-- 备份进度（含独立增量备份/还原运行期间） -->
+      <!-- 备份进度（含独立压缩包/增量备份/还原运行期间） -->
       <BackupProgressSection
-        v-if="isBackingUp || isIncrementalRunning || isIncrementalRestoring"
+        v-if="isBackingUp || isZipBackingUp || isIncrementalRunning || isIncrementalRestoring"
         :progress="backupProgress"
         :phase-label="phaseLabel"
         :i18n="i18n"
@@ -70,7 +70,6 @@
       <!-- 手动备份 -->
       <ManualBackupCard
         :is-backing-up="isBackingUp"
-        :is-s3-only-backing-up="isS3OnlyBackingUp"
         :can-backup="canBackup"
         :is-configured="isConfigured"
         :workspace-path="workspacePath"
@@ -82,11 +81,12 @@
         :backup-mode-local-zip="backupModeLocal.localZip"
         :backup-mode-s3-upload="backupModeLocal.s3Upload"
         :backup-mode-s3-incremental="backupModeLocal.s3Incremental"
+        :is-zip-backing-up="isZipBackingUp"
         :is-incremental-running="isIncrementalRunning"
         :is-incremental-restoring="isIncrementalRestoring"
         :i18n="i18n"
         @perform-backup="performManualBackup"
-        @trigger-s3-upload="triggerS3OnlyUpload"
+        @trigger-zip-backup="triggerZipBackupOnly"
         @trigger-incremental="triggerIncrementalOnly"
         @trigger-incremental-restore="triggerIncrementalRestore"
         @update:use-date-folder="useDateFolder = $event; saveWorkspaceSettings()"
@@ -275,7 +275,7 @@ const lastBackupTime = ref("")
 const useDateFolder = ref(true)
 const localBackupDir = ref("data-backup")
 const s3SubPrefix = ref("data-backup")
-const isS3OnlyBackingUp = ref(false)
+const isZipBackingUp = ref(false)
 const backupLogs = ref<BackupLog[]>([])
 const checksums = ref<FileChecksum[]>([])
 const uploadHostMap = ref<Record<string, string>>({})
@@ -387,7 +387,7 @@ async function runIncrementalBackup(): Promise<void> {
   await performIncrementalBackup(s3Config.value.prefix, s3SubPrefix.value)
 }
 
-/** 独立增量备份按钮（不依赖模式开关，仿 triggerS3OnlyUpload） */
+/** 独立增量备份按钮（不依赖模式开关，单独触发一次增量上传） */
 async function triggerIncrementalOnly(): Promise<void> {
   if (isIncrementalRunning.value || !backupManager) { return }
   if (!workspacePath.value) {
@@ -769,21 +769,21 @@ async function performS3Backup(latestZip?: BackupResult | null): Promise<void> {
   }
 }
 
-/** 触发独立 S3 上传（按钮直接调用，无需额外包装） */
-async function triggerS3OnlyUpload(): Promise<void> {
-  if (isS3OnlyBackingUp.value || !backupManager) { return }
+/** 独立压缩包备份按钮（不依赖模式开关，直接执行本地 ZIP 打包） */
+async function triggerZipBackupOnly(): Promise<void> {
+  if (isZipBackingUp.value || isBackingUp.value || !backupManager) { return }
   if (!workspacePath.value) {
     showMessage(props.i18n.noWorkspace || "请先选择工作区路径", 3000, "info")
     await selectWorkspacePath()
     if (!workspacePath.value) { return }
   }
-  isS3OnlyBackingUp.value = true
+  isZipBackingUp.value = true
   try {
-    await performS3Backup()
+    await performLocalBackup()
   } catch (err: unknown) {
-    showMessage(`S3 上传失败: ${getErrorMessage(err)}`, 5000, "error")
+    showMessage(`${props.i18n.zipBackup}: ${getErrorMessage(err)}`, 5000, "error")
   } finally {
-    isS3OnlyBackingUp.value = false
+    isZipBackingUp.value = false
   }
 }
 

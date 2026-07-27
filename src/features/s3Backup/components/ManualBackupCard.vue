@@ -23,6 +23,26 @@
       >
         {{ i18n.uploadToS3 || "上传到 S3" }}
       </Button>
+      <!-- 增量备份按钮："增量备份" -->
+      <Button
+        variant="ghost"
+        size="xsmall"
+        :disabled="isBackingUp || isIncrementalRunning || !isConfigured || !workspacePath"
+        :loading="isIncrementalRunning"
+        @click="$emit('triggerIncremental')"
+      >
+        {{ i18n.incrementalBackup }}
+      </Button>
+      <!-- 增量还原按钮："增量还原" -->
+      <Button
+        variant="ghost"
+        size="xsmall"
+        :disabled="isBackingUp || isIncrementalRestoring || !isConfigured || !workspacePath"
+        :loading="isIncrementalRestoring"
+        @click="$emit('triggerIncrementalRestore')"
+      >
+        {{ i18n.incrementalRestore }}
+      </Button>
     </div>
     <div class="form-group form-group-checkbox">
       <Switch
@@ -86,18 +106,27 @@ const props = defineProps<{
   resolvedS3Path: string
   backupModeLocalZip: boolean
   backupModeS3Upload: boolean
+  backupModeS3Incremental?: boolean
+  isIncrementalRunning?: boolean
+  isIncrementalRestoring?: boolean
   i18n: Record<string, string>
 }>()
 
 defineEmits<{
   (e: "performBackup"): void
   (e: "triggerS3Upload"): void
+  (e: "triggerIncremental"): void
+  (e: "triggerIncrementalRestore"): void
   (e: "update:useDateFolder", value: boolean): void
   (e: "update:localBackupDir", value: string): void
   (e: "update:s3SubPrefix", value: string): void
 }>()
 
 const backupHintText = computed(() => {
+  // 勾选增量时优先提示增量语义（可与其他模式叠加，此处仅展示主要行为）
+  if (props.backupModeS3Incremental) {
+    return props.i18n.backupHintIncremental
+  }
   if (props.backupModeLocalZip && props.backupModeS3Upload) {
     return props.i18n.backupHintBoth || "将先打包本地 ZIP 再上传 S3"
   }

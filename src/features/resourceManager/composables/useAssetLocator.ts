@@ -2,23 +2,17 @@
 import type { ResourceManagerI18n } from "../types"
 import { showMessage } from "siyuan"
 import { sql } from "@/api"
-import { escapeSqlLike, escapeSqlString } from "../utils"
+import { buildPathVariants, escapeSqlLike, escapeSqlString } from "../utils"
 
 /** assets 表单资源引用查询上限 */
 const ASSET_REF_LIMIT = 32
 /** blocks 表兜底查询上限 */
 const BLOCK_REF_LIMIT = 5
 
-/** 生成原始与 URL 编码双形态（含中文/空格的路径在 markdown 中以编码形式存储） */
-function buildVariants(str: string): string[] {
-  const encoded = encodeURI(str)
-  return encoded === str ? [str] : [str, encoded]
-}
-
 /** assets 表按 path 等值查询引用块 id；sql 静默失败时返回 null */
 async function queryAssetRefs(path: string): Promise<Set<string> | null> {
   const ids = new Set<string>()
-  for (const variant of buildVariants(path)) {
+  for (const variant of buildPathVariants(path)) {
     const rows = await sql(
       `SELECT block_id, root_id FROM assets WHERE path = '${escapeSqlString(variant)}' LIMIT ${ASSET_REF_LIMIT}`,
     ) as { block_id: string, root_id: string }[] | null
@@ -34,7 +28,7 @@ async function queryAssetRefs(path: string): Promise<Set<string> | null> {
 /** blocks 表 markdown 模糊匹配引用块 id（needle 为完整路径或文件名片段） */
 async function queryBlockRefs(needle: string): Promise<Set<string>> {
   const ids = new Set<string>()
-  for (const variant of buildVariants(needle)) {
+  for (const variant of buildPathVariants(needle)) {
     const rows = await sql(
       `SELECT DISTINCT id, root_id FROM blocks WHERE markdown LIKE '%${escapeSqlLike(variant)}%' ESCAPE '\\' ORDER BY updated DESC LIMIT ${BLOCK_REF_LIMIT}`,
     ) as { id: string, root_id: string }[] | null

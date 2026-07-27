@@ -21,9 +21,8 @@
   "backupNow": "立即备份",
   "backupSuccess": "备份上传成功",
   "backupFailed": "备份上传失败",
-  "backupHint": "备份将逐文件上传到 S3",
-  "backupHintLocal": "备份将打包为 data-*.zip 保存到本地备份目录",
-  "backupHintBoth": "将先打包本地 ZIP 再上传 S3",
+  "backupNowHintPrefix": "点击「立即备份」将执行：",
+  "backupNowHintNone": "未勾选任何备份模式，请到「配置」Tab 的「备份模式」中勾选",
   "backupProgress": "备份进度",
   "s3Backups": "云端备份列表",
   "noBackups": "暂无云端备份",
@@ -108,7 +107,6 @@
   "alreadyUploaded": "已上传",
   "s3Incremental": "S3 增量备份",
   "s3IncrementalHint": "仅上传 data/ 中新增或变更的文件到 S3（需先完成 S3 配置）",
-  "backupHintIncremental": "增量备份：仅上传自上次备份以来新增或变更的文件",
   "incrementalFirstRun": "首次增量备份，将全量上传",
   "incrementalResult": "增量备份完成：上传 {uploaded}、跳过 {skipped}、删除 {deleted}",
   "incrementalResultFailed": "，失败 {failed}",
@@ -120,5 +118,6 @@
   "incrementalNoManifest": "云端无增量备份清单，请先执行增量备份",
   "incrementalRestoreResult": "增量还原完成：下载 {downloaded} 个文件 → {path}",
   "incrementalRestoreFailed": "，失败 {failed}",
-  "downloading": "下载 S3"
+  "downloading": "下载 S3",
+  "zipBackup": "压缩包备份"
 }

@@ -27,14 +27,16 @@ import {
 import { copyToClipboard } from "@/utils/domUtils"
 import { PluginStorage } from "@/utils/pluginStorage"
 import {
+  assetFileExists,
   BUILT_IN_CATEGORY_KEYS,
   buildAssetList,
   escapeSqlLike,
-  escapeSqlString,
   isValidAssetMovePath,
+  safeDecodeURI,
   scanAssetDir,
   STORAGE_KEY,
 } from "../utils"
+import { useAssetLocator } from "./useAssetLocator"
 
 /** 引用更新分批并发大小 */
 const UPDATE_BATCH_SIZE = 10
@@ -133,52 +135,8 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     showMsg(ok ? i18n.pathCopied : i18n.copyFailed)
   }
 
-  /**
-   * 定位资源引用：查 assets 表按 path 等值匹配（原始 + URL 编码双形态），
-   * 无命中时兜底查 blocks 表 markdown LIKE，命中后以 siyuan:// 协议跳转
-   */
-  async function handleLocateAsset(path: string) {
-    const variants = [path]
-    const encoded = encodeURI(path)
-    if (encoded !== path) variants.push(encoded)
-
-    // assets 表等值查询，按引用块 id 去重
-    const refIds = new Set<string>()
-    for (const variant of variants) {
-      const rows = await sql(
-        `SELECT block_id, root_id FROM assets WHERE path = '${escapeSqlString(variant)}' LIMIT 32`,
-      ) as { block_id: string, root_id: string }[] | null
-      if (!rows) {
-        // sql 静默失败返回 null：明确提示定位失败
-        showMsg(i18n.locateFailed)
-        return
-      }
-      for (const row of rows) {
-        const id = row.block_id || row.root_id
-        if (id) refIds.add(id)
-      }
-    }
-
-    // 兜底：索引缺失时查 blocks 表 markdown 模糊匹配
-    if (refIds.size === 0) {
-      for (const variant of variants) {
-        const rows = await sql(
-          `SELECT DISTINCT id, root_id FROM blocks WHERE markdown LIKE '%${escapeSqlLike(variant)}%' ESCAPE '\\' ORDER BY updated DESC LIMIT 5`,
-        ) as { id: string, root_id: string }[] | null
-        for (const row of rows || []) {
-          const id = row.id || row.root_id
-          if (id) refIds.add(id)
-        }
-      }
-    }
-
-    if (refIds.size === 0) {
-      showMsg(i18n.locateNotFound)
-      return
-    }
-    if (refIds.size > 1) showMsg(i18n.locateRefs.replace("{count}", String(refIds.size)))
-    window.open(`siyuan://blocks/${[...refIds][0]}`)
-  }
+  // 资源定位逻辑（含索引滞后兜底）抽离到独立 composable
+  const { handleLocateAsset } = useAssetLocator(i18n)
 
   // ── Data Loading ──
 
@@ -361,6 +319,17 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     return updatedCount
   }
 
+  /**
+   * 解析资源在磁盘上的真实路径：assets 表中的路径可能是 URL 编码形态
+   * （如 a%20b.png），而磁盘文件名是解码后的（a b.png），原样不存在时尝试解码形态
+   */
+  async function resolveDiskPath(path: string): Promise<string | null> {
+    if (await assetFileExists(path)) return path
+    const decoded = safeDecodeURI(path)
+    if (decoded !== path && await assetFileExists(decoded)) return decoded
+    return null
+  }
+
   async function handleMoveAsset(oldPath: string) {
     const newPath = moveNewPath.value.trim()
     if (!newPath || newPath === oldPath) {
@@ -372,13 +341,18 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
       return
     }
     try {
-      const dirPart = newPath.substring(0, newPath.lastIndexOf("/"))
+      // 磁盘操作使用真实（解码）路径；markdown 引用更新仍按列表中的原形态
+      const diskOldPath = await resolveDiskPath(oldPath)
+      if (!diskOldPath) throw new Error(i18n.fileNotFound)
+      const diskNewPath = safeDecodeURI(newPath)
+
+      const dirPart = diskNewPath.substring(0, diskNewPath.lastIndexOf("/"))
       if (dirPart && dirPart !== "assets") {
         try { await putFile(`/data/${dirPart}`, true, new File([], "")) }
         catch { /* 目录可能已存在 */ }
       }
 
-      await renameFile(`/data/${oldPath}`, `/data/${newPath}`)
+      await renameFile(`/data/${diskOldPath}`, `/data/${diskNewPath}`)
       const updatedCount = await updateAssetReferences(oldPath, newPath)
 
       try { await fullReindexAssetContent() }

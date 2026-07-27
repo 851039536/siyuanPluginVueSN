@@ -49,6 +49,7 @@
     "locate": "Locate",
     "locateRefs": "Referenced in {count} block(s)",
     "locateNotFound": "No document references this asset",
-    "locateFailed": "Locate failed"
+    "locateFailed": "Locate failed",
+    "fileNotFound": "File does not exist on disk"
   }
 }

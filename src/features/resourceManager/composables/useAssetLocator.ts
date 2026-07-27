@@ -1,6 +1,5 @@
 // 资源定位 composable：查询引用资源的块并以 siyuan:// 协议跳转（assets 等值 → blocks 全路径 → 文件名兜底）
 import type { ResourceManagerI18n } from "../types"
-import { showMessage } from "siyuan"
 import { sql } from "@/api"
 import { buildPathVariants, escapeSqlLike, escapeSqlString } from "../utils"
 
@@ -40,13 +39,8 @@ async function queryBlockRefs(needle: string): Promise<Set<string>> {
   return ids
 }
 
-/** 资源定位逻辑，供 useResourceManager 组合复用 */
-export function useAssetLocator(i18n: ResourceManagerI18n) {
-  function showMsg(msg: string) {
-    try { showMessage(msg, 3000, "info") }
-    catch { /* ignore */ }
-  }
-
+/** 资源定位逻辑，供 useResourceManager 组合复用；showMsg 由调用方注入以复用统一提示封装 */
+export function useAssetLocator(i18n: ResourceManagerI18n, showMsg: (msg: string) => void) {
   /**
    * 定位资源引用并跳转：assets 等值 → blocks 全路径 → 文件名兜底
    * 文件名兜底覆盖"移动后思源索引异步刷新、旧路径尚未更新"的窗口期

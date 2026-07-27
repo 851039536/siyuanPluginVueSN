@@ -172,6 +172,56 @@ export async function getBlockTypeStats(): Promise<BlockTypeStat[]> {
   }
 }
 
+// 周期标题返回 i18n 键，由视图层（index.vue chartTitle）映射为文案
+const DAY_PERIOD_KEYS: Record<number, string> = {
+  7: "periodDays7",
+  15: "periodDays15",
+  30: "periodDays30",
+  90: "periodDays90",
+  180: "periodDays180",
+  365: "periodDays365",
+}
+const MONTH_PERIOD_KEYS: Record<number, string> = {
+  1: "periodMonths1",
+  2: "periodMonths2",
+  3: "periodMonths3",
+}
+
+// 时段统计（柱状图数据）：切换时间范围时单独调用，避免重跑全量统计
+export async function getPeriodStats(viewMode: string, options: {
+  dayRange: number
+  monthYearRange: number
+  selectedYear: number
+}): Promise<Pick<StatisticsData, "dailyStats" | "currentPeriod" | "periodTotalWords">> {
+  let dailyStats: DailyWordCount[] = []
+  let currentPeriod = ""
+
+  switch (viewMode) {
+    case "day":
+      dailyStats = await getDailyStats(options.dayRange)
+      currentPeriod = DAY_PERIOD_KEYS[options.dayRange] || "periodDaysDefault"
+      break
+    case "week":
+      dailyStats = await getWeeklyStats(4)
+      currentPeriod = "periodWeeks4"
+      break
+    case "month":
+      dailyStats = await getMonthlyStatsRange(options.monthYearRange)
+      currentPeriod = MONTH_PERIOD_KEYS[options.monthYearRange] || "periodMonthsDefault"
+      break
+    case "year":
+      dailyStats = await getYearlyStats(options.selectedYear)
+      currentPeriod = "periodYears"
+      break
+  }
+
+  return {
+    dailyStats,
+    currentPeriod,
+    periodTotalWords: dailyStats.reduce((sum, item) => sum + item.words, 0),
+  }
+}
+
 export async function getStatistics(viewMode: string, options: {
   dayRange: number
   monthYearRange: number
@@ -213,48 +263,7 @@ export async function getStatistics(viewMode: string, options: {
 
     const avgWordsPerDoc = totalNotes > 0 ? Math.round(totalWords / totalNotes) : 0
 
-    let dailyStats: DailyWordCount[] = []
-    let currentPeriod = ""
-    let periodTotalWords = 0
-    const sumWords = (items: DailyWordCount[]) => items.reduce((sum, item) => sum + item.words, 0)
-
-    // 周期标题返回 i18n 键，由视图层（index.vue chartTitle）映射为文案
-    const DAY_PERIOD_KEYS: Record<number, string> = {
-      7: "periodDays7",
-      15: "periodDays15",
-      30: "periodDays30",
-      90: "periodDays90",
-      180: "periodDays180",
-      365: "periodDays365",
-    }
-    const MONTH_PERIOD_KEYS: Record<number, string> = {
-      1: "periodMonths1",
-      2: "periodMonths2",
-      3: "periodMonths3",
-    }
-
-    switch (viewMode) {
-      case "day":
-        dailyStats = await getDailyStats(options.dayRange)
-        currentPeriod = DAY_PERIOD_KEYS[options.dayRange] || "periodDaysDefault"
-        periodTotalWords = sumWords(dailyStats)
-        break
-      case "week":
-        dailyStats = await getWeeklyStats(4)
-        currentPeriod = "periodWeeks4"
-        periodTotalWords = sumWords(dailyStats)
-        break
-      case "month":
-        dailyStats = await getMonthlyStatsRange(options.monthYearRange)
-        currentPeriod = MONTH_PERIOD_KEYS[options.monthYearRange] || "periodMonthsDefault"
-        periodTotalWords = sumWords(dailyStats)
-        break
-      case "year":
-        dailyStats = await getYearlyStats(options.selectedYear)
-        currentPeriod = "periodYears"
-        periodTotalWords = sumWords(dailyStats)
-        break
-    }
+    const { dailyStats, currentPeriod, periodTotalWords } = await getPeriodStats(viewMode, options)
 
     return {
       totalNotes,

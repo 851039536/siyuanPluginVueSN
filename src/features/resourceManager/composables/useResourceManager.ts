@@ -1,9 +1,6 @@
 // 资源管理业务逻辑 composable：资源加载与缓存、分类筛选、移动/删除/重建索引
 import type { Plugin } from "siyuan"
-import type {
-  ImageAssetInfo,
-  ResourceManagerI18n,
-} from "../types"
+import type { ResourceManagerI18n } from "../types"
 import { getAllEditor, showMessage } from "siyuan"
 import {
   computed,
@@ -103,18 +100,18 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
   // 单次过滤同时产出总数与截断列表，避免重复遍历
   const filteredAssets = computed(() => {
     const list = activeTab.value === "fileAssets" ? fileAssets.value : imageAssets.value
-    let matched: ImageAssetInfo[]
+    let matched: string[]
     if (!categoryFilter.value) {
       // 空筛选 = 待分类视图：排除所有已归入分类目录的资源
       const prefixes = quickCategories.value.map((c) => `assets/${c.key.toLowerCase()}/`)
-      matched = list.filter((item) => {
-        const lower = item.path.toLowerCase()
+      matched = list.filter((path) => {
+        const lower = path.toLowerCase()
         return !prefixes.some((prefix) => lower.startsWith(prefix))
       })
     }
     else {
       const prefix = `assets/${categoryFilter.value.toLowerCase()}/`
-      matched = list.filter((item) => item.path.toLowerCase().startsWith(prefix))
+      matched = list.filter((path) => path.toLowerCase().startsWith(prefix))
     }
     return {
       total: matched.length,
@@ -137,27 +134,24 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     showMsg(ok ? i18n.pathCopied : i18n.copyFailed)
   }
 
-  // 资源定位逻辑（含索引滞后兜底）抽离到独立 composable
-  const { handleLocateAsset } = useAssetLocator(i18n)
+  // 资源定位逻辑（含索引滞后兜底）抽离到独立 composable，复用本文件的 showMsg
+  const { handleLocateAsset } = useAssetLocator(i18n, showMsg)
 
   // ── Data Loading ──
 
   async function loadAssets(token: number) {
     try {
-      // 三个数据源相互独立，并行请求
-      const [referenced, unused, fsPaths] = await Promise.all([
+      // 两个数据源相互独立，并行请求；磁盘扫描已覆盖未使用资源（其本质是磁盘上无引用的文件）
+      const [referenced, fsPaths] = await Promise.all([
         sql("SELECT DISTINCT path FROM assets WHERE path LIKE 'assets/%' LIMIT 102400"),
-        getUnusedAssets(),
         scanAssetDir("/data/assets"),
       ])
       const refPaths = (referenced || [])
         .map((r: { path: string }) => r.path)
         .filter((p: unknown): p is string => typeof p === "string")
-      const unusedPaths = (unused || [])
-        .filter((p: unknown): p is string => typeof p === "string")
 
       if (!isMounted.value || token !== requestToken) return
-      allAssetPaths.value = [...new Set([...refPaths, ...unusedPaths, ...fsPaths])].sort()
+      allAssetPaths.value = [...new Set([...refPaths, ...fsPaths])].sort()
     }
     catch (e: unknown) {
       console.error("加载资源列表失败:", e)
@@ -257,7 +251,7 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
   async function applyCustomCategory(currentPath: string) {
     const cat = customCategory.value.trim()
     if (!cat) return
-    applyCategory(currentPath, cat)
+    await applyCategory(currentPath, cat)
 
     if (!BUILT_IN_CATEGORY_KEYS.has(cat) && !customCategories.value.includes(cat)) {
       customCategories.value = [...customCategories.value, cat]
@@ -270,6 +264,13 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     allAssetPaths.value = allAssetPaths.value
       .map((p) => (p === oldPath ? newPath : p))
       .sort()
+  }
+
+  /** 按 LIKE 片段查询含该资源引用的块；sql 静默失败时返回 null */
+  async function queryRefBlocks(likeNeedle: string): Promise<{ id: string, markdown: string }[] | null> {
+    return await sql(
+      `SELECT id, markdown FROM blocks WHERE markdown LIKE '%${escapeSqlLike(likeNeedle)}%' ESCAPE '\\' LIMIT 1000`,
+    ) as { id: string, markdown: string }[] | null
   }
 
   /**
@@ -286,9 +287,7 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     // 各形态分别查询，按块 id 去重
     const blockMap = new Map<string, string>()
     for (const variant of variants) {
-      const rows = await sql(
-        `SELECT id, markdown FROM blocks WHERE markdown LIKE '%${escapeSqlLike(variant.from)}%' ESCAPE '\\' LIMIT 1000`,
-      ) as { id: string, markdown: string }[] | null
+      const rows = await queryRefBlocks(variant.from)
       if (!rows) {
         // sql 静默失败返回 null：文件已移动但引用未更新，明确提示用户
         showMsg(i18n.refUpdateFailed)
@@ -304,9 +303,7 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     const baseName = newBase.split("/").pop() ?? ""
     const namePairs = baseName ? buildVariantPairs(baseName, newBase) : []
     for (const pair of namePairs) {
-      const rows = await sql(
-        `SELECT id, markdown FROM blocks WHERE markdown LIKE '%/${escapeSqlLike(pair.from)}%' ESCAPE '\\' LIMIT 1000`,
-      ) as { id: string, markdown: string }[] | null
+      const rows = await queryRefBlocks(`/${pair.from}`)
       if (!rows) continue
       for (const row of rows) {
         if (!blockMap.has(row.id)) blockMap.set(row.id, row.markdown)
@@ -465,8 +462,6 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     activeTab,
     loading,
     rebuildingIndex,
-    imageAssets,
-    fileAssets,
     missingAssets,
     unusedAssets,
     categoryFilter,
@@ -474,7 +469,6 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     movingAsset,
     moveNewPath,
     customCategory,
-    customCategories,
     rebuildResult,
     quickCategories,
     totalAssetCount,

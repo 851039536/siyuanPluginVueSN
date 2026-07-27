@@ -367,6 +367,7 @@ const {
   selectedYear,
   periodAvgWords,
   refreshData: refreshCore,
+  refreshPeriodOnly,
 } = useStatistics()
 
 // 图表标题：查询层返回周期 i18n 键，此处映射为文案（年视图带年份占位符）
@@ -443,8 +444,16 @@ const storagePaths = computed(() => {
 })
 
 
-watch([viewMode, dayRange, monthYearRange, selectedYear], () => {
-  refreshData()
+// 切换视图模式/时间范围时只重查时段统计（柱状图），避免重跑全量统计导致卡顿
+watch([viewMode, dayRange, monthYearRange, selectedYear], async () => {
+  loading.value = true
+  try {
+    await refreshPeriodOnly()
+  } catch (error) {
+    console.error("刷新时段统计失败:", error)
+  } finally {
+    loading.value = false
+  }
 })
 
 let notebookStatsLoaded = false

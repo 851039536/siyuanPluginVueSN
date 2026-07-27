@@ -101,50 +101,50 @@
           class="rm-asset-list"
         >
           <li
-            v-for="asset in currentAssetList"
-            :key="asset.path"
+            v-for="path in currentAssetList"
+            :key="path"
             class="rm-asset-item"
           >
             <div class="rm-asset-item__info">
               <div
                 class="rm-asset-item__name"
-                :title="asset.path"
+                :title="path"
               >
-                {{ asset.path }}
+                {{ path }}
               </div>
             </div>
             <div class="rm-asset-item__actions">
               <!-- 按钮："定位" -->
               <button
                 class="rm-btn small"
-                @click="handleLocateAsset(asset.path)"
+                @click="handleLocateAsset(path)"
               >
                 {{ i18n.locate }}
               </button>
               <!-- 按钮："复制路径" -->
               <button
                 class="rm-btn small"
-                @click="copyPathToClipboard(asset.path)"
+                @click="copyPathToClipboard(path)"
               >
                 {{ i18n.copyPath }}
               </button>
               <!-- 按钮："移动" -->
               <button
                 class="rm-btn small"
-                @click="startMoveAsset(asset.path)"
+                @click="startMoveAsset(path)"
               >
                 {{ i18n.moveAsset }}
               </button>
             </div>
             <!-- 移动表单 -->
             <div
-              v-if="movingAsset === asset.path"
+              v-if="movingAsset === path"
               class="rm-move-form"
             >
               <div class="rm-move-form__row">
                 <!-- 标签："当前路径" -->
                 <span class="rm-move-form__label">{{ i18n.currentPath }}:</span>
-                <span class="rm-move-form__path">{{ asset.path }}</span>
+                <span class="rm-move-form__path">{{ path }}</span>
               </div>
               <div class="rm-move-form__row">
                 <!-- 标签："新路径" -->
@@ -154,7 +154,7 @@
                   v-model="moveNewPath"
                   class="rm-move-form__input"
                   :placeholder="i18n.movePathPlaceholder"
-                  @keyup.enter="handleMoveAsset(asset.path)"
+                  @keyup.enter="handleMoveAsset(path)"
                 />
               </div>
               <div class="rm-move-form__row">
@@ -166,7 +166,7 @@
                     v-for="cat in quickCategories"
                     :key="cat.key"
                     class="rm-btn small"
-                    @click="applyCategory(asset.path, cat.key)"
+                    @click="applyCategory(path, cat.key)"
                   >
                     {{ cat.label }}
                   </button>
@@ -175,13 +175,13 @@
                     v-model="customCategory"
                     class="rm-move-form__category-input"
                     :placeholder="i18n.customCategoryPlaceholder"
-                    @keyup.enter="applyCustomCategory(asset.path)"
+                    @keyup.enter="applyCustomCategory(path)"
                   />
                   <!-- 按钮："应用" -->
                   <button
                     class="rm-btn small"
                     :disabled="!customCategory"
-                    @click="applyCustomCategory(asset.path)"
+                    @click="applyCustomCategory(path)"
                   >
                     {{ i18n.apply }}
                   </button>
@@ -193,7 +193,7 @@
                 <button
                   class="rm-btn small primary"
                   :disabled="!moveNewPath"
-                  @click="handleMoveAsset(asset.path)"
+                  @click="handleMoveAsset(path)"
                 >
                   {{ i18n.confirmMove }}
                 </button>

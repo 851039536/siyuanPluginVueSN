@@ -105,6 +105,24 @@
             :key="path"
             class="rm-asset-item"
           >
+            <!-- 图片缩略图（hover 显示放大预览，加载失败自动隐藏） -->
+            <div
+              v-if="activeTab === 'imageAssets' && !thumbErrors.has(path)"
+              class="rm-asset-item__thumb"
+              @mouseenter="hoveredThumb = path"
+              @mouseleave="hoveredThumb = ''"
+            >
+              <img
+                :src="buildAssetSrc(path)"
+                loading="lazy"
+                @error="thumbErrors.add(path)"
+              />
+              <img
+                v-if="hoveredThumb === path"
+                class="rm-asset-item__preview"
+                :src="buildAssetSrc(path)"
+              />
+            </div>
             <div class="rm-asset-item__info">
               <div
                 class="rm-asset-item__name"
@@ -127,6 +145,20 @@
                 @click="copyPathToClipboard(path)"
               >
                 {{ i18n.copyPath }}
+              </button>
+              <!-- 按钮："复制MD" -->
+              <button
+                class="rm-btn small"
+                @click="copyMarkdownRef(path, activeTab === 'imageAssets')"
+              >
+                {{ i18n.copyMdRef }}
+              </button>
+              <!-- 按钮："打开目录" -->
+              <button
+                class="rm-btn small"
+                @click="openAssetInExplorer(path)"
+              >
+                {{ i18n.openInFolder }}
               </button>
               <!-- 按钮："移动" -->
               <button
@@ -210,6 +242,15 @@
         </ul>
       </div>
 
+      <!-- 当前文档资源（自包含组件，自行加载活动文档的资源列表） -->
+      <DocAssetsSection
+        v-if="activeTab === 'docAssets'"
+        :i18n="i18n"
+        :on-locate="handleLocateAsset"
+        :on-copy-path="copyPathToClipboard"
+        :on-copy-md-ref="copyMarkdownRef"
+      />
+
       <!-- 丢失资源 -->
       <div
         v-if="activeTab === 'missingAssets'"
@@ -238,11 +279,22 @@
             :key="path"
             class="rm-asset-item"
           >
-            <div
-              class="rm-asset-item__name"
-              :title="path"
-            >
-              {{ path }}
+            <div class="rm-asset-item__info">
+              <div
+                class="rm-asset-item__name"
+                :title="path"
+              >
+                {{ path }}
+              </div>
+            </div>
+            <div class="rm-asset-item__actions">
+              <!-- 按钮："定位"（跳转到引用该丢失资源的文档，便于修复断链） -->
+              <button
+                class="rm-btn small"
+                @click="handleLocateAsset(path)"
+              >
+                {{ i18n.locate }}
+              </button>
             </div>
           </li>
         </ul>
@@ -342,9 +394,11 @@
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
 import type { ResourceManagerI18n } from "./types"
-import { computed } from "vue"
+import { computed, reactive, ref } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import DocAssetsSection from "./components/DocAssetsSection.vue"
 import { useResourceManager } from "./composables/useResourceManager"
+import { buildAssetSrc } from "./utils"
 
 interface Props {
   i18n: ResourceManagerI18n
@@ -370,6 +424,8 @@ const {
   currentAssetList,
   refresh,
   copyPathToClipboard,
+  copyMarkdownRef,
+  openAssetInExplorer,
   handleLocateAsset,
   handleDeleteUnused,
   handleDeleteAllUnused,
@@ -381,9 +437,14 @@ const {
   handleRebuildIndex,
 } = useResourceManager(props.plugin, props.i18n)
 
+// 缩略图交互状态：hover 中的资源路径（控制放大预览按需加载）与加载失败集合
+const hoveredThumb = ref("")
+const thumbErrors = reactive(new Set<string>())
+
 const tabs = computed(() => [
   { key: "imageAssets", label: props.i18n.imageAssets },
   { key: "fileAssets", label: props.i18n.fileAssets },
+  { key: "docAssets", label: props.i18n.docAssets },
   { key: "missingAssets", label: props.i18n.missingAssets },
   { key: "unusedAssets", label: props.i18n.unusedAssets },
   { key: "rebuildIndex", label: props.i18n.rebuildIndex },

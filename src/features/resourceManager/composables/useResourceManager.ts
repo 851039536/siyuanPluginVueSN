@@ -24,17 +24,18 @@ import {
 import { copyToClipboard } from "@/utils/domUtils"
 import { PluginStorage } from "@/utils/pluginStorage"
 import {
-  assetFileExists,
   BUILT_IN_CATEGORY_KEYS,
   buildAssetList,
   buildVariantPairs,
   escapeRegExp,
   escapeSqlLike,
   isValidAssetMovePath,
+  resolveDiskPath,
   safeDecodeURI,
   scanAssetDir,
   STORAGE_KEY,
 } from "../utils"
+import { useAssetActions } from "./useAssetActions"
 import { useAssetLocator } from "./useAssetLocator"
 
 /** 引用更新分批并发大小 */
@@ -136,6 +137,9 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
 
   // 资源定位逻辑（含索引滞后兜底）抽离到独立 composable，复用本文件的 showMsg
   const { handleLocateAsset } = useAssetLocator(i18n, showMsg)
+
+  // 行内快捷操作（复制 MD 引用 / 文件管理器打开）抽离到独立 composable
+  const { copyMarkdownRef, openAssetInExplorer } = useAssetActions(i18n, showMsg)
 
   // ── Data Loading ──
 
@@ -340,17 +344,6 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     return updatedCount
   }
 
-  /**
-   * 解析资源在磁盘上的真实路径：assets 表中的路径可能是 URL 编码形态
-   * （如 a%20b.png），而磁盘文件名是解码后的（a b.png），原样不存在时尝试解码形态
-   */
-  async function resolveDiskPath(path: string): Promise<string | null> {
-    if (await assetFileExists(path)) return path
-    const decoded = safeDecodeURI(path)
-    if (decoded !== path && await assetFileExists(decoded)) return decoded
-    return null
-  }
-
   async function handleMoveAsset(oldPath: string) {
     const newPath = moveNewPath.value.trim()
     if (!newPath) {
@@ -479,6 +472,8 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     currentAssetList,
     refresh,
     copyPathToClipboard,
+    copyMarkdownRef,
+    openAssetInExplorer,
     handleLocateAsset,
     handleDeleteUnused,
     handleDeleteAllUnused,

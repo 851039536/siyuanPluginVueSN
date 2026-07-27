@@ -180,6 +180,42 @@
       gap: $spacing-1;
       flex-shrink: 0;
     }
+
+    // 图片缩略图（行首小图，hover 弹出放大预览）
+    &__thumb {
+      position: relative;
+      // 缩略图固定尺寸（正方形小图）
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: $radius-sm;
+        border: 1px solid var(--b3-border-color);
+        display: block;
+      }
+
+      // 悬浮放大预览（与缩略图同 URL，命中浏览器缓存）
+      .rm-asset-item__preview {
+        position: absolute;
+        top: 0;
+        left: calc(100% + #{$spacing-1});
+        // 浮于列表行之上
+        z-index: 10;
+        width: auto;
+        height: auto;
+        // 预览浮层最大尺寸
+        max-width: 160px;
+        max-height: 160px;
+        object-fit: contain;
+        background: var(--b3-theme-background);
+        border: 1px solid var(--b3-border-color);
+        border-radius: $radius-sm;
+      }
+    }
   }
 
   // ── 过滤栏 ──

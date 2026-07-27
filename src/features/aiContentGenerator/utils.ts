@@ -3,7 +3,6 @@
  */
 import type { SkillItem } from "@/types/ai"
 import { parseMarkdown } from "@/utils/mdRenderer"
-import * as api from "@/api"
 
 // ============ 本地工具元数据（替代跨功能导入 skillsViewer）============
 
@@ -46,8 +45,10 @@ export function renderMarkdown(content: string, stripHeadingBold = true): string
 }
 
 export function truncateTitle(title: string, maxLen = 12): string {
-  if (title.length <= maxLen) return title
-  return `${title.substring(0, maxLen)}...`
+  // 按码点截断，避免 emoji 等代理对字符被截半产生乱码
+  const chars = [...title]
+  if (chars.length <= maxLen) return title
+  return `${chars.slice(0, maxLen).join("")}...`
 }
 
 // ============ 技能来源展示 ============
@@ -70,29 +71,78 @@ export function removeFrontmatter(content: string): string {
   return content.replace(frontmatterRegex, "").trim()
 }
 
+// ============ 代码围栏识别（convertToSiyuanMarkdown / splitMarkdownBlocks 共用）============
+
+/** 开栏匹配：行首（可缩进）3 个及以上反引号，捕获围栏本体 */
+const FENCE_RE = /^(`{3,})/
+
+/** 判断是否为与开栏匹配的闭栏：裸围栏且反引号数不少于开栏 */
+function isClosingFence(line: string, openFence: string): boolean {
+  const trimmed = line.trim()
+  return /^`{3,}$/.test(trimmed) && trimmed.length >= openFence.length
+}
+
 /**
  * 转换 Markdown 为思源兼容格式
- * 确保各语法块前后有空行，清理多余连续空行
+ * 代码块内容原样保留，仅对块外文本确保各语法块前后有空行、清理多余连续空行
  */
 export function convertToSiyuanMarkdown(content: string): string {
-  let converted = content
+  const lines = content.split("\n")
+  const segments: Array<{ code: boolean, lines: string[] }> = []
+  let current: { code: boolean, lines: string[] } = { code: false, lines: [] }
+  let openFence: string | null = null
 
-  // 1. 确保标题前后有空行
-  converted = converted.replace(/([^\n])\n(#{1,6}\s)/g, "$1\n\n$2")
-  converted = converted.replace(/(#{1,6}\s[^\n]+)\n([^\n#])/g, "$1\n\n$2")
+  // 按围栏切分为文本段/代码段，代码段（含围栏行）不做任何改写
+  for (const line of lines) {
+    if (openFence) {
+      current.lines.push(line)
+      if (isClosingFence(line, openFence)) {
+        openFence = null
+        segments.push(current)
+        current = { code: false, lines: [] }
+      }
+      continue
+    }
+    const fence = line.trimStart().match(FENCE_RE)
+    if (fence) {
+      if (current.lines.length) segments.push(current)
+      current = { code: true, lines: [line] }
+      openFence = fence[1]
+      continue
+    }
+    current.lines.push(line)
+  }
+  if (current.lines.length) segments.push(current)
 
-  // 2. 确保代码块前后有空行
-  converted = converted.replace(/([^\n])\n```/g, "$1\n\n```")
-  converted = converted.replace(/```\n([^\n])/g, "```\n\n$1")
+  // 段间以空行衔接，天然保证代码块前后有空行
+  return segments
+    .map((seg) => (seg.code ? seg.lines.join("\n") : normalizeTextSegment(seg.lines.join("\n"))))
+    .filter((s) => s.trim() !== "")
+    .join("\n\n")
+}
 
-  // 3. 确保列表前后有空行
-  converted = converted.replace(/([^\n])\n([-*+]\s)/g, "$1\n\n$2")
-  converted = converted.replace(/([^\n])\n(\d+\.\s)/g, "$1\n\n$2")
+/** 对代码块外的文本段应用思源空行规则（按行扫描，行间需要分隔时插入空行） */
+function normalizeTextSegment(text: string): string {
+  const srcLines = text.split("\n")
+  const out: string[] = []
+  const isHeading = (s: string): boolean => /^#{1,6}\s/.test(s)
+  const isListItem = (s: string): boolean => /^([-*+]|\d+\.)\s/.test(s)
 
-  // 4. 清理多余的连续空行（最多保留两个换行符）
-  converted = converted.replace(/\n{3,}/g, "\n\n")
+  for (const line of srcLines) {
+    const prev = out.length > 0 ? out[out.length - 1] : null
+    if (prev !== null && prev.trim() !== "") {
+      // 标题的前后、列表的前面需要空行分隔
+      const needBlank
+        = isHeading(line)
+          || isHeading(prev)
+          || (isListItem(line) && !isListItem(prev))
+      if (needBlank) out.push("")
+    }
+    out.push(line)
+  }
 
-  return converted
+  // 清理多余的连续空行（最多保留两个换行符）
+  return out.join("\n").replace(/\n{3,}/g, "\n\n").trim()
 }
 
 /**
@@ -105,9 +155,11 @@ export function processContentByType(content: string, isBlock: boolean): string 
   if (isBlock) {
     return convertToSiyuanMarkdown(withoutFrontmatter)
   }
-  // 文档模式：额外移除第一行标题
+  // 文档模式：仅当首行确为 Markdown 标题时移除（文档标题由思源文档名承载）
   const lines = withoutFrontmatter.split("\n")
-  const withoutHeading = lines.length <= 1 ? "" : lines.slice(1).join("\n").trim()
+  const withoutHeading = /^#{1,6}\s/.test(lines[0] ?? "")
+    ? lines.slice(1).join("\n").trim()
+    : withoutFrontmatter
   return convertToSiyuanMarkdown(withoutHeading)
 }
 
@@ -121,19 +173,22 @@ export function splitMarkdownBlocks(content: string): string[] {
 
   const blocks: string[] = []
   let currentBlock = ""
-  let inCodeBlock = false
+  let openFence: string | null = null
 
   const lines = content.split("\n")
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i]
 
-    // 跟踪代码块状态
-    if (line.trimStart().startsWith("```")) {
-      inCodeBlock = !inCodeBlock
+    // 跟踪代码块围栏状态（与 convertToSiyuanMarkdown 同一套判定）
+    if (openFence) {
+      if (isClosingFence(line, openFence)) openFence = null
+    } else {
+      const fence = line.trimStart().match(FENCE_RE)
+      if (fence) openFence = fence[1]
     }
 
-    if (!inCodeBlock && line.trim() === "" && currentBlock.trim()) {
+    if (!openFence && line.trim() === "" && currentBlock.trim()) {
       blocks.push(currentBlock.trim())
       currentBlock = ""
     } else {
@@ -146,58 +201,4 @@ export function splitMarkdownBlocks(content: string): string[] {
   }
 
   return blocks
-}
-
-// ============ DOM 操作 ============
-
-/**
- * 获取当前光标所在的块ID
- */
-export function getCurrentBlockId(): string | null {
-  // 方法1: 获取当前选中的块
-  const selectedBlock = document.querySelector(".protyle-wysiwyg--select")
-  if (selectedBlock) {
-    return selectedBlock.getAttribute("data-node-id")
-  }
-
-  // 方法2: 获取光标所在的块（聚焦的块）
-  const focusedBlock = document.querySelector(
-    ".protyle-wysiwyg [data-node-id].protyle-wysiwyg--focus",
-  )
-  if (focusedBlock) {
-    return focusedBlock.getAttribute("data-node-id")
-  }
-
-  // 方法3: 通过 window.getSelection() 精确获取光标位置
-  const selection = window.getSelection()
-  if (selection && selection.rangeCount > 0) {
-    const range = selection.getRangeAt(0)
-    let node: Node | null = range.startContainer
-
-    while (node) {
-      if (node instanceof Element) {
-        const nodeId = node.getAttribute("data-node-id")
-        const dataType = node.getAttribute("data-type")
-        if (nodeId && dataType) {
-          return nodeId
-        }
-      }
-      node = node.parentNode
-    }
-  }
-
-  return null
-}
-
-/**
- * 通过块ID获取其所属的文档ID
- */
-export async function getDocIdByBlockId(blockId: string): Promise<string | null> {
-  try {
-    const block = await api.getBlockByID(blockId)
-    return block?.root_id || null
-  } catch (error) {
-    console.error("获取文档ID失败:", error)
-    return null
-  }
 }

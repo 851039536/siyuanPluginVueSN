@@ -9,7 +9,7 @@ import {
   computed,
   ref,
 } from "vue"
-import { getStatistics } from "../queries"
+import { getPeriodStats, getStatistics } from "../queries"
 
 export function useStatistics(): {
   loading: Ref<boolean>
@@ -21,6 +21,7 @@ export function useStatistics(): {
   selectedYear: Ref<number>
   periodAvgWords: ComputedRef<number>
   refreshData: () => Promise<void>
+  refreshPeriodOnly: () => Promise<void>
 } {
   const loading = ref(false)
   const stats = ref<StatisticsData | null>(null)
@@ -46,6 +47,20 @@ export function useStatistics(): {
     lastUpdateTime.value = new Date().toLocaleString("zh-CN")
   }
 
+  // 仅刷新时段统计（柱状图数据）：切换时间范围时避免重跑全量统计
+  async function refreshPeriodOnly(): Promise<void> {
+    if (!stats.value) return
+    const period = await getPeriodStats(viewMode.value, {
+      dayRange: dayRange.value,
+      monthYearRange: monthYearRange.value,
+      selectedYear: selectedYear.value,
+    })
+    stats.value = {
+      ...stats.value,
+      ...period,
+    }
+  }
+
   return {
     loading,
     stats,
@@ -56,5 +71,6 @@ export function useStatistics(): {
     selectedYear,
     periodAvgWords,
     refreshData,
+    refreshPeriodOnly,
   }
 }

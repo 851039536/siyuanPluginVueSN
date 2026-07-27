@@ -4,8 +4,6 @@ import type { ResourceManagerI18n } from "./types"
 import { createVueDockApp } from "@/utils/vueAppHelper"
 import ResourceManagerPanel from "./index.vue"
 
-export type { ResourceManagerI18n } from "./types"
-
 export function registerResourceManager(plugin: Plugin) {
   const i18n = (plugin.i18n as unknown as { resourceManager?: ResourceManagerI18n }).resourceManager
   createVueDockApp(plugin, ResourceManagerPanel, {

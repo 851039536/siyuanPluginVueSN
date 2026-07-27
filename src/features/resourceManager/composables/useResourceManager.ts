@@ -30,6 +30,7 @@ import {
   BUILT_IN_CATEGORY_KEYS,
   buildAssetList,
   escapeSqlLike,
+  escapeSqlString,
   isValidAssetMovePath,
   scanAssetDir,
   STORAGE_KEY,
@@ -130,6 +131,53 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
   async function copyPathToClipboard(path: string) {
     const ok = await copyToClipboard(path)
     showMsg(ok ? i18n.pathCopied : i18n.copyFailed)
+  }
+
+  /**
+   * 定位资源引用：查 assets 表按 path 等值匹配（原始 + URL 编码双形态），
+   * 无命中时兜底查 blocks 表 markdown LIKE，命中后以 siyuan:// 协议跳转
+   */
+  async function handleLocateAsset(path: string) {
+    const variants = [path]
+    const encoded = encodeURI(path)
+    if (encoded !== path) variants.push(encoded)
+
+    // assets 表等值查询，按引用块 id 去重
+    const refIds = new Set<string>()
+    for (const variant of variants) {
+      const rows = await sql(
+        `SELECT block_id, root_id FROM assets WHERE path = '${escapeSqlString(variant)}' LIMIT 32`,
+      ) as { block_id: string, root_id: string }[] | null
+      if (!rows) {
+        // sql 静默失败返回 null：明确提示定位失败
+        showMsg(i18n.locateFailed)
+        return
+      }
+      for (const row of rows) {
+        const id = row.block_id || row.root_id
+        if (id) refIds.add(id)
+      }
+    }
+
+    // 兜底：索引缺失时查 blocks 表 markdown 模糊匹配
+    if (refIds.size === 0) {
+      for (const variant of variants) {
+        const rows = await sql(
+          `SELECT DISTINCT id, root_id FROM blocks WHERE markdown LIKE '%${escapeSqlLike(variant)}%' ESCAPE '\\' ORDER BY updated DESC LIMIT 5`,
+        ) as { id: string, root_id: string }[] | null
+        for (const row of rows || []) {
+          const id = row.id || row.root_id
+          if (id) refIds.add(id)
+        }
+      }
+    }
+
+    if (refIds.size === 0) {
+      showMsg(i18n.locateNotFound)
+      return
+    }
+    if (refIds.size > 1) showMsg(i18n.locateRefs.replace("{count}", String(refIds.size)))
+    window.open(`siyuan://blocks/${[...refIds][0]}`)
   }
 
   // ── Data Loading ──
@@ -425,6 +473,7 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     currentAssetList,
     refresh,
     copyPathToClipboard,
+    handleLocateAsset,
     handleDeleteUnused,
     handleDeleteAllUnused,
     startMoveAsset,

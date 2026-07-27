@@ -4,7 +4,11 @@ import type {
   AggregationRow,
   DailyWordCount,
 } from "../types"
-import { padZero } from "../utils"
+import {
+  formatDate,
+  formatYmd,
+  padZero,
+} from "../utils"
 import {
   executeSql,
   formatDateTime,
@@ -16,14 +20,14 @@ export async function getWordCountAggregation(
   subStrLen: number,
   groupField: string,
 ): Promise<AggregationRow[]> {
+  // 字数口径：思源预计算的 length 列（与报告/笔记本分布统一），比 LENGTH(content) 现算更快
   const sql = `
     SELECT
       substr(created, 1, ${subStrLen}) as ${groupField},
-      SUM(LENGTH(content)) as total
+      SUM(length) as total
     FROM blocks
     WHERE type = 'p'
-      AND content IS NOT NULL
-      AND content != ''
+      AND length > 0
       AND created >= '${startDate}'
       AND created <= '${endDate}'
     GROUP BY substr(created, 1, ${subStrLen})
@@ -44,14 +48,10 @@ export async function getDailyStats(days: number): Promise<DailyWordCount[]> {
 
   const queryResult = await getWordCountAggregation(startDateStr, endDateStr, 8, "date")
 
+  // 以紧凑 YYYYMMDD 为键，避免解析-重拼往返
   const dateMap = new Map<string, number>()
   queryResult.forEach((row) => {
-    const dateStr = String(row.date)
-    const year = Number.parseInt(dateStr.substring(0, 4))
-    const month = Number.parseInt(dateStr.substring(4, 6))
-    const day = Number.parseInt(dateStr.substring(6, 8))
-    const formattedDate = `${year}-${padZero(month)}-${padZero(day)}`
-    dateMap.set(formattedDate, row.total || 0)
+    dateMap.set(String(row.date), row.total || 0)
   })
 
   const result: DailyWordCount[] = []
@@ -60,11 +60,10 @@ export async function getDailyStats(days: number): Promise<DailyWordCount[]> {
     date.setDate(today.getDate() - i)
     date.setHours(0, 0, 0, 0)
 
-    const dateStr = `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())}`
-    const words = dateMap.get(dateStr) || 0
+    const words = dateMap.get(formatYmd(date)) || 0
 
     result.push({
-      date: dateStr,
+      date: formatDate(date),
       words,
       dateLabel: `${date.getMonth() + 1}/${date.getDate()} ${["周日", "周一", "周二", "周三", "周四", "周五", "周六"][date.getDay()]}`,
     })
@@ -109,12 +108,11 @@ export async function getWeeklyStats(weeks: number): Promise<DailyWordCount[]> {
     for (let d = 0; d < 7; d++) {
       const day = new Date(weekStart)
       day.setDate(weekStart.getDate() + d)
-      const dayStr = formatDateTime(day).substring(0, 8)
-      weekWords += dateMap.get(dayStr) || 0
+      weekWords += dateMap.get(formatYmd(day)) || 0
     }
 
     result.push({
-      date: `${weekStart.getFullYear()}-${padZero(weekStart.getMonth() + 1)}-${padZero(weekStart.getDate())}`,
+      date: formatDate(weekStart),
       words: weekWords,
       dateLabel: `${weekStart.getMonth() + 1}/${weekStart.getDate()} - ${weekEnd.getMonth() + 1}/${weekEnd.getDate()}`,
     })

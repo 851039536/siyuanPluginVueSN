@@ -10,8 +10,17 @@ import type {
   ScalarRow,
   TrendPrediction,
 } from "../types"
-import { padZero } from "../utils"
-import { executeSql } from "./executeSql"
+import {
+  formatDate,
+  formatYmd,
+  padZero,
+  parseYmd,
+  toDashedYmd,
+} from "../utils"
+import {
+  executeSql,
+  formatDateTime,
+} from "./executeSql"
 import { getMostProductiveNotebook } from "./notebookStats"
 
 async function calcLongestStreak(startStr: string, endStr: string): Promise<number> {
@@ -33,17 +42,7 @@ async function calcLongestStreak(startStr: string, endStr: string): Promise<numb
     let current = 1
 
     for (let i = 1; i < sorted.length; i++) {
-      const prev = new Date(
-        Number(sorted[i - 1].substring(0, 4)),
-        Number(sorted[i - 1].substring(4, 6)) - 1,
-        Number(sorted[i - 1].substring(6, 8)),
-      )
-      const curr = new Date(
-        Number(sorted[i].substring(0, 4)),
-        Number(sorted[i].substring(4, 6)) - 1,
-        Number(sorted[i].substring(6, 8)),
-      )
-      const diff = (curr.getTime() - prev.getTime()) / 86400000
+      const diff = (parseYmd(sorted[i]).getTime() - parseYmd(sorted[i - 1]).getTime()) / 86400000
 
       if (diff === 1) {
         current++
@@ -59,6 +58,70 @@ async function calcLongestStreak(startStr: string, endStr: string): Promise<numb
   }
 }
 
+/** 时段核心指标（年度/月度报告共用） */
+interface PeriodCore {
+  totalWords: number
+  totalNotesCreated: number
+  activeDays: number
+  maxWordsDay: { date: string, words: number }
+  mostProductiveNotebook: { name: string, words: number }
+  longestStreak: number
+}
+
+/** 加载时段核心指标：六项查询相互独立，并行执行 */
+async function loadPeriodCore(startStr: string, endStr: string): Promise<PeriodCore> {
+  const [wordRows, createdRows, activeRows, maxDayRows, mostProductiveNotebook, longestStreak] = await Promise.all([
+    executeSql<ScalarRow>(`
+      SELECT SUM(length) as total_words
+      FROM blocks
+      WHERE type = 'p' AND length > 0
+        AND created >= '${startStr}' AND created <= '${endStr}'
+    `),
+    executeSql<ScalarRow>(`
+      SELECT COUNT(*) as cnt
+      FROM blocks
+      WHERE type = 'd'
+        AND created >= '${startStr}' AND created <= '${endStr}'
+    `),
+    executeSql<ScalarRow>(`
+      SELECT COUNT(DISTINCT substr(created, 1, 8)) as active_days
+      FROM blocks
+      WHERE type = 'p' AND length > 0
+        AND created >= '${startStr}' AND created <= '${endStr}'
+    `),
+    executeSql<DateWordsRow>(`
+      SELECT substr(created, 1, 8) as date, SUM(length) as words
+      FROM blocks
+      WHERE type = 'p' AND length > 0
+        AND created >= '${startStr}' AND created <= '${endStr}'
+      GROUP BY substr(created, 1, 8)
+      ORDER BY words DESC
+      LIMIT 1
+    `),
+    getMostProductiveNotebook(startStr, endStr),
+    calcLongestStreak(startStr, endStr),
+  ])
+
+  const maxWordsDay = maxDayRows.length > 0
+    ? {
+        date: toDashedYmd(String(maxDayRows[0].date)),
+        words: Number(maxDayRows[0].words || 0),
+      }
+    : {
+        date: "",
+        words: 0,
+      }
+
+  return {
+    totalWords: Number(wordRows[0]?.total_words || 0),
+    totalNotesCreated: Number(createdRows[0]?.cnt || 0),
+    activeDays: Number(activeRows[0]?.active_days || 0),
+    maxWordsDay,
+    mostProductiveNotebook,
+    longestStreak,
+  }
+}
+
 export async function getReportData(year?: number, month?: number): Promise<ReportData> {
   const today = new Date()
   const reportYear = year || today.getFullYear()
@@ -70,67 +133,19 @@ export async function getReportData(year?: number, month?: number): Promise<Repo
       const yearStartStr = `${reportYear}0101000000`
       const yearEndStr = `${reportYear}1231235959`
 
-      const [wordRows, createdRows] = await Promise.all([
-        executeSql<ScalarRow>(`
-          SELECT SUM(length) as total_words
+      const [core, monthlyRows] = await Promise.all([
+        loadPeriodCore(yearStartStr, yearEndStr),
+        executeSql<MonthWordsRow>(`
+          SELECT substr(created, 1, 6) as month,
+            SUM(length) as words,
+            COUNT(DISTINCT CASE WHEN type='d' THEN root_id END) as created
           FROM blocks
-          WHERE type = 'p' AND length > 0
+          WHERE (type = 'p' OR type = 'd')
             AND created >= '${yearStartStr}' AND created <= '${yearEndStr}'
-        `),
-        executeSql<ScalarRow>(`
-          SELECT COUNT(*) as cnt
-          FROM blocks
-          WHERE type = 'd'
-            AND substr(created, 1, 4) = '${reportYear}'
+          GROUP BY substr(created, 1, 6)
+          ORDER BY month ASC
         `),
       ])
-
-      const totalWords = Number(wordRows[0]?.total_words || 0)
-      const totalNotesCreated = Number(createdRows[0]?.cnt || 0)
-
-      const activeRows = await executeSql<ScalarRow>(`
-        SELECT COUNT(DISTINCT substr(created, 1, 8)) as active_days
-        FROM blocks
-        WHERE type = 'p' AND length > 0
-          AND created >= '${yearStartStr}' AND created <= '${yearEndStr}'
-      `)
-      const activeDays = Number(activeRows[0]?.active_days || 0)
-
-      const maxDayRows = await executeSql<DateWordsRow>(`
-        SELECT substr(created, 1, 8) as date, SUM(length) as words
-        FROM blocks
-        WHERE type = 'p' AND length > 0
-          AND created >= '${yearStartStr}' AND created <= '${yearEndStr}'
-        GROUP BY substr(created, 1, 8)
-        ORDER BY words DESC
-        LIMIT 1
-      `)
-
-      let maxWordsDay: { date: string, words: number } = {
-        date: "",
-        words: 0,
-      }
-      if (maxDayRows.length > 0) {
-        const d = maxDayRows[0].date
-        maxWordsDay = {
-          date: `${d.substring(0, 4)}-${d.substring(4, 6)}-${d.substring(6, 8)}`,
-          words: Number(maxDayRows[0].words || 0),
-        }
-      }
-
-      const mostProductiveNotebook = await getMostProductiveNotebook(yearStartStr, yearEndStr)
-      const longestStreak = await calcLongestStreak(yearStartStr, yearEndStr)
-
-      const monthlyRows = await executeSql<MonthWordsRow>(`
-        SELECT substr(created, 1, 6) as month,
-          SUM(length) as words,
-          COUNT(DISTINCT CASE WHEN type='d' THEN root_id END) as created
-        FROM blocks
-        WHERE (type = 'p' OR type = 'd')
-          AND created >= '${yearStartStr}' AND created <= '${yearEndStr}'
-        GROUP BY substr(created, 1, 6)
-        ORDER BY month ASC
-      `)
 
       const monthlyBreakdown: Array<{ month: string, words: number, created: number }> = []
       for (let m = 1; m <= 12; m++) {
@@ -143,19 +158,20 @@ export async function getReportData(year?: number, month?: number): Promise<Repo
         })
       }
 
+      // 当年按已过天数计日均；往年按全年天数（闰年 366）
       const daysInYear = today.getFullYear() === reportYear
-        ? (() => { const start = new Date(reportYear, 0, 1); return Math.ceil((today.getTime() - start.getTime()) / 86400000) + 1 })()
-        : 365
+        ? Math.ceil((today.getTime() - new Date(reportYear, 0, 1).getTime()) / 86400000) + 1
+        : (new Date(reportYear, 1, 29).getDate() === 29 ? 366 : 365)
 
       return {
         periodLabel: `${reportYear}年`,
-        totalWords,
-        totalNotesCreated,
-        avgDailyWords: daysInYear > 0 ? Math.round(totalWords / daysInYear) : 0,
-        activeDays,
-        maxWordsDay,
-        mostProductiveNotebook,
-        longestStreak,
+        totalWords: core.totalWords,
+        totalNotesCreated: core.totalNotesCreated,
+        avgDailyWords: daysInYear > 0 ? Math.round(core.totalWords / daysInYear) : 0,
+        activeDays: core.activeDays,
+        maxWordsDay: core.maxWordsDay,
+        mostProductiveNotebook: core.mostProductiveNotebook,
+        longestStreak: core.longestStreak,
         monthlyBreakdown,
       }
     } else {
@@ -164,69 +180,21 @@ export async function getReportData(year?: number, month?: number): Promise<Repo
       const lastDay = new Date(reportYear, reportMonth, 0).getDate()
       const monthEndStr = `${reportYear}${padZero(reportMonth)}${padZero(lastDay)}235959`
 
-      const [wordRows, createdRows] = await Promise.all([
-        executeSql<ScalarRow>(`
-          SELECT SUM(length) as total_words
+      const [core, dailyRows] = await Promise.all([
+        loadPeriodCore(monthStartStr, monthEndStr),
+        executeSql<DateWordsRow>(`
+          SELECT substr(created, 1, 8) as date,
+            SUM(length) as words,
+            COUNT(DISTINCT CASE WHEN type='d' THEN root_id END) as created
           FROM blocks
-          WHERE type = 'p' AND length > 0
+          WHERE (type = 'p' OR type = 'd')
             AND created >= '${monthStartStr}' AND created <= '${monthEndStr}'
-        `),
-        executeSql<ScalarRow>(`
-          SELECT COUNT(*) as cnt
-          FROM blocks
-          WHERE type = 'd'
-            AND substr(created, 1, 6) = '${reportYear}${padZero(reportMonth)}'
+          GROUP BY substr(created, 1, 8)
+          ORDER BY date ASC
         `),
       ])
 
-      const totalWords = Number(wordRows[0]?.total_words || 0)
-      const totalNotesCreated = Number(createdRows[0]?.cnt || 0)
-
-      const activeRows = await executeSql<ScalarRow>(`
-        SELECT COUNT(DISTINCT substr(created, 1, 8)) as active_days
-        FROM blocks
-        WHERE type = 'p' AND length > 0
-          AND created >= '${monthStartStr}' AND created <= '${monthEndStr}'
-      `)
-      const activeDays = Number(activeRows[0]?.active_days || 0)
-
-      const maxDayRows = await executeSql<DateWordsRow>(`
-        SELECT substr(created, 1, 8) as date, SUM(length) as words
-        FROM blocks
-        WHERE type = 'p' AND length > 0
-          AND created >= '${monthStartStr}' AND created <= '${monthEndStr}'
-        GROUP BY substr(created, 1, 8)
-        ORDER BY words DESC
-        LIMIT 1
-      `)
-
-      let maxWordsDay: { date: string, words: number } = {
-        date: "",
-        words: 0,
-      }
-      if (maxDayRows.length > 0) {
-        const d = maxDayRows[0].date
-        maxWordsDay = {
-          date: `${d.substring(0, 4)}-${d.substring(4, 6)}-${d.substring(6, 8)}`,
-          words: Number(maxDayRows[0].words || 0),
-        }
-      }
-
-      const mostProductiveNotebook = await getMostProductiveNotebook(monthStartStr, monthEndStr)
-      const longestStreak = await calcLongestStreak(monthStartStr, monthEndStr)
-
-      const weeklyRows = await executeSql<DateWordsRow>(`
-        SELECT substr(created, 1, 8) as date,
-          SUM(length) as words,
-          COUNT(DISTINCT CASE WHEN type='d' THEN root_id END) as created
-        FROM blocks
-        WHERE (type = 'p' OR type = 'd')
-          AND created >= '${monthStartStr}' AND created <= '${monthEndStr}'
-        GROUP BY substr(created, 1, 8)
-        ORDER BY date ASC
-      `)
-
-      const monthlyBreakdown = (weeklyRows || []).map((r) => {
+      const monthlyBreakdown = (dailyRows || []).map((r) => {
         const d = String(r.date)
         return {
           month: `${d.substring(4, 6)}/${d.substring(6, 8)}`,
@@ -237,13 +205,13 @@ export async function getReportData(year?: number, month?: number): Promise<Repo
 
       return {
         periodLabel: `${reportYear}年${reportMonth}月`,
-        totalWords,
-        totalNotesCreated,
-        avgDailyWords: lastDay > 0 ? Math.round(totalWords / lastDay) : 0,
-        activeDays,
-        maxWordsDay,
-        mostProductiveNotebook,
-        longestStreak,
+        totalWords: core.totalWords,
+        totalNotesCreated: core.totalNotesCreated,
+        avgDailyWords: lastDay > 0 ? Math.round(core.totalWords / lastDay) : 0,
+        activeDays: core.activeDays,
+        maxWordsDay: core.maxWordsDay,
+        mostProductiveNotebook: core.mostProductiveNotebook,
+        longestStreak: core.longestStreak,
         monthlyBreakdown,
       }
     }
@@ -275,8 +243,8 @@ export async function getTrendPrediction(): Promise<TrendPrediction> {
   startDate.setDate(today.getDate() - 29)
   startDate.setHours(0, 0, 0, 0)
 
-  const startStr = `${startDate.getFullYear()}${padZero(startDate.getMonth() + 1)}${padZero(startDate.getDate())}${padZero(startDate.getHours())}${padZero(startDate.getMinutes())}${padZero(startDate.getSeconds())}`
-  const endStr = `${today.getFullYear()}${padZero(today.getMonth() + 1)}${padZero(today.getDate())}${padZero(today.getHours())}${padZero(today.getMinutes())}${padZero(today.getSeconds())}`
+  const startStr = formatDateTime(startDate)
+  const endStr = formatDateTime(today)
 
   try {
     const rows = await executeSql<DateWordsRow>(`
@@ -299,11 +267,10 @@ export async function getTrendPrediction(): Promise<TrendPrediction> {
     for (let i = 29; i >= 0; i--) {
       const date = new Date(today)
       date.setDate(today.getDate() - i)
-      const dateStr = `${date.getFullYear()}${padZero(date.getMonth() + 1)}${padZero(date.getDate())}`
 
       historical.push({
-        date: `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())}`,
-        words: wordMap.get(dateStr) || 0,
+        date: formatDate(date),
+        words: wordMap.get(formatYmd(date)) || 0,
         dateLabel: `${date.getMonth() + 1}/${date.getDate()}`,
       })
     }
@@ -351,7 +318,7 @@ export async function getTrendPrediction(): Promise<TrendPrediction> {
       predDate.setDate(today.getDate() + i + 1)
 
       predicted.push({
-        date: `${predDate.getFullYear()}-${padZero(predDate.getMonth() + 1)}-${padZero(predDate.getDate())}`,
+        date: formatDate(predDate),
         words: predWords,
         dateLabel: `${predDate.getMonth() + 1}/${predDate.getDate()}`,
       })

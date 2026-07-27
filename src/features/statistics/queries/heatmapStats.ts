@@ -9,6 +9,7 @@ import { lsNotebooks } from "@/api"
 import {
   filterActiveNotebooks,
   isValidDateStr,
+  toDashedYmd,
 } from "../utils"
 import { getDateChangedDocs } from "./docChangeStats"
 import {
@@ -83,8 +84,7 @@ export async function getHeatmapActivityData(
   for (const row of rows) {
     const dateStr = String(row.date || "")
     if (dateStr.length >= 8) {
-      const key = `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}`
-      activityMap.set(key, Number(row.cnt || 0))
+      activityMap.set(toDashedYmd(dateStr), Number(row.cnt || 0))
     }
   }
   return activityMap

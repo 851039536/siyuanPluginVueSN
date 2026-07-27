@@ -15,7 +15,10 @@ import {
   IMAGE_EXTENSIONS,
   ZERO_STATISTICS,
 } from "../types/constants"
-import { filterActiveNotebooks } from "../utils"
+import {
+  filterActiveNotebooks,
+  formatYmd,
+} from "../utils"
 import {
   executeSql,
   formatDateTime,
@@ -82,11 +85,6 @@ async function getNotebookCount(): Promise<number> {
   }
 }
 
-// 日期 → YYYYMMDD 字符串键
-function toDateKey(date: Date): string {
-  return formatDateTime(date).substring(0, 8)
-}
-
 async function getWritingActivity(): Promise<{ activeDays: number, writingStreak: number }> {
   // Get distinct dates with any create/update activity in the last 2 years
   const today = new Date()
@@ -122,11 +120,11 @@ async function getWritingActivity(): Promise<{ activeDays: number, writingStreak
   let streak = 0
   const checkDate = new Date(today)
   // Include today if active, otherwise start from yesterday
-  if (!activeDateSet.has(toDateKey(checkDate))) {
+  if (!activeDateSet.has(formatYmd(checkDate))) {
     checkDate.setDate(checkDate.getDate() - 1)
   }
 
-  while (activeDateSet.has(toDateKey(checkDate))) {
+  while (activeDateSet.has(formatYmd(checkDate))) {
     streak++
     checkDate.setDate(checkDate.getDate() - 1)
   }
@@ -223,13 +221,13 @@ export async function getStatistics(viewMode: string, options: {
   selectedYear: number
 }): Promise<StatisticsData> {
   try {
-    const todayStr = toDateKey(new Date())
+    const todayStr = formatYmd(new Date())
 
-    // 今日统计使用范围比较（而非 substr 包裹列），保持 sargable
+    // 今日统计使用范围比较（而非 substr 包裹列），保持 sargable；字数口径统一为思源预计算的 length 列
     const combinedSql = `
       SELECT
         (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d') as totalNotes,
-        (SELECT SUM(LENGTH(content)) FROM blocks WHERE type = 'p' AND content IS NOT NULL AND content != '') as totalWords,
+        (SELECT SUM(length) FROM blocks WHERE type = 'p' AND length > 0) as totalWords,
         (SELECT COUNT(DISTINCT block_id) FROM refs) as totalBacklinks,
         (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d' AND created >= '${todayStr}000000' AND created <= '${todayStr}235959') as todayCreated,
         (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d' AND updated >= '${todayStr}000000' AND updated <= '${todayStr}235959') as todayModified

@@ -2,10 +2,12 @@
  * S3 备份功能纯工具函数
  *
  * 不依赖 Vue 响应式的纯函数：数字补零、备份时间戳生成、
- * S3 对象 key 构建、主机名获取（模块级缓存）。
+ * S3 对象 key 构建、主机名获取（模块级缓存）、
+ * 增量备份的 manifest 构建/对比与 key 生成。
  */
 import { getNodeProcessModules } from "@/utils/nodeModules"
-import { DEFAULT_S3_PREFIX, DEFAULT_BACKUP_DIR } from "./types"
+import { DEFAULT_S3_PREFIX, DEFAULT_BACKUP_DIR, INCREMENTAL_SUBDIR, INCREMENTAL_MANIFEST_NAME, MANIFEST_VERSION } from "./types"
+import type { BackupManifest, IncrementalDiff, IncrementalFileEntry } from "./types"
 
 /** 数字补零（如 padNum(3) → "03"） */
 export function padNum(n: number): string {
@@ -42,4 +44,67 @@ export function getHostname(): string {
     _hostname = getNodeProcessModules()?.os?.hostname() || ""
   }
   return _hostname
+}
+
+// ========== 增量备份纯函数 ==========
+
+/**
+ * 构建增量备份对象 key
+ * 数据文件：{prefix}/{sub}/incremental/data/{relativePath}
+ * 复用 buildS3Key 的空段过滤与斜杠规范化
+ */
+export function buildIncrementalKey(prefix: string, sub: string, relativePath: string): string {
+  return buildS3Key(prefix, sub, `${INCREMENTAL_SUBDIR}/data/${relativePath.replace(/^\/+/, "")}`)
+}
+
+/** 构建增量清单对象 key：{prefix}/{sub}/incremental/manifest.json */
+export function buildManifestKey(prefix: string, sub: string): string {
+  return buildS3Key(prefix, sub, `${INCREMENTAL_SUBDIR}/${INCREMENTAL_MANIFEST_NAME}`)
+}
+
+/** 由扫描结果构建新的备份清单 */
+export function buildManifest(files: IncrementalFileEntry[], hostname: string): BackupManifest {
+  const map: BackupManifest["files"] = {}
+  for (const f of files) {
+    map[f.relativePath] = { mtime: f.mtime, size: f.size }
+  }
+  return {
+    version: MANIFEST_VERSION,
+    createdAt: new Date().toISOString(),
+    hostname,
+    files: map,
+  }
+}
+
+/**
+ * 对比本次扫描结果与旧清单，产出增量差异
+ * - mtime 或 size 任一变化即视为修改（宽松触发，宁多传不漏传）
+ * - oldManifest 为 null 时视为首次备份，全部文件进入 toUpload
+ */
+export function diffManifest(
+  scanned: IncrementalFileEntry[],
+  oldManifest: BackupManifest | null,
+): IncrementalDiff {
+  if (!oldManifest) {
+    return { toUpload: [...scanned], toDelete: [], unchangedCount: 0 }
+  }
+
+  const toUpload: IncrementalFileEntry[] = []
+  let unchangedCount = 0
+  const scannedPaths = new Set<string>()
+
+  for (const file of scanned) {
+    scannedPaths.add(file.relativePath)
+    const old = oldManifest.files[file.relativePath]
+    if (old && old.mtime === file.mtime && old.size === file.size) {
+      unchangedCount++
+    } else {
+      toUpload.push(file)
+    }
+  }
+
+  // 旧清单有、本次扫描无 → 本地已删除，需清理 S3 对象
+  const toDelete = Object.keys(oldManifest.files).filter((p) => !scannedPaths.has(p))
+
+  return { toUpload, toDelete, unchangedCount }
 }

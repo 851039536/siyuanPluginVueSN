@@ -340,6 +340,20 @@ export class S3Client {
     await fs.writeFile(localPath, Buffer.from(buffer))
   }
 
+  /** 读取对象文本内容（404 返回 null，供增量清单等小文件读取使用） */
+  async getObjectText(key: string): Promise<string | null> {
+    const url = this.buildUrl(key)
+    const response = await this.request("GET", this.buildUri(key), "", url, null)
+
+    if (response.status === 404) { return null }
+    if (!response.ok) {
+      const body = await response.text()
+      throw new Error(formatS3Error(response, body, "S3 读取对象失败"))
+    }
+
+    return response.text()
+  }
+
   /** 列举指定前缀的文件 */
   async list(prefix: string): Promise<S3FileInfo[]> {
     const url = this.buildUrl("", `?prefix=${encodeURIComponent(prefix)}&max-keys=1000`)

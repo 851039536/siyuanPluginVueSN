@@ -9,12 +9,12 @@
 import JSZip from "jszip"
 import { getNodeModules } from "@/utils/nodeModules"
 import { makeBackupTimestamp } from "../utils"
-import type { LocalBackupInfo } from "../types"
+import type { LocalBackupInfo, IncrementalFileEntry } from "../types"
 
 // ========== 类型定义 ==========
 
 export interface BackupProgress {
-  phase: "scanning" | "packing" | "compressing" | "saving" | "uploading"
+  phase: "scanning" | "packing" | "compressing" | "saving" | "uploading" | "downloading"
   currentFile: string
   filesProcessed: number
   totalFiles: number
@@ -142,6 +142,41 @@ export class BackupManager {
     })
 
     await this.scanDirectory(this.backupDir, "", skipDirs, files, onProgress)
+
+    onProgress?.({
+      phase: "scanning",
+      currentFile: "",
+      filesProcessed: files.length,
+      totalFiles: files.length,
+      percent: 100,
+    })
+
+    return files
+  }
+
+  // ========== 增量模式：扫描 data/ 原始文件 ==========
+
+  /**
+   * 扫描 {workspaceRoot}/data 目录中的原始文件（供 S3 增量备份使用）
+   * 返回含 mtime/size 的完整条目，供 manifest 对比
+   */
+  async scanDataFiles(
+    onProgress?: (progress: BackupProgress) => void,
+  ): Promise<IncrementalFileEntry[]> {
+    await this.validatePath(this.dataPath)
+
+    const skipDirs = new Set(["temp", ".recycle"])
+    const files: IncrementalFileEntry[] = []
+
+    onProgress?.({
+      phase: "scanning",
+      currentFile: "",
+      filesProcessed: 0,
+      totalFiles: 0,
+      percent: 0,
+    })
+
+    await this.scanDirectory(this.dataPath, "", skipDirs, files, onProgress)
 
     onProgress?.({
       phase: "scanning",

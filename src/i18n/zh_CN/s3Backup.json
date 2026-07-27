@@ -105,5 +105,20 @@
   "confirmClearLogs": "确定要清空全部日志吗？",
   "uploadSuccess": "上传成功",
   "uploadFailed": "上传失败",
-  "alreadyUploaded": "已上传"
+  "alreadyUploaded": "已上传",
+  "s3Incremental": "S3 增量备份",
+  "s3IncrementalHint": "仅上传 data/ 中新增或变更的文件到 S3（需先完成 S3 配置）",
+  "backupHintIncremental": "增量备份：仅上传自上次备份以来新增或变更的文件",
+  "incrementalFirstRun": "首次增量备份，将全量上传",
+  "incrementalResult": "增量备份完成：上传 {uploaded}、跳过 {skipped}、删除 {deleted}",
+  "incrementalResultFailed": "，失败 {failed}",
+  "incrementalEmptyScan": "扫描结果为空，已中止增量备份",
+  "incrementalManifestCorrupt": "云端清单解析失败，按首次备份处理",
+  "incrementalBackup": "增量备份",
+  "incrementalRestore": "增量还原",
+  "confirmIncrementalRestore": "确定要按云端清单下载全部增量备份文件吗？文件将保存到本地备份目录下的还原文件夹（不会覆盖 data/），如需恢复请手动替换。",
+  "incrementalNoManifest": "云端无增量备份清单，请先执行增量备份",
+  "incrementalRestoreResult": "增量还原完成：下载 {downloaded} 个文件 → {path}",
+  "incrementalRestoreFailed": "，失败 {failed}",
+  "downloading": "下载 S3"
 }

@@ -12,8 +12,8 @@ import { showMessage } from "siyuan"
 import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import type { BackupManager, BackupProgress } from "../modules/BackupManager"
-import type { BackupLog, BackupManifest, IncrementalFileEntry } from "../types"
-import { LARGE_FILE_WARN_SIZE, MANIFEST_VERSION } from "../types"
+import type { BackupLog, BackupLogDetail, BackupManifest, IncrementalFileEntry } from "../types"
+import { LARGE_FILE_WARN_SIZE, MANIFEST_VERSION, MAX_LOG_DETAIL_FILES } from "../types"
 import { buildIncrementalKey, buildManifestKey, diffManifest, getHostname, parseManifest } from "../utils"
 
 /** 上传并发数（S3 客户端无内建并发管理，固定小并发防止请求风暴） */
@@ -22,13 +22,10 @@ const UPLOAD_CONCURRENCY = 4
 /** 单文件传输（上传/下载）最大重试次数（不含首次尝试） */
 const TRANSFER_MAX_RETRIES = 2
 
-/** 日志详情中文件清单最多展示条数（超出以 +N 结尾，防止首次全量备份撑爆日志） */
-const MAX_LOG_FILES = 10
-
-/** 格式化文件清单：最多展示 MAX_LOG_FILES 个，超出追加 " +N" */
-function formatFileList(files: string[]): string {
-  const shown = files.slice(0, MAX_LOG_FILES).join(", ")
-  return files.length > MAX_LOG_FILES ? `${shown} +${files.length - MAX_LOG_FILES}` : shown
+/** 按存储上限截断文件清单，返回 [截断后清单, 被省略条数]（空清单返回 undefined 不占存储） */
+function capFileList(files: string[]): [string[] | undefined, number] {
+  if (files.length === 0) { return [undefined, 0] }
+  return [files.slice(0, MAX_LOG_DETAIL_FILES), Math.max(0, files.length - MAX_LOG_DETAIL_FILES)]
 }
 
 /** 依赖注入：全部来自 index.vue 已有的状态与方法 */
@@ -237,7 +234,7 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
       percent: 100,
     }
 
-    // 8. 结果上报：日志 + 消息
+    // 8. 结果上报：日志 + 消息（文件清单以结构化 detail 存储，由日志 UI 展开展示）
     const result: IncrementalResult = { uploaded, skipped: diff.unchangedCount, deleted, failed }
     let message = (i18n.incrementalResult || "")
       .replace("{uploaded}", String(uploaded))
@@ -246,24 +243,28 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
     if (failed > 0) {
       message += (i18n.incrementalResultFailed || "").replace("{failed}", String(failed))
     }
-    // 日志详情追加上传/删除/失败文件清单（各最多 10 个），便于直接从日志 Tab 查看本次变更
-    let logMessage = message
-    if (uploadedFiles.length > 0) {
-      logMessage += (i18n.incrementalUploadedList || "").replace("{files}", formatFileList(uploadedFiles))
-    }
-    if (deletedFiles.length > 0) {
-      logMessage += (i18n.incrementalDeletedList || "").replace("{files}", formatFileList(deletedFiles))
-    }
-    if (failedFiles.length > 0) {
-      logMessage += (i18n.incrementalFailedList || "").replace("{files}", formatFileList(failedFiles))
-    }
+    const [cappedUploaded, omittedUploaded] = capFileList(uploadedFiles)
+    const [cappedDeleted, omittedDeleted] = capFileList(deletedFiles)
+    const [cappedFailed, omittedFailed] = capFileList(failedFiles)
+    const hasDetail = cappedUploaded || cappedDeleted || cappedFailed
+    const detail: BackupLogDetail | undefined = hasDetail
+      ? {
+          uploaded: cappedUploaded,
+          deleted: cappedDeleted,
+          failed: cappedFailed,
+          omitted: omittedUploaded + omittedDeleted + omittedFailed > 0
+            ? { uploaded: omittedUploaded || undefined, deleted: omittedDeleted || undefined, failed: omittedFailed || undefined }
+            : undefined,
+        }
+      : undefined
     addLog({
       type: "s3Incremental",
       action: i18n.s3Incremental,
       // 日志文件名："N 个文件"
       fileName: uploaded > 0 ? i18n.filesCount.replace("{count}", String(uploaded)) : "",
       success: failed === 0,
-      message: logMessage,
+      message,
+      detail,
     })
     showMessage(message, failed > 0 ? 5000 : 3000, failed > 0 ? "error" : "info")
 
@@ -306,6 +307,8 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
     let processed = 0
     let downloaded = 0
     let failed = 0
+    // 下载失败的文件相对路径（写入日志 detail，便于用户定位而无需打开控制台）
+    const failedFiles: string[] = []
 
     await runWithConcurrency(relativePaths, UPLOAD_CONCURRENCY, async (relativePath) => {
       backupProgress.value = {
@@ -321,7 +324,7 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
         () => deps.downloadObject(key, localPath),
         `下载失败: ${relativePath}`,
       )
-      if (ok) { downloaded++ } else { failed++ }
+      if (ok) { downloaded++ } else { failed++; failedFiles.push(relativePath) }
       processed++
     })
 
@@ -333,13 +336,14 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
       percent: 100,
     }
 
-    // 3. 结果上报：日志 + 消息（type 复用既有 s3Download）
+    // 3. 结果上报：日志 + 消息（type 复用既有 s3Download；仅失败清单入 detail，下载成功清单不记避免冗余）
     let message = (i18n.incrementalRestoreResult || "")
       .replace("{downloaded}", String(downloaded))
       .replace("{path}", targetDir)
     if (failed > 0) {
       message += (i18n.incrementalRestoreFailed || "").replace("{failed}", String(failed))
     }
+    const [cappedFailed, omittedFailed] = capFileList(failedFiles)
     addLog({
       type: "s3Download",
       action: i18n.incrementalRestore,
@@ -347,6 +351,9 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
       fileName: downloaded > 0 ? i18n.filesCount.replace("{count}", String(downloaded)) : "",
       success: failed === 0,
       message,
+      detail: cappedFailed
+        ? { failed: cappedFailed, omitted: omittedFailed > 0 ? { failed: omittedFailed } : undefined }
+        : undefined,
     })
     showMessage(message, failed > 0 ? 5000 : 4000, failed > 0 ? "error" : "info")
 

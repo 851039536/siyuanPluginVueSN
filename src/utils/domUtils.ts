@@ -152,3 +152,43 @@ export function simpleHtmlEscape(text: string): string {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#x27;")
 }
+
+/**
+ * 获取思源编辑器中当前光标所在的块 ID。
+ * 优先使用 window.getSelection()（最可靠，不依赖 CSS 类名实现细节，
+ * 且不会误取非活跃分屏中的选中残留），CSS 类选择器作为降级方案。
+ * @returns 块 ID，获取失败返回 null
+ */
+export function getCurrentBlockId(): string | null {
+  // 首选: window.getSelection() 精确获取光标位置
+  const selection = window.getSelection()
+  if (selection && selection.rangeCount > 0) {
+    const range = selection.getRangeAt(0)
+    let node: Node | null = range.startContainer
+
+    while (node) {
+      if (node instanceof Element) {
+        const nodeId = node.getAttribute("data-node-id")
+        const dataType = node.getAttribute("data-type")
+        if (nodeId && dataType) return nodeId
+      }
+      node = node.parentNode
+    }
+  }
+
+  // 降级1: 当前选中的块
+  const selectedBlock = document.querySelector(".protyle-wysiwyg--select")
+  if (selectedBlock) {
+    return selectedBlock.getAttribute("data-node-id")
+  }
+
+  // 降级2: 聚焦的块
+  const focusedBlock = document.querySelector(
+    ".protyle-wysiwyg [data-node-id].protyle-wysiwyg--focus",
+  )
+  if (focusedBlock) {
+    return focusedBlock.getAttribute("data-node-id")
+  }
+
+  return null
+}

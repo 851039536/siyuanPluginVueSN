@@ -6,7 +6,8 @@ import { type Ref } from "vue"
 import { showMessage } from "siyuan"
 import type { TargetDoc } from "@/types/ai"
 import * as api from "@/api"
-import { removeFrontmatter, getCurrentBlockId, getDocIdByBlockId } from "../utils"
+import { getCurrentBlockId } from "@/utils/domUtils"
+import { removeFrontmatter } from "../utils"
 
 export interface UseDocumentTargetDeps {
   editTargetDoc: Ref<TargetDoc | null>
@@ -82,7 +83,7 @@ export function useDocumentTarget(deps: UseDocumentTargetDeps) {
       if (!docId) {
         const currentBlockId = getCurrentBlockId()
         if (currentBlockId) {
-          docId = await getDocIdByBlockId(currentBlockId)
+          docId = await api.getDocIdByBlockId(currentBlockId)
         }
       }
 

@@ -2,65 +2,12 @@
  * 目录索引工具函数
  */
 import * as api from "@/api"
+import { getCurrentBlockId } from "@/utils/domUtils"
 
 /** 当前文档/块上下文 */
 export interface CurrentContext {
   docId: string | null
   blockId: string | null
-}
-
-/**
- * 获取当前光标所在的块 ID。
- * 优先使用 window.getSelection()（最可靠，不依赖 CSS 类名实现细节），
- * CSS 类选择器作为降级方案。
- */
-export function getCurrentBlockId(): string | null {
-  // 首选: window.getSelection() 精确获取光标位置
-  const selection = window.getSelection()
-  if (selection && selection.rangeCount > 0) {
-    const range = selection.getRangeAt(0)
-    let node: Node | null = range.startContainer
-
-    while (node) {
-      if (node instanceof Element) {
-        const nodeId = node.getAttribute("data-node-id")
-        const dataType = node.getAttribute("data-type")
-        if (nodeId && dataType) return nodeId
-      }
-      node = node.parentNode
-    }
-  }
-
-  // 降级1: 当前选中的块
-  const selectedBlock = document.querySelector(".protyle-wysiwyg--select")
-  if (selectedBlock) {
-    return selectedBlock.getAttribute("data-node-id")
-  }
-
-  // 降级2: 聚焦的块
-  const focusedBlock = document.querySelector(
-    ".protyle-wysiwyg [data-node-id].protyle-wysiwyg--focus",
-  )
-  if (focusedBlock) {
-    return focusedBlock.getAttribute("data-node-id")
-  }
-
-  return null
-}
-
-/**
- * 通过块ID获取其所属的文档ID
- */
-export async function getDocIdByBlockId(
-  blockId: string,
-): Promise<string | null> {
-  try {
-    const block = await api.getBlockByID(blockId)
-    return block?.root_id || null
-  } catch (error) {
-    console.error("获取文档ID失败:", error)
-    return null
-  }
 }
 
 /**
@@ -81,7 +28,7 @@ export async function getCurrentContext(): Promise<CurrentContext> {
   const blockId = getCurrentBlockId()
 
   if (blockId) {
-    const docId = await getDocIdByBlockId(blockId)
+    const docId = await api.getDocIdByBlockId(blockId)
     if (docId) { return {
       docId,
       blockId,

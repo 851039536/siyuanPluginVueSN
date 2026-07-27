@@ -18,13 +18,26 @@ import {
   isValidDateStr,
   mapChangedDocs,
   padZero,
+  stripTags,
 } from "../utils"
 import { executeSql } from "./executeSql"
+
+// YYYYMMDD 字符串 → Date（本地时区零点）
+function parseYmd(ymd: string): Date {
+  return new Date(
+    Number.parseInt(ymd.substring(0, 4)),
+    Number.parseInt(ymd.substring(4, 6)) - 1,
+    Number.parseInt(ymd.substring(6, 8)),
+  )
+}
+
+// 删除历史翻页保护上限，防止异常数据导致无限翻页
+const MAX_HISTORY_PAGES = 32
 
 /**
  * 通过思源数据历史获取日期范围内被删除的文档（含所属日期）。
  * 删除文档的块已从 blocks 表移除、无法 SQL 查询，故改用内核数据历史（op=delete）：
- * 1) searchHistory 拿到范围内的快照时间点；2) 逐时间点 getHistoryItems 拿被删除条目。
+ * 1) searchHistory 逐页拿到范围内的快照时间点；2) 逐时间点 getHistoryItems 拿被删除条目。
  * 依赖「数据历史」功能开启；时间为快照时间，为近似值。
  * @param startStr 起始日期 YYYYMMDD
  * @param endStr 结束日期 YYYYMMDD
@@ -35,22 +48,34 @@ export async function getDeletedDocsInRange(
 ): Promise<DeletedDoc[]> {
   if (!isValidDateStr(startStr) || !isValidDateStr(endStr)) return []
   try {
-    const result = await searchHistory("delete", 0, { page: 1 })
-    const timestamps = result?.histories ?? []
-
-    // 仅保留范围内的快照时间点
+    // 逐页收集范围内的快照时间点（histories 按时间倒序，翻到早于起始日期即可停止）
     const matched: Array<{ created: string, ymd: string, hm: string }> = []
-    for (const ts of timestamps) {
-      const sec = Number.parseInt(ts, 10)
-      if (!Number.isFinite(sec)) continue
-      const date = new Date(sec * 1000)
-      const ymd = formatYmd(date)
-      if (ymd < startStr || ymd > endStr) continue
-      matched.push({
-        created: ts,
-        ymd,
-        hm: `${padZero(date.getHours())}:${padZero(date.getMinutes())}`,
-      })
+    let page = 1
+    let pageCount = 1
+    let reachedBeforeRange = false
+    while (page <= pageCount && page <= MAX_HISTORY_PAGES && !reachedBeforeRange) {
+      const result = await searchHistory("delete", 0, { page })
+      const timestamps = result?.histories ?? []
+      if (timestamps.length === 0) break
+      pageCount = result?.pageCount ?? page
+
+      for (const ts of timestamps) {
+        const sec = Number.parseInt(ts, 10)
+        if (!Number.isFinite(sec)) continue
+        const date = new Date(sec * 1000)
+        const ymd = formatYmd(date)
+        if (ymd < startStr) {
+          reachedBeforeRange = true
+          break
+        }
+        if (ymd > endStr) continue
+        matched.push({
+          created: ts,
+          ymd,
+          hm: `${padZero(date.getHours())}:${padZero(date.getMinutes())}`,
+        })
+      }
+      page++
     }
     if (matched.length === 0) return []
 
@@ -64,9 +89,9 @@ export async function getDeletedDocsInRange(
       const m = matched[i]
       for (const item of res?.items ?? []) {
         if (item.op && item.op !== "delete") continue
-        const title = (item.title || "").replace(/<[^>]*>/g, "").trim()
         deleted.push({
-          title: title || "无标题",
+          // 标题可能为空，由视图层用 i18n.untitled 兜底
+          title: stripTags(item.title || "").trim(),
           time: m.hm,
           date: `${m.ymd.substring(4, 6)}/${m.ymd.substring(6, 8)}`,
         })
@@ -99,16 +124,18 @@ export async function getDateChangedDocs(dateStr: string): Promise<{
     }
   }
 
+  // WHERE 使用范围比较（而非 substr 包裹列），保持 sargable
   const newDocsSql = `
     SELECT id, content, created FROM blocks
-    WHERE type = 'd' AND substr(created, 1, 8) = '${dateStr}'
+    WHERE type = 'd'
+      AND created >= '${dateStr}000000' AND created <= '${dateStr}235959'
     ORDER BY created ASC
     LIMIT 512
   `
   const modifiedDocsSql = `
     SELECT id, content, updated FROM blocks
     WHERE type = 'd'
-      AND substr(updated, 1, 8) = '${dateStr}'
+      AND updated >= '${dateStr}000000' AND updated <= '${dateStr}235959'
       AND substr(created, 1, 8) != '${dateStr}'
     ORDER BY updated DESC
     LIMIT 512
@@ -136,12 +163,13 @@ export async function getDateRangeChangeStats(startStr: string, endStr: string):
     return []
   }
 
+  // WHERE 使用范围比较（而非 substr 包裹列），保持 sargable；GROUP BY 的 substr 为语义必需
   const newSql = `
     SELECT substr(created, 1, 8) as date, COUNT(*) as cnt
     FROM blocks
     WHERE type = 'd'
-      AND substr(created, 1, 8) >= '${startStr}'
-      AND substr(created, 1, 8) <= '${endStr}'
+      AND created >= '${startStr}000000'
+      AND created <= '${endStr}235959'
     GROUP BY substr(created, 1, 8)
     ORDER BY date ASC
     LIMIT 1024
@@ -150,8 +178,8 @@ export async function getDateRangeChangeStats(startStr: string, endStr: string):
     SELECT substr(updated, 1, 8) as date, COUNT(*) as cnt
     FROM blocks
     WHERE type = 'd'
-      AND substr(updated, 1, 8) >= '${startStr}'
-      AND substr(updated, 1, 8) <= '${endStr}'
+      AND updated >= '${startStr}000000'
+      AND updated <= '${endStr}235959'
       AND substr(created, 1, 8) != substr(updated, 1, 8)
     GROUP BY substr(updated, 1, 8)
     ORDER BY date ASC
@@ -164,16 +192,8 @@ export async function getDateRangeChangeStats(startStr: string, endStr: string):
   ])
 
   const result: Array<{ date: string, newCount: number, modifiedCount: number }> = []
-  const startDate = new Date(
-    Number.parseInt(startStr.substring(0, 4)),
-    Number.parseInt(startStr.substring(4, 6)) - 1,
-    Number.parseInt(startStr.substring(6, 8)),
-  )
-  const endDate = new Date(
-    Number.parseInt(endStr.substring(0, 4)),
-    Number.parseInt(endStr.substring(4, 6)) - 1,
-    Number.parseInt(endStr.substring(6, 8)),
-  )
+  const startDate = parseYmd(startStr)
+  const endDate = parseYmd(endStr)
 
   const newMap = new Map<string, number>()
   const modifiedMap = new Map<string, number>()
@@ -185,7 +205,7 @@ export async function getDateRangeChangeStats(startStr: string, endStr: string):
     d <= endDate;
     d.setDate(d.getDate() + 1)
   ) {
-    const dateStr = `${d.getFullYear()}${padZero(d.getMonth() + 1)}${padZero(d.getDate())}`
+    const dateStr = formatYmd(d)
     result.push({
       date: dateStr,
       newCount: newMap.get(dateStr) || 0,
@@ -201,31 +221,32 @@ export async function getDateRangeChangeStats(startStr: string, endStr: string):
  * 按 updated 降序排列，返回最近 N 条记录
  */
 export async function getRecentUpdatedDocs(limit: number = 20): Promise<RecentUpdatedDoc[]> {
-  // 获取笔记本映射表
-  const idToName = new Map<string, string>()
-  try {
-    const nbData = await lsNotebooks()
-    const notebooks = filterActiveNotebooks(nbData?.notebooks ?? [])
-    for (const nb of notebooks) {
-      idToName.set(nb.id, nb.name)
-    }
-  } catch (e) {
-    console.error("获取笔记本列表失败:", e)
-  }
-
   const sql = `
     SELECT id, content, created, updated, box FROM blocks
     WHERE type = 'd'
     ORDER BY updated DESC
-    LIMIT ${limit}
+    LIMIT ${Math.max(1, Math.floor(limit))}
   `
 
-  const rows = await executeSql<DocBlockRow>(sql)
+  // 笔记本映射表与文档查询无依赖，并行请求
+  const [nbData, rows] = await Promise.all([
+    lsNotebooks().catch((e) => {
+      console.error("获取笔记本列表失败:", e)
+      return null
+    }),
+    executeSql<DocBlockRow>(sql),
+  ])
+
+  const idToName = new Map<string, string>()
+  for (const nb of filterActiveNotebooks(nbData?.notebooks ?? [])) {
+    idToName.set(nb.id, nb.name)
+  }
+
   if (!rows || rows.length === 0) return []
 
   return rows.map((r) => ({
     id: r.id,
-    title: (r.content || "").replace(/<[^>]*>/g, ""),
+    title: stripTags(r.content || ""),
     created: r.created || "",
     updated: r.updated || "",
     notebookName: idToName.get(r.box || "") || "",

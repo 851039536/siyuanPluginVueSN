@@ -17,6 +17,13 @@ export function filterActiveNotebooks(notebooks: Notebook[]): Notebook[] {
 }
 
 /**
+ * 去除字符串中的 HTML 标签
+ */
+export function stripTags(html: string): string {
+  return html.replace(/<[^>]*>/g, "")
+}
+
+/**
  * 将文档块查询行映射为 ChangedDoc（去除 HTML 标签，格式化时间）
  */
 export function mapChangedDocs(
@@ -25,7 +32,7 @@ export function mapChangedDocs(
 ): ChangedDoc[] {
   return rows.map((r) => ({
     id: r.id,
-    title: (r.content || "").replace(/<[^>]*>/g, ""),
+    title: stripTags(r.content || ""),
     time: formatTime(r[timeField]),
   }))
 }

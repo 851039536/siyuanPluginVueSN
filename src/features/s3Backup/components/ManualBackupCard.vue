@@ -14,14 +14,15 @@
       >
         {{ i18n.backupNow || "立即备份" }}
       </Button>
+      <!-- 压缩包备份按钮："压缩包备份"（独立触发本地 ZIP 打包，不依赖模式开关） -->
       <Button
         variant="ghost"
         size="xsmall"
-        :disabled="isBackingUp || !isConfigured || !workspacePath"
-        :loading="isS3OnlyBackingUp"
-        @click="$emit('triggerS3Upload')"
+        :disabled="isBackingUp || isZipBackingUp || !workspacePath"
+        :loading="isZipBackingUp"
+        @click="$emit('triggerZipBackup')"
       >
-        {{ i18n.uploadToS3 || "上传到 S3" }}
+        {{ i18n.zipBackup }}
       </Button>
       <!-- 增量备份按钮："增量备份" -->
       <Button
@@ -81,6 +82,7 @@
         <code class="path-preview-value">{{ resolvedS3Path }}</code>
       </div>
     </div>
+    <!-- 立即备份动态提示：如"点击「立即备份」将执行：本地 ZIP 备份 + 上传到 S3"，未勾选模式时提示去配置 -->
     <p class="backup-hint">
       {{ backupHintText }}
     </p>
@@ -95,7 +97,6 @@ import Switch from "@/components/Switch.vue"
 
 const props = defineProps<{
   isBackingUp: boolean
-  isS3OnlyBackingUp: boolean
   canBackup: boolean
   isConfigured: boolean
   workspacePath: string
@@ -107,6 +108,7 @@ const props = defineProps<{
   backupModeLocalZip: boolean
   backupModeS3Upload: boolean
   backupModeS3Incremental?: boolean
+  isZipBackingUp?: boolean
   isIncrementalRunning?: boolean
   isIncrementalRestoring?: boolean
   i18n: Record<string, string>
@@ -114,7 +116,7 @@ const props = defineProps<{
 
 defineEmits<{
   (e: "performBackup"): void
-  (e: "triggerS3Upload"): void
+  (e: "triggerZipBackup"): void
   (e: "triggerIncremental"): void
   (e: "triggerIncrementalRestore"): void
   (e: "update:useDateFolder", value: boolean): void
@@ -123,17 +125,15 @@ defineEmits<{
 }>()
 
 const backupHintText = computed(() => {
-  // 勾选增量时优先提示增量语义（可与其他模式叠加，此处仅展示主要行为）
-  if (props.backupModeS3Incremental) {
-    return props.i18n.backupHintIncremental
+  // 动态列出已勾选的备份模式，明确「立即备份」将执行的动作
+  const modes: string[] = []
+  if (props.backupModeLocalZip) { modes.push(props.i18n.localZipBackup) }
+  if (props.backupModeS3Upload) { modes.push(props.i18n.s3Upload) }
+  if (props.backupModeS3Incremental) { modes.push(props.i18n.s3Incremental) }
+  if (modes.length === 0) {
+    return props.i18n.backupNowHintNone
   }
-  if (props.backupModeLocalZip && props.backupModeS3Upload) {
-    return props.i18n.backupHintBoth || "将先打包本地 ZIP 再上传 S3"
-  }
-  if (props.backupModeLocalZip) {
-    return props.i18n.backupHintLocal || "备份将打包为 data-*.zip 保存到本地备份目录"
-  }
-  return props.i18n.backupHint || "备份将逐文件上传到 S3"
+  return `${props.i18n.backupNowHintPrefix}${modes.join(" + ")}`
 })
 </script>
 

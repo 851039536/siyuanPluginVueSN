@@ -50,6 +50,7 @@
     "locateRefs": "Referenced in {count} block(s)",
     "locateNotFound": "No document references this asset",
     "locateFailed": "Locate failed",
-    "fileNotFound": "File does not exist on disk"
+    "fileNotFound": "File does not exist on disk",
+    "samePathHint": "New path is the same as current path, no move performed"
   }
 }

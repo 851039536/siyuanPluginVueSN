@@ -58,4 +58,5 @@ export interface ResourceManagerI18n {
   locateNotFound: string
   locateFailed: string
   fileNotFound: string
+  samePathHint: string
 }

@@ -96,7 +96,7 @@ export interface BackupLog {
   /** 唯一 ID（时间戳） */
   id: string
   /** 操作类型 */
-  type: "localZip" | "s3Upload" | "s3Download" | "s3Delete" | "s3Incremental"
+  type: "localZip" | "s3Upload" | "s3Download" | "s3Delete" | "s3Incremental" | "autoBackup"
   /** 操作描述文字 */
   action: string
   /** 相关文件名 */
@@ -187,6 +187,8 @@ export interface IncrementalDiff {
   toDelete: string[]
   /** 未变更被跳过的文件数 */
   unchangedCount: number
+  /** 未变更条目映射（供新 manifest 直接起步，消除调用方二次遍历） */
+  unchanged: BackupManifest["files"]
 }
 
 /** 增量备份在 S3 中的子目录名（位于 {prefix}/{s3SubPrefix}/ 之下） */

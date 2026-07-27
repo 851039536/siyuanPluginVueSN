@@ -159,7 +159,7 @@
         @update:keep-backup-count="keepBackupCount = $event; saveWorkspaceSettings()"
       />
 
-      <section class="card-section config-section">
+      <section class="card-section">
         <S3ConfigForm
           :config="s3ConfigLocal"
           :i18n="i18n"
@@ -203,18 +203,16 @@ import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue"
 import { Plugin, showMessage } from "siyuan"
 import { getWorkspaceDir } from "@/api"
 import { pickDirectory, openFolderInExplorer } from "@/utils/electronDialog"
-import { getNodeModules, getNodeProcessModules } from "@/utils/nodeModules"
+import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import { encryptSetting, decryptSetting } from "@/utils/settingsCrypto"
 import { useS3Backup } from "./composables/useS3Backup"
-import { BackupManager, padNum } from "./modules/BackupManager"
+import { BackupManager } from "./modules/BackupManager"
 import type { BackupResult, WorkspaceFile } from "./modules/BackupManager"
 import { getS3BackupInstance } from "./index"
-import type { S3Config, LocalBackupInfo, BackupMode } from "./types"
-import { DEFAULT_BACKUP_MODE } from "./types"
-import type { BackupLog } from "./types"
-import type { FileChecksum } from "./types"
-import { MAX_LOG_COUNT } from "./types"
+import { buildS3Key, makeBackupTimestamp, getHostname } from "./utils"
+import type { S3Config, LocalBackupInfo, BackupMode, BackupLog, FileChecksum, S3BackupStorage } from "./types"
+import { DEFAULT_BACKUP_MODE, DEFAULT_BACKUP_DIR, MAX_LOG_COUNT, MAX_LOCAL_BACKUP_COUNT } from "./types"
 import S3ConfigForm from "./components/S3ConfigForm.vue"
 import WorkspaceInfoCard from "./components/WorkspaceInfoCard.vue"
 import BackupModeSelector from "./components/BackupModeSelector.vue"
@@ -258,7 +256,7 @@ const {
   downloadBackup,
   deleteBackup,
   loadConfig,
-} = useS3Backup()
+} = useS3Backup(props.i18n)
 
 // ========== 基础状态 ==========
 
@@ -273,6 +271,13 @@ const isS3OnlyBackingUp = ref(false)
 const backupLogs = ref<BackupLog[]>([])
 const checksums = ref<FileChecksum[]>([])
 const uploadHostMap = ref<Record<string, string>>({})
+
+/** 持久化辅助：统一「获取实例 → 存储槽 save」样板 */
+async function persistStorage(save: (storage: S3BackupStorage) => Promise<unknown>): Promise<void> {
+  const instance = getS3BackupInstance()
+  if (instance) { await save(instance.getStorage()) }
+}
+
 // ========== 路径预览 ==========
 
 const node = getNodeModules()
@@ -289,9 +294,7 @@ const resolvedLocalBackupPath = computed(() => {
 
 /** S3 上传在桶中的完整路径预览 */
 const resolvedS3Path = computed(() => {
-  const prefix = s3Config.value?.prefix || "siyuan-backup/"
-  const sub = s3SubPrefix.value || "data-backup"
-  return `${prefix.replace(/\/+$/, "")}/${sub}/`
+  return buildS3Key(s3Config.value?.prefix || "", s3SubPrefix.value, "")
 })
 
 // ========== 备份模式 ==========
@@ -506,10 +509,7 @@ async function performLocalBackup(): Promise<BackupResult | null> {
       localBackupList.value = localBackupList.value.slice(0, keepBackupCount.value)
     }
 
-    const instance = getS3BackupInstance()
-    if (instance) {
-      await instance.getStorage().backupHistory.save({ list: localBackupList.value })
-    }
+    await persistStorage((s) => s.backupHistory.save({ list: localBackupList.value }))
 
     showMessage(`本地备份成功: ${result.fileName}（${result.totalFiles} 文件）`, 3000, "info")
     addLog({
@@ -540,20 +540,9 @@ async function performLocalBackup(): Promise<BackupResult | null> {
   }
 }
 
-/**
- * 构建 S3 对象 key
- * 将 prefix/subPrefix/datePath/relativePath 多段拼接为规范 S3 key，
- * 自动 strip 首尾斜杠、过滤空段，避免产生 // 等无效前缀
- */
-function buildS3Key(relativePath: string, timestamp: string): string {
-  const prefix = s3Config.value.prefix || "siyuan-backup/"
-  const sub = s3SubPrefix.value || "data-backup"
-  const datePath = useDateFolder.value ? `${timestamp}/` : ""
-  const parts: string[] = [prefix.replace(/\/+$/, ""), sub.replace(/\/+$/, "")]
-    .filter(Boolean)
-  if (datePath) { parts.push(datePath.replace(/\/+$/, "")) }
-  parts.push(relativePath.replace(/^\/+/, ""))
-  return parts.join("/")
+/** 构建 S3 对象 key（复用 utils.buildS3Key，日期子文件夹由 useDateFolder 控制） */
+function makeS3Key(relativePath: string, timestamp: string): string {
+  return buildS3Key(s3Config.value.prefix, s3SubPrefix.value, relativePath, useDateFolder.value ? timestamp : "")
 }
 
 /** S3 备份
@@ -581,8 +570,7 @@ async function performS3Backup(latestZip?: BackupResult | null): Promise<void> {
     return
   }
 
-  const d = new Date()
-  const timestamp = `${d.getFullYear()}${padNum(d.getMonth() + 1)}${padNum(d.getDate())}-${padNum(d.getHours())}${padNum(d.getMinutes())}${padNum(d.getSeconds())}`
+  const timestamp = makeBackupTimestamp()
   // B10 修复：复用顶层缓存的 node 实例
   if (!node) {
     throw new Error("无法访问文件系统，请使用桌面版思源笔记")
@@ -591,6 +579,8 @@ async function performS3Backup(latestZip?: BackupResult | null): Promise<void> {
 
   // 去重优化：上传前先获取 S3 已有文件列表，已存在的文件跳过上传
   let existingKeys: Set<string> = new Set()
+  // fetchBackupList 成功时已同步更新 backupList，无需备份结束后再次拉取
+  let listFailed = false
   try {
     existingKeys = await listExistingKeys()
     console.log(`[S3备份] 去重检查：S3 已有 ${existingKeys.size} 个文件`)
@@ -599,12 +589,13 @@ async function performS3Backup(latestZip?: BackupResult | null): Promise<void> {
       const sampleExisting = [...existingKeys].slice(0, 3)
       const sampleNew: string[] = []
       for (let i = 0; i < Math.min(3, files.length); i++) {
-        sampleNew.push(buildS3Key(files[i].relativePath, timestamp))
+        sampleNew.push(makeS3Key(files[i].relativePath, timestamp))
       }
       console.log("[S3备份] S3 已有 key 示例:", sampleExisting)
       console.log("[S3备份] 待上传 key 示例:", sampleNew)
     }
   } catch (err: unknown) {
+    listFailed = true
     console.warn("[S3备份] 无法获取 S3 文件列表，将上传全部文件:", err)
   }
 
@@ -614,7 +605,7 @@ async function performS3Backup(latestZip?: BackupResult | null): Promise<void> {
 
   for (let i = 0; i < files.length; i++) {
     const file = files[i]
-    const s3Key = buildS3Key(file.relativePath, timestamp)
+    const s3Key = makeS3Key(file.relativePath, timestamp)
 
     // 去重：S3 上已存在的文件跳过上传
     if (existingKeys.has(s3Key)) {
@@ -683,20 +674,19 @@ async function performS3Backup(latestZip?: BackupResult | null): Promise<void> {
   })
 
   // 批量记录上传来源：以时间戳前缀为 key 标记本机上传
-  const osModule = getNodeProcessModules()?.os
-  const batchHostname = osModule?.hostname() || ""
+  const batchHostname = getHostname()
   if (batchHostname && uploadedCount > 0) {
     for (const file of files) {
       const fileName = file.relativePath.split("/").pop() || file.relativePath
       uploadHostMap.value[fileName] = batchHostname
     }
-    const instance = getS3BackupInstance()
-    if (instance) {
-      await instance.getStorage().uploadHostMap.save({ map: uploadHostMap.value })
-    }
+    await persistStorage((s) => s.uploadHostMap.save({ map: uploadHostMap.value }))
   }
 
-  await refreshBackupList()
+  // 列表已在去重检查时刷新；仅当去重列举失败时兜底刷新一次
+  if (listFailed) {
+    await refreshBackupList()
+  }
 }
 
 /** 触发独立 S3 上传（按钮直接调用，无需额外包装） */
@@ -743,9 +733,6 @@ watch(
 
 // ========== 本地备份管理 ==========
 
-/** 本地备份列表最大显示条数 */
-const MAX_LOCAL_BACKUP_COUNT = 50
-
 async function loadLocalBackupList(): Promise<void> {
   localBackupList.value = []
   try {
@@ -753,10 +740,7 @@ async function loadLocalBackupList(): Promise<void> {
       const scanned = await backupManager.scanBackupDir()
       if (scanned.length > 0) {
         localBackupList.value = scanned.slice(0, MAX_LOCAL_BACKUP_COUNT)
-        const instance = getS3BackupInstance()
-        if (instance) {
-          await instance.getStorage().backupHistory.save({ list: localBackupList.value })
-        }
+        await persistStorage((s) => s.backupHistory.save({ list: localBackupList.value }))
         return
       }
     }
@@ -790,10 +774,7 @@ async function deleteLocalBackup(backup: Record<string, any>): Promise<void> {
     }
     // A11 修复：按 path 过滤而非 name，避免同名文件误删
     localBackupList.value = localBackupList.value.filter((b) => b.path !== backup.path)
-    const instance = getS3BackupInstance()
-    if (instance) {
-      await instance.getStorage().backupHistory.save({ list: localBackupList.value })
-    }
+    await persistStorage((s) => s.backupHistory.save({ list: localBackupList.value }))
     showMessage(props.i18n.deleteSuccess || "删除成功", 2000, "info")
   } catch (error) {
     console.error("删除本地备份失败:", error)
@@ -811,9 +792,7 @@ async function uploadLocalBackup(backup: Record<string, any>): Promise<void> {
   uploadingItems.value = { ...uploadingItems.value, [backup.path]: true }
   try {
     const content = await node.fs.promises.readFile(backup.path)
-    const prefix = (s3Config.value.prefix || "siyuan-backup/").replace(/\/+$/, "")
-    const sub = (s3SubPrefix.value || "data-backup").replace(/\/+$/, "")
-    const s3Key = [prefix, sub, backup.name].filter(Boolean).join("/")
+    const s3Key = buildS3Key(s3Config.value.prefix, s3SubPrefix.value, backup.name)
     await uploadFileContent(content, s3Key)
     await recordUploadHost(backup.name)
     addLog({ type: "s3Upload", action: props.i18n.uploadToS3 || "上传到 S3", fileName: backup.name, success: true })
@@ -834,14 +813,10 @@ function isAlreadyUploaded(fileName: string): boolean {
 
 /** 记录文件上传来源设备名并持久化 */
 async function recordUploadHost(fileName: string): Promise<void> {
-  const osModule = getNodeProcessModules()?.os
-  const hostname = osModule?.hostname() || ""
+  const hostname = getHostname()
   if (!hostname) { return }
   uploadHostMap.value = { ...uploadHostMap.value, [fileName]: hostname }
-  const instance = getS3BackupInstance()
-  if (instance) {
-    await instance.getStorage().uploadHostMap.save({ map: uploadHostMap.value })
-  }
+  await persistStorage((s) => s.uploadHostMap.save({ map: uploadHostMap.value }))
 }
 
 // ========== S3 备份管理 ==========
@@ -919,12 +894,11 @@ async function handleDelete(backup: Record<string, any>): Promise<void> {
 // ========== 日志管理 ==========
 
 function addLog(entry: Omit<BackupLog, "id" | "time" | "hostname">): void {
-  const osModule = getNodeProcessModules()?.os
   const log: BackupLog = {
     ...entry,
     id: Date.now().toString(),
     time: new Date().toISOString(),
-    hostname: osModule?.hostname() || "",
+    hostname: getHostname(),
   }
   backupLogs.value.unshift(log)
   if (backupLogs.value.length > MAX_LOG_COUNT) {
@@ -934,18 +908,12 @@ function addLog(entry: Omit<BackupLog, "id" | "time" | "hostname">): void {
 }
 
 async function saveLogs(): Promise<void> {
-  const instance = getS3BackupInstance()
-  if (instance) {
-    await instance.getStorage().backupLogs.save({ logs: backupLogs.value })
-  }
+  await persistStorage((s) => s.backupLogs.save({ logs: backupLogs.value }))
 }
 
 async function clearLogs(): Promise<void> {
   backupLogs.value = []
-  const instance = getS3BackupInstance()
-  if (instance) {
-    await instance.getStorage().backupLogs.save({ logs: [] })
-  }
+  await saveLogs()
 }
 
 // ========== 校验值管理 ==========
@@ -969,26 +937,17 @@ function saveChecksum(fileName: string, filePath: string, fileSize: number, chec
 }
 
 async function saveChecksums(): Promise<void> {
-  const instance = getS3BackupInstance()
-  if (instance) {
-    await instance.getStorage().checksums.save({ items: checksums.value })
-  }
+  await persistStorage((s) => s.checksums.save({ items: checksums.value }))
 }
 
 async function clearChecksums(): Promise<void> {
   checksums.value = []
-  const instance = getS3BackupInstance()
-  if (instance) {
-    await instance.getStorage().checksums.save({ items: [] })
-  }
+  await saveChecksums()
 }
 
 async function removeOneChecksum(fileName: string): Promise<void> {
   checksums.value = checksums.value.filter((c) => c.fileName !== fileName)
-  const instance = getS3BackupInstance()
-  if (instance) {
-    await instance.getStorage().checksums.save({ items: checksums.value })
-  }
+  await saveChecksums()
 }
 
 // ========== 设置持久化 ==========
@@ -997,22 +956,23 @@ async function loadWorkspaceSettings(): Promise<void> {
   try {
     const instance = getS3BackupInstance()
     if (instance) {
+      // loadOrDefault 已与 DEFAULT_BACKUP_SETTINGS 浅合并，字段保证完整，无需逐字段兜底
       const data = await instance.loadWorkspaceSettings()
       lastBackupTime.value = data.lastBackupTime
-      useDateFolder.value = data.useDateFolder ?? true
-      autoBackupEnabled.value = data.autoBackupEnabled ?? false
-      backupFrequency.value = data.backupFrequency ?? "daily"
-      backupTime.value = data.backupTime ?? "03:00"
-      keepBackupCount.value = data.keepBackupCount ?? 7
-      lastBackupTimestamp = data.lastBackupTimestamp ?? 0
-      localBackupDir.value = data.localBackupDir || "data-backup"
-      s3SubPrefix.value = data.s3SubPrefix || "data-backup"
+      useDateFolder.value = data.useDateFolder
+      autoBackupEnabled.value = data.autoBackupEnabled
+      backupFrequency.value = data.backupFrequency
+      backupTime.value = data.backupTime
+      keepBackupCount.value = data.keepBackupCount
+      lastBackupTimestamp = data.lastBackupTimestamp
+      // 空字符串视为未设置，回退默认目录
+      localBackupDir.value = data.localBackupDir || DEFAULT_BACKUP_DIR
+      s3SubPrefix.value = data.s3SubPrefix || DEFAULT_BACKUP_DIR
 
-      // 加载备份模式
-      const bs = await instance.getStorage().backupSettings.loadOrDefault()
-      if (bs.backupMode) {
-        backupModeLocal.localZip = bs.backupMode.localZip ?? true
-        backupModeLocal.s3Upload = bs.backupMode.s3Upload ?? false
+      // 备份模式（同一份数据，无需二次读取存储）
+      if (data.backupMode) {
+        backupModeLocal.localZip = data.backupMode.localZip ?? true
+        backupModeLocal.s3Upload = data.backupMode.s3Upload ?? false
       }
 
       const root = instance.getWorkspaceRoot()
@@ -1129,38 +1089,21 @@ onMounted(async () => {
     await refreshBackupList()
   }
 
-  // 加载操作日志
-  try {
-    const instance2 = getS3BackupInstance()
-    if (instance2) {
-      const data = await instance2.getStorage().backupLogs.load()
-      if (data?.logs) {
-        backupLogs.value = data.logs
-      }
-    }
-  } catch { /* ignore */ }
-
-  // 加载校验值
-  try {
-    const instance3 = getS3BackupInstance()
-    if (instance3) {
-      const data = await instance3.getStorage().checksums.load()
-      if (data?.items) {
-        checksums.value = data.items
-      }
-    }
-  } catch { /* ignore */ }
-
-  // 加载上传来源映射
-  try {
-    const instance4 = getS3BackupInstance()
-    if (instance4) {
-      const data = await instance4.getStorage().uploadHostMap.load()
-      if (data?.map) {
-        uploadHostMap.value = data.map
-      }
-    }
-  } catch { /* ignore */ }
+  // 并行加载操作日志 / 校验值 / 上传来源映射（复用同一 instance）
+  if (instance) {
+    const storage = instance.getStorage()
+    await Promise.all([
+      storage.backupLogs.load().then((data) => {
+        if (data?.logs) { backupLogs.value = data.logs }
+      }).catch(() => { /* ignore */ }),
+      storage.checksums.load().then((data) => {
+        if (data?.items) { checksums.value = data.items }
+      }).catch(() => { /* ignore */ }),
+      storage.uploadHostMap.load().then((data) => {
+        if (data?.map) { uploadHostMap.value = data.map }
+      }).catch(() => { /* ignore */ }),
+    ])
+  }
 
   // 注册自动备份事件监听
   window.addEventListener("autoBackupTrigger", handleAutoBackupTrigger)

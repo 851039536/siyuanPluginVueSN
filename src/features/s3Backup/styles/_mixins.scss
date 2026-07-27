@@ -1,0 +1,31 @@
+// ========== s3Backup/styles/_mixins.scss ==========
+// 模块内共享 mixins（仅限 s3Backup 范围使用）
+@use '@/variables.scss' as *;
+
+// 状态徽章基础样式（三处徽章共用：日志状态 / 校验结果 / 比对结果）
+@mixin status-badge {
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  padding: 1px $spacing-1;
+  border-radius: 3px;
+}
+
+// 成功态（绿色）
+@mixin status-badge-ok {
+  color: var(--b3-theme-success);
+  background: rgba(var(--b3-theme-success-rgb, 45, 170, 78), 0.1);
+}
+
+// 失败态（红色）
+@mixin status-badge-fail {
+  color: var(--b3-theme-error);
+  background: rgba(var(--b3-theme-error-rgb, 212, 59, 59), 0.1);
+}
+
+// 元信息分隔符（"·"）
+@mixin meta-sep {
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface-light);
+  opacity: 0.5;
+  flex-shrink: 0;
+}

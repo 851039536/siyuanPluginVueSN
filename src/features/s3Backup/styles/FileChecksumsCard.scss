@@ -1,5 +1,6 @@
 /** 文件校验卡片样式 (Codex) */
 @use '@/variables.scss' as *;
+@use './mixins' as m;
 
 .checksums-container {
   display: flex;
@@ -97,20 +98,19 @@
   flex-shrink: 0;
 }
 
+.checksum-sep {
+  @include m.meta-sep;
+}
+
 .verify-badge {
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
-  padding: 1px $spacing-1;
-  border-radius: 3px;
+  @include m.status-badge;
 
   &.verify-ok {
-    color: var(--b3-theme-success);
-    background: rgba(var(--b3-theme-success-rgb, 45, 170, 78), 0.1);
+    @include m.status-badge-ok;
   }
 
   &.verify-fail {
-    color: var(--b3-theme-error);
-    background: rgba(var(--b3-theme-error-rgb, 212, 59, 59), 0.1);
+    @include m.status-badge-fail;
   }
 }
 
@@ -228,19 +228,14 @@
 }
 
 .compare-badge {
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
-  padding: 1px $spacing-1;
-  border-radius: 3px;
+  @include m.status-badge;
   white-space: nowrap;
 
   &.compare-ok {
-    color: var(--b3-theme-success);
-    background: rgba(var(--b3-theme-success-rgb, 45, 170, 78), 0.1);
+    @include m.status-badge-ok;
   }
 
   &.compare-fail {
-    color: var(--b3-theme-error);
-    background: rgba(var(--b3-theme-error-rgb, 212, 59, 59), 0.1);
+    @include m.status-badge-fail;
   }
 }

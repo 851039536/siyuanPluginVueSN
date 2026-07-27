@@ -89,7 +89,7 @@
             <span class="checksum-path-icon" :title="item.filePath" :aria-label="item.filePath">&#9432;</span>
             <span class="checksum-meta">
               <span class="checksum-size">{{ formatFileSize(item.fileSize) }}</span>
-              <span class="log-sep">·</span>
+              <span class="checksum-sep">·</span>
               <span class="checksum-time">{{ formatTime(item.time) }}</span>
             </span>
             <div class="checksum-actions">
@@ -163,9 +163,17 @@ const verifyResults = ref<Record<string, boolean | undefined>>({})
 const verifyingItems = ref<Record<string, boolean>>({})
 const isVerifyingAll = ref(false)
 
+/** 惰性缓存的 BackupManager 单实例（workspaceRoot 变化时重建，避免每次校验重复创建） */
+let cachedManager: BackupManager | null = null
+let cachedRoot = ""
+
 function getManager(): BackupManager | null {
   if (!props.workspaceRoot) { return null }
-  return new BackupManager(props.workspaceRoot)
+  if (!cachedManager || cachedRoot !== props.workspaceRoot) {
+    cachedManager = new BackupManager(props.workspaceRoot)
+    cachedRoot = props.workspaceRoot
+  }
+  return cachedManager
 }
 
 async function verifyOne(item: FileChecksum): Promise<void> {
@@ -287,18 +295,17 @@ interface ResolvedDropPath {
  */
 async function resolveDropPath(file: File): Promise<ResolvedDropPath | null> {
   let filePath: string | null = null
+  // 一次性获取 node 模块，供下方各分支复用
+  const node = getNodeModules()
 
   // 1. Electron webUtils API（最可靠，不受 contextIsolation 影响）
   try {
     if (typeof window.require === "function") {
       const electron = window.require("electron")
       const webPath = electron?.webUtils?.getPathForFile?.(file)
-      if (webPath) {
-        const node = getNodeModules()
-        if (node) {
-          await node.fs.promises.access(webPath)
-          filePath = webPath
-        }
+      if (webPath && node) {
+        await node.fs.promises.access(webPath)
+        filePath = webPath
       }
     }
   } catch { /* webUtils 不可用 */ }
@@ -308,7 +315,6 @@ async function resolveDropPath(file: File): Promise<ResolvedDropPath | null> {
     const rawPath = (file as any).path as string | undefined
     if (rawPath) {
       try {
-        const node = getNodeModules()
         if (node) { await node.fs.promises.access(rawPath); filePath = rawPath }
       } catch { /* fall through */ }
     }
@@ -318,7 +324,6 @@ async function resolveDropPath(file: File): Promise<ResolvedDropPath | null> {
 
   // 获取实际文件名和大小
   try {
-    const node = getNodeModules()
     if (node) {
       const stats = await node.fs.promises.stat(filePath)
       return {

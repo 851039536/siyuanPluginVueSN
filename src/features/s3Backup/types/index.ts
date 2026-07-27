@@ -111,6 +111,20 @@ export interface BackupLog {
   message?: string
   /** 操作来源设备名 */
   hostname?: string
+  /** 结构化文件清单详情（旧日志无此字段，展开时降级显示完整 message） */
+  detail?: BackupLogDetail
+}
+
+/** 备份日志的结构化文件清单（增量备份/还原产生，按类别分组供 UI 展开展示） */
+export interface BackupLogDetail {
+  /** 上传成功的文件相对路径 */
+  uploaded?: string[]
+  /** 从远端删除的文件相对路径 */
+  deleted?: string[]
+  /** 传输失败的文件相对路径 */
+  failed?: string[]
+  /** 各清单因存储上限被省略的条数 */
+  omitted?: { uploaded?: number; deleted?: number; failed?: number }
 }
 
 // ========== 默认值常量 ==========
@@ -123,6 +137,9 @@ export const DEFAULT_BACKUP_MODE: BackupMode = {
 
 /** 日志最大保留条数 */
 export const MAX_LOG_COUNT = 200
+
+/** 日志 detail 中每类文件清单的存储上限（超出记入 omitted 计数，防止首次全量备份撑爆 storage） */
+export const MAX_LOG_DETAIL_FILES = 200
 
 /** 本地备份列表最大显示条数 */
 export const MAX_LOCAL_BACKUP_COUNT = 50

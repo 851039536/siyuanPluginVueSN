@@ -10,14 +10,29 @@
 
 .log-item {
   display: flex;
-  align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-1 $spacing-2;
+  flex-direction: column;
   border-radius: $radius-sm;
   font-size: $font-size-xs;
 
   &.log-fail {
     background: rgba(var(--b3-theme-error-rgb, 212, 59, 59), 0.06);
+  }
+}
+
+/* 头部行：类型徽章 / 文件名 / 元信息 / 状态徽章 / 消息预览 / 展开箭头 */
+.log-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-1 $spacing-2;
+
+  &.log-row-expandable {
+    cursor: pointer;
+
+    &:hover {
+      background: var(--b3-list-hover);
+      border-radius: $radius-sm;
+    }
   }
 }
 
@@ -102,5 +117,97 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 160px;
+  /* 40%：消息预览的最大占宽，message 现为纯统计摘要，完整内容在展开详情区查看 */
+  max-width: 40%;
+}
+
+/* 展开/收起箭头（展开态旋转 90 度） */
+.log-chevron {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  color: var(--b3-theme-on-surface-light);
+  transition: transform 0.12s ease;
+
+  &.log-chevron-open {
+    transform: rotate(90deg);
+  }
+}
+
+/* 详情区：全宽块，结构化文件清单或旧日志完整 message */
+.log-detail {
+  position: relative;
+  margin: 0 $spacing-2 $spacing-1;
+  padding: $spacing-1 $spacing-2;
+  /* Codex 边框风格：左侧 2px 细边框缩进标识层级，禁 box-shadow */
+  border-left: 2px solid var(--b3-border-color);
+  /* 240px：大清单展开时的详情区高度上限，内部滚动防止撑爆日志列表 */
+  max-height: 240px;
+  overflow-y: auto;
+  font-size: $font-size-2xs;
+}
+
+.log-detail-toolbar {
+  position: absolute;
+  top: $spacing-1;
+  right: $spacing-1;
+}
+
+.log-detail-group {
+  & + & {
+    margin-top: $spacing-1;
+  }
+}
+
+/* 分组标题（上传文件/删除文件/失败文件 + 计数），大写标签风格 */
+.log-detail-title {
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.06em;
+  color: var(--b3-theme-on-surface-light);
+  margin-bottom: $spacing-2px;
+
+  &.log-detail-title-uploaded {
+    color: var(--b3-theme-primary);
+  }
+
+  &.log-detail-title-deleted {
+    color: #d97706;
+  }
+
+  &.log-detail-title-failed {
+    color: var(--b3-theme-error);
+  }
+}
+
+.log-detail-files {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2px;
+}
+
+/* 文件相对路径：mono 字体，长路径折行不截断 */
+.log-detail-file {
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  line-height: $line-height-normal;
+  word-break: break-all;
+  color: var(--b3-theme-on-background);
+}
+
+/* 超出存储上限的省略提示："+N 更多" */
+.log-detail-more {
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light);
+}
+
+/* 旧日志降级显示：完整 message 折行 */
+.log-detail-message {
+  font-size: $font-size-2xs;
+  line-height: $line-height-normal;
+  color: var(--b3-theme-on-surface-light);
+  white-space: pre-wrap;
+  word-break: break-all;
+  /* 给右上角复制按钮留出空间，避免首行文字被遮挡 */
+  padding-right: $spacing-8;
 }

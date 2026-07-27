@@ -114,6 +114,13 @@
               </div>
             </div>
             <div class="rm-asset-item__actions">
+              <!-- 按钮："定位" -->
+              <button
+                class="rm-btn small"
+                @click="handleLocateAsset(asset.path)"
+              >
+                {{ i18n.locate }}
+              </button>
               <!-- 按钮："复制路径" -->
               <button
                 class="rm-btn small"
@@ -363,6 +370,7 @@ const {
   currentAssetList,
   refresh,
   copyPathToClipboard,
+  handleLocateAsset,
   handleDeleteUnused,
   handleDeleteAllUnused,
   startMoveAsset,

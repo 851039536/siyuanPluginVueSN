@@ -22,6 +22,11 @@ export function escapeSqlLike(str: string): string {
     .replace(/'/g, "''")
 }
 
+/** 转义 SQL 字符串字面量（仅单引号与反斜杠），用于 = 等值比较 */
+export function escapeSqlString(str: string): string {
+  return str.replace(/\\/g, "\\\\").replace(/'/g, "''")
+}
+
 /** 校验移动目标路径：必须位于 assets/ 下、不含路径穿越、不以 / 结尾 */
 export function isValidAssetMovePath(path: string): boolean {
   return path.startsWith("assets/") && !path.includes("..") && !path.endsWith("/")

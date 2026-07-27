@@ -53,4 +53,8 @@ export interface ResourceManagerI18n {
   apply: string
   copyFailed: string
   updatedRefs: string
+  locate: string
+  locateRefs: string
+  locateNotFound: string
+  locateFailed: string
 }

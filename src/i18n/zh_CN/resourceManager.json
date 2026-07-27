@@ -45,6 +45,10 @@
     "apply": "应用",
     "loadLimit": "加载数量",
     "copyFailed": "复制失败",
-    "updatedRefs": "已更新 {count} 处引用"
+    "updatedRefs": "已更新 {count} 处引用",
+    "locate": "定位",
+    "locateRefs": "该资源在 {count} 个块中被引用",
+    "locateNotFound": "未找到引用该资源的文档",
+    "locateFailed": "定位失败"
   }
 }

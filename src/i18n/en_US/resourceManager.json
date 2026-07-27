@@ -45,6 +45,10 @@
     "apply": "Apply",
     "loadLimit": "Load Limit",
     "copyFailed": "Copy failed",
-    "updatedRefs": "Updated {count} reference(s)"
+    "updatedRefs": "Updated {count} reference(s)",
+    "locate": "Locate",
+    "locateRefs": "Referenced in {count} block(s)",
+    "locateNotFound": "No document references this asset",
+    "locateFailed": "Locate failed"
   }
 }

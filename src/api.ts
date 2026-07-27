@@ -620,6 +620,20 @@ export async function getBlockByID(blockId: string): Promise<Block> {
   return data[0]
 }
 
+/**
+ * 通过块 ID 获取其所属的文档 ID（root_id）
+ * @returns 文档 ID，查询失败或块不存在返回 null
+ */
+export async function getDocIdByBlockId(blockId: string): Promise<string | null> {
+  try {
+    const block = await getBlockByID(blockId)
+    return block?.root_id || null
+  } catch (error) {
+    console.error("获取文档ID失败:", error)
+    return null
+  }
+}
+
 // **************************************** Template ****************************************
 
 export async function render(

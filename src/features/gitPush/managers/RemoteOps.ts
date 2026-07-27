@@ -90,16 +90,24 @@ export class RemoteOps {
   private async getCurrentBranch(cwd: string): Promise<string> {
     try {
       const branch = await this.executor.execGit(cwd, ["rev-parse", "--abbrev-ref", "HEAD"])
-      return branch === "HEAD" ? "" : branch
+      if (branch && branch !== "HEAD") return branch
+    } catch { /* 空仓库（unborn branch）时 rev-parse 失败，走下方 symbolic-ref 兜底 */ }
+    try {
+      return await this.executor.execGit(cwd, ["symbolic-ref", "--short", "HEAD"])
     } catch {
       return ""
     }
   }
 
-  /** pull --ff-only 分叉失败时增强错误提示（首次失败与重试失败统一应用） */
+  /** pull 失败时增强错误提示（首次失败与重试失败统一应用） */
   private enhancePullError(action: "push" | "pull", msg: string): string {
-    if (action === "pull" && /fast-forward|non-fast-forward/i.test(msg)) {
+    if (action !== "pull") return msg
+    if (/fast-forward|non-fast-forward/i.test(msg)) {
       return `拉取失败（本地与远程提交历史已分叉，无法快进合并）。\n请在终端使用 git pull --rebase 或手动 merge 解决。\n原始错误: ${msg}`
+    }
+    // 未能解析当前分支时退回裸 pull，非默认上游远程会报 "did not specify a branch"
+    if (/did not specify a branch/i.test(msg)) {
+      return `拉取失败（无法确定当前分支，且该远程不是当前分支的默认上游）。\n请确认仓库不处于 detached HEAD 或空仓库状态后重试。\n原始错误: ${msg}`
     }
     return msg
   }

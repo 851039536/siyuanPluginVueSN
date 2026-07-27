@@ -40,6 +40,22 @@ export function buildAssetList(paths: string[], isImage: boolean): ImageAssetInf
   return paths.filter(extFilter).map((path) => ({ path }))
 }
 
+/** 安全解码 URL 编码路径（非法编码时原样返回） */
+export function safeDecodeURI(path: string): string {
+  try { return decodeURI(path) }
+  catch { return path }
+}
+
+/** 检查资源文件是否存在于磁盘（通过列出父目录比对文件名） */
+export async function assetFileExists(path: string): Promise<boolean> {
+  const segments = `/data/${path}`.split("/")
+  const name = segments.pop()
+  const entries = await readDir(segments.join("/"))
+  if (!entries) return false
+  const files = Array.isArray(entries) ? entries : [entries]
+  return files.some((entry) => entry.name === name)
+}
+
 /** 递归扫描资源目录，子目录并行收集，返回相对 /data/ 的路径列表 */
 export async function scanAssetDir(dirPath: string): Promise<string[]> {
   try {

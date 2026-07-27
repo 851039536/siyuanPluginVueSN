@@ -57,4 +57,5 @@ export interface ResourceManagerI18n {
   locateRefs: string
   locateNotFound: string
   locateFailed: string
+  fileNotFound: string
 }

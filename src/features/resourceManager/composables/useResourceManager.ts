@@ -389,9 +389,13 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
         for (const editor of getAllEditor()) editor.reload(false)
       }
 
+      // 移动成功后自动复制新路径，便于直接粘贴引用
+      const copied = await copyToClipboard(newPath)
+
       if (!isMounted.value) return
       const refMsg = updatedCount > 0 ? `（${i18n.updatedRefs.replace("{count}", String(updatedCount))}）` : ""
-      showMsg(`${i18n.moveSuccess}${refMsg}（${i18n.newPath}: ${newPath}）`)
+      const copyMsg = copied ? `（${i18n.pathCopied}）` : ""
+      showMsg(`${i18n.moveSuccess}${refMsg}（${i18n.newPath}: ${newPath}）${copyMsg}`)
       updateAssetPathAfterMove(oldPath, newPath)
       cancelMove()
     }

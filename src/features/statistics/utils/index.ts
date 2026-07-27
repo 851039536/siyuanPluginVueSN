@@ -83,6 +83,24 @@ export function formatYmd(date: Date): string {
 }
 
 /**
+ * 紧凑日期字符串 YYYYMMDD → 带连字符的 YYYY-MM-DD
+ */
+export function toDashedYmd(ymd: string): string {
+  return `${ymd.substring(0, 4)}-${ymd.substring(4, 6)}-${ymd.substring(6, 8)}`
+}
+
+/**
+ * 紧凑日期字符串 YYYYMMDD → Date（本地时区零点）
+ */
+export function parseYmd(ymd: string): Date {
+  return new Date(
+    Number.parseInt(ymd.substring(0, 4)),
+    Number.parseInt(ymd.substring(4, 6)) - 1,
+    Number.parseInt(ymd.substring(6, 8)),
+  )
+}
+
+/**
  * 判断日期字符串（格式 YYYY-MM-DD）是否为今天
  */
 export function isToday(dateStr: string): boolean {

@@ -18,18 +18,10 @@ import {
   isValidDateStr,
   mapChangedDocs,
   padZero,
+  parseYmd,
   stripTags,
 } from "../utils"
 import { executeSql } from "./executeSql"
-
-// YYYYMMDD 字符串 → Date（本地时区零点）
-function parseYmd(ymd: string): Date {
-  return new Date(
-    Number.parseInt(ymd.substring(0, 4)),
-    Number.parseInt(ymd.substring(4, 6)) - 1,
-    Number.parseInt(ymd.substring(6, 8)),
-  )
-}
 
 // 删除历史翻页保护上限，防止异常数据导致无限翻页
 const MAX_HISTORY_PAGES = 32

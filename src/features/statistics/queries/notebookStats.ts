@@ -18,7 +18,8 @@ import {
 } from "../types/constants"
 import {
   filterActiveNotebooks,
-  padZero,
+  formatDate,
+  formatYmd,
 } from "../utils"
 import {
   executeSql,
@@ -83,7 +84,8 @@ export async function getNotebookDocStats(): Promise<Array<{ name: string, count
 
     if (rows && rows.length > 0) {
       for (const row of rows) {
-        const name = idToName.get(row.notebook_id) || "未知笔记本"
+        // box IN 已过滤为已知笔记本，兜底仅为防御（不可达）
+        const name = idToName.get(row.notebook_id) || ""
         result.push({
           name,
           count: Number(row.doc_count || 0),
@@ -131,7 +133,7 @@ export async function getNotebookWordStats(): Promise<NotebookWordStat[]> {
 
     if (rows && rows.length > 0) {
       for (const row of rows) {
-        const name = idToName.get(row.notebook_id) || "未知笔记本"
+        const name = idToName.get(row.notebook_id) || ""
         const words = Number(row.total_words || 0)
         totalWordsAll += words
         result.push({
@@ -221,18 +223,17 @@ export async function getNotebookActivityTrend(days: number): Promise<NotebookAc
         const date = new Date(today)
         date.setDate(today.getDate() - i)
         date.setHours(0, 0, 0, 0)
-        const dateStr = `${date.getFullYear()}${padZero(date.getMonth() + 1)}${padZero(date.getDate())}`
-        const words = dayMap.get(dateStr) || 0
+        const words = dayMap.get(formatYmd(date)) || 0
 
         dailyData.push({
-          date: `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())}`,
+          date: formatDate(date),
           words,
           dateLabel: `${date.getMonth() + 1}/${date.getDate()}`,
         })
       }
 
       result.push({
-        notebook: idToName.get(nb.id) || "未知笔记本",
+        notebook: idToName.get(nb.id) || "",
         data: dailyData,
         color: NOTEBOOK_COLORS[idx % NOTEBOOK_COLORS.length],
       })
@@ -273,7 +274,7 @@ export async function getMostProductiveNotebook(
 
     if (rows.length > 0) {
       return {
-        name: idToName.get(rows[0].notebook_id) || "未知笔记本",
+        name: idToName.get(rows[0].notebook_id) || "",
         words: Number(rows[0].words || 0),
       }
     }
@@ -311,7 +312,7 @@ export async function getNotebookBlockTypeStats(): Promise<NotebookBlockTypeStat
     const grouped = new Map<string, Array<{ name: string, count: number, label: string }>>()
     if (rows) {
       for (const row of rows) {
-        const nbName = idToName.get(row.notebook_id) || "未知笔记本"
+        const nbName = idToName.get(row.notebook_id) || ""
         if (!grouped.has(nbName)) {
           grouped.set(nbName, [])
         }

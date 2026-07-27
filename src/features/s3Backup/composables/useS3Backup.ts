@@ -7,7 +7,7 @@
  */
 import { computed, ref } from "vue"
 import type { S3Config, S3FileInfo } from "../types"
-import { DEFAULT_S3_CONFIG } from "../types"
+import { DEFAULT_S3_CONFIG, INCREMENTAL_SUBDIR } from "../types"
 import { S3Client } from "../types/s3Client"
 import type { BackupProgress } from "../modules/BackupManager"
 import { getErrorMessage } from "@/utils/stringUtils"
@@ -98,6 +98,18 @@ export function useS3Backup(i18n: Record<string, string> = {}) {
     await s3Client.uploadBuffer(buffer, key)
   }
 
+  /** 读取 S3 对象文本内容（404 返回 null，供增量清单读取使用） */
+  async function getObjectText(key: string): Promise<string | null> {
+    if (!s3Client) { throw new Error("S3 客户端未初始化") }
+    return s3Client.getObjectText(key)
+  }
+
+  /** 删除 S3 对象（不联动 backupList，供增量清理已删除文件使用） */
+  async function deleteObject(key: string): Promise<void> {
+    if (!s3Client) { throw new Error("S3 客户端未初始化") }
+    await s3Client.delete(key)
+  }
+
   /** 获取 S3 列举前缀（统一默认值，消除 listBackups/listExistingKeys 重复构造） */
   function getListPrefix(): string {
     return s3Config.value.prefix || "siyuan-backup/"
@@ -106,7 +118,14 @@ export function useS3Backup(i18n: Record<string, string> = {}) {
   /** 从 S3 拉取文件列表（消除 listBackups/listExistingKeys 重复的 list 调用和 backupList 赋值） */
   async function fetchBackupList(): Promise<S3FileInfo[]> {
     if (!s3Client) { throw new Error("S3 客户端未初始化") }
-    const files = await s3Client.list(getListPrefix())
+    const all = await s3Client.list(getListPrefix())
+    // 过滤增量备份的小文件与清单，避免污染云端备份列表与去重集合；
+    // 同时过滤文件夹占位对象（0 字节，如 S3 Browser 的 ThisIsAnEmptyFolderInTheS3Bucket）与目录标记键（以 / 结尾）
+    const files = all.filter((f) =>
+      !f.key.includes(`/${INCREMENTAL_SUBDIR}/`)
+      && !f.key.endsWith("/")
+      && f.size > 0,
+    )
     backupList.value = files
     return files
   }
@@ -144,6 +163,8 @@ export function useS3Backup(i18n: Record<string, string> = {}) {
     testConnection,
     saveConfig,
     uploadFileContent,
+    getObjectText,
+    deleteObject,
     listBackups,
     listExistingKeys,
     downloadBackup,

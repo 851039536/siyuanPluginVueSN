@@ -59,9 +59,9 @@
         @open-folder="openWorkspaceFolder"
       />
 
-      <!-- 备份进度 -->
+      <!-- 备份进度（含独立增量备份/还原运行期间） -->
       <BackupProgressSection
-        v-if="isBackingUp"
+        v-if="isBackingUp || isIncrementalRunning || isIncrementalRestoring"
         :progress="backupProgress"
         :phase-label="phaseLabel"
         :i18n="i18n"
@@ -81,9 +81,14 @@
         :resolved-s3-path="resolvedS3Path"
         :backup-mode-local-zip="backupModeLocal.localZip"
         :backup-mode-s3-upload="backupModeLocal.s3Upload"
+        :backup-mode-s3-incremental="backupModeLocal.s3Incremental"
+        :is-incremental-running="isIncrementalRunning"
+        :is-incremental-restoring="isIncrementalRestoring"
         :i18n="i18n"
         @perform-backup="performManualBackup"
         @trigger-s3-upload="triggerS3OnlyUpload"
+        @trigger-incremental="triggerIncrementalOnly"
+        @trigger-incremental-restore="triggerIncrementalRestore"
         @update:use-date-folder="useDateFolder = $event; saveWorkspaceSettings()"
         @update:local-backup-dir="localBackupDir = $event; onLocalBackupDirChanged()"
         @update:s3-sub-prefix="s3SubPrefix = $event; saveWorkspaceSettings()"
@@ -207,6 +212,7 @@ import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import { encryptSetting, decryptSetting } from "@/utils/settingsCrypto"
 import { useS3Backup } from "./composables/useS3Backup"
+import { useIncrementalBackup } from "./composables/useIncrementalBackup"
 import { BackupManager } from "./modules/BackupManager"
 import type { BackupResult, WorkspaceFile } from "./modules/BackupManager"
 import { getS3BackupInstance } from "./index"
@@ -251,6 +257,8 @@ const {
   testConnection,
   saveConfig,
   uploadFileContent,
+  getObjectText,
+  deleteObject,
   listBackups,
   listExistingKeys,
   downloadBackup,
@@ -304,6 +312,7 @@ const backupModeLocal = reactive<BackupMode>({ ...DEFAULT_BACKUP_MODE })
 function onBackupModeChanged(mode: BackupMode): void {
   backupModeLocal.localZip = mode.localZip
   backupModeLocal.s3Upload = mode.s3Upload
+  backupModeLocal.s3Incremental = mode.s3Incremental
   saveWorkspaceSettings()
 }
 
@@ -334,7 +343,8 @@ let backupManager: BackupManager | null = null
 
 /** 是否有任一备份模式被选中 */
 const canBackup = computed(() => {
-  return backupModeLocal.localZip || (backupModeLocal.s3Upload && isConfigured.value)
+  return backupModeLocal.localZip
+    || ((backupModeLocal.s3Upload || backupModeLocal.s3Incremental) && isConfigured.value)
 })
 
 // ========== 备份管理器初始化 ==========
@@ -351,6 +361,72 @@ function onLocalBackupDirChanged(): void {
     backupManager.setBackupDir(localBackupDir.value)
   }
   saveWorkspaceSettings()
+}
+
+// ========== 增量备份（逻辑在 useIncrementalBackup，此处仅接线） ==========
+
+const isIncrementalRunning = ref(false)
+const isIncrementalRestoring = ref(false)
+
+const { performIncrementalBackup, performIncrementalRestore } = useIncrementalBackup({
+  getBackupManager: () => backupManager,
+  uploadFileContent,
+  getObjectText,
+  deleteObject,
+  downloadObject: downloadBackup,
+  backupProgress,
+  addLog: (entry) => addLog(entry),
+  i18n: props.i18n,
+})
+
+/** 执行增量备份（传入当前 S3 前缀与子路径） */
+async function runIncrementalBackup(): Promise<void> {
+  if (!isConfigured.value) {
+    throw new Error("S3 未配置，请先完成 S3 连接配置")
+  }
+  await performIncrementalBackup(s3Config.value.prefix, s3SubPrefix.value)
+}
+
+/** 独立增量备份按钮（不依赖模式开关，仿 triggerS3OnlyUpload） */
+async function triggerIncrementalOnly(): Promise<void> {
+  if (isIncrementalRunning.value || !backupManager) { return }
+  if (!workspacePath.value) {
+    showMessage(props.i18n.noWorkspace || "请先选择工作区路径", 3000, "info")
+    await selectWorkspacePath()
+    if (!workspacePath.value) { return }
+  }
+  isIncrementalRunning.value = true
+  try {
+    await runIncrementalBackup()
+  } catch (err: unknown) {
+    showMessage(`${props.i18n.incrementalBackup}: ${getErrorMessage(err)}`, 5000, "error")
+  } finally {
+    isIncrementalRunning.value = false
+  }
+}
+
+/** 增量还原：按云端 manifest 下载全部文件到本地备份目录下的时间戳还原文件夹 */
+async function triggerIncrementalRestore(): Promise<void> {
+  if (isIncrementalRestoring.value || !workspaceRoot.value || !pathModule) { return }
+  if (!isConfigured.value) {
+    showMessage("S3 未配置，请先完成 S3 连接配置", 3000, "error")
+    return
+  }
+  const confirmed = confirm(props.i18n.confirmIncrementalRestore)
+  if (!confirmed) { return }
+  isIncrementalRestoring.value = true
+  try {
+    const targetDir = pathModule.join(
+      workspaceRoot.value,
+      localBackupDir.value || DEFAULT_BACKUP_DIR,
+      `incremental-restore-${makeBackupTimestamp()}`,
+    )
+    await performIncrementalRestore(s3Config.value.prefix, s3SubPrefix.value, targetDir)
+  } catch (err: unknown) {
+    showMessage(`${props.i18n.incrementalRestore}: ${getErrorMessage(err)}`, 5000, "error")
+  } finally {
+    isIncrementalRestoring.value = false
+  }
 }
 
 // ========== 工作区路径管理 ==========
@@ -447,6 +523,10 @@ async function performManualBackup(): Promise<void> {
     if (backupModeLocal.s3Upload) {
       // 同时勾选本地+S3 时，只上传本次生成的 ZIP，避免重复上传历史备份（A4 修复）
       await performS3Backup(localResult)
+    }
+    if (backupModeLocal.s3Incremental) {
+      // 增量上传 data/ 中新增/变更文件（逻辑全部在 useIncrementalBackup）
+      await runIncrementalBackup()
     }
 
     // 更新备份时间
@@ -973,6 +1053,8 @@ async function loadWorkspaceSettings(): Promise<void> {
       if (data.backupMode) {
         backupModeLocal.localZip = data.backupMode.localZip ?? true
         backupModeLocal.s3Upload = data.backupMode.s3Upload ?? false
+        // 旧数据缺 s3Incremental 字段（浅合并不补嵌套字段），显式兜底为关闭
+        backupModeLocal.s3Incremental = data.backupMode.s3Incremental ?? false
       }
 
       const root = instance.getWorkspaceRoot()

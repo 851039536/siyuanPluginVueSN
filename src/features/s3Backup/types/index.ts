@@ -39,6 +39,8 @@ export interface BackupMode {
   localZip: boolean
   /** 是否启用 S3 上传 */
   s3Upload: boolean
+  /** 是否启用 S3 增量备份（仅上传 data/ 中新增/变更文件） */
+  s3Incremental: boolean
 }
 
 // ========== 备份设置接口 ==========
@@ -94,7 +96,7 @@ export interface BackupLog {
   /** 唯一 ID（时间戳） */
   id: string
   /** 操作类型 */
-  type: "localZip" | "s3Upload" | "s3Download" | "s3Delete"
+  type: "localZip" | "s3Upload" | "s3Download" | "s3Delete" | "s3Incremental"
   /** 操作描述文字 */
   action: string
   /** 相关文件名 */
@@ -116,6 +118,7 @@ export interface BackupLog {
 export const DEFAULT_BACKUP_MODE: BackupMode = {
   localZip: true,
   s3Upload: false,
+  s3Incremental: false,
 }
 
 /** 日志最大保留条数 */
@@ -145,6 +148,58 @@ export const DEFAULT_BACKUP_SETTINGS: BackupSettings = {
   localBackupDir: DEFAULT_BACKUP_DIR,
   s3SubPrefix: DEFAULT_BACKUP_DIR,
 }
+
+// ========== 增量备份接口 ==========
+
+/** 增量备份清单条目（以 relativePath 为键存储在 BackupManifest.files 中） */
+export interface ManifestEntry {
+  /** 文件修改时间（毫秒时间戳） */
+  mtime: number
+  /** 文件大小（字节） */
+  size: number
+}
+
+/** 增量备份清单（存储于 S3，为增量对比的唯一事实源） */
+export interface BackupManifest {
+  /** 清单结构版本（预留未来扩展，如分片/哈希字段） */
+  version: number
+  /** 生成时间（ISO 字符串） */
+  createdAt: string
+  /** 生成设备主机名 */
+  hostname: string
+  /** relativePath → 文件状态映射 */
+  files: Record<string, ManifestEntry>
+}
+
+/** 增量扫描的本地文件条目（scanDataFiles 的返回项） */
+export interface IncrementalFileEntry {
+  fullPath: string
+  relativePath: string
+  mtime: number
+  size: number
+}
+
+/** 增量对比结果 */
+export interface IncrementalDiff {
+  /** 需上传的新增/变更文件 */
+  toUpload: IncrementalFileEntry[]
+  /** 需从 S3 删除的 relativePath 列表（本地已删除） */
+  toDelete: string[]
+  /** 未变更被跳过的文件数 */
+  unchangedCount: number
+}
+
+/** 增量备份在 S3 中的子目录名（位于 {prefix}/{s3SubPrefix}/ 之下） */
+export const INCREMENTAL_SUBDIR = "incremental"
+
+/** 增量清单文件名 */
+export const INCREMENTAL_MANIFEST_NAME = "manifest.json"
+
+/** 当前清单结构版本 */
+export const MANIFEST_VERSION = 1
+
+/** 大文件警告阈值（100MB）：uploadBuffer 整体读入内存，超过阈值仅警告不阻断 */
+export const LARGE_FILE_WARN_SIZE = 100 * 1024 * 1024
 
 // ========== 备份校验值接口 ==========
 

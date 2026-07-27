@@ -1,4 +1,4 @@
-<!-- 备份模式选择组件 — 本地 ZIP / S3 上传两个开关 -->
+<!-- 备份模式选择组件 — 本地 ZIP / S3 上传 / S3 增量备份三个开关 -->
 <template>
   <section class="card-section backup-mode-section">
     <div class="section-header">
@@ -21,6 +21,17 @@
         @update:model-value="$emit('update:modelValue', { ...modelValue, s3Upload: $event as boolean })"
       />
       <span class="form-hint">{{ i18n.s3UploadHint || "逐文件上传到 S3 兼容存储（需先完成 S3 配置）" }}</span>
+    </div>
+    <!-- 增量备份开关："S3 增量备份" -->
+    <div class="form-group form-group-checkbox">
+      <Switch
+        :model-value="modelValue.s3Incremental"
+        size="xsmall"
+        :label="i18n.s3Incremental"
+        @update:model-value="$emit('update:modelValue', { ...modelValue, s3Incremental: $event as boolean })"
+      />
+      <!-- 增量备份提示："仅上传 data/ 中新增或变更的文件到 S3（需先完成 S3 配置）" -->
+      <span class="form-hint">{{ i18n.s3IncrementalHint }}</span>
     </div>
     <p class="backup-hint">
       {{ i18n.backupModeHint || "可同时勾选两项，本地 ZIP 和 S3 上传将顺序执行" }}

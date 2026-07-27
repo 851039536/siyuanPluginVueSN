@@ -69,6 +69,7 @@ function typeLabel(type: BackupLog["type"]): string {
     s3Upload: "上传",
     s3Download: "下载",
     s3Delete: "删除",
+    s3Incremental: "增量",
   }
   return map[type] || type
 }

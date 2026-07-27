@@ -39,6 +39,11 @@ export class PluginStorage {
   async load<T>(key: string): Promise<T | null> {
     try {
       const data = await this.plugin.loadData(key)
+      // 思源 loadData 在文件不存在（404）时返回 ""，remove() 也以写入 "" 实现删除
+      // 统一将空字符串归一化为 null，避免下游误判为损坏数据
+      if (data === "" || data === undefined) {
+        return null
+      }
       return data as T
     } catch (error) {
       console.error(`加载数据失败 [${key}]:`, error)

@@ -1910,6 +1910,8 @@
   "incrementalResult": "增量备份完成：上传 {uploaded}、跳过 {skipped}、删除 {deleted}",
   "incrementalResultFailed": "，失败 {failed}",
   "incrementalFailedList": "；失败文件：{files}",
+  "incrementalUploadedList": "；上传：{files}",
+  "incrementalDeletedList": "；删除：{files}",
   "incrementalEmptyScan": "扫描结果为空，已中止增量备份",
   "incrementalManifestCorrupt": "云端清单解析失败，按首次备份处理",
   "incrementalBackup": "增量备份",

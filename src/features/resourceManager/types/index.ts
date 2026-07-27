@@ -1,9 +1,4 @@
-// 资源管理模块类型定义：资源条目与国际化文案接口
-
-/** 图片资源信息 */
-export interface ImageAssetInfo {
-  path: string
-}
+// 资源管理模块类型定义：国际化文案接口
 
 /** 资源管理器国际化类型 */
 export interface ResourceManagerI18n {

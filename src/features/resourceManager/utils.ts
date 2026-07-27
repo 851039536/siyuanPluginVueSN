@@ -1,9 +1,8 @@
 // 资源管理模块纯工具函数与共享常量：路径过滤、SQL 转义、目录扫描
-import type { ImageAssetInfo } from "./types"
 import { readDir } from "@/api"
 
 /** 图片扩展名匹配 */
-export const IMAGE_EXT = /\.(?:png|jpg|jpeg|gif|svg|webp|bmp|ico|tiff|avif)$/i
+const IMAGE_EXT = /\.(?:png|jpg|jpeg|gif|svg|webp|bmp|ico|tiff|avif)$/i
 
 /** 内置快速分类 key 集合 */
 export const BUILT_IN_CATEGORY_KEYS = new Set(["images", "net", "tool", "other"])
@@ -32,12 +31,12 @@ export function isValidAssetMovePath(path: string): boolean {
   return path.startsWith("assets/") && !path.includes("..") && !path.endsWith("/")
 }
 
-/** 按图片/非图片扩展名过滤路径列表并构造资源条目 */
-export function buildAssetList(paths: string[], isImage: boolean): ImageAssetInfo[] {
+/** 按图片/非图片扩展名过滤路径列表 */
+export function buildAssetList(paths: string[], isImage: boolean): string[] {
   const extFilter = isImage
     ? (p: string) => IMAGE_EXT.test(p)
     : (p: string) => !IMAGE_EXT.test(p)
-  return paths.filter(extFilter).map((path) => ({ path }))
+  return paths.filter(extFilter)
 }
 
 /** 安全解码 URL 编码路径（非法编码时原样返回） */
@@ -50,7 +49,7 @@ export function safeDecodeURI(path: string): string {
  * markdown 中资源路径的可能存储形态变换：
  * 原文 / 仅空格编码（思源链接中空格存为 %20、中文保留原文）/ 完整 URL 编码
  */
-export const PATH_ENCODING_TRANSFORMS: ((s: string) => string)[] = [
+const PATH_ENCODING_TRANSFORMS: ((s: string) => string)[] = [
   (s) => s,
   (s) => s.split(" ").join("%20"),
   (s) => encodeURI(s),

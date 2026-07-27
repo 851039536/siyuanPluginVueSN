@@ -111,6 +111,8 @@
   "incrementalResult": "Incremental backup finished: uploaded {uploaded}, skipped {skipped}, deleted {deleted}",
   "incrementalResultFailed": ", failed {failed}",
   "incrementalFailedList": "; failed files: {files}",
+  "incrementalUploadedList": "; uploaded: {files}",
+  "incrementalDeletedList": "; deleted: {files}",
   "incrementalEmptyScan": "Scan result is empty, incremental backup aborted",
   "incrementalManifestCorrupt": "Failed to parse remote manifest, treated as first backup",
   "incrementalBackup": "Incremental Backup",

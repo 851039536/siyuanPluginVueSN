@@ -22,6 +22,15 @@ const UPLOAD_CONCURRENCY = 4
 /** 单文件传输（上传/下载）最大重试次数（不含首次尝试） */
 const TRANSFER_MAX_RETRIES = 2
 
+/** 日志详情中文件清单最多展示条数（超出以 +N 结尾，防止首次全量备份撑爆日志） */
+const MAX_LOG_FILES = 10
+
+/** 格式化文件清单：最多展示 MAX_LOG_FILES 个，超出追加 " +N" */
+function formatFileList(files: string[]): string {
+  const shown = files.slice(0, MAX_LOG_FILES).join(", ")
+  return files.length > MAX_LOG_FILES ? `${shown} +${files.length - MAX_LOG_FILES}` : shown
+}
+
 /** 依赖注入：全部来自 index.vue 已有的状态与方法 */
 export interface IncrementalBackupDeps {
   getBackupManager: () => BackupManager | null
@@ -157,8 +166,10 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
     let processed = 0
     let uploaded = 0
     let failed = 0
-    // 上传失败的文件相对路径（写入日志详情，便于用户定位而无需打开控制台）
+    // 上传成功/失败与删除成功的文件相对路径（写入日志详情，便于用户定位而无需打开控制台）
+    const uploadedFiles: string[] = []
     const failedFiles: string[] = []
+    const deletedFiles: string[] = []
     // 新 manifest 从旧清单的未变更条目起步，仅写入本次成功上传的条目（幂等保证）
     const newFiles: BackupManifest["files"] = { ...diff.unchanged }
 
@@ -177,6 +188,7 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
       if (ok) {
         newFiles[file.relativePath] = { mtime: file.mtime, size: file.size }
         uploaded++
+        uploadedFiles.push(file.relativePath)
       } else {
         failed++
         failedFiles.push(file.relativePath)
@@ -197,6 +209,7 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
       try {
         await deps.deleteObject(buildIncrementalKey(prefix, subPrefix, relativePath))
         deleted++
+        deletedFiles.push(relativePath)
       } catch (err: unknown) {
         // 删除失败：条目不在新 manifest 中，仅残留孤儿对象，不影响后续备份正确性
         console.warn(`[S3增量] 删除远端文件失败: ${relativePath}`, getErrorMessage(err))
@@ -233,12 +246,16 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
     if (failed > 0) {
       message += (i18n.incrementalResultFailed || "").replace("{failed}", String(failed))
     }
-    // 日志详情追加失败文件清单（最多 5 个），便于直接从日志 Tab 定位问题文件
+    // 日志详情追加上传/删除/失败文件清单（各最多 10 个），便于直接从日志 Tab 查看本次变更
     let logMessage = message
+    if (uploadedFiles.length > 0) {
+      logMessage += (i18n.incrementalUploadedList || "").replace("{files}", formatFileList(uploadedFiles))
+    }
+    if (deletedFiles.length > 0) {
+      logMessage += (i18n.incrementalDeletedList || "").replace("{files}", formatFileList(deletedFiles))
+    }
     if (failedFiles.length > 0) {
-      const shown = failedFiles.slice(0, 5).join(", ")
-      const suffix = failedFiles.length > 5 ? ` +${failedFiles.length - 5}` : ""
-      logMessage += (i18n.incrementalFailedList || "").replace("{files}", `${shown}${suffix}`)
+      logMessage += (i18n.incrementalFailedList || "").replace("{files}", formatFileList(failedFiles))
     }
     addLog({
       type: "s3Incremental",

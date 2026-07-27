@@ -109,6 +109,5 @@ const backupHintText = computed(() => {
 </script>
 
 <style scoped lang="scss">
-@use "../styles/ManualBackupCard.scss";
 @use "../styles/index.scss";
 </style>

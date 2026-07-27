@@ -8,6 +8,8 @@
  */
 import JSZip from "jszip"
 import { getNodeModules } from "@/utils/nodeModules"
+import { makeBackupTimestamp } from "../utils"
+import type { LocalBackupInfo } from "../types"
 
 // ========== 类型定义 ==========
 
@@ -27,7 +29,7 @@ export interface BackupResult {
   totalFiles: number
 }
 
-export interface BackupInfo {
+interface BackupInfo {
   timestamp: number
   backupTime: string
   version: string
@@ -52,18 +54,31 @@ export interface WorkspaceFile {
 
 // ========== 工具函数 ==========
 
-/** 数字补零（如 padNum(3) → "03"），供模块内 formatTimestamp 和 index.vue 的 timestamp 生成共用 */
-export function padNum(n: number): string {
-  return n.toString().padStart(2, "0")
+/** 缓存的 crypto/fs 模块引用（模块级单例，避免每次哈希计算重复 require） */
+let _crypto: any = null
+let _fsRaw: any = null
+
+/** 获取 crypto/fs 模块（仅 Electron/Node.js 环境可用） */
+function requireCryptoFs(): { crypto: any; fsRaw: any } {
+  if (!_crypto || !_fsRaw) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      _crypto = require("node:crypto")
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      _fsRaw = require("node:fs")
+    } catch {
+      throw new Error("哈希计算需要 Node.js 环境，请使用桌面版思源笔记")
+    }
+  }
+  return { crypto: _crypto, fsRaw: _fsRaw }
 }
 
 /** B11 修复：生成备份文件名，支持日期子文件夹 */
 function formatTimestamp(now: Date, useDateFolder = false): string {
-  const y = now.getFullYear()
-  const datePart = `${y}${padNum(now.getMonth() + 1)}${padNum(now.getDate())}`
-  const timePart = `${padNum(now.getHours())}${padNum(now.getMinutes())}${padNum(now.getSeconds())}`
+  const ts = makeBackupTimestamp(now) // "YYYYMMDD-HHmmss"
+  const datePart = ts.slice(0, 8)
   const prefix = useDateFolder ? `${datePart}/` : ""
-  return `data-${prefix}${datePart}-${timePart}.zip`
+  return `data-${prefix}${ts}.zip`
 }
 
 // ========== BackupManager ==========
@@ -280,10 +295,8 @@ export class BackupManager {
     await this.fs.unlink(backupFilePath)
   }
 
-  async scanBackupDir(): Promise<
-    Array<{ name: string; path: string; time: string; size: number }>
-  > {
-    const result: Array<{ name: string; path: string; time: string; size: number }> = []
+  async scanBackupDir(): Promise<LocalBackupInfo[]> {
+    const result: LocalBackupInfo[] = []
 
     try {
       await this.fs.access(this.backupDir)
@@ -323,16 +336,7 @@ export class BackupManager {
    * 流式读取，不阻塞 UI，支持大文件
    */
   async computeFileHash(filePath: string): Promise<string> {
-    let crypto: any
-    let fsRaw: any
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      crypto = require("node:crypto")
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      fsRaw = require("node:fs")
-    } catch {
-      throw new Error("哈希计算需要 Node.js 环境，请使用桌面版思源笔记")
-    }
+    const { crypto, fsRaw } = requireCryptoFs()
     const hash = crypto.createHash("sha256")
     return new Promise((resolve, reject) => {
       let stream: any

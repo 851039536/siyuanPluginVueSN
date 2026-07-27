@@ -110,9 +110,6 @@
   "incrementalFirstRun": "First incremental backup, all files will be uploaded",
   "incrementalResult": "Incremental backup finished: uploaded {uploaded}, skipped {skipped}, deleted {deleted}",
   "incrementalResultFailed": ", failed {failed}",
-  "incrementalFailedList": "; failed files: {files}",
-  "incrementalUploadedList": "; uploaded: {files}",
-  "incrementalDeletedList": "; deleted: {files}",
   "incrementalEmptyScan": "Scan result is empty, incremental backup aborted",
   "incrementalManifestCorrupt": "Failed to parse remote manifest, treated as first backup",
   "incrementalBackup": "Incremental Backup",
@@ -127,5 +124,17 @@
   "s3NotConfigured": "S3 is not configured, please complete the S3 connection configuration first",
   "noFilesToBackup": "No files to backup in workspace",
   "closeWhileBackingUp": "Backup in progress; closing the window will not interrupt it. Hide the window?",
-  "autoBackupSkippedBusy": "Another backup task is running, this auto backup was skipped"
+  "autoBackupSkippedBusy": "Another backup task is running, this auto backup was skipped",
+  "logTypeLocalZip": "ZIP",
+  "logTypeS3Upload": "UP",
+  "logTypeS3Download": "DOWN",
+  "logTypeS3Delete": "DEL",
+  "logTypeS3Incremental": "INCR",
+  "logTypeAutoBackup": "AUTO",
+  "logUploadedFiles": "Uploaded files",
+  "logDeletedFiles": "Deleted files",
+  "logFailedFiles": "Failed files",
+  "logMoreFiles": "+{count} more",
+  "logCopyDetail": "Copy detail",
+  "logCopied": "Copied"
 }

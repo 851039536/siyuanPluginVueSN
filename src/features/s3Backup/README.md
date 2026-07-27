@@ -5,9 +5,10 @@
 ## 功能
 
 - **S3 配置**：支持自定义 endpoint、access key、secret key、bucket、region、path style、HTTPS 等
-- **工作区备份**：逐文件扫描工作区 data 目录，直接上传到 S3
+- **本地 ZIP 备份**：打包 data/ 为 `data-*.zip` 保存到工作区 `data-backup/` 目录（可选按日期建 `data-YYYYMMDD/` 子文件夹）
+- **S3 上传**：上传 `data-backup/` 中的备份 ZIP 到 S3；与本地 ZIP 同时勾选时仅上传本次新生成的 ZIP。上传前按云端已有对象去重（全 key 精确匹配 + 文件名尾部匹配兜底）
 - **S3 增量备份**：基于云端 manifest 对比，仅上传新增/变更文件，并清理本地已删除文件
-- **备份管理**：查看云端备份列表，支持下载、恢复和删除
+- **备份管理**：查看云端备份列表，支持下载、恢复和删除；本地列表含日期子文件夹内的备份，保留数清理只删除插件生成的 `data-*.zip`（用户手工放入的归档不受影响）
 - **连接测试**：保存配置前可测试 S3 连接是否正常
 
 ## 使用方式
@@ -58,7 +59,8 @@
 ## 技术实现
 
 - **签名算法**：AWS Signature V4，基于 Node.js crypto 模块，无外部 SDK 依赖
-- **备份方式**：逐文件扫描→上传（上传超时 120s，跳过 temp/.recycle 目录）
+- **备份方式**：本地 ZIP 打包（JSZip）→ 上传 `data-backup/` 中的 ZIP（上传超时 120s，扫描跳过 temp/.recycle 目录）。开启日期子文件夹时，S3 key 的日期段只取日期部分（YYYYMMDD），与本地目录语义一致，保证跨备份去重可命中
 - **增量对比**：`utils.ts` 纯函数 diff（mtime+size 快筛）+ `composables/useIncrementalBackup.ts` 编排，绝不使用 listObjects 做增量判断（1000 条截断风险）
+- **任务互斥**：立即备份/压缩包备份/增量备份/增量还原以及自动备份触发共用运行守卫，任一任务运行中不并发启动新任务（自动备份遇忙记日志跳过）
 - **存储**：PluginStorage + TypedStorage 持久化配置
 - **UI**：Vue 3 Modal，Codex 风格

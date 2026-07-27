@@ -9,7 +9,19 @@
 import JSZip from "jszip"
 import { getNodeModules } from "@/utils/nodeModules"
 import { makeBackupTimestamp } from "../utils"
+import { DEFAULT_BACKUP_DIR } from "../types"
 import type { LocalBackupInfo, IncrementalFileEntry } from "../types"
+
+// ========== 模块常量 ==========
+
+/** 扫描时始终跳过的目录（思源临时目录/回收站） */
+const SKIP_DIRS = ["temp", ".recycle"] as const
+
+/** 本地备份列表识别的归档扩展名白名单 */
+const ARCHIVE_EXTS = [".zip", ".7z", ".tar", ".tar.gz", ".tgz", ".tar.bz2", ".rar"]
+
+/** 插件生成的日期子文件夹命名规则（useDateFolder 开启时的 data-YYYYMMDD 目录） */
+const DATE_DIR_RE = /^data-\d{8}$/
 
 // ========== 类型定义 ==========
 
@@ -99,14 +111,14 @@ export class BackupManager {
     this.path = node.path
   }
 
-  private _customBackupDir = "data-backup"
+  private _customBackupDir = DEFAULT_BACKUP_DIR
 
   get backupDir(): string {
     return this.path.join(this.workspaceRoot, this._customBackupDir)
   }
 
   setBackupDir(dir: string): void {
-    this._customBackupDir = dir || "data-backup"
+    this._customBackupDir = dir || DEFAULT_BACKUP_DIR
   }
 
   /** 数据目录路径（本地 ZIP 备份/扫描的对象），即 {workspaceRoot}/data */
@@ -119,42 +131,17 @@ export class BackupManager {
     this.workspaceRoot = workspaceRoot
   }
 
-  // ========== S3 模式：扫描文件列表（不打包） ==========
+  // ========== 文件扫描（S3 上传 / 增量共用） ==========
 
   /**
-   * 扫描 data-backup/ 目录中的 ZIP 文件列表（供 S3 上传使用）
+   * 扫描 data-backup/ 目录中的备份文件列表（供 S3 上传使用）
    * 上传的是本地备份已打包的 ZIP 文件，而非 data/ 原始文件
    */
   async getWorkspaceFiles(
     onProgress?: (progress: BackupProgress) => void,
   ): Promise<WorkspaceFile[]> {
-    await this.validatePath(this.backupDir)
-
-    const skipDirs = new Set(["temp", ".recycle"])
-    const files: WorkspaceFile[] = []
-
-    onProgress?.({
-      phase: "scanning",
-      currentFile: "",
-      filesProcessed: 0,
-      totalFiles: 0,
-      percent: 0,
-    })
-
-    await this.scanDirectory(this.backupDir, "", skipDirs, files, onProgress)
-
-    onProgress?.({
-      phase: "scanning",
-      currentFile: "",
-      filesProcessed: files.length,
-      totalFiles: files.length,
-      percent: 100,
-    })
-
-    return files
+    return this.scanFiles(this.backupDir, onProgress)
   }
-
-  // ========== 增量模式：扫描 data/ 原始文件 ==========
 
   /**
    * 扫描 {workspaceRoot}/data 目录中的原始文件（供 S3 增量备份使用）
@@ -163,9 +150,16 @@ export class BackupManager {
   async scanDataFiles(
     onProgress?: (progress: BackupProgress) => void,
   ): Promise<IncrementalFileEntry[]> {
-    await this.validatePath(this.dataPath)
+    return this.scanFiles(this.dataPath, onProgress)
+  }
 
-    const skipDirs = new Set(["temp", ".recycle"])
+  /** 统一扫描入口：校验根目录 → 上报起止进度 → 递归收集（消除两个公开方法的同构样板） */
+  private async scanFiles(
+    rootPath: string,
+    onProgress?: (progress: BackupProgress) => void,
+  ): Promise<IncrementalFileEntry[]> {
+    await this.validatePath(rootPath)
+
     const files: IncrementalFileEntry[] = []
 
     onProgress?.({
@@ -176,7 +170,7 @@ export class BackupManager {
       percent: 0,
     })
 
-    await this.scanDirectory(this.dataPath, "", skipDirs, files, onProgress)
+    await this.scanDirectory(rootPath, "", new Set(SKIP_DIRS), files, onProgress)
 
     onProgress?.({
       phase: "scanning",
@@ -204,7 +198,7 @@ export class BackupManager {
     const backupSourcePath = this.dataPath
     await this.validatePath(backupSourcePath)
 
-    const skipDirs = new Set(["temp", ".recycle", ...excludeDirs])
+    const skipDirs = new Set([...SKIP_DIRS, ...excludeDirs])
     const zip = new JSZip()
 
     // 阶段1：扫描文件
@@ -330,38 +324,70 @@ export class BackupManager {
     await this.fs.unlink(backupFilePath)
   }
 
+  /**
+   * 扫描本地备份目录，收集归档文件
+   * - 顶层归档 + 插件日期子文件夹（data-YYYYMMDD）内一层归档（useDateFolder 场景）
+   * - 子目录条目 name 为 "子目录/文件名" 相对形式
+   * - 按修改时间倒序（新的在前），供列表展示与保留数清理使用
+   */
   async scanBackupDir(): Promise<LocalBackupInfo[]> {
-    const result: LocalBackupInfo[] = []
+    const collected: { name: string; path: string; mtimeMs: number; size: number }[] = []
 
     try {
       await this.fs.access(this.backupDir)
     } catch {
-      return result
+      return []
     }
 
-    const files = await this.fs.readdir(this.backupDir)
-    const ARCHIVE_EXTS = [".zip", ".7z", ".tar", ".tar.gz", ".tgz", ".tar.bz2", ".rar"]
-    const archiveFiles = files
-      .filter((f: string) => ARCHIVE_EXTS.some((ext) => f.toLowerCase().endsWith(ext)))
-      .sort()
-      .reverse()
+    const isArchive = (f: string): boolean =>
+      ARCHIVE_EXTS.some((ext) => f.toLowerCase().endsWith(ext))
 
-    for (const name of archiveFiles) {
-      const filePath = this.path.join(this.backupDir, name)
+    /** 收集单个归档文件的元信息（无法读取的文件静默跳过） */
+    const collect = async (name: string, filePath: string): Promise<void> => {
       try {
         const stats = await this.fs.stat(filePath)
-        result.push({
-          name,
-          path: filePath,
-          time: stats.mtime.toLocaleString(),
-          size: stats.size,
-        })
+        collected.push({ name, path: filePath, mtimeMs: stats.mtime.getTime(), size: stats.size })
       } catch {
         // 跳过无法读取的文件
       }
     }
 
-    return result
+    let entries
+    try {
+      entries = await this.fs.readdir(this.backupDir, { withFileTypes: true })
+    } catch {
+      return []
+    }
+
+    for (const entry of entries) {
+      if (entry.isFile() && isArchive(entry.name)) {
+        await collect(entry.name, this.path.join(this.backupDir, entry.name))
+      } else if (entry.isDirectory() && DATE_DIR_RE.test(entry.name)) {
+        // 仅递归插件自建的日期子文件夹一层，避免把用户嵌套目录卷入列表与清理
+        const subDir = this.path.join(this.backupDir, entry.name)
+        let subFiles: string[] = []
+        try {
+          subFiles = await this.fs.readdir(subDir)
+        } catch {
+          continue
+        }
+        for (const f of subFiles) {
+          if (isArchive(f)) {
+            await collect(`${entry.name}/${f}`, this.path.join(subDir, f))
+          }
+        }
+      }
+    }
+
+    // 按 mtime 倒序（原文件名排序在混合命名下不保证时间顺序）
+    collected.sort((a, b) => b.mtimeMs - a.mtimeMs)
+
+    return collected.map((f) => ({
+      name: f.name,
+      path: f.path,
+      time: new Date(f.mtimeMs).toLocaleString(),
+      size: f.size,
+    }))
   }
 
   // ========== 文件校验 ==========

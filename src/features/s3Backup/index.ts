@@ -265,6 +265,10 @@ export class S3Backup {
       this._openHandler = null
     }
     this.modal.destroy()
+    // 释放模块级单例引用，避免卸载后 Vue 面板拿到失效实例
+    if (s3BackupInstance === this) {
+      s3BackupInstance = null
+    }
   }
 }
 
@@ -273,6 +277,8 @@ export class S3Backup {
  */
 export function registerS3Backup(plugin: Plugin): void {
   s3BackupInstance = new S3Backup(plugin)
+  // 挂到 plugin 实例供 onunload() 销毁钩子调用（缺失会导致定时器与事件监听器泄漏）
+  ;(plugin as any).__s3Backup = s3BackupInstance
   s3BackupInstance.init().catch((err) => {
     console.error("S3 备份初始化失败:", err)
   })

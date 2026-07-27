@@ -33,8 +33,9 @@
       <!-- 增量备份提示："仅上传 data/ 中新增或变更的文件到 S3（需先完成 S3 配置）" -->
       <span class="form-hint">{{ i18n.s3IncrementalHint }}</span>
     </div>
+    <!-- 模式组合提示："三种模式可任意组合勾选，执行顺序：本地 ZIP → S3 上传 → S3 增量" -->
     <p class="backup-hint">
-      {{ i18n.backupModeHint || "可同时勾选两项，本地 ZIP 和 S3 上传将顺序执行" }}
+      {{ i18n.backupModeHint }}
     </p>
   </section>
 </template>

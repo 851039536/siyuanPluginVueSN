@@ -7,7 +7,7 @@
  */
 import { computed, ref } from "vue"
 import type { S3Config, S3FileInfo } from "../types"
-import { DEFAULT_S3_CONFIG, INCREMENTAL_SUBDIR } from "../types"
+import { DEFAULT_S3_CONFIG, DEFAULT_S3_PREFIX, INCREMENTAL_SUBDIR } from "../types"
 import { S3Client } from "../types/s3Client"
 import type { BackupProgress } from "../modules/BackupManager"
 import { getErrorMessage } from "@/utils/stringUtils"
@@ -60,9 +60,11 @@ export function useS3Backup(i18n: Record<string, string> = {}) {
     }
   }
 
-  /** 保存 S3 配置 */
-  function saveConfig(config: S3Config): void {
-    applyConfig(config)
+  /** 保存并应用 S3 配置（表单保存场景，配置已校验） */
+  function applyConfig(config: S3Config): void {
+    s3Config.value = { ...config }
+    isConfigured.value = true
+    initClient(config)
   }
 
   /** 加载已保存的配置（仅在 endpoint 有效时应用） */
@@ -72,24 +74,10 @@ export function useS3Backup(i18n: Record<string, string> = {}) {
     }
   }
 
-  /** 应用 S3 配置（消除 saveConfig/loadConfig 重复逻辑） */
-  function applyConfig(config: S3Config): void {
-    s3Config.value = { ...config }
-    isConfigured.value = true
-    initClient(config)
-  }
-
   /** 下载 S3 备份文件 */
   async function downloadBackup(s3Key: string, localPath: string): Promise<void> {
     if (!s3Client) { throw new Error("S3 客户端未初始化") }
     await s3Client.download(s3Key, localPath)
-  }
-
-  /** 删除 S3 备份文件 */
-  async function deleteBackup(s3Key: string): Promise<void> {
-    if (!s3Client) { throw new Error("S3 客户端未初始化") }
-    await s3Client.delete(s3Key)
-    backupList.value = backupList.value.filter((f) => f.key !== s3Key)
   }
 
   /** 直接上传文件内容到 S3（跳过本地打包，用于逐文件上传模式） */
@@ -104,15 +92,18 @@ export function useS3Backup(i18n: Record<string, string> = {}) {
     return s3Client.getObjectText(key)
   }
 
-  /** 删除 S3 对象（不联动 backupList，供增量清理已删除文件使用） */
-  async function deleteObject(key: string): Promise<void> {
+  /** 删除 S3 对象；syncList 为 true 时同步从 backupList 移除（云端列表删除场景） */
+  async function deleteObject(key: string, syncList = false): Promise<void> {
     if (!s3Client) { throw new Error("S3 客户端未初始化") }
     await s3Client.delete(key)
+    if (syncList) {
+      backupList.value = backupList.value.filter((f) => f.key !== key)
+    }
   }
 
   /** 获取 S3 列举前缀（统一默认值，消除 listBackups/listExistingKeys 重复构造） */
   function getListPrefix(): string {
-    return s3Config.value.prefix || "siyuan-backup/"
+    return s3Config.value.prefix || DEFAULT_S3_PREFIX
   }
 
   /** 从 S3 拉取文件列表（消除 listBackups/listExistingKeys 重复的 list 调用和 backupList 赋值） */
@@ -161,14 +152,13 @@ export function useS3Backup(i18n: Record<string, string> = {}) {
     phaseLabel,
     // 方法
     testConnection,
-    saveConfig,
+    applyConfig,
     uploadFileContent,
     getObjectText,
     deleteObject,
     listBackups,
     listExistingKeys,
     downloadBackup,
-    deleteBackup,
     loadConfig,
   }
 }

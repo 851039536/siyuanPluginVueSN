@@ -13,14 +13,14 @@ import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import type { BackupManager, BackupProgress } from "../modules/BackupManager"
 import type { BackupLog, BackupManifest, IncrementalFileEntry } from "../types"
-import { LARGE_FILE_WARN_SIZE } from "../types"
-import { buildIncrementalKey, buildManifestKey, diffManifest, getHostname } from "../utils"
+import { LARGE_FILE_WARN_SIZE, MANIFEST_VERSION } from "../types"
+import { buildIncrementalKey, buildManifestKey, diffManifest, getHostname, parseManifest } from "../utils"
 
 /** 上传并发数（S3 客户端无内建并发管理，固定小并发防止请求风暴） */
 const UPLOAD_CONCURRENCY = 4
 
-/** 单文件上传最大重试次数（不含首次尝试） */
-const UPLOAD_MAX_RETRIES = 2
+/** 单文件传输（上传/下载）最大重试次数（不含首次尝试） */
+const TRANSFER_MAX_RETRIES = 2
 
 /** 依赖注入：全部来自 index.vue 已有的状态与方法 */
 export interface IncrementalBackupDeps {
@@ -65,6 +65,21 @@ async function runWithConcurrency<T>(
   await Promise.all(lanes)
 }
 
+/** 通用重试执行器：任务成功返回 true，重试耗尽后记警告并返回 false（上传/下载共用） */
+async function withRetry(task: () => Promise<void>, failLabel: string): Promise<boolean> {
+  for (let attempt = 0; attempt <= TRANSFER_MAX_RETRIES; attempt++) {
+    try {
+      await task()
+      return true
+    } catch (err: unknown) {
+      if (attempt === TRANSFER_MAX_RETRIES) {
+        console.warn(`[S3增量] ${failLabel}（已重试 ${TRANSFER_MAX_RETRIES} 次）`, getErrorMessage(err))
+      }
+    }
+  }
+  return false
+}
+
 export function useIncrementalBackup(deps: IncrementalBackupDeps) {
   const { backupProgress, addLog, i18n } = deps
 
@@ -73,11 +88,7 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
     const text = await deps.getObjectText(manifestKey)
     if (text === null) { return null }
     try {
-      const parsed = JSON.parse(text) as BackupManifest
-      if (!parsed || typeof parsed.files !== "object" || parsed.files === null) {
-        throw new TypeError("manifest 缺少 files 字段")
-      }
-      return parsed
+      return parseManifest(text)
     } catch (err: unknown) {
       console.warn("[S3增量] 清单解析失败，按首次备份处理:", getErrorMessage(err))
       addLog({
@@ -95,19 +106,10 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
   async function uploadWithRetry(file: IncrementalFileEntry, key: string): Promise<boolean> {
     const node = getNodeModules()
     if (!node) { return false }
-    for (let attempt = 0; attempt <= UPLOAD_MAX_RETRIES; attempt++) {
-      try {
-        const content = await node.fs.promises.readFile(file.fullPath)
-        await deps.uploadFileContent(content, key)
-        return true
-      } catch (err: unknown) {
-        if (attempt === UPLOAD_MAX_RETRIES) {
-          console.warn(`[S3增量] 上传失败（已重试 ${UPLOAD_MAX_RETRIES} 次）: ${file.relativePath}`, getErrorMessage(err))
-          return false
-        }
-      }
-    }
-    return false
+    return withRetry(async () => {
+      const content = await node.fs.promises.readFile(file.fullPath)
+      await deps.uploadFileContent(content, key)
+    }, `上传失败: ${file.relativePath}`)
   }
 
   /**
@@ -155,16 +157,10 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
     let processed = 0
     let uploaded = 0
     let failed = 0
+    // 上传失败的文件相对路径（写入日志详情，便于用户定位而无需打开控制台）
+    const failedFiles: string[] = []
     // 新 manifest 从旧清单的未变更条目起步，仅写入本次成功上传的条目（幂等保证）
-    const newFiles: BackupManifest["files"] = {}
-    if (oldManifest) {
-      for (const file of scanned) {
-        const old = oldManifest.files[file.relativePath]
-        if (old && old.mtime === file.mtime && old.size === file.size) {
-          newFiles[file.relativePath] = old
-        }
-      }
-    }
+    const newFiles: BackupManifest["files"] = { ...diff.unchanged }
 
     await runWithConcurrency(diff.toUpload, UPLOAD_CONCURRENCY, async (file) => {
       if (file.size > LARGE_FILE_WARN_SIZE) {
@@ -183,6 +179,7 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
         uploaded++
       } else {
         failed++
+        failedFiles.push(file.relativePath)
       }
       processed++
     })
@@ -209,7 +206,7 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
 
     // 7. 上传新 manifest（部分失败也上传，失败文件缺席 → 下次自动重传）
     const newManifest: BackupManifest = {
-      version: oldManifest?.version ?? 1,
+      version: MANIFEST_VERSION,
       createdAt: new Date().toISOString(),
       hostname: getHostname(),
       files: newFiles,
@@ -236,12 +233,20 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
     if (failed > 0) {
       message += (i18n.incrementalResultFailed || "").replace("{failed}", String(failed))
     }
+    // 日志详情追加失败文件清单（最多 5 个），便于直接从日志 Tab 定位问题文件
+    let logMessage = message
+    if (failedFiles.length > 0) {
+      const shown = failedFiles.slice(0, 5).join(", ")
+      const suffix = failedFiles.length > 5 ? ` +${failedFiles.length - 5}` : ""
+      logMessage += (i18n.incrementalFailedList || "").replace("{files}", `${shown}${suffix}`)
+    }
     addLog({
       type: "s3Incremental",
       action: i18n.s3Incremental,
-      fileName: uploaded > 0 ? `${uploaded} 个文件` : "",
+      // 日志文件名："N 个文件"
+      fileName: uploaded > 0 ? i18n.filesCount.replace("{count}", String(uploaded)) : "",
       success: failed === 0,
-      message,
+      message: logMessage,
     })
     showMessage(message, failed > 0 ? 5000 : 3000, failed > 0 ? "error" : "info")
 
@@ -273,10 +278,7 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
     }
     let manifest: BackupManifest
     try {
-      manifest = JSON.parse(text) as BackupManifest
-      if (!manifest || typeof manifest.files !== "object" || manifest.files === null) {
-        throw new TypeError("manifest 缺少 files 字段")
-      }
+      manifest = parseManifest(text)
     } catch (err: unknown) {
       throw new Error(`${i18n.incrementalManifestCorrupt}: ${getErrorMessage(err)}`)
     }
@@ -298,18 +300,10 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
       }
       const key = buildIncrementalKey(prefix, subPrefix, relativePath)
       const localPath = node.path.join(targetDir, ...relativePath.split("/"))
-      let ok = false
-      for (let attempt = 0; attempt <= UPLOAD_MAX_RETRIES; attempt++) {
-        try {
-          await deps.downloadObject(key, localPath)
-          ok = true
-          break
-        } catch (err: unknown) {
-          if (attempt === UPLOAD_MAX_RETRIES) {
-            console.warn(`[S3增量] 下载失败（已重试 ${UPLOAD_MAX_RETRIES} 次）: ${relativePath}`, getErrorMessage(err))
-          }
-        }
-      }
+      const ok = await withRetry(
+        () => deps.downloadObject(key, localPath),
+        `下载失败: ${relativePath}`,
+      )
       if (ok) { downloaded++ } else { failed++ }
       processed++
     })
@@ -332,7 +326,8 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
     addLog({
       type: "s3Download",
       action: i18n.incrementalRestore,
-      fileName: downloaded > 0 ? `${downloaded} 个文件` : "",
+      // 日志文件名："N 个文件"
+      fileName: downloaded > 0 ? i18n.filesCount.replace("{count}", String(downloaded)) : "",
       success: failed === 0,
       message,
     })

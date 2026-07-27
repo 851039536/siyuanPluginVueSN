@@ -55,7 +55,7 @@
   "useDateFolder": "生成日期子文件夹",
   "useDateFolderHint": "勾选后按日期（如 siyuan-backup/20260706-012735/）分类存储，不勾选则直接放在目录前缀下",
   "backupMode": "备份模式",
-  "backupModeHint": "可同时勾选两项，本地 ZIP 和 S3 上传将顺序执行",
+  "backupModeHint": "三种模式可任意组合勾选，执行顺序：本地 ZIP → S3 上传 → S3 增量",
   "localZipBackup": "本地 ZIP 备份",
   "localZipHint": "打包为 data-*.zip 保存到工作区 data-backup/ 目录",
   "s3Upload": "上传到 S3",
@@ -110,6 +110,7 @@
   "incrementalFirstRun": "首次增量备份，将全量上传",
   "incrementalResult": "增量备份完成：上传 {uploaded}、跳过 {skipped}、删除 {deleted}",
   "incrementalResultFailed": "，失败 {failed}",
+  "incrementalFailedList": "；失败文件：{files}",
   "incrementalEmptyScan": "扫描结果为空，已中止增量备份",
   "incrementalManifestCorrupt": "云端清单解析失败，按首次备份处理",
   "incrementalBackup": "增量备份",
@@ -119,5 +120,10 @@
   "incrementalRestoreResult": "增量还原完成：下载 {downloaded} 个文件 → {path}",
   "incrementalRestoreFailed": "，失败 {failed}",
   "downloading": "下载 S3",
-  "zipBackup": "压缩包备份"
+  "zipBackup": "压缩包备份",
+  "filesCount": "{count} 个文件",
+  "s3NotConfigured": "S3 未配置，请先完成 S3 连接配置",
+  "noFilesToBackup": "工作区没有可备份的文件",
+  "closeWhileBackingUp": "正在备份中，关闭窗口不会中断备份。确定要隐藏窗口吗？",
+  "autoBackupSkippedBusy": "另一备份任务运行中，本次自动备份已跳过"
 }

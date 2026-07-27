@@ -3,15 +3,26 @@
  *
  * 不依赖 Vue 响应式的纯函数：数字补零、备份时间戳生成、
  * S3 对象 key 构建、主机名获取（模块级缓存）、
- * 增量备份的 manifest 构建/对比与 key 生成。
+ * 增量备份的 manifest 解析/对比与 key 生成、插件备份文件名判定。
  */
 import { getNodeProcessModules } from "@/utils/nodeModules"
-import { DEFAULT_S3_PREFIX, DEFAULT_BACKUP_DIR, INCREMENTAL_SUBDIR, INCREMENTAL_MANIFEST_NAME, MANIFEST_VERSION } from "./types"
+import { DEFAULT_S3_PREFIX, DEFAULT_BACKUP_DIR, INCREMENTAL_SUBDIR, INCREMENTAL_MANIFEST_NAME } from "./types"
 import type { BackupManifest, IncrementalDiff, IncrementalFileEntry } from "./types"
 
 /** 数字补零（如 padNum(3) → "03"） */
 export function padNum(n: number): string {
   return n.toString().padStart(2, "0")
+}
+
+/** 取路径末段文件名（本地列表条目 name 可能含日期子目录，如 "data-20260707/xxx.zip"） */
+export function getBaseName(name: string): string {
+  return name.split("/").pop() || name
+}
+
+/** 判断是否为插件自动生成的备份文件（data- 前缀 + .zip），保留数清理只删除此类文件 */
+export function isPluginBackupFile(name: string): boolean {
+  const base = getBaseName(name)
+  return base.startsWith("data-") && base.toLowerCase().endsWith(".zip")
 }
 
 /** 生成备份时间戳（格式 YYYYMMDD-HHmmss） */
@@ -62,18 +73,16 @@ export function buildManifestKey(prefix: string, sub: string): string {
   return buildS3Key(prefix, sub, `${INCREMENTAL_SUBDIR}/${INCREMENTAL_MANIFEST_NAME}`)
 }
 
-/** 由扫描结果构建新的备份清单 */
-export function buildManifest(files: IncrementalFileEntry[], hostname: string): BackupManifest {
-  const map: BackupManifest["files"] = {}
-  for (const f of files) {
-    map[f.relativePath] = { mtime: f.mtime, size: f.size }
+/**
+ * 解析 manifest 文本并校验结构（备份/还原两处共用）
+ * @throws 解析失败或缺少 files 字段时抛错，错误策略由调用方决定
+ */
+export function parseManifest(text: string): BackupManifest {
+  const parsed = JSON.parse(text) as BackupManifest
+  if (!parsed || typeof parsed.files !== "object" || parsed.files === null) {
+    throw new TypeError("manifest 缺少 files 字段")
   }
-  return {
-    version: MANIFEST_VERSION,
-    createdAt: new Date().toISOString(),
-    hostname,
-    files: map,
-  }
+  return parsed
 }
 
 /**
@@ -86,10 +95,11 @@ export function diffManifest(
   oldManifest: BackupManifest | null,
 ): IncrementalDiff {
   if (!oldManifest) {
-    return { toUpload: [...scanned], toDelete: [], unchangedCount: 0 }
+    return { toUpload: [...scanned], toDelete: [], unchangedCount: 0, unchanged: {} }
   }
 
   const toUpload: IncrementalFileEntry[] = []
+  const unchanged: BackupManifest["files"] = {}
   let unchangedCount = 0
   const scannedPaths = new Set<string>()
 
@@ -97,6 +107,7 @@ export function diffManifest(
     scannedPaths.add(file.relativePath)
     const old = oldManifest.files[file.relativePath]
     if (old && old.mtime === file.mtime && old.size === file.size) {
+      unchanged[file.relativePath] = old
       unchangedCount++
     } else {
       toUpload.push(file)
@@ -106,5 +117,5 @@ export function diffManifest(
   // 旧清单有、本次扫描无 → 本地已删除，需清理 S3 对象
   const toDelete = Object.keys(oldManifest.files).filter((p) => !scannedPaths.has(p))
 
-  return { toUpload, toDelete, unchangedCount }
+  return { toUpload, toDelete, unchangedCount, unchanged }
 }

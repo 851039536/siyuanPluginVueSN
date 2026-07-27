@@ -10,6 +10,7 @@
 import type { S3Config, S3FileInfo } from "./index"
 import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
+import { padNum } from "../utils"
 
 // ========== 工具函数 ==========
 
@@ -100,8 +101,7 @@ function sortQueryString(qs: string): string {
 function utcToUtcString(utcIso: string): string {
   const d = new Date(utcIso)
   if (isNaN(d.getTime())) return utcIso
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`
+  return `${d.getUTCFullYear()}-${padNum(d.getUTCMonth() + 1)}-${padNum(d.getUTCDate())} ${padNum(d.getUTCHours())}:${padNum(d.getUTCMinutes())}:${padNum(d.getUTCSeconds())}`
 }
 
 /** 解析 S3 ListObjects XML 响应（兼容 OpenList/Alist 等非标准 S3 代理） */
@@ -391,20 +391,35 @@ export class S3Client {
   private buildUrl(key: string, queryString = ""): string {
     const safeKey = this.normKey(key)
     const protocol = this.config.useSSL ? "https" : "http"
-    const encodedKey = safeKey.split("/").map(encodeURIComponent).join("/")
+    const encodedKey = this.encodeKeyPath(safeKey)
     const host = this.config.pathStyle
       ? `${this.config.endpoint}/${this.config.bucket}`
       : `${this.config.bucket}.${this.config.endpoint}`
     return `${protocol}://${host}/${encodedKey}${queryString}`
   }
 
-  /** 构建请求 URI (用于签名) */
+  /**
+   * 按 SigV4 规则编码对象 key 路径（RFC 3986，保留段间 /）
+   * encodeURIComponent 遗漏的 !'()* 一并补编，与 AWS SDK 的 uriEscapePath 行为一致
+   */
+  private encodeKeyPath(key: string): string {
+    return key
+      .split("/")
+      .map((seg) => encodeURIComponent(seg).replace(/[!'()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`))
+      .join("/")
+  }
+
+  /**
+   * 构建请求 URI (用于签名)
+   * 必须与 buildUrl 的路径编码完全一致：canonical URI 与线上请求 path 编码不一致时，
+   * 含中文/空格的 key 会触发 403 SignatureDoesNotMatch（纯 ASCII key 编码前后相同故不受影响）
+   */
   private buildUri(key: string): string {
-    const safeKey = this.normKey(key)
+    const encodedKey = this.encodeKeyPath(this.normKey(key))
     if (this.config.pathStyle) {
-      return `/${this.config.bucket}/${safeKey}`.replace(/\/+/g, "/")
+      return `/${this.config.bucket}/${encodedKey}`.replace(/\/+/g, "/")
     }
-    return `/${safeKey}`.replace(/\/+/g, "/")
+    return `/${encodedKey}`.replace(/\/+/g, "/")
   }
 
   /** 执行带 AWS SigV4 签名的 HTTP 请求（使用 Node.js http/https 模块，绕过浏览器 Mixed Content 限制） */

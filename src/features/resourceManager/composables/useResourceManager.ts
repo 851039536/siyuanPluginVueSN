@@ -4,7 +4,7 @@ import type {
   ImageAssetInfo,
   ResourceManagerI18n,
 } from "../types"
-import { showMessage } from "siyuan"
+import { getAllEditor, showMessage } from "siyuan"
 import {
   computed,
   onMounted,
@@ -379,6 +379,11 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
 
       try { await fullReindexAssetContent() }
       catch { /* 索引重建失败不影响移动结果 */ }
+
+      // 引用已写入内核，但打开中的编辑器仍渲染旧路径缓存，需主动重载
+      if (updatedCount > 0) {
+        for (const editor of getAllEditor()) editor.reload(false)
+      }
 
       if (!isMounted.value) return
       const refMsg = updatedCount > 0 ? `（${i18n.updatedRefs.replace("{count}", String(updatedCount))}）` : ""

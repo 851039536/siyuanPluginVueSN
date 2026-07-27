@@ -11,7 +11,7 @@ import { emitCustomEvent } from "@/utils/eventBus"
 import { createModalVueApp } from "@/utils/vueAppHelper"
 import { getWorkspaceDir } from "@/api"
 import S3BackupPanel from "./index.vue"
-import { S3BackupStorage } from "./types"
+import { S3BackupStorage, DEFAULT_BACKUP_SETTINGS } from "./types"
 import type { BackupSettings } from "./types"
 
 let s3BackupInstance: S3Backup | null = null
@@ -209,51 +209,18 @@ export class S3Backup {
 
   // ========== 工作区设置持久化 ==========
 
-  async loadWorkspaceSettings(): Promise<{
-    lastBackupTime: string
-    useDateFolder: boolean
-    autoBackupEnabled: boolean
-    backupFrequency: string
-    backupTime: string
-    keepBackupCount: number
-    lastBackupTimestamp: number
-    localBackupDir: string
-    s3SubPrefix: string
-  }> {
+  /** 加载备份设置（loadOrDefault 已与 DEFAULT_BACKUP_SETTINGS 浅合并，字段保证完整） */
+  async loadWorkspaceSettings(): Promise<BackupSettings> {
     try {
-      const data = await this.storage.backupSettings.loadOrDefault()
-      return {
-        lastBackupTime: data.lastBackupTime ?? "",
-        useDateFolder: data.useDateFolder ?? true,
-        autoBackupEnabled: data.autoBackupEnabled ?? false,
-        backupFrequency: data.backupFrequency ?? "daily",
-        backupTime: data.backupTime ?? "03:00",
-        keepBackupCount: data.keepBackupCount ?? 7,
-        lastBackupTimestamp: data.lastBackupTimestamp ?? 0,
-        localBackupDir: data.localBackupDir ?? "data-backup",
-        s3SubPrefix: data.s3SubPrefix ?? "data-backup",
-      }
+      return await this.storage.backupSettings.loadOrDefault()
     } catch {
-      return { lastBackupTime: "", useDateFolder: true, autoBackupEnabled: false, backupFrequency: "daily", backupTime: "03:00", keepBackupCount: 7, lastBackupTimestamp: 0, localBackupDir: "data-backup", s3SubPrefix: "data-backup" }
+      return { ...DEFAULT_BACKUP_SETTINGS, backupMode: { ...DEFAULT_BACKUP_SETTINGS.backupMode } }
     }
   }
 
-  async saveWorkspaceSettings(settings: {
-    lastBackupTime: string
-    workspacePath: string
-    workspaceRoot: string
-    useDateFolder?: boolean
-    autoBackupEnabled?: boolean
-    backupFrequency?: string
-    backupTime?: string
-    keepBackupCount?: number
-    backupMode?: { localZip: boolean; s3Upload: boolean }
-    lastBackupTimestamp?: number
-    localBackupDir?: string
-    s3SubPrefix?: string
-  }): Promise<void> {
+  async saveWorkspaceSettings(settings: Partial<BackupSettings>): Promise<void> {
     const existing = await this.storage.backupSettings.loadOrDefault()
-    await this.storage.backupSettings.save({ ...existing, ...settings } as BackupSettings)
+    await this.storage.backupSettings.save({ ...existing, ...settings })
   }
 
   // ========== 工作区检测 ==========

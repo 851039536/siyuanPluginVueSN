@@ -3,7 +3,7 @@
  *
  * 提供响应式的 S3 配置、备份状态、备份列表等状态，
  * 以及连接测试、备份、恢复、列举、删除等操作方法。
- * 被 index.vue 和子组件 S3ConfigForm.vue 共享使用。
+ * 仅被 index.vue 使用（S3ConfigForm 通过 props 接收 testConnection）。
  */
 import { computed, ref } from "vue"
 import type { S3Config, S3FileInfo } from "../types"
@@ -12,7 +12,7 @@ import { S3Client } from "../types/s3Client"
 import type { BackupProgress } from "../modules/BackupManager"
 import { getErrorMessage } from "@/utils/stringUtils"
 
-export function useS3Backup() {
+export function useS3Backup(i18n: Record<string, string> = {}) {
   // ========== 状态 ==========
 
   const s3Config = ref<S3Config>({ ...DEFAULT_S3_CONFIG })
@@ -34,15 +34,9 @@ export function useS3Backup() {
 
   // ========== 计算属性 ==========
 
+  // 阶段标签：i18n 键与 BackupProgress.phase 同名（scanning/packing/compressing/saving/uploading），缺失时回退 phase 原值
   const phaseLabel = computed(() => {
-    const labels: Record<string, string> = {
-      scanning: "扫描文件",
-      packing: "打包文件",
-      compressing: "压缩数据",
-      saving: "保存备份",
-      uploading: "上传文件",
-    }
-    return labels[backupProgress.value.phase] || backupProgress.value.phase
+    return i18n[backupProgress.value.phase] || backupProgress.value.phase
   })
 
   // ========== 方法 ==========

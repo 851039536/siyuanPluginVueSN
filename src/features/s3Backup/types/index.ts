@@ -121,6 +121,31 @@ export const DEFAULT_BACKUP_MODE: BackupMode = {
 /** 日志最大保留条数 */
 export const MAX_LOG_COUNT = 200
 
+/** 本地备份列表最大显示条数 */
+export const MAX_LOCAL_BACKUP_COUNT = 50
+
+/** S3 目录前缀默认值（兜底用） */
+export const DEFAULT_S3_PREFIX = "siyuan-backup/"
+
+/** 本地备份目录 / S3 子路径默认值（兜底用） */
+export const DEFAULT_BACKUP_DIR = "data-backup"
+
+/** 备份设置默认值（单一事实源：TypedStorage 默认值与各处兜底均引用此常量） */
+export const DEFAULT_BACKUP_SETTINGS: BackupSettings = {
+  lastBackupTime: "",
+  workspacePath: "",
+  workspaceRoot: "",
+  useDateFolder: true,
+  autoBackupEnabled: false,
+  backupFrequency: "daily",
+  backupTime: "03:00",
+  keepBackupCount: 7,
+  backupMode: { ...DEFAULT_BACKUP_MODE },
+  lastBackupTimestamp: 0,
+  localBackupDir: DEFAULT_BACKUP_DIR,
+  s3SubPrefix: DEFAULT_BACKUP_DIR,
+}
+
 // ========== 备份校验值接口 ==========
 
 export interface FileChecksum {
@@ -162,19 +187,9 @@ export class S3BackupStorage {
     const storage = new PluginStorage(plugin)
     this.s3Config = new TypedStorage(storage, STORAGE_KEYS.S3_CONFIG)
     this.backupSettings = new TypedStorage(storage, STORAGE_KEYS.BACKUP_SETTINGS, {
-      lastBackupTime: "",
-      workspacePath: "",
-      workspaceRoot: "",
-      useDateFolder: true,
-      autoBackupEnabled: false,
-      backupFrequency: "daily",
-      backupTime: "03:00",
-      keepBackupCount: 7,
+      ...DEFAULT_BACKUP_SETTINGS,
       backupMode: { ...DEFAULT_BACKUP_MODE },
-      lastBackupTimestamp: 0,
-      localBackupDir: "data-backup",
-      s3SubPrefix: "data-backup",
-    } as BackupSettings)
+    })
     this.backupHistory = new TypedStorage(storage, STORAGE_KEYS.BACKUP_HISTORY, { list: [] })
     this.backupLogs = new TypedStorage(storage, STORAGE_KEYS.BACKUP_LOG, { logs: [] })
     this.checksums = new TypedStorage(storage, STORAGE_KEYS.CHECKSUMS, { items: [] })
@@ -192,6 +207,6 @@ export const DEFAULT_S3_CONFIG: S3Config = {
   bucket: "",
   region: "us-east-1",
   pathStyle: true,
-  prefix: "siyuan-backup/",
+  prefix: DEFAULT_S3_PREFIX,
   useSSL: false,
 }

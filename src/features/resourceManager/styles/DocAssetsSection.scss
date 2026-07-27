@@ -1,0 +1,33 @@
+@use "@/variables.scss" as *;
+
+// 当前文档信息栏
+.rm-doc-bar {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin-bottom: $spacing-2;
+  font-size: $font-size-xs;
+
+  &__label {
+    flex-shrink: 0;
+    // 辅助标签文字
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-on-surface-light);
+  }
+
+  &__title {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: $font-weight-medium;
+  }
+}
+
+// 文件大小元信息（辅助文字）
+.rm-asset-item__size {
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light);
+  line-height: $line-height-tight;
+}

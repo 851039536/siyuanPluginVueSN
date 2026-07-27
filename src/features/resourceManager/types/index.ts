@@ -54,4 +54,12 @@ export interface ResourceManagerI18n {
   locateFailed: string
   fileNotFound: string
   samePathHint: string
+  copyMdRef: string
+  mdRefCopied: string
+  openInFolder: string
+  openFolderFailed: string
+  docAssets: string
+  noDocAssets: string
+  noActiveDoc: string
+  currentDoc: string
 }

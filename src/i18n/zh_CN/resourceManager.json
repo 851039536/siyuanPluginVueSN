@@ -51,6 +51,14 @@
     "locateNotFound": "未找到引用该资源的文档",
     "locateFailed": "定位失败",
     "fileNotFound": "文件不存在于磁盘",
-    "samePathHint": "新路径与当前路径相同，未执行移动"
+    "samePathHint": "新路径与当前路径相同，未执行移动",
+    "copyMdRef": "复制MD",
+    "mdRefCopied": "Markdown 引用已复制",
+    "openInFolder": "打开目录",
+    "openFolderFailed": "无法打开目录",
+    "docAssets": "文档资源",
+    "noDocAssets": "当前文档未引用资源",
+    "noActiveDoc": "请先打开一个文档",
+    "currentDoc": "当前文档"
   }
 }

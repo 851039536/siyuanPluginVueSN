@@ -30,6 +30,8 @@ import {
   assetFileExists,
   BUILT_IN_CATEGORY_KEYS,
   buildAssetList,
+  buildVariantPairs,
+  escapeRegExp,
   escapeSqlLike,
   isValidAssetMovePath,
   safeDecodeURI,
@@ -269,16 +271,17 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
   }
 
   /**
-   * 更新全库中对资源的引用，同时匹配原始与 URL 编码两种形态
-   * （含空格/中文文件名的链接在 markdown 中以编码形式存储）
+   * 更新全库中对资源的引用，两级匹配：
+   * 1. 全路径（原文/仅空格编码/全量编码三形态）精确替换
+   * 2. 文件名兜底——引用可能指向历史旧目录（此前移动时引用未同步），
+   *    按文件名查块并用正则将 assets/任意目录/文件名 整体替换为新路径，实现引用自愈
    * @returns 成功更新的块数量
    */
   async function updateAssetReferences(oldPath: string, newPath: string): Promise<number> {
-    const variants = [{ from: oldPath, to: newPath }]
-    const encodedOld = encodeURI(oldPath)
-    if (encodedOld !== oldPath) variants.push({ from: encodedOld, to: encodeURI(newPath) })
+    const newBase = safeDecodeURI(newPath)
+    const variants = buildVariantPairs(safeDecodeURI(oldPath), newBase)
 
-    // 两种形态各查一次，按块 id 去重
+    // 各形态分别查询，按块 id 去重
     const blockMap = new Map<string, string>()
     for (const variant of variants) {
       const rows = await sql(
@@ -294,10 +297,29 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
       }
     }
 
+    // 文件名兜底：按文件名（含编码形态）补查引用了旧目录路径的块；
+    // pair.to 为同编码形态的新完整路径，替换时保持形态一致
+    const baseName = newBase.split("/").pop() ?? ""
+    const namePairs = baseName ? buildVariantPairs(baseName, newBase) : []
+    for (const pair of namePairs) {
+      const rows = await sql(
+        `SELECT id, markdown FROM blocks WHERE markdown LIKE '%/${escapeSqlLike(pair.from)}%' ESCAPE '\\' LIMIT 1000`,
+      ) as { id: string, markdown: string }[] | null
+      if (!rows) continue
+      for (const row of rows) {
+        if (!blockMap.has(row.id)) blockMap.set(row.id, row.markdown)
+      }
+    }
+
     const updates = [...blockMap.entries()]
       .map(([id, markdown]) => {
         let next = markdown
         for (const variant of variants) next = next.split(variant.from).join(variant.to)
+        // 兜底替换：assets/ 下任意目录 + 该文件名 → 同形态新路径（跳过已是新路径的引用）
+        for (const pair of namePairs) {
+          const pattern = new RegExp(`assets/(?:[^)\\s"']*/)?${escapeRegExp(pair.from)}`, "g")
+          next = next.replace(pattern, (match) => (match === pair.to ? match : pair.to))
+        }
         return { id, next, changed: next !== markdown }
       })
       .filter((u) => u.changed)

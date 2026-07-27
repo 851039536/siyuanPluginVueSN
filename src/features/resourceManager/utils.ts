@@ -31,12 +31,14 @@ export function isValidAssetMovePath(path: string): boolean {
   return path.startsWith("assets/") && !path.includes("..") && !path.endsWith("/")
 }
 
+/** 判断路径是否为图片资源 */
+export function isImagePath(path: string): boolean {
+  return IMAGE_EXT.test(path)
+}
+
 /** 按图片/非图片扩展名过滤路径列表 */
 export function buildAssetList(paths: string[], isImage: boolean): string[] {
-  const extFilter = isImage
-    ? (p: string) => IMAGE_EXT.test(p)
-    : (p: string) => !IMAGE_EXT.test(p)
-  return paths.filter(extFilter)
+  return paths.filter((p) => isImagePath(p) === isImage)
 }
 
 /** 安全解码 URL 编码路径（非法编码时原样返回） */
@@ -59,6 +61,16 @@ const PATH_ENCODING_TRANSFORMS: ((s: string) => string)[] = [
 export function buildPathVariants(path: string): string[] {
   const base = safeDecodeURI(path)
   return [...new Set(PATH_ENCODING_TRANSFORMS.map((t) => t(base)))]
+}
+
+/** 转换为思源 markdown 链接标准形态：解码后仅空格编码为 %20 */
+export function toMarkdownPath(path: string): string {
+  return PATH_ENCODING_TRANSFORMS[1](safeDecodeURI(path))
+}
+
+/** 构造 img src 可用的根相对 URL（思源内核直接服务 /assets/ 路径） */
+export function buildAssetSrc(path: string): string {
+  return `/${encodeURI(safeDecodeURI(path))}`
 }
 
 /** 对新旧字符串施加相同的编码形态变换，按 from 去重生成替换对 */
@@ -87,6 +99,17 @@ export async function assetFileExists(path: string): Promise<boolean> {
   if (!entries) return false
   const files = Array.isArray(entries) ? entries : [entries]
   return files.some((entry) => entry.name === name)
+}
+
+/**
+ * 解析资源在磁盘上的真实路径：assets 表中的路径可能是 URL 编码形态
+ * （如 a%20b.png），而磁盘文件名是解码后的（a b.png），原样不存在时尝试解码形态
+ */
+export async function resolveDiskPath(path: string): Promise<string | null> {
+  if (await assetFileExists(path)) return path
+  const decoded = safeDecodeURI(path)
+  if (decoded !== path && await assetFileExists(decoded)) return decoded
+  return null
 }
 
 /** 递归扫描资源目录，子目录并行收集，返回相对 /data/ 的路径列表 */

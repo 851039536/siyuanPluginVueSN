@@ -1720,7 +1720,15 @@
     "locateNotFound": "No document references this asset",
     "locateFailed": "Locate failed",
     "fileNotFound": "File does not exist on disk",
-    "samePathHint": "New path is the same as current path, no move performed"
+    "samePathHint": "New path is the same as current path, no move performed",
+    "copyMdRef": "Copy MD",
+    "mdRefCopied": "Markdown reference copied",
+    "openInFolder": "Open Folder",
+    "openFolderFailed": "Failed to open folder",
+    "docAssets": "Doc Assets",
+    "noDocAssets": "No assets referenced in current document",
+    "noActiveDoc": "Please open a document first",
+    "currentDoc": "Current Doc"
   },
   "rssReader": {
     "title": "RSS Reader",

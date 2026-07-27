@@ -247,9 +247,11 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     customCategory.value = ""
   }
 
-  function applyCategory(currentPath: string, category: string) {
+  async function applyCategory(currentPath: string, category: string) {
     const fileName = currentPath.split("/").pop() || currentPath
     moveNewPath.value = `assets/${category}/${fileName}`
+    // 点击分类即直接执行移动，避免"填入路径后未点确认"的静默无操作陷阱
+    await handleMoveAsset(currentPath)
   }
 
   async function applyCustomCategory(currentPath: string) {
@@ -354,8 +356,13 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
 
   async function handleMoveAsset(oldPath: string) {
     const newPath = moveNewPath.value.trim()
-    if (!newPath || newPath === oldPath) {
+    if (!newPath) {
       cancelMove()
+      return
+    }
+    if (newPath === oldPath) {
+      // 路径未变化时明确提示，避免静默关闭被误认为移动成功
+      showMsg(i18n.samePathHint)
       return
     }
     if (!isValidAssetMovePath(newPath)) {

@@ -50,6 +50,7 @@
     "locateRefs": "该资源在 {count} 个块中被引用",
     "locateNotFound": "未找到引用该资源的文档",
     "locateFailed": "定位失败",
-    "fileNotFound": "文件不存在于磁盘"
+    "fileNotFound": "文件不存在于磁盘",
+    "samePathHint": "新路径与当前路径相同，未执行移动"
   }
 }

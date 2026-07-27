@@ -46,6 +46,40 @@ export function safeDecodeURI(path: string): string {
   catch { return path }
 }
 
+/**
+ * markdown 中资源路径的可能存储形态变换：
+ * 原文 / 仅空格编码（思源链接中空格存为 %20、中文保留原文）/ 完整 URL 编码
+ */
+export const PATH_ENCODING_TRANSFORMS: ((s: string) => string)[] = [
+  (s) => s,
+  (s) => s.split(" ").join("%20"),
+  (s) => encodeURI(s),
+]
+
+/** 生成资源路径在 markdown 中可能出现的引用形态（以解码路径为基准，去重） */
+export function buildPathVariants(path: string): string[] {
+  const base = safeDecodeURI(path)
+  return [...new Set(PATH_ENCODING_TRANSFORMS.map((t) => t(base)))]
+}
+
+/** 对新旧字符串施加相同的编码形态变换，按 from 去重生成替换对 */
+export function buildVariantPairs(from: string, to: string): { from: string, to: string }[] {
+  const seen = new Set<string>()
+  const pairs: { from: string, to: string }[] = []
+  for (const transform of PATH_ENCODING_TRANSFORMS) {
+    const f = transform(from)
+    if (seen.has(f)) continue
+    seen.add(f)
+    pairs.push({ from: f, to: transform(to) })
+  }
+  return pairs
+}
+
+/** 转义正则表达式元字符 */
+export function escapeRegExp(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
+
 /** 检查资源文件是否存在于磁盘（通过列出父目录比对文件名） */
 export async function assetFileExists(path: string): Promise<boolean> {
   const segments = `/data/${path}`.split("/")

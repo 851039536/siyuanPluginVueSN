@@ -112,7 +112,7 @@ export async function getDeletedDocs(dateStr: string): Promise<DeletedDoc[]> {
   return getDeletedDocsInRange(dateStr, dateStr)
 }
 
-export async function getDateChangedDocs(dateStr: string): Promise<{
+export async function getDateChangedDocs(dateStr: string, limit: number = 512): Promise<{
   newDocs: ChangedDoc[]
   modifiedDocs: ChangedDoc[]
 }> {
@@ -124,13 +124,14 @@ export async function getDateChangedDocs(dateStr: string): Promise<{
     }
   }
 
+  const safeLimit = Math.max(1, Math.floor(limit))
   // WHERE 使用范围比较（而非 substr 包裹列），保持 sargable
   const newDocsSql = `
     SELECT id, content, created FROM blocks
     WHERE type = 'd'
       AND created >= '${dateStr}000000' AND created <= '${dateStr}235959'
     ORDER BY created ASC
-    LIMIT 512
+    LIMIT ${safeLimit}
   `
   const modifiedDocsSql = `
     SELECT id, content, updated FROM blocks
@@ -138,7 +139,7 @@ export async function getDateChangedDocs(dateStr: string): Promise<{
       AND updated >= '${dateStr}000000' AND updated <= '${dateStr}235959'
       AND substr(created, 1, 8) != '${dateStr}'
     ORDER BY updated DESC
-    LIMIT 512
+    LIMIT ${safeLimit}
   `
 
   const [newRows, modifiedRows] = await Promise.all([

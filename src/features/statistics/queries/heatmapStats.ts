@@ -3,15 +3,14 @@
 import type {
   ChangedDoc,
   DateCountRow,
-  DocBlockRow,
   HeatmapMetric,
 } from "../types"
 import { lsNotebooks } from "@/api"
 import {
   filterActiveNotebooks,
   isValidDateStr,
-  mapChangedDocs,
 } from "../utils"
+import { getDateChangedDocs } from "./docChangeStats"
 import {
   executeSql,
   formatDateTime,
@@ -93,46 +92,20 @@ export async function getHeatmapActivityData(
 
 /**
  * 查询某天的文档变更详情（新增 + 修改）
+ * 复用 getDateChangedDocs，热力图详情限 256 条
+ * @param dateStr 日期字符串 YYYY-MM-DD
  */
 export async function getHeatmapDailyDetail(dateStr: string): Promise<{
   newDocs: ChangedDoc[]
   modifiedDocs: ChangedDoc[]
 }> {
-  if (dateStr.length < 8) { return {
-    newDocs: [],
-    modifiedDocs: [],
-  }
-  }
   const yyyymmdd = dateStr.replace(/-/g, "")
   if (!isValidDateStr(yyyymmdd)) {
     console.warn("getHeatmapDailyDetail: 无效的日期参数", dateStr)
     return { newDocs: [], modifiedDocs: [] }
   }
 
-  const newDocsSql = `
-    SELECT id, content, created FROM blocks
-    WHERE type = 'd' AND substr(created, 1, 8) = '${yyyymmdd}'
-    ORDER BY created ASC
-    LIMIT 256
-  `
-  const modifiedDocsSql = `
-    SELECT id, content, updated FROM blocks
-    WHERE type = 'd'
-      AND substr(updated, 1, 8) = '${yyyymmdd}'
-      AND substr(created, 1, 8) != '${yyyymmdd}'
-    ORDER BY updated DESC
-    LIMIT 256
-  `
-
-  const [newRows, modifiedRows] = await Promise.all([
-    executeSql<DocBlockRow>(newDocsSql),
-    executeSql<DocBlockRow>(modifiedDocsSql),
-  ])
-
-  return {
-    newDocs: mapChangedDocs(newRows || [], "created"),
-    modifiedDocs: mapChangedDocs(modifiedRows || [], "updated"),
-  }
+  return getDateChangedDocs(yyyymmdd, 256)
 }
 
 /** 获取打开的笔记本列表（供筛选器使用） */

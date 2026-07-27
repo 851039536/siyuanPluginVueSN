@@ -274,7 +274,6 @@ export class GitPushStorage {
   }
 
   async init(): Promise<void> {
-    await this.projects.loadOrDefault()
     const cats = await this.categories.loadOrDefault()
     // 确保默认分类始终存在
     if (!cats.some((c) => c.id === UNGROUPED_ID)) {

@@ -57,7 +57,7 @@ export function useProjectCrud(manager: GitPushManager) {
     projects.value = [...projects.value]
   }
 
-  async function updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "name" | "path" | "tags" | "starred" | "status" | "archived" | "note" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl" | "localPaths" | "pathDevices">>) {
+  async function updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "name" | "path" | "tags" | "starred" | "archived" | "note" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl" | "localPaths" | "pathDevices">>) {
     const updated = await manager.updateProjectMeta(id, patch)
     if (updated) {
       patchProject(id, patch)
@@ -77,19 +77,6 @@ export function useProjectCrud(manager: GitPushManager) {
     } catch (e: unknown) {
       patchProject(id, { starred: prev })
       showMessage(`收藏操作失败: ${getErrorMessage(e) || "未知错误"}`, 3000, "error")
-    }
-  }
-
-  async function setProjectStatus(id: string, status: GitProject["status"]) {
-    if (!status) return
-    const project = findProject(projects, id)
-    const prev = project?.status
-    patchProject(id, { status })
-    try {
-      await manager.setProjectStatus(id, status)
-    } catch (e: unknown) {
-      if (prev) patchProject(id, { status: prev })
-      showMessage(`状态更新失败: ${getErrorMessage(e) || "未知错误"}`, 3000, "error")
     }
   }
 
@@ -166,7 +153,6 @@ export function useProjectCrud(manager: GitPushManager) {
     removeProject,
     updateProjectMeta,
     toggleStar,
-    setProjectStatus,
     appendTag,
     removeTag,
     refreshRemotes,

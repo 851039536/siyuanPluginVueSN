@@ -39,25 +39,6 @@ export const PLATFORM_META = [
 
 export type PlatformKey = typeof PLATFORM_META[number]["key"]
 
-// ── 项目状态徽章元数据（颜色 + 文案 + 图标 + 循环顺序）──
-export const STATUS_META: Record<string, { color: string, label: string, icon: string }> = {
-  active: {
-    color: "var(--b3-theme-success)",
-    label: "活跃",
-    icon: "mdi:circle-medium",
-  },
-  maintenance: {
-    color: "var(--b3-theme-primary)",
-    label: "维护中",
-    icon: "mdi:circle-medium",
-  },
-  paused: {
-    color: "var(--b3-theme-on-surface)",
-    label: "暂停",
-    icon: "mdi:pause-circle-outline",
-  },
-}
-
 // ── 文件变更状态元数据（icon + 中文标题，供 WorkingTreePanel 使用）──
 export const FILE_STATUS_META: Record<string, { icon: string, title: string }> = {
   modified: { icon: "~", title: "已修改" },

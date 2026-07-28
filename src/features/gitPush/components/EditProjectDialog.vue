@@ -24,15 +24,6 @@
           @keydown.enter="save()"
         />
         <div class="gp-edit-row">
-          <div class="gp-grow">
-            <!-- 表单项："状态" -->
-            <Select
-              v-model="localStatus"
-              :label="i18n.statusLabel"
-              size="xsmall"
-              :options="statusOptions"
-            />
-          </div>
           <div class="gp-form-group gp-edit-toggles">
             <!-- 标签："标记" -->
             <label class="gp-label">{{ i18n.markLabel }}</label>
@@ -235,9 +226,8 @@ import type {
   GitProject,
   GitPushManager,
   GitRemoteInfo,
-  ProjectStatus,
 } from "../types"
-import { PLATFORM_META, REMOTES, STATUS_CYCLE, STATUS_META } from "../types"
+import { PLATFORM_META, REMOTES } from "../types"
 import { Icon } from "@iconify/vue"
 import { showMessage } from "siyuan"
 import {
@@ -248,7 +238,6 @@ import {
 } from "vue"
 import Input from "@/components/Input.vue"
 import type { SelectOption } from "@/components/Select.vue"
-import Select from "@/components/Select.vue"
 import type { RemoteRowItem } from "./EditableRemoteList.vue"
 import EditableRemoteList from "./EditableRemoteList.vue"
 import CloneLogPanel from "./CloneLogPanel.vue"
@@ -265,10 +254,6 @@ const props = defineProps<{
   i18n: Record<string, any>
 }>()
 
-const statusOptions = computed<SelectOption[]>(() =>
-  STATUS_CYCLE.map((s) => ({ value: s, label: STATUS_META[s].label })),
-)
-
 const emit = defineEmits<{
   "close": []
   "saved": [] // 通知父组件刷新列表并关闭弹窗
@@ -282,7 +267,6 @@ const remoteError = ref("")
 
 // ── 表单本地状态 ──
 const localName = ref("")
-const localStatus = ref<ProjectStatus>("active")
 const localStarred = ref(false)
 const localArchived = ref(false)
 const localNote = ref("")
@@ -456,7 +440,6 @@ onMounted(async () => {
   project.value = p
   // 填充表单
   localName.value = p.name
-  localStatus.value = p.status || "active"
   localStarred.value = !!p.starred
   localArchived.value = !!p.archived
   localNote.value = p.note || ""
@@ -473,7 +456,6 @@ async function save() {
   const payload = pathsToPayload()
   await props.manager.updateProjectMeta(props.projectId, {
     name: localName.value.trim() || project.value.name,
-    status: localStatus.value,
     starred: localStarred.value,
     archived: localArchived.value,
     note: localNote.value,

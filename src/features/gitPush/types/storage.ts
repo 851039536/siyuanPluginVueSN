@@ -6,12 +6,6 @@ import { TypedStorage } from "@/utils/typedStorage"
 /** 未分组分类的 ID（魔法字符串收敛为单一常量） */
 export const UNGROUPED_ID = "__ungrouped__"
 
-/** 项目状态（用于状态徽章；archived 是独立字段，不混入此处） */
-export type ProjectStatus = "active" | "maintenance" | "paused"
-
-/** 项目状态可选值（单一数据源，驱动 UI select） */
-export const PROJECT_STATUS_VALUES: ProjectStatus[] = ["active", "maintenance", "paused"]
-
 /** 项目映射条目 */
 export interface GitProject {
   /** 唯一标识（时间戳生成） */
@@ -44,8 +38,6 @@ export interface GitProject {
   tags?: string[]
   /** 收藏/置顶（排序优先级最高） */
   starred?: boolean
-  /** 项目状态徽章（active=在写/maintenance=维护中/paused=暂停） */
-  status?: ProjectStatus
   /** 归档（默认隐藏，需 toggle 显示） */
   archived?: boolean
   /** 最后活动时间（ISO，由最近提交时间持久化，首屏直接读取展示） */
@@ -288,20 +280,12 @@ export class GitPushStorage {
       cats.unshift(DEFAULT_UNGROUPED)
       await this.categories.save(cats)
     }
-    // 迁移旧项目：补 categoryId + 推导默认 status（依据 lastActivity 是否超过 90 天）
+    // 迁移旧项目：补 categoryId
     const projs = await this.projects.loadOrDefault()
     let needsSave = false
-    const now = Date.now()
-    const NINETY_DAYS = 90 * 24 * 60 * 60 * 1000
     for (const p of projs) {
       if (!p.categoryId) {
         p.categoryId = UNGROUPED_ID
-        needsSave = true
-      }
-      // status 缺失时按活动时间推导：长时间未活动 → paused，否则 active
-      if (!p.status) {
-        const last = p.lastActivity ? Date.parse(p.lastActivity) : Number.NaN
-        p.status = !isNaN(last) && (now - last) > NINETY_DAYS ? "paused" : "active"
         needsSave = true
       }
     }

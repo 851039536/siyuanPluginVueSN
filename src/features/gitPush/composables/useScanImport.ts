@@ -4,21 +4,19 @@ import { ref } from "vue"
 import { showMessage } from "siyuan"
 import type { ScannedGitRepo } from "../types/storage"
 import { UNGROUPED_ID } from "../types"
-import { pickDirectory } from "@/utils/electronDialog"
 import { getErrorMessage } from "@/utils/stringUtils"
 
 type ScanRepo = ScannedGitRepo & { alreadyImported: boolean }
 
 export function useScanImport(deps: {
   scanResults: Ref<ScanRepo[]>
-  scanDirInput: Ref<string>
   activeCategory: Ref<string>
   startScan: (dir: string) => Promise<void>
   importScanResults: (paths: string[], catId: string) => Promise<{ imported: number, skipped: number }>
   loadProjects: () => Promise<void>
   tf: (key: string, fallback: string, ...args: (string | number)[]) => string
 }) {
-  const { scanResults, scanDirInput, activeCategory, startScan, importScanResults, loadProjects, tf } = deps
+  const { scanResults, activeCategory, startScan, importScanResults, loadProjects, tf } = deps
 
   const showScanDialog = ref(false)
   const scanError = ref("")
@@ -26,7 +24,6 @@ export function useScanImport(deps: {
 
   function handleOpenScan() {
     scanError.value = ""
-    scanDirInput.value = ""
     scanResults.value = []
     scanSelection.value = {}
     showScanDialog.value = true
@@ -37,10 +34,11 @@ export function useScanImport(deps: {
     scanError.value = ""
   }
 
-  async function handleStartScan() {
+  /** 执行扫描（目录由弹窗 start-scan 事件携带） */
+  async function handleStartScan(dir: string) {
     scanError.value = ""
     try {
-      await startScan(scanDirInput.value.trim())
+      await startScan(dir.trim())
       // 扫描成功 → 自动全选未导入项
       const sel: Record<string, boolean> = {}
       for (const repo of scanResults.value) {
@@ -93,12 +91,6 @@ export function useScanImport(deps: {
     }
   }
 
-  /** 扫描目录专用路径选择，结果写入 scanDirInput */
-  async function selectScanDirectory() {
-    const path = await pickDirectory(tf("selectScanDirTitle", "选择要扫描的目录"))
-    if (path) scanDirInput.value = path
-  }
-
   return {
     showScanDialog,
     scanError,
@@ -109,6 +101,5 @@ export function useScanImport(deps: {
     handleToggleSelectAll,
     toggleScanItem,
     handleImportSelected,
-    selectScanDirectory,
   }
 }

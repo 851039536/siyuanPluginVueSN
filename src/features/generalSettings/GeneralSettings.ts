@@ -291,8 +291,9 @@ export class GeneralSettings {
 
   public async applyDocCountStyle() {
     try {
-      const settings = await this.storage.docCount.load()
-      if (settings && settings.enableDocCount) {
+      // loadOrDefault：从未保存过设置时按默认值（启用）启动，与设置面板默认状态保持一致
+      const settings = await this.storage.docCount.loadOrDefault()
+      if (settings.enableDocCount) {
         this.updateDocCount(settings)
       }
     } catch (error) {

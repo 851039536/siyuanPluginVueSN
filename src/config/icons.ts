@@ -563,6 +563,22 @@ export const COMMON_ICONS = {
   formatSize: {
     icon: "mdi:format-size",
   },
+  // 文档字体设置相关
+  formatFont: {
+    icon: "mdi:format-font",
+  },
+  formatLineSpacing: {
+    icon: "mdi:format-line-spacing",
+  },
+  formatLetterSpacing: {
+    icon: "mdi:format-letter-spacing",
+  },
+  formatParagraph: {
+    icon: "mdi:format-pilcrow",
+  },
+  formatBold: {
+    icon: "mdi:format-bold",
+  },
   lightbulb: {
     icon: "mdi:lightbulb",
   },

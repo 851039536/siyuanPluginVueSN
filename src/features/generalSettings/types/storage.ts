@@ -166,6 +166,17 @@ export const DEFAULT_FONT_SETTINGS: FontSettings = {
   lineHeight: 1.6,
 }
 
+/** 默认文档字体设置 */
+export const DEFAULT_DOCUMENT_FONT_SETTINGS: DocumentFontSettings = {
+  enabled: false,
+  fontFamily: "",
+  fontSize: 12,
+  lineHeight: 1.6,
+  letterSpacing: 0,
+  paragraphSpacing: 8,
+  fontWeight: "normal",
+}
+
 /** 默认代码块设置 */
 export const DEFAULT_CODEBLOCK_SETTINGS: CodeBlockSettings = {
   style: "default",
@@ -290,7 +301,7 @@ export class GeneralSettingsStorage {
     this.heading = new TypedStorage(storage, "heading-settings", DEFAULT_HEADING_SETTINGS)
     this.list = new TypedStorage(storage, "list-settings", DEFAULT_LIST_SETTINGS)
     this.highlight = new TypedStorage(storage, "highlight-settings", DEFAULT_HIGHLIGHT_SETTINGS)
-    this.documentFont = new TypedStorage(storage, "document-font-settings")
+    this.documentFont = new TypedStorage(storage, "document-font-settings", DEFAULT_DOCUMENT_FONT_SETTINGS)
     this.tableStyle = new TypedStorage(storage, "table-style-settings")
     this.listStyle = new TypedStorage(storage, "list-style-settings")
     this.docCount = new TypedStorage(storage, "doc-count-settings", DEFAULT_DOC_COUNT_SETTINGS)

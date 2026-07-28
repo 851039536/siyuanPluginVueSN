@@ -41,6 +41,7 @@ const VARIANT_ORDER: Record<MdFileVariant, number> = {
 const MD_VARIANT_MAP: Record<string, MdFileVariant> = {
   "readme.md": "readme",
   "agents.md": "agents",
+  "claude.md": "claude",
   "codebuddy.md": "codebuddy",
 }
 
@@ -83,8 +84,8 @@ export function scanMarkdownFiles(dir: string): MdFileEntry[] {
         } satisfies MdFileEntry
       })
       .sort((a, b) => {
-        const va = VARIANT_ORDER[a.variant] ?? 3
-        const vb = VARIANT_ORDER[b.variant] ?? 3
+        const va = VARIANT_ORDER[a.variant]
+        const vb = VARIANT_ORDER[b.variant]
         if (va !== vb) return va - vb
         return a.name.localeCompare(b.name)
       })
@@ -97,12 +98,12 @@ export function scanMarkdownFiles(dir: string): MdFileEntry[] {
  * 读取单个 Markdown 文件的内容（纯文本）
  * @param filePath 文件绝对路径
  * @param maxLines 最大读取行数（超限时截断），0 表示不限制
- * @returns 文件内容字符串，读取失败返回 null
+ * @returns 文件内容与是否实际发生截断，读取失败返回 null
  */
 export function readMarkdownFile(
   filePath: string,
   maxLines = 0,
-): string | null {
+): { content: string, truncated: boolean } | null {
   const node = getNodeFsPathOs()
   if (!node) return null
   const { fs } = node
@@ -113,10 +114,10 @@ export function readMarkdownFile(
     if (maxLines > 0) {
       const lines = raw.split("\n")
       if (lines.length > maxLines) {
-        return lines.slice(0, maxLines).join("\n")
+        return { content: lines.slice(0, maxLines).join("\n"), truncated: true }
       }
     }
-    return raw
+    return { content: raw, truncated: false }
   } catch {
     return null
   }

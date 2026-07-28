@@ -254,6 +254,17 @@ export const DEFAULT_TABPIN_SETTINGS: TabPinSettings = {
   backgroundColor: "rgba(var(--b3-theme-primary-rgb), 0.1)",
 }
 
+/** 默认文档数统计设置 */
+export const DEFAULT_DOC_COUNT_SETTINGS: DocCountSettings = {
+  enableDocCount: true,
+  updateInterval: "3600000",
+  fontSize: "12px",
+  fontColor: "#8c8c8c",
+  fontWeight: "normal",
+  opacity: 0.8,
+  displayFormat: "bracket",
+}
+
 // ============================================================
 // 存储类
 // ============================================================
@@ -282,7 +293,7 @@ export class GeneralSettingsStorage {
     this.documentFont = new TypedStorage(storage, "document-font-settings")
     this.tableStyle = new TypedStorage(storage, "table-style-settings")
     this.listStyle = new TypedStorage(storage, "list-style-settings")
-    this.docCount = new TypedStorage(storage, "doc-count-settings")
+    this.docCount = new TypedStorage(storage, "doc-count-settings", DEFAULT_DOC_COUNT_SETTINGS)
     this.tabPin = new TypedStorage(storage, "tabpin-settings", DEFAULT_TABPIN_SETTINGS)
     this.appearance = new TypedStorage(storage, "appearance-settings")
     this.password = new TypedStorage(storage, "global-password")

@@ -938,6 +938,49 @@
   margin-top: $spacing-1;
 }
 
+// ── 克隆日志面板（EditProjectDialog：git clone --progress 实时输出）──
+.gp-clone-log {
+  margin-top: $spacing-1;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  overflow: hidden;
+}
+
+.gp-clone-log-header {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-2;
+  border-bottom: 1px solid var(--b3-border-color);
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+}
+
+// 日志面板头部关闭按钮（推到最右侧）
+.gp-clone-log-close {
+  margin-left: auto;
+}
+
+.gp-clone-log-body {
+  max-height: 140px; // 约 10 行日志高度，超出滚动，避免撑高弹窗
+  overflow-y: auto;
+  padding: $spacing-1 $spacing-2;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  line-height: $line-height-normal;
+  opacity: 0.8;
+}
+
+.gp-clone-log-line {
+  white-space: pre-wrap;
+  word-break: break-all;
+
+  // 空行占位（换行提交后的待写入行）
+  &:empty {
+    height: 1em;
+  }
+}
+
 // 扫描导入弹窗：加宽以容纳扫描结果的完整路径展示
 .gp-dialog--scan {
   width: 520px;

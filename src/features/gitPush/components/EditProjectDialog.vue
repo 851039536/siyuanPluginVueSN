@@ -137,6 +137,13 @@
             @remove="removeRepoLink"
             @download="downloadRepoLink"
           />
+          <!-- 克隆日志面板：下载时实时显示 git clone 进度输出 -->
+          <CloneLogPanel
+            :lines="cloneLog.lines.value"
+            :running="cloneLog.running.value"
+            :i18n="i18n"
+            @clear="cloneLog.clear"
+          />
         </div>
         <!-- Git 远程仓库区块（从 .git/config 自动检测，可编辑/增删） -->
         <div class="gp-form-group">
@@ -232,6 +239,7 @@ import type {
 } from "../types"
 import { PLATFORM_META, REMOTES, STATUS_CYCLE, STATUS_META } from "../types"
 import { Icon } from "@iconify/vue"
+import { showMessage } from "siyuan"
 import {
   computed,
   onMounted,
@@ -243,9 +251,11 @@ import type { SelectOption } from "@/components/Select.vue"
 import Select from "@/components/Select.vue"
 import type { RemoteRowItem } from "./EditableRemoteList.vue"
 import EditableRemoteList from "./EditableRemoteList.vue"
+import CloneLogPanel from "./CloneLogPanel.vue"
 import { getCurrentDeviceName, hasPlatformRemote, resolveValidPath } from "../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
 import { pickDirectory } from "@/utils/electronDialog"
+import { useCloneLog } from "../composables/useCloneLog"
 import { usePathRows } from "../composables/usePathRows"
 
 
@@ -293,6 +303,8 @@ const showHelp = ref(false)
 
 // ── 仓库链接（EditableRemoteList 数据源与操作回调）──
 const repoLinkError = ref("")
+// 克隆实时日志（\r 进度行原地刷新由 composable 解析）
+const cloneLog = useCloneLog()
 
 const repoLinkRows = computed<RemoteRowItem[]>(() =>
   PLATFORM_META
@@ -340,7 +352,7 @@ async function removeRepoLink(platform: string): Promise<boolean> {
   return upsertRepoLink(platform, "")
 }
 
-/** 下载（克隆）仓库链接：选目录 → clone 到同名子目录 → 新路径追加到路径行并立即持久化 */
+/** 下载（克隆）仓库链接：选目录 → clone 到同名子目录（实时日志）→ 新路径追加到路径行并立即持久化 */
 async function downloadRepoLink(platform: string): Promise<boolean> {
   const pl = PLATFORM_META.find((p) => p.key === platform)
   const url = pl ? urlInputs[pl.urlProp] : ""
@@ -348,8 +360,9 @@ async function downloadRepoLink(platform: string): Promise<boolean> {
   const dir = await pickDirectory(props.i18n.selectCloneDir)
   if (!dir) { return false }
   repoLinkError.value = ""
+  cloneLog.start(`$ git clone --progress ${url}`)
   try {
-    const clonedPath = await props.manager.cloneRepo(dir, url)
+    const clonedPath = await props.manager.cloneRepo(dir, url, cloneLog.append)
     allPathsList.value.push({ path: clonedPath, device: getCurrentDeviceName() })
     // 立即持久化全部路径行（首行为主路径），并通知父组件刷新列表
     const payload = pathsToPayload()
@@ -361,9 +374,15 @@ async function downloadRepoLink(platform: string): Promise<boolean> {
       })
     }
     emit("urlsUpdated")
+    // 克隆完成：日志收尾 + 全局提示（含克隆到的完整路径）
+    const doneMsg = props.i18n.cloneSuccess.replace("{0}", clonedPath)
+    cloneLog.finish(doneMsg)
+    showMessage(doneMsg, 4000, "info")
     return true
   } catch (e: unknown) {
-    repoLinkError.value = getErrorMessage(e) || props.i18n.errCloneRepo
+    const errMsg = getErrorMessage(e) || props.i18n.errCloneRepo
+    repoLinkError.value = errMsg
+    cloneLog.finish(`${props.i18n.errCloneRepo}: ${errMsg}`)
     return false
   }
 }

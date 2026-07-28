@@ -45,6 +45,11 @@
   color: var(--b3-theme-error);
 }
 
+// 通用弹性占位列（flex 行内占满剩余宽度）
+.gp-grow {
+  flex: 1;
+}
+
 .gp-checking {
   font-size: $font-size-2xs;
   display: flex;

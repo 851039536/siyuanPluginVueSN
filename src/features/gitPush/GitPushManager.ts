@@ -268,8 +268,6 @@ export class GitPushManager {
 
   getProjectGitConfigFilePath(projectPath: string): string { return this.repoOps.getProjectGitConfigFilePath(projectPath) }
 
-  async openGitConfigFile(): Promise<boolean> { return this.repoOps.openGitConfigFile() }
-
   async scanForGitRepos(dirPath: string): Promise<ScannedGitRepo[]> { return this.repoOps.scanForGitRepos(dirPath) }
 
   // ── AI 提交信息（CommitMsgGenerator）──

@@ -146,24 +146,6 @@ export class RepoOps {
     return modules?.path?.join(projectPath, ".git", "config") || ""
   }
 
-  /** 用系统默认编辑器打开全局 Git 配置文件 */
-  async openGitConfigFile(): Promise<boolean> {
-    const filePath = this.getGitConfigFilePath()
-    if (!filePath) {
-      return false
-    }
-    if (typeof window.require === "function") {
-      try {
-        const { shell } = window.require("electron")
-        const result = await shell.openPath(filePath)
-        return !result // openPath 成功返回空字符串，失败返回错误描述
-      } catch {
-        return false
-      }
-    }
-    return false
-  }
-
   // ── 仓库扫描 ──
 
   async scanForGitRepos(dirPath: string): Promise<ScannedGitRepo[]> {

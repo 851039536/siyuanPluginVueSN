@@ -7,9 +7,9 @@
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-md;
-  width: 50vw;
+  width: 50vw; // 弹窗宽度随窗口自适应，上限 700px 保证宽屏下配置行不过长
   max-width: 700px;
-  height: 60vh;
+  height: 60vh; // 高度随窗口自适应，上限 600px；内容区超出滚动
   max-height: 600px;
   display: flex;
   flex-direction: column;
@@ -40,7 +40,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
+  width: 24px; // 24px 方形点击区（16px 图标 + 两侧留白）
   height: 24px;
   border-radius: $radius-sm;
   color: var(--b3-theme-on-surface);
@@ -91,10 +91,10 @@
 .gp-gc-config-item {
   display: flex;
   align-items: flex-start;
-  padding: 5px $spacing-3;
+  padding: $spacing-1 $spacing-3;
   font-size: $font-size-2xs;
   font-family: $vp-mono;
-  line-height: 1.6;
+  line-height: $line-height-normal;
   border-bottom: 1px solid var(--b3-border-color);
 
   &:last-child {
@@ -134,7 +134,7 @@
 .gp-gc-config-value {
   color: var(--b3-theme-on-surface);
   word-break: break-all;
-  margin-left: 2px;
+  margin-left: $spacing-2px;
 }
 
 // ── 底部操作栏 ──
@@ -147,12 +147,8 @@
   flex-shrink: 0;
 }
 
-.gp-gc-spacer {
-  flex: 1;
-}
-
 .gp-gc-config-count {
-  font-size: $font-size-xs;
+  font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
 }

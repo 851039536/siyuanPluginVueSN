@@ -25,7 +25,8 @@ export function useGitStats(
 
   async function setGitConcurrency(n: number) {
     await manager.setGitConcurrency(n)
-    gitConcurrency.value = n
+    // 回读 manager 钳位后的实际值，避免 UI 显示与持久化值不一致
+    gitConcurrency.value = manager.getGitConcurrency()
   }
 
   /**

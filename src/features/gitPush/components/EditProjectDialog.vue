@@ -4,11 +4,9 @@
     class="gp-mask"
     @click.self="$emit('close')"
   >
-    <div
-      class="gp-dialog"
-      style="width: 754px;"
-    >
+    <div class="gp-dialog gp-dialog--edit">
       <div class="gp-dialog-header">
+        <!-- 弹窗标题："编辑项目 — 项目名" -->
         <span class="gp-dialog-title">{{ i18n.editProjectTitlePrefix }} — {{ project?.name }}</span>
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
@@ -18,6 +16,7 @@
         </button>
       </div>
       <div class="gp-dialog-body">
+        <!-- 表单项："项目名称" -->
         <Input
           v-model="localName"
           :label="i18n.projectName"
@@ -25,7 +24,8 @@
           @keydown.enter="save()"
         />
         <div class="gp-edit-row">
-          <div style="flex:1">
+          <div class="gp-grow">
+            <!-- 表单项："状态" -->
             <Select
               v-model="localStatus"
               :label="i18n.statusLabel"
@@ -34,8 +34,10 @@
             />
           </div>
           <div class="gp-form-group gp-edit-toggles">
+            <!-- 标签："标记" -->
             <label class="gp-label">{{ i18n.markLabel }}</label>
             <div class="gp-toggle-row">
+              <!-- 切换按钮："收藏" -->
               <button
                 class="gp-toggle-chip"
                 :class="{ active: localStarred }"
@@ -46,6 +48,7 @@
                   height="12"
                 />{{ i18n.favorite }}
               </button>
+              <!-- 切换按钮："归档" -->
               <button
                 class="gp-toggle-chip"
                 :class="{ active: localArchived }"
@@ -60,6 +63,7 @@
           </div>
         </div>
 
+        <!-- 表单项："备注" -->
         <Input
           v-model="localNote"
           type="textarea"
@@ -68,7 +72,9 @@
           :rows="3"
           :placeholder="i18n.notePlaceholder"
         />
+        <!-- 本地路径区块（多设备路径行） -->
         <div class="gp-form-group">
+          <!-- 标签："本地路径（跨设备适配）" -->
           <label class="gp-label">{{ i18n.localPathTitle }} <span class="gp-label-hint">{{ i18n.crossDeviceHint }}</span></label>
           <div class="gp-edit-paths">
             <div
@@ -81,7 +87,7 @@
                 size="xsmall"
                 :placeholder="i18n.devicePathPlaceholder.replace('{0}', String(idx + 1))"
               />
-              <!-- 设备电脑名（可选）：占位符“电脑名（可选）”，新增路径时自动填入当前主机名 -->
+              <!-- 设备电脑名（可选）：占位符"电脑名（可选）"，新增路径时自动填入当前主机名 -->
               <div class="gp-path-device">
                 <Input
                   v-model="entry.device"
@@ -106,6 +112,7 @@
               </button>
             </div>
           </div>
+          <!-- 按钮："添加本地路径" -->
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm gp-add-path-btn"
             @click="addLocalPath"
@@ -114,200 +121,40 @@
             <span>{{ i18n.addLocalPath }}</span>
           </button>
         </div>
+        <!-- 仓库链接区块（手动输入的平台 URL，持久化存储） -->
         <div class="gp-form-group">
+          <!-- 标签："仓库链接（手动输入，用于跨设备持久化）" -->
           <label class="gp-label">{{ i18n.repoLinkLabel }} <span class="gp-label-hint">{{ i18n.repoLinkHint }}</span></label>
-          <div
-            v-if="repoLinkList.length"
-            class="gp-remote-list"
-          >
-            <div
-              v-for="link in repoLinkList"
-              :key="link.key"
-              class="gp-remote-row"
-            >
-              <Icon
-                :icon="link.icon"
-                height="12"
-              />
-              <span class="gp-remote-name">{{ link.label }}</span>
-              <template v-if="editLinkPlatform === link.key">
-                <Input
-                  v-model="editLinkUrl"
-                  size="xsmall"
-                  style="flex:1"
-                  @keydown.enter="saveRepoLinkEdit(link)"
-                  @keydown.escape="cancelRepoLinkEdit()"
-                />
-                <button
-                  class="vp-btn vp-btn--primary vp-btn--sm"
-                  @click="saveRepoLinkEdit(link)"
-                >
-                  {{ i18n.save }}
-                </button>
-                <button
-                  class="vp-btn vp-btn--ghost vp-btn--sm"
-                  @click="cancelRepoLinkEdit()"
-                >
-                  {{ i18n.cancel }}
-                </button>
-              </template>
-              <template v-else>
-                <span
-                  class="gp-remote-url"
-                  :title="link.url"
-                >{{ link.url }}</span>
-                <button
-                  class="vp-btn vp-btn--ghost vp-btn--sm"
-                  @click="editLinkPlatform = link.key; editLinkUrl = link.url"
-                >
-                  {{ i18n.edit }}
-                </button>
-                <button
-                  class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
-                  @click="handleDeleteRepoLink(link.urlProp)"
-                >
-                  {{ i18n.delete }}
-                </button>
-              </template>
-            </div>
-          </div>
-          <div
-            v-else
-            class="gp-remote-empty"
-          >
-            {{ i18n.noRepoLinks }}
-          </div>
-          <div
-            v-if="linkAddOptions.length > 0"
-            class="gp-remote-add"
-            style="margin-top:4px"
-          >
-            <Select
-              v-model="newLinkPlatform"
-              size="xsmall"
-              style="width:130px"
-              :options="linkAddOptions"
-              :placeholder="i18n.selectPlatform"
-            />
-            <Input
-              v-model="newLinkUrl"
-              size="xsmall"
-              :placeholder="i18n.repoUrlPlaceholder"
-              style="flex:1"
-              @keydown.enter="handleAddRepoLink()"
-            />
-            <button
-              class="vp-btn vp-btn--primary vp-btn--sm"
-              :disabled="!newLinkPlatform || !newLinkUrl.trim()"
-              @click="handleAddRepoLink"
-            >
-              {{ i18n.add }}
-            </button>
-          </div>
-          <div
-            v-if="repoLinkError"
-            class="gp-error"
-            style="margin-top:4px"
-          >
-            {{ repoLinkError }}
-          </div>
+          <EditableRemoteList
+            :rows="repoLinkRows"
+            :add-options="linkAddOptions"
+            :empty-text="i18n.noRepoLinks"
+            :url-placeholder="i18n.repoUrlPlaceholder"
+            :error="repoLinkError"
+            :i18n="i18n"
+            @add="upsertRepoLink"
+            @saveEdit="upsertRepoLink"
+            @remove="removeRepoLink"
+          />
         </div>
+        <!-- Git 远程仓库区块（从 .git/config 自动检测，可编辑/增删） -->
         <div class="gp-form-group">
+          <!-- 标签："Git 远程仓库（编辑/增删）" -->
           <label class="gp-label">{{ i18n.gitRemoteLabel }}</label>
-          <div
-            v-if="remoteList.length"
-            class="gp-remote-list"
-          >
-            <div
-              v-for="r in remoteList"
-              :key="r.name"
-              class="gp-remote-row"
-            >
-              <span class="gp-remote-name">{{ r.name }}</span>
-              <template v-if="editRemoteName === r.name">
-                <Input
-                  v-model="editRemoteUrl"
-                  size="xsmall"
-                  style="flex:1"
-                  @keydown.enter="saveRemoteEdit(r.name)"
-                  @keydown.escape="editRemoteName = ''"
-                />
-                <button
-                  class="vp-btn vp-btn--primary vp-btn--sm"
-                  @click="saveRemoteEdit(r.name)"
-                >
-                  {{ i18n.save }}
-                </button>
-                <button
-                  class="vp-btn vp-btn--ghost vp-btn--sm"
-                  @click="editRemoteName = ''"
-                >
-                  {{ i18n.cancel }}
-                </button>
-              </template>
-              <template v-else>
-                <span
-                  class="gp-remote-url"
-                  :title="r.url"
-                >{{ r.url }}</span>
-                <button
-                  class="vp-btn vp-btn--ghost vp-btn--sm"
-                  @click="editRemoteName = r.name; editRemoteUrl = r.url"
-                >
-                  {{ i18n.edit }}
-                </button>
-                <button
-                  class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
-                  @click="handleRemoveRemote(r.name)"
-                >
-                  {{ i18n.delete }}
-                </button>
-              </template>
-            </div>
-          </div>
-          <div
-            v-else
-            class="gp-remote-empty"
-          >
-            {{ i18n.noRemotes }}
-          </div>
-          <!-- 添加远程仓库行：已添加的平台不可重复选择，全部平台配齐后隐藏 -->
-          <div
-            v-if="remoteOptions.length > 0"
-            class="gp-remote-add"
-            style="margin-top:4px"
-          >
-            <Select
-              v-model="newRemoteName"
-              size="xsmall"
-              style="width:130px"
-              :options="remoteOptions"
-              :placeholder="i18n.selectPlatform"
-            />
-            <Input
-              v-model="newRemoteUrl"
-              size="xsmall"
-              :placeholder="i18n.remoteUrlPlaceholder"
-              style="flex:1"
-              @keydown.enter="handleAddRemote()"
-            />
-            <button
-              class="vp-btn vp-btn--primary vp-btn--sm"
-              :disabled="!newRemoteName || !newRemoteUrl.trim()"
-              @click="handleAddRemote"
-            >
-              {{ i18n.add }}
-            </button>
-          </div>
-          <div
-            v-if="remoteError"
-            class="gp-error"
-            style="margin-top:4px"
-          >
-            {{ remoteError }}
-          </div>
+          <EditableRemoteList
+            :rows="remoteRows"
+            :add-options="remoteOptions"
+            :empty-text="i18n.noRemotes"
+            :url-placeholder="i18n.remoteUrlPlaceholder"
+            :error="remoteError"
+            :i18n="i18n"
+            @add="addRemote"
+            @saveEdit="updateRemoteUrl"
+            @remove="removeRemote"
+          />
         </div>
       </div>
+      <!-- 底部操作栏 -->
       <div class="gp-dialog-footer">
         <div class="gp-help-wrap">
           <button
@@ -317,6 +164,7 @@
           >
             <Icon icon="mdi:help-circle-outline" height="12" />
           </button>
+          <!-- 帮助说明弹层 -->
           <div
             v-if="showHelp"
             class="gp-help-popover"
@@ -324,10 +172,10 @@
           >
             <div class="gp-help-header">
               <Icon icon="mdi:information-outline" height="12" />
+              <!-- 弹层标题："帮助说明" -->
               <span>{{ i18n.help }}</span>
               <button
-                class="vp-btn vp-btn--ghost vp-btn--sm"
-                style="margin-left:auto"
+                class="vp-btn vp-btn--ghost vp-btn--sm gp-help-close"
                 @click="showHelp = false"
               >
                 <Icon icon="mdi:close" height="12" />
@@ -340,10 +188,12 @@
                 class="gp-help-item"
               >
                 <Icon :icon="item.icon" height="12" class="gp-help-item-icon" />
-                <p>{{ isZh ? item.textZh : item.textEn }}</p>
+                <!-- 帮助条目正文（本地路径/仓库链接/Git 远程/数据持久化说明） -->
+                <p>{{ item.text }}</p>
               </div>
             </div>
             <div class="gp-help-footer">
+              <!-- 按钮："知道了" -->
               <button
                 class="vp-btn vp-btn--primary vp-btn--sm"
                 @click="showHelp = false"
@@ -353,12 +203,14 @@
             </div>
           </div>
         </div>
+        <!-- 按钮："取消" -->
         <button
           class="vp-btn vp-btn--ghost"
           @click="$emit('close')"
         >
           {{ i18n.cancel }}
         </button>
+        <!-- 按钮："保存" -->
         <button
           class="vp-btn vp-btn--primary"
           @click="save"
@@ -384,11 +236,12 @@ import {
   onMounted,
   reactive,
   ref,
-  watch,
 } from "vue"
 import Input from "@/components/Input.vue"
 import type { SelectOption } from "@/components/Select.vue"
 import Select from "@/components/Select.vue"
+import type { RemoteRowItem } from "./EditableRemoteList.vue"
+import EditableRemoteList from "./EditableRemoteList.vue"
 import { hasPlatformRemote, resolveValidPath } from "../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
 import { usePathRows } from "../composables/usePathRows"
@@ -417,7 +270,7 @@ const remoteError = ref("")
 
 // ── 表单本地状态 ──
 const localName = ref("")
-const localStatus = ref("active")
+const localStatus = ref<ProjectStatus>("active")
 const localStarred = ref(false)
 const localArchived = ref(false)
 const localNote = ref("")
@@ -434,11 +287,61 @@ const {
   pickRow: pickLocalPath,
   toPayload: pathsToPayload,
 } = usePathRows(() => props.i18n.selectLocalPath)
-const newRemoteName = ref("github")
-const newRemoteUrl = ref("")
-const editRemoteName = ref("")
-const editRemoteUrl = ref("")
 const showHelp = ref(false)
+
+// ── 仓库链接（EditableRemoteList 数据源与操作回调）──
+const repoLinkError = ref("")
+
+const repoLinkRows = computed<RemoteRowItem[]>(() =>
+  PLATFORM_META
+    .filter((pl) => urlInputs[pl.urlProp])
+    .map((pl) => ({
+      key: pl.key,
+      name: pl.label,
+      icon: pl.icon,
+      url: urlInputs[pl.urlProp],
+    })),
+)
+
+// 平台下拉仅列出尚未配置 URL 的平台
+const linkAddOptions = computed<SelectOption[]>(() =>
+  PLATFORM_META
+    .filter((pl) => !urlInputs[pl.urlProp])
+    .map((pl) => ({ value: pl.key, label: `${pl.label}${props.i18n.notConfiguredSuffix}` })),
+)
+
+/** 将 urlInputs 全量持久化，返回是否成功（失败写入 repoLinkError） */
+async function persistUrls(): Promise<boolean> {
+  if (!project.value) { return false }
+  try {
+    const patch: Partial<Pick<GitProject, "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl">> = {}
+    for (const pl of PLATFORM_META) { patch[pl.urlProp] = urlInputs[pl.urlProp] || undefined }
+    await props.manager.updateProjectMeta(props.projectId, patch)
+    repoLinkError.value = ""
+    emit("urlsUpdated")
+    return true
+  } catch (e: unknown) {
+    repoLinkError.value = getErrorMessage(e) || props.i18n.errSaveRepoLinks
+    return false
+  }
+}
+
+/** 添加与编辑共用：写入平台 URL 后持久化 */
+async function upsertRepoLink(platform: string, url: string): Promise<boolean> {
+  const pl = PLATFORM_META.find((p) => p.key === platform)
+  if (!pl) { return false }
+  urlInputs[pl.urlProp] = url
+  return persistUrls()
+}
+
+async function removeRepoLink(platform: string): Promise<boolean> {
+  return upsertRepoLink(platform, "")
+}
+
+// ── Git 远程仓库（EditableRemoteList 数据源与操作回调）──
+const remoteRows = computed<RemoteRowItem[]>(() =>
+  remoteList.value.map((r) => ({ key: r.name, name: r.name, url: r.url })),
+)
 
 // 平台下拉仅列出尚未添加的平台（已存在的远程如 GitHub 不允许重复添加）
 const remoteOptions = computed<SelectOption[]>(() =>
@@ -447,106 +350,51 @@ const remoteOptions = computed<SelectOption[]>(() =>
     .map((r) => ({ value: r.key, label: r.label })),
 )
 
-// 当前选中平台被占用后自动切换到第一个可用平台
-watch(remoteOptions, (opts) => {
-  if (!opts.some((o) => o.value === newRemoteName.value)) {
-    newRemoteName.value = String(opts[0]?.value ?? "")
-  }
-}, { immediate: true })
-
-// ── 仓库链接列表操作 ──
-const repoLinkError = ref("")
-const editLinkPlatform = ref("")
-const editLinkUrl = ref("")
-const newLinkPlatform = ref("")
-const newLinkUrl = ref("")
-
-const repoLinkList = computed(() =>
-  PLATFORM_META
-    .filter((pl) => urlInputs[pl.urlProp])
-    .map((pl) => ({
-      key: pl.key,
-      icon: pl.icon,
-      label: pl.label,
-      urlProp: pl.urlProp,
-      url: urlInputs[pl.urlProp],
-    })),
-)
-
-const availablePlatforms = computed(() =>
-  PLATFORM_META.filter((pl) => !urlInputs[pl.urlProp]),
-)
-
-const linkAddOptions = computed<SelectOption[]>(() =>
-  availablePlatforms.value.map((pl) => ({
-    value: pl.key,
-    label: `${pl.label}（未配置）`,
-  })),
-)
-
-async function persistUrls() {
-  if (!project.value) { return }
+async function loadRemotes() {
+  if (!project.value) return
   try {
-    const patch: Partial<Pick<GitProject, "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl">> = {}
-    for (const pl of PLATFORM_META) { patch[pl.urlProp] = urlInputs[pl.urlProp] || undefined }
-    await props.manager.updateProjectMeta(props.projectId, patch)
-    repoLinkError.value = ""
-    emit("urlsUpdated")
+    const path = resolveValidPath(project.value)
+    remoteList.value = await props.manager.detectRemotes(path)
+    remoteError.value = ""
   } catch (e: unknown) {
-    repoLinkError.value = getErrorMessage(e) || "保存仓库链接失败"
+    remoteError.value = getErrorMessage(e) || props.i18n.errDetectRemotes
   }
 }
 
-async function handleAddRepoLink() {
-  const pl = PLATFORM_META.find((p) => p.key === newLinkPlatform.value)
-  if (!pl) { return }
-  urlInputs[pl.urlProp] = newLinkUrl.value.trim()
-  await persistUrls()
-  newLinkUrl.value = ""
-  newLinkPlatform.value = availablePlatforms.value[0]?.key ?? ""
+/** 统一远程操作骨架：清错 → 执行 → 重新检测 + 刷新项目远程映射，失败写入 remoteError，返回是否成功 */
+async function runRemoteOp(fallbackMsg: string, op: (repoPath: string) => Promise<void>): Promise<boolean> {
+  if (!project.value) { return false }
+  remoteError.value = ""
+  try {
+    await op(resolveValidPath(project.value))
+    await loadRemotes()
+    await props.manager.refreshRemotes(props.projectId)
+    return true
+  } catch (e: unknown) {
+    remoteError.value = getErrorMessage(e) || fallbackMsg
+    return false
+  }
 }
 
-async function handleDeleteRepoLink(urlProp: string) {
-  urlInputs[urlProp] = ""
-  await persistUrls()
+function addRemote(name: string, url: string): Promise<boolean> {
+  return runRemoteOp(props.i18n.errAddRemote, (repoPath) => props.manager.addRemote(repoPath, name, url))
 }
 
-async function saveRepoLinkEdit(link: { urlProp: string }) {
-  urlInputs[link.urlProp] = editLinkUrl.value
-  await persistUrls()
-  editLinkPlatform.value = ""
+function updateRemoteUrl(name: string, url: string): Promise<boolean> {
+  return runRemoteOp(props.i18n.errUpdateRemote, (repoPath) => props.manager.setRemoteUrl(repoPath, name, url))
 }
 
-function cancelRepoLinkEdit() {
-  editLinkPlatform.value = ""
+function removeRemote(name: string): Promise<boolean> {
+  return runRemoteOp(props.i18n.errRemoveRemote, (repoPath) => props.manager.removeRemote(repoPath, name))
 }
 
-// ── 语言检测 ──
-const isZh = computed(() => (props.i18n.cancel || '取消') === '取消')
-
-// ── 帮助项 ──
-const helpItems = [
-  {
-    icon: 'mdi:folder-outline',
-    textZh: '本地路径（跨设备适配）\n为同一项目配置多台电脑上的本地路径。Git 操作时会按顺序检测，自动使用第一个存在的有效路径。例如：家里电脑路径 E:\\projects\\repo，公司电脑路径 D:\\work\\repo，无需手动切换。路径可随时编辑、删除、新增，至少保留一个。',
-    textEn: 'Local Paths (Cross-Device)\nConfigure multiple local paths for the same project across different computers. Git operations detect the first valid path automatically. Example: home PC at E:\\projects\\repo, office PC at D:\\work\\repo — no manual switching needed. Paths can be edited, deleted, or added anytime; keep at least one.',
-  },
-  {
-    icon: 'mdi:link-variant',
-    textZh: '仓库链接（持久化存储）\n手动填写的远程仓库 URL（GitHub/Gitee/Gitea/CNB），通过思源插件存储 API 持久化保存到 workspace/data/storage/petal/ 目录。即使本地 .git/config 中没有配置 remote，URL 也不会丢失。使用思源同步（S3/WebDAV）后，换电脑可自动恢复所有链接。',
-    textEn: 'Repo URLs (Persistent Storage)\nManually entered remote repository URLs (GitHub/Gitee/Gitea/CNB), persisted via the SiYuan plugin storage API to workspace/data/storage/petal/. URLs are preserved even when the local .git/config has no remote configured. After workspace sync (S3/WebDAV), all URLs auto-recover on other devices.',
-  },
-  {
-    icon: 'mdi:source-repository',
-    textZh: 'Git 远程仓库（自动检测）\n从当前有效本地路径的 .git/config 中通过 git remote -v 自动检测。系统会自动识别平台类型（GitHub/Gitee 等）并映射到对应字段。点击「编辑」可修改 URL，点击「删除」移除 remote 配置。修改会同时作用于本地 git 仓库和持久化数据。若当前电脑路径不存在，将显示「暂无远程仓库」。',
-    textEn: 'Git Remotes (Auto-Detection)\nDetected from the valid local path\'s .git/config via git remote -v. The system auto-identifies platform types (GitHub/Gitee, etc.) and maps them to the correct fields. Click Edit to modify a URL, Delete to remove a remote. Changes apply to both the local git repo and persistent data. If no valid local path exists, "No remotes" will be shown.',
-  },
-  {
-    icon: 'mdi:database-outline',
-    textZh: '数据持久化机制\n所有项目数据（名称、路径、标签、分类、状态、备注、远程仓库 URL 等）均通过思源原生 plugin.saveData() API 保存为 JSON 文件，存储于当前工作空间的 data/storage/petal/<插件名>/ 目录下。数据随工作空间同步（S3/WebDAV）自动跨设备可用，无需额外配置。',
-    textEn: 'Data Persistence\nAll project data (name, paths, tags, categories, status, notes, remote URLs, etc.) is saved via SiYuan\'s native plugin.saveData() API as JSON files under workspace/data/storage/petal/<plugin>/. Data syncs automatically with workspace sync (S3/WebDAV) for seamless cross-device access.',
-  },
-]
+// ── 帮助项（文案来自 i18n 分片 gitPush.json 的 help* 键）──
+const helpItems = computed(() => [
+  { icon: "mdi:folder-outline", text: props.i18n.helpLocalPaths },
+  { icon: "mdi:link-variant", text: props.i18n.helpRepoLinks },
+  { icon: "mdi:source-repository", text: props.i18n.helpGitRemotes },
+  { icon: "mdi:database-outline", text: props.i18n.helpPersistence },
+])
 
 // ── 初始化：从 manager 加载项目数据 ──
 onMounted(async () => {
@@ -566,52 +414,9 @@ onMounted(async () => {
   // 平台 URL 由 PLATFORM_META 单一数据源驱动回填
   for (const pl of PLATFORM_META) { urlInputs[pl.urlProp] = p[pl.urlProp] || "" }
   initPathRows(p.path, p.localPaths, p.pathDevices)
-  // 初始化添加行默认平台
-  newLinkPlatform.value = availablePlatforms.value[0]?.key ?? ""
   // 检测远程仓库
   await loadRemotes()
 })
-
-async function loadRemotes() {
-  if (!project.value) return
-  try {
-    const path = resolveValidPath(project.value)
-    remoteList.value = await props.manager.detectRemotes(path)
-    remoteError.value = ""
-  } catch (e: unknown) {
-    remoteError.value = getErrorMessage(e) || "检测远程仓库失败"
-  }
-}
-
-// ── 远程仓库操作 ──
-/** 统一远程操作骨架：清错 → 执行 → 重新检测 + 刷新项目远程映射，失败写入 remoteError */
-async function runRemoteOp(fallbackMsg: string, op: (repoPath: string) => Promise<void>) {
-  if (!project.value) { return }
-  remoteError.value = ""
-  try {
-    await op(resolveValidPath(project.value))
-    await loadRemotes()
-    await props.manager.refreshRemotes(props.projectId)
-  } catch (e: unknown) { remoteError.value = getErrorMessage(e) || fallbackMsg }
-}
-
-async function handleAddRemote() {
-  await runRemoteOp("添加失败", async (repoPath) => {
-    await props.manager.addRemote(repoPath, newRemoteName.value.trim(), newRemoteUrl.value.trim())
-    newRemoteUrl.value = ""
-  })
-}
-
-async function handleRemoveRemote(name: string) {
-  await runRemoteOp("删除失败", (repoPath) => props.manager.removeRemote(repoPath, name))
-}
-
-async function saveRemoteEdit(name: string) {
-  await runRemoteOp("修改失败", async (repoPath) => {
-    await props.manager.setRemoteUrl(repoPath, name, editRemoteUrl.value)
-    editRemoteName.value = ""
-  })
-}
 
 // ── 保存 ──
 async function save() {
@@ -619,7 +424,7 @@ async function save() {
   const payload = pathsToPayload()
   await props.manager.updateProjectMeta(props.projectId, {
     name: localName.value.trim() || project.value.name,
-    status: localStatus.value as ProjectStatus,
+    status: localStatus.value,
     starred: localStarred.value,
     archived: localArchived.value,
     note: localNote.value,

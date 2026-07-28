@@ -925,12 +925,27 @@
 .gp-remote-add {
   display: flex;
   gap: $spacing-1;
-  margin-top: 4px;
+  margin-top: $spacing-1;
+}
+
+// 添加行的平台下拉（固定窄宽，URL 输入占满剩余）
+.gp-remote-platform {
+  width: 130px;
+}
+
+// 远程区块错误提示与上方内容留出间距
+.gp-remote-error {
+  margin-top: $spacing-1;
 }
 
 // 扫描导入弹窗：加宽以容纳扫描结果的完整路径展示
 .gp-dialog--scan {
   width: 520px;
+}
+
+// 项目编辑弹窗：加宽以容纳多设备路径行与远程列表
+.gp-dialog--edit {
+  width: 754px;
 }
 
 // 扫描按钮行：居中放置"开始扫描"按钮

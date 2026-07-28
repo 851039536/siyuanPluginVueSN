@@ -146,8 +146,6 @@ export interface ListSettings {
 export interface HighlightSettings {
   enableHighlight: boolean
   backgroundColor: string
-  fontSize: number
-  bold: boolean
   minTextLength: number
   minLetterLength: number
   maxTextLength: number
@@ -250,8 +248,6 @@ export const DEFAULT_LIST_SETTINGS: ListSettings = {
 export const DEFAULT_HIGHLIGHT_SETTINGS: HighlightSettings = {
   enableHighlight: true,
   backgroundColor: "rgb(255, 220, 60)",
-  fontSize: 0,
-  bold: false,
   minTextLength: 1,
   minLetterLength: 1,
   maxTextLength: 50,

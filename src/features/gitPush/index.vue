@@ -106,7 +106,6 @@
             :categories="categories"
             :platform-meta="PLATFORM_META"
             :remotes="REMOTES"
-            :status-meta="STATUS_META"
             :detected-ides="detectedIdes"
             :custom-ides="customIdes"
             :editing-name-id="editingNameId"
@@ -156,7 +155,6 @@
             :needs-push-for="needsPushFor"
             :get-push-status="getPushStatus"
             @toggle-star="toggleStar"
-            @cycle-status="cycleStatus"
             @start-name-edit="startNameEdit"
             @name-edit-save="handleNameEditSave"
             @toggle-tag-filter="toggleTagFilter"
@@ -340,7 +338,6 @@ import type {
   GitPushManager,
   PlatformKey,
   ProjectPathExtras,
-  ProjectStatus,
 } from "./types"
 import type { Plugin } from "siyuan"
 import { Icon } from "@iconify/vue"
@@ -384,7 +381,7 @@ import { useScanImport } from "./composables/useScanImport"
 import { useGitConfigDialog } from "./composables/useGitConfigDialog"
 import { useGitHandlers } from "./composables/useGitHandlers"
 import { useRefreshOps } from "./composables/useRefreshOps"
-import { PLATFORM_META, REMOTES, STATUS_CYCLE, STATUS_META } from "./types"
+import { PLATFORM_META, REMOTES } from "./types"
 import {
   batchProcess,
   gitUrlToWebUrl,
@@ -498,7 +495,6 @@ const {
   starredProjects,
   updateProjectMeta,
   toggleStar,
-  setProjectStatus,
 } = useGitPush(props.manager)
 
 const { commitLogLoading, commitLogForProject, handleExpand, handleReloadCommitLog } = useCommitLog({
@@ -1028,14 +1024,6 @@ async function handleSwitchBranch(id: string, branch: string) {
 }
 
 // ---- 项目聚合管理操作 ----
-
-/** 状态徽章循环切换 active → maintenance → paused → active */
-async function cycleStatus(id: string, current?: ProjectStatus) {
-  const cur: ProjectStatus = current || "active"
-  const idx = STATUS_CYCLE.indexOf(cur)
-  const next = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length]
-  await setProjectStatus(id, next)
-}
 
 /** 打开项目编辑弹窗 */
 function openEditDialog(project: GitProject) {

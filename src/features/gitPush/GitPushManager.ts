@@ -9,7 +9,6 @@ import type {
   GitRemoteInfo,
   ProjectCategory,
   ProjectPathExtras,
-  ProjectStatus,
   PushStatusInfo,
   ScannedGitRepo,
   StashEntry,
@@ -97,15 +96,11 @@ export class GitPushManager {
 
   async removeProject(id: string): Promise<void> { return this.store.removeProject(id) }
 
-  async updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "path" | "tags" | "starred" | "status" | "archived" | "note" | "name" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl" | "localPaths" | "pathDevices">>): Promise<GitProject | null> {
+  async updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "path" | "tags" | "starred" | "archived" | "note" | "name" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl" | "localPaths" | "pathDevices">>): Promise<GitProject | null> {
     return this.store.updateProjectMeta(id, patch)
   }
 
   async toggleStar(id: string): Promise<GitProject | null> { return this.store.toggleStar(id) }
-
-  async setProjectStatus(id: string, status: ProjectStatus): Promise<GitProject | null> {
-    return this.store.setProjectStatus(id, status)
-  }
 
   async appendTag(id: string, tag: string): Promise<GitProject | null> { return this.store.appendTag(id, tag) }
 

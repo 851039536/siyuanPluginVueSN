@@ -194,7 +194,6 @@
     "unstar": "Unstar",
     "starPin": "Star & pin",
     "clickToRename": "Click to rename",
-    "statusTitle": "Status: {0} (click to switch)",
     "archivedTitle": "Archived",
     "archivedShort": "Archived",
     "devicePathsCount": "{0} device paths configured",
@@ -211,7 +210,7 @@
     "refreshOptions": "Refresh options",
     "yes": "Yes",
     "no": "No",
-    "editProjectBtn": "Edit project (tags/status/notes)",
+    "editProjectBtn": "Edit project (tags/notes)",
     "viewProjectGitConfig": "View project Git config",
     "processing": "Processing...",
     "clickViewDiff": "Click to view diff",
@@ -245,7 +244,6 @@
     "pushBranchAllOpt": "All branches (--all)",
     "pushBranchHeadOpt": "Current branch only (HEAD)",
     "editProjectTitlePrefix": "Edit project",
-    "statusLabel": "Status",
     "markLabel": "Mark",
     "favorite": "Favorite",
     "noteLabel": "Note",
@@ -282,6 +280,6 @@
     "helpLocalPaths": "Local Paths (Cross-Device)\nConfigure multiple local paths for the same project across different computers. Git operations detect the first valid path automatically. Example: home PC at E:\\projects\\repo, office PC at D:\\work\\repo — no manual switching needed. Paths can be edited, deleted, or added anytime; keep at least one.",
     "helpRepoLinks": "Repo URLs (Persistent Storage)\nManually entered remote repository URLs (GitHub/Gitee/Gitea/CNB), persisted via the SiYuan plugin storage API to workspace/data/storage/petal/. URLs are preserved even when the local .git/config has no remote configured. After workspace sync (S3/WebDAV), all URLs auto-recover on other devices.",
     "helpGitRemotes": "Git Remotes (Auto-Detection)\nDetected from the valid local path's .git/config via git remote -v. The system auto-identifies platform types (GitHub/Gitee, etc.) and maps them to the correct fields. Click Edit to modify a URL, Delete to remove a remote. Changes apply to both the local git repo and persistent data. If no valid local path exists, \"No remotes\" will be shown.",
-    "helpPersistence": "Data Persistence\nAll project data (name, paths, tags, categories, status, notes, remote URLs, etc.) is saved via SiYuan's native plugin.saveData() API as JSON files under workspace/data/storage/petal/<plugin>/. Data syncs automatically with workspace sync (S3/WebDAV) for seamless cross-device access."
+    "helpPersistence": "Data Persistence\nAll project data (name, paths, tags, categories, notes, remote URLs, etc.) is saved via SiYuan's native plugin.saveData() API as JSON files under workspace/data/storage/petal/<plugin>/. Data syncs automatically with workspace sync (S3/WebDAV) for seamless cross-device access."
   }
 }

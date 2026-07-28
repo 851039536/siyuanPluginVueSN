@@ -2,7 +2,12 @@
  * 通用设置 - 样式工具函数
  */
 import type { IconKey } from "@/config/icons"
+import type {
+  HeadingColors,
+  TabPinSettings,
+} from "../types/storage"
 import { emitCustomEvent } from "@/utils/eventBus"
+import { DEFAULT_TABPIN_SETTINGS } from "../types/storage"
 
 export const CODEBLOCK_STYLES = [
   "default",
@@ -36,6 +41,19 @@ export const HEADING_LEVEL_MAPPINGS: Record<string, string[]> = {
   arrow: ["→", "→→", "→→→", "→→→→", "→→→→→", "→→→→→→"],
   tag: ["H1", "H2", "H3", "H4", "H5", "H6"],
   bracket: ["[1]", "[2]", "[3]", "[4]", "[5]", "[6]"],
+}
+
+/** 标题颜色预设风格调色板（下拉选择后整体套用） */
+export const HEADING_COLOR_STYLES: Record<string, HeadingColors> = {
+  default: { h1: "#F39A94", h2: "#F8D694", h3: "#B1DCB9", h4: "#AAD2FC", h5: "#AC9DC0", h6: "#D7D7D7" },
+  github: { h1: "#0969DA", h2: "#1F883D", h3: "#9A6700", h4: "#8250DF", h5: "#CF222E", h6: "#57606A" },
+  mac: { h1: "#007AFF", h2: "#34C759", h3: "#FF9500", h4: "#FF3B30", h5: "#AF52DE", h6: "#8E8E93" },
+  cartoon: { h1: "#FF6B9D", h2: "#FFA07A", h3: "#FFD700", h4: "#98D8C8", h5: "#87CEFA", h6: "#DDA0DD" },
+  rainbow: { h1: "#FF6B6B", h2: "#FFA500", h3: "#FFD700", h4: "#90EE90", h5: "#87CEEB", h6: "#DA70D6" },
+  monochrome: { h1: "#2C3E50", h2: "#34495E", h3: "#546E7A", h4: "#607D8B", h5: "#90A4AE", h6: "#B0BEC5" },
+  warm: { h1: "#FF6B6B", h2: "#FF8E53", h3: "#FFAB73", h4: "#FFC299", h5: "#FFD4B3", h6: "#FFE4CC" },
+  cool: { h1: "#667EEA", h2: "#64B5F6", h3: "#4FC3F7", h4: "#4DD0E1", h5: "#4DB6AC", h6: "#81C784" },
+  gradient: { h1: "#667EEA", h2: "#7E57C2", h3: "#AB47BC", h4: "#EC407A", h5: "#EF5350", h6: "#FF7043" },
 }
 
 export function checkIsMobile(): boolean {
@@ -626,9 +644,10 @@ export function applyDocumentFontStyles(fontSettings: DocumentFontSettingsData):
   }
 }
 
-export function generateTabPinCSS(settings: { enabled: boolean, displayMode: string, backgroundColor: string }): string {
-  const defaultBackgroundColor = "rgba(var(--b3-theme-primary-rgb), 0.1)"
+/** 钉住页签样式的 <style> 元素 id，组件与 GeneralSettings 共用同一注入点 */
+export const TAB_PIN_STYLE_ID = "tab-pin-settings-style"
 
+export function generateTabPinCSS(settings: TabPinSettings): string {
   let css = `
     .layout-tab-bar .item.item--pin .item__text {
       width: auto !important;
@@ -647,7 +666,7 @@ export function generateTabPinCSS(settings: { enabled: boolean, displayMode: str
 
   css += `
     .layout-tab-bar .item.item--pin {
-      ${settings.backgroundColor !== defaultBackgroundColor ? `background: ${settings.backgroundColor} !important;` : ""}
+      ${settings.backgroundColor !== DEFAULT_TABPIN_SETTINGS.backgroundColor ? `background: ${settings.backgroundColor} !important;` : ""}
     }
   `
 

@@ -6,6 +6,7 @@ import type {
   ListSettings,
   ListStyleSettings,
   TableStyleSettings,
+  TabPinSettings,
 } from "./types/storage"
 /**
  * 通用设置功能模块
@@ -29,6 +30,7 @@ import {
   applyDocumentFontStyles,
   generateLevelDisplayCss,
   generateTabPinCSS,
+  TAB_PIN_STYLE_ID,
 } from "./utils/styles"
 
 export class GeneralSettings {
@@ -92,7 +94,7 @@ export class GeneralSettings {
     } else if (settings.moduleId === "listStyle") {
       this.applyListStylesEnhanced(settings.settings as unknown as ListStyleSettings)
     } else if (settings.moduleId === "tabPin") {
-      this.applyTabPinStyles(settings.settings as { enabled: boolean, displayMode: string, backgroundColor: string })
+      this.applyTabPinStyles(settings.settings as unknown as TabPinSettings)
     }
     emitCustomEvent("general-settings-changed", settings)
   }
@@ -338,10 +340,9 @@ export class GeneralSettings {
 
   public async applyTabPinStyle() {
     try {
-      const settings = await this.storage.tabPin.load()
-      if (settings) {
-        this.applyTabPinStyles(settings)
-      }
+      // 使用 loadOrDefault：全新安装从未保存过设置时也能按默认值（enabled: true）生效
+      const settings = await this.storage.tabPin.loadOrDefault()
+      this.applyTabPinStyles(settings)
     } catch (error) {
       console.error("应用钉住页签样式失败:", error)
     }
@@ -387,14 +388,14 @@ export class GeneralSettings {
     })
   }
 
-  private applyTabPinStyles(tabPinSettings: { enabled: boolean, displayMode: string, backgroundColor: string }) {
+  private applyTabPinStyles(tabPinSettings: TabPinSettings) {
     try {
       if (!tabPinSettings.enabled) {
-        removeStyle("tab-pin-settings-style")
+        removeStyle(TAB_PIN_STYLE_ID)
         return
       }
 
-      injectStyle("tab-pin-settings-style", generateTabPinCSS(tabPinSettings))
+      injectStyle(TAB_PIN_STYLE_ID, generateTabPinCSS(tabPinSettings))
     } catch (error) {
       console.error("应用钉住页签样式失败:", error)
     }

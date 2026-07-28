@@ -119,7 +119,6 @@ import Input from "@/components/Input.vue"
 import type { SelectOption } from "@/components/Select.vue"
 import Select from "@/components/Select.vue"
 import { UNGROUPED_ID } from "../types"
-import { useDialogKeyboard } from "../composables/useDialogKeyboard"
 import { usePathRows } from "../composables/usePathRows"
 
 const props = defineProps<{
@@ -135,8 +134,6 @@ const emit = defineEmits<{
   "close": []
   "add": [data: ProjectPathExtras & { name: string, path: string, catId: string }]
 }>()
-
-const { rootRef } = useDialogKeyboard()
 
 const name = ref("")
 const catId = ref(UNGROUPED_ID)

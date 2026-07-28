@@ -928,6 +928,28 @@
   margin-top: 4px;
 }
 
+// 扫描导入弹窗：加宽以容纳扫描结果的完整路径展示
+.gp-dialog--scan {
+  width: 520px;
+}
+
+// 扫描按钮行：居中放置"开始扫描"按钮
+.gp-scan-action-row {
+  display: flex;
+  justify-content: center;
+  margin-top: $spacing-1;
+}
+
+// 结果列表头部的"全选"按钮（辅助操作，用 2xs 字号）
+.gp-scan-select-all {
+  font-size: $font-size-2xs;
+}
+
+// 扫描空结果提示：上下留白
+.gp-scan-empty {
+  padding: $spacing-5 0;
+}
+
 .gp-scan-results {
   max-height: 300px;
   overflow-y: auto;

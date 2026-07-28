@@ -51,12 +51,6 @@ function makeChildren(i18n: Record<string, string>): FloatingToolChild[] {
         }
       },
     },
-    {
-      id: "refresh-ui",
-      label: i18n.refreshUI,
-      title: i18n.refreshUITitle,
-      action: refreshUI,
-    },
   ]
 }
 
@@ -68,7 +62,7 @@ export function createRefreshTool(plugin: Plugin): FloatingTool {
     title: i18n.refreshTitle,
     icon: "mdi:refresh",
     bgColor: "linear-gradient(135deg, #4ade80 0%, #16a34a 100%)",
-    // 父级 action 与子项"完整刷新"共用重构后的 refreshUI
+    // 父级点击 = 完整刷新（最常用且移动端可用）；hover 展开子菜单选择文件树/标签树细粒度刷新
     action: refreshUI,
     children: makeChildren(i18n),
   }

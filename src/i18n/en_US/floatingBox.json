@@ -21,8 +21,6 @@
     "refreshFiletreeDone": "File tree reloaded",
     "refreshTag": "Tag Tree",
     "refreshTagTitle": "Reload Tag Tree",
-    "refreshTagDone": "Tag tree reloaded",
-    "refreshUI": "Full Refresh",
-    "refreshUITitle": "Reload Entire Interface"
+    "refreshTagDone": "Tag tree reloaded"
   }
 }

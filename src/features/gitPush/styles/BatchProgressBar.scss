@@ -64,7 +64,7 @@
   opacity: 0.6;
   white-space: nowrap;
   flex-shrink: 0;
-  tabular-nums: tabular-nums;
+  font-variant-numeric: tabular-nums;
 }
 
 .gp-batch-progress-toggle {
@@ -206,6 +206,13 @@
   align-items: center;
   gap: 2px;
   white-space: nowrap;
+
+  // 步骤间分隔符（替代模板中的 v-if 分隔 span）
+  + .gp-batch-log-step::before {
+    content: "·";
+    margin: 0 4px;
+    opacity: 0.3;
+  }
 }
 
 .gp-batch-log-step-name {
@@ -215,9 +222,4 @@
 .gp-batch-log-step-ms {
   opacity: 0.5;
   font-variant-numeric: tabular-nums;
-}
-
-.gp-batch-log-step-sep {
-  margin: 0 4px;
-  opacity: 0.3;
 }

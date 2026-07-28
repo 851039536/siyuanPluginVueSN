@@ -31,6 +31,7 @@
     <BatchProgressBar
       :state="progressState"
       :log-entries="progressLogEntries"
+      :i18n="i18n"
       @close="progressHide"
     />
 

@@ -1309,6 +1309,7 @@
     "stepStatus": "状态",
     "stepHead": "HEAD",
     "stepLog": "日志",
+    "batchLogToggle": "日志",
     "stepBranch": "分支",
     "stepStash": "Stash",
     "stepStats": "统计",

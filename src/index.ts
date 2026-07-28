@@ -134,19 +134,8 @@ export default class PluginSample extends Plugin {
     this.settings = await loadSettings(this)
     // 同步回文件缓存，确保下次 onload 同步阶段能读到最新开关
     saveFeatureFlagsSync(this.settings)
-    // 根据真实配置同步紧凑模式 CSS 类
-    applyCompactMode({
-      compactMode: this.settings.compactMode,
-      compactModeDensity: this.settings.compactModeDensity ?? 'compact',
-      compactModeFontScale: this.settings.compactModeFontScale ?? 94,
-      compactModeAreas: this.settings.compactModeAreas ?? {
-        sidebar: true,
-        editor: true,
-        tabs: true,
-        dialogs: true,
-        controls: true,
-      },
-    })
+    // 根据真实配置同步紧凑模式 CSS 类（settings 已合并 DEFAULT_SETTINGS，无需兜底默认值）
+    applyCompactMode(this.settings)
     // 主题色可能在异步加载后需要重新应用（scheme 已变）
     this.rebuildThemeColor()
   }

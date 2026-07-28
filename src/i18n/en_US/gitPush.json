@@ -182,6 +182,7 @@
     "stepStatus": "Status",
     "stepHead": "HEAD",
     "stepLog": "Log",
+    "batchLogToggle": "Log",
     "stepBranch": "Branch",
     "stepStash": "Stash",
     "stepStats": "Stats",

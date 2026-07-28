@@ -28,6 +28,7 @@ export function useBatchProgress() {
     }, 100)
   }
 
+  /** 完成一项并记录项目名（在单项完成后调用，projectName 语义为"最近完成的项目"而非"正在处理的项目"） */
   function advance(projectName?: string) {
     state.value.current++
     if (projectName) {
@@ -52,9 +53,9 @@ export function useBatchProgress() {
     state.value = { ...state.value, done: true }
   }
 
-  /** 手动关闭进度条 */
+  /** 手动关闭进度条（复用 end，防御性清理计时器） */
   function hide() {
-    state.value = { ...DEFAULT_STATE }
+    end()
   }
 
   /** 创建 pending 状态的日志条目，返回索引供后续 addStep/completeLog 使用 */
@@ -92,11 +93,6 @@ export function useBatchProgress() {
     }
   }
 
-  /** 兼容旧 API：一次性添加完整的日志条目（无步骤明细） */
-  function addLog(entry: LogEntry) {
-    logEntries.value.push(entry)
-  }
-
   onUnmounted(() => {
     if (progressTimer) {
       clearInterval(progressTimer)
@@ -115,6 +111,5 @@ export function useBatchProgress() {
     beginLog,
     addStep,
     completeLog,
-    addLog,
   }
 }

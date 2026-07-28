@@ -13,7 +13,8 @@
         height="14"
         class="gp-batch-progress-done-icon"
       />
-      <span class="gp-batch-progress-label">{{ state.done ? '完成' : state.label }} {{ state.current }}/{{ state.total }}</span>
+      <!-- 进度标签："完成"（done 态）或调用方传入的操作名 -->
+      <span class="gp-batch-progress-label">{{ state.done ? i18n.done : state.label }} {{ state.current }}/{{ state.total }}</span>
       <div class="gp-batch-progress-bar">
         <div
           class="gp-batch-progress-fill"
@@ -30,16 +31,18 @@
         :class="{ 'is-expanded': logExpanded }"
         @click="logExpanded = !logExpanded"
       >
-        <span class="gp-batch-progress-toggle-label">日志</span>
+        <!-- 日志展开按钮："日志" -->
+        <span class="gp-batch-progress-toggle-label">{{ i18n.batchLogToggle }}</span>
         <Icon
           :icon="logExpanded ? 'mdi:chevron-up' : 'mdi:chevron-down'"
           height="14"
         />
       </button>
+      <!-- 关闭按钮，悬浮提示："关闭" -->
       <button
         v-if="state.done"
         class="gp-batch-progress-close"
-        title="关闭"
+        :title="i18n.close"
         @click="emit('close')"
       >
         <Icon
@@ -58,11 +61,7 @@
         v-for="(entry, i) in logEntries"
         :key="i"
         class="gp-batch-log-line"
-        :class="{
-          'gp-batch-log-line--ok': entry.status === 'ok',
-          'gp-batch-log-line--fail': entry.status === 'fail',
-          'gp-batch-log-line--pending': entry.status === 'pending',
-        }"
+        :class="`gp-batch-log-line--${entry.status}`"
       >
         <Icon
           v-if="entry.status === 'ok'"
@@ -81,14 +80,18 @@
           class="gp-batch-log-spin"
         />
         <span class="gp-batch-log-name">{{ entry.projectName }}</span>
-        <span class="gp-batch-log-time">{{ entry.elapsedSeconds.toFixed(1) }}s</span>
+        <!-- 总耗时：pending 期间无实时计时，完成后才显示，避免恒显 0.0s -->
+        <span
+          v-if="entry.status !== 'pending'"
+          class="gp-batch-log-time"
+        >{{ entry.elapsedSeconds.toFixed(1) }}s</span>
         <span
           v-if="entry.error"
           class="gp-batch-log-error"
         >{{ entry.error }}</span>
-        <!-- 分步骤耗时标签行 -->
+        <!-- 分步骤耗时标签行（步骤间分隔符由 CSS 兄弟选择器生成） -->
         <div
-          v-if="entry.steps && entry.steps.length > 0"
+          v-if="entry.steps?.length"
           class="gp-batch-log-steps"
         >
           <span
@@ -98,10 +101,6 @@
           >
             <span class="gp-batch-log-step-name">{{ step.name }}</span>
             <span class="gp-batch-log-step-ms">{{ step.ms }}ms</span>
-            <span
-              v-if="si < entry.steps.length - 1"
-              class="gp-batch-log-step-sep"
-            >·</span>
           </span>
         </div>
       </div>
@@ -110,13 +109,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue"
+import { computed, ref, watch } from "vue"
 import { Icon } from "@iconify/vue"
 import type { LoadProgress, LogEntry } from "../types/batchProgress"
 
 const props = defineProps<{
   state: LoadProgress
   logEntries: LogEntry[]
+  i18n: Record<string, any>
 }>()
 
 const emit = defineEmits<{
@@ -125,11 +125,15 @@ const emit = defineEmits<{
 
 const logExpanded = ref(false)
 
-const progressPercent = computed(() => {
-  if (props.state.total === 0) return 0
-  return (props.state.current / props.state.total) * 100
+// 组件实例常驻（根节点 v-if 控制显隐），新一轮批量操作开始时收起上次遗留的日志区
+watch(() => props.state.visible, (visible) => {
+  if (visible) logExpanded.value = false
 })
 
+const progressPercent = computed(() => {
+  if (props.state.total === 0) return 0
+  return Math.min(100, (props.state.current / props.state.total) * 100)
+})
 </script>
 
 <style lang="scss">

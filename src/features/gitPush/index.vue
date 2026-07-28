@@ -371,7 +371,7 @@ import StatsPanel from "./components/StatsPanel.vue"
 import BatchProgressBar from "./components/BatchProgressBar.vue"
 import GitConfigDialog from "./components/GitConfigDialog.vue"
 import Loader from "@/components/Loader.vue"
-import { pickDirectory } from "./composables/useDirectoryPicker"
+import { pickDirectory } from "@/utils/electronDialog"
 import { useGitPush } from "./composables/useGitPush"
 import { useBatchProgress } from "./composables/useBatchProgress"
 import {

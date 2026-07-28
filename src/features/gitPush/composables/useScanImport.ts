@@ -4,7 +4,7 @@ import { ref } from "vue"
 import { showMessage } from "siyuan"
 import type { ScannedGitRepo } from "../types/storage"
 import { UNGROUPED_ID } from "../types"
-import { pickDirectory } from "./useDirectoryPicker"
+import { pickDirectory } from "@/utils/electronDialog"
 import { getErrorMessage } from "@/utils/stringUtils"
 
 type ScanRepo = ScannedGitRepo & { alreadyImported: boolean }

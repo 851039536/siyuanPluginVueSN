@@ -9,7 +9,6 @@ export function createPasswordVaultTool(plugin: Plugin): FloatingTool {
   return createEventDispatchTool(plugin, {
     id: "passwordVault",
     icon: "mdi:lock-outline",
-    bgColor: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
     eventName: "openPasswordVault",
   })
 }

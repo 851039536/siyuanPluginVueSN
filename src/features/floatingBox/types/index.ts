@@ -12,7 +12,6 @@ export interface FloatingTool {
   id: string
   label: string
   icon: string
-  bgColor: string
   action: () => void
   /** 子菜单项，hover 时展开 */
   children?: FloatingToolChild[]

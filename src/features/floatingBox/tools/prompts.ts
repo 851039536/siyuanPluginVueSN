@@ -9,7 +9,6 @@ export function createPromptsTool(plugin: Plugin): FloatingTool {
   return createEventDispatchTool(plugin, {
     id: "prompts",
     icon: "mdi:star",
-    bgColor: "#667eea",
     eventName: "openPrompts",
   })
 }

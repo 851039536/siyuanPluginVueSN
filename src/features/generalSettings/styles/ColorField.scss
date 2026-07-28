@@ -1,0 +1,51 @@
+@use "@/variables.scss" as *;
+
+.color-field {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  width: 100%;
+}
+
+.color-picker {
+  width: 40px;
+  height: 28px;
+  border: 1px solid var(--b3-theme-outline);
+  border-radius: $radius-base;
+  cursor: pointer;
+  padding: 2px;
+  background: var(--b3-theme-surface);
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
+
+  &::-webkit-color-swatch-wrapper {
+    padding: 0;
+  }
+
+  &::-webkit-color-swatch {
+    border: none;
+    border-radius: $radius-sm;
+  }
+
+  &::-moz-color-swatch {
+    border: none;
+    border-radius: $radius-sm;
+  }
+}
+
+.color-input {
+  flex: 1;
+  padding: $spacing-1 $spacing-2;
+  font-size: $font-size-xs;
+  border: 1px solid var(--b3-theme-outline);
+  border-radius: $radius-base;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+
+  &:focus {
+    outline: none;
+    border-color: var(--b3-theme-primary);
+  }
+}

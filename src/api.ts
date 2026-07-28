@@ -773,19 +773,33 @@ export async function exportResources(
 }
 
 /**
- * 导出笔记本为 Markdown
+ * 导出笔记本为 Markdown，返回生成的 ZIP 文件路径
  */
 export async function exportNotebookMd(notebook: string): Promise<string> {
   const url = "/api/export/exportNotebookMd"
-  return request(url, { notebook })
+  const data = await requestOrThrow(url, { notebook })
+  const zip = data?.zip
+  if (!zip) throw new Error(`Missing zip path in response: ${url}`)
+  return zip
 }
 
 /**
- * 导出数据（用于备份）
+ * 导出数据（用于备份）；省略 tempDir 时思源生成 ZIP 并在返回值 data.zip 中给出路径
  */
-export async function exportData(tempDir: string): Promise<any> {
+export async function exportData(tempDir?: string): Promise<any> {
   const url = "/api/export/exportData"
-  return request(url, { tempDir })
+  return requestOrThrow(url, tempDir ? { tempDir } : {})
+}
+
+/**
+ * 下载导出 API 生成的 ZIP 文件（二进制），zipPath 为导出接口返回的相对路径
+ */
+export async function fetchExportZip(zipPath: string): Promise<Blob> {
+  const response = await fetch(zipPath)
+  if (!response.ok) {
+    throw new Error(`Download export zip failed: ${response.status}`)
+  }
+  return response.blob()
 }
 
 /**

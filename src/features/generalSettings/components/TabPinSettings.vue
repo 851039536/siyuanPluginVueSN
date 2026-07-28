@@ -1,9 +1,9 @@
-<!-- 钉住页签设置子组件：启用开关 + 显示模式（图标+标题/仅标题）+ 页签背景颜色，自动保存并实时注入样式 -->
+<!-- 钉住页签设置子组件：Switch 开关 + 显示模式卡片 + 预设色板/自定义颜色 + 实时预览，自动保存并实时注入样式 -->
 <template>
   <div class="tab-pin-settings">
     <div class="settings-container">
       <!-- 启用开关行 -->
-      <div class="setting-row">
+      <div class="setting-row setting-row--inline">
         <label class="setting-label">
           <IconWrapper
             name="starOutline"
@@ -13,19 +13,17 @@
           <!-- 开关标签："钉住页签优化" -->
           {{ i18n.enableTabPinOptimization }}
         </label>
-        <div class="toggle-container">
-          <input
-            v-model="enabled"
-            type="checkbox"
-            class="toggle-checkbox"
-          />
+        <Switch
+          v-model="enabled"
+          size="xsmall"
+        >
           <!-- 开关状态文案："已启用" / "已禁用" -->
-          <span class="toggle-label">{{ enabled ? i18n.enabled : i18n.disabled }}</span>
-        </div>
+          {{ enabled ? i18n.enabled : i18n.disabled }}
+        </Switch>
       </div>
 
       <template v-if="enabled">
-        <!-- 显示模式单选行 -->
+        <!-- 显示模式卡片行 -->
         <div class="setting-row">
           <label class="setting-label">
             <IconWrapper
@@ -36,25 +34,29 @@
             <!-- 分组标签："显示模式" -->
             {{ i18n.tabPinDisplayMode }}
           </label>
-          <div class="display-mode-options">
-            <label class="radio-item">
-              <input
-                v-model="displayMode"
-                type="radio"
-                value="iconAndText"
+          <div class="mode-cards">
+            <button
+              v-for="meta in TAB_PIN_MODE_META"
+              :key="meta.mode"
+              class="mode-card"
+              :class="{ 'mode-card--active': displayMode === meta.mode }"
+              type="button"
+              @click="displayMode = meta.mode"
+            >
+              <IconWrapper
+                :name="meta.iconKey"
+                :size="16"
+                class="mode-card-icon"
               />
-              <!-- 选项："图标 + 标题" -->
-              <span class="radio-label">{{ i18n.iconAndText }}</span>
-            </label>
-            <label class="radio-item">
-              <input
-                v-model="displayMode"
-                type="radio"
-                value="textOnly"
+              <!-- 模式名："图标 + 标题" / "仅标题" -->
+              <span class="mode-card-label">{{ i18n[meta.labelKey] }}</span>
+              <IconWrapper
+                v-if="displayMode === meta.mode"
+                name="check"
+                :size="12"
+                class="mode-card-check"
               />
-              <!-- 选项："仅标题" -->
-              <span class="radio-label">{{ i18n.textOnly }}</span>
-            </label>
+            </button>
           </div>
         </div>
 
@@ -69,6 +71,19 @@
             <!-- 分组标签："页签背景颜色" -->
             {{ i18n.tabPinBackground }}
           </label>
+          <!-- 预设色板：点击直接应用，title 提示："预设颜色" -->
+          <div class="preset-swatches">
+            <button
+              v-for="color in PRESET_COLORS"
+              :key="color"
+              class="preset-swatch"
+              :class="{ 'preset-swatch--active': backgroundColor === color }"
+              type="button"
+              :style="{ background: color }"
+              :title="i18n.tabPinPresetColors"
+              @click="backgroundColor = color"
+            ></button>
+          </div>
           <div class="color-input-group">
             <input
               :value="toPickerHex(backgroundColor)"
@@ -85,11 +100,56 @@
             <button
               v-if="backgroundColor !== defaultBackgroundColor"
               class="reset-color-btn"
+              type="button"
               @click="resetBackgroundColor"
             >
               <!-- 按钮："重置" -->
               {{ i18n.resetColor }}
             </button>
+          </div>
+        </div>
+
+        <!-- 实时预览行 -->
+        <div class="setting-row">
+          <label class="setting-label">
+            <IconWrapper
+              name="eye"
+              :size="13"
+              class="label-icon"
+            />
+            <!-- 分组标签："效果预览" -->
+            {{ i18n.tabPinPreview }}
+          </label>
+          <div class="preview-tabbar">
+            <!-- 钉住页签（应用当前设置） -->
+            <div
+              class="preview-tab preview-tab--pinned"
+              :style="{ background: backgroundColor }"
+            >
+              <IconWrapper
+                v-if="displayMode === 'iconAndText'"
+                name="file"
+                :size="12"
+                class="preview-tab-icon"
+              />
+              <!-- 预览页签标题："示例文档" -->
+              <span class="preview-tab-text">{{ i18n.tabPinPreviewSample }}</span>
+              <IconWrapper
+                name="star"
+                :size="10"
+                class="preview-tab-pin"
+              />
+            </div>
+            <!-- 普通页签（对比参照） -->
+            <div class="preview-tab preview-tab--normal">
+              <IconWrapper
+                name="file"
+                :size="12"
+                class="preview-tab-icon"
+              />
+              <!-- 预览页签标题："示例文档" -->
+              <span class="preview-tab-text">{{ i18n.tabPinPreviewSample }}</span>
+            </div>
           </div>
         </div>
 
@@ -118,6 +178,7 @@ import {
   watch,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import Switch from "@/components/Switch.vue"
 import {
   DEFAULT_TABPIN_SETTINGS,
   GeneralSettingsStorage,
@@ -125,6 +186,7 @@ import {
 } from "@/features/generalSettings/types/storage"
 import {
   generateTabPinCSS,
+  TAB_PIN_MODE_META,
   TAB_PIN_STYLE_ID,
 } from "@/features/generalSettings/utils/styles"
 import {
@@ -150,6 +212,16 @@ const emit = defineEmits<Emits>()
 
 // 默认背景色统一引用存储层默认值，避免多处重复定义
 const defaultBackgroundColor = DEFAULT_TABPIN_SETTINGS.backgroundColor
+
+// 预设色板（首项为默认主题色；其余为低透明度柔和色，适配明暗主题）
+const PRESET_COLORS: string[] = [
+  defaultBackgroundColor,
+  "rgba(250, 200, 60, 0.18)",
+  "rgba(80, 200, 120, 0.18)",
+  "rgba(240, 100, 130, 0.18)",
+  "rgba(150, 120, 240, 0.18)",
+  "rgba(60, 160, 240, 0.18)",
+]
 
 // 将颜色值归一化为拾取器可用的 6 位 hex；非 hex 值（如默认 rgba(var(...))）回退黑色仅作展示
 function toPickerHex(value: string): string {

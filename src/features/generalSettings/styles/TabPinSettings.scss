@@ -22,6 +22,13 @@
   width: 100%;
 }
 
+// 开关行：标签与开关同行两端对齐，节省纵向空间
+.setting-row--inline {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .setting-label {
   display: flex;
   align-items: center;
@@ -36,57 +43,83 @@
   opacity: 0.8;
 }
 
-/* 启用开关 */
-.toggle-container {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-}
-
-.toggle-checkbox {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-}
-
-.toggle-label {
-  font-size: $font-size-xs;
-  color: var(--b3-theme-on-surface);
-  user-select: none;
-}
-
-/* 显示模式选项 */
-.display-mode-options {
-  display: flex;
-  flex-direction: column;
+/* 显示模式卡片：两列等宽，选中态主题色边框 + 对勾角标 */
+.mode-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: $spacing-2;
   margin-top: $spacing-1;
 }
 
-.radio-item {
+.mode-card {
+  position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: $spacing-2;
-  cursor: pointer;
-  padding: $spacing-1 $spacing-2;
-  background: var(--b3-theme-surface-variant);
-  border-radius: $radius-base;
-}
-
-.radio-item:hover {
-  background: rgba(var(--b3-theme-primary-rgb), 0.08);
-}
-
-.radio-item input[type="radio"] {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-}
-
-.radio-label {
-  font-size: $font-size-xs;
+  gap: $spacing-1;
+  padding: $spacing-2;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $vp-radius;
+  background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.mode-card:hover {
+  border-color: var(--b3-theme-primary);
+}
+
+.mode-card--active {
+  border-color: var(--b3-theme-primary);
+  background: rgba(var(--b3-theme-primary-rgb), 0.06);
+}
+
+.mode-card-icon {
+  opacity: 0.85;
+}
+
+.mode-card--active .mode-card-icon {
+  color: var(--b3-theme-primary);
+  opacity: 1;
+}
+
+.mode-card-label {
+  font-size: $font-size-xs;
   user-select: none;
+}
+
+.mode-card-check {
+  position: absolute;
+  top: $spacing-1;
+  right: $spacing-1;
+  color: var(--b3-theme-primary);
+}
+
+/* 预设色板：小方块横排，选中态主题色描边 */
+.preset-swatches {
+  display: flex;
+  gap: $spacing-1;
+  margin-top: $spacing-1;
+}
+
+.preset-swatch {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-sm;
+  cursor: pointer;
+  transition: border-color 0.12s, transform 0.12s;
+}
+
+.preset-swatch:hover {
+  border-color: var(--b3-theme-primary);
+  transform: scale(1.08);
+}
+
+.preset-swatch--active {
+  border: 2px solid var(--b3-theme-primary);
 }
 
 /* 颜色输入组 */
@@ -143,6 +176,48 @@
   border-color: var(--b3-theme-primary);
   background: var(--b3-theme-primary);
   color: var(--b3-theme-on-primary);
+}
+
+/* 实时预览：模拟思源页签栏，钉住页签应用当前设置，普通页签作对比 */
+.preview-tabbar {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2px;
+  margin-top: $spacing-1;
+  padding: $spacing-1;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $vp-radius;
+  background: var(--b3-theme-background);
+  overflow: hidden;
+}
+
+.preview-tab {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-2;
+  border-radius: $radius-sm;
+  // 辅助展示文字，按两级字号制使用 2xs
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface);
+  white-space: nowrap;
+}
+
+.preview-tab--normal {
+  opacity: 0.55;
+}
+
+.preview-tab-icon {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.preview-tab-text {
+  user-select: none;
+}
+
+.preview-tab-pin {
+  flex-shrink: 0;
 }
 
 /* 说明提示 */

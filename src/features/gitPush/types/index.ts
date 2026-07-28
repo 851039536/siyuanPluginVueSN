@@ -24,7 +24,10 @@ export type {
   WorkingTreeInfo,
 } from "./storage"
 export {
+  clampGitConcurrency,
   COMMIT_TYPE_VALUES,
+  GIT_CONCURRENCY_MAX,
+  GIT_CONCURRENCY_MIN,
   GitPushStorage,
   UNGROUPED_ID,
 } from "./storage"

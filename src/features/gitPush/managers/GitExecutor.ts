@@ -1,6 +1,7 @@
 // Git 子进程执行器：双池信号量限流（网络/本地命令独立并发池）+ abort 生命周期管理
 import { getNodeProcessModules } from "@/utils/nodeModules"
 import type { GitPushStorage } from "../types/storage"
+import { clampGitConcurrency } from "../types/storage"
 
 export class GitExecutor {
   private storage: GitPushStorage
@@ -41,7 +42,7 @@ export class GitExecutor {
 
   /** 设置 git 并发上限并持久化 */
   async setGitConcurrency(n: number): Promise<void> {
-    const clamped = Math.max(1, Math.min(10, n))
+    const clamped = clampGitConcurrency(n)
     this.gitMaxConcurrent = clamped
     await this.storage.gitConcurrency.save(clamped)
   }

@@ -6,6 +6,16 @@ import { TypedStorage } from "@/utils/typedStorage"
 /** 未分组分类的 ID（魔法字符串收敛为单一常量） */
 export const UNGROUPED_ID = "__ungrouped__"
 
+/** Git 并发数允许范围（设置弹窗输入与 GitExecutor 钳位的单一数据源） */
+export const GIT_CONCURRENCY_MIN = 1
+export const GIT_CONCURRENCY_MAX = 10
+
+/** 将 git 并发数整数化并钳位到允许范围 */
+export function clampGitConcurrency(n: number): number {
+  const num = Math.round(Number(n) || GIT_CONCURRENCY_MIN)
+  return Math.max(GIT_CONCURRENCY_MIN, Math.min(GIT_CONCURRENCY_MAX, num))
+}
+
 /** 项目映射条目 */
 export interface GitProject {
   /** 唯一标识（时间戳生成） */

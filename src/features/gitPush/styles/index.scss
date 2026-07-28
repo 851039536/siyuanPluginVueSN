@@ -799,6 +799,11 @@
   gap: $spacing-2;
 }
 
+// 设置弹窗内相邻设置组之间的垂直间距
+.gp-set-row--spaced {
+  margin-top: $spacing-3;
+}
+
 .gp-set-label {
   font-size: $font-size-xs;
   white-space: nowrap;
@@ -808,6 +813,11 @@
   display: flex;
   align-items: center;
   gap: $spacing-1;
+}
+
+// 并发数数字输入框：固定窄宽度（仅需容纳 1~2 位数字）
+.gp-set-concurrency-input {
+  width: 70px;
 }
 
 .gp-set-hint {
@@ -970,6 +980,11 @@
   &:empty {
     height: 1em;
   }
+}
+
+// 设置弹窗：窄布局（仅两个设置项）
+.gp-dialog--settings {
+  width: 300px;
 }
 
 // 扫描导入弹窗：加宽以容纳扫描结果的完整路径展示

@@ -58,6 +58,14 @@ export interface GitProject {
   pathDevices?: Record<string, string>
 }
 
+/** 新增项目时的多设备路径附加信息（备选路径 + 设备名映射） */
+export interface ProjectPathExtras {
+  /** 备选本地路径（不含主路径） */
+  localPaths?: string[]
+  /** 路径 → 设备电脑名映射（仅保留非空标注） */
+  pathDevices?: Record<string, string>
+}
+
 /** 项目分类 */
 export interface ProjectCategory {
   id: string

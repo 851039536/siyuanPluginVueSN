@@ -3,6 +3,7 @@ import type {
   GitProject,
   GitPushManager,
   ProjectCategory,
+  ProjectPathExtras,
 } from "../types"
 import { ref } from "vue"
 import { showMessage } from "siyuan"
@@ -27,13 +28,16 @@ export function useProjectCrud(manager: GitPushManager) {
     }
   }
 
-  async function addProject(name: string, path: string, categoryId = UNGROUPED_ID, tags?: string[]) {
-    const normalized = normalizePathForDedup(path)
-    const dup = projects.value.find((p) => normalizePathForDedup(p.path) === normalized)
+  async function addProject(name: string, path: string, categoryId = UNGROUPED_ID, tags?: string[], extras?: ProjectPathExtras) {
+    // 查重覆盖新旧项目的全部路径（主路径 + localPaths），防止跨设备副本重复添加
+    const newPaths = [path, ...(extras?.localPaths || [])].map(normalizePathForDedup)
+    const dup = projects.value.find((p) =>
+      [p.path, ...(p.localPaths || [])].some((ep) => newPaths.includes(normalizePathForDedup(ep))),
+    )
     if (dup) {
       throw new Error(`项目路径已存在："${dup.name}"（${dup.path}）`)
     }
-    const project = await manager.addProject(name, path, categoryId, tags)
+    const project = await manager.addProject(name, path, categoryId, tags, extras)
     projects.value = [...projects.value, project]
     if (tags && tags.length > 0) allTags.value = await manager.getAllTags()
     return project
@@ -53,7 +57,7 @@ export function useProjectCrud(manager: GitPushManager) {
     projects.value = [...projects.value]
   }
 
-  async function updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "name" | "tags" | "starred" | "status" | "archived" | "note" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl" | "localPaths" | "pathDevices">>) {
+  async function updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "name" | "path" | "tags" | "starred" | "status" | "archived" | "note" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl" | "localPaths" | "pathDevices">>) {
     const updated = await manager.updateProjectMeta(id, patch)
     if (updated) {
       patchProject(id, patch)

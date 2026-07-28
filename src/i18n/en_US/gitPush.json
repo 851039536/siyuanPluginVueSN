@@ -17,7 +17,6 @@
     "projectName": "Project Name",
     "namePlaceholder": "Enter project name...",
     "projectPath": "Project Path",
-    "pathPlaceholder": "Select or enter project path...",
     "cancel": "Cancel",
     "add": "Add",
     "checkingGit": "Checking git repository...",

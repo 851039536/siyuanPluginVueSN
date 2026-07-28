@@ -221,9 +221,7 @@
         v-if="showAddDialog"
         :i18n="i18n"
         :categories="categories"
-        :selected-path="newProjectPath"
         @close="showAddDialog = false"
-        @pick-dir="selectDirectory"
         @add="handleAddFromDialog"
       />
     </Transition>
@@ -343,6 +341,7 @@ import type {
   GitProject,
   GitPushManager,
   PlatformKey,
+  ProjectPathExtras,
   ProjectStatus,
 } from "./types"
 import type { Plugin } from "siyuan"
@@ -372,7 +371,6 @@ import StatsPanel from "./components/StatsPanel.vue"
 import BatchProgressBar from "./components/BatchProgressBar.vue"
 import GitConfigDialog from "./components/GitConfigDialog.vue"
 import Loader from "@/components/Loader.vue"
-import { pickDirectory } from "@/utils/electronDialog"
 import { useGitPush } from "./composables/useGitPush"
 import { useBatchProgress } from "./composables/useBatchProgress"
 import {
@@ -808,7 +806,6 @@ function getProjectUrl(project: GitProject, prop: "githubUrl" | "giteeUrl" | "gi
   return project[prop]
 }
 
-const newProjectPath = ref("") // 目录选择回填用
 /** 项目编辑弹窗状态 */
 const editDialogProjectId = ref("")
 /** Markdown 文档预览弹窗状态 */
@@ -939,9 +936,12 @@ watch(currentView, async (view) => {
   })
 })
 
-async function handleAddFromDialog(data: { name: string, path: string, catId: string }) {
+async function handleAddFromDialog(data: ProjectPathExtras & { name: string, path: string, catId: string }) {
   try {
-    await addProject(data.name, data.path, data.catId)
+    await addProject(data.name, data.path, data.catId, undefined, {
+      localPaths: data.localPaths,
+      pathDevices: data.pathDevices,
+    })
     showAddDialog.value = false
   } catch (e: unknown) {
     showMessage(getErrorMessage(e) || tf("addFailed", "添加失败"), 5000, "error")
@@ -1170,11 +1170,6 @@ function hasBehind(projectId: string): boolean {
   const status = pushStatuses.value[projectId]
   if (!status) return false
   return Object.values(status.remotes).some((r) => r.behind > 0)
-}
-
-async function selectDirectory() {
-  const path = await pickDirectory(tf("selectProjectDirTitle", "选择项目目录"))
-  if (path) newProjectPath.value = path
 }
 </script>
 

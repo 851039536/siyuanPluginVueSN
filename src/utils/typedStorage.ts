@@ -42,6 +42,25 @@ export class TypedStorage<T> {
     if (data === null || data === undefined) {
       return this._getDefault()
     }
+    // 默认值是布尔时，兼容思源 loadData 将原始值以字符串（"true"/"false"）返回的情况
+    // （saveData 对非对象类型直接写入原始文本，读回可能得到字符串，"false" 为真值会导致状态误判）
+    if (typeof this._defaultValue === "boolean") {
+      if (typeof data === "boolean") return data
+      if (data === "true" as unknown as T) return true as unknown as T
+      if (data === "false" as unknown as T) return false as unknown as T
+      console.warn(`[TypedStorage] key="${this._key}" 存储的数据不是布尔值，已回退到默认值`)
+      return this._getDefault()
+    }
+    // 默认值是数字时同理，字符串数字归一化为 number
+    if (typeof this._defaultValue === "number") {
+      if (typeof data === "number") return data
+      const n = Number(data)
+      if (typeof data === "string" && data.trim() !== "" && !Number.isNaN(n)) {
+        return n as unknown as T
+      }
+      console.warn(`[TypedStorage] key="${this._key}" 存储的数据不是数字，已回退到默认值`)
+      return this._getDefault()
+    }
     // 默认值是数组时，校验当前值是否为数组
     if (this._defaultValue !== undefined && Array.isArray(this._defaultValue)) {
       if (!Array.isArray(data)) {

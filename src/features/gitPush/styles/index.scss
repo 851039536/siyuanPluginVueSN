@@ -720,29 +720,29 @@
 
 // ── 控制台风格输出面板 ──
 .gp-output {
-  margin-top: 8px;
-  max-height: 200px;
+  margin-top: $spacing-2;
+  max-height: 200px; // 输出面板高度上限，超出滚动
   border-radius: $radius-sm;
   background: var(--b3-theme-surface);
   overflow: hidden;
   font-family: $vp-mono;
-  // 拉取/推送结果头行与 stdout/stderr 详情（2xs）保持一致
+  // 控制台输出统一 2xs 等宽字号
   font-size: $font-size-2xs;
-  line-height: 1.6;
+  line-height: $line-height-normal;
   color: var(--b3-theme-on-surface);
   user-select: text;
 }
 
 .gp-output-scroll {
-  max-height: 200px;
+  max-height: 200px; // 与 .gp-output 上限一致
   overflow-y: auto;
-  padding: 8px;
+  padding: $spacing-2;
 }
 
-.gp-output-line {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
+// 控制台单行：头行按状态着色，stdout/stderr 详情行缩进
+.gp-console-line {
+  white-space: pre-wrap;
+  word-break: break-all;
 
   &--ok {
     color: var(--b3-theme-success);
@@ -752,34 +752,20 @@
     color: var(--b3-theme-error);
   }
 
-  &--skipped {
+  &--skip {
     color: var(--b3-theme-on-surface-light);
     opacity: 0.6;
   }
-}
 
-.gp-output-stdout {
-  margin: 2px 0 2px 12px;
-  padding: 2px 0;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  line-height: 1.4;
-  color: var(--b3-theme-on-surface-light);
-  white-space: pre-wrap;
-  word-break: break-all;
-  user-select: text;
-}
+  &--out {
+    padding-left: $spacing-3;
+    color: var(--b3-theme-on-surface-light);
+  }
 
-.gp-output-stderr {
-  margin: 2px 0 2px 12px;
-  padding: 2px 0;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  line-height: 1.4;
-  color: var(--b3-theme-error);
-  white-space: pre-wrap;
-  word-break: break-all;
-  user-select: text;
+  &--err {
+    padding-left: $spacing-3;
+    color: var(--b3-theme-error);
+  }
 }
 
 // ── 设置弹窗：分支模式 radio ──

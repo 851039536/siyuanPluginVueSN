@@ -3,8 +3,8 @@
 .gp-md-badge {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  padding: 1px 6px;
+  gap: $spacing-2px;
+  padding: 1px 6px; // 徽章微内边距：垂直 1px 保持行高紧凑，水平 6px 无对应 Token
   font-size: $font-size-2xs;
   font-family: $vp-mono;
   font-weight: $font-weight-semibold;

@@ -1,8 +1,10 @@
 <!-- gitPush Markdown 文档预览弹窗 — Pattern B 内嵌 v-if 弹窗 -->
 <template>
   <div
+    tabindex="-1"
     class="gp-mask"
-    @click.self="close"
+    @keydown.escape="$emit('close')"
+    @click.self="$emit('close')"
   >
     <div class="gp-md-dialog">
       <!-- 头部 -->
@@ -12,12 +14,14 @@
             icon="mdi:file-document-multiple-outline"
             height="14"
           />
-          <span>{{ i18n.previewMarkdown || '文档预览' }}</span>
+          <!-- 弹窗标题："文档预览" -->
+          <span>{{ i18n.previewMarkdown }}</span>
         </div>
+        <!-- 关闭按钮（tooltip："关闭"） -->
         <button
           class="gp-md-close"
-          title="关闭"
-          @click="close"
+          :title="i18n.close"
+          @click="$emit('close')"
         >
           <Icon
             icon="mdi:close"
@@ -26,7 +30,7 @@
         </button>
       </div>
 
-      <!-- Tab 栏 -->
+      <!-- Tab 栏（多文件时显示） -->
       <div
         v-if="files.length > 1"
         class="gp-md-tabs"
@@ -39,10 +43,11 @@
           @click="selectFile(f.name)"
         >
           {{ f.label }}
+          <!-- 超大文件警示图标（tooltip："文件较大"） -->
           <span
             v-if="f.oversized"
             class="gp-md-tab-warn"
-            title="文件较大"
+            :title="i18n.fileTooLarge"
           >
             <Icon
               icon="mdi:alert-circle-outline"
@@ -54,29 +59,19 @@
 
       <!-- 内容区 -->
       <div class="gp-md-body">
+        <!-- 空态："未找到 Markdown 文件" -->
         <div
-          v-if="loading"
-          class="gp-md-loading"
-        >
-          <Icon
-            icon="mdi:loading"
-            height="16"
-            class="gp-spin"
-          />
-          <span>加载中...</span>
-        </div>
-
-        <div
-          v-else-if="!currentFile"
+          v-if="!currentFile"
           class="gp-md-empty"
         >
           <Icon
             icon="mdi:file-document-outline"
             height="32"
           />
-          <span>{{ i18n.noMarkdownFiles || '未找到 Markdown 文件' }}</span>
+          <span>{{ i18n.noMarkdownFiles }}</span>
         </div>
 
+        <!-- 读取失败："读取文件失败" -->
         <div
           v-else-if="loadError"
           class="gp-md-error"
@@ -88,6 +83,7 @@
           <span>{{ loadError }}</span>
         </div>
 
+        <!-- 渲染的 Markdown 内容 -->
         <article
           v-else
           v-html="renderedHtml"
@@ -100,6 +96,7 @@
         v-if="currentFile"
         class="gp-md-footer"
       >
+        <!-- 截断提示："文件过大，仅显示前 1000 行" -->
         <span
           v-if="truncated"
           class="gp-md-warn"
@@ -108,9 +105,10 @@
             icon="mdi:alert-circle-outline"
             height="12"
           />
-          {{ i18n.fileOversized || '文件过大，仅显示前 1000 行' }}
+          {{ i18n.fileOversized }}
         </span>
-        <div class="gp-md-spacer" />
+        <div class="gp-grow" />
+        <!-- 按钮："复制原文" / "已复制" -->
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
           @click="handleCopy"
@@ -119,7 +117,7 @@
             :icon="copied ? 'mdi:check' : 'mdi:content-copy'"
             height="12"
           />
-          <span>{{ copied ? (i18n.copied || '已复制') : (i18n.copyRaw || '复制原文') }}</span>
+          <span>{{ copied ? i18n.copied : i18n.copyRaw }}</span>
         </button>
       </div>
     </div>
@@ -127,13 +125,12 @@
 </template>
 
 <script setup lang="ts">
-import type { GitProject, GitPushManager } from "../types"
+import type { GitProject } from "../types"
 import {
   computed,
   onMounted,
   onUnmounted,
   ref,
-  watch,
 } from "vue"
 import { Icon } from "@iconify/vue"
 import { parseMarkdown } from "@/utils/mdRenderer"
@@ -146,13 +143,12 @@ import { resolveValidPath } from "../utils"
 
 const props = defineProps<{
   project: GitProject
-  manager: GitPushManager
   i18n: Record<string, any>
   /** 初始打开的文件名（可选） */
   initialFile?: string
 }>()
 
-const emit = defineEmits<{
+defineEmits<{
   close: []
 }>()
 
@@ -163,11 +159,9 @@ const files = ref(scanMarkdownFiles(resolveValidPath(props.project)))
 const currentFile = ref(files.value[0] ?? null)
 /** 当前文件原始内容 */
 const rawContent = ref("")
-/** 加载中 */
-const loading = ref(false)
 /** 读取错误 */
 const loadError = ref("")
-/** 是否被截断 */
+/** 是否实际发生截断 */
 const truncated = ref(false)
 /** 复制成功反馈 */
 const copied = ref(false)
@@ -179,7 +173,7 @@ const renderedHtml = computed(() => {
     return parseMarkdown(rawContent.value, { codeHighlight: true })
   } catch (e) {
     console.error("[MarkdownPreviewDialog] 渲染失败:", e)
-    return `<p style="color:var(--b3-theme-error)">渲染失败</p>`
+    return `<p class="gp-md-render-error">${props.i18n.errRenderMarkdown}</p>`
   }
 })
 
@@ -192,25 +186,21 @@ function selectFile(name: string) {
   }
 }
 
+// 超大文件仅读取前 1000 行，避免渲染卡顿
+const OVERSIZED_MAX_LINES = 1000
+
 function loadFile(file: typeof currentFile.value) {
   if (!file) return
-  loading.value = true
   loadError.value = ""
   truncated.value = false
-  const maxLines = file.oversized ? 1000 : 0
-  const content = readMarkdownFile(file.path, maxLines)
-  if (content === null) {
-    loadError.value = "读取文件失败"
+  const result = readMarkdownFile(file.path, file.oversized ? OVERSIZED_MAX_LINES : 0)
+  if (result === null) {
+    loadError.value = props.i18n.errReadFile
     rawContent.value = ""
   } else {
-    rawContent.value = content
-    truncated.value = file.oversized
+    rawContent.value = result.content
+    truncated.value = result.truncated
   }
-  loading.value = false
-}
-
-function close() {
-  emit("close")
 }
 
 /** 复制成功反馈定时器 */
@@ -220,12 +210,14 @@ async function handleCopy() {
   if (!rawContent.value) return
   const ok = await copyToClipboard(rawContent.value)
   if (ok) {
+    // 先清旧定时器，避免连续点击时旧定时器提前掐灭新反馈
+    if (copiedTimer) clearTimeout(copiedTimer)
     copied.value = true
     copiedTimer = setTimeout(() => { copied.value = false }, 2000)
   }
 }
 
-// ── 初始化 + 监听 ──
+// ── 初始化 ──
 onMounted(() => {
   if (files.value.length === 0) return
   // 优先打开 initialFile（若存在）
@@ -243,18 +235,8 @@ onMounted(() => {
 onUnmounted(() => {
   if (copiedTimer) clearTimeout(copiedTimer)
 })
-
-/** 项目变化时重新扫描 */
-watch(
-  () => props.project.id,
-  () => {
-    files.value = scanMarkdownFiles(resolveValidPath(props.project))
-    currentFile.value = files.value[0] ?? null
-    loadFile(currentFile.value)
-  },
-)
 </script>
 
 <style lang="scss">
-@use "../styles/MarkdownPreviewDialog";
+@use "../styles/MarkdownPreviewDialog.scss";
 </style>

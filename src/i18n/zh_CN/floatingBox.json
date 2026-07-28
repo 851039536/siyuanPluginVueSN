@@ -21,8 +21,6 @@
     "refreshFiletreeDone": "文件树已刷新",
     "refreshTag": "标签树",
     "refreshTagTitle": "重载标签树",
-    "refreshTagDone": "标签树已刷新",
-    "refreshUI": "完整刷新",
-    "refreshUITitle": "重载整个界面"
+    "refreshTagDone": "标签树已刷新"
   }
 }

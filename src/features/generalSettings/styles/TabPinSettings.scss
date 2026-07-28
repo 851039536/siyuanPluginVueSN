@@ -1,0 +1,186 @@
+@use '@/variables.scss' as *;
+
+.tab-pin-settings {
+  padding: $spacing-3;
+  box-sizing: border-box;
+  // 面板基准字号，防止内部未声明字号的文字继承思源全局默认字号
+  font-size: $font-size-xs;
+}
+
+.settings-container {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  max-width: 100%;
+}
+
+/* 设置行 */
+.setting-row {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  width: 100%;
+}
+
+.setting-label {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-surface);
+  margin: 0;
+}
+
+.label-icon {
+  opacity: 0.8;
+}
+
+/* 启用开关 */
+.toggle-container {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.toggle-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.toggle-label {
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface);
+  user-select: none;
+}
+
+/* 显示模式选项 */
+.display-mode-options {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  margin-top: $spacing-1;
+}
+
+.radio-item {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  cursor: pointer;
+  padding: $spacing-1 $spacing-2;
+  background: var(--b3-theme-surface-variant);
+  border-radius: $radius-base;
+}
+
+.radio-item:hover {
+  background: rgba(var(--b3-theme-primary-rgb), 0.08);
+}
+
+.radio-item input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.radio-label {
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface);
+  user-select: none;
+}
+
+/* 颜色输入组 */
+.color-input-group {
+  display: flex;
+  gap: $spacing-2;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.color-picker {
+  width: 48px;
+  height: 32px;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-base;
+  cursor: pointer;
+  background: transparent;
+}
+
+.color-picker:hover {
+  border-color: var(--b3-theme-primary);
+}
+
+.color-text {
+  flex: 1;
+  min-width: 100px;
+  padding: $spacing-1 $spacing-2;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-base;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-xs;
+  font-family: $vp-mono;
+  text-transform: uppercase;
+}
+
+.color-text:focus {
+  outline: none;
+  border-color: var(--b3-theme-primary);
+}
+
+.reset-color-btn {
+  padding: $spacing-1 $spacing-3;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-base;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-xs;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.reset-color-btn:hover {
+  border-color: var(--b3-theme-primary);
+  background: var(--b3-theme-primary);
+  color: var(--b3-theme-on-primary);
+}
+
+/* 说明提示 */
+.tab-pin-hint {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  margin-top: $spacing-1;
+  padding: $spacing-1 $spacing-2;
+  background: rgba(var(--b3-theme-primary-rgb), 0.08);
+  border-left: 3px solid var(--b3-theme-primary);
+  border-radius: $radius-sm;
+  // 辅助提示文字，按两级字号制使用 2xs
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-variant);
+}
+
+.hint-icon {
+  opacity: 0.8;
+}
+
+.hint-text {
+  flex: 1;
+  line-height: $line-height-normal;
+}
+
+/* 响应式调整 */
+@media (max-width: 480px) {
+  .color-input-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .color-picker {
+    width: 100%;
+  }
+
+  .color-text {
+    min-width: auto;
+  }
+}

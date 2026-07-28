@@ -143,10 +143,10 @@ import {
   ref,
 } from "vue"
 import CompactModeSettings from "@/features/compactMode/components/CompactModeSettings.vue"
+import EncryptionSettings from "@/features/encryption/components/EncryptionSettings.vue"
 import CodeBlockSettings from "./components/CodeBlockSettings.vue"
 import DocCountSettings from "./components/DocCountSettings.vue"
 import DocumentFontSettings from "./components/DocumentFontSettings.vue"
-import EncryptionSettings from "./components/EncryptionSettings.vue"
 import HeadingSettings from "./components/HeadingSettings.vue"
 import HighlightSettings from "./components/HighlightSettings.vue"
 import ListStyleSettings from "./components/ListStyleSettings.vue"

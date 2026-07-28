@@ -114,7 +114,7 @@
             :refreshing="refreshing"
             :fetching="fetching[project.id]"
             :open-ide-menu="openIdeMenu"
-            :confirming-del-idx="confirmingDelIdx"
+            :confirming-del-name="confirmingDelName"
             :branches="branches[project.id]"
             :push-status="pushStatuses[project.id]"
             :working-tree="workingTrees[project.id]"
@@ -172,10 +172,10 @@
             @toggle-ide-menu="toggleIdeMenu"
             @toggle-refresh-menu="toggleRefreshMenu"
             @show-ide-dialog="showIdeDialog = true"
-            @do-remove-custom-ide="doRemoveCustomIde"
+            @remove-custom-ide="removeCustomIdeByName"
             @update:editing-name-id="editingNameId = $event"
             @update:editing-name-input="editingNameInput = $event"
-            @update:confirming-del-idx="confirmingDelIdx = $event"
+            @update:confirming-del-name="confirmingDelName = $event"
             @refresh="handleRefresh"
             @refresh-working-tree="handleRefreshWorkingTree"
             @refresh-commit-log="handleRefreshCommitLog"
@@ -677,12 +677,13 @@ const {
 const {
   detectedIdes,
   customIdes,
-  confirmingDelIdx,
+  confirmingDelName,
   showIdeDialog,
   saveEditIde,
   loadCustomIdes,
   addCustomIde,
   doRemoveCustomIde,
+  removeCustomIdeByName,
   handleOpenCustomIde,
   scanIdes,
   handleOpenIde,

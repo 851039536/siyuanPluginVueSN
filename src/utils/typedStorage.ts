@@ -34,7 +34,7 @@ export class TypedStorage<T> {
    * 加载数据，若不存在则返回默认值
    * 对象类型会与默认值进行浅合并（{ ...defaultValue, ...saved }），
    * 确保新增字段有默认值兜底
-   * 数组类型会校验返回值的类型，非数组时回退到默认值
+   * 数组/对象类型会校验返回值的类型，类型不匹配时回退到默认值
    */
   async loadOrDefault(): Promise<T> {
     const data = await this._storage.load<T>(this._key)
@@ -46,16 +46,20 @@ export class TypedStorage<T> {
     if (this._defaultValue !== undefined && Array.isArray(this._defaultValue)) {
       if (!Array.isArray(data)) {
         console.warn(`[TypedStorage] key="${this._key}" 存储的数据不是数组，已回退到默认值`)
-        return this._defaultValue as T
+        return this._getDefault()
       }
       return data
     }
-    // 默认值是对象时，进行浅合并
+    // 默认值是对象时，先校验当前值同为对象再浅合并（防止损坏数据把字符/索引混入对象）
     if (
       this._defaultValue !== undefined
       && typeof this._defaultValue === "object"
       && this._defaultValue !== null
     ) {
+      if (typeof data !== "object" || Array.isArray(data)) {
+        console.warn(`[TypedStorage] key="${this._key}" 存储的数据不是对象，已回退到默认值`)
+        return this._getDefault()
+      }
       return {
         ...this._defaultValue,
         ...data,
@@ -64,13 +68,14 @@ export class TypedStorage<T> {
     return data
   }
 
-  /** 获取默认值的独立副本 */
+  /** 获取默认值的独立副本（数组/对象为浅拷贝，嵌套引用仍共享） */
   private _getDefault(): T {
     if (this._defaultValue === undefined) {
+      console.warn(`[TypedStorage] key="${this._key}" 未提供默认值，loadOrDefault 将返回 undefined`)
       return undefined as unknown as T
     }
     if (Array.isArray(this._defaultValue)) {
-      return [] as unknown as T
+      return [...this._defaultValue] as unknown as T
     }
     if (typeof this._defaultValue === "object" && this._defaultValue !== null) {
       return { ...this._defaultValue } as T

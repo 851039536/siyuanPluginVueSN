@@ -218,27 +218,28 @@
               <span>{{ ide.name }}</span>
             </button>
             <button
-              v-for="(custom, idx) in customIdes"
-              :key="`custom-${idx}`"
+              v-for="custom in uniqueCustomIdes"
+              :key="`custom-${custom.name}`"
               class="gp-ide-item gp-ide-item--custom"
-              @click="$emit('openCustomIde', resolvedPath(project), custom.name, custom.path); openIdeMenu.delete(project.id)"
+              :title="custom.paths.join('\n')"
+              @click="$emit('openCustomIde', resolvedPath(project), custom.name); openIdeMenu.delete(project.id)"
             >
               <Icon
                 icon="mdi:application-brackets"
                 height="12"
               />
               <span>{{ custom.name }}</span>
-              <template v-if="confirmingDelIdx === idx">
+              <template v-if="confirmingDelName === custom.name">
                 <span class="gp-ide-del-confirm">{{ i18n.confirmDeleteShort }}</span>
                 <button
                   class="gp-ide-del-yes"
-                  @click.stop="$emit('doRemoveCustomIde', idx)"
+                  @click.stop="$emit('removeCustomIde', custom.name)"
                 >
                   {{ i18n.yes }}
                 </button>
                 <button
                   class="gp-ide-del-no"
-                  @click.stop="$emit('update:confirmingDelIdx', -1)"
+                  @click.stop="$emit('update:confirmingDelName', '')"
                 >
                   {{ i18n.no }}
                 </button>
@@ -247,7 +248,7 @@
                 v-else
                 class="gp-ide-item-del"
                 :title="i18n.deleteCustomIde"
-                @click.stop="$emit('update:confirmingDelIdx', idx)"
+                @click.stop="$emit('update:confirmingDelName', custom.name)"
               >
                 <Icon
                   icon="mdi:delete-outline"
@@ -709,7 +710,7 @@ const props = defineProps<{
   workingTreeExpanded?: boolean
   remoteStatusLoading?: boolean
   openRefreshMenu: Set<string>
-  confirmingDelIdx: number
+  confirmingDelName: string
   // 每项目响应式数据（单项目值，非全量 Record，避免跨卡片 re-render）
   branches: BranchInfo[]
   pushStatus: PushStatusInfo
@@ -765,14 +766,14 @@ const emit = defineEmits<{
   "copyUrl": [url: string]
   "openPath": [path: string]
   "openIde": [path: string, ide: { name: string, path?: string }]
-  "openCustomIde": [path: string, name: string, idePath: string]
+  "openCustomIde": [path: string, name: string]
   "toggleIdeMenu": [id: string]
   "showIdeDialog": []
-  "doRemoveCustomIde": [idx: number]
+  "removeCustomIde": [name: string]
   // 编辑状态
   "update:editingNameId": [id: string]
   "update:editingNameInput": [value: string]
-  "update:confirmingDelIdx": [idx: number]
+  "update:confirmingDelName": [name: string]
   // 工作区
   "refresh": [id: string]
   "toggleRefreshMenu": [id: string]
@@ -818,6 +819,17 @@ const emit = defineEmits<{
 
 /** 项目名搜索高亮分段（按当前 searchQuery 切分） */
 const nameSegments = computed(() => highlightSegments(props.project.name, props.searchQuery || ""))
+
+/** 自定义 IDE 按名称去重（同名多条 = 多台电脑的候选路径，菜单只展示一项，tooltip 列出全部路径） */
+const uniqueCustomIdes = computed(() => {
+  const map = new Map<string, string[]>()
+  for (const c of props.customIdes) {
+    const paths = map.get(c.name)
+    if (paths) paths.push(c.path)
+    else map.set(c.name, [c.path])
+  }
+  return [...map.entries()].map(([name, paths]) => ({ name, paths }))
+})
 
 /** Stash / Tag 面板 Tab 切换 */
 const stashTagTab = ref<"worktree" | "log" | "stash" | "tag">("worktree")

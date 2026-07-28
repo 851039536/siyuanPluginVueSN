@@ -100,7 +100,8 @@ export function useIdeManagement(options: {
 
   const detectedIdes = ref<IdeEntry[]>([])
   const customIdes = ref<CustomIde[]>([])
-  const confirmingDelIdx = ref(-1)
+  // 项目卡片 IDE 菜单中处于删除确认态的自定义 IDE 名称（按名称去重展示，故用名称标识）
+  const confirmingDelName = ref("")
 
   const showIdeDialog = ref(false)
 
@@ -127,10 +128,11 @@ export function useIdeManagement(options: {
     catch { /* ignore */ }
   }
 
-  /** 新增自定义 IDE（预设名 + 可执行文件路径） */
+  /** 新增自定义 IDE（预设名 + 可执行文件路径；同名多条 = 多台电脑的候选路径，完全相同的条目跳过） */
   function addCustomIde(name: string, path: string) {
     const trimmed = path.trim()
     if (!trimmed) return
+    if (customIdes.value.some((c) => c.name === name && c.path === trimmed)) return
     customIdes.value = [...customIdes.value, {
       name,
       path: trimmed,
@@ -140,7 +142,14 @@ export function useIdeManagement(options: {
 
   function doRemoveCustomIde(idx: number) {
     customIdes.value = customIdes.value.filter((_, i) => i !== idx)
-    confirmingDelIdx.value = -1
+    confirmingDelName.value = ""
+    saveCustomIdes()
+  }
+
+  /** 按名称删除该 IDE 的全部候选路径（项目卡片 IDE 菜单按名称去重展示，删除即删整组） */
+  function removeCustomIdeByName(name: string) {
+    customIdes.value = customIdes.value.filter((c) => c.name !== name)
+    confirmingDelName.value = ""
     saveCustomIdes()
   }
 
@@ -276,17 +285,26 @@ export function useIdeManagement(options: {
     openFolder(path)
   }
 
-  async function handleOpenCustomIde(projectPath: string, ideName: string, idePath: string) {
+  /**
+   * 打开自定义 IDE：同名条目视为多台电脑的候选安装路径，
+   * 依次尝试——路径不存在或启动失败即跳过下一个，全部失败回退打开文件夹
+   */
+  async function handleOpenCustomIde(projectPath: string, ideName: string) {
     let target = projectPath
     if (/rider|visual\s*studio/i.test(ideName)) {
       const sln = await findSlnFile(projectPath)
       if (sln) target = sln
     }
-    const nodeModules = getNodeProcessModules()
-    const cp = nodeModules?.child_process
+    const cp = getNodeProcessModules()?.child_process
+    const fs = getNodeModules()?.fs
     if (cp) {
-      try { await launchIde(cp, idePath, [target]); return }
-      catch { /* fallback */ }
+      const candidates = customIdes.value.filter((c) => c.name === ideName)
+      for (const { path } of candidates) {
+        // 本机不存在该安装路径（其他电脑的配置）→ 跳过
+        if (fs && !fs.existsSync(path)) continue
+        try { await launchIde(cp, path, [target]); return }
+        catch { /* 启动失败，继续下一个候选路径 */ }
+      }
     }
     openFolder(projectPath)
   }
@@ -294,13 +312,14 @@ export function useIdeManagement(options: {
   return {
     detectedIdes,
     customIdes,
-    confirmingDelIdx,
+    confirmingDelName,
     showIdeDialog,
     saveEditIde,
     loadCustomIdes,
     saveCustomIdes,
     addCustomIde,
     doRemoveCustomIde,
+    removeCustomIdeByName,
     handleOpenCustomIde,
     scanIdes,
     handleOpenIde,

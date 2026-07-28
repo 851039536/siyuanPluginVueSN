@@ -154,6 +154,7 @@ import { Icon } from "@iconify/vue"
 import { computed, ref } from "vue"
 import Input from "@/components/Input.vue"
 import { pickDirectory } from "@/utils/electronDialog"
+import { useDialogKeyboard } from "../composables/useDialogKeyboard"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -170,6 +171,9 @@ const emit = defineEmits<{
   "toggleItem": [path: string]
   "importSelected": []
 }>()
+
+// 弹窗打开时自动聚焦遮罩，使 Esc 关闭生效
+const { rootRef } = useDialogKeyboard()
 
 const localScanDir = ref("")
 

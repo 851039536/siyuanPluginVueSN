@@ -33,6 +33,7 @@ import {
   applyCodeBlockEnhancedStyles,
   applyCodeBlockStyle,
   applyDocumentFontStyles,
+  applyListStyleEnhancedCss,
   generateLevelDisplayCss,
   generateTabPinCSS,
   TAB_PIN_STYLE_ID,
@@ -78,7 +79,7 @@ export class GeneralSettings {
       position: "RightTop",
       width: 360,
       icon: "iconSettings",
-      title: this.plugin.i18n.generalSettings || "通用设置",
+      title: this.plugin.i18n.generalSettings,
       type: "general-settings-dock",
       i18n: this.plugin.i18n,
       extraProps: {
@@ -97,7 +98,7 @@ export class GeneralSettings {
     } else if (settings.moduleId === "tableStyle") {
       this.applyTableStyles(settings.settings as unknown as TableStyleSettings)
     } else if (settings.moduleId === "listStyle") {
-      this.applyListStylesEnhanced(settings.settings as unknown as ListStyleSettings)
+      applyListStyleEnhancedCss(settings.settings as unknown as ListStyleSettings)
     } else if (settings.moduleId === "tabPin") {
       this.applyTabPinStyles(settings.settings as unknown as TabPinSettings)
     }
@@ -286,7 +287,7 @@ export class GeneralSettings {
     try {
       const settings = await this.storage.listStyle.load()
       if (settings) {
-        this.applyListStylesEnhanced(settings)
+        applyListStyleEnhancedCss(settings)
       }
     } catch (error) {
       console.error("应用列表样式失败:", error)
@@ -406,69 +407,6 @@ export class GeneralSettings {
       injectStyle(TAB_PIN_STYLE_ID, generateTabPinCSS(tabPinSettings))
     } catch (error) {
       console.error("应用钉住页签样式失败:", error)
-    }
-  }
-
-  private applyListStylesEnhanced(listSettings: ListStyleSettings) {
-    try {
-      if (!listSettings.enabled) {
-        removeStyle("list-style-settings")
-        return
-      }
-
-      // 有序列表颜色
-      const orderedListCss = listSettings.orderedListColors
-        .map((color: string, index: number) => {
-          const depth = '.li[data-subtype="o"] '.repeat(index)
-          return `
-          ${depth}.li[data-subtype="o"] > .protyle-action--order {
-            color: ${color} !important;
-            font-weight: bold !important;
-          }
-        `
-        })
-        .join("\n")
-
-      // 无序列表颜色和符号
-      const unorderedListCss = listSettings.unorderedListColors
-        .map((color: string, index: number) => {
-          const depth = '[data-subtype="u"] > '.repeat(index)
-          const symbol = index % 2 === 0 ? "•" : "▪"
-          return `
-          ${depth}.li[data-subtype="u"] > .protyle-action::before {
-            content: "${symbol}";
-            font-size: ${listSettings.symbolSize}em;
-            font-weight: bold;
-            font-family: Arial;
-            position: absolute;
-            color: ${color} !important;
-          }
-        `
-        })
-        .join("\n")
-
-      const css = `
-        /* 有序列表样式 */
-        ${orderedListCss}
-
-        /* 无序列表样式 - 隐藏原始符号 */
-        [data-subtype="u"] > .li[data-subtype="u"] > .protyle-action svg {
-          color: transparent;
-        }
-
-        /* 无序列表符号 */
-        ${unorderedListCss}
-
-        /* 暗色主题适配 */
-        :root[data-theme-mode="dark"] .li[data-subtype="o"] > .protyle-action--order,
-        :root[data-theme-mode="dark"] .li[data-subtype="u"] > .protyle-action::before {
-          opacity: 0.9;
-        }
-      `
-
-      injectStyle("list-style-settings", css)
-    } catch (error) {
-      console.error("应用列表样式失败:", error)
     }
   }
 

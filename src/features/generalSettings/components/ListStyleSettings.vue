@@ -1,39 +1,38 @@
+<!-- 列表样式设置：有序/无序列表层级颜色与无序符号大小配置，样式经共享工具函数注入编辑器 -->
 <template>
   <div class="list-style-settings">
     <div class="settings-container">
-      <!-- 列表样式设置 -->
+      <!-- 模块标题与描述 -->
       <div class="setting-row">
         <div class="setting-item">
-          <label class="setting-label">
-            <span class="label-icon"><IconWrapper
-              name="listBulleted"
-              :size="14"
-            /></span>
-            {{ i18n.listStyleSettings || '列表样式设置' }}
-          </label>
+          <!-- 标题："列表样式" -->
+          <SettingLabel
+            icon="listBulleted"
+            :text="i18n.listStyleSettings"
+          />
+          <!-- 描述："自定义有序列表和无序列表的颜色和样式" -->
           <p class="setting-description">
-            {{ i18n.listStyleSettingsDesc || '自定义有序列表和无序列表的颜色和样式' }}
+            {{ i18n.listStyleSettingsDesc }}
           </p>
         </div>
       </div>
 
-      <!-- 启用列表样式设置 -->
+      <!-- 启用开关 -->
       <div class="setting-row">
         <div class="setting-item">
-          <label class="setting-label">
-            <span class="label-icon"><IconWrapper
-              name="sparkles"
-              :size="14"
-            /></span>
-            {{ i18n.enableListStyle || '启用列表样式设置' }}
-          </label>
+          <!-- 标签："启用列表样式设置" -->
+          <SettingLabel
+            icon="sparkles"
+            :text="i18n.enableListStyle"
+          />
           <div class="toggle-container">
             <SiSwitch
               v-model="settings.enabled"
               @change="handleToggleChange"
             />
+            <!-- 开关状态："已启用" / "已禁用" -->
             <span class="toggle-description">
-              {{ settings.enabled ? (i18n.enabled || '已启用') : (i18n.disabled || '已禁用') }}
+              {{ settings.enabled ? i18n.enabled : i18n.disabled }}
             </span>
           </div>
         </div>
@@ -51,7 +50,8 @@
               :name="section.icon"
               :size="14"
             /></span>
-            <span class="section-title">{{ i18n[section.titleKey] || section.fallback }}</span>
+            <!-- 区块标题："有序列表颜色" / "无序列表颜色" -->
+            <span class="section-title">{{ i18n[section.titleKey] }}</span>
           </div>
 
           <div class="color-grid">
@@ -60,19 +60,9 @@
               :key="`${section.key}-${index}`"
               class="color-item"
             >
-              <label class="color-label">层级 {{ index + 1 }}</label>
-              <div class="color-input-group">
-                <input
-                  v-model="settings[section.key][index]"
-                  type="color"
-                  class="color-picker"
-                />
-                <input
-                  v-model="settings[section.key][index]"
-                  type="text"
-                  class="color-text"
-                />
-              </div>
+              <!-- 层级标签："层级 N" -->
+              <label class="color-label">{{ levelLabel(index) }}</label>
+              <ColorField v-model="settings[section.key][index]" />
             </div>
           </div>
         </div>
@@ -80,28 +70,19 @@
         <!-- 无序列表符号大小 -->
         <div class="setting-row">
           <div class="setting-item">
-            <label class="setting-label">
-              <span class="label-icon"><IconWrapper
-                name="formatSize"
-                :size="14"
-              /></span>
-              {{ i18n.listSymbolSize || '无序列表符号大小' }}
-              <span class="setting-value">{{ settings.symbolSize }}em</span>
-            </label>
-            <div class="slider-container">
-              <input
-                v-model.number="settings.symbolSize"
-                type="range"
-                min="1.0"
-                max="2.5"
-                step="0.1"
-                class="range-slider"
-              />
-              <div class="slider-labels">
-                <span>1.0em</span>
-                <span>2.5em</span>
-              </div>
-            </div>
+            <!-- 标签："无序列表符号大小" + 当前值徽标 -->
+            <SettingLabel
+              icon="formatSize"
+              :text="i18n.listSymbolSize"
+              :value="`${settings.symbolSize}em`"
+            />
+            <SettingSlider
+              v-model="settings.symbolSize"
+              :min="SYMBOL_SIZE_MIN"
+              :max="SYMBOL_SIZE_MAX"
+              :step="SYMBOL_SIZE_STEP"
+              :show-value="false"
+            />
           </div>
         </div>
 
@@ -115,7 +96,8 @@
               name="eye"
               :size="14"
             /></span>
-            <span>{{ i18n.preview || '预览效果' }}</span>
+            <!-- 折叠标题："预览效果" -->
+            <span>{{ i18n.preview }}</span>
             <span
               class="toggle-arrow"
               :class="{ expanded: showPreview }"
@@ -131,34 +113,38 @@
               v-show="showPreview"
               class="preview-content"
             >
+              <!-- 预览小节标题："有序列表" -->
               <div class="preview-section-title">
-                {{ i18n.orderedList || '有序列表' }}
+                {{ i18n.orderedList }}
               </div>
+              <!-- 预览示例："第一/二/三层级项目" -->
               <ol class="preview-list">
                 <li>
-                  第一层级项目
+                  {{ i18n.listPreviewLevel1 }}
                   <ol>
                     <li>
-                      第二层级项目
+                      {{ i18n.listPreviewLevel2 }}
                       <ol>
-                        <li>第三层级项目</li>
+                        <li>{{ i18n.listPreviewLevel3 }}</li>
                       </ol>
                     </li>
                   </ol>
                 </li>
               </ol>
 
+              <!-- 预览小节标题："无序列表" -->
               <div class="preview-section-title">
-                {{ i18n.unorderedList || '无序列表' }}
+                {{ i18n.unorderedList }}
               </div>
+              <!-- 预览示例："第一/二/三层级项目" -->
               <ul class="preview-list">
                 <li>
-                  第一层级项目
+                  {{ i18n.listPreviewLevel1 }}
                   <ul>
                     <li>
-                      第二层级项目
+                      {{ i18n.listPreviewLevel2 }}
                       <ul>
-                        <li>第三层级项目</li>
+                        <li>{{ i18n.listPreviewLevel3 }}</li>
                       </ul>
                     </li>
                   </ul>
@@ -180,7 +166,8 @@
               name="refresh"
               :size="14"
             />
-            <span>{{ i18n.resetToDefault || '恢复默认设置' }}</span>
+            <!-- 按钮文案："恢复默认设置" -->
+            <span>{{ i18n.resetToDefault }}</span>
           </button>
         </div>
       </div>
@@ -189,13 +176,11 @@
 </template>
 
 <script setup lang="ts">
+import type { Plugin } from "siyuan"
 import type { ListStyleSettings as ListStyleSettingsData } from "../types/storage"
 import type { IconKey } from "@/config/icons"
 
-import {
-  Plugin,
-  showMessage,
-} from "siyuan"
+import { showMessage } from "siyuan"
 import {
   computed,
   onBeforeUnmount,
@@ -206,10 +191,13 @@ import {
 import IconWrapper from "@/components/IconWrapper.vue"
 import SiSwitch from "@/components/Switch.vue"
 import {
-  injectStyle,
-  removeStyle,
-} from "@/utils/domUtils"
-import { GeneralSettingsStorage } from "../types/storage"
+  createDefaultListStyleSettings,
+  GeneralSettingsStorage,
+} from "../types/storage"
+import { applyListStyleEnhancedCss } from "../utils/styles"
+import ColorField from "./ColorField.vue"
+import SettingLabel from "./SettingLabel.vue"
+import SettingSlider from "./SettingSlider.vue"
 
 interface Props {
   i18n?: Record<string, string>
@@ -227,24 +215,14 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
-const STYLE_ID = "list-style-settings"
-
-/** 默认列表层级配色（有序 / 无序共享） */
-const DEFAULT_LIST_COLORS: readonly string[] = [
-  "#000000",
-  "#0080ff",
-  "#00b600",
-  "#fd8700",
-  "#be6fff",
-  "#888888",
-]
-
-const DEFAULT_SETTINGS: ListStyleSettingsData = {
-  enabled: false,
-  orderedListColors: [...DEFAULT_LIST_COLORS],
-  unorderedListColors: [...DEFAULT_LIST_COLORS],
-  symbolSize: 1.6,
-}
+/** 修改后延迟保存的防抖时长（毫秒） */
+const SAVE_DEBOUNCE_MS = 100
+/** showMessage 提示的展示时长（毫秒） */
+const MESSAGE_DURATION_MS = 2000
+/** 无序列表符号大小范围（em） */
+const SYMBOL_SIZE_MIN = 1.0
+const SYMBOL_SIZE_MAX = 2.5
+const SYMBOL_SIZE_STEP = 0.1
 
 /** 颜色区块配置——数据驱动，消除有序 / 无序两段重复模板 */
 type ColorArrayKey = "orderedListColors" | "unorderedListColors"
@@ -252,48 +230,47 @@ type ColorArrayKey = "orderedListColors" | "unorderedListColors"
 const colorSections: {
   key: ColorArrayKey
   titleKey: string
-  fallback: string
   icon: IconKey
 }[] = [
   {
     key: "orderedListColors",
     titleKey: "orderedListColors",
-    fallback: "有序列表颜色",
     icon: "listOrdered",
   },
   {
     key: "unorderedListColors",
     titleKey: "unorderedListColors",
-    fallback: "无序列表颜色",
     icon: "list",
   },
 ]
 
-/** 创建一份与 DEFAULT_SETTINGS 无引用共享的设置副本 */
-function createDefaultSettings(): ListStyleSettingsData {
-  return {
-    ...DEFAULT_SETTINGS,
-    orderedListColors: [...DEFAULT_LIST_COLORS],
-    unorderedListColors: [...DEFAULT_LIST_COLORS],
-  }
-}
-
-const settings = ref<ListStyleSettingsData>(createDefaultSettings())
+const settings = ref<ListStyleSettingsData>(createDefaultListStyleSettings())
 const showPreview = ref(true)
 
 /** 防抖保存定时器 */
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
+/** 加载赋值触发的首次 watch 跳过标记，避免刚加载的数据被原样回写 */
+let skipWatchOnce = false
 
 watch(
   settings,
   (newSettings) => {
+    if (skipWatchOnce) {
+      skipWatchOnce = false
+      return
+    }
     emit("change", newSettings)
     if (debounceTimer) clearTimeout(debounceTimer)
-    debounceTimer = setTimeout(() => saveSettings(), 100)
-    applyListStyles(newSettings)
+    debounceTimer = setTimeout(() => saveSettings(), SAVE_DEBOUNCE_MS)
+    applyListStyleEnhancedCss(newSettings)
   },
   { deep: true },
 )
+
+/** 层级标签："层级 N" */
+function levelLabel(index: number): string {
+  return (props.i18n.listLevelLabel || "").replace("{n}", String(index + 1))
+}
 
 function togglePreview() {
   showPreview.value = !showPreview.value
@@ -301,74 +278,15 @@ function togglePreview() {
 
 function handleToggleChange() {
   showMessage(
-    settings.value.enabled ? "列表样式已启用" : "列表样式已禁用",
-    2000,
+    settings.value.enabled ? props.i18n.listStyleEnabledMsg : props.i18n.listStyleDisabledMsg,
+    MESSAGE_DURATION_MS,
     "info",
   )
 }
 
 function resetSettings() {
-  settings.value = createDefaultSettings()
-  showMessage("已恢复默认设置", 2000, "info")
-}
-
-/** 构建列表样式 CSS（纯函数） */
-function buildListStyleCss(s: ListStyleSettingsData): string {
-  const orderedListCss = s.orderedListColors
-    .map((color, index) => {
-      const depth = '.li[data-subtype="o"] '.repeat(index)
-      return `${depth}.li[data-subtype="o"] > .protyle-action--order {
-        color: ${color} !important;
-        font-weight: bold !important;
-      }`
-    })
-    .join("\n")
-
-  const unorderedListCss = s.unorderedListColors
-    .map((color, index) => {
-      const depth = '[data-subtype="u"] > '.repeat(index)
-      const symbol = index % 2 === 0 ? "•" : "▪"
-      return `${depth}.li[data-subtype="u"] > .protyle-action::before {
-        content: "${symbol}";
-        font-size: ${s.symbolSize}em;
-        font-weight: bold;
-        font-family: Arial;
-        position: absolute;
-        color: ${color} !important;
-      }`
-    })
-    .join("\n")
-
-  return `
-    /* 有序列表样式 */
-    ${orderedListCss}
-
-    /* 无序列表样式 - 隐藏原始符号 */
-    [data-subtype="u"] > .li[data-subtype="u"] > .protyle-action svg {
-      color: transparent;
-    }
-
-    /* 无序列表符号 */
-    ${unorderedListCss}
-
-    /* 暗色主题适配 */
-    :root[data-theme-mode="dark"] .li[data-subtype="o"] > .protyle-action--order,
-    :root[data-theme-mode="dark"] .li[data-subtype="u"] > .protyle-action::before {
-      opacity: 0.9;
-    }
-  `
-}
-
-function applyListStyles(listSettings: ListStyleSettingsData) {
-  try {
-    if (!listSettings.enabled) {
-      removeStyle(STYLE_ID)
-      return
-    }
-    injectStyle(STYLE_ID, buildListStyleCss(listSettings))
-  } catch (error) {
-    console.error("应用列表样式失败:", error)
-  }
+  settings.value = createDefaultListStyleSettings()
+  showMessage(props.i18n.resetDoneMsg, MESSAGE_DURATION_MS, "info")
 }
 
 const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null)
@@ -378,11 +296,12 @@ async function loadSettings() {
   try {
     const data = await gsStorage.value.listStyle.load()
     if (data) {
+      skipWatchOnce = true
       settings.value = {
-        ...DEFAULT_SETTINGS,
+        ...createDefaultListStyleSettings(),
         ...data,
       }
-      applyListStyles(settings.value)
+      applyListStyleEnhancedCss(settings.value)
     }
   } catch (error) {
     console.error("加载列表样式设置失败:", error)
@@ -398,17 +317,10 @@ async function saveSettings() {
   }
 }
 
-onMounted(async () => {
-  await loadSettings()
-})
+onMounted(loadSettings)
 
 onBeforeUnmount(() => {
   if (debounceTimer) clearTimeout(debounceTimer)
-})
-
-defineExpose({
-  settings,
-  loadSettings,
 })
 </script>
 

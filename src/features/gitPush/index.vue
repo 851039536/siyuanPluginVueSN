@@ -901,17 +901,29 @@ watch(activeCategory, async (catId) => {
 })
 
 /**
- * 切换到统计视图时，补齐统计面板所需的最小数据集（pushStatus + workingTree）。
- *  commitLog/branches/stash 不在统计视图中展示，无需加载。
+ * 补齐所有项目的统计最小数据集（pushStatus + workingTree），统计视图与智能视图共用。
+ *  commitLog/branches/stash 不在这两类视图中展示，无需加载。
  *  使用 loadStatsData 共用 rev-parse，避免 loadPushStatus/loadWorkingTree 各调一次
  */
-watch(currentView, async (view) => {
-  if (view !== "stats" || gitOpsPaused.value) return
+async function ensureStatsDataLoaded() {
+  if (gitOpsPaused.value) return
   const pending = projects.value.filter((p) => !pushStatuses.value[p.id] || !workingTrees.value[p.id])
   if (pending.length === 0) return
   await runBatchWithProgress(pending, tf("loadingLabel", "加载中"), async (p, ctx) => {
     await ctx.step(tf("stepStats", "统计"), () => loadStatsData(p.id))
   })
+}
+
+/** 切换到统计视图时，补齐统计面板所需数据 */
+watch(currentView, async (view) => {
+  if (view !== "stats") return
+  await ensureStatsDataLoaded()
+})
+
+/** 切换到"需推送/有变更"智能视图时，补齐命中判定所需的全量状态数据 */
+watch(viewMode, async (mode) => {
+  if (mode !== "needsPush" && mode !== "uncommitted") return
+  await ensureStatsDataLoaded()
 })
 
 async function handleAddFromDialog(data: ProjectPathExtras & { name: string, path: string, catId: string }) {

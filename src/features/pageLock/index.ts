@@ -188,7 +188,7 @@ export function showGlobalPasswordDialog(plugin: Plugin) {
           : plugin.i18n.passwordSetSuccess
         showMessage(successMsg || "密码设置成功", 3000, "info")
 
-        emitCustomEvent("password-updated")
+        emitCustomEvent("passwordUpdated")
         modal.close()
       },
       onClose: () => {
@@ -411,7 +411,7 @@ export function registerPageLock(plugin: Plugin) {
   plugin.eventBus.on("switch-protyle", updateButton)
   plugin.eventBus.on("loaded-protyle-dynamic", updateButton)
   plugin.eventBus.on("loaded-protyle-static", staticHandler)
-  window.addEventListener("open-password-dialog", dialogHandler)
+  window.addEventListener("openPasswordDialog", dialogHandler)
 
   const intervalId = setInterval(cleanupCache, 30000)
 
@@ -422,7 +422,7 @@ export function registerPageLock(plugin: Plugin) {
       plugin.eventBus.off("switch-protyle", updateButton)
       plugin.eventBus.off("loaded-protyle-dynamic", updateButton)
       plugin.eventBus.off("loaded-protyle-static", staticHandler)
-      window.removeEventListener("open-password-dialog", dialogHandler)
+      window.removeEventListener("openPasswordDialog", dialogHandler)
       storage = null
     },
   }

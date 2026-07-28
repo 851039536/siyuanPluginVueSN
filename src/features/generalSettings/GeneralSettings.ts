@@ -4,6 +4,7 @@ import type {
   DocumentFontSettings,
   FontSettings,
   HeadingSettings,
+  HighlightSettings,
   ListSettings,
   ListStyleSettings,
   TableStyleSettings,
@@ -23,7 +24,10 @@ import { createVueDockApp } from "@/utils/vueAppHelper"
 import GeneralSettingsPanel from "./index.vue"
 import { DocCountManager } from "./modules/DocCountManager"
 import { HighlightManager } from "./modules/HighlightManager"
-import { GeneralSettingsStorage } from "./types/storage"
+import {
+  DEFAULT_HIGHLIGHT_SETTINGS,
+  GeneralSettingsStorage,
+} from "./types/storage"
 import {
   applyCodeBlockCollapse,
   applyCodeBlockEnhancedStyles,
@@ -373,31 +377,21 @@ export class GeneralSettings {
     }
     const current = await this.storage.highlight.load()
     this.storage.highlight.save({
+      ...DEFAULT_HIGHLIGHT_SETTINGS,
+      ...current,
       enableHighlight: enabled,
-      backgroundColor: current?.backgroundColor ?? "rgb(255, 220, 60)",
-      fontSize: current?.fontSize ?? 0,
-      bold: current?.bold ?? false,
-      minTextLength: current?.minTextLength ?? 1,
-      minLetterLength: current?.minLetterLength ?? 1,
-      maxTextLength: current?.maxTextLength ?? 50,
-      maxLetterLength: current?.maxLetterLength ?? 100,
     })
   }
 
-  public updateHighlightOptions(options: { backgroundColor?: string, fontSize?: number, bold?: boolean, minTextLength?: number, minLetterLength?: number, maxTextLength?: number, maxLetterLength?: number }) {
+  public updateHighlightOptions(options: Partial<Omit<HighlightSettings, "enableHighlight">>) {
     if (this.highlightManager) {
       this.highlightManager.updateOptions(options)
     }
     this.storage.highlight.load().then((current) => {
       this.storage.highlight.save({
-        enableHighlight: current?.enableHighlight ?? true,
-        backgroundColor: options.backgroundColor ?? current?.backgroundColor ?? "rgb(255, 220, 60)",
-        fontSize: options.fontSize ?? current?.fontSize ?? 0,
-        bold: options.bold ?? current?.bold ?? false,
-        minTextLength: options.minTextLength ?? current?.minTextLength ?? 1,
-        minLetterLength: options.minLetterLength ?? current?.minLetterLength ?? 1,
-        maxTextLength: options.maxTextLength ?? current?.maxTextLength ?? 50,
-        maxLetterLength: options.maxLetterLength ?? current?.maxLetterLength ?? 100,
+        ...DEFAULT_HIGHLIGHT_SETTINGS,
+        ...current,
+        ...options,
       })
     })
   }

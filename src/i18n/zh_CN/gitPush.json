@@ -17,7 +17,6 @@
     "projectName": "项目名称",
     "namePlaceholder": "输入项目名称...",
     "projectPath": "项目路径",
-    "pathPlaceholder": "选择或输入项目路径...",
     "cancel": "取消",
     "add": "添加",
     "checkingGit": "正在检查 git 仓库...",

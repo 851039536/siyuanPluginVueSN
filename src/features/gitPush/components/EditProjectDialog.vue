@@ -389,9 +389,9 @@ import {
 import Input from "@/components/Input.vue"
 import type { SelectOption } from "@/components/Select.vue"
 import Select from "@/components/Select.vue"
-import { getCurrentDeviceName, hasPlatformRemote, resolveValidPath } from "../utils"
+import { hasPlatformRemote, resolveValidPath } from "../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
-import { pickDirectory } from "@/utils/electronDialog"
+import { usePathRows } from "../composables/usePathRows"
 
 
 const props = defineProps<{
@@ -425,8 +425,15 @@ const localNote = ref("")
 const urlInputs = reactive<Record<string, string>>(
   Object.fromEntries(PLATFORM_META.map((pl) => [pl.urlProp, ""])),
 )
-// 本地路径行：path 为路径，device 为可选的设备电脑名标注（旧数据无映射时为空串，向后兼容）
-const allPathsList = ref<{ path: string, device: string }[]>([])
+// 本地路径行（共享 composable：增删行、目录选择、载荷构建）
+const {
+  rows: allPathsList,
+  initFrom: initPathRows,
+  addRow: addLocalPath,
+  removeRow: removeLocalPath,
+  pickRow: pickLocalPath,
+  toPayload: pathsToPayload,
+} = usePathRows(() => props.i18n.selectLocalPath)
 const newRemoteName = ref("github")
 const newRemoteUrl = ref("")
 const editRemoteName = ref("")
@@ -558,10 +565,7 @@ onMounted(async () => {
   localNote.value = p.note || ""
   // 平台 URL 由 PLATFORM_META 单一数据源驱动回填
   for (const pl of PLATFORM_META) { urlInputs[pl.urlProp] = p[pl.urlProp] || "" }
-  allPathsList.value = [p.path, ...(p.localPaths || [])].map((path) => ({
-    path,
-    device: p.pathDevices?.[path] || "",
-  }))
+  initPathRows(p.path, p.localPaths, p.pathDevices)
   // 初始化添加行默认平台
   newLinkPlatform.value = availablePlatforms.value[0]?.key ?? ""
   // 检测远程仓库
@@ -577,22 +581,6 @@ async function loadRemotes() {
   } catch (e: unknown) {
     remoteError.value = getErrorMessage(e) || "检测远程仓库失败"
   }
-}
-
-// ── 路径管理 ──
-function addLocalPath() {
-  // 新增路径时自动填入当前设备电脑名
-  allPathsList.value = [...allPathsList.value, { path: "", device: getCurrentDeviceName() }]
-}
-
-function removeLocalPath(idx: number) {
-  if (allPathsList.value.length <= 1) { return }
-  allPathsList.value = allPathsList.value.filter((_, i) => i !== idx)
-}
-
-async function pickLocalPath(idx: number) {
-  const dir = await pickDirectory("选择本地路径")
-  if (dir) { allPathsList.value[idx].path = dir }
 }
 
 // ── 远程仓库操作 ──
@@ -628,25 +616,17 @@ async function saveRemoteEdit(name: string) {
 // ── 保存 ──
 async function save() {
   if (!project.value) { return }
-  const entries = allPathsList.value
-    .map((e) => ({ path: e.path.trim(), device: e.device.trim() }))
-    .filter((e) => e.path)
-  const firstPath = entries[0]?.path || project.value.path
-  const restPaths = entries.slice(1).map((e) => e.path)
-  // 重建 路径→电脑名 映射（仅保留非空标注；路径被编辑后键自动跟随）
-  const pathDevices: Record<string, string> = {}
-  for (const e of entries) {
-    if (e.device) { pathDevices[e.path] = e.device }
-  }
+  const payload = pathsToPayload()
   await props.manager.updateProjectMeta(props.projectId, {
     name: localName.value.trim() || project.value.name,
     status: localStatus.value as ProjectStatus,
     starred: localStarred.value,
     archived: localArchived.value,
     note: localNote.value,
-    path: firstPath,
-    localPaths: restPaths.length > 0 ? restPaths : undefined,
-    pathDevices: Object.keys(pathDevices).length > 0 ? pathDevices : undefined,
+    // 全部路径行为空时保留原主路径
+    path: payload?.path ?? project.value.path,
+    localPaths: payload?.localPaths,
+    pathDevices: payload?.pathDevices,
   })
   emit("saved")
 }

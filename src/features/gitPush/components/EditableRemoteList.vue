@@ -43,6 +43,20 @@
           class="gp-remote-url"
           :title="row.url"
         >{{ row.url }}</span>
+        <!-- 按钮：下载到本地（仅传入 onDownload 回调时显示，克隆进行中转圈） -->
+        <button
+          v-if="onDownload"
+          class="vp-btn vp-btn--ghost vp-btn--sm"
+          :title="i18n.downloadRepo"
+          :disabled="downloadingKey === row.key"
+          @click="submitDownload(row.key)"
+        >
+          <Icon
+            :icon="downloadingKey === row.key ? 'mdi:loading' : 'mdi:download-outline'"
+            :class="{ 'gp-spin': downloadingKey === row.key }"
+            height="12"
+          />
+        </button>
         <!-- 按钮："编辑" -->
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
@@ -130,6 +144,8 @@ const props = defineProps<{
   onAdd: (key: string, url: string) => Promise<boolean>
   onSaveEdit: (key: string, url: string) => Promise<boolean>
   onRemove: (key: string) => Promise<boolean>
+  /** 可选：下载（克隆）回调，仅传入时行内显示下载按钮 */
+  onDownload?: (key: string) => Promise<boolean>
 }>()
 
 // ── 行内编辑 / 添加行状态（自包含，父组件不感知） ──
@@ -137,6 +153,8 @@ const editKey = ref("")
 const editUrl = ref("")
 const newKey = ref("")
 const newUrl = ref("")
+// 正在下载（克隆）的行 key（驱动转圈图标与禁用态）
+const downloadingKey = ref("")
 
 // 当前选中项被占用/移除后自动切换到第一个可用选项（含首次初始化）
 watch(() => props.addOptions, (opts) => {
@@ -157,6 +175,16 @@ async function submitEdit(key: string) {
   // 成功才退出编辑态，失败保留输入并展示错误
   if (await props.onSaveEdit(key, editUrl.value)) {
     editKey.value = ""
+  }
+}
+
+async function submitDownload(key: string) {
+  if (!props.onDownload || downloadingKey.value) { return }
+  downloadingKey.value = key
+  try {
+    await props.onDownload(key)
+  } finally {
+    downloadingKey.value = ""
   }
 }
 </script>

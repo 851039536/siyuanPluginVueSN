@@ -94,6 +94,30 @@ export class RepoOps {
     await this.executor.execGit(projectPath, ["remote", "set-url", name, url])
   }
 
+  // ── 仓库克隆 ──
+
+  /** 从远程 URL 提取仓库目录名（去尾部 / 与 .git，取最后一段） */
+  private repoNameFromUrl(url: string): string {
+    const trimmed = url.replace(/\/+$/, "").replace(/\.git$/, "")
+    const name = trimmed.split(/[/:]/).pop() || ""
+    if (!name) throw new Error("无法从 URL 解析仓库名")
+    return name
+  }
+
+  /** 克隆仓库到指定父目录下的同名子目录，返回克隆后的完整路径（5 分钟超时） */
+  async cloneRepo(parentDir: string, url: string): Promise<string> {
+    const nodeModules = getNodeFsPathOs()
+    if (!nodeModules) throw new Error("Node 环境不可用")
+    const { fs, path } = nodeModules
+
+    if (!fs.existsSync(parentDir)) throw new Error("路径不存在")
+    const target = path.join(parentDir, this.repoNameFromUrl(url))
+    if (fs.existsSync(target)) throw new Error("目标目录已存在")
+
+    await this.executor.execGit(parentDir, ["clone", url], undefined, 300000)
+    return target
+  }
+
   // ── Git 配置查看 ──
 
   /** 获取本机全局 Git 配置（git config --global --list） */

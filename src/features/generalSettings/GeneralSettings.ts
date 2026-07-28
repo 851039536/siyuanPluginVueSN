@@ -1,5 +1,6 @@
 import type {
   CodeBlockSettings,
+  DocCountSettings,
   DocumentFontSettings,
   FontSettings,
   HeadingSettings,
@@ -292,21 +293,33 @@ export class GeneralSettings {
     try {
       const settings = await this.storage.docCount.load()
       if (settings && settings.enableDocCount) {
-        this.docCountManager = new DocCountManager()
-        this.docCountManager.start()
-        this.docCountManager.setUpdateInterval(
-          Number.parseInt(settings.updateInterval),
-        )
-        this.docCountManager.setDisplayFormat(settings.displayFormat || "bracket")
-        this.docCountManager.setFontStyle({
-          fontSize: settings.fontSize,
-          color: settings.fontColor,
-          fontWeight: settings.fontWeight,
-          opacity: settings.opacity ?? 0.8,
-        })
+        this.updateDocCount(settings)
       }
     } catch (error) {
       console.error("应用文档数统计样式失败:", error)
+    }
+  }
+
+  /** 更新文档数统计设置：按开关管理 DocCountManager 生命周期并应用配置（供设置面板调用） */
+  public updateDocCount(settings: DocCountSettings) {
+    if (settings.enableDocCount) {
+      if (!this.docCountManager) {
+        this.docCountManager = new DocCountManager()
+        this.docCountManager.start()
+      }
+      this.docCountManager.setUpdateInterval(
+        Number.parseInt(settings.updateInterval),
+      )
+      this.docCountManager.setDisplayFormat(settings.displayFormat || "bracket")
+      this.docCountManager.setFontStyle({
+        fontSize: settings.fontSize,
+        color: settings.fontColor,
+        fontWeight: settings.fontWeight,
+        opacity: settings.opacity ?? 0.8,
+      })
+    } else {
+      this.docCountManager?.stop()
+      this.docCountManager = null
     }
   }
 

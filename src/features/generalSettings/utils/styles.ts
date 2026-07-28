@@ -6,6 +6,7 @@ import type {
   DocumentFontSettings,
   HeadingColors,
   ListStyleSettings,
+  TableStyleSettings,
   TabPinSettings,
 } from "../types/storage"
 import {
@@ -637,6 +638,47 @@ export function applyDocumentFontStyles(fontSettings: DocumentFontSettings): voi
     document.head.appendChild(style)
   } catch (error) {
     console.error("应用文档字体样式失败:", error)
+  }
+}
+
+/** 表格样式的 <style> 元素 id，组件与 GeneralSettings 共用同一注入点 */
+export const TABLE_STYLE_ID = "table-style-settings"
+
+/** 应用表格样式：enabled=false 时移除注入样式，组件与 GeneralSettings 共用 */
+export function applyTableStyleCss(tableSettings: TableStyleSettings): void {
+  try {
+    if (!tableSettings.enabled) {
+      removeStyle(TABLE_STYLE_ID)
+      return
+    }
+
+    const css = `
+      .protyle-wysiwyg table {
+        border-collapse: collapse;
+        border-radius: ${tableSettings.borderRadius}px;
+        overflow: hidden;
+      }
+      .protyle-wysiwyg table th,
+      .protyle-wysiwyg table td {
+        border: 1px solid ${tableSettings.cellBorderColor};
+      }
+      .protyle-wysiwyg table th {
+        background-color: ${tableSettings.headerBackground};
+        color: ${tableSettings.textColor};
+      }
+      .protyle-wysiwyg table tr:nth-child(odd) {
+        background-color: ${tableSettings.oddRowBackground};
+      }
+      .protyle-wysiwyg table tr:nth-child(even) {
+        background-color: ${tableSettings.evenRowBackground};
+      }
+      .protyle-wysiwyg table td {
+        color: ${tableSettings.textColor};
+      }
+    `
+    injectStyle(TABLE_STYLE_ID, css)
+  } catch (error) {
+    console.error("应用表格样式失败:", error)
   }
 }
 

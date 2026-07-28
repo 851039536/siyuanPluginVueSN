@@ -1,29 +1,30 @@
+<!-- 表格样式设置：单元格边框/表头/斑马纹/文本颜色与圆角配置，样式经共享工具函数注入编辑器 -->
 <template>
   <div class="table-style-settings">
-    <label class="setting-label">
-      <span class="label-icon"><IconWrapper
-        name="tableBorder"
-        :size="14"
-      /></span>
-      {{ i18n.tableStyleSettings || '表格样式设置' }}
-    </label>
+    <!-- 标题："表格样式" -->
+    <SettingLabel
+      icon="tableBorder"
+      :text="i18n.tableStyleSettings"
+    />
     <SiSwitch
       v-model="settings.enabled"
       @change="handleToggleChange"
     />
+    <!-- 描述："自定义表格的边框、背景、颜色等样式" -->
     <p class="toggle-description">
-      {{ i18n.tableStyleSettingsDesc || '自定义表格的边框、背景、颜色等样式' }}
+      {{ i18n.tableStyleSettingsDesc }}
     </p>
 
     <template v-if="settings.enabled">
-      <!-- 颜色设置 -->
+      <!-- 颜色设置卡片 -->
       <div class="style-card">
         <div class="card-title">
           <span class="title-icon"><IconWrapper
             name="codeBlockColor"
             :size="14"
           /></span>
-          {{ i18n.tableStyleSettings || '表格样式' }}
+          <!-- 卡片标题："表格样式" -->
+          {{ i18n.tableStyleSettings }}
         </div>
 
         <div
@@ -31,37 +32,27 @@
           :key="field.key"
           class="style-row"
         >
-          <label class="style-label">{{ i18n[field.labelKey] || field.fallback }}</label>
-          <div class="color-input-group">
-            <input
-              v-model="settings[field.key]"
-              type="color"
-              class="color-picker"
-              @input="handleColorChange"
-            />
-            <input
-              v-model="settings[field.key]"
-              type="text"
-              class="color-text"
-              :placeholder="field.placeholder"
-              @change="handleColorChange"
-            />
-          </div>
+          <!-- 字段标签："单元格边框" / "表头背景" / "奇数行背景" / "偶数行背景" / "文本颜色" -->
+          <label class="style-label">{{ i18n[field.labelKey] }}</label>
+          <ColorField
+            v-model="settings[field.key]"
+            :placeholder="field.placeholder"
+          />
         </div>
 
         <!-- 圆角大小 -->
         <div class="style-row">
           <label class="style-label">
-            {{ i18n.tableBorderRadius || '圆角大小' }}
+            <!-- 字段标签："圆角大小" + 当前值徽标 -->
+            {{ i18n.tableBorderRadius }}
             <span class="slider-value">{{ settings.borderRadius }}px</span>
           </label>
-          <input
-            v-model.number="settings.borderRadius"
-            type="range"
-            min="0"
-            max="20"
-            step="1"
-            class="range-slider"
+          <SettingSlider
+            v-model="settings.borderRadius"
+            :min="BORDER_RADIUS_MIN"
+            :max="BORDER_RADIUS_MAX"
+            :step="BORDER_RADIUS_STEP"
+            :show-value="false"
           />
         </div>
       </div>
@@ -76,7 +67,8 @@
             :name="showPreview ? 'eye' : 'eyeOff'"
             :size="14"
           /></span>
-          <span>{{ i18n.preview || '预览效果' }}</span>
+          <!-- 折叠标题："预览效果" -->
+          <span>{{ i18n.preview }}</span>
           <span class="preview-arrow"><IconWrapper
             name="chevronDown"
             :size="10"
@@ -86,32 +78,32 @@
           v-show="showPreview"
           class="preview-body"
         >
+          <!-- 预览表格：表头"标题 N" + 单元格"数据 R-C" -->
           <table
             class="preview-table"
             :style="previewTableStyle"
           >
             <thead>
               <tr>
-                <th>标题 1</th>
-                <th>标题 2</th>
-                <th>标题 3</th>
+                <th
+                  v-for="col in PREVIEW_COLS"
+                  :key="`h-${col}`"
+                >
+                  {{ previewHeader(col) }}
+                </th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>数据 1-1</td>
-                <td>数据 1-2</td>
-                <td>数据 1-3</td>
-              </tr>
-              <tr>
-                <td>数据 2-1</td>
-                <td>数据 2-2</td>
-                <td>数据 2-3</td>
-              </tr>
-              <tr>
-                <td>数据 3-1</td>
-                <td>数据 3-2</td>
-                <td>数据 3-3</td>
+              <tr
+                v-for="row in PREVIEW_ROWS"
+                :key="`r-${row}`"
+              >
+                <td
+                  v-for="col in PREVIEW_COLS"
+                  :key="`c-${row}-${col}`"
+                >
+                  {{ previewCell(row, col) }}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -128,18 +120,17 @@
         name="refresh"
         :size="14"
       />
-      <span>{{ i18n.resetToDefault || '恢复默认设置' }}</span>
+      <!-- 按钮文案："恢复默认设置" -->
+      <span>{{ i18n.resetToDefault }}</span>
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { Plugin } from "siyuan"
 import type { TableStyleSettings as TableStyleSettingsData } from "../types/storage"
-import {
-  Plugin,
-  showMessage,
 
-} from "siyuan"
+import { showMessage } from "siyuan"
 import {
   computed,
   onBeforeUnmount,
@@ -148,13 +139,15 @@ import {
   watch,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-
 import SiSwitch from "@/components/Switch.vue"
 import {
-  injectStyle,
-  removeStyle,
-} from "@/utils/domUtils"
-import { GeneralSettingsStorage } from "../types/storage"
+  DEFAULT_TABLE_STYLE_SETTINGS,
+  GeneralSettingsStorage,
+} from "../types/storage"
+import { applyTableStyleCss } from "../utils/styles"
+import ColorField from "./ColorField.vue"
+import SettingLabel from "./SettingLabel.vue"
+import SettingSlider from "./SettingSlider.vue"
 
 interface Props {
   i18n?: Record<string, string>
@@ -172,58 +165,52 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
-const STYLE_ID = "table-style-settings"
-
-const DEFAULT_SETTINGS: TableStyleSettingsData = {
-  enabled: false,
-  cellBorderColor: "rgba(0, 0, 0, 0.171)",
-  headerBackground: "#e0ffd6",
-  oddRowBackground: "#ffffff",
-  evenRowBackground: "#f8f8f8",
-  textColor: "#000000",
-  borderRadius: 6,
-}
+/** 修改后延迟保存的防抖时长（毫秒） */
+const SAVE_DEBOUNCE_MS = 100
+/** showMessage 提示的展示时长（毫秒） */
+const MESSAGE_DURATION_MS = 2000
+/** 圆角大小范围（px） */
+const BORDER_RADIUS_MIN = 0
+const BORDER_RADIUS_MAX = 20
+const BORDER_RADIUS_STEP = 1
+/** 预览表格行列数 */
+const PREVIEW_ROWS = 3
+const PREVIEW_COLS = 3
 
 /** 颜色字段配置——数据驱动 */
 const colorFields: {
   key: keyof Pick<TableStyleSettingsData, "cellBorderColor" | "headerBackground" | "oddRowBackground" | "evenRowBackground" | "textColor">
   labelKey: string
-  fallback: string
   placeholder: string
 }[] = [
   {
     key: "cellBorderColor",
     labelKey: "tableCellBorder",
-    fallback: "单元格边框",
     placeholder: "#000000",
   },
   {
     key: "headerBackground",
     labelKey: "tableHeaderBackground",
-    fallback: "表头背景",
     placeholder: "#e0ffd6",
   },
   {
     key: "oddRowBackground",
     labelKey: "tableOddRowBackground",
-    fallback: "奇数行背景",
     placeholder: "#ffffff",
   },
   {
     key: "evenRowBackground",
     labelKey: "tableEvenRowBackground",
-    fallback: "偶数行背景",
     placeholder: "#f8f8f8",
   },
   {
     key: "textColor",
     labelKey: "tableTextColor",
-    fallback: "文本颜色",
     placeholder: "#000000",
   },
 ]
 
-const settings = ref<TableStyleSettingsData>({ ...DEFAULT_SETTINGS })
+const settings = ref<TableStyleSettingsData>({ ...DEFAULT_TABLE_STYLE_SETTINGS })
 const showPreview = ref(true)
 
 const previewTableStyle = computed(() => ({
@@ -235,76 +222,54 @@ const previewTableStyle = computed(() => ({
   "--preview-text-color": settings.value.textColor,
 }))
 
-/** 防抖保存 */
+/** 防抖保存定时器 */
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
+/** 加载赋值触发的首次 watch 跳过标记，避免刚加载的数据被原样回写 */
+let skipWatchOnce = false
 
 watch(
   settings,
   (newSettings) => {
+    if (skipWatchOnce) {
+      skipWatchOnce = false
+      return
+    }
     emit("change", newSettings)
     if (debounceTimer) clearTimeout(debounceTimer)
-    debounceTimer = setTimeout(() => saveSettings(), 100)
-    applyTableStyles(newSettings)
+    debounceTimer = setTimeout(() => saveSettings(), SAVE_DEBOUNCE_MS)
+    applyTableStyleCss(newSettings)
   },
   { deep: true },
 )
+
+/** 预览表头："标题 N" */
+function previewHeader(col: number): string {
+  return (props.i18n.tablePreviewHeader || "").replace("{n}", String(col))
+}
+
+/** 预览单元格："数据 R-C" */
+function previewCell(row: number, col: number): string {
+  return (props.i18n.tablePreviewCell || "")
+    .replace("{r}", String(row))
+    .replace("{c}", String(col))
+}
 
 function togglePreview() {
   showPreview.value = !showPreview.value
 }
 
 function handleToggleChange() {
-  saveSettings()
-  applyTableStyles(settings.value)
+  // 保存与样式应用由 watch(deep) 统一处理，此处仅提示
   showMessage(
-    settings.value.enabled ? "表格样式已启用" : "表格样式已禁用",
-    2000,
+    settings.value.enabled ? props.i18n.tableStyleEnabledMsg : props.i18n.tableStyleDisabledMsg,
+    MESSAGE_DURATION_MS,
     "info",
   )
 }
 
-function handleColorChange() {
-  // watch(deep) 自动处理保存和样式应用
-}
-
 function resetSettings() {
-  settings.value = { ...DEFAULT_SETTINGS }
-  showMessage("已恢复默认设置", 2000, "info")
-}
-
-function applyTableStyles(tableSettings: TableStyleSettingsData) {
-  try {
-    removeStyle(STYLE_ID)
-    if (!tableSettings.enabled) return
-
-    const css = `
-      .protyle-wysiwyg table {
-        border-collapse: collapse;
-        border-radius: ${tableSettings.borderRadius}px;
-        overflow: hidden;
-      }
-      .protyle-wysiwyg table th,
-      .protyle-wysiwyg table td {
-        border: 1px solid ${tableSettings.cellBorderColor};
-      }
-      .protyle-wysiwyg table th {
-        background-color: ${tableSettings.headerBackground};
-        color: ${tableSettings.textColor};
-      }
-      .protyle-wysiwyg table tr:nth-child(odd) {
-        background-color: ${tableSettings.oddRowBackground};
-      }
-      .protyle-wysiwyg table tr:nth-child(even) {
-        background-color: ${tableSettings.evenRowBackground};
-      }
-      .protyle-wysiwyg table td {
-        color: ${tableSettings.textColor};
-      }
-    `
-    injectStyle(STYLE_ID, css)
-  } catch (error) {
-    console.error("应用表格样式失败:", error)
-  }
+  settings.value = { ...DEFAULT_TABLE_STYLE_SETTINGS }
+  showMessage(props.i18n.resetDoneMsg, MESSAGE_DURATION_MS, "info")
 }
 
 const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null)
@@ -314,11 +279,12 @@ async function loadSettings() {
   try {
     const data = await gsStorage.value.tableStyle.load()
     if (data) {
+      skipWatchOnce = true
       settings.value = {
-        ...DEFAULT_SETTINGS,
+        ...DEFAULT_TABLE_STYLE_SETTINGS,
         ...data,
       }
-      applyTableStyles(settings.value)
+      applyTableStyleCss(settings.value)
     }
   } catch (error) {
     console.error("加载表格样式设置失败:", error)
@@ -327,22 +293,17 @@ async function loadSettings() {
 
 async function saveSettings() {
   if (!gsStorage.value) return
-  try { await gsStorage.value.tableStyle.save(settings.value) } catch (error) {
+  try {
+    await gsStorage.value.tableStyle.save(settings.value)
+  } catch (error) {
     console.error("保存表格样式设置失败:", error)
   }
 }
 
-onMounted(async () => {
-  await loadSettings()
-})
+onMounted(loadSettings)
 
 onBeforeUnmount(() => {
   if (debounceTimer) clearTimeout(debounceTimer)
-})
-
-defineExpose({
-  settings,
-  loadSettings,
 })
 </script>
 

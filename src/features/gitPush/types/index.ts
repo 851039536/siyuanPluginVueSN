@@ -34,6 +34,8 @@ export {
   PLATFORM_META,
   FILE_STATUS_META,
   REMOTES,
+  VIEW_MODE_META,
+  VIEW_MODES,
 } from "./meta"
 export type { PlatformKey, PlatformStatusItem, ViewMode } from "./meta"
 export { getPlatformStatus } from "./meta"

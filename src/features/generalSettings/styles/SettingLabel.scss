@@ -1,0 +1,26 @@
+@use "@/variables.scss" as *;
+
+.setting-label {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-surface);
+  margin: 0;
+}
+
+.label-icon {
+  font-size: $font-size-sm; // 图标包裹容器基准尺寸
+  opacity: 0.8;
+}
+
+.setting-value {
+  margin-left: auto;
+  font-size: $font-size-2xs;
+  padding: $spacing-2px $spacing-1;
+  background: var(--b3-theme-primary);
+  color: var(--b3-theme-on-primary);
+  border-radius: $radius-md;
+  font-weight: $font-weight-semibold;
+}

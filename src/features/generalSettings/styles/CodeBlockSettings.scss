@@ -8,7 +8,7 @@
 .settings-container {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: $spacing-3;
   max-width: 100%;
 }
 
@@ -24,18 +24,8 @@
   width: 100%;
 }
 
-.setting-label {
-  display: flex;
-  align-items: center;
-  gap: $spacing-1;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-  color: var(--b3-theme-on-surface);
-  margin: 0;
-}
-
 .label-icon {
-  font-size: 14px;
+  font-size: $font-size-sm; // 图标包裹容器基准尺寸
   opacity: 0.8;
 }
 
@@ -49,7 +39,7 @@
 
 .style-card {
   position: relative;
-  padding: $spacing-2 $spacing-2;
+  padding: $spacing-2;
   border: 1px solid var(--b3-theme-outline);
   border-radius: $radius-md;
   background: var(--b3-theme-surface);
@@ -73,7 +63,6 @@
 }
 
 .style-card-icon {
-  font-size: 22px;
   position: relative;
   z-index: 1;
 }
@@ -88,12 +77,12 @@
 }
 
 .style-card-desc {
-  font-size: 10px;
+  font-size: $font-size-2xs;
+  line-height: $line-height-tight;
   color: var(--b3-theme-on-surface-variant);
   text-align: center;
   position: relative;
   z-index: 1;
-  line-height: 1.3;
 }
 
 .style-card-check {
@@ -108,8 +97,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
-  font-weight: $font-weight-bold;
   z-index: 2;
 }
 
@@ -128,78 +115,29 @@
   display: flex;
   align-items: center;
   gap: $spacing-1;
-  font-size: 13px;
+  font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-surface);
   padding-bottom: $spacing-1;
   border-bottom: 1px solid var(--b3-theme-outline);
 }
 
-.setting-value {
-  margin-left: auto;
-  font-size: 11px;
-  padding: 2px $spacing-1;
-  background: var(--b3-theme-primary);
-  color: var(--b3-theme-on-primary);
-  border-radius: $radius-md;
-  font-weight: $font-weight-semibold;
-}
-
-.slider-container {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  width: 100%;
-}
-
-.range-slider {
-  width: 100%;
-  height: 5px;
-  border-radius: 3px;
-  background: var(--b3-theme-surface-variant);
-  outline: none;
-  cursor: pointer;
-  -webkit-appearance: none;
-  appearance: none;
-}
-
-// Range 滑块拖拽拇指——box-shadow 用于控件自身的视觉渲染，非页面阴影
-.range-slider::-webkit-slider-thumb,
-.range-slider::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--b3-theme-primary);
-  cursor: pointer;
-  border: 2px solid var(--b3-theme-background);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
-}
-
-.range-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-}
-
-.range-slider::-webkit-slider-thumb:hover,
-.range-slider::-moz-range-thumb:hover {
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
+/* 折叠高度区间刻度标签 */
 .slider-labels {
   display: flex;
   justify-content: space-between;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface-variant);
   font-weight: $font-weight-medium;
-  padding: 0 3px;
+  padding: 0 $spacing-px;
 }
 
-/* 折叠设置样式 */
+/* 开关样式 */
 .toggle-container {
   display: flex;
   align-items: center;
   gap: $spacing-2;
-  margin-top: 3px;
+  margin-top: $spacing-px;
 }
 
 .toggle-switch {
@@ -249,50 +187,13 @@
 }
 
 .toggle-description {
-  font-size: 11px;
+  font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface-variant);
   font-weight: $font-weight-medium;
-  padding: 2px $spacing-1;
+  padding: $spacing-2px $spacing-1;
   background: var(--b3-theme-surface-variant);
   border-radius: $radius-base;
   border: 1px solid var(--b3-theme-outline);
-}
-
-/* 颜色选择器样式 */
-.color-picker-container {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-  width: 100%;
-}
-
-.color-picker {
-  width: 40px;
-  height: 28px;
-  border: 1px solid var(--b3-theme-outline);
-  border-radius: $radius-base;
-  cursor: pointer;
-  padding: 2px;
-  background: var(--b3-theme-surface);
-
-  &:hover {
-    border-color: var(--b3-theme-primary);
-  }
-}
-
-.color-input {
-  flex: 1;
-  padding: 4px $spacing-2;
-  font-size: $font-size-xs;
-  border: 1px solid var(--b3-theme-outline);
-  border-radius: $radius-base;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-
-  &:focus {
-    outline: none;
-    border-color: var(--b3-theme-primary);
-  }
 }
 
 /* 边框设置样式 */
@@ -313,7 +214,7 @@
 
   label {
     min-width: 80px;
-    font-size: 11px;
+    font-size: $font-size-2xs;
     font-weight: $font-weight-medium;
     color: var(--b3-theme-on-surface-variant);
   }
@@ -323,12 +224,12 @@
 .shadow-options {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: $spacing-1;
 }
 
 .shadow-btn {
-  padding: 4px $spacing-3;
-  font-size: 11px;
+  padding: $spacing-1 $spacing-3;
+  font-size: $font-size-2xs;
   font-weight: $font-weight-medium;
   border: 1px solid var(--b3-theme-outline);
   border-radius: $radius-base;
@@ -366,7 +267,7 @@
 
   label {
     min-width: 80px;
-    font-size: 11px;
+    font-size: $font-size-2xs;
     font-weight: $font-weight-medium;
     color: var(--b3-theme-on-surface-variant);
   }
@@ -381,7 +282,7 @@
 
 .text-input {
   flex: 1;
-  padding: 4px $spacing-2;
+  padding: $spacing-1 $spacing-2;
   font-size: $font-size-xs;
   border: 1px solid var(--b3-theme-outline);
   border-radius: $radius-base;
@@ -399,8 +300,8 @@
 }
 
 .font-select {
-  padding: 4px $spacing-2;
-  font-size: 11px;
+  padding: $spacing-1 $spacing-2;
+  font-size: $font-size-2xs;
   border: 1px solid var(--b3-theme-outline);
   border-radius: $radius-base;
   background: var(--b3-theme-surface);
@@ -436,84 +337,10 @@
 
   label {
     min-width: 100px;
-    font-size: 11px;
+    font-size: $font-size-2xs;
     font-weight: $font-weight-medium;
     color: var(--b3-theme-on-surface-variant);
   }
-}
-
-/* 小型滑块容器 */
-.slider-container.small {
-  flex-direction: row;
-  align-items: center;
-  gap: $spacing-2;
-
-  .range-slider {
-    flex: 1;
-  }
-
-  .slider-value {
-    min-width: 40px;
-    font-size: 11px;
-    font-weight: $font-weight-medium;
-    color: var(--b3-theme-on-surface);
-    padding: 2px $spacing-1;
-    background: var(--b3-theme-surface);
-    border-radius: $radius-sm;
-    border: 1px solid var(--b3-theme-outline);
-    text-align: center;
-  }
-}
-
-/* 滑块按钮样式 */
-.slider-btn {
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: 1px solid var(--b3-theme-outline);
-  border-radius: $radius-sm;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  font-size: 16px;
-  font-weight: $font-weight-semibold;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-
-  &:hover {
-    background: var(--b3-theme-surface-variant);
-    border-color: var(--b3-theme-primary);
-    color: var(--b3-theme-primary);
-  }
-}
-
-/* 滑块行容器 */
-.slider-row {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-  width: 100%;
-
-  .range-slider {
-    flex: 1;
-  }
-}
-
-/* 颜色预览效果 */
-.color-picker::-webkit-color-swatch-wrapper {
-  padding: 0;
-}
-
-.color-picker::-webkit-color-swatch {
-  border: none;
-  border-radius: $radius-sm;
-}
-
-.color-picker::-moz-color-swatch {
-  border: none;
-  border-radius: $radius-sm;
 }
 
 /* ===== 响应式设计 ===== */
@@ -532,10 +359,6 @@
     label {
       min-width: auto;
     }
-  }
-
-  .color-picker-container {
-    width: 100%;
   }
 
   .input-group {
@@ -575,24 +398,10 @@
     flex-direction: row;
     padding: $spacing-2;
 
-    .style-card-icon {
-      font-size: 18px;
-    }
-
     .style-card-name {
       flex: 1;
       text-align: left;
-      font-size: 10px;
+      font-size: $font-size-2xs;
     }
-  }
-}
-
-@media (max-width: 320px) {
-  .style-card-icon {
-    font-size: 16px !important;
-  }
-
-  .style-card-name {
-    font-size: 9px;
   }
 }

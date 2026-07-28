@@ -1,0 +1,76 @@
+@use "@/variables.scss" as *;
+
+.setting-slider {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  width: 100%;
+}
+
+.range-slider {
+  flex: 1;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--b3-theme-surface-variant);
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+// Range 滑块拖拽拇指——box-shadow 用于控件自身的视觉渲染，非页面阴影
+.range-slider::-webkit-slider-thumb,
+.range-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--b3-theme-primary);
+  cursor: pointer;
+  border: 2px solid var(--b3-theme-background);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.range-slider::-webkit-slider-thumb:hover,
+.range-slider::-moz-range-thumb:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.slider-btn {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--b3-theme-outline);
+  border-radius: $radius-sm;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-sm; // 加减号字符需略大以保证可读性
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  &:hover {
+    background: var(--b3-theme-surface-variant);
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+  }
+}
+
+.slider-value {
+  min-width: 40px;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-medium;
+  color: var(--b3-theme-on-surface);
+  padding: $spacing-2px $spacing-1;
+  background: var(--b3-theme-surface);
+  border-radius: $radius-sm;
+  border: 1px solid var(--b3-theme-outline);
+  text-align: center;
+}

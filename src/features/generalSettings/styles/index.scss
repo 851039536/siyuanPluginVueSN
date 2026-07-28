@@ -2,6 +2,7 @@
  * 通用设置功能样式 - 仅保留面板布局相关样式
  * 各组件样式已提取到独立 SCSS 文件
  */
+@use "@/variables.scss" as *;
 
 /* 主面板 */
 .general-settings {
@@ -11,6 +12,7 @@
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   overflow: hidden;
+  font-size: $font-size-xs; // 基准字号，防止继承思源全局默认字号导致偏大
 }
 
 .settings-header {
@@ -20,8 +22,8 @@
 
   h3 {
     margin: 0;
-    font-size: 15px;
-    font-weight: 600;
+    font-size: $font-size-sm; // 面板主标题，允许高于两级字号制以突出层级
+    font-weight: $font-weight-semibold;
     color: var(--b3-theme-on-surface);
   }
 }
@@ -69,16 +71,16 @@
 }
 
 .sidebar-title {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
   color: var(--b3-theme-on-surface);
   display: block;
-  line-height: 1.5;
+  line-height: $line-height-normal;
 }
 
 .sidebar-item.active .sidebar-title {
   color: var(--b3-theme-primary);
-  font-weight: 600;
+  font-weight: $font-weight-semibold;
 }
 
 /* 内容区 */
@@ -115,7 +117,7 @@
   }
 
   .sidebar-title {
-    font-size: 12px;
+    font-size: $font-size-xs;
   }
 }
 
@@ -124,7 +126,7 @@
     padding: 12px 14px;
 
     h3 {
-      font-size: 14px;
+      font-size: $font-size-xs;
     }
   }
 
@@ -139,6 +141,6 @@
   }
 
   .sidebar-title {
-    font-size: 11px;
+    font-size: $font-size-2xs;
   }
 }

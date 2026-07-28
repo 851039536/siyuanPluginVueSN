@@ -9,7 +9,7 @@ import type {
   TagInfo,
 } from "../types"
 import { ref } from "vue"
-import { findProject, normalizePathForDedup, resolveValidPath } from "../utils"
+import { findProject, getAllProjectPathsForDedup, normalizePathForDedup, resolveValidPath } from "../utils"
 
 export function useGitTagsConflicts(manager: GitPushManager, projects: Ref<GitProject[]>) {
   /** Tag 列表缓存 */
@@ -24,7 +24,6 @@ export function useGitTagsConflicts(manager: GitPushManager, projects: Ref<GitPr
   /** 扫描导入相关状态 */
   const scanning = ref(false)
   const scanResults = ref<(ScannedGitRepo & { alreadyImported: boolean })[]>([])
-  const scanDirInput = ref("")
 
   // ── Tag 管理 ──
   async function loadTags(id: string): Promise<TagInfo[]> {
@@ -100,8 +99,9 @@ export function useGitTagsConflicts(manager: GitPushManager, projects: Ref<GitPr
     scanResults.value = []
     try {
       const repos = await manager.scanForGitRepos(dirPath)
+      // 已导入判定覆盖主路径 + 多设备备选路径，避免跨设备副本被重复导入
       const existingPaths = new Set(
-        projects.value.map((p) => normalizePathForDedup(p.path)),
+        projects.value.flatMap((p) => getAllProjectPathsForDedup(p)),
       )
       scanResults.value = repos.map((repo) => ({
         ...repo,
@@ -146,7 +146,6 @@ export function useGitTagsConflicts(manager: GitPushManager, projects: Ref<GitPr
     fillTemplate,
     scanning,
     scanResults,
-    scanDirInput,
     checkIsGitRepo,
     startScan,
     importScanResults,

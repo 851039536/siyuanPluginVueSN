@@ -1,4 +1,4 @@
-<!-- 扫描导入 Git 项目弹窗 -->
+<!-- 扫描导入 Git 项目弹窗（自行调用目录选择器） -->
 <template>
   <div
     ref="rootRef"
@@ -11,8 +11,10 @@
       class="gp-dialog"
       style="width: 520px;"
     >
+      <!-- 弹窗头部 -->
       <div class="gp-dialog-header">
-        <span class="gp-dialog-title">{{ i18n.importProject || '导入' }}</span>
+        <!-- 弹窗标题："导入" -->
+        <span class="gp-dialog-title">{{ i18n.importProject }}</span>
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
           @click="$emit('close')"
@@ -21,24 +23,28 @@
         </button>
       </div>
       <div class="gp-dialog-body">
+        <!-- 扫描目录输入行 -->
         <div class="gp-form-group">
-          <label class="gp-label">{{ i18n.scanDir || '扫描目录' }}</label>
+          <!-- 标签："扫描目录" -->
+          <label class="gp-label">{{ i18n.scanDir }}</label>
           <div class="gp-path-row">
+            <!-- 占位符："选择要递归扫描的目录..." -->
             <Input
               v-model="localScanDir"
               size="xsmall"
-              :placeholder="i18n.scanDirPlaceholder || '选择要递归扫描的目录...'"
+              :placeholder="i18n.scanDirPlaceholder"
               @keydown="$event.key === 'Enter' && $emit('start-scan', localScanDir)"
             />
             <button
               class="vp-btn vp-btn--ghost vp-btn--sm"
-              @click="$emit('pick-scan-dir')"
+              @click="pickScanDir"
             >
               <Icon icon="mdi:folder-open" height="12" />
             </button>
           </div>
         </div>
         <div style="display: flex; justify-content: center; margin-top: 4px;">
+          <!-- 按钮："扫描中..." / "开始扫描" -->
           <button
             class="vp-btn vp-btn--primary"
             :disabled="scanning || !localScanDir.trim()"
@@ -55,21 +61,24 @@
               icon="mdi:magnify"
               height="12"
             />
-            <span>{{ scanning ? (i18n.scanning || '扫描中...') : (i18n.startScan || '开始扫描') }}</span>
+            <span>{{ scanning ? i18n.scanning : i18n.startScan }}</span>
           </button>
         </div>
+        <!-- 扫描结果列表 -->
         <div
           v-if="results.length > 0"
           class="gp-scan-results"
         >
           <div class="gp-scan-results-header">
-            <span class="gp-scan-count">{{ i18n.scanResults || '扫描结果' }} ({{ results.length }})</span>
+            <!-- 标题："扫描结果 (N)" -->
+            <span class="gp-scan-count">{{ i18n.scanResults }} ({{ results.length }})</span>
+            <!-- 按钮："全选" -->
             <button
               class="vp-btn vp-btn--ghost vp-btn--sm"
               style="font-size:10px;"
               @click="$emit('toggle-select-all')"
             >
-              {{ i18n.selectAll || '全选' }}
+              {{ i18n.selectAll }}
             </button>
           </div>
           <div
@@ -91,13 +100,15 @@
                 <span class="gp-scan-item-name">{{ repo.name }}</span>
                 <span class="gp-scan-item-path">{{ repo.path }}</span>
               </div>
+              <!-- 徽章："已导入" -->
               <span
                 v-if="repo.alreadyImported"
                 class="gp-scan-badge"
-              >{{ i18n.imported || '已导入' }}</span>
+              >{{ i18n.imported }}</span>
             </label>
           </div>
         </div>
+        <!-- 空结果提示 -->
         <div
           v-else-if="!scanning && localScanDir.trim() && results.length === 0"
           class="gp-empty"
@@ -108,10 +119,12 @@
             width="36"
             height="36"
           />
+          <!-- 提示："未找到 Git 仓库" -->
           <div class="gp-empty-text">
-            {{ i18n.noScanResults || '未找到 Git 仓库' }}
+            {{ i18n.noScanResults }}
           </div>
         </div>
+        <!-- 错误信息 -->
         <div
           v-if="error"
           class="gp-error"
@@ -119,19 +132,22 @@
           {{ error }}
         </div>
       </div>
+      <!-- 底部操作栏 -->
       <div class="gp-dialog-footer">
+        <!-- 按钮："取消" -->
         <button
           class="vp-btn vp-btn--ghost"
           @click="$emit('close')"
         >
-          {{ i18n.cancel || '取消' }}
+          {{ i18n.cancel }}
         </button>
+        <!-- 按钮："导入选中 (N)" -->
         <button
           class="vp-btn vp-btn--primary"
           :disabled="selectedCount === 0"
           @click="$emit('import-selected')"
         >
-          {{ `${i18n.importSelected || '导入选中'} (${selectedCount})` }}
+          {{ `${i18n.importSelected} (${selectedCount})` }}
         </button>
       </div>
     </div>
@@ -140,13 +156,10 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
-import {
-  computed,
-  ref,
-  watch,
-} from "vue"
+import { computed, ref } from "vue"
 import Input from "@/components/Input.vue"
 import { useDialogKeyboard } from "../composables/useDialogKeyboard"
+import { pickDirectory } from "@/utils/electronDialog"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -154,26 +167,25 @@ const props = defineProps<{
   error: string
   results: { path: string, name: string, alreadyImported?: boolean }[]
   selection: Record<string, boolean>
-  scanDir: string
 }>()
 
 const emit = defineEmits<{
   "close": []
-  "pick-scan-dir": []
   "start-scan": [dir: string]
   "toggle-select-all": []
   "toggle-item": [path: string]
   "import-selected": []
 }>()
 
-const localScanDir = ref(props.scanDir)
+const localScanDir = ref("")
 
 const { rootRef } = useDialogKeyboard()
 
-// 目录选择器回填路径
-watch(() => props.scanDir, (v) => {
-  localScanDir.value = v
-})
+// 目录选择器直接写入扫描目录输入框
+async function pickScanDir() {
+  const dir = await pickDirectory(props.i18n.selectScanDirTitle)
+  if (dir) { localScanDir.value = dir }
+}
 
 const selectedCount = computed(() =>
   Object.values(props.selection).filter(Boolean).length,

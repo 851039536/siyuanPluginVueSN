@@ -14,6 +14,11 @@ export function normalizePathForDedup(p: string): string {
   return p.replace(/\\/g, "/").replace(/\/+$/, "").toLowerCase()
 }
 
+/** 收集项目的全部路径（主路径 + 多设备备选路径），已做去重规范化 */
+export function getAllProjectPathsForDedup(project: GitProject): string[] {
+  return [project.path, ...(project.localPaths || [])].map(normalizePathForDedup)
+}
+
 /** 限制 Record 缓存条目数，超过上限时删除最早的条目 */
 export function pruneRecordCache(record: Record<string, any>, max = 30) {
   const keys = Object.keys(record)

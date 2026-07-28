@@ -49,10 +49,6 @@
       >
         <Icon icon="mdi:refresh" height="12" :class="{ 'gp-spin': loading }" />
       </button>
-      <span
-        v-if="!loading && entries.length"
-        class="bcl-count"
-      >{{ entries.length }}</span>
     </div>
 
     <!-- 加载中提示 -->

@@ -4,15 +4,17 @@
  */
 
 import type { Plugin } from "siyuan"
+import type { PluginSettings } from "@/config/settings"
 import type { FloatingTool } from "../types"
-import {
-  createFlashcardReadingTool,
-  createPasswordVaultTool,
-  createPromptsTool,
-  createRefreshTool,
-  createSuperPanelTool,
-  createTextDiffTool,
-} from "./index"
+import { createFlashcardReadingTool } from "./flashcardReading"
+import { createPasswordVaultTool } from "./passwordVault"
+import { createPromptsTool } from "./prompts"
+import { createRefreshTool } from "./refresh"
+import { createSuperPanelTool } from "./superPanel"
+import { createTextDiffTool } from "./textDiff"
+
+/** 插件实例携带的设置字段（PluginSample.settings） */
+type PluginWithSettings = Plugin & { settings?: PluginSettings }
 
 export interface ToolDefinition {
   id: string
@@ -52,7 +54,7 @@ export const toolRegistry: ToolDefinition[] = [
     id: "prompts",
     factory: createPromptsTool,
     platforms: ["desktop"],
-    condition: (plugin) => (plugin as any)?.settings?.enablePrompts !== false,
+    condition: (plugin) => (plugin as PluginWithSettings).settings?.enablePrompts !== false,
     order: 40,
   },
   {

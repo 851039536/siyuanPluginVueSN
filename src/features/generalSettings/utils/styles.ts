@@ -5,8 +5,13 @@ import type { IconKey } from "@/config/icons"
 import type {
   DocumentFontSettings,
   HeadingColors,
+  ListStyleSettings,
   TabPinSettings,
 } from "../types/storage"
+import {
+  injectStyle,
+  removeStyle,
+} from "@/utils/domUtils"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { DEFAULT_TABPIN_SETTINGS } from "../types/storage"
 
@@ -632,6 +637,69 @@ export function applyDocumentFontStyles(fontSettings: DocumentFontSettings): voi
     document.head.appendChild(style)
   } catch (error) {
     console.error("应用文档字体样式失败:", error)
+  }
+}
+
+/** 列表样式（增强）的 <style> 元素 id，组件与 GeneralSettings 共用同一注入点 */
+export const LIST_STYLE_ID = "list-style-settings"
+
+/** 构建列表样式增强 CSS（有序层级颜色 + 无序层级颜色/符号，纯函数） */
+function buildListStyleEnhancedCss(s: ListStyleSettings): string {
+  const orderedListCss = s.orderedListColors
+    .map((color, index) => {
+      const depth = '.li[data-subtype="o"] '.repeat(index)
+      return `${depth}.li[data-subtype="o"] > .protyle-action--order {
+        color: ${color} !important;
+        font-weight: bold !important;
+      }`
+    })
+    .join("\n")
+
+  const unorderedListCss = s.unorderedListColors
+    .map((color, index) => {
+      const depth = '[data-subtype="u"] > '.repeat(index)
+      const symbol = index % 2 === 0 ? "•" : "▪"
+      return `${depth}.li[data-subtype="u"] > .protyle-action::before {
+        content: "${symbol}";
+        font-size: ${s.symbolSize}em;
+        font-weight: bold;
+        font-family: Arial;
+        position: absolute;
+        color: ${color} !important;
+      }`
+    })
+    .join("\n")
+
+  return `
+    /* 有序列表样式 */
+    ${orderedListCss}
+
+    /* 无序列表样式 - 隐藏原始符号 */
+    [data-subtype="u"] > .li[data-subtype="u"] > .protyle-action svg {
+      color: transparent;
+    }
+
+    /* 无序列表符号 */
+    ${unorderedListCss}
+
+    /* 暗色主题适配 */
+    :root[data-theme-mode="dark"] .li[data-subtype="o"] > .protyle-action--order,
+    :root[data-theme-mode="dark"] .li[data-subtype="u"] > .protyle-action::before {
+      opacity: 0.9;
+    }
+  `
+}
+
+/** 应用列表样式增强：enabled=false 时移除注入样式，组件与 GeneralSettings 共用 */
+export function applyListStyleEnhancedCss(listSettings: ListStyleSettings): void {
+  try {
+    if (!listSettings.enabled) {
+      removeStyle(LIST_STYLE_ID)
+      return
+    }
+    injectStyle(LIST_STYLE_ID, buildListStyleEnhancedCss(listSettings))
+  } catch (error) {
+    console.error("应用列表样式失败:", error)
   }
 }
 

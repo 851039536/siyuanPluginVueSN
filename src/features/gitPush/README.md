@@ -42,8 +42,7 @@ src/features/gitPush/
 │   ├── useProjectCrud.ts            # 项目 CRUD 响应式封装
 │   ├── useGitOps.ts                 # 推送/拉取/工作区/stash 响应式封装
 │   ├── useGitTagsConflicts.ts       # Tag/冲突/模板/扫描导入
-│   ├── useGitStats.ts               # 统计视图 computed
-│   └── useDirectoryPicker.ts        # 目录选择封装（Electron + webkitdirectory 降级）
+│   └── useGitStats.ts               # 统计视图 computed
 ├── components/
 │   ├── StatsPanel.vue               # 统计视图（覆盖率/待处理项目/平台状态）
 │   ├── WorkingTreePanel.vue         # 工作区变更面板（暂存/diff/提交）

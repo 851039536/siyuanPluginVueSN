@@ -1,5 +1,5 @@
 // Electron 原生对话框与文件操作工具（目录选择 + 文件夹打开）
-import { getNodeModules } from "@/utils/nodeModules"
+import { getElectronModules, getNodeModules } from "@/utils/nodeModules"
 
 /** 使用 Electron 原生对话框选择目录 */
 export async function pickDirectory(title: string): Promise<string | null> {
@@ -11,8 +11,7 @@ export async function pickDirectory(title: string): Promise<string | null> {
       try {
         remote = window.require("@electron/remote")
       } catch {
-        const electron = window.require("electron")
-        remote = electron.remote || electron
+        remote = window.require("electron").remote
       }
       if (remote?.dialog?.showOpenDialog) {
         const result = await remote.dialog.showOpenDialog({
@@ -44,16 +43,20 @@ export async function pickDirectory(title: string): Promise<string | null> {
         clearTimeout(timeoutId)
         resolve(val)
       }
+      // 兜底超时：防止部分环境不触发 cancel 事件导致 Promise 悬挂
       const timeoutId = setTimeout(() => done(null), 60000)
 
-      input.onchange = (e: any) => {
-        const files = e.target?.files
+      input.onchange = (e: Event) => {
+        const files = (e.target as HTMLInputElement).files
         if (files && files.length > 0) {
-          const relativePath = files[0].webkitRelativePath
+          // File.path 为 Electron 私有扩展（Electron 32+ 已移除），仅旧内核可用
+          const first = files[0] as File & { path?: string }
+          const relativePath = first.webkitRelativePath
           const dirName = relativePath.split("/")[0]
-          if (files[0].path) {
-            const fullPath = files[0].path
-            const dirPath = fullPath.substring(0, fullPath.lastIndexOf(dirName) + dirName.length)
+          if (first.path) {
+            // 用相对路径长度从末尾反推目录根路径（分隔符 \ 与 / 等长，无需归一化）
+            const fullPath = first.path
+            const dirPath = fullPath.slice(0, fullPath.length - relativePath.length + dirName.length)
             done(dirPath)
             return
           }
@@ -79,16 +82,14 @@ export async function openFolderInExplorer(folderPath: string): Promise<boolean>
       return false
     }
   }
-  // 尝试 Electron shell.openPath
-  if (typeof window.require === "function") {
+  // 尝试 Electron shell.openPath（成功返回空串，失败返回错误描述字符串）
+  const shell = getElectronModules()?.shell
+  if (shell?.openPath) {
     try {
-      const { shell } = window.require("electron")
-      if (shell?.openPath) {
-        await shell.openPath(folderPath)
-        return true
-      }
+      const result = await shell.openPath(folderPath)
+      return !result
     } catch {
-      // shell 不可用
+      // shell 调用异常
     }
   }
   return false

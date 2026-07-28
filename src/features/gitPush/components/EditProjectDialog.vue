@@ -391,7 +391,7 @@ import type { SelectOption } from "@/components/Select.vue"
 import Select from "@/components/Select.vue"
 import { getCurrentDeviceName, hasPlatformRemote, resolveValidPath } from "../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
-import { pickDirectory } from "../composables/useDirectoryPicker"
+import { pickDirectory } from "@/utils/electronDialog"
 
 
 const props = defineProps<{

@@ -1,4 +1,3 @@
-import type { Plugin } from "siyuan"
 /**
  * Vue 应用辅助工具
  *
@@ -6,6 +5,7 @@ import type { Plugin } from "siyuan"
  * - Dock 侧边栏面板挂载
  * - Modal 遮罩弹窗挂载
  */
+import type { Plugin } from "siyuan"
 import type {
   Component,
   App as VueApp,
@@ -14,6 +14,9 @@ import {
   createApp,
   h,
 } from "vue"
+
+/** Modal 遮罩层 z-index（高于思源内置弹窗） */
+const MODAL_MASK_Z_INDEX = 10000
 
 // ============================================================
 // Dock 侧边栏面板
@@ -71,7 +74,7 @@ export function createVueDockApp(
     },
     data: {},
     type,
-    init: (dock: any) => {
+    init: (dock: { element?: Element }) => {
       const container = document.createElement("div")
       container.style.height = "100%"
       container.style.overflow = "hidden"
@@ -88,10 +91,7 @@ export function createVueDockApp(
 
       app.mount(container)
       dock.element?.appendChild(container)
-
-      // 保存引用以便后续清理
-      dock.__app = app
-      dock.__container = container
+      // Dock 的 Vue 实例生命周期交给思源 dock 管理，卸载时随 dock DOM 移除后被 GC
     },
   })
 }
@@ -102,14 +102,12 @@ export function createVueDockApp(
 
 /** Modal 弹窗配置选项 */
 export interface ModalAppOptions {
-  /** 遮罩层 DOM ID（用于清理时查找） */
+  /** 遮罩层 DOM ID（便于调试与外部样式定位） */
   maskId: string
   /** 弹窗宽度 */
   width?: string
   /** 弹窗高度 */
   height?: string
-  /** 传递给组件的 props */
-  props?: Record<string, any>
   /**
    * 持久模式：关闭时仅隐藏 DOM，不销毁 Vue 实例。
    * 适用于需要保留组件内部状态（如进行中的任务、表单内容）的场景。
@@ -190,12 +188,12 @@ export function createModalVueApp(
       return
     }
 
-    // 如果已打开则先关闭（非持久模式会销毁重建）
+    // 如果已打开则先销毁重建（非持久模式）
     if (app && container) {
-      close()
+      destroy()
     }
 
-    // 创建遮罩层
+    // 创建遮罩层（基准字号 12px 对齐 $font-size-xs，防止内部继承思源全局字号）
     mask = document.createElement("div")
     mask.style.cssText = `
       position: fixed;
@@ -204,21 +202,22 @@ export function createModalVueApp(
       right: 0;
       bottom: 0;
       background: rgba(0, 0, 0, 0.5);
-      z-index: 10000;
+      z-index: ${MODAL_MASK_Z_INDEX};
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: 12px;
     `
     mask.id = maskId
 
-    // 创建容器
+    // 创建容器（Codex 风格：边框代替 box-shadow，圆角 6px 对齐 $vp-radius）
     container = document.createElement("div")
     container.style.cssText = `
       width: ${width};
       height: ${height};
       background: var(--b3-theme-background);
-      border-radius: 8px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--b3-border-color);
+      border-radius: 6px;
       display: flex;
       flex-direction: column;
       overflow: hidden;

@@ -88,6 +88,7 @@
             :filename="f.name"
             :label="f.label"
             :variant="f.variant"
+            :i18n="i18n"
             @select="$emit('openMarkdownPreview', project, f.name)"
           />
         </div>

@@ -305,7 +305,6 @@
       <MarkdownPreviewDialog
         v-if="markdownPreviewProject"
         :project="markdownPreviewProject"
-        :manager="manager"
         :i18n="i18n"
         :initial-file="markdownPreviewInitialFile"
         @close="closeMarkdownPreview"
@@ -924,6 +923,24 @@ watch(currentView, async (view) => {
 watch(viewMode, async (mode) => {
   if (mode !== "needsPush" && mode !== "uncommitted") return
   await ensureStatsDataLoaded()
+})
+
+/** 解除暂停时按当前上下文补载数据（暂停期间跳过的加载在恢复后立即补齐） */
+watch(gitOpsPaused, async (paused) => {
+  if (paused) return
+  // 统计视图 / 智能视图需要全量状态数据
+  if (currentView.value === "stats" || viewMode.value === "needsPush" || viewMode.value === "uncommitted") {
+    await ensureStatsDataLoaded()
+    return
+  }
+  // 列表视图只补当前分类下未缓存的项目（与首屏最小集一致）
+  const catId = activeCategory.value
+  const projList = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
+  const pending = projList.filter((p) => !workingTrees.value[p.id])
+  if (pending.length === 0) return
+  await runBatchWithProgress(pending, tf("loadingLabel", "加载中"), async (p, ctx) => {
+    await ctx.step(tf("stepStatus", "状态"), () => loadProjectGitStatus(p.id, true))
+  })
 })
 
 async function handleAddFromDialog(data: ProjectPathExtras & { name: string, path: string, catId: string }) {

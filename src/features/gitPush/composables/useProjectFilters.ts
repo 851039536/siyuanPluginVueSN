@@ -7,6 +7,7 @@ import {
   ref,
   watch,
 } from "vue"
+import { VIEW_MODE_META } from "../types"
 import type { TypedStorage } from "@/utils/typedStorage"
 
 interface UseProjectFiltersOptions {
@@ -20,15 +21,6 @@ interface UseProjectFiltersOptions {
   starredProjects: Ref<GitProject[]>
   visibleGroups: Ref<{ category: { id: string, name: string, color: string, order: number }, projects: GitProject[] }[]>
   sortProjects: (list: GitProject[]) => GitProject[]
-}
-
-/** 智能视图模式元数据（标签 + 命中数） */
-export const VIEW_MODE_META: Record<string, { label: string, icon: string }> = {
-  all: { label: "全部", icon: "mdi:view-grid-outline" },
-  needsPush: { label: "需推送", icon: "mdi:cloud-upload-outline" },
-  uncommitted: { label: "有变更", icon: "mdi:source-branch" },
-  starred: { label: "收藏", icon: "mdi:star" },
-  archived: { label: "归档", icon: "mdi:archive-outline" },
 }
 
 export function useProjectFilters(options: UseProjectFiltersOptions) {
@@ -120,7 +112,8 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
       return [{
         category: {
           id: `__smart_${viewMode.value}__`,
-          name: meta.label,
+          // 合成分组名无 UI 渲染点，存 i18n 键名仅作调试标识
+          name: meta.labelKey,
           color: "var(--b3-theme-primary)",
           order: -1,
         },

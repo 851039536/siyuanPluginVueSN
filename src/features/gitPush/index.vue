@@ -50,19 +50,15 @@
 
     <!-- ========== 列表视图 ========== -->
     <template v-if="currentView === 'list'">
-      <!-- 筛选工具栏 + 标签筛选 + 分类 TAB -->
+      <!-- 筛选工具栏 + 分类 TAB -->
       <ListViewToolbar
+        v-model:view-mode="viewMode"
+        v-model:active-category="activeCategory"
+        v-model:show-archived="showArchived"
+        v-model:git-ops-paused="gitOpsPaused"
+        :i18n="i18n"
         :projects="projects"
         :grouped-projects="groupedProjects"
-        :view-mode="viewMode"
-        :active-category="activeCategory"
-        :show-archived="showArchived"
-        :git-ops-paused="gitOpsPaused"
-        @update:view-mode="viewMode = $event"
-        @update:active-category="activeCategory = $event"
-        @update:show-archived="showArchived = $event"
-        @update:git-ops-paused="gitOpsPaused = $event"
-        @toggle-tag-filter="toggleTagFilter"
       />
 
       <!-- 项目列表 -->

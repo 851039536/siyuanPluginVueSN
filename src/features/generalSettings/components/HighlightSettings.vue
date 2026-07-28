@@ -1,213 +1,188 @@
+<!-- 双击高亮功能设置面板：功能开关 + 功能说明 + 高亮样式配置（颜色/字号/加粗/长度限制） -->
 <template>
   <div class="highlight-settings">
-    <label class="section-header setting-label">
-      <IconWrapper
-        name="edit"
-        :size="14"
-        class="section-icon"
-      />
-      {{ i18n?.enableHighlight || '双击高亮功能' }}
-    </label>
+    <!-- 功能开关标题："双击高亮功能" -->
+    <SettingLabel
+      icon="edit"
+      :text="i18n.enableHighlight"
+      class="toggle-label"
+    />
     <SiSwitch
       v-model="enableHighlight"
       @change="handleToggleChange"
     />
+    <!-- 开关说明："双击选中文本自动高亮显示" -->
     <p class="toggle-description">
-      {{ i18n?.highlightDescription || '双击选中文本自动高亮显示' }}
+      {{ i18n.highlightDescription }}
     </p>
 
-    <!-- 功能说明 -->
+    <!-- 功能说明区块 -->
     <div class="feature-description">
-      <div class="section-header description-title">
-        <IconWrapper
-          name="lightbulb"
-          :size="14"
-          class="section-icon"
-        />
-        {{ i18n?.featureDescription || '功能说明' }}
-      </div>
+      <!-- 区块标题："功能说明" -->
+      <SettingLabel
+        icon="lightbulb"
+        :text="i18n.featureDescription"
+        class="description-title"
+      />
       <ul class="description-list">
-        <li>{{ i18n?.highlightFeature1 || '在文档编辑器中双击选中文本，自动应用高亮样式' }}</li>
+        <!-- 说明条目："在文档编辑器中双击选中文本，自动应用高亮样式" -->
+        <li>{{ i18n.highlightFeature1 }}</li>
       </ul>
     </div>
 
-    <!-- 高亮样式设置 -->
-    <template v-if="enableHighlight">
-      <div class="style-settings">
-        <div class="section-header style-settings-title">
-          <IconWrapper
-            name="format"
-            :size="14"
-            class="section-icon"
-          />
-          {{ i18n?.highlightStyleSettings || '高亮样式设置' }}
-        </div>
+    <!-- 高亮样式设置区块（开关开启时显示） -->
+    <div
+      v-if="enableHighlight"
+      class="style-settings"
+    >
+      <!-- 区块标题："高亮样式设置" -->
+      <SettingLabel
+        icon="format"
+        :text="i18n.highlightStyleSettings"
+        class="style-settings-title"
+      />
 
-        <div class="style-row">
-          <label class="style-label">
-            {{ i18n?.highlightBgColor || '背景颜色' }}
-          </label>
-          <div class="color-input-wrapper">
-            <input
-              v-model="backgroundColor"
-              type="color"
-              class="color-picker"
-              @input="handleStyleChange"
-            />
-            <input
-              v-model="backgroundColor"
-              type="text"
-              class="color-text"
-              placeholder="rgb(255, 220, 60)"
-              @change="handleStyleChange"
-            />
-          </div>
-        </div>
-
-        <div class="style-row">
-          <label class="style-label">
-            {{ i18n?.highlightFontSize || '字体大小' }}
-          </label>
-          <select
-            v-model="fontSize"
-            class="style-select"
-            @change="handleStyleChange"
-          >
-            <option value="0">
-              跟随原文
-            </option>
-            <option value="12">
-              12px
-            </option>
-            <option value="13">
-              13px
-            </option>
-            <option value="14">
-              14px
-            </option>
-            <option value="15">
-              15px
-            </option>
-            <option value="16">
-              16px
-            </option>
-            <option value="18">
-              18px
-            </option>
-            <option value="20">
-              20px
-            </option>
-          </select>
-        </div>
-
-        <div class="style-row">
-          <label class="style-label">
-            {{ i18n?.highlightBold || '加粗显示' }}
-          </label>
-          <SiSwitch
-            v-model="bold"
-            @change="handleStyleChange"
-          />
-        </div>
-
-        <div class="style-row">
-          <label class="style-label">
-            {{ i18n?.highlightMinTextLength || '最小文字长度' }}
-          </label>
-          <input
-            v-model.number="minTextLength"
-            type="number"
-            class="style-number"
-            min="1"
-            max="100"
-            @change="handleStyleChange"
-          />
-        </div>
-
-        <div class="style-row">
-          <label class="style-label">
-            {{ i18n?.highlightMinLetterLength || '最小字母长度' }}
-          </label>
-          <input
-            v-model.number="minLetterLength"
-            type="number"
-            class="style-number"
-            min="1"
-            max="100"
-            @change="handleStyleChange"
-          />
-        </div>
-
-        <div class="style-row">
-          <label class="style-label">
-            {{ i18n?.highlightMaxTextLength || '最大文字长度' }}
-          </label>
-          <input
-            v-model.number="maxTextLength"
-            type="number"
-            class="style-number"
-            min="1"
-            max="1000"
-            @change="handleStyleChange"
-          />
-        </div>
-
-        <div class="style-row">
-          <label class="style-label">
-            {{ i18n?.highlightMaxLetterLength || '最大字母长度' }}
-          </label>
-          <input
-            v-model.number="maxLetterLength"
-            type="number"
-            class="style-number"
-            min="1"
-            max="1000"
-            @change="handleStyleChange"
-          />
-        </div>
+      <!-- 背景颜色行 -->
+      <div class="style-row">
+        <!-- 行标签："背景颜色" -->
+        <label class="style-label">
+          {{ i18n.highlightBgColor }}
+        </label>
+        <ColorField
+          v-model="backgroundColor"
+          placeholder="rgb(255, 220, 60)"
+          class="style-color"
+          @update:model-value="handleStyleChange"
+        />
       </div>
-    </template>
+
+      <!-- 字体大小行 -->
+      <div class="style-row">
+        <!-- 行标签："字体大小" -->
+        <label class="style-label">
+          {{ i18n.highlightFontSize }}
+        </label>
+        <SiSelect
+          v-model="fontSize"
+          :options="fontSizeOptions"
+          size="small"
+          class="style-select"
+          @change="handleStyleChange"
+        />
+      </div>
+
+      <!-- 加粗显示行 -->
+      <div class="style-row">
+        <!-- 行标签："加粗显示" -->
+        <label class="style-label">
+          {{ i18n.highlightBold }}
+        </label>
+        <SiSwitch
+          v-model="bold"
+          @change="handleStyleChange"
+        />
+      </div>
+
+      <!-- 长度限制行：最小/最大文字与字母长度 -->
+      <div
+        v-for="field in LENGTH_FIELDS"
+        :key="field.key"
+        class="style-row"
+      >
+        <!-- 行标签："最小文字长度 / 最小字母长度 / 最大文字长度 / 最大字母长度" -->
+        <label class="style-label">
+          {{ i18n[field.labelKey] }}
+        </label>
+        <SiInput
+          :model-value="lengths[field.key]"
+          type="number"
+          size="small"
+          class="style-number"
+          @change="(value) => handleLengthChange(field, value)"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { Plugin } from "siyuan"
+import type { SelectOption } from "@/components/Select.vue"
+import type { GeneralSettings } from "../GeneralSettings"
 import { showMessage } from "siyuan"
 import {
+  computed,
   onMounted,
+  reactive,
   ref,
 } from "vue"
-import IconWrapper from "@/components/IconWrapper.vue"
+import SiInput from "@/components/Input.vue"
+import SiSelect from "@/components/Select.vue"
 import SiSwitch from "@/components/Switch.vue"
-import { GeneralSettingsStorage } from "@/features/generalSettings/types/storage"
+import {
+  DEFAULT_HIGHLIGHT_SETTINGS,
+  GeneralSettingsStorage,
+} from "../types/storage"
+import ColorField from "./ColorField.vue"
+import SettingLabel from "./SettingLabel.vue"
 
-const props = defineProps<{
+interface Props {
   i18n?: Record<string, string>
-  plugin?: any
-}>()
+  plugin?: Plugin | null
+}
 
-const enableHighlight = ref(true)
-const backgroundColor = ref("rgb(255, 220, 60)")
-const fontSize = ref("0")
-const bold = ref(false)
-const minTextLength = ref(1)
-const minLetterLength = ref(1)
-const maxTextLength = ref(50)
-const maxLetterLength = ref(100)
-const storage = ref<GeneralSettingsStorage | null>(null)
+const props = withDefaults(defineProps<Props>(), {
+  i18n: () => ({}),
+  plugin: null,
+})
+
+/** 字号下拉可选像素值（0 = 跟随原文，单独渲染） */
+const FONT_SIZE_VALUES = [12, 13, 14, 15, 16, 18, 20]
+
+/** 长度限制输入行配置：key 对应设置字段，labelKey 对应 i18n 键，max 为允许上限 */
+const LENGTH_FIELDS = [
+  { key: "minTextLength", labelKey: "highlightMinTextLength", max: 100 },
+  { key: "minLetterLength", labelKey: "highlightMinLetterLength", max: 100 },
+  { key: "maxTextLength", labelKey: "highlightMaxTextLength", max: 1000 },
+  { key: "maxLetterLength", labelKey: "highlightMaxLetterLength", max: 1000 },
+] as const
+
+type LengthField = (typeof LENGTH_FIELDS)[number]
+
+const enableHighlight = ref(DEFAULT_HIGHLIGHT_SETTINGS.enableHighlight)
+const backgroundColor = ref(DEFAULT_HIGHLIGHT_SETTINGS.backgroundColor)
+const fontSize = ref(DEFAULT_HIGHLIGHT_SETTINGS.fontSize)
+const bold = ref(DEFAULT_HIGHLIGHT_SETTINGS.bold)
+const lengths = reactive<Record<LengthField["key"], number>>({
+  minTextLength: DEFAULT_HIGHLIGHT_SETTINGS.minTextLength,
+  minLetterLength: DEFAULT_HIGHLIGHT_SETTINGS.minLetterLength,
+  maxTextLength: DEFAULT_HIGHLIGHT_SETTINGS.maxTextLength,
+  maxLetterLength: DEFAULT_HIGHLIGHT_SETTINGS.maxLetterLength,
+})
+let storage: GeneralSettingsStorage | null = null
+
+const fontSizeOptions = computed<SelectOption[]>(() => [
+  { value: 0, label: props.i18n.highlightFontSizeFollow },
+  ...FONT_SIZE_VALUES.map(size => ({ value: size, label: `${size}px` })),
+])
+
+/** 获取挂载在 plugin 上的 GeneralSettings 实例（注册于 registerGeneralSettings） */
+const getGeneralSettings = (): GeneralSettings | null => {
+  const host = props.plugin as unknown as { __generalSettings?: GeneralSettings } | null
+  return host?.__generalSettings ?? null
+}
 
 const loadSettings = async () => {
-  if (!storage.value) return
+  if (!storage) return
   try {
-    const settings = await storage.value.highlight.loadOrDefault()
-    if (settings) {
-      enableHighlight.value = settings.enableHighlight ?? true
-      backgroundColor.value = settings.backgroundColor ?? "rgb(255, 220, 60)"
-      fontSize.value = settings.fontSize?.toString() ?? "0"
-      bold.value = settings.bold ?? false
-      minTextLength.value = settings.minTextLength ?? 1
-      minLetterLength.value = settings.minLetterLength ?? 1
-      maxTextLength.value = settings.maxTextLength ?? 50
-      maxLetterLength.value = settings.maxLetterLength ?? 100
+    // loadOrDefault 保证返回带 DEFAULT_HIGHLIGHT_SETTINGS 默认值的完整对象
+    const settings = await storage.highlight.loadOrDefault()
+    enableHighlight.value = settings.enableHighlight
+    backgroundColor.value = settings.backgroundColor
+    fontSize.value = settings.fontSize
+    bold.value = settings.bold
+    for (const field of LENGTH_FIELDS) {
+      lengths[field.key] = settings[field.key]
     }
   } catch (e) {
     console.error("加载高亮设置失败:", e)
@@ -216,15 +191,9 @@ const loadSettings = async () => {
 
 const handleToggleChange = () => {
   try {
-    const generalSettings = (props.plugin as any).__generalSettings
-    if (generalSettings) {
-      generalSettings.updateHighlight(enableHighlight.value)
-    }
-
+    getGeneralSettings()?.updateHighlight(enableHighlight.value)
     showMessage(
-      enableHighlight.value
-        ? (props.i18n?.highlightEnabled ?? "双击高亮功能已启用")
-        : (props.i18n?.highlightDisabled ?? "双击高亮功能已禁用"),
+      enableHighlight.value ? props.i18n.highlightEnabled : props.i18n.highlightDisabled,
       2000,
       "info",
     )
@@ -235,33 +204,31 @@ const handleToggleChange = () => {
 
 const handleStyleChange = () => {
   try {
-    const generalSettings = (props.plugin as any).__generalSettings
-    if (generalSettings) {
-      generalSettings.updateHighlightOptions({
-        backgroundColor: backgroundColor.value,
-        fontSize: Number(fontSize.value),
-        bold: bold.value,
-        minTextLength: minTextLength.value,
-        minLetterLength: minLetterLength.value,
-        maxTextLength: maxTextLength.value,
-        maxLetterLength: maxLetterLength.value,
-      })
-    }
+    getGeneralSettings()?.updateHighlightOptions({
+      backgroundColor: backgroundColor.value,
+      fontSize: fontSize.value,
+      bold: bold.value,
+      ...lengths,
+    })
   } catch (e) {
     console.error("更新高亮样式失败:", e)
   }
 }
 
+const handleLengthChange = (field: LengthField, value: string | number) => {
+  const num = Number(value)
+  // 非法输入或越界时钳制到 [1, field.max]
+  lengths[field.key] = Number.isFinite(num)
+    ? Math.min(Math.max(Math.round(num), 1), field.max)
+    : 1
+  handleStyleChange()
+}
+
 onMounted(() => {
   if (props.plugin) {
-    storage.value = new GeneralSettingsStorage(props.plugin)
+    storage = new GeneralSettingsStorage(props.plugin)
   }
   loadSettings()
-})
-
-defineExpose({
-  loadSettings,
-  enableHighlight,
 })
 </script>
 

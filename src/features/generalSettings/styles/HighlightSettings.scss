@@ -1,75 +1,63 @@
 /* HighlightSettings 组件样式 */
+@use "@/variables.scss" as *;
 
 .highlight-settings {
-  padding: 16px;
+  padding: $spacing-4;
+  font-size: $font-size-xs; // 基准字号，防止内部文字继承思源全局默认字号
 }
 
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--b3-theme-on-surface);
-}
-
-.setting-label {
-  margin-bottom: 12px;
+.toggle-label {
+  margin-bottom: $spacing-3;
 }
 
 .description-title {
-  margin-bottom: 10px;
-}
-
-.section-icon {
-  font-size: 14px;
-  opacity: 0.8;
+  margin-bottom: $spacing-2;
 }
 
 .toggle-description {
-  font-size: 12px;
+  font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface-variant);
-  margin-top: 8px;
-  line-height: 1.4;
+  margin-top: $spacing-2;
+  line-height: $line-height-normal;
 }
 
 .feature-description {
-  margin-top: 20px;
-  padding: 12px 14px;
+  margin-top: $spacing-5;
+  padding: $spacing-3;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 8px;
+  border-radius: $vp-radius;
 }
 
 .description-list {
   margin: 0;
-  padding-left: 18px;
-  font-size: 12px;
+  padding-left: $spacing-4;
+  font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface-variant);
-  line-height: 1.8;
+  line-height: $line-height-relaxed;
 }
 
 .description-list li:not(:last-child) {
-  margin-bottom: 4px;
+  margin-bottom: $spacing-1;
 }
 
 .style-settings {
-  margin-top: 20px;
-  padding: 12px 14px;
+  margin-top: $spacing-5;
+  padding: $spacing-3;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 8px;
+  border-radius: $vp-radius;
 }
 
 .style-settings-title {
-  margin-bottom: 12px;
+  margin-bottom: $spacing-3;
 }
 
 .style-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: $spacing-2;
 }
 
 .style-row:last-child {
@@ -77,57 +65,19 @@
 }
 
 .style-label {
-  font-size: 13px;
+  font-size: $font-size-xs;
   color: var(--b3-theme-on-surface);
   flex-shrink: 0;
 }
 
-.color-input-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.color-picker {
-  width: 28px;
-  height: 28px;
-  border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
-  cursor: pointer;
-  padding: 2px;
-  background: transparent;
-}
-
-.color-text {
-  width: 120px;
-  padding: 4px 8px;
-  font-size: 12px;
-  border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  outline: none;
+.style-color {
+  max-width: 180px; // 180px：颜色拾取器 + 文本框整体宽度上限，避免撑满整行
 }
 
 .style-select {
-  padding: 4px 8px;
-  font-size: 12px;
-  border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  outline: none;
-  cursor: pointer;
+  width: 120px; // 120px：字号下拉固定宽度
 }
 
 .style-number {
-  width: 60px;
-  padding: 4px 8px;
-  font-size: 12px;
-  border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  outline: none;
-  text-align: center;
+  width: 80px; // 80px：长度数字输入固定宽度
 }

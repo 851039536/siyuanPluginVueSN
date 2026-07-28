@@ -273,12 +273,10 @@
         v-if="showIdeDialog"
         :i18n="i18n"
         :custom-ides="customIdes"
-        :preset-options="IDE_PRESETS"
-        :get-icon="getIdePresetIcon"
         @close="showIdeDialog = false"
-        @add-ide="(preset: string, path: string) => { addIdePreset = preset; addIdePath = path; addCustomIde() }"
-        @save-edit-ide="(idx: number, preset: string, path: string) => { editingIdeIdx = idx; editIdePreset = preset; editIdePath = path; saveEditIde(idx) }"
-        @delete-ide="doRemoveCustomIde"
+        @add="addCustomIde"
+        @saveEdit="saveEditIde"
+        @delete="doRemoveCustomIde"
       />
     </Transition>
     <Transition name="gp-dialog-fade">
@@ -368,10 +366,7 @@ import GitConfigDialog from "./components/GitConfigDialog.vue"
 import Loader from "@/components/Loader.vue"
 import { useGitPush } from "./composables/useGitPush"
 import { useBatchProgress } from "./composables/useBatchProgress"
-import {
-  IDE_PRESETS,
-  useIdeManagement,
-} from "./composables/useIdeManagement"
+import { useIdeManagement } from "./composables/useIdeManagement"
 import {
   useProjectFilters,
 } from "./composables/useProjectFilters"
@@ -684,12 +679,6 @@ const {
   customIdes,
   confirmingDelIdx,
   showIdeDialog,
-  addIdePreset,
-  addIdePath,
-  editingIdeIdx,
-  editIdePreset,
-  editIdePath,
-  getIdePresetIcon,
   saveEditIde,
   loadCustomIdes,
   addCustomIde,

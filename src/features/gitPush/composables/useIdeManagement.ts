@@ -30,6 +30,9 @@ export const IDE_ENTRIES: IdeEntry[] = [
   },
 ]
 
+/** 预设外 IDE 的兜底名称（IDE_PRESETS 末项，编辑时名称不在预设列表则归入此项） */
+export const OTHER_IDE_NAME = "其他"
+
 export const IDE_PRESETS = [
   {
     name: "Visual Studio",
@@ -68,12 +71,17 @@ export const IDE_PRESETS = [
     icon: "mdi:language-java",
   },
   {
-    name: "其他",
+    name: OTHER_IDE_NAME,
     icon: "mdi:application-brackets",
   },
 ]
 
 export const CUSTOM_IDE_KEY = "git-push-custom-ides"
+
+/** 按预设名取图标（非预设名回退通用括号图标） */
+export function getIdePresetIcon(name: string): string {
+  return IDE_PRESETS.find((p) => p.name === name)?.icon ?? "mdi:application-brackets"
+}
 
 export function useIdeManagement(options: {
   // saveData 返回值声明为 unknown：思源 Plugin.saveData 实际返回 Promise<IWebSocketData>，调用方不消费返回值
@@ -95,34 +103,16 @@ export function useIdeManagement(options: {
   const confirmingDelIdx = ref(-1)
 
   const showIdeDialog = ref(false)
-  const addIdePreset = ref("Visual Studio")
-  const addIdePath = ref("")
-  const editingIdeIdx = ref(-1)
-  const editIdePreset = ref("")
-  const editIdePath = ref("")
-  const confirmingMgmtDelIdx = ref(-1)
 
-  function getIdePresetIcon(name: string): string {
-    return IDE_PRESETS.find((p) => p.name === name)?.icon ?? "mdi:application-brackets"
-  }
-
-  function startEditIde(idx: number) {
-    const c = customIdes.value[idx]
-    if (!c) return
-    editingIdeIdx.value = idx
-    editIdePreset.value = IDE_PRESETS.some((p) => p.name === c.name) ? c.name : "其他"
-    editIdePath.value = c.path
-  }
-
-  function saveEditIde(idx: number) {
+  /** 保存对指定自定义 IDE 的编辑（弹窗内表单状态自包含，此处只接收结果） */
+  function saveEditIde(idx: number, name: string, path: string) {
     const list = [...customIdes.value]
+    if (!list[idx]) return
     list[idx] = {
-      name: editIdePreset.value.trim() || customIdes.value[idx].name,
-      path: editIdePath.value.trim(),
+      name: name.trim() || list[idx].name,
+      path: path.trim(),
     }
     customIdes.value = list
-    editingIdeIdx.value = -1
-    confirmingMgmtDelIdx.value = -1
     saveCustomIdes()
   }
 
@@ -137,21 +127,20 @@ export function useIdeManagement(options: {
     catch { /* ignore */ }
   }
 
-  function addCustomIde() {
-    const path = addIdePath.value.trim()
-    if (!path) return
+  /** 新增自定义 IDE（预设名 + 可执行文件路径） */
+  function addCustomIde(name: string, path: string) {
+    const trimmed = path.trim()
+    if (!trimmed) return
     customIdes.value = [...customIdes.value, {
-      name: addIdePreset.value,
-      path,
+      name,
+      path: trimmed,
     }]
     saveCustomIdes()
-    addIdePath.value = ""
   }
 
   function doRemoveCustomIde(idx: number) {
     customIdes.value = customIdes.value.filter((_, i) => i !== idx)
     confirmingDelIdx.value = -1
-    confirmingMgmtDelIdx.value = -1
     saveCustomIdes()
   }
 
@@ -307,14 +296,6 @@ export function useIdeManagement(options: {
     customIdes,
     confirmingDelIdx,
     showIdeDialog,
-    addIdePreset,
-    addIdePath,
-    editingIdeIdx,
-    editIdePreset,
-    editIdePath,
-    confirmingMgmtDelIdx,
-    getIdePresetIcon,
-    startEditIde,
     saveEditIde,
     loadCustomIdes,
     saveCustomIdes,

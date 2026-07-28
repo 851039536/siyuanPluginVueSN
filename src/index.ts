@@ -1,10 +1,9 @@
+/**
+ * 插件入口：主类 PluginSample
+ * onload 同步读取功能开关并条件注册各功能模块；onunload 统一销毁持有持久资源的实例
+ */
 import type { PluginSettings } from "@/config/settings"
-import {
-  getFrontend,
-  Plugin,
-} from "siyuan"
-
-import PluginInfoString from "@/../plugin.json"
+import { Plugin } from "siyuan"
 
 import {
   destroyCommands,
@@ -79,56 +78,34 @@ import { setupIconifyOffline } from "@/utils/iconifySetup"
 // Vite 会将此 CSS 编译到 index.css 并在入口点立即注入
 import "@/index.scss"
 
-let PluginInfo = {
-  version: "",
-}
-try {
-  PluginInfo = PluginInfoString
-} catch (err) {}
-const { version } = PluginInfo
-
 export default class PluginSample extends Plugin {
-  // Run as mobile
-  public isMobile: boolean
-  // Run in browser
-  public isBrowser: boolean
-  // Run as local
-  public isLocal: boolean
-  // Run in Electron
-  public isElectron: boolean
-  // Run in window
-  public isInWindow: boolean
-  public platform: SyFrontendTypes
-  public readonly version = version
   // 插件配置
   public settings: PluginSettings
   /** 浮动工具栏实例（由 floatingToolbar 功能模块注入） */
   public __floatingToolbar?: import("@/features/floatingToolbar/core/FloatingToolbar").FloatingToolbar
 
+  /** 持有持久资源（定时器/监听器/Modal）、需在 onunload 统一 destroy 的实例字段清单 */
+  private static readonly DESTROYABLE_KEYS = [
+    "__pageLock", // 页面锁定（interval + 事件监听器）
+    "__flashcardReading", // 单词阅读
+    "__floatingBox", // 悬浮框
+    "__floatingToolbar", // 浮动工具栏
+    "__generalSettings", // 通用设置
+    "__formatAssistant", // 排版助手
+    "__htmlViewer", // HTML 展示
+    "__themeColor", // 主题色
+    "__bookmarkMarker", // 书签标记
+    "__scriptLauncher", // 脚本启动器
+    "__gitPush", // Git 推送
+    "__s3Backup", // S3 备份
+    "__textDiff", // 文本对比
+  ] as const
+
   onload() {
     setupIconifyOffline() // 预加载 mdi + ph 图标数据，确保断网可用
 
-    const frontEnd = getFrontend()
-    this.platform = frontEnd as SyFrontendTypes
-    this.isMobile = frontEnd === "mobile" || frontEnd === "browser-mobile"
-    this.isBrowser = frontEnd.includes("browser")
-    this.isLocal =
-      location.href.includes("127.0.0.1")
-      || location.href.includes("localhost")
-    this.isInWindow = location.href.includes("window.html")
-
-    try {
-      require("@electron/remote").require("@electron/remote/main")
-      this.isElectron = true
-    } catch (err) {
-      this.isElectron = false
-    }
-
     // 关键：初始化功能开关文件持久化目录（必须在 loadFeatureFlagsSync 之前）
     setFeatureFlagsDir((this as any).dataDir)
-
-    // 存储 dataDir 到实例上，供子模块通过 plugin 引用获取
-    ;(this as any).__pluginDataDir = (this as any).dataDir
 
     // 同步读取功能开关（优先从文件，跨重启可靠）
     // 因为 addDock() 必须在 onload 同步阶段完成，不能等异步 loadData
@@ -144,8 +121,10 @@ export default class PluginSample extends Plugin {
 
     init(this)
 
-    // 异步加载真实配置并更新
-    this.loadAndApplySettings()
+    // 异步加载真实配置并更新（失败时保持默认配置运行，仅记录日志）
+    this.loadAndApplySettings().catch((err) => {
+      console.error("[PluginSample] 异步加载配置失败，继续使用默认配置:", err)
+    })
   }
 
   /**
@@ -169,12 +148,16 @@ export default class PluginSample extends Plugin {
       },
     })
     // 主题色可能在异步加载后需要重新应用（scheme 已变）
-    if ((this as any).__themeColor) {
-      (this as any).__themeColor.destroy()
-    }
-    if (this.settings.enableThemeColor) {
-      (this as any).__themeColor = registerThemeColor(this, this.settings.themeColorScheme)
-    }
+    this.rebuildThemeColor()
+  }
+
+  /** 重建主题色实例：先销毁旧实例，再按 enableThemeColor 开关决定是否注册 */
+  private rebuildThemeColor() {
+    const existing = (this as any).__themeColor as { destroy: () => void } | undefined
+    existing?.destroy()
+    ;(this as any).__themeColor = this.settings.enableThemeColor
+      ? registerThemeColor(this, this.settings.themeColorScheme)
+      : undefined
   }
 
   onunload() {
@@ -183,78 +166,19 @@ export default class PluginSample extends Plugin {
     // 清除 Markdown 渲染器缓存
     clearRendererCache()
 
-    // 清理页面锁定资源（interval + 事件监听器）
-    if ((this as any).__pageLock) {
-      (this as any).__pageLock.destroy()
+    // 统一销毁各功能实例（新增功能只需将实例字段名加入 DESTROYABLE_KEYS）
+    for (const key of PluginSample.DESTROYABLE_KEYS) {
+      const instance = (this as any)[key] as { destroy?: () => void } | undefined
+      instance?.destroy?.()
     }
 
-    // 清理单词阅读资源
-    if ((this as any).__flashcardReading) {
-      (this as any).__flashcardReading.destroy()
-    }
-
-    // 清理悬浮框资源
-    if ((this as any).__floatingBox) {
-      (this as any).__floatingBox.destroy()
-    }
-
-    // 清理浮动工具栏资源
-    if (this.__floatingToolbar) {
-      this.__floatingToolbar.destroy()
-    }
-
-    // 清理通用设置资源
-    if ((this as any).__generalSettings) {
-      (this as any).__generalSettings.destroy()
-    }
-
-    // 清理排版助手资源
-    if ((this as any).__formatAssistant) {
-      (this as any).__formatAssistant.destroy()
-    }
-
-    // 清理HTML展示资源
-    if ((this as any).__htmlViewer) {
-      (this as any).__htmlViewer.destroy()
-    }
-
-    // 清理主题色
-    if ((this as any).__themeColor) {
-      (this as any).__themeColor.destroy()
-    }
-
-    // 清理书签标记
-    if ((this as any).__bookmarkMarker) {
-      (this as any).__bookmarkMarker.destroy()
-    }
-
-    // 清理脚本启动器资源
-    if ((this as any).__scriptLauncher) {
-      (this as any).__scriptLauncher.destroy()
-    }
-
-    // 清理 Git 推送资源
-    if ((this as any).__gitPush) {
-      (this as any).__gitPush.destroy()
-    }
-
-    // 清理统计数据资源
+    // 清理统计数据资源（模块级单例，不挂在 plugin 实例上）
     getStatisticsInstance()?.destroy()
 
-    // 清理工具合集资源
+    // 清理工具合集资源（无 destroy 方法，需单独卸载 Vue app + 移除容器）
     if ((this as any).__toolCollection) {
       ;(this as any).__toolCollection.app.unmount()
       ;(this as any).__toolCollection.container.remove()
-    }
-
-    // 清理 S3 备份资源
-    if ((this as any).__s3Backup) {
-      ;(this as any).__s3Backup.destroy()
-    }
-
-    // 清理文本对比资源
-    if ((this as any).__textDiff) {
-      ;(this as any).__textDiff.destroy()
     }
 
     // 清理状态栏资源
@@ -271,6 +195,7 @@ export default class PluginSample extends Plugin {
   private registerFeatures() {
     const s = this.settings
 
+    // superPanel 是设置中枢（功能开关的管理入口），不受开关控制，始终注册
     registerSuperPanel(this)
 
     if (s.enablePageLock) (this as any).__pageLock = registerPageLock(this)
@@ -301,9 +226,7 @@ export default class PluginSample extends Plugin {
     if (s.enableHtmlViewer) registerHtmlViewer(this)
     if (s.enableResourceManager) registerResourceManager(this)
     if (s.enableRssReader) registerRssReader(this)
-    if (s.enableThemeColor) {
-      (this as any).__themeColor = registerThemeColor(this, s.themeColorScheme)
-    }
+    this.rebuildThemeColor() // 主题色（方法内部检查 enableThemeColor 开关）
     if (s.enableBookmarkMarker) {
       ;(this as any).__bookmarkMarker = registerBookmarkMarker(this)
     }

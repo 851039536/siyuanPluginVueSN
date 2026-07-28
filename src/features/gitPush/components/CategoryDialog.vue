@@ -9,7 +9,7 @@
   >
     <div
       class="gp-dialog"
-      style="width: 340px;"
+      style="width: 540px;"
     >
       <div class="gp-dialog-header">
         <!-- 弹窗标题：“管理分类” -->

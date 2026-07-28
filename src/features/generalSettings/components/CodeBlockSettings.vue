@@ -407,9 +407,16 @@ function debouncedApplyEnhanced(s: CodeBlockSettings) {
 }
 
 // ── Watch ──
+/** 加载赋值触发的首次 watch 跳过标记，避免刚加载的数据被原样回写与重复应用样式 */
+let skipWatchOnce = false
+
 watch(
   settings,
   (newSettings) => {
+    if (skipWatchOnce) {
+      skipWatchOnce = false
+      return
+    }
     emit("change", newSettings)
     // 风格切换 / 折叠开关：轻量操作，立即执行
     applyCodeBlockStyle(newSettings.style)
@@ -441,6 +448,7 @@ async function loadSettings() {
 
   try {
     const loadedSettings = await storage.value!.codeblock.loadOrDefault()
+    skipWatchOnce = true
     settings.value = {
       ...DEFAULT_CODEBLOCK_SETTINGS,
       ...loadedSettings,
@@ -460,12 +468,6 @@ onMounted(async () => {
     storage.value = new GeneralSettingsStorage(props.plugin)
   }
   await loadSettings()
-})
-
-// ── 暴露 ──
-defineExpose({
-  loadSettings,
-  settings,
 })
 </script>
 

@@ -195,7 +195,7 @@
 <script setup lang="ts">
 import type { IconKey } from "@/config/icons"
 import type { SelectOption } from "@/components/Select.vue"
-import { Plugin } from "siyuan"
+import type { Plugin } from "siyuan"
 import {
   computed,
   nextTick,

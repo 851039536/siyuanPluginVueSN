@@ -348,9 +348,16 @@ function debouncedSave(s: HeadingSettings) {
 }
 
 // ── Watch：单一数据流，change 事件透传完整设置给父级应用 ──
+/** 加载赋值触发的首次 watch 跳过标记，避免刚加载的数据被原样回写 */
+let skipWatchOnce = false
+
 watch(
   settings,
   (s) => {
+    if (skipWatchOnce) {
+      skipWatchOnce = false
+      return
+    }
     emit("change", { ...s })
     debouncedSave(s)
   },
@@ -366,6 +373,7 @@ async function loadSettings() {
 
   try {
     const loaded = await storage.value.loadHeadingOrDefault()
+    skipWatchOnce = true
     settings.value = {
       colors: { ...DEFAULT_HEADING_SETTINGS.colors, ...loaded.colors },
       fontSizes: { ...DEFAULT_HEADING_SETTINGS.fontSizes, ...loaded.fontSizes },
@@ -388,12 +396,6 @@ onMounted(async () => {
     storage.value = new GeneralSettingsStorage(props.plugin)
   }
   await loadSettings()
-})
-
-// ── 暴露 ──
-defineExpose({
-  loadSettings,
-  settings,
 })
 </script>
 

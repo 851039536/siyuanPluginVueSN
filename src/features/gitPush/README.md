@@ -35,7 +35,7 @@ src/features/gitPush/
 │   └── CommitMsgGenerator.ts        # AI 提交信息与 stash 描述生成（含启发式降级）
 ├── types/
 │   ├── index.ts                     # 类型桶（重导出 meta/storage + GitPushManager）
-│   ├── meta.ts                      # PLATFORM_META/STATUS_META 等共享常量（独立模块切断循环引用）
+│   ├── meta.ts                      # PLATFORM_META/FILE_STATUS_META 等共享常量（独立模块切断循环引用）
 │   └── storage.ts                   # 类型定义 + TypedStorage 持久化
 ├── composables/
 │   ├── useGitPush.ts                # Vue 3 响应式状态层（聚合入口）
@@ -108,7 +108,6 @@ GitPushManager (facade)
 
 - `PLATFORM_META`：远程平台元数据（GitHub/Gitee/Gitea 单个数据源），供 index.vue / StatsPanel / useGitPush 共用
 - `COMMIT_TYPE_VALUES`：Conventional Commit 类型数组，单一数据源
-- `PROJECT_STATUS_VALUES`：项目状态循环顺序（`active → maintenance → paused`）
 
 ## 使用
 

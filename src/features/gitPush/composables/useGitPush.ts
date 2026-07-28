@@ -42,7 +42,6 @@ export function useGitPush(manager: GitPushManager) {
     removeProject,
     updateProjectMeta: projectCrud.updateProjectMeta,
     toggleStar: projectCrud.toggleStar,
-    setProjectStatus: projectCrud.setProjectStatus,
     appendTag: projectCrud.appendTag,
     removeTag: projectCrud.removeTag,
     refreshRemotes: projectCrud.refreshRemotes,

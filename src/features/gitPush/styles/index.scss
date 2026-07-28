@@ -1119,21 +1119,6 @@
   }
 }
 
-.gp-project-status-btn {
-  display: inline-flex;
-  align-items: center;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  transition: transform 0.1s;
-
-  &:hover { transform: scale(1.2); }
-
-  &.gp-psb-active { color: var(--b3-theme-success); }
-  &.gp-psb-maintenance { color: var(--b3-theme-primary); }
-  &.gp-psb-paused { color: var(--b3-theme-on-surface); opacity: 0.4; }
-}
 
 .gp-archived-tag {
   display: inline-flex;

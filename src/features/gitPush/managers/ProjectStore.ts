@@ -4,7 +4,6 @@ import type {
   GitRemoteInfo,
   ProjectCategory,
   ProjectPathExtras,
-  ProjectStatus,
 } from "../types/storage"
 import { UNGROUPED_ID } from "../types/storage"
 import type { GitPushStorage } from "../types/storage"
@@ -77,7 +76,6 @@ export class ProjectStore {
       categoryId,
       addedAt: Date.now(),
       tags: tags && tags.length > 0 ? tags : undefined,
-      status: "active",
       archived: false,
       starred: false,
       localPaths: extras?.localPaths?.length ? extras.localPaths : undefined,
@@ -108,7 +106,7 @@ export class ProjectStore {
   /**
    * 更新项目元信息
    */
-  async updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "path" | "tags" | "starred" | "status" | "archived" | "note" | "name" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl" | "localPaths" | "pathDevices">>): Promise<GitProject | null> {
+  async updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "path" | "tags" | "starred" | "archived" | "note" | "name" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl" | "localPaths" | "pathDevices">>): Promise<GitProject | null> {
     const projects = await this.getProjects()
     const project = projects.find((p) => p.id === id)
     if (!project) return null
@@ -128,11 +126,6 @@ export class ProjectStore {
     await this.storage.projects.save(projects)
     this.invalidateProjectCache()
     return project
-  }
-
-  /** 设置项目状态徽章 */
-  async setProjectStatus(id: string, status: ProjectStatus): Promise<GitProject | null> {
-    return this.updateProjectMeta(id, { status })
   }
 
   /** 添加标签（去重） */

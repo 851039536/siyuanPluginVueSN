@@ -38,18 +38,6 @@
             v-if="seg.hit"
             class="gp-hl"
           >{{ seg.text }}</span><template v-else>{{ seg.text }}</template></template></span>
-          <!-- 状态徽章 -->
-          <button
-            class="gp-project-status-btn"
-            :class="`gp-psb-${project.status || 'active'}`"
-            :title="i18n.statusTitle.replace('{0}', statusMeta[project.status || 'active'].label)"
-            @click.stop="$emit('cycleStatus', project.id, project.status)"
-          >
-            <Icon
-              :icon="statusMeta[project.status || 'active'].icon"
-              height="12"
-            />
-          </button>
           <span
             v-if="project.archived"
             class="gp-archived-tag"
@@ -677,7 +665,6 @@ import type {
   GitProject,
   PlatformKey,
   ProjectCategory,
-  ProjectStatus,
   PushStatusInfo,
   StashEntry,
   TagInfo,
@@ -688,7 +675,6 @@ import { computed, onBeforeUnmount, ref, watch } from "vue"
 import {
   PLATFORM_META,
   REMOTES,
-  STATUS_META,
 } from "../types"
 import { highlightSegments } from "../utils"
 import type { MdFileEntry } from "../composables/useMarkdownFiles"
@@ -709,7 +695,6 @@ const props = defineProps<{
   categories: ProjectCategory[]
   platformMeta: typeof PLATFORM_META
   remotes: typeof REMOTES
-  statusMeta: typeof STATUS_META
   detectedIdes: { name: string, icon: string, path?: string }[]
   customIdes: { name: string, path: string }[]
   // 编辑状态
@@ -768,7 +753,6 @@ const props = defineProps<{
 // ── Events ──
 const emit = defineEmits<{
   "toggleStar": [id: string]
-  "cycleStatus": [id: string, status: ProjectStatus | undefined]
   "startNameEdit": [project: GitProject]
   "nameEditSave": [project: GitProject]
   "toggleTagFilter": [tag: string]

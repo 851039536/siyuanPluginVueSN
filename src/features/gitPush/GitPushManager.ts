@@ -8,6 +8,7 @@ import type {
   GitProject,
   GitRemoteInfo,
   ProjectCategory,
+  ProjectPathExtras,
   ProjectStatus,
   PushStatusInfo,
   ScannedGitRepo,
@@ -90,8 +91,8 @@ export class GitPushManager {
 
   invalidateProjectCache(): void { return this.store.invalidateProjectCache() }
 
-  async addProject(name: string, path: string, categoryId?: string, tags?: string[]): Promise<GitProject> {
-    return this.store.addProject(name, path, categoryId, tags)
+  async addProject(name: string, path: string, categoryId?: string, tags?: string[], extras?: ProjectPathExtras): Promise<GitProject> {
+    return this.store.addProject(name, path, categoryId, tags, extras)
   }
 
   async removeProject(id: string): Promise<void> { return this.store.removeProject(id) }

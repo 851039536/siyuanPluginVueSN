@@ -3,12 +3,13 @@ import type {
   GitProject,
   GitRemoteInfo,
   ProjectCategory,
+  ProjectPathExtras,
   ProjectStatus,
 } from "../types/storage"
 import { UNGROUPED_ID } from "../types/storage"
 import type { GitPushStorage } from "../types/storage"
 import type { GitExecutor } from "./GitExecutor"
-import { resolveValidPath } from "../utils"
+import { getCurrentDeviceName, resolveValidPath } from "../utils"
 
 /** 递增计数器（与时间戳组合成唯一 ID，避免同毫秒碰撞） */
 let idCounter = 0
@@ -60,9 +61,15 @@ export class ProjectStore {
   /**
    * 添加项目映射
    */
-  async addProject(name: string, path: string, categoryId = UNGROUPED_ID, tags?: string[]): Promise<GitProject> {
+  async addProject(name: string, path: string, categoryId = UNGROUPED_ID, tags?: string[], extras?: ProjectPathExtras): Promise<GitProject> {
     const projects = await this.getProjects()
     idCounter++
+    // 主路径无设备标注时自动补当前电脑名（与编辑弹窗新增路径行为对称）
+    const pathDevices = { ...(extras?.pathDevices || {}) }
+    if (!pathDevices[path]) {
+      const device = getCurrentDeviceName()
+      if (device) { pathDevices[path] = device }
+    }
     const project: GitProject = {
       id: `${Date.now().toString(36)}-${idCounter}`,
       name,
@@ -73,6 +80,8 @@ export class ProjectStore {
       status: "active",
       archived: false,
       starred: false,
+      localPaths: extras?.localPaths?.length ? extras.localPaths : undefined,
+      pathDevices: Object.keys(pathDevices).length > 0 ? pathDevices : undefined,
     }
     this.applyRemotesToProject(project, await this.detectRemotes(path))
     projects.push(project)

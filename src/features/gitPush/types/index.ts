@@ -15,6 +15,7 @@ export type {
   GitProject,
   GitRemoteInfo,
   ProjectCategory,
+  ProjectPathExtras,
   ProjectStatus,
   PushStatusInfo,
   RemotePushStatus,

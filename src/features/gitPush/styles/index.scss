@@ -394,20 +394,20 @@
   display: flex;
   flex-direction: column;
   gap: $spacing-1;
-  margin-bottom: 4px;
+  margin-bottom: $spacing-1;
 }
 
 .gp-ide-mgmt-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 0;
+  gap: $spacing-1;
+  padding: $spacing-1 0;
 }
 
 .gp-ide-mgmt-name {
   font-weight: $font-weight-semibold;
   font-size: $font-size-xs;
-  min-width: 100px;
+  min-width: 100px; // 预设名称列最小宽度，保证各行路径列左对齐
 }
 
 .gp-ide-mgmt-path {
@@ -422,12 +422,17 @@
   opacity: 0.4;
   font-style: italic;
   text-align: center;
-  padding: 12px 0 6px;
+  padding: $spacing-3 0 $spacing-1;
 }
 
 .gp-ide-mgmt-add {
   display: flex;
-  gap: 6px;
+  gap: $spacing-1;
+}
+
+// 预设 IDE 下拉（固定窄宽，容纳最长预设名，路径输入占满剩余）
+.gp-ide-preset-select {
+  width: 150px;
 }
 
 // .gp-btn-danger 已移入 styles/Buttons.scss
@@ -989,6 +994,11 @@
 // 项目编辑弹窗：加宽以容纳多设备路径行与远程列表
 .gp-dialog--edit {
   width: 754px;
+}
+
+// IDE 管理弹窗：容纳预设下拉 + 路径输入 + 操作按钮单行布局
+.gp-dialog--ide {
+  width: 460px;
 }
 
 // 扫描按钮行：居中放置"开始扫描"按钮

@@ -5,14 +5,12 @@
 export interface FloatingToolChild {
   id: string
   label: string
-  title: string
   action: () => void
 }
 
 export interface FloatingTool {
   id: string
   label: string
-  title: string
   icon: string
   bgColor: string
   action: () => void

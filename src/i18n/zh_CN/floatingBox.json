@@ -5,22 +5,14 @@
     "enable": "启用悬浮工具箱",
     "enableDesc": "在屏幕右侧显示悬浮工具箱，包含超级面板、时间戳等快捷工具",
     "superPanel": "超级面板",
-    "superPanelTitle": "打开超级面板",
     "refresh": "刷新",
-    "refreshTitle": "刷新界面",
     "textDiff": "文本对比",
-    "textDiffTitle": "打开文本对比工具",
     "prompts": "提示词库",
-    "promptsTitle": "打开提示词库",
     "passwordVault": "密码箱",
-    "passwordVaultTitle": "打开密码箱",
     "flashcardReading": "单词阅读",
-    "flashcardReadingTitle": "打开单词阅读",
     "refreshFiletree": "文件树",
-    "refreshFiletreeTitle": "重载文件树",
     "refreshFiletreeDone": "文件树已刷新",
     "refreshTag": "标签树",
-    "refreshTagTitle": "重载标签树",
     "refreshTagDone": "标签树已刷新"
   }
 }

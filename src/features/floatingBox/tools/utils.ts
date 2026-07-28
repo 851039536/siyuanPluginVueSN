@@ -12,7 +12,7 @@ export function getFloatingBoxI18n(plugin: Plugin): Record<string, string> {
 }
 
 export interface EventDispatchToolConfig {
-  /** 工具唯一标识，同时作为 i18n 键前缀（label 取 id，title 取 `${id}Title`） */
+  /** 工具唯一标识，同时作为 i18n 键（label 取 id） */
   id: string
   /** Iconify 图标名 */
   icon: string
@@ -33,7 +33,6 @@ export function createEventDispatchTool(
   return {
     id: config.id,
     label: i18n[config.id],
-    title: i18n[`${config.id}Title`],
     icon: config.icon,
     bgColor: config.bgColor,
     action: () => {

@@ -29,7 +29,6 @@ import {
   applyDocumentFontStyles,
   generateLevelDisplayCss,
   generateTabPinCSS,
-  HEADING_LEVEL_MAPPINGS,
 } from "./utils/styles"
 
 export class GeneralSettings {

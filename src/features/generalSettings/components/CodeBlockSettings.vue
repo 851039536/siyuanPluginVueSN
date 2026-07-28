@@ -1,18 +1,16 @@
+<!-- 代码块样式增强设置面板：风格选择 + 背景/边框/阴影/字体/颜色/折叠等高级配置 -->
 <template>
   <div class="codeblock-settings">
     <div class="settings-container">
       <!-- 启用代码块样式增强 -->
       <div class="setting-row">
         <div class="setting-item">
-          <label class="setting-label">
-            <span class="label-icon">
-              <IconWrapper
-                name="codeBlockEnable"
-                :size="14"
-              />
-            </span>
-            {{ i18n.enableCodeBlockStyle || '启用代码块样式增强' }}
-          </label>
+          <!-- 标签："启用代码块样式增强" -->
+          <SettingLabel
+            icon="codeBlockEnable"
+            :text="i18n.enableCodeBlockStyle"
+          />
+          <!-- 开关 + 状态描述："已启用"/"已禁用" -->
           <div class="toggle-container">
             <label class="toggle-switch">
               <input
@@ -23,7 +21,7 @@
               <span class="toggle-slider"></span>
             </label>
             <span class="toggle-description">
-              {{ settings.enabled ? (i18n.enabled || '已启用') : (i18n.disabled || '已禁用') }}
+              {{ settings.enabled ? i18n.enabled : i18n.disabled }}
             </span>
           </div>
         </div>
@@ -35,19 +33,15 @@
         class="setting-row"
       >
         <div class="setting-item">
-          <label class="setting-label">
-            <span class="label-icon">
-              <IconWrapper
-                name="codeBlockStyle"
-                :size="14"
-              />
-            </span>
-            {{ i18n.codeBlockStyle || '代码块风格' }}
-          </label>
+          <!-- 标签："代码块风格" -->
+          <SettingLabel
+            icon="codeBlockStyle"
+            :text="i18n.codeBlockStyle"
+          />
           <!-- 风格卡片选择器 -->
           <div class="style-cards">
             <div
-              v-for="style in STYLE_OPTIONS"
+              v-for="style in CODEBLOCK_STYLES"
               :key="style"
               class="style-card"
               :class="{ active: settings.style === style }"
@@ -65,11 +59,15 @@
               <div class="style-card-desc">
                 {{ styleDescMap[style] }}
               </div>
+              <!-- 选中标记 -->
               <div
                 v-if="settings.style === style"
                 class="style-card-check"
               >
-                ✓
+                <IconWrapper
+                  name="check"
+                  :size="10"
+                />
               </div>
             </div>
           </div>
@@ -80,6 +78,7 @@
         v-if="settings.enabled"
         class="advanced-settings"
       >
+        <!-- 区块标题："高级设置" -->
         <div class="setting-header">
           <span class="label-icon">
             <IconWrapper
@@ -87,153 +86,77 @@
               :size="14"
             />
           </span>
-          <span>{{ i18n.advancedSettings || '高级设置' }}</span>
+          <span>{{ i18n.advancedSettings }}</span>
         </div>
 
         <!-- 背景色 -->
         <div class="setting-item">
-          <label class="setting-label">
-            <span class="label-icon">
-              <IconWrapper
-                name="codeBlockBackground"
-                :size="14"
-              />
-            </span>
-            {{ i18n.codeBlockBackground || '背景色' }}
-            <span class="setting-value">{{ Math.round(settings.backgroundColorOpacity * 100) }}%</span>
-          </label>
-          <div class="color-picker-container">
-            <input
-              v-model="settings.backgroundColor"
-              type="color"
-              class="color-picker"
-            />
-            <input
-              v-model="settings.backgroundColor"
-              type="text"
-              class="color-input"
-              :placeholder="i18n.colorPlaceholder || '输入颜色值'"
-            />
-          </div>
-          <div class="slider-container small">
-            <button
-              class="slider-btn"
-              @click="adjustOpacity(-0.1)"
-            >
-              −
-            </button>
-            <input
-              :value="settings.backgroundColorOpacity"
-              type="range"
-              min="0.1"
-              max="1"
-              step="0.05"
-              class="range-slider"
-              @input="onOpacityInput"
-            />
-            <button
-              class="slider-btn"
-              @click="adjustOpacity(0.1)"
-            >
-              +
-            </button>
-            <span class="slider-value">{{ Math.round(settings.backgroundColorOpacity * 100) }}%</span>
-          </div>
+          <!-- 标签："背景色" + 当前透明度百分比 -->
+          <SettingLabel
+            icon="codeBlockBackground"
+            :text="i18n.codeBlockBackground"
+            :value="opacityPercent"
+          />
+          <ColorField
+            v-model="settings.backgroundColor"
+            :placeholder="i18n.colorPlaceholder"
+          />
+          <!-- 背景透明度滑块 -->
+          <SettingSlider
+            v-model="settings.backgroundColorOpacity"
+            :min="0.1"
+            :max="1"
+            :step="0.05"
+            :button-step="0.1"
+            :format-value="formatPercent"
+          />
         </div>
 
         <!-- 边框设置 -->
         <div class="setting-item">
-          <label class="setting-label">
-            <span class="label-icon">
-              <IconWrapper
-                name="codeBlockBorder"
-                :size="14"
-              />
-            </span>
-            {{ i18n.codeBlockBorder || '边框设置' }}
-          </label>
+          <!-- 标签："边框设置" -->
+          <SettingLabel
+            icon="codeBlockBorder"
+            :text="i18n.codeBlockBorder"
+          />
           <div class="border-settings">
+            <!-- 边框颜色 -->
             <div class="border-row">
-              <label>{{ i18n.borderColor || '边框颜色' }}</label>
-              <div class="color-picker-container">
-                <input
-                  v-model="settings.borderColor"
-                  type="color"
-                  class="color-picker"
-                />
-                <input
-                  v-model="settings.borderColor"
-                  type="text"
-                  class="color-input"
-                />
-              </div>
+              <label>{{ i18n.borderColor }}</label>
+              <ColorField v-model="settings.borderColor" />
             </div>
+            <!-- 边框宽度 -->
             <div class="border-row">
-              <label>{{ i18n.borderWidth || '边框宽度' }}</label>
-              <div class="slider-container small">
-                <button
-                  class="slider-btn"
-                  @click="adjustValue('borderWidth', -0.5, 0, 5)"
-                >
-                  −
-                </button>
-                <input
-                  v-model.number="settings.borderWidth"
-                  type="range"
-                  min="0"
-                  max="5"
-                  step="0.5"
-                  class="range-slider"
-                />
-                <button
-                  class="slider-btn"
-                  @click="adjustValue('borderWidth', 0.5, 0, 5)"
-                >
-                  +
-                </button>
-                <span class="slider-value">{{ settings.borderWidth }}px</span>
-              </div>
+              <label>{{ i18n.borderWidth }}</label>
+              <SettingSlider
+                v-model="settings.borderWidth"
+                :min="0"
+                :max="5"
+                :step="0.5"
+                :format-value="formatPx"
+              />
             </div>
+            <!-- 圆角 -->
             <div class="border-row">
-              <label>{{ i18n.borderRadius || '圆角' }}</label>
-              <div class="slider-container small">
-                <button
-                  class="slider-btn"
-                  @click="adjustValue('borderRadius', -1, 0, 20)"
-                >
-                  −
-                </button>
-                <input
-                  v-model.number="settings.borderRadius"
-                  type="range"
-                  min="0"
-                  max="20"
-                  step="1"
-                  class="range-slider"
-                />
-                <button
-                  class="slider-btn"
-                  @click="adjustValue('borderRadius', 1, 0, 20)"
-                >
-                  +
-                </button>
-                <span class="slider-value">{{ settings.borderRadius }}px</span>
-              </div>
+              <label>{{ i18n.borderRadius }}</label>
+              <SettingSlider
+                v-model="settings.borderRadius"
+                :min="0"
+                :max="20"
+                :step="1"
+                :format-value="formatPx"
+              />
             </div>
           </div>
         </div>
 
         <!-- 阴影 -->
         <div class="setting-item">
-          <label class="setting-label">
-            <span class="label-icon">
-              <IconWrapper
-                name="codeBlockShadow"
-                :size="14"
-              />
-            </span>
-            {{ i18n.codeBlockShadow || '阴影' }}
-          </label>
+          <!-- 标签："阴影" -->
+          <SettingLabel
+            icon="codeBlockShadow"
+            :text="i18n.codeBlockShadow"
+          />
           <div class="shadow-options">
             <button
               v-for="shadow in shadowOptions"
@@ -249,32 +172,30 @@
 
         <!-- 代码字体设置 -->
         <div class="setting-item">
-          <label class="setting-label">
-            <span class="label-icon">
-              <IconWrapper
-                name="codeBlockFont"
-                :size="14"
-              />
-            </span>
-            {{ i18n.codeFontSettings || '代码字体' }}
-          </label>
+          <!-- 标签："代码字体" -->
+          <SettingLabel
+            icon="codeBlockFont"
+            :text="i18n.codeFontSettings"
+          />
           <div class="font-settings">
+            <!-- 字体族 -->
             <div class="font-row">
-              <label>{{ i18n.fontFamily || '字体族' }}</label>
+              <label>{{ i18n.fontFamily }}</label>
               <div class="input-group">
                 <input
                   v-model="settings.codeFontFamily"
                   type="text"
                   class="text-input font-input"
-                  :placeholder="i18n.fontFamilyPlaceholder || '输入字体名称'"
+                  :placeholder="i18n.fontFamilyPlaceholder"
                 />
                 <select
                   v-model="presetCodeFont"
                   class="font-select"
                   @change="applyPresetCodeFont"
                 >
+                  <!-- 占位项："选择字体" -->
                   <option value="">
-                    {{ i18n.selectFont || '选择字体' }}
+                    {{ i18n.selectFont }}
                   </option>
                   <option
                     v-for="f in presetFonts"
@@ -286,106 +207,57 @@
                 </select>
               </div>
             </div>
+            <!-- 字体大小 -->
             <div class="font-row">
-              <label>{{ i18n.fontSize || '字体大小' }}</label>
-              <div class="slider-container small">
-                <button
-                  class="slider-btn"
-                  @click="adjustValue('codeFontSize', -1, 10, 20)"
-                >
-                  −
-                </button>
-                <input
-                  v-model.number="settings.codeFontSize"
-                  type="range"
-                  min="10"
-                  max="20"
-                  step="1"
-                  class="range-slider"
-                />
-                <button
-                  class="slider-btn"
-                  @click="adjustValue('codeFontSize', 1, 10, 20)"
-                >
-                  +
-                </button>
-                <span class="slider-value">{{ settings.codeFontSize }}px</span>
-              </div>
+              <label>{{ i18n.fontSize }}</label>
+              <SettingSlider
+                v-model="settings.codeFontSize"
+                :min="10"
+                :max="20"
+                :step="1"
+                :format-value="formatPx"
+              />
             </div>
+            <!-- 行高 -->
             <div class="font-row">
-              <label>{{ i18n.lineHeight || '行高' }}</label>
-              <div class="slider-container small">
-                <button
-                  class="slider-btn"
-                  @click="adjustValue('codeLineHeight', -0.1, 1.2, 2.0)"
-                >
-                  −
-                </button>
-                <input
-                  v-model.number="settings.codeLineHeight"
-                  type="range"
-                  min="1.2"
-                  max="2.0"
-                  step="0.1"
-                  class="range-slider"
-                />
-                <button
-                  class="slider-btn"
-                  @click="adjustValue('codeLineHeight', 0.1, 1.2, 2.0)"
-                >
-                  +
-                </button>
-                <span class="slider-value">{{ settings.codeLineHeight }}</span>
-              </div>
+              <label>{{ i18n.lineHeight }}</label>
+              <SettingSlider
+                v-model="settings.codeLineHeight"
+                :min="1.2"
+                :max="2.0"
+                :step="0.1"
+              />
             </div>
           </div>
         </div>
 
         <!-- 代码颜色设置 -->
         <div class="setting-item">
-          <label class="setting-label">
-            <span class="label-icon">
-              <IconWrapper
-                name="codeBlockColor"
-                :size="14"
-              />
-            </span>
-            {{ i18n.codeColorSettings || '代码颜色' }}
-          </label>
+          <!-- 标签："代码颜色" -->
+          <SettingLabel
+            icon="codeBlockColor"
+            :text="i18n.codeColorSettings"
+          />
           <div class="color-settings">
             <div
-              v-for="colorField in colorFields"
-              :key="colorField.key"
+              v-for="key in colorFields"
+              :key="key"
               class="color-row"
             >
-              <label>{{ i18n[colorField.i18nKey] || colorField.label }}</label>
-              <div class="color-picker-container">
-                <input
-                  v-model="settings[colorField.key]"
-                  type="color"
-                  class="color-picker"
-                />
-                <input
-                  v-model="settings[colorField.key]"
-                  type="text"
-                  class="color-input"
-                />
-              </div>
+              <label>{{ i18n[key] }}</label>
+              <ColorField v-model="settings[key]" />
             </div>
           </div>
         </div>
 
         <!-- 代码块折叠设置 -->
         <div class="setting-item">
-          <label class="setting-label">
-            <span class="label-icon">
-              <IconWrapper
-                name="codeBlockCollapse"
-                :size="14"
-              />
-            </span>
-            {{ i18n.codeBlockCollapse || '代码块折叠' }}
-          </label>
+          <!-- 标签："代码块折叠" -->
+          <SettingLabel
+            icon="codeBlockCollapse"
+            :text="i18n.codeBlockCollapse"
+          />
+          <!-- 折叠开关 + 状态描述 -->
           <div class="toggle-container">
             <label class="toggle-switch">
               <input
@@ -396,7 +268,7 @@
               <span class="toggle-slider"></span>
             </label>
             <span class="toggle-description">
-              {{ settings.enableCollapse ? (i18n.collapseEnabled || '已启用') : (i18n.collapseDisabled || '已禁用') }}
+              {{ settings.enableCollapse ? i18n.collapseEnabled : i18n.collapseDisabled }}
             </span>
           </div>
         </div>
@@ -405,43 +277,23 @@
           v-if="settings.enableCollapse"
           class="setting-item"
         >
-          <label class="setting-label">
-            <span class="label-icon">
-              <IconWrapper
-                name="codeBlockHeight"
-                :size="14"
-              />
-            </span>
-            {{ i18n.collapseHeight || '折叠高度' }}
-            <span class="setting-value">{{ settings.collapseHeight }}px</span>
-          </label>
-          <div class="slider-container">
-            <div class="slider-row">
-              <button
-                class="slider-btn"
-                @click="adjustValue('collapseHeight', -50, 200, 800)"
-              >
-                −
-              </button>
-              <input
-                v-model.number="settings.collapseHeight"
-                type="range"
-                min="200"
-                max="800"
-                step="50"
-                class="range-slider"
-              />
-              <button
-                class="slider-btn"
-                @click="adjustValue('collapseHeight', 50, 200, 800)"
-              >
-                +
-              </button>
-            </div>
-            <div class="slider-labels">
-              <span>200px</span>
-              <span>800px</span>
-            </div>
+          <!-- 标签："折叠高度" + 当前值 -->
+          <SettingLabel
+            icon="codeBlockHeight"
+            :text="i18n.collapseHeight"
+            :value="`${settings.collapseHeight}px`"
+          />
+          <SettingSlider
+            v-model="settings.collapseHeight"
+            :min="200"
+            :max="800"
+            :step="50"
+            :show-value="false"
+          />
+          <!-- 区间刻度标签 -->
+          <div class="slider-labels">
+            <span>200px</span>
+            <span>800px</span>
           </div>
         </div>
       </div>
@@ -450,6 +302,7 @@
 </template>
 
 <script setup lang="ts">
+import type { Plugin } from "siyuan"
 import type { IconKey } from "@/config/icons"
 import type { CodeBlockSettings } from "@/features/generalSettings/types/storage"
 import {
@@ -467,7 +320,22 @@ import {
   applyCodeBlockCollapse,
   applyCodeBlockEnhancedStyles,
   applyCodeBlockStyle,
+  CODEBLOCK_STYLES,
 } from "../utils/styles"
+import ColorField from "./ColorField.vue"
+import SettingLabel from "./SettingLabel.vue"
+import SettingSlider from "./SettingSlider.vue"
+
+// ── Props & Emits ──
+interface Props {
+  i18n?: Record<string, string>
+  plugin?: Plugin | null
+  initialSettings?: CodeBlockSettings
+}
+
+interface Emits {
+  (e: "change", settings: CodeBlockSettings): void
+}
 
 const props = withDefaults(defineProps<Props>(), {
   i18n: () => ({}),
@@ -478,12 +346,10 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>()
 
 // ── 常量 ──
-const STYLE_OPTIONS: CodeBlockSettings["style"][] = ["default", "github", "mac"] as const
-
-const styleIcons: Record<string, IconKey> = {
-  default: "codeBlockDefault" as IconKey,
-  github: "codeBlockGithub" as IconKey,
-  mac: "codeBlockMac" as IconKey,
+const styleIcons: Record<CodeBlockSettings["style"], IconKey> = {
+  default: "codeBlockDefault",
+  github: "codeBlockGithub",
+  mac: "codeBlockMac",
 }
 
 const presetFonts = [
@@ -494,88 +360,47 @@ const presetFonts = [
   "Hack",
 ] as const
 
-// ── Props & Emits ──
-interface Props {
-  i18n?: Record<string, string>
-  plugin?: any
-  initialSettings?: CodeBlockSettings
-}
-
-interface Emits {
-  (e: "change", settings: CodeBlockSettings): void
-}
+/** 代码语法着色字段（键名与 i18n 键一致） */
+const colorFields = [
+  "textColor",
+  "keywordColor",
+  "stringColor",
+  "commentColor",
+  "functionColor",
+  "numberColor",
+] as const
 
 // ── 状态 ──
 const settings = ref<CodeBlockSettings>({ ...props.initialSettings })
 const presetCodeFont = ref("")
 const storage = ref<GeneralSettingsStorage | null>(null)
 
+// ── 值格式化 ──
+const formatPx = (v: number) => `${v}px`
+const formatPercent = (v: number) => `${Math.round(v * 100)}%`
+const opacityPercent = computed(() => formatPercent(settings.value.backgroundColorOpacity))
+
 // ── 预计算映射（避免 v-for 内重复构建 Record） ──
 const styleNameMap = computed<Record<string, string>>(() => ({
-  default: props.i18n.defaultStyle || "默认风格",
-  github: props.i18n.githubStyle || "GitHub 风格",
-  mac: props.i18n.macStyle || "Mac 风格",
+  default: props.i18n.defaultStyle,
+  github: props.i18n.githubStyle,
+  mac: props.i18n.macStyle,
 }))
 
 const styleDescMap = computed<Record<string, string>>(() => ({
-  default: props.i18n.defaultStyleDesc || "思源原生外观",
-  github: props.i18n.githubStyleDesc || "GitHub 深色代码块",
-  mac: props.i18n.macStyleDesc || "macOS 窗口样式",
+  default: props.i18n.defaultStyleDesc,
+  github: props.i18n.githubStyleDesc,
+  mac: props.i18n.macStyleDesc,
 }))
 
 const shadowOptions = computed(() => [
-  {
-    label: props.i18n.noneShadow || "无阴影",
-    value: "none",
-  },
-  {
-    label: props.i18n.lightShadow || "轻阴影",
-    value: "0 2px 8px rgba(0, 0, 0, 0.1)",
-  },
-  {
-    label: props.i18n.mediumShadow || "中阴影",
-    value: "0 4px 12px rgba(0, 0, 0, 0.15)",
-  },
-  {
-    label: props.i18n.heavyShadow || "重阴影",
-    value: "0 8px 24px rgba(0, 0, 0, 0.2)",
-  },
+  { label: props.i18n.noneShadow, value: "none" },
+  { label: props.i18n.lightShadow, value: "0 2px 8px rgba(0, 0, 0, 0.1)" },
+  { label: props.i18n.mediumShadow, value: "0 4px 12px rgba(0, 0, 0, 0.15)" },
+  { label: props.i18n.heavyShadow, value: "0 8px 24px rgba(0, 0, 0, 0.2)" },
 ])
 
-const colorFields = [
-  {
-    key: "textColor" as const,
-    i18nKey: "textColor",
-    label: "文本颜色",
-  },
-  {
-    key: "keywordColor" as const,
-    i18nKey: "keywordColor",
-    label: "关键字颜色",
-  },
-  {
-    key: "stringColor" as const,
-    i18nKey: "stringColor",
-    label: "字符串颜色",
-  },
-  {
-    key: "commentColor" as const,
-    i18nKey: "commentColor",
-    label: "注释颜色",
-  },
-  {
-    key: "functionColor" as const,
-    i18nKey: "functionColor",
-    label: "函数颜色",
-  },
-  {
-    key: "numberColor" as const,
-    i18nKey: "numberColor",
-    label: "数字颜色",
-  },
-]
-
-// ── 防抖 ──
+// ── 防抖：自动保存 ──
 let saveTimer: ReturnType<typeof setTimeout> | null = null
 function debouncedSave(s: CodeBlockSettings) {
   if (saveTimer) clearTimeout(saveTimer)
@@ -590,6 +415,7 @@ function debouncedSave(s: CodeBlockSettings) {
   }, 300)
 }
 
+// ── 防抖：视觉属性重建 <style> 开销大 ──
 let styleTimer: ReturnType<typeof setTimeout> | null = null
 function debouncedApplyEnhanced(s: CodeBlockSettings) {
   if (styleTimer) clearTimeout(styleTimer)
@@ -605,10 +431,7 @@ watch(
     emit("change", newSettings)
     // 风格切换 / 折叠开关：轻量操作，立即执行
     applyCodeBlockStyle(newSettings.style)
-    applyCodeBlockCollapse(
-      newSettings.enableCollapse,
-      newSettings.collapseHeight,
-    )
+    applyCodeBlockCollapse(newSettings.enableCollapse, newSettings.collapseHeight)
     // 视觉属性：重建 <style> 开销大，100ms 防抖
     debouncedApplyEnhanced(newSettings)
     debouncedSave(newSettings)
@@ -626,30 +449,6 @@ function applyPresetCodeFont() {
   }
 }
 
-function adjustValue(
-  key: keyof CodeBlockSettings,
-  delta: number,
-  min: number,
-  max: number,
-) {
-  const current = settings.value[key] as number
-  const clamped = Math.max(min, Math.min(max, current + delta))
-  if (clamped !== current) {
-    (settings.value as Record<string, unknown>)[key] = clamped
-  }
-}
-
-function adjustOpacity(delta: number) {
-  const clamped = Math.max(0.1, Math.min(1, +(settings.value.backgroundColorOpacity + delta).toFixed(2)))
-  if (clamped !== settings.value.backgroundColorOpacity) {
-    settings.value.backgroundColorOpacity = clamped
-  }
-}
-
-function onOpacityInput(e: Event) {
-  settings.value.backgroundColorOpacity = +(e.target as HTMLInputElement).value
-}
-
 // ── 加载保存的设置 ──
 async function loadSettings() {
   if (!props.plugin) {
@@ -665,10 +464,7 @@ async function loadSettings() {
       ...loadedSettings,
     }
     applyCodeBlockStyle(settings.value.style)
-    applyCodeBlockCollapse(
-      settings.value.enableCollapse,
-      settings.value.collapseHeight,
-    )
+    applyCodeBlockCollapse(settings.value.enableCollapse, settings.value.collapseHeight)
     applyCodeBlockEnhancedStyles(settings.value)
   } catch (error) {
     console.error("加载设置失败:", error)

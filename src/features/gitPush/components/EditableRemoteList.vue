@@ -1,0 +1,162 @@
+<!-- 通用可编辑远程列表（仓库链接 / Git 远程共用：行内编辑 + 添加 + 删除 + 错误提示） -->
+<template>
+  <div
+    v-if="rows.length"
+    class="gp-remote-list"
+  >
+    <div
+      v-for="row in rows"
+      :key="row.key"
+      class="gp-remote-row"
+    >
+      <Icon
+        v-if="row.icon"
+        :icon="row.icon"
+        height="12"
+      />
+      <span class="gp-remote-name">{{ row.name }}</span>
+      <template v-if="editKey === row.key">
+        <Input
+          v-model="editUrl"
+          size="xsmall"
+          class="gp-grow"
+          @keydown.enter="submitEdit(row.key)"
+          @keydown.escape="editKey = ''"
+        />
+        <!-- 按钮："保存" -->
+        <button
+          class="vp-btn vp-btn--primary vp-btn--sm"
+          @click="submitEdit(row.key)"
+        >
+          {{ i18n.save }}
+        </button>
+        <!-- 按钮："取消" -->
+        <button
+          class="vp-btn vp-btn--ghost vp-btn--sm"
+          @click="editKey = ''"
+        >
+          {{ i18n.cancel }}
+        </button>
+      </template>
+      <template v-else>
+        <span
+          class="gp-remote-url"
+          :title="row.url"
+        >{{ row.url }}</span>
+        <!-- 按钮："编辑" -->
+        <button
+          class="vp-btn vp-btn--ghost vp-btn--sm"
+          @click="editKey = row.key; editUrl = row.url"
+        >
+          {{ i18n.edit }}
+        </button>
+        <!-- 按钮："删除" -->
+        <button
+          class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
+          @click="onRemove(row.key)"
+        >
+          {{ i18n.delete }}
+        </button>
+      </template>
+    </div>
+  </div>
+  <!-- 空态提示（文案由父组件传入，如"暂无仓库链接"/"暂无远程仓库"） -->
+  <div
+    v-else
+    class="gp-remote-empty"
+  >
+    {{ emptyText }}
+  </div>
+  <!-- 添加行：可选平台配齐后隐藏 -->
+  <div
+    v-if="addOptions.length > 0"
+    class="gp-remote-add"
+  >
+    <Select
+      v-model="newKey"
+      size="xsmall"
+      class="gp-remote-platform"
+      :options="addOptions"
+      :placeholder="i18n.selectPlatform"
+    />
+    <Input
+      v-model="newUrl"
+      size="xsmall"
+      class="gp-grow"
+      :placeholder="urlPlaceholder"
+      @keydown.enter="submitAdd()"
+    />
+    <!-- 按钮："添加" -->
+    <button
+      class="vp-btn vp-btn--primary vp-btn--sm"
+      :disabled="!newKey || !newUrl.trim()"
+      @click="submitAdd"
+    >
+      {{ i18n.add }}
+    </button>
+  </div>
+  <!-- 操作错误提示 -->
+  <div
+    v-if="error"
+    class="gp-error gp-remote-error"
+  >
+    {{ error }}
+  </div>
+</template>
+
+<script setup lang="ts">
+import { Icon } from "@iconify/vue"
+import { ref, watch } from "vue"
+import Input from "@/components/Input.vue"
+import type { SelectOption } from "@/components/Select.vue"
+import Select from "@/components/Select.vue"
+
+/** 列表行：key 为唯一标识（平台 key / remote 名），name 为显示名，icon 可选 */
+export interface RemoteRowItem {
+  key: string
+  name: string
+  url: string
+  icon?: string
+}
+
+const props = defineProps<{
+  rows: RemoteRowItem[]
+  addOptions: SelectOption[]
+  emptyText: string
+  urlPlaceholder: string
+  error: string
+  i18n: Record<string, any>
+  /** 异步操作回调（camelCase 事件绑定，返回是否成功，成功后组件自行收敛输入态） */
+  onAdd: (key: string, url: string) => Promise<boolean>
+  onSaveEdit: (key: string, url: string) => Promise<boolean>
+  onRemove: (key: string) => Promise<boolean>
+}>()
+
+// ── 行内编辑 / 添加行状态（自包含，父组件不感知） ──
+const editKey = ref("")
+const editUrl = ref("")
+const newKey = ref("")
+const newUrl = ref("")
+
+// 当前选中项被占用/移除后自动切换到第一个可用选项（含首次初始化）
+watch(() => props.addOptions, (opts) => {
+  if (!opts.some((o) => o.value === newKey.value)) {
+    newKey.value = String(opts[0]?.value ?? "")
+  }
+}, { immediate: true })
+
+async function submitAdd() {
+  if (!newKey.value || !newUrl.value.trim()) { return }
+  // 成功才清空 URL 输入，失败保留以便修正后重试
+  if (await props.onAdd(newKey.value, newUrl.value.trim())) {
+    newUrl.value = ""
+  }
+}
+
+async function submitEdit(key: string) {
+  // 成功才退出编辑态，失败保留输入并展示错误
+  if (await props.onSaveEdit(key, editUrl.value)) {
+    editKey.value = ""
+  }
+}
+</script>

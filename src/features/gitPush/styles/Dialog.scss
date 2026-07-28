@@ -92,6 +92,11 @@
   &:hover { opacity: 0.8; }
 }
 
+// 帮助弹层头部的关闭按钮（推到最右侧）
+.gp-help-close {
+  margin-left: auto;
+}
+
 .gp-help-popover {
   position: absolute;
   bottom: 100%;

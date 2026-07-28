@@ -261,7 +261,9 @@ export class GitPushManager {
     return this.repoOps.setRemoteUrl(projectPath, name, url)
   }
 
-  async cloneRepo(parentDir: string, url: string): Promise<string> { return this.repoOps.cloneRepo(parentDir, url) }
+  async cloneRepo(parentDir: string, url: string, onOutput?: (chunk: string) => void): Promise<string> {
+    return this.repoOps.cloneRepo(parentDir, url, onOutput)
+  }
 
   async getGitGlobalConfig(): Promise<string> { return this.repoOps.getGitGlobalConfig() }
 

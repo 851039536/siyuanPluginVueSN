@@ -277,6 +277,8 @@
     "downloadRepo": "下载到本地（git clone）",
     "selectCloneDir": "选择克隆目标目录",
     "errCloneRepo": "克隆失败",
+    "cloneSuccess": "克隆完成：{0}",
+    "cloneLogTitle": "克隆日志",
     "helpLocalPaths": "本地路径（跨设备适配）\n为同一项目配置多台电脑上的本地路径。Git 操作时会按顺序检测，自动使用第一个存在的有效路径。例如：家里电脑路径 E:\\projects\\repo，公司电脑路径 D:\\work\\repo，无需手动切换。路径可随时编辑、删除、新增，至少保留一个。",
     "helpRepoLinks": "仓库链接（持久化存储）\n手动填写的远程仓库 URL（GitHub/Gitee/Gitea/CNB），通过思源插件存储 API 持久化保存到 workspace/data/storage/petal/ 目录。即使本地 .git/config 中没有配置 remote，URL 也不会丢失。使用思源同步（S3/WebDAV）后，换电脑可自动恢复所有链接。",
     "helpGitRemotes": "Git 远程仓库（自动检测）\n从当前有效本地路径的 .git/config 中通过 git remote -v 自动检测。系统会自动识别平台类型（GitHub/Gitee 等）并映射到对应字段。点击「编辑」可修改 URL，点击「删除」移除 remote 配置。修改会同时作用于本地 git 仓库和持久化数据。若当前电脑路径不存在，将显示「暂无远程仓库」。",

@@ -261,6 +261,17 @@ export const DEFAULT_TABPIN_SETTINGS: TabPinSettings = {
   backgroundColor: "rgba(var(--b3-theme-primary-rgb), 0.1)",
 }
 
+/** 默认表格样式设置 */
+export const DEFAULT_TABLE_STYLE_SETTINGS: TableStyleSettings = {
+  enabled: false,
+  cellBorderColor: "rgba(0, 0, 0, 0.171)",
+  headerBackground: "#e0ffd6",
+  oddRowBackground: "#ffffff",
+  evenRowBackground: "#f8f8f8",
+  textColor: "#000000",
+  borderRadius: 6,
+}
+
 /** 默认列表层级配色（有序 / 无序共享，6 个层级循环） */
 export const DEFAULT_LIST_COLORS: readonly string[] = [
   "#000000",

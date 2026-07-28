@@ -34,6 +34,7 @@ import {
   applyCodeBlockStyle,
   applyDocumentFontStyles,
   applyListStyleEnhancedCss,
+  applyTableStyleCss,
   generateLevelDisplayCss,
   generateTabPinCSS,
   TAB_PIN_STYLE_ID,
@@ -96,7 +97,7 @@ export class GeneralSettings {
     } else if (settings.moduleId === "documentFont") {
       applyDocumentFontStyles(settings.settings as unknown as DocumentFontSettings)
     } else if (settings.moduleId === "tableStyle") {
-      this.applyTableStyles(settings.settings as unknown as TableStyleSettings)
+      applyTableStyleCss(settings.settings as unknown as TableStyleSettings)
     } else if (settings.moduleId === "listStyle") {
       applyListStyleEnhancedCss(settings.settings as unknown as ListStyleSettings)
     } else if (settings.moduleId === "tabPin") {
@@ -238,46 +239,8 @@ export class GeneralSettings {
     try {
       const settings = await this.storage.tableStyle.load()
       if (settings) {
-        this.applyTableStyles(settings)
+        applyTableStyleCss(settings)
       }
-    } catch (error) {
-      console.error("应用表格样式失败:", error)
-    }
-  }
-
-  private applyTableStyles(tableSettings: TableStyleSettings) {
-    try {
-      if (!tableSettings.enabled) {
-        removeStyle("table-style-settings")
-        return
-      }
-
-      const css = `
-        .protyle-wysiwyg table {
-          border-collapse: collapse;
-          border-radius: ${tableSettings.borderRadius}px;
-          overflow: hidden;
-        }
-        .protyle-wysiwyg table th,
-        .protyle-wysiwyg table td {
-          border: 1px solid ${tableSettings.cellBorderColor};
-        }
-        .protyle-wysiwyg table th {
-          background-color: ${tableSettings.headerBackground};
-          color: ${tableSettings.textColor};
-        }
-        .protyle-wysiwyg table tr:nth-child(odd) {
-          background-color: ${tableSettings.oddRowBackground};
-        }
-        .protyle-wysiwyg table tr:nth-child(even) {
-          background-color: ${tableSettings.evenRowBackground};
-        }
-        .protyle-wysiwyg table td {
-          color: ${tableSettings.textColor};
-        }
-      `
-
-      injectStyle("table-style-settings", css)
     } catch (error) {
       console.error("应用表格样式失败:", error)
     }

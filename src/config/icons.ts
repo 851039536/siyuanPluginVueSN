@@ -410,6 +410,9 @@ export const COMMON_ICONS = {
   "folder-open-outline": {
     icon: "mdi:folder-open-outline",
   },
+  notebook: {
+    icon: "mdi:notebook-outline",
+  },
   loading: {
     icon: "mdi:loading",
   },

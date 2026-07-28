@@ -647,6 +647,18 @@ export function applyDocumentFontStyles(fontSettings: DocumentFontSettingsData):
 /** 钉住页签样式的 <style> 元素 id，组件与 GeneralSettings 共用同一注入点 */
 export const TAB_PIN_STYLE_ID = "tab-pin-settings-style"
 
+/** 钉住页签显示模式呈现层元数据（图标 + i18n 标签键），新增模式在此单点登记 */
+export interface TabPinModeMeta {
+  mode: TabPinSettings["displayMode"]
+  iconKey: IconKey
+  labelKey: string
+}
+
+export const TAB_PIN_MODE_META: TabPinModeMeta[] = [
+  { mode: "iconAndText", iconKey: "image", labelKey: "iconAndText" },
+  { mode: "textOnly", iconKey: "format", labelKey: "textOnly" },
+]
+
 export function generateTabPinCSS(settings: TabPinSettings): string {
   let css = `
     .layout-tab-bar .item.item--pin .item__text {

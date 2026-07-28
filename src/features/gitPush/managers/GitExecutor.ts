@@ -101,8 +101,9 @@ export class GitExecutor {
   /**
    * 执行 git 命令（双池信号量限流：网络命令与本地命令独立并发池）
    * @param signal 可选 AbortSignal，触发后 kill 子进程并清等待队列
+   * @param timeoutMs 子进程超时（默认 30 秒；clone 等长耗时操作可传更大值）
    */
-  async execGit(cwd: string, args: string[], signal?: AbortSignal): Promise<string> {
+  async execGit(cwd: string, args: string[], signal?: AbortSignal, timeoutMs = 30000): Promise<string> {
     const isNetwork = GitExecutor.NETWORK_COMMANDS.has(args[0])
 
     return new Promise<string>((resolve, reject) => {
@@ -124,7 +125,7 @@ export class GitExecutor {
 
         const child = cp.execFile(
           "git", args,
-          { cwd, timeout: 30000, encoding: "utf8", windowsHide: true },
+          { cwd, timeout: timeoutMs, encoding: "utf8", windowsHide: true },
           (error: any, stdout: string, stderr: string) => {
             if (isNetwork) {
               this.networkRunning--

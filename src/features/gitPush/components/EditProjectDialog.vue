@@ -135,6 +135,7 @@
             @add="upsertRepoLink"
             @saveEdit="upsertRepoLink"
             @remove="removeRepoLink"
+            @download="downloadRepoLink"
           />
         </div>
         <!-- Git 远程仓库区块（从 .git/config 自动检测，可编辑/增删） -->
@@ -242,8 +243,9 @@ import type { SelectOption } from "@/components/Select.vue"
 import Select from "@/components/Select.vue"
 import type { RemoteRowItem } from "./EditableRemoteList.vue"
 import EditableRemoteList from "./EditableRemoteList.vue"
-import { hasPlatformRemote, resolveValidPath } from "../utils"
+import { getCurrentDeviceName, hasPlatformRemote, resolveValidPath } from "../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
+import { pickDirectory } from "@/utils/electronDialog"
 import { usePathRows } from "../composables/usePathRows"
 
 
@@ -336,6 +338,34 @@ async function upsertRepoLink(platform: string, url: string): Promise<boolean> {
 
 async function removeRepoLink(platform: string): Promise<boolean> {
   return upsertRepoLink(platform, "")
+}
+
+/** 下载（克隆）仓库链接：选目录 → clone 到同名子目录 → 新路径追加到路径行并立即持久化 */
+async function downloadRepoLink(platform: string): Promise<boolean> {
+  const pl = PLATFORM_META.find((p) => p.key === platform)
+  const url = pl ? urlInputs[pl.urlProp] : ""
+  if (!url) { return false }
+  const dir = await pickDirectory(props.i18n.selectCloneDir)
+  if (!dir) { return false }
+  repoLinkError.value = ""
+  try {
+    const clonedPath = await props.manager.cloneRepo(dir, url)
+    allPathsList.value.push({ path: clonedPath, device: getCurrentDeviceName() })
+    // 立即持久化全部路径行（首行为主路径），并通知父组件刷新列表
+    const payload = pathsToPayload()
+    if (payload) {
+      await props.manager.updateProjectMeta(props.projectId, {
+        path: payload.path,
+        localPaths: payload.localPaths,
+        pathDevices: payload.pathDevices,
+      })
+    }
+    emit("urlsUpdated")
+    return true
+  } catch (e: unknown) {
+    repoLinkError.value = getErrorMessage(e) || props.i18n.errCloneRepo
+    return false
+  }
 }
 
 // ── Git 远程仓库（EditableRemoteList 数据源与操作回调）──

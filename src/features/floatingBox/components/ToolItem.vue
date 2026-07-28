@@ -3,7 +3,6 @@
   <div
     class="tool-item"
     :class="{ 'has-children': hasChildren }"
-    :title="tool.title"
     @click="handleClick"
   >
     <div
@@ -34,7 +33,6 @@
         v-for="child in tool.children"
         :key="child.id"
         class="submenu-item"
-        :title="child.title"
         @click.stop="handleChildClick(child)"
       >
         <span class="submenu-label">{{ child.label }}</span>

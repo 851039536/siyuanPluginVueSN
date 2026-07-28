@@ -28,7 +28,6 @@ function makeChildren(i18n: Record<string, string>): FloatingToolChild[] {
     {
       id: "refresh-filetree",
       label: i18n.refreshFiletree,
-      title: i18n.refreshFiletreeTitle,
       action: async () => {
         try {
           await reloadFiletree()
@@ -41,7 +40,6 @@ function makeChildren(i18n: Record<string, string>): FloatingToolChild[] {
     {
       id: "refresh-tag",
       label: i18n.refreshTag,
-      title: i18n.refreshTagTitle,
       action: async () => {
         try {
           await reloadTag()
@@ -59,7 +57,6 @@ export function createRefreshTool(plugin: Plugin): FloatingTool {
   return {
     id: "refresh",
     label: i18n.refresh,
-    title: i18n.refreshTitle,
     icon: "mdi:refresh",
     bgColor: "linear-gradient(135deg, #4ade80 0%, #16a34a 100%)",
     // 父级点击 = 完整刷新（最常用且移动端可用）；hover 展开子菜单选择文件树/标签树细粒度刷新

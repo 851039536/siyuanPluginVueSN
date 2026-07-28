@@ -1,6 +1,7 @@
 /**
  * 通用设置 - 样式工具函数
  */
+import type { IconKey } from "@/config/icons"
 import { emitCustomEvent } from "@/utils/eventBus"
 
 export const CODEBLOCK_STYLES = [
@@ -9,6 +10,20 @@ export const CODEBLOCK_STYLES = [
   "mac",
 ] as const
 export type CodeBlockStyle = (typeof CODEBLOCK_STYLES)[number]
+
+/** 代码块风格呈现层元数据（图标 + i18n 名称/描述键），新增风格在此单点登记 */
+export interface CodeBlockStyleMeta {
+  style: CodeBlockStyle
+  iconKey: IconKey
+  nameKey: string
+  descKey: string
+}
+
+export const CODEBLOCK_STYLE_META: CodeBlockStyleMeta[] = [
+  { style: "default", iconKey: "codeBlockDefault", nameKey: "defaultStyle", descKey: "defaultStyleDesc" },
+  { style: "github", iconKey: "codeBlockGithub", nameKey: "githubStyle", descKey: "githubStyleDesc" },
+  { style: "mac", iconKey: "codeBlockMac", nameKey: "macStyle", descKey: "macStyleDesc" },
+]
 
 export const HEADING_LEVEL_MAPPINGS: Record<string, string[]> = {
   number: ["1", "2", "3", "4", "5", "6"],

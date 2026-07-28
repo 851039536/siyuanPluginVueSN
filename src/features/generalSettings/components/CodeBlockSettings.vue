@@ -41,27 +41,29 @@
           <!-- 风格卡片选择器 -->
           <div class="style-cards">
             <div
-              v-for="style in CODEBLOCK_STYLES"
-              :key="style"
+              v-for="item in CODEBLOCK_STYLE_META"
+              :key="item.style"
               class="style-card"
-              :class="{ active: settings.style === style }"
-              @click="settings.style = style"
+              :class="{ active: settings.style === item.style }"
+              @click="settings.style = item.style"
             >
               <div class="style-card-icon">
                 <IconWrapper
-                  :name="styleIcons[style]"
+                  :name="item.iconKey"
                   :size="22"
                 />
               </div>
+              <!-- 风格名称：“默认风格 / GitHub 风格 / Mac 风格” -->
               <div class="style-card-name">
-                {{ styleNameMap[style] }}
+                {{ i18n[item.nameKey] }}
               </div>
+              <!-- 风格描述 -->
               <div class="style-card-desc">
-                {{ styleDescMap[style] }}
+                {{ i18n[item.descKey] }}
               </div>
               <!-- 选中标记 -->
               <div
-                v-if="settings.style === style"
+                v-if="settings.style === item.style"
                 class="style-card-check"
               >
                 <IconWrapper
@@ -303,7 +305,6 @@
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
-import type { IconKey } from "@/config/icons"
 import type { CodeBlockSettings } from "@/features/generalSettings/types/storage"
 import {
   computed,
@@ -320,7 +321,7 @@ import {
   applyCodeBlockCollapse,
   applyCodeBlockEnhancedStyles,
   applyCodeBlockStyle,
-  CODEBLOCK_STYLES,
+  CODEBLOCK_STYLE_META,
 } from "../utils/styles"
 import ColorField from "./ColorField.vue"
 import SettingLabel from "./SettingLabel.vue"
@@ -346,12 +347,6 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>()
 
 // ── 常量 ──
-const styleIcons: Record<CodeBlockSettings["style"], IconKey> = {
-  default: "codeBlockDefault",
-  github: "codeBlockGithub",
-  mac: "codeBlockMac",
-}
-
 const presetFonts = [
   "Consolas",
   "Courier New",
@@ -379,19 +374,6 @@ const storage = ref<GeneralSettingsStorage | null>(null)
 const formatPx = (v: number) => `${v}px`
 const formatPercent = (v: number) => `${Math.round(v * 100)}%`
 const opacityPercent = computed(() => formatPercent(settings.value.backgroundColorOpacity))
-
-// ── 预计算映射（避免 v-for 内重复构建 Record） ──
-const styleNameMap = computed<Record<string, string>>(() => ({
-  default: props.i18n.defaultStyle,
-  github: props.i18n.githubStyle,
-  mac: props.i18n.macStyle,
-}))
-
-const styleDescMap = computed<Record<string, string>>(() => ({
-  default: props.i18n.defaultStyleDesc,
-  github: props.i18n.githubStyleDesc,
-  mac: props.i18n.macStyleDesc,
-}))
 
 const shadowOptions = computed(() => [
   { label: props.i18n.noneShadow, value: "none" },

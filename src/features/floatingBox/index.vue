@@ -28,7 +28,6 @@
           v-for="tool in tools"
           :key="tool.id"
           :tool="tool"
-          :plugin="plugin"
         />
       </div>
     </Transition>
@@ -44,7 +43,7 @@ import { getToolsForPlatform } from "./tools/registry"
 import { useMobileDetection } from "./composables/useMobileDetection"
 
 const props = defineProps<{
-  plugin?: Plugin
+  plugin: Plugin
 }>()
 
 const { isMobile } = useMobileDetection()
@@ -52,7 +51,7 @@ const { isMobile } = useMobileDetection()
 const isExpanded = ref(false)
 
 const tools = computed(() =>
-  getToolsForPlatform(props.plugin as Plugin, isMobile.value),
+  getToolsForPlatform(props.plugin, isMobile.value),
 )
 
 const handleMouseEnter = () => {

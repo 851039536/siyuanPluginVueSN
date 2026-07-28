@@ -269,6 +269,16 @@ onMounted(() => {
 
 2. **完整设置**（`plugin-settings` 键，通过 `plugin.loadData/saveData`）：异步加载，在注册之后执行。敏感字段（`aiApiKeys`、`searchBochaApiKey`）在存储前使用嵌入的应用密钥进行 AES-GCM 加密。
 
+### 功能设置的加载起点（强制）
+
+带持久化设置的运行时功能，设置**必须在插件启动链路中加载并立即应用**。加载起点是功能的注册/初始化入口（如 `GeneralSettings.init()` 中的 `applyXxxStyle()`），而不是设置面板：
+
+1. **启动即加载**：初始化入口用 `TypedStorage.loadOrDefault()` 读取设置（默认值在 `types/storage.ts` 的 `DEFAULT_XXX_SETTINGS` 常量中注册），从未保存过设置时按默认值生效，与设置面板显示的默认状态保持一致。禁止用 `load()` 返回 null 就跳过——那会导致"必须打开设置面板动一次开关才生效"
+2. **DOM 就绪轮询**：启动阶段目标 DOM（如文件树 `ul[data-url]`）可能尚未渲染，Manager 首渲必须做有界轮询等待（如每 2 秒一次、上限 15 次），出现后立即渲染；禁止首渲扑空后依赖下一个定时器周期补渲，轮询定时器须在 `stop()` 中清理
+3. **设置面板只负责修改**：面板保存后通过 Manager 宿主的公开方法（如 `updateDocCount(settings)`）应用变更，不承担启动加载职责，也不得直接触碰 Manager 实例的私有字段
+
+参考实现：`GeneralSettings.applyDocCountStyle()` + `DocCountManager.renderWhenTreeReady()`。
+
 ---
 
 ## 持久化 Modal 模式

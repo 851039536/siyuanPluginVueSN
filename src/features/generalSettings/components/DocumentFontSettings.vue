@@ -1,324 +1,181 @@
+<!-- 文档字体设置面板：字体族/字号/行高/字间距/段落间距/字重 + 实时预览 -->
 <template>
   <div class="document-font-settings">
     <div class="settings-container">
-      <!-- 文档字体设置 -->
+      <!-- 标题与说明 -->
       <div class="setting-row">
         <div class="setting-item">
           <label class="setting-label">
             <IconWrapper
-              name="code"
-              :size="13"
+              name="format"
+              :size="14"
               class="label-icon"
             />
-            {{ i18n.documentFont || '文档字体设置' }}
+            <!-- 标题："文档字体设置" -->
+            {{ i18n.documentFont }}
           </label>
+          <!-- 描述："设置文档内容的字体、字号、行距等样式" -->
           <p class="setting-description">
-            {{ i18n.documentFontDesc || '设置文档内容的字体、字号、行距等样式' }}
+            {{ i18n.documentFontDesc }}
           </p>
         </div>
       </div>
 
-      <!-- 启用文档字体设置 -->
+      <!-- 启用开关 -->
       <div class="setting-row">
         <div class="setting-item">
           <label class="setting-label">
-            <IconWrapper
-              name="sparkles"
-              :size="13"
-              class="label-icon"
-            />
-            {{ i18n.enableDocumentFont || '启用文档字体设置' }}
+            <!-- 标签："启用文档字体设置" -->
+            {{ i18n.enableDocumentFont }}
           </label>
           <div class="toggle-container">
-            <label class="toggle-switch">
-              <input
-                v-model="settings.enabled"
-                type="checkbox"
-                class="toggle-input"
-              />
-              <span class="toggle-slider"></span>
-            </label>
+            <SiSwitch v-model="settings.enabled" />
+            <!-- 状态文案："已启用" / "已禁用" -->
             <span class="toggle-description">
-              {{ settings.enabled ? (i18n.enabled || '已启用') : (i18n.disabled || '已禁用') }}
+              {{ settings.enabled ? i18n.enabled : i18n.disabled }}
             </span>
           </div>
         </div>
       </div>
 
-      <!-- 字体族 -->
-      <div
-        v-if="settings.enabled"
-        class="setting-row"
-      >
-        <div class="setting-item">
-          <label class="setting-label">
-            <span class="label-icon">Aa</span>
-            {{ i18n.fontFamily || '字体族' }}
-          </label>
-          <div class="input-group">
-            <input
-              v-model="settings.fontFamily"
-              type="text"
-              class="text-input font-input"
-              :placeholder="i18n.fontFamilyPlaceholder || '输入字体名称，如: Microsoft YaHei, Arial'"
-              @input="applySettings"
-            />
-            <select
-              v-model="presetFont"
-              class="font-select"
-              @change="applyPresetFont"
-            >
-              <option value="">
-                {{ i18n.selectFont || '选择字体' }}
-              </option>
-              <option value="Microsoft YaHei">
-                微软雅黑
-              </option>
-              <option value="Microsoft YaHei Light">
-                微软雅黑 Light
-              </option>
-              <option value="Segoe UI">
-                Segoe UI
-              </option>
-              <option value="等线">
-                等线 (DengXian)
-              </option>
-              <option value="仿宋">
-                仿宋
-              </option>
-              <option value="华文细黑">
-                华文细黑
-              </option>
-              <option value="华文黑体">
-                华文黑体
-              </option>
-              <option value="华文楷体">
-                华文楷体
-              </option>
-              <option value="华文宋体">
-                华文宋体
-              </option>
-              <option value="黑体">
-                黑体
-              </option>
-              <option value="system-ui">
-                系统默认
-              </option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- 字体大小 -->
-      <div
-        v-if="settings.enabled"
-        class="setting-row"
-      >
-        <div class="setting-item">
-          <label class="setting-label">
-            <IconWrapper
-              name="formatSize"
-              :size="13"
-              class="label-icon"
-            />
-            {{ i18n.fontSize || '字体大小' }}
-            <span class="setting-value">{{ settings.fontSize }}px</span>
-          </label>
-          <div class="slider-container">
-            <input
-              v-model.number="settings.fontSize"
-              type="range"
-              min="10"
-              max="24"
-              step="1"
-              class="range-slider"
-              @input="applySettings"
-            />
-            <div class="slider-labels">
-              <span>10px</span>
-              <span>24px</span>
-            </div>
-          </div>
-          <div class="preset-buttons">
-            <button
-              v-for="size in presetFontSizes"
-              :key="size"
-              class="preset-btn"
-              :class="[{ active: settings.fontSize === size }]"
-              @click="setFontSize(size)"
-            >
-              {{ size }}px
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 行高 -->
-      <div
-        v-if="settings.enabled"
-        class="setting-row"
-      >
-        <div class="setting-item">
-          <label class="setting-label">
-            <IconWrapper
-              name="chevronDown"
-              :size="13"
-              class="label-icon"
-            />
-            {{ i18n.lineHeight || '行高' }}
-            <span class="setting-value">{{ settings.lineHeight }}</span>
-          </label>
-          <div class="slider-container">
-            <input
-              v-model.number="settings.lineHeight"
-              type="range"
-              min="1.2"
-              max="2.4"
-              step="0.1"
-              class="range-slider"
-              @input="applySettings"
-            />
-            <div class="slider-labels">
-              <span>1.2</span>
-              <span>2.4</span>
-            </div>
-          </div>
-          <div class="preset-buttons">
-            <button
-              v-for="lh in presetLineHeights"
-              :key="lh"
-              class="preset-btn"
-              :class="[{ active: Math.abs(settings.lineHeight - lh) < 0.01 }]"
-              @click="setLineHeight(lh)"
-            >
-              {{ lh }}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 字间距 -->
-      <div
-        v-if="settings.enabled"
-        class="setting-row"
-      >
-        <div class="setting-item">
-          <label class="setting-label">
-            <IconWrapper
-              name="chevronRight"
-              :size="13"
-              class="label-icon"
-            />
-            {{ i18n.letterSpacing || '字间距' }}
-            <span class="setting-value">{{ settings.letterSpacing }}px</span>
-          </label>
-          <div class="slider-container">
-            <input
-              v-model.number="settings.letterSpacing"
-              type="range"
-              min="0"
-              max="5"
-              step="0.5"
-              class="range-slider"
-              @input="applySettings"
-            />
-            <div class="slider-labels">
-              <span>0px</span>
-              <span>5px</span>
+      <template v-if="settings.enabled">
+        <!-- 字体族 -->
+        <div class="setting-row">
+          <div class="setting-item">
+            <label class="setting-label">
+              <IconWrapper
+                name="formatFont"
+                :size="13"
+                class="label-icon"
+              />
+              <!-- 标签："字体族" -->
+              {{ i18n.fontFamily }}
+            </label>
+            <div class="input-group">
+              <!-- 占位符："输入字体名称，如: Microsoft YaHei, Arial" -->
+              <input
+                v-model="settings.fontFamily"
+                type="text"
+                class="text-input font-input"
+                :placeholder="i18n.fontFamilyPlaceholder"
+              />
+              <!-- 占位符："选择字体" -->
+              <SiSelect
+                v-model="presetFont"
+                class="font-select"
+                :options="PRESET_FONTS"
+                size="small"
+                :placeholder="i18n.selectFont"
+                @change="applyPresetFont"
+              />
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- 段落间距 -->
-      <div
-        v-if="settings.enabled"
-        class="setting-row"
-      >
-        <div class="setting-item">
-          <label class="setting-label">
-            <span class="label-icon">¶</span>
-            {{ i18n.paragraphSpacing || '段落间距' }}
-            <span class="setting-value">{{ settings.paragraphSpacing }}px</span>
-          </label>
-          <div class="slider-container">
-            <input
-              v-model.number="settings.paragraphSpacing"
-              type="range"
-              min="0"
-              max="30"
-              step="2"
-              class="range-slider"
-              @input="applySettings"
-            />
-            <div class="slider-labels">
-              <span>0px</span>
-              <span>30px</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 字重 -->
-      <div
-        v-if="settings.enabled"
-        class="setting-row"
-      >
-        <div class="setting-item">
-          <label class="setting-label">
-            <span class="label-icon">𝐁</span>
-            {{ i18n.fontWeight || '字体粗细' }}
-          </label>
-          <div class="font-weight-options">
-            <button
-              v-for="weight in fontWeights"
-              :key="weight.value"
-              class="weight-btn"
-              :class="[{ active: settings.fontWeight === weight.value }]"
-              @click="setFontWeight(weight.value)"
-            >
-              {{ weight.label }}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 预览区域 -->
-      <div
-        v-if="settings.enabled"
-        class="preview-section"
-      >
+        <!-- 数值滑块（字号/行高/字间距/段落间距，元数据驱动） -->
         <div
-          class="preview-toggle"
-          @click="togglePreview"
+          v-for="field in SLIDER_FIELDS"
+          :key="field.key"
+          class="setting-row"
         >
-          <IconWrapper
-            class="preview-icon"
-            :name="showPreview ? 'eye' : 'eyeOff'"
-          />
-          <span>{{ i18n.preview || '预览效果' }}</span>
-          <span
-            class="toggle-arrow"
-            :class="{ expanded: showPreview }"
-          >▼</span>
-        </div>
-        <transition name="preview-expand">
-          <div
-            v-show="showPreview"
-            class="preview-content"
-            :style="previewStyle"
-          >
-            <h2>示例标题</h2>
-            <p>这是一段示例文本,用于预览文档字体设置效果。The quick brown fox jumps over the lazy dog.</p>
-            <p>思源笔记是一款本地优先的个人知识管理系统,支持块级引用和双向链接。它可以帮助您构建个人知识图谱,让知识之间的关联更加清晰。</p>
-            <p>支持 Markdown 语法,让您专注于内容创作。丰富的功能特性,满足各种知识管理需求。</p>
+          <div class="setting-item">
+            <label class="setting-label">
+              <IconWrapper
+                :name="field.icon"
+                :size="13"
+                class="label-icon"
+              />
+              <!-- 标签："字体大小" / "行高" / "字间距" / "段落间距" -->
+              {{ i18n[field.labelKey] }}
+            </label>
+            <SettingSlider
+              v-model="settings[field.key]"
+              :min="field.min"
+              :max="field.max"
+              :step="field.step"
+              :format-value="(v: number) => `${v}${field.unit}`"
+            />
+            <div
+              v-if="field.presets"
+              class="preset-buttons"
+            >
+              <button
+                v-for="preset in field.presets"
+                :key="preset"
+                class="preset-btn"
+                :class="[{ active: Math.abs(settings[field.key] - preset) < 0.01 }]"
+                @click="settings[field.key] = preset"
+              >
+                {{ preset }}{{ field.unit }}
+              </button>
+            </div>
           </div>
-        </transition>
-      </div>
+        </div>
+
+        <!-- 字重 -->
+        <div class="setting-row">
+          <div class="setting-item">
+            <label class="setting-label">
+              <IconWrapper
+                name="formatBold"
+                :size="13"
+                class="label-icon"
+              />
+              <!-- 标签："字体粗细" -->
+              {{ i18n.fontWeight }}
+            </label>
+            <div class="font-weight-options">
+              <!-- 按钮："细体" / "正常" / "粗体" -->
+              <button
+                v-for="weight in FONT_WEIGHTS"
+                :key="weight.value"
+                class="weight-btn"
+                :class="[{ active: settings.fontWeight === weight.value }]"
+                @click="settings.fontWeight = weight.value"
+              >
+                {{ i18n[weight.labelKey] }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 预览区域 -->
+        <div class="preview-section">
+          <div
+            class="preview-toggle"
+            @click="showPreview = !showPreview"
+          >
+            <IconWrapper
+              class="preview-icon"
+              :name="showPreview ? 'eye' : 'eyeOff'"
+            />
+            <!-- 折叠标题："预览效果" -->
+            <span>{{ i18n.preview }}</span>
+            <span
+              class="toggle-arrow"
+              :class="{ expanded: showPreview }"
+            >▼</span>
+          </div>
+          <transition name="preview-expand">
+            <div
+              v-show="showPreview"
+              class="preview-content"
+              :style="previewStyle"
+            >
+              <!-- 预览示例："示例标题" + 三段示例文本 -->
+              <h2>{{ i18n.previewSampleTitle }}</h2>
+              <p>{{ i18n.previewSampleText1 }}</p>
+              <p>{{ i18n.previewSampleText2 }}</p>
+              <p>{{ i18n.previewSampleText3 }}</p>
+            </div>
+          </transition>
+        </div>
+      </template>
 
       <!-- 重置按钮 -->
       <div class="setting-row">
         <div class="setting-item">
+          <!-- 按钮："恢复默认设置" -->
           <button
             class="reset-btn"
             @click="resetSettings"
@@ -327,7 +184,7 @@
               class="btn-icon"
               name="refresh"
             />
-            {{ i18n.resetToDefault || '恢复默认设置' }}
+            {{ i18n.resetToDefault }}
           </button>
         </div>
       </div>
@@ -336,20 +193,29 @@
 </template>
 
 <script setup lang="ts">
+import type { IconKey } from "@/config/icons"
+import type { SelectOption } from "@/components/Select.vue"
 import { Plugin } from "siyuan"
 import {
   computed,
+  nextTick,
   onMounted,
   ref,
   watch,
 } from "vue"
 
 import IconWrapper from "@/components/IconWrapper.vue"
-import { DocumentFontSettings, GeneralSettingsStorage } from "../types/storage"
-import { applyDocumentFontStyles } from "../utils/styles"
+import SiSelect from "@/components/Select.vue"
+import SiSwitch from "@/components/Switch.vue"
+import {
+  DEFAULT_DOCUMENT_FONT_SETTINGS,
+  DocumentFontSettings,
+  GeneralSettingsStorage,
+} from "../types/storage"
+import SettingSlider from "./SettingSlider.vue"
 
 interface Props {
-  i18n?: any
+  i18n?: Record<string, string>
   plugin?: Plugin
 }
 
@@ -364,37 +230,58 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
-const DEFAULT_SETTINGS: DocumentFontSettings = {
-  enabled: false,
-  fontFamily: "",
-  fontSize: 12,
-  lineHeight: 1.6,
-  letterSpacing: 0,
-  paragraphSpacing: 8,
-  fontWeight: "normal",
+/** 数值型设置字段（对应 SettingSlider 可绑定的键） */
+type NumericFontKey = "fontSize" | "lineHeight" | "letterSpacing" | "paragraphSpacing"
+
+interface SliderField {
+  key: NumericFontKey
+  icon: IconKey
+  labelKey: string
+  min: number
+  max: number
+  step: number
+  unit: string
+  /** 有预设值时渲染快捷按钮组 */
+  presets?: number[]
 }
 
-const settings = ref<DocumentFontSettings>({ ...DEFAULT_SETTINGS })
+/** 滑块行元数据：新增数值设置项时在此单点登记 */
+const SLIDER_FIELDS: SliderField[] = [
+  { key: "fontSize", icon: "formatSize", labelKey: "fontSize", min: 10, max: 24, step: 1, unit: "px", presets: [12, 14, 16, 18] },
+  { key: "lineHeight", icon: "formatLineSpacing", labelKey: "lineHeight", min: 1.2, max: 2.4, step: 0.1, unit: "", presets: [1.4, 1.6, 1.8, 2.0] },
+  { key: "letterSpacing", icon: "formatLetterSpacing", labelKey: "letterSpacing", min: 0, max: 5, step: 0.5, unit: "px" },
+  { key: "paragraphSpacing", icon: "formatParagraph", labelKey: "paragraphSpacing", min: 0, max: 30, step: 2, unit: "px" },
+]
+
+/** 预设字体列表（字体名为专有名词，label 保留原生名称不走 i18n） */
+const PRESET_FONTS: SelectOption[] = [
+  { value: "Microsoft YaHei", label: "微软雅黑" },
+  { value: "Microsoft YaHei Light", label: "微软雅黑 Light" },
+  { value: "Segoe UI", label: "Segoe UI" },
+  { value: "等线", label: "等线 (DengXian)" },
+  { value: "仿宋", label: "仿宋" },
+  { value: "华文细黑", label: "华文细黑" },
+  { value: "华文黑体", label: "华文黑体" },
+  { value: "华文楷体", label: "华文楷体" },
+  { value: "华文宋体", label: "华文宋体" },
+  { value: "黑体", label: "黑体" },
+  { value: "system-ui", label: "system-ui" },
+]
+
+/** 字重选项元数据（label 走 i18n 键） */
+const FONT_WEIGHTS = [
+  { value: "lighter", labelKey: "fontWeightLight" },
+  { value: "normal", labelKey: "fontWeightNormal" },
+  { value: "bold", labelKey: "fontWeightBold" },
+]
+
+const settings = ref<DocumentFontSettings>({ ...DEFAULT_DOCUMENT_FONT_SETTINGS })
 const showPreview = ref(true)
 const presetFont = ref("")
+/** 加载守卫：存储数据回填期间跳过 watch 的 emit/save */
+const isLoading = ref(false)
 
-const presetFontSizes = [12, 14, 16, 18]
-const presetLineHeights = [1.4, 1.6, 1.8, 2.0]
-
-const fontWeights = [
-  {
-    label: "细体",
-    value: "lighter",
-  },
-  {
-    label: "正常",
-    value: "normal",
-  },
-  {
-    label: "粗体",
-    value: "bold",
-  },
-]
+const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null)
 
 const previewStyle = computed(() => ({
   fontFamily: settings.value.fontFamily || "inherit",
@@ -404,69 +291,50 @@ const previewStyle = computed(() => ({
   fontWeight: settings.value.fontWeight,
 }))
 
+// 唯一变更出口：emit 交由 GeneralSettings 统一应用样式，本地仅负责持久化
 watch(
   settings,
   (newSettings) => {
+    if (isLoading.value) {
+      return
+    }
     emit("change", newSettings)
     saveSettings()
   },
   { deep: true },
 )
 
-function applySettings() {
-  applyDocumentFontStyles(settings.value)
-}
-
-function applyPresetFont() {
-  if (presetFont.value) {
-    settings.value.fontFamily = presetFont.value
-    applySettings()
+function applyPresetFont(value: string | number | boolean | null) {
+  if (typeof value === "string" && value) {
+    settings.value.fontFamily = value
   }
 }
 
-function setFontSize(size: number) {
-  settings.value.fontSize = size
-  applySettings()
-}
-
-function setLineHeight(lh: number) {
-  settings.value.lineHeight = lh
-  applySettings()
-}
-
-function setFontWeight(weight: string) {
-  settings.value.fontWeight = weight
-  applySettings()
-}
-
-function togglePreview() {
-  showPreview.value = !showPreview.value
-}
-
 function resetSettings() {
-  settings.value = { ...DEFAULT_SETTINGS }
+  settings.value = { ...DEFAULT_DOCUMENT_FONT_SETTINGS }
   presetFont.value = ""
-  applySettings()
 }
-
-const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null)
 
 async function loadSettings() {
   if (!gsStorage.value) {
     return
   }
 
+  isLoading.value = true
   try {
     const data = await gsStorage.value.documentFont.load()
     if (data) {
       settings.value = {
-        ...DEFAULT_SETTINGS,
+        ...DEFAULT_DOCUMENT_FONT_SETTINGS,
         ...data,
       }
-      applySettings()
     }
   } catch (error) {
     console.error("加载文档字体设置失败:", error)
+  } finally {
+    // 等待 deep watch 消化回填赋值后再解除守卫
+    await nextTick()
+    isLoading.value = false
   }
 }
 
@@ -484,11 +352,6 @@ async function saveSettings() {
 
 onMounted(async () => {
   await loadSettings()
-})
-
-defineExpose({
-  settings,
-  loadSettings,
 })
 </script>
 

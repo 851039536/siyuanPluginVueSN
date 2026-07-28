@@ -9,7 +9,13 @@ import {
  * 用于在笔记本列表中显示文档数量
  */
 export class DocCountManager {
+  /** 启动时文件树未渲染的重试间隔（毫秒） */
+  private static readonly INIT_RETRY_DELAY = 2000
+  /** 启动重试次数上限（约 30 秒等待窗口） */
+  private static readonly INIT_RETRY_MAX = 15
+
   private updateTimer: number | null = null
+  private initRetryTimer: number | null = null
   private updateInterval = 3600000 // 默认1小时
   private displayFormat: DocCountFormat = "bracket"
   private fontStyle: {
@@ -28,14 +34,33 @@ export class DocCountManager {
    * 启动文档数统计功能
    */
   public start(): void {
-    this.setBoxCount()
+    this.renderWhenTreeReady()
     this.startAutoUpdate()
+  }
+
+  /**
+   * 插件 onload 阶段文件树 ul[data-url] 往往尚未渲染，
+   * 轮询等待其出现后立即首渲，避免要等一个更新周期才显示数量
+   */
+  private renderWhenTreeReady(attempt = 0): void {
+    if (document.querySelector("ul[data-url]")) {
+      this.setBoxCount()
+      return
+    }
+    if (attempt >= DocCountManager.INIT_RETRY_MAX) return
+    this.initRetryTimer = window.setTimeout(() => {
+      this.renderWhenTreeReady(attempt + 1)
+    }, DocCountManager.INIT_RETRY_DELAY)
   }
 
   /**
    * 停止文档数统计功能
    */
   public stop(): void {
+    if (this.initRetryTimer) {
+      clearTimeout(this.initRetryTimer)
+      this.initRetryTimer = null
+    }
     this.stopAutoUpdate()
     this.clearAllCounts()
   }

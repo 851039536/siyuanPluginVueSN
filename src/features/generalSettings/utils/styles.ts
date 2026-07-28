@@ -3,6 +3,7 @@
  */
 import type { IconKey } from "@/config/icons"
 import type {
+  DocumentFontSettings,
   HeadingColors,
   TabPinSettings,
 } from "../types/storage"
@@ -530,17 +531,7 @@ export function generateLevelDisplayCss(
     .join("\n")
 }
 
-export interface DocumentFontSettingsData {
-  enabled: boolean
-  fontFamily: string
-  fontSize: number
-  lineHeight: number
-  letterSpacing: number
-  paragraphSpacing: number
-  fontWeight: string
-}
-
-export function applyDocumentFontStyles(fontSettings: DocumentFontSettingsData): void {
+export function applyDocumentFontStyles(fontSettings: DocumentFontSettings): void {
   try {
     const existingStyle = document.getElementById("document-font-settings")
     if (existingStyle) {

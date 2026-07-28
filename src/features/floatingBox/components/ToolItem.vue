@@ -44,7 +44,6 @@
 </template>
 
 <script setup lang="ts">
-import type { Plugin } from "siyuan"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
 import type {
@@ -54,17 +53,16 @@ import type {
 
 const props = defineProps<{
   tool: FloatingTool
-  plugin?: Plugin
 }>()
 
 const hasChildren = computed(() => (props.tool.children?.length ?? 0) > 0)
 
 const handleClick = () => {
-  props.tool.action(props.plugin)
+  props.tool.action()
 }
 
 const handleChildClick = (child: FloatingToolChild) => {
-  child.action(props.plugin)
+  child.action()
 }
 </script>
 

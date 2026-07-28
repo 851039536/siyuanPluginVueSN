@@ -6,7 +6,7 @@ export interface FloatingToolChild {
   id: string
   label: string
   title: string
-  action: (plugin?: any) => void
+  action: () => void
 }
 
 export interface FloatingTool {
@@ -15,12 +15,7 @@ export interface FloatingTool {
   title: string
   icon: string
   bgColor: string
-  action: (plugin?: any) => void
+  action: () => void
   /** 子菜单项，hover 时展开 */
   children?: FloatingToolChild[]
-}
-
-export interface FloatingBoxOptions {
-  position?: "left" | "right"
-  offset?: number
 }

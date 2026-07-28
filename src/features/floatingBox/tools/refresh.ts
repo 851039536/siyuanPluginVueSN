@@ -12,6 +12,7 @@ import {
   reloadTag,
   reloadUI,
 } from "@/api"
+import { getFloatingBoxI18n } from "./utils"
 
 /** 共用：执行完整界面刷新 */
 async function refreshUI(): Promise<void> {
@@ -22,17 +23,16 @@ async function refreshUI(): Promise<void> {
   }
 }
 
-function makeChildren(plugin: Plugin): FloatingToolChild[] {
-  const i18n = (plugin.i18n as any)?.floatingBox || {}
+function makeChildren(i18n: Record<string, string>): FloatingToolChild[] {
   return [
     {
       id: "refresh-filetree",
-      label: i18n.refreshFiletree || "文件树",
-      title: i18n.refreshFiletreeTitle || "重载文件树",
+      label: i18n.refreshFiletree,
+      title: i18n.refreshFiletreeTitle,
       action: async () => {
         try {
           await reloadFiletree()
-          showMessage("文件树已刷新", 2000, "info")
+          showMessage(i18n.refreshFiletreeDone, 2000, "info")
         } catch (error) {
           console.error("重载文件树失败:", error)
         }
@@ -40,12 +40,12 @@ function makeChildren(plugin: Plugin): FloatingToolChild[] {
     },
     {
       id: "refresh-tag",
-      label: i18n.refreshTag || "标签树",
-      title: i18n.refreshTagTitle || "重载标签树",
+      label: i18n.refreshTag,
+      title: i18n.refreshTagTitle,
       action: async () => {
         try {
           await reloadTag()
-          showMessage("标签树已刷新", 2000, "info")
+          showMessage(i18n.refreshTagDone, 2000, "info")
         } catch (error) {
           console.error("重载标签树失败:", error)
         }
@@ -53,23 +53,23 @@ function makeChildren(plugin: Plugin): FloatingToolChild[] {
     },
     {
       id: "refresh-ui",
-      label: i18n.refreshUI || "完整刷新",
-      title: i18n.refreshUITitle || "重载整个界面",
+      label: i18n.refreshUI,
+      title: i18n.refreshUITitle,
       action: refreshUI,
     },
   ]
 }
 
 export function createRefreshTool(plugin: Plugin): FloatingTool {
-  const i18n = (plugin.i18n as any)?.floatingBox || {}
+  const i18n = getFloatingBoxI18n(plugin)
   return {
     id: "refresh",
-    label: i18n.refresh || "刷新",
-    title: i18n.refreshTitle || "刷新界面",
+    label: i18n.refresh,
+    title: i18n.refreshTitle,
     icon: "mdi:refresh",
     bgColor: "linear-gradient(135deg, #4ade80 0%, #16a34a 100%)",
     // 父级 action 与子项"完整刷新"共用重构后的 refreshUI
     action: refreshUI,
-    children: makeChildren(plugin),
+    children: makeChildren(i18n),
   }
 }

@@ -10,14 +10,18 @@
     "refreshTitle": "刷新界面",
     "textDiff": "文本对比",
     "textDiffTitle": "打开文本对比工具",
+    "prompts": "提示词库",
+    "promptsTitle": "打开提示词库",
     "passwordVault": "密码箱",
     "passwordVaultTitle": "打开密码箱",
     "flashcardReading": "单词阅读",
     "flashcardReadingTitle": "打开单词阅读",
     "refreshFiletree": "文件树",
     "refreshFiletreeTitle": "重载文件树",
+    "refreshFiletreeDone": "文件树已刷新",
     "refreshTag": "标签树",
     "refreshTagTitle": "重载标签树",
+    "refreshTagDone": "标签树已刷新",
     "refreshUI": "完整刷新",
     "refreshUITitle": "重载整个界面"
   }

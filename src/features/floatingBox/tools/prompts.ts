@@ -3,18 +3,13 @@
  */
 import type { Plugin } from "siyuan"
 import type { FloatingTool } from "../types"
-import { emitCustomEvent } from "@/utils/eventBus"
+import { createEventDispatchTool } from "./utils"
 
 export function createPromptsTool(plugin: Plugin): FloatingTool {
-  const i18n = (plugin.i18n as any)?.floatingBox || {}
-  return {
+  return createEventDispatchTool(plugin, {
     id: "prompts",
-    label: i18n.prompts || "Prompts",
-    title: i18n.promptsTitle || "提示词库",
     icon: "mdi:star",
     bgColor: "#667eea",
-    action: () => {
-      emitCustomEvent("openPrompts")
-    },
-  }
+    eventName: "openPrompts",
+  })
 }

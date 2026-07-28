@@ -7,10 +7,7 @@ import { Plugin } from "siyuan"
 import { createApp } from "vue"
 import FloatingBox from "./index.vue"
 
-export type {
-  FloatingBoxOptions,
-  FloatingTool,
-} from "./types"
+export type { FloatingTool } from "./types"
 
 interface FloatingBoxInstance {
   destroy: () => void
@@ -46,7 +43,6 @@ export function registerFloatingBox(plugin: Plugin): void {
   }
 
   vueApp = createApp(FloatingBox, {
-    i18n: (plugin.i18n as any).floatingBox || {},
     plugin,
   })
 

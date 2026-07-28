@@ -338,8 +338,6 @@ export class GeneralSettings {
       const options = settings
         ? {
             backgroundColor: settings.backgroundColor,
-            fontSize: settings.fontSize,
-            bold: settings.bold,
             minTextLength: settings.minTextLength,
             minLetterLength: settings.minLetterLength,
             maxTextLength: settings.maxTextLength,

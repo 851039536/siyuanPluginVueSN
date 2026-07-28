@@ -1,4 +1,4 @@
-<!-- 双击高亮功能设置面板：功能开关 + 功能说明 + 高亮样式配置（颜色/字号/加粗/长度限制） -->
+<!-- 双击高亮功能设置面板：功能开关 + 功能说明 + 高亮样式配置（颜色/长度限制） -->
 <template>
   <div class="highlight-settings">
     <!-- 功能开关标题："双击高亮功能" -->
@@ -56,33 +56,6 @@
         />
       </div>
 
-      <!-- 字体大小行 -->
-      <div class="style-row">
-        <!-- 行标签："字体大小" -->
-        <label class="style-label">
-          {{ i18n.highlightFontSize }}
-        </label>
-        <SiSelect
-          v-model="fontSize"
-          :options="fontSizeOptions"
-          size="small"
-          class="style-select"
-          @change="handleStyleChange"
-        />
-      </div>
-
-      <!-- 加粗显示行 -->
-      <div class="style-row">
-        <!-- 行标签："加粗显示" -->
-        <label class="style-label">
-          {{ i18n.highlightBold }}
-        </label>
-        <SiSwitch
-          v-model="bold"
-          @change="handleStyleChange"
-        />
-      </div>
-
       <!-- 长度限制行：最小/最大文字与字母长度 -->
       <div
         v-for="field in LENGTH_FIELDS"
@@ -107,17 +80,14 @@
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
-import type { SelectOption } from "@/components/Select.vue"
 import type { GeneralSettings } from "../GeneralSettings"
 import { showMessage } from "siyuan"
 import {
-  computed,
   onMounted,
   reactive,
   ref,
 } from "vue"
 import SiInput from "@/components/Input.vue"
-import SiSelect from "@/components/Select.vue"
 import SiSwitch from "@/components/Switch.vue"
 import {
   DEFAULT_HIGHLIGHT_SETTINGS,
@@ -136,9 +106,6 @@ const props = withDefaults(defineProps<Props>(), {
   plugin: null,
 })
 
-/** 字号下拉可选像素值（0 = 跟随原文，单独渲染） */
-const FONT_SIZE_VALUES = [12, 13, 14, 15, 16, 18, 20]
-
 /** 长度限制输入行配置：key 对应设置字段，labelKey 对应 i18n 键，max 为允许上限 */
 const LENGTH_FIELDS = [
   { key: "minTextLength", labelKey: "highlightMinTextLength", max: 100 },
@@ -151,8 +118,6 @@ type LengthField = (typeof LENGTH_FIELDS)[number]
 
 const enableHighlight = ref(DEFAULT_HIGHLIGHT_SETTINGS.enableHighlight)
 const backgroundColor = ref(DEFAULT_HIGHLIGHT_SETTINGS.backgroundColor)
-const fontSize = ref(DEFAULT_HIGHLIGHT_SETTINGS.fontSize)
-const bold = ref(DEFAULT_HIGHLIGHT_SETTINGS.bold)
 const lengths = reactive<Record<LengthField["key"], number>>({
   minTextLength: DEFAULT_HIGHLIGHT_SETTINGS.minTextLength,
   minLetterLength: DEFAULT_HIGHLIGHT_SETTINGS.minLetterLength,
@@ -160,11 +125,6 @@ const lengths = reactive<Record<LengthField["key"], number>>({
   maxLetterLength: DEFAULT_HIGHLIGHT_SETTINGS.maxLetterLength,
 })
 let storage: GeneralSettingsStorage | null = null
-
-const fontSizeOptions = computed<SelectOption[]>(() => [
-  { value: 0, label: props.i18n.highlightFontSizeFollow },
-  ...FONT_SIZE_VALUES.map(size => ({ value: size, label: `${size}px` })),
-])
 
 /** 获取挂载在 plugin 上的 GeneralSettings 实例（注册于 registerGeneralSettings） */
 const getGeneralSettings = (): GeneralSettings | null => {
@@ -179,8 +139,6 @@ const loadSettings = async () => {
     const settings = await storage.highlight.loadOrDefault()
     enableHighlight.value = settings.enableHighlight
     backgroundColor.value = settings.backgroundColor
-    fontSize.value = settings.fontSize
-    bold.value = settings.bold
     for (const field of LENGTH_FIELDS) {
       lengths[field.key] = settings[field.key]
     }
@@ -206,8 +164,6 @@ const handleStyleChange = () => {
   try {
     getGeneralSettings()?.updateHighlightOptions({
       backgroundColor: backgroundColor.value,
-      fontSize: fontSize.value,
-      bold: bold.value,
       ...lengths,
     })
   } catch (e) {

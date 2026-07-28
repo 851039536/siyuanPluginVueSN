@@ -7,10 +7,7 @@
     @keydown.escape="$emit('close')"
     @click.self="$emit('close')"
   >
-    <div
-      class="gp-dialog"
-      style="width: 520px;"
-    >
+    <div class="gp-dialog gp-dialog--scan">
       <!-- 弹窗头部 -->
       <div class="gp-dialog-header">
         <!-- 弹窗标题："导入" -->
@@ -33,7 +30,7 @@
               v-model="localScanDir"
               size="xsmall"
               :placeholder="i18n.scanDirPlaceholder"
-              @keydown="$event.key === 'Enter' && $emit('start-scan', localScanDir)"
+              @keydown="$event.key === 'Enter' && $emit('startScan', localScanDir)"
             />
             <button
               class="vp-btn vp-btn--ghost vp-btn--sm"
@@ -43,12 +40,12 @@
             </button>
           </div>
         </div>
-        <div style="display: flex; justify-content: center; margin-top: 4px;">
+        <div class="gp-scan-action-row">
           <!-- 按钮："扫描中..." / "开始扫描" -->
           <button
             class="vp-btn vp-btn--primary"
             :disabled="scanning || !localScanDir.trim()"
-            @click="$emit('start-scan', localScanDir)"
+            @click="$emit('startScan', localScanDir)"
           >
             <Icon
               v-if="scanning"
@@ -74,9 +71,8 @@
             <span class="gp-scan-count">{{ i18n.scanResults }} ({{ results.length }})</span>
             <!-- 按钮："全选" -->
             <button
-              class="vp-btn vp-btn--ghost vp-btn--sm"
-              style="font-size:10px;"
-              @click="$emit('toggle-select-all')"
+              class="vp-btn vp-btn--ghost vp-btn--sm gp-scan-select-all"
+              @click="$emit('toggleSelectAll')"
             >
               {{ i18n.selectAll }}
             </button>
@@ -94,7 +90,7 @@
                 type="checkbox"
                 :checked="selection[repo.path] || false"
                 :disabled="repo.alreadyImported"
-                @change="$emit('toggle-item', repo.path)"
+                @change="$emit('toggleItem', repo.path)"
               />
               <div class="gp-scan-item-info">
                 <span class="gp-scan-item-name">{{ repo.name }}</span>
@@ -111,8 +107,7 @@
         <!-- 空结果提示 -->
         <div
           v-else-if="!scanning && localScanDir.trim() && results.length === 0"
-          class="gp-empty"
-          style="padding:20px 0;"
+          class="gp-empty gp-scan-empty"
         >
           <Icon
             icon="mdi:folder-search-outline"
@@ -145,7 +140,7 @@
         <button
           class="vp-btn vp-btn--primary"
           :disabled="selectedCount === 0"
-          @click="$emit('import-selected')"
+          @click="$emit('importSelected')"
         >
           {{ `${i18n.importSelected} (${selectedCount})` }}
         </button>
@@ -158,7 +153,6 @@
 import { Icon } from "@iconify/vue"
 import { computed, ref } from "vue"
 import Input from "@/components/Input.vue"
-import { useDialogKeyboard } from "../composables/useDialogKeyboard"
 import { pickDirectory } from "@/utils/electronDialog"
 
 const props = defineProps<{
@@ -171,15 +165,13 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   "close": []
-  "start-scan": [dir: string]
-  "toggle-select-all": []
-  "toggle-item": [path: string]
-  "import-selected": []
+  "startScan": [dir: string]
+  "toggleSelectAll": []
+  "toggleItem": [path: string]
+  "importSelected": []
 }>()
 
 const localScanDir = ref("")
-
-const { rootRef } = useDialogKeyboard()
 
 // 目录选择器直接写入扫描目录输入框
 async function pickScanDir() {

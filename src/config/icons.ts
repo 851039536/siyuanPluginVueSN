@@ -295,7 +295,7 @@ export const FEATURE_ICONS = {
     color: "#a855f7",
   },
   codeBlockDefault: {
-    icon: "mdi:file-document-outline",
+    icon: "mdi:code-tags",
   },
   codeBlockGithub: {
     icon: "mdi:github",

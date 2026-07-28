@@ -89,6 +89,7 @@
   position: absolute;
   top: $spacing-1;
   right: $spacing-1;
+  // 选中角标固定尺寸（圆形勾标），无对应间距 Token
   width: 16px;
   height: 16px;
   border-radius: $radius-full;
@@ -158,7 +159,7 @@
   position: absolute;
   inset: 0;
   background-color: var(--b3-theme-surface-variant);
-  border-radius: 20px;
+  border-radius: 20px; // 与轨道等高（20px）形成胶囊形开关
   cursor: pointer;
   border: 1px solid var(--b3-theme-outline);
 }

@@ -208,7 +208,7 @@ const categories = computed(() => [
   },
   {
     id: "markdownExport",
-    label: "Markdown 导出",
+    label: props.i18n.markdownExport?.title || "Markdown 导出",
   },
   {
     id: "compactMode",

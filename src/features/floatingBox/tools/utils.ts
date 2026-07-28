@@ -16,8 +16,6 @@ export interface EventDispatchToolConfig {
   id: string
   /** Iconify 图标名 */
   icon: string
-  /** 图标背景色（CSS 值） */
-  bgColor: string
   /** 点击时派发的 CustomEvent 名称 */
   eventName: string
 }
@@ -34,7 +32,6 @@ export function createEventDispatchTool(
     id: config.id,
     label: i18n[config.id],
     icon: config.icon,
-    bgColor: config.bgColor,
     action: () => {
       emitCustomEvent(config.eventName)
     },

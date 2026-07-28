@@ -3,9 +3,13 @@
 // ==================== 悬浮工具栏 ====================
 
 $floating-z-index: 100;
-$trigger-size: 30px;
+$trigger-size: 32px;
 $trigger-size-mobile: 44px;
-$toolbar-gap: 4px;
+$icon-box: 22px;
+$icon-box-mobile: 26px;
+$toolbar-offset: 38px;
+$toolbar-offset-mobile: 54px;
+$floating-transition: 0.12s ease;
 
 .floating-box-wrapper {
   position: fixed;
@@ -15,7 +19,8 @@ $toolbar-gap: 4px;
   z-index: $floating-z-index;
   display: flex;
   align-items: center;
-  gap: $toolbar-gap;
+  gap: $spacing-1;
+  transition: opacity $floating-transition;
 
   &.collapsed {
     opacity: 0.35;
@@ -38,12 +43,9 @@ $toolbar-gap: 4px;
   justify-content: center;
   cursor: pointer;
   border: 1px solid var(--b3-theme-primary);
-  backdrop-filter: blur(10px);
+  transition: background $floating-transition;
 
-  &:hover {
-    background: var(--b3-theme-primary-light);
-  }
-
+  &:hover,
   &.expanded {
     background: var(--b3-theme-primary-light);
   }
@@ -51,7 +53,7 @@ $toolbar-gap: 4px;
 
 .floating-toolbar {
   position: absolute;
-  right: 36px;
+  right: $toolbar-offset;
   display: flex;
   flex-direction: column;
   gap: $spacing-2px;
@@ -59,7 +61,6 @@ $toolbar-gap: 4px;
   background: var(--b3-theme-background);
   border-radius: $radius-lg;
   border: 1px solid var(--b3-border-color);
-  backdrop-filter: blur(10px);
 }
 
 .tool-item {
@@ -70,27 +71,35 @@ $toolbar-gap: 4px;
   border-radius: $vp-radius;
   cursor: pointer;
   min-width: 5rem;
+  transition: background $floating-transition;
 
   &:hover {
     background: var(--b3-list-hover);
+
+    .tool-icon {
+      color: var(--b3-theme-primary);
+      border-color: var(--b3-theme-primary);
+    }
   }
 }
 
 .tool-icon {
-  width: 22px;
-  height: 22px;
+  width: $icon-box;
+  height: $icon-box;
   border-radius: $radius-base;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--b3-theme-on-surface);
   flex-shrink: 0;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--b3-border-color);
+  transition: color $floating-transition, border-color $floating-transition;
 }
 
 .tool-label {
-  font-size: $font-size-2xs;
+  font-size: $font-size-xs;
   font-weight: $font-weight-normal;
+  line-height: $line-height-normal;
   color: var(--b3-theme-on-background);
   white-space: nowrap;
 }
@@ -119,16 +128,16 @@ $toolbar-gap: 4px;
   .tool-submenu {
     display: none;
     position: absolute;
-    right: calc(100% + 4px);
+    right: calc(100% + #{$spacing-1});
     top: 50%;
     transform: translateY(-50%);
     flex-direction: column;
-    gap: 1px;
+    gap: $spacing-2px;
     padding: $spacing-px;
     background: var(--b3-theme-background);
     border-radius: $radius-md;
     border: 1px solid var(--b3-border-color);
-    min-width: 5.625rem;
+    min-width: 6rem;
     z-index: calc($floating-z-index + 1);
   }
 
@@ -138,12 +147,14 @@ $toolbar-gap: 4px;
 }
 
 .submenu-item {
-  padding: $spacing-1 0.625rem;
+  padding: $spacing-1 $spacing-2;
   border-radius: $radius-sm;
   cursor: pointer;
-  font-size: $font-size-2xs;
+  font-size: $font-size-xs;
+  line-height: $line-height-normal;
   color: var(--b3-theme-on-background);
   white-space: nowrap;
+  transition: background $floating-transition, color $floating-transition;
 
   &:hover {
     background: var(--b3-list-hover);
@@ -151,9 +162,15 @@ $toolbar-gap: 4px;
   }
 }
 
+.toolbar-enter-active,
+.toolbar-leave-active {
+  transition: opacity $floating-transition, transform $floating-transition;
+}
+
 .toolbar-enter-from,
 .toolbar-leave-to {
   opacity: 0;
+  transform: translateX($spacing-2);
 }
 
 @media (max-width: $mobile-breakpoint) {
@@ -167,25 +184,19 @@ $toolbar-gap: 4px;
   }
 
   .floating-toolbar {
-    right: 52px;
+    right: $toolbar-offset-mobile;
   }
 
   .tool-item {
     padding: $spacing-2 $spacing-3;
-    min-width: 5rem;
   }
 
   .tool-icon {
-    width: 24px;
-    height: 24px;
-  }
-
-  .tool-label {
-    font-size: $font-size-xs;
+    width: $icon-box-mobile;
+    height: $icon-box-mobile;
   }
 
   .submenu-item {
-    padding: $spacing-2 0.875rem;
-    font-size: $font-size-sm;
+    padding: $spacing-2 $spacing-3;
   }
 }

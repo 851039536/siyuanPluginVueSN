@@ -58,7 +58,6 @@ export function createRefreshTool(plugin: Plugin): FloatingTool {
     id: "refresh",
     label: i18n.refresh,
     icon: "mdi:refresh",
-    bgColor: "linear-gradient(135deg, #4ade80 0%, #16a34a 100%)",
     // 父级点击 = 完整刷新（最常用且移动端可用）；hover 展开子菜单选择文件树/标签树细粒度刷新
     action: refreshUI,
     children: makeChildren(i18n),

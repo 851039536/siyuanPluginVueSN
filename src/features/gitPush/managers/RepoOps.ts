@@ -104,8 +104,8 @@ export class RepoOps {
     return name
   }
 
-  /** 克隆仓库到指定父目录下的同名子目录，返回克隆后的完整路径（5 分钟超时） */
-  async cloneRepo(parentDir: string, url: string): Promise<string> {
+  /** 克隆仓库到指定父目录下的同名子目录，返回克隆后的完整路径（5 分钟超时，onOutput 实时回传 git 进度输出） */
+  async cloneRepo(parentDir: string, url: string, onOutput?: (chunk: string) => void): Promise<string> {
     const nodeModules = getNodeFsPathOs()
     if (!nodeModules) throw new Error("Node 环境不可用")
     const { fs, path } = nodeModules
@@ -114,7 +114,8 @@ export class RepoOps {
     const target = path.join(parentDir, this.repoNameFromUrl(url))
     if (fs.existsSync(target)) throw new Error("目标目录已存在")
 
-    await this.executor.execGit(parentDir, ["clone", url], undefined, 300000)
+    // --progress 强制非 TTY 下也输出进度（走 stderr，由 onOutput 流式回传）
+    await this.executor.execGit(parentDir, ["clone", "--progress", url], undefined, 300000, onOutput)
     return target
   }
 

@@ -5,10 +5,7 @@
     :class="{ 'has-children': hasChildren }"
     @click="handleClick"
   >
-    <div
-      class="tool-icon"
-      :style="{ background: tool.bgColor }"
-    >
+    <div class="tool-icon">
       <Icon
         :icon="tool.icon"
         width="18"

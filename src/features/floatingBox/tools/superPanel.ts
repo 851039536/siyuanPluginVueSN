@@ -9,7 +9,6 @@ export function createSuperPanelTool(plugin: Plugin): FloatingTool {
   return createEventDispatchTool(plugin, {
     id: "superPanel",
     icon: "mdi:view-dashboard",
-    bgColor: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
     eventName: "toggleSuperPanel",
   })
 }

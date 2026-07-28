@@ -1,3 +1,4 @@
+<!-- 页面锁定密码弹窗：锁定/解锁/更新密码三模式表单 -->
 <template>
   <div
     class="page-lock-dialog"
@@ -10,6 +11,7 @@
           :size="20"
         />
       </div>
+      <!-- 弹窗标题："更新密码" / "文档密码" / "输入密码" -->
       <h3>{{ title }}</h3>
       <Button
         class="page-lock-dialog__close"
@@ -35,6 +37,7 @@
           name="info"
           :size="16"
         />
+        <!-- 提示文案：更新/设置/解锁密码引导语 -->
         <span>{{ hintText }}</span>
       </div>
 
@@ -62,7 +65,7 @@
             :ref="isUpdateMode ? 'secondInput' : 'firstInput'"
             v-model="password"
             type="password"
-            :label="passwordLabel"
+            :label="passwordPlaceholder"
             :placeholder="passwordPlaceholder"
             :prefix-icon="'pageLock' as IconKey"
             :show-password="true"
@@ -79,7 +82,7 @@
           <Input
             v-model="confirmPassword"
             type="password"
-            :label="confirmPasswordLabel"
+            :label="confirmPasswordPlaceholder"
             :placeholder="confirmPasswordPlaceholder"
             :prefix-icon="'pageLock' as IconKey"
             :show-password="true"
@@ -101,6 +104,7 @@
             :size="15"
           />
         </template>
+        <!-- 取消按钮："取消" -->
         {{ cancelText }}
       </Button>
       <Button @click="handleConfirm">
@@ -110,6 +114,7 @@
             :size="15"
           />
         </template>
+        <!-- 确认按钮："确定" -->
         {{ confirmText }}
       </Button>
     </div>
@@ -144,9 +149,9 @@ const isLockMode = computed(() => props.mode === "lock")
 const isUpdateMode = computed(() => props.mode === "update")
 
 const title = computed(() => {
-  if (isUpdateMode.value) return props.i18n.updatePassword || "更新密码"
-  if (isLockMode.value) return props.i18n.setPassword || "设置密码"
-  return props.i18n.enterPassword || "输入密码"
+  if (isUpdateMode.value) return props.i18n.updatePassword
+  if (isLockMode.value) return props.i18n.setPassword
+  return props.i18n.enterPassword
 })
 
 const headerIconName = computed(() =>
@@ -155,29 +160,22 @@ const headerIconName = computed(() =>
 
 const hintText = computed(() => {
   if (isUpdateMode.value)
-    return props.i18n.updatePasswordHint || "请先输入旧密码，然后设置新密码"
+    return props.i18n.updatePasswordHint
   if (isLockMode.value)
-    return props.i18n.setPasswordHint || "设置密码后可以锁定文档，保护隐私内容"
-  return props.i18n.unlockHint || "请输入密码解锁文档"
+    return props.i18n.setPasswordHint
+  return props.i18n.unlockHint
 })
 
-const oldPasswordLabel = props.i18n.oldPasswordPlaceholder || "旧密码"
-const passwordLabel = computed(() =>
-  isUpdateMode.value
-    ? props.i18n.newPasswordPlaceholder || "新密码"
-    : props.i18n.passwordPlaceholder || "密码",
-)
-const confirmPasswordLabel =
-  props.i18n.confirmPasswordPlaceholder || "确认密码"
+const oldPasswordLabel = props.i18n.oldPasswordPlaceholder
+// 更新模式下密码栏显示"新密码"，其余模式显示"请输入密码"（label 与 placeholder 共用）
 const passwordPlaceholder = computed(() =>
   isUpdateMode.value
-    ? props.i18n.newPasswordPlaceholder || "请输入新密码"
-    : props.i18n.passwordPlaceholder || "请输入密码",
+    ? props.i18n.newPasswordPlaceholder
+    : props.i18n.passwordPlaceholder,
 )
-const confirmPasswordPlaceholder =
-  props.i18n.confirmPasswordPlaceholder || "请再次输入密码"
-const confirmText = props.i18n.confirm || "确认"
-const cancelText = props.i18n.cancel || "取消"
+const confirmPasswordPlaceholder = props.i18n.confirmPasswordPlaceholder
+const confirmText = props.i18n.confirm
+const cancelText = props.i18n.cancel
 
 const clearPasswords = () => {
   password.value = ""

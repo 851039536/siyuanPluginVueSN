@@ -1,7 +1,9 @@
+<!-- 通用设置主面板：左侧分类导航 + 右侧各设置子面板（高亮/代码块/标题/字体/表格/列表/页签/加密/统计/导出/紧凑模式） -->
 <template>
   <div class="general-settings">
     <div class="settings-header">
-      <h3>{{ i18n.commonSettings || '常用设置' }}</h3>
+      <!-- 面板标题："常用设置" -->
+      <h3>{{ i18n.commonSettings }}</h3>
     </div>
 
     <div class="settings-layout">
@@ -156,7 +158,7 @@ import TableStyleSettings from "./components/TableStyleSettings.vue"
 import TabPinSettings from "./components/TabPinSettings.vue"
 
 interface Props {
-  i18n?: any
+  i18n?: Record<string, any>
   plugin?: any
   onSettingsChange?: (settings: any) => void
 }
@@ -172,47 +174,47 @@ const activeCategory = ref("highlight")
 const categories = computed(() => [
   {
     id: "highlight",
-    label: props.i18n.enableHighlight || "高亮设置",
+    label: props.i18n.enableHighlight,
   },
   {
     id: "codeblock",
-    label: props.i18n.codeBlockSettings || "代码块美化",
+    label: props.i18n.codeBlockSettings,
   },
   {
     id: "heading",
-    label: props.i18n.headingSettings || "标题配置",
+    label: props.i18n.headingSettings,
   },
   {
     id: "documentFont",
-    label: props.i18n.documentFontSettings || "文档字体",
+    label: props.i18n.documentFontSettings,
   },
   {
     id: "tableStyle",
-    label: props.i18n.tableStyleSettings || "表格样式",
+    label: props.i18n.tableStyleSettings,
   },
   {
     id: "listStyle",
-    label: props.i18n.listStyleSettings || "列表样式",
+    label: props.i18n.listStyleSettings,
   },
   {
     id: "tabPin",
-    label: props.i18n.tabPinSettings || "钉住页签",
+    label: props.i18n.tabPinSettings,
   },
   {
     id: "encryption",
-    label: props.i18n.encryptionSettings || "加密设置",
+    label: props.i18n.encryptionSettings,
   },
   {
     id: "docCount",
-    label: props.i18n.docCountSettings || "文档数统计",
+    label: props.i18n.docCountSettings,
   },
   {
     id: "markdownExport",
-    label: props.i18n.markdownExport?.title || "Markdown 导出",
+    label: props.i18n.markdownExport?.title,
   },
   {
     id: "compactMode",
-    label: props.i18n.compactModeSettings || "紧凑模式",
+    label: props.i18n.compactModeSettings,
   },
 ])
 

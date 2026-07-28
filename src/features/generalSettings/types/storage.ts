@@ -265,6 +265,26 @@ export const DEFAULT_TABPIN_SETTINGS: TabPinSettings = {
   backgroundColor: "rgba(var(--b3-theme-primary-rgb), 0.1)",
 }
 
+/** 默认列表层级配色（有序 / 无序共享，6 个层级循环） */
+export const DEFAULT_LIST_COLORS: readonly string[] = [
+  "#000000",
+  "#0080ff",
+  "#00b600",
+  "#fd8700",
+  "#be6fff",
+  "#888888",
+]
+
+/** 创建默认列表样式（增强）设置——数组深拷贝，避免默认值被外部修改污染 */
+export function createDefaultListStyleSettings(): ListStyleSettings {
+  return {
+    enabled: false,
+    orderedListColors: [...DEFAULT_LIST_COLORS],
+    unorderedListColors: [...DEFAULT_LIST_COLORS],
+    symbolSize: 1.6,
+  }
+}
+
 /** 默认文档数统计设置 */
 export const DEFAULT_DOC_COUNT_SETTINGS: DocCountSettings = {
   enableDocCount: true,

@@ -2,6 +2,7 @@
 <template>
   <div class="gp-header">
     <div class="gp-header-left">
+      <!-- 面板标题："Git 推送" -->
       <span class="gp-title">{{ i18n.panelTitle }}</span>
       <span
         v-if="projectCount > 0"
@@ -12,22 +13,24 @@
     <div class="gp-header-btns">
       <!-- 视图切换 -->
       <div class="gp-view-toggle">
+        <!-- 按钮（tooltip："列表视图"） -->
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
           :class="{ active: currentView === 'list' }"
-          :title="i18n.listView "
-          @click="emit('update:currentView', 'list')"
+          :title="i18n.listView"
+          @click="currentView = 'list'"
         >
           <Icon
             icon="mdi:view-list"
             height="12"
           />
         </button>
+        <!-- 按钮（tooltip："统计视图"） -->
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
           :class="{ active: currentView === 'stats' }"
           :title="i18n.statsView"
-          @click="emit('update:currentView', 'stats')"
+          @click="currentView = 'stats'"
         >
           <Icon
             icon="mdi:chart-bar"
@@ -38,10 +41,11 @@
       <!-- 平台官网快捷入口 -->
       <span class="gp-header-sep" />
       <div class="gp-platform-wrap">
+        <!-- 按钮（tooltip："平台官网"） -->
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm gp-platform-dropdown-btn"
           :title="i18n.platformSites"
-          @click.stop="emit('update:showPlatformMenu', !showPlatformMenu)"
+          @click.stop="showPlatformMenu = !showPlatformMenu"
         >
           <Icon
             icon="mdi:web"
@@ -50,7 +54,7 @@
           <Icon
             icon="mdi:unfold-more-horizontal"
             height="12"
-            style="margin-left:1px;opacity:0.5"
+            class="gp-platform-caret"
           />
         </button>
         <div
@@ -62,7 +66,7 @@
             v-for="pl in PLATFORM_META"
             :key="pl.key"
             class="gp-platform-item"
-            @click="emit('update:showPlatformMenu', false); emit('openWeb', pl.webUrl)"
+            @click="showPlatformMenu = false; emit('openWeb', pl.webUrl)"
           >
             <Icon
               :icon="pl.icon"
@@ -73,8 +77,10 @@
         </div>
       </div>
       <span class="gp-header-sep" />
+      <!-- 按钮（tooltip："管理分类"） -->
       <button
         class="vp-btn vp-btn--ghost vp-btn--sm"
+        :title="i18n.manageCategories"
         @click="emit('openCategory')"
       >
         <Icon
@@ -82,6 +88,7 @@
           height="12"
         />
       </button>
+      <!-- 按钮（tooltip："Git 配置"） -->
       <button
         class="vp-btn vp-btn--ghost vp-btn--sm"
         :title="i18n.gitConfigLabel"
@@ -92,6 +99,7 @@
           height="12"
         />
       </button>
+      <!-- 按钮（tooltip："设置"） -->
       <button
         class="vp-btn vp-btn--ghost vp-btn--sm"
         :title="i18n.settings"
@@ -102,12 +110,14 @@
           height="12"
         />
       </button>
+      <!-- 刷新下拉菜单 -->
       <div class="gp-header-refresh-wrap">
+        <!-- 按钮（tooltip："刷新选项"，刷新进行中图标转圈） -->
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
           :title="i18n.refreshOptions"
           :disabled="refreshingAllLocal || refreshingAllRemote || refreshingAll"
-          @click.stop="emit('update:showRefreshMenu', !showRefreshMenu)"
+          @click.stop="showRefreshMenu = !showRefreshMenu"
         >
           <Icon
             icon="mdi:sync"
@@ -120,49 +130,50 @@
           class="gp-refresh-popover"
           @click.stop
         >
+          <!-- 菜单项："刷新本地状态"（点击后关闭菜单，进度由头部 sync 图标转圈体现） -->
           <button
             class="gp-refresh-item"
             :disabled="refreshingAllLocal"
-            @click="emit('refreshAllLocal')"
+            @click="showRefreshMenu = false; emit('refreshAllLocal')"
           >
             <Icon
-              :icon="refreshingAllLocal ? 'mdi:loading' : 'mdi:file-document-outline'"
+              icon="mdi:file-document-outline"
               height="12"
-              :class="{ 'gp-spin': refreshingAllLocal }"
             />
             <span>{{ i18n.headerRefreshLocal }}</span>
           </button>
+          <!-- 菜单项："刷新远程状态" -->
           <button
             class="gp-refresh-item"
             :disabled="refreshingAllRemote"
-            @click="emit('refreshAllRemote')"
+            @click="showRefreshMenu = false; emit('refreshAllRemote')"
           >
             <Icon
-              :icon="refreshingAllRemote ? 'mdi:loading' : 'mdi:cloud-refresh-outline'"
+              icon="mdi:cloud-refresh-outline"
               height="12"
-              :class="{ 'gp-spin': refreshingAllRemote }"
             />
             <span>{{ i18n.headerRefreshRemote }}</span>
           </button>
           <div class="gp-refresh-divider" />
+          <!-- 菜单项："全部刷新" -->
           <button
             class="gp-refresh-item gp-refresh-item--all"
             :disabled="refreshingAll"
-            @click="emit('refreshAll')"
+            @click="showRefreshMenu = false; emit('refreshAll')"
           >
             <Icon
               icon="mdi:refresh-circle"
               height="12"
-              :class="{ 'gp-spin': refreshingAll }"
             />
             <span>{{ i18n.refreshAll }}</span>
           </button>
         </div>
       </div>
+      <!-- 添加/导入合并下拉 -->
       <div class="gp-add-wrap">
         <button
           class="vp-btn vp-btn--ghost gp-add-dropdown-btn"
-          @click.stop="emit('update:showAddMenu', !showAddMenu)"
+          @click.stop="showAddMenu = !showAddMenu"
         >
           <Icon
             icon="mdi:plus"
@@ -174,9 +185,10 @@
           class="gp-add-popover"
           @click.stop
         >
+          <!-- 菜单项："添加" -->
           <button
             class="gp-add-item"
-            @click="emit('update:showAddMenu', false); emit('openAddProject')"
+            @click="showAddMenu = false; emit('openAddProject')"
           >
             <Icon
               icon="mdi:plus-circle-outline"
@@ -184,9 +196,10 @@
             />
             <span>{{ i18n.addProject }}</span>
           </button>
+          <!-- 菜单项："导入" -->
           <button
             class="gp-add-item"
-            @click="emit('update:showAddMenu', false); emit('openScan')"
+            @click="showAddMenu = false; emit('openScan')"
           >
             <Icon
               icon="mdi:file-find-outline"
@@ -197,20 +210,20 @@
         </div>
       </div>
 
-          <div
-      v-if="projectCount > 0"
-      class="gp-header-search"
-    >
-      <Input
-        :model-value="searchQuery"
-        size="xsmall"
-        :placeholder="searchPlaceholder"
-        prefix-icon="search"
-        clearable
-        autocomplete="off"
-        @update:model-value="emit('update:searchQuery', String($event ?? ''))"
-      />
-    </div>
+      <!-- 项目搜索框（placeholder："搜索项目..."） -->
+      <div
+        v-if="projectCount > 0"
+        class="gp-header-search"
+      >
+        <Input
+          v-model="searchQuery"
+          size="xsmall"
+          :placeholder="i18n.searchPlaceholder"
+          prefix-icon="search"
+          clearable
+          autocomplete="off"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -220,47 +233,33 @@ import { Icon } from "@iconify/vue"
 import Input from "@/components/Input.vue"
 import { PLATFORM_META } from "../types"
 
-interface Props {
+withDefaults(defineProps<{
   i18n: Record<string, any>
   projectCount?: number
-  currentView: "list" | "stats"
   refreshingAll?: boolean
   refreshingAllLocal?: boolean
   refreshingAllRemote?: boolean
-
-  showPlatformMenu?: boolean
-  showAddMenu?: boolean
-  showRefreshMenu?: boolean
-  searchQuery?: string
-  searchPlaceholder?: string
-}
-
-withDefaults(defineProps<Props>(), {
+}>(), {
   projectCount: 0,
   refreshingAll: false,
   refreshingAllLocal: false,
   refreshingAllRemote: false,
-
-  showPlatformMenu: false,
-  showAddMenu: false,
-  showRefreshMenu: false,
-  searchQuery: "",
-  searchPlaceholder: "搜索项目...",
 })
 
+// ── 双向绑定（defineModel 收敛 props + update: emit 样板） ──
+const currentView = defineModel<"list" | "stats">("currentView", { required: true })
+const showPlatformMenu = defineModel<boolean>("showPlatformMenu", { default: false })
+const showAddMenu = defineModel<boolean>("showAddMenu", { default: false })
+const showRefreshMenu = defineModel<boolean>("showRefreshMenu", { default: false })
+const searchQuery = defineModel<string>("searchQuery", { default: "" })
+
 const emit = defineEmits<{
-  "update:currentView": [value: "list" | "stats"]
-  "update:showPlatformMenu": [value: boolean]
-  "update:showAddMenu": [value: boolean]
-  "update:showRefreshMenu": [value: boolean]
-  "update:searchQuery": [value: string]
   openCategory: []
   openGitConfig: []
   openSettings: []
   refreshAll: []
   refreshAllLocal: []
   refreshAllRemote: []
-
   openAddProject: []
   openScan: []
   openWeb: [url: string]
@@ -268,7 +267,5 @@ const emit = defineEmits<{
 </script>
 
 <style lang="scss">
-@use "@/index.scss" as *;
-@use "../styles/variables" as *;
 @use "../styles/PanelHeader.scss";
 </style>

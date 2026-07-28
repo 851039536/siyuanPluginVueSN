@@ -114,7 +114,6 @@ export function useGitPush(manager: GitPushManager) {
     saveCommitTemplates: tagsConflicts.saveCommitTemplates,
     scanning: tagsConflicts.scanning,
     scanResults: tagsConflicts.scanResults,
-    scanDirInput: tagsConflicts.scanDirInput,
     startScan: tagsConflicts.startScan,
     importScanResults: tagsConflicts.importScanResults,
 

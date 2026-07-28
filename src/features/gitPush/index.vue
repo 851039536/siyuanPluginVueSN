@@ -291,9 +291,7 @@
         :error="scanError"
         :results="scanResults"
         :selection="scanSelection"
-        :scan-dir="scanDirInput"
         @close="handleCloseScan"
-        @pick-scan-dir="selectScanDirectory"
         @start-scan="handleStartScan"
         @toggle-select-all="handleToggleSelectAll"
         @toggle-item="toggleScanItem"
@@ -462,7 +460,6 @@ const {
   importScanResults,
   scanning,
   scanResults,
-  scanDirInput,
   gitConcurrency,
   loadGitConcurrency,
   setGitConcurrency,
@@ -720,9 +717,8 @@ const {
   handleToggleSelectAll,
   toggleScanItem,
   handleImportSelected,
-  selectScanDirectory,
 } = useScanImport({
-  scanResults, scanDirInput, activeCategory, startScan, importScanResults, loadProjects, tf,
+  scanResults, activeCategory, startScan, importScanResults, loadProjects, tf,
 })
 
 // ── Git 配置弹窗 ──

@@ -7,7 +7,7 @@ import type {
 } from "../types"
 import { ref } from "vue"
 import { showMessage } from "siyuan"
-import { findProject, normalizePathForDedup } from "../utils"
+import { findProject, getAllProjectPathsForDedup, normalizePathForDedup } from "../utils"
 import { UNGROUPED_ID } from "../types"
 import { getErrorMessage } from "@/utils/stringUtils"
 
@@ -32,7 +32,7 @@ export function useProjectCrud(manager: GitPushManager) {
     // 查重覆盖新旧项目的全部路径（主路径 + localPaths），防止跨设备副本重复添加
     const newPaths = [path, ...(extras?.localPaths || [])].map(normalizePathForDedup)
     const dup = projects.value.find((p) =>
-      [p.path, ...(p.localPaths || [])].some((ep) => newPaths.includes(normalizePathForDedup(ep))),
+      getAllProjectPathsForDedup(p).some((ep) => newPaths.includes(ep)),
     )
     if (dup) {
       throw new Error(`项目路径已存在："${dup.name}"（${dup.path}）`)

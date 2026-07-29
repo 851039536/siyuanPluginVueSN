@@ -13,7 +13,7 @@ export function useGitHandlers(deps: {
   /** 统一异步错误处理包装（由 index.vue 提供） */
   safeGitOp: (label: string, fn: () => Promise<void>) => Promise<void>
   /** i18n 取值 + 占位替换（由 index.vue 提供） */
-  tf: (key: string, fallback: string, ...args: (string | number)[]) => string
+  tf: (key: string, ...args: (string | number)[]) => string
   // ── useGitPush 领域操作 ──
   discardFile: (id: string, file: string, staged: boolean, status: string) => Promise<void>
   doCommit: (id: string, message: string) => Promise<string>
@@ -72,8 +72,8 @@ export function useGitHandlers(deps: {
   }
 
   async function handleDiscard(id: string, file: string, staged: boolean, status: string) {
-    const label = status === "untracked" ? tf("discardUntracked", "删除未跟踪文件") : tf("discardChanges", "丢弃更改")
-    showConfirm(tf("confirmActionTitle", "确认操作"), tf("discardConfirmBody", "确定要{0} \"{1}\" 吗？此操作不可撤销。", label, file), () => {
+    const label = status === "untracked" ? tf("discardUntracked") : tf("discardChanges")
+    showConfirm(tf("confirmActionTitle"), tf("discardConfirmBody", label, file), () => {
       doDiscard(id, file, staged, status, label)
     })
   }
@@ -85,7 +85,7 @@ export function useGitHandlers(deps: {
       await discardFile(id, file, staged, status)
       await loadWorkingTree(id)
     } catch (e: unknown) {
-      commitOutputs.value[id] = tf("discardOpFailed", "{0}失败: {1}", label, getErrorMessage(e))
+      commitOutputs.value[id] = tf("discardOpFailed", label, getErrorMessage(e))
     } finally {
       delete gitOpLoading.value[id]
     }
@@ -106,34 +106,34 @@ export function useGitHandlers(deps: {
   }
 
   function handleStashConfirmMsg(id: string, msg: string) {
-    safeGitOp(tf("stashSaveFailed", "暂存失败"), () => doStashSave(id, msg))
+    safeGitOp(tf("stashSaveFailed"), () => doStashSave(id, msg))
   }
 
   function handleStashPop(id: string, index: number) {
-    showConfirm(tf("stashPopTitle", "恢复 Stash"), tf("stashPopConfirm", "确定恢复 stash@{{0}} 并删除该条目？恢复过程中如有冲突会保留该 stash。", index), () => {
-      safeGitOp(tf("stashPopFailed", "恢复失败"), () => doStashPop(id, index))
+    showConfirm(tf("stashPopTitle"), tf("stashPopConfirm", index), () => {
+      safeGitOp(tf("stashPopFailed"), () => doStashPop(id, index))
     })
   }
 
   function handleStashApply(id: string, index: number) {
-    safeGitOp(tf("stashApplyFailed", "应用失败"), () => doStashApply(id, index))
+    safeGitOp(tf("stashApplyFailed"), () => doStashApply(id, index))
   }
 
   function handleStashDrop(id: string, index: number) {
-    showConfirm(tf("stashDropTitle", "删除 Stash"), tf("stashDropConfirm", "确定删除 stash@{{0}}？此操作不可撤销。", index), () => {
-      safeGitOp(tf("stashDropFailed", "删除失败"), () => doStashDrop(id, index))
+    showConfirm(tf("stashDropTitle"), tf("stashDropConfirm", index), () => {
+      safeGitOp(tf("stashDropFailed"), () => doStashDrop(id, index))
     })
   }
 
   // ── Tag 操作 ──
 
   function handleCreateTag(id: string, name: string, message?: string) {
-    safeGitOp(tf("createTagFailed", "创建 Tag 失败"), () => createTagOp(id, name, message).then(() => { loadTags(id) }))
+    safeGitOp(tf("createTagFailed"), () => createTagOp(id, name, message).then(() => { loadTags(id) }))
   }
 
   function handleDeleteTag(id: string, tag: string) {
-    showConfirm(tf("deleteTagTitle", "删除 Tag"), tf("deleteTagConfirm", "确定删除 Tag \"{0}\"？此操作不可撤销。", tag), () => {
-      safeGitOp(tf("deleteTagFailed", "删除失败"), () => deleteTagOp(id, tag).then(() => { loadTags(id) }))
+    showConfirm(tf("deleteTagTitle"), tf("deleteTagConfirm", tag), () => {
+      safeGitOp(tf("deleteTagFailed"), () => deleteTagOp(id, tag).then(() => { loadTags(id) }))
     })
   }
 
@@ -142,7 +142,7 @@ export function useGitHandlers(deps: {
     if (!project) return
     // 收集所有已配置的远程
     const remoteNames = getProjectRemoteNames(project).map((r) => r.name)
-    if (remoteNames.length === 0) { showMessage(tf("noRemoteFound", "未找到远程仓库"), 3000, "error"); return }
+    if (remoteNames.length === 0) { showMessage(tf("noRemoteFound"), 3000, "error"); return }
     tagPushLoading.value = {
       ...tagPushLoading.value,
       [id]: tag,
@@ -150,7 +150,7 @@ export function useGitHandlers(deps: {
     try {
       await Promise.all(remoteNames.map((name) => pushTagOp(id, name, tag)))
     } catch (e: unknown) {
-      showMessage(tf("pushTagFailed", "推送 Tag 失败: {0}", getErrorMessage(e)), 5000, "error")
+      showMessage(tf("pushTagFailed", getErrorMessage(e)), 5000, "error")
     } finally {
       delete tagPushLoading.value[id]
       // ref<Record> 的 delete 不被 Vue 深层响应式追踪检测到，需手动触发浅拷贝
@@ -161,24 +161,24 @@ export function useGitHandlers(deps: {
   // ── 冲突操作 ──
 
   function handleAbortMerge(id: string) {
-    showConfirm(tf("abortMergeTitle", "中止合并"), tf("abortMergeConfirm", "确定中止合并操作？所有合并进度将丢失。"), () => {
-      safeGitOp(tf("abortMergeFailed", "中止合并失败"), () => abortMergeOp(id))
+    showConfirm(tf("abortMergeTitle"), tf("abortMergeConfirm"), () => {
+      safeGitOp(tf("abortMergeFailed"), () => abortMergeOp(id))
     })
   }
 
   function handleResolveConflict(id: string, file: string, strategy: "theirs" | "ours") {
-    safeGitOp(tf("resolveConflictFailed", "解决冲突失败"), () => resolveConflictOp(id, file, strategy).then(() => { checkConflicts(id) }))
+    safeGitOp(tf("resolveConflictFailed"), () => resolveConflictOp(id, file, strategy).then(() => { checkConflicts(id) }))
   }
 
   async function handleCommit(id: string, message: string) {
     commitOutputs.value[id] = ""
     try {
       const result = await doCommit(id, message)
-      commitOutputs.value[id] = result || tf("commitSuccess", "提交成功")
+      commitOutputs.value[id] = result || tf("commitSuccess")
       pruneRecordCache(commitOutputs.value)
       await loadCommitLog(id)
     } catch (e: unknown) {
-      commitOutputs.value[id] = tf("commitFailed", "提交失败: {0}", getErrorMessage(e))
+      commitOutputs.value[id] = tf("commitFailed", getErrorMessage(e))
     }
   }
 
@@ -201,10 +201,10 @@ export function useGitHandlers(deps: {
         },
       }
       if (result.source === "heuristic") {
-        commitOutputs.value[id] = tf("aiHeuristic", "AI 未返回有效信息，已使用启发式生成。")
+        commitOutputs.value[id] = tf("aiHeuristic")
       }
     } catch (e: unknown) {
-      commitOutputs.value[id] = tf("generateFailed", "生成失败: {0}", getErrorMessage(e))
+      commitOutputs.value[id] = tf("generateFailed", getErrorMessage(e))
       generatingMsgs.value = {
         ...generatingMsgs.value,
         [id]: {

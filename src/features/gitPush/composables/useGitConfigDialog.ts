@@ -8,7 +8,7 @@ import { getErrorMessage } from "@/utils/stringUtils"
 export function useGitConfigDialog(deps: {
   manager: GitPushManager
   projects: Ref<GitProject[]>
-  tf: (key: string, fallback: string, ...args: (string | number)[]) => string
+  tf: (key: string, ...args: (string | number)[]) => string
 }) {
   const { manager, projects, tf } = deps
 
@@ -31,7 +31,7 @@ export function useGitConfigDialog(deps: {
       const text = await manager.getGitGlobalConfig()
       gitConfigText.value = text
     } catch (e: unknown) {
-      gitConfigError.value = getErrorMessage(e) || tf("queryFailed", "查询失败")
+      gitConfigError.value = getErrorMessage(e) || tf("queryFailed")
     } finally {
       gitConfigLoading.value = false
     }
@@ -53,7 +53,7 @@ export function useGitConfigDialog(deps: {
       const text = await manager.getProjectGitConfig(path)
       gitConfigText.value = text
     } catch (e: unknown) {
-      gitConfigError.value = getErrorMessage(e) || tf("queryFailed", "查询失败")
+      gitConfigError.value = getErrorMessage(e) || tf("queryFailed")
     } finally {
       gitConfigLoading.value = false
     }

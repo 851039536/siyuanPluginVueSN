@@ -302,6 +302,7 @@
     "errUpdateRemote": "修改失败",
     "errRemoveRemote": "删除失败",
     "downloadRepo": "下载到本地（git clone）",
+    "copyRepoLink": "复制链接地址",
     "selectCloneDir": "选择克隆目标目录",
     "errCloneRepo": "克隆失败",
     "cloneSuccess": "克隆完成：{0}",

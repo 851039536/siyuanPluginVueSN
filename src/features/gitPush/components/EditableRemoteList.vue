@@ -43,6 +43,15 @@
           class="gp-remote-url"
           :title="row.url"
         >{{ row.url }}</span>
+        <!-- 按钮：复制链接地址（仅传入 onCopy 回调时显示） -->
+        <button
+          v-if="onCopy"
+          class="vp-btn vp-btn--ghost vp-btn--sm"
+          :title="i18n.copyRepoLink"
+          @click="onCopy(row.key)"
+        >
+          <Icon icon="mdi:content-copy" height="12" />
+        </button>
         <!-- 按钮：下载到本地（仅传入 onDownload 回调时显示，克隆进行中转圈） -->
         <button
           v-if="onDownload"
@@ -144,6 +153,8 @@ const props = defineProps<{
   onAdd: (key: string, url: string) => Promise<boolean>
   onSaveEdit: (key: string, url: string) => Promise<boolean>
   onRemove: (key: string) => Promise<boolean>
+  /** 可选：复制链接回调，仅传入时行内显示复制按钮 */
+  onCopy?: (key: string) => void
   /** 可选：下载（克隆）回调，仅传入时行内显示下载按钮 */
   onDownload?: (key: string) => Promise<boolean>
 }>()

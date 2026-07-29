@@ -1344,6 +1344,8 @@
     "currentBranch": "Current branch",
     "switchToBranch": "Switch to {0}",
     "openPlatformHint": "Open {0} (right-click to copy link)",
+    "platformLinks": "Platform links",
+    "noPlatformLink": "No platform link configured",
     "openProject": "Open project",
     "openFolder": "Open folder",
     "noIdeDetected": "No IDE detected",

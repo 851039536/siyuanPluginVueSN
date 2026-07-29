@@ -305,6 +305,30 @@
   position: relative;
 }
 
+// 平台链接下拉菜单（复用 IDE 弹出层同款 mixin）
+.gp-platform-wrap {
+  position: relative;
+}
+
+.gp-platform-popover {
+  @include popover-base;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 6px;
+  min-width: 140px;
+}
+
+.gp-platform-item {
+  @include popover-item;
+
+  &--none {
+    opacity: 0.5;
+    cursor: default;
+    &:hover { background: none; }
+  }
+}
+
 .gp-ide-popover {
   @include popover-base;
   top: 100%;

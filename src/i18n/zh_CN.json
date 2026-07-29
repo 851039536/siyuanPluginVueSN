@@ -1344,6 +1344,8 @@
     "currentBranch": "当前分支",
     "switchToBranch": "切换到 {0}",
     "openPlatformHint": "打开 {0}（右键复制链接）",
+    "platformLinks": "平台链接",
+    "noPlatformLink": "未配置平台链接",
     "openProject": "打开项目",
     "openFolder": "打开文件夹",
     "noIdeDetected": "未检测到 IDE",

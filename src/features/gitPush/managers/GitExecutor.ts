@@ -1,4 +1,5 @@
 // Git 子进程执行器：双池信号量限流（网络/本地命令独立并发池）+ abort 生命周期管理
+import type { ChildProcess } from "node:child_process"
 import { getNodeProcessModules } from "@/utils/nodeModules"
 import type { GitPushStorage } from "../types/storage"
 import { clampGitConcurrency } from "../types/storage"
@@ -11,8 +12,8 @@ export class GitExecutor {
   get activeGitOps(): number { return this.gitRunning }
   /** 最大并发 git 子进程数（从存储加载，可通过 setGitConcurrency 修改） */
   private gitMaxConcurrent = 3
-  /** 等待队列（关联 signal 以便 abort 时精准过滤） */
-  private gitWaitQueue: { run: () => void, signal?: AbortSignal }[] = []
+  /** 等待队列（关联 signal + reject 以便 abort/destroy 时精准拒绝） */
+  private gitWaitQueue: { run: () => void, reject: (e: Error) => void, signal?: AbortSignal }[] = []
   /** 识别网络 IO 类 git 命令，自动路由到独立并发池 */
   private static readonly NETWORK_COMMANDS = new Set(["fetch", "push", "pull", "clone", "ls-remote"])
   /** 网络命令最大并发（常量，避免被 GitHub/Gitee 限流） */
@@ -20,11 +21,13 @@ export class GitExecutor {
   /** 当前正在执行的网络类 git 子进程数 */
   private networkRunning = 0
   /** 网络命令等待队列 */
-  private networkWaitQueue: { run: () => void, signal?: AbortSignal }[] = []
+  private networkWaitQueue: { run: () => void, reject: (e: Error) => void, signal?: AbortSignal }[] = []
   /** 记录当前正在执行的子进程引用（用于取消操作时 kill） */
-  private activeProcesses: Set<any> = new Set()
+  private activeProcesses: Set<ChildProcess> = new Set()
   /** 项目 push/pull 的 AbortController 数组（同项目多操作不覆盖） */
   private abortControllers: Map<string, AbortController[]> = new Map()
+  /** execFile maxBuffer 10MB（防止全量 diff / 大仓库 status 超 Node 默认 1MB 报错） */
+  private static readonly MAX_BUFFER = 10 * 1024 * 1024
 
   constructor(storage: GitPushStorage) {
     this.storage = storage
@@ -100,13 +103,40 @@ export class GitExecutor {
   }
 
   /**
+   * 从 args 中提取实际命令名（跳过前导 -c <value> / -C <value> 全局参数对）
+   */
+  private static getCommandName(args: string[]): string {
+    let i = 0
+    while (i < args.length && (args[i] === "-c" || args[i] === "-C")) {
+      i += 2
+    }
+    return args[i] || ""
+  }
+
+  /**
+   * 调度队列中下一个可运行项（跳过并 reject 已中止项，防止池饥饿/死锁）
+   */
+  private scheduleNext(isNetwork: boolean): void {
+    const queue = isNetwork ? this.networkWaitQueue : this.gitWaitQueue
+    while (queue.length > 0) {
+      const item = queue.shift()!
+      if (item.signal?.aborted) {
+        item.reject(new Error("操作已取消"))
+        continue
+      }
+      item.run()
+      return
+    }
+  }
+
+  /**
    * 执行 git 命令（双池信号量限流：网络命令与本地命令独立并发池）
    * @param signal 可选 AbortSignal，触发后 kill 子进程并清等待队列
    * @param timeoutMs 子进程超时（默认 30 秒；clone 等长耗时操作可传更大值）
    * @param onOutput 可选流式输出回调，实时回传 stdout/stderr 原始块（clone --progress 等长任务日志展示）
    */
   async execGit(cwd: string, args: string[], signal?: AbortSignal, timeoutMs = 30000, onOutput?: (chunk: string) => void): Promise<string> {
-    const isNetwork = GitExecutor.NETWORK_COMMANDS.has(args[0])
+    const isNetwork = GitExecutor.NETWORK_COMMANDS.has(GitExecutor.getCommandName(args))
 
     return new Promise<string>((resolve, reject) => {
       let killed = false
@@ -114,11 +144,16 @@ export class GitExecutor {
       const run = () => {
         if (signal?.aborted) {
           reject(new Error("操作已取消"))
+          this.scheduleNext(isNetwork)
           return
         }
 
         const cp = this.getProcess()
-        if (!cp) { reject(new Error("Node 环境不可用")); return }
+        if (!cp) {
+          reject(new Error("Node 环境不可用"))
+          this.scheduleNext(isNetwork)
+          return
+        }
         if (isNetwork) {
           this.networkRunning++
         } else {
@@ -127,16 +162,20 @@ export class GitExecutor {
 
         const child = cp.execFile(
           "git", args,
-          { cwd, timeout: timeoutMs, encoding: "utf8", windowsHide: true },
-          (error: any, stdout: string, stderr: string) => {
+          { cwd, timeout: timeoutMs, encoding: "utf8", windowsHide: true, maxBuffer: GitExecutor.MAX_BUFFER },
+          (error: Error & { code?: number } | null, stdout: string, stderr: string) => {
             if (isNetwork) {
               this.networkRunning--
             } else {
               this.gitRunning--
             }
             this.activeProcesses.delete(child)
-            const next = isNetwork ? this.networkWaitQueue.shift() : this.gitWaitQueue.shift()
-            if (next) { next.run() }
+            this.scheduleNext(isNetwork)
+
+            // 正常完成时移除 abort 监听器，防止泄漏
+            if (signal) {
+              signal.removeEventListener("abort", onAbort)
+            }
 
             if (killed) { reject(new Error("操作已取消")); return }
             if (error) {
@@ -150,23 +189,29 @@ export class GitExecutor {
 
         // 流式输出：execFile 的完成回调仍收全量缓冲，此处额外逐块回传（git progress 走 stderr）
         if (onOutput) {
-          child.stdout?.on("data", (d: any) => onOutput(String(d)))
-          child.stderr?.on("data", (d: any) => onOutput(String(d)))
+          child.stdout?.on("data", (d: Buffer | string) => onOutput(String(d)))
+          child.stderr?.on("data", (d: Buffer | string) => onOutput(String(d)))
         }
 
         const onAbort = () => {
           killed = true
           try { child.kill("SIGTERM") } catch {}
-          // 清空两个池中与当前 signal 关联的排队项，避免残留
-          this.gitWaitQueue = this.gitWaitQueue.filter((item) => item.signal !== signal)
-          this.networkWaitQueue = this.networkWaitQueue.filter((item) => item.signal !== signal)
+          // 过滤并 reject 与当前 signal 关联的排队项，防止僵尸 Promise
+          const removeFromQueue = (queue: typeof this.gitWaitQueue): typeof this.gitWaitQueue => {
+            const remaining: typeof this.gitWaitQueue = []
+            for (const item of queue) {
+              if (item.signal === signal) {
+                item.reject(new Error("操作已取消"))
+              } else {
+                remaining.push(item)
+              }
+            }
+            return remaining
+          }
+          this.gitWaitQueue = removeFromQueue(this.gitWaitQueue)
+          this.networkWaitQueue = removeFromQueue(this.networkWaitQueue)
         }
         if (signal) {
-          if (signal.aborted) {
-            onAbort()
-            reject(new Error("操作已取消"))
-            return
-          }
           signal.addEventListener("abort", onAbort, { once: true })
         }
       }
@@ -175,13 +220,13 @@ export class GitExecutor {
         if (this.networkRunning < this.networkMaxConcurrent) {
           run()
         } else {
-          this.networkWaitQueue.push({ run, signal })
+          this.networkWaitQueue.push({ run, reject, signal })
         }
       } else {
         if (this.gitRunning < this.gitMaxConcurrent) {
           run()
         } else {
-          this.gitWaitQueue.push({ run, signal })
+          this.gitWaitQueue.push({ run, reject, signal })
         }
       }
     })
@@ -198,7 +243,9 @@ export class GitExecutor {
       try { child.kill("SIGTERM") } catch {}
     }
     this.activeProcesses.clear()
-    // 清空等待队列中所有闭包，防止插件卸载后僵尸 Promise 持有闭包引用导致内存泄漏
+    // 拒绝排队中的 Promise 后清空队列，防止插件卸载后僵尸 Promise 泄漏
+    for (const item of this.gitWaitQueue) { item.reject(new Error("操作已取消")) }
+    for (const item of this.networkWaitQueue) { item.reject(new Error("操作已取消")) }
     this.gitWaitQueue.length = 0
     this.networkWaitQueue.length = 0
   }

@@ -2107,6 +2107,7 @@
   "logMoreFiles": "+{count} 更多",
   "logCopyDetail": "复制详情",
   "logCopied": "已复制",
+  "hashCopied": "SHA-256 已复制",
   "scriptLauncher": {
     "panelTitle": "脚本启动器",
     "description": "管理并运行自定义脚本，支持 Python、Bash、PowerShell、Node.js、Batch",

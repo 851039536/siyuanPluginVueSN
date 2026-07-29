@@ -1,88 +1,96 @@
 <!-- 手动备份卡片组件 — 备份按钮 + 日期文件夹 + 本地目录 + S3 子路径 -->
 <template>
   <section class="card-section">
+    <!-- 卡片标题 -->
     <div class="section-header">
-      <h4>{{ i18n.manualBackup || "手动备份" }}</h4>
+      <!-- 标题："手动备份" -->
+      <h4>{{ i18n.manualBackup }}</h4>
     </div>
+    <!-- 备份操作按钮行 -->
     <div class="backup-actions-row">
+      <!-- 按钮："立即备份"（主按钮，执行当前勾选的备份模式组合） -->
       <Button
         variant="primary"
         size="xsmall"
-        :disabled="isBackingUp || !canBackup || !workspacePath"
+        :disabled="isAnyTaskRunning || isBackingUp || !canBackup || !workspacePath"
         :loading="isBackingUp"
         @click="$emit('performBackup')"
       >
-        {{ i18n.backupNow || "立即备份" }}
+        {{ i18n.backupNow }}
       </Button>
-      <!-- 压缩包备份按钮："压缩包备份"（独立触发本地 ZIP 打包，不依赖模式开关） -->
+      <!-- 按钮："压缩包备份"（独立触发本地 ZIP 打包，不依赖模式开关） -->
       <Button
         variant="ghost"
         size="xsmall"
-        :disabled="isBackingUp || isZipBackingUp || !workspacePath"
+        :disabled="isAnyTaskRunning || isBackingUp || isZipBackingUp || !workspacePath"
         :loading="isZipBackingUp"
         @click="$emit('triggerZipBackup')"
       >
         {{ i18n.zipBackup }}
       </Button>
-      <!-- 增量备份按钮："增量备份" -->
+      <!-- 按钮："增量备份" -->
       <Button
         variant="ghost"
         size="xsmall"
-        :disabled="isBackingUp || isIncrementalRunning || !isConfigured || !workspacePath"
+        :disabled="isAnyTaskRunning || isBackingUp || isIncrementalRunning || !isConfigured || !workspacePath"
         :loading="isIncrementalRunning"
         @click="$emit('triggerIncremental')"
       >
         {{ i18n.incrementalBackup }}
       </Button>
-      <!-- 增量还原按钮："增量还原" -->
+      <!-- 按钮："增量还原" -->
       <Button
         variant="ghost"
         size="xsmall"
-        :disabled="isBackingUp || isIncrementalRestoring || !isConfigured || !workspacePath"
+        :disabled="isAnyTaskRunning || isBackingUp || isIncrementalRestoring || !isConfigured || !workspacePath"
         :loading="isIncrementalRestoring"
         @click="$emit('triggerIncrementalRestore')"
       >
         {{ i18n.incrementalRestore }}
       </Button>
     </div>
+    <!-- 日期文件夹开关 -->
     <div class="form-group form-group-checkbox">
+      <!-- Switch 标签："生成日期子文件夹" -->
       <Switch
-        :model-value="useDateFolder"
+        v-model="useDateFolder"
         size="xsmall"
-        :label="i18n.useDateFolder || '生成日期子文件夹'"
-        @update:model-value="$emit('update:useDateFolder', $event as boolean)"
+        :label="i18n.useDateFolder"
       />
-      <span class="form-hint">{{ i18n.useDateFolderHint || "勾选后按日期分类存储" }}</span>
+      <!-- 提示文字 -->
+      <span class="form-hint">{{ i18n.useDateFolderHint }}</span>
     </div>
     <!-- 本地备份目录 -->
     <div class="form-group">
       <Input
-        :model-value="localBackupDir"
+        v-model="localBackupDir"
         size="xsmall"
-        :label="i18n.localBackupDir || '本地备份目录'"
-        placeholder="data-backup"
-        @update:model-value="$emit('update:localBackupDir', $event as string)"
+        :label="i18n.localBackupDir"
+        :placeholder="DEFAULT_BACKUP_DIR"
       />
+      <!-- 本地路径预览 -->
       <div v-if="resolvedLocalBackupPath" class="path-preview">
-        <span class="path-preview-label">{{ i18n.pathPreview || "实际路径" }}</span>
+        <!-- 标签："实际路径" -->
+        <span class="path-preview-label">{{ i18n.pathPreview }}</span>
         <code class="path-preview-value">{{ resolvedLocalBackupPath }}</code>
       </div>
     </div>
     <!-- S3 上传子路径 -->
     <div class="form-group">
       <Input
-        :model-value="s3SubPrefix"
+        v-model="s3SubPrefix"
         size="xsmall"
-        :label="i18n.s3SubPath || 'S3 上传子路径'"
-        placeholder="data-backup"
-        @update:model-value="$emit('update:s3SubPrefix', $event as string)"
+        :label="i18n.s3SubPath"
+        :placeholder="DEFAULT_BACKUP_DIR"
       />
+      <!-- S3 路径预览 -->
       <div v-if="resolvedS3Path" class="path-preview">
-        <span class="path-preview-label">{{ i18n.pathPreview || "云存储路径" }}</span>
+        <!-- 标签："云存储路径" -->
+        <span class="path-preview-label">{{ i18n.s3PathPreview }}</span>
         <code class="path-preview-value">{{ resolvedS3Path }}</code>
       </div>
     </div>
-    <!-- 立即备份动态提示：如"点击「立即备份」将执行：本地 ZIP 备份 + 上传到 S3"，未勾选模式时提示去配置 -->
+    <!-- 立即备份动态提示：列出已勾选的备份模式 -->
     <p class="backup-hint">
       {{ backupHintText }}
     </p>
@@ -94,15 +102,19 @@ import { computed } from "vue"
 import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 import Switch from "@/components/Switch.vue"
+import { DEFAULT_BACKUP_DIR } from "../types"
+
+// defineModel — 双向绑定（对齐同模块 AutoBackupCard 写法）
+const useDateFolder = defineModel<boolean>("useDateFolder", { required: true })
+const localBackupDir = defineModel<string>("localBackupDir", { required: true })
+const s3SubPrefix = defineModel<string>("s3SubPrefix", { required: true })
 
 const props = defineProps<{
+  isAnyTaskRunning: boolean
   isBackingUp: boolean
   canBackup: boolean
   isConfigured: boolean
   workspacePath: string
-  useDateFolder: boolean
-  localBackupDir: string
-  s3SubPrefix: string
   resolvedLocalBackupPath: string
   resolvedS3Path: string
   backupModeLocalZip: boolean
@@ -119,9 +131,6 @@ defineEmits<{
   (e: "triggerZipBackup"): void
   (e: "triggerIncremental"): void
   (e: "triggerIncrementalRestore"): void
-  (e: "update:useDateFolder", value: boolean): void
-  (e: "update:localBackupDir", value: string): void
-  (e: "update:s3SubPrefix", value: string): void
 }>()
 
 const backupHintText = computed(() => {

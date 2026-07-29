@@ -2048,6 +2048,7 @@
   "noLocalBackups": "暂无本地备份",
   "localBackupDir": "本地备份目录",
   "s3SubPath": "S3 上传子路径",
+  "s3PathPreview": "云存储路径",
   "pathPreview": "实际路径",
   "backupTab": "备份",
   "configTab": "配置",

@@ -78,6 +78,7 @@
   "noLocalBackups": "No local backups",
   "localBackupDir": "Local Backup Directory",
   "s3SubPath": "S3 Sub Path",
+  "s3PathPreview": "Cloud storage path",
   "pathPreview": "Resolved Path",
   "backupTab": "Backup",
   "configTab": "Config",

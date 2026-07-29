@@ -1,8 +1,8 @@
-// Git 刷新操作集群（单项/工作区/日志/标签/远程 + 全局刷新与 fetch）
+// Git 刷新操作集群（单项/工作区/远程 + 全局刷新与 fetch；日志/标签刷新已下沉卡片）
 import type { Ref } from "vue"
 import { ref } from "vue"
 import { showMessage } from "siyuan"
-import type { GitProject, GitPushManager } from "../types"
+import type { CardDataDomain, GitProject, GitPushManager } from "../types"
 import type { StepCtx } from "./useBatchProgress"
 import { resolveValidPath } from "../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
@@ -26,23 +26,19 @@ export function useRefreshOps(deps: {
   gitOpsPaused: Ref<boolean>
   runBatchWithProgress: RunBatch
   tf: (key: string, ...args: (string | number)[]) => string
-  commitLogLoading: Ref<Record<string, boolean>>
-  tagLoading: Ref<Record<string, boolean>>
+  /** 按域通知卡片重载自持数据（log/branches/stash 已下沉 ProjectCard） */
+  bumpCardRefresh: (id: string, ...domains: CardDataDomain[]) => void
   loadProjectGitStatus: (id: string, skipRefresh?: boolean) => Promise<void>
   loadPushStatus: (id: string, opts?: { fetchFirst?: boolean, branch?: string }) => Promise<void>
   loadWorkingTree: (id: string, skipRefresh?: boolean, branch?: string) => Promise<void>
-  loadCommitLog: (id: string, count?: number) => Promise<void>
-  loadBranches: (id: string) => Promise<void>
-  loadStashList: (id: string) => Promise<void>
-  loadTags: (id: string) => Promise<unknown>
   refreshRemotes: (id: string) => Promise<unknown>
   fetchAllRemotes: (id: string) => Promise<unknown>
 }) {
   const {
     manager, projects, activeCategory, gitOpsPaused, runBatchWithProgress, tf,
-    commitLogLoading, tagLoading,
-    loadProjectGitStatus, loadPushStatus, loadWorkingTree, loadCommitLog,
-    loadBranches, loadStashList, loadTags, refreshRemotes, fetchAllRemotes,
+    bumpCardRefresh,
+    loadProjectGitStatus, loadPushStatus, loadWorkingTree,
+    refreshRemotes, fetchAllRemotes,
   } = deps
 
   const refreshing = ref<string | null>(null)
@@ -55,8 +51,6 @@ export function useRefreshOps(deps: {
   const showRefreshMenu = ref(false)
   /** FETCH 操作加载中 id → true */
   const fetching = ref<Record<string, boolean>>({})
-  /** 工作区刷新加载中 id → true */
-  const workingTreeLoading = ref<Record<string, boolean>>({})
   /** 远程状态刷新加载中 id → true */
   const remoteStatusLoading = ref<Record<string, boolean>>({})
   /** HEAD hash 缓存，用于跳过无变动项目的 commit log / branches 刷新 */
@@ -81,15 +75,12 @@ export function useRefreshOps(deps: {
         ctx.step(tf("stepHead"), () => manager.getHeadHash(resolveValidPath(p))),
       ])
 
+      // 日志/分支/stash 已下沉卡片，HEAD 变化时按域通知重载，未变仅刷 stash
       if (curr && curr !== prev) {
         headHashes.value[p.id] = curr
-        await Promise.all([
-          ctx.step(tf("stepLog"), () => loadCommitLog(p.id)),
-          ctx.step(tf("stepBranch"), () => loadBranches(p.id)),
-          ctx.step(tf("stepStash"), () => loadStashList(p.id)),
-        ])
+        bumpCardRefresh(p.id, "log", "branches", "stash")
       } else if (curr) {
-        await ctx.step(tf("stepStash"), () => loadStashList(p.id))
+        bumpCardRefresh(p.id, "stash")
       }
     }, undefined, { keepVisible })
   }
@@ -100,17 +91,16 @@ export function useRefreshOps(deps: {
     refreshing.value = id
     try {
       await runBatchWithProgress([project], tf("refreshingLabel"), async (p, ctx) => {
-        // 一次 rev-parse 获取 branch，六项操作全部并行（git 信号量自动限流到 3）
+        // 一次 rev-parse 获取 branch，远程/推送/工作区并行（git 信号量自动限流到 3）
         const cwd = resolveValidPath(p)
         const branch = await manager.getBranch(cwd)
         await Promise.all([
           ctx.step(tf("stepRemote"), () => refreshRemotes(p.id)),
           ctx.step(tf("stepPush"), () => loadPushStatus(p.id, { fetchFirst: true, branch })),
           ctx.step(tf("stepWorkingTree"), () => loadWorkingTree(p.id, false, branch)),
-          ctx.step(tf("stepLog"), () => loadCommitLog(p.id)),
-          ctx.step(tf("stepBranch"), () => loadBranches(p.id)),
-          ctx.step(tf("stepStash"), () => loadStashList(p.id)),
         ])
+        // 日志/分支/stash 已下沉卡片，按域通知重载
+        bumpCardRefresh(p.id, "log", "branches", "stash")
       }, (p) => p.name, { keepVisible: true })
     } finally {
       refreshing.value = null
@@ -122,34 +112,8 @@ export function useRefreshOps(deps: {
   async function handleRefreshWorkingTree(id: string) {
     const project = projects.value.find((p) => p.id === id)
     if (!project) return
-    workingTreeLoading.value = { ...workingTreeLoading.value, [id]: true }
-    try {
-      const branch = await manager.getBranch(resolveValidPath(project))
-      await loadWorkingTree(id, false, branch)
-    } finally {
-      delete workingTreeLoading.value[id]
-      workingTreeLoading.value = { ...workingTreeLoading.value }
-    }
-  }
-
-  async function handleRefreshCommitLog(id: string) {
-    commitLogLoading.value = { ...commitLogLoading.value, [id]: true }
-    try {
-      await loadCommitLog(id)
-    } finally {
-      delete commitLogLoading.value[id]
-      commitLogLoading.value = { ...commitLogLoading.value }
-    }
-  }
-
-  async function handleRefreshTags(id: string) {
-    tagLoading.value = { ...tagLoading.value, [id]: true }
-    try {
-      await loadTags(id)
-    } finally {
-      delete tagLoading.value[id]
-      tagLoading.value = { ...tagLoading.value }
-    }
+    const branch = await manager.getBranch(resolveValidPath(project))
+    await loadWorkingTree(id, false, branch)
   }
 
   async function handleRefreshRemoteStatus(id: string) {
@@ -237,14 +201,11 @@ export function useRefreshOps(deps: {
     refreshingAllRemote,
     showRefreshMenu,
     fetching,
-    workingTreeLoading,
     remoteStatusLoading,
     headHashes,
     silentRefreshAll,
     handleRefresh,
     handleRefreshWorkingTree,
-    handleRefreshCommitLog,
-    handleRefreshTags,
     handleRefreshRemoteStatus,
     handleRefreshAll,
     handleRefreshAllLocal,

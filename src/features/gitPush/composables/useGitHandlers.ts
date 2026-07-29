@@ -2,7 +2,7 @@
 import type { Ref } from "vue"
 import { ref } from "vue"
 import { showMessage } from "siyuan"
-import type { GitProject } from "../types"
+import type { CardDataDomain, GitProject } from "../types"
 import { getProjectRemoteNames, pruneRecordCache } from "../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
 
@@ -28,10 +28,8 @@ export function useGitHandlers(deps: {
   pushTagOp: (id: string, remote: string, tag: string) => Promise<string>
   abortMergeOp: (id: string) => Promise<void>
   resolveConflictOp: (id: string, file: string, strategy: "theirs" | "ours") => Promise<void>
-  // 返回值声明为 unknown：实际实现返回 ConflictFile[]，此处仅触发不消费结果
-  checkConflicts: (id: string) => Promise<unknown>
-  loadTags: (id: string) => Promise<unknown>
-  loadCommitLog: (id: string, count?: number) => Promise<void>
+  /** 按域通知卡片重载自持数据（log/tags/conflicts 已下沉 ProjectCard） */
+  bumpCardRefresh: (id: string, ...domains: CardDataDomain[]) => void
   loadWorkingTree: (id: string, skipRefresh?: boolean, branch?: string) => Promise<void>
 }) {
   const {
@@ -39,8 +37,8 @@ export function useGitHandlers(deps: {
     discardFile, doCommit, generateCommitMsg,
     doStashSave, doStashPop, doStashApply, doStashDrop, generateStashDesc,
     createTagOp, deleteTagOp, pushTagOp,
-    abortMergeOp, resolveConflictOp, checkConflicts,
-    loadTags, loadCommitLog, loadWorkingTree,
+    abortMergeOp, resolveConflictOp,
+    bumpCardRefresh, loadWorkingTree,
   } = deps
 
   /** 提交输出 id → text */
@@ -128,12 +126,12 @@ export function useGitHandlers(deps: {
   // ── Tag 操作 ──
 
   function handleCreateTag(id: string, name: string, message?: string) {
-    safeGitOp(tf("createTagFailed"), () => createTagOp(id, name, message).then(() => { loadTags(id) }))
+    safeGitOp(tf("createTagFailed"), () => createTagOp(id, name, message).then(() => { bumpCardRefresh(id, "tags") }))
   }
 
   function handleDeleteTag(id: string, tag: string) {
     showConfirm(tf("deleteTagTitle"), tf("deleteTagConfirm", tag), () => {
-      safeGitOp(tf("deleteTagFailed"), () => deleteTagOp(id, tag).then(() => { loadTags(id) }))
+      safeGitOp(tf("deleteTagFailed"), () => deleteTagOp(id, tag).then(() => { bumpCardRefresh(id, "tags") }))
     })
   }
 
@@ -162,12 +160,12 @@ export function useGitHandlers(deps: {
 
   function handleAbortMerge(id: string) {
     showConfirm(tf("abortMergeTitle"), tf("abortMergeConfirm"), () => {
-      safeGitOp(tf("abortMergeFailed"), () => abortMergeOp(id))
+      safeGitOp(tf("abortMergeFailed"), () => abortMergeOp(id).then(() => { bumpCardRefresh(id, "conflicts") }))
     })
   }
 
   function handleResolveConflict(id: string, file: string, strategy: "theirs" | "ours") {
-    safeGitOp(tf("resolveConflictFailed"), () => resolveConflictOp(id, file, strategy).then(() => { checkConflicts(id) }))
+    safeGitOp(tf("resolveConflictFailed"), () => resolveConflictOp(id, file, strategy).then(() => { bumpCardRefresh(id, "conflicts") }))
   }
 
   async function handleCommit(id: string, message: string) {
@@ -176,7 +174,8 @@ export function useGitHandlers(deps: {
       const result = await doCommit(id, message)
       commitOutputs.value[id] = result || tf("commitSuccess")
       pruneRecordCache(commitOutputs.value)
-      await loadCommitLog(id)
+      // 提交日志已下沉卡片，提交后经信号通知重载
+      bumpCardRefresh(id, "log")
     } catch (e: unknown) {
       commitOutputs.value[id] = tf("commitFailed", getErrorMessage(e))
     }

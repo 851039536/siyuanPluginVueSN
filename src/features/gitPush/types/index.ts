@@ -34,7 +34,7 @@ export {
 
 // ── 重导出卡片注入契约（provide/inject 消除中间人 props/emits）──
 export { CARD_SERVICES_KEY } from "./cardServices"
-export type { CardServices } from "./cardServices"
+export type { CardDataDomain, CardRefreshSignals, CardServices } from "./cardServices"
 
 // ── 重导出元数据（来自 meta.ts，独立模块切断循环引用）──
 export {

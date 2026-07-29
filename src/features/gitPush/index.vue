@@ -98,32 +98,23 @@
             :search-query="searchQuery"
             :refreshing="refreshing"
             :fetching="fetching[project.id]"
-            :branches="branches[project.id]"
             :push-status="pushStatuses[project.id]"
             :working-tree="workingTrees[project.id]"
-            :stash-entries="stashEntries[project.id]"
             :stash-loading="stashLoading[project.id]"
-            :conflicts="conflicts[project.id]"
             :commit-output="commitOutputs[project.id]"
             :pull-outputs="pullOutputs[project.id]"
             :push-outputs="pushOutputs[project.id]"
             :committing="committing[project.id]"
             :generating-msg="generatingMsgs[project.id]"
             :git-op-loading="gitOpLoading[project.id]"
-            :commit-log-loading="commitLogLoading[project.id]"
-            :tags-cache="tagsCache[project.id]"
-            :tag-loading="tagLoading[project.id]"
             :remote-status-loading="remoteStatusLoading[project.id]"
             :tag-push-loading="tagPushLoading[project.id]"
             :gen-stash-desc-loading="genStashDescLoading[project.id]"
             :generated-stash-msg="generatedStashMsg"
             :commit-templates="commitTemplates"
-            :md-files="mdFilesForProject(project.id)"
             :status-badge-class="statusBadgeClass"
             :status-label="statusLabel"
             :has-behind="hasBehind"
-            :file-diffs="fileDiffsForProject(project.id)"
-            :commit-log-entries="commitLogForProject(project.id)"
             :is-pulling="isPulling"
             :is-pushing="isPushing"
             :needs-push-for="needsPushFor"
@@ -141,8 +132,6 @@
             @remove-custom-ide="removeCustomIdeByName"
             @refresh="handleRefresh"
             @refresh-working-tree="handleRefreshWorkingTree"
-            @refresh-commit-log="handleRefreshCommitLog"
-            @refresh-tags="handleRefreshTags"
             @refresh-remote-status="handleRefreshRemoteStatus"
             @stage-file="(id: string, file: string) => handleGitOp(tf('stageFailed'), () => stageItem(id, file), id)"
             @unstage-file="(id: string, file: string) => handleGitOp(tf('unstageFailed'), () => unstageItem(id, file), id)"
@@ -150,11 +139,8 @@
             @unstage-all="(id: string) => handleGitOp(tf('unstageFailed'), () => unstageAllItems(id), id)"
             @commit="(id: string, msg: string) => handleCommit(id, msg)"
             @generate-msg="handleGenerateMsg"
-            @load-diff="loadFileDiff"
             @clear-output="(id: string) => commitOutputs[id] = ''"
             @discard-file="handleDiscard"
-            @expand="handleExpand"
-            @reload-commit-log="handleReloadCommitLog"
             @stash-confirm-msg="handleStashConfirmMsg"
             @gen-stash-desc="handleGenStashDesc"
             @stash-pop="handleStashPop"
@@ -318,7 +304,6 @@ import { useIdeManagement } from "./composables/useIdeManagement"
 import {
   useProjectFilters,
 } from "./composables/useProjectFilters"
-import { useCommitLog } from "./composables/useCommitLog"
 import { useScanImport } from "./composables/useScanImport"
 import { useGitConfigDialog } from "./composables/useGitConfigDialog"
 import { useGitHandlers } from "./composables/useGitHandlers"
@@ -327,9 +312,7 @@ import { CARD_SERVICES_KEY, PLATFORM_META, REMOTES } from "./types"
 import {
   openLocalPath,
   openRepoWebUrl,
-  resolveValidPath,
 } from "./utils"
-import { scanMarkdownFiles } from "./composables/useMarkdownFiles"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -356,15 +339,12 @@ const {
   pullOutputs,
   pushStatuses,
   workingTrees,
-  fileDiffs,
   committing,
-  branches,
   loadProjects,
   loadPushStatus,
   loadWorkingTree,
   loadProjectGitStatus,
   loadStatsData,
-  loadFileDiff,
   stageItem,
   stageAllItems,
   unstageItem,
@@ -382,9 +362,6 @@ const {
   addCategory: addCategoryFn,
   deleteCategory: deleteCategoryFn,
   moveProject,
-  commitLogs,
-  loadCommitLog,
-  loadBranches,
   switchBranch,
   startScan,
   importScanResults,
@@ -393,25 +370,21 @@ const {
   gitConcurrency,
   loadGitConcurrency,
   setGitConcurrency,
-  stashEntries,
   stashLoading,
-  loadStashList,
   doStashSave,
   doStashPop,
   doStashApply,
   doStashDrop,
   generateStashDesc,
   fetchAllRemotes,
-  // Tag 管理
-  tagsCache,
-  tagLoading,
-  loadTags,
+  // 卡片刷新信号（下沉数据的父层写入替代通道）
+  cardRefreshSignals,
+  bumpCardRefresh,
+  // Tag 管理（仅写操作，列表数据已下沉卡片）
   createTagOp,
   deleteTagOp,
   pushTagOp,
-  // 冲突检测
-  conflicts,
-  checkConflicts,
+  // 冲突操作（仅写操作，冲突列表已下沉卡片）
   abortMergeOp,
   resolveConflictOp,
   // 提交信息模板
@@ -428,16 +401,18 @@ const {
   toggleStar,
 } = useGitPush(props.manager)
 
-// 卡片服务注入（ProjectCard 自包含下沉：卡片直连父层服务，消除中间人 props/emits）
-provide(CARD_SERVICES_KEY, { updateProjectMeta })
+// 卡片服务注入（ProjectCard 自包含下沉：卡片直连父层服务与刷新信号，消除中间人 props/emits）
+provide(CARD_SERVICES_KEY, { manager: props.manager, updateProjectMeta, cardRefreshSignals, recordCommitActivity })
 
-const { commitLogLoading, commitLogForProject, handleExpand, handleReloadCommitLog } = useCommitLog({
-  commitLogs,
-  loadCommitLog,
-  loadBranches,
-  loadStashList,
-  loadTags,
-})
+/** 卡片加载提交日志后回传最近活动时间（原 useGitOps.loadCommitLog 的副作用） */
+async function recordCommitActivity(id: string, isoTime: string) {
+  await props.manager.recordLastActivity(id, isoTime).catch(() => {})
+  const project = projects.value.find((p) => p.id === id)
+  if (project && project.lastActivity !== isoTime) {
+    project.lastActivity = isoTime
+    projects.value = [...projects.value]
+  }
+}
 
 const showAddDialog = ref(false)
 const showCatDialog = ref(false)
@@ -590,8 +565,8 @@ const {
   discardFile, doCommit, generateCommitMsg,
   doStashSave, doStashPop, doStashApply, doStashDrop, generateStashDesc,
   createTagOp, deleteTagOp, pushTagOp,
-  abortMergeOp, resolveConflictOp, checkConflicts,
-  loadTags, loadCommitLog, loadWorkingTree,
+  abortMergeOp, resolveConflictOp,
+  bumpCardRefresh, loadWorkingTree,
 })
 
 // ── 刷新操作集群 ──
@@ -606,8 +581,6 @@ const {
   headHashes,
   handleRefresh,
   handleRefreshWorkingTree,
-  handleRefreshCommitLog,
-  handleRefreshTags,
   handleRefreshRemoteStatus,
   handleRefreshAll,
   handleRefreshAllLocal,
@@ -615,26 +588,15 @@ const {
   handleFetchAll,
 } = useRefreshOps({
   manager: props.manager, projects, activeCategory, gitOpsPaused, runBatchWithProgress, tf,
-  commitLogLoading, tagLoading,
-  loadProjectGitStatus, loadPushStatus, loadWorkingTree, loadCommitLog,
-  loadBranches, loadStashList, loadTags, refreshRemotes, fetchAllRemotes,
+  bumpCardRefresh,
+  loadProjectGitStatus, loadPushStatus, loadWorkingTree,
+  refreshRemotes, fetchAllRemotes,
 })
 /** 项目编辑弹窗状态 */
 const editDialogProjectId = ref("")
 /** Markdown 文档预览弹窗状态 */
 const markdownPreviewProject = ref<GitProject | null>(null)
 const markdownPreviewInitialFile = ref<string | undefined>(undefined)
-/** 项目 Markdown 文件缓存（项目 id → 文件元数据数组，避免每次 readdirSync） */
-const projectMdFiles = ref<Record<string, ReturnType<typeof scanMarkdownFiles>>>({})
-/** 获取指定项目的 Markdown 文件列表（懒扫描 + 缓存） */
-function mdFilesForProject(projectId: string): ReturnType<typeof scanMarkdownFiles> {
-  if (projectMdFiles.value[projectId]) return projectMdFiles.value[projectId]
-  const project = projects.value.find((p) => p.id === projectId)
-  if (!project) return []
-  const files = scanMarkdownFiles(resolveValidPath(project))
-  projectMdFiles.value = { ...projectMdFiles.value, [projectId]: files }
-  return files
-}
 
 /** 打开 Markdown 文档预览弹窗 */
 function openMarkdownPreview(project: GitProject, fileName: string) {
@@ -648,22 +610,9 @@ function closeMarkdownPreview() {
   markdownPreviewInitialFile.value = undefined
 }
 
-/** 提取指定项目相关的 fileDiffs（按前缀过滤） */
-function fileDiffsForProject(projectId: string): Record<string, string> {
-  const result: Record<string, string> = {}
-  for (const [key, val] of Object.entries(fileDiffs.value)) {
-    if (key.startsWith(`${projectId}::`)) {
-      // 去掉 projectId 前缀作为组件内 key
-      result[key.substring(projectId.length + 2)] = val
-    }
-  }
-  return result
-}
-
 onMounted(async () => {
   document.addEventListener("click", closeIdeMenuOnOutside)
   await loadProjects()
-  projectMdFiles.value = {}
   loadCommitTemplates()
   loadCustomIdes()
   scanIdes() // 扫描已安装的 IDE

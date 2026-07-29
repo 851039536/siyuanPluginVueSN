@@ -1,18 +1,16 @@
 // Git 底层操作封装（加载/提交/暂存/分支切换；远程推送/拉取已提取到 useRemoteProgress）
 import type { Ref } from "vue"
 import type {
-  BranchInfo,
-  CommitLogEntry,
+  CardDataDomain,
+  CardRefreshSignals,
   GitProject,
   GitPushManager,
   PushStatusInfo,
-  StashEntry,
   WorkingTreeInfo,
 } from "../types"
 import { onUnmounted, ref } from "vue"
 import {
   findProject,
-  pruneRecordCache,
   resolveValidPath,
 } from "../utils"
 import { useRemoteProgress } from "./useRemoteProgress"
@@ -23,18 +21,19 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
   const pushStatuses = ref<Record<string, PushStatusInfo>>({})
   /** 工作区状态缓存 */
   const workingTrees = ref<Record<string, WorkingTreeInfo>>({})
-  /** 文件差异缓存 */
-  const fileDiffs = ref<Record<string, string>>({})
   /** 正在提交的项目 id → true */
   const committing = ref<Record<string, boolean>>({})
-  /** 提交日志缓存 */
-  const commitLogs = ref<Record<string, CommitLogEntry[]>>({})
-  /** 分支列表缓存 */
-  const branches = ref<Record<string, BranchInfo[]>>({})
-  /** Stash 条目缓存 */
-  const stashEntries = ref<Record<string, StashEntry[]>>({})
   /** Stash 操作加载中 */
   const stashLoading = ref<Record<string, boolean>>({})
+  /** 卡片自持数据的按域刷新信号（log/branches/stash/tags/conflicts 已下沉 ProjectCard，父层操作后经此通知重载） */
+  const cardRefreshSignals = ref<CardRefreshSignals>({})
+
+  /** 按域递增指定项目的刷新信号，触发卡片重载对应数据 */
+  function bumpCardRefresh(id: string, ...domains: CardDataDomain[]) {
+    const cur = { ...(cardRefreshSignals.value[id] || {}) }
+    for (const d of domains) cur[d] = (cur[d] || 0) + 1
+    cardRefreshSignals.value = { ...cardRefreshSignals.value, [id]: cur }
+  }
 
   /** 待清理的 setTimeout ID */
   const pendingTimers = new Set<ReturnType<typeof setTimeout>>()
@@ -91,44 +90,14 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     ])
   }
 
-  async function loadFileDiff(id: string, file: string, staged: boolean) {
-    const project = findProject(projects, id)
-    if (!project) return ""
-    const key = `${id}::${staged ? "s" : "u"}::${file}`
-    const diff = await manager.getFileDiff(resolveValidPath(project), file, staged)
-    fileDiffs.value[key] = diff
-    return diff
-  }
-
-  async function loadCommitLog(id: string, count?: number) {
-    const project = findProject(projects, id)
-    if (!project) return
-    const entries = await manager.getCommitLog(resolveValidPath(project), count)
-    commitLogs.value[id] = entries
-    const latest = entries[0]?.date
-    if (latest) {
-      await manager.recordLastActivity(id, latest).catch(() => {})
-      if (project.lastActivity !== latest) {
-        project.lastActivity = latest
-        projects.value = [...projects.value]
-      }
-    }
-  }
-
-  async function loadBranches(id: string) {
-    const project = findProject(projects, id)
-    if (!project) return
-    branches.value[id] = await manager.getBranches(resolveValidPath(project))
-  }
-
   async function switchBranch(id: string, branch: string) {
     const project = findProject(projects, id)
     if (!project) throw new Error("项目未找到")
     await manager.switchBranch(resolveValidPath(project), branch)
     await loadWorkingTree(id)
     await loadPushStatus(id)
-    await loadCommitLog(id)
-    await loadBranches(id)
+    // 提交日志与分支列表已下沉卡片，切换分支后经信号通知重载
+    bumpCardRefresh(id, "log", "branches")
   }
 
   // ── 工作区操作 ──
@@ -192,17 +161,12 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
       const project = findProject(projects, id)
       if (!project) return
       await fn(resolveValidPath(project))
-      await loadStashList(id)
+      // Stash 列表已下沉卡片，操作后经信号通知重载
+      bumpCardRefresh(id, "stash")
       await loadWorkingTree(id)
     } finally {
       delete stashLoading.value[id]
     }
-  }
-
-  async function loadStashList(id: string) {
-    const project = findProject(projects, id)
-    if (!project) return
-    stashEntries.value[id] = await manager.stashList(resolveValidPath(project))
   }
 
   async function doStashSave(id: string, message?: string) {
@@ -253,16 +217,9 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
   // ── 缓存清理 ──
 
   function clearProjectCache(id: string) {
-    const caches: Record<string, any>[] = [
-      pushStatuses.value, workingTrees.value, commitLogs.value,
-      branches.value, stashEntries.value,
-    ]
-    for (const cache of caches) { delete cache[id] }
-    const prefix = `${id}::`
-    for (const key of Object.keys(fileDiffs.value)) {
-      if (key.startsWith(prefix)) { delete fileDiffs.value[key] }
-    }
-    pruneRecordCache(fileDiffs.value, 50)
+    delete pushStatuses.value[id]
+    delete workingTrees.value[id]
+    delete cardRefreshSignals.value[id]
   }
 
   // ── 远程推送/拉取（委托 useRemoteProgress）──
@@ -293,20 +250,16 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     // 本地状态
     pushStatuses,
     workingTrees,
-    fileDiffs,
     committing,
-    commitLogs,
-    branches,
-    stashEntries,
     stashLoading,
+    // 卡片刷新信号（下沉数据的父层写入替代通道）
+    cardRefreshSignals,
+    bumpCardRefresh,
     // 加载
     loadPushStatus,
     loadWorkingTree,
     loadProjectGitStatus,
     loadStatsData,
-    loadFileDiff,
-    loadCommitLog,
-    loadBranches,
     switchBranch,
     // 工作区
     stageItem,
@@ -317,7 +270,6 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     doCommit,
     generateCommitMsg,
     // Stash
-    loadStashList,
     doStashSave,
     doStashPop,
     doStashApply,

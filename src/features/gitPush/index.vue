@@ -36,12 +36,7 @@
     <StatsPanel
       v-if="currentView === 'stats'"
       :i18n="i18n"
-      :project-count="projectCount"
-      :remote-coverage="remoteCoverage"
-      :push-status-stats="pushStatusStats"
-      :pending-projects="pendingProjects"
-      :uncommitted-count="uncommittedProjects.length"
-      :platform-status-projects="platformStatusProjects"
+      :stats="statsView"
       @view-project="onViewProject"
     />
 
@@ -473,12 +468,9 @@ const {
   loadCommitTemplates,
   // 统计视图数据
   projectCount,
-  remoteCoverage,
-  pushStatusStats,
   needsPushProjects,
   uncommittedProjects,
-  pendingProjects,
-  platformStatusProjects,
+  statsView,
   // 项目聚合管理
   starredProjects,
   updateProjectMeta,

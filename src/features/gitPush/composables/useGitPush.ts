@@ -121,12 +121,9 @@ export function useGitPush(manager: GitPushManager) {
     loadGitConcurrency: stats.loadGitConcurrency,
     setGitConcurrency: stats.setGitConcurrency,
     projectCount: stats.projectCount,
-    remoteCoverage: stats.remoteCoverage,
-    pushStatusStats: stats.pushStatusStats,
     needsPushProjects: stats.needsPushProjects,
     uncommittedProjects: stats.uncommittedProjects,
-    pendingProjects: stats.pendingProjects,
-    platformStatusProjects: stats.platformStatusProjects,
+    statsView: stats.statsView,
     groupedProjects: stats.groupedProjects,
     starredProjects: stats.starredProjects,
   }

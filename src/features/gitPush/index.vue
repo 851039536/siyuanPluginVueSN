@@ -705,15 +705,19 @@ function closeIdeMenuOnOutside(e: MouseEvent) {
   }
 }
 
-/** 切换分类时懒加载该分类下项目的数据（首屏最小集，详情展开时再补） */
+/** 加载当前分类列表视图所需的最小状态数据（工作区摘要 + 推送状态）。分类切换 / 切回列表 / 恢复暂停共用 */
+async function loadCurrentCategoryList() {
+  const catId = activeCategory.value
+  const projList = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
+  const pending = projList.filter((p) => !workingTrees.value[p.id])
+  await runProjectLoadBatch(pending, "stepStatus", (id) => loadProjectGitStatus(id, true))
+}
+
+/** 切换分类时懒加载该分类下项目的数据（仅列表视图需要；非列表视图由 ensureStats 统一加载，避免看不见的预加载） */
 watch(activeCategory, async (catId) => {
   if (!catId || gitOpsPaused.value) return
-  const projList = projects.value.filter((p) => p.categoryId === catId)
-  if (projList.length === 0) return
-  // 只加载尚未缓存的
-  const pending = projList.filter((p) => !workingTrees.value[p.id])
-  if (pending.length === 0) return
-  await runProjectLoadBatch(pending, "stepStatus", (id) => loadProjectGitStatus(id, true))
+  if (currentView.value !== "list") return
+  await loadCurrentCategoryList()
 })
 
 /**
@@ -728,8 +732,9 @@ async function ensureStatsDataLoaded() {
   return runProjectLoadBatch(pending, "stepStats", (id) => loadStatsData(id))
 }
 
-/** 切换到统计视图时，补齐统计面板所需数据；切到日志视图时同步置 loading（pre-flush，避免 LogPanel 首渲闪空态） */
+/** 切换视图时按目标视图补齐数据：列表→当前分类状态；统计→全量统计；日志→同步置 loading（pre-flush，避免 LogPanel 首渲闪空态） */
 watch(currentView, async (view) => {
+  if (view === "list") await loadCurrentCategoryList()
   if (view === "stats") await ensureStatsDataLoaded()
   if (view === "log") {
     opLogsLoading.value = true
@@ -756,11 +761,7 @@ watch(gitOpsPaused, async (paused) => {
     return
   }
   // 列表视图只补当前分类下未缓存的项目（与首屏最小集一致）
-  const catId = activeCategory.value
-  const projList = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
-  const pending = projList.filter((p) => !workingTrees.value[p.id])
-  if (pending.length === 0) return
-  await runProjectLoadBatch(pending, "stepStatus", (id) => loadProjectGitStatus(id, true))
+  await loadCurrentCategoryList()
 })
 
 async function handleAddFromDialog(data: ProjectPathExtras & { name: string, path: string, catId: string }) {

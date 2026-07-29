@@ -90,6 +90,16 @@ export interface LocalBackupInfo {
   size: number
 }
 
+// ========== 备份列表展示项基础类型 ==========
+
+/** 列表展示项基础类型（LocalBackupInfo / S3FileInfo 均满足此约束），供 BackupListCard 泛型化使用 */
+export interface BackupListDisplayItem {
+  name: string
+  size: number
+  time?: string
+  lastModified?: string
+}
+
 // ========== 备份日志接口 ==========
 
 export interface BackupLog {

@@ -98,8 +98,8 @@
 
       <!-- 本地备份列表 -->
       <BackupListCard
-        :title="i18n.localBackups || '本地备份列表'"
-        :empty-text="i18n.noLocalBackups || '暂无本地备份'"
+        :title="i18n.localBackups"
+        :empty-text="i18n.noLocalBackups"
         :items="localBackupList"
         :disable-refresh="isLoadingLocal || !workspaceRoot"
         :i18n="i18n"
@@ -111,7 +111,7 @@
             :disabled="!isConfigured || uploadingItems[item.path] || isAlreadyUploaded(item.name)"
             @click="uploadLocalBackup(item)"
           >
-            {{ isAlreadyUploaded(item.name) ? (i18n.alreadyUploaded || '已上传') : i18n.uploadToS3 }}
+            {{ isAlreadyUploaded(item.name) ? i18n.alreadyUploaded : i18n.uploadToS3 }}
           </Button>
           <Button variant="danger" size="xsmall" @click="deleteLocalBackup(item)">
             {{ i18n.delete }}
@@ -121,10 +121,9 @@
 
       <!-- S3 备份列表 -->
       <BackupListCard
-        :title="i18n.s3Backups || '云端备份列表'"
-        :empty-text="i18n.noBackups || '暂无云端备份'"
+        :title="i18n.s3Backups"
+        :empty-text="i18n.noBackups"
         :items="backupList"
-        time-key="lastModified"
         :disable-refresh="isLoading || !isConfigured"
         :i18n="i18n"
         :host-map="uploadHostMap"
@@ -132,10 +131,10 @@
       >
         <template #actions="{ item }">
           <Button size="xsmall" @click="handleDownload(item)">
-            {{ i18n.download || "下载" }}
+            {{ i18n.download }}
           </Button>
           <Button variant="danger" size="xsmall" @click="handleDelete(item)">
-            {{ i18n.delete || "删除" }}
+            {{ i18n.delete }}
           </Button>
         </template>
       </BackupListCard>

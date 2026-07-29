@@ -106,47 +106,60 @@ export function useBatchProgress() {
     }
   })
 
+  /** 跨批次串行链：同一时刻只允许一个批次占用共享进度状态。
+   *  防止并发批次（如首屏加载 + 切到统计视图）同时 start() 重置 total、而各自 advance() 累加 current，导致 current 超过 total（如 49/23） */
+  let runChain: Promise<void> = Promise.resolve()
+
   /** 批量处理 + 进度条包装（per-item 异常隔离，单项目失败不影响后续，支持分步骤计时） */
   async function runBatch<T>(
     items: T[], label: string, fn: (item: T, ctx: StepCtx) => Promise<void>, getName?: (item: T) => string, options?: { keepVisible?: boolean },
   ) {
     if (items.length === 0) { return }
-    start(items.length, label)
+    // 跨批次串行：等上一批完全结束再启动本批（批内仍保留 3 路并发，仅跨批次串行）
+    const prev = runChain
+    let release!: () => void
+    runChain = new Promise<void>((r) => { release = r })
     try {
-      await batchProcess(items, 3, async (item, index) => {
-        const name = getName?.(item) ?? ""
-        const displayName = name || `#${index + 1}`
-        const logIdx = beginLog(displayName)
-        const startTime = Date.now()
+      await prev
+      start(items.length, label)
+      try {
+        await batchProcess(items, 3, async (item, index) => {
+          const name = getName?.(item) ?? ""
+          const displayName = name || `#${index + 1}`
+          const logIdx = beginLog(displayName)
+          const startTime = Date.now()
 
-        // 构造步骤上下文：step() 测量耗时后追加到当前日志条目
-        const ctx: StepCtx = {
-          async step<R>(stepName: string, stepFn: () => Promise<R>): Promise<R> {
-            const stepStart = Date.now()
-            try {
-              return await stepFn()
-            } finally {
-              addStep(logIdx, { name: stepName, ms: Date.now() - stepStart })
-            }
-          },
-        }
+          // 构造步骤上下文：step() 测量耗时后追加到当前日志条目
+          const ctx: StepCtx = {
+            async step<R>(stepName: string, stepFn: () => Promise<R>): Promise<R> {
+              const stepStart = Date.now()
+              try {
+                return await stepFn()
+              } finally {
+                addStep(logIdx, { name: stepName, ms: Date.now() - stepStart })
+              }
+            },
+          }
 
-        try {
-          await fn(item, ctx)
-          advance(name)
-          completeLog(logIdx, "ok", (Date.now() - startTime) / 1000)
-        } catch (err) {
-          const elapsed = (Date.now() - startTime) / 1000
-          advance(name)
-          completeLog(logIdx, "fail", elapsed, String(err))
+          try {
+            await fn(item, ctx)
+            advance(name)
+            completeLog(logIdx, "ok", (Date.now() - startTime) / 1000)
+          } catch (err) {
+            const elapsed = (Date.now() - startTime) / 1000
+            advance(name)
+            completeLog(logIdx, "fail", elapsed, String(err))
+          }
+        })
+      } finally {
+        if (options?.keepVisible) {
+          finish()
+        } else {
+          end()
         }
-      })
-    } finally {
-      if (options?.keepVisible) {
-        finish()
-      } else {
-        end()
       }
+    } finally {
+      release()
     }
   }
 

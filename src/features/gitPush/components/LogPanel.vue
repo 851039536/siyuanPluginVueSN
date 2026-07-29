@@ -1,9 +1,28 @@
 <!-- Git 操作日志面板（推送/拉取/提交历史记录） -->
 <template>
   <div class="gp-log-panel">
+    <!-- 加载中占位（首次读盘期间显示，避免闪现空态） -->
+    <div
+      v-if="loading && logs.length === 0"
+      class="gp-empty"
+    >
+      <div class="gp-empty-icon">
+        <Icon
+          icon="mdi:loading"
+          width="48"
+          height="48"
+          class="gp-spin"
+        />
+      </div>
+      <!-- 加载中文案："加载中..." -->
+      <div class="gp-empty-text">
+        {{ i18n.loading }}
+      </div>
+    </div>
+
     <!-- 空状态 -->
     <div
-      v-if="logs.length === 0"
+      v-else-if="logs.length === 0"
       class="gp-empty"
     >
       <div class="gp-empty-icon">
@@ -145,6 +164,7 @@ import type { GitOpLogEntry } from "../types"
 const props = defineProps<{
   i18n: Record<string, any>
   logs: GitOpLogEntry[]
+  loading?: boolean
 }>()
 
 const emit = defineEmits<{

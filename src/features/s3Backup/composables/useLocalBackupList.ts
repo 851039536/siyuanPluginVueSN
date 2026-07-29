@@ -11,14 +11,14 @@ import { showMessage } from "siyuan"
 import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import type { BackupManager } from "../modules/BackupManager"
-import type { BackupLog, LocalBackupInfo, S3BackupStorage, S3FileInfo } from "../types"
+import type { BackupLog, LocalBackupInfo, PersistFn, S3FileInfo } from "../types"
 import { MAX_LOCAL_BACKUP_COUNT } from "../types"
 import { getBaseName, getHostname } from "../utils"
 
 /** 依赖注入：全部来自 index.vue 已有的状态与方法 */
 export interface LocalBackupListDeps {
   getBackupManager: () => BackupManager | null
-  persist: (save: (storage: S3BackupStorage) => Promise<unknown>) => Promise<void>
+  persist: PersistFn
   getStorageHistory: () => Promise<{ list: LocalBackupInfo[] } | null>
   isConfigured: Ref<boolean>
   /** 云端备份列表（防重判断的比对来源） */

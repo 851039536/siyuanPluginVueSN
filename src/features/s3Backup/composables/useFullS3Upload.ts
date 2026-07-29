@@ -26,7 +26,10 @@ export interface FullS3UploadDeps {
   uploadFileContent: (buffer: Buffer, key: string) => Promise<void>
   backupProgress: Ref<BackupProgress>
   addLog: (entry: Omit<BackupLog, "id" | "time" | "hostname">) => void
-  saveChecksum: (fileName: string, filePath: string, fileSize: number, checksum: string) => void
+  /** 保存校验值（persistNow=false 仅更新内存不落盘，供批量循环使用） */
+  saveChecksum: (fileName: string, filePath: string, fileSize: number, checksum: string, persistNow?: boolean) => Promise<void>
+  /** 将内存中的校验值列表统一落盘（批量场景循环结束后调用一次） */
+  persistChecksums: () => Promise<void>
   /** 批量记录上传来源设备名（仅实际上传成功的文件） */
   recordUploadHosts: (fileNames: string[]) => Promise<void>
   refreshBackupList: () => Promise<void>
@@ -109,52 +112,63 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
     let processedCount = 0 // 已处理文件数（含跳过 + 上传）
     const uploadedNames: string[] = [] // 实际上传成功的文件名（hostMap 只记录这些）
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
-      const s3Key = makeS3Key(file.relativePath, timestamp)
+    // try/finally 兜底：即使中途上传抛错，也保住已成功文件的校验值落盘
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        const s3Key = makeS3Key(file.relativePath, timestamp)
 
-      // 去重：全 key 精确匹配，或 basename 已存在（历史目录布局兜底）即跳过
-      if (existingKeys.has(s3Key) || existingBaseNames.has(getBaseName(file.relativePath))) {
-        skippedCount++
-        processedCount++
-        console.log(`[S3备份] 跳过已存在: ${s3Key}`)
+        // 去重：全 key 精确匹配，或 basename 已存在（历史目录布局兜底）即跳过
+        if (existingKeys.has(s3Key) || existingBaseNames.has(getBaseName(file.relativePath))) {
+          skippedCount++
+          processedCount++
+          console.log(`[S3备份] 跳过已存在: ${s3Key}`)
+          backupProgress.value = {
+            phase: "uploading",
+            currentFile: `${file.relativePath} (已跳过)`,
+            filesProcessed: processedCount,
+            totalFiles: files.length,
+            percent: Math.round((processedCount / files.length) * 100),
+          }
+          continue
+        }
+
         backupProgress.value = {
           phase: "uploading",
-          currentFile: `${file.relativePath} (已跳过)`,
-          filesProcessed: processedCount,
+          currentFile: file.relativePath,
+          filesProcessed: processedCount + 1,
           totalFiles: files.length,
           percent: Math.round((processedCount / files.length) * 100),
         }
-        continue
-      }
 
-      backupProgress.value = {
-        phase: "uploading",
-        currentFile: file.relativePath,
-        filesProcessed: processedCount + 1,
-        totalFiles: files.length,
-        percent: Math.round((processedCount / files.length) * 100),
-      }
-
-      let content
-      try {
-        content = await fs.readFile(file.fullPath)
-      } catch (readErr: unknown) {
-        console.warn(`跳过无法读取的文件: ${file.relativePath}`, getErrorMessage(readErr))
+        let content
+        try {
+          content = await fs.readFile(file.fullPath)
+        } catch (readErr: unknown) {
+          console.warn(`跳过无法读取的文件: ${file.relativePath}`, getErrorMessage(readErr))
+          processedCount++
+          continue
+        }
+        await deps.uploadFileContent(content, s3Key)
+        // 上传成功后计算并保存校验值（仅更新内存，循环结束后统一落盘）
+        try {
+          const hash = await backupManager.computeFileHash(file.fullPath)
+          await deps.saveChecksum(file.relativePath, file.fullPath, content.length, hash, false)
+        } catch (hashErr: unknown) {
+          console.warn("计算校验值失败:", file.relativePath, getErrorMessage(hashErr))
+        }
+        uploadedNames.push(file.relativePath)
+        uploadedCount++
         processedCount++
-        continue
       }
-      await deps.uploadFileContent(content, s3Key)
-      // 上传成功后计算并保存校验值
-      try {
-        const hash = await backupManager.computeFileHash(file.fullPath)
-        deps.saveChecksum(file.relativePath, file.fullPath, content.length, hash)
-      } catch (hashErr: unknown) {
-        console.warn("计算校验值失败:", file.relativePath, getErrorMessage(hashErr))
+    } finally {
+      // 批量循环统一落盘校验值（O(N) 写入 → O(1)）；零上传时跳过无意义写入
+      // 落盘失败仅告警，避免掩盖循环内的原始上传错误
+      if (uploadedCount > 0) {
+        await deps.persistChecksums().catch((persistErr: unknown) => {
+          console.warn("校验值落盘失败:", getErrorMessage(persistErr))
+        })
       }
-      uploadedNames.push(file.relativePath)
-      uploadedCount++
-      processedCount++
     }
 
     backupProgress.value = {

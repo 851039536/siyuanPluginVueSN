@@ -284,6 +284,18 @@ export function useRemoteProgress(
   function cancelPush(id: string) { manager.cancelOp(id, "push") }
   function cancelPull(id: string) { manager.cancelOp(id, "pull") }
 
+  /** 清理指定项目的全部远程进度/输出缓存（删除项目时调用，避免孤儿状态残留） */
+  function clearProject(id: string) {
+    for (const r of [pushProgress, pullProgress, pushOutputs, pullOutputs] as Ref<Record<string, unknown>>[]) {
+      if (id in r.value) {
+        const next = { ...r.value }
+        delete next[id]
+        r.value = next
+      }
+    }
+    delete opSeq[id]
+  }
+
   async function fetchAllRemotes(id: string) {
     const result = await manager.fetchAllForProject(id)
     await opts.loadPushStatus(id)
@@ -306,5 +318,6 @@ export function useRemoteProgress(
     cancelPush,
     cancelPull,
     fetchAllRemotes,
+    clearProject,
   }
 }

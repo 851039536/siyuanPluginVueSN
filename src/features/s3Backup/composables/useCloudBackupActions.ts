@@ -8,7 +8,7 @@ import type { Ref } from "vue"
 import { showMessage } from "siyuan"
 import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
-import type { BackupLog } from "../types"
+import type { BackupLog, S3FileInfo } from "../types"
 import { DEFAULT_BACKUP_DIR } from "../types"
 
 /** 依赖注入：全部来自 index.vue 已有的状态与方法 */
@@ -24,45 +24,47 @@ export interface CloudBackupActionsDeps {
 export function useCloudBackupActions(deps: CloudBackupActionsDeps) {
   const { addLog, i18n } = deps
 
-  // B7 修复：提取公共方法，消除 handleDownload/handleRestore 核心逻辑重复
-  async function downloadToLocalDir(backup: Record<string, any>): Promise<string> {
+  /** 下载云端对象到本地备份目录 */
+  async function downloadToLocalDir(backup: S3FileInfo): Promise<void> {
     const node = getNodeModules()
     if (!node) { throw new Error("无法访问文件系统，请使用桌面版思源笔记") }
     const fs = node.fs.promises
     const pathModule = node.path
 
-    const downloadDir = `${deps.workspaceRoot.value}/${deps.localBackupDir.value || DEFAULT_BACKUP_DIR}`
+    const downloadDir = pathModule.join(
+      deps.workspaceRoot.value,
+      deps.localBackupDir.value || DEFAULT_BACKUP_DIR,
+    )
     await fs.mkdir(downloadDir, { recursive: true })
     const localPath = pathModule.join(downloadDir, backup.name)
 
     await deps.downloadBackup(backup.key, localPath)
-    return localPath
   }
 
-  async function handleDownload(backup: Record<string, any>): Promise<void> {
+  async function handleDownload(backup: S3FileInfo): Promise<void> {
     try {
       await downloadToLocalDir(backup)
       addLog({
         type: "s3Download",
-        action: i18n.download || "下载",
+        action: i18n.download,
         fileName: backup.name,
         success: true,
       })
-      showMessage(i18n.downloadSuccess || "下载成功", 2000, "info")
+      showMessage(i18n.downloadSuccess, 2000, "info")
     } catch (err: unknown) {
       addLog({
         type: "s3Download",
-        action: i18n.download || "下载",
+        action: i18n.download,
         fileName: backup.name,
         success: false,
         message: getErrorMessage(err),
       })
-      showMessage(`${i18n.downloadFailed || "下载失败"}: ${getErrorMessage(err)}`, 5000, "error")
+      showMessage(`${i18n.downloadFailed}: ${getErrorMessage(err)}`, 5000, "error")
     }
   }
 
-  async function handleDelete(backup: Record<string, any>): Promise<void> {
-    const confirmed = confirm(i18n.confirmDelete || "确定要删除此备份吗？")
+  async function handleDelete(backup: S3FileInfo): Promise<void> {
+    const confirmed = confirm(i18n.confirmDelete)
     if (!confirmed) { return }
 
     try {
@@ -70,20 +72,20 @@ export function useCloudBackupActions(deps: CloudBackupActionsDeps) {
       await deps.deleteObject(backup.key, true)
       addLog({
         type: "s3Delete",
-        action: i18n.delete || "删除",
+        action: i18n.delete,
         fileName: backup.name,
         success: true,
       })
-      showMessage(i18n.deleteSuccess || "删除成功", 2000, "info")
+      showMessage(i18n.deleteSuccess, 2000, "info")
     } catch (err: unknown) {
       addLog({
         type: "s3Delete",
-        action: i18n.delete || "删除",
+        action: i18n.delete,
         fileName: backup.name,
         success: false,
         message: getErrorMessage(err),
       })
-      showMessage(`${i18n.deleteFailed || "删除失败"}: ${getErrorMessage(err)}`, 5000, "error")
+      showMessage(`${i18n.deleteFailed}: ${getErrorMessage(err)}`, 5000, "error")
     }
   }
 

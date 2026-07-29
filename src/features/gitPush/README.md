@@ -46,11 +46,13 @@ src/features/gitPush/
 ├── components/
 │   ├── StatsPanel.vue               # 统计视图（覆盖率/待处理项目/平台状态）
 │   ├── WorkingTreePanel.vue         # 工作区变更面板（暂存/diff/提交）
+│   ├── WorkingTreeDiffDialog.vue    # 差异查看弹窗（词级高亮/文件导航/弹窗内暂存丢弃）
 │   └── BranchCommitList.vue         # 提交历史面板（含搜索）
 └── styles/
     ├── index.scss                   # 主面板样式
     ├── StatsPanel.scss              # 统计视图样式
     ├── WorkingTreePanel.scss        # 工作区面板样式
+    ├── WorkingTreeDiffDialog.scss   # 差异弹窗样式
     ├── BranchCommitList.scss        # 提交历史列表样式
     ├── _variables.scss              # 设计 Token
     ├── _mixins.scss                 # 共享混入

@@ -119,12 +119,17 @@ export function isAheadOfRemote(rs: RemotePushStatus): boolean {
 /** diff 文本行类型（meta = diff --git / index / --- / +++ 等文件头行） */
 export type DiffLineType = "add" | "del" | "hunk" | "ctx" | "meta"
 
+/** 词级差异分段（changed=true 为行内真正变化的片段） */
+export interface DiffSegment { text: string, changed: boolean }
+
 /** 带类型的 diff 行（用于着色渲染），oldNo/newNo 为旧/新文件行号 */
 export interface DiffLine {
   text: string
   type: DiffLineType
   oldNo?: number
   newNo?: number
+  /** 词级差异分段（仅 add/del 行与对侧行配对成功时存在） */
+  segments?: DiffSegment[]
 }
 
 /** diff 文件头行前缀（渲染时淡化显示，不参与行号计算） */
@@ -156,7 +161,55 @@ export function parseDiffLines(diffText: string): DiffLine[] {
   // 去掉文本末尾换行符经 split 产生的空行
   const last = result[result.length - 1]
   if (last && (last.type === "ctx" || last.type === "meta") && last.text === "") result.pop()
+  markInlineDiff(result)
   return result
+}
+
+// 行内变化占比阈值：中间变化片段超过此比例视为整行重写，不做词级高亮（高亮反而添噪）
+const INLINE_DIFF_MAX_CHANGED_RATIO = 0.6
+
+/** 对配对的 del/add 行做公共前缀/后缀裁剪，生成词级差异分段；变化过大或完全相同时返回 null */
+function diffSegments(del: string, add: string): { del: DiffSegment[], add: DiffSegment[] } | null {
+  const minLen = Math.min(del.length, add.length)
+  let prefix = 0
+  while (prefix < minLen && del[prefix] === add[prefix]) prefix++
+  let suffix = 0
+  while (suffix < minLen - prefix && del[del.length - 1 - suffix] === add[add.length - 1 - suffix]) suffix++
+  const delMid = del.slice(prefix, del.length - suffix)
+  const addMid = add.slice(prefix, add.length - suffix)
+  if (!delMid && !addMid) return null
+  const maxLen = Math.max(del.length, add.length)
+  if (Math.max(delMid.length, addMid.length) / maxLen > INLINE_DIFF_MAX_CHANGED_RATIO) return null
+  const build = (text: string, mid: string): DiffSegment[] => {
+    const segs: DiffSegment[] = []
+    if (prefix) segs.push({ text: text.slice(0, prefix), changed: false })
+    if (mid) segs.push({ text: mid, changed: true })
+    if (suffix) segs.push({ text: text.slice(text.length - suffix), changed: false })
+    return segs
+  }
+  return { del: build(del, delMid), add: build(add, addMid) }
+}
+
+/** 后处理：将连续 del 块与紧随的 add 块按下标配对，为每对行生成词级差异分段 */
+function markInlineDiff(lines: DiffLine[]): void {
+  let i = 0
+  while (i < lines.length) {
+    if (lines[i].type !== "del") { i++; continue }
+    const delStart = i
+    while (i < lines.length && lines[i].type === "del") i++
+    const addStart = i
+    while (i < lines.length && lines[i].type === "add") i++
+    const pairCount = Math.min(addStart - delStart, i - addStart)
+    for (let k = 0; k < pairCount; k++) {
+      const delLine = lines[delStart + k]
+      const addLine = lines[addStart + k]
+      const segs = diffSegments(delLine.text, addLine.text)
+      if (segs) {
+        delLine.segments = segs.del
+        addLine.segments = segs.add
+      }
+    }
+  }
 }
 
 /** 将 git URL 转为浏览器可访问的 web URL */

@@ -109,6 +109,9 @@
   --gp-diff-hunk-color: #0969da;
   --gp-diff-add-bg: #e6ffec;
   --gp-diff-del-bg: #ffebe9;
+  // 词级差异变化片段的强调背景（比整行背景更深一档）
+  --gp-diff-add-emph-bg: #abf2bc;
+  --gp-diff-del-emph-bg: #ffcecb;
 
   // 暗色主题：GitHub Dark 调色板——背景改半透明深色，避免浅底浅字；前景提亮保证对比度
   :root[data-theme-mode="dark"] & {
@@ -117,5 +120,7 @@
     --gp-diff-hunk-color: #58a6ff;
     --gp-diff-add-bg: rgba(46, 160, 67, 0.18);
     --gp-diff-del-bg: rgba(248, 81, 73, 0.18);
+    --gp-diff-add-emph-bg: rgba(46, 160, 67, 0.4);
+    --gp-diff-del-emph-bg: rgba(248, 81, 73, 0.4);
   }
 }

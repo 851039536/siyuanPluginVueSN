@@ -51,6 +51,12 @@ export class ProjectStore {
     return this.projectCache.get(id)
   }
 
+  /** 获取项目列表的可写浅克隆副本（写操作基于此，避免污染缓存 + save 失败时缓存不变脏） */
+  private async getProjectsForWrite(): Promise<GitProject[]> {
+    const projects = await this.getProjects()
+    return projects.map((p) => ({ ...p }))
+  }
+
   /** 清空全部项目缓存（写操作后调用以保证一致性） */
   invalidateProjectCache(): void {
     this.projectsCache = null
@@ -61,7 +67,7 @@ export class ProjectStore {
    * 添加项目映射
    */
   async addProject(name: string, path: string, categoryId = UNGROUPED_ID, tags?: string[], extras?: ProjectPathExtras): Promise<GitProject> {
-    const projects = await this.getProjects()
+    const projects = await this.getProjectsForWrite()
     idCounter++
     // 主路径无设备标注时自动补当前电脑名（与编辑弹窗新增路径行为对称）
     const pathDevices = { ...(extras?.pathDevices || {}) }
@@ -93,7 +99,7 @@ export class ProjectStore {
    * 删除项目映射
    */
   async removeProject(id: string): Promise<void> {
-    const projects = await this.getProjects()
+    const projects = await this.getProjectsForWrite()
     const idx = projects.findIndex((p) => p.id === id)
     if (idx !== -1) {
       projects.splice(idx, 1)
@@ -107,7 +113,7 @@ export class ProjectStore {
    * 更新项目元信息
    */
   async updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "path" | "tags" | "starred" | "archived" | "note" | "name" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl" | "localPaths" | "pathDevices">>): Promise<GitProject | null> {
-    const projects = await this.getProjects()
+    const projects = await this.getProjectsForWrite()
     const project = projects.find((p) => p.id === id)
     if (!project) return null
     Object.assign(project, patch)
@@ -119,7 +125,7 @@ export class ProjectStore {
 
   /** 切换收藏状态 */
   async toggleStar(id: string): Promise<GitProject | null> {
-    const projects = await this.getProjects()
+    const projects = await this.getProjectsForWrite()
     const project = projects.find((p) => p.id === id)
     if (!project) return null
     project.starred = !project.starred
@@ -132,7 +138,7 @@ export class ProjectStore {
   async appendTag(id: string, tag: string): Promise<GitProject | null> {
     const t = tag.trim()
     if (!t) return null
-    const projects = await this.getProjects()
+    const projects = await this.getProjectsForWrite()
     const project = projects.find((p) => p.id === id)
     if (!project) return null
     const tags = project.tags || []
@@ -147,7 +153,7 @@ export class ProjectStore {
 
   /** 移除标签 */
   async removeTag(id: string, tag: string): Promise<GitProject | null> {
-    const projects = await this.getProjects()
+    const projects = await this.getProjectsForWrite()
     const project = projects.find((p) => p.id === id)
     if (!project) return null
     if (project.tags) {
@@ -162,7 +168,7 @@ export class ProjectStore {
 
   /** 记录最后活动时间 */
   async recordLastActivity(id: string, isoTime: string): Promise<void> {
-    const projects = await this.getProjects()
+    const projects = await this.getProjectsForWrite()
     const project = projects.find((p) => p.id === id)
     if (!project) return
     project.lastActivity = isoTime
@@ -187,7 +193,7 @@ export class ProjectStore {
 
   /** 重新检测项目远程仓库并更新 */
   async refreshRemotes(id: string): Promise<GitProject | null> {
-    const projects = await this.getProjects()
+    const projects = await this.getProjectsForWrite()
     const project = projects.find((p) => p.id === id)
     if (!project) return null
     this.applyRemotesToProject(project, await this.detectRemotes(resolveValidPath(project)))
@@ -261,7 +267,8 @@ export class ProjectStore {
 
   async addCategory(name: string, color = "#4a9eff"): Promise<ProjectCategory> {
     const cats = await this.getCategories()
-    const cat: ProjectCategory = { id: Date.now().toString(), name, color, order: cats.length }
+    idCounter++
+    const cat: ProjectCategory = { id: `${Date.now().toString(36)}-${idCounter}`, name, color, order: cats.length }
     cats.push(cat)
     await this.storage.categories.save(cats)
     return cat
@@ -284,7 +291,7 @@ export class ProjectStore {
     cats.splice(idx, 1)
     await this.storage.categories.save(cats)
 
-    const projs = await this.getProjects()
+    const projs = await this.getProjectsForWrite()
     let changed = false
     for (const p of projs) {
       if (p.categoryId === id) { p.categoryId = UNGROUPED_ID; changed = true }
@@ -296,9 +303,14 @@ export class ProjectStore {
   }
 
   async moveProject(projectId: string, categoryId: string): Promise<void> {
-    const projs = await this.getProjects()
+    // 目标分类不存在时不移动（UNGROUPED_ID 恒有效），维持"项目分类始终指向有效分类或未分组"不变式
+    if (categoryId !== UNGROUPED_ID) {
+      const cats = await this.getCategories()
+      if (!cats.some((c) => c.id === categoryId)) return
+    }
+    const projs = await this.getProjectsForWrite()
     const p = projs.find((x) => x.id === projectId)
-    if (!p) return
+    if (!p || p.categoryId === categoryId) return
     p.categoryId = categoryId
     await this.storage.projects.save(projs)
     this.invalidateProjectCache()

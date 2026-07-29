@@ -85,16 +85,16 @@
           <span
             class="wt-file-status"
             :class="`wt-s-${file.status}`"
-            :title="statusTitle(file)"
+            :title="fileStatusTitle(file)"
           >
             <!-- renamed/unmerged 用 IconWrapper 图标渲染，其余状态用字符标记（图标名与字符均来自 FILE_STATUS_META） -->
             <IconWrapper
-              v-if="isIconStatus(file)"
-              :name="statusIconKey(file)"
+              v-if="isIconFileStatus(file)"
+              :name="fileStatusIconKey(file)"
               :size="12"
             />
             <template v-else>
-              {{ statusIcon(file) }}
+              {{ fileStatusIcon(file) }}
             </template>
           </span>
 
@@ -278,9 +278,9 @@ import type {
   FileChange,
   WorkingTreeInfo,
 } from "../types"
-import { COMMIT_TYPE_VALUES, FILE_STATUS_META } from "../types"
+import { COMMIT_TYPE_VALUES } from "../types"
 import type { DiffLineType } from "../utils"
-import { parseDiffLines } from "../utils"
+import { fileStatusIcon, fileStatusIconKey, fileStatusTitle, isIconFileStatus, parseDiffLines } from "../utils"
 import { useGeneratedMsgSync } from "../composables/useGeneratedMsgSync"
 import { Icon } from "@iconify/vue"
 import {
@@ -289,7 +289,6 @@ import {
   toRef,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import type { IconKey } from "@/config/icons"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -355,25 +354,6 @@ const activeDiffText = computed(() => {
 
 /** 将 diff 文本解析为带类型的行数组（用于着色渲染） */
 const coloredDiffLines = computed(() => parseDiffLines(activeDiffText.value))
-
-function statusIcon(file: FileChange): string {
-  return FILE_STATUS_META[file.status]?.icon || "·"
-}
-
-/** renamed/unmerged 状态用 IconWrapper 渲染，其余为字符标记 */
-function isIconStatus(file: FileChange): boolean {
-  return file.status === "renamed" || file.status === "unmerged"
-}
-
-/** isIconStatus 守卫下取图标键（forward/warning 均为已注册 IconKey） */
-function statusIconKey(file: FileChange): IconKey {
-  return statusIcon(file) as IconKey
-}
-
-function statusTitle(file: FileChange): string {
-  const title = FILE_STATUS_META[file.status]?.title || file.status
-  return file.oldPath ? `${title}: ${file.oldPath} -> ${file.path}` : title
-}
 
 function toggleStage(file: FileChange) {
   if (file.staged) {

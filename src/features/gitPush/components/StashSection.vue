@@ -121,20 +121,57 @@
         >{{ i18n.stashDrop }}</button>
       </div>
     </div>
+    <!-- 待暂存的变更预览（stash 含未跟踪文件，故展示工作区全部变更） -->
+    <div
+      v-if="tree?.files?.length"
+      class="gp-stash-pending"
+    >
+      <!-- 区块标题："待暂存的变更" -->
+      <div class="gp-stash-pending-title">{{ i18n.stashPendingChanges }}</div>
+      <div class="gp-stash-pending-list">
+        <div
+          v-for="f in tree.files"
+          :key="`${f.staged ? 's' : 'u'}::${f.path}`"
+          class="gp-stash-pending-row"
+        >
+          <!-- 状态标记（着色与 CHANGES 页签一致，复用 .wt-file-status） -->
+          <span
+            class="wt-file-status"
+            :class="`wt-s-${f.status}`"
+            :title="fileStatusTitle(f)"
+          >
+            <IconWrapper
+              v-if="isIconFileStatus(f)"
+              :name="fileStatusIconKey(f)"
+              :size="12"
+            />
+            <template v-else>
+              {{ fileStatusIcon(f) }}
+            </template>
+          </span>
+          <span
+            class="gp-stash-pending-path"
+            :title="f.path"
+          >{{ f.path }}</span>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { StashEntry } from "../types"
+import type { StashEntry, WorkingTreeInfo } from "../types"
 import { Icon } from "@iconify/vue"
-import { nextTick, ref, toRef } from "vue"
+import { computed, nextTick, ref, toRef } from "vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
+import { fileStatusIcon, fileStatusIconKey, fileStatusTitle, isIconFileStatus } from "../utils"
 import { useGeneratedMsgSync } from "../composables/useGeneratedMsgSync"
 
 const props = defineProps<{
   entries: StashEntry[] | undefined
   loading: boolean
-  hasChanges: boolean
+  tree: WorkingTreeInfo | undefined
   genDescLoading: boolean
   generatedMsg: string
   i18n: Record<string, any>
@@ -151,6 +188,9 @@ const emit = defineEmits<{
 const isInputVisible = ref(false)
 const localMsg = ref("")
 const inputEl = ref<InstanceType<typeof Input>>()
+
+/** 工作区是否有可暂存的变更（控制"暂存变更"按钮可用性） */
+const hasChanges = computed(() => !!props.tree?.hasChanges)
 
 function showInput() {
   isInputVisible.value = true

@@ -20,7 +20,7 @@
       @refresh-all-remote="handleRefreshAllRemote"
       @open-add-project="showAddDialog = true"
       @open-scan="handleOpenScan"
-      @open-web="handleOpenWeb"
+      @open-web="openRepoWebUrl"
       @open-git-config="handleOpenGitConfig"
     />
 
@@ -95,12 +95,9 @@
             :remotes="REMOTES"
             :detected-ides="detectedIdes"
             :custom-ides="customIdes"
-            :editing-name-id="editingNameId"
-            :editing-name-input="editingNameInput"
             :search-query="searchQuery"
             :refreshing="refreshing"
             :fetching="fetching[project.id]"
-            :confirming-del-name="confirmingDelName"
             :branches="branches[project.id]"
             :push-status="pushStatuses[project.id]"
             :working-tree="workingTrees[project.id]"
@@ -121,38 +118,27 @@
             :gen-stash-desc-loading="genStashDescLoading[project.id]"
             :generated-stash-msg="generatedStashMsg"
             :commit-templates="commitTemplates"
-            :get-project-url="getProjectUrl"
-            :resolved-path="resolvedPath"
             :md-files="mdFilesForProject(project.id)"
             :status-badge-class="statusBadgeClass"
             :status-label="statusLabel"
             :has-behind="hasBehind"
             :file-diffs="fileDiffsForProject(project.id)"
             :commit-log-entries="commitLogForProject(project.id)"
-            :has-any-remote="hasAnyRemote"
             :is-pulling="isPulling"
             :is-pushing="isPushing"
             :needs-push-for="needsPushFor"
             :get-push-status="getPushStatus"
             @toggle-star="toggleStar"
-            @start-name-edit="startNameEdit"
-            @name-edit-save="handleNameEditSave"
             @switch-branch="handleSwitchBranch"
             @remove="handleRemove"
             @open-edit-dialog="openEditDialog"
             @open-markdown-preview="openMarkdownPreview"
             @open-project-git-config="handleOpenProjectGitConfig"
             @move-project="moveProject"
-            @open-web="handleOpenWeb"
-            @copy-url="handleCopyUrl"
-            @open-path="handleOpenPath"
             @open-ide="handleOpenIde"
             @open-custom-ide="handleOpenCustomIde"
             @show-ide-dialog="showIdeDialog = true"
             @remove-custom-ide="removeCustomIdeByName"
-            @update:editing-name-id="editingNameId = $event"
-            @update:editing-name-input="editingNameInput = $event"
-            @update:confirming-del-name="confirmingDelName = $event"
             @refresh="handleRefresh"
             @refresh-working-tree="handleRefreshWorkingTree"
             @refresh-commit-log="handleRefreshCommitLog"
@@ -305,11 +291,10 @@ import {
   computed,
   onMounted,
   onUnmounted,
+  provide,
   ref,
   watch,
 } from "vue"
-import { copyToClipboard } from "@/utils/domUtils"
-import { getElectronModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import AddProjectDialog from "./components/AddProjectDialog.vue"
 import CategoryDialog from "./components/CategoryDialog.vue"
@@ -338,10 +323,10 @@ import { useScanImport } from "./composables/useScanImport"
 import { useGitConfigDialog } from "./composables/useGitConfigDialog"
 import { useGitHandlers } from "./composables/useGitHandlers"
 import { useRefreshOps } from "./composables/useRefreshOps"
-import { PLATFORM_META, REMOTES } from "./types"
+import { CARD_SERVICES_KEY, PLATFORM_META, REMOTES } from "./types"
 import {
-  gitUrlToWebUrl,
-  hasAnyRemote,
+  openLocalPath,
+  openRepoWebUrl,
   resolveValidPath,
 } from "./utils"
 import { scanMarkdownFiles } from "./composables/useMarkdownFiles"
@@ -443,6 +428,9 @@ const {
   toggleStar,
 } = useGitPush(props.manager)
 
+// 卡片服务注入（ProjectCard 自包含下沉：卡片直连父层服务，消除中间人 props/emits）
+provide(CARD_SERVICES_KEY, { updateProjectMeta })
+
 const { commitLogLoading, commitLogForProject, handleExpand, handleReloadCommitLog } = useCommitLog({
   commitLogs,
   loadCommitLog,
@@ -533,7 +521,6 @@ const {
 const {
   detectedIdes,
   customIdes,
-  confirmingDelName,
   showIdeDialog,
   saveEditIde,
   loadCustomIdes,
@@ -545,7 +532,7 @@ const {
   handleOpenIde,
 } = useIdeManagement({
   plugin: props.plugin,
-  openFolder: (path: string) => { handleOpenPath(path) },
+  openFolder: (path: string) => { void openLocalPath(path) },
 })
 
 // ── 扫描导入 ──
@@ -617,7 +604,6 @@ const {
   fetching,
   remoteStatusLoading,
   headHashes,
-  silentRefreshAll,
   handleRefresh,
   handleRefreshWorkingTree,
   handleRefreshCommitLog,
@@ -633,16 +619,6 @@ const {
   loadProjectGitStatus, loadPushStatus, loadWorkingTree, loadCommitLog,
   loadBranches, loadStashList, loadTags, refreshRemotes, fetchAllRemotes,
 })
-/** 解析项目有效路径（模板辅助函数） */
-function resolvedPath(p: { path: string, localPaths?: string[] }): string {
-  return resolveValidPath(p as GitProject)
-}
-
-/** 获取项目平台 URL（模板中动态属性访问的辅助函数） */
-function getProjectUrl(project: GitProject, prop: "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl"): string | undefined {
-  return project[prop]
-}
-
 /** 项目编辑弹窗状态 */
 const editDialogProjectId = ref("")
 /** Markdown 文档预览弹窗状态 */
@@ -650,9 +626,6 @@ const markdownPreviewProject = ref<GitProject | null>(null)
 const markdownPreviewInitialFile = ref<string | undefined>(undefined)
 /** 项目 Markdown 文件缓存（项目 id → 文件元数据数组，避免每次 readdirSync） */
 const projectMdFiles = ref<Record<string, ReturnType<typeof scanMarkdownFiles>>>({})
-/** 行内名称编辑状态 */
-const editingNameId = ref("")
-const editingNameInput = ref("")
 /** 获取指定项目的 Markdown 文件列表（懒扫描 + 缓存） */
 function mdFilesForProject(projectId: string): ReturnType<typeof scanMarkdownFiles> {
   if (projectMdFiles.value[projectId]) return projectMdFiles.value[projectId]
@@ -817,30 +790,6 @@ function onViewProject(projectId: string) {
   searchQuery.value = project.name
 }
 
-/** 在文件管理器中打开项目路径（统一走 getElectronModules 入口，浏览器环境无能力打开本地文件夹） */
-async function handleOpenPath(path: string) {
-  await getElectronModules()?.shell?.openPath(path)
-}
-
-/** 在浏览器中打开远程仓库网页（Electron 用系统浏览器，降级 window.open） */
-async function handleOpenWeb(url: string) {
-  const webUrl = gitUrlToWebUrl(url)
-  const shell = getElectronModules()?.shell
-  if (shell?.openExternal) {
-    await shell.openExternal(webUrl)
-    return
-  }
-  window.open(webUrl, "_blank")
-}
-
-/** 右键复制远程仓库链接 */
-async function handleCopyUrl(url: string) {
-  const ok = await copyToClipboard(url)
-  if (ok) {
-    showMessage(tf("copiedLink"), 1500, "info")
-  }
-}
-
 function handleRemove(project: GitProject) {
   showConfirm(tf("deleteProjectTitle"), tf("deleteProjectConfirm", project.name), () => {
     removeProject(project.id)
@@ -869,28 +818,6 @@ async function handleEditSaved() {
 /** 仓库链接更新：仅刷新列表，不关闭弹窗 */
 async function handleUrlsUpdated() {
   await loadProjects()
-}
-
-/** 行内名称编辑：点击名称开始编辑 */
-function startNameEdit(project: GitProject) {
-  editingNameId.value = project.id
-  editingNameInput.value = project.name
-}
-
-/** 行内名称编辑：失焦/回车保存 */
-async function handleNameEditSave(project: GitProject) {
-  const newName = editingNameInput.value.trim()
-  try {
-    if (!newName) {
-      showMessage(tf("nameEmpty"), 2000, "error")
-    } else if (newName !== project.name) {
-      await updateProjectMeta(project.id, { name: newName })
-    }
-  } catch (e: unknown) {
-    showMessage(tf("nameUpdateFailed", getErrorMessage(e)), 4000, "error")
-  } finally {
-    editingNameId.value = ""
-  }
 }
 
 /** 统一的异步操作错误处理包装器 */

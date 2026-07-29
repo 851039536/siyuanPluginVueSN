@@ -12,6 +12,9 @@ export type {
   ConflictFile,
   FileChange,
   FileChangeStatus,
+  GitOpAction,
+  GitOpLogEntry,
+  GitOpLogPlatform,
   GitProject,
   GitRemoteInfo,
   ProjectCategory,
@@ -29,6 +32,7 @@ export {
   GIT_CONCURRENCY_MAX,
   GIT_CONCURRENCY_MIN,
   GitPushStorage,
+  MAX_OP_LOG_COUNT,
   UNGROUPED_ID,
 } from "./storage"
 
@@ -44,5 +48,5 @@ export {
   VIEW_MODE_META,
   VIEW_MODES,
 } from "./meta"
-export type { CategoryDistributionItem, NeedsPullItem, NeedsPushItem, PendingProjectItem, PlatformKey, PlatformStatusItem, PushStatusStats, RemoteCoverage, StatsView, UncommittedItem, ViewMode } from "./meta"
+export type { CategoryDistributionItem, NeedsPullItem, NeedsPushItem, PanelView, PendingProjectItem, PlatformKey, PlatformStatusItem, PushStatusStats, RemoteCoverage, StatsView, UncommittedItem, ViewMode } from "./meta"
 export { getPlatformStatus } from "./meta"

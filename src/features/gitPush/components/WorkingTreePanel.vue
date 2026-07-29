@@ -148,6 +148,14 @@
                 />
                 <span class="wt-diff-title">{{ activeDiffFile.path }}</span>
                 <span class="wt-diff-badge">{{ activeDiffFile.staged ? i18n.staged : i18n.unstaged }}</span>
+                <!-- 增/删行数统计 -->
+                <span
+                  v-if="diffStats.add || diffStats.del"
+                  class="wt-diff-stats"
+                >
+                  <span class="wt-stat-add">+{{ diffStats.add }}</span>
+                  <span class="wt-stat-del">−{{ diffStats.del }}</span>
+                </span>
               </div>
               <button
                 class="vp-btn vp-btn--ghost vp-btn--sm"
@@ -165,12 +173,22 @@
               <span class="wt-legend-ctx">⋯ {{ i18n.legendCtx }}</span>
             </div>
             <div class="wt-diff-content">
+              <!-- 空态：差异尚未加载完成或无内容（如二进制文件） -->
+              <div
+                v-if="!coloredDiffLines.length"
+                class="wt-diff-empty"
+              >
+                {{ i18n.diffEmpty }}
+              </div>
               <div
                 v-for="(line, i) in coloredDiffLines"
                 :key="i"
                 class="wt-diff-line"
                 :class="`wt-dl-${line.type}`"
               >
+                <!-- 旧/新文件行号双列（hunk/meta 行无行号，留空保持对齐） -->
+                <span class="wt-dl-no">{{ line.oldNo ?? "" }}</span>
+                <span class="wt-dl-no">{{ line.newNo ?? "" }}</span>
                 <span class="wt-dl-sign">{{ DIFF_SIGN[line.type] }}</span>
                 <span class="wt-dl-text">{{ line.text }}</span>
               </div>
@@ -285,8 +303,10 @@ import { useGeneratedMsgSync } from "../composables/useGeneratedMsgSync"
 import { Icon } from "@iconify/vue"
 import {
   computed,
+  onUnmounted,
   ref,
   toRef,
+  watch,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 
@@ -323,6 +343,7 @@ const DIFF_SIGN: Record<DiffLineType, string> = {
   del: "−",
   hunk: "@",
   ctx: " ",
+  meta: " ",
 }
 
 const commitType = ref("chore")
@@ -354,6 +375,27 @@ const activeDiffText = computed(() => {
 
 /** 将 diff 文本解析为带类型的行数组（用于着色渲染） */
 const coloredDiffLines = computed(() => parseDiffLines(activeDiffText.value))
+
+/** 增/删行数统计（弹窗标题行展示） */
+const diffStats = computed(() => {
+  let add = 0
+  let del = 0
+  for (const line of coloredDiffLines.value) {
+    if (line.type === "add") add++
+    else if (line.type === "del") del++
+  }
+  return { add, del }
+})
+
+// Esc 关闭差异弹窗（仅弹窗打开期间监听，避免干扰其他键盘操作）
+function handleDiffKeydown(e: KeyboardEvent) {
+  if (e.key === "Escape") activeDiffFile.value = null
+}
+watch(activeDiffFile, (open) => {
+  if (open) window.addEventListener("keydown", handleDiffKeydown)
+  else window.removeEventListener("keydown", handleDiffKeydown)
+})
+onUnmounted(() => window.removeEventListener("keydown", handleDiffKeydown))
 
 function toggleStage(file: FileChange) {
   if (file.staged) {

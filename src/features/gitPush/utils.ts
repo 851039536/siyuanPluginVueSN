@@ -116,21 +116,47 @@ export function isAheadOfRemote(rs: RemotePushStatus): boolean {
   return rs.noUpstream || rs.ahead > 0
 }
 
-/** diff 文本行类型 */
-export type DiffLineType = "add" | "del" | "hunk" | "ctx"
+/** diff 文本行类型（meta = diff --git / index / --- / +++ 等文件头行） */
+export type DiffLineType = "add" | "del" | "hunk" | "ctx" | "meta"
 
-/** 带类型的 diff 行（用于着色渲染） */
-export interface DiffLine { text: string, type: DiffLineType }
+/** 带类型的 diff 行（用于着色渲染），oldNo/newNo 为旧/新文件行号 */
+export interface DiffLine {
+  text: string
+  type: DiffLineType
+  oldNo?: number
+  newNo?: number
+}
 
-/** 将 diff 文本解析为带类型的行数组（用于着色渲染） */
+/** diff 文件头行前缀（渲染时淡化显示，不参与行号计算） */
+const DIFF_META_PREFIXES = ["diff --git", "index ", "--- ", "+++ ", "new file", "deleted file", "old mode", "new mode", "rename ", "copy ", "similarity ", "dissimilarity ", "Binary files", "\\ No newline"]
+
+/** 将 diff 文本解析为带类型与行号的行数组（剥离行首 +/-/空格标记，标记改由渲染层的符号列展示） */
 export function parseDiffLines(diffText: string): DiffLine[] {
   if (!diffText) return []
-  return diffText.split("\n").map((line) => {
-    if (line.startsWith("+") && !line.startsWith("+++")) { return { text: line, type: "add" } }
-    if (line.startsWith("-") && !line.startsWith("---")) { return { text: line, type: "del" } }
-    if (line.startsWith("@@")) { return { text: line, type: "hunk" } }
-    return { text: line, type: "ctx" }
-  })
+  let oldNo = 0
+  let newNo = 0
+  const result: DiffLine[] = []
+  for (const line of diffText.split("\n")) {
+    const hunk = /^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/.exec(line)
+    if (hunk) {
+      oldNo = Number(hunk[1])
+      newNo = Number(hunk[2])
+      result.push({ text: line, type: "hunk" })
+    } else if ((oldNo === 0 && newNo === 0) || DIFF_META_PREFIXES.some((p) => line.startsWith(p))) {
+      // 首个 hunk 之前的所有行、以及多文件 diff 中间的文件头行均为 meta
+      result.push({ text: line, type: "meta" })
+    } else if (line.startsWith("+")) {
+      result.push({ text: line.slice(1), type: "add", newNo: newNo++ })
+    } else if (line.startsWith("-")) {
+      result.push({ text: line.slice(1), type: "del", oldNo: oldNo++ })
+    } else {
+      result.push({ text: line.slice(1), type: "ctx", oldNo: oldNo++, newNo: newNo++ })
+    }
+  }
+  // 去掉文本末尾换行符经 split 产生的空行
+  const last = result[result.length - 1]
+  if (last && (last.type === "ctx" || last.type === "meta") && last.text === "") result.pop()
+  return result
 }
 
 /** 将 git URL 转为浏览器可访问的 web URL */

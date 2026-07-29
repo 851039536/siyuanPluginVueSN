@@ -1358,6 +1358,7 @@
     "legendAdd": "新增",
     "legendDel": "删除",
     "legendCtx": "未变",
+    "diffEmpty": "暂无差异内容（加载中或二进制文件）",
     "close": "关闭",
     "listView": "列表视图",
     "statsView": "统计视图",

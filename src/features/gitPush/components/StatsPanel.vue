@@ -42,40 +42,25 @@
           {{ i18n.remoteCoverage }}
         </div>
         <div class="gp-coverage-list">
+          <!-- 覆盖率条目：四个平台 + 多远程合计（配置驱动，多远程标签为“多远程项目”） -->
           <div
-            v-for="pm in PLATFORM_META"
-            :key="pm.key"
+            v-for="c in coverageItems"
+            :key="c.key"
             class="gp-coverage-item"
           >
             <div class="gp-coverage-head">
               <Icon
-                :icon="pm.icon"
+                :icon="c.icon"
                 height="12"
               />
-              <span>{{ pm.label }}</span>
-              <span class="gp-coverage-num">{{ remoteCoverage[pm.key] }} / {{ projectCount }}</span>
+              <span>{{ c.label }}</span>
+              <span class="gp-coverage-num">{{ c.count }} / {{ projectCount }}</span>
             </div>
             <div class="gp-coverage-bar">
               <div
                 class="gp-coverage-fill"
-                :class="`gp-coverage-fill--${pm.key}`"
-                :style="{ width: pct(remoteCoverage[pm.key]) }"
-              />
-            </div>
-          </div>
-          <div class="gp-coverage-item">
-            <div class="gp-coverage-head">
-              <Icon
-                icon="mdi:layers"
-                height="12"
-              />
-              <span>{{ i18n.multipleRemotes }}</span>
-              <span class="gp-coverage-num">{{ remoteCoverage.multiple }} / {{ projectCount }}</span>
-            </div>
-            <div class="gp-coverage-bar">
-              <div
-                class="gp-coverage-fill gp-coverage-fill--multi"
-                :style="{ width: pct(remoteCoverage.multiple) }"
+                :class="`gp-coverage-fill--${c.key}`"
+                :style="{ width: pct(c.count) }"
               />
             </div>
           </div>
@@ -221,17 +206,11 @@
               class="gp-table-cell gp-table-cell--platform-status"
               :title="getPlatformStatus(item, pm.key) ? i18n.configured : i18n.notConfigured"
             >
+              <!-- 已配置/未配置状态图标（单节点三元切换） -->
               <Icon
-                v-if="getPlatformStatus(item, pm.key)"
-                icon="mdi:check-circle"
+                :icon="getPlatformStatus(item, pm.key) ? 'mdi:check-circle' : 'mdi:close-circle-outline'"
                 height="12"
-                class="gp-platform-ok"
-              />
-              <Icon
-                v-else
-                icon="mdi:close-circle-outline"
-                height="12"
-                class="gp-platform-missing"
+                :class="getPlatformStatus(item, pm.key) ? 'gp-platform-ok' : 'gp-platform-missing'"
               />
             </span>
             <span class="gp-table-cell gp-table-cell--act">
@@ -250,47 +229,20 @@
 </template>
 
 <script setup lang="ts">
-import type { GitProject, PlatformStatusItem } from "../types"
+import type { PendingProjectItem, PlatformStatusItem, PushStatusStats, RemoteCoverage } from "../types"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
 import { PLATFORM_META, getPlatformStatus } from "../types"
-
-export interface RemoteCoverage {
-  github: number
-  gitee: number
-  gitea: number
-  cnb: number
-  hasRemote: number
-  multiple: number
-}
-
-export interface PushStatusStats {
-  ahead: number
-  behind: number
-  synced: number
-  noRemote: number
-}
-
-export interface NeedsPushItem {
-  project: GitProject
-  aheadByRemote: { key: string, ahead: number }[]
-  totalAhead: number
-}
-
-export interface UncommittedItem {
-  project: GitProject
-  staged: number
-  unstaged: number
-  untracked: number
-}
 
 const props = defineProps<{
   i18n: Record<string, any>
   projectCount: number
   remoteCoverage: RemoteCoverage
   pushStatusStats: PushStatusStats
-  needsPushProjects: NeedsPushItem[]
-  uncommittedProjects: UncommittedItem[]
+  /** 待处理项目（需要推送 + 有未提交变更，已在 useGitStats 中合并排序） */
+  pendingProjects: PendingProjectItem[]
+  /** 有未提交变更的项目数（仅供总览卡片展示） */
+  uncommittedCount: number
   /** 平台配置状态明细（每个项目的 GitHub/Gitee/Gitea/CNB 是否已配置） */
   platformStatusProjects: PlatformStatusItem[]
 }>()
@@ -304,7 +256,19 @@ const overviewCards = computed(() => [
   { value: props.projectCount, label: props.i18n.totalProjects, cls: "" },
   { value: props.remoteCoverage.hasRemote, label: props.i18n.remoteConfigured, cls: "gp-stat-card--info" },
   { value: props.pushStatusStats.ahead, label: props.i18n.needsPush, cls: "gp-stat-card--warn" },
-  { value: props.uncommittedProjects.length, label: props.i18n.uncommitted, cls: "gp-stat-card--accent" },
+  { value: props.uncommittedCount, label: props.i18n.uncommitted, cls: "gp-stat-card--accent" },
+])
+
+// 覆盖率条目：四个平台（PLATFORM_META 投影）+ 多远程合计（key 同时作为 gp-coverage-fill 修饰类后缀）
+const coverageItems = computed(() => [
+  ...PLATFORM_META.map((pm) => ({
+    key: pm.key as string,
+    icon: pm.icon,
+    label: pm.label as string,
+    count: props.remoteCoverage[pm.key],
+  })),
+  // 多远程项目条目：“多远程项目”
+  { key: "multi", icon: "mdi:layers", label: props.i18n.multipleRemotes as string, count: props.remoteCoverage.multiple },
 ])
 
 // 推送状态 chip 配置：待推送/待拉取/已同步/无远程
@@ -326,59 +290,9 @@ function pct(count: number): string {
   if (props.projectCount === 0) return "0%"
   return `${Math.round((count / props.projectCount) * 100)}%`
 }
-
-/** 合并后的待处理项目（需要推送 + 有未提交变更） */
-interface PendingProjectItem {
-  project: GitProject
-  aheadByRemote: { key: string, ahead: number }[]
-  totalAhead: number
-  staged: number
-  unstaged: number
-  untracked: number
-}
-
-const pendingProjects = computed<PendingProjectItem[]>(() => {
-  const map = new Map<string, PendingProjectItem>()
-  // 先收集需要推送的项目
-  for (const np of props.needsPushProjects) {
-    map.set(np.project.id, {
-      project: np.project,
-      aheadByRemote: np.aheadByRemote,
-      totalAhead: np.totalAhead,
-      staged: 0,
-      unstaged: 0,
-      untracked: 0,
-    })
-  }
-  // 再合并有未提交变更的项目
-  for (const uc of props.uncommittedProjects) {
-    const existing = map.get(uc.project.id)
-    if (existing) {
-      existing.staged = uc.staged
-      existing.unstaged = uc.unstaged
-      existing.untracked = uc.untracked
-    } else {
-      map.set(uc.project.id, {
-        project: uc.project,
-        aheadByRemote: [],
-        totalAhead: 0,
-        staged: uc.staged,
-        unstaged: uc.unstaged,
-        untracked: uc.untracked,
-      })
-    }
-  }
-  // 按 totalAhead 降序 → staged+unstaged+untracked 降序
-  return [...map.values()].sort((a, b) => {
-    if (a.totalAhead !== b.totalAhead) return b.totalAhead - a.totalAhead
-    const aTotal = a.staged + a.unstaged + a.untracked
-    const bTotal = b.staged + b.unstaged + b.untracked
-    return bTotal - aTotal
-  })
-})
 </script>
 
 <style lang="scss">
-@use "../styles/variables" as *;
 @use "../styles/StatsPanel.scss";
+@use "../styles/index.scss";
 </style>

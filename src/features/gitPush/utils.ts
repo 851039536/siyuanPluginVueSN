@@ -30,10 +30,10 @@ export function pruneRecordCache(record: Record<string, any>, max = 30) {
 }
 
 /** 批次化并发处理：避免所有项目同时涌入 git 信号量导致排队拥堵 */
-export async function batchProcess<T>(items: T[], batchSize: number, fn: (item: T) => Promise<void>) {
+export async function batchProcess<T>(items: T[], batchSize: number, fn: (item: T, index: number) => Promise<void>) {
   for (let i = 0; i < items.length; i += batchSize) {
     const batch = items.slice(i, i + batchSize)
-    await Promise.all(batch.map(fn))
+    await Promise.all(batch.map((item, j) => fn(item, i + j)))
   }
 }
 

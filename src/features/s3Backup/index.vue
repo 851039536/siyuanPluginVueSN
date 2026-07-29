@@ -153,15 +153,15 @@
       />
 
       <AutoBackupCard
-        :auto-backup-enabled="autoBackupEnabled"
-        :backup-frequency="backupFrequency"
-        :backup-time="backupTime"
-        :keep-backup-count="keepBackupCount"
+        v-model:auto-backup-enabled="autoBackupEnabled"
+        v-model:backup-frequency="backupFrequency"
+        v-model:backup-time="backupTime"
+        v-model:keep-backup-count="keepBackupCount"
         :i18n="i18n"
-        @update:auto-backup-enabled="autoBackupEnabled = $event; saveWorkspaceSettings()"
-        @update:backup-frequency="backupFrequency = $event; saveWorkspaceSettings()"
-        @update:backup-time="backupTime = $event; saveWorkspaceSettings()"
-        @update:keep-backup-count="keepBackupCount = $event; saveWorkspaceSettings()"
+        @update:auto-backup-enabled="saveWorkspaceSettings()"
+        @update:backup-frequency="saveWorkspaceSettings()"
+        @update:backup-time="saveWorkspaceSettings()"
+        @update:keep-backup-count="saveWorkspaceSettings()"
       />
 
       <section class="card-section">

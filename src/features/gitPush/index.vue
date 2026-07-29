@@ -489,6 +489,29 @@ function confirmClearOpLogs() {
 // ── 批量加载进度条（runBatchWithProgress 编排已下沉 useBatchProgress.runBatch）──
 const { state: progressState, logEntries: progressLogEntries, hide: progressHide, runBatch: runBatchWithProgress } = useBatchProgress()
 
+/** 正在加载中的项目 id（跨所有自动加载触发器共享，防止来回切换重复入队同一项目导致成倍加载） */
+const loadingProjectIds = new Set<string>()
+
+/**
+ * 统一自动批量加载入口：先剔除已在加载中的项目，标记在途，完成后逐项清除。
+ * 所有"切换/挂载"触发器共用，配合 useBatchProgress 的 runChain 串行化，
+ * 既不重复入队同一项目，也不破坏进度计数。
+ */
+async function runProjectLoadBatch(
+  candidates: GitProject[], stepKey: string, loader: (id: string) => Promise<void>,
+) {
+  const pending = candidates.filter((p) => !loadingProjectIds.has(p.id))
+  if (pending.length === 0) return
+  pending.forEach((p) => loadingProjectIds.add(p.id))
+  await runBatchWithProgress(pending, tf("loadingLabel"), async (p, ctx) => {
+    try {
+      await ctx.step(tf(stepKey), () => loader(p.id))
+    } finally {
+      loadingProjectIds.delete(p.id)
+    }
+  })
+}
+
 let initTimer: ReturnType<typeof setTimeout> | null = null
 /** 当前视图: 'list' | 'stats' | 'log' */
 const currentView = ref<PanelView>("list")
@@ -659,9 +682,7 @@ onMounted(async () => {
     if (gitOpsPaused.value) return
     const catId = activeCategory.value
     const projList = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
-    await runBatchWithProgress(projList, tf("loadingLabel"), async (p, ctx) => {
-      await ctx.step(tf("stepStatus"), () => loadProjectGitStatus(p.id, true))
-    })
+    await runProjectLoadBatch(projList, "stepStatus", (id) => loadProjectGitStatus(id, true))
   }, 200)
 })
 
@@ -692,33 +713,19 @@ watch(activeCategory, async (catId) => {
   // 只加载尚未缓存的
   const pending = projList.filter((p) => !workingTrees.value[p.id])
   if (pending.length === 0) return
-  await runBatchWithProgress(pending, tf("loadingLabel"), async (p, ctx) => {
-    await ctx.step(tf("stepStatus"), () => loadProjectGitStatus(p.id, true))
-  })
+  await runProjectLoadBatch(pending, "stepStatus", (id) => loadProjectGitStatus(id, true))
 })
 
 /**
  * 补齐所有项目的统计最小数据集（pushStatus + workingTree），统计视图与智能视图共用。
  *  commitLog/branches/stash 不在这两类视图中展示，无需加载。
- *  使用 loadStatsData 共用 rev-parse，避免 loadPushStatus/loadWorkingTree 各调一次
+ *  使用 loadStatsData 共用 rev-parse，避免 loadPushStatus/loadWorkingTree 各调一次。
+ *  在途去重下沉 runProjectLoadBatch（按项目 id），来回切换不再重复入队。
  */
-/** 在途去重：加载未完成时来回切换视图不再重复启动批量加载（防并发叠加、进度条反复重置） */
-let statsLoadPromise: Promise<void> | null = null
 async function ensureStatsDataLoaded() {
   if (gitOpsPaused.value) return
-  if (statsLoadPromise) return statsLoadPromise
   const pending = projects.value.filter((p) => !pushStatuses.value[p.id] || !workingTrees.value[p.id])
-  if (pending.length === 0) return
-  statsLoadPromise = (async () => {
-    try {
-      await runBatchWithProgress(pending, tf("loadingLabel"), async (p, ctx) => {
-        await ctx.step(tf("stepStats"), () => loadStatsData(p.id))
-      })
-    } finally {
-      statsLoadPromise = null
-    }
-  })()
-  return statsLoadPromise
+  return runProjectLoadBatch(pending, "stepStats", (id) => loadStatsData(id))
 }
 
 /** 切换到统计视图时，补齐统计面板所需数据；切到日志视图时同步置 loading（pre-flush，避免 LogPanel 首渲闪空态） */
@@ -753,9 +760,7 @@ watch(gitOpsPaused, async (paused) => {
   const projList = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
   const pending = projList.filter((p) => !workingTrees.value[p.id])
   if (pending.length === 0) return
-  await runBatchWithProgress(pending, tf("loadingLabel"), async (p, ctx) => {
-    await ctx.step(tf("stepStatus"), () => loadProjectGitStatus(p.id, true))
-  })
+  await runProjectLoadBatch(pending, "stepStatus", (id) => loadProjectGitStatus(id, true))
 })
 
 async function handleAddFromDialog(data: ProjectPathExtras & { name: string, path: string, catId: string }) {

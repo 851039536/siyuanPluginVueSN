@@ -44,6 +44,7 @@
       v-if="currentView === 'log'"
       :i18n="i18n"
       :logs="opLogs"
+      :loading="opLogsLoading"
       @clear="confirmClearOpLogs"
       @view-project="onViewProject"
     />
@@ -491,6 +492,8 @@ const { state: progressState, logEntries: progressLogEntries, hide: progressHide
 let initTimer: ReturnType<typeof setTimeout> | null = null
 /** 当前视图: 'list' | 'stats' | 'log' */
 const currentView = ref<PanelView>("list")
+/** 日志视图首次读盘加载态（供 LogPanel 展示加载中占位，避免闪现空态） */
+const opLogsLoading = ref(false)
 /** 当前选中的分类 ID（onMounted 中设为首个分类） */
 const activeCategory = ref<string>("")
 
@@ -699,19 +702,36 @@ watch(activeCategory, async (catId) => {
  *  commitLog/branches/stash 不在这两类视图中展示，无需加载。
  *  使用 loadStatsData 共用 rev-parse，避免 loadPushStatus/loadWorkingTree 各调一次
  */
+/** 在途去重：加载未完成时来回切换视图不再重复启动批量加载（防并发叠加、进度条反复重置） */
+let statsLoadPromise: Promise<void> | null = null
 async function ensureStatsDataLoaded() {
   if (gitOpsPaused.value) return
+  if (statsLoadPromise) return statsLoadPromise
   const pending = projects.value.filter((p) => !pushStatuses.value[p.id] || !workingTrees.value[p.id])
   if (pending.length === 0) return
-  await runBatchWithProgress(pending, tf("loadingLabel"), async (p, ctx) => {
-    await ctx.step(tf("stepStats"), () => loadStatsData(p.id))
-  })
+  statsLoadPromise = (async () => {
+    try {
+      await runBatchWithProgress(pending, tf("loadingLabel"), async (p, ctx) => {
+        await ctx.step(tf("stepStats"), () => loadStatsData(p.id))
+      })
+    } finally {
+      statsLoadPromise = null
+    }
+  })()
+  return statsLoadPromise
 }
 
-/** 切换到统计视图时，补齐统计面板所需数据 */
+/** 切换到统计视图时，补齐统计面板所需数据；切到日志视图时同步置 loading（pre-flush，避免 LogPanel 首渲闪空态） */
 watch(currentView, async (view) => {
   if (view === "stats") await ensureStatsDataLoaded()
-  if (view === "log") await ensureOpLogsLoaded()
+  if (view === "log") {
+    opLogsLoading.value = true
+    try {
+      await ensureOpLogsLoaded()
+    } finally {
+      opLogsLoading.value = false
+    }
+  }
 })
 
 /** 切换到"需推送/有变更"智能视图时，补齐命中判定所需的全量状态数据 */

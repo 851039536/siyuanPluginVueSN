@@ -39,8 +39,8 @@
       :project-count="projectCount"
       :remote-coverage="remoteCoverage"
       :push-status-stats="pushStatusStats"
-      :needs-push-projects="needsPushProjects"
-      :uncommitted-projects="uncommittedProjects"
+      :pending-projects="pendingProjects"
+      :uncommitted-count="uncommittedProjects.length"
       :platform-status-projects="platformStatusProjects"
       @view-project="onViewProject"
     />
@@ -477,6 +477,7 @@ const {
   pushStatusStats,
   needsPushProjects,
   uncommittedProjects,
+  pendingProjects,
   platformStatusProjects,
   // 项目聚合管理
   starredProjects,

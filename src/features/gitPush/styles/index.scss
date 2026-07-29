@@ -7,11 +7,9 @@
 
 .git-push-panel {
   // ── 本地 CSS 颜色变量（diff / 文件状态 / accent）──
-  --gp-diff-add-color: #1a7f37;
-  --gp-diff-del-color: #cf222e;
-  --gp-diff-hunk-color: #0969da;
-  --gp-diff-add-bg: #e6ffec;
-  --gp-diff-del-bg: #ffebe9;
+  // diff 着色变量提取为 mixin，与 Teleport 到 body 的 .wt-diff-overlay 共用同一事实源
+  @include gp-diff-color-vars;
+
   --gp-file-renamed-color: #9b59b6;
   --gp-accent-color: #f58742;
   --gp-badge-untracked-bg: #fde68a;

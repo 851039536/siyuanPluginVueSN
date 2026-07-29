@@ -58,7 +58,50 @@ export const REMOTES = PLATFORM_META.map((pm) => ({
   remoteProp: pm.remoteProp,
 }))
 
-// ── 统计视图类型 ──
+// ── 统计视图类型（useGitStats 产出 / StatsPanel 消费的共享形状）──
+/** 远程覆盖率统计 */
+export interface RemoteCoverage {
+  github: number
+  gitee: number
+  gitea: number
+  cnb: number
+  hasRemote: number
+  multiple: number
+}
+
+/** 推送状态统计 */
+export interface PushStatusStats {
+  ahead: number
+  behind: number
+  synced: number
+  noRemote: number
+}
+
+/** 需要推送的项目项 */
+export interface NeedsPushItem {
+  project: GitProject
+  aheadByRemote: { key: string, ahead: number }[]
+  totalAhead: number
+}
+
+/** 有未提交变更的项目项 */
+export interface UncommittedItem {
+  project: GitProject
+  staged: number
+  unstaged: number
+  untracked: number
+}
+
+/** 待处理项目（需要推送 + 有未提交变更 的合并视图） */
+export interface PendingProjectItem {
+  project: GitProject
+  aheadByRemote: { key: string, ahead: number }[]
+  totalAhead: number
+  staged: number
+  unstaged: number
+  untracked: number
+}
+
 /** 平台配置状态明细项 */
 export interface PlatformStatusItem {
   /** 仅引用 id/name/path，避免完整 GitProject 导致类型依赖链循环 */

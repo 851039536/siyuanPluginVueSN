@@ -40,5 +40,5 @@ export {
   VIEW_MODE_META,
   VIEW_MODES,
 } from "./meta"
-export type { PlatformKey, PlatformStatusItem, ViewMode } from "./meta"
+export type { NeedsPushItem, PendingProjectItem, PlatformKey, PlatformStatusItem, PushStatusStats, RemoteCoverage, UncommittedItem, ViewMode } from "./meta"
 export { getPlatformStatus } from "./meta"

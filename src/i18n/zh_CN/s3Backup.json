@@ -136,5 +136,6 @@
   "logFailedFiles": "失败文件",
   "logMoreFiles": "+{count} 更多",
   "logCopyDetail": "复制详情",
-  "logCopied": "已复制"
+  "logCopied": "已复制",
+  "hashCopied": "SHA-256 已复制"
 }

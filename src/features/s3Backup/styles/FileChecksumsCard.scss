@@ -121,7 +121,6 @@
   border-radius: $vp-radius;
   padding: $spacing-4;
   text-align: center;
-  cursor: pointer;
   transition: border-color 0.12s ease, background 0.12s ease;
   margin-bottom: $spacing-3;
 
@@ -141,7 +140,6 @@
 }
 
 .drop-zone-icon {
-  font-size: 28px;
   opacity: 0.6;
 }
 
@@ -160,6 +158,16 @@
   padding: $spacing-2;
   border: 1px solid var(--b3-theme-surface-lighter);
   border-radius: $radius-sm;
+
+  &.drop-compare-match {
+    border-color: var(--b3-theme-success);
+    background: rgba(var(--b3-theme-success-rgb, 45, 170, 78), 0.04);
+  }
+
+  &.drop-compare-mismatch {
+    border-color: var(--b3-theme-error);
+    background: rgba(var(--b3-theme-error-rgb, 212, 59, 59), 0.04);
+  }
 }
 
 .drop-result-info {
@@ -192,18 +200,6 @@
 }
 
 // ========== 拖放结果比对 ==========
-
-.drop-result-item {
-  &.drop-compare-match {
-    border-color: var(--b3-theme-success);
-    background: rgba(var(--b3-theme-success-rgb, 45, 170, 78), 0.04);
-  }
-
-  &.drop-compare-mismatch {
-    border-color: var(--b3-theme-error);
-    background: rgba(var(--b3-theme-error-rgb, 212, 59, 59), 0.04);
-  }
-}
 
 .drop-result-compare {
   flex-shrink: 0;

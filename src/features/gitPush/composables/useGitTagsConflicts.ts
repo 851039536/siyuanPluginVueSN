@@ -7,7 +7,7 @@ import type {
   ScannedGitRepo,
 } from "../types"
 import { ref } from "vue"
-import { findProject, getAllProjectPathsForDedup, normalizePathForDedup, resolveValidPath } from "../utils"
+import { getAllProjectPathsForDedup, normalizePathForDedup, requireProject, resolveValidPath } from "../utils"
 
 export function useGitTagsConflicts(manager: GitPushManager, projects: Ref<GitProject[]>) {
   /** 提交信息模板 */
@@ -19,33 +19,28 @@ export function useGitTagsConflicts(manager: GitPushManager, projects: Ref<GitPr
 
   // ── Tag 管理（列表数据已下沉卡片，此处仅保留写操作）──
   async function createTagOp(id: string, name: string, message?: string) {
-    const project = findProject(projects, id)
-    if (!project) throw new Error("项目未找到")
+    const project = requireProject(projects, id)
     await manager.createTag(resolveValidPath(project), name, message)
   }
 
   async function deleteTagOp(id: string, name: string) {
-    const project = findProject(projects, id)
-    if (!project) throw new Error("项目未找到")
+    const project = requireProject(projects, id)
     await manager.deleteTag(resolveValidPath(project), name)
   }
 
   async function pushTagOp(id: string, remoteName: string, tag: string): Promise<string> {
-    const project = findProject(projects, id)
-    if (!project) throw new Error("项目未找到")
+    const project = requireProject(projects, id)
     return manager.pushTag(resolveValidPath(project), remoteName, tag)
   }
 
   // ── 冲突操作（冲突文件列表已下沉卡片，此处仅保留写操作）──
   async function abortMergeOp(id: string) {
-    const project = findProject(projects, id)
-    if (!project) throw new Error("项目未找到")
+    const project = requireProject(projects, id)
     await manager.abortMerge(resolveValidPath(project))
   }
 
   async function resolveConflictOp(id: string, file: string, strategy: "theirs" | "ours") {
-    const project = findProject(projects, id)
-    if (!project) throw new Error("项目未找到")
+    const project = requireProject(projects, id)
     await manager.resolveConflictFile(resolveValidPath(project), file, strategy)
   }
 

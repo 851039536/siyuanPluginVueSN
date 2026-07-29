@@ -25,7 +25,7 @@ export function useRefreshOps(deps: {
   activeCategory: Ref<string>
   gitOpsPaused: Ref<boolean>
   runBatchWithProgress: RunBatch
-  tf: (key: string, fallback: string, ...args: (string | number)[]) => string
+  tf: (key: string, ...args: (string | number)[]) => string
   commitLogLoading: Ref<Record<string, boolean>>
   tagLoading: Ref<Record<string, boolean>>
   loadProjectGitStatus: (id: string, skipRefresh?: boolean) => Promise<void>
@@ -74,22 +74,22 @@ export function useRefreshOps(deps: {
     const projList = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
     if (projList.length === 0) return
 
-    await runBatchWithProgress(projList, tf("refreshingLabel", "刷新中"), async (p, ctx) => {
+    await runBatchWithProgress(projList, tf("refreshingLabel"), async (p, ctx) => {
       const prev = headHashes.value[p.id] || ""
       const [, curr] = await Promise.all([
-        ctx.step(tf("stepStatus", "状态"), () => loadProjectGitStatus(p.id, true)),
-        ctx.step(tf("stepHead", "HEAD"), () => manager.getHeadHash(resolveValidPath(p))),
+        ctx.step(tf("stepStatus"), () => loadProjectGitStatus(p.id, true)),
+        ctx.step(tf("stepHead"), () => manager.getHeadHash(resolveValidPath(p))),
       ])
 
       if (curr && curr !== prev) {
         headHashes.value[p.id] = curr
         await Promise.all([
-          ctx.step(tf("stepLog", "日志"), () => loadCommitLog(p.id)),
-          ctx.step(tf("stepBranch", "分支"), () => loadBranches(p.id)),
-          ctx.step(tf("stepStash", "Stash"), () => loadStashList(p.id)),
+          ctx.step(tf("stepLog"), () => loadCommitLog(p.id)),
+          ctx.step(tf("stepBranch"), () => loadBranches(p.id)),
+          ctx.step(tf("stepStash"), () => loadStashList(p.id)),
         ])
       } else if (curr) {
-        await ctx.step(tf("stepStash", "Stash"), () => loadStashList(p.id))
+        await ctx.step(tf("stepStash"), () => loadStashList(p.id))
       }
     }, undefined, { keepVisible })
   }
@@ -99,17 +99,17 @@ export function useRefreshOps(deps: {
     if (!project) return
     refreshing.value = id
     try {
-      await runBatchWithProgress([project], tf("refreshingLabel", "刷新中"), async (p, ctx) => {
+      await runBatchWithProgress([project], tf("refreshingLabel"), async (p, ctx) => {
         // 一次 rev-parse 获取 branch，六项操作全部并行（git 信号量自动限流到 3）
         const cwd = resolveValidPath(p)
         const branch = await manager.getBranch(cwd)
         await Promise.all([
-          ctx.step(tf("stepRemote", "远程"), () => refreshRemotes(p.id)),
-          ctx.step(tf("stepPush", "推送"), () => loadPushStatus(p.id, { fetchFirst: true, branch })),
-          ctx.step(tf("stepWorkingTree", "工作区"), () => loadWorkingTree(p.id, false, branch)),
-          ctx.step(tf("stepLog", "日志"), () => loadCommitLog(p.id)),
-          ctx.step(tf("stepBranch", "分支"), () => loadBranches(p.id)),
-          ctx.step(tf("stepStash", "Stash"), () => loadStashList(p.id)),
+          ctx.step(tf("stepRemote"), () => refreshRemotes(p.id)),
+          ctx.step(tf("stepPush"), () => loadPushStatus(p.id, { fetchFirst: true, branch })),
+          ctx.step(tf("stepWorkingTree"), () => loadWorkingTree(p.id, false, branch)),
+          ctx.step(tf("stepLog"), () => loadCommitLog(p.id)),
+          ctx.step(tf("stepBranch"), () => loadBranches(p.id)),
+          ctx.step(tf("stepStash"), () => loadStashList(p.id)),
         ])
       }, (p) => p.name, { keepVisible: true })
     } finally {
@@ -206,7 +206,7 @@ export function useRefreshOps(deps: {
       const catId = activeCategory.value
       const projList = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
       if (projList.length === 0) return
-      await runBatchWithProgress(projList, tf("fetchAll", "更新远程状态"), async (p) => {
+      await runBatchWithProgress(projList, tf("fetchAll"), async (p) => {
         await fetchAllRemotes(p.id)
       }, undefined, { keepVisible: true })
     } finally {
@@ -223,7 +223,7 @@ export function useRefreshOps(deps: {
     try {
       await fetchAllRemotes(id)
     } catch (e: unknown) {
-      showMessage(getErrorMessage(e) || tf("fetchFailed", "Fetch 失败"), 5000, "error")
+      showMessage(getErrorMessage(e) || tf("fetchFailed"), 5000, "error")
     } finally {
       delete fetching.value[id]
       fetching.value = { ...fetching.value }

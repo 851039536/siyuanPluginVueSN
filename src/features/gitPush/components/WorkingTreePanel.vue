@@ -132,70 +132,19 @@
         </div>
       </div>
 
-      <!-- 差异查看弹窗 -->
-      <Teleport to="body">
-        <div
-          v-if="activeDiffFile"
-          class="wt-diff-overlay"
-          @click.self="activeDiffFile = null"
-        >
-          <div class="wt-diff-dialog">
-            <div class="wt-diff-header">
-              <div class="wt-diff-title-row">
-                <Icon
-                  icon="mdi:file-compare"
-                  height="12"
-                />
-                <span class="wt-diff-title">{{ activeDiffFile.path }}</span>
-                <span class="wt-diff-badge">{{ activeDiffFile.staged ? i18n.staged : i18n.unstaged }}</span>
-                <!-- 增/删行数统计 -->
-                <span
-                  v-if="diffStats.add || diffStats.del"
-                  class="wt-diff-stats"
-                >
-                  <span class="wt-stat-add">+{{ diffStats.add }}</span>
-                  <span class="wt-stat-del">−{{ diffStats.del }}</span>
-                </span>
-              </div>
-              <button
-                class="vp-btn vp-btn--ghost vp-btn--sm"
-                @click="activeDiffFile = null"
-              >
-                <Icon
-                  icon="mdi:close"
-                  height="12"
-                />
-              </button>
-            </div>
-            <div class="wt-diff-legend">
-              <span class="wt-legend-add">+ {{ i18n.legendAdd }}</span>
-              <span class="wt-legend-del">− {{ i18n.legendDel }}</span>
-              <span class="wt-legend-ctx">⋯ {{ i18n.legendCtx }}</span>
-            </div>
-            <div class="wt-diff-content">
-              <!-- 空态：差异尚未加载完成或无内容（如二进制文件） -->
-              <div
-                v-if="!coloredDiffLines.length"
-                class="wt-diff-empty"
-              >
-                {{ i18n.diffEmpty }}
-              </div>
-              <div
-                v-for="(line, i) in coloredDiffLines"
-                :key="i"
-                class="wt-diff-line"
-                :class="`wt-dl-${line.type}`"
-              >
-                <!-- 旧/新文件行号双列（hunk/meta 行无行号，留空保持对齐） -->
-                <span class="wt-dl-no">{{ line.oldNo ?? "" }}</span>
-                <span class="wt-dl-no">{{ line.newNo ?? "" }}</span>
-                <span class="wt-dl-sign">{{ DIFF_SIGN[line.type] }}</span>
-                <span class="wt-dl-text">{{ line.text }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Teleport>
+      <!-- 差异查看弹窗（子组件自含渲染与键盘导航，父只管开关与数据下发） -->
+      <WorkingTreeDiffDialog
+        v-if="activeDiffFile"
+        :i18n="i18n"
+        :file="activeDiffFile"
+        :files="sortedFiles"
+        :file-diffs="fileDiffs"
+        :git-op-loading="gitOpLoading"
+        @close="activeDiffFile = null"
+        @navigate="handleDiffNavigate"
+        @stage-toggle="handleDiffStageToggle"
+        @discard="handleDiffDiscard"
+      />
 
       <!-- 提交表单 -->
       <div
@@ -297,13 +246,12 @@ import type {
   WorkingTreeInfo,
 } from "../types"
 import { COMMIT_TYPE_VALUES } from "../types"
-import type { DiffLineType } from "../utils"
-import { fileStatusIcon, fileStatusIconKey, fileStatusTitle, isIconFileStatus, parseDiffLines } from "../utils"
+import { fileStatusIcon, fileStatusIconKey, fileStatusTitle, isIconFileStatus } from "../utils"
 import { useGeneratedMsgSync } from "../composables/useGeneratedMsgSync"
+import WorkingTreeDiffDialog from "./WorkingTreeDiffDialog.vue"
 import { Icon } from "@iconify/vue"
 import {
   computed,
-  onUnmounted,
   ref,
   toRef,
   watch,
@@ -337,15 +285,6 @@ const emit = defineEmits<{
   refreshWorkingTree: []
 }>()
 
-// diff 行类型 → 行首符号（替代模板中的三元链）
-const DIFF_SIGN: Record<DiffLineType, string> = {
-  add: "+",
-  del: "−",
-  hunk: "@",
-  ctx: " ",
-  meta: " ",
-}
-
 const commitType = ref("chore")
 const commitMessage = ref("")
 const activeDiffFile = ref<FileChange | null>(null)
@@ -367,36 +306,6 @@ const sortedFiles = computed(() => {
   })
 })
 
-const activeDiffText = computed(() => {
-  if (!activeDiffFile.value) return ""
-  const key = `${activeDiffFile.value.staged ? "s" : "u"}::${activeDiffFile.value.path}`
-  return props.fileDiffs[key] || ""
-})
-
-/** 将 diff 文本解析为带类型的行数组（用于着色渲染） */
-const coloredDiffLines = computed(() => parseDiffLines(activeDiffText.value))
-
-/** 增/删行数统计（弹窗标题行展示） */
-const diffStats = computed(() => {
-  let add = 0
-  let del = 0
-  for (const line of coloredDiffLines.value) {
-    if (line.type === "add") add++
-    else if (line.type === "del") del++
-  }
-  return { add, del }
-})
-
-// Esc 关闭差异弹窗（仅弹窗打开期间监听，避免干扰其他键盘操作）
-function handleDiffKeydown(e: KeyboardEvent) {
-  if (e.key === "Escape") activeDiffFile.value = null
-}
-watch(activeDiffFile, (open) => {
-  if (open) window.addEventListener("keydown", handleDiffKeydown)
-  else window.removeEventListener("keydown", handleDiffKeydown)
-})
-onUnmounted(() => window.removeEventListener("keydown", handleDiffKeydown))
-
 function toggleStage(file: FileChange) {
   if (file.staged) {
     emit("unstageFile", file.path)
@@ -413,6 +322,46 @@ function toggleDiff(file: FileChange) {
     emit("loadDiff", file.path, file.staged)
   }
 }
+
+/** 弹窗内导航：切换当前差异文件并加载对应 diff */
+function handleDiffNavigate(file: FileChange) {
+  activeDiffFile.value = file
+  emit("loadDiff", file.path, file.staged)
+}
+
+/** 弹窗内暂存切换：翻转 staged 后重新加载 diff（缓存键含 staged 前缀） */
+function handleDiffStageToggle() {
+  const file = activeDiffFile.value
+  if (!file) return
+  toggleStage(file)
+  activeDiffFile.value = { ...file, staged: !file.staged }
+  emit("loadDiff", file.path, !file.staged)
+}
+
+/** 弹窗内丢弃：透传给父级确认流程，文件从树中消失后由下方 watch 关闭弹窗 */
+function handleDiffDiscard() {
+  const file = activeDiffFile.value
+  if (!file) return
+  emit("discardFile", file.path, file.staged, file.status)
+}
+
+// 树刷新后同步当前差异文件：两级匹配自愈——精确匹配则跟随新对象；仅同路径（操作失败回滚等）则改指现存条目；都不存在（丢弃/提交完成）则关闭弹窗
+watch(() => props.tree, (tree) => {
+  const file = activeDiffFile.value
+  if (!file || !tree) return
+  const exact = tree.files.find((f) => f.path === file.path && f.staged === file.staged)
+  if (exact) {
+    activeDiffFile.value = exact
+    return
+  }
+  const samePath = tree.files.find((f) => f.path === file.path)
+  if (samePath) {
+    activeDiffFile.value = samePath
+    emit("loadDiff", samePath.path, samePath.staged)
+  } else {
+    activeDiffFile.value = null
+  }
+})
 
 function updateCommitMessage() {
   if (commitMessage.value) {

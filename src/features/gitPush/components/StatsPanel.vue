@@ -36,6 +36,8 @@
         </div>
       </div>
 
+      <!-- 瀑布流布局：四个区块按列自上而下填充，各列高度独立，消除并排等高行的空隙（列数由容器宽度自适应） -->
+      <div class="gp-stats-masonry">
       <!-- 远程覆盖率 -->
       <div class="gp-stats-section">
         <div class="gp-stats-section-title">
@@ -103,10 +105,8 @@
         </div>
       </div>
 
-      <!-- 双列布局：待处理项目 + 平台配置状态 -->
-      <div class="gp-stats-duo">
       <!-- 待处理项目（推送状态概览 + 待处理表格合并） -->
-      <div class="gp-stats-section gp-stats-section--half">
+      <div class="gp-stats-section">
         <div class="gp-stats-section-title">
           {{ i18n.pendingProjects }}
           <span class="gp-stats-section-count">{{ stats.pendingProjects.length }}</span>
@@ -217,7 +217,7 @@
       <!-- 平台配置状态（显示每个项目各平台是否已配置） -->
       <div
         v-if="stats.platformStatusProjects.length > 0"
-        class="gp-stats-section gp-stats-section--half"
+        class="gp-stats-section"
       >
         <div class="gp-stats-section-title">
           {{ i18n.platformStatus }}

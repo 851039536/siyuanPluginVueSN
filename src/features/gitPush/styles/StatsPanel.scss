@@ -10,7 +10,8 @@
 // ── 总览卡片 ──
 .gp-stats-cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); // 6 卡均分两行三列（窄 Dock 下比 4 列更不易挤压）
+  // 自适应列数：全屏单行 6 卡，窄 Dock（约 420px）自动折为 3 列两行（容器宽度驱动，不用 @media）
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
   gap: $spacing-1;
   margin-bottom: $spacing-3;
 }
@@ -50,18 +51,15 @@
 .gp-stat-card--star .gp-stat-card-value { color: var(--b3-theme-warning, #f5a623); } // 收藏卡：与列表星标按钮（.gp-star-btn）同色
 .gp-stat-card--muted .gp-stat-card-value { opacity: 0.45; } // 归档卡：弱化展示（非活跃数据）
 
-// ── 双列布局 ──
-.gp-stats-duo {
-  display: flex;
-  flex-wrap: wrap; // 窄 Dock 下自动堆叠为单列（Dock 宽度≠视口宽度，不用 @media）
-  gap: $spacing-3;
-  margin-bottom: $spacing-3;
-}
+// ── 瀑布流布局（CSS 多列）──
+.gp-stats-masonry {
+  column-count: 2; // 固定两列瀑布：区块按列填充、两列高度自动平衡
+  column-gap: $spacing-3;
 
-.gp-stats-section--half {
-  flex: 1 1 300px; // 单列最小基准宽：容器窄于约两倍基准时换行为单列
-  min-width: 0;
-  margin-bottom: 0;
+  // 区块作为瀑布流单元：整体不可跨列拆分，各列高度独立填充，无等高行空隙
+  > .gp-stats-section {
+    break-inside: avoid;
+  }
 }
 
 // ── 区块标题 ──

@@ -1362,6 +1362,8 @@
     "legendDel": "Deleted",
     "legendCtx": "Unchanged",
     "diffEmpty": "No diff content (loading or binary file)",
+    "prevFile": "Previous file",
+    "nextFile": "Next file",
     "close": "Close",
     "listView": "List view",
     "statsView": "Stats view",

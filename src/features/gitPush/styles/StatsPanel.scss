@@ -33,12 +33,12 @@
   font-weight: $font-weight-bold;
   font-family: $vp-mono;
   line-height: $line-height-tight;
-  margin-bottom: 1px;
+  margin-bottom: 1px; // 数值与标签的最小视觉间隔（小于 $spacing-2px，刻意紧贴）
   color: var(--b3-theme-on-surface);
 }
 
 .gp-stat-card-label {
-  font-size: $font-size-xs;
+  font-size: $font-size-2xs; // 大写辅助标签语义，与 gp-label-base 一致（两级字号制）
   opacity: 0.5;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -51,16 +51,15 @@
 // ── 双列布局 ──
 .gp-stats-duo {
   display: flex;
+  flex-wrap: wrap; // 窄 Dock 下自动堆叠为单列（Dock 宽度≠视口宽度，不用 @media）
   gap: $spacing-3;
   margin-bottom: $spacing-3;
 }
 
 .gp-stats-section--half {
-  flex: 1 1 0;
+  flex: 1 1 300px; // 单列最小基准宽：容器窄于约两倍基准时换行为单列
   min-width: 0;
   margin-bottom: 0;
-  height: 450px; // 双列区块固定高度：两侧表格等高对齐，超出部分内部滚动
-  overflow-y: auto;
 }
 
 // ── 区块标题 ──
@@ -74,7 +73,7 @@
   margin-bottom: $spacing-2;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: $spacing-1;
 }
 
 .gp-stats-section-count {
@@ -98,13 +97,13 @@
 .gp-coverage-item {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: $spacing-px;
 }
 
 .gp-coverage-head {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: $spacing-1;
   font-size: $font-size-xs;
   opacity: 0.7;
 }
@@ -139,6 +138,7 @@
 // ── 推送状态概览条（待处理项目顶部）──
 .gp-status-bar {
   display: flex;
+  flex-wrap: wrap; // 窄面板下四个 chip 自动换行防溢出
   gap: $spacing-1;
   margin-bottom: $spacing-2;
 }
@@ -147,7 +147,7 @@
   display: flex;
   align-items: center;
   gap: $spacing-1;
-  padding: $spacing-1 10px;
+  padding: $spacing-1 $spacing-2;
   border-radius: $radius-sm;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
@@ -186,8 +186,8 @@
 .gp-status-all-clear {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px $spacing-2;
+  gap: $spacing-1;
+  padding: $spacing-2;
   font-size: $font-size-xs;
   opacity: 0.45;
   font-style: italic;
@@ -197,8 +197,7 @@
 .gp-table-wrap {
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
-  overflow: hidden;
-  max-height: 260px;
+  max-height: 320px; // 外层区块不再固高后的唯一滚动层上限（原 260px + 释放的外层空间）
   overflow-y: auto;
 }
 
@@ -211,12 +210,16 @@
   @include row-divider;
 
   &--head {
+    // sticky 表头：滚动时常驻顶部；实色背景 + 文字色弱化（整行 opacity 会透出下层行）
+    position: sticky;
+    top: 0;
+    z-index: 1;
     background: var(--b3-theme-surface);
+    color: var(--b3-theme-on-surface-light);
     font-size: $font-size-2xs;
     font-weight: $font-weight-bold;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    opacity: 0.45;
   }
 
   &--clickable {
@@ -240,7 +243,8 @@
 
   &--num {
     width: 40px;
-    text-align: center;
+    text-align: right; // 等宽字体右对齐，数值纵向可比
+    padding-right: $spacing-1;
     font-family: $vp-mono;
     font-size: $font-size-2xs;
   }

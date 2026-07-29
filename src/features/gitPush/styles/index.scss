@@ -661,10 +661,6 @@
   gap: $spacing-1;
 }
 
-.gp-stash-label {
-  @include gp-label-base;
-}
-
 .gp-stash-help {
   cursor: help;
   opacity: 0.35;
@@ -675,20 +671,9 @@
   }
 }
 
-.gp-stash-msg-input {
+// 暂存描述输入框（共享 Input 组件）：撑满头部剩余宽度
+.gp-stash-input {
   flex: 1;
-  padding: 3px 6px;
-  border: 1px solid var(--b3-theme-primary);
-  border-radius: $radius-sm;
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  outline: none;
-
-  &::placeholder {
-    opacity: 0.35;
-  }
 }
 
 .gp-stash-list {

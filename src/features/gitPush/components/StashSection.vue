@@ -1,10 +1,12 @@
 <!-- Git Stash 储藏管理区 -->
 <template>
   <div class="gp-stash-wrap">
+    <!-- 暂存操作头部：帮助图标 + 描述输入态/暂存按钮态切换 -->
     <div class="gp-stash-header">
+      <!-- 悬停提示："暂存：把当前未提交的修改临时保存起来……" -->
       <span
         class="gp-stash-help"
-        title="暂存：把当前未提交的修改临时保存起来，方便切换到其他分支工作。之后可以随时'恢复'回来继续编辑，就像把工作进度先放进抽屉里一样。"
+        :title="i18n.stashHelp"
       >
         <Icon
           icon="mdi:help-circle-outline"
@@ -12,17 +14,19 @@
         />
       </span>
       <template v-if="isInputVisible">
+        <!-- 占位符："暂存描述（可选）" -->
         <Input
           ref="inputEl"
           v-model="localMsg"
           size="xsmall"
-          placeholder="暂存描述（可选）"
-          style="flex:1"
-          @keydown="$event.key === 'Enter' && confirm()"
+          :placeholder="i18n.stashMsgPlaceholder"
+          class="gp-stash-input"
+          @keydown.enter="confirm"
         />
+        <!-- 悬停提示："AI 生成描述" -->
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
-          title="AI 生成描述"
+          :title="i18n.stashGenDesc"
           :disabled="genDescLoading"
           @click="$emit('genStashDesc')"
         >
@@ -75,9 +79,11 @@
           icon="mdi:archive-outline"
           height="12"
         />
+        <!-- 按钮文案："暂存变更" -->
         {{ i18n.stashSave }}
       </button>
     </div>
+    <!-- 储藏条目列表 -->
     <div
       v-if="entries?.length"
       class="gp-stash-list"
@@ -92,21 +98,24 @@
           class="gp-stash-msg"
           :title="e.message"
         >{{ e.message }}</span>
+        <!-- 悬停提示："恢复并删除 (pop)"，按钮文案："恢复" -->
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
-          title="恢复并删除 (pop)"
+          :title="i18n.stashPopHint"
           :disabled="loading"
           @click="$emit('stashPop', e.index)"
         >{{ i18n.stashRestore }}</button>
+        <!-- 悬停提示："应用但不删除 (apply)"，按钮文案："应用" -->
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
-          title="应用但不删除 (apply)"
+          :title="i18n.stashApplyHint"
           :disabled="loading"
           @click="$emit('stashApply', e.index)"
         >{{ i18n.stashApply }}</button>
+        <!-- 悬停提示："删除 (drop)"，按钮文案："删除" -->
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
-          title="删除 (drop)"
+          :title="i18n.stashDropHint"
           :disabled="loading"
           @click="$emit('stashDrop', e.index)"
         >{{ i18n.stashDrop }}</button>

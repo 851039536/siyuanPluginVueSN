@@ -125,8 +125,6 @@
             :get-project-url="getProjectUrl"
             :resolved-path="resolvedPath"
             :md-files="mdFilesForProject(project.id)"
-            :relative-time="relativeTime"
-            :activity-level="activityLevel"
             :status-badge-class="statusBadgeClass"
             :status-label="statusLabel"
             :has-behind="hasBehind"
@@ -348,7 +346,6 @@ import { useIdeManagement } from "./composables/useIdeManagement"
 import {
   useProjectFilters,
 } from "./composables/useProjectFilters"
-import { useTimeUtils } from "./composables/useTimeUtils"
 import { useCommitLog } from "./composables/useCommitLog"
 import { useScanImport } from "./composables/useScanImport"
 import { useGitConfigDialog } from "./composables/useGitConfigDialog"
@@ -376,13 +373,6 @@ function tf(key: string, fallback: string, ...args: (string | number)[]): string
   args.forEach((a, i) => { s = s.replace(`{${i}}`, String(a)) })
   return s
 }
-
-const ut = useTimeUtils()
-const {
-  relativeTime,
-  activityLevel,
-  sortProjects,
-} = ut
 
 const {
   projects,
@@ -627,7 +617,6 @@ const {
   uncommittedProjects,
   starredProjects,
   visibleGroups,
-  sortProjects,
 })
 
 const {

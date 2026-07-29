@@ -18,13 +18,12 @@
             />
           </button>
           <input
-            v-if="editingNameId === project.id"
-            :value="editingNameInput"
+            v-if="editingName"
+            v-model="nameInput"
             class="gp-card-name-input"
-            @input="$emit('update:editingNameInput', ($event.target as HTMLInputElement).value)"
-            @blur="$emit('nameEditSave', project)"
+            @blur="saveNameEdit"
             @keyup.enter="($event.target as HTMLInputElement).blur()"
-            @keyup.escape="$emit('update:editingNameId', '')"
+            @keyup.escape="cancelNameEdit"
             @click.stop
           />
           <!-- 项目名（悬停提示："点击修改名称"，含搜索命中高亮分段） -->
@@ -32,7 +31,7 @@
             v-else
             class="gp-card-name"
             :title="i18n.clickToRename"
-            @click.stop="$emit('startNameEdit', project)"
+            @click.stop="startNameEdit"
           ><template
             v-for="(seg, i) in nameSegments"
             :key="i"
@@ -159,11 +158,11 @@
           :key="pm.key"
         >
           <button
-            v-if="getProjectUrl(project, pm.urlProp)"
+            v-if="projectUrl(pm.urlProp)"
             class="vp-btn vp-btn--ghost vp-btn--sm"
             :title="i18n.openPlatformHint.replace('{0}', pm.label)"
-            @click="$emit('openWeb', getProjectUrl(project, pm.urlProp)!)"
-            @contextmenu.prevent="$emit('copyUrl', getProjectUrl(project, pm.urlProp)!)"
+            @click="openRepoWebUrl(projectUrl(pm.urlProp)!)"
+            @contextmenu.prevent="handleCopyUrl(projectUrl(pm.urlProp)!)"
           >
             <Icon
               :icon="pm.icon"
@@ -197,7 +196,7 @@
             <!-- 菜单项："打开文件夹" -->
             <button
               class="gp-ide-item"
-              @click="$emit('openPath', resolvedPath(project)); openMenu = null"
+              @click="openLocalPath(projectPath()); openMenu = null"
             >
               <Icon
                 icon="mdi:folder-open"
@@ -222,7 +221,7 @@
               v-for="ide in detectedIdes"
               :key="`detected-${ide.name}`"
               class="gp-ide-item"
-              @click="$emit('openIde', resolvedPath(project), ide); openMenu = null"
+              @click="$emit('openIde', projectPath(), ide); openMenu = null"
             >
               <Icon
                 :icon="ide.icon"
@@ -235,7 +234,7 @@
               :key="`custom-${custom.name}`"
               class="gp-ide-item gp-ide-item--custom"
               :title="custom.paths.join('\n')"
-              @click="$emit('openCustomIde', resolvedPath(project), custom.name); openMenu = null"
+              @click="$emit('openCustomIde', projectPath(), custom.name); openMenu = null"
             >
               <Icon
                 icon="mdi:application-brackets"
@@ -247,13 +246,13 @@
                 <span class="gp-ide-del-confirm">{{ i18n.confirmDeleteShort }}</span>
                 <button
                   class="gp-ide-del-yes"
-                  @click.stop="$emit('removeCustomIde', custom.name)"
+                  @click.stop="$emit('removeCustomIde', custom.name); confirmingDelName = ''"
                 >
                   {{ i18n.yes }}
                 </button>
                 <button
                   class="gp-ide-del-no"
-                  @click.stop="$emit('update:confirmingDelName', '')"
+                  @click.stop="confirmingDelName = ''"
                 >
                   {{ i18n.no }}
                 </button>
@@ -262,7 +261,7 @@
                 v-else
                 class="gp-ide-item-del"
                 :title="i18n.deleteCustomIde"
-                @click.stop="$emit('update:confirmingDelName', custom.name)"
+                @click.stop="confirmingDelName = custom.name"
               >
                 <Icon
                   icon="mdi:delete-outline"
@@ -704,9 +703,10 @@ import {
   PLATFORM_META,
   REMOTES,
 } from "../types"
-import { activityLevel, highlightSegments, relativeTime } from "../utils"
+import { activityLevel, hasAnyRemote, highlightSegments, openLocalPath, openRepoWebUrl, relativeTime, resolveValidPath } from "../utils"
 import type { MdFileEntry } from "../composables/useMarkdownFiles"
 import type { PushOutputEntry } from "../composables/useGitOps"
+import { useCardActions } from "../composables/useCardActions"
 import BranchCommitList from "./BranchCommitList.vue"
 import ConflictSection from "./ConflictSection.vue"
 import MarkdownFileBadge from "./MarkdownFileBadge.vue"
@@ -726,13 +726,10 @@ const props = defineProps<{
   detectedIdes: { name: string, icon: string, path?: string }[]
   customIdes: { name: string, path: string }[]
   // 编辑状态
-  editingNameId: string
-  editingNameInput: string
   searchQuery?: string
   refreshing: string | null
   fetching: boolean
   remoteStatusLoading?: boolean
-  confirmingDelName: string
   // 每项目响应式数据（单项目值，非全量 Record，避免跨卡片 re-render）
   branches: BranchInfo[]
   pushStatus: PushStatusInfo
@@ -758,12 +755,9 @@ const props = defineProps<{
   // Markdown 文件列表
   mdFiles: MdFileEntry[]
   // 计算辅助函数
-  getProjectUrl: (project: GitProject, prop: string) => string | undefined
-  resolvedPath: (project: GitProject) => string
   statusBadgeClass: (id: string, key: string) => string
   statusLabel: (id: string, key: string) => string
   hasBehind: (id: string) => boolean
-  hasAnyRemote: (project: GitProject) => boolean
   isPulling: (id: string, key?: string) => boolean
   isPushing: (id: string) => boolean
   needsPushFor: (id: string, key: string) => boolean
@@ -773,24 +767,15 @@ const props = defineProps<{
 // ── Events ──
 const emit = defineEmits<{
   "toggleStar": [id: string]
-  "startNameEdit": [project: GitProject]
-  "nameEditSave": [project: GitProject]
   "switchBranch": [id: string, name: string]
   "remove": [project: GitProject]
   "openEditDialog": [project: GitProject]
   "moveProject": [id: string, categoryId: string]
-  // URL & IDE
-  "openWeb": [url: string]
-  "copyUrl": [url: string]
-  "openPath": [path: string]
+  // IDE
   "openIde": [path: string, ide: { name: string, path?: string }]
   "openCustomIde": [path: string, name: string]
   "showIdeDialog": []
   "removeCustomIde": [name: string]
-  // 编辑状态
-  "update:editingNameId": [id: string]
-  "update:editingNameInput": [value: string]
-  "update:confirmingDelName": [name: string]
   // 工作区
   "refresh": [id: string]
   "refreshWorkingTree": [id: string]
@@ -834,6 +819,27 @@ const emit = defineEmits<{
 
 /** 项目名搜索高亮分段（按当前 searchQuery 切分） */
 const nameSegments = computed(() => highlightSegments(props.project.name, props.searchQuery || ""))
+
+// ── 卡片本地动作（行内改名 / IDE 删除确认 / 复制链接，服务经 CardServices 注入）──
+const {
+  editingName,
+  nameInput,
+  startNameEdit,
+  cancelNameEdit,
+  saveNameEdit,
+  confirmingDelName,
+  handleCopyUrl,
+} = useCardActions({ project: () => props.project, i18n: props.i18n })
+
+/** 当前项目有效路径（多设备路径解析，点击时实时检测磁盘存在性，不用 computed 缓存） */
+function projectPath(): string {
+  return resolveValidPath(props.project)
+}
+
+/** 读取项目在指定平台的仓库 URL（模板动态属性访问辅助） */
+function projectUrl(prop: typeof PLATFORM_META[number]["urlProp"]): string | undefined {
+  return props.project[prop]
+}
 
 /** 自定义 IDE 按名称去重（同名多条 = 多台电脑的候选路径，菜单只展示一项，tooltip 列出全部路径） */
 const uniqueCustomIdes = computed(() => {

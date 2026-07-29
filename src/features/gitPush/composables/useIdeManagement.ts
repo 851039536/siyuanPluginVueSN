@@ -100,8 +100,6 @@ export function useIdeManagement(options: {
 
   const detectedIdes = ref<IdeEntry[]>([])
   const customIdes = ref<CustomIde[]>([])
-  // 项目卡片 IDE 菜单中处于删除确认态的自定义 IDE 名称（按名称去重展示，故用名称标识）
-  const confirmingDelName = ref("")
 
   const showIdeDialog = ref(false)
 
@@ -142,14 +140,12 @@ export function useIdeManagement(options: {
 
   function doRemoveCustomIde(idx: number) {
     customIdes.value = customIdes.value.filter((_, i) => i !== idx)
-    confirmingDelName.value = ""
     saveCustomIdes()
   }
 
   /** 按名称删除该 IDE 的全部候选路径（项目卡片 IDE 菜单按名称去重展示，删除即删整组） */
   function removeCustomIdeByName(name: string) {
     customIdes.value = customIdes.value.filter((c) => c.name !== name)
-    confirmingDelName.value = ""
     saveCustomIdes()
   }
 
@@ -312,7 +308,6 @@ export function useIdeManagement(options: {
   return {
     detectedIdes,
     customIdes,
-    confirmingDelName,
     showIdeDialog,
     saveEditIde,
     loadCustomIdes,

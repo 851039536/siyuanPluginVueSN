@@ -33,7 +33,7 @@
           <span class="log-filename">{{ log.fileName }}</span>
           <span class="log-meta">
             <span v-if="log.fileSize" class="log-size">{{ formatFileSize(log.fileSize) }}</span>
-            <span class="log-sep" v-if="log.fileSize">·</span>
+            <span v-if="log.fileSize" class="log-sep">·</span>
             <span class="log-time">{{ formatTime(log.time) }}</span>
             <span v-if="log.hostname" class="log-sep">·</span>
             <span v-if="log.hostname" class="log-hostname">{{ log.hostname }}</span>

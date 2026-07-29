@@ -67,6 +67,7 @@
     "stashPopHint": "恢复并删除 (pop)",
     "stashApplyHint": "应用但不删除 (apply)",
     "stashDropHint": "删除 (drop)",
+    "stashPendingChanges": "待暂存的变更",
     "platformStatus": "平台配置状态",
     "configured": "已配置",
     "notConfigured": "未配置",

@@ -1194,6 +1194,7 @@
     "stashPopHint": "Restore and drop (pop)",
     "stashApplyHint": "Apply without dropping (apply)",
     "stashDropHint": "Delete (drop)",
+    "stashPendingChanges": "Changes to be stashed",
     "platformStatus": "Platform Status",
     "configured": "Configured",
     "notConfigured": "Not Configured",

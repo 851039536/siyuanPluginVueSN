@@ -18,7 +18,6 @@
       @refresh-all="handleRefreshAll"
       @refresh-all-local="handleRefreshAllLocal"
       @refresh-all-remote="handleRefreshAllRemote"
-
       @open-add-project="showAddDialog = true"
       @open-scan="handleOpenScan"
       @open-web="handleOpenWeb"
@@ -143,7 +142,7 @@
             @open-edit-dialog="openEditDialog"
             @open-markdown-preview="openMarkdownPreview"
             @open-project-git-config="handleOpenProjectGitConfig"
-            @move-project="handleMoveProject"
+            @move-project="moveProject"
             @open-web="handleOpenWeb"
             @copy-url="handleCopyUrl"
             @open-path="handleOpenPath"
@@ -217,25 +216,11 @@
         :concurrency="gitConcurrency"
         :push-branch-mode="pushBranchMode"
         @close="showSettings = false"
-        @save="handleSaveConcurrency"
+        @save="setGitConcurrency"
         @save-branch-mode="handleSaveBranchMode"
       />
     </Transition>
-    <!-- 拉取确认弹窗 -->
-    <ConfirmDialog
-      :visible="showPullConfirm"
-      :title="i18n.pullConfirm"
-      message=""
-      :confirm-text="i18n.pullConfirm"
-      :cancel-text="i18n.cancel"
-      @confirm="doPullSingle"
-      @cancel="cancelPullConfirm"
-    >
-      <template #message>
-        <p class="gp-confirm-message">{{ pullConfirmMessage }}</p>
-      </template>
-    </ConfirmDialog>
-    <!-- 通用确认弹窗（删除/丢弃/恢复/分类等破坏性操作） -->
+    <!-- 通用确认弹窗（删除/丢弃/恢复/分类/拉取等需二次确认的操作） -->
     <ConfirmDialog
       :visible="genericConfirm.visible"
       :title="genericConfirm.title"
@@ -324,6 +309,7 @@ import {
   watch,
 } from "vue"
 import { copyToClipboard } from "@/utils/domUtils"
+import { getElectronModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import AddProjectDialog from "./components/AddProjectDialog.vue"
 import CategoryDialog from "./components/CategoryDialog.vue"
@@ -342,6 +328,7 @@ import GitConfigDialog from "./components/GitConfigDialog.vue"
 import Loader from "@/components/Loader.vue"
 import { useGitPush } from "./composables/useGitPush"
 import { useBatchProgress } from "./composables/useBatchProgress"
+import { usePushStatusView } from "./composables/usePushStatusView"
 import { useIdeManagement } from "./composables/useIdeManagement"
 import {
   useProjectFilters,
@@ -353,10 +340,8 @@ import { useGitHandlers } from "./composables/useGitHandlers"
 import { useRefreshOps } from "./composables/useRefreshOps"
 import { PLATFORM_META, REMOTES } from "./types"
 import {
-  batchProcess,
   gitUrlToWebUrl,
   hasAnyRemote,
-  isAheadOfRemote,
   resolveValidPath,
 } from "./utils"
 import { scanMarkdownFiles } from "./composables/useMarkdownFiles"
@@ -471,38 +456,15 @@ const showCatDialog = ref(false)
 const showSettings = ref(false)
 const showAddMenu = ref(false)
 const showPlatformMenu = ref(false)
-/** 拉取确认状态 */
-const showPullConfirm = ref(false)
-interface PendingPull { id: string, key: PlatformKey }
-const pendingPull = ref<PendingPull | null>(null)
-const pendingPullLabel = computed(() => {
-  if (!pendingPull.value) return ""
-  return PLATFORM_META.find((pm) => pm.key === pendingPull.value!.key)?.label ?? pendingPull.value!.key
-})
-/** 拉取确认弹窗正文（复用 i18n pullConfirmBody，{0} 填充平台名） */
-const pullConfirmMessage = computed(() =>
-  props.i18n.pullConfirmBody.replace("{0}", pendingPullLabel.value),
-)
+/** 拉取二次确认：复用通用确认弹窗，正文 {0} 填充平台名 */
 function confirmPullSingle(id: string, key: PlatformKey) {
-  pendingPull.value = {
-    id,
-    key,
-  }
-  showPullConfirm.value = true
-}
-function cancelPullConfirm() {
-  showPullConfirm.value = false
-  pendingPull.value = null
-}
-function doPullSingle() {
-  if (!pendingPull.value) return
-  const {
-    id,
-    key,
-  } = pendingPull.value
-  pullSingle(id, key)
-  showPullConfirm.value = false
-  pendingPull.value = null
+  const label = PLATFORM_META.find((pm) => pm.key === key)?.label ?? key
+  showConfirm(
+    props.i18n.pullConfirm,
+    props.i18n.pullConfirmBody.replace("{0}", label),
+    () => { pullSingle(id, key) },
+    props.i18n.pullConfirm,
+  )
 }
 /** 通用确认弹窗状态 */
 interface ConfirmState {
@@ -535,65 +497,14 @@ function cancelGenericConfirm() {
   genericConfirm.value.visible = false
 }
 
-// ── 批量加载进度条 ──
-const { state: progressState, logEntries: progressLogEntries, start: progressStart, advance: progressAdvance, end: progressEnd, finish: progressFinish, hide: progressHide, beginLog: progressBeginLog, addStep: progressAddStep, completeLog: progressCompleteLog } = useBatchProgress()
-
-/** 步骤上下文：在 fn 内部用 ctx.step(name, fn) 测量并记录每个 git 操作的耗时 */
-interface StepCtx {
-  step<R>(name: string, fn: () => Promise<R>): Promise<R>
-}
-
-/** 批量处理 + 进度条包装（per-item 异常隔离，单项目失败不影响后续，支持分步骤计时） */
-async function runBatchWithProgress<T>(
-  items: T[], label: string, fn: (item: T, ctx: StepCtx) => Promise<void>, getName?: (item: T) => string, options?: { keepVisible?: boolean },
-) {
-  if (items.length === 0) { return }
-  progressStart(items.length, label)
-  try {
-    await batchProcess(items, 3, async (item) => {
-      const name = getName?.(item) ?? ""
-      const displayName = name || `#${progressState.value.current + 1}`
-      const logIdx = progressBeginLog(displayName)
-      const start = Date.now()
-
-      // 构造步骤上下文：step() 测量耗时后追加到当前日志条目
-      const ctx: StepCtx = {
-        async step<R>(stepName: string, stepFn: () => Promise<R>): Promise<R> {
-          const stepStart = Date.now()
-          try {
-            return await stepFn()
-          } finally {
-            progressAddStep(logIdx, { name: stepName, ms: Date.now() - stepStart })
-          }
-        },
-      }
-
-      try {
-        await fn(item, ctx)
-        progressAdvance(name)
-        progressCompleteLog(logIdx, "ok", (Date.now() - start) / 1000)
-      } catch (err) {
-        const elapsed = (Date.now() - start) / 1000
-        progressAdvance(name)
-        progressCompleteLog(logIdx, "fail", elapsed, String(err))
-      }
-    })
-  } finally {
-    if (options?.keepVisible) {
-      progressFinish()
-    } else {
-      progressEnd()
-    }
-  }
-}
+// ── 批量加载进度条（runBatchWithProgress 编排已下沉 useBatchProgress.runBatch）──
+const { state: progressState, logEntries: progressLogEntries, hide: progressHide, runBatch: runBatchWithProgress } = useBatchProgress()
 
 let initTimer: ReturnType<typeof setTimeout> | null = null
 /** 当前视图: 'list' | 'stats' */
 const currentView = ref<"list" | "stats">("list")
 /** 当前选中的分类 ID（onMounted 中设为首个分类） */
 const activeCategory = ref<string>("")
-
-/** 扫描导入弹窗状态 */
 
 /** 按分类 TAB 过滤后的分组 */
 const visibleGroups = computed(() => {
@@ -906,37 +817,18 @@ function onViewProject(projectId: string) {
   searchQuery.value = project.name
 }
 
-/** 在文件管理器中打开项目路径 */
+/** 在文件管理器中打开项目路径（统一走 getElectronModules 入口，浏览器环境无能力打开本地文件夹） */
 async function handleOpenPath(path: string) {
-  if (typeof window.require === "function") {
-    try {
-      const electron = window.require("electron")
-      const shell = electron.shell || electron.remote?.shell
-      if (shell?.openPath) {
-        await shell.openPath(path)
-
-      }
-    } catch {
-      // 降级
-    }
-  }
-  // 浏览器环境：无法直接打开本地文件夹
+  await getElectronModules()?.shell?.openPath(path)
 }
 
-/** 在浏览器中打开远程仓库网页 */
+/** 在浏览器中打开远程仓库网页（Electron 用系统浏览器，降级 window.open） */
 async function handleOpenWeb(url: string) {
   const webUrl = gitUrlToWebUrl(url)
-  if (typeof window.require === "function") {
-    try {
-      const electron = window.require("electron")
-      const shell = electron.shell || electron.remote?.shell
-      if (shell?.openExternal) {
-        await shell.openExternal(webUrl)
-        return
-      }
-    } catch {
-      // 降级
-    }
+  const shell = getElectronModules()?.shell
+  if (shell?.openExternal) {
+    await shell.openExternal(webUrl)
+    return
   }
   window.open(webUrl, "_blank")
 }
@@ -949,7 +841,7 @@ async function handleCopyUrl(url: string) {
   }
 }
 
-function handleRemove(project: any) {
+function handleRemove(project: GitProject) {
   showConfirm(tf("deleteProjectTitle", "删除项目"), tf("deleteProjectConfirm", "确定要删除项目 \"{0}\" 吗？此操作不可撤销。", project.name), () => {
     removeProject(project.id)
     // 清理 HEAD hash 缓存中已删除项目的条目
@@ -1034,14 +926,6 @@ async function doDeleteCategory(id: string) {
   await deleteCategoryFn(id)
 }
 
-async function handleMoveProject(projectId: string, categoryId: string) {
-  await moveProject(projectId, categoryId)
-}
-
-async function handleSaveConcurrency(value: number) {
-  await setGitConcurrency(value)
-}
-
 /** 推送分支模式 */
 const pushBranchMode = ref<"all" | "head">(props.manager.getPushBranchMode())
 
@@ -1050,56 +934,11 @@ async function handleSaveBranchMode(mode: "all" | "head") {
   await props.manager.setPushBranchMode(mode)
 }
 
-
-
-/** 获取指定项目指定远程的推送状态 */
-function getRemoteStatus(projectId: string, remoteKey: string) {
-  return pushStatuses.value[projectId]?.remotes[remoteKey]
-}
-
-/** 获取远程推送状态标签文案 */
-function statusLabel(projectId: string, remoteKey: string): string {
-  const rs = getRemoteStatus(projectId, remoteKey)
-  if (!rs) return ""
-  if (rs.noUpstream) return `+${rs.ahead}`
-  // 分叉（既领先又落后）时同时展示上传与下拉数量
-  const parts: string[] = []
-  if (rs.ahead > 0) parts.push(`↑${rs.ahead}`)
-  if (rs.behind > 0) parts.push(`↓${rs.behind}`)
-  return parts.join(" ")
-}
-
-/** 获取状态 badge 的 CSS 类 */
-function statusBadgeClass(projectId: string, remoteKey: string): string {
-  const rs = getRemoteStatus(projectId, remoteKey)
-  if (!rs) return ""
-  // 分叉优先判断，避免被 ahead 抢先归类为 gp-ahead
-  if (!rs.noUpstream && rs.ahead > 0 && rs.behind > 0) return "gp-diverged"
-  if (isAheadOfRemote(rs)) return "gp-ahead"
-  if (rs.behind > 0) return "gp-behind"
-  return "gp-synced"
-}
-
-/** 判断某个远程是否需要推送（本地超前或从未推送） */
-function needsPushFor(projectId: string, remoteKey: string): boolean {
-  const rs = getRemoteStatus(projectId, remoteKey)
-  if (!rs) return true // 尚未检测，允许点击
-  return isAheadOfRemote(rs)
-}
-
-/** 判断项目是否有远程落后（远程有新提交） */
-function hasBehind(projectId: string): boolean {
-  const status = pushStatuses.value[projectId]
-  if (!status) return false
-  return Object.values(status.remotes).some((r) => r.behind > 0)
-}
+// 推送状态派生视图（徽章文案/样式类/推送判定，供 ProjectCard 函数 props）
+const { statusLabel, statusBadgeClass, needsPushFor, hasBehind } = usePushStatusView(pushStatuses)
 </script>
 
 <style lang="scss">
 @use "@/index.scss" as *;
-@use "./styles/variables" as *;
-@use "./styles/mixins" as *;
-@use "./styles/Buttons";
-@use "./styles/Shared";
 @use "./styles/index.scss";
 </style>

@@ -3,14 +3,11 @@ import type { Ref } from "vue"
 import { ref } from "vue"
 import { showMessage } from "siyuan"
 import type { GitProject, GitPushManager } from "../types"
+import type { StepCtx } from "./useBatchProgress"
 import { resolveValidPath } from "../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
 
-/** 步骤上下文：测量并记录每个 git 操作的耗时 */
-interface StepCtx {
-  step: <R>(name: string, fn: () => Promise<R>) => Promise<R>
-}
-/** runBatchWithProgress 的类型（由 index.vue 注入） */
+/** runBatchWithProgress 的类型（由 index.vue 注入，StepCtx 复用 useBatchProgress 导出的共享定义） */
 type RunBatch = <T>(
   items: T[],
   label: string,

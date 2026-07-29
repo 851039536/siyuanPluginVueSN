@@ -160,13 +160,16 @@ export class RepoOps {
       "node_modules", ".git", "__pycache__", ".venv", "venv",
       "dist", "build", "target", "bin", "obj",
     ])
+    // 同步 BFS 扫描边界：防止选错大目录（如磁盘根）同步阻塞 Electron 渲染进程
+    const MAX_DEPTH = 8
+    const MAX_RESULTS = 500
 
     const results: ScannedGitRepo[] = []
-    const queue: string[] = [dirPath]
+    const queue: { dir: string, depth: number }[] = [{ dir: dirPath, depth: 0 }]
     let head = 0
 
     while (head < queue.length) {
-      const currentDir = queue[head++]
+      const { dir: currentDir, depth } = queue[head++]
       try {
         const entries = fs.readdirSync(currentDir, { withFileTypes: true })
         let hasGitDir = false
@@ -176,8 +179,8 @@ export class RepoOps {
           const fullPath = path.join(currentDir, entry.name)
           if (entry.name === ".git" && entry.isDirectory()) {
             hasGitDir = true
-          } else if (entry.isDirectory() && !entry.isSymbolicLink() && !SKIP_DIRS.has(entry.name)) {
-            queue.push(fullPath)
+          } else if (entry.isDirectory() && !entry.isSymbolicLink() && !SKIP_DIRS.has(entry.name) && depth < MAX_DEPTH) {
+            queue.push({ dir: fullPath, depth: depth + 1 })
           }
         }
 
@@ -185,6 +188,7 @@ export class RepoOps {
           results.push({ name: path.basename(currentDir), path: currentDir })
           // 不深入已找到 .git 的目录的子目录，避免递归扫描仓库内部
           queue.length = queueLenBefore
+          if (results.length >= MAX_RESULTS) break
         }
       } catch {
         continue

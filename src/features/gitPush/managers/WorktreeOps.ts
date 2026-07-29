@@ -47,14 +47,17 @@ export class WorktreeOps {
       const raw = await this.executor.execGit(projectPath, ["-c", "core.quotepath=false", "status", "--porcelain"])
       if (!raw) { return { ...empty, branch } }
 
+      // 基于 core.quotepath=false + 文本解析 porcelain v1；路径含换行等极端字符仍有局限，未用 -z 是权衡
+      // git porcelain 仅对含特殊字符的路径加引号（core.quotepath=false 下非 ASCII 不加），去引号需按 -> 拆分后分别处理
+      const unquote = (s: string): string => {
+        const t = s.trim()
+        return t.startsWith('"') && t.endsWith('"') ? t.slice(1, -1) : t
+      }
       const lines = raw.split("\n").filter(Boolean)
       for (const line of lines) {
         const statusCode = line.substring(0, 2)
-        let filePath = line.substring(2).trim()
-        if (filePath.startsWith('"') && filePath.endsWith('"')) {
-          filePath = filePath.slice(1, -1)
-        }
-        if (!filePath) continue
+        const rawPath = line.substring(2).trim()
+        if (!rawPath) continue
 
         const xy = statusCode.trim()
         const staged = statusCode[0] !== " " && statusCode[0] !== "?"
@@ -74,14 +77,14 @@ export class WorktreeOps {
         if (staged && status !== "untracked" && status !== "unmerged") stagedCount++
         if (unstaged && status !== "untracked" && status !== "unmerged") unstagedCount++
 
-        let actualPath = filePath
+        let actualPath: string
         let oldPath: string | undefined
-        if (status === "renamed") {
-          const arrowIdx = filePath.indexOf(" -> ")
-          if (arrowIdx > 0) {
-            oldPath = filePath.substring(0, arrowIdx).trim()
-            actualPath = filePath.substring(arrowIdx + 4).trim()
-          }
+        if (status === "renamed" && rawPath.includes(" -> ")) {
+          const arrowIdx = rawPath.indexOf(" -> ")
+          oldPath = unquote(rawPath.substring(0, arrowIdx))
+          actualPath = unquote(rawPath.substring(arrowIdx + 4))
+        } else {
+          actualPath = unquote(rawPath)
         }
 
         files.push({ path: actualPath, status, staged, oldPath })
@@ -204,6 +207,7 @@ export class WorktreeOps {
    */
   async getCommitLog(projectPath: string, count = 30): Promise<CommitLogEntry[]> {
     try {
+      // 依赖 %s(subject) 单行，勿加入 %b(body) 等多行字段，否则 5 行固定切分错位
       const format = "%h%n%s%n%an%n%ar%n%aI"
       const raw = await this.executor.execGit(projectPath, ["log", `-${count}`, `--format=${format}`])
       if (!raw) return []

@@ -1,10 +1,11 @@
 <!-- gitPush 项目卡片子组件 -->
 <template>
   <div class="gp-card" @click.capture="handleCardClick">
+    <!-- 卡片顶栏：项目信息（左）+ 操作按钮（右） -->
     <div class="gp-card-top">
       <div class="gp-card-info">
         <div class="gp-card-name-row">
-          <!-- 收藏星标 -->
+          <!-- 收藏星标（悬停提示："取消收藏"/"收藏置顶"） -->
           <button
             class="gp-star-btn"
             :class="{ active: project.starred }"
@@ -26,6 +27,7 @@
             @keyup.escape="$emit('update:editingNameId', '')"
             @click.stop
           />
+          <!-- 项目名（悬停提示："点击修改名称"，含搜索命中高亮分段） -->
           <span
             v-else
             class="gp-card-name"
@@ -38,6 +40,7 @@
             v-if="seg.hit"
             class="gp-hl"
           >{{ seg.text }}</span><template v-else>{{ seg.text }}</template></template></span>
+          <!-- 归档角标："归档"（悬停："已归档"） -->
           <span
             v-if="project.archived"
             class="gp-archived-tag"
@@ -49,6 +52,7 @@
             />{{ i18n.archivedShort }}
           </span>
         </div>
+        <!-- 项目路径行：路径 + 多设备路径角标（"已配置 {0} 个设备路径"）+ 活跃度（悬停："长时间未活动，建议归档"） -->
         <div
           class="gp-card-path"
           :title="project.path"
@@ -92,7 +96,7 @@
             @select="$emit('openMarkdownPreview', project, f.name)"
           />
         </div>
-        <!-- 分支标签 -->
+        <!-- 分支标签（悬停："当前分支"/"切换到 {0}"） -->
         <div
           v-if="branches?.length"
           class="gp-branch-row"
@@ -130,7 +134,9 @@
           <span>{{ project.note }}</span>
         </div>
       </div>
+      <!-- 操作按钮区：分类选择/平台链接/IDE/刷新/编辑/Git配置/删除 -->
       <div class="gp-card-actions">
+        <!-- 分类下拉（悬停提示："移动分类"） -->
         <select
           class="gp-cat-select"
           :value="project.categoryId"
@@ -146,6 +152,7 @@
             {{ cat.name }}
           </option>
         </select>
+        <!-- 平台链接按钮（悬停："打开 {0}（右键复制链接）"） -->
         <template
           v-for="pm in platformMeta"
           :key="pm.key"
@@ -163,11 +170,13 @@
             />
           </button>
         </template>
-        <div class="gp-ide-wrap">
+        <!-- IDE 打开菜单（本地开关，与拉取/推送菜单同模式） -->
+        <div class="gp-ide-wrap gp-menu-wrap">
+          <!-- 悬停提示："打开项目" -->
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm"
             :title="i18n.openProject"
-            @click.stop="$emit('toggleIdeMenu', project.id)"
+            @click.stop="toggleMenu('ide')"
           >
             <Icon
               icon="mdi:folder-open"
@@ -176,17 +185,18 @@
             <Icon
               icon="mdi:unfold-more-horizontal"
               height="12"
-              style="margin-left:1px;opacity:0.5"
+              class="gp-caret-icon"
             />
           </button>
           <div
-            v-if="openIdeMenu.has(project.id)"
+            v-if="openMenu === 'ide'"
             class="gp-ide-popover"
             @click.stop
           >
+            <!-- 菜单项："打开文件夹" -->
             <button
               class="gp-ide-item"
-              @click="$emit('openPath', resolvedPath(project)); openIdeMenu.delete(project.id)"
+              @click="$emit('openPath', resolvedPath(project)); openMenu = null"
             >
               <Icon
                 icon="mdi:folder-open"
@@ -195,6 +205,7 @@
               <span>{{ i18n.openFolder }}</span>
             </button>
             <div class="gp-ide-divider" />
+            <!-- 空态项："未检测到 IDE" -->
             <button
               v-if="detectedIdes.length === 0 && customIdes.length === 0"
               class="gp-ide-item gp-ide-item--none"
@@ -210,7 +221,7 @@
               v-for="ide in detectedIdes"
               :key="`detected-${ide.name}`"
               class="gp-ide-item"
-              @click="$emit('openIde', resolvedPath(project), ide); openIdeMenu.delete(project.id)"
+              @click="$emit('openIde', resolvedPath(project), ide); openMenu = null"
             >
               <Icon
                 :icon="ide.icon"
@@ -223,7 +234,7 @@
               :key="`custom-${custom.name}`"
               class="gp-ide-item gp-ide-item--custom"
               :title="custom.paths.join('\n')"
-              @click="$emit('openCustomIde', resolvedPath(project), custom.name); openIdeMenu.delete(project.id)"
+              @click="$emit('openCustomIde', resolvedPath(project), custom.name); openMenu = null"
             >
               <Icon
                 icon="mdi:application-brackets"
@@ -231,6 +242,7 @@
               />
               <span>{{ custom.name }}</span>
               <template v-if="confirmingDelName === custom.name">
+                <!-- 二次确认："确认删除?" -->
                 <span class="gp-ide-del-confirm">{{ i18n.confirmDeleteShort }}</span>
                 <button
                   class="gp-ide-del-yes"
@@ -258,9 +270,10 @@
               </button>
             </button>
             <div class="gp-ide-divider" />
+            <!-- 菜单项："管理 IDE..." -->
             <button
               class="gp-ide-item gp-ide-item--add"
-              @click.stop="$emit('showIdeDialog'); openIdeMenu.delete(project.id)"
+              @click.stop="$emit('showIdeDialog'); openMenu = null"
             >
               <Icon
                 icon="mdi:cog-outline"
@@ -270,11 +283,13 @@
             </button>
           </div>
         </div>
-        <div class="gp-refresh-wrap">
+        <!-- 刷新选项菜单（本地开关，与拉取/推送菜单同模式） -->
+        <div class="gp-refresh-wrap gp-menu-wrap">
+          <!-- 悬停提示："刷新选项" -->
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm"
             :title="i18n.refreshOptions"
-            @click.stop="$emit('toggleRefreshMenu', project.id)"
+            @click.stop="toggleMenu('refresh')"
           >
             <Icon
               icon="mdi:refresh"
@@ -283,33 +298,39 @@
             />
           </button>
           <div
-            v-if="openRefreshMenu.has(project.id)"
+            v-if="openMenu === 'refresh'"
             class="gp-refresh-popover"
             @click.stop
           >
-            <button class="gp-refresh-item" @click="$emit('refreshWorkingTree', project.id); openRefreshMenu.delete(project.id)">
+            <!-- 菜单项："刷新工作空间" -->
+            <button class="gp-refresh-item" @click="$emit('refreshWorkingTree', project.id); openMenu = null">
               <Icon icon="mdi:file-tree" height="12" />
               <span>{{ i18n.refreshWorkingTree }}</span>
             </button>
-            <button class="gp-refresh-item" @click="$emit('refreshCommitLog', project.id); openRefreshMenu.delete(project.id)">
+            <!-- 菜单项："刷新提交日志" -->
+            <button class="gp-refresh-item" @click="$emit('refreshCommitLog', project.id); openMenu = null">
               <Icon icon="mdi:history" height="12" />
-              <span>{{ i18n.refreshCommitLog  }}</span>
+              <span>{{ i18n.refreshCommitLog }}</span>
             </button>
-            <button class="gp-refresh-item" @click="$emit('refreshTags', project.id); openRefreshMenu.delete(project.id)">
+            <!-- 菜单项："刷新标签" -->
+            <button class="gp-refresh-item" @click="$emit('refreshTags', project.id); openMenu = null">
               <Icon icon="mdi:tag-outline" height="12" />
-              <span>{{ i18n.refreshTags}}</span>
+              <span>{{ i18n.refreshTags }}</span>
             </button>
-            <button class="gp-refresh-item" @click="$emit('refreshRemoteStatus', project.id); openRefreshMenu.delete(project.id)">
+            <!-- 菜单项："刷新远程状态" -->
+            <button class="gp-refresh-item" @click="$emit('refreshRemoteStatus', project.id); openMenu = null">
               <Icon icon="mdi:cloud-refresh-outline" height="12" />
               <span>{{ i18n.refreshRemoteStatus }}</span>
             </button>
             <div class="gp-refresh-divider" />
-            <button class="gp-refresh-item gp-refresh-item--all" @click="$emit('refresh', project.id); openRefreshMenu.delete(project.id)">
+            <!-- 菜单项："全部刷新" -->
+            <button class="gp-refresh-item gp-refresh-item--all" @click="$emit('refresh', project.id); openMenu = null">
               <Icon icon="mdi:refresh-circle" height="12" />
               <span>{{ i18n.refreshAll }}</span>
             </button>
           </div>
         </div>
+        <!-- 悬停提示："编辑项目（标签/备注）" -->
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
           :title="i18n.editProjectBtn"
@@ -320,6 +341,7 @@
             height="12"
           />
         </button>
+        <!-- 悬停提示："查看项目 Git 配置" -->
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
           :title="i18n.viewProjectGitConfig"
@@ -330,8 +352,10 @@
             height="12"
           />
         </button>
+        <!-- 悬停提示："删除"（移除项目） -->
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
+          :title="i18n.delete"
           @click="$emit('remove', project)"
         >
           <Icon
@@ -364,10 +388,11 @@
           height="12"
         />
         <span v-if="project[r.remoteProp]">{{ project[r.remoteProp] }}</span>
+        <!-- 未配置占位："未检测到" -->
         <span
           v-else
           class="gp-remote-none"
-        >{{ i18n.notDetected}}</span>
+        >{{ i18n.notDetected }}</span>
         <span
           v-if="pushStatus?.remotes[r.key]"
           class="gp-status-badge"
@@ -378,7 +403,7 @@
       </div>
     </div>
 
-    <!-- 远程冲突警告 -->
+    <!-- 远程冲突警告："远程有新的提交，建议先拉取再推送" -->
     <div
       v-if="hasBehind(project.id)"
       class="gp-conflict-warn"
@@ -387,7 +412,7 @@
         icon="mdi:alert-circle-outline"
         height="12"
       />
-      <span>{{ i18n.conflictWarn}}</span>
+      <span>{{ i18n.conflictWarn }}</span>
     </div>
 
     <!-- 多面板 Tab 切换（工作区 / 提交日志 / Stash / Tag） -->
@@ -512,7 +537,7 @@
 
     <!-- 操作栏：拉取 / 推送 -->
     <div class="gp-actions-bar">
-      <!-- 拉取区（下拉菜单） -->
+      <!-- 拉取区（下拉菜单）：区标签"拉取" + 悬停说明图标 -->
       <div class="gp-actions-section">
         <span class="gp-actions-label">{{ i18n.pull }}</span>
         <Icon
@@ -521,7 +546,7 @@
           class="gp-actions-hint-icon"
           :title="i18n.pullVsFetchHint"
         />
-        <div class="gp-inline-menu-wrap">
+        <div class="gp-inline-menu-wrap gp-menu-wrap">
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm gp-action-btn"
             :class="{ 'gp-action-btn--active': isPulling(project.id) || fetching }"
@@ -538,7 +563,7 @@
             <Icon
               icon="mdi:unfold-more-horizontal"
               height="12"
-              style="margin-left:1px;opacity:0.5"
+              class="gp-caret-icon"
             />
           </button>
           <div
@@ -562,7 +587,7 @@
               <span>{{ r.label }}</span>
             </button>
             <div class="gp-inline-menu-divider" />
-            <!-- Fetch 项 -->
+            <!-- Fetch 项："更新远程状态"（悬停：仅刷新状态不合并代码） -->
             <button
               class="gp-inline-menu-item gp-inline-menu-item--muted"
               :class="{ 'gp-inline-menu-item--active': fetching }"
@@ -580,12 +605,12 @@
         </div>
       </div>
 
-      <!-- 推送区 -->
+      <!-- 推送区：区标签"推送" + 单远程菜单 + 推送全部/取消 -->
       <div class="gp-actions-section">
         <span class="gp-actions-label">{{ i18n.push }}</span>
         <div class="gp-actions-btns">
           <!-- 单远程推送（下拉菜单） -->
-          <div class="gp-inline-menu-wrap">
+          <div class="gp-inline-menu-wrap gp-menu-wrap">
             <button
               class="vp-btn vp-btn--ghost vp-btn--sm gp-action-btn"
               :class="{ 'gp-action-btn--active': isPushing(project.id) }"
@@ -602,7 +627,7 @@
               <Icon
                 icon="mdi:unfold-more-horizontal"
                 height="12"
-                style="margin-left:1px;opacity:0.5"
+                class="gp-caret-icon"
               />
             </button>
             <div
@@ -623,12 +648,12 @@
                   icon="mdi:arrow-up"
                   height="12"
                 />
-                <span>{{ pushBtnText(getPushStatus(project.id, r.key), r.label, i18n) }}</span>
+                <span>{{ pushBtnText(getPushStatus(project.id, r.key), r.label) }}</span>
               </button>
             </div>
           </div>
 
-          <!-- 推送全部 -->
+          <!-- 推送全部："推送全部" -->
           <button
             v-if="!isPushing(project.id)"
             class="vp-btn vp-btn--primary vp-btn--sm gp-action-btn"
@@ -638,7 +663,7 @@
             <span>{{ i18n.pushAll }}</span>
           </button>
 
-          <!-- 取消推送 -->
+          <!-- 取消推送："取消" -->
           <button
             v-else
             class="vp-btn vp-btn--danger vp-btn--sm gp-action-btn"
@@ -705,12 +730,7 @@ const props = defineProps<{
   searchQuery?: string
   refreshing: string | null
   fetching: boolean
-  openIdeMenu: Set<string>
-  workingTreeLoading?: boolean
-  /** 工作区面板展开状态（按 projectId 持久化） */
-  workingTreeExpanded?: boolean
   remoteStatusLoading?: boolean
-  openRefreshMenu: Set<string>
   confirmingDelName: string
   // 每项目响应式数据（单项目值，非全量 Record，避免跨卡片 re-render）
   branches: BranchInfo[]
@@ -732,7 +752,6 @@ const props = defineProps<{
   genStashDescLoading: boolean
   generatedStashMsg: string
   commitTemplates: { id: string, name: string, pattern: string, builtin?: boolean }[]
-  selectedTags: Set<string>
   fileDiffs: Record<string, string>
   commitLogEntries: CommitLogEntry[]
   // Markdown 文件列表
@@ -757,7 +776,6 @@ const emit = defineEmits<{
   "toggleStar": [id: string]
   "startNameEdit": [project: GitProject]
   "nameEditSave": [project: GitProject]
-  "toggleTagFilter": [tag: string]
   "switchBranch": [id: string, name: string]
   "remove": [project: GitProject]
   "openEditDialog": [project: GitProject]
@@ -768,7 +786,6 @@ const emit = defineEmits<{
   "openPath": [path: string]
   "openIde": [path: string, ide: { name: string, path?: string }]
   "openCustomIde": [path: string, name: string]
-  "toggleIdeMenu": [id: string]
   "showIdeDialog": []
   "removeCustomIde": [name: string]
   // 编辑状态
@@ -777,7 +794,6 @@ const emit = defineEmits<{
   "update:confirmingDelName": [name: string]
   // 工作区
   "refresh": [id: string]
-  "toggleRefreshMenu": [id: string]
   "refreshWorkingTree": [id: string]
   "refreshCommitLog": [id: string]
   "refreshTags": [id: string]
@@ -792,7 +808,6 @@ const emit = defineEmits<{
   "clearOutput": [id: string]
   "discardFile": [id: string, file: string, staged: boolean, status: string]
   "expand": [id: string]
-  "update:workingTreeExpanded": [id: string, value: boolean]
   "reloadCommitLog": [id: string, count: number]
   // Stash
   "stashConfirmMsg": [id: string, msg: string]
@@ -863,10 +878,10 @@ function pushBtnClass(status: string | undefined): Record<string, boolean> {
 }
 
 /** 推送按钮文本映射（消除模板中 4 次三元判断） */
-function pushBtnText(status: string | undefined, label: string, i18n: Record<string, any>): string {
-  if (status === 'pushing') return i18n.pushing
-  if (status === 'ok') return i18n.done
-  if (status === 'fail') return i18n.failed
+function pushBtnText(status: string | undefined, label: string): string {
+  if (status === 'pushing') return props.i18n.pushing
+  if (status === 'ok') return props.i18n.done
+  if (status === 'fail') return props.i18n.failed
   return label
 }
 
@@ -879,18 +894,19 @@ const outputPanels = computed(() => [
 /** 仅"全部刷新"时转动下拉菜单按钮 */
 const isRefreshing = computed(() => props.refreshing === props.project.id)
 
-/** 拉取/推送内联下拉菜单开关（同时只允许一个展开） */
-const openMenu = ref<"pull" | "push" | null>(null)
+/** 卡片内下拉菜单开关（拉取/推送/IDE/刷新，同时只允许一个展开） */
+type CardMenu = "pull" | "push" | "ide" | "refresh"
+const openMenu = ref<CardMenu | null>(null)
 
 /** 切换内联下拉菜单（再次点击同一菜单则关闭） */
-function toggleMenu(name: "pull" | "push") {
+function toggleMenu(name: CardMenu) {
   openMenu.value = openMenu.value === name ? null : name
 }
 
-/** 点击卡片外部时关闭内联下拉菜单 */
+/** 点击卡片外部时关闭内联下拉菜单（.gp-menu-wrap 覆盖四类菜单容器） */
 function closeMenuOnOutside(e: MouseEvent) {
   const target = e.target as HTMLElement | null
-  if (target && !target.closest(".gp-inline-menu-wrap")) {
+  if (target && !target.closest(".gp-menu-wrap")) {
     openMenu.value = null
   }
 }

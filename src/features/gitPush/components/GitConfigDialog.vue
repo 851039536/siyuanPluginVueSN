@@ -126,7 +126,7 @@
 import { computed, ref } from "vue"
 import { Icon } from "@iconify/vue"
 import { copyToClipboard } from "@/utils/domUtils"
-import { getElectronModules } from "@/utils/nodeModules"
+import { openLocalPath } from "../utils"
 import { getConfigDesc } from "../types/gitConfigDesc"
 
 interface ConfigEntry {
@@ -178,10 +178,10 @@ async function handleCopy() {
   }
 }
 
-/** 打开系统默认编辑器编辑 Git 配置文件（统一走 getElectronModules 入口） */
+/** 打开系统默认编辑器编辑 Git 配置文件（复用 utils 的 openLocalPath 统一入口） */
 async function handleOpenFile() {
   if (!props.filePath) return
-  await getElectronModules()?.shell?.openPath(props.filePath)
+  await openLocalPath(props.filePath)
 }
 </script>
 

@@ -3,7 +3,7 @@ import type { Ref } from "vue"
 import type { FileChange, GitProject, GitRemoteInfo, PlatformKey, RemotePushStatus } from "./types"
 import { FILE_STATUS_META, PLATFORM_META } from "./types"
 import type { IconKey } from "@/config/icons"
-import { getNodeFsPathOs } from "@/utils/nodeModules"
+import { getElectronModules, getNodeFsPathOs } from "@/utils/nodeModules"
 
 /** 按 ID 查找项目（消除散落在各处的 projects.value.find 重复） */
 export function findProject(projects: Ref<GitProject[]>, id: string): GitProject | undefined {
@@ -224,6 +224,22 @@ export function gitUrlToWebUrl(url: string): string {
     return `https://${sshMatch[1]}/${sshMatch[2]}`
   }
   return url
+}
+
+/** 在文件管理器中打开本地路径（统一走 getElectronModules 入口，浏览器环境无能力打开本地文件夹） */
+export async function openLocalPath(path: string): Promise<void> {
+  await getElectronModules()?.shell?.openPath(path)
+}
+
+/** 在浏览器中打开远程仓库网页（Electron 用系统浏览器，降级 window.open） */
+export async function openRepoWebUrl(url: string): Promise<void> {
+  const webUrl = gitUrlToWebUrl(url)
+  const shell = getElectronModules()?.shell
+  if (shell?.openExternal) {
+    await shell.openExternal(webUrl)
+    return
+  }
+  window.open(webUrl, "_blank")
 }
 
 // ── 时间格式化与项目排序（纯函数，无 Vue 响应式依赖）──

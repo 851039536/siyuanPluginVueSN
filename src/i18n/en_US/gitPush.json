@@ -302,6 +302,7 @@
     "errUpdateRemote": "Failed to update remote",
     "errRemoveRemote": "Failed to remove remote",
     "downloadRepo": "Clone to local (git clone)",
+    "copyRepoLink": "Copy link address",
     "selectCloneDir": "Select clone destination",
     "errCloneRepo": "Failed to clone repository",
     "cloneSuccess": "Clone completed: {0}",

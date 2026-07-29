@@ -126,6 +126,7 @@
             @add="upsertRepoLink"
             @saveEdit="upsertRepoLink"
             @remove="removeRepoLink"
+            @copy="copyRepoLink"
             @download="downloadRepoLink"
           />
           <!-- 克隆日志面板：下载时实时显示 git clone 进度输出 -->
@@ -243,6 +244,7 @@ import EditableRemoteList from "./EditableRemoteList.vue"
 import CloneLogPanel from "./CloneLogPanel.vue"
 import { getCurrentDeviceName, hasPlatformRemote, resolveValidPath } from "../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
+import { copyToClipboard } from "@/utils/domUtils"
 import { pickDirectory } from "@/utils/electronDialog"
 import { useCloneLog } from "../composables/useCloneLog"
 import { usePathRows } from "../composables/usePathRows"
@@ -334,6 +336,15 @@ async function upsertRepoLink(platform: string, url: string): Promise<boolean> {
 
 async function removeRepoLink(platform: string): Promise<boolean> {
   return upsertRepoLink(platform, "")
+}
+
+/** 复制仓库链接地址到剪贴板 */
+function copyRepoLink(platform: string): void {
+  const pl = PLATFORM_META.find((p) => p.key === platform)
+  const url = pl ? urlInputs[pl.urlProp] : ""
+  if (!url) { return }
+  copyToClipboard(url)
+  showMessage(props.i18n.copiedLink, 2000, "info")
 }
 
 /** 下载（克隆）仓库链接：选目录 → clone 到同名子目录（实时日志）→ 新路径追加到路径行并立即持久化 */

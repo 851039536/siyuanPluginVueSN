@@ -307,13 +307,13 @@
               <Icon icon="mdi:file-tree" height="12" />
               <span>{{ i18n.refreshWorkingTree }}</span>
             </button>
-            <!-- 菜单项："刷新提交日志" -->
-            <button class="gp-refresh-item" @click="$emit('refreshCommitLog', project.id); openMenu = null">
+            <!-- 菜单项："刷新提交日志"（日志已下沉卡片，直调卡内重载） -->
+            <button class="gp-refresh-item" @click="reloadLog(); openMenu = null">
               <Icon icon="mdi:history" height="12" />
               <span>{{ i18n.refreshCommitLog }}</span>
             </button>
-            <!-- 菜单项："刷新标签" -->
-            <button class="gp-refresh-item" @click="$emit('refreshTags', project.id); openMenu = null">
+            <!-- 菜单项："刷新标签"（标签已下沉卡片，直调卡内重载） -->
+            <button class="gp-refresh-item" @click="refreshTags(); openMenu = null">
               <Icon icon="mdi:tag-outline" height="12" />
               <span>{{ i18n.refreshTags }}</span>
             </button>
@@ -436,9 +436,9 @@
         >
           LOG
           <span
-            v-if="commitLogEntries?.length"
+            v-if="logEntries.length"
             class="gp-stash-tag-tab-count"
-          >{{ commitLogEntries.length }}</span>
+          >{{ logEntries.length }}</span>
         </button>
         <button
           class="gp-stash-tag-tab"
@@ -447,9 +447,9 @@
         >
           STASH
           <span
-            v-if="stashEntries?.length"
+            v-if="stashList.length"
             class="gp-stash-tag-tab-count"
-          >{{ stashEntries.length }}</span>
+          >{{ stashList.length }}</span>
         </button>
         <button
           class="gp-stash-tag-tab"
@@ -458,9 +458,9 @@
         >
           TAG
           <span
-            v-if="tagsCache?.length"
+            v-if="tags.length"
             class="gp-stash-tag-tab-count"
-          >{{ tagsCache.length }}</span>
+          >{{ tags.length }}</span>
         </button>
       </div>
 
@@ -482,25 +482,25 @@
         @unstage-all="$emit('unstageAll', project.id)"
         @commit="(msg: string) => $emit('commit', project.id, msg)"
         @generate-msg="$emit('generateMsg', project.id)"
-        @load-diff="(file: string, staged: boolean) => $emit('loadDiff', project.id, file, staged)"
+        @load-diff="loadDiff"
         @clear-output="$emit('clearOutput', project.id)"
         @discard-file="(file: string, staged: boolean, status: string) => $emit('discardFile', project.id, file, staged, status)"
         @refresh-working-tree="$emit('refreshWorkingTree', project.id)"
       />
 
-      <!-- 提交日志 -->
+      <!-- 提交日志（数据卡内自持，刷新/换条数直调卡内重载） -->
       <BranchCommitList
         v-if="stashTagTab === 'log'"
-        :entries="commitLogEntries"
-        :loading="commitLogLoading"
-        @reload-commit-log="(count: number) => $emit('reloadCommitLog', project.id, count)"
-        @refresh-commit-log="$emit('refreshCommitLog', project.id)"
+        :entries="logEntries"
+        :loading="logLoading"
+        @reload-commit-log="(count: number) => reloadLog(count)"
+        @refresh-commit-log="() => reloadLog()"
       />
 
       <!-- Stash -->
       <StashSection
         v-if="stashTagTab === 'stash'"
-        :entries="stashEntries"
+        :entries="stashList"
         :loading="stashLoading || false"
         :tree="workingTree"
         :gen-desc-loading="genStashDescLoading || false"
@@ -513,17 +513,17 @@
         @stash-drop="(idx: number) => $emit('stashDrop', project.id, idx)"
       />
 
-      <!-- Tag -->
+      <!-- Tag（列表数据卡内自持，刷新直调卡内重载） -->
       <TagPanel
         v-if="stashTagTab === 'tag'"
-        :tags="tagsCache || []"
-        :loading="tagLoading"
+        :tags="tags"
+        :loading="tagsLoading"
         :push-loaded="tagPushLoading"
         :i18n="i18n"
         @create="(name: string, message?: string) => $emit('createTag', project.id, name, message)"
         @push="(tag: string) => $emit('pushTag', project.id, tag)"
         @delete="(tag: string) => $emit('deleteTag', project.id, tag)"
-        @refresh="$emit('refreshTags', project.id)"
+        @refresh="refreshTags"
       />
     </div>
 
@@ -686,15 +686,10 @@
 
 <script setup lang="ts">
 import type {
-  BranchInfo,
-  CommitLogEntry,
-  ConflictFile,
   GitProject,
   PlatformKey,
   ProjectCategory,
   PushStatusInfo,
-  StashEntry,
-  TagInfo,
   WorkingTreeInfo,
 } from "../types"
 import { Icon } from "@iconify/vue"
@@ -704,9 +699,9 @@ import {
   REMOTES,
 } from "../types"
 import { activityLevel, hasAnyRemote, highlightSegments, openLocalPath, openRepoWebUrl, relativeTime, resolveValidPath } from "../utils"
-import type { MdFileEntry } from "../composables/useMarkdownFiles"
 import type { PushOutputEntry } from "../composables/useGitOps"
 import { useCardActions } from "../composables/useCardActions"
+import { useCardData } from "../composables/useCardData"
 import BranchCommitList from "./BranchCommitList.vue"
 import ConflictSection from "./ConflictSection.vue"
 import MarkdownFileBadge from "./MarkdownFileBadge.vue"
@@ -731,29 +726,19 @@ const props = defineProps<{
   fetching: boolean
   remoteStatusLoading?: boolean
   // 每项目响应式数据（单项目值，非全量 Record，避免跨卡片 re-render）
-  branches: BranchInfo[]
   pushStatus: PushStatusInfo
   workingTree: WorkingTreeInfo
-  stashEntries: StashEntry[]
   stashLoading: boolean
-  conflicts: ConflictFile[]
   commitOutput: string
   pullOutputs: PushOutputEntry[]
   pushOutputs: PushOutputEntry[]
   committing: boolean
   generatingMsg: { generating: boolean, text: string }
   gitOpLoading: boolean
-  commitLogLoading: boolean
-  tagsCache: TagInfo[]
-  tagLoading: boolean
   tagPushLoading: string
   genStashDescLoading: boolean
   generatedStashMsg: string
   commitTemplates: { id: string, name: string, pattern: string, builtin?: boolean }[]
-  fileDiffs: Record<string, string>
-  commitLogEntries: CommitLogEntry[]
-  // Markdown 文件列表
-  mdFiles: MdFileEntry[]
   // 计算辅助函数
   statusBadgeClass: (id: string, key: string) => string
   statusLabel: (id: string, key: string) => string
@@ -779,8 +764,6 @@ const emit = defineEmits<{
   // 工作区
   "refresh": [id: string]
   "refreshWorkingTree": [id: string]
-  "refreshCommitLog": [id: string]
-  "refreshTags": [id: string]
   "refreshRemoteStatus": [id: string]
   "stageFile": [id: string, file: string]
   "unstageFile": [id: string, file: string]
@@ -788,11 +771,8 @@ const emit = defineEmits<{
   "unstageAll": [id: string]
   "commit": [id: string, msg: string]
   "generateMsg": [id: string]
-  "loadDiff": [id: string, file: string, staged: boolean]
   "clearOutput": [id: string]
   "discardFile": [id: string, file: string, staged: boolean, status: string]
-  "expand": [id: string]
-  "reloadCommitLog": [id: string, count: number]
   // Stash
   "stashConfirmMsg": [id: string, msg: string]
   "genStashDesc": [id: string]
@@ -831,6 +811,23 @@ const {
   handleCopyUrl,
 } = useCardActions({ project: () => props.project, i18n: props.i18n })
 
+// ── 卡片自持 Tab 数据（log/branches/stash/tags/冲突/diff/md，经 manager 直取 + 父层信号重载）──
+const {
+  branches,
+  logEntries,
+  logLoading,
+  stashList,
+  tags,
+  tagsLoading,
+  conflicts,
+  fileDiffs,
+  mdFiles,
+  ensureDetailsLoaded,
+  reloadLog,
+  refreshTags,
+  loadDiff,
+} = useCardData(() => props.project)
+
 /** 当前项目有效路径（多设备路径解析，点击时实时检测磁盘存在性，不用 computed 缓存） */
 function projectPath(): string {
   return resolveValidPath(props.project)
@@ -855,12 +852,12 @@ const uniqueCustomIdes = computed(() => {
 /** Stash / Tag 面板 Tab 切换 */
 const stashTagTab = ref<"worktree" | "log" | "stash" | "tag">("worktree")
 
-// 切换回 worktree 时自动刷新工作区；切到 log/stash/tag 时懒加载次要数据
+// 切换回 worktree 时自动刷新工作区（父层数据）；切到 log/stash/tag 时懒加载卡内详情
 watch(stashTagTab, (val) => {
   if (val === "worktree") {
     emit("refreshWorkingTree", props.project.id)
   } else {
-    emit("expand", props.project.id)
+    void ensureDetailsLoaded()
   }
 })
 
@@ -870,7 +867,7 @@ function handleCardClick() {
   if (cardDataLoaded) return
   cardDataLoaded = true
   emit("refreshWorkingTree", props.project.id)
-  emit("expand", props.project.id)
+  void ensureDetailsLoaded()
 }
 
 /** 推送按钮状态 class 映射（消除模板中 3 次 getPushStatus 调用） */

@@ -1,6 +1,12 @@
-// 批量操作进度状态管理 composable
+// 批量操作进度状态管理 composable（含带进度条的批量执行编排 runBatch）
 import { ref, onUnmounted } from "vue"
 import type { LoadProgress, LogEntry, LogStep } from "../types/batchProgress"
+import { batchProcess } from "../utils"
+
+/** 步骤上下文：在批量任务 fn 内部用 ctx.step(name, fn) 测量并记录每个 git 操作的耗时 */
+export interface StepCtx {
+  step: <R>(name: string, fn: () => Promise<R>) => Promise<R>
+}
 
 const DEFAULT_STATE: LoadProgress = {
   visible: false,
@@ -100,6 +106,50 @@ export function useBatchProgress() {
     }
   })
 
+  /** 批量处理 + 进度条包装（per-item 异常隔离，单项目失败不影响后续，支持分步骤计时） */
+  async function runBatch<T>(
+    items: T[], label: string, fn: (item: T, ctx: StepCtx) => Promise<void>, getName?: (item: T) => string, options?: { keepVisible?: boolean },
+  ) {
+    if (items.length === 0) { return }
+    start(items.length, label)
+    try {
+      await batchProcess(items, 3, async (item, index) => {
+        const name = getName?.(item) ?? ""
+        const displayName = name || `#${index + 1}`
+        const logIdx = beginLog(displayName)
+        const startTime = Date.now()
+
+        // 构造步骤上下文：step() 测量耗时后追加到当前日志条目
+        const ctx: StepCtx = {
+          async step<R>(stepName: string, stepFn: () => Promise<R>): Promise<R> {
+            const stepStart = Date.now()
+            try {
+              return await stepFn()
+            } finally {
+              addStep(logIdx, { name: stepName, ms: Date.now() - stepStart })
+            }
+          },
+        }
+
+        try {
+          await fn(item, ctx)
+          advance(name)
+          completeLog(logIdx, "ok", (Date.now() - startTime) / 1000)
+        } catch (err) {
+          const elapsed = (Date.now() - startTime) / 1000
+          advance(name)
+          completeLog(logIdx, "fail", elapsed, String(err))
+        }
+      })
+    } finally {
+      if (options?.keepVisible) {
+        finish()
+      } else {
+        end()
+      }
+    }
+  }
+
   return {
     state,
     logEntries,
@@ -111,5 +161,6 @@ export function useBatchProgress() {
     beginLog,
     addStep,
     completeLog,
+    runBatch,
   }
 }

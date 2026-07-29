@@ -39,6 +39,15 @@
       @view-project="onViewProject"
     />
 
+    <!-- ========== 操作日志视图 ========== -->
+    <LogPanel
+      v-if="currentView === 'log'"
+      :i18n="i18n"
+      :logs="opLogs"
+      @clear="confirmClearOpLogs"
+      @view-project="onViewProject"
+    />
+
     <!-- ========== 列表视图 ========== -->
     <template v-if="currentView === 'list'">
       <!-- 筛选工具栏 + 分类 TAB -->
@@ -267,6 +276,7 @@
 import type {
   GitProject,
   GitPushManager,
+  PanelView,
   PlatformKey,
   ProjectPathExtras,
 } from "./types"
@@ -294,6 +304,7 @@ import ProjectCard from "./components/ProjectCard.vue"
 import ScanImportDialog from "./components/ScanImportDialog.vue"
 import SettingsDialog from "./components/SettingsDialog.vue"
 import StatsPanel from "./components/StatsPanel.vue"
+import LogPanel from "./components/LogPanel.vue"
 import BatchProgressBar from "./components/BatchProgressBar.vue"
 import GitConfigDialog from "./components/GitConfigDialog.vue"
 import Loader from "@/components/Loader.vue"
@@ -395,6 +406,10 @@ const {
   needsPushProjects,
   uncommittedProjects,
   statsView,
+  // 操作日志
+  opLogs,
+  ensureOpLogsLoaded,
+  clearOpLogs,
   // 项目聚合管理
   starredProjects,
   updateProjectMeta,
@@ -460,12 +475,22 @@ function cancelGenericConfirm() {
   genericConfirm.value.visible = false
 }
 
+/** 清空操作日志二次确认 */
+function confirmClearOpLogs() {
+  showConfirm(
+    props.i18n.clearLogsConfirm,
+    props.i18n.clearLogsConfirmBody,
+    () => { clearOpLogs() },
+    props.i18n.clearLogs,
+  )
+}
+
 // ── 批量加载进度条（runBatchWithProgress 编排已下沉 useBatchProgress.runBatch）──
 const { state: progressState, logEntries: progressLogEntries, hide: progressHide, runBatch: runBatchWithProgress } = useBatchProgress()
 
 let initTimer: ReturnType<typeof setTimeout> | null = null
-/** 当前视图: 'list' | 'stats' */
-const currentView = ref<"list" | "stats">("list")
+/** 当前视图: 'list' | 'stats' | 'log' */
+const currentView = ref<PanelView>("list")
 /** 当前选中的分类 ID（onMounted 中设为首个分类） */
 const activeCategory = ref<string>("")
 
@@ -685,8 +710,8 @@ async function ensureStatsDataLoaded() {
 
 /** 切换到统计视图时，补齐统计面板所需数据 */
 watch(currentView, async (view) => {
-  if (view !== "stats") return
-  await ensureStatsDataLoaded()
+  if (view === "stats") await ensureStatsDataLoaded()
+  if (view === "log") await ensureOpLogsLoaded()
 })
 
 /** 切换到"需推送/有变更"智能视图时，补齐命中判定所需的全量状态数据 */

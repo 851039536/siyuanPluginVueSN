@@ -1,6 +1,6 @@
 // 远程推送/拉取进度追踪与结构化输出（从 useGitOps 提取，降低单文件复杂度）
 import type { Ref } from "vue"
-import type { GitProject, GitPushManager, PlatformKey } from "../types"
+import type { GitOpAction, GitOpLogEntry, GitProject, GitPushManager, PlatformKey } from "../types"
 import { ref } from "vue"
 import { PLATFORM_META } from "../types"
 import { findProject, pruneRecordCache, resolveValidPath } from "../utils"
@@ -17,6 +17,9 @@ export interface PushOutputEntry {
   fullStderr: string
 }
 
+/** appendOpLog 输入类型（精简版，不含 id/time） */
+type AppendOpLogInput = Omit<GitOpLogEntry, "id" | "time">
+
 export type ProgressStatus = "pending" | "pushing" | "ok" | "fail"
 type ProgressRef = Ref<Record<string, Record<string, ProgressStatus>>>
 type OutputsRef = Ref<Record<string, PushOutputEntry[]>>
@@ -31,6 +34,8 @@ export function useRemoteProgress(
   opts: {
     loadPushStatus: (id: string) => Promise<void>
     safeTimeout: (fn: () => void, delay: number) => ReturnType<typeof setTimeout>
+    /** 操作日志追加回调（fire-and-forget，失败不影响主流程） */
+    appendOpLog?: (input: AppendOpLogInput) => void
   },
 ) {
   const pushProgress = ref<Record<string, Record<string, ProgressStatus>>>({})
@@ -89,6 +94,28 @@ export function useRemoteProgress(
     const project = findProject(projects, id)
     if (!project) return undefined
     return resolveValidPath(project)
+  }
+
+  /** 从 PushOutputEntry[] 构建操作日志条目并追加（不包括 fullStdout/fullStderr） */
+  function appendOpLogFromEntries(
+    action: string, id: string, projectName: string | undefined, entries?: PushOutputEntry[],
+  ) {
+    if (!opts.appendOpLog || !entries) return
+    const nonSkipped = entries.filter((e) => !e.skipped)
+    opts.appendOpLog({
+      projectId: id,
+      projectName: projectName ?? id,
+      action: action as GitOpAction,
+      ok: nonSkipped.length > 0 ? nonSkipped.every((e) => e.ok) : true,
+      summary: nonSkipped[0]?.summary ?? "操作完成",
+      platforms: entries.map((e) => ({
+        key: e.platform,
+        label: e.label,
+        ok: e.ok,
+        skipped: e.skipped,
+        summary: e.summary,
+      })),
+    })
   }
 
   // ── 通用推送/拉取实现 ──
@@ -159,12 +186,22 @@ export function useRemoteProgress(
       outputsRef.value[id] = buildOutputEntries(result, sharedDurations, getUsedPath(id))
       pruneRecordCache(outputsRef.value)
       opts.loadPushStatus(id).catch((e: any) => console.warn(`[gitPush] 刷新${action === "push" ? "推送" : "拉取"}状态失败:`, e?.message || e))
+      // 操作日志埋点（fire-and-forget）
+      void appendOpLogFromEntries(action, id, project?.name, outputsRef.value[id])
       return result
     } catch (e) {
       console.error(`[gitPush] ${action === "push" ? "推送" : "拉取"}失败:`, e)
       const failProg: Record<string, ProgressStatus> = {}
       for (const key of Object.keys(initProg)) { failProg[key] = "fail" }
       progressRef.value = { ...progressRef.value, [id]: failProg }
+      // 操作日志埋点：失败条目
+      void opts.appendOpLog?.({
+        projectId: id,
+        projectName: project?.name ?? id,
+        action: action as GitOpAction,
+        ok: false,
+        summary: String(e).split("\n")[0]?.trim() || "操作失败",
+      })
       return { success: false }
     } finally {
       scheduleProgressCleanup(progressRef, id, seq)
@@ -211,6 +248,16 @@ export function useRemoteProgress(
       outputsRef.value[id] = entries
       pruneRecordCache(outputsRef.value)
       opts.loadPushStatus(id).catch((e: any) => console.warn(`[gitPush] 刷新${action === "push" ? "推送" : "拉取"}状态失败:`, e?.message || e))
+      // 操作日志埋点：单平台成功
+      const project = findProject(projects, id)
+      void opts.appendOpLog?.({
+        projectId: id,
+        projectName: project?.name ?? id,
+        action: action as GitOpAction,
+        ok: result.ok,
+        summary: entries[0]?.summary ?? "操作完成",
+        platforms: entries.map((e) => ({ key: e.platform, label: e.label, ok: e.ok, skipped: e.skipped, summary: e.summary })),
+      })
       return result
     } catch (e: any) {
       const duration = Date.now() - startedAt
@@ -231,6 +278,16 @@ export function useRemoteProgress(
         fullStderr: errMsg,
       }]
       pruneRecordCache(outputsRef.value)
+      // 操作日志埋点：单平台失败
+      const project2 = findProject(projects, id)
+      void opts.appendOpLog?.({
+        projectId: id,
+        projectName: project2?.name ?? id,
+        action: action as GitOpAction,
+        ok: false,
+        summary: errMsg.split("\n")[0]?.trim() || "操作失败",
+        platforms: [{ key: target, label: pm?.label ?? target, ok: false, skipped: false, summary: errMsg.split("\n")[0]?.trim() || "失败" }],
+      })
       // 与 remoteOpAll 策略统一：不重抛（调用方为模板事件处理器，无 catch），返回结构化错误
       return { ok: false, stdout: "", stderr: errMsg }
     } finally {

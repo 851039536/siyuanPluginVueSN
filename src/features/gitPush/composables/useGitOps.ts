@@ -15,6 +15,7 @@ import {
   resolveValidPath,
 } from "../utils"
 import { useRemoteProgress } from "./useRemoteProgress"
+import { useOpLog } from "./useOpLog"
 export type { PushOutputEntry, ProgressStatus } from "./useRemoteProgress"
 
 export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) {
@@ -137,7 +138,27 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
       // 立即失效推送状态缓存，防止 loadPushStatus 完成前的智能跳过用到陈旧的 ahead=0
       manager.invalidatePushStatusCache(id)
       await Promise.all([loadWorkingTree(id), loadPushStatus(id)])
+      // 操作日志埋点
+      void appendOpLog({
+        projectId: id,
+        projectName: project.name,
+        action: "commit",
+        ok: true,
+        summary: result.split("\n")[0]?.trim() || "提交成功",
+        message,
+      })
       return result
+    } catch (e: any) {
+      // 操作日志埋点：提交失败
+      void appendOpLog({
+        projectId: id,
+        projectName: project.name,
+        action: "commit",
+        ok: false,
+        summary: String(e?.message || e).split("\n")[0]?.trim() || "提交失败",
+        message,
+      })
+      throw e // 原样 rethrow，保持 handleCommit 的现有错误处理不变
     } finally {
       delete committing.value[id]
     }
@@ -219,8 +240,11 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     remote.clearProject(id)
   }
 
+  // ── 操作日志（实例化后在漏斗处埋点）──
+  const { opLogs, ensureOpLogsLoaded, appendOpLog, clearOpLogs, flush: flushOpLogs } = useOpLog(manager)
+
   // ── 远程推送/拉取（委托 useRemoteProgress）──
-  const remote = useRemoteProgress(manager, projects, { loadPushStatus, safeTimeout })
+  const remote = useRemoteProgress(manager, projects, { loadPushStatus, safeTimeout, appendOpLog })
 
   onUnmounted(() => {
     pendingTimers.forEach(clearTimeout)
@@ -278,6 +302,11 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     editRemoteOp,
     // 清理
     clearProjectCache,
+    // 操作日志
+    opLogs,
+    ensureOpLogsLoaded,
+    clearOpLogs,
+    flushOpLogs,
   }
 }
 

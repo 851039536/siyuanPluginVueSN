@@ -152,24 +152,58 @@
             {{ cat.name }}
           </option>
         </select>
-        <!-- 平台链接按钮（悬停："打开 {0}（右键复制链接）"） -->
-        <template
-          v-for="pm in platformMeta"
-          :key="pm.key"
-        >
+        <!-- 平台链接下拉菜单（本地开关，与 IDE/刷新菜单同模式） -->
+        <div class="gp-platform-wrap gp-menu-wrap">
+          <!-- 悬停提示："平台链接" -->
           <button
-            v-if="projectUrl(pm.urlProp)"
             class="vp-btn vp-btn--ghost vp-btn--sm"
-            :title="i18n.openPlatformHint.replace('{0}', pm.label)"
-            @click="openRepoWebUrl(projectUrl(pm.urlProp)!)"
-            @contextmenu.prevent="handleCopyUrl(projectUrl(pm.urlProp)!)"
+            :title="i18n.platformLinks"
+            @click.stop="toggleMenu('platform')"
           >
             <Icon
-              :icon="pm.icon"
+              icon="mdi:link-variant"
               height="12"
             />
+            <Icon
+              icon="mdi:unfold-more-horizontal"
+              height="12"
+              class="gp-caret-icon"
+            />
           </button>
-        </template>
+          <div
+            v-if="openMenu === 'platform'"
+            class="gp-platform-popover"
+            @click.stop
+          >
+            <!-- 空态项："未配置平台链接" -->
+            <button
+              v-if="platformLinks.length === 0"
+              class="gp-platform-item gp-platform-item--none"
+              disabled
+            >
+              <Icon
+                icon="mdi:link-off"
+                height="12"
+              />
+              <span>{{ i18n.noPlatformLink }}</span>
+            </button>
+            <!-- 平台项（左键打开 / 右键复制链接），悬停："打开 {0}（右键复制链接）" -->
+            <button
+              v-for="pl in platformLinks"
+              :key="pl.key"
+              class="gp-platform-item"
+              :title="i18n.openPlatformHint.replace('{0}', pl.label)"
+              @click="openRepoWebUrl(pl.url); openMenu = null"
+              @contextmenu.prevent="handleCopyUrl(pl.url)"
+            >
+              <Icon
+                :icon="pl.icon"
+                height="12"
+              />
+              <span>{{ pl.label }}</span>
+            </button>
+          </div>
+        </div>
         <!-- IDE 打开菜单（本地开关，与拉取/推送菜单同模式） -->
         <div class="gp-ide-wrap gp-menu-wrap">
           <!-- 悬停提示："打开项目" -->
@@ -833,10 +867,12 @@ function projectPath(): string {
   return resolveValidPath(props.project)
 }
 
-/** 读取项目在指定平台的仓库 URL（模板动态属性访问辅助） */
-function projectUrl(prop: typeof PLATFORM_META[number]["urlProp"]): string | undefined {
-  return props.project[prop]
-}
+/** 已配置 URL 的平台链接列表（平台下拉菜单数据源） */
+const platformLinks = computed(() =>
+  props.platformMeta
+    .filter((pm) => props.project[pm.urlProp])
+    .map((pm) => ({ key: pm.key, icon: pm.icon, label: pm.label, url: props.project[pm.urlProp]! })),
+)
 
 /** 自定义 IDE 按名称去重（同名多条 = 多台电脑的候选路径，菜单只展示一项，tooltip 列出全部路径） */
 const uniqueCustomIdes = computed(() => {
@@ -897,7 +933,7 @@ const outputPanels = computed(() => [
 const isRefreshing = computed(() => props.refreshing === props.project.id)
 
 /** 卡片内下拉菜单开关（拉取/推送/IDE/刷新，同时只允许一个展开） */
-type CardMenu = "pull" | "push" | "ide" | "refresh"
+type CardMenu = "pull" | "push" | "ide" | "refresh" | "platform"
 const openMenu = ref<CardMenu | null>(null)
 
 /** 切换内联下拉菜单（再次点击同一菜单则关闭） */

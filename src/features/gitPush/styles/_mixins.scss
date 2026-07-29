@@ -103,9 +103,19 @@
 // .git-push-panel 与 Teleport 到 body 的 .wt-diff-overlay 共用：
 // 弹窗脱离面板 DOM 后取不到面板上的变量定义，必须在两处分别注入
 @mixin gp-diff-color-vars {
+  // 浅色主题：GitHub Light 调色板
   --gp-diff-add-color: #1a7f37;
   --gp-diff-del-color: #cf222e;
   --gp-diff-hunk-color: #0969da;
   --gp-diff-add-bg: #e6ffec;
   --gp-diff-del-bg: #ffebe9;
+
+  // 暗色主题：GitHub Dark 调色板——背景改半透明深色，避免浅底浅字；前景提亮保证对比度
+  :root[data-theme-mode="dark"] & {
+    --gp-diff-add-color: #3fb950;
+    --gp-diff-del-color: #f85149;
+    --gp-diff-hunk-color: #58a6ff;
+    --gp-diff-add-bg: rgba(46, 160, 67, 0.18);
+    --gp-diff-del-bg: rgba(248, 81, 73, 0.18);
+  }
 }

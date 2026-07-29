@@ -11,6 +11,7 @@ import type {
 import { onUnmounted, ref } from "vue"
 import {
   findProject,
+  requireProject,
   resolveValidPath,
 } from "../utils"
 import { useRemoteProgress } from "./useRemoteProgress"
@@ -91,11 +92,9 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
   }
 
   async function switchBranch(id: string, branch: string) {
-    const project = findProject(projects, id)
-    if (!project) throw new Error("项目未找到")
+    const project = requireProject(projects, id)
     await manager.switchBranch(resolveValidPath(project), branch)
-    await loadWorkingTree(id)
-    await loadPushStatus(id)
+    await Promise.all([loadWorkingTree(id), loadPushStatus(id)])
     // 提交日志与分支列表已下沉卡片，切换分支后经信号通知重载
     bumpCardRefresh(id, "log", "branches")
   }
@@ -103,8 +102,8 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
   // ── 工作区操作 ──
 
   async function withProjectPath(id: string, fn: (path: string) => Promise<void>) {
-    const project = findProject(projects, id)
-    if (!project) return
+    // 变更类操作统一抛错（而非静默跳过），由调用方的 handleGitOp 展示错误
+    const project = requireProject(projects, id)
     await fn(resolveValidPath(project))
     await loadWorkingTree(id)
   }
@@ -126,21 +125,18 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
   }
 
   async function discardFile(id: string, file: string, staged: boolean, status: string) {
-    const project = findProject(projects, id)
-    if (!project) throw new Error("项目未找到")
+    const project = requireProject(projects, id)
     await manager.discardFile(resolveValidPath(project), file, staged, status)
   }
 
   async function doCommit(id: string, message: string): Promise<string> {
-    const project = findProject(projects, id)
-    if (!project) throw new Error("项目未找到")
+    const project = requireProject(projects, id)
     committing.value[id] = true
     try {
       const result = await manager.commit(resolveValidPath(project), message)
       // 立即失效推送状态缓存，防止 loadPushStatus 完成前的智能跳过用到陈旧的 ahead=0
       manager.invalidatePushStatusCache(id)
-      await loadWorkingTree(id)
-      await loadPushStatus(id)
+      await Promise.all([loadWorkingTree(id), loadPushStatus(id)])
       return result
     } finally {
       delete committing.value[id]
@@ -158,8 +154,8 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
   async function withProjectPathStash(id: string, fn: (path: string) => Promise<void>) {
     stashLoading.value[id] = true
     try {
-      const project = findProject(projects, id)
-      if (!project) return
+      // 变更类操作统一抛错（而非静默跳过），由调用方的 handleGitOp 展示错误
+      const project = requireProject(projects, id)
       await fn(resolveValidPath(project))
       // Stash 列表已下沉卡片，操作后经信号通知重载
       bumpCardRefresh(id, "stash")
@@ -194,32 +190,33 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
   // ── 远程仓库 CRUD ──
 
   async function addRemoteOp(id: string, name: string, url: string) {
-    const project = findProject(projects, id)
-    if (!project) throw new Error("项目未找到")
+    const project = requireProject(projects, id)
     await manager.addRemote(resolveValidPath(project), name, url)
     await loadPushStatus(id)
   }
 
   async function removeRemoteOp(id: string, name: string) {
-    const project = findProject(projects, id)
-    if (!project) throw new Error("项目未找到")
+    const project = requireProject(projects, id)
     await manager.removeRemote(resolveValidPath(project), name)
     await loadPushStatus(id)
   }
 
   async function editRemoteOp(id: string, name: string, url: string) {
-    const project = findProject(projects, id)
-    if (!project) throw new Error("项目未找到")
+    const project = requireProject(projects, id)
     await manager.setRemoteUrl(resolveValidPath(project), name, url)
     await loadPushStatus(id)
   }
 
   // ── 缓存清理 ──
 
+  /** 删除项目时清理全部关联缓存（含进行中操作标记与远程进度/输出） */
   function clearProjectCache(id: string) {
     delete pushStatuses.value[id]
     delete workingTrees.value[id]
     delete cardRefreshSignals.value[id]
+    delete committing.value[id]
+    delete stashLoading.value[id]
+    remote.clearProject(id)
   }
 
   // ── 远程推送/拉取（委托 useRemoteProgress）──

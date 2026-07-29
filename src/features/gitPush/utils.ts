@@ -10,6 +10,13 @@ export function findProject(projects: Ref<GitProject[]>, id: string): GitProject
   return projects.value.find((p) => p.id === id)
 }
 
+/** 按 ID 查找项目，未找到时抛错（错误文案经 handleGitOp/safeGitOp 展示给用户） */
+export function requireProject(projects: Ref<GitProject[]>, id: string): GitProject {
+  const project = findProject(projects, id)
+  if (!project) throw new Error("项目未找到")
+  return project
+}
+
 /** 规范化路径用于去重比较（统一斜杠 + 去除末尾斜杠 + 小写） */
 export function normalizePathForDedup(p: string): string {
   return p.replace(/\\/g, "/").replace(/\/+$/, "").toLowerCase()

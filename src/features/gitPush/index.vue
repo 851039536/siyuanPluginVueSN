@@ -101,7 +101,6 @@
             :search-query="searchQuery"
             :refreshing="refreshing"
             :fetching="fetching[project.id]"
-            :open-ide-menu="openIdeMenu"
             :confirming-del-name="confirmingDelName"
             :branches="branches[project.id]"
             :push-status="pushStatuses[project.id]"
@@ -118,15 +117,11 @@
             :commit-log-loading="commitLogLoading[project.id]"
             :tags-cache="tagsCache[project.id]"
             :tag-loading="tagLoading[project.id]"
-            :working-tree-loading="workingTreeLoading[project.id]"
-            :working-tree-expanded="expandedWorkingTrees[project.id]"
             :remote-status-loading="remoteStatusLoading[project.id]"
-            :open-refresh-menu="openRefreshMenu"
             :tag-push-loading="tagPushLoading[project.id]"
             :gen-stash-desc-loading="genStashDescLoading[project.id]"
             :generated-stash-msg="generatedStashMsg"
             :commit-templates="commitTemplates"
-            :selected-tags="selectedTags"
             :get-project-url="getProjectUrl"
             :resolved-path="resolvedPath"
             :md-files="mdFilesForProject(project.id)"
@@ -145,7 +140,6 @@
             @toggle-star="toggleStar"
             @start-name-edit="startNameEdit"
             @name-edit-save="handleNameEditSave"
-            @toggle-tag-filter="toggleTagFilter"
             @switch-branch="handleSwitchBranch"
             @remove="handleRemove"
             @open-edit-dialog="openEditDialog"
@@ -157,8 +151,6 @@
             @open-path="handleOpenPath"
             @open-ide="handleOpenIde"
             @open-custom-ide="handleOpenCustomIde"
-            @toggle-ide-menu="toggleIdeMenu"
-            @toggle-refresh-menu="toggleRefreshMenu"
             @show-ide-dialog="showIdeDialog = true"
             @remove-custom-ide="removeCustomIdeByName"
             @update:editing-name-id="editingNameId = $event"
@@ -179,7 +171,6 @@
             @clear-output="(id: string) => commitOutputs[id] = ''"
             @discard-file="handleDiscard"
             @expand="handleExpand"
-            @update:working-tree-expanded="handleWorkingTreeExpanded"
             @reload-commit-log="handleReloadCommitLog"
             @stash-confirm-msg="handleStashConfirmMsg"
             @gen-stash-desc="handleGenStashDesc"
@@ -485,24 +476,6 @@ const { commitLogLoading, commitLogForProject, handleExpand, handleReloadCommitL
   loadTags,
 })
 
-/** 各项目工作区面板展开状态（按 projectId 持久化，跨会话记忆） */
-const expandedWorkingTrees = ref<Record<string, boolean>>({})
-
-/** 从持久化存储恢复工作区展开状态 */
-async function loadExpandedWorkingTrees() {
-  expandedWorkingTrees.value = await props.manager.storage.workingTreeExpanded.loadOrDefault()
-}
-
-/** 工作区展开状态变化：更新内存并持久化 */
-function handleWorkingTreeExpanded(id: string, value: boolean) {
-  if (value) {
-    expandedWorkingTrees.value[id] = true
-  } else {
-    delete expandedWorkingTrees.value[id]
-  }
-  props.manager.storage.workingTreeExpanded.save({ ...expandedWorkingTrees.value }).catch(() => {})
-}
-
 const showAddDialog = ref(false)
 const showCatDialog = ref(false)
 const showSettings = ref(false)
@@ -643,9 +616,7 @@ const {
   viewMode,
   showArchived,
   gitOpsPaused,
-  selectedTags,
   filteredGroups,
-  toggleTag: toggleTagFilter,
   loadGitOpsPaused,
   loadShowArchived,
 } = useProjectFilters({
@@ -744,7 +715,6 @@ const {
   refreshingAllRemote,
   showRefreshMenu,
   fetching,
-  workingTreeLoading,
   remoteStatusLoading,
   headHashes,
   silentRefreshAll,
@@ -783,10 +753,6 @@ const projectMdFiles = ref<Record<string, ReturnType<typeof scanMarkdownFiles>>>
 /** 行内名称编辑状态 */
 const editingNameId = ref("")
 const editingNameInput = ref("")
-/** IDE 打开菜单：当前打开的项目 id 集合 */
-const openIdeMenu = ref(new Set<string>())
-/** 刷新下拉菜单：当前打开的项目 id 集合 */
-const openRefreshMenu = ref(new Set<string>())
 /** 获取指定项目的 Markdown 文件列表（懒扫描 + 缓存） */
 function mdFilesForProject(projectId: string): ReturnType<typeof scanMarkdownFiles> {
   if (projectMdFiles.value[projectId]) return projectMdFiles.value[projectId]
@@ -823,8 +789,6 @@ function fileDiffsForProject(projectId: string): Record<string, string> {
 
 onMounted(async () => {
   document.addEventListener("click", closeIdeMenuOnOutside)
-  // 先恢复工作区展开状态，确保首屏 ProjectCard 挂载时 initialExpanded 已就绪
-  await loadExpandedWorkingTrees()
   await loadProjects()
   projectMdFiles.value = {}
   loadCommitTemplates()
@@ -856,20 +820,14 @@ onUnmounted(() => {
   document.removeEventListener("click", closeIdeMenuOnOutside)
 })
 
-/** 点击外部关闭 IDE 菜单 / 添加菜单 / 刷新菜单 */
+/** 点击外部关闭顶栏菜单（添加/平台过滤/刷新；卡片内菜单由 ProjectCard 自行管理） */
 function closeIdeMenuOnOutside(e: MouseEvent) {
   const target = e.target as HTMLElement | null
-  if (target && !target.closest(".gp-ide-wrap")) {
-    openIdeMenu.value = new Set()
-  }
   if (target && !target.closest(".gp-add-wrap")) {
     showAddMenu.value = false
   }
   if (target && !target.closest(".gp-platform-wrap")) {
     showPlatformMenu.value = false
-  }
-  if (target && !target.closest(".gp-refresh-wrap")) {
-    openRefreshMenu.value = new Set()
   }
   if (target && !target.closest(".gp-header-refresh-wrap")) {
     showRefreshMenu.value = false
@@ -974,20 +932,6 @@ async function handleOpenPath(path: string) {
     }
   }
   // 浏览器环境：无法直接打开本地文件夹
-}
-
-/** 切换 IDE 打开菜单 */
-function toggleIdeMenu(id: string) {
-  const s = openIdeMenu.value
-  if (s.has(id)) { s.delete(id) } else { s.add(id) }
-  openIdeMenu.value = new Set(s)
-}
-
-/** 切换刷新下拉菜单 */
-function toggleRefreshMenu(id: string) {
-  const s = openRefreshMenu.value
-  if (s.has(id)) { s.delete(id) } else { s.add(id) }
-  openRefreshMenu.value = new Set(s)
 }
 
 /** 在浏览器中打开远程仓库网页 */

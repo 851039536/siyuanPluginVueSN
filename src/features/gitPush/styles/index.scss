@@ -263,6 +263,12 @@
   position: relative;
 }
 
+// 下拉菜单按钮尾部的展开箭头图标（IDE/拉取/推送菜单共用）
+.gp-caret-icon {
+  margin-left: $spacing-px;
+  opacity: 0.5;
+}
+
 .gp-inline-menu-popover {
   @include popover-base;
   top: 100%;

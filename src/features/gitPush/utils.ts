@@ -1,7 +1,8 @@
 // gitPush 工具函数与多路径解析
 import type { Ref } from "vue"
-import type { GitProject, GitRemoteInfo, PlatformKey, RemotePushStatus } from "./types"
-import { PLATFORM_META } from "./types"
+import type { FileChange, GitProject, GitRemoteInfo, PlatformKey, RemotePushStatus } from "./types"
+import { FILE_STATUS_META, PLATFORM_META } from "./types"
+import type { IconKey } from "@/config/icons"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 
 /** 按 ID 查找项目（消除散落在各处的 projects.value.find 重复） */
@@ -75,6 +76,29 @@ export function hasPlatformRemote(remotes: GitRemoteInfo[], key: PlatformKey): b
 /** 向则项目是否配置了任何远程仓库 */
 export function hasAnyRemote(project: GitProject): boolean {
   return PLATFORM_META.some((pm) => !!project[pm.remoteProp])
+}
+
+// ── 文件状态标记渲染辅助（WorkingTreePanel / StashSection 共用）──
+
+/** 取文件状态的标记（字符或图标名，来自 FILE_STATUS_META） */
+export function fileStatusIcon(file: FileChange): string {
+  return FILE_STATUS_META[file.status]?.icon || "·"
+}
+
+/** renamed/unmerged 状态用 IconWrapper 渲染，其余为字符标记 */
+export function isIconFileStatus(file: FileChange): boolean {
+  return file.status === "renamed" || file.status === "unmerged"
+}
+
+/** isIconFileStatus 守卫下取图标键（forward/warning 均为已注册 IconKey） */
+export function fileStatusIconKey(file: FileChange): IconKey {
+  return fileStatusIcon(file) as IconKey
+}
+
+/** 文件状态悬停标题（重命名时附带旧路径） */
+export function fileStatusTitle(file: FileChange): string {
+  const title = FILE_STATUS_META[file.status]?.title || file.status
+  return file.oldPath ? `${title}: ${file.oldPath} -> ${file.path}` : title
 }
 
 /** 获取项目已配置的远程名称列表（消除 4 处 for PLATFORM_META + project[pm.remoteProp] 重复模式） */

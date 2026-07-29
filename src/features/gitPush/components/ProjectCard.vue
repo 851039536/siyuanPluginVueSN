@@ -477,7 +477,7 @@
         v-if="stashTagTab === 'stash'"
         :entries="stashEntries"
         :loading="stashLoading || false"
-        :has-changes="!!workingTree?.hasChanges"
+        :tree="workingTree"
         :gen-desc-loading="genStashDescLoading || false"
         :generated-msg="generatedStashMsg"
         :i18n="i18n"

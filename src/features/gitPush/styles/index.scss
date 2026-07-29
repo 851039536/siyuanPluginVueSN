@@ -682,6 +682,39 @@
   overflow-y: auto;
 }
 
+// 待暂存变更预览：标题 + 只读文件列表（状态标记复用 WorkingTreePanel 的 .wt-file-status 着色）
+.gp-stash-pending {
+  margin-top: $spacing-2;
+  padding-top: $spacing-1;
+  border-top: 1px solid var(--b3-border-color);
+}
+
+.gp-stash-pending-title {
+  @include gp-label-base;
+  margin-bottom: $spacing-1;
+}
+
+.gp-stash-pending-list {
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.gp-stash-pending-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: 1px 0;
+}
+
+.gp-stash-pending-path {
+  flex: 1;
+  min-width: 0;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  opacity: 0.75;
+  @include text-ellipsis;
+}
+
 .gp-stash-row {
   display: flex;
   align-items: center;

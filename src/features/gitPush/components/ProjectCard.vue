@@ -78,7 +78,8 @@
               icon="mdi:clock-outline"
               height="12"
             />
-            {{ relativeTime(project.lastActivity) }}
+            <!-- 相对活动时间："刚刚 / N分钟前 / N天前…" -->
+            {{ relativeTime(project.lastActivity, i18n) }}
           </span>
         </div>
         <!-- Markdown 文件标识 -->
@@ -703,7 +704,7 @@ import {
   PLATFORM_META,
   REMOTES,
 } from "../types"
-import { highlightSegments } from "../utils"
+import { activityLevel, highlightSegments, relativeTime } from "../utils"
 import type { MdFileEntry } from "../composables/useMarkdownFiles"
 import type { PushOutputEntry } from "../composables/useGitOps"
 import BranchCommitList from "./BranchCommitList.vue"
@@ -759,8 +760,6 @@ const props = defineProps<{
   // 计算辅助函数
   getProjectUrl: (project: GitProject, prop: string) => string | undefined
   resolvedPath: (project: GitProject) => string
-  relativeTime: (date: string) => string
-  activityLevel: (date: string) => string
   statusBadgeClass: (id: string, key: string) => string
   statusLabel: (id: string, key: string) => string
   hasBehind: (id: string) => boolean

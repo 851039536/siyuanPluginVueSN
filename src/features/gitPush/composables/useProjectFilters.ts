@@ -8,6 +8,7 @@ import {
   watch,
 } from "vue"
 import { VIEW_MODE_META } from "../types"
+import { sortProjects } from "../utils"
 import type { TypedStorage } from "@/utils/typedStorage"
 
 interface UseProjectFiltersOptions {
@@ -20,7 +21,6 @@ interface UseProjectFiltersOptions {
   uncommittedProjects: Ref<{ project: GitProject }[]>
   starredProjects: Ref<GitProject[]>
   visibleGroups: Ref<{ category: { id: string, name: string, color: string, order: number }, projects: GitProject[] }[]>
-  sortProjects: (list: GitProject[]) => GitProject[]
 }
 
 export function useProjectFilters(options: UseProjectFiltersOptions) {
@@ -32,7 +32,6 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
     uncommittedProjects,
     starredProjects,
     visibleGroups,
-    sortProjects,
   } = options
 
   const searchQuery = ref("")

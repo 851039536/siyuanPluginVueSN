@@ -10,7 +10,7 @@
 // ── 总览卡片 ──
 .gp-stats-cards {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr); // 6 卡均分两行三列（窄 Dock 下比 4 列更不易挤压）
   gap: $spacing-1;
   margin-bottom: $spacing-3;
 }
@@ -47,6 +47,8 @@
 .gp-stat-card--info .gp-stat-card-value { color: var(--b3-theme-primary); }
 .gp-stat-card--warn .gp-stat-card-value { color: var(--b3-theme-warning); }
 .gp-stat-card--accent .gp-stat-card-value { color: var(--gp-accent-color); }
+.gp-stat-card--star .gp-stat-card-value { color: var(--b3-theme-warning, #f5a623); } // 收藏卡：与列表星标按钮（.gp-star-btn）同色
+.gp-stat-card--muted .gp-stat-card-value { opacity: 0.45; } // 归档卡：弱化展示（非活跃数据）
 
 // ── 双列布局 ──
 .gp-stats-duo {
@@ -133,7 +135,15 @@
 .gp-coverage-fill--gitea { background: #609926; }
 .gp-coverage-fill--cnb { background: #00a8e8; }
 .gp-coverage-fill--multi { background: #8b5cf6; }
-// 注：github 无专属修饰类，沿用 .gp-coverage-fill 默认主题色
+// 注：github 无专属修饰类，沿用 .gp-coverage-fill 默认主题色；分类分布条的颜色由 category.color 内联样式驱动
+
+// 分类分布条目的分类色点（颜色由 category.color 内联驱动）
+.gp-cat-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
 
 // ── 推送状态概览条（待处理项目顶部）──
 .gp-status-bar {
@@ -277,6 +287,13 @@
 }
 
 .gp-badge-unstaged {
+  @extend .gp-badge-ahead;
+  background: var(--b3-theme-warning-lightest);
+  color: var(--b3-theme-warning);
+}
+
+// 待拉取徽章：与状态 chip --behind 同色系（警告色）
+.gp-badge-behind {
   @extend .gp-badge-ahead;
   background: var(--b3-theme-warning-lightest);
   color: var(--b3-theme-warning);

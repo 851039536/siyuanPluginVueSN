@@ -92,14 +92,31 @@ export interface UncommittedItem {
   untracked: number
 }
 
-/** 待处理项目（需要推送 + 有未提交变更 的合并视图） */
+/** 需要拉取的项目项 */
+export interface NeedsPullItem {
+  project: GitProject
+  behindByRemote: { key: string, behind: number }[]
+  totalBehind: number
+}
+
+/** 待处理项目（需要推送 + 需要拉取 + 有未提交变更 的合并视图） */
 export interface PendingProjectItem {
   project: GitProject
   aheadByRemote: { key: string, ahead: number }[]
   totalAhead: number
+  behindByRemote: { key: string, behind: number }[]
+  totalBehind: number
   staged: number
   unstaged: number
   untracked: number
+}
+
+/** 分类分布条目（用 category.color 着色的条形区块） */
+export interface CategoryDistributionItem {
+  id: string
+  name: string
+  color: string
+  count: number
 }
 
 /** 平台配置状态明细项 */
@@ -116,6 +133,25 @@ export interface PlatformStatusItem {
 /** 类型安全地获取平台状态 */
 export function getPlatformStatus(item: PlatformStatusItem, key: PlatformKey): boolean {
   return item[key]
+}
+
+/** 统计面板聚合视图（单对象 prop，消除 useGitStats → useGitPush → index.vue → StatsPanel 四层透传的字段遗漏风险） */
+export interface StatsView {
+  projectCount: number
+  remoteCoverage: RemoteCoverage
+  pushStatusStats: PushStatusStats
+  /** 待处理项目（已在 useGitStats 中合并排序） */
+  pendingProjects: PendingProjectItem[]
+  /** 有未提交变更的项目数（仅供总览卡片展示） */
+  uncommittedCount: number
+  /** 收藏项目数（总览卡片） */
+  starredCount: number
+  /** 已归档项目数（总览卡片） */
+  archivedCount: number
+  /** 分类分布（按 category.order 排序，仅含非空分类） */
+  categoryDistribution: CategoryDistributionItem[]
+  /** 平台配置状态明细（每个项目的 GitHub/Gitee/Gitea/CNB 是否已配置） */
+  platformStatusProjects: PlatformStatusItem[]
 }
 
 /** 项目列表视图模式（单一事实源，ViewMode 联合类型由此推导） */

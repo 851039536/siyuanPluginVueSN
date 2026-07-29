@@ -37,6 +37,18 @@
             height="12"
           />
         </button>
+        <!-- 按钮（tooltip："操作日志"） -->
+        <button
+          class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
+          :class="{ active: currentView === 'log' }"
+          :title="i18n.logView"
+          @click="currentView = 'log'"
+        >
+          <Icon
+            icon="mdi:history"
+            height="12"
+          />
+        </button>
       </div>
       <!-- 平台官网快捷入口 -->
       <span class="gp-header-sep" />
@@ -231,7 +243,7 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
 import Input from "@/components/Input.vue"
-import { PLATFORM_META } from "../types"
+import { PLATFORM_META, type PanelView } from "../types"
 
 withDefaults(defineProps<{
   i18n: Record<string, any>
@@ -247,7 +259,7 @@ withDefaults(defineProps<{
 })
 
 // ── 双向绑定（defineModel 收敛 props + update: emit 样板） ──
-const currentView = defineModel<"list" | "stats">("currentView", { required: true })
+const currentView = defineModel<PanelView>("currentView", { required: true })
 const showPlatformMenu = defineModel<boolean>("showPlatformMenu", { default: false })
 const showAddMenu = defineModel<boolean>("showAddMenu", { default: false })
 const showRefreshMenu = defineModel<boolean>("showRefreshMenu", { default: false })

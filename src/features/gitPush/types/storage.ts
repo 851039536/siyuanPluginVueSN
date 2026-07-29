@@ -203,6 +203,46 @@ export interface ConflictFile {
   status: "both-modified" | "added-by-us" | "added-by-them" | "deleted-by-us" | "deleted-by-them"
 }
 
+// ── Git 操作日志（持久化追查推送/拉取/提交历史）──
+
+/** 操作类型 */
+export type GitOpAction = "push" | "pull" | "commit"
+
+/** 操作日志单平台结果（PushOutputEntry 的精简投影，不存 fullStdout/fullStderr 防撑爆存储） */
+export interface GitOpLogPlatform {
+  key: string
+  label: string
+  ok: boolean
+  skipped: boolean
+  summary: string
+}
+
+/** 操作日志条目 */
+export interface GitOpLogEntry {
+  id: string
+  /** ISO 时间戳 */
+  time: string
+  /** 项目 ID */
+  projectId: string
+  /** 项目名称（存储时不实时反查，打点方传入快照） */
+  projectName: string
+  /** 操作类型 */
+  action: GitOpAction
+  /** 整体成功/失败 */
+  ok: boolean
+  /** 摘要（第一行输出或错误消息） */
+  summary: string
+  /** commit 信息（仅 action=commit 时有值） */
+  message?: string
+  /** 逐平台结果（仅 push/pull 时有值） */
+  platforms?: GitOpLogPlatform[]
+}
+
+/** 操作日志环形上限 */
+export const MAX_OP_LOG_COUNT = 300
+
+// ── 提交信息模板 ──
+
 /** 提价信息模板 */
 export interface CommitTemplate {
   id: string
@@ -267,6 +307,8 @@ export class GitPushStorage {
   readonly showArchived: TypedStorage<boolean>
   /** 推送分支模式：all=全部分支, head=仅当前分支（持久化） */
   readonly pushBranchMode: TypedStorage<"all" | "head">
+  /** 操作日志（环形上限 300 条，防抖落盘） */
+  readonly opLogs: TypedStorage<GitOpLogEntry[]>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
@@ -278,6 +320,7 @@ export class GitPushStorage {
     this.gitOpsPaused = new TypedStorage(storage, "git-push-ops-paused", false)
     this.showArchived = new TypedStorage(storage, "git-push-show-archived", false)
     this.pushBranchMode = new TypedStorage<"all" | "head">(storage, "git-push-branch-mode", "all")
+    this.opLogs = new TypedStorage(storage, "git-push-op-logs", [])
   }
 
   async init(): Promise<void> {

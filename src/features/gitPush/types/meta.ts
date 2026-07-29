@@ -154,6 +154,9 @@ export interface StatsView {
   platformStatusProjects: PlatformStatusItem[]
 }
 
+/** 面板头部视图（列表/统计/操作日志），与 ViewMode（列表内筛选模式 all/needsPush/...）语义不同 */
+export type PanelView = "list" | "stats" | "log"
+
 /** 项目列表视图模式（单一事实源，ViewMode 联合类型由此推导） */
 export const VIEW_MODES = ["all", "needsPush", "uncommitted", "starred", "archived"] as const
 export type ViewMode = typeof VIEW_MODES[number]

@@ -25,7 +25,7 @@
   }
 }
 
-// 大写标签样式（.gp-label / .gp-stash-label / .gp-tag-label 共享）
+// 大写标签样式（.gp-label / .gp-tag-label 共享）
 @mixin gp-label-base {
   font-size: $font-size-2xs;
   font-weight: $font-weight-bold;

@@ -69,6 +69,7 @@
 
       <!-- 手动备份 -->
       <ManualBackupCard
+        :is-any-task-running="isAnyTaskRunning"
         :is-backing-up="isBackingUp"
         :can-backup="canBackup"
         :is-configured="isConfigured"

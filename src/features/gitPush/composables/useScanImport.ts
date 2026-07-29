@@ -14,7 +14,7 @@ export function useScanImport(deps: {
   startScan: (dir: string) => Promise<void>
   importScanResults: (paths: string[], catId: string) => Promise<{ imported: number, skipped: number }>
   loadProjects: () => Promise<void>
-  tf: (key: string, fallback: string, ...args: (string | number)[]) => string
+  tf: (key: string, ...args: (string | number)[]) => string
 }) {
   const { scanResults, activeCategory, startScan, importScanResults, loadProjects, tf } = deps
 
@@ -48,7 +48,7 @@ export function useScanImport(deps: {
       }
       scanSelection.value = sel
     } catch (e: unknown) {
-      scanError.value = getErrorMessage(e) || tf("scanError", "扫描失败")
+      scanError.value = getErrorMessage(e) || tf("scanError")
     }
   }
 
@@ -85,8 +85,8 @@ export function useScanImport(deps: {
     await loadProjects()
     handleCloseScan()
     if (imported > 0 || skipped > 0) {
-      const msg = tf("importSucceed", "导入完成：成功 {0} 个", imported)
-        + (skipped > 0 ? tf("importSkipped", "，跳过 {0} 个", skipped) : "")
+      const msg = tf("importSucceed", imported)
+        + (skipped > 0 ? tf("importSkipped", skipped) : "")
       showMessage(msg, 3000, "info")
     }
   }

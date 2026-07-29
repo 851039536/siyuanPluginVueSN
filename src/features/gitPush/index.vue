@@ -158,10 +158,10 @@
             @refresh-commit-log="handleRefreshCommitLog"
             @refresh-tags="handleRefreshTags"
             @refresh-remote-status="handleRefreshRemoteStatus"
-            @stage-file="(id: string, file: string) => handleGitOp(tf('stageFailed', '暂存失败'), () => stageItem(id, file), id)"
-            @unstage-file="(id: string, file: string) => handleGitOp(tf('unstageFailed', '取消暂存失败'), () => unstageItem(id, file), id)"
-            @stage-all="(id: string) => handleGitOp(tf('stageFailed', '暂存失败'), () => stageAllItems(id), id)"
-            @unstage-all="(id: string) => handleGitOp(tf('unstageFailed', '取消暂存失败'), () => unstageAllItems(id), id)"
+            @stage-file="(id: string, file: string) => handleGitOp(tf('stageFailed'), () => stageItem(id, file), id)"
+            @unstage-file="(id: string, file: string) => handleGitOp(tf('unstageFailed'), () => unstageItem(id, file), id)"
+            @stage-all="(id: string) => handleGitOp(tf('stageFailed'), () => stageAllItems(id), id)"
+            @unstage-all="(id: string) => handleGitOp(tf('unstageFailed'), () => unstageAllItems(id), id)"
             @commit="(id: string, msg: string) => handleCommit(id, msg)"
             @generate-msg="handleGenerateMsg"
             @load-diff="loadFileDiff"
@@ -352,9 +352,9 @@ const props = defineProps<{
   manager: GitPushManager
 }>()
 
-/** i18n 取值 + {n} 占位替换，缺失时降级为 fallback */
-function tf(key: string, fallback: string, ...args: (string | number)[]): string {
-  let s: string = props.i18n[key] || fallback
+/** i18n 取值 + {n} 占位替换（i18n 是唯一文案数据源，不设兜底） */
+function tf(key: string, ...args: (string | number)[]): string {
+  let s: string = props.i18n[key]
   args.forEach((a, i) => { s = s.replace(`{${i}}`, String(a)) })
   return s
 }
@@ -709,8 +709,8 @@ onMounted(async () => {
     if (gitOpsPaused.value) return
     const catId = activeCategory.value
     const projList = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
-    await runBatchWithProgress(projList, tf("loadingLabel", "加载中"), async (p, ctx) => {
-      await ctx.step(tf("stepStatus", "状态"), () => loadProjectGitStatus(p.id, true))
+    await runBatchWithProgress(projList, tf("loadingLabel"), async (p, ctx) => {
+      await ctx.step(tf("stepStatus"), () => loadProjectGitStatus(p.id, true))
     })
   }, 200)
 })
@@ -742,8 +742,8 @@ watch(activeCategory, async (catId) => {
   // 只加载尚未缓存的
   const pending = projList.filter((p) => !workingTrees.value[p.id])
   if (pending.length === 0) return
-  await runBatchWithProgress(pending, tf("loadingLabel", "加载中"), async (p, ctx) => {
-    await ctx.step(tf("stepStatus", "状态"), () => loadProjectGitStatus(p.id, true))
+  await runBatchWithProgress(pending, tf("loadingLabel"), async (p, ctx) => {
+    await ctx.step(tf("stepStatus"), () => loadProjectGitStatus(p.id, true))
   })
 })
 
@@ -756,8 +756,8 @@ async function ensureStatsDataLoaded() {
   if (gitOpsPaused.value) return
   const pending = projects.value.filter((p) => !pushStatuses.value[p.id] || !workingTrees.value[p.id])
   if (pending.length === 0) return
-  await runBatchWithProgress(pending, tf("loadingLabel", "加载中"), async (p, ctx) => {
-    await ctx.step(tf("stepStats", "统计"), () => loadStatsData(p.id))
+  await runBatchWithProgress(pending, tf("loadingLabel"), async (p, ctx) => {
+    await ctx.step(tf("stepStats"), () => loadStatsData(p.id))
   })
 }
 
@@ -786,8 +786,8 @@ watch(gitOpsPaused, async (paused) => {
   const projList = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
   const pending = projList.filter((p) => !workingTrees.value[p.id])
   if (pending.length === 0) return
-  await runBatchWithProgress(pending, tf("loadingLabel", "加载中"), async (p, ctx) => {
-    await ctx.step(tf("stepStatus", "状态"), () => loadProjectGitStatus(p.id, true))
+  await runBatchWithProgress(pending, tf("loadingLabel"), async (p, ctx) => {
+    await ctx.step(tf("stepStatus"), () => loadProjectGitStatus(p.id, true))
   })
 })
 
@@ -799,7 +799,7 @@ async function handleAddFromDialog(data: ProjectPathExtras & { name: string, pat
     })
     showAddDialog.value = false
   } catch (e: unknown) {
-    showMessage(getErrorMessage(e) || tf("addFailed", "添加失败"), 5000, "error")
+    showMessage(getErrorMessage(e) || tf("addFailed"), 5000, "error")
   }
 }
 
@@ -837,12 +837,12 @@ async function handleOpenWeb(url: string) {
 async function handleCopyUrl(url: string) {
   const ok = await copyToClipboard(url)
   if (ok) {
-    showMessage(tf("copiedLink", "已复制链接"), 1500, "info")
+    showMessage(tf("copiedLink"), 1500, "info")
   }
 }
 
 function handleRemove(project: GitProject) {
-  showConfirm(tf("deleteProjectTitle", "删除项目"), tf("deleteProjectConfirm", "确定要删除项目 \"{0}\" 吗？此操作不可撤销。", project.name), () => {
+  showConfirm(tf("deleteProjectTitle"), tf("deleteProjectConfirm", project.name), () => {
     removeProject(project.id)
     // 清理 HEAD hash 缓存中已删除项目的条目
     delete headHashes.value[project.id]
@@ -850,7 +850,7 @@ function handleRemove(project: GitProject) {
 }
 
 async function handleSwitchBranch(id: string, branch: string) {
-  await safeGitOp(tf("switchBranchFailed", "分支切换失败"), () => switchBranch(id, branch))
+  await safeGitOp(tf("switchBranchFailed"), () => switchBranch(id, branch))
 }
 
 // ---- 项目聚合管理操作 ----
@@ -882,12 +882,12 @@ async function handleNameEditSave(project: GitProject) {
   const newName = editingNameInput.value.trim()
   try {
     if (!newName) {
-      showMessage(tf("nameEmpty", "项目名称不能为空"), 2000, "error")
+      showMessage(tf("nameEmpty"), 2000, "error")
     } else if (newName !== project.name) {
       await updateProjectMeta(project.id, { name: newName })
     }
   } catch (e: unknown) {
-    showMessage(tf("nameUpdateFailed", "名称修改失败: {0}", getErrorMessage(e)), 4000, "error")
+    showMessage(tf("nameUpdateFailed", getErrorMessage(e)), 4000, "error")
   } finally {
     editingNameId.value = ""
   }
@@ -912,7 +912,7 @@ async function handleAddCategory(name: string, color: string) {
 async function handleDeleteCategory(id: string) {
   const cat = categories.value.find((c) => c.id === id)
   if (!cat) return
-  showConfirm(tf("deleteCategoryTitle", "删除分类"), tf("deleteCategoryConfirm", "确定删除分类 \"{0}\"？\n该分类下的项目将移至「未分组」。", cat.name), () => {
+  showConfirm(tf("deleteCategoryTitle"), tf("deleteCategoryConfirm", cat.name), () => {
     doDeleteCategory(id)
   })
 }

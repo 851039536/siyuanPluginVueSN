@@ -42,11 +42,12 @@
           {{ i18n.remoteCoverage }}
         </div>
         <div class="gp-coverage-list">
-          <!-- 覆盖率条目：四个平台 + 多远程合计（配置驱动，多远程标签为“多远程项目”） -->
+          <!-- 覆盖率条目：四个平台 + 多远程合计（配置驱动，多远程标签为“多远程项目”；hover 显示百分比） -->
           <div
             v-for="c in coverageItems"
             :key="c.key"
             class="gp-coverage-item"
+            :title="pct(c.count)"
           >
             <div class="gp-coverage-head">
               <Icon
@@ -189,28 +190,29 @@
             <span class="gp-table-cell gp-table-cell--act"></span>
           </div>
           <div
-            v-for="item in platformStatusProjects"
-            :key="item.project.id"
+            v-for="row in platformRows"
+            :key="row.id"
             class="gp-table-row gp-table-row--clickable"
-            @click="emit('viewProject', item.project.id)"
+            @click="emit('viewProject', row.id)"
           >
             <span
               class="gp-table-cell gp-table-cell--name"
-              :title="item.project.path"
+              :title="row.path"
             >
-              {{ item.project.name }}
+              {{ row.name }}
             </span>
+            <!-- 悬停提示：“已配置”/“未配置”（行视图模型预计算，避免每格 3 次函数调用） -->
             <span
-              v-for="pm in PLATFORM_META"
-              :key="pm.key"
+              v-for="cell in row.cells"
+              :key="cell.key"
               class="gp-table-cell gp-table-cell--platform-status"
-              :title="getPlatformStatus(item, pm.key) ? i18n.configured : i18n.notConfigured"
+              :title="cell.ok ? i18n.configured : i18n.notConfigured"
             >
               <!-- 已配置/未配置状态图标（单节点三元切换） -->
               <Icon
-                :icon="getPlatformStatus(item, pm.key) ? 'mdi:check-circle' : 'mdi:close-circle-outline'"
+                :icon="cell.ok ? 'mdi:check-circle' : 'mdi:close-circle-outline'"
                 height="12"
-                :class="getPlatformStatus(item, pm.key) ? 'gp-platform-ok' : 'gp-platform-missing'"
+                :class="cell.ok ? 'gp-platform-ok' : 'gp-platform-missing'"
               />
             </span>
             <span class="gp-table-cell gp-table-cell--act">
@@ -285,6 +287,16 @@ const COUNT_COLUMNS = [
   { field: "unstaged", badge: "gp-badge-unstaged" },
   { field: "untracked", badge: "gp-badge-untracked" },
 ] as const
+
+// 平台状态行视图模型：预计算每格配置状态，避免模板中每行 12 次 getPlatformStatus 调用
+const platformRows = computed(() =>
+  props.platformStatusProjects.map((item) => ({
+    id: item.project.id,
+    name: item.project.name,
+    path: item.project.path,
+    cells: PLATFORM_META.map((pm) => ({ key: pm.key, ok: getPlatformStatus(item, pm.key) })),
+  })),
+)
 
 function pct(count: number): string {
   if (props.projectCount === 0) return "0%"

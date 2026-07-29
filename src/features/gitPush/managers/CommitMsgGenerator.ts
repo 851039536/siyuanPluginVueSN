@@ -1,8 +1,7 @@
 // AI 提交信息与 stash 描述生成（含启发式降级）
 import type { Plugin } from "siyuan"
-import type { CommitTemplate } from "../types/storage"
 import { COMMIT_TYPE_VALUES } from "../types/storage"
-import type { GitPushStorage } from "../types/storage"
+import type { CommitTemplate, GitPushStorage } from "../types/storage"
 import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi"
 import type { GitExecutor } from "./GitExecutor"
 import type { WorktreeOps } from "./WorktreeOps"
@@ -30,15 +29,15 @@ export class CommitMsgGenerator {
       ])
       if (!diffText) { return { message: "chore: update files", source: "heuristic" } }
 
-      const fullDiff = await this.executor.execGit(projectPath, [
-        "-c", "core.quotepath=false", "diff", "--text", "--cached",
-      ])
-      const diffSnippet = (fullDiff || diffText).substring(0, 3000)
-
       const aiConfig = getApiConfigFromPlugin(this.plugin)
       if (!aiConfig.apiKey) {
         return { message: this.heuristicCommitMessage(diffText), source: "heuristic" }
       }
+
+      const fullDiff = await this.executor.execGit(projectPath, [
+        "-c", "core.quotepath=false", "diff", "--text", "--cached",
+      ])
+      const diffSnippet = (fullDiff || diffText).substring(0, 3000)
 
       try {
         const result = await callAI(
@@ -52,9 +51,10 @@ export class CommitMsgGenerator {
           },
         )
         const trimmed = result?.trim() ?? ""
-        const match = trimmed.match(/(feat|fix|chore|docs|style|refactor|test)(?:\([^)]+\))?\s*:\s*(.+)/i)
+        const typesPattern = COMMIT_TYPE_VALUES.join("|")
+        const match = trimmed.match(new RegExp(`(${typesPattern})(?:\\([^)]+\\))?\\s*:\\s*(.+)`, "i"))
         if (match) {
-          return { message: `${match[1]}: ${match[2].trim()}`, source: "ai" }
+          return { message: `${match[1].toLowerCase()}: ${match[2].trim()}`, source: "ai" }
         }
         console.warn("[gitPush] AI 未返回有效 commit 格式，降级启发式:", trimmed.substring(0, 80))
       } catch (e: unknown) {
@@ -70,6 +70,7 @@ export class CommitMsgGenerator {
   private heuristicCommitMessage(statText: string): string {
     const lines = statText.split("\n").filter(Boolean)
     const files = lines.slice(0, -1).map((l) => l.split("|")[0]?.trim()).filter(Boolean)
+    if (files.length === 0) { return "chore: update files" }
 
     let type = "chore"
     const allPaths = files.join(" ").toLowerCase()
@@ -94,10 +95,11 @@ export class CommitMsgGenerator {
     if (!wt.hasChanges) return ""
     const names = wt.files.slice(0, 8).map((f) => f.path.split("/").pop() || f.path).join("、")
     const more = wt.files.length > 8 ? `等${wt.files.length}个文件` : ""
+    const desc = `${wt.files.length}个文件: ${names}${more}`
 
     const aiConfig = getApiConfigFromPlugin(this.plugin)
     if (!aiConfig.apiKey) {
-      return `${wt.files.length}个文件: ${names}${more}`
+      return desc
     }
 
     try {
@@ -107,9 +109,9 @@ export class CommitMsgGenerator {
         { temperature: 0.5, maxTokens: 40 },
       )
       const t = result?.trim()
-      return t && t.length > 0 ? t : `${wt.files.length}个文件`
+      return t && t.length > 0 ? t : desc
     } catch {
-      return `${wt.files.length}个文件: ${names}${more}`
+      return desc
     }
   }
 

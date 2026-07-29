@@ -98,3 +98,14 @@
     border-bottom: none;
   }
 }
+
+// ── diff 着色 CSS 变量 ──
+// .git-push-panel 与 Teleport 到 body 的 .wt-diff-overlay 共用：
+// 弹窗脱离面板 DOM 后取不到面板上的变量定义，必须在两处分别注入
+@mixin gp-diff-color-vars {
+  --gp-diff-add-color: #1a7f37;
+  --gp-diff-del-color: #cf222e;
+  --gp-diff-hunk-color: #0969da;
+  --gp-diff-add-bg: #e6ffec;
+  --gp-diff-del-bg: #ffebe9;
+}

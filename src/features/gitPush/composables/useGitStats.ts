@@ -3,8 +3,11 @@ import type { Ref } from "vue"
 import type {
   GitProject,
   GitPushManager,
+  NeedsPushItem,
+  PendingProjectItem,
   ProjectCategory,
   PushStatusInfo,
+  UncommittedItem,
   WorkingTreeInfo,
 } from "../types"
 import { computed, ref } from "vue"
@@ -49,8 +52,8 @@ export function useGitStats(
     let behind = 0
     let synced = 0
     let noRemote = 0
-    const needsPush: { project: GitProject; aheadByRemote: { key: string; ahead: number }[]; totalAhead: number }[] = []
-    const uncommitted: { project: GitProject; staged: number; unstaged: number; untracked: number }[] = []
+    const needsPush: NeedsPushItem[] = []
+    const uncommitted: UncommittedItem[] = []
     const platformMissing: PlatformStatusItem[] = []
     const starred: GitProject[] = []
 
@@ -151,6 +154,33 @@ export function useGitStats(
   const platformStatusProjects = computed(() => projectStats.value.platformMissing)
   const starredProjects = computed(() => projectStats.value.starred)
 
+  /** 待处理项目：需要推送 + 有未提交变更 的合并视图（供统计面板表格使用） */
+  const pendingProjects = computed<PendingProjectItem[]>(() => {
+    const map = new Map<string, PendingProjectItem>()
+    // 先收集需要推送的项目
+    for (const np of projectStats.value.needsPush) {
+      map.set(np.project.id, { ...np, staged: 0, unstaged: 0, untracked: 0 })
+    }
+    // 再合并有未提交变更的项目
+    for (const uc of projectStats.value.uncommitted) {
+      const existing = map.get(uc.project.id)
+      if (existing) {
+        existing.staged = uc.staged
+        existing.unstaged = uc.unstaged
+        existing.untracked = uc.untracked
+      } else {
+        map.set(uc.project.id, { ...uc, aheadByRemote: [], totalAhead: 0 })
+      }
+    }
+    // 按 totalAhead 降序 → staged+unstaged+untracked 降序
+    return [...map.values()].sort((a, b) => {
+      if (a.totalAhead !== b.totalAhead) return b.totalAhead - a.totalAhead
+      const aTotal = a.staged + a.unstaged + a.untracked
+      const bTotal = b.staged + b.unstaged + b.untracked
+      return bTotal - aTotal
+    })
+  })
+
   return {
     gitConcurrency,
     loadGitConcurrency,
@@ -161,6 +191,7 @@ export function useGitStats(
     pushStatusStats,
     needsPushProjects,
     uncommittedProjects,
+    pendingProjects,
     platformStatusProjects,
     starredProjects,
   }

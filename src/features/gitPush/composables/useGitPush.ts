@@ -125,6 +125,7 @@ export function useGitPush(manager: GitPushManager) {
     pushStatusStats: stats.pushStatusStats,
     needsPushProjects: stats.needsPushProjects,
     uncommittedProjects: stats.uncommittedProjects,
+    pendingProjects: stats.pendingProjects,
     platformStatusProjects: stats.platformStatusProjects,
     groupedProjects: stats.groupedProjects,
     starredProjects: stats.starredProjects,

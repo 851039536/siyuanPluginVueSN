@@ -3,7 +3,7 @@
   <div class="gp-stats-panel">
     <!-- 空状态：无项目时显示“暂无项目统计” -->
     <div
-      v-if="projectCount === 0"
+      v-if="stats.projectCount === 0"
       class="gp-empty"
     >
       <div class="gp-empty-icon">
@@ -19,7 +19,7 @@
     </div>
 
     <template v-else>
-      <!-- 总览卡片：总项目数 / 已配远程 / 待推送 / 未提交（配置驱动） -->
+      <!-- 总览卡片：总项目数 / 已配远程 / 待推送 / 未提交 / 收藏 / 已归档（配置驱动） -->
       <div class="gp-stats-cards">
         <div
           v-for="(card, i) in overviewCards"
@@ -55,7 +55,7 @@
                 height="12"
               />
               <span>{{ c.label }}</span>
-              <span class="gp-coverage-num">{{ c.count }} / {{ projectCount }}</span>
+              <span class="gp-coverage-num">{{ c.count }} / {{ stats.projectCount }}</span>
             </div>
             <div class="gp-coverage-bar">
               <div
@@ -68,13 +68,48 @@
         </div>
       </div>
 
+      <!-- 分类分布：各分类项目数条形区块（用 category.color 着色，复用覆盖率条模式） -->
+      <div
+        v-if="stats.categoryDistribution.length > 0"
+        class="gp-stats-section"
+      >
+        <!-- 区块标题：“分类分布” -->
+        <div class="gp-stats-section-title">
+          {{ i18n.categoryDistribution }}
+        </div>
+        <div class="gp-coverage-list">
+          <!-- 分类条目：分类色点 + 名称 + 计数；hover 显示百分比 -->
+          <div
+            v-for="c in stats.categoryDistribution"
+            :key="c.id"
+            class="gp-coverage-item"
+            :title="pct(c.count)"
+          >
+            <div class="gp-coverage-head">
+              <span
+                class="gp-cat-dot"
+                :style="{ background: c.color }"
+              />
+              <span>{{ c.name }}</span>
+              <span class="gp-coverage-num">{{ c.count }} / {{ stats.projectCount }}</span>
+            </div>
+            <div class="gp-coverage-bar">
+              <div
+                class="gp-coverage-fill"
+                :style="{ width: pct(c.count), background: c.color }"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 双列布局：待处理项目 + 平台配置状态 -->
       <div class="gp-stats-duo">
       <!-- 待处理项目（推送状态概览 + 待处理表格合并） -->
       <div class="gp-stats-section gp-stats-section--half">
         <div class="gp-stats-section-title">
           {{ i18n.pendingProjects }}
-          <span class="gp-stats-section-count">{{ pendingProjects.length }}</span>
+          <span class="gp-stats-section-count">{{ stats.pendingProjects.length }}</span>
         </div>
         <!-- 推送状态概览：待推送/待拉取/已同步/无远程（配置驱动） -->
         <div class="gp-status-bar">
@@ -88,17 +123,19 @@
               :icon="chip.icon"
               height="12"
             />
-            <span>{{ pushStatusStats[chip.field] }}</span>
+            <span>{{ stats.pushStatusStats[chip.field] }}</span>
           </div>
         </div>
         <!-- 待处理项目表格 -->
         <div
-          v-if="pendingProjects.length > 0"
+          v-if="stats.pendingProjects.length > 0"
           class="gp-table-wrap"
         >
           <div class="gp-table-row gp-table-row--head">
             <span class="gp-table-cell gp-table-cell--name">{{ i18n.projectName }}</span>
             <span class="gp-table-cell gp-table-cell--num">{{ i18n.needsPushShort }}</span>
+            <!-- 表头：“待拉取” -->
+            <span class="gp-table-cell gp-table-cell--num">{{ i18n.needsPullShort }}</span>
             <!-- 表头三列：已暂存/未暂存/未跟踪（field 同时作为 i18n 键） -->
             <span
               v-for="col in COUNT_COLUMNS"
@@ -108,7 +145,7 @@
             <span class="gp-table-cell gp-table-cell--act"></span>
           </div>
           <div
-            v-for="item in pendingProjects"
+            v-for="item in stats.pendingProjects"
             :key="item.project.id"
             class="gp-table-row gp-table-row--clickable"
             @click="emit('viewProject', item.project.id)"
@@ -127,6 +164,18 @@
               >↑{{ r.ahead }}</span>
               <span
                 v-if="item.aheadByRemote.length === 0"
+                class="gp-cell-empty"
+              >-</span>
+            </span>
+            <!-- 待拉取列：各远程落后提交数徽章（0 时显示占位符 -） -->
+            <span class="gp-table-cell gp-table-cell--num">
+              <span
+                v-for="r in item.behindByRemote"
+                :key="r.key"
+                class="gp-badge-behind"
+              >↓{{ r.behind }}</span>
+              <span
+                v-if="item.behindByRemote.length === 0"
                 class="gp-cell-empty"
               >-</span>
             </span>
@@ -167,12 +216,12 @@
 
       <!-- 平台配置状态（显示每个项目各平台是否已配置） -->
       <div
-        v-if="platformStatusProjects.length > 0"
+        v-if="stats.platformStatusProjects.length > 0"
         class="gp-stats-section gp-stats-section--half"
       >
         <div class="gp-stats-section-title">
           {{ i18n.platformStatus }}
-          <span class="gp-stats-section-count">{{ platformStatusProjects.length }}</span>
+          <span class="gp-stats-section-count">{{ stats.platformStatusProjects.length }}</span>
         </div>
         <div class="gp-table-wrap">
           <div class="gp-table-row gp-table-row--head">
@@ -231,34 +280,31 @@
 </template>
 
 <script setup lang="ts">
-import type { PendingProjectItem, PlatformStatusItem, PushStatusStats, RemoteCoverage } from "../types"
+import type { StatsView } from "../types"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
 import { PLATFORM_META, getPlatformStatus } from "../types"
 
 const props = defineProps<{
   i18n: Record<string, any>
-  projectCount: number
-  remoteCoverage: RemoteCoverage
-  pushStatusStats: PushStatusStats
-  /** 待处理项目（需要推送 + 有未提交变更，已在 useGitStats 中合并排序） */
-  pendingProjects: PendingProjectItem[]
-  /** 有未提交变更的项目数（仅供总览卡片展示） */
-  uncommittedCount: number
-  /** 平台配置状态明细（每个项目的 GitHub/Gitee/Gitea/CNB 是否已配置） */
-  platformStatusProjects: PlatformStatusItem[]
+  /** 统计聚合视图（单对象 prop，由 useGitStats.statsView 产出，消除四层透传字段遗漏风险） */
+  stats: StatsView
 }>()
 
 const emit = defineEmits<{
   viewProject: [projectId: string]
 }>()
 
-// 总览卡片配置：总项目数 / 已配远程 / 待推送 / 未提交
+// 总览卡片配置：总项目数 / 已配远程 / 待推送 / 未提交 / 收藏 / 已归档
 const overviewCards = computed(() => [
-  { value: props.projectCount, label: props.i18n.totalProjects, cls: "" },
-  { value: props.remoteCoverage.hasRemote, label: props.i18n.remoteConfigured, cls: "gp-stat-card--info" },
-  { value: props.pushStatusStats.ahead, label: props.i18n.needsPush, cls: "gp-stat-card--warn" },
-  { value: props.uncommittedCount, label: props.i18n.uncommitted, cls: "gp-stat-card--accent" },
+  { value: props.stats.projectCount, label: props.i18n.totalProjects, cls: "" },
+  { value: props.stats.remoteCoverage.hasRemote, label: props.i18n.remoteConfigured, cls: "gp-stat-card--info" },
+  { value: props.stats.pushStatusStats.ahead, label: props.i18n.needsPush, cls: "gp-stat-card--warn" },
+  { value: props.stats.uncommittedCount, label: props.i18n.uncommitted, cls: "gp-stat-card--accent" },
+  // 收藏卡：“收藏”（与列表星标按钮同色）
+  { value: props.stats.starredCount, label: props.i18n.starred, cls: "gp-stat-card--star" },
+  // 归档卡：“已归档”（弱化展示）
+  { value: props.stats.archivedCount, label: props.i18n.archivedTitle, cls: "gp-stat-card--muted" },
 ])
 
 // 覆盖率条目：四个平台（PLATFORM_META 投影）+ 多远程合计（key 同时作为 gp-coverage-fill 修饰类后缀）
@@ -267,10 +313,10 @@ const coverageItems = computed(() => [
     key: pm.key as string,
     icon: pm.icon,
     label: pm.label as string,
-    count: props.remoteCoverage[pm.key],
+    count: props.stats.remoteCoverage[pm.key],
   })),
   // 多远程项目条目：“多远程项目”
-  { key: "multi", icon: "mdi:layers", label: props.i18n.multipleRemotes as string, count: props.remoteCoverage.multiple },
+  { key: "multi", icon: "mdi:layers", label: props.i18n.multipleRemotes as string, count: props.stats.remoteCoverage.multiple },
 ])
 
 // 推送状态 chip 配置：待推送/待拉取/已同步/无远程
@@ -290,7 +336,7 @@ const COUNT_COLUMNS = [
 
 // 平台状态行视图模型：预计算每格配置状态，避免模板中每行 12 次 getPlatformStatus 调用
 const platformRows = computed(() =>
-  props.platformStatusProjects.map((item) => ({
+  props.stats.platformStatusProjects.map((item) => ({
     id: item.project.id,
     name: item.project.name,
     path: item.project.path,
@@ -299,8 +345,8 @@ const platformRows = computed(() =>
 )
 
 function pct(count: number): string {
-  if (props.projectCount === 0) return "0%"
-  return `${Math.round((count / props.projectCount) * 100)}%`
+  if (props.stats.projectCount === 0) return "0%"
+  return `${Math.round((count / props.stats.projectCount) * 100)}%`
 }
 </script>
 

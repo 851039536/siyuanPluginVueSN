@@ -236,8 +236,9 @@ export class RemoteOps {
         }
       }
 
+      type SettledEntry = { key: PlatformKey } & RemoteOpResult
       const results = await Promise.allSettled(
-        entries.map(({ key, remoteName }) =>
+        entries.map(({ key, remoteName }): Promise<SettledEntry> =>
           this.tryRemoteOp(cwd, remoteName, action, signal, pullBranch).then((r) => ({ key, ...r })),
         ),
       )
@@ -247,8 +248,7 @@ export class RemoteOps {
       let rejectedError = ""
       for (const r of results) {
         if (r.status === "fulfilled") {
-          const val = r.value as any
-          const { key, ...rest } = val
+          const { key, ...rest } = r.value
           resultMap.set(key, rest)
         } else {
           rejectedError = rejectedError || String(r.reason?.message || r.reason || "未知错误")
@@ -270,6 +270,9 @@ export class RemoteOps {
       const gitee = build("gitee")
       const gitea = build("gitea")
       const cnb = build("cnb")
+
+      // push 成功后失效智能跳过缓存，保证下次 shouldSkip 走真实状态检查（commit 路径已失效，但 push 本身也需收尾）
+      if (action === "push") { this.invalidatePushStatusCache(id) }
 
       return {
         success: github.ok || gitee.ok || gitea.ok || cnb.ok,
@@ -323,6 +326,8 @@ export class RemoteOps {
       // pull 时预解析当前分支，显式指定拉取分支
       const pullBranch = action === "pull" ? await this.getCurrentBranch(cwd) : undefined
       const result = await this.tryRemoteOp(cwd, remoteName, action, signal, pullBranch)
+      // push 成功后失效智能跳过缓存
+      if (action === "push") { this.invalidatePushStatusCache(id) }
       return {
         ok: result.ok,
         stdout: result.stdout,
@@ -401,7 +406,8 @@ export class RemoteOps {
 
     // 如果指定 fetchFirst，先并行 fetch 所有已配置远程以更新跟踪分支
     if (opts?.fetchFirst) {
-      await this.fetchAllForProject(id)
+      const { errors } = await this.fetchAllForProject(id)
+      if (errors.length > 0) { console.warn("[gitPush] fetch 部分远程失败:", errors) }
     }
 
     // 由 PLATFORM_META 驱动检查
@@ -412,6 +418,8 @@ export class RemoteOps {
 
     const remoteChecks = remotesToCheck.map(async ({ key, remoteName }) => {
       try {
+        // rev-list --left-right A...B：左侧(A=remote/branch)独有计入 parts[0]=behind，右侧(B=HEAD)独有计入 parts[1]=ahead
+        // 调换 ... 两侧会静默反转 ahead/behind，切勿改动顺序
         // 直接 rev-list --left-right --count，失败则远程分支不存在（noUpstream）
         const counts = await this.executor.execGit(cwd, [
           "rev-list", "--left-right", "--count",

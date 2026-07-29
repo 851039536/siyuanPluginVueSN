@@ -1,49 +1,57 @@
 <!-- 自动备份设置卡片组件 — 启用/频率/时间/保留份数 -->
 <template>
   <section class="card-section auto-backup-section">
+    <!-- 区块标题 -->
     <div class="section-header">
-      <h4>{{ i18n.autoBackupSettings || "自动备份设置" }}</h4>
+      <!-- 标题："自动备份设置" -->
+      <h4>{{ i18n.autoBackupSettings }}</h4>
     </div>
     <div class="settings-row">
-      <span class="inline-label">{{ i18n.autoBackup || "自动备份" }}</span>
+      <!-- 行内标签："自动备份" -->
+      <span class="inline-label">{{ i18n.autoBackup }}</span>
       <Select
-        :model-value="autoBackupEnabled"
+        v-model="autoBackupEnabled"
         :options="autoBackupOptions"
         size="xsmall"
-        @update:model-value="$emit('update:autoBackupEnabled', $event as boolean)"
       />
+      <!-- 自动备份已启用时的设置区域 -->
       <template v-if="autoBackupEnabled">
-        <span class="inline-label">{{ i18n.backupFrequency || "频率" }}</span>
+        <!-- 行内标签："备份频率" -->
+        <span class="inline-label">{{ i18n.backupFrequency }}</span>
         <Select
-          :model-value="backupFrequency"
+          v-model="backupFrequency"
           :options="frequencyOptions"
           size="xsmall"
-          @update:model-value="$emit('update:backupFrequency', $event as string)"
         />
+        <!-- 每日备份时显示时间输入 -->
         <template v-if="backupFrequency === 'daily'">
-          <span class="inline-label">{{ i18n.backupTime || "时间" }}</span>
+          <!-- 行内标签："备份时间" -->
+          <span class="inline-label">{{ i18n.backupTime }}</span>
           <Input
-            :model-value="backupTime"
+            v-model="backupTime"
             type="text"
             size="xsmall"
-            @update:model-value="$emit('update:backupTime', $event as string)"
+            placeholder="03:00"
           />
         </template>
-        <span class="inline-label">{{ i18n.keepBackupCount || "保留" }}</span>
-          <Input
-            :model-value="keepBackupCount"
-            type="number"
-            size="xsmall"
-            class="keep-count-input"
-            @update:model-value="$emit('update:keepBackupCount', Number($event))"
-          />
-        <span class="inline-label">{{ i18n.keepBackupCountHint || "份" }}</span>
+        <!-- 行内标签："保留" -->
+        <span class="inline-label">{{ i18n.keepBackupCount }}</span>
+        <Input
+          :model-value="keepBackupCount"
+          type="number"
+          size="xsmall"
+          class="keep-count-input"
+          @update:model-value="keepBackupCount = sanitizeKeepCount($event)"
+        />
+        <!-- 行内标签："份" -->
+        <span class="inline-label">{{ i18n.keepBackupCountHint }}</span>
       </template>
     </div>
+    <!-- 自动备份状态提示 -->
     <p class="backup-hint">
       {{ autoBackupEnabled
-        ? (i18n.autoBackupEnabledHint || "自动备份已启用，将按设定频率自动执行")
-        : (i18n.autoBackupDisabledHint || "启用后按设定频率自动备份工作区")
+        ? i18n.autoBackupEnabledHint
+        : i18n.autoBackupDisabledHint
       }}
     </p>
   </section>
@@ -54,30 +62,33 @@ import { computed } from "vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
 
+// 保留份数输入值清洗 — 防止 NaN/0 持久化导致本地备份保留清理失效
+function sanitizeKeepCount(raw: unknown): number {
+  const n = Math.floor(Number(raw))
+  if (!Number.isFinite(n) || n < 1) {
+    return 1
+  }
+  return n
+}
+
+const autoBackupEnabled = defineModel<boolean>("autoBackupEnabled", { required: true })
+const backupFrequency = defineModel<string>("backupFrequency", { required: true })
+const backupTime = defineModel<string>("backupTime", { required: true })
+const keepBackupCount = defineModel<number>("keepBackupCount", { required: true })
+
 const props = defineProps<{
-  autoBackupEnabled: boolean
-  backupFrequency: string
-  backupTime: string
-  keepBackupCount: number
   i18n: Record<string, string>
 }>()
 
-defineEmits<{
-  (e: "update:autoBackupEnabled", value: boolean): void
-  (e: "update:backupFrequency", value: string): void
-  (e: "update:backupTime", value: string): void
-  (e: "update:keepBackupCount", value: number): void
-}>()
-
 const autoBackupOptions = computed(() => [
-  { value: false, label: props.i18n.disabled || "禁用" },
-  { value: true, label: props.i18n.enabled || "启用" },
+  { value: false, label: props.i18n.disabled },
+  { value: true, label: props.i18n.enabled },
 ])
 
 const frequencyOptions = computed(() => [
-  { value: "minute", label: props.i18n.everyMinute || "每分钟" },
-  { value: "hourly", label: props.i18n.everyHour || "每小时" },
-  { value: "daily", label: props.i18n.everyDay || "每天" },
+  { value: "minute", label: props.i18n.everyMinute },
+  { value: "hourly", label: props.i18n.everyHour },
+  { value: "daily", label: props.i18n.everyDay },
 ])
 </script>
 

@@ -100,6 +100,11 @@ export interface BackupListDisplayItem {
   lastModified?: string
 }
 
+// ========== 共享工具类型 ==========
+
+/** 持久化辅助函数类型：由 index.vue 提供，统一「获取实例 → 存储槽 save」样板 */
+export type PersistFn = (save: (storage: S3BackupStorage) => Promise<unknown>) => Promise<void>
+
 // ========== 备份日志接口 ==========
 
 export interface BackupLog {

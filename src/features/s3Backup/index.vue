@@ -284,7 +284,7 @@ let backupManager: BackupManager | null = null
 // ========== 日志 / 校验值管理（composable） ==========
 
 const { backupLogs, addLog, clearLogs } = useBackupLogs({ persist: persistStorage })
-const { checksums, saveChecksum, clearChecksums, removeOneChecksum } = useChecksums({ persist: persistStorage })
+const { checksums, saveChecksum, persistChecksums, clearChecksums, removeOneChecksum } = useChecksums({ persist: persistStorage })
 
 // ========== 工作区路径与备份设置（composable） ==========
 
@@ -411,6 +411,7 @@ const { performS3Backup } = useFullS3Upload({
   backupProgress,
   addLog: (entry) => addLog(entry),
   saveChecksum,
+  persistChecksums,
   recordUploadHosts,
   refreshBackupList: () => refreshBackupList(),
   i18n: props.i18n,
@@ -611,7 +612,7 @@ async function performLocalBackup(): Promise<BackupResult | null> {
     // 计算 ZIP 文件校验值并持久化
     try {
       const hash = await backupManager.computeFileHash(result.filePath)
-      saveChecksum(result.fileName, result.filePath, result.size, hash)
+      await saveChecksum(result.fileName, result.filePath, result.size, hash)
     } catch (hashErr: unknown) {
       console.warn("计算文件校验值失败:", getErrorMessage(hashErr))
     }

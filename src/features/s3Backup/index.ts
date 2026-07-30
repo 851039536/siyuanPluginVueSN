@@ -12,7 +12,7 @@ import { createModalVueApp } from "@/utils/vueAppHelper"
 import { getWorkspaceDir } from "@/api"
 import S3BackupPanel from "./index.vue"
 import { S3BackupStorage, DEFAULT_BACKUP_SETTINGS } from "./types"
-import type { BackupSettings } from "./types"
+import type { BackupSettings, BackupFrequency } from "./types"
 
 let s3BackupInstance: S3Backup | null = null
 
@@ -31,6 +31,8 @@ export class S3Backup {
   /** A6 修复：防重复执行状态提升为实例字段，避免重启定时器时丢失 */
   private lastExecutedHour = -1
   private lastExecutedDateStr = ""
+  /** 设置保存串行链：面板多个 @update 连发时防止 load-merge-save 交错覆盖 */
+  private saveChain: Promise<void> = Promise.resolve()
 
   private cachedWorkspaceRoot = ""
 
@@ -89,19 +91,16 @@ export class S3Backup {
       const data = await this.storage.backupSettings.loadOrDefault()
       this.lastBackupTimestamp = data.lastBackupTimestamp || 0
 
-      const autoBackupEnabled = data.autoBackupEnabled ?? false
-      const backupFrequency = data.backupFrequency ?? "daily"
-      const backupTime = data.backupTime ?? "03:00"
-
-      if (autoBackupEnabled) {
-        this.startAutoBackupTimer(backupFrequency, backupTime)
+      // loadOrDefault 已与 DEFAULT_BACKUP_SETTINGS 浅合并，字段保证完整
+      if (data.autoBackupEnabled) {
+        this.startAutoBackupTimer(data.backupFrequency, data.backupTime)
       }
     } catch (error) {
       console.error("初始化自动备份失败:", error)
     }
   }
 
-  public startAutoBackupTimer(backupFrequency: string, backupTime: string) {
+  public startAutoBackupTimer(backupFrequency: BackupFrequency, backupTime: string) {
     this.stopAutoBackupTimer()
 
     // A6 修复：重置实例字段而非闭包局部变量
@@ -123,7 +122,7 @@ export class S3Backup {
 
     const timerStartTime = Date.now()
 
-    const checkAndBackup = async () => {
+    const checkAndBackup = () => {
       const now = new Date()
       const currentTime = now.getTime()
       const currentHour = now.getHours()
@@ -200,7 +199,16 @@ export class S3Backup {
     this.lastBackupTimestamp = timestamp
   }
 
-  public restartAutoBackupTimer(enabled: boolean, frequency: string, backupTime: string = "03:00") {
+  /**
+   * 回滚防重标记：自动备份触发被吞（忙时跳过/执行失败）时由面板调用，
+   * 使下一个 tick 可重试；重试频率由 timeSinceLastBackup 守卫限幅，不会风暴
+   */
+  public resetExecutionMarks(): void {
+    this.lastExecutedHour = -1
+    this.lastExecutedDateStr = ""
+  }
+
+  public restartAutoBackupTimer(enabled: boolean, frequency: BackupFrequency, backupTime: string) {
     this.stopAutoBackupTimer()
     if (enabled) {
       this.startAutoBackupTimer(frequency, backupTime)
@@ -219,21 +227,20 @@ export class S3Backup {
   }
 
   async saveWorkspaceSettings(settings: Partial<BackupSettings>): Promise<void> {
-    const existing = await this.storage.backupSettings.loadOrDefault()
-    await this.storage.backupSettings.save({ ...existing, ...settings })
+    // 串行执行 load-merge-save：并发调用交错读写会用过期快照覆盖刚写入的字段
+    const task = this.saveChain.then(async () => {
+      const existing = await this.storage.backupSettings.loadOrDefault()
+      await this.storage.backupSettings.save({ ...existing, ...settings })
+    })
+    // 链上吞错防断链，错误仍通过 task 抛给当前调用方
+    this.saveChain = task.catch(() => {})
+    return task
   }
 
   // ========== 工作区检测 ==========
 
   private async detectAndInitWorkspace(): Promise<void> {
-    // 1. 环境变量（最高优先级）
-    const envRoot = (window as any).__SIYUAN_WORKSPACE__ || (window as any).SIYUAN_WORKSPACE
-    if (envRoot) {
-      this.setWorkspacePaths(envRoot)
-      return
-    }
-
-    // 2. API 自动获取（最可靠的方式）
+    // 1. API 自动获取（最可靠的方式）
     try {
       const dir = await getWorkspaceDir()
       if (dir) {
@@ -242,7 +249,7 @@ export class S3Backup {
       }
     } catch { /* ignore */ }
 
-    // 3. 持久化存储（兜底）
+    // 2. 持久化存储（兜底）
     try {
       const data = await this.storage.backupSettings.loadOrDefault()
       if (data.workspaceRoot) {
@@ -276,6 +283,8 @@ export class S3Backup {
  * 注册 S3 备份功能
  */
 export function registerS3Backup(plugin: Plugin): void {
+  // 重复注册防护：先销毁旧实例，避免定时器/监听器/persistent Modal 泄漏
+  s3BackupInstance?.destroy()
   s3BackupInstance = new S3Backup(plugin)
   // 挂到 plugin 实例供 onunload() 销毁钩子调用（缺失会导致定时器与事件监听器泄漏）
   ;(plugin as any).__s3Backup = s3BackupInstance

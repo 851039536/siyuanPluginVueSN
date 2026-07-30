@@ -584,15 +584,43 @@ export function useDocAnalysis(plugin: Plugin) {
   async function queryByMissingPlatform(platformMatcher: string) {
     statsFilter.value = ""
     const platformEntry = PLATFORM_META.value.find((p) => p.id === platformMatcher || p.matchers.includes(platformMatcher))
-    const matchers = platformEntry ? platformEntry.matchers : [platformMatcher]
-    // 与 getPlatformIdFromAttrKey 判定逻辑对齐：要求 custom- 前缀 + -yaml 后缀 + 包含 matcher
-    const nameConditions = matchers.map((m) => `name LIKE 'custom-%${escapeSqlLike(m)}%-yaml' ESCAPE '\\'`).join(" OR ")
-    await runDocQuery({
-      extraWhere: `AND b.id IN (
-        SELECT block_id FROM attributes WHERE name LIKE 'custom-%-yaml'
-        AND block_id IN (SELECT b2.id FROM blocks b2 LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw2 ON b2.id = sw2.root_id WHERE b2.type = 'd' AND COALESCE(sw2.total_size, 0) > 0 ${buildNotebookCondition()})
-      ) AND b.id NOT IN (SELECT block_id FROM attributes WHERE (${nameConditions}))`,
-    })
+    const targetIds = new Set(platformEntry ? [platformEntry.id] : [platformMatcher])
+    const nc = buildNotebookCondition()
+
+    // 与分析阶段(analyzePlatformPublish)使用完全相同的 JS 判定逻辑，消除 SQL LIKE 与 JS 的语义差异
+    const yamlRows = await sql(`
+      SELECT block_id, name FROM attributes
+      WHERE name LIKE '%yaml%'
+      AND block_id IN (
+        SELECT b.id FROM blocks b
+        LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
+        WHERE b.type = 'd' AND COALESCE(sw.total_size, 0) > 0 ${nc}
+      )
+      LIMIT 50000
+    `)
+
+    // 逐文档聚合已发布平台（与 analyzePlatformPublish 同逻辑）
+    const docPlatforms = new Map<string, Set<string>>()
+    if (yamlRows) {
+      for (const row of yamlRows) {
+        const id = String(row.block_id)
+        const pid = getPlatformIdFromAttrKey(String(row.name), PLATFORM_META.value)
+        if (!pid) continue
+        if (!docPlatforms.has(id)) docPlatforms.set(id, new Set())
+        docPlatforms.get(id)!.add(pid)
+      }
+    }
+
+    // 筛选：已发布到至少一个平台、但未发布到目标平台的文档
+    const matchingIds: string[] = []
+    for (const [id, platforms] of docPlatforms) {
+      if (platforms.size > 0 && ![...targetIds].some((t) => platforms.has(t))) {
+        matchingIds.push(id)
+      }
+    }
+
+    if (matchingIds.length === 0) { setEmptyState(); return }
+    await runDocQuery({ extraWhere: buildIdInClause(new Set(matchingIds)) })
   }
 
   return {

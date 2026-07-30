@@ -135,6 +135,40 @@ export function getPlatformStatus(item: PlatformStatusItem, key: PlatformKey): b
   return item[key]
 }
 
+// ── 仓库链接一致性审计（useRepoLinkAudit 产出 / RepoLinkAuditSection 消费）──
+/** 单平台比对状态：一致 / 不一致 / 仅配置链接 / 仅存在远程 / 两者皆无 */
+export type RepoLinkAuditState = "match" | "mismatch" | "linkOnly" | "remoteOnly" | "none"
+
+/** 单项目单平台的审计单元格（link/remoteUrl 保留原文供 tooltip 排错） */
+export interface RepoLinkAuditCell {
+  key: PlatformKey
+  state: RepoLinkAuditState
+  /** 手动配置的仓库链接原文（未配置为空串） */
+  link: string
+  /** 实际检测到的远程 URL 原文（无该平台远程为空串） */
+  remoteUrl: string
+}
+
+/** 单项目审计行 */
+export interface RepoLinkAuditRow {
+  id: string
+  name: string
+  path: string
+  /** 路径无效或 git 检测失败 */
+  error: boolean
+  cells: RepoLinkAuditCell[]
+  /** 存在 mismatch/linkOnly/remoteOnly 或 error */
+  hasIssue: boolean
+}
+
+/** 审计四态汇总计数 */
+export interface RepoLinkAuditSummary {
+  match: number
+  mismatch: number
+  linkOnly: number
+  remoteOnly: number
+}
+
 /** 统计面板聚合视图（单对象 prop，消除 useGitStats → useGitPush → index.vue → StatsPanel 四层透传的字段遗漏风险） */
 export interface StatsView {
   projectCount: number

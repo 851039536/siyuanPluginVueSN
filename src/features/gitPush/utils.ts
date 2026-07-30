@@ -74,15 +74,38 @@ const PLATFORM_FLAG_BY_KEY: Record<PlatformKey, "isGithub" | "isGitee" | "isGite
   cnb: "isCnb",
 }
 
+/** 查找指定平台的首个命中远程（远程名等于平台 key，或平台检测标志命中） */
+export function findPlatformRemote(remotes: GitRemoteInfo[], key: PlatformKey): GitRemoteInfo | undefined {
+  const flagProp = PLATFORM_FLAG_BY_KEY[key]
+  return remotes.find((r) => r.name === key || r[flagProp])
+}
+
 /** 判断指定平台是否已存在于远程列表（远程名等于平台 key，或平台检测标志命中） */
 export function hasPlatformRemote(remotes: GitRemoteInfo[], key: PlatformKey): boolean {
-  const flagProp = PLATFORM_FLAG_BY_KEY[key]
-  return remotes.some((r) => r.name === key || r[flagProp])
+  return !!findPlatformRemote(remotes, key)
 }
 
 /** 向则项目是否配置了任何远程仓库 */
 export function hasAnyRemote(project: GitProject): boolean {
   return PLATFORM_META.some((pm) => !!project[pm.remoteProp])
+}
+
+/**
+ * 归一化 git 仓库 URL（ssh/https/凭据/.git 后缀统一抹平为 host/path），
+ * 两个 URL 归一化后相等即视为指向同一仓库（仓库链接一致性分析用）
+ */
+export function normalizeGitUrl(url: string): string {
+  let s = url.trim().toLowerCase()
+  if (!s) { return "" }
+  // 剔除协议头（https:// / http:// / ssh:// / git://）
+  s = s.replace(/^(?:https?|ssh|git):\/\//, "")
+  // scp 短形式 git@host:path → host/path
+  s = s.replace(/^([^/@]+@[^/:]+):/, "$1/")
+  // 剔除凭据段 user(:pass)@
+  s = s.replace(/^[^/@]+@/, "")
+  // 去掉尾部 / 与 .git 后缀
+  s = s.replace(/\/+$/, "").replace(/\.git$/, "")
+  return s
 }
 
 // ── 文件状态标记渲染辅助（WorkingTreePanel / StashSection 共用）──

@@ -223,6 +223,8 @@ interface Props {
   attrs: Record<string, string> | null
   loading: boolean
   error: string
+  /** docAnalysis 分片 i18n（提供发布操作提示文案） */
+  i18n: Record<string, string>
 }
 
 const props = defineProps<Props>()
@@ -283,15 +285,15 @@ function handlePublishFormat() {
 async function handlePublishGo(platform: PlatformInfo) {
   if (publishGoLoading.value) return
   publishGoLoading.value = platform.id
-  const ok = await copyDocForPublish(props.docId, props.attrs?.title || "")
-  if (ok) openExternalPublish(platform.url, platform.name)
+  const ok = await copyDocForPublish(props.docId, props.attrs?.title || "", props.i18n)
+  if (ok) openExternalPublish(platform.url, platform.name, props.i18n)
   publishGoLoading.value = null
 }
 
 async function copyMdContent() {
   if (mdCopyLoading.value) return
   mdCopyLoading.value = true
-  await copyDocForPublish(props.docId, props.attrs?.title || "")
+  await copyDocForPublish(props.docId, props.attrs?.title || "", props.i18n)
   mdCopyLoading.value = false
 }
 
@@ -470,8 +472,8 @@ async function copyAllAttrs() {
 }
 
 async function goToDoocs() {
-  const ok = await copyDocForPublish(props.docId, props.attrs?.title || "")
-  if (ok) openExternalPublish("https://md.doocs.org/", "md.doocs.org", 400)
+  const ok = await copyDocForPublish(props.docId, props.attrs?.title || "", props.i18n)
+  if (ok) openExternalPublish("https://md.doocs.org/", "md.doocs.org", props.i18n, 400)
 }
 </script>
 

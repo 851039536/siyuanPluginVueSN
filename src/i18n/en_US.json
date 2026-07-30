@@ -600,7 +600,10 @@
     "downloadSuccess": "HTML file downloading...",
     "formatSuccess": "Formatting rules applied",
     "renderError": "Render error",
-    "publishFromAttrs": "Format & Publish: format in editor then copy to publish"
+    "publishFromAttrs": "Format & Publish: format in editor then copy to publish",
+    "publishFetchFailed": "Failed to get document content, please retry",
+    "publishClipboardFailed": "Failed to copy to clipboard",
+    "publishCopiedRedirect": "Title and content copied, redirecting to {platform}"
   },
   "enableDocNavigation": "Enable Document Navigation",
   "enableDocNavigationDesc": "Auto display navigation links to parent and child documents below title",

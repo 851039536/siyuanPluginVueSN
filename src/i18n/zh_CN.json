@@ -600,7 +600,10 @@
     "downloadSuccess": "HTML 文件下载中...",
     "formatSuccess": "已应用排版规则",
     "renderError": "渲染失败",
-    "publishFromAttrs": "排版发布：在编辑器内格式化后复制发布"
+    "publishFromAttrs": "排版发布：在编辑器内格式化后复制发布",
+    "publishFetchFailed": "获取文档内容失败，请重试",
+    "publishClipboardFailed": "复制到剪贴板失败",
+    "publishCopiedRedirect": "标题和内容已复制，即将跳转到 {platform}"
   },
   "enableDocNavigation": "启用文档层级导航",
   "enableDocNavigationDesc": "在文档标题下方自动显示父子文档的导航链接",

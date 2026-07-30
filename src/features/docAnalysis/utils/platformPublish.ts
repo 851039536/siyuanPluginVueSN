@@ -3,12 +3,12 @@
  */
 import type { PlatformMeta } from "../types/index"
 
-/** 从 YAML 属性 key 中提取发布平台名（如 custom-csdn-yaml → "csdn"），格式不符或无匹配返回 null */
+/** 从 YAML 属性 key 中提取发布平台名（如 custom-csdn-yaml → "csdn"），格式不符或无匹配返回 null；全程小写比较，兼容大写 matcher */
 export function getPlatformIdFromAttrKey(key: string, platformMeta: PlatformMeta[]): string | null {
-  if (!key.startsWith("custom-") || !key.endsWith("-yaml")) return null
   const lower = key.toLowerCase()
+  if (!lower.startsWith("custom-") || !lower.endsWith("-yaml")) return null
   for (const meta of platformMeta) {
-    if (meta.matchers.some((m) => lower.includes(m))) return meta.id
+    if (meta.matchers.some((m) => lower.includes(m.toLowerCase()))) return meta.id
   }
   return null
 }
@@ -25,9 +25,8 @@ export function getPublishedPlatformIdsFromAttrs(attrs: Record<string, string> |
   return ids
 }
 
-/** 计算文档的未发布平台名称列表 */
+/** 计算文档的未发布平台名称列表（全部已发布返回 undefined） */
 export function computeUnpublishedPlatformNames(publishedIds: Set<string>, platformMeta: PlatformMeta[]): string[] | undefined {
-  if (publishedIds.size >= platformMeta.length) return undefined
   const names = platformMeta
     .filter((m) => !publishedIds.has(m.id))
     .map((m) => m.name)

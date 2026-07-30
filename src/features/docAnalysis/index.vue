@@ -341,6 +341,7 @@
       <PublishPanel
         :plugin="props.plugin"
         :doc-id="publishDocId"
+        :i18n="i18n"
       />
     </div>
 
@@ -351,6 +352,7 @@
       :attrs="attrsData"
       :loading="attrsLoading"
       :error="attrsError"
+      :i18n="i18n"
       @close="handleCloseAttrs"
       @refresh="handleRefreshAttrs"
       @publish="handlePublishDoc"

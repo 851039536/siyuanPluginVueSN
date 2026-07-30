@@ -128,6 +128,8 @@
               <span class="checksum-size">{{ formatFileSize(item.fileSize) }}</span>
               <span class="checksum-sep">·</span>
               <span class="checksum-time">{{ formatTime(item.time) }}</span>
+              <!-- 相对时间（如"5分钟前"） -->
+              <span class="checksum-relative">{{ formatRelativeTime(item.time) }}</span>
             </span>
             <!-- 操作按钮区 -->
             <div class="checksum-actions">
@@ -180,7 +182,7 @@
 <script setup lang="ts">
 import { ref, watch } from "vue"
 import { Icon } from "@iconify/vue"
-import { formatFileSize, formatTime } from "@/utils/format"
+import { formatFileSize, formatRelativeTime, formatTime } from "@/utils/format"
 import { copyToClipboard } from "@/utils/domUtils"
 import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"

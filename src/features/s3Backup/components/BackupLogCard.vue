@@ -35,6 +35,8 @@
             <span v-if="log.fileSize" class="log-size">{{ formatFileSize(log.fileSize) }}</span>
             <span v-if="log.fileSize" class="log-sep">·</span>
             <span class="log-time">{{ formatTime(log.time) }}</span>
+            <!-- 相对时间（如"5分钟前"） -->
+            <span class="log-relative">{{ formatRelativeTime(log.time) }}</span>
             <span v-if="log.hostname" class="log-sep">·</span>
             <span v-if="log.hostname" class="log-hostname">{{ log.hostname }}</span>
           </span>
@@ -99,7 +101,7 @@
 <script setup lang="ts">
 import { reactive } from "vue"
 import { showMessage } from "siyuan"
-import { formatFileSize, formatTime } from "@/utils/format"
+import { formatFileSize, formatRelativeTime, formatTime } from "@/utils/format"
 import { copyToClipboard } from "@/utils/domUtils"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"

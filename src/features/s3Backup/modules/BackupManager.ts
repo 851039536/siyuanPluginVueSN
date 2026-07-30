@@ -14,8 +14,12 @@ import type { LocalBackupInfo, IncrementalFileEntry } from "../types"
 
 // ========== 模块常量 ==========
 
-/** 扫描时始终跳过的目录（思源临时目录/回收站） */
-const SKIP_DIRS = ["temp", ".recycle"] as const
+/**
+ * 扫描时始终跳过的目录（思源临时目录/回收站/内核健康检查目录）
+ * filesys_status_check：思源内核周期性写入又删除 check_consistency 探测文件，
+ * 扫描时存在、压缩时已消失会导致惰性读流 ENOENT 使整次备份失败，且无备份价值
+ */
+const SKIP_DIRS = ["temp", ".recycle", "filesys_status_check"] as const
 
 /** 插件生成的日期子文件夹命名规则（useDateFolder 开启时的 data-YYYYMMDD 目录） */
 const DATE_DIR_RE = /^data-\d{8}$/

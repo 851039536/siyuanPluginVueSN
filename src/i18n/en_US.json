@@ -2118,6 +2118,7 @@
   "guideSSL": "Check when the server has an HTTPS certificate or reverse proxy; usually unchecked for local services",
   "statusConnected": "Connected",
   "statusDisconnected": "Disconnected",
+  "clientNotInitialized": "S3 client not initialized",
   "testException": "Test error",
   "uploadTimeout": "Upload timeout (seconds)",
   "uploadTimeoutHint": "Timeout for a single upload request; increase for large files or slow networks. Default 240 seconds",

@@ -2635,6 +2635,8 @@
     "cellTooltip": "{date} ({weekday}): {count}次",
     "achievementsLabel": "成就",
     "deleteAchievementHint": "删除此成就",
+    "confirmDeleteAchievement": "确定删除此成就？",
+    "tierAll": "全部",
     "lockedLabel": "未获得",
     "comparisonHint": "选择两个期间并点击\"对比\"",
     "compareBtn": "对比",

@@ -2635,6 +2635,8 @@
     "cellTooltip": "{date} ({weekday}): {count} times",
     "achievementsLabel": "Achievements",
     "deleteAchievementHint": "Delete this achievement",
+    "confirmDeleteAchievement": "Delete this achievement?",
+    "tierAll": "All",
     "lockedLabel": "Locked",
     "comparisonHint": "Select two periods and click \"Compare\"",
     "compareBtn": "Compare",

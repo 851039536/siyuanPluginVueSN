@@ -48,6 +48,13 @@ export default defineConfig(({
     resolve: {
       alias: {
         "@": resolve(__dirname, "src"),
+        // jszip 默认按 browser 字段解析到浏览器版 dist/jszip.min.js（nodestream 能力被裁剪），
+        // 会导致 s3Backup 的流式打包（zip.file 挂载 Node 流 + generateNodeStream）
+        // 抛出 "nodestream is not supported by this platform"。
+        // 思源桌面端是 Electron 渲染进程，具备完整 Node 能力，这里强制打包 Node 源码版，
+        // 并把 readable-stream 指向运行时内置的原生 stream 模块（下方 external 列表中外部化）。
+        "jszip": resolve(__dirname, "node_modules/jszip/lib/index.js"),
+        "readable-stream": "stream",
       },
     },
 
@@ -107,6 +114,15 @@ export default defineConfig(({
       outDir: distDir,
       emptyOutDir: !isWatch,
 
+      commonjsOptions: {
+        // jszip 的 support.js 在 try/catch 内 require("readable-stream") 做 nodestream 能力探测，
+        // @rollup/plugin-commonjs 默认 ignoreTryCatch: true 会原样保留该调用，
+        // 而思源运行时环境没有 readable-stream 包 → 探测失败 → nodestream=false，
+        // 导致 s3Backup 的 generateNodeStream 报 "nodestream is not supported"。
+        // 仅对 readable-stream 强制打包转换，使其走上方 alias → 原生 stream 模块。
+        ignoreTryCatch: (id: string) => id !== "readable-stream",
+      },
+
       // 构建后是否生成 source map 文件
       sourcemap: false,
 
@@ -155,7 +171,7 @@ export default defineConfig(({
 
         // make sure to externalize deps that shouldn't be bundled
         // into your library
-        external: ["siyuan", "process", "node:fs", "node:path", "node:child_process", "node:os", "node:http", "node:https", "node:crypto"],
+        external: ["siyuan", "process", "stream", "node:fs", "node:path", "node:child_process", "node:os", "node:http", "node:https", "node:crypto"],
 
         output: {
           entryFileNames: "[name].js",

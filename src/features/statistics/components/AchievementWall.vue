@@ -56,7 +56,7 @@
           v-if="ach._custom"
           class="btn-del-ach"
           :title="i18n.deleteAchievementHint"
-          @click="emit('deleteCustom', ach.id)"
+          @click="onDeleteCustom(ach.id)"
         >
           <IconWrapper
             name="close"
@@ -90,7 +90,7 @@
       />
     </button>
     <div
-      v-if="showLocked"
+      v-if="showLocked && filteredLocked.length > 0"
       class="achievement-grid locked"
     >
       <div
@@ -103,7 +103,7 @@
           v-if="ach._custom"
           class="btn-del-ach"
           :title="i18n.deleteAchievementHint"
-          @click="emit('deleteCustom', ach.id)"
+          @click="onDeleteCustom(ach.id)"
         >
           <IconWrapper
             name="close"
@@ -128,7 +128,7 @@ import type { IconKey } from "@/config/icons"
 import { computed, ref } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { ACH_CATEGORIES } from "../types/milestoneData"
-import { getAchType, matchCategory, matchTier } from "../utils/achievements"
+import { matchCategory, matchTier } from "../utils/achievements"
 
 interface Props {
   unlocked: AchievementDef[]
@@ -148,12 +148,15 @@ const activeAchTier = ref("all")
 
 const achCategories = ACH_CATEGORIES
 
+// 稀有度筛选 Tab："全部" + 由 tierLabels 派生的四级稀有度（避免重复枚举 tier id）
 const achTiers = computed(() => [
-  { id: "all", icon: "star", name: "全部" },
-  { id: "common", icon: "star", name: props.tierLabels.common },
-  { id: "rare", icon: "star", name: props.tierLabels.rare },
-  { id: "epic", icon: "star", name: props.tierLabels.epic },
-  { id: "legendary", icon: "star", name: props.tierLabels.legendary },
+  // Tab 名："全部"
+  { id: "all", icon: "star", name: props.i18n.tierAll },
+  ...Object.entries(props.tierLabels).map(([id, name]) => ({
+    id,
+    icon: "star",
+    name,
+  })),
 ])
 
 function matchFilters(ach: AchievementDef): boolean {
@@ -163,16 +166,20 @@ function matchFilters(ach: AchievementDef): boolean {
 const filteredUnlocked = computed(() => props.unlocked.filter(matchFilters))
 const filteredLocked = computed(() => props.locked.filter(matchFilters))
 
+/** 分类 Tab 角标：该分类下（叠加当前稀有度筛选）的已解锁数 */
 function getCategoryCount(catId: string): number {
-  if (catId === "all") return props.unlocked.filter((a) => matchTier(a, activeAchTier.value)).length
-  const cat = achCategories.find((c) => c.id === catId)
-  if (!cat || !cat.types) return 0
-  return props.unlocked.filter((a) => cat.types!.includes(getAchType(a)) && matchTier(a, activeAchTier.value)).length
+  return props.unlocked.filter((a) => matchCategory(a, catId) && matchTier(a, activeAchTier.value)).length
 }
 
+/** 稀有度 Tab 角标：该稀有度下（叠加当前分类筛选）的已解锁数 */
 function getTierCount(tierId: string): number {
-  if (tierId === "all") return props.unlocked.filter((a) => matchCategory(a, activeAchCategory.value)).length
-  return props.unlocked.filter((a) => a.tier === tierId && matchCategory(a, activeAchCategory.value)).length
+  return props.unlocked.filter((a) => matchTier(a, tierId) && matchCategory(a, activeAchCategory.value)).length
+}
+
+function onDeleteCustom(id: string) {
+  // 删除不可撤销，先经原生确认（与 AchievementsTab 删除行为一致）
+  if (!window.confirm(props.i18n.confirmDeleteAchievement)) return
+  emit("deleteCustom", id)
 }
 </script>
 

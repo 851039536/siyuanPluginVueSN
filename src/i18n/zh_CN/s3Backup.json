@@ -138,5 +138,15 @@
   "logMoreFiles": "+{count} 更多",
   "logCopyDetail": "复制详情",
   "logCopied": "已复制",
-  "hashCopied": "SHA-256 已复制"
+  "hashCopied": "SHA-256 已复制",
+  "configGuide": "配置指引",
+  "guideEndpoint": "S3 服务地址，不含 http:// 前缀。如 192.168.1.100:5244",
+  "guideKeys": "从 S3 服务管理后台获取。OpenList 在「对象存储」设置中生成",
+  "guideBucket": "存储桶名称，需与 S3 服务端创建的桶名一致",
+  "guideRegion": "区域标识。MinIO / OpenList 等自建服务通常填 us-east-1 即可",
+  "guidePathStyle": "自建服务（MinIO、OpenList、Ceph）必须勾选；AWS S3 / Cloudflare R2 通常不勾选",
+  "guideSSL": "服务端配了 HTTPS 证书或反代时勾选，本地服务通常不勾选",
+  "statusConnected": "已连接",
+  "statusDisconnected": "未连接",
+  "testException": "测试异常"
 }

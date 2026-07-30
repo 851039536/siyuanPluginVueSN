@@ -83,84 +83,51 @@ this.modal.destroy() // 彻底销毁（persistent 模式卸载时必调）
 └──────────────────────────────────────────────────────────┘
 ```
 
-### 实现步骤
-
-**1. 创建 persistent Modal**
+### 实现步骤（完整示例）
 
 ```typescript
-// index.ts
+// ===== index.ts =====
 import { createModalVueApp } from "@/utils/vueAppHelper"
 
 class MyFeature {
   private modal: ModalAppInstance
+  private timer: number | null = null
 
   constructor(plugin: Plugin) {
+    // 1. 创建 persistent Modal
     this.modal = createModalVueApp(MyPanel, {
       maskId: "my-feature-mask",
       persistent: true, // 关键：关闭时仅 display:none，不销毁 Vue
       getCloseHandler: () => this.close,
-      buildProps: () => ({
-        onClose: this.close,
-        i18n: plugin.i18n,
-        plugin,
-      }),
+      buildProps: () => ({ onClose: this.close, i18n: plugin.i18n, plugin }),
     })
   }
-}
-```
 
-**2. init() 中预挂载，触发 onMounted 注册监听**
-
-```typescript
-async init() {
-  this.modal.open()    // 创建 Vue 实例 → onMounted 触发 → addEventListener 注册
-  this.modal.close()   // display:none 隐藏 DOM，Vue 实例/监听器保留
-  this.startTimer()    // 启动 setInterval 定时器
-}
-
-// setInterval 轮询，条件满足时派发事件
-private startTimer() {
-  this.timer = window.setInterval(() => {
-    if (/* 满足触发条件 */) {
-      emitCustomEvent("myFeatureTick")
-    }
-  }, 60000)
-}
-```
-
-**3. Vue 组件中注册事件监听**
-
-```typescript
-// index.vue
-import {
-  onMounted,
-  onUnmounted,
-} from "vue"
-
-function handleTick() {
-  // 执行后台任务
-}
-
-onMounted(() => {
-  window.addEventListener("myFeatureTick", handleTick)
-})
-
-onUnmounted(() => {
-  window.removeEventListener("myFeatureTick", handleTick)
-})
-```
-
-**4. 插件卸载时彻底清理**
-
-```typescript
-// index.ts
-public destroy() {
-  if (this.timer) {
-    clearInterval(this.timer)
-    this.timer = null
+  // 2. init() 中预挂载，触发 onMounted 注册监听
+  async init() {
+    this.modal.open()  // 创建 Vue 实例 → onMounted 触发 → addEventListener 注册
+    this.modal.close() // display:none 隐藏 DOM，Vue 实例/监听器保留
+    this.startTimer()
   }
-  this.modal.destroy()   // unmount Vue + 移除 DOM → onUnmounted 触发
+
+  // setInterval 轮询，条件满足时派发事件
+  private startTimer() {
+    this.timer = window.setInterval(() => {
+      if (/* 满足触发条件 */) emitCustomEvent("myFeatureTick")
+    }, 60000)
+  }
+
+  // 4. 插件卸载时彻底清理
+  public destroy() {
+    if (this.timer) { clearInterval(this.timer); this.timer = null }
+    this.modal.destroy() // unmount Vue + 移除 DOM → onUnmounted 触发
+  }
 }
+
+// ===== index.vue（3. Vue 组件中注册事件监听）=====
+function handleTick() { /* 执行后台任务 */ }
+onMounted(() => window.addEventListener("myFeatureTick", handleTick))
+onUnmounted(() => window.removeEventListener("myFeatureTick", handleTick))
 ```
 
 ### 关键点
@@ -1009,24 +976,17 @@ components/
 
 ### 排查三步法
 
-1. **确认源文件正确**：
-   ```bash
-   node -e "const j=require('./src/i18n/zh_CN/gitPush.json'); console.log(Object.keys(j.gitPush).length)"
-   # 应返回完整 key 数（如 257）
-   ```
+用同一验证命令模板依次检查三处，key 数应一致且包含目标 key：
 
-2. **确认合并文件正确**（源目录）：
-   ```bash
-   node -e "const j=require('./src/i18n/zh_CN.json'); const gp=j.gitPush||{}; console.log(Object.keys(gp).length, 'refreshWorkingTree' in gp)"
-   # 应与源分片一致
-   ```
+```bash
+node -e "const j=require('<路径>'); const gp=j.gitPush||j; console.log(Object.keys(gp).length, 'refreshWorkingTree' in gp)"
+```
 
-3. **确认构建产物正确**（思源工作区目录）：
-   思源工作区路径见 `.env` 文件中的 `VITE_SIYUAN_WORKSPACE_PATH`。
-   ```bash
-   node -e "const j=require('E:/siyuan2/data/plugins/siyuan-plugin-vite-vue-sn/i18n/zh_CN.json'); const gp=j.gitPush||{}; console.log(Object.keys(gp).length, 'refreshWorkingTree' in gp)"
-   # 如果 key 数不对或缺少 key → 构建产物是旧的
-   ```
+| 步骤 | 路径 | 说明 |
+|------|------|------|
+| 1. 源分片 | `./src/i18n/zh_CN/gitPush.json` | 确认源文件正确（应返回完整 key 数，如 257） |
+| 2. 合并文件 | `./src/i18n/zh_CN.json` | 确认合并产物与源分片一致 |
+| 3. 构建产物 | `E:/siyuan2/data/plugins/siyuan-plugin-vite-vue-sn/i18n/zh_CN.json` | 思源工作区路径见 `.env` 的 `VITE_SIYUAN_WORKSPACE_PATH`；key 数不对或缺 key → 构建产物是旧的 |
 
 ### 手动修复
 

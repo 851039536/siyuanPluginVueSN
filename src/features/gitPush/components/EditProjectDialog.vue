@@ -387,13 +387,13 @@ async function downloadRepoLink(platform: string): Promise<boolean> {
 
 // ── Git 远程仓库（EditableRemoteList 数据源与操作回调）──
 // 识别为平台的远程用统一 label + icon 展示（与仓库链接列表一致），key 仍为真实远程名供 git 操作；
-// 附远程名后缀便于区分同平台多远程，origin/upstream 等自定义远程回退显示原始名
+// origin/upstream 等未识别为平台的自定义远程回退显示原始名
 const remoteRows = computed<RemoteRowItem[]>(() =>
   remoteList.value.map((r) => {
     const pm = resolveRemotePlatform(r)
     return {
       key: r.name,
-      name: pm ? `${pm.label} (${r.name})` : r.name,
+      name: pm ? pm.label : r.name,
       url: r.url,
       icon: pm?.icon,
     }

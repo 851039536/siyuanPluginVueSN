@@ -13,7 +13,7 @@ import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import type { BackupManager, BackupProgress } from "../modules/BackupManager"
 import type { BackupLog, BackupLogDetail, BackupManifest, IncrementalFileEntry } from "../types"
-import { LARGE_FILE_WARN_SIZE, MANIFEST_VERSION, MAX_LOG_DETAIL_FILES } from "../types"
+import { LARGE_FILE_WARN_SIZE, MANIFEST_VERSION, MAX_LOG_DETAIL_FILES, MSG_DESKTOP_ONLY } from "../types"
 import { buildIncrementalKey, buildManifestKey, diffManifest, getHostname, parseManifest } from "../utils"
 
 /** 上传并发数（S3 客户端无内建并发管理，固定小并发防止请求风暴） */
@@ -285,7 +285,7 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
   ): Promise<IncrementalRestoreResult> {
     const node = getNodeModules()
     if (!node) {
-      throw new Error("无法访问文件系统，请使用桌面版思源笔记")
+      throw new Error(MSG_DESKTOP_ONLY)
     }
 
     // 1. 下载 manifest（还原场景下无清单/解析失败均为致命错误）

@@ -148,5 +148,8 @@
   "guideSSL": "Check when the server has an HTTPS certificate or reverse proxy; usually unchecked for local services",
   "statusConnected": "Connected",
   "statusDisconnected": "Disconnected",
-  "testException": "Test error"
+  "testException": "Test error",
+  "s3UploadResult": "Backup upload finished: {uploaded} uploaded, {skipped} skipped",
+  "s3UploadFailedPart": ", {failed} file(s) failed to read",
+  "allFilesExist": "All files already exist on S3, {skipped} skipped"
 }

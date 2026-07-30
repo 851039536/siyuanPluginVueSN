@@ -144,6 +144,9 @@ export interface BackupLogDetail {
 
 // ========== 默认值常量 ==========
 
+/** 非桌面端无法访问文件系统的统一错误消息（模块内部使用，不经 i18n） */
+export const MSG_DESKTOP_ONLY = "无法访问文件系统，请使用桌面版思源笔记"
+
 export const DEFAULT_BACKUP_MODE: BackupMode = {
   localZip: true,
   s3Upload: false,

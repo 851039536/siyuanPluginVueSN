@@ -201,12 +201,7 @@ export interface PublishTheme {
   container: Record<string, string>
   /** 按标签的样式覆盖（标签 → CSS属性 → 值） */
   elements: Record<string, Record<string, string>>
-  /** 默认代码高亮主题（highlight.js 主题名） */
-  codeTheme: CodeTheme
 }
-
-/** 代码高亮主题 */
-export type CodeTheme = "github" | "monokai" | "atom-one-dark" | "atom-one-light" | "vs"
 
 
 // ============================================================

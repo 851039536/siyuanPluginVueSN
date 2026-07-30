@@ -35,6 +35,7 @@ import {
 import {
   buildIdInClause,
   buildIdNotInClause,
+  daysAgoStr,
   escapeSql,
   quoteSql,
   quoteSqlList,
@@ -60,10 +61,6 @@ import { filterDuplicateGroups } from "../utils"
 
 /** 平台元数据（模块级响应式单例） */
 export const PLATFORM_META = ref<PlatformMeta[]>([...DEFAULT_PLATFORM_META])
-
-function getAllPlatformsMask() {
-  return (1 << PLATFORM_META.value.length) - 1
-}
 
 // ============================================================
 // 模块级纯常量 / 纯函数（不依赖组件实例状态）
@@ -104,13 +101,6 @@ const SIZE_CONDITIONS: Record<string, string> = {
   "medium": "AND COALESCE(sw.total_size, 0) >= 1024 AND COALESCE(sw.total_size, 0) < 10240",
   "large": "AND COALESCE(sw.total_size, 0) >= 10240 AND COALESCE(sw.total_size, 0) < 102400",
   "xlarge": "AND COALESCE(sw.total_size, 0) >= 102400",
-}
-
-/** 生成思源时间格式的 N 天前字符串 */
-function daysAgoStr(days: number): string {
-  const d = new Date(Date.now() - days * 86400000)
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`
 }
 
 /** 时间区间相邻策略：7days→(>=7d), 30days→(>=30d,<7d)，以此类推 */
@@ -371,7 +361,7 @@ export function useDocAnalysis(plugin: Plugin) {
         analyzeUpdateTime(nc, docStats),
         analyzeDepth(nc, docStats, depthStats.value),
         analyzeBookmarks(nc, docStats),
-        analyzePlatformPublish(nc, docStats, PLATFORM_META.value, getAllPlatformsMask),
+        analyzePlatformPublish(nc, docStats, PLATFORM_META.value),
         analyzeContentQuality(nc, docStats),
         analyzeContentScan(nc, docStats),
         analyzeWordCount(nc, docStats),

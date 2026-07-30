@@ -1,6 +1,13 @@
 /**
- * SQL 转义与拼接工具
+ * SQL 转义、拼接与时间字符串工具
  */
+
+/** 生成思源时间格式（yyyyMMddHHmmss）的 N 天前字符串 */
+export function daysAgoStr(days: number): string {
+  const d = new Date(Date.now() - days * 86400000)
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`
+}
 
 /** SQL 字符串转义（单引号→两个单引号） */
 export function escapeSql(value: string): string {

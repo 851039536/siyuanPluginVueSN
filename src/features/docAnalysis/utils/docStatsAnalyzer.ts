@@ -3,14 +3,8 @@
  */
 import { sql } from "@/api"
 import type { DocStats, DepthStats, PlatformMeta } from "../types/index"
+import { daysAgoStr } from "./sqlHelpers"
 import { SIZE_WORDCOUNT_SUBQUERY } from "./sqlConstants"
-
-/** 生成 N 天前的 yyyyMMddHHmmss 格式字符串 */
-function daysAgoStr(days: number): string {
-  const d = new Date(Date.now() - days * 86400000)
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`
-}
 
 // ============================================================
 // 各维度分析（通过闭包修改 docStats / depthStats reactive）
@@ -24,13 +18,13 @@ export async function analyzeUpdateTime(notebookCondition: string, docStats: Doc
     const ts90 = daysAgoStr(90)
     const ts180 = daysAgoStr(180)
 
+    // 注：90~180 天区间无对应统计桶（UI 无 3~6 月卡片），各桶之和不等于文档总数，属现状设计
     const rows = await sql(`
       SELECT
         SUM(CASE WHEN b.updated >= '${ts7}' THEN 1 ELSE 0 END) as in_7_days,
         SUM(CASE WHEN b.updated >= '${ts30}' AND b.updated < '${ts7}' THEN 1 ELSE 0 END) as in_30_days,
         SUM(CASE WHEN b.updated >= '${ts60}' AND b.updated < '${ts30}' THEN 1 ELSE 0 END) as in_1_to_2_months,
         SUM(CASE WHEN b.updated >= '${ts90}' AND b.updated < '${ts60}' THEN 1 ELSE 0 END) as in_2_to_3_months,
-        SUM(CASE WHEN b.updated >= '${ts180}' AND b.updated < '${ts90}' THEN 1 ELSE 0 END) as in_half_year,
         SUM(CASE WHEN b.updated < '${ts180}' THEN 1 ELSE 0 END) as over_half_year
       FROM blocks b
       WHERE b.type = 'd' ${notebookCondition}
@@ -47,6 +41,10 @@ export async function analyzeUpdateTime(notebookCondition: string, docStats: Doc
 }
 
 export async function analyzeDepth(notebookCondition: string, docStats: DocStats, depthStats: DepthStats) {
+  // 先重置，避免空笔记本重新分析时残留上次的深度分布
+  depthStats.depthDistribution = []
+  depthStats.maxDepth = 0
+  depthStats.avgDepth = 0
   try {
     const rows = await sql(`
       SELECT
@@ -105,10 +103,12 @@ export async function analyzeContentScan(
 ) {
   const result = { incomingRefDocIds: new Set<string>(), orphanDocIds: new Set<string>() }
   try {
+    // 性能护栏：超过 10000 篇文档时截断，引用/孤立统计会存在偏差
     const allDocs = await sql(`SELECT id FROM blocks WHERE type = 'd' ${notebookCondition} LIMIT 10000`)
     if (!allDocs?.length) return result
     const allDocIds = new Set(allDocs.map((r: any) => String(r.id)))
 
+    // 性能护栏：含引用/图片的内容块超过 50000 时截断，统计会存在偏差
     const contentRows = await sql(`
       SELECT root_id, markdown FROM blocks
       WHERE type != 'd' AND (markdown LIKE '%((%' OR markdown LIKE '%![%')
@@ -118,7 +118,6 @@ export async function analyzeContentScan(
 
     const refDocSet = new Set<string>()
     const imgDocSet = new Set<string>()
-    const outgoingSet = new Set<string>()
     const incomingSet = new Set<string>()
     const idPattern = /\(\((\d{14}-[a-z0-9]{7})\b/g
     let totalRefCount = 0
@@ -130,17 +129,16 @@ export async function analyzeContentScan(
         const md = String(row.markdown || "")
         if (!rootId || rootId.length < 22) continue
 
-        if (md.includes("((")) {
-          refDocSet.add(rootId)
-          totalRefCount++
-          outgoingSet.add(rootId)
-          let match: RegExpExecArray | null
-          while ((match = idPattern.exec(md)) !== null) {
-            const targetId = match[1]
-            if (allDocIds.has(targetId) && targetId !== rootId) incomingSet.add(targetId)
-          }
+        // 以合法块 ID 正则命中为判据，避免正文普通括号文本 "((" 误报为引用
+        let hasRef = false
+        let match: RegExpExecArray | null
+        while ((match = idPattern.exec(md)) !== null) {
+          hasRef = true
+          const targetId = match[1]
+          if (allDocIds.has(targetId) && targetId !== rootId) incomingSet.add(targetId)
         }
-        if (md.includes("!(")) { imgDocSet.add(rootId); totalImgCount++ }
+        if (hasRef) { refDocSet.add(rootId); totalRefCount++ }
+        if (md.includes("![")) { imgDocSet.add(rootId); totalImgCount++ }
       }
     }
 
@@ -151,7 +149,7 @@ export async function analyzeContentScan(
     docStats.incomingRefDocs = incomingSet.size
     result.incomingRefDocIds = incomingSet
 
-    const hasOutOrIn = new Set([...outgoingSet, ...incomingSet])
+    const hasOutOrIn = new Set([...refDocSet, ...incomingSet])
     const orphans = new Set<string>()
     for (const id of allDocIds) { if (!hasOutOrIn.has(id)) orphans.add(id) }
     result.orphanDocIds = orphans
@@ -171,7 +169,7 @@ export async function analyzeBookmarks(notebookCondition: string, docStats: DocS
         SUM(CASE WHEN a.value = '无' THEN 1 ELSE 0 END) as none_count
       FROM attributes a
       WHERE a.name = 'bookmark'
-      AND a.block_id IN (SELECT b.id FROM blocks b WHERE b.type = 'd' ${notebookCondition} LIMIT 50000)
+      AND a.block_id IN (SELECT b.id FROM blocks b WHERE b.type = 'd' ${notebookCondition})
     `)
     if (rows?.length > 0) {
       const r = rows[0]
@@ -186,7 +184,7 @@ export async function analyzeBookmarks(notebookCondition: string, docStats: DocS
       SELECT a.value, COUNT(DISTINCT a.block_id) as cnt FROM attributes a
       WHERE a.name = 'bookmark'
       AND a.value NOT IN ('待发布', '已发布', '不使用', '无', '')
-      AND a.block_id IN (SELECT b.id FROM blocks b WHERE b.type = 'd' ${notebookCondition} LIMIT 50000)
+      AND a.block_id IN (SELECT b.id FROM blocks b WHERE b.type = 'd' ${notebookCondition})
       GROUP BY a.value ORDER BY cnt DESC LIMIT 8
     `)
     docStats.customBookmarkTop = customRows
@@ -199,7 +197,6 @@ export async function analyzePlatformPublish(
   notebookCondition: string,
   docStats: DocStats,
   platformMeta: PlatformMeta[],
-  getAllPlatformsMask: () => number,
 ) {
   const result = {
     platformUnpublishedCounts: {} as Record<string, number>,
@@ -251,7 +248,7 @@ export async function analyzePlatformPublish(
     const noSet = new Set<string>()
     const pCounts: Record<string, number> = {}
     for (const p of platformMeta) pCounts[p.id] = 0
-    const allMask = getAllPlatformsMask()
+    const allMask = (1 << platformMeta.length) - 1
 
     for (const [id, mask] of docMap) {
       if (mask === 0) { no++; noSet.add(id); continue }
@@ -279,22 +276,16 @@ export async function analyzeContentQuality(notebookCondition: string, docStats:
   try {
     const tagRows = await sql(`SELECT id FROM blocks WHERE type = 'd' AND tag != '' ${notebookCondition} LIMIT 50000`)
     if (tagRows) for (const row of tagRows) result.taggedDocIds.add(String(row.id))
-  } catch (_e) { /* keep 0 */ }
+  } catch (e) { console.error("标签统计失败:", e) }
   docStats.taggedDocs = result.taggedDocIds.size
 
   try {
-    const [aliased, memoed] = await Promise.all([
-      (async (): Promise<number> => {
-        const rows = await sql(`SELECT COUNT(DISTINCT a.block_id) as cnt FROM attributes a WHERE a.name = 'alias' AND a.value != '' AND a.block_id IN (SELECT b.id FROM blocks b WHERE b.type = 'd' ${notebookCondition})`)
-        return rows?.[0]?.cnt ?? 0
-      })(),
-      (async (): Promise<number> => {
-        const rows = await sql(`SELECT COUNT(DISTINCT a.block_id) as cnt FROM attributes a WHERE a.name = 'memo' AND a.value != '' AND a.block_id IN (SELECT b.id FROM blocks b WHERE b.type = 'd' ${notebookCondition})`)
-        return rows?.[0]?.cnt ?? 0
-      })(),
+    const [aliasRows, memoRows] = await Promise.all([
+      sql(`SELECT COUNT(DISTINCT a.block_id) as cnt FROM attributes a WHERE a.name = 'alias' AND a.value != '' AND a.block_id IN (SELECT b.id FROM blocks b WHERE b.type = 'd' ${notebookCondition})`),
+      sql(`SELECT COUNT(DISTINCT a.block_id) as cnt FROM attributes a WHERE a.name = 'memo' AND a.value != '' AND a.block_id IN (SELECT b.id FROM blocks b WHERE b.type = 'd' ${notebookCondition})`),
     ])
-    docStats.aliasedDocs = aliased
-    docStats.memoedDocs = memoed
+    docStats.aliasedDocs = aliasRows?.[0]?.cnt ?? 0
+    docStats.memoedDocs = memoRows?.[0]?.cnt ?? 0
   } catch (e) { console.error("别名/备注统计失败:", e) }
   return result
 }

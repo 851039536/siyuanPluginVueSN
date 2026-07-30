@@ -2,7 +2,7 @@
  * S3 文件管理器多选状态 composable
  *
  * 维护选中 key 集合与 Windows 资源管理器式选择语义：
- * 单击单选、Ctrl+单击切换、Shift+单击范围选择、全选/清空。纯逻辑无 IO。
+ * 单击单选、Ctrl+单击切换、Shift+单击范围选择、清空。纯逻辑无 IO。
  */
 import { computed, ref } from "vue"
 import type { Ref } from "vue"
@@ -17,7 +17,8 @@ export function useS3Selection(deps: { orderedEntries: Ref<S3Entry[]> }) {
     deps.orderedEntries.value.filter((e) => selectedKeys.value.has(e.key)),
   )
 
-  const selectedCount = computed(() => selectedKeys.value.size)
+  // 仅统计当前目录可见条目，避免跨目录导航后残留 key 虚增计数
+  const selectedCount = computed(() => selectedEntries.value.length)
 
   function isSelected(key: string): boolean {
     return selectedKeys.value.has(key)
@@ -58,23 +59,17 @@ export function useS3Selection(deps: { orderedEntries: Ref<S3Entry[]> }) {
     }
   }
 
-  function selectAll(): void {
-    selectedKeys.value = new Set(deps.orderedEntries.value.map((e) => e.key))
-  }
-
   function clearSelection(): void {
     selectedKeys.value = new Set()
     anchorKey = null
   }
 
   return {
-    selectedKeys,
     selectedEntries,
     selectedCount,
     isSelected,
     handleItemClick,
     ensureSelected,
-    selectAll,
     clearSelection,
   }
 }

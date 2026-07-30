@@ -55,6 +55,12 @@
   color: var(--b3-theme-on-surface-light);
 }
 
+// 目标目录列举失败的错误态（与空态区分）
+.fm-mc-error {
+  color: var(--b3-theme-error);
+  word-break: break-all;
+}
+
 .fm-mc-folder {
   display: flex;
   align-items: center;

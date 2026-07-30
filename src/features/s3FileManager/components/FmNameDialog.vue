@@ -1,4 +1,4 @@
-<!-- 名称输入弹窗 — 新建文件夹 / 重命名共用，Enter 确认、Esc 取消、实时校验非法名称 -->
+<!-- 名称输入弹窗 — 新建文件夹 / 重命名共用，Enter 确认、Esc 取消（全局生效）、实时校验非法名称 -->
 <template>
   <div
     class="fm-dialog-mask"
@@ -24,7 +24,6 @@
           size="small"
           :placeholder="i18n.namePlaceholder"
           @keydown.enter="handleConfirm"
-          @keydown.esc="$emit('close')"
         />
         <!-- 校验错误："名称不能包含斜杠等非法字符" -->
         <span
@@ -63,6 +62,7 @@ import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 import type { S3FileManagerI18n } from "../types"
 import { isValidEntryName } from "../utils"
+import { useEscClose } from "../composables/useEscClose"
 
 const props = defineProps<{
   title: string
@@ -81,6 +81,9 @@ const showError = ref(false)
 const inputRef = ref<InstanceType<typeof Input> | null>(null)
 
 const isValid = computed(() => isValidEntryName(name.value))
+
+// Esc 关闭弹窗（全局监听，不依赖输入框聚焦）
+useEscClose(() => emit("close"))
 
 onMounted(async () => {
   await nextTick()

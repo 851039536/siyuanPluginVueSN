@@ -34,6 +34,7 @@
 import { computed } from "vue"
 import type { IconKey } from "@/config/icons"
 import IconWrapper from "@/components/IconWrapper.vue"
+import { useEscClose } from "../composables/useEscClose"
 
 /** 菜单项：动作标识 + 文案 + 图标 + 是否危险色 */
 export interface FmMenuItem {
@@ -55,6 +56,9 @@ const emit = defineEmits<{
   close: []
   select: [action: string]
 }>()
+
+// Esc 关闭菜单（组件常驻挂载，按可见性守卫）
+useEscClose(() => emit("close"), () => props.visible)
 
 // 定位：限制在视口内，避免右下角溢出（菜单预估宽 180 / 每项高 30）
 const menuStyle = computed(() => {

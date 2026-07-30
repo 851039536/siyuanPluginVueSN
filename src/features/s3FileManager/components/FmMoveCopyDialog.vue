@@ -51,9 +51,16 @@
             <Loader />
           </div>
           <template v-else>
+            <!-- 错误态："目标目录加载失败" + 错误信息 -->
+            <div
+              v-if="loadError"
+              class="fm-mc-state fm-mc-error"
+            >
+              {{ i18n.targetListFailed }}: {{ loadError }}
+            </div>
             <!-- 空态："此文件夹下无子目录" -->
             <div
-              v-if="folders.length === 0"
+              v-else-if="folders.length === 0"
               class="fm-mc-state"
             >
               {{ i18n.noSubFolders }}
@@ -109,6 +116,7 @@ import IconWrapper from "@/components/IconWrapper.vue"
 import Loader from "@/components/Loader.vue"
 import type { S3FileManagerI18n } from "../types"
 import { aggregateEntries, nameFromKey, prefixFromSegments, splitPrefixSegments } from "../utils"
+import { useEscClose } from "../composables/useEscClose"
 
 const props = defineProps<{
   title: string
@@ -118,7 +126,7 @@ const props = defineProps<{
   i18n: S3FileManagerI18n
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   confirm: [destPrefix: string]
   close: []
 }>()
@@ -126,6 +134,10 @@ defineEmits<{
 const currentPrefix = ref(props.rootPrefix)
 const folders = ref<string[]>([])
 const loading = ref(false)
+const loadError = ref("")
+
+// Esc 关闭弹窗
+useEscClose(() => emit("close"))
 
 const segments = computed(() => {
   const relative = currentPrefix.value.startsWith(props.rootPrefix)
@@ -140,6 +152,7 @@ function folderName(prefix: string): string {
 
 async function navigate(prefix: string): Promise<void> {
   loading.value = true
+  loadError.value = ""
   currentPrefix.value = prefix
   try {
     const listing = await listDir(props.requireClient(), prefix)
@@ -148,7 +161,9 @@ async function navigate(prefix: string): Promise<void> {
     const agg = aggregateEntries(listing.files, prefix)
     folders.value = [...new Set([...listing.folders, ...agg.folders])]
   } catch (err) {
+    // 列举失败显示错误态，与“无子目录”空态区分
     console.warn("[S3文件管理] 目标目录列举失败:", getErrorMessage(err))
+    loadError.value = getErrorMessage(err)
     folders.value = []
   } finally {
     loading.value = false

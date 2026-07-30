@@ -16,7 +16,8 @@ import { pickDirectory, pickFiles, getPathsFromFiles } from "@/utils/electronDia
 import { getErrorMessage } from "@/utils/stringUtils"
 import { useStatusBarTask } from "@/features/statusBar/composables/useStatusBarTask"
 import type { FileOpLog, S3Entry, S3FileManagerI18n } from "../types"
-import { TRANSFER_CONCURRENCY, TRANSFER_MAX_RETRIES, MAX_LOG_DETAIL_FILES } from "../types"
+import { TRANSFER_CONCURRENCY, TRANSFER_MAX_RETRIES } from "../types"
+import { buildFailDetail, nameFromKey } from "../utils"
 
 /** 传输进度状态 */
 export interface TransferProgress {
@@ -43,7 +44,7 @@ export function useS3Transfer(deps: {
 
   const statusTask = useStatusBarTask("s3-file-manager", "mdi:folder-network")
 
-  /** 更新进度（整数百分比变化才触发响应式，避免高频更新） */
+  /** 更新进度（整数百分比变化才触发响应式，避免高频更新；fraction 为全部进行中任务的字节分数之和） */
   function reportProgress(label: string, currentFile: string, done: number, total: number, fraction: number): void {
     const percent = Math.round(((done + fraction) / Math.max(total, 1)) * 100)
     const prev = transferProgress.value
@@ -88,26 +89,49 @@ export function useS3Transfer(deps: {
     const failed: string[] = []
     let done = 0
     let uploadedBytes = 0
+    /** 进行中任务的字节分数（key → 0~1）：求和后参与百分比，避免并发交替上报导致进度回退 */
+    const fractions = new Map<string, number>()
     try {
+      // 预先 stat 全部任务：大文件警告仅汇总弹一次，尺寸复用于上传字节统计
+      const sizeMap = new Map<string, number>()
+      for (const task of tasks) {
+        try {
+          sizeMap.set(task.key, (await fs.promises.stat(task.path)).size)
+        } catch {
+          // stat 失败交给 worker 的 readFile 自然失败并计入 failed
+        }
+      }
+      const largeNames = tasks.filter((t) => (sizeMap.get(t.key) ?? 0) > LARGE_FILE_WARN_SIZE).map((t) => t.name)
+      if (largeNames.length > 0) {
+        // 大文件警告："存在超过 100MB 的大文件，上传时将整包驻留内存"（超过 3 个只显示数量）
+        const summary = largeNames.length > 3 ? `${largeNames.length} ${i18n.itemsUnit}` : largeNames.join(", ")
+        showMessage(`${i18n.largeFileWarn}: ${summary}`, 4000, "info")
+      }
+
+      /** 上报当前聚合进度（done + 全部进行中任务分数之和） */
+      const reportUpload = (currentFile: string): void => {
+        let fractionSum = 0
+        for (const f of fractions.values()) { fractionSum += f }
+        reportProgress(i18n.statusUploading, currentFile, done, tasks.length, fractionSum)
+      }
+
       await runWithConcurrency(tasks, TRANSFER_CONCURRENCY, async (task) => {
         try {
-          const stat = await fs.promises.stat(task.path)
-          if (stat.size > LARGE_FILE_WARN_SIZE) {
-            // 大文件警告："存在超过 100MB 的大文件，上传时将整包驻留内存"
-            showMessage(`${i18n.largeFileWarn}: ${task.name}`, 4000, "info")
-          }
           const buffer = await fs.promises.readFile(task.path)
-          reportProgress(i18n.statusUploading, task.name, done, tasks.length, 0)
+          fractions.set(task.key, 0)
+          reportUpload(task.name)
           await withRetries(() => client.uploadBuffer(buffer, task.key, (sent, total) => {
-            reportProgress(i18n.statusUploading, task.name, done, tasks.length, sent / Math.max(total, 1))
+            fractions.set(task.key, sent / Math.max(total, 1))
+            reportUpload(task.name)
           }))
-          uploadedBytes += stat.size
+          uploadedBytes += sizeMap.get(task.key) ?? buffer.length
         } catch (err) {
           console.warn("[S3文件管理] 上传失败:", task.path, getErrorMessage(err))
           failed.push(task.name)
         }
+        fractions.delete(task.key)
         done++
-        reportProgress(i18n.statusUploading, task.name, done, tasks.length, 0)
+        reportUpload(task.name)
       })
 
       const success = failed.length === 0
@@ -272,15 +296,16 @@ export function useS3Transfer(deps: {
     try {
       const tasks = await collectDownloadTasks(entries, destDir, node.path)
       await runWithConcurrency(tasks, TRANSFER_CONCURRENCY, async (task) => {
+        const displayName = nameFromKey(task.key)
         try {
-          reportProgress(i18n.statusDownloading, task.key, done, tasks.length, 0)
+          reportProgress(i18n.statusDownloading, displayName, done, tasks.length, 0)
           await withRetries(() => client.download(task.key, task.dest))
         } catch (err) {
           console.warn("[S3文件管理] 下载失败:", task.key, getErrorMessage(err))
           failed.push(task.key)
         }
         done++
-        reportProgress(i18n.statusDownloading, task.key, done, tasks.length, 0)
+        reportProgress(i18n.statusDownloading, displayName, done, tasks.length, 0)
       })
 
       const success = failed.length === 0
@@ -290,7 +315,7 @@ export function useS3Transfer(deps: {
         itemCount: tasks.length,
         success,
         message: success ? destDir : `${failed.length} ${i18n.logFailed}`,
-        detail: failed.length > 0 ? { failed: failed.slice(0, MAX_LOG_DETAIL_FILES), omitted: Math.max(0, failed.length - MAX_LOG_DETAIL_FILES) } : undefined,
+        detail: buildFailDetail(failed),
       })
       if (success) {
         statusTask.complete(i18n.downloadSuccess)

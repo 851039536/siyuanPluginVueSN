@@ -4,7 +4,6 @@
  * 定义列表条目 S3Entry、视图偏好、操作日志 FileOpLog 等类型，
  * 以及日志上限、批量操作并发数等模块级常量（此处不放 register 逻辑）。
  */
-import type { S3FileManagerStorage } from "./storage"
 
 // ========== 列表条目 ==========
 
@@ -106,9 +105,6 @@ export const TRANSFER_MAX_RETRIES = 2
 export const RENDER_BATCH_SIZE = 200
 
 // ========== 共享工具类型 ==========
-
-/** 持久化辅助函数类型：由 index.vue 提供，统一「存储槽 save」样板 */
-export type PersistFn = (save: (storage: S3FileManagerStorage) => Promise<unknown>) => Promise<void>
 
 /** i18n 文案对象（键定义见 src/i18n/zh_CN/s3FileManager.json，值均为字符串） */
 export type S3FileManagerI18n = Record<string, string>

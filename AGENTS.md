@@ -74,6 +74,20 @@ feature/
 7. **配置** `src/features/config.ts` — 在 `FEATURE_CONFIG` 数组中添加条目；纯配置型功能（无 register 函数）还须加入 `_ConfigOnly` 白名单
 8. **图标** `src/config/icons.ts` — 添加到 `FEATURE_ICONS`，运行 `pnpm validate:icons`
 
+**迁移现有功能为 Config-Only**：若功能不再独立注册（如 `base64Image` 迁移到 `toolCollection` 内），需：
+- 将 `register` 函数改为 no-op（保留导出以维持编译通过）
+- 在 `_ConfigOnly` 白名单中添加该功能 ID
+- 从 `_Registered` 联合类型中移除，保留其在 `FeatureId` 中的存在
+
+**验证链条**：完成全部 8 步后，由用户自行验证以下 4 项检查：
+```bash
+pnpm lint           # ESLint 代码规范（用户自行执行，AI 不运行）
+pnpm i18n:verify    # 中英文键对齐
+pnpm validate:icons # 图标注册有效性
+npx tsc --noEmit    # TypeScript 编译类型检查
+```
+> **重要**：AI 不得执行 `pnpm vite build` 和 `pnpm lint`。这些验证由用户自行完成。
+
 ### 功能模块内代码分层（强制）
 
 模块内的 TypeScript 代码按职责分三层，杜绝复制粘贴：
@@ -125,39 +139,7 @@ App.vue onMounted 监听 ───────────────┘
 
 ### 正确示例
 
-```typescript
-// ===== Feature A（如 floatingToolbar/actions/passwordVault.ts）=====
-// 只用 createDialogAction 工厂 + emitCustomEvent 派发
-// ===== App.vue（中心调度）=====
-// 唯一允许同时导入两个 feature 的文件
-import { openPasswordVaultWithText } from "@/features"
-
-export function createPasswordVaultAction(plugin: Plugin): ToolbarAction {
-  return createDialogAction({
-    id: "passwordVault",
-    icon: `<svg>...</svg>`,
-    label: plugin.i18n.passwordVault.quickSave,
-    eventName: "openPasswordVaultAdd", // 事件名
-    getContent: (selection) => ({ content: selection }),
-  })
-}
-
-// ===== Feature B（如 passwordVault/index.ts）=====
-// 导出 public API，不导入任何其他 feature
-export const pendingEntryName = ref("")
-export function openPasswordVaultWithText(text: string) {
-  pendingEntryName.value = text
-  passwordVaultVisible.value = true
-}
-
-onMounted(() => {
-  window.addEventListener("openPasswordVaultAdd", ((event: any) => {
-    if (event.detail?.content) {
-      openPasswordVaultWithText(event.detail.content)
-    }
-  }) as EventListener)
-})
-```
+> 完整代码示例（floatingToolbar → passwordVault 联动）见 [AGENTS_RULES.md § 跨功能联动示例](./AGENTS_RULES.md#跨功能联动示例)
 
 ### 规则清单
 
@@ -255,12 +237,6 @@ onMounted(() => {
 
 ---
 
-## 文件头注释规则
-
-每个 `.ts` / `.vue` 文件顶部**必须**包含一行注释，简要说明文件功能（`.scss` 不适用）。详细格式规范见 [AGENTS_RULES.md § 强制规则：文件头注释](./AGENTS_RULES.md#强制规则文件头注释)。
-
----
-
 ## 设置架构
 
 双层持久化策略：
@@ -297,89 +273,17 @@ onMounted(() => {
 
 ## 底部面板模式（Tab 切换）
 
-部分工具类功能不需要独立 Dock 面板，适合整合到统一的"底部面板 + Tab 切换"容器中。参考实现：`src/features/toolCollection/`。
+部分工具类功能不需要独立 Dock 面板，适合整合到统一的"底部面板 + Tab 切换"容器中。参考实现：`src/features/toolCollection/`。注册新工具只需在 `toolCollection/index.vue` 的 `tools` computed 添加条目 + 内容区添加 `v-if` 组件引用，无需修改注册清单。
 
-**架构要点**：
-
-```
-toolCollection/
-├── index.ts              # registerToolCollection() + 公开 API（toggle/close/visible）
-├── index.vue             # 面板容器：Overlay + Header + Tab 栏 + 内容区 + Transition 动画
-├── types/index.ts        # ToolMeta 接口（id/label/icon）
-├── styles/index.scss     # 面板样式（固定底部定位、Tab 栏、slide-up 动画）
-└── tools/                # 各工具模块（独立子目录，互不依赖）
-    └── <toolName>/
-        ├── index.vue     # 工具主组件（接收 plugin / i18n props）
-        ├── components/   # 工具子组件
-        └── styles/       # 工具样式（SCSS 分离）
-```
-
-**通信流程**：
-
-1. **触发**：状态栏（或快捷键）→ `emitCustomEvent("toggleToolCollection")`
-2. **调度**：`App.vue` 监听 `window.addEventListener("toggleToolCollection", ...)` → 调用 `toggleToolCollection()`
-3. **响应**：`toolCollection/index.ts` 导出模块级 `ref(visible)` + `toggleToolCollection()` / `closeToolCollection()`
-4. **清理**：`onunload()` 中 `app.unmount()` + `container.remove()` + 重置 `ref`
-
-**注册新工具到面板**：在 `toolCollection/index.vue` 的 `tools` computed 中添加条目 + 在 `<div class="tool-collection-content">` 中添加 `v-if` 组件引用。无需修改注册清单。
+> 完整目录结构与通信流程见 [AGENTS_RULES.md § 底部面板模式（Tab 切换）](./AGENTS_RULES.md#底部面板模式tab-切换)
 
 ---
 
 ## 快捷键注册
 
-通过 `plugin.addCommand()` 注册全局快捷键，在 `registerFeature()` 中调用：
+通过 `plugin.addCommand()` 注册全局快捷键（macOS 符号风格 hotkey，如 `⌃⌥T`，Windows 自动转换），在 `registerFeature()` 中调用；`langKey` 需对应 i18n 分片中的翻译键。
 
-```ts
-plugin.addCommand({
-  langKey: "toggleToolCollection", // i18n 键（命令名称，显示在快捷键设置界面）
-  langText: "工具合集", // 回退文本（i18n 缺失时使用）
-  hotkey: "⌃⌥T", // macOS 风格：⌃=Ctrl ⌥=Alt ⌘=Cmd ⇧=Shift；Windows 自动转换
-  callback: () => {
-    toggleToolCollection() // 回调函数
-  },
-})
-```
-
-**hotkey 格式**：
-| 符号 | 按键 | 示例 |
-|------|------|------|
-| `⌃` | Ctrl | `⌃T` = Ctrl+T |
-| `⌥` | Alt | `⌃⌥E` = Ctrl+Alt+E |
-| `⌘` | Cmd | `⌘K` = Cmd+K |
-| `⇧` | Shift | `⇧⌃P` = Ctrl+Shift+P |
-
-快捷键的 `langKey` 需要对应 i18n 分片文件中的翻译键。思源框架会自动将 macOS 符号转换为 Windows 键名显示。
-
----
-
-## 新增功能完整流程（8 步演练）
-
-以 `toolCollection` 为例，展示从零到一完整步骤：
-
-| 步骤 | 位置 | 操作 | toolCollection 实例 |
-|------|------|------|---------------------|
-| 1. **实现** | `src/features/<name>/index.ts` | 导出 `registerXxx(plugin)` + 公开 API（ref/函数） | `registerToolCollection()` + `toggleToolCollection`/`closeToolCollection`/`toolCollectionVisible` |
-| 2. **类型** | `src/features/<name>/types/index.ts` | 接口/类型定义（不放 register 逻辑） | `ToolMeta { id, label, icon }` |
-| 3. **导出** | `src/features/index.ts` | 添加 `export { ... } from "./<name>"` + 更新 `_Registered` 联合类型 | 新增 `registerToolCollection`, `toggleToolCollection` 等；`_Registered` 加 `"toolCollection"` |
-| 4. **注册** | `src/index.ts` | `registerFeatures()` 中 `if (s.enableXxx) registerXxx(this)` + `onunload()` 清理 | `if (s.enableToolCollection) registerToolCollection(this)` + 清理 app/container |
-| 5. **设置** | `src/config/settings.ts` | `PluginSettings` 接口 + `DEFAULT_SETTINGS` 默认值 | `enableToolCollection: boolean` 默认 `true` |
-| 6. **i18n** | `src/i18n/{zh_CN,en_US}/<name>.json` | 翻译键值对，运行 `pnpm i18n:verify` | `toolCollection.json`（面板标题、描述、tab 标签、快捷键标签） |
-| 7. **配置** | `src/features/config.ts` | `FEATURE_CONFIG` 数组条目；若纯配置型加 `_ConfigOnly` | 新增 `{ id: "toolCollection", defaultTitle: "工具合集", ... }` |
-| 8. **图标** | `src/config/icons.ts` | `FEATURE_ICONS` 条目，运行 `pnpm validate:icons` | `toolCollection: { icon: "mdi:toolbox-outline", color: "#6366f1" }` |
-
-**迁移现有功能为 Config-Only**：若功能不再独立注册（如 `base64Image` 迁移到 `toolCollection` 内），需：
-- 将 `register` 函数改为 no-op（保留导出以维持编译通过）
-- 在 `_ConfigOnly` 白名单中添加该功能 ID
-- 从 `_Registered` 联合类型中移除，保留其在 `FeatureId` 中的存在
-
-**验证链条**：完成全部 8 步后，由用户自行验证以下 4 项检查：
-```bash
-pnpm lint           # ESLint 代码规范（用户自行执行，AI 不运行）
-pnpm i18n:verify    # 中英文键对齐
-pnpm validate:icons # 图标注册有效性
-npx tsc --noEmit    # TypeScript 编译类型检查
-```
-> **重要**：AI 不得执行 `pnpm vite build` 和 `pnpm lint`。这些验证由用户自行完成。
+> 完整代码示例与 hotkey 符号表见 [AGENTS_RULES.md § 快捷键注册](./AGENTS_RULES.md#快捷键注册)
 
 ---
 
@@ -414,7 +318,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 - `_mixins.scss` 由各 SCSS 文件通过 `@use "./mixins" as m` 自行引用
 - 响应式 `@media` 查询就近放置：组件专属放在组件 SCSS 末尾，公共基座类放在 `index.scss` 末尾
 
-项目遵循 **Codex UI 风格**：基于边框的卡片（禁用 `box-shadow`），使用 `src/_variables.scss` 中的全局设计 Token（`$radius-*`/`$vp-radius`/`$spacing-2px`/`$spacing-px`/`$spacing-1`~`$spacing-4`/`$font-size-*`/`$font-weight-*`/`$line-height-*`/`$vp-mono`），大写标签 `$font-size-2xs`/`$font-weight-bold` 字重 + 0.06em 字母间距，统一 0.12s 过渡。**字体三要素 `font-size`/`font-weight`/`line-height` 禁止硬编码 px 或数字值**，必须使用对应的 `$font-size-*`/`$font-weight-*`/`$line-height-*` Token。**所有 `<Input>`/`<Select>` 在弹窗表单中必须指定 `size="small"`**，默认 `medium` 与紧凑风格不匹配。
+Codex UI 风格要求（禁用 `box-shadow`、全套设计 Token、字体三要素禁止硬编码、弹窗表单 `<Input>`/`<Select>` 必须 `size="small"`）见上方「UI 风格：Codex」章节。
 
 > 完整设计 Token 表、核心规范速查表、`.vp-*` 组件模式库（弹窗/输入框/标签）、禁止事项清单见 [AGENTS_RULES.md § UI 风格：Codex](./AGENTS_RULES.md#ui-风格codex)
 >
@@ -451,14 +355,6 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 ⚠️ 遗留 — base64Image 使用下划线前缀，暂不重构
   src/i18n/zh_CN/base64Image.json   → plugin.i18n.base64Image_encode
-```
-
-### 日常操作
-
-```bash
-pnpm i18n:merge    # 手动合并（构建时自动执行，通常无需手动调用）
-pnpm i18n:verify   # 校验 zh_CN 与 en_US 键完全对齐 + 检测重复键
-pnpm i18n:split    # 从单体 JSON 重新拆分（极少需要，仅在分片损坏时使用）
 ```
 
 ### 新增 i18n 文本
@@ -555,8 +451,10 @@ src/
 
 | 章节 | 内容 |
 |------|------|
-| API 参考 | 存储/Dock/Modal/事件/状态栏/DOM/Node/加密/AI/开关/设置的完整调用示例 |
+| API 参考 | 存储/Dock/Modal/事件/状态栏/DOM/Node/加密/AI/开关/设置/快捷键的完整调用示例 |
+| 跨功能联动示例 | floatingToolbar → passwordVault 完整联动代码 |
 | Vue 实例常驻模式 | 持久化 Modal 的 4 步实现 + 关键点速查表 |
+| 底部面板模式（Tab 切换） | toolCollection 目录结构与通信流程 |
 | 文件路径 | `getFile`/`putFile` 路径规则、工作区目录、插件数据目录、Vite 外部模块声明 |
 | UI 风格：Codex | 全局设计 Token 全表、核心规范速查表、`.vp-*` 组件模式库（弹窗/输入框/标签）、禁止事项清单 |
 | 强制规则：SCSS 分离 | 目录结构模式、正误示例对比 |

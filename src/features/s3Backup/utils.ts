@@ -3,11 +3,51 @@
  *
  * 不依赖 Vue 响应式的纯函数：数字补零、备份时间戳生成、
  * S3 对象 key 构建、主机名获取（模块级缓存）、
- * 增量备份的 manifest 解析/对比与 key 生成、插件备份文件名判定。
+ * 增量备份的 manifest 解析/对比与 key 生成、插件备份文件名判定、
+ * 归档文件识别与惰性读取流创建。
  */
-import { getNodeProcessModules } from "@/utils/nodeModules"
-import { DEFAULT_S3_PREFIX, DEFAULT_BACKUP_DIR, INCREMENTAL_SUBDIR, INCREMENTAL_MANIFEST_NAME } from "./types"
+import { getNodeProcessModules, getNodeStream } from "@/utils/nodeModules"
+import { DEFAULT_S3_PREFIX, DEFAULT_BACKUP_DIR, INCREMENTAL_SUBDIR, INCREMENTAL_MANIFEST_NAME, MSG_DESKTOP_ONLY } from "./types"
 import type { BackupManifest, IncrementalDiff, IncrementalFileEntry } from "./types"
+
+/** 本地备份列表识别的归档扩展名白名单 */
+const ARCHIVE_EXTS = [".zip", ".7z", ".tar", ".tar.gz", ".tgz", ".tar.bz2", ".rar"]
+
+/** 判断文件名是否为受支持的归档文件 */
+export function isArchiveFile(name: string): boolean {
+  return ARCHIVE_EXTS.some((ext) => name.toLowerCase().endsWith(ext))
+}
+
+/**
+ * 创建惰性读取流：注册进 JSZip 时不打开文件描述符，
+ * 待压缩阶段实际消费时才 open 底层文件，避免大量文件同时占用 fd 触发 EMFILE
+ */
+export function createLazyReadStream(fsRaw: any, filePath: string): NodeJS.ReadableStream {
+  const streamMod = getNodeStream()
+  if (!streamMod) {
+    throw new TypeError(MSG_DESKTOP_ONLY)
+  }
+  let source: any = null
+  const lazy: any = new streamMod.stream.Readable({
+    read() {
+      if (source) {
+        source.resume()
+        return
+      }
+      source = fsRaw.createReadStream(filePath)
+      source.on("data", (chunk: Buffer) => {
+        if (!lazy.push(chunk)) { source.pause() }
+      })
+      source.on("end", () => lazy.push(null))
+      source.on("error", (err: Error) => lazy.destroy(err))
+    },
+    destroy(err: Error | null, callback: (e?: Error | null) => void) {
+      source?.destroy()
+      callback(err)
+    },
+  })
+  return lazy
+}
 
 /** 数字补零（如 padNum(3) → "03"） */
 export function padNum(n: number): string {

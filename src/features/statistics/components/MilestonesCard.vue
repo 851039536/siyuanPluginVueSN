@@ -131,7 +131,7 @@
       :locked="lockedAchievements"
       :tier-labels="tierLabels"
       :i18n="i18n"
-      @delete-custom="deleteCustomAchievement"
+      @delete-custom="deleteAchievement"
     />
   </div>
 </template>
@@ -231,10 +231,6 @@ const {
 onMounted(() => {
   initMilestoneStorage(props.plugin)
 })
-
-function deleteCustomAchievement(id: string) {
-  deleteAchievement(id)
-}
 
 const expandedCategories = ref<Set<string>>(new Set())
 

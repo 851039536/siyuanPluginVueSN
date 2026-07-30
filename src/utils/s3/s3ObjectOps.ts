@@ -40,10 +40,7 @@ export async function listDir(client: S3Client, prefix: string): Promise<S3DirLi
       throw new Error(formatS3Error(response, body, "S3 目录列举失败"))
     }
 
-    const xml = await response.text()
-    // 临时诊断：输出首个 Contents 块原文，取证后端 Size/LastModified 字段格式（取证后移除）
-    console.info("[S3] Contents 样本:", /<Contents>[\s\S]*?<\/Contents>/.exec(xml)?.[0]?.slice(0, 400) ?? "(无 Contents)")
-    const { files: pageFiles, folders, isTruncated, nextMarker } = parseListDirXml(xml)
+    const { files: pageFiles, folders, isTruncated, nextMarker } = parseListDirXml(await response.text())
     // 过滤当前目录自身的占位对象（key 与 prefix 相同，通常为 0 字节文件夹标记）
     files.push(...pageFiles.filter((f) => f.key !== prefix))
     for (const folder of folders) {

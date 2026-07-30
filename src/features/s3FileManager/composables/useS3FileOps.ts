@@ -10,23 +10,14 @@ import type { S3Client } from "@/utils/s3/s3Client"
 import { copyObject, createFolder } from "@/utils/s3/s3ObjectOps"
 import { runWithConcurrency } from "@/utils/s3/concurrency"
 import { getErrorMessage } from "@/utils/stringUtils"
-import type { FileOpLog, FileOpLogDetail, S3Entry, S3FileManagerI18n } from "../types"
-import { FILE_OP_CONCURRENCY, MAX_LOG_DETAIL_FILES } from "../types"
-import { joinPrefix, parentPrefix } from "../utils"
+import type { FileOpLog, S3Entry, S3FileManagerI18n } from "../types"
+import { FILE_OP_CONCURRENCY } from "../types"
+import { buildFailDetail, joinPrefix, parentPrefix } from "../utils"
 
 /** 复制任务对：源 key → 目标 key */
 interface CopyPair {
   src: string
   dest: string
-}
-
-/** 构造日志失败清单（超上限截断并记录省略数） */
-function buildFailDetail(failed: string[]): FileOpLogDetail | undefined {
-  if (failed.length === 0) { return undefined }
-  return {
-    failed: failed.slice(0, MAX_LOG_DETAIL_FILES),
-    omitted: Math.max(0, failed.length - MAX_LOG_DETAIL_FILES),
-  }
 }
 
 export function useS3FileOps(deps: {
@@ -59,11 +50,16 @@ export function useS3FileOps(deps: {
   /** 构造条目到目标目录的复制任务对（文件夹保持相对结构） */
   async function buildCopyPairs(entry: S3Entry, destPrefix: string): Promise<CopyPair[]> {
     if (!entry.isFolder) {
-      return [{ src: entry.key, dest: joinPrefix(destPrefix, entry.name, false) }]
+      const dest = joinPrefix(destPrefix, entry.name, false)
+      // 目标与源相同：复制自身后再删源会直接删掉文件，必须拦截
+      if (dest === entry.key) {
+        throw new Error(i18n.destSameAsSource)
+      }
+      return [{ src: entry.key, dest }]
     }
     const destBase = joinPrefix(destPrefix, entry.name, true)
-    // 目标不能是自身或自身子目录（复制/移动进自己会无限嵌套或自毁）
-    if (destBase === entry.key || destBase.startsWith(entry.key)) {
+    // 目标不能是自身或自身子目录（复制/移动进自己会无限嵌套或自毁；startsWith 已覆盖相等情形）
+    if (destBase.startsWith(entry.key)) {
       throw new Error(i18n.destInsideSelf)
     }
     const keys = await collectKeys(entry)
@@ -128,6 +124,17 @@ export function useS3FileOps(deps: {
     return entries.length === 1 ? entries[0].name : `${entries.length} ${i18n.itemsUnit}`
   }
 
+  /** 过滤掉已位于目标目录的条目；全部被过滤时提示并返回 null（不产生日志与刷新） */
+  function filterMovableEntries(entries: S3Entry[], destPrefix: string): S3Entry[] | null {
+    const movable = entries.filter((e) => parentPrefix(e.key) !== destPrefix)
+    if (movable.length === 0) {
+      // 提示："目标位置与源相同，无需移动/复制"
+      showMessage(i18n.destSameAsSource, 3000, "info")
+      return null
+    }
+    return movable
+  }
+
   // ========== 公开操作 ==========
 
   /** 新建文件夹（名称合法性由调用方 FmNameDialog 校验） */
@@ -176,17 +183,19 @@ export function useS3FileOps(deps: {
     })
   }
 
-  /** 复制条目到目标目录 */
+  /** 复制条目到目标目录（已在目标目录的条目跳过） */
   async function copyEntries(entries: S3Entry[], destPrefix: string): Promise<void> {
+    const movable = filterMovableEntries(entries, destPrefix)
+    if (!movable) { return }
     await runOp(async () => {
       const pairs: CopyPair[] = []
-      for (const entry of entries) {
+      for (const entry of movable) {
         pairs.push(...await buildCopyPairs(entry, destPrefix))
       }
       const failed = await runCopies(pairs, i18n.statusCopying)
       deps.addLog({
         type: "copy", action: i18n.actionCopy,
-        fileName: summarizeNames(entries), itemCount: pairs.length,
+        fileName: summarizeNames(movable), itemCount: pairs.length,
         success: failed.length === 0,
         message: failed.length > 0 ? `${failed.length} ${i18n.logFailed}` : undefined,
         detail: buildFailDetail(failed),
@@ -196,18 +205,20 @@ export function useS3FileOps(deps: {
     })
   }
 
-  /** 移动条目到目标目录（全部复制成功后才批量删除源，失败不删源） */
+  /** 移动条目到目标目录（全部复制成功后才批量删除源，失败不删源；已在目标目录的条目跳过） */
   async function moveEntries(entries: S3Entry[], destPrefix: string): Promise<void> {
+    const movable = filterMovableEntries(entries, destPrefix)
+    if (!movable) { return }
     await runOp(async () => {
       const pairs: CopyPair[] = []
-      for (const entry of entries) {
+      for (const entry of movable) {
         pairs.push(...await buildCopyPairs(entry, destPrefix))
       }
       const copyFailed = await runCopies(pairs, i18n.statusCopying)
       if (copyFailed.length > 0) {
         deps.addLog({
           type: "move", action: i18n.actionMove,
-          fileName: summarizeNames(entries), itemCount: pairs.length,
+          fileName: summarizeNames(movable), itemCount: pairs.length,
           success: false, message: i18n.moveFailed, detail: buildFailDetail(copyFailed),
         })
         throw new Error(i18n.moveFailed)
@@ -215,7 +226,7 @@ export function useS3FileOps(deps: {
       const deleteFailed = await runDeletes(pairs.map((p) => p.src), i18n.statusDeleting)
       deps.addLog({
         type: "move", action: i18n.actionMove,
-        fileName: summarizeNames(entries), itemCount: pairs.length,
+        fileName: summarizeNames(movable), itemCount: pairs.length,
         success: deleteFailed.length === 0,
         message: deleteFailed.length > 0 ? i18n.moveDeleteFailed : undefined,
         detail: buildFailDetail(deleteFailed),

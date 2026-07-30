@@ -152,6 +152,11 @@ export function useS3Entries(deps: {
     }
   }
 
+  /** 重置 delimiter 能力探测（切换 endpoint/bucket 后旧探测结果不再适用） */
+  function resetCapabilityProbe(): void {
+    delimiterUnsupported = false
+  }
+
   /** 展示下一批条目（大目录增量渲染） */
   function loadMore(): void {
     renderLimit.value += RENDER_BATCH_SIZE
@@ -185,6 +190,7 @@ export function useS3Entries(deps: {
     navigateToSegment,
     refresh,
     invalidateCache,
+    resetCapabilityProbe,
     loadMore,
     toggleSort,
   }

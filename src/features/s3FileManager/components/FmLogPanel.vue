@@ -92,6 +92,7 @@ import { showMessage } from "siyuan"
 import Button from "@/components/Button.vue"
 import { formatRelativeTime } from "@/utils/format"
 import type { FileOpLog, S3FileManagerI18n } from "../types"
+import { useEscClose } from "../composables/useEscClose"
 
 const props = defineProps<{
   logs: FileOpLog[]
@@ -102,6 +103,9 @@ const emit = defineEmits<{
   clear: []
   close: []
 }>()
+
+// Esc 关闭面板
+useEscClose(() => emit("close"))
 
 function relativeTime(time: string): string {
   return formatRelativeTime(time) || time

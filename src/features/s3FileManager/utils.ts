@@ -2,11 +2,12 @@
  * S3 文件管理器纯工具函数
  *
  * 不依赖 Vue 响应式的纯函数：前缀/名称路径运算、名称合法性校验、
- * 全量列举结果的目录聚合、扩展名图标映射与排序比较器。
+ * 全量列举结果的目录聚合、日志失败清单构造、扩展名图标映射与排序比较器。
  */
 import type { IconKey } from "@/config/icons"
 import type { S3FileInfo } from "@/utils/s3/types"
-import type { S3Entry, SortField } from "./types"
+import type { FileOpLogDetail, S3Entry, SortField } from "./types"
+import { MAX_LOG_DETAIL_FILES } from "./types"
 
 // ========== 前缀/名称路径运算 ==========
 
@@ -89,6 +90,17 @@ export function buildEntries(files: S3FileInfo[], folders: string[]): S3Entry[] 
     timestamp: f.timestamp,
   }))
   return [...folderEntries, ...fileEntries]
+}
+
+// ========== 日志失败清单 ==========
+
+/** 构造日志失败清单（超上限截断并记录省略数） */
+export function buildFailDetail(failed: string[]): FileOpLogDetail | undefined {
+  if (failed.length === 0) { return undefined }
+  return {
+    failed: failed.slice(0, MAX_LOG_DETAIL_FILES),
+    omitted: Math.max(0, failed.length - MAX_LOG_DETAIL_FILES),
+  }
 }
 
 // ========== 排序 ==========

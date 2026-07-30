@@ -73,10 +73,6 @@ export interface FilterOptions {
   wordCountMax: number
   /** 书签名称过滤（空字符串表示全部） */
   bookmarkName: string
-  /** 自定义时间过滤 - 更新于此日期之后（yyyy-MM-dd 格式，空字符串表示不限制） */
-  updatedAfter: string
-  /** 自定义时间过滤 - 更新于此日期之前（yyyy-MM-dd 格式，空字符串表示不限制） */
-  updatedBefore: string
 }
 
 /** 查询结果状态 */
@@ -233,8 +229,6 @@ export const DEFAULT_FILTER_OPTIONS: FilterOptions = {
   wordCountMin: 0,
   wordCountMax: 30000,
   bookmarkName: "",
-  updatedAfter: "",
-  updatedBefore: "",
 }
 
 /** 默认平台元数据（用户未自定义时使用） */
@@ -312,7 +306,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   "1to2month": "1~2月更新",
   "2to3month": "2~3月更新",
   "halfYear": "半年以上未更新",
-  "customTime": "自定义时间",
   "deep": "深层文档(≥5层)",
   "hasRef": "含引用",
   "hasImage": "含图片",
@@ -361,8 +354,6 @@ export interface StatCardDef {
   suffixStatKey?: keyof DocStats
   /** 函数计算值（如无标签 = totalDocs - taggedDocs），优先级高于 statKey */
   resolveValue?: (stats: DocStats) => number
-  /** 图标名（仅图标卡片，如自定义时间） */
-  iconValue?: string
 }
 
 /** 统计分区定义 */
@@ -395,7 +386,6 @@ export const STAT_SECTIONS: StatSectionDef[] = [
       { id: "1to2month", shortLabel: "1~2月", statKey: "updatedIn1To2Months", colorClass: "time-cyan" },
       { id: "2to3month", shortLabel: "2~3月", statKey: "updatedIn2To3Months", colorClass: "time-orange" },
       { id: "halfYear", shortLabel: "半年+", statKey: "updatedOverHalfYear", colorClass: "time-red" },
-      { id: "customTime", shortLabel: "自定义", statKey: "updatedIn7Days", colorClass: "time-purple", iconValue: "mdi:calendar-range" },
     ],
   },
   {

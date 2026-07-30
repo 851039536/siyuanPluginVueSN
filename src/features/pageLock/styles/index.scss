@@ -153,14 +153,6 @@
   }
 }
 
-.page-lock-mask--placeholder {
-  background: var(--b3-theme-background);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-
 .page-lock-mask {
   position: absolute;
   top: 0;
@@ -250,6 +242,15 @@
   max-width: 90%;
 }
 
+// 输入框内左侧的锁图标：绝对定位居中，不拦截点击
+.input-container__icon {
+  position: absolute;
+  left: $spacing-3;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
 .page-lock-mask__input {
   width: 100%;
   padding: $spacing-2 $spacing-3;
@@ -260,6 +261,12 @@
   font-size: $font-size-sm;
   outline: none;
   box-sizing: border-box;
+
+  // 带左侧图标时为图标预留内边距
+  &--with-icon {
+    position: relative;
+    padding-left: $spacing-10;
+  }
 
   &:focus {
     border-color: var(--b3-theme-primary);
@@ -313,6 +320,12 @@
   cursor: pointer;
   color: var(--b3-theme-on-background);
   opacity: 0.68;
+
+  &__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
 
   &:hover {
     background: var(--b3-theme-surface-lighter);

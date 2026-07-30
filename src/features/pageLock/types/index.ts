@@ -10,10 +10,8 @@ export interface PageLockI18n {
   oldPasswordPlaceholder?: string
   newPasswordPlaceholder?: string
   setPassword?: string
-  enterPassword?: string
   updatePassword?: string
   setPasswordHint?: string
-  unlockHint?: string
   updatePasswordHint?: string
   passwordEmpty?: string
   passwordMismatch?: string
@@ -29,7 +27,7 @@ export interface PageLockI18n {
 }
 
 export interface LockDialogProps {
-  mode: "lock" | "unlock" | "update"
+  mode: "lock" | "update"
   i18n: PageLockI18n
 }
 
@@ -57,6 +55,6 @@ export const DEFAULT_OPTIONS: Required<PageLockOptions> = {
 
 export interface ProtyleLike {
   block?: { rootID: string }
-  element?: Element
-  wysiwyg?: { element?: Element }
+  element?: HTMLElement
+  wysiwyg?: { element?: HTMLElement }
 }

@@ -18,6 +18,28 @@ export function resolveAlpha(rule: BookmarkRule): number {
   return rule.alpha ?? 0.25
 }
 
+/** 归一化规则：兼容旧格式 bookmarkName（单数）→ bookmarkNames（数组），兼容字段缺失 */
+export function normalizeRules(rules: any[]): BookmarkRule[] {
+  if (!Array.isArray(rules)) return []
+  return rules.map((r) => ({
+    ...r,
+    bookmarkNames: Array.isArray(r.bookmarkNames)
+      ? r.bookmarkNames
+      : (r.bookmarkName ? [r.bookmarkName] : []),
+  }))
+}
+
+/** 生成规则样式签名，用于判断已渲染标记是否需要重建 */
+export function buildRuleSignature(rule: BookmarkRule): string {
+  return [
+    resolveMode(rule),
+    rule.color,
+    rule.backgroundColor,
+    rule.icon ?? "",
+    resolveAlpha(rule),
+  ].join("|")
+}
+
 /** 检查书签名是否匹配规则 */
 export function matchesBookmarkName(bookmarkName: string, rule: BookmarkRule): boolean {
   const mode = rule.matchMode || "exact"
@@ -66,6 +88,7 @@ export function createMarkerElement(
   const marker = document.createElement("span")
   marker.className = className
   marker.dataset.bookmark = bookmarkName
+  marker.dataset.sig = buildRuleSignature(rule)
   marker.style.color = rule.color
 
   if (mode === "icon" && rule.icon) {

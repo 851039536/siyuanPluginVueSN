@@ -11,7 +11,10 @@
   "passwordMismatch": "Passwords do not match",
   "passwordEmpty": "Password cannot be empty",
   "lockSuccess": "Page locked successfully",
+  "lockFailed": "Failed to lock page",
   "unlockSuccess": "Page unlocked successfully",
+  "unlockButton": "Unlock Page",
+  "quickUnlockHint": "Quick unlock",
   "passwordError": "Incorrect password",
   "pageLocked": "This page is locked",
   "pleaseUnlock": "Please enter password to unlock",
@@ -26,7 +29,6 @@
   "updatePasswordDesc": "Update current password",
   "updatePasswordHint": "Please enter old password first, then set new password",
   "setPasswordHint": "Set password to lock documents and protect private content",
-  "unlockHint": "Please enter password to unlock document",
   "passwordNotSetYet": "Password not set yet",
   "enterPasswordToDecrypt": "Enter password to decrypt content"
 }

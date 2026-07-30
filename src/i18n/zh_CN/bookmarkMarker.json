@@ -27,6 +27,12 @@
     "interval30min": "30分钟",
     "interval1hour": "1小时",
     "interval2hour": "2小时",
-    "interval4hour": "4小时"
+    "interval4hour": "4小时",
+    "msgEnabled": "书签标记已启用",
+    "msgDisabled": "书签标记已禁用",
+    "msgRulesUpdated": "标记规则已更新",
+    "msgIntervalUpdated": "更新间隔已修改",
+    "previewLabel": "预览：",
+    "unnamed": "未命名"
   }
 }

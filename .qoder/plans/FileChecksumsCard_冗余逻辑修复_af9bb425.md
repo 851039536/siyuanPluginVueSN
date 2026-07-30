@@ -1,37 +1,40 @@
-# FileChecksumsCard 冗余与逻辑修复
+# useFullS3Upload 审查修复
 
 ## 摘要
-审查发现 6 处逻辑缺陷、5 处规范违规、3 处冗余，集中修复于 `src/features/s3Backup/components/FileChecksumsCard.vue`，附带 i18n 分片与 SCSS 小改。
+发现 3 处逻辑缺陷、4 处规范违规。修改集中于 `src/features/s3Backup/composables/useFullS3Upload.ts`，附带 i18n 分片新增 3 个键、`types/index.ts` 新增 1 个共享常量并替换模块内 5 处重复字符串。
 
-## 逻辑修复（FileChecksumsCard.vue）
+## i18n 分片（zh_CN + en_US 的 s3Backup.json）
 
-- 新增 `clearDropResults()`：同时清空 `droppedResults` / `compareSelects` / `compareResults`，替换模板中 `@click="droppedResults = []"`（修复清空后旧比对状态污染新拖放结果的 bug）；`onDrop` 内 push 新结果时按新 index 不残留旧状态。
-- `v-for` 拖放结果改用 `:key="index"`（与按 index 存储的 compare 状态保持一致，消除同文件重复拖放的 key 冲突）。
-- 验证状态清理：`watch(() => props.storedItems, ...)` 中剔除 `verifyResults` / `verifyingItems` 里已不存在于列表的 fileName 键；已出结果的条目徽章旁保留"验证"按钮（把 L96 的 `v-if === undefined` 改为始终渲染按钮 + 徽章并列），支持单条重验。
-- `getManager()` 用 try/catch 包裹 `new BackupManager()`，构造抛错时 `showMessage(getErrorMessage(err))` 并返回 null；`onDrop` 中 manager 为 null 且 `workspaceRoot` 为空时提示改用已有键 `i18n.noWorkspace`。
-- `verifyAll` 期间禁用单条验证按钮（`:disabled="verifyingItems[...] || isVerifyingAll"`）。
-- `onDragEnter` 补 `isDragging.value = true`；`onDragOver` 去掉重复赋值只保留 `dropEffect`；`resolveDropPath` 头注释删去不存在的"文件选择器兜底"描述。
+- 新增 `s3UploadResult`：`"备份上传完成：上传 {uploaded}、跳过 {skipped}"` / `"Backup upload finished: {uploaded} uploaded, {skipped} skipped"`（仿 `incrementalResult` 模板风格）。
+- 新增 `s3UploadFailedPart`：`"，{failed} 个文件读取失败"` / `", {failed} file(s) failed to read"`（failedCount>0 时追加）。
+- 新增 `allFilesExist`：`"文件均已存在于 S3，跳过 {skipped} 个"` / `"All files already exist on S3, {skipped} skipped"`（零上传场景专用消息）。
 
-## 规范修复
+## types/index.ts（s3Backup）
 
-- 删除全部 i18n 兜底：`i18n.verify || "验证"`、`match`、`mismatch`、`removeChecksum`、`confirmRemoveChecksum`、`confirmClearAll` 共 6 处（键均已存在）。
-- 硬编码文案入 i18n：新增键 `hashCopied`（"SHA-256 已复制" / "SHA-256 copied"）到 `src/i18n/{zh_CN,en_US}/s3Backup.json`；L261 错误分支改用 `noWorkspace` 或 `getErrorMessage(err)`，不再硬编码。
-- 图标替换：L16 `📂` 改为 `@iconify/vue` 的 `<Icon icon="mdi:folder-open-outline">`（COMMON_ICONS/已注册集内，必要时在 `src/config/icons.ts` 注册后运行 validate）；L89 `&#9432;` 改为 `mdi:information-outline`。
-- `(file as any).path` 改为局部类型 `(file as File & { path?: string }).path`。
-- 模板各 i18n 渲染处补中文注释（如 `<!-- 按钮："验证全部" -->`），主要区块注释已有、保持。
+- 新增共享常量 `export const MSG_DESKTOP_ONLY = "无法访问文件系统，请使用桌面版思源笔记"`（模块内部错误消息，5 处文件共用；按分层规则提取到 types，不进 i18n——该消息由 catch 后统一经 getErrorMessage 展示，现有各处同样直接抛中文）。
+- 替换 5 处重复字面量为该常量：`useFullS3Upload.ts` L81、`useCloudBackupActions.ts` L30、`BackupManager.ts` L108（保持 `TypeError`）、`useIncrementalBackup.ts` L288、`types/s3Client.ts` L36。
 
-## 冗余清理
+## useFullS3Upload.ts
 
-- `verifyResults.value = { ...verifyResults.value, [k]: v }` 等 5 处展开拷贝改为直接下标赋值（Vue 3 响应式支持）。
-- SCSS `FileChecksumsCard.scss`：合并两处 `.drop-result-item` 选择器；emoji 移除后删除 `.drop-zone-icon` 的硬编码 `font-size: 28px`（改 Icon 尺寸经 token 或 width 控制）；`.drop-zone` 去掉无对应交互的 `cursor: pointer`。
+- 逻辑修复：
+  - 新增 `failedCount` 计数：L147-151 读取失败分支 `failedCount++`（保留 console.warn）。
+  - 日志 `fileName` 改为 `uploadedCount > 1 ? i18n.filesCount.replace(...) : (uploadedNames[0] || "")`——修复取 `files[0]` 可能是被跳过/失败文件的 bug。
+  - 结果消息重写：`uploadedCount > 0` 时用 `s3UploadResult` 模板（`{uploaded}`/`{skipped}` 替换）；`uploadedCount === 0 && skippedCount > 0` 时用 `allFilesExist`；`failedCount > 0` 时追加 `s3UploadFailedPart` 并将 showMessage 类型改为 `"error"`（其余保持 `"info"`）。
+  - 日志 `message` 改为模板产物（跳过/失败信息），删除硬编码 `` `跳过 ${skippedCount}` ``；`success` 改为 `failedCount === 0`。
+  - 进度口径统一：L139 `filesProcessed` 改为 `processedCount`（与 percent 同口径，跳过分支已是递增后取值，上传分支表示"正在处理第 N+1 个前已完成 N 个"，统一为已完成数）。
+- 规范清理：
+  - 删除 L183/L191 两处 i18n 兜底 `|| "..."`。
+  - 删除 L95-104 调试样例打印块与 L125 逐文件跳过 log；保留 L94 去重汇总 log 与各 console.warn。
+  - L86/L88 移除冗余显式类型注解（`= new Set<string>()` 即可）。
 
 ## 验证
 
-- `npx tsc --noEmit`、`pnpm i18n:verify`、`pnpm validate:icons`（若新注册图标）。
+- `pnpm i18n:merge` + `pnpm i18n:verify`、`npx tsc --noEmit`。
 - `pnpm lint` / `pnpm build` 由用户自行执行。
 
-## 假设
+## 假设与不改动项
 
-- 保留子组件自建 `cachedManager`（含 workspaceRoot 变化重建），不改为父传 `backupManager` prop——父实例生命周期由 `initBackupManager` 控制，改造收益低、影响面大，本次不动。
-- 原生 `confirm()` 与原生 `<select class="compare-select">` 为 s3Backup 模块现有统一做法（多处同款），本次不替换。
-- `.checksum-hash-value` 的 `border-radius: 3px` / `padding: 1px` 等历史硬编码不在本次范围。
+- 去重 basename 兜底、`listFailed` 兜底刷新、finally 落盘校验值均为正确设计，保留。
+- `recordUploadHosts([])` 内部已空数组早退，调用侧不加守卫。
+- 跨午夜上传落次日日期文件夹的极端边缘不处理。
+- L40 deps 解构风格不一致不改（低价值改动）。

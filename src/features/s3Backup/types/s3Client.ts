@@ -8,6 +8,7 @@
  * ListObjects(列举)、DeleteObject(删除)
  */
 import type { S3Config, S3FileInfo } from "./index"
+import { MSG_DESKTOP_ONLY } from "./index"
 import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import { padNum } from "../utils"
@@ -33,7 +34,7 @@ function requireCrypto(): any {
 /** 获取 fs/path 模块 */
 function requireFsPath() {
   const node = getNodeModules()
-  if (!node) throw new Error("无法访问文件系统，请使用桌面版思源笔记")
+  if (!node) throw new Error(MSG_DESKTOP_ONLY)
   return {
     fs: node.fs.promises,
     path: node.path,

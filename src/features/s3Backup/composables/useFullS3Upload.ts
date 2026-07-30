@@ -13,6 +13,7 @@ import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import type { BackupManager, BackupProgress, BackupResult, WorkspaceFile } from "../modules/BackupManager"
 import type { BackupLog, S3Config } from "../types"
+import { MSG_DESKTOP_ONLY } from "../types"
 import { buildS3Key, getBaseName, makeBackupTimestamp } from "../utils"
 
 /** 依赖注入：全部来自 index.vue 已有的状态与方法 */
@@ -78,30 +79,20 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
     const timestamp = makeBackupTimestamp()
     const node = getNodeModules()
     if (!node) {
-      throw new Error("无法访问文件系统，请使用桌面版思源笔记")
+      throw new Error(MSG_DESKTOP_ONLY)
     }
     const fs = node.fs.promises
 
     // 去重优化：上传前先获取 S3 已有文件列表，已存在的文件跳过上传
-    let existingKeys: Set<string> = new Set()
+    let existingKeys = new Set<string>()
     // basename 兜底集合：兼容历史时间戳目录下的旧对象（key 布局与当前规则不同）
-    let existingBaseNames: Set<string> = new Set()
+    let existingBaseNames = new Set<string>()
     // fetchBackupList 成功时已同步更新 backupList，无需备份结束后再次拉取
     let listFailed = false
     try {
       existingKeys = await deps.listExistingKeys()
       existingBaseNames = new Set([...existingKeys].map((k) => getBaseName(k)))
       console.log(`[S3备份] 去重检查：S3 已有 ${existingKeys.size} 个文件`)
-      if (existingKeys.size > 0 && files.length > 0) {
-        // 打印前 3 个已有 key 和前 3 个待上传 key 供诊断对比
-        const sampleExisting = [...existingKeys].slice(0, 3)
-        const sampleNew: string[] = []
-        for (let i = 0; i < Math.min(3, files.length); i++) {
-          sampleNew.push(makeS3Key(files[i].relativePath, timestamp))
-        }
-        console.log("[S3备份] S3 已有 key 示例:", sampleExisting)
-        console.log("[S3备份] 待上传 key 示例:", sampleNew)
-      }
     } catch (err: unknown) {
       listFailed = true
       console.warn("[S3备份] 无法获取 S3 文件列表，将上传全部文件:", err)
@@ -109,7 +100,8 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
 
     let skippedCount = 0
     let uploadedCount = 0
-    let processedCount = 0 // 已处理文件数（含跳过 + 上传）
+    let failedCount = 0
+    let processedCount = 0 // 已处理文件数（含跳过 + 上传 + 失败）
     const uploadedNames: string[] = [] // 实际上传成功的文件名（hostMap 只记录这些）
 
     // try/finally 兜底：即使中途上传抛错，也保住已成功文件的校验值落盘
@@ -122,7 +114,6 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
         if (existingKeys.has(s3Key) || existingBaseNames.has(getBaseName(file.relativePath))) {
           skippedCount++
           processedCount++
-          console.log(`[S3备份] 跳过已存在: ${s3Key}`)
           backupProgress.value = {
             phase: "uploading",
             currentFile: `${file.relativePath} (已跳过)`,
@@ -136,7 +127,7 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
         backupProgress.value = {
           phase: "uploading",
           currentFile: file.relativePath,
-          filesProcessed: processedCount + 1,
+          filesProcessed: processedCount,
           totalFiles: files.length,
           percent: Math.round((processedCount / files.length) * 100),
         }
@@ -146,6 +137,7 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
           content = await fs.readFile(file.fullPath)
         } catch (readErr: unknown) {
           console.warn(`跳过无法读取的文件: ${file.relativePath}`, getErrorMessage(readErr))
+          failedCount++
           processedCount++
           continue
         }
@@ -180,19 +172,26 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
     }
 
     // 构建结果消息
-    let msg = `${i18n.backupSuccess || "备份上传成功"}: 上传 ${uploadedCount} 个文件`
-    if (skippedCount > 0) {
-      msg += `，跳过 ${skippedCount} 个已存在文件`
+    let msg: string
+    let msgType: "info" | "error" = "info"
+    if (uploadedCount > 0) {
+      msg = i18n.s3UploadResult.replace("{uploaded}", String(uploadedCount)).replace("{skipped}", String(skippedCount))
+    } else {
+      msg = i18n.allFilesExist.replace("{skipped}", String(skippedCount))
     }
-    showMessage(msg, 3000, "info")
+    if (failedCount > 0) {
+      msg += i18n.s3UploadFailedPart.replace("{failed}", String(failedCount))
+      msgType = "error"
+    }
+    showMessage(msg, 3000, msgType)
 
     addLog({
       type: "s3Upload",
-      action: i18n.s3Upload || "S3 上传",
+      action: i18n.s3Upload,
       // 日志文件名："N 个文件"（多文件时）
-      fileName: uploadedCount > 1 ? i18n.filesCount.replace("{count}", String(uploadedCount)) : (files[0]?.relativePath || ""),
-      success: true,
-      message: skippedCount > 0 ? `跳过 ${skippedCount}` : undefined,
+      fileName: uploadedCount > 1 ? i18n.filesCount.replace("{count}", String(uploadedCount)) : (uploadedNames[0] || ""),
+      success: failedCount === 0,
+      message: msg,
     })
 
     // 仅记录实际上传成功的文件，避免覆盖其他设备的上传来源标记

@@ -101,9 +101,6 @@ export function useS3Entries(deps: {
         }
       } else {
         const all = await client.list(prefix)
-        // 诊断日志：降级全量列举的返回样本（前 5 条），与 listDir 同口径取证后端 prefix 行为
-        console.info(`[S3文件管理] 全量列举 prefix="${prefix}" 共 ${all.length} 条`,
-          { fileKeys: all.slice(0, 5).map((f) => f.key) })
         const agg = aggregateEntries(all, prefix)
         files = agg.files
         folders = agg.folders

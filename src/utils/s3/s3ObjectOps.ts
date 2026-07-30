@@ -44,6 +44,8 @@ export async function listDir(client: S3Client, prefix: string): Promise<S3DirLi
     // 过滤当前目录自身的占位对象（key 与 prefix 相同，通常为 0 字节文件夹标记）
     files.push(...pageFiles.filter((f) => f.key !== prefix))
     for (const folder of folders) {
+      // 过滤后端回显的当前目录自身与不属于本层的异常前缀（OpenList/Alist 等代理会回显 prefix 自身导致目录自嵌套）
+      if (folder === prefix || !folder.startsWith(prefix)) { continue }
       folderSet.add(folder)
     }
 

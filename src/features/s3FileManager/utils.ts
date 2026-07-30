@@ -66,7 +66,9 @@ export function aggregateEntries(files: S3FileInfo[], prefix: string): { files: 
     if (slashIdx === -1) {
       directFiles.push(f)
     } else {
-      folderSet.add(`${prefix}${rest.slice(0, slashIdx + 1)}`)
+      const seg = rest.slice(0, slashIdx)
+      // 跳过双斜杠异常键（首段为空），避免聚合出与当前目录同名的假文件夹
+      if (seg) { folderSet.add(`${prefix}${seg}/`) }
     }
   }
   return { files: directFiles, folders: [...folderSet] }

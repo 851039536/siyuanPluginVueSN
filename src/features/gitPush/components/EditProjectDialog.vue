@@ -235,15 +235,17 @@ import { showMessage } from "siyuan"
 import {
   computed,
   onMounted,
+  onUnmounted,
   reactive,
   ref,
+  watch,
 } from "vue"
 import Input from "@/components/Input.vue"
 import type { SelectOption } from "@/components/Select.vue"
 import type { RemoteRowItem } from "./EditableRemoteList.vue"
 import EditableRemoteList from "./EditableRemoteList.vue"
 import CloneLogPanel from "./CloneLogPanel.vue"
-import { getCurrentDeviceName, hasPlatformRemote, resolveValidPath } from "../utils"
+import { getCurrentDeviceName, hasPlatformRemote, resolveValidPathFromPaths } from "../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
 import { copyToClipboard } from "@/utils/domUtils"
 import { pickDirectory } from "@/utils/electronDialog"
@@ -395,10 +397,17 @@ const remoteOptions = computed<SelectOption[]>(() =>
     .map((r) => ({ value: r.key, label: r.label })),
 )
 
+/** 当前编辑表单解析出的有效仓库路径（基于实时路径行，而非已持久化的 project，确保输入路径后立即用于远程检测） */
+function currentRepoPath(): string {
+  return resolveValidPathFromPaths(allPathsList.value.map((r) => r.path))
+}
+
 async function loadRemotes() {
   if (!project.value) return
+  const path = currentRepoPath()
+  // 无有效路径时清空远程列表（避免沿用旧路径的检测结果）
+  if (!path) { remoteList.value = []; remoteError.value = ""; return }
   try {
-    const path = resolveValidPath(project.value)
     remoteList.value = await props.manager.detectRemotes(path)
     remoteError.value = ""
   } catch (e: unknown) {
@@ -411,7 +420,7 @@ async function runRemoteOp(fallbackMsg: string, op: (repoPath: string) => Promis
   if (!project.value) { return false }
   remoteError.value = ""
   try {
-    await op(resolveValidPath(project.value))
+    await op(currentRepoPath())
     await loadRemotes()
     await props.manager.refreshRemotes(props.projectId)
     return true
@@ -468,6 +477,20 @@ onMounted(async () => {
   initPathRows(p.path, p.localPaths, p.pathDevices)
   // 检测远程仓库
   await loadRemotes()
+})
+
+// 路径行变动时防抖重新检测远程（输入本地路径后无需关闭重开，Git 远程列表即时刷新）
+let remoteDetectTimer: ReturnType<typeof setTimeout> | null = null
+watch(
+  () => allPathsList.value.map((r) => r.path).join("\n"),
+  () => {
+    if (!project.value) { return }
+    if (remoteDetectTimer) { clearTimeout(remoteDetectTimer) }
+    remoteDetectTimer = setTimeout(() => { void loadRemotes() }, 500)
+  },
+)
+onUnmounted(() => {
+  if (remoteDetectTimer) { clearTimeout(remoteDetectTimer) }
 })
 
 // ── 保存 ──

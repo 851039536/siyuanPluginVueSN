@@ -113,7 +113,7 @@
     />
     <!-- 按钮："添加" -->
     <button
-      class="vp-btn vp-btn--primary vp-btn--sm"
+      class="vp-btn vp-btn--primary vp-btn--xs"
       :disabled="!newKey || !newUrl.trim()"
       @click="submitAdd"
     >

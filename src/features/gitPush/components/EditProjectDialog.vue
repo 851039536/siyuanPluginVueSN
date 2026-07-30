@@ -9,10 +9,10 @@
         <!-- 弹窗标题："编辑项目 — 项目名" -->
         <span class="gp-dialog-title">{{ i18n.editProjectTitlePrefix }} — {{ project?.name }}</span>
         <button
-          class="vp-btn vp-btn--ghost vp-btn--sm"
+          class="vp-btn vp-btn--ghost vp-btn--xs"
           @click="$emit('close')"
         >
-          <Icon icon="mdi:close" height="12" />
+          <Icon icon="mdi:close" height="10" />
         </button>
       </div>
       <div class="gp-dialog-body">
@@ -36,7 +36,7 @@
               >
                 <Icon
                   :icon="localStarred ? 'mdi:star' : 'mdi:star-outline'"
-                  height="12"
+                  height="10"
                 />{{ i18n.favorite }}
               </button>
               <!-- 切换按钮："归档" -->
@@ -47,7 +47,7 @@
               >
                 <Icon
                   icon="mdi:archive-outline"
-                  height="12"
+                  height="10"
                 />{{ i18n.archivedShort }}
               </button>
             </div>
@@ -87,28 +87,28 @@
                 />
               </div>
               <button
-                class="vp-btn vp-btn--ghost vp-btn--sm"
+                class="vp-btn vp-btn--ghost vp-btn--xs"
                 :title="i18n.selectDir"
                 @click="pickLocalPath(idx)"
               >
-                <Icon icon="mdi:folder-outline" height="12" />
+                <Icon icon="mdi:folder-outline" height="10" />
               </button>
               <button
-                class="vp-btn vp-btn--ghost vp-btn--sm"
+                class="vp-btn vp-btn--ghost vp-btn--xs"
                 :title="i18n.removePath"
                 :disabled="allPathsList.length <= 1"
                 @click="removeLocalPath(idx)"
               >
-                <Icon icon="mdi:delete-outline" height="12" />
+                <Icon icon="mdi:delete-outline" height="10" />
               </button>
             </div>
           </div>
           <!-- 按钮："添加本地路径" -->
           <button
-            class="vp-btn vp-btn--ghost vp-btn--sm gp-add-path-btn"
+            class="vp-btn vp-btn--ghost vp-btn--xs gp-add-path-btn"
             @click="addLocalPath"
           >
-            <Icon icon="mdi:plus" height="12" />
+            <Icon icon="mdi:plus" height="10" />
             <span>{{ i18n.addLocalPath }}</span>
           </button>
         </div>
@@ -159,11 +159,11 @@
       <div class="gp-dialog-footer">
         <div class="gp-help-wrap">
           <button
-            class="vp-btn vp-btn--ghost vp-btn--sm gp-help-btn"
+            class="vp-btn vp-btn--ghost vp-btn--xs gp-help-btn"
             :title="i18n.help"
             @click="showHelp = !showHelp"
           >
-            <Icon icon="mdi:help-circle-outline" height="12" />
+            <Icon icon="mdi:help-circle-outline" height="10" />
           </button>
           <!-- 帮助说明弹层 -->
           <div
@@ -176,10 +176,10 @@
               <!-- 弹层标题："帮助说明" -->
               <span>{{ i18n.help }}</span>
               <button
-                class="vp-btn vp-btn--ghost vp-btn--sm gp-help-close"
+                class="vp-btn vp-btn--ghost vp-btn--xs gp-help-close"
                 @click="showHelp = false"
               >
-                <Icon icon="mdi:close" height="12" />
+                <Icon icon="mdi:close" height="10" />
               </button>
             </div>
             <div class="gp-help-body">
@@ -196,7 +196,7 @@
             <div class="gp-help-footer">
               <!-- 按钮："知道了" -->
               <button
-                class="vp-btn vp-btn--primary vp-btn--sm"
+                class="vp-btn vp-btn--primary vp-btn--xs"
                 @click="showHelp = false"
               >
                 {{ i18n.gotIt }}
@@ -206,14 +206,14 @@
         </div>
         <!-- 按钮："取消" -->
         <button
-          class="vp-btn vp-btn--ghost"
+          class="vp-btn vp-btn--ghost vp-btn--sm"
           @click="$emit('close')"
         >
           {{ i18n.cancel }}
         </button>
         <!-- 按钮："保存" -->
         <button
-          class="vp-btn vp-btn--primary"
+          class="vp-btn vp-btn--primary vp-btn--sm"
           @click="save"
         >
           {{ i18n.save }}

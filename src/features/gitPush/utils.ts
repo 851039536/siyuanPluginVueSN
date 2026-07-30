@@ -302,6 +302,25 @@ export function activityLevel(iso?: string): "fresh" | "recent" | "stale" | "dea
   return "dead"
 }
 
+/**
+ * 从候选路径列表中解析当前设备上实际存在的首个路径（供编辑弹窗基于实时表单行重新检测远程）。
+ * 与 resolveValidPath 不同：它不依赖已持久化的 GitProject，而是直接反映实时编辑中的路径。
+ * 皆不存在时降级返回首个非空路径；均为空返回空串。
+ */
+export function resolveValidPathFromPaths(paths: string[]): string {
+  const candidates = paths.map((p) => p.trim()).filter(Boolean)
+  if (candidates.length === 0) { return "" }
+  const fs = getNodeFsPathOs()?.fs
+  if (fs) {
+    for (const p of candidates) {
+      try {
+        if (fs.existsSync(p)) { return p }
+      } catch { /* skip */ }
+    }
+  }
+  return candidates[0]
+}
+
 /** 全局排序：starred 优先 → lastActivity 降序 → name */
 export function sortProjects(list: GitProject[]): GitProject[] {
   return [...list].sort((a, b) => {

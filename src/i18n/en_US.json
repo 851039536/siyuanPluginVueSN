@@ -2234,6 +2234,7 @@
     "largeFileWarn": "Files larger than 100MB exist, they will be fully held in memory during upload",
     "pickUploadFiles": "Select files to upload",
     "pickDownloadDir": "Select the download destination directory",
+    "dropToUpload": "Release to upload to current folder",
     "logSucceed": "Success",
     "logFailed": "Failed",
     "noLogs": "No operation records yet",

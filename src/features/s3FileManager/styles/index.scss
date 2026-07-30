@@ -92,6 +92,32 @@
   transition: width 0.2s ease;
 }
 
+// ========== 浏览区 + 外部拖入提示浮层 ==========
+
+.fm-browse {
+  position: relative; // 作为拖入提示浮层的定位基准
+  flex: 1;
+  min-height: 0; // 允许内部列表正常滚动
+  display: flex;
+  flex-direction: column;
+}
+
+.fm-dropzone-overlay {
+  position: absolute;
+  inset: $spacing-2;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none; // 不拦截拖拽事件，交给底层容器处理
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: var(--b3-theme-primary);
+  background: var(--b3-theme-primary-lightest, rgba(66, 133, 244, 0.12));
+  border: 2px dashed var(--b3-theme-primary);
+  border-radius: $vp-radius;
+}
+
 // ========== 弹窗共享基座（各 Dialog 复用） ==========
 
 .fm-dialog-mask {

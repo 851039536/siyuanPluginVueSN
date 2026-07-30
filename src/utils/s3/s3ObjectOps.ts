@@ -44,15 +44,15 @@ export async function listDir(client: S3Client, prefix: string): Promise<S3DirLi
     // 过滤当前目录自身的占位对象（key 与 prefix 相同，通常为 0 字节文件夹标记）
     files.push(...pageFiles.filter((f) => f.key !== prefix))
     for (const folder of folders) {
+      // 归一化为以 / 结尾：部分非标准后端返回的 CommonPrefix 缺尾斜杠，
+      // 会导致目录 key/currentPrefix 无斜杠 → 上传 key 拼接错乱、列举误命中同名前缀文件
+      const normalized = folder.endsWith("/") ? folder : `${folder}/`
       // 过滤后端回显的当前目录自身与不属于本层的异常前缀（OpenList/Alist 等代理会回显 prefix 自身导致目录自嵌套）
-      if (folder === prefix || !folder.startsWith(prefix)) { continue }
-      folderSet.add(folder)
+      if (normalized === prefix || !normalized.startsWith(prefix)) { continue }
+      folderSet.add(normalized)
     }
 
     if (!isTruncated || !nextMarker) {
-      // 诊断日志：输出请求 prefix 与返回样本（前 5 条），用于取证后端非标准 prefix 行为（如回显假 key）
-      console.info(`[S3] listDir prefix="${prefix}" files=${files.length} folders=${folderSet.size}`,
-        { fileKeys: files.slice(0, 5).map((f) => f.key), folders: [...folderSet].slice(0, 5) })
       return { files, folders: [...folderSet] }
     }
     marker = nextMarker

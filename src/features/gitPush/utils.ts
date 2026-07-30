@@ -80,6 +80,15 @@ export function findPlatformRemote(remotes: GitRemoteInfo[], key: PlatformKey): 
   return remotes.find((r) => r.name === key || r[flagProp])
 }
 
+/**
+ * 解析远程对应的平台元数据（按 GitRemoteInfo 检测标志匹配）。
+ * 命中时返回 PLATFORM_META 条目（含统一 label/icon），用于让远程列表与仓库链接列表显示一致；
+ * origin/upstream 等未识别为平台的自定义远程返回 undefined，由调用方回退显示原始远程名。
+ */
+export function resolveRemotePlatform(remote: GitRemoteInfo): typeof PLATFORM_META[number] | undefined {
+  return PLATFORM_META.find((pm) => remote[PLATFORM_FLAG_BY_KEY[pm.key]])
+}
+
 /** 判断指定平台是否已存在于远程列表（远程名等于平台 key，或平台检测标志命中） */
 export function hasPlatformRemote(remotes: GitRemoteInfo[], key: PlatformKey): boolean {
   return !!findPlatformRemote(remotes, key)

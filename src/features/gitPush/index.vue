@@ -542,6 +542,7 @@ const {
   uncommittedProjects,
   starredProjects,
   visibleGroups,
+  allGroups: groupedProjects,
 })
 
 const {

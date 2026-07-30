@@ -11,6 +11,9 @@ import { VIEW_MODE_META } from "../types"
 import { sortProjects } from "../utils"
 import type { TypedStorage } from "@/utils/typedStorage"
 
+/** 分类分组结构（与 useGitStats.groupedProjects 元素结构一致） */
+type ProjectGroup = { category: { id: string, name: string, color: string, order: number }, projects: GitProject[] }
+
 interface UseProjectFiltersOptions {
   /** git 操作暂停状态持久化槽位（由 GitPushStorage 提供） */
   gitOpsPausedStorage: TypedStorage<boolean>
@@ -20,7 +23,10 @@ interface UseProjectFiltersOptions {
   needsPushProjects: Ref<{ project: GitProject }[]>
   uncommittedProjects: Ref<{ project: GitProject }[]>
   starredProjects: Ref<GitProject[]>
-  visibleGroups: Ref<{ category: { id: string, name: string, color: string, order: number }, projects: GitProject[] }[]>
+  /** 按分类 TAB 过滤后的分组（无搜索词时的数据源） */
+  visibleGroups: Ref<ProjectGroup[]>
+  /** 全部分组（搜索时跨分类查找的数据源，不受分类 TAB 限制） */
+  allGroups: Ref<ProjectGroup[]>
 }
 
 export function useProjectFilters(options: UseProjectFiltersOptions) {
@@ -32,6 +38,7 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
     uncommittedProjects,
     starredProjects,
     visibleGroups,
+    allGroups,
   } = options
 
   const searchQuery = ref("")
@@ -120,7 +127,9 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
       }]
     }
 
-    return visibleGroups.value
+    // 有搜索词时跨全部分类查找，不受当前分类 TAB 限制
+    const source = q ? allGroups.value : visibleGroups.value
+    return source
       .map((g) => ({ ...g, projects: sortProjects(applyFilters(g.projects)) }))
       .filter((g) => g.projects.length > 0)
   })

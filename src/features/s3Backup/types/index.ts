@@ -147,6 +147,12 @@ export interface BackupLogDetail {
 /** 非桌面端无法访问文件系统的统一错误消息（模块内部使用，不经 i18n） */
 export const MSG_DESKTOP_ONLY = "无法访问文件系统，请使用桌面版思源笔记"
 
+/** 单文件传输（上传/下载）最大重试次数（不含首次尝试） */
+export const TRANSFER_MAX_RETRIES = 2
+
+/** 全量上传并发数（对象为大 ZIP，带宽易饱和，用小并发） */
+export const FULL_UPLOAD_CONCURRENCY = 2
+
 export const DEFAULT_BACKUP_MODE: BackupMode = {
   localZip: true,
   s3Upload: false,

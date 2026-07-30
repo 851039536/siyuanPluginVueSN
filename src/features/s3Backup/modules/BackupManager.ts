@@ -2,13 +2,13 @@
  * 统一备份管理器
  *
  * 支持两种备份模式：
- * 1. 文件扫描（getWorkspaceFiles）— 供 S3 逐文件上传使用
- * 2. ZIP 打包（performFullBackup）— 供本地压缩备份使用
- * 两者共用统一的 scanDirectory() 实现。
+ * 1. 归档扫描（getWorkspaceFiles）— 复用 scanBackupDir 规则，供 S3 上传本地备份归档
+ * 2. ZIP 流式打包（performFullBackup）— 供本地压缩备份使用
+ * 增量扫描（scanDataFiles）与 ZIP 打包共用统一的 scanDirectory() 实现。
  */
 import JSZip from "jszip"
-import { getNodeModules } from "@/utils/nodeModules"
-import { makeBackupTimestamp } from "../utils"
+import { getNodeModules, getNodeCrypto } from "@/utils/nodeModules"
+import { makeBackupTimestamp, isArchiveFile, createLazyReadStream } from "../utils"
 import { DEFAULT_BACKUP_DIR, MSG_DESKTOP_ONLY } from "../types"
 import type { LocalBackupInfo, IncrementalFileEntry } from "../types"
 
@@ -16,9 +16,6 @@ import type { LocalBackupInfo, IncrementalFileEntry } from "../types"
 
 /** 扫描时始终跳过的目录（思源临时目录/回收站） */
 const SKIP_DIRS = ["temp", ".recycle"] as const
-
-/** 本地备份列表识别的归档扩展名白名单 */
-const ARCHIVE_EXTS = [".zip", ".7z", ".tar", ".tar.gz", ".tgz", ".tar.bz2", ".rar"]
 
 /** 插件生成的日期子文件夹命名规则（useDateFolder 开启时的 data-YYYYMMDD 目录） */
 const DATE_DIR_RE = /^data-\d{8}$/
@@ -39,6 +36,8 @@ export interface BackupResult {
   filePath: string
   size: number
   totalFiles: number
+  /** 打包时因无法读取而被跳过的文件数 */
+  skippedCount: number
 }
 
 interface BackupInfo {
@@ -49,6 +48,8 @@ interface BackupInfo {
   workspaceDataPath: string
   backupDir: string
   totalFiles: number
+  /** 打包时因无法读取而被跳过的文件相对路径列表 */
+  skippedFiles: string[]
 }
 
 export interface BackupOptions {
@@ -66,27 +67,8 @@ export interface WorkspaceFile {
 
 // ========== 工具函数 ==========
 
-/** 缓存的 crypto/fs 模块引用（模块级单例，避免每次哈希计算重复 require） */
-let _crypto: any = null
-let _fsRaw: any = null
-
-/** 获取 crypto/fs 模块（仅 Electron/Node.js 环境可用） */
-function requireCryptoFs(): { crypto: any; fsRaw: any } {
-  if (!_crypto || !_fsRaw) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      _crypto = require("node:crypto")
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      _fsRaw = require("node:fs")
-    } catch {
-      throw new Error("哈希计算需要 Node.js 环境，请使用桌面版思源笔记")
-    }
-  }
-  return { crypto: _crypto, fsRaw: _fsRaw }
-}
-
-/** B11 修复：生成备份文件名，支持日期子文件夹 */
-function formatTimestamp(now: Date, useDateFolder = false): string {
+/** 生成备份文件名（含可选的 data-YYYYMMDD 日期子文件夹前缀） */
+function buildBackupFileName(now: Date, useDateFolder = false): string {
   const ts = makeBackupTimestamp(now) // "YYYYMMDD-HHmmss"
   const datePart = ts.slice(0, 8)
   const prefix = useDateFolder ? `${datePart}/` : ""
@@ -98,6 +80,8 @@ function formatTimestamp(now: Date, useDateFolder = false): string {
 export class BackupManager {
   private workspaceRoot: string
   private fs: any
+  /** 原始 fs 模块（createReadStream/createWriteStream 用） */
+  private fsRaw: any
   private path: any
 
   constructor(workspaceRoot: string) {
@@ -108,6 +92,7 @@ export class BackupManager {
       throw new TypeError(MSG_DESKTOP_ONLY)
     }
     this.fs = node.fs.promises
+    this.fsRaw = node.fs
     this.path = node.path
   }
 
@@ -131,16 +116,36 @@ export class BackupManager {
     this.workspaceRoot = workspaceRoot
   }
 
-  // ========== 文件扫描（S3 上传 / 增量共用） ==========
+  // ========== 文件扫描（S3 上传 / 增量） ==========
 
   /**
-   * 扫描 data-backup/ 目录中的备份文件列表（供 S3 上传使用）
-   * 上传的是本地备份已打包的 ZIP 文件，而非 data/ 原始文件
+   * 收集 data-backup/ 目录中的备份归档列表（供 S3 上传使用）
+   * 复用 scanBackupDir 的归档识别规则（顶层归档 + data-YYYYMMDD 一层），
+   * 只上传本地备份已打包的归档文件；目录不存在时返回空列表
    */
   async getWorkspaceFiles(
     onProgress?: (progress: BackupProgress) => void,
   ): Promise<WorkspaceFile[]> {
-    return this.scanFiles(this.backupDir, onProgress)
+    onProgress?.({
+      phase: "scanning",
+      currentFile: "",
+      filesProcessed: 0,
+      totalFiles: 0,
+      percent: 0,
+    })
+
+    const archives = await this.scanBackupDir()
+    const files = archives.map((a) => ({ fullPath: a.path, relativePath: a.name }))
+
+    onProgress?.({
+      phase: "scanning",
+      currentFile: "",
+      filesProcessed: files.length,
+      totalFiles: files.length,
+      percent: 100,
+    })
+
+    return files
   }
 
   /**
@@ -150,15 +155,7 @@ export class BackupManager {
   async scanDataFiles(
     onProgress?: (progress: BackupProgress) => void,
   ): Promise<IncrementalFileEntry[]> {
-    return this.scanFiles(this.dataPath, onProgress)
-  }
-
-  /** 统一扫描入口：校验根目录 → 上报起止进度 → 递归收集（消除两个公开方法的同构样板） */
-  private async scanFiles(
-    rootPath: string,
-    onProgress?: (progress: BackupProgress) => void,
-  ): Promise<IncrementalFileEntry[]> {
-    await this.validatePath(rootPath)
+    await this.validatePath(this.dataPath)
 
     const files: IncrementalFileEntry[] = []
 
@@ -170,7 +167,7 @@ export class BackupManager {
       percent: 0,
     })
 
-    await this.scanDirectory(rootPath, "", new Set(SKIP_DIRS), files, onProgress)
+    await this.scanDirectory(this.dataPath, "", new Set(SKIP_DIRS), files)
 
     onProgress?.({
       phase: "scanning",
@@ -193,8 +190,11 @@ export class BackupManager {
       onProgress,
     } = options
 
+    // 统一时间基准：backup-info.json 与文件名/日期子文件夹同源，避免打包耗时导致跨秒/跨日撕裂
+    const now = new Date()
+
     // 本地 ZIP 备份扫描 data/ 子目录，打包到 data-backup/；
-    // S3 上传 getWorkspaceFiles() 扫描 data-backup/ 中的 ZIP 文件上传到云端。
+    // S3 上传 getWorkspaceFiles() 收集 data-backup/ 中的归档文件上传到云端。
     const backupSourcePath = this.dataPath
     await this.validatePath(backupSourcePath)
 
@@ -210,12 +210,17 @@ export class BackupManager {
       percent: 0,
     })
 
-    const allFiles: { fullPath: string; relativePath: string; mtime: number; size: number }[] = []
-    await this.scanDirectory(backupSourcePath, "", skipDirs, allFiles, onProgress)
+    const allFiles: IncrementalFileEntry[] = []
+    await this.scanDirectory(backupSourcePath, "", skipDirs, allFiles)
 
     const totalFiles = allFiles.length
+    // 空数据目录多为路径配置错误，拒绝产出空 ZIP 占用备份保留槽位
+    if (totalFiles === 0) {
+      throw new Error(`数据目录为空，已取消备份: ${backupSourcePath}`)
+    }
 
-    // 阶段2：打包文件
+    // 阶段2：登记文件（流式输入：仅探测可读性并挂载惰性读取流，内容在压缩阶段逐个消费）
+    const skippedFiles: string[] = []
     for (let i = 0; i < allFiles.length; i++) {
       const file = allFiles[i]
       onProgress?.({
@@ -226,38 +231,44 @@ export class BackupManager {
         percent: Math.round(((i + 1) / totalFiles) * 70),
       })
       try {
-        const content = await this.fs.readFile(file.fullPath)
-        zip.file(file.relativePath, content)
+        // 预探测可读性：无法打开的文件跳过并记录（压缩阶段的残余流错误会使整次备份失败，
+        // 对备份工具而言“响亮失败”优于静默丢数据）
+        const handle = await this.fs.open(file.fullPath, "r")
+        await handle.close()
+        zip.file(file.relativePath, createLazyReadStream(this.fsRaw, file.fullPath))
       } catch (err) {
+        skippedFiles.push(file.relativePath)
         console.warn(`无法读取文件: ${file.fullPath}`, err)
       }
     }
 
     const backupInfo: BackupInfo = {
-      timestamp: Date.now(),
-      backupTime: new Date().toISOString(),
+      timestamp: now.getTime(),
+      backupTime: now.toISOString(),
       version: "2.0",
       workspaceRoot: this.workspaceRoot,
       workspaceDataPath: backupSourcePath,
       backupDir: this.backupDir,
       totalFiles,
+      skippedFiles,
     }
 
-    return this.finalizeAndSaveBackup(zip, backupInfo, totalFiles, compressionLevel, useDateFolder, onProgress)
+    return this.finalizeAndSaveBackup(zip, backupInfo, compressionLevel, useDateFolder, now, onProgress)
   }
 
-  /** 压缩、保存备份（公共逻辑） */
+  /** 压缩并流式写盘保存备份（公共逻辑） */
   private async finalizeAndSaveBackup(
     zip: JSZip,
     backupInfo: BackupInfo,
-    totalFiles: number,
     compressionLevel: number,
     useDateFolder: boolean,
+    now: Date,
     onProgress?: (progress: BackupProgress) => void,
   ): Promise<BackupResult> {
+    const { totalFiles } = backupInfo
     zip.file("backup-info.json", JSON.stringify(backupInfo, null, 2))
 
-    // 阶段3：压缩
+    // 阶段3：压缩（generateNodeStream 流式写盘，避免整包 Buffer 驻留内存）
     onProgress?.({
       phase: "compressing",
       currentFile: "",
@@ -266,24 +277,43 @@ export class BackupManager {
       percent: 75,
     })
 
-    const zipBuffer = await zip.generateAsync(
-      {
-        type: "uint8array",
-        compression: "DEFLATE",
-        compressionOptions: { level: compressionLevel },
-      },
-      (metadata) => {
-        onProgress?.({
-          phase: "compressing",
-          currentFile: "",
-          filesProcessed: totalFiles,
-          totalFiles,
-          percent: 75 + Math.round(metadata.percent * 0.2),
-        })
-      },
-    )
+    const fileName = buildBackupFileName(now, useDateFolder)
+    const zipFilePath = this.path.join(this.backupDir, fileName)
+    // recursive: true 自动创建中间目录（包括日期子文件夹）
+    await this.fs.mkdir(this.path.dirname(zipFilePath), { recursive: true })
 
-    // 阶段4：保存文件
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const output = this.fsRaw.createWriteStream(zipFilePath)
+        output.on("error", reject)
+        output.on("finish", () => resolve())
+        zip.generateNodeStream(
+          {
+            type: "nodebuffer",
+            streamFiles: true,
+            compression: "DEFLATE",
+            compressionOptions: { level: compressionLevel },
+          },
+          (metadata) => {
+            onProgress?.({
+              phase: "compressing",
+              currentFile: metadata.currentFile ?? "",
+              filesProcessed: totalFiles,
+              totalFiles,
+              percent: 75 + Math.round(metadata.percent * 0.2),
+            })
+          },
+        )
+          .on("error", reject)
+          .pipe(output)
+      })
+    } catch (err) {
+      // 生成失败时清理半成品 ZIP，避免残留损坏文件被当作有效备份
+      try { await this.fs.unlink(zipFilePath) } catch { /* 忽略清理失败 */ }
+      throw err
+    }
+
+    // 阶段4：保存完成
     onProgress?.({
       phase: "saving",
       currentFile: "",
@@ -291,13 +321,6 @@ export class BackupManager {
       totalFiles,
       percent: 95,
     })
-
-    // A2 修复：支持按日期创建子文件夹
-    const fileName = formatTimestamp(new Date(), useDateFolder)
-    const zipFilePath = this.path.join(this.backupDir, fileName)
-    // recursive: true 自动创建中间目录（包括日期子文件夹）
-    await this.fs.mkdir(this.path.dirname(zipFilePath), { recursive: true })
-    await this.fs.writeFile(zipFilePath, zipBuffer)
 
     const stats = await this.fs.stat(zipFilePath)
 
@@ -315,13 +338,31 @@ export class BackupManager {
       filePath: zipFilePath,
       size: stats.size,
       totalFiles,
+      skippedCount: backupInfo.skippedFiles.length,
     }
   }
 
   // ========== 本地备份文件管理 ==========
 
   async deleteBackupFile(backupFilePath: string): Promise<void> {
+    // 防护：本方法只应删除扫描所得的备份归档，拒绝任意路径误删
+    if (!isArchiveFile(backupFilePath)) {
+      throw new Error(`拒绝删除非归档文件: ${backupFilePath}`)
+    }
     await this.fs.unlink(backupFilePath)
+
+    // useDateFolder 场景：删除后若插件自建的日期子目录已空则一并清理
+    const parentDir = this.path.dirname(backupFilePath)
+    if (DATE_DIR_RE.test(this.path.basename(parentDir))) {
+      try {
+        const rest = await this.fs.readdir(parentDir)
+        if (rest.length === 0) {
+          await this.fs.rmdir(parentDir)
+        }
+      } catch {
+        // 目录清理失败不影响删除结果
+      }
+    }
   }
 
   /**
@@ -332,15 +373,6 @@ export class BackupManager {
    */
   async scanBackupDir(): Promise<LocalBackupInfo[]> {
     const collected: { name: string; path: string; mtimeMs: number; size: number }[] = []
-
-    try {
-      await this.fs.access(this.backupDir)
-    } catch {
-      return []
-    }
-
-    const isArchive = (f: string): boolean =>
-      ARCHIVE_EXTS.some((ext) => f.toLowerCase().endsWith(ext))
 
     /** 收集单个归档文件的元信息（无法读取的文件静默跳过） */
     const collect = async (name: string, filePath: string): Promise<void> => {
@@ -360,7 +392,7 @@ export class BackupManager {
     }
 
     for (const entry of entries) {
-      if (entry.isFile() && isArchive(entry.name)) {
+      if (entry.isFile() && isArchiveFile(entry.name)) {
         await collect(entry.name, this.path.join(this.backupDir, entry.name))
       } else if (entry.isDirectory() && DATE_DIR_RE.test(entry.name)) {
         // 仅递归插件自建的日期子文件夹一层，避免把用户嵌套目录卷入列表与清理
@@ -372,7 +404,7 @@ export class BackupManager {
           continue
         }
         for (const f of subFiles) {
-          if (isArchive(f)) {
+          if (isArchiveFile(f)) {
             await collect(`${entry.name}/${f}`, this.path.join(subDir, f))
           }
         }
@@ -398,19 +430,20 @@ export class BackupManager {
    * 流式读取，不阻塞 UI，支持大文件
    */
   async computeFileHash(filePath: string): Promise<string> {
-    const { crypto, fsRaw } = requireCryptoFs()
-    const hash = crypto.createHash("sha256")
+    const cryptoMod = getNodeCrypto()
+    if (!cryptoMod) {
+      throw new TypeError(MSG_DESKTOP_ONLY)
+    }
+    const hash = cryptoMod.crypto.createHash("sha256")
     return new Promise((resolve, reject) => {
-      let stream: any
-      try {
-        stream = fsRaw.createReadStream(filePath)
-      } catch (err) {
-        reject(err)
-        return
-      }
+      const stream = this.fsRaw.createReadStream(filePath)
       stream.on("data", (chunk: Buffer) => hash.update(chunk))
-      stream.on("end", () => resolve(hash.digest("hex")))
-      stream.on("error", reject)
+      stream.once("end", () => resolve(hash.digest("hex")))
+      stream.once("error", (err: Error) => {
+        // 显式销毁，确保错误路径立即释放文件句柄
+        stream.destroy()
+        reject(err)
+      })
     })
   }
 
@@ -433,8 +466,7 @@ export class BackupManager {
     dirPath: string,
     zipPath: string,
     skipDirs: Set<string>,
-    result: { fullPath: string; relativePath: string; mtime?: number; size?: number }[],
-    onProgress?: (progress: BackupProgress) => void,
+    result: IncrementalFileEntry[],
   ) {
     let entries
     try {
@@ -449,7 +481,7 @@ export class BackupManager {
 
       if (entry.isDirectory()) {
         if (skipDirs.has(entry.name)) { continue }
-        await this.scanDirectory(fullPath, relativePath, skipDirs, result, onProgress)
+        await this.scanDirectory(fullPath, relativePath, skipDirs, result)
       } else if (entry.isFile()) {
         try {
           const stats = await this.fs.stat(fullPath)

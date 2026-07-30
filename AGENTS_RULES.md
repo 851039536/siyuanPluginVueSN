@@ -191,6 +191,44 @@ emitCustomEvent("openDialog", { content }, { useMicrotask: true })
 // 默认值: bubbles=true, cancelable=true, target=window, useMicrotask=false
 ```
 
+### 跨功能联动示例
+
+规则见 AGENTS.md 「跨功能联动规则」章节，完整正确示例：
+
+```typescript
+// ===== Feature A（如 floatingToolbar/actions/passwordVault.ts）=====
+// 只用 createDialogAction 工厂 + emitCustomEvent 派发
+// ===== App.vue（中心调度）=====
+// 唯一允许同时导入两个 feature 的文件
+import { openPasswordVaultWithText } from "@/features"
+
+export function createPasswordVaultAction(plugin: Plugin): ToolbarAction {
+  return createDialogAction({
+    id: "passwordVault",
+    icon: `<svg>...</svg>`,
+    label: plugin.i18n.passwordVault.quickSave,
+    eventName: "openPasswordVaultAdd", // 事件名
+    getContent: (selection) => ({ content: selection }),
+  })
+}
+
+// ===== Feature B（如 passwordVault/index.ts）=====
+// 导出 public API，不导入任何其他 feature
+export const pendingEntryName = ref("")
+export function openPasswordVaultWithText(text: string) {
+  pendingEntryName.value = text
+  passwordVaultVisible.value = true
+}
+
+onMounted(() => {
+  window.addEventListener("openPasswordVaultAdd", ((event: any) => {
+    if (event.detail?.content) {
+      openPasswordVaultWithText(event.detail.content)
+    }
+  }) as EventListener)
+})
+```
+
 ### Markdown 渲染
 
 ```typescript
@@ -365,6 +403,31 @@ clearCachedKey() // 卸载时
 // 注意：settings.ts 是唯一允许直接调用 plugin.loadData/saveData 的例外
 ```
 
+### 快捷键注册
+
+通过 `plugin.addCommand()` 注册全局快捷键，在 `registerFeature()` 中调用：
+
+```ts
+plugin.addCommand({
+  langKey: "toggleToolCollection", // i18n 键（命令名称，显示在快捷键设置界面）
+  langText: "工具合集", // 回退文本（i18n 缺失时使用）
+  hotkey: "⌃⌥T", // macOS 风格：⌃=Ctrl ⌥=Alt ⌘=Cmd ⇧=Shift；Windows 自动转换
+  callback: () => {
+    toggleToolCollection() // 回调函数
+  },
+})
+```
+
+**hotkey 格式**：
+| 符号 | 按键 | 示例 |
+|------|------|------|
+| `⌃` | Ctrl | `⌃T` = Ctrl+T |
+| `⌥` | Alt | `⌃⌥E` = Ctrl+Alt+E |
+| `⌘` | Cmd | `⌘K` = Cmd+K |
+| `⇧` | Shift | `⇧⌃P` = Ctrl+Shift+P |
+
+快捷键的 `langKey` 需要对应 i18n 分片文件中的翻译键。思源框架会自动将 macOS 符号转换为 Windows 键名显示。
+
 ## 文件路径
 
 ### getFile / putFile / removeFile
@@ -396,6 +459,34 @@ const dir = await getWorkspaceDir() // "E:\\siyuan2"
 ### Vite 外部模块
 
 使用 `require("node:fs/path/os/child_process")` 的模块需在 `vite.config.ts` 的 `external` 中声明。
+
+## 底部面板模式（Tab 切换）
+
+部分工具类功能不需要独立 Dock 面板，适合整合到统一的"底部面板 + Tab 切换"容器中。参考实现：`src/features/toolCollection/`。
+
+**架构要点**：
+
+```
+toolCollection/
+├── index.ts              # registerToolCollection() + 公开 API（toggle/close/visible）
+├── index.vue             # 面板容器：Overlay + Header + Tab 栏 + 内容区 + Transition 动画
+├── types/index.ts        # ToolMeta 接口（id/label/icon）
+├── styles/index.scss     # 面板样式（固定底部定位、Tab 栏、slide-up 动画）
+└── tools/                # 各工具模块（独立子目录，互不依赖）
+    └── <toolName>/
+        ├── index.vue     # 工具主组件（接收 plugin / i18n props）
+        ├── components/   # 工具子组件
+        └── styles/       # 工具样式（SCSS 分离）
+```
+
+**通信流程**：
+
+1. **触发**：状态栏（或快捷键）→ `emitCustomEvent("toggleToolCollection")`
+2. **调度**：`App.vue` 监听 `window.addEventListener("toggleToolCollection", ...)` → 调用 `toggleToolCollection()`
+3. **响应**：`toolCollection/index.ts` 导出模块级 `ref(visible)` + `toggleToolCollection()` / `closeToolCollection()`
+4. **清理**：`onunload()` 中 `app.unmount()` + `container.remove()` + 重置 `ref`
+
+**注册新工具到面板**：在 `toolCollection/index.vue` 的 `tools` computed 中添加条目 + 在 `<div class="tool-collection-content">` 中添加 `v-if` 组件引用。无需修改注册清单。
 
 ## UI 风格：Codex
 
@@ -537,178 +628,6 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
   padding: 2px 8px; border-radius: $radius-lg;
   font-size: $font-size-xs; font-weight: 500;
 }
-```
-
-#### 布局组件模式（参考代码映射）
-
-以下模式来自参考代码的 Apple 风格布局，已映射到现有 Codex Token：保留边框优先、琥珀/主色强调、无阴影、统一 0.12s 过渡。
-
-##### 应用框架（Sidebar + Header + Content）
-
-```scss
-// 局部布局常量（按模块需求声明，不加入全局 Token）
-$sidebar-width: 220px;
-$header-height: 56px;
-$content-max-width: 960px;
-
-.app-layout { display: flex; min-height: 100vh; }
-
-.sidebar {
-  width: $sidebar-width; flex-shrink: 0;
-  background: var(--b3-theme-surface); border-right: 1px solid var(--b3-border-color);
-  padding: $spacing-3 $spacing-2;
-  display: flex; flex-direction: column; gap: $spacing-1;
-}
-
-.sidebar__item {
-  display: flex; align-items: center; gap: $spacing-3;
-  padding: $spacing-2 $spacing-3;
-  border-radius: $radius-md;
-  color: var(--b3-theme-on-surface); font-size: $font-size-sm; font-weight: $font-weight-medium;
-  cursor: pointer; transition: background-color 0.12s, color 0.12s;
-
-  &:hover { background: var(--b3-theme-surface-lighter); color: var(--b3-theme-on-background); }
-  &--active { background: var(--b3-theme-surface-lighter); color: var(--b3-theme-on-background); }
-  .icon { width: 18px; height: 18px; opacity: 0.8; }
-}
-
-.main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-
-.header {
-  height: $header-height; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: space-between; gap: $spacing-3;
-  padding: 0 $spacing-5;
-  border-bottom: 1px solid var(--b3-border-color);
-  background: var(--b3-theme-background);
-}
-
-.header__search {
-  display: flex; align-items: center; gap: $spacing-2;
-  padding: $spacing-2 $spacing-3;
-  background: var(--b3-theme-surface); border: 1px solid var(--b3-border-color);
-  border-radius: $radius-full; min-width: 200px;
-  input { border: none; background: transparent; outline: none; font-size: $font-size-sm; color: var(--b3-theme-on-background); width: 100%; }
-  input::placeholder { color: var(--b3-theme-on-surface-light); }
-}
-
-.header__btn-add {
-  display: flex; align-items: center; gap: $spacing-1;
-  padding: $spacing-2 $spacing-3;
-  background: var(--b3-theme-primary); color: var(--b3-theme-on-primary);
-  border: 1px solid var(--b3-theme-primary); border-radius: $radius-full;
-  font-size: $font-size-sm; font-weight: $font-weight-medium;
-  cursor: pointer; transition: opacity 0.12s;
-  &:hover { opacity: 0.9; }
-}
-
-.content { flex: 1; padding: $spacing-8 $spacing-12; max-width: $content-max-width; }
-```
-
-##### Hero Card（首焦区）
-
-```scss
-.hero-card {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: $spacing-8;
-  background: var(--b3-theme-surface); border: 1px solid var(--b3-border-color);
-  border-radius: $radius-xl; margin-bottom: $spacing-8;
-}
-.hero-card__content { max-width: 50%; }
-.hero-card__title { font-size: $font-size-lg; font-weight: $font-weight-semibold; margin: 0 0 $spacing-2; }
-.hero-card__desc { font-size: $font-size-sm; color: var(--b3-theme-on-surface); margin: 0; }
-.hero-card__illustration {
-  width: 260px; height: 140px; border-radius: $radius-md;
-  background: var(--b3-theme-surface-lighter);
-  border: 1px dashed var(--b3-border-color);
-  display: flex; align-items: center; justify-content: center;
-  color: var(--b3-theme-on-surface-light); font-size: $font-size-sm;
-}
-```
-
-##### Section Header（带标题与徽章）
-
-```scss
-.section-header {
-  display: flex; align-items: center; gap: $spacing-3; margin-bottom: $spacing-4;
-}
-.section-header__title { font-size: $font-size-base; font-weight: $font-weight-semibold; margin: 0; }
-.section-header__badge {
-  display: inline-flex; align-items: center; gap: $spacing-1;
-  font-size: $font-size-sm; color: var(--b3-theme-on-surface);
-}
-.section-header__badge-count { color: var(--b3-theme-on-surface-light); }
-```
-
-##### Tabs 分段控制器
-
-```scss
-.tabs {
-  display: flex; gap: $spacing-1; margin-bottom: $spacing-4; padding: $spacing-1;
-  background: var(--b3-theme-surface); border: 1px solid var(--b3-border-color);
-  border-radius: $radius-md; width: fit-content;
-}
-.tab {
-  padding: $spacing-2 $spacing-3; border-radius: $radius-sm;
-  font-size: $font-size-sm; font-weight: $font-weight-medium;
-  color: var(--b3-theme-on-surface); cursor: pointer; transition: all 0.12s;
-  border: none; background: transparent;
-  &:hover { color: var(--b3-theme-on-background); }
-  &--active { background: var(--b3-theme-background); color: var(--b3-theme-on-background); border: 1px solid var(--b3-border-color); }
-}
-```
-
-##### Connector Card（连接项/列表项）
-
-```scss
-.card-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: $spacing-4; }
-
-.connector-card {
-  display: flex; align-items: center; gap: $spacing-3;
-  padding: $spacing-4;
-  background: var(--b3-theme-surface); border: 1px solid var(--b3-border-color); border-radius: $radius-lg;
-  transition: border-color 0.12s;
-  &:hover { border-color: var(--b3-theme-primary); }
-}
-.connector-card__icon {
-  width: 44px; height: 44px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: $radius-md; background: var(--b3-theme-background); border: 1px solid var(--b3-border-color);
-  color: var(--b3-theme-on-background); font-size: $font-size-lg;
-  svg { width: 20px; height: 20px; }
-  img { width: 24px; height: 24px; object-fit: contain; }
-}
-.connector-card__body { flex: 1; min-width: 0; }
-.connector-card__title { font-size: $font-size-base; font-weight: $font-weight-semibold; margin: 0 0 $spacing-1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.connector-card__desc { font-size: $font-size-sm; color: var(--b3-theme-on-surface); margin: 0; line-height: $line-height-tight; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.connector-card__action {
-  width: 32px; height: 32px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  border: 1px solid var(--b3-border-color); border-radius: $radius-full;
-  background: transparent; color: var(--b3-theme-on-surface); cursor: pointer; transition: all 0.12s;
-  &:hover { border-color: var(--b3-theme-primary); color: var(--b3-theme-primary); }
-  &--installed { color: var(--b3-theme-success); border-color: var(--b3-theme-success); background: var(--b3-theme-surface-lighter); }
-}
-```
-
-##### User Profile（底部账号区）
-
-```scss
-.user-profile {
-  margin-top: auto;
-  display: flex; align-items: center; gap: $spacing-3;
-  padding: $spacing-3; border-radius: $radius-md; cursor: pointer;
-  transition: background-color 0.12s;
-  &:hover { background: var(--b3-theme-surface-lighter); }
-}
-.user-profile__avatar {
-  width: 32px; height: 32px; border-radius: $radius-full;
-  background: var(--b3-theme-primary); color: var(--b3-theme-on-primary);
-  display: flex; align-items: center; justify-content: center;
-  font-size: $font-size-xs; font-weight: $font-weight-semibold;
-}
-.user-profile__info { flex: 1; min-width: 0; }
-.user-profile__name { font-size: $font-size-sm; font-weight: $font-weight-medium; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.user-profile__plan { font-size: $font-size-xs; color: var(--b3-theme-on-surface-light); margin: 0; }
 ```
 
 ##### Badge 变体（状态胶囊）
@@ -938,18 +857,10 @@ export function useXxx(deps: {
 - 可接受：300 ~ 500 行
 - 超过 500 行 → 应拆分逻辑与模板
 
-**后端类/模块（C#/Java/Go）**：
-
-- 理想范围：200 ~ 400 行
-- 单一职责原则下，一个类不应超过 300 行
-- 超过 800 行 → 几乎必然违反单一职责原则
-
 **单一方法/函数**：
 
 - 最佳实践：≤ 30 行（Rule of 30）
 - 超过 50 行 → 应考虑提取子函数
-
-**ESLint 参考**：`max-lines` 规则默认建议 300 行触发警告（跳过空行与注释）。
 
 ### 关键考量：不只看行数
 
@@ -963,21 +874,13 @@ export function useXxx(deps: {
 | 职责数量 | 一个文件做 > 1 件事 |
 | PR 变更行数 | > 400 行 reviewers 开始丧失注意力 |
 
-### 快速判断法
-
-问自己 3 个问题：
-
-1. **滚轮滑多少次才能看完？** — 超过 3~4 屏（约 300 行）就有问题
-2. **能用一个短句说清它的职责吗？** — 如果不能，职责太多
-3. **改了需求 A，会不小心影响 B 吗？** — 如果是，耦合太高
-
 **结论**：300 行是警戒线，500 行是必须优化的硬阈值，1000 行以上属于不可维护代码。但更重要的是职责是否单一，而非机械按行数拆分。
 
 ---
 
 ## 强制规则：模块提取判定标准
 
-> **核心原则**：重复远比错误抽象便宜。在同一个 P问题出现 3 次之前，不要抽象。
+> **核心原则**：重复远比错误抽象便宜。在同一个问题出现 3 次之前，不要抽象。
 > — Sandi Metz, *The Wrong Abstraction* (2016)
 
 提取独立文件（模块化）不是"越拆越好"。错误的抽象比重复更难维护——它会固化错误的假设，让后续修改束手束脚。以下规则用于判断**什么条件下必须提取**以及**什么条件下不应提取**。
@@ -1080,7 +983,7 @@ components/
 1. **这个文件被 2 个以上的地方用到吗？** — 没有 → 大概率不该提取
 2. **能用一句话说清这个文件的职责吗？** — 不能 → 职责不清晰，暂不提取
 3. **提取后父文件是否反而更难读？** — 是 → 不要提取
-4. **这是同一个 P问题 的第 3 次出现吗？** — 不是 → 等到第 3 次再抽象（Rule of Three）
+4. **这是同一个问题的第 3 次出现吗？** — 不是 → 等到第 3 次再抽象（Rule of Three）
 
 ---
 

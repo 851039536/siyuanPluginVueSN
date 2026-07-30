@@ -15,6 +15,10 @@ type NodeOS = typeof import("node:os")
 type NodeChildProcess = typeof import("node:child_process")
 /** Node.js util 模块类型 */
 type NodeUtil = typeof import("node:util")
+/** Node.js crypto 模块类型 */
+type NodeCrypto = typeof import("node:crypto")
+/** Node.js stream 模块类型 */
+type NodeStream = typeof import("node:stream")
 
 /** Electron shell 最小接口（仅声明本项目用到的方法） */
 interface ElectronShell {
@@ -65,6 +69,26 @@ export function getNodeFsPathOs(): { fs: NodeFS, path: NodePath, os: NodeOS } | 
       path,
       os,
     }
+  } catch {
+    return null
+  }
+}
+
+/** 获取 Node.js crypto 模块 */
+export function getNodeCrypto(): { crypto: NodeCrypto } | null {
+  try {
+    const crypto = require("node:crypto") as NodeCrypto
+    return { crypto }
+  } catch {
+    return null
+  }
+}
+
+/** 获取 Node.js stream 模块 */
+export function getNodeStream(): { stream: NodeStream } | null {
+  try {
+    const stream = require("node:stream") as NodeStream
+    return { stream }
   } catch {
     return null
   }

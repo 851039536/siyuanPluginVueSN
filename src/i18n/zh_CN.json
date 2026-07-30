@@ -448,6 +448,11 @@
     "copyFailed": "复制失败",
     "downloadFailed": "下载失败"
   },
+  "colorPicker": {
+    "title": "颜色选择器",
+    "copy": "复制",
+    "palette": "快捷色板"
+  },
   "compactMode": "紧洛模式",
   "compactModeEnabled": "紧凑模式已启用",
   "compactModeDisabled": "紧凑模式已禁用",
@@ -1617,6 +1622,19 @@
   "enableImageCompressorDesc": "扫描并压缩 assets 目录下的图片,节省存储空间",
   "enableImageCreation": "启用图片生成",
   "enableImageCreationDesc": "图片生成工具，支持文章封面和代码图片两种模式",
+  "jsonFormatter": {
+    "title": "JSON格式化",
+    "format": "格式化",
+    "minify": "压缩",
+    "validate": "校验",
+    "copyResult": "复制结果",
+    "clear": "清空",
+    "input": "输入",
+    "output": "输出",
+    "inputPlaceholder": "在此粘贴 JSON 文本...",
+    "successMsg": "✓ 完成",
+    "validMsg": "✓ 合法 JSON"
+  },
   "lockPage": "锁定页面",
   "unlockPage": "解锁页面",
   "setPassword": "文档密码",
@@ -1854,6 +1872,13 @@
   "qrcodeDownloaded": "二维码已下载",
   "qrcodeDownloadFailed": "下载失败",
   "qrcodeGenerateFailed": "生成二维码失败",
+  "regexTester": {
+    "title": "正则测试器",
+    "patternPlaceholder": "输入正则表达式...",
+    "testText": "测试文本",
+    "testPlaceholder": "在此输入待匹配的文本...",
+    "matches": "匹配数"
+  },
   "resourceManager": {
     "panelTitle": "资源管理",
     "description": "管理思源笔记资源文件：查看、分类、移动、清理资源",

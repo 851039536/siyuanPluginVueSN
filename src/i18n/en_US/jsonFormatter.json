@@ -1,0 +1,15 @@
+{
+  "jsonFormatter": {
+    "title": "JSON Formatter",
+    "format": "Format",
+    "minify": "Minify",
+    "validate": "Validate",
+    "copyResult": "Copy Result",
+    "clear": "Clear",
+    "input": "Input",
+    "output": "Output",
+    "inputPlaceholder": "Paste JSON text here...",
+    "successMsg": "✓ Done",
+    "validMsg": "✓ Valid JSON"
+  }
+}

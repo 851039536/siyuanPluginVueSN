@@ -1,0 +1,110 @@
+@use '@/variables.scss' as *;
+
+.color-picker {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-size: $font-size-xs;
+  gap: $spacing-3;
+  padding: $spacing-3;
+  overflow-y: auto;
+
+  .cp-preview-row {
+    display: flex;
+    align-items: center;
+    gap: $spacing-3;
+
+    .cp-swatch {
+      width: 48px;
+      height: 48px;
+      border-radius: $vp-radius;
+      border: 1px solid var(--b3-border-color);
+      flex-shrink: 0;
+    }
+
+    .cp-native-input {
+      width: 32px;
+      height: 32px;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      background: none;
+    }
+  }
+
+  .cp-fields {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-2;
+
+    .cp-field {
+      display: flex;
+      align-items: center;
+      gap: $spacing-2;
+
+      .cp-field-label {
+        width: 32px;
+        font-size: $font-size-2xs;
+        color: var(--b3-theme-on-surface);
+        flex-shrink: 0;
+      }
+
+      .cp-field-input {
+        flex: 1;
+        padding: $spacing-1 $spacing-2;
+        border: 1px solid var(--b3-border-color);
+        border-radius: $vp-radius;
+        background: var(--b3-theme-surface);
+        color: var(--b3-theme-on-background);
+        font-family: $vp-mono;
+        font-size: $font-size-2xs;
+        outline: none;
+
+        &:focus {
+          border-color: var(--b3-theme-primary);
+        }
+      }
+
+      .cp-copy-btn {
+        padding: $spacing-1 $spacing-2;
+        border: 1px solid var(--b3-border-color);
+        border-radius: $vp-radius;
+        background: var(--b3-theme-background);
+        color: var(--b3-theme-on-background);
+        font-size: $font-size-2xs;
+        cursor: pointer;
+
+        &:hover {
+          background: var(--b3-theme-surface);
+        }
+      }
+    }
+  }
+
+  .cp-palette {
+    .cp-palette-label {
+      font-size: $font-size-2xs;
+      color: var(--b3-theme-on-surface);
+      margin-bottom: $spacing-1;
+    }
+
+    .cp-palette-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: $spacing-1;
+
+      .cp-palette-item {
+        width: 20px;
+        height: 20px;
+        border-radius: $radius-sm;
+        border: 1px solid var(--b3-border-color);
+        cursor: pointer;
+        transition: transform 0.1s;
+
+        &:hover {
+          transform: scale(1.2);
+        }
+      }
+    }
+  }
+}

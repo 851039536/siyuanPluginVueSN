@@ -1,0 +1,9 @@
+{
+  "regexTester": {
+    "title": "正则测试器",
+    "patternPlaceholder": "输入正则表达式...",
+    "testText": "测试文本",
+    "testPlaceholder": "在此输入待匹配的文本...",
+    "matches": "匹配数"
+  }
+}

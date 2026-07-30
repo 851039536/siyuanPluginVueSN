@@ -1,0 +1,9 @@
+{
+  "regexTester": {
+    "title": "Regex Tester",
+    "patternPlaceholder": "Enter regex pattern...",
+    "testText": "Test Text",
+    "testPlaceholder": "Enter text to match against...",
+    "matches": "Matches"
+  }
+}

@@ -147,6 +147,7 @@ import Input from "@/components/Input.vue"
 import Switch from "@/components/Switch.vue"
 import type { S3FileManagerI18n } from "../types"
 import type { S3FileManagerStorage } from "../types/storage"
+import { useEscClose } from "../composables/useEscClose"
 
 const props = defineProps<{
   storage: S3FileManagerStorage
@@ -163,6 +164,9 @@ const form = reactive<S3Config>({ ...DEFAULT_S3_CONFIG })
 const testing = ref(false)
 const saving = ref(false)
 const testResult = ref<{ success: boolean; message: string } | null>(null)
+
+// Esc 关闭弹窗
+useEscClose(() => emit("close"))
 
 /** 归一化并快照当前表单为 S3Config */
 function snapshot(): S3Config {

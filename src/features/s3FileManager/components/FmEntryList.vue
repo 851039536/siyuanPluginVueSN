@@ -87,7 +87,10 @@
               :name="entryIconKey(entry)"
               :size="14"
             />
-            <span class="fm-entry-name">{{ entry.name }}</span>
+            <span
+              class="fm-entry-name"
+              :title="entry.name"
+            >{{ entry.name }}</span>
           </span>
           <span class="fm-col-size">{{ entry.isFolder ? "—" : formatFileSize(entry.size) }}</span>
           <span class="fm-col-date">{{ entry.lastModified || "—" }}</span>

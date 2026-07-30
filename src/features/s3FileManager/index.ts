@@ -13,11 +13,6 @@ import { S3FileManagerStorage } from "./types/storage"
 
 let instance: S3FileManager | null = null
 
-/** 获取当前 S3FileManager 实例 */
-export function getS3FileManagerInstance(): S3FileManager | null {
-  return instance
-}
-
 export class S3FileManager {
   private plugin: Plugin
   private storage: S3FileManagerStorage
@@ -36,7 +31,6 @@ export class S3FileManager {
       getCloseHandler: () => this.close,
       buildProps: () => ({
         onClose: this.close,
-        plugin: this.plugin,
         storage: this.storage,
         i18n: this.plugin.i18n.s3FileManager,
       }),

@@ -201,8 +201,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue"
-import { Plugin, showMessage } from "siyuan"
+import { computed, onMounted, ref, watch } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import type { S3FileManagerStorage } from "./types/storage"
@@ -226,7 +225,6 @@ import FmMoveCopyDialog from "./components/FmMoveCopyDialog.vue"
 import FmLogPanel from "./components/FmLogPanel.vue"
 
 const props = defineProps<{
-  plugin: Plugin
   storage: S3FileManagerStorage
   i18n: S3FileManagerI18n
   onClose?: () => void
@@ -241,11 +239,10 @@ const { s3Config, isConfigured, applyConfig, requireClient, loadConfig, getRootP
 const {
   currentPrefix, entries, loading, loadError, sortField, sortAsc, sortedEntries, visibleEntries,
   hasMore, pathSegments, isAtRoot, loadDir, navigateTo, navigateUp,
-  navigateToSegment, refresh, invalidateCache, loadMore, toggleSort,
+  navigateToSegment, refresh, invalidateCache, resetCapabilityProbe, loadMore, toggleSort,
 } = useS3Entries({ requireClient, getRootPrefix })
 
-const orderedEntries = computed(() => sortedEntries.value)
-const { selectedEntries, selectedCount, isSelected, handleItemClick: selectItemClick, ensureSelected, clearSelection } = useS3Selection({ orderedEntries })
+const { selectedEntries, selectedCount, isSelected, handleItemClick: selectItemClick, ensureSelected, clearSelection } = useS3Selection({ orderedEntries: sortedEntries })
 
 const { logs, loadLogs, addLog, clearLogs } = useFileOpLogs({ storage })
 
@@ -285,6 +282,15 @@ const contextMenu = ref<{ visible: boolean; x: number; y: number; entry: S3Entry
 
 const busy = computed(() => opBusy.value || transferring.value)
 const opPercent = computed(() => opProgress.value ? Math.round((opProgress.value.done / Math.max(opProgress.value.total, 1)) * 100) : 0)
+
+// 跨目录导航后清空选中，避免残留 key/锚点干扰新目录的选择与计数
+watch(currentPrefix, () => clearSelection())
+
+// 排序变更即时持久化（列头 toggleSort 不经过 setViewMode）；与已存偏好一致时跳过，避免启动恢复时冗余落盘
+watch([sortField, sortAsc], () => {
+  if (prefs.value.sortField === sortField.value && prefs.value.sortAsc === sortAsc.value) { return }
+  void savePrefs()
+})
 
 // ========== 右键菜单项（按选中态动态生成） ==========
 
@@ -386,7 +392,9 @@ function openRename(): void {
 function handleRenameConfirm(newName: string): void {
   const target = renameTarget.value
   renameTarget.value = null
-  if (target) { void renameEntry(target, newName) }
+  // 名称未变更时直接关闭：同名复制+删源会误删文件
+  if (!target || newName.trim() === target.name) { return }
+  void renameEntry(target, newName)
 }
 
 function handleNewFolderConfirm(name: string): void {
@@ -419,6 +427,10 @@ async function savePrefs(): Promise<void> {
 function handleConfigSaved(config: typeof s3Config.value): void {
   applyConfig(config)
   showConfig.value = false
+  // 旧连接的目录缓存、delimiter 探测与选中态全部失效，避免切换 bucket/endpoint 后展示脏数据
+  invalidateCache()
+  resetCapabilityProbe()
+  clearSelection()
   void loadDir(getRootPrefix(), true)
 }
 

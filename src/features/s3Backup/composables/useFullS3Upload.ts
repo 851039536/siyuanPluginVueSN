@@ -2,8 +2,8 @@
  * S3 全量上传编排 composable
  *
  * 上传 data-backup/ 中的备份 ZIP（或本次刚生成的 ZIP）到 S3：
- * 列举云端已有对象做防重（全 key 精确匹配 + basename 尾部匹配兜底）→ 逐文件读取上传
- * → 记录校验值与上传来源设备名（仅实际上传成功的文件）。
+ * 列举云端已有对象做防重（全 key 精确匹配 + basename 尾部匹配兜底）→ 有界并发上传（单文件失败重试后继续）
+ * → 上传与哈希并行执行 → 记录校验值与上传来源设备名（仅实际上传成功的文件）。
  * 日期子文件夹的 key 只取日期部分（YYYYMMDD），与本地 ZIP 目录语义一致。
  * 依赖注入方式接入 index.vue，不接触其他 composable 的内部状态。
  */
@@ -13,8 +13,8 @@ import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import type { BackupManager, BackupProgress, BackupResult, WorkspaceFile } from "../modules/BackupManager"
 import type { BackupLog, S3Config } from "../types"
-import { MSG_DESKTOP_ONLY } from "../types"
-import { buildS3Key, getBaseName, makeBackupTimestamp } from "../utils"
+import { FULL_UPLOAD_CONCURRENCY, MSG_DESKTOP_ONLY, TRANSFER_MAX_RETRIES } from "../types"
+import { buildS3Key, getBaseName, makeBackupTimestamp, runWithConcurrency } from "../utils"
 
 /** 依赖注入：全部来自 index.vue 已有的状态与方法 */
 export interface FullS3UploadDeps {
@@ -100,16 +100,15 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
 
     let skippedCount = 0
     let uploadedCount = 0
-    let failedCount = 0
+    let failedCount = 0 // 读取失败 + 上传失败
     let processedCount = 0 // 已处理文件数（含跳过 + 上传 + 失败）
     const uploadedNames: string[] = [] // 实际上传成功的文件名（hostMap 只记录这些）
-
-    // try/finally 兜底：即使中途上传抛错，也保住已成功文件的校验值落盘
+    
+    // try/finally 兜底：即使 worker 意外抛错，也保住已成功文件的校验值落盘
     try {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i]
+      await runWithConcurrency(files, FULL_UPLOAD_CONCURRENCY, async (file) => {
         const s3Key = makeS3Key(file.relativePath, timestamp)
-
+    
         // 去重：全 key 精确匹配，或 basename 已存在（历史目录布局兜底）即跳过
         if (existingKeys.has(s3Key) || existingBaseNames.has(getBaseName(file.relativePath))) {
           skippedCount++
@@ -121,9 +120,9 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
             totalFiles: files.length,
             percent: Math.round((processedCount / files.length) * 100),
           }
-          continue
+          return
         }
-
+    
         backupProgress.value = {
           phase: "uploading",
           currentFile: file.relativePath,
@@ -131,30 +130,51 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
           totalFiles: files.length,
           percent: Math.round((processedCount / files.length) * 100),
         }
-
-        let content
+    
+        let content: Buffer
         try {
           content = await fs.readFile(file.fullPath)
         } catch (readErr: unknown) {
           console.warn(`跳过无法读取的文件: ${file.relativePath}`, getErrorMessage(readErr))
           failedCount++
           processedCount++
-          continue
+          return
         }
-        await deps.uploadFileContent(content, s3Key)
-        // 上传成功后计算并保存校验值（仅更新内存，循环结束后统一落盘）
-        try {
-          const hash = await backupManager.computeFileHash(file.fullPath)
-          await deps.saveChecksum(file.relativePath, file.fullPath, content.length, hash, false)
-        } catch (hashErr: unknown) {
-          console.warn("计算校验值失败:", file.relativePath, getErrorMessage(hashErr))
+    
+        // 上传（带重试）与哈希并行执行，消除二次磁盘读的串行等待
+        const [uploadResult, hashResult] = await Promise.allSettled([
+          (async () => {
+            for (let attempt = 0; attempt <= TRANSFER_MAX_RETRIES; attempt++) {
+              try {
+                await deps.uploadFileContent(content, s3Key)
+                return
+              } catch (err: unknown) {
+                if (attempt === TRANSFER_MAX_RETRIES) { throw err }
+              }
+            }
+          })(),
+          backupManager.computeFileHash(file.fullPath),
+        ])
+    
+        if (uploadResult.status === "rejected") {
+          console.warn(`[S3备份] 上传失败（已重试 ${TRANSFER_MAX_RETRIES} 次）: ${file.relativePath}`, getErrorMessage(uploadResult.reason))
+          failedCount++
+          processedCount++
+          return
+        }
+    
+        // 上传成功：保存校验值（哈希失败仅告警，不阻断）
+        if (hashResult.status === "fulfilled") {
+          await deps.saveChecksum(file.relativePath, file.fullPath, content.length, hashResult.value, false)
+        } else {
+          console.warn("计算校验值失败:", file.relativePath, getErrorMessage(hashResult.reason))
         }
         uploadedNames.push(file.relativePath)
         uploadedCount++
         processedCount++
-      }
+      })
     } finally {
-      // 批量循环统一落盘校验值（O(N) 写入 → O(1)）；零上传时跳过无意义写入
+      // 批量统一落盘校验值（O(N) 写入 → O(1)）；零上传时跳过无意义写入
       // 落盘失败仅告警，避免掩盖循环内的原始上传错误
       if (uploadedCount > 0) {
         await deps.persistChecksums().catch((persistErr: unknown) => {

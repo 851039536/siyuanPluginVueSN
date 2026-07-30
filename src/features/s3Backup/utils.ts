@@ -57,6 +57,24 @@ export function getHostname(): string {
   return _hostname
 }
 
+// ========== 并发控制 ==========
+
+/** 简易并发池：以固定并发数执行任务列表（全量上传 / 增量备份共用） */
+export async function runWithConcurrency<T>(
+  items: T[],
+  concurrency: number,
+  worker: (item: T) => Promise<void>,
+): Promise<void> {
+  let cursor = 0
+  const lanes = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+    while (cursor < items.length) {
+      const item = items[cursor++]
+      await worker(item)
+    }
+  })
+  await Promise.all(lanes)
+}
+
 // ========== 增量备份纯函数 ==========
 
 /**

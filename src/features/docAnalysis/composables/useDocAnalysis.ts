@@ -37,11 +37,13 @@ import {
   buildIdNotInClause,
   daysAgoStr,
   escapeSql,
+  escapeSqlLike,
   quoteSql,
   quoteSqlList,
 } from "../utils/sqlHelpers"
 import {
   BOOKMARK_SUBQUERY,
+  DOC_DEPTH_EXPR,
   DOC_SELECT,
   DOC_SELECT_NO_SIZE,
   IMAGE_SUBQUERY,
@@ -478,12 +480,12 @@ export function useDocAnalysis(plugin: Plugin) {
 
     // 深度
     if (category === "deep") {
-      await runDocQuery({ extraWhere: "AND LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 >= 5", orderBy: "doc_depth DESC" })
+      await runDocQuery({ extraWhere: `AND ${DOC_DEPTH_EXPR} >= 5`, orderBy: "doc_depth DESC" })
       return
     }
     if (category.startsWith("depth_")) {
       const d = Number.parseInt(category.slice(6), 10)
-      if (!isNaN(d)) { await runDocQuery({ extraWhere: `AND LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1 = ${d}`, orderBy: "b.updated DESC" }); return }
+      if (!isNaN(d)) { await runDocQuery({ extraWhere: `AND ${DOC_DEPTH_EXPR} = ${d}`, orderBy: "b.updated DESC" }); return }
     }
 
     // 自定义时间
@@ -550,8 +552,8 @@ export function useDocAnalysis(plugin: Plugin) {
   async function queryDocs() {
     const needWcFilter = filterOptions.wordCountMin > 0 || filterOptions.wordCountMax > 0
     let conds = ""
-    if (filterOptions.titleKeyword.trim()) conds += `AND b.content LIKE '%${escapeSql(filterOptions.titleKeyword.trim())}%' `
-    if (filterOptions.contentKeyword.trim()) conds += `AND b.id IN (SELECT DISTINCT root_id FROM blocks WHERE content LIKE '%${escapeSql(filterOptions.contentKeyword.trim())}%' AND type != 'd') `
+    if (filterOptions.titleKeyword.trim()) conds += `AND b.content LIKE '%${escapeSqlLike(filterOptions.titleKeyword.trim())}%' ESCAPE '\\' `
+    if (filterOptions.contentKeyword.trim()) conds += `AND b.id IN (SELECT DISTINCT root_id FROM blocks WHERE content LIKE '%${escapeSqlLike(filterOptions.contentKeyword.trim())}%' ESCAPE '\\' AND type != 'd') `
     if (filterOptions.bookmarkName.trim()) conds += `AND b.id IN (SELECT block_id FROM attributes WHERE name='bookmark' AND value='${escapeSql(filterOptions.bookmarkName.trim())}') `
     const afterDigits = filterOptions.updatedAfter ? toDateDigits(filterOptions.updatedAfter) : null
     const beforeDigits = filterOptions.updatedBefore ? toDateDigits(filterOptions.updatedBefore) : null
@@ -603,7 +605,7 @@ export function useDocAnalysis(plugin: Plugin) {
     statsFilter.value = ""
     const platformEntry = PLATFORM_META.value.find((p) => p.id === platformMatcher || p.matchers.includes(platformMatcher))
     const matchers = platformEntry ? platformEntry.matchers : [platformMatcher]
-    const nameConditions = matchers.map((m) => `name LIKE '%${escapeSql(m)}%'`).join(" OR ")
+    const nameConditions = matchers.map((m) => `name LIKE '%${escapeSqlLike(m)}%' ESCAPE '\\'`).join(" OR ")
     await runDocQuery({
       extraWhere: `AND b.id IN (
         SELECT block_id FROM attributes WHERE name LIKE '%yaml%'

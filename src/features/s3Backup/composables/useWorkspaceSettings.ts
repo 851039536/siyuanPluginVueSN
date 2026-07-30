@@ -17,6 +17,8 @@ import { getS3BackupInstance } from "../index"
 /** 依赖注入：backupManager 由 index.vue 持有（初始化时机在 onMounted） */
 export interface WorkspaceSettingsDeps {
   getBackupManager: () => BackupManager | null
+  /** 工作区路径变更后回调：由宿主幂等创建/同步 BackupManager（覆盖启动后首次选择路径场景） */
+  onWorkspaceUpdated?: () => void
   i18n: Record<string, string>
 }
 
@@ -42,10 +44,8 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
   function updateWorkspacePath(root: string, shouldSave = false): void {
     workspaceRoot.value = root
     workspacePath.value = root
-    const backupManager = deps.getBackupManager()
-    if (backupManager) {
-      backupManager.updateWorkspacePaths(workspaceRoot.value)
-    }
+    // 通知宿主幂等创建/同步 BackupManager（启动时无工作区、之后才选择路径时在此补建）
+    deps.onWorkspaceUpdated?.()
     const instance = getS3BackupInstance()
     if (instance) {
       instance.setWorkspacePaths(root)

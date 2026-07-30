@@ -148,5 +148,8 @@
   "guideSSL": "服务端配了 HTTPS 证书或反代时勾选，本地服务通常不勾选",
   "statusConnected": "已连接",
   "statusDisconnected": "未连接",
-  "testException": "测试异常"
+  "testException": "测试异常",
+  "s3UploadResult": "备份上传完成：上传 {uploaded}、跳过 {skipped}",
+  "s3UploadFailedPart": "，{failed} 个文件读取失败",
+  "allFilesExist": "文件均已存在于 S3，跳过 {skipped} 个"
 }

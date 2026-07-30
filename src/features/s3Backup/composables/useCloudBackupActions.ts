@@ -9,7 +9,7 @@ import { showMessage } from "siyuan"
 import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import type { BackupLog, S3FileInfo } from "../types"
-import { DEFAULT_BACKUP_DIR } from "../types"
+import { DEFAULT_BACKUP_DIR, MSG_DESKTOP_ONLY } from "../types"
 
 /** 依赖注入：全部来自 index.vue 已有的状态与方法 */
 export interface CloudBackupActionsDeps {
@@ -27,7 +27,7 @@ export function useCloudBackupActions(deps: CloudBackupActionsDeps) {
   /** 下载云端对象到本地备份目录 */
   async function downloadToLocalDir(backup: S3FileInfo): Promise<void> {
     const node = getNodeModules()
-    if (!node) { throw new Error("无法访问文件系统，请使用桌面版思源笔记") }
+    if (!node) { throw new Error(MSG_DESKTOP_ONLY) }
     const fs = node.fs.promises
     const pathModule = node.path
 

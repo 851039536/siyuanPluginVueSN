@@ -9,7 +9,7 @@
 import JSZip from "jszip"
 import { getNodeModules } from "@/utils/nodeModules"
 import { makeBackupTimestamp } from "../utils"
-import { DEFAULT_BACKUP_DIR } from "../types"
+import { DEFAULT_BACKUP_DIR, MSG_DESKTOP_ONLY } from "../types"
 import type { LocalBackupInfo, IncrementalFileEntry } from "../types"
 
 // ========== 模块常量 ==========
@@ -105,7 +105,7 @@ export class BackupManager {
 
     const node = getNodeModules()
     if (!node) {
-      throw new TypeError("无法访问文件系统，请使用桌面版思源笔记")
+      throw new TypeError(MSG_DESKTOP_ONLY)
     }
     this.fs = node.fs.promises
     this.path = node.path

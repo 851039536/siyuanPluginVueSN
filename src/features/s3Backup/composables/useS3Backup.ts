@@ -80,10 +80,10 @@ export function useS3Backup(i18n: Record<string, string> = {}) {
     await s3Client.download(s3Key, localPath)
   }
 
-  /** 直接上传文件内容到 S3（跳过本地打包，用于逐文件上传模式） */
-  async function uploadFileContent(buffer: Buffer, key: string): Promise<void> {
+  /** 直接上传文件内容到 S3（跳过本地打包，用于逐文件上传模式；onProgress 上报字节级发送进度） */
+  async function uploadFileContent(buffer: Buffer, key: string, onProgress?: (sent: number, total: number) => void): Promise<void> {
     if (!s3Client) { throw new Error("S3 客户端未初始化") }
-    await s3Client.uploadBuffer(buffer, key)
+    await s3Client.uploadBuffer(buffer, key, onProgress)
   }
 
   /** 读取 S3 对象文本内容（404 返回 null，供增量清单读取使用） */

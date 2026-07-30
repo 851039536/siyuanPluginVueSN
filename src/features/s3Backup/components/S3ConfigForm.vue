@@ -181,6 +181,18 @@
           :label="i18n.useSSL"
         />
       </div>
+
+      <!-- 允许自签名证书 -->
+      <div class="form-group form-group-checkbox">
+        <!-- 开关标签："允许自签名证书" -->
+        <Switch
+          v-model="localConfig.allowSelfSigned"
+          size="xsmall"
+          :label="i18n.allowSelfSigned"
+        />
+        <!-- 提示："跳过 HTTPS 证书校验以兼容 MinIO 等自建服务；连接公网正规服务时建议关闭以防中间人攻击" -->
+        <span class="form-hint">{{ i18n.allowSelfSignedHint }}</span>
+      </div>
     </div>
 
     <!-- 操作按钮 -->

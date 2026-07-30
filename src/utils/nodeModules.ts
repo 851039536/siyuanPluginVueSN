@@ -19,6 +19,10 @@ type NodeUtil = typeof import("node:util")
 type NodeCrypto = typeof import("node:crypto")
 /** Node.js stream 模块类型 */
 type NodeStream = typeof import("node:stream")
+/** Node.js http 模块类型 */
+type NodeHttp = typeof import("node:http")
+/** Node.js https 模块类型 */
+type NodeHttps = typeof import("node:https")
 
 /** Electron shell 最小接口（仅声明本项目用到的方法） */
 interface ElectronShell {
@@ -89,6 +93,17 @@ export function getNodeStream(): { stream: NodeStream } | null {
   try {
     const stream = require("node:stream") as NodeStream
     return { stream }
+  } catch {
+    return null
+  }
+}
+
+/** 获取 Node.js http/https 模块（绕过浏览器 Mixed Content 限制的直连请求用） */
+export function getNodeHttp(): { http: NodeHttp, https: NodeHttps } | null {
+  try {
+    const http = require("node:http") as NodeHttp
+    const https = require("node:https") as NodeHttps
+    return { http, https }
   } catch {
     return null
   }

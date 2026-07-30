@@ -32,6 +32,8 @@ export interface S3Config {
   useSSL: boolean
   /** 上传请求超时秒数（大文件/慢网络可调大，默认 240） */
   uploadTimeoutSec: number
+  /** 允许自签名证书（跳过 TLS 校验；默认开启以兼容 MinIO/OpenList 等自建服务，旧配置缺字段时视为开启） */
+  allowSelfSigned?: boolean
 }
 
 // ========== 备份模式接口 ==========
@@ -319,4 +321,5 @@ export const DEFAULT_S3_CONFIG: S3Config = {
   prefix: DEFAULT_S3_PREFIX,
   useSSL: false,
   uploadTimeoutSec: DEFAULT_UPLOAD_TIMEOUT_SEC,
+  allowSelfSigned: true,
 }

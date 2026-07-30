@@ -129,26 +129,18 @@ App.vue onMounted 监听 ───────────────┘
   )
 ```
 
-### 错误模式
+### 错误模式与规则清单
 
-| 禁止行为 | 原因 |
-|----------|------|
-| Feature A 直接 `import { xxx } from "@/features/FeatureB"` | 产生硬依赖，破坏模块独立性 |
-| Feature A 直接修改 Feature B 的 ref | 跨越模块边界，状态归属混乱 |
-| Feature A 通过全局变量 `(window as any).xxx` 访问 Feature B | 类型不安全，无契约约束 |
-
-### 正确示例
+| 规则 | 禁止反例（含原因） |
+|------|---------------------|
+| **Feature 间零直接导入**：任何 feature 目录下的文件不得 `import` 其他 feature（`@/features/*` 的子目录） | `import { xxx } from "@/features/FeatureB"` — 产生硬依赖，破坏模块独立性 |
+| **单向数据流**：发起方只负责 `emitCustomEvent`，绝不触碰响应方的状态 | 直接修改 Feature B 的 ref — 跨越模块边界，状态归属混乱 |
+| **App.vue 是唯一调度中心**：所有跨功能的事件监听统一在 App.vue 的 `onMounted` 中注册 | 通过全局变量 `(window as any).xxx` 访问 Feature B — 类型不安全，无契约约束 |
+| **Public API 契约**：响应方 feature 的 `index.ts` 导出的函数/ref 即为它的 public API | 其他 feature 直接调用（只允许 App.vue 调用） |
+| **事件名规范**：使用 camelCase 动词短语（如 `openPasswordVaultAdd`），在 eventBus 中保持唯一 | — |
+| **数据透传**：事件 detail 中携带的数据由 App.vue 透传给响应方，双方不共享类型定义 | — |
 
 > 完整代码示例（floatingToolbar → passwordVault 联动）见 [AGENTS_RULES.md § 跨功能联动示例](./AGENTS_RULES.md#跨功能联动示例)
-
-### 规则清单
-
-1. **Feature 间零直接导入**：任何 feature 目录下的文件不得 `import` 其他 feature（`@/features/*` 的子目录）
-2. **单向数据流**：发起方只负责 `emitCustomEvent`，绝不触碰响应方的状态
-3. **App.vue 是唯一调度中心**：所有跨功能的事件监听统一在 App.vue 的 `onMounted` 中注册
-4. **Public API 契约**：响应方 feature 的 `index.ts` 导出的函数/ref 即为它的 public API，其他 feature 不直接调用
-5. **事件名规范**：使用 camelCase 动词短语（如 `openPasswordVaultAdd`），在 eventBus 中保持唯一
-6. **数据透传**：事件 detail 中携带的数据由 App.vue 透传给响应方，双方不共享类型定义
 
 ---
 
@@ -184,21 +176,7 @@ App.vue onMounted 监听 ───────────────┘
 
 **对话框/编辑弹窗类子组件必须自包含，禁止父传全量 props + 子 emit 回父的中间人模式。**
 
-### 正确模式
-
-```
-父组件                             子组件（对话框）
-  │                                   │
-  │ props: id, manager/service        │ 接收最小标识符 + 服务实例
-  │                                   │
-  │                                   ▼
-  │                                 onMounted → 自行从 service 加载数据
-  │                                   │
-  │                                   ▼
-  │                                 save() → 直接调用 service 持久化
-  │                                   │
-  │  ◄── emit("saved" | "close") ──  emit 极简通知（无数据载荷）
-```
+**正确模式**：父只传最小标识符 + manager/service 实例；子组件 `onMounted` 自行从 service 加载数据，`save()` 直接调 service 持久化，仅 emit 极简通知（`saved`/`close`，无数据载荷）。
 
 ### 禁止事项
 
@@ -336,6 +314,7 @@ Codex UI 风格要求（禁用 `box-shadow`、全套设计 Token、字体三要�
 >
 > - 不确定 key 属于哪个分片？→ 在 `zh_CN/` 目录下 grep 搜索
 > - 全新增模块？→ 新建 `zh_CN/<feature>.json` + `en_US/<feature>.json`
+> - 新增键必须中英分片同步添加，提交前运行 `pnpm i18n:verify` 确保键对齐
 > - 修改完成后 → 运行 `pnpm i18n:merge` 重新生成大文件（构建时自动执行）
 
 ### 文件规则
@@ -356,13 +335,6 @@ Codex UI 风格要求（禁用 `box-shadow`、全套设计 Token、字体三要�
 ⚠️ 遗留 — base64Image 使用下划线前缀，暂不重构
   src/i18n/zh_CN/base64Image.json   → plugin.i18n.base64Image_encode
 ```
-
-### 新增 i18n 文本
-
-1. 找到对应 feature 的分片文件（如 `src/i18n/zh_CN/wordQuery.json`）
-2. 添加键值对
-3. 同样在 `src/i18n/en_US/<feature>.json` 添加英文翻译
-4. 提交前运行 `pnpm i18n:verify` 确保键对齐
 
 ### 构建流程
 

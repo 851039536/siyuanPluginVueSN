@@ -1,0 +1,160 @@
+/**
+ * 文件列表样式 — 详细信息表格 + 图标网格双视图
+ */
+@use '@/variables.scss' as *;
+
+.fm-entry-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+// ========== 状态占位 ==========
+
+.fm-list-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  padding: $spacing-8;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface-light);
+}
+
+.fm-list-error {
+  color: var(--b3-theme-error);
+}
+
+// ========== 详细信息视图 ==========
+
+.fm-column-headers {
+  display: flex;
+  align-items: center;
+  padding: $spacing-1 $spacing-4;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  position: sticky;
+  top: 0;
+  background: var(--b3-theme-background);
+  z-index: 1;
+}
+
+.fm-col {
+  border: none;
+  background: transparent;
+  color: var(--b3-theme-on-surface-light);
+  font-size: $font-size-2xs; // 列标题为辅助文字
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+
+  &:hover {
+    color: var(--b3-theme-on-surface);
+  }
+}
+
+.fm-sort-arrow {
+  margin-left: $spacing-1;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-primary);
+}
+
+.fm-col-name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+}
+
+.fm-col-size {
+  width: 90px;
+  flex-shrink: 0;
+}
+
+.fm-col-date {
+  width: 150px;
+  flex-shrink: 0;
+}
+
+.fm-detail-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.fm-detail-row {
+  display: flex;
+  align-items: center;
+  padding: $spacing-1 $spacing-4;
+  font-size: $font-size-xs;
+  cursor: default;
+  user-select: none;
+  border-bottom: 1px solid transparent;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+  }
+
+  &.selected {
+    background: var(--b3-theme-primary-lightest, rgba(66, 133, 244, 0.15));
+  }
+
+  .fm-col-size,
+  .fm-col-date {
+    font-size: $font-size-2xs; // 大小/日期为辅助元信息
+    color: var(--b3-theme-on-surface-light);
+  }
+}
+
+.fm-entry-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// ========== 图标网格视图 ==========
+
+.fm-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: $spacing-2;
+  padding: $spacing-4;
+}
+
+.fm-icon-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-2;
+  border-radius: $vp-radius;
+  cursor: default;
+  user-select: none;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+  }
+
+  &.selected {
+    background: var(--b3-theme-primary-lightest, rgba(66, 133, 244, 0.15));
+  }
+}
+
+.fm-icon-name {
+  font-size: $font-size-2xs; // 图标下文件名为辅助文字
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+// ========== 加载更多 ==========
+
+.fm-load-more {
+  display: flex;
+  justify-content: center;
+  padding: $spacing-2;
+}

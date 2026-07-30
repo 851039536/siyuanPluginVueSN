@@ -30,6 +30,8 @@ export interface S3Config {
   prefix: string
   /** 是否使用 HTTPS */
   useSSL: boolean
+  /** 上传请求超时秒数（大文件/慢网络可调大，默认 240） */
+  uploadTimeoutSec: number
 }
 
 // ========== 备份模式接口 ==========
@@ -152,6 +154,9 @@ export const TRANSFER_MAX_RETRIES = 2
 
 /** 全量上传并发数（对象为大 ZIP，带宽易饱和，用小并发） */
 export const FULL_UPLOAD_CONCURRENCY = 2
+
+/** 上传请求默认超时秒数（旧配置缺字段/表单非法输入时的回退值） */
+export const DEFAULT_UPLOAD_TIMEOUT_SEC = 240
 
 export const DEFAULT_BACKUP_MODE: BackupMode = {
   localZip: true,
@@ -307,4 +312,5 @@ export const DEFAULT_S3_CONFIG: S3Config = {
   pathStyle: true,
   prefix: DEFAULT_S3_PREFIX,
   useSSL: false,
+  uploadTimeoutSec: DEFAULT_UPLOAD_TIMEOUT_SEC,
 }

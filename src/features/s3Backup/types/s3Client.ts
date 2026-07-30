@@ -8,7 +8,7 @@
  * ListObjects(列举)、DeleteObject(删除)
  */
 import type { S3Config, S3FileInfo } from "./index"
-import { MSG_DESKTOP_ONLY } from "./index"
+import { DEFAULT_UPLOAD_TIMEOUT_SEC, MSG_DESKTOP_ONLY } from "./index"
 import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import { padNum } from "../utils"
@@ -586,9 +586,9 @@ export class S3Client {
           })
         })
 
-        // 30 秒超时保护
-        // 上传请求 120s 超时（大文件上传 + 服务端处理），其他请求 30s
-        const timeoutMs = body ? 120000 : 30000
+        // 上传请求超时可配置（默认 240s，大文件上传 + 服务端处理；旧配置缺字段时回退默认值），其他请求 30s
+        const uploadTimeoutSec = this.config.uploadTimeoutSec > 0 ? this.config.uploadTimeoutSec : DEFAULT_UPLOAD_TIMEOUT_SEC
+        const timeoutMs = body ? uploadTimeoutSec * 1000 : 30000
         req.setTimeout(timeoutMs, () => {
           req.destroy(new Error(`请求超时（${timeoutMs / 1000}s）`))
         })

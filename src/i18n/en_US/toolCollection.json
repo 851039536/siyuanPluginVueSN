@@ -5,5 +5,13 @@
   "enableToolCollectionDesc": "Show tool collection toggle in status bar, click to expand tool panel from bottom",
   "toolCollection_tabs_base64Image": "Base64 Image Converter",
   "toolCollection_defaultTitle": "Tool Collection",
-  "toggleToolCollection": "Tool Collection"
+  "toggleToolCollection": "Tool Collection",
+  "toolCollectionPanel": {
+    "narrower": "Narrower",
+    "wider": "Wider",
+    "shorter": "Shorter",
+    "taller": "Taller",
+    "prevTool": "Previous tool (←)",
+    "nextTool": "Next tool (→)"
+  }
 }

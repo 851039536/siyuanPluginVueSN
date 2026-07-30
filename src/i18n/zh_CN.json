@@ -2780,6 +2780,14 @@
   "toolCollection_tabs_base64Image": "Base64图片转换",
   "toolCollection_defaultTitle": "工具合集",
   "toggleToolCollection": "工具合集",
+  "toolCollectionPanel": {
+    "narrower": "变窄",
+    "wider": "变宽",
+    "shorter": "变矮",
+    "taller": "变高",
+    "prevTool": "上一个工具 (←)",
+    "nextTool": "下一个工具 (→)"
+  },
   "unitConverter": "单位转换",
   "unitConverterDesc": "在右侧边栏提供长度、面积、体积、质量、功率、时间、速度、数据存储、进制、ASCII等转换功能",
   "unitConverterTitle": "单位转换",

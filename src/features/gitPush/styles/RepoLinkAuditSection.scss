@@ -1,0 +1,42 @@
+@use "./variables" as *;
+
+// ── 仓库链接一致性区块（RepoLinkAuditSection）──
+
+// 区块标题右侧的分析按钮（推到最右，还原标题容器的大写/字距样式）
+.gp-audit-run-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+// 未分析/分析中提示文案（辅助文字）
+.gp-audit-hint {
+  font-size: $font-size-2xs;
+  opacity: 0.45;
+  font-style: italic;
+  padding: $spacing-1 0;
+}
+
+// 不一致汇总 chip（错误色系，补充 StatsPanel 既有 ahead/behind/synced 修饰类）
+.gp-status-chip--error {
+  border-color: var(--b3-theme-error-lighter);
+  color: var(--b3-theme-error);
+  background: var(--b3-theme-error-lightest);
+}
+
+// 单元格四态图标颜色（match 复用成功色，mismatch 错误色，linkOnly 警告色，remoteOnly 主题色）
+.gp-audit-match { color: var(--b3-theme-success); }
+.gp-audit-mismatch { color: var(--b3-theme-error); }
+.gp-audit-linkonly { color: var(--b3-theme-warning); }
+.gp-audit-remoteonly { color: var(--b3-theme-primary); }
+
+// 项目名后的错误标注（路径无效/检测失败）
+.gp-audit-error-text {
+  margin-left: $spacing-1;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-error);
+  opacity: 0.8;
+}

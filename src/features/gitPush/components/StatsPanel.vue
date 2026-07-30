@@ -273,6 +273,17 @@
           </div>
         </div>
       </div>
+
+      <!-- 仓库链接一致性（按需批量比对手动链接与实际远程 URL） -->
+      <RepoLinkAuditSection
+        :i18n="i18n"
+        :rows="auditRows"
+        :auditing="auditing"
+        :audited="audited"
+        :summary="auditSummary"
+        @run-audit="emit('runAudit')"
+        @view-project="emit('viewProject', $event)"
+      />
       </div>
 
     </template>
@@ -280,19 +291,26 @@
 </template>
 
 <script setup lang="ts">
-import type { StatsView } from "../types"
+import type { RepoLinkAuditRow, RepoLinkAuditSummary, StatsView } from "../types"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
 import { PLATFORM_META, getPlatformStatus } from "../types"
+import RepoLinkAuditSection from "./RepoLinkAuditSection.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
   /** 统计聚合视图（单对象 prop，由 useGitStats.statsView 产出，消除四层透传字段遗漏风险） */
   stats: StatsView
+  /** 仓库链接一致性审计状态（useRepoLinkAudit 产出，透传给 RepoLinkAuditSection） */
+  auditRows: RepoLinkAuditRow[]
+  auditing: boolean
+  audited: boolean
+  auditSummary: RepoLinkAuditSummary
 }>()
 
 const emit = defineEmits<{
   viewProject: [projectId: string]
+  runAudit: []
 }>()
 
 // 总览卡片配置：总项目数 / 已配远程 / 待推送 / 未提交 / 收藏 / 已归档

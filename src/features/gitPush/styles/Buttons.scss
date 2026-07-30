@@ -17,6 +17,13 @@
     font-size: $font-size-2xs;
   }
 
+  // 比 --sm 再小一号（字号已是最小 Token，缩小体现在内边距与行高；用于可编辑远程列表的行内按钮）
+  &--xs {
+    padding: 1px 3px;
+    font-size: $font-size-2xs;
+    line-height: $line-height-tight;
+  }
+
   &--primary {
     background: var(--b3-theme-primary);
     color: var(--b3-theme-on-primary);

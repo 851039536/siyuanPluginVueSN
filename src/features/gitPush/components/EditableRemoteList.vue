@@ -25,14 +25,14 @@
         />
         <!-- 按钮："保存" -->
         <button
-          class="vp-btn vp-btn--primary vp-btn--sm"
+          class="vp-btn vp-btn--primary vp-btn--xs"
           @click="submitEdit(row.key)"
         >
           {{ i18n.save }}
         </button>
         <!-- 按钮："取消" -->
         <button
-          class="vp-btn vp-btn--ghost vp-btn--sm"
+          class="vp-btn vp-btn--ghost vp-btn--xs"
           @click="editKey = ''"
         >
           {{ i18n.cancel }}
@@ -46,16 +46,16 @@
         <!-- 按钮：复制链接地址（仅传入 onCopy 回调时显示） -->
         <button
           v-if="onCopy"
-          class="vp-btn vp-btn--ghost vp-btn--sm"
+          class="vp-btn vp-btn--ghost vp-btn--xs"
           :title="i18n.copyRepoLink"
           @click="onCopy(row.key)"
         >
-          <Icon icon="mdi:content-copy" height="12" />
+          <Icon icon="mdi:content-copy" height="10" />
         </button>
         <!-- 按钮：下载到本地（仅传入 onDownload 回调时显示，克隆进行中转圈） -->
         <button
           v-if="onDownload"
-          class="vp-btn vp-btn--ghost vp-btn--sm"
+          class="vp-btn vp-btn--ghost vp-btn--xs"
           :title="i18n.downloadRepo"
           :disabled="downloadingKey === row.key"
           @click="submitDownload(row.key)"
@@ -63,22 +63,24 @@
           <Icon
             :icon="downloadingKey === row.key ? 'mdi:loading' : 'mdi:download-outline'"
             :class="{ 'gp-spin': downloadingKey === row.key }"
-            height="12"
+            height="10"
           />
         </button>
-        <!-- 按钮："编辑" -->
+        <!-- 按钮：编辑（图标按钮，tooltip："编辑"） -->
         <button
-          class="vp-btn vp-btn--ghost vp-btn--sm"
+          class="vp-btn vp-btn--ghost vp-btn--xs"
+          :title="i18n.edit"
           @click="editKey = row.key; editUrl = row.url"
         >
-          {{ i18n.edit }}
+          <Icon icon="mdi:pencil-outline" height="10" />
         </button>
-        <!-- 按钮："删除" -->
+        <!-- 按钮：删除（图标按钮，tooltip："删除"） -->
         <button
-          class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
+          class="vp-btn vp-btn--ghost vp-btn--xs gp-btn-danger"
+          :title="i18n.delete"
           @click="onRemove(row.key)"
         >
-          {{ i18n.delete }}
+          <Icon icon="mdi:delete-outline" height="10" />
         </button>
       </template>
     </div>

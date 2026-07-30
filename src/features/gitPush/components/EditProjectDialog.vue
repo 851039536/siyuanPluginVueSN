@@ -151,6 +151,7 @@
             @add="addRemote"
             @saveEdit="updateRemoteUrl"
             @remove="removeRemote"
+            @copy="copyRemoteUrl"
           />
         </div>
       </div>
@@ -430,6 +431,14 @@ function updateRemoteUrl(name: string, url: string): Promise<boolean> {
 
 function removeRemote(name: string): Promise<boolean> {
   return runRemoteOp(props.i18n.errRemoveRemote, (repoPath) => props.manager.removeRemote(repoPath, name))
+}
+
+/** 复制远程仓库 URL 到剪贴板（按远程名在检测列表中查找） */
+function copyRemoteUrl(name: string): void {
+  const url = remoteList.value.find((r) => r.name === name)?.url || ""
+  if (!url) { return }
+  copyToClipboard(url)
+  showMessage(props.i18n.copiedLink, 2000, "info")
 }
 
 // ── 帮助项（文案来自 i18n 分片 gitPush.json 的 help* 键）──

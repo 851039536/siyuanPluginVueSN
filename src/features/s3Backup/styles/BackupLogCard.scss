@@ -93,6 +93,11 @@
   color: var(--b3-theme-on-surface-light);
 }
 
+// 相对时间（如"5分钟前"），比绝对时间弱化一级（字号/颜色继承自 .log-meta）
+.log-relative {
+  opacity: 0.75;
+}
+
 .log-sep {
   @include m.meta-sep;
 }

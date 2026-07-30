@@ -387,6 +387,7 @@ export class BackupManager {
       path: f.path,
       time: new Date(f.mtimeMs).toLocaleString(),
       size: f.size,
+      timestamp: f.mtimeMs,
     }))
   }
 

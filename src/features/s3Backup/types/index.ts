@@ -81,6 +81,8 @@ export interface S3FileInfo {
   key: string
   size: number
   lastModified: string
+  /** 真实 epoch 毫秒时间戳（lastModified 为 UTC 墙钟串不可反解析，相对时间显示用） */
+  timestamp?: number
 }
 
 // ========== 本地备份文件信息接口 ==========
@@ -90,6 +92,8 @@ export interface LocalBackupInfo {
   path: string
   time: string
   size: number
+  /** 真实 epoch 毫秒时间戳（time 为 locale 串不可靠反解析；旧持久化历史无此字段，故可选） */
+  timestamp?: number
 }
 
 // ========== 备份列表展示项基础类型 ==========
@@ -100,6 +104,8 @@ export interface BackupListDisplayItem {
   size: number
   time?: string
   lastModified?: string
+  /** 真实 epoch 毫秒时间戳，存在时额外展示相对时间（如"5分钟前"） */
+  timestamp?: number
 }
 
 // ========== 共享工具类型 ==========

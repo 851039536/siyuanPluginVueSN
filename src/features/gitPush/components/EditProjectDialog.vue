@@ -245,7 +245,7 @@ import type { SelectOption } from "@/components/Select.vue"
 import type { RemoteRowItem } from "./EditableRemoteList.vue"
 import EditableRemoteList from "./EditableRemoteList.vue"
 import CloneLogPanel from "./CloneLogPanel.vue"
-import { getCurrentDeviceName, hasPlatformRemote, resolveValidPathFromPaths } from "../utils"
+import { getCurrentDeviceName, hasPlatformRemote, resolveRemotePlatform, resolveValidPathFromPaths } from "../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
 import { copyToClipboard } from "@/utils/domUtils"
 import { pickDirectory } from "@/utils/electronDialog"
@@ -386,8 +386,18 @@ async function downloadRepoLink(platform: string): Promise<boolean> {
 }
 
 // ── Git 远程仓库（EditableRemoteList 数据源与操作回调）──
+// 识别为平台的远程用统一 label + icon 展示（与仓库链接列表一致），key 仍为真实远程名供 git 操作；
+// 附远程名后缀便于区分同平台多远程，origin/upstream 等自定义远程回退显示原始名
 const remoteRows = computed<RemoteRowItem[]>(() =>
-  remoteList.value.map((r) => ({ key: r.name, name: r.name, url: r.url })),
+  remoteList.value.map((r) => {
+    const pm = resolveRemotePlatform(r)
+    return {
+      key: r.name,
+      name: pm ? `${pm.label} (${r.name})` : r.name,
+      url: r.url,
+      icon: pm?.icon,
+    }
+  }),
 )
 
 // 平台下拉仅列出尚未添加的平台（已存在的远程如 GitHub 不允许重复添加）

@@ -291,6 +291,11 @@ export const DEFAULT_DOC_STATS: DocStats = {
   customBookmarkTop: [],
 }
 
+/** 生成全新的默认统计对象（嵌套字段深拷贝，避免与 DEFAULT_DOC_STATS 常量共享引用被意外污染） */
+export function makeDefaultDocStats(): DocStats {
+  return { ...DEFAULT_DOC_STATS, platformCounts: {}, wordCountDistribution: [], customBookmarkTop: [] }
+}
+
 // ============================================================
 // 类别标签
 // ============================================================

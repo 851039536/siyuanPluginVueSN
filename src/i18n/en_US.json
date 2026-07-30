@@ -570,6 +570,7 @@
     "sortByNotebook": "Sort by Notebook",
     "query": "Query",
     "querying": "Querying...",
+    "reAnalyzeRequired": "Filter changed, please re-analyze",
     "resultCount": "Found {count} small documents",
     "noResults": "No documents found matching the criteria",
     "noResultsHint": "Try adjusting the threshold or selecting another notebook",

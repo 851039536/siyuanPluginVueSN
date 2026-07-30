@@ -570,6 +570,7 @@
     "sortByNotebook": "按笔记本排序",
     "query": "查询",
     "querying": "查询中...",
+    "reAnalyzeRequired": "筛选条件已变化，请重新分析",
     "resultCount": "共找到 {count} 个小文档",
     "noResults": "未找到符合条件的文档",
     "noResultsHint": "尝试调整阈值或选择其他笔记本",

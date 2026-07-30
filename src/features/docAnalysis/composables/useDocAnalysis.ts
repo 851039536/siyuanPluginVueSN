@@ -14,6 +14,8 @@ import type {
   QueryState,
 } from "../types/index"
 import {
+  nextTick,
+  onScopeDispose,
   reactive,
   ref,
   watch,
@@ -25,7 +27,7 @@ import {
 import {
   DocAnalysisStorage,
 } from "../types/storage"
-import { DEFAULT_DOC_STATS, DEFAULT_FILTER_OPTIONS, DEFAULT_PLATFORM_META } from "../types/index"
+import { DEFAULT_FILTER_OPTIONS, DEFAULT_PLATFORM_META, makeDefaultDocStats } from "../types/index"
 import {
   computeUnpublishedPlatformNames,
   getPlatformIdFromAttrKey,
@@ -63,8 +65,99 @@ function getAllPlatformsMask() {
   return (1 << PLATFORM_META.value.length) - 1
 }
 
+// ============================================================
+// 模块级纯常量 / 纯函数（不依赖组件实例状态）
+// ============================================================
+
+/** 文档查询配置 */
+interface DocQueryConfig {
+  extraSelect?: string
+  extraJoin?: string
+  extraWhere?: string
+  orderBy?: string
+  limit?: number
+  bookmarkInner?: boolean
+  skipSizeJoin?: boolean
+}
+
+/** 排序比较器映射 */
+const SORT_CMP: Record<string, (a: DocInfo, b: DocInfo) => number> = {
+  title: (a, b) => a.title.localeCompare(b.title, "zh-CN"),
+  notebook: (a, b) => a.notebookName.localeCompare(b.notebookName, "zh-CN"),
+  updated: (a, b) => (a.updated || "").localeCompare(b.updated || ""),
+  depth: (a, b) => (a.depth || 0) - (b.depth || 0),
+  refCount: (a, b) => (a.refCount || 0) - (b.refCount || 0),
+  imageCount: (a, b) => (a.imageCount || 0) - (b.imageCount || 0),
+  bookmark: (a, b) => (a.bookmark || "").localeCompare(b.bookmark || "", "zh-CN"),
+  wordCount: (a, b) => a.wordCount - b.wordCount,
+}
+
+function sortDocs(docs: DocInfo[], field: string, order: string): DocInfo[] {
+  const cmp = SORT_CMP[field] || SORT_CMP.wordCount
+  return [...docs].sort((a, b) => order === "desc" ? -cmp(a, b) : cmp(a, b))
+}
+
+/** 大小分档条件 */
+const SIZE_CONDITIONS: Record<string, string> = {
+  "0B": "AND COALESCE(sw.total_size, 0) = 0",
+  "small": "AND COALESCE(sw.total_size, 0) > 0 AND COALESCE(sw.total_size, 0) < 1024",
+  "medium": "AND COALESCE(sw.total_size, 0) >= 1024 AND COALESCE(sw.total_size, 0) < 10240",
+  "large": "AND COALESCE(sw.total_size, 0) >= 10240 AND COALESCE(sw.total_size, 0) < 102400",
+  "xlarge": "AND COALESCE(sw.total_size, 0) >= 102400",
+}
+
+/** 生成思源时间格式的 N 天前字符串 */
+function daysAgoStr(days: number): string {
+  const d = new Date(Date.now() - days * 86400000)
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`
+}
+
+/** 时间区间相邻策略：7days→(>=7d), 30days→(>=30d,<7d)，以此类推 */
+const TIME_INTERVALS: Record<string, [number, number | null]> = {
+  "7days": [7, null],
+  "30days": [30, 7],
+  "1to2month": [60, 30],
+  "2to3month": [90, 60],
+}
+
+/** 按分类实时生成时间过滤条件（每次调用重新计算，避免时间戳在初始化时冻结） */
+function buildTimeConfig(category: string): DocQueryConfig | null {
+  if (category === "halfYear") return { extraWhere: `AND b.updated < '${daysAgoStr(180)}'` }
+  const interval = TIME_INTERVALS[category]
+  if (!interval) return null
+  const [lower, upper] = interval
+  let w = `AND b.updated >= '${daysAgoStr(lower)}'`
+  if (upper !== null) w += ` AND b.updated < '${daysAgoStr(upper)}'`
+  return { extraWhere: w }
+}
+
+/** EXISTS 模式书签/属性查询 */
+function existsCond(attr: string, value?: string): string {
+  const valCond = value ? ` AND a.value = '${escapeSql(value)}'` : " AND a.value != ''"
+  return `AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = '${attr}'${valCond} AND a.block_id = b.id LIMIT 1)`
+}
+
+/** EXISTS 模式分类条件映射 */
+const EXISTS_MAP: Record<string, string> = {
+  hasBookmark: "AND bm.bookmark != '无'",
+  noBookmark: "AND b.id NOT IN (SELECT block_id FROM attributes WHERE name = 'bookmark')",
+  noneBookmark: existsCond("bookmark", "无"),
+  pendingPublish: existsCond("bookmark", "待发布"),
+  published: existsCond("bookmark", "已发布"),
+  unused: existsCond("bookmark", "不使用"),
+  hasAlias: existsCond("alias"),
+  hasMemo: existsCond("memo"),
+}
+
+/** 将 YYYY-MM-DD 日期转为 8 位数字；格式非法返回 null */
+function toDateDigits(value: string): string | null {
+  const digits = value.replace(/-/g, "")
+  return /^\d{8}$/.test(digits) ? digits : null
+}
+
 /**
- * 文档分析 composable
+ * 文档分析 composable（须在组件 setup 中调用，watch/onScopeDispose 依赖当前 effect 作用域自动回收）
  */
 export function useDocAnalysis(plugin: Plugin) {
   const storage = new DocAnalysisStorage(plugin)
@@ -79,12 +172,19 @@ export function useDocAnalysis(plugin: Plugin) {
 
   function setResults(docs: DocInfo[]) { queryState.results = docs }
 
+  /** 统一空结果状态：清空旧结果并标记已查询，避免 status 与 results 不一致 */
+  function setEmptyState() {
+    setResults([])
+    queryState.hasQueried = true
+    queryState.status = "empty"
+  }
+
   const filterOptions = reactive<FilterOptions>({ ...DEFAULT_FILTER_OPTIONS })
 
   async function loadPlatformMeta(): Promise<PlatformMeta[]> {
     try {
       const saved = await storage.platformMeta.loadOrDefault()
-      if (saved && Array.isArray(saved) && saved.length > 0) PLATFORM_META.value = saved
+      if (Array.isArray(saved) && saved.length > 0) PLATFORM_META.value = saved
     } catch { PLATFORM_META.value = [...DEFAULT_PLATFORM_META] }
     return PLATFORM_META.value
   }
@@ -94,7 +194,7 @@ export function useDocAnalysis(plugin: Plugin) {
     return storage.platformMeta.save(meta)
   }
 
-  const docStats = reactive<DocStats>({ ...DEFAULT_DOC_STATS })
+  const docStats = reactive<DocStats>(makeDefaultDocStats())
   const statsLoading = ref(false)
   const hasAnalyzed = ref(false)
   const duplicateGroups = ref<DuplicateNameGroup[]>([])
@@ -105,6 +205,8 @@ export function useDocAnalysis(plugin: Plugin) {
   let taggedDocIds: Set<string> = new Set()
   let fullPublishDocIds: Set<string> = new Set()
   let noPublishDocIds: Set<string> = new Set()
+  /** 上次成功分析时的笔记本过滤 ID（null 表示尚未分析），用于检测 ID 集是否过期 */
+  let analyzedNotebookId: string | null = null
 
   const platformUnpublishedCounts = ref<Record<string, number>>({})
   const depthStats = ref<DepthStats>({ depthDistribution: [], maxDepth: 0, avgDepth: 0 })
@@ -118,7 +220,7 @@ export function useDocAnalysis(plugin: Plugin) {
   // ============================================================
 
   function buildNotebookCondition(): string {
-    return filterOptions.notebookId ? `AND b.box = '${filterOptions.notebookId}'` : ""
+    return filterOptions.notebookId ? `AND b.box = ${quoteSql(filterOptions.notebookId)}` : ""
   }
 
   function buildNotebookMap(): Map<string, string> {
@@ -147,40 +249,19 @@ export function useDocAnalysis(plugin: Plugin) {
   }
 
   // ============================================================
-  // 排序比较器映射
+  // 统一查询执行器
   // ============================================================
 
-  const SORT_CMP: Record<string, (a: DocInfo, b: DocInfo) => number> = {
-    title: (a, b) => a.title.localeCompare(b.title, "zh-CN"),
-    notebook: (a, b) => a.notebookName.localeCompare(b.notebookName, "zh-CN"),
-    updated: (a, b) => (a.updated || "").localeCompare(b.updated || ""),
-    depth: (a, b) => (a.depth || 0) - (b.depth || 0),
-    refCount: (a, b) => (a.refCount || 0) - (b.refCount || 0),
-    imageCount: (a, b) => (a.imageCount || 0) - (b.imageCount || 0),
-    bookmark: (a, b) => (a.bookmark || "").localeCompare(b.bookmark || "", "zh-CN"),
-    wordCount: (a, b) => a.wordCount - b.wordCount,
-  }
+  /** 查询世代 token：新查询自增，使在途旧查询结果失效，避免竞态覆盖 */
+  let queryToken = 0
+  /** 分析世代 token */
+  let analyzeToken = 0
 
-  function sortDocs(docs: DocInfo[], field: string, order: string): DocInfo[] {
-    const cmp = SORT_CMP[field] || SORT_CMP.wordCount
-    return [...docs].sort((a, b) => order === "desc" ? -cmp(a, b) : cmp(a, b))
-  }
-
-  // ============================================================
-  // DocQueryConfig + 统一查询执行器
-  // ============================================================
-
-  interface DocQueryConfig {
-    extraSelect?: string
-    extraJoin?: string
-    extraWhere?: string
-    orderBy?: string
-    limit?: number
-    bookmarkInner?: boolean
-    skipSizeJoin?: boolean
-  }
+  // 组件卸载后使所有在途查询/分析结果失效，避免写入已废弃的响应式状态
+  onScopeDispose(() => { queryToken++; analyzeToken++ })
 
   async function runDocQuery(config: DocQueryConfig) {
+    const token = ++queryToken
     queryState.status = "loading"
     queryState.errorMessage = ""
     queryState.hasQueried = true
@@ -202,14 +283,19 @@ export function useDocAnalysis(plugin: Plugin) {
         LIMIT ${config.limit || 2000}
       `)
 
+      // 已有更新的查询发起，丢弃过期结果
+      if (token !== queryToken) return
+
       if (!rows || rows.length === 0) { setResults([]); queryState.status = "empty"; return }
 
       const docs = mapRowsToDocs(rows)
       const sorted = sortDocs(docs, filterOptions.sortField, filterOptions.sortOrder)
       await enrichWithPublishedPlatforms(sorted)
+      if (token !== queryToken) return
       setResults(sorted)
       queryState.status = "success"
     } catch (error) {
+      if (token !== queryToken) return
       console.error("查询文档列表失败:", error)
       queryState.errorMessage = (error as Error).message || "查询失败"
       queryState.status = "error"
@@ -242,31 +328,32 @@ export function useDocAnalysis(plugin: Plugin) {
     catch (e) { console.error("保存文档分析配置失败:", e) }
   }
 
+  /** 首次加载完成前跳过持久化 */
+  let dupFilterLoaded = false
+
   async function loadDuplicateNameFilter() {
     try { duplicateNameFilter.value = await storage.duplicateNameFilter.load() || [] }
     catch { duplicateNameFilter.value = [] }
+    // 等 watch 刷新完成后再放行持久化，避免加载回填（或加载失败置空）触发回写覆盖存储
+    await nextTick()
+    dupFilterLoaded = true
   }
 
   watch(duplicateNameFilter, async (val) => {
+    if (!dupFilterLoaded) return
     await storage.duplicateNameFilter.save(val)
   })
-
-  /** 生成思源时间格式的 N 天前字符串 */
-  function daysAgoStr(days: number): string {
-    const d = new Date(Date.now() - days * 86400000)
-    const pad = (n: number) => String(n).padStart(2, "0")
-    return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`
-  }
 
   // ============================================================
   // 统计维度分析（委托 analyze* 工具函数）
   // ============================================================
 
   async function analyzeDocStats() {
+    const token = ++analyzeToken
     statsLoading.value = true
     try {
       const nc = buildNotebookCondition()
-      Object.assign(docStats, { ...DEFAULT_DOC_STATS })
+      Object.assign(docStats, makeDefaultDocStats())
 
       const [sizeRows, dupRows, _t, _d, _bm, platformResult, qualityResult, scanResult, _wc] = await Promise.all([
         sql(`
@@ -289,6 +376,9 @@ export function useDocAnalysis(plugin: Plugin) {
         analyzeContentScan(nc, docStats),
         analyzeWordCount(nc, docStats),
       ])
+
+      // 已有更新的分析发起，丢弃过期结果
+      if (token !== analyzeToken) return
 
       platformUnpublishedCounts.value = platformResult.platformUnpublishedCounts
       fullPublishDocIds = platformResult.fullPublishDocIds
@@ -321,8 +411,9 @@ export function useDocAnalysis(plugin: Plugin) {
       docStats.noBookmarkDocs = Math.max(0, docStats.totalDocs - effectiveBm - docStats.noneBookmarkDocs)
 
       hasAnalyzed.value = true
+      analyzedNotebookId = filterOptions.notebookId
     } catch (e) { console.error("分析文档统计失败:", e) }
-    finally { statsLoading.value = false }
+    finally { if (token === analyzeToken) statsLoading.value = false }
   }
 
   // ============================================================
@@ -355,36 +446,16 @@ export function useDocAnalysis(plugin: Plugin) {
   // 分类查询 — 配置表驱动
   // ============================================================
 
-  /** 大小分档条件 */
-  const SIZE_CONDITIONS: Record<string, string> = {
-    "0B": "AND COALESCE(sw.total_size, 0) = 0",
-    "small": "AND COALESCE(sw.total_size, 0) > 0 AND COALESCE(sw.total_size, 0) < 1024",
-    "medium": "AND COALESCE(sw.total_size, 0) >= 1024 AND COALESCE(sw.total_size, 0) < 10240",
-    "large": "AND COALESCE(sw.total_size, 0) >= 10240 AND COALESCE(sw.total_size, 0) < 102400",
-    "xlarge": "AND COALESCE(sw.total_size, 0) >= 102400",
+  /** ID 集来自上次分析；笔记本过滤已变化时阻断查询并提示重新分析 */
+  function requireReAnalyze(): boolean {
+    if (analyzedNotebookId === filterOptions.notebookId) return false
+    setResults([])
+    queryState.hasQueried = true
+    // 提示文案："筛选条件已变化，请重新分析"
+    queryState.errorMessage = (plugin.i18n as any)?.docAnalysis?.reAnalyzeRequired || ""
+    queryState.status = "error"
+    return true
   }
-
-  /** EXISTS 模式书签/属性查询 */
-  function existsCond(attr: string, value?: string): string {
-    const valCond = value ? ` AND a.value = '${escapeSql(value)}'` : " AND a.value != ''"
-    return `AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = '${attr}'${valCond} AND a.block_id = b.id LIMIT 1)`
-  }
-
-  /** 时间区间相邻策略：7days→(>=7d), 30days→(>=30d,<7d), 以此类推 */
-  const TIME_INTERVALS: [string, number, number | null][] = [
-    ["7days", 7, null],
-    ["30days", 30, 7],
-    ["1to2month", 60, 30],
-    ["2to3month", 90, 60],
-    ["halfYear", 180, null],
-  ]
-  const TIME_CONFIGS: Record<string, DocQueryConfig> = {}
-  for (const [id, lower, upper] of TIME_INTERVALS) {
-    let w = `AND b.updated >= '${daysAgoStr(lower)}'`
-    if (upper !== null) w += ` AND b.updated < '${daysAgoStr(upper)}'`
-    TIME_CONFIGS[id] = { extraWhere: w }
-  }
-  TIME_CONFIGS.halfYear = { extraWhere: `AND b.updated < '${daysAgoStr(180)}'` }
 
   async function queryByStatsCategory(category: string) {
     if (statsFilter.value === category) {
@@ -400,7 +471,7 @@ export function useDocAnalysis(plugin: Plugin) {
     if (category === "duplicate") {
       const groups = filterDuplicateGroups(duplicateGroups.value, duplicateNameFilter.value)
       const titles = groups.map((g) => g.title)
-      if (titles.length === 0) { queryState.status = "empty"; queryState.hasQueried = true; setResults([]); return }
+      if (titles.length === 0) { setEmptyState(); return }
       await runDocQuery({ extraWhere: `AND b.content IN (${quoteSqlList(titles)})`, orderBy: "b.content ASC, content_size ASC" })
       return
     }
@@ -411,8 +482,9 @@ export function useDocAnalysis(plugin: Plugin) {
       return
     }
 
-    // 时间
-    if (TIME_CONFIGS[category]) { await runDocQuery(TIME_CONFIGS[category]); return }
+    // 时间（实时生成条件，避免时间戳冻结）
+    const timeConfig = buildTimeConfig(category)
+    if (timeConfig) { await runDocQuery(timeConfig); return }
 
     // 深度
     if (category === "deep") {
@@ -426,10 +498,12 @@ export function useDocAnalysis(plugin: Plugin) {
 
     // 自定义时间
     if (category === "customTime") {
+      const afterDigits = filterOptions.updatedAfter ? toDateDigits(filterOptions.updatedAfter) : null
+      const beforeDigits = filterOptions.updatedBefore ? toDateDigits(filterOptions.updatedBefore) : null
       let w = ""
-      if (filterOptions.updatedAfter) w += `AND b.updated >= '${filterOptions.updatedAfter.replace(/-/g, "")}000000' `
-      if (filterOptions.updatedBefore) w += `AND b.updated <= '${filterOptions.updatedBefore.replace(/-/g, "")}235959' `
-      if (!w) { queryState.status = "empty"; return }
+      if (afterDigits) w += `AND b.updated >= '${afterDigits}000000' `
+      if (beforeDigits) w += `AND b.updated <= '${beforeDigits}235959' `
+      if (!w) { setEmptyState(); return }
       await runDocQuery({ extraWhere: w })
       return
     }
@@ -452,33 +526,35 @@ export function useDocAnalysis(plugin: Plugin) {
       incomingRef: incomingRefDocIds,
       orphanDoc: orphanDocIds,
     }
-    if (ID_SET_MAP[category]) { await runDocQuery({ extraWhere: buildIdInClause(ID_SET_MAP[category]) }); return }
+    if (ID_SET_MAP[category]) {
+      if (requireReAnalyze()) return
+      await runDocQuery({ extraWhere: buildIdInClause(ID_SET_MAP[category]) })
+      return
+    }
     if (category === "partialPublish") {
+      if (requireReAnalyze()) return
       const partialCond = fullPublishDocIds.size === 0 && noPublishDocIds.size === 0 ? "AND 1 = 0" : buildIdNotInClause(new Set([...fullPublishDocIds, ...noPublishDocIds]))
       await runDocQuery({ extraWhere: partialCond })
       return
     }
-    if (category === "noTag") { await runDocQuery({ extraWhere: buildIdNotInClause(taggedDocIds) }); return }
+    if (category === "noTag") {
+      if (requireReAnalyze()) return
+      await runDocQuery({ extraWhere: buildIdNotInClause(taggedDocIds) })
+      return
+    }
 
     // EXISTS 模式
-    const EXISTS_MAP: Record<string, string> = {
-      hasBookmark: "AND bm.bookmark != '无'",
-      noBookmark: "AND b.id NOT IN (SELECT block_id FROM attributes WHERE name = 'bookmark' LIMIT 10000)",
-      noneBookmark: existsCond("bookmark", "无"),
-      pendingPublish: existsCond("bookmark", "待发布"),
-      published: existsCond("bookmark", "已发布"),
-      unused: existsCond("bookmark", "不使用"),
-      hasAlias: existsCond("alias"),
-      hasMemo: existsCond("memo"),
-    }
     if (EXISTS_MAP[category]) {
       const cfg: DocQueryConfig = { extraWhere: EXISTS_MAP[category] }
-      if (category === "hasBookmark") cfg.bookmarkInner = true; cfg.orderBy = "bm.bookmark ASC"
+      if (category === "hasBookmark") {
+        cfg.bookmarkInner = true
+        cfg.orderBy = "bm.bookmark ASC"
+      }
       await runDocQuery(cfg)
       return
     }
 
-    queryState.status = "empty"
+    setEmptyState()
   }
 
   async function queryDocs() {
@@ -487,8 +563,10 @@ export function useDocAnalysis(plugin: Plugin) {
     if (filterOptions.titleKeyword.trim()) conds += `AND b.content LIKE '%${escapeSql(filterOptions.titleKeyword.trim())}%' `
     if (filterOptions.contentKeyword.trim()) conds += `AND b.id IN (SELECT DISTINCT root_id FROM blocks WHERE content LIKE '%${escapeSql(filterOptions.contentKeyword.trim())}%' AND type != 'd') `
     if (filterOptions.bookmarkName.trim()) conds += `AND b.id IN (SELECT block_id FROM attributes WHERE name='bookmark' AND value='${escapeSql(filterOptions.bookmarkName.trim())}') `
-    if (filterOptions.updatedAfter) conds += `AND b.updated >= '${filterOptions.updatedAfter.replace(/-/g, "")}000000' `
-    if (filterOptions.updatedBefore) conds += `AND b.updated <= '${filterOptions.updatedBefore.replace(/-/g, "")}235959' `
+    const afterDigits = filterOptions.updatedAfter ? toDateDigits(filterOptions.updatedAfter) : null
+    const beforeDigits = filterOptions.updatedBefore ? toDateDigits(filterOptions.updatedBefore) : null
+    if (afterDigits) conds += `AND b.updated >= '${afterDigits}000000' `
+    if (beforeDigits) conds += `AND b.updated <= '${beforeDigits}235959' `
     if (needWcFilter) {
       if (filterOptions.wordCountMin > 0) conds += `AND COALESCE(sw.total_word_count, 0) >= ${filterOptions.wordCountMin} `
       if (filterOptions.wordCountMax > 0) conds += `AND COALESCE(sw.total_word_count, 0) <= ${filterOptions.wordCountMax} `

@@ -306,7 +306,7 @@ const {
   loadWorkspaceSettings,
   saveWorkspaceSettings,
   markBackupCompleted,
-} = useWorkspaceSettings({ getBackupManager: () => backupManager })
+} = useWorkspaceSettings({ getBackupManager: () => backupManager, i18n: props.i18n })
 
 // ========== 路径预览 ==========
 

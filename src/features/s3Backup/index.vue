@@ -102,7 +102,7 @@
         :items="localBackupList"
         :disable-refresh="isLoadingLocal || !workspaceRoot"
         :i18n="i18n"
-        @refresh="refreshLocalBackupList"
+        @refresh="loadLocalBackupList"
       >
         <template #actions="{ item }">
           <Button
@@ -348,7 +348,6 @@ const {
   uploadingItems,
   uploadHostMap,
   loadLocalBackupList,
-  refreshLocalBackupList,
   deleteLocalBackup,
   uploadLocalBackup,
   isAlreadyUploaded,

@@ -9,6 +9,11 @@
         class="tool-collection-panel"
         :style="panelStyle"
       >
+        <!-- 拖拽调整高度手柄 -->
+        <div
+          class="resize-handle"
+          @mousedown="onResizeStart"
+        />
         <!-- 头部 -->
         <div class="tool-collection-header">
           <span class="header-title">{{ i18n.toolCollection }}</span>
@@ -91,12 +96,17 @@
           </button>
           <div class="tool-collection-tabs">
             <button
-              v-for="tool in tools"
+              v-for="(tool, idx) in tools"
               :key="tool.id"
               class="tab-btn"
-              :class="{ active: currentTool === tool.id }"
+              :class="{ active: currentTool === tool.id, dragging: dragIndex === idx }"
               :ref="(el) => { if (currentTool === tool.id) activeTabRef = el as HTMLButtonElement | null }"
+              draggable="true"
               @click="currentTool = tool.id"
+              @dragstart="onDragStart(idx)"
+              @dragover="onDragOver"
+              @drop="onDrop(idx)"
+              @dragend="onDragEnd"
             >
               <Icon
                 :icon="tool.icon"
@@ -119,19 +129,11 @@
           <span class="tab-keyhint">← →</span>
         </div>
 
-        <!-- 工具内容区 -->
+        <!-- 工具内容区（动态组件，由 registry 驱动） -->
         <div class="tool-collection-content">
-          <Base64ImageTool
-            v-if="currentTool === 'base64Image'"
-            :i18n="plugin.i18n"
-          />
-          <UnitConverterTool
-            v-if="currentTool === 'unitConverter'"
-            :plugin="plugin"
-            :i18n="plugin.i18n"
-          />
-          <WordQueryTool
-            v-if="currentTool === 'wordQuery'"
+          <component
+            :is="currentToolMeta.component"
+            :key="currentTool"
             :plugin="plugin"
             :i18n="plugin.i18n"
           />
@@ -153,23 +155,22 @@ import { Icon } from "@iconify/vue"
 import {
   computed,
   nextTick,
-  onBeforeUnmount,
   onMounted,
   ref,
   watch,
 } from "vue"
-import { PluginStorage } from "@/utils/pluginStorage"
-import { TypedStorage } from "@/utils/typedStorage"
-import Base64ImageTool from "./tools/base64Image/index.vue"
-import UnitConverterTool from "./tools/unitConverter/index.vue"
-import WordQueryTool from "./tools/wordQuery/index.vue"
+import { usePanelResize } from "./composables/usePanelResize"
+import { useDragResize } from "./composables/useDragResize"
+import { useTabReorder } from "./composables/useTabReorder"
+import { useToolNavigation } from "./composables/useToolNavigation"
+import {
+  TOOL_LABEL_KEYS,
+  TOOL_REGISTRY,
+} from "./tools/registry"
 
 /** 面板 i18n 键的最小类型声明 */
 interface PanelI18n {
   toolCollection: string
-  base64Image: string
-  unitConverter: string
-  wordQuery: { title: string }
   toolCollectionPanel: {
     narrower: string
     wider: string
@@ -189,6 +190,34 @@ const props = defineProps<Props>()
 
 const i18n = props.plugin.i18n as unknown as PanelI18n
 
+const close = () => {
+  props.visible.value = false
+}
+
+// ==================== 面板尺寸 ====================
+const { panelWidth, panelHeight, panelStyle, adjustDimension, loadPersistedSize, saveHeight } = usePanelResize(props.plugin)
+const { onResizeStart } = useDragResize(panelHeight, saveHeight)
+
+// ==================== 工具注册表（由 registry.ts 驱动） ====================
+const tools = ref<ToolMeta[]>(TOOL_REGISTRY.map((t) => ({
+  ...t,
+  label: TOOL_LABEL_KEYS[t.id]?.(props.plugin.i18n) ?? t.id,
+})))
+
+// ==================== Tab 拖拽排序 ====================
+const { dragIndex, onDragStart, onDragOver, onDrop, onDragEnd } = useTabReorder(tools, props.plugin)
+
+// ==================== Tab 导航 + 键盘交互 ====================
+const { currentTool, prevTool, nextTool, handleKeydown } = useToolNavigation(
+  tools,
+  props.visible,
+  close
+)
+
+const currentToolMeta = computed(() =>
+  tools.value.find((t) => t.id === currentTool.value) ?? tools.value[0]
+)
+
 // 当前激活的 Tab 按钮 ref（打开时聚焦于此，兼顾键盘上下文与无障碍）
 const activeTabRef = ref<HTMLButtonElement | null>(null)
 
@@ -196,118 +225,15 @@ watch(
   () => props.visible.value,
   (val) => {
     if (val) {
-      // 打开后将焦点移到激活的 Tab 按钮，使键盘监听立即生效
       nextTick(() => activeTabRef.value?.focus())
     }
   },
 )
 
-const close = () => {
-  props.visible.value = false
-}
-
-// ==================== 面板尺寸（持久化存储） ====================
-const DEFAULT_WIDTH = 1060
-const DEFAULT_HEIGHT = 60 // vh
-
-const panelWidth = ref(DEFAULT_WIDTH)
-const panelHeight = ref(DEFAULT_HEIGHT)
-
-const storage = new PluginStorage(props.plugin)
-const widthSlot = new TypedStorage<number>(storage, "toolCollection-width", DEFAULT_WIDTH)
-const heightSlot = new TypedStorage<number>(storage, "toolCollection-height", DEFAULT_HEIGHT)
-
-const panelStyle = computed(() => {
-  // height 固定，内部内容通过 overflow-y: auto 滚动；maxHeight 硬封顶防止溢出视口
-  return {
-    maxWidth: `${panelWidth.value}px`,
-    height: `${panelHeight.value}vh`,
-    maxHeight: `calc(88vh - 36px)`,
-  }
-})
-
 onMounted(async () => {
-  // 键盘监听注册必须在任何 await 之前，确保 onBeforeUnmount 的 removeEventListener 必然晚于注册
+  // 键盘监听注册必须在任何 await 之前
   window.addEventListener("keydown", handleKeydown)
-
-  // 并行加载持久化尺寸，loadOrDefault 内置字符串数字归一化
-  const [w, h] = await Promise.all([widthSlot.loadOrDefault(), heightSlot.loadOrDefault()])
-  // 仅在值未被用户调整过（仍为默认值）时应用，避免异步加载覆盖用户操作
-  if (w >= 500 && w <= 1600 && panelWidth.value === DEFAULT_WIDTH) panelWidth.value = w
-  if (h >= 30 && h <= 100 && panelHeight.value === DEFAULT_HEIGHT) panelHeight.value = h
-})
-
-const adjustDimension = async (
-  key: "width" | "height",
-  delta: number,
-  min: number,
-  max: number
-) => {
-  const target = key === "width" ? panelWidth : panelHeight
-  target.value = Math.max(min, Math.min(max, target.value + delta))
-  const slot = key === "width" ? widthSlot : heightSlot
-  await slot.save(target.value)
-}
-
-// ==================== 工具注册表 ====================
-const tools: ToolMeta[] = [
-  {
-    id: "wordQuery",
-    label: i18n.wordQuery.title,
-    icon: "mdi:book",
-  },
-  {
-    id: "base64Image",
-    label: i18n.base64Image,
-    icon: "mdi:code-brackets",
-  },
-  {
-    id: "unitConverter",
-    label: i18n.unitConverter,
-    icon: "mdi:swap-horizontal",
-  },
-]
-
-const currentTool = ref("wordQuery")
-
-// ==================== Tab 循环切换 ====================
-const currentIndex = computed(() =>
-  tools.findIndex((t) => t.id === currentTool.value)
-)
-
-const prevTool = () => {
-  const idx = currentIndex.value
-  const prev = idx <= 0 ? tools.length - 1 : idx - 1
-  currentTool.value = tools[prev].id
-}
-
-const nextTool = () => {
-  const idx = currentIndex.value
-  const next = idx >= tools.length - 1 ? 0 : idx + 1
-  currentTool.value = tools[next].id
-}
-
-// ==================== 键盘交互（Escape 关闭 / 左右切换 Tab） ====================
-const handleKeydown = (e: KeyboardEvent) => {
-  if (!props.visible.value) return
-  const target = e.target as HTMLElement
-  const tagName = target.tagName
-  if (tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT" || target.isContentEditable) return
-
-  if (e.key === "Escape") {
-    e.preventDefault()
-    close()
-  } else if (e.key === "ArrowLeft") {
-    e.preventDefault()
-    prevTool()
-  } else if (e.key === "ArrowRight") {
-    e.preventDefault()
-    nextTool()
-  }
-}
-
-onBeforeUnmount(() => {
-  window.removeEventListener("keydown", handleKeydown)
+  await loadPersistedSize()
 })
 </script>
 

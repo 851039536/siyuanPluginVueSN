@@ -1,0 +1,15 @@
+{
+  "jsonFormatter": {
+    "title": "JSON格式化",
+    "format": "格式化",
+    "minify": "压缩",
+    "validate": "校验",
+    "copyResult": "复制结果",
+    "clear": "清空",
+    "input": "输入",
+    "output": "输出",
+    "inputPlaceholder": "在此粘贴 JSON 文本...",
+    "successMsg": "✓ 完成",
+    "validMsg": "✓ 合法 JSON"
+  }
+}

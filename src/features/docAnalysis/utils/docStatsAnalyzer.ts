@@ -4,6 +4,7 @@
 import { sql } from "@/api"
 import type { DocStats, DepthStats, PlatformMeta } from "../types/index"
 import { daysAgoStr } from "./sqlHelpers"
+import { getPlatformIdFromAttrKey } from "./platformPublish"
 import { SIZE_WORDCOUNT_SUBQUERY } from "./sqlConstants"
 
 // ============================================================
@@ -226,19 +227,15 @@ export async function analyzePlatformPublish(
     const docMap = new Map<string, number>()
     for (const doc of allDocs) docMap.set(String(doc.id), 0)
 
-    const platformBits: [string, number][] = platformMeta.flatMap((p, i) =>
-      p.matchers.map((m) => [m, 1 << i] as [string, number]),
-    )
+    // 平台 id → 位掩码；归属判据统一走 getPlatformIdFromAttrKey，与列表徽章/属性面板保持一致
+    const idToBit = new Map(platformMeta.map((p, i) => [p.id, 1 << i]))
 
     if (yamlRows) {
       for (const row of yamlRows) {
         const id = String(row.block_id)
         if (!docMap.has(id)) continue
-        const name = String(row.name).toLowerCase()
-        let mask = 0
-        for (const [m, bit] of platformBits) {
-          if (name.includes(m)) { mask = bit; break }
-        }
+        const pid = getPlatformIdFromAttrKey(String(row.name), platformMeta)
+        const mask = pid ? idToBit.get(pid) ?? 0 : 0
         if (mask > 0) docMap.set(id, docMap.get(id)! | mask)
       }
     }

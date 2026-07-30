@@ -123,6 +123,8 @@ interface Props {
   plugin: Plugin
   docId?: string
   initialMd?: string
+  /** docAnalysis 分片 i18n（提供发布操作提示文案） */
+  i18n: Record<string, string>
 }
 
 const props = defineProps<Props>()
@@ -255,8 +257,8 @@ function downloadHtml() {
 
 async function publishToDoocs() {
   if (!mdText.value) return
-  const ok = await copyDocForPublish(props.docId || "", "")
-  if (ok) openExternalPublish("https://md.doocs.org/", "md.doocs.org", 400)
+  const ok = await copyDocForPublish(props.docId || "", "", props.i18n)
+  if (ok) openExternalPublish("https://md.doocs.org/", "md.doocs.org", props.i18n, 400)
 }
 
 // ============================================================

@@ -98,7 +98,6 @@
     >
       <StatsOverview
         :stats="docStats"
-        :loading="statsLoading"
         :has-analyzed="hasAnalyzed"
         :active-filter="statsFilter"
         :depth-stats="depthStats"

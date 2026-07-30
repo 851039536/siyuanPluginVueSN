@@ -121,6 +121,18 @@
           />
           {{ tab.label }}
         </button>
+        <!-- 隐藏零值开关（概览/质量 Tab 共用） -->
+        <button
+          class="toolbar-btn hide-zero-btn"
+          :class="{ active: hideZero }"
+          title="隐藏零值卡片"
+          @click.stop="hideZero = !hideZero"
+        >
+          <Icon
+            :icon="hideZero ? 'mdi:eye-off-outline' : 'mdi:eye-outline'"
+            :size="13"
+          />
+        </button>
       </div>
 
       <!-- Tab: 概览 — 元数据驱动分区 -->
@@ -132,19 +144,6 @@
           :icon="section.icon"
         >
           <template #headerExtra>
-            <button
-              v-if="section.key === 'size'"
-              class="toolbar-btn"
-              :class="{ active: hideZero }"
-              title="隐藏零值卡片"
-              @click.stop="hideZero = !hideZero"
-            >
-              <Icon
-                :icon="hideZero ? 'mdi:eye-off-outline' : 'mdi:eye-outline'"
-                :size="13"
-              />
-              {{ hideZero ? '已隐藏' : '隐藏零值' }}
-            </button>
             <button
               v-if="section.key === 'bookmark'"
               class="bookmark-detail-btn"
@@ -212,7 +211,7 @@
         <!-- 自定义书签 -->
         <StatSection
           v-if="stats.customBookmarkTop.length > 0"
-          title="书签分类 Top-{{ stats.customBookmarkTop.length }}"
+          :title="`书签分类 Top-${stats.customBookmarkTop.length}`"
           icon="mdi:tag-outline"
         >
           <div class="wordcount-chart">
@@ -232,93 +231,14 @@
         <!-- 文档质量 -->
         <div class="section-cards">
           <StatCard
-            v-if="!hideZero || stats.deepDocs !== 0"
-            card-id="deep"
-            :value="stats.deepDocs"
-            label="深层≥5"
-            color-class="depth-color"
-            :active="activeFilter === 'deep'"
-            :pct="pctStr(stats.deepDocs)"
-            @select="(id) => $emit('selectCategory', id)"
-          />
-          <StatCard
-            v-if="!hideZero || stats.imageDocs !== 0"
-            card-id="hasImage"
-            :value="stats.imageDocs"
-            :label="`图片(${stats.totalImages})`"
-            color-class="img-color"
-            :active="activeFilter === 'hasImage'"
-            :pct="pctStr(stats.imageDocs)"
-            @select="(id) => $emit('selectCategory', id)"
-          />
-          <StatCard
-            v-if="!hideZero || stats.taggedDocs !== 0"
-            card-id="hasTag"
-            :value="stats.taggedDocs"
-            label="有标签"
-            color-class="time-green"
-            :active="activeFilter === 'hasTag'"
-            :pct="pctStr(stats.taggedDocs)"
-            @select="(id) => $emit('selectCategory', id)"
-          />
-          <StatCard
-            v-if="!hideZero || stats.taggedDocs !== stats.totalDocs"
-            card-id="noTag"
-            :value="stats.totalDocs - stats.taggedDocs"
-            label="无标签"
-            color-class="time-red"
-            :active="activeFilter === 'noTag'"
-            :pct="pctStr(stats.totalDocs - stats.taggedDocs)"
-            @select="(id) => $emit('selectCategory', id)"
-          />
-          <StatCard
-            v-if="!hideZero || stats.aliasedDocs !== 0"
-            card-id="hasAlias"
-            :value="stats.aliasedDocs"
-            label="有别名"
-            color-class="time-cyan"
-            :active="activeFilter === 'hasAlias'"
-            :pct="pctStr(stats.aliasedDocs)"
-            @select="(id) => $emit('selectCategory', id)"
-          />
-          <StatCard
-            v-if="!hideZero || stats.memoedDocs !== 0"
-            card-id="hasMemo"
-            :value="stats.memoedDocs"
-            label="有备注"
-            color-class="time-purple"
-            :active="activeFilter === 'hasMemo'"
-            :pct="pctStr(stats.memoedDocs)"
-            @select="(id) => $emit('selectCategory', id)"
-          />
-          <StatCard
-            v-if="!hideZero || stats.refDocs !== 0"
-            card-id="hasRef"
-            :value="stats.refDocs"
-            :label="`含引用(${stats.totalRefs})`"
-            color-class="ref-color"
-            :active="activeFilter === 'hasRef'"
-            :pct="pctStr(stats.refDocs)"
-            @select="(id) => $emit('selectCategory', id)"
-          />
-          <StatCard
-            v-if="!hideZero || stats.incomingRefDocs !== 0"
-            card-id="incomingRef"
-            :value="stats.incomingRefDocs"
-            label="被引用"
-            color-class="time-cyan"
-            :active="activeFilter === 'incomingRef'"
-            :pct="pctStr(stats.incomingRefDocs)"
-            @select="(id) => $emit('selectCategory', id)"
-          />
-          <StatCard
-            v-if="!hideZero || stats.orphanDocs !== 0"
-            card-id="orphanDoc"
-            :value="stats.orphanDocs"
-            label="孤文档"
-            color-class="zero"
-            :active="activeFilter === 'orphanDoc'"
-            :pct="pctStr(stats.orphanDocs)"
+            v-for="card in visibleQualityCards"
+            :key="card.id"
+            :card-id="card.id"
+            :value="getCardValue(card)"
+            :label="cardLabel(card)"
+            :color-class="card.colorClass"
+            :active="activeFilter === card.id"
+            :pct="pctStr(getCardValue(card))"
             @select="(id) => $emit('selectCategory', id)"
           />
         </div>
@@ -362,7 +282,11 @@
       class="bookmark-detail-overlay"
       @click.self="$emit('showBookmarkDetails')"
     >
-      <div class="bookmark-detail-panel">
+      <div
+        class="bookmark-detail-panel"
+        tabindex="-1"
+        @keydown.esc="$emit('showBookmarkDetails')"
+      >
         <div class="bookmark-detail-header">
           <span class="bookmark-detail-title">
             <Icon icon="mdi:bookmark-outline" />
@@ -418,7 +342,11 @@
       class="dup-manage-overlay"
       @click.self="cancelDupDialog"
     >
-      <div class="dup-manage-panel">
+      <div
+        class="dup-manage-panel"
+        tabindex="-1"
+        @keydown.esc="cancelDupDialog"
+      >
         <div class="dup-manage-header">
           <span class="dup-manage-title">
             <Icon icon="mdi:filter-remove-outline" />
@@ -468,13 +396,14 @@ import type {
   StatCardDef,
   StatSectionDef,
 } from "../types/index"
-import { STAT_SECTIONS } from "../types/index"
+import { STAT_SECTIONS, QUALITY_CARDS } from "../types/index"
 import { Icon } from "@iconify/vue"
 import {
   computed,
   ref,
 } from "vue"
 import { PLATFORM_META } from "../composables/useDocAnalysis"
+import { WC_TOP_BIN_LABEL } from "../utils/docStatsAnalyzer"
 import { filterDuplicateGroups } from "../utils"
 import StatCard from "./StatCard.vue"
 import StatSection from "./StatSection.vue"
@@ -482,7 +411,6 @@ import BarRow from "./BarRow.vue"
 
 interface Props {
   stats: DocStats
-  loading: boolean
   hasAnalyzed: boolean
   activeFilter: string
   depthStats: DepthStats
@@ -518,15 +446,17 @@ const dupDialogVisible = ref(false)
 const dupDialogText = ref("")
 
 function openDupDialog() {
-  dupDialogText.value = (props.duplicateNameFilter || []).join("\n")
+  dupDialogText.value = props.duplicateNameFilter.join("\n")
   dupDialogVisible.value = true
 }
 
 function saveDupDialog() {
-  const names = dupDialogText.value
-    .split("\n")
-    .map((s) => s.trim())
-    .filter(Boolean)
+  const names = [...new Set(
+    dupDialogText.value
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean),
+  )]
   emit("update:duplicateNameFilter", names)
   dupDialogVisible.value = false
 }
@@ -563,8 +493,8 @@ const _healthBreakdown = computed(() => {
   const depthGt7 = props.depthStats.depthDistribution
     .filter((d) => d.depth > 7)
     .reduce((sum, d) => sum + d.count, 0)
-  const wcGt20000 = (s.wordCountDistribution || [])
-    .filter((d) => d.label === ">2万字")
+  const wcGt20000 = s.wordCountDistribution
+    .filter((d) => d.label === WC_TOP_BIN_LABEL)
     .reduce((sum, d) => sum + d.count, 0)
   const issues = s.zeroByteDocs
     + excessDupes
@@ -623,6 +553,7 @@ function getCardValue(card: StatCardDef): number {
 
 function cardLabel(card: StatCardDef): string {
   if (card.id === "duplicate") return `重名(${effectiveDupGroupCount.value}组)`
+  if (card.suffixStatKey) return `${card.shortLabel}(${props.stats[card.suffixStatKey]})`
   return card.shortLabel
 }
 
@@ -630,6 +561,12 @@ function getVisibleCards(section: StatSectionDef): StatCardDef[] {
   if (!hideZero.value) return section.cards
   return section.cards.filter((c) => getCardValue(c) > 0)
 }
+
+/** 质量 Tab 卡片（复用 hideZero 过滤逻辑） */
+const visibleQualityCards = computed(() => {
+  if (!hideZero.value) return QUALITY_CARDS
+  return QUALITY_CARDS.filter((c) => getCardValue(c) > 0)
+})
 
 function pctStr(count: number): string {
   if (!props.stats.totalDocs) return "0%"
@@ -641,7 +578,7 @@ function pctStr(count: number): string {
 // ============================================================
 
 const platformEntries = computed(() => {
-  const counts = props.stats.platformCounts || {}
+  const counts = props.stats.platformCounts
   const entries = Object.entries(counts)
     .map(([id, count]) => {
       const meta = PLATFORM_META.value.find((p) => p.id === id)
@@ -659,7 +596,7 @@ const docsInSystem = computed(() =>
 
 const avgPlatformsPerDoc = computed(() => {
   if (docsInSystem.value === 0) return "0"
-  const total = Object.values(props.stats.platformCounts || {}).reduce((a, b) => a + b, 0)
+  const total = Object.values(props.stats.platformCounts).reduce((a, b) => a + b, 0)
   return (total / docsInSystem.value).toFixed(1)
 })
 

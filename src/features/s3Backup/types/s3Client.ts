@@ -206,6 +206,38 @@ function signRequest(
   return `AWS4-HMAC-SHA256 Credential=${accessKey}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`
 }
 
+// ========== 分块上传进度 ==========
+
+/** 请求体分块写入的块大小（256KB，块间回调字节进度） */
+const UPLOAD_CHUNK_SIZE = 256 * 1024
+
+/**
+ * 分块写入请求体并上报已发送字节数
+ * req.write 整体写入无进度回调；分块写入 + 尊重背压（write 返回 false 时等 drain 再续写）
+ * 使大文件上传期间能持续上报真实发送进度
+ */
+function writeBodyInChunks(
+  req: any,
+  body: Buffer,
+  onProgress: (sent: number, total: number) => void,
+): void {
+  let offset = 0
+  const writeNext = (): void => {
+    while (offset < body.length) {
+      const chunk = body.subarray(offset, offset + UPLOAD_CHUNK_SIZE)
+      offset += chunk.length
+      const canContinue = req.write(chunk)
+      onProgress(offset, body.length)
+      if (!canContinue) {
+        req.once("drain", writeNext)
+        return
+      }
+    }
+    req.end()
+  }
+  writeNext()
+}
+
 // ========== NodeResponse 兼容接口 ==========
 
 /**
@@ -314,10 +346,10 @@ export class S3Client {
     }
   }
 
-  /** 直接上传 Buffer 内容到 S3（跳过本地文件读写） */
-  async uploadBuffer(buffer: Buffer, key: string): Promise<void> {
+  /** 直接上传 Buffer 内容到 S3（跳过本地文件读写；onProgress 上报字节级发送进度） */
+  async uploadBuffer(buffer: Buffer, key: string, onProgress?: (sent: number, total: number) => void): Promise<void> {
     const url = this.buildUrl(key)
-    const response = await this.request("PUT", this.buildUri(key), "", url, buffer)
+    const response = await this.request("PUT", this.buildUri(key), "", url, buffer, onProgress)
 
     if (!response.ok) {
       const body = await response.text()
@@ -430,6 +462,7 @@ export class S3Client {
     queryString: string,
     url: string,
     body: Buffer | null,
+    onProgress?: (sent: number, total: number) => void,
   ): Promise<NodeResponse> {
     const now = new Date()
     const amzDateStr = amzDate(now)
@@ -564,10 +597,15 @@ export class S3Client {
           reject(new Error(`S3 请求失败: ${err.message}`))
         })
 
-        if (body) {
-          req.write(body)
+        if (body && onProgress) {
+          // 分块写入以上报字节进度（整体 req.write 无进度回调）；writeNext 内部负责 req.end()
+          writeBodyInChunks(req, body, onProgress)
+        } else {
+          if (body) {
+            req.write(body)
+          }
+          req.end()
         }
-        req.end()
       }
 
       doRequest(transport, options, sortedUrl, 0)

@@ -24,7 +24,8 @@ export interface FullS3UploadDeps {
   s3SubPrefix: Ref<string>
   useDateFolder: Ref<boolean>
   listExistingKeys: () => Promise<Set<string>>
-  uploadFileContent: (buffer: Buffer, key: string) => Promise<void>
+  /** 上传文件内容（onProgress 上报单文件字节进度，供大文件上传时进度条流动） */
+  uploadFileContent: (buffer: Buffer, key: string, onProgress?: (sent: number, total: number) => void) => Promise<void>
   backupProgress: Ref<BackupProgress>
   addLog: (entry: Omit<BackupLog, "id" | "time" | "hostname">) => void
   /** 保存校验值（persistNow=false 仅更新内存不落盘，供批量循环使用） */
@@ -103,12 +104,12 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
     let failedCount = 0 // 读取失败 + 上传失败
     let processedCount = 0 // 已处理文件数（含跳过 + 上传 + 失败）
     const uploadedNames: string[] = [] // 实际上传成功的文件名（hostMap 只记录这些）
-    
+
     // try/finally 兜底：即使 worker 意外抛错，也保住已成功文件的校验值落盘
     try {
       await runWithConcurrency(files, FULL_UPLOAD_CONCURRENCY, async (file) => {
         const s3Key = makeS3Key(file.relativePath, timestamp)
-    
+
         // 去重：全 key 精确匹配，或 basename 已存在（历史目录布局兜底）即跳过
         if (existingKeys.has(s3Key) || existingBaseNames.has(getBaseName(file.relativePath))) {
           skippedCount++
@@ -122,7 +123,7 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
           }
           return
         }
-    
+
         backupProgress.value = {
           phase: "uploading",
           currentFile: file.relativePath,
@@ -130,7 +131,7 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
           totalFiles: files.length,
           percent: Math.round((processedCount / files.length) * 100),
         }
-    
+
         let content: Buffer
         try {
           content = await fs.readFile(file.fullPath)
@@ -140,13 +141,19 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
           processedCount++
           return
         }
-    
+
         // 上传（带重试）与哈希并行执行，消除二次磁盘读的串行等待
         const [uploadResult, hashResult] = await Promise.allSettled([
           (async () => {
             for (let attempt = 0; attempt <= TRANSFER_MAX_RETRIES; attempt++) {
               try {
-                await deps.uploadFileContent(content, s3Key)
+                // 字节级进度：单文件内发送比例折算到总进度（否则单大 ZIP 上传全程 0% 直跳 100%）
+                await deps.uploadFileContent(content, s3Key, (sent, total) => {
+                  const percent = Math.round(((processedCount + sent / total) / files.length) * 100)
+                  if (percent !== backupProgress.value.percent) { // 整数百分比变化才更新，避免高频响应式触发
+                    backupProgress.value = { ...backupProgress.value, percent }
+                  }
+                })
                 return
               } catch (err: unknown) {
                 if (attempt === TRANSFER_MAX_RETRIES) { throw err }
@@ -155,14 +162,14 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
           })(),
           backupManager.computeFileHash(file.fullPath),
         ])
-    
+
         if (uploadResult.status === "rejected") {
           console.warn(`[S3备份] 上传失败（已重试 ${TRANSFER_MAX_RETRIES} 次）: ${file.relativePath}`, getErrorMessage(uploadResult.reason))
           failedCount++
           processedCount++
           return
         }
-    
+
         // 上传成功：保存校验值（哈希失败仅告警，不阻断）
         if (hashResult.status === "fulfilled") {
           await deps.saveChecksum(file.relativePath, file.fullPath, content.length, hashResult.value, false)

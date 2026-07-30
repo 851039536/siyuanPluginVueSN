@@ -686,9 +686,16 @@ async function handleAutoBackupTrigger(): Promise<void> {
       success: false,
       message: props.i18n.autoBackupSkippedBusy,
     })
+    // 回滚防重标记，下一分钟 tick 自动补跑（否则当天/该小时不再重试）
+    getS3BackupInstance()?.resetExecutionMarks()
     return
   }
-  await performManualBackup()
+  try {
+    await performManualBackup()
+  } catch {
+    // 错误提示与日志由 performManualBackup 内部处理，此处仅回滚标记允许重试
+    getS3BackupInstance()?.resetExecutionMarks()
+  }
 }
 
 // ========== 定时器重启 ==========

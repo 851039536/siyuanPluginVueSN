@@ -10,7 +10,7 @@ import { showMessage } from "siyuan"
 import { getWorkspaceDir } from "@/api"
 import { pickDirectory, openFolderInExplorer } from "@/utils/electronDialog"
 import type { BackupManager } from "../modules/BackupManager"
-import type { BackupMode } from "../types"
+import type { BackupMode, BackupFrequency } from "../types"
 import { DEFAULT_BACKUP_MODE, DEFAULT_BACKUP_DIR } from "../types"
 import { getS3BackupInstance } from "../index"
 
@@ -31,7 +31,7 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
   const s3SubPrefix = ref(DEFAULT_BACKUP_DIR)
   const backupModeLocal = reactive<BackupMode>({ ...DEFAULT_BACKUP_MODE })
   const autoBackupEnabled = ref(false)
-  const backupFrequency = ref("daily")
+  const backupFrequency = ref<BackupFrequency>("daily")
   const backupTime = ref("03:00")
   const keepBackupCount = ref(7)
 

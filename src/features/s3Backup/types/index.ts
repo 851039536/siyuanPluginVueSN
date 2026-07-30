@@ -49,6 +49,9 @@ export interface BackupMode {
 
 // ========== 备份设置接口 ==========
 
+/** 自动备份频率（拼错字符串会导致定时器 switch 全不命中，收窄为联合类型在编译期拦截） */
+export type BackupFrequency = "minute" | "hourly" | "daily"
+
 export interface BackupSettings {
   /** 上次备份时间文本 */
   lastBackupTime: string
@@ -61,7 +64,7 @@ export interface BackupSettings {
   /** 是否启用自动备份 */
   autoBackupEnabled: boolean
   /** 备份频率 */
-  backupFrequency: string
+  backupFrequency: BackupFrequency
   /** 每日备份时间 */
   backupTime: string
   /** 保留备份份数 */

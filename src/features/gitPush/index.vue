@@ -36,7 +36,12 @@
       v-if="currentView === 'stats'"
       :i18n="i18n"
       :stats="statsView"
+      :audit-rows="auditRows"
+      :auditing="auditing"
+      :audited="audited"
+      :audit-summary="auditSummary"
       @view-project="onViewProject"
+      @run-audit="runAudit"
     />
 
     <!-- ========== 操作日志视图 ========== -->
@@ -320,6 +325,7 @@ import { useScanImport } from "./composables/useScanImport"
 import { useGitConfigDialog } from "./composables/useGitConfigDialog"
 import { useGitHandlers } from "./composables/useGitHandlers"
 import { useRefreshOps } from "./composables/useRefreshOps"
+import { useRepoLinkAudit } from "./composables/useRepoLinkAudit"
 import { CARD_SERVICES_KEY, PLATFORM_META, REMOTES } from "./types"
 import {
   openLocalPath,
@@ -544,6 +550,15 @@ const {
   visibleGroups,
   allGroups: groupedProjects,
 })
+
+// ── 仓库链接一致性审计（批量 git 调用由统计视图内“开始分析”按钮显式触发）──
+const {
+  auditRows,
+  auditing,
+  audited,
+  auditSummary,
+  runAudit,
+} = useRepoLinkAudit(props.manager, projects)
 
 const {
   detectedIdes,

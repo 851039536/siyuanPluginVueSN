@@ -48,5 +48,5 @@ export {
   VIEW_MODE_META,
   VIEW_MODES,
 } from "./meta"
-export type { CategoryDistributionItem, NeedsPullItem, NeedsPushItem, PanelView, PendingProjectItem, PlatformKey, PlatformStatusItem, PushStatusStats, RemoteCoverage, StatsView, UncommittedItem, ViewMode } from "./meta"
+export type { CategoryDistributionItem, NeedsPullItem, NeedsPushItem, PanelView, PendingProjectItem, PlatformKey, PlatformStatusItem, PushStatusStats, RemoteCoverage, RepoLinkAuditCell, RepoLinkAuditRow, RepoLinkAuditState, RepoLinkAuditSummary, StatsView, UncommittedItem, ViewMode } from "./meta"
 export { getPlatformStatus } from "./meta"

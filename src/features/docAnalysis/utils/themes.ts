@@ -85,7 +85,7 @@ const wechatTheme: PublishTheme = {
       "color": "#d14",
     },
     "pre": {
-      "background": "#282c34",
+      "background": "#f6f8fa",
       "padding": "16px",
       "margin": "14px 0",
       "border-radius": "6px",
@@ -96,7 +96,7 @@ const wechatTheme: PublishTheme = {
     "pre code": {
       "background": "transparent",
       "padding": "0",
-      "color": "#abb2bf",
+      "color": "#24292e",
       "font-size": "13px",
     },
     "table": {
@@ -128,9 +128,16 @@ const wechatTheme: PublishTheme = {
       "margin": "20px 0",
     },
   },
-  codeTheme: "github",
 }
 
-/** 默认主题 */
-export const DEFAULT_THEME = wechatTheme
+/** 深度冻结主题对象，防止响应式代理或外部代码意外修改模块单例 */
+function freezeTheme(theme: PublishTheme): Readonly<PublishTheme> {
+  for (const styles of Object.values(theme.elements)) Object.freeze(styles)
+  Object.freeze(theme.elements)
+  Object.freeze(theme.container)
+  return Object.freeze(theme)
+}
+
+/** 默认主题（已冻结，禁止深层修改） */
+export const DEFAULT_THEME = freezeTheme(wechatTheme)
 

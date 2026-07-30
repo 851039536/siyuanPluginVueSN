@@ -437,6 +437,11 @@
   border: 1px solid var(--b3-border-color);
   border-radius: $vp-radius;
   background: var(--b3-theme-surface);
+
+  .hide-zero-btn {
+    flex: none;
+    margin-left: auto;
+  }
 }
 
 .stats-tab-btn {

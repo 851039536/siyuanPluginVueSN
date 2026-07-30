@@ -409,3 +409,16 @@ export const STAT_SECTIONS: StatSectionDef[] = [
   },
 ]
 
+/** 质量 Tab 卡片元数据（与概览分区卡片同构，驱动 v-for 渲染） */
+export const QUALITY_CARDS: StatCardDef[] = [
+  { id: "deep", shortLabel: "深层≥5", statKey: "deepDocs", colorClass: "depth-color" },
+  { id: "hasImage", shortLabel: "图片", statKey: "imageDocs", colorClass: "img-color", suffixStatKey: "totalImages" },
+  { id: "hasTag", shortLabel: "有标签", statKey: "taggedDocs", colorClass: "time-green" },
+  { id: "noTag", shortLabel: "无标签", statKey: "taggedDocs", colorClass: "time-red", resolveValue: (s) => s.totalDocs - s.taggedDocs },
+  { id: "hasAlias", shortLabel: "有别名", statKey: "aliasedDocs", colorClass: "time-cyan" },
+  { id: "hasMemo", shortLabel: "有备注", statKey: "memoedDocs", colorClass: "time-purple" },
+  { id: "hasRef", shortLabel: "含引用", statKey: "refDocs", colorClass: "ref-color", suffixStatKey: "totalRefs" },
+  { id: "incomingRef", shortLabel: "被引用", statKey: "incomingRefDocs", colorClass: "time-cyan" },
+  { id: "orphanDoc", shortLabel: "孤文档", statKey: "orphanDocs", colorClass: "zero" },
+]
+

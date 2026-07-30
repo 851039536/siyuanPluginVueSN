@@ -17,9 +17,12 @@ import { getS3BackupInstance } from "../index"
 /** 依赖注入：backupManager 由 index.vue 持有（初始化时机在 onMounted） */
 export interface WorkspaceSettingsDeps {
   getBackupManager: () => BackupManager | null
+  i18n: Record<string, string>
 }
 
 export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
+  const { i18n } = deps
+
   const workspacePath = ref("")
   const workspaceRoot = ref("")
   const lastBackupTime = ref("")
@@ -82,14 +85,14 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
       const wsPath = await fetchWorkspacePath()
       if (wsPath) {
         updateWorkspacePath(wsPath, true)
-        showMessage("工作区路径已自动获取", 2000, "info")
+        showMessage(i18n.workspaceAutoDetected, 2000, "info")
         return
       }
     }
-    const selectedPath = await pickDirectory("选择思源工作区")
+    const selectedPath = await pickDirectory(i18n.selectWorkspaceTitle)
     if (selectedPath) {
       updateWorkspacePath(selectedPath, true)
-      showMessage("工作区路径已设置", 2000, "info")
+      showMessage(i18n.workspacePathSet, 2000, "info")
     }
   }
 
@@ -97,7 +100,7 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
     if (!workspaceRoot.value) { return }
     const opened = await openFolderInExplorer(workspaceRoot.value)
     if (!opened) {
-      showMessage(`工作区路径: ${workspaceRoot.value}`, 3000, "info")
+      showMessage(`${i18n.workspacePath}: ${workspaceRoot.value}`, 3000, "info")
     }
   }
 
@@ -168,15 +171,12 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
     }
   }
 
-  /** 备份完成后更新上次备份时间并同步定时器防重时间戳 + 持久化 */
+  /** 备份完成后更新上次备份时间并同步定时器防重时间戳 + 持久化（复用 saveWorkspaceSettings 的错误处理，保存失败不向备份流程抛异常） */
   async function markBackupCompleted(): Promise<void> {
     lastBackupTime.value = new Date().toLocaleString()
     lastBackupTimestamp = Date.now()
-    const instance = getS3BackupInstance()
-    if (instance) {
-      instance.updateLastBackupTime(lastBackupTimestamp)
-      await instance.saveWorkspaceSettings(buildWorkspaceSettings())
-    }
+    getS3BackupInstance()?.updateLastBackupTime(lastBackupTimestamp)
+    await saveWorkspaceSettings()
   }
 
   return {

@@ -61,6 +61,7 @@
 import { computed } from "vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
+import type { BackupFrequency } from "../types"
 
 // 保留份数输入值清洗 — 防止 NaN/0 持久化导致本地备份保留清理失效
 function sanitizeKeepCount(raw: unknown): number {
@@ -72,7 +73,7 @@ function sanitizeKeepCount(raw: unknown): number {
 }
 
 const autoBackupEnabled = defineModel<boolean>("autoBackupEnabled", { required: true })
-const backupFrequency = defineModel<string>("backupFrequency", { required: true })
+const backupFrequency = defineModel<BackupFrequency>("backupFrequency", { required: true })
 const backupTime = defineModel<string>("backupTime", { required: true })
 const keepBackupCount = defineModel<number>("keepBackupCount", { required: true })
 

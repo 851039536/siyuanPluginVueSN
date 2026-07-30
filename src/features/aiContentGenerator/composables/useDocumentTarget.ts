@@ -1,6 +1,6 @@
 /**
  * 文档/块目标选择 Composable
- * 封装 selectTargetDocument/selectTargetBlock/loadTargetDocument/setTargetDocState 逻辑
+ * 封装 selectTargetDocument/selectTargetBlock 逻辑（含加载与状态写入的内部实现）
  */
 import { type Ref } from "vue"
 import { showMessage } from "siyuan"
@@ -50,12 +50,15 @@ export function useDocumentTarget(deps: UseDocumentTargetDeps) {
     }
   }
 
+  // 防重入标志：加载进行中忽略重复点击，避免后完成者覆盖状态的竞态
+  let isSelecting = false
+
   /** 设置目标文档状态 */
-  const setTargetDocState = (doc: TargetDoc, content: string) => {
+  const setTargetDocState = (doc: TargetDoc) => {
     editTargetDoc.value = doc
-    originalContent.value = content
-    generatedContent.value = content
-    displayedContent.value = content
+    originalContent.value = doc.content
+    generatedContent.value = doc.content
+    displayedContent.value = doc.content
     onClearCustomInput()
   }
 
@@ -66,12 +69,13 @@ export function useDocumentTarget(deps: UseDocumentTargetDeps) {
     const cleanContent = removeFrontmatter(result.content)
     setTargetDocState(
       { id: docId, title: result.title, content: cleanContent, isBlock: false },
-      cleanContent,
     )
   }
 
   /** 选择目标文档 */
   const selectTargetDocument = async () => {
+    if (isSelecting) return
+    isSelecting = true
     try {
       const protyle = document.querySelector(
         ".layout__wnd--active .protyle:not(.fn__none)",
@@ -95,11 +99,16 @@ export function useDocumentTarget(deps: UseDocumentTargetDeps) {
       await loadTargetDocument(docId)
     } catch (error) {
       console.error("选择文档失败:", error)
+      showMessage("选择文档失败: " + (error as Error).message, 3000, "error")
+    } finally {
+      isSelecting = false
     }
   }
 
   /** 选择当前光标所在的块 */
   const selectTargetBlock = async () => {
+    if (isSelecting) return
+    isSelecting = true
     try {
       const blockId = getCurrentBlockId()
       if (!blockId) {
@@ -118,17 +127,16 @@ export function useDocumentTarget(deps: UseDocumentTargetDeps) {
 
       setTargetDocState(
         { id: blockId, title: docTitle, content: blockContent, isBlock: true },
-        blockContent,
       )
     } catch (error) {
       console.error("选择块失败:", error)
       showMessage("选择块失败: " + (error as Error).message, 3000, "error")
+    } finally {
+      isSelecting = false
     }
   }
 
   return {
-    setTargetDocState,
-    loadTargetDocument,
     selectTargetDocument,
     selectTargetBlock,
   }

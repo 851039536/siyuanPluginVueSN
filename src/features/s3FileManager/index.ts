@@ -30,7 +30,7 @@ export class S3FileManager {
 
     this.modal = createModalVueApp(S3FileManagerPanel, {
       maskId: "s3-file-manager-mask",
-      width: "90vw",
+      width: "72vw",
       height: "85vh",
       persistent: true,
       getCloseHandler: () => this.close,

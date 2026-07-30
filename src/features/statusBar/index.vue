@@ -262,6 +262,18 @@ const FEATURES: FeatureRegistryEntry[] = [
     action: () => emitCustomEvent("openS3Backup"),
   },
   {
+    id: "s3FileManager",
+    icon: "mdi:folder-network",
+    color: "#0ea5e9",
+    title: props.plugin?.i18n?.s3FileManager?.s3FileManager || "S3 文件管理",
+    pinnable: true,
+    shortcut: {
+      icon: "mdi:folder-network",
+      itemClass: "action-item s3-file-manager-item",
+    },
+    action: () => emitCustomEvent("openS3FileManager"),
+  },
+  {
     id: "everythingSearch",
     icon: "ph:binoculars",
     color: "#d97706",

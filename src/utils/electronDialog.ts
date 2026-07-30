@@ -136,6 +136,39 @@ export async function pickFiles(title: string): Promise<string[] | null> {
   })
 }
 
+/** 获取 Electron webUtils 模块（Electron 32+ 用 getPathForFile 取拖入文件磁盘路径） */
+function getWebUtils(): any {
+  if (typeof window.require !== "function") { return null }
+  try {
+    return window.require("electron").webUtils
+  } catch {
+    return null
+  }
+}
+
+/**
+ * 从拖入的 File 列表解析绝对磁盘路径（取消/不可用返回空数组）
+ * 先取 File.path（旧内核私有扩展），为空则用 webUtils.getPathForFile（Electron 32+）
+ */
+export function getPathsFromFiles(files: File[]): string[] {
+  const webUtils = getWebUtils()
+  const paths: string[] = []
+  for (const f of files) {
+    const legacyPath = (f as File & { path?: string }).path
+    if (legacyPath) {
+      paths.push(legacyPath)
+      continue
+    }
+    try {
+      const resolved = webUtils?.getPathForFile?.(f)
+      if (resolved) { paths.push(resolved) }
+    } catch {
+      // 单个文件路径解析失败则跳过
+    }
+  }
+  return paths
+}
+
 /** 在文件管理器中打开指定文件夹（Electron shell.openPath 或降级到 fs 验证） */
 export async function openFolderInExplorer(folderPath: string): Promise<boolean> {
   // 先验证路径存在

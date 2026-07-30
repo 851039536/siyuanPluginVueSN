@@ -12,7 +12,7 @@ import type { S3Client } from "@/utils/s3/s3Client"
 import { runWithConcurrency } from "@/utils/s3/concurrency"
 import { LARGE_FILE_WARN_SIZE } from "@/utils/s3/types"
 import { getNodeModules } from "@/utils/nodeModules"
-import { pickDirectory, pickFiles } from "@/utils/electronDialog"
+import { pickDirectory, pickFiles, getPathsFromFiles } from "@/utils/electronDialog"
 import { getErrorMessage } from "@/utils/stringUtils"
 import { useStatusBarTask } from "@/features/statusBar/composables/useStatusBarTask"
 import type { FileOpLog, S3Entry, S3FileManagerI18n } from "../types"
@@ -66,61 +66,55 @@ export function useS3Transfer(deps: {
 
   // ========== 上传 ==========
 
-  /** 选择本地文件并上传到当前目录（重名确认覆盖；大文件仅警告不阻断） */
-  async function uploadFiles(): Promise<void> {
-    if (transferring.value) { return }
-    const client = deps.requireClient()
-    const paths = await pickFiles(i18n.pickUploadFiles)
-    if (!paths || paths.length === 0) { return }
+  /** 单个上传任务：本地绝对路径 → 目标 key（含展示名） */
+  interface UploadTask {
+    path: string
+    key: string
+    name: string
+  }
 
+  /** 核心并发上传：读 Buffer → 带字节进度上传 → 汇总日志与状态栏上报 */
+  async function runUpload(tasks: UploadTask[], summaryName: string): Promise<void> {
+    if (transferring.value || tasks.length === 0) { return }
+    const client = deps.requireClient()
     const node = getNodeModules()
     if (!node) {
       showMessage(i18n.desktopOnly, 3000, "error")
       return
     }
-    const { fs, path } = node
-
-    // 重名覆盖确认
-    const existingNames = new Set(deps.getEntries().filter((e) => !e.isFolder).map((e) => e.name))
-    const conflicts = paths.map((p) => path.basename(p)).filter((name) => existingNames.has(name))
-    if (conflicts.length > 0) {
-      // 覆盖确认："以下文件已存在，继续上传将覆盖："
-      if (!confirm(`${i18n.overwriteConfirm}\n${conflicts.join("\n")}`)) { return }
-    }
+    const { fs } = node
 
     transferring.value = true
     const failed: string[] = []
     let done = 0
     let uploadedBytes = 0
     try {
-      await runWithConcurrency(paths, TRANSFER_CONCURRENCY, async (filePath) => {
-        const name = path.basename(filePath)
-        const key = `${deps.currentPrefix.value}${name}`
+      await runWithConcurrency(tasks, TRANSFER_CONCURRENCY, async (task) => {
         try {
-          const stat = await fs.promises.stat(filePath)
+          const stat = await fs.promises.stat(task.path)
           if (stat.size > LARGE_FILE_WARN_SIZE) {
             // 大文件警告："存在超过 100MB 的大文件，上传时将整包驻留内存"
-            showMessage(`${i18n.largeFileWarn}: ${name}`, 4000, "info")
+            showMessage(`${i18n.largeFileWarn}: ${task.name}`, 4000, "info")
           }
-          const buffer = await fs.promises.readFile(filePath)
-          reportProgress(i18n.statusUploading, name, done, paths.length, 0)
-          await withRetries(() => client.uploadBuffer(buffer, key, (sent, total) => {
-            reportProgress(i18n.statusUploading, name, done, paths.length, sent / Math.max(total, 1))
+          const buffer = await fs.promises.readFile(task.path)
+          reportProgress(i18n.statusUploading, task.name, done, tasks.length, 0)
+          await withRetries(() => client.uploadBuffer(buffer, task.key, (sent, total) => {
+            reportProgress(i18n.statusUploading, task.name, done, tasks.length, sent / Math.max(total, 1))
           }))
           uploadedBytes += stat.size
         } catch (err) {
-          console.warn("[S3文件管理] 上传失败:", filePath, getErrorMessage(err))
-          failed.push(name)
+          console.warn("[S3文件管理] 上传失败:", task.path, getErrorMessage(err))
+          failed.push(task.name)
         }
         done++
-        reportProgress(i18n.statusUploading, name, done, paths.length, 0)
+        reportProgress(i18n.statusUploading, task.name, done, tasks.length, 0)
       })
 
       const success = failed.length === 0
       deps.addLog({
         type: "upload", action: i18n.actionUpload,
-        fileName: paths.length === 1 ? path.basename(paths[0]) : `${paths.length} ${i18n.itemsUnit}`,
-        itemCount: paths.length, fileSize: uploadedBytes,
+        fileName: tasks.length === 1 ? tasks[0].name : summaryName,
+        itemCount: tasks.length, fileSize: uploadedBytes,
         success,
         message: success ? undefined : `${failed.length} ${i18n.logFailed}: ${failed.join(", ")}`,
       })
@@ -136,6 +130,106 @@ export function useS3Transfer(deps: {
       transferProgress.value = null
       await deps.afterMutation()
     }
+  }
+
+  /** 递归收集目录下全部文件的绝对路径 */
+  async function collectDirFiles(
+    fs: typeof import("node:fs"),
+    pathMod: typeof import("node:path"),
+    dir: string,
+  ): Promise<string[]> {
+    const result: string[] = []
+    const entries = await fs.promises.readdir(dir, { withFileTypes: true })
+    for (const ent of entries) {
+      const full = pathMod.join(dir, ent.name)
+      if (ent.isDirectory()) {
+        result.push(...await collectDirFiles(fs, pathMod, full))
+      } else if (ent.isFile()) {
+        result.push(full)
+      }
+    }
+    return result
+  }
+
+  /** 选择本地文件并上传到当前目录（重名确认覆盖；大文件仅警告不阻断） */
+  async function uploadFiles(): Promise<void> {
+    if (transferring.value) { return }
+    deps.requireClient()
+    const paths = await pickFiles(i18n.pickUploadFiles)
+    if (!paths || paths.length === 0) { return }
+
+    const node = getNodeModules()
+    if (!node) {
+      showMessage(i18n.desktopOnly, 3000, "error")
+      return
+    }
+    const { path } = node
+
+    // 重名覆盖确认
+    const existingNames = new Set(deps.getEntries().filter((e) => !e.isFolder).map((e) => e.name))
+    const conflicts = paths.map((p) => path.basename(p)).filter((name) => existingNames.has(name))
+    if (conflicts.length > 0) {
+      // 覆盖确认："以下文件已存在，继续上传将覆盖："
+      if (!confirm(`${i18n.overwriteConfirm}\n${conflicts.join("\n")}`)) { return }
+    }
+
+    const tasks: UploadTask[] = paths.map((p) => {
+      const name = path.basename(p)
+      return { path: p, name, key: `${deps.currentPrefix.value}${name}` }
+    })
+    await runUpload(tasks, `${paths.length} ${i18n.itemsUnit}`)
+  }
+
+  /** 拖入的文件/文件夹上传到当前目录（文件夹递归保持相对结构；重名确认覆盖） */
+  async function uploadDropped(files: File[]): Promise<void> {
+    if (transferring.value || files.length === 0) { return }
+    deps.requireClient()
+    const node = getNodeModules()
+    if (!node) {
+      showMessage(i18n.desktopOnly, 3000, "error")
+      return
+    }
+    const { fs, path } = node
+    const paths = getPathsFromFiles(files)
+    if (paths.length === 0) {
+      // 取不到磁盘路径（非桌面版或 Electron 受限）
+      showMessage(i18n.desktopOnly, 3000, "error")
+      return
+    }
+
+    // 展开：文件直接上传；目录递归收集并保持相对结构（顶层目录名作为前缀段）
+    const tasks: UploadTask[] = []
+    const topLevelNames: string[] = []
+    for (const p of paths) {
+      let stat
+      try {
+        stat = await fs.promises.stat(p)
+      } catch {
+        continue
+      }
+      const baseName = path.basename(p)
+      topLevelNames.push(baseName)
+      if (stat.isDirectory()) {
+        const collected = await collectDirFiles(fs, path, p)
+        for (const filePath of collected) {
+          const rel = filePath.slice(p.length + 1).split(path.sep).join("/")
+          tasks.push({ path: filePath, name: path.basename(filePath), key: `${deps.currentPrefix.value}${baseName}/${rel}` })
+        }
+      } else {
+        tasks.push({ path: p, name: baseName, key: `${deps.currentPrefix.value}${baseName}` })
+      }
+    }
+    if (tasks.length === 0) { return }
+
+    // 重名覆盖确认（基于顶层名比对现有条目）
+    const existingNames = new Set(deps.getEntries().map((e) => e.name))
+    const conflicts = topLevelNames.filter((name) => existingNames.has(name))
+    if (conflicts.length > 0) {
+      // 覆盖确认："以下文件已存在，继续上传将覆盖："
+      if (!confirm(`${i18n.overwriteConfirm}\n${conflicts.join("\n")}`)) { return }
+    }
+
+    await runUpload(tasks, `${tasks.length} ${i18n.itemsUnit}`)
   }
 
   // ========== 下载 ==========
@@ -218,6 +312,7 @@ export function useS3Transfer(deps: {
     transferring,
     transferProgress,
     uploadFiles,
+    uploadDropped,
     downloadEntries,
   }
 }

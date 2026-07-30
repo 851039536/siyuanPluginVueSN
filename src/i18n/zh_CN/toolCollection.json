@@ -5,5 +5,13 @@
   "enableToolCollectionDesc": "在状态栏显示工具合集开关，点击从底部展开工具面板",
   "toolCollection_tabs_base64Image": "Base64图片转换",
   "toolCollection_defaultTitle": "工具合集",
-  "toggleToolCollection": "工具合集"
+  "toggleToolCollection": "工具合集",
+  "toolCollectionPanel": {
+    "narrower": "变窄",
+    "wider": "变宽",
+    "shorter": "变矮",
+    "taller": "变高",
+    "prevTool": "上一个工具 (←)",
+    "nextTool": "下一个工具 (→)"
+  }
 }

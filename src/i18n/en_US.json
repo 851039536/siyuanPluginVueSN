@@ -2780,6 +2780,14 @@
   "toolCollection_tabs_base64Image": "Base64 Image Converter",
   "toolCollection_defaultTitle": "Tool Collection",
   "toggleToolCollection": "Tool Collection",
+  "toolCollectionPanel": {
+    "narrower": "Narrower",
+    "wider": "Wider",
+    "shorter": "Shorter",
+    "taller": "Taller",
+    "prevTool": "Previous tool (←)",
+    "nextTool": "Next tool (→)"
+  },
   "unitConverter": "Unit Converter",
   "unitConverterDesc": "Provide unit conversion for length, area, volume, mass, power, time, speed, data storage, base, ASCII in the right sidebar",
   "unitConverterTitle": "Unit Converter",

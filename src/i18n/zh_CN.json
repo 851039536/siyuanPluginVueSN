@@ -2119,6 +2119,8 @@
   "statusConnected": "已连接",
   "statusDisconnected": "未连接",
   "testException": "测试异常",
+  "uploadTimeout": "上传超时（秒）",
+  "uploadTimeoutHint": "单个上传请求的超时时间，大文件或慢网络可调大，默认 240 秒",
   "s3UploadResult": "备份上传完成：上传 {uploaded}、跳过 {skipped}",
   "s3UploadFailedPart": "，{failed} 个文件读取失败",
   "allFilesExist": "文件均已存在于 S3，跳过 {skipped} 个",

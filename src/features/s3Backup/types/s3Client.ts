@@ -1,276 +1,39 @@
 /**
  * S3 兼容存储客户端
  *
- * 使用 AWS Signature V4 签名算法，通过 Node.js crypto 模块直接签名 HTTP 请求。
+ * 使用 AWS Signature V4 签名算法，通过 Node.js http/https 模块直接签名并发送请求。
  * 不依赖任何外部 SDK，支持所有 S3 兼容存储（MinIO、Ceph、LocalStack 等）。
+ * 签名/XML 解析等纯函数实现位于 ../modules/s3Protocol。
  *
- * 支持操作：HeadBucket(测试连接)、PutObject(上传Buffer)、GetObject(下载)、
- * ListObjects(列举)、DeleteObject(删除)
+ * 支持操作：HeadBucket(测试连接)、PutObject(上传Buffer)、GetObject(流式下载/读文本)、
+ * ListObjects(自动翻页列举)、DeleteObject(删除)
  */
 import type { S3Config, S3FileInfo } from "./index"
 import { DEFAULT_UPLOAD_TIMEOUT_SEC, MSG_DESKTOP_ONLY } from "./index"
-import { getNodeModules } from "@/utils/nodeModules"
+import { getNodeModules, getNodeHttp } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
-import { padNum } from "../utils"
+import {
+  sha256Hex, amzDate, dateStamp, sortQueryString, signRequest,
+  parseListObjectsXml, parseS3Error, formatS3Error, writeBodyInChunks,
+} from "../modules/s3Protocol"
+import type { NodeResponse } from "../modules/s3Protocol"
+
+// ========== 模块常量 ==========
+
+/** ListObjects 自动翻页的防御性上限（100 页 × 1000 = 10 万对象） */
+const MAX_LIST_PAGES = 100
 
 // ========== 工具函数 ==========
 
-/** 缓存的 crypto 模块引用（模块级单例，与 requireHttp 风格统一） */
-let _crypto: any = null
-
-/** 获取 crypto 模块 (仅 Electron/Node.js 环境可用) */
-function requireCrypto(): any {
-  if (!_crypto) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      _crypto = require("node:crypto")
-    } catch {
-      throw new Error("签名需要 Node.js 环境，请使用桌面版思源笔记")
-    }
-  }
-  return _crypto
-}
-
-/** 获取 fs/path 模块 */
+/** 获取 fs/path 模块（fs 为 promises API，fsRaw 供 createWriteStream 流式写盘用） */
 function requireFsPath() {
   const node = getNodeModules()
   if (!node) throw new Error(MSG_DESKTOP_ONLY)
   return {
     fs: node.fs.promises,
+    fsRaw: node.fs,
     path: node.path,
   }
-}
-
-/** 缓存的 http/https 模块引用（模块级单例，避免每次请求重复 require） */
-let _httpModule: any = null
-let _httpsModule: any = null
-
-/** 获取 Node.js http/https 模块（绕过浏览器 Mixed Content 限制） */
-function requireHttp(): { http: any; https: any } {
-  if (!_httpModule || !_httpsModule) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    _httpModule = require("node:http")
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    _httpsModule = require("node:https")
-  }
-  return { http: _httpModule, https: _httpsModule }
-}
-
-/** SHA256 哈希，返回 hex 字符串 */
-function sha256Hex(data: string | Buffer): string {
-  const crypto = requireCrypto()
-  return crypto.createHash("sha256").update(data).digest("hex")
-}
-
-/** HMAC-SHA256，返回 Buffer */
-function hmacSha256(key: Buffer | string, data: string): Buffer {
-  const crypto = requireCrypto()
-  const keyBuf = typeof key === "string" ? Buffer.from(key, "utf-8") : key
-  return crypto.createHmac("sha256", keyBuf).update(data).digest()
-}
-
-/** HMAC-SHA256，返回 hex 字符串 */
-function hmacSha256Hex(key: Buffer | string, data: string): string {
-  return hmacSha256(key, data).toString("hex")
-}
-
-/** 生成 ISO 8601 时间戳 (YYYYMMDDTHHMMSSZ) */
-function amzDate(d: Date): string {
-  return d.toISOString().replace(/[:-]|\.\d{3}/g, "")
-}
-
-/** 生成日期戳 (YYYYMMDD) */
-function dateStamp(d: Date): string {
-  return d.toISOString().slice(0, 10).replace(/-/g, "")
-}
-
-/** 生成 Payload 的 SHA256 哈希 (hex)，null/undefined 返回空体 SHA256 常量避免 sha256Hex(null) 报错 */
-function payloadHash(body: Buffer | string | null): string {
-  if (body === null || body === undefined) {
-    return "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" // 空字符串的 SHA256
-  }
-  return sha256Hex(body)
-}
-
-/** 对 query string 参数按字母序排序（SigV4 canonical request 强制要求） */
-function sortQueryString(qs: string): string {
-  if (!qs) return ""
-  return qs.split("&").sort().join("&")
-}
-
-/** 将 S3 UTC ISO 时间字符串转为 UTC 时间字符串（避免 formatTime 二次转本地时区） */
-function utcToUtcString(utcIso: string): string {
-  const d = new Date(utcIso)
-  if (isNaN(d.getTime())) return utcIso
-  return `${d.getUTCFullYear()}-${padNum(d.getUTCMonth() + 1)}-${padNum(d.getUTCDate())} ${padNum(d.getUTCHours())}:${padNum(d.getUTCMinutes())}:${padNum(d.getUTCSeconds())}`
-}
-
-/**
- * 将 LastModified 的 UTC 墙钟字段按本地时区重组为 epoch 毫秒
- * OpenList/Alist 等代理返回的实为本地墙钟时间误标 Z；展示串（utcToUtcString）已按墙钟原样口径，
- * epoch 必须同口径重组，否则相对时间会比展示的绝对时间偏移一个时区（如显示"8小时后"）
- */
-function utcWallClockToLocalEpoch(utcIso: string): number {
-  const d = new Date(utcIso)
-  if (isNaN(d.getTime())) return NaN
-  return new Date(
-    d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(),
-    d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds(),
-  ).getTime()
-}
-
-/** 解析 S3 ListObjects XML 响应（兼容 OpenList/Alist 等非标准 S3 代理） */
-function parseListObjectsXml(xml: string): S3FileInfo[] {
-  const results: S3FileInfo[] = []
-  // 按 <Contents> 块分割，逐块提取字段（兼容中间夹有 ETag/StorageClass 等额外元素）
-  const blocks = xml.split(/<\/Contents>/)
-  for (const block of blocks) {
-    const keyMatch = /<Key>([\s\S]*?)<\/Key>/.exec(block)
-    if (!keyMatch) continue
-    const lastModMatch = /<LastModified>([\s\S]*?)<\/LastModified>/.exec(block)
-    const sizeMatch = /<Size>(\d+)<\/Size>/.exec(block)
-    // epoch 与展示串同口径：取 UTC 墙钟字段按本地时区重组（兼容代理本地时间误标 Z）
-    const lastModEpoch = lastModMatch ? utcWallClockToLocalEpoch(lastModMatch[1]) : NaN
-    results.push({
-      name: keyMatch[1].split("/").pop() || keyMatch[1],
-      key: keyMatch[1],
-      size: sizeMatch ? Number.parseInt(sizeMatch[1], 10) : 0,
-      lastModified: lastModMatch ? utcToUtcString(lastModMatch[1]) : "",
-      timestamp: isNaN(lastModEpoch) ? undefined : lastModEpoch,
-    })
-  }
-  return results
-}
-
-/** 解析 S3 错误响应 XML，附带 HTTP 状态码辅助诊断 */
-function parseS3Error(xml: string, httpStatus?: number): string {
-  const codeMatch = /<Code>(.*?)<\/Code>/.exec(xml)
-  const msgMatch = /<Message>(.*?)<\/Message>/.exec(xml)
-  const code = codeMatch ? codeMatch[1] : "Unknown"
-  const msg = msgMatch ? msgMatch[1] : (xml || "(empty body)")
-  const prefix = httpStatus !== undefined ? `[HTTP ${httpStatus}] ` : ""
-  return `${prefix}${code}: ${msg}`
-}
-
-/**
- * 格式化 S3 错误信息，附带响应头诊断（405 时显示 Allow 头）
- * 用于 upload/download/list/delete 等非 ok 响应的统一错误构造
- */
-function formatS3Error(response: NodeResponse, body: string, operation: string): string {
-  const errMsg = parseS3Error(body, response.status)
-  let extra = ""
-  if (response.status === 405 && response.headers?.["allow"]) {
-    extra = `（服务器允许的方法: ${response.headers["allow"]}）`
-  }
-  return `${operation}: ${errMsg}${extra}`
-}
-
-// ========== AWS Signature V4 签名实现 ==========
-
-/**
- * 构建 AWS Signature V4 Authorization header
- *
- * 签名流程:
- *   CanonicalRequest → StringToSign → Signature → Authorization header
- */
-function signRequest(
-  method: string,
-  uri: string,
-  queryString: string,
-  headers: Record<string, string>,
-  signedHeaders: string,
-  payloadHashStr: string,
-  accessKey: string,
-  secretKey: string,
-  region: string,
-  amzDateStr: string,
-  dateStampStr: string,
-): string {
-  // 1. 构建 CanonicalRequest
-  const canonicalHeaders = signedHeaders
-    .split(";")
-    .map((h) => `${h}:${headers[h]}`)
-    .join("\n")
-
-  const canonicalRequest = [
-    method.toUpperCase(),
-    uri,
-    queryString,
-    `${canonicalHeaders}\n`,
-    signedHeaders,
-    payloadHashStr,
-  ].join("\n")
-
-  // 2. 构建 StringToSign
-  const credentialScope = `${dateStampStr}/${region}/s3/aws4_request`
-  const stringToSign = [
-    "AWS4-HMAC-SHA256",
-    amzDateStr,
-    credentialScope,
-    sha256Hex(canonicalRequest),
-  ].join("\n")
-
-  // 3. 计算签名密钥
-  const kDate = hmacSha256(`AWS4${secretKey}`, dateStampStr)
-  const kRegion = hmacSha256(kDate, region)
-  const kService = hmacSha256(kRegion, "s3")
-  const kSigning = hmacSha256(kService, "aws4_request")
-
-  // 4. 计算签名
-  const signature = hmacSha256Hex(kSigning, stringToSign)
-
-  // 5. 组装 Authorization header
-  return `AWS4-HMAC-SHA256 Credential=${accessKey}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`
-}
-
-// ========== 分块上传进度 ==========
-
-/** 请求体分块写入的块大小（256KB，块间回调字节进度） */
-const UPLOAD_CHUNK_SIZE = 256 * 1024
-
-/**
- * 分块写入请求体并上报已发送字节数
- * req.write 整体写入无进度回调；分块写入 + 尊重背压（write 返回 false 时等 drain 再续写）
- * 使大文件上传期间能持续上报真实发送进度
- */
-function writeBodyInChunks(
-  req: any,
-  body: Buffer,
-  onProgress: (sent: number, total: number) => void,
-): void {
-  let offset = 0
-  const writeNext = (): void => {
-    while (offset < body.length) {
-      const chunk = body.subarray(offset, offset + UPLOAD_CHUNK_SIZE)
-      offset += chunk.length
-      const canContinue = req.write(chunk)
-      onProgress(offset, body.length)
-      if (!canContinue) {
-        req.once("drain", writeNext)
-        return
-      }
-    }
-    req.end()
-  }
-  writeNext()
-}
-
-// ========== NodeResponse 兼容接口 ==========
-
-/**
- * Node http/https 响应的兼容接口（模拟浏览器 Response）
- *
- * S3Client 内部所有调用方（tryHeadBucket/tryListObjects/upload/uploadBuffer/
- * download/list/delete）均通过鸭子类型访问 .ok/.status/.text()/.arrayBuffer()，
- * 定义此接口后这些调用方零改动。
- */
-interface NodeResponse {
-  ok: boolean
-  status: number
-  text(): Promise<string>
-  arrayBuffer(): Promise<ArrayBuffer>
-  /** 响应头（Node http 中 key 全小写） */
-  headers?: Record<string, string>
 }
 
 // ========== S3Client 类 ==========
@@ -316,12 +79,9 @@ export class S3Client {
   /** HeadBucket 测试 */
   private async tryHeadBucket(): Promise<{ success: boolean; message: string }> {
     try {
-      const url = this.buildUrl("")
-      const uri = this.buildUri("")
+      const response = await this.request("HEAD", this.buildUri(""), "", this.buildUrl(""), null)
 
-      const response = await this.request("HEAD", uri, "", url, null)
-
-      if (response.ok || response.status === 200) {
+      if (response.ok) {
         return { success: true, message: "S3 连接成功" }
       }
 
@@ -341,12 +101,9 @@ export class S3Client {
   private async tryListObjects(): Promise<{ success: boolean; message: string }> {
     try {
       const prefix = this.config.prefix || ""
-      const url = this.buildUrl("", `?prefix=${encodeURIComponent(prefix)}&max-keys=1`)
+      const query = `prefix=${encodeURIComponent(prefix)}&max-keys=1`
       // 签名用 buildUri("")：path-style → /bucket/, virtual-host → /
-      const uri = this.buildUri("")
-      const response = await this.request(
-        "GET", uri, `prefix=${encodeURIComponent(prefix)}&max-keys=1`, url, null,
-      )
+      const response = await this.request("GET", this.buildUri(""), query, this.buildUrl(""), null)
 
       if (response.ok) {
         return { success: true, message: "S3 连接成功" }
@@ -363,7 +120,10 @@ export class S3Client {
     }
   }
 
-  /** 直接上传 Buffer 内容到 S3（跳过本地文件读写；onProgress 上报字节级发送进度） */
+  /**
+   * 直接上传 Buffer 内容到 S3（跳过本地文件读写；onProgress 上报字节级发送进度）
+   * 已知限制：整包 Buffer 驻留内存；流式上传需 UNSIGNED-PAYLOAD 签名 + 调用方哈希计算重构，留待后续优化
+   */
   async uploadBuffer(buffer: Buffer, key: string, onProgress?: (sent: number, total: number) => void): Promise<void> {
     const url = this.buildUrl(key)
     const response = await this.request("PUT", this.buildUri(key), "", url, buffer, onProgress)
@@ -374,20 +134,18 @@ export class S3Client {
     }
   }
 
-  /** 下载文件到本地 */
+  /** 下载文件到本地（响应体流式写盘，避免大备份整包驻留内存） */
   async download(key: string, localPath: string): Promise<void> {
     const { fs, path } = requireFsPath()
+    await fs.mkdir(path.dirname(localPath), { recursive: true })
+
     const url = this.buildUrl(key)
-    const response = await this.request("GET", this.buildUri(key), "", url, null)
+    const response = await this.request("GET", this.buildUri(key), "", url, null, undefined, localPath)
 
     if (!response.ok) {
       const body = await response.text()
       throw new Error(formatS3Error(response, body, "S3 下载失败"))
     }
-
-    const buffer = await response.arrayBuffer()
-    await fs.mkdir(path.dirname(localPath), { recursive: true })
-    await fs.writeFile(localPath, Buffer.from(buffer))
   }
 
   /** 读取对象文本内容（404 返回 null，供增量清单等小文件读取使用） */
@@ -404,19 +162,34 @@ export class S3Client {
     return response.text()
   }
 
-  /** 列举指定前缀的文件 */
+  /** 列举指定前缀的全部文件（IsTruncated 时按 marker 自动翻页） */
   async list(prefix: string): Promise<S3FileInfo[]> {
-    const url = this.buildUrl("", `?prefix=${encodeURIComponent(prefix)}&max-keys=1000`)
-    const uri = this.buildUri("")
+    const all: S3FileInfo[] = []
+    let marker = ""
 
-    const response = await this.request("GET", uri, `prefix=${encodeURIComponent(prefix)}&max-keys=1000`, url, null)
+    for (let page = 0; page < MAX_LIST_PAGES; page++) {
+      let query = `prefix=${encodeURIComponent(prefix)}&max-keys=1000`
+      if (marker) {
+        query += `&marker=${encodeURIComponent(marker)}`
+      }
 
-    if (!response.ok) {
-      const body = await response.text()
-      throw new Error(formatS3Error(response, body, "S3 列举文件失败"))
+      const response = await this.request("GET", this.buildUri(""), query, this.buildUrl(""), null)
+      if (!response.ok) {
+        const body = await response.text()
+        throw new Error(formatS3Error(response, body, "S3 列举文件失败"))
+      }
+
+      const { files, isTruncated, nextMarker } = parseListObjectsXml(await response.text())
+      all.push(...files)
+
+      if (!isTruncated || !nextMarker) {
+        return all
+      }
+      marker = nextMarker
     }
 
-    return parseListObjectsXml(await response.text())
+    console.warn(`[S3] 列举超过 ${MAX_LIST_PAGES} 页上限，返回已收集的 ${all.length} 条（结果可能不完整）`)
+    return all
   }
 
   /** 删除文件 */
@@ -437,15 +210,15 @@ export class S3Client {
     return key.replace(/^\/+/, "")
   }
 
-  /** 构建请求 URL */
-  private buildUrl(key: string, queryString = ""): string {
+  /** 构建请求 URL（不含查询串；查询串以 request() 的 queryString 参数为单一来源统一拼接） */
+  private buildUrl(key: string): string {
     const safeKey = this.normKey(key)
     const protocol = this.config.useSSL ? "https" : "http"
     const encodedKey = this.encodeKeyPath(safeKey)
     const host = this.config.pathStyle
       ? `${this.config.endpoint}/${this.config.bucket}`
       : `${this.config.bucket}.${this.config.endpoint}`
-    return `${protocol}://${host}/${encodedKey}${queryString}`
+    return `${protocol}://${host}/${encodedKey}`
   }
 
   /**
@@ -472,7 +245,10 @@ export class S3Client {
     return `/${encodedKey}`.replace(/\/+/g, "/")
   }
 
-  /** 执行带 AWS SigV4 签名的 HTTP 请求（使用 Node.js http/https 模块，绕过浏览器 Mixed Content 限制） */
+  /**
+   * 执行带 AWS SigV4 签名的 HTTP 请求（使用 Node.js http/https 模块，绕过浏览器 Mixed Content 限制）
+   * @param saveToPath 提供时 2xx 响应体直接流式写入该本地文件（错误响应仍缓冲以解析错误 XML）
+   */
   private async request(
     method: string,
     uri: string,
@@ -480,16 +256,19 @@ export class S3Client {
     url: string,
     body: Buffer | null,
     onProgress?: (sent: number, total: number) => void,
+    saveToPath?: string,
   ): Promise<NodeResponse> {
     const now = new Date()
     const amzDateStr = amzDate(now)
     const dateStampStr = dateStamp(now)
     // 无 body 的请求使用 UNSIGNED-PAYLOAD（许多 S3 兼容服务不认空体 SHA256）
-    const payloadHashValue = body === null ? "UNSIGNED-PAYLOAD" : payloadHash(body)
+    const payloadHashValue = body === null ? "UNSIGNED-PAYLOAD" : sha256Hex(body)
 
-    // SigV4 canonical request 要求查询参数按字母序排列
+    // SigV4 canonical request 要求查询参数按字母序排列；
+    // 查询串以 queryString 参数为单一来源拼接，不依赖传入 url 是否已带查询
     const sortedQuery = sortQueryString(queryString)
-    const sortedUrl = sortedQuery ? url.replace(/\?.*$/, `?${sortedQuery}`) : url
+    const baseUrl = url.replace(/\?.*$/, "")
+    const sortedUrl = sortedQuery ? `${baseUrl}?${sortedQuery}` : baseUrl
 
     const parsedUrl = new URL(sortedUrl)
     const hostname = parsedUrl.host
@@ -522,7 +301,11 @@ export class S3Client {
       reqHeaders["Content-Length"] = String(body.length)
     }
 
-    const { http, https } = requireHttp()
+    const node = getNodeHttp()
+    if (!node) {
+      throw new Error(MSG_DESKTOP_ONLY)
+    }
+    const { http, https } = node
     const transport = parsedUrl.protocol === "https:" ? https : http
 
     const options: any = {
@@ -533,8 +316,10 @@ export class S3Client {
       headers: reqHeaders,
     }
 
-    // HTTPS 自签名证书支持（MinIO/Ceph/OpenList 等 S3 兼容服务常用自签名证书）
-    if (parsedUrl.protocol === "https:") {
+    // HTTPS 证书校验：仅允许自签名时跳过（MinIO/Ceph/OpenList 等自建服务常用自签名证书；
+    // 旧持久化配置缺 allowSelfSigned 字段时视为允许，保持向后兼容）
+    const allowSelfSigned = this.config.allowSelfSigned !== false
+    if (parsedUrl.protocol === "https:" && allowSelfSigned) {
       options.rejectUnauthorized = false
     }
 
@@ -560,9 +345,11 @@ export class S3Client {
               hostname: redirectUrl.hostname,
               port: redirectUrl.port || (redirectUrl.protocol === "https:" ? 443 : 80),
               path: redirectUrl.pathname + redirectUrl.search,
-              headers: reqOptions.headers,
+              // Host 必须指向重定向目标主机；跨主机后 SigV4 签名（含 host）随之失效属预期，
+              // 服务端会返回 403 SignatureDoesNotMatch，此时错误信息可正确诊断
+              headers: { ...reqOptions.headers, Host: redirectUrl.host },
             }
-            if (redirectUrl.protocol === "https:") {
+            if (redirectUrl.protocol === "https:" && allowSelfSigned) {
               redirectOptions.rejectUnauthorized = false
             }
             doRequest(nextTransport, redirectOptions, redirectUrl.href, redirectCount + 1)
@@ -574,13 +361,38 @@ export class S3Client {
             console.warn(`[S3] ${method} 收到重定向 ${res.statusCode} → ${res.headers.location}（PUT/DELETE 不跟随重定向，签名会失效）`)
           }
 
+          const ok = res.statusCode >= 200 && res.statusCode < 300
+
+          // 流式下载：2xx 响应体直接写盘，不经内存缓冲（错误响应走下方缓冲逻辑以解析错误 XML）
+          if (ok && saveToPath) {
+            const { fs, fsRaw } = requireFsPath()
+            const output = fsRaw.createWriteStream(saveToPath)
+            const fail = (err: Error) => {
+              // 清理半成品文件，避免残留损坏文件被当作有效备份
+              output.destroy()
+              fs.unlink(saveToPath).catch(() => { /* 忽略清理失败 */ })
+              reject(new Error(`S3 下载写盘失败: ${err.message}`))
+            }
+            res.on("error", fail)
+            output.on("error", fail)
+            output.on("finish", () => {
+              resolve({
+                ok: true,
+                status: res.statusCode,
+                text: async () => "",
+                headers: res.headers,
+              })
+            })
+            res.pipe(output)
+            return
+          }
+
           const chunks: Buffer[] = []
           res.on("data", (chunk: Buffer) => {
             chunks.push(chunk)
           })
           res.on("end", () => {
             const responseBody = Buffer.concat(chunks)
-            const ok = res.statusCode >= 200 && res.statusCode < 300
             if (!ok) {
               const allowHeader = res.headers["allow"] ? ` (Allow: ${res.headers["allow"]})` : ""
               const bodyPreview = responseBody.toString("utf-8").slice(0, 300)
@@ -593,11 +405,6 @@ export class S3Client {
               ok,
               status: res.statusCode,
               text: async () => responseBody.toString("utf-8"),
-              arrayBuffer: async () => {
-                const ab = new ArrayBuffer(responseBody.length)
-                new Uint8Array(ab).set(responseBody)
-                return ab
-              },
               headers: res.headers,
             })
           })

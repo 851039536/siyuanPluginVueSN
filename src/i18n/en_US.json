@@ -1987,6 +1987,8 @@
   "pathStyle": "Path Style",
   "pathStyleHint": "Use path-style access (bucket in path instead of domain)",
   "useSSL": "Use HTTPS",
+  "allowSelfSigned": "Allow self-signed certificates",
+  "allowSelfSignedHint": "Skip HTTPS certificate verification for self-hosted services like MinIO; disable when connecting to public cloud services to prevent MITM attacks",
   "prefix": "Prefix",
   "prefixHint": "Directory prefix in bucket, e.g. siyuan-backup/",
   "testConnection": "Test Connection",

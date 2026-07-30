@@ -20,6 +20,8 @@
     "queryError": "Query error",
     "clickToOpen": "Click a document to open in SiYuan",
     "sizeUnit": "Size Unit",
+    "wordCountNormal": "{count} words",
+    "wordCountLarge": "{countK}k words",
     "sortOrder": "Sort Order",
     "ascending": "Ascending",
     "descending": "Descending",

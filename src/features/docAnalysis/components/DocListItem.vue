@@ -132,6 +132,8 @@ import {
 
 interface Props {
   doc: DocInfo
+  /** docAnalysis 分片 i18n（提供字数单位模板等文案） */
+  i18n: Record<string, string>
 }
 
 const props = defineProps<Props>()
@@ -142,7 +144,8 @@ defineEmits<{
 }>()
 
 const formatSize = computed(() => formatBytes(props.doc.contentSize))
-const formatWords = computed(() => formatWordCount(props.doc.wordCount))
+// 字数文案模板：wordCountNormal="{count} 字"、wordCountLarge="{countTenK} 万字"
+const formatWords = computed(() => formatWordCount(props.doc.wordCount, props.i18n.wordCountNormal, props.i18n.wordCountLarge))
 
 /** 解析思源 yyyyMMddHHmmss 格式时间字符串为 Date */
 function parseSiyuanTime(ts: string): Date | null {

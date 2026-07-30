@@ -20,6 +20,8 @@
     "queryError": "查询出错",
     "clickToOpen": "点击文档可在思源中打开",
     "sizeUnit": "大小单位",
+    "wordCountNormal": "{count} 字",
+    "wordCountLarge": "{countTenK} 万字",
     "sortOrder": "排序方向",
     "ascending": "升序",
     "descending": "降序",

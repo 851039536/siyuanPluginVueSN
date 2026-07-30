@@ -1,0 +1,108 @@
+/**
+ * 操作日志面板样式 — 日志条目 + 状态徽章 + 失败清单
+ */
+@use '@/variables.scss' as *;
+
+.fm-log-panel {
+  width: 560px;
+  max-width: 92vw;
+}
+
+.fm-log-header-actions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+}
+
+.fm-log-body {
+  min-height: 200px;
+}
+
+.fm-log-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-8;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface-light);
+}
+
+.fm-log-item {
+  padding: $spacing-2 0;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+}
+
+.fm-log-line {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: $font-size-xs;
+}
+
+.fm-log-badge {
+  flex-shrink: 0;
+  padding: 0 $spacing-1;
+  border-radius: $radius-sm;
+  font-size: $font-size-2xs; // 徽章为辅助文字
+  border: 1px solid transparent;
+
+  &.success {
+    color: var(--b3-theme-success, #22c55e);
+    border-color: var(--b3-theme-success, #22c55e);
+  }
+
+  &.error {
+    color: var(--b3-theme-error);
+    border-color: var(--b3-theme-error);
+  }
+}
+
+.fm-log-action {
+  font-weight: $font-weight-medium;
+  flex-shrink: 0;
+}
+
+.fm-log-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--b3-theme-on-surface-light);
+}
+
+.fm-log-time {
+  flex-shrink: 0;
+  font-size: $font-size-2xs; // 时间为辅助元信息
+  color: var(--b3-theme-on-surface-light);
+}
+
+.fm-log-message {
+  margin-top: $spacing-1;
+  font-size: $font-size-2xs; // 附加消息为辅助文字
+  color: var(--b3-theme-on-surface-light);
+  word-break: break-all;
+}
+
+.fm-log-detail {
+  margin-top: $spacing-1;
+  font-size: $font-size-2xs;
+
+  summary {
+    cursor: pointer;
+    color: var(--b3-theme-error);
+  }
+}
+
+.fm-log-detail-line {
+  padding-left: $spacing-3;
+  font-family: $vp-mono;
+  color: var(--b3-theme-on-surface-light);
+  word-break: break-all;
+}
+
+.fm-log-detail-omitted {
+  padding-left: $spacing-3;
+  color: var(--b3-theme-on-surface-light);
+  font-style: italic;
+}

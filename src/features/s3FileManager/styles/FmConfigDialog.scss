@@ -1,0 +1,40 @@
+/**
+ * S3 配置弹窗样式 — 字段网格 + 开关组 + 测试结果
+ */
+@use '@/variables.scss' as *;
+
+.fm-config-dialog {
+  width: 520px;
+  max-width: 92vw;
+}
+
+.fm-config-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-3;
+}
+
+.fm-config-switches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-4;
+  margin-top: $spacing-4;
+}
+
+.fm-config-result {
+  margin-top: $spacing-3;
+  padding: $spacing-2 $spacing-3;
+  border-radius: $vp-radius;
+  font-size: $font-size-2xs; // 结果提示为辅助文字
+  border: 1px solid transparent;
+
+  &.success {
+    color: var(--b3-theme-success, #22c55e);
+    border-color: var(--b3-theme-success, #22c55e);
+  }
+
+  &.error {
+    color: var(--b3-theme-error);
+    border-color: var(--b3-theme-error);
+  }
+}

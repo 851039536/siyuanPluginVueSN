@@ -48,6 +48,7 @@ import {
   registerResourceManager,
   registerRssReader,
   registerS3Backup,
+  registerS3FileManager,
   registerScriptLauncher,
   registerShortcut,
   registerSkillLearning,
@@ -98,6 +99,7 @@ export default class PluginSample extends Plugin {
     "__scriptLauncher", // 脚本启动器
     "__gitPush", // Git 推送
     "__s3Backup", // S3 备份
+    "__s3FileManager", // S3 文件管理
     "__textDiff", // 文本对比
   ] as const
 
@@ -227,6 +229,7 @@ export default class PluginSample extends Plugin {
     if (s.enableSkillLearning) registerSkillLearning(this)
     if (s.enableToolCollection) registerToolCollection(this)
     if (s.enableS3Backup) registerS3Backup(this)
+    if (s.enableS3FileManager) registerS3FileManager(this)
   }
 
   /**

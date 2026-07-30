@@ -6,35 +6,17 @@
  * 使用 PluginStorage + TypedStorage 模式管理配置持久化。
  */
 import type { Plugin } from "siyuan"
+import type { S3Config } from "@/utils/s3/types"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 
-// ========== S3 配置接口 ==========
+// ========== S3 共享层再导出（定义已提升至 @/utils/s3/types，保持原路径可用） ==========
 
-export interface S3Config {
-  /** 存储类型标识 */
-  type: "s3"
-  /** S3 服务端点，如 http://localhost:9000 或 https://s3.amazonaws.com */
-  endpoint: string
-  /** Access Key */
-  accessKey: string
-  /** Secret Key */
-  secretKey: string
-  /** 存储桶名称 */
-  bucket: string
-  /** 区域，如 us-east-1 */
-  region: string
-  /** 是否使用路径风格访问 (bucket 在路径中而非域名中) */
-  pathStyle: boolean
-  /** 备份文件在桶中的目录前缀 */
-  prefix: string
-  /** 是否使用 HTTPS */
-  useSSL: boolean
-  /** 上传请求超时秒数（大文件/慢网络可调大，默认 240） */
-  uploadTimeoutSec: number
-  /** 允许自签名证书（跳过 TLS 校验；默认开启以兼容 MinIO/OpenList 等自建服务，旧配置缺字段时视为开启） */
-  allowSelfSigned?: boolean
-}
+export type { S3Config, S3FileInfo } from "@/utils/s3/types"
+export {
+  MSG_DESKTOP_ONLY, DEFAULT_UPLOAD_TIMEOUT_SEC, DEFAULT_S3_PREFIX,
+  LARGE_FILE_WARN_SIZE, DEFAULT_S3_CONFIG,
+} from "@/utils/s3/types"
 
 // ========== 备份模式接口 ==========
 
@@ -77,17 +59,6 @@ export interface BackupSettings {
   localBackupDir: string
   /** S3 上传子路径（拼在 prefix 之后，默认 "data-backup"） */
   s3SubPrefix: string
-}
-
-// ========== S3 文件信息接口 ==========
-
-export interface S3FileInfo {
-  name: string
-  key: string
-  size: number
-  lastModified: string
-  /** 真实 epoch 毫秒时间戳（lastModified 为 UTC 墙钟串不可反解析，相对时间显示用） */
-  timestamp?: number
 }
 
 // ========== 本地备份文件信息接口 ==========
@@ -157,17 +128,11 @@ export interface BackupLogDetail {
 
 // ========== 默认值常量 ==========
 
-/** 非桌面端无法访问文件系统的统一错误消息（模块内部使用，不经 i18n） */
-export const MSG_DESKTOP_ONLY = "无法访问文件系统，请使用桌面版思源笔记"
-
 /** 单文件传输（上传/下载）最大重试次数（不含首次尝试） */
 export const TRANSFER_MAX_RETRIES = 2
 
 /** 全量上传并发数（对象为大 ZIP，带宽易饱和，用小并发） */
 export const FULL_UPLOAD_CONCURRENCY = 2
-
-/** 上传请求默认超时秒数（旧配置缺字段/表单非法输入时的回退值） */
-export const DEFAULT_UPLOAD_TIMEOUT_SEC = 240
 
 export const DEFAULT_BACKUP_MODE: BackupMode = {
   localZip: true,
@@ -183,9 +148,6 @@ export const MAX_LOG_DETAIL_FILES = 200
 
 /** 本地备份列表最大显示条数 */
 export const MAX_LOCAL_BACKUP_COUNT = 50
-
-/** S3 目录前缀默认值（兜底用） */
-export const DEFAULT_S3_PREFIX = "siyuan-backup/"
 
 /** 本地备份目录 / S3 子路径默认值（兜底用） */
 export const DEFAULT_BACKUP_DIR = "data-backup"
@@ -257,9 +219,6 @@ export const INCREMENTAL_MANIFEST_NAME = "manifest.json"
 /** 当前清单结构版本 */
 export const MANIFEST_VERSION = 1
 
-/** 大文件警告阈值（100MB）：uploadBuffer 整体读入内存，超过阈值仅警告不阻断 */
-export const LARGE_FILE_WARN_SIZE = 100 * 1024 * 1024
-
 // ========== 备份校验值接口 ==========
 
 export interface FileChecksum {
@@ -309,20 +268,4 @@ export class S3BackupStorage {
     this.checksums = new TypedStorage(storage, STORAGE_KEYS.CHECKSUMS, { items: [] })
     this.uploadHostMap = new TypedStorage(storage, STORAGE_KEYS.UPLOAD_HOST_MAP, { map: {} })
   }
-}
-
-// ========== S3 配置默认值 ==========
-
-export const DEFAULT_S3_CONFIG: S3Config = {
-  type: "s3",
-  endpoint: "http://localhost:9000",
-  accessKey: "",
-  secretKey: "",
-  bucket: "",
-  region: "us-east-1",
-  pathStyle: true,
-  prefix: DEFAULT_S3_PREFIX,
-  useSSL: false,
-  uploadTimeoutSec: DEFAULT_UPLOAD_TIMEOUT_SEC,
-  allowSelfSigned: true,
 }

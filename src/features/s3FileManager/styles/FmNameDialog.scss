@@ -1,0 +1,16 @@
+/**
+ * 名称输入弹窗样式 — 输入 + 校验错误
+ */
+@use '@/variables.scss' as *;
+
+.fm-name-dialog {
+  width: 360px;
+  max-width: 90vw;
+}
+
+.fm-name-error {
+  display: block;
+  margin-top: $spacing-1;
+  font-size: $font-size-2xs; // 校验提示为辅助文字
+  color: var(--b3-theme-error);
+}

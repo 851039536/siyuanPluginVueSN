@@ -6,9 +6,12 @@
  * 增量备份的 manifest 解析/对比与 key 生成、插件备份文件名判定、
  * 归档文件识别与惰性读取流创建。
  */
-import { getNodeProcessModules, getNodeStream } from "@/utils/nodeModules"
+import { getNodeStream } from "@/utils/nodeModules"
 import { DEFAULT_S3_PREFIX, DEFAULT_BACKUP_DIR, INCREMENTAL_SUBDIR, INCREMENTAL_MANIFEST_NAME, MSG_DESKTOP_ONLY } from "./types"
 import type { BackupManifest, IncrementalDiff, IncrementalFileEntry } from "./types"
+
+// 并发池与主机名已提升至共享层，再导出保持模块内既有 import 零改动
+export { getHostname, runWithConcurrency } from "@/utils/s3/concurrency"
 
 /** 本地备份列表识别的归档扩展名白名单 */
 const ARCHIVE_EXTS = [".zip", ".7z", ".tar", ".tar.gz", ".tgz", ".tar.bz2", ".rar"]
@@ -84,35 +87,6 @@ export function buildS3Key(prefix: string, sub: string, relativePath: string, da
   if (datePath) { parts.push(datePath.replace(/\/+$/, "")) }
   parts.push(relativePath.replace(/^\/+/, ""))
   return parts.join("/")
-}
-
-/** 缓存的主机名（进程生命周期内不变，避免重复 require os 模块） */
-let _hostname: string | null = null
-
-/** 获取本机主机名（非 Node 环境返回空串） */
-export function getHostname(): string {
-  if (_hostname === null) {
-    _hostname = getNodeProcessModules()?.os?.hostname() || ""
-  }
-  return _hostname
-}
-
-// ========== 并发控制 ==========
-
-/** 简易并发池：以固定并发数执行任务列表（全量上传 / 增量备份共用） */
-export async function runWithConcurrency<T>(
-  items: T[],
-  concurrency: number,
-  worker: (item: T) => Promise<void>,
-): Promise<void> {
-  let cursor = 0
-  const lanes = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
-    while (cursor < items.length) {
-      const item = items[cursor++]
-      await worker(item)
-    }
-  })
-  await Promise.all(lanes)
 }
 
 // ========== 增量备份纯函数 ==========

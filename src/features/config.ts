@@ -299,6 +299,17 @@ export const FEATURE_CONFIG = [
     titleI18nKey: "s3Backup",
     descI18nKey: "s3BackupDesc",
   },
+  {
+    id: "s3FileManager",
+    defaultTitle: "S3 文件管理",
+    defaultDesc: "S3 兼容存储的可视化文件管理器，支持上传/下载/移动/复制/重命名/删除",
+    titleI18nKey: "s3FileManager.s3FileManager",
+    descI18nKey: "s3FileManager.description",
+    actions: [{
+      key: "openS3FileManager",
+      label: "打开",
+    }],
+  },
 ] as const
 
 /**

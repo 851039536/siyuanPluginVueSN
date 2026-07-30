@@ -62,15 +62,13 @@
           v-model="newAchievement.type"
           class="ach-form-select"
         >
+          <!-- 原生 option 不渲染元素子节点，只放文本标签 -->
           <option
             v-for="t in MILESTONE_TYPES"
             :key="t.key"
             :value="t.key"
           >
-            <IconWrapper
-              :name="t.icon"
-              :size="12"
-            /> {{ t.label }}
+            {{ t.label }}
           </option>
         </select>
         <span class="ach-form-hint">{{ STAT_TYPE_DESCRIPTIONS[newAchievement.type] }}</span>
@@ -115,23 +113,20 @@
           v-model="newAchievement.tier"
           class="ach-form-select"
         >
-          <option value="common">
-            普通
-          </option>
-          <option value="rare">
-            稀有
-          </option>
-          <option value="epic">
-            史诗
-          </option>
-          <option value="legendary">
-            传说
+          <!-- 稀有度选项由 TIER_LABELS 单一数据源驱动 -->
+          <option
+            v-for="(label, key) in TIER_LABELS"
+            :key="key"
+            :value="key"
+          >
+            {{ label }}
           </option>
         </select>
       </div>
       <div class="ach-form-actions">
         <button
           class="btn-ach-submit"
+          :disabled="!canSubmit"
           @click="onAddAchievement"
         >
           添加成就
@@ -141,14 +136,54 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts">
+// 模块级常量与纯工具：只构建一次，不随组件实例重建
 import type { CustomAchievement } from "../types/milestoneRules"
 import type { IconKey } from "@/config/icons"
-import { ref } from "vue"
+import {
+  COMMON_ICONS,
+  FEATURE_ICONS,
+} from "@/config/icons"
+import { MILESTONE_TYPES } from "../types/milestoneRules"
+
+/** 类型 key → 图标/标签映射（成就列表项展示用） */
+const TYPE_LABEL_MAP = Object.fromEntries(
+  MILESTONE_TYPES.map((t) => [t.key, {
+    icon: t.icon,
+    label: t.label,
+  }]),
+) as Record<string, { icon: IconKey, label: string }>
+
+/** 空表单默认值工厂（初始化与提交后重置共用，id 在提交时生成） */
+function createEmptyAchievement(): Omit<CustomAchievement, "id"> {
+  return {
+    icon: "star",
+    title: "",
+    description: "",
+    tier: "common",
+    type: "notes",
+    threshold: 1,
+  }
+}
+
+function generateAchievementId(): string {
+  return `custom-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+}
+
+/** 图标键未注册时回退 star，避免任意字符串以 IconKey 入库 */
+function normalizeIconKey(key: string): IconKey {
+  return (key in FEATURE_ICONS || key in COMMON_ICONS) ? key as IconKey : "star"
+}
+</script>
+
+<script setup lang="ts">
+import {
+  computed,
+  ref,
+} from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { useMilestoneStorage } from "../composables/useMilestoneStorage"
 import {
-  MILESTONE_TYPES,
   STAT_TYPE_DESCRIPTIONS,
   TIER_LABELS,
 } from "../types/milestoneRules"
@@ -159,49 +194,42 @@ const {
   deleteAchievement,
 } = useMilestoneStorage()
 
-const TYPE_LABEL_MAP = Object.fromEntries(
-  MILESTONE_TYPES.map((t) => [t.key, {
-    icon: t.icon,
-    label: t.label,
-  }]),
-) as Record<string, { icon: string, label: string }>
-
 const showAddAchievement = ref(false)
-const newAchievement = ref<CustomAchievement>({
-  id: "",
-  icon: "star",
-  title: "",
-  description: "",
-  tier: "common",
-  type: "notes",
-  threshold: 1,
+const newAchievement = ref<Omit<CustomAchievement, "id">>(createEmptyAchievement())
+
+// 标题非空 + 阈值为 ≥1 的有限数值方可提交（v-model.number 解析失败时为字符串，一并拦截）
+const canSubmit = computed(() => {
+  const a = newAchievement.value
+  return a.title.trim().length > 0 && Number.isFinite(a.threshold) && a.threshold >= 1
 })
 
-function generateAchievementId(): string {
-  return `custom-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
-}
-
-function onAddAchievement() {
+async function onAddAchievement() {
+  if (!canSubmit.value) return
   const a = newAchievement.value
-  if (!a.title.trim() || a.threshold <= 0) return
-  addAchievement({
-    ...a,
-    id: generateAchievementId(),
-  })
-  newAchievement.value = {
-    id: "",
-    icon: "star",
-    title: "",
-    description: "",
-    tier: "common",
-    type: "notes",
-    threshold: 1,
+  try {
+    await addAchievement({
+      ...a,
+      id: generateAchievementId(),
+      icon: normalizeIconKey(a.icon),
+      title: a.title.trim(),
+      description: a.description.trim(),
+      threshold: Math.floor(a.threshold),
+    })
+    newAchievement.value = createEmptyAchievement()
+    showAddAchievement.value = false
+  } catch (err) {
+    console.error("添加自定义成就失败:", err)
   }
-  showAddAchievement.value = false
 }
 
-function onDeleteAchievement(id: string) {
-  deleteAchievement(id)
+async function onDeleteAchievement(id: string) {
+  // 删除不可撤销，先经原生确认
+  if (!window.confirm("确定删除此成就？")) return
+  try {
+    await deleteAchievement(id)
+  } catch (err) {
+    console.error("删除自定义成就失败:", err)
+  }
 }
 </script>
 

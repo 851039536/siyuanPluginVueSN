@@ -147,6 +147,19 @@
         />
       </div>
 
+      <!-- 上传超时 -->
+      <div class="form-group">
+        <!-- 输入框标签："上传超时（秒）"，提示："单个上传请求的超时时间…默认 240" -->
+        <Input
+          v-model="localConfig.uploadTimeoutSec"
+          type="number"
+          size="xsmall"
+          :label="i18n.uploadTimeout"
+          :placeholder="String(DEFAULT_UPLOAD_TIMEOUT_SEC)"
+        />
+        <span class="form-hint">{{ i18n.uploadTimeoutHint }}</span>
+      </div>
+
       <!-- Path Style -->
       <div class="form-group form-group-checkbox">
         <!-- 开关标签："Path Style" -->
@@ -211,7 +224,7 @@ import Input from "@/components/Input.vue"
 import Switch from "@/components/Switch.vue"
 import { getErrorMessage } from "@/utils/stringUtils"
 import type { S3Config } from "../types"
-import { DEFAULT_S3_CONFIG } from "../types"
+import { DEFAULT_S3_CONFIG, DEFAULT_UPLOAD_TIMEOUT_SEC } from "../types"
 
 // ========== Props ==========
 
@@ -258,6 +271,9 @@ const connectionStatusClass = computed(() => {
 // ========== 方法 ==========
 
 function handleSave(): void {
+  // 超时秒数归一化：Input 输出可能为字符串，非法/非正数回退默认 240
+  const timeout = Number(localConfig.uploadTimeoutSec)
+  localConfig.uploadTimeoutSec = Number.isFinite(timeout) && timeout > 0 ? Math.round(timeout) : DEFAULT_UPLOAD_TIMEOUT_SEC
   // 单事件携带完整配置，父组件负责同步状态 + 持久化
   emit("saved", { ...localConfig })
   lastTestResult.value = null

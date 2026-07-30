@@ -585,12 +585,13 @@ export function useDocAnalysis(plugin: Plugin) {
     statsFilter.value = ""
     const platformEntry = PLATFORM_META.value.find((p) => p.id === platformMatcher || p.matchers.includes(platformMatcher))
     const matchers = platformEntry ? platformEntry.matchers : [platformMatcher]
-    const nameConditions = matchers.map((m) => `name LIKE '%${escapeSqlLike(m)}%' ESCAPE '\\'`).join(" OR ")
+    // 与 getPlatformIdFromAttrKey 判定逻辑对齐：要求 custom- 前缀 + -yaml 后缀 + 包含 matcher
+    const nameConditions = matchers.map((m) => `name LIKE 'custom-%${escapeSqlLike(m)}%-yaml' ESCAPE '\\'`).join(" OR ")
     await runDocQuery({
       extraWhere: `AND b.id IN (
-        SELECT block_id FROM attributes WHERE name LIKE '%yaml%'
+        SELECT block_id FROM attributes WHERE name LIKE 'custom-%-yaml'
         AND block_id IN (SELECT b2.id FROM blocks b2 LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw2 ON b2.id = sw2.root_id WHERE b2.type = 'd' AND COALESCE(sw2.total_size, 0) > 0 ${buildNotebookCondition()})
-      ) AND b.id NOT IN (SELECT block_id FROM attributes WHERE (${nameConditions}) AND name LIKE '%yaml%')`,
+      ) AND b.id NOT IN (SELECT block_id FROM attributes WHERE (${nameConditions}))`,
     })
   }
 

@@ -31,6 +31,20 @@
   z-index: 9998;
 }
 
+// 拖拽调整高度手柄（面板顶部边缘）
+.resize-handle {
+  height: 4px;
+  cursor: row-resize;
+  flex-shrink: 0;
+  background: transparent;
+  transition: background 0.15s;
+
+  &:hover {
+    background: var(--b3-theme-primary);
+    opacity: 0.4;
+  }
+}
+
 // ==================== Tab 标签栏 ====================
 .tool-collection-tab-bar {
   display: flex;
@@ -132,6 +146,11 @@
     border-radius: 2px 2px 0 0;
     transform: scaleX(0);
     transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  // 拖拽排序视觉反馈
+  &.dragging {
+    opacity: 0.4;
   }
 }
 

@@ -37,7 +37,6 @@ import {
   buildIdNotInClause,
   daysAgoStr,
   escapeSql,
-  escapeSqlLike,
   quoteSql,
   quoteSqlList,
 } from "../utils/sqlHelpers"
@@ -536,8 +535,8 @@ export function useDocAnalysis(plugin: Plugin) {
   async function queryDocs() {
     const needWcFilter = filterOptions.wordCountMin > 0 || filterOptions.wordCountMax > 0
     let conds = ""
-    if (filterOptions.titleKeyword.trim()) conds += `AND b.content LIKE '%${escapeSqlLike(filterOptions.titleKeyword.trim())}%' ESCAPE '\\' `
-    if (filterOptions.contentKeyword.trim()) conds += `AND b.id IN (SELECT DISTINCT root_id FROM blocks WHERE content LIKE '%${escapeSqlLike(filterOptions.contentKeyword.trim())}%' ESCAPE '\\' AND type != 'd') `
+    if (filterOptions.titleKeyword.trim()) conds += `AND b.content LIKE '%${escapeSql(filterOptions.titleKeyword.trim())}%' `
+    if (filterOptions.contentKeyword.trim()) conds += `AND b.id IN (SELECT DISTINCT root_id FROM blocks WHERE content LIKE '%${escapeSql(filterOptions.contentKeyword.trim())}%' AND type != 'd') `
     if (filterOptions.bookmarkName.trim()) conds += `AND b.id IN (SELECT block_id FROM attributes WHERE name='bookmark' AND value='${escapeSql(filterOptions.bookmarkName.trim())}') `
     if (needWcFilter) {
       if (filterOptions.wordCountMin > 0) conds += `AND COALESCE(sw.total_word_count, 0) >= ${filterOptions.wordCountMin} `

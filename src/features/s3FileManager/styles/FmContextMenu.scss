@@ -1,0 +1,43 @@
+/**
+ * 右键菜单样式 — fixed 定位浮层
+ */
+@use '@/variables.scss' as *;
+
+.fm-context-menu-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+}
+
+.fm-context-menu {
+  position: fixed;
+  min-width: 160px;
+  padding: $spacing-1;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $vp-radius;
+  background: var(--b3-theme-background);
+  font-size: $font-size-xs;
+}
+
+.fm-context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  width: 100%;
+  padding: $spacing-1 $spacing-2;
+  border: none;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-xs;
+  text-align: left;
+  cursor: pointer;
+  border-radius: $radius-sm;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+  }
+
+  &.danger {
+    color: var(--b3-theme-error);
+  }
+}

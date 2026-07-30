@@ -222,6 +222,12 @@ export const FEATURE_ICONS = {
     color: "#f59e0b",
   },
 
+  // S3 文件管理
+  s3FileManager: {
+    icon: "mdi:folder-network",
+    color: "#0ea5e9",
+  },
+
   // 单词阅读
   flashcardReading: {
     icon: "mdi:card-bulleted",
@@ -400,6 +406,18 @@ export const COMMON_ICONS = {
   },
   copy: {
     icon: "mdi:content-copy",
+  },
+  upload: {
+    icon: "mdi:upload",
+  },
+  folderPlus: {
+    icon: "mdi:folder-plus",
+  },
+  folderMove: {
+    icon: "mdi:folder-move",
+  },
+  viewGrid: {
+    icon: "mdi:view-grid",
   },
   refresh: {
     icon: "mdi:refresh",

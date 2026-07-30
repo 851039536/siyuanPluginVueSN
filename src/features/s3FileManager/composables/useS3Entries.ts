@@ -7,6 +7,7 @@
 import { computed, ref, shallowRef } from "vue"
 import type { S3Client } from "@/utils/s3/s3Client"
 import { listDir } from "@/utils/s3/s3ObjectOps"
+import type { S3DirListing } from "@/utils/s3/s3ObjectOps"
 import { getErrorMessage } from "@/utils/stringUtils"
 import type { S3Entry, SortField } from "../types"
 import { RENDER_BATCH_SIZE } from "../types"
@@ -73,7 +74,7 @@ export function useS3Entries(deps: {
     loadError.value = ""
     try {
       const client = deps.requireClient()
-      let listing: { files: { key: string; name: string; size: number; lastModified: string; timestamp?: number }[]; folders: string[] } | null = null
+      let listing: S3DirListing | null = null
 
       if (!delimiterUnsupported) {
         try {
@@ -84,13 +85,28 @@ export function useS3Entries(deps: {
           delimiterUnsupported = true
         }
       }
-      if (!listing) {
+
+      let files: S3DirListing["files"]
+      let folders: string[]
+      if (listing) {
+        // 防御性客户端聚合：服务端静默忽略 delimiter（返回扁平递归列举且无 CommonPrefixes）时，
+        // 把嵌套对象按 / 折叠回当前层文件夹，避免子目录文件冒到上层、当前文件夹自嵌套。
+        // delimiter 正常时 listing.files 本就是直接子项，聚合为幂等无副作用。
+        const agg = aggregateEntries(listing.files, prefix)
+        files = agg.files
+        folders = [...new Set([...listing.folders, ...agg.folders])]
+        // 探测到 delimiter 被忽略（无 CommonPrefixes 却聚合出子目录）→ 后续直接走全量列举，省一次无效 delimiter 请求
+        if (listing.folders.length === 0 && agg.folders.length > 0) {
+          delimiterUnsupported = true
+        }
+      } else {
         const all = await client.list(prefix)
-        listing = aggregateEntries(all, prefix)
+        const agg = aggregateEntries(all, prefix)
+        files = agg.files
+        folders = agg.folders
       }
 
-      // 过滤子目录占位对象（key 以 / 结尾，已由 CommonPrefixes 表达）
-      const built = buildEntries(listing.files.filter((f) => !f.key.endsWith("/")), listing.folders)
+      const built = buildEntries(files, folders)
       cache.set(prefix, built)
       entries.value = built
       currentPrefix.value = prefix

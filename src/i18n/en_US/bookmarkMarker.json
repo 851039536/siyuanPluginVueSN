@@ -27,6 +27,12 @@
     "interval30min": "30 minutes",
     "interval1hour": "1 hour",
     "interval2hour": "2 hours",
-    "interval4hour": "4 hours"
+    "interval4hour": "4 hours",
+    "msgEnabled": "Bookmark marker enabled",
+    "msgDisabled": "Bookmark marker disabled",
+    "msgRulesUpdated": "Marker rules updated",
+    "msgIntervalUpdated": "Update interval changed",
+    "previewLabel": "Preview:",
+    "unnamed": "Unnamed"
   }
 }

@@ -213,6 +213,7 @@ import { useChecksums } from "./composables/useChecksums"
 import { useLocalBackupList } from "./composables/useLocalBackupList"
 import { useFullS3Upload } from "./composables/useFullS3Upload"
 import { useWorkspaceSettings } from "./composables/useWorkspaceSettings"
+import { useStatusBarTask } from "@/features/statusBar/composables/useStatusBarTask"
 import { useCloudBackupActions } from "./composables/useCloudBackupActions"
 import { BackupManager } from "./modules/BackupManager"
 import type { BackupResult } from "./modules/BackupManager"
@@ -270,6 +271,9 @@ const {
 
 const activeTab = ref<"backup" | "config" | "log" | "checksums">("backup")
 const isZipBackingUp = ref(false)
+
+// 状态栏后台任务：备份/还原进度显示在底部状态栏（自动备份时弹窗隐藏，状态栏是唯一可见反馈）
+const statusTask = useStatusBarTask("s3Backup", "mdi:cloud-upload")
 
 /** 持久化辅助：统一「获取实例 → 存储槽 save」样板 */
 async function persistStorage(save: (storage: S3BackupStorage) => Promise<unknown>): Promise<void> {
@@ -432,6 +436,18 @@ const { performIncrementalBackup, performIncrementalRestore } = useIncrementalBa
   i18n: props.i18n,
 })
 
+// 任务运行中实时同步进度到状态栏（还原与备份区分标签）；结束时的 complete/fail 由各入口函数显式调用
+// 注：watch 会在 setup 阶段立即求值源 computed，必须放在 isIncrementalRunning/isIncrementalRestoring 声明之后，否则触发 TDZ 错误
+watch([isAnyTaskRunning, backupProgress], () => {
+  if (!isAnyTaskRunning.value) { return }
+  statusTask.progress({
+    // 状态栏主文本："还原中" / "备份中"
+    label: isIncrementalRestoring.value ? props.i18n.statusRestoring : props.i18n.statusBackingUp,
+    percent: backupProgress.value.percent,
+    phase: phaseLabel.value,
+  })
+}, { deep: true })
+
 /** 执行增量备份（传入当前 S3 前缀与子路径） */
 async function runIncrementalBackup(): Promise<void> {
   if (!isConfigured.value) {
@@ -451,7 +467,11 @@ async function triggerIncrementalOnly(): Promise<void> {
   isIncrementalRunning.value = true
   try {
     await runIncrementalBackup()
+    // 状态栏："备份完成"
+    statusTask.complete(props.i18n.statusBackupDone)
   } catch (err: unknown) {
+    // 状态栏："备份失败"
+    statusTask.fail(props.i18n.statusBackupFailed)
     showMessage(`${props.i18n.incrementalBackup}: ${getErrorMessage(err)}`, 5000, "error")
   } finally {
     isIncrementalRunning.value = false
@@ -475,7 +495,11 @@ async function triggerIncrementalRestore(): Promise<void> {
       `incremental-restore-${makeBackupTimestamp()}`,
     )
     await performIncrementalRestore(s3Config.value.prefix, s3SubPrefix.value, targetDir)
+    // 状态栏："还原完成"
+    statusTask.complete(props.i18n.statusRestoreDone)
   } catch (err: unknown) {
+    // 状态栏："还原失败"
+    statusTask.fail(props.i18n.statusRestoreFailed)
     showMessage(`${props.i18n.incrementalRestore}: ${getErrorMessage(err)}`, 5000, "error")
   } finally {
     isIncrementalRestoring.value = false
@@ -539,8 +563,12 @@ async function performManualBackup(): Promise<void> {
 
     // 更新备份时间并持久化（含定时器防重时间戳同步）
     await markBackupCompleted()
+    // 状态栏："备份完成"
+    statusTask.complete(props.i18n.statusBackupDone)
   } catch (err: unknown) {
     console.error("备份失败:", err)
+    // 状态栏："备份失败"
+    statusTask.fail(props.i18n.statusBackupFailed)
     showMessage(`${props.i18n.backupFailed || "备份失败"}: ${getErrorMessage(err)}`, 5000, "error")
   } finally {
     isBackingUp.value = false
@@ -635,7 +663,11 @@ async function triggerZipBackupOnly(): Promise<void> {
   isZipBackingUp.value = true
   try {
     await performLocalBackup()
+    // 状态栏："备份完成"
+    statusTask.complete(props.i18n.statusBackupDone)
   } catch (err: unknown) {
+    // 状态栏："备份失败"
+    statusTask.fail(props.i18n.statusBackupFailed)
     showMessage(`${props.i18n.zipBackup}: ${getErrorMessage(err)}`, 5000, "error")
   } finally {
     isZipBackingUp.value = false
@@ -767,6 +799,8 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener("autoBackupTrigger", handleAutoBackupTrigger)
+  // 卸载时清除状态栏任务，避免残留条目
+  statusTask.clear()
 })
 </script>
 

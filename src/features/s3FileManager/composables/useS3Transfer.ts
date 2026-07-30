@@ -77,6 +77,8 @@ export function useS3Transfer(deps: {
   /** 核心并发上传：读 Buffer → 带字节进度上传 → 汇总日志与状态栏上报 */
   async function runUpload(tasks: UploadTask[], summaryName: string): Promise<void> {
     if (transferring.value || tasks.length === 0) { return }
+    // 诊断日志：输出本批上传的完整目标 key，用于排查落点异常（后端非标准 prefix 行为取证）
+    console.info("[S3文件管理] 上传目标 key:", tasks.map((t) => t.key))
     const client = deps.requireClient()
     const node = getNodeModules()
     if (!node) {
@@ -179,6 +181,8 @@ export function useS3Transfer(deps: {
   async function uploadFiles(): Promise<void> {
     if (transferring.value) { return }
     deps.requireClient()
+    // 入口固化目标前缀：选择对话框期间的目录切换不应改变本批上传落点
+    const destPrefix = deps.currentPrefix.value
     const paths = await pickFiles(i18n.pickUploadFiles)
     if (!paths || paths.length === 0) { return }
 
@@ -199,7 +203,7 @@ export function useS3Transfer(deps: {
 
     const tasks: UploadTask[] = paths.map((p) => {
       const name = path.basename(p)
-      return { path: p, name, key: `${deps.currentPrefix.value}${name}` }
+      return { path: p, name, key: `${destPrefix}${name}` }
     })
     await runUpload(tasks, `${paths.length} ${i18n.itemsUnit}`)
   }
@@ -208,6 +212,8 @@ export function useS3Transfer(deps: {
   async function uploadDropped(files: File[]): Promise<void> {
     if (transferring.value || files.length === 0) { return }
     deps.requireClient()
+    // 入口固化目标前缀：任务构建期间含多次 await（stat/递归收集），期间切换目录不应改变本批上传落点
+    const destPrefix = deps.currentPrefix.value
     const node = getNodeModules()
     if (!node) {
       showMessage(i18n.desktopOnly, 3000, "error")
@@ -237,10 +243,10 @@ export function useS3Transfer(deps: {
         const collected = await collectDirFiles(fs, path, p)
         for (const filePath of collected) {
           const rel = filePath.slice(p.length + 1).split(path.sep).join("/")
-          tasks.push({ path: filePath, name: path.basename(filePath), key: `${deps.currentPrefix.value}${baseName}/${rel}` })
+          tasks.push({ path: filePath, name: path.basename(filePath), key: `${destPrefix}${baseName}/${rel}` })
         }
       } else {
-        tasks.push({ path: p, name: baseName, key: `${deps.currentPrefix.value}${baseName}` })
+        tasks.push({ path: p, name: baseName, key: `${destPrefix}${baseName}` })
       }
     }
     if (tasks.length === 0) { return }

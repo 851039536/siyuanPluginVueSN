@@ -50,6 +50,9 @@ export async function listDir(client: S3Client, prefix: string): Promise<S3DirLi
     }
 
     if (!isTruncated || !nextMarker) {
+      // 诊断日志：输出请求 prefix 与返回样本（前 5 条），用于取证后端非标准 prefix 行为（如回显假 key）
+      console.info(`[S3] listDir prefix="${prefix}" files=${files.length} folders=${folderSet.size}`,
+        { fileKeys: files.slice(0, 5).map((f) => f.key), folders: [...folderSet].slice(0, 5) })
       return { files, folders: [...folderSet] }
     }
     marker = nextMarker

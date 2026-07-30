@@ -26,3 +26,29 @@ export function formatTime(time: string | number | Date): string {
   const pad = (n: number) => String(n).padStart(2, "0")
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
 }
+
+/** 相对时间的单位阈值表（秒），从大到小匹配第一个满足的单位 */
+const RELATIVE_TIME_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
+  ["year", 31536000],
+  ["month", 2592000],
+  ["day", 86400],
+  ["hour", 3600],
+  ["minute", 60],
+]
+
+/**
+ * 格式化时间为相对时间字符串，跟随系统语言（Intl.RelativeTimeFormat）
+ * @param time ISO 字符串、时间戳或 Date 对象
+ * @returns 如 "1分钟前" / "5 minutes ago"；不足 1 分钟显示秒级；无效时间返回空串
+ */
+export function formatRelativeTime(time: string | number | Date): string {
+  const d = new Date(time)
+  if (isNaN(d.getTime())) { return "" }
+  const diffSec = Math.round((d.getTime() - Date.now()) / 1000) // 过去为负值
+  const rtf = new Intl.RelativeTimeFormat(navigator.language, { numeric: "auto" })
+  const abs = Math.abs(diffSec)
+  for (const [unit, sec] of RELATIVE_TIME_UNITS) {
+    if (abs >= sec) { return rtf.format(Math.round(diffSec / sec), unit) }
+  }
+  return rtf.format(diffSec, "second")
+}

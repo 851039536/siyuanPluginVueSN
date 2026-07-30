@@ -52,6 +52,15 @@
   flex-shrink: 0;
 }
 
+// 相对时间（如"5分钟前"），比绝对时间弱化一级
+.backup-relative {
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light);
+  opacity: 0.75;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .backup-sep {
   font-size: $font-size-xs;
   color: var(--b3-theme-on-surface-light);

@@ -105,6 +105,20 @@ function utcToUtcString(utcIso: string): string {
   return `${d.getUTCFullYear()}-${padNum(d.getUTCMonth() + 1)}-${padNum(d.getUTCDate())} ${padNum(d.getUTCHours())}:${padNum(d.getUTCMinutes())}:${padNum(d.getUTCSeconds())}`
 }
 
+/**
+ * 将 LastModified 的 UTC 墙钟字段按本地时区重组为 epoch 毫秒
+ * OpenList/Alist 等代理返回的实为本地墙钟时间误标 Z；展示串（utcToUtcString）已按墙钟原样口径，
+ * epoch 必须同口径重组，否则相对时间会比展示的绝对时间偏移一个时区（如显示"8小时后"）
+ */
+function utcWallClockToLocalEpoch(utcIso: string): number {
+  const d = new Date(utcIso)
+  if (isNaN(d.getTime())) return NaN
+  return new Date(
+    d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(),
+    d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds(),
+  ).getTime()
+}
+
 /** 解析 S3 ListObjects XML 响应（兼容 OpenList/Alist 等非标准 S3 代理） */
 function parseListObjectsXml(xml: string): S3FileInfo[] {
   const results: S3FileInfo[] = []
@@ -115,11 +129,14 @@ function parseListObjectsXml(xml: string): S3FileInfo[] {
     if (!keyMatch) continue
     const lastModMatch = /<LastModified>([\s\S]*?)<\/LastModified>/.exec(block)
     const sizeMatch = /<Size>(\d+)<\/Size>/.exec(block)
+    // epoch 与展示串同口径：取 UTC 墙钟字段按本地时区重组（兼容代理本地时间误标 Z）
+    const lastModEpoch = lastModMatch ? utcWallClockToLocalEpoch(lastModMatch[1]) : NaN
     results.push({
       name: keyMatch[1].split("/").pop() || keyMatch[1],
       key: keyMatch[1],
       size: sizeMatch ? Number.parseInt(sizeMatch[1], 10) : 0,
       lastModified: lastModMatch ? utcToUtcString(lastModMatch[1]) : "",
+      timestamp: isNaN(lastModEpoch) ? undefined : lastModEpoch,
     })
   }
   return results

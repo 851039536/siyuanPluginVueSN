@@ -76,6 +76,11 @@
   white-space: nowrap;
 }
 
+// 相对时间（如"5分钟前"），比绝对时间弱化一级（字号/颜色继承自 .checksum-meta）
+.checksum-relative {
+  opacity: 0.75;
+}
+
 .checksum-hash {
   margin-bottom: $spacing-1;
 }

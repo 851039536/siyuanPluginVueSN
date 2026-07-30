@@ -22,6 +22,8 @@
           <span class="backup-name">{{ item.name }}</span>
           <!-- 备份时间 -->
           <span class="backup-time">{{ formatTime(item.time ?? item.lastModified ?? "") }}</span>
+          <!-- 相对时间（如"5分钟前"，仅有真实时间戳时展示） -->
+          <span v-if="item.timestamp" class="backup-relative">{{ formatRelativeTime(item.timestamp) }}</span>
           <span class="backup-sep">·</span>
           <!-- 备份文件大小 -->
           <span class="backup-size">{{ formatFileSize(item.size) }}</span>
@@ -45,7 +47,7 @@
 </template>
 
 <script setup lang="ts" generic="T extends BackupListDisplayItem">
-import { formatFileSize, formatTime } from "@/utils/format"
+import { formatFileSize, formatRelativeTime, formatTime } from "@/utils/format"
 import type { BackupListDisplayItem } from "../types"
 import Button from "@/components/Button.vue"
 

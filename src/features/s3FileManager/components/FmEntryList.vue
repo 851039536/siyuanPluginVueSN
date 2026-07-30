@@ -71,10 +71,16 @@
           v-for="entry in entries"
           :key="entry.key"
           class="fm-detail-row"
-          :class="{ selected: isSelected(entry.key) }"
+          :class="{ selected: isSelected(entry.key), 'drag-over': dragOverKey === entry.key }"
+          draggable="true"
           @click="$emit('itemClick', entry, $event)"
           @dblclick="$emit('itemDblclick', entry)"
           @contextmenu.prevent="$emit('itemContextmenu', entry, $event)"
+          @dragstart="onDragStart(entry, $event)"
+          @dragend="onDragEnd"
+          @dragover="onFolderDragOver(entry, $event)"
+          @dragleave="onFolderDragLeave(entry)"
+          @drop="onFolderDrop(entry, $event)"
         >
           <span class="fm-col-name">
             <IconWrapper
@@ -96,11 +102,17 @@
           v-for="entry in entries"
           :key="entry.key"
           class="fm-icon-item"
-          :class="{ selected: isSelected(entry.key) }"
+          :class="{ selected: isSelected(entry.key), 'drag-over': dragOverKey === entry.key }"
           :title="entry.name"
+          draggable="true"
           @click="$emit('itemClick', entry, $event)"
           @dblclick="$emit('itemDblclick', entry)"
           @contextmenu.prevent="$emit('itemContextmenu', entry, $event)"
+          @dragstart="onDragStart(entry, $event)"
+          @dragend="onDragEnd"
+          @dragover="onFolderDragOver(entry, $event)"
+          @dragleave="onFolderDragLeave(entry)"
+          @drop="onFolderDrop(entry, $event)"
         >
           <IconWrapper
             :name="entryIconKey(entry)"
@@ -129,6 +141,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue"
 import type { S3Entry, S3FileManagerI18n, SortField, ViewMode } from "../types"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
@@ -149,13 +162,63 @@ interface Props {
 }
 
 defineProps<Props>()
-defineEmits<{
+const emit = defineEmits<{
   itemClick: [entry: S3Entry, ev: MouseEvent]
   itemDblclick: [entry: S3Entry]
   itemContextmenu: [entry: S3Entry, ev: MouseEvent]
   sort: [field: SortField]
   loadMore: []
+  entryDragStart: [entry: S3Entry]
+  entryDropToFolder: [entry: S3Entry]
 }>()
+
+// ========== 内部拖动（条目拖到文件夹=移动） ==========
+
+/** 当前被拖动条目的 key（仅内部拖动期间有值） */
+const draggingKey = ref<string | null>(null)
+/** 当前作为放置目标高亮的文件夹 key */
+const dragOverKey = ref<string | null>(null)
+
+/** 目标是否可放置：内部拖动中 + 目标为文件夹 + 非自身 */
+function isDropTarget(entry: S3Entry): boolean {
+  return !!draggingKey.value && entry.isFolder && entry.key !== draggingKey.value
+}
+
+function onDragStart(entry: S3Entry, e: DragEvent): void {
+  draggingKey.value = entry.key
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = "move"
+    // 自定义类型标记内部拖动，与外部 Files 拖入区分
+    e.dataTransfer.setData("application/x-s3fm", entry.key)
+  }
+  emit("entryDragStart", entry)
+}
+
+function onDragEnd(): void {
+  draggingKey.value = null
+  dragOverKey.value = null
+}
+
+function onFolderDragOver(entry: S3Entry, e: DragEvent): void {
+  if (!isDropTarget(entry)) { return }
+  // preventDefault 才能成为放置目标；非文件夹/外部拖入不在此拦截，冒泡给外部拖入区
+  e.preventDefault()
+  if (e.dataTransfer) { e.dataTransfer.dropEffect = "move" }
+  dragOverKey.value = entry.key
+}
+
+function onFolderDragLeave(entry: S3Entry): void {
+  if (dragOverKey.value === entry.key) { dragOverKey.value = null }
+}
+
+function onFolderDrop(entry: S3Entry, e: DragEvent): void {
+  if (!isDropTarget(entry)) { return }
+  e.preventDefault()
+  e.stopPropagation() // 阻断冒泡到外部 fm-browse 拖入区
+  emit("entryDropToFolder", entry)
+  draggingKey.value = null
+  dragOverKey.value = null
+}
 </script>
 
 <style scoped lang="scss">

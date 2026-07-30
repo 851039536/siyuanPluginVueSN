@@ -67,57 +67,76 @@
         @refresh="refresh"
       />
 
-      <!-- 传输进度条 -->
+      <!-- 浏览区：外部文件/文件夹拖入即上传到当前目录 -->
       <div
-        v-if="transferProgress"
-        class="fm-progress"
+        class="fm-browse"
+        @dragenter="externalDrop.onDragEnter"
+        @dragover="externalDrop.onDragOver"
+        @dragleave="externalDrop.onDragLeave"
+        @drop="externalDrop.onDrop"
       >
-        <div class="fm-progress-info">
-          <span class="fm-progress-label">{{ transferProgress.label }}</span>
-          <span class="fm-progress-file">{{ transferProgress.currentFile }}</span>
-          <span class="fm-progress-count">{{ transferProgress.done }} / {{ transferProgress.total }}</span>
+        <!-- 传输进度条 -->
+        <div
+          v-if="transferProgress"
+          class="fm-progress"
+        >
+          <div class="fm-progress-info">
+            <span class="fm-progress-label">{{ transferProgress.label }}</span>
+            <span class="fm-progress-file">{{ transferProgress.currentFile }}</span>
+            <span class="fm-progress-count">{{ transferProgress.done }} / {{ transferProgress.total }}</span>
+          </div>
+          <div class="fm-progress-bar">
+            <div
+              class="fm-progress-fill"
+              :style="{ width: `${transferProgress.percent}%` }"
+            />
+          </div>
         </div>
-        <div class="fm-progress-bar">
-          <div
-            class="fm-progress-fill"
-            :style="{ width: `${transferProgress.percent}%` }"
-          />
+
+        <!-- 批量操作进度条 -->
+        <div
+          v-if="opProgress"
+          class="fm-progress"
+        >
+          <div class="fm-progress-info">
+            <span class="fm-progress-label">{{ opProgress.label }}</span>
+            <span class="fm-progress-count">{{ opProgress.done }} / {{ opProgress.total }}</span>
+          </div>
+          <div class="fm-progress-bar">
+            <div
+              class="fm-progress-fill"
+              :style="{ width: `${opPercent}%` }"
+            />
+          </div>
+        </div>
+
+        <FmEntryList
+          :entries="visibleEntries"
+          :view-mode="prefs.viewMode"
+          :loading="loading"
+          :load-error="loadError"
+          :has-more="hasMore"
+          :sort-field="sortField"
+          :sort-asc="sortAsc"
+          :is-selected="isSelected"
+          :i18n="i18n"
+          @item-click="handleItemClick"
+          @item-dblclick="handleItemDblclick"
+          @item-contextmenu="handleContextmenu"
+          @sort="toggleSort"
+          @load-more="loadMore"
+          @entry-drag-start="handleEntryDragStart"
+          @entry-drop-to-folder="handleEntryDropToFolder"
+        />
+
+        <!-- 拖入提示浮层："松开以上传到当前目录" -->
+        <div
+          v-if="externalDrop.isDragOver.value"
+          class="fm-dropzone-overlay"
+        >
+          {{ i18n.dropToUpload }}
         </div>
       </div>
-
-      <!-- 批量操作进度条 -->
-      <div
-        v-if="opProgress"
-        class="fm-progress"
-      >
-        <div class="fm-progress-info">
-          <span class="fm-progress-label">{{ opProgress.label }}</span>
-          <span class="fm-progress-count">{{ opProgress.done }} / {{ opProgress.total }}</span>
-        </div>
-        <div class="fm-progress-bar">
-          <div
-            class="fm-progress-fill"
-            :style="{ width: `${opPercent}%` }"
-          />
-        </div>
-      </div>
-
-      <FmEntryList
-        :entries="visibleEntries"
-        :view-mode="prefs.viewMode"
-        :loading="loading"
-        :load-error="loadError"
-        :has-more="hasMore"
-        :sort-field="sortField"
-        :sort-asc="sortAsc"
-        :is-selected="isSelected"
-        :i18n="i18n"
-        @item-click="handleItemClick"
-        @item-dblclick="handleItemDblclick"
-        @item-contextmenu="handleContextmenu"
-        @sort="toggleSort"
-        @load-more="loadMore"
-      />
     </template>
 
     <!-- 右键菜单 -->
@@ -195,6 +214,7 @@ import { useS3Selection } from "./composables/useS3Selection"
 import { useS3FileOps } from "./composables/useS3FileOps"
 import { useS3Transfer } from "./composables/useS3Transfer"
 import { useFileOpLogs } from "./composables/useFileOpLogs"
+import { useExternalDrop } from "./composables/useExternalDrop"
 import FmToolbar from "./components/FmToolbar.vue"
 import FmBreadcrumb from "./components/FmBreadcrumb.vue"
 import FmEntryList from "./components/FmEntryList.vue"
@@ -240,12 +260,15 @@ const { opBusy, opProgress, createNewFolder, renameEntry, copyEntries, moveEntri
   requireClient, i18n, addLog, afterMutation,
 })
 
-const { transferring, transferProgress, uploadFiles, downloadEntries } = useS3Transfer({
+const { transferring, transferProgress, uploadFiles, uploadDropped, downloadEntries } = useS3Transfer({
   requireClient, i18n,
   currentPrefix,
   getEntries: () => entries.value,
   addLog, afterMutation,
 })
+
+// 外部文件/文件夹拖入浏览区 → 上传到当前目录
+const externalDrop = useExternalDrop((files) => { void uploadDropped(files) })
 
 // ========== 本地 UI 状态 ==========
 
@@ -296,6 +319,19 @@ function handleItemDblclick(entry: S3Entry): void {
 function handleContextmenu(entry: S3Entry, ev: MouseEvent): void {
   ensureSelected(entry)
   contextMenu.value = { visible: true, x: ev.clientX, y: ev.clientY, entry }
+}
+
+// ========== 内部拖拽移动 ==========
+
+function handleEntryDragStart(entry: S3Entry): void {
+  // 拖动未选中条目时改为单选它；已在选中集则保持多选整批拖动
+  ensureSelected(entry)
+}
+
+function handleEntryDropToFolder(folder: S3Entry): void {
+  // 排除目标文件夹自身（moveEntries 内部另有 destInsideSelf 守卫）
+  const targets = selectedEntries.value.filter((e) => e.key !== folder.key)
+  if (targets.length > 0) { void moveEntries(targets, folder.key) }
 }
 
 function handleMenuSelect(action: string): void {

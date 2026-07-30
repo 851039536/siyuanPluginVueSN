@@ -89,6 +89,7 @@
     "largeFileWarn": "存在超过 100MB 的大文件，上传时将整包驻留内存",
     "pickUploadFiles": "选择要上传的文件",
     "pickDownloadDir": "选择下载保存目录",
+    "dropToUpload": "松开以上传到当前目录",
     "logSucceed": "成功",
     "logFailed": "失败",
     "noLogs": "暂无操作记录",

@@ -7,6 +7,9 @@ import { daysAgoStr } from "./sqlHelpers"
 import { getPlatformIdFromAttrKey } from "./platformPublish"
 import { SIZE_WORDCOUNT_SUBQUERY, DOC_DEPTH_EXPR } from "./sqlConstants"
 
+/** 字数分布最高档标签（健康度扣分项引用此常量，避免字符串耦合） */
+export const WC_TOP_BIN_LABEL = ">2万字"
+
 // ============================================================
 // 各维度分析（通过闭包修改 docStats / depthStats reactive）
 // ============================================================
@@ -92,7 +95,7 @@ export async function analyzeWordCount(notebookCondition: string, docStats: DocS
         { label: "2000~5000字", count: r.wc_2000_5000 || 0 },
         { label: "5000~1万字", count: r.wc_5000_10000 || 0 },
         { label: "1万~2万字", count: r.wc_10000_20000 || 0 },
-        { label: ">2万字", count: r.wc_20000_plus || 0 },
+        { label: WC_TOP_BIN_LABEL, count: r.wc_20000_plus || 0 },
       ]
     }
   } catch (e) { console.error("字数分布分析失败:", e) }

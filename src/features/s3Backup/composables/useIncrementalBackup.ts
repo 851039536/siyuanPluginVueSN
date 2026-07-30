@@ -13,14 +13,11 @@ import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import type { BackupManager, BackupProgress } from "../modules/BackupManager"
 import type { BackupLog, BackupLogDetail, BackupManifest, IncrementalFileEntry } from "../types"
-import { LARGE_FILE_WARN_SIZE, MANIFEST_VERSION, MAX_LOG_DETAIL_FILES, MSG_DESKTOP_ONLY } from "../types"
-import { buildIncrementalKey, buildManifestKey, diffManifest, getHostname, parseManifest } from "../utils"
+import { LARGE_FILE_WARN_SIZE, MANIFEST_VERSION, MAX_LOG_DETAIL_FILES, MSG_DESKTOP_ONLY, TRANSFER_MAX_RETRIES } from "../types"
+import { buildIncrementalKey, buildManifestKey, diffManifest, getHostname, parseManifest, runWithConcurrency } from "../utils"
 
 /** 上传并发数（S3 客户端无内建并发管理，固定小并发防止请求风暴） */
 const UPLOAD_CONCURRENCY = 4
-
-/** 单文件传输（上传/下载）最大重试次数（不含首次尝试） */
-const TRANSFER_MAX_RETRIES = 2
 
 /** 按存储上限截断文件清单，返回 [截断后清单, 被省略条数]（空清单返回 undefined 不占存储） */
 function capFileList(files: string[]): [string[] | undefined, number] {
@@ -53,22 +50,6 @@ export interface IncrementalRestoreResult {
   downloaded: number
   failed: number
   targetDir: string
-}
-
-/** 简易并发池：以固定并发数执行任务列表 */
-async function runWithConcurrency<T>(
-  items: T[],
-  concurrency: number,
-  worker: (item: T) => Promise<void>,
-): Promise<void> {
-  let cursor = 0
-  const lanes = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
-    while (cursor < items.length) {
-      const item = items[cursor++]
-      await worker(item)
-    }
-  })
-  await Promise.all(lanes)
 }
 
 /** 通用重试执行器：任务成功返回 true，重试耗尽后记警告并返回 false（上传/下载共用） */

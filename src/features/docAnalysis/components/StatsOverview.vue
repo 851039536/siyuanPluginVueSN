@@ -164,7 +164,6 @@
               :color-class="card.colorClass"
               :active="activeFilter === card.id"
               :pct="pctStr(getCardValue(card))"
-              :icon-only="card.iconValue"
               @select="(id) => $emit('selectCategory', id)"
             />
           </div>

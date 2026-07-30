@@ -5,17 +5,9 @@
     :class="{ active: active }"
     @click="$emit('select', cardId)"
   >
-    <template v-if="!iconOnly">
-      <span class="card-value" :class="colorClass">{{ value.toLocaleString() }}</span>
-    </template>
-    <template v-else>
-      <span class="card-value" :class="colorClass">
-        <Icon :icon="iconOnly" />
-      </span>
-    </template>
+    <span class="card-value" :class="colorClass">{{ value.toLocaleString() }}</span>
     <span class="card-unit">{{ label }}</span>
     <span
-      v-if="!iconOnly"
       class="card-percent"
       :style="{ width: pct }"
     />
@@ -23,15 +15,12 @@
 </template>
 
 <script setup lang="ts">
-import { Icon } from "@iconify/vue"
-
 interface Props {
   value: number
   label: string
   colorClass: string
   active: boolean
   pct: string
-  iconOnly?: string
   cardId: string
 }
 

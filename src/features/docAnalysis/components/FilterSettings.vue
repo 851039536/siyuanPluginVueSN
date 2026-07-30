@@ -1,4 +1,4 @@
-<!-- 文档过滤设置组件 - 标题/全文搜索 + 字数/笔记本/书签/日期过滤 -->
+<!-- 文档过滤设置组件 - 标题/全文搜索 + 字数/笔记本/书签过滤 -->
 <template>
   <div class="doc-analysis-filter">
     <!-- 第一行：主搜索 -->
@@ -89,21 +89,7 @@
         @input="handleDebouncedInput"
         @keyup.enter="$emit('query')"
       />
-      <div class="filter-group date-group">
-        <DateInput
-          v-model="options.updatedAfter"
-          placeholder="起始日期"
-          class="date-picker"
-          @update:model-value="handleChange"
-        />
-        <span class="filter-separator">~</span>
-        <DateInput
-          v-model="options.updatedBefore"
-          placeholder="截止日期"
-          class="date-picker"
-          @update:model-value="handleChange"
-        />
-      </div>
+
     </div>
   </div>
 </template>
@@ -116,7 +102,6 @@ import {
   computed,
   onBeforeUnmount,
 } from "vue"
-import DateInput from "./DateInput.vue"
 
 interface Props {
   options: FilterOptions
@@ -151,8 +136,6 @@ const hasAnyFilter = computed(() => {
     || o.wordCountMax
     || o.notebookId
     || o.bookmarkName
-    || o.updatedAfter
-    || o.updatedBefore
   )
 })
 

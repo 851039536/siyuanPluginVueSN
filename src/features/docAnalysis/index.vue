@@ -228,6 +228,7 @@
             :key="doc.id"
             v-memo="[doc.id, doc.title, doc.wordCount, doc.contentSize, doc.updated, doc.depth, doc.refCount, doc.imageCount, doc.bookmark]"
             :doc="doc"
+            :i18n="i18n"
             @open="openDoc"
             @attrs="handleShowAttrs"
           />
@@ -394,7 +395,8 @@ import { getCategoryLabel } from "./types/index"
 import { DEFAULT_FILTER_OPTIONS } from "./types/index"
 
 interface Props {
-  i18n: Record<string, Record<string, string>>
+  /** docAnalysis 分片 i18n（index.ts 传入 plugin.i18n.docAnalysis，扁平键值） */
+  i18n: Record<string, string>
   plugin: Plugin
 }
 

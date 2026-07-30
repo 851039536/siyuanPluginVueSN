@@ -142,11 +142,6 @@ const EXISTS_MAP: Record<string, string> = {
   hasMemo: existsCond("memo"),
 }
 
-/** 将 YYYY-MM-DD 日期转为 8 位数字；格式非法返回 null */
-function toDateDigits(value: string): string | null {
-  const digits = value.replace(/-/g, "")
-  return /^\d{8}$/.test(digits) ? digits : null
-}
 
 /**
  * 文档分析 composable（须在组件 setup 中调用，watch/onScopeDispose 依赖当前 effect 作用域自动回收）
@@ -488,17 +483,6 @@ export function useDocAnalysis(plugin: Plugin) {
       if (!isNaN(d)) { await runDocQuery({ extraWhere: `AND ${DOC_DEPTH_EXPR} = ${d}`, orderBy: "b.updated DESC" }); return }
     }
 
-    // 自定义时间
-    if (category === "customTime") {
-      const afterDigits = filterOptions.updatedAfter ? toDateDigits(filterOptions.updatedAfter) : null
-      const beforeDigits = filterOptions.updatedBefore ? toDateDigits(filterOptions.updatedBefore) : null
-      let w = ""
-      if (afterDigits) w += `AND b.updated >= '${afterDigits}000000' `
-      if (beforeDigits) w += `AND b.updated <= '${beforeDigits}235959' `
-      if (!w) { setEmptyState(); return }
-      await runDocQuery({ extraWhere: w })
-      return
-    }
 
     // 引用/图片（特殊 JOIN）
     if (category === "hasRef") {
@@ -555,10 +539,6 @@ export function useDocAnalysis(plugin: Plugin) {
     if (filterOptions.titleKeyword.trim()) conds += `AND b.content LIKE '%${escapeSqlLike(filterOptions.titleKeyword.trim())}%' ESCAPE '\\' `
     if (filterOptions.contentKeyword.trim()) conds += `AND b.id IN (SELECT DISTINCT root_id FROM blocks WHERE content LIKE '%${escapeSqlLike(filterOptions.contentKeyword.trim())}%' ESCAPE '\\' AND type != 'd') `
     if (filterOptions.bookmarkName.trim()) conds += `AND b.id IN (SELECT block_id FROM attributes WHERE name='bookmark' AND value='${escapeSql(filterOptions.bookmarkName.trim())}') `
-    const afterDigits = filterOptions.updatedAfter ? toDateDigits(filterOptions.updatedAfter) : null
-    const beforeDigits = filterOptions.updatedBefore ? toDateDigits(filterOptions.updatedBefore) : null
-    if (afterDigits) conds += `AND b.updated >= '${afterDigits}000000' `
-    if (beforeDigits) conds += `AND b.updated <= '${beforeDigits}235959' `
     if (needWcFilter) {
       if (filterOptions.wordCountMin > 0) conds += `AND COALESCE(sw.total_word_count, 0) >= ${filterOptions.wordCountMin} `
       if (filterOptions.wordCountMax > 0) conds += `AND COALESCE(sw.total_word_count, 0) <= ${filterOptions.wordCountMax} `

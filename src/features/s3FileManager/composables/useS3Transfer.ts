@@ -77,8 +77,6 @@ export function useS3Transfer(deps: {
   /** 核心并发上传：读 Buffer → 带字节进度上传 → 汇总日志与状态栏上报 */
   async function runUpload(tasks: UploadTask[], summaryName: string): Promise<void> {
     if (transferring.value || tasks.length === 0) { return }
-    // 诊断日志：输出本批上传的完整目标 key，用于排查落点异常（后端非标准 prefix 行为取证）
-    console.info("[S3文件管理] 上传目标 key:", tasks.map((t) => t.key))
     const client = deps.requireClient()
     const node = getNodeModules()
     if (!node) {

@@ -47,7 +47,6 @@
           class="page-lock-dialog__field"
         >
           <Input
-            ref="firstInput"
             v-model="oldPassword"
             type="password"
             :label="oldPasswordLabel"
@@ -62,21 +61,19 @@
 
         <div class="page-lock-dialog__field">
           <Input
-            :ref="isUpdateMode ? 'secondInput' : 'firstInput'"
             v-model="password"
             type="password"
             :label="passwordPlaceholder"
             :placeholder="passwordPlaceholder"
             :prefix-icon="'pageLock' as IconKey"
             :show-password="true"
-            :autocomplete="!isLockMode && !isUpdateMode ? 'current-password' : 'new-password'"
+            autocomplete="new-password"
             :autofocus="!isUpdateMode"
             @keydown.enter="handleConfirm"
           />
         </div>
 
         <div
-          v-if="isLockMode || isUpdateMode"
           class="page-lock-dialog__field"
         >
           <Input
@@ -129,8 +126,6 @@ import type {
 import type { IconKey } from "@/config/icons"
 import {
   computed,
-  nextTick,
-  onMounted,
   ref,
 } from "vue"
 import Button from "@/components/Button.vue"
@@ -143,28 +138,22 @@ const emit = defineEmits<LockDialogEmits>()
 const password = ref("")
 const confirmPassword = ref("")
 const oldPassword = ref("")
-const firstInput = ref<InstanceType<typeof Input>>()
 
-const isLockMode = computed(() => props.mode === "lock")
 const isUpdateMode = computed(() => props.mode === "update")
 
-const title = computed(() => {
-  if (isUpdateMode.value) return props.i18n.updatePassword
-  if (isLockMode.value) return props.i18n.setPassword
-  return props.i18n.enterPassword
-})
+const title = computed(() =>
+  isUpdateMode.value ? props.i18n.updatePassword : props.i18n.setPassword,
+)
 
 const headerIconName = computed(() =>
   isUpdateMode.value ? "refresh" : "pageLock",
 )
 
-const hintText = computed(() => {
-  if (isUpdateMode.value)
-    return props.i18n.updatePasswordHint
-  if (isLockMode.value)
-    return props.i18n.setPasswordHint
-  return props.i18n.unlockHint
-})
+const hintText = computed(() =>
+  isUpdateMode.value
+    ? props.i18n.updatePasswordHint
+    : props.i18n.setPasswordHint,
+)
 
 const oldPasswordLabel = props.i18n.oldPasswordPlaceholder
 // 更新模式下密码栏显示"新密码"，其余模式显示"请输入密码"（label 与 placeholder 共用）
@@ -183,14 +172,6 @@ const clearPasswords = () => {
   oldPassword.value = ""
 }
 
-const focusInput = () => {
-  if (firstInput.value) {
-    nextTick(() => {
-      firstInput.value?.focus?.()
-    })
-  }
-}
-
 const handleClose = () => {
   clearPasswords()
   emit("close")
@@ -199,17 +180,11 @@ const handleClose = () => {
 const handleConfirm = () => {
   if (isUpdateMode.value) {
     emit("confirm", password.value, confirmPassword.value, oldPassword.value)
-  } else if (isLockMode.value) {
-    emit("confirm", password.value, confirmPassword.value)
   } else {
-    emit("confirm", password.value)
+    emit("confirm", password.value, confirmPassword.value)
   }
   clearPasswords()
 }
-
-onMounted(() => {
-  setTimeout(focusInput, 100)
-})
 </script>
 
 <style lang="scss">

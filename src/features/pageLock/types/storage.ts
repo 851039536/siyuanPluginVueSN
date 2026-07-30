@@ -109,74 +109,6 @@ export class PageLockStorage {
     return !!locks[docId]?.locked
   }
 
-  async verifyPagePassword(
-    docId: string,
-    password: string,
-  ): Promise<boolean> {
-    try {
-      const locks = await this.getAllLocks()
-      const lockInfo = locks[docId]
-
-      if (!lockInfo) {
-        return false
-      }
-
-      return await verifyPassword(
-        password,
-        lockInfo.passwordHash,
-        lockInfo.salt,
-      )
-    } catch (error) {
-      console.error("验证密码失败:", error)
-      return false
-    }
-  }
-
-  async getLockInfo(docId: string): Promise<PageLockInfo | null> {
-    const locks = await this.getAllLocks()
-    return locks[docId] || null
-  }
-
-  async changePassword(
-    docId: string,
-    oldPassword: string,
-    newPassword: string,
-  ): Promise<boolean> {
-    try {
-      const locks = await this.getAllLocks()
-      const lockInfo = locks[docId]
-
-      if (!lockInfo) {
-        return false
-      }
-
-      const isValid = await verifyPassword(
-        oldPassword,
-        lockInfo.passwordHash,
-        lockInfo.salt,
-      )
-      if (!isValid) {
-        return false
-      }
-
-      const {
-        hash: newHash,
-        salt: newSalt,
-      } = await hashPassword(newPassword)
-      locks[docId] = {
-        ...lockInfo,
-        passwordHash: newHash,
-        salt: newSalt,
-        updatedAt: Date.now(),
-      }
-
-      return await this.saveAllLocks(locks)
-    } catch (error) {
-      console.error("修改密码失败:", error)
-      return false
-    }
-  }
-
   // ==================== 全局密码管理 ====================
   //
   // 持久层：仅存储 PBKDF2 哈希 + 盐值（hash:salt 格式）
@@ -216,12 +148,39 @@ export class PageLockStorage {
         this.globalHash = hash
         this.globalSalt = salt
         this.globalPassword = password
+        // 密码更新后，用新密码重新哈希全部锁记录，避免旧锁页因密码变更而永久无法解锁
+        await this.migrateLocksToPassword(password)
       }
       return success
     } catch (error) {
       console.error("保存全局密码失败:", error)
       return false
     }
+  }
+
+  /**
+   * 将所有已锁定页面的密码哈希迁移到新的全局密码。
+   * 仅在更新密码时有意义（首次设置时锁表为空，为无操作）。
+   * 调用方须保证旧密码已通过校验，明文可信。
+   */
+  private async migrateLocksToPassword(password: string): Promise<void> {
+    const locks = await this.getAllLocks()
+    const docIds = Object.keys(locks)
+    if (docIds.length === 0) return
+
+    for (const docId of docIds) {
+      const {
+        hash,
+        salt,
+      } = await hashPassword(password)
+      locks[docId] = {
+        ...locks[docId],
+        passwordHash: hash,
+        salt,
+        updatedAt: Date.now(),
+      }
+    }
+    await this.saveAllLocks(locks)
   }
 
   /** 全局密码是否已设置（持久层判断） */

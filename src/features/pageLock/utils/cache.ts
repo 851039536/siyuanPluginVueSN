@@ -1,14 +1,16 @@
+// 页面锁定状态缓存：内存缓存文档锁定状态，带过期时间与容量上限，定期清理
+
 import { DEFAULT_OPTIONS } from "../types"
 
 export const CACHE_EXPIRE_TIME = DEFAULT_OPTIONS.cacheExpireTime
 export const MAX_CACHE_SIZE = DEFAULT_OPTIONS.maxCacheSize
+export const CACHE_CLEANUP_INTERVAL = DEFAULT_OPTIONS.cacheCleanupInterval
 
 interface CacheEntry<T> {
   value: T
   timestamp: number
 }
 
-const maskCache = new Map<string, CacheEntry<HTMLElement>>()
 const lockStateCache = new Map<string, CacheEntry<boolean>>()
 
 function cleanupSingleCache<T>(cache: Map<string, CacheEntry<T>>) {
@@ -31,13 +33,15 @@ function cleanupSingleCache<T>(cache: Map<string, CacheEntry<T>>) {
 }
 
 export function cleanupCache() {
-  cleanupSingleCache(maskCache)
   cleanupSingleCache(lockStateCache)
 }
 
-export async function getCachedLockState(
-  docId: string,
-): Promise<boolean | null> {
+/** 清空全部缓存（功能卸载时调用） */
+export function clearAllCache() {
+  lockStateCache.clear()
+}
+
+export function getCachedLockState(docId: string): boolean | null {
   const cached = lockStateCache.get(docId)
   if (cached && Date.now() - cached.timestamp < CACHE_EXPIRE_TIME) {
     return cached.value
@@ -50,22 +54,4 @@ export function setCachedLockState(docId: string, isLocked: boolean) {
     value: isLocked,
     timestamp: Date.now(),
   })
-  cleanupCache()
-}
-
-export function getCachedMask(docId: string): HTMLElement | null {
-  const cached = maskCache.get(docId)
-  if (cached && Date.now() - cached.timestamp < CACHE_EXPIRE_TIME) {
-    cached.timestamp = Date.now()
-    return cached.value
-  }
-  return null
-}
-
-export function setCachedMask(docId: string, element: HTMLElement) {
-  maskCache.set(docId, {
-    value: element,
-    timestamp: Date.now(),
-  })
-  cleanupCache()
 }

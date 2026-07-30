@@ -13,6 +13,7 @@ import {
 import {
   applyRowStyle,
   buildRowStyle,
+  buildRuleSignature,
   clearAllRowMarkers,
   clearRowStyle,
   createMarkerElement,
@@ -29,6 +30,10 @@ export class BookmarkMarker {
   private protyleObserver: MutationObserver | null = null
   private debounceTimer: number | null = null
   private protyleDebounceTimer: number | null = null
+  private protyleRetryCount = 0
+  private protyleRetryTimer: number | null = null
+  private fileTreeRetryCount = 0
+  private fileTreeRetryTimer: number | null = null
   private bookmarkCache = new Map<string, string>()
   private cacheLoaded = false
 
@@ -38,7 +43,6 @@ export class BookmarkMarker {
 
   updateOptions(options: Partial<BookmarkMarkerOptions>) {
     Object.assign(this.options, options)
-    this.cacheLoaded = false
     if (this.active) this.applyMarkers()
   }
 
@@ -90,6 +94,8 @@ export class BookmarkMarker {
     const result = await sql(
       `SELECT block_id as id, value as bookmark FROM attributes WHERE name = 'bookmark' AND block_id = root_id LIMIT 999999`,
     )
+    // stop() 后在途查询返回时不回填缓存，避免停用后数据驻留
+    if (!this.active) return
     this.bookmarkCache.clear()
     if (result?.length) {
       for (const row of result as AttrRow[]) {
@@ -114,10 +120,10 @@ export class BookmarkMarker {
   private async applyMarkers(): Promise<void> {
     if (!this.active) return
     await this.loadBookmarkCache()
-    if (this.bookmarkCache.size) {
-      this.applyMarkersToDOM()
-      this.applyMarkersToProtyle()
-    }
+    if (!this.active) return
+    // 缓存为空时也需执行：循环内的 remove 分支负责清理已无书签的旧标记
+    this.applyMarkersToDOM()
+    this.applyMarkersToProtyle()
   }
 
   private applyMarkersToDOM(): void {
@@ -154,12 +160,22 @@ export class BookmarkMarker {
     if (!textEl) return
 
     if (mode === "row") {
+      // 模式切换对称清理：移除旧徽章，避免与行样式叠加
+      textEl.querySelector(`.${BOOKMARK_MARKER_CLASS}`)?.remove()
       applyRowStyle(textEl, buildRowStyle(rule), bookmarkName)
       return
     }
 
+    // 模式切换对称清理：清除旧行样式，避免与徽章叠加
+    if (textEl.dataset.bookmarkRow) clearRowStyle(textEl)
+
     const existingMarker = textEl.querySelector(`.${BOOKMARK_MARKER_CLASS}`) as HTMLElement | null
-    if (existingMarker?.dataset.bookmark === bookmarkName) return
+    if (
+      existingMarker?.dataset.bookmark === bookmarkName
+      && existingMarker.dataset.sig === buildRuleSignature(rule)
+    ) {
+      return
+    }
     existingMarker?.remove()
 
     textEl.appendChild(createMarkerElement(BOOKMARK_MARKER_CLASS, bookmarkName, rule))
@@ -207,12 +223,23 @@ export class BookmarkMarker {
     if (mode === "row") {
       const inputEl = title.querySelector(".protyle-title__input") as HTMLElement | null
       if (!inputEl) return
+      // 模式切换对称清理：移除旧徽章，避免与行样式叠加
+      title.querySelector(`.${BOOKMARK_PROTYLE_CLASS}`)?.remove()
       applyRowStyle(inputEl, buildRowStyle(rule), bookmarkName)
       return
     }
 
+    // 模式切换对称清理：清除旧行样式，避免与徽章叠加
+    const rowEl = title.querySelector(".protyle-title__input") as HTMLElement | null
+    if (rowEl?.dataset.bookmarkRow) clearRowStyle(rowEl)
+
     const existingMarker = title.querySelector(`.${BOOKMARK_PROTYLE_CLASS}`) as HTMLElement | null
-    if (existingMarker?.dataset.bookmark === bookmarkName) return
+    if (
+      existingMarker?.dataset.bookmark === bookmarkName
+      && existingMarker.dataset.sig === buildRuleSignature(rule)
+    ) {
+      return
+    }
     existingMarker?.remove()
 
     title.appendChild(createMarkerElement(BOOKMARK_PROTYLE_CLASS, bookmarkName, rule))
@@ -245,20 +272,43 @@ export class BookmarkMarker {
 
     const target = this.findFileTreeContainer()
     if (!target) {
-      setTimeout(() => {
-        if (!this.active) return
-        const el = this.findFileTreeContainer()
-        if (el) {
-          this.attachObserver(el)
-          this.applyMarkersToDOM()
-        }
-      }, 3000)
+      // 文件树尚未渲染：有界轮询（每 2 秒一次，上限 15 次）
+      this.startFileTreeRetry()
       return
     }
     this.attachObserver(target)
   }
 
+  private startFileTreeRetry(): void {
+    if (this.fileTreeRetryTimer) return
+    this.fileTreeRetryCount = 0
+    this.fileTreeRetryTimer = window.setInterval(() => {
+      if (!this.active) {
+        this.stopFileTreeRetry()
+        return
+      }
+      this.fileTreeRetryCount++
+      const el = this.findFileTreeContainer()
+      if (el) {
+        this.stopFileTreeRetry()
+        this.attachObserver(el)
+        this.applyMarkersToDOM()
+        return
+      }
+      if (this.fileTreeRetryCount >= 15) this.stopFileTreeRetry()
+    }, 2000)
+  }
+
+  private stopFileTreeRetry(): void {
+    if (this.fileTreeRetryTimer) {
+      clearInterval(this.fileTreeRetryTimer)
+      this.fileTreeRetryTimer = null
+    }
+    this.fileTreeRetryCount = 0
+  }
+
   private attachObserver(target: Element): void {
+    if (this.fileTreeObserver) return
     this.fileTreeObserver = new MutationObserver((mutations) => {
       const relevant = mutations.some((m) => {
         if (m.type !== "childList" || !m.addedNodes.length) return false
@@ -266,7 +316,7 @@ export class BookmarkMarker {
           (n) => n instanceof HTMLElement && (n.matches("li[data-node-id]") || n.querySelector("li[data-node-id]") || n.matches("ul[data-url]")),
         )
       })
-      if (relevant) this.debounce(() => this.applyMarkersToDOM(), this, "debounceTimer")
+      if (relevant) this.debounce(() => this.applyMarkersToDOM(), "debounceTimer")
     })
 
     this.fileTreeObserver.observe(target, {
@@ -301,7 +351,7 @@ export class BookmarkMarker {
           && m.attributeName === "data-node-id"
           && (m.target as HTMLElement).matches(".protyle-title")
       })
-      if (hasNew) this.debounce(() => this.applyMarkersToProtyle(), this, "protyleDebounceTimer")
+      if (hasNew) this.debounce(() => this.applyMarkersToProtyle(), "protyleDebounceTimer")
     })
 
     this.protyleObserver.observe(document.body, {
@@ -319,6 +369,7 @@ export class BookmarkMarker {
   private stopObserving(): void {
     this.fileTreeObserver?.disconnect()
     this.fileTreeObserver = null
+    this.stopFileTreeRetry()
     this.clearDebounce("debounceTimer")
   }
 
@@ -332,10 +383,10 @@ export class BookmarkMarker {
   // 防抖 & 轮询
   // ============================================================
 
-  private debounce(fn: () => void, scope: this, timerKey: "debounceTimer" | "protyleDebounceTimer"): void {
-    if (scope[timerKey]) clearTimeout(scope[timerKey] as number)
-    scope[timerKey] = window.setTimeout(() => {
-      if (!scope.active) return
+  private debounce(fn: () => void, timerKey: "debounceTimer" | "protyleDebounceTimer"): void {
+    if (this[timerKey]) clearTimeout(this[timerKey] as number)
+    this[timerKey] = window.setTimeout(() => {
+      if (!this.active) return
       fn()
     }, 300)
   }
@@ -346,9 +397,6 @@ export class BookmarkMarker {
       this[timerKey] = null
     }
   }
-
-  private protyleRetryCount = 0
-  private protyleRetryTimer: number | null = null
 
   private startProtyleRetry(): void {
     if (this.protyleRetryTimer) return

@@ -11,7 +11,10 @@
   "passwordMismatch": "两次输入的密码不一致",
   "passwordEmpty": "密码不能为空",
   "lockSuccess": "页面已锁定",
+  "lockFailed": "锁定失败",
   "unlockSuccess": "页面已解锁",
+  "unlockButton": "解锁页面",
+  "quickUnlockHint": "快速解锁",
   "passwordError": "密码错误",
   "pageLocked": "此页面已锁定",
   "pleaseUnlock": "请输入密码解锁后查看",
@@ -26,7 +29,6 @@
   "updatePasswordDesc": "修改当前密码",
   "updatePasswordHint": "请先输入旧密码，然后设置新密码",
   "setPasswordHint": "设置密码后可以锁定文档，保护隐私内容",
-  "unlockHint": "请输入密码解锁文档",
   "passwordNotSetYet": "尚未设置密码",
   "enterPasswordToDecrypt": "请输入密码以解密内容"
 }

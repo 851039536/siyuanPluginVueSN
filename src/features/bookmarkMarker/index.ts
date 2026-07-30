@@ -7,6 +7,7 @@ import type { ModalAppInstance } from "@/utils/vueAppHelper"
 import { createModalVueApp } from "@/utils/vueAppHelper"
 import { BookmarkMarker } from "./modules/BookmarkMarker"
 import { BookmarkMarkerStorage } from "./types/storage"
+import { normalizeRules } from "./utils"
 import BookmarkMarkerPanel from "./index.vue"
 
 export class BookmarkMarkerManager {
@@ -18,14 +19,15 @@ export class BookmarkMarkerManager {
     this.storage = new BookmarkMarkerStorage(plugin)
 
     const i18n = (plugin.i18n?.bookmarkMarker as unknown as Record<string, any>) || {}
+    const close = this.close.bind(this)
 
     this.modal = createModalVueApp(BookmarkMarkerPanel, {
       maskId: "bookmark-marker-mask",
       width: "644px",
       height: "85vh",
-      getCloseHandler: () => this.close.bind(this),
+      getCloseHandler: () => close,
       buildProps: () => ({
-        onClose: this.close.bind(this),
+        onClose: close,
         onBookmarkMarkerChange: this.handleChange.bind(this),
         i18n,
         plugin,
@@ -56,7 +58,7 @@ export class BookmarkMarkerManager {
       const settings = await this.storage.settings.loadOrDefault()
       if (settings.enableBookmarkMarker) {
         this.bookmarkMarker = new BookmarkMarker({
-          rules: settings.rules,
+          rules: normalizeRules(settings.rules),
           updateInterval: settings.updateInterval,
         })
         await this.bookmarkMarker.start()
@@ -70,9 +72,13 @@ export class BookmarkMarkerManager {
     switch (action) {
       case "toggle":
         if (data.enabled) {
-          if (!this.bookmarkMarker) {
+          if (this.bookmarkMarker) {
+            // 重新启用时同步最新配置，避免沿用禁用期间的旧规则/旧间隔
+            this.bookmarkMarker.updateOptions({ rules: normalizeRules(data.rules) })
+            this.bookmarkMarker.setUpdateInterval(data.updateInterval)
+          } else {
             this.bookmarkMarker = new BookmarkMarker({
-              rules: data.rules,
+              rules: normalizeRules(data.rules),
               updateInterval: data.updateInterval,
             })
           }
@@ -82,12 +88,10 @@ export class BookmarkMarkerManager {
         }
         break
       case "rulesChanged":
-        this.bookmarkMarker?.updateOptions({ rules: data.rules })
+        this.bookmarkMarker?.updateOptions({ rules: normalizeRules(data.rules) })
         break
       case "intervalChanged":
         this.bookmarkMarker?.setUpdateInterval(data.updateInterval)
-        break
-      case "settingsChanged":
         break
     }
   }

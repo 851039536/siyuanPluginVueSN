@@ -148,6 +148,7 @@
   "guideSSL": "服务端配了 HTTPS 证书或反代时勾选，本地服务通常不勾选",
   "statusConnected": "已连接",
   "statusDisconnected": "未连接",
+  "clientNotInitialized": "S3 客户端未初始化",
   "testException": "测试异常",
   "uploadTimeout": "上传超时（秒）",
   "uploadTimeoutHint": "单个上传请求的超时时间，大文件或慢网络可调大，默认 240 秒",

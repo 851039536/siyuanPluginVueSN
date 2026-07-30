@@ -12,7 +12,7 @@ import { S3Client } from "../types/s3Client"
 import type { BackupProgress } from "../modules/BackupManager"
 import { getErrorMessage } from "@/utils/stringUtils"
 
-export function useS3Backup(i18n: Record<string, string> = {}) {
+export function useS3Backup(i18n: Record<string, string>) {
   // ========== 状态 ==========
 
   const s3Config = ref<S3Config>({ ...DEFAULT_S3_CONFIG })
@@ -48,15 +48,21 @@ export function useS3Backup(i18n: Record<string, string> = {}) {
     return s3Client
   }
 
-  /** 测试 S3 连接 */
+  /** 获取已初始化的 S3 客户端，未初始化时抛错（文案进入 UI 错误提示） */
+  function requireClient(): S3Client {
+    if (!s3Client) { throw new Error(i18n.clientNotInitialized) }
+    return s3Client
+  }
+
+  /** 测试 S3 连接（使用临时客户端，不影响已应用配置的共享客户端） */
   async function testConnection(config?: S3Config): Promise<{ success: boolean; message: string }> {
     const cfg = config || s3Config.value
 
     try {
-      const client = initClient(cfg)
+      const client = new S3Client(cfg)
       return await client.testConnection()
     } catch (err: unknown) {
-      return { success: false, message: `连接测试异常: ${getErrorMessage(err)}` }
+      return { success: false, message: `${i18n.testException}: ${getErrorMessage(err)}` }
     }
   }
 
@@ -76,26 +82,26 @@ export function useS3Backup(i18n: Record<string, string> = {}) {
 
   /** 下载 S3 备份文件 */
   async function downloadBackup(s3Key: string, localPath: string): Promise<void> {
-    if (!s3Client) { throw new Error("S3 客户端未初始化") }
-    await s3Client.download(s3Key, localPath)
+    const client = requireClient()
+    await client.download(s3Key, localPath)
   }
 
   /** 直接上传文件内容到 S3（跳过本地打包，用于逐文件上传模式；onProgress 上报字节级发送进度） */
   async function uploadFileContent(buffer: Buffer, key: string, onProgress?: (sent: number, total: number) => void): Promise<void> {
-    if (!s3Client) { throw new Error("S3 客户端未初始化") }
-    await s3Client.uploadBuffer(buffer, key, onProgress)
+    const client = requireClient()
+    await client.uploadBuffer(buffer, key, onProgress)
   }
 
   /** 读取 S3 对象文本内容（404 返回 null，供增量清单读取使用） */
   async function getObjectText(key: string): Promise<string | null> {
-    if (!s3Client) { throw new Error("S3 客户端未初始化") }
-    return s3Client.getObjectText(key)
+    const client = requireClient()
+    return client.getObjectText(key)
   }
 
   /** 删除 S3 对象；syncList 为 true 时同步从 backupList 移除（云端列表删除场景） */
   async function deleteObject(key: string, syncList = false): Promise<void> {
-    if (!s3Client) { throw new Error("S3 客户端未初始化") }
-    await s3Client.delete(key)
+    const client = requireClient()
+    await client.delete(key)
     if (syncList) {
       backupList.value = backupList.value.filter((f) => f.key !== key)
     }
@@ -108,8 +114,8 @@ export function useS3Backup(i18n: Record<string, string> = {}) {
 
   /** 从 S3 拉取文件列表（消除 listBackups/listExistingKeys 重复的 list 调用和 backupList 赋值） */
   async function fetchBackupList(): Promise<S3FileInfo[]> {
-    if (!s3Client) { throw new Error("S3 客户端未初始化") }
-    const all = await s3Client.list(getListPrefix())
+    const client = requireClient()
+    const all = await client.list(getListPrefix())
     // 过滤增量备份的小文件与清单，避免污染云端备份列表与去重集合；
     // 同时过滤文件夹占位对象（0 字节，如 S3 Browser 的 ThisIsAnEmptyFolderInTheS3Bucket）与目录标记键（以 / 结尾）
     const files = all.filter((f) =>
@@ -126,7 +132,8 @@ export function useS3Backup(i18n: Record<string, string> = {}) {
     isLoading.value = true
     try {
       return await fetchBackupList()
-    } catch (_err: unknown) {
+    } catch (err: unknown) {
+      console.error("列举 S3 备份失败:", err)
       backupList.value = []
       return []
     } finally {

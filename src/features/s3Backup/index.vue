@@ -3,7 +3,7 @@
   <div class="s3-backup-panel">
     <!-- 头部 -->
     <div class="s3-backup-header">
-      <span class="s3-backup-header-title">{{ i18n.s3Backup || "S3 备份" }}</span>
+      <span class="s3-backup-header-title">{{ i18n.s3Backup }}</span>
       <Button
         variant="ghost"
         size="xsmall"
@@ -19,28 +19,28 @@
         :class="{ active: activeTab === 'backup' }"
         @click="activeTab = 'backup'"
       >
-        {{ i18n.backupTab || "备份" }}
+        {{ i18n.backupTab }}
       </button>
       <button
         class="s3-tab-btn"
         :class="{ active: activeTab === 'config' }"
         @click="activeTab = 'config'"
       >
-        {{ i18n.configTab || "配置" }}
+        {{ i18n.configTab }}
       </button>
       <button
         class="s3-tab-btn"
         :class="{ active: activeTab === 'log' }"
         @click="activeTab = 'log'"
       >
-        {{ i18n.logTab || "日志" }}
+        {{ i18n.logTab }}
       </button>
       <button
         class="s3-tab-btn"
         :class="{ active: activeTab === 'checksums' }"
         @click="activeTab = 'checksums'"
       >
-        {{ i18n.checksumsTab || "校验" }}
+        {{ i18n.checksumsTab }}
       </button>
     </div>
 
@@ -61,7 +61,7 @@
 
       <!-- 备份进度（含独立压缩包/增量备份/还原运行期间） -->
       <BackupProgressSection
-        v-if="isBackingUp || isZipBackingUp || isIncrementalRunning || isIncrementalRestoring"
+        v-if="isAnyTaskRunning"
         :progress="backupProgress"
         :phase-label="phaseLabel"
         :i18n="i18n"
@@ -310,7 +310,12 @@ const {
   loadWorkspaceSettings,
   saveWorkspaceSettings,
   markBackupCompleted,
-} = useWorkspaceSettings({ getBackupManager: () => backupManager, i18n: props.i18n })
+} = useWorkspaceSettings({
+  getBackupManager: () => backupManager,
+  // 路径变更时幂等创建/同步 BackupManager（覆盖启动时无工作区、之后才选择路径的场景）
+  onWorkspaceUpdated: () => initBackupManager(),
+  i18n: props.i18n,
+})
 
 // ========== 路径预览 ==========
 
@@ -328,7 +333,7 @@ const resolvedLocalBackupPath = computed(() => {
 
 /** S3 上传在桶中的完整路径预览 */
 const resolvedS3Path = computed(() => {
-  return buildS3Key(s3Config.value?.prefix || "", s3SubPrefix.value, "")
+  return buildS3Key(s3Config.value.prefix, s3SubPrefix.value, "")
 })
 
 // ========== 备份模式 ==========
@@ -387,11 +392,15 @@ const isAnyTaskRunning = computed(() => {
 
 // ========== 备份管理器初始化 ==========
 
+/** 幂等初始化/同步备份管理器：工作区路径就绪后可随时调用（含启动后首次选择路径场景） */
 function initBackupManager(): void {
-  if (workspacePath.value) {
+  if (!workspaceRoot.value) { return }
+  if (backupManager) {
+    backupManager.updateWorkspacePaths(workspaceRoot.value)
+  } else {
     backupManager = new BackupManager(workspaceRoot.value)
-    backupManager.setBackupDir(localBackupDir.value)
   }
+  backupManager.setBackupDir(localBackupDir.value)
 }
 
 function onLocalBackupDirChanged(): void {
@@ -446,7 +455,7 @@ watch([isAnyTaskRunning, backupProgress], () => {
     percent: backupProgress.value.percent,
     phase: phaseLabel.value,
   })
-}, { deep: true })
+})
 
 /** 执行增量备份（传入当前 S3 前缀与子路径） */
 async function runIncrementalBackup(): Promise<void> {
@@ -460,9 +469,11 @@ async function runIncrementalBackup(): Promise<void> {
 async function triggerIncrementalOnly(): Promise<void> {
   if (isAnyTaskRunning.value || !backupManager) { return }
   if (!workspacePath.value) {
-    showMessage(props.i18n.noWorkspace || "请先选择工作区路径", 3000, "info")
+    showMessage(props.i18n.noWorkspace, 3000, "info")
     await selectWorkspacePath()
     if (!workspacePath.value) { return }
+    // 目录对话框挂起期间可能有自动备份 tick 进入，重查互斥守卫
+    if (isAnyTaskRunning.value) { return }
   }
   isIncrementalRunning.value = true
   try {
@@ -525,23 +536,41 @@ async function handleConfigSaved(config: S3Config): Promise<void> {
     await instance.getStorage().s3Config.save(encrypted)
   }
   showMessage(props.i18n.configSaved, 2000, "info")
+  // 首次配置保存后自动加载云端列表，无需再手动点刷新
+  void refreshBackupList()
 }
 
 // ========== 备份操作 ==========
 
-async function performManualBackup(): Promise<void> {
+/** 备份主流程；isAuto 为 true 时为定时触发（无人值守，不弹交互对话框）。返回是否成功，供自动路径失败时回滚防重标记 */
+async function performManualBackup(isAuto = false): Promise<boolean> {
   // A7 修复：backupManager 为 null 时记录警告日志，避免静默失败
   if (!backupManager) {
     console.warn("[S3备份] backupManager 未初始化，无法执行备份")
-    return
+    return false
   }
   // 互斥守卫：任一备份/还原任务运行中都不启动新的全量流程（防止并发写共享进度与 manifest）
-  if (isAnyTaskRunning.value) { return }
+  if (isAnyTaskRunning.value) { return false }
+  // 三个备份模式全关（或 S3 模式未配置）时直接跳过，避免空跑却更新备份时间并显示"备份完成"
+  if (!canBackup.value) { return false }
 
   if (!workspacePath.value) {
-    showMessage(props.i18n.noWorkspace || "请先选择工作区路径", 3000, "info")
+    if (isAuto) {
+      // 定时触发无人值守，不弹目录选择框，仅记日志跳过
+      addLog({
+        type: "autoBackup",
+        action: props.i18n.autoBackup,
+        fileName: "",
+        success: false,
+        message: props.i18n.noWorkspace,
+      })
+      return false
+    }
+    showMessage(props.i18n.noWorkspace, 3000, "info")
     await selectWorkspacePath()
-    if (!workspacePath.value) { return }
+    if (!workspacePath.value) { return false }
+    // 目录对话框挂起期间可能有自动备份 tick 进入，重查互斥守卫
+    if (isAnyTaskRunning.value) { return false }
   }
 
   isBackingUp.value = true
@@ -565,11 +594,13 @@ async function performManualBackup(): Promise<void> {
     await markBackupCompleted()
     // 状态栏："备份完成"
     statusTask.complete(props.i18n.statusBackupDone)
+    return true
   } catch (err: unknown) {
     console.error("备份失败:", err)
     // 状态栏："备份失败"
     statusTask.fail(props.i18n.statusBackupFailed)
-    showMessage(`${props.i18n.backupFailed || "备份失败"}: ${getErrorMessage(err)}`, 5000, "error")
+    showMessage(`${props.i18n.backupFailed}: ${getErrorMessage(err)}`, 5000, "error")
+    return false
   } finally {
     isBackingUp.value = false
     // B13 修复：移除 finally 中重复的 saveWorkspaceSettings()，try 块已通过 instance 保存
@@ -598,11 +629,12 @@ async function performLocalBackup(): Promise<BackupResult | null> {
     })
 
     // A3 修复：使用当前时间而非 lastBackupTime.value（后者尚未更新）
-    const backupTime = new Date().toLocaleString()
+    // 命名为 createdAt 避免遮蔽外层的 backupTime ref（自动备份时刻设置）
+    const createdAt = new Date().toLocaleString()
     localBackupList.value.unshift({
       name: result.fileName,
       path: result.filePath,
-      time: backupTime,
+      time: createdAt,
       size: result.size,
     })
 
@@ -626,7 +658,7 @@ async function performLocalBackup(): Promise<BackupResult | null> {
     showMessage(`本地备份成功: ${result.fileName}（${result.totalFiles} 文件）`, 3000, "info")
     addLog({
       type: "localZip",
-      action: props.i18n.localZipBackup || "本地压缩备份",
+      action: props.i18n.localZipBackup,
       fileName: result.fileName,
       fileSize: result.size,
       success: true,
@@ -643,7 +675,7 @@ async function performLocalBackup(): Promise<BackupResult | null> {
   } catch (err: unknown) {
     addLog({
       type: "localZip",
-      action: props.i18n.localZipBackup || "本地压缩备份",
+      action: props.i18n.localZipBackup,
       fileName: "",
       success: false,
       message: getErrorMessage(err),
@@ -656,9 +688,11 @@ async function performLocalBackup(): Promise<BackupResult | null> {
 async function triggerZipBackupOnly(): Promise<void> {
   if (isAnyTaskRunning.value || !backupManager) { return }
   if (!workspacePath.value) {
-    showMessage(props.i18n.noWorkspace || "请先选择工作区路径", 3000, "info")
+    showMessage(props.i18n.noWorkspace, 3000, "info")
     await selectWorkspacePath()
     if (!workspacePath.value) { return }
+    // 目录对话框挂起期间可能有自动备份 tick 进入，重查互斥守卫
+    if (isAnyTaskRunning.value) { return }
   }
   isZipBackingUp.value = true
   try {
@@ -690,10 +724,9 @@ async function handleAutoBackupTrigger(): Promise<void> {
     getS3BackupInstance()?.resetExecutionMarks()
     return
   }
-  try {
-    await performManualBackup()
-  } catch {
-    // 错误提示与日志由 performManualBackup 内部处理，此处仅回滚标记允许重试
+  // performManualBackup 内部吞掉所有错误并返回是否成功；失败/跳过时回滚标记，允许下一 tick 重试
+  const ok = await performManualBackup(true)
+  if (!ok) {
     getS3BackupInstance()?.resetExecutionMarks()
   }
 }

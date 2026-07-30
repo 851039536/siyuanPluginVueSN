@@ -167,7 +167,6 @@
           :config="s3ConfigLocal"
           :i18n="i18n"
           :on-test-connection="testConnection"
-          @config-changed="handleConfigChanged"
           @saved="handleConfigSaved"
         />
       </section>
@@ -487,26 +486,22 @@ async function triggerIncrementalRestore(): Promise<void> {
 
 // ========== S3 配置管理 ==========
 
-function handleConfigChanged(config: S3Config): void {
+/** 子组件 saved 事件携带完整配置：同步本地引用 + 应用 + 加密持久化 */
+async function handleConfigSaved(config: S3Config): Promise<void> {
   s3ConfigLocal.value = config
-}
-
-async function handleConfigSaved(): Promise<void> {
-  if (!s3ConfigLocal.value) { return }
-  applyConfig(s3ConfigLocal.value)
+  applyConfig(config)
 
   const instance = getS3BackupInstance()
   if (instance) {
     // A8 修复：S3 凭证加密存储，防止 accessKey/secretKey 明文暴露
-    const plain = s3ConfigLocal.value
     const encrypted: S3Config = {
-      ...plain,
-      accessKey: await encryptSetting(plain.accessKey),
-      secretKey: await encryptSetting(plain.secretKey),
+      ...config,
+      accessKey: await encryptSetting(config.accessKey),
+      secretKey: await encryptSetting(config.secretKey),
     }
     await instance.getStorage().s3Config.save(encrypted)
   }
-  showMessage(props.i18n.configSaved || "配置已保存", 2000, "info")
+  showMessage(props.i18n.configSaved, 2000, "info")
 }
 
 // ========== 备份操作 ==========

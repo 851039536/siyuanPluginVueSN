@@ -108,7 +108,7 @@ import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Loader from "@/components/Loader.vue"
 import type { S3FileManagerI18n } from "../types"
-import { nameFromKey, prefixFromSegments, splitPrefixSegments } from "../utils"
+import { aggregateEntries, nameFromKey, prefixFromSegments, splitPrefixSegments } from "../utils"
 
 const props = defineProps<{
   title: string
@@ -143,7 +143,10 @@ async function navigate(prefix: string): Promise<void> {
   currentPrefix.value = prefix
   try {
     const listing = await listDir(props.requireClient(), prefix)
-    folders.value = listing.folders
+    // 防御性客户端聚合：服务端静默忽略 delimiter（无 CommonPrefixes）时，
+    // 从扁平递归列举折叠出子目录，与主列表 loadDir 同口径，否则选不到目标文件夹
+    const agg = aggregateEntries(listing.files, prefix)
+    folders.value = [...new Set([...listing.folders, ...agg.folders])]
   } catch (err) {
     console.warn("[S3文件管理] 目标目录列举失败:", getErrorMessage(err))
     folders.value = []

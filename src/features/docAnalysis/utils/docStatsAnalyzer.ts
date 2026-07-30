@@ -5,7 +5,7 @@ import { sql } from "@/api"
 import type { DocStats, DepthStats, PlatformMeta } from "../types/index"
 import { daysAgoStr } from "./sqlHelpers"
 import { getPlatformIdFromAttrKey } from "./platformPublish"
-import { SIZE_WORDCOUNT_SUBQUERY } from "./sqlConstants"
+import { SIZE_WORDCOUNT_SUBQUERY, DOC_DEPTH_EXPR } from "./sqlConstants"
 
 // ============================================================
 // 各维度分析（通过闭包修改 docStats / depthStats reactive）
@@ -49,7 +49,7 @@ export async function analyzeDepth(notebookCondition: string, docStats: DocStats
   try {
     const rows = await sql(`
       SELECT
-        COALESCE(LENGTH(b.hpath) - LENGTH(REPLACE(b.hpath, '/', '')) - 1, 0) as depth,
+        COALESCE(${DOC_DEPTH_EXPR}, 0) as depth,
         COUNT(*) as cnt
       FROM blocks b
       WHERE b.type = 'd' ${notebookCondition}

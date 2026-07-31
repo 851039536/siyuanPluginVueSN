@@ -7,9 +7,11 @@ import { Plugin } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 
-/** 默认设置：弹窗居中显示 */
+/** 默认设置：弹窗居中显示，无自定义坐标 */
 export const DEFAULT_QUICK_NOTE_SETTINGS: QuickNoteSettings = {
   position: "center",
+  customX: 0,
+  customY: 0,
 }
 
 export class QuickNoteStorage {

@@ -382,6 +382,9 @@ export const COMMON_ICONS = {
   circleOutline: {
     icon: "mdi:circle-outline",
   },
+  layoutGrid: {
+    icon: "mdi:view-grid-outline",
+  },
   x: {
     icon: "mdi:close",
   },

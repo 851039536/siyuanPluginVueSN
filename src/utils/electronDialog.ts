@@ -1,14 +1,35 @@
 // Electron 原生对话框与文件操作工具（目录选择 + 文件多选 + 文件夹打开）
 import { getElectronModules, getNodeModules } from "@/utils/nodeModules"
 
+/** Electron showOpenDialog 返回结果最小接口 */
+interface OpenDialogResult {
+  canceled: boolean
+  filePaths: string[]
+}
+
+/** Electron remote 模块最小接口（仅声明本项目用到的方法） */
+interface ElectronRemote {
+  dialog?: {
+    showOpenDialog: (options: {
+      properties: string[]
+      title: string
+    }) => Promise<OpenDialogResult>
+  }
+}
+
+/** Electron webUtils 模块最小接口 */
+interface ElectronWebUtils {
+  getPathForFile?: (file: File) => string
+}
+
 /** 获取 Electron remote 模块（兼容新旧 Electron：先 @electron/remote 再回退 electron.remote） */
-function getRemote(): any {
+function getRemote(): ElectronRemote | null {
   if (typeof window.require !== "function") { return null }
   try {
     try {
-      return window.require("@electron/remote")
+      return window.require("@electron/remote") as ElectronRemote
     } catch {
-      return window.require("electron").remote
+      return (window.require("electron") as { remote: ElectronRemote }).remote
     }
   } catch {
     return null
@@ -18,21 +39,21 @@ function getRemote(): any {
 /** 使用 Electron 原生对话框选择目录 */
 export async function pickDirectory(title: string): Promise<string | null> {
   // 优先使用 Electron 原生目录选择对话框（路径可靠）
-  if (typeof window.require === "function") {
-    try {
-      const remote = getRemote()
-      if (remote?.dialog?.showOpenDialog) {
-        const result = await remote.dialog.showOpenDialog({
-          properties: ["openDirectory"],
-          title,
-        })
-        if (!result.canceled && result.filePaths[0]) {
-          return result.filePaths[0]
-        }
-      }
-    } catch {
-      // 降级到 webkitdirectory 方案
+  try {
+    const remote = getRemote()
+    if (remote?.dialog?.showOpenDialog) {
+      const result = await remote.dialog.showOpenDialog({
+        properties: ["openDirectory"],
+        title,
+      })
+      // 原生对话框可用时直接返回结果，不能穿透到降级方案，
+      // 否则用户取消后会再弹出一个浏览器选择框
+      return !result.canceled && result.filePaths[0]
+        ? result.filePaths[0]
+        : null
     }
+  } catch {
+    // remote 不可用或调用异常 → 降级到 webkitdirectory 方案
   }
   // 降级方案：浏览器环境使用 input[webkitdirectory]
   return new Promise((resolve) => {
@@ -137,10 +158,10 @@ export async function pickFiles(title: string): Promise<string[] | null> {
 }
 
 /** 获取 Electron webUtils 模块（Electron 32+ 用 getPathForFile 取拖入文件磁盘路径） */
-function getWebUtils(): any {
+function getWebUtils(): ElectronWebUtils | null {
   if (typeof window.require !== "function") { return null }
   try {
-    return window.require("electron").webUtils
+    return (window.require("electron") as { webUtils: ElectronWebUtils }).webUtils
   } catch {
     return null
   }

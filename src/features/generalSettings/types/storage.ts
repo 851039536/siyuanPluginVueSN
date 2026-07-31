@@ -150,6 +150,10 @@ export interface HighlightSettings {
   minLetterLength: number
   maxTextLength: number
   maxLetterLength: number
+  /** 双击英文单词后解释：优先读取单词本释义，未收录时调用 AI 翻译 */
+  enableWordExplain: boolean
+  /** 解释单词时自动播放发音 */
+  autoPlayWord: boolean
 }
 
 // ============================================================
@@ -252,6 +256,8 @@ export const DEFAULT_HIGHLIGHT_SETTINGS: HighlightSettings = {
   minLetterLength: 1,
   maxTextLength: 50,
   maxLetterLength: 100,
+  enableWordExplain: false,
+  autoPlayWord: false,
 }
 
 /** 默认钉住页签设置 */

@@ -9,95 +9,34 @@
   </div>
 
   <div
-    v-else-if="changedDocs.newDocs.length > 0 || changedDocs.modifiedDocs.length > 0 || deletedDocs.length > 0"
+    v-else-if="hasChanges"
     class="changed-docs-content"
   >
+    <!-- 三分组统一由 groups 配置数组驱动（新增/修改可点击打开，删除只读） -->
     <div
-      v-if="changedDocs.newDocs.length > 0"
+      v-for="group in groups"
+      :key="group.key"
       class="changed-docs-group"
     >
       <div class="changed-docs-group-title">
         <IconWrapper
-          name="success"
+          :name="group.titleIcon"
           :size="12"
         />
-        <!-- 分组标题："新增（N）" -->
-        {{ i18n.todayCreated }}（{{ changedDocs.newDocs.length }}）
+        <!-- 分组标题："新增/修改/删除（N）" -->
+        {{ group.title }}（{{ group.docs.length }}）
       </div>
       <div
-        v-for="doc in changedDocs.newDocs"
-        :key="doc.id"
-        class="changed-doc-item new"
-        :title="i18n.openDocHint"
-        @click="openDoc(doc.id)"
+        v-for="(doc, idx) in group.docs"
+        :key="group.clickable ? (doc as ChangedDoc).id : `${group.key}-${doc.title}-${doc.time ?? ''}-${idx}`"
+        class="changed-doc-item"
+        :class="group.itemClass"
+        :title="group.clickable ? i18n.openDocHint : undefined"
+        @click="group.clickable && openDocById((doc as ChangedDoc).id)"
       >
         <span class="changed-doc-icon">
           <IconWrapper
-            name="plus"
-            :size="11"
-          />
-        </span>
-        <!-- 文档标题（空标题显示"无标题"） -->
-        <span class="changed-doc-title">{{ doc.title || i18n.untitled }}</span>
-        <span
-          v-if="doc.time"
-          class="changed-doc-time"
-        >{{ doc.time }}</span>
-      </div>
-    </div>
-    <div
-      v-if="changedDocs.modifiedDocs.length > 0"
-      class="changed-docs-group"
-    >
-      <div class="changed-docs-group-title">
-        <IconWrapper
-          name="edit"
-          :size="12"
-        />
-        <!-- 分组标题："修改（N）" -->
-        {{ i18n.todayModified }}（{{ changedDocs.modifiedDocs.length }}）
-      </div>
-      <div
-        v-for="doc in changedDocs.modifiedDocs"
-        :key="doc.id"
-        class="changed-doc-item modified"
-        :title="i18n.openDocHint"
-        @click="openDoc(doc.id)"
-      >
-        <span class="changed-doc-icon">
-          <IconWrapper
-            name="edit"
-            :size="11"
-          />
-        </span>
-        <!-- 文档标题（空标题显示"无标题"） -->
-        <span class="changed-doc-title">{{ doc.title || i18n.untitled }}</span>
-        <span
-          v-if="doc.time"
-          class="changed-doc-time"
-        >{{ doc.time }}</span>
-      </div>
-    </div>
-    <div
-      v-if="deletedDocs.length > 0"
-      class="changed-docs-group"
-    >
-      <div class="changed-docs-group-title">
-        <IconWrapper
-          name="delete"
-          :size="12"
-        />
-        <!-- 分组标题："删除（N）" -->
-        {{ i18n.deletedTitle }}（{{ deletedDocs.length }}）
-      </div>
-      <div
-        v-for="(doc, idx) in deletedDocs"
-        :key="idx"
-        class="changed-doc-item deleted"
-      >
-        <span class="changed-doc-icon">
-          <IconWrapper
-            name="delete"
+            :name="group.itemIcon"
             :size="11"
           />
         </span>
@@ -124,7 +63,10 @@ import type {
   ChangedDoc,
   DeletedDoc,
 } from "../types"
+import type { IconKey } from "@/config/icons"
+import { computed } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import { openDocById } from "../utils"
 
 interface Props {
   changedDocs?: { newDocs: ChangedDoc[], modifiedDocs: ChangedDoc[] }
@@ -133,7 +75,7 @@ interface Props {
   i18n?: Record<string, any>
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   changedDocs: () => ({
     newDocs: [],
     modifiedDocs: [],
@@ -143,11 +85,51 @@ withDefaults(defineProps<Props>(), {
   i18n: () => ({}),
 })
 
-function openDoc(docId: string) {
-  if (docId) {
-    window.open(`siyuan://blocks/${docId}`)
-  }
+interface Group {
+  key: string
+  title: string
+  titleIcon: IconKey
+  itemIcon: IconKey
+  itemClass: string
+  clickable: boolean
+  docs: Array<ChangedDoc | DeletedDoc>
 }
+
+// 三分组元数据 + 数据，仅保留非空分组供模板遍历
+const groups = computed<Group[]>(() => {
+  const list: Group[] = [
+    {
+      key: "new",
+      title: props.i18n.todayCreated,
+      titleIcon: "success",
+      itemIcon: "plus",
+      itemClass: "new",
+      clickable: true,
+      docs: props.changedDocs.newDocs,
+    },
+    {
+      key: "modified",
+      title: props.i18n.todayModified,
+      titleIcon: "edit",
+      itemIcon: "edit",
+      itemClass: "modified",
+      clickable: true,
+      docs: props.changedDocs.modifiedDocs,
+    },
+    {
+      key: "deleted",
+      title: props.i18n.deletedTitle,
+      titleIcon: "delete",
+      itemIcon: "delete",
+      itemClass: "deleted",
+      clickable: false,
+      docs: props.deletedDocs,
+    },
+  ]
+  return list.filter((g) => g.docs.length > 0)
+})
+
+const hasChanges = computed(() => groups.value.length > 0)
 </script>
 
 <style lang="scss" scoped>

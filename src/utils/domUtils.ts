@@ -15,12 +15,12 @@ export function fallbackCopyToClipboard(text: string): boolean {
   document.body.appendChild(textarea)
   textarea.select()
   try {
-    document.execCommand("copy")
-    return true
+    // execCommand 在部分浏览器不抛异常而是返回 false 表示失败，须回传其结果
+    return document.execCommand("copy")
   } catch {
     return false
   } finally {
-    document.body.removeChild(textarea)
+    textarea.remove()
   }
 }
 
@@ -42,7 +42,7 @@ export async function copyToClipboard(text: string): Promise<boolean> {
 
 /**
  * 触发浏览器文件下载
- * @param url 文件 URL（Blob URL 或远程 URL）
+ * @param url 文件 URL（data: URL 或远程 URL；object URL 请用 triggerBlobDownload）
  * @param filename 下载文件名
  */
 export function triggerDownload(url: string, filename: string): void {
@@ -51,9 +51,9 @@ export function triggerDownload(url: string, filename: string): void {
   a.download = filename
   document.body.appendChild(a)
   a.click()
+  // 仅移除锚点；URL 生命周期由调用方负责（object URL 的 revoke 交给 triggerBlobDownload）
   setTimeout(() => {
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    a.remove()
   }, 100)
 }
 
@@ -65,6 +65,10 @@ export function triggerDownload(url: string, filename: string): void {
 export function triggerBlobDownload(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob)
   triggerDownload(url, filename)
+  // 由创建者负责回收 object URL，避免越权 revoke 调用方传入的其他 URL
+  setTimeout(() => {
+    URL.revokeObjectURL(url)
+  }, 100)
 }
 
 /**

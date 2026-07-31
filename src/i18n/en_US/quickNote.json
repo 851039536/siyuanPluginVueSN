@@ -1,0 +1,22 @@
+{
+  "quickNote": {
+    "title": "Quick Note",
+    "description": "Quickly jot down multi-line notes with pending/done states and configurable dialog position",
+    "addPlaceholder": "Type a note, Ctrl+Enter to add",
+    "add": "Add",
+    "pending": "Pending",
+    "done": "Done",
+    "emptyPending": "No pending notes",
+    "emptyDone": "No completed notes",
+    "position": "Position",
+    "positionCenter": "Center",
+    "positionTop": "Top",
+    "positionBottom": "Bottom",
+    "positionLeft": "Left",
+    "positionRight": "Right",
+    "markDone": "Mark as done",
+    "markPending": "Mark as pending",
+    "deleteConfirm": "Delete this note?",
+    "createdAt": "Created at"
+  }
+}

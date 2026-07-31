@@ -225,6 +225,12 @@ onMounted(() => {
     }
   })
 
+  // 监听速记面板切换事件（来自状态栏按钮/功能抽屉）
+  window.addEventListener("toggleQuickNote", () => {
+    const pluginInstance = plugin as any
+    pluginInstance.__quickNote?.toggle()
+  })
+
   // 监听打开HTML展示事件
   window.addEventListener("openHtmlViewer", ((event: any) => {
     htmlViewerVisible.value = true

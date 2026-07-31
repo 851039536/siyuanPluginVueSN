@@ -58,6 +58,7 @@ export interface PluginSettings {
   enableToolCollection: boolean // 是否启用工具合集功能
   enableS3Backup: boolean // 是否启用 S3 备份功能
   enableS3FileManager: boolean // 是否启用 S3 文件管理功能
+  enableQuickNote: boolean // 是否启用速记功能
   featureStatus: Record<string, string> // 功能状态标识: featureId -> 'stable' | 'needsFix' | 'critical' | 'minor'
   themeColorScheme: string // 主题色方案: 'orange' | 'github'
   videoCategories?: string[] // 视频分类列表
@@ -125,6 +126,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableToolCollection: true,
   enableS3Backup: true,
   enableS3FileManager: true,
+  enableQuickNote: true,
   featureStatus: {},
   themeColorScheme: "orange",
   videoCategories: ["默认分类", "教程", "演示", "其他"],

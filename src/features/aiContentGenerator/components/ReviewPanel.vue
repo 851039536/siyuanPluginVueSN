@@ -18,7 +18,8 @@
         width="14"
         height="14"
       ><use xlink:href="#iconCheck"></use></svg>
-      <span>交叉审核</span>
+      <!-- 折叠头标题："交叉审核" -->
+      <span>{{ i18n.reviewCrossReview }}</span>
       <span
         v-if="isReviewing"
         class="review-loading-dot"
@@ -61,7 +62,8 @@
             class="subsection-chevron"
             :class="{ expanded: showScores }"
           ><use xlink:href="#iconRight"></use></svg>
-          <span>分项评分</span>
+          <!-- 小节标题："分项评分" -->
+          <span>{{ i18n.reviewDetailedScore }}</span>
         </button>
         <div
           v-if="showScores"
@@ -103,39 +105,41 @@
 
       <!-- 问题清单 -->
       <div
-        v-if="filteredIssues.length > 0"
+        v-if="filteredIssueEntries.length > 0"
         class="review-issues"
       >
+        <!-- 小节标题："问题清单 (N)" -->
         <div class="review-section-title">
-          问题清单 ({{ filteredIssues.length }})
+          {{ i18n.reviewIssueList }} ({{ filteredIssueEntries.length }})
         </div>
         <div
-          v-for="(issue, idx) in filteredIssues"
-          :key="idx"
+          v-for="entry in filteredIssueEntries"
+          :key="entry.originalIndex"
           class="review-issue-item"
-          :class="`severity-${issue.severity}`"
+          :class="`severity-${entry.issue.severity}`"
         >
           <div class="issue-content">
             <span
               class="issue-severity"
-              :class="`severity-${issue.severity}`"
-            >{{ issue.severity }}</span>
-            <span class="issue-text">{{ issue.description }}</span>
+              :class="`severity-${entry.issue.severity}`"
+            >{{ entry.issue.severity }}</span>
+            <span class="issue-text">{{ entry.issue.description }}</span>
           </div>
           <div
-            v-if="reviewResult.rating === '需改进' && !isAutoFixing"
+            v-if="needsFix && !isAutoFixing"
             class="issue-actions"
           >
+            <!-- 按钮："修复"（title："定向修复此问题"） -->
             <button
               class="fix-issue-btn"
-              title="定向修复此问题"
-              @click="$emit('fixIssue', filteredIssueIndices[idx])"
+              :title="i18n.reviewFixIssueTitle"
+              @click="$emit('fixIssue', entry.originalIndex)"
             >
               <svg
                 width="10"
                 height="10"
               ><use xlink:href="#iconRefresh"></use></svg>
-              修复
+              {{ i18n.reviewFix }}
             </button>
           </div>
         </div>
@@ -146,8 +150,9 @@
         v-if="reviewResult.suggestions.length > 0"
         class="review-suggestions"
       >
+        <!-- 小节标题："改进建议" -->
         <div class="review-section-title">
-          改进建议
+          {{ i18n.reviewSuggestions }}
         </div>
         <div
           v-for="(sug, idx) in reviewResult.suggestions"
@@ -161,40 +166,44 @@
 
       <!-- 底部操作栏 -->
       <div class="review-footer">
-        <span class="review-model">审核模型: {{ reviewResult.reviewModel }}</span>
+        <!-- 元信息："审核模型:" + 模型名 -->
+        <span class="review-model">{{ i18n.reviewModelLabel }} {{ reviewResult.reviewModel }}</span>
         <span class="review-time">{{ formatTime(reviewResult.reviewedAt) }}</span>
         <div class="review-footer-actions">
+          <!-- 按钮："重新审核" -->
           <button
             v-if="!isReviewing"
             class="review-footer-btn"
-            title="重新审核"
+            :title="i18n.reviewReReview"
             @click="$emit('reReview')"
           >
             <svg
               width="10"
               height="10"
             ><use xlink:href="#iconRefresh"></use></svg>
-            重新审核
+            {{ i18n.reviewReReview }}
           </button>
-          <template v-if="reviewResult.rating === '需改进' && reviewResult.issues.length > 0">
+          <template v-if="needsFix && reviewResult.issues.length > 0">
+            <!-- 修复进行中徽标："修复中..." -->
             <span
               v-if="isAutoFixing"
               class="auto-fixing-badge"
             >
               <span class="dot-flashing"></span>
-              修复中...
+              {{ i18n.reviewFixing }}
             </span>
+            <!-- 按钮："自动修复"（title："自动修复所有问题"） -->
             <button
               v-else
               class="review-footer-btn auto-fix-btn"
-              title="自动修复所有问题"
+              :title="i18n.reviewAutoFixTitle"
               @click="$emit('autoFix')"
             >
               <svg
                 width="10"
                 height="10"
               ><use xlink:href="#iconRefresh"></use></svg>
-              自动修复
+              {{ i18n.reviewAutoFix }}
             </button>
           </template>
         </div>
@@ -211,6 +220,7 @@ import {
 import type { ReviewResult } from "@/types/ai"
 
 interface Props {
+  i18n: Record<string, string>
   isReviewing: boolean
   reviewResult: ReviewResult | null
   isAutoFixing: boolean
@@ -229,13 +239,14 @@ const showScores = ref(true)
 
 type ScoreKey = keyof NonNullable<ReviewResult["detailedScore"]>
 
-const scoreLabelMap: Record<ScoreKey, string> = {
-  accuracy: "准确性",
-  structure: "结构",
-  quality: "语言质量",
-  format: "格式规范",
-  coverage: "覆盖完整",
-}
+/** 分项评分标签（准确性/结构/语言质量/格式规范/覆盖完整），文案来自 i18n */
+const scoreLabelMap = computed<Record<ScoreKey, string>>(() => ({
+  accuracy: props.i18n.reviewScoreAccuracy,
+  structure: props.i18n.reviewScoreStructure,
+  quality: props.i18n.reviewScoreQuality,
+  format: props.i18n.reviewScoreFormat,
+  coverage: props.i18n.reviewScoreCoverage,
+}))
 
 const scoreLevel = (value: number): string => {
   if (value >= 8) return "high"
@@ -243,13 +254,19 @@ const scoreLevel = (value: number): string => {
   return "low"
 }
 
-const ratingClass = computed(() => {
-  if (!props.reviewResult) return ""
-  const r = props.reviewResult.rating
-  if (r === "优秀") return "rating-good"
-  if (r === "良好") return "rating-ok"
-  return "rating-needs-fix"
-})
+/** 评级→徽标样式类映射（rating 值为 AI 输出的中文业务枚举） */
+const RATING_CLASS_MAP: Record<ReviewResult["rating"], string> = {
+  优秀: "rating-good",
+  良好: "rating-ok",
+  需改进: "rating-needs-fix",
+}
+
+const ratingClass = computed(() =>
+  props.reviewResult ? RATING_CLASS_MAP[props.reviewResult.rating] : "",
+)
+
+/** 评级为"需改进"时才展示定向修复/自动修复入口 */
+const needsFix = computed(() => props.reviewResult?.rating === "需改进")
 
 /** 严重程度过滤键的联合类型 */
 type SeverityFilterKey = "all" | "高" | "中" | "低"
@@ -257,43 +274,33 @@ type SeverityFilterKey = "all" | "高" | "中" | "低"
 // 严重程度过滤
 const issueFilter = ref<SeverityFilterKey>("all")
 
+// 单次遍历累加各严重度计数
 const filterCounts = computed<Record<SeverityFilterKey, number>>(() => {
-  if (!props.reviewResult) {
-    return { all: 0, 高: 0, 中: 0, 低: 0 }
+  const counts: Record<SeverityFilterKey, number> = { all: 0, 高: 0, 中: 0, 低: 0 }
+  for (const issue of props.reviewResult?.issues ?? []) {
+    counts.all++
+    counts[issue.severity]++
   }
-  const issues = props.reviewResult.issues
-  return {
-    all: issues.length,
-    高: issues.filter((i) => i.severity === "高").length,
-    中: issues.filter((i) => i.severity === "中").length,
-    低: issues.filter((i) => i.severity === "低").length,
-  }
+  return counts
 })
 
-const filterOptions: { key: SeverityFilterKey; label: string }[] = [
-  { key: "all", label: "全部" },
+// 过滤按钮："全部"为 UI 文案取自 i18n；高/中/低为业务枚举值本身，按数据原样展示
+const filterOptions = computed<{ key: SeverityFilterKey; label: string }[]>(() => [
+  { key: "all", label: props.i18n.reviewFilterAll },
   { key: "高", label: "高" },
   { key: "中", label: "中" },
   { key: "低", label: "低" },
-]
+])
 
-const filteredIssues = computed(() => {
-  if (!props.reviewResult) return []
-  if (issueFilter.value === "all") return props.reviewResult.issues
-  return props.reviewResult.issues.filter((i) => i.severity === issueFilter.value)
+/** 过滤后的问题及其在原始数组中的索引（fixIssue emit 需要原始索引），单 computed 避免两次遍历靠位置隐式对齐 */
+const filteredIssueEntries = computed(() => {
+  const issues = props.reviewResult?.issues ?? []
+  return issues
+    .map((issue, originalIndex) => ({ issue, originalIndex }))
+    .filter((entry) => issueFilter.value === "all" || entry.issue.severity === issueFilter.value)
 })
 
-// 过滤后的问题在原始数组中的索引（用于 fix-issue emit）
-const filteredIssueIndices = computed(() => {
-  if (!props.reviewResult) return []
-  if (issueFilter.value === "all") {
-    return props.reviewResult.issues.map((_, i) => i)
-  }
-  return props.reviewResult.issues
-    .map((i, idx) => (i.severity === issueFilter.value ? idx : -1))
-    .filter((idx) => idx >= 0)
-})
-
+// 本地紧凑 HH:mm 展示；不复用 @/utils/format.ts 的 formatTime（其输出完整日期时间，不适合 footer 徽标）
 const formatTime = (ts: number): string => {
   const d = new Date(ts)
   return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`

@@ -25,16 +25,20 @@ const AUTHOR_RANK_LIMIT = 10
 export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProject[]>) {
   /** 分析中标记（并发去重） */
   const analyzing = ref(false)
-  /** 是否已完成过至少一轮分析（区分"未分析"与"分析结果为空"） */
+  /** 是否已完成过至少一轮分析（区分“未分析”与“分析结果为空”） */
   const analyzed = ref(false)
   /** 每项目抓取的提交条数（默认 100，可改 30/50/100/200） */
   const commitCount = ref<number>(100)
+  /** 上次分析完成时间（ISO，缓存加载/分析完成后回填，供面板展示） */
+  const analyzedAt = ref("")
   /** 跨项目合并的原始提交条目缓存 */
   const entries = ref<CommitAnalysisEntry[]>([])
   /** 分析失败的项目数（路径无效/git 失败，getCommitLog 内部吞错时按空数组计） */
   const failedCount = ref(0)
+  /** 是否已尝试过从存储载入缓存（防重复读盘） */
+  let cacheLoaded = false
 
-  /** 批量分析全部项目（GitExecutor 自带并发限流，无需额外节流） */
+  /** 批量分析全部项目（GitExecutor 自带并发限流，无需额外节流）；成功后持久化结果供下次复用 */
   async function runAnalysis() {
     if (analyzing.value) return
     analyzing.value = true
@@ -58,10 +62,40 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
       })
       entries.value = flat
       failedCount.value = fail
+      analyzedAt.value = new Date().toISOString()
       analyzed.value = true
+      await manager.storage.commitAnalysisCache.save({
+        commitCount: commitCount.value,
+        analyzedAt: analyzedAt.value,
+        failedCount: fail,
+        entries: flat,
+      })
     } finally {
       analyzing.value = false
     }
+  }
+
+  /** 从存储载入上次分析结果（有有效条目时直接复用，不再重新分析） */
+  async function loadCachedAnalysis() {
+    if (cacheLoaded) return
+    cacheLoaded = true
+    const cache = await manager.storage.commitAnalysisCache.loadOrDefault()
+    if (cache.entries.length === 0) return
+    // 过滤已删除项目的残留条目（项目删除后缓存不再展示其数据）
+    const validIds = new Set(projects.value.map((p) => p.id))
+    const valid = cache.entries.filter((e) => validIds.has(e.projectId))
+    if (valid.length === 0) return
+    commitCount.value = cache.commitCount
+    failedCount.value = cache.failedCount
+    analyzedAt.value = cache.analyzedAt
+    entries.value = valid
+    analyzed.value = true
+  }
+
+  /** 进入分析视图的统一入口：先尝试复用持久化缓存，无有效缓存时才重新分析 */
+  async function ensureAnalysis() {
+    await loadCachedAnalysis()
+    if (!analyzed.value && !analyzing.value) await runAnalysis()
   }
 
   /** 修改抓取条数后置为未分析并自动重跑 */
@@ -74,7 +108,9 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
 
   /** 分析聚合视图（CommitAnalysisPanel 唯一数据 prop，新增维度只需改这里 + 类型 + 面板三处） */
   const analysisStats = computed<CommitAnalysisStats>(() => {
-    const list = entries.value
+    // 实时过滤已删除项目的条目（项目删除后缓存/内存中的残留数据不参与统计与展示）
+    const validIds = new Set(projects.value.map((p) => p.id))
+    const list = entries.value.filter((e) => validIds.has(e.projectId))
     const nameById = new Map(projects.value.map((p) => [p.id, p.name]))
     return {
       totalCommits: list.length,
@@ -103,8 +139,10 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     analysisStats,
     analyzing,
     analyzed,
+    analyzedAt,
     commitCount,
     setCommitCount,
     runAnalysis,
+    ensureAnalysis,
   }
 }

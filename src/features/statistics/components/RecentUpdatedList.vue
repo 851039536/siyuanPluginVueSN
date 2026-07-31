@@ -33,7 +33,7 @@
         :key="doc.id"
         class="recent-doc-item"
         :class="{ new: isDocCreatedToday(doc) }"
-        @click="openDoc(doc.id)"
+        @click="openDocById(doc.id)"
       >
         <span class="recent-doc-badge">
           <IconWrapper
@@ -57,7 +57,7 @@
 import type { RecentUpdatedDoc } from "../types"
 import { computed } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { formatYmd } from "../utils"
+import { formatYmd, openDocById } from "../utils"
 
 interface Props {
   docs?: RecentUpdatedDoc[]
@@ -70,12 +70,6 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false,
   i18n: () => ({}),
 })
-
-function openDoc(docId: string) {
-  if (docId) {
-    window.open(`siyuan://blocks/${docId}`)
-  }
-}
 
 function getTodayStr(): string {
   return formatYmd(new Date())

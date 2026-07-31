@@ -24,6 +24,13 @@ export function stripTags(html: string): string {
 }
 
 /**
+ * 按文档块 ID 在思源中打开对应文档（空 ID 不做任何事）
+ */
+export function openDocById(docId: string): void {
+  if (docId) window.open(`siyuan://blocks/${docId}`)
+}
+
+/**
  * 将文档块查询行映射为 ChangedDoc（去除 HTML 标签，格式化时间）
  */
 export function mapChangedDocs(

@@ -45,7 +45,7 @@
           v-for="doc in newDocs"
           :key="doc.id"
           class="detail-item new"
-          @click="openDoc(doc.id)"
+          @click="openDocById(doc.id)"
         >
           <span class="detail-icon">+</span>
           <!-- 文档标题（空标题显示"无标题"） -->
@@ -73,7 +73,7 @@
           v-for="doc in modifiedDocs"
           :key="doc.id"
           class="detail-item modified"
-          @click="openDoc(doc.id)"
+          @click="openDocById(doc.id)"
         >
           <span class="detail-icon">~</span>
           <!-- 文档标题（空标题显示"无标题"） -->
@@ -91,6 +91,7 @@
 <script setup lang="ts">
 import type { ChangedDoc } from "../types"
 import IconWrapper from "@/components/IconWrapper.vue"
+import { openDocById } from "../utils"
 
 interface Props {
   date: string
@@ -110,10 +111,6 @@ withDefaults(defineProps<Props>(), {
 defineEmits<{
   close: []
 }>()
-
-function openDoc(docId: string) {
-  if (docId) window.open(`siyuan://blocks/${docId}`)
-}
 </script>
 
 <style lang="scss" scoped>

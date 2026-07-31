@@ -1,8 +1,5 @@
 <template>
   <div class="ai-content-panel">
-    <!-- 顶部工具栏 -->
-    <PanelHeader />
-
     <!-- 内容显示区域 -->
     <div class="content-display-section">
       <MainContentArea
@@ -97,7 +94,6 @@ import { useReview } from "./composables/useReview"
 import { useEditOperations } from "./composables/useEditOperations"
 import { useDocumentTarget } from "./composables/useDocumentTarget"
 import { renderMarkdown } from "./utils"
-import PanelHeader from "./components/PanelHeader.vue"
 import MainContentArea from "./components/MainContentArea.vue"
 import BottomInputArea from "./components/BottomInputArea.vue"
 

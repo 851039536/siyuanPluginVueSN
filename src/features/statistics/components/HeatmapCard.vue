@@ -224,6 +224,20 @@ const selectedMetric = ref<HeatmapMetric>('docsModified')
 const selectedNotebook = ref('')
 const loading = ref(false)
 
+// 请求时序计数：每次筛选发起的加载自增，回填前比对以丢弃过期响应
+let reqSeq = 0
+
+// 星期名（周日→周六），供日历 tooltip 与星期分布共用，避免重复构造
+const weekdayNames = computed(() => [
+  props.i18n.sunday,
+  props.i18n.monday,
+  props.i18n.tuesday,
+  props.i18n.wednesday,
+  props.i18n.thursday,
+  props.i18n.friday,
+  props.i18n.saturday,
+])
+
 // 时间范围选项（3个月/6个月/1年）
 const rangeOptions = computed(() => [
   {
@@ -266,18 +280,23 @@ const activityMap = ref(new Map<string, number>())
 
 async function loadData() {
   if (!props.onGetActivityData) return
+  const seq = ++reqSeq
   loading.value = true
   try {
     const nbId = selectedNotebook.value || undefined
-    activityMap.value = await props.onGetActivityData(
+    const result = await props.onGetActivityData(
       selectedRange.value,
       selectedMetric.value,
       nbId,
     )
+    // 时序控制：若已有更新的请求发出，丢弃本次过期响应
+    if (seq !== reqSeq) return
+    activityMap.value = result
   } catch (e) {
     console.error("加载热力图数据失败:", e)
   } finally {
-    loading.value = false
+    // 仅最新请求负责复位 loading，避免过期响应提前关闭加载态
+    if (seq === reqSeq) loading.value = false
   }
 }
 
@@ -291,6 +310,9 @@ const detailLoading = ref(false)
 const detailNewDocs = ref<ChangedDoc[]>([])
 const detailModifiedDocs = ref<ChangedDoc[]>([])
 
+// 日详情请求时序计数：快速切换选中日期时丢弃过期响应
+let detailSeq = 0
+
 async function clickCell(cell: { date: string, level: string }) {
   if (cell.level === 'level-empty' || !cell.date) return
   if (selectedDate.value === cell.date) {
@@ -299,13 +321,18 @@ async function clickCell(cell: { date: string, level: string }) {
   }
   selectedDate.value = cell.date
   if (!props.onGetDailyDetail) return
+  const seq = ++detailSeq
   detailLoading.value = true
   try {
     const d = await props.onGetDailyDetail(cell.date)
+    // 时序控制：过期响应不覆盖当前选中日期的详情
+    if (seq !== detailSeq) return
     detailNewDocs.value = d.newDocs
     detailModifiedDocs.value = d.modifiedDocs
+  } catch (e) {
+    console.error("加载日详情失败:", e)
   } finally {
-    detailLoading.value = false
+    if (seq === detailSeq) detailLoading.value = false
   }
 }
 
@@ -336,21 +363,12 @@ const calendarCells = computed(() => {
     const dateStr = formatDate(cursor)
     const activity = getActivity(dateStr)
     // 单元格 tooltip："{日期} ({星期}): {次数}次"
-    const dayNames = [
-      props.i18n.sunday,
-      props.i18n.monday,
-      props.i18n.tuesday,
-      props.i18n.wednesday,
-      props.i18n.thursday,
-      props.i18n.friday,
-      props.i18n.saturday,
-    ]
     cells.push({
       date: dateStr,
       level: getLevel(activity),
       tooltip: String(props.i18n.cellTooltip || "")
         .replace("{date}", dateStr)
-        .replace("{weekday}", dayNames[cursor.getDay()])
+        .replace("{weekday}", weekdayNames.value[cursor.getDay()])
         .replace("{count}", String(activity)),
     })
     cursor.setDate(cursor.getDate() + 1)
@@ -364,7 +382,6 @@ const calendarCells = computed(() => {
         level: 'level-empty',
         tooltip: '',
       })
-      cursor.setDate(cursor.getDate() + 1)
     }
   }
 
@@ -381,8 +398,8 @@ const monthLabels = computed(() => {
   for (let week = 0; week < totalWeeks.value; week++) {
     const cell = calendarCells.value[week * 7]
     if (!cell || cell.level === 'level-empty') continue
-    const d = new Date(cell.date)
-    const m = d.getMonth()
+    // 直接按 YYYY-MM-DD 文本取月份，避免 new Date 按 UTC 解析在西半区时区月初回退一月
+    const m = Number(cell.date.slice(5, 7)) - 1
     if (m !== lastMonth) {
       labels.push({
         text: monthNames[m],
@@ -415,15 +432,6 @@ const totalOperations = computed(() => {
 
 // ---- 星期分布 ----
 const weekdayDistribution = computed(() => {
-  const dayLabels = [
-    props.i18n.sunday,
-    props.i18n.monday,
-    props.i18n.tuesday,
-    props.i18n.wednesday,
-    props.i18n.thursday,
-    props.i18n.friday,
-    props.i18n.saturday,
-  ]
   const totals: number[] = Array.from({ length: 7 }).fill(0) as number[]
 
   for (const [dateStr, count] of activityMap.value.entries()) {
@@ -434,7 +442,7 @@ const weekdayDistribution = computed(() => {
   const grandTotal = totals.reduce((s, t) => s + t, 0)
   const maxTotal = Math.max(...totals, 1)
 
-  return dayLabels.map((label, i) => ({
+  return weekdayNames.value.map((label, i) => ({
     label,
     total: totals[i],
     pct: grandTotal > 0 ? Math.round((totals[i] / grandTotal) * 100) : 0,

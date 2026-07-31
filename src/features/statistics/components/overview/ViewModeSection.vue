@@ -102,7 +102,7 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { formatNumber } from "../utils"
+import { formatNumber } from "../../utils"
 
 interface Props {
   modelValue?: "day" | "week" | "month" | "year"
@@ -258,6 +258,6 @@ const periodAvgLabel = computed(() => {
 </script>
 
 <style scoped lang="scss">
-@use "../styles/ViewModeSection.scss";
-@use '../styles/index.scss' as stats;
+@use "../../styles/ViewModeSection.scss";
+@use '../../styles/index.scss' as stats;
 </style>

@@ -49,9 +49,9 @@
 </template>
 
 <script setup lang="ts">
-import type { NotebookActivityItem } from "../types"
+import type { NotebookActivityItem } from "../../types"
 import { computed } from "vue"
-import { formatNumber } from "../utils"
+import { formatNumber } from "../../utils"
 
 interface Props {
   notebooks?: NotebookActivityItem[]
@@ -87,6 +87,6 @@ const rankingData = computed(() => {
 </script>
 
 <style scoped lang="scss">
-@use '../styles/NotebookActivityTrend.scss';
-@use '../styles/index.scss' as stats;
+@use '../../styles/NotebookActivityTrend.scss';
+@use '../../styles/index.scss' as stats;
 </style>

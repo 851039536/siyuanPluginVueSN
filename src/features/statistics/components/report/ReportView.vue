@@ -193,14 +193,14 @@
 import type {
   ComparisonData,
   ReportData,
-} from "../types"
+} from "../../types"
 import {
   computed,
   ref,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { formatNumber } from "../utils"
-import ReportTrendChart from "./charts/ReportTrendChart.vue"
+import { formatNumber } from "../../utils"
+import ReportTrendChart from "./ReportTrendChart.vue"
 import ComparisonView from "./ComparisonView.vue"
 
 interface Props {
@@ -250,6 +250,6 @@ async function generate() {
 </script>
 
 <style scoped lang="scss">
-@use "../styles/ReportView.scss";
-@use '../styles/index.scss' as stats;
+@use "../../styles/ReportView.scss";
+@use '../../styles/index.scss' as stats;
 </style>

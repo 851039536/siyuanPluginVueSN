@@ -118,14 +118,14 @@
 </template>
 
 <script setup lang="ts">
-import type { HistoricalDataItem } from "../types"
+import type { HistoricalDataItem } from "../../types"
 import { computed } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import {
   formatDate,
   formatNumber,
   formatShortNumber,
-} from "../utils"
+} from "../../utils"
 
 interface Props {
   historicalData?: HistoricalDataItem[]
@@ -165,6 +165,6 @@ function getDiff(
 </script>
 
 <style scoped lang="scss">
-@use "../styles/HistoryTable.scss";
-@use '../styles/index.scss' as stats;
+@use "../../styles/HistoryTable.scss";
+@use '../../styles/index.scss' as stats;
 </style>

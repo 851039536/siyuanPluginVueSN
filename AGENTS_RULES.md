@@ -893,54 +893,59 @@ export function useXxx(deps: {
 
 ### 四、组件文件夹组织标准（`components/` 子目录）
 
-当 feature 的 `components/` 目录文件达到 **≥15 个**时，允许按**组件类型**创建子文件夹。但不是"设了子文件夹就一定要用完"——必须遵循以下分级标准：
+当 feature 的 UI 含 **≥3 个（含 3 个）Tab/子功能**时，`components/` **必须按 Tab/子功能创建子文件夹**分类；平铺大量组件会使目录难以导航（文件数 ≥15 时问题尤为突出）。必须遵循以下分级标准：
 
-#### 可以创建子文件夹（高置信度）
+#### 必须创建子文件夹（强制）
 
 | 条件 | 说明 | 示例 |
 |------|------|------|
-| 同一类型组件 **≥3 个** | Rule of Three 的文件夹版。3+ 个组件职责高度同质（如都是纯渲染图表），创建子文件夹提升导航效率 | `charts/`（BarChart + DocBarChart + NotebookBlockTypeChart + NotebookWordPie） |
+| Tab/子功能 **≥3 个** | 每个 Tab/子功能一个文件夹，该 Tab 专属的全部组件（含其图表、列表、弹窗等子组件）归入同一文件夹 | `overview/`、`trend/`、`heatmap/` |
+| 存在跨 Tab 复用/面板级常驻组件 | 被 ≥2 个 Tab 引用的组件，或面板级常驻组件（如顶部操作栏），统一放 `common/` 通用文件夹 | `common/StatisticsHeader.vue` |
 
-#### 不应创建子文件夹（过度碎片化）
+#### 不应创建子文件夹
 
 | 条件 | 说明 |
 |------|------|
-| 同一类型组件 **< 3 个** | 2 个组件放同一个文件夹与平铺无本质区别，反而增加 1 层导航成本 |
-| 按 Tab/页面分组 | 会产生大量文件夹且多数仅 1-3 文件，属于"按位置分"而非"按职责分"。如 `overview/`、`trend/`、`heatmap/` 这种按页面拆分——每个 Tab 的组件已通过 `index.vue` 的 `v-show` 组织，不需要文件夹重复表达 |
-| 紧密耦合组件已通过**命名**体现关系 | `MilestoneChip` / `MilestoneRuleEditor` 已有 `Milestone` 前缀表明父子关系，无需额外子文件夹（Vue 官方风格指南推荐） |
-| feature 总文件 < 15 | 扁平结构即可，导航成本低 |
+| Tab/子功能 **< 3 个** | 扁平结构即可，1-2 个视图分组与平铺无本质区别，反而增加 1 层导航成本 |
+| 按组件类型与按 Tab 双重混合分类 | 禁止在 Tab 文件夹之外再保留 `charts/` 这类类型文件夹——同一 Tab 的组件会分散在两处；图表等类型组件应并入其所属 Tab 文件夹 |
 
 #### 子文件夹命名规范
 
-- 使用**职责类型**而非页面/Tab 名：`charts/` ✅、`overview/` ❌
+- 使用 **Tab 语义的小写短名**：`overview/` ✅、`distribution/`（对应 notebookDistribution Tab）✅
+- 通用文件夹固定命名 `common/`
 - 保持小写（遵循项目目录命名惯例）
-- 每个 feature 的 `components/` 下**最多 3 个子文件夹**，避免碎片化
+- 子文件夹数量以 **Tab 数 + common/** 为准，不设额外上限
 
 #### 正面案例
 
 ```
-# ✅ statistics/components/（20 个文件 → 可建子文件夹）
+# ✅ statistics/components/（7 个 Tab → 7 个 Tab 文件夹 + common/）
 components/
-├── charts/                          # 4 个同质图表组件 → 达到阈值
-│   ├── BarChart.vue
-│   ├── DocBarChart.vue
-│   ├── NotebookBlockTypeChart.vue
-│   └── NotebookWordPie.vue
-└── (其余 16 个保持平铺)
+├── common/            # 1 个文件：StatisticsHeader（面板级常驻头部）
+├── overview/          # 7 个文件（含 BarChart 图表）
+├── heatmap/           # 2 个文件
+├── activity/          # 2 个文件
+├── trend/             # 4 个文件
+├── distribution/      # 4 个文件（含 3 个图表）
+├── report/            # 5 个文件（含 2 个图表）
+└── milestones/        # 6 个文件
 ```
 
 #### 反面案例
 
 ```
-# ❌ 按 Tab 分组 — 7 个子文件夹，多数仅 1-2 文件
+# ❌ 类型文件夹与 Tab 文件夹混用 — report Tab 的组件分散在两处
 components/
-├── overview/          # 5 个文件
-├── trend/             # 2 个文件 ← 不够 3 个
-├── notebook/          # 4 个文件
-├── report/            # 1 个文件 ← 不够 3 个
-├── milestones/        # 1 个文件 ← 不够 3 个
-├── heatmap/           # 1 个文件 ← 不够 3 个
-└── activity/          # 1 个文件 ← 不够 3 个
+├── charts/            # ReportTrendChart 在这里
+│   └── ReportTrendChart.vue
+└── report/            # ReportView 却在这里 ← 同一 Tab 两处找
+    └── ReportView.vue
+
+# ❌ 跨 Tab 共享组件散落在某个 Tab 文件夹内
+components/
+├── overview/
+│   └── StatisticsHeader.vue   # ← 面板级常驻组件，应放 common/
+└── trend/
 ```
 
 ### 快速自检清单

@@ -13,5 +13,13 @@
     "taller": "变高",
     "prevTool": "上一个工具 (←)",
     "nextTool": "下一个工具 (→)"
+  },
+  "pdfViewer": {
+    "title": "PDF 预览",
+    "dropHint": "将 PDF 文件拖拽到此处",
+    "dropSubHint": "支持本地 .pdf 文件",
+    "zoomHint": "Ctrl + 滚轮缩放",
+    "clear": "清除",
+    "notPdf": "仅支持 PDF 文件"
   }
 }

@@ -1,0 +1,135 @@
+@use '@/variables.scss' as *;
+
+.pdf-viewer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-size: $font-size-xs;
+  overflow: hidden;
+
+  // 拖拽引导区（无文件时）
+  .pv-dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: $spacing-2;
+    margin: $spacing-3;
+    border: 2px dashed var(--b3-border-color);
+    border-radius: $vp-radius;
+    transition: border-color 0.2s, background 0.2s;
+
+    &.drag-over {
+      border-color: var(--b3-theme-primary);
+      background: color-mix(in srgb, var(--b3-theme-primary) 6%, transparent);
+    }
+
+    .pv-dropzone-icon {
+      color: var(--b3-theme-on-surface);
+      opacity: 0.5;
+    }
+
+    .pv-dropzone-hint {
+      font-size: $font-size-xs;
+      color: var(--b3-theme-on-background);
+    }
+
+    .pv-dropzone-sub {
+      font-size: $font-size-2xs;
+      color: var(--b3-theme-on-surface);
+    }
+  }
+
+  // 顶部工具栏
+  .pv-toolbar {
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+    padding: $spacing-2 $spacing-3;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--b3-border-color);
+
+    .pv-filename {
+      font-size: $font-size-2xs;
+      color: var(--b3-theme-on-background);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 300px;
+    }
+
+    .pv-zoom-hint {
+      font-size: $font-size-2xs;
+      color: var(--b3-theme-on-surface);
+      margin-left: auto;
+    }
+
+    .pv-btn {
+      padding: $spacing-1 $spacing-3;
+      border: 1px solid var(--b3-border-color);
+      border-radius: $vp-radius;
+      background: var(--b3-theme-background);
+      color: var(--b3-theme-on-background);
+      font-size: $font-size-2xs;
+      cursor: pointer;
+      transition: background 0.15s;
+
+      &:hover {
+        background: var(--b3-theme-surface);
+      }
+    }
+  }
+
+  // PDF iframe 显示区
+  .pv-frame {
+    flex: 1;
+    min-height: 0;
+    border: none;
+    background: var(--b3-theme-surface);
+  }
+
+  // 拖拽悬浮遮罩（有文件时拖入新文件）
+  .pv-dropzone-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-2;
+    background: color-mix(in srgb, var(--b3-theme-background) 85%, transparent);
+    border: 2px dashed var(--b3-theme-primary);
+    border-radius: $vp-radius;
+    z-index: 10;
+    font-size: $font-size-xs;
+    color: var(--b3-theme-on-background);
+  }
+
+  // 错误提示
+  .pv-error {
+    position: absolute;
+    bottom: $spacing-3;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: $spacing-1 $spacing-3;
+    border-radius: $vp-radius;
+    background: hsl($destructive-light);
+    color: #fff;
+    font-size: $font-size-2xs;
+    white-space: nowrap;
+    z-index: 20;
+  }
+}
+
+// 错误提示淡入淡出
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}

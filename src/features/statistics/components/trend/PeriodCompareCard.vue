@@ -45,13 +45,13 @@
 </template>
 
 <script setup lang="ts">
-import type { HistoricalDataItem } from "../types"
+import type { HistoricalDataItem } from "../../types"
 import { computed } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import {
   formatDate,
   formatNumber,
-} from "../utils"
+} from "../../utils"
 
 interface Props {
   historicalData?: HistoricalDataItem[]
@@ -264,6 +264,6 @@ function formatChange(change: number | null): string {
 </script>
 
 <style scoped lang="scss">
-@use "../styles/PeriodCompareCard.scss";
-@use '../styles/index.scss' as stats;
+@use "../../styles/PeriodCompareCard.scss";
+@use '../../styles/index.scss' as stats;
 </style>

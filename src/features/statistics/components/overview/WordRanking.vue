@@ -62,13 +62,13 @@
 </template>
 
 <script setup lang="ts">
-import type { DailyWordCount } from "../types"
+import type { DailyWordCount } from "../../types"
 import {
   computed,
   ref,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { formatNumber } from "../utils"
+import { formatNumber } from "../../utils"
 
 interface Props {
   chartData?: DailyWordCount[]
@@ -110,6 +110,6 @@ function getRankClass(index: number): string {
 </script>
 
 <style lang="scss" scoped>
-@use '../styles/WordRanking.scss';
-@use '../styles/index.scss' as stats;
+@use '../../styles/WordRanking.scss';
+@use '../../styles/index.scss' as stats;
 </style>

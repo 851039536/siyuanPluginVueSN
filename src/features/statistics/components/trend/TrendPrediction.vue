@@ -193,14 +193,14 @@
 </template>
 
 <script setup lang="ts">
-import type { TrendPrediction } from "../types"
+import type { TrendPrediction } from "../../types"
 import {
   computed,
   onMounted,
   ref,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { formatNumber } from "../utils"
+import { formatNumber } from "../../utils"
 
 interface Props {
   onGetTrendPrediction?: () => Promise<TrendPrediction>
@@ -373,6 +373,6 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-@use "../styles/TrendPrediction.scss";
-@use '../styles/index.scss' as stats;
+@use "../../styles/TrendPrediction.scss";
+@use '../../styles/index.scss' as stats;
 </style>

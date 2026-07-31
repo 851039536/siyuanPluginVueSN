@@ -89,7 +89,7 @@ function handleRefresh() {
 </script>
 
 <style scoped lang="scss">
-@use "../styles/StatisticsHeader.scss";
-@use '../styles/index.scss' as stats;
+@use "../../styles/StatisticsHeader.scss";
+@use '../../styles/index.scss' as stats;
 </style>
 

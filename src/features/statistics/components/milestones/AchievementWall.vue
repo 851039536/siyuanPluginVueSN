@@ -123,12 +123,12 @@
 </template>
 
 <script setup lang="ts">
-import type { AchievementDef, Tier } from "../types/milestoneData"
+import type { AchievementDef, Tier } from "../../types/milestoneData"
 import type { IconKey } from "@/config/icons"
 import { computed, ref } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { ACH_CATEGORIES } from "../types/milestoneData"
-import { matchCategory, matchTier } from "../utils/achievements"
+import { ACH_CATEGORIES } from "../../types/milestoneData"
+import { matchCategory, matchTier } from "../../utils/achievements"
 
 interface Props {
   unlocked: AchievementDef[]
@@ -184,6 +184,6 @@ function onDeleteCustom(id: string) {
 </script>
 
 <style scoped lang="scss">
-@use "../styles/MilestonesCard.scss";
-@use '../styles/index.scss' as stats;
+@use "../../styles/MilestonesCard.scss";
+@use '../../styles/index.scss' as stats;
 </style>

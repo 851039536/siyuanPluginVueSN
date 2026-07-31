@@ -153,7 +153,7 @@
 </template>
 
 <script setup lang="ts">
-import type { MilestoneTypeKey } from "../types/milestoneRules"
+import type { MilestoneTypeKey } from "../../types/milestoneRules"
 import type { IconKey } from "@/config/icons"
 import {
   computed,
@@ -161,9 +161,9 @@ import {
   watch,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { useMilestoneStorage } from "../composables/useMilestoneStorage"
-import { MILESTONE_TYPES } from "../types/milestoneRules"
-import { generateDefaultRules } from "../utils/milestones"
+import { useMilestoneStorage } from "../../composables/useMilestoneStorage"
+import { MILESTONE_TYPES } from "../../types/milestoneRules"
+import { generateDefaultRules } from "../../utils/milestones"
 import AchievementsTab from "./AchievementsTab.vue"
 import LevelConfigTab from "./LevelConfigTab.vue"
 
@@ -262,6 +262,6 @@ function onSave() {
 </script>
 
 <style scoped lang="scss">
-@use "../styles/MilestoneRuleEditor.scss";
-@use '../styles/index.scss' as stats;
+@use "../../styles/MilestoneRuleEditor.scss";
+@use '../../styles/index.scss' as stats;
 </style>

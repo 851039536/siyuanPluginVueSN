@@ -43,7 +43,7 @@ import { computed } from "vue"
 import {
   formatNumber,
   formatShortNumber,
-} from "../utils"
+} from "../../utils"
 
 interface Props {
   totalNotes?: number
@@ -176,6 +176,6 @@ function formatDelta(change: number | null): string {
 </script>
 
 <style scoped lang="scss">
-@use "../styles/StatsCardsCompact.scss";
-@use '../styles/index.scss' as stats;
+@use "../../styles/StatsCardsCompact.scss";
+@use '../../styles/index.scss' as stats;
 </style>

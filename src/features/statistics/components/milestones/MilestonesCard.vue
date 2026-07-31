@@ -145,7 +145,7 @@ import type {
   MilestoneDef,
   MilestoneState,
   Tier,
-} from "../types/milestoneData"
+} from "../../types/milestoneData"
 import type { IconKey } from "@/config/icons"
 import {
   computed,
@@ -156,17 +156,17 @@ import IconWrapper from "@/components/IconWrapper.vue"
 import {
   CATEGORY_DEFS,
   META_ACHIEVEMENTS,
-} from "../types/milestoneData"
+} from "../../types/milestoneData"
 import {
   buildThresholdAchievements,
   getLevelInfo,
   pointsForLevel,
-} from "../utils/achievements"
+} from "../../utils/achievements"
 import {
   generateMilestones,
   TYPE_META,
-} from "../utils/milestones"
-import { useMilestoneStorage } from "../composables/useMilestoneStorage"
+} from "../../utils/milestones"
+import { useMilestoneStorage } from "../../composables/useMilestoneStorage"
 import AchievementWall from "./AchievementWall.vue"
 import MilestoneCategoryList from "./MilestoneCategoryList.vue"
 import MilestoneRuleEditor from "./MilestoneRuleEditor.vue"
@@ -437,6 +437,6 @@ const lockedAchievements = computed(() => achievementPartition.value.locked)
 </script>
 
 <style scoped lang="scss">
-@use "../styles/MilestonesCard.scss";
-@use '../styles/index.scss' as stats;
+@use "../../styles/MilestonesCard.scss";
+@use '../../styles/index.scss' as stats;
 </style>

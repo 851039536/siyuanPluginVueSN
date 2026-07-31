@@ -143,6 +143,9 @@ export interface ListSettings {
   css?: string
 }
 
+/** 发音来源：webSpeech = 浏览器内置语音合成（离线），youdao = 有道词典在线发音（真人，失败回退） */
+export type PronunciationSource = "webSpeech" | "youdao"
+
 export interface HighlightSettings {
   enableHighlight: boolean
   backgroundColor: string
@@ -154,6 +157,8 @@ export interface HighlightSettings {
   enableWordExplain: boolean
   /** 解释单词时自动播放发音 */
   autoPlayWord: boolean
+  /** 发音来源 */
+  pronunciationSource: PronunciationSource
 }
 
 // ============================================================
@@ -258,6 +263,7 @@ export const DEFAULT_HIGHLIGHT_SETTINGS: HighlightSettings = {
   maxLetterLength: 100,
   enableWordExplain: false,
   autoPlayWord: false,
+  pronunciationSource: "webSpeech",
 }
 
 /** 默认钉住页签设置 */

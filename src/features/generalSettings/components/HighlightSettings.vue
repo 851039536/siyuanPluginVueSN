@@ -105,6 +105,24 @@
           @change="handleStyleChange"
         />
       </div>
+
+      <!-- 发音来源选择行（解释 + 自动播放均开启时显示） -->
+      <div
+        v-if="enableWordExplain && autoPlayWord"
+        class="style-row"
+      >
+        <!-- 行标签："发音来源" -->
+        <label class="style-label">
+          {{ i18n.highlightPronunciationSource }}
+        </label>
+        <SiSelect
+          v-model="pronunciationSource"
+          :options="sourceOptions"
+          size="small"
+          class="style-color"
+          @change="handleStyleChange"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -114,16 +132,19 @@ import type { Plugin } from "siyuan"
 import type { GeneralSettings } from "../GeneralSettings"
 import { showMessage } from "siyuan"
 import {
+  computed,
   onMounted,
   reactive,
   ref,
 } from "vue"
 import SiInput from "@/components/Input.vue"
+import SiSelect from "@/components/Select.vue"
 import SiSwitch from "@/components/Switch.vue"
 import {
   DEFAULT_HIGHLIGHT_SETTINGS,
   GeneralSettingsStorage,
 } from "../types/storage"
+import type { PronunciationSource } from "../types/storage"
 import ColorField from "./ColorField.vue"
 import SettingLabel from "./SettingLabel.vue"
 
@@ -151,6 +172,13 @@ const enableHighlight = ref(DEFAULT_HIGHLIGHT_SETTINGS.enableHighlight)
 const backgroundColor = ref(DEFAULT_HIGHLIGHT_SETTINGS.backgroundColor)
 const enableWordExplain = ref(DEFAULT_HIGHLIGHT_SETTINGS.enableWordExplain)
 const autoPlayWord = ref(DEFAULT_HIGHLIGHT_SETTINGS.autoPlayWord)
+const pronunciationSource = ref<PronunciationSource>(DEFAULT_HIGHLIGHT_SETTINGS.pronunciationSource)
+
+/** 发音来源选项：标签文案取自 i18n（"系统合成（离线）" / "有道词典（在线）"） */
+const sourceOptions = computed(() => [
+  { label: props.i18n.highlightSourceWebSpeech, value: "webSpeech" },
+  { label: props.i18n.highlightSourceYoudao, value: "youdao" },
+])
 const lengths = reactive<Record<LengthField["key"], number>>({
   minTextLength: DEFAULT_HIGHLIGHT_SETTINGS.minTextLength,
   minLetterLength: DEFAULT_HIGHLIGHT_SETTINGS.minLetterLength,
@@ -174,6 +202,7 @@ const loadSettings = async () => {
     backgroundColor.value = settings.backgroundColor
     enableWordExplain.value = settings.enableWordExplain
     autoPlayWord.value = settings.autoPlayWord
+    pronunciationSource.value = settings.pronunciationSource
     for (const field of LENGTH_FIELDS) {
       lengths[field.key] = settings[field.key]
     }
@@ -201,6 +230,7 @@ const handleStyleChange = () => {
       backgroundColor: backgroundColor.value,
       enableWordExplain: enableWordExplain.value,
       autoPlayWord: autoPlayWord.value,
+      pronunciationSource: pronunciationSource.value,
       ...lengths,
     })
   } catch (e) {

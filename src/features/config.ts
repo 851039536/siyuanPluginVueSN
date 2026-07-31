@@ -316,6 +316,15 @@ export const FEATURE_CONFIG = [
     defaultDesc: "快速记录多行笔记，支持完成/待完成状态与弹窗位置设置",
     titleI18nKey: "quickNote.title",
     descI18nKey: "quickNote.description",
+    subFeatures: [
+      {
+        id: "quickNoteAutoOpen",
+        defaultLabel: "启动时自动打开",
+        labelI18nKey: "quickNote.autoOpen",
+        icon: "mdi:rocket-launch-outline",
+        color: "#f59e0b",
+      },
+    ],
   },
 ] as const
 

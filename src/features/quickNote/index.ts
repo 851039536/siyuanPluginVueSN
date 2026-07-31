@@ -35,8 +35,8 @@ export class QuickNoteManager {
   /** 自定义定位坐标（拖拽产生，position === "custom" 时生效） */
   private customX = DEFAULT_QUICK_NOTE_SETTINGS.customX
   private customY = DEFAULT_QUICK_NOTE_SETTINGS.customY
-  /** 最小化状态（会话级，不持久化；面板最小化按钮触发） */
-  private minimized = false
+  /** 最小化状态（持久化，重启/自动打开时恢复小条形态） */
+  private minimized = DEFAULT_QUICK_NOTE_SETTINGS.minimized
   /** 刚完成一次拖拽（供小条 click 判断是否吞掉本次点击） */
   private dragMoved = false
   /** 当前拖拽会话的 window 监听清理函数（destroy 兜底） */
@@ -61,12 +61,13 @@ export class QuickNoteManager {
     })
   }
 
-  /** 预加载位置设置到缓存（persistent Modal 无需预挂载） */
+  /** 预加载位置与最小化设置到缓存（persistent Modal 无需预挂载） */
   async init(): Promise<void> {
     const settings = await this.storage.settings.loadOrDefault()
     this.position = settings.position
     this.customX = settings.customX
     this.customY = settings.customY
+    this.minimized = settings.minimized
   }
 
   /** 切换弹窗显隐（状态栏按钮/功能抽屉入口） */
@@ -79,9 +80,10 @@ export class QuickNoteManager {
   }
 
   open(): void {
-    // persistent 模式首次 open 才创建遮罩 DOM，位置必须在 open 之后应用
+    // persistent 模式首次 open 才创建遮罩 DOM，位置/最小化必须在 open 之后应用（恢复持久化的小条形态）
     this.modal.open()
     this.applyPosition()
+    this.applyMinimized()
   }
 
   close = (): void => {
@@ -109,13 +111,16 @@ export class QuickNoteManager {
   }
 
   /**
-   * 设置最小化状态（供面板最小化/展开按钮调用）
+   * 设置最小化状态（供面板最小化/展开按钮调用，持久化供重启恢复）
    * 收起：容器尺寸改为 auto（由面板最小化条的 CSS 决定收缩方向与尺寸），
    * 遮罩变透明且点击穿透，仅贴边小条可交互；展开：还原尺寸与遮罩
    */
   setMinimized(minimized: boolean): void {
     this.minimized = minimized
     this.applyMinimized()
+    this.persistSettings().catch((err) => {
+      console.error("[quickNote] 最小化状态保存失败:", err)
+    })
   }
 
   /** 按当前最小化状态改写容器尺寸与遮罩交互（与 applyPosition 同样依赖遮罩 DOM 结构） */
@@ -231,12 +236,13 @@ export class QuickNoteManager {
     }
   }
 
-  /** 持久化当前定位设置（预设/自定义坐标全量写入） */
+  /** 持久化当前设置（定位 + 最小化状态全量写入） */
   private async persistSettings(): Promise<void> {
     await this.storage.settings.save({
       position: this.position,
       customX: this.customX,
       customY: this.customY,
+      minimized: this.minimized,
     })
   }
 

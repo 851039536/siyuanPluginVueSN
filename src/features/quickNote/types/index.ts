@@ -33,6 +33,8 @@ export interface QuickNoteSettings {
   /** 自定义定位的容器左上角视口坐标（px，position === "custom" 时生效） */
   customX: number
   customY: number
+  /** 最小化状态（持久化，重启/自动打开时恢复小条形态） */
+  minimized: boolean
 }
 
 /** 位置选项列表（Select 选项与 Manager 校验共用的单一数据源） */

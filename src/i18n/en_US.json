@@ -1423,6 +1423,7 @@
     "analysisAuthorRanking": "Top Authors",
     "analysisRecentCommits": "Recent Commits",
     "analysisNoData": "No commit data",
+    "analysisLastRun": "Analyzed {0}",
     "commitTypeFeat": "Feature",
     "commitTypeFix": "Fix",
     "commitTypeDocs": "Docs",

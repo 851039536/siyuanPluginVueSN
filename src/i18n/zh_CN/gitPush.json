@@ -271,6 +271,7 @@
     "analysisAuthorRanking": "作者提交排行",
     "analysisRecentCommits": "最近提交记录",
     "analysisNoData": "暂无提交数据",
+    "analysisLastRun": "上次分析：{0}",
     "commitTypeFeat": "功能",
     "commitTypeFix": "修复",
     "commitTypeDocs": "文档",

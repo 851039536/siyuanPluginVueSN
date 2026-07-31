@@ -246,6 +246,18 @@ export interface CommitAnalysisStats {
   authorRanking: { author: string, count: number }[]
 }
 
+/** 提交分析结果缓存（持久化到插件存储，进入视图直接复用上次结果，避免每次重跑 git log） */
+export interface CommitAnalysisCache {
+  /** 每项目抓取条数（缓存对应的设置，加载时回填选择器） */
+  commitCount: number
+  /** 上次分析完成时间（ISO，面板展示“上次分析”文案） */
+  analyzedAt: string
+  /** 抓取失败的项目数 */
+  failedCount: number
+  /** 跨项目合并的提交条目 */
+  entries: CommitAnalysisEntry[]
+}
+
 /** 项目列表视图模式（单一事实源，ViewMode 联合类型由此推导） */
 export const VIEW_MODES = ["all", "needsPush", "uncommitted", "starred", "archived"] as const
 export type ViewMode = typeof VIEW_MODES[number]

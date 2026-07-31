@@ -49,5 +49,5 @@ export {
   VIEW_MODES,
   COMMIT_ANALYSIS_TYPE_META,
 } from "./meta"
-export type { CategoryDistributionItem, CommitAnalysisEntry, CommitAnalysisStats, CommitAnalysisType, NeedsPullItem, NeedsPushItem, PanelView, PendingProjectItem, PlatformKey, PlatformStatusItem, PushStatusStats, RemoteCoverage, RepoLinkAuditCell, RepoLinkAuditRow, RepoLinkAuditState, RepoLinkAuditSummary, StatsView, UncommittedItem, ViewMode } from "./meta"
+export type { CategoryDistributionItem, CommitAnalysisCache, CommitAnalysisEntry, CommitAnalysisStats, CommitAnalysisType, NeedsPullItem, NeedsPushItem, PanelView, PendingProjectItem, PlatformKey, PlatformStatusItem, PushStatusStats, RemoteCoverage, RepoLinkAuditCell, RepoLinkAuditRow, RepoLinkAuditState, RepoLinkAuditSummary, StatsView, UncommittedItem, ViewMode } from "./meta"
 export { getPlatformStatus } from "./meta"

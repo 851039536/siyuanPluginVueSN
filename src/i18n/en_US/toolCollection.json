@@ -13,5 +13,13 @@
     "taller": "Taller",
     "prevTool": "Previous tool (←)",
     "nextTool": "Next tool (→)"
+  },
+  "pdfViewer": {
+    "title": "PDF Viewer",
+    "dropHint": "Drop PDF file here",
+    "dropSubHint": "Supports local .pdf files",
+    "zoomHint": "Ctrl + Scroll to zoom",
+    "clear": "Clear",
+    "notPdf": "Only PDF files are supported"
   }
 }

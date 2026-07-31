@@ -1,42 +1,31 @@
 @use "@/variables.scss" as *;
 
 .color-field {
+  position: relative; // 调色板弹层的定位锚点
   display: flex;
   align-items: center;
   gap: $spacing-2;
   width: 100%;
 }
 
-.color-picker {
+/* 当前颜色色块按钮 */
+.color-swatch-btn {
+  flex: none;
   width: 40px;
   height: 28px;
   border: 1px solid var(--b3-theme-outline);
   border-radius: $radius-base;
   cursor: pointer;
-  padding: 2px;
-  background: var(--b3-theme-surface);
+  padding: 0;
 
   &:hover {
     border-color: var(--b3-theme-primary);
-  }
-
-  &::-webkit-color-swatch-wrapper {
-    padding: 0;
-  }
-
-  &::-webkit-color-swatch {
-    border: none;
-    border-radius: $radius-sm;
-  }
-
-  &::-moz-color-swatch {
-    border: none;
-    border-radius: $radius-sm;
   }
 }
 
 .color-input {
   flex: 1;
+  min-width: 0;
   padding: $spacing-1 $spacing-2;
   font-size: $font-size-xs;
   border: 1px solid var(--b3-theme-outline);
@@ -47,5 +36,41 @@
   &:focus {
     outline: none;
     border-color: var(--b3-theme-primary);
+  }
+}
+
+/* 预设调色板弹层 */
+.color-popover {
+  position: absolute;
+  top: calc(100% + #{$spacing-1});
+  left: 0;
+  z-index: 10; // 覆盖面板内相邻表单控件
+  padding: $spacing-2;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-theme-outline);
+  border-radius: $radius-md;
+}
+
+.palette-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: $spacing-1;
+}
+
+.palette-swatch {
+  // 调色板色块固定尺寸（8 列紧凑网格），无对应间距 Token
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid var(--b3-theme-outline);
+  border-radius: $radius-sm;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
+
+  &.active {
+    border: 2px solid var(--b3-theme-primary);
   }
 }

@@ -8,20 +8,21 @@
 - **状态管理**：条目可勾选完成/待完成，Tab 切换两种视图（含计数）
 - **增删改**：条目支持行内编辑（Ctrl+Enter 确认 / Esc 取消）与删除（带确认）
 - **位置设置**：弹窗可设五档显示位置，持久化并即时生效
+- **最小化**：头部最小化按钮按当前位置方向收起——左/右贴边收成竖条，上/下/居中收成横条；收起期间遮罩透明且点击穿透，不阻断背后界面操作，点击小条展开
 - **statusBar 集成**：功能抽屉中出现「速记」项，pin 后状态栏出现快捷按钮，点击切换弹窗显隐
 
 ## 目录职责
 
 ```
 quickNote/
-├── index.ts                    # QuickNoteManager（persistent Modal 生命周期 + 位置应用）+ registerQuickNote
-├── index.vue                   # 弹窗主面板（头部/新增区/Tab/列表）
+├── index.ts                    # QuickNoteManager（persistent Modal 生命周期 + 位置/最小化应用）+ registerQuickNote
+├── index.vue                   # 弹窗主面板（头部/新增区/Tab/列表 + 最小化条）
 ├── components/
 │   └── NoteItem.vue            # 单条目组件（纯展示，勾选/编辑/删除走 emit）
 ├── composables/
 │   └── useQuickNotes.ts        # 条目响应式列表 + CRUD + 动作级持久化
 ├── types/
-│   ├── index.ts                # 领域类型 + POSITION_ALIGN_MAP 位置映射
+│   ├── index.ts                # 领域类型 + POSITION_ALIGN_MAP / POSITION_MINIMIZE_META 映射
 │   └── storage.ts              # QuickNoteStorage（TypedStorage 两个槽位）
 └── styles/
     ├── index.scss              # 主面板样式（Codex 风格）
@@ -34,6 +35,13 @@ quickNote/
 通过 `maskId`（`quick-note-mask`）获取遮罩元素，按 `POSITION_ALIGN_MAP` 改写
 `align-items` / `justify-content` 实现贴边，贴边档位附加边缘间距。
 该实现与 `vueAppHelper` 的遮罩 DOM 结构耦合，helper 重构时需同步调整。
+
+## 最小化机制
+
+最小化方向由当前位置派生（`POSITION_MINIMIZE_META`）：左/右 → 竖条（标题纵向排版），
+上/下/居中 → 横条。Manager 的 `setMinimized()` 将容器尺寸改为 `auto`（小条尺寸由 CSS 决定），
+并将遮罩设为透明 + `pointer-events: none` 实现点击穿透，仅小条本身可交互；
+展开时还原尺寸与遮罩。最小化状态为会话级（不持久化），persistent 下关闭重开保持一致。
 
 ## 联动链路
 

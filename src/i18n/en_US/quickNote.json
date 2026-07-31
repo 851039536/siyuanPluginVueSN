@@ -16,6 +16,8 @@
     "positionRight": "Right",
     "markDone": "Mark as done",
     "markPending": "Mark as pending",
+    "minimize": "Minimize",
+    "restore": "Restore",
     "deleteConfirm": "Delete this note?",
     "createdAt": "Created at"
   }

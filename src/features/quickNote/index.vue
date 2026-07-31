@@ -254,6 +254,12 @@ const handleToggleMinimize = () => {
   props.manager.setMinimized(minimized.value)
 }
 
+// 遮罩点击（面板外区域）：收起为最小化条而非关闭（Manager 派发的 CustomEvent）
+const handleMaskMinimize = () => {
+  if (minimized.value) return
+  handleToggleMinimize()
+}
+
 // 小条点击：刚完成拖动则吞掉本次点击（不触发展开）
 const handleMiniBarClick = () => {
   if (props.manager.consumeDragClick()) return
@@ -270,12 +276,14 @@ onMounted(() => {
   load()
   position.value = props.manager.getPosition()
   minimized.value = props.manager.isMinimized()
-  // 预设菜单点击外部关闭（persistent 实例常驻，onUnmounted 对应清理）
+  // 预设菜单点击外部关闭 + 遮罩点击收起监听（persistent 实例常驻，onUnmounted 对应清理）
   window.addEventListener("click", handleWindowClick)
+  window.addEventListener("quickNoteMaskMinimize", handleMaskMinimize)
 })
 
 onUnmounted(() => {
   window.removeEventListener("click", handleWindowClick)
+  window.removeEventListener("quickNoteMaskMinimize", handleMaskMinimize)
 })
 </script>
 

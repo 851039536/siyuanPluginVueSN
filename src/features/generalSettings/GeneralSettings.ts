@@ -307,6 +307,7 @@ export class GeneralSettings {
             maxLetterLength: settings.maxLetterLength,
             enableWordExplain: settings.enableWordExplain,
             autoPlayWord: settings.autoPlayWord,
+            pronunciationSource: settings.pronunciationSource,
           }
         : undefined
       this.highlightManager = new HighlightManager(options, this.plugin)

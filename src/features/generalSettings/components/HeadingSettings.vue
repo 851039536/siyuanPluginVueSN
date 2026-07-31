@@ -99,14 +99,10 @@
           />
           <!-- 开关 + 状态描述："已启用"/"已禁用" -->
           <div class="toggle-container">
-            <label class="toggle-switch">
-              <input
-                v-model="settings.titleCenterAlign"
-                type="checkbox"
-                class="toggle-input"
-              />
-              <span class="toggle-slider"></span>
-            </label>
+            <Switch
+              v-model="settings.titleCenterAlign"
+              size="small"
+            />
             <span class="toggle-description">
               {{ settings.titleCenterAlign ? i18n.enabled : i18n.disabled }}
             </span>
@@ -227,10 +223,12 @@ import type { HeadingColors, HeadingSettings } from "@/features/generalSettings/
 import {
   computed,
   onMounted,
+  onUnmounted,
   ref,
   watch,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import Switch from "@/components/Switch.vue"
 import {
   DEFAULT_HEADING_SETTINGS,
   GeneralSettingsStorage,
@@ -337,6 +335,7 @@ let saveTimer: ReturnType<typeof setTimeout> | null = null
 function debouncedSave(s: HeadingSettings) {
   if (saveTimer) clearTimeout(saveTimer)
   saveTimer = setTimeout(async () => {
+    saveTimer = null
     if (storage.value) {
       try {
         await storage.value.heading.save(s)
@@ -366,7 +365,8 @@ watch(
 
 // ── 加载保存的设置（仅填充表单，样式由 GeneralSettings.init() 在启动时应用）──
 async function loadSettings() {
-  if (!props.plugin || !storage.value) {
+  // 无插件实例 / 加载失败时保持初始默认值，不重新赋值，避免触发 watch 把默认值回写存储
+  if (!storage.value) {
     console.warn("插件实例不可用，使用默认设置")
     return
   }
@@ -396,6 +396,17 @@ onMounted(async () => {
     storage.value = new GeneralSettingsStorage(props.plugin)
   }
   await loadSettings()
+})
+
+// 卸载时清理防抖定时器，并立即落盘待保存的修改，避免关闭面板丢失最后一次变更
+onUnmounted(() => {
+  if (saveTimer) {
+    clearTimeout(saveTimer)
+    saveTimer = null
+    storage.value?.heading.save(settings.value).catch((error) => {
+      console.error("卸载前保存标题设置失败:", error)
+    })
+  }
 })
 </script>
 

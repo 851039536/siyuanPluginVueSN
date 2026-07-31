@@ -1,7 +1,7 @@
 /**
  * 技能加载 Composable
  * 统一 index.vue 中的 loadSkills 逻辑
- * 支持同名技能去重（合并来源提示）和搜索过滤
+ * 支持同名技能去重（合并来源提示）和持久化选择恢复
  * scanSkills 由调用方通过依赖注入传入（遵循零跨 Feature 直接导入规则）
  */
 import type {
@@ -21,28 +21,12 @@ export function useSkillsLoader(
   /** 去重后的技能列表 */
   const skills = ref<SkillItem[]>([])
   const currentSkillIndex = ref(-1)
-  /** 技能搜索关键词 */
-  const skillSearchQuery = ref("")
 
   const currentSkill = computed(() => {
     if (currentSkillIndex.value < 0 || currentSkillIndex.value >= skills.value.length) {
       return null
     }
     return skills.value[currentSkillIndex.value]
-  })
-
-  /** 根据搜索关键词过滤技能 */
-  const filteredSkills = computed(() => {
-    if (!skillSearchQuery.value.trim()) {
-      return skills.value
-    }
-    const query = skillSearchQuery.value.toLowerCase().trim()
-    return skills.value.filter(
-      (s) =>
-        s.name.toLowerCase().includes(query)
-        || s.description.toLowerCase().includes(query)
-        || s.sources.some((src) => src.tool.toLowerCase().includes(query)),
-    )
   })
 
   /**
@@ -103,12 +87,29 @@ export function useSkillsLoader(
     }
   }
 
+  /**
+   * 按技能 id 恢复持久化的选择
+   * null（无持久化记录）→ 不操作，保留 loadSkills 的默认选中
+   * ""（明确选择"无技能"）→ 选中 -1
+   * 具体 id → 找到则选中对应技能；技能已不存在则回退默认逻辑
+   */
+  function restoreSkillById(skillId: string | null): boolean {
+    if (skillId === null) return false
+    if (skillId === "") {
+      currentSkillIndex.value = -1
+      return true
+    }
+    const index = skills.value.findIndex((s) => s.id === skillId)
+    if (index === -1) return false
+    currentSkillIndex.value = index
+    return true
+  }
+
   return {
     skills,
     currentSkillIndex,
     currentSkill,
     loadSkills,
-    skillSearchQuery,
-    filteredSkills,
+    restoreSkillById,
   }
 }

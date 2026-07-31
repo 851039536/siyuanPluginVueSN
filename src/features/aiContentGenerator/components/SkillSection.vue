@@ -1,6 +1,7 @@
 <!-- 技能选择器区域组件 -->
 <template>
   <div
+    ref="wrapperRef"
     class="skill-selector-wrapper"
     :class="{ open: showSkillDropdown }"
   >
@@ -10,8 +11,8 @@
       @click="toggleSkillDropdown"
     >
       <span class="skill-select-value">
-        <template v-if="currentSkillIndex >= 0 && currentSkill">
-          {{ currentSkill.name }}
+        <template v-if="hasCurrentSkill">
+          {{ currentSkill?.name }}
           <span class="skill-source-dots">
             <span
               v-for="(color, i) in getSourceDotColors(currentSkill)"
@@ -31,7 +32,7 @@
     </div>
     <!-- 技能预览按钮 -->
     <button
-      v-if="currentSkillIndex >= 0 && currentSkill"
+      v-if="hasCurrentSkill"
       class="skill-preview-btn"
       title="预览技能细则"
       @click="$emit('showPreview')"
@@ -53,11 +54,10 @@
         ><use xlink:href="#iconSearch"></use></svg>
         <input
           ref="skillSearchInputRef"
-          :value="skillSearchQuery"
+          v-model="skillSearchQuery"
           type="text"
           placeholder="搜索技能..."
           class="skill-search-input"
-          @input="onSkillSearchInput($event)"
           @keydown.escape.stop="showSkillDropdown = false"
         />
       </div>
@@ -101,25 +101,44 @@
 
 <script setup lang="ts">
 import type { SkillItem } from "@/types/ai"
-import { nextTick, onMounted, onUnmounted, ref } from "vue"
+import { computed, nextTick, onMounted, onUnmounted, ref } from "vue"
 import { getSourceDotColors } from "../utils"
 
 const props = defineProps<{
   currentSkillIndex: number
   currentSkill: SkillItem | null
   skills: SkillItem[]
-  filteredSkills: SkillItem[]
-  skillSearchQuery: string
 }>()
 
 const emit = defineEmits<{
-  'update:skillSearchQuery': [value: string]
   'selectSkill': [index: number]
   'showPreview': []
 }>()
 
 const showSkillDropdown = ref(false)
 const skillSearchInputRef = ref<HTMLInputElement | null>(null)
+const wrapperRef = ref<HTMLElement | null>(null)
+
+/** 当前是否有选中技能（索引越界时 currentSkill 为 null，避免 UI 状态不一致） */
+const hasCurrentSkill = computed(() => props.currentSkillIndex >= 0 && !!props.currentSkill)
+
+// ===== 技能搜索（本地状态，仅服务本组件下拉过滤） =====
+
+const skillSearchQuery = ref("")
+
+/** 根据搜索关键词过滤技能 */
+const filteredSkills = computed(() => {
+  if (!skillSearchQuery.value.trim()) {
+    return props.skills
+  }
+  const query = skillSearchQuery.value.toLowerCase().trim()
+  return props.skills.filter(
+    (s) =>
+      s.name.toLowerCase().includes(query)
+      || s.description.toLowerCase().includes(query)
+      || s.sources.some((src) => src.tool.toLowerCase().includes(query)),
+  )
+})
 
 const toggleSkillDropdown = () => {
   showSkillDropdown.value = !showSkillDropdown.value
@@ -138,19 +157,13 @@ const selectSkill = (index: number) => {
 /** 通过技能对象选择（在原始 skills 中找到索引） */
 const selectSkillByItem = (skill: SkillItem) => {
   const index = props.skills.findIndex((s) => s.id === skill.id)
-  emit("selectSkill", index)
-  showSkillDropdown.value = false
+  if (index === -1) return // 防御：找不到时静默退出，禁止误选"无技能"
+  selectSkill(index)
 }
 
-const onSkillSearchInput = (e: Event) => {
-  const value = (e.target as HTMLInputElement).value
-  emit("update:skillSearchQuery", value)
-}
-
-// 点击外部关闭下拉
+// 点击外部关闭下拉（基于组件根 ref，避免全局 querySelector 命中错误实例）
 const handleClickOutside = (e: MouseEvent) => {
-  const wrapper = document.querySelector(".skill-selector-wrapper")
-  if (wrapper && !wrapper.contains(e.target as Node)) {
+  if (wrapperRef.value && !wrapperRef.value.contains(e.target as Node)) {
     showSkillDropdown.value = false
   }
 }

@@ -178,23 +178,11 @@
           <h4 class="breakdown-title">
             各时段明细
           </h4>
-          <div class="breakdown-list">
-            <div
-              v-for="item in report.monthlyBreakdown"
-              :key="item.month"
-              class="breakdown-row"
-            >
-              <span class="breakdown-month">{{ item.month }}</span>
-              <div class="breakdown-bars">
-                <div
-                  class="breakdown-bar words"
-                  :style="{ width: barPct(item.words, maxBreakWords) }"
-                ></div>
-              </div>
-              <span class="breakdown-value">{{ item.words > 0 ? `${formatNumber(item.words)}字` : '' }}</span>
-              <span class="breakdown-created">{{ item.created > 0 ? `+${item.created}` : '' }}</span>
-            </div>
-          </div>
+          <!-- 各子时段字数以单序列面积折线呈现，峰值高亮，新增数走悬浮提示 -->
+          <ReportTrendChart
+            :points="report.monthlyBreakdown"
+            i18n-words-unit="字"
+          />
         </div>
       </div>
     </template>
@@ -211,7 +199,8 @@ import {
   ref,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { barPct, formatNumber } from "../utils"
+import { formatNumber } from "../utils"
+import ReportTrendChart from "./charts/ReportTrendChart.vue"
 import ComparisonView from "./ComparisonView.vue"
 
 interface Props {
@@ -241,16 +230,6 @@ const yearOptions = computed(() => {
 function removeReport(idx: number) {
   reports.value.splice(idx, 1)
 }
-
-const maxBreakWords = computed(() => {
-  let max = 1
-  for (const r of reports.value) {
-    for (const item of r.monthlyBreakdown) {
-      max = Math.max(max, item.words)
-    }
-  }
-  return max
-})
 
 async function generate() {
   if (!props.onGetReportData) return

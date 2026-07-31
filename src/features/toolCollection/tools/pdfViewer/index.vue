@@ -149,23 +149,21 @@ function onDrop(e: DragEvent) {
 }
 
 function handleClear() {
-  if (isFullscreen.value) document.exitFullscreen()
+  isFullscreen.value = false
   pdfPath.value = null
   fileName.value = ""
   errorMsg.value = ""
 }
 
-// ==================== 全屏切换 ====================
+// ==================== 全屏切换（CSS 固定定位模拟，避免 Fullscreen API 渲染副作用） ====================
 function toggleFullscreen() {
-  if (isFullscreen.value) {
-    document.exitFullscreen()
-  } else {
-    rootRef.value?.requestFullscreen()
-  }
+  isFullscreen.value = !isFullscreen.value
 }
 
-function onFullscreenChange() {
-  isFullscreen.value = document.fullscreenElement === rootRef.value
+function onKeydown(e: KeyboardEvent) {
+  if (e.key === "Escape" && isFullscreen.value) {
+    isFullscreen.value = false
+  }
 }
 
 // ==================== Window 级拖拽检测（有文件时不干扰 iframe 交互） ====================
@@ -193,14 +191,14 @@ function onWindowDrop() {
 }
 
 onMounted(() => {
-  document.addEventListener("fullscreenchange", onFullscreenChange)
+  window.addEventListener("keydown", onKeydown)
   window.addEventListener("dragenter", onWindowDragEnter)
   window.addEventListener("dragleave", onWindowDragLeave)
   window.addEventListener("drop", onWindowDrop)
 })
 
 onBeforeUnmount(() => {
-  document.removeEventListener("fullscreenchange", onFullscreenChange)
+  window.removeEventListener("keydown", onKeydown)
   window.removeEventListener("dragenter", onWindowDragEnter)
   window.removeEventListener("dragleave", onWindowDragLeave)
   window.removeEventListener("drop", onWindowDrop)

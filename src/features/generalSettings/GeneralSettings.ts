@@ -46,6 +46,8 @@ export class GeneralSettings {
   private contentObserver: MutationObserver | null = null
   private docCountManager: DocCountManager | null = null
   private highlightManager: HighlightManager | null = null
+  /** 代码块样式应用防抖定时器：重建 <style> 开销大，避免面板输入时每个字符全量重建 */
+  private codeblockApplyTimer: ReturnType<typeof setTimeout> | null = null
   private _cachedFontSettings: FontSettings = {
     fontFamily: "",
     fontSize: 14,
@@ -91,7 +93,12 @@ export class GeneralSettings {
 
   private handleSettingsChange(settings: { moduleId: string, settings: Record<string, unknown> }) {
     if (settings.moduleId === "codeblock") {
-      this.applyCodeBlockStyleFromSettings(settings.settings as unknown as CodeBlockSettings)
+      // 100ms 防抖：面板 deep watch 每次修改都会触发，避免频繁重建 <style>
+      if (this.codeblockApplyTimer) clearTimeout(this.codeblockApplyTimer)
+      this.codeblockApplyTimer = setTimeout(() => {
+        this.codeblockApplyTimer = null
+        this.applyCodeBlockStyleFromSettings(settings.settings as unknown as CodeBlockSettings)
+      }, 100)
     } else if (settings.moduleId === "heading") {
       this.applyHeadingStyles(settings.settings as unknown as HeadingSettings)
     } else if (settings.moduleId === "documentFont") {
@@ -531,6 +538,10 @@ export class GeneralSettings {
   }
 
   public destroy() {
+    if (this.codeblockApplyTimer) {
+      clearTimeout(this.codeblockApplyTimer)
+      this.codeblockApplyTimer = null
+    }
     if (this.contentObserver) {
       this.contentObserver.disconnect()
       this.contentObserver = null

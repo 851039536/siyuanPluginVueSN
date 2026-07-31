@@ -48,8 +48,6 @@
       :skills="skills"
       :current-skill="currentSkill"
       :current-skill-index="currentSkillIndex"
-      :filtered-skills="filteredSkills"
-      :skill-search-query="skillSearchQuery"
       :web-search="webSearch"
       :selected-model="selectedModel"
       :custom-model="customModel"
@@ -65,7 +63,6 @@
       @customEdit="handleCustomEdit"
       @update:editCustomInput="editCustomInput = $event"
       @update:currentSkillIndex="currentSkillIndex = $event"
-      @update:skillSearchQuery="skillSearchQuery = $event"
       @update:webSearch="webSearch = $event"
       @update:selectedModel="selectedModel = $event"
       @update:customModel="customModel = $event"
@@ -130,8 +127,7 @@ const editCustomInput = ref("")
 // ============ 技能加载 ============
 
 const {
-  skills, currentSkillIndex, currentSkill, loadSkills,
-  skillSearchQuery, filteredSkills,
+  skills, currentSkillIndex, currentSkill, loadSkills, restoreSkillById,
 } = useSkillsLoader(props.plugin, props.scanSkills)
 
 // ============ 生成管道 ============
@@ -307,6 +303,8 @@ ${editTargetDoc.value.content}`
 let isSettingsLoaded = false
 let settingsSaveTimer: number | null = null
 const SETTINGS_SAVE_DEBOUNCE_MS = 300
+/** 持久化的技能 id（null = 设置未加载/首次无记录，"" = 明确选择"无技能"） */
+let savedSkillId: string | null = null
 
 const saveSettings = async () => {
   if (!storage.value || !isSettingsLoaded) return
@@ -315,6 +313,7 @@ const saveSettings = async () => {
     customModel: customModel.value,
     enableThinking: enableThinking.value,
     webSearch: webSearch.value,
+    skillId: skills.value[currentSkillIndex.value]?.id ?? "",
   }
   try {
     await storage.value.settings.save(settings)
@@ -332,6 +331,7 @@ const loadSettings = async () => {
       customModel.value = settings.customModel || ""
       enableThinking.value = settings.enableThinking ?? false
       webSearch.value = settings.webSearch ?? false
+      savedSkillId = settings.skillId ?? null
     }
     isSettingsLoaded = true
   } catch (error) {
@@ -339,13 +339,19 @@ const loadSettings = async () => {
   }
 }
 
+/** 防抖调度设置保存（多个 watcher 共用同一定时器） */
+const scheduleSaveSettings = () => {
+  if (settingsSaveTimer) clearTimeout(settingsSaveTimer)
+  settingsSaveTimer = window.setTimeout(() => saveSettings(), SETTINGS_SAVE_DEBOUNCE_MS)
+}
+
 watch(
   [selectedModel, customModel, enableThinking, webSearch],
-  () => {
-    if (settingsSaveTimer) clearTimeout(settingsSaveTimer)
-    settingsSaveTimer = window.setTimeout(() => saveSettings(), SETTINGS_SAVE_DEBOUNCE_MS)
-  },
+  scheduleSaveSettings,
 )
+
+// 技能选择变更持久化（按 id 保存，索引不稳定）
+watch(currentSkillIndex, scheduleSaveSettings)
 
 // ============ 生命周期 ============
 
@@ -355,11 +361,18 @@ onMounted(async () => {
     await storage.value.init()
     await loadSettings()
   }
-  loadSkills()
+  await loadSkills()
+  // 技能加载完成后恢复持久化的选择（须在 skills 就绪后执行）
+  restoreSkillById(savedSkillId)
 })
 
 onUnmounted(() => {
   cleanupRaf()
+  handleStop() // 中止仍在进行中的生成请求，避免卸载后回调滞留
+  if (settingsSaveTimer) {
+    clearTimeout(settingsSaveTimer)
+    settingsSaveTimer = null
+  }
 })
 </script>
 

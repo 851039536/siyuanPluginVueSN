@@ -51,10 +51,7 @@
           :current-skill-index="currentSkillIndex"
           :current-skill="currentSkill"
           :skills="skills"
-          :filtered-skills="filteredSkills"
-          :skill-search-query="skillSearchQuery"
           @selectSkill="onSkillSelect"
-          @update:skillSearchQuery="(v: string) => $emit('update:skillSearchQuery', v)"
           @showPreview="showSkillPreview = true"
         />
       </div>
@@ -188,8 +185,6 @@ interface Props {
   skills: SkillItem[]
   currentSkill: SkillItem | null
   currentSkillIndex: number
-  filteredSkills: SkillItem[]
-  skillSearchQuery: string
   webSearch: boolean
   selectedModel: string
   customModel: string
@@ -210,7 +205,6 @@ const emit = defineEmits<{
   'customEdit': []
   'update:editCustomInput': [value: string]
   'update:currentSkillIndex': [value: number]
-  'update:skillSearchQuery': [value: string]
   'update:webSearch': [value: boolean]
   'update:selectedModel': [value: string]
   'update:customModel': [value: string]

@@ -68,7 +68,7 @@ feature/
 1. **实现** `src/features/<feature>/index.ts` — 导出 `registerFeature(plugin)`
 2. **类型** `src/features/<feature>/types/index.ts` — 仅放类型/Manager 类，不放 register 逻辑
 3. **导出** `src/features/index.ts` — 添加 `export { registerFeature } from "./feature"` 并更新 `_Registered` 联合类型（编译时断言将其链接到 `FEATURE_CONFIG`）
-4. **注册** `src/index.ts` → `registerFeatures()` — 添加 `if (s.enableXxx) registerXxx(this)`
+4. **注册** `src/index.ts` → `registerFeatures()` — 添加 `if (s.enableXxx) registerXxx(this)`（统一单行模式，禁止在此处接收返回值做 `(this as any).__xxx =` 挂载，见下方「实例挂载与销毁模式」）
 5. **设置** `src/config/settings.ts` — 在 `PluginSettings` 接口添加 `enableXxx: boolean` + `DEFAULT_SETTINGS` 添加默认值。含缩写词的 ID（如 `qrCode`、`aiContentGenerator`）需要在 `FEATURE_ID_TO_KEY_MAP` 中添加映射
 6. **i18n** `src/i18n/{zh_CN,en_US}/<feature>.json` — 添加翻译，运行 `pnpm i18n:verify`
 7. **配置** `src/features/config.ts` — 在 `FEATURE_CONFIG` 数组中添加条目；纯配置型功能（无 register 函数）还须加入 `_ConfigOnly` 白名单
@@ -78,6 +78,13 @@ feature/
 - 将 `register` 函数改为 no-op（保留导出以维持编译通过）
 - 在 `_ConfigOnly` 白名单中添加该功能 ID
 - 从 `_Registered` 联合类型中移除，保留其在 `FeatureId` 中的存在
+
+**实例挂载与销毁模式（强制）**：持有持久资源（定时器/监听器/persistent Modal/常驻 DOM）的功能，实例挂载必须在自己的 `registerFeature(plugin)` 内部完成：
+- register 内部自挂载：`(plugin as any).__xxx = instance`，实例必须提供 `destroy()` 方法
+- 字段名同步加入 `src/index.ts` 的 `DESTROYABLE_KEYS` 清单，由 `onunload` 统一循环销毁
+- 禁止由 `registerFeatures()` 接收返回值再挂载（两套模式并存）；禁止在 `onunload` 中为个别功能写特例清理分支（无 destroy 方法的资源应在 register 内包一层 `{ destroy: cleanupFn }` 再挂载）
+- 跨功能调度（App.vue 调用 `plugin.__xxx.toggle()` 等）依赖同一挂载点，挂载时机与调度入口保持一致
+- 参考实现：`src/features/gitPush/index.ts`（Manager 自挂载）、`src/features/toolCollection/index.ts`（包装 destroy）
 
 **验证链条**：完成全部 8 步后，由用户自行验证以下 4 项检查：
 ```bash
@@ -196,6 +203,7 @@ App.vue onMounted 监听 ───────────────┘
 ## 硬规则
 
 - **功能注册完整性**：新功能必须在 8 处注册（见上方「功能注册清单」）
+- **实例挂载统一**：持有持久资源的功能实例在 register 内部自挂载 `(plugin as any).__xxx` + 加入 `DESTROYABLE_KEYS`，禁止在 `registerFeatures()` 接收返回值挂载或在 `onunload` 写特例清理（见上方「实例挂载与销毁模式」）
 - **Composable 复用**：Dock 面板与弹窗共享逻辑时抽取 `composables/use*.ts`，禁止两个组件各自实例化 Storage。参考 `flashcardReading/composables/`
 - **Vue 事件命名**：emit 事件必须 camelCase，禁止 kebab-case 或 `input:title` 格式
 - **图标注册**：`FEATURE_ICONS` 中添加映射 + 运行 `pnpm validate:icons`

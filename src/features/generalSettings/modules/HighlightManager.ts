@@ -11,6 +11,7 @@
  * 因此不提供字号、加粗等排版类配置。
  */
 import type { Plugin } from "siyuan"
+import type { PronunciationSource } from "../types/storage"
 import type { ExplainResult } from "./WordExplainer"
 import { WordExplainer } from "./WordExplainer"
 
@@ -34,6 +35,8 @@ export interface HighlightOptions {
   enableWordExplain?: boolean
   /** 解释单词时自动播放发音 */
   autoPlayWord?: boolean
+  /** 发音来源：webSpeech（离线）/ youdao（在线真人，失败回退） */
+  pronunciationSource?: PronunciationSource
 }
 
 const DEFAULT_OPTIONS: Required<HighlightOptions> = {
@@ -44,6 +47,7 @@ const DEFAULT_OPTIONS: Required<HighlightOptions> = {
   maxLetterLength: 100,
   enableWordExplain: false,
   autoPlayWord: false,
+  pronunciationSource: "webSpeech",
 }
 
 export class HighlightManager {
@@ -404,7 +408,7 @@ export class HighlightManager {
     this.renderExplainTip(word, i18n.highlightExplainLoading)
 
     if (this.options.autoPlayWord) {
-      explainer.play(word)
+      explainer.play(word, this.options.pronunciationSource)
     }
 
     explainer

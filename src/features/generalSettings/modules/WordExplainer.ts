@@ -6,6 +6,7 @@
  */
 import type { Plugin } from "siyuan"
 import type { Flashcard } from "@/utils/sharedStorage/flashcardStorage"
+import type { PronunciationSource } from "../types/storage"
 import {
   callAI,
   getApiConfigFromPlugin,
@@ -53,6 +54,8 @@ export class WordExplainer {
   private storage: FlashcardStorage
   private cardsCache: Flashcard[] | null = null
   private cardsCacheTimestamp = 0
+  /** 当前在线发音音频实例（用于取消与回退判断） */
+  private audio: HTMLAudioElement | null = null
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
@@ -95,12 +98,43 @@ export class WordExplainer {
     }
   }
 
-  /** 播放单词发音（与 flashcardReading 的 usePlayWord 同参数：en-US / 0.8 倍速） */
-  play(word: string) {
+  /** 播放单词发音：youdao 在线真人（失败回退），否则 Web Speech；固定英式 */
+  play(word: string, source: PronunciationSource = "webSpeech") {
+    this.cancelSpeech()
+    if (source === "youdao") {
+      this.playYoudao(word)
+    } else {
+      this.playWebSpeech(word)
+    }
+  }
+
+  /** 有道词典在线发音（type=1 英式），加载/播放失败时回退 Web Speech */
+  private playYoudao(word: string) {
+    try {
+      const url = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=1`
+      const audio = new Audio(url)
+      this.audio = audio
+      audio.onerror = () => {
+        if (this.audio !== audio) return
+        this.audio = null
+        this.playWebSpeech(word)
+      }
+      audio.play().catch(() => {
+        if (this.audio !== audio) return
+        this.audio = null
+        this.playWebSpeech(word)
+      })
+    } catch {
+      this.playWebSpeech(word)
+    }
+  }
+
+  /** 浏览器内置语音合成（离线），固定英式 en-GB / 0.8 倍速 */
+  private playWebSpeech(word: string) {
     try {
       speechSynthesis.cancel()
       const utterance = new SpeechSynthesisUtterance(word)
-      utterance.lang = "en-US"
+      utterance.lang = "en-GB"
       utterance.rate = 0.8
       speechSynthesis.speak(utterance)
     } catch (error) {
@@ -108,12 +142,16 @@ export class WordExplainer {
     }
   }
 
-  /** 取消正在播放的发音（禁用功能/清理 toast 时调用） */
+  /** 取消正在播放的发音（禁用功能/清理 toast 时调用，同时停掉在线音频与语音合成） */
   cancelSpeech() {
     try {
       speechSynthesis.cancel()
     } catch {
       // speechSynthesis 不可用时静默忽略
+    }
+    if (this.audio) {
+      this.audio.pause()
+      this.audio = null
     }
   }
 }

@@ -93,44 +93,12 @@
           <!-- 区块标题："各时段明细对比" -->
           {{ i18n.breakdownTitle }}
         </h4>
-        <div class="breakdown-list">
-          <div
-            v-for="item in mergedBreakdown"
-            :key="item.label"
-            class="breakdown-row"
-          >
-            <span class="breakdown-label">{{ item.label }}</span>
-            <div class="breakdown-bars-wrap">
-              <!-- A 期条形：灰色角标 + 灰色条 -->
-              <div class="bar-row">
-                <span class="bar-tag bar-tag-a">A</span>
-                <div class="bar-track">
-                  <div
-                    class="bar-fill bar-a"
-                    :style="{ width: barPct(item.aWords, maxBreakVal) }"
-                  ></div>
-                </div>
-                <span class="bar-value bar-value-a">{{ item.aWords > 0 ? formatNumber(item.aWords) : '—' }}</span>
-              </div>
-              <!-- B 期条形：主色角标 + 主色条 -->
-              <div class="bar-row">
-                <span class="bar-tag bar-tag-b">B</span>
-                <div class="bar-track">
-                  <div
-                    class="bar-fill bar-b"
-                    :style="{ width: barPct(item.bWords, maxBreakVal) }"
-                  ></div>
-                </div>
-                <span class="bar-value bar-value-b">{{ item.bWords > 0 ? formatNumber(item.bWords) : '—' }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- 图例：A=期间A标签，B=期间B标签 -->
-        <div class="breakdown-legend">
-          <span class="legend-item"><span class="bar-tag bar-tag-a">A</span>{{ data.periodALabel }}</span>
-          <span class="legend-item"><span class="bar-tag bar-tag-b">B</span>{{ data.periodBLabel }}</span>
-        </div>
+        <!-- A/B 两期各子时段字数以双折线叠加对比（A 灰 / B 主色） -->
+        <CompareLineChart
+          :points="mergedBreakdown"
+          :period-a-label="data.periodALabel"
+          :period-b-label="data.periodBLabel"
+        />
       </div>
     </div>
 
@@ -150,7 +118,8 @@ import {
   computed,
   ref,
 } from "vue"
-import { barPct, formatNumber } from "../utils"
+import { formatNumber } from "../utils"
+import CompareLineChart from "./charts/CompareLineChart.vue"
 import PeriodPicker from "./PeriodPicker.vue"
 
 interface Props {
@@ -265,14 +234,6 @@ const mergedBreakdown = computed(() => {
     }
   }
   return [...map.values()]
-})
-
-const maxBreakVal = computed(() => {
-  let max = 1
-  for (const item of mergedBreakdown.value) {
-    max = Math.max(max, item.aWords, item.bWords)
-  }
-  return max
 })
 
 let reqSeq = 0

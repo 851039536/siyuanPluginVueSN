@@ -5,24 +5,62 @@
 
 import mdiIcons from "@iconify-json/mdi/icons.json"
 
+/** 离线 mdi 图标数据（body 为完整内层 SVG 标记，含 <path .../>） */
+interface MdiIconData {
+  body: string
+  width: number
+  height: number
+}
+
+/** mdi icons.json 结构最小声明 */
+interface MdiIconSet {
+  icons?: Record<string, { body: string, width?: number, height?: number }>
+  width?: number
+  height?: number
+}
+
+/**
+ * 从离线预加载的 mdi 图标数据取图标（仅支持 mdi collection）
+ * 依赖 setupIconifyOffline() 已预加载 mdi 图标数据，全程无网络请求
+ */
+function getMdiIconData(iconName: string): MdiIconData | null {
+  const [collection, name] = iconName.split(":")
+  if (collection !== "mdi" || !name) {
+    console.warn(`iconHelper: 仅支持离线 mdi 图标，收到 "${iconName}"`)
+    return null
+  }
+  const iconSet = mdiIcons as unknown as MdiIconSet
+  const iconData = iconSet.icons?.[name]
+  if (!iconData) return null
+  return {
+    body: iconData.body,
+    width: iconData.width || iconSet.width || 24,
+    height: iconData.height || iconSet.height || 24,
+  }
+}
+
+/** 过滤 color 中可能破坏属性/样式的字符，防止注入 */
+function sanitizeColor(color: string): string {
+  return color.replace(/["'<>;]/g, "")
+}
+
 /**
  * 同步获取 Iconify 图标的 SVG HTML 字符串（用于思源 menu.addItem 等需要 iconHTML 的 API）
- * 依赖 setupIconifyOffline() 已预加载 mdi 图标数据
+ * 仅支持离线预加载的 mdi 图标
  */
 export function getIconHTML(
   iconName: string,
   size: number = 14,
   color?: string,
 ): string {
-  const [, name] = iconName.split(":")
-  const iconData = (mdiIcons as any).icons?.[name]
+  const iconData = getMdiIconData(iconName)
   if (!iconData) return ""
 
-  const width = iconData.width || 24
-  const height = iconData.height || 24
-  const style = `display:inline-block;vertical-align:middle${color ? `;color:${color}` : ""}`
+  const safeColor = color ? sanitizeColor(color) : ""
+  const style = `display:inline-block;vertical-align:middle${safeColor ? `;color:${safeColor}` : ""}`
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${size}" height="${size}" style="${style}"><path fill="currentColor" d="${iconData.body}"/></svg>`
+  // body 已是完整内层标记（含 <path fill="currentColor" .../>），直接作为 svg 内容
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${iconData.width} ${iconData.height}" width="${size}" height="${size}" style="${style}">${iconData.body}</svg>`
 }
 
 /**
@@ -47,57 +85,35 @@ export function replaceTopBarIcon(
   iconName: string,
   color?: string,
 ): void {
-  // 延迟执行，确保元素已添加到 DOM
-  setTimeout(() => {
+  const iconData = getMdiIconData(iconName)
+  if (!iconData) return
+
+  // 有界轮询等待顶部栏 svg 就绪（addTopBar 后通常已同步存在，
+  // 一旦出现立即写入；不依赖单次定时器猜测，超时后告警放弃）
+  let attempts = 0
+  const maxAttempts = 20
+  const apply = () => {
     const svgElement = element.querySelector("svg")
     if (!svgElement) {
-      console.warn("SVG element not found in top bar")
+      if (attempts++ < maxAttempts) {
+        setTimeout(apply, 50)
+      } else {
+        console.warn("replaceTopBarIcon: 顶部栏 SVG 未就绪")
+      }
       return
     }
 
-    const [collection, icon] = iconName.split(":")
-    if (!collection || !icon) {
-      console.error("Invalid icon name format. Expected: collection:icon-name")
-      return
-    }
-
-    // 设置 SVG 基本属性
-    svgElement.innerHTML = ""
     svgElement.setAttribute("width", "20")
     svgElement.setAttribute("height", "20")
-    svgElement.setAttribute("viewBox", "0 0 24 24")
-
+    svgElement.setAttribute("viewBox", `0 0 ${iconData.width} ${iconData.height}`)
     if (color) {
       svgElement.style.color = color
       svgElement.style.fill = "currentColor"
     }
-
-    // 从 Iconify API 加载图标
-    fetch(`https://api.iconify.design/${collection}/${icon}.svg?height=20`)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        return response.text()
-      })
-      .then((svgText) => {
-        const parser = new DOMParser()
-        const doc = parser.parseFromString(svgText, "image/svg+xml")
-        const newSvg = doc.querySelector("svg")
-
-        if (newSvg) {
-          // 复制内容和 viewBox
-          svgElement.innerHTML = newSvg.innerHTML
-          const viewBox = newSvg.getAttribute("viewBox")
-          if (viewBox) {
-            svgElement.setAttribute("viewBox", viewBox)
-          }
-        }
-      })
-      .catch((error) => {
-        console.error(`Failed to load Iconify icon: ${iconName}`, error)
-      })
-  }, 100)
+    // 离线 body 直接写入（含 <path fill="currentColor" .../>），无网络请求
+    svgElement.innerHTML = iconData.body
+  }
+  apply()
 }
 
 /**
@@ -120,41 +136,28 @@ export function createIconElement(
   container.style.width = `${size}px`
   container.style.height = `${size}px`
 
-  const [collection, icon] = iconName.split(":")
+  const iconData = getMdiIconData(iconName)
 
-  // 创建 SVG 元素
+  // 创建 SVG 元素，同步写入离线图标内容（无网络请求）
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
   svg.setAttribute("width", String(size))
   svg.setAttribute("height", String(size))
-  svg.setAttribute("viewBox", "0 0 24 24")
+  svg.setAttribute(
+    "viewBox",
+    iconData ? `0 0 ${iconData.width} ${iconData.height}` : "0 0 24 24",
+  )
 
   if (color) {
     svg.style.color = color
     svg.style.fill = "currentColor"
   }
 
+  if (iconData) {
+    // body 已含 <path fill="currentColor" .../>，直接作为 svg 内容
+    svg.innerHTML = iconData.body
+  }
+
   container.appendChild(svg)
-
-  // 异步加载图标内容
-  fetch(`https://api.iconify.design/${collection}/${icon}.svg?height=${size}`)
-    .then((response) => response.text())
-    .then((svgText) => {
-      const parser = new DOMParser()
-      const doc = parser.parseFromString(svgText, "image/svg+xml")
-      const newSvg = doc.querySelector("svg")
-
-      if (newSvg) {
-        svg.innerHTML = newSvg.innerHTML
-        const viewBox = newSvg.getAttribute("viewBox")
-        if (viewBox) {
-          svg.setAttribute("viewBox", viewBox)
-        }
-      }
-    })
-    .catch((error) => {
-      console.error(`Failed to load icon: ${iconName}`, error)
-    })
-
   return container
 }
 

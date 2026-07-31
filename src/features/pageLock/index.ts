@@ -378,8 +378,8 @@ export function registerPageLock(plugin: Plugin) {
 
   const intervalId = setInterval(cleanupCache, CACHE_CLEANUP_INTERVAL)
 
-  /** 返回清理函数，供插件 onunload 调用 */
-  return {
+  /** 清理函数挂载到 plugin 实例，供 onunload 经 DESTROYABLE_KEYS 统一销毁 */
+  const instance = {
     destroy() {
       clearInterval(intervalId)
       plugin.eventBus.off("switch-protyle", updateButton)
@@ -391,4 +391,6 @@ export function registerPageLock(plugin: Plugin) {
       storage = null
     },
   }
+  ;(plugin as any).__pageLock = instance
+  return instance
 }

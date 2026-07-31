@@ -18,6 +18,8 @@ export function getTextDiffManager(): TextDiffManager | undefined {
  */
 export function registerTextDiff(plugin: Plugin): TextDiffManager {
   manager = new TextDiffManager(plugin)
+  // 挂载到 plugin 实例，供 onunload 经 DESTROYABLE_KEYS 统一销毁
+  ;(plugin as any).__textDiff = manager
   return manager
 }
 

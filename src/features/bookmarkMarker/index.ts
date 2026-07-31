@@ -100,5 +100,7 @@ export class BookmarkMarkerManager {
 export function registerBookmarkMarker(plugin: Plugin): BookmarkMarkerManager {
   const manager = new BookmarkMarkerManager(plugin)
   manager.init()
+  // 挂载到 plugin 实例：onunload 经 DESTROYABLE_KEYS 销毁，App.vue 经 __bookmarkMarker.open() 调度
+  ;(plugin as any).__bookmarkMarker = manager
   return manager
 }

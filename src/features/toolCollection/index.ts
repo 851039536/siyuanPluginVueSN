@@ -66,10 +66,9 @@ export function registerToolCollection(plugin: Plugin) {
   })
   app.mount(container)
 
-  // 保存引用供 onunload 清理
+  // 挂载到 plugin 实例，供 onunload 经 DESTROYABLE_KEYS 统一销毁
   ;(plugin as any).__toolCollection = {
-    app,
-    container,
+    destroy: unregisterToolCollection,
   }
 }
 

@@ -62,18 +62,13 @@
 </template>
 
 <script setup lang="ts">
+import type { DailyWordCount } from "../types"
 import {
   computed,
   ref,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { formatNumber } from "../utils"
-
-interface DailyWordCount {
-  date: string
-  words: number
-  dateLabel: string
-}
 
 interface Props {
   chartData?: DailyWordCount[]
@@ -86,10 +81,11 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const topNOptions = [10, 50, 100] as const
-const topN = ref<number>(10)
+const topN = ref<(typeof topNOptions)[number]>(10)
 
 const rankingList = computed(() => {
-  return [...props.chartData]
+  // filter 已返回新数组，sort 原地排序不会污染 props
+  return props.chartData
     .filter((item) => item.words > 0)
     .sort((a, b) => b.words - a.words)
     .slice(0, topN.value)

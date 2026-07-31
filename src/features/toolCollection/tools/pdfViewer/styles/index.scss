@@ -131,7 +131,14 @@
 
   // 全屏模式
   &.is-fullscreen {
+    width: 100vw;
+    height: 100vh;
     background: var(--b3-theme-background);
+
+    // 强制 iframe 独立合成层，避免全屏时滚动条拖拽卡顿
+    .pv-frame {
+      transform: translateZ(0);
+    }
   }
 }
 

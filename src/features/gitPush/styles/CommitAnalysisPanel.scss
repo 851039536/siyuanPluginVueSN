@@ -1,0 +1,256 @@
+@use "./variables" as *;
+@use "./mixins" as *;
+
+// ── 面板基座（与 StatsPanel 一致：独立滚动 + 上下留白）──
+.gpa-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: $spacing-1 0;
+}
+
+// ── 顶部工具条 ──
+.gpa-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+  margin-bottom: $spacing-3;
+}
+
+// 分析状态文案（未分析/分析中/完成）
+.gpa-status {
+  font-size: $font-size-xs;
+  opacity: 0.6;
+}
+
+.gpa-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+}
+
+// 条数选择（每项目抓取条数）
+.gpa-count-select {
+  font-size: $font-size-2xs;
+  font-family: $vp-mono;
+  color: var(--b3-theme-on-surface);
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  padding: 2px 4px;
+  cursor: pointer;
+
+  &:focus {
+    @include focus-ring;
+  }
+}
+
+// ── 总览卡片（复用 gp-stat-card 视觉模式）──
+.gpa-cards {
+  display: grid;
+  // 两列等宽卡片（总提交次数 + 已分析项目）
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-2;
+  margin-bottom: $spacing-3;
+}
+
+.gpa-card {
+  text-align: center;
+  padding: $spacing-2 $spacing-1;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-base;
+  background: var(--b3-theme-surface);
+}
+
+.gpa-card-value {
+  font-size: $font-size-lg; // 数据突出展示：统计数值大号字体
+  font-weight: $font-weight-bold;
+  font-family: $vp-mono;
+  line-height: $line-height-tight;
+  color: var(--b3-theme-on-surface);
+}
+
+.gpa-card-label {
+  font-size: $font-size-2xs; // 大写辅助标签语义，与 gp-label-base 一致（两级字号制）
+  opacity: 0.5;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+// 抓取失败提示（弱化展示，不打断正常结果阅读）
+.gpa-fail-hint {
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-warning);
+  margin-bottom: $spacing-2;
+}
+
+// ── 区块标题（复用 gp-stats-section-title 视觉模式）──
+.gpa-section {
+  margin-bottom: $spacing-3;
+}
+
+.gpa-section-title {
+  @include gp-label-base;
+  font-size: $font-size-xs;
+  margin-bottom: $spacing-2;
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+}
+
+.gpa-section-count {
+  font-size: $font-size-2xs;
+  font-family: $vp-mono;
+  padding: 0 6px;
+  border-radius: $radius-sm;
+  background: var(--b3-theme-primary-lightest);
+  color: var(--b3-theme-primary);
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0;
+}
+
+// ── 水平条形（排行/类型分布共用：标签 + 轨道 + 计数）──
+.gpa-bar-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.gpa-bar-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: $font-size-xs;
+}
+
+.gpa-bar-row--clickable {
+  cursor: pointer;
+
+  &:hover .gpa-bar-label {
+    color: var(--b3-theme-primary);
+  }
+}
+
+.gpa-bar-label {
+  flex: 0 0 88px; // 固定标签列宽，保证轨道对齐
+  @include text-ellipsis;
+  opacity: 0.75;
+  transition: color 0.12s;
+}
+
+.gpa-bar-track {
+  flex: 1;
+  height: 4px;
+  background: var(--b3-theme-surface);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.gpa-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--b3-theme-primary);
+}
+
+.gpa-bar-num {
+  flex: 0 0 auto;
+  min-width: 24px;
+  text-align: right;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  opacity: 0.5;
+}
+
+// ── 最近 30 天提交趋势（纵向条形图：底部对齐，hover 显示日期与次数）──
+.gpa-daily {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 64px; // 条形图固定高度，视觉稳定
+  padding: $spacing-1 0 0;
+  border-bottom: 1px solid var(--b3-border-color);
+}
+
+.gpa-daily-col {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 100%;
+  cursor: default;
+}
+
+.gpa-daily-bar {
+  width: 60%;
+  min-height: 2px; // 零值日保留 2px 底线，图表可读
+  background: var(--b3-theme-primary);
+  border-radius: 1px 1px 0 0;
+  transition: background 0.12s;
+
+  .gpa-daily-col:hover & {
+    background: var(--b3-theme-primary-lightest);
+  }
+}
+
+// ── 最近提交记录列表 ──
+.gpa-commit-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-px;
+}
+
+.gpa-commit-item {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-px;
+  padding: $spacing-1 0;
+  @include row-divider;
+}
+
+.gpa-commit-hash {
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  opacity: 0.45;
+}
+
+.gpa-commit-msg {
+  font-size: $font-size-xs;
+  @include text-ellipsis;
+}
+
+.gpa-commit-meta {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: $font-size-2xs;
+  opacity: 0.6;
+}
+
+.gpa-commit-project {
+  color: var(--b3-theme-primary);
+  cursor: pointer;
+  @include text-ellipsis;
+  max-width: 40%;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.gpa-commit-author {
+  @include text-ellipsis;
+  max-width: 30%;
+}
+
+.gpa-commit-date {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+// ── 加载更多 ──
+.gpa-load-more {
+  display: flex;
+  justify-content: center;
+  margin-top: $spacing-2;
+}

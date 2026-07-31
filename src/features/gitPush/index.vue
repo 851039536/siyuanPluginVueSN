@@ -54,6 +54,19 @@
       @view-project="onViewProject"
     />
 
+    <!-- ========== 提交分析视图 ========== -->
+    <CommitAnalysisPanel
+      v-if="currentView === 'analysis'"
+      :i18n="i18n"
+      :stats="analysisStats"
+      :analyzing="analysisAnalyzing"
+      :analyzed="analysisAnalyzed"
+      :commit-count="analysisCommitCount"
+      @run-analysis="runAnalysis"
+      @update-count="setCommitCount"
+      @view-project="onViewProject"
+    />
+
     <!-- ========== 列表视图 ========== -->
     <template v-if="currentView === 'list'">
       <!-- 筛选工具栏 + 分类 TAB -->
@@ -311,6 +324,7 @@ import ScanImportDialog from "./components/ScanImportDialog.vue"
 import SettingsDialog from "./components/SettingsDialog.vue"
 import StatsPanel from "./components/StatsPanel.vue"
 import LogPanel from "./components/LogPanel.vue"
+import CommitAnalysisPanel from "./components/CommitAnalysisPanel.vue"
 import BatchProgressBar from "./components/BatchProgressBar.vue"
 import GitConfigDialog from "./components/GitConfigDialog.vue"
 import Loader from "@/components/Loader.vue"
@@ -326,6 +340,7 @@ import { useGitConfigDialog } from "./composables/useGitConfigDialog"
 import { useGitHandlers } from "./composables/useGitHandlers"
 import { useRefreshOps } from "./composables/useRefreshOps"
 import { useRepoLinkAudit } from "./composables/useRepoLinkAudit"
+import { useCommitAnalysis } from "./composables/useCommitAnalysis"
 import { CARD_SERVICES_KEY, PLATFORM_META, REMOTES } from "./types"
 import {
   openLocalPath,
@@ -560,6 +575,16 @@ const {
   runAudit,
 } = useRepoLinkAudit(props.manager, projects)
 
+// ── 提交分析（批量读取各项目提交日志，首次进入视图自动分析一次，之后手动重新分析）──
+const {
+  analysisStats,
+  analyzing: analysisAnalyzing,
+  analyzed: analysisAnalyzed,
+  commitCount: analysisCommitCount,
+  setCommitCount,
+  runAnalysis,
+} = useCommitAnalysis(props.manager, projects)
+
 const {
   detectedIdes,
   customIdes,
@@ -748,7 +773,7 @@ async function ensureStatsDataLoaded() {
   return runProjectLoadBatch(pending, "stepStats", (id) => loadStatsData(id))
 }
 
-/** 切换视图时按目标视图补齐数据：列表→当前分类状态；统计→全量统计；日志→同步置 loading（pre-flush，避免 LogPanel 首渲闪空态） */
+/** 切换视图时按目标视图补齐数据：列表→当前分类状态；统计→全量统计；日志→同步置 loading（pre-flush，避免 LogPanel 首渲闪空态）；分析→首次自动分析 */
 watch(currentView, async (view) => {
   if (view === "list") await loadCurrentCategoryList()
   if (view === "stats") await ensureStatsDataLoaded()
@@ -759,6 +784,9 @@ watch(currentView, async (view) => {
     } finally {
       opLogsLoading.value = false
     }
+  }
+  if (view === "analysis" && !analysisAnalyzed.value) {
+    if (!gitOpsPaused.value) await runAnalysis()
   }
 })
 
@@ -771,6 +799,11 @@ watch(viewMode, async (mode) => {
 /** 解除暂停时按当前上下文补载数据（暂停期间跳过的加载在恢复后立即补齐） */
 watch(gitOpsPaused, async (paused) => {
   if (paused) return
+  // 提交分析视图：暂停期间跳过的首次分析在恢复后补齐
+  if (currentView.value === "analysis") {
+    if (!analysisAnalyzed.value) await runAnalysis()
+    return
+  }
   // 统计视图 / 智能视图需要全量状态数据
   if (currentView.value === "stats" || viewMode.value === "needsPush" || viewMode.value === "uncommitted") {
     await ensureStatsDataLoaded()

@@ -25,7 +25,7 @@
             height="12"
           />
         </button>
-        <!-- 按钮（tooltip："统计视图"） -->
+        <!-- 按钮（tooltip：“统计视图”） -->
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
           :class="{ active: currentView === 'stats' }"
@@ -34,6 +34,18 @@
         >
           <Icon
             icon="mdi:chart-bar"
+            height="12"
+          />
+        </button>
+        <!-- 按钮（tooltip：“提交分析”） -->
+        <button
+          class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
+          :class="{ active: currentView === 'analysis' }"
+          :title="i18n.analysisView"
+          @click="currentView = 'analysis'"
+        >
+          <Icon
+            icon="mdi:chart-timeline-variant"
             height="12"
           />
         </button>

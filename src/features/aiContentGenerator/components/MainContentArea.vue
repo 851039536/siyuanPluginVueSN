@@ -339,10 +339,10 @@ const hasDiff = computed(() => {
     && props.originalContent !== props.generatedContent
 })
 
-// 生成完成后自动切换到 Diff 模式
-watch(() => props.isGenerating, (newVal, oldVal) => {
-  if (oldVal && !newVal && hasDiff.value) {
-    viewMode.value = "diff"
+// 生成开始时重置为预览模式：流式输出需要预览展示，且生成完成后默认停留在预览界面，由用户手动切换对比
+watch(() => props.isGenerating, (newVal) => {
+  if (newVal) {
+    viewMode.value = "preview"
   }
 })
 </script>

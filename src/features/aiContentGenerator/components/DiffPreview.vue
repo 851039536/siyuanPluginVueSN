@@ -31,7 +31,6 @@
     </div>
     <div
       class="diff-viewer-wrapper"
-      :class="{ 'is-dark': isDarkTheme }"
     >
       <Diff
         class="diff-viewer"
@@ -71,10 +70,10 @@ const props = defineProps<Props>()
 const diffMode = ref<"split" | "unified">("unified")
 const isDarkTheme = ref(false)
 
-// 检测思源笔记当前是否为暗色主题
+// 检测思源笔记当前是否为暗色主题（思源在 html 上维护 data-theme-mode 属性）
 const checkTheme = () => {
   const html = document.documentElement
-  isDarkTheme.value = html.getAttribute("data-theme") === "dark"
+  isDarkTheme.value = html.getAttribute("data-theme-mode") === "dark"
 }
 
 // 监听思源主题切换
@@ -87,7 +86,7 @@ onMounted(() => {
   })
   observer.observe(document.documentElement, {
     attributes: true,
-    attributeFilter: ["data-theme", "class"],
+    attributeFilter: ["data-theme-mode"],
   })
 })
 
@@ -114,17 +113,4 @@ const diffStats = computed(() => {
 
 <style scoped lang="scss">
 @use "../styles/index.scss";
-</style>
-
-<style lang="scss">
-.diff-viewer-wrapper .diff-viewer,
-.diff-viewer-wrapper .diff-viewer *,
-.diff-viewer-wrapper .d2h-wrapper,
-.diff-viewer-wrapper .d2h-diff-table,
-.diff-viewer-wrapper .d2h-diff-row,
-.diff-viewer-wrapper .d2h-del,
-.diff-viewer-wrapper .d2h-ins,
-.diff-viewer-wrapper .d2h-line-num {
-  font-size: 12px !important;
-}
 </style>

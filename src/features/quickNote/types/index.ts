@@ -18,15 +18,21 @@ export interface QuickNoteItem {
   updatedAt: number
 }
 
-/** 弹窗显示位置（五档） */
+/** 弹窗显示位置（五档预设） */
 export type QuickNotePosition = "center" | "top" | "bottom" | "left" | "right"
+
+/** 实际定位模式：五档预设或拖拽产生的自定义坐标 */
+export type QuickNotePlacement = QuickNotePosition | "custom"
 
 /** 列表视图筛选：待完成 / 已完成 */
 export type QuickNoteFilter = "pending" | "done"
 
 /** 速记功能设置（对象存储，便于未来扩展字段时浅合并兜底） */
 export interface QuickNoteSettings {
-  position: QuickNotePosition
+  position: QuickNotePlacement
+  /** 自定义定位的容器左上角视口坐标（px，position === "custom" 时生效） */
+  customX: number
+  customY: number
 }
 
 /** 位置选项列表（Select 选项与 Manager 校验共用的单一数据源） */
@@ -76,11 +82,17 @@ export type QuickNoteMinimizeAxis = "horizontal" | "vertical"
  * axis 决定最小化条的收缩轴向；collapseIcon/expandIcon 指示收起/展开的方向箭头
  */
 export const POSITION_MINIMIZE_META: Record<
-  QuickNotePosition,
+  QuickNotePlacement,
   { axis: QuickNoteMinimizeAxis, collapseIcon: IconKey, expandIcon: IconKey }
 > = {
   // 居中无贴靠边缘，按横条收起（视觉上向上折叠为标题条）
   center: {
+    axis: "horizontal",
+    collapseIcon: "chevronUp",
+    expandIcon: "chevronDown",
+  },
+  // 自定义坐标无贴靠边缘，同 center 按横条原地收起
+  custom: {
     axis: "horizontal",
     collapseIcon: "chevronUp",
     expandIcon: "chevronDown",

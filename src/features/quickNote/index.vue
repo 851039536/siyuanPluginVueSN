@@ -3,13 +3,14 @@
     class="quick-note-panel"
     :class="{ 'quick-note-panel--minimized': minimized }"
   >
-    <!-- 最小化态：贴边小条（横条/竖条由当前位置派生），点击展开 -->
+    <!-- 最小化态：贴边小条（横条/竖条由当前位置派生），按住可拖动，点击展开 -->
     <button
       v-if="minimized"
       class="mini-bar"
       :class="{ 'mini-bar--vertical': minimizeMeta.axis === 'vertical' }"
       :title="i18n.restore"
-      @click="handleToggleMinimize"
+      @pointerdown="props.manager.startDrag($event)"
+      @click="handleMiniBarClick"
     >
       <IconWrapper
         name="quickNote"
@@ -31,26 +32,52 @@
 
     <!-- 展开态：完整面板 -->
     <template v-else>
-      <!-- 面板头部 -->
-      <div class="panel-header">
+      <!-- 面板头部（拖拽把手：按住空白区可拖动面板） -->
+      <div
+        class="panel-header"
+        @pointerdown="props.manager.startDrag($event)"
+      >
         <!-- 弹窗标题："速记" -->
         <h3 class="panel-title">
           <IconWrapper
             name="quickNote"
-            :size="16"
+            :size="14"
             class="panel-title__icon"
           />
           {{ i18n.title }}
         </h3>
         <div class="header-actions">
-          <!-- 位置选择器（标签："显示位置"，选项："居中/顶部/底部/左侧/右侧"） -->
-          <SiSelect
-            :model-value="position"
-            :options="positionOptions"
-            size="small"
-            class="position-select"
-            @update:model-value="(val) => handlePositionChange(val as QuickNotePosition)"
-          />
+          <!-- 预设位置菜单（悬浮提示："显示位置"，点击弹出五档预设） -->
+          <div
+            ref="menuWrapRef"
+            class="position-menu-wrap"
+          >
+            <button
+              class="close-btn"
+              :title="i18n.position"
+              @click="handleToggleMenu"
+            >
+              <IconWrapper
+                name="layoutGrid"
+                :size="12"
+              />
+            </button>
+            <!-- 预设菜单项："居中/顶部/底部/左侧/右侧"（当前预设高亮，拖拽自定义态无高亮） -->
+            <div
+              v-if="menuOpen"
+              class="position-menu"
+            >
+              <button
+                v-for="p in QUICK_NOTE_POSITIONS"
+                :key="p"
+                class="position-menu__item"
+                :class="{ 'position-menu__item--active': position === p }"
+                @click="handleSelectPreset(p)"
+              >
+                {{ i18n[`position${p.charAt(0).toUpperCase()}${p.slice(1)}`] }}
+              </button>
+            </div>
+          </div>
           <!-- 最小化按钮（悬浮提示："最小化"，箭头指向收缩方向） -->
           <button
             class="close-btn"
@@ -59,7 +86,7 @@
           >
             <IconWrapper
               :name="minimizeMeta.collapseIcon"
-              :size="14"
+              :size="12"
             />
           </button>
           <button
@@ -68,7 +95,7 @@
           >
             <IconWrapper
               name="close"
-              :size="14"
+              :size="12"
             />
           </button>
         </div>
@@ -147,16 +174,14 @@
 /**
  * 速记 — 弹窗主面板
  * 自包含数据流：onMounted 从 manager.storage 加载条目，CRUD 经 useQuickNotes 直达存储；
- * 位置变更直接调 manager.setPosition，父层（Manager）不维护任何表单中间状态
+ * 位置变更（预设菜单/拖拽）与最小化直达 manager，父层（Manager）不维护任何表单中间状态
  */
 import type { Plugin } from "siyuan"
-import type { SelectOption } from "@/components/Select.vue"
 import type { QuickNoteManager } from "./index"
-import type { QuickNotePosition } from "./types"
-import { computed, onMounted, ref } from "vue"
+import type { QuickNotePlacement, QuickNotePosition } from "./types"
+import { computed, onMounted, onUnmounted, ref } from "vue"
 import SiButton from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import SiSelect from "@/components/Select.vue"
 import NoteItem from "./components/NoteItem.vue"
 import { useQuickNotes } from "./composables/useQuickNotes"
 import { POSITION_MINIMIZE_META, QUICK_NOTE_POSITIONS } from "./types"
@@ -183,22 +208,18 @@ const {
 // 新增输入草稿（persistent Modal 下关闭再打开不丢失）
 const draft = ref("")
 
-// 位置选择器（选中值初始化自 Manager 缓存）
-const position = ref<QuickNotePosition>(props.manager.getPosition())
+// 定位模式（预设/custom，初始化自 Manager 缓存；菜单高亮与最小化方向据此派生）
+const position = ref<QuickNotePlacement>(props.manager.getPosition())
+
+// 预设位置菜单开合与点击外部关闭用的容器引用
+const menuOpen = ref(false)
+const menuWrapRef = ref<HTMLElement | null>(null)
 
 // 最小化状态（persistent Modal 下与 Manager 保持同步）
 const minimized = ref(props.manager.isMinimized())
 
-// 当前位置对应的最小化方向元数据（轴向 + 收起/展开箭头）
+// 当前定位对应的最小化方向元数据（轴向 + 收起/展开箭头）
 const minimizeMeta = computed(() => POSITION_MINIMIZE_META[position.value])
-
-// 位置键 → i18n 显示键（positionCenter / positionTop / ...）
-const positionOptions = computed<SelectOption[]>(() =>
-  QUICK_NOTE_POSITIONS.map((p) => ({
-    value: p,
-    label: props.i18n[`position${p.charAt(0).toUpperCase()}${p.slice(1)}`],
-  })),
-)
 
 const handleAdd = async () => {
   if (!draft.value.trim()) return
@@ -206,15 +227,37 @@ const handleAdd = async () => {
   draft.value = ""
 }
 
-const handlePositionChange = (pos: QuickNotePosition) => {
+// 预设菜单开合：打开前同步 Manager 侧定位（拖拽后可能已变为 custom，用于高亮判断）
+const handleToggleMenu = () => {
+  position.value = props.manager.getPosition()
+  menuOpen.value = !menuOpen.value
+}
+
+// 选择预设档位：吸附并退出自定义定位
+const handleSelectPreset = (pos: QuickNotePosition) => {
   position.value = pos
+  menuOpen.value = false
   props.manager.setPosition(pos)
 }
 
-// 最小化/展开切换：本地状态驱动模板，Manager 负责改写容器尺寸与遮罩交互
+// 点击菜单外部关闭预设菜单
+const handleWindowClick = (e: MouseEvent) => {
+  if (!menuOpen.value) return
+  if (menuWrapRef.value?.contains(e.target as Node)) return
+  menuOpen.value = false
+}
+
+// 最小化/展开切换：先同步定位（拖拽后已变 custom，据此派生收缩方向），Manager 改写容器与遮罩
 const handleToggleMinimize = () => {
+  position.value = props.manager.getPosition()
   minimized.value = !minimized.value
   props.manager.setMinimized(minimized.value)
+}
+
+// 小条点击：刚完成拖动则吞掉本次点击（不触发展开）
+const handleMiniBarClick = () => {
+  if (props.manager.consumeDragClick()) return
+  handleToggleMinimize()
 }
 
 const handleRemove = (id: string) => {
@@ -227,6 +270,12 @@ onMounted(() => {
   load()
   position.value = props.manager.getPosition()
   minimized.value = props.manager.isMinimized()
+  // 预设菜单点击外部关闭（persistent 实例常驻，onUnmounted 对应清理）
+  window.addEventListener("click", handleWindowClick)
+})
+
+onUnmounted(() => {
+  window.removeEventListener("click", handleWindowClick)
 })
 </script>
 

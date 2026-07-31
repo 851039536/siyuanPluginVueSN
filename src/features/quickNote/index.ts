@@ -1,11 +1,11 @@
 /**
  * 速记功能模块 — 入口
- * QuickNoteManager 管理 persistent Modal 生命周期、弹窗位置与最小化应用，
+ * QuickNoteManager 管理 persistent Modal 生命周期、弹窗位置（预设/拖拽自定义）与最小化应用，
  * registerQuickNote 供插件注册链调用，toggle 由 App.vue 中心调度触发
  */
 import type { Plugin } from "siyuan"
 import type { ModalAppInstance } from "@/utils/vueAppHelper"
-import type { QuickNotePosition } from "./types"
+import type { QuickNotePlacement, QuickNotePosition } from "./types"
 import { createModalVueApp } from "@/utils/vueAppHelper"
 import { POSITION_ALIGN_MAP } from "./types"
 import { DEFAULT_QUICK_NOTE_SETTINGS, QuickNoteStorage } from "./types/storage"
@@ -18,14 +18,23 @@ const PANEL_WIDTH = "420px"
 const PANEL_HEIGHT = "70vh"
 /** 遮罩展开态背景（与 vueAppHelper 创建时的遮罩背景保持一致） */
 const MASK_BACKGROUND = "rgba(0, 0, 0, 0.5)"
+/** 拖拽启动位移阈值（px，小于此值视为点击，避免小条点击展开误触拖拽） */
+const DRAG_THRESHOLD = 4
 
 export class QuickNoteManager {
   readonly storage: QuickNoteStorage
   private modal: ModalAppInstance
   /** 当前位置缓存（init 时预加载，避免 open 时异步等待） */
-  private position: QuickNotePosition = DEFAULT_QUICK_NOTE_SETTINGS.position
+  private position: QuickNotePlacement = DEFAULT_QUICK_NOTE_SETTINGS.position
+  /** 自定义定位坐标（拖拽产生，position === "custom" 时生效） */
+  private customX = DEFAULT_QUICK_NOTE_SETTINGS.customX
+  private customY = DEFAULT_QUICK_NOTE_SETTINGS.customY
   /** 最小化状态（会话级，不持久化；面板最小化按钮触发） */
   private minimized = false
+  /** 刚完成一次拖拽（供小条 click 判断是否吞掉本次点击） */
+  private dragMoved = false
+  /** 当前拖拽会话的 window 监听清理函数（destroy 兜底） */
+  private dragCleanup: (() => void) | null = null
 
   constructor(plugin: Plugin) {
     this.storage = new QuickNoteStorage(plugin)
@@ -49,6 +58,8 @@ export class QuickNoteManager {
   async init(): Promise<void> {
     const settings = await this.storage.settings.loadOrDefault()
     this.position = settings.position
+    this.customX = settings.customX
+    this.customY = settings.customY
   }
 
   /** 切换弹窗显隐（状态栏按钮/功能抽屉入口） */
@@ -70,8 +81,8 @@ export class QuickNoteManager {
     this.modal.close()
   }
 
-  /** 获取当前位置（供面板初始化选择器选中值） */
-  getPosition(): QuickNotePosition {
+  /** 获取当前定位模式（供面板预设菜单高亮与最小化方向派生） */
+  getPosition(): QuickNotePlacement {
     return this.position
   }
 
@@ -111,21 +122,117 @@ export class QuickNoteManager {
     }
   }
 
-  /** 设置位置：更新缓存 + 持久化 + 立即应用（供面板位置选择器调用） */
+  /** 设置预设位置：退出自定义定位 + 更新缓存 + 持久化 + 立即应用（供面板预设菜单调用） */
   async setPosition(position: QuickNotePosition): Promise<void> {
     this.position = position
     this.applyPosition()
-    await this.storage.settings.save({ position })
+    await this.persistSettings()
   }
 
   /**
-   * 按当前位置改写遮罩层 flex 对齐实现贴边/居中
-   * 注意：依赖 vueAppHelper createModalVueApp 的遮罩 DOM 结构
-   * （全屏 fixed flex 容器，id 为 maskId），helper 重构时需同步调整此处
+   * 拖拽启动入口（展开态头部与最小化小条的 pointerdown 调用）
+   * 位移超过 DRAG_THRESHOLD 才切换为 custom 绝对定位并跟随移动，
+   * 松手后若确实发生拖动则持久化坐标，并置 dragMoved 供 click 护栏读取
+   */
+  startDrag(e: PointerEvent): void {
+    const container = this.modal.container
+    if (!container) return
+    // 拖拽把手内的其它按钮（最小化/关闭/预设菜单）不触发拖拽；小条自身是 button，不在此限
+    const targetButton = (e.target as HTMLElement).closest("button")
+    if (targetButton && targetButton !== e.currentTarget) return
+    // 阻止拖拽过程中选中面板文本
+    e.preventDefault()
+
+    const rect = container.getBoundingClientRect()
+    const startX = e.clientX
+    const startY = e.clientY
+    let dragging = false
+
+    const onMove = (ev: PointerEvent): void => {
+      const dx = ev.clientX - startX
+      const dy = ev.clientY - startY
+      if (!dragging && Math.abs(dx) < DRAG_THRESHOLD && Math.abs(dy) < DRAG_THRESHOLD) return
+      if (!dragging) {
+        dragging = true
+        // 起拖即切换为绝对定位（脱离遮罩 flex 流，保持当前视觉位置）
+        container.style.position = "absolute"
+      }
+      const clamped = this.clampToViewport(rect.left + dx, rect.top + dy, rect.width, rect.height)
+      container.style.left = `${clamped.x}px`
+      container.style.top = `${clamped.y}px`
+      this.customX = clamped.x
+      this.customY = clamped.y
+    }
+
+    const onUp = (): void => {
+      this.dragCleanup?.()
+      if (!dragging) return
+      this.position = "custom"
+      this.dragMoved = true
+      // click 事件在 pointerup 后同步派发，延时复位避免标记残留吞掉后续正常点击
+      setTimeout(() => {
+        this.dragMoved = false
+      }, 0)
+      this.persistSettings().catch((err) => {
+        console.error("[quickNote] 拖拽位置保存失败:", err)
+      })
+    }
+
+    window.addEventListener("pointermove", onMove)
+    window.addEventListener("pointerup", onUp)
+    this.dragCleanup = () => {
+      window.removeEventListener("pointermove", onMove)
+      window.removeEventListener("pointerup", onUp)
+      this.dragCleanup = null
+    }
+  }
+
+  /** 小条 click 护栏：刚完成拖拽则返回 true（本次点击应被吞掉，不触发展开） */
+  consumeDragClick(): boolean {
+    const moved = this.dragMoved
+    this.dragMoved = false
+    return moved
+  }
+
+  /** 坐标 clamp 到视口内（防止面板被拖出屏幕无法找回） */
+  private clampToViewport(x: number, y: number, width: number, height: number): { x: number, y: number } {
+    return {
+      x: Math.min(Math.max(x, 0), Math.max(window.innerWidth - width, 0)),
+      y: Math.min(Math.max(y, 0), Math.max(window.innerHeight - height, 0)),
+    }
+  }
+
+  /** 持久化当前定位设置（预设/自定义坐标全量写入） */
+  private async persistSettings(): Promise<void> {
+    await this.storage.settings.save({
+      position: this.position,
+      customX: this.customX,
+      customY: this.customY,
+    })
+  }
+
+  /**
+   * 按当前定位模式应用位置
+   * 预设档：清除绝对定位内联样式，改写遮罩 flex 对齐实现贴边/居中；
+   * custom：容器绝对定位到 clamp 后的自定义坐标（绝对定位脱离 flex 流，对齐属性无影响）。
+   * 注意：依赖 vueAppHelper createModalVueApp 的遮罩 DOM 结构，helper 重构时需同步调整此处
    */
   private applyPosition(): void {
     const mask = document.getElementById("quick-note-mask")
-    if (!mask) return
+    const container = this.modal.container
+    if (!mask || !container) return
+    if (this.position === "custom") {
+      const rect = container.getBoundingClientRect()
+      const clamped = this.clampToViewport(this.customX, this.customY, rect.width, rect.height)
+      container.style.position = "absolute"
+      container.style.left = `${clamped.x}px`
+      container.style.top = `${clamped.y}px`
+      return
+    }
+    // 退出自定义定位：清除拖拽产生的绝对定位内联样式，回归 flex 对齐
+    container.style.position = ""
+    container.style.left = ""
+    container.style.top = ""
     const align = POSITION_ALIGN_MAP[this.position]
     mask.style.alignItems = align.alignItems
     mask.style.justifyContent = align.justifyContent
@@ -135,6 +242,8 @@ export class QuickNoteManager {
 
   /** 彻底销毁（persistent Modal 必须 destroy 而非 close，否则残留 DOM） */
   destroy(): void {
+    // 兜底清理拖拽会话未释放的 window 监听
+    this.dragCleanup?.()
     this.modal.destroy()
   }
 }

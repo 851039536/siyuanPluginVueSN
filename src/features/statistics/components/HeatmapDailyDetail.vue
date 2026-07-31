@@ -6,7 +6,12 @@
       <button
         class="daily-detail-close"
         @click="$emit('close')"
-      >&times;</button>
+      >
+        <IconWrapper
+          name="close"
+          :size="12"
+        />
+      </button>
     </div>
 
     <div

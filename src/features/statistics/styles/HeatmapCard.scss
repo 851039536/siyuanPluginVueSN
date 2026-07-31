@@ -232,9 +232,8 @@
   border-radius: stats.$radius-sm;
   background: transparent;
   color: var(--b3-theme-on-surface-light);
-  font-size: $font-size-base; // 图标字形尺寸（关闭按钮 × 符号，非正文文字）
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
 

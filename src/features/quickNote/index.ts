@@ -6,6 +6,7 @@
 import type { Plugin } from "siyuan"
 import type { ModalAppInstance } from "@/utils/vueAppHelper"
 import type { QuickNotePlacement, QuickNotePosition } from "./types"
+import { emitCustomEvent } from "@/utils/eventBus"
 import { createModalVueApp } from "@/utils/vueAppHelper"
 import { POSITION_ALIGN_MAP } from "./types"
 import { DEFAULT_QUICK_NOTE_SETTINGS, QuickNoteStorage } from "./types/storage"
@@ -43,8 +44,9 @@ export class QuickNoteManager {
       maskId: "quick-note-mask",
       width: PANEL_WIDTH,
       height: PANEL_HEIGHT,
+      // 点击遮罩（面板外区域）收起为最小化条而非关闭，关闭仅由头部关闭按钮/状态栏切换触发
+      getCloseHandler: () => this.requestMinimize,
       persistent: true,
-      getCloseHandler: () => this.close,
       buildProps: () => ({
         plugin,
         i18n: (plugin.i18n?.quickNote as unknown as Record<string, string>) || {},
@@ -79,6 +81,16 @@ export class QuickNoteManager {
 
   close = (): void => {
     this.modal.close()
+  }
+
+  /**
+   * 遮罩点击入口：请求收起为最小化条
+   * 最小化条视图由面板组件渲染（v-if），故派发事件让面板同步切换并回调 setMinimized
+   */
+  private requestMinimize = (): void => {
+    // 从头部起拖、松手落在遮罩上时 click 会派发到遮罩（共同祖先），不应误触收起
+    if (this.minimized || this.dragMoved) return
+    emitCustomEvent("quickNoteMaskMinimize")
   }
 
   /** 获取当前定位模式（供面板预设菜单高亮与最小化方向派生） */

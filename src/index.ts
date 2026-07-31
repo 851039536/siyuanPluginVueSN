@@ -45,6 +45,7 @@ import {
   registerImageCreation,
   registerPageLock,
   registerPasswordVault,
+  registerPrompts,
   registerQuickNote,
   registerResourceManager,
   registerRssReader,
@@ -53,7 +54,6 @@ import {
   registerScriptLauncher,
   registerShortcut,
   registerSkillLearning,
-  registerPrompts,
   registerSkillsViewer,
   registerStatistics,
   registerStatusBar,
@@ -81,10 +81,12 @@ import { setupIconifyOffline } from "@/utils/iconifySetup"
 import "@/index.scss"
 
 export default class PluginSample extends Plugin {
-  // 插件配置
-  public settings: PluginSettings
+  // 插件配置（onload 同步阶段赋值，非空断言）
+  public settings!: PluginSettings
   /** 浮动工具栏实例（由 floatingToolbar 功能模块注入） */
   public __floatingToolbar?: import("@/features/floatingToolbar/core/FloatingToolbar").FloatingToolbar
+  /** 主题色实例（rebuildThemeColor 维护，onunload 经 DESTROYABLE_KEYS 销毁） */
+  private __themeColor?: { destroy: () => void }
 
   /** 持有持久资源（定时器/监听器/Modal）、需在 onunload 统一 destroy 的实例字段清单 */
   private static readonly DESTROYABLE_KEYS = [
@@ -103,6 +105,7 @@ export default class PluginSample extends Plugin {
     "__s3FileManager", // S3 文件管理
     "__textDiff", // 文本对比
     "__quickNote", // 速记（persistent Modal）
+    "__toolCollection", // 工具合集（Vue app + 容器 DOM）
   ] as const
 
   onload() {
@@ -146,9 +149,8 @@ export default class PluginSample extends Plugin {
 
   /** 重建主题色实例：先销毁旧实例，再按 enableThemeColor 开关决定是否注册 */
   private rebuildThemeColor() {
-    const existing = (this as any).__themeColor as { destroy: () => void } | undefined
-    existing?.destroy()
-    ;(this as any).__themeColor = this.settings.enableThemeColor
+    this.__themeColor?.destroy()
+    this.__themeColor = this.settings.enableThemeColor
       ? registerThemeColor(this, this.settings.themeColorScheme)
       : undefined
   }
@@ -168,12 +170,6 @@ export default class PluginSample extends Plugin {
     // 清理统计数据资源（模块级单例，不挂在 plugin 实例上）
     getStatisticsInstance()?.destroy()
 
-    // 清理工具合集资源（无 destroy 方法，需单独卸载 Vue app + 移除容器）
-    if ((this as any).__toolCollection) {
-      ;(this as any).__toolCollection.app.unmount()
-      ;(this as any).__toolCollection.container.remove()
-    }
-
     // 清理状态栏资源
     unregisterStatusBar()
 
@@ -191,7 +187,7 @@ export default class PluginSample extends Plugin {
     // superPanel 是设置中枢（功能开关的管理入口），不受开关控制，始终注册
     registerSuperPanel(this)
 
-    if (s.enablePageLock) (this as any).__pageLock = registerPageLock(this)
+    if (s.enablePageLock) registerPageLock(this)
     if (s.enableTableOfContents) registerTableOfContents(this)
     if (s.enableImageCompressor) registerImageCompressor(this)
     if (s.enableDocNavigation) registerDocNavigation(this)
@@ -209,7 +205,7 @@ export default class PluginSample extends Plugin {
     if (s.enableStatusBar) registerStatusBar(this)
     if (s.enableFloatingToolbar) registerFloatingToolbar(this)
     if (s.enableFloatingBox) registerFloatingBox(this)
-    if (s.enableTextDiff) (this as any).__textDiff = registerTextDiff(this)
+    if (s.enableTextDiff) registerTextDiff(this)
     if (s.enableFlashcardReading) registerFlashcardReading(this)
     if (s.enablePasswordVault) registerPasswordVault(this)
     if (s.enablePrompts) registerPrompts(this)
@@ -220,9 +216,7 @@ export default class PluginSample extends Plugin {
     if (s.enableResourceManager) registerResourceManager(this)
     if (s.enableRssReader) registerRssReader(this)
     this.rebuildThemeColor() // 主题色（方法内部检查 enableThemeColor 开关）
-    if (s.enableBookmarkMarker) {
-      ;(this as any).__bookmarkMarker = registerBookmarkMarker(this)
-    }
+    if (s.enableBookmarkMarker) registerBookmarkMarker(this)
     if (s.enableApiDebugger) registerApiDebugger(this)
     if (s.enableWebsiteNavigation) registerWebsiteNavigation(this)
     if (s.enableScriptLauncher) registerScriptLauncher(this)
@@ -232,7 +226,7 @@ export default class PluginSample extends Plugin {
     if (s.enableToolCollection) registerToolCollection(this)
     if (s.enableS3Backup) registerS3Backup(this)
     if (s.enableS3FileManager) registerS3FileManager(this)
-    if (s.enableQuickNote) (this as any).__quickNote = registerQuickNote(this)
+    if (s.enableQuickNote) registerQuickNote(this)
   }
 
   /**

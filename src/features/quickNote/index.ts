@@ -104,5 +104,7 @@ export function registerQuickNote(plugin: Plugin): QuickNoteManager {
   manager.init().catch((err) => {
     console.error("[quickNote] 初始化失败:", err)
   })
+  // 挂载到 plugin 实例：onunload 经 DESTROYABLE_KEYS 销毁，App.vue 经 __quickNote.toggle() 调度
+  ;(plugin as any).__quickNote = manager
   return manager
 }

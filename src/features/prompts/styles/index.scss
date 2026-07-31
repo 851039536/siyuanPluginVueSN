@@ -48,7 +48,7 @@
 
     h2 {
       margin: 0;
-      font-size: $font-size-base;
+      font-size: $font-size-xs;
       font-weight: $font-weight-semibold;
       color: var(--b3-theme-on-background);
       font-family: $font-heading;
@@ -73,7 +73,7 @@
   text-align: center;
   padding: $spacing-16 $spacing-4;
   color: var(--b3-theme-on-surface-light);
-  font-size: $font-size-sm;
+  font-size: $font-size-xs;
   font-family: $font-body;
 }
 
@@ -82,7 +82,7 @@
   text-align: center;
   padding: $spacing-10 $spacing-4;
   color: var(--b3-theme-on-surface-light);
-  font-size: $font-size-sm;
+  font-size: $font-size-xs;
   font-style: italic;
   opacity: 0.35;
 }
@@ -113,7 +113,7 @@
       }
 
       h2 {
-        font-size: $font-size-base;
+        font-size: $font-size-xs;
       }
     }
   }
@@ -123,6 +123,6 @@
   }
 
   .vp-input {
-    font-size: $font-size-sm;
+    font-size: $font-size-xs;
   }
 }

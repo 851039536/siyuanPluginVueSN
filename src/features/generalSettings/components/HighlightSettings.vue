@@ -74,6 +74,37 @@
           @change="(value) => handleLengthChange(field, value)"
         />
       </div>
+
+      <!-- 双击解释单词开关行 -->
+      <div class="style-row">
+        <!-- 行标签："双击解释单词" -->
+        <label class="style-label">
+          {{ i18n.highlightWordExplain }}
+        </label>
+        <SiSwitch
+          v-model="enableWordExplain"
+          @change="handleStyleChange"
+        />
+      </div>
+      <!-- 解释功能说明："优先读取单词本释义，未收录时调用 AI 翻译（仅英文单词）" -->
+      <p class="toggle-description">
+        {{ i18n.highlightWordExplainDesc }}
+      </p>
+
+      <!-- 自动播放单词发音开关行（解释开关开启时显示） -->
+      <div
+        v-if="enableWordExplain"
+        class="style-row"
+      >
+        <!-- 行标签："自动播放单词发音" -->
+        <label class="style-label">
+          {{ i18n.highlightAutoPlayWord }}
+        </label>
+        <SiSwitch
+          v-model="autoPlayWord"
+          @change="handleStyleChange"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -118,6 +149,8 @@ type LengthField = (typeof LENGTH_FIELDS)[number]
 
 const enableHighlight = ref(DEFAULT_HIGHLIGHT_SETTINGS.enableHighlight)
 const backgroundColor = ref(DEFAULT_HIGHLIGHT_SETTINGS.backgroundColor)
+const enableWordExplain = ref(DEFAULT_HIGHLIGHT_SETTINGS.enableWordExplain)
+const autoPlayWord = ref(DEFAULT_HIGHLIGHT_SETTINGS.autoPlayWord)
 const lengths = reactive<Record<LengthField["key"], number>>({
   minTextLength: DEFAULT_HIGHLIGHT_SETTINGS.minTextLength,
   minLetterLength: DEFAULT_HIGHLIGHT_SETTINGS.minLetterLength,
@@ -139,6 +172,8 @@ const loadSettings = async () => {
     const settings = await storage.highlight.loadOrDefault()
     enableHighlight.value = settings.enableHighlight
     backgroundColor.value = settings.backgroundColor
+    enableWordExplain.value = settings.enableWordExplain
+    autoPlayWord.value = settings.autoPlayWord
     for (const field of LENGTH_FIELDS) {
       lengths[field.key] = settings[field.key]
     }
@@ -164,6 +199,8 @@ const handleStyleChange = () => {
   try {
     getGeneralSettings()?.updateHighlightOptions({
       backgroundColor: backgroundColor.value,
+      enableWordExplain: enableWordExplain.value,
+      autoPlayWord: autoPlayWord.value,
       ...lengths,
     })
   } catch (e) {

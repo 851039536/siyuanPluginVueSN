@@ -305,9 +305,11 @@ export class GeneralSettings {
             minLetterLength: settings.minLetterLength,
             maxTextLength: settings.maxTextLength,
             maxLetterLength: settings.maxLetterLength,
+            enableWordExplain: settings.enableWordExplain,
+            autoPlayWord: settings.autoPlayWord,
           }
         : undefined
-      this.highlightManager = new HighlightManager(options)
+      this.highlightManager = new HighlightManager(options, this.plugin)
       this.highlightManager.enable()
     } catch (error) {
       console.error("应用双击高亮功能失败:", error)
@@ -330,7 +332,7 @@ export class GeneralSettings {
 
   public async updateHighlight(enabled: boolean) {
     if (!this.highlightManager) {
-      this.highlightManager = new HighlightManager()
+      this.highlightManager = new HighlightManager(undefined, this.plugin)
     }
     if (enabled) {
       this.highlightManager.enable()

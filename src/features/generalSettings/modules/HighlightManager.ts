@@ -10,9 +10,19 @@
  * （background-color / color / text-decoration / text-shadow 等），
  * 因此不提供字号、加粗等排版类配置。
  */
+import type { Plugin } from "siyuan"
+import type { ExplainResult } from "./WordExplainer"
+import { WordExplainer } from "./WordExplainer"
+
 const HIGHLIGHT_STYLE_ID = "highlight-feature-styles"
 /** CSS.highlights 注册名，对应样式中的 ::highlight() 选择器 */
 const HIGHLIGHT_NAME = "plugin-double-click-highlight"
+/** 纯英文单词判定（允许单词内部的连字符/撇号），仅此类文本触发解释 */
+const WORD_PATTERN = /^[A-Z][A-Z'-]*$/i
+/** 普通高亮 toast 展示时长（毫秒） */
+const TOAST_DURATION_MS = 1800
+/** 含单词解释时的 toast 展示时长（毫秒）：预留阅读释义时间 */
+const EXPLAIN_TOAST_DURATION_MS = 6000
 
 export interface HighlightOptions {
   backgroundColor?: string
@@ -20,6 +30,10 @@ export interface HighlightOptions {
   minLetterLength?: number
   maxTextLength?: number
   maxLetterLength?: number
+  /** 双击英文单词后解释（单词本优先，AI 兜底） */
+  enableWordExplain?: boolean
+  /** 解释单词时自动播放发音 */
+  autoPlayWord?: boolean
 }
 
 const DEFAULT_OPTIONS: Required<HighlightOptions> = {
@@ -28,6 +42,8 @@ const DEFAULT_OPTIONS: Required<HighlightOptions> = {
   minLetterLength: 1,
   maxTextLength: 50,
   maxLetterLength: 100,
+  enableWordExplain: false,
+  autoPlayWord: false,
 }
 
 export class HighlightManager {
@@ -37,9 +53,16 @@ export class HighlightManager {
   private toastEl: HTMLDivElement | null = null
   private toastHideTimer: ReturnType<typeof setTimeout> | null = null
   private options: Required<HighlightOptions> = { ...DEFAULT_OPTIONS }
+  private plugin: Plugin | null = null
+  private explainer: WordExplainer | null = null
+  /** toast 内的释义行元素（showToast 重置内容后会重建） */
+  private explainEl: HTMLDivElement | null = null
+  /** 解释请求序号：新双击/清理 toast 后递增，防止陈旧异步结果覆盖 */
+  private explainSeq = 0
 
-  constructor(options?: HighlightOptions) {
+  constructor(options?: HighlightOptions, plugin?: Plugin) {
     if (options) this.updateOptions(options)
+    if (plugin) this.plugin = plugin
   }
 
   /** 当前环境是否支持 CSS Custom Highlight API（思源 Electron 为现代 Chromium，正常均支持） */
@@ -98,7 +121,12 @@ export class HighlightManager {
 
     this.selectedText = selection
     const matchCount = this.highlightText(selection)
-    this.showToast(selection, matchCount)
+    // 纯英文单词且开启解释时，走结构化解释浮层（只显示单词/音标/谐音/释义）；否则显示“N 处”高亮提示
+    if (this.shouldExplain(selection)) {
+      this.showExplainToast(selection)
+    } else {
+      this.showToast(selection, matchCount)
+    }
   }
 
   private handleMouseDown = () => {
@@ -136,6 +164,7 @@ export class HighlightManager {
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         display: flex;
         align-items: center;
+        flex-wrap: wrap;
         gap: 8px;
         border: 1px solid var(--b3-border-color);
       }
@@ -146,6 +175,42 @@ export class HighlightManager {
       .highlight-toast .count {
         color: var(--b3-theme-primary);
         font-weight: 600;
+      }
+      .highlight-toast .explain {
+        flex-basis: 100%;
+        max-width: 360px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--b3-theme-on-surface);
+        word-break: break-word;
+      }
+      .highlight-toast .explain-word {
+        font-weight: 600;
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .highlight-toast .explain-phonetic {
+        font-weight: 400;
+        color: var(--b3-theme-primary);
+      }
+      .highlight-toast .explain-row {
+        color: var(--b3-theme-on-surface-variant, var(--b3-theme-on-surface));
+        white-space: pre-wrap;
+      }
+      .highlight-toast .explain-label {
+        color: var(--b3-theme-on-surface);
+        font-weight: 600;
+        margin-right: 4px;
+      }
+      .highlight-toast .explain-tip {
+        flex-basis: 100%;
+        font-size: 12px;
+        color: var(--b3-theme-on-surface-variant, var(--b3-theme-on-surface));
       }
     `
     document.head.appendChild(style)
@@ -265,6 +330,11 @@ export class HighlightManager {
 
     requestAnimationFrame(() => this.toastEl!.classList.add("show"))
 
+    this.resetToastHideTimer(TOAST_DURATION_MS)
+  }
+
+  /** 重置 toast 自动隐藏定时器（解释结果到达后延长展示时长时复用） */
+  private resetToastHideTimer(duration: number) {
     if (this.toastHideTimer) {
       clearTimeout(this.toastHideTimer)
     }
@@ -273,10 +343,14 @@ export class HighlightManager {
         this.toastEl.classList.remove("show")
         setTimeout(() => this.toastEl?.remove(), 200)
       }
-    }, 1800)
+    }, duration)
   }
 
   private clearToast() {
+    // 递增序号使在途的解释请求失效，并停止上一次的自动发音
+    this.explainSeq++
+    this.explainer?.cancelSpeech()
+    this.explainEl = null
     if (this.toastHideTimer) {
       clearTimeout(this.toastHideTimer)
       this.toastHideTimer = null
@@ -285,5 +359,129 @@ export class HighlightManager {
       this.toastEl.remove()
       this.toastEl = null
     }
+  }
+
+  // ============ 双击解释单词（单词本优先 + AI 兜底） ============
+
+  /** 是否触发解释：开关开启 + 持有 plugin + 选中文本为纯英文单词 */
+  private shouldExplain(text: string): boolean {
+    return this.options.enableWordExplain && !!this.plugin && WORD_PATTERN.test(text)
+  }
+
+  /** 惰性创建单词解释器（仅开启解释且持有 plugin 时创建） */
+  private getExplainer(): WordExplainer | null {
+    if (!this.plugin) return null
+    if (!this.explainer) {
+      this.explainer = new WordExplainer(this.plugin)
+    }
+    return this.explainer
+  }
+
+  /** 展示解释浮层：顶部单词行 + 加载提示，异步结果到达后填充音标/谐音/释义 */
+  private showExplainToast(word: string) {
+    this.clearToast()
+
+    this.toastEl = document.createElement("div")
+    this.toastEl.className = "highlight-toast"
+    this.explainEl = document.createElement("div")
+    this.explainEl.className = "explain"
+    this.toastEl.appendChild(this.explainEl)
+    document.body.appendChild(this.toastEl)
+
+    requestAnimationFrame(() => this.toastEl?.classList.add("show"))
+    this.resetToastHideTimer(EXPLAIN_TOAST_DURATION_MS)
+
+    this.explainWord(word)
+  }
+
+  private explainWord(word: string) {
+    const explainer = this.getExplainer()
+    if (!explainer) return
+
+    const seq = ++this.explainSeq
+    const i18n = (this.plugin?.i18n ?? {}) as Record<string, string>
+    // 先展示加载提示（文案："解释中..."）
+    this.renderExplainTip(word, i18n.highlightExplainLoading)
+
+    if (this.options.autoPlayWord) {
+      explainer.play(word)
+    }
+
+    explainer
+      .explain(word)
+      .then((result) => {
+        // 序号已失效（新双击/清理 toast）时丢弃陈旧结果
+        if (seq !== this.explainSeq) return
+        this.renderExplainResult(result)
+        this.resetToastHideTimer(EXPLAIN_TOAST_DURATION_MS)
+      })
+      .catch((error) => {
+        console.error("解释单词失败:", error)
+        if (seq !== this.explainSeq) return
+        // 失败提示（文案："解释失败"）
+        this.renderExplainTip(word, i18n.highlightExplainFailed)
+        this.resetToastHideTimer(EXPLAIN_TOAST_DURATION_MS)
+      })
+  }
+
+  /** 渲染单词行 + 一条提示文字（加载中/解释失败） */
+  private renderExplainTip(word: string, tip: string | undefined) {
+    if (!this.explainEl) return
+    this.explainEl.textContent = ""
+    this.explainEl.appendChild(this.buildWordRow(word, ""))
+    if (tip) {
+      const tipEl = document.createElement("div")
+      tipEl.className = "explain-tip"
+      tipEl.textContent = tip
+      this.explainEl.appendChild(tipEl)
+    }
+  }
+
+  /** 渲染结构化解释：单词 + 音标（同行）、谐音行、释义行（均仅在有值时显示） */
+  private renderExplainResult(result: ExplainResult) {
+    if (!this.explainEl) return
+    const i18n = (this.plugin?.i18n ?? {}) as Record<string, string>
+    this.explainEl.textContent = ""
+    // 单词行（含音标）
+    this.explainEl.appendChild(this.buildWordRow(result.word, result.phonetic))
+    // 谐音行（文案标签："谐音"）
+    if (result.homophone) {
+      this.explainEl.appendChild(this.buildLabelRow(i18n.highlightHomophoneLabel, result.homophone))
+    }
+    // 释义行（文案标签："释义"）
+    if (result.definition) {
+      this.explainEl.appendChild(this.buildLabelRow(i18n.highlightDefinitionLabel, result.definition))
+    }
+  }
+
+  /** 构造单词行：单词（加粗）+ 音标（有则附在右侧） */
+  private buildWordRow(word: string, phonetic: string): HTMLDivElement {
+    const row = document.createElement("div")
+    row.className = "explain-word"
+    const wordEl = document.createElement("span")
+    wordEl.textContent = word
+    row.appendChild(wordEl)
+    if (phonetic) {
+      const phoneticEl = document.createElement("span")
+      phoneticEl.className = "explain-phonetic"
+      // 音标自动补斜杠（若 AI/单词本未携带）
+      phoneticEl.textContent = /^[/[]/.test(phonetic) ? phonetic : `/${phonetic}/`
+      row.appendChild(phoneticEl)
+    }
+    return row
+  }
+
+  /** 构造带标签的内容行（谐音/释义），均用 textContent 防注入 */
+  private buildLabelRow(label: string | undefined, value: string): HTMLDivElement {
+    const row = document.createElement("div")
+    row.className = "explain-row"
+    if (label) {
+      const labelEl = document.createElement("span")
+      labelEl.className = "explain-label"
+      labelEl.textContent = label
+      row.appendChild(labelEl)
+    }
+    row.appendChild(document.createTextNode(value))
+    return row
   }
 }

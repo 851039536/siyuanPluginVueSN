@@ -701,9 +701,9 @@ function buildListStyleEnhancedCss(s: ListStyleSettings): string {
   const unorderedListCss = s.unorderedListColors
     .map((color, index) => {
       const depth = '[data-subtype="u"] > '.repeat(index)
-      const symbol = index % 2 === 0 ? "•" : "▪"
+      // 各层级统一使用圆点符号
       return `${depth}.li[data-subtype="u"] > .protyle-action::before {
-        content: "${symbol}";
+        content: "•";
         font-size: ${s.symbolSize}em;
         font-weight: bold;
         font-family: Arial;

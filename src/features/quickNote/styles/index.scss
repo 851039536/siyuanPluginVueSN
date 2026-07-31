@@ -29,11 +29,17 @@
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   font-family: inherit;
-  cursor: pointer;
+  // 可拖动把手（pointer 拖拽需禁用默认触控手势）
+  cursor: grab;
+  touch-action: none;
   transition: background 0.12s;
 
   &:hover {
     background: var(--b3-theme-surface-lighter);
+  }
+
+  &:active {
+    cursor: grabbing;
   }
 
   // 竖条态（位置为左/右贴边）：纵向堆叠，标题纵向排版
@@ -61,15 +67,23 @@
   color: var(--b3-theme-on-surface-variant);
 }
 
-// ========== 面板头部 ==========
+// ========== 面板头部（紧凑拖拽把手） ==========
 
 .panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-2 $spacing-3;
+  padding: $spacing-1 $spacing-2;
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
+  // 拖拽把手：禁止选中文本/默认触控手势，grab 光标提示可拖动
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+
+  &:active {
+    cursor: grabbing;
+  }
 }
 
 .panel-title {
@@ -89,19 +103,57 @@
 .header-actions {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $spacing-1;
 }
 
-.position-select {
-  width: 96px;
+// 预设位置菜单容器（为下拉菜单提供定位锚点）
+.position-menu-wrap {
+  position: relative;
+}
+
+// 预设位置下拉菜单（Codex 风格：边框代替阴影）
+.position-menu {
+  position: absolute;
+  top: calc(100% + #{$spacing-1});
+  right: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 72px;
+  padding: $spacing-1;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  background: var(--b3-theme-background);
+}
+
+.position-menu__item {
+  padding: $spacing-1 $spacing-2;
+  border: none;
+  border-radius: $vp-radius;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-xs;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+  }
+
+  &--active {
+    background: var(--b3-theme-surface-lighter);
+    color: var(--b3-theme-primary);
+  }
 }
 
 .close-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   padding: 0;
   border: 1px solid transparent;
   border-radius: $vp-radius;

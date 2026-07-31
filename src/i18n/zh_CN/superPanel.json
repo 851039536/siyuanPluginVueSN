@@ -47,6 +47,9 @@
       "translate": "英译中替换",
       "pronunciation": "谐音翻译"
     },
+    "quickNote": {
+      "autoOpen": "启动时自动打开"
+    },
     "shortcutsDesc": "查看和管理快捷键",
     "diskBrowser": "本地磁盘",
     "diskBrowserDesc": "浏览本地磁盘和文件夹",

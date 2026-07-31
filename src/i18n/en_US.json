@@ -2757,6 +2757,9 @@
       "translate": "EN→CN Translate+Replace",
       "pronunciation": "Phonetic Helper"
     },
+    "quickNote": {
+      "autoOpen": "Auto-open on startup"
+    },
     "shortcutsDesc": "View and manage shortcuts",
     "diskBrowser": "Local Disk",
     "diskBrowserDesc": "Browse local disks and folders",

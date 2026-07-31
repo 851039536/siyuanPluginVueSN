@@ -283,7 +283,12 @@ export class QuickNoteManager {
  */
 export function registerQuickNote(plugin: Plugin): QuickNoteManager {
   const manager = new QuickNoteManager(plugin)
-  manager.init().catch((err) => {
+  manager.init().then(() => {
+    // 超级面板子开关「启动时自动打开」：init 完成后再 open，保证持久化位置缓存已加载
+    if ((plugin as any).settings?.enableQuickNoteAutoOpen) {
+      manager.open()
+    }
+  }).catch((err) => {
     console.error("[quickNote] 初始化失败:", err)
   })
   // 挂载到 plugin 实例：onunload 经 DESTROYABLE_KEYS 销毁，App.vue 经 __quickNote.toggle() 调度

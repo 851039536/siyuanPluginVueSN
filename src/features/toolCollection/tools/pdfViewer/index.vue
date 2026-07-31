@@ -4,15 +4,15 @@
     ref="rootRef"
     class="pdf-viewer"
     :class="{ 'is-fullscreen': isFullscreen }"
-    @dragover.prevent="onDragOver"
-    @dragleave.prevent="onDragLeave"
-    @drop.prevent="onDrop"
   >
-    <!-- 无文件时：拖拽引导区 -->
+    <!-- 无文件时：拖拽引导区（自身捕获拖拽事件） -->
     <div
       v-if="!pdfPath"
       class="pv-dropzone"
       :class="{ 'drag-over': isDragOver }"
+      @dragover.prevent="isDragOver = true"
+      @dragleave.prevent="isDragOver = false"
+      @drop.prevent="onDrop"
     >
       <Icon
         icon="mdi:file-pdf-box"
@@ -62,10 +62,12 @@
       />
     </template>
 
-    <!-- 拖拽悬浮遮罩（有文件时拖入新文件） -->
+    <!-- 拖拽捕获层（有文件时由 window 级检测激活，覆盖 iframe 接收 drop） -->
     <div
       v-if="pdfPath && isDragOver"
       class="pv-dropzone-overlay"
+      @dragover.prevent
+      @drop.prevent="onDrop"
     >
       <Icon
         icon="mdi:file-pdf-box"
@@ -126,16 +128,9 @@ function showError(msg: string) {
   errorTimer = setTimeout(() => { errorMsg.value = "" }, 2500)
 }
 
-function onDragOver() {
-  isDragOver.value = true
-}
-
-function onDragLeave() {
-  isDragOver.value = false
-}
-
 function onDrop(e: DragEvent) {
   isDragOver.value = false
+  dragCounter = 0
   const files = e.dataTransfer?.files
   if (!files || files.length === 0) return
 
@@ -173,12 +168,42 @@ function onFullscreenChange() {
   isFullscreen.value = document.fullscreenElement === rootRef.value
 }
 
+// ==================== Window 级拖拽检测（有文件时不干扰 iframe 交互） ====================
+let dragCounter = 0
+
+function onWindowDragEnter(e: DragEvent) {
+  if (!e.dataTransfer?.types.includes("Files")) return
+  if (!rootRef.value?.contains(e.target as Node)) return
+  dragCounter++
+  isDragOver.value = true
+}
+
+function onWindowDragLeave(e: DragEvent) {
+  if (!rootRef.value?.contains(e.target as Node)) return
+  dragCounter--
+  if (dragCounter <= 0) {
+    dragCounter = 0
+    isDragOver.value = false
+  }
+}
+
+function onWindowDrop() {
+  dragCounter = 0
+  isDragOver.value = false
+}
+
 onMounted(() => {
   document.addEventListener("fullscreenchange", onFullscreenChange)
+  window.addEventListener("dragenter", onWindowDragEnter)
+  window.addEventListener("dragleave", onWindowDragLeave)
+  window.addEventListener("drop", onWindowDrop)
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener("fullscreenchange", onFullscreenChange)
+  window.removeEventListener("dragenter", onWindowDragEnter)
+  window.removeEventListener("dragleave", onWindowDragLeave)
+  window.removeEventListener("drop", onWindowDrop)
 })
 </script>
 

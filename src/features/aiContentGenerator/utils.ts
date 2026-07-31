@@ -53,8 +53,8 @@ export function truncateTitle(title: string, maxLen = 12): string {
 
 // ============ 技能来源展示 ============
 
-export function getSourceDotColors(skill: SkillItem): string[] {
-  if (!skill.sources || skill.sources.length === 0) return []
+export function getSourceDotColors(skill: SkillItem | null): string[] {
+  if (!skill?.sources || skill.sources.length === 0) return []
   return skill.sources.map((s) => {
     const tool = TOOL_META.find((t) => t.id === s.tool)
     return tool?.color || "#999"

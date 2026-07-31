@@ -10,6 +10,8 @@ export interface AISettings {
   customModel: string
   enableThinking: boolean
   webSearch: boolean
+  /** 上次选中的技能 id（空串 = 明确选择"无技能"） */
+  skillId: string
 }
 
 const DEFAULT_AI_SETTINGS: AISettings = {
@@ -17,6 +19,7 @@ const DEFAULT_AI_SETTINGS: AISettings = {
   customModel: "",
   enableThinking: false,
   webSearch: false,
+  skillId: "",
 }
 
 /**

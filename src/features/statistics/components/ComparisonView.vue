@@ -108,7 +108,7 @@
                     :style="{ width: barPct(item.aWords, maxBreakVal) }"
                   ></div>
                 </div>
-                <span class="bar-value">{{ item.aWords > 0 ? fmtN(item.aWords) : '' }}</span>
+                <span class="bar-value">{{ item.aWords > 0 ? formatNumber(item.aWords) : '' }}</span>
               </div>
               <div class="bar-row">
                 <div class="bar-track">
@@ -117,7 +117,7 @@
                     :style="{ width: barPct(item.bWords, maxBreakVal) }"
                   ></div>
                 </div>
-                <span class="bar-value">{{ item.bWords > 0 ? fmtN(item.bWords) : '' }}</span>
+                <span class="bar-value">{{ item.bWords > 0 ? formatNumber(item.bWords) : '' }}</span>
               </div>
             </div>
           </div>
@@ -158,7 +158,7 @@ const props = withDefaults(defineProps<Props>(), {
   i18n: () => ({}),
 })
 
-const i18n = computed(() => props.i18n || {})
+const i18n = computed(() => props.i18n)
 
 const now = new Date()
 const curYear = now.getFullYear()
@@ -213,15 +213,20 @@ const metrics = computed<MetricDef[]>(() => [
   },
 ])
 
+/** 取指定指标的 delta 值（B−A 差值，即 B 相对 A 的变化），无数据时返回 0 */
+function getDelta(key: string): number {
+  return data.value?.deltas?.[key as keyof typeof data.value.deltas] ?? 0
+}
+
 function deltaClass(key: string): string {
-  const d = data.value?.deltas?.[key as keyof typeof data.value.deltas] ?? 0
+  const d = getDelta(key)
   if (d > 0) return 'delta-up'
   if (d < 0) return 'delta-down'
   return 'delta-flat'
 }
 
 function deltaText(key: string): string {
-  const d = data.value?.deltas?.[key as keyof typeof data.value.deltas] ?? 0
+  const d = getDelta(key)
   if (d === 0) return '—'
   const sign = d > 0 ? '+' : ''
   const aVal = (data.value!.a as any)[key] as number
@@ -229,20 +234,32 @@ function deltaText(key: string): string {
   return `${sign}${formatNumber(d)} (${sign}${pct}%)`
 }
 
+/** 提取对齐键：年度 label 形如 `2024/01` 取月份 `01`；日度 label 形如 `01/15` 原样返回 */
+function alignKey(label: string): string {
+  const m = label.match(/^\d{4}\/(\d{2})$/)
+  return m ? m[1] : label
+}
+
 const mergedBreakdown = computed(() => {
   if (!data.value) return []
   const aItems = data.value.a.monthlyBreakdown
   const bItems = data.value.b.monthlyBreakdown
-  const maxLen = Math.max(aItems.length, bItems.length)
-  const result: Array<{ label: string, aWords: number, bWords: number }> = []
-  for (let i = 0; i < maxLen; i++) {
-    result.push({
-      label: aItems[i]?.month || bItems[i]?.month || '',
-      aWords: aItems[i]?.words || 0,
-      bWords: bItems[i]?.words || 0,
-    })
+  // 用 Map 按 alignKey 合并：A 先插入保持顺序，B 命中同键则回填 bWords，否则追加
+  const map = new Map<string, { label: string, aWords: number, bWords: number }>()
+  for (const item of aItems) {
+    const key = alignKey(item.month)
+    map.set(key, { label: item.month, aWords: item.words, bWords: 0 })
   }
-  return result
+  for (const item of bItems) {
+    const key = alignKey(item.month)
+    const existing = map.get(key)
+    if (existing) {
+      existing.bWords = item.words
+    } else {
+      map.set(key, { label: item.month, aWords: 0, bWords: item.words })
+    }
+  }
+  return [...map.values()]
 })
 
 const maxBreakVal = computed(() => {
@@ -253,22 +270,27 @@ const maxBreakVal = computed(() => {
   return max
 })
 
-function fmtN(n: number): string {
-  return formatNumber(n)
-}
+let reqSeq = 0
 
 async function compare() {
   if (!props.onGetComparisonData) return
+  const seq = ++reqSeq
   loading.value = true
   try {
-    data.value = await props.onGetComparisonData(
+    const result = await props.onGetComparisonData(
       yearA.value,
       monthA.value || undefined,
       yearB.value,
       monthB.value || undefined,
     )
+    // 时序控制：若已有更新的请求发出，丢弃本次过期响应（loading 交由最新请求复位）
+    if (seq !== reqSeq) return
+    data.value = result
+  } catch (e) {
+    console.error('[ComparisonView] compare failed:', e)
   } finally {
-    loading.value = false
+    // 仅最新请求负责复位 loading，避免过期响应提前关闭加载态
+    if (seq === reqSeq) loading.value = false
   }
 }
 </script>

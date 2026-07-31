@@ -82,6 +82,7 @@
 import type { Plugin } from "siyuan"
 import { Icon } from "@iconify/vue"
 import { computed, ref } from "vue"
+import { getPathsFromFiles } from "@/utils/electronDialog"
 
 interface Props {
   plugin: Plugin
@@ -123,18 +124,18 @@ function onDrop(e: DragEvent) {
   const files = e.dataTransfer?.files
   if (!files || files.length === 0) return
 
-  const file = files[0]
-  // Electron 环境下 File 对象携带 path 属性
-  const filePath = (file as any).path as string | undefined
-  if (!filePath) return
+  // 兼容旧版 File.path 与 Electron 32+ webUtils.getPathForFile
+  const paths = getPathsFromFiles(Array.from(files))
+  if (paths.length === 0) return
 
+  const filePath = paths[0]
   if (!filePath.toLowerCase().endsWith(".pdf")) {
     showError(props.i18n.pdfViewer?.notPdf ?? "Only PDF files are supported")
     return
   }
 
   pdfPath.value = filePath
-  fileName.value = file.name
+  fileName.value = filePath.split(/[\\/]/).pop() ?? filePath
 }
 
 function handleClear() {

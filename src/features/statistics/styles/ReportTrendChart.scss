@@ -1,0 +1,52 @@
+// 单期报告字数趋势图样式：主色折线 + 半透明面积填充 + 峰值高亮点 + 稀疏 X 轴标签
+@use "@/variables" as *;
+@use "../styles/index.scss" as stats;
+
+.rt-chart {
+  display: flex;
+  flex-direction: column;
+}
+
+.rt-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.rt-axis {
+  stroke: var(--b3-border-color);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.rt-area {
+  fill: rgba(var(--b3-theme-primary-rgb), 0.1);
+  stroke: none;
+}
+
+.rt-line {
+  fill: none;
+  stroke: var(--b3-theme-primary);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.rt-dot {
+  fill: var(--b3-theme-primary);
+
+  // 峰值点：描白边 + 更实心，突出全期最高
+  &.rt-dot-peak {
+    stroke: var(--b3-theme-background);
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+  }
+}
+
+.rt-x-label {
+  font-family: stats.$font-mono;
+  font-size: 8px; // SVG 视图坐标内的字号，随图整体等比缩放（非 DOM 正文字号）
+  fill: var(--b3-theme-on-surface);
+  opacity: 0.5;
+}

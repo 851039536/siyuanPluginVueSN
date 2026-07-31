@@ -130,7 +130,7 @@
 
     h3 {
       margin: 0;
-      font-size: $font-size-base;
+      font-size: $font-size-xs;
       font-weight: $font-weight-semibold;
       color: var(--b3-theme-on-background);
       flex: 1;
@@ -157,7 +157,7 @@
 }
 
 .vp-card-desc {
-  font-size: $font-size-sm;
+  font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface);
   margin-bottom: $spacing-2;
   line-height: $line-height-normal;
@@ -256,7 +256,7 @@
     }
 
     h3 {
-      font-size: $font-size-base;
+      font-size: $font-size-xs;
     }
 
     .vp-tag {

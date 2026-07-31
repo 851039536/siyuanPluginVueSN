@@ -172,27 +172,24 @@
   }
 }
 
-/* 无序符号与编辑器注入规则一致：奇数层 •、偶数层 ▪，大小随 symbolSize */
+/* 无序符号与编辑器注入规则一致：各层级统一圆点 •，大小随 symbolSize */
 .preview-unordered {
-  > li::marker {
+  li::marker {
     content: "•  ";
-    color: var(--preview-unordered-1);
     font-size: var(--preview-symbol-size);
     font-weight: $font-weight-bold;
+  }
+
+  > li::marker {
+    color: var(--preview-unordered-1);
   }
 
   > li > ul > li::marker {
-    content: "▪  ";
     color: var(--preview-unordered-2);
-    font-size: var(--preview-symbol-size);
-    font-weight: $font-weight-bold;
   }
 
   > li > ul > li > ul > li::marker {
-    content: "•  ";
     color: var(--preview-unordered-3);
-    font-size: var(--preview-symbol-size);
-    font-weight: $font-weight-bold;
   }
 }
 

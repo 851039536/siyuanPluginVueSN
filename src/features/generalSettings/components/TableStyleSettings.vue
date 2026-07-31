@@ -144,7 +144,6 @@ import {
   DEFAULT_TABLE_STYLE_SETTINGS,
   GeneralSettingsStorage,
 } from "../types/storage"
-import { applyTableStyleCss } from "../utils/styles"
 import ColorField from "./ColorField.vue"
 import SettingLabel from "./SettingLabel.vue"
 import SettingSlider from "./SettingSlider.vue"
@@ -227,6 +226,7 @@ let debounceTimer: ReturnType<typeof setTimeout> | null = null
 /** 加载赋值触发的首次 watch 跳过标记，避免刚加载的数据被原样回写 */
 let skipWatchOnce = false
 
+// 样式应用统一由父链路 GeneralSettings.handleSettingsChange 承担，面板只负责修改 + 保存 + 通知
 watch(
   settings,
   (newSettings) => {
@@ -236,8 +236,10 @@ watch(
     }
     emit("change", newSettings)
     if (debounceTimer) clearTimeout(debounceTimer)
-    debounceTimer = setTimeout(() => saveSettings(), SAVE_DEBOUNCE_MS)
-    applyTableStyleCss(newSettings)
+    debounceTimer = setTimeout(() => {
+      debounceTimer = null
+      saveSettings()
+    }, SAVE_DEBOUNCE_MS)
   },
   { deep: true },
 )
@@ -284,7 +286,7 @@ async function loadSettings() {
         ...DEFAULT_TABLE_STYLE_SETTINGS,
         ...data,
       }
-      applyTableStyleCss(settings.value)
+      // 样式无需在此应用：启动链路 GeneralSettings.init() 已应用过
     }
   } catch (error) {
     console.error("加载表格样式设置失败:", error)
@@ -302,8 +304,13 @@ async function saveSettings() {
 
 onMounted(loadSettings)
 
+// 卸载时清理防抖定时器，并立即落盘待保存的修改，避免关闭面板丢失最后一次变更
 onBeforeUnmount(() => {
-  if (debounceTimer) clearTimeout(debounceTimer)
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
+    debounceTimer = null
+    saveSettings()
+  }
 })
 </script>
 

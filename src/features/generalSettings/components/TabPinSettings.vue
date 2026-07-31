@@ -184,15 +184,7 @@ import {
   GeneralSettingsStorage,
   type TabPinSettings,
 } from "@/features/generalSettings/types/storage"
-import {
-  generateTabPinCSS,
-  TAB_PIN_MODE_META,
-  TAB_PIN_STYLE_ID,
-} from "@/features/generalSettings/utils/styles"
-import {
-  injectStyle,
-  removeStyle,
-} from "@/utils/domUtils"
+import { TAB_PIN_MODE_META } from "@/features/generalSettings/utils/styles"
 
 interface Props {
   i18n?: any
@@ -244,22 +236,14 @@ const backgroundColor = ref(defaultBackgroundColor)
 let initialized = false
 const storage = ref<GeneralSettingsStorage | null>(null)
 
-// 统一监听所有响应式变化，自动应用样式并保存（初始加载期间跳过保存）
+// 统一监听所有响应式变化：样式应用由父链路 GeneralSettings.handleSettingsChange 承担，
+// 面板只负责通知 + 保存（初始加载期间跳过）
 watch([enabled, displayMode, backgroundColor], () => {
-  applyToDocument()
   if (initialized) {
+    emit("change", currentSettings())
     autoSave()
   }
 })
-
-// 应用到文档：与 GeneralSettings.applyTabPinStyles 使用同一注入点与禁用语义
-function applyToDocument() {
-  if (enabled.value) {
-    injectStyle(TAB_PIN_STYLE_ID, generateTabPinCSS(currentSettings()))
-  } else {
-    removeStyle(TAB_PIN_STYLE_ID)
-  }
-}
 
 // 重置背景颜色：仅改值，保存由 watch 统一触发，避免双重保存
 function resetBackgroundColor() {
@@ -275,22 +259,20 @@ function currentSettings(): TabPinSettings {
   }
 }
 
-// 自动保存设置
+// 自动保存设置（仅负责持久化，通知由 watch 统一 emit，避免保存失败时样式不生效）
 async function autoSave() {
-  if (!props.plugin || !storage.value) return
+  if (!storage.value) return
 
   try {
-    const settingsToSave = currentSettings()
-    await storage.value.tabPin.save(settingsToSave)
-    emit("change", settingsToSave)
+    await storage.value.tabPin.save(currentSettings())
   } catch (error) {
     console.error("保存钉住页签设置失败:", error)
   }
 }
 
-// 加载保存的设置
+// 加载保存的设置（仅填充表单，样式由 GeneralSettings.init() 在启动时应用）
 async function loadSettings() {
-  if (!props.plugin || !storage.value) {
+  if (!storage.value) {
     console.warn("插件实例不可用，使用默认设置")
     return
   }
@@ -312,8 +294,6 @@ onMounted(async () => {
     storage.value = new GeneralSettingsStorage(props.plugin)
   }
   await loadSettings()
-  // 显式应用一次：加载结果与初始默认值相同时 watch 不触发，需保证样式生效
-  applyToDocument()
   initialized = true
 })
 </script>

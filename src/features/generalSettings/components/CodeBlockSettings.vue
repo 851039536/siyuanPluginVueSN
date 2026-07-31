@@ -12,14 +12,10 @@
           />
           <!-- 开关 + 状态描述："已启用"/"已禁用" -->
           <div class="toggle-container">
-            <label class="toggle-switch">
-              <input
-                v-model="settings.enabled"
-                type="checkbox"
-                class="toggle-input"
-              />
-              <span class="toggle-slider"></span>
-            </label>
+            <Switch
+              v-model="settings.enabled"
+              size="small"
+            />
             <span class="toggle-description">
               {{ settings.enabled ? i18n.enabled : i18n.disabled }}
             </span>
@@ -27,11 +23,8 @@
         </div>
       </div>
 
-      <!-- 代码块风格选择 -->
-      <div
-        v-if="settings.enabled"
-        class="setting-row"
-      >
+      <!-- 代码块风格选择（不受增强开关控制，风格始终生效） -->
+      <div class="setting-row">
         <div class="setting-item">
           <!-- 标签："代码块风格" -->
           <SettingLabel
@@ -193,7 +186,6 @@
                 <select
                   v-model="presetCodeFont"
                   class="font-select"
-                  @change="applyPresetCodeFont"
                 >
                   <!-- 占位项："选择字体" -->
                   <option value="">
@@ -251,34 +243,34 @@
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- 代码块折叠设置 -->
+      <!-- 代码块折叠设置（不受增强开关控制，折叠始终生效） -->
+      <div class="setting-row">
         <div class="setting-item">
           <!-- 标签："代码块折叠" -->
           <SettingLabel
             icon="codeBlockCollapse"
             :text="i18n.codeBlockCollapse"
           />
-          <!-- 折叠开关 + 状态描述 -->
+          <!-- 折叠开关 + 状态描述："已启用"/"已禁用" -->
           <div class="toggle-container">
-            <label class="toggle-switch">
-              <input
-                v-model="settings.enableCollapse"
-                type="checkbox"
-                class="toggle-input"
-              />
-              <span class="toggle-slider"></span>
-            </label>
+            <Switch
+              v-model="settings.enableCollapse"
+              size="small"
+            />
             <span class="toggle-description">
-              {{ settings.enableCollapse ? i18n.collapseEnabled : i18n.collapseDisabled }}
+              {{ settings.enableCollapse ? i18n.enabled : i18n.disabled }}
             </span>
           </div>
         </div>
-        <!-- 折叠高度设置 -->
-        <div
-          v-if="settings.enableCollapse"
-          class="setting-item"
-        >
+      </div>
+      <!-- 折叠高度设置 -->
+      <div
+        v-if="settings.enableCollapse"
+        class="setting-row"
+      >
+        <div class="setting-item">
           <!-- 标签："折叠高度" + 当前值 -->
           <SettingLabel
             icon="codeBlockHeight"
@@ -309,20 +301,17 @@ import type { CodeBlockSettings } from "@/features/generalSettings/types/storage
 import {
   computed,
   onMounted,
+  onUnmounted,
   ref,
   watch,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import Switch from "@/components/Switch.vue"
 import {
   DEFAULT_CODEBLOCK_SETTINGS,
   GeneralSettingsStorage,
 } from "@/features/generalSettings/types/storage"
-import {
-  applyCodeBlockCollapse,
-  applyCodeBlockEnhancedStyles,
-  applyCodeBlockStyle,
-  CODEBLOCK_STYLE_META,
-} from "../utils/styles"
+import { CODEBLOCK_STYLE_META } from "../utils/styles"
 import ColorField from "./ColorField.vue"
 import SettingLabel from "./SettingLabel.vue"
 import SettingSlider from "./SettingSlider.vue"
@@ -331,7 +320,6 @@ import SettingSlider from "./SettingSlider.vue"
 interface Props {
   i18n?: Record<string, string>
   plugin?: Plugin | null
-  initialSettings?: CodeBlockSettings
 }
 
 interface Emits {
@@ -341,7 +329,6 @@ interface Emits {
 const props = withDefaults(defineProps<Props>(), {
   i18n: () => ({}),
   plugin: null,
-  initialSettings: () => ({ ...DEFAULT_CODEBLOCK_SETTINGS }),
 })
 
 const emit = defineEmits<Emits>()
@@ -366,9 +353,21 @@ const colorFields = [
 ] as const
 
 // ── 状态 ──
-const settings = ref<CodeBlockSettings>({ ...props.initialSettings })
-const presetCodeFont = ref("")
+const settings = ref<CodeBlockSettings>({ ...DEFAULT_CODEBLOCK_SETTINGS })
 const storage = ref<GeneralSettingsStorage | null>(null)
+
+/** 预设字体下拉：命中预设时回显当前字体，手输非预设字体时自动复位为占位项 */
+const presetCodeFont = computed({
+  get: () => {
+    const family = settings.value.codeFontFamily
+    return (presetFonts as readonly string[]).includes(family) ? family : ""
+  },
+  set: (v: string) => {
+    if (v) {
+      settings.value.codeFontFamily = v
+    }
+  },
+})
 
 // ── 值格式化 ──
 const formatPx = (v: number) => `${v}px`
@@ -387,6 +386,7 @@ let saveTimer: ReturnType<typeof setTimeout> | null = null
 function debouncedSave(s: CodeBlockSettings) {
   if (saveTimer) clearTimeout(saveTimer)
   saveTimer = setTimeout(async () => {
+    saveTimer = null
     if (storage.value) {
       try {
         await storage.value.codeblock.save(s)
@@ -397,19 +397,11 @@ function debouncedSave(s: CodeBlockSettings) {
   }, 300)
 }
 
-// ── 防抖：视觉属性重建 <style> 开销大 ──
-let styleTimer: ReturnType<typeof setTimeout> | null = null
-function debouncedApplyEnhanced(s: CodeBlockSettings) {
-  if (styleTimer) clearTimeout(styleTimer)
-  styleTimer = setTimeout(() => {
-    applyCodeBlockEnhancedStyles(s)
-  }, 100)
-}
-
 // ── Watch ──
-/** 加载赋值触发的首次 watch 跳过标记，避免刚加载的数据被原样回写与重复应用样式 */
+/** 加载赋值触发的首次 watch 跳过标记，避免刚加载的数据被原样回写 */
 let skipWatchOnce = false
 
+// 样式应用统一由父链路 GeneralSettings.handleSettingsChange 承担，面板只负责修改 + 保存 + 通知
 watch(
   settings,
   (newSettings) => {
@@ -418,47 +410,28 @@ watch(
       return
     }
     emit("change", newSettings)
-    // 风格切换 / 折叠开关：轻量操作，立即执行
-    applyCodeBlockStyle(newSettings.style)
-    applyCodeBlockCollapse(newSettings.enableCollapse, newSettings.collapseHeight)
-    // 视觉属性：重建 <style> 开销大，100ms 防抖
-    debouncedApplyEnhanced(newSettings)
     debouncedSave(newSettings)
   },
-  {
-    deep: true,
-    immediate: false,
-  },
+  { deep: true },
 )
-
-// ── 方法 ──
-function applyPresetCodeFont() {
-  if (presetCodeFont.value) {
-    settings.value.codeFontFamily = presetCodeFont.value
-  }
-}
 
 // ── 加载保存的设置 ──
 async function loadSettings() {
-  if (!props.plugin) {
+  // 无插件实例 / 加载失败时保持初始默认值，不重新赋值，避免触发 watch 把默认值回写存储
+  if (!storage.value) {
     console.warn("插件实例不可用，使用默认设置")
-    settings.value = { ...DEFAULT_CODEBLOCK_SETTINGS }
     return
   }
 
   try {
-    const loadedSettings = await storage.value!.codeblock.loadOrDefault()
+    const loadedSettings = await storage.value.codeblock.loadOrDefault()
     skipWatchOnce = true
     settings.value = {
       ...DEFAULT_CODEBLOCK_SETTINGS,
       ...loadedSettings,
     }
-    applyCodeBlockStyle(settings.value.style)
-    applyCodeBlockCollapse(settings.value.enableCollapse, settings.value.collapseHeight)
-    applyCodeBlockEnhancedStyles(settings.value)
   } catch (error) {
     console.error("加载设置失败:", error)
-    settings.value = { ...DEFAULT_CODEBLOCK_SETTINGS }
   }
 }
 
@@ -468,6 +441,17 @@ onMounted(async () => {
     storage.value = new GeneralSettingsStorage(props.plugin)
   }
   await loadSettings()
+})
+
+// 卸载时清理防抖定时器，并立即落盘待保存的修改，避免关闭面板丢失最后一次变更
+onUnmounted(() => {
+  if (saveTimer) {
+    clearTimeout(saveTimer)
+    saveTimer = null
+    storage.value?.codeblock.save(settings.value).catch((error) => {
+      console.error("卸载前保存设置失败:", error)
+    })
+  }
 })
 </script>
 

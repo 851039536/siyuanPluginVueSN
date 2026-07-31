@@ -3,6 +3,7 @@
  */
 import type { IconKey } from "@/config/icons"
 import type {
+  CodeBlockSettings,
   DocumentFontSettings,
   HeadingColors,
   ListStyleSettings,
@@ -95,7 +96,7 @@ function hexToRgba(hex: string, opacity: number): string {
   return `rgba(${r}, ${g}, ${b}, ${Number(opacity.toFixed(2))})`
 }
 
-export function applyCodeBlockEnhancedStyles(codeSettings: any): void {
+export function applyCodeBlockEnhancedStyles(codeSettings: CodeBlockSettings): void {
   try {
     const existingStyle = document.getElementById("codeblock-enhanced-style")
     if (existingStyle) {

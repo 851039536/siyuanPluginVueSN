@@ -133,58 +133,12 @@
   padding: 0 $spacing-px;
 }
 
-/* 开关样式 */
+/* 开关行：共享 Switch 组件 + 右侧状态徽标 */
 .toggle-container {
   display: flex;
   align-items: center;
   gap: $spacing-2;
   margin-top: $spacing-px;
-}
-
-.toggle-switch {
-  position: relative;
-  display: inline-block;
-  width: 40px;
-  height: 20px;
-  cursor: pointer;
-}
-
-.toggle-input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.toggle-slider {
-  position: absolute;
-  inset: 0;
-  background-color: var(--b3-theme-surface-variant);
-  border-radius: 20px; // 与轨道等高（20px）形成胶囊形开关
-  cursor: pointer;
-  border: 1px solid var(--b3-theme-outline);
-}
-
-.toggle-slider::before {
-  position: absolute;
-  content: "";
-  height: 14px;
-  width: 14px;
-  left: 2px;
-  bottom: 2px;
-  background-color: var(--b3-theme-on-surface-variant);
-  border-radius: 50%;
-  border: 1px solid transparent;
-  transition: border-color 0.12s;
-}
-
-.toggle-input:checked + .toggle-slider {
-  background-color: var(--b3-theme-primary);
-  border-color: var(--b3-theme-primary);
-}
-
-.toggle-input:checked + .toggle-slider::before {
-  background-color: var(--b3-theme-on-primary);
-  border-color: var(--b3-theme-primary);
 }
 
 .toggle-description {

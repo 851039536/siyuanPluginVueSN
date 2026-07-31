@@ -4,7 +4,7 @@
  */
 import hljs from "highlight.js"
 import {
-  marked,
+  Marked,
   type TokenizerAndRendererExtension,
   Renderer,
 } from "marked"
@@ -77,6 +77,30 @@ export function convertHljsToInlineStyles(highlighted: string): string {
   )
 }
 
+/**
+ * 高亮单段代码为内层 HTML（不含 <pre>/<code> 包裹）
+ * - 语言未注册或 hljs.highlight 抛异常时回退为转义纯文本
+ * - inlineStyles=true 时将 hljs class 转为内联样式（微信等平台兼容）
+ * 供 mdRenderer 与 formatAssistant 共用，避免高亮逻辑重复
+ */
+export function highlightCode(
+  text: string,
+  lang: string | undefined,
+  inlineStyles = false,
+): string {
+  // 先确认语言已注册再高亮：未注册语言 hljs.highlight 会抛异常，
+  // 提前判断可避免无谓的 try/catch 命中，并直接回退为转义文本
+  if (lang && hljs.getLanguage(lang)) {
+    try {
+      const value = hljs.highlight(text, { language: lang }).value
+      return inlineStyles ? convertHljsToInlineStyles(value) : value
+    } catch {
+      return escapeHtml(text)
+    }
+  }
+  return escapeHtml(text)
+}
+
 // ============================================================
 // 渲染选项
 // ============================================================
@@ -119,20 +143,7 @@ function createCodeRenderer(inlineStyles = false): Renderer {
 
   renderer.code = function ({ text, lang }: { text: string, lang?: string }) {
     const langAttr = lang ? ` class="language-${escapeHtml(lang)}"` : ""
-    let highlighted: string
-    if (lang) {
-      try {
-        const value = hljs.highlight(text, { language: lang }).value
-        highlighted = hljs.getLanguage(lang)
-          ? (inlineStyles ? convertHljsToInlineStyles(value) : value)
-          : escapeHtml(text)
-      } catch {
-        highlighted = escapeHtml(text)
-      }
-    } else {
-      highlighted = escapeHtml(text)
-    }
-    return `<pre><code${langAttr}>${highlighted}</code></pre>`
+    return `<pre><code${langAttr}>${highlightCode(text, lang, inlineStyles)}</code></pre>`
   }
 
   return renderer
@@ -181,10 +192,20 @@ export function parseMarkdown(mdText: string, options?: ParseMarkdownOptions | M
   if (!mdText) return ""
 
   const renderer = getRenderer(codeHighlight, inlineStyles)
-  return marked.parse(mdText, {
+
+  // 使用隔离的 Marked 实例，不污染全局 marked 单例（避免与
+  // 其他模块的 marked.use() 相互干扰，也不被其他模块污染）
+  const md = new Marked({
     breaks,
     gfm,
-    ...(extensions ? { extensions } : {}),
     ...(renderer ? { renderer } : {}),
-  }) as string
+  })
+
+  // 自定义扩展必须通过 use() 注册；marked v17 的 per-call
+  // options.extensions 只接受编译后的内部形态，数组会被静默忽略
+  if (extensions) {
+    md.use({ extensions })
+  }
+
+  return md.parse(mdText) as string
 }

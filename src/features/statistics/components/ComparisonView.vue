@@ -101,30 +101,35 @@
           >
             <span class="breakdown-label">{{ item.label }}</span>
             <div class="breakdown-bars-wrap">
+              <!-- A 期条形：灰色角标 + 灰色条 -->
               <div class="bar-row">
+                <span class="bar-tag bar-tag-a">A</span>
                 <div class="bar-track">
                   <div
                     class="bar-fill bar-a"
                     :style="{ width: barPct(item.aWords, maxBreakVal) }"
                   ></div>
                 </div>
-                <span class="bar-value">{{ item.aWords > 0 ? formatNumber(item.aWords) : '' }}</span>
+                <span class="bar-value bar-value-a">{{ item.aWords > 0 ? formatNumber(item.aWords) : '—' }}</span>
               </div>
+              <!-- B 期条形：主色角标 + 主色条 -->
               <div class="bar-row">
+                <span class="bar-tag bar-tag-b">B</span>
                 <div class="bar-track">
                   <div
                     class="bar-fill bar-b"
                     :style="{ width: barPct(item.bWords, maxBreakVal) }"
                   ></div>
                 </div>
-                <span class="bar-value">{{ item.bWords > 0 ? formatNumber(item.bWords) : '' }}</span>
+                <span class="bar-value bar-value-b">{{ item.bWords > 0 ? formatNumber(item.bWords) : '—' }}</span>
               </div>
             </div>
           </div>
         </div>
+        <!-- 图例：A=期间A标签，B=期间B标签 -->
         <div class="breakdown-legend">
-          <span class="legend-dot legend-a"></span>{{ data.periodALabel }}
-          <span class="legend-dot legend-b"></span>{{ data.periodBLabel }}
+          <span class="legend-item"><span class="bar-tag bar-tag-a">A</span>{{ data.periodALabel }}</span>
+          <span class="legend-item"><span class="bar-tag bar-tag-b">B</span>{{ data.periodBLabel }}</span>
         </div>
       </div>
     </div>

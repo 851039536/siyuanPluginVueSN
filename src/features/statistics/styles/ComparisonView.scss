@@ -143,7 +143,7 @@
 .breakdown-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px; // 期间行间距加大，与同一行内 A/B 两条的 3px 间距拉开层次
 }
 
 .breakdown-row {
@@ -174,10 +174,35 @@
   gap: 4px;
 }
 
+// A/B 角标：在每条前方标明归属期间，不依赖颜色记忆
+.bar-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  border-radius: stats.$radius-sm;
+  font-family: stats.$font-mono;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
+  line-height: 1;
+
+  &.bar-tag-a {
+    background: rgba(var(--b3-theme-on-surface-rgb), 0.12);
+    color: var(--b3-theme-on-surface);
+  }
+
+  &.bar-tag-b {
+    background: rgba(var(--b3-theme-primary-rgb), 0.15);
+    color: var(--b3-theme-primary);
+  }
+}
+
 .bar-track {
   position: relative;
   flex: 1;
-  height: 20px;
+  height: 18px;
   background: rgba(var(--b3-theme-on-surface-rgb), 0.04);
   border-radius: 6px;
   overflow: hidden;
@@ -191,9 +216,9 @@
   border-radius: 6px;
   min-width: 4px;
 
+  // A 期用中性灰、B 期用主色，颜色差异化而非仅靠透明度
   &.bar-a {
-    background: var(--b3-theme-primary);
-    opacity: 0.6;
+    background: rgba(var(--b3-theme-on-surface-rgb), 0.4);
   }
 
   &.bar-b {
@@ -202,14 +227,21 @@
 }
 
 .bar-value {
-  width: 44px;
+  min-width: 48px;
   flex-shrink: 0;
   font-family: stats.$font-mono;
   font-size: $font-size-2xs;
   font-weight: $font-weight-semibold;
-  color: var(--b3-theme-on-surface);
   text-align: right;
   white-space: nowrap;
+
+  &.bar-value-a {
+    color: var(--b3-theme-on-surface-light);
+  }
+
+  &.bar-value-b {
+    color: var(--b3-theme-primary);
+  }
 }
 
 .breakdown-legend {
@@ -222,19 +254,8 @@
   color: var(--b3-theme-on-surface-light);
 }
 
-.legend-dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: stats.$radius-sm;
-  margin-right: 3px;
-
-  &.legend-a {
-    background: var(--b3-theme-primary);
-    opacity: 0.6;
-  }
-
-  &.legend-b {
-    background: var(--b3-theme-primary);
-  }
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }

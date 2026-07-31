@@ -1,6 +1,6 @@
 /**
  * 速记功能模块 — 入口
- * QuickNoteManager 管理 persistent Modal 生命周期与弹窗位置应用，
+ * QuickNoteManager 管理 persistent Modal 生命周期、弹窗位置与最小化应用，
  * registerQuickNote 供插件注册链调用，toggle 由 App.vue 中心调度触发
  */
 import type { Plugin } from "siyuan"
@@ -13,20 +13,27 @@ import QuickNotePanel from "./index.vue"
 
 /** 贴边档位与屏幕边缘的间距 */
 const EDGE_PADDING = "8px"
+/** 弹窗展开态尺寸（构造 Modal 与最小化还原共用的单一数据源） */
+const PANEL_WIDTH = "420px"
+const PANEL_HEIGHT = "70vh"
+/** 遮罩展开态背景（与 vueAppHelper 创建时的遮罩背景保持一致） */
+const MASK_BACKGROUND = "rgba(0, 0, 0, 0.5)"
 
 export class QuickNoteManager {
   readonly storage: QuickNoteStorage
   private modal: ModalAppInstance
   /** 当前位置缓存（init 时预加载，避免 open 时异步等待） */
   private position: QuickNotePosition = DEFAULT_QUICK_NOTE_SETTINGS.position
+  /** 最小化状态（会话级，不持久化；面板最小化按钮触发） */
+  private minimized = false
 
   constructor(plugin: Plugin) {
     this.storage = new QuickNoteStorage(plugin)
 
     this.modal = createModalVueApp(QuickNotePanel, {
       maskId: "quick-note-mask",
-      width: "420px",
-      height: "70vh",
+      width: PANEL_WIDTH,
+      height: PANEL_HEIGHT,
       persistent: true,
       getCloseHandler: () => this.close,
       buildProps: () => ({
@@ -66,6 +73,42 @@ export class QuickNoteManager {
   /** 获取当前位置（供面板初始化选择器选中值） */
   getPosition(): QuickNotePosition {
     return this.position
+  }
+
+  /** 获取当前最小化状态（供面板初始化，persistent 下重开保持状态一致） */
+  isMinimized(): boolean {
+    return this.minimized
+  }
+
+  /**
+   * 设置最小化状态（供面板最小化/展开按钮调用）
+   * 收起：容器尺寸改为 auto（由面板最小化条的 CSS 决定收缩方向与尺寸），
+   * 遮罩变透明且点击穿透，仅贴边小条可交互；展开：还原尺寸与遮罩
+   */
+  setMinimized(minimized: boolean): void {
+    this.minimized = minimized
+    this.applyMinimized()
+  }
+
+  /** 按当前最小化状态改写容器尺寸与遮罩交互（与 applyPosition 同样依赖遮罩 DOM 结构） */
+  private applyMinimized(): void {
+    const mask = document.getElementById("quick-note-mask")
+    const container = this.modal.container
+    if (!mask || !container) return
+    if (this.minimized) {
+      container.style.width = "auto"
+      container.style.height = "auto"
+      // 遮罩透明化 + 点击穿透，最小化期间不阻断背后界面操作
+      mask.style.background = "transparent"
+      mask.style.pointerEvents = "none"
+      container.style.pointerEvents = "auto"
+    } else {
+      container.style.width = PANEL_WIDTH
+      container.style.height = PANEL_HEIGHT
+      mask.style.background = MASK_BACKGROUND
+      mask.style.pointerEvents = "auto"
+      container.style.pointerEvents = ""
+    }
   }
 
   /** 设置位置：更新缓存 + 持久化 + 立即应用（供面板位置选择器调用） */

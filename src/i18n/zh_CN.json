@@ -1889,6 +1889,8 @@
     "positionRight": "右侧",
     "markDone": "标记完成",
     "markPending": "标记待完成",
+    "minimize": "最小化",
+    "restore": "展开",
     "deleteConfirm": "确定删除这条速记吗？",
     "createdAt": "创建于"
   },

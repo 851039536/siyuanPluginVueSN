@@ -1,7 +1,8 @@
 /**
  * 速记功能 — 领域类型与共享常量
- * 定义速记条目、弹窗位置、视图筛选类型，以及位置 → 遮罩 flex 对齐映射表
+ * 定义速记条目、弹窗位置、视图筛选类型，以及位置 → 遮罩 flex 对齐 / 最小化方向映射表
  */
+import type { IconKey } from "@/config/icons"
 
 /** 单条速记条目 */
 export interface QuickNoteItem {
@@ -64,5 +65,44 @@ export const POSITION_ALIGN_MAP: Record<
   right: {
     alignItems: "center",
     justifyContent: "flex-end",
+  },
+}
+
+/** 最小化条的收缩轴向：horizontal = 收成横条（上/下/居中），vertical = 收成竖条（左/右） */
+export type QuickNoteMinimizeAxis = "horizontal" | "vertical"
+
+/**
+ * 位置 → 最小化方向元数据映射
+ * axis 决定最小化条的收缩轴向；collapseIcon/expandIcon 指示收起/展开的方向箭头
+ */
+export const POSITION_MINIMIZE_META: Record<
+  QuickNotePosition,
+  { axis: QuickNoteMinimizeAxis, collapseIcon: IconKey, expandIcon: IconKey }
+> = {
+  // 居中无贴靠边缘，按横条收起（视觉上向上折叠为标题条）
+  center: {
+    axis: "horizontal",
+    collapseIcon: "chevronUp",
+    expandIcon: "chevronDown",
+  },
+  top: {
+    axis: "horizontal",
+    collapseIcon: "chevronUp",
+    expandIcon: "chevronDown",
+  },
+  bottom: {
+    axis: "horizontal",
+    collapseIcon: "chevronDown",
+    expandIcon: "chevronUp",
+  },
+  left: {
+    axis: "vertical",
+    collapseIcon: "chevronLeft",
+    expandIcon: "chevronRight",
+  },
+  right: {
+    axis: "vertical",
+    collapseIcon: "chevronRight",
+    expandIcon: "chevronLeft",
   },
 }

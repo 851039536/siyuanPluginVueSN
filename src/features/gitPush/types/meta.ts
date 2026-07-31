@@ -188,8 +188,63 @@ export interface StatsView {
   platformStatusProjects: PlatformStatusItem[]
 }
 
-/** 面板头部视图（列表/统计/操作日志），与 ViewMode（列表内筛选模式 all/needsPush/...）语义不同 */
-export type PanelView = "list" | "stats" | "log"
+/** 面板头部视图（列表/统计/操作日志/提交分析），与 ViewMode（列表内筛选模式 all/needsPush/...）语义不同 */
+export type PanelView = "list" | "stats" | "log" | "analysis"
+
+// ── 提交分析视图（useCommitAnalysis 产出 / CommitAnalysisPanel 消费）──
+
+/** 单条提交分析条目（跨项目合并的提交流最小形状） */
+export interface CommitAnalysisEntry {
+  projectId: string
+  projectName: string
+  hash: string
+  message: string
+  author: string
+  /** ISO 时间戳（git %aI 输出，new Date 可直接解析） */
+  date: string
+}
+
+/** Conventional Commits 类型（提交内容分析分类，other 兜底无前缀提交；与 storage.ts 的 CommitType 提交模板类型语义不同） */
+export type CommitAnalysisType =
+  | "feat" | "fix" | "docs" | "refactor" | "perf" | "style"
+  | "test" | "build" | "ci" | "chore" | "other"
+
+/** 提交类型元数据（labelKey 对应 i18n 键 commitTypeFeat 等，color 用于条形/徽章着色） */
+export const COMMIT_ANALYSIS_TYPE_META: Record<CommitAnalysisType, { labelKey: string, color: string }> = {
+  feat: { labelKey: "commitTypeFeat", color: "#10b981" },
+  fix: { labelKey: "commitTypeFix", color: "#ef4444" },
+  docs: { labelKey: "commitTypeDocs", color: "#3b82f6" },
+  refactor: { labelKey: "commitTypeRefactor", color: "#8b5cf6" },
+  perf: { labelKey: "commitTypePerf", color: "#f59e0b" },
+  style: { labelKey: "commitTypeStyle", color: "#ec4899" },
+  test: { labelKey: "commitTypeTest", color: "#14b8a6" },
+  build: { labelKey: "commitTypeBuild", color: "#f97316" },
+  ci: { labelKey: "commitTypeCi", color: "#06b6d4" },
+  chore: { labelKey: "commitTypeChore", color: "#64748b" },
+  other: { labelKey: "commitTypeOther", color: "#9ca3af" },
+}
+
+/** 提交分析聚合视图（单对象 prop，与 StatsView 同模式） */
+export interface CommitAnalysisStats {
+  /** 跨项目提交总数 */
+  totalCommits: number
+  /** 全部项目数 */
+  projectCount: number
+  /** 成功抓取提交的项目数 */
+  analyzedCount: number
+  /** 抓取失败的项目数（路径无效/git 失败） */
+  failedCount: number
+  /** 跨项目合并的原始条目 */
+  entries: CommitAnalysisEntry[]
+  /** 最近 30 天每日提交数（缺天补 0，label 为 YYYY-MM-DD） */
+  dailyCommits: { label: string, count: number }[]
+  /** 项目提交次数排行（降序） */
+  projectRanking: { id: string, name: string, count: number }[]
+  /** 提交内容类型分布（降序，仅含非零类型） */
+  typeDistribution: { type: CommitAnalysisType, count: number }[]
+  /** 作者提交排行（降序） */
+  authorRanking: { author: string, count: number }[]
+}
 
 /** 项目列表视图模式（单一事实源，ViewMode 联合类型由此推导） */
 export const VIEW_MODES = ["all", "needsPush", "uncommitted", "starred", "archived"] as const

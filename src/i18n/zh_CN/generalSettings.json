@@ -159,8 +159,6 @@
   "resetDoneMsg": "已恢复默认设置",
   "enableHighlight": "双击高亮功能",
   "highlightDescription": "双击选中文本自动高亮显示",
-  "featureDescription": "功能说明",
-  "highlightFeature1": "在文档编辑器中双击选中文本，自动应用高亮样式",
   "highlightStyleSettings": "高亮样式设置",
   "highlightBgColor": "背景颜色",
   "highlightMinTextLength": "最小文字长度",

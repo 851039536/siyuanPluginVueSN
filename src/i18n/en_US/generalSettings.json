@@ -159,8 +159,6 @@
   "resetDoneMsg": "Default settings restored",
   "enableHighlight": "Double-Click Highlight",
   "highlightDescription": "Double-click text to automatically highlight",
-  "featureDescription": "Feature Description",
-  "highlightFeature1": "Double-click to select text in the document editor to automatically apply highlight style",
   "highlightStyleSettings": "Highlight Style Settings",
   "highlightBgColor": "Background Color",
   "highlightMinTextLength": "Min Text Length",

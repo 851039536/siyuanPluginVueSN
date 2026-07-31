@@ -1,7 +1,7 @@
 // gitPush 工具函数与多路径解析
 import type { Ref } from "vue"
-import type { FileChange, GitProject, GitRemoteInfo, PlatformKey, RemotePushStatus } from "./types"
-import { FILE_STATUS_META, PLATFORM_META } from "./types"
+import type { CommitAnalysisEntry, CommitAnalysisType, FileChange, GitProject, GitRemoteInfo, PlatformKey, RemotePushStatus } from "./types"
+import { COMMIT_ANALYSIS_TYPE_META, FILE_STATUS_META, PLATFORM_META } from "./types"
 import type { IconKey } from "@/config/icons"
 import { getElectronModules, getNodeFsPathOs } from "@/utils/nodeModules"
 
@@ -263,6 +263,55 @@ export function gitUrlToWebUrl(url: string): string {
     return `https://${sshMatch[1]}/${sshMatch[2]}`
   }
   return url
+}
+
+/**
+ * 解析 Conventional Commits 提交信息前缀类型（feat/fix/docs 等），无前缀或未知前缀返回 other。
+ * 提交内容分析用；与 storage.ts 的 COMMIT_TYPE_VALUES（提交模板类型）各自独立。
+ */
+export function parseCommitAnalysisType(message: string): CommitAnalysisType {
+  const match = /^([a-z]+)(?:\([^)]*\))?!?:\s/.exec(message || "")
+  if (match) {
+    const t = match[1] as CommitAnalysisType
+    if (t in COMMIT_ANALYSIS_TYPE_META) return t
+  }
+  return "other"
+}
+
+/**
+ * 按本地日期（YYYY-MM-DD）聚合提交条目到最近 days 天的每日桶（缺天补 0），
+ * 时间分析：返回从最早到今天的正序桶，供条形图直接渲染。
+ */
+export function buildDailyCommitBuckets(entries: CommitAnalysisEntry[], days = 30): { label: string, count: number }[] {
+  const countByDay = new Map<string, number>()
+  for (const e of entries) {
+    const d = new Date(e.date)
+    if (Number.isNaN(d.getTime())) continue
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+    countByDay.set(key, (countByDay.get(key) || 0) + 1)
+  }
+  const buckets: { label: string, count: number }[] = []
+  const today = new Date()
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i)
+    const label = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+    buckets.push({ label, count: countByDay.get(label) || 0 })
+  }
+  return buckets
+}
+
+/** 通用计数排行：按 keyFn 分组计数，降序取前 limit 条（项目/作者/类型排行共用） */
+export function rankByCount<T>(items: T[], keyFn: (item: T) => string, limit: number): { key: string, count: number }[] {
+  const map = new Map<string, number>()
+  for (const item of items) {
+    const key = keyFn(item)
+    if (!key) continue
+    map.set(key, (map.get(key) || 0) + 1)
+  }
+  return [...map.entries()]
+    .map(([key, count]) => ({ key, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit)
 }
 
 /** 在文件管理器中打开本地路径（统一走 getElectronModules 入口，浏览器环境无能力打开本地文件夹） */

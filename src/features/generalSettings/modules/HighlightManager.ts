@@ -11,6 +11,8 @@
  * 因此不提供字号、加粗等排版类配置。
  */
 import type { Plugin } from "siyuan"
+import { showMessage } from "siyuan"
+import { copyToClipboard } from "@/utils/domUtils"
 import type { PronunciationSource } from "../types/storage"
 import type { ExplainResult } from "./WordExplainer"
 import { WordExplainer } from "./WordExplainer"
@@ -165,12 +167,14 @@ export class HighlightManager {
         z-index: 10000;
         pointer-events: none;
         opacity: 0;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         display: flex;
         align-items: center;
         flex-wrap: wrap;
         gap: 8px;
         border: 1px solid var(--b3-border-color);
+      }
+      .highlight-toast.interactive {
+        pointer-events: auto;
       }
       .highlight-toast.show {
         opacity: 1;
@@ -215,6 +219,26 @@ export class HighlightManager {
         flex-basis: 100%;
         font-size: 12px;
         color: var(--b3-theme-on-surface-variant, var(--b3-theme-on-surface));
+      }
+      .highlight-toast .explain-actions {
+        flex-basis: 100%;
+        display: flex;
+        gap: 8px;
+        margin-top: 2px;
+      }
+      .highlight-toast .explain-btn {
+        cursor: pointer;
+        font-size: 12px;
+        line-height: 1.4;
+        padding: 2px 10px;
+        border-radius: 4px;
+        border: 1px solid var(--b3-border-color);
+        background: var(--b3-theme-background);
+        color: var(--b3-theme-on-surface);
+      }
+      .highlight-toast .explain-btn:hover {
+        border-color: var(--b3-theme-primary);
+        color: var(--b3-theme-primary);
       }
     `
     document.head.appendChild(style)
@@ -381,12 +405,23 @@ export class HighlightManager {
     return this.explainer
   }
 
-  /** 展示解释浮层：顶部单词行 + 加载提示，异步结果到达后填充音标/谐音/释义 */
+  /** 展示解释浮层：顶部单词行 + 加载提示，异步结果到达后填充音标/谐音/释义/例句/词形；浮层可交互（复制/朗读） */
   private showExplainToast(word: string) {
     this.clearToast()
 
     this.toastEl = document.createElement("div")
-    this.toastEl.className = "highlight-toast"
+    // interactive：允许点击复制/朗读按钮（普通高亮 toast 为 pointer-events:none）
+    this.toastEl.className = "highlight-toast interactive"
+    // 阻止冒泡到文档级 mousedown，避免点击浮层内按钮时清除高亮
+    this.toastEl.addEventListener("mousedown", (e) => e.stopPropagation())
+    // 悬停时冻结自动隐藏，移出后重新计时，便于阅读与点击操作
+    this.toastEl.addEventListener("mouseenter", () => {
+      if (this.toastHideTimer) {
+        clearTimeout(this.toastHideTimer)
+        this.toastHideTimer = null
+      }
+    })
+    this.toastEl.addEventListener("mouseleave", () => this.resetToastHideTimer(EXPLAIN_TOAST_DURATION_MS))
     this.explainEl = document.createElement("div")
     this.explainEl.className = "explain"
     this.toastEl.appendChild(this.explainEl)
@@ -441,21 +476,76 @@ export class HighlightManager {
     }
   }
 
-  /** 渲染结构化解释：单词 + 音标（同行）、谐音行、释义行（均仅在有值时显示） */
+  /** 渲染结构化解释：单词 + 音标（同行）、谐音/释义/例句/词形行（均仅在有值时显示）、操作行（复制/朗读） */
   private renderExplainResult(result: ExplainResult) {
     if (!this.explainEl) return
     const i18n = (this.plugin?.i18n ?? {}) as Record<string, string>
     this.explainEl.textContent = ""
     // 单词行（含音标）
     this.explainEl.appendChild(this.buildWordRow(result.word, result.phonetic))
-    // 谐音行（文案标签："谐音"）
+    // 谐音行（文案标签：“谐音”）
     if (result.homophone) {
       this.explainEl.appendChild(this.buildLabelRow(i18n.highlightHomophoneLabel, result.homophone))
     }
-    // 释义行（文案标签："释义"）
+    // 释义行（文案标签：“释义”）
     if (result.definition) {
       this.explainEl.appendChild(this.buildLabelRow(i18n.highlightDefinitionLabel, result.definition))
     }
+    // 例句行（文案标签：“例句”）
+    if (result.example) {
+      this.explainEl.appendChild(this.buildLabelRow(i18n.highlightExampleLabel, result.example))
+    }
+    // 词形变化行（文案标签：“词形变化”；值为“无”时不展示）
+    if (result.forms && result.forms !== "无") {
+      this.explainEl.appendChild(this.buildLabelRow(i18n.highlightFormsLabel, result.forms))
+    }
+    // 操作行：复制、朗读
+    this.explainEl.appendChild(this.buildActionsRow(result))
+  }
+
+  /** 构造操作行：“复制”（整理成纯文本写入剪贴板）+ “朗读”（按当前发音来源重播） */
+  private buildActionsRow(result: ExplainResult): HTMLDivElement {
+    const i18n = (this.plugin?.i18n ?? {}) as Record<string, string>
+    const row = document.createElement("div")
+    row.className = "explain-actions"
+
+    // 复制按钮（文案：“复制”）
+    const copyBtn = document.createElement("button")
+    copyBtn.className = "explain-btn"
+    copyBtn.type = "button"
+    copyBtn.textContent = i18n.highlightCopyAction ?? ""
+    copyBtn.addEventListener("click", () => {
+      copyToClipboard(this.buildCopyText(result)).then((ok) => {
+        if (ok && i18n.highlightCopied) showMessage(i18n.highlightCopied)
+      })
+    })
+    row.appendChild(copyBtn)
+
+    // 朗读按钮（文案：“朗读”）
+    const playBtn = document.createElement("button")
+    playBtn.className = "explain-btn"
+    playBtn.type = "button"
+    playBtn.textContent = i18n.highlightPlayAction ?? ""
+    playBtn.addEventListener("click", () => {
+      this.getExplainer()?.play(result.word, this.options.pronunciationSource)
+    })
+    row.appendChild(playBtn)
+
+    return row
+  }
+
+  /** 将解释结果整理为多行纯文本（供复制），仅拼接有值字段 */
+  private buildCopyText(result: ExplainResult): string {
+    const i18n = (this.plugin?.i18n ?? {}) as Record<string, string>
+    const phonetic = result.phonetic
+      ? (/^[/[]/.test(result.phonetic) ? result.phonetic : `/${result.phonetic}/`)
+      : ""
+    const lines = [phonetic ? `${result.word} ${phonetic}` : result.word]
+    if (result.homophone) lines.push(`${i18n.highlightHomophoneLabel ?? ""}：${result.homophone}`)
+    if (result.definition) lines.push(`${i18n.highlightDefinitionLabel ?? ""}：${result.definition}`)
+    if (result.example) lines.push(`${i18n.highlightExampleLabel ?? ""}：${result.example}`)
+    if (result.forms && result.forms !== "无") lines.push(`${i18n.highlightFormsLabel ?? ""}：${result.forms}`)
+    return lines.join("\n")
   }
 
   /** 构造单词行：单词（加粗）+ 音标（有则附在右侧） */

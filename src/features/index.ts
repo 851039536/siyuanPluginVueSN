@@ -57,6 +57,7 @@ export {
   pendingEntryData,
   registerPasswordVault,
 } from "./passwordVault"
+export { registerQuickNote } from "./quickNote"
 export { registerResourceManager } from "./resourceManager"
 export { registerRssReader } from "./rssReader"
 export { registerScriptLauncher } from "./scriptLauncher"
@@ -122,6 +123,7 @@ type _Registered =
   | "formatAssistant" | "htmlViewer" | "rssReader" | "resourceManager"
   | "skillsViewer" | "themeColor" | "bookmarkMarker" | "apiDebugger"
   | "scriptLauncher" | "websiteNavigation" | "dataSnapshot" | "gitPush" | "skillLearning" | "prompts" | "toolCollection" | "s3Backup" | "s3FileManager"
+  | "quickNote"
 
 // --- 编译时断言辅助 ---
 // 利用泛型接口约束 T extends true 产生 TypeScript 编译错误，无运行时开销

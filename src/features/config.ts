@@ -310,6 +310,13 @@ export const FEATURE_CONFIG = [
       label: "打开",
     }],
   },
+  {
+    id: "quickNote",
+    defaultTitle: "速记",
+    defaultDesc: "快速记录多行笔记，支持完成/待完成状态与弹窗位置设置",
+    titleI18nKey: "quickNote.title",
+    descI18nKey: "quickNote.description",
+  },
 ] as const
 
 /**

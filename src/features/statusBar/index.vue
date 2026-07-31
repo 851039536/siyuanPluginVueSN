@@ -156,6 +156,9 @@ interface FeatureRegistryEntry extends FeatureDrawerItem {
   action?: () => void
 }
 
+// 速记 i18n 分片（思源类型将 i18n 声明为扁平 IObject，嵌套命名空间需显式收窄）
+const quickNoteI18n = (props.plugin?.i18n?.quickNote ?? {}) as unknown as Record<string, string>
+
 const FEATURES: FeatureRegistryEntry[] = [
   {
     id: "superPanel",
@@ -320,6 +323,18 @@ const FEATURES: FeatureRegistryEntry[] = [
       itemClass: "action-item bookmark-marker-item",
     },
     action: () => emitCustomEvent("openBookmarkMarker"),
+  },
+  {
+    id: "quickNote",
+    icon: "mdi:note-edit-outline",
+    color: "#f59e0b",
+    title: quickNoteI18n.title,
+    pinnable: true,
+    shortcut: {
+      icon: "ph:note-pencil",
+      itemClass: "action-item quick-note-item",
+    },
+    action: () => emitCustomEvent("toggleQuickNote"),
   },
   // ========== 状态栏监控项（可固定控制显隐） ==========
   {

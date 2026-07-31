@@ -45,6 +45,7 @@ import {
   registerImageCreation,
   registerPageLock,
   registerPasswordVault,
+  registerQuickNote,
   registerResourceManager,
   registerRssReader,
   registerS3Backup,
@@ -101,6 +102,7 @@ export default class PluginSample extends Plugin {
     "__s3Backup", // S3 备份
     "__s3FileManager", // S3 文件管理
     "__textDiff", // 文本对比
+    "__quickNote", // 速记（persistent Modal）
   ] as const
 
   onload() {
@@ -230,6 +232,7 @@ export default class PluginSample extends Plugin {
     if (s.enableToolCollection) registerToolCollection(this)
     if (s.enableS3Backup) registerS3Backup(this)
     if (s.enableS3FileManager) registerS3FileManager(this)
+    if (s.enableQuickNote) (this as any).__quickNote = registerQuickNote(this)
   }
 
   /**

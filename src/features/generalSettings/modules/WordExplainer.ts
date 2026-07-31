@@ -24,6 +24,10 @@ export interface ExplainResult {
   homophone: string
   /** 中文释义 */
   definition: string
+  /** 例句（英文例句 + 中文翻译） */
+  example: string
+  /** 词形变化（复数/时态/比较级等，逗号分隔） */
+  forms: string
   /** 释义来源：local = 单词本命中，ai = AI 生成 */
   source: "local" | "ai"
 }
@@ -37,16 +41,19 @@ function extractField(text: string, labels: string[]): string {
   return ""
 }
 
-/** 将单词本内容或 AI 输出解析为结构化字段（音标/谐音/释义） */
+/** 将单词本内容或 AI 输出解析为结构化字段（音标/谐音/释义/例句/词形变化） */
 function parseExplainFields(word: string, raw: string, source: "local" | "ai"): ExplainResult {
   const phonetic = extractField(raw, ["音标"])
   const homophone = extractField(raw, ["谐音"])
   let definition = extractField(raw, ["释义", "中文", "含义"])
+  const example = extractField(raw, ["例句"])
+  // “词形变化”须排在“词形”前，避免前缀标签被短标签抢先匹配
+  const forms = extractField(raw, ["词形变化", "词形", "变形"])
   // 无任何结构字段时（如用户自定义纯文本卡片），整段作为释义
-  if (!phonetic && !homophone && !definition) {
+  if (!phonetic && !homophone && !definition && !example && !forms) {
     definition = raw.trim()
   }
-  return { word, phonetic, homophone, definition, source }
+  return { word, phonetic, homophone, definition, example, forms, source }
 }
 
 export class WordExplainer {
@@ -70,14 +77,16 @@ export class WordExplainer {
     }
 
     const config = getApiConfigFromPlugin(this.plugin)
-    const prompt = `请为英文单词 "${word}" 提供信息，严格按以下三行格式输出，不要有任何其他内容：
+    const prompt = `请为英文单词 "${word}" 提供信息，严格按以下五行格式输出，不要有任何其他内容：
 音标：[英式音标]
 谐音：[中文谐音，使用带声调拼音标注]
-释义：[简短中文释义]`
+释义：[简短中文释义]
+例句：[一个英文例句，附中文翻译]
+词形变化：[常见词形，如复数/时态/比较级，用逗号分隔；没有则填“无”]`
     const text = await callAI(prompt, config, {
-      systemPrompt: "你是一个专业的英汉词典助手，擅长给出准确的音标、谐音记忆和简洁中文释义。",
+      systemPrompt: "你是一个专业的英汉词典助手，擅长给出准确的音标、谐音记忆、简洁中文释义、例句和词形变化。",
       temperature: 0.3,
-      maxTokens: 300,
+      maxTokens: 500,
     })
     return parseExplainFields(word, text, "ai")
   }

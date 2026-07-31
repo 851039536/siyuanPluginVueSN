@@ -1,0 +1,85 @@
+// 期间对比双折线图样式：A 灰线 / B 主色线 + 数据点 + 稀疏 X 轴标签 + 图例
+@use "@/variables" as *;
+@use "../styles/index.scss" as stats;
+
+.cmp-line-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cmp-line-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.cmp-axis {
+  stroke: var(--b3-border-color);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.cmp-line {
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+
+  // A 期用中性灰、B 期用主色，与差异表/条形图颜色语言一致
+  &.cmp-line-a {
+    stroke: rgba(var(--b3-theme-on-surface-rgb), 0.4);
+  }
+
+  &.cmp-line-b {
+    stroke: var(--b3-theme-primary);
+  }
+}
+
+.cmp-dot {
+  &.cmp-dot-a {
+    fill: rgba(var(--b3-theme-on-surface-rgb), 0.55);
+  }
+
+  &.cmp-dot-b {
+    fill: var(--b3-theme-primary);
+  }
+}
+
+.cmp-x-label {
+  font-family: stats.$font-mono;
+  font-size: 8px; // SVG 视图坐标内的字号，随图整体等比缩放（非 DOM 正文字号）
+  fill: var(--b3-theme-on-surface);
+  opacity: 0.5;
+}
+
+.cmp-legend {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-family: stats.$font-mono;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light);
+}
+
+.cmp-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cmp-legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 3px;
+  border-radius: stats.$radius-sm;
+
+  &.cmp-dot-a-bg {
+    background: rgba(var(--b3-theme-on-surface-rgb), 0.4);
+  }
+
+  &.cmp-dot-b-bg {
+    background: var(--b3-theme-primary);
+  }
+}

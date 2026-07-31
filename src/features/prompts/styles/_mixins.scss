@@ -22,6 +22,7 @@ $card-border-radius: $radius-md;
   justify-content: center;
   z-index: $modal-z-index;
   backdrop-filter: blur(4px);
+  font-size: $font-size-xs;
 }
 
 @mixin modal-base {
@@ -41,7 +42,7 @@ $card-border-radius: $radius-md;
   border-radius: $vp-radius;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-background);
-  font-size: $font-size-sm;
+  font-size: $font-size-xs;
   font-family: inherit;
 
   &:focus {

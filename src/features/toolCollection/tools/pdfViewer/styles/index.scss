@@ -79,6 +79,13 @@
       &:hover {
         background: var(--b3-theme-surface);
       }
+
+      &.pv-btn-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: $spacing-1;
+      }
     }
   }
 
@@ -120,6 +127,11 @@
     font-size: $font-size-2xs;
     white-space: nowrap;
     z-index: 20;
+  }
+
+  // 全屏模式
+  &.is-fullscreen {
+    background: var(--b3-theme-background);
   }
 }
 

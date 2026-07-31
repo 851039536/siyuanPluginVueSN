@@ -1,7 +1,9 @@
 <!-- PDF 预览工具 — 拖拽 PDF 文件到面板内嵌 iframe 显示，支持缩放翻页 -->
 <template>
   <div
+    ref="rootRef"
     class="pdf-viewer"
+    :class="{ 'is-fullscreen': isFullscreen }"
     @dragover.prevent="onDragOver"
     @dragleave.prevent="onDragLeave"
     @drop.prevent="onDrop"
@@ -34,6 +36,17 @@
         <span class="pv-filename">{{ fileName }}</span>
         <!-- 缩放提示："Ctrl + 滚轮缩放" -->
         <span class="pv-zoom-hint">{{ i18n.pdfViewer?.zoomHint }}</span>
+        <!-- 全屏/还原按钮 -->
+        <button
+          class="pv-btn pv-btn-icon"
+          :title="isFullscreen ? (i18n.pdfViewer?.restore ?? 'Restore') : (i18n.pdfViewer?.fullscreen ?? 'Fullscreen')"
+          @click="toggleFullscreen"
+        >
+          <Icon
+            :icon="isFullscreen ? 'mdi:fullscreen-exit' : 'mdi:fullscreen'"
+            :size="14"
+          />
+        </button>
         <!-- 清除按钮："清除" -->
         <button
           class="pv-btn"
@@ -81,7 +94,7 @@
  */
 import type { Plugin } from "siyuan"
 import { Icon } from "@iconify/vue"
-import { computed, ref } from "vue"
+import { computed, onBeforeUnmount, onMounted, ref } from "vue"
 import { getPathsFromFiles } from "@/utils/electronDialog"
 
 interface Props {
@@ -91,9 +104,11 @@ interface Props {
 
 const props = defineProps<Props>()
 
+const rootRef = ref<HTMLElement | null>(null)
 const pdfPath = ref<string | null>(null)
 const fileName = ref("")
 const isDragOver = ref(false)
+const isFullscreen = ref(false)
 const errorMsg = ref("")
 
 /** 将 Windows 反斜杠路径转为 file:/// URL */
@@ -139,10 +154,32 @@ function onDrop(e: DragEvent) {
 }
 
 function handleClear() {
+  if (isFullscreen.value) document.exitFullscreen()
   pdfPath.value = null
   fileName.value = ""
   errorMsg.value = ""
 }
+
+// ==================== 全屏切换 ====================
+function toggleFullscreen() {
+  if (isFullscreen.value) {
+    document.exitFullscreen()
+  } else {
+    rootRef.value?.requestFullscreen()
+  }
+}
+
+function onFullscreenChange() {
+  isFullscreen.value = document.fullscreenElement === rootRef.value
+}
+
+onMounted(() => {
+  document.addEventListener("fullscreenchange", onFullscreenChange)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener("fullscreenchange", onFullscreenChange)
+})
 </script>
 
 <style lang="scss" scoped>

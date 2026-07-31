@@ -129,16 +129,12 @@
     z-index: 20;
   }
 
-  // 全屏模式
+  // 全屏模式（CSS 固定定位模拟，不走 Fullscreen API）
   &.is-fullscreen {
-    width: 100vw;
-    height: 100vh;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
     background: var(--b3-theme-background);
-
-    // 强制 iframe 独立合成层，避免全屏时滚动条拖拽卡顿
-    .pv-frame {
-      transform: translateZ(0);
-    }
   }
 }
 

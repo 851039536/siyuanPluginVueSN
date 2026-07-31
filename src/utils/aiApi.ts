@@ -148,44 +148,40 @@ function buildRequestBody(
 
   // DeepSeek 思考模式处理
   const isDeepSeek = resolvedProvider === "deepseek" && supportsThinkingMode(model)
-  const deepseekThinking = isDeepSeek && options?.enableThinking !== false
 
-  if (deepseekThinking) {
-    const reasoningEffort: DeepSeekReasoningEffort =
-      (options?.reasoningEffort as DeepSeekReasoningEffort) || "high"
-    return {
-      model,
-      messages,
-      max_tokens: maxTokens,
-      thinking: { type: "enabled" },
-      reasoning_effort: reasoningEffort,
-      ...(options?.responseFormat ? { response_format: options.responseFormat } : {}),
-      ...(stream ? { stream: true } : {}),
-    }
-  }
-
-  // DeepSeek 思考模式已显式禁用 → 必须传 thinking: disabled，
-  // 否则 DeepSeek API 仍默认开启思考（ref: api-docs.deepseek.com）
-  if (isDeepSeek && options?.enableThinking === false) {
-    return {
-      model,
-      messages,
-      temperature,
-      max_tokens: maxTokens,
-      thinking: { type: "disabled" },
-      ...(options?.responseFormat ? { response_format: options.responseFormat } : {}),
-      ...(stream ? { stream: true } : {}),
-    }
-  }
-
-  // OpenAI / DeepSeek（非思考）/ Custom 格式
-  return {
+  // OpenAI / DeepSeek / Custom 共用字段
+  const common: any = {
     model,
     messages,
-    temperature,
     max_tokens: maxTokens,
     ...(options?.responseFormat ? { response_format: options.responseFormat } : {}),
     ...(stream ? { stream: true } : {}),
+  }
+
+  if (isDeepSeek) {
+    if (options?.enableThinking !== false) {
+      const reasoningEffort: DeepSeekReasoningEffort =
+        (options?.reasoningEffort as DeepSeekReasoningEffort) || "high"
+      // 思考模式下 DeepSeek 不接受 temperature，故不传
+      return {
+        ...common,
+        thinking: { type: "enabled" },
+        reasoning_effort: reasoningEffort,
+      }
+    }
+    // 思考模式已显式禁用 → 必须传 thinking: disabled，
+    // 否则 DeepSeek API 仍默认开启思考（ref: api-docs.deepseek.com）
+    return {
+      ...common,
+      temperature,
+      thinking: { type: "disabled" },
+    }
+  }
+
+  // OpenAI / DeepSeek（非思考模型）/ Custom 格式
+  return {
+    ...common,
+    temperature,
   }
 }
 
@@ -212,71 +208,45 @@ function buildHeaders(
 
 // ============ 流式解析 ============
 
-/**
- * 解析通义千问 SSE 流数据
- */
-async function parseTongyiStream(
-  response: Response,
-  onChunk: (chunk: string) => void,
-  signal?: AbortSignal,
-): Promise<string> {
-  const reader = response.body?.getReader()
-  if (!reader) throw new Error("无法读取响应流")
-
-  const decoder = new TextDecoder("utf-8")
-  let fullContent = ""
-  let buffer = ""
-
-  try {
-    while (true) {
-      if (signal?.aborted) break
-
-      const {
-        done,
-        value,
-      } = await reader.read()
-      if (done) break
-
-      buffer += decoder.decode(value, { stream: true })
-      const lines = buffer.split("\n")
-      buffer = lines.pop() || ""
-
-      for (const line of lines) {
-        if (!line.trim() || !line.startsWith("data:")) continue
-
-        const data = line.slice(5).trim()
-        if (data === "[DONE]") continue
-
-        try {
-          const json = JSON.parse(data)
-          let content = ""
-          if (json.output?.choices?.[0]?.message?.content) {
-            content = json.output.choices[0].message.content
-          } else if (json.output?.text) {
-            content = json.output.text
-          }
-
-          if (content) {
-            onChunk(content)
-            fullContent += content
-          }
-        } catch {
-          // 忽略解析错误的行
-        }
-      }
-    }
-  } finally {
-    reader.releaseLock()
-  }
-
-  return fullContent
+/** 单行 SSE 数据解析后提取出的内容片段 */
+interface StreamDelta {
+  content?: string
+  reasoning?: string
 }
 
 /**
- * 解析 OpenAI/DeepSeek SSE 流数据
+ * 通义千问 SSE delta 提取
  */
-async function parseOpenAIStream(
+function extractTongyiDelta(json: any): StreamDelta {
+  if (json.output?.choices?.[0]?.message?.content) {
+    return { content: json.output.choices[0].message.content }
+  }
+  if (json.output?.text) {
+    return { content: json.output.text }
+  }
+  return {}
+}
+
+/**
+ * OpenAI/DeepSeek SSE delta 提取
+ */
+function extractOpenAIDelta(json: any): StreamDelta {
+  const delta = json.choices?.[0]?.delta
+  return {
+    content: delta?.content,
+    reasoning: delta?.reasoning_content,
+  }
+}
+
+/**
+ * 通用 SSE 流解析：逐行迭代脚手架 + provider 特定的 delta 提取
+ * - try 仅包住 JSON.parse，解析失败的行忽略；onChunk/onReasoningChunk 回调异常
+ *   照常向上抛出，避免正文 chunk 被当作"解析失败"静默丢弃
+ * - 提前退出/异常路径先 cancel 底层流，避免未消费的响应体保持连接与缓冲
+ */
+async function parseSSEStream(
   response: Response,
+  extract: (json: any) => StreamDelta,
   onChunk: (chunk: string) => void,
   signal?: AbortSignal,
   onReasoningChunk?: (chunk: string) => void,
@@ -288,6 +258,36 @@ async function parseOpenAIStream(
   let fullContent = ""
   let buffer = ""
 
+  const handleLine = (line: string) => {
+    if (!line.trim()) return
+
+    let dataStr = line
+    if (line.startsWith("data:")) {
+      dataStr = line.slice(5).trim()
+    }
+    if (dataStr === "[DONE]") return
+
+    // try 仅包住 JSON 解析：非 JSON 行（如通义的 event:/id: 行）忽略
+    let json: any
+    try {
+      json = JSON.parse(dataStr)
+    } catch {
+      return
+    }
+
+    const {
+      content,
+      reasoning,
+    } = extract(json)
+    if (reasoning) {
+      onReasoningChunk?.(reasoning)
+    }
+    if (content) {
+      onChunk(content)
+      fullContent += content
+    }
+  }
+
   try {
     while (true) {
       if (signal?.aborted) break
@@ -303,44 +303,73 @@ async function parseOpenAIStream(
       buffer = lines.pop() || ""
 
       for (const line of lines) {
-        if (!line.trim()) continue
-
-        let dataStr = line
-        if (line.startsWith("data:")) {
-          dataStr = line.slice(5).trim()
-        }
-
-        if (dataStr === "[DONE]") continue
-
-        try {
-          const json = JSON.parse(dataStr)
-          const delta = json.choices?.[0]?.delta
-          const reasoningContent = delta?.reasoning_content
-          const content = delta?.content
-
-          if (reasoningContent) {
-            onReasoningChunk?.(reasoningContent)
-          }
-          if (content) {
-            onChunk(content)
-            fullContent += content
-          }
-        } catch {
-          // 忽略解析错误的行
-        }
+        handleLine(line)
       }
     }
+    // flush 尾部残留：服务端最后一个事件可能不以换行收尾
+    buffer += decoder.decode()
+    if (buffer) {
+      handleLine(buffer)
+    }
   } finally {
+    try {
+      await reader.cancel()
+    } catch {
+      // 忽略 cancel 异常
+    }
     reader.releaseLock()
   }
 
   return fullContent
 }
 
+/**
+ * 按 provider 选择 delta 提取器并解析流（消除多处重复的分支选择）
+ */
+function parseStreamByProvider(
+  provider: AiProvider,
+  response: Response,
+  onChunk: (chunk: string) => void,
+  signal?: AbortSignal,
+  onReasoningChunk?: (chunk: string) => void,
+): Promise<string> {
+  const extract =
+    resolveProvider(provider) === "tongyi"
+      ? extractTongyiDelta
+      : extractOpenAIDelta
+  return parseSSEStream(response, extract, onChunk, signal, onReasoningChunk)
+}
+
+/**
+ * 统一 POST JSON 请求并校验响应状态
+ */
+async function postJson(
+  apiUrl: string,
+  headers: Record<string, string>,
+  requestBody: any,
+  signal?: AbortSignal,
+): Promise<Response> {
+  const response = await fetch(apiUrl, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(requestBody),
+    signal,
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    throw new Error(`API请求失败: ${response.status} ${errorText}`)
+  }
+
+  return response
+}
+
 // ============ 核心调用函数 ============
 
 /**
  * 合并 config 和 options 中的 enableThinking
+ * 优先级：单次调用的 options.enableThinking > 全局 config.enableThinking
+ * （符合 GenerateOptions “覆盖全局设置”的契约）
  */
 function mergeOptions(
   config: AiApiConfig,
@@ -351,7 +380,7 @@ function mergeOptions(
   }
   return {
     ...options,
-    enableThinking: config.enableThinking ?? options?.enableThinking,
+    enableThinking: options?.enableThinking ?? config.enableThinking,
   }
 }
 
@@ -365,16 +394,22 @@ interface PreparedRequest {
   merged: AiCallOptions | undefined
 }
 
+/** 基础参数（provider 校验、URL、model、温度、maxTokens） */
+interface BaseParams {
+  apiUrl: string
+  model: string
+  temperature: number
+  maxTokens: number
+}
+
 /**
- * 公共前置逻辑：校验、参数构建、options 合并
- * 当 options.webSearch 为 true 时，先调用搜索 API 获取真实数据（RAG），
- * 再将搜索结果注入 system prompt，让 LLM 基于真实数据回答
+ * 解析基础调用参数：provider 校验 + apiKey 校验 + 默认值
+ * 被 prepareRequest 与 callChatStream 共用，消除重复的前置逻辑
  */
-async function prepareRequest(
-  prompt: string,
+function resolveBaseParams(
   config: AiApiConfig,
-  options?: AiCallOptions,
-): Promise<PreparedRequest> {
+  options?: Pick<AiCallOptions, "temperature" | "maxTokens">,
+): BaseParams {
   const providerConfig = API_PROVIDERS[config.provider]
   if (!providerConfig) {
     throw new Error(`不支持的API供应商: ${config.provider}`)
@@ -386,9 +421,30 @@ async function prepareRequest(
     throw new Error("请先在超级面板中配置API密钥")
   }
 
-  const model = config.model || providerConfig.defaultModel
-  const temperature = options?.temperature ?? 0.7
-  const maxTokens = options?.maxTokens ?? 800
+  return {
+    apiUrl,
+    model: config.model || providerConfig.defaultModel,
+    temperature: options?.temperature ?? 0.7,
+    maxTokens: options?.maxTokens ?? 800,
+  }
+}
+
+/**
+ * 公共前置逻辑：校验、参数构建、options 合并
+ * 当 options.webSearch 为 true 时，先调用搜索 API 获取真实数据（RAG），
+ * 再将搜索结果注入 system prompt，让 LLM 基于真实数据回答
+ */
+async function prepareRequest(
+  prompt: string,
+  config: AiApiConfig,
+  options?: AiCallOptions,
+): Promise<PreparedRequest> {
+  const {
+    apiUrl,
+    model,
+    temperature,
+    maxTokens,
+  } = resolveBaseParams(config, options)
 
   // ============ RAG 联网搜索：先搜后答 ============
   let searchContext = ""
@@ -493,17 +549,7 @@ export async function callAI(
 
   const headers = buildHeaders(config.apiKey, config.provider)
 
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(requestBody),
-    signal: merged?.signal,
-  })
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`API请求失败: ${response.status} ${errorText}`)
-  }
+  const response = await postJson(apiUrl, headers, requestBody, merged?.signal)
 
   const data = await response.json()
   return extractResponseText(data)
@@ -540,24 +586,10 @@ export async function callAIStream(
 
   const headers = buildHeaders(config.apiKey, config.provider, true)
 
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(requestBody),
-    signal: merged?.signal,
-  })
+  const response = await postJson(apiUrl, headers, requestBody, merged?.signal)
 
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`API请求失败: ${response.status} ${errorText}`)
-  }
-
-  // 根据 provider 类型选择不同的流解析器
-  const resolvedProvider = resolveProvider(config.provider)
-  if (resolvedProvider === "tongyi") {
-    return parseTongyiStream(response, onChunk, merged?.signal)
-  }
-  return parseOpenAIStream(
+  return parseStreamByProvider(
+    config.provider,
     response,
     onChunk,
     merged?.signal,
@@ -568,39 +600,21 @@ export async function callAIStream(
 /**
  * 多轮对话 AI API 调用（接收完整 messages 数组）
  * 适合智能体问答等需要传递对话历史的场景
+ * 注：不走 prepareRequest，不支持 webSearch/systemPrompt（已由类型收窄排除）
  */
 async function callChatStream(
   messages: Array<{ role: string, content: string }>,
   config: AiApiConfig,
-  onChunk: (chunk: string) => void,
-  options?: Omit<AiCallOptions, "onChunk" | "systemPrompt">,
-): Promise<string>
-async function callChatStream(
-  messages: Array<{ role: string, content: string }>,
-  config: AiApiConfig,
-  onChunk?: undefined,
-  options?: Omit<AiCallOptions, "onChunk" | "systemPrompt">,
-): Promise<string>
-async function callChatStream(
-  messages: Array<{ role: string, content: string }>,
-  config: AiApiConfig,
   onChunk?: ((chunk: string) => void) | undefined,
-  options?: Omit<AiCallOptions, "onChunk" | "systemPrompt">,
+  options?: Omit<AiCallOptions, "onChunk" | "systemPrompt" | "webSearch" | "searchQuery" | "onSearchStart" | "onSearchResults" | "onSearchError">,
 ): Promise<string> {
-  const providerConfig = API_PROVIDERS[config.provider]
-  if (!providerConfig) {
-    throw new Error(`不支持的API供应商: ${config.provider}`)
-  }
+  const {
+    apiUrl,
+    model,
+    temperature,
+    maxTokens,
+  } = resolveBaseParams(config, options)
 
-  const apiUrl = getApiUrl(config, providerConfig)
-
-  if (!config.apiKey) {
-    throw new Error("请先在超级面板中配置API密钥")
-  }
-
-  const model = config.model || providerConfig.defaultModel
-  const temperature = options?.temperature ?? 0.7
-  const maxTokens = options?.maxTokens ?? 800
   const isStream = !!onChunk
   const merged = mergeOptions(config, options)
 
@@ -616,24 +630,11 @@ async function callChatStream(
 
   const headers = buildHeaders(config.apiKey, config.provider, isStream)
 
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(requestBody),
-    signal: merged?.signal,
-  })
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`API请求失败: ${response.status} ${errorText}`)
-  }
+  const response = await postJson(apiUrl, headers, requestBody, merged?.signal)
 
   if (isStream) {
-    const resolvedProvider = resolveProvider(config.provider)
-    if (resolvedProvider === "tongyi") {
-      return parseTongyiStream(response, onChunk!, merged?.signal)
-    }
-    return parseOpenAIStream(
+    return parseStreamByProvider(
+      config.provider,
       response,
       onChunk!,
       merged?.signal,
@@ -648,11 +649,12 @@ async function callChatStream(
 /**
  * 多轮对话 AI API 调用（接收完整 messages 数组）
  * 适合智能体问答等需要传递对话历史的场景
+ * 注：systemPrompt 应直接作为 messages[0] 传入；webSearch 系列选项不适用（已由类型排除）
  */
 export async function callAIChat(
   messages: Array<{ role: string, content: string }>,
   config: AiApiConfig,
-  options?: AiCallOptions,
+  options?: Omit<AiCallOptions, "systemPrompt" | "webSearch" | "searchQuery" | "onSearchStart" | "onSearchResults" | "onSearchError">,
 ): Promise<string> {
   if (options?.onChunk) {
     const {
@@ -705,10 +707,14 @@ export function getApiConfigFromPlugin(plugin: any): AiApiConfig {
     jinaApiKey: settings.searchJinaApiKey || "",
   }
 
+  // 先解析 provider（带默认值），再据此查找 apiKey，
+  // 避免 aiApiProvider 未设置时 aiApiKeys[undefined] 取不到已配置的 key
+  const provider: AiProvider = settings.aiApiProvider || "tongyi"
+
   return {
-    provider: settings.aiApiProvider || "tongyi",
+    provider,
     model,
-    apiKey: (settings.aiApiKeys?.[settings.aiApiProvider]) || settings.aiApiKey || "",
+    apiKey: settings.aiApiKeys?.[provider] || settings.aiApiKey || "",
     customEndpoint: settings.aiCustomEndpoint || "",
     enableThinking: settings.aiEnableThinking ?? false,
     searchConfig,

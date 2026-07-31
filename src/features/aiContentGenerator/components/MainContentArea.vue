@@ -162,10 +162,10 @@
               height="14"
             ><use xlink:href="#iconCopy"></use></svg>
           </Button>
-          <!-- 重新审核 -->
+          <!-- 重新审核（首次发起入口：尚无审核结果时显示；有结果后由 ReviewPanel 内按钮承担重审，title："重新审核内容"） -->
           <Button
-            v-if="!isGenerating && generatedContent"
-            title="重新审核内容"
+            v-if="!isGenerating && generatedContent && !isReviewing && !reviewResult"
+            :title="i18n.reviewReReviewTitle"
             variant="ghost"
             size="xsmall"
             @click="$emit('reReview')"
@@ -220,6 +220,7 @@
       <!-- 审核结果（独立组件） -->
       <ReviewPanel
         v-if="isReviewing || reviewResult"
+        :i18n="i18n"
         :is-reviewing="isReviewing"
         :review-result="reviewResult || null"
         :is-auto-fixing="isAutoFixing"
@@ -267,6 +268,9 @@ import ReasoningSection from "./ReasoningSection.vue"
 import SearchResultsSection from "./SearchResultsSection.vue"
 
 interface Props {
+  // 国际化文案（转传给 ReviewPanel 等子组件）
+  i18n: Record<string, string>
+
   // 状态
   isGenerating: boolean
   isApplying: boolean

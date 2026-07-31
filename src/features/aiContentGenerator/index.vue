@@ -3,6 +3,7 @@
     <!-- 内容显示区域 -->
     <div class="content-display-section">
       <MainContentArea
+        :i18n="i18n"
         :is-generating="isGenerating"
         :is-applying="isApplying"
         :is-undoing="isUndoing"

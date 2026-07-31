@@ -31,6 +31,7 @@
     </div>
     <div
       class="diff-viewer-wrapper"
+      :class="{ 'is-dark': isDarkTheme }"
     >
       <Diff
         class="diff-viewer"

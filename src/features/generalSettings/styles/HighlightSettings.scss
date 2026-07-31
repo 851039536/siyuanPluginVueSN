@@ -10,35 +10,11 @@
   margin-bottom: $spacing-3;
 }
 
-.description-title {
-  margin-bottom: $spacing-2;
-}
-
 .toggle-description {
   font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface-variant);
   margin-top: $spacing-2;
   line-height: $line-height-normal;
-}
-
-.feature-description {
-  margin-top: $spacing-5;
-  padding: $spacing-3;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $vp-radius;
-}
-
-.description-list {
-  margin: 0;
-  padding-left: $spacing-4;
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-surface-variant);
-  line-height: $line-height-relaxed;
-}
-
-.description-list li:not(:last-child) {
-  margin-bottom: $spacing-1;
 }
 
 .style-settings {

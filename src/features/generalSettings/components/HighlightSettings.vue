@@ -16,20 +16,6 @@
       {{ i18n.highlightDescription }}
     </p>
 
-    <!-- 功能说明区块 -->
-    <div class="feature-description">
-      <!-- 区块标题："功能说明" -->
-      <SettingLabel
-        icon="lightbulb"
-        :text="i18n.featureDescription"
-        class="description-title"
-      />
-      <ul class="description-list">
-        <!-- 说明条目："在文档编辑器中双击选中文本，自动应用高亮样式" -->
-        <li>{{ i18n.highlightFeature1 }}</li>
-      </ul>
-    </div>
-
     <!-- 高亮样式设置区块（开关开启时显示） -->
     <div
       v-if="enableHighlight"

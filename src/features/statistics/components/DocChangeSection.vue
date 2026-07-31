@@ -150,7 +150,7 @@
       <div class="range-deleted-list">
         <div
           v-for="(doc, idx) in rangeDeletedDocs"
-          :key="idx"
+          :key="`${doc.date ?? ''}-${doc.title}-${doc.time ?? ''}-${idx}`"
           class="changed-doc-item deleted"
         >
           <span class="changed-doc-icon">
@@ -189,7 +189,7 @@ import {
   ref,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { formatYmd } from "../utils"
+import { formatYmd, toDashedYmd } from "../utils"
 import DocChangeList from "./DocChangeList.vue"
 import RecentUpdatedList from "./RecentUpdatedList.vue"
 interface Props {
@@ -265,6 +265,9 @@ const selectedChartDate = ref<string | null>(null)
 const recentDocs = ref<RecentUpdatedDoc[]>([])
 const recentDocsLoading = ref(false)
 
+// 请求时序计数：每次用户发起的加载自增，回填前比对以丢弃过期响应
+let reqSeq = 0
+
 // ---- 现有逻辑 ----
 
 const todayDateStr = computed(() => getTodayStr())
@@ -286,10 +289,7 @@ const badgeText = computed(() => {
   return ''
 })
 
-const formattedDocDate = computed(() => {
-  const d = docChangeDate.value
-  return `${d.substring(0, 4)}-${d.substring(4, 6)}-${d.substring(6, 8)}`
-})
+const formattedDocDate = computed(() => toDashedYmd(docChangeDate.value))
 
 const changedDocsCount = computed(() =>
   changedDocs.value.newDocs.length + changedDocs.value.modifiedDocs.length,
@@ -337,6 +337,7 @@ function sortByDate(items: RangeStatItem[]) {
 }
 
 async function switchDocRange(range: DocRangeType) {
+  const seq = ++reqSeq
   docRange.value = range
   selectedChartDate.value = null
   changedDocs.value = {
@@ -345,18 +346,19 @@ async function switchDocRange(range: DocRangeType) {
   }
   deletedDocs.value = []
   rangeDeletedDocs.value = []
+  rangeStats.value = []
 
   if (range === 'recent') {
-    await loadRecentDocs()
+    await loadRecentDocs(seq)
     // 最近更新：展示最近 30 天的删除记录
     const recentStart = new Date()
     recentStart.setDate(recentStart.getDate() - 29)
-    await loadRangeDeletedDocs(formatYmd(recentStart), getTodayStr())
+    await loadRangeDeletedDocs(formatYmd(recentStart), getTodayStr(), seq)
     return
   }
 
   if (range === 'today') {
-    loadDateChangedDocs(docChangeDate.value)
+    loadDateChangedDocs(docChangeDate.value, seq)
     return
   }
 
@@ -374,64 +376,79 @@ async function switchDocRange(range: DocRangeType) {
 
   rangeStatsLoading.value = true
   try {
-    rangeStats.value = props.onGetDateRangeChangeStats
+    const result = props.onGetDateRangeChangeStats
       ? await props.onGetDateRangeChangeStats(startStr, endStr)
       : []
+    // 时序控制：过期响应丢弃，避免覆盖更新的范围数据
+    if (seq !== reqSeq) return
+    rangeStats.value = result
   } catch (e) {
     console.error("加载范围统计失败:", e)
   } finally {
-    rangeStatsLoading.value = false
+    if (seq === reqSeq) rangeStatsLoading.value = false
   }
 
-  await loadRangeDeletedDocs(startStr, endStr)
+  // 若期间已有更新请求发出，跳过后续删除记录加载
+  if (seq !== reqSeq) return
+  await loadRangeDeletedDocs(startStr, endStr, seq)
 }
 
-async function loadRecentDocs() {
+async function loadRecentDocs(seq: number) {
   if (!props.onGetRecentUpdatedDocs) return
   recentDocsLoading.value = true
   try {
-    recentDocs.value = await props.onGetRecentUpdatedDocs(20)
+    const result = await props.onGetRecentUpdatedDocs(20)
+    if (seq !== reqSeq) return
+    recentDocs.value = result
   } catch (e) {
     console.error("加载最近更新文档失败:", e)
-    recentDocs.value = []
+    if (seq === reqSeq) recentDocs.value = []
   } finally {
-    recentDocsLoading.value = false
+    if (seq === reqSeq) recentDocsLoading.value = false
   }
 }
 
-async function loadRangeDeletedDocs(startStr: string, endStr: string) {
+async function loadRangeDeletedDocs(startStr: string, endStr: string, seq: number) {
   if (!props.onGetDeletedDocsInRange) {
     rangeDeletedDocs.value = []
     return
   }
   try {
-    rangeDeletedDocs.value = await props.onGetDeletedDocsInRange(startStr, endStr)
+    const result = await props.onGetDeletedDocsInRange(startStr, endStr)
+    if (seq !== reqSeq) return
+    rangeDeletedDocs.value = result
   } catch (e) {
     console.error("加载范围删除文档失败:", e)
-    rangeDeletedDocs.value = []
+    if (seq === reqSeq) rangeDeletedDocs.value = []
   }
 }
 
 async function drillIntoDate(dateStr: string) {
+  const seq = ++reqSeq
   selectedChartDate.value = dateStr
-  await loadDateChangedDocs(dateStr)
+  await loadDateChangedDocs(dateStr, seq)
 }
 
-async function loadDateChangedDocs(dateStr: string) {
+async function loadDateChangedDocs(dateStr: string, seq: number) {
   if (!props.onGetDateChangedDocs) return
   changedDocsLoading.value = true
   try {
-    changedDocs.value = await props.onGetDateChangedDocs(dateStr)
-    deletedDocs.value = (await props.onGetDeletedDocs?.(dateStr)) ?? []
+    const changed = await props.onGetDateChangedDocs(dateStr)
+    const deleted = (await props.onGetDeletedDocs?.(dateStr)) ?? []
+    if (seq !== reqSeq) return
+    changedDocs.value = changed
+    deletedDocs.value = deleted
   } catch (error) {
     console.error("加载文档变化失败:", error)
-    changedDocs.value = {
-      newDocs: [],
-      modifiedDocs: [],
+    if (seq === reqSeq) {
+      changedDocs.value = {
+        newDocs: [],
+        modifiedDocs: [],
+      }
+      deletedDocs.value = []
     }
-    deletedDocs.value = []
   } finally {
-    changedDocsLoading.value = false
+    if (seq === reqSeq) changedDocsLoading.value = false
   }
 }
 
@@ -439,12 +456,12 @@ function onDocDateChange(e: Event) {
   const input = e.target as HTMLInputElement
   if (!input.value) return
   docChangeDate.value = input.value.replace(/-/g, "")
-  loadDateChangedDocs(docChangeDate.value)
+  loadDateChangedDocs(docChangeDate.value, ++reqSeq)
 }
 
 function setDocDateToday() {
   docChangeDate.value = getTodayStr()
-  loadDateChangedDocs(docChangeDate.value)
+  loadDateChangedDocs(docChangeDate.value, ++reqSeq)
 }
 
 // 首次加载：默认选中“近3天”并加载其数据

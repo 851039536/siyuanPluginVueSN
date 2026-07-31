@@ -6,6 +6,7 @@
 import type { Plugin } from "siyuan"
 import type { ModalAppInstance } from "@/utils/vueAppHelper"
 import type { QuickNotePlacement, QuickNotePosition } from "./types"
+import { injectStyle, removeStyle } from "@/utils/domUtils"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { createModalVueApp } from "@/utils/vueAppHelper"
 import { POSITION_ALIGN_MAP } from "./types"
@@ -21,6 +22,10 @@ const PANEL_HEIGHT = "70vh"
 const MASK_BACKGROUND = "rgba(0, 0, 0, 0.5)"
 /** 拖拽启动位移阈值（px，小于此值视为点击，避免小条点击展开误触拖拽） */
 const DRAG_THRESHOLD = 4
+/** 最小化态动态样式的 style 标签 ID（injectStyle/removeStyle 配对） */
+const MINIMIZED_STYLE_ID = "quick-note-minimized-style"
+/** 最小化态半透明度（悬停恢复不透明，降低小条对背后界面的视觉干扰） */
+const MINIMIZED_OPACITY = 0.5
 
 export class QuickNoteManager {
   readonly storage: QuickNoteStorage
@@ -125,12 +130,24 @@ export class QuickNoteManager {
       mask.style.background = "transparent"
       mask.style.pointerEvents = "none"
       container.style.pointerEvents = "auto"
+      // 小条外壳（容器 div）半透明，悬停恢复：:hover 无法用内联样式表达，经 injectStyle + 遮罩状态 class 实现
+      mask.classList.add("quick-note-mask--minimized")
+      injectStyle(MINIMIZED_STYLE_ID, `
+        #quick-note-mask.quick-note-mask--minimized > div {
+          opacity: ${MINIMIZED_OPACITY};
+          transition: opacity 0.12s;
+        }
+        #quick-note-mask.quick-note-mask--minimized > div:hover {
+          opacity: 1;
+        }
+      `)
     } else {
       container.style.width = PANEL_WIDTH
       container.style.height = PANEL_HEIGHT
       mask.style.background = MASK_BACKGROUND
       mask.style.pointerEvents = "auto"
       container.style.pointerEvents = ""
+      mask.classList.remove("quick-note-mask--minimized")
     }
   }
 
@@ -254,8 +271,9 @@ export class QuickNoteManager {
 
   /** 彻底销毁（persistent Modal 必须 destroy 而非 close，否则残留 DOM） */
   destroy(): void {
-    // 兜底清理拖拽会话未释放的 window 监听
+    // 兜底清理拖拽会话未释放的 window 监听与最小化动态样式
     this.dragCleanup?.()
+    removeStyle(MINIMIZED_STYLE_ID)
     this.modal.destroy()
   }
 }

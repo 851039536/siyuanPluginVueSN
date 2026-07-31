@@ -6,10 +6,9 @@
  * 通过 StyleOverrides 配置实现平台差异化。
  */
 import type { CodeWrapMode } from "../types/storage"
-import hljs from "highlight.js"
-import { marked } from "marked"
+import { Marked } from "marked"
 import { escapeHtml } from "@/utils/stringUtils"
-import { convertHljsToInlineStyles } from "@/utils/mdRenderer"
+import { highlightCode } from "@/utils/mdRenderer"
 import { normalizeWidths } from "@/utils/htmlNormalizer"
 
 /**
@@ -268,7 +267,10 @@ export async function convertMarkdown(
     codeWrap = "scroll",
   } = options
 
-  marked.use({
+  // 使用隔离的 Marked 实例，不污染全局 marked 单例
+  // （避免影响其他模块如 mdRenderer 的默认渲染）
+  const md = new Marked()
+  md.use({
     breaks: true,
     gfm: true,
     renderer: {
@@ -278,24 +280,14 @@ export async function convertMarkdown(
       }: { text: string, lang?: string }) {
         const langAttr = lang ? ` class="language-${lang}"` : ""
         const langLabel = lang ? overrides.langLabelStyle(colors, lang) : ""
-        let highlighted: string
-        if (codeHighlight && lang) {
-          try {
-            highlighted = hljs.getLanguage(lang)
-              ? convertHljsToInlineStyles(hljs.highlight(text, { language: lang }).value)
-              : escapeHtml(text)
-          } catch {
-            highlighted = escapeHtml(text)
-          }
-        } else {
-          highlighted = escapeHtml(text)
-        }
-        return `<pre>${langLabel}<code${langAttr}>${highlighted}</code></pre>`
+        // 高亮开关关闭时始终输出转义纯文本；开启时走共享 highlightCode（内联样式）
+        const inner = codeHighlight ? highlightCode(text, lang, true) : escapeHtml(text)
+        return `<pre>${langLabel}<code${langAttr}>${inner}</code></pre>`
       },
     },
   })
 
-  const html = await marked.parse(markdown)
+  const html = await md.parse(markdown)
   const styledHtml = applyInlineStyles(html, colors, fontSize, lineHeight, overrides, codeWrap)
   const normalizedHtml = normalizeWidths(styledHtml).html
 

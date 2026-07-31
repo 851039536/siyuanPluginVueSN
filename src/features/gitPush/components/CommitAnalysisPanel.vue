@@ -22,8 +22,8 @@
     <template v-else>
       <!-- 顶部工具条：分析状态 + 条数选择 + 分析按钮 -->
       <div class="gpa-toolbar">
-        <!-- 分析状态："分析中…/完成/未分析" -->
-        <span class="gpa-status">{{ analyzing ? i18n.auditing : (analyzed ? i18n.done : i18n.analysisNotRun) }}</span>
+        <!-- 分析状态：“分析中…/上次分析 xx/未分析” -->
+        <span class="gpa-status">{{ analyzing ? i18n.auditing : (analyzed ? i18n.analysisLastRun.replace("{0}", relativeTime(analyzedAt, i18n)) : i18n.analysisNotRun) }}</span>
         <div class="gpa-toolbar-right">
           <!-- 条数选择（tooltip："每项目 {0} 条"） -->
           <select
@@ -295,6 +295,8 @@ const props = defineProps<{
   stats: CommitAnalysisStats
   analyzing: boolean
   analyzed: boolean
+  /** 上次分析完成时间（ISO，工具条展示“上次分析”相对时间） */
+  analyzedAt: string
   commitCount: number
 }>()
 

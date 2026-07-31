@@ -1,5 +1,6 @@
 // Git 项目持久化存储与类型定义
 import type { Plugin } from "siyuan"
+import type { CommitAnalysisCache } from "./meta"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 
@@ -286,6 +287,14 @@ const DEFAULT_TEMPLATES: CommitTemplate[] = [
 
 const DEFAULT_PROJECTS: GitProject[] = []
 
+/** 提交分析缓存默认值（entries 为空即视为未分析过） */
+const DEFAULT_ANALYSIS_CACHE: CommitAnalysisCache = {
+  commitCount: 100,
+  analyzedAt: "",
+  failedCount: 0,
+  entries: [],
+}
+
 const DEFAULT_UNGROUPED: ProjectCategory = {
   id: UNGROUPED_ID,
   name: "未分组",
@@ -309,6 +318,8 @@ export class GitPushStorage {
   readonly pushBranchMode: TypedStorage<"all" | "head">
   /** 操作日志（环形上限 300 条，防抖落盘） */
   readonly opLogs: TypedStorage<GitOpLogEntry[]>
+  /** 提交分析结果缓存（跨会话复用，进入分析视图直接展示上次结果，手动重新分析后更新） */
+  readonly commitAnalysisCache: TypedStorage<CommitAnalysisCache>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
@@ -321,6 +332,7 @@ export class GitPushStorage {
     this.showArchived = new TypedStorage(storage, "git-push-show-archived", false)
     this.pushBranchMode = new TypedStorage<"all" | "head">(storage, "git-push-branch-mode", "all")
     this.opLogs = new TypedStorage(storage, "git-push-op-logs", [])
+    this.commitAnalysisCache = new TypedStorage(storage, "git-push-analysis-cache", DEFAULT_ANALYSIS_CACHE)
   }
 
   async init(): Promise<void> {

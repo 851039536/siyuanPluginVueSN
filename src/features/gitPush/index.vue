@@ -61,6 +61,7 @@
       :stats="analysisStats"
       :analyzing="analysisAnalyzing"
       :analyzed="analysisAnalyzed"
+      :analyzed-at="analysisAnalyzedAt"
       :commit-count="analysisCommitCount"
       @run-analysis="runAnalysis"
       @update-count="setCommitCount"
@@ -575,14 +576,16 @@ const {
   runAudit,
 } = useRepoLinkAudit(props.manager, projects)
 
-// ── 提交分析（批量读取各项目提交日志，首次进入视图自动分析一次，之后手动重新分析）──
+// ── 提交分析（批量读取各项目提交日志；结果持久化，首次进入复用缓存，无缓存时自动分析一次）──
 const {
   analysisStats,
   analyzing: analysisAnalyzing,
   analyzed: analysisAnalyzed,
+  analyzedAt: analysisAnalyzedAt,
   commitCount: analysisCommitCount,
   setCommitCount,
   runAnalysis,
+  ensureAnalysis,
 } = useCommitAnalysis(props.manager, projects)
 
 const {
@@ -773,7 +776,7 @@ async function ensureStatsDataLoaded() {
   return runProjectLoadBatch(pending, "stepStats", (id) => loadStatsData(id))
 }
 
-/** 切换视图时按目标视图补齐数据：列表→当前分类状态；统计→全量统计；日志→同步置 loading（pre-flush，避免 LogPanel 首渲闪空态）；分析→首次自动分析 */
+/** 切换视图时按目标视图补齐数据：列表→当前分类状态；统计→全量统计；日志→同步置 loading（pre-flush，避免 LogPanel 首渲闪空态）；分析→复用缓存或首次自动分析 */
 watch(currentView, async (view) => {
   if (view === "list") await loadCurrentCategoryList()
   if (view === "stats") await ensureStatsDataLoaded()
@@ -785,9 +788,7 @@ watch(currentView, async (view) => {
       opLogsLoading.value = false
     }
   }
-  if (view === "analysis" && !analysisAnalyzed.value) {
-    if (!gitOpsPaused.value) await runAnalysis()
-  }
+  if (view === "analysis" && !gitOpsPaused.value) await ensureAnalysis()
 })
 
 /** 切换到"需推送/有变更"智能视图时，补齐命中判定所需的全量状态数据 */
@@ -799,9 +800,9 @@ watch(viewMode, async (mode) => {
 /** 解除暂停时按当前上下文补载数据（暂停期间跳过的加载在恢复后立即补齐） */
 watch(gitOpsPaused, async (paused) => {
   if (paused) return
-  // 提交分析视图：暂停期间跳过的首次分析在恢复后补齐
+  // 提交分析视图：暂停期间跳过的缓存加载/首次分析在恢复后补齐
   if (currentView.value === "analysis") {
-    if (!analysisAnalyzed.value) await runAnalysis()
+    await ensureAnalysis()
     return
   }
   // 统计视图 / 智能视图需要全量状态数据

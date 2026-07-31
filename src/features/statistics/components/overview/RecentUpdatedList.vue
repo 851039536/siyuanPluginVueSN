@@ -54,10 +54,10 @@
 </template>
 
 <script setup lang="ts">
-import type { RecentUpdatedDoc } from "../types"
+import type { RecentUpdatedDoc } from "../../types"
 import { computed } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { formatYmd, openDocById } from "../utils"
+import { formatYmd, openDocById } from "../../utils"
 
 interface Props {
   docs?: RecentUpdatedDoc[]
@@ -167,6 +167,6 @@ function formatRelativeTime(updated: string): string {
 </script>
 
 <style lang="scss" scoped>
-@use '../styles/DocChangeSection.scss';
-@use '../styles/index.scss' as stats;
+@use '../../styles/DocChangeSection.scss';
+@use '../../styles/index.scss' as stats;
 </style>

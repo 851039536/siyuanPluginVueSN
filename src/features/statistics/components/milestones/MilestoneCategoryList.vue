@@ -111,7 +111,7 @@
 </template>
 
 <script setup lang="ts">
-import type { CategoryView, Tier } from "../types/milestoneData"
+import type { CategoryView, Tier } from "../../types/milestoneData"
 import type { IconKey } from "@/config/icons"
 import IconWrapper from "@/components/IconWrapper.vue"
 
@@ -127,6 +127,6 @@ const emit = defineEmits<{
 </script>
 
 <style scoped lang="scss">
-@use "../styles/MilestonesCard.scss";
-@use '../styles/index.scss' as stats;
+@use "../../styles/MilestonesCard.scss";
+@use '../../styles/index.scss' as stats;
 </style>

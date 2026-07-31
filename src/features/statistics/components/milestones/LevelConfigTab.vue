@@ -81,16 +81,16 @@
 </template>
 
 <script setup lang="ts">
-import type { LevelConfig } from "../types/milestoneRules"
+import type { LevelConfig } from "../../types/milestoneRules"
 import {
   ref,
   watch,
 } from "vue"
-import { useMilestoneStorage } from "../composables/useMilestoneStorage"
+import { useMilestoneStorage } from "../../composables/useMilestoneStorage"
 import {
   DEFAULT_LEVEL_CONFIG,
   TIER_LABELS,
-} from "../types/milestoneRules"
+} from "../../types/milestoneRules"
 
 interface Props {
   visible: boolean
@@ -131,6 +131,6 @@ function onSaveLevelConfig() {
 </script>
 
 <style scoped lang="scss">
-@use "../styles/MilestoneRuleEditor.scss";
-@use '../styles/index.scss' as stats;
+@use "../../styles/MilestoneRuleEditor.scss";
+@use '../../styles/index.scss' as stats;
 </style>

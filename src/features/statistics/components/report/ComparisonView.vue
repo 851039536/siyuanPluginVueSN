@@ -113,13 +113,13 @@
 </template>
 
 <script setup lang="ts">
-import type { ComparisonData } from "../types"
+import type { ComparisonData } from "../../types"
 import {
   computed,
   ref,
 } from "vue"
-import { formatNumber } from "../utils"
-import CompareLineChart from "./charts/CompareLineChart.vue"
+import { formatNumber } from "../../utils"
+import CompareLineChart from "./CompareLineChart.vue"
 import PeriodPicker from "./PeriodPicker.vue"
 
 interface Props {
@@ -262,6 +262,6 @@ async function compare() {
 </script>
 
 <style scoped lang="scss">
-@use '../styles/ComparisonView.scss';
-@use '../styles/index.scss';
+@use '../../styles/ComparisonView.scss';
+@use '../../styles/index.scss';
 </style>

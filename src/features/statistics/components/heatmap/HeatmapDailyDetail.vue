@@ -94,9 +94,9 @@
 </template>
 
 <script setup lang="ts">
-import type { ChangedDoc } from "../types"
+import type { ChangedDoc } from "../../types"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { openDocById } from "../utils"
+import { openDocById } from "../../utils"
 
 interface Props {
   date: string
@@ -119,6 +119,6 @@ defineEmits<{
 </script>
 
 <style lang="scss" scoped>
-@use '../styles/HeatmapCard.scss';
-@use '../styles/index.scss' as stats;
+@use '../../styles/HeatmapCard.scss';
+@use '../../styles/index.scss' as stats;
 </style>

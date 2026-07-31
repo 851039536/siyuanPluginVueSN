@@ -158,7 +158,7 @@
 </template>
 
 <script setup lang="ts">
-import type { HistoricalDataItem } from "../types"
+import type { HistoricalDataItem } from "../../types"
 import {
   computed,
   ref,
@@ -167,7 +167,7 @@ import IconWrapper from "@/components/IconWrapper.vue"
 import {
   formatNumber,
   formatShortNumber,
-} from "../utils"
+} from "../../utils"
 import HistoryTable from "./HistoryTable.vue"
 import PeriodCompareCard from "./PeriodCompareCard.vue"
 
@@ -393,6 +393,6 @@ const trendStats = computed(() => {
 
 
 <style scoped lang="scss">
-@use "../styles/TrendView.scss";
-@use '../styles/index.scss' as stats;
+@use "../../styles/TrendView.scss";
+@use '../../styles/index.scss' as stats;
 </style>

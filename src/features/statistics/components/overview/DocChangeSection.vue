@@ -182,14 +182,14 @@ import type {
   DeletedDoc,
   RangeStatItem,
   RecentUpdatedDoc,
-} from "../types"
+} from "../../types"
 import {
   computed,
   onMounted,
   ref,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { formatYmd, toDashedYmd } from "../utils"
+import { formatYmd, toDashedYmd } from "../../utils"
 import DocChangeList from "./DocChangeList.vue"
 import RecentUpdatedList from "./RecentUpdatedList.vue"
 interface Props {
@@ -471,6 +471,6 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@use '../styles/DocChangeSection.scss';
-@use '../styles/index.scss' as stats;
+@use '../../styles/DocChangeSection.scss';
+@use '../../styles/index.scss' as stats;
 </style>

@@ -60,12 +60,12 @@
 </template>
 
 <script setup lang="ts">
-import type { NotebookWordStat } from "../types"
+import type { NotebookWordStat } from "../../types"
 import {
   computed,
   ref,
 } from "vue"
-import { useNotebookHover } from "../composables/useNotebookHover"
+import { useNotebookHover } from "../../composables/useNotebookHover"
 
 interface DocStat {
   name: string
@@ -161,6 +161,6 @@ const sortedRows = computed(() => {
 </script>
 
 <style scoped lang="scss">
-@use "../styles/NotebookTable.scss";
-@use '../styles/index.scss' as stats;
+@use "../../styles/NotebookTable.scss";
+@use '../../styles/index.scss' as stats;
 </style>

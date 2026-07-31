@@ -62,11 +62,11 @@
 import type {
   ChangedDoc,
   DeletedDoc,
-} from "../types"
+} from "../../types"
 import type { IconKey } from "@/config/icons"
 import { computed } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { openDocById } from "../utils"
+import { openDocById } from "../../utils"
 
 interface Props {
   changedDocs?: { newDocs: ChangedDoc[], modifiedDocs: ChangedDoc[] }
@@ -133,6 +133,6 @@ const hasChanges = computed(() => groups.value.length > 0)
 </script>
 
 <style lang="scss" scoped>
-@use '../styles/DocChangeSection.scss';
-@use '../styles/index.scss' as stats;
+@use '../../styles/DocChangeSection.scss';
+@use '../../styles/index.scss' as stats;
 </style>

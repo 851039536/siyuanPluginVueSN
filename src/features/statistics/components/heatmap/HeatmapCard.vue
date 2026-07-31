@@ -185,12 +185,12 @@
 import type {
   ChangedDoc,
   HeatmapMetric,
-} from "../types"
+} from "../../types"
 import {
   computed,
   ref,
 } from "vue"
-import { formatDate } from "../utils"
+import { formatDate } from "../../utils"
 import HeatmapDailyDetail from "./HeatmapDailyDetail.vue"
 
 interface Props {
@@ -456,6 +456,6 @@ loadData()
 </script>
 
 <style lang="scss" scoped>
-@use '../styles/HeatmapCard.scss';
-@use '../styles/index.scss' as stats;
+@use '../../styles/HeatmapCard.scss';
+@use '../../styles/index.scss' as stats;
 </style>

@@ -19,6 +19,8 @@
     "dropHint": "Drop PDF file here",
     "dropSubHint": "Supports local .pdf files",
     "zoomHint": "Ctrl + Scroll to zoom",
+    "fullscreen": "Fullscreen",
+    "restore": "Restore",
     "clear": "Clear",
     "notPdf": "Only PDF files are supported"
   }

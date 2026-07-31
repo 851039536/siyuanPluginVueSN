@@ -19,6 +19,8 @@
     "dropHint": "将 PDF 文件拖拽到此处",
     "dropSubHint": "支持本地 .pdf 文件",
     "zoomHint": "Ctrl + 滚轮缩放",
+    "fullscreen": "全屏",
+    "restore": "还原",
     "clear": "清除",
     "notPdf": "仅支持 PDF 文件"
   }

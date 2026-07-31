@@ -286,6 +286,11 @@ export const FEATURE_ICONS = {
     icon: "mdi:camera-marker",
     color: "#0ea5e9",
   },
+  // 速记
+  quickNote: {
+    icon: "mdi:note-edit-outline",
+    color: "#f59e0b",
+  },
   // Git 推送
   gitPush: {
     icon: "mdi:source-repository",
@@ -373,6 +378,9 @@ export const COMMON_ICONS = {
   },
   check: {
     icon: "mdi:check",
+  },
+  circleOutline: {
+    icon: "mdi:circle-outline",
   },
   x: {
     icon: "mdi:close",

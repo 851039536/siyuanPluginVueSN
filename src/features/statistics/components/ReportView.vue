@@ -89,7 +89,10 @@
             class="report-close-btn"
             @click="removeReport(ri)"
           >
-            ✕
+            <IconWrapper
+              name="close"
+              :size="14"
+            />
           </button>
         </div>
 
@@ -112,7 +115,7 @@
           </div>
           <div class="report-stat">
             <span class="stat-icon"><IconWrapper
-              name="list"
+              name="chartLine"
               :size="16"
             /></span>
             <span class="stat-value">{{ report.avgDailyWords.toLocaleString() }}</span>
@@ -120,7 +123,7 @@
           </div>
           <div class="report-stat">
             <span class="stat-icon"><IconWrapper
-              name="star"
+              name="calendarCheck"
               :size="16"
             /></span>
             <span class="stat-value">{{ report.activeDays }}</span>
@@ -128,7 +131,7 @@
           </div>
           <div class="report-stat">
             <span class="stat-icon"><IconWrapper
-              name="star"
+              name="fire"
               :size="16"
             /></span>
             <span class="stat-value">{{ report.longestStreak }}</span>
@@ -136,7 +139,7 @@
           </div>
           <div class="report-stat">
             <span class="stat-icon"><IconWrapper
-              name="star"
+              name="trophy"
               :size="16"
             /></span>
             <span class="stat-value">{{ formatNumber(report.maxWordsDay.words) }}</span>

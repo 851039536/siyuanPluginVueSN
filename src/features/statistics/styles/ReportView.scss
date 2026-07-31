@@ -108,7 +108,9 @@
   color: var(--b3-theme-on-surface);
   opacity: 0.4;
   cursor: pointer;
-  font-size: $font-size-sm; // 图标字形尺寸（非正文文字）
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 2px 6px;
   border-radius: stats.$radius-sm;
   transition: opacity 0.15s, background 0.15s;
@@ -127,12 +129,11 @@
 }
 
 .report-stat {
+  @include stats.stats-card-base;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 8px 4px;
-  background: var(--b3-theme-background);
-  border-radius: stats.$radius-sm;
 }
 
 .stat-icon {

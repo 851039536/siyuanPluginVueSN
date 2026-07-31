@@ -464,6 +464,22 @@ export const COMMON_ICONS = {
     color: "#3b82f6",
   },
 
+  // 统计/数据类
+  chartLine: {
+    icon: "mdi:chart-line",
+  },
+  calendarCheck: {
+    icon: "mdi:calendar-check",
+  },
+  fire: {
+    icon: "mdi:fire",
+    color: "#f97316",
+  },
+  trophy: {
+    icon: "mdi:trophy",
+    color: "#eab308",
+  },
+
   // 导航类
   menu: {
     icon: "mdi:menu",

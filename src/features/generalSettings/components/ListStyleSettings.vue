@@ -112,13 +112,14 @@
             <div
               v-show="showPreview"
               class="preview-content"
+              :style="previewStyle"
             >
               <!-- 预览小节标题："有序列表" -->
               <div class="preview-section-title">
                 {{ i18n.orderedList }}
               </div>
               <!-- 预览示例："第一/二/三层级项目" -->
-              <ol class="preview-list">
+              <ol class="preview-list preview-ordered">
                 <li>
                   {{ i18n.listPreviewLevel1 }}
                   <ol>
@@ -137,7 +138,7 @@
                 {{ i18n.unorderedList }}
               </div>
               <!-- 预览示例："第一/二/三层级项目" -->
-              <ul class="preview-list">
+              <ul class="preview-list preview-unordered">
                 <li>
                   {{ i18n.listPreviewLevel1 }}
                   <ul>
@@ -245,6 +246,18 @@ const colorSections: {
 
 const settings = ref<ListStyleSettingsData>(createDefaultListStyleSettings())
 const showPreview = ref(true)
+
+/** 预览用 CSS 变量：与 buildListStyleEnhancedCss 的层级取色/符号大小规则保持一致（预览仅展示前 3 层） */
+const previewStyle = computed(() => {
+  const vars: Record<string, string> = {
+    "--preview-symbol-size": `${settings.value.symbolSize}em`,
+  }
+  for (let i = 0; i < 3; i++) {
+    vars[`--preview-ordered-${i + 1}`] = settings.value.orderedListColors[i] ?? "inherit"
+    vars[`--preview-unordered-${i + 1}`] = settings.value.unorderedListColors[i] ?? "inherit"
+  }
+  return vars
+})
 
 /** 防抖保存定时器 */
 let debounceTimer: ReturnType<typeof setTimeout> | null = null

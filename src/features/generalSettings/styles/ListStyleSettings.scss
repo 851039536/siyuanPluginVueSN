@@ -154,6 +154,48 @@
   }
 }
 
+/* 预览层级取色：CSS 变量由组件 previewStyle 注入，与 buildListStyleEnhancedCss 规则对齐 */
+.preview-ordered {
+  > li::marker {
+    color: var(--preview-ordered-1);
+    font-weight: $font-weight-bold;
+  }
+
+  > li > ol > li::marker {
+    color: var(--preview-ordered-2);
+    font-weight: $font-weight-bold;
+  }
+
+  > li > ol > li > ol > li::marker {
+    color: var(--preview-ordered-3);
+    font-weight: $font-weight-bold;
+  }
+}
+
+/* 无序符号与编辑器注入规则一致：奇数层 •、偶数层 ▪，大小随 symbolSize */
+.preview-unordered {
+  > li::marker {
+    content: "•  ";
+    color: var(--preview-unordered-1);
+    font-size: var(--preview-symbol-size);
+    font-weight: $font-weight-bold;
+  }
+
+  > li > ul > li::marker {
+    content: "▪  ";
+    color: var(--preview-unordered-2);
+    font-size: var(--preview-symbol-size);
+    font-weight: $font-weight-bold;
+  }
+
+  > li > ul > li > ul > li::marker {
+    content: "•  ";
+    color: var(--preview-unordered-3);
+    font-size: var(--preview-symbol-size);
+    font-weight: $font-weight-bold;
+  }
+}
+
 /* 预览展开动画 */
 .preview-expand-enter-active,
 .preview-expand-leave-active {

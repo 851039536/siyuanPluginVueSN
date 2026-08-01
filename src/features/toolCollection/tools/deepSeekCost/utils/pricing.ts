@@ -38,6 +38,24 @@ export const DEEPSEEK_PRICES: ModelPrice[] = [
 /** 高峰时段价格倍率 */
 export const PEAK_MULTIPLIER = 2
 
+/** 人民币兑美元参考汇率（2026-08 近似值，仅供换算参考，以实时汇率为准） */
+export const CNY_PER_USD = 7.15
+
+/** 人民币金额换算为美元 */
+export function toUSD(cny: number): number {
+  return cny / CNY_PER_USD
+}
+
+/** 根据模型 ID 从价格表中匹配价格，匹配不到返回 null */
+export function findPriceForModel(modelId: string): ModelPrice | null {
+  const normalized = modelId.toLowerCase()
+  return (
+    DEEPSEEK_PRICES.find((p) => p.name.toLowerCase() === normalized) ??
+    DEEPSEEK_PRICES.find((p) => normalized.includes(p.name.toLowerCase())) ??
+    null
+  )
+}
+
 /** 高峰时段（北京时间）：9:00-12:00、14:00-18:00 */
 const PEAK_RANGES: Array<{ start: number; end: number }> = [
   { start: 9, end: 12 },
@@ -117,6 +135,15 @@ export function formatCost(value: number): string {
 /** 格式化 token 数（千分位） */
 export function formatTokens(value: number): string {
   return Math.round(value).toLocaleString("en-US")
+}
+
+/** 格式化美元金额：保留 4 位，去掉无意义尾零 */
+export function formatUSD(value: number): string {
+  if (!Number.isFinite(value)) return "0"
+  return value
+    .toFixed(4)
+    .replace(/0+$/, "")
+    .replace(/\.$/, "")
 }
 
 /** 格式化百分比 */

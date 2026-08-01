@@ -26,6 +26,18 @@
     "totalBalance": "Total Balance",
     "grantedBalance": "Granted Balance",
     "toppedUpBalance": "Topped-up Balance",
-    "deductHint": "Note: granted balance is deducted before topped-up balance."
+    "deductHint": "Note: granted balance is deducted before topped-up balance.",
+    "officialLinks": "Official Links",
+    "linkPricing": "Pricing",
+    "linkDocs": "API Docs",
+    "linkConsole": "Console",
+    "models": "Available Models",
+    "rateHint": "Exchange Rate",
+    "perMillion": "per Million Tokens",
+    "cacheHitPrice": "Input (Cache Hit)",
+    "cacheMissPrice": "Input (Cache Miss)",
+    "outputPrice": "Output",
+    "priceUnknown": "Price not in table, refer to official site.",
+    "modelsFailed": "Failed to fetch models"
   }
 }

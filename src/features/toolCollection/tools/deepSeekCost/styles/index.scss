@@ -52,6 +52,38 @@
     min-height: 0;
     padding: $spacing-3 $spacing-4;
   }
+
+  // 底部官网链接栏
+  .dc-footer {
+    display: flex;
+    align-items: center;
+    gap: $spacing-3;
+    padding: $spacing-2 $spacing-4;
+    border-top: 1px solid var(--b3-border-color);
+    flex-shrink: 0;
+
+    .dc-footer-label {
+      font-size: $font-size-2xs;
+      font-weight: $font-weight-bold;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      opacity: 0.45;
+      color: var(--b3-theme-on-surface);
+    }
+
+    .dc-link {
+      font-size: $font-size-2xs;
+      color: var(--b3-theme-primary);
+      text-decoration: none;
+      opacity: 0.75;
+      transition: opacity 0.12s;
+
+      &:hover {
+        opacity: 1;
+        text-decoration: underline;
+      }
+    }
+  }
 }
 
 // ===== 共享表单元素（顶层类，供子面板 @use 复用） =====

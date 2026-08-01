@@ -1,5 +1,8 @@
 <template>
-  <div class="copy-dropdown">
+  <div
+    ref="rootRef"
+    class="copy-dropdown"
+  >
     <Button
       class="dropdown-toggle"
       variant="ghost"
@@ -28,7 +31,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
+// 复制下拉菜单：提供多种格式的复制选项，点击外部自动关闭
+import { onMounted, onUnmounted, ref } from "vue"
 import Button from "@/components/Button.vue"
 
 interface CopyOption {
@@ -47,6 +51,7 @@ const emit = defineEmits<{
 }>()
 
 const isOpen = ref(false)
+const rootRef = ref<HTMLElement | null>(null)
 
 const toggle = () => {
   isOpen.value = !isOpen.value
@@ -56,6 +61,16 @@ const select = (value: string) => {
   emit("select", value)
   isOpen.value = false
 }
+
+// 点击菜单外部时关闭
+const handleClickOutside = (e: MouseEvent) => {
+  if (rootRef.value && !rootRef.value.contains(e.target as Node)) {
+    isOpen.value = false
+  }
+}
+
+onMounted(() => document.addEventListener("click", handleClickOutside))
+onUnmounted(() => document.removeEventListener("click", handleClickOutside))
 </script>
 
 <style scoped lang="scss">

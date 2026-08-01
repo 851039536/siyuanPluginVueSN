@@ -59,6 +59,7 @@
 </template>
 
 <script setup lang="ts">
+// 水印设置组件：启用开关、文字、位置、透明度与字号调节
 import type { SelectOption } from "@/components/Select.vue"
 import Select from "@/components/Select.vue"
 

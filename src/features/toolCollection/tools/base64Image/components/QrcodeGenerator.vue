@@ -88,6 +88,7 @@
 </template>
 
 <script setup lang="ts">
+// 二维码生成组件：内容输入、大小与深色模式调节、预览与下载复制
 import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 

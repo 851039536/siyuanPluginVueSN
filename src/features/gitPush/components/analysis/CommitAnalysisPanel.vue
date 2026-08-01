@@ -1,28 +1,17 @@
 <!-- gitPush 提交分析面板（提交记录/时间趋势/提交次数/内容类型聚合视图） -->
 <template>
   <div class="gpa-panel">
-    <!-- 空状态：无项目（复用 gp-empty 基座） -->
-    <div
+    <!-- 空状态：无项目 -->
+    <EmptyState
       v-if="stats.projectCount === 0"
-      class="gp-empty"
-    >
-      <div class="gp-empty-icon">
-        <Icon
-          icon="mdi:chart-timeline-variant"
-          width="48"
-          height="48"
-        />
-      </div>
-      <!-- 空状态文案："暂无项目，请在列表视图中添加" -->
-      <div class="gp-empty-text">
-        {{ i18n.noProjectsStats }}
-      </div>
-    </div>
+      icon="mdi:chart-timeline-variant"
+      :text="i18n.noProjectsStats"
+    />
 
     <template v-else>
       <!-- 顶部工具条：分析状态 + 条数选择 + 分析按钮 -->
       <div class="gpa-toolbar">
-        <!-- 分析状态：“分析中…/上次分析 xx/未分析” -->
+        <!-- 分析状态："分析中…/上次分析 xx/未分析" -->
         <span class="gpa-status">{{ analyzing ? i18n.auditing : (analyzed ? i18n.analysisLastRun.replace("{0}", relativeTime(analyzedAt, i18n)) : i18n.analysisNotRun) }}</span>
         <div class="gpa-toolbar-right">
           <!-- 条数选择（tooltip："每项目 {0} 条"） -->
@@ -38,7 +27,7 @@
               :value="n"
             >{{ n }}</option>
           </select>
-          <!-- 按钮文案：“开始分析”/“重新分析”（分析中图标转圈） -->
+          <!-- 按钮文案："开始分析"/"重新分析"（分析中图标转圈） -->
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm"
             :disabled="analyzing"
@@ -51,7 +40,7 @@
             />
             {{ analyzed ? i18n.auditRerun : i18n.auditRun }}
           </button>
-          <!-- 显示设置菜单（视图/显示范围/每周第一天/格子颜色） -->
+          <!-- 显示设置菜单 -->
           <CommitAnalysisSettings
             :i18n="i18n"
             :view-settings="viewSettings"
@@ -61,7 +50,7 @@
         </div>
       </div>
 
-      <!-- 首次分析中占位（避免闪现空态） -->
+      <!-- 首次分析中占位 -->
       <div
         v-if="analyzing && !analyzed"
         class="gp-loading"
@@ -71,26 +60,15 @@
         <span class="gp-loading-text">{{ i18n.auditing }}</span>
       </div>
 
-      <!-- 未分析提示（自动分析被 gitOpsPaused 跳过或尚未触发的瞬间） -->
-      <div
+      <!-- 未分析提示 -->
+      <EmptyState
         v-else-if="!analyzed"
-        class="gp-empty"
-      >
-        <div class="gp-empty-icon">
-          <Icon
-            icon="mdi:chart-timeline-variant"
-            width="48"
-            height="48"
-          />
-        </div>
-        <!-- 空状态文案："点击「开始分析」聚合所有项目的提交记录" -->
-        <div class="gp-empty-text">
-          {{ i18n.analysisNotRun }}
-        </div>
-      </div>
+        icon="mdi:chart-timeline-variant"
+        :text="i18n.analysisNotRun"
+      />
 
       <template v-else>
-        <!-- 总览卡片：总提交次数 / 已分析项目数 -->
+        <!-- 总览卡片 -->
         <div class="gpa-cards">
           <div class="gpa-card">
             <div class="gpa-card-value">{{ stats.totalCommits }}</div>
@@ -104,7 +82,7 @@
           </div>
         </div>
 
-        <!-- 失败提示："{0} 个项目获取提交失败" -->
+        <!-- 失败提示 -->
         <div
           v-if="stats.failedCount > 0"
           class="gpa-fail-hint"
@@ -113,27 +91,15 @@
         </div>
 
         <!-- 空状态：分析完成但无提交数据 -->
-        <div
+        <EmptyState
           v-if="stats.totalCommits === 0"
-          class="gp-empty"
-        >
-          <div class="gp-empty-icon">
-            <Icon
-              icon="mdi:source-commit"
-              width="48"
-              height="48"
-            />
-          </div>
-          <!-- 空状态文案："暂无提交数据" -->
-          <div class="gp-empty-text">
-            {{ i18n.analysisNoData }}
-          </div>
-        </div>
+          icon="mdi:source-commit"
+          :text="i18n.analysisNoData"
+        />
 
         <template v-else>
-          <!-- 双栏：项目提交排行 | 最近提交记录（固定高度，内容超高时列表内部滚动） -->
+          <!-- 双栏：项目提交排行 | 最近提交记录 -->
           <div class="gpa-pair">
-            <!-- 项目提交排行（点击行跳转项目） -->
             <div class="gpa-section gpa-section--scroll">
               <!-- 区块标题："项目提交排行" -->
               <div class="gpa-section-title">
@@ -165,7 +131,7 @@
               </div>
             </div>
 
-            <!-- 最近提交记录（跨项目合并按日期降序） -->
+            <!-- 最近提交记录 -->
             <div class="gpa-section gpa-section--scroll">
               <div class="gpa-section-title">
                 <!-- 区块标题："最近提交记录" + 条数徽章 -->
@@ -201,24 +167,20 @@
                   </span>
                 </div>
               </div>
-              <!-- 加载更多（本地分页，每次 +50，文案："加载更多 (可见/总数)"） -->
-              <div
-                v-if="visibleCount < sortedEntries.length"
-                class="gpa-load-more"
-              >
-                <button
-                  class="vp-btn vp-btn--ghost vp-btn--sm"
-                  @click="visibleCount += 50"
-                >
-                  {{ i18n.loadMoreLogs }} ({{ visibleCount }} / {{ sortedEntries.length }})
-                </button>
-              </div>
+              <!-- 加载更多 -->
+              <LoadMoreButton
+                v-if="pagedHasMore"
+                :i18n="i18n"
+                :visible="pagedVisibleCount"
+                :total="sortedEntries.length"
+                @load-more="pagedLoadMore"
+              />
             </div>
           </div>
 
-          <!-- 提交热力图 / 日历（设置菜单可切换视图、显示范围、周起始与主色） -->
+          <!-- 提交热力图 / 日历 -->
           <div class="gpa-section">
-            <!-- 区块标题："提交热力图"/"提交日历"（随视图切换） -->
+            <!-- 区块标题："提交热力图"/"提交日历" -->
             <div class="gpa-section-title">
               {{ viewSettings.view === "heatmap" ? i18n.analysisHeatTitle : i18n.analysisCalendarTitle }}
             </div>
@@ -242,14 +204,14 @@
             />
           </div>
 
-          <!-- 最近 30 天提交趋势（每日纵向条形图） -->
+          <!-- 最近 30 天提交趋势 -->
           <div class="gpa-section">
             <!-- 区块标题："最近 30 天提交趋势" -->
             <div class="gpa-section-title">
               {{ i18n.analysisDailyTitle }}
             </div>
             <div class="gpa-daily">
-              <!-- 每日柱（hover 显示 "日期: 次数"） -->
+              <!-- 每日柱 -->
               <div
                 v-for="d in dailyRows"
                 :key="d.label"
@@ -293,7 +255,7 @@
               </div>
             </div>
 
-            <!-- 提交内容类型（Conventional Commits 前缀分类条形） -->
+            <!-- 提交内容类型 -->
             <div class="gpa-section">
               <!-- 区块标题："提交内容类型" -->
               <div class="gpa-section-title">
@@ -326,25 +288,26 @@
 <script setup lang="ts">
 import type { CommitAnalysisStats, CommitAnalysisViewSettings } from "../../types"
 import { Icon } from "@iconify/vue"
-import { computed, ref } from "vue"
+import { computed } from "vue"
 import { COMMIT_COUNT_OPTIONS } from "../../composables/useCommitAnalysis"
 import { COMMIT_ANALYSIS_TYPE_META } from "../../types"
-import { buildDayCountMap, formatLocalDate, relativeTime, resolveAnalysisRange } from "../../utils"
+import { buildDayCountMap, formatLocalDate, relativeTime, resolveAnalysisRange, withBarPct } from "../../utils"
+import { usePagedList } from "../../composables/usePagedList"
 import CommitAnalysisSettings from "./CommitAnalysisSettings.vue"
 import CommitCalendar from "./CommitCalendar.vue"
 import CommitHeatmap from "./CommitHeatmap.vue"
+import EmptyState from "../common/EmptyState.vue"
 import Loader from "@/components/Loader.vue"
+import LoadMoreButton from "../common/LoadMoreButton.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
-  /** 分析聚合视图（单对象 prop，由 useCommitAnalysis.analysisStats 产出） */
   stats: CommitAnalysisStats
   analyzing: boolean
   analyzed: boolean
-  /** 上次分析完成时间（ISO，工具条展示“上次分析”相对时间） */
+  /** 上次分析完成时间（ISO） */
   analyzedAt: string
   commitCount: number
-  /** 热力图/日历显示设置（视图/范围/每周第一天/格子主色，useCommitAnalysis 产出） */
   viewSettings: CommitAnalysisViewSettings
 }>()
 
@@ -355,10 +318,7 @@ const emit = defineEmits<{
   viewProject: [projectId: string]
 }>()
 
-/** 提交记录本地分页：默认 50 条，加载更多逐次 +50（仿 LogPanel） */
-const visibleCount = ref(50)
-
-/** 日计数映射（YYYY-MM-DD → 提交数），热力图与日历视图共用 */
+/** 日计数映射（YYYY-MM-DD → 提交数） */
 const dayCounts = computed(() => buildDayCountMap(props.stats.entries))
 
 /** 当前显示范围起止（YYYY-MM-DD） */
@@ -367,7 +327,7 @@ const heatRange = computed(() => {
   return { start: formatLocalDate(start), end: formatLocalDate(end) }
 })
 
-/** 年份选项：数据年份 ∪ 今年 ∪ 已保存年份，降序（已保存年份不在数据中时也并入，避免 select 显示错位） */
+/** 年份选项：数据年份 ∪ 今年 ∪ 已保存年份，降序 */
 const yearOptions = computed(() => {
   const years = new Set<number>()
   years.add(new Date().getFullYear())
@@ -384,28 +344,27 @@ const sortedEntries = computed(() =>
   [...props.stats.entries].sort((a, b) => Date.parse(b.date) - Date.parse(a.date)),
 )
 
-const pagedEntries = computed(() => sortedEntries.value.slice(0, visibleCount.value))
+/** 本地分页（usePagedList 消除与 LogPanel 的 visibleCount/slice/loadMore 重复） */
+const {
+  visibleCount: pagedVisibleCount,
+  paged: pagedEntries,
+  hasMore: pagedHasMore,
+  loadMore: pagedLoadMore,
+} = usePagedList(sortedEntries, 50)
 
-/** 条形宽度百分比（相对最大值） */
-function barPct(count: number, max: number): string {
-  return `${Math.round((count / max) * 100)}%`
-}
-
-/** 百分比格式化：保留 1 位小数并去掉尾零（如 12.3% / 100%）；极小占比显示 <0.1% 避免误导 */
+/** 百分比格式化：保留 1 位小数并去掉尾零；极小占比显示 <0.1% 避免误导 */
 function formatShare(share: number): string {
   if (share > 0 && share < 0.1) return "<0.1%"
   return `${share.toFixed(1).replace(/\.0$/, "")}%`
 }
 
-/** 项目排行行视图：条形宽度相对最大值；数字列显示占总提交的百分比（tooltip 保留原始次数） */
+/** 项目排行行视图：条形宽度相对最大值；数字列显示占总提交的百分比 */
 const projectRows = computed(() => {
-  const max = props.stats.projectRanking[0]?.count || 1
   const total = props.stats.totalCommits || 1
-  return props.stats.projectRanking.map((r) => {
+  return withBarPct(props.stats.projectRanking).map((r) => {
     const shareText = formatShare((r.count / total) * 100)
     return {
       ...r,
-      pct: barPct(r.count, max),
       shareText,
       title: String(props.i18n.analysisShareTooltip || "")
         .replace("{0}", String(r.count))
@@ -415,22 +374,13 @@ const projectRows = computed(() => {
 })
 
 /** 每日趋势行视图：高度百分比预计算（0 次日留空柱） */
-const dailyRows = computed(() => {
-  const max = Math.max(...props.stats.dailyCommits.map((d) => d.count), 1)
-  return props.stats.dailyCommits.map((d) => ({ ...d, pct: d.count === 0 ? "0%" : barPct(d.count, max) }))
-})
+const dailyRows = computed(() => withBarPct(props.stats.dailyCommits, { zeroAsEmpty: true }))
 
-/** 提交类型行视图：标签与颜色来自 COMMIT_ANALYSIS_TYPE_META */
-const typeRows = computed(() => {
-  const max = props.stats.typeDistribution[0]?.count || 1
-  return props.stats.typeDistribution.map((t) => ({ ...t, pct: barPct(t.count, max) }))
-})
+/** 提交类型行视图 */
+const typeRows = computed(() => withBarPct(props.stats.typeDistribution))
 
 /** 作者排行行视图 */
-const authorRows = computed(() => {
-  const max = props.stats.authorRanking[0]?.count || 1
-  return props.stats.authorRanking.map((a) => ({ ...a, pct: barPct(a.count, max) }))
-})
+const authorRows = computed(() => withBarPct(props.stats.authorRanking))
 
 function onCountChange(e: Event) {
   emit("updateCount", Number((e.target as HTMLSelectElement).value))

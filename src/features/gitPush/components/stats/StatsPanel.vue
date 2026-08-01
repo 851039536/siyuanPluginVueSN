@@ -1,22 +1,12 @@
 <!-- Git 项目统计概览面板 -->
 <template>
   <div class="gp-stats-panel">
-    <!-- 空状态：无项目时显示“暂无项目统计” -->
-    <div
+    <!-- 空状态：无项目时显示"暂无项目统计" -->
+    <EmptyState
       v-if="stats.projectCount === 0"
-      class="gp-empty"
-    >
-      <div class="gp-empty-icon">
-        <Icon
-          icon="mdi:chart-bar"
-          width="48"
-          height="48"
-        />
-      </div>
-      <div class="gp-empty-text">
-        {{ i18n.noProjectsStats }}
-      </div>
-    </div>
+      icon="mdi:chart-bar"
+      :text="i18n.noProjectsStats"
+    />
 
     <template v-else>
       <!-- 总览卡片：总项目数 / 已配远程 / 待推送 / 未提交 / 收藏 / 已归档（配置驱动） -->
@@ -44,7 +34,7 @@
           {{ i18n.remoteCoverage }}
         </div>
         <div class="gp-coverage-list">
-          <!-- 覆盖率条目：四个平台 + 多远程合计（配置驱动，多远程标签为“多远程项目”；hover 显示百分比） -->
+          <!-- 覆盖率条目：四个平台 + 多远程合计（配置驱动，多远程标签为"多远程项目"；hover 显示百分比） -->
           <div
             v-for="c in coverageItems"
             :key="c.key"
@@ -75,7 +65,7 @@
         v-if="stats.categoryDistribution.length > 0"
         class="gp-stats-section"
       >
-        <!-- 区块标题：“分类分布” -->
+        <!-- 区块标题："分类分布" -->
         <div class="gp-stats-section-title">
           {{ i18n.categoryDistribution }}
         </div>
@@ -134,7 +124,7 @@
           <div class="gp-table-row gp-table-row--head">
             <span class="gp-table-cell gp-table-cell--name">{{ i18n.projectName }}</span>
             <span class="gp-table-cell gp-table-cell--num">{{ i18n.needsPushShort }}</span>
-            <!-- 表头：“待拉取” -->
+            <!-- 表头："待拉取" -->
             <span class="gp-table-cell gp-table-cell--num">{{ i18n.needsPullShort }}</span>
             <!-- 表头三列：已暂存/未暂存/未跟踪（field 同时作为 i18n 键） -->
             <span
@@ -250,7 +240,7 @@
             >
               {{ row.name }}
             </span>
-            <!-- 悬停提示：“已配置”/“未配置”（行视图模型预计算，避免每格 3 次函数调用） -->
+            <!-- 悬停提示："已配置"/"未配置"（行视图模型预计算，避免每格 3 次函数调用） -->
             <span
               v-for="cell in row.cells"
               :key="cell.key"
@@ -295,6 +285,7 @@ import type { RepoLinkAuditRow, RepoLinkAuditSummary, StatsView } from "../../ty
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
 import { PLATFORM_META, getPlatformStatus } from "../../types"
+import EmptyState from "../common/EmptyState.vue"
 import RepoLinkAuditSection from "./RepoLinkAuditSection.vue"
 
 const props = defineProps<{
@@ -319,9 +310,9 @@ const overviewCards = computed(() => [
   { value: props.stats.remoteCoverage.hasRemote, label: props.i18n.remoteConfigured, cls: "gp-stat-card--info" },
   { value: props.stats.pushStatusStats.ahead, label: props.i18n.needsPush, cls: "gp-stat-card--warn" },
   { value: props.stats.uncommittedCount, label: props.i18n.uncommitted, cls: "gp-stat-card--accent" },
-  // 收藏卡：“收藏”（与列表星标按钮同色）
+  // 收藏卡："收藏"（与列表星标按钮同色）
   { value: props.stats.starredCount, label: props.i18n.starred, cls: "gp-stat-card--star" },
-  // 归档卡：“已归档”（弱化展示）
+  // 归档卡："已归档"（弱化展示）
   { value: props.stats.archivedCount, label: props.i18n.archivedTitle, cls: "gp-stat-card--muted" },
 ])
 
@@ -333,7 +324,7 @@ const coverageItems = computed(() => [
     label: pm.label as string,
     count: props.stats.remoteCoverage[pm.key],
   })),
-  // 多远程项目条目：“多远程项目”
+  // 多远程项目条目："多远程项目"
   { key: "multi", icon: "mdi:layers", label: props.i18n.multipleRemotes as string, count: props.stats.remoteCoverage.multiple },
 ])
 

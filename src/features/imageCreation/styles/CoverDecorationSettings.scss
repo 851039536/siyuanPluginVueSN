@@ -1,0 +1,48 @@
+// ============================================================
+// 封面装饰设置（主题色/水印/Logo）专属样式
+// ============================================================
+
+@use "@/variables" as *;
+
+.color-rows {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-px;
+}
+
+.color-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+  // 辅助文字
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface);
+
+  input[type="color"] {
+    width: $spacing-6;
+    height: $spacing-5;
+    padding: 0;
+    border: 1px solid var(--b3-theme-background-light);
+    border-radius: $radius-sm;
+    background: transparent;
+    cursor: pointer;
+  }
+}
+
+.logo-thumb {
+  width: $spacing-8;
+  height: $spacing-8;
+  object-fit: contain;
+  border: 1px solid var(--b3-theme-background-light);
+  border-radius: $vp-radius;
+  background: var(--b3-theme-surface, #ffffff);
+  padding: $spacing-1;
+}
+
+.logo-empty-hint {
+  // 辅助文字
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.45;
+}

@@ -231,6 +231,8 @@
     .preview-actions {
       display: flex;
       gap: $spacing-1;
+      flex-wrap: wrap;
+      justify-content: flex-end;
     }
   }
 }

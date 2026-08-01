@@ -45,6 +45,30 @@
   resize: vertical;
 }
 
+// 背景层：透明度只作用于背景，内容层在其上保持不透明
+.bg-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.window-header,
+.code-content,
+.text-content,
+.decorations {
+  position: relative;
+  z-index: 1;
+}
+
+// 代码/文字内容使用等宽字体（内联 font-family 覆盖具体选择）
+.code-content pre code,
+.text-body {
+  font-family: $vp-mono;
+}
+
 // 滑块
 .slider-control {
   width: 100%;
@@ -164,6 +188,34 @@
   min-height: 300px;
   display: flex;
   flex-direction: column;
+}
+
+// 底色取色器与背景图缩略图
+.color-swatch {
+  width: $spacing-6;
+  height: $spacing-5;
+  padding: 0;
+  border: 1px solid var(--b3-theme-background-light);
+  border-radius: $radius-sm;
+  background: transparent;
+  cursor: pointer;
+}
+
+.bg-thumb {
+  width: $spacing-8;
+  height: $spacing-8;
+  object-fit: contain;
+  border: 1px solid var(--b3-theme-background-light);
+  border-radius: $vp-radius;
+  background: var(--b3-theme-surface, #ffffff);
+  padding: $spacing-1;
+}
+
+.bg-empty-hint {
+  // 辅助文字
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.45;
 }
 
 .text-content {

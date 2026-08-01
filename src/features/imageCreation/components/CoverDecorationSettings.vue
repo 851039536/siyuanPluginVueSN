@@ -218,7 +218,7 @@
  * 自包含：直接读写共享的 CoverSettingsService，无中间人 emit
  */
 import type { SelectOption } from "@/components/Select.vue"
-import type { ImageCreationI18n } from "../types"
+import type { ImageCreationI18n, WatermarkPosition } from "../types"
 import type { CoverSettingsService } from "../composables/useCoverSettings"
 import { ref } from "vue"
 import Button from "@/components/Button.vue"
@@ -227,6 +227,7 @@ import Select from "@/components/Select.vue"
 import Slider from "@/components/Slider.vue"
 import Switch from "@/components/Switch.vue"
 import { usePlugin } from "@/main"
+import { LOGO_POSITIONS, WATERMARK_POSITIONS } from "../types"
 import { DEFAULT_COVER_SETTINGS } from "../types/storage"
 
 interface Props {
@@ -249,20 +250,22 @@ const t = (plugin.i18n as Record<string, any>).imageCreation as ImageCreationI18
 const expanded = ref(false)
 const fileInput = ref<HTMLInputElement>()
 
-const watermarkPositionOptions: SelectOption[] = [
-  { value: "bottomLeft", label: t.positionBottomLeft },
-  { value: "bottomRight", label: t.positionBottomRight },
-  { value: "topLeft", label: t.positionTopLeft },
-  { value: "topRight", label: t.positionTopRight },
-  { value: "center", label: t.positionCenter },
-]
-
-const logoPositionOptions: SelectOption[] = [
-  { value: "topLeft", label: t.positionTopLeft },
-  { value: "topRight", label: t.positionTopRight },
-  { value: "bottomLeft", label: t.positionBottomLeft },
-  { value: "bottomRight", label: t.positionBottomRight },
-]
+// 位置选项单一数据源：类型常量 WATERMARK_POSITIONS / LOGO_POSITIONS + i18n 标签映射
+const positionLabelMap: Record<WatermarkPosition, string> = {
+  bottomLeft: t.positionBottomLeft,
+  bottomRight: t.positionBottomRight,
+  topLeft: t.positionTopLeft,
+  topRight: t.positionTopRight,
+  center: t.positionCenter,
+}
+const watermarkPositionOptions: SelectOption[] = WATERMARK_POSITIONS.map((p) => ({
+  value: p,
+  label: positionLabelMap[p],
+}))
+const logoPositionOptions: SelectOption[] = LOGO_POSITIONS.map((p) => ({
+  value: p,
+  label: positionLabelMap[p],
+}))
 
 /** 恢复主题色为默认调色板（保留启用状态） */
 function resetColors() {

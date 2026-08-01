@@ -14,9 +14,11 @@ import { showMessage } from "siyuan"
 import { getFile, putFile } from "@/api"
 import { fileToDataUrl } from "../utils/coverHtml"
 import {
+  cloneCoverSettings,
   DEFAULT_COVER_SETTINGS,
   ImageCreationStorage,
   LOGO_ALLOWED_EXTENSIONS,
+  mergeCoverSettings,
 } from "../types/storage"
 
 /** 封面设置服务（CoverTab / CoverDecorationSettings / CoverPreview 共享同一实例） */
@@ -27,35 +29,12 @@ export interface CoverSettingsService {
   logoDataUrl: Ref<string>
   /** 首次加载完成标记 */
   ready: Promise<void>
-  /** 防抖保存（500ms） */
-  save: () => void
   /** 上传 Logo（校验类型 + putFile + 更新设置与缓存） */
   uploadLogo: (file: File) => Promise<void>
   /** 移除 Logo */
   removeLogo: () => Promise<void>
   /** 从工作区路径加载 Logo dataURL（会话内缓存） */
   loadLogoDataUrl: (path: string) => Promise<string>
-}
-
-/** 深拷贝偏好设置（默认值/合并/候选变体使用，避免嵌套对象共享引用） */
-export function cloneCoverSettings(s: CoverSettings): CoverSettings {
-  return {
-    ...s,
-    colors: { ...s.colors },
-    watermark: { ...s.watermark },
-    logo: { ...s.logo },
-  }
-}
-
-/** 合并保存数据与默认值（新增字段有默认值兜底） */
-function mergeCoverSettings(saved: CoverSettings): CoverSettings {
-  return {
-    ...cloneCoverSettings(DEFAULT_COVER_SETTINGS),
-    ...saved,
-    colors: { ...DEFAULT_COVER_SETTINGS.colors, ...saved.colors },
-    watermark: { ...DEFAULT_COVER_SETTINGS.watermark, ...saved.watermark },
-    logo: { ...DEFAULT_COVER_SETTINGS.logo, ...saved.logo },
-  }
 }
 
 export function useCoverSettings(plugin: Plugin, i18n: ImageCreationI18n): CoverSettingsService {
@@ -93,11 +72,16 @@ export function useCoverSettings(plugin: Plugin, i18n: ImageCreationI18n): Cover
 
   const loadLogoDataUrl = async (path: string): Promise<string> => {
     if (logoDataUrl.value) return logoDataUrl.value
-    const blob = await getFile(path)
-    if (!blob) return ""
-    const url = await fileToDataUrl(blob)
-    logoDataUrl.value = url
-    return url
+    try {
+      const blob = await getFile(path)
+      if (!blob) return ""
+      const url = await fileToDataUrl(blob)
+      logoDataUrl.value = url
+      return url
+    } catch (error) {
+      console.error("Logo 加载失败:", error)
+      return ""
+    }
   }
 
   const ready = (async () => {
@@ -146,7 +130,6 @@ export function useCoverSettings(plugin: Plugin, i18n: ImageCreationI18n): Cover
     settings,
     logoDataUrl,
     ready,
-    save,
     uploadLogo,
     removeLogo,
     loadLogoDataUrl,

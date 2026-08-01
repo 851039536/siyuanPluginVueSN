@@ -286,6 +286,7 @@
     "analysisLess": "少",
     "analysisMore": "多",
     "analysisHeatTooltip": "{0}（{1}）：{2} 次提交",
+    "analysisShareTooltip": "{0} 次提交（{1}）",
     "analysisWdSun": "周日",
     "analysisWdMon": "周一",
     "analysisWdTue": "周二",

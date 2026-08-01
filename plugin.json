@@ -2,7 +2,7 @@
   "name": "siyuan-plugin-vite-vue-sn",
   "author": "sn",
   "url": "",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "minAppVersion": "2.10.14",
   "disabledInPublish": true,
   "backends": [

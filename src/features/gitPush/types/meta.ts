@@ -258,6 +258,21 @@ export interface CommitAnalysisCache {
   entries: CommitAnalysisEntry[]
 }
 
+/** 提交分析显示设置（热力图/日历视图配置，持久化到 git-push-analysis-view） */
+export interface CommitAnalysisViewSettings {
+  /** 视图：热力图 / 日历 */
+  view: "heatmap" | "calendar"
+  /** 显示范围："lastYear"=最近一年；number=起始年份，连续显示到今年 */
+  range: "lastYear" | number
+  /** 每周第一天（与 Date.getDay 一致）：1=周一, 0=周日 */
+  weekStart: 0 | 1
+  /** 热力主色（#RRGGBB，格子由主色按等级加透明度渲染） */
+  color: string
+}
+
+/** 热力等级阈值：0 次 → level 0；≥1 / ≥3 / ≥6 / ≥12 次 → level 1~4（提交粒度，区别于 statistics 的文档操作阈值） */
+export const HEAT_LEVEL_THRESHOLDS = [0, 1, 3, 6, 12] as const
+
 /** 项目列表视图模式（单一事实源，ViewMode 联合类型由此推导） */
 export const VIEW_MODES = ["all", "needsPush", "uncommitted", "starred", "archived"] as const
 export type ViewMode = typeof VIEW_MODES[number]

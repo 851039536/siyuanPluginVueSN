@@ -4,10 +4,12 @@ import type {
   CommitAnalysisEntry,
   CommitAnalysisStats,
   CommitAnalysisType,
+  CommitAnalysisViewSettings,
   GitProject,
   GitPushManager,
 } from "../types"
 import { computed, ref } from "vue"
+import { DEFAULT_ANALYSIS_VIEW_SETTINGS } from "../types"
 import {
   buildDailyCommitBuckets,
   parseCommitAnalysisType,
@@ -37,6 +39,20 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   const failedCount = ref(0)
   /** 是否已尝试过从存储载入缓存（防重复读盘） */
   let cacheLoaded = false
+  /** 热力图/日历显示设置（视图/范围/每周第一天/格子主色，持久化到 git-push-analysis-view） */
+  const viewSettings = ref<CommitAnalysisViewSettings>({ ...DEFAULT_ANALYSIS_VIEW_SETTINGS })
+
+  /** 从存储载入显示设置（与默认值逐字段合并，防旧数据缺字段导致渲染异常） */
+  async function loadViewSettings() {
+    const saved = await manager.storage.commitAnalysisView.loadOrDefault()
+    viewSettings.value = { ...viewSettings.value, ...saved }
+  }
+
+  /** 更新显示设置并持久化（面板每项改动即时调用） */
+  async function updateViewSettings(patch: Partial<CommitAnalysisViewSettings>) {
+    viewSettings.value = { ...viewSettings.value, ...patch }
+    await manager.storage.commitAnalysisView.save(viewSettings.value)
+  }
 
   /** 批量分析全部项目（GitExecutor 自带并发限流，无需额外节流）；成功后持久化结果供下次复用 */
   async function runAnalysis() {
@@ -92,8 +108,9 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     analyzed.value = true
   }
 
-  /** 进入分析视图的统一入口：先尝试复用持久化缓存，无有效缓存时才重新分析 */
+  /** 进入分析视图的统一入口：先尝试复用持久化缓存，无有效缓存时才重新分析；同时加载显示设置 */
   async function ensureAnalysis() {
+    await loadViewSettings()
     await loadCachedAnalysis()
     if (!analyzed.value && !analyzing.value) await runAnalysis()
   }
@@ -144,5 +161,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     setCommitCount,
     runAnalysis,
     ensureAnalysis,
+    viewSettings,
+    updateViewSettings,
   }
 }

@@ -29,6 +29,7 @@ export type {
 export {
   clampGitConcurrency,
   COMMIT_TYPE_VALUES,
+  DEFAULT_ANALYSIS_VIEW_SETTINGS,
   GIT_CONCURRENCY_MAX,
   GIT_CONCURRENCY_MIN,
   GitPushStorage,
@@ -48,6 +49,7 @@ export {
   VIEW_MODE_META,
   VIEW_MODES,
   COMMIT_ANALYSIS_TYPE_META,
+  HEAT_LEVEL_THRESHOLDS,
 } from "./meta"
-export type { CategoryDistributionItem, CommitAnalysisCache, CommitAnalysisEntry, CommitAnalysisStats, CommitAnalysisType, NeedsPullItem, NeedsPushItem, PanelView, PendingProjectItem, PlatformKey, PlatformStatusItem, PushStatusStats, RemoteCoverage, RepoLinkAuditCell, RepoLinkAuditRow, RepoLinkAuditState, RepoLinkAuditSummary, StatsView, UncommittedItem, ViewMode } from "./meta"
+export type { CategoryDistributionItem, CommitAnalysisCache, CommitAnalysisEntry, CommitAnalysisStats, CommitAnalysisType, CommitAnalysisViewSettings, NeedsPullItem, NeedsPushItem, PanelView, PendingProjectItem, PlatformKey, PlatformStatusItem, PushStatusStats, RemoteCoverage, RepoLinkAuditCell, RepoLinkAuditRow, RepoLinkAuditState, RepoLinkAuditSummary, StatsView, UncommittedItem, ViewMode } from "./meta"
 export { getPlatformStatus } from "./meta"

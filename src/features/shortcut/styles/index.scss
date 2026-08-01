@@ -2,15 +2,17 @@
  * 快捷键面板 - 样式文件
  * 仅包含 index.vue 直接渲染的元素样式（子组件样式由各自 scoped style 管理）
  */
+@use "@/variables.scss" as *;
 
 // 面板基础样式
+// 根容器基准字号对齐全局 $font-size-xs(12px)：原硬编码 13px 会覆盖 vp-dock-root 兜底规则
 .shortcut-panel {
   display: flex;
   flex-direction: column;
   height: 100%;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
-  font-size: 13px;
+  font-size: $font-size-xs;
   overflow: hidden;
 }
 
@@ -28,8 +30,8 @@
   padding: 6px 16px;
   border: none;
   background: none;
-  font-size: 10px;
-  font-weight: 600;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-surface-variant);
   cursor: pointer;
   opacity: 0.6;

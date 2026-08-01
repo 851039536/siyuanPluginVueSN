@@ -101,10 +101,10 @@ $font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Ne
 // 中文字体优先的字体栈
 $font-zh: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
-// 字体大小
-$font-size-2xs: 0.625rem;    // 10px 仅用于大写标签
-$font-size-xs: 0.75rem;      // 12px
-$font-size-sm: 0.875rem;     // 14px
+// 字体大小（两级字号制：$font-size-xs 为标题与正文内容基准，$font-size-2xs 为辅助文字基准）
+$font-size-2xs: 0.625rem;    // 10px 辅助文字：标签/提示/描述/状态/输出/路径/徽章
+$font-size-xs: 0.75rem;      // 12px 标题与正文内容基准（Dock 面板根容器与弹窗遮罩的统一基准字号）
+$font-size-sm: 0.875rem;     // 14px 仅限阅读区正文（如 Markdown 预览）与数据突出展示
 $font-size-base: 1rem;       // 16px
 $font-size-lg: 1.125rem;     // 18px
 $font-size-2xl: 1.5rem;      // 24px

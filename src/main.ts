@@ -32,6 +32,8 @@ export function init(pluginInstance: Plugin) {
 
   container = document.createElement("div")
   container.classList.add("siyuan-plugin-vite-vue-sn-app")
+  // 全局基准字号类：index.scss 中 .vp-dock-root 统一设为 $font-size-xs(12px)
+  container.classList.add("vp-dock-root")
   container.id = pluginInstance.name
   app = createApp(App)
   app.mount(container)

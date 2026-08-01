@@ -76,6 +76,8 @@ export function createVueDockApp(
     type,
     init: (dock: { element?: Element }) => {
       const container = document.createElement("div")
+      // 全局基准字号类：index.scss 中 .vp-dock-root 统一设为 $font-size-xs(12px)
+      container.classList.add("vp-dock-root")
       container.style.height = "100%"
       container.style.overflow = "hidden"
 

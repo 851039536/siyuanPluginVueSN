@@ -59,7 +59,6 @@ export const FEATURE_CONFIG = [
     defaultTitle: "页面锁定",
     defaultDesc: "锁定页面防止误编辑",
   },
-  // wordQuery 已迁移至 toolCollection/tools/wordQuery/
   {
     id: "generalSettings",
     defaultTitle: "通用设置",

@@ -49,6 +49,46 @@
       </div>
     </div>
 
+    <!-- 随机组合候选条（AI 全自动封面产物） -->
+    <div
+      v-if="candidates.length"
+      class="candidate-strip"
+    >
+      <div class="candidate-strip-header">
+        <!-- 候选条标题："随机组合候选" -->
+        <span class="candidate-strip-title">{{ t.randomComboTitle }}</span>
+        <Button
+          variant="ghost"
+          size="xsmall"
+          icon="refresh"
+          :title="t.reroll"
+          @click="emit('reroll-candidates')"
+        />
+      </div>
+      <div class="candidate-list">
+        <button
+          v-for="(c, i) in candidates"
+          :key="i"
+          class="candidate-item"
+          :title="c.label"
+          @click="emit('select-candidate', i)"
+        >
+          <!-- 候选标签（AI 推荐 / 随机组合 N） -->
+          <span class="candidate-label">{{ c.label }}</span>
+          <span
+            class="candidate-frame"
+            :style="candidateFrameStyle"
+          >
+            <iframe
+              :srcdoc="c.html"
+              :style="candidateIframeStyle"
+              sandbox="allow-scripts allow-same-origin"
+            ></iframe>
+          </span>
+        </button>
+      </div>
+    </div>
+
     <div
       ref="previewWrapper"
       class="preview-content"
@@ -105,6 +145,7 @@
 import type { SelectOption } from "@/components/Select.vue"
 import type { CoverGenerationStatus, ExportFormat } from "../types"
 import type { ImageCreationI18n } from "../types"
+import type { CoverCandidate } from "../types/storage"
 import type { CoverSettingsService } from "../composables/useCoverSettings"
 import html2canvas from "html2canvas"
 import { showMessage } from "siyuan"
@@ -139,9 +180,18 @@ interface Props {
   status: CoverGenerationStatus
   /** 封面设置服务（导出格式/质量读写） */
   settingsService: CoverSettingsService
+  /** AI 全自动封面随机组合候选（空数组不显示候选条） */
+  candidates: CoverCandidate[]
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  candidates: () => [],
+})
+
+const emit = defineEmits<{
+  (e: "select-candidate", index: number): void
+  (e: "reroll-candidates"): void
+}>()
 
 const settings = props.settingsService.settings
 
@@ -157,6 +207,20 @@ const exportFormatOptions: SelectOption[] = [
   { value: "jpeg", label: t.formatJpeg },
   { value: "webp", label: t.formatWebp },
 ]
+
+// 候选缩略图缩放（固定展示宽度，按封面实际尺寸等比缩放）
+const CANDIDATE_VIEW_WIDTH = 180
+const candidateScale = computed(() => (props.width > 0 ? Math.min(1, CANDIDATE_VIEW_WIDTH / props.width) : 1))
+const candidateFrameStyle = computed(() => ({
+  width: `${CANDIDATE_VIEW_WIDTH}px`,
+  height: `${Math.round(props.height * candidateScale.value)}px`,
+}))
+const candidateIframeStyle = computed(() => ({
+  width: `${props.width}px`,
+  height: `${props.height}px`,
+  transform: `scale(${candidateScale.value})`,
+  transformOrigin: "top left",
+}))
 
 const MIME_MAP: Record<ExportFormat, string> = {
   png: "image/png",
@@ -345,5 +409,6 @@ const qualityFormat = (v: number) => `${Math.round(v * 100)}%`
 </script>
 
 <style scoped lang="scss">
+@use "../styles/CoverPreview.scss";
 @use "../styles/index.scss";
 </style>

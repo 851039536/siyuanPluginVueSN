@@ -37,8 +37,8 @@ export interface CoverSettingsService {
   loadLogoDataUrl: (path: string) => Promise<string>
 }
 
-/** 深拷贝偏好设置（默认值/合并使用，避免嵌套对象共享引用） */
-function cloneCoverSettings(s: CoverSettings): CoverSettings {
+/** 深拷贝偏好设置（默认值/合并/候选变体使用，避免嵌套对象共享引用） */
+export function cloneCoverSettings(s: CoverSettings): CoverSettings {
   return {
     ...s,
     colors: { ...s.colors },

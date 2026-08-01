@@ -59,6 +59,29 @@ export function fileToDataUrl(blob: Blob): Promise<string> {
   })
 }
 
+/** 生成随机和谐色板（用于全自动封面的随机组合变体） */
+export function randomCoverColors(): { bg: string, titleColor: string, accent: string } {
+  const hue = Math.floor(Math.random() * 360)
+  const dark = Math.random() < 0.5
+  return {
+    bg: `hsl(${hue}, ${dark ? 40 : 55}%, ${dark ? 14 : 88}%)`,
+    titleColor: dark ? "#f5f5f5" : "#1a1a1a",
+    accent: `hsl(${(hue + 40 + Math.floor(Math.random() * 60)) % 360}, 75%, 55%)`,
+  }
+}
+
+/** 随机水印位置 */
+export function randomWatermarkPosition(): WatermarkPosition {
+  const positions: WatermarkPosition[] = ["bottomLeft", "bottomRight", "topLeft", "topRight", "center"]
+  return positions[Math.floor(Math.random() * positions.length)]
+}
+
+/** 随机 Logo 角标位置 */
+export function randomLogoPosition(): LogoPosition {
+  const positions: LogoPosition[] = ["topLeft", "topRight", "bottomLeft", "bottomRight"]
+  return positions[Math.floor(Math.random() * positions.length)]
+}
+
 /** 构建完整封面 HTML（纯代码，无 AI 依赖） */
 export function buildCoverHtml(
   config: CoverGenerationConfig,

@@ -180,6 +180,9 @@
       :height="config.height"
       :status="generationStatus"
       :settings-service="coverSettings"
+      :candidates="candidates"
+      @select-candidate="applyCandidate"
+      @reroll-candidates="rerollCandidates"
     />
   </div>
 </template>
@@ -190,6 +193,7 @@
  */
 import type { CoverSizePreset } from "../types"
 import type { ImageCreationI18n } from "../types"
+import type { CoverCandidate } from "../types/storage"
 import { showMessage } from "siyuan"
 import {
   computed,
@@ -227,6 +231,7 @@ const {
   errorMessage,
   currentConfig: config,
   generateCover,
+  generateCoverCandidates,
   randomStyle,
   applyPersistedPrefs,
   COVER_SIZE_PRESETS,
@@ -242,6 +247,9 @@ const aiExtracting = ref(false)
 
 // AI 全自动封面
 const aiAutoRunning = ref(false)
+// AI 全自动封面候选（随机组合灵感板）
+const candidates = ref<CoverCandidate[]>([])
+let lastAiInput: { title: string, keywords: string, styleId: string } | null = null
 
 async function aiExtractKeywords() {
   if (!contentText.value.trim() || aiExtracting.value) return
@@ -273,18 +281,42 @@ async function aiAutoGenerate() {
       showMessage(t.aiAutoParseFailed, 3000, "error")
       return
     }
-    if (parsed.title) config.value.title = parsed.title
-    if (parsed.keywords.length) config.value.keywords = parsed.keywords.join(" ")
-    if (parsed.styleId && COVER_STYLE_REGISTRY.some((s) => s.id === parsed.styleId)) {
-      config.value.styleId = parsed.styleId
-    }
+    // 构造 AI 输入（缺失字段沿用当前值），先应用到主封面，再生成随机组合候选
+    const title = parsed.title || config.value.title
+    const keywords = parsed.keywords.length ? parsed.keywords.join(" ") : config.value.keywords
+    const styleId = parsed.styleId && COVER_STYLE_REGISTRY.some((s) => s.id === parsed.styleId)
+      ? parsed.styleId
+      : config.value.styleId
+    lastAiInput = { title, keywords, styleId }
+    config.value.title = title
+    config.value.keywords = keywords
+    config.value.styleId = styleId
+    candidates.value = []
     await generateCover()
+    candidates.value = await generateCoverCandidates(lastAiInput)
   } catch (error) {
     console.error("AI 全自动封面失败:", error)
     showMessage(t.msgAiFailed, 3000, "error")
   } finally {
     aiAutoRunning.value = false
   }
+}
+
+/** 重新随机候选（复用上一次 AI 结果，不重复调用 AI） */
+async function rerollCandidates() {
+  if (!lastAiInput) return
+  candidates.value = await generateCoverCandidates(lastAiInput)
+}
+
+/** 应用选中的候选组合（覆盖主封面配置与偏好设置变体） */
+function applyCandidate(index: number) {
+  const c = candidates.value[index]
+  if (!c) return
+  config.value.title = c.config.title
+  config.value.keywords = c.config.keywords
+  config.value.styleId = c.config.styleId
+  coverSettings.settings.value = c.settings
+  void generateCover()
 }
 
 /** AI 封面 prompt（按界面语言取中/英文模板，附风格注册表供 AI 选择） */

@@ -624,6 +624,52 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 | 图标按钮用 `padding` 控制尺寸 | 固定 `width: 26px; height: 26px; padding: 0;`，icon `16px` |
 | 标题 font-size > 16px | 统一 `$font-size-base`（16px），极少数场景可用 15px（如 superPanel-title） |
 | 各模块重复声明 `$vp-radius` / `$vp-mono` | 直接从 `@/variables.scss` 继承（已全局定义） |
+| 根容器缺基准字号 / JS 硬编码 `font-size: 12px` | 根容器显式声明 `font-size: $font-size-xs`；自建挂载容器补 `vp-dock-root` / `vp-modal-mask` 类 |
+
+## 强制规则：字号层级与全局基准字号
+
+所有 feature 的 UI 一律采用**两级字号制**，并依赖全局基准字号规则兜底（2026-08 起）。
+
+### 两级字号制
+
+| 字号 | Token | 用途 |
+|------|-------|------|
+| 10px | `$font-size-2xs` | 辅助文字：标签、提示、描述、状态、命令输出、路径、徽章 |
+| 12px | `$font-size-xs` | 标题与正文内容（面板/弹窗统一基准字号） |
+| 14px+ | `$font-size-sm` 及以上 | 仅限阅读区正文（如 Markdown 预览）与数据突出展示（如统计数值），必须加注释说明用途 |
+
+### 全局基准字号机制
+
+全局样式入口 `src/index.scss` 已定义（经 `src/index.ts:81` 全局加载）：
+
+```scss
+:root {
+  --vp-font-size-xs: #{$font-size-xs}; // CSS 变量桥接：供 TS 内联样式引用
+}
+
+.vp-dock-root,
+.vp-modal-mask {
+  font-size: $font-size-xs; // 12px 基准
+}
+```
+
+- **`vp-dock-root`**：`createVueDockApp` 创建的 Dock 容器、`main.ts` 全局宿主、`floatingBox`、`toolCollection` 等自建挂载容器已自动获得该类
+- **`vp-modal-mask`**：`createModalVueApp` 创建的 Modal 遮罩自动获得该类，遮罩内联样式用 `var(--vp-font-size-xs, 12px)` 兜底
+- **兜底语义**：全局规则仅对「未显式声明字号」的元素生效（CSS 继承）；已显式声明的元素（即使是硬编码错误值）不会被全局覆盖——因此根容器必须主动声明正确字号
+
+### 审查检查点（新增/修改 SCSS 时逐条核对）
+
+1. **根容器显式声明 `font-size: $font-size-xs`**（gitPush 模式：`.git-push-panel { font-size: $font-size-xs; }`）——即使已挂 `vp-dock-root`，显式声明保证语义清晰、不依赖全局类
+2. **禁止硬编码字号**：`font-size: 13px / 14px / 10px` 等一律替换为 Token（`$font-size-xs` / `$font-size-2xs` / `$font-size-sm`）
+3. **禁止硬编码字重/行高/字体族**：`font-weight: 600` → `$font-weight-semibold`；`line-height: 1.5` → `$line-height-normal`；`font-family: monospace` → `$vp-mono`
+4. **自建挂载点必须补类**：任何 `document.createElement("div")` + `createApp().mount()` 的容器，必须加 `vp-dock-root` 类（遮罩加 `vp-modal-mask`），禁止 JS 内联硬编码 `font-size: 12px`
+5. **优先复用挂载工具**：新增弹窗/面板优先使用 `createVueDockApp` / `createModalVueApp`（自动获得全局类），禁止自建容器裸挂
+
+### 参考实现
+
+- `src/features/gitPush/styles/`（两级字号制源头实现）
+- `src/index.scss`（全局基准规则 + `--vp-font-size-xs` 变量）
+- `src/utils/vueAppHelper.ts`（`vp-dock-root` / `vp-modal-mask` 类的自动挂载点）
 
 ## 强制规则：SCSS 必须分离到 styles/ 目录
 

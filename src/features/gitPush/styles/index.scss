@@ -1060,11 +1060,6 @@
   font-size: $font-size-2xs;
 }
 
-// 扫描空结果提示：上下留白
-.gp-scan-empty {
-  padding: $spacing-5 0;
-}
-
 .gp-scan-results {
   max-height: 300px;
   overflow-y: auto;
@@ -1479,4 +1474,11 @@
 // ── 搜索框 ──
 .gp-search-wrap {
   padding: 4px 10px 4px 0;
+}
+
+// ── 加载更多（LogPanel / CommitAnalysisPanel 共用）──
+.gp-load-more {
+  display: flex;
+  justify-content: center;
+  padding: $spacing-2;
 }

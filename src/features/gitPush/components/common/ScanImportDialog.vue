@@ -104,21 +104,13 @@
             </label>
           </div>
         </div>
-        <!-- 空结果提示 -->
-        <div
+        <!-- 空结果提示："未找到 Git 仓库" -->
+        <EmptyState
           v-else-if="!scanning && localScanDir.trim() && results.length === 0"
-          class="gp-empty gp-scan-empty"
-        >
-          <Icon
-            icon="mdi:folder-search-outline"
-            width="36"
-            height="36"
-          />
-          <!-- 提示："未找到 Git 仓库" -->
-          <div class="gp-empty-text">
-            {{ i18n.noScanResults }}
-          </div>
-        </div>
+          icon="mdi:folder-search-outline"
+          :text="i18n.noScanResults"
+          icon-size="36"
+        />
         <!-- 错误信息 -->
         <div
           v-if="error"
@@ -152,6 +144,7 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
 import { computed, ref } from "vue"
+import EmptyState from "./EmptyState.vue"
 import Input from "@/components/Input.vue"
 import { pickDirectory } from "@/utils/electronDialog"
 import { useDialogKeyboard } from "../../composables/useDialogKeyboard"

@@ -91,6 +91,32 @@ function getPushRemote() {
   })
 }
 
+// Promise 化的 exec，失败时 reject 并输出 stderr
+function execAsync(cmd) {
+  return new Promise((resolve, reject) => {
+    exec(cmd, (err, stdout, stderr) => {
+      if (err) {
+        reject(new Error(`${err.message}\n${stderr}`))
+        return
+      }
+      resolve(stdout.trim())
+    })
+  })
+}
+
+// 检查 git 标签是否存在
+function checkTagExists(tag) {
+  return new Promise((resolve) => {
+    exec(`git tag -l ${tag}`, (err, stdout) => {
+      if (err) {
+        resolve(false)
+        return
+      }
+      resolve(stdout.trim() === tag)
+    })
+  })
+}
+
 const args = process.argv.slice(2)
 const mode = args.find((arg) => arg.startsWith('--mode='))?.split('=')[1]
 
@@ -182,25 +208,31 @@ const main = async () => {
     writeFileSync('./package.json', packageUpdated, 'utf8')
     console.log('✅  package.json updated')
 
-    console.log('🔄  \x1B[90m Ready to commit new version and create tag...\x1B[0m')
-    exec(
-      `git add ./plugin.json ./package.json && git commit -m "chore: update version to ${newVersion}" && git push && git tag v${newVersion}`,
-      (err, stdout) => {
-        if (err) {
-          console.error('\x1B[31m%s\x1B[0m', '❌  Error for adding and committing:', err)
-          process.exit(1)
-        }
+    // Step 1: add + commit
+    console.log('🔄  \x1B[90mCommitting version files...\x1B[0m')
+    await execAsync(`git add ./plugin.json ./package.json && git commit -m "chore: update version to ${newVersion}"`)
+    console.log('✅  Version files committed')
 
-        console.log('🔄  \x1B[90mTag Created, pushing...\x1B[0m')
-        exec(`git push origin v${newVersion}`, (err) => {
-          if (err) {
-            console.error('\x1B[31m%s\x1B[0m', '❌  Error for pushing tag:', err)
-            process.exit(1)
-          }
-          console.log(`\n✅  Version successfully updated to: \x1B[32m${newVersion}\x1B[0m\n`)
-        })
-      },
-    )
+    // Step 2: push commit
+    console.log('🔄  \x1B[90mPushing commit...\x1B[0m')
+    await execAsync('git push')
+    console.log('✅  Commit pushed')
+
+    // Step 3: create tag (idempotent)
+    const tagName = `v${newVersion}`
+    const tagExists = await checkTagExists(tagName)
+    if (!tagExists) {
+      await execAsync(`git tag ${tagName}`)
+      console.log(`🏷️  Tag ${tagName} created`)
+    } else {
+      console.log(`⚠️  Tag ${tagName} already exists, skipping creation`)
+    }
+
+    // Step 4: push tag with detected remote
+    const remote = await getPushRemote()
+    console.log(`🔄  \x1B[90mPushing tag to ${remote}...\x1B[0m`)
+    await execAsync(`git push ${remote} ${tagName}`)
+    console.log(`\n✅  Version successfully updated to: \x1B[32m${newVersion}\x1B[0m\n`)
 
 
   } catch (error) {

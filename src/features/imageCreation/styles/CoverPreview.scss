@@ -1,0 +1,72 @@
+// ============================================================
+// 封面预览面板专属样式（含随机组合候选条）
+// ============================================================
+
+@use "@/variables" as *;
+
+.candidate-strip {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-3;
+  border-top: 1px solid var(--b3-theme-background-light);
+  background: var(--b3-theme-background, #f5f5f5);
+  flex-shrink: 0;
+
+  .candidate-strip-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .candidate-strip-title {
+      // 辅助文字
+      font-size: $font-size-2xs;
+      color: var(--b3-theme-on-surface);
+      opacity: 0.7;
+    }
+  }
+}
+
+.candidate-list {
+  display: flex;
+  gap: $spacing-2;
+  overflow-x: auto;
+  padding-bottom: $spacing-1;
+}
+
+.candidate-item {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  padding: $spacing-1;
+  border: 1px solid var(--b3-theme-background-light);
+  border-radius: $vp-radius;
+  background: var(--b3-theme-surface, #ffffff);
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
+
+  .candidate-label {
+    // 辅助文字
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-on-surface);
+    text-align: center;
+  }
+}
+
+.candidate-frame {
+  overflow: hidden;
+  border: 1px solid var(--b3-theme-background-light);
+  border-radius: $radius-sm;
+  background: #fff;
+
+  iframe {
+    display: block;
+    border: none;
+    // 缩略图仅预览，点击需穿透到候选按钮
+    pointer-events: none;
+  }
+}

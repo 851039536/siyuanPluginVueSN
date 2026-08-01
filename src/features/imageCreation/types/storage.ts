@@ -6,6 +6,7 @@
 import type { Plugin } from "siyuan"
 import type {
   CoverColorOverrides,
+  CoverGenerationConfig,
   CoverLogoSettings,
   CoverWatermarkSettings,
   ExportFormat,
@@ -63,6 +64,18 @@ export const DEFAULT_COVER_SETTINGS: CoverSettings = {
 
 /** Logo 允许的文件扩展名（上传校验） */
 export const LOGO_ALLOWED_EXTENSIONS = ["png", "jpg", "jpeg", "webp"] as const
+
+/** 封面候选（AI 全自动封面的随机组合方案） */
+export interface CoverCandidate {
+  /** 候选标签（如 "AI 推荐" / "随机组合 1"） */
+  label: string
+  /** 候选封面 HTML */
+  html: string
+  /** 应用时写入的生成配置 */
+  config: CoverGenerationConfig
+  /** 应用时写入的偏好设置变体 */
+  settings: CoverSettings
+}
 
 /** 图片生成功能持久化存储 */
 export class ImageCreationStorage {

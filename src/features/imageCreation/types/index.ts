@@ -122,6 +122,10 @@ export interface ImageCreationI18n {
   aiAutoCover: string
   aiAutoRunning: string
   aiAutoParseFailed: string
+  aiRecommend: string
+  randomCombo: string
+  randomComboTitle: string
+  reroll: string
   keywordsLabel: string
   keywordsHint: string
   keywordsPlaceholder: string

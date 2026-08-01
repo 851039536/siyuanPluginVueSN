@@ -62,7 +62,7 @@
 }
 
 .gpa-cal-day {
-  aspect-ratio: 1;
+  min-height: 24px; // 内容（日号+计数）约 22px，留 2px 余量；行高由内容撑起自动均匀
   border-radius: $radius-sm;
   display: flex;
   flex-direction: column;

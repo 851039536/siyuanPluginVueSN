@@ -255,7 +255,7 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
 import Input from "@/components/Input.vue"
-import { PLATFORM_META, type PanelView } from "../types"
+import { PLATFORM_META, type PanelView } from "../../types"
 
 withDefaults(defineProps<{
   i18n: Record<string, any>
@@ -291,5 +291,5 @@ const emit = defineEmits<{
 </script>
 
 <style lang="scss">
-@use "../styles/PanelHeader.scss";
+@use "../../styles/PanelHeader.scss";
 </style>

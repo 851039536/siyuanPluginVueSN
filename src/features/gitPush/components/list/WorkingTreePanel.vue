@@ -244,10 +244,10 @@ import type {
   CommitTemplate,
   FileChange,
   WorkingTreeInfo,
-} from "../types"
-import { COMMIT_TYPE_VALUES } from "../types"
-import { fileStatusIcon, fileStatusIconKey, fileStatusTitle, isIconFileStatus } from "../utils"
-import { useGeneratedMsgSync } from "../composables/useGeneratedMsgSync"
+} from "../../types"
+import { COMMIT_TYPE_VALUES } from "../../types"
+import { fileStatusIcon, fileStatusIconKey, fileStatusTitle, isIconFileStatus } from "../../utils"
+import { useGeneratedMsgSync } from "../../composables/useGeneratedMsgSync"
 import WorkingTreeDiffDialog from "./WorkingTreeDiffDialog.vue"
 import { Icon } from "@iconify/vue"
 import {
@@ -394,7 +394,7 @@ defineExpose({ clear: () => { commitMessage.value = ""; commitType.value = "chor
 
 <style lang="scss">
 @use "@/index.scss" as *;
-@use "../styles/variables" as *;
-@use "../styles/mixins" as *;
-@use "../styles/WorkingTreePanel.scss";
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+@use "../../styles/WorkingTreePanel.scss";
 </style>

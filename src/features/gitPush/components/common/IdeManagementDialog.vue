@@ -142,8 +142,8 @@ import { computed, ref } from "vue"
 import Input from "@/components/Input.vue"
 import type { SelectOption } from "@/components/Select.vue"
 import Select from "@/components/Select.vue"
-import { useDialogKeyboard } from "../composables/useDialogKeyboard"
-import { getIdePresetIcon, IDE_PRESETS, OTHER_IDE_NAME } from "../composables/useIdeManagement"
+import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
+import { getIdePresetIcon, IDE_PRESETS, OTHER_IDE_NAME } from "../../composables/useIdeManagement"
 
 const props = defineProps<{
   i18n: Record<string, any>

@@ -160,13 +160,13 @@
 </template>
 
 <script setup lang="ts">
-import type { StashEntry, WorkingTreeInfo } from "../types"
+import type { StashEntry, WorkingTreeInfo } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed, nextTick, ref, toRef } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
-import { fileStatusIcon, fileStatusIconKey, fileStatusTitle, isIconFileStatus } from "../utils"
-import { useGeneratedMsgSync } from "../composables/useGeneratedMsgSync"
+import { fileStatusIcon, fileStatusIconKey, fileStatusTitle, isIconFileStatus } from "../../utils"
+import { useGeneratedMsgSync } from "../../composables/useGeneratedMsgSync"
 
 const props = defineProps<{
   entries: StashEntry[] | undefined
@@ -216,5 +216,5 @@ useGeneratedMsgSync(toRef(props, "generatedMsg"), localMsg)
 </script>
 
 <style lang="scss">
-@use "../styles/index.scss";
+@use "../../styles/index.scss";
 </style>

@@ -103,7 +103,7 @@
 </template>
 
 <script setup lang="ts">
-import type { CommitLogEntry } from "../types"
+import type { CommitLogEntry } from "../../types"
 import { Icon } from "@iconify/vue"
 import {
   computed,
@@ -145,5 +145,5 @@ function onCountChange() {
 
 <style lang="scss">
 @use "@/index.scss" as *;
-@use "../styles/BranchCommitList.scss";
+@use "../../styles/BranchCommitList.scss";
 </style>

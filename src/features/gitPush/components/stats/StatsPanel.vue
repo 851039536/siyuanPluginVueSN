@@ -291,10 +291,10 @@
 </template>
 
 <script setup lang="ts">
-import type { RepoLinkAuditRow, RepoLinkAuditSummary, StatsView } from "../types"
+import type { RepoLinkAuditRow, RepoLinkAuditSummary, StatsView } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
-import { PLATFORM_META, getPlatformStatus } from "../types"
+import { PLATFORM_META, getPlatformStatus } from "../../types"
 import RepoLinkAuditSection from "./RepoLinkAuditSection.vue"
 
 const props = defineProps<{
@@ -369,6 +369,6 @@ function pct(count: number): string {
 </script>
 
 <style lang="scss">
-@use "../styles/StatsPanel.scss";
-@use "../styles/index.scss";
+@use "../../styles/StatsPanel.scss";
+@use "../../styles/index.scss";
 </style>

@@ -40,7 +40,7 @@
 
 <script setup lang="ts">
 import { toRef } from "vue"
-import { useDialogKeyboard } from "../composables/useDialogKeyboard"
+import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
 
 const props = defineProps<{
   visible: boolean
@@ -59,5 +59,5 @@ const { rootRef } = useDialogKeyboard(toRef(props, "visible"))
 </script>
 
 <style lang="scss" scoped>
-@use "../styles/ConfirmDialog.scss";
+@use "../../styles/ConfirmDialog.scss";
 </style>

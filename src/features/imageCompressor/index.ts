@@ -1,17 +1,9 @@
+// imageCompressor 功能注册入口（纯弹出型，UI 由 App.vue 渲染，无需侧边栏 Dock）
 import type { Plugin } from "siyuan"
 import { emitCustomEvent } from "@/utils/eventBus"
-import { createVueDockApp } from "@/utils/vueAppHelper"
-import ImageCompressorPanel from "./index.vue"
 
 export function registerImageCompressor(plugin: Plugin) {
-  createVueDockApp(plugin, ImageCompressorPanel, {
-    icon: "iconImage",
-    title: (plugin.i18n as any)?.imageCompressor?.title || "图片压缩",
-    type: "image-compressor-dock",
-    width: 400,
-    i18n: (plugin.i18n as any)?.imageCompressor || {},
-  })
-
+  // 全局快捷键：打开图片压缩器（App.vue 监听 openImageCompressor 事件显示 ImageViewer）
   plugin.addCommand({
     langKey: "openImageCompressor",
     hotkey: "⌃⌥C",

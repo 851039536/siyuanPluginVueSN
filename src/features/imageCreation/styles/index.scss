@@ -1,0 +1,246 @@
+// ============================================================
+// 图片生成弹窗外壳 + 两个 Tab 共享布局基座
+// 基准字号：弹窗遮罩显式设置 $font-size-xs，防止继承思源全局默认字号
+// ============================================================
+
+@use "@/variables" as *;
+@use "./transitions";
+
+.image-creation-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 100001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-xs;
+}
+
+.image-creation-dialog {
+  background: var(--b3-theme-surface, #ffffff);
+  border-radius: $radius-lg;
+  width: 92vw;
+  max-width: 1200px;
+  height: 85vh;
+  max-height: 800px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--b3-border-color);
+  overflow: hidden;
+  font-size: $font-size-xs;
+  position: relative;
+
+  // 顶部细条点缀
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--b3-theme-primary) 20%,
+      var(--b3-theme-primary) 80%,
+      transparent 100%
+    );
+    opacity: 0.35;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $spacing-3 $spacing-5;
+    border-bottom: 1px solid var(--b3-theme-background-light);
+    flex-shrink: 0;
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: $spacing-2;
+
+      h2 {
+        margin: 0;
+        // 标题与正文同一字号层级
+        font-size: $font-size-xs;
+        font-weight: $font-weight-semibold;
+        color: var(--b3-theme-on-surface);
+      }
+    }
+  }
+
+  // Tab 栏
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    padding: 0 $spacing-5;
+    border-bottom: 1px solid var(--b3-theme-background-light);
+    background: var(--b3-theme-surface);
+    flex-shrink: 0;
+
+    .tab-btn {
+      display: flex;
+      align-items: center;
+      gap: $spacing-px;
+      padding: $spacing-2 $spacing-4;
+      border: none;
+      background: transparent;
+      color: var(--b3-theme-on-surface);
+      opacity: 0.6;
+      font-size: $font-size-xs;
+      font-weight: $font-weight-medium;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      font-family: inherit;
+
+      &::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: $spacing-4;
+        right: $spacing-4;
+        height: $spacing-2px;
+        border-radius: $radius-sm $radius-sm 0 0;
+        background: transparent;
+        transition: background 0.2s ease;
+      }
+
+      &:hover:not(.active) {
+        opacity: 0.85;
+        background: var(--b3-theme-background-light);
+      }
+
+      &.active {
+        opacity: 1;
+        color: var(--b3-theme-primary);
+
+        &::after {
+          background: var(--b3-theme-primary);
+        }
+      }
+    }
+  }
+
+  .dialog-body {
+    flex: 1;
+    overflow: auto;
+    padding: $spacing-4 $spacing-5;
+  }
+}
+
+// ========== 两个 Tab 共享布局 ==========
+
+.cover-layout {
+  display: flex;
+  gap: $spacing-5;
+  height: 100%;
+}
+
+// 左侧配置面板
+.config-panel {
+  width: 340px;
+  min-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  overflow-y: auto;
+  padding-right: $spacing-2;
+  // 底部暗纹 — 从 section 间隙之间透出极浅的装饰
+  background-image:
+    linear-gradient(
+      0deg,
+      rgb(from var(--b3-theme-primary) r g b / 0.025) 1px,
+      transparent 1px
+    );
+  background-size: 100% 28px;
+}
+
+.config-section {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-px;
+}
+
+.config-label {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: var(--b3-theme-on-surface);
+
+  .config-hint {
+    // 辅助文字
+    font-weight: $font-weight-normal;
+    opacity: 0.45;
+    font-size: $font-size-2xs;
+  }
+}
+
+// 内容摘要 textarea
+.content-textarea {
+  width: 94.5%;
+  padding: $spacing-2;
+  border: 1px solid var(--b3-theme-background-light);
+  border-radius: $vp-radius;
+  background: var(--b3-theme-surface, #ffffff);
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-xs;
+  font-family: inherit;
+  line-height: $line-height-normal;
+  resize: vertical;
+  min-height: 60px;
+
+  &::placeholder {
+    color: var(--b3-theme-on-surface);
+    opacity: 0.4;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+// 右侧预览面板
+.preview-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--b3-theme-background-light);
+  border-radius: $radius-md;
+  overflow: hidden;
+  min-width: 0;
+
+  .preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $spacing-2 $spacing-3;
+    background: var(--b3-theme-background-light);
+    font-size: $font-size-xs;
+    color: var(--b3-theme-on-surface);
+    font-weight: $font-weight-medium;
+    flex-shrink: 0;
+
+    .preview-actions {
+      display: flex;
+      gap: $spacing-1;
+    }
+  }
+}
+
+.preview-content {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--b3-theme-background, #f5f5f5);
+  position: relative;
+}

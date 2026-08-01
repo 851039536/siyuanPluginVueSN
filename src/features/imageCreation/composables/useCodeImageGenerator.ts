@@ -1,9 +1,9 @@
 /**
- * 代码图片生成核心逻辑
- * 从 codeImageGenerator/index.vue 提取，供 CodeImageTab.vue 使用
+ * 代码图片生成核心逻辑（供 CodeImageTab.vue 使用）
  */
 import type { CSSProperties } from "vue"
 import type { SelectOption } from "@/components/Select.vue"
+import type { ImageCreationI18n } from "../types"
 import hljs from "highlight.js"
 import html2canvas from "html2canvas"
 import { showMessage } from "siyuan"
@@ -11,7 +11,11 @@ import {
   computed,
   ref,
 } from "vue"
-import { triggerBlobDownload } from "@/utils/domUtils"
+import {
+  canvasToBlob,
+  copyImageToClipboard,
+  triggerBlobDownload,
+} from "@/utils/domUtils"
 import { CODE_IMAGE_DEFAULTS } from "../types"
 import "highlight.js/styles/github.css"
 import "highlight.js/styles/github-dark.css"
@@ -44,91 +48,103 @@ export const LANGUAGE_MAP = Object.freeze({
   bash: "Bash",
 } as const)
 
-export const languageOptions: SelectOption[] = Object.entries(LANGUAGE_MAP).map(
-  ([value, label]) => ({
-    value,
-    label,
-  }),
-)
+/** 语言选项（语言名称为专有名词，无需 i18n） */
+function buildLanguageOptions(): SelectOption[] {
+  return Object.entries(LANGUAGE_MAP).map(
+    ([value, label]) => ({
+      value,
+      label,
+    }),
+  )
+}
 
-export const codeStyleOptions: SelectOption[] = [
-  {
-    value: "github",
-    label: "GitHub",
-  },
-  {
-    value: "mac",
-    label: "Mac",
-  },
-  {
-    value: "cartoon",
-    label: "卡通",
-  },
-  {
-    value: "wave",
-    label: "波浪渐变",
-  },
-  {
-    value: "glass",
-    label: "玻璃拟态",
-  },
-  {
-    value: "neon",
-    label: "霓虹灯",
-  },
-  {
-    value: "3d",
-    label: "3D立体",
-  },
-]
+/** 代码风格选项（label 走 i18n） */
+function buildCodeStyleOptions(i18n: ImageCreationI18n): SelectOption[] {
+  return [
+    {
+      value: "github",
+      label: "GitHub",
+    },
+    {
+      value: "mac",
+      label: "Mac",
+    },
+    {
+      value: "cartoon",
+      label: i18n.styleCartoon,
+    },
+    {
+      value: "wave",
+      label: i18n.styleWave,
+    },
+    {
+      value: "glass",
+      label: i18n.styleGlass,
+    },
+    {
+      value: "neon",
+      label: i18n.styleNeon,
+    },
+    {
+      value: "3d",
+      label: i18n.style3d,
+    },
+  ]
+}
 
-export const textStyleOptions: SelectOption[] = [
-  {
-    value: "quote",
-    label: "名人名言",
-  },
-  {
-    value: "poetry",
-    label: "诗词意境",
-  },
-  {
-    value: "note",
-    label: "手写便签",
-  },
-  {
-    value: "poster",
-    label: "激励海报",
-  },
-  {
-    value: "card",
-    label: "引用卡片",
-  },
-  {
-    value: "newspaper",
-    label: "复古报纸",
-  },
-  {
-    value: "gradient",
-    label: "渐变文字",
-  },
-]
+/** 文字风格选项（label 走 i18n） */
+function buildTextStyleOptions(i18n: ImageCreationI18n): SelectOption[] {
+  return [
+    {
+      value: "quote",
+      label: i18n.textStyleQuote,
+    },
+    {
+      value: "poetry",
+      label: i18n.textStylePoetry,
+    },
+    {
+      value: "note",
+      label: i18n.textStyleNote,
+    },
+    {
+      value: "poster",
+      label: i18n.textStylePoster,
+    },
+    {
+      value: "card",
+      label: i18n.textStyleCard,
+    },
+    {
+      value: "newspaper",
+      label: i18n.textStyleNewspaper,
+    },
+    {
+      value: "gradient",
+      label: i18n.textStyleGradient,
+    },
+  ]
+}
 
-export const themeOptions: SelectOption[] = [
-  {
-    value: "light",
-    label: "浅色",
-  },
-  {
-    value: "dark",
-    label: "深色",
-  },
-]
+/** 主题选项（label 走 i18n） */
+function buildThemeOptions(i18n: ImageCreationI18n): SelectOption[] {
+  return [
+    {
+      value: "light",
+      label: i18n.themeLight,
+    },
+    {
+      value: "dark",
+      label: i18n.themeDark,
+    },
+  ]
+}
 
 // ============================================================
 // Composable
 // ============================================================
 
-export function useCodeImageGenerator() {
+export function useCodeImageGenerator(i18n: ImageCreationI18n) {
   // 核心状态
   const contentType = ref<"code" | "text">("code")
   const codeContent = ref<string>("")
@@ -153,6 +169,12 @@ export function useCodeImageGenerator() {
   const backgroundOpacity = ref<number>(CODE_IMAGE_DEFAULTS.backgroundOpacity)
   const shadowIntensity = ref<number>(CODE_IMAGE_DEFAULTS.shadowIntensity)
 
+  // 选项（i18n 文案在 setup 时一次性构建，语言切换需重启插件生效）
+  const languageOptions = buildLanguageOptions()
+  const codeStyleOptions = buildCodeStyleOptions(i18n)
+  const textStyleOptions = buildTextStyleOptions(i18n)
+  const themeOptions = buildThemeOptions(i18n)
+
   // 计算属性
   const currentStyleOptions = computed<SelectOption[]>(() =>
     contentType.value === "code" ? codeStyleOptions : textStyleOptions,
@@ -160,7 +182,7 @@ export function useCodeImageGenerator() {
 
   const highlightedCode = computed<string>(() => {
     if (!codeContent.value) {
-      return '<span style="color: #999;">输入代码...</span>'
+      return `<span style="color: #999;">${i18n.codeInputHint}</span>`
     }
     try {
       const result = hljs.highlight(codeContent.value, {
@@ -184,6 +206,7 @@ export function useCodeImageGenerator() {
     })
   })
 
+  // 阴影强度属于生成图片的装饰效果（产品输出，非 UI 样式），故保留 box-shadow
   const previewCustomStyle = computed<CSSProperties>(() => ({
     borderRadius: `${borderRadius.value}px`,
     padding: `${paddingSize.value}px`,
@@ -228,44 +251,30 @@ export function useCodeImageGenerator() {
 
   const generateBlob = async (): Promise<Blob> => {
     const canvas = await generateCanvas()
-    return new Promise<Blob>((resolve, reject) =>
-      canvas.toBlob(
-        (blob) => (blob ? resolve(blob) : reject(new Error("Blob generation failed"))),
-        "image/png",
-        1.0,
-      ),
-    )
+    return canvasToBlob(canvas, "image/png")
   }
 
-  const copyImage = async (copiedMsg: string, copyFailedMsg: string): Promise<void> => {
+  const copyImage = async (): Promise<void> => {
     if (!codeContent.value) return
     try {
       const blob = await generateBlob()
-      const item = new ClipboardItem({ "image/png": blob })
-      await navigator.clipboard.write([item])
-      showMessage(copiedMsg, CODE_IMAGE_DEFAULTS.messageDuration, "info")
+      const ok = await copyImageToClipboard(blob)
+      showMessage(ok ? i18n.msgCopied : i18n.msgCopyFailed, CODE_IMAGE_DEFAULTS.messageDuration, ok ? "info" : "error")
     } catch (error) {
       console.error("复制失败:", error instanceof Error ? error.message : String(error))
-      showMessage(copyFailedMsg, CODE_IMAGE_DEFAULTS.messageDuration, "error")
+      showMessage(i18n.msgCopyFailed, CODE_IMAGE_DEFAULTS.messageDuration, "error")
     }
   }
 
-  const downloadImage = async (downloadedMsg: string, downloadFailedMsg: string): Promise<void> => {
+  const downloadImage = async (): Promise<void> => {
     if (!codeContent.value) return
     try {
-      const canvas = await generateCanvas()
-      const blob = await new Promise<Blob>((resolve, reject) =>
-        canvas.toBlob(
-          (b) => (b ? resolve(b) : reject(new Error("Blob generation failed"))),
-          "image/png",
-          1.0,
-        ),
-      )
+      const blob = await generateBlob()
       triggerBlobDownload(blob, createFilename())
-      showMessage(downloadedMsg, CODE_IMAGE_DEFAULTS.messageDuration, "info")
+      showMessage(i18n.msgDownloaded, CODE_IMAGE_DEFAULTS.messageDuration, "info")
     } catch (error) {
       console.error("下载失败:", error instanceof Error ? error.message : String(error))
-      showMessage(downloadFailedMsg, CODE_IMAGE_DEFAULTS.messageDuration, "error")
+      showMessage(i18n.msgDownloadFailed, CODE_IMAGE_DEFAULTS.messageDuration, "error")
     }
   }
 
@@ -290,6 +299,9 @@ export function useCodeImageGenerator() {
     paddingSize,
     backgroundOpacity,
     shadowIntensity,
+    // 选项
+    languageOptions,
+    themeOptions,
     // 计算属性
     currentStyleOptions,
     highlightedCode,

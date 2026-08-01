@@ -1,25 +1,31 @@
+<!-- 代码图片 Tab：代码/文字输入 + 装饰选项 + 实时预览 -->
 <template>
   <div class="code-image-tab">
     <div class="cover-layout">
       <!-- 左侧：配置面板 -->
       <div class="config-panel">
-        <!-- 内容模式 -->
+        <!-- 内容类型 -->
         <div class="config-section">
-          <label class="config-label">内容类型</label>
+          <label class="config-label">
+            <!-- 标签："内容类型" -->
+            {{ t.contentTypeLabel }}
+          </label>
           <div class="mode-toggle">
             <button
               class="mode-btn"
               :class="{ active: contentType === 'code' }"
               @click="contentType = 'code'"
             >
-              代码
+              <!-- 选项："代码" -->
+              {{ t.modeCode }}
             </button>
             <button
               class="mode-btn"
               :class="{ active: contentType === 'text' }"
               @click="contentType = 'text'"
             >
-              文字
+              <!-- 选项："文字" -->
+              {{ t.modeText }}
             </button>
           </div>
         </div>
@@ -27,14 +33,14 @@
         <!-- 内容输入 -->
         <div class="config-section">
           <label class="config-label">
-            {{ contentType === 'code' ? '代码内容' : '文字内容' }}
+            <!-- 标签："代码内容" / "文字内容" -->
+            {{ contentType === 'code' ? t.codeContentLabel : t.textContentLabel }}
           </label>
           <textarea
             v-model="codeContent"
             class="content-textarea code-input"
-            :placeholder="contentType === 'code' ? '输入代码...' : '输入文字内容...'"
+            :placeholder="contentType === 'code' ? t.codePlaceholder : t.textPlaceholder"
             rows="8"
-            style="font-family: monospace"
           ></textarea>
         </div>
 
@@ -43,7 +49,10 @@
           v-if="contentType === 'code'"
           class="config-section"
         >
-          <label class="config-label">语言</label>
+          <label class="config-label">
+            <!-- 标签："语言" -->
+            {{ t.languageLabel }}
+          </label>
           <Select
             v-model="selectedLanguage"
             :options="languageOptions"
@@ -53,7 +62,10 @@
 
         <!-- 风格选择 -->
         <div class="config-section">
-          <label class="config-label">风格</label>
+          <label class="config-label">
+            <!-- 标签："风格" -->
+            {{ t.codeStyleLabel }}
+          </label>
           <Select
             v-model="selectedStyle"
             :options="currentStyleOptions"
@@ -63,7 +75,10 @@
 
         <!-- 主题 -->
         <div class="config-section">
-          <label class="config-label">主题</label>
+          <label class="config-label">
+            <!-- 标签："主题" -->
+            {{ t.themeLabel }}
+          </label>
           <Select
             v-model="selectedTheme"
             :options="themeOptions"
@@ -73,7 +88,10 @@
 
         <!-- 字体大小 -->
         <div class="config-section">
-          <label class="config-label">字体大小 {{ fontSize }}px</label>
+          <label class="config-label">
+            <!-- 标签："字体大小 {值}px" -->
+            {{ t.fontSizeLabel }} {{ fontSize }}px
+          </label>
           <input
             :value="fontSize"
             type="range"
@@ -91,7 +109,8 @@
             class="decoration-header"
             @click="showDecorations = !showDecorations"
           >
-            <span class="decoration-title-text">装饰选项</span>
+            <!-- 折叠标题："装饰选项" -->
+            <span class="decoration-title-text">{{ t.decorationsLabel }}</span>
             <IconWrapper
               :name="showDecorations ? 'chevronUp' : 'chevronDown'"
               :size="14"
@@ -108,7 +127,7 @@
             <div class="deco-row">
               <Switch
                 :model-value="enableWatermark"
-                label="显示水印"
+                :label="t.showWatermark"
                 size="xsmall"
                 @update:model-value="enableWatermark = $event"
               />
@@ -116,14 +135,14 @@
                 v-if="enableWatermark"
                 v-model="watermarkText"
                 class="deco-input"
-                placeholder="水印文字"
+                :placeholder="t.watermarkTextPlaceholder"
               />
             </div>
             <!-- 作者 -->
             <div class="deco-row">
               <Switch
                 :model-value="enableAuthor"
-                label="显示作者"
+                :label="t.showAuthor"
                 size="xsmall"
                 @update:model-value="enableAuthor = $event"
               />
@@ -131,14 +150,14 @@
                 v-if="enableAuthor"
                 v-model="authorName"
                 class="deco-input"
-                placeholder="作者名称"
+                :placeholder="t.authorPlaceholder"
               />
             </div>
             <!-- 时间戳 -->
             <div class="deco-row">
               <Switch
                 :model-value="enableTimestamp"
-                label="显示时间"
+                :label="t.showTimestamp"
                 size="xsmall"
                 @update:model-value="enableTimestamp = $event"
               />
@@ -146,10 +165,12 @@
 
             <!-- 高级样式 -->
             <div class="deco-group-title">
-              高级样式
+              <!-- 分组标题："高级样式" -->
+              {{ t.advancedStyles }}
             </div>
             <div class="deco-slider-row">
-              <span class="deco-slider-label">边框宽度</span>
+              <!-- 滑块标签："边框宽度" -->
+              <span class="deco-slider-label">{{ t.borderWidth }}</span>
               <input
                 :value="borderWidth"
                 type="range"
@@ -162,7 +183,8 @@
               <span class="deco-slider-val">{{ borderWidth }}px</span>
             </div>
             <div class="deco-slider-row">
-              <span class="deco-slider-label">圆角</span>
+              <!-- 滑块标签："圆角" -->
+              <span class="deco-slider-label">{{ t.borderRadius }}</span>
               <input
                 :value="borderRadius"
                 type="range"
@@ -175,7 +197,8 @@
               <span class="deco-slider-val">{{ borderRadius }}px</span>
             </div>
             <div class="deco-slider-row">
-              <span class="deco-slider-label">内边距</span>
+              <!-- 滑块标签："内边距" -->
+              <span class="deco-slider-label">{{ t.paddingSize }}</span>
               <input
                 :value="paddingSize"
                 type="range"
@@ -188,7 +211,8 @@
               <span class="deco-slider-val">{{ paddingSize }}px</span>
             </div>
             <div class="deco-slider-row">
-              <span class="deco-slider-label">背景透明度</span>
+              <!-- 滑块标签："背景透明度" -->
+              <span class="deco-slider-label">{{ t.backgroundOpacity }}</span>
               <input
                 :value="backgroundOpacity"
                 type="range"
@@ -201,7 +225,8 @@
               <span class="deco-slider-val">{{ backgroundOpacity }}%</span>
             </div>
             <div class="deco-slider-row">
-              <span class="deco-slider-label">阴影强度</span>
+              <!-- 滑块标签："阴影强度" -->
+              <span class="deco-slider-label">{{ t.shadowIntensity }}</span>
               <input
                 :value="shadowIntensity"
                 type="range"
@@ -220,13 +245,14 @@
       <!-- 右侧：预览面板 -->
       <div class="preview-panel">
         <div class="preview-header">
-          <span>预览</span>
+          <!-- 预览标题："预览" -->
+          <span>{{ t.preview }}</span>
           <div class="preview-actions">
             <Button
               variant="ghost"
               size="xsmall"
               icon="contentCopy"
-              title="复制为图片"
+              :title="t.copyImage"
               :disabled="!codeContent"
               @click="handleCopy"
             />
@@ -234,7 +260,7 @@
               variant="ghost"
               size="xsmall"
               icon="download"
-              title="下载为图片"
+              :title="t.downloadImage"
               :disabled="!codeContent"
               @click="handleDownload"
             />
@@ -305,7 +331,8 @@
               :style="{ fontSize: `${fontSize}px` }"
             >
               <div class="text-body">
-                {{ codeContent || '在这里输入文字...' }}
+                <!-- 空内容提示："在这里输入文字..." -->
+                {{ codeContent || t.textEmptyHint }}
               </div>
             </div>
             <div
@@ -340,15 +367,19 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 代码图片 Tab：代码/文字输入 + 语言/风格/主题选择 + 装饰选项 + 实时预览
+ */
+import type { ImageCreationI18n } from "../types"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Select from "@/components/Select.vue"
 import Switch from "@/components/Switch.vue"
-import {
-  languageOptions,
-  themeOptions,
-  useCodeImageGenerator,
-} from "../composables/useCodeImageGenerator"
+import { usePlugin } from "@/main"
+import { useCodeImageGenerator } from "../composables/useCodeImageGenerator"
+
+const plugin = usePlugin()
+const t = (plugin.i18n as Record<string, any>).imageCreation as ImageCreationI18n
 
 const {
   contentType,
@@ -369,6 +400,8 @@ const {
   paddingSize,
   backgroundOpacity,
   shadowIntensity,
+  languageOptions,
+  themeOptions,
   currentStyleOptions,
   highlightedCode,
   currentTime,
@@ -376,304 +409,13 @@ const {
   getLanguageDisplay,
   copyImage,
   downloadImage,
-} = useCodeImageGenerator()
+} = useCodeImageGenerator(t)
 
-const handleCopy = () => copyImage("图片已复制到剪贴板", "复制失败")
-const handleDownload = () => downloadImage("图片已下载", "下载失败")
+const handleCopy = () => copyImage()
+const handleDownload = () => downloadImage()
 </script>
 
-<style lang="scss" scoped>
-@use "../styles/cover-generator.scss";
-@use "../styles/code-image-styles";
-
-.code-image-tab {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-// 内容类型切换
-.mode-toggle {
-  display: flex;
-  border: 1px solid var(--b3-theme-background-light);
-  border-radius: 6px;
-  overflow: hidden;
-
-  .mode-btn {
-    flex: 1;
-    padding: 5px 12px;
-    border: none;
-    background: transparent;
-    color: var(--b3-theme-on-surface);
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.15s;
-
-    &.active {
-      background: var(--b3-theme-primary);
-      color: #fff;
-    }
-
-    &:not(.active):hover {
-      background: var(--b3-theme-background-light);
-    }
-  }
-}
-
-// 代码输入
-.code-input {
-  font-family: "Fira Code", "Cascadia Code", Consolas, monospace !important;
-  resize: vertical;
-}
-
-// 滑块
-.slider-control {
-  width: 100%;
-  height: 4px;
-  border-radius: 2px;
-  -webkit-appearance: none;
-  appearance: none;
-  background: var(--b3-theme-background-light);
-  outline: none;
-  cursor: pointer;
-
-  &::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: var(--b3-theme-primary);
-    cursor: pointer;
-  }
-}
-
-// 装饰选项
-.decoration-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 10px;
-  background: var(--b3-theme-background-light);
-  border-radius: 6px;
-  cursor: pointer;
-  user-select: none;
-
-  &:hover {
-    background: var(--b3-theme-surface-lighter);
-  }
-
-  .decoration-title-text {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--b3-theme-on-surface);
-  }
-
-  .decoration-chevron {
-    color: var(--b3-theme-on-surface);
-    transition: transform 0.2s;
-
-    &.expanded {
-      transform: rotate(180deg);
-    }
-  }
-}
-
-.decoration-body {
-  padding: 10px;
-  border: 1px solid var(--b3-theme-background-light);
-  border-radius: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.deco-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.deco-input {
-  flex: 1;
-  padding: 4px 8px;
-  border: 1px solid var(--b3-theme-background-light);
-  border-radius: 4px;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  font-size: 11px;
-  outline: none;
-
-  &:focus {
-    border-color: var(--b3-theme-primary);
-  }
-}
-
-.deco-group-title {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--b3-theme-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 4px 0 2px;
-}
-
-.deco-slider-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.deco-slider-label {
-  font-size: 10px;
-  color: var(--b3-theme-on-surface);
-  min-width: 65px;
-}
-
-.deco-slider-val {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--b3-theme-on-surface);
-  min-width: 32px;
-  text-align: right;
-}
-
-// 预览区域
-.code-preview-wrapper {
-  padding: 12px;
-  overflow: auto;
-}
-
-.code-preview {
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  min-width: 400px;
-  max-width: 100%;
-}
-
-// 窗口装饰
-.window-header {
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  background: rgba(0, 0, 0, 0.05);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  gap: 10px;
-}
-
-.window-buttons {
-  display: flex;
-  gap: 6px;
-}
-
-.window-btn {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  display: block;
-
-  &.close { background: #ff5f56; }
-  &.minimize { background: #ffbd2e; }
-  &.maximize { background: #27c93f; }
-}
-
-.window-title {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--b3-theme-on-surface);
-  flex: 1;
-  text-align: center;
-}
-
-.code-content {
-  padding: 12px;
-  overflow-x: auto;
-
-  pre {
-    margin: 0;
-    line-height: 1.5;
-  }
-
-  code {
-    display: block;
-    white-space: pre;
-  }
-}
-
-// 文字预览
-.text-preview {
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  min-width: 400px;
-  max-width: 100%;
-  min-height: 300px;
-  display: flex;
-  flex-direction: column;
-}
-
-.text-content {
-  flex: 1;
-  padding: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-
-.text-body {
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  line-height: 1.8;
-}
-
-// 装饰元素
-.decorations {
-  position: relative;
-  padding: 8px 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.watermark {
-  font-size: 9px;
-  color: rgba(0, 0, 0, 0.5);
-  font-weight: 500;
-}
-
-.metadata {
-  display: flex;
-  gap: 10px;
-  font-size: 10px;
-  color: rgba(0, 0, 0, 0.7);
-}
-
-.author::before {
-  content: "";
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  margin-right: 3px;
-  vertical-align: -1px;
-  background: currentColor;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E") no-repeat center;
-  mask-size: contain;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E") no-repeat center;
-  -webkit-mask-size: contain;
-}
-.timestamp::before {
-  content: "";
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  margin-right: 3px;
-  vertical-align: -1px;
-  background: currentColor;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z'/%3E%3C/svg%3E") no-repeat center;
-  mask-size: contain;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z'/%3E%3C/svg%3E") no-repeat center;
-  -webkit-mask-size: contain;
-}
+<style scoped lang="scss">
+@use "../styles/CodeImageTab.scss";
+@use "../styles/index.scss";
 </style>

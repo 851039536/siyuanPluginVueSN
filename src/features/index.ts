@@ -33,8 +33,6 @@ export {
 export { registerImageCompressor } from "./imageCompressor"
 export {
   hideImageCreation,
-  imageCreationInitialKeywords,
-  imageCreationInitialTitle,
   imageCreationVisible,
   registerImageCreation,
   showImageCreation,

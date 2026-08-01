@@ -1,0 +1,189 @@
+// ============================================================
+// 文章封面 Tab 专属样式
+// ============================================================
+
+@use "@/variables" as *;
+
+// 共用按钮交互模式（.style-btn / .size-preset-btn 共享）
+@mixin btn-interactive {
+  border: 1px solid var(--b3-theme-background-light);
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &.active {
+    border-color: var(--b3-theme-primary);
+    background: color-mix(in srgb, var(--b3-theme-primary) 10%, transparent);
+    color: var(--b3-theme-primary);
+  }
+
+  &:hover:not(.active) {
+    background: var(--b3-theme-background-light);
+  }
+}
+
+// 尺寸预设
+.size-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-1;
+}
+
+.size-preset-btn {
+  @include btn-interactive;
+  padding: $spacing-1 $spacing-2;
+  border-radius: $radius-sm;
+  font-size: $font-size-2xs;
+}
+
+.size-custom {
+  margin-top: $spacing-1;
+}
+
+.size-input-group {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+
+  .size-x {
+    color: var(--b3-theme-on-surface);
+    opacity: 0.4;
+    font-size: $font-size-xs;
+  }
+
+  .size-unit {
+    color: var(--b3-theme-on-surface);
+    opacity: 0.5;
+    font-size: $font-size-xs;
+  }
+}
+
+// 风格选择
+.style-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-px;
+}
+
+.style-btn {
+  @include btn-interactive;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: $spacing-2;
+  border-radius: $vp-radius;
+  text-align: left;
+
+  &.active {
+    background: color-mix(in srgb, var(--b3-theme-primary) 8%, transparent);
+  }
+
+  .style-name {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    color: var(--b3-theme-on-surface);
+  }
+
+  .style-desc {
+    // 辅助文字
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.5;
+    margin-top: $spacing-2px;
+    line-height: $line-height-tight;
+  }
+}
+
+// 操作按钮
+.config-actions {
+  display: flex;
+  gap: $spacing-2;
+  margin-top: $spacing-1;
+}
+
+// 错误信息
+.error-message {
+  font-size: $font-size-xs;
+  color: var(--b3-theme-error, #e74c3c);
+  padding: $spacing-px $spacing-2;
+  background: color-mix(in srgb, var(--b3-theme-error, #e74c3c) 8%, transparent);
+  border-radius: $radius-sm;
+}
+
+// 空状态
+.preview-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-2;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.3;
+  position: relative;
+
+  // 微光晕，只在空态出现
+  &::before {
+    content: '';
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(
+      circle,
+      rgb(from var(--b3-theme-primary) r g b / 0.06) 0%,
+      transparent 70%
+    );
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  p {
+    margin: 0;
+    font-size: $font-size-xs;
+    position: relative;
+  }
+
+  .preview-hint {
+    // 辅助文字
+    font-size: $font-size-2xs;
+    opacity: 0.7;
+    position: relative;
+  }
+}
+
+// 预览 iframe
+.preview-iframe-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-4;
+  overflow: hidden;
+  position: relative;
+}
+
+// 缩放容器：实际尺寸渲染，通过 CSS transform 缩放适配预览区
+.preview-iframe-scaler {
+  flex-shrink: 0;
+  transform-origin: center center;
+}
+
+.cover-preview-iframe {
+  display: block;
+  border: 1px solid var(--b3-border-color);
+  // 尺寸由内联 style 控制（与封面实际尺寸一致）
+  background: #fff;
+}
+
+.preview-meta {
+  padding: $spacing-px $spacing-3;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.4;
+  text-align: center;
+  border-top: 1px solid var(--b3-theme-background-light);
+  flex-shrink: 0;
+}

@@ -1,0 +1,325 @@
+// ============================================================
+// 代码图片 Tab 专属样式
+// ============================================================
+
+@use "@/variables" as *;
+@use "./CodeImageStyles";
+
+.code-image-tab {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+// 内容类型切换
+.mode-toggle {
+  display: flex;
+  border: 1px solid var(--b3-theme-background-light);
+  border-radius: $vp-radius;
+  overflow: hidden;
+
+  .mode-btn {
+    flex: 1;
+    padding: $spacing-1 $spacing-3;
+    border: none;
+    background: transparent;
+    color: var(--b3-theme-on-surface);
+    font-size: $font-size-xs;
+    cursor: pointer;
+    transition: all 0.15s;
+
+    &.active {
+      background: var(--b3-theme-primary);
+      color: #fff;
+    }
+
+    &:not(.active):hover {
+      background: var(--b3-theme-background-light);
+    }
+  }
+}
+
+// 代码输入
+.code-input {
+  font-family: $vp-mono !important;
+  resize: vertical;
+}
+
+// 滑块
+.slider-control {
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--b3-theme-background-light);
+  outline: none;
+  cursor: pointer;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--b3-theme-primary);
+    cursor: pointer;
+  }
+}
+
+// 装饰区迷你滑块（与主滑块同款外观，宽度自适应行内布局）
+.mini-slider {
+  flex: 1;
+  min-width: 0;
+  height: 4px;
+  border-radius: 2px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--b3-theme-background-light);
+  outline: none;
+  cursor: pointer;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--b3-theme-primary);
+    cursor: pointer;
+  }
+}
+
+// 装饰选项
+.decoration-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-2;
+  background: var(--b3-theme-background-light);
+  border-radius: $vp-radius;
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+  }
+
+  .decoration-title-text {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    color: var(--b3-theme-on-surface);
+  }
+
+  .decoration-chevron {
+    color: var(--b3-theme-on-surface);
+    transition: transform 0.2s;
+
+    &.expanded {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.decoration-body {
+  padding: $spacing-2;
+  border: 1px solid var(--b3-theme-background-light);
+  border-radius: $vp-radius;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.deco-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.deco-input {
+  flex: 1;
+  padding: $spacing-1 $spacing-2;
+  border: 1px solid var(--b3-theme-background-light);
+  border-radius: $radius-sm;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  font-size: $font-size-2xs;
+  outline: none;
+
+  &:focus {
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+.deco-group-title {
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
+  color: var(--b3-theme-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: $spacing-1 0 $spacing-2px;
+}
+
+.deco-slider-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.deco-slider-label {
+  // 辅助文字
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface);
+  min-width: 65px;
+}
+
+.deco-slider-val {
+  // 辅助文字
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-surface);
+  min-width: 32px;
+  text-align: right;
+}
+
+// 预览区域
+.code-preview-wrapper {
+  padding: $spacing-3;
+  overflow: auto;
+}
+
+.code-preview {
+  border-radius: $radius-md;
+  overflow: hidden;
+  // UI 容器用边框替代阴影（Codex 风格）
+  border: 1px solid var(--b3-theme-background-light);
+  min-width: 400px;
+  max-width: 100%;
+}
+
+// 窗口装饰
+.window-header {
+  display: flex;
+  align-items: center;
+  padding: $spacing-2 $spacing-3;
+  background: rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  gap: $spacing-1;
+}
+
+.window-buttons {
+  display: flex;
+  gap: $spacing-px;
+}
+
+.window-btn {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: block;
+
+  &.close { background: #ff5f56; }
+  &.minimize { background: #ffbd2e; }
+  &.maximize { background: #27c93f; }
+}
+
+.window-title {
+  // 辅助文字
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-medium;
+  color: var(--b3-theme-on-surface);
+  flex: 1;
+  text-align: center;
+}
+
+.code-content {
+  padding: $spacing-3;
+  overflow-x: auto;
+
+  pre {
+    margin: 0;
+    line-height: $line-height-normal;
+  }
+
+  code {
+    display: block;
+    white-space: pre;
+  }
+}
+
+// 文字预览
+.text-preview {
+  border-radius: $radius-lg;
+  overflow: hidden;
+  // UI 容器用边框替代阴影（Codex 风格）
+  border: 1px solid var(--b3-theme-background-light);
+  min-width: 400px;
+  max-width: 100%;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.text-content {
+  flex: 1;
+  padding: $spacing-6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.text-body {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: $line-height-relaxed;
+}
+
+// 装饰元素
+.decorations {
+  position: relative;
+  padding: $spacing-2 $spacing-3;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.watermark {
+  font-size: $font-size-2xs;
+  color: rgba(0, 0, 0, 0.5);
+  font-weight: $font-weight-medium;
+}
+
+.metadata {
+  display: flex;
+  gap: $spacing-2;
+  font-size: $font-size-2xs;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.author::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: $spacing-px;
+  vertical-align: -1px;
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E") no-repeat center;
+  mask-size: contain;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E") no-repeat center;
+  -webkit-mask-size: contain;
+}
+
+.timestamp::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: $spacing-px;
+  vertical-align: -1px;
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z'/%3E%3C/svg%3E") no-repeat center;
+  mask-size: contain;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z'/%3E%3C/svg%3E") no-repeat center;
+  -webkit-mask-size: contain;
+}

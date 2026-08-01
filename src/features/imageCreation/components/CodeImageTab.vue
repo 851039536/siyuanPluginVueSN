@@ -1,4 +1,4 @@
-<!-- 代码图片 Tab：代码/文字输入 + 装饰选项 + 实时预览 -->
+<!-- 代码图片 Tab：配置表单 + 字体/主题/导出设置 + 装饰/底色 + 预览与灵感候选 -->
 <template>
   <div class="code-image-tab">
     <div class="cover-layout">
@@ -13,16 +13,16 @@
           <div class="mode-toggle">
             <button
               class="mode-btn"
-              :class="{ active: contentType === 'code' }"
-              @click="contentType = 'code'"
+              :class="{ active: state.contentType === 'code' }"
+              @click="state.contentType = 'code'"
             >
               <!-- 选项："代码" -->
               {{ t.modeCode }}
             </button>
             <button
               class="mode-btn"
-              :class="{ active: contentType === 'text' }"
-              @click="contentType = 'text'"
+              :class="{ active: state.contentType === 'text' }"
+              @click="state.contentType = 'text'"
             >
               <!-- 选项："文字" -->
               {{ t.modeText }}
@@ -34,19 +34,19 @@
         <div class="config-section">
           <label class="config-label">
             <!-- 标签："代码内容" / "文字内容" -->
-            {{ contentType === 'code' ? t.codeContentLabel : t.textContentLabel }}
+            {{ state.contentType === 'code' ? t.codeContentLabel : t.textContentLabel }}
           </label>
           <textarea
-            v-model="codeContent"
+            v-model="state.codeContent"
             class="content-textarea code-input"
-            :placeholder="contentType === 'code' ? t.codePlaceholder : t.textPlaceholder"
+            :placeholder="state.contentType === 'code' ? t.codePlaceholder : t.textPlaceholder"
             rows="8"
           ></textarea>
         </div>
 
         <!-- 语言选择（仅代码模式） -->
         <div
-          v-if="contentType === 'code'"
+          v-if="state.contentType === 'code'"
           class="config-section"
         >
           <label class="config-label">
@@ -54,7 +54,7 @@
             {{ t.languageLabel }}
           </label>
           <Select
-            v-model="selectedLanguage"
+            v-model="state.selectedLanguage"
             :options="languageOptions"
             size="xsmall"
           />
@@ -67,7 +67,7 @@
             {{ t.codeStyleLabel }}
           </label>
           <Select
-            v-model="selectedStyle"
+            v-model="state.selectedStyle"
             :options="currentStyleOptions"
             size="xsmall"
           />
@@ -80,9 +80,39 @@
             {{ t.themeLabel }}
           </label>
           <Select
-            v-model="selectedTheme"
+            v-model="state.selectedTheme"
             :options="themeOptions"
             size="xsmall"
+          />
+        </div>
+
+        <!-- 字体 -->
+        <div class="config-section">
+          <label class="config-label">
+            <!-- 标签："字体" -->
+            {{ t.fontLabel }}
+          </label>
+          <Select
+            v-model="state.fontFamily"
+            :options="fontOptions"
+            size="xsmall"
+          />
+        </div>
+
+        <!-- 高亮主题（仅代码模式） -->
+        <div
+          v-if="state.contentType === 'code'"
+          class="config-section"
+        >
+          <label class="config-label">
+            <!-- 标签："高亮主题" -->
+            {{ t.hljsThemeLabel }}
+          </label>
+          <Select
+            :model-value="state.hljsTheme"
+            :options="hljsThemeOptions"
+            size="xsmall"
+            @update:model-value="onHljsThemeChange"
           />
         </div>
 
@@ -90,155 +120,81 @@
         <div class="config-section">
           <label class="config-label">
             <!-- 标签："字体大小 {值}px" -->
-            {{ t.fontSizeLabel }} {{ fontSize }}px
+            {{ t.fontSizeLabel }} {{ state.fontSize }}px
           </label>
           <input
-            :value="fontSize"
+            :value="state.fontSize"
             type="range"
             min="12"
             max="60"
             step="1"
             class="slider-control"
-            @input="fontSize = Number(($event.target as HTMLInputElement).value)"
+            @input="state.fontSize = Number(($event.target as HTMLInputElement).value)"
           />
         </div>
 
-        <!-- 装饰选项 -->
+        <!-- 装饰选项（水印/作者/时间戳 + 高级样式） -->
+        <CodeImageDecorationSettings :service="service" />
+
+        <!-- 底色与背景图 -->
         <div class="config-section">
-          <div
-            class="decoration-header"
-            @click="showDecorations = !showDecorations"
-          >
-            <!-- 折叠标题："装饰选项" -->
-            <span class="decoration-title-text">{{ t.decorationsLabel }}</span>
-            <IconWrapper
-              :name="showDecorations ? 'chevronUp' : 'chevronDown'"
-              :size="14"
-              class="decoration-chevron"
-              :class="{ expanded: showDecorations }"
+          <div class="deco-group-title">
+            <!-- 分组标题："自定义底色" -->
+            {{ t.bgColorLabel }}
+          </div>
+          <div class="deco-row">
+            <Switch
+              :model-value="state.bgColorEnabled"
+              :label="t.bgColorEnable"
+              size="xsmall"
+              @update:model-value="state.bgColorEnabled = $event"
+            />
+            <input
+              v-if="state.bgColorEnabled"
+              v-model="state.bgColor"
+              type="color"
+              class="color-swatch"
             />
           </div>
-
-          <div
-            v-if="showDecorations"
-            class="decoration-body"
-          >
-            <!-- 水印 -->
-            <div class="deco-row">
-              <Switch
-                :model-value="enableWatermark"
-                :label="t.showWatermark"
-                size="xsmall"
-                @update:model-value="enableWatermark = $event"
-              />
-              <input
-                v-if="enableWatermark"
-                v-model="watermarkText"
-                class="deco-input"
-                :placeholder="t.watermarkTextPlaceholder"
-              />
-            </div>
-            <!-- 作者 -->
-            <div class="deco-row">
-              <Switch
-                :model-value="enableAuthor"
-                :label="t.showAuthor"
-                size="xsmall"
-                @update:model-value="enableAuthor = $event"
-              />
-              <input
-                v-if="enableAuthor"
-                v-model="authorName"
-                class="deco-input"
-                :placeholder="t.authorPlaceholder"
-              />
-            </div>
-            <!-- 时间戳 -->
-            <div class="deco-row">
-              <Switch
-                :model-value="enableTimestamp"
-                :label="t.showTimestamp"
-                size="xsmall"
-                @update:model-value="enableTimestamp = $event"
-              />
-            </div>
-
-            <!-- 高级样式 -->
-            <div class="deco-group-title">
-              <!-- 分组标题："高级样式" -->
-              {{ t.advancedStyles }}
-            </div>
-            <div class="deco-slider-row">
-              <!-- 滑块标签："边框宽度" -->
-              <span class="deco-slider-label">{{ t.borderWidth }}</span>
-              <input
-                :value="borderWidth"
-                type="range"
-                min="0"
-                max="10"
-                step="1"
-                class="mini-slider"
-                @input="borderWidth = Number(($event.target as HTMLInputElement).value)"
-              />
-              <span class="deco-slider-val">{{ borderWidth }}px</span>
-            </div>
-            <div class="deco-slider-row">
-              <!-- 滑块标签："圆角" -->
-              <span class="deco-slider-label">{{ t.borderRadius }}</span>
-              <input
-                :value="borderRadius"
-                type="range"
-                min="0"
-                max="32"
-                step="2"
-                class="mini-slider"
-                @input="borderRadius = Number(($event.target as HTMLInputElement).value)"
-              />
-              <span class="deco-slider-val">{{ borderRadius }}px</span>
-            </div>
-            <div class="deco-slider-row">
-              <!-- 滑块标签："内边距" -->
-              <span class="deco-slider-label">{{ t.paddingSize }}</span>
-              <input
-                :value="paddingSize"
-                type="range"
-                min="0"
-                max="48"
-                step="4"
-                class="mini-slider"
-                @input="paddingSize = Number(($event.target as HTMLInputElement).value)"
-              />
-              <span class="deco-slider-val">{{ paddingSize }}px</span>
-            </div>
-            <div class="deco-slider-row">
-              <!-- 滑块标签："背景透明度" -->
-              <span class="deco-slider-label">{{ t.backgroundOpacity }}</span>
-              <input
-                :value="backgroundOpacity"
-                type="range"
-                min="0"
-                max="100"
-                step="5"
-                class="mini-slider"
-                @input="backgroundOpacity = Number(($event.target as HTMLInputElement).value)"
-              />
-              <span class="deco-slider-val">{{ backgroundOpacity }}%</span>
-            </div>
-            <div class="deco-slider-row">
-              <!-- 滑块标签："阴影强度" -->
-              <span class="deco-slider-label">{{ t.shadowIntensity }}</span>
-              <input
-                :value="shadowIntensity"
-                type="range"
-                min="0"
-                max="100"
-                step="10"
-                class="mini-slider"
-                @input="shadowIntensity = Number(($event.target as HTMLInputElement).value)"
-              />
-              <span class="deco-slider-val">{{ shadowIntensity }}%</span>
-            </div>
+          <div class="deco-group-title">
+            <!-- 分组标题："背景图" -->
+            {{ t.bgImageLabel }}
           </div>
+          <div class="deco-row">
+            <Button
+              variant="ghost"
+              size="xsmall"
+              icon="upload"
+              :title="t.bgImageUpload"
+              @click="triggerBgFileInput"
+            />
+            <Button
+              v-if="codeSettings.bgImagePath"
+              variant="ghost"
+              size="xsmall"
+              icon="delete"
+              :title="t.bgImageRemove"
+              @click="removeBgImage"
+            />
+            <!-- 空提示："未设置背景图" -->
+            <span
+              v-if="!codeSettings.bgImagePath"
+              class="bg-empty-hint"
+            >{{ t.bgImageEmptyHint }}</span>
+            <img
+              v-if="bgImageDataUrl"
+              class="bg-thumb"
+              :src="bgImageDataUrl"
+              alt="bg"
+            />
+          </div>
+          <input
+            ref="bgFileInput"
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            hidden
+            @change="onBgFileChange"
+          />
         </div>
       </div>
 
@@ -251,18 +207,55 @@
             <Button
               variant="ghost"
               size="xsmall"
+              @click="generateCandidates"
+            >
+              <!-- 按钮文案："灵感模式" -->
+              {{ t.inspirationLabel }}
+            </Button>
+            <Select
+              v-model="state.exportFormat"
+              :options="exportFormatOptions"
+              size="xsmall"
+            />
+            <Select
+              v-model="state.exportScale"
+              :options="scaleOptions"
+              size="xsmall"
+            />
+            <Slider
+              v-if="state.exportFormat === 'jpeg'"
+              v-model="state.jpegQuality"
+              :label="t.jpegQualityLabel"
+              :min="0.5"
+              :max="1"
+              :step="0.05"
+              size="xsmall"
+              :show-value="true"
+              :format-value="qualityFormat"
+            />
+            <Button
+              variant="ghost"
+              size="xsmall"
               icon="contentCopy"
               :title="t.copyImage"
-              :disabled="!codeContent"
-              @click="handleCopy"
+              :disabled="!state.codeContent"
+              @click="copyImage"
             />
             <Button
               variant="ghost"
               size="xsmall"
               icon="download"
               :title="t.downloadImage"
-              :disabled="!codeContent"
-              @click="handleDownload"
+              :disabled="!state.codeContent"
+              @click="downloadImage"
+            />
+            <Button
+              variant="ghost"
+              size="xsmall"
+              icon="code"
+              :title="t.copyHtml"
+              :disabled="!state.codeContent"
+              @click="copyHtml"
             />
           </div>
         </div>
@@ -270,12 +263,17 @@
         <div class="preview-content code-preview-wrapper">
           <!-- 代码模式预览 -->
           <div
-            v-if="contentType === 'code'"
+            v-if="state.contentType === 'code'"
             ref="codePreview"
             class="code-preview"
-            :class="[`style-${selectedStyle}`, `theme-${selectedTheme}`]"
+            :class="[`style-${state.selectedStyle}`, `theme-${state.selectedTheme}`, `hljs-theme-${state.hljsTheme}`]"
             :style="previewCustomStyle"
           >
+            <div
+              class="bg-layer"
+              :class="[`style-${state.selectedStyle}`, `theme-${state.selectedTheme}`]"
+              :style="bgLayerStyle"
+            ></div>
             <div class="window-header">
               <div class="window-buttons">
                 <span class="window-btn close" />
@@ -288,30 +286,30 @@
             </div>
             <div
               class="code-content"
-              :style="{ fontSize: `${fontSize}px` }"
+              :style="contentStyle"
             >
               <pre><code v-html="highlightedCode" /></pre>
             </div>
             <div
-              v-if="enableWatermark || enableAuthor || enableTimestamp"
+              v-if="state.enableWatermark || state.enableAuthor || state.enableTimestamp"
               class="decorations"
             >
               <div
-                v-if="enableWatermark"
+                v-if="state.enableWatermark"
                 class="watermark"
               >
-                {{ watermarkText }}
+                {{ state.watermarkText }}
               </div>
               <div
-                v-if="enableAuthor || enableTimestamp"
+                v-if="state.enableAuthor || state.enableTimestamp"
                 class="metadata"
               >
                 <span
-                  v-if="enableAuthor"
+                  v-if="state.enableAuthor"
                   class="author"
-                >{{ authorName }}</span>
+                >{{ state.authorName }}</span>
                 <span
-                  v-if="enableTimestamp"
+                  v-if="state.enableTimestamp"
                   class="timestamp"
                 >{{ currentTime }}</span>
               </div>
@@ -323,44 +321,52 @@
             v-else
             ref="codePreview"
             class="text-preview"
-            :class="[`text-style-${selectedStyle}`, `theme-${selectedTheme}`]"
+            :class="[`text-style-${state.selectedStyle}`, `theme-${state.selectedTheme}`]"
             :style="previewCustomStyle"
           >
             <div
+              class="bg-layer"
+              :class="[`text-style-${state.selectedStyle}`, `theme-${state.selectedTheme}`]"
+              :style="bgLayerStyle"
+            ></div>
+            <div
               class="text-content"
-              :style="{ fontSize: `${fontSize}px` }"
+              :style="contentStyle"
             >
               <div class="text-body">
                 <!-- 空内容提示："在这里输入文字..." -->
-                {{ codeContent || t.textEmptyHint }}
+                {{ state.codeContent || t.textEmptyHint }}
               </div>
             </div>
             <div
-              v-if="enableWatermark || enableAuthor || enableTimestamp"
+              v-if="state.enableWatermark || state.enableAuthor || state.enableTimestamp"
               class="decorations"
             >
               <div
-                v-if="enableWatermark"
+                v-if="state.enableWatermark"
                 class="watermark"
               >
-                {{ watermarkText }}
+                {{ state.watermarkText }}
               </div>
               <div
-                v-if="enableAuthor || enableTimestamp"
+                v-if="state.enableAuthor || state.enableTimestamp"
                 class="metadata"
               >
                 <span
-                  v-if="enableAuthor"
+                  v-if="state.enableAuthor"
                   class="author"
-                >{{ authorName }}</span>
+                >{{ state.authorName }}</span>
                 <span
-                  v-if="enableTimestamp"
+                  v-if="state.enableTimestamp"
                   class="timestamp"
                 >{{ currentTime }}</span>
               </div>
             </div>
           </div>
         </div>
+
+        <!-- 灵感模式候选条 -->
+        <CodeImageCandidateStrip :service="service" />
       </div>
     </div>
   </div>
@@ -368,51 +374,85 @@
 
 <script setup lang="ts">
 /**
- * 代码图片 Tab：代码/文字输入 + 语言/风格/主题选择 + 装饰选项 + 实时预览
+ * 代码图片 Tab：配置表单 + 字体/主题/导出设置 + 装饰/底色 + 预览与灵感候选
  */
+import type { SelectOption } from "@/components/Select.vue"
 import type { ImageCreationI18n } from "../types"
+import {
+  onMounted,
+  ref,
+} from "vue"
 import Button from "@/components/Button.vue"
-import IconWrapper from "@/components/IconWrapper.vue"
 import Select from "@/components/Select.vue"
+import Slider from "@/components/Slider.vue"
 import Switch from "@/components/Switch.vue"
 import { usePlugin } from "@/main"
 import { useCodeImageGenerator } from "../composables/useCodeImageGenerator"
+import { useCodeImageSettings } from "../composables/useCodeImageSettings"
+import CodeImageCandidateStrip from "./CodeImageCandidateStrip.vue"
+import CodeImageDecorationSettings from "./CodeImageDecorationSettings.vue"
 
 const plugin = usePlugin()
 const t = (plugin.i18n as Record<string, any>).imageCreation as ImageCreationI18n
 
+const codeImageSettings = useCodeImageSettings(plugin, t)
+const service = useCodeImageGenerator(t, codeImageSettings)
+
 const {
-  contentType,
-  codeContent,
-  selectedLanguage,
-  selectedStyle,
-  selectedTheme,
-  fontSize,
+  state,
   codePreview,
-  showDecorations,
-  enableWatermark,
-  watermarkText,
-  enableAuthor,
-  authorName,
-  enableTimestamp,
-  borderWidth,
-  borderRadius,
-  paddingSize,
-  backgroundOpacity,
-  shadowIntensity,
   languageOptions,
   themeOptions,
+  fontOptions,
+  hljsThemeOptions,
+  scaleOptions,
   currentStyleOptions,
   highlightedCode,
   currentTime,
   previewCustomStyle,
+  bgLayerStyle,
+  contentStyle,
   getLanguageDisplay,
+  onHljsThemeChange,
+  generateCandidates,
   copyImage,
+  copyHtml,
   downloadImage,
-} = useCodeImageGenerator(t)
+  applyPersistedPrefs,
+} = service
 
-const handleCopy = () => copyImage()
-const handleDownload = () => downloadImage()
+const exportFormatOptions: SelectOption[] = [
+  { value: "png", label: t.formatPng },
+  { value: "jpeg", label: t.formatJpeg },
+  { value: "webp", label: t.formatWebp },
+]
+
+// 背景图
+const bgFileInput = ref<HTMLInputElement>()
+const codeSettings = codeImageSettings.settings
+const bgImageDataUrl = codeImageSettings.bgImageDataUrl
+const { removeBgImage } = codeImageSettings
+
+function triggerBgFileInput() {
+  bgFileInput.value?.click()
+}
+
+function onBgFileChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (file) {
+    void codeImageSettings.uploadBgImage(file)
+  }
+  // 清空以允许再次选择同一文件
+  input.value = ""
+}
+
+const qualityFormat = (v: number) => `${Math.round(v * 100)}%`
+
+// 启动时应用持久化偏好（字体/主题/装饰/导出/底色等）
+onMounted(() => {
+  void applyPersistedPrefs()
+})
 </script>
 
 <style scoped lang="scss">

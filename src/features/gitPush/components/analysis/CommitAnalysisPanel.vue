@@ -131,30 +131,83 @@
         </div>
 
         <template v-else>
-          <!-- 项目提交排行（点击行跳转项目） -->
-          <div class="gpa-section">
-            <!-- 区块标题："项目提交排行" -->
-            <div class="gpa-section-title">
-              {{ i18n.analysisProjectRanking }}
-            </div>
-            <div class="gpa-bar-list">
-              <div
-                v-for="row in projectRows"
-                :key="row.id"
-                class="gpa-bar-row gpa-bar-row--clickable"
-                @click="emit('viewProject', row.id)"
-              >
-                <span
-                  class="gpa-bar-label"
-                  :title="row.name"
-                >{{ row.name }}</span>
-                <span class="gpa-bar-track">
+          <!-- 双栏：项目提交排行 | 最近提交记录（固定高度，内容超高时列表内部滚动） -->
+          <div class="gpa-pair">
+            <!-- 项目提交排行（点击行跳转项目） -->
+            <div class="gpa-section gpa-section--scroll">
+              <!-- 区块标题："项目提交排行" -->
+              <div class="gpa-section-title">
+                {{ i18n.analysisProjectRanking }}
+              </div>
+              <div class="gpa-bar-list">
+                <div
+                  v-for="row in projectRows"
+                  :key="row.id"
+                  class="gpa-bar-row gpa-bar-row--clickable"
+                  @click="emit('viewProject', row.id)"
+                >
                   <span
-                    class="gpa-bar-fill"
-                    :style="{ width: row.pct }"
-                  />
-                </span>
-                <span class="gpa-bar-num">{{ row.count }}</span>
+                    class="gpa-bar-label"
+                    :title="row.name"
+                  >{{ row.name }}</span>
+                  <span class="gpa-bar-track">
+                    <span
+                      class="gpa-bar-fill"
+                      :style="{ width: row.pct }"
+                    />
+                  </span>
+                  <span class="gpa-bar-num">{{ row.count }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 最近提交记录（跨项目合并按日期降序） -->
+            <div class="gpa-section gpa-section--scroll">
+              <div class="gpa-section-title">
+                <!-- 区块标题："最近提交记录" + 条数徽章 -->
+                {{ i18n.analysisRecentCommits }}
+                <span class="gpa-section-count">{{ stats.entries.length }}</span>
+              </div>
+              <div class="gpa-commit-list">
+                <div
+                  v-for="c in pagedEntries"
+                  :key="`${c.projectId}-${c.hash}`"
+                  class="gpa-commit-item"
+                >
+                  <span
+                    class="gpa-commit-hash"
+                    :title="c.hash"
+                  >{{ c.hash }}</span>
+                  <span
+                    class="gpa-commit-msg"
+                    :title="c.message"
+                  >{{ c.message }}</span>
+                  <span class="gpa-commit-meta">
+                    <!-- 项目名（可点击跳转列表视图） -->
+                    <span
+                      class="gpa-commit-project"
+                      :title="c.projectName"
+                      @click.stop="emit('viewProject', c.projectId)"
+                    >{{ c.projectName }}</span>
+                    <span class="gpa-commit-author">{{ c.author }}</span>
+                    <span
+                      class="gpa-commit-date"
+                      :title="c.date"
+                    >{{ relativeTime(c.date, i18n) }}</span>
+                  </span>
+                </div>
+              </div>
+              <!-- 加载更多（本地分页，每次 +50，文案："加载更多 (可见/总数)"） -->
+              <div
+                v-if="visibleCount < sortedEntries.length"
+                class="gpa-load-more"
+              >
+                <button
+                  class="vp-btn vp-btn--ghost vp-btn--sm"
+                  @click="visibleCount += 50"
+                >
+                  {{ i18n.loadMoreLogs }} ({{ visibleCount }} / {{ sortedEntries.length }})
+                </button>
               </div>
             </div>
           </div>
@@ -207,104 +260,57 @@
             </div>
           </div>
 
-          <!-- 提交内容类型（Conventional Commits 前缀分类条形） -->
-          <div class="gpa-section">
-            <!-- 区块标题："提交内容类型" -->
-            <div class="gpa-section-title">
-              {{ i18n.analysisTypeDistribution }}
-            </div>
-            <div class="gpa-bar-list">
-              <div
-                v-for="t in typeRows"
-                :key="t.type"
-                class="gpa-bar-row"
-              >
-                <span class="gpa-bar-label">{{ i18n[COMMIT_ANALYSIS_TYPE_META[t.type].labelKey] }}</span>
-                <span class="gpa-bar-track">
+          <!-- 双栏：作者提交排行 | 提交内容类型 -->
+          <div class="gpa-pair">
+            <!-- 作者提交排行 -->
+            <div class="gpa-section">
+              <!-- 区块标题："作者提交排行" -->
+              <div class="gpa-section-title">
+                {{ i18n.analysisAuthorRanking }}
+              </div>
+              <div class="gpa-bar-list">
+                <div
+                  v-for="a in authorRows"
+                  :key="a.author"
+                  class="gpa-bar-row"
+                >
                   <span
-                    class="gpa-bar-fill"
-                    :style="{ width: t.pct, background: COMMIT_ANALYSIS_TYPE_META[t.type].color }"
-                  />
-                </span>
-                <span class="gpa-bar-num">{{ t.count }}</span>
+                    class="gpa-bar-label"
+                    :title="a.author"
+                  >{{ a.author }}</span>
+                  <span class="gpa-bar-track">
+                    <span
+                      class="gpa-bar-fill"
+                      :style="{ width: a.pct }"
+                    />
+                  </span>
+                  <span class="gpa-bar-num">{{ a.count }}</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- 作者提交排行 -->
-          <div class="gpa-section">
-            <!-- 区块标题："作者提交排行" -->
-            <div class="gpa-section-title">
-              {{ i18n.analysisAuthorRanking }}
-            </div>
-            <div class="gpa-bar-list">
-              <div
-                v-for="a in authorRows"
-                :key="a.author"
-                class="gpa-bar-row"
-              >
-                <span
-                  class="gpa-bar-label"
-                  :title="a.author"
-                >{{ a.author }}</span>
-                <span class="gpa-bar-track">
-                  <span
-                    class="gpa-bar-fill"
-                    :style="{ width: a.pct }"
-                  />
-                </span>
-                <span class="gpa-bar-num">{{ a.count }}</span>
+            <!-- 提交内容类型（Conventional Commits 前缀分类条形） -->
+            <div class="gpa-section">
+              <!-- 区块标题："提交内容类型" -->
+              <div class="gpa-section-title">
+                {{ i18n.analysisTypeDistribution }}
               </div>
-            </div>
-          </div>
-
-          <!-- 最近提交记录（跨项目合并按日期降序） -->
-          <div class="gpa-section">
-            <div class="gpa-section-title">
-              <!-- 区块标题："最近提交记录" + 条数徽章 -->
-              {{ i18n.analysisRecentCommits }}
-              <span class="gpa-section-count">{{ stats.entries.length }}</span>
-            </div>
-            <div class="gpa-commit-list">
-              <div
-                v-for="c in pagedEntries"
-                :key="`${c.projectId}-${c.hash}`"
-                class="gpa-commit-item"
-              >
-                <span
-                  class="gpa-commit-hash"
-                  :title="c.hash"
-                >{{ c.hash }}</span>
-                <span
-                  class="gpa-commit-msg"
-                  :title="c.message"
-                >{{ c.message }}</span>
-                <span class="gpa-commit-meta">
-                  <!-- 项目名（可点击跳转列表视图） -->
-                  <span
-                    class="gpa-commit-project"
-                    :title="c.projectName"
-                    @click.stop="emit('viewProject', c.projectId)"
-                  >{{ c.projectName }}</span>
-                  <span class="gpa-commit-author">{{ c.author }}</span>
-                  <span
-                    class="gpa-commit-date"
-                    :title="c.date"
-                  >{{ relativeTime(c.date, i18n) }}</span>
-                </span>
+              <div class="gpa-bar-list">
+                <div
+                  v-for="t in typeRows"
+                  :key="t.type"
+                  class="gpa-bar-row"
+                >
+                  <span class="gpa-bar-label">{{ i18n[COMMIT_ANALYSIS_TYPE_META[t.type].labelKey] }}</span>
+                  <span class="gpa-bar-track">
+                    <span
+                      class="gpa-bar-fill"
+                      :style="{ width: t.pct, background: COMMIT_ANALYSIS_TYPE_META[t.type].color }"
+                    />
+                  </span>
+                  <span class="gpa-bar-num">{{ t.count }}</span>
+                </div>
               </div>
-            </div>
-            <!-- 加载更多（本地分页，每次 +50，文案："加载更多 (可见/总数)"） -->
-            <div
-              v-if="visibleCount < sortedEntries.length"
-              class="gpa-load-more"
-            >
-              <button
-                class="vp-btn vp-btn--ghost vp-btn--sm"
-                @click="visibleCount += 50"
-              >
-                {{ i18n.loadMoreLogs }} ({{ visibleCount }} / {{ sortedEntries.length }})
-              </button>
             </div>
           </div>
         </template>

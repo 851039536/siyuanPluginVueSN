@@ -26,6 +26,18 @@
     "totalBalance": "总余额",
     "grantedBalance": "赠送余额",
     "toppedUpBalance": "充值余额",
-    "deductHint": "提示：充值与赠送余额同时存在时，优先扣减赠送余额。"
+    "deductHint": "提示：充值与赠送余额同时存在时，优先扣减赠送余额。",
+    "officialLinks": "官方链接",
+    "linkPricing": "价格参考",
+    "linkDocs": "API 文档",
+    "linkConsole": "控制台",
+    "models": "可用模型",
+    "rateHint": "汇率",
+    "perMillion": "每百万 tokens",
+    "cacheHitPrice": "输入（命中缓存）",
+    "cacheMissPrice": "输入（未命中缓存）",
+    "outputPrice": "输出",
+    "priceUnknown": "价格表未收录该模型，请以官网为准。",
+    "modelsFailed": "模型列表获取失败"
   }
 }

@@ -66,6 +66,31 @@ function promptUser(query) {
   }))
 }
 
+// 自动检测推送 remote 名称（优先从当前分支 upstream 解析 → 取 remote 列表第一个 → 回退 'origin'）
+function getPushRemote() {
+  return new Promise((resolve) => {
+    // 尝试从当前分支的 upstream 获取 remote 名（如 gitee/master → gitee）
+    exec('git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>nul', (err, stdout) => {
+      if (!err && stdout.trim()) {
+        const remote = stdout.trim().split('/')[0]
+        if (remote) {
+          resolve(remote)
+          return
+        }
+      }
+      // 回退：列出所有 remote，取第一个
+      exec('git remote', (err2, stdout2) => {
+        if (!err2 && stdout2.trim()) {
+          const remotes = stdout2.trim().split('\n')
+          resolve(remotes[0] || 'origin')
+          return
+        }
+        resolve('origin')
+      })
+    })
+  })
+}
+
 const args = process.argv.slice(2)
 const mode = args.find((arg) => arg.startsWith('--mode='))?.split('=')[1]
 

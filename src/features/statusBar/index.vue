@@ -158,6 +158,8 @@ interface FeatureRegistryEntry extends FeatureDrawerItem {
 
 // 速记 i18n 分片（思源类型将 i18n 声明为扁平 IObject，嵌套命名空间需显式收窄）
 const quickNoteI18n = (props.plugin?.i18n?.quickNote ?? {}) as unknown as Record<string, string>
+// 图片生成 i18n 分片（同上，显式收窄嵌套命名空间）
+const imageCreationI18n = (props.plugin?.i18n?.imageCreation ?? {}) as unknown as Record<string, string>
 
 const FEATURES: FeatureRegistryEntry[] = [
   {
@@ -244,7 +246,7 @@ const FEATURES: FeatureRegistryEntry[] = [
     id: "imageCreation",
     icon: "mdi:image-text",
     color: "#f59e0b",
-    title: "图片生成",
+    title: imageCreationI18n.title,
     pinnable: false,
     shortcut: {
       icon: "ph:image-square",

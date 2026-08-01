@@ -70,11 +70,10 @@
       @close="hideSkillsViewer"
     />
 
-    <!-- 图片生成器 -->
-    <CoverGenerator
+    <!-- 图片生成器（按功能开关挂载，关闭开关时不再常驻） -->
+    <ImageCreationDialog
+      v-if="imageCreationEnabled"
       :visible="imageCreationVisible"
-      :initial-title="imageCreationInitialTitle"
-      :initial-keywords="imageCreationInitialKeywords"
       @update:visible="(v: boolean) => { imageCreationVisible = v; if (!v) hideImageCreation() }"
     />
   </div>
@@ -93,10 +92,9 @@ import {
   hidePasswordVault,
   hideSkillsViewer,
   showPromptsModal,
+  showImageCreation,
   showWebsiteNavigation,
   htmlViewerVisible,
-  imageCreationInitialKeywords,
-  imageCreationInitialTitle,
   imageCreationVisible,
   openPasswordVaultWithText,
   passwordVaultVisible,
@@ -113,7 +111,7 @@ import {
 } from "@/features/floatingToolbar"
 import HtmlViewerDialog from "@/features/htmlViewer/index.vue"
 import ImageViewer from "@/features/imageCompressor/index.vue"
-import CoverGenerator from "@/features/imageCreation/components/CoverGenerator.vue"
+import ImageCreationDialog from "@/features/imageCreation/index.vue"
 import PasswordVaultDialog from "@/features/passwordVault/index.vue"
 import SkillsViewerDialog from "@/features/skillsViewer/index.vue"
 import VideoManager from "@/features/video/index.vue"
@@ -121,6 +119,7 @@ import { usePlugin } from "@/main"
 
 const plugin = usePlugin() as PluginSample
 const skillsViewerEnabled = plugin.settings.enableSkillsViewer !== false
+const imageCreationEnabled = plugin.settings.enableImageCreation !== false
 const showImageViewer = ref(false)
 const showQRCodeDialog = ref(false)
 const showVideoManager = ref(false)
@@ -183,7 +182,7 @@ onMounted(() => {
 
   // 监听打开图片生成事件（来自状态栏功能抽屉）
   window.addEventListener("openImageCreation", () => {
-    imageCreationVisible.value = true
+    showImageCreation()
   })
 
   // 监听打开Everything搜索事件

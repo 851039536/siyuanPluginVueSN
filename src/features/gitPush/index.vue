@@ -63,8 +63,10 @@
       :analyzed="analysisAnalyzed"
       :analyzed-at="analysisAnalyzedAt"
       :commit-count="analysisCommitCount"
+      :view-settings="analysisViewSettings"
       @run-analysis="runAnalysis"
       @update-count="setCommitCount"
+      @update-view-settings="updateViewSettings"
       @view-project="onViewProject"
     />
 
@@ -586,6 +588,8 @@ const {
   setCommitCount,
   runAnalysis,
   ensureAnalysis,
+  viewSettings: analysisViewSettings,
+  updateViewSettings,
 } = useCommitAnalysis(props.manager, projects)
 
 const {

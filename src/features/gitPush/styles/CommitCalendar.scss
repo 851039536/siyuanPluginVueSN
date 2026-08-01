@@ -1,0 +1,110 @@
+// 提交日历样式：月卡片网格视图（星期表头按周起始排序，日格子显示日号与提交数）
+@use "./variables" as *;
+@use "./mixins" as *;
+
+// 月卡片网格（12 个月约 4 列 × 3 行，窄面板自动换行）
+.gpa-cal {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: $spacing-2;
+}
+
+.gpa-cal-month {
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-base;
+  background: var(--b3-theme-surface);
+  padding: $spacing-2;
+}
+
+// 月标题：YYYY-MM + 月提交总数
+.gpa-cal-month-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-1;
+
+  .gpa-cal-month-title {
+    font-family: $vp-mono;
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-bold;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--b3-theme-on-surface-light);
+    opacity: 0.6;
+  }
+
+  .gpa-cal-month-total {
+    font-family: $vp-mono;
+    font-size: $font-size-2xs;
+    opacity: 0.45;
+  }
+}
+
+// 星期表头（7 列，与日格子列对齐）
+.gpa-cal-weekhead {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: $spacing-px;
+  margin-bottom: $spacing-px;
+
+  .gpa-cal-weekhead-cell {
+    font-size: $font-size-2xs;
+    text-align: center;
+    opacity: 0.45;
+  }
+}
+
+// 日格子网格（7 列，月内最后一周不足 7 格时留白）
+.gpa-cal-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: $spacing-px;
+}
+
+.gpa-cal-day {
+  aspect-ratio: 1;
+  border-radius: $radius-sm;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: outline 0.12s;
+
+  // 月初偏移空格（占位不显示）
+  &.is-blank {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  // 当前月内超出范围末尾（今天之后）的日期弱化
+  &.is-future {
+    opacity: 0.35;
+  }
+
+  // 今天描边强调
+  &.is-today {
+    outline: 2px solid var(--b3-theme-primary);
+    outline-offset: 1px;
+  }
+
+  &:hover:not(.is-blank) {
+    outline: 2px solid var(--b3-theme-on-surface);
+    outline-offset: 1px;
+  }
+
+  .gpa-cal-day-num {
+    font-family: $vp-mono;
+    font-size: $font-size-2xs;
+    line-height: 1;
+    opacity: 0.8;
+  }
+
+  .gpa-cal-day-count {
+    font-family: $vp-mono;
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-bold;
+    line-height: 1;
+    margin-top: $spacing-2px;
+    color: var(--b3-theme-on-surface);
+  }
+}

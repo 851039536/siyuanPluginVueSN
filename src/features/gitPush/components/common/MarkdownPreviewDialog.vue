@@ -125,7 +125,7 @@
 </template>
 
 <script setup lang="ts">
-import type { GitProject } from "../types"
+import type { GitProject } from "../../types"
 import {
   computed,
   onMounted,
@@ -138,8 +138,8 @@ import { copyToClipboard } from "@/utils/domUtils"
 import {
   readMarkdownFile,
   scanMarkdownFiles,
-} from "../composables/useMarkdownFiles"
-import { resolveValidPath } from "../utils"
+} from "../../composables/useMarkdownFiles"
+import { resolveValidPath } from "../../utils"
 
 const props = defineProps<{
   project: GitProject
@@ -238,5 +238,5 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss">
-@use "../styles/MarkdownPreviewDialog.scss";
+@use "../../styles/MarkdownPreviewDialog.scss";
 </style>

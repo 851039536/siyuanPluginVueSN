@@ -126,8 +126,8 @@
 import { computed, ref } from "vue"
 import { Icon } from "@iconify/vue"
 import { copyToClipboard } from "@/utils/domUtils"
-import { openLocalPath } from "../utils"
-import { getConfigDesc } from "../types/gitConfigDesc"
+import { openLocalPath } from "../../utils"
+import { getConfigDesc } from "../../types/gitConfigDesc"
 
 interface ConfigEntry {
   key: string
@@ -186,5 +186,5 @@ async function handleOpenFile() {
 </script>
 
 <style lang="scss" scoped>
-@use "../styles/GitConfigDialog";
+@use "../../styles/GitConfigDialog";
 </style>

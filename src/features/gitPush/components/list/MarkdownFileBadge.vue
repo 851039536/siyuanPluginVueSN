@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import type { MdFileVariant } from "../composables/useMarkdownFiles"
+import type { MdFileVariant } from "../../composables/useMarkdownFiles"
 import { Icon } from "@iconify/vue"
 
 defineProps<{
@@ -32,5 +32,5 @@ defineEmits<{
 </script>
 
 <style lang="scss">
-@use "../styles/MarkdownFileBadge.scss";
+@use "../../styles/MarkdownFileBadge.scss";
 </style>

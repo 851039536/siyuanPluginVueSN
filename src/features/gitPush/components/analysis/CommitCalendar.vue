@@ -49,7 +49,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue"
-import { formatLocalDate, heatCellColor, heatLevel } from "../utils"
+import { formatLocalDate, heatCellColor, heatLevel } from "../../utils"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -151,6 +151,6 @@ const months = computed<MonthCell[]>(() => {
 </script>
 
 <style lang="scss">
-@use "../styles/CommitCalendar.scss";
-@use "../styles/index.scss";
+@use "../../styles/CommitCalendar.scss";
+@use "../../styles/index.scss";
 </style>

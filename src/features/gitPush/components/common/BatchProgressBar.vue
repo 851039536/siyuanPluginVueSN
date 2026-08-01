@@ -111,7 +111,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue"
 import { Icon } from "@iconify/vue"
-import type { LoadProgress, LogEntry } from "../types/batchProgress"
+import type { LoadProgress, LogEntry } from "../../types/batchProgress"
 
 const props = defineProps<{
   state: LoadProgress
@@ -137,6 +137,6 @@ const progressPercent = computed(() => {
 </script>
 
 <style lang="scss">
-@use "../styles/BatchProgressBar.scss";
-@use "../styles/index.scss";
+@use "../../styles/BatchProgressBar.scss";
+@use "../../styles/index.scss";
 </style>

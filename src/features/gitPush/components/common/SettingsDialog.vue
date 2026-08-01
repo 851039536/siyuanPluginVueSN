@@ -84,8 +84,8 @@
 import { Icon } from "@iconify/vue"
 import { ref, watch } from "vue"
 import Input from "@/components/Input.vue"
-import { clampGitConcurrency } from "../types"
-import { useDialogKeyboard } from "../composables/useDialogKeyboard"
+import { clampGitConcurrency } from "../../types"
+import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
 
 const props = defineProps<{
   i18n: Record<string, any>

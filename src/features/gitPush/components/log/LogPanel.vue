@@ -159,7 +159,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue"
 import { Icon } from "@iconify/vue"
-import type { GitOpLogEntry } from "../types"
+import type { GitOpLogEntry } from "../../types"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -229,6 +229,6 @@ function formatTime(iso: string): string {
 </script>
 
 <style lang="scss">
-@use "../styles/LogPanel.scss";
-@use "../styles/index.scss";
+@use "../../styles/LogPanel.scss";
+@use "../../styles/index.scss";
 </style>

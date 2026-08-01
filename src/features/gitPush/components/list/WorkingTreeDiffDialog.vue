@@ -135,9 +135,9 @@
 </template>
 
 <script setup lang="ts">
-import type { FileChange } from "../types"
-import type { DiffLineType } from "../utils"
-import { parseDiffLines } from "../utils"
+import type { FileChange } from "../../types"
+import type { DiffLineType } from "../../utils"
+import { parseDiffLines } from "../../utils"
 import { Icon } from "@iconify/vue"
 import {
   computed,
@@ -214,7 +214,7 @@ onUnmounted(() => window.removeEventListener("keydown", handleKeydown))
 
 <style lang="scss">
 @use "@/index.scss" as *;
-@use "../styles/variables" as *;
-@use "../styles/mixins" as *;
-@use "../styles/WorkingTreeDiffDialog.scss";
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+@use "../../styles/WorkingTreeDiffDialog.scss";
 </style>

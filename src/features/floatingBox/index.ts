@@ -19,6 +19,8 @@ let container: HTMLElement | null = null
 export function registerFloatingBox(plugin: Plugin): void {
   container = document.createElement("div")
   container.id = "floating-box-container"
+  // 全局基准字号类：index.scss 中 .vp-dock-root 统一设为 $font-size-xs(12px)
+  container.classList.add("vp-dock-root")
 
   const selectors = [
     ".layout__center.fn__flex.fn__flex-1",

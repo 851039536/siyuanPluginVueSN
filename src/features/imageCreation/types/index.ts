@@ -70,6 +70,12 @@ export type WatermarkPosition = "bottomLeft" | "bottomRight" | "topLeft" | "topR
 /** Logo 角标位置 */
 export type LogoPosition = "topLeft" | "topRight" | "bottomLeft" | "bottomRight"
 
+/** 水印位置选项（设置下拉与随机组合共用） */
+export const WATERMARK_POSITIONS: WatermarkPosition[] = ["bottomLeft", "bottomRight", "topLeft", "topRight", "center"]
+
+/** Logo 角标位置选项（设置下拉与随机组合共用） */
+export const LOGO_POSITIONS: LogoPosition[] = ["topLeft", "topRight", "bottomLeft", "bottomRight"]
+
 /** 导出图片格式 */
 export type ExportFormat = "png" | "jpeg" | "webp"
 

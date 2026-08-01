@@ -13,7 +13,10 @@ import type { CoverSettings } from "../types/storage"
 import {
   COVER_FONT_FAMILY,
   COVER_STYLE_REGISTRY,
+  LOGO_POSITIONS,
+  WATERMARK_POSITIONS,
 } from "../types"
+import { cloneCoverSettings } from "../types/storage"
 import { simpleHtmlEscape } from "@/utils/domUtils"
 
 /** 从风格注册表解析风格定义（无效 styleId 回退第一个） */
@@ -72,14 +75,37 @@ export function randomCoverColors(): { bg: string, titleColor: string, accent: s
 
 /** 随机水印位置 */
 export function randomWatermarkPosition(): WatermarkPosition {
-  const positions: WatermarkPosition[] = ["bottomLeft", "bottomRight", "topLeft", "topRight", "center"]
-  return positions[Math.floor(Math.random() * positions.length)]
+  return WATERMARK_POSITIONS[Math.floor(Math.random() * WATERMARK_POSITIONS.length)]
 }
 
 /** 随机 Logo 角标位置 */
 export function randomLogoPosition(): LogoPosition {
-  const positions: LogoPosition[] = ["topLeft", "topRight", "bottomLeft", "bottomRight"]
-  return positions[Math.floor(Math.random() * positions.length)]
+  return LOGO_POSITIONS[Math.floor(Math.random() * LOGO_POSITIONS.length)]
+}
+
+/** 随机取风格注册表内风格（可排除若干风格，保证候选之间互不相同） */
+export function pickRandomStyleId(exclude: string[] = []): string {
+  const ids = COVER_STYLE_REGISTRY
+    .map((s) => s.id)
+    .filter((id) => !exclude.includes(id))
+  if (!ids.length) return COVER_STYLE_REGISTRY[0].id
+  return ids[Math.floor(Math.random() * ids.length)]
+}
+
+/** 生成随机组合变体设置：随机主题色 + 随机水印/Logo 位置（保留其余偏好） */
+export function buildRandomVariantSettings(base: CoverSettings): CoverSettings {
+  const variant = cloneCoverSettings(base)
+  variant.colors = {
+    enabled: true,
+    ...randomCoverColors(),
+  }
+  if (variant.watermark.enabled) {
+    variant.watermark.position = randomWatermarkPosition()
+  }
+  if (variant.logo.enabled) {
+    variant.logo.position = randomLogoPosition()
+  }
+  return variant
 }
 
 /** 构建完整封面 HTML（纯代码，无 AI 依赖） */

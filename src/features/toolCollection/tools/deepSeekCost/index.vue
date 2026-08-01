@@ -35,6 +35,23 @@
         :i18n="i18n"
       />
     </div>
+
+    <!-- 底部官网链接栏 -->
+    <div class="dc-footer">
+      <!-- 标签："官方链接" -->
+      <span class="dc-footer-label">{{ i18n.officialLinks }}</span>
+      <!-- 链接："价格参考 / API 文档 / 控制台" -->
+      <a
+        v-for="link in OFFICIAL_LINKS"
+        :key="link.href"
+        class="dc-link"
+        :href="link.href"
+        target="_blank"
+        rel="noreferrer"
+      >
+        {{ i18n[link.labelKey] }}
+      </a>
+    </div>
   </div>
 </template>
 
@@ -56,6 +73,22 @@ const currentTab = ref<"calc" | "balance">("calc")
 
 // 解出本工具文案对象（缺失时为空对象兜底，避免模板崩溃）
 const i18n = props.i18n.deepSeekCost ?? ({} as Record<string, string>)
+
+// 官网链接常量（href + 对应 i18n 文案键）
+const OFFICIAL_LINKS = [
+  {
+    href: "https://api-docs.deepseek.com/zh-cn/quick_start/pricing",
+    labelKey: "linkPricing",
+  },
+  {
+    href: "https://api-docs.deepseek.com/zh-cn/api/",
+    labelKey: "linkDocs",
+  },
+  {
+    href: "https://platform.deepseek.com/",
+    labelKey: "linkConsole",
+  },
+]
 </script>
 
 <style scoped lang="scss">

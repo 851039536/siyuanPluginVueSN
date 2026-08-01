@@ -41,6 +41,7 @@ toolCollection/
 | 颜色选择器 | HEX/RGB/HSL 互转 + 调色板 + 复制 |
 | Base64 图片转换 | 图片 → Base64 编码互转 |
 | 单位换算 | 8 类物理单位 + 进制 + ASCII 转换 |
+| DeepSeek 成本 | 缓存命中率费用换算 + API 余额查询 |
 
 ## 注册新工具
 

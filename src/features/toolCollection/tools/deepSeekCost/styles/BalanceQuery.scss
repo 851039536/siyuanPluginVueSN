@@ -1,0 +1,110 @@
+// 余额查询面板样式（共享类见 index.scss）
+@use "@/variables.scss" as *;
+
+.dc-balance {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+
+  .dc-key-status {
+    .dc-key-masked {
+      font-family: $vp-mono;
+      font-size: $font-size-xs;
+      color: var(--b3-theme-on-surface);
+    }
+
+    .dc-key-missing {
+      font-size: $font-size-xs;
+      color: var(--b3-theme-warning);
+    }
+  }
+
+  .dc-query-btn {
+    padding: $spacing-2 $spacing-4;
+    align-self: flex-start;
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-medium;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--b3-theme-on-primary);
+    background: var(--b3-theme-primary);
+    border: none;
+    border-radius: $vp-radius;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    &:not(:disabled):hover {
+      opacity: 0.85;
+    }
+  }
+
+  .dc-error {
+    padding: $spacing-2 $spacing-3;
+    font-family: $vp-mono;
+    font-size: $font-size-2xs;
+    color: var(--b3-error);
+    background: var(--b3-theme-error-container);
+    border: 1px solid var(--b3-error);
+    border-radius: $vp-radius;
+    word-break: break-all;
+  }
+
+  .dc-result {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-2;
+
+    .dc-avail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .dc-avail {
+        font-family: $vp-mono;
+        font-weight: $font-weight-bold;
+
+        &.ok {
+          color: var(--b3-theme-success);
+        }
+
+        &.no {
+          color: var(--b3-error);
+        }
+      }
+    }
+
+    .dc-balance-card {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-1;
+      padding: $spacing-3;
+      border: 1px solid var(--b3-border-color);
+      border-radius: $vp-radius;
+      background: var(--b3-theme-surface);
+
+      .dc-currency {
+        font-family: $vp-mono;
+        font-size: $font-size-xs;
+        font-weight: $font-weight-bold;
+        color: var(--b3-theme-primary);
+        margin-bottom: $spacing-1;
+      }
+
+      .dc-balance-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: $font-size-2xs;
+        color: var(--b3-theme-on-surface);
+
+        span:last-child {
+          font-family: $vp-mono;
+          color: var(--b3-theme-on-background);
+        }
+      }
+    }
+  }
+}

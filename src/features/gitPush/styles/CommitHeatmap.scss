@@ -1,0 +1,111 @@
+// 提交热力图样式：GitHub 风格贡献图（周为列 × 7 天为行），固定 12px 格子保证星期标签行列对齐
+@use "./variables" as *;
+@use "./mixins" as *;
+
+// 热力图容器（周数由行内 CSS 变量 --gpa-heat-weeks 驱动，独立 SCSS 无法用 v-bind）
+.gpa-heat {
+  margin-bottom: $spacing-2;
+}
+
+// 横向滚动容器（最近一年约 53 周 ≈ 790px，窄面板可横向滚动）
+.gpa-heat-scroll {
+  overflow-x: auto;
+  @include hide-h-scrollbar;
+}
+
+// 月份标签行（gridColumn 由行内样式对齐到周列；标签可溢出列宽，与 GitHub 一致）
+.gpa-heat-months {
+  display: grid;
+  grid-template-columns: repeat(var(--gpa-heat-weeks), 12px);
+  gap: $spacing-px;
+  padding-left: calc(28px + #{$spacing-px}); // 对齐星期标签列（28px）+ 网格 gap
+  margin-bottom: $spacing-1;
+}
+
+.gpa-heat-month {
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface-light);
+  opacity: 0.45;
+  white-space: nowrap;
+}
+
+// 主体：星期标签列 + 周网格（同 gap 同尺寸，行对齐）
+.gpa-heat-body {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: $spacing-px;
+}
+
+// 星期标签列（3 个标签定位到第 1/3/5 行，与格子行严格对齐）
+.gpa-heat-weekdays {
+  display: grid;
+  grid-template-rows: repeat(7, 12px);
+  gap: $spacing-px;
+}
+
+.gpa-heat-weekday {
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface-light);
+  opacity: 0.45;
+  line-height: 12px;
+
+  &:nth-child(1) { grid-row: 1; }
+  &:nth-child(2) { grid-row: 3; }
+  &:nth-child(3) { grid-row: 5; }
+}
+
+// 周网格：固定 12px 列宽 × 7 行，列优先填充
+.gpa-heat-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--gpa-heat-weeks), 12px);
+  grid-template-rows: repeat(7, 12px);
+  grid-auto-flow: column;
+  gap: $spacing-px;
+}
+
+.gpa-heat-cell {
+  width: 12px;
+  height: 12px;
+  border-radius: $radius-sm;
+  transition: outline 0.12s;
+
+  // 范围外补齐周的空单元格（占位不显示）
+  &.is-empty {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  &:hover:not(.is-empty) {
+    outline: 2px solid var(--b3-theme-on-surface);
+    outline-offset: 1px;
+  }
+}
+
+// 图例：少 [0~4 级] 多
+.gpa-heat-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: $spacing-px;
+  margin-top: $spacing-2;
+
+  .gpa-heat-legend-text {
+    font-size: $font-size-2xs;
+    opacity: 0.45;
+    margin: 0 $spacing-1;
+  }
+
+  .gpa-heat-legend-cell {
+    width: 12px;
+    height: 12px;
+    border-radius: $radius-sm;
+  }
+}

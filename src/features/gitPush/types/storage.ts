@@ -1,6 +1,6 @@
 // Git 项目持久化存储与类型定义
 import type { Plugin } from "siyuan"
-import type { CommitAnalysisCache } from "./meta"
+import type { CommitAnalysisCache, CommitAnalysisViewSettings } from "./meta"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 
@@ -295,6 +295,14 @@ const DEFAULT_ANALYSIS_CACHE: CommitAnalysisCache = {
   entries: [],
 }
 
+/** 提交分析显示设置默认值（热力图 + 最近一年 + 周一起始 + GitHub 绿） */
+export const DEFAULT_ANALYSIS_VIEW_SETTINGS: CommitAnalysisViewSettings = {
+  view: "heatmap",
+  range: "lastYear",
+  weekStart: 1,
+  color: "#2ea44f",
+}
+
 const DEFAULT_UNGROUPED: ProjectCategory = {
   id: UNGROUPED_ID,
   name: "未分组",
@@ -320,6 +328,8 @@ export class GitPushStorage {
   readonly opLogs: TypedStorage<GitOpLogEntry[]>
   /** 提交分析结果缓存（跨会话复用，进入分析视图直接展示上次结果，手动重新分析后更新） */
   readonly commitAnalysisCache: TypedStorage<CommitAnalysisCache>
+  /** 提交分析显示设置（热力图/日历视图、显示范围、每周第一天、格子主色） */
+  readonly commitAnalysisView: TypedStorage<CommitAnalysisViewSettings>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
@@ -333,6 +343,7 @@ export class GitPushStorage {
     this.pushBranchMode = new TypedStorage<"all" | "head">(storage, "git-push-branch-mode", "all")
     this.opLogs = new TypedStorage(storage, "git-push-op-logs", [])
     this.commitAnalysisCache = new TypedStorage(storage, "git-push-analysis-cache", DEFAULT_ANALYSIS_CACHE)
+    this.commitAnalysisView = new TypedStorage(storage, "git-push-analysis-view", DEFAULT_ANALYSIS_VIEW_SETTINGS)
   }
 
   async init(): Promise<void> {

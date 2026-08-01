@@ -38,7 +38,7 @@
               :value="n"
             >{{ n }}</option>
           </select>
-          <!-- 按钮文案："开始分析"/"重新分析"（分析中图标转圈） -->
+          <!-- 按钮文案：“开始分析”/“重新分析”（分析中图标转圈） -->
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm"
             :disabled="analyzing"
@@ -51,6 +51,13 @@
             />
             {{ analyzed ? i18n.auditRerun : i18n.auditRun }}
           </button>
+          <!-- 显示设置菜单（视图/显示范围/每周第一天/格子颜色） -->
+          <CommitAnalysisSettings
+            :i18n="i18n"
+            :view-settings="viewSettings"
+            :years="yearOptions"
+            @update="emit('updateViewSettings', $event)"
+          />
         </div>
       </div>
 
@@ -150,6 +157,32 @@
                 <span class="gpa-bar-num">{{ row.count }}</span>
               </div>
             </div>
+          </div>
+
+          <!-- 提交热力图 / 日历（设置菜单可切换视图、显示范围、周起始与主色） -->
+          <div class="gpa-section">
+            <!-- 区块标题："提交热力图"/"提交日历"（随视图切换） -->
+            <div class="gpa-section-title">
+              {{ viewSettings.view === "heatmap" ? i18n.analysisHeatTitle : i18n.analysisCalendarTitle }}
+            </div>
+            <CommitHeatmap
+              v-if="viewSettings.view === 'heatmap'"
+              :i18n="i18n"
+              :day-counts="dayCounts"
+              :start="heatRange.start"
+              :end="heatRange.end"
+              :week-start="viewSettings.weekStart"
+              :color="viewSettings.color"
+            />
+            <CommitCalendar
+              v-else
+              :i18n="i18n"
+              :day-counts="dayCounts"
+              :start="heatRange.start"
+              :end="heatRange.end"
+              :week-start="viewSettings.weekStart"
+              :color="viewSettings.color"
+            />
           </div>
 
           <!-- 最近 30 天提交趋势（每日纵向条形图） -->
@@ -281,12 +314,15 @@
 </template>
 
 <script setup lang="ts">
-import type { CommitAnalysisStats } from "../types"
+import type { CommitAnalysisStats, CommitAnalysisViewSettings } from "../types"
 import { Icon } from "@iconify/vue"
 import { computed, ref } from "vue"
 import { COMMIT_COUNT_OPTIONS } from "../composables/useCommitAnalysis"
 import { COMMIT_ANALYSIS_TYPE_META } from "../types"
-import { relativeTime } from "../utils"
+import { buildDayCountMap, formatLocalDate, relativeTime, resolveAnalysisRange } from "../utils"
+import CommitAnalysisSettings from "./CommitAnalysisSettings.vue"
+import CommitCalendar from "./CommitCalendar.vue"
+import CommitHeatmap from "./CommitHeatmap.vue"
 import Loader from "@/components/Loader.vue"
 
 const props = defineProps<{
@@ -298,16 +334,40 @@ const props = defineProps<{
   /** 上次分析完成时间（ISO，工具条展示“上次分析”相对时间） */
   analyzedAt: string
   commitCount: number
+  /** 热力图/日历显示设置（视图/范围/每周第一天/格子主色，useCommitAnalysis 产出） */
+  viewSettings: CommitAnalysisViewSettings
 }>()
 
 const emit = defineEmits<{
   runAnalysis: []
   updateCount: [n: number]
+  updateViewSettings: [patch: Partial<CommitAnalysisViewSettings>]
   viewProject: [projectId: string]
 }>()
 
 /** 提交记录本地分页：默认 50 条，加载更多逐次 +50（仿 LogPanel） */
 const visibleCount = ref(50)
+
+/** 日计数映射（YYYY-MM-DD → 提交数），热力图与日历视图共用 */
+const dayCounts = computed(() => buildDayCountMap(props.stats.entries))
+
+/** 当前显示范围起止（YYYY-MM-DD） */
+const heatRange = computed(() => {
+  const { start, end } = resolveAnalysisRange(props.viewSettings.range)
+  return { start: formatLocalDate(start), end: formatLocalDate(end) }
+})
+
+/** 年份选项：数据年份 ∪ 今年 ∪ 已保存年份，降序（已保存年份不在数据中时也并入，避免 select 显示错位） */
+const yearOptions = computed(() => {
+  const years = new Set<number>()
+  years.add(new Date().getFullYear())
+  if (typeof props.viewSettings.range === "number") years.add(props.viewSettings.range)
+  for (const e of props.stats.entries) {
+    const d = new Date(e.date)
+    if (!Number.isNaN(d.getTime())) years.add(d.getFullYear())
+  }
+  return [...years].sort((a, b) => b - a)
+})
 
 /** 跨项目合并、按日期降序的提交流 */
 const sortedEntries = computed(() =>

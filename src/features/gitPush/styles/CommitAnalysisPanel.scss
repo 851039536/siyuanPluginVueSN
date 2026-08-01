@@ -17,8 +17,11 @@
   margin-bottom: $spacing-3;
 }
 
-// 分析状态文案（未分析/分析中/完成）
+// 分析状态文案（未分析/分析中/完成；占满剩余空间，超长省略避免挤压右侧控件）
 .gpa-status {
+  flex: 1;
+  min-width: 0;
+  @include text-ellipsis;
   font-size: $font-size-xs;
   opacity: 0.6;
 }
@@ -116,7 +119,22 @@
     flex: 1;
     min-height: 0; // 允许 flex 子项收缩，触发内部滚动
     overflow-y: auto;
+
+    // 细滚动条（仿 BatchProgressBar 先例，窄列下减少宽度侵占）
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: var(--b3-border-color);
+      border-radius: 2px;
+    }
   }
+}
+
+// 固定高度窄列内收敛条形标签列（轨道可读），不影响 Pair 2 全宽布局
+.gpa-section--scroll .gpa-bar-label {
+  flex-basis: 72px;
 }
 
 .gpa-section-title {
@@ -253,6 +271,7 @@
   display: flex;
   align-items: center;
   gap: $spacing-2;
+  flex-wrap: wrap; // 宽面板仍单行，窄列自动折行
   font-size: $font-size-2xs;
   opacity: 0.6;
 }

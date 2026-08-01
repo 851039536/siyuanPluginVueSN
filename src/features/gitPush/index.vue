@@ -92,21 +92,11 @@
         <span class="gp-loading-text">{{ i18n.loading }}</span>
       </div>
 
-      <div
+      <EmptyState
         v-else-if="projects.length === 0"
-        class="gp-empty"
-      >
-        <div class="gp-empty-icon">
-          <Icon
-            icon="mdi:source-repository"
-            width="48"
-            height="48"
-          />
-        </div>
-        <div class="gp-empty-text">
-          {{ i18n.noProjects }}
-        </div>
-      </div>
+        icon="mdi:source-repository"
+        :text="i18n.noProjects"
+      />
 
       <div
         v-else
@@ -303,7 +293,6 @@ import type {
   ProjectPathExtras,
 } from "./types"
 import type { Plugin } from "siyuan"
-import { Icon } from "@iconify/vue"
 import { showMessage } from "siyuan"
 import {
   computed,
@@ -329,6 +318,7 @@ import StatsPanel from "./components/stats/StatsPanel.vue"
 import LogPanel from "./components/log/LogPanel.vue"
 import CommitAnalysisPanel from "./components/analysis/CommitAnalysisPanel.vue"
 import BatchProgressBar from "./components/common/BatchProgressBar.vue"
+import EmptyState from "./components/common/EmptyState.vue"
 import GitConfigDialog from "./components/common/GitConfigDialog.vue"
 import Loader from "@/components/Loader.vue"
 import { useGitPush } from "./composables/useGitPush"

@@ -1,42 +1,20 @@
 <!-- Git 操作日志面板（推送/拉取/提交历史记录） -->
 <template>
   <div class="gp-log-panel">
-    <!-- 加载中占位（首次读盘期间显示，避免闪现空态） -->
-    <div
+    <!-- 加载中占位 -->
+    <EmptyState
       v-if="loading && logs.length === 0"
-      class="gp-empty"
-    >
-      <div class="gp-empty-icon">
-        <Icon
-          icon="mdi:loading"
-          width="48"
-          height="48"
-          class="gp-spin"
-        />
-      </div>
-      <!-- 加载中文案："加载中..." -->
-      <div class="gp-empty-text">
-        {{ i18n.loading }}
-      </div>
-    </div>
+      icon="mdi:loading"
+      :text="i18n.loading"
+      spin
+    />
 
     <!-- 空状态 -->
-    <div
+    <EmptyState
       v-else-if="logs.length === 0"
-      class="gp-empty"
-    >
-      <div class="gp-empty-icon">
-        <Icon
-          icon="mdi:history"
-          width="48"
-          height="48"
-        />
-      </div>
-      <!-- 空状态文案："暂无操作记录" -->
-      <div class="gp-empty-text">
-        {{ i18n.noOpLogs }}
-      </div>
-    </div>
+      icon="mdi:history"
+      :text="i18n.noOpLogs"
+    />
 
     <template v-else>
       <!-- 顶部工具条 -->
@@ -99,7 +77,7 @@
             <!-- 时间 -->
             <span class="gp-log-time">{{ formatTime(entry.time) }}</span>
           </div>
-          <!-- 平台明细（push/pull 可展开） -->
+          <!-- 平台明细 -->
           <div
             v-if="hasPlatforms(entry) && expandedIds.has(entry.id)"
             class="gp-log-platforms"
@@ -140,18 +118,13 @@
       </div>
 
       <!-- 加载更多 -->
-      <div
-        v-if="visibleCount < filteredLogs.length"
-        class="gp-log-load-more"
-      >
-        <!-- 按钮文案："加载更多" -->
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm"
-          @click="visibleCount = Math.min(visibleCount + 50, filteredLogs.length)"
-        >
-          {{ i18n.loadMoreLogs }} ({{ visibleCount }} / {{ filteredLogs.length }})
-        </button>
-      </div>
+      <LoadMoreButton
+        v-if="pagedHasMore"
+        :i18n="i18n"
+        :visible="pagedVisibleCount"
+        :total="filteredLogs.length"
+        @load-more="pagedLoadMore"
+      />
     </template>
   </div>
 </template>
@@ -160,6 +133,9 @@
 import { computed, ref } from "vue"
 import { Icon } from "@iconify/vue"
 import type { GitOpLogEntry } from "../../types"
+import { usePagedList } from "../../composables/usePagedList"
+import EmptyState from "../common/EmptyState.vue"
+import LoadMoreButton from "../common/LoadMoreButton.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -171,9 +147,6 @@ const emit = defineEmits<{
   clear: []
   viewProject: [projectId: string]
 }>()
-
-// ── 本地分页：默认 50 条，加载更多逐次增加 ──
-const visibleCount = ref(50)
 
 // ── 操作类型筛选 ──
 const activeFilter = ref("all")
@@ -189,7 +162,13 @@ const filteredLogs = computed(() => {
   return props.logs.filter((e) => e.action === activeFilter.value)
 })
 
-const pagedLogs = computed(() => filteredLogs.value.slice(0, visibleCount.value))
+/** 本地分页（usePagedList 消除与 CommitAnalysisPanel 的 visibleCount/slice 重复） */
+const {
+  visibleCount: pagedVisibleCount,
+  paged: pagedLogs,
+  hasMore: pagedHasMore,
+  loadMore: pagedLoadMore,
+} = usePagedList(filteredLogs, 50)
 
 /** 已展开平台明细的条目 id 集合 */
 const expandedIds = ref(new Set<string>())

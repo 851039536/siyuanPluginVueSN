@@ -376,6 +376,27 @@ export async function openRepoWebUrl(url: string): Promise<void> {
   window.open(webUrl, "_blank")
 }
 
+/** 条形宽度百分比（相对最大值，消除 CommitAnalysisPanel 中 4 个 computed 内的重复计算） */
+export function barPct(count: number, max: number): string {
+  return `${Math.round((count / max) * 100)}%`
+}
+
+/**
+ * 为排行条目预计算条形宽度百分比。
+ * max 取所有行中的最大值（兼容已排序降序的排行数据以及未排序的时间序列如 dailyCommits）。
+ * zeroAsEmpty 为 true 时 count=0 的项返回 "0%"（如 dailyRows 留空柱）。
+ */
+export function withBarPct<T extends { count: number }>(
+  rows: T[],
+  opts?: { zeroAsEmpty?: boolean },
+): (T & { pct: string })[] {
+  const max = Math.max(...rows.map((r) => r.count), 1)
+  return rows.map((r) => ({
+    ...r,
+    pct: opts?.zeroAsEmpty && r.count === 0 ? "0%" : barPct(r.count, max),
+  }))
+}
+
 // ── 时间格式化与项目排序（纯函数，无 Vue 响应式依赖）──
 
 /** 把 ISO 时间转为相对时间文案（i18n 驱动，含 {0} 数字占位），无法解析返回空 */

@@ -314,12 +314,12 @@
 </template>
 
 <script setup lang="ts">
-import type { CommitAnalysisStats, CommitAnalysisViewSettings } from "../types"
+import type { CommitAnalysisStats, CommitAnalysisViewSettings } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed, ref } from "vue"
-import { COMMIT_COUNT_OPTIONS } from "../composables/useCommitAnalysis"
-import { COMMIT_ANALYSIS_TYPE_META } from "../types"
-import { buildDayCountMap, formatLocalDate, relativeTime, resolveAnalysisRange } from "../utils"
+import { COMMIT_COUNT_OPTIONS } from "../../composables/useCommitAnalysis"
+import { COMMIT_ANALYSIS_TYPE_META } from "../../types"
+import { buildDayCountMap, formatLocalDate, relativeTime, resolveAnalysisRange } from "../../utils"
 import CommitAnalysisSettings from "./CommitAnalysisSettings.vue"
 import CommitCalendar from "./CommitCalendar.vue"
 import CommitHeatmap from "./CommitHeatmap.vue"
@@ -411,6 +411,6 @@ function onCountChange(e: Event) {
 </script>
 
 <style lang="scss">
-@use "../styles/CommitAnalysisPanel.scss";
-@use "../styles/index.scss";
+@use "../../styles/CommitAnalysisPanel.scss";
+@use "../../styles/index.scss";
 </style>

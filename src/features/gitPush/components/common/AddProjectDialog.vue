@@ -112,15 +112,15 @@
 </template>
 
 <script setup lang="ts">
-import type { ProjectPathExtras } from "../types"
+import type { ProjectPathExtras } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed, ref } from "vue"
 import Input from "@/components/Input.vue"
 import type { SelectOption } from "@/components/Select.vue"
 import Select from "@/components/Select.vue"
-import { UNGROUPED_ID } from "../types"
-import { useDialogKeyboard } from "../composables/useDialogKeyboard"
-import { usePathRows } from "../composables/usePathRows"
+import { UNGROUPED_ID } from "../../types"
+import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
+import { usePathRows } from "../../composables/usePathRows"
 
 const props = defineProps<{
   i18n: Record<string, any>

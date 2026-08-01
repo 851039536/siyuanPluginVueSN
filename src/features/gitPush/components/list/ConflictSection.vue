@@ -56,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import type { ConflictFile } from "../types"
+import type { ConflictFile } from "../../types"
 import { Icon } from "@iconify/vue"
 
 defineProps<{
@@ -71,5 +71,5 @@ defineEmits<{
 </script>
 
 <style lang="scss">
-@use "../styles/index.scss";
+@use "../../styles/index.scss";
 </style>

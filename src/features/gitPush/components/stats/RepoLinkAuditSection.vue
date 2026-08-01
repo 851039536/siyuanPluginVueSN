@@ -138,10 +138,10 @@ import type {
   RepoLinkAuditCell,
   RepoLinkAuditRow,
   RepoLinkAuditSummary,
-} from "../types"
+} from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
-import { PLATFORM_META } from "../types"
+import { PLATFORM_META } from "../../types"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -184,6 +184,6 @@ function cellTitle(cell: RepoLinkAuditCell): string {
 </script>
 
 <style lang="scss">
-@use "../styles/RepoLinkAuditSection.scss";
-@use "../styles/index.scss";
+@use "../../styles/RepoLinkAuditSection.scss";
+@use "../../styles/index.scss";
 </style>

@@ -228,8 +228,8 @@ import type {
   GitProject,
   GitPushManager,
   GitRemoteInfo,
-} from "../types"
-import { PLATFORM_META, REMOTES } from "../types"
+} from "../../types"
+import { PLATFORM_META, REMOTES } from "../../types"
 import { Icon } from "@iconify/vue"
 import { showMessage } from "siyuan"
 import {
@@ -245,12 +245,12 @@ import type { SelectOption } from "@/components/Select.vue"
 import type { RemoteRowItem } from "./EditableRemoteList.vue"
 import EditableRemoteList from "./EditableRemoteList.vue"
 import CloneLogPanel from "./CloneLogPanel.vue"
-import { getCurrentDeviceName, hasPlatformRemote, resolveRemotePlatform, resolveValidPathFromPaths } from "../utils"
+import { getCurrentDeviceName, hasPlatformRemote, resolveRemotePlatform, resolveValidPathFromPaths } from "../../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
 import { copyToClipboard } from "@/utils/domUtils"
 import { pickDirectory } from "@/utils/electronDialog"
-import { useCloneLog } from "../composables/useCloneLog"
-import { usePathRows } from "../composables/usePathRows"
+import { useCloneLog } from "../../composables/useCloneLog"
+import { usePathRows } from "../../composables/usePathRows"
 
 
 const props = defineProps<{

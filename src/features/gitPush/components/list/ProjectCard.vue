@@ -725,17 +725,17 @@ import type {
   ProjectCategory,
   PushStatusInfo,
   WorkingTreeInfo,
-} from "../types"
+} from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed, onBeforeUnmount, ref, watch } from "vue"
 import {
   PLATFORM_META,
   REMOTES,
-} from "../types"
-import { activityLevel, hasAnyRemote, highlightSegments, openLocalPath, openRepoWebUrl, relativeTime, resolveValidPath } from "../utils"
-import type { PushOutputEntry } from "../composables/useGitOps"
-import { useCardActions } from "../composables/useCardActions"
-import { useCardData } from "../composables/useCardData"
+} from "../../types"
+import { activityLevel, hasAnyRemote, highlightSegments, openLocalPath, openRepoWebUrl, relativeTime, resolveValidPath } from "../../utils"
+import type { PushOutputEntry } from "../../composables/useGitOps"
+import { useCardActions } from "../../composables/useCardActions"
+import { useCardData } from "../../composables/useCardData"
 import BranchCommitList from "./BranchCommitList.vue"
 import ConflictSection from "./ConflictSection.vue"
 import MarkdownFileBadge from "./MarkdownFileBadge.vue"

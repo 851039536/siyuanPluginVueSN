@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-import type { PushOutputEntry } from "../composables/useGitOps"
+import type { PushOutputEntry } from "../../composables/useGitOps"
 import { computed } from "vue"
 
 /** stdout 预览截断上限（字符数） */

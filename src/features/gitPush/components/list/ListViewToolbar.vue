@@ -79,9 +79,9 @@
 </template>
 
 <script setup lang="ts">
-import type { GitProject, ProjectCategory, ViewMode } from "../types"
+import type { GitProject, ProjectCategory, ViewMode } from "../../types"
 import { Icon } from "@iconify/vue"
-import { VIEW_MODE_META, VIEW_MODES } from "../types"
+import { VIEW_MODE_META, VIEW_MODES } from "../../types"
 
 defineProps<{
   i18n: Record<string, any>
@@ -96,5 +96,5 @@ const gitOpsPaused = defineModel<boolean>("gitOpsPaused", { required: true })
 </script>
 
 <style lang="scss">
-@use "../styles/ListViewToolbar.scss";
+@use "../../styles/ListViewToolbar.scss";
 </style>

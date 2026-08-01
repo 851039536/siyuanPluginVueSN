@@ -44,10 +44,42 @@ src/features/gitPush/
 │   ├── useGitTagsConflicts.ts       # Tag/冲突/模板/扫描导入
 │   └── useGitStats.ts               # 统计视图 computed
 ├── components/
-│   ├── StatsPanel.vue               # 统计视图（覆盖率/待处理项目/平台状态）
-│   ├── WorkingTreePanel.vue         # 工作区变更面板（暂存/diff/提交）
-│   ├── WorkingTreeDiffDialog.vue    # 差异查看弹窗（词级高亮/文件导航/弹窗内暂存丢弃）
-│   └── BranchCommitList.vue         # 提交历史面板（含搜索）
+│   ├── common/                      # 面板常驻 + 全局弹窗 + 弹窗子组件（14 个）
+│   │   ├── PanelHeader.vue          # 面板头部（搜索 + 视图切换）
+│   │   ├── BatchProgressBar.vue     # 批量进度条
+│   │   ├── ConfirmDialog.vue        # 通用确认弹窗
+│   │   ├── AddProjectDialog.vue     # 添加项目弹窗
+│   │   ├── CategoryDialog.vue       # 分类管理弹窗
+│   │   ├── SettingsDialog.vue       # 设置弹窗
+│   │   ├── IdeManagementDialog.vue  # IDE 管理弹窗
+│   │   ├── ScanImportDialog.vue     # 扫描导入弹窗
+│   │   ├── EditProjectDialog.vue    # 编辑项目弹窗
+│   │   ├── MarkdownPreviewDialog.vue# Markdown 预览弹窗
+│   │   ├── GitConfigDialog.vue      # Git 配置弹窗
+│   │   ├── SearchBox.vue            # 搜索框
+│   │   ├── EditableRemoteList.vue   # 可编辑远程列表
+│   │   └── CloneLogPanel.vue        # 克隆日志面板
+│   ├── list/                        # 列表视图专属（10 个）
+│   │   ├── ListViewToolbar.vue      # 列表工具栏
+│   │   ├── ProjectCard.vue          # 项目卡片
+│   │   ├── BranchCommitList.vue     # 提交历史（含搜索）
+│   │   ├── ConflictSection.vue      # 冲突区
+│   │   ├── MarkdownFileBadge.vue    # Markdown 文件标记
+│   │   ├── OutputPanel.vue          # 命令输出面板
+│   │   ├── StashSection.vue         # Stash 管理区
+│   │   ├── TagPanel.vue             # 标签面板
+│   │   ├── WorkingTreePanel.vue     # 工作区变更面板
+│   │   └── WorkingTreeDiffDialog.vue# 差异查看弹窗
+│   ├── stats/                       # 统计视图专属（2 个）
+│   │   ├── StatsPanel.vue           # 统计视图
+│   │   └── RepoLinkAuditSection.vue # 仓库链接审计
+│   ├── log/                         # 操作日志视图专属（1 个）
+│   │   └── LogPanel.vue             # 操作日志面板
+│   └── analysis/                    # 提交分析视图专属（4 个）
+│       ├── CommitAnalysisPanel.vue  # 提交分析面板
+│       ├── CommitAnalysisSettings.vue# 分析设置
+│       ├── CommitCalendar.vue       # 提交日历
+│       └── CommitHeatmap.vue        # 提交热力图
 └── styles/
     ├── index.scss                   # 主面板样式
     ├── StatsPanel.scss              # 统计视图样式

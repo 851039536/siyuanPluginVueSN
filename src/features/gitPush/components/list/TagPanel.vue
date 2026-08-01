@@ -126,7 +126,7 @@
 </template>
 
 <script setup lang="ts">
-import type { TagInfo } from "../types"
+import type { TagInfo } from "../../types"
 import { Icon } from "@iconify/vue"
 import { ref } from "vue"
 import Input from "@/components/Input.vue"

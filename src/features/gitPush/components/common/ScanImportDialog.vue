@@ -154,7 +154,7 @@ import { Icon } from "@iconify/vue"
 import { computed, ref } from "vue"
 import Input from "@/components/Input.vue"
 import { pickDirectory } from "@/utils/electronDialog"
-import { useDialogKeyboard } from "../composables/useDialogKeyboard"
+import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
 
 const props = defineProps<{
   i18n: Record<string, any>

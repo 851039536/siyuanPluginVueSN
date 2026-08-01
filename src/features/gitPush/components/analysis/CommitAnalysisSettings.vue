@@ -88,7 +88,7 @@
 </template>
 
 <script setup lang="ts">
-import type { CommitAnalysisViewSettings } from "../types"
+import type { CommitAnalysisViewSettings } from "../../types"
 import { Icon } from "@iconify/vue"
 import { onMounted, onUnmounted, ref } from "vue"
 
@@ -135,6 +135,6 @@ onUnmounted(() => document.removeEventListener("click", closeOnOutside))
 </script>
 
 <style lang="scss">
-@use "../styles/CommitAnalysisSettings.scss";
-@use "../styles/index.scss";
+@use "../../styles/CommitAnalysisSettings.scss";
+@use "../../styles/index.scss";
 </style>

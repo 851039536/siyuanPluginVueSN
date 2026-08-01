@@ -79,9 +79,9 @@
 import { Icon } from "@iconify/vue"
 import { ref } from "vue"
 import Input from "@/components/Input.vue"
-import type { ProjectCategory } from "../types"
-import { UNGROUPED_ID } from "../types"
-import { useDialogKeyboard } from "../composables/useDialogKeyboard"
+import type { ProjectCategory } from "../../types"
+import { UNGROUPED_ID } from "../../types"
+import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
 
 defineProps<{
   i18n: Record<string, any>

@@ -89,6 +89,36 @@
   margin-bottom: $spacing-3;
 }
 
+// ── 双栏区块（项目排行+最近记录 / 作者+内容类型 同排）──
+.gpa-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $spacing-3;
+  margin-bottom: $spacing-3;
+
+  > .gpa-section {
+    margin-bottom: 0; // 网格内由 gap 控制间距，不叠加底部 margin
+  }
+}
+
+// ── 固定高度区块（Pair 1 双栏：内容超高时列表内部滚动，标题保持可见）──
+.gpa-section--scroll {
+  height: 320px; // 固定高度（约 8 行），超出滚动
+  display: flex;
+  flex-direction: column;
+
+  > .gpa-section-title {
+    flex-shrink: 0; // 标题不随滚动区压缩
+  }
+
+  > .gpa-bar-list,
+  > .gpa-commit-list {
+    flex: 1;
+    min-height: 0; // 允许 flex 子项收缩，触发内部滚动
+    overflow-y: auto;
+  }
+}
+
 .gpa-section-title {
   @include gp-label-base;
   font-size: $font-size-xs;

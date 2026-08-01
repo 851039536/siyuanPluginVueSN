@@ -25,6 +25,7 @@
 </template>
 
 <script setup lang="ts">
+// 对比统计组件：展示原始/输出大小与压缩率（正负中性三态着色）
 import { formatFileSize } from "@/utils/format"
 import { computed } from "vue"
 

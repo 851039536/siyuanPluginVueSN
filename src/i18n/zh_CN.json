@@ -379,6 +379,8 @@
   "base64Image_generateQrcode": "生成二维码",
   "base64Image_qrcodeFailed": "生成二维码失败",
   "base64Image_content": "内容",
+  "base64Image_fetchCorsFailed": "获取图片失败，可能是跨域(CORS)限制导致",
+  "base64Image_cssUnavailable": "当前模式不支持CSS格式",
   "bookmarkMarker": {
     "title": "书签标记",
     "enableBookmarkMarker": "书签标记",

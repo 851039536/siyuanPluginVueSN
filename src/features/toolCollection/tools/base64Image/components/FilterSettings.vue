@@ -74,6 +74,7 @@
 </template>
 
 <script setup lang="ts">
+// 滤镜设置组件：灰度/模糊/亮度/对比度/饱和度五档滑块调节
 import Button from "@/components/Button.vue"
 
 export interface FilterSettings {

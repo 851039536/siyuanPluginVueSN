@@ -9,6 +9,7 @@ import type {
   CoverGenerationConfig,
   CoverLogoSettings,
   CoverWatermarkSettings,
+  CodeImageState,
   ExportFormat,
 } from "./index"
 import { PluginStorage } from "@/utils/pluginStorage"
@@ -65,6 +66,9 @@ export const DEFAULT_COVER_SETTINGS: CoverSettings = {
 /** Logo 允许的文件扩展名（上传校验） */
 export const LOGO_ALLOWED_EXTENSIONS = ["png", "jpg", "jpeg", "webp"] as const
 
+/** 背景图允许的文件扩展名（上传校验） */
+export const BG_IMAGE_ALLOWED_EXTENSIONS = ["png", "jpg", "jpeg", "webp"] as const
+
 /** 深拷贝偏好设置（默认值/合并/候选变体使用，避免嵌套对象共享引用） */
 export function cloneCoverSettings(s: CoverSettings): CoverSettings {
   return {
@@ -98,13 +102,126 @@ export interface CoverCandidate {
   settings: CoverSettings
 }
 
+/** 代码图片偏好设置（不含代码内容与折叠状态） */
+export interface CodeImageSettings {
+  contentType: "code" | "text"
+  selectedLanguage: string
+  selectedStyle: string
+  selectedTheme: string
+  fontSize: number
+  fontFamily: string
+  hljsTheme: string
+  enableWatermark: boolean
+  watermarkText: string
+  enableAuthor: boolean
+  authorName: string
+  enableTimestamp: boolean
+  borderWidth: number
+  borderRadius: number
+  paddingSize: number
+  backgroundOpacity: number
+  shadowIntensity: number
+  exportFormat: ExportFormat
+  exportScale: number
+  jpegQuality: number
+  bgColorEnabled: boolean
+  bgColor: string
+  /** 背景图工作区路径（storage/petal/<plugin>/codeimage/...），空 = 未设置 */
+  bgImagePath: string
+}
+
+/** 代码图片偏好默认值 */
+export const DEFAULT_CODE_IMAGE_SETTINGS: CodeImageSettings = {
+  contentType: "code",
+  selectedLanguage: "javascript",
+  selectedStyle: "github",
+  selectedTheme: "light",
+  fontSize: 14,
+  fontFamily: "jetbrains",
+  hljsTheme: "github",
+  enableWatermark: false,
+  watermarkText: "SiYuan Notes",
+  enableAuthor: false,
+  authorName: "",
+  enableTimestamp: false,
+  borderWidth: 1,
+  borderRadius: 8,
+  paddingSize: 16,
+  backgroundOpacity: 100,
+  shadowIntensity: 50,
+  exportFormat: "png",
+  exportScale: 2,
+  jpegQuality: 0.9,
+  bgColorEnabled: false,
+  bgColor: "#1e1e1e",
+  bgImagePath: "",
+}
+
+/** 从完整工作状态提取持久化偏好子集（bgImagePath 由设置服务持有，单独传入） */
+export function extractCodeImagePrefs(state: CodeImageState, bgImagePath: string): CodeImageSettings {
+  return {
+    contentType: state.contentType,
+    selectedLanguage: state.selectedLanguage,
+    selectedStyle: state.selectedStyle,
+    selectedTheme: state.selectedTheme,
+    fontSize: state.fontSize,
+    fontFamily: state.fontFamily,
+    hljsTheme: state.hljsTheme,
+    enableWatermark: state.enableWatermark,
+    watermarkText: state.watermarkText,
+    enableAuthor: state.enableAuthor,
+    authorName: state.authorName,
+    enableTimestamp: state.enableTimestamp,
+    borderWidth: state.borderWidth,
+    borderRadius: state.borderRadius,
+    paddingSize: state.paddingSize,
+    backgroundOpacity: state.backgroundOpacity,
+    shadowIntensity: state.shadowIntensity,
+    exportFormat: state.exportFormat,
+    exportScale: state.exportScale,
+    jpegQuality: state.jpegQuality,
+    bgColorEnabled: state.bgColorEnabled,
+    bgColor: state.bgColor,
+    bgImagePath,
+  }
+}
+
+/** 将持久化偏好应用到工作状态（contentType 等覆盖，codeContent/showDecorations 保留） */
+export function applyCodeImagePrefs(state: CodeImageState, settings: CodeImageSettings): void {
+  state.contentType = settings.contentType
+  state.selectedLanguage = settings.selectedLanguage
+  state.selectedStyle = settings.selectedStyle
+  state.selectedTheme = settings.selectedTheme
+  state.fontSize = settings.fontSize
+  state.fontFamily = settings.fontFamily
+  state.hljsTheme = settings.hljsTheme
+  state.enableWatermark = settings.enableWatermark
+  state.watermarkText = settings.watermarkText
+  state.enableAuthor = settings.enableAuthor
+  state.authorName = settings.authorName
+  state.enableTimestamp = settings.enableTimestamp
+  state.borderWidth = settings.borderWidth
+  state.borderRadius = settings.borderRadius
+  state.paddingSize = settings.paddingSize
+  state.backgroundOpacity = settings.backgroundOpacity
+  state.shadowIntensity = settings.shadowIntensity
+  state.exportFormat = settings.exportFormat
+  state.exportScale = settings.exportScale
+  state.jpegQuality = settings.jpegQuality
+  state.bgColorEnabled = settings.bgColorEnabled
+  state.bgColor = settings.bgColor
+}
+
 /** 图片生成功能持久化存储 */
 export class ImageCreationStorage {
   /** 封面偏好设置 */
   readonly cover: TypedStorage<CoverSettings>
+  /** 代码图片偏好设置 */
+  readonly codeImage: TypedStorage<CodeImageSettings>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
     this.cover = new TypedStorage(storage, "image-creation-cover-settings", DEFAULT_COVER_SETTINGS)
+    this.codeImage = new TypedStorage(storage, "image-creation-code-image-settings", DEFAULT_CODE_IMAGE_SETTINGS)
   }
 }

@@ -106,6 +106,98 @@ export interface CoverLogoSettings {
 }
 
 // ============================================================
+// 代码图片生成类型
+// ============================================================
+
+/** 代码图片完整工作状态（含内容与 UI 状态；持久化只存 CodeImageSettings 子集） */
+export interface CodeImageState {
+  contentType: "code" | "text"
+  /** 代码/文字内容（不持久化） */
+  codeContent: string
+  selectedLanguage: string
+  selectedStyle: string
+  selectedTheme: string
+  fontSize: number
+  /** 字体 id（CODE_FONT_OPTIONS） */
+  fontFamily: string
+  /** hljs 高亮主题 id（HLJS_THEMES） */
+  hljsTheme: string
+  /** 装饰折叠状态（不持久化） */
+  showDecorations: boolean
+  enableWatermark: boolean
+  watermarkText: string
+  enableAuthor: boolean
+  authorName: string
+  enableTimestamp: boolean
+  borderWidth: number
+  borderRadius: number
+  paddingSize: number
+  backgroundOpacity: number
+  shadowIntensity: number
+  exportFormat: ExportFormat
+  /** 导出缩放倍数（1/2/3） */
+  exportScale: number
+  jpegQuality: number
+  bgColorEnabled: boolean
+  bgColor: string
+}
+
+/** 代码模式风格 id 列表（选项与随机候选共用） */
+export const CODE_STYLE_IDS = ["github", "mac", "cartoon", "wave", "glass", "neon", "3d"] as const
+
+/** 文字模式风格 id 列表（选项与随机候选共用） */
+export const TEXT_STYLE_IDS = ["quote", "poetry", "note", "poster", "card", "newspaper", "gradient"] as const
+
+/** 代码图片灵感候选（随机参数快照，共享当前内容） */
+export interface CodeImageCandidate {
+  label: string
+  params: CodeImageState
+}
+
+/** 等宽字体选项 */
+export interface CodeFontOption {
+  id: string
+  /** i18n 键（fontJetbrains 等） */
+  labelKey: string
+  /** 本地系统字体栈 */
+  stack: string
+}
+
+/** 代码图片字体选项（本地系统字体，无需外部加载） */
+export const CODE_FONT_OPTIONS: CodeFontOption[] = [
+  {
+    id: "jetbrains",
+    labelKey: "fontJetbrains",
+    stack: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace",
+  },
+  {
+    id: "fira",
+    labelKey: "fontFira",
+    stack: "'Fira Code', 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace",
+  },
+  {
+    id: "cascadia",
+    labelKey: "fontCascadia",
+    stack: "'Cascadia Code', 'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
+  },
+  {
+    id: "consolas",
+    labelKey: "fontConsolas",
+    stack: "Consolas, 'Courier New', monospace",
+  },
+  {
+    id: "system",
+    labelKey: "fontSystem",
+    stack: "monospace",
+  },
+]
+
+/** 按字体 id 解析字体栈（未知 id 回退 JetBrains Mono 栈） */
+export function resolveCodeFontStack(fontId: string): string {
+  return CODE_FONT_OPTIONS.find((f) => f.id === fontId)?.stack ?? CODE_FONT_OPTIONS[0].stack
+}
+
+// ============================================================
 // 图片生成 i18n 键接口（对应 src/i18n/*/imageCreation.json 的 imageCreation 命名空间）
 // ============================================================
 
@@ -184,6 +276,34 @@ export interface ImageCreationI18n {
   formatJpeg: string
   formatWebp: string
   jpegQualityLabel: string
+  fontLabel: string
+  fontJetbrains: string
+  fontFira: string
+  fontCascadia: string
+  fontConsolas: string
+  fontSystem: string
+  hljsThemeLabel: string
+  hljsGitHubLight: string
+  hljsGitHubDark: string
+  hljsAtomLight: string
+  hljsAtomDark: string
+  hljsMonokai: string
+  hljsTokyoNight: string
+  scale1x: string
+  scale2x: string
+  scale3x: string
+  copyHtml: string
+  msgCopiedHtml: string
+  bgColorLabel: string
+  bgColorEnable: string
+  bgImageLabel: string
+  bgImageUpload: string
+  bgImageRemove: string
+  bgImageEmptyHint: string
+  msgBgImageTypeInvalid: string
+  msgBgImageUploadFailed: string
+  msgBgImageLoadFailed: string
+  inspirationLabel: string
   msgLogoTypeInvalid: string
   msgLogoUploadFailed: string
   msgLogoRemoved: string

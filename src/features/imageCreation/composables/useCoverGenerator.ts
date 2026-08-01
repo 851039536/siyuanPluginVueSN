@@ -7,7 +7,7 @@ import type {
   CoverGenerationStatus,
   ImageCreationI18n,
 } from "../types"
-import type { CoverCandidate, CoverSettings } from "../types/storage"
+import type { CoverCandidate } from "../types/storage"
 import type { CoverSettingsService } from "./useCoverSettings"
 import {
   COVER_SIZE_PRESETS,
@@ -16,40 +16,12 @@ import {
 } from "../types"
 import { showMessage } from "siyuan"
 import { ref } from "vue"
-import { getFile } from "@/api"
 import {
   buildCoverHtml,
-  fileToDataUrl,
-  randomCoverColors,
-  randomLogoPosition,
-  randomWatermarkPosition,
+  buildRandomVariantSettings,
+  pickRandomStyleId,
 } from "../utils/coverHtml"
-import { cloneCoverSettings } from "./useCoverSettings"
-
-/** 随机取注册表内风格（可排除若干风格，保证候选之间互不相同） */
-function pickRandomStyleId(exclude: string[] = []): string {
-  const ids = COVER_STYLE_REGISTRY
-    .map((s) => s.id)
-    .filter((id) => !exclude.includes(id))
-  if (!ids.length) return COVER_STYLE_REGISTRY[0].id
-  return ids[Math.floor(Math.random() * ids.length)]
-}
-
-/** 生成随机组合变体设置：随机主题色 + 随机水印/Logo 位置（保留其余偏好） */
-function buildRandomVariantSettings(base: CoverSettings): CoverSettings {
-  const variant = cloneCoverSettings(base)
-  variant.colors = {
-    enabled: true,
-    ...randomCoverColors(),
-  }
-  if (variant.watermark.enabled) {
-    variant.watermark.position = randomWatermarkPosition()
-  }
-  if (variant.logo.enabled) {
-    variant.logo.position = randomLogoPosition()
-  }
-  return variant
-}
+import { cloneCoverSettings } from "../types/storage"
 
 export function useCoverGenerator(i18n: ImageCreationI18n, coverSettings: CoverSettingsService) {
   const coverHtml = ref("")
@@ -73,23 +45,15 @@ export function useCoverGenerator(i18n: ImageCreationI18n, coverSettings: CoverS
     currentConfig.value.styleId = s.styleId
   }
 
-  /** 解析当前 Logo dataURL（会话缓存；失败降级为空并提示） */
+  /** 解析当前 Logo dataURL（复用设置服务的会话缓存；失败降级为空并提示） */
   async function resolveLogoDataUrl(): Promise<string> {
     const s = coverSettings.settings.value
     if (!s.logo.enabled || !s.logo.path) return ""
-    if (coverSettings.logoDataUrl.value) return coverSettings.logoDataUrl.value
-    try {
-      const blob = await getFile(s.logo.path)
-      if (blob) {
-        const url = await fileToDataUrl(blob)
-        coverSettings.logoDataUrl.value = url
-        return url
-      }
-    } catch (error) {
-      console.error("Logo 加载失败，按无 Logo 生成:", error)
+    const url = await coverSettings.loadLogoDataUrl(s.logo.path)
+    if (!url) {
       showMessage(i18n.logoLoadFailed, 3000, "error")
     }
-    return ""
+    return url
   }
 
   /** 生成封面（Logo 存在时先经 getFile 加载 dataURL；失败降级为无 Logo 并提示） */
@@ -146,9 +110,9 @@ export function useCoverGenerator(i18n: ImageCreationI18n, coverSettings: CoverS
       },
     ]
 
-    // 2 个随机组合变体：随机风格（与已有候选互不相同）+ 随机主题色 + 随机水印/Logo 位置
+    // 4 个随机组合变体：随机风格（与已有候选互不相同）+ 随机主题色 + 随机水印/Logo 位置
     const usedStyles = new Set<string>([aiStyleId])
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 4; i++) {
       const styleId = pickRandomStyleId([...usedStyles])
       usedStyles.add(styleId)
       candidates.push({

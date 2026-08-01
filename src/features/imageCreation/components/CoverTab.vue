@@ -378,19 +378,25 @@ function updateCustomSize() {
   }
 }
 
-// 响应式自动生成：文字变化 debounce 200ms 避免频繁触发
+// 表单内容与装饰设置（主题色/水印/Logo）变化：防抖重生成
+// 尺寸/风格由下方即时 watch 处理，避免重复生成
 let autoGenTimer: ReturnType<typeof setTimeout> | null = null
-watch(
-  () => [config.value.title, config.value.category, config.value.keywords],
-  () => {
-    if (autoGenTimer) clearTimeout(autoGenTimer)
-    autoGenTimer = setTimeout(() => {
-      if (config.value.title.trim()) {
-        void generateCover()
-      }
-    }, 200)
-  },
-)
+const coverInputSignature = computed(() => JSON.stringify([
+  config.value.title,
+  config.value.category,
+  config.value.keywords,
+  coverSettings.settings.value.colors,
+  coverSettings.settings.value.watermark,
+  coverSettings.settings.value.logo,
+]))
+watch(coverInputSignature, () => {
+  if (autoGenTimer) clearTimeout(autoGenTimer)
+  autoGenTimer = setTimeout(() => {
+    if (config.value.title.trim()) {
+      void generateCover()
+    }
+  }, 200)
+})
 
 // 尺寸/风格变化：同步偏好设置 + 即时生成（无需 debounce）
 watch(
@@ -404,24 +410,6 @@ watch(
     }
   },
 )
-
-// 偏好设置中影响封面的部分（颜色/水印/Logo/尺寸/风格）变化时防抖重生成
-const coverAffectingSettings = computed(() => JSON.stringify({
-  colors: coverSettings.settings.value.colors,
-  watermark: coverSettings.settings.value.watermark,
-  logo: coverSettings.settings.value.logo,
-  width: coverSettings.settings.value.width,
-  height: coverSettings.settings.value.height,
-  styleId: coverSettings.settings.value.styleId,
-}))
-watch(coverAffectingSettings, () => {
-  if (autoGenTimer) clearTimeout(autoGenTimer)
-  autoGenTimer = setTimeout(() => {
-    if (config.value.title.trim()) {
-      void generateCover()
-    }
-  }, 200)
-})
 
 // 组件卸载时清理防抖定时器
 onUnmounted(() => {

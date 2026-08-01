@@ -58,6 +58,8 @@ export function registerToolCollection(plugin: Plugin) {
 
   container = document.createElement("div")
   container.id = "tool-collection-root"
+  // 全局基准字号类：index.scss 中 .vp-dock-root 统一设为 $font-size-xs(12px)
+  container.classList.add("vp-dock-root")
   document.body.appendChild(container)
 
   app = createApp(ToolCollectionPanel, {

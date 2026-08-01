@@ -12,3 +12,16 @@
 
 // 导入代码块美化主题样式（预设风格 + 通用增强）
 @use './features/generalSettings/styles/codeblockThemes.scss';
+
+// ========== 全局基准字号规则（两级字号制，参考 gitPush） ==========
+// Dock 面板根容器与弹窗遮罩统一以 $font-size-xs(12px) 为基准字号，
+// 防止内部未声明字号的文字继承思源全局默认字号（14px+）导致偏大。
+:root {
+  // CSS 自定义属性：桥接 SCSS Token，供 TS 内联样式（如 vueAppHelper.ts）引用
+  --vp-font-size-xs: #{$font-size-xs};
+}
+
+.vp-dock-root,
+.vp-modal-mask {
+  font-size: $font-size-xs;
+}

@@ -1,4 +1,4 @@
-<!-- 文章封面 Tab：左侧配置表单 + 封面预览面板 + AI 关键字提取 -->
+<!-- 文章封面 Tab：配置表单 + AI 全自动封面 + 装饰设置 + 换风格（预览见 CoverPreview） -->
 <template>
   <div class="cover-layout">
     <!-- 左侧：配置区 -->
@@ -31,7 +31,7 @@
         />
       </div>
 
-      <!-- 内容摘要：AI 提取关键字 -->
+      <!-- 内容摘要：AI 提取关键字 + AI 全自动封面 -->
       <div class="config-section">
         <label class="config-label">
           <!-- 标签："内容摘要" -->
@@ -45,15 +45,26 @@
           :placeholder="t.contentSummaryPlaceholder"
           rows="4"
         ></textarea>
-        <Button
-          variant="secondary"
-          size="xsmall"
-          :disabled="!contentText.trim() || aiExtracting"
-          @click="aiExtractKeywords"
-        >
-          <!-- 按钮文案："AI提取中..." / "AI提取关键字" -->
-          {{ aiExtracting ? t.aiExtracting : t.aiExtract }}
-        </Button>
+        <div class="config-actions">
+          <Button
+            variant="secondary"
+            size="xsmall"
+            :disabled="!contentText.trim() || aiExtracting"
+            @click="aiExtractKeywords"
+          >
+            <!-- 按钮文案："AI提取中..." / "AI提取关键字" -->
+            {{ aiExtracting ? t.aiExtracting : t.aiExtract }}
+          </Button>
+          <Button
+            variant="secondary"
+            size="xsmall"
+            :disabled="!contentText.trim() || aiAutoRunning"
+            @click="aiAutoGenerate"
+          >
+            <!-- 按钮文案："AI 生成中..." / "AI 全自动封面" -->
+            {{ aiAutoRunning ? t.aiAutoRunning : t.aiAutoCover }}
+          </Button>
+        </div>
       </div>
 
       <!-- 关键字 -->
@@ -68,21 +79,6 @@
           v-model="config.keywords"
           type="text"
           :placeholder="t.keywordsPlaceholder"
-        />
-      </div>
-
-      <!-- 水印 -->
-      <div class="config-section">
-        <label class="config-label">
-          <!-- 标签："水印" -->
-          {{ t.watermarkLabel }}
-          <!-- 辅助说明："（左下角显示）" -->
-          <span class="config-hint">{{ t.watermarkHint }}</span>
-        </label>
-        <Input
-          v-model="config.watermark"
-          type="text"
-          :placeholder="t.watermarkPlaceholder"
         />
       </div>
 
@@ -145,6 +141,9 @@
         </div>
       </div>
 
+      <!-- 封面装饰设置（主题色/水印/Logo） -->
+      <CoverDecorationSettings :service="coverSettings" />
+
       <!-- 操作按钮 -->
       <div class="config-actions">
         <Button
@@ -155,6 +154,13 @@
           <!-- 按钮文案："刷新封面" / "生成封面" -->
           {{ generationStatus === 'done' ? t.refreshCover : t.generateCover }}
         </Button>
+        <Button
+          variant="secondary"
+          size="xsmall"
+          icon="refresh"
+          :title="t.shuffleStyle"
+          @click="randomStyle"
+        />
       </div>
 
       <!-- 错误信息 -->
@@ -173,18 +179,21 @@
       :width="config.width"
       :height="config.height"
       :status="generationStatus"
+      :settings-service="coverSettings"
     />
   </div>
 </template>
 
 <script setup lang="ts">
 /**
- * 文章封面 Tab：配置表单 + AI 关键字提取 + 尺寸/风格选择（预览见 CoverPreview）
+ * 文章封面 Tab：配置表单 + AI 关键字提取 + AI 全自动封面 + 装饰设置 + 换风格
  */
 import type { CoverSizePreset } from "../types"
 import type { ImageCreationI18n } from "../types"
 import { showMessage } from "siyuan"
 import {
+  computed,
+  onMounted,
   onUnmounted,
   ref,
   watch,
@@ -196,7 +205,10 @@ import {
   callAI,
   getApiConfigFromPlugin,
 } from "@/utils/aiApi"
+import { COVER_STYLE_REGISTRY } from "../types"
 import { useCoverGenerator } from "../composables/useCoverGenerator"
+import { useCoverSettings } from "../composables/useCoverSettings"
+import CoverDecorationSettings from "./CoverDecorationSettings.vue"
 import CoverPreview from "./CoverPreview.vue"
 
 interface Props {
@@ -208,15 +220,18 @@ const props = defineProps<Props>()
 const plugin = usePlugin()
 const t = (plugin.i18n as Record<string, any>).imageCreation as ImageCreationI18n
 
+const coverSettings = useCoverSettings(plugin, t)
 const {
   coverHtml,
   generationStatus,
   errorMessage,
   currentConfig: config,
   generateCover,
+  randomStyle,
+  applyPersistedPrefs,
   COVER_SIZE_PRESETS,
   COVER_STYLE_PRESETS,
-} = useCoverGenerator(t)
+} = useCoverGenerator(t, coverSettings)
 
 const widthInput = ref(String(config.value.width))
 const heightInput = ref(String(config.value.height))
@@ -224,6 +239,9 @@ const heightInput = ref(String(config.value.height))
 // AI 关键字提取
 const contentText = ref("")
 const aiExtracting = ref(false)
+
+// AI 全自动封面
+const aiAutoRunning = ref(false)
 
 async function aiExtractKeywords() {
   if (!contentText.value.trim() || aiExtracting.value) return
@@ -240,6 +258,73 @@ async function aiExtractKeywords() {
     showMessage(t.msgAiFailed, 3000, "error")
   } finally {
     aiExtracting.value = false
+  }
+}
+
+/** AI 全自动封面：产出标题/关键字/风格建议，填入并自动生成 */
+async function aiAutoGenerate() {
+  if (!contentText.value.trim() || aiAutoRunning.value) return
+  aiAutoRunning.value = true
+  try {
+    const apiConfig = getApiConfigFromPlugin(plugin)
+    const result = await callAI(buildAiAutoPrompt(contentText.value.slice(0, 3000)), apiConfig)
+    const parsed = parseAiAutoResult(result)
+    if (!parsed) {
+      showMessage(t.aiAutoParseFailed, 3000, "error")
+      return
+    }
+    if (parsed.title) config.value.title = parsed.title
+    if (parsed.keywords.length) config.value.keywords = parsed.keywords.join(" ")
+    if (parsed.styleId && COVER_STYLE_REGISTRY.some((s) => s.id === parsed.styleId)) {
+      config.value.styleId = parsed.styleId
+    }
+    await generateCover()
+  } catch (error) {
+    console.error("AI 全自动封面失败:", error)
+    showMessage(t.msgAiFailed, 3000, "error")
+  } finally {
+    aiAutoRunning.value = false
+  }
+}
+
+/** AI 封面 prompt（按界面语言取中/英文模板，附风格注册表供 AI 选择） */
+function buildAiAutoPrompt(content: string): string {
+  const styleList = COVER_STYLE_REGISTRY
+    .map((s) => `${s.id}: ${s.label}（${s.description}）`)
+    .join("；")
+  const zh = `你是封面设计助手。根据以下文章内容生成封面配置，严格只返回 JSON（不要任何其他文字）：
+{"title":"不超过16字的吸引人标题","keywords":["关键字1","关键字2","关键字3"],"styleId":"风格id"}
+可选风格（styleId: 名称（描述））：${styleList}
+请根据内容主题选择最匹配的风格。
+文章内容：
+${content}`
+  const en = `You are a cover design assistant. Based on the article content below, generate a cover config and return ONLY JSON (no extra text):
+{"title":"an attractive title within 16 characters","keywords":["keyword1","keyword2","keyword3"],"styleId":"style id"}
+Available styles (styleId: label (description)): ${styleList}
+Pick the most fitting style based on the article topic.
+Article content:
+${content}`
+  return navigator.language.toLowerCase().startsWith("zh") ? zh : en
+}
+
+/** 解析 AI 返回的 JSON（兼容 ```json 代码块包裹） */
+function parseAiAutoResult(raw: string): { title: string, keywords: string[], styleId: string } | null {
+  try {
+    const match = raw.match(/\{[\s\S]*\}/)
+    if (!match) return null
+    const obj = JSON.parse(match[0])
+    const title = typeof obj.title === "string" ? obj.title.trim() : ""
+    const keywords = Array.isArray(obj.keywords)
+      ? obj.keywords
+        .filter((k: unknown): k is string => typeof k === "string")
+        .map((k) => k.trim())
+        .filter(Boolean)
+      : []
+    const styleId = typeof obj.styleId === "string" ? obj.styleId.trim() : ""
+    if (!title && !keywords.length) return null
+    return { title, keywords, styleId }
+  } catch {
+    return null
   }
 }
 
@@ -269,21 +354,42 @@ watch(
     if (autoGenTimer) clearTimeout(autoGenTimer)
     autoGenTimer = setTimeout(() => {
       if (config.value.title.trim()) {
-        generateCover()
+        void generateCover()
       }
     }, 200)
   },
 )
 
-// 尺寸/风格变化：即时生成（无需 debounce）
+// 尺寸/风格变化：同步偏好设置 + 即时生成（无需 debounce）
 watch(
   () => [config.value.styleId, config.value.width, config.value.height],
   () => {
+    coverSettings.settings.value.styleId = config.value.styleId
+    coverSettings.settings.value.width = config.value.width
+    coverSettings.settings.value.height = config.value.height
     if (config.value.title.trim()) {
-      generateCover()
+      void generateCover()
     }
   },
 )
+
+// 偏好设置中影响封面的部分（颜色/水印/Logo/尺寸/风格）变化时防抖重生成
+const coverAffectingSettings = computed(() => JSON.stringify({
+  colors: coverSettings.settings.value.colors,
+  watermark: coverSettings.settings.value.watermark,
+  logo: coverSettings.settings.value.logo,
+  width: coverSettings.settings.value.width,
+  height: coverSettings.settings.value.height,
+  styleId: coverSettings.settings.value.styleId,
+}))
+watch(coverAffectingSettings, () => {
+  if (autoGenTimer) clearTimeout(autoGenTimer)
+  autoGenTimer = setTimeout(() => {
+    if (config.value.title.trim()) {
+      void generateCover()
+    }
+  }, 200)
+})
 
 // 组件卸载时清理防抖定时器
 onUnmounted(() => {
@@ -303,6 +409,13 @@ watch(
     }
   },
 )
+
+// 启动时应用持久化偏好（尺寸/风格）
+onMounted(async () => {
+  await applyPersistedPrefs()
+  widthInput.value = String(config.value.width)
+  heightInput.value = String(config.value.height)
+})
 </script>
 
 <style scoped lang="scss">

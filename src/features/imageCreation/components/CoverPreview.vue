@@ -1,14 +1,29 @@
-<!-- 封面预览面板：iframe 缩放预览 + 复制/下载/全屏操作 -->
+<!-- 封面预览面板：iframe 缩放预览 + 导出格式 + 复制/下载/全屏操作 -->
 <template>
   <div class="preview-panel">
     <div class="preview-header">
       <!-- 预览标题："封面预览" -->
       <span>{{ t.previewTitle }}</span>
-      <div
-        v-if="status === 'done'"
-        class="preview-actions"
-      >
+      <div class="preview-actions">
+        <!-- 导出格式下拉 -->
+        <Select
+          v-model="settings.exportFormat"
+          :options="exportFormatOptions"
+          size="xsmall"
+        />
+        <Slider
+          v-if="settings.exportFormat === 'jpeg'"
+          v-model="settings.jpegQuality"
+          :label="t.jpegQualityLabel"
+          :min="0.5"
+          :max="1"
+          :step="0.05"
+          size="xsmall"
+          :show-value="true"
+          :format-value="qualityFormat"
+        />
         <Button
+          v-if="status === 'done'"
           variant="ghost"
           size="xsmall"
           icon="contentCopy"
@@ -16,6 +31,7 @@
           @click="copyCoverAsImage"
         />
         <Button
+          v-if="status === 'done'"
           variant="ghost"
           size="xsmall"
           icon="download"
@@ -23,6 +39,7 @@
           @click="downloadCoverAsImage"
         />
         <Button
+          v-if="status === 'done'"
           variant="ghost"
           size="xsmall"
           icon="eye"
@@ -83,10 +100,12 @@
 
 <script setup lang="ts">
 /**
- * 封面预览面板：iframe 缩放预览 + 复制/下载/全屏操作
+ * 封面预览面板：iframe 缩放预览 + 导出格式选择 + 复制/下载/全屏
  */
-import type { CoverGenerationStatus } from "../types"
+import type { SelectOption } from "@/components/Select.vue"
+import type { CoverGenerationStatus, ExportFormat } from "../types"
 import type { ImageCreationI18n } from "../types"
+import type { CoverSettingsService } from "../composables/useCoverSettings"
 import html2canvas from "html2canvas"
 import { showMessage } from "siyuan"
 import {
@@ -99,6 +118,8 @@ import {
 } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import Select from "@/components/Select.vue"
+import Slider from "@/components/Slider.vue"
 import { usePlugin } from "@/main"
 import {
   canvasToBlob,
@@ -116,9 +137,13 @@ interface Props {
   height: number
   /** 生成状态（done 时显示操作按钮） */
   status: CoverGenerationStatus
+  /** 封面设置服务（导出格式/质量读写） */
+  settingsService: CoverSettingsService
 }
 
 const props = defineProps<Props>()
+
+const settings = props.settingsService.settings
 
 const plugin = usePlugin()
 const t = (plugin.i18n as Record<string, any>).imageCreation as ImageCreationI18n
@@ -126,6 +151,33 @@ const t = (plugin.i18n as Record<string, any>).imageCreation as ImageCreationI18
 const coverFrame = ref<HTMLIFrameElement | null>(null)
 const previewWrapper = ref<HTMLDivElement | null>(null)
 const previewScale = ref(1)
+
+const exportFormatOptions: SelectOption[] = [
+  { value: "png", label: t.formatPng },
+  { value: "jpeg", label: t.formatJpeg },
+  { value: "webp", label: t.formatWebp },
+]
+
+const MIME_MAP: Record<ExportFormat, string> = {
+  png: "image/png",
+  jpeg: "image/jpeg",
+  webp: "image/webp",
+}
+
+/** 导出文件名后缀（jpeg → jpg） */
+function exportExtension(): string {
+  const fmt = settings.value.exportFormat
+  return fmt === "jpeg" ? "jpg" : fmt
+}
+
+/** 按当前格式构建导出 Blob（jpeg 带质量参数） */
+async function buildExportBlob(): Promise<Blob | null> {
+  const canvas = await captureCoverCanvas()
+  if (!canvas) return null
+  const fmt = settings.value.exportFormat
+  const quality = fmt === "jpeg" ? settings.value.jpegQuality : undefined
+  return canvasToBlob(canvas, MIME_MAP[fmt], quality)
+}
 
 // iframe 缩放样式：让封面按实际尺寸渲染，CSS 缩放适配预览区
 // 使用 center center 原点 + flex 父容器居中，无需负 margin 偏移
@@ -219,7 +271,7 @@ watch(
   },
 )
 
-// 获取封面截图画布
+// 获取封面截图画布（大尺寸动态降采样，控制内存占用）
 async function captureCoverCanvas(): Promise<HTMLCanvasElement | null> {
   const iframe = coverFrame.value
   const doc = iframe?.contentDocument
@@ -230,7 +282,7 @@ async function captureCoverCanvas(): Promise<HTMLCanvasElement | null> {
   // 使用 body 而非 firstElementChild，确保捕获完整封面内容
   return html2canvas(doc.body, {
     useCORS: true,
-    scale: 2,
+    scale: props.width <= 1600 ? 2 : 1.5,
     backgroundColor: "#ffffff",
     logging: false,
     width: props.width,
@@ -243,20 +295,19 @@ async function captureCoverCanvas(): Promise<HTMLCanvasElement | null> {
 // 复制为图片
 async function copyCoverAsImage() {
   try {
-    const canvas = await captureCoverCanvas()
-    if (!canvas) {
+    const blob = await buildExportBlob()
+    if (!blob) {
       showMessage(t.msgNothingToCopy, 2000, "info")
       return
     }
 
-    const blob = await canvasToBlob(canvas, "image/png")
     const ok = await copyImageToClipboard(blob)
 
     if (ok) {
       showMessage(t.msgCoverCopied, 2000, "info")
     } else {
       // 兜底：剪贴板不可用时降级为下载
-      triggerBlobDownload(blob, `cover-${props.width}x${props.height}-${Date.now()}.png`)
+      triggerBlobDownload(blob, `cover-${props.width}x${props.height}-${Date.now()}.${exportExtension()}`)
       showMessage(t.msgCopiedFallback, 2000, "info")
     }
   } catch (error) {
@@ -268,14 +319,13 @@ async function copyCoverAsImage() {
 // 下载为图片
 async function downloadCoverAsImage() {
   try {
-    const canvas = await captureCoverCanvas()
-    if (!canvas) {
+    const blob = await buildExportBlob()
+    if (!blob) {
       showMessage(t.msgNothingToDownload, 2000, "info")
       return
     }
 
-    const blob = await canvasToBlob(canvas, "image/png")
-    triggerBlobDownload(blob, `cover-${props.width}x${props.height}-${Date.now()}.png`)
+    triggerBlobDownload(blob, `cover-${props.width}x${props.height}-${Date.now()}.${exportExtension()}`)
     showMessage(t.msgCoverDownloaded, 2000, "info")
   } catch (error) {
     console.error("下载封面失败:", error)
@@ -290,6 +340,8 @@ function openFullscreen() {
   const url = URL.createObjectURL(blob)
   window.open(url, "_blank")
 }
+
+const qualityFormat = (v: number) => `${Math.round(v * 100)}%`
 </script>
 
 <style scoped lang="scss">

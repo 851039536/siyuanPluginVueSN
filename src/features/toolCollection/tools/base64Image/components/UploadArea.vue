@@ -36,6 +36,7 @@
 </template>
 
 <script setup lang="ts">
+// 上传区域组件：支持点击选择与拖拽图片，选择后重置 input 以便重复选择同一文件
 import { ref } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
@@ -63,6 +64,8 @@ const handleFileSelect = (event: Event) => {
   if (file) {
     emit("fileSelect", file)
   }
+  // 重置 value，允许再次选择同一文件时触发 change
+  target.value = ""
 }
 
 const handleDragOver = (e: DragEvent) => {

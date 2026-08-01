@@ -19,9 +19,10 @@
       v-if="currentMode === 'encode'"
       class="mode-content"
     >
+      <!-- 上传区域："拖拽图片到此处，或" / "选择文件" -->
       <UploadArea
-        :drag-text="i18n.base64Image_dragImageHere || '拖拽图片到此处，或'"
-        :select-text="i18n.base64Image_selectFile || '选择文件'"
+        :drag-text="i18n.base64Image_dragImageHere"
+        :select-text="i18n.base64Image_selectFile"
         @file-select="handleFile"
       />
 
@@ -31,7 +32,8 @@
         class="result-section"
       >
         <div class="preview-section">
-          <h4>{{ i18n.imagePreview || '图片预览' }}</h4>
+          <!-- 标题："图片预览" -->
+          <h4>{{ i18n.base64Image_imagePreview }}</h4>
           <div
             class="image-preview"
             :style="previewFilterStyle"
@@ -42,27 +44,31 @@
             />
           </div>
           <div class="file-info">
-            <p><strong>{{ i18n.base64Image_fileName || '文件名' }}:</strong> {{ selectedFile.name }}</p>
-            <p><strong>{{ i18n.base64Image_fileSize || '文件大小' }}:</strong> {{ formatFileSize(selectedFile.size) }}</p>
-            <p><strong>{{ i18n.base64Image_fileType || '文件类型' }}:</strong> {{ selectedFile.type }}</p>
+            <!-- 文件信息："文件名" / "文件大小" / "文件类型" -->
+            <p><strong>{{ i18n.base64Image_fileName }}:</strong> {{ selectedFile.name }}</p>
+            <p><strong>{{ i18n.base64Image_fileSize }}:</strong> {{ formatFileSize(selectedFile.size) }}</p>
+            <p><strong>{{ i18n.base64Image_fileType }}:</strong> {{ selectedFile.type }}</p>
           </div>
         </div>
 
         <div class="output-section">
           <!-- 压缩设置 -->
           <div class="compression-settings">
-            <h4>{{ i18n.base64Image_compressionSettings || '压缩设置' }}</h4>
+            <!-- 标题："压缩设置" -->
+            <h4>{{ i18n.base64Image_compressionSettings }}</h4>
             <div class="setting-group">
+              <!-- 下拉框："输出格式" -->
               <Select
                 v-model="outputFormat"
-                :label="i18n.base64Image_outputFormat || '输出格式'"
+                :label="i18n.base64Image_outputFormat"
                 :options="formatOptions"
                 size="xsmall"
                 @change="processImage"
               />
             </div>
             <div class="setting-group">
-              <label>{{ i18n.base64Image_quality || '图片质量' }}: {{ compressionQuality }}%</label>
+              <!-- 滑块："图片质量" -->
+              <label>{{ i18n.base64Image_quality }}: {{ compressionQuality }}%</label>
               <input
                 v-model="compressionQuality"
                 type="range"
@@ -74,7 +80,8 @@
               />
             </div>
             <div class="setting-group">
-              <label>{{ i18n.base64Image_maxWidth || '最大宽度' }}: {{ maxWidth }}px</label>
+              <!-- 滑块："最大宽度" -->
+              <label>{{ i18n.base64Image_maxWidth }}: {{ maxWidth }}px</label>
               <input
                 v-model="maxWidth"
                 type="range"
@@ -86,13 +93,14 @@
               />
             </div>
             <div class="setting-group">
+              <!-- 复选框："保持纵横比" -->
               <label class="checkbox-label">
                 <input
                   v-model="maintainAspectRatio"
                   type="checkbox"
                   @change="processImage"
                 />
-                {{ i18n.base64Image_maintainAspectRatio || '保持纵横比' }}
+                {{ i18n.base64Image_maintainAspectRatio }}
               </label>
             </div>
           </div>
@@ -100,13 +108,13 @@
           <!-- 滤镜设置 -->
           <FilterSettings
             v-model="filterSettings"
-            :title="i18n.base64Image_filterSettings || '滤镜效果'"
-            :grayscale-label="i18n.base64Image_grayscale || '灰度'"
-            :blur-label="i18n.base64Image_blur || '模糊'"
-            :brightness-label="i18n.base64Image_brightness || '亮度'"
-            :contrast-label="i18n.base64Image_contrast || '对比度'"
-            :saturation-label="i18n.base64Image_saturation || '饱和度'"
-            :reset-text="i18n.base64Image_resetFilters || '重置滤镜'"
+            :title="i18n.base64Image_filterSettings"
+            :grayscale-label="i18n.base64Image_grayscale"
+            :blur-label="i18n.base64Image_blur"
+            :brightness-label="i18n.base64Image_brightness"
+            :contrast-label="i18n.base64Image_contrast"
+            :saturation-label="i18n.base64Image_saturation"
+            :reset-text="i18n.base64Image_resetFilters"
             @reset="resetFilters"
             @update:model-value="processImage"
           />
@@ -114,48 +122,51 @@
           <!-- 水印设置 -->
           <WatermarkSettings
             v-model="watermarkSettings"
-            :title="i18n.base64Image_watermarkSettings || '水印设置'"
-            :enable-text="i18n.base64Image_enableWatermark || '启用水印'"
-            :text-placeholder="i18n.base64Image_watermarkText || '水印文字'"
-            :position-label="i18n.base64Image_watermarkPosition || '水印位置'"
+            :title="i18n.base64Image_watermarkSettings"
+            :enable-text="i18n.base64Image_enableWatermark"
+            :text-placeholder="i18n.base64Image_watermarkText"
+            :position-label="i18n.base64Image_watermarkPosition"
             :position-options="watermarkPositionOptions"
-            :opacity-label="i18n.base64Image_watermarkOpacity || '透明度'"
-            :font-size-label="i18n.base64Image_watermarkSize || '字体大小'"
+            :opacity-label="i18n.base64Image_watermarkOpacity"
+            :font-size-label="i18n.base64Image_watermarkSize"
             @update:model-value="processImage"
           />
 
-          <h4>{{ i18n.base64Image_base64Output || 'Base64输出' }}</h4>
+          <!-- 标题："Base64输出" -->
+          <h4>{{ i18n.base64Image_base64Output }}</h4>
           <div class="output-controls">
+            <!-- 复制按钮："复制" -->
             <CopyDropdown
-              :button-text="i18n.base64Image_copy || '复制'"
+              :button-text="i18n.base64Image_copy"
               :options="copyOptions"
               @select="handleCopySelect"
             />
+            <!-- 下载按钮："下载" -->
             <Button
               variant="primary"
               size="xsmall"
               @click="downloadBase64"
             >
-              {{ i18n.base64Image_download || '下载' }}
+              {{ i18n.base64Image_download }}
             </Button>
           </div>
           <Input
             v-model="base64Output"
             type="textarea"
             class="output-textarea"
-            :placeholder="i18n.base64Image_base64Placeholder || 'Base64编码将显示在这里...'"
+            :placeholder="i18n.base64Image_base64Placeholder"
             :readonly="true"
             :rows="6"
           />
 
           <!-- 对比统计 -->
           <StatsSection
-            :title="i18n.base64Image_statistics || '对比统计'"
-            :original-label="i18n.base64Image_originalSize || '原始大小'"
-            :output-label="i18n.base64Image_outputSize || '输出大小'"
-            :ratio-label="i18n.base64Image_compressionRatio || '压缩率'"
+            :title="i18n.base64Image_statistics"
+            :original-label="i18n.base64Image_originalSize"
+            :output-label="i18n.base64Image_outputSize"
+            :ratio-label="i18n.base64Image_compressionRatio"
             :original-size="originalSize"
-            :output-size="base64Output.length"
+            :output-size="base64OutputBytes"
           />
         </div>
       </div>
@@ -167,12 +178,13 @@
       class="mode-content"
     >
       <div class="input-section">
-        <h4>{{ i18n.base64Image_base64Input || 'Base64输入' }}</h4>
+        <!-- 标题："Base64输入" -->
+        <h4>{{ i18n.base64Image_base64Input }}</h4>
         <Input
           v-model="base64Input"
           type="textarea"
           class="input-textarea"
-          :placeholder="i18n.base64Image_base64InputPlaceholder || '在此粘贴Base64编码...'"
+          :placeholder="i18n.base64Image_base64InputPlaceholder"
           :rows="8"
         />
       </div>
@@ -182,7 +194,8 @@
         class="result-section"
       >
         <div class="preview-section">
-          <h4>{{ i18n.base64Image_imagePreview || '图片预览' }}</h4>
+          <!-- 标题："图片预览" -->
+          <h4>{{ i18n.base64Image_imagePreview }}</h4>
           <div class="image-preview">
             <img
               :src="decodedImageUrl"
@@ -193,13 +206,15 @@
 
         <div class="output-section">
           <div class="output-controls">
+            <!-- 下载图片按钮："下载图片" -->
             <Button
               variant="primary"
               size="xsmall"
               @click="downloadDecodedImage"
             >
-              {{ i18n.base64Image_downloadImage || '下载图片' }}
+              {{ i18n.base64Image_downloadImage }}
             </Button>
+            <!-- 复制URL按钮："复制URL" -->
             <Button
               variant="ghost"
               size="xsmall"
@@ -207,11 +222,12 @@
               :icon-size="14"
               @click="copyDecodedImageUrl"
             >
-              {{ i18n.base64Image_copyUrl || '复制URL' }}
+              {{ i18n.base64Image_copyUrl }}
             </Button>
           </div>
           <div class="output-info">
-            <p><strong>{{ i18n.base64Image_imageSize || '图片大小' }}:</strong> {{ decodedImageSize }}</p>
+            <!-- 图片尺寸："图片大小" -->
+            <p><strong>{{ i18n.base64Image_imageSize }}:</strong> {{ decodedImageSize }}</p>
           </div>
         </div>
       </div>
@@ -223,13 +239,15 @@
       class="mode-content"
     >
       <div class="input-section">
-        <h4>{{ i18n.base64Image_urlInput || 'URL输入' }}</h4>
+        <!-- 标题："URL输入" -->
+        <h4>{{ i18n.base64Image_urlInput }}</h4>
         <input
           v-model="imageUrlInput"
           type="text"
           class="text-input url-input"
-          :placeholder="i18n.base64Image_urlPlaceholder || '请输入图片URL地址...'"
+          :placeholder="i18n.base64Image_urlPlaceholder"
         />
+        <!-- 获取并转换按钮："获取并转换" -->
         <Button
           variant="primary"
           :loading="isFetchingUrl"
@@ -237,7 +255,7 @@
           class="fetch-btn"
           @click="fetchUrlToBase64"
         >
-          {{ i18n.base64Image_fetch || '获取并转换' }}
+          {{ i18n.base64Image_fetch }}
         </Button>
       </div>
 
@@ -246,7 +264,8 @@
         class="result-section"
       >
         <div class="preview-section">
-          <h4>{{ i18n.base64Image_imagePreview || '图片预览' }}</h4>
+          <!-- 标题："图片预览" -->
+          <h4>{{ i18n.base64Image_imagePreview }}</h4>
           <div class="image-preview">
             <img
               :src="urlBase64Output"
@@ -257,17 +276,19 @@
 
         <div class="output-section">
           <div class="output-controls">
+            <!-- 复制按钮："复制" -->
             <CopyDropdown
-              :button-text="i18n.base64Image_copy || '复制'"
+              :button-text="i18n.base64Image_copy"
               :options="urlCopyOptions"
               @select="handleUrlCopySelect"
             />
+            <!-- 下载按钮："下载" -->
             <Button
               variant="primary"
               size="xsmall"
               @click="downloadUrlBase64"
             >
-              {{ i18n.base64Image_download || '下载' }}
+              {{ i18n.base64Image_download }}
             </Button>
           </div>
           <Input
@@ -278,7 +299,8 @@
             :rows="6"
           />
           <div class="output-info">
-            <p><strong>{{ i18n.base64Image_outputSize || '输出大小' }}:</strong> {{ formatFileSize(urlBase64Output.length) }}</p>
+            <!-- 输出大小："输出大小" -->
+            <p><strong>{{ i18n.base64Image_outputSize }}:</strong> {{ formatFileSize(urlBase64OutputBytes) }}</p>
           </div>
         </div>
       </div>
@@ -294,15 +316,15 @@
         v-model:size="qrcodeSize"
         v-model:dark-mode="qrcodeDarkMode"
         :output="qrcodeOutput"
-        :input-title="i18n.base64Image_qrcodeInput || '二维码内容'"
-        :placeholder="i18n.base64Image_qrcodePlaceholder || '输入文本或URL生成二维码...'"
-        :size-label="i18n.base64Image_qrcodeSize || '二维码大小'"
-        :dark-mode-label="i18n.base64Image_qrcodeDark || '深色模式'"
-        :generate-text="i18n.base64Image_generateQrcode || '生成二维码'"
-        :preview-title="i18n.base64Image_qrcodePreview || '二维码预览'"
-        :download-text="i18n.base64Image_download || '下载'"
-        :copy-text="i18n.base64Image_copyBase64 || '复制Base64'"
-        :content-label="i18n.base64Image_content || '内容'"
+        :input-title="i18n.base64Image_qrcodeInput"
+        :placeholder="i18n.base64Image_qrcodePlaceholder"
+        :size-label="i18n.base64Image_qrcodeSize"
+        :dark-mode-label="i18n.base64Image_qrcodeDark"
+        :generate-text="i18n.base64Image_generateQrcode"
+        :preview-title="i18n.base64Image_qrcodePreview"
+        :download-text="i18n.base64Image_download"
+        :copy-text="i18n.base64Image_copyBase64"
+        :content-label="i18n.base64Image_content"
         @generate="generateQrcode"
         @download="downloadQrcode"
         @copy="copyQrcodeBase64"
@@ -314,6 +336,7 @@
       v-if="currentMode === 'decode' && base64Input"
       class="action-section"
     >
+      <!-- 解码按钮："解码" -->
       <Button
         class="convert-btn"
         variant="primary"
@@ -321,13 +344,14 @@
         :disabled="isDecoding"
         @click="decodeBase64"
       >
-        {{ i18n.base64Image_decode || '解码' }}
+        {{ i18n.base64Image_decode }}
       </Button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+// Base64图片转换工具：图片/Base64/URL/二维码互转，支持压缩、滤镜、水印
 import type { SelectOption } from "@/components/Select.vue"
 import QRCode from "qrcode"
 import { showMessage } from "siyuan"
@@ -359,18 +383,19 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const i18n = props.i18n as Record<string, string>
+// computed 包装保持 i18n 响应式（父组件 i18n 变化时模板与派生数组同步更新）
+const i18n = computed(() => props.i18n)
 
 // 模式选项
 type Mode = "encode" | "decode" | "url" | "qrcode"
 const modes = computed(() => [
   {
     value: "encode" as Mode,
-    label: i18n.base64Image_encode || "图片转Base64",
+    label: props.i18n.base64Image_encode,
   },
   {
     value: "decode" as Mode,
-    label: i18n.base64Image_decode || "Base64转图片",
+    label: props.i18n.base64Image_decode,
   },
   {
     value: "url" as Mode,
@@ -378,7 +403,7 @@ const modes = computed(() => [
   },
   {
     value: "qrcode" as Mode,
-    label: i18n.base64Image_qrcode || "二维码",
+    label: props.i18n.base64Image_qrcode,
   },
 ])
 
@@ -474,86 +499,115 @@ const watermarkPositionOptions: SelectOption[] = [
   },
 ]
 
-// 复制选项
-const copyOptions = [
+// 复制选项（encode 模式含 CSS，url 模式不含，由单一源数据派生）
+const copyOptionBase = computed(() => [
   {
     value: "base64",
-    label: i18n.base64Image_copyBase64 || "纯Base64",
+    label: props.i18n.base64Image_copyBase64,
   },
   {
     value: "html",
-    label: i18n.base64Image_copyHtml || "HTML <img> 标签",
+    label: props.i18n.base64Image_copyHtml,
   },
   {
     value: "markdown",
-    label: i18n.base64Image_copyMarkdown || "Markdown 图片语法",
+    label: props.i18n.base64Image_copyMarkdown,
   },
+])
+
+const copyOptions = computed(() => [
+  ...copyOptionBase.value,
   {
     value: "css",
-    label: i18n.base64Image_copyCss || "CSS 背景图片语法",
+    label: props.i18n.base64Image_copyCss,
   },
-]
+])
 
-const urlCopyOptions = [
-  {
-    value: "base64",
-    label: i18n.base64Image_copyBase64 || "纯Base64",
-  },
-  {
-    value: "html",
-    label: i18n.base64Image_copyHtml || "HTML <img> 标签",
-  },
-  {
-    value: "markdown",
-    label: i18n.base64Image_copyMarkdown || "Markdown",
-  },
-]
+const urlCopyOptions = computed(() => copyOptionBase.value)
 
 // UI状态
 const isDecoding = ref(false)
 
-// 预览滤镜样式
-const previewFilterStyle = computed(() => {
-  const {
-    grayscale,
-    blur,
-    brightness,
-    contrast,
-    saturation,
-  } = filterSettings.value
-  return {
-    filter: `grayscale(${grayscale}%) blur(${blur}px) brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`,
+// 预览滤镜样式（与 processImage 共用构建函数，保证一致）
+const buildFilterString = (f: {
+  grayscale: number
+  blur: number
+  brightness: number
+  contrast: number
+  saturation: number
+}) =>
+  `grayscale(${f.grayscale}%) blur(${f.blur}px) brightness(${f.brightness}%) contrast(${f.contrast}%) saturate(${f.saturation}%)`
+
+const previewFilterStyle = computed(() => ({
+  filter: buildFilterString(filterSettings.value),
+}))
+
+// 计算 dataURL 实际字节数（去除 MIME 前缀后按 Base64 解码估算）
+const calcDataUrlBytes = (data: string) => {
+  if (!data) return 0
+  const commaIndex = data.indexOf(",")
+  const pure = commaIndex >= 0 ? data.slice(commaIndex + 1) : data
+  let padding = 0
+  if (pure.endsWith("==")) {
+    padding = 2
+  } else if (pure.endsWith("=")) {
+    padding = 1
   }
-})
+  return Math.max(0, Math.floor((pure.length * 3) / 4) - padding)
+}
+
+const base64OutputBytes = computed(() => calcDataUrlBytes(base64Output.value))
+const urlBase64OutputBytes = computed(() => calcDataUrlBytes(urlBase64Output.value))
+
+// 释放图片预览的 ObjectURL，防止内存泄漏
+const releasePreviewUrl = () => {
+  if (imagePreviewUrl.value) {
+    URL.revokeObjectURL(imagePreviewUrl.value)
+    imagePreviewUrl.value = ""
+  }
+}
 
 // 切换模式
 const switchMode = (mode: Mode) => {
   currentMode.value = mode
+  if (decodeTimer) {
+    clearTimeout(decodeTimer)
+    decodeTimer = null
+  }
   clearAll()
 }
 
 // 处理文件
 const handleFile = (file: File) => {
   if (!file.type.startsWith("image/")) {
-    showMessage(i18n.base64Image_pleaseSelectImage || "请选择图片文件", 3000, "error")
+    showMessage(props.i18n.base64Image_pleaseSelectImage, 3000, "error")
     return
   }
   selectedFile.value = file
   originalSize.value = file.size
+  releasePreviewUrl()
   imagePreviewUrl.value = URL.createObjectURL(file)
   processImage()
 }
 
-// 处理图片
-const processImage = () => {
-  if (!selectedFile.value) return
+// 处理图片（带请求序列号，丢弃过期异步结果，避免竞态）
+let processRequestId = 0
 
+const processImage = () => {
+  if (!selectedFile.value || !imagePreviewUrl.value) return
+
+  const requestId = ++processRequestId
   const canvas = document.createElement("canvas")
   const ctx = canvas.getContext("2d")
+  if (!ctx) {
+    showMessage(props.i18n.base64Image_decodeFailed, 3000, "error")
+    return
+  }
   const img = new Image()
-  const objectUrl = URL.createObjectURL(selectedFile.value)
 
   img.onload = () => {
+    if (requestId !== processRequestId) return
+
     let {
       width,
       height,
@@ -567,16 +621,9 @@ const processImage = () => {
     canvas.width = width
     canvas.height = height
 
-    const {
-      grayscale,
-      blur,
-      brightness,
-      contrast,
-      saturation,
-    } = filterSettings.value
-    ctx!.filter = `grayscale(${grayscale}%) blur(${blur}px) brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`
-    ctx?.drawImage(img, 0, 0, width, height)
-    ctx!.filter = "none"
+    ctx.filter = buildFilterString(filterSettings.value)
+    ctx.drawImage(img, 0, 0, width, height)
+    ctx.filter = "none"
 
     // 添加水印
     if (watermarkSettings.value.enabled && watermarkSettings.value.text) {
@@ -586,13 +633,13 @@ const processImage = () => {
         opacity,
         fontSize,
       } = watermarkSettings.value
-      ctx!.globalAlpha = opacity / 100
-      ctx!.font = `${fontSize}px Arial`
-      ctx!.fillStyle = "rgba(255, 255, 255, 0.8)"
-      ctx!.strokeStyle = "rgba(0, 0, 0, 0.5)"
-      ctx!.lineWidth = 1
+      ctx.globalAlpha = opacity / 100
+      ctx.font = `${fontSize}px Arial`
+      ctx.fillStyle = "rgba(255, 255, 255, 0.8)"
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.5)"
+      ctx.lineWidth = 1
 
-      const textWidth = ctx!.measureText(text).width
+      const textWidth = ctx.measureText(text).width
       const padding = 10
       let x = padding
       let y = padding + fontSize
@@ -614,17 +661,21 @@ const processImage = () => {
           break
       }
 
-      ctx!.strokeText(text, x, y)
-      ctx!.fillText(text, x, y)
-      ctx!.globalAlpha = 1
+      ctx.strokeText(text, x, y)
+      ctx.fillText(text, x, y)
+      ctx.globalAlpha = 1
     }
 
     const quality = compressionQuality.value / 100
     base64Output.value = canvas.toDataURL(outputFormat.value, quality)
-    URL.revokeObjectURL(objectUrl)
   }
 
-  img.src = objectUrl
+  img.onerror = () => {
+    if (requestId !== processRequestId) return
+    showMessage(props.i18n.base64Image_decodeFailed, 3000, "error")
+  }
+
+  img.src = imagePreviewUrl.value
 }
 
 // 重置滤镜
@@ -646,21 +697,28 @@ const fetchUrlToBase64 = async () => {
 
   try {
     const response = await fetch(imageUrlInput.value)
+    if (!response.ok) {
+      showMessage(props.i18n.base64Image_fetchFailed, 3000, "error")
+      return
+    }
     const blob = await response.blob()
 
     if (!blob.type.startsWith("image/")) {
-      showMessage(i18n.base64Image_pleaseSelectImage || "请选择图片文件", 3000, "error")
+      showMessage(props.i18n.base64Image_pleaseSelectImage, 3000, "error")
       return
     }
 
     const reader = new FileReader()
     reader.onload = () => {
       urlBase64Output.value = reader.result as string
-      showMessage(i18n.base64Image_decodeSuccess || "转换成功", 2000, "info")
+      showMessage(props.i18n.base64Image_decodeSuccess, 2000, "info")
+    }
+    reader.onerror = () => {
+      showMessage(props.i18n.base64Image_fetchFailed, 3000, "error")
     }
     reader.readAsDataURL(blob)
   } catch {
-    showMessage(i18n.base64Image_fetchFailed || "获取图片失败", 3000, "error")
+    showMessage(props.i18n.base64Image_fetchCorsFailed, 3000, "error")
   } finally {
     isFetchingUrl.value = false
   }
@@ -681,46 +739,50 @@ const generateQrcode = async () => {
     }
     qrcodeOutput.value = await QRCode.toDataURL(qrcodeInput.value, options)
   } catch {
-    showMessage(i18n.base64Image_qrcodeFailed || "生成二维码失败", 3000, "error")
+    showMessage(props.i18n.base64Image_qrcodeFailed, 3000, "error")
   }
 }
 
-// 解码Base64
+// 解码Base64（异步加载完成后再结束 loading，失败时清除预览）
+let decodeRequestId = 0
+
 const decodeBase64 = () => {
   if (!base64Input.value.trim()) {
-    showMessage(i18n.base64Image_pleaseInputBase64 || "请输入Base64编码", 3000, "error")
+    showMessage(props.i18n.base64Image_pleaseInputBase64, 3000, "error")
     return
   }
 
+  const requestId = ++decodeRequestId
   isDecoding.value = true
 
-  try {
-    let base64 = base64Input.value.trim()
-    if (!base64.startsWith("data:image/")) {
-      base64 = `data:image/png;base64,${base64}`
-    }
-
-    decodedImageUrl.value = base64
-
-    const img = new Image()
-    img.onload = () => {
-      decodedImageSize.value = `${img.width} × ${img.height}px`
-    }
-    img.src = base64
-
-    showMessage(i18n.base64Image_decodeSuccess || "解码成功", 2000, "info")
-  } catch {
-    showMessage(i18n.base64Image_decodeFailed || "解码失败", 3000, "error")
-  } finally {
-    isDecoding.value = false
+  let base64 = base64Input.value.trim()
+  if (!base64.startsWith("data:image/")) {
+    base64 = `data:image/png;base64,${base64}`
   }
+
+  decodedImageUrl.value = base64
+
+  const img = new Image()
+  img.onload = () => {
+    if (requestId !== decodeRequestId) return
+    decodedImageSize.value = `${img.width} × ${img.height}px`
+    isDecoding.value = false
+    showMessage(props.i18n.base64Image_decodeSuccess, 2000, "info")
+  }
+  img.onerror = () => {
+    if (requestId !== decodeRequestId) return
+    decodedImageUrl.value = ""
+    isDecoding.value = false
+    showMessage(props.i18n.base64Image_decodeFailed, 3000, "error")
+  }
+  img.src = base64
 }
 
 // 复制结果反馈
 const showCopyResult = async (content: string) => {
   const ok = await copyToClipboard(content)
   showMessage(
-    ok ? i18n.base64Image_copySuccess || "复制成功" : i18n.base64Image_copyFailed || "复制失败",
+    ok ? props.i18n.base64Image_copySuccess : props.i18n.base64Image_copyFailed,
     2000,
     ok ? "info" : "error",
   )
@@ -748,7 +810,13 @@ const copyFormatted = (type: string, raw: string, alt: string, withCss: boolean)
       content = `![${alt}](${raw})`
       break
     case "css":
-      if (withCss) content = `background-image: url('${raw}');`
+      if (withCss) {
+        content = `background-image: url('${raw}');`
+      } else {
+        // 该模式不支持 CSS 格式，提示而非复制空内容
+        showMessage(props.i18n.base64Image_cssUnavailable, 3000, "error")
+        return
+      }
       break
   }
 
@@ -773,8 +841,8 @@ const downloadQrcode = () => triggerDownload(qrcodeOutput.value, "qrcode.png")
 
 // 清空所有
 const clearAll = () => {
+  releasePreviewUrl()
   selectedFile.value = null
-  imagePreviewUrl.value = ""
   base64Output.value = ""
   originalSize.value = 0
   base64Input.value = ""
@@ -797,12 +865,12 @@ const handlePaste = (e: ClipboardEvent) => {
   const file = imageItem?.getAsFile()
 
   if (file && currentMode.value === "encode") {
-    showMessage(i18n.base64Image_pasteSuccess || "粘贴图片成功", 2000, "info")
+    showMessage(props.i18n.base64Image_pasteSuccess, 2000, "info")
     handleFile(file)
   }
 }
 
-// 监听Base64输入变化
+// 监听Base64输入变化（500ms 防抖）
 let decodeTimer: ReturnType<typeof setTimeout> | null = null
 
 watch(base64Input, (newValue) => {
@@ -815,16 +883,33 @@ watch(base64Input, (newValue) => {
   }
 })
 
-// 监听二维码输入变化
+// 监听二维码输入变化（300ms 防抖，与 base64Input 行为一致）
+let qrcodeTimer: ReturnType<typeof setTimeout> | null = null
+
 watch(qrcodeInput, (newValue) => {
+  if (qrcodeTimer) {
+    clearTimeout(qrcodeTimer)
+    qrcodeTimer = null
+  }
   if (newValue && currentMode.value === "qrcode") {
-    generateQrcode()
+    qrcodeTimer = setTimeout(generateQrcode, 300)
   }
 })
 
 // 生命周期
 onMounted(() => document.addEventListener("paste", handlePaste))
-onUnmounted(() => document.removeEventListener("paste", handlePaste))
+onUnmounted(() => {
+  document.removeEventListener("paste", handlePaste)
+  if (decodeTimer) {
+    clearTimeout(decodeTimer)
+    decodeTimer = null
+  }
+  if (qrcodeTimer) {
+    clearTimeout(qrcodeTimer)
+    qrcodeTimer = null
+  }
+  releasePreviewUrl()
+})
 </script>
 
 <style scoped lang="scss">

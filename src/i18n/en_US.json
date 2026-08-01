@@ -379,6 +379,8 @@
   "base64Image_generateQrcode": "Generate QR Code",
   "base64Image_qrcodeFailed": "Failed to generate QR code",
   "base64Image_content": "Content",
+  "base64Image_fetchCorsFailed": "Failed to fetch image, possibly due to CORS restriction",
+  "base64Image_cssUnavailable": "CSS format is not supported in this mode",
   "bookmarkMarker": {
     "title": "Bookmark Marker",
     "enableBookmarkMarker": "Bookmark Marker",

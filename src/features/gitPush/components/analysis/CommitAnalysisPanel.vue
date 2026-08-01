@@ -156,7 +156,11 @@
                       :style="{ width: row.pct }"
                     />
                   </span>
-                  <span class="gpa-bar-num">{{ row.count }}</span>
+                  <!-- 数字列：占总提交百分比（tooltip 保留原始次数） -->
+                  <span
+                    class="gpa-bar-num"
+                    :title="row.title"
+                  >{{ row.shareText }}</span>
                 </div>
               </div>
             </div>
@@ -387,10 +391,27 @@ function barPct(count: number, max: number): string {
   return `${Math.round((count / max) * 100)}%`
 }
 
-/** 项目排行行视图：宽度百分比预计算，避免模板中重复求最大值 */
+/** 百分比格式化：保留 1 位小数并去掉尾零（如 12.3% / 100%）；极小占比显示 <0.1% 避免误导 */
+function formatShare(share: number): string {
+  if (share > 0 && share < 0.1) return "<0.1%"
+  return `${share.toFixed(1).replace(/\.0$/, "")}%`
+}
+
+/** 项目排行行视图：条形宽度相对最大值；数字列显示占总提交的百分比（tooltip 保留原始次数） */
 const projectRows = computed(() => {
   const max = props.stats.projectRanking[0]?.count || 1
-  return props.stats.projectRanking.map((r) => ({ ...r, pct: barPct(r.count, max) }))
+  const total = props.stats.totalCommits || 1
+  return props.stats.projectRanking.map((r) => {
+    const shareText = formatShare((r.count / total) * 100)
+    return {
+      ...r,
+      pct: barPct(r.count, max),
+      shareText,
+      title: String(props.i18n.analysisShareTooltip || "")
+        .replace("{0}", String(r.count))
+        .replace("{1}", shareText),
+    }
+  })
 })
 
 /** 每日趋势行视图：高度百分比预计算（0 次日留空柱） */

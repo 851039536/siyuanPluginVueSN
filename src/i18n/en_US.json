@@ -1456,6 +1456,7 @@
     "analysisLess": "Less",
     "analysisMore": "More",
     "analysisHeatTooltip": "{0} ({1}): {2} commits",
+    "analysisShareTooltip": "{0} commits ({1})",
     "analysisWdSun": "Sun",
     "analysisWdMon": "Mon",
     "analysisWdTue": "Tue",

@@ -1,0 +1,105 @@
+// DeepSeek 成本工具 - 主外壳 + 共享表单样式（Codex 风格，设计 Token）
+@use "@/variables.scss" as *;
+
+.deepseek-cost {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 200px;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  font-size: $font-size-xs;
+  line-height: $line-height-normal;
+  overflow: hidden;
+
+  .dc-tabs {
+    display: flex;
+    gap: $spacing-px;
+    padding: $spacing-2;
+    border-bottom: 1px solid var(--b3-border-color);
+    flex-shrink: 0;
+
+    .dc-tab {
+      padding: $spacing-1 $spacing-3;
+      font-size: $font-size-2xs;
+      font-weight: $font-weight-medium;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--b3-theme-on-background);
+      opacity: 0.55;
+      border: 1px solid transparent;
+      border-radius: $vp-radius;
+      cursor: pointer;
+      background: transparent;
+      transition: opacity 0.12s, border-color 0.12s;
+
+      &:hover {
+        opacity: 0.8;
+      }
+
+      &.active {
+        opacity: 1;
+        color: var(--b3-theme-primary);
+        border-color: var(--b3-border-color);
+        background: var(--b3-theme-surface);
+      }
+    }
+  }
+
+  .dc-content {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    padding: $spacing-3 $spacing-4;
+  }
+}
+
+// ===== 共享表单元素（顶层类，供子面板 @use 复用） =====
+
+.dc-field {
+  margin-bottom: $spacing-3;
+}
+
+.dc-label {
+  display: block;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.45;
+  color: var(--b3-theme-on-surface);
+  margin-bottom: $spacing-1;
+}
+
+.dc-input {
+  width: 100%;
+  padding: $spacing-2 $spacing-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-background);
+  font-family: $vp-mono;
+  font-size: $font-size-xs;
+  outline: none;
+
+  &:focus {
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+.dc-hint {
+  margin: $spacing-1 0 $spacing-3;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+  line-height: $line-height-normal;
+}
+
+.dc-check {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+}

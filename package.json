@@ -1,7 +1,7 @@
 {
   "name": "siyuan-plugin-vite-vue-sn",
   "type": "module",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "SN plugin collection for SiYuan Note, providing 25+ practical features including table of contents, image compression, word query, AI content generation, and more",
   "author": "sn",
   "license": "MIT",

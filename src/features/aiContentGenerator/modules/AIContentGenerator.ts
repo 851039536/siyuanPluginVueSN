@@ -127,24 +127,42 @@ export class AIContentGenerator {
         apiConfig.model = options.model
       }
 
+      // 跟踪思考是否产生输出：区分"完全无输出"与"仅思考无正文"
+      // （思考模式流正常结束但无 content，是思考过长被服务端截断的典型表现）
+      let hasReasoning = false
+
       const result = await callAISmart(fullPrompt, apiConfig, {
         systemPrompt: options.systemPrompt,
         temperature: options.temperature,
         maxTokens: options.maxTokens,
         signal: options.signal,
         onChunk: options.onChunk,
-        onReasoningChunk: options.onReasoningChunk,
+        onReasoningChunk: (chunk) => {
+          hasReasoning = true
+          options.onReasoningChunk?.(chunk)
+        },
         webSearch: options.webSearch,
         searchQuery: options.searchQuery,
         onSearchStart: options.onSearchStart,
         onSearchResults: options.onSearchResults,
         onSearchError: options.onSearchError,
         enableThinking: options.enableThinking,
+        reasoningEffort: options.reasoningEffort,
       })
 
       if (result) {
         return result
       }
+
+      // 有思考但无正文：保留界面上的思考内容，明确提示截断原因
+      if (hasReasoning) {
+        showMessage(
+          "思考完成但未生成正文，可能是思考过长被服务端截断，请降低思考强度或重试",
+          5000, "error",
+        )
+        return ""
+      }
+
       showMessage("生成失败，请重试", 3000, "error")
       return ""
     } catch (error) {

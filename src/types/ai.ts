@@ -17,8 +17,8 @@ export interface AiApiConfig {
   searchConfig?: SearchApiConfig
 }
 
-/** DeepSeek 思考强度 */
-export type DeepSeekReasoningEffort = "high" | "max"
+/** DeepSeek 思考强度（官方取值：low/high/max，默认 high） */
+export type DeepSeekReasoningEffort = "low" | "high" | "max"
 
 /** AI API 调用选项 */
 export interface AiCallOptions {
@@ -57,6 +57,8 @@ export interface GenerateOptions {
   model?: string
   /** 启用思考模式（覆盖全局设置） */
   enableThinking?: boolean
+  /** 思考强度（DeepSeek 思考模式：low/high/max，默认 high） */
+  reasoningEffort?: DeepSeekReasoningEffort
   /** 思考过程回调（DeepSeek reasoning_content） */
   onReasoningChunk?: (chunk: string) => void
   /** 联网搜索（RAG 模式：先搜后答，所有 provider 通用） */

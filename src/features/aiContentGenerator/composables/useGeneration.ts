@@ -5,7 +5,7 @@
 import { ref, computed, type Ref, type ComputedRef } from "vue"
 import { showMessage } from "siyuan"
 import type { Plugin } from "siyuan"
-import type { GenerateOptions, SearchResult, SkillItem, TargetDoc } from "@/types/ai"
+import type { DeepSeekReasoningEffort, GenerateOptions, SearchResult, SkillItem, TargetDoc } from "@/types/ai"
 import { PROVIDER_MODELS } from "@/config/aiModels"
 
 // ============ 类型定义 ============
@@ -249,6 +249,7 @@ export function useGeneration(opts: UseGenerationOptions) {
     ...(opts.enableThinking.value ? { onReasoningChunk: defaultOnReasoningChunk } : {}),
     model: opts.resolvedModel.value || undefined,
     enableThinking: opts.enableThinking.value,
+    reasoningEffort: opts.reasoningEffort.value,
     webSearch: opts.webSearch.value,
     ...(searchQueryOverride ? { searchQuery: searchQueryOverride } : {}),
     onSearchStart: stableSearchStart,

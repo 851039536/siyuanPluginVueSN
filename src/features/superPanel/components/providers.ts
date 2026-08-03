@@ -33,25 +33,11 @@ export const PROVIDERS: ProviderMeta[] = [
     models: PROVIDER_MODELS.tongyi,
   },
   {
-    id: "openai",
-    i18nKey: "openAI",
-    fallbackName: "OpenAI",
-    defaultModel: "gpt-3.5-turbo",
-    models: PROVIDER_MODELS.openai,
-  },
-  {
     id: "deepseek",
     i18nKey: "deepSeek",
     fallbackName: "DeepSeek",
     defaultModel: "deepseek-v4-flash",
     models: PROVIDER_MODELS.deepseek,
-  },
-  {
-    id: "zhipu",
-    i18nKey: "zhipuAI",
-    fallbackName: "智谱AI",
-    defaultModel: "glm-4-flash",
-    models: PROVIDER_MODELS.zhipu,
   },
   {
     id: "xiaomi",

@@ -39,17 +39,9 @@ const API_PROVIDERS: Record<AiProvider, ProviderConfig> = {
     url: "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation",
     defaultModel: "qwen-plus",
   },
-  openai: {
-    url: "https://api.openai.com/v1/chat/completions",
-    defaultModel: "gpt-3.5-turbo",
-  },
   deepseek: {
     url: "https://api.deepseek.com/v1/chat/completions",
     defaultModel: "deepseek-v4-flash",
-  },
-  zhipu: {
-    url: "https://open.bigmodel.cn/api/paas/v4/chat/completions",
-    defaultModel: "glm-4-flash",
   },
   xiaomi: {
     url: "https://api.xiaomimimo.com/v1/chat/completions",
@@ -86,20 +78,10 @@ export function extractResponseText(data: any): string {
 }
 
 /**
- * 获取解析后的 provider key（custom 映射到 openai 格式）
- */
-function resolveProvider(provider: AiProvider): AiProvider {
-  return provider === "custom" ? "openai" : provider
-}
-
-/**
  * 判断模型是否支持思考模式（V4 系列均支持）
  */
 function supportsThinkingMode(model: string): boolean {
-  return (
-    model === "deepseek-reasoner"
-    || model.startsWith("deepseek-v4-")
-  )
+  return model.startsWith("deepseek-v4-")
 }
 
 /**
@@ -126,9 +108,7 @@ function buildRequestBody(
   stream: boolean = false,
   options?: AiCallOptions,
 ): any {
-  const resolvedProvider = resolveProvider(provider)
-
-  if (resolvedProvider === "tongyi") {
+  if (provider === "tongyi") {
     return {
       model,
       input: { messages },
@@ -147,7 +127,7 @@ function buildRequestBody(
   }
 
   // DeepSeek 思考模式处理
-  const isDeepSeek = resolvedProvider === "deepseek" && supportsThinkingMode(model)
+  const isDeepSeek = provider === "deepseek" && supportsThinkingMode(model)
 
   // OpenAI / DeepSeek / Custom 共用字段
   const common: any = {
@@ -163,10 +143,13 @@ function buildRequestBody(
       const reasoningEffort: DeepSeekReasoningEffort =
         options?.reasoningEffort || "high"
       // 思考模式下 DeepSeek 不接受 temperature，故不传
+      // reasoning_effort 必须放在 thinking 对象内（ref: api-docs.deepseek.com）
       return {
         ...common,
-        thinking: { type: "enabled" },
-        reasoning_effort: reasoningEffort,
+        thinking: {
+          type: "enabled",
+          reasoning_effort: reasoningEffort,
+        },
       }
     }
     // 思考模式已显式禁用 → 必须传 thinking: disabled，
@@ -199,7 +182,7 @@ function buildHeaders(
   }
 
   // 通义千问流式需要 SSE header
-  if (stream && resolveProvider(provider) === "tongyi") {
+  if (stream && provider === "tongyi") {
     headers["X-DashScope-SSE"] = "enable"
   }
 
@@ -334,7 +317,7 @@ function parseStreamByProvider(
   onReasoningChunk?: (chunk: string) => void,
 ): Promise<string> {
   const extract =
-    resolveProvider(provider) === "tongyi"
+    provider === "tongyi"
       ? extractTongyiDelta
       : extractOpenAIDelta
   return parseSSEStream(response, extract, onChunk, signal, onReasoningChunk)
@@ -709,7 +692,11 @@ export function getApiConfigFromPlugin(plugin: any): AiApiConfig {
 
   // 先解析 provider（带默认值），再据此查找 apiKey，
   // 避免 aiApiProvider 未设置时 aiApiKeys[undefined] 取不到已配置的 key
-  const provider: AiProvider = settings.aiApiProvider || "tongyi"
+  // 兼容迁移：已废弃的 openai/zhipu 供应商降级为 tongyi
+  let provider: AiProvider = settings.aiApiProvider || "tongyi"
+  if (provider === "openai" || provider === "zhipu") {
+    provider = "tongyi"
+  }
 
   return {
     provider,

@@ -2,27 +2,13 @@
 @use "./index.scss" as *;
 
 // ============ RAG 搜索来源 ============
-.search-results-section {
-  @include collapsible-section;
-}
-
-.search-results-toggle {
-  @include collapsible-toggle;
-}
-
-.search-chevron {
-  @include collapsible-chevron;
-}
-
 .search-status-text {
   font-size: $font-size-2xs;
   font-weight: $font-weight-normal;
   opacity: 0.5;
-  margin-left: auto;
 }
 
 .search-results-body {
-  @include collapsible-body;
   padding-top: 6px;
   display: flex;
   flex-direction: column;

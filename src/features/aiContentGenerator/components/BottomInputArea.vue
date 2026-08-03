@@ -171,9 +171,10 @@ import Tag from "@/components/Tag.vue"
 import SkillSection from "./SkillSection.vue"
 import SkillPreviewModal from "./SkillPreviewModal.vue"
 import { truncateTitle } from "../utils"
+import type { EditActionKey } from "../types"
 
 interface QuickAction {
-  key: "polish" | "expand" | "condense" | "fix" | "rewrite" | "summary"
+  key: EditActionKey
   label: string
   icon: string
 }
@@ -197,7 +198,7 @@ interface Props {
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
-  'aiEdit': [action: "polish" | "expand" | "condense" | "fix" | "rewrite" | "summary"]
+  'aiEdit': [action: EditActionKey]
   'stop': []
   'selectTargetDoc': []
   'selectTargetBlock': []

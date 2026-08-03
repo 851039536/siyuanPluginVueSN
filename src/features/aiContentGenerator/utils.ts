@@ -4,6 +4,21 @@
 import type { SkillItem } from "@/types/ai"
 import { parseMarkdown } from "@/utils/mdRenderer"
 
+// ============ 系统提示词构建 ============
+
+/**
+ * 提取公共的 skill system prompt 构建逻辑（有技能时前缀技能内容，消除多处重复）
+ */
+export function buildSkillSystemPrompt(
+  skill: SkillItem | null,
+  fallback: string,
+): string {
+  if (skill) {
+    return `${skill.content}\n\n${fallback}`
+  }
+  return fallback
+}
+
 // ============ 本地工具元数据（替代跨功能导入 skillsViewer）============
 
 /** AI 工具元数据（仅 id/name/color，用于技能来源展示） */

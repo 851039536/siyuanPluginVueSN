@@ -82,16 +82,17 @@ import "highlight.js/styles/github.css"
 
 // 类型
 import type { GenerateOptions, ReviewResult, SkillItem, TargetDoc } from "@/types/ai"
-import type { SkillScanEntry } from "./types"
+import { DEFAULT_SYSTEM_PROMPTS } from "./types"
+import type { EditActionKey, SkillScanEntry } from "./types"
 
 // 模块内部导入
 import { AIGeneratorStorage } from "./types/storage"
 import { useSkillsLoader } from "./composables/useSkillsLoader"
-import { useGeneration, buildSkillSystemPrompt } from "./composables/useGeneration"
+import { useGeneration } from "./composables/useGeneration"
 import { useReview } from "./composables/useReview"
 import { useEditOperations } from "./composables/useEditOperations"
 import { useDocumentTarget } from "./composables/useDocumentTarget"
-import { renderMarkdown } from "./utils"
+import { buildSkillSystemPrompt, renderMarkdown } from "./utils"
 import MainContentArea from "./components/MainContentArea.vue"
 import BottomInputArea from "./components/BottomInputArea.vue"
 
@@ -221,7 +222,7 @@ watch(renderedDisplayedMarkdown, () =>
 
 // ============ AI 编辑动作（薄壳包装，调用 composable 核心）============
 
-const actionPrompts: Record<string, string> = {
+const actionPrompts: Record<EditActionKey, string> = {
   polish: "请对以下文档进行润色优化，保持原有结构，提升语言质量和可读性，使表达更加专业、流畅。保持Markdown格式，直接输出优化后的完整文档内容：",
   expand: "请对以下文档进行扩写，增加更详细的说明、例子和补充信息，使内容更加丰富和全面。保持Markdown格式，直接输出扩写后的完整文档内容：",
   condense: "请对以下文档进行精简，去除冗余内容，保留核心要点，使表达更加简洁有力。保持Markdown格式，直接输出精简后的完整文档内容：",
@@ -230,9 +231,7 @@ const actionPrompts: Record<string, string> = {
   summary: "请为以下文档生成一个简洁的总结，包括主要内容和关键要点。总结应该清晰明了，突出文档的核心信息。保持Markdown格式，直接输出总结内容：",
 }
 
-const aiEditAction = async (
-  action: "polish" | "expand" | "condense" | "fix" | "rewrite" | "summary",
-) => {
+const aiEditAction = async (action: EditActionKey) => {
   if (!editTargetDoc.value) {
     showMessage("请先选择要编辑的文档", 2000, "info")
     return
@@ -240,7 +239,7 @@ const aiEditAction = async (
 
   const systemPromptText = buildSkillSystemPrompt(
     currentSkill.value,
-    "你是一个专业的文档编辑助手，擅长优化Markdown文档。请直接输出优化后的完整文档，不要添加任何解释性文字。",
+    DEFAULT_SYSTEM_PROMPTS.polish,
   )
 
   await executeGeneration("AI编辑", () =>
@@ -276,7 +275,7 @@ const handleCustomEdit = async () => {
       if (currentSkill.value) {
         baseSystemPrompt = currentSkill.value.content
       } else {
-        baseSystemPrompt = "你是一个专业的文档编辑助手，擅长根据用户指令优化Markdown文档。请直接输出编辑后的完整文档，不要添加任何解释性文字。"
+        baseSystemPrompt = DEFAULT_SYSTEM_PROMPTS.editByInstruction
       }
 
       if (editCustomInput.value.trim()) {

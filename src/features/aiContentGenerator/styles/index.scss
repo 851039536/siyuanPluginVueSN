@@ -5,7 +5,7 @@
 // ============ 可折叠区块 mixin ============
 // 统一 思考过程 / 搜索来源 / 交叉审核 三处重复的折叠卡片模式
 @mixin collapsible-section {
-  margin: 0 14px;
+  margin: 0 0px;
   border-radius: 6px;
   border: 1px solid var(--b3-theme-surface-lighter);
   background: var(--b3-theme-surface);
@@ -47,7 +47,7 @@
 @mixin collapsible-body {
   padding: 8px 10px 10px;
   border-top: 1px solid var(--b3-theme-surface-lighter);
-  margin: 0 10px 8px;
+  margin: 0 2px 4px;
 }
 
 @mixin collapsible-status-dot($color: var(--b3-theme-primary)) {

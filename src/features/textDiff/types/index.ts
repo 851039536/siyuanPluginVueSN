@@ -21,7 +21,7 @@ export class TextDiffManager {
     // 使用共享 Modal 辅助工具创建弹窗
     this.modal = createModalVueApp(TextDiffPanel, {
       maskId: "text-diff-mask",
-      width: "90vw",
+      width: "72vw", // 弹窗宽度随窗口自适应（较默认 90vw 收窄 20%，保证双列输入可读性）
       height: "80vh",
       getCloseHandler: () => this.close,
       buildProps: () => ({

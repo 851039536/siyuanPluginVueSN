@@ -99,7 +99,7 @@
 
       <!-- 分割线 -->
       <div class="divider">
-        <Icon icon="mdi:chevron-down" :width="18" :height="18" />
+        <Icon icon="mdi:chevron-down" :width="14" :height="14" />
       </div>
 
       <!-- 差异结果 -->

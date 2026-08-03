@@ -321,16 +321,33 @@ const plaintext = await aesGcmDecrypt(ciphertext, key, iv)
 
 ### AI 调用
 
+完整用法见 [docs/ai-api-usage.md](./docs/ai-api-usage.md)（唯一 AI 调用参考文档）。
+
 ```typescript
+// 推荐入口 callAISmart：传 onChunk 自动走流式，否则走非流式
 import {
+  callAISmart,
   callAI,
-  callAIStream,
   getApiConfigFromPlugin,
 } from '@/utils/aiApi'
 
-const config = getApiConfigFromPlugin(plugin) // 从 PluginSettings 提取 AI 配置
-const result = await callAI(prompt, config, { model: 'gpt-4o' })
-// 类型: AiProvider, AiApiConfig, AiCallOptions 定义在 src/types/ai.ts
+// 1. 标准模式（非流式）
+const config = getApiConfigFromPlugin(plugin) // 自动读取超级面板 provider/apiKey/model
+const result = await callAI(prompt, config, {
+  systemPrompt: '你是一个专业的助手。',
+  temperature: 0.7,
+  maxTokens: 1000,
+})
+
+// 2. 流式 + DeepSeek 思考模式
+const streamResult = await callAISmart(prompt, config, {
+  onChunk: (chunk) => { /* 流式正文 */ },
+  onReasoningChunk: (chunk) => { /* 思考过程 */ },
+  enableThinking: true,       // 单次调用覆盖全局开关
+  reasoningEffort: 'high',    // "low" | "high" | "max"
+  model: 'deepseek-v4-pro',   // 可选，覆盖全局模型
+})
+// 类型: AiProvider, AiApiConfig, AiCallOptions, DeepSeekReasoningEffort 定义在 src/types/ai.ts
 ```
 
 ### 功能开关
@@ -1104,6 +1121,19 @@ const files = await fg([
 - 如果 i18n 有値 → 显示 i18n 值；如果无值 → 显示空白（暴露问题，及时排查）
 
 > 此规则 2026-07-24 正式生效，从 gitPush 模块 (`WorkingTreePanel.vue`) 移除 17 处兜底值开始推广到全项目。
+
+## 强制规则：AI 调用
+
+所有 AI 调用必须遵循以下规则，完整 API 用法见 [docs/ai-api-usage.md](./docs/ai-api-usage.md)。
+
+1. **统一入口**：AI 调用必须走 `@/utils/aiApi` 导出的 `callAI` / `callAISmart` / `callAIStream` / `callAIChat`。禁止在功能模块中直接 `fetch` 第三方 LLM API。
+2. **禁止硬编码**：禁止硬编码 API Key、模型名、端点 URL。必须通过 `getApiConfigFromPlugin(plugin)` 读取超级面板设置（含迁移降级：openai/zhipu → tongyi）。
+3. **推荐 `callAISmart`**：新功能默认使用 `callAISmart`（传 `onChunk` 自动走流式，不传走非流式）；仅固定单一模式时才用 `callAI` / `callAIStream`。
+4. **DeepSeek 思考模式**：`reasoning_effort` 必须放在 `thinking` 对象内（`thinking: { type: "enabled", reasoning_effort }`）；思考模式下不传 `temperature`；显式关闭必须传 `thinking: { type: "disabled" }`。单次调用 `options.enableThinking` 优先于全局 `config.enableThinking`。
+5. **联网搜索**：RAG 先搜后答需开启 `webSearch: true` 且超级面板已配置 `searchConfig`；搜索失败不中断生成（降级为无搜索回答）。
+6. **plugin 实例来源**：`plugin` 实例必须通过 props / 注册参数传入，禁止 `(window as any).siyuan`。
+
+> 参考实现：`src/features/aiContentGenerator/`（`useGeneration.ts` 构建 GenerateOptions → `AIContentGenerator.generateContent()` 调 `callAISmart` 透传 `enableThinking` / `reasoningEffort` / `onReasoningChunk`）
 
 ## 依赖
 

@@ -158,7 +158,7 @@ App.vue onMounted 监听 ───────────────┘
 | 场景 | 必须使用的 API | 位置 |
 |------|-------------|----------|
 | 存储 | `PluginStorage` / `TypedStorage<T>` | `@/utils/pluginStorage` / `@/utils/typedStorage` |
-| AI 调用 | `callAI` / `callAIStream` | `@/utils/aiApi` |
+| AI 调用 | `callAI` / `callAIStream` / `callAISmart` / `callAIChat` / `getApiConfigFromPlugin` | `@/utils/aiApi` |
 | 自定义事件 | `emitCustomEvent` | `@/utils/eventBus` |
 | Dock 面板 | `createVueDockApp` | `@/utils/vueAppHelper` |
 | Modal 弹窗 | `createModalVueApp` | `@/utils/vueAppHelper` |
@@ -217,6 +217,7 @@ App.vue onMounted 监听 ───────────────┘
 - **模块提取判定**：核心原则——重复远比错误抽象便宜，同一问题出现第 3 次前不要抽象（Rule of Three）。组件仅在 ≥2 处复用 / 文件超 500 行 / 含 ≥3 个独立状态 + 操作函数时才拆分。仅 1 处使用且 ≤80 行的薄壳包装（仅 slot + CSS 外壳）禁止拆分。详见 [AGENTS_RULES.md § 强制规则：模块提取判定标准](./AGENTS_RULES.md#强制规则模块提取判定标准)
 - **组件文件夹组织**：feature 的 UI 含 **≥3 个（含 3 个）Tab/子功能**时，`components/` **必须按 Tab/子功能建子文件夹**分类（每个 Tab 一个文件夹，文件夹名用 Tab 语义的小写短名，如 `overview/`、`trend/`）；被 ≥2 个 Tab 复用或面板级常驻的组件统一放 `common/` 通用文件夹；禁止在 Tab 文件夹之外再按组件类型（如 `charts/`）混合分类。Tab/子功能 <3 个时保持平铺。参考实现：`src/features/statistics/components/`。详见 [AGENTS_RULES.md § 四、组件文件夹组织标准](./AGENTS_RULES.md#四组件文件夹组织标准components-子目录)
 - **字号层级规范**：所有 feature 的 UI 一律采用两级字号制——标题与正文内容 `$font-size-xs`(12px)，辅助文字（标签、提示、描述、状态、命令输出、元信息）`$font-size-2xs`(10px)。`$font-size-sm`(14px) 及以上仅限阅读区正文（如 Markdown 预览）与数据突出展示（如统计数值），且必须加注释说明用途。**全局基准字号机制**：`src/index.scss` 已定义 `--vp-font-size-xs` CSS 变量 + `.vp-dock-root, .vp-modal-mask { font-size: $font-size-xs; }` 兜底规则；Dock/Modal 容器经 `createVueDockApp`/`createModalVueApp` 自动获得全局类，`main.ts`/`floatingBox`/`toolCollection` 自建挂载点已补类。所有 Dock 面板根容器与弹窗遮罩层（mask/overlay）必须显式设置基准 `font-size: $font-size-xs`（即使已挂全局类），自建挂载容器必须补 `vp-dock-root`/`vp-modal-mask` 类，禁止 JS 内联硬编码 `font-size: 12px`，防止内部未声明字号的文字继承思源全局默认字号（14px+）导致偏大。详见 [AGENTS_RULES.md § 强制规则：字号层级与全局基准字号](./AGENTS_RULES.md#强制规则字号层级与全局基准字号)。参考实现：`src/features/gitPush/styles/`
+- **AI 调用统一入口**：所有 AI 调用必须走 `@/utils/aiApi` 的 `callAI` / `callAISmart` / `callAIChat`，通过 `getApiConfigFromPlugin(plugin)` 读取超级面板设置，禁止直接 `fetch` 第三方 LLM API 或硬编码 Key/端点。推荐 `callAISmart`（传 `onChunk` 自动走流式）。详见 [AGENTS_RULES.md § 强制规则：AI 调用](./AGENTS_RULES.md#强制规则ai-调用) 与 [docs/ai-api-usage.md](./docs/ai-api-usage.md)
 - **禁止 i18n 硬编码兜底**：模板中 `{{ i18n.xxx || '中文兜底' }}` 模式禁止使用。i18n 是 UI 文案唯一数据源，兜底值会掩盖 i18n 未加载/缺失的 bug。详见 [AGENTS_RULES.md § 强制规则：禁止 i18n 硬编码兜底值](./AGENTS_RULES.md#强制规则禁止-i18n-硬编码兜底值)
 - **i18n 中文注释**：模板中每处使用 i18n 键渲染文案的位置，必须在其上方添加中文 HTML 注释标明实际显示的中文文案（如 `<!-- 弹窗标题："Git 全局配置" -->`）；模板的主要结构区块同样必须添加中文区块注释（如 `<!-- 底部操作栏 -->`）。i18n 键名是英文，缺少注释会降低模板可读性。
 - **规则文件同步**：`AGENTS.md` 与 `CODEBUDDY.md` 必须保持内容一致（仅首行标题可不同）。修改任一方后，必须立即同步到另一方，禁止出现差异。
@@ -385,7 +386,7 @@ src/
 │   ├── settings.ts         # PluginSettings 接口 + 功能开关持久化
 │   └── icons.ts            # FEATURE_ICONS + COMMON_ICONS
 ├── utils/
-│   ├── aiApi.ts            # callAI / callAIStream — 所有 AI 调用唯一入口
+│   ├── aiApi.ts            # callAI / callAISmart / callAIChat — 所有 AI 调用唯一入口
 │   ├── eventBus.ts         # emitCustomEvent — 所有自定义事件唯一入口
 │   ├── pluginStorage.ts    # PluginStorage — 统一存储抽象层
 │   ├── typedStorage.ts     # TypedStorage<T> — 类型安全存储槽
@@ -440,4 +441,5 @@ src/
 | 强制规则：SCSS 分离 | 目录结构模式、正误示例对比 |
 | 强制规则：文件头注释 | .ts/.vue 文件头注释格式规范 |
 | 强制规则：Composable 提取 | 工厂函数 + 依赖注入模式、判断标准、禁止事项 |
+| AI 调用文档 | `docs/ai-api-usage.md` — 完整 AI 调用用法（标准/流式/思考模式/RAG/多轮对话 + 调用方清单） |
 | 构建与验证 | 常见 Vite 警告原因与处理方法 |

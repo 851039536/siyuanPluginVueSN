@@ -1,0 +1,124 @@
+// textDiff 输入面板子组件样式：单侧文本面板（标题栏/文本域/拖拽遮罩/隐藏文件输入）
+@use '@/variables.scss' as *;
+@use './mixins' as m;
+
+.input-panel {
+  display: flex;
+  flex-direction: column;
+  @include m.codex-border-card;
+  overflow: hidden;
+  min-height: 150px;
+  position: relative;
+
+  &.drag-over {
+    border-color: var(--b3-theme-primary);
+    background: var(--b3-theme-surface-lighter);
+  }
+}
+
+// 输入主体：相对定位容器，拖拽遮罩层覆盖其内（替代旧版 top:29px 硬编码）
+.input-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.header-left {
+  @include m.flex-row($spacing-2);
+  overflow: hidden;
+}
+
+.header-right {
+  @include m.flex-row($spacing-2);
+  flex-shrink: 0;
+}
+
+.file-name {
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.char-count {
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-variant);
+}
+
+.file-btn {
+  @include m.codex-btn-base;
+  background: var(--b3-theme-background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+  }
+}
+
+.input-textarea {
+  flex: 1;
+  padding: $spacing-1 $spacing-3;
+  font-size: var(--diff-font-size, 14px); // 用户可调字号变量（12-24px），兜底 14px
+  font-family: inherit;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--b3-theme-on-background);
+  resize: none;
+  outline: none;
+  line-height: $line-height-normal;
+
+  &:focus {
+    border-color: var(--b3-theme-primary);
+  }
+
+  &::placeholder {
+    color: var(--b3-theme-on-surface-variant);
+    opacity: 0.6;
+  }
+}
+
+// 拖拽提示层（遮罩于 .input-body 内部）
+.drag-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  background: rgba(var(--b3-theme-primary-rgb, 235, 94, 42), 0.1);
+  border: 2px dashed var(--b3-theme-primary);
+  border-radius: 0 0 $vp-radius $vp-radius;
+  color: var(--b3-theme-primary);
+  pointer-events: none;
+  z-index: 10;
+
+  span {
+    font-size: $font-size-xs; // 辅助提示文字，二级字号
+    font-weight: $font-weight-medium;
+  }
+}
+
+// 隐藏的文件输入（替代内联 style）
+.hidden-file-input {
+  display: none;
+}
+
+// ==================== Responsive ====================
+
+@media (max-width: 900px) {
+  .input-panel {
+    min-height: 120px;
+  }
+}

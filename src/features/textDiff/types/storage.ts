@@ -1,3 +1,6 @@
+/**
+ * 文本对比功能存储管理：设置类型定义 + TypedStorage 槽位
+ */
 import { Plugin } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"

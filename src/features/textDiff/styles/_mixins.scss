@@ -1,0 +1,41 @@
+// textDiff 共享 mixin 混入（Codex 设计系统基座，index.scss 与 InputPanel.scss 共用）
+@use '@/variables.scss' as *;
+
+// 大写元信息标签（面板标题 / 工具栏选项标签共用）
+@mixin codex-meta-label {
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.45;
+  color: var(--b3-theme-on-surface);
+}
+
+// Codex 边框卡片（输入面板 / 结果区共用）
+@mixin codex-border-card {
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  background: var(--b3-theme-surface);
+  transition: border-color 0.12s;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+// 按钮基础样式（toggle-btn / action-btn / file-btn 共用，hover 由各按钮自行定义）
+@mixin codex-btn-base {
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+// 横向 flex 布局（header-left / header-right 共用）
+@mixin flex-row($gap: $spacing-2) {
+  display: flex;
+  align-items: center;
+  gap: $gap;
+}

@@ -1,3 +1,32 @@
+// SuperPanel AI 设置面板样式
+@use "@/variables" as *;
+
+// 通用切换按钮（思考模式开关 / 搜索引擎选择共用）
+.toggle-btn {
+  padding: $spacing-1 $spacing-3;
+  border-radius: $radius-sm;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  transition: all 0.12s;
+  border: 1px solid var(--b3-border-color);
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+    border-color: var(--b3-theme-on-surface);
+  }
+
+  &.active {
+    border: 1px solid var(--b3-theme-primary);
+    background: var(--b3-theme-primary);
+    color: #fff;
+
+    &:hover { opacity: 0.9; }
+  }
+}
+
 .thinking-toggle-row {
   display: flex;
   align-items: center;
@@ -6,81 +35,31 @@
 }
 
 .thinking-toggle-label {
-  font-size: 12px;
+  font-size: $font-size-xs;
   color: var(--b3-theme-on-surface);
   white-space: nowrap;
-}
-
-.thinking-toggle-btn {
-  padding: 4px 14px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.12s;
-  border: 1px solid var(--b3-border-color);
-  background: transparent;
-  color: var(--b3-theme-on-surface);
-
-  &:hover {
-    background: var(--b3-theme-surface-lighter);
-    border-color: var(--b3-theme-on-surface);
-  }
-
-  &.active {
-    border: 1px solid var(--b3-theme-primary);
-    background: var(--b3-theme-primary);
-    color: #fff;
-
-    &:hover { opacity: 0.9; }
-  }
 }
 
 .search-section-divider {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 8px 0 4px;
-  padding-top: 8px;
+  gap: $spacing-2;
+  margin: $spacing-2 0 $spacing-1;
+  padding-top: $spacing-2;
   border-top: 1px solid var(--b3-theme-surface-lighter);
 }
 
 .divider-text {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
   color: var(--b3-theme-primary);
   white-space: nowrap;
 }
 
 .search-provider-options {
   display: flex;
-  gap: 4px;
+  gap: $spacing-1;
   flex-wrap: wrap;
-}
-
-.search-provider-btn {
-  padding: 4px 14px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.12s;
-  border: 1px solid var(--b3-border-color);
-  background: transparent;
-  color: var(--b3-theme-on-surface);
-
-  &:hover {
-    background: var(--b3-theme-surface-lighter);
-    border-color: var(--b3-theme-on-surface);
-  }
-
-  &.active {
-    border: 1px solid var(--b3-theme-primary);
-    background: var(--b3-theme-primary);
-    color: #fff;
-
-    &:hover { opacity: 0.9; }
-  }
 }
 
 .setting-link {
@@ -91,16 +70,16 @@
 
 .jina-hint {
   background: rgba(var(--b3-theme-primary-rgb), 0.06);
-  border-radius: 4px;
-  padding: 6px 8px;
+  border-radius: $radius-sm;
+  padding: $spacing-1 $spacing-2;
 }
 
 .test-search-btn {
   width: 100%;
-  padding: 6px 18px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
+  padding: $spacing-1 $spacing-4;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
   cursor: pointer;
   transition: all 0.12s;
   border: 1px solid var(--b3-theme-primary);
@@ -116,9 +95,9 @@
 }
 
 .search-test-result {
-  margin-top: 4px;
-  font-size: 11px;
-  line-height: 1.4;
+  margin-top: $spacing-1;
+  font-size: $font-size-2xs;
+  line-height: $line-height-normal;
   word-break: break-all;
 
   &.error {

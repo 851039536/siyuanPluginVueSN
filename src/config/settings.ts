@@ -70,7 +70,7 @@ export interface PluginSettings {
   statisticsTheme: "default" | "github" // 统计面板主题风格
   statisticsUpdateInterval: number // 统计自动更新时间间隔(毫秒),默认60000(1分钟)
   // 统一的大模型API配置
-  aiApiProvider: string // AI API供应商: 'tongyi' | 'openai' | 'deepseek' | 'custom'
+  aiApiProvider: string // AI API供应商: 'tongyi' | 'deepseek' | 'xiaomi' | 'custom'
   aiModel: string // AI 模型名称
   aiCustomModel: string // 自定义模型名称
   aiApiKeys: Record<string, string> // AI API密钥（按供应商存储）

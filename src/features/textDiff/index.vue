@@ -3,11 +3,12 @@
 -->
 <template>
   <div class="text-diff-container">
-    <!-- 工具栏 -->
+    <!-- 工具栏：显示模式 / 字号 / 主题 + 清空 / 交换 -->
     <div class="diff-toolbar">
       <div class="toolbar-left">
+        <!-- 显示模式切换（"显示模式"） -->
         <div class="option-group">
-          <span class="option-label">{{ $t('displayMode') }}</span>
+          <span class="option-label">{{ $t("displayMode") }}</span>
           <button
             v-for="mode in modeOptions"
             :key="mode.value"
@@ -19,8 +20,9 @@
           </button>
         </div>
 
+        <!-- 字号选择（"字体大小"） -->
         <div class="option-group">
-          <span class="option-label">{{ $t('fontSize') }}</span>
+          <span class="option-label">{{ $t("fontSize") }}</span>
           <select
             class="font-select"
             :value="fontSize"
@@ -36,8 +38,9 @@
           </select>
         </div>
 
+        <!-- 主题切换（"主题"） -->
         <div class="option-group">
-          <span class="option-label">{{ $t('theme') }}</span>
+          <span class="option-label">{{ $t("theme") }}</span>
           <button
             v-for="t in themeOptions"
             :key="t.value"
@@ -51,182 +54,67 @@
       </div>
 
       <div class="toolbar-right">
+        <!-- 清空按钮（"清空"） -->
         <button
           class="action-btn"
           :title="$t('clear')"
           @click="clearAll"
         >
-          <svg
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            fill="currentColor"
-          >
-            <path :d="ICONS.close" />
-          </svg>
-          <span>{{ $t('clear') }}</span>
+          <Icon icon="mdi:close" :width="16" :height="16" />
+          <span>{{ $t("clear") }}</span>
         </button>
+        <!-- 交换按钮（"交换"） -->
         <button
           class="action-btn"
           :title="$t('swap')"
           @click="swapTexts"
         >
-          <svg
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            fill="currentColor"
-          >
-            <path :d="ICONS.swap" />
-          </svg>
-          <span>{{ $t('swap') }}</span>
+          <Icon icon="mdi:swap-horizontal" :width="16" :height="16" />
+          <span>{{ $t("swap") }}</span>
         </button>
       </div>
     </div>
 
     <!-- 主内容区 -->
     <div class="diff-main">
-      <!-- 输入区域 -->
+      <!-- 输入区域：原文本 / 修改后文本 双面板 -->
       <div class="input-section">
-        <!-- 原文本面板 -->
-        <div
-          class="input-panel"
-          :class="{ 'drag-over': dragState.original }"
-          @dragover.prevent="handleDragOver('original', $event)"
-          @dragleave="handleDragLeave('original')"
-          @drop.prevent="handleDrop('original', $event)"
-        >
-          <div class="panel-header">
-            <div class="header-left">
-              <span class="panel-title">{{ $t('original') }}</span>
-              <span
-                v-if="originalFileName"
-                class="file-name"
-              >{{ originalFileName }}</span>
-            </div>
-            <div class="header-right">
-              <span class="char-count">{{ originalText.length }} {{ $t('chars') }}</span>
-              <button
-                class="file-btn"
-                :title="$t('selectFile')"
-                @click="triggerFileInput('original')"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  width="14"
-                  height="14"
-                  fill="currentColor"
-                >
-                  <path :d="ICONS.file" />
-                </svg>
-              </button>
-            </div>
-          </div>
-          <textarea
-            v-model="originalText"
-            :placeholder="$t('originalPlaceholder')"
-            class="input-textarea"
-          ></textarea>
-          <!-- 拖拽提示层 -->
-          <div
-            v-if="dragState.original"
-            class="drag-overlay"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              width="32"
-              height="32"
-              fill="currentColor"
-            >
-              <path :d="ICONS.cloudUpload" />
-            </svg>
-            <span>{{ $t('dropFile') }}</span>
-          </div>
-        </div>
-
-        <!-- 修改后文本面板 -->
-        <div
-          class="input-panel"
-          :class="{ 'drag-over': dragState.modified }"
-          @dragover.prevent="handleDragOver('modified', $event)"
-          @dragleave="handleDragLeave('modified')"
-          @drop.prevent="handleDrop('modified', $event)"
-        >
-          <div class="panel-header">
-            <div class="header-left">
-              <span class="panel-title">{{ $t('modified') }}</span>
-              <span
-                v-if="modifiedFileName"
-                class="file-name"
-              >{{ modifiedFileName }}</span>
-            </div>
-            <div class="header-right">
-              <span class="char-count">{{ modifiedText.length }} {{ $t('chars') }}</span>
-              <button
-                class="file-btn"
-                :title="$t('selectFile')"
-                @click="triggerFileInput('modified')"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  width="14"
-                  height="14"
-                  fill="currentColor"
-                >
-                  <path :d="ICONS.file" />
-                </svg>
-              </button>
-            </div>
-          </div>
-          <textarea
-            v-model="modifiedText"
-            :placeholder="$t('modifiedPlaceholder')"
-            class="input-textarea"
-          ></textarea>
-          <!-- 拖拽提示层 -->
-          <div
-            v-if="dragState.modified"
-            class="drag-overlay"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              width="32"
-              height="32"
-              fill="currentColor"
-            >
-              <path :d="ICONS.cloudUpload" />
-            </svg>
-            <span>{{ $t('dropFile') }}</span>
-          </div>
-        </div>
+        <!-- 原文本面板（"原文本"） -->
+        <InputPanel
+          v-model="originalText"
+          v-model:fileName="originalFileName"
+          title-key="original"
+          placeholder-key="originalPlaceholder"
+          :i18n="props.i18n"
+        />
+        <!-- 修改后文本面板（"修改后文本"） -->
+        <InputPanel
+          v-model="modifiedText"
+          v-model:fileName="modifiedFileName"
+          title-key="modified"
+          placeholder-key="modifiedPlaceholder"
+          :i18n="props.i18n"
+        />
       </div>
-
-      <!-- 隐藏的文件输入 -->
-      <input
-        ref="fileInputRef"
-        type="file"
-        style="display: none"
-        @change="handleFileSelect"
-      />
 
       <!-- 分割线 -->
       <div class="divider">
-        <svg
-          viewBox="0 0 24 24"
-          width="18"
-          height="18"
-          fill="currentColor"
-        >
-          <path :d="ICONS.chevronDown" />
-        </svg>
+        <Icon icon="mdi:chevron-down" :width="18" :height="18" />
       </div>
 
       <!-- 差异结果 -->
       <div class="result-section">
         <div class="panel-header">
-          <span class="panel-title">{{ $t('diffResult') }}</span>
+          <!-- 差异结果标题（"差异结果"） -->
+          <span class="panel-title">{{ $t("diffResult") }}</span>
+        </div>
+        <!-- 空状态：双文本均为空时提示（"请输入文本以查看差异"） -->
+        <div v-if="!originalText && !modifiedText" class="empty-state">
+          <Icon icon="mdi:file-compare-outline" :width="48" :height="48" />
+          <p>{{ $t("emptyState") }}</p>
         </div>
         <Diff
+          v-else
           class="diff-viewer"
           :mode="diffMode"
           :theme="diffTheme"
@@ -235,9 +123,6 @@
           :current="modifiedText"
           :folding="false"
           :virtual-scroll="false"
-          :render-added="true"
-          :render-removed="true"
-          :hide-line-numbers="false"
         />
       </div>
     </div>
@@ -245,30 +130,27 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 文本对比主面板：持有双文本状态，v-model 下发输入面板，实时驱动 vue-diff 差异计算
+ */
 import type { Plugin } from "siyuan"
 import type { TextDiffSettings } from "./types/storage"
-import {
-  computed,
-  onMounted,
-  reactive,
-  ref,
-} from "vue"
+import { computed, onMounted, ref } from "vue"
+import { Icon } from "@iconify/vue"
 import { Diff } from "vue-diff"
 import { TextDiffStorage } from "./types/storage"
+import { textDiffI18n } from "./utils"
+import InputPanel from "./components/InputPanel.vue"
 import "vue-diff/dist/index.css"
 
 const props = defineProps<{
   onClose?: () => void
-  i18n?: any
+  i18n?: Record<string, any>
   plugin?: Plugin
 }>()
 
 // 存储管理
 const storage = props.plugin ? new TextDiffStorage(props.plugin) : null
-
-// 文件输入引用
-const fileInputRef = ref<HTMLInputElement | null>(null)
-const currentInputTarget = ref<"original" | "modified">("original")
 
 // 响应式数据
 const originalText = ref("")
@@ -279,72 +161,32 @@ const diffMode = ref<"split" | "unified">("split")
 const diffTheme = ref<"light" | "dark">("light")
 const fontSize = ref<number>(14)
 
-// 拖拽状态
-const dragState = reactive({
-  original: false,
-  modified: false,
-})
-
-// 内联 SVG 图标路径（模板复用去重）
-const ICONS = {
-  close: "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z",
-  swap: "M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z",
-  file: "M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z",
-  cloudUpload: "M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z",
-  chevronDown: "M7 10l5 5 5-5z",
-}
-
-// 选项数据
+// 字号选项（用户可调，12-24px）
 const FONT_SIZE_OPTIONS = [
-  {
-    value: 12,
-    label: "12px",
-  },
-  {
-    value: 14,
-    label: "14px",
-  },
-  {
-    value: 16,
-    label: "16px",
-  },
-  {
-    value: 18,
-    label: "18px",
-  },
-  {
-    value: 20,
-    label: "20px",
-  },
-  {
-    value: 24,
-    label: "24px",
-  },
+  { value: 12, label: "12px" },
+  { value: 14, label: "14px" },
+  { value: 16, label: "16px" },
+  { value: 18, label: "18px" },
+  { value: 20, label: "20px" },
+  { value: 24, label: "24px" },
 ]
 
+// 显示模式选项（"分栏" / "统一"）
 const modeOptions = computed(() => [
-  {
-    value: "split" as const,
-    label: $t("splitMode"),
-  },
-  {
-    value: "unified" as const,
-    label: $t("unifiedMode"),
-  },
+  { value: "split" as const, label: $t("splitMode") },
+  { value: "unified" as const, label: $t("unifiedMode") },
 ])
 
+// 主题选项（"浅色" / "深色"）
 const themeOptions = computed(() => [
-  {
-    value: "light" as const,
-    label: $t("lightTheme"),
-  },
-  {
-    value: "dark" as const,
-    label: $t("darkTheme"),
-  },
+  { value: "light" as const, label: $t("lightTheme") },
+  { value: "dark" as const, label: $t("darkTheme") },
 ])
 
-// 设置字体大小
+// 国际化
+const $t = (key: string): string => textDiffI18n(props.i18n, key)
+
+// 设置字体大小（用户可调字号，写入全局 CSS 变量）
 const setFontSize = (size: number) => {
   document.documentElement.style.setProperty("--diff-font-size", `${size}px`)
 }
@@ -410,68 +252,6 @@ const swapTexts = () => {
   modifiedFileName.value = tempName
 }
 
-// 触发文件选择
-const triggerFileInput = (target: "original" | "modified") => {
-  currentInputTarget.value = target
-  fileInputRef.value?.click()
-}
-
-// 处理文件选择
-const handleFileSelect = (event: Event) => {
-  const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
-  if (file) {
-    readFile(file, currentInputTarget.value)
-  }
-  // 重置 input 以允许再次选择同一文件
-  input.value = ""
-}
-
-// 处理拖拽进入
-const handleDragOver = (target: "original" | "modified", event: DragEvent) => {
-  if (event.dataTransfer?.types.includes("Files")) {
-    dragState[target] = true
-  }
-}
-
-// 处理拖拽离开
-const handleDragLeave = (target: "original" | "modified") => {
-  dragState[target] = false
-}
-
-// 处理文件放置
-const handleDrop = (target: "original" | "modified", event: DragEvent) => {
-  dragState[target] = false
-  const file = event.dataTransfer?.files?.[0]
-  if (file) {
-    readFile(file, target)
-  }
-}
-
-// 读取文件内容
-const readFile = (file: File, target: "original" | "modified") => {
-  const reader = new FileReader()
-  reader.onload = () => {
-    const content = reader.result as string
-    if (target === "original") {
-      originalText.value = content
-      originalFileName.value = file.name
-    } else {
-      modifiedText.value = content
-      modifiedFileName.value = file.name
-    }
-  }
-  reader.onerror = () => {
-    console.error("读取文件失败:", file.name)
-  }
-  reader.readAsText(file)
-}
-
-// 国际化
-const $t = (key: string): string => {
-  return props.i18n?.textDiff?.[key] || key
-}
-
 onMounted(() => {
   loadSettings()
   setFontSize(fontSize.value)
@@ -479,5 +259,5 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-@use './styles/TextDiff.scss';
+@use './styles/index.scss';
 </style>

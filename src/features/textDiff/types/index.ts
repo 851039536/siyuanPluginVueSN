@@ -36,7 +36,7 @@ export class TextDiffManager {
    * 切换文本对比工具显示/隐藏
    */
   public toggle = () => {
-    if (this.modal.app && this.modal.container) {
+    if (this.modal.visible) {
       this.close()
     } else {
       this.open()
@@ -58,9 +58,9 @@ export class TextDiffManager {
   }
 
   /**
-   * 销毁管理器
+   * 销毁管理器（插件卸载时彻底清理 Modal 实例与 DOM）
    */
   public destroy() {
-    this.close()
+    this.modal.destroy()
   }
 }

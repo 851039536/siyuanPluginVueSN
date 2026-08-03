@@ -1,44 +1,6 @@
-// textDiff 功能样式：差异对比主界面（从 index.vue 提取，遵循 SCSS 分离规则）
+// textDiff 功能主面板样式：工具栏、输入区网格、差异查看器、空状态（共享基座，子组件双行导入）
 @use '@/variables.scss' as *;
-
-// ==================== Codex Design System ====================
-
-@mixin codex-meta-label {
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.45;
-  color: var(--b3-theme-on-surface);
-}
-
-@mixin codex-border-card {
-  border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
-  background: var(--b3-theme-surface);
-  transition: border-color 0.12s;
-
-  &:hover {
-    border-color: var(--b3-theme-primary);
-  }
-}
-
-// 按钮基础样式：toggle-btn / action-btn / file-btn 共用（hover 由各按钮自行定义）
-@mixin codex-btn-base {
-  border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
-  background: transparent;
-  color: var(--b3-theme-on-surface);
-  cursor: pointer;
-  transition: all 0.12s;
-}
-
-// 横向 flex 布局：header-left / header-right 共用
-@mixin flex-row($gap: $spacing-2) {
-  display: flex;
-  align-items: center;
-  gap: $gap;
-}
+@use './mixins' as m;
 
 // ==================== Container ====================
 
@@ -84,21 +46,21 @@
 }
 
 .option-label {
-  @include codex-meta-label;
+  @include m.codex-meta-label;
   white-space: nowrap;
 }
 
 // ==================== Toggle Buttons ====================
 
 .toggle-btn {
-  @include codex-btn-base;
+  @include m.codex-btn-base;
   padding: $spacing-1 $spacing-3;
   font-size: $font-size-xs;
   white-space: nowrap;
 
   &.active {
     background: var(--b3-theme-primary);
-    color: #fff;
+    color: var(--b3-theme-on-primary);
     border-color: var(--b3-theme-primary);
 
     &:hover {
@@ -133,7 +95,7 @@
 // ==================== Action Buttons ====================
 
 .action-btn {
-  @include codex-btn-base;
+  @include m.codex-btn-base;
   display: flex;
   align-items: center;
   gap: $spacing-1;
@@ -170,19 +132,7 @@
   max-height: 35vh;
 }
 
-.input-panel {
-  display: flex;
-  flex-direction: column;
-  @include codex-border-card;
-  overflow: hidden;
-  min-height: 150px;
-  position: relative;
-
-  &.drag-over {
-    border-color: var(--b3-theme-primary);
-    background: var(--b3-theme-surface-lighter);
-  }
-}
+// ==================== Panel Header（结果区 + InputPanel 头部共用）====================
 
 .panel-header {
   display: flex;
@@ -194,96 +144,9 @@
   flex-shrink: 0;
 }
 
-.header-left {
-  @include flex-row($spacing-2);
-  overflow: hidden;
-}
-
-.header-right {
-  @include flex-row($spacing-2);
-  flex-shrink: 0;
-}
-
 .panel-title {
-  @include codex-meta-label;
+  @include m.codex-meta-label;
   flex-shrink: 0;
-}
-
-.file-name {
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.char-count {
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-surface-variant);
-}
-
-.file-btn {
-  @include codex-btn-base;
-  background: var(--b3-theme-background);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
-
-  &:hover {
-    border-color: var(--b3-theme-primary);
-    color: var(--b3-theme-primary);
-  }
-}
-
-.input-textarea {
-  flex: 1;
-  padding: $spacing-1 $spacing-3;
-  font-size: var(--diff-font-size, 14px);
-  font-family: inherit;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--b3-theme-on-background);
-  resize: none;
-  outline: none;
-  line-height: $line-height-normal;
-
-  &:focus {
-    border-color: var(--b3-theme-primary);
-  }
-
-  &::placeholder {
-    color: var(--b3-theme-on-surface-variant);
-    opacity: 0.6;
-  }
-}
-
-// ==================== Drag Overlay ====================
-
-.drag-overlay {
-  position: absolute;
-  inset: 0;
-  top: 29px; // header height
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: $spacing-2;
-  background: rgba(var(--b3-theme-primary-rgb, 235, 94, 42), 0.1);
-  border: 2px dashed var(--b3-theme-primary);
-  border-radius: 0 0 $vp-radius $vp-radius;
-  color: var(--b3-theme-primary);
-  pointer-events: none;
-  z-index: 10;
-
-  span {
-    font-size: $font-size-sm;
-    font-weight: $font-weight-medium;
-  }
 }
 
 // ==================== Divider ====================
@@ -308,14 +171,32 @@
   flex-direction: column;
   overflow: hidden;
   min-height: 200px;
-  @include codex-border-card;
+  @include m.codex-border-card;
   margin: 0 $spacing-2 $spacing-2;
+}
+
+// 空状态：双文本均为空时占位提示
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  font-style: italic;
+  opacity: 0.5;
+  color: var(--b3-theme-on-surface);
+  min-height: 0;
+
+  p {
+    margin: 0;
+  }
 }
 
 .diff-viewer {
   flex: 1;
   overflow: auto;
-  font-size: var(--diff-font-size, 14px);
+  font-size: var(--diff-font-size, 14px); // 用户可调字号变量（12-24px），兜底 14px
 
   // vue-diff 根容器（类名为 .vue-diff-wrapper，非 .vue-diff）
   :deep(.vue-diff-wrapper) {
@@ -357,10 +238,6 @@
   .input-section {
     grid-template-columns: 1fr;
     max-height: 45vh;
-  }
-
-  .input-panel {
-    min-height: 120px;
   }
 
   .result-section {

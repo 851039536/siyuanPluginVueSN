@@ -317,13 +317,21 @@
   overflow: auto;
   font-size: var(--diff-font-size, 14px);
 
-  :deep(.vue-diff) {
+  // vue-diff 根容器（类名为 .vue-diff-wrapper，非 .vue-diff）
+  :deep(.vue-diff-wrapper) {
     height: 100%;
     overflow: auto;
   }
 
-  // :deep(.vue-diff *) 已匹配全部后代，下方冗余的 .d2h-* 具体选择器已删除
-  :deep(.vue-diff *) {
+  // 覆盖 vue-diff 第三方硬编码 font-size: 16px（定义在 .vue-diff-viewer 上），改用用户可调字号变量
+  :deep(.vue-diff-viewer) {
+    font-size: var(--diff-font-size, 14px) !important;
+    line-height: $line-height-normal !important;
+    background: var(--b3-theme-surface) !important;
+  }
+
+  // 内部所有元素继承用户设定字号
+  :deep(.vue-diff-viewer *) {
     font-size: inherit !important;
   }
 }

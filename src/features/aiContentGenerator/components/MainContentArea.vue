@@ -1,9 +1,9 @@
 <!-- AI内容生成器主内容展示区：加载态 / 空状态 / 错误提示 / Markdown预览 / Diff对比 / 流式输出 -->
 <template>
   <div class="main-content-area">
-    <!-- 加载状态（仅在没有内容时显示） -->
+    <!-- 加载状态（仅在没有内容时显示，思考过程中不遮挡） -->
     <div
-      v-if="isGenerating && !displayedContent && !generatedContent"
+      v-if="isGenerating && !displayedContent && !generatedContent && !reasoningContent"
       class="loading-wrapper"
     >
       <Loader />
@@ -24,9 +24,9 @@
       <p>{{ errorMessage }}</p>
     </div>
 
-    <!-- 生成结果（流式输出时也显示） -->
+    <!-- 生成结果（流式输出时也显示；思考过程到达时也渲染以展示推理内容） -->
     <div
-      v-else-if="displayedContent || generatedContent"
+      v-else-if="displayedContent || generatedContent || reasoningContent"
       class="result-container"
     >
       <div class="result-header">

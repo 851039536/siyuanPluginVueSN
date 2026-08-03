@@ -44,18 +44,19 @@ src/features/gitPush/
 │   ├── useGitTagsConflicts.ts       # Tag/冲突/模板/扫描导入
 │   └── useGitStats.ts               # 统计视图 computed
 ├── components/
-│   ├── common/                      # 面板常驻 + 全局弹窗 + 弹窗子组件（14 个）
+│   ├── common/                      # 面板常驻 + 全局弹窗 + 弹窗子组件（15 个）
 │   │   ├── PanelHeader.vue          # 面板头部（搜索 + 视图切换）
 │   │   ├── BatchProgressBar.vue     # 批量进度条
 │   │   ├── ConfirmDialog.vue        # 通用确认弹窗
 │   │   ├── AddProjectDialog.vue     # 添加项目弹窗
 │   │   ├── CategoryDialog.vue       # 分类管理弹窗
-│   │   ├── SettingsDialog.vue       # 设置弹窗
+│   │   ├── SettingsDialog.vue       # 设置弹窗（并发数 + 分支模式）
+│   │   ├── GitConfigSection.vue     # Git 配置管理面板（查看/编辑/新增/删除，全局/项目级）
 │   │   ├── IdeManagementDialog.vue  # IDE 管理弹窗
 │   │   ├── ScanImportDialog.vue     # 扫描导入弹窗
 │   │   ├── EditProjectDialog.vue    # 编辑项目弹窗
 │   │   ├── MarkdownPreviewDialog.vue# Markdown 预览弹窗
-│   │   ├── GitConfigDialog.vue      # Git 配置弹窗
+│   │   ├── GitConfigDialog.vue      # Git 配置弹窗（内嵌 GitConfigSection，可读写）
 │   │   ├── SearchBox.vue            # 搜索框
 │   │   ├── EditableRemoteList.vue   # 可编辑远程列表
 │   │   └── CloneLogPanel.vue        # 克隆日志面板
@@ -137,6 +138,7 @@ GitPushManager (facade)
 | `getStashList / stashSave / stashPop / stashApply / stashDrop` | Stash 操作 |
 | `generateStashDescription(path)` | AI 生成 Stash 描述 |
 | `scanForGitRepos(dirPath)` | 递归扫描目录查找 Git 仓库 |
+| `getGitGlobalConfig / setGitGlobalConfig / unsetGitGlobalConfig` | Git 全局配置查看/写入/删除（设置弹窗内管理） |
 
 ### 共享常量
 

@@ -262,9 +262,25 @@ export class GitPushManager {
 
   async getGitGlobalConfig(): Promise<string> { return this.repoOps.getGitGlobalConfig() }
 
+  async setGitGlobalConfig(key: string, value: string): Promise<void> {
+    return this.repoOps.setGitGlobalConfig(key, value)
+  }
+
+  async unsetGitGlobalConfig(key: string): Promise<void> {
+    return this.repoOps.unsetGitGlobalConfig(key)
+  }
+
   getGitConfigFilePath(): string { return this.repoOps.getGitConfigFilePath() }
 
   async getProjectGitConfig(projectPath: string): Promise<string> { return this.repoOps.getProjectGitConfig(projectPath) }
+
+  async setProjectGitConfig(projectPath: string, key: string, value: string): Promise<void> {
+    return this.repoOps.setProjectGitConfig(projectPath, key, value)
+  }
+
+  async unsetProjectGitConfig(projectPath: string, key: string): Promise<void> {
+    return this.repoOps.unsetProjectGitConfig(projectPath, key)
+  }
 
   getProjectGitConfigFilePath(projectPath: string): string { return this.repoOps.getProjectGitConfigFilePath(projectPath) }
 

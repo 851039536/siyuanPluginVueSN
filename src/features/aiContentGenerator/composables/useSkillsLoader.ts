@@ -16,7 +16,7 @@ import {
 
 export function useSkillsLoader(
   plugin: any,
-  scanSkills: ScanSkillsFn,
+  scanSkills?: ScanSkillsFn,
 ) {
   /** 去重后的技能列表 */
   const skills = ref<SkillItem[]>([])
@@ -64,6 +64,12 @@ export function useSkillsLoader(
 
   /** 扫描加载 AI 技能 */
   async function loadSkills() {
+    // modules 侧未注入 scanSkills（可选契约）时置空技能列表直接返回
+    if (!scanSkills) {
+      skills.value = []
+      currentSkillIndex.value = -1
+      return
+    }
     try {
       let projectPath = ""
       try {
@@ -93,16 +99,15 @@ export function useSkillsLoader(
    * ""（明确选择"无技能"）→ 选中 -1
    * 具体 id → 找到则选中对应技能；技能已不存在则回退默认逻辑
    */
-  function restoreSkillById(skillId: string | null): boolean {
-    if (skillId === null) return false
+  function restoreSkillById(skillId: string | null): void {
+    if (skillId === null) return
     if (skillId === "") {
       currentSkillIndex.value = -1
-      return true
+      return
     }
     const index = skills.value.findIndex((s) => s.id === skillId)
-    if (index === -1) return false
+    if (index === -1) return
     currentSkillIndex.value = index
-    return true
   }
 
   return {

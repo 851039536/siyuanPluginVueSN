@@ -19,10 +19,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: $spacing-3 $spacing-3;
+  padding: $spacing-1 $spacing-3; // 与 .panel-header 垂直内边距统一（$spacing-1），消除工具栏偏胖
   background: var(--b3-theme-surface);
   border-bottom: 1px solid var(--b3-border-color);
-  gap: $spacing-4;
   flex-shrink: 0;
 }
 
@@ -155,10 +154,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: $spacing-1;
+  padding: $spacing-px; // 3px 微间距，分隔条尽量细
   background: var(--b3-theme-surface);
-  border-top: 1px dashed var(--b3-border-color);
-  border-bottom: 1px dashed var(--b3-border-color);
   color: var(--b3-theme-on-surface-variant);
   flex-shrink: 0;
 }
@@ -222,7 +219,7 @@
 @media (max-width: 900px) {
   .diff-toolbar {
     flex-wrap: wrap;
-    padding: $spacing-2;
+    padding: $spacing-1 $spacing-3; // 与默认态保持一致
   }
 
   .toolbar-left {

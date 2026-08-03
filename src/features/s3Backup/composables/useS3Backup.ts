@@ -7,12 +7,14 @@
  */
 import { computed, ref } from "vue"
 import type { S3Config, S3FileInfo } from "../types"
-import { DEFAULT_S3_CONFIG, DEFAULT_S3_PREFIX, INCREMENTAL_SUBDIR } from "../types"
+import { DEFAULT_S3_CONFIG, INCREMENTAL_SUBDIR } from "../types"
 import { S3Client } from "../types/s3Client"
 import type { BackupProgress } from "../modules/BackupManager"
+import { buildS3Key } from "../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
 
-export function useS3Backup(i18n: Record<string, string>) {
+export function useS3Backup(options: { i18n: Record<string, string>; getSubPrefix: () => string }) {
+  const { i18n, getSubPrefix } = options
   // ========== 状态 ==========
 
   const s3Config = ref<S3Config>({ ...DEFAULT_S3_CONFIG })
@@ -107,19 +109,23 @@ export function useS3Backup(i18n: Record<string, string>) {
     }
   }
 
-  /** 获取 S3 列举前缀（统一默认值，消除 listBackups/listExistingKeys 重复构造） */
+  /** 获取 S3 列举前缀（限定当前工作区子路径 {prefix}/{sub}/，消除 listBackups/listExistingKeys 重复构造） */
   function getListPrefix(): string {
-    return s3Config.value.prefix || DEFAULT_S3_PREFIX
+    return buildS3Key(s3Config.value.prefix, getSubPrefix(), "")
   }
 
   /** 从 S3 拉取文件列表（消除 listBackups/listExistingKeys 重复的 list 调用和 backupList 赋值） */
   async function fetchBackupList(): Promise<S3FileInfo[]> {
     const client = requireClient()
-    const all = await client.list(getListPrefix())
-    // 过滤增量备份的小文件与清单，避免污染云端备份列表与去重集合；
-    // 同时过滤文件夹占位对象（0 字节，如 S3 Browser 的 ThisIsAnEmptyFolderInTheS3Bucket）与目录标记键（以 / 结尾）
+    const fullPrefix = getListPrefix()
+    const all = await client.list(fullPrefix)
+    // 防御性过滤：仅保留当前工作区子路径 {prefix}/{sub}/ 下的对象，防止 S3 服务端
+    // 对子前缀匹配不严导致其他工作区/无关文件夹的内容混入列表；
+    // 同时过滤增量备份的小文件与清单（避免污染云端备份列表与去重集合）、
+    // 文件夹占位对象（0 字节，如 S3 Browser 的 ThisIsAnEmptyFolderInTheS3Bucket）与目录标记键（以 / 结尾）
     const files = all.filter((f) =>
-      !f.key.includes(`/${INCREMENTAL_SUBDIR}/`)
+      f.key.startsWith(fullPrefix)
+      && !f.key.includes(`/${INCREMENTAL_SUBDIR}/`)
       && !f.key.endsWith("/")
       && f.size > 0,
     )

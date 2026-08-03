@@ -119,7 +119,7 @@ export function useGeneration(opts: UseGenerationOptions) {
     generatedContent.value = ""
     displayedContent.value = ""
     reasoningContent.value = ""
-    showReasoning.value = false
+    showReasoning.value = true
     chunkBuffer = ""
     reasoningBuffer = ""
     streamingInCodeBlock = false

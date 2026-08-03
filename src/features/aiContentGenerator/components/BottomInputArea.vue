@@ -110,6 +110,18 @@
         <input type="checkbox" :checked="enableThinking" @change="$emit('update:enableThinking', ($event.target as HTMLInputElement).checked)" />
         <span class="thinking-label">思考</span>
       </label>
+      <!-- 思考强度选择：仅思考模式开启时显示，取值为 DeepSeek 官方 low/high/max -->
+      <select
+        v-if="supportsThinking && enableThinking"
+        class="reasoning-effort-select"
+        :value="reasoningEffort"
+        title="思考强度（low/high/max）"
+        @change="emit('update:reasoningEffort', ($event.target as HTMLSelectElement).value as DeepSeekReasoningEffort)"
+      >
+        <option value="low">思考强度：低</option>
+        <option value="high">思考强度：高</option>
+        <option value="max">思考强度：最大</option>
+      </select>
       <label class="review-toggle" title="生成后使用 V4 Pro 交叉审核">
         <input type="checkbox" :checked="enableReview" @change="$emit('update:enableReview', ($event.target as HTMLInputElement).checked)" />
         <span class="review-label"><svg width="11" height="11"><use xlink:href="#iconCheck" /></svg>审核</span>
@@ -163,7 +175,7 @@
 
 <script setup lang="ts">
 import type { ProviderModels } from "@/config/aiModels"
-import type { SkillItem, TargetDoc } from "@/types/ai"
+import type { DeepSeekReasoningEffort, SkillItem, TargetDoc } from "@/types/ai"
 import { computed, ref } from "vue"
 import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
@@ -192,6 +204,8 @@ interface Props {
   availableModels: ProviderModels
   supportsThinking: boolean
   enableThinking: boolean
+  /** 思考强度（DeepSeek 思考模式：low/high/max） */
+  reasoningEffort: DeepSeekReasoningEffort
   enableReview: boolean
 }
 
@@ -210,6 +224,7 @@ const emit = defineEmits<{
   'update:selectedModel': [value: string]
   'update:customModel': [value: string]
   'update:enableThinking': [value: boolean]
+  'update:reasoningEffort': [value: DeepSeekReasoningEffort]
   'update:enableReview': [value: boolean]
 }>()
 

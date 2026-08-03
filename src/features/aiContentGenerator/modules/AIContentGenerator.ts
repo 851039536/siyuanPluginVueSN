@@ -72,6 +72,9 @@ function validateRating(rating: unknown): "优秀" | "良好" | "需改进" {
   return "良好"
 }
 
+/** 思考截断重试时的输出预算上限 */
+const RETRY_MAX_TOKENS_CAP = 65536
+
 export class AIContentGenerator {
   private plugin: Plugin
   private scanSkills: ScanSkillsFn | null
@@ -113,6 +116,39 @@ export class AIContentGenerator {
     })
   }
 
+  /** 单次生成执行：跟踪思考是否产生输出，返回正文与思考标记 */
+  private async runOnce(
+    fullPrompt: string,
+    apiConfig: AiApiConfig,
+    options: GenerateOptions,
+    maxTokens: number,
+  ): Promise<{ result: string, hasReasoning: boolean }> {
+    // 区分"完全无输出"与"仅思考无正文"
+    // （思考模式流正常结束但无 content，是思考耗尽 max_tokens 预算的典型表现）
+    let hasReasoning = false
+
+    const result = await callAISmart(fullPrompt, apiConfig, {
+      systemPrompt: options.systemPrompt,
+      temperature: options.temperature,
+      maxTokens,
+      signal: options.signal,
+      onChunk: options.onChunk,
+      onReasoningChunk: (chunk) => {
+        hasReasoning = true
+        options.onReasoningChunk?.(chunk)
+      },
+      webSearch: options.webSearch,
+      searchQuery: options.searchQuery,
+      onSearchStart: options.onSearchStart,
+      onSearchResults: options.onSearchResults,
+      onSearchError: options.onSearchError,
+      enableThinking: options.enableThinking,
+      reasoningEffort: options.reasoningEffort,
+    })
+
+    return { result, hasReasoning }
+  }
+
   public async generateContent(options: GenerateOptions): Promise<string> {
     if (!options.userInput) {
       showMessage("请输入内容", 3000, "error")
@@ -127,40 +163,24 @@ export class AIContentGenerator {
         apiConfig.model = options.model
       }
 
-      // 跟踪思考是否产生输出：区分"完全无输出"与"仅思考无正文"
-      // （思考模式流正常结束但无 content，是思考过长被服务端截断的典型表现）
-      let hasReasoning = false
-
-      const result = await callAISmart(fullPrompt, apiConfig, {
-        systemPrompt: options.systemPrompt,
-        temperature: options.temperature,
-        maxTokens: options.maxTokens,
-        signal: options.signal,
-        onChunk: options.onChunk,
-        onReasoningChunk: (chunk) => {
-          hasReasoning = true
-          options.onReasoningChunk?.(chunk)
-        },
-        webSearch: options.webSearch,
-        searchQuery: options.searchQuery,
-        onSearchStart: options.onSearchStart,
-        onSearchResults: options.onSearchResults,
-        onSearchError: options.onSearchError,
-        enableThinking: options.enableThinking,
-        reasoningEffort: options.reasoningEffort,
-      })
-
-      if (result) {
-        return result
+      const first = await this.runOnce(fullPrompt, apiConfig, options, options.maxTokens)
+      if (first.result) {
+        return first.result
       }
 
-      // 有思考但无正文：保留界面上的思考内容，明确提示截断原因
-      if (hasReasoning) {
-        showMessage(
-          "思考完成但未生成正文，可能是思考过长被服务端截断，请降低思考强度或重试",
-          5000, "error",
-        )
-        return ""
+      // 有思考但无正文：思考耗尽输出预算，自动加倍预算重试一次
+      if (first.hasReasoning) {
+        options.onTruncationRetry?.()
+        showMessage("思考被截断，正在以更大输出预算自动重试...", 3000, "info")
+        const retryTokens = Math.min(options.maxTokens * 2, RETRY_MAX_TOKENS_CAP)
+        const retry = await this.runOnce(fullPrompt, apiConfig, options, retryTokens)
+        if (retry.result) {
+          return retry.result
+        }
+        if (retry.hasReasoning) {
+          showMessage("已扩大输出预算重试但仍被截断，请降低思考强度", 5000, "error")
+          return ""
+        }
       }
 
       showMessage("生成失败，请重试", 3000, "error")

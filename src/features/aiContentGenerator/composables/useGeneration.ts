@@ -19,6 +19,12 @@ interface ConversationTurn {
 /** 硬编码的默认生成参数 */
 const DEFAULT_TEMPERATURE = 0.7
 const DEFAULT_MAX_TOKENS = 10000
+/**
+ * 思考模式专用输出预算：思考 token 与正文 token 共用 max_tokens，
+ * 思考强度 high/max 时 10000 预算会被思考耗尽导致无正文。
+ * 仅思考模式使用（思考开关限 deepseek-v4-*，该系列支持大预算，不影响其他供应商）
+ */
+const THINKING_MAX_TOKENS = 32000
 
 interface UseGenerationOptions {
   enableThinking: Ref<boolean>
@@ -102,6 +108,13 @@ export function useGeneration(opts: UseGenerationOptions) {
   const stableSearchError = (error: string) => {
     searchStatus.value = `搜索失败: ${error}`
     showMessage(`联网搜索失败: ${error}`, 3000, "info")
+  }
+
+  /** 思考截断自动重试前：清空旧思考展示（重试的思考是全新流，替换展示避免重复堆叠） */
+  const stableTruncationRetry = () => {
+    reasoningBuffer = ""
+    reasoningContent.value = ""
+    showReasoning.value = true
   }
 
   // ===== 内部辅助 =====
@@ -254,10 +267,12 @@ export function useGeneration(opts: UseGenerationOptions) {
     userInput,
     systemPrompt,
     temperature: DEFAULT_TEMPERATURE,
-    maxTokens: DEFAULT_MAX_TOKENS,
+    maxTokens: opts.enableThinking.value ? THINKING_MAX_TOKENS : DEFAULT_MAX_TOKENS,
     signal: abortController.value?.signal,
     onChunk: defaultOnChunk,
-    ...(opts.enableThinking.value ? { onReasoningChunk: defaultOnReasoningChunk } : {}),
+    ...(opts.enableThinking.value
+      ? { onReasoningChunk: defaultOnReasoningChunk, onTruncationRetry: stableTruncationRetry }
+      : {}),
     model: opts.resolvedModel.value || undefined,
     enableThinking: opts.enableThinking.value,
     reasoningEffort: opts.reasoningEffort.value,

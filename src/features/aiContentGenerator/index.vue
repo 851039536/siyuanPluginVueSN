@@ -1,5 +1,5 @@
 <template>
-  <div class="ai-content-panel">
+  <div ref="panelRoot" class="ai-content-panel">
     <!-- 内容显示区域 -->
     <div class="content-display-section">
       <MainContentArea
@@ -29,7 +29,7 @@
         @insertSubdoc="insertSubDocument"
         @undoEdit="undoEdit"
         @copy="copyContent"
-        @clear="clearContent"
+        @clear="handleClearAll"
         @toggleReasoning="showReasoning = !showReasoning"
         @autoFix="handleAutoFix"
         :conversation-count="conversationHistory.length"
@@ -68,6 +68,7 @@
       @update:selectedModel="selectedModel = $event"
       @update:customModel="customModel = $event"
       @update:enableThinking="enableThinking = $event"
+      @update:reasoningEffort="reasoningEffort = $event"
       @update:enableReview="enableReview = $event"
     />
   </div>
@@ -103,12 +104,16 @@ interface Props {
   i18n: Record<string, string>
   plugin: Plugin
   onGenerate: (options: GenerateOptions) => Promise<string>
-  onReview?: (userRequest: string, generatedContent: string, skill?: SkillItem) => Promise<ReviewResult>
-  scanSkills: (projectPath?: string) => Promise<SkillScanEntry[]>
+  /** 交叉审核回调（modules 侧 addDock 始终注入） */
+  onReview: (userRequest: string, generatedContent: string, skill?: SkillItem) => Promise<ReviewResult>
+  /** 技能扫描回调（modules 侧仅在注入时透传，故为可选） */
+  scanSkills?: (projectPath?: string) => Promise<SkillScanEntry[]>
 }
 
-const props = withDefaults(defineProps<Props>(), {})
+const props = defineProps<Props>()
 const storage = ref<AIGeneratorStorage | null>(null)
+/** 面板根容器引用（代码高亮等 DOM 查询限定在面板内，避免误伤 Teleport 到 body 的弹窗） */
+const panelRoot = ref<HTMLElement | null>(null)
 
 // ============ 顶层独立状态（供多个 composable 共享）============
 
@@ -137,14 +142,14 @@ const {
 // ============ 生成管道 ============
 
 // 审核后回调（需要在 useGeneration 创建后传递给 useReview，此处预声明）
-let onAfterGenerateCallback: (() => void) | null = null
+let onAfterGenerateCallback: ((reviewUserRequest?: string) => void) | null = null
 
 const gen = useGeneration({
   enableThinking, reasoningEffort, webSearch, selectedModel, customModel, resolvedModel,
   currentSkill, editTargetDoc, editCustomInput,
   plugin: props.plugin,
   onGenerate: props.onGenerate,
-  onAfterGenerate: () => onAfterGenerateCallback?.(),
+  onAfterGenerate: (reviewUserRequest?: string) => onAfterGenerateCallback?.(reviewUserRequest),
 })
 
 const {
@@ -153,6 +158,7 @@ const {
   searchStatus, searchResults, conversationHistory,
   availableModels, supportsThinking,
   handleStop, buildGenerateOptions, executeGeneration, clearConversation, cleanupRaf,
+  refreshProvider, clearDisplayState,
 } = gen
 
 // ============ 4. 编辑操作 ============
@@ -187,11 +193,12 @@ const reviewDeps = {
   editCustomInput,
   executeGeneration,
   buildGenerateOptions,
-  onReview: props.onReview || (async () => ({ rating: "良好" as const, summary: "", issues: [], suggestions: [], reviewModel: "", reviewedAt: Date.now() })),
+  onReview: props.onReview,
 }
 
 const { enableReview, isReviewing, reviewResult, isAutoFixing,
-  performReview, handleAutoFix, handleReReview, handleFixIssue } = useReview(reviewDeps)
+  performReview, handleAutoFix, handleReReview, handleFixIssue,
+  clearReviewState } = useReview(reviewDeps)
 
 onAfterGenerateCallback = performReview
 
@@ -208,10 +215,11 @@ const canInsertSubDoc = computed(() =>
 // Markdown 渲染
 const renderedDisplayedMarkdown = computed(() => renderMarkdown(displayedContent.value))
 
-// 代码高亮
+// 代码高亮（查询限定在面板根内，避免误伤 Teleport 到 body 的 SkillPreviewModal 等其他组件）
 const applyCodeHighlighting = async (selector: string) => {
   await nextTick()
-  const preBlocks = document.querySelectorAll(selector)
+  if (!panelRoot.value) return
+  const preBlocks = panelRoot.value.querySelectorAll(selector)
   preBlocks.forEach((block) => {
     if (!(block as HTMLElement).dataset.highlighted) {
       hljs.highlightElement(block as HTMLElement)
@@ -234,22 +242,36 @@ const actionPrompts: Record<EditActionKey, string> = {
   summary: "请为以下文档生成一个简洁的总结，包括主要内容和关键要点。总结应该清晰明了，突出文档的核心信息。保持Markdown格式，直接输出总结内容：",
 }
 
+/** 快捷动作对应的审核指令描述（供审核阶段理解"用户需求"） */
+const ACTION_REVIEW_LABELS: Record<EditActionKey, string> = {
+  polish: "对文档进行润色优化",
+  expand: "对文档进行扩写",
+  condense: "对文档进行精简",
+  fix: "对文档进行错误修正",
+  rewrite: "对文档进行改写",
+  summary: "为文档生成总结",
+}
+
 const aiEditAction = async (action: EditActionKey) => {
   if (!editTargetDoc.value) {
     showMessage("请先选择要编辑的文档", 2000, "info")
     return
   }
 
+  // 6 个快捷动作统一复用 polish 系统提示词是有意为之：具体编辑指令由 userInput 承载，此处仅提供"直接输出完整文档"的通用约束
   const systemPromptText = buildSkillSystemPrompt(
     currentSkill.value,
     DEFAULT_SYSTEM_PROMPTS.polish,
   )
 
-  await executeGeneration("AI编辑", () =>
-    buildGenerateOptions(
+  await executeGeneration(
+    "AI编辑",
+    () => buildGenerateOptions(
       `${actionPrompts[action]}\n\n${editTargetDoc.value!.content}`,
       systemPromptText,
     ),
+    undefined,
+    { reviewUserRequest: ACTION_REVIEW_LABELS[action] },
   )
 }
 
@@ -265,6 +287,9 @@ const handleCustomEdit = async () => {
       return
     }
   }
+
+  // 执行前快照输入指令：onSuccess 会清空 editCustomInput，审核阶段需要真实指令
+  const reviewRequest = editCustomInput.value.trim()
 
   await executeGeneration("自定义编辑", () => {
     let finalSystemPrompt: string
@@ -297,7 +322,7 @@ ${editTargetDoc.value.content}`
     return buildGenerateOptions(userInput, finalSystemPrompt, editCustomInput.value.trim() || undefined)
   }, () => {
     editCustomInput.value = ""
-  })
+  }, { reviewUserRequest: reviewRequest })
 }
 
 // ============ 设置持久化 ============
@@ -316,6 +341,7 @@ const saveSettings = async () => {
     enableThinking: enableThinking.value,
     reasoningEffort: reasoningEffort.value,
     webSearch: webSearch.value,
+    enableReview: enableReview.value,
     skillId: skills.value[currentSkillIndex.value]?.id ?? "",
   }
   try {
@@ -335,6 +361,7 @@ const loadSettings = async () => {
       enableThinking.value = settings.enableThinking ?? false
       reasoningEffort.value = settings.reasoningEffort ?? "high"
       webSearch.value = settings.webSearch ?? false
+      enableReview.value = settings.enableReview ?? false
       savedSkillId = settings.skillId ?? null
     }
     isSettingsLoaded = true
@@ -350,29 +377,41 @@ const scheduleSaveSettings = () => {
 }
 
 watch(
-  [selectedModel, customModel, enableThinking, reasoningEffort, webSearch],
+  [selectedModel, customModel, enableThinking, reasoningEffort, webSearch, enableReview],
   scheduleSaveSettings,
 )
 
 // 技能选择变更持久化（按 id 保存，索引不稳定）
 watch(currentSkillIndex, scheduleSaveSettings)
 
+// ============ 清除所有展示态 ============
+
+/** 「清除」按钮：组合清理内容、生成展示态与审核态，避免残留区块仍被渲染 */
+const handleClearAll = () => {
+  clearContent()
+  clearDisplayState()
+  clearReviewState()
+}
+
 // ============ 生命周期 ============
 
 onMounted(async () => {
   if (props.plugin) {
     storage.value = new AIGeneratorStorage(props.plugin)
-    await storage.value.init()
     await loadSettings()
   }
   await loadSkills()
   // 技能加载完成后恢复持久化的选择（须在 skills 就绪后执行）
   restoreSkillById(savedSkillId)
+  // 读取当前 AI 供应商（模型列表依赖该响应式值），并在全局设置更新后同步刷新
+  refreshProvider()
+  window.addEventListener("settingsUpdated", refreshProvider)
 })
 
 onUnmounted(() => {
   cleanupRaf()
   handleStop() // 中止仍在进行中的生成请求，避免卸载后回调滞留
+  window.removeEventListener("settingsUpdated", refreshProvider)
   if (settingsSaveTimer) {
     clearTimeout(settingsSaveTimer)
     settingsSaveTimer = null

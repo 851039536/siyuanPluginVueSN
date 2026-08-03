@@ -13,6 +13,8 @@ export interface AISettings {
   /** 思考强度（仅 DeepSeek 思考模式生效：low/high/max） */
   reasoningEffort: DeepSeekReasoningEffort
   webSearch: boolean
+  /** 生成后使用 V4 Pro 交叉审核 */
+  enableReview: boolean
   /** 上次选中的技能 id（空串 = 明确选择"无技能"） */
   skillId: string
 }
@@ -23,11 +25,13 @@ const DEFAULT_AI_SETTINGS: AISettings = {
   enableThinking: false,
   reasoningEffort: "high",
   webSearch: false,
+  enableReview: false,
   skillId: "",
 }
 
 /**
  * AI内容生成器存储管理器
+ * 默认值由 TypedStorage 兜底，无需 init 预写入
  */
 export class AIGeneratorStorage {
   readonly settings: TypedStorage<AISettings>
@@ -35,16 +39,5 @@ export class AIGeneratorStorage {
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
     this.settings = new TypedStorage(storage, "ai-content-generator-settings", DEFAULT_AI_SETTINGS)
-  }
-
-  async init(): Promise<void> {
-    try {
-      const settings = await this.settings.load()
-      if (!settings) {
-        await this.settings.save(DEFAULT_AI_SETTINGS)
-      }
-    } catch (error) {
-      console.error("初始化AI生成器存储失败:", error)
-    }
   }
 }

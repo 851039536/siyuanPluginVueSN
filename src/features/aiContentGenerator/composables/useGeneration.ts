@@ -32,8 +32,16 @@ interface UseGenerationOptions {
   editCustomInput: Ref<string>
   plugin: Plugin
   onGenerate: (options: GenerateOptions) => Promise<string>
-  /** 生成完成后的审核回调 */
-  onAfterGenerate?: () => void
+  /** 生成完成后的审核回调（携带本次用户真实指令，供审核阶段理解需求） */
+  onAfterGenerate?: (reviewUserRequest?: string) => void
+}
+
+/** executeGeneration 附加选项 */
+export interface ExecuteGenerationOptions {
+  /** 跳过自动审核（如自动修复内部循环） */
+  skipReview?: boolean
+  /** 本次用户真实指令（审核阶段优先使用，避免被 onSuccess 清空的输入兜底） */
+  reviewUserRequest?: string
 }
 
 // ============ Composable ============
@@ -69,14 +77,17 @@ export function useGeneration(opts: UseGenerationOptions) {
   const MAX_CONVERSATION_TURNS = 20
 
   // ===== 模型 =====
-  const currentProvider = computed(() =>
-    (opts.plugin as any)?.settings?.aiApiProvider || "tongyi",
-  )
+  // 供应商以 ref 承载：plugin.settings 为非响应式对象，直接 computed 会在首评后永久缓存
+  // （settings 异步加载，Dock 挂载时通常未就绪），须由调用方显式调用 refreshProvider() 驱动刷新
+  const providerRef = ref<string>("tongyi")
+  const refreshProvider = () => {
+    providerRef.value = (opts.plugin as any)?.settings?.aiApiProvider || "tongyi"
+  }
   const availableModels = computed(() => {
-    return PROVIDER_MODELS[currentProvider.value] || { common: [], all: [] }
+    return PROVIDER_MODELS[providerRef.value] || { common: [], all: [] }
   })
   const supportsThinking = computed(() =>
-    currentProvider.value === "deepseek"
+    providerRef.value === "deepseek"
     && opts.selectedModel.value.startsWith("deepseek-v4-"),
   )
 
@@ -266,8 +277,10 @@ export function useGeneration(opts: UseGenerationOptions) {
     context: string,
     buildOptions: () => GenerateOptions,
     onSuccess?: () => void,
-    skipReview = false,
+    execOptions: ExecuteGenerationOptions = {},
   ) => {
+    const { skipReview = false, reviewUserRequest } = execOptions
+    let failed = false
     startGeneration()
     try {
       const options = buildOptions()
@@ -276,12 +289,14 @@ export function useGeneration(opts: UseGenerationOptions) {
       addConversationTurns(userInput)
       onSuccess?.()
     } catch (error) {
+      // 中止/失败均标记 failed，避免对残缺内容触发审核
+      failed = true
       if (handleGenerationError(error as Error, context)) return
     } finally {
       resetAllGenerationStates()
       recordGenerationElapsed()
-      if (!skipReview) {
-        opts.onAfterGenerate?.()
+      if (!failed && !skipReview) {
+        opts.onAfterGenerate?.(reviewUserRequest)
       }
     }
   }
@@ -302,6 +317,16 @@ export function useGeneration(opts: UseGenerationOptions) {
       cancelAnimationFrame(rafId)
       rafId = null
     }
+  }
+
+  /** 清除生成展示态（推理/搜索/提示），供"清除"按钮组合调用，避免残留区块渲染 */
+  const clearDisplayState = () => {
+    reasoningContent.value = ""
+    showReasoning.value = false
+    searchStatus.value = ""
+    searchResults.value = []
+    generationTip.value = ""
+    reasoningBuffer = ""
   }
 
   return {
@@ -326,5 +351,7 @@ export function useGeneration(opts: UseGenerationOptions) {
     buildGenerateOptions,
     executeGeneration,
     clearConversation,
+    refreshProvider,
+    clearDisplayState,
   }
 }

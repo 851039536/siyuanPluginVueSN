@@ -3,7 +3,12 @@
 
 // ============ 思考过程 ============
 .reasoning-section {
-  @include collapsible-section;
+    margin: 0 0px;
+    border-radius: 6px;
+    border: 1px solid var(--b3-theme-surface-lighter)
+rgba(230, 230, 230, .1);
+    background: hsl(24, 10%, 5%);
+    overflow: hidden;
 }
 
 .reasoning-toggle {

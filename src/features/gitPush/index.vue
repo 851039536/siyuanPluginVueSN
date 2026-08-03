@@ -272,11 +272,10 @@
     <Transition name="gp-dialog-fade">
       <GitConfigDialog
         v-if="showGitConfig"
-        :config-text="gitConfigText"
-        :loading="gitConfigLoading"
-        :error="gitConfigError"
         :i18n="i18n"
-        :file-path="gitConfigFilePath"
+        :manager="props.manager"
+        :scope="gitConfigScope"
+        :project-path="gitConfigProjectPath"
         :title="gitConfigTitle"
         @close="closeGitConfig"
       />
@@ -617,15 +616,13 @@ const {
 // ── Git 配置弹窗 ──
 const {
   showGitConfig,
-  gitConfigText,
-  gitConfigLoading,
-  gitConfigError,
-  gitConfigFilePath,
+  gitConfigScope,
+  gitConfigProjectPath,
   gitConfigTitle,
   handleOpenGitConfig,
   handleOpenProjectGitConfig,
   closeGitConfig,
-} = useGitConfigDialog({ manager: props.manager, projects, tf })
+} = useGitConfigDialog({ manager: props.manager, projects })
 
 // ── Git 操作 handler 集群 ──
 const {

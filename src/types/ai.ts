@@ -61,6 +61,8 @@ export interface GenerateOptions {
   reasoningEffort?: DeepSeekReasoningEffort
   /** 思考过程回调（DeepSeek reasoning_content） */
   onReasoningChunk?: (chunk: string) => void
+  /** 思考截断自动重试前回调（UI 层清空旧思考展示，避免新旧思考内容重复堆叠） */
+  onTruncationRetry?: () => void
   /** 联网搜索（RAG 模式：先搜后答，所有 provider 通用） */
   webSearch?: boolean
   /** 显式搜索关键词（优先级高于自动提取） */

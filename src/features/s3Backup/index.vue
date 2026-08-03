@@ -265,7 +265,12 @@ const {
   listExistingKeys,
   downloadBackup,
   loadConfig,
-} = useS3Backup(props.i18n)
+} = useS3Backup({
+  i18n: props.i18n,
+  // 惰性读取当前工作区子路径：s3SubPrefix 在下方 useWorkspaceSettings 中声明，
+  // 该 getter 仅在运行时（刷新列表/去重）才求值，setup 阶段无 TDZ 风险
+  getSubPrefix: () => s3SubPrefix.value,
+})
 
 // ========== 基础状态 ==========
 

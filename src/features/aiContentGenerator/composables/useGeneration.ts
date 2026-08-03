@@ -22,6 +22,7 @@ const DEFAULT_MAX_TOKENS = 10000
 
 interface UseGenerationOptions {
   enableThinking: Ref<boolean>
+  reasoningEffort: Ref<DeepSeekReasoningEffort>
   webSearch: Ref<boolean>
   selectedModel: Ref<string>
   customModel: Ref<string>
@@ -76,8 +77,7 @@ export function useGeneration(opts: UseGenerationOptions) {
   })
   const supportsThinking = computed(() =>
     currentProvider.value === "deepseek"
-    && (opts.selectedModel.value === "deepseek-reasoner"
-      || opts.selectedModel.value.startsWith("deepseek-v4-")),
+    && opts.selectedModel.value.startsWith("deepseek-v4-"),
   )
 
   // ===== 搜索稳定回调（避免每次 buildGenerateOptions 重新创建闭包） =====

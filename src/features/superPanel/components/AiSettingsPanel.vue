@@ -46,7 +46,7 @@
         <div class="thinking-toggle-row">
           <label class="thinking-toggle-label">{{ i18n.thinkingMode || '思考模式' }}</label>
           <button
-            class="thinking-toggle-btn"
+            class="toggle-btn"
             :class="{ active: settings.enableThinking }"
             @click="updateSetting('enableThinking', !settings.enableThinking)"
           >
@@ -100,7 +100,7 @@
           <button
             v-for="opt in searchProviderOptions"
             :key="opt.value"
-            class="search-provider-btn"
+            class="toggle-btn"
             :class="{ active: settings.searchProvider === opt.value }"
             @click="updateSetting('searchProvider', opt.value)"
           >
@@ -199,9 +199,7 @@ interface Props {
     apiKey?: string
     customEndpoint?: string
     tongyiQianwen?: string
-    openAI?: string
     deepSeek?: string
-    zhipuAI?: string
     xiaomiMiMo?: string
     customApi?: string
     [key: string]: any

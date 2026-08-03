@@ -1,0 +1,192 @@
+@use "./variables" as *;
+@use "./mixins" as *;
+
+// gitPush 设置弹窗内嵌 Git 全局配置管理区块样式
+
+.gp-cfg {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  margin-top: $spacing-2;
+  padding-top: $spacing-3;
+  border-top: 1px solid var(--b3-border-color);
+}
+
+// ── 顶部行 ──
+.gp-cfg-header {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.gp-cfg-count {
+  font-size: $font-size-2xs;
+  opacity: 0.5;
+}
+
+// ── 底部操作栏 ──
+.gp-cfg-footer {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+// ── 加载/错误/空态 ──
+.gp-cfg-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-1;
+  padding: $spacing-3 0;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+}
+
+.gp-cfg-state--error {
+  color: var(--b3-theme-error);
+  opacity: 1;
+}
+
+// ── 配置列表 ──
+.gp-cfg-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 220px; // 列表超出滚动，避免整个弹窗过高
+  overflow-y: auto;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+}
+
+.gp-cfg-item {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-2;
+  font-size: $font-size-2xs;
+  @include row-divider;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+}
+
+.gp-cfg-key {
+  color: var(--b3-theme-primary);
+  font-family: $vp-mono;
+  font-weight: $font-weight-medium;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.gp-cfg-key--edit {
+  color: var(--b3-theme-on-surface);
+}
+
+.gp-cfg-desc {
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.gp-cfg-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--b3-theme-on-surface);
+  @include text-ellipsis;
+}
+
+// ── 行内操作按钮 ──
+.gp-cfg-act {
+  @include btn-reset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: $radius-sm;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.55;
+  transition: opacity 0.12s, background 0.12s;
+  flex-shrink: 0;
+
+  &:hover:not(:disabled) {
+    opacity: 1;
+    background: var(--b3-list-hover);
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+}
+
+.gp-cfg-act--save {
+  color: var(--b3-theme-primary);
+  opacity: 1;
+}
+
+.gp-cfg-act--danger {
+  color: var(--b3-theme-error);
+  opacity: 1;
+}
+
+// ── 新增表单 ──
+.gp-cfg-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-1;
+}
+
+.gp-cfg-select {
+  flex: 1 1 150px;
+  min-width: 0;
+  padding: 4px 6px;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface);
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.12s;
+
+  &:focus {
+    @include focus-ring;
+  }
+}
+
+.gp-cfg-input {
+  flex: 1 1 120px;
+  min-width: 0;
+  padding: 4px 8px;
+  font-size: $font-size-xs;
+  font-family: $vp-mono;
+  color: var(--b3-theme-on-surface);
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  outline: none;
+  transition: border-color 0.12s;
+
+  &:focus {
+    @include focus-ring;
+  }
+}
+
+.gp-cfg-input--key {
+  flex: 1 1 160px;
+}
+
+// ── 反馈与说明 ──
+.gp-cfg-msg {
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-primary);
+}
+
+.gp-cfg-hint {
+  font-size: $font-size-2xs;
+  opacity: 0.4;
+}

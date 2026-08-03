@@ -117,6 +117,50 @@ const GIT_CONFIG_DESC: Record<string, string> = {
   "uploadpack.allowfilter": "允许部分克隆",
 }
 
+/** Git 配置作用域：全局（~/.gitconfig）或项目级（<project>/.git/config） */
+export type GitConfigScope = "global" | "local"
+
+/** git config --list 输出解析后的配置条目 */
+export interface GitConfigEntry {
+  key: string
+  value: string
+  desc: string
+}
+
+/** 解析 git config --list 输出为 key-value 数组（含中文说明），跳过无 = 的行 */
+export function parseGitConfigText(text: string): GitConfigEntry[] {
+  if (!text) return []
+  return text
+    .split("\n")
+    .filter((line) => line.includes("="))
+    .map((line) => {
+      const eqIdx = line.indexOf("=")
+      const key = line.substring(0, eqIdx)
+      return {
+        key,
+        value: line.substring(eqIdx + 1),
+        desc: getConfigDesc(key),
+      }
+    })
+}
+
+/** 常用 Git 全局配置键预设（新增配置项时下拉选择，label 与说明映射同源） */
+export const GIT_PRESET_KEYS: { key: string, label: string }[] = [
+  { key: "user.name", label: "用户名" },
+  { key: "user.email", label: "邮箱" },
+  { key: "user.signingkey", label: "签名密钥" },
+  { key: "core.autocrlf", label: "自动换行符转换" },
+  { key: "core.editor", label: "默认编辑器" },
+  { key: "core.quotepath", label: "路径引号" },
+  { key: "init.defaultBranch", label: "默认分支名" },
+  { key: "pull.rebase", label: "拉取策略(rebase)" },
+  { key: "push.default", label: "推送默认行为" },
+  { key: "push.autoSetupRemote", label: "自动设置上游" },
+  { key: "credential.helper", label: "凭据助手" },
+  { key: "http.proxy", label: "HTTP 代理" },
+  { key: "https.proxy", label: "HTTPS 代理" },
+]
+
 /** 查找配置键中文说明：精确匹配优先，其次按前缀/正则通配（alias.*、remote.*.url 等），无匹配返回空串 */
 export function getConfigDesc(key: string): string {
   if (GIT_CONFIG_DESC[key]) return GIT_CONFIG_DESC[key]

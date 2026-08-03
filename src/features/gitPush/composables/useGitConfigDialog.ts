@@ -1,75 +1,51 @@
-// Git 全局/项目级配置弹窗状态与查询
+// Git 配置弹窗开关与作用域参数（查询/编辑逻辑已下沉至 GitConfigDialog 内自包含组件）
 import type { Ref } from "vue"
 import { ref } from "vue"
 import type { GitProject, GitPushManager } from "../types"
 import { resolveValidPath } from "../utils"
-import { getErrorMessage } from "@/utils/stringUtils"
+
+/** Git 配置作用域：全局（~/.gitconfig）或项目级（<project>/.git/config） */
+type GitConfigScope = "global" | "local"
 
 export function useGitConfigDialog(deps: {
   manager: GitPushManager
   projects: Ref<GitProject[]>
-  tf: (key: string, ...args: (string | number)[]) => string
 }) {
-  const { manager, projects, tf } = deps
+  const { projects } = deps
 
   const showGitConfig = ref(false)
-  const gitConfigText = ref("")
-  const gitConfigLoading = ref(false)
-  const gitConfigError = ref("")
-  const gitConfigFilePath = ref("")
+  const gitConfigScope = ref<GitConfigScope>("global")
+  const gitConfigProjectPath = ref("")
   const gitConfigTitle = ref("")
 
-  /** 打开 Git 全局配置弹窗并查询 */
-  async function handleOpenGitConfig() {
-    showGitConfig.value = true
-    gitConfigLoading.value = true
-    gitConfigError.value = ""
-    gitConfigText.value = ""
-    gitConfigFilePath.value = manager.getGitConfigFilePath()
+  /** 打开 Git 全局配置弹窗（作用域：global） */
+  function handleOpenGitConfig() {
+    gitConfigScope.value = "global"
+    gitConfigProjectPath.value = ""
     gitConfigTitle.value = ""
-    try {
-      const text = await manager.getGitGlobalConfig()
-      gitConfigText.value = text
-    } catch (e: unknown) {
-      gitConfigError.value = getErrorMessage(e) || tf("queryFailed")
-    } finally {
-      gitConfigLoading.value = false
-    }
+    showGitConfig.value = true
   }
 
-  /** 打开项目级 Git 配置弹窗并查询 */
-  async function handleOpenProjectGitConfig(projectId: string) {
+  /** 打开项目级 Git 配置弹窗（作用域：local，带项目名标题） */
+  function handleOpenProjectGitConfig(projectId: string) {
     const index = projects.value.findIndex((p) => p.id === projectId)
     if (index === -1) return
     const project = projects.value[index]
-    const path = resolveValidPath(project)
-    showGitConfig.value = true
-    gitConfigLoading.value = true
-    gitConfigError.value = ""
-    gitConfigText.value = ""
-    gitConfigFilePath.value = manager.getProjectGitConfigFilePath(path)
+    gitConfigScope.value = "local"
+    gitConfigProjectPath.value = resolveValidPath(project)
     gitConfigTitle.value = project.name
-    try {
-      const text = await manager.getProjectGitConfig(path)
-      gitConfigText.value = text
-    } catch (e: unknown) {
-      gitConfigError.value = getErrorMessage(e) || tf("queryFailed")
-    } finally {
-      gitConfigLoading.value = false
-    }
+    showGitConfig.value = true
   }
 
-  /** 关闭 Git 全局配置弹窗 */
+  /** 关闭 Git 配置弹窗 */
   function closeGitConfig() {
     showGitConfig.value = false
   }
 
   return {
     showGitConfig,
-    gitConfigText,
-    gitConfigLoading,
-    gitConfigError,
-    gitConfigFilePath,
+    gitConfigScope,
+    gitConfigProjectPath,
     gitConfigTitle,
     handleOpenGitConfig,
     handleOpenProjectGitConfig,

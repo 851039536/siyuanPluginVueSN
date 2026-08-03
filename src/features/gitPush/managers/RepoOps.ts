@@ -121,11 +121,27 @@ export class RepoOps {
 
   // ── Git 配置查看 ──
 
+  /** 本机 home 目录（Git 全局配置执行目录） */
+  private gitHomeDir(): string {
+    const modules = getNodeFsPathOs()
+    return modules?.os?.homedir() || process.cwd()
+  }
+
   /** 获取本机全局 Git 配置（git config --global --list） */
   async getGitGlobalConfig(): Promise<string> {
-    const modules = getNodeFsPathOs()
-    const home = modules?.os?.homedir() || process.cwd()
-    return this.executor.execGit(home, ["config", "--global", "--list"])
+    return this.executor.execGit(this.gitHomeDir(), ["config", "--global", "--list"])
+  }
+
+  /** 设置全局 Git 配置项（git config --global <key> <value>） */
+  async setGitGlobalConfig(key: string, value: string): Promise<void> {
+    await this.executor.execGit(this.gitHomeDir(), ["config", "--global", key, value])
+  }
+
+  /** 删除全局 Git 配置项（git config --global --unset-all <key>，键不存在视为成功） */
+  async unsetGitGlobalConfig(key: string): Promise<void> {
+    try {
+      await this.executor.execGit(this.gitHomeDir(), ["config", "--global", "--unset-all", key])
+    } catch { /* 删除不存在的配置项无需报错 */ }
   }
 
   /** 获取全局 Git 配置文件路径（~/.gitconfig） */
@@ -138,6 +154,18 @@ export class RepoOps {
   /** 获取项目级 Git 配置（git config --local --list） */
   async getProjectGitConfig(projectPath: string): Promise<string> {
     return this.executor.execGit(projectPath, ["config", "--local", "--list"])
+  }
+
+  /** 设置项目级 Git 配置项（git config --local <key> <value>） */
+  async setProjectGitConfig(projectPath: string, key: string, value: string): Promise<void> {
+    await this.executor.execGit(projectPath, ["config", "--local", key, value])
+  }
+
+  /** 删除项目级 Git 配置项（git config --local --unset-all <key>，键不存在视为成功） */
+  async unsetProjectGitConfig(projectPath: string, key: string): Promise<void> {
+    try {
+      await this.executor.execGit(projectPath, ["config", "--local", "--unset-all", key])
+    } catch { /* 删除不存在的配置项无需报错 */ }
   }
 
   /** 获取项目 Git 配置文件路径（<projectPath>/.git/config） */

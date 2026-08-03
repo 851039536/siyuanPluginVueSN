@@ -130,16 +130,22 @@ export interface SearchApiConfig {
 
 // ============ 审核相关类型 ============
 
+/** 审核评级（AI 输出的中文业务枚举） */
+export type ReviewRating = "优秀" | "良好" | "需改进"
+
+/** 问题严重程度（AI 输出的中文业务枚举） */
+export type IssueSeverity = "高" | "中" | "低"
+
 /** 审核结果 */
 export interface ReviewResult {
-  /** 质量评级：优秀/良好/需改进 */
-  rating: "优秀" | "良好" | "需改进"
+  /** 质量评级 */
+  rating: ReviewRating
   /** 总体评价 */
   summary: string
   /** 问题清单 */
   issues: Array<{
     description: string
-    severity: "高" | "中" | "低"
+    severity: IssueSeverity
   }>
   /** 改进建议 */
   suggestions: string[]

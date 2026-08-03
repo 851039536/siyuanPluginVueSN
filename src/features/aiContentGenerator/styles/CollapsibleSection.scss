@@ -1,0 +1,34 @@
+@use "../../../variables" as *;
+@use "./index.scss" as *;
+
+// ============ 通用可折叠区块 ============
+.collapsible-section {
+  @include collapsible-section;
+}
+
+.collapsible-toggle {
+  @include collapsible-toggle;
+
+  &.toggle-success svg {
+    color: var(--b3-theme-success);
+  }
+}
+
+.collapsible-chevron {
+  @include collapsible-chevron;
+}
+
+.collapsible-status-dot {
+  @include collapsible-status-dot;
+}
+
+.collapsible-header-right {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.collapsible-body {
+  @include collapsible-body;
+}

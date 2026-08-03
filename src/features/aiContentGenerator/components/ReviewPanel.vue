@@ -1,25 +1,14 @@
 <!-- 交叉审核面板：分项评分条形图 / 严重度过滤 / 问题清单 / 改进建议 / 自动修复 -->
 <template>
-  <div class="review-section">
-    <!-- 审核头部（始终可见） -->
-    <button
-      class="review-toggle-btn"
-      @click="showReviewPanel = !showReviewPanel"
-    >
-      <svg
-        width="12"
-        height="12"
-        class="review-chevron"
-        :class="{ expanded: showReviewPanel }"
-      >
-        <use xlink:href="#iconRight"></use>
-      </svg>
-      <svg
-        width="14"
-        height="14"
-      ><use xlink:href="#iconCheck"></use></svg>
-      <!-- 折叠头标题："交叉审核" -->
-      <span>{{ i18n.reviewCrossReview }}</span>
+  <CollapsibleSection
+    :title="i18n.reviewCrossReview"
+    icon="#iconCheck"
+    :open="showReviewPanel"
+    accent="success"
+    @update:open="showReviewPanel = $event"
+  >
+    <!-- 审核头部右侧：加载状态点 / 评级徽标 -->
+    <template #headerRight>
       <span
         v-if="isReviewing"
         class="review-loading-dot"
@@ -31,11 +20,11 @@
       >
         {{ reviewResult.rating }}
       </span>
-    </button>
+    </template>
 
     <!-- 审核详情 -->
     <div
-      v-if="showReviewPanel && reviewResult"
+      v-if="reviewResult"
       class="review-body"
     >
       <!-- 总体评价 -->
@@ -183,7 +172,7 @@
             ><use xlink:href="#iconRefresh"></use></svg>
             {{ i18n.reviewReReview }}
           </button>
-          <template v-if="needsFix && reviewResult.issues.length > 0">
+          <template v-if="needsFix">
             <!-- 修复进行中徽标："修复中..." -->
             <span
               v-if="isAutoFixing"
@@ -209,7 +198,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </CollapsibleSection>
 </template>
 
 <script setup lang="ts">
@@ -217,7 +206,9 @@ import {
   computed,
   ref,
 } from "vue"
-import type { ReviewResult } from "@/types/ai"
+import type { IssueSeverity, ReviewRating, ReviewResult } from "@/types/ai"
+import { RATING_NEEDS_FIX, SEVERITY_LEVELS } from "../types"
+import CollapsibleSection from "./CollapsibleSection.vue"
 
 interface Props {
   i18n: Record<string, string>
@@ -255,7 +246,7 @@ const scoreLevel = (value: number): string => {
 }
 
 /** 评级→徽标样式类映射（rating 值为 AI 输出的中文业务枚举） */
-const RATING_CLASS_MAP: Record<ReviewResult["rating"], string> = {
+const RATING_CLASS_MAP: Record<ReviewRating, string> = {
   优秀: "rating-good",
   良好: "rating-ok",
   需改进: "rating-needs-fix",
@@ -265,18 +256,22 @@ const ratingClass = computed(() =>
   props.reviewResult ? RATING_CLASS_MAP[props.reviewResult.rating] : "",
 )
 
-/** 评级为"需改进"时才展示定向修复/自动修复入口 */
-const needsFix = computed(() => props.reviewResult?.rating === "需改进")
+/** 评级为"需改进"且有具体问题时才展示定向修复/自动修复入口（语义与 useReview 逻辑一致） */
+const needsFix = computed(() => {
+  const result = props.reviewResult
+  return result?.rating === RATING_NEEDS_FIX && result.issues.length > 0
+})
 
-/** 严重程度过滤键的联合类型 */
-type SeverityFilterKey = "all" | "高" | "中" | "低"
+/** 严重程度过滤键的联合类型（"全部"为 UI 键，"高/中/低"派生自业务枚举） */
+type SeverityFilterKey = "all" | IssueSeverity
 
 // 严重程度过滤
 const issueFilter = ref<SeverityFilterKey>("all")
 
 // 单次遍历累加各严重度计数
 const filterCounts = computed<Record<SeverityFilterKey, number>>(() => {
-  const counts: Record<SeverityFilterKey, number> = { all: 0, 高: 0, 中: 0, 低: 0 }
+  const counts = { all: 0 } as Record<SeverityFilterKey, number>
+  for (const sev of SEVERITY_LEVELS) counts[sev] = 0
   for (const issue of props.reviewResult?.issues ?? []) {
     counts.all++
     counts[issue.severity]++
@@ -287,9 +282,7 @@ const filterCounts = computed<Record<SeverityFilterKey, number>>(() => {
 // 过滤按钮："全部"为 UI 文案取自 i18n；高/中/低为业务枚举值本身，按数据原样展示
 const filterOptions = computed<{ key: SeverityFilterKey; label: string }[]>(() => [
   { key: "all", label: props.i18n.reviewFilterAll },
-  { key: "高", label: "高" },
-  { key: "中", label: "中" },
-  { key: "低", label: "低" },
+  ...SEVERITY_LEVELS.map((sev) => ({ key: sev, label: sev })),
 ])
 
 /** 过滤后的问题及其在原始数组中的索引（fixIssue emit 需要原始索引），单 computed 避免两次遍历靠位置隐式对齐 */

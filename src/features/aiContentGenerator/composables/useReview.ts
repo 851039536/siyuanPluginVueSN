@@ -2,14 +2,15 @@
  * 审核系统 Composable
  * 封装审核状态、审核执行、自动修正和定向修复逻辑
  */
-import { computed, ref, type Ref } from "vue"
+import { ref, type Ref } from "vue"
 import { showMessage } from "siyuan"
 import type { GenerateOptions, ReviewResult, SkillItem, TargetDoc } from "@/types/ai"
-import { buildSkillSystemPrompt } from "./useGeneration"
+import { DEFAULT_SYSTEM_PROMPTS } from "../types"
+import { buildSkillSystemPrompt } from "../utils"
 
 // ============ 类型 ============
 
-export interface FixEntry {
+interface FixEntry {
   timestamp: number
   issuesAddressed: string[]
   ratingBefore: string
@@ -53,18 +54,6 @@ export function useReview(deps: UseReviewDeps) {
   const isAutoFixing = ref(false)
   const autoFixCount = ref(0)
   const fixHistory = ref<FixEntry[]>([])
-
-  const needsFix = computed(() =>
-    reviewResult.value?.rating === "需改进"
-    && (reviewResult.value?.issues?.length ?? 0) > 0,
-  )
-
-  const resetReview = () => {
-    reviewResult.value = null
-    isReviewing.value = false
-    isAutoFixing.value = false
-    autoFixCount.value = 0
-  }
 
   const recordFixEntry = (issuesAddressed: string[], ratingBefore: string) => {
     fixHistory.value.push({
@@ -143,7 +132,7 @@ ${suggestionsText}`
 
     const systemPrompt = buildSkillSystemPrompt(
       currentSkill.value,
-      "你是一个专业的文档编辑助手，擅长根据审核反馈修正Markdown文档。请直接输出修正后的完整文档，不要添加任何解释性文字。",
+      DEFAULT_SYSTEM_PROMPTS.fixByReview,
     )
 
     await executeGeneration("内容修正", () =>
@@ -186,7 +175,7 @@ ${suggestion ? `改进建议：${suggestion}` : ""}
 
     const systemPrompt = buildSkillSystemPrompt(
       currentSkill.value,
-      "你是一个专业的文档编辑助手。请根据描述的问题定向修改，仅修正相关问题部分，保持其他内容不变。直接输出修改后的完整文档。",
+      DEFAULT_SYSTEM_PROMPTS.fixIssue,
     )
 
     await executeGeneration("定向修复", () =>
@@ -204,8 +193,6 @@ ${suggestion ? `改进建议：${suggestion}` : ""}
 
   return {
     enableReview, isReviewing, reviewResult, isAutoFixing,
-    autoFixCount, fixHistory, MAX_AUTO_FIX_ITERATIONS,
-    needsFix, resetReview, recordFixEntry,
     performReview, handleAutoFix, handleReReview, handleFixIssue,
   }
 }

@@ -35,21 +35,6 @@ interface UseGenerationOptions {
   onAfterGenerate?: () => void
 }
 
-// ============ 公共工具函数 ============
-
-/**
- * 提取公共的 skill system prompt 构建逻辑，消除 4 处重复
- */
-export function buildSkillSystemPrompt(
-  skill: SkillItem | null,
-  fallback: string,
-): string {
-  if (skill) {
-    return `${skill.content}\n\n${fallback}`
-  }
-  return fallback
-}
-
 // ============ Composable ============
 
 export function useGeneration(opts: UseGenerationOptions) {

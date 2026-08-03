@@ -1,30 +1,16 @@
 <!-- 联网搜索结果可折叠区块 -->
 <template>
-  <div
+  <CollapsibleSection
     v-if="searchStatus || searchResults.length > 0"
-    class="search-results-section"
+    title="搜索来源"
+    icon="#iconSearch"
+    v-model:open="showPanel"
   >
-    <button
-      class="search-results-toggle"
-      @click="showPanel = !showPanel"
-    >
-      <svg
-        width="12"
-        height="12"
-        class="search-chevron"
-        :class="{ expanded: showPanel }"
-      >
-        <use xlink:href="#iconRight"></use>
-      </svg>
-      <svg
-        width="14"
-        height="14"
-      ><use xlink:href="#iconSearch"></use></svg>
-      <span>搜索来源</span>
+    <template #headerRight>
       <span class="search-status-text">{{ searchStatus }}</span>
-    </button>
+    </template>
     <div
-      v-if="showPanel && searchResults.length > 0"
+      v-if="searchResults.length > 0"
       class="search-results-body"
     >
       <div
@@ -47,12 +33,13 @@
         >{{ result.content }}</div>
       </div>
     </div>
-  </div>
+  </CollapsibleSection>
 </template>
 
 <script setup lang="ts">
 import { ref } from "vue"
 import type { SearchResult } from "@/types/ai"
+import CollapsibleSection from "./CollapsibleSection.vue"
 
 defineProps<{
   searchResults: SearchResult[]

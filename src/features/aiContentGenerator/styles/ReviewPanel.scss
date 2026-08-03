@@ -1,25 +1,14 @@
 @use "../../../variables" as *;
 @use "./index.scss" as *;
 
-.review-section {
-  @include collapsible-section;
-}
-
-.review-toggle-btn {
-  @include collapsible-toggle(var(--b3-theme-success));
-}
-
-.review-chevron {
-  @include collapsible-chevron;
-}
+// ============ 审核面板 ============
+// 折叠头结构由通用 CollapsibleSection 提供（含 success 强调色），此处仅保留面板专属样式
 
 .review-loading-dot {
   @include collapsible-status-dot(var(--b3-theme-success));
-  margin-left: auto;
 }
 
 .review-rating-badge {
-  margin-left: auto;
   font-size: $font-size-2xs;
   font-weight: $font-weight-semibold;
   padding: 1px 6px;
@@ -42,7 +31,6 @@
 }
 
 .review-body {
-  @include collapsible-body;
   display: flex;
   flex-direction: column;
   gap: 8px;

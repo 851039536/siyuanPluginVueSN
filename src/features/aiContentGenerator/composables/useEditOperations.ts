@@ -237,8 +237,8 @@ export function useEditOperations(deps: UseEditOperationsDeps) {
 
   return {
     isApplying, isUndoing, isInsertingSubDoc,
-    editHistoryStack, canUndoEdit,
-    clearContent, clearEditState, clearTargetDocument,
+    canUndoEdit,
+    clearContent, clearTargetDocument,
     copyContent, applyEdit, undoEdit, insertSubDocument,
   }
 }

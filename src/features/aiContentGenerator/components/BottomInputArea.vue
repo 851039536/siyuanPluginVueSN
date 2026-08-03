@@ -252,12 +252,14 @@ const onEditCustomInputChange = (value: string | null) => {
 
 // ===== Computed =====
 
+// 与 index.vue handleCustomEdit 校验保持一致：有文档时（技能在 或 输入非空）可执行；无文档时必须有技能且输入非空
 const canExecute = computed(() => {
-  if (props.currentSkillIndex >= 0) return true
+  const hasSkill = props.currentSkillIndex >= 0
+  const hasInput = !!props.editCustomInput.trim()
   if (props.editTargetDoc) {
-    return !!props.editCustomInput.trim()
+    return hasSkill || hasInput
   }
-  return false
+  return hasSkill && hasInput
 })
 
 const executeButtonTitle = computed(() => {

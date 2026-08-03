@@ -161,7 +161,7 @@ function buildRequestBody(
   if (isDeepSeek) {
     if (options?.enableThinking !== false) {
       const reasoningEffort: DeepSeekReasoningEffort =
-        (options?.reasoningEffort as DeepSeekReasoningEffort) || "high"
+        options?.reasoningEffort || "high"
       // 思考模式下 DeepSeek 不接受 temperature，故不传
       return {
         ...common,

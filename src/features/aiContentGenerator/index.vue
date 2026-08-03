@@ -54,6 +54,7 @@
       :available-models="availableModels"
       :supports-thinking="supportsThinking"
       :enable-thinking="enableThinking"
+      :reasoning-effort="reasoningEffort"
       :enable-review="enableReview"
       @aiEdit="aiEditAction"
       @stop="handleStop"
@@ -81,7 +82,7 @@ import hljs from "highlight.js"
 import "highlight.js/styles/github.css"
 
 // 类型
-import type { GenerateOptions, ReviewResult, SkillItem, TargetDoc } from "@/types/ai"
+import type { DeepSeekReasoningEffort, GenerateOptions, ReviewResult, SkillItem, TargetDoc } from "@/types/ai"
 import { DEFAULT_SYSTEM_PROMPTS } from "./types"
 import type { EditActionKey, SkillScanEntry } from "./types"
 
@@ -114,6 +115,8 @@ const storage = ref<AIGeneratorStorage | null>(null)
 const selectedModel = ref("")
 const customModel = ref("")
 const enableThinking = ref(false)
+/** 思考强度（DeepSeek 思考模式：low/high/max，默认 high） */
+const reasoningEffort = ref<DeepSeekReasoningEffort>("high")
 const webSearch = ref(false)
 
 const resolvedModel = computed(() =>
@@ -137,7 +140,7 @@ const {
 let onAfterGenerateCallback: (() => void) | null = null
 
 const gen = useGeneration({
-  enableThinking, webSearch, selectedModel, customModel, resolvedModel,
+  enableThinking, reasoningEffort, webSearch, selectedModel, customModel, resolvedModel,
   currentSkill, editTargetDoc, editCustomInput,
   plugin: props.plugin,
   onGenerate: props.onGenerate,
@@ -311,6 +314,7 @@ const saveSettings = async () => {
     model: selectedModel.value,
     customModel: customModel.value,
     enableThinking: enableThinking.value,
+    reasoningEffort: reasoningEffort.value,
     webSearch: webSearch.value,
     skillId: skills.value[currentSkillIndex.value]?.id ?? "",
   }
@@ -329,6 +333,7 @@ const loadSettings = async () => {
       selectedModel.value = settings.model || ""
       customModel.value = settings.customModel || ""
       enableThinking.value = settings.enableThinking ?? false
+      reasoningEffort.value = settings.reasoningEffort ?? "high"
       webSearch.value = settings.webSearch ?? false
       savedSkillId = settings.skillId ?? null
     }
@@ -345,7 +350,7 @@ const scheduleSaveSettings = () => {
 }
 
 watch(
-  [selectedModel, customModel, enableThinking, webSearch],
+  [selectedModel, customModel, enableThinking, reasoningEffort, webSearch],
   scheduleSaveSettings,
 )
 

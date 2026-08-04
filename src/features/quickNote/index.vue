@@ -53,7 +53,7 @@
             class="position-menu-wrap"
           >
             <button
-              class="close-btn"
+              class="qn-icon-btn"
               :title="i18n.position"
               @click="handleToggleMenu"
             >
@@ -90,7 +90,7 @@
             />
           </button>
           <button
-            class="close-btn"
+            class="qn-icon-btn"
             @click="props.onClose?.()"
           >
             <IconWrapper
@@ -111,18 +111,35 @@
           rows="3"
           @keydown.ctrl.enter.prevent="handleAdd"
         />
-        <!-- 按钮："添加" -->
-        <SiButton
-          size="small"
-          :disabled="!draft.trim()"
-          @click="handleAdd"
-        >
-          <IconWrapper
-            name="plus"
-            :size="12"
-          />
-          {{ i18n.add }}
-        </SiButton>
+        <div class="add-area__actions">
+          <!-- AI 润色按钮："AI 润色"（点击润色草稿内容，流式回填输入框，由用户确认后添加） -->
+          <SiButton
+            size="small"
+            variant="secondary"
+            :loading="polishing"
+            :disabled="!draft.trim()"
+            :title="i18n.polish"
+            @click="handlePolish"
+          >
+            <IconWrapper
+              name="sparkles"
+              :size="12"
+            />
+            {{ polishing ? i18n.polishing : i18n.polish }}
+          </SiButton>
+          <!-- 按钮："添加" -->
+          <SiButton
+            size="small"
+            :disabled="!draft.trim()"
+            @click="handleAdd"
+          >
+            <IconWrapper
+              name="plus"
+              :size="12"
+            />
+            {{ i18n.add }}
+          </SiButton>
+        </div>
       </div>
 
       <!-- 待完成/已完成 Tab 切换栏 -->
@@ -160,6 +177,7 @@
           v-for="note in filteredNotes"
           :key="note.id"
           :note="note"
+          :plugin="plugin"
           :i18n="i18n"
           @toggle-done="toggleDone(note.id)"
           @update="(content: string) => update(note.id, content)"
@@ -180,9 +198,11 @@ import type { Plugin } from "siyuan"
 import type { QuickNoteManager } from "./index"
 import type { QuickNotePlacement, QuickNotePosition } from "./types"
 import { computed, onMounted, onUnmounted, ref } from "vue"
+import { pushMsg } from "@/api"
 import SiButton from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import NoteItem from "./components/NoteItem.vue"
+import { useAiPolish, PolishError } from "./composables/useAiPolish"
 import { useQuickNotes } from "./composables/useQuickNotes"
 import { POSITION_MINIMIZE_META, QUICK_NOTE_POSITIONS } from "./types"
 
@@ -192,6 +212,9 @@ const props = defineProps<{
   manager: QuickNoteManager
   onClose?: () => void
 }>()
+
+// i18n 文案（script 内多处引用，从 props 解构；模板中亦可直接使用）
+const i18n = props.i18n
 
 const {
   filter,
@@ -207,6 +230,9 @@ const {
 
 // 新增输入草稿（persistent Modal 下关闭再打开不丢失）
 const draft = ref("")
+
+// AI 润色：并发锁 + 流式调用（新增区草稿与 NoteItem 编辑态各自实例化，互不干扰）
+const { polishing, polish } = useAiPolish(props.plugin)
 
 // 定位模式（预设/custom，初始化自 Manager 缓存；菜单高亮与最小化方向据此派生）
 const position = ref<QuickNotePlacement>(props.manager.getPosition())
@@ -227,9 +253,38 @@ const handleAdd = async () => {
   draft.value = ""
 }
 
+// 同步 Manager 侧定位到本地 position ref（拖拽后可能已变为 custom，用于菜单高亮/最小化方向派生）
+const syncPosition = () => {
+  position.value = props.manager.getPosition()
+}
+
+// AI 润色草稿：缓存原稿 → 清空后流式回填 → 失败恢复原稿并提示
+const handlePolish = async () => {
+  if (polishing.value) return
+  const original = draft.value
+  if (!original.trim()) return
+  try {
+    draft.value = ""
+    const result = await polish(original, (chunk) => {
+      draft.value += chunk
+    })
+    // 模型无输出时恢复原稿，避免草稿被清空丢失
+    if (!result.trim()) {
+      draft.value = original
+    }
+  } catch (err) {
+    draft.value = original
+    if (err instanceof PolishError && err.code === "NO_API_KEY") {
+      pushMsg(i18n.polishNoApiKey, 5000, "info")
+    } else {
+      pushMsg(i18n.polishFailed, 5000, "error")
+    }
+  }
+}
+
 // 预设菜单开合：打开前同步 Manager 侧定位（拖拽后可能已变为 custom，用于高亮判断）
 const handleToggleMenu = () => {
-  position.value = props.manager.getPosition()
+  syncPosition()
   menuOpen.value = !menuOpen.value
 }
 
@@ -249,7 +304,7 @@ const handleWindowClick = (e: MouseEvent) => {
 
 // 最小化/展开切换：先同步定位（拖拽后已变 custom，据此派生收缩方向），Manager 改写容器与遮罩
 const handleToggleMinimize = () => {
-  position.value = props.manager.getPosition()
+  syncPosition()
   minimized.value = !minimized.value
   props.manager.setMinimized(minimized.value)
 }
@@ -268,13 +323,13 @@ const handleMiniBarClick = () => {
 
 const handleRemove = (id: string) => {
   // 删除确认："确定删除这条速记吗？"
-  if (!window.confirm(props.i18n.deleteConfirm)) return
+  if (!window.confirm(i18n.deleteConfirm)) return
   remove(id)
 }
 
 onMounted(() => {
   load()
-  position.value = props.manager.getPosition()
+  syncPosition()
   minimized.value = props.manager.isMinimized()
   // 预设菜单点击外部关闭 + 遮罩点击收起监听（persistent 实例常驻，onUnmounted 对应清理）
   window.addEventListener("click", handleWindowClick)

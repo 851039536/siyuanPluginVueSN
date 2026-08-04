@@ -19,6 +19,10 @@
     "minimize": "最小化",
     "restore": "展开",
     "deleteConfirm": "确定删除这条速记吗？",
-    "createdAt": "创建于"
+    "createdAt": "创建于",
+    "polish": "AI 润色",
+    "polishing": "正在润色…",
+    "polishFailed": "润色失败，请重试",
+    "polishNoApiKey": "请先在超级面板中配置 AI API 密钥"
   }
 }

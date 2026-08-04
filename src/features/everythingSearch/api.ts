@@ -162,6 +162,32 @@ export function getFullPath(item: EverythingSearchResult): string {
   return item.path ? `${item.path}\\${item.name}` : item.name
 }
 
+/** 系统关键目录名列表（小写，用于排除空文件夹搜索结果中的系统路径，防止误删导致系统异常） */
+const SYSTEM_ROOT_DIRS = [
+  "windows",
+  "program files",
+  "program files (x86)",
+  "programdata",
+  "$recycle.bin",
+  "system volume information",
+  "recovery",
+  "boot",
+  "perflogs",
+]
+
+/** 提取 Windows 路径盘符后的一级目录名（如 "C:\\Windows\\System32" → "Windows"） */
+const ROOT_DIR_REGEX = /^[a-zA-Z]:\\([^\\]+)(?:\\|$)/i
+
+/**
+ * 判断完整路径是否位于系统关键目录下
+ * 仅做纯字符串比对，无文件系统 I/O，不会因访问系统文件引发异常
+ */
+export function isSystemPath(fullPath: string): boolean {
+  const match = ROOT_DIR_REGEX.exec(fullPath)
+  if (!match) return false
+  return SYSTEM_ROOT_DIRS.includes(match[1].toLowerCase())
+}
+
 /**
  * 获取文件扩展名
  */

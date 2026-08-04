@@ -667,6 +667,7 @@
     "matchPath": "Match path",
     "regex": "Regex",
     "advancedMode": "Advanced mode",
+    "emptyFolders": "Empty folders",
     "sortByModTime": "Modified time",
     "sortByName": "Name",
     "sortByPath": "Path",

@@ -19,6 +19,7 @@
           :i18n="i18n"
           :is-searching="searchState.status === 'loading'"
           @search="handleSearch"
+          @empty-search="handleEmptyFoldersSearch"
           @clear="handleClear"
           @escape="closeDialog"
         />
@@ -96,6 +97,7 @@ import {
   checkEverythingService,
   deleteFile,
   getFullPath,
+  isSystemPath,
   openFile,
   searchFiles,
   showInExplorer,
@@ -200,17 +202,22 @@ const checkService = async () => {
 }
 
 /** 搜索 */
-const handleSearch = async () => {
+const handleSearch = async (forceEmpty = false) => {
   // 拼接基础查询与文件大小过滤条件
   const rawQuery = searchQuery.value.trim()
-  if (!rawQuery) return
+  if (!rawQuery && !forceEmpty) return
 
   let query = rawQuery
-  if (options.minSize > 0) {
-    query += ` size:>${options.minSize}${options.minSizeUnit.toLowerCase()}`
-  }
-  if (options.maxSize > 0) {
-    query += ` size:<${options.maxSize}${options.maxSizeUnit.toLowerCase()}`
+  if (forceEmpty) {
+    // 空文件夹查询：追加 Everything empty: 语法仅匹配空文件夹（空文件夹 size 必为 0，跳过大小过滤，否则 minSize 配置会过滤掉全部结果）
+    query = query ? `${query} empty:` : "empty:"
+  } else {
+    if (options.minSize > 0) {
+      query += ` size:>${options.minSize}${options.minSizeUnit.toLowerCase()}`
+    }
+    if (options.maxSize > 0) {
+      query += ` size:<${options.maxSize}${options.maxSizeUnit.toLowerCase()}`
+    }
   }
 
   // 取消之前的防抖定时器
@@ -238,14 +245,24 @@ const handleSearch = async () => {
       config,
     )
 
-    searchState.results = results
-    searchState.status = results.length === 0 ? "empty" : "success"
+    // 空文件夹查询模式下排除系统关键路径下的结果，防止误删导致系统异常
+    searchState.results = forceEmpty
+      ? results.filter(
+          (item) => !(item.type === "folder" && isSystemPath(getFullPath(item))),
+        )
+      : results
+    searchState.status = searchState.results.length === 0 ? "empty" : "success"
   } catch (error) {
     // 搜索失败提示："搜索失败"
     searchState.errorMessage = (error as Error).message || i18n.value.searchFailed
     searchState.status = "error"
     searchState.results = []
   }
+}
+
+/** 点击空文件夹按钮直接查询空文件夹 */
+const handleEmptyFoldersSearch = () => {
+  handleSearch(true)
 }
 
 /** 重置搜索状态 */

@@ -20,6 +20,7 @@
   ],
   "scripts": {
     "dev": "vite build --watch",
+    "dev:test": "vite build --watch --mode test",
     "release": "node ./release.js",
     "release:manual": "node ./release.js --mode=manual",
     "release:patch": "node ./release.js --mode=patch",

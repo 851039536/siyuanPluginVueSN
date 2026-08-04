@@ -1,4 +1,4 @@
-<!-- Git 推送/拉取操作输出面板：结构化结果拍平为控制台逐行输出 -->
+<!-- Git 推送/拉取操作输出面板：结构化结果拍平为控制台逐行输出，失败时提供 AI 错误分析入口 -->
 <template>
   <div
     v-if="lines.length"
@@ -13,12 +13,41 @@
         :class="`gp-console-line--${line.type}`"
       >{{ line.text }}</div>
     </div>
+    <!-- 存在失败条目时显示 AI 分析按钮 -->
+    <div
+      v-if="hasFailed"
+      class="gp-output-ai"
+    >
+      <!-- "AI 分析"（tooltip：分析失败原因与解决方案） -->
+      <button
+        class="vp-btn vp-btn--ghost vp-btn--sm gp-output-ai-btn"
+        :title="i18n.aiAnalyze"
+        @click="showAiDialog = true"
+      >
+        <Icon
+          icon="mdi:auto-fix"
+          height="12"
+        />
+        <span>{{ i18n.aiAnalyze }}</span>
+      </button>
+    </div>
+    <!-- AI 错误分析弹窗（自包含，父只管开关） -->
+    <AiErrorAnalysisDialog
+      v-if="showAiDialog"
+      :i18n="i18n"
+      :project-name="projectName"
+      :action="action"
+      :entries="entries"
+      @close="showAiDialog = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import type { PushOutputEntry } from "../../composables/useGitOps"
-import { computed } from "vue"
+import { Icon } from "@iconify/vue"
+import { computed, ref } from "vue"
+import AiErrorAnalysisDialog from "./AiErrorAnalysisDialog.vue"
 
 /** stdout 预览截断上限（字符数） */
 const MAX_STDOUT_PREVIEW = 500
@@ -33,7 +62,21 @@ interface ConsoleLine {
 
 const props = defineProps<{
   entries: PushOutputEntry[]
+  /** 面板内 i18n 文案（AI 分析按钮/弹窗文案） */
+  i18n: Record<string, any>
+  /** 当前项目名（AI 分析上下文） */
+  projectName: string
+  /** 操作类型：推送或拉取（AI 分析上下文 + 弹窗徽标） */
+  action: "push" | "pull"
 }>()
+
+/** 是否存在失败条目（非跳过且失败，控制 AI 分析按钮显隐） */
+const hasFailed = computed(() =>
+  (props.entries ?? []).some((e) => !e.ok && !e.skipped),
+)
+
+/** AI 分析弹窗开关 */
+const showAiDialog = ref(false)
 
 /** 截断超长 stdout 预览 */
 function truncate(text: string): string {

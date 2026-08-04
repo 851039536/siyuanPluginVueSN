@@ -814,6 +814,22 @@
   }
 }
 
+// 输出面板底部 AI 分析按钮区（失败条目时显示）
+.gp-output-ai {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 $spacing-2 $spacing-2;
+}
+
+.gp-output-ai-btn {
+  color: var(--b3-theme-primary);
+  border-color: var(--b3-theme-primary);
+
+  &:hover:not(:disabled) {
+    background: var(--b3-theme-primary-lightest);
+  }
+}
+
 // ── 设置弹窗：分支模式 radio ──
 .gp-set-radio-group {
   display: flex;

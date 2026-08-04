@@ -10,6 +10,7 @@
 - **路径检查**：添加时检查路径是否为合法 Git 仓库
 - **工作区变更**：查看暂存/未暂存/未跟踪文件，支持暂存、取消暂存、查看着色 diff、丢弃更改
 - **提交功能**：Conventional Commit 快捷类型选择、AI 生成提交信息（支持思考模式控制）
+- **AI 错误分析**：推送/拉取失败时日志面板提供「AI 分析」按钮，弹窗内流式分析失败日志，输出错误原因、解决方案与预防建议
 - **提交历史**：查看当前分支最近 N 条提交记录，支持关键词/作者搜索过滤
 - **分支管理**：查看本地分支列表，一键切换分支（自动检测未提交变更）
 - **Stash 暂存**：Git stash 存取恢复，支持 AI 生成描述
@@ -60,13 +61,14 @@ src/features/gitPush/
 │   │   ├── SearchBox.vue            # 搜索框
 │   │   ├── EditableRemoteList.vue   # 可编辑远程列表
 │   │   └── CloneLogPanel.vue        # 克隆日志面板
-│   ├── list/                        # 列表视图专属（10 个）
+│   ├── list/                        # 列表视图专属（11 个）
 │   │   ├── ListViewToolbar.vue      # 列表工具栏
 │   │   ├── ProjectCard.vue          # 项目卡片
 │   │   ├── BranchCommitList.vue     # 提交历史（含搜索）
 │   │   ├── ConflictSection.vue      # 冲突区
 │   │   ├── MarkdownFileBadge.vue    # Markdown 文件标记
-│   │   ├── OutputPanel.vue          # 命令输出面板
+│   │   ├── OutputPanel.vue          # 命令输出面板（失败时内置 AI 分析入口）
+│   │   ├── AiErrorAnalysisDialog.vue# AI 错误日志分析弹窗（流式）
 │   │   ├── StashSection.vue         # Stash 管理区
 │   │   ├── TagPanel.vue             # 标签面板
 │   │   ├── WorkingTreePanel.vue     # 工作区变更面板
@@ -86,6 +88,7 @@ src/features/gitPush/
     ├── StatsPanel.scss              # 统计视图样式
     ├── WorkingTreePanel.scss        # 工作区面板样式
     ├── WorkingTreeDiffDialog.scss   # 差异弹窗样式
+    ├── AiErrorAnalysisDialog.scss   # AI 错误分析弹窗样式
     ├── BranchCommitList.scss        # 提交历史列表样式
     ├── _variables.scss              # 设计 Token
     ├── _mixins.scss                 # 共享混入
@@ -129,6 +132,7 @@ GitPushManager (facade)
 | `discardFile(path, file, staged, status)` | 丢弃更改 |
 | `commit(path, message)` | 提交暂存内容 |
 | `generateCommitMessage(path)` | AI / 启发式生成提交信息 |
+| `getAiConfig()` | 读取超级面板 AI 配置（统一入口 `@/utils/aiApi`，供 AI 错误分析弹窗使用） |
 | `getCommitLog(path, count?)` | 获取最近 N 条提交记录 |
 | `getBranches(path)` | 获取本地分支列表 |
 | `switchBranch(path, branch)` | 切换分支（检测未提交变更） |

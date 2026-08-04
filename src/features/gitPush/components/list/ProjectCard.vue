@@ -709,11 +709,14 @@
       </div>
     </div>
 
-    <!-- 拉取/推送输出 -->
+    <!-- 拉取/推送输出（失败时内置 AI 分析入口） -->
     <OutputPanel
       v-for="panel in outputPanels"
       :key="panel.key"
       :entries="panel.entries"
+      :i18n="i18n"
+      :project-name="project.name"
+      :action="panel.key"
     />
   </div>
 </template>
@@ -923,8 +926,8 @@ function pushBtnText(status: string | undefined, label: string): string {
   return label
 }
 
-/** 拉取/推送输出面板列表 */
-const outputPanels = computed(() => [
+/** 拉取/推送输出面板列表（key 即操作类型，传给 OutputPanel 的 action prop） */
+const outputPanels = computed<{ key: 'push' | 'pull', entries: PushOutputEntry[] }[]>(() => [
   { key: 'pull', entries: props.pullOutputs },
   { key: 'push', entries: props.pushOutputs },
 ])

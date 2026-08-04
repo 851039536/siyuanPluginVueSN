@@ -15,6 +15,8 @@ import type {
   TagInfo,
   WorkingTreeInfo,
 } from "./types/storage"
+import type { AiApiConfig } from "@/utils/aiApi"
+import { getApiConfigFromPlugin } from "@/utils/aiApi"
 import type { PlatformKey } from "./types/meta"
 import { GitPushStorage } from "./types/storage"
 import { createVueDockApp } from "@/utils/vueAppHelper"
@@ -285,6 +287,12 @@ export class GitPushManager {
   getProjectGitConfigFilePath(projectPath: string): string { return this.repoOps.getProjectGitConfigFilePath(projectPath) }
 
   async scanForGitRepos(dirPath: string): Promise<ScannedGitRepo[]> { return this.repoOps.scanForGitRepos(dirPath) }
+
+  // ── AI 配置（统一入口 @/utils/aiApi，供卡片级 AI 分析弹窗读取超级面板设置）──
+
+  getAiConfig(): AiApiConfig {
+    return getApiConfigFromPlugin(this.plugin)
+  }
 
   // ── AI 提交信息（CommitMsgGenerator）──
 

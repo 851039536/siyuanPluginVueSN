@@ -148,7 +148,8 @@
   }
 }
 
-.close-btn {
+// 共享图标按钮（面板头部操作 + 条目编辑操作复用，20x20 无填充基础样式）
+.qn-icon-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -167,6 +168,16 @@
     color: var(--b3-theme-on-surface);
     border-color: var(--b3-border-color);
   }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  // 危险操作变体（删除按钮悬停变红）
+  &--danger:hover {
+    color: var(--b3-card-error-color);
+  }
 }
 
 // ========== 新增速记区 ==========
@@ -178,6 +189,14 @@
   padding: $spacing-3;
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
+}
+
+// 新增区操作行：AI 润色与添加按钮左右分布
+.add-area__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
 }
 
 .add-textarea {

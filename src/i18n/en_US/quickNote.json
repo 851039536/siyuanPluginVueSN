@@ -19,6 +19,10 @@
     "minimize": "Minimize",
     "restore": "Restore",
     "deleteConfirm": "Delete this note?",
-    "createdAt": "Created at"
+    "createdAt": "Created at",
+    "polish": "AI Polish",
+    "polishing": "Polishing…",
+    "polishFailed": "Polish failed, please retry",
+    "polishNoApiKey": "Please configure an AI API key in the Super Panel first"
   }
 }

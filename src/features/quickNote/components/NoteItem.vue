@@ -39,7 +39,7 @@
         </button>
         <!-- 删除按钮 -->
         <button
-          class="note-item__action-btn note-item__action-btn--danger"
+          class="qn-icon-btn qn-icon-btn--danger"
           @click="emit('remove')"
         >
           <IconWrapper
@@ -62,9 +62,21 @@
           @keydown.esc="cancelEdit"
         />
         <div class="note-item__edit-actions">
-          <!-- 按钮："保存"（common i18n 由父层透传） -->
+          <!-- AI 润色按钮："AI 润色"（润色编辑内容，流式回填编辑框，由用户确认后保存） -->
           <button
             class="note-item__action-btn"
+            :disabled="!editDraft.trim() || polishing"
+            :title="i18n.polish"
+            @click="handlePolishEdit"
+          >
+            <IconWrapper
+              name="sparkles"
+              :size="12"
+            />
+          </button>
+          <!-- 按钮："保存"（common i18n 由父层透传） -->
+          <button
+            class="qn-icon-btn"
             :disabled="!editDraft.trim()"
             @click="confirmEdit"
           >
@@ -75,7 +87,7 @@
           </button>
           <!-- 按钮："取消" -->
           <button
-            class="note-item__action-btn"
+            class="qn-icon-btn"
             @click="cancelEdit"
           >
             <IconWrapper
@@ -92,14 +104,18 @@
 <script setup lang="ts">
 /**
  * 速记 — 单条目组件
- * 纯展示组件：勾选/编辑/删除仅 emit 事件，存储由父组件的 composable 统一处理
+ * 勾选/编辑/删除仅 emit 事件（存储由父 composable 统一处理）；编辑态持有 plugin 自行完成 AI 润色并回填编辑框
  */
+import type { Plugin } from "siyuan"
 import type { QuickNoteItem } from "../types"
 import { nextTick, ref } from "vue"
+import { pushMsg } from "@/api"
 import IconWrapper from "@/components/IconWrapper.vue"
+import { PolishError, useAiPolish } from "../composables/useAiPolish"
 
 const props = defineProps<{
   note: QuickNoteItem
+  plugin: Plugin
   i18n: Record<string, string>
 }>()
 
@@ -112,6 +128,33 @@ const emit = defineEmits<{
 const editing = ref(false)
 const editDraft = ref("")
 const editTextareaRef = ref<HTMLTextAreaElement | null>(null)
+
+// AI 润色：编辑态本地实例，润色结果流式回填 editDraft（保存仍由用户触发）
+const { polishing, polish } = useAiPolish(props.plugin)
+
+// AI 润色编辑内容：缓存原稿 → 清空后流式回填 → 失败恢复原稿并提示
+const handlePolishEdit = async () => {
+  if (polishing.value) return
+  const original = editDraft.value
+  if (!original.trim()) return
+  try {
+    editDraft.value = ""
+    const result = await polish(original, (chunk) => {
+      editDraft.value += chunk
+    })
+    // 模型无输出时恢复原稿，避免编辑内容被清空丢失
+    if (!result.trim()) {
+      editDraft.value = original
+    }
+  } catch (err) {
+    editDraft.value = original
+    if (err instanceof PolishError && err.code === "NO_API_KEY") {
+      pushMsg(i18n.polishNoApiKey, 5000, "info")
+    } else {
+      pushMsg(i18n.polishFailed, 5000, "error")
+    }
+  }
+}
 
 const startEdit = async () => {
   editDraft.value = props.note.content

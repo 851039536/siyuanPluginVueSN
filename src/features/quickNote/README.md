@@ -7,6 +7,7 @@
 - **多行速记**：textarea 输入多行文本，Ctrl+Enter 快速添加
 - **状态管理**：条目可勾选完成/待完成，Tab 切换两种视图（含计数）
 - **增删改**：条目支持行内编辑（Ctrl+Enter 确认 / Esc 取消）与删除（带确认）
+- **AI 润色**：新增速记区与条目编辑态均提供「AI 润色」按钮，走 `callAISmart` 流式调用超级面板配置的 AI 润色文本并回填输入框，由用户确认后再添加/保存；未配置 API Key 或调用失败时经 `pushMsg` 提示，失败自动恢复原稿
 - **位置设置**：头部图标菜单可选五档预设位置；按住头部/最小化小条可自由拖拽到任意位置，均持久化并重启恢复
 - **最小化**：头部最小化按钮或点击面板外区域（遮罩）按当前位置方向收起——左/右贴边收成竖条，上/下/居中收成横条；小条半透明显示、悬停恢复不透明；收起期间遮罩透明且点击穿透，不阻断背后界面操作，点击小条展开；最小化状态持久化，重启/自动打开时恢复小条形态；关闭仅由头部关闭按钮/状态栏切换触发
 - **statusBar 集成**：功能抽屉中出现「速记」项，pin 后状态栏出现快捷按钮，点击切换弹窗显隐
@@ -19,8 +20,9 @@ quickNote/
 ├── index.ts                    # QuickNoteManager（persistent Modal 生命周期 + 位置/拖拽/最小化应用）+ registerQuickNote
 ├── index.vue                   # 弹窗主面板（紧凑头部/预设菜单/新增区/Tab/列表 + 最小化条）
 ├── components/
-│   └── NoteItem.vue            # 单条目组件（纯展示，勾选/编辑/删除走 emit）
+│   └── NoteItem.vue            # 单条目组件（勾选/编辑/删除走 emit；编辑态持有 plugin 自行完成 AI 润色）
 ├── composables/
+│   ├── useAiPolish.ts          # AI 润色：并发锁 + API Key 校验 + callAISmart 流式 + 错误码（新增区/编辑态复用）
 │   └── useQuickNotes.ts        # 条目响应式列表 + CRUD + 动作级持久化
 ├── types/
 │   ├── index.ts                # 领域类型 + POSITION_ALIGN_MAP / POSITION_MINIMIZE_META 映射

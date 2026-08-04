@@ -667,6 +667,7 @@
     "matchPath": "匹配路径",
     "regex": "正则",
     "advancedMode": "高级模式",
+    "emptyFolders": "空文件夹",
     "sortByModTime": "修改时间",
     "sortByName": "名称",
     "sortByPath": "路径",

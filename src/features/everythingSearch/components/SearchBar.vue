@@ -22,6 +22,15 @@
     >
       {{ i18n.search }}
     </Button>
+    <!-- 按钮："空文件夹"（点击直接查询空文件夹，自动排除系统路径） -->
+    <Button
+      variant="secondary"
+      size="xsmall"
+      :disabled="isSearching"
+      @click="handleEmptySearch"
+    >
+      {{ i18n.emptyFolders }}
+    </Button>
   </div>
 </template>
 
@@ -45,6 +54,7 @@ interface Props {
 interface Emits {
   (e: "update:modelValue", value: string): void
   (e: "search"): void
+  (e: "empty-search"): void
   (e: "clear"): void
   (e: "escape"): void
 }
@@ -78,6 +88,11 @@ const handleClear = () => {
 /** 处理搜索 */
 const handleSearch = () => {
   emit("search")
+}
+
+/** 处理空文件夹搜索 */
+const handleEmptySearch = () => {
+  emit("empty-search")
 }
 
 /** 聚焦输入框 */

@@ -1,10 +1,14 @@
 <!-- gitPush 代码统计报告：代码热点分区（热点文件列表 + 热度分类汇总 + 优化建议） -->
 <template>
   <div class="gpr-section">
-    <!-- 区块标题："代码热点分析" + 文件数徽章 -->
+    <!-- 区块标题："代码热点分析" + 文件数徽章（悬浮说明统计口径） -->
     <div class="gpr-section-title">
       {{ i18n.reportHeatTitle }}
-      <span class="gpr-section-count">{{ report.analyzedFiles }}</span>
+      <!-- 文件数徽章（title 提示口径："分析范围内涉及的文件数（不含 .md 文档）"） -->
+      <span
+        class="gpr-section-count"
+        :title="i18n.reportAnalyzedFilesTip"
+      >{{ report.analyzedFiles }}</span>
     </div>
 
     <!-- 空状态：范围内无文件 -->
@@ -23,16 +27,20 @@
           class="gpr-hot-item"
         >
           <div class="gpr-hot-head">
-            <!-- 热度徽章：热度值 + 等级（"热门/温热/冷却/冷门"） -->
+            <!-- 热度徽章：仅热度值（颜色编码等级，悬浮提示等级名，去掉 /100 与等级文字避免三重冗余） -->
             <span
               class="gpr-heat-chip"
               :class="`gpr-heat-chip--${h.level}`"
-            >{{ h.heat }}/100 [{{ i18n[HOTSPOT_LEVEL_META[h.level].labelKey] }}]</span>
-            <!-- 文件路径（悬浮显示完整路径） -->
+              :title="i18n[HOTSPOT_LEVEL_META[h.level].labelKey]"
+            >{{ h.heat }}</span>
+            <!-- 文件路径（目录弱化 + 文件名强调，悬浮显示完整路径） -->
             <span
-              class="gpr-cell gpr-cell--file"
+              class="gpr-hot-path"
               :title="h.path"
-            >{{ h.path }}</span>
+            >
+              <span class="gpr-path-dir">{{ splitPath(h.path).dir }}</span>
+              <span class="gpr-path-base">{{ splitPath(h.path).base }}</span>
+            </span>
           </div>
           <!-- 指标行：修改次数 / 参与人数 / 代码行数 / 最后修改 -->
           <div class="gpr-hot-meta">
@@ -106,6 +114,15 @@ import { Icon } from "@iconify/vue"
 import { HOTSPOT_LEVEL_META } from "../../types"
 import { relativeTime } from "../../utils"
 import EmptyState from "../common/EmptyState.vue"
+
+/** 拆分文件路径为目录 + 文件名（dirname 弱化 / basename 强调，便于快速扫描定位文件） */
+function splitPath(path: string): { dir: string, base: string } {
+  const idx = path.lastIndexOf("/")
+  if (idx < 0) {
+    return { dir: "", base: path }
+  }
+  return { dir: path.slice(0, idx + 1), base: path.slice(idx + 1) }
+}
 
 defineProps<{
   i18n: Record<string, any>

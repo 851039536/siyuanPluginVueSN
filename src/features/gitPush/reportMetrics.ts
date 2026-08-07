@@ -228,6 +228,11 @@ export function fileExistsInRepo(project: GitProject, filePath: string): boolean
   }
 }
 
+/** 判断是否为代码文件（排除 .md 文档：Markdown 不属于代码，不计入债务/热点/分析文件统计） */
+export function isCodeFile(filePath: string): boolean {
+  return !filePath.toLowerCase().endsWith(".md")
+}
+
 // ── 技术债务 ──
 
 /** 债务门槛：修改次数低于该值的文件视为正常迭代，不构成技术债务（1-2 次提交是常态演进，参考 code-maat churn 阈值思路） */
@@ -331,9 +336,9 @@ export function buildReportData(
   const fileMap = aggregateFileStats(commits)
 
   // 文件 → 完整统计行（loc 仅在榜单 Top 读取行数控制开销）
-  // 过滤 git 历史中已从工作区删除的文件（历史记录不因删除而消失，需按当前磁盘存在性剔除）
+  // 过滤链：①已从工作区删除的"幽灵文件"（历史记录不因删除而消失，需按当前磁盘存在性剔除）②非代码文件（.md 文档不属代码）
   const rankedFiles = [...fileMap.entries()]
-    .filter(([path]: [string, FileAgg]) => fileExistsInRepo(project, path))
+    .filter(([path]: [string, FileAgg]) => fileExistsInRepo(project, path) && isCodeFile(path))
     .sort((a, b) => b[1].modCount - a[1].modCount)
   const debtRows: DebtFileRow[] = []
   const hotspotRows: HotspotFileRow[] = []

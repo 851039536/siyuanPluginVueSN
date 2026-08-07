@@ -1,12 +1,61 @@
-// gitPush 代码统计报告：代码贡献度分区（作者排行表补充样式）
+// gitPush 代码统计报告：代码贡献度分区（作者排行表：HTML table 布局，跨行严格对齐，数字列按内容自适应宽度）
 @use "./variables" as *;
 @use "./mixins" as *;
 
-// 数字列自适应内容宽度：不固定 42px，窄容器下表头/数值不再被挤压换行
-// 特异性 .gpr-row .gpr-cell--num 高于 index.scss 基座 .gpr-cell--num，仅作用于本表格
-.gpr-row .gpr-cell--num {
-  width: auto;
+// 作者排行表格（table 布局强制各行列宽一致，消除 flex 模拟表格的表头/数据行错位；auto 布局下数字列按内容自适应，姓名列吃剩余空间）
+.gpr-author-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: auto;
+  font-size: $font-size-xs;
+}
+
+// 表头（sticky：容器滚动时常驻顶部，实色背景防透出下层行）
+.gpr-author-th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--b3-theme-surface);
+  padding: $spacing-2;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-surface-light);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-align: left;
   white-space: nowrap;
+  border-bottom: 2px solid var(--b3-border-color);
+
+  // 数字列表头右对齐（与数据列数值对齐）
+  &--num {
+    text-align: right;
+  }
+}
+
+// 数据行（底部细线分隔）
+.gpr-author-row {
+  border-bottom: 1px solid var(--b3-border-color);
+}
+
+// 单元格
+.gpr-author-cell {
+  padding: $spacing-1 $spacing-2;
+  vertical-align: middle;
+
+  // 作者名列（占用剩余宽度，超长单行省略）
+  &--name {
+    @include text-ellipsis;
+  }
+
+  // 数字列（等宽右对齐，内容自适应宽度）
+  &--num {
+    font-family: $vp-mono;
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-on-surface-light);
+    text-align: right;
+    white-space: nowrap;
+  }
 }
 
 // 质量评分徽章（分数 + 等级，颜色由 GRADE_META 内联驱动）

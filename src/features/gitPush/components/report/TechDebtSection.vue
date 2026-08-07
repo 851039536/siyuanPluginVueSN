@@ -15,33 +15,34 @@
     />
 
     <template v-else>
-      <!-- 严重度分组（严重/高/中；组内已按风险分升序排列，groups 由单次过滤预计算） -->
-      <div
-        v-for="g in groups"
-        :key="g.sev"
-        class="gpr-debt-group"
-      >
-        <!-- 分组标题：严重度色点 + 名称 + 计数 -->
-        <div class="gpr-debt-group-title">
-          <span
-            class="gpr-debt-dot"
-            :style="{ background: DEBT_SEVERITY_META[g.sev].color }"
-          />
-          <span>{{ i18n[DEBT_SEVERITY_META[g.sev].labelKey] }}</span>
-          <span class="gpr-debt-count">{{ g.rows.length }}</span>
+      <!-- 单表格容器：所有严重度分组连续排布，分组标题作为表内跨行分隔行（取代原多表格堆叠） -->
+      <div class="gpr-table-wrap">
+        <!-- 表头（单表头，全部分组共用） -->
+        <div class="gpr-row gpr-row--head">
+          <span class="gpr-cell gpr-cell--name">{{ i18n.reportFileCol }}</span>
+          <span class="gpr-cell gpr-cell--type">{{ i18n.reportTypeCol }}</span>
+          <span class="gpr-cell gpr-cell--num">{{ i18n.reportScoreCol }}</span>
+          <span class="gpr-cell gpr-cell--num">{{ i18n.reportModsCol }}</span>
+          <span class="gpr-cell gpr-cell--num">{{ i18n.reportComplexityCol }}</span>
+          <span class="gpr-cell gpr-cell--num">{{ i18n.reportLinesCol }}</span>
+          <span class="gpr-cell gpr-cell--num">{{ i18n.reportStabilityCol }}</span>
         </div>
 
-        <!-- 该组文件表：表头 + 每文件一块（指标行 + 说明文案紧跟其下） -->
-        <div class="gpr-table-wrap">
-          <div class="gpr-row gpr-row--head">
-            <span class="gpr-cell gpr-cell--name">{{ i18n.reportFileCol }}</span>
-            <span class="gpr-cell gpr-cell--type">{{ i18n.reportTypeCol }}</span>
-            <span class="gpr-cell gpr-cell--num">{{ i18n.reportScoreCol }}</span>
-            <span class="gpr-cell gpr-cell--num">{{ i18n.reportModsCol }}</span>
-            <span class="gpr-cell gpr-cell--num">{{ i18n.reportComplexityCol }}</span>
-            <span class="gpr-cell gpr-cell--num">{{ i18n.reportLinesCol }}</span>
-            <span class="gpr-cell gpr-cell--num">{{ i18n.reportStabilityCol }}</span>
+        <!-- 严重度分组（仅渲染有数据的分组，groups 已过滤空分组；组内按风险分升序） -->
+        <template v-for="g in groups" :key="g.sev">
+          <!-- 分组标题行：严重度色点 + 名称 + 计数（跨整行，浅色底区分） -->
+          <div class="gpr-row gpr-row--group">
+            <span class="gpr-cell gpr-cell--group">
+              <span
+                class="gpr-debt-dot"
+                :style="{ background: DEBT_SEVERITY_META[g.sev].color }"
+              />
+              <span>{{ i18n[DEBT_SEVERITY_META[g.sev].labelKey] }}</span>
+              <span class="gpr-debt-count">{{ g.rows.length }}</span>
+            </span>
           </div>
+
+          <!-- 组内文件块：每个文件 = 指标行 + 说明文案整体一块（悬停整块高亮） -->
           <div
             v-for="row in g.rows"
             :key="row.path"
@@ -79,7 +80,7 @@
               <span class="gpr-cell gpr-cell--desc">{{ row.description }}</span>
             </div>
           </div>
-        </div>
+        </template>
       </div>
     </template>
   </div>
@@ -103,12 +104,12 @@ const props = defineProps<{
 /** 问题总数（严重度计数合计，与面板 Tab 徽章共用 countDebtFiles） */
 const totalCount = computed(() => countDebtFiles(props.report.debtSummary))
 
-/** 按严重度预分组（严重/高/中，组内已按风险分升序排列；单次过滤替代模板中重复 filter 调用） */
+/** 按严重度预分组（严重/高/中，组内已按风险分升序排列；单次过滤替代模板中重复 filter 调用；空分组不渲染） */
 const groups = computed(() =>
   DEBT_SEVERITY_ORDER.map((sev) => ({
     sev,
     rows: props.report.debtFiles.filter((r) => r.severity === sev),
-  })),
+  })).filter((g) => g.rows.length > 0),
 )
 
 /** 数值格式化：null/undefined 显示占位符 -（与参考报告"暂无数据"一致） */

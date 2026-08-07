@@ -45,8 +45,24 @@
   opacity: 0.5;
 }
 
-// 说明文案行（模板拼接："此文件在过去6个月被修改了 X 次…"）
+// 每个文件的整体块（指标行 + 说明文案成对出现）：块间用分割线区隔，悬停整块高亮便于扫描
+.gpr-debt-file {
+  @include row-divider;
+  transition: background 0.15s;
+
+  &:hover {
+    background: var(--b3-theme-surface);
+  }
+
+  // 块内行关闭各自分割线（文件间区隔由块统一承担，避免双线）
+  .gpr-row {
+    border-bottom: none;
+  }
+}
+
+// 说明文案行（模板拼接："此文件在过去6个月被修改了 X 次…"）：紧跟指标行 + 浅色底强化配对
 .gpr-row--desc {
   padding-top: 0; // 与上方数据行紧贴，视觉上属于同一文件
   padding-bottom: $spacing-2;
+  background: var(--b3-list-hover);
 }

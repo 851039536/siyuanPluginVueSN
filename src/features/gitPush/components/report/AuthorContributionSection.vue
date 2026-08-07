@@ -21,7 +21,7 @@
     >
       <div class="gpr-row gpr-row--head">
         <span class="gpr-cell gpr-cell--name">{{ i18n.projectName }}</span>
-        <span class="gpr-cell gpr-cell--num">{{ i18n.reportCommitsCol }}</span>
+        <span class="gpr-cell gpr-cell--num gpr-cell--commits">{{ i18n.reportCommitsCol }}</span>
         <span class="gpr-cell gpr-cell--num">{{ i18n.reportLinesCol }}</span>
         <span class="gpr-cell gpr-cell--num">{{ i18n.reportNetCol }}</span>
         <span class="gpr-cell gpr-cell--num">{{ i18n.reportAvgSizeCol }}</span>
@@ -39,7 +39,7 @@
           class="gpr-cell gpr-cell--name"
           :title="a.author"
         >{{ a.author }}</span>
-        <span class="gpr-cell gpr-cell--num">{{ a.commits }}</span>
+        <span class="gpr-cell gpr-cell--num gpr-cell--commits">{{ a.commits }}</span>
         <span class="gpr-cell gpr-cell--num">{{ a.linesAdded }}</span>
         <!-- 净增列：正负着色（+ 绿色 / - 红色） -->
         <span

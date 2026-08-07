@@ -1444,6 +1444,7 @@
     "reportRerun": "重新生成",
     "reportRunHint": "生成代码统计报告",
     "reportRunning": "生成中…",
+    "reportNotRun": "点击「生成」生成代码统计报告",
     "reportFailed": "无法生成报告：项目路径无效或不是 Git 仓库",
     "reportGenerated": "生成时间：{0}",
     "reportRangeLabel": "统计范围：{0}",

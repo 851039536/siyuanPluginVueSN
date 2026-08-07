@@ -1444,6 +1444,7 @@
     "reportRerun": "Regenerate",
     "reportRunHint": "Generate code statistics report",
     "reportRunning": "Generating…",
+    "reportNotRun": "Click \"Generate\" to build the code statistics report",
     "reportFailed": "Cannot generate report: project path is invalid or not a Git repository",
     "reportGenerated": "Generated: {0}",
     "reportRangeLabel": "Range: {0}",

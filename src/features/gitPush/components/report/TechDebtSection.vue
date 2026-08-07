@@ -91,7 +91,7 @@ import type { CodeReportData, DebtFileRow, DebtSeverity } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
 import { DEBT_SEVERITY_META, DEBT_TYPE_META } from "../../types"
-import { DEBT_SEVERITY_ORDER } from "../../reportMetrics"
+import { countDebtFiles, DEBT_SEVERITY_ORDER } from "../../reportMetrics"
 import EmptyState from "../common/EmptyState.vue"
 
 const props = defineProps<{
@@ -100,10 +100,8 @@ const props = defineProps<{
   report: CodeReportData
 }>()
 
-/** 问题总数（严重度计数合计，无数据分组为 0） */
-const totalCount = computed(() =>
-  DEBT_SEVERITY_ORDER.reduce((sum, s) => sum + (props.report.debtSummary[s] || 0), 0),
-)
+/** 问题总数（严重度计数合计，与面板 Tab 徽章共用 countDebtFiles） */
+const totalCount = computed(() => countDebtFiles(props.report.debtSummary))
 
 /** 按严重度取组内文件行（已按风险分升序排列） */
 function groupRows(sev: DebtSeverity): DebtFileRow[] {

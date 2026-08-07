@@ -688,6 +688,27 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 - `src/index.scss`（全局基准规则 + `--vp-font-size-xs` 变量）
 - `src/utils/vueAppHelper.ts`（`vp-dock-root` / `vp-modal-mask` 类的自动挂载点）
 
+## 强制规则：Dock 面板侧边栏间距（2026-08-07）
+
+**Dock 面板/弹窗内的滚动内容不得紧贴侧边栏或滚动条**，必须在容器根节点预留右侧间距，否则内容视觉上"贴合"侧边栏，观感拥挤。
+
+### 规则
+
+1. **面板根容器（`overflow-y: auto` 的滚动容器）必须设置 `padding-right`**，至少 `$spacing-2`（8px），为滚动条与侧边栏留出呼吸空间
+2. **禁止用 `padding: xxx 0` 省略左右**：左右为 0 时内容会直接贴到侧边栏
+3. **使用间距 Token，禁止硬编码 px**：`$spacing-2`(8px) / `$spacing-3`(12px)，按面板宽度与观感选择
+4. **一处容器覆盖多 Tab 子页面**：若多个 Tab/子页面共用同一根容器（如 `CodeReportPanel` → `.gpr-panel`），在共用容器上统一加右侧间距即可一次覆盖所有页面
+
+### 审查检查点
+
+1. 新增/修改 Dock 面板、弹窗、报告类滚动容器时，检查根容器是否声明 `padding-right`
+2. `padding` 简写省略右值时（如 `$spacing-1 0` 等价于右 0），视为可疑点，需显式补右值
+3. 滚动条重叠时右侧间距可适当加大（`$spacing-3`），确保内容不被滚动条遮挡
+
+### 参考实现
+
+- `src/features/gitPush/styles/CodeReportPanel.scss`（`.gpr-panel` 基座：`padding: $spacing-1 $spacing-2 $spacing-1 0`）
+
 ## 强制规则：SCSS 必须分离到 styles/ 目录
 
 **所有 Vue 文件的 SCSS 样式必须提取到独立的 `.scss` 文件**，放置在对应 feature 的 `styles/` 目录下，使用 `@use` 导入。

@@ -8,6 +8,8 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  // 右侧留白，避免滚动条/内容紧贴侧边栏
+  padding-right: $spacing-2;
 }
 
 // ========== 状态占位 ==========

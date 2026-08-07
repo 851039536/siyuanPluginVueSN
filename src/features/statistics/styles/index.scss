@@ -238,7 +238,8 @@ $color-rank-bronze: #cd7f32;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 4px;
+  // 右侧留白 8px，避免滚动条/内容紧贴侧边栏
+  padding: 4px $spacing-2;
   background: var(--b3-theme-background);
 
   // Custom scrollbar (6px width, themed colors)

@@ -2,9 +2,11 @@
 @use "./variables" as *;
 @use "./mixins" as *;
 
-// 提交列（提交次数可能到三位数，比通用数字列更宽）
-.gpr-cell--commits {
-  width: 66px;
+// 数字列自适应内容宽度：不固定 42px，窄容器下表头/数值不再被挤压换行
+// 特异性 .gpr-row .gpr-cell--num 高于 index.scss 基座 .gpr-cell--num，仅作用于本表格
+.gpr-row .gpr-cell--num {
+  width: auto;
+  white-space: nowrap;
 }
 
 // 质量评分徽章（分数 + 等级，颜色由 GRADE_META 内联驱动）

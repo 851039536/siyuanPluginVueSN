@@ -1,26 +1,25 @@
-// gitPush 代码统计报告：技术债务分区（严重度分组 + 说明行）
+// gitPush 代码统计报告：技术债务分区（严重度分组行 + 说明行）
 @use "./variables" as *;
 @use "./mixins" as *;
 
-// 严重度分组（组内表格 + 说明行成对出现）
-.gpr-debt-group {
-  margin-bottom: $spacing-3;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
+// 分组标题行（表内跨行分隔：色点 + 名称 + 计数；浅色底与数据行区分，不再单独起表格）
+.gpr-row--group {
+  background: var(--b3-list-hover);
+  color: var(--b3-theme-on-surface);
 }
 
-// 分组标题：严重度色点 + 名称 + 计数
-.gpr-debt-group-title {
+// 分组标题单元格（跨整行，内部 flex 排列色点/名称/计数）
+.gpr-cell--group {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: $spacing-1;
-  margin-bottom: $spacing-1;
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
 }
 
+// 严重度色点
 .gpr-debt-dot {
   flex-shrink: 0;
   width: 8px;
@@ -28,13 +27,14 @@
   border-radius: 50%;
 }
 
+// 分组计数徽章
 .gpr-debt-count {
   font-size: $font-size-2xs;
   font-family: $vp-mono;
   font-weight: $font-weight-bold;
   padding: 0 5px;
   border-radius: $radius-full;
-  background: var(--b3-list-hover);
+  background: var(--b3-theme-surface);
   opacity: 0.6;
   line-height: $line-height-normal;
 }
@@ -60,9 +60,14 @@
   }
 }
 
-// 说明文案行（模板拼接："此文件在过去6个月被修改了 X 次…"）：紧跟指标行 + 浅色底强化配对
+// 说明文案行（模板拼接："此文件在过去6个月被修改了 X 次…"）：透明背景继承父块悬停高亮，
+// 左侧竖线 + 缩进强调与上排指标行的配对关系
 .gpr-row--desc {
   padding-top: 0; // 与上方数据行紧贴，视觉上属于同一文件
   padding-bottom: $spacing-2;
-  background: var(--b3-list-hover);
+
+  .gpr-cell--desc {
+    border-left: 2px solid var(--b3-border-color);
+    padding-left: $spacing-2;
+  }
 }

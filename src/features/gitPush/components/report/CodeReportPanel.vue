@@ -127,6 +127,7 @@
           v-show="activeTab === 'debt'"
           :i18n="i18n"
           :report="report"
+          :project="currentProject"
         />
         <HotspotSection
           v-show="activeTab === 'hotspot'"
@@ -188,6 +189,13 @@ const reportTabs = computed<ReadonlyArray<{ id: ReportTabId, labelKey: string, i
 
 /** 当前分区 Tab */
 const activeTab = ref<ReportTabId>("overview")
+
+/** 当前选中项目（选中项优先，未选中或已删除回退首个项目；与 useCodeReport 同一回退逻辑，供 TechDebtSection LOC 懒加载） */
+const currentProject = computed<GitProject | null>(() => {
+  if (props.projects.length === 0) return null
+  const selected = props.projects.find((p) => p.id === props.projectId)
+  return selected ?? props.projects[0]
+})
 
 /** 项目下拉选项（名称，路径在编辑弹窗可见） */
 const projectOptions = computed(() =>

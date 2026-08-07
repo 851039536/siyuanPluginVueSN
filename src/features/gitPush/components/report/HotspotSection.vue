@@ -23,48 +23,55 @@
           class="gpr-hot-item"
         >
           <div class="gpr-hot-head">
-            <!-- 热度徽章：热度值 + 等级 -->
+            <!-- 热度徽章：热度值 + 等级（"热门/温热/冷却/冷门"） -->
             <span
               class="gpr-heat-chip"
               :class="`gpr-heat-chip--${h.level}`"
             >{{ h.heat }}/100 [{{ i18n[HOTSPOT_LEVEL_META[h.level].labelKey] }}]</span>
+            <!-- 文件路径（悬浮显示完整路径） -->
             <span
               class="gpr-cell gpr-cell--file"
               :title="h.path"
             >{{ h.path }}</span>
           </div>
+          <!-- 指标行：修改次数 / 参与人数 / 代码行数 / 最后修改 -->
           <div class="gpr-hot-meta">
             <span>{{ i18n.reportModsCol }}: {{ h.modCount }}</span>
             <span>{{ i18n.reportAuthorsCol }}: {{ h.authorCount }}</span>
+            <span>LOC: {{ h.loc ?? "-" }}</span>
             <span
               :title="h.lastModified"
             >{{ i18n.reportLastModifiedCol }}: {{ h.lastModified ? relativeTime(h.lastModified, i18n) : "-" }}</span>
           </div>
-          <!-- 建议文案（按等级模板拼接） -->
+          <!-- 建议文案（按等级 i18n 键解析，如"考虑重构或拆分此文件"） -->
           <div
-            v-if="h.advice"
+            v-if="h.adviceKey"
             class="gpr-hot-advice"
-          >{{ h.advice }}</div>
+          >{{ i18n[h.adviceKey] }}</div>
         </div>
       </div>
 
       <!-- 统计摘要：四类热度汇总表（文件数 + 占比） -->
       <div class="gpr-subsection">
+        <!-- 子区块标题："热度分布汇总" -->
         <div class="gpr-section-title">
           {{ i18n.reportHeatSummaryTitle }}
         </div>
         <div class="gpr-table-wrap">
+          <!-- 表头：类别 / 文件数 / 占比 -->
           <div class="gpr-row gpr-row--head">
             <span class="gpr-cell gpr-cell--name">{{ i18n.reportCategoryCol }}</span>
             <span class="gpr-cell gpr-cell--num">{{ i18n.reportFilesCol }}</span>
             <span class="gpr-cell gpr-cell--pct">{{ i18n.reportPctCol }}</span>
           </div>
+          <!-- 表体：四类热度等级行 -->
           <div
             v-for="s in report.hotspotSummary"
             :key="s.level"
             class="gpr-row"
           >
             <span class="gpr-cell gpr-cell--name">
+              <!-- 等级色点 -->
               <span
                 class="gpr-heat-dot"
                 :style="{ background: HOTSPOT_LEVEL_META[s.level].color }"
@@ -77,16 +84,16 @@
         </div>
       </div>
 
-      <!-- 优化建议 -->
+      <!-- 优化建议（按热点分布 i18n 键解析，如"项目代码热点分布相对健康"） -->
       <div
-        v-if="report.suggestion"
+        v-if="report.suggestionKey"
         class="gpr-suggestion"
       >
         <Icon
           icon="mdi:lightbulb-outline"
           height="12"
         />
-        <span>{{ report.suggestion }}</span>
+        <span>{{ i18n[report.suggestionKey] }}</span>
       </div>
     </template>
   </div>
@@ -102,7 +109,7 @@ import EmptyState from "../common/EmptyState.vue"
 
 defineProps<{
   i18n: Record<string, any>
-  /** 报告聚合数据（仅读取 hotspots / hotspotSummary / suggestion） */
+  /** 报告聚合数据（仅读取 hotspots / hotspotSummary / suggestionKey） */
   report: CodeReportData
 }>()
 </script>

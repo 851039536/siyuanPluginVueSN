@@ -1,8 +1,7 @@
 // gitPush 代码统计报告指标引擎：numstat 解析 + 作者/文件聚合 + 启发式评分（纯函数，无 Vue 依赖）
 //
-// 启发式公式说明（参考报告反推，确定性可复现）：
-// - 稳定性 stability = clamp(100 - 修改次数*3.6)（26次→6、24次→14、28次→0，与参考值 ±1 内吻合）
-// - 复杂度 complexity = 代码行数*0.45 + 修改次数*1.2（行数不可读时退化为 修改次数*2）
+// 启发式公式说明（确定性可复现，聚焦 churn 原始指标，思路参考 code-maat）：
+// - 技术债务风险分 risk = clamp(修改次数*2.5 + 参与人数*6)，仅统计修改 ≥3 次的文件（低于门槛视为正常迭代）
 // - 质量分 quality：活跃天数 + 提交数 + 净增倾向加权，clamp 到 0~100
 // - 热度 heat = 修改次数*2.2 + 参与人数*7 + 近期修改加分；阈值 热点≥75 / 温热≥45 / 冷却≥25
 import type { GitProject } from "./types"
@@ -11,7 +10,6 @@ import type {
   CodeReportData,
   DebtFileRow,
   DebtSeverity,
-  DebtType,
   FileStatRow,
   HotspotFileRow,
   HotspotLevel,
@@ -197,16 +195,6 @@ export function qualityGrade(score: number): QualityGrade {
   return "D"
 }
 
-/** 稳定性启发式：修改越频繁稳定性越低（参考报告 3.6 倍率反推） */
-export function stabilityScore(modCount: number): number {
-  return clamp100(100 - modCount * 3.6)
-}
-
-/** 复杂度估算：行数*0.45 + 修改次数*1.2；行数不可读时退化为 修改次数*2 */
-export function complexityEstimate(modCount: number, loc: number | null): number {
-  return loc !== null ? Math.round(loc * 0.45 + modCount * 1.2) : modCount * 2
-}
-
 /** 超过 2MB 的文件视为不可读（压缩包/锁文件/二进制，避免整读大文件） */
 const LOC_READ_MAX_BYTES = 2 * 1024 * 1024
 
@@ -241,68 +229,24 @@ export function fileExistsInRepo(project: GitProject, filePath: string): boolean
 
 // ── 技术债务 ──
 
-/**
- * 问题类型分类：无稳定分但高复杂度 → 高复杂度；稳定分低(≤18) → 不稳定；
- * 其余高复杂度(≥60) → 高复杂度；否则高频修改。
- */
-export function classifyDebt(stability: number | null, complexity: number | null): DebtType {
-  if (stability === null && complexity !== null && complexity >= 60) return "highComplexity"
-  if (stability !== null && stability <= 18) return "unstable"
-  if (complexity !== null && complexity >= 60) return "highComplexity"
-  return "frequentChanges"
+/** 债务门槛：修改次数低于该值的文件视为正常迭代，不构成技术债务（1-2 次提交是常态演进，参考 code-maat churn 阈值思路） */
+export const DEBT_MIN_MOD_COUNT = 3
+
+/** 风险评分（技术债务"评分"列）：修改次数*2.5 + 参与人数*6，聚焦 churn 与多人触碰风险，clamp 0~100 */
+export function debtRiskScore(modCount: number, authorCount: number): number {
+  return clamp100(modCount * 2.5 + authorCount * 6)
 }
 
-/** 严重度分级：稳定性 ≤10 → 严重；≤30 → 高；其余 → 中（无稳定分时按复杂度高判定为高） */
-export function debtSeverity(stability: number | null, complexity: number | null): DebtSeverity {
-  if (stability === null) {
-    return complexity !== null && complexity >= 60 ? "high" : "medium"
-  }
-  if (stability <= 10) return "severe"
-  if (stability <= 30) return "high"
+/** 严重度分级（基于统一风险分分档）：≥50 严重 / ≥30 高 / 其余 中 */
+export function debtSeverity(riskScore: number): DebtSeverity {
+  if (riskScore >= 50) return "severe"
+  if (riskScore >= 30) return "high"
   return "medium"
-}
-
-/** 风险评分（技术债务"评分"列）：复杂度 + 修改次数 + 低稳定分加权，clamp 0~100 */
-export function debtRiskScore(stability: number | null, complexity: number | null, modCount: number): number {
-  const score =
-    (complexity ?? 0) * 0.18
-    + modCount * 0.9
-    + (stability !== null ? (100 - stability) * 0.12 : 6)
-  return clamp100(score)
 }
 
 /** 技术债务问题总数（严重度计数合计；面板 Tab 徽章与 TechDebtSection 表头徽章/空态共用，消除双份 reduce） */
 export function countDebtFiles(debtSummary: Record<DebtSeverity, number>): number {
   return Object.values(debtSummary).reduce((sum, n) => sum + n, 0)
-}
-
-/** 时间范围对应的"过去{0}"时长词（供说明文案模板） */
-export function rangeDurationKey(range: ReportRange): "reportDurAll" | "reportDur3m" | "reportDur6m" | "reportDur1y" {
-  switch (range) {
-    case "3m": return "reportDur3m"
-    case "1y": return "reportDur1y"
-    case "6m": return "reportDur6m"
-    default: return "reportDurAll"
-  }
-}
-
-/** 拼接技术债务说明文案（按可用指标分句组合，与参考报告"说明"结构一致） */
-export function buildDebtDescription(row: FileStatRow, range: ReportRange, i18n: Record<string, any>): string {
-  const duration = i18n[rangeDurationKey(range)] || i18n.reportDur6m || ""
-  const parts: string[] = []
-  if (row.modCount > 0) {
-    const tpl = i18n.reportDebtDescModified || "{1}"
-    parts.push(tpl.replace("{0}", duration).replace("{1}", String(row.modCount)))
-  }
-  if (row.complexity !== null) {
-    const tpl = i18n.reportDebtDescComplexity || "{0}"
-    parts.push(tpl.replace("{0}", String(row.complexity)))
-  }
-  if (row.stability !== null) {
-    const tpl = i18n.reportDebtDescStability || "{0}"
-    parts.push(tpl.replace("{0}", String(row.stability)))
-  }
-  return parts.join("; ")
 }
 
 // ── 代码热点 ──
@@ -362,20 +306,18 @@ const SEVERITY_ORDER: Record<DebtSeverity, number> = { severe: 0, high: 1, mediu
  * @param projectName 项目名称
  * @param commits 解析后的提交块（空数组 = 无提交或 git 失败）
  * @param rangeLabel 时间范围标签
- * @param range 时间范围
- * @param i18n 说明文案模板来源（i18n 分片，纯文本不参与响应式）
+ * @param i18n 建议文案模板来源（i18n 分片，纯文本不参与响应式）
  */
 export function buildReportData(
   project: GitProject,
   commits: NumstatCommit[],
   rangeLabel: string,
-  range: ReportRange,
   i18n: Record<string, any>,
 ): CodeReportData {
   const authors = aggregateAuthorStats(commits)
   const fileMap = aggregateFileStats(commits)
 
-  // 文件 → 完整统计行（含 loc/复杂度/稳定分，仅在榜单 Top 读取行数控制开销）
+  // 文件 → 完整统计行（loc 仅在榜单 Top 读取行数控制开销）
   // 过滤 git 历史中已从工作区删除的文件（历史记录不因删除而消失，需按当前磁盘存在性剔除）
   const rankedFiles = [...fileMap.entries()]
     .filter(([path]: [string, FileAgg]) => fileExistsInRepo(project, path))
@@ -384,24 +326,22 @@ export function buildReportData(
   const hotspotRows: HotspotFileRow[] = []
   rankedFiles.forEach(([path, agg], idx) => {
     const loc = idx < HOTSPOT_LIMIT ? countFileLines(project, path) : null
-    const complexity = complexityEstimate(agg.modCount, loc)
-    const stability = stabilityScore(agg.modCount)
     const base: FileStatRow = {
       path,
       modCount: agg.modCount,
       authorCount: agg.authors.size,
       lastModified: agg.lastIso,
-      complexity,
       loc,
-      stability,
     }
-    debtRows.push({
-      ...base,
-      severity: debtSeverity(stability, complexity),
-      debtType: classifyDebt(stability, complexity),
-      riskScore: debtRiskScore(stability, complexity, agg.modCount),
-      description: buildDebtDescription(base, range, i18n),
-    })
+    // 债务门槛：修改次数低于 DEBT_MIN_MOD_COUNT 的文件视为正常迭代，仅进入热点榜不列为技术债务
+    if (agg.modCount >= DEBT_MIN_MOD_COUNT) {
+      const riskScore = debtRiskScore(agg.modCount, agg.authors.size)
+      debtRows.push({
+        ...base,
+        severity: debtSeverity(riskScore),
+        riskScore,
+      })
+    }
     const heat = heatScore(agg.modCount, agg.authors.size, agg.lastIso)
     const level = heatLevel(heat)
     hotspotRows.push({

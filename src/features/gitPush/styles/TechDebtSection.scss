@@ -1,4 +1,4 @@
-// gitPush 代码统计报告：技术债务分区（严重度分组行 + 说明行）
+// gitPush 代码统计报告：技术债务分区（严重度分组行 + 单行文件指标）
 @use "./variables" as *;
 @use "./mixins" as *;
 
@@ -45,7 +45,7 @@
   opacity: 0.5;
 }
 
-// 每个文件的整体块（指标行 + 说明文案成对出现）：块间用分割线区隔，悬停整块高亮便于扫描
+// 每个文件的整体块（单行指标）：块间用分割线区隔，悬停整块高亮便于扫描
 .gpr-debt-file {
   @include row-divider;
   transition: background 0.15s;
@@ -57,17 +57,5 @@
   // 块内行关闭各自分割线（文件间区隔由块统一承担，避免双线）
   .gpr-row {
     border-bottom: none;
-  }
-}
-
-// 说明文案行（模板拼接："此文件在过去6个月被修改了 X 次…"）：透明背景继承父块悬停高亮，
-// 左侧竖线 + 缩进强调与上排指标行的配对关系
-.gpr-row--desc {
-  padding-top: 0; // 与上方数据行紧贴，视觉上属于同一文件
-  padding-bottom: $spacing-2;
-
-  .gpr-cell--desc {
-    border-left: 2px solid var(--b3-border-color);
-    padding-left: $spacing-2;
   }
 }

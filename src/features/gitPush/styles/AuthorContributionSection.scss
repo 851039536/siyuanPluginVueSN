@@ -2,6 +2,11 @@
 @use "./variables" as *;
 @use "./mixins" as *;
 
+// 提交列（提交次数可能到三位数，比通用数字列更宽）
+.gpr-cell--commits {
+  width: 66px;
+}
+
 // 质量评分徽章（分数 + 等级，颜色由 GRADE_META 内联驱动）
 .gpr-grade-chip {
   font-weight: $font-weight-bold;

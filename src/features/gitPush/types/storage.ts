@@ -1,6 +1,8 @@
 // Git 项目持久化存储与类型定义
 import type { Plugin } from "siyuan"
 import type { CommitAnalysisCache, CommitAnalysisViewSettings } from "./meta"
+import type { CodeReportPrefs } from "./report"
+import { DEFAULT_REPORT_PREFS } from "./report"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 
@@ -330,6 +332,8 @@ export class GitPushStorage {
   readonly commitAnalysisCache: TypedStorage<CommitAnalysisCache>
   /** 提交分析显示设置（热力图/日历视图、显示范围、每周第一天、格子主色） */
   readonly commitAnalysisView: TypedStorage<CommitAnalysisViewSettings>
+  /** 代码统计报告偏好（上次选中项目 + 时间范围，进入视图恢复选择） */
+  readonly reportPrefs: TypedStorage<CodeReportPrefs>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
@@ -344,6 +348,7 @@ export class GitPushStorage {
     this.opLogs = new TypedStorage(storage, "git-push-op-logs", [])
     this.commitAnalysisCache = new TypedStorage(storage, "git-push-analysis-cache", DEFAULT_ANALYSIS_CACHE)
     this.commitAnalysisView = new TypedStorage(storage, "git-push-analysis-view", DEFAULT_ANALYSIS_VIEW_SETTINGS)
+    this.reportPrefs = new TypedStorage(storage, "git-push-report-prefs", DEFAULT_REPORT_PREFS)
   }
 
   async init(): Promise<void> {

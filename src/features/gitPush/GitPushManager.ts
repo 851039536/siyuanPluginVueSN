@@ -18,6 +18,7 @@ import type {
 import type { AiApiConfig } from "@/utils/aiApi"
 import { getApiConfigFromPlugin } from "@/utils/aiApi"
 import type { PlatformKey } from "./types/meta"
+import type { NumstatCommit } from "./reportMetrics"
 import { GitPushStorage } from "./types/storage"
 import { createVueDockApp } from "@/utils/vueAppHelper"
 import GitPushPanel from "./index.vue"
@@ -28,6 +29,7 @@ import type { AllPlatformResult } from "./managers/RemoteOps"
 import { WorktreeOps } from "./managers/WorktreeOps"
 import { RepoOps } from "./managers/RepoOps"
 import { CommitMsgGenerator } from "./managers/CommitMsgGenerator"
+import { ReportOps } from "./managers/ReportOps"
 
 export class GitPushManager {
   private plugin: Plugin
@@ -38,6 +40,7 @@ export class GitPushManager {
   private worktreeOps: WorktreeOps
   private repoOps: RepoOps
   private commitMsgGen: CommitMsgGenerator
+  private reportOps: ReportOps
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
@@ -48,6 +51,7 @@ export class GitPushManager {
     this.worktreeOps = new WorktreeOps(this.executor)
     this.repoOps = new RepoOps(this.executor)
     this.commitMsgGen = new CommitMsgGenerator(plugin, this.executor, this.worktreeOps, this.storage)
+    this.reportOps = new ReportOps(this.executor)
   }
 
   async init() {
@@ -308,5 +312,17 @@ export class GitPushManager {
 
   async saveCommitTemplates(templates: CommitTemplate[]): Promise<void> {
     return this.commitMsgGen.saveCommitTemplates(templates)
+  }
+
+  // ── 代码统计报告（ReportOps：numstat 提交日志 + 首提交日期）──
+
+  /** 获取 numstat 提交日志（供代码统计报告聚合；git 失败返回空数组） */
+  async getNumstatLog(projectPath: string, since?: string): Promise<NumstatCommit[]> {
+    return this.reportOps.getNumstatLog(projectPath, since)
+  }
+
+  /** 获取仓库首个提交日期（ISO，无提交/失败返回空串） */
+  async getFirstCommitDate(projectPath: string): Promise<string> {
+    return this.reportOps.getFirstCommitDate(projectPath)
   }
 }

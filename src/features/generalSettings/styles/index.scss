@@ -88,6 +88,8 @@
   flex: 1;
   overflow-y: auto;
   background: var(--b3-theme-background);
+  // 右侧留白，避免滚动条紧贴面板侧边栏（各子页面自带 padding，此处只补滚动条呼吸空间）
+  padding-right: $spacing-2;
 
   &::-webkit-scrollbar {
     width: 6px;

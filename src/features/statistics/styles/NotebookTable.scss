@@ -6,6 +6,7 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  // 右侧间距由共用根容器 .statistics-content 统一承担（至少 $spacing-2），此处仅保留轻量边距
   padding: 0 2px;
 
   &::-webkit-scrollbar {

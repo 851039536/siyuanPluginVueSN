@@ -85,6 +85,8 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  // 右侧留白，避免滚动条/内容紧贴侧边栏（多 Tab 共用根容器统一加一次）
+  padding-right: $spacing-2;
   @include da-scrollbar;
 
   &.doc-list-panel {

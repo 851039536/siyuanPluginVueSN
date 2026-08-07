@@ -133,6 +133,7 @@
           v-show="activeTab === 'hotspot'"
           :i18n="i18n"
           :report="report"
+          :project="currentProject"
         />
       </template>
     </template>

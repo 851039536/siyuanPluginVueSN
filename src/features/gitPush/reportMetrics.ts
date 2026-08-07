@@ -370,6 +370,14 @@ export function buildReportData(
   debtRows.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity] || b.riskScore - a.riskScore)
   hotspotRows.sort((a, b) => b.heat - a.heat)
 
+  // 补齐热点榜前 N 的 LOC：预读仅按 modCount 榜前 N 计算（上方 forEach），热度重排后两个榜单维度不同，
+  // 落在热度榜前 N 但未预读的行在此补齐，保证展示的每个热点文件都有代码行数（fs 读取有 2MB 上限且数量受限）
+  hotspotRows.slice(0, HOTSPOT_LIMIT).forEach((row) => {
+    if (row.loc === null) {
+      row.loc = countFileLines(project, row.path)
+    }
+  })
+
   // 四类热度汇总（文件数 + 占比）
   // 口径说明：分母为全部现存文件（rankedFiles，含修改次数低于债务门槛的常态文件），
   // 与债务表（仅 ≥ 门槛的风险子集）口径不同——热点汇总描述全仓库热度分布，债务表描述高风险子集。

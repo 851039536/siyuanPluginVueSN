@@ -60,13 +60,14 @@ export interface AuthorReportRow {
 // ── 技术债务 ──
 
 /** 技术债务严重度（分组标题） */
-export type DebtSeverity = "severe" | "high" | "medium"
+export type DebtSeverity = "severe" | "high" | "medium" | "low"
 
 /** 严重度元数据（labelKey 为 i18n 键，color 用于徽章） */
 export const DEBT_SEVERITY_META: Record<DebtSeverity, { labelKey: string, color: string }> = {
   severe: { labelKey: "reportDebtSevere", color: "#ef4444" },
   high: { labelKey: "reportDebtHigh", color: "#f59e0b" },
   medium: { labelKey: "reportDebtMedium", color: "#64748b" },
+  low: { labelKey: "reportDebtLow", color: "#9ca3af" },
 }
 
 /** 文件统计基础行（技术债务/热点共用，由 git numstat + fs 读取派生） */
@@ -172,6 +173,8 @@ export interface CodeReportPrefs {
   projectId: string
   /** 时间范围 */
   range: ReportRange
+  /** 技术债务门槛（修改次数低于该值不列为债务；可选字段兼容旧存储，缺省用 DEBT_MIN_MOD_COUNT） */
+  debtMinModCount?: number
 }
 
 /** 统计报告偏好默认值 */

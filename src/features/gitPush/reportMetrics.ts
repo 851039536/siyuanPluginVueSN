@@ -1,9 +1,10 @@
 // gitPush 代码统计报告指标引擎：numstat 解析 + 作者/文件聚合 + 启发式评分（纯函数，无 Vue 依赖）
 //
 // 启发式公式说明（确定性可复现，聚焦 churn 原始指标，思路参考 code-maat）：
-// - 技术债务风险分 risk = clamp(修改次数*2.5 + 参与人数*6)，仅统计修改 ≥3 次的文件（低于门槛视为正常迭代）
+// - 技术债务风险分 risk = clamp(sqrt(修改次数)*10 + 参与人数*6 + 近期修改加分)，sqrt 使 churn 边际收益递减避免高分区饱和；
+//   仅统计修改 ≥门槛次（默认 3，可由偏好配置）的文件（低于门槛视为正常迭代）
 // - 质量分 quality：活跃天数 + 提交数 + 净增倾向加权，clamp 到 0~100
-// - 热度 heat = 修改次数*2.2 + 参与人数*7 + 近期修改加分；阈值 热点≥75 / 温热≥45 / 冷却≥25
+// - 热度 heat = 修改次数*2.2 + 参与人数*7 + 近期修改加分（recencyBonus 与债务评分共用）；阈值 热点≥75 / 温热≥45 / 冷却≥25
 import type { GitProject } from "./types"
 import type {
   AuthorReportRow,
@@ -232,16 +233,34 @@ export function fileExistsInRepo(project: GitProject, filePath: string): boolean
 /** 债务门槛：修改次数低于该值的文件视为正常迭代，不构成技术债务（1-2 次提交是常态演进，参考 code-maat churn 阈值思路） */
 export const DEBT_MIN_MOD_COUNT = 3
 
-/** 风险评分（技术债务"评分"列）：修改次数*2.5 + 参与人数*6，聚焦 churn 与多人触碰风险，clamp 0~100 */
-export function debtRiskScore(modCount: number, authorCount: number): number {
-  return clamp100(modCount * 2.5 + authorCount * 6)
+/**
+ * 近期修改加分（3 天+8 / 7 天+5 / 30 天+2，仅对可解析的 ISO 时间生效）。
+ * 供热度评分与技术债务评分共用：同一改动量，近期发生比久远发生更值得关注（债务"恶化趋势"信号）。
+ */
+function recencyBonus(lastModified: string): number {
+  const ms = parseIsoMs(lastModified)
+  if (ms <= 0) return 0
+  const diffDays = (Date.now() - ms) / (24 * 60 * 60 * 1000)
+  if (diffDays <= 3) return 8
+  if (diffDays <= 7) return 5
+  if (diffDays <= 30) return 2
+  return 0
 }
 
-/** 严重度分级（基于统一风险分分档）：≥50 严重 / ≥30 高 / 其余 中 */
+/**
+ * 风险评分（技术债务"评分"列）：sqrt(修改次数)*10 + 参与人数*6 + 近期修改加分，clamp 0~100。
+ * sqrt 使 churn 边际收益递减，避免线性公式在活跃文件上过早饱和（modCount 25/40/100 仍可区分）。
+ */
+export function debtRiskScore(modCount: number, authorCount: number, lastModified: string): number {
+  return clamp100(Math.sqrt(modCount) * 10 + authorCount * 6 + recencyBonus(lastModified))
+}
+
+/** 严重度分级（基于统一风险分分档）：≥50 严重 / ≥30 高 / ≥15 中 / 其余 低 */
 export function debtSeverity(riskScore: number): DebtSeverity {
   if (riskScore >= 50) return "severe"
   if (riskScore >= 30) return "high"
-  return "medium"
+  if (riskScore >= 15) return "medium"
+  return "low"
 }
 
 /** 技术债务问题总数（严重度计数合计；面板 Tab 徽章与 TechDebtSection 表头徽章/空态共用，消除双份 reduce） */
@@ -259,17 +278,9 @@ export function heatLevel(heat: number): HotspotLevel {
   return "cold"
 }
 
-/** 热度评分：修改次数*2.2 + 参与人数*7 + 近期修改加分（3 天+8 / 7 天+5 / 30 天+2），clamp 0~100 */
+/** 热度评分：修改次数*2.2 + 参与人数*7 + 近期修改加分（recencyBonus 与债务评分共用），clamp 0~100 */
 export function heatScore(modCount: number, authorCount: number, lastModified: string): number {
-  const ms = parseIsoMs(lastModified)
-  let recency = 0
-  if (ms > 0) {
-    const diffDays = (Date.now() - ms) / (24 * 60 * 60 * 1000)
-    if (diffDays <= 3) recency = 8
-    else if (diffDays <= 7) recency = 5
-    else if (diffDays <= 30) recency = 2
-  }
-  return clamp100(modCount * 2.2 + authorCount * 7 + recency)
+  return clamp100(modCount * 2.2 + authorCount * 7 + recencyBonus(lastModified))
 }
 
 /** 热点建议文案（按等级选择） */
@@ -298,7 +309,7 @@ export function sinceForRange(range: ReportRange): string {
 const HOTSPOT_LIMIT = 12
 
 /** 债务/热点按严重度排序权重（用于组内排序） */
-const SEVERITY_ORDER: Record<DebtSeverity, number> = { severe: 0, high: 1, medium: 2 }
+const SEVERITY_ORDER: Record<DebtSeverity, number> = { severe: 0, high: 1, medium: 2, low: 3 }
 
 /**
  * 由解析结果组装完整报告。
@@ -307,12 +318,14 @@ const SEVERITY_ORDER: Record<DebtSeverity, number> = { severe: 0, high: 1, mediu
  * @param commits 解析后的提交块（空数组 = 无提交或 git 失败）
  * @param rangeLabel 时间范围标签
  * @param i18n 建议文案模板来源（i18n 分片，纯文本不参与响应式）
+ * @param debtMinModCount 债务门槛（修改次数低于该值不列为债务；默认 DEBT_MIN_MOD_COUNT）
  */
 export function buildReportData(
   project: GitProject,
   commits: NumstatCommit[],
   rangeLabel: string,
   i18n: Record<string, any>,
+  debtMinModCount: number = DEBT_MIN_MOD_COUNT,
 ): CodeReportData {
   const authors = aggregateAuthorStats(commits)
   const fileMap = aggregateFileStats(commits)
@@ -333,9 +346,9 @@ export function buildReportData(
       lastModified: agg.lastIso,
       loc,
     }
-    // 债务门槛：修改次数低于 DEBT_MIN_MOD_COUNT 的文件视为正常迭代，仅进入热点榜不列为技术债务
-    if (agg.modCount >= DEBT_MIN_MOD_COUNT) {
-      const riskScore = debtRiskScore(agg.modCount, agg.authors.size)
+    // 债务门槛：修改次数低于 debtMinModCount 的文件视为正常迭代，仅进入热点榜不列为技术债务
+    if (agg.modCount >= debtMinModCount) {
+      const riskScore = debtRiskScore(agg.modCount, agg.authors.size, agg.lastIso)
       debtRows.push({
         ...base,
         severity: debtSeverity(riskScore),
@@ -352,10 +365,12 @@ export function buildReportData(
     })
   })
 
-  debtRows.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity] || a.riskScore - b.riskScore)
+  debtRows.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity] || b.riskScore - a.riskScore)
   hotspotRows.sort((a, b) => b.heat - a.heat)
 
   // 四类热度汇总（文件数 + 占比）
+  // 口径说明：分母为全部现存文件（rankedFiles，含修改次数低于债务门槛的常态文件），
+  // 与债务表（仅 ≥ 门槛的风险子集）口径不同——热点汇总描述全仓库热度分布，债务表描述高风险子集。
   const totalFiles = rankedFiles.length || 1
   const summary: HotspotFileRow["level"][] = ["hot", "warm", "cool", "cold"]
   const hotspotSummary = summary.map((level) => {
@@ -369,7 +384,7 @@ export function buildReportData(
   const totalLines = authors.reduce((sum, a) => sum + a.linesAdded, 0)
   const avgQuality = authors.length > 0 ? Math.round(authors.reduce((sum, a) => sum + a.quality, 0) / authors.length) : 0
 
-  const debtSummary: Record<DebtSeverity, number> = { severe: 0, high: 0, medium: 0 }
+  const debtSummary: Record<DebtSeverity, number> = { severe: 0, high: 0, medium: 0, low: 0 }
   debtRows.forEach((r) => { debtSummary[r.severity]++ })
 
   const suggestionKeyName = suggestionKey(hotPct, warmPct)
@@ -410,7 +425,7 @@ export function buildEmptyReport(project: GitProject, rangeLabel: string): CodeR
     teamOverview: { memberCount: 0, totalCommits: 0, totalLines: 0, avgQuality: 0, topAuthor: "" },
     authors: [],
     debtFiles: [],
-    debtSummary: { severe: 0, high: 0, medium: 0 },
+    debtSummary: { severe: 0, high: 0, medium: 0, low: 0 },
     hotspots: [],
     hotspotSummary: HOTSPOT_LEVEL_ORDER.map((level) => ({ level, count: 0, pct: 0 })),
     suggestion: "",
@@ -422,4 +437,4 @@ export function buildEmptyReport(project: GitProject, rangeLabel: string): CodeR
 export const HOTSPOT_LEVEL_ORDER: HotspotLevel[] = ["hot", "warm", "cool", "cold"]
 
 /** 展示用常量：严重度顺序（供 UI 遍历分组） */
-export const DEBT_SEVERITY_ORDER: DebtSeverity[] = ["severe", "high", "medium"]
+export const DEBT_SEVERITY_ORDER: DebtSeverity[] = ["severe", "high", "medium", "low"]

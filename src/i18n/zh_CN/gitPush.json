@@ -319,6 +319,7 @@
     "reportDebtSevere": "严重",
     "reportDebtHigh": "高",
     "reportDebtMedium": "中",
+    "reportDebtLow": "低",
     "reportFileCol": "文件",
     "reportScoreCol": "评分",
     "reportModsCol": "修改次数",

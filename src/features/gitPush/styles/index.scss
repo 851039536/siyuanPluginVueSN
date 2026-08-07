@@ -1568,11 +1568,6 @@
     @include text-ellipsis;
   }
 
-  &--type {
-    width: 72px;
-    text-align: center;
-  }
-
   &--pct {
     width: 48px;
     text-align: right;
@@ -1592,28 +1587,6 @@
   &--wider {
     width: 78px;
   }
-
-  // 说明文案行（跨整行）
-  &--desc {
-    flex: 1;
-    min-width: 0;
-    font-size: $font-size-2xs;
-    opacity: 0.55;
-    line-height: $line-height-normal;
-  }
-}
-
-// 问题类型徽章（技术债务）
-.gpr-type-chip {
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
-  padding: 1px 5px;
-  border-radius: $radius-sm;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  color: var(--b3-theme-on-surface);
-  opacity: 0.7;
-  white-space: nowrap;
 }
 
 // 净增正负着色（代码贡献度）

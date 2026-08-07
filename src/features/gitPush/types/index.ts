@@ -58,10 +58,9 @@ export { getPlatformStatus } from "./meta"
 export {
   DEFAULT_REPORT_PREFS,
   DEBT_SEVERITY_META,
-  DEBT_TYPE_META,
   GRADE_META,
   HOTSPOT_LEVEL_META,
   REPORT_RANGES,
   REPORT_RANGE_LABEL_KEYS,
 } from "./report"
-export type { AuthorReportRow, CodeReportData, CodeReportPrefs, DebtFileRow, DebtSeverity, DebtType, FileStatRow, HotspotFileRow, HotspotLevel, HotspotLevelSummary, QualityGrade, ReportRange } from "./report"
+export type { AuthorReportRow, CodeReportData, CodeReportPrefs, DebtFileRow, DebtSeverity, FileStatRow, HotspotFileRow, HotspotLevel, HotspotLevelSummary, QualityGrade, ReportRange } from "./report"

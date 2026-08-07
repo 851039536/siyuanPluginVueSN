@@ -1,4 +1,4 @@
-<!-- gitPush 代码统计报告：技术债务分区（按严重/高/中分组；每个文件=指标行+说明文案整体一块） -->
+<!-- gitPush 代码统计报告：技术债务分区（按严重/高/中分组；每文件一行，展示修改/参与/行数/评分） -->
 <template>
   <div class="gpr-section">
     <!-- 区块标题："技术债务" + 问题总数徽章 -->
@@ -17,15 +17,13 @@
     <template v-else>
       <!-- 单表格容器：所有严重度分组连续排布，分组标题作为表内跨行分隔行（取代原多表格堆叠） -->
       <div class="gpr-table-wrap">
-        <!-- 表头（单表头，全部分组共用） -->
+        <!-- 表头（单表头，全部分组共用）：文件 / 修改次数 / 参与人数 / 代码行数 / 风险评分 -->
         <div class="gpr-row gpr-row--head">
           <span class="gpr-cell gpr-cell--name">{{ i18n.reportFileCol }}</span>
-          <span class="gpr-cell gpr-cell--type">{{ i18n.reportTypeCol }}</span>
-          <span class="gpr-cell gpr-cell--num">{{ i18n.reportScoreCol }}</span>
           <span class="gpr-cell gpr-cell--num">{{ i18n.reportModsCol }}</span>
-          <span class="gpr-cell gpr-cell--num">{{ i18n.reportComplexityCol }}</span>
+          <span class="gpr-cell gpr-cell--num">{{ i18n.reportAuthorsCol }}</span>
           <span class="gpr-cell gpr-cell--num">{{ i18n.reportLinesCol }}</span>
-          <span class="gpr-cell gpr-cell--num">{{ i18n.reportStabilityCol }}</span>
+          <span class="gpr-cell gpr-cell--num">{{ i18n.reportScoreCol }}</span>
         </div>
 
         <!-- 严重度分组（仅渲染有数据的分组，groups 已过滤空分组；组内按风险分升序） -->
@@ -42,7 +40,7 @@
             </span>
           </div>
 
-          <!-- 组内文件块：每个文件 = 指标行 + 说明文案整体一块（悬停整块高亮） -->
+          <!-- 组内文件块：单行指标（悬停提示完整路径，主题色强调） -->
           <div
             v-for="row in g.rows"
             :key="row.path"
@@ -61,23 +59,11 @@
                 />
                 {{ row.path }}
               </span>
-              <span class="gpr-cell gpr-cell--type">
-                <span class="gpr-type-chip">{{ i18n[DEBT_TYPE_META[row.debtType].labelKey] }}</span>
-              </span>
-              <!-- 风险评分（等宽数字） -->
-              <span class="gpr-cell gpr-cell--num">{{ row.riskScore }}</span>
-              <!-- 修改次数 / 复杂度 / 代码行数 / 稳定性（暂无数据显示占位符 -） -->
+              <!-- 修改次数 / 参与人数 / 代码行数（暂无数据显示占位符 -）/ 风险评分（等宽数字） -->
               <span class="gpr-cell gpr-cell--num">{{ row.modCount }}</span>
-              <span class="gpr-cell gpr-cell--num">{{ fmtOrDash(row.complexity) }}</span>
+              <span class="gpr-cell gpr-cell--num">{{ row.authorCount }}</span>
               <span class="gpr-cell gpr-cell--num">{{ fmtOrDash(row.loc) }}</span>
-              <span class="gpr-cell gpr-cell--num">{{ fmtOrDash(row.stability) }}</span>
-            </div>
-            <!-- 说明文案行（紧跟文件指标行："此文件在过去6个月被修改了 X 次…"） -->
-            <div
-              v-if="row.description"
-              class="gpr-row gpr-row--desc"
-            >
-              <span class="gpr-cell gpr-cell--desc">{{ row.description }}</span>
+              <span class="gpr-cell gpr-cell--num">{{ row.riskScore }}</span>
             </div>
           </div>
         </template>
@@ -91,7 +77,7 @@
 import type { CodeReportData } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
-import { DEBT_SEVERITY_META, DEBT_TYPE_META } from "../../types"
+import { DEBT_SEVERITY_META } from "../../types"
 import { countDebtFiles, DEBT_SEVERITY_ORDER } from "../../reportMetrics"
 import EmptyState from "../common/EmptyState.vue"
 

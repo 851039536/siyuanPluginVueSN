@@ -1481,6 +1481,7 @@
     "reportDebtSevere": "Severe",
     "reportDebtHigh": "High",
     "reportDebtMedium": "Medium",
+    "reportDebtLow": "Low",
     "reportFileCol": "File",
     "reportScoreCol": "Score",
     "reportModsCol": "Changes",

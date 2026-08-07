@@ -1,4 +1,4 @@
-<!-- gitPush 代码统计报告：技术债务分区（按严重/高/中分组；每文件一行，展示修改/参与/行数/评分） -->
+<!-- gitPush 代码统计报告：技术债务分区（按严重/高/中/低分组；每文件一行，展示修改/参与/行数/评分） -->
 <template>
   <div class="gpr-section">
     <!-- 区块标题："技术债务" + 问题总数徽章 -->
@@ -26,7 +26,7 @@
           <span class="gpr-cell gpr-cell--num">{{ i18n.reportScoreCol }}</span>
         </div>
 
-        <!-- 严重度分组（仅渲染有数据的分组，groups 已过滤空分组；组内按风险分升序） -->
+        <!-- 严重度分组（仅渲染有数据的分组，groups 已过滤空分组；组内按风险分降序） -->
         <template v-for="g in groups" :key="g.sev">
           <!-- 分组标题行：严重度色点 + 名称 + 计数（跨整行，浅色底区分） -->
           <div class="gpr-row gpr-row--group">
@@ -73,7 +73,7 @@
 </template>
 
 <script setup lang="ts">
-// 技术债务分区：严重度分组文件表（每个文件=指标行+说明文案整体一块；分组行由单次过滤预计算）
+// 技术债务分区：严重度分组文件表（每个文件=指标行整体一块；分组行由单次过滤预计算）
 import type { CodeReportData } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
@@ -90,7 +90,7 @@ const props = defineProps<{
 /** 问题总数（严重度计数合计，与面板 Tab 徽章共用 countDebtFiles） */
 const totalCount = computed(() => countDebtFiles(props.report.debtSummary))
 
-/** 按严重度预分组（严重/高/中，组内已按风险分升序排列；单次过滤替代模板中重复 filter 调用；空分组不渲染） */
+/** 按严重度预分组（严重/高/中/低，组内已按风险分降序排列；单次过滤替代模板中重复 filter 调用；空分组不渲染） */
 const groups = computed(() =>
   DEBT_SEVERITY_ORDER.map((sev) => ({
     sev,

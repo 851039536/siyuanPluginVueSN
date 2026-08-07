@@ -1,4 +1,4 @@
-<!-- gitPush 代码统计报告：代码贡献度分区（作者排行表：提交/行数/净增/平均大小/频率/文件/质量评分/活跃天数） -->
+<!-- gitPush 代码统计报告：代码贡献度分区（作者排行表：排名/提交/行数/净增bar/平均大小/频率/文件/质量徽章/活跃天数 + 点击行展开详情） -->
 <template>
   <div class="gpr-section">
     <!-- 区块标题："代码贡献度" + 行数徽章 -->
@@ -14,7 +14,7 @@
       :text="i18n.reportNoData"
     />
 
-    <!-- 作者排行表（HTML table 布局：跨行列宽强制一致，数字列按内容自适应） -->
+    <!-- 作者排行表（HTML table 布局：跨行列宽强制一致，数字列按内容自适应；展开行 colspan 覆盖全部列） -->
     <div
       v-else
       class="gpr-table-wrap"
@@ -22,6 +22,8 @@
       <table class="gpr-author-table">
         <thead>
           <tr>
+            <!-- 表头："排名" -->
+            <th class="gpr-author-th gpr-author-th--rank">#</th>
             <!-- 表头："作者" -->
             <th class="gpr-author-th">{{ i18n.projectName }}</th>
             <!-- 表头："提交次数" -->
@@ -43,45 +45,128 @@
           </tr>
         </thead>
         <tbody>
-          <tr
-            v-for="a in authors"
-            :key="a.author"
-            class="gpr-author-row"
+          <!-- 每作者渲染主行 + 展开行（template 包装使两者可并排） -->
+          <template
+            v-for="row in rows"
+            :key="row.author"
           >
-            <!-- 作者名（超长省略，完整名悬停可见） -->
-            <td
-              class="gpr-author-cell gpr-author-cell--name"
-              :title="a.author"
-            >{{ a.author }}</td>
-            <!-- 提交次数 -->
-            <td class="gpr-author-cell gpr-author-cell--num">{{ a.commits }}</td>
-            <!-- 新增行数 -->
-            <td class="gpr-author-cell gpr-author-cell--num">{{ a.linesAdded }}</td>
-            <!-- 净增行数（正负着色：+ 绿色 / - 红色） -->
-            <td
-              class="gpr-author-cell gpr-author-cell--num"
-              :class="netClass(a.netLines)"
-            >{{ formatNet(a.netLines) }}</td>
-            <!-- 平均提交大小 -->
-            <td class="gpr-author-cell gpr-author-cell--num">{{ a.avgCommitSize }}</td>
-            <!-- 提交频率 -->
-            <td class="gpr-author-cell gpr-author-cell--num">{{ a.frequency }}</td>
-            <!-- 涉及文件数 -->
-            <td class="gpr-author-cell gpr-author-cell--num">{{ a.filesTouched }}</td>
-            <!-- 质量评分：分数 + 等级徽章 + 星级 -->
-            <td class="gpr-author-cell gpr-author-cell--num">
-              <span
-                class="gpr-grade-chip"
-                :style="{ color: GRADE_META[a.grade].color }"
-              >{{ a.quality }}/100 [{{ i18n[GRADE_META[a.grade].labelKey] }}级]</span>
-              <span
-                class="gpr-stars"
-                :title="String(a.quality)"
-              >{{ "★".repeat(GRADE_META[a.grade].stars) }}</span>
-            </td>
-            <!-- 活跃天数 -->
-            <td class="gpr-author-cell gpr-author-cell--num">{{ a.activeDays }}</td>
-          </tr>
+            <tr
+              class="gpr-author-row"
+              :class="[row.topClass, { 'gpr-author-row--open': expanded === row.author }]"
+              :title="i18n.reportExpandHint"
+              @click="toggleExpand(row.author)"
+            >
+              <!-- 排名列：TOP3 金/银/铜徽章，其余纯数字 -->
+              <td class="gpr-author-cell gpr-author-cell--rank">
+                <span
+                  v-if="row.medalClass"
+                  class="gpr-medal"
+                  :class="row.medalClass"
+                >{{ row.rank }}</span>
+                <span
+                  v-else
+                  class="gpr-rank"
+                >{{ row.rank }}</span>
+              </td>
+              <!-- 作者名（超长省略，完整名悬停可见） -->
+              <td
+                class="gpr-author-cell gpr-author-cell--name"
+                :title="row.author"
+              >{{ row.author }}</td>
+              <!-- 提交次数 -->
+              <td class="gpr-author-cell gpr-author-cell--num">{{ row.commits }}</td>
+              <!-- 新增行数 -->
+              <td class="gpr-author-cell gpr-author-cell--num">{{ row.linesAdded }}</td>
+              <!-- 净增行数：数字正负着色 + mini bar 量级可视化 -->
+              <td class="gpr-author-cell gpr-author-cell--num">
+                <div class="gpr-net-cell">
+                  <span
+                    class="gpr-net-value"
+                    :class="row.netClass"
+                  >{{ row.netText }}</span>
+                  <div
+                    class="gpr-net-bar"
+                    :class="row.netBarClass"
+                  >
+                    <span
+                      class="gpr-net-bar-fill"
+                      :style="{ width: row.netBarWidth }"
+                    />
+                  </div>
+                </div>
+              </td>
+              <!-- 平均提交大小 -->
+              <td class="gpr-author-cell gpr-author-cell--num">{{ row.avgCommitSize }}</td>
+              <!-- 提交频率 -->
+              <td class="gpr-author-cell gpr-author-cell--num">{{ row.frequency }}</td>
+              <!-- 涉及文件数 -->
+              <td class="gpr-author-cell gpr-author-cell--num">{{ row.filesTouched }}</td>
+              <!-- 质量评分：彩色等级徽章 + 星级（分数悬停可见） -->
+              <td class="gpr-author-cell gpr-author-cell--num">
+                <span
+                  class="gpr-grade-chip"
+                  :style="{
+                    color: row.gradeColor,
+                    borderColor: row.gradeColor,
+                    background: row.gradeBg,
+                  }"
+                  :title="String(row.quality)"
+                >{{ row.gradeLabel }} {{ row.quality }}</span>
+                <span class="gpr-stars">{{ row.stars }}</span>
+              </td>
+              <!-- 活跃天数 -->
+              <td class="gpr-author-cell gpr-author-cell--num">{{ row.activeDays }}</td>
+            </tr>
+            <!-- 展开详情行：Top3 修改文件 + 活跃时间范围 + 代码流失率 -->
+            <tr
+              v-if="expanded === row.author"
+              class="gpr-author-detail-row"
+            >
+              <td
+                class="gpr-author-detail"
+                :colspan="10"
+              >
+                <div class="gpr-detail-grid">
+                  <!-- 详情块：主要修改文件 -->
+                  <div class="gpr-detail-block">
+                    <div class="gpr-detail-label">{{ i18n.reportTopFilesTitle }}</div>
+                    <ul
+                      v-if="row.topFiles.length > 0"
+                      class="gpr-detail-files"
+                    >
+                      <li
+                        v-for="f in row.topFiles"
+                        :key="f.path"
+                        class="gpr-detail-file"
+                      >
+                        <span
+                          class="gpr-detail-file-name"
+                          :title="f.path"
+                        >{{ f.path }}</span>
+                        <span class="gpr-detail-file-count">{{ f.count }}×</span>
+                      </li>
+                    </ul>
+                    <div
+                      v-else
+                      class="gpr-detail-empty"
+                    >—</div>
+                  </div>
+                  <!-- 详情块：活跃时间范围 -->
+                  <div class="gpr-detail-block">
+                    <div class="gpr-detail-label">{{ i18n.reportActiveRange }}</div>
+                    <div class="gpr-detail-value">{{ formatDate(row.firstCommitAt) }} ~ {{ formatDate(row.lastCommitAt) }}</div>
+                    <div class="gpr-detail-sub">{{ i18n.reportActiveDaysCol }}: {{ row.activeDays }}</div>
+                  </div>
+                  <!-- 详情块：代码流失率 -->
+                  <div class="gpr-detail-block">
+                    <div class="gpr-detail-label">{{ i18n.reportChurnRate }}</div>
+                    <div class="gpr-detail-value">{{ churnText(row.churnRate) }}</div>
+                    <div class="gpr-detail-sub">{{ row.linesDeleted }} {{ i18n.reportDeletedLinesShort }}</div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </template>
         </tbody>
       </table>
     </div>
@@ -89,16 +174,26 @@
 </template>
 
 <script setup lang="ts">
-// 代码贡献度分区：作者排行表（按提交次数降序，质量列含等级徽章 + 星级）
+// 代码贡献度分区：作者排行表（预计算行数据消除模板重复查找/拼接；TOP3 排名徽章 + 净增 mini bar + 等级徽章 + 点击行展开详情）
+import { computed, ref } from "vue"
 import type { AuthorReportRow } from "../../types"
 import { GRADE_META } from "../../types"
 import EmptyState from "../common/EmptyState.vue"
 
-defineProps<{
+const props = defineProps<{
   i18n: Record<string, any>
   /** 作者排行（按提交次数降序） */
   authors: AuthorReportRow[]
 }>()
+
+/** 展开详情的作者名（空串 = 全部收起） */
+const expanded = ref("")
+
+/** TOP3 徽章样式（金/银/铜） */
+const MEDAL_CLASSES = ["gpr-medal--gold", "gpr-medal--silver", "gpr-medal--bronze"]
+
+/** 排名行背景强调（前 3 名） */
+const TOP_ROW_CLASSES = ["gpr-author-row--top1", "gpr-author-row--top2", "gpr-author-row--top3"]
 
 /** 净增列正负着色：正数绿色 / 负数红色 / 零中性 */
 function netClass(n: number): string {
@@ -110,6 +205,47 @@ function netClass(n: number): string {
 /** 净增格式化：正数带 + 前缀便于视觉区分 */
 function formatNet(n: number): string {
   return n > 0 ? `+${n}` : String(n)
+}
+
+/** ISO 日期 → YYYY-MM-DD（git %aI 为 UTC ISO，切前 10 位即可；无值返回 —） */
+function formatDate(iso: string): string {
+  return iso ? iso.slice(0, 10) : "—"
+}
+
+/** 代码流失率 → 百分比文案 */
+function churnText(rate: number): string {
+  return `${Math.round(rate * 100)}%`
+}
+
+/** 行数据（模板渲染源）：预计算颜色/星级/徽章/mini bar 宽度等派生值，消除模板内重复查找与拼接 */
+const rows = computed(() => {
+  // 净增 mini bar 基准：全部作者净增绝对值的最大值（避免单个大数值压缩其余 bar）
+  const maxNet = Math.max(...props.authors.map((a) => Math.abs(a.netLines)), 0)
+  return props.authors.map((a, i) => {
+    const meta = GRADE_META[a.grade]
+    const medalClass = i < MEDAL_CLASSES.length ? MEDAL_CLASSES[i] : ""
+    return {
+      ...a,
+      rank: i + 1,
+      medalClass,
+      topClass: i < TOP_ROW_CLASSES.length ? TOP_ROW_CLASSES[i] : "",
+      netClass: netClass(a.netLines),
+      netText: formatNet(a.netLines),
+      // bar 宽度：按最大净增归一化，至少 3% 保证可见；净增 0 时 0%
+      netBarWidth: maxNet > 0 ? `${Math.max(3, Math.round((Math.abs(a.netLines) / maxNet) * 100))}%` : "0%",
+      netBarClass: a.netLines > 0 ? "gpr-net-bar--pos" : a.netLines < 0 ? "gpr-net-bar--neg" : "gpr-net-bar--zero",
+      gradeLabel: props.i18n[meta.labelKey],
+      gradeColor: meta.color,
+      // 半透明背景：等级色 12% 透明度作 chip 底色
+      gradeBg: `${meta.color}1f`,
+      stars: "★".repeat(meta.stars),
+    }
+  })
+})
+
+/** 点击行切换展开状态 */
+function toggleExpand(author: string) {
+  expanded.value = expanded.value === author ? "" : author
 }
 </script>
 

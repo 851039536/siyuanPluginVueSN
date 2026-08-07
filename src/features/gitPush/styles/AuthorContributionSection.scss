@@ -1,4 +1,4 @@
-// gitPush 代码统计报告：代码贡献度分区（作者排行表：HTML table 布局，跨行严格对齐，数字列按内容自适应宽度）
+// gitPush 代码统计报告：代码贡献度分区（作者排行表：HTML table 布局 + 排名徽章 + 净增 mini bar + 等级徽章 + 展开详情）
 @use "./variables" as *;
 @use "./mixins" as *;
 
@@ -31,11 +31,45 @@
   &--num {
     text-align: right;
   }
+
+  // 排名列居中窄化
+  &--rank {
+    width: 36px;
+    text-align: center;
+  }
 }
 
-// 数据行（底部细线分隔）
+// 数据行（底部细线分隔；悬停高亮提示可点击展开）
 .gpr-author-row {
   border-bottom: 1px solid var(--b3-border-color);
+  cursor: pointer;
+  transition: background 0.12s;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+
+  // 展开态：保持高亮提示当前展开行
+  &--open {
+    background: var(--b3-list-hover);
+
+    &:hover {
+      background: var(--b3-list-hover);
+    }
+  }
+
+  // 前三名行背景微着色（金/银/铜，半透明不压正文）
+  &--top1 {
+    background: rgba(245, 158, 11, 0.06);
+  }
+
+  &--top2 {
+    background: rgba(148, 163, 184, 0.06);
+  }
+
+  &--top3 {
+    background: rgba(205, 127, 50, 0.06);
+  }
 }
 
 // 单元格
@@ -48,6 +82,12 @@
     @include text-ellipsis;
   }
 
+  // 排名列（居中）
+  &--rank {
+    text-align: center;
+    white-space: nowrap;
+  }
+
   // 数字列（等宽右对齐，内容自适应宽度）
   &--num {
     font-family: $vp-mono;
@@ -58,8 +98,219 @@
   }
 }
 
-// 质量评分徽章（分数 + 等级，颜色由 GRADE_META 内联驱动）
-.gpr-grade-chip {
+// 排名徽章（TOP3 金/银/铜，圆形 + 实色背景 + 白字）
+.gpr-medal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: $font-size-2xs;
   font-weight: $font-weight-bold;
+  color: #fff;
+
+  &--gold {
+    background: #d4a017;
+  }
+
+  &--silver {
+    background: #8e9aa8;
+  }
+
+  &--bronze {
+    background: #b87333;
+  }
+}
+
+// 普通排名数字（TOP3 之外，弱化处理）
+.gpr-rank {
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light);
+  opacity: 0.6;
+}
+
+// 净增单元格（数值 + mini bar 上下排列）
+.gpr-net-cell {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+// 净增数值（正负着色复用 index.scss 的 .gpr-cell--pos / --neg）
+.gpr-net-value {
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+}
+
+// 净增 mini bar（量级可视化：宽度按最大净增归一化）
+.gpr-net-bar {
+  width: 48px;
+  height: 3px;
+  border-radius: 1px;
+  background: var(--b3-border-color);
+
+  // 填充条（内联宽度由 JS 计算，色随正负）
+  &-fill {
+    display: block;
+    height: 100%;
+    border-radius: 1px;
+    transition: width 0.2s ease;
+  }
+
+  &--pos .gpr-net-bar-fill {
+    background: var(--b3-theme-success);
+  }
+
+  &--neg .gpr-net-bar-fill {
+    background: var(--b3-theme-error);
+  }
+
+  // 净增为 0：填充条 0 宽，底色保留
+  &--zero {
+    background: var(--b3-border-color);
+  }
+}
+
+// 质量等级徽章（彩色圆角 chip：等级 + 分数，颜色/底色由 GRADE_META 内联驱动）
+.gpr-grade-chip {
+  display: inline-block;
+  padding: 1px 6px;
+  border: 1px solid;
+  border-radius: $radius-sm;
+  font-weight: $font-weight-semibold;
   white-space: nowrap;
+}
+
+// 星级（紧随徽章，弱化展示）
+.gpr-stars {
+  margin-left: $spacing-1;
+  font-size: $font-size-2xs;
+  opacity: 0.7;
+  letter-spacing: 0.02em;
+}
+
+// ── 展开详情行 ──
+
+// 详情行（紧随主行，浅灰底与主行区分）
+.gpr-author-detail-row {
+  border-bottom: 1px solid var(--b3-border-color);
+  background: var(--b3-list-hover);
+
+  .gpr-author-row + & {
+    border-top: none;
+  }
+}
+
+// 详情单元格（跨全列，内含三块并排信息）
+.gpr-author-detail {
+  padding: $spacing-2 $spacing-3;
+}
+
+// 详情三块网格（弹性布局，窄容器自动换行）
+.gpr-detail-grid {
+  display: flex;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+}
+
+// 详情块（每块最小宽度，均分剩余空间；块间左侧细线分隔增强分区感）
+.gpr-detail-block {
+  flex: 1;
+  min-width: 150px;
+
+  & + & {
+    padding-left: $spacing-3;
+    border-left: 1px solid var(--b3-border-color);
+  }
+}
+
+// 详情标签（主色竖条 + 大写弱化文字，提升辨识度）
+.gpr-detail-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: $spacing-1;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface-light);
+
+  &::before {
+    content: "";
+    flex-shrink: 0;
+    width: 3px;
+    height: 10px;
+    border-radius: 1px;
+    background: var(--b3-theme-primary);
+    opacity: 0.75;
+  }
+}
+
+// 详情值（主数据，等宽数字突出）
+.gpr-detail-value {
+  font-family: $vp-mono;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: var(--b3-theme-on-surface);
+}
+
+// 详情副文案（弱化）
+.gpr-detail-sub {
+  margin-top: 3px;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light);
+  opacity: 0.85;
+}
+
+// 修改文件列表（去点）
+.gpr-detail-files {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+// 单个文件行（路径省略 + 次数徽章；悬停主题色路径）
+.gpr-detail-file {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: 2px 0;
+  border-radius: $radius-sm;
+
+  &:hover .gpr-detail-file-name {
+    color: var(--b3-theme-primary);
+  }
+
+  &-name {
+    flex: 1;
+    min-width: 0;
+    font-family: $vp-mono;
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-on-surface);
+    @include text-ellipsis;
+  }
+
+  // 修改次数徽章（浅色圆角底）
+  &-count {
+    flex-shrink: 0;
+    padding: 0 5px;
+    border-radius: 8px;
+    font-family: $vp-mono;
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-medium;
+    color: var(--b3-theme-on-surface);
+    background: var(--b3-border-color);
+  }
+}
+
+// 无文件数据占位
+.gpr-detail-empty {
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface-light);
+  opacity: 0.6;
+  font-style: italic;
 }

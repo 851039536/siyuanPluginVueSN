@@ -41,6 +41,8 @@ export interface AuthorReportRow {
   commits: number
   /** 新增代码行数（numstat 新增行合计，即"代码行数"） */
   linesAdded: number
+  /** 删除代码行数（numstat 删除行合计，代码流失量） */
+  linesDeleted: number
   /** 净增行数（新增 - 删除） */
   netLines: number
   /** 平均提交大小（新增行/提交数，四舍五入） */
@@ -51,6 +53,14 @@ export interface AuthorReportRow {
   filesTouched: number
   /** 活跃天数（首个提交与末次提交之间的日历天数，最小 1） */
   activeDays: number
+  /** 最早提交时间（ISO，活跃时间范围起点；无有效日期时为空串） */
+  firstCommitAt: string
+  /** 最近提交时间（ISO，活跃时间范围终点；无有效日期时为空串） */
+  lastCommitAt: string
+  /** 代码流失率（删除行/新增行，0~1 小数；无新增时为 0） */
+  churnRate: number
+  /** 修改最多的文件 Top3 [路径, 修改次数]，按次数降序 */
+  topFiles: Array<{ path: string, count: number }>
   /** 代码质量评分（启发式公式，见 reportMetrics.qualityScore） */
   quality: number
   /** 质量等级 */

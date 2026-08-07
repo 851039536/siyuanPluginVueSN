@@ -2,11 +2,11 @@
 @use "./variables" as *;
 @use "./mixins" as *;
 
-// 面板基座（与 StatsPanel 一致：独立滚动 + 上下留白）
+// 面板基座（与 StatsPanel 一致：独立滚动 + 上下留白；右侧留白 8px 避免内容紧贴侧边栏）
 .gpr-panel {
   flex: 1;
   overflow-y: auto;
-  padding: $spacing-1 0;
+  padding: $spacing-1 $spacing-2 $spacing-1 0;
 }
 
 // ── 顶部工具条（项目下拉 + 时间范围下拉 + 生成按钮）──

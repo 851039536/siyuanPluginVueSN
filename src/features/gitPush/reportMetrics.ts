@@ -259,6 +259,11 @@ export function debtRiskScore(stability: number | null, complexity: number | nul
   return clamp100(score)
 }
 
+/** 技术债务问题总数（严重度计数合计；面板 Tab 徽章与 TechDebtSection 表头徽章/空态共用，消除双份 reduce） */
+export function countDebtFiles(debtSummary: Record<DebtSeverity, number>): number {
+  return Object.values(debtSummary).reduce((sum, n) => sum + n, 0)
+}
+
 /** 时间范围对应的"过去{0}"时长词（供说明文案模板） */
 export function rangeDurationKey(range: ReportRange): "reportDurAll" | "reportDur3m" | "reportDur6m" | "reportDur1y" {
   switch (range) {

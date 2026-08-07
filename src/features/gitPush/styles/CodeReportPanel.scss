@@ -58,7 +58,7 @@
   border-radius: $radius-sm;
 }
 
-// ── 分区 Tab 栏（团队总览/代码贡献度/技术债务/代码热点）──
+// ── 分区 Tab 栏（团队总览[含代码贡献度]/技术债务/代码热点）──
 .gpr-tabs {
   display: flex;
   gap: $spacing-2px;
@@ -90,7 +90,7 @@
   }
 }
 
-// 分区条数徽章（贡献度作者数 / 债务问题数 / 热点文件数）
+// 分区条数徽章（总览作者数 / 债务问题数 / 热点文件数）
 .gpr-tab-count {
   font-size: $font-size-2xs;
   font-family: $vp-mono;

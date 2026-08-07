@@ -10,6 +10,7 @@ import type {
 import { computed, ref } from "vue"
 import { DEFAULT_REPORT_PREFS, REPORT_RANGE_LABEL_KEYS } from "../types"
 import { buildEmptyReport, buildReportData, sinceForRange } from "../reportMetrics"
+import type { NumstatCommit } from "../reportMetrics"
 import { relativeTime, resolveValidPath } from "../utils"
 
 export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[]>, i18n: Record<string, any>) {
@@ -58,7 +59,8 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
 
   /**
    * 生成报告：读取 numstat 提交日志 → 聚合评分 → 持久化偏好。
-   * 项目路径无效 / 非 git 仓库 / git 失败时由 ReportOps 内部吞错，按空提交产出空数据并标记失败。
+   * 区分两种失败语义：git 命令失败（路径无效/非仓库）→ ok:false 展示失败提示；
+   * 命令成功但零提交（合法空仓库）→ ok:true 空数据，由面板展示"暂无数据"。
    */
   async function runReport() {
     const project = currentProject.value
@@ -67,17 +69,21 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
     try {
       const cwd = resolveValidPath(project)
       const since = sinceForRange(range.value)
-      const [commits, firstDate] = await Promise.all([
-        manager.getNumstatLog(cwd, since),
-        manager.getFirstCommitDate(cwd),
-      ])
+      let commits: NumstatCommit[] = []
+      let gitFailed = false
+      try {
+        commits = await manager.getNumstatLog(cwd, since)
+      } catch {
+        gitFailed = true
+      }
+      const firstDate = await manager.getFirstCommitDate(cwd).catch(() => "")
       // 全部历史时用首提交日期生成时间范围标签（如 "5 months ago"），按本地语言 i18n 格式化
       const rangeLabel = range.value === "all"
         ? (firstDate ? relativeTime(firstDate, i18n) : i18n.reportRangeAll || "")
         : (i18n[REPORT_RANGE_LABEL_KEYS[range.value]] || "")
-      reportData.value = commits.length > 0
-        ? buildReportData(project, commits, rangeLabel, range.value, i18n)
-        : buildEmptyReport(project, rangeLabel)
+      reportData.value = gitFailed
+        ? buildEmptyReport(project, rangeLabel)
+        : buildReportData(project, commits, rangeLabel, range.value, i18n)
       generatedAt.value = new Date().toISOString()
       generated.value = true
       await savePrefs()

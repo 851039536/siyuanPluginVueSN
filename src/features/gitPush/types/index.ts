@@ -53,3 +53,15 @@ export {
 } from "./meta"
 export type { CategoryDistributionItem, CommitAnalysisCache, CommitAnalysisEntry, CommitAnalysisStats, CommitAnalysisType, CommitAnalysisViewSettings, NeedsPullItem, NeedsPushItem, PanelView, PendingProjectItem, PlatformKey, PlatformStatusItem, PushStatusStats, RemoteCoverage, RepoLinkAuditCell, RepoLinkAuditRow, RepoLinkAuditState, RepoLinkAuditSummary, StatsView, UncommittedItem, ViewMode } from "./meta"
 export { getPlatformStatus } from "./meta"
+
+// ── 重导出代码统计报告类型与常量（来自 report.ts）──
+export {
+  DEFAULT_REPORT_PREFS,
+  DEBT_SEVERITY_META,
+  DEBT_TYPE_META,
+  GRADE_META,
+  HOTSPOT_LEVEL_META,
+  REPORT_RANGES,
+  REPORT_RANGE_LABEL_KEYS,
+} from "./report"
+export type { AuthorReportRow, CodeReportData, CodeReportPrefs, DebtFileRow, DebtSeverity, DebtType, FileStatRow, HotspotFileRow, HotspotLevel, HotspotLevelSummary, QualityGrade, ReportRange } from "./report"

@@ -1,0 +1,111 @@
+// gitPush 代码统计报告：代码热点分区（热点文件列表 + 汇总 + 建议）
+@use "./variables" as *;
+@use "./mixins" as *;
+
+// ── 热点文件列表 ──
+.gpr-hot-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  margin-bottom: $spacing-3;
+}
+
+.gpr-hot-item {
+  padding: $spacing-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  background: var(--b3-theme-surface);
+  transition: border-color 0.15s;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+// 首行：热度徽章 + 文件路径
+.gpr-hot-head {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin-bottom: $spacing-1;
+  font-size: $font-size-xs;
+}
+
+// 热度徽章（数值 + 等级，颜色由等级驱动）
+.gpr-heat-chip {
+  flex-shrink: 0;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
+  font-family: $vp-mono;
+  padding: 1px 6px;
+  border-radius: $radius-sm;
+  white-space: nowrap;
+
+  &--hot {
+    background: var(--b3-theme-error-lightest);
+    color: var(--b3-theme-error);
+  }
+
+  &--warm {
+    background: var(--b3-theme-warning-lightest);
+    color: var(--b3-theme-warning);
+  }
+
+  &--cool {
+    background: var(--b3-theme-primary-lightest);
+    color: var(--b3-theme-primary);
+  }
+
+  &--cold {
+    background: var(--b3-list-hover);
+    color: var(--b3-theme-on-surface-light);
+  }
+}
+
+// 指标行（修改次数/参与人数/最后修改）
+.gpr-hot-meta {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+  font-size: $font-size-2xs;
+  opacity: 0.5;
+  font-family: $vp-mono;
+}
+
+// 建议文案（按等级模板拼接）
+.gpr-hot-advice {
+  margin-top: $spacing-1;
+  padding-top: $spacing-1;
+  border-top: 1px dashed var(--b3-border-color);
+  font-size: $font-size-2xs;
+  opacity: 0.6;
+  line-height: $line-height-normal;
+}
+
+// ── 汇总子区块 ──
+.gpr-subsection {
+  margin-bottom: $spacing-3;
+}
+
+// 汇总表热度等级色点
+.gpr-heat-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: $spacing-1;
+}
+
+// 优化建议条
+.gpr-suggestion {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-2;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-success);
+  background: var(--b3-theme-success-lightest);
+  border: 1px solid var(--b3-theme-success-lighter, var(--b3-theme-success));
+  border-radius: $radius-sm;
+}

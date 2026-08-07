@@ -1,0 +1,9 @@
+// gitPush 代码统计报告：代码贡献度分区（作者排行表补充样式）
+@use "./variables" as *;
+@use "./mixins" as *;
+
+// 质量评分徽章（分数 + 等级，颜色由 GRADE_META 内联驱动）
+.gpr-grade-chip {
+  font-weight: $font-weight-bold;
+  white-space: nowrap;
+}

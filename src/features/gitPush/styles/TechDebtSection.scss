@@ -1,0 +1,52 @@
+// gitPush 代码统计报告：技术债务分区（严重度分组 + 说明行）
+@use "./variables" as *;
+@use "./mixins" as *;
+
+// 严重度分组（组内表格 + 说明行成对出现）
+.gpr-debt-group {
+  margin-bottom: $spacing-3;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// 分组标题：严重度色点 + 名称 + 计数
+.gpr-debt-group-title {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  margin-bottom: $spacing-1;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+}
+
+.gpr-debt-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.gpr-debt-count {
+  font-size: $font-size-2xs;
+  font-family: $vp-mono;
+  font-weight: $font-weight-bold;
+  padding: 0 5px;
+  border-radius: $radius-full;
+  background: var(--b3-list-hover);
+  opacity: 0.6;
+  line-height: $line-height-normal;
+}
+
+// 文件路径列图标（技术债务行）
+.gpr-file-icon {
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+// 说明文案行（模板拼接："此文件在过去6个月被修改了 X 次…"）
+.gpr-row--desc {
+  padding-top: 0; // 与上方数据行紧贴，视觉上属于同一文件
+  padding-bottom: $spacing-2;
+}

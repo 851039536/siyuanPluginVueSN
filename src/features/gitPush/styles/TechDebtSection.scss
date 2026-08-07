@@ -1,4 +1,4 @@
-// gitPush 代码统计报告：技术债务分区（严重度分组行 + 单行文件指标）
+// gitPush 代码统计报告：技术债务分区（汇总条 + 严重度分组行 + 可展开文件指标行）
 @use "./variables" as *;
 @use "./mixins" as *;
 
@@ -45,7 +45,7 @@
   opacity: 0.5;
 }
 
-// 每个文件的整体块（单行指标）：块间用分割线区隔，悬停整块高亮便于扫描
+// 每个文件的整体块：块间用分割线区隔，悬停整块高亮便于扫描
 .gpr-debt-file {
   @include row-divider;
   transition: background 0.15s;
@@ -54,8 +54,65 @@
     background: var(--b3-theme-surface);
   }
 
+  // 展开态背景常驻（区别于悬停临时高亮）
+  &--open {
+    background: var(--b3-theme-surface);
+
+    &:hover {
+      background: var(--b3-theme-surface);
+    }
+  }
+
   // 块内行关闭各自分割线（文件间区隔由块统一承担，避免双线）
   .gpr-row {
     border-bottom: none;
   }
+}
+
+// 文件指标行（可点击展开）
+.gpr-debt-row {
+  cursor: pointer;
+  user-select: none;
+}
+
+// 文件路径（单行省略，完整路径悬停可见）
+.gpr-debt-path {
+  min-width: 0;
+  @include text-ellipsis;
+}
+
+// 趋势徽章（箭头 + 方向文案；颜色由趋势方向驱动，边框描边风格）
+.gpr-debt-trend-chip {
+  flex-shrink: 0;
+  margin-left: $spacing-1;
+  padding: 0 5px;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  border: 1px solid;
+  border-radius: $radius-sm;
+  white-space: nowrap;
+  line-height: $line-height-tight;
+}
+
+// 展开箭头（收起时右指，展开时下指并旋转；淡色）
+.gpr-debt-expand-icon {
+  flex-shrink: 0;
+  margin-left: $spacing-1;
+  opacity: 0.35;
+  transition: transform 0.15s;
+
+  &.open {
+    opacity: 0.7;
+    transform: rotate(180deg);
+  }
+}
+
+// 最后修改列（相对时间文本，宽度容纳 "3 个月前" 等较长文案）
+.gpr-cell--date {
+  width: 72px;
+  text-align: right;
+  padding-right: $spacing-1;
+  font-size: $font-size-2xs;
+  opacity: 0.75;
+  @include text-ellipsis;
 }

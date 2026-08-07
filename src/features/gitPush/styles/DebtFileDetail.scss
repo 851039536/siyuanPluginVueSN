@@ -1,0 +1,138 @@
+// gitPush 技术债务文件详情面板：指标网格 + 趋势条 + 近期共变列表
+@use "./variables" as *;
+@use "./mixins" as *;
+
+// 详情面板整体：缩进在文件行下方，浅色底与指标行区分
+.gpr-debt-detail {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-3;
+  background: var(--b3-list-hover);
+  font-size: $font-size-xs;
+}
+
+// 指标网格（2 列自适应）
+.gpr-debt-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $spacing-1 $spacing-3;
+}
+
+// 指标单元格
+.gpr-debt-detail-cell {
+  display: flex;
+  align-items: baseline;
+  gap: $spacing-1;
+  min-width: 0;
+}
+
+// 指标标签（淡色辅助文字）
+.gpr-debt-detail-label {
+  font-size: $font-size-2xs;
+  opacity: 0.45;
+  flex-shrink: 0;
+}
+
+// 指标值（等宽数字）
+.gpr-debt-detail-value {
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  @include text-ellipsis;
+  min-width: 0;
+}
+
+// 趋势推断条：左边框色 = 趋势方向色
+.gpr-debt-trend {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: 3px $spacing-2;
+  border: 1px solid;
+  border-radius: $radius-sm;
+  background: var(--b3-theme-surface);
+}
+
+// 趋势箭头
+.gpr-debt-trend-arrow {
+  font-family: $vp-mono;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  flex-shrink: 0;
+}
+
+// 趋势文案
+.gpr-debt-trend-text {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+}
+
+// 近期共变区块
+.gpr-debt-coupling {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+}
+
+// 共变区块标题（+ 启发式说明）
+.gpr-debt-coupling-title {
+  display: flex;
+  align-items: baseline;
+  gap: $spacing-1;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+}
+
+// 共变说明（淡色辅助文字）
+.gpr-debt-coupling-hint {
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-normal;
+  opacity: 0.45;
+}
+
+// 共变空态
+.gpr-debt-coupling-empty {
+  font-size: $font-size-2xs;
+  opacity: 0.4;
+  font-style: italic;
+}
+
+// 共变文件行
+.gpr-debt-coupling-item {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: 2px $spacing-1;
+  font-size: $font-size-2xs;
+  @include row-divider;
+}
+
+// 共变严重度色点
+.gpr-debt-coupling-dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+// 共变文件路径（单行省略）
+.gpr-debt-coupling-path {
+  flex: 1;
+  min-width: 0;
+  font-family: $vp-mono;
+  @include text-ellipsis;
+}
+
+// 共变修改次数（等宽数字，淡色）
+.gpr-debt-coupling-mods {
+  flex-shrink: 0;
+  font-family: $vp-mono;
+  opacity: 0.5;
+}
+
+// 共变风险评分（等宽数字）
+.gpr-debt-coupling-score {
+  flex-shrink: 0;
+  font-family: $vp-mono;
+  font-weight: $font-weight-bold;
+}

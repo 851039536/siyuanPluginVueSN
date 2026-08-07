@@ -591,6 +591,9 @@ export const COMMON_ICONS = {
   chevronDown: {
     icon: "mdi:chevron-down",
   },
+  linkVariant: {
+    icon: "mdi:link-variant",
+  },
   download: {
     icon: "mdi:download",
   },

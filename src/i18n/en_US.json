@@ -1486,6 +1486,8 @@
     "reportScoreCol": "Score",
     "reportModsCol": "Changes",
     "reportHeatTitle": "Code Hotspots",
+    "reportLevelCol": "Level",
+    "reportFilePathCol": "File",
     "reportAnalyzedFilesTip": "Number of files analyzed in range (excluding .md docs)",
     "reportNoData": "No data in range",
     "reportHeatHot": "Hot",

@@ -1,77 +1,139 @@
-// gitPush 代码统计报告：代码热点分区（热点文件列表 + 汇总 + 建议）
+// gitPush 代码统计报告：代码热点分区（第一行热点表格 + 第二行统计摘要）
 @use "./variables" as *;
 @use "./mixins" as *;
 
-// ── 热点文件列表 ──
-.gpr-hot-list {
+// ── 纵向两行布局容器（第一行表格，第二行统计摘要，均在各自行内自然排布）──
+.gpr-hot-grid {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
-  margin-bottom: $spacing-3;
+  gap: $spacing-4;
 }
 
-.gpr-hot-item {
-  padding: $spacing-2;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
-  background: var(--b3-theme-surface);
-}
-
-// 首行：热度徽章 + 文件路径
-.gpr-hot-head {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-  margin-bottom: $spacing-1;
-  font-size: $font-size-xs;
-}
-
-// 文件路径（目录弱化 + 文件名强调，快速扫描定位；可点击打开文件，hover 主题色提示）
-.gpr-hot-path {
-  flex: 1;
+// 第一行：表格 + 截断提示（全宽）
+.gpr-hot-left {
+  width: 100%;
   min-width: 0;
+}
+
+// 第二行：统计摘要面板（全宽，汇总表 + 优化建议）
+.gpr-hot-right {
+  width: 100%;
+}
+
+// ── 热点表格 ──
+.gpr-hot-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: $font-size-xs;
+  table-layout: fixed;
+}
+
+// 表头
+.gpr-hot-th {
+  padding: $spacing-2 $spacing-2;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-surface-light);
+  text-transform: uppercase;
+  text-align: left;
+  border-bottom: 2px solid var(--b3-border-color);
+
+  &--level {
+    width: 40px;
+    text-align: center;
+  }
+
+  &--path {
+    width: auto;
+  }
+
+  &--num {
+    width: 56px;
+    text-align: right;
+  }
+
+  &--time {
+    width: 72px;
+    text-align: right;
+  }
+}
+
+// 数据行（hover 高亮 + 底部细线分隔）
+.gpr-hot-row {
+  border-bottom: 1px solid var(--b3-border-color);
+  transition: background 0.12s ease;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+}
+
+// 单元格
+.gpr-hot-cell {
+  padding: $spacing-1 $spacing-2;
+
+  &--level {
+    text-align: center;
+  }
+
+  &--path {
+    min-width: 0;
+  }
+
+  &--num {
+    font-family: $vp-mono;
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-on-surface-light);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  &--time {
+    font-family: $vp-mono;
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-on-surface-light);
+    text-align: right;
+    white-space: nowrap;
+  }
+}
+
+// ── 文件路径（表格内嵌，单行溢出省略）──
+.gpr-hot-path {
+  display: inline-block;
+  max-width: 100%;
   @include text-ellipsis;
   cursor: pointer;
 
   &:hover {
     color: var(--b3-theme-primary);
-    // 目录部分显式继承父级 hover 色，避免显式 color 阻止颜色传递
+    // 目录部分显式继承父级 hover 色
     .gpr-path-dir {
       color: inherit;
     }
   }
 }
 
-// 路径目录部分（弱色，弱化噪音；hover 时由父级强制继承主题色）
+// 路径目录部分（弱色，弱化噪音）
 .gpr-path-dir {
   color: var(--b3-theme-on-surface-light);
 }
 
-// 路径文件名部分（正常色 + 中等字重，视觉强调；transition 下放到实际承载颜色变化的子元素，保证 hover 平滑过渡）
+// 路径文件名部分（中等字重 + hover 颜色过渡）
 .gpr-path-base {
   font-weight: $font-weight-medium;
   transition: color 0.15s ease;
 }
 
-// 热点榜截断提示（仅展示前 N 个，其余文件未列出）
-.gpr-hot-truncated {
-  display: flex;
-  align-items: center;
-  gap: $spacing-1;
-  margin-bottom: $spacing-3;
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-surface-light);
-}
-
-// 热度徽章（仅数值，颜色编码等级；等级名由 title 提示承载）
+// ── 热度徽章（仅数值，颜色编码等级）──
 .gpr-heat-chip {
-  flex-shrink: 0;
+  display: inline-block;
   font-size: $font-size-2xs;
   font-weight: $font-weight-bold;
   font-family: $vp-mono;
-  padding: 1px 6px;
+  padding: 1px 5px;
   border-radius: $radius-sm;
   white-space: nowrap;
+  line-height: $line-height-normal;
 
   &--hot {
     background: var(--b3-theme-error-lightest);
@@ -94,33 +156,22 @@
   }
 }
 
-// 指标行（修改次数/参与人数/代码行数/最后修改；语义色弱化替代 opacity，保留可读性）
-.gpr-hot-meta {
+// ── 截断提示 ──
+.gpr-hot-truncated {
   display: flex;
   align-items: center;
-  gap: $spacing-3;
-  flex-wrap: wrap;
+  gap: $spacing-1;
+  margin-top: $spacing-2;
   font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface-light);
-  font-family: $vp-mono;
 }
 
-// 建议文案（按等级 i18n 键解析；语义色弱化替代 opacity）
-.gpr-hot-advice {
-  margin-top: $spacing-1;
-  padding-top: $spacing-1;
-  border-top: 1px dashed var(--b3-border-color);
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-surface-light);
-  line-height: $line-height-normal;
-}
-
-// ── 汇总子区块 ──
+// ── 汇总子区块（右侧面板内，底部留间距）──
 .gpr-subsection {
   margin-bottom: $spacing-3;
 }
 
-// 汇总表热度等级色点（inline 流内排布，flex-shrink 无效；尺寸复用间距 Token）
+// 汇总表热度等级色点
 .gpr-heat-dot {
   width: $spacing-2;
   height: $spacing-2;
@@ -128,7 +179,7 @@
   margin-right: $spacing-1;
 }
 
-// 优化建议条
+// ── 优化建议条 ──
 .gpr-suggestion {
   display: flex;
   align-items: center;

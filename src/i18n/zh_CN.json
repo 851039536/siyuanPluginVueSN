@@ -1486,6 +1486,8 @@
     "reportScoreCol": "评分",
     "reportModsCol": "修改次数",
     "reportHeatTitle": "代码热点图",
+    "reportLevelCol": "等级",
+    "reportFilePathCol": "文件",
     "reportAnalyzedFilesTip": "分析范围内涉及的文件数（不含 .md 文档）",
     "reportNoData": "范围内没有数据",
     "reportHeatHot": "热点",

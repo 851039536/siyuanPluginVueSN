@@ -1,10 +1,10 @@
-<!-- gitPush 代码统计报告：代码热点分区（热点文件列表 + 热度分类汇总 + 优化建议） -->
+<!-- gitPush 代码统计报告：代码热点分区（第一行热点表格 + 第二行统计摘要） -->
 <template>
   <div class="gpr-section">
     <!-- 区块标题："代码热点分析" + 文件数徽章（悬浮说明统计口径） -->
     <div class="gpr-section-title">
       {{ i18n.reportHeatTitle }}
-      <!-- 文件数徽章（title 提示口径："分析范围内涉及的文件数（不含 .md 文档）"） -->
+      <!-- 文件数徽章 -->
       <span
         class="gpr-section-count"
         :title="i18n.reportAnalyzedFilesTip"
@@ -18,109 +18,127 @@
       :text="i18n.reportNoData"
     />
 
-    <template v-else>
-      <!-- 热点/温热文件列表（热度徽章 + 指标 + 建议） -->
-      <div class="gpr-hot-list">
-        <div
-          v-for="h in preparedHotspots"
-          :key="h.path"
-          class="gpr-hot-item"
-        >
-          <div class="gpr-hot-head">
-            <!-- 热度徽章：仅热度值（颜色编码等级，悬浮提示等级名，去掉 /100 与等级文字避免三重冗余） -->
-            <span
-              class="gpr-heat-chip"
-              :class="`gpr-heat-chip--${h.level}`"
-              :title="i18n[HOTSPOT_LEVEL_META[h.level].labelKey]"
-            >{{ h.heat }}</span>
-            <!-- 文件路径（目录弱化 + 文件名强调；点击经 shell.openPath 打开文件，悬浮提示完整路径 + 点击说明） -->
-            <span
-              class="gpr-hot-path"
-              :title="i18n.reportOpenFileTitle.replace('{0}', h.path)"
-              role="button"
-              tabindex="0"
-              @click="openFile(h.path)"
-              @keydown.enter="openFile(h.path)"
-              @keydown.space.prevent="openFile(h.path)"
+    <!-- 两栏布局：左侧表格（flex:1 自适应）+ 右侧汇总面板（定宽，顶部对齐不留空隙） -->
+    <div
+      v-else
+      class="gpr-hot-grid"
+    >
+      <!-- 左侧：热点表格 + 截断提示 -->
+      <div class="gpr-hot-left">
+        <table class="gpr-hot-table">
+          <thead>
+            <tr>
+              <th class="gpr-hot-th gpr-hot-th--level">{{ i18n.reportLevelCol }}</th>
+              <th class="gpr-hot-th gpr-hot-th--path">{{ i18n.reportFilePathCol }}</th>
+              <th class="gpr-hot-th gpr-hot-th--num">{{ i18n.reportModsCol }}</th>
+              <th class="gpr-hot-th gpr-hot-th--num">{{ i18n.reportAuthorsCol }}</th>
+              <th class="gpr-hot-th gpr-hot-th--num">{{ i18n.reportLinesCol }}</th>
+              <th class="gpr-hot-th gpr-hot-th--time">{{ i18n.reportLastModifiedCol }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="h in preparedHotspots"
+              :key="h.path"
+              class="gpr-hot-row"
             >
-              <span class="gpr-path-dir">{{ h.dir }}</span>
-              <span class="gpr-path-base">{{ h.base }}</span>
-            </span>
-          </div>
-          <!-- 指标行：修改次数 / 参与人数 / 代码行数 / 最后修改 -->
-          <div class="gpr-hot-meta">
-            <span>{{ i18n.reportModsCol }}: {{ h.modCount }}</span>
-            <span>{{ i18n.reportAuthorsCol }}: {{ h.authorCount }}</span>
-            <span>{{ i18n.reportLinesCol }}: {{ h.loc ?? "-" }}</span>
-            <span
-              :title="h.lastModified"
-            >{{ i18n.reportLastModifiedCol }}: {{ h.lastModified ? relativeTime(h.lastModified, i18n) : "-" }}</span>
-          </div>
-          <!-- 建议文案（按等级 i18n 键解析，如"考虑重构或拆分此文件"） -->
-          <div
-            v-if="h.adviceKey"
-            class="gpr-hot-advice"
-          >{{ i18n[h.adviceKey] }}</div>
+              <!-- 热度徽章 -->
+              <td class="gpr-hot-cell gpr-hot-cell--level">
+                <span
+                  class="gpr-heat-chip"
+                  :class="`gpr-heat-chip--${h.level}`"
+                  :title="i18n[HOTSPOT_LEVEL_META[h.level].labelKey]"
+                >{{ h.heat }}</span>
+              </td>
+              <!-- 文件路径（可点击打开文件管理器） -->
+              <td class="gpr-hot-cell gpr-hot-cell--path">
+                <span
+                  class="gpr-hot-path"
+                  :title="i18n.reportOpenFileTitle.replace('{0}', h.path)"
+                  role="button"
+                  tabindex="0"
+                  @click="openFile(h.path)"
+                  @keydown.enter="openFile(h.path)"
+                  @keydown.space.prevent="openFile(h.path)"
+                >
+                  <span class="gpr-path-dir">{{ h.dir }}</span>
+                  <span class="gpr-path-base">{{ h.base }}</span>
+                </span>
+              </td>
+              <!-- 修改次数 -->
+              <td class="gpr-hot-cell gpr-hot-cell--num">{{ h.modCount }}</td>
+              <!-- 参与人数 -->
+              <td class="gpr-hot-cell gpr-hot-cell--num">{{ h.authorCount }}</td>
+              <!-- 代码行数 -->
+              <td class="gpr-hot-cell gpr-hot-cell--num">{{ h.loc ?? "-" }}</td>
+              <!-- 最后修改时间 -->
+              <td
+                class="gpr-hot-cell gpr-hot-cell--time"
+                :title="h.lastModified"
+              >{{ h.lastModified ? relativeTime(h.lastModified, i18n) : "-" }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- 截断提示 -->
+        <div
+          v-if="truncatedText"
+          class="gpr-hot-truncated"
+        >
+          <Icon
+            icon="mdi:information-outline"
+            height="12"
+          />
+          <span>{{ truncatedText }}</span>
         </div>
       </div>
 
-      <!-- 截断提示：热点榜仅展示前 12 个，分析文件数更多时提示（口径与徽章一致，多语文案由 i18n 承载） -->
-      <div
-        v-if="truncatedText"
-        class="gpr-hot-truncated"
-      >
-        <Icon
-          icon="mdi:information-outline"
-          height="12"
-        />
-        <span>{{ truncatedText }}</span>
-      </div>
-
-      <!-- 统计摘要：四类热度汇总表（文件数 + 占比） -->
-      <div class="gpr-subsection">
-        <!-- 子区块标题："热度分布汇总" -->
-        <div class="gpr-section-title">
-          {{ i18n.reportHeatSummaryTitle }}
-        </div>
-        <div class="gpr-table-wrap">
-          <!-- 表头：类别 / 文件数 / 占比 -->
-          <div class="gpr-row gpr-row--head">
-            <span class="gpr-cell gpr-cell--name">{{ i18n.reportCategoryCol }}</span>
-            <span class="gpr-cell gpr-cell--num">{{ i18n.reportFilesCol }}</span>
-            <span class="gpr-cell gpr-cell--pct">{{ i18n.reportPctCol }}</span>
+      <!-- 第二行：统计摘要面板（全宽，汇总表 + 优化建议） -->
+      <div class="gpr-hot-right">
+        <!-- 热度分布汇总表 -->
+        <div class="gpr-subsection">
+          <div class="gpr-section-title">
+            {{ i18n.reportHeatSummaryTitle }}
           </div>
-          <!-- 表体：四类热度等级行 -->
-          <div
-            v-for="s in report.hotspotSummary"
-            :key="s.level"
-            class="gpr-row"
-          >
-            <span class="gpr-cell gpr-cell--name">
-              <!-- 等级色点 -->
-              <span
-                class="gpr-heat-dot"
-                :style="{ background: HOTSPOT_LEVEL_META[s.level].color }"
-              />
-              {{ i18n[HOTSPOT_LEVEL_META[s.level].labelKey] }}
-            </span>
-            <span class="gpr-cell gpr-cell--num">{{ s.count }}</span>
-            <span class="gpr-cell gpr-cell--pct">{{ s.pct }}%</span>
+          <div class="gpr-table-wrap">
+            <!-- 表头：类别 / 文件数 / 占比 -->
+            <div class="gpr-row gpr-row--head">
+              <span class="gpr-cell gpr-cell--name">{{ i18n.reportCategoryCol }}</span>
+              <span class="gpr-cell gpr-cell--num">{{ i18n.reportFilesCol }}</span>
+              <span class="gpr-cell gpr-cell--pct">{{ i18n.reportPctCol }}</span>
+            </div>
+            <!-- 表体：四类热度等级行 -->
+            <div
+              v-for="s in report.hotspotSummary"
+              :key="s.level"
+              class="gpr-row"
+            >
+              <span class="gpr-cell gpr-cell--name">
+                <span
+                  class="gpr-heat-dot"
+                  :style="{ background: HOTSPOT_LEVEL_META[s.level].color }"
+                />
+                {{ i18n[HOTSPOT_LEVEL_META[s.level].labelKey] }}
+              </span>
+              <span class="gpr-cell gpr-cell--num">{{ s.count }}</span>
+              <span class="gpr-cell gpr-cell--pct">{{ s.pct }}%</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- 优化建议（按热点分布 i18n 键解析，如"项目代码热点分布相对健康"） -->
-      <div
-        v-if="report.suggestionKey"
-        class="gpr-suggestion"
-      >
-        <Icon
-          icon="mdi:lightbulb-outline"
-          height="12"
-        />
-        <span>{{ i18n[report.suggestionKey] }}</span>
+        <!-- 优化建议 -->
+        <div
+          v-if="report.suggestionKey"
+          class="gpr-suggestion"
+        >
+          <Icon
+            icon="mdi:lightbulb-outline"
+            height="12"
+          />
+          <span>{{ i18n[report.suggestionKey] }}</span>
+        </div>
       </div>
-    </template>
+    </div>
   </div>
 </template>
 

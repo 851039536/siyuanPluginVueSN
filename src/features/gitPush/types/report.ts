@@ -69,16 +69,6 @@ export const DEBT_SEVERITY_META: Record<DebtSeverity, { labelKey: string, color:
   medium: { labelKey: "reportDebtMedium", color: "#64748b" },
 }
 
-/** 技术债务问题类型（分类规则见 reportMetrics.classifyDebt） */
-export type DebtType = "unstable" | "highComplexity" | "frequentChanges"
-
-/** 问题类型元数据 */
-export const DEBT_TYPE_META: Record<DebtType, { labelKey: string }> = {
-  unstable: { labelKey: "reportDebtTypeUnstable" },
-  highComplexity: { labelKey: "reportDebtTypeHighComplexity" },
-  frequentChanges: { labelKey: "reportDebtTypeFrequentChanges" },
-}
-
 /** 文件统计基础行（技术债务/热点共用，由 git numstat + fs 读取派生） */
 export interface FileStatRow {
   /** 相对仓库根目录路径 */
@@ -89,22 +79,15 @@ export interface FileStatRow {
   authorCount: number
   /** 最后修改时间（ISO，无记录时为空串） */
   lastModified: string
-  /** 复杂度估算（启发式；null=无法估算，如二进制/不可读文件） */
-  complexity: number | null
   /** 代码行数（fs 直接读取，null=暂无数据，与参考报告一致） */
   loc: number | null
-  /** 稳定性评分 0~100（启发式；null=暂无数据） */
-  stability: number | null
 }
 
-/** 技术债务文件行（含风险评分与模板说明文案） */
+/** 技术债务文件行（含风险评分；由修改次数+参与人数派生） */
 export interface DebtFileRow extends FileStatRow {
   severity: DebtSeverity
-  debtType: DebtType
   /** 风险评分（越高越需要关注，展示列"评分"） */
   riskScore: number
-  /** 说明文案（按可用指标模板拼接，供单元格展示） */
-  description: string
 }
 
 // ── 代码热点 ──

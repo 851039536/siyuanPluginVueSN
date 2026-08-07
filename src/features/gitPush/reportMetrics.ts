@@ -227,6 +227,18 @@ export function countFileLines(project: GitProject, filePath: string): number | 
   }
 }
 
+/** 判断仓库内文件当前是否仍存在于工作区（过滤 git 历史中已删除的"幽灵文件"） */
+export function fileExistsInRepo(project: GitProject, filePath: string): boolean {
+  try {
+    const modules = getNodeFsPathOs()
+    const { fs, path } = modules || {}
+    if (!fs || !path) return false
+    return fs.statSync(path.join(resolveValidPath(project), filePath)).isFile()
+  } catch {
+    return false
+  }
+}
+
 // ── 技术债务 ──
 
 /**
@@ -364,7 +376,10 @@ export function buildReportData(
   const fileMap = aggregateFileStats(commits)
 
   // 文件 → 完整统计行（含 loc/复杂度/稳定分，仅在榜单 Top 读取行数控制开销）
-  const rankedFiles = [...fileMap.entries()].sort((a, b) => b[1].modCount - a[1].modCount)
+  // 过滤 git 历史中已从工作区删除的文件（历史记录不因删除而消失，需按当前磁盘存在性剔除）
+  const rankedFiles = [...fileMap.entries()]
+    .filter(([path]: [string, FileAgg]) => fileExistsInRepo(project, path))
+    .sort((a, b) => b[1].modCount - a[1].modCount)
   const debtRows: DebtFileRow[] = []
   const hotspotRows: HotspotFileRow[] = []
   rankedFiles.forEach(([path, agg], idx) => {

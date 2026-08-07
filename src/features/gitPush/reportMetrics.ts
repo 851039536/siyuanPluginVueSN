@@ -339,14 +339,16 @@ export function buildReportData(
     .sort((a, b) => b[1].modCount - a[1].modCount)
   const debtRows: DebtFileRow[] = []
   const hotspotRows: HotspotFileRow[] = []
-  rankedFiles.forEach(([path, agg], idx) => {
-    const loc = idx < HOTSPOT_LIMIT ? countFileLines(project, path) : null
+  rankedFiles.forEach(([path, agg]) => {
+    // loc 初始为 null：forEach 按 modCount 降序遍历，但最终热点榜按 heat 排序，
+    // 先全部置 null，等 heat 排序后再对真正的前 HOTSPOT_LIMIT 条逐一读取 LOC，
+    // 避免按 modCount 预读的 LOC 白费（那些文件在热度重排后可能不在最终 Top N 中）
     const base: FileStatRow = {
       path,
       modCount: agg.modCount,
       authorCount: agg.authors.size,
       lastModified: agg.lastIso,
-      loc,
+      loc: null,
     }
     // 债务门槛：修改次数低于 debtMinModCount 的文件视为正常迭代，仅进入热点榜不列为技术债务
     if (agg.modCount >= debtMinModCount) {
@@ -370,13 +372,11 @@ export function buildReportData(
   debtRows.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity] || b.riskScore - a.riskScore)
   hotspotRows.sort((a, b) => b.heat - a.heat)
 
-  // 补齐热点榜前 N 的 LOC：预读仅按 modCount 榜前 N 计算（上方 forEach），热度重排后两个榜单维度不同，
-  // 落在热度榜前 N 但未预读的行在此补齐，保证展示的每个热点文件都有代码行数（fs 读取有 2MB 上限且数量受限）
-  hotspotRows.slice(0, HOTSPOT_LIMIT).forEach((row) => {
-    if (row.loc === null) {
-      row.loc = countFileLines(project, row.path)
-    }
-  })
+  // 仅对热度排序后的最终前 HOTSPOT_LIMIT 条读取 LOC：fs 读取受 2MB 上限约束且数量可控，
+  // 避免在 forEach 阶段按 modCount 排序预读导致 LOC 白费（热度重排后条目可能不在 Top N 中）
+  for (let i = 0; i < Math.min(HOTSPOT_LIMIT, hotspotRows.length); i++) {
+    hotspotRows[i].loc = countFileLines(project, hotspotRows[i].path)
+  }
 
   // 四类热度汇总（文件数 + 占比）
   // 口径说明：分母为全部现存文件（rankedFiles，含修改次数低于债务门槛的常态文件），

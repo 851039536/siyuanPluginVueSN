@@ -1551,12 +1551,6 @@
     text-transform: uppercase;
     letter-spacing: 0.06em;
   }
-
-  &--debt {
-    &:hover {
-      background: var(--b3-theme-surface);
-    }
-  }
 }
 
 .gpr-cell {
@@ -1568,10 +1562,9 @@
     @include text-ellipsis;
   }
 
-  // 可点击文件路径（定位/悬停提示完整路径）
+  // 文件路径（悬停提示完整路径，主题色强调）
   &--file {
     color: var(--b3-theme-primary);
-    cursor: pointer;
     @include text-ellipsis;
   }
 

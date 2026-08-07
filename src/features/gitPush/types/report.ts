@@ -104,13 +104,13 @@ export const HOTSPOT_LEVEL_META: Record<HotspotLevel, { labelKey: string, color:
   cold: { labelKey: "reportHeatCold", color: "#9ca3af" },
 }
 
-/** 热点文件行（含热度评分与建议文案） */
+/** 热点文件行（含热度评分与建议文案键） */
 export interface HotspotFileRow extends FileStatRow {
   level: HotspotLevel
   /** 热度评分 0~100 */
   heat: number
-  /** 建议文案（模板拼接） */
-  advice: string
+  /** 建议文案的 i18n 键（如 reportHeatAdviceHot，由 UI 层解析，避免语言快照烤入数据层） */
+  adviceKey: string
 }
 
 /** 热点等级汇总（统计摘要表行） */
@@ -161,8 +161,8 @@ export interface CodeReportData {
   hotspots: HotspotFileRow[]
   /** 四类热度汇总（按等级排序） */
   hotspotSummary: HotspotLevelSummary[]
-  /** 优化建议文案（按热点分布阈值拼接） */
-  suggestion: string
+  /** 优化建议文案的 i18n 键（如 reportSugNormal，由 UI 层解析，避免语言快照烤入数据层） */
+  suggestionKey: string
   /** 分析涉及的文件数（numstat 去重后） */
   analyzedFiles: number
 }

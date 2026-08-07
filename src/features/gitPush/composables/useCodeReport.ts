@@ -88,7 +88,7 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
         : (i18n[REPORT_RANGE_LABEL_KEYS[range.value]] || "")
       reportData.value = gitFailed
         ? buildEmptyReport(project, rangeLabel)
-        : buildReportData(project, commits, rangeLabel, i18n, debtMinModCount.value)
+        : buildReportData(project, commits, rangeLabel, debtMinModCount.value)
       generatedAt.value = new Date().toISOString()
       generated.value = true
       await savePrefs()

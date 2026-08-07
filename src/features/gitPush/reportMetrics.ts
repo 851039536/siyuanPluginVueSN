@@ -288,11 +288,11 @@ export function heatScore(modCount: number, authorCount: number, lastModified: s
   return clamp100(modCount * 2.2 + authorCount * 7 + recencyBonus(lastModified))
 }
 
-/** 热点建议文案（按等级选择） */
-export function buildHeatAdvice(level: HotspotLevel, i18n: Record<string, any>): string {
-  if (level === "hot") return i18n.reportHeatAdviceHot || ""
-  if (level === "warm") return i18n.reportHeatAdviceWarm || ""
-  if (level === "cool") return i18n.reportHeatAdviceCool || ""
+/** 热点建议文案的 i18n 键（按等级选择；由 UI 层解析 i18n，数据层只存键名避免语言快照） */
+export function heatAdviceKey(level: HotspotLevel): string {
+  if (level === "hot") return "reportHeatAdviceHot"
+  if (level === "warm") return "reportHeatAdviceWarm"
+  if (level === "cool") return "reportHeatAdviceCool"
   return ""
 }
 
@@ -318,18 +318,15 @@ const SEVERITY_ORDER: Record<DebtSeverity, number> = { severe: 0, high: 1, mediu
 
 /**
  * 由解析结果组装完整报告。
- * @param projectId 项目 ID（透传用于后续跳转/过滤）
- * @param projectName 项目名称
+ * @param project 项目（用于读取当前存在性/代码行数）
  * @param commits 解析后的提交块（空数组 = 无提交或 git 失败）
  * @param rangeLabel 时间范围标签
- * @param i18n 建议文案模板来源（i18n 分片，纯文本不参与响应式）
  * @param debtMinModCount 债务门槛（修改次数低于该值不列为债务；默认 DEBT_MIN_MOD_COUNT）
  */
 export function buildReportData(
   project: GitProject,
   commits: NumstatCommit[],
   rangeLabel: string,
-  i18n: Record<string, any>,
   debtMinModCount: number = DEBT_MIN_MOD_COUNT,
 ): CodeReportData {
   const authors = aggregateAuthorStats(commits)
@@ -366,7 +363,7 @@ export function buildReportData(
       ...base,
       heat,
       level,
-      advice: buildHeatAdvice(level, i18n),
+      adviceKey: heatAdviceKey(level),
     })
   })
 
@@ -413,7 +410,7 @@ export function buildReportData(
     debtSummary,
     hotspots: hotspotRows.slice(0, HOTSPOT_LIMIT),
     hotspotSummary,
-    suggestion: i18n[suggestionKeyName] || "",
+    suggestionKey: suggestionKeyName,
     analyzedFiles: totalFiles,
   }
 }
@@ -433,7 +430,7 @@ export function buildEmptyReport(project: GitProject, rangeLabel: string): CodeR
     debtSummary: { severe: 0, high: 0, medium: 0, low: 0 },
     hotspots: [],
     hotspotSummary: HOTSPOT_LEVEL_ORDER.map((level) => ({ level, count: 0, pct: 0 })),
-    suggestion: "",
+    suggestionKey: "",
     analyzedFiles: 0,
   }
 }

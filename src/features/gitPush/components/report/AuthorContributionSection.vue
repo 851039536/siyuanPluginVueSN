@@ -14,54 +14,76 @@
       :text="i18n.reportNoData"
     />
 
-    <!-- 作者排行表 -->
+    <!-- 作者排行表（HTML table 布局：跨行列宽强制一致，数字列按内容自适应） -->
     <div
       v-else
       class="gpr-table-wrap"
     >
-      <div class="gpr-row gpr-row--head">
-        <span class="gpr-cell gpr-cell--name">{{ i18n.projectName }}</span>
-        <span class="gpr-cell gpr-cell--num gpr-cell--commits">{{ i18n.reportCommitsCol }}</span>
-        <span class="gpr-cell gpr-cell--num">{{ i18n.reportLinesCol }}</span>
-        <span class="gpr-cell gpr-cell--num">{{ i18n.reportNetCol }}</span>
-        <span class="gpr-cell gpr-cell--num">{{ i18n.reportAvgSizeCol }}</span>
-        <span class="gpr-cell gpr-cell--num">{{ i18n.reportFrequencyCol }}</span>
-        <span class="gpr-cell gpr-cell--num">{{ i18n.reportFilesCol }}</span>
-        <span class="gpr-cell gpr-cell--num gpr-cell--wider">{{ i18n.reportQualityCol }}</span>
-        <span class="gpr-cell gpr-cell--num">{{ i18n.reportActiveDaysCol }}</span>
-      </div>
-      <div
-        v-for="a in authors"
-        :key="a.author"
-        class="gpr-row"
-      >
-        <span
-          class="gpr-cell gpr-cell--name"
-          :title="a.author"
-        >{{ a.author }}</span>
-        <span class="gpr-cell gpr-cell--num gpr-cell--commits">{{ a.commits }}</span>
-        <span class="gpr-cell gpr-cell--num">{{ a.linesAdded }}</span>
-        <!-- 净增列：正负着色（+ 绿色 / - 红色） -->
-        <span
-          class="gpr-cell gpr-cell--num gpr-cell--net"
-          :class="netClass(a.netLines)"
-        >{{ formatNet(a.netLines) }}</span>
-        <span class="gpr-cell gpr-cell--num">{{ a.avgCommitSize }}</span>
-        <span class="gpr-cell gpr-cell--num">{{ a.frequency }}</span>
-        <span class="gpr-cell gpr-cell--num">{{ a.filesTouched }}</span>
-        <!-- 质量评分列：分数 + 等级徽章 + 星级 -->
-        <span class="gpr-cell gpr-cell--num gpr-cell--wider">
-          <span
-            class="gpr-grade-chip"
-            :style="{ color: GRADE_META[a.grade].color }"
-          >{{ a.quality }}/100 [{{ i18n[GRADE_META[a.grade].labelKey] }}级]</span>
-          <span
-            class="gpr-stars"
-            :title="String(a.quality)"
-          >{{ "★".repeat(GRADE_META[a.grade].stars) }}</span>
-        </span>
-        <span class="gpr-cell gpr-cell--num">{{ a.activeDays }}</span>
-      </div>
+      <table class="gpr-author-table">
+        <thead>
+          <tr>
+            <!-- 表头："作者" -->
+            <th class="gpr-author-th">{{ i18n.projectName }}</th>
+            <!-- 表头："提交次数" -->
+            <th class="gpr-author-th gpr-author-th--num">{{ i18n.reportCommitsCol }}</th>
+            <!-- 表头："新增行数" -->
+            <th class="gpr-author-th gpr-author-th--num">{{ i18n.reportLinesCol }}</th>
+            <!-- 表头："净增行数" -->
+            <th class="gpr-author-th gpr-author-th--num">{{ i18n.reportNetCol }}</th>
+            <!-- 表头："平均提交大小" -->
+            <th class="gpr-author-th gpr-author-th--num">{{ i18n.reportAvgSizeCol }}</th>
+            <!-- 表头："提交频率" -->
+            <th class="gpr-author-th gpr-author-th--num">{{ i18n.reportFrequencyCol }}</th>
+            <!-- 表头："涉及文件数" -->
+            <th class="gpr-author-th gpr-author-th--num">{{ i18n.reportFilesCol }}</th>
+            <!-- 表头："质量评分" -->
+            <th class="gpr-author-th gpr-author-th--num">{{ i18n.reportQualityCol }}</th>
+            <!-- 表头："活跃天数" -->
+            <th class="gpr-author-th gpr-author-th--num">{{ i18n.reportActiveDaysCol }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="a in authors"
+            :key="a.author"
+            class="gpr-author-row"
+          >
+            <!-- 作者名（超长省略，完整名悬停可见） -->
+            <td
+              class="gpr-author-cell gpr-author-cell--name"
+              :title="a.author"
+            >{{ a.author }}</td>
+            <!-- 提交次数 -->
+            <td class="gpr-author-cell gpr-author-cell--num">{{ a.commits }}</td>
+            <!-- 新增行数 -->
+            <td class="gpr-author-cell gpr-author-cell--num">{{ a.linesAdded }}</td>
+            <!-- 净增行数（正负着色：+ 绿色 / - 红色） -->
+            <td
+              class="gpr-author-cell gpr-author-cell--num"
+              :class="netClass(a.netLines)"
+            >{{ formatNet(a.netLines) }}</td>
+            <!-- 平均提交大小 -->
+            <td class="gpr-author-cell gpr-author-cell--num">{{ a.avgCommitSize }}</td>
+            <!-- 提交频率 -->
+            <td class="gpr-author-cell gpr-author-cell--num">{{ a.frequency }}</td>
+            <!-- 涉及文件数 -->
+            <td class="gpr-author-cell gpr-author-cell--num">{{ a.filesTouched }}</td>
+            <!-- 质量评分：分数 + 等级徽章 + 星级 -->
+            <td class="gpr-author-cell gpr-author-cell--num">
+              <span
+                class="gpr-grade-chip"
+                :style="{ color: GRADE_META[a.grade].color }"
+              >{{ a.quality }}/100 [{{ i18n[GRADE_META[a.grade].labelKey] }}级]</span>
+              <span
+                class="gpr-stars"
+                :title="String(a.quality)"
+              >{{ "★".repeat(GRADE_META[a.grade].stars) }}</span>
+            </td>
+            <!-- 活跃天数 -->
+            <td class="gpr-author-cell gpr-author-cell--num">{{ a.activeDays }}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </template>

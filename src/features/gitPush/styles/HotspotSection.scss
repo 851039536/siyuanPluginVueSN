@@ -26,11 +26,17 @@
   font-size: $font-size-xs;
 }
 
-// 文件路径（目录弱化 + 文件名强调，快速扫描定位；悬停提示完整路径）
+// 文件路径（目录弱化 + 文件名强调，快速扫描定位；可点击打开文件，hover 主题色提示）
 .gpr-hot-path {
   flex: 1;
   min-width: 0;
   @include text-ellipsis;
+  cursor: pointer;
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: var(--b3-theme-primary);
+  }
 }
 
 // 路径目录部分（弱色，弱化噪音）
@@ -41,6 +47,16 @@
 // 路径文件名部分（正常色 + 中等字重，视觉强调）
 .gpr-path-base {
   font-weight: $font-weight-medium;
+}
+
+// 热点榜截断提示（仅展示前 N 个，其余文件未列出）
+.gpr-hot-truncated {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  margin-bottom: $spacing-3;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light);
 }
 
 // 热度徽章（仅数值，颜色编码等级；等级名由 title 提示承载）
@@ -93,6 +109,16 @@
   font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface-light);
   line-height: $line-height-normal;
+}
+
+// 热点榜截断提示（仅展示前 N 个，其余文件未列出；弱化色避免喧宾夺主）
+.gpr-hot-truncated {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  margin-bottom: $spacing-3;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light);
 }
 
 // ── 汇总子区块 ──

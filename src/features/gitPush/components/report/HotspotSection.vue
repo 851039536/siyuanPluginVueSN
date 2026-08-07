@@ -22,7 +22,7 @@
       <!-- 热点/温热文件列表（热度徽章 + 指标 + 建议） -->
       <div class="gpr-hot-list">
         <div
-          v-for="h in report.hotspots"
+          v-for="h in preparedHotspots"
           :key="h.path"
           class="gpr-hot-item"
         >
@@ -33,20 +33,22 @@
               :class="`gpr-heat-chip--${h.level}`"
               :title="i18n[HOTSPOT_LEVEL_META[h.level].labelKey]"
             >{{ h.heat }}</span>
-            <!-- 文件路径（目录弱化 + 文件名强调，悬浮显示完整路径） -->
+            <!-- 文件路径（目录弱化 + 文件名强调；点击经 shell.openPath 打开文件，悬浮提示完整路径 + 点击说明） -->
             <span
               class="gpr-hot-path"
-              :title="h.path"
+              :title="i18n.reportOpenFileTitle.replace('{0}', h.path)"
+              role="button"
+              @click="openFile(h.path)"
             >
-              <span class="gpr-path-dir">{{ splitPath(h.path).dir }}</span>
-              <span class="gpr-path-base">{{ splitPath(h.path).base }}</span>
+              <span class="gpr-path-dir">{{ h.dir }}</span>
+              <span class="gpr-path-base">{{ h.base }}</span>
             </span>
           </div>
           <!-- 指标行：修改次数 / 参与人数 / 代码行数 / 最后修改 -->
           <div class="gpr-hot-meta">
             <span>{{ i18n.reportModsCol }}: {{ h.modCount }}</span>
             <span>{{ i18n.reportAuthorsCol }}: {{ h.authorCount }}</span>
-            <span>LOC: {{ h.loc ?? "-" }}</span>
+            <span>{{ i18n.reportLinesCol }}: {{ h.loc ?? "-" }}</span>
             <span
               :title="h.lastModified"
             >{{ i18n.reportLastModifiedCol }}: {{ h.lastModified ? relativeTime(h.lastModified, i18n) : "-" }}</span>
@@ -57,6 +59,18 @@
             class="gpr-hot-advice"
           >{{ i18n[h.adviceKey] }}</div>
         </div>
+      </div>
+
+      <!-- 截断提示：热点榜仅展示前 12 个，分析文件数更多时提示（口径与徽章一致，多语文案由 i18n 承载） -->
+      <div
+        v-if="truncatedText"
+        class="gpr-hot-truncated"
+      >
+        <Icon
+          icon="mdi:information-outline"
+          height="12"
+        />
+        <span>{{ truncatedText }}</span>
       </div>
 
       <!-- 统计摘要：四类热度汇总表（文件数 + 占比） -->
@@ -109,10 +123,12 @@
 
 <script setup lang="ts">
 // 代码热点分区：热点文件列表（热度/指标/建议）+ 四类汇总表 + 优化建议
-import type { CodeReportData } from "../../types"
+import type { CodeReportData, GitProject } from "../../types"
+import { computed } from "vue"
 import { Icon } from "@iconify/vue"
 import { HOTSPOT_LEVEL_META } from "../../types"
-import { relativeTime } from "../../utils"
+import { getNodeFsPathOs } from "@/utils/nodeModules"
+import { openLocalPath, relativeTime, resolveValidPath } from "../../utils"
 import EmptyState from "../common/EmptyState.vue"
 
 /** 拆分文件路径为目录 + 文件名（dirname 弱化 / basename 强调，便于快速扫描定位文件） */
@@ -124,11 +140,38 @@ function splitPath(path: string): { dir: string, base: string } {
   return { dir: path.slice(0, idx + 1), base: path.slice(idx + 1) }
 }
 
-defineProps<{
+const props = defineProps<{
   i18n: Record<string, any>
-  /** 报告聚合数据（仅读取 hotspots / hotspotSummary / suggestionKey） */
+  /** 报告聚合数据（仅读取 hotspots / hotspotSummary / suggestionKey / analyzedFiles） */
   report: CodeReportData
+  /** 当前项目实例（点击路径打开文件需要解析根目录；可为 null 表示无项目） */
+  project: GitProject | null
 }>()
+
+/** 热点行预映射：预先拆分路径为 dir/base，避免模板中同一路径重复 splitPath 求值 */
+const preparedHotspots = computed(() =>
+  props.report.hotspots.map((h) => {
+    const { dir, base } = splitPath(h.path)
+    return { ...h, dir, base }
+  }),
+)
+
+/** 截断提示文案（热点榜仅展示前 12 个；分析文件数不超过榜单上限时返回空串，隐藏提示） */
+const truncatedText = computed(() => {
+  if (props.report.analyzedFiles <= props.report.hotspots.length) return ""
+  return props.i18n.reportHotspotTruncated
+    .replace("{0}", String(props.report.hotspots.length))
+    .replace("{1}", String(props.report.analyzedFiles))
+})
+
+/** 点击文件路径：拼接项目根目录后经 shell.openPath 以默认应用打开（浏览器环境无能力打开本地文件，静默忽略） */
+async function openFile(path: string) {
+  if (!props.project) return
+  const nodePath = getNodeFsPathOs()?.path
+  const root = resolveValidPath(props.project)
+  if (!nodePath || !root) return
+  await openLocalPath(nodePath.join(root, path))
+}
 </script>
 
 <style lang="scss">

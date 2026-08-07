@@ -32,21 +32,25 @@
   min-width: 0;
   @include text-ellipsis;
   cursor: pointer;
-  transition: color 0.15s ease;
 
   &:hover {
     color: var(--b3-theme-primary);
+    // 目录部分显式继承父级 hover 色，避免显式 color 阻止颜色传递
+    .gpr-path-dir {
+      color: inherit;
+    }
   }
 }
 
-// 路径目录部分（弱色，弱化噪音）
+// 路径目录部分（弱色，弱化噪音；hover 时由父级强制继承主题色）
 .gpr-path-dir {
   color: var(--b3-theme-on-surface-light);
 }
 
-// 路径文件名部分（正常色 + 中等字重，视觉强调）
+// 路径文件名部分（正常色 + 中等字重，视觉强调；transition 下放到实际承载颜色变化的子元素，保证 hover 平滑过渡）
 .gpr-path-base {
   font-weight: $font-weight-medium;
+  transition: color 0.15s ease;
 }
 
 // 热点榜截断提示（仅展示前 N 个，其余文件未列出）
@@ -111,26 +115,15 @@
   line-height: $line-height-normal;
 }
 
-// 热点榜截断提示（仅展示前 N 个，其余文件未列出；弱化色避免喧宾夺主）
-.gpr-hot-truncated {
-  display: flex;
-  align-items: center;
-  gap: $spacing-1;
-  margin-bottom: $spacing-3;
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-surface-light);
-}
-
 // ── 汇总子区块 ──
 .gpr-subsection {
   margin-bottom: $spacing-3;
 }
 
-// 汇总表热度等级色点
+// 汇总表热度等级色点（inline 流内排布，flex-shrink 无效；尺寸复用间距 Token）
 .gpr-heat-dot {
-  flex-shrink: 0;
-  width: 8px;
-  height: 8px;
+  width: $spacing-2;
+  height: $spacing-2;
   border-radius: 50%;
   margin-right: $spacing-1;
 }

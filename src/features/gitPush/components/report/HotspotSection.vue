@@ -38,7 +38,10 @@
               class="gpr-hot-path"
               :title="i18n.reportOpenFileTitle.replace('{0}', h.path)"
               role="button"
+              tabindex="0"
               @click="openFile(h.path)"
+              @keydown.enter="openFile(h.path)"
+              @keydown.space.prevent="openFile(h.path)"
             >
               <span class="gpr-path-dir">{{ h.dir }}</span>
               <span class="gpr-path-base">{{ h.base }}</span>

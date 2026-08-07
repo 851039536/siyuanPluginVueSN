@@ -1498,3 +1498,138 @@
   justify-content: center;
   padding: $spacing-2;
 }
+
+// ════ 代码统计报告（gpr-）共享基座：表格/徽章/区块标题原语（4 个分区 SCSS 复用，避免重复定义）════
+.gpr-section {
+  margin-bottom: $spacing-3;
+}
+
+.gpr-section-title {
+  @include gp-label-base;
+  font-size: $font-size-xs;
+  margin-bottom: $spacing-2;
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+}
+
+.gpr-section-count {
+  font-size: $font-size-2xs;
+  font-family: $vp-mono;
+  padding: 0 6px;
+  border-radius: $radius-sm;
+  background: var(--b3-theme-primary-lightest);
+  color: var(--b3-theme-primary);
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0;
+}
+
+// 表格（技术债务/贡献度/热点汇总共用）：sticky 表头 + 行分割 + 等宽右对齐数字
+.gpr-table-wrap {
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  overflow-y: auto;
+}
+
+.gpr-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: 5px $spacing-2;
+  font-size: $font-size-xs;
+  @include row-divider;
+
+  &--head {
+    // sticky 表头：滚动时常驻顶部（实色背景防透出下层行）
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--b3-theme-surface);
+    color: var(--b3-theme-on-surface-light);
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-bold;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  &--debt {
+    &:hover {
+      background: var(--b3-theme-surface);
+    }
+  }
+}
+
+.gpr-cell {
+  flex-shrink: 0;
+
+  &--name {
+    flex: 1;
+    min-width: 0;
+    @include text-ellipsis;
+  }
+
+  // 可点击文件路径（定位/悬停提示完整路径）
+  &--file {
+    color: var(--b3-theme-primary);
+    cursor: pointer;
+    @include text-ellipsis;
+  }
+
+  &--type {
+    width: 72px;
+    text-align: center;
+  }
+
+  &--pct {
+    width: 48px;
+    text-align: right;
+    font-family: $vp-mono;
+    font-size: $font-size-2xs;
+  }
+
+  &--num {
+    width: 42px;
+    text-align: right;
+    padding-right: $spacing-1;
+    font-family: $vp-mono;
+    font-size: $font-size-2xs;
+  }
+
+  // 质量评分列（分数 + 等级 + 星级）需更宽
+  &--wider {
+    width: 78px;
+  }
+
+  // 说明文案行（跨整行）
+  &--desc {
+    flex: 1;
+    min-width: 0;
+    font-size: $font-size-2xs;
+    opacity: 0.55;
+    line-height: $line-height-normal;
+  }
+}
+
+// 问题类型徽章（技术债务）
+.gpr-type-chip {
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  padding: 1px 5px;
+  border-radius: $radius-sm;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+// 净增正负着色（代码贡献度）
+.gpr-cell--pos { color: var(--b3-theme-success); }
+.gpr-cell--neg { color: var(--b3-theme-error); }
+
+// 星级（质量等级）
+.gpr-stars {
+  font-size: $font-size-2xs;
+  opacity: 0.7;
+  letter-spacing: 0.02em;
+}

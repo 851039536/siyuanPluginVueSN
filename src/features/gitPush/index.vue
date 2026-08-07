@@ -70,6 +70,21 @@
       @view-project="onViewProject"
     />
 
+    <!-- ========== 代码统计报告视图 ========== -->
+    <CodeReportPanel
+      v-if="currentView === 'report'"
+      :i18n="i18n"
+      :report="reportData"
+      :running="reportRunning"
+      :generated="reportGenerated"
+      :projects="projects"
+      :project-id="reportProjectId"
+      :range="reportRange"
+      @run-report="runReport"
+      @change-project="setProject"
+      @change-range="setRange"
+    />
+
     <!-- ========== 列表视图 ========== -->
     <template v-if="currentView === 'list'">
       <!-- 筛选工具栏 + 分类 TAB -->
@@ -316,6 +331,7 @@ import SettingsDialog from "./components/common/SettingsDialog.vue"
 import StatsPanel from "./components/stats/StatsPanel.vue"
 import LogPanel from "./components/log/LogPanel.vue"
 import CommitAnalysisPanel from "./components/analysis/CommitAnalysisPanel.vue"
+import CodeReportPanel from "./components/report/CodeReportPanel.vue"
 import BatchProgressBar from "./components/common/BatchProgressBar.vue"
 import EmptyState from "./components/common/EmptyState.vue"
 import GitConfigDialog from "./components/common/GitConfigDialog.vue"
@@ -333,6 +349,7 @@ import { useGitHandlers } from "./composables/useGitHandlers"
 import { useRefreshOps } from "./composables/useRefreshOps"
 import { useRepoLinkAudit } from "./composables/useRepoLinkAudit"
 import { useCommitAnalysis } from "./composables/useCommitAnalysis"
+import { useCodeReport } from "./composables/useCodeReport"
 import { CARD_SERVICES_KEY, PLATFORM_META, REMOTES } from "./types"
 import {
   openLocalPath,
@@ -581,6 +598,19 @@ const {
   updateViewSettings,
 } = useCommitAnalysis(props.manager, projects)
 
+// ── 代码统计报告（单项目 git numstat 统计：团队总览/贡献度/技术债务/热点；进入视图自动生成）──
+const {
+  reportData,
+  running: reportRunning,
+  generated: reportGenerated,
+  projectId: reportProjectId,
+  range: reportRange,
+  runReport,
+  setRange,
+  setProject,
+  ensureReport,
+} = useCodeReport(props.manager, projects, props.i18n)
+
 const {
   detectedIdes,
   customIdes,
@@ -767,7 +797,7 @@ async function ensureStatsDataLoaded() {
   return runProjectLoadBatch(pending, "stepStats", (id) => loadStatsData(id))
 }
 
-/** 切换视图时按目标视图补齐数据：列表→当前分类状态；统计→全量统计；日志→同步置 loading（pre-flush，避免 LogPanel 首渲闪空态）；分析→复用缓存或首次自动分析 */
+/** 切换视图时按目标视图补齐数据：列表→当前分类状态；统计→全量统计；日志→同步置 loading（pre-flush，避免 LogPanel 首渲闪空态）；分析→复用缓存或首次自动分析；报告→自动生成一次 */
 watch(currentView, async (view) => {
   if (view === "list") await loadCurrentCategoryList()
   if (view === "stats") await ensureStatsDataLoaded()
@@ -780,6 +810,7 @@ watch(currentView, async (view) => {
     }
   }
   if (view === "analysis" && !gitOpsPaused.value) await ensureAnalysis()
+  if (view === "report" && !gitOpsPaused.value) await ensureReport()
 })
 
 /** 切换到"需推送/有变更"智能视图时，补齐命中判定所需的全量状态数据 */
@@ -794,6 +825,11 @@ watch(gitOpsPaused, async (paused) => {
   // 提交分析视图：暂停期间跳过的缓存加载/首次分析在恢复后补齐
   if (currentView.value === "analysis") {
     await ensureAnalysis()
+    return
+  }
+  // 代码统计报告视图：暂停期间跳过的首次生成在恢复后补齐
+  if (currentView.value === "report") {
+    await ensureReport()
     return
   }
   // 统计视图 / 智能视图需要全量状态数据

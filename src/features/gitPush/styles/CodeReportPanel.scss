@@ -1,0 +1,103 @@
+// gitPush 代码统计报告面板（外壳/工具条/分区 Tab）
+@use "./variables" as *;
+@use "./mixins" as *;
+
+// 面板基座（与 StatsPanel 一致：独立滚动 + 上下留白）
+.gpr-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: $spacing-1 0;
+}
+
+// ── 顶部工具条（项目下拉 + 时间范围下拉 + 生成按钮）──
+.gpr-toolbar {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  margin-bottom: $spacing-2;
+}
+
+// 项目下拉：占据剩余宽度（名称超长省略）
+.gpr-project-select {
+  flex: 1;
+  min-width: 0;
+}
+
+// 时间范围下拉：固定窄宽
+.gpr-range-select {
+  flex: 0 0 88px;
+}
+
+// 生成/重新生成按钮（紧凑，与头部按钮一致）
+.gpr-run-btn {
+  flex-shrink: 0;
+  padding: $spacing-1 6px; // 水平 6px 与头部按钮统一，无对应 Token
+}
+
+// ── 生成信息行（生成时间 + 时间范围 + 数据源概况）──
+.gpr-meta {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  flex-wrap: wrap;
+  margin-bottom: $spacing-2;
+  font-size: $font-size-2xs;
+  opacity: 0.45;
+}
+
+// 生成失败提示（路径无效/非 git 仓库/无提交）
+.gpr-fail {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-2;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-warning);
+  background: var(--b3-theme-warning-lightest);
+  border: 1px solid var(--b3-theme-warning-lighter, var(--b3-theme-warning));
+  border-radius: $radius-sm;
+}
+
+// ── 分区 Tab 栏（团队总览/代码贡献度/技术债务/代码热点）──
+.gpr-tabs {
+  display: flex;
+  gap: $spacing-2px;
+  margin-bottom: $spacing-3;
+  border-bottom: 1px solid var(--b3-border-color);
+}
+
+.gpr-tab {
+  @include gp-label-base;
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-2;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  cursor: pointer;
+  opacity: 0.4;
+  transition: opacity 0.12s, border-color 0.12s, color 0.12s;
+
+  &:hover {
+    opacity: 0.7;
+  }
+
+  &.active {
+    opacity: 1;
+    border-bottom-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+  }
+}
+
+// 分区条数徽章（贡献度作者数 / 债务问题数 / 热点文件数）
+.gpr-tab-count {
+  font-size: $font-size-2xs;
+  font-family: $vp-mono;
+  font-weight: $font-weight-bold;
+  padding: 0 4px;
+  border-radius: $radius-full;
+  background: var(--b3-theme-primary-lightest);
+  color: var(--b3-theme-primary);
+  line-height: $line-height-normal;
+}

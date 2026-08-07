@@ -61,6 +61,18 @@
             height="12"
           />
         </button>
+        <!-- 按钮（tooltip："统计报告"） -->
+        <button
+          class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
+          :class="{ active: currentView === 'report' }"
+          :title="i18n.reportView"
+          @click="currentView = 'report'"
+        >
+          <Icon
+            icon="mdi:chart-box"
+            height="12"
+          />
+        </button>
       </div>
       <!-- 平台官网快捷入口 -->
       <span class="gp-header-sep" />

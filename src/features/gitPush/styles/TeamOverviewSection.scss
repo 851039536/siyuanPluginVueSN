@@ -1,0 +1,55 @@
+// gitPush 代码统计报告：团队总览 KPI 卡片
+@use "./variables" as *;
+@use "./mixins" as *;
+
+// KPI 卡片网格（自适应列数：窄 Dock 自动折行）
+.gpr-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: $spacing-1;
+}
+
+.gpr-card {
+  text-align: center;
+  padding: $spacing-2 $spacing-1;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-base;
+  background: var(--b3-theme-surface);
+  transition: border-color 0.15s;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+// 卡片数值：等宽大号突出展示
+.gpr-card-value {
+  font-size: $font-size-lg; // 数据突出展示：统计数值大号字体
+  font-weight: $font-weight-bold;
+  font-family: $vp-mono;
+  line-height: $line-height-tight;
+  margin-bottom: 1px; // 数值与标签的最小视觉间隔（小于 $spacing-2px，刻意紧贴）
+  color: var(--b3-theme-on-surface);
+  // 文本类数值（最活跃贡献者）可长，超出省略
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// 卡片标签：两级字号制（辅助标签）
+.gpr-card-label {
+  font-size: $font-size-2xs;
+  opacity: 0.5;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+// 平均质量卡：警告色（数值可低于 60）
+.gpr-card--warn .gpr-card-value {
+  color: var(--b3-theme-warning);
+}
+
+// 最活跃贡献者卡：主题色强调
+.gpr-card--accent .gpr-card-value {
+  color: var(--b3-theme-primary);
+}

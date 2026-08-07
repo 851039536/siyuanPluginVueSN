@@ -15,11 +15,6 @@
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
   background: var(--b3-theme-surface);
-  transition: border-color 0.15s;
-
-  &:hover {
-    border-color: var(--b3-theme-primary);
-  }
 }
 
 // 首行：热度徽章 + 文件路径
@@ -62,24 +57,24 @@
   }
 }
 
-// 指标行（修改次数/参与人数/最后修改）
+// 指标行（修改次数/参与人数/代码行数/最后修改；语义色弱化替代 opacity，保留可读性）
 .gpr-hot-meta {
   display: flex;
   align-items: center;
   gap: $spacing-3;
   flex-wrap: wrap;
   font-size: $font-size-2xs;
-  opacity: 0.5;
+  color: var(--b3-theme-on-surface-light);
   font-family: $vp-mono;
 }
 
-// 建议文案（按等级模板拼接）
+// 建议文案（按等级 i18n 键解析；语义色弱化替代 opacity）
 .gpr-hot-advice {
   margin-top: $spacing-1;
   padding-top: $spacing-1;
   border-top: 1px dashed var(--b3-border-color);
   font-size: $font-size-2xs;
-  opacity: 0.6;
+  color: var(--b3-theme-on-surface-light);
   line-height: $line-height-normal;
 }
 

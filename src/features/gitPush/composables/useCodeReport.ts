@@ -9,7 +9,7 @@ import type {
 } from "../types"
 import { computed, ref } from "vue"
 import { DEFAULT_REPORT_PREFS, REPORT_RANGE_LABEL_KEYS } from "../types"
-import { buildEmptyReport, buildReportData, sinceForRange } from "../reportMetrics"
+import { buildEmptyReport, buildReportData, sinceForRange, DEBT_MIN_MOD_COUNT } from "../reportMetrics"
 import type { NumstatCommit } from "../reportMetrics"
 import { relativeTime, resolveValidPath } from "../utils"
 
@@ -24,6 +24,8 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
   const projectId = ref<string>("")
   /** 时间范围（默认近 6 个月） */
   const range = ref<ReportRange>(DEFAULT_REPORT_PREFS.range)
+  /** 技术债务门槛（修改次数低于该值不列为债务；默认 3，数据层可配置，UI 控件后续接线） */
+  const debtMinModCount = ref<number>(DEBT_MIN_MOD_COUNT)
   /** 是否已从存储载入偏好（防重复读盘） */
   let prefsLoaded = false
   /** 聚合后的报告数据（未生成时为空报告） */
@@ -46,6 +48,9 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
     const saved = await manager.storage.reportPrefs.loadOrDefault()
     range.value = REPORT_RANGE_LABEL_KEYS[saved.range] ? saved.range : DEFAULT_REPORT_PREFS.range
     projectId.value = saved.projectId
+    // 债务门槛：旧存储无该字段时回退默认值，并钳位到 [1, 99] 防脏数据
+    const minCount = Math.round(saved.debtMinModCount ?? DEBT_MIN_MOD_COUNT)
+    debtMinModCount.value = Math.max(1, Math.min(99, minCount))
   }
 
   /** 持久化偏好（生成成功或切换范围时调用，恢复会话选择） */
@@ -83,7 +88,7 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
         : (i18n[REPORT_RANGE_LABEL_KEYS[range.value]] || "")
       reportData.value = gitFailed
         ? buildEmptyReport(project, rangeLabel)
-        : buildReportData(project, commits, rangeLabel, i18n)
+        : buildReportData(project, commits, rangeLabel, i18n, debtMinModCount.value)
       generatedAt.value = new Date().toISOString()
       generated.value = true
       await savePrefs()
@@ -121,6 +126,7 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
     generatedAt,
     projectId,
     range,
+    debtMinModCount,
     currentProject,
     runReport,
     setRange,

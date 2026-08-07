@@ -26,7 +26,24 @@
   font-size: $font-size-xs;
 }
 
-// 热度徽章（数值 + 等级，颜色由等级驱动）
+// 文件路径（目录弱化 + 文件名强调，快速扫描定位；悬停提示完整路径）
+.gpr-hot-path {
+  flex: 1;
+  min-width: 0;
+  @include text-ellipsis;
+}
+
+// 路径目录部分（弱色，弱化噪音）
+.gpr-path-dir {
+  color: var(--b3-theme-on-surface-light);
+}
+
+// 路径文件名部分（正常色 + 中等字重，视觉强调）
+.gpr-path-base {
+  font-weight: $font-weight-medium;
+}
+
+// 热度徽章（仅数值，颜色编码等级；等级名由 title 提示承载）
 .gpr-heat-chip {
   flex-shrink: 0;
   font-size: $font-size-2xs;

@@ -10,5 +10,22 @@
   "docNavReference": "参考",
   "docNavReferencePanelTitle": "参考",
   "docNavSiblings": "同级",
-  "docNavSiblingPanelTitle": "同级文档"
+  "docNavSiblingPanelTitle": "同级文档",
+  "docNavBacklinks": "反向链接",
+  "docNavBacklinkPanelTitle": "反向链接",
+  "docNavBacklinkSearchPlaceholder": "搜索...",
+  "docNavBacklinkNoResults": "无结果",
+  "docNavFilter": "过滤",
+  "docNavFilterPanelTitle": "过滤结果",
+  "docNavMetaCreated": "创建",
+  "docNavMetaUpdated": "更新",
+  "docNavMetaBlocks": "块",
+  "docNavMetaBytes": "字节",
+  "docNavMetaCreatedAt": "创建于",
+  "docNavMetaUpdatedAt": "更新于",
+  "docNavFilterKeywordsEdit": "编辑关键词",
+  "docNavFilterKeywordsPlaceholder": "输入关键词，逗号分隔",
+  "docNavFilterKeywordsSave": "保存",
+  "docNavFilterKeywordsCancel": "取消",
+  "docNavFilterKeywordsHint": "逗号分隔多个关键词"
 }

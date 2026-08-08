@@ -242,6 +242,26 @@ export interface IListDocsByPathResponse {
   files: IFile[]
 }
 
+/** getDoc 返回的文档详情（created/updated 为 YYYYMMDDHHMMSS 格式字符串） */
+export interface DocDetail {
+  id: string
+  name: string
+  icon: string
+  memo: string
+  path: string
+  size: number
+  fcount: number
+  subFileCount: number
+  created: string
+  updated: string
+  hCreated: string
+  hUpdated: string
+  content: string
+  markdown: string
+  /** SiYuan /api/filetree/getDoc 返回的块属性（可能是对象或 JSON 字符串，created/updated 可能在内） */
+  ial?: string | { created?: string; updated?: string }
+}
+
 /**
  * 列出指定路径下的文档
  * @param notebook 笔记本 ID
@@ -277,6 +297,67 @@ export async function getPathByID(
     id,
   }
   const url = "/api/filetree/getPathByID"
+  return request(url, data)
+}
+
+/**
+ * 获取文档详情（含创建/更新时间、图标、备注、规模等元数据）
+ * @param id 文档块 ID
+ * @param mode 内容模式：0=DOM（默认），1=Markdown
+ */
+export async function getDoc(
+  id: BlockId,
+  mode: number = 0,
+): Promise<DocDetail | null> {
+  const data = {
+    id,
+    mode,
+  }
+  const url = "/api/filetree/getDoc"
+  return request(url, data)
+}
+
+// **************************************** Ref（反向链接/提及） ****************************************
+
+/** 反链/反提及返回的引用文档条目（IFile 基础上补充所属笔记本 box） */
+export interface IRefFile extends IFile {
+  box: string
+}
+
+/** getBacklink / getBackmention 通用返回结构：files=文档级引用，backmention=块级提及聚合 */
+export interface IGetBacklinkResponse {
+  backmention: IRefFile[]
+  files: IRefFile[]
+}
+
+/**
+ * 获取引用当前文档的文档列表（反链）
+ * @param id 块 ID
+ */
+export async function getBacklink(
+  id: BlockId,
+): Promise<IGetBacklinkResponse | null> {
+  const data = {
+    id,
+  }
+  const url = "/api/ref/getBacklink"
+  return request(url, data)
+}
+
+/**
+ * 获取提及当前文档的文档列表（反提及）
+ * @param id 被提及的块 ID
+ * @param rootID 被提及块所属文档 ID
+ */
+export async function getBackmention(
+  id: BlockId,
+  rootID: BlockId,
+): Promise<IGetBacklinkResponse | null> {
+  const data = {
+    id,
+    rootID,
+  }
+  const url = "/api/ref/getBackmention"
   return request(url, data)
 }
 

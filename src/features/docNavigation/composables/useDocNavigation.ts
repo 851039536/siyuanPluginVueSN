@@ -1,11 +1,13 @@
-// 文档导航核心逻辑：加载层级/面包屑/同级/标题，计算显示条件，提供跳转与 HTML 清洗
+// 文档导航核心逻辑：加载层级/面包屑/同级/反链/元数据，计算显示条件，提供跳转与 HTML 清洗
 import type {
   ComputedRef,
   Ref,
 } from "vue"
 import type {
+  BacklinkItem,
   Block,
   BreadcrumbItem,
+  DocMeta,
   ProtyleLike,
   SiblingDocs,
   TargetCacheItem,
@@ -14,11 +16,16 @@ import {
   computed,
   ref,
 } from "vue"
+import {
+  DEFAULT_NAV_SETTINGS,
+} from "../types"
 import * as api from "@/api"
 import {
   DocNavigationCache,
+  fetchBacklinks,
   fetchBreadcrumb,
   fetchDocHierarchy,
+  fetchDocMeta,
   fetchSiblingDocs,
 } from "../types/storage"
 
@@ -27,6 +34,11 @@ export interface UseDocNavigationReturn {
   childDocs: Ref<Block[]>
   breadcrumbs: Ref<BreadcrumbItem[]>
   siblingDocs: Ref<SiblingDocs>
+  backlinks: Ref<BacklinkItem[]>
+  backlinkCount: ComputedRef<number>
+  hasBacklinks: ComputedRef<boolean>
+  docMeta: Ref<DocMeta | null>
+  hasMeta: ComputedRef<boolean>
   currentDocId: Ref<string>
   notebook: Ref<string>
   hasNavigation: ComputedRef<boolean>
@@ -35,9 +47,11 @@ export interface UseDocNavigationReturn {
   childCount: ComputedRef<number>
   filteredChildDocs: ComputedRef<Block[]>
   filteredChildCount: ComputedRef<number>
+  filterKeywords: Ref<string[]>
   loadHierarchy: (docId: string) => Promise<void>
   openDoc: (docId: string) => void
   stripHtml: (html: string) => string
+  setFilterKeywords: (keywords: string[]) => void
 }
 
 const cache = new DocNavigationCache()
@@ -54,6 +68,9 @@ export function useDocNavigation(): UseDocNavigationReturn {
   const childDocs = ref<Block[]>([])
   const breadcrumbs = ref<BreadcrumbItem[]>([])
   const siblingDocs = ref<SiblingDocs>({ ...emptySiblings })
+  const backlinks = ref<BacklinkItem[]>([])
+  const docMeta = ref<DocMeta | null>(null)
+  const filterKeywords = ref<string[]>([...DEFAULT_NAV_SETTINGS.filterKeywords])
   const currentDocId = ref("")
   const notebook = ref("")
 
@@ -73,20 +90,47 @@ export function useDocNavigation(): UseDocNavigationReturn {
     return childDocs.value.length
   })
 
+  const backlinkCount = computed(() => {
+    return backlinks.value.length
+  })
+
+  const hasBacklinks = computed(() => {
+    return backlinks.value.length > 0
+  })
+
+  const hasMeta = computed(() => {
+    return docMeta.value !== null
+  })
+
   // childDocs 的 content 来自文件名（iFileToBlock 已去 .sy 后缀），纯文本无需 HTML 清洗
+  // 多关键词过滤：任一关键词命中即保留，关键词列表为空时不显示过滤结果
   const filteredChildDocs = computed(() => {
-    return childDocs.value.filter((doc) => doc.content.includes("参考"))
+    const keywords = filterKeywords.value.filter((kw) => kw.trim() !== "")
+    if (keywords.length === 0) {
+      return []
+    }
+    return childDocs.value.filter((doc) =>
+      keywords.some((kw) => doc.content.includes(kw)),
+    )
   })
 
   const filteredChildCount = computed(() => {
     return filteredChildDocs.value.length
   })
 
+  function setFilterKeywords(keywords: string[]): void {
+    filterKeywords.value = Array.isArray(keywords)
+      ? [...keywords]
+      : [...DEFAULT_NAV_SETTINGS.filterKeywords]
+  }
+
   function resetState() {
     parentDoc.value = null
     childDocs.value = []
     breadcrumbs.value = []
     siblingDocs.value = { ...emptySiblings }
+    backlinks.value = []
+    docMeta.value = null
     notebook.value = ""
   }
 
@@ -110,16 +154,22 @@ export function useDocNavigation(): UseDocNavigationReturn {
       }
 
       // pathInfo 已窄化为非空 { notebook, path }，直接传给数据层
-      const [hierarchy, breadcrumbItems, siblings] = await Promise.all([
-        fetchDocHierarchy(currentDoc, cache, pathInfo),
-        fetchBreadcrumb(currentDoc, cache, pathInfo),
-        fetchSiblingDocs(currentDoc, cache, pathInfo),
-      ])
+      // 反链与元数据与层级数据并行获取，不增加串行等待时间
+      const [hierarchy, breadcrumbItems, siblings, backlinkItems, meta] =
+        await Promise.all([
+          fetchDocHierarchy(currentDoc, cache, pathInfo),
+          fetchBreadcrumb(currentDoc, cache, pathInfo),
+          fetchSiblingDocs(currentDoc, cache, pathInfo),
+          fetchBacklinks(currentDoc, cache),
+          fetchDocMeta(currentDoc, cache),
+        ])
 
       parentDoc.value = hierarchy.parent
       childDocs.value = hierarchy.children
       breadcrumbs.value = breadcrumbItems
       siblingDocs.value = siblings
+      backlinks.value = backlinkItems
+      docMeta.value = meta
     } catch (error) {
       console.error("加载文档层级失败:", error)
       resetState()
@@ -141,6 +191,11 @@ export function useDocNavigation(): UseDocNavigationReturn {
     childDocs,
     breadcrumbs,
     siblingDocs,
+    backlinks,
+    backlinkCount,
+    hasBacklinks,
+    docMeta,
+    hasMeta,
     currentDocId,
     notebook,
     hasNavigation,
@@ -149,9 +204,11 @@ export function useDocNavigation(): UseDocNavigationReturn {
     childCount,
     filteredChildDocs,
     filteredChildCount,
+    filterKeywords,
     loadHierarchy,
     openDoc,
     stripHtml,
+    setFilterKeywords,
   }
 }
 

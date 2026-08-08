@@ -1,0 +1,24 @@
+@use "@/variables" as *;
+
+// 文档元数据信息条样式：右对齐、辅助字号、半透明，hover 时增强显示
+.doc-meta-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  margin-left: auto;
+  padding: $spacing-2px $spacing-2;
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-2xs;
+  line-height: $line-height-tight;
+  white-space: nowrap;
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.doc-meta-bar-separator {
+  opacity: 0.4;
+}

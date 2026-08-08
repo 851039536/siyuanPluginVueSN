@@ -65,6 +65,22 @@ export const FEATURE_ICONS = {
     icon: "mdi:format-list-bulleted-square",
     color: "#8b5cf6",
   },
+  docNavBacklink: {
+    icon: "mdi:link-variant",
+    color: "#8b5cf6",
+  },
+  docNavBacklinkSearch: {
+    icon: "mdi:magnify",
+    color: "#8b5cf6",
+  },
+  docNavFilter: {
+    icon: "mdi:filter-variant",
+    color: "#8b5cf6",
+  },
+  docNavKeywordEdit: {
+    icon: "mdi:pencil",
+    color: "#8b5cf6",
+  },
 
   // 页面锁定
   pageLock: {

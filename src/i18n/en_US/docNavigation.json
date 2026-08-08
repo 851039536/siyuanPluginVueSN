@@ -8,5 +8,7 @@
   "docNavExpand": "Expand",
   "docNavCollapse": "Collapse",
   "docNavReference": "Reference",
-  "docNavReferencePanelTitle": "References"
+  "docNavReferencePanelTitle": "References",
+  "docNavSiblings": "Siblings",
+  "docNavSiblingPanelTitle": "Sibling Documents"
 }

@@ -8,5 +8,7 @@
   "docNavExpand": "展开",
   "docNavCollapse": "折叠",
   "docNavReference": "参考",
-  "docNavReferencePanelTitle": "参考"
+  "docNavReferencePanelTitle": "参考",
+  "docNavSiblings": "同级",
+  "docNavSiblingPanelTitle": "同级文档"
 }

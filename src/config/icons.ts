@@ -61,6 +61,10 @@ export const FEATURE_ICONS = {
     icon: "mdi:book-open-variant",
     color: "#8b5cf6",
   },
+  docNavSiblings: {
+    icon: "mdi:format-list-bulleted-square",
+    color: "#8b5cf6",
+  },
 
   // 页面锁定
   pageLock: {

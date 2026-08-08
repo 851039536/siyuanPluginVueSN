@@ -629,6 +629,8 @@
   "docNavCollapse": "折叠",
   "docNavReference": "参考",
   "docNavReferencePanelTitle": "参考",
+  "docNavSiblings": "同级",
+  "docNavSiblingPanelTitle": "同级文档",
   "copiedSuccess": "已复制到剪贴板",
   "encryption": "内容加密",
   "encryptionSettings": "密码加密",

@@ -10,5 +10,22 @@
   "docNavReference": "Reference",
   "docNavReferencePanelTitle": "References",
   "docNavSiblings": "Siblings",
-  "docNavSiblingPanelTitle": "Sibling Documents"
+  "docNavSiblingPanelTitle": "Sibling Documents",
+  "docNavBacklinks": "Backlinks",
+  "docNavBacklinkPanelTitle": "Backlinks",
+  "docNavBacklinkSearchPlaceholder": "Search...",
+  "docNavBacklinkNoResults": "No results",
+  "docNavFilter": "Filter",
+  "docNavFilterPanelTitle": "Filter Results",
+  "docNavMetaCreated": "Created",
+  "docNavMetaUpdated": "Updated",
+  "docNavMetaBlocks": "blocks",
+  "docNavMetaBytes": "bytes",
+  "docNavMetaCreatedAt": "Created at",
+  "docNavMetaUpdatedAt": "Updated at",
+  "docNavFilterKeywordsEdit": "Edit Keywords",
+  "docNavFilterKeywordsPlaceholder": "Keywords, comma separated",
+  "docNavFilterKeywordsSave": "Save",
+  "docNavFilterKeywordsCancel": "Cancel",
+  "docNavFilterKeywordsHint": "Separate keywords with commas"
 }

@@ -1,11 +1,15 @@
-// 文档导航数据层：设置持久化、DocNavigationCache 缓存、层级/面包屑/同级/文档标题获取
+// 文档导航数据层：设置持久化、DocNavigationCache 缓存、层级/面包屑/同级/反链/元数据获取
 import type {
+  BacklinkCacheItem,
+  BacklinkItem,
   Block,
   BreadcrumbCacheItem,
   BreadcrumbItem,
   DocHierarchy,
   DocHierarchyCacheItem,
+  DocMeta,
   DocNavSettings,
+  MetaCacheItem,
   SiblingCacheItem,
   SiblingDocs,
 } from "./index"
@@ -36,6 +40,8 @@ export class DocNavigationCache {
   private hierarchyCache = new Map<string, DocHierarchyCacheItem>()
   private breadcrumbCache = new Map<string, BreadcrumbCacheItem>()
   private siblingCache = new Map<string, SiblingCacheItem>()
+  private backlinkCache = new Map<string, BacklinkCacheItem>()
+  private metaCache = new Map<string, MetaCacheItem>()
   private htmlCache = new Map<string, string>()
   private maxCacheSize: number
   private cacheTTL: number
@@ -138,10 +144,32 @@ export class DocNavigationCache {
     })
   }
 
+  getCachedBacklinks(box: string, docId: string): BacklinkCacheItem | null {
+    return this.get(this.backlinkCache, box, docId)
+  }
+
+  setCachedBacklinks(
+    box: string,
+    docId: string,
+    items: BacklinkItem[],
+  ): void {
+    this.set(this.backlinkCache, box, docId, { items })
+  }
+
+  getCachedMeta(box: string, docId: string): MetaCacheItem | null {
+    return this.get(this.metaCache, box, docId)
+  }
+
+  setCachedMeta(box: string, docId: string, meta: DocMeta): void {
+    this.set(this.metaCache, box, docId, { meta })
+  }
+
   clearAll(): void {
     this.hierarchyCache.clear()
     this.breadcrumbCache.clear()
     this.siblingCache.clear()
+    this.backlinkCache.clear()
+    this.metaCache.clear()
     this.htmlCache.clear()
   }
 }
@@ -422,5 +450,117 @@ export async function fetchSiblingDocs(
       siblings: [],
       currentIndex: -1,
     }
+  }
+}
+
+/** 反链展示上限，超过部分丢弃，避免面板渲染卡顿 */
+const MAX_BACKLINK_COUNT = 50
+
+/**
+ * 获取引用/提及当前文档的文档列表（反链 + 反提及合并去重）
+ * 使用 getBacklink + getBackmention 官方 API，截断至 MAX_BACKLINK_COUNT 条
+ */
+export async function fetchBacklinks(
+  currentDoc: Block,
+  cache: DocNavigationCache,
+): Promise<BacklinkItem[]> {
+  try {
+    if (!currentDoc.box) {
+      return []
+    }
+
+    const cached = cache.getCachedBacklinks(currentDoc.box, currentDoc.id)
+    if (cached) {
+      return cached.items
+    }
+
+    const [backlinkRes, backmentionRes] = await Promise.all([
+      api.getBacklink(currentDoc.id),
+      api.getBackmention(currentDoc.id, currentDoc.id),
+    ])
+
+    const seen = new Set<string>()
+    const items: BacklinkItem[] = []
+    const files = [
+      ...(backlinkRes?.files ?? []),
+      ...(backlinkRes?.backmention ?? []),
+      ...(backmentionRes?.files ?? []),
+      ...(backmentionRes?.backmention ?? []),
+    ]
+    for (const file of files) {
+      if (seen.has(file.id)) {
+        continue
+      }
+      seen.add(file.id)
+      items.push({
+        id: file.id,
+        content: stripSySuffix(file.name),
+        hpath: stripSySuffix(file.path),
+        box: file.box,
+      })
+      if (items.length >= MAX_BACKLINK_COUNT) {
+        break
+      }
+    }
+
+    cache.setCachedBacklinks(currentDoc.box, currentDoc.id, items)
+    return items
+  } catch (error) {
+    console.error("获取反向链接失败:", error)
+    return []
+  }
+}
+
+/**
+ * 获取文档元数据（创建/更新时间、块数、图标、备注、大小）
+ * 时间从 blocks 表 SQL 查询（最可靠），块数同表统计，图标/备注/大小来自 getDoc
+ */
+export async function fetchDocMeta(
+  currentDoc: Block,
+  cache: DocNavigationCache,
+): Promise<DocMeta | null> {
+  try {
+    if (!currentDoc.box) {
+      return null
+    }
+
+    const cached = cache.getCachedMeta(currentDoc.box, currentDoc.id)
+    if (cached) {
+      return cached.meta
+    }
+
+    // 同时查块数统计和根块时间（blocks 表 created/updated 为 YYYYMMDDHHMMSS 格式）
+    const [docResult, blockInfo] = await Promise.all([
+      api.getDoc(currentDoc.id),
+      api.sql(
+        `select ` +
+          `(select count(*) from blocks where root_id = '${currentDoc.id}') as c, ` +
+          `(select created from blocks where id = '${currentDoc.id}') as created, ` +
+          `(select updated from blocks where id = '${currentDoc.id}') as updated`,
+      ),
+    ])
+    if (!docResult) {
+      return null
+    }
+
+    const info = (blockInfo as Array<{ c?: number | string; created?: string; updated?: string }>)?.[0]
+    // 优先使用 SQL 查询的 blocks 表时间（最可靠），回退到 getDoc 的 ial/顶层字段
+    const ialTime = typeof docResult.ial === "object" && docResult.ial !== null
+      ? docResult.ial
+      : undefined
+    const meta: DocMeta = {
+      created: info?.created ?? ialTime?.created ?? docResult.created ?? "",
+      updated: info?.updated ?? ialTime?.updated ?? docResult.updated ?? "",
+      count: Number(info?.c) || 0,
+      icon: docResult.icon ?? "",
+      memo: docResult.memo ?? "",
+      size: docResult.size ?? 0,
+    }
+
+    cache.setCachedMeta(currentDoc.box, currentDoc.id, meta)
+    return meta
+  } catch (error) {
+    console.error("获取文档元数据失败:", error)
+    return null
   }
 }

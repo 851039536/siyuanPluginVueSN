@@ -44,6 +44,42 @@ export interface SiblingCacheItem {
   timestamp: number
 }
 
+/** 反向链接条目（引用/提及当前文档的文档） */
+export interface BacklinkItem {
+  id: string
+  content: string
+  hpath: string
+  box?: string
+}
+
+/** 文档元数据（来自 getDoc + SQL 块数统计） */
+export interface DocMeta {
+  /** 创建时间，思源格式 YYYYMMDDHHMMSS */
+  created: string
+  /** 最后更新时间，思源格式 YYYYMMDDHHMMSS */
+  updated: string
+  /** 文档内块数统计 */
+  count: number
+  /** emoji 图标 */
+  icon: string
+  /** 备注 */
+  memo: string
+  /** 文件大小（字节） */
+  size: number
+}
+
+/** 反链缓存条目 */
+export interface BacklinkCacheItem {
+  items: BacklinkItem[]
+  timestamp: number
+}
+
+/** 元数据缓存条目 */
+export interface MetaCacheItem {
+  meta: DocMeta
+  timestamp: number
+}
+
 export interface TargetCacheItem {
   el: Element
   method: "after" | "before"
@@ -65,11 +101,14 @@ export const DEFAULT_OPTIONS: Required<DocNavigationOptions> = {
 export interface DocNavSettings {
   maxVisibleChildren: number
   position: "top" | "bottom"
+  /** 子文档过滤关键词列表，默认 ["参考"] 与旧版硬编码行为一致 */
+  filterKeywords: string[]
 }
 
 export const DEFAULT_NAV_SETTINGS: DocNavSettings = {
   maxVisibleChildren: 5,
   position: "top",
+  filterKeywords: ["参考"],
 }
 
 export interface ProtyleLike {

@@ -1,12 +1,14 @@
+<!-- 文档导航容器：面包屑 + 同级/下级/过滤下拉 + 反向链接下拉 + 元数据信息条 -->
 <template>
   <div
-    v-if="hasNavigation || hasBreadcrumbs || hasSiblings"
+    v-if="hasNavigation || hasBreadcrumbs || hasSiblings || hasBacklinks || hasMeta"
     class="doc-navigation-container"
     role="navigation"
     aria-label="文档导航"
     :data-doc-id="docId"
   >
     <div class="doc-navigation">
+      <!-- 面包屑导航 -->
       <div
         v-if="hasBreadcrumbs"
         class="doc-nav-breadcrumb"
@@ -83,7 +85,7 @@
         :panel-title="i18n.docNavPanelTitle"
       />
 
-      <!-- 参考下拉树形面板：仅显示标题含「参考」的子文档，无匹配项时不显示 -->
+      <!-- 过滤下拉：仅显示标题命中过滤关键词的子文档，无匹配项时不显示 -->
       <ChildDocDropdown
         v-if="filteredChildCount > 0"
         :child-docs="filteredChildDocs"
@@ -93,9 +95,33 @@
         :i18n="i18n"
         :open-doc="openDoc"
         :strip-html="stripHtml"
-        :trigger-text="i18n.docNavReference"
-        :panel-title="i18n.docNavReferencePanelTitle"
-        trigger-icon="docNavReference"
+        :trigger-text="i18n.docNavFilter"
+        :panel-title="i18n.docNavFilterPanelTitle"
+        trigger-icon="docNavFilter"
+      />
+
+      <!-- 过滤关键词编辑按钮：铅笔图标，内联编辑面板 -->
+      <FilterKeywordsEditor
+        :filter-keywords="filterKeywords"
+        :i18n="i18n"
+        @saved="handleFilterKeywordsSaved"
+      />
+
+      <!-- 反向链接下拉面板：展示引用/提及当前文档的文档 -->
+      <BacklinkDropdown
+        v-if="hasBacklinks"
+        :backlinks="backlinks"
+        :backlink-count="backlinkCount"
+        :i18n="i18n"
+        :open-doc="openDoc"
+        :strip-html="stripHtml"
+      />
+
+      <!-- 文档元数据信息条：创建/更新时间 + 块数 -->
+      <DocMetaBar
+        v-if="hasMeta"
+        :doc-meta="docMeta"
+        :i18n="i18n"
       />
     </div>
   </div>
@@ -103,10 +129,22 @@
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
-import { watch } from "vue"
+import {
+  onMounted,
+  watch,
+} from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { useDocNavigation } from "../composables/useDocNavigation"
+import {
+  DEFAULT_NAV_SETTINGS,
+} from "../types"
+import {
+  DocNavSettingsStorage,
+} from "../types/storage"
+import BacklinkDropdown from "./BacklinkDropdown.vue"
 import ChildDocDropdown from "./ChildDocDropdown.vue"
+import DocMetaBar from "./DocMetaBar.vue"
+import FilterKeywordsEditor from "./FilterKeywordsEditor.vue"
 import SiblingDropdown from "./SiblingDropdown.vue"
 
 const props = defineProps<{
@@ -122,6 +160,11 @@ const {
   childDocs,
   breadcrumbs,
   siblingDocs,
+  backlinks,
+  backlinkCount,
+  hasBacklinks,
+  docMeta,
+  hasMeta,
   currentDocId,
   notebook,
   hasNavigation,
@@ -130,10 +173,31 @@ const {
   childCount,
   filteredChildDocs,
   filteredChildCount,
+  filterKeywords,
   loadHierarchy,
   openDoc,
   stripHtml,
+  setFilterKeywords,
 } = useDocNavigation()
+
+/** 持久化存储实例，启动时创建，后续保存关键词时复用 */
+let settingsStorage: DocNavSettingsStorage
+
+/**
+ * 保存过滤关键词：写入持久化存储 + 更新运行时过滤状态
+ * 由 FilterKeywordsEditor 的 @saved 触发
+ */
+async function handleFilterKeywordsSaved(keywords: string[]): Promise<void> {
+  setFilterKeywords(keywords)
+  await settingsStorage.settings.set("filterKeywords", keywords)
+}
+
+/** 启动时加载设置并应用过滤关键词（默认 ["参考"]，向后兼容旧版硬编码行为） */
+onMounted(async () => {
+  settingsStorage = new DocNavSettingsStorage(props.plugin)
+  const settings = await settingsStorage.settings.loadOrDefault()
+  setFilterKeywords(settings.filterKeywords ?? DEFAULT_NAV_SETTINGS.filterKeywords)
+})
 
 watch(
   () => props.docId,

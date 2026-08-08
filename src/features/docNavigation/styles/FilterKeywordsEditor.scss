@@ -1,0 +1,162 @@
+@use "@/variables" as *;
+
+// 过滤关键词编辑器：铅笔触发按钮 + 下拉内联编辑面板
+.doc-nav-filter-editor {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.doc-nav-filter-editor-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: $radius-sm;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    opacity: 0.9;
+    background: var(--b3-theme-surface-lighter);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--b3-theme-primary);
+    opacity: 0.9;
+  }
+}
+
+// 内联编辑面板
+.doc-nav-filter-editor-panel {
+  position: absolute;
+  top: calc(100% + $spacing-1);
+  left: 0;
+  z-index: 100;
+  min-width: 200px;
+  max-width: 280px;
+  padding: $spacing-2;
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $vp-radius;
+  font-size: $font-size-xs;
+  line-height: $line-height-normal;
+}
+
+// 面板标题
+.doc-nav-filter-editor-header {
+  margin-bottom: $spacing-2;
+  padding-bottom: $spacing-2px;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-tight;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  opacity: 0.7;
+}
+
+// 输入框
+.doc-nav-filter-editor-input {
+  width: 100%;
+  padding: $spacing-1 $spacing-2;
+  margin-bottom: $spacing-1;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-sm;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-xs;
+  font-family: $vp-mono;
+  line-height: $line-height-normal;
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: var(--b3-theme-primary);
+  }
+
+  &::placeholder {
+    color: var(--b3-theme-on-surface);
+    opacity: 0.4;
+    font-family: inherit;
+  }
+}
+
+// 提示文字
+.doc-nav-filter-editor-hint {
+  margin-bottom: $spacing-2;
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-2xs;
+  line-height: $line-height-tight;
+  opacity: 0.5;
+}
+
+// 操作按钮行
+.doc-nav-filter-editor-actions {
+  display: flex;
+  gap: $spacing-1;
+  justify-content: flex-end;
+}
+
+// 按钮共用样式
+.doc-nav-filter-editor-btn {
+  padding: $spacing-2px $spacing-2;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-tight;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+// 取消按钮
+.doc-nav-filter-editor-btn--cancel {
+  background: var(--b3-theme-surface-lighter);
+  color: var(--b3-theme-on-surface);
+
+  &:hover {
+    background: var(--b3-theme-surface);
+  }
+}
+
+// 保存按钮
+.doc-nav-filter-editor-btn--save {
+  background: var(--b3-theme-primary);
+  border-color: var(--b3-theme-primary);
+  color: var(--b3-theme-on-primary);
+
+  &:hover {
+    background: var(--b3-theme-primary-hover);
+  }
+}
+
+// 过渡动画
+.doc-nav-filter-editor-fade-enter-active,
+.doc-nav-filter-editor-fade-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.doc-nav-filter-editor-fade-enter-from,
+.doc-nav-filter-editor-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-$spacing-1);
+}
+
+.doc-nav-filter-editor-fade-enter-to,
+.doc-nav-filter-editor-fade-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}

@@ -330,6 +330,23 @@ export function buildReportData(
   const authors = aggregateAuthorStats(commits)
   const fileMap = aggregateFileStats(commits)
 
+  // 作者 Top 修改文件详情查找表（供文件详情弹窗随机访问）
+  // 每个作者的 Top3 路径去重后逐条读取 LOC（fs 受 2MB 上限约束且数量受 作者数×3 约束，开销可控）
+  const fileDetailsMap: Record<string, FileStatRow> = {}
+  for (const author of authors) {
+    for (const f of author.topFiles) {
+      if (fileDetailsMap[f.path]) continue
+      const agg = fileMap.get(f.path)
+      fileDetailsMap[f.path] = {
+        path: f.path,
+        modCount: agg?.modCount ?? f.count,
+        authorCount: agg?.authors.size ?? 0,
+        lastModified: agg?.lastIso ?? "",
+        loc: countFileLines(project, f.path),
+      }
+    }
+  }
+
   // 文件 → 完整统计行（loc 仅在榜单 Top 读取行数控制开销）
   // 过滤链：①已从工作区删除的"幽灵文件"（历史记录不因删除而消失，需按当前磁盘存在性剔除）②非代码文件（.md 文档不属代码）
   const rankedFiles = [...fileMap.entries()]
@@ -416,6 +433,7 @@ export function buildReportData(
     hotspotSummary,
     suggestionKey: suggestionKeyName,
     analyzedFiles: totalFiles,
+    fileDetailsMap,
   }
 }
 
@@ -436,6 +454,7 @@ export function buildEmptyReport(project: GitProject, rangeLabel: string): CodeR
     hotspotSummary: HOTSPOT_LEVEL_ORDER.map((level) => ({ level, count: 0, pct: 0 })),
     suggestionKey: "",
     analyzedFiles: 0,
+    fileDetailsMap: {},
   }
 }
 

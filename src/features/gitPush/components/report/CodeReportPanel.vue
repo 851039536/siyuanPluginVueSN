@@ -122,6 +122,7 @@
           v-show="activeTab === 'overview'"
           :i18n="i18n"
           :authors="report.authors"
+          :file-details-map="report.fileDetailsMap"
         />
         <TechDebtSection
           v-show="activeTab === 'debt'"

@@ -255,16 +255,22 @@
   padding: 0;
 }
 
-// 单个文件行（路径省略 + 次数徽章；悬停主题色路径）
+// 单个文件行（路径省略 + 次数徽章；可点击弹窗：悬停主题色路径 + 底色提示）
 .gpr-detail-file {
   display: flex;
   align-items: center;
   gap: $spacing-2;
-  padding: 2px 0;
+  padding: 2px 4px;
   border-radius: $radius-sm;
+  cursor: pointer;
+  transition: background 0.12s;
 
-  &:hover .gpr-detail-file-name {
-    color: var(--b3-theme-primary);
+  &:hover {
+    background: var(--b3-list-hover);
+
+    .gpr-detail-file-name {
+      color: var(--b3-theme-primary);
+    }
   }
 
   &-name {

@@ -127,6 +127,8 @@
                         v-for="f in row.topFiles"
                         :key="f.path"
                         class="gpr-detail-file"
+                        :title="i18n.reportFileDetailClickHint"
+                        @click.stop="openFileDetail(f.path)"
                       >
                         <span
                           class="gpr-detail-file-name"
@@ -143,7 +145,7 @@
                   <!-- 详情块：活跃时间范围 -->
                   <div class="gpr-detail-block">
                     <div class="gpr-detail-label">{{ i18n.reportActiveRange }}</div>
-                    <div class="gpr-detail-value">{{ formatDate(row.firstCommitAt) }} ~ {{ formatDate(row.lastCommitAt) }}</div>
+                    <div class="gpr-detail-value">{{ formatIsoDate(row.firstCommitAt) }} ~ {{ formatIsoDate(row.lastCommitAt) }}</div>
                     <div class="gpr-detail-sub">{{ i18n.reportActiveDaysCol }}: {{ row.activeDays }}</div>
                   </div>
                   <!-- 详情块：代码流失率 -->
@@ -159,23 +161,42 @@
         </tbody>
       </table>
     </div>
+
+    <!-- 文件详情弹窗（点击 Top 修改文件项触发，fileStat 非空即展示） -->
+    <FileDetailModal
+      :i18n="i18n"
+      :file-stat="selectedFile"
+      @close="selectedFile = null"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 // 代码贡献度分区：作者排行表（预计算行数据消除模板重复查找/拼接；TOP3 排名徽章 + 净增 mini bar + 点击行展开详情）
 import { computed, ref } from "vue"
-import type { AuthorReportRow } from "../../types"
+import type { AuthorReportRow, FileStatRow } from "../../types"
+import { formatIsoDate } from "../../utils"
 import EmptyState from "../common/EmptyState.vue"
+import FileDetailModal from "./FileDetailModal.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
   /** 作者排行（按提交次数降序） */
   authors: AuthorReportRow[]
+  /** 文件详情查找表（路径 → 完整统计行，Top 修改文件点击弹窗数据源） */
+  fileDetailsMap: Record<string, FileStatRow>
 }>()
 
 /** 展开详情的作者名（空串 = 全部收起） */
 const expanded = ref("")
+
+/** 弹窗展示的文件详情（null = 隐藏） */
+const selectedFile = ref<FileStatRow | null>(null)
+
+/** 点击 Top 修改文件项：从查找表取完整统计行弹出详情弹窗 */
+function openFileDetail(path: string) {
+  selectedFile.value = props.fileDetailsMap[path] ?? null
+}
 
 /** TOP3 徽章样式（金/银/铜） */
 const MEDAL_CLASSES = ["gpr-medal--gold", "gpr-medal--silver", "gpr-medal--bronze"]
@@ -193,11 +214,6 @@ function netClass(n: number): string {
 /** 净增格式化：正数带 + 前缀便于视觉区分 */
 function formatNet(n: number): string {
   return n > 0 ? `+${n}` : String(n)
-}
-
-/** ISO 日期 → YYYY-MM-DD（git %aI 为 UTC ISO，切前 10 位即可；无值返回 —） */
-function formatDate(iso: string): string {
-  return iso ? iso.slice(0, 10) : "—"
 }
 
 /** 代码流失率 → 百分比文案 */

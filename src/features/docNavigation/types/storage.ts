@@ -482,10 +482,10 @@ export async function fetchBacklinks(
     const seen = new Set<string>()
     const items: BacklinkItem[] = []
     const files = [
-      ...(backlinkRes?.files ?? []),
-      ...(backlinkRes?.backmention ?? []),
-      ...(backmentionRes?.files ?? []),
-      ...(backmentionRes?.backmention ?? []),
+      ...(backlinkRes?.backlinks ?? []),
+      ...(backlinkRes?.backmentions ?? []),
+      ...(backmentionRes?.backlinks ?? []),
+      ...(backmentionRes?.backmentions ?? []),
     ]
     for (const file of files) {
       if (seen.has(file.id)) {

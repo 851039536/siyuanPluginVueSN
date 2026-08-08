@@ -158,11 +158,7 @@ const filteredBacklinks = computed(() => {
 
 /** 打开面板时重置搜索框，避免残留上次查询；设置 justOpened 防止 document click 立即关闭 */
 function togglePanel(): void {
-  // eslint-disable-next-line no-console
-  console.log("[docNav] BacklinkDropdown togglePanel, before isOpen:", isOpen.value)
   isOpen.value = !isOpen.value
-  // eslint-disable-next-line no-console
-  console.log("[docNav] BacklinkDropdown togglePanel, after isOpen:", isOpen.value)
   if (isOpen.value) {
     searchQuery.value = ""
     justOpened = true
@@ -178,8 +174,6 @@ function handleDocumentClick(event: MouseEvent) {
     return
   }
   if (rootRef.value && !rootRef.value.contains(event.target as Node)) {
-    // eslint-disable-next-line no-console
-    console.log("[docNav] BacklinkDropdown handleDocumentClick closing panel")
     isOpen.value = false
   }
 }

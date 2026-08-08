@@ -6,5 +6,7 @@
   "docNavNoChildren": "No child docs",
   "docNavLoading": "Loading...",
   "docNavExpand": "Expand",
-  "docNavCollapse": "Collapse"
+  "docNavCollapse": "Collapse",
+  "docNavReference": "Reference",
+  "docNavReferencePanelTitle": "References"
 }

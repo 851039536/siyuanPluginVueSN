@@ -1,3 +1,4 @@
+// 文档导航数据层：设置持久化、DocNavigationCache 缓存、层级/面包屑/同级/文档标题获取
 import type {
   Block,
   BreadcrumbCacheItem,

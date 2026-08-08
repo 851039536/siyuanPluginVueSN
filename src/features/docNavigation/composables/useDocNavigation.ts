@@ -1,3 +1,4 @@
+// 文档导航核心逻辑：加载层级/面包屑/同级/标题，计算显示条件，提供跳转与 HTML 清洗
 import type {
   ComputedRef,
   Ref,
@@ -33,6 +34,8 @@ export interface UseDocNavigationReturn {
   hasBreadcrumbs: ComputedRef<boolean>
   hasSiblings: ComputedRef<boolean>
   childCount: ComputedRef<number>
+  filteredChildDocs: ComputedRef<Block[]>
+  filteredChildCount: ComputedRef<number>
   loadHierarchy: (docId: string) => Promise<void>
   openDoc: (docId: string) => void
   stripHtml: (html: string) => string
@@ -69,6 +72,14 @@ export function useDocNavigation(): UseDocNavigationReturn {
 
   const childCount = computed(() => {
     return childDocs.value.length
+  })
+
+  const filteredChildDocs = computed(() => {
+    return childDocs.value.filter((doc) => stripHtml(doc.content).includes("参考"))
+  })
+
+  const filteredChildCount = computed(() => {
+    return filteredChildDocs.value.length
   })
 
   function resetState() {
@@ -140,6 +151,8 @@ export function useDocNavigation(): UseDocNavigationReturn {
     hasBreadcrumbs,
     hasSiblings,
     childCount,
+    filteredChildDocs,
+    filteredChildCount,
     loadHierarchy,
     openDoc,
     stripHtml,

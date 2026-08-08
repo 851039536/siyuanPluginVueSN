@@ -5,22 +5,18 @@ import type {
 import type {
   Block,
   BreadcrumbItem,
-  DocNavSettings,
   ProtyleLike,
   SiblingDocs,
   TargetCacheItem,
 } from "../types"
 import type { DocPathInfo } from "../types/storage"
-import { Plugin } from "siyuan"
 import {
   computed,
   ref,
 } from "vue"
 import * as api from "@/api"
-import { DEFAULT_NAV_SETTINGS } from "../types"
 import {
   DocNavigationCache,
-  DocNavSettingsStorage,
   fetchBreadcrumb,
   fetchDocHierarchy,
   fetchSiblingDocs,
@@ -32,14 +28,12 @@ export interface UseDocNavigationReturn {
   breadcrumbs: Ref<BreadcrumbItem[]>
   siblingDocs: Ref<SiblingDocs>
   currentDocId: Ref<string>
+  notebook: Ref<string>
   hasNavigation: ComputedRef<boolean>
   hasBreadcrumbs: ComputedRef<boolean>
   hasSiblings: ComputedRef<boolean>
-  isExpanded: Ref<boolean>
-  visibleChildren: ComputedRef<Block[]>
-  hiddenChildren: ComputedRef<Block[]>
+  childCount: ComputedRef<number>
   loadHierarchy: (docId: string) => Promise<void>
-  toggleExpand: () => void
   openDoc: (docId: string) => void
   stripHtml: (html: string) => string
 }
@@ -53,16 +47,13 @@ const emptySiblings: SiblingDocs = {
   currentIndex: -1,
 }
 
-export function useDocNavigation(plugin: Plugin): UseDocNavigationReturn {
-  const settingsStorage = new DocNavSettingsStorage(plugin)
-  const settings = ref<DocNavSettings>({ ...DEFAULT_NAV_SETTINGS })
-
+export function useDocNavigation(): UseDocNavigationReturn {
   const parentDoc = ref<Block | null>(null)
   const childDocs = ref<Block[]>([])
   const breadcrumbs = ref<BreadcrumbItem[]>([])
   const siblingDocs = ref<SiblingDocs>({ ...emptySiblings })
   const currentDocId = ref("")
-  const isExpanded = ref(false)
+  const notebook = ref("")
 
   const hasNavigation = computed(() => {
     return parentDoc.value !== null || childDocs.value.length > 0
@@ -76,12 +67,8 @@ export function useDocNavigation(plugin: Plugin): UseDocNavigationReturn {
     return siblingDocs.value.siblings.length > 1
   })
 
-  const visibleChildren = computed(() => {
-    return childDocs.value.slice(0, settings.value.maxVisibleChildren)
-  })
-
-  const hiddenChildren = computed(() => {
-    return childDocs.value.slice(settings.value.maxVisibleChildren)
+  const childCount = computed(() => {
+    return childDocs.value.length
   })
 
   function resetState() {
@@ -89,20 +76,20 @@ export function useDocNavigation(plugin: Plugin): UseDocNavigationReturn {
     childDocs.value = []
     breadcrumbs.value = []
     siblingDocs.value = { ...emptySiblings }
+    notebook.value = ""
   }
 
   async function loadHierarchy(docId: string): Promise<void> {
     try {
       currentDocId.value = docId
 
-      const loaded = await settingsStorage.settings.loadOrDefault()
-      settings.value = loaded
-
       const pathInfo = await api.getPathByID(docId)
       if (!pathInfo?.notebook || !pathInfo.path) {
         resetState()
         return
       }
+
+      notebook.value = pathInfo.notebook
 
       const docPathInfo: DocPathInfo = {
         notebook: pathInfo.notebook,
@@ -132,10 +119,6 @@ export function useDocNavigation(plugin: Plugin): UseDocNavigationReturn {
     }
   }
 
-  function toggleExpand(): void {
-    isExpanded.value = !isExpanded.value
-  }
-
   function openDoc(docId: string): void {
     if (docId) {
       window.open(`siyuan://blocks/${docId}`)
@@ -152,14 +135,12 @@ export function useDocNavigation(plugin: Plugin): UseDocNavigationReturn {
     breadcrumbs,
     siblingDocs,
     currentDocId,
+    notebook,
     hasNavigation,
     hasBreadcrumbs,
     hasSiblings,
-    isExpanded,
-    visibleChildren,
-    hiddenChildren,
+    childCount,
     loadHierarchy,
-    toggleExpand,
     openDoc,
     stripHtml,
   }

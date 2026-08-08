@@ -36,67 +36,16 @@
         </template>
       </div>
 
-      <div
+      <!-- 同级文档下拉面板 -->
+      <SiblingDropdown
         v-if="hasSiblings"
-        class="doc-nav-siblings"
-        role="group"
-        aria-label="同级文档"
-      >
-        <a
-          v-if="siblingDocs.prev"
-          class="doc-nav-sibling doc-nav-sibling-prev"
-          :data-doc-id="siblingDocs.prev.id"
-          :title="`上一篇: ${stripHtml(siblingDocs.prev.content)}`"
-          :aria-label="`上一篇: ${stripHtml(siblingDocs.prev.content)}`"
-          @click="openDoc(siblingDocs.prev.id)"
-        >
-          <IconWrapper
-            name="chevronLeft"
-            size="14"
-          />
-          <span class="doc-nav-sibling-text">{{ stripHtml(siblingDocs.prev.content) }}</span>
-        </a>
-        <span
-          v-else
-          class="doc-nav-sibling doc-nav-sibling-disabled"
-          aria-hidden="true"
-        >
-          <IconWrapper
-            name="chevronLeft"
-            size="14"
-          />
-        </span>
-
-        <span
-          class="doc-nav-sibling-count"
-          aria-live="polite"
-        >{{ siblingDocs.currentIndex + 1 }}/{{ siblingDocs.siblings.length }}</span>
-
-        <a
-          v-if="siblingDocs.next"
-          class="doc-nav-sibling doc-nav-sibling-next"
-          :data-doc-id="siblingDocs.next.id"
-          :title="`下一篇: ${stripHtml(siblingDocs.next.content)}`"
-          :aria-label="`下一篇: ${stripHtml(siblingDocs.next.content)}`"
-          @click="openDoc(siblingDocs.next.id)"
-        >
-          <span class="doc-nav-sibling-text">{{ stripHtml(siblingDocs.next.content) }}</span>
-          <IconWrapper
-            name="chevronRight"
-            size="14"
-          />
-        </a>
-        <span
-          v-else
-          class="doc-nav-sibling doc-nav-sibling-disabled"
-          aria-hidden="true"
-        >
-          <IconWrapper
-            name="chevronRight"
-            size="14"
-          />
-        </span>
-      </div>
+        :siblings="siblingDocs.siblings"
+        :sibling-count="siblingDocs.siblings.length"
+        :current-doc-id="currentDocId"
+        :i18n="i18n"
+        :open-doc="openDoc"
+        :strip-html="stripHtml"
+      />
 
       <div
         v-if="parentDoc"
@@ -157,6 +106,7 @@ import { watch } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { useDocNavigation } from "../composables/useDocNavigation"
 import ChildDocDropdown from "./ChildDocDropdown.vue"
+import SiblingDropdown from "./SiblingDropdown.vue"
 
 const props = defineProps<{
   docId: string

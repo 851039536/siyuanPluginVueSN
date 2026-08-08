@@ -55,50 +55,6 @@
   font-size: $font-size-xs;
 }
 
-.doc-nav-siblings {
-  display: flex;
-  align-items: center;
-  gap: $spacing-1;
-  min-width: 0;
-  padding: $spacing-2px $spacing-2;
-  background: var(--b3-theme-surface-lighter);
-  border-radius: $radius-sm;
-}
-
-.doc-nav-sibling {
-  @extend %doc-nav-link-base;
-  display: flex;
-  align-items: center;
-  gap: $spacing-2px;
-  color: var(--b3-theme-primary);
-  max-width: 150px;
-  min-width: 20px;
-
-  &:hover {
-    background: var(--b3-theme-primary-lightest);
-  }
-}
-
-.doc-nav-sibling-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.doc-nav-sibling-disabled {
-  color: var(--b3-theme-on-surface);
-  opacity: 0.2;
-  min-width: 20px;
-}
-
-.doc-nav-sibling-count {
-  color: var(--b3-theme-on-surface);
-  font-size: $font-size-2xs;
-  opacity: 0.5;
-  white-space: nowrap;
-  padding: 0 $spacing-2px;
-}
-
 .doc-nav-parent {
   display: flex;
   align-items: center;

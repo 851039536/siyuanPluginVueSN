@@ -629,6 +629,8 @@
   "docNavCollapse": "Collapse",
   "docNavReference": "Reference",
   "docNavReferencePanelTitle": "References",
+  "docNavSiblings": "Siblings",
+  "docNavSiblingPanelTitle": "Sibling Documents",
   "copiedSuccess": "Copied to clipboard",
   "encryption": "Content Encryption",
   "encryptionSettings": "Password Encryption",

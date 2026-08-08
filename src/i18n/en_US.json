@@ -1481,6 +1481,7 @@
     "reportFileDetailDeleted": "Lines Deleted",
     "reportFileDetailAuthors": "Contributors",
     "reportFileDetailLastModified": "Last Modified",
+    "reportFileDetailDiff": "Code Changes",
     "reportActiveRange": "Active Range",
     "reportChurnRate": "Churn Rate",
     "reportDeletedLinesShort": "lines deleted",

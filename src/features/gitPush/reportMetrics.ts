@@ -16,7 +16,7 @@ import type {
   ReportRange,
 } from "./types/report"
 import { REPORT_RANGES } from "./types/report"
-import { getNodeFsPathOs } from "@/utils/nodeModules"
+import { getNodeFsPathOs, getNodeProcessModules } from "@/utils/nodeModules"
 import { resolveValidPath } from "./utils"
 
 // ── 解析：git log --numstat 输出 → 结构化提交块 ──
@@ -220,6 +220,31 @@ export function countFileLines(project: GitProject, filePath: string): number | 
   }
 }
 
+/** diff 输出截断上限（约 5KB 文本，约 100 行 diff，防止巨型文件撑爆 Modal） */
+const DIFF_MAX_CHARS = 5000
+
+/**
+ * 获取文件最近的 git log -p 差异内容（同步 execFileSync，与 countFileLines 一致）。
+ * 仅取最近 5 条提交的 patch，超长截断以控制 Modal 体积。
+ * 返回 null 表示获取失败（文件不存在 / 二进制 / 命令失败）。
+ */
+export function fetchFileDiff(project: GitProject, filePath: string): string | null {
+  try {
+    const modules = getNodeProcessModules()
+    if (!modules) return null
+    const repoPath = resolveValidPath(project)
+    const raw = modules.child_process.execFileSync(
+      "git",
+      ["log", "-p", "--max-count=5", "--", filePath],
+      { cwd: repoPath, encoding: "utf8", maxBuffer: 2 * 1024 * 1024, timeout: 5000 },
+    ) as string
+    if (!raw) return null
+    return raw.length > DIFF_MAX_CHARS ? raw.slice(0, DIFF_MAX_CHARS) + "\n…(truncated)" : raw
+  } catch {
+    return null
+  }
+}
+
 /** 判断仓库内文件当前是否仍存在于工作区（过滤 git 历史中已删除的"幽灵文件"） */
 export function fileExistsInRepo(project: GitProject, filePath: string): boolean {
   try {
@@ -351,6 +376,7 @@ export function buildReportData(
         loc: countFileLines(project, f.path),
         added: agg?.added ?? 0,
         deleted: agg?.deleted ?? 0,
+        diffContent: fetchFileDiff(project, f.path),
       }
     }
   }
@@ -374,6 +400,7 @@ export function buildReportData(
       loc: null,
       added: agg.added,
       deleted: agg.deleted,
+      diffContent: null,
     }
     // 债务门槛：修改次数低于 debtMinModCount 的文件视为正常迭代，仅进入热点榜不列为技术债务
     if (agg.modCount >= debtMinModCount) {

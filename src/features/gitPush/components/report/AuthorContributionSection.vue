@@ -1,4 +1,4 @@
-<!-- gitPush 代码统计报告：代码贡献度分区（作者排行表：排名/提交/行数/净增bar/平均大小/频率/文件/活跃天数 + 点击行展开详情） -->
+<!-- gitPush 代码统计报告：代码贡献度分区（作者排行表：排名/提交/新增/删除/净增bar/平均大小/频率/文件/活跃天数 + 点击行展开详情） -->
 <template>
   <div class="gpr-section">
     <!-- 区块标题："代码贡献度" + 行数徽章 -->
@@ -30,6 +30,8 @@
             <th class="gpr-author-th gpr-author-th--num">{{ i18n.reportCommitsCol }}</th>
             <!-- 表头："新增行数" -->
             <th class="gpr-author-th gpr-author-th--num">{{ i18n.reportLinesCol }}</th>
+            <!-- 表头："删除行数" -->
+            <th class="gpr-author-th gpr-author-th--num">{{ i18n.reportDeletedLinesCol }}</th>
             <!-- 表头："净增行数" -->
             <th class="gpr-author-th gpr-author-th--num">{{ i18n.reportNetCol }}</th>
             <!-- 表头："平均提交大小" -->
@@ -75,6 +77,8 @@
               <td class="gpr-author-cell gpr-author-cell--num">{{ row.commits }}</td>
               <!-- 新增行数 -->
               <td class="gpr-author-cell gpr-author-cell--num">{{ row.linesAdded }}</td>
+              <!-- 删除行数 -->
+              <td class="gpr-author-cell gpr-author-cell--num">{{ row.linesDeleted }}</td>
               <!-- 净增行数：数字正负着色 + mini bar 量级可视化 -->
               <td class="gpr-author-cell gpr-author-cell--num">
                 <div class="gpr-net-cell">

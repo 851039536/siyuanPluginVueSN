@@ -15,11 +15,11 @@
   font-size: $font-size-xs;
 }
 
-// 弹窗卡片（Codex 风格：边框 + 圆角，无阴影）
+// 弹窗卡片（Codex 风格：边框 + 圆角，无阴影；加宽适配 diff 代码块）
 .gpr-fm-dialog {
-  width: 420px;
-  max-width: 90vw;
-  max-height: 80vh;
+  width: 680px;
+  max-width: 92vw;
+  max-height: 85vh;
   display: flex;
   flex-direction: column;
   background: var(--b3-theme-background);
@@ -120,4 +120,37 @@
 // 删除行数（红色强调，与 git diff 一致）
 .gpr-fm-deleted {
   color: #dc3545;
+}
+
+// ── 变更详情（diff 代码块） ──
+
+// diff 区域容器（指标网格下方，可滚动）
+.gpr-fm-diff-section {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+// diff 分区标签（独立一行，与指标网格标签一致）
+.gpr-fm-diff-label {
+  flex-shrink: 0;
+}
+
+// diff 内容等宽代码块（暗色底 + 滚动，模拟终端 diff 视图）
+.gpr-fm-diff {
+  font-family: $vp-mono;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--b3-theme-on-surface);
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  padding: $spacing-2;
+  margin: 0;
+  max-height: 280px;
+  overflow: auto;
+  white-space: pre;
+  tab-size: 4;
 }

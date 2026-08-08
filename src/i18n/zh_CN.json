@@ -1481,6 +1481,7 @@
     "reportFileDetailDeleted": "删除行数",
     "reportFileDetailAuthors": "参与作者数",
     "reportFileDetailLastModified": "最后修改时间",
+    "reportFileDetailDiff": "变更详情",
     "reportActiveRange": "活跃时间范围",
     "reportChurnRate": "代码流失率",
     "reportDeletedLinesShort": "行删除",

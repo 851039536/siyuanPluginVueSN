@@ -76,6 +76,10 @@ export interface FileStatRow {
   lastModified: string
   /** 代码行数（fs 直接读取，null=暂无数据，与参考报告一致） */
   loc: number | null
+  /** 新增代码行数（numstat 汇总，分析范围内该文件被新增的总行数） */
+  added: number
+  /** 删除代码行数（numstat 汇总，分析范围内该文件被删除的总行数） */
+  deleted: number
 }
 
 /** 技术债务文件行（含风险评分；由修改次数+参与人数派生） */

@@ -86,11 +86,11 @@
   white-space: pre-wrap;
 }
 
-// 指标网格（2 列自适应，窄容器自动收缩）
+// 指标网格（3 列：修改次数 / 新增 / 删除 / 参与作者 / 净增 / 最后修改）
 .gpr-fm-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: $spacing-2 $spacing-3;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: $spacing-2;
 }
 
 // 指标单元格（边框卡片）
@@ -110,4 +110,14 @@
   font-size: $font-size-xs;
   font-weight: $font-weight-medium;
   color: var(--b3-theme-on-surface);
+}
+
+// 新增行数（绿色强调，与 git diff 一致）
+.gpr-fm-added {
+  color: #28a745;
+}
+
+// 删除行数（红色强调，与 git diff 一致）
+.gpr-fm-deleted {
+  color: #dc3545;
 }

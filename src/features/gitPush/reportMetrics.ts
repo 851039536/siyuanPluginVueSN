@@ -93,6 +93,10 @@ interface FileAgg {
   modCount: number
   authors: Set<string>
   lastIso: string
+  /** numstat 新增行汇总 */
+  added: number
+  /** numstat 删除行汇总 */
+  deleted: number
 }
 
 /** 解析 ISO 日期为毫秒时间戳（无法解析返回 0） */
@@ -169,10 +173,12 @@ export function aggregateFileStats(commits: NumstatCommit[]): Map<string, FileAg
     for (const f of c.files) {
       let agg = map.get(f.path)
       if (!agg) {
-        agg = { modCount: 0, authors: new Set(), lastIso: "" }
+        agg = { modCount: 0, authors: new Set(), lastIso: "", added: 0, deleted: 0 }
         map.set(f.path, agg)
       }
       agg.modCount++
+      agg.added += f.added
+      agg.deleted += f.deleted
       agg.authors.add(c.author)
       if (c.date > agg.lastIso) agg.lastIso = c.date
     }
@@ -343,6 +349,8 @@ export function buildReportData(
         authorCount: agg?.authors.size ?? 0,
         lastModified: agg?.lastIso ?? "",
         loc: countFileLines(project, f.path),
+        added: agg?.added ?? 0,
+        deleted: agg?.deleted ?? 0,
       }
     }
   }
@@ -364,6 +372,8 @@ export function buildReportData(
       authorCount: agg.authors.size,
       lastModified: agg.lastIso,
       loc: null,
+      added: agg.added,
+      deleted: agg.deleted,
     }
     // 债务门槛：修改次数低于 debtMinModCount 的文件视为正常迭代，仅进入热点榜不列为技术债务
     if (agg.modCount >= debtMinModCount) {

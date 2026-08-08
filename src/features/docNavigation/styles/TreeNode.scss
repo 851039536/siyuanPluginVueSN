@@ -1,0 +1,92 @@
+@use "@/variables" as *;
+
+// 递归树节点样式：文档链接、展开箭头、层级缩进、加载中状态
+.doc-nav-tree-node {
+  min-width: 0;
+}
+
+.doc-nav-tree-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2px;
+  min-width: 0;
+  height: 28px;
+  padding: 0 $spacing-1;
+  border-radius: $radius-sm;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+  }
+}
+
+.doc-nav-tree-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: $spacing-4;
+  height: $spacing-4;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  border-radius: $radius-sm;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 1;
+    background: var(--b3-theme-surface-lighter);
+  }
+
+  &-placeholder {
+    opacity: 0;
+    cursor: default;
+  }
+}
+
+.doc-nav-tree-arrow-icon {
+  transition: transform 0.15s ease;
+
+  &.doc-nav-tree-arrow-expanded {
+    transform: rotate(90deg);
+  }
+}
+
+.doc-nav-tree-link {
+  flex: 1;
+  min-width: 0;
+  padding: $spacing-2px $spacing-1;
+  border-left: 2px solid transparent;
+  border-radius: $radius-sm;
+  color: var(--b3-theme-primary);
+  text-decoration: none;
+  font-size: $font-size-xs;
+  line-height: $line-height-tight;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &:hover {
+    background: var(--b3-theme-primary-lightest);
+  }
+
+  &.doc-nav-tree-current {
+    font-weight: $font-weight-semibold;
+    border-left-color: var(--b3-theme-primary);
+  }
+}
+
+.doc-nav-tree-children {
+  margin-left: $spacing-3;
+  min-width: 0;
+}
+
+.doc-nav-tree-loading,
+.doc-nav-tree-empty {
+  padding: $spacing-1 $spacing-2;
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-2xs;
+  font-style: italic;
+  opacity: 0.6;
+}

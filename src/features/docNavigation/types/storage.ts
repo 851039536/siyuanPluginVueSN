@@ -154,11 +154,13 @@ function stripSySuffix(str: string): string {
 /**
  * 将 IFile 转换为 Block 格式
  */
-function iFileToBlock(file: api.IFile): Block {
+export function iFileToBlock(file: api.IFile): Block {
   return {
     id: file.id,
     content: stripSySuffix(file.name),
     hpath: stripSySuffix(file.path),
+    path: stripSySuffix(file.path),
+    subFileCount: file.subFileCount,
   }
 }
 

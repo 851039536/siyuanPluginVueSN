@@ -3,6 +3,10 @@ export interface Block {
   content: string
   hpath: string
   box?: string
+  /** 存储物理路径（去除 .sy 后缀），用于 listDocsByPath 查询子文档 */
+  path?: string
+  /** 子文档数量，0 表示无下级文档 */
+  subFileCount?: number
 }
 
 export interface DocHierarchy {

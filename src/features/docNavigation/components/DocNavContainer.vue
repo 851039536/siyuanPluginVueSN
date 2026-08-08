@@ -47,8 +47,9 @@
         :strip-html="stripHtml"
       />
 
+      <!-- 上级文档链接：面包屑可见时已包含上级，避免重复显示 -->
       <div
-        v-if="parentDoc"
+        v-if="parentDoc && !hasBreadcrumbs"
         class="doc-nav-parent"
       >
         <IconWrapper

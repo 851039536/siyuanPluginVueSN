@@ -71,14 +71,28 @@
             </div>
           </div>
 
-          <!-- 变更详情：git log -p diff 内容（仅当 diffContent 非空时展示） -->
+          <!-- 变更详情：git log -p diff 内容（行级着色，仅当 diffContent 非空时展示） -->
           <div
             v-if="fileStat.diffContent"
             class="gpr-fm-diff-section"
           >
             <!-- 分区标签："变更详情" -->
             <span class="gpr-fm-label gpr-fm-diff-label">{{ i18n.reportFileDetailDiff }}</span>
-            <pre class="gpr-fm-diff">{{ fileStat.diffContent }}</pre>
+            <div class="gpr-fm-diff">
+              <div
+                v-for="(line, i) in diffLines"
+                :key="i"
+                class="gpr-fm-dl"
+                :class="`gpr-fm-dl-${line.type}`"
+              >
+                <!-- 旧/新文件行号双列（hunk/meta 行无行号，留空对齐） -->
+                <span class="gpr-fm-dl-no">{{ line.oldNo ?? "" }}</span>
+                <span class="gpr-fm-dl-no">{{ line.newNo ?? "" }}</span>
+                <!-- 行首符号：+ / − / @ / 空格 -->
+                <span class="gpr-fm-dl-sign">{{ DIFF_SIGN[line.type] }}</span>
+                <span class="gpr-fm-dl-text">{{ line.text }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -91,7 +105,7 @@
 import { Icon } from "@iconify/vue"
 import { computed, onBeforeUnmount, onMounted } from "vue"
 import type { FileStatRow } from "../../types"
-import { formatIsoDate } from "../../utils"
+import { formatIsoDate, parseDiffLines, type DiffLineType } from "../../utils"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -109,6 +123,20 @@ const netLines = computed(() => {
   const net = props.fileStat.added - props.fileStat.deleted
   return net >= 0 ? `+${net}` : `${net}`
 })
+
+/** diff 行类型 → 行首符号（与 WorkingTreeDiffDialog 展示一致） */
+const DIFF_SIGN: Record<DiffLineType, string> = {
+  add: "+",
+  del: "−",
+  hunk: "@",
+  ctx: " ",
+  meta: " ",
+}
+
+/** 将 diffContent 解析为带类型/行号的行数组（供行级着色渲染） */
+const diffLines = computed(() =>
+  props.fileStat?.diffContent ? parseDiffLines(props.fileStat.diffContent) : [],
+)
 
 /** ESC 关闭（Teleport 到 body 后键盘事件在 document 层监听） */
 function onKeydown(e: KeyboardEvent) {

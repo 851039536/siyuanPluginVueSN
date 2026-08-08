@@ -627,6 +627,8 @@
   "docNavLoading": "Loading...",
   "docNavExpand": "Expand",
   "docNavCollapse": "Collapse",
+  "docNavReference": "Reference",
+  "docNavReferencePanelTitle": "References",
   "copiedSuccess": "Copied to clipboard",
   "encryption": "Content Encryption",
   "encryptionSettings": "Password Encryption",

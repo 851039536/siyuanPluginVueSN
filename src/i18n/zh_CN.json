@@ -627,6 +627,8 @@
   "docNavLoading": "加载中...",
   "docNavExpand": "展开",
   "docNavCollapse": "折叠",
+  "docNavReference": "参考",
+  "docNavReferencePanelTitle": "参考",
   "copiedSuccess": "已复制到剪贴板",
   "encryption": "内容加密",
   "encryptionSettings": "密码加密",

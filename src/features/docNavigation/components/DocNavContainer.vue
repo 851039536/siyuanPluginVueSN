@@ -119,7 +119,7 @@
         </a>
       </div>
 
-      <!-- 子文档下拉树形面板 -->
+      <!-- 下级文档下拉树形面板 -->
       <ChildDocDropdown
         v-if="childCount > 0"
         :child-docs="childDocs"
@@ -129,6 +129,23 @@
         :i18n="i18n"
         :open-doc="openDoc"
         :strip-html="stripHtml"
+        :trigger-text="i18n.docNavShowChildren"
+        :panel-title="i18n.docNavPanelTitle"
+      />
+
+      <!-- 参考下拉树形面板：仅显示标题含「参考」的子文档，无匹配项时不显示 -->
+      <ChildDocDropdown
+        v-if="filteredChildCount > 0"
+        :child-docs="filteredChildDocs"
+        :notebook="notebook"
+        :current-doc-id="currentDocId"
+        :child-count="filteredChildCount"
+        :i18n="i18n"
+        :open-doc="openDoc"
+        :strip-html="stripHtml"
+        :trigger-text="i18n.docNavReference"
+        :panel-title="i18n.docNavReferencePanelTitle"
+        trigger-icon="docNavReference"
       />
     </div>
   </div>
@@ -160,6 +177,8 @@ const {
   hasBreadcrumbs,
   hasSiblings,
   childCount,
+  filteredChildDocs,
+  filteredChildCount,
   loadHierarchy,
   openDoc,
   stripHtml,

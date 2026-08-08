@@ -13,6 +13,8 @@
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(2px);
   font-size: $font-size-xs;
+  // Teleport 到 body 后取不到面板上的 diff 着色变量，须在此重新注入
+  @include gp-diff-color-vars;
 }
 
 // 弹窗卡片（Codex 风格：边框 + 圆角，无阴影；加宽适配 diff 代码块）
@@ -138,19 +140,84 @@
   flex-shrink: 0;
 }
 
-// diff 内容等宽代码块（暗色底 + 滚动，模拟终端 diff 视图）
+// diff 内容等宽代码块（行级着色 + 滚动，仿 git diff 视图）
 .gpr-fm-diff {
   font-family: $vp-mono;
-  font-size: 10px;
-  line-height: 1.5;
+  font-size: $font-size-2xs;
+  line-height: $line-height-normal;
   color: var(--b3-theme-on-surface);
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
-  padding: $spacing-2;
   margin: 0;
   max-height: 280px;
   overflow: auto;
-  white-space: pre;
   tab-size: 4;
+}
+
+// ── diff 行着色（复用 WorkingTreeDiffDialog 的 add/del/hunk/ctx/meta 语义） ──
+
+// 行容器（行号双列 + 符号列 + 文本列）
+.gpr-fm-dl {
+  display: flex;
+  padding: 0 8px 0 0;
+
+  // 新增行：绿色背景 + 绿色符号
+  &.gpr-fm-dl-add {
+    background: var(--gp-diff-add-bg);
+
+    .gpr-fm-dl-sign { color: var(--gp-diff-add-color); opacity: 1; }
+  }
+
+  // 删除行：红色背景 + 红色符号
+  &.gpr-fm-dl-del {
+    background: var(--gp-diff-del-bg);
+
+    .gpr-fm-dl-sign { color: var(--gp-diff-del-color); opacity: 1; }
+  }
+
+  // hunk 头（@@ -a,b +c,d @@）：蓝色分隔条
+  &.gpr-fm-dl-hunk {
+    background: var(--b3-theme-surface);
+    color: var(--gp-diff-hunk-color);
+    font-weight: $font-weight-bold;
+  }
+
+  // 上下文行：弱化
+  &.gpr-fm-dl-ctx {
+    opacity: 0.6;
+  }
+
+  // 文件头行（diff --git / index / --- / +++）：最弱化
+  &.gpr-fm-dl-meta {
+    opacity: 0.35;
+  }
+}
+
+// 旧/新文件行号双列（右对齐，不参与选中复制）
+.gpr-fm-dl-no {
+  flex-shrink: 0;
+  width: 28px;
+  padding-right: 4px;
+  text-align: right;
+  opacity: 0.35;
+  user-select: none;
+}
+
+// 行首符号列（+ / − / @ / 空格）
+.gpr-fm-dl-sign {
+  width: 16px;
+  flex-shrink: 0;
+  text-align: center;
+  font-weight: $font-weight-bold;
+  user-select: none;
+  opacity: 0.5;
+}
+
+// 文本列（自动换行）
+.gpr-fm-dl-text {
+  white-space: pre-wrap;
+  word-break: break-all;
+  flex: 1;
+  min-width: 0;
 }

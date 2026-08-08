@@ -324,10 +324,10 @@ export interface IRefFile extends IFile {
   box: string
 }
 
-/** getBacklink / getBackmention 通用返回结构：files=文档级引用，backmention=块级提及聚合 */
+/** getBacklink / getBackmention 通用返回结构：backlinks=文档级引用，backmentions=块级提及聚合 */
 export interface IGetBacklinkResponse {
-  backmention: IRefFile[]
-  files: IRefFile[]
+  backlinks: IRefFile[]
+  backmentions: IRefFile[]
 }
 
 /**

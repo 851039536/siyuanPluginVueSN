@@ -145,14 +145,15 @@ function highlightSegments(content: string): HighlightSegment[] {
   return segments
 }
 
-/** 反链列表按关键词即时过滤（computed 响应式，无 debounce） */
+/** 反链列表按关键词即时过滤（computed 响应式，无 debounce）：同时匹配文档标题与完整路径 */
 const filteredBacklinks = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
   if (!query) {
     return props.backlinks
   }
   return props.backlinks.filter((item) =>
-    item.content.toLowerCase().includes(query),
+    item.content.toLowerCase().includes(query)
+    || item.hpath.toLowerCase().includes(query),
   )
 })
 

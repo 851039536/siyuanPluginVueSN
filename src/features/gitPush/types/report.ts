@@ -19,18 +19,6 @@ export const REPORT_RANGE_LABEL_KEYS: Record<ReportRange, string> = {
   "1y": "reportRange1Y",
 }
 
-/** 质量等级（S/A/B/C/D，评分阈值见 reportMetrics.qualityGrade） */
-export type QualityGrade = "S" | "A" | "B" | "C" | "D"
-
-/** 质量等级元数据（stars 为星级展示数量，color 用于评级徽章） */
-export const GRADE_META: Record<QualityGrade, { labelKey: string, stars: number, color: string }> = {
-  S: { labelKey: "reportGradeS", stars: 5, color: "#10b981" },
-  A: { labelKey: "reportGradeA", stars: 5, color: "#10b981" },
-  B: { labelKey: "reportGradeB", stars: 4, color: "#f59e0b" },
-  C: { labelKey: "reportGradeC", stars: 3, color: "#f59e0b" },
-  D: { labelKey: "reportGradeD", stars: 2, color: "#ef4444" },
-}
-
 // ── 作者贡献度 ──
 
 /** 作者贡献度排行行（代码贡献度分析报告数据源） */
@@ -61,10 +49,6 @@ export interface AuthorReportRow {
   churnRate: number
   /** 修改最多的文件 Top3 [路径, 修改次数]，按次数降序 */
   topFiles: Array<{ path: string, count: number }>
-  /** 代码质量评分（启发式公式，见 reportMetrics.qualityScore） */
-  quality: number
-  /** 质量等级 */
-  grade: QualityGrade
 }
 
 // ── 技术债务 ──
@@ -156,8 +140,6 @@ export interface CodeReportData {
     totalCommits: number
     /** 总代码量（全部新增行合计） */
     totalLines: number
-    /** 平均代码质量（作者质量分简单平均，四舍五入） */
-    avgQuality: number
     /** 最活跃贡献者（提交次数最多的作者） */
     topAuthor: string
   }

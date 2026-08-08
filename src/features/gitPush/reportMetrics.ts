@@ -1,6 +1,6 @@
-// gitPush 代码统计报告指标引擎：numstat 解析 + 作者/文件聚合 + 启发式评分（纯函数，无 Vue 依赖）
+// gitPush 代码统计报告指标引擎：numstat 解析 + 作者/文件聚合 + 债务/热点评分（纯函数，无 Vue 依赖）
 //
-// 启发式公式说明（确定性可复现，聚焦 churn 原始指标，思路参考 code-maat）：
+// 评分公式说明（确定性可复现，聚焦 churn 原始指标，思路参考 code-maat）：
 // - 技术债务风险分 risk = clamp(sqrt(修改次数)*10 + 参与人数*6 + 近期修改加分)，sqrt 使 churn 边际收益递减避免高分区饱和；
 //   仅统计修改 ≥门槛次（默认 3，可由偏好配置）的文件（低于门槛视为正常迭代）
 // - 热度 heat = 修改次数*2.2 + 参与人数*7 + 近期修改加分（recencyBonus 与债务评分共用）；阈值 热点≥75 / 温热≥45 / 冷却≥25
@@ -180,7 +180,7 @@ export function aggregateFileStats(commits: NumstatCommit[]): Map<string, FileAg
   return map
 }
 
-// ── 启发式评分公式 ──
+// ── 通用工具 ──
 
 /** 整数钳位到 [0, 100] */
 function clamp100(n: number): number {
@@ -192,7 +192,7 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100
 }
 
-// ── 文件工具函数 ──
+// ── 文件读取工具 ──
 
 /** 超过 2MB 的文件视为不可读（压缩包/锁文件/二进制，避免整读大文件） */
 const LOC_READ_MAX_BYTES = 2 * 1024 * 1024

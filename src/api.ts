@@ -319,19 +319,27 @@ export async function getDoc(
 
 // **************************************** Ref（反向链接/提及） ****************************************
 
-/** 反链/反提及返回的引用文档条目（IFile 基础上补充所属笔记本 box） */
-export interface IRefFile extends IFile {
+/**
+ * getBacklink2 返回的反链/反提及条目（对齐思源前端 IBlockTree 结构）
+ * 注意：该结构只有 hPath（人类可读路径），没有 path 字段
+ */
+export interface IRefFile {
   box: string
+  id: string
+  name: string
+  hPath: string
 }
 
-/** getBacklink / getBackmention 通用返回结构：backlinks=文档级引用，backmentions=块级提及聚合 */
+/** getBacklink2 通用返回结构：backlinks=文档级引用，backmentions=块级提及聚合 */
 export interface IGetBacklinkResponse {
   backlinks: IRefFile[]
   backmentions: IRefFile[]
 }
 
 /**
- * 获取引用当前文档的文档列表（反链）
+ * 获取引用/提及当前文档的文档列表（反链 + 反提及）
+ * 使用 getBacklink2 官方 API（思源前端反链面板同款），一次返回 backlinks 与 backmentions。
+ * k/mk 传空串表示不过滤，sort/mSort 传 "0" 表示默认排序
  * @param id 块 ID
  */
 export async function getBacklink(
@@ -339,25 +347,12 @@ export async function getBacklink(
 ): Promise<IGetBacklinkResponse | null> {
   const data = {
     id,
+    k: "",
+    mk: "",
+    sort: "0",
+    mSort: "0",
   }
-  const url = "/api/ref/getBacklink"
-  return request(url, data)
-}
-
-/**
- * 获取提及当前文档的文档列表（反提及）
- * @param id 被提及的块 ID
- * @param rootID 被提及块所属文档 ID
- */
-export async function getBackmention(
-  id: BlockId,
-  rootID: BlockId,
-): Promise<IGetBacklinkResponse | null> {
-  const data = {
-    id,
-    rootID,
-  }
-  const url = "/api/ref/getBackmention"
+  const url = "/api/ref/getBacklink2"
   return request(url, data)
 }
 

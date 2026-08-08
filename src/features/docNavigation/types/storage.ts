@@ -458,7 +458,7 @@ const MAX_BACKLINK_COUNT = 50
 
 /**
  * 获取引用/提及当前文档的文档列表（反链 + 反提及合并去重）
- * 使用 getBacklink + getBackmention 官方 API，截断至 MAX_BACKLINK_COUNT 条
+ * 使用 getBacklink2 官方 API 一次获取（backlinks + backmentions），截断至 MAX_BACKLINK_COUNT 条
  */
 export async function fetchBacklinks(
   currentDoc: Block,
@@ -474,18 +474,13 @@ export async function fetchBacklinks(
       return cached.items
     }
 
-    const [backlinkRes, backmentionRes] = await Promise.all([
-      api.getBacklink(currentDoc.id),
-      api.getBackmention(currentDoc.id, currentDoc.id),
-    ])
+    const backlinkRes = await api.getBacklink(currentDoc.id)
 
     const seen = new Set<string>()
     const items: BacklinkItem[] = []
     const files = [
       ...(backlinkRes?.backlinks ?? []),
       ...(backlinkRes?.backmentions ?? []),
-      ...(backmentionRes?.backlinks ?? []),
-      ...(backmentionRes?.backmentions ?? []),
     ]
     for (const file of files) {
       if (seen.has(file.id)) {
@@ -495,7 +490,7 @@ export async function fetchBacklinks(
       items.push({
         id: file.id,
         content: stripSySuffix(file.name),
-        hpath: stripSySuffix(file.path),
+        hpath: stripSySuffix(file.hPath || ""),
         box: file.box,
       })
       if (items.length >= MAX_BACKLINK_COUNT) {

@@ -10,7 +10,6 @@ import type {
   SiblingDocs,
   TargetCacheItem,
 } from "../types"
-import type { DocPathInfo } from "../types/storage"
 import {
   computed,
   ref,
@@ -74,8 +73,9 @@ export function useDocNavigation(): UseDocNavigationReturn {
     return childDocs.value.length
   })
 
+  // childDocs 的 content 来自文件名（iFileToBlock 已去 .sy 后缀），纯文本无需 HTML 清洗
   const filteredChildDocs = computed(() => {
-    return childDocs.value.filter((doc) => stripHtml(doc.content).includes("参考"))
+    return childDocs.value.filter((doc) => doc.content.includes("参考"))
   })
 
   const filteredChildCount = computed(() => {
@@ -102,11 +102,6 @@ export function useDocNavigation(): UseDocNavigationReturn {
 
       notebook.value = pathInfo.notebook
 
-      const docPathInfo: DocPathInfo = {
-        notebook: pathInfo.notebook,
-        path: pathInfo.path,
-      }
-
       const currentDoc: Block = {
         id: docId,
         content: "",
@@ -114,10 +109,11 @@ export function useDocNavigation(): UseDocNavigationReturn {
         box: pathInfo.notebook,
       }
 
+      // pathInfo 已窄化为非空 { notebook, path }，直接传给数据层
       const [hierarchy, breadcrumbItems, siblings] = await Promise.all([
-        fetchDocHierarchy(currentDoc, cache, docPathInfo),
-        fetchBreadcrumb(currentDoc, cache, docPathInfo),
-        fetchSiblingDocs(currentDoc, cache, docPathInfo),
+        fetchDocHierarchy(currentDoc, cache, pathInfo),
+        fetchBreadcrumb(currentDoc, cache, pathInfo),
+        fetchSiblingDocs(currentDoc, cache, pathInfo),
       ])
 
       parentDoc.value = hierarchy.parent
@@ -159,6 +155,7 @@ export function useDocNavigation(): UseDocNavigationReturn {
   }
 }
 
+/** 清空数据缓存（由 index.ts 的 destroy() 在插件卸载时调用，避免缓存长期驻留） */
 export function disposeCache(): void {
   cache.clearAll()
 }
@@ -198,18 +195,4 @@ export function findNavigationTarget(
   }
   targetCache.set(protyle, result)
   return result
-}
-
-export function removeExistingNav(protyle: ProtyleLike): void {
-  const cached = targetCache.get(protyle)
-  if (!cached) return
-
-  const sibling =
-    cached.method === "after"
-      ? cached.el.nextElementSibling
-      : cached.el.previousElementSibling
-
-  if (sibling?.classList.contains("doc-navigation-container")) {
-    sibling.remove()
-  }
 }

@@ -106,6 +106,7 @@ export default class PluginSample extends Plugin {
     "__textDiff", // 文本对比
     "__quickNote", // 速记（persistent Modal）
     "__toolCollection", // 工具合集（Vue app + 容器 DOM）
+    "__docNavigation", // 文档层级导航（IntersectionObserver + 事件监听 + Vue app）
   ] as const
 
   onload() {

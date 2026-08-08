@@ -146,8 +146,8 @@ const props = defineProps<{
   plugin: Plugin
 }>()
 
-/** 功能 i18n 文案（合并后键组 docNavigation） */
-const i18n = (props.plugin.i18n as any)?.docNavigation || ({} as Record<string, string>)
+/** 功能 i18n 文案（合并后平铺在 plugin.i18n 顶层，与 tableOfContents 等同级模块一致） */
+const i18n = props.plugin.i18n as Record<string, string>
 
 const {
   parentDoc,

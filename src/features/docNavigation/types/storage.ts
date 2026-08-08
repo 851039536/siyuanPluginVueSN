@@ -27,11 +27,8 @@ export class DocNavSettingsStorage {
   }
 }
 
-/** 文档路径信息，由 getPathByID 返回 */
-export interface DocPathInfo {
-  notebook: string
-  path: string
-}
+/** getPathByID 成功时的文档路径信息（从 api 返回类型推导，避免与 api 重复声明结构） */
+type DocPathInfo = NonNullable<Awaited<ReturnType<typeof api.getPathByID>>>
 
 interface CacheItem { timestamp: number }
 
@@ -72,12 +69,15 @@ export class DocNavigationCache {
   ): T | null {
     const cacheKey = this.getCacheKey(box, docId)
     const cached = cache.get(cacheKey)
-    if (cached && Date.now() - cached.timestamp < this.cacheTTL) {
+    if (!cached) return null
+    if (Date.now() - cached.timestamp >= this.cacheTTL) {
+      // 过期条目直接驱逐，避免长期占用 Map 空间
       cache.delete(cacheKey)
-      cache.set(cacheKey, cached)
-      return cached
+      return null
     }
-    return null
+    cache.delete(cacheKey)
+    cache.set(cacheKey, cached)
+    return cached
   }
 
   private set<T>(
@@ -118,7 +118,8 @@ export class DocNavigationCache {
     docId: string,
     items: BreadcrumbItem[],
   ): void {
-    this.set(this.breadcrumbCache, box, docId, { items } as BreadcrumbCacheItem)
+    // set() 内部会补充 timestamp 字段，无需 as 断言
+    this.set(this.breadcrumbCache, box, docId, { items })
   }
 
   getCachedSibling(box: string, docId: string): SiblingCacheItem | null {

@@ -489,7 +489,8 @@ export async function fetchBacklinks(
       seen.add(file.id)
       items.push({
         id: file.id,
-        content: stripSySuffix(file.name),
+        // 数据层统一清洗 HTML，保证过滤/显示/高亮基于同一份纯文本，避免标签词误匹配
+        content: cache.stripHtml(stripSySuffix(file.name)),
         hpath: stripSySuffix(file.hPath || ""),
         box: file.box,
       })

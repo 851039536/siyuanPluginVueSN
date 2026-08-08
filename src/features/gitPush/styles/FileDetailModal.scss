@@ -1,0 +1,113 @@
+// gitPush 文件详情弹窗：Teleport 到 body 的居中遮罩 + 卡片（文件路径 + 指标网格）
+@use "./variables" as *;
+@use "./mixins" as *;
+
+// 遮罩（居中 + 半透明模糊底；基准字号 12px 兜底，防内部文字继承思源默认 14px）
+.gpr-fm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  font-size: $font-size-xs;
+}
+
+// 弹窗卡片（Codex 风格：边框 + 圆角，无阴影）
+.gpr-fm-dialog {
+  width: 420px;
+  max-width: 90vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-md;
+  overflow: hidden;
+}
+
+// ── 头部 ──
+
+.gpr-fm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+  padding: 8px 12px;
+  background: var(--b3-theme-surface);
+  border-bottom: 1px solid var(--b3-border-color);
+  flex-shrink: 0;
+}
+
+// 标题（图标 + 文字）
+.gpr-fm-title {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  min-width: 0;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-background);
+}
+
+// ── 正文 ──
+
+.gpr-fm-body {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  padding: $spacing-3;
+  overflow-y: auto;
+}
+
+// 标签（大写弱化，与报告其余区块一致）
+.gpr-fm-label {
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.45;
+}
+
+// 文件路径行（标签 + 等宽完整路径，超长自动换行）
+.gpr-fm-path-row {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+}
+
+.gpr-fm-path {
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface);
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+
+// 指标网格（2 列自适应，窄容器自动收缩）
+.gpr-fm-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $spacing-2 $spacing-3;
+}
+
+// 指标单元格（边框卡片）
+.gpr-fm-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: $spacing-1 $spacing-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+}
+
+// 指标值（等宽数字突出）
+.gpr-fm-value {
+  font-family: $vp-mono;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: var(--b3-theme-on-surface);
+}

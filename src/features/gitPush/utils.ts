@@ -278,6 +278,11 @@ export function parseCommitAnalysisType(message: string): CommitAnalysisType {
   return "other"
 }
 
+/** ISO 日期 → YYYY-MM-DD（git %aI 为 UTC ISO，切前 10 位即可；无值返回 —；报告视图文件详情/活跃范围共用） */
+export function formatIsoDate(iso: string): string {
+  return iso ? iso.slice(0, 10) : "—"
+}
+
 /** 本地日期格式化：Date → YYYY-MM-DD（日聚合/热力图共用，避免 UTC 解析在西半球时区跨日偏移） */
 export function formatLocalDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`

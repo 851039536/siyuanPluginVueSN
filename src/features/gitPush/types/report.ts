@@ -157,6 +157,8 @@ export interface CodeReportData {
   suggestionKey: string
   /** 分析涉及的文件数（numstat 去重后） */
   analyzedFiles: number
+  /** 作者 Top 修改文件详情查找表（路径 → 完整统计行，含预读 LOC；供文件详情弹窗随机访问） */
+  fileDetailsMap: Record<string, FileStatRow>
 }
 
 /** 统计报告偏好设置（持久化到 git-push-report-prefs：进入视图恢复上次选择） */

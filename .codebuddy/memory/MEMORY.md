@@ -7,6 +7,7 @@
 - 新功能必须在 8 处注册（index.ts + types + features/index.ts + src/index.ts + settings + i18n + config + icons）
 - 优先思源内置图标或 @iconify/vue
 - if 语句必须有花括号 `{}`，即使只有一行
+- i18n 只改分片文件（`src/i18n/{zh_CN,en_US}/<feature>.json`）；顶层合并 JSON（`src/i18n/zh_CN.json` / `en_US.json`）由 `pnpm i18n:merge` 脚本自动生成，**禁止手动修改**
 
 ## 代码风格硬规则
 - 单文件行数：300 行警戒，500 行硬阈值，≥1000 行必须重构

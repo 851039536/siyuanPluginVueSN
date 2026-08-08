@@ -119,68 +119,17 @@
         </a>
       </div>
 
-      <div
-        v-if="childDocs.length"
-        class="doc-nav-children"
-      >
-        <IconWrapper
-          name="docNavChildren"
-          class="doc-nav-icon"
-          size="18"
-          aria-hidden="true"
-        />
-        <div
-          class="doc-nav-children-list"
-          role="list"
-          :aria-label="`下级文档 (${childDocs.length})`"
-        >
-          <a
-            v-for="doc in visibleChildren"
-            :key="doc.id"
-            class="doc-nav-link"
-            :class="{ 'doc-nav-current': doc.id === currentDocId }"
-            role="listitem"
-            :data-doc-id="doc.id"
-            :title="stripHtml(doc.content)"
-            :aria-current="doc.id === currentDocId ? 'page' : undefined"
-            @click="openDoc(doc.id)"
-          >
-            {{ stripHtml(doc.content) }}
-          </a>
-
-          <template v-if="hiddenChildren.length">
-            <button
-              class="doc-nav-expand"
-              :aria-expanded="isExpanded"
-              aria-controls="doc-nav-hidden-children"
-              @click="toggleExpand"
-            >
-              {{ isExpanded ? '收起' : `+${hiddenChildren.length}` }}
-            </button>
-            <div
-              id="doc-nav-hidden-children"
-              :hidden="!isExpanded"
-            >
-              <a
-                v-for="doc in hiddenChildren"
-                :key="doc.id"
-                class="doc-nav-link doc-nav-link-hidden"
-                :class="{
-                  'show': isExpanded,
-                  'doc-nav-current': doc.id === currentDocId,
-                }"
-                role="listitem"
-                :data-doc-id="doc.id"
-                :title="stripHtml(doc.content)"
-                :aria-current="doc.id === currentDocId ? 'page' : undefined"
-                @click="openDoc(doc.id)"
-              >
-                {{ stripHtml(doc.content) }}
-              </a>
-            </div>
-          </template>
-        </div>
-      </div>
+      <!-- 子文档下拉树形面板 -->
+      <ChildDocDropdown
+        v-if="childCount > 0"
+        :child-docs="childDocs"
+        :notebook="notebook"
+        :current-doc-id="currentDocId"
+        :child-count="childCount"
+        :i18n="i18n"
+        :open-doc="openDoc"
+        :strip-html="stripHtml"
+      />
     </div>
   </div>
 </template>
@@ -190,11 +139,15 @@ import type { Plugin } from "siyuan"
 import { watch } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { useDocNavigation } from "../composables/useDocNavigation"
+import ChildDocDropdown from "./ChildDocDropdown.vue"
 
 const props = defineProps<{
   docId: string
   plugin: Plugin
 }>()
+
+/** 功能 i18n 文案（合并后键组 docNavigation） */
+const i18n = (props.plugin.i18n as any)?.docNavigation || ({} as Record<string, string>)
 
 const {
   parentDoc,
@@ -202,17 +155,15 @@ const {
   breadcrumbs,
   siblingDocs,
   currentDocId,
+  notebook,
   hasNavigation,
   hasBreadcrumbs,
   hasSiblings,
-  isExpanded,
-  visibleChildren,
-  hiddenChildren,
+  childCount,
   loadHierarchy,
-  toggleExpand,
   openDoc,
   stripHtml,
-} = useDocNavigation(props.plugin)
+} = useDocNavigation()
 
 watch(
   () => props.docId,

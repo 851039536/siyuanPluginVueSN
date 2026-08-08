@@ -1,4 +1,9 @@
 {
   "enableDocNavigation": "Enable Document Navigation",
-  "enableDocNavigationDesc": "Auto display navigation links to parent and child documents below title"
+  "enableDocNavigationDesc": "Auto display navigation links to parent and child documents below title",
+  "docNavShowChildren": "Child Docs",
+  "docNavNoChildren": "No child docs",
+  "docNavLoading": "Loading...",
+  "docNavExpand": "Expand",
+  "docNavCollapse": "Collapse"
 }

@@ -113,7 +113,7 @@
             >
               <td
                 class="gpr-author-detail"
-                :colspan="9"
+                :colspan="10"
               >
                 <div class="gpr-detail-grid">
                   <!-- 详情块：主要修改文件 -->

@@ -34,6 +34,8 @@
         role="tree"
         :aria-label="i18n.docNavShowChildren"
       >
+        <!-- 面板标题："子文档" -->
+        <div class="doc-nav-dropdown-header">{{ i18n.docNavPanelTitle }}</div>
         <template v-if="childDocs.length">
           <TreeNode
             v-for="doc in childDocs"

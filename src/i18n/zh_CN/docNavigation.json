@@ -6,5 +6,7 @@
   "docNavNoChildren": "无下级文档",
   "docNavLoading": "加载中...",
   "docNavExpand": "展开",
-  "docNavCollapse": "折叠"
+  "docNavCollapse": "折叠",
+  "docNavReference": "参考",
+  "docNavReferencePanelTitle": "参考"
 }

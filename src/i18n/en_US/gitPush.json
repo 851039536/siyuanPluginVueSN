@@ -302,6 +302,7 @@
     "reportAuthorsTitle": "Contributions",
     "reportCommitsCol": "Commits",
     "reportLinesCol": "Lines",
+    "reportDeletedLinesCol": "Deleted Lines",
     "reportNetCol": "Net",
     "reportAvgSizeCol": "Avg Size",
     "reportFrequencyCol": "Frequency",

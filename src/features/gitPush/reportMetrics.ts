@@ -192,6 +192,8 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100
 }
 
+// ── 文件工具函数 ──
+
 /** 超过 2MB 的文件视为不可读（压缩包/锁文件/二进制，避免整读大文件） */
 const LOC_READ_MAX_BYTES = 2 * 1024 * 1024
 

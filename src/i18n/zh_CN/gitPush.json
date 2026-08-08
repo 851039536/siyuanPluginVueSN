@@ -302,6 +302,7 @@
     "reportAuthorsTitle": "代码贡献度",
     "reportCommitsCol": "提交次数",
     "reportLinesCol": "代码行数",
+    "reportDeletedLinesCol": "删除行数",
     "reportNetCol": "净增",
     "reportAvgSizeCol": "平均提交大小",
     "reportFrequencyCol": "提交频率",

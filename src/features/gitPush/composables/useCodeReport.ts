@@ -1,4 +1,4 @@
-// gitPush 代码统计报告 — 选中项目/时间范围 + git 数据抓取 + 启发式聚合（仿 useCommitAnalysis 模式）
+// gitPush 代码统计报告 — 选中项目/时间范围 + git 数据抓取 + 报告聚合（仿 useCommitAnalysis 模式）
 import type { Ref } from "vue"
 import type {
   CodeReportData,

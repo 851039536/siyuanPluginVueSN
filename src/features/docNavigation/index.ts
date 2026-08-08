@@ -1,3 +1,4 @@
+// 文档导航功能入口：监听 protyle 事件渲染层级导航栏，插件卸载时经 destroy() 统一销毁（observer/事件/Vue app/缓存）
 import type { ProtyleLike } from "./types"
 import { Plugin } from "siyuan"
 import {
@@ -6,8 +7,8 @@ import {
 } from "vue"
 import DocNavContainer from "./components/DocNavContainer.vue"
 import {
+  disposeCache,
   findNavigationTarget,
-  removeExistingNav,
 } from "./composables/useDocNavigation"
 import {
   DEFAULT_NAV_SETTINGS,
@@ -26,6 +27,8 @@ const observer = new IntersectionObserver(
   },
   { threshold: 0 },
 )
+/** 跟踪所有进入导航流程的 protyle 对象，插件卸载时统一清理 timer / Vue app / DOM 容器 */
+const mountedProtyles = new Set<ProtyleLike>()
 
 export function registerDocNavigation(plugin: Plugin) {
   const settingsStorage = new DocNavSettingsStorage(plugin)
@@ -43,6 +46,37 @@ export function registerDocNavigation(plugin: Plugin) {
       plugin.eventBus.on(event as any, handleEvent)
     },
   )
+
+  /** 清理函数挂载到 plugin 实例，供 onunload 经 DESTROYABLE_KEYS 统一销毁 */
+  const instance = {
+    destroy() {
+      // 1. 释放 IntersectionObserver 对已观测元素的引用
+      observer.disconnect()
+      // 2. 解绑事件监听，避免插件重载时监听器累积
+      plugin.eventBus.off("switch-protyle" as any, handleEvent)
+      plugin.eventBus.off("loaded-protyle-dynamic" as any, handleEvent)
+      plugin.eventBus.off("loaded-protyle-static" as any, handleEvent)
+      // 3. 逐个清理已挂载的导航实例：清定时器 + 卸载 Vue app + 移除容器 DOM
+      for (const protyle of mountedProtyles) {
+        const el = protyle.element
+        if (el && timerMap.has(el)) {
+          clearTimeout(timerMap.get(el))
+          timerMap.delete(el)
+        }
+        const ref = protyle as any
+        ref.__docNavApp?.unmount()
+        ref.__docNavApp = null
+        ref.__docNavContainer?.remove()
+        ref.__docNavContainer = null
+      }
+      mountedProtyles.clear()
+      visibilityMap.clear()
+      // 4. 清空文档层级/面包屑/同级数据缓存
+      disposeCache()
+    },
+  }
+  ;(plugin as any).__docNavigation = instance
+  return instance
 }
 
 function updateDocNavigationDebounced(
@@ -51,11 +85,15 @@ function updateDocNavigationDebounced(
   protyle: ProtyleLike,
 ) {
   if (!protyle?.block?.rootID || !protyle.element) return
+  // visibilityMap 未观测到该元素时返回 undefined（与 false 严格不等），不拦截首次渲染；
+  // 仅拦截已确认不可见（=== false）的文档，避免为隐藏编辑器做无意义渲染
   if (visibilityMap.get(protyle.element) === false) return
 
   const el = protyle.element
   const existing = timerMap.get(el)
   if (existing) clearTimeout(existing)
+  // 记录已进入导航流程的 protyle，插件卸载时可统一清理 timer 与挂载实例
+  mountedProtyles.add(protyle)
   timerMap.set(
     el,
     setTimeout(
@@ -79,10 +117,9 @@ async function updateDocNavigation(
     const target = findNavigationTarget(protyle, position)
     if (!target) return
 
-    removeExistingNav(protyle)
-
     const protyleRef = protyle as any
     if (protyleRef.__docNavApp) {
+      // 同一文档二次导航时先卸载旧 app，容器 DOM 会被复用于后续挂载
       protyleRef.__docNavApp.unmount()
       protyleRef.__docNavApp = null
     }
@@ -109,6 +146,7 @@ async function updateDocNavigation(
 
     app.mount(container)
     protyleRef.__docNavApp = app
+    mountedProtyles.add(protyle)
 
     if (target.method === "after") {
       target.el.after(container)

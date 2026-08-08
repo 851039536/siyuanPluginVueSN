@@ -36,25 +36,17 @@
       >
         <!-- 面板标题：panelTitle -->
         <div class="doc-nav-dropdown-header">{{ panelTitle }}</div>
-        <template v-if="childDocs.length">
-          <TreeNode
-            v-for="doc in childDocs"
-            :key="doc.id"
-            :node="doc"
-            :notebook="notebook"
-            :current-doc-id="currentDocId"
-            :i18n="i18n"
-            :open-doc="openDoc"
-            :strip-html="stripHtml"
-          />
-        </template>
-        <!-- 空状态提示："无下级文档" -->
-        <div
-          v-else
-          class="doc-nav-dropdown-empty"
-        >
-          {{ i18n.docNavNoChildren }}
-        </div>
+        <!-- 父组件 v-if="childCount > 0" 已保证 childDocs 非空，空状态分支不可达故移除 -->
+        <TreeNode
+          v-for="doc in childDocs"
+          :key="doc.id"
+          :node="doc"
+          :notebook="notebook"
+          :current-doc-id="currentDocId"
+          :i18n="i18n"
+          :open-doc="openDoc"
+          :strip-html="stripHtml"
+        />
       </div>
     </Transition>
   </div>

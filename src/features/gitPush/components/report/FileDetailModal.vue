@@ -37,22 +37,32 @@
             <span class="gpr-fm-label">{{ i18n.reportFileDetailPath }}</span>
             <span class="gpr-fm-path">{{ fileStat.path }}</span>
           </div>
-          <!-- 指标网格：修改次数 / 代码行数 / 参与作者数 / 最后修改时间 -->
+          <!-- 指标网格：修改次数 / 新增行数 / 删除行数 / 参与作者数 / 净增 / 最后修改时间 -->
           <div class="gpr-fm-grid">
             <!-- 指标："修改次数" -->
             <div class="gpr-fm-cell">
               <span class="gpr-fm-label">{{ i18n.reportFileDetailMods }}</span>
               <span class="gpr-fm-value">{{ fileStat.modCount }}</span>
             </div>
-            <!-- 指标："代码行数"（null = 暂无数据，如幽灵文件/超限文件） -->
+            <!-- 指标："新增行数" -->
             <div class="gpr-fm-cell">
-              <span class="gpr-fm-label">{{ i18n.reportFileDetailLoc }}</span>
-              <span class="gpr-fm-value">{{ fileStat.loc ?? "—" }}</span>
+              <span class="gpr-fm-label">{{ i18n.reportFileDetailAdded }}</span>
+              <span class="gpr-fm-value gpr-fm-added">+{{ fileStat.added }}</span>
+            </div>
+            <!-- 指标："删除行数" -->
+            <div class="gpr-fm-cell">
+              <span class="gpr-fm-label">{{ i18n.reportFileDetailDeleted }}</span>
+              <span class="gpr-fm-value gpr-fm-deleted">-{{ fileStat.deleted }}</span>
             </div>
             <!-- 指标："参与作者数" -->
             <div class="gpr-fm-cell">
               <span class="gpr-fm-label">{{ i18n.reportFileDetailAuthors }}</span>
               <span class="gpr-fm-value">{{ fileStat.authorCount }}</span>
+            </div>
+            <!-- 指标："净增"（新增-删除） -->
+            <div class="gpr-fm-cell">
+              <span class="gpr-fm-label">{{ i18n.reportNetCol }}</span>
+              <span class="gpr-fm-value">{{ netLines }}</span>
             </div>
             <!-- 指标："最后修改时间" -->
             <div class="gpr-fm-cell">
@@ -68,8 +78,7 @@
 
 <script setup lang="ts">
 // 文件详情弹窗：受控显示（fileStat 非空即展示），ESC/遮罩/关闭按钮触发 close
-import { Icon } from "@iconify/vue"
-import { onBeforeUnmount, onMounted } from "vue"
+import { computed, onBeforeUnmount, onMounted } from "vue"
 import type { FileStatRow } from "../../types"
 import { formatIsoDate } from "../../utils"
 
@@ -82,6 +91,13 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: []
 }>()
+
+/** 净增行数（新增 - 删除；fileStat 为 null 时显示 —） */
+const netLines = computed(() => {
+  if (!props.fileStat) return "—"
+  const net = props.fileStat.added - props.fileStat.deleted
+  return net >= 0 ? `+${net}` : `${net}`
+})
 
 /** ESC 关闭（Teleport 到 body 后键盘事件在 document 层监听） */
 function onKeydown(e: KeyboardEvent) {

@@ -44,11 +44,6 @@
   letter-spacing: 0.06em;
 }
 
-// 平均质量卡：警告色（数值可低于 60）
-.gpr-card--warn .gpr-card-value {
-  color: var(--b3-theme-warning);
-}
-
 // 最活跃贡献者卡：主题色强调
 .gpr-card--accent .gpr-card-value {
   color: var(--b3-theme-primary);

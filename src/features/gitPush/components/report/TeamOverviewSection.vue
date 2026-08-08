@@ -1,4 +1,4 @@
-<!-- gitPush 代码统计报告：团队总览分区（KPI 卡片：团队成员/总提交数/总代码量/平均质量/最活跃贡献者） -->
+<!-- gitPush 代码统计报告：团队总览分区（KPI 卡片：团队成员/总提交数/总代码量/最活跃贡献者） -->
 <template>
   <div class="gpr-section">
     <!-- 区块标题："团队总览" -->
@@ -27,7 +27,7 @@
 </template>
 
 <script setup lang="ts">
-// 团队总览分区：从 teamOverview 派生 KPI 卡片（成员数/总提交/总代码量/平均质量/最活跃贡献者）
+// 团队总览分区：从 teamOverview 派生 KPI 卡片（成员数/总提交/总代码量/最活跃贡献者）
 import type { CodeReportData } from "../../types"
 import { computed } from "vue"
 
@@ -37,12 +37,11 @@ const props = defineProps<{
   report: CodeReportData
 }>()
 
-/** 总览卡片配置：团队成员/总提交数/总代码量/平均代码质量/最活跃贡献者（平均质量按色弱化，最活跃用主题色） */
+/** 总览卡片配置：团队成员/总提交数/总代码量/最活跃贡献者（最活跃用主题色） */
 const overviewCards = computed(() => [
   { value: props.report.teamOverview.memberCount, label: props.i18n.reportMemberCount, cls: "" },
   { value: props.report.totalCommits, label: props.i18n.reportTotalCommits, cls: "" },
   { value: props.report.teamOverview.totalLines, label: props.i18n.reportTotalLines, cls: "" },
-  { value: props.report.teamOverview.avgQuality, label: props.i18n.reportAvgQuality, cls: "gpr-card--warn" },
   { value: props.report.teamOverview.topAuthor, label: props.i18n.reportTopAuthor, cls: "gpr-card--accent" },
 ])
 </script>

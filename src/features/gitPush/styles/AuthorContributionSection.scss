@@ -174,24 +174,6 @@
   }
 }
 
-// 质量等级徽章（彩色圆角 chip：等级 + 分数，颜色/底色由 GRADE_META 内联驱动）
-.gpr-grade-chip {
-  display: inline-block;
-  padding: 1px 6px;
-  border: 1px solid;
-  border-radius: $radius-sm;
-  font-weight: $font-weight-semibold;
-  white-space: nowrap;
-}
-
-// 星级（紧随徽章，弱化展示）
-.gpr-stars {
-  margin-left: $spacing-1;
-  font-size: $font-size-2xs;
-  opacity: 0.7;
-  letter-spacing: 0.02em;
-}
-
 // ── 展开详情行 ──
 
 // 详情行（紧随主行，浅灰底与主行区分）

@@ -1,4 +1,4 @@
-<!-- gitPush 代码统计报告：代码贡献度分区（作者排行表：排名/提交/行数/净增bar/平均大小/频率/文件/质量徽章/活跃天数 + 点击行展开详情） -->
+<!-- gitPush 代码统计报告：代码贡献度分区（作者排行表：排名/提交/行数/净增bar/平均大小/频率/文件/活跃天数 + 点击行展开详情） -->
 <template>
   <div class="gpr-section">
     <!-- 区块标题："代码贡献度" + 行数徽章 -->
@@ -38,8 +38,6 @@
             <th class="gpr-author-th gpr-author-th--num">{{ i18n.reportFrequencyCol }}</th>
             <!-- 表头："涉及文件数" -->
             <th class="gpr-author-th gpr-author-th--num">{{ i18n.reportFilesCol }}</th>
-            <!-- 表头："质量评分" -->
-            <th class="gpr-author-th gpr-author-th--num">{{ i18n.reportQualityCol }}</th>
             <!-- 表头："活跃天数" -->
             <th class="gpr-author-th gpr-author-th--num">{{ i18n.reportActiveDaysCol }}</th>
           </tr>
@@ -101,19 +99,6 @@
               <td class="gpr-author-cell gpr-author-cell--num">{{ row.frequency }}</td>
               <!-- 涉及文件数 -->
               <td class="gpr-author-cell gpr-author-cell--num">{{ row.filesTouched }}</td>
-              <!-- 质量评分：彩色等级徽章 + 星级（分数悬停可见） -->
-              <td class="gpr-author-cell gpr-author-cell--num">
-                <span
-                  class="gpr-grade-chip"
-                  :style="{
-                    color: row.gradeColor,
-                    borderColor: row.gradeColor,
-                    background: row.gradeBg,
-                  }"
-                  :title="String(row.quality)"
-                >{{ row.gradeLabel }} {{ row.quality }}</span>
-                <span class="gpr-stars">{{ row.stars }}</span>
-              </td>
               <!-- 活跃天数 -->
               <td class="gpr-author-cell gpr-author-cell--num">{{ row.activeDays }}</td>
             </tr>
@@ -124,7 +109,7 @@
             >
               <td
                 class="gpr-author-detail"
-                :colspan="10"
+                :colspan="9"
               >
                 <div class="gpr-detail-grid">
                   <!-- 详情块：主要修改文件 -->
@@ -174,10 +159,9 @@
 </template>
 
 <script setup lang="ts">
-// 代码贡献度分区：作者排行表（预计算行数据消除模板重复查找/拼接；TOP3 排名徽章 + 净增 mini bar + 等级徽章 + 点击行展开详情）
+// 代码贡献度分区：作者排行表（预计算行数据消除模板重复查找/拼接；TOP3 排名徽章 + 净增 mini bar + 点击行展开详情）
 import { computed, ref } from "vue"
 import type { AuthorReportRow } from "../../types"
-import { GRADE_META } from "../../types"
 import EmptyState from "../common/EmptyState.vue"
 
 const props = defineProps<{
@@ -222,7 +206,6 @@ const rows = computed(() => {
   // 净增 mini bar 基准：全部作者净增绝对值的最大值（避免单个大数值压缩其余 bar）
   const maxNet = Math.max(...props.authors.map((a) => Math.abs(a.netLines)), 0)
   return props.authors.map((a, i) => {
-    const meta = GRADE_META[a.grade]
     const medalClass = i < MEDAL_CLASSES.length ? MEDAL_CLASSES[i] : ""
     return {
       ...a,
@@ -234,11 +217,6 @@ const rows = computed(() => {
       // bar 宽度：按最大净增归一化，至少 3% 保证可见；净增 0 时 0%
       netBarWidth: maxNet > 0 ? `${Math.max(3, Math.round((Math.abs(a.netLines) / maxNet) * 100))}%` : "0%",
       netBarClass: a.netLines > 0 ? "gpr-net-bar--pos" : a.netLines < 0 ? "gpr-net-bar--neg" : "gpr-net-bar--zero",
-      gradeLabel: props.i18n[meta.labelKey],
-      gradeColor: meta.color,
-      // 半透明背景：等级色 12% 透明度作 chip 底色
-      gradeBg: `${meta.color}1f`,
-      stars: "★".repeat(meta.stars),
     }
   })
 })

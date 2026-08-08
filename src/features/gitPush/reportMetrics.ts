@@ -3,7 +3,6 @@
 // 启发式公式说明（确定性可复现，聚焦 churn 原始指标，思路参考 code-maat）：
 // - 技术债务风险分 risk = clamp(sqrt(修改次数)*10 + 参与人数*6 + 近期修改加分)，sqrt 使 churn 边际收益递减避免高分区饱和；
 //   仅统计修改 ≥门槛次（默认 3，可由偏好配置）的文件（低于门槛视为正常迭代）
-// - 质量分 quality：活跃天数 + 提交数 + 净增倾向加权，clamp 到 0~100
 // - 热度 heat = 修改次数*2.2 + 参与人数*7 + 近期修改加分（recencyBonus 与债务评分共用）；阈值 热点≥75 / 温热≥45 / 冷却≥25
 import type { GitProject } from "./types"
 import type {
@@ -14,7 +13,6 @@ import type {
   FileStatRow,
   HotspotFileRow,
   HotspotLevel,
-  QualityGrade,
   ReportRange,
 } from "./types/report"
 import { REPORT_RANGES } from "./types/report"
@@ -139,7 +137,6 @@ export function aggregateAuthorStats(commits: NumstatCommit[]): AuthorReportRow[
   for (const [author, a] of map) {
     const net = a.added - a.deleted
     const activeDays = activeDaysBetween(a.firstDate, a.lastDate)
-    const quality = qualityScore(a.commits, net, activeDays)
     // 修改最多的文件 Top3（按修改次数降序，供展开详情展示）
     const topFiles = [...a.fileMods.entries()]
       .sort((x, y) => y[1] - x[1])
@@ -160,8 +157,6 @@ export function aggregateAuthorStats(commits: NumstatCommit[]): AuthorReportRow[
       // 代码流失率：删除行/新增行（无新增为 0，避免除零）
       churnRate: a.added > 0 ? round2(a.deleted / a.added) : 0,
       topFiles,
-      quality,
-      grade: qualityGrade(quality),
     })
   }
   return rows.sort((x, y) => y.commits - x.commits)
@@ -195,26 +190,6 @@ function clamp100(n: number): number {
 /** 保留两位小数 */
 function round2(n: number): number {
   return Math.round(n * 100) / 100
-}
-
-/**
- * 质量分启发式：活跃天数 + 提交数 + 净增倾向（每提交净增越大越正向）。
- * 参考报告三作者反推：活跃天数与净增为正相关，提交数上限封顶防刷分。
- */
-export function qualityScore(commits: number, netLines: number, activeDays: number): number {
-  const netPerCommit = netLines / Math.max(commits, 1)
-  const netBonus = Math.max(-8, Math.min(12, netPerCommit / 25))
-  const score = 60 + activeDays * 0.28 + Math.min(commits, 25) * 0.35 + netBonus
-  return clamp100(score)
-}
-
-/** 质量等级：S≥90 / A≥80 / B≥60 / C≥40 / 其余 D */
-export function qualityGrade(score: number): QualityGrade {
-  if (score >= 90) return "S"
-  if (score >= 80) return "A"
-  if (score >= 60) return "B"
-  if (score >= 40) return "C"
-  return "D"
 }
 
 /** 超过 2MB 的文件视为不可读（压缩包/锁文件/二进制，避免整读大文件） */
@@ -413,7 +388,6 @@ export function buildReportData(
 
   const totalCommits = commits.length
   const totalLines = authors.reduce((sum, a) => sum + a.linesAdded, 0)
-  const avgQuality = authors.length > 0 ? Math.round(authors.reduce((sum, a) => sum + a.quality, 0) / authors.length) : 0
 
   const debtSummary: Record<DebtSeverity, number> = { severe: 0, high: 0, medium: 0, low: 0 }
   debtRows.forEach((r) => { debtSummary[r.severity]++ })
@@ -431,7 +405,6 @@ export function buildReportData(
       memberCount: authors.length,
       totalCommits,
       totalLines,
-      avgQuality,
       topAuthor: authors[0]?.author ?? "",
     },
     authors,
@@ -453,7 +426,7 @@ export function buildEmptyReport(project: GitProject, rangeLabel: string): CodeR
     rangeLabel,
     generatedAt: new Date().toISOString(),
     totalCommits: 0,
-    teamOverview: { memberCount: 0, totalCommits: 0, totalLines: 0, avgQuality: 0, topAuthor: "" },
+    teamOverview: { memberCount: 0, totalCommits: 0, totalLines: 0, topAuthor: "" },
     authors: [],
     debtFiles: [],
     debtSummary: { severe: 0, high: 0, medium: 0, low: 0 },

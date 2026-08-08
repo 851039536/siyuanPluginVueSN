@@ -70,6 +70,16 @@
               <span class="gpr-fm-value">{{ formatIsoDate(fileStat.lastModified) }}</span>
             </div>
           </div>
+
+          <!-- 变更详情：git log -p diff 内容（仅当 diffContent 非空时展示） -->
+          <div
+            v-if="fileStat.diffContent"
+            class="gpr-fm-diff-section"
+          >
+            <!-- 分区标签："变更详情" -->
+            <span class="gpr-fm-label gpr-fm-diff-label">{{ i18n.reportFileDetailDiff }}</span>
+            <pre class="gpr-fm-diff">{{ fileStat.diffContent }}</pre>
+          </div>
         </div>
       </div>
     </div>
@@ -78,6 +88,7 @@
 
 <script setup lang="ts">
 // 文件详情弹窗：受控显示（fileStat 非空即展示），ESC/遮罩/关闭按钮触发 close
+import { Icon } from "@iconify/vue"
 import { computed, onBeforeUnmount, onMounted } from "vue"
 import type { FileStatRow } from "../../types"
 import { formatIsoDate } from "../../utils"

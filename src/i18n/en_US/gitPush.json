@@ -379,6 +379,8 @@
     "reportWeekThu": "Thu",
     "reportWeekFri": "Fri",
     "reportWeekSat": "Sat",
+    "reportScrollLeft": "Scroll left (view earlier dates)",
+    "reportScrollRight": "Scroll right (view latest dates)",
     "reportHotspotTruncated": "Showing top {0} hotspot files, {1} analyzed in total",
     "reportOpenFileTitle": "{0} (click to open file)",
     "reportDebtDistTitle": "Severity Distribution",

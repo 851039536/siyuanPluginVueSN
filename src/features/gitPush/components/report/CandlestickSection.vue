@@ -40,18 +40,47 @@
         <span class="gpc-legend-hint">{{ i18n.reportCandlestickHint }}</span>
       </div>
 
-      <!-- K 线图（chart.js 浮动条 + 影线插件：实体=首末提交时刻跨度，影线=±0.5h 缓冲，底色=工作时间区；外层滚动容器保证日期多时可横向滑动） -->
-      <div class="gpc-chart-scroll">
+      <!-- K 线图（chart.js 浮动条 + 影线插件：实体=首末提交时刻跨度，影线=±0.5h 缓冲，底色=工作时间区；外层滚动容器保证日期多时可横向滑动，两侧中部提供滚动箭头按钮） -->
+      <div class="gpc-chart-scroll-area">
         <div
-          class="gpc-chart-wrap"
-          :style="{ minWidth: `${minChartWidth}px` }"
+          ref="scrollRef"
+          class="gpc-chart-scroll"
         >
-          <Bar
-            :data="barData"
-            :options="chartOptions"
-            :plugins="chartPlugins"
-          />
+          <div
+            class="gpc-chart-wrap"
+            :style="{ minWidth: `${minChartWidth}px` }"
+          >
+            <Bar
+              :data="barData"
+              :options="chartOptions"
+              :plugins="chartPlugins"
+            />
+          </div>
         </div>
+        <!-- 左滚动按钮：查看更早日期数据 -->
+        <button
+          type="button"
+          class="gpc-scroll-btn gpc-scroll-btn--left"
+          :class="{ 'is-disabled': !canScrollLeft }"
+          :disabled="!canScrollLeft"
+          :title="i18n.reportScrollLeft"
+          :aria-label="i18n.reportScrollLeft"
+          @click="handleScrollLeft"
+        >
+          <Icon icon="mdi:chevron-left" />
+        </button>
+        <!-- 右滚动按钮：查看最新日期数据 -->
+        <button
+          type="button"
+          class="gpc-scroll-btn gpc-scroll-btn--right"
+          :class="{ 'is-disabled': !canScrollRight }"
+          :disabled="!canScrollRight"
+          :title="i18n.reportScrollRight"
+          :aria-label="i18n.reportScrollRight"
+          @click="handleScrollRight"
+        >
+          <Icon icon="mdi:chevron-right" />
+        </button>
       </div>
 
       <!-- 提交节奏迷你图：星期分布（7 根柱）+ 时段热力条（24h 色块） -->
@@ -151,7 +180,8 @@ import {
   Tooltip,
 } from "chart.js"
 import { Bar } from "vue-chartjs"
-import { computed } from "vue"
+import { Icon } from "@iconify/vue"
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue"
 import type { CodeReportData } from "../../types"
 import { WEEKDAY_LABEL_KEYS } from "../../types/report"
 import type { DailyCommitStat } from "../../types/report"
@@ -181,6 +211,9 @@ const MIN_BODY_HOURS = 0.3
 /** 每根蜡烛最小占地宽度（px）：实体 16px + 左右间距，保证多日期时不被挤压 */
 const MIN_WIDTH_PER_DAY = 30
 
+/** 单次点击滚动距离（px）：约 10 根蜡烛宽度，步长适中便于快速定位 */
+const SCROLL_AMOUNT = 300
+
 /** 日提交数标注字号（canvas 字体不受 CSS Token 约束，取与 10px 标签接近的小字号） */
 const LABEL_FONT = "500 9px ui-monospace, SFMono-Regular, Menlo, monospace"
 
@@ -192,6 +225,51 @@ const props = defineProps<{
 
 /** 每日提交统计（按日期升序，来自报告聚合） */
 const stats = computed(() => props.report.dailyStats)
+
+/** K 线图横向滚动容器 DOM 引用 */
+const scrollRef = ref<HTMLElement | null>(null)
+
+/** 左/右滚动按钮可用状态（滚动到边界时对应方向禁用） */
+const canScrollLeft = ref(false)
+const canScrollRight = ref(false)
+
+/** 依据滚动容器当前偏移量更新左右按钮可用状态（1px 容差避免浮点抖动） */
+function updateScrollState() {
+  const el = scrollRef.value
+  if (!el) return
+  canScrollLeft.value = el.scrollLeft > 1
+  canScrollRight.value = el.scrollLeft < el.scrollWidth - el.clientWidth - 1
+}
+
+/** 向左平滑滚动 300px（查看更早日期数据） */
+function handleScrollLeft() {
+  scrollRef.value?.scrollBy({ left: -SCROLL_AMOUNT, behavior: "smooth" })
+}
+
+/** 向右平滑滚动 300px（查看最新日期数据） */
+function handleScrollRight() {
+  scrollRef.value?.scrollBy({ left: SCROLL_AMOUNT, behavior: "smooth" })
+}
+
+onMounted(() => {
+  const el = scrollRef.value
+  if (!el) return
+  el.addEventListener("scroll", updateScrollState, { passive: true })
+  // 初始状态：图表可能尚未渲染完成，待 DOM 稳定后再检测一次滚动边界
+  nextTick(updateScrollState)
+})
+
+onUnmounted(() => {
+  scrollRef.value?.removeEventListener("scroll", updateScrollState)
+})
+
+// 切换项目/时间范围导致数据变化时：滚动回最左并重新检测边界状态，避免停留在旧数据位置
+watch(stats, () => {
+  const el = scrollRef.value
+  if (!el) return
+  el.scrollLeft = 0
+  nextTick(updateScrollState)
+})
 
 /** 图表最小宽度（px）：日期数 × 每根蜡烛占地宽；超过容器宽度时外层滚动容器出现横向滚动条 */
 const minChartWidth = computed(() => stats.value.length * MIN_WIDTH_PER_DAY)

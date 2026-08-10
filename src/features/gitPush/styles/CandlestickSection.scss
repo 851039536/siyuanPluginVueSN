@@ -44,6 +44,58 @@
   opacity: 0.5;
 }
 
+// ── K 线图滚动区域（相对定位容器，承载左右滑动箭头按钮）──
+.gpc-chart-scroll-area {
+  position: relative;
+}
+
+// ── K 线图滚动按钮（半透明圆形箭头，hover 高亮；左右两侧垂直居中悬浮于图表边缘）──
+.gpc-scroll-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px; // 圆形按钮直径（与图表边缘视觉平衡，项目内 28px 按钮先例一致）
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-full;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-sm; // 图标尺寸 14px（Iconify 图标随字号缩放，非正文）
+  opacity: 0.45;
+  cursor: pointer;
+  transition:
+    opacity 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    opacity: 1;
+    border-color: var(--b3-theme-primary);
+    background: var(--b3-theme-primary-lightest);
+  }
+
+  &.is-disabled,
+  &:disabled {
+    opacity: 0.18;
+    cursor: default;
+  }
+}
+
+// 左按钮（查看更早数据）：贴左边缘垂直居中
+.gpc-scroll-btn--left {
+  left: 0;
+}
+
+// 右按钮（查看最新数据）：贴右边缘垂直居中
+.gpc-scroll-btn--right {
+  right: 0;
+}
+
 // ── K 线图滚动容器（日期多时横向滚动，避免蜡烛被挤压；细滚动条可见便于拖动）──
 .gpc-chart-scroll {
   width: 100%;

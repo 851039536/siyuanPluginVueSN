@@ -216,8 +216,18 @@ ${options.userInput}`
     const skillRubric = skill ? this.buildSkillRubric(skill) : ""
 
     const reviewPrompt = [
-      "你是专业的文档质量审核专家。请严格按以下维度审核AI生成的Markdown文档，并以JSON格式输出。",
-
+      "你是专业的代码/文档审核专家，请以 GitHub PR Review 的严谨风格审核以下AI生成的Markdown文档，并以JSON格式输出。",
+      "请参考 Reviewer 的审查习惯，按三段式结构组织审查意见：",
+      "",
+      "## Summary（总体评价）",
+      "类似 PR 顶部的总结评论：用 1-2 句话概括文档整体质量，给出评级。",
+      "",
+      "## Review Comments（逐条审查意见）",
+      "类似行内评论：逐条指出发现的问题，每条必须标注严重程度（severity）并给出具体可定位的描述。",
+      "",
+      "## Suggestions（改进建议）",
+      "给出可操作的改进方向与具体修改建议。",
+      "",
       "## 用户需求",
       userRequest.slice(0, 500),
 
@@ -232,6 +242,12 @@ ${options.userInput}`
       "3. 语言质量（quality）— 清晰度、简洁度、语气一致",
       "4. 格式规范（format）— Markdown语法正确、无原始HTML、标准格式",
       "5. 覆盖完整性（coverage）— 所有必要方面已涵盖",
+      "6. 标题质量（titleQuality）— 标题是否准确概括内容、是否具有吸引力与信息量",
+
+      "## 标题质量专项评估（titleQuality 评分依据）",
+      "- 检查文档标题是否准确反映内容主题，是否存在标题与正文偏离",
+      "- 评估标题的吸引力与信息量：是否过于宽泛、过于冗长或缺乏关键信息",
+      "- 若标题不理想，必须在 suggestions 中给出更好的标题建议",
 
       "## 输出格式（严格JSON，禁止任何额外文字）",
       `{`,
@@ -239,7 +255,7 @@ ${options.userInput}`
       `  "summary":"总体评价（1-2句话）",`,
       `  "issues":[{"description":"具体问题描述","severity":"高|中|低"}],`,
       `  "suggestions":["可操作改进建议"],`,
-      `  "detailedScore":{"accuracy":8,"structure":7,"quality":9,"format":8,"coverage":7}`,
+      `  "detailedScore":{"accuracy":8,"structure":7,"quality":9,"format":8,"coverage":7,"titleQuality":8}`,
       `}`,
 
       "规则：",
@@ -257,7 +273,7 @@ ${options.userInput}`
       const result = await callAI(reviewPrompt, apiConfig, {
         systemPrompt: "你只输出JSON，禁止任何解释或前缀文字。",
         temperature: 0.1,
-        maxTokens: 2000,
+        maxTokens: 2500,
         responseFormat: { type: "json_object" },
       })
 

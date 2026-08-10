@@ -1,0 +1,143 @@
+// 速记功能 — 每周复盘面板样式（Codex 风格：全 Token 化）
+
+@use "@/variables.scss" as *;
+
+.qn-review {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+// 本周完成数字卡片
+.qn-review__stat {
+  display: flex;
+  align-items: baseline;
+  gap: $spacing-2;
+  padding: $spacing-3;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-base;
+  background: var(--b3-theme-surface);
+}
+
+// 辅助文字：统计标签
+.qn-review__stat-label,
+.qn-review__stat-unit {
+  // 辅助文字
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-variant);
+}
+
+// 突出数字（数据突出展示，允许 $font-size-sm 以上）
+.qn-review__stat-value {
+  // 数据突出展示
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: var(--b3-theme-primary);
+  line-height: 1;
+}
+
+// ========== 双图表区 ==========
+
+.qn-review__charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-3;
+}
+
+.qn-review__chart-col {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+// 辅助文字：图表标题
+.qn-review__chart-title {
+  // 辅助文字
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--b3-theme-on-surface);
+}
+
+// 图表容器（固定高度，Chart 内部 maintainAspectRatio: false）
+.qn-review__chart-box {
+  height: 130px;
+  padding: $spacing-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-base;
+  background: var(--b3-theme-surface);
+}
+
+// 图表空态
+.qn-review__chart-empty {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  // 辅助文字
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-variant);
+  font-style: italic;
+  opacity: 0.6;
+}
+
+// ========== 卡点汇总 ==========
+
+.qn-review__blocks {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  padding: $spacing-3;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-base;
+  background: var(--b3-theme-surface);
+}
+
+// 区块标题
+.qn-review__section-title {
+  // 辅助文字
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--b3-theme-on-surface);
+}
+
+.qn-review__block-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+}
+
+.qn-review__block-item {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-1;
+  // 辅助文字
+  font-size: $font-size-2xs;
+  color: var(--b3-card-error-color);
+  line-height: $line-height-tight;
+}
+
+.qn-review__block-name {
+  font-weight: $font-weight-semibold;
+  flex-shrink: 0;
+}
+
+.qn-review__block-text {
+  word-break: break-word;
+  opacity: 0.85;
+}
+
+// 无卡点柔和提示
+.qn-review__block-empty {
+  // 辅助文字
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-variant);
+  font-style: italic;
+  opacity: 0.6;
+}

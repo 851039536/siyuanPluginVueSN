@@ -1,0 +1,200 @@
+// 速记功能 — 项目卡片样式（Codex 风格：全 Token 化）
+
+@use "@/variables.scss" as *;
+
+.qn-proj-item {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  padding: $spacing-3;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-base;
+  background: var(--b3-theme-surface);
+  transition: border-color 0.12s;
+
+  &:hover {
+    border-color: var(--b3-theme-primary-lighter);
+  }
+
+  // 卡住态：红色左边框强调
+  &--blocked {
+    border-left: $spacing-px solid var(--b3-card-error-color);
+  }
+}
+
+// 卡片头部
+.qn-proj-item__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+}
+
+.qn-proj-item__title-group {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  min-width: 0;
+}
+
+.qn-proj-item__name {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-surface);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// 状态徽章
+.qn-proj-item__status {
+  // 辅助文字
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  padding: 0 $spacing-2;
+  border: 1px solid;
+  border-radius: $radius-full;
+  flex-shrink: 0;
+}
+
+.qn-proj-item__actions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  flex-shrink: 0;
+}
+
+// 进度流程（当前 → 下一步）
+.qn-proj-item__flow {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-2;
+}
+
+.qn-proj-item__flow-col {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2px;
+  flex: 1;
+  min-width: 0;
+}
+
+// 辅助文字：流程标签
+.qn-proj-item__flow-label {
+  // 辅助文字
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-variant);
+  opacity: 0.8;
+}
+
+.qn-proj-item__flow-text {
+  font-size: $font-size-xs;
+  line-height: $line-height-tight;
+  color: var(--b3-theme-on-surface);
+  word-break: break-word;
+}
+
+.qn-proj-item__flow-arrow {
+  color: var(--b3-theme-on-surface-variant);
+  opacity: 0.6;
+  flex-shrink: 0;
+  margin-top: $spacing-3;
+}
+
+// 卡点警示
+.qn-proj-item__blocker {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-2;
+  border-radius: $vp-radius;
+  background: color-mix(in srgb, var(--b3-card-error-color) 8%, transparent);
+  color: var(--b3-card-error-color);
+  // 辅助文字
+  font-size: $font-size-2xs;
+  line-height: $line-height-tight;
+  word-break: break-word;
+}
+
+// ========== 关联待办进度 ==========
+
+.qn-proj-item__todos {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+}
+
+.qn-proj-item__progress-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+// 进度条轨道
+.qn-proj-item__progress-track {
+  flex: 1;
+  height: 6px;
+  border-radius: $radius-full;
+  background: var(--b3-theme-surface-lighter);
+  overflow: hidden;
+}
+
+// 进度条填充（蓝绿渐变；唯一允许 transition width 0.3s 的例外）
+.qn-proj-item__progress-fill {
+  height: 100%;
+  border-radius: $radius-full;
+  background: linear-gradient(90deg, var(--b3-theme-primary), var(--b3-theme-success));
+  transition: width 0.3s;
+}
+
+.qn-proj-item__progress-text {
+  // 辅助文字
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-variant);
+  flex-shrink: 0;
+}
+
+// 折叠切换
+.qn-proj-item__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-px;
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--b3-theme-primary);
+  // 辅助文字
+  font-size: $font-size-2xs;
+  cursor: pointer;
+  transition: opacity 0.12s;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+.qn-proj-item__todo-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.qn-proj-item__todo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-px;
+  // 辅助文字
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface);
+  line-height: $line-height-tight;
+
+  // 已完成：删除线弱化
+  &--done {
+    text-decoration: line-through;
+    color: var(--b3-theme-on-surface-variant);
+  }
+}

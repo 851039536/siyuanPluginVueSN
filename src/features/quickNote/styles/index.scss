@@ -1,4 +1,4 @@
-// 速记弹窗主面板样式 — Codex 风格（边框代替阴影，全 Token 化）
+// 速记弹窗主面板样式 — Codex 风格（边框代替阴影，全 Token 化，蓝绿商务）
 
 @use "@/variables.scss" as *;
 
@@ -54,7 +54,7 @@
 }
 
 .mini-bar__count {
-  // 辅助文字：待完成计数徽标
+  // 辅助文字：未完成待办计数徽标
   font-size: $font-size-2xs;
   padding: 0 $spacing-1;
   border-radius: $radius-full;
@@ -180,109 +180,173 @@
   }
 }
 
-// ========== 新增速记区 ==========
-
-.add-area {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-2;
-  padding: $spacing-3;
-  border-bottom: 1px solid var(--b3-border-color);
-  flex-shrink: 0;
-}
-
-// 新增区操作行：AI 润色与添加按钮左右分布
-.add-area__actions {
+// 头部最小化关闭按钮
+.close-btn {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: $spacing-2;
-}
-
-.add-textarea {
-  width: 100%;
-  box-sizing: border-box;
-  padding: $spacing-2;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  font-size: $font-size-xs;
-  font-family: inherit;
-  line-height: $line-height-normal;
-  resize: vertical;
-
-  &:focus {
-    outline: none;
-    border-color: var(--b3-theme-primary);
-  }
-
-  &::placeholder {
-    // 辅助文字：占位提示
-    font-size: $font-size-2xs;
-    color: var(--b3-theme-on-surface-variant);
-  }
-}
-
-// ========== 待完成/已完成 Tab ==========
-
-.filter-tabs {
-  display: flex;
-  gap: $spacing-1;
-  padding: $spacing-2 $spacing-3;
-  flex-shrink: 0;
-}
-
-.filter-tab {
-  display: flex;
-  align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-1 $spacing-2;
-  border: 1px solid var(--b3-border-color);
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid transparent;
   border-radius: $vp-radius;
   background: transparent;
   color: var(--b3-theme-on-surface-variant);
-  font-size: $font-size-xs;
   cursor: pointer;
   transition: all 0.12s;
 
   &:hover {
     background: var(--b3-theme-surface-lighter);
     color: var(--b3-theme-on-surface);
-  }
-
-  &--active {
-    background: var(--b3-theme-surface-lighter);
-    color: var(--b3-theme-on-surface);
-    border-color: var(--b3-theme-primary);
+    border-color: var(--b3-border-color);
   }
 }
 
-.filter-tab__count {
-  // 辅助文字：计数徽标
+// ========== 页头（克制蓝绿渐变配图） ==========
+
+.panel-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-3 $spacing-4;
+  // 免版权渐变配图：蓝→绿 135° 对角渐变，叠加半透明白，克制不喧宾夺主
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--b3-theme-primary) 90%, #fff) 0%,
+    color-mix(in srgb, var(--b3-theme-success) 70%, #fff) 100%
+  );
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.panel-hero__text {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2px;
+}
+
+// 页头主标题（阅读区/数据突出展示级别）
+.panel-hero__title {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  line-height: $line-height-tight;
+}
+
+// 页头副标题（辅助文字）
+.panel-hero__subtitle {
+  // 辅助文字
   font-size: $font-size-2xs;
-  padding: 0 $spacing-1;
-  border-radius: $radius-full;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  color: var(--b3-theme-on-surface-variant);
+  opacity: 0.9;
 }
 
-// ========== 条目列表 ==========
+.panel-hero__icon {
+  opacity: 0.85;
+}
 
-.note-list {
+// ========== Tab 导航栏（下划线式） ==========
+
+.panel-tabs {
+  display: flex;
+  gap: $spacing-3;
+  padding: $spacing-1 $spacing-3;
+  border-bottom: 1px solid var(--b3-border-color);
+  flex-shrink: 0;
+}
+
+.panel-tab {
+  padding: $spacing-1 $spacing-1;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--b3-theme-on-surface-variant);
+  font-size: $font-size-xs;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.12s;
+
+  &:hover {
+    color: var(--b3-theme-on-surface);
+  }
+
+  // 激活态：品牌蓝下划线 + 文字
+  &--active {
+    color: var(--b3-theme-primary);
+    border-bottom-color: var(--b3-theme-primary);
+    font-weight: $font-weight-semibold;
+  }
+}
+
+// ========== Tab 内容区（可滚动，右侧留滚动条呼吸空间） ==========
+
+.panel-body {
   flex: 1;
   overflow-y: auto;
-  padding: $spacing-2 $spacing-3 $spacing-3;
+  padding: $spacing-3 $spacing-2 $spacing-3 $spacing-3;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.panel-section {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+// ========== 待办分组 ==========
+
+.todo-group-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.todo-group {
   display: flex;
   flex-direction: column;
   gap: $spacing-2;
 }
 
-.note-list__empty {
-  // 辅助文字：空态提示
+// 分组标题（辅助文字：标签级）
+.todo-group__label {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  // 辅助文字
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--b3-theme-on-surface-variant);
+  padding-left: $spacing-1;
+}
+
+.todo-group__count {
+  // 辅助文字
+  font-size: $font-size-2xs;
+  padding: 0 $spacing-1;
+  border-radius: $radius-full;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+}
+
+// ========== 灵感/项目列表 ==========
+
+.insp-list,
+.project-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+// 空态提示
+.insp-list__empty,
+.project-list__empty {
+  // 辅助文字
   font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface-variant);
   text-align: center;
   padding: $spacing-6 0;
+  font-style: italic;
+  opacity: 0.6;
 }

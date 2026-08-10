@@ -1,0 +1,143 @@
+// 速记功能 — 灵感新增表单 + 标签筛选栏样式（Codex 风格：全 Token 化）
+
+@use "@/variables.scss" as *;
+
+.qn-insp-form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+// 新增表单
+.qn-insp-form__add {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.qn-insp-form__textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: $spacing-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  font-size: $font-size-xs;
+  font-family: inherit;
+  line-height: $line-height-normal;
+  resize: vertical;
+
+  &:focus {
+    outline: none;
+    border-color: var(--b3-theme-primary);
+  }
+
+  &::placeholder {
+    // 辅助文字：占位提示
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-on-surface-variant);
+  }
+}
+
+.qn-insp-form__row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+}
+
+.qn-insp-form__tag-input {
+  flex: 1;
+  min-width: 0;
+  padding: $spacing-1 $spacing-2;
+  // 辅助文字
+  font-size: $font-size-2xs;
+}
+
+// 图标操作按钮（AI 润色）
+.qn-insp-form__icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  background: transparent;
+  color: var(--b3-theme-on-surface-variant);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.12s;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+    color: var(--b3-theme-on-surface);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+// 添加按钮（品牌蓝色块）
+.qn-insp-form__add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: $vp-radius;
+  background: var(--b3-theme-primary);
+  color: var(--b3-theme-on-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.12s;
+
+  &:hover {
+    opacity: 0.85;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+// ========== 标签筛选栏 ==========
+
+.qn-insp-form__filter {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $spacing-1;
+  padding: $spacing-1 0;
+  border-top: 1px solid var(--b3-border-color);
+}
+
+.qn-insp-form__filter-tag {
+  padding: 1px $spacing-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-full;
+  background: transparent;
+  color: var(--b3-theme-on-surface-variant);
+  // 辅助文字
+  font-size: $font-size-2xs;
+  cursor: pointer;
+  transition: all 0.12s;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+  }
+
+  // 选中态：品牌蓝填充
+  &--active {
+    background: var(--b3-theme-primary);
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-on-primary);
+  }
+}

@@ -566,8 +566,30 @@ export const COMMON_ICONS = {
   folder: {
     icon: "mdi:folder",
   },
+  folderAlert: {
+    icon: "mdi:folder-alert",
+  },
   image: {
     icon: "mdi:image",
+  },
+
+  // 速记 — 日历/重复/箭头
+  calendar: {
+    icon: "mdi:calendar",
+  },
+  repeat: {
+    icon: "mdi:repeat",
+  },
+  arrowRight: {
+    icon: "mdi:arrow-right",
+  },
+  alertCircle: {
+    icon: "mdi:alert-circle",
+    color: "#ef4444",
+  },
+  checkCircle: {
+    icon: "mdi:check-circle",
+    color: "#22c55e",
   },
 
   // 其他

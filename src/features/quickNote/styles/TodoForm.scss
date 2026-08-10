@@ -1,0 +1,105 @@
+// 速记功能 — 待办新增表单样式（Codex 风格：全 Token 化）
+
+@use "@/variables.scss" as *;
+
+.qn-todo-form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+// 行容器（输入+按钮 / 优先级+日期+项目）
+.qn-todo-form__row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+// 待办内容输入框
+.qn-todo-form__input {
+  flex: 1;
+  min-width: 0;
+}
+
+// 添加按钮（品牌蓝色块）
+.qn-todo-form__add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: $vp-radius;
+  background: var(--b3-theme-primary);
+  color: var(--b3-theme-on-primary);
+  cursor: pointer;
+  transition: opacity 0.12s;
+  flex-shrink: 0;
+
+  &:hover {
+    opacity: 0.85;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+// 优先级色块组
+.qn-todo-form__priorities {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+}
+
+.qn-todo-form__prio {
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: $radius-full;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: all 0.12s;
+
+  &:hover {
+    opacity: 0.85;
+    transform: scale(1.15);
+  }
+
+  // 选中：描边高亮（用边框模拟外圈，避免 box-shadow 做分层）
+  &--active {
+    opacity: 1;
+    transform: scale(1.15);
+    border-color: var(--b3-theme-background);
+    outline: 2px solid var(--b3-theme-primary);
+  }
+}
+
+// 截止日期选择
+.qn-todo-form__date {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  color: var(--b3-theme-on-surface-variant);
+  flex-shrink: 0;
+}
+
+.qn-todo-form__date-input {
+  width: 8.5rem;
+  padding: $spacing-1 $spacing-2;
+  // 辅助文字
+  font-size: $font-size-2xs;
+}
+
+// 关联项目下拉
+.qn-todo-form__project {
+  flex: 1;
+  min-width: 0;
+  padding: $spacing-1 $spacing-2;
+  // 辅助文字
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-background);
+}

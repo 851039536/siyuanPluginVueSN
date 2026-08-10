@@ -16,7 +16,7 @@ import QuickNotePanel from "./index.vue"
 /** 贴边档位与屏幕边缘的间距 */
 const EDGE_PADDING = "8px"
 /** 弹窗展开态尺寸（构造 Modal 与最小化还原共用的单一数据源） */
-const PANEL_WIDTH = "420px"
+const PANEL_WIDTH = "480px"
 const PANEL_HEIGHT = "70vh"
 /** 遮罩展开态背景（与 vueAppHelper 创建时的遮罩背景保持一致） */
 const MASK_BACKGROUND = "rgba(0, 0, 0, 0.5)"

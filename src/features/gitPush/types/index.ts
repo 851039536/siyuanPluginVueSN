@@ -61,5 +61,6 @@ export {
   HOTSPOT_LEVEL_META,
   REPORT_RANGES,
   REPORT_RANGE_LABEL_KEYS,
+  WEEKDAY_LABEL_KEYS,
 } from "./report"
-export type { AuthorReportRow, CodeReportData, CodeReportPrefs, DebtFileRow, DebtSeverity, FileStatRow, HotspotFileRow, HotspotLevel, HotspotLevelSummary, ReportRange } from "./report"
+export type { AuthorReportRow, CodeReportData, CodeReportPrefs, CommitRhythmStats, DailyCommitStat, DebtFileRow, DebtSeverity, FileStatRow, HotspotFileRow, HotspotLevel, HotspotLevelSummary, HourBucketStat, ReportRange, WeekdayStat } from "./report"

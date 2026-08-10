@@ -1,4 +1,4 @@
-<!-- gitPush 代码统计报告面板：项目/时间范围选择 + 3 分区 Tab（团队总览[含代码贡献度]/技术债务/代码热点） -->
+<!-- gitPush 代码统计报告面板：项目/时间范围选择 + 4 分区 Tab（团队总览[含代码贡献度]/技术债务/代码热点/提交趋势） -->
 <template>
   <div class="gpr-panel">
     <!-- 无项目空状态 -->
@@ -91,7 +91,7 @@
           <span class="gpr-meta-item">{{ i18n.reportFilesAnalyzed.replace("{0}", String(report.analyzedFiles)) }}</span>
         </div>
 
-        <!-- 分区 Tab 栏（团队总览[含代码贡献度]/技术债务/代码热点） -->
+        <!-- 分区 Tab 栏（团队总览[含代码贡献度]/技术债务/代码热点/提交趋势） -->
         <div class="gpr-tabs">
           <button
             v-for="tab in reportTabs"
@@ -136,6 +136,11 @@
           :report="report"
           :project="currentProject"
         />
+        <CandlestickSection
+          v-show="activeTab === 'candlestick'"
+          :i18n="i18n"
+          :report="report"
+        />
       </template>
     </template>
   </div>
@@ -156,6 +161,7 @@ import TeamOverviewSection from "./TeamOverviewSection.vue"
 import AuthorContributionSection from "./AuthorContributionSection.vue"
 import TechDebtSection from "./TechDebtSection.vue"
 import HotspotSection from "./HotspotSection.vue"
+import CandlestickSection from "./CandlestickSection.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -180,13 +186,14 @@ const emit = defineEmits<{
 }>()
 
 /** 分区 Tab 类型（团队总览已合并代码贡献度） */
-type ReportTabId = "overview" | "debt" | "hotspot"
+type ReportTabId = "overview" | "debt" | "hotspot" | "candlestick"
 
-/** 分区 Tab 配置（labelKey 为 i18n 键，count 为分区条数徽章：总览=贡献作者数，债务=问题数，热点=分析文件数） */
+/** 分区 Tab 配置（labelKey 为 i18n 键，count 为分区条数徽章：总览=贡献作者数，债务=问题数，热点=分析文件数，趋势=提交天数） */
 const reportTabs = computed<ReadonlyArray<{ id: ReportTabId, labelKey: string, icon: string, count: number }>>(() => [
   { id: "overview", labelKey: "reportTabOverview", icon: "mdi:account-group", count: props.report.authors.length },
   { id: "debt", labelKey: "reportTabDebt", icon: "mdi:alert-octagon-outline", count: countDebtFiles(props.report.debtSummary) },
   { id: "hotspot", labelKey: "reportTabHotspot", icon: "mdi:fire", count: props.report.analyzedFiles },
+  { id: "candlestick", labelKey: "reportTabCandlestick", icon: "mdi:chart-finance", count: props.report.dailyStats.length },
 ])
 
 /** 当前分区 Tab */

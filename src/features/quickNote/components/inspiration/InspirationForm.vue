@@ -74,9 +74,9 @@
  */
 import type { Plugin } from "siyuan"
 import { ref } from "vue"
-import { pushMsg } from "@/api"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { PolishError, useAiPolish } from "../../composables/useAiPolish"
+import { useAiPolish } from "../../composables/useAiPolish"
+import { polishText } from "../../utils"
 
 const props = defineProps<{
   plugin: Plugin
@@ -105,27 +105,11 @@ const handleAdd = () => {
   tags.value = ""
 }
 
-// AI 润色草稿：缓存原稿 → 清空后流式回填 → 失败恢复原稿并提示
+// AI 润色草稿：缓存原稿 → 清空后流式回填 → 失败恢复原稿并提示（复用共享辅助函数）
 const handlePolish = async () => {
   if (polishing.value) return
-  const original = content.value
-  if (!original.trim()) return
-  try {
-    content.value = ""
-    const result = await polish(original, (chunk) => {
-      content.value += chunk
-    })
-    if (!result.trim()) {
-      content.value = original
-    }
-  } catch (err) {
-    content.value = original
-    if (err instanceof PolishError && err.code === "NO_API_KEY") {
-      pushMsg(i18n.polishNoApiKey, 5000, "info")
-    } else {
-      pushMsg(i18n.polishFailed, 5000, "error")
-    }
-  }
+  if (!content.value.trim()) return
+  await polishText(polish, content, content.value, props.i18n)
 }
 </script>
 

@@ -6,11 +6,7 @@ import type { Ref } from "vue"
 import type { QuickNoteStorage } from "../types/storage"
 import type { InspirationItem } from "../types"
 import { computed, ref } from "vue"
-
-/** 生成条目唯一 ID（时间戳 + 随机串） */
-function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-}
+import { generateId } from "../utils"
 
 /** 标签输入：按逗号/顿号/空格拆分并去重去空 */
 export function splitTags(input: string): string[] {
@@ -34,10 +30,18 @@ export function useInspirations(storage: QuickNoteStorage) {
     inspirations.value = data.inspirations
   }
 
-  /** 持久化当前灵感列表（动作级保存） */
+  /** 写入串行锁：防止快速连续操作时 read-modify-write 读到旧数据 */
+  let _saveLock: Promise<void> = Promise.resolve()
+
+  /** 持久化当前灵感列表（动作级保存，串行化写操作） */
   const persist = async () => {
-    const data = await storage.data.loadOrDefault()
-    await storage.data.save({ ...data, inspirations: inspirations.value })
+    _saveLock = _saveLock
+      .catch(() => undefined)
+      .then(async () => {
+        const data = await storage.data.loadOrDefault()
+        await storage.data.save({ ...data, inspirations: inspirations.value })
+      })
+    await _saveLock
   }
 
   /** 新增灵感（空内容忽略），tags 为原始字符串（自动拆分） */

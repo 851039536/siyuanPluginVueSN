@@ -55,6 +55,13 @@
           v-if="showScores"
           class="subsection-body"
         >
+          <!-- 雷达图：五维得分分布总览 -->
+          <ReviewRadarChart
+            :scores="reviewResult.detailedScore"
+            :labels="scoreLabelMap"
+            :get-level="scoreLevel"
+          />
+          <!-- 条形图：各维度精确读数 -->
           <div
             v-for="(value, key) in reviewResult.detailedScore"
             :key="key"
@@ -206,6 +213,7 @@ import {
 import type { IssueSeverity, ReviewRating, ReviewResult } from "@/types/ai"
 import { RATING_NEEDS_FIX, SEVERITY_LEVELS } from "../types"
 import CollapsibleSection from "./CollapsibleSection.vue"
+import ReviewRadarChart from "./ReviewRadarChart.vue"
 import SvgIcon from "./SvgIcon.vue"
 
 interface Props {

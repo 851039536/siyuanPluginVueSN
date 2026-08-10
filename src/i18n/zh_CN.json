@@ -1575,6 +1575,8 @@
     "reportWeekThu": "周四",
     "reportWeekFri": "周五",
     "reportWeekSat": "周六",
+    "reportScrollLeft": "向左滚动（查看更早日期）",
+    "reportScrollRight": "向右滚动（查看最新日期）",
     "reportHotspotTruncated": "仅展示热度前 {0} 个文件，共分析 {1} 个文件",
     "reportOpenFileTitle": "{0}（点击打开文件）",
     "reportDebtDistTitle": "严重度分布",

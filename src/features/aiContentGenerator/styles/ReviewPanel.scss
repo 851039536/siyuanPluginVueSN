@@ -4,8 +4,11 @@
 // ============ 审核面板 ============
 
 // 面板容器（固定头栏 + 内容区，无折叠交互）
+// flex-shrink: 0：作为 .review-tab（flex column 滚动容器）的唯一子项，禁止收缩
+// （否则内容超高时会被压缩到容器高度，overflow: hidden 导致无法滚动查看完整内容）
 .review-panel-wrapper {
   margin: 0;
+  flex-shrink: 0;
   border-radius: $radius-md;
   border: 1px solid var(--b3-theme-surface-lighter);
   background: var(--b3-theme-surface);

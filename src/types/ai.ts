@@ -164,5 +164,6 @@ export interface ReviewResult {
     quality: number // 语言质量 1-10
     format: number // 格式规范 1-10
     coverage: number // 覆盖完整性 1-10
+    titleQuality?: number // 标题质量 1-10
   }
 }

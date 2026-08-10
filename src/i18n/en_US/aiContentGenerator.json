@@ -99,6 +99,7 @@
   "reviewScoreQuality": "Quality",
   "reviewScoreFormat": "Format",
   "reviewScoreCoverage": "Coverage",
+  "reviewScoreTitleQuality": "Title",
   "reviewTab": "Review",
   "directReview": "Direct Review",
   "directReviewTitle": "Review current content now",

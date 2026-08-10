@@ -55,7 +55,7 @@
           <span>{{ i18n.reviewDetailedScore }}</span>
         </button>
         <div v-if="showScores">
-          <!-- 雷达图：五维得分分布总览 -->
+          <!-- 雷达图：六维得分分布总览 -->
           <ReviewRadarChart
             :scores="reviewResult.detailedScore"
             :labels="scoreLabelMap"
@@ -71,11 +71,11 @@
             <div class="score-bar-bg">
               <div
                 class="score-bar-fill"
-                :class="`score-fill-${scoreLevel(value)}`"
-                :style="{ width: `${value * 10}%` }"
+                :class="`score-fill-${scoreLevel(value ?? 0)}`"
+                :style="{ width: `${(value ?? 0) * 10}%` }"
               ></div>
             </div>
-            <span class="score-value">{{ value }}/10</span>
+            <span class="score-value">{{ value ?? 0 }}/10</span>
           </div>
         </div>
       </div>
@@ -176,29 +176,27 @@
             />
             {{ i18n.reviewReReview }}
           </button>
-          <template v-if="needsFix">
-            <!-- 修复进行中徽标："修复中..." -->
-            <span
-              v-if="isAutoFixing"
-              class="auto-fixing-badge"
-            >
-              <span class="dot-flashing"></span>
-              {{ i18n.reviewFixing }}
-            </span>
-            <!-- 按钮："自动修复"（title："自动修复所有问题"） -->
-            <button
-              v-else
-              class="review-footer-btn auto-fix-btn"
-              :title="i18n.reviewAutoFixTitle"
-              @click="$emit('autoFix')"
-            >
-              <SvgIcon
-                name="#iconRefresh"
-                :size="10"
-              />
-              {{ i18n.reviewAutoFix }}
-            </button>
-          </template>
+          <!-- 修复进行中徽标："修复中..." -->
+          <span
+            v-if="isAutoFixing"
+            class="auto-fixing-badge"
+          >
+            <span class="dot-flashing"></span>
+            {{ i18n.reviewFixing }}
+          </span>
+          <!-- 按钮："自动修复"（title："自动修复所有问题"） -->
+          <button
+            v-else
+            class="review-footer-btn auto-fix-btn"
+            :title="i18n.reviewAutoFixTitle"
+            @click="$emit('autoFix')"
+          >
+            <SvgIcon
+              name="#iconRefresh"
+              :size="10"
+            />
+            {{ i18n.reviewAutoFix }}
+          </button>
         </div>
       </div>
     </div>
@@ -234,13 +232,14 @@ const showScores = ref(true)
 
 type ScoreKey = keyof NonNullable<ReviewResult["detailedScore"]>
 
-/** 分项评分标签（准确性/结构/语言质量/格式规范/覆盖完整），文案来自 i18n */
+/** 分项评分标签（准确性/结构/语言质量/格式规范/覆盖完整/标题质量），文案来自 i18n */
 const scoreLabelMap = computed<Record<ScoreKey, string>>(() => ({
   accuracy: props.i18n.reviewScoreAccuracy,
   structure: props.i18n.reviewScoreStructure,
   quality: props.i18n.reviewScoreQuality,
   format: props.i18n.reviewScoreFormat,
   coverage: props.i18n.reviewScoreCoverage,
+  titleQuality: props.i18n.reviewScoreTitleQuality,
 }))
 
 const scoreLevel = (value: number): string => {
@@ -260,7 +259,7 @@ const ratingClass = computed(() =>
   props.reviewResult ? RATING_CLASS_MAP[props.reviewResult.rating] : "",
 )
 
-/** 评级为"需改进"且有具体问题时才展示定向修复/自动修复入口（语义与 useReview 逻辑一致） */
+/** 评级为"需改进"且有具体问题时才展示单条 issue 的定向修复按钮 */
 const needsFix = computed(() => {
   const result = props.reviewResult
   return result?.rating === RATING_NEEDS_FIX && result.issues.length > 0

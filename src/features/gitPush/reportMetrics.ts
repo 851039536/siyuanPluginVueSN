@@ -8,6 +8,7 @@ import type { GitProject } from "./types"
 import type {
   AuthorReportRow,
   CodeReportData,
+  DailyCommitStat,
   DebtFileRow,
   DebtSeverity,
   FileStatRow,
@@ -184,6 +185,52 @@ export function aggregateFileStats(commits: NumstatCommit[]): Map<string, FileAg
     }
   }
   return map
+}
+
+// ── K 线图：按日期聚合每日提交统计 ──
+
+/** 影线外扩量（小时）：实体上下各留 0.5h 形成 K 线影线视觉 */
+export const WICK_PAD_HOURS = 0.5
+
+/** 解析 ISO 时刻为一天中的小时小数（0~24），解析失败返回 -1 */
+function hourOfDay(iso: string): number {
+  const t = Date.parse(iso)
+  if (Number.isNaN(t)) return -1
+  const d = new Date(t)
+  return d.getHours() + d.getMinutes() / 60
+}
+
+/**
+ * 从 NumstatCommit[] 按日期聚合每日提交统计（单次 O(n) 遍历，输出按日期升序）。
+ * 忽略无法解析的 ISO 时间戳条目；无有效提交时返回空数组。
+ */
+export function aggregateDailyStats(commits: NumstatCommit[]): DailyCommitStat[] {
+  const byDate = new Map<string, { open: number, close: number, count: number }>()
+  for (const c of commits) {
+    const dateKey = c.date.slice(0, 10)
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) continue
+    const h = hourOfDay(c.date)
+    if (h < 0) continue
+    let agg = byDate.get(dateKey)
+    if (!agg) {
+      agg = { open: h, close: h, count: 0 }
+      byDate.set(dateKey, agg)
+    }
+    if (h < agg.open) agg.open = h
+    if (h > agg.close) agg.close = h
+    agg.count++
+  }
+  return [...byDate.entries()]
+    .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+    .map(([date, a]) => ({
+      date,
+      open: a.open,
+      close: a.close,
+      // 影线钳位到 [0, 24] 时刻轴范围，避免凌晨/深夜提交时影线越界被 canvas 裁剪
+      high: Math.min(24, Math.max(a.open, a.close) + WICK_PAD_HOURS),
+      low: Math.max(0, Math.min(a.open, a.close) - WICK_PAD_HOURS),
+      count: a.count,
+    }))
 }
 
 // ── 通用工具 ──
@@ -469,6 +516,7 @@ export function buildReportData(
     hotspots: hotspotRows.slice(0, HOTSPOT_LIMIT),
     hotspotSummary,
     suggestionKey: suggestionKeyName,
+    dailyStats: aggregateDailyStats(commits),
     analyzedFiles: totalFiles,
     fileDetailsMap,
   }
@@ -490,6 +538,7 @@ export function buildEmptyReport(project: GitProject, rangeLabel: string): CodeR
     hotspots: [],
     hotspotSummary: HOTSPOT_LEVEL_ORDER.map((level) => ({ level, count: 0, pct: 0 })),
     suggestionKey: "",
+    dailyStats: [],
     analyzedFiles: 0,
     fileDetailsMap: {},
   }

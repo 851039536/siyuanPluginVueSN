@@ -503,6 +503,9 @@ export const COMMON_ICONS = {
   chartLine: {
     icon: "mdi:chart-line",
   },
+  chartCandlestick: {
+    icon: "mdi:chart-finance",
+  },
   calendarCheck: {
     icon: "mdi:calendar-check",
   },

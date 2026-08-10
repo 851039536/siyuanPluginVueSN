@@ -7,15 +7,11 @@ import type { Ref } from "vue"
 import type { QuickNoteStorage } from "../types/storage"
 import type { TodoItem } from "../types"
 import { computed, ref } from "vue"
+import { generateId } from "../utils"
 import { PRIORITY_META } from "../types"
 
-/** 生成条目唯一 ID（时间戳 + 随机串） */
-function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-}
-
 /** 毫秒时间戳 → 本地日期 YYYY-MM-DD（自动顺延与分组比较用） */
-export function toDateStr(date: Date): string {
+function toDateStr(date: Date): string {
   const y = date.getFullYear()
   const m = String(date.getMonth() + 1).padStart(2, "0")
   const d = String(date.getDate()).padStart(2, "0")
@@ -152,10 +148,11 @@ export function useTodoList(storage: QuickNoteStorage) {
 
   /** 是否已逾期：未完成且截止日期严格早于今天 */
   const isOverdue = (t: TodoItem): boolean => {
-    if (t.done || !t.dueDate) return false
+    if (t.done || !t.dueDate?.trim()) return false
     const due = parseDateStr(t.dueDate)
     if (!due) return false
-    return due < parseDateStr(toDateStr(new Date()))!
+    const todayStart = parseDateStr(toDateStr(new Date()))
+    return todayStart ? due < todayStart : false
   }
 
   /** 逾期未完成待办（顶部「今天要处理的」聚焦区用，按优先级排序） */
@@ -170,10 +167,10 @@ export function useTodoList(storage: QuickNoteStorage) {
 
   /** 确定某待办所属日期分组 */
   const groupOf = (t: TodoItem): DateGroup => {
-    if (!t.dueDate) return "future"
-    const today = toDateStr(new Date())
-    const due = parseDateStr(t.dueDate)!
-    const todayStart = parseDateStr(today)!
+    if (!t.dueDate?.trim()) return "future"
+    const due = parseDateStr(t.dueDate)
+    const todayStart = parseDateStr(toDateStr(new Date()))
+    if (!due || !todayStart) return "future"
     const diffDays = Math.round((due.getTime() - todayStart.getTime()) / 86400000)
     if (diffDays <= 0) return "today"
     if (diffDays === 1) return "tomorrow"

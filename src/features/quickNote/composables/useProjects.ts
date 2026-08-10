@@ -6,11 +6,7 @@ import type { Ref } from "vue"
 import type { ProjectItem, TodoItem } from "../types"
 import type { QuickNoteStorage } from "../types/storage"
 import { computed, ref } from "vue"
-
-/** 生成条目唯一 ID（时间戳 + 随机串） */
-function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-}
+import { generateId } from "../utils"
 
 export function useProjects(storage: QuickNoteStorage) {
   const projects: Ref<ProjectItem[]> = ref([])
@@ -23,10 +19,18 @@ export function useProjects(storage: QuickNoteStorage) {
     projects.value = data.projects
   }
 
-  /** 持久化当前项目列表（动作级保存） */
+  /** 写入串行锁：防止快速连续操作时 read-modify-write 读到旧数据 */
+  let _saveLock: Promise<void> = Promise.resolve()
+
+  /** 持久化当前项目列表（动作级保存，串行化写操作） */
   const persist = async () => {
-    const data = await storage.data.loadOrDefault()
-    await storage.data.save({ ...data, projects: projects.value })
+    _saveLock = _saveLock
+      .catch(() => undefined)
+      .then(async () => {
+        const data = await storage.data.loadOrDefault()
+        await storage.data.save({ ...data, projects: projects.value })
+      })
+    await _saveLock
   }
 
   /** 注入关联待办列表 ref（壳层在待办加载后调用，保存引用而非拷贝以保持响应式） */
@@ -70,7 +74,13 @@ export function useProjects(storage: QuickNoteStorage) {
         t.projectId === id ? { ...t, projectId: null, updatedAt: Date.now() } : t,
       )
     }
-    await persist()
+    // 全量持久化：projects 与待办两个槽位需同时落盘，通用 persist() 只写 projects 会造成关联置空丢失
+    const data = await storage.data.loadOrDefault()
+    await storage.data.save({
+      ...data,
+      projects: projects.value,
+      todos: todosRef ? todosRef.value : data.todos,
+    })
   }
 
   /** 某项目关联的待办列表 */
@@ -96,18 +106,10 @@ export function useProjects(storage: QuickNoteStorage) {
       .sort((a, b) => b.updatedAt - a.updatedAt),
   )
 
-  /** 全部项目按状态分组（进行中/已完成/卡住） */
-  const groupedByStatus = computed(() => ({
-    active: projects.value.filter((p) => p.status === "active"),
-    completed: projects.value.filter((p) => p.status === "completed"),
-    blocked: projects.value.filter((p) => p.status === "blocked"),
-  }))
-
   return {
     projects,
     blockedProjects,
     activeProjects,
-    groupedByStatus,
     load,
     add,
     update,

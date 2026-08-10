@@ -37,7 +37,7 @@
           <Chart
             v-if="hasEffortData"
             type="bar"
-            :data="effortChartData"
+            :data="projectEffort"
             :height="120"
             :options="barOptions"
           />
@@ -97,7 +97,7 @@ const props = defineProps<{
   /** 本周完成事项总数 */
   weekTotal: number
   /** 优先级分布数据（label 为优先级类型字符串，需经 PRIORITY_META 转 i18n 文案） */
-  priorityDistribution: Array<{ label: string, value: number, color: string }>
+  priorityDistribution: ChartData[]
   /** 项目精力分布数据 */
   projectEffort: ChartData[]
   /** 卡点汇总清单 */
@@ -122,8 +122,6 @@ const priorityChartData = computed<ChartData[]>(() =>
 
 /** 条形图是否存在数据（任一项目有完成数） */
 const hasEffortData = computed(() => props.projectEffort.some((d) => d.value > 0))
-
-const effortChartData = computed<ChartData[]>(() => props.projectEffort)
 
 // 环形图选项：紧凑布局，隐藏图例改由小图例自行标注（简单起见显示图例）
 const doughnutOptions: ChartOptions = {

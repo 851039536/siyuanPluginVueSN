@@ -105,6 +105,7 @@ const handleAdd = () => {
   })
   content.value = ""
   dueDate.value = ""
+  projectId.value = ""
 }
 </script>
 

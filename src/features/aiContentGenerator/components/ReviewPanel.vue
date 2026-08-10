@@ -54,10 +54,7 @@
           />
           <span>{{ i18n.reviewDetailedScore }}</span>
         </button>
-        <div
-          v-if="showScores"
-          class="subsection-body"
-        >
+        <div v-if="showScores">
           <!-- 雷达图：五维得分分布总览 -->
           <ReviewRadarChart
             :scores="reviewResult.detailedScore"
@@ -286,17 +283,17 @@ const filterCounts = computed<Record<SeverityFilterKey, number>>(() => {
   return counts
 })
 
-/** 严重度 → i18n 标签映射（高/中/低），与"全部"按钮同为 i18n 文案来源，保证国际化一致性 */
-const SEVERITY_LABEL_MAP: Record<IssueSeverity, string> = {
-  高: props.i18n.reviewSeverityHigh,
-  中: props.i18n.reviewSeverityMid,
-  低: props.i18n.reviewSeverityLow,
+// 严重度 → i18n 键映射（高/中/低），避免中文枚举值直接硬编码展示
+const sevKeyMap: Record<IssueSeverity, string> = {
+  高: "reviewSeverityHigh",
+  中: "reviewSeverityMid",
+  低: "reviewSeverityLow",
 }
 
-// 过滤按钮："全部"与"高/中/低"文案均取自 i18n，避免中文枚举值直接硬编码展示
+// 过滤按钮："全部"与"高/中/低"文案均取自 i18n
 const filterOptions = computed<{ key: SeverityFilterKey; label: string }[]>(() => [
   { key: "all", label: props.i18n.reviewFilterAll },
-  ...SEVERITY_LEVELS.map((sev) => ({ key: sev, label: SEVERITY_LABEL_MAP[sev] })),
+  ...SEVERITY_LEVELS.map((sev) => ({ key: sev, label: props.i18n[sevKeyMap[sev]] })),
 ])
 
 /** 过滤后的问题及其在原始数组中的索引（fixIssue emit 需要原始索引），单 computed 避免两次遍历靠位置隐式对齐 */

@@ -202,47 +202,6 @@
   }
 }
 
-// ========== 页头（克制蓝绿渐变配图） ==========
-
-.panel-hero {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: $spacing-3 $spacing-4;
-  // 免版权渐变配图：蓝→绿 135° 对角渐变，叠加半透明白，克制不喧宾夺主
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--b3-theme-primary) 90%, #fff) 0%,
-    color-mix(in srgb, var(--b3-theme-success) 70%, #fff) 100%
-  );
-  color: #fff;
-  flex-shrink: 0;
-}
-
-.panel-hero__text {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-2px;
-}
-
-// 页头主标题（阅读区/数据突出展示级别）
-.panel-hero__title {
-  font-size: $font-size-sm;
-  font-weight: $font-weight-bold;
-  line-height: $line-height-tight;
-}
-
-// 页头副标题（辅助文字）
-.panel-hero__subtitle {
-  // 辅助文字
-  font-size: $font-size-2xs;
-  opacity: 0.9;
-}
-
-.panel-hero__icon {
-  opacity: 0.85;
-}
-
 // ========== Tab 导航栏（下划线式） ==========
 
 .panel-tabs {

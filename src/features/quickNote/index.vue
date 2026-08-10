@@ -101,21 +101,6 @@
         </div>
       </div>
 
-      <!-- 页头：克制蓝绿渐变配图（免版权，CSS 渐变模拟，不喧宾夺主） -->
-      <div class="panel-hero">
-        <div class="panel-hero__text">
-          <!-- 主标题 -->
-          <span class="panel-hero__title">{{ i18n.title }}</span>
-          <!-- 副标题 -->
-          <span class="panel-hero__subtitle">{{ i18n.subtitle }}</span>
-        </div>
-        <IconWrapper
-          name="quickNote"
-          :size="28"
-          class="panel-hero__icon"
-        />
-      </div>
-
       <!-- 「今天要处理的」聚焦区（逾期任务 + 卡住项目标红） -->
       <TodayFocus
         :overdue-todos="overdueTodos"

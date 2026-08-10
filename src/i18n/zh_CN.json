@@ -2248,7 +2248,6 @@
   "qrcodeGenerateFailed": "生成二维码失败",
   "quickNote": {
     "title": "速记",
-    "subtitle": "待办 · 灵感 · 项目 · 复盘",
     "description": "日常待办、灵感收集、项目跟进与每周复盘的综合工作面板",
     "autoOpen": "启动时自动打开",
     "position": "显示位置",

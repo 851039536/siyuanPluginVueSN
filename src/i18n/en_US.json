@@ -2248,7 +2248,6 @@
   "qrcodeGenerateFailed": "Failed to generate QR code",
   "quickNote": {
     "title": "Quick Note",
-    "subtitle": "Todo · Ideas · Projects · Review",
     "description": "Integrated panel for daily todos, idea capture, project tracking and weekly review",
     "autoOpen": "Open automatically on startup",
     "position": "Position",

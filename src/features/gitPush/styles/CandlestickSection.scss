@@ -218,12 +218,11 @@
 // ── 星期分布（7 根迷你柱）──
 .gpc-weekdays {
   display: flex;
-  align-items: flex-end;
   gap: $spacing-1;
   height: 72px;
 }
 
-// 单个星期列（柱 + 标签 + 计数垂直排布）
+// 单个星期列（柱 + 标签 + 计数垂直排布；默认 stretch 撑满容器高度，保证轨道有确定高度供柱子百分比解析）
 .gpc-weekday {
   flex: 1;
   display: flex;
@@ -233,9 +232,10 @@
   min-width: 0;
 }
 
-// 柱子轨道（flex 撑满剩余高度，柱子在底部对齐）
+// 柱子轨道（flex 撑满剩余高度，柱子在底部对齐；min-height:0 允许轨道被压缩，防止内容撑开破坏高度基准）
 .gpc-weekday-track {
   flex: 1;
+  min-height: 0;
   width: 100%;
   display: flex;
   align-items: flex-end;

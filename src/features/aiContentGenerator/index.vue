@@ -35,6 +35,7 @@
         :conversation-count="conversationHistory.length"
         :generation-tip="generationTip"
         @reReview="handleReReview"
+        @directReview="handleDirectReview"
         @fixIssue="handleFixIssue"
         @clearConversation="clearConversation"
       />
@@ -201,6 +202,11 @@ const { enableReview, isReviewing, reviewResult, isAutoFixing,
   clearReviewState } = useReview(reviewDeps)
 
 onAfterGenerateCallback = performReview
+
+/** 「直接审查」按钮：跳过 enableReview 开关强制对当前内容发起审核 */
+const handleDirectReview = () => {
+  performReview(undefined, true)
+}
 
 // 编辑可用性计算（依赖审核状态，须在 useReview 之后定义）
 const canApplyEdit = computed(() =>

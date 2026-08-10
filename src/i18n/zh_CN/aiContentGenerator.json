@@ -85,7 +85,6 @@
   "reviewSuggestions": "改进建议",
   "reviewModelLabel": "审核模型:",
   "reviewReReview": "重新审核",
-  "reviewReReviewTitle": "重新审核内容",
   "reviewAutoFix": "自动修复",
   "reviewAutoFixTitle": "自动修复所有问题",
   "reviewFixing": "修复中...",
@@ -99,5 +98,9 @@
   "reviewScoreStructure": "结构",
   "reviewScoreQuality": "语言质量",
   "reviewScoreFormat": "格式规范",
-  "reviewScoreCoverage": "覆盖完整"
+  "reviewScoreCoverage": "覆盖完整",
+  "reviewTab": "审查",
+  "directReview": "直接审查",
+  "directReviewTitle": "立即对当前内容执行交叉审核",
+  "reviewTabEmpty": "暂无审核结果，点击上方「直接审查」按钮发起审核"
 }

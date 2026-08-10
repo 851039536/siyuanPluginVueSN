@@ -85,7 +85,6 @@
   "reviewSuggestions": "Suggestions",
   "reviewModelLabel": "Review model:",
   "reviewReReview": "Re-review",
-  "reviewReReviewTitle": "Re-review content",
   "reviewAutoFix": "Auto Fix",
   "reviewAutoFixTitle": "Auto-fix all issues",
   "reviewFixing": "Fixing...",
@@ -99,5 +98,9 @@
   "reviewScoreStructure": "Structure",
   "reviewScoreQuality": "Quality",
   "reviewScoreFormat": "Format",
-  "reviewScoreCoverage": "Coverage"
+  "reviewScoreCoverage": "Coverage",
+  "reviewTab": "Review",
+  "directReview": "Direct Review",
+  "directReviewTitle": "Review current content now",
+  "reviewTabEmpty": "No review result yet. Click the \"Direct Review\" button to start."
 }

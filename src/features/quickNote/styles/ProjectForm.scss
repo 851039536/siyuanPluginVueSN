@@ -1,0 +1,68 @@
+// 速记功能 — 项目新增表单样式（Codex 风格：全 Token 化）
+
+@use "@/variables.scss" as *;
+
+.qn-proj-form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.qn-proj-form__row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.qn-proj-form__name {
+  flex: 1;
+  min-width: 0;
+  font-weight: $font-weight-medium;
+}
+
+.qn-proj-form__status {
+  width: 6.5rem;
+  flex-shrink: 0;
+  // 辅助文字
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-background);
+}
+
+// 常规字段（当前进度/下一步/卡点）
+.qn-proj-form__field {
+  width: 100%;
+  box-sizing: border-box;
+  // 辅助文字
+  font-size: $font-size-2xs;
+}
+
+.qn-proj-form__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+// 提交按钮（品牌蓝色块）
+.qn-proj-form__add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-3;
+  border: none;
+  border-radius: $vp-radius;
+  background: var(--b3-theme-primary);
+  color: var(--b3-theme-on-primary);
+  // 辅助文字
+  font-size: $font-size-2xs;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.12s;
+
+  &:hover {
+    opacity: 0.85;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}

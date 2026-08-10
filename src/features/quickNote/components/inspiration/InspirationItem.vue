@@ -1,70 +1,70 @@
 <template>
-  <div
-    class="note-item"
-    :class="{ 'note-item--done': note.done }"
-  >
+  <div class="qn-insp-item">
     <!-- 展示态 -->
     <template v-if="!editing">
-      <!-- 完成勾选框（悬浮提示："标记完成" / "标记待完成"） -->
-      <button
-        class="note-item__check"
-        :title="note.done ? i18n.markPending : i18n.markDone"
-        @click="emit('toggleDone')"
-      >
-        <IconWrapper
-          :name="note.done ? 'check' : 'circleOutline'"
-          :size="14"
-        />
-      </button>
-
-      <div class="note-item__body">
-        <!-- 多行内容 -->
-        <div class="note-item__content">{{ note.content }}</div>
-        <!-- 元信息："创建于 xxxx" -->
-        <div class="note-item__meta">
-          {{ i18n.createdAt }} {{ formatTime(note.createdAt) }}
-        </div>
+      <div class="qn-insp-item__tags">
+        <!-- 标签徽章 -->
+        <span
+          v-for="tag in item.tags"
+          :key="tag"
+          class="qn-insp-item__tag"
+          @click="emit('filterTag', tag)"
+        >#{{ tag }}</span>
       </div>
-
-      <div class="note-item__actions">
-        <!-- 编辑按钮 -->
-        <button
-          class="note-item__action-btn"
-          @click="startEdit"
-        >
-          <IconWrapper
-            name="edit"
-            :size="12"
-          />
-        </button>
-        <!-- 删除按钮 -->
-        <button
-          class="qn-icon-btn qn-icon-btn--danger"
-          @click="emit('remove')"
-        >
-          <IconWrapper
-            name="delete"
-            :size="12"
-          />
-        </button>
+      <div class="qn-insp-item__content">{{ item.content }}</div>
+      <!-- 元信息 + 操作 -->
+      <div class="qn-insp-item__footer">
+        <!-- 创建时间 -->
+        <span class="qn-insp-item__meta">{{ i18n.createdAt }} {{ formatTime(item.createdAt) }}</span>
+        <div class="qn-insp-item__actions">
+          <!-- 编辑按钮 -->
+          <button
+            class="qn-icon-btn"
+            :title="i18n.edit"
+            @click="startEdit"
+          >
+            <IconWrapper
+              name="edit"
+              :size="12"
+            />
+          </button>
+          <!-- 删除按钮 -->
+          <button
+            class="qn-icon-btn qn-icon-btn--danger"
+            :title="i18n.delete"
+            @click="emit('remove')"
+          >
+            <IconWrapper
+              name="delete"
+              :size="12"
+            />
+          </button>
+        </div>
       </div>
     </template>
 
     <!-- 编辑态 -->
     <template v-else>
-      <div class="note-item__edit">
+      <div class="qn-insp-item__edit">
         <textarea
-          ref="editTextareaRef"
+          ref="textareaRef"
           v-model="editDraft"
-          class="note-item__edit-textarea"
-          rows="3"
+          class="qn-insp-item__textarea"
+          rows="2"
+          :placeholder="i18n.inspContentPlaceholder"
           @keydown.ctrl.enter.prevent="confirmEdit"
           @keydown.esc="cancelEdit"
         />
-        <div class="note-item__edit-actions">
-          <!-- AI 润色按钮："AI 润色"（润色编辑内容，流式回填编辑框，由用户确认后保存） -->
+        <!-- 标签输入 -->
+        <input
+          v-model="editTags"
+          class="vp-input qn-insp-item__tag-input"
+          :placeholder="i18n.tagsPlaceholder"
+        />
+        <div class="qn-insp-item__edit-actions">
+          <!-- AI 润色按钮 -->
           <button
-            class="note-item__action-btn"
+            class="qn-icon-btn"
             :disabled="!editDraft.trim() || polishing"
             :title="i18n.polish"
             @click="handlePolishEdit"
@@ -74,10 +74,11 @@
               :size="12"
             />
           </button>
-          <!-- 按钮："保存"（common i18n 由父层透传） -->
+          <!-- 保存按钮 -->
           <button
             class="qn-icon-btn"
             :disabled="!editDraft.trim()"
+            :title="i18n.save"
             @click="confirmEdit"
           >
             <IconWrapper
@@ -85,9 +86,10 @@
               :size="12"
             />
           </button>
-          <!-- 按钮："取消" -->
+          <!-- 取消按钮 -->
           <button
             class="qn-icon-btn"
+            :title="i18n.cancel"
             @click="cancelEdit"
           >
             <IconWrapper
@@ -103,31 +105,33 @@
 
 <script setup lang="ts">
 /**
- * 速记 — 单条目组件
- * 勾选/编辑/删除仅 emit 事件（存储由父 composable 统一处理）；编辑态持有 plugin 自行完成 AI 润色并回填编辑框
+ * 速记功能 — 灵感单条目组件
+ * 展示标签与内容；编辑态持有 plugin 自行完成 AI 润色并回填编辑框，
+ * 勾选/更新/删除仅 emit 事件（存储由父 composable 统一处理）
  */
 import type { Plugin } from "siyuan"
-import type { QuickNoteItem } from "../types"
+import type { InspirationItem } from "../../types"
 import { nextTick, ref } from "vue"
 import { pushMsg } from "@/api"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { PolishError, useAiPolish } from "../composables/useAiPolish"
+import { PolishError, useAiPolish } from "../../composables/useAiPolish"
 
 const props = defineProps<{
-  note: QuickNoteItem
+  item: InspirationItem
   plugin: Plugin
   i18n: Record<string, string>
 }>()
 
 const emit = defineEmits<{
-  toggleDone: []
-  update: [content: string]
+  update: [content: string, tags: string]
   remove: []
+  filterTag: [tag: string]
 }>()
 
 const editing = ref(false)
 const editDraft = ref("")
-const editTextareaRef = ref<HTMLTextAreaElement | null>(null)
+const editTags = ref("")
+const textareaRef = ref<HTMLTextAreaElement | null>(null)
 
 // AI 润色：编辑态本地实例，润色结果流式回填 editDraft（保存仍由用户触发）
 const { polishing, polish } = useAiPolish(props.plugin)
@@ -142,7 +146,6 @@ const handlePolishEdit = async () => {
     const result = await polish(original, (chunk) => {
       editDraft.value += chunk
     })
-    // 模型无输出时恢复原稿，避免编辑内容被清空丢失
     if (!result.trim()) {
       editDraft.value = original
     }
@@ -157,15 +160,16 @@ const handlePolishEdit = async () => {
 }
 
 const startEdit = async () => {
-  editDraft.value = props.note.content
+  editDraft.value = props.item.content
+  editTags.value = props.item.tags.join("、")
   editing.value = true
   await nextTick()
-  editTextareaRef.value?.focus()
+  textareaRef.value?.focus()
 }
 
 const confirmEdit = () => {
   if (!editDraft.value.trim()) return
-  emit("update", editDraft.value)
+  emit("update", editDraft.value, editTags.value)
   editing.value = false
 }
 
@@ -173,7 +177,7 @@ const cancelEdit = () => {
   editing.value = false
 }
 
-/** 时间戳 → 本地化短时间文案（元信息展示） */
+/** 时间戳 → 本地化短时间文案 */
 const formatTime = (ts: number) => {
   return new Date(ts).toLocaleString(undefined, {
     month: "2-digit",
@@ -185,6 +189,6 @@ const formatTime = (ts: number) => {
 </script>
 
 <style scoped lang="scss">
-@use "../styles/NoteItem.scss";
-@use "../styles/index.scss";
+@use "../../styles/InspirationItem.scss";
+@use "../../styles/index.scss";
 </style>

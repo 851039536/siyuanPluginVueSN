@@ -18,7 +18,7 @@
       />
       <!-- 最小化条标题："速记"（竖条时纵向排版） -->
       <span class="mini-bar__title">{{ i18n.title }}</span>
-      <!-- 待完成计数徽标 -->
+      <!-- 未完成待办计数徽标 -->
       <span
         v-if="pendingCount > 0"
         class="mini-bar__count"
@@ -47,7 +47,7 @@
           {{ i18n.title }}
         </h3>
         <div class="header-actions">
-          <!-- 预设位置菜单（悬浮提示："显示位置"，点击弹出五档预设） -->
+          <!-- 预设位置菜单 -->
           <div
             ref="menuWrapRef"
             class="position-menu-wrap"
@@ -62,7 +62,7 @@
                 :size="12"
               />
             </button>
-            <!-- 预设菜单项："居中/顶部/底部/左侧/右侧"（当前预设高亮，拖拽自定义态无高亮） -->
+            <!-- 预设菜单项："居中/顶部/底部/左侧/右侧" -->
             <div
               v-if="menuOpen"
               class="position-menu"
@@ -78,7 +78,7 @@
               </button>
             </div>
           </div>
-          <!-- 最小化按钮（悬浮提示："最小化"，箭头指向收缩方向） -->
+          <!-- 最小化按钮 -->
           <button
             class="close-btn"
             :title="i18n.minimize"
@@ -101,88 +101,174 @@
         </div>
       </div>
 
-      <!-- 新增速记区 -->
-      <div class="add-area">
-        <!-- 输入框占位："输入速记内容，Ctrl+Enter 快速添加" -->
-        <textarea
-          v-model="draft"
-          class="add-textarea"
-          :placeholder="i18n.addPlaceholder"
-          rows="3"
-          @keydown.ctrl.enter.prevent="handleAdd"
-        />
-        <div class="add-area__actions">
-          <!-- AI 润色按钮："AI 润色"（点击润色草稿内容，流式回填输入框，由用户确认后添加） -->
-          <SiButton
-            size="small"
-            variant="secondary"
-            :loading="polishing"
-            :disabled="!draft.trim()"
-            :title="i18n.polish"
-            @click="handlePolish"
-          >
-            <IconWrapper
-              name="sparkles"
-              :size="12"
-            />
-            {{ polishing ? i18n.polishing : i18n.polish }}
-          </SiButton>
-          <!-- 按钮："添加" -->
-          <SiButton
-            size="small"
-            :disabled="!draft.trim()"
-            @click="handleAdd"
-          >
-            <IconWrapper
-              name="plus"
-              :size="12"
-            />
-            {{ i18n.add }}
-          </SiButton>
+      <!-- 页头：克制蓝绿渐变配图（免版权，CSS 渐变模拟，不喧宾夺主） -->
+      <div class="panel-hero">
+        <div class="panel-hero__text">
+          <!-- 主标题 -->
+          <span class="panel-hero__title">{{ i18n.title }}</span>
+          <!-- 副标题 -->
+          <span class="panel-hero__subtitle">{{ i18n.subtitle }}</span>
         </div>
+        <IconWrapper
+          name="quickNote"
+          :size="28"
+          class="panel-hero__icon"
+        />
       </div>
 
-      <!-- 待完成/已完成 Tab 切换栏 -->
-      <div class="filter-tabs">
-        <!-- Tab："待完成"（含计数） -->
-        <button
-          class="filter-tab"
-          :class="{ 'filter-tab--active': filter === 'pending' }"
-          @click="filter = 'pending'"
-        >
-          {{ i18n.pending }}
-          <span class="filter-tab__count">{{ pendingCount }}</span>
-        </button>
-        <!-- Tab："已完成"（含计数） -->
-        <button
-          class="filter-tab"
-          :class="{ 'filter-tab--active': filter === 'done' }"
-          @click="filter = 'done'"
-        >
-          {{ i18n.done }}
-          <span class="filter-tab__count">{{ doneCount }}</span>
-        </button>
-      </div>
+      <!-- 「今天要处理的」聚焦区（逾期任务 + 卡住项目标红） -->
+      <TodayFocus
+        :overdue-todos="overdueTodos"
+        :blocked-projects="blockedProjects"
+        :i18n="i18n"
+      />
 
-      <!-- 速记条目列表 -->
-      <div class="note-list">
-        <!-- 空态提示："暂无待完成速记" / "暂无已完成速记" -->
-        <div
-          v-if="filteredNotes.length === 0"
-          class="note-list__empty"
+      <!-- Tab 导航栏（下划线式，激活态品牌蓝） -->
+      <nav class="panel-tabs">
+        <button
+          v-for="tab in TABS"
+          :key="tab.key"
+          class="panel-tab"
+          :class="{ 'panel-tab--active': activeTab === tab.key }"
+          @click="activeTab = tab.key"
         >
-          {{ filter === "pending" ? i18n.emptyPending : i18n.emptyDone }}
-        </div>
-        <NoteItem
-          v-for="note in filteredNotes"
-          :key="note.id"
-          :note="note"
-          :plugin="plugin"
-          :i18n="i18n"
-          @toggle-done="toggleDone(note.id)"
-          @update="(content: string) => update(note.id, content)"
-          @remove="handleRemove(note.id)"
-        />
+          {{ i18n[tab.labelKey] }}
+        </button>
+      </nav>
+
+      <!-- Tab 内容区（可滚动，右侧留滚动条呼吸空间） -->
+      <div class="panel-body">
+        <!-- 今天待办 Tab -->
+        <section
+          v-if="activeTab === 'todo'"
+          class="panel-section"
+        >
+          <TodoForm
+            :projects="projects"
+            :i18n="i18n"
+            @add="handleTodoAdd"
+          />
+          <div class="todo-group-list">
+            <!-- 按日期分组的未完成任务 -->
+            <template v-for="group in todoGroups">
+              <div
+                v-if="group.list.length > 0"
+                :key="group.key"
+                class="todo-group"
+              >
+                <!-- 分组标题 -->
+                <div class="todo-group__label">
+                  {{ i18n[groupLabelKey(group.key)] }}
+                  <span class="todo-group__count">{{ group.list.length }}</span>
+                </div>
+                <TodoItem
+                  v-for="todo in group.list"
+                  :key="todo.id"
+                  :todo="todo"
+                  :overdue="isOverdue(todo)"
+                  :project-name="projectNameOf(todo)"
+                  :i18n="i18n"
+                  @toggle-done="toggleTodoDone(todo.id)"
+                  @rollover="rolloverTodo(todo.id)"
+                  @remove="handleTodoRemove(todo.id)"
+                />
+              </div>
+            </template>
+            <!-- 已完成待办 -->
+            <div
+              v-if="doneTodos.length > 0"
+              class="todo-group"
+            >
+              <!-- 分组标题："已完成" -->
+              <div class="todo-group__label">
+                {{ i18n.done }}
+                <span class="todo-group__count">{{ doneTodos.length }}</span>
+              </div>
+              <TodoItem
+                v-for="todo in doneTodos"
+                :key="todo.id"
+                :todo="todo"
+                :overdue="false"
+                :project-name="projectNameOf(todo)"
+                :i18n="i18n"
+                @toggle-done="toggleTodoDone(todo.id)"
+                @rollover="rolloverTodo(todo.id)"
+                @remove="handleTodoRemove(todo.id)"
+              />
+            </div>
+          </div>
+        </section>
+
+        <!-- 灵感速记 Tab -->
+        <section
+          v-else-if="activeTab === 'inspiration'"
+          class="panel-section"
+        >
+          <InspirationForm
+            :plugin="plugin"
+            :all-tags="allTags"
+            :active-tag="activeTag"
+            :i18n="i18n"
+            @add="handleInspAdd"
+            @select-tag="handleSelectTag"
+          />
+          <div class="insp-list">
+            <div
+              v-if="filteredInspirations.length === 0"
+              class="insp-list__empty"
+            >{{ i18n.inspEmpty }}</div>
+            <InspirationItem
+              v-for="item in filteredInspirations"
+              :key="item.id"
+              :item="item"
+              :plugin="plugin"
+              :i18n="i18n"
+              @update="(c, t) => updateInsp(item.id, c, t)"
+              @remove="handleInspRemove(item.id)"
+              @filter-tag="handleSelectTag"
+            />
+          </div>
+        </section>
+
+        <!-- 项目跟进 Tab -->
+        <section
+          v-else-if="activeTab === 'project'"
+          class="panel-section"
+        >
+          <ProjectForm
+            :i18n="i18n"
+            @submit="handleProjectAdd"
+          />
+          <div class="project-list">
+            <div
+              v-if="projects.length === 0"
+              class="project-list__empty"
+            >{{ i18n.projectEmpty }}</div>
+            <ProjectItem
+              v-for="project in activeProjects"
+              :key="project.id"
+              :project="project"
+              :linked-todos="linkedTodosOf(project.id)"
+              :progress="projectProgressOf(project.id)"
+              :i18n="i18n"
+              @remove="handleProjectRemove(project.id)"
+            />
+          </div>
+        </section>
+
+        <!-- 每周复盘 Tab -->
+        <section
+          v-else
+          class="panel-section"
+        >
+          <WeeklyReview
+            :week-total="weekTotal"
+            :priority-distribution="priorityDistribution"
+            :project-effort="projectEffort"
+            :block-summary="blockSummary"
+            :i18n="i18n"
+          />
+        </section>
       </div>
     </template>
   </div>
@@ -190,20 +276,28 @@
 
 <script setup lang="ts">
 /**
- * 速记 — 弹窗主面板
- * 自包含数据流：onMounted 从 manager.storage 加载条目，CRUD 经 useQuickNotes 直达存储；
- * 位置变更（预设菜单/拖拽）与最小化直达 manager，父层（Manager）不维护任何表单中间状态
+ * 速记 — 弹窗主面板（四大模块 Tab 导航壳）
+ * 顶部页头渐变配图 + 「今天要处理的」聚焦区；Tab 切换待办/灵感/项目/复盘；
+ * 自包含数据流：onMounted 从 manager.storage 加载统一数据，四个 composable 直达存储，
+ * 位置变更/最小化直达 manager
  */
 import type { Plugin } from "siyuan"
 import type { QuickNoteManager } from "./index"
-import type { QuickNotePlacement, QuickNotePosition } from "./types"
+import type { QuickNotePlacement, QuickNotePosition, TodoItem as TodoItemType } from "./types"
 import { computed, onMounted, onUnmounted, ref } from "vue"
-import { pushMsg } from "@/api"
-import SiButton from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import NoteItem from "./components/NoteItem.vue"
-import { useAiPolish, PolishError } from "./composables/useAiPolish"
-import { useQuickNotes } from "./composables/useQuickNotes"
+import TodayFocus from "./components/today/TodayFocus.vue"
+import TodoForm from "./components/todo/TodoForm.vue"
+import TodoItem from "./components/todo/TodoItem.vue"
+import InspirationForm from "./components/inspiration/InspirationForm.vue"
+import InspirationItem from "./components/inspiration/InspirationItem.vue"
+import ProjectForm from "./components/project/ProjectForm.vue"
+import ProjectItem from "./components/project/ProjectItem.vue"
+import WeeklyReview from "./components/review/WeeklyReview.vue"
+import { useTodoList } from "./composables/useTodoList"
+import { useInspirations } from "./composables/useInspirations"
+import { useProjects } from "./composables/useProjects"
+import { useWeeklyReview } from "./composables/useWeeklyReview"
 import { POSITION_MINIMIZE_META, QUICK_NOTE_POSITIONS } from "./types"
 
 const props = defineProps<{
@@ -213,125 +307,150 @@ const props = defineProps<{
   onClose?: () => void
 }>()
 
-// i18n 文案（script 内多处引用，从 props 解构；模板中亦可直接使用）
+// i18n 文案（script 内多处引用）
 const i18n = props.i18n
 
-const {
-  filter,
-  filteredNotes,
-  pendingCount,
-  doneCount,
-  load,
-  add,
-  update,
-  toggleDone,
-  remove,
-} = useQuickNotes(props.manager.storage)
+// ==================== 四大 composable ====================
+const todoList = useTodoList(props.manager.storage)
+const inspirations = useInspirations(props.manager.storage)
+const projectsApi = useProjects(props.manager.storage)
+// 注入关联待办列表给项目进度计算
+projectsApi.setTodos(todoList.todos)
 
-// 新增输入草稿（persistent Modal 下关闭再打开不丢失）
-const draft = ref("")
+// 复盘为纯计算派生
+const review = useWeeklyReview(todoList.todos, projectsApi.projects)
 
-// AI 润色：并发锁 + 流式调用（新增区草稿与 NoteItem 编辑态各自实例化，互不干扰）
-const { polishing, polish } = useAiPolish(props.plugin)
+// ==================== Tab 导航 ====================
+/** Tab 定义：key + i18n 标签键（<3 个 Tab 时平铺，此处 4 个按语义建 components 子目录） */
+const TABS = [
+  { key: "todo", labelKey: "tabTodo" },
+  { key: "inspiration", labelKey: "tabInspiration" },
+  { key: "project", labelKey: "tabProject" },
+  { key: "review", labelKey: "tabReview" },
+] as const
 
-// 定位模式（预设/custom，初始化自 Manager 缓存；菜单高亮与最小化方向据此派生）
+const activeTab = ref<(typeof TABS)[number]["key"]>("todo")
+
+// ==================== 定位/最小化（沿用 Manager 机制） ====================
 const position = ref<QuickNotePlacement>(props.manager.getPosition())
+const minimized = ref(props.manager.isMinimized())
+const minimizeMeta = computed(() => POSITION_MINIMIZE_META[position.value])
 
-// 预设位置菜单开合与点击外部关闭用的容器引用
+// 预设位置菜单开合
 const menuOpen = ref(false)
 const menuWrapRef = ref<HTMLElement | null>(null)
 
-// 最小化状态（persistent Modal 下与 Manager 保持同步）
-const minimized = ref(props.manager.isMinimized())
+// ==================== 待办数据访问 ====================
+const pendingCount = todoList.pendingCount
+const overdueTodos = todoList.overdueTodos
+const doneTodos = todoList.doneTodos
+const isOverdue = todoList.isOverdue
 
-// 当前定位对应的最小化方向元数据（轴向 + 收起/展开箭头）
-const minimizeMeta = computed(() => POSITION_MINIMIZE_META[position.value])
+/** 按日期分组的未完成任务（今天/明天/本周/更远） */
+const todoGroups = computed(() => [
+  { key: "today", list: todoList.groupedPending.value.today },
+  { key: "tomorrow", list: todoList.groupedPending.value.tomorrow },
+  { key: "week", list: todoList.groupedPending.value.week },
+  { key: "future", list: todoList.groupedPending.value.future },
+])
 
-const handleAdd = async () => {
-  if (!draft.value.trim()) return
-  await add(draft.value)
-  draft.value = ""
+/** 分组标题 i18n 键 */
+const groupLabelKey = (key: string) => `group${key.charAt(0).toUpperCase()}${key.slice(1)}`
+
+/** 关联项目名（无则返回空字符串） */
+const projectNameOf = (todo: TodoItemType) =>
+  projectsApi.projects.value.find((p) => p.id === todo.projectId)?.name ?? ""
+
+// ==================== 灵感数据访问 ====================
+const allTags = inspirations.allTags
+const activeTag = inspirations.activeTag
+const filteredInspirations = inspirations.filteredInspirations
+
+// ==================== 项目数据访问 ====================
+const projects = projectsApi.projects
+const activeProjects = projectsApi.activeProjects
+const blockedProjects = projectsApi.blockedProjects
+const linkedTodosOf = (id: string) => projectsApi.todosOf(id)
+const projectProgressOf = (id: string) => projectsApi.progressOf(id)
+
+// ==================== 复盘数据访问 ====================
+const weekTotal = review.weekTotal
+const priorityDistribution = review.priorityDistribution
+const projectEffort = review.projectEffort
+const blockSummary = review.blockSummary
+
+// ==================== 事件处理 ====================
+const handleTodoAdd = (payload: Parameters<typeof todoList.add>[0]) => {
+  todoList.add(payload)
+}
+const toggleTodoDone = (id: string) => todoList.toggleDone(id)
+const rolloverTodo = (id: string) => todoList.rolloverToTomorrow(id)
+const handleTodoRemove = (id: string) => {
+  if (!window.confirm(i18n.deleteConfirm)) return
+  todoList.remove(id)
 }
 
-// 同步 Manager 侧定位到本地 position ref（拖拽后可能已变为 custom，用于菜单高亮/最小化方向派生）
+const handleInspAdd = (content: string, tags: string) => {
+  inspirations.add(content, tags)
+}
+const updateInsp = (id: string, content: string, tags: string) => {
+  inspirations.update(id, content, tags)
+}
+const handleInspRemove = (id: string) => {
+  if (!window.confirm(i18n.deleteConfirm)) return
+  inspirations.remove(id)
+}
+const handleSelectTag = (tag: string | null) => {
+  inspirations.activeTag.value = tag
+}
+
+const handleProjectAdd = (payload: Parameters<typeof projectsApi.add>[0]) => {
+  projectsApi.add(payload)
+}
+const handleProjectRemove = (id: string) => {
+  if (!window.confirm(i18n.deleteConfirm)) return
+  projectsApi.remove(id)
+}
+
+// ==================== 定位/最小化事件 ====================
 const syncPosition = () => {
   position.value = props.manager.getPosition()
 }
-
-// AI 润色草稿：缓存原稿 → 清空后流式回填 → 失败恢复原稿并提示
-const handlePolish = async () => {
-  if (polishing.value) return
-  const original = draft.value
-  if (!original.trim()) return
-  try {
-    draft.value = ""
-    const result = await polish(original, (chunk) => {
-      draft.value += chunk
-    })
-    // 模型无输出时恢复原稿，避免草稿被清空丢失
-    if (!result.trim()) {
-      draft.value = original
-    }
-  } catch (err) {
-    draft.value = original
-    if (err instanceof PolishError && err.code === "NO_API_KEY") {
-      pushMsg(i18n.polishNoApiKey, 5000, "info")
-    } else {
-      pushMsg(i18n.polishFailed, 5000, "error")
-    }
-  }
-}
-
-// 预设菜单开合：打开前同步 Manager 侧定位（拖拽后可能已变为 custom，用于高亮判断）
 const handleToggleMenu = () => {
   syncPosition()
   menuOpen.value = !menuOpen.value
 }
-
-// 选择预设档位：吸附并退出自定义定位
 const handleSelectPreset = (pos: QuickNotePosition) => {
   position.value = pos
   menuOpen.value = false
   props.manager.setPosition(pos)
 }
-
-// 点击菜单外部关闭预设菜单
 const handleWindowClick = (e: MouseEvent) => {
   if (!menuOpen.value) return
   if (menuWrapRef.value?.contains(e.target as Node)) return
   menuOpen.value = false
 }
-
-// 最小化/展开切换：先同步定位（拖拽后已变 custom，据此派生收缩方向），Manager 改写容器与遮罩
 const handleToggleMinimize = () => {
   syncPosition()
   minimized.value = !minimized.value
   props.manager.setMinimized(minimized.value)
 }
-
-// 遮罩点击（面板外区域）：收起为最小化条而非关闭（Manager 派发的 CustomEvent）
 const handleMaskMinimize = () => {
   if (minimized.value) return
   handleToggleMinimize()
 }
-
-// 小条点击：刚完成拖动则吞掉本次点击（不触发展开）
 const handleMiniBarClick = () => {
   if (props.manager.consumeDragClick()) return
   handleToggleMinimize()
 }
 
-const handleRemove = (id: string) => {
-  // 删除确认："确定删除这条速记吗？"
-  if (!window.confirm(i18n.deleteConfirm)) return
-  remove(id)
-}
-
-onMounted(() => {
-  load()
+// ==================== 生命周期 ====================
+onMounted(async () => {
+  await todoList.load()
+  await inspirations.load()
+  await projectsApi.load()
   syncPosition()
   minimized.value = props.manager.isMinimized()
-  // 预设菜单点击外部关闭 + 遮罩点击收起监听（persistent 实例常驻，onUnmounted 对应清理）
   window.addEventListener("click", handleWindowClick)
   window.addEventListener("quickNoteMaskMinimize", handleMaskMinimize)
 })

@@ -131,7 +131,7 @@
           <TodoForm
             :projects="projects"
             :i18n="i18n"
-            @add="handleTodoAdd"
+            @add="todoList.add"
           />
           <div class="todo-group-list">
             <!-- 按日期分组的未完成任务 -->
@@ -153,8 +153,8 @@
                   :overdue="isOverdue(todo)"
                   :project-name="projectNameOf(todo)"
                   :i18n="i18n"
-                  @toggle-done="toggleTodoDone(todo.id)"
-                  @rollover="rolloverTodo(todo.id)"
+                  @toggle-done="todoList.toggleDone(todo.id)"
+                  @rollover="todoList.rolloverToTomorrow(todo.id)"
                   @remove="handleTodoRemove(todo.id)"
                 />
               </div>
@@ -176,8 +176,8 @@
                 :overdue="false"
                 :project-name="projectNameOf(todo)"
                 :i18n="i18n"
-                @toggle-done="toggleTodoDone(todo.id)"
-                @rollover="rolloverTodo(todo.id)"
+                @toggle-done="todoList.toggleDone(todo.id)"
+                @rollover="todoList.rolloverToTomorrow(todo.id)"
                 @remove="handleTodoRemove(todo.id)"
               />
             </div>
@@ -194,7 +194,7 @@
             :all-tags="allTags"
             :active-tag="activeTag"
             :i18n="i18n"
-            @add="handleInspAdd"
+            @add="inspirations.add"
             @select-tag="handleSelectTag"
           />
           <div class="insp-list">
@@ -208,7 +208,7 @@
               :item="item"
               :plugin="plugin"
               :i18n="i18n"
-              @update="(c, t) => updateInsp(item.id, c, t)"
+              @update="(c, t) => inspirations.update(item.id, c, t)"
               @remove="handleInspRemove(item.id)"
               @filter-tag="handleSelectTag"
             />
@@ -222,7 +222,7 @@
         >
           <ProjectForm
             :i18n="i18n"
-            @submit="handleProjectAdd"
+            @submit="projectsApi.add"
           />
           <div class="project-list">
             <div
@@ -365,22 +365,11 @@ const projectEffort = review.projectEffort
 const blockSummary = review.blockSummary
 
 // ==================== 事件处理 ====================
-const handleTodoAdd = (payload: Parameters<typeof todoList.add>[0]) => {
-  todoList.add(payload)
-}
-const toggleTodoDone = (id: string) => todoList.toggleDone(id)
-const rolloverTodo = (id: string) => todoList.rolloverToTomorrow(id)
 const handleTodoRemove = (id: string) => {
   if (!window.confirm(i18n.deleteConfirm)) return
   todoList.remove(id)
 }
 
-const handleInspAdd = (content: string, tags: string) => {
-  inspirations.add(content, tags)
-}
-const updateInsp = (id: string, content: string, tags: string) => {
-  inspirations.update(id, content, tags)
-}
 const handleInspRemove = (id: string) => {
   if (!window.confirm(i18n.deleteConfirm)) return
   inspirations.remove(id)
@@ -389,9 +378,6 @@ const handleSelectTag = (tag: string | null) => {
   inspirations.activeTag.value = tag
 }
 
-const handleProjectAdd = (payload: Parameters<typeof projectsApi.add>[0]) => {
-  projectsApi.add(payload)
-}
 const handleProjectRemove = (id: string) => {
   if (!window.confirm(i18n.deleteConfirm)) return
   projectsApi.remove(id)
@@ -436,11 +422,14 @@ onMounted(async () => {
   await projectsApi.load()
   syncPosition()
   minimized.value = props.manager.isMinimized()
+  // 启动周起始时间周期刷新（防止面板常驻跨周后复盘统计锁死）
+  review.startWatch()
   window.addEventListener("click", handleWindowClick)
   window.addEventListener("quickNoteMaskMinimize", handleMaskMinimize)
 })
 
 onUnmounted(() => {
+  review.stopWatch()
   window.removeEventListener("click", handleWindowClick)
   window.removeEventListener("quickNoteMaskMinimize", handleMaskMinimize)
 })

@@ -47,7 +47,7 @@
           name="plus"
           :size="12"
         />
-        {{ submitLabel }}
+        {{ i18n.addProject }}
       </button>
     </div>
   </div>
@@ -60,7 +60,7 @@
  * 提交时仅 emit(submit) 携带结构化载荷，存储由父 composable 统一处理
  */
 import type { ProjectItem } from "../../types"
-import { computed, ref } from "vue"
+import { ref } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { PROJECT_STATUSES, STATUS_META } from "../../types"
 

@@ -112,9 +112,9 @@
 import type { Plugin } from "siyuan"
 import type { InspirationItem } from "../../types"
 import { nextTick, ref } from "vue"
-import { pushMsg } from "@/api"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { PolishError, useAiPolish } from "../../composables/useAiPolish"
+import { useAiPolish } from "../../composables/useAiPolish"
+import { polishText } from "../../utils"
 
 const props = defineProps<{
   item: InspirationItem
@@ -136,27 +136,11 @@ const textareaRef = ref<HTMLTextAreaElement | null>(null)
 // AI 润色：编辑态本地实例，润色结果流式回填 editDraft（保存仍由用户触发）
 const { polishing, polish } = useAiPolish(props.plugin)
 
-// AI 润色编辑内容：缓存原稿 → 清空后流式回填 → 失败恢复原稿并提示
+// AI 润色编辑内容：缓存原稿 → 清空后流式回填 → 失败恢复原稿并提示（复用共享辅助函数）
 const handlePolishEdit = async () => {
   if (polishing.value) return
-  const original = editDraft.value
-  if (!original.trim()) return
-  try {
-    editDraft.value = ""
-    const result = await polish(original, (chunk) => {
-      editDraft.value += chunk
-    })
-    if (!result.trim()) {
-      editDraft.value = original
-    }
-  } catch (err) {
-    editDraft.value = original
-    if (err instanceof PolishError && err.code === "NO_API_KEY") {
-      pushMsg(i18n.polishNoApiKey, 5000, "info")
-    } else {
-      pushMsg(i18n.polishFailed, 5000, "error")
-    }
-  }
+  if (!editDraft.value.trim()) return
+  await polishText(polish, editDraft, editDraft.value, props.i18n)
 }
 
 const startEdit = async () => {

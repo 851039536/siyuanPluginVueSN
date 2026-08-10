@@ -14,17 +14,6 @@
         >{{ i18n[statusMeta.labelKey] }}</span>
       </div>
       <div class="qn-proj-item__actions">
-        <!-- 编辑按钮 -->
-        <button
-          class="qn-icon-btn"
-          :title="i18n.edit"
-          @click="emit('edit')"
-        >
-          <IconWrapper
-            name="edit"
-            :size="12"
-          />
-        </button>
         <!-- 删除按钮 -->
         <button
           class="qn-icon-btn qn-icon-btn--danger"
@@ -121,7 +110,7 @@
 /**
  * 速记功能 — 项目卡片组件
  * 展示项目状态徽章、进度流程、卡点警示、关联待办进度条与折叠列表；
- * 编辑/删除仅 emit 事件，关联待办与进度由父层经 props 注入
+ * 删除仅 emit 事件，关联待办与进度由父层经 props 注入
  */
 import type { ProjectItem, TodoItem } from "../../types"
 import { computed, ref } from "vue"
@@ -138,7 +127,6 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  edit: []
   remove: []
 }>()
 

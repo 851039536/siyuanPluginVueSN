@@ -1,7 +1,7 @@
-<!-- 分项评分雷达图：纯 SVG 五轴视图，总览 5 个维度的得分均衡性 -->
+<!-- 分项评分雷达图：纯 SVG 六轴视图，总览 6 个维度的得分均衡性 -->
 <template>
   <div class="review-radar-chart">
-    <!-- viewBox 原点在圆心，首轴指向正上方，5 轴等分 360° -->
+    <!-- viewBox 原点在圆心，首轴指向正上方，6 轴等分 360° -->
     <svg
       class="review-radar-svg"
       viewBox="-110 -85 220 170"
@@ -69,16 +69,15 @@
 <script setup lang="ts">
 import { computed } from "vue"
 
-/** 五个评分维度的固定顺序（与 @/types/ai detailedScore 字段一致），保证数据与轴一一对应 */
-const SCORE_KEYS = ["accuracy", "structure", "quality", "format", "coverage"] as const
-type ScoreKey = (typeof SCORE_KEYS)[number]
+/** 六个评分维度的固定顺序（与 @/types/ai detailedScore 字段一致），保证数据与轴一一对应 */
+const SCORE_KEYS = ["accuracy", "structure", "quality", "format", "coverage", "titleQuality"] as const
 
 // 几何常量（viewBox 以圆心为原点）
 const MAX_RADIUS = 50 // 满分 10 分对应的半径
 const AXIS_LABEL_OFFSET = 18 // 轴标签相对数据区外缘的偏移
 const SCORE_LABEL_OFFSET = 6 // 分数标签相对数据点的外偏
 const START_ANGLE = -90 // 首轴指向正上方（度）
-const ANGLE_STEP = 360 / SCORE_KEYS.length // 72°
+const ANGLE_STEP = 360 / SCORE_KEYS.length // 60°
 const ANCHOR_COS_THRESHOLD = 0.3 // |cos|<该值时视为垂直轴，标签水平居中
 const BASELINE_SIN_THRESHOLD = 0.35 // |sin|<该值时视为水平轴，标签垂直居中
 

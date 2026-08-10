@@ -29,10 +29,7 @@
     >
       <!-- 总体评价 -->
       <div class="review-summary">
-        <svg
-          width="12"
-          height="12"
-        ><use xlink:href="#iconSparkles"></use></svg>
+        <SvgIcon name="#iconSparkles" />
         {{ reviewResult.summary }}
       </div>
 
@@ -45,13 +42,13 @@
           class="subsection-toggle"
           @click="showScores = !showScores"
         >
-          <svg
-            width="10"
-            height="10"
+          <!-- 小节标题："分项评分" -->
+          <SvgIcon
+            name="#iconRight"
+            :size="10"
             class="subsection-chevron"
             :class="{ expanded: showScores }"
-          ><use xlink:href="#iconRight"></use></svg>
-          <!-- 小节标题："分项评分" -->
+          />
           <span>{{ i18n.reviewDetailedScore }}</span>
         </button>
         <div
@@ -124,10 +121,10 @@
               :title="i18n.reviewFixIssueTitle"
               @click="$emit('fixIssue', entry.originalIndex)"
             >
-              <svg
-                width="10"
-                height="10"
-              ><use xlink:href="#iconRefresh"></use></svg>
+              <SvgIcon
+                name="#iconRefresh"
+                :size="10"
+              />
               {{ i18n.reviewFix }}
             </button>
           </div>
@@ -166,10 +163,10 @@
             :title="i18n.reviewReReview"
             @click="$emit('reReview')"
           >
-            <svg
-              width="10"
-              height="10"
-            ><use xlink:href="#iconRefresh"></use></svg>
+            <SvgIcon
+              name="#iconRefresh"
+              :size="10"
+            />
             {{ i18n.reviewReReview }}
           </button>
           <template v-if="needsFix">
@@ -188,10 +185,10 @@
               :title="i18n.reviewAutoFixTitle"
               @click="$emit('autoFix')"
             >
-              <svg
-                width="10"
-                height="10"
-              ><use xlink:href="#iconRefresh"></use></svg>
+              <SvgIcon
+                name="#iconRefresh"
+                :size="10"
+              />
               {{ i18n.reviewAutoFix }}
             </button>
           </template>
@@ -209,6 +206,7 @@ import {
 import type { IssueSeverity, ReviewRating, ReviewResult } from "@/types/ai"
 import { RATING_NEEDS_FIX, SEVERITY_LEVELS } from "../types"
 import CollapsibleSection from "./CollapsibleSection.vue"
+import SvgIcon from "./SvgIcon.vue"
 
 interface Props {
   i18n: Record<string, string>
@@ -279,10 +277,17 @@ const filterCounts = computed<Record<SeverityFilterKey, number>>(() => {
   return counts
 })
 
-// 过滤按钮："全部"为 UI 文案取自 i18n；高/中/低为业务枚举值本身，按数据原样展示
+/** 严重度 → i18n 标签映射（高/中/低），与"全部"按钮同为 i18n 文案来源，保证国际化一致性 */
+const SEVERITY_LABEL_MAP: Record<IssueSeverity, string> = {
+  高: props.i18n.reviewSeverityHigh,
+  中: props.i18n.reviewSeverityMid,
+  低: props.i18n.reviewSeverityLow,
+}
+
+// 过滤按钮："全部"与"高/中/低"文案均取自 i18n，避免中文枚举值直接硬编码展示
 const filterOptions = computed<{ key: SeverityFilterKey; label: string }[]>(() => [
   { key: "all", label: props.i18n.reviewFilterAll },
-  ...SEVERITY_LEVELS.map((sev) => ({ key: sev, label: sev })),
+  ...SEVERITY_LEVELS.map((sev) => ({ key: sev, label: SEVERITY_LABEL_MAP[sev] })),
 ])
 
 /** 过滤后的问题及其在原始数组中的索引（fixIssue emit 需要原始索引），单 computed 避免两次遍历靠位置隐式对齐 */

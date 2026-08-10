@@ -8,13 +8,16 @@ import type { GitProject } from "./types"
 import type {
   AuthorReportRow,
   CodeReportData,
+  CommitRhythmStats,
   DailyCommitStat,
   DebtFileRow,
   DebtSeverity,
   FileStatRow,
   HotspotFileRow,
   HotspotLevel,
+  HourBucketStat,
   ReportRange,
+  WeekdayStat,
 } from "./types/report"
 import { REPORT_RANGES } from "./types/report"
 import { getNodeFsPathOs, getNodeProcessModules } from "@/utils/nodeModules"
@@ -231,6 +234,112 @@ export function aggregateDailyStats(commits: NumstatCommit[]): DailyCommitStat[]
       low: Math.max(0, Math.min(a.open, a.close) - WICK_PAD_HOURS),
       count: a.count,
     }))
+}
+
+// ── 提交节奏：星期分布 / 时段分布 / 最长连续提交 ──
+
+/** 小时分桶步长（2 小时一桶，共 12 桶） */
+const HOUR_BUCKET_STEP = 2
+
+/**
+ * 按星期聚合提交分布（单次 O(n) 遍历，输出固定 7 项，下标 0=周日 ~ 6=周六，与 Date.getDay 对齐）。
+ * 解析失败的日期条目忽略；无提交的星期 count 保持 0。
+ */
+export function aggregateWeekdayStats(commits: NumstatCommit[]): WeekdayStat[] {
+  const counts = new Array<number>(7).fill(0)
+  for (const c of commits) {
+    const t = parseIsoMs(c.date)
+    if (t <= 0) continue
+    counts[new Date(t).getDay()]++
+  }
+  return counts.map((count, dow) => ({ dow, count }))
+}
+
+/**
+ * 按 2 小时分桶聚合时段分布（单次 O(n) 遍历，输出固定 12 桶，每桶 [start, start+2)）。
+ * 解析失败/越界时刻忽略；无提交的时段 count 保持 0。
+ */
+export function aggregateHourlyStats(commits: NumstatCommit[]): HourBucketStat[] {
+  const counts = new Array<number>(24 / HOUR_BUCKET_STEP).fill(0)
+  for (const c of commits) {
+    const h = hourOfDay(c.date)
+    if (h < 0 || h >= 24) continue
+    counts[Math.floor(h / HOUR_BUCKET_STEP)]++
+  }
+  return counts.map((count, i) => ({
+    start: i * HOUR_BUCKET_STEP,
+    end: (i + 1) * HOUR_BUCKET_STEP,
+    count,
+  }))
+}
+
+/**
+ * 最长连续提交天数（按本地日历日去重后识别最大连续天数，O(n log n)）。
+ * 思路：日期集合排序后相邻两日相差 1 天则 streak 递增，否则重置；无提交返回 0。
+ */
+export function maxCommitStreak(commits: NumstatCommit[]): number {
+  const days = new Set<string>()
+  for (const c of commits) {
+    const t = parseIsoMs(c.date)
+    if (t <= 0) continue
+    days.add(new Date(t).toISOString().slice(0, 10))
+  }
+  if (days.size === 0) return 0
+  const sorted = [...days].sort()
+  let best = 1
+  let cur = 1
+  for (let i = 1; i < sorted.length; i++) {
+    const gap = (Date.parse(sorted[i]) - Date.parse(sorted[i - 1])) / (24 * 60 * 60 * 1000)
+    if (gap === 1) {
+      cur++
+      if (cur > best) best = cur
+    } else {
+      cur = 1
+    }
+  }
+  return best
+}
+
+/** 提交节奏空结构（git 失败/零提交时报告填充用） */
+export function emptyRhythmStats(): CommitRhythmStats {
+  const weekday = Array.from({ length: 7 }, (_, dow) => ({ dow, count: 0 }))
+  const hourly = Array.from({ length: 24 / HOUR_BUCKET_STEP }, (_, i) => ({
+    start: i * HOUR_BUCKET_STEP,
+    end: (i + 1) * HOUR_BUCKET_STEP,
+    count: 0,
+  }))
+  return { weekday, hourly, topWeekday: weekday[1], peakHours: hourly[0], maxStreak: 0 }
+}
+
+/**
+ * 组装提交节奏聚合（星期分布 + 时段分布 + 最长连续提交 + 高峰时段 + 最活跃星期）。
+ * 全部为 0 时：最活跃星期取周一（dow=1），高峰时段取首桶（0-2），避免 UI 索引越界。
+ */
+export function buildRhythmStats(commits: NumstatCommit[]): CommitRhythmStats {
+  const weekday = aggregateWeekdayStats(commits)
+  const hourly = aggregateHourlyStats(commits)
+  const topWeekday = weekday.reduce((best, w) => (w.count > best.count ? w : best), weekday[1])
+  const peakHours = hourly.reduce((best, h) => (h.count > best.count ? h : best), hourly[0])
+  return { weekday, hourly, topWeekday, peakHours, maxStreak: maxCommitStreak(commits) }
+}
+
+/**
+ * 计算每日提交量的 7 日滑动平均（供 K 线图叠加趋势折线）。
+ * 对每个活跃日取含当日在内的前 7 个日历日为窗口，缺失日期按 0 计入后求均值（1 位小数）。
+ * 输出长度与 daily 一致（每个活跃日一个值），无窗口内提交时值为 0。
+ */
+export function calcMovingAverage7(daily: DailyCommitStat[]): number[] {
+  const byDate = new Map(daily.map((s) => [s.date, s.count]))
+  const DAY_MS = 24 * 60 * 60 * 1000
+  return daily.map((s) => {
+    const endMs = Date.parse(s.date)
+    let sum = 0
+    for (let offset = 0; offset < 7; offset++) {
+      const d = new Date(endMs - offset * DAY_MS)
+      sum += byDate.get(d.toISOString().slice(0, 10)) ?? 0
+    }
+    return Math.round((sum / 7) * 10) / 10
+  })
 }
 
 // ── 通用工具 ──
@@ -517,6 +626,7 @@ export function buildReportData(
     hotspotSummary,
     suggestionKey: suggestionKeyName,
     dailyStats: aggregateDailyStats(commits),
+    rhythm: buildRhythmStats(commits),
     analyzedFiles: totalFiles,
     fileDetailsMap,
   }
@@ -539,6 +649,7 @@ export function buildEmptyReport(project: GitProject, rangeLabel: string): CodeR
     hotspotSummary: HOTSPOT_LEVEL_ORDER.map((level) => ({ level, count: 0, pct: 0 })),
     suggestionKey: "",
     dailyStats: [],
+    rhythm: emptyRhythmStats(),
     analyzedFiles: 0,
     fileDetailsMap: {},
   }

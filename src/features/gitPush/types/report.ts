@@ -145,6 +145,54 @@ export interface DailyCommitStat {
   count: number
 }
 
+// ── 提交节奏（星期分布 / 时段分布 / 最长连续提交）──
+
+/** 星期分布统计（7 项，下标 0=周日 ~ 6=周六，与 Date.getDay 对齐） */
+export interface WeekdayStat {
+  /** 星期数字（0=周日 ~ 6=周六） */
+  dow: number
+  /** 该星期提交总数 */
+  count: number
+}
+
+/** 时段分布统计（24h 按 2 小时分桶，共 12 桶） */
+export interface HourBucketStat {
+  /** 桶起始小时（0~22，步长 2） */
+  start: number
+  /** 桶结束小时（start+2） */
+  end: number
+  /** 该时段提交总数 */
+  count: number
+}
+
+/**
+ * 提交节奏聚合（提交趋势分区的迷你图表 + 扩展摘要卡片数据源）。
+ * 全部由 commits 派生，与 dailyStats 同源。
+ */
+export interface CommitRhythmStats {
+  /** 周一~周日提交分布（7 项，下标 0=周日，与 getDay 对齐；无提交的星期 count=0） */
+  weekday: WeekdayStat[]
+  /** 24h 分桶（12 项，每桶 2 小时；无提交的时段 count=0） */
+  hourly: HourBucketStat[]
+  /** 最活跃星期（提交数最多的星期；全部为 0 时 dow 取 1=周一） */
+  topWeekday: WeekdayStat
+  /** 高峰提交时段（提交数最多的一桶；全部为 0 时取首桶） */
+  peakHours: HourBucketStat
+  /** 最长连续提交天数（按本地日历日去重后计算，无提交为 0） */
+  maxStreak: number
+}
+
+/** 星期标签的 i18n 键（下标 0=周日 ~ 6=周六，与 Date.getDay 对齐，供迷你图表与摘要卡片取文案） */
+export const WEEKDAY_LABEL_KEYS: readonly string[] = [
+  "reportWeekSun",
+  "reportWeekMon",
+  "reportWeekTue",
+  "reportWeekWed",
+  "reportWeekThu",
+  "reportWeekFri",
+  "reportWeekSat",
+]
+
 // ── 报告聚合视图 ──
 
 /** 代码统计报告聚合视图（CodeReportPanel 唯一数据 prop，由 useCodeReport 产出） */
@@ -186,6 +234,8 @@ export interface CodeReportData {
   suggestionKey: string
   /** 每日提交统计（提交 K 线图数据源，按日期升序；git 失败或零提交时为空数组） */
   dailyStats: DailyCommitStat[]
+  /** 提交节奏聚合（星期分布/时段分布/最长连续提交；与 dailyStats 同源，git 失败时为零值结构） */
+  rhythm: CommitRhythmStats
   /** 分析涉及的文件数（numstat 去重后） */
   analyzedFiles: number
   /** 作者 Top 修改文件详情查找表（路径 → 完整统计行，含预读 LOC；供文件详情弹窗随机访问） */

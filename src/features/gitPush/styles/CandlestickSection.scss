@@ -1,4 +1,4 @@
-// gitPush 提交趋势 K 线图分区（图例 + 图表容器 + 摘要卡片）
+// gitPush 提交趋势 K 线图分区（图例 + 图表容器 + 迷你节奏图 + 摘要卡片）
 @use "./variables" as *;
 @use "./mixins" as *;
 
@@ -90,4 +90,148 @@
   opacity: 0.5;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+}
+
+// ── 图例 7 日均线（琥珀色横线，与 canvas 折线颜色一致）──
+.gpc-legend-line {
+  width: 14px;
+  height: 2px;
+  background: #f59e0b;
+  border-radius: 1px;
+}
+
+// ── 提交节奏迷你图（两栏卡片：星期分布 + 时段热力）──
+.gpc-rhythm {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: $spacing-2;
+  margin-top: $spacing-2;
+}
+
+// 迷你图卡片（与图表容器同构的边框卡片）
+.gpc-rhythm-card {
+  padding: $spacing-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-base;
+  background: var(--b3-theme-surface);
+}
+
+// 迷你图卡片标题（两级字号制：辅助标签 + 大写）
+.gpc-rhythm-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+  margin-bottom: $spacing-2;
+  font-size: $font-size-2xs;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.6;
+}
+
+// 徽章（最长连续提交 / 高峰时段）
+.gpc-rhythm-badge {
+  padding: 1px $spacing-2; // 上下 1px 微调（与 gpc-card-value 的 1px 惯例一致）
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-full;
+  font-family: $vp-mono;
+  text-transform: none;
+  letter-spacing: normal;
+  opacity: 1;
+  white-space: nowrap;
+}
+
+// 高峰时段徽章（琥珀色描边强调）
+.gpc-rhythm-badge--accent {
+  border-color: #f59e0b;
+  color: #f59e0b;
+}
+
+// ── 星期分布（7 根迷你柱）──
+.gpc-weekdays {
+  display: flex;
+  align-items: flex-end;
+  gap: $spacing-1;
+  height: 72px;
+}
+
+// 单个星期列（柱 + 标签 + 计数垂直排布）
+.gpc-weekday {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px; // 柱/标签/计数间的微距（小于 $spacing-1，刻意紧贴）
+  min-width: 0;
+}
+
+// 柱子轨道（flex 撑满剩余高度，柱子在底部对齐）
+.gpc-weekday-track {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+// 迷你柱（高度由内联 style 按提交占比控制，百分比相对轨道）
+.gpc-weekday-bar {
+  width: 55%;
+  min-height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: #64748b;
+  transition: background 0.15s;
+}
+
+// 最活跃星期柱高亮（主题色）
+.gpc-weekday-bar--peak {
+  background: var(--b3-theme-primary);
+}
+
+// 星期标签（两级字号制：辅助标签）
+.gpc-weekday-label {
+  font-size: $font-size-2xs;
+  opacity: 0.6;
+}
+
+// 提交计数（等宽小字）
+.gpc-weekday-count {
+  font-size: $font-size-2xs;
+  font-family: $vp-mono;
+  opacity: 0.8;
+}
+
+// ── 时段热力条（12 格 × 2 小时）──
+.gpc-hourly {
+  display: flex;
+  gap: 2px;
+  height: 26px;
+  align-items: stretch;
+}
+
+// 热力格（背景色由内联 style 按频率控制；边框保证无提交格仍可见）
+.gpc-hour-cell {
+  flex: 1;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 2px;
+  cursor: default;
+  transition: opacity 0.15s;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+// 高峰时段格（琥珀色描边强调）
+.gpc-hour-cell--peak {
+  border-color: #f59e0b;
+}
+
+// 时间轴刻度（0/6/12/18/24 时）
+.gpc-hourly-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2px;
+  font-size: $font-size-2xs;
+  opacity: 0.5;
 }

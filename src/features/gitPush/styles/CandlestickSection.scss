@@ -1,0 +1,93 @@
+// gitPush 提交趋势 K 线图分区（图例 + 图表容器 + 摘要卡片）
+@use "./variables" as *;
+@use "./mixins" as *;
+
+// ── 图例（涨/跌/平色块 + K 线语义说明）──
+.gpc-legend {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+  margin-bottom: $spacing-2;
+  font-size: $font-size-2xs;
+}
+
+// 图例条目：色块 + 文案
+.gpc-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+}
+
+// 涨/跌/平色块（与 canvas 实心颜色一致）
+.gpc-legend-dot {
+  width: $spacing-2;
+  height: $spacing-2;
+  border-radius: $radius-full;
+}
+
+.gpc-legend-dot--up {
+  background: #10b981;
+}
+
+.gpc-legend-dot--down {
+  background: #ef4444;
+}
+
+.gpc-legend-dot--flat {
+  background: #64748b;
+}
+
+// 语义说明（右对齐，弱化显示）
+.gpc-legend-hint {
+  margin-left: auto;
+  opacity: 0.5;
+}
+
+// ── K 线图容器（边框卡片 + 固定高度撑起 canvas）──
+.gpc-chart-wrap {
+  height: 260px;
+  padding: $spacing-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-base;
+  background: var(--b3-theme-surface);
+}
+
+// ── 摘要卡片（提交天数/总提交/日均提交/最高单日，与团队总览 KPI 卡片同构）──
+.gpc-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: $spacing-1;
+  margin-top: $spacing-2;
+}
+
+.gpc-card {
+  text-align: center;
+  padding: $spacing-2 $spacing-1;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-base;
+  background: var(--b3-theme-surface);
+  transition: border-color 0.15s;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+// 卡片数值（等宽字体突出展示）
+.gpc-card-value {
+  font-size: $font-size-lg; // 数据突出展示：统计数值大号字体
+  font-weight: $font-weight-bold;
+  font-family: $vp-mono;
+  line-height: $line-height-tight;
+  margin-bottom: 1px; // 数值与标签的最小视觉间隔（小于 $spacing-2px，刻意紧贴）
+  color: var(--b3-theme-on-surface);
+}
+
+// 卡片标签（两级字号制：辅助标签）
+.gpc-card-label {
+  font-size: $font-size-2xs;
+  opacity: 0.5;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}

@@ -122,6 +122,29 @@ export interface HotspotLevelSummary {
   pct: number
 }
 
+// ── 提交 K 线图 ──
+
+/**
+ * 每日提交统计（提交 K 线图数据源）。
+ * 以「一天中的时刻（小时，含分钟小数，0~24）」为 y 轴，每个活跃日一根蜡烛：
+ * - 开盘 open：当日第一条提交的时刻；收盘 close：当日最后一条提交的时刻（实体 = 当日提交活跃时间跨度）
+ * - 影线 low/high：在实体上下各外扩 0.5 小时形成上下影线视觉，实体颜色按提交量较前一活跃日增减区分（红跌/绿涨）
+ */
+export interface DailyCommitStat {
+  /** 日期 YYYY-MM-DD */
+  date: string
+  /** 开盘：当日第一条提交的时刻（小时，含分钟小数，如 9.25 = 09:15） */
+  open: number
+  /** 收盘：当日最后一条提交的时刻（小时，含分钟小数） */
+  close: number
+  /** 最高：影线上沿（= max(open, close) + 0.5h） */
+  high: number
+  /** 最低：影线下沿（= min(open, close) - 0.5h） */
+  low: number
+  /** 当日提交总数（实体颜色涨跌依据） */
+  count: number
+}
+
 // ── 报告聚合视图 ──
 
 /** 代码统计报告聚合视图（CodeReportPanel 唯一数据 prop，由 useCodeReport 产出） */
@@ -161,6 +184,8 @@ export interface CodeReportData {
   hotspotSummary: HotspotLevelSummary[]
   /** 优化建议文案的 i18n 键（如 reportSugNormal，由 UI 层解析，避免语言快照烤入数据层） */
   suggestionKey: string
+  /** 每日提交统计（提交 K 线图数据源，按日期升序；git 失败或零提交时为空数组） */
+  dailyStats: DailyCommitStat[]
   /** 分析涉及的文件数（numstat 去重后） */
   analyzedFiles: number
   /** 作者 Top 修改文件详情查找表（路径 → 完整统计行，含预读 LOC；供文件详情弹窗随机访问） */

@@ -481,7 +481,8 @@ const weekdayBars = computed(() => {
     dow: w.dow,
     count: w.count,
     label: props.i18n[WEEKDAY_LABEL_KEYS[w.dow]] ?? "",
-    heightPct: Math.max(4, Math.round((w.count / max) * 100)),
+    // 高度与数值严格成正比：零值星期 0%（仅保留 2px 基线），非零值至少 4% 保证可见
+    heightPct: w.count === 0 ? 0 : Math.max(4, Math.round((w.count / max) * 100)),
     isPeak: w.dow === rhythm.topWeekday.dow && rhythm.topWeekday.count > 0,
   }))
 })

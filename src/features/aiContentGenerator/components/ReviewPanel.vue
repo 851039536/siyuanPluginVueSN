@@ -1,26 +1,29 @@
 <!-- 交叉审核面板：分项评分条形图 / 严重度过滤 / 问题清单 / 改进建议 / 自动修复 -->
 <template>
-  <CollapsibleSection
-    :title="i18n.reviewCrossReview"
-    icon="#iconCheck"
-    :open="showReviewPanel"
-    accent="success"
-    @update:open="showReviewPanel = $event"
-  >
-    <!-- 审核头部右侧：加载状态点 / 评级徽标 -->
-    <template #headerRight>
-      <span
-        v-if="isReviewing"
-        class="review-loading-dot"
-      ></span>
-      <span
-        v-else-if="reviewResult"
-        class="review-rating-badge"
-        :class="ratingClass"
-      >
-        {{ reviewResult.rating }}
-      </span>
-    </template>
+  <div class="review-panel-wrapper">
+    <!-- 审核头部 -->
+    <div class="review-header">
+      <!-- 左侧：图标 + 标题 -->
+      <div class="review-header-left">
+        <SvgIcon name="#iconCheck" />
+        <!-- 头栏标题："交叉审核" -->
+        <span class="review-header-title">{{ i18n.reviewCrossReview }}</span>
+      </div>
+      <!-- 右侧：加载状态点 / 评级徽标 -->
+      <div class="review-header-right">
+        <span
+          v-if="isReviewing"
+          class="review-loading-dot"
+        ></span>
+        <span
+          v-else-if="reviewResult"
+          class="review-rating-badge"
+          :class="ratingClass"
+        >
+          {{ reviewResult.rating }}
+        </span>
+      </div>
+    </div>
 
     <!-- 审核详情 -->
     <div
@@ -202,7 +205,7 @@
         </div>
       </div>
     </div>
-  </CollapsibleSection>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -212,7 +215,6 @@ import {
 } from "vue"
 import type { IssueSeverity, ReviewRating, ReviewResult } from "@/types/ai"
 import { RATING_NEEDS_FIX, SEVERITY_LEVELS } from "../types"
-import CollapsibleSection from "./CollapsibleSection.vue"
 import ReviewRadarChart from "./ReviewRadarChart.vue"
 import SvgIcon from "./SvgIcon.vue"
 
@@ -231,7 +233,6 @@ defineEmits<{
   (e: "fixIssue", issueIndex: number): void
 }>()
 
-const showReviewPanel = ref(true)
 const showScores = ref(true)
 
 type ScoreKey = keyof NonNullable<ReviewResult["detailedScore"]>

@@ -1,4 +1,4 @@
-<!-- AI内容生成器主内容展示区：加载态 / 空状态 / 错误提示 / Markdown预览 / Diff对比 / 流式输出 -->
+<!-- AI内容生成器主内容展示区：加载态 / 空状态 / 错误提示 / 预览 / Diff对比 / 审查 Tab 与直接审查 / 流式输出 -->
 <template>
   <div class="main-content-area">
     <!-- 加载状态（仅在没有内容时显示，思考过程中不遮挡） -->
@@ -78,6 +78,20 @@
                   height="14"
                 ><use xlink:href="#iconColumns"></use></svg>
                 对比
+              </button>
+              <!-- Tab："审查"（交叉审核结果独立页签） -->
+              <button
+                class="view-mode-btn"
+                :class="[{ active: viewMode === 'review' }]"
+                :disabled="!generatedContent"
+                :title="i18n.reviewTab"
+                @click="viewMode = 'review'"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                ><use xlink:href="#iconSparkles"></use></svg>
+                {{ i18n.reviewTab }}
               </button>
             </div>
           </template>
@@ -162,18 +176,19 @@
               height="14"
             ><use xlink:href="#iconCopy"></use></svg>
           </Button>
-          <!-- 重新审核（首次发起入口：尚无审核结果时显示；有结果后由 ReviewPanel 内按钮承担重审，title："重新审核内容"） -->
+          <!-- 直接审查：绕过 enableReview 开关，随时对当前内容发起交叉审核 -->
           <Button
-            v-if="!isGenerating && generatedContent && !isReviewing && !reviewResult"
-            :title="i18n.reviewReReviewTitle"
-            variant="ghost"
+            v-if="!isGenerating && generatedContent && !isReviewing"
+            :title="i18n.directReviewTitle"
+            variant="primary"
             size="xsmall"
-            @click="$emit('reReview')"
+            @click="$emit('directReview')"
           >
             <svg
               width="14"
               height="14"
-            ><use xlink:href="#iconCheck"></use></svg>
+            ><use xlink:href="#iconSparkles"></use></svg>
+            {{ i18n.directReview }}
           </Button>
           <!-- 对话控制 -->
           <Button
@@ -217,18 +232,6 @@
         :search-status="searchStatus"
       />
 
-      <!-- 审核结果（独立组件） -->
-      <ReviewPanel
-        v-if="isReviewing || reviewResult"
-        :i18n="i18n"
-        :is-reviewing="isReviewing"
-        :review-result="reviewResult || null"
-        :is-auto-fixing="isAutoFixing"
-        @reReview="$emit('reReview')"
-        @autoFix="$emit('autoFix')"
-        @fixIssue="$emit('fixIssue', $event)"
-      />
-
       <div class="result-content">
         <!-- 预览模式 -->
         <div
@@ -242,6 +245,34 @@
           :original-content="originalContent"
           :new-content="generatedContent"
         />
+        <!-- 审查模式（交叉审核结果独立页签） -->
+        <div
+          v-else-if="viewMode === 'review'"
+          class="review-tab"
+        >
+          <ReviewPanel
+            v-if="isReviewing || reviewResult"
+            :i18n="i18n"
+            :is-reviewing="isReviewing"
+            :review-result="reviewResult || null"
+            :is-auto-fixing="isAutoFixing"
+            @reReview="$emit('reReview')"
+            @autoFix="$emit('autoFix')"
+            @fixIssue="$emit('fixIssue', $event)"
+          />
+          <!-- 审查 Tab 空态：尚无审核结果时的提示 -->
+          <div
+            v-else
+            class="review-tab-empty"
+          >
+            <svg
+              width="22"
+              height="22"
+              class="review-tab-empty-icon"
+            ><use xlink:href="#iconSparkles"></use></svg>
+            <p>{{ i18n.reviewTabEmpty }}</p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -331,11 +362,12 @@ defineEmits<{
   (e: "toggleReasoning"): void
   (e: "autoFix"): void
   (e: "reReview"): void
+  (e: "directReview"): void
   (e: "fixIssue", issueIndex: number): void
   (e: "clearConversation"): void
 }>()
 
-const viewMode = ref<"preview" | "diff">("preview")
+const viewMode = ref<"preview" | "diff" | "review">("preview")
 
 // 是否存在差异（有原文且有生成内容且不同）
 const hasDiff = computed(() => {
@@ -349,6 +381,16 @@ watch(() => props.isGenerating, (newVal) => {
     viewMode.value = "preview"
   }
 })
+
+// 审核发起或结果就绪时自动切换到审查 Tab：点击"直接审查"后立即停留在审核页，审核完成后展示结果
+watch(
+  () => [props.isReviewing, props.reviewResult] as const,
+  ([reviewing, result]) => {
+    if (reviewing || result) {
+      viewMode.value = "review"
+    }
+  },
+)
 </script>
 
 <style scoped lang="scss">

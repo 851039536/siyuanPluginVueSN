@@ -288,6 +288,38 @@
   min-height: 0;
 }
 
+// ============ 审查 Tab ============
+.review-tab {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: $spacing-2; // 右侧留白，避免滚动条贴住侧边栏
+}
+
+.review-tab-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: $spacing-2;
+  color: var(--b3-theme-on-surface-variant);
+  font-size: $font-size-2xs;
+
+  p {
+    margin: 0;
+    text-align: center;
+    line-height: $line-height-normal;
+  }
+}
+
+.review-tab-empty-icon {
+  color: var(--b3-theme-primary);
+  opacity: 0.5;
+}
+
 .markdown-preview {
   padding: 8px 10px;
   background: var(--b3-theme-surface);

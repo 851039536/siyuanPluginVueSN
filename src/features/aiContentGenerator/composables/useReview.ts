@@ -56,9 +56,10 @@ export function useReview(deps: UseReviewDeps) {
   /**
    * 执行交叉审核
    * @param override 优先使用的用户需求描述（生成发起方传入的真实指令，避免被 onSuccess 清空的输入兜底）
+   * @param force 强制审核：跳过 enableReview 开关检查，供"直接审查"按钮调用
    */
-  const performReview = async (override?: string) => {
-    if (!enableReview.value || !generatedContent.value) return
+  const performReview = async (override?: string, force = false) => {
+    if ((!enableReview.value && !force) || !generatedContent.value) return
 
     const userRequest = override
       || editCustomInput.value

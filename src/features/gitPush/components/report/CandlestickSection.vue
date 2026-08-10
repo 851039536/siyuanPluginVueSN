@@ -40,13 +40,18 @@
         <span class="gpc-legend-hint">{{ i18n.reportCandlestickHint }}</span>
       </div>
 
-      <!-- K 线图（chart.js 浮动条 + 影线插件：实体=首末提交时刻跨度，影线=±0.5h 缓冲，底色=工作时间区） -->
-      <div class="gpc-chart-wrap">
-        <Bar
-          :data="barData"
-          :options="chartOptions"
-          :plugins="chartPlugins"
-        />
+      <!-- K 线图（chart.js 浮动条 + 影线插件：实体=首末提交时刻跨度，影线=±0.5h 缓冲，底色=工作时间区；外层滚动容器保证日期多时可横向滑动） -->
+      <div class="gpc-chart-scroll">
+        <div
+          class="gpc-chart-wrap"
+          :style="{ minWidth: `${minChartWidth}px` }"
+        >
+          <Bar
+            :data="barData"
+            :options="chartOptions"
+            :plugins="chartPlugins"
+          />
+        </div>
       </div>
 
       <!-- 提交节奏迷你图：星期分布（7 根柱）+ 时段热力条（24h 色块） -->
@@ -173,6 +178,9 @@ const GRID_COLOR = "rgba(128, 128, 128, 0.12)"
 /** 最低实体高度（小时）：单条提交（open==close）时外扩到该厚度保证实体可见 */
 const MIN_BODY_HOURS = 0.3
 
+/** 每根蜡烛最小占地宽度（px）：实体 16px + 左右间距，保证多日期时不被挤压 */
+const MIN_WIDTH_PER_DAY = 30
+
 /** 日提交数标注字号（canvas 字体不受 CSS Token 约束，取与 10px 标签接近的小字号） */
 const LABEL_FONT = "500 9px ui-monospace, SFMono-Regular, Menlo, monospace"
 
@@ -184,6 +192,9 @@ const props = defineProps<{
 
 /** 每日提交统计（按日期升序，来自报告聚合） */
 const stats = computed(() => props.report.dailyStats)
+
+/** 图表最小宽度（px）：日期数 × 每根蜡烛占地宽；超过容器宽度时外层滚动容器出现横向滚动条 */
+const minChartWidth = computed(() => stats.value.length * MIN_WIDTH_PER_DAY)
 
 /** 当日相对前一活跃日的提交量涨跌（首日视为持平） */
 function trendOf(list: DailyCommitStat[], i: number): "up" | "down" | "flat" {

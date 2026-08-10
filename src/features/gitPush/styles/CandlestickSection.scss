@@ -44,7 +44,23 @@
   opacity: 0.5;
 }
 
-// ── K 线图容器（边框卡片 + 固定高度撑起 canvas）──
+// ── K 线图滚动容器（日期多时横向滚动，避免蜡烛被挤压；细滚动条可见便于拖动）──
+.gpc-chart-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--b3-border-color);
+    border-radius: 2px;
+  }
+}
+
+// ── K 线图容器（边框卡片 + 固定高度撑起 canvas；min-width 由行内样式按日期数动态控制）──
 .gpc-chart-wrap {
   height: 260px;
   padding: $spacing-2;

@@ -1,0 +1,94 @@
+@use "../../../variables" as *;
+
+// ============ 分项评分雷达图 ============
+.review-radar-chart {
+  display: flex;
+  justify-content: center;
+  padding: $spacing-1 $spacing-2 $spacing-2;
+}
+
+.review-radar-svg {
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+  overflow: visible;
+}
+
+// 网格层：5/8/10 分档同心多边形
+.radar-grid-ring {
+  fill: none;
+  stroke: var(--b3-theme-surface-lighter);
+  stroke-width: 0.5;
+}
+
+// 轴线：圆心到各轴端点
+.radar-axis-line {
+  stroke: var(--b3-theme-surface-lighter);
+  stroke-width: 0.5;
+}
+
+// 数据区域：按平均分等级着色（与 score-fill-high/mid/low 语义一致）
+.radar-data-area {
+  fill-opacity: 0.15;
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+
+  &.level-high {
+    fill: var(--b3-theme-success);
+    stroke: var(--b3-theme-success);
+  }
+
+  &.level-mid {
+    fill: var(--b3-theme-warning, #e6a23c);
+    stroke: var(--b3-theme-warning, #e6a23c);
+  }
+
+  &.level-low {
+    fill: var(--b3-theme-error);
+    stroke: var(--b3-theme-error);
+  }
+}
+
+// 数据点圆标记：按各自维度等级着色
+.radar-data-dot {
+  stroke: var(--b3-theme-background);
+  stroke-width: 1.2;
+
+  &.level-high {
+    fill: var(--b3-theme-success);
+  }
+
+  &.level-mid {
+    fill: var(--b3-theme-warning, #e6a23c);
+  }
+
+  &.level-low {
+    fill: var(--b3-theme-error);
+  }
+}
+
+// 数据点旁分数标注：等宽字体 + 等级色
+.radar-score-label {
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  font-family: $vp-mono;
+
+  &.level-high {
+    fill: var(--b3-theme-success);
+  }
+
+  &.level-mid {
+    fill: var(--b3-theme-warning, #e6a23c);
+  }
+
+  &.level-low {
+    fill: var(--b3-theme-error);
+  }
+}
+
+// 轴端点维度标签：弱化处理，避免与数据视觉竞争
+.radar-axis-label {
+  font-size: $font-size-2xs;
+  fill: var(--b3-theme-on-surface);
+  opacity: 0.45;
+}

@@ -89,7 +89,15 @@ export class AIContentGenerator {
   }
 
   public init() {
+    this.registerIcons()
     this.addDock()
+  }
+
+  /** 注册模块自定义 SVG symbol：对比图标（#iconColumns）非思源内置，需自行注入，避免 Tab 图标空白 */
+  private registerIcons() {
+    this.plugin.addIcons(
+      `<symbol id="iconColumns" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7.5" height="18" rx="1"/><rect x="13.5" y="3" width="7.5" height="18" rx="1"/></symbol>`,
+    )
   }
 
   private addDock() {

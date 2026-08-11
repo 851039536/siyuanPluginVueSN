@@ -235,11 +235,11 @@
           />
           <div class="project-list">
             <div
-              v-if="activeProjects.length === 0"
+              v-if="visibleProjects.length === 0"
               class="project-list__empty"
             >{{ i18n.projectEmpty }}</div>
             <ProjectItem
-              v-for="project in activeProjects"
+              v-for="project in visibleProjects"
               :key="project.id"
               :project="project"
               :linked-todos="linkedTodosOf(project.id)"
@@ -366,7 +366,7 @@ const filteredInspirations = inspirations.filteredInspirations
 
 // ==================== 项目数据访问 ====================
 const projects = projectsApi.projects
-const activeProjects = projectsApi.activeProjects
+const visibleProjects = projectsApi.visibleProjects
 const blockedProjects = projectsApi.blockedProjects
 const linkedTodosOf = (id: string) => projectsApi.todosOf(id)
 const projectProgressOf = (id: string) => projectsApi.progressOf(id)

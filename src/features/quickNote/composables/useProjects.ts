@@ -101,17 +101,20 @@ export function useProjects(storage: QuickNoteStorage) {
   /** 卡住的项目（顶部「今天要处理的」聚焦区用） */
   const blockedProjects = computed(() => projects.value.filter((p) => p.status === "blocked"))
 
-  /** 进行中/卡住项目列表（排除已完成，按更新时间倒序） */
-  const activeProjects = computed(() =>
-    projects.value
-      .filter((p) => p.status !== "completed")
-      .sort((a, b) => b.updatedAt - a.updatedAt),
+  /** 可见项目列表（全部显示）：未完成在前、已完成排后，组内按更新时间倒序 */
+  const visibleProjects = computed(() =>
+    [...projects.value].sort((a, b) => {
+      if ((a.status === "completed") !== (b.status === "completed")) {
+        return a.status === "completed" ? 1 : -1
+      }
+      return b.updatedAt - a.updatedAt
+    }),
   )
 
   return {
     projects,
     blockedProjects,
-    activeProjects,
+    visibleProjects,
     load,
     add,
     update,

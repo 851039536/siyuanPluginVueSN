@@ -91,6 +91,22 @@ export class QuickNoteManager {
   }
 
   /**
+   * 一键恢复兜底（状态栏恢复按钮调用）：弹窗被拖到异常位置（如顶部）导致
+   * 无法点击/拖动时，重置为居中展开态——清除自定义坐标与绝对定位残留、
+   * 退出最小化、持久化后重新应用，确保弹窗可见且可交互
+   */
+  async reset(): Promise<void> {
+    this.position = DEFAULT_QUICK_NOTE_SETTINGS.position
+    this.customX = DEFAULT_QUICK_NOTE_SETTINGS.customX
+    this.customY = DEFAULT_QUICK_NOTE_SETTINGS.customY
+    this.minimized = false
+    // open() 内部依次 modal.open → applyPosition → applyMinimized，
+    // 展开分支会还原遮罩交互并清除绝对定位残留，无需在此重复应用
+    this.open()
+    await this.persistSettings()
+  }
+
+  /**
    * 遮罩点击入口：请求收起为最小化条
    * 最小化条视图由面板组件渲染（v-if），故派发事件让面板同步切换并回调 setMinimized
    */
@@ -153,6 +169,8 @@ export class QuickNoteManager {
       mask.style.pointerEvents = "auto"
       container.style.pointerEvents = ""
       mask.classList.remove("quick-note-mask--minimized")
+      // 展开时按当前定位模式重新还原容器位置（清除拖拽绝对定位残留，避免与最小化小条坐标冲突）
+      this.applyPosition()
     }
   }
 

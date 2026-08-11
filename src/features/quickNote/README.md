@@ -99,6 +99,12 @@ quickNote/
 拖拽由 `startDrag()` 驱动；`consumeDragClick()` 供小条 click 护栏吞掉拖拽后的误触点击。
 该实现与 `vueAppHelper` 的遮罩 DOM 结构耦合，helper 重构时需同步调整。
 
+## 恢复兜底
+
+弹窗被拖到异常位置（如顶部）导致无法点击/拖动时，状态栏提供独立的「恢复默认位置」按钮（仅在速记功能启用时显示），
+点击派发 `resetQuickNote` 事件，经 App.vue 调度调用 `QuickNoteManager.reset()`：
+将定位重置为居中、清除自定义坐标与绝对定位残留、退出最小化，持久化后重新应用展开态。
+
 ## 最小化机制
 
 最小化方向由当前定位派生（`POSITION_MINIMIZE_META`）。Manager 的 `setMinimized()` 将容器尺寸改为 `auto`，
@@ -109,6 +115,9 @@ quickNote/
 ```
 statusBar FEATURES 条目 → emitCustomEvent("toggleQuickNote")
   → App.vue onMounted 监听 → plugin.__quickNote.toggle()
+
+statusBar 恢复按钮 → emitCustomEvent("resetQuickNote")
+  → App.vue onMounted 监听 → plugin.__quickNote.reset()
 ```
 
 ## 存储

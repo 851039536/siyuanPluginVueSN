@@ -230,6 +230,12 @@ onMounted(() => {
     pluginInstance.__quickNote?.toggle()
   })
 
+  // 监听速记弹窗一键恢复事件（来自状态栏恢复按钮，弹窗卡死时复位为居中展开态）
+  window.addEventListener("resetQuickNote", () => {
+    const pluginInstance = plugin as any
+    pluginInstance.__quickNote?.reset()
+  })
+
   // 监听打开HTML展示事件
   window.addEventListener("openHtmlViewer", ((event: any) => {
     htmlViewerVisible.value = true

@@ -154,6 +154,11 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
     color: var(--status-color-tool);
   }
 
+  // 速记恢复按钮（兜底复位弹窗，警示色提示可点）
+  .quick-note-reset-item {
+    color: var(--b3-theme-warning);
+  }
+
   .status-bar-task-item {
     color: var(--b3-theme-primary);
     font-family: $vp-mono;

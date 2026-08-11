@@ -72,6 +72,15 @@ item-class="uptime-item"
       @click="shortcut.handler"
     />
 
+    <!-- 速记恢复按钮：tooltip 文案"恢复默认位置"，弹窗卡死/位置异常时一键复位为居中展开态 -->
+    <MonitorItem
+      v-if="isFeatureEnabled('quickNote')"
+      icon="ph:arrow-counter-clockwise"
+      item-class="action-item quick-note-reset-item"
+      :title="quickNoteResetTitle"
+      @click="handleResetQuickNote"
+    />
+
     <MonitorItem
       icon="ph:grid-four"
       item-class="action-item feature-drawer-item"
@@ -158,6 +167,8 @@ interface FeatureRegistryEntry extends FeatureDrawerItem {
 
 // 速记 i18n 分片（思源类型将 i18n 声明为扁平 IObject，嵌套命名空间需显式收窄）
 const quickNoteI18n = (props.plugin?.i18n?.quickNote ?? {}) as unknown as Record<string, string>
+// 速记恢复按钮 tooltip（i18n quickNote.reset，缺失时兜底"恢复默认位置"）
+const quickNoteResetTitle = computed(() => quickNoteI18n.reset || "恢复默认位置")
 // 图片生成 i18n 分片（同上，显式收窄嵌套命名空间）
 const imageCreationI18n = (props.plugin?.i18n?.imageCreation ?? {}) as unknown as Record<string, string>
 
@@ -519,6 +530,11 @@ const toggleFeatureDrawer = () => {
 const handleSelectFeature = (id: string) => {
   showFeatureDrawer.value = false
   featureMap.get(id)?.action?.()
+}
+
+// 一键恢复速记弹窗：派发事件由 App.vue 调度调用 QuickNoteManager.reset()
+const handleResetQuickNote = () => {
+  emitCustomEvent("resetQuickNote")
 }
 
 // 监听设置变更事件，同步功能开关快照（statusBar 为独立挂载 app，需自行清理监听）

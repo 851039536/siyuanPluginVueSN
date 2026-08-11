@@ -66,12 +66,15 @@
 
 .gp-list {
   flex: 1;
+  // width: 100% 必须搭配 border-box：content-box 下 padding-right 会溢出容器被裁掉，留白失效
+  box-sizing: border-box !important;
   display: flex !important;
   flex-wrap: wrap !important;
   align-content: flex-start;
   gap: 6px;
   overflow-y: auto;
-  padding-right: 4px;
+  // 右侧留白 8px，避免滚动条/内容紧贴侧边栏（规则见 AGENTS_RULES §Dock 面板侧边栏间距）
+  padding-right: $spacing-1 !important;
   width: 100% !important;
 }
 

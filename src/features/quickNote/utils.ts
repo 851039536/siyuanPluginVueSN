@@ -1,13 +1,39 @@
 /**
  * 速记功能 — 共享工具函数
- * 提供条目 ID 生成与 AI 润色流式回填辅助，供多个 composable / 组件复用，避免复制粘贴
+ * 提供条目 ID 生成、串行持久化锁与 AI 润色流式回填辅助，供多个 composable / 组件复用，避免复制粘贴
  */
 import { pushMsg } from "@/api"
+import type { TypedStorage } from "@/utils/typedStorage"
+import type { AppData } from "./types"
 import { PolishError } from "./composables/useAiPolish"
 
 /** 生成条目唯一 ID（时间戳 + 随机串） */
 export function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+}
+
+/**
+ * 创建串行持久化锁
+ * 防止快速连续操作时 read-modify-write 读到旧数据：多个 persist 调用共享同一把锁，
+ * buildPayload 接收最新存储数据并返回待写入的完整 payload（支持携带额外参数，如项目删除时跨槽写入待办）
+ * @param data 统一数据存储槽（TypedStorage<AppData>）
+ * @param buildPayload 构造待写入 payload 的函数
+ * @returns 串行化后的持久化函数
+ */
+export function createPersistLock<TArgs extends unknown[]>(
+  data: TypedStorage<AppData>,
+  buildPayload: (current: AppData, ...args: TArgs) => AppData,
+): (...args: TArgs) => Promise<void> {
+  let lock: Promise<void> = Promise.resolve()
+  return async (...args: TArgs) => {
+    lock = lock
+      .catch(() => undefined)
+      .then(async () => {
+        const current = await data.loadOrDefault()
+        await data.save(buildPayload(current, ...args))
+      })
+    await lock
+  }
 }
 
 /**

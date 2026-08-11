@@ -1,6 +1,7 @@
 // 速记功能 — 待办单条目样式（Codex 风格：边框代替阴影，全 Token 化）
 
 @use "@/variables.scss" as *;
+@use "./index.scss" as *;
 
 .qn-todo-item {
   display: flex;
@@ -77,14 +78,12 @@
 
 // 元信息行（截止日期/顺延/项目/优先级）
 .qn-todo-item__meta {
+  @extend %qn-helper-text;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: $spacing-2;
   margin-top: $spacing-1;
-  // 辅助文字
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-surface-variant);
 }
 
 .qn-todo-item__due,

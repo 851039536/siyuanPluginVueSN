@@ -1,6 +1,7 @@
 // 速记功能 — 每周复盘面板样式（Codex 风格：全 Token 化）
 
 @use "@/variables.scss" as *;
+@use "./index.scss" as *;
 
 .qn-review {
   display: flex;
@@ -22,9 +23,7 @@
 // 辅助文字：统计标签
 .qn-review__stat-label,
 .qn-review__stat-unit {
-  // 辅助文字
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-surface-variant);
+  @extend %qn-helper-text;
 }
 
 // 突出数字（数据突出展示，允许 $font-size-sm 以上）
@@ -71,15 +70,11 @@
 
 // 图表空态
 .qn-review__chart-empty {
+  @extend %qn-empty-state;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  // 辅助文字
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-surface-variant);
-  font-style: italic;
-  opacity: 0.6;
 }
 
 // ========== 卡点汇总 ==========
@@ -135,9 +130,5 @@
 
 // 无卡点柔和提示
 .qn-review__block-empty {
-  // 辅助文字
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-surface-variant);
-  font-style: italic;
-  opacity: 0.6;
+  @extend %qn-empty-state;
 }

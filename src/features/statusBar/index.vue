@@ -159,6 +159,8 @@ interface FeatureRegistryEntry extends FeatureDrawerItem {
 
 // 速记 i18n 分片（思源类型将 i18n 声明为扁平 IObject，嵌套命名空间需显式收窄）
 const quickNoteI18n = (props.plugin?.i18n?.quickNote ?? {}) as unknown as Record<string, string>
+// 速记恢复 i18n 分片（同上，显式收窄嵌套命名空间）
+const quickNoteResetI18n = (props.plugin?.i18n?.quickNoteReset ?? {}) as unknown as Record<string, string>
 // 图片生成 i18n 分片（同上，显式收窄嵌套命名空间）
 const imageCreationI18n = (props.plugin?.i18n?.imageCreation ?? {}) as unknown as Record<string, string>
 
@@ -338,6 +340,15 @@ const FEATURES: FeatureRegistryEntry[] = [
       itemClass: "action-item quick-note-item",
     },
     action: () => emitCustomEvent("toggleQuickNote"),
+  },
+  // 速记恢复：弹窗卡死/位置异常时的应急兜底，点击即复位为居中展开态
+  {
+    id: "quickNoteReset",
+    icon: "ph:arrow-counter-clockwise",
+    color: "#f59e0b",
+    title: quickNoteResetI18n.title,
+    pinnable: false,
+    action: () => emitCustomEvent("resetQuickNote"),
   },
   // ========== 状态栏监控项（可固定控制显隐） ==========
   {

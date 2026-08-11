@@ -9,6 +9,7 @@ $stats-header-height: 56px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  // 右侧保留 $spacing-4 留白，避免与侧边栏滚动条区域重叠（Dock 面板侧边栏间距规则）
   padding: 0 $spacing-4;
   border-bottom: 1px solid var(--b3-border-color);
   background: var(--b3-theme-surface);

@@ -17,6 +17,7 @@
 - **项目分类**：按颜色标签分组管理项目
 - **标签/状态/备注**：多标签筛选、状态徽章循环切换（活跃/维护中/暂停）、项目备注
 - **统计视图**：远程覆盖率、待处理项目合并视图（推送状态概览 + 待推送/暂存/未暂存表格）、平台配置状态
+- **行数统计视图**：独立 Tab，统计各项目/作者的代码新增、删除、净增行数排行（千位分隔数字，净增正绿负红），支持 30/50/100/200 条数选择
 - **扫描导入**：递归扫描目录批量导入 Git 仓库
 - **远程配置**：添加/编辑/删除远程仓库，支持行内编辑 URL
 
@@ -25,7 +26,7 @@
 ```
 src/features/gitPush/
 ├── index.ts                         # registerGitPush() 入口
-├── index.vue                        # 主面板（Dock，列表+统计双视图）
+├── index.vue                        # 主面板（Dock，列表/统计/日志/分析/行数统计/报告多视图）
 ├── GitPushManager.ts                # 门面：组合 managers/ 协作者，对外暴露统一 API
 ├── managers/
 │   ├── GitExecutor.ts               # git 子进程执行器（双池信号量限流 + abort 生命周期）
@@ -78,14 +79,17 @@ src/features/gitPush/
 │   │   └── RepoLinkAuditSection.vue # 仓库链接审计
 │   ├── log/                         # 操作日志视图专属（1 个）
 │   │   └── LogPanel.vue             # 操作日志面板
-│   └── analysis/                    # 提交分析视图专属（4 个）
+│   └── analysis/                    # 提交分析视图专属（5 个）
 │       ├── CommitAnalysisPanel.vue  # 提交分析面板
+│       ├── LineStatsPanel.vue       # 行数统计面板（项目/作者行数排行）
 │       ├── CommitAnalysisSettings.vue# 分析设置
 │       ├── CommitCalendar.vue       # 提交日历
 │       └── CommitHeatmap.vue        # 提交热力图
 └── styles/
     ├── index.scss                   # 主面板样式
     ├── StatsPanel.scss              # 统计视图样式
+    ├── CommitAnalysisPanel.scss     # 提交分析面板样式
+    ├── LineStatsPanel.scss          # 行数统计面板样式
     ├── WorkingTreePanel.scss        # 工作区面板样式
     ├── WorkingTreeDiffDialog.scss   # 差异弹窗样式
     ├── AiErrorAnalysisDialog.scss   # AI 错误分析弹窗样式
@@ -134,6 +138,7 @@ GitPushManager (facade)
 | `generateCommitMessage(path)` | AI / 启发式生成提交信息 |
 | `getAiConfig()` | 读取超级面板 AI 配置（统一入口 `@/utils/aiApi`，供 AI 错误分析弹窗使用） |
 | `getCommitLog(path, count?)` | 获取最近 N 条提交记录 |
+| `getNumstatLog(path, since?, maxCount?)` | 获取 numstat 提交日志（每文件增删行；供提交分析行数排行聚合） |
 | `getBranches(path)` | 获取本地分支列表 |
 | `switchBranch(path, branch)` | 切换分支（检测未提交变更） |
 | `getCategories / addCategory / updateCategory / deleteCategory` | 分类 CRUD |
@@ -156,8 +161,9 @@ GitPushManager (facade)
 3. 面板自动检测 GitHub/Gitee/Gitea 远程
 4. **列表视图**：展开项目卡片查看工作区变更、分支列表、提交历史
 5. **统计视图**：查看远程覆盖率、待处理项目汇总、平台配置状态
-6. 使用拉取/推送按钮同步远程仓库
-7. 暂存文件 → 生成/输入提交信息 → 提交
+6. **行数统计视图**：点击「开始行数分析」统计各项目/作者的代码新增/删除/净增行数排行
+7. 使用拉取/推送按钮同步远程仓库
+8. 暂存文件 → 生成/输入提交信息 → 提交
 
 ## 存储
 

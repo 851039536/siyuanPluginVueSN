@@ -1,12 +1,14 @@
-// 提交分析 — 批量读取各项目提交日志，聚合时间分布/提交次数/内容类型/作者排行
+// 提交分析 — 批量读取各项目提交日志，聚合时间分布/提交次数/内容类型/作者排行；行数统计视图独立并行抓取 numstat 生成代码行数排行
 import type { Ref } from "vue"
 import type {
+  AuthorLineRankItem,
   CommitAnalysisEntry,
   CommitAnalysisStats,
   CommitAnalysisType,
   CommitAnalysisViewSettings,
   GitProject,
   GitPushManager,
+  ProjectLineRankItem,
 } from "../types"
 import { computed, ref } from "vue"
 import { DEFAULT_ANALYSIS_VIEW_SETTINGS } from "../types"
@@ -16,6 +18,7 @@ import {
   rankByCount,
   resolveValidPath,
 } from "../utils"
+import { sumAuthorLines, sumProjectLines, type NumstatCommit } from "../reportMetrics"
 
 /** 每项目抓取条数选项（仿 BranchCommitList.countOptions） */
 export const COMMIT_COUNT_OPTIONS = [30, 50, 100, 200] as const
@@ -27,7 +30,7 @@ const AUTHOR_RANK_LIMIT = 10
 export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProject[]>) {
   /** 分析中标记（并发去重） */
   const analyzing = ref(false)
-  /** 是否已完成过至少一轮分析（区分“未分析”与“分析结果为空”） */
+  /** 是否已完成过至少一轮分析（区分"未分析"与"分析结果为空"） */
   const analyzed = ref(false)
   /** 每项目抓取的提交条数（默认 100，可改 30/50/100/200） */
   const commitCount = ref<number>(100)
@@ -41,6 +44,10 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   let cacheLoaded = false
   /** 热力图/日历显示设置（视图/范围/每周第一天/格子主色，持久化到 git-push-analysis-view） */
   const viewSettings = ref<CommitAnalysisViewSettings>({ ...DEFAULT_ANALYSIS_VIEW_SETTINGS })
+  /** 项目代码行数排行（按新增行降序，行数统计视图分析后填充） */
+  const projectLineRanking = ref<ProjectLineRankItem[]>([])
+  /** 作者代码行数排行（按新增行降序，行数统计视图分析后填充） */
+  const authorLineRanking = ref<AuthorLineRankItem[]>([])
 
   /** 从存储载入显示设置（与默认值逐字段合并，防旧数据缺字段导致渲染异常） */
   async function loadViewSettings() {
@@ -54,14 +61,64 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     await manager.storage.commitAnalysisView.save(viewSettings.value)
   }
 
-  /** 批量分析全部项目（GitExecutor 自带并发限流，无需额外节流）；成功后持久化结果供下次复用 */
-  async function runAnalysis() {
+  /** 由各项目的 settled 结果聚合项目/作者行数排行（仅统计含 numstat 的 fulfilled 结果） */
+  function buildLineRankings(
+    settled: PromiseSettledResult<{ projectId: string, projectName: string, entries: CommitAnalysisEntry[], numstat: NumstatCommit[] }>[],
+    nameById: Map<string, string>,
+  ): { projectRanking: ProjectLineRankItem[], authorRanking: AuthorLineRankItem[] } {
+    const projectLines = new Map<string, { added: number, deleted: number }>()
+    const authorLines = new Map<string, { added: number, deleted: number }>()
+    settled.forEach((r) => {
+      if (r.status !== "fulfilled") return
+      const { projectId, numstat } = r.value
+      const psum = sumProjectLines(numstat)
+      const prevP = projectLines.get(projectId)
+      projectLines.set(projectId, {
+        added: (prevP?.added ?? 0) + psum.added,
+        deleted: (prevP?.deleted ?? 0) + psum.deleted,
+      })
+      for (const [author, agg] of sumAuthorLines(numstat)) {
+        const prevA = authorLines.get(author)
+        authorLines.set(author, {
+          added: (prevA?.added ?? 0) + agg.added,
+          deleted: (prevA?.deleted ?? 0) + agg.deleted,
+        })
+      }
+    })
+    // 按新增行降序，同新增量再按净增降序；剔除无行数变化的项目/作者
+    const projectRanking = [...projectLines.entries()]
+      .filter(([, agg]) => agg.added + agg.deleted > 0)
+      .map(([id, agg]) => ({
+        id,
+        name: nameById.get(id) || id,
+        added: agg.added,
+        deleted: agg.deleted,
+        net: agg.added - agg.deleted,
+      }))
+      .sort((a, b) => b.added - a.added || b.net - a.net)
+      .slice(0, PROJECT_RANK_LIMIT)
+    const authorRanking = [...authorLines.entries()]
+      .filter(([, agg]) => agg.added + agg.deleted > 0)
+      .map(([author, agg]) => ({
+        author,
+        added: agg.added,
+        deleted: agg.deleted,
+        net: agg.added - agg.deleted,
+      }))
+      .sort((a, b) => b.added - a.added || b.net - a.net)
+      .slice(0, AUTHOR_RANK_LIMIT)
+    return { projectRanking, authorRanking }
+  }
+
+  /** 批量分析全部项目核心（GitExecutor 自带并发限流，无需额外节流）；needNumstat 时并行抓取 numstat 生成行数排行，成功后持久化结果供下次复用 */
+  async function runCore(needNumstat: boolean) {
     if (analyzing.value) return
     analyzing.value = true
     try {
       const settled = await Promise.allSettled(projects.value.map(async (p) => {
-        const log = await manager.getCommitLog(resolveValidPath(p), commitCount.value)
-        return log.map((c) => ({
+        const path = resolveValidPath(p)
+        const log = await manager.getCommitLog(path, commitCount.value)
+        const itemEntries = log.map((c) => ({
           projectId: p.id,
           projectName: p.name,
           hash: c.hash,
@@ -69,26 +126,57 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
           author: c.author,
           date: c.date,
         }))
+        // 行数统计时并行抓取 numstat（失败不阻塞主流程，按空数据降级）
+        let numstat: NumstatCommit[] = []
+        if (needNumstat) {
+          try {
+            numstat = await manager.getNumstatLog(path, undefined, commitCount.value)
+          } catch {
+            numstat = []
+          }
+        }
+        return { projectId: p.id, projectName: p.name, entries: itemEntries, numstat }
       }))
       let fail = 0
       const flat: CommitAnalysisEntry[] = []
       settled.forEach((r) => {
-        if (r.status === "fulfilled") flat.push(...r.value)
+        if (r.status === "fulfilled") flat.push(...r.value.entries)
         else fail++
       })
       entries.value = flat
       failedCount.value = fail
       analyzedAt.value = new Date().toISOString()
       analyzed.value = true
+      // 行数统计请求才重算排行；提交分析不触碰已有排行，保留缓存中的行数数据供行数视图复用
+      if (needNumstat) {
+        const nameById = new Map(projects.value.map((p) => [p.id, p.name]))
+        const { projectRanking, authorRanking } = buildLineRankings(settled, nameById)
+        projectLineRanking.value = projectRanking
+        authorLineRanking.value = authorRanking
+      }
+      // 提交分析保存缓存时沿用旧缓存的行数排行，避免覆盖行数视图已分析的数据
+      const oldCache = await manager.storage.commitAnalysisCache.loadOrDefault()
       await manager.storage.commitAnalysisCache.save({
         commitCount: commitCount.value,
         analyzedAt: analyzedAt.value,
         failedCount: fail,
         entries: flat,
+        projectLineRanking: needNumstat ? projectLineRanking.value : (oldCache.projectLineRanking ?? []),
+        authorLineRanking: needNumstat ? authorLineRanking.value : (oldCache.authorLineRanking ?? []),
       })
     } finally {
       analyzing.value = false
     }
+  }
+
+  /** 提交分析（仅抓取 commit log 聚合提交维度；行数排行沿用缓存旧值，不重新抓 numstat） */
+  async function runAnalysis() {
+    await runCore(false)
+  }
+
+  /** 行数统计（始终并行抓取 numstat 生成项目/作者行数排行并覆盖缓存行数数据） */
+  async function runLineStatsAnalysis() {
+    await runCore(true)
   }
 
   /** 从存储载入上次分析结果（有有效条目时直接复用，不再重新分析） */
@@ -105,6 +193,9 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     failedCount.value = cache.failedCount
     analyzedAt.value = cache.analyzedAt
     entries.value = valid
+    // 行数排行随缓存恢复（旧缓存无此字段时按空数组兜底；行数数据同样过滤已删除项目）
+    projectLineRanking.value = (cache.projectLineRanking ?? []).filter((r) => validIds.has(r.id))
+    authorLineRanking.value = cache.authorLineRanking ?? []
     analyzed.value = true
   }
 
@@ -115,12 +206,17 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     if (!analyzed.value && !analyzing.value) await runAnalysis()
   }
 
-  /** 修改抓取条数后置为未分析并自动重跑 */
-  async function setCommitCount(n: number) {
+  /** 进入行数统计视图的统一入口：复用持久化缓存（含上次行数排行），无有效缓存时需用户手动点击「开始行数分析」 */
+  async function ensureLineStats() {
+    await loadCachedAnalysis()
+  }
+
+  /** 修改抓取条数后置为未分析并自动重跑；needNumstat 表示来自行数统计视图，重跑时同步抓 numstat 刷新行数排行 */
+  async function setCommitCount(n: number, needNumstat = false) {
     if (commitCount.value === n) return
     commitCount.value = n
     analyzed.value = false
-    await runAnalysis()
+    await runCore(needNumstat)
   }
 
   /** 分析聚合视图（CommitAnalysisPanel 唯一数据 prop，新增维度只需改这里 + 类型 + 面板三处） */
@@ -149,6 +245,8 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         author: r.key,
         count: r.count,
       })),
+      projectLineRanking: projectLineRanking.value.filter((r) => validIds.has(r.id)),
+      authorLineRanking: authorLineRanking.value,
     }
   })
 
@@ -157,11 +255,16 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     analyzing,
     analyzed,
     analyzedAt,
+    failedCount,
     commitCount,
     setCommitCount,
     runAnalysis,
+    runLineStatsAnalysis,
     ensureAnalysis,
+    ensureLineStats,
     viewSettings,
     updateViewSettings,
+    projectLineRanking,
+    authorLineRanking,
   }
 }

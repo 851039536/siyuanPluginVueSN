@@ -295,6 +295,8 @@ const DEFAULT_ANALYSIS_CACHE: CommitAnalysisCache = {
   analyzedAt: "",
   failedCount: 0,
   entries: [],
+  projectLineRanking: [],
+  authorLineRanking: [],
 }
 
 /** 提交分析显示设置默认值（热力图 + 最近一年 + 周一起始 + GitHub 绿） */

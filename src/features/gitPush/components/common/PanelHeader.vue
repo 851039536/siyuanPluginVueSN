@@ -61,6 +61,18 @@
             height="12"
           />
         </button>
+        <!-- 按钮（tooltip："行数统计"） -->
+        <button
+          class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
+          :class="{ active: currentView === 'linestats' }"
+          :title="i18n.lineStatsView"
+          @click="currentView = 'linestats'"
+        >
+          <Icon
+            icon="mdi:code-tags"
+            height="12"
+          />
+        </button>
         <!-- 按钮（tooltip："统计报告"） -->
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"

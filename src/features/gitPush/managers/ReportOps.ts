@@ -11,15 +11,17 @@ export class ReportOps {
 
   /**
    * 获取 numstat 提交日志（每条提交：作者 + ISO 日期 + 每文件增删行）。
-   * since 为空时统计全部历史。git 失败/路径无效时抛出错误，
+   * since 为空时统计全部历史；maxCount 传入时仅取最近 N 条提交（与 git log -N 等价）。
+   * git 失败/路径无效时抛出错误，
    * 由调用方区分「仓库无提交」（合法空数据）与「命令失败」（无效路径/非仓库）。
    */
-  async getNumstatLog(projectPath: string, since?: string): Promise<NumstatCommit[]> {
+  async getNumstatLog(projectPath: string, since?: string, maxCount?: number): Promise<NumstatCommit[]> {
     const args = [
       "-c", "core.quotepath=false",
       "log", "--numstat", "--no-renames",
       "--pretty=format:%x1e%an%x1f%aI",
     ]
+    if (maxCount && maxCount > 0) args.push(`-${maxCount}`)
     if (since) args.push(`--since=${since}`)
     // 大仓库历史可能超过默认 30s，放宽到 60s
     const raw = await this.executor.execGit(projectPath, args, undefined, 60000)

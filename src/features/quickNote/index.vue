@@ -235,7 +235,7 @@
           />
           <div class="project-list">
             <div
-              v-if="projects.length === 0"
+              v-if="activeProjects.length === 0"
               class="project-list__empty"
             >{{ i18n.projectEmpty }}</div>
             <ProjectItem
@@ -279,7 +279,7 @@
 import type { Plugin } from "siyuan"
 import type { QuickNoteManager } from "./index"
 import type { QuickNotePlacement, QuickNotePosition, ProjectItem as ProjectItemType, TodoItem as TodoItemType } from "./types"
-import { computed, onMounted, onUnmounted, ref } from "vue"
+import { computed, onMounted, onUnmounted, ref, watch } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import TodayFocus from "./components/today/TodayFocus.vue"
 import TodoForm from "./components/todo/TodoForm.vue"
@@ -453,6 +453,12 @@ const handleProjectSubmit = (payload: {
 const handleCancelEdit = () => {
   editingProject.value = null
 }
+
+/** 切换 Tab 时自动清空编辑状态（防止状态泄漏导致误编辑已有条目） */
+watch(activeTab, () => {
+  editingProject.value = null
+  editingTodo.value = null
+})
 
 // ==================== 定位/最小化事件 ====================
 const syncPosition = () => {

@@ -73,8 +73,7 @@
   align-content: flex-start;
   gap: 6px;
   overflow-y: auto;
-  // 右侧留白 8px，避免滚动条/内容紧贴侧边栏（规则见 AGENTS_RULES §Dock 面板侧边栏间距）
-  padding-right: $spacing-1 !important;
+  padding: $spacing-1 $spacing-1 $spacing-1 0 !important;
   width: 100% !important;
 }
 

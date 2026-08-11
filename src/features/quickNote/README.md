@@ -101,14 +101,16 @@ quickNote/
 
 ## 恢复兜底
 
-弹窗被拖到异常位置（如顶部）导致无法点击/拖动时，状态栏提供独立的「恢复默认位置」按钮（仅在速记功能启用时显示），
-点击派发 `resetQuickNote` 事件，经 App.vue 调度调用 `QuickNoteManager.reset()`：
+弹窗被拖到异常位置（如顶部）导致无法点击/拖动时，可打开工具合集切到「速记恢复」工具，点击「恢复默认位置」按钮，
+派发 `resetQuickNote` 事件，经 App.vue 调度调用 `QuickNoteManager.reset()`：
 将定位重置为居中、清除自定义坐标与绝对定位残留、退出最小化，持久化后重新应用展开态。
 
 ## 最小化机制
 
 最小化方向由当前定位派生（`POSITION_MINIMIZE_META`）。Manager 的 `setMinimized()` 将容器尺寸改为 `auto`，
 遮罩设为透明 + `pointer-events: none` 实现点击穿透；展开时还原尺寸与遮罩。最小化状态持久化。
+自定义定位下最小化时，会清除拖拽产生的 absolute 定位内联样式，小条以横条形态贴最左边缘垂直居中
+（customX/customY 缓存保留，展开时 `applyPosition()` 仍还原原拖拽坐标）。
 
 ## 联动链路
 
@@ -116,7 +118,7 @@ quickNote/
 statusBar FEATURES 条目 → emitCustomEvent("toggleQuickNote")
   → App.vue onMounted 监听 → plugin.__quickNote.toggle()
 
-statusBar 恢复按钮 → emitCustomEvent("resetQuickNote")
+toolCollection「速记恢复」工具 → emitCustomEvent("resetQuickNote")
   → App.vue onMounted 监听 → plugin.__quickNote.reset()
 ```
 

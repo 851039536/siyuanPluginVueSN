@@ -11,6 +11,7 @@ import RegexTesterTool from "./regexTester/index.vue"
 import UnitConverterTool from "./unitConverter/index.vue"
 import WordQueryTool from "./wordQuery/index.vue"
 import PdfViewerTool from "./pdfViewer/index.vue"
+import QuickNoteResetTool from "./quickNoteReset/index.vue"
 
 /**
  * 工具注册表（静态配置）
@@ -67,6 +68,12 @@ export const TOOL_REGISTRY: ToolMeta[] = [
     icon: "mdi:file-pdf-box",
     component: PdfViewerTool,
   },
+  {
+    id: "quickNoteReset",
+    label: "",
+    icon: "ph:arrow-counter-clockwise",
+    component: QuickNoteResetTool,
+  },
 ]
 
 /** 工具 ID → i18n label 解析映射 */
@@ -79,4 +86,5 @@ export const TOOL_LABEL_KEYS: Record<string, (i18n: any) => string> = {
   base64Image: (i18n) => i18n.base64Image ?? "Base64 Image",
   unitConverter: (i18n) => i18n.unitConverter ?? "Unit Converter",
   pdfViewer: (i18n) => i18n.pdfViewer?.title ?? "PDF Viewer",
+  quickNoteReset: (i18n) => i18n.quickNoteReset?.title ?? "Quick Note Reset",
 }

@@ -1,0 +1,71 @@
+@use '@/variables.scss' as *;
+
+.quick-note-reset {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-size: $font-size-xs;
+  gap: $spacing-3;
+  padding: $spacing-3;
+  overflow-y: auto;
+
+  .qnr-header {
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+    color: var(--b3-theme-on-background);
+
+    .qnr-title {
+      font-size: $font-size-xs;
+      font-weight: $font-weight-semibold;
+      line-height: $line-height-normal;
+    }
+  }
+
+  .qnr-desc {
+    padding: $spacing-3;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $vp-radius;
+    background: var(--b3-theme-surface);
+    font-size: $font-size-2xs;
+    line-height: $line-height-normal;
+    color: var(--b3-theme-on-surface);
+  }
+
+  .qnr-actions {
+    display: flex;
+    justify-content: center;
+
+    .qnr-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: $spacing-2;
+      padding: $spacing-2 $spacing-4;
+      border: 1px solid var(--b3-theme-warning);
+      border-radius: $vp-radius;
+      background: transparent;
+      color: var(--b3-theme-warning);
+      font-size: $font-size-xs;
+      font-weight: $font-weight-medium;
+      line-height: $line-height-normal;
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
+
+      &:hover {
+        background: var(--b3-theme-warning);
+        color: var(--b3-theme-on-primary);
+      }
+
+      // "已恢复"成功态：绿色反馈，区别于默认警示色
+      &--done {
+        border-color: var(--b3-theme-success);
+        color: var(--b3-theme-success);
+
+        &:hover {
+          background: var(--b3-theme-success);
+          color: var(--b3-theme-on-primary);
+        }
+      }
+    }
+  }
+}

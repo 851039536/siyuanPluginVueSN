@@ -1,0 +1,8 @@
+{
+  "quickNoteReset": {
+    "title": "Quick Note Reset",
+    "description": "If the quick note panel gets stuck or dragged to an unreachable position, click the button below to reset it to the centered expanded state.",
+    "reset": "Reset position",
+    "done": "Restored"
+  }
+}

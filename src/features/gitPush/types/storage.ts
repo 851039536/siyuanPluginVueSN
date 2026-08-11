@@ -1,6 +1,6 @@
 // Git 项目持久化存储与类型定义
 import type { Plugin } from "siyuan"
-import type { CommitAnalysisCache, CommitAnalysisViewSettings } from "./meta"
+import type { CommitAnalysisCache, CommitAnalysisViewSettings, LineStatsCache } from "./meta"
 import type { CodeReportPrefs } from "./report"
 import { DEFAULT_REPORT_PREFS } from "./report"
 import { PluginStorage } from "@/utils/pluginStorage"
@@ -299,6 +299,15 @@ const DEFAULT_ANALYSIS_CACHE: CommitAnalysisCache = {
   authorLineRanking: [],
 }
 
+/** 行数统计独立缓存默认值（与提交分析缓存解耦，空排行即视为未分析过） */
+const DEFAULT_LINE_STATS_CACHE: LineStatsCache = {
+  commitCount: 100,
+  analyzedAt: "",
+  failedCount: 0,
+  projectLineRanking: [],
+  authorLineRanking: [],
+}
+
 /** 提交分析显示设置默认值（热力图 + 最近一年 + 周一起始 + GitHub 绿） */
 export const DEFAULT_ANALYSIS_VIEW_SETTINGS: CommitAnalysisViewSettings = {
   view: "heatmap",
@@ -332,6 +341,8 @@ export class GitPushStorage {
   readonly opLogs: TypedStorage<GitOpLogEntry[]>
   /** 提交分析结果缓存（跨会话复用，进入分析视图直接展示上次结果，手动重新分析后更新） */
   readonly commitAnalysisCache: TypedStorage<CommitAnalysisCache>
+  /** 行数统计独立缓存（与提交分析缓存解耦，进入行数统计视图直接复用上次结果） */
+  readonly lineStatsCache: TypedStorage<LineStatsCache>
   /** 提交分析显示设置（热力图/日历视图、显示范围、每周第一天、格子主色） */
   readonly commitAnalysisView: TypedStorage<CommitAnalysisViewSettings>
   /** 代码统计报告偏好（上次选中项目 + 时间范围，进入视图恢复选择） */
@@ -349,6 +360,7 @@ export class GitPushStorage {
     this.pushBranchMode = new TypedStorage<"all" | "head">(storage, "git-push-branch-mode", "all")
     this.opLogs = new TypedStorage(storage, "git-push-op-logs", [])
     this.commitAnalysisCache = new TypedStorage(storage, "git-push-analysis-cache", DEFAULT_ANALYSIS_CACHE)
+    this.lineStatsCache = new TypedStorage(storage, "git-push-line-stats-cache", DEFAULT_LINE_STATS_CACHE)
     this.commitAnalysisView = new TypedStorage(storage, "git-push-analysis-view", DEFAULT_ANALYSIS_VIEW_SETTINGS)
     this.reportPrefs = new TypedStorage(storage, "git-push-report-prefs", DEFAULT_REPORT_PREFS)
   }

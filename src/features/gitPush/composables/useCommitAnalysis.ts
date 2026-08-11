@@ -40,8 +40,10 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   const entries = ref<CommitAnalysisEntry[]>([])
   /** 分析失败的项目数（路径无效/git 失败，getCommitLog 内部吞错时按空数组计） */
   const failedCount = ref(0)
-  /** 是否已尝试过从存储载入缓存（防重复读盘） */
+  /** 是否已尝试过从存储载入提交分析缓存（防重复读盘） */
   let cacheLoaded = false
+  /** 是否已尝试过从存储载入行数统计独立缓存（防重复读盘） */
+  let lineStatsCacheLoaded = false
   /** 热力图/日历显示设置（视图/范围/每周第一天/格子主色，持久化到 git-push-analysis-view） */
   const viewSettings = ref<CommitAnalysisViewSettings>({ ...DEFAULT_ANALYSIS_VIEW_SETTINGS })
   /** 项目代码行数排行（按新增行降序，行数统计视图分析后填充） */
@@ -164,6 +166,16 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         projectLineRanking: needNumstat ? projectLineRanking.value : (oldCache.projectLineRanking ?? []),
         authorLineRanking: needNumstat ? authorLineRanking.value : (oldCache.authorLineRanking ?? []),
       })
+      // 行数统计请求时同步写入独立行数统计缓存（与提交分析缓存解耦，行数视图优先读此槽位）
+      if (needNumstat) {
+        await manager.storage.lineStatsCache.save({
+          commitCount: commitCount.value,
+          analyzedAt: analyzedAt.value,
+          failedCount: fail,
+          projectLineRanking: projectLineRanking.value,
+          authorLineRanking: authorLineRanking.value,
+        })
+      }
     } finally {
       analyzing.value = false
     }
@@ -203,12 +215,33 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   async function ensureAnalysis() {
     await loadViewSettings()
     await loadCachedAnalysis()
-    if (!analyzed.value && !analyzing.value) await runAnalysis()
+    // 行数统计视图可能已置 analyzed=true 但提交条目未加载，此时仍需重新分析补全提交维度数据
+    if ((!analyzed.value || entries.value.length === 0) && !analyzing.value) await runAnalysis()
   }
 
-  /** 进入行数统计视图的统一入口：复用持久化缓存（含上次行数排行），无有效缓存时需用户手动点击「开始行数分析」 */
-  async function ensureLineStats() {
+  /** 行数统计视图专用缓存加载：优先读取独立槽位 git-push-line-stats-cache，无数据时回退到提交分析旧缓存的行数数据（兼容老版本升级用户）；行数排行同样过滤已删除项目 */
+  async function loadLineStatsCache() {
+    if (lineStatsCacheLoaded) return
+    lineStatsCacheLoaded = true
+    const cache = await manager.storage.lineStatsCache.loadOrDefault()
+    const validIds = new Set(projects.value.map((p) => p.id))
+    // 独立槽位已有分析结果：直接恢复（无 entries，供行数视图独立复用）
+    if (cache.projectLineRanking.length > 0 || cache.authorLineRanking.length > 0) {
+      commitCount.value = cache.commitCount
+      failedCount.value = cache.failedCount
+      analyzedAt.value = cache.analyzedAt
+      projectLineRanking.value = cache.projectLineRanking.filter((r) => validIds.has(r.id))
+      authorLineRanking.value = cache.authorLineRanking
+      analyzed.value = true
+      return
+    }
+    // 独立槽位无数据：回退到提交分析旧缓存（老版本行数数据随 commitAnalysisCache 持久化）
     await loadCachedAnalysis()
+  }
+
+  /** 进入行数统计视图的统一入口：复用独立行数统计缓存（含上次行数排行），无有效缓存时需用户手动点击「开始行数分析」 */
+  async function ensureLineStats() {
+    await loadLineStatsCache()
   }
 
   /** 修改抓取条数后置为未分析并自动重跑；needNumstat 表示来自行数统计视图，重跑时同步抓 numstat 刷新行数排行 */

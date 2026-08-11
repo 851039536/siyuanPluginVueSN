@@ -180,28 +180,6 @@
   }
 }
 
-// 头部最小化关闭按钮
-.close-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: 1px solid transparent;
-  border-radius: $vp-radius;
-  background: transparent;
-  color: var(--b3-theme-on-surface-variant);
-  cursor: pointer;
-  transition: all 0.12s;
-
-  &:hover {
-    background: var(--b3-theme-surface-lighter);
-    color: var(--b3-theme-on-surface);
-    border-color: var(--b3-border-color);
-  }
-}
-
 // ========== Tab 导航栏（下划线式） ==========
 
 .panel-tabs {

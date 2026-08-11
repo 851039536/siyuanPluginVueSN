@@ -85,9 +85,6 @@ const currentStep = ref("")
 const nextStep = ref("")
 const blockers = ref("")
 
-/** 提交按钮文案（随状态动态：卡住状态提示填卡点） */
-const submitLabel = computed(() => props.i18n.addProject)
-
 /** 提交：emit 结构化载荷并复位表单 */
 const handleSubmit = () => {
   if (!name.value.trim()) return

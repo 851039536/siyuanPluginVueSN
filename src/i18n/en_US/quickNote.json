@@ -11,6 +11,7 @@
     "positionRight": "Right",
     "minimize": "Minimize",
     "restore": "Restore",
+    "close": "Close",
     "markDone": "Mark as done",
     "markPending": "Mark as pending",
     "deleteConfirm": "Delete this record?",

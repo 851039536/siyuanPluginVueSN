@@ -3,7 +3,7 @@
  * 承载项目条目的响应式列表与 CRUD、关联待办进度计算（已完成数/总数）、卡住项目筛选
  */
 import type { Ref } from "vue"
-import type { ProjectItem, TodoItem } from "../types"
+import type { AppData, ProjectItem, TodoItem } from "../types"
 import type { QuickNoteStorage } from "../types/storage"
 import { computed, ref } from "vue"
 import { generateId } from "../utils"
@@ -22,13 +22,20 @@ export function useProjects(storage: QuickNoteStorage) {
   /** 写入串行锁：防止快速连续操作时 read-modify-write 读到旧数据 */
   let _saveLock: Promise<void> = Promise.resolve()
 
-  /** 持久化当前项目列表（动作级保存，串行化写操作） */
-  const persist = async () => {
+  /**
+   * 持久化当前项目列表（动作级保存，串行化写操作）
+   * todos 参数用于跨槽写入：删除项目时需同时落盘待办的 projectId 置空，缺省仅写 projects
+   */
+  const persist = async (todos?: TodoItem[]) => {
     _saveLock = _saveLock
       .catch(() => undefined)
       .then(async () => {
         const data = await storage.data.loadOrDefault()
-        await storage.data.save({ ...data, projects: projects.value })
+        const payload: AppData = { ...data, projects: projects.value }
+        if (todos !== undefined) {
+          payload.todos = todos
+        }
+        await storage.data.save(payload)
       })
     await _saveLock
   }
@@ -74,13 +81,8 @@ export function useProjects(storage: QuickNoteStorage) {
         t.projectId === id ? { ...t, projectId: null, updatedAt: Date.now() } : t,
       )
     }
-    // 全量持久化：projects 与待办两个槽位需同时落盘，通用 persist() 只写 projects 会造成关联置空丢失
-    const data = await storage.data.loadOrDefault()
-    await storage.data.save({
-      ...data,
-      projects: projects.value,
-      todos: todosRef ? todosRef.value : data.todos,
-    })
+    // 跨槽持久化：projects 与待办两个槽位同时落盘，与 add/update 共用同一把串行锁
+    await persist(todosRef?.value)
   }
 
   /** 某项目关联的待办列表 */

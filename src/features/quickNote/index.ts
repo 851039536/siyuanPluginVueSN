@@ -147,6 +147,16 @@ export class QuickNoteManager {
     if (this.minimized) {
       container.style.width = "auto"
       container.style.height = "auto"
+      // 自定义定位下最小化：清除拖拽产生的 absolute 定位内联样式，小条回归遮罩 flex 流
+      // 贴最左边缘垂直居中；customX/customY 缓存保留，展开时 applyPosition() 仍还原拖拽坐标
+      if (this.position === "custom") {
+        container.style.position = ""
+        container.style.left = ""
+        container.style.top = ""
+        mask.style.alignItems = "center"
+        mask.style.justifyContent = "flex-start"
+        mask.style.padding = EDGE_PADDING
+      }
       // 遮罩透明化 + 点击穿透，最小化期间不阻断背后界面操作
       mask.style.background = "transparent"
       mask.style.pointerEvents = "none"

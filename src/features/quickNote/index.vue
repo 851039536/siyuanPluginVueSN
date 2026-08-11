@@ -132,8 +132,11 @@
         >
           <TodoForm
             :projects="projects"
+            :plugin="plugin"
+            :editing-todo="editingTodo"
             :i18n="i18n"
-            @add="todoList.add"
+            @submit="handleTodoSubmit"
+            @cancel="handleTodoCancel"
           />
           <div class="todo-group-list">
             <!-- 按日期分组的未完成任务 -->
@@ -157,6 +160,7 @@
                   :i18n="i18n"
                   @toggle-done="todoList.toggleDone(todo.id)"
                   @rollover="todoList.rolloverToTomorrow(todo.id)"
+                  @edit="startTodoEdit(todo)"
                   @remove="handleTodoRemove(todo.id)"
                 />
               </div>
@@ -180,6 +184,7 @@
                 :i18n="i18n"
                 @toggle-done="todoList.toggleDone(todo.id)"
                 @rollover="todoList.rolloverToTomorrow(todo.id)"
+                @edit="startTodoEdit(todo)"
                 @remove="handleTodoRemove(todo.id)"
               />
             </div>
@@ -351,6 +356,9 @@ const groupLabelKey = (key: string) => `group${key.charAt(0).toUpperCase()}${key
 const projectNameOf = (todo: TodoItemType) =>
   projectsApi.projects.value.find((p) => p.id === todo.projectId)?.name ?? ""
 
+/** 编辑中的待办（null 为新增模式） */
+const editingTodo = ref<TodoItemType | null>(null)
+
 // ==================== 灵感数据访问 ====================
 const allTags = inspirations.allTags
 const activeTag = inspirations.activeTag
@@ -376,6 +384,33 @@ const blockSummary = review.blockSummary
 const handleTodoRemove = (id: string) => {
   if (!window.confirm(i18n.deleteConfirm)) return
   todoList.remove(id)
+}
+
+/** 开始编辑待办（回填表单） */
+const startTodoEdit = (todo: TodoItemType) => {
+  editingTodo.value = todo
+}
+
+/** 提交待办（分发新增/更新） */
+const handleTodoSubmit = (payload: {
+  id?: string
+  content: string
+  priority: TodoItemType["priority"]
+  dueDate: string | null
+  projectId: string | null
+}) => {
+  if (payload.id) {
+    const { id, ...patch } = payload
+    todoList.update(id, patch)
+    editingTodo.value = null
+  } else {
+    todoList.add(payload)
+  }
+}
+
+/** 取消编辑（清空待办回填，回到新增模式） */
+const handleTodoCancel = () => {
+  editingTodo.value = null
 }
 
 const handleInspRemove = (id: string) => {

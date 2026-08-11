@@ -224,7 +224,9 @@
         >
           <ProjectForm
             :i18n="i18n"
-            @submit="projectsApi.add"
+            :editing-project="editingProject"
+            @submit="handleProjectSubmit"
+            @cancel="handleCancelEdit"
           />
           <div class="project-list">
             <div
@@ -238,6 +240,7 @@
               :linked-todos="linkedTodosOf(project.id)"
               :progress="projectProgressOf(project.id)"
               :i18n="i18n"
+              @edit="startEdit(project)"
               @remove="handleProjectRemove(project.id)"
             />
           </div>
@@ -270,7 +273,7 @@
  */
 import type { Plugin } from "siyuan"
 import type { QuickNoteManager } from "./index"
-import type { QuickNotePlacement, QuickNotePosition, TodoItem as TodoItemType } from "./types"
+import type { QuickNotePlacement, QuickNotePosition, ProjectItem as ProjectItemType, TodoItem as TodoItemType } from "./types"
 import { computed, onMounted, onUnmounted, ref } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import TodayFocus from "./components/today/TodayFocus.vue"
@@ -360,6 +363,9 @@ const blockedProjects = projectsApi.blockedProjects
 const linkedTodosOf = (id: string) => projectsApi.todosOf(id)
 const projectProgressOf = (id: string) => projectsApi.progressOf(id)
 
+/** 编辑中的项目（null 为新增模式） */
+const editingProject = ref<ProjectItemType | null>(null)
+
 // ==================== 复盘数据访问 ====================
 const weekTotal = review.weekTotal
 const priorityDistribution = review.priorityDistribution
@@ -383,6 +389,34 @@ const handleSelectTag = (tag: string | null) => {
 const handleProjectRemove = (id: string) => {
   if (!window.confirm(i18n.deleteConfirm)) return
   projectsApi.remove(id)
+}
+
+/** 开始编辑项目（回填表单） */
+const startEdit = (project: ProjectItemType) => {
+  editingProject.value = project
+}
+
+/** 提交项目（分发新增/更新） */
+const handleProjectSubmit = (payload: {
+  id?: string
+  name: string
+  status: ProjectItemType["status"]
+  currentStep: string
+  nextStep: string
+  blockers: string
+}) => {
+  if (payload.id) {
+    const { id, ...patch } = payload
+    projectsApi.update(id, patch)
+    editingProject.value = null
+  } else {
+    projectsApi.add(payload)
+  }
+}
+
+/** 取消编辑（清空项目回填，回到新增模式） */
+const handleCancelEdit = () => {
+  editingProject.value = null
 }
 
 // ==================== 定位/最小化事件 ====================

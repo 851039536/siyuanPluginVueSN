@@ -42,7 +42,8 @@
 }
 
 // 提交按钮（品牌蓝色块）
-.qn-proj-form__add-btn {
+.qn-proj-form__add-btn,
+.qn-proj-form__save-btn {
   display: inline-flex;
   align-items: center;
   gap: $spacing-1;
@@ -64,5 +65,27 @@
   &:disabled {
     opacity: 0.4;
     cursor: not-allowed;
+  }
+}
+
+// 取消按钮（编辑模式，灰色边框透明底，与保存按钮左右分布）
+.qn-proj-form__cancel-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: $spacing-1 $spacing-3;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  background: transparent;
+  color: var(--b3-theme-on-background);
+  // 辅助文字
+  font-size: $font-size-2xs;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s;
+  // 推右侧保存按钮到右，取消按钮自然左对齐
+  margin-right: auto;
+
+  &:hover {
+    background: var(--b3-list-hover);
   }
 }

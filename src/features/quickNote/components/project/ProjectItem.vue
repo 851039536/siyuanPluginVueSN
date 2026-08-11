@@ -14,6 +14,17 @@
         >{{ i18n[statusMeta.labelKey] }}</span>
       </div>
       <div class="qn-proj-item__actions">
+        <!-- 编辑按钮 -->
+        <button
+          class="qn-icon-btn"
+          :title="i18n.edit"
+          @click="emit('edit')"
+        >
+          <IconWrapper
+            name="edit"
+            :size="12"
+          />
+        </button>
         <!-- 删除按钮 -->
         <button
           class="qn-icon-btn qn-icon-btn--danger"
@@ -128,6 +139,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   remove: []
+  edit: []
 }>()
 
 const showTodos = ref(false)

@@ -150,8 +150,9 @@ const handleSubmit = () => {
   }
   emit("submit", payload)
   if (!props.editingProject) {
-    // 新增模式：提交后立即清空表单
+    // 新增模式：提交后立即清空表单，状态复位为「进行中」防止上次选择泄漏到后续新增
     name.value = ""
+    status.value = "active"
     currentStep.value = ""
     nextStep.value = ""
     blockers.value = ""

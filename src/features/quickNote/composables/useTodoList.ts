@@ -45,10 +45,18 @@ export function useTodoList(storage: QuickNoteStorage) {
     }
   }
 
-  /** 持久化当前待办列表（动作级保存） */
+  /** 写入串行锁：防止快速连续操作时 read-modify-write 读到旧数据 */
+  let _saveLock: Promise<void> = Promise.resolve()
+
+  /** 持久化当前待办列表（动作级保存，串行化写操作） */
   const persist = async () => {
-    const data = await storage.data.loadOrDefault()
-    await storage.data.save({ ...data, todos: todos.value })
+    _saveLock = _saveLock
+      .catch(() => undefined)
+      .then(async () => {
+        const data = await storage.data.loadOrDefault()
+        await storage.data.save({ ...data, todos: todos.value })
+      })
+    await _saveLock
   }
 
   /**

@@ -186,8 +186,9 @@ const handleSubmit = () => {
   }
   emit("submit", payload)
   if (!props.editingTodo) {
-    // 新增模式：提交后立即清空表单
+    // 新增模式：提交后立即清空表单，优先级复位为「中」防止上次选择泄漏到后续新增
     content.value = ""
+    priority.value = "medium"
     dueDate.value = ""
     projectId.value = ""
   }

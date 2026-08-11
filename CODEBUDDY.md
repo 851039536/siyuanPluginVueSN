@@ -209,6 +209,7 @@ App.vue onMounted 监听 ───────────────┘
 - **图标注册**：`FEATURE_ICONS` 中添加映射 + 运行 `pnpm validate:icons`
 - **README 文档**：每个 `src/features/*/` 目录下必须有 `README.md`
 - **全局样式**：`@use "@/index.scss" as *;`
+- **路径别名同步**：新增功能模块时，必须在 `vite.config.ts`（`resolve.alias`）与 `tsconfig.json`（`paths`）同步注册 `@<featureName>` 别名（`@<featureName>` → `src/features/<featureName>`），两者必须一一对应；同时更新 [AGENTS_RULES.md § 路径别名](./AGENTS_RULES.md#路径别名) 清单与「构建流程」章节。完整别名清单见 [AGENTS_RULES.md § 路径别名](./AGENTS_RULES.md#路径别名)
 - **优先思源内置图标** 或 @iconify/vue
 - **图标规则**：禁止使用 emoji 表情作为图标。使用 `src/config/icons.ts` 中 `FEATURE_ICONS` / `COMMON_ICONS` 已注册的 Iconify 图标（`mdi:xxx`、`carbon:xxx` 等）。需要新图标时在 `icons.ts` 注册映射后引用，浏览图标 https://icon-sets.iconify.design/
 - **文件头注释**：每个 `.ts` / `.vue` 文件顶部必须包含简要功能说明注释（`.scss` 不适用），格式见 [AGENTS_RULES.md § 强制规则：文件头注释](./AGENTS_RULES.md#强制规则文件头注释)
@@ -363,6 +364,7 @@ vite buildStart
 
 Vite library 模式 → 从 `src/index.ts` 输出 CJS 格式。`vite.config.ts` 配置：
 - `@/` 别名解析为 `src/`
+- 功能模块别名 `@<featureName>` 解析为 `src/features/<featureName>`（如 `@gitPush` → `src/features/gitPush`），与 `tsconfig.json` 的 `paths` 保持一一对应
 - 自定义 `merge-i18n` 插件在 `buildStart` 时运行
 - `viteStaticCopy` 将 `plugin.json`、`icon.png`、`preview.png`、`README*.md`、`i18n/` 复制到输出目录
 - Watch 模式：构建到思源工作区插件目录 + livereload

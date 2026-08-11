@@ -2,6 +2,30 @@
 
 思源笔记插件 — 详细 API 参考、代码示例、UI 规范。
 
+## 路径别名
+
+项目配置了统一的路径别名，`vite.config.ts` 的 `resolve.alias` 与 `tsconfig.json` 的 `compilerOptions.paths` **必须一一对应**，否则运行正常但编辑器类型解析错位。
+
+| 别名 | 解析目标 | 示例 |
+|------|---------|------|
+| `@/` | `src/` | `@/utils/aiApi`、`@/config/settings` |
+| `@/libs/` | `src/libs/` | `@/libs/siyuan` |
+| `@<featureName>` | `src/features/<featureName>` | `@gitPush/...` → `src/features/gitPush/...` |
+
+**功能模块别名清单**（共 40 个，按 `src/features/` 目录一一生成）：
+
+`@aiContentGenerator`、`@apiDebugger`、`@bookmarkMarker`、`@compactMode`、`@dataSnapshot`、`@diskBrowser`、`@docAnalysis`、`@docNavigation`、`@encryption`、`@everythingSearch`、`@flashcardReading`、`@floatingBox`、`@floatingToolbar`、`@formatAssistant`、`@generalSettings`、`@gitPush`、`@htmlViewer`、`@imageCompressor`、`@imageCreation`、`@pageLock`、`@passwordVault`、`@prompts`、`@quickNote`、`@resourceManager`、`@rssReader`、`@s3Backup`、`@s3FileManager`、`@scriptLauncher`、`@shortcut`、`@skillLearning`、`@skillsViewer`、`@statistics`、`@statusBar`、`@superPanel`、`@tableOfContents`、`@textDiff`、`@themeColor`、`@toolCollection`、`@video`、`@websiteNavigation`
+
+```typescript
+// 使用示例：以 gitPush 模块为例
+import { GitPushManager } from '@gitPush/types'
+import { resolveValidPath } from '@gitPush/utils'
+```
+
+> **强制规则**：新增功能模块时，必须同步在 `vite.config.ts`（`resolve.alias`）与 `tsconfig.json`（`paths`）注册 `@<featureName>` 别名，并更新本清单与 `CODEBUDDY.md` 的「构建流程」章节。遗漏任一文件会导致别名不一致。
+
+---
+
 ## API 参考
 
 ### 存储

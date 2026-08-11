@@ -70,6 +70,22 @@
       @view-project="onViewProject"
     />
 
+    <!-- ========== 行数统计视图 ========== -->
+    <LineStatsPanel
+      v-if="currentView === 'linestats'"
+      :i18n="i18n"
+      :project-count="projects.length"
+      :project-ranking="projectLineRanking"
+      :author-ranking="authorLineRanking"
+      :analyzing="analysisAnalyzing"
+      :analyzed="analysisAnalyzed"
+      :analyzed-at="analysisAnalyzedAt"
+      :failed-count="analysisFailedCount"
+      :commit-count="analysisCommitCount"
+      @run-analysis="runLineStatsAnalysis"
+      @update-count="(n) => setCommitCount(n, true)"
+    />
+
     <!-- ========== 代码统计报告视图 ========== -->
     <CodeReportPanel
       v-if="currentView === 'report'"
@@ -331,6 +347,7 @@ import SettingsDialog from "./components/common/SettingsDialog.vue"
 import StatsPanel from "./components/stats/StatsPanel.vue"
 import LogPanel from "./components/log/LogPanel.vue"
 import CommitAnalysisPanel from "./components/analysis/CommitAnalysisPanel.vue"
+import LineStatsPanel from "./components/analysis/LineStatsPanel.vue"
 import CodeReportPanel from "./components/report/CodeReportPanel.vue"
 import BatchProgressBar from "./components/common/BatchProgressBar.vue"
 import EmptyState from "./components/common/EmptyState.vue"
@@ -590,12 +607,17 @@ const {
   analyzing: analysisAnalyzing,
   analyzed: analysisAnalyzed,
   analyzedAt: analysisAnalyzedAt,
+  failedCount: analysisFailedCount,
   commitCount: analysisCommitCount,
   setCommitCount,
   runAnalysis,
+  runLineStatsAnalysis,
   ensureAnalysis,
+  ensureLineStats,
   viewSettings: analysisViewSettings,
   updateViewSettings,
+  projectLineRanking,
+  authorLineRanking,
 } = useCommitAnalysis(props.manager, projects)
 
 // ── 代码统计报告（单项目 git numstat 统计：团队总览/贡献度/技术债务/热点；进入视图自动生成）──
@@ -797,7 +819,7 @@ async function ensureStatsDataLoaded() {
   return runProjectLoadBatch(pending, "stepStats", (id) => loadStatsData(id))
 }
 
-/** 切换视图时按目标视图补齐数据：列表→当前分类状态；统计→全量统计；日志→同步置 loading（pre-flush，避免 LogPanel 首渲闪空态）；分析→复用缓存或首次自动分析；报告→自动生成一次 */
+/** 切换视图时按目标视图补齐数据：列表→当前分类状态；统计→全量统计；日志→同步置 loading（pre-flush，避免 LogPanel 首渲闪空态）；分析→复用缓存或首次自动分析；行数统计→复用缓存（无缓存需手动分析）；报告→自动生成一次 */
 watch(currentView, async (view) => {
   if (view === "list") await loadCurrentCategoryList()
   if (view === "stats") await ensureStatsDataLoaded()
@@ -810,6 +832,7 @@ watch(currentView, async (view) => {
     }
   }
   if (view === "analysis" && !gitOpsPaused.value) await ensureAnalysis()
+  if (view === "linestats" && !gitOpsPaused.value) await ensureLineStats()
   if (view === "report" && !gitOpsPaused.value) await ensureReport()
 })
 
@@ -825,6 +848,11 @@ watch(gitOpsPaused, async (paused) => {
   // 提交分析视图：暂停期间跳过的缓存加载/首次分析在恢复后补齐
   if (currentView.value === "analysis") {
     await ensureAnalysis()
+    return
+  }
+  // 行数统计视图：暂停期间跳过的缓存加载在恢复后补齐
+  if (currentView.value === "linestats") {
+    await ensureLineStats()
     return
   }
   // 代码统计报告视图：暂停期间跳过的首次生成在恢复后补齐

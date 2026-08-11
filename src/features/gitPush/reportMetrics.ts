@@ -190,6 +190,38 @@ export function aggregateFileStats(commits: NumstatCommit[]): Map<string, FileAg
   return map
 }
 
+// ── 行数聚合：跨项目提交分析用（单项目/单作者的增删行汇总，与 aggregateAuthorStats 同源但不做文件级派生统计）──
+
+/** 从 NumstatCommit[] 汇总单项目总增删行数 */
+export function sumProjectLines(commits: NumstatCommit[]): { added: number, deleted: number } {
+  let added = 0
+  let deleted = 0
+  for (const c of commits) {
+    for (const f of c.files) {
+      added += f.added
+      deleted += f.deleted
+    }
+  }
+  return { added, deleted }
+}
+
+/** 从 NumstatCommit[] 汇总每人增删行数（Map<作者名, {added, deleted}>） */
+export function sumAuthorLines(commits: NumstatCommit[]): Map<string, { added: number, deleted: number }> {
+  const map = new Map<string, { added: number, deleted: number }>()
+  for (const c of commits) {
+    let agg = map.get(c.author)
+    if (!agg) {
+      agg = { added: 0, deleted: 0 }
+      map.set(c.author, agg)
+    }
+    for (const f of c.files) {
+      agg.added += f.added
+      agg.deleted += f.deleted
+    }
+  }
+  return map
+}
+
 // ── K 线图：按日期聚合每日提交统计 ──
 
 /** 影线外扩量（小时）：实体上下各留 0.5h 形成 K 线影线视觉 */

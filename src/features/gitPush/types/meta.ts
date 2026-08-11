@@ -188,8 +188,8 @@ export interface StatsView {
   platformStatusProjects: PlatformStatusItem[]
 }
 
-/** 面板头部视图（列表/统计/操作日志/提交分析/代码统计报告），与 ViewMode（列表内筛选模式 all/needsPush/...）语义不同 */
-export type PanelView = "list" | "stats" | "log" | "analysis" | "report"
+/** 面板头部视图（列表/统计/操作日志/提交分析/行数统计/代码统计报告），与 ViewMode（列表内筛选模式 all/needsPush/...）语义不同 */
+export type PanelView = "list" | "stats" | "log" | "analysis" | "linestats" | "report"
 
 // ── 提交分析视图（useCommitAnalysis 产出 / CommitAnalysisPanel 消费）──
 
@@ -224,6 +224,27 @@ export const COMMIT_ANALYSIS_TYPE_META: Record<CommitAnalysisType, { labelKey: s
   other: { labelKey: "commitTypeOther", color: "#9ca3af" },
 }
 
+/** 行数排行基础字段（新增/删除/净增三要素） */
+interface LineRankBase {
+  /** 新增行数（numstat 聚合） */
+  added: number
+  /** 删除行数（numstat 聚合） */
+  deleted: number
+  /** 净增行数 = added - deleted */
+  net: number
+}
+
+/** 项目代码行数排行条目 */
+export interface ProjectLineRankItem extends LineRankBase {
+  id: string
+  name: string
+}
+
+/** 作者代码行数排行条目 */
+export interface AuthorLineRankItem extends LineRankBase {
+  author: string
+}
+
 /** 提交分析聚合视图（单对象 prop，与 StatsView 同模式） */
 export interface CommitAnalysisStats {
   /** 跨项目提交总数 */
@@ -244,18 +265,26 @@ export interface CommitAnalysisStats {
   typeDistribution: { type: CommitAnalysisType, count: number }[]
   /** 作者提交排行（降序） */
   authorRanking: { author: string, count: number }[]
+  /** 项目代码行数排行（按新增行降序，行数统计视图分析后非空） */
+  projectLineRanking: ProjectLineRankItem[]
+  /** 作者代码行数排行（按新增行降序，行数统计视图分析后非空） */
+  authorLineRanking: AuthorLineRankItem[]
 }
 
 /** 提交分析结果缓存（持久化到插件存储，进入视图直接复用上次结果，避免每次重跑 git log） */
 export interface CommitAnalysisCache {
   /** 每项目抓取条数（缓存对应的设置，加载时回填选择器） */
   commitCount: number
-  /** 上次分析完成时间（ISO，面板展示“上次分析”文案） */
+  /** 上次分析完成时间（ISO，面板展示"上次分析"文案） */
   analyzedAt: string
   /** 抓取失败的项目数 */
   failedCount: number
   /** 跨项目合并的提交条目 */
   entries: CommitAnalysisEntry[]
+  /** 项目代码行数排行（随缓存持久化，切换视图复用） */
+  projectLineRanking: ProjectLineRankItem[]
+  /** 作者代码行数排行（随缓存持久化，切换视图复用） */
+  authorLineRanking: AuthorLineRankItem[]
 }
 
 /** 提交分析显示设置（热力图/日历视图配置，持久化到 git-push-analysis-view） */

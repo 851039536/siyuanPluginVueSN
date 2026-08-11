@@ -1,0 +1,172 @@
+@use "./variables" as *;
+@use "./mixins" as *;
+
+// ── 面板基座（与 CommitAnalysisPanel 一致：独立滚动 + 上下留白）──
+.gls-panel {
+  flex: 1;
+  overflow-y: auto;
+  // 右侧留白 8px，避免滚动条/内容紧贴侧边栏（规则见 AGENTS_RULES §Dock 面板侧边栏间距）
+  padding: $spacing-1 $spacing-2 $spacing-1 0;
+}
+
+// ── 顶部工具条 ──
+.gls-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+  margin-bottom: $spacing-3;
+}
+
+// 分析状态文案（未分析/分析中/完成；占满剩余空间，超长省略避免挤压右侧控件）
+.gls-status {
+  flex: 1;
+  min-width: 0;
+  @include text-ellipsis;
+  font-size: $font-size-xs;
+  opacity: 0.6;
+}
+
+.gls-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+}
+
+// 条数选择（每项目抓取条数）
+.gls-count-select {
+  font-size: $font-size-2xs;
+  font-family: $vp-mono;
+  color: var(--b3-theme-on-surface);
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  padding: 2px 4px;
+  cursor: pointer;
+
+  &:focus {
+    @include focus-ring;
+  }
+}
+
+// 抓取失败提示（弱化展示，不打断正常结果阅读）
+.gls-fail-hint {
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-warning);
+  margin-bottom: $spacing-2;
+}
+
+// ── 双栏区块（项目行数排行 | 作者行数排行 同排）──
+.gls-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $spacing-3;
+
+  > .gls-section {
+    margin-bottom: 0; // 网格内由 gap 控制间距，不叠加底部 margin
+  }
+}
+
+.gls-section {
+  margin-bottom: $spacing-3;
+}
+
+.gls-section-title {
+  @include gp-label-base;
+  font-size: $font-size-xs;
+  margin-bottom: $spacing-2;
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+}
+
+// ── 水平条形（项目/作者行数排行共用：标签 + 轨道 + 三列数字）──
+.gls-bar-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.gls-bar-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: $font-size-xs;
+}
+
+.gls-bar-label {
+  flex: 0 0 88px; // 固定标签列宽，保证轨道对齐
+  @include text-ellipsis;
+  opacity: 0.75;
+}
+
+.gls-bar-track {
+  flex: 1;
+  height: 4px;
+  background: var(--b3-theme-surface);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.gls-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--b3-theme-primary);
+}
+
+// ── 行数排行数字列（+新增 / -删除 / 净增 三列等宽数字）──
+// 靠右对齐让三列数字尾部对齐；相邻数字用 margin 保证间距（不依赖 flex gap 支持，根除粘连）
+.gls-line-nums {
+  flex: 0 0 auto;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+}
+
+// 数字单元格：自适应数字宽度（含千位分隔符），禁止换行挤压
+.gls-line-num {
+  flex-shrink: 0;
+  white-space: nowrap;
+  text-align: right;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+}
+
+.gls-line-num + .gls-line-num {
+  margin-left: $spacing-2;
+}
+
+// 新增行 → 绿（success）
+.gls-line-num--add {
+  color: var(--b3-theme-success);
+}
+
+// 删除行 → 红（error）
+.gls-line-num--del {
+  color: var(--b3-theme-error);
+}
+
+// 净增行语义色：正→绿 / 负→红 / 零→灰（条形 fill 与数字共用）
+.gls-net--pos {
+  color: var(--b3-theme-success);
+}
+
+.gls-net--neg {
+  color: var(--b3-theme-error);
+}
+
+.gls-net--zero {
+  opacity: 0.5;
+}
+
+// 条形 fill 按净增语义着色（正绿负红，与数字列呼应）
+.gls-bar-fill.gls-net--pos {
+  background: var(--b3-theme-success);
+}
+
+.gls-bar-fill.gls-net--neg {
+  background: var(--b3-theme-error);
+}

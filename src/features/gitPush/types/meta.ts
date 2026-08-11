@@ -287,6 +287,20 @@ export interface CommitAnalysisCache {
   authorLineRanking: AuthorLineRankItem[]
 }
 
+/** 行数统计独立缓存（与提交分析缓存解耦，独立持久化到 git-push-line-stats-cache） */
+export interface LineStatsCache {
+  /** 每项目抓取条数（缓存对应的设置，加载时回填选择器） */
+  commitCount: number
+  /** 上次分析完成时间（ISO，面板展示"上次分析"文案） */
+  analyzedAt: string
+  /** 抓取失败的项目数 */
+  failedCount: number
+  /** 项目代码行数排行（按新增行降序） */
+  projectLineRanking: ProjectLineRankItem[]
+  /** 作者代码行数排行（按新增行降序） */
+  authorLineRanking: AuthorLineRankItem[]
+}
+
 /** 提交分析显示设置（热力图/日历视图配置，持久化到 git-push-analysis-view） */
 export interface CommitAnalysisViewSettings {
   /** 视图：热力图 / 日历 */

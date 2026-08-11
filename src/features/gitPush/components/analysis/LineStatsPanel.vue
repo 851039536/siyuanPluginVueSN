@@ -89,10 +89,12 @@
             </div>
             <div class="gls-bar-list">
               <div
-                v-for="row in projectRows"
+                v-for="(row, idx) in projectRows"
                 :key="row.id"
                 class="gls-bar-row"
               >
+                <!-- 排名序号：从 1 开始 -->
+                <span class="gls-bar-rank">{{ idx + 1 }}</span>
                 <span
                   class="gls-bar-label"
                   :title="row.name"
@@ -120,6 +122,8 @@
                     :title="`${i18n.analysisLineNet} ${row.net}`"
                   >{{ row.net.toLocaleString() }}</span>
                 </span>
+                <!-- 占比列：新增行占总新增的百分比 -->
+                <span class="gls-bar-share">{{ row.share }}</span>
               </div>
             </div>
           </div>
@@ -132,10 +136,12 @@
             </div>
             <div class="gls-bar-list">
               <div
-                v-for="row in authorRows"
+                v-for="(row, idx) in authorRows"
                 :key="row.author"
                 class="gls-bar-row"
               >
+                <!-- 排名序号：从 1 开始 -->
+                <span class="gls-bar-rank">{{ idx + 1 }}</span>
                 <span
                   class="gls-bar-label"
                   :title="row.author"
@@ -163,6 +169,8 @@
                     :title="`${i18n.analysisLineNet} ${row.net}`"
                   >{{ row.net.toLocaleString() }}</span>
                 </span>
+                <!-- 占比列：新增行占总新增的百分比 -->
+                <span class="gls-bar-share">{{ row.share }}</span>
               </div>
             </div>
           </div>
@@ -203,10 +211,15 @@ const emit = defineEmits<{
   updateCount: [n: number]
 }>()
 
-/** 行数排行行视图：条形宽度按新增行相对最大值（0 时退化为全空轨道） */
-function withLineBarPct<T extends { added: number }>(rows: T[]): (T & { pct: string })[] {
+/** 行数排行行视图：条形宽度按新增行相对最大值（0 时退化为全空轨道）+ 新增行占总新增的百分比（保留 1 位小数，总 0 时兜底 1 防除零） */
+function withLineBarPct<T extends { added: number }>(rows: T[]): (T & { pct: string, share: string })[] {
   const max = Math.max(...rows.map((r) => r.added), 1)
-  return rows.map((r) => ({ ...r, pct: `${Math.round((r.added / max) * 100)}%` }))
+  const total = rows.reduce((s, r) => s + r.added, 0) || 1
+  return rows.map((r) => ({
+    ...r,
+    pct: `${Math.round((r.added / max) * 100)}%`,
+    share: `${((r.added / total) * 100).toFixed(1)}%`,
+  }))
 }
 
 /** 项目代码行数排行行视图 */

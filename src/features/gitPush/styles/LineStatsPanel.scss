@@ -94,8 +94,18 @@
   font-size: $font-size-xs;
 }
 
+// 排名序号列（等宽数字右对齐，弱化强调，非交互）
+.gls-bar-rank {
+  flex: 0 0 20px;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  text-align: right;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+}
+
 .gls-bar-label {
-  flex: 0 0 88px; // 固定标签列宽，保证轨道对齐
+  flex: 0 0 72px; // 固定标签列宽（让出排名列），保证轨道对齐
   @include text-ellipsis;
   opacity: 0.75;
 }
@@ -137,6 +147,17 @@
 
 .gls-line-num + .gls-line-num {
   margin-left: $spacing-2;
+}
+
+// 占比列（新增行占总新增的百分比，等宽右对齐弱化展示）
+.gls-bar-share {
+  flex: 0 0 42px;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
 }
 
 // 新增行 → 绿（success）

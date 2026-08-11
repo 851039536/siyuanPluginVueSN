@@ -71,10 +71,16 @@
   display: flex !important;
   flex-wrap: wrap !important;
   align-content: flex-start;
-  gap: 6px;
+  gap: 4px;
   overflow-y: auto;
   padding: $spacing-1 $spacing-1 $spacing-1 0 !important;
   width: 100% !important;
+
+  // 细滚动条：内容增减导致滚动条出现/消失时，宽度占用仅 4px，
+  // 消除分类/视图切换时右侧留白"明显不一样"的跳动（参考 .gpa-* 先例）
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
 }
 
 .gp-card {

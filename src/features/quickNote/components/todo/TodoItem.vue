@@ -85,6 +85,17 @@
         />
         {{ i18n.rolloverToTomorrow }}
       </button>
+      <!-- 编辑按钮（回填表单由父层 editingTodo 分发） -->
+      <button
+        class="qn-icon-btn"
+        :title="i18n.edit"
+        @click="emit('edit')"
+      >
+        <IconWrapper
+          name="edit"
+          :size="12"
+        />
+      </button>
       <!-- 删除按钮（带确认由父层处理） -->
       <button
         class="qn-icon-btn qn-icon-btn--danger"
@@ -103,7 +114,7 @@
 <script setup lang="ts">
 /**
  * 速记功能 — 待办单条目组件
- * 勾选/顺延/删除仅 emit 事件（存储由父 composable 统一处理）；
+ * 勾选/顺延/编辑/删除仅 emit 事件（存储与编辑状态由父层统一处理）；
  * 优先级色条与逾期红色警示由 props 派生，关联项目名由父层注入
  */
 import type { TodoItem } from "../../types"
@@ -123,6 +134,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   toggleDone: []
   rollover: []
+  edit: []
   remove: []
 }>()
 

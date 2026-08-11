@@ -3,7 +3,7 @@
     class="quick-note-panel"
     :class="{ 'quick-note-panel--minimized': minimized }"
   >
-    <!-- 最小化态：贴边小条（横条/竖条由当前位置派生），按住可拖动，点击展开 -->
+    <!-- 最小化态：贴边小条（横条/竖条由当前位置派生），按住可拖动，点击展开，tooltip："展开" -->
     <button
       v-if="minimized"
       class="mini-bar"
@@ -78,9 +78,9 @@
               </button>
             </div>
           </div>
-          <!-- 最小化按钮 -->
+          <!-- 最小化按钮："最小化" -->
           <button
-            class="close-btn"
+            class="qn-icon-btn"
             :title="i18n.minimize"
             @click="handleToggleMinimize"
           >
@@ -89,8 +89,10 @@
               :size="12"
             />
           </button>
+          <!-- 关闭按钮："关闭" -->
           <button
             class="qn-icon-btn"
+            :title="i18n.close"
             @click="props.onClose?.()"
           >
             <IconWrapper

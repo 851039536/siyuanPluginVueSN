@@ -2288,7 +2288,6 @@
     "positionRight": "右侧",
     "minimize": "最小化",
     "restore": "展开",
-    "reset": "恢复默认位置",
     "close": "关闭",
     "markDone": "标记完成",
     "markPending": "标记待完成",
@@ -2347,6 +2346,12 @@
     "blockSummaryTitle": "卡点汇总",
     "blockEmpty": "本周无卡点",
     "noData": "暂无数据"
+  },
+  "quickNoteReset": {
+    "title": "速记恢复",
+    "description": "速记弹窗被拖到异常位置或卡住无法操作时，点击下方按钮一键复位为居中展开态。",
+    "reset": "恢复默认位置",
+    "done": "已恢复"
   },
   "regexTester": {
     "title": "正则测试器",

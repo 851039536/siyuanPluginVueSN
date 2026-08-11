@@ -11,6 +11,7 @@
     "positionRight": "Right",
     "minimize": "Minimize",
     "restore": "Restore",
+    "reset": "Reset position",
     "close": "Close",
     "markDone": "Mark as done",
     "markPending": "Mark as pending",

@@ -47,27 +47,34 @@
 ```
 quickNote/
 ├── index.ts                    # QuickNoteManager（persistent Modal 生命周期 + 位置/拖拽/最小化应用）+ registerQuickNote
-├── index.vue                   # 弹窗主面板（页头渐变配图 / TodayFocus 聚焦区 / 四大 Tab 导航壳）
+├── index.vue                   # 弹窗主面板壳层（TodayFocus 聚焦区 + 四大 Tab 导航 + 定位/最小化逻辑）
+├── utils.ts                    # generateId / createPersistLock 串行锁 / polishText 润色回填辅助
 ├── components/
 │   ├── today/TodayFocus.vue    # 「今天要处理的」逾期任务 + 卡住项目标红列表
+│   ├── todo/TodoTab.vue        # 待办 Tab（表单 + 分组列表 + 已完成列表，持有编辑中状态）
 │   ├── todo/TodoItem.vue       # 待办单条目（优先级色条/逾期标红/顺延按钮）
 │   ├── todo/TodoForm.vue       # 待办新增表单（优先级/截止日期/关联项目）
+│   ├── inspiration/InspirationTab.vue  # 灵感 Tab（表单 + 筛选栏 + 列表，标签筛选状态在此）
 │   ├── inspiration/InspirationItem.vue  # 灵感单条目（标签/编辑态 AI 润色）
 │   ├── inspiration/InspirationForm.vue  # 灵感新增表单 + 标签筛选栏
+│   ├── project/ProjectTab.vue  # 项目 Tab（表单 + 卡片列表，持有编辑中状态）
 │   ├── project/ProjectItem.vue # 项目卡片（状态徽章/进度条/关联待办折叠）
 │   ├── project/ProjectForm.vue # 项目新增表单
+│   ├── review/ReviewTab.vue    # 复盘 Tab（透传 useWeeklyReview 派生数据）
 │   └── review/WeeklyReview.vue # 每周复盘（数字卡片 + 环形图 + 条形图 + 卡点清单）
 ├── composables/
 │   ├── useAiPolish.ts          # AI 润色：并发锁 + API Key 校验 + callAISmart 流式 + 错误码
 │   ├── useTodoList.ts          # 待办 CRUD + 每日自动顺延 + 逾期检测 + 日期分组
 │   ├── useInspirations.ts      # 灵感 CRUD + 标签提取/筛选
-│   ├── useProjects.ts          # 项目 CRUD + 关联待办进度计算 + 卡住筛选
+│   ├── useProjects.ts          # 项目 CRUD + 关联待办进度计算 + 卡住筛选（todosRef 构造参数注入）
 │   └── useWeeklyReview.ts      # 复盘纯计算派生（图表数据 + 卡点汇总）
 ├── types/
-│   ├── index.ts                # 弹窗位置类型 + 四大数据模块类型 + 优先级/状态元数据
+│   ├── index.ts                # 类型入口（re-export position + data，外部导入路径不变）
+│   ├── position.ts             # 弹窗位置类型 + 位置 → 对齐/最小化方向映射表
+│   ├── data.ts                 # 待办/灵感/项目数据模型 + 优先级/状态元数据映射表
 │   └── storage.ts              # QuickNoteStorage（data + settings 两个槽位）
 └── styles/
-    ├── index.scss              # 面板壳 + 页头渐变 + Tab 导航 + 分组列表
+    ├── index.scss              # 面板壳 + Tab 导航 + 分组列表 + 共享 %占位类（icon-btn/primary-btn/cancel-btn/helper-text/empty-state）
     ├── TodayFocus.scss         # 「今天要处理的」聚焦区
     ├── TodoItem.scss / TodoForm.scss
     ├── InspirationItem.scss / InspirationForm.scss

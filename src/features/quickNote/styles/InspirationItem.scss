@@ -1,6 +1,7 @@
 // 速记功能 — 灵感单条目样式（Codex 风格：全 Token 化）
 
 @use "@/variables.scss" as *;
+@use "./index.scss" as *;
 
 .qn-insp-item {
   display: flex;
@@ -60,9 +61,7 @@
 
 // 辅助文字：创建时间
 .qn-insp-item__meta {
-  // 辅助文字
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-surface-variant);
+  @extend %qn-helper-text;
 }
 
 .qn-insp-item__actions {

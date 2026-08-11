@@ -2,6 +2,85 @@
 
 @use "@/variables.scss" as *;
 
+// ========== 共享占位类（子 SCSS 经 @use "./index.scss" as * 后 @extend 复用） ==========
+
+/** 28×28 图标操作按钮（灰色边框 + 透明底 + hover 高亮） */
+%qn-icon-btn-28 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  background: transparent;
+  color: var(--b3-theme-on-surface-variant);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.12s;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+    color: var(--b3-theme-on-surface);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+/** 品牌蓝色主按钮（背景填充 + hover 降透明） */
+%qn-primary-btn {
+  border: none;
+  border-radius: $vp-radius;
+  background: var(--b3-theme-primary);
+  color: var(--b3-theme-on-primary);
+  // 辅助文字
+  font-size: $font-size-2xs;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.12s;
+
+  &:hover {
+    opacity: 0.85;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+/** 取消按钮（灰色边框 + 透明底） */
+%qn-cancel-btn {
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  background: transparent;
+  // 辅助文字
+  font-size: $font-size-2xs;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+/** 辅助文字（2xs 字号 + 次要色） */
+%qn-helper-text {
+  // 辅助文字
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-variant);
+}
+
+/** 空态提示（斜体 + 弱化） */
+%qn-empty-state {
+  // 辅助文字
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-variant);
+  font-style: italic;
+  opacity: 0.6;
+}
+
 .quick-note-panel {
   height: 100%;
   display: flex;
@@ -279,11 +358,7 @@
 // 空态提示
 .insp-list__empty,
 .project-list__empty {
-  // 辅助文字
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-surface-variant);
+  @extend %qn-empty-state;
   text-align: center;
   padding: $spacing-6 0;
-  font-style: italic;
-  opacity: 0.6;
 }

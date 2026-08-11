@@ -101,7 +101,7 @@ quickNote/
 
 ## 恢复兜底
 
-弹窗被拖到异常位置（如顶部）导致无法点击/拖动时，可打开工具合集切到「速记恢复」工具，点击「恢复默认位置」按钮，
+弹窗被拖到异常位置（如顶部）导致无法点击/拖动时，可打开状态栏「功能列表」抽屉，点击「速记恢复」条目，
 派发 `resetQuickNote` 事件，经 App.vue 调度调用 `QuickNoteManager.reset()`：
 将定位重置为居中、清除自定义坐标与绝对定位残留、退出最小化，持久化后重新应用展开态。
 
@@ -118,7 +118,7 @@ quickNote/
 statusBar FEATURES 条目 → emitCustomEvent("toggleQuickNote")
   → App.vue onMounted 监听 → plugin.__quickNote.toggle()
 
-toolCollection「速记恢复」工具 → emitCustomEvent("resetQuickNote")
+statusBar「速记恢复」抽屉条目 → emitCustomEvent("resetQuickNote")
   → App.vue onMounted 监听 → plugin.__quickNote.reset()
 ```
 

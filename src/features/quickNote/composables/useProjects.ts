@@ -6,12 +6,10 @@ import type { Ref } from "vue"
 import type { AppData, ProjectItem, TodoItem } from "../types"
 import type { QuickNoteStorage } from "../types/storage"
 import { computed, ref } from "vue"
-import { generateId } from "../utils"
+import { createPersistLock, generateId } from "../utils"
 
-export function useProjects(storage: QuickNoteStorage) {
+export function useProjects(storage: QuickNoteStorage, todosRef?: Ref<TodoItem[]>) {
   const projects: Ref<ProjectItem[]> = ref([])
-  /** 关联待办列表 ref 引用（由 useTodoList 注入，直接持有引用以响应待办变化） */
-  let todosRef: Ref<TodoItem[]> | null = null
 
   /** 从存储加载全部项目 */
   const load = async () => {
@@ -19,31 +17,17 @@ export function useProjects(storage: QuickNoteStorage) {
     projects.value = data.projects
   }
 
-  /** 写入串行锁：防止快速连续操作时 read-modify-write 读到旧数据 */
-  let _saveLock: Promise<void> = Promise.resolve()
-
   /**
-   * 持久化当前项目列表（动作级保存，串行化写操作）
+   * 持久化当前项目列表（串行锁防止快速连续操作时 read-modify-write 读到旧数据）
    * todos 参数用于跨槽写入：删除项目时需同时落盘待办的 projectId 置空，缺省仅写 projects
    */
-  const persist = async (todos?: TodoItem[]) => {
-    _saveLock = _saveLock
-      .catch(() => undefined)
-      .then(async () => {
-        const data = await storage.data.loadOrDefault()
-        const payload: AppData = { ...data, projects: projects.value }
-        if (todos !== undefined) {
-          payload.todos = todos
-        }
-        await storage.data.save(payload)
-      })
-    await _saveLock
-  }
-
-  /** 注入关联待办列表 ref（壳层在待办加载后调用，保存引用而非拷贝以保持响应式） */
-  const setTodos = (todosSource: Ref<TodoItem[]>) => {
-    todosRef = todosSource
-  }
+  const persist = createPersistLock(storage.data, (data, todos?: TodoItem[]) => {
+    const payload: AppData = { ...data, projects: projects.value }
+    if (todos !== undefined) {
+      payload.todos = todos
+    }
+    return payload
+  })
 
   /** 新增项目 */
   const add = async (partial: Omit<ProjectItem, "id" | "createdAt" | "updatedAt">) => {
@@ -119,7 +103,6 @@ export function useProjects(storage: QuickNoteStorage) {
     add,
     update,
     remove,
-    setTodos,
     todosOf,
     progressOf,
   }

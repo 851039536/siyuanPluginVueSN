@@ -7,7 +7,7 @@ import type { Ref } from "vue"
 import type { QuickNoteStorage } from "../types/storage"
 import type { TodoItem } from "../types"
 import { computed, ref } from "vue"
-import { generateId } from "../utils"
+import { createPersistLock, generateId } from "../utils"
 import { PRIORITY_META } from "../types"
 
 /** 毫秒时间戳 → 本地日期 YYYY-MM-DD（自动顺延与分组比较用） */
@@ -45,19 +45,8 @@ export function useTodoList(storage: QuickNoteStorage) {
     }
   }
 
-  /** 写入串行锁：防止快速连续操作时 read-modify-write 读到旧数据 */
-  let _saveLock: Promise<void> = Promise.resolve()
-
-  /** 持久化当前待办列表（动作级保存，串行化写操作） */
-  const persist = async () => {
-    _saveLock = _saveLock
-      .catch(() => undefined)
-      .then(async () => {
-        const data = await storage.data.loadOrDefault()
-        await storage.data.save({ ...data, todos: todos.value })
-      })
-    await _saveLock
-  }
+  /** 持久化当前待办列表（串行锁防止快速连续操作时 read-modify-write 读到旧数据） */
+  const persist = createPersistLock(storage.data, (data) => ({ ...data, todos: todos.value }))
 
   /**
    * 每日自动顺延：若上次顺延日期非今天，将已过期未完成的任务截止日期顺延到今天，

@@ -1,6 +1,7 @@
 // 速记功能 — 项目新增表单样式（Codex 风格：全 Token 化）
 
 @use "@/variables.scss" as *;
+@use "./index.scss" as *;
 
 .qn-proj-form {
   display: flex;
@@ -44,43 +45,21 @@
 // 提交按钮（品牌蓝色块）
 .qn-proj-form__add-btn,
 .qn-proj-form__save-btn {
+  @extend %qn-primary-btn;
   display: inline-flex;
   align-items: center;
   gap: $spacing-1;
   padding: $spacing-1 $spacing-3;
-  border: none;
-  border-radius: $vp-radius;
-  background: var(--b3-theme-primary);
-  color: var(--b3-theme-on-primary);
-  // 辅助文字
-  font-size: $font-size-2xs;
-  font-family: inherit;
-  cursor: pointer;
-  transition: opacity 0.12s;
-
-  &:hover {
-    opacity: 0.85;
-  }
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
 }
 
 // 取消按钮（编辑模式，灰色边框透明底，与保存按钮左右分布）
 .qn-proj-form__cancel-btn {
+  @extend %qn-cancel-btn;
   display: inline-flex;
   align-items: center;
   padding: $spacing-1 $spacing-3;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
-  background: transparent;
   color: var(--b3-theme-on-background);
-  // 辅助文字
-  font-size: $font-size-2xs;
-  font-family: inherit;
-  cursor: pointer;
+  // 悬停过渡只作用于背景色
   transition: background 0.12s;
   // 推右侧保存按钮到右，取消按钮自然左对齐
   margin-right: auto;

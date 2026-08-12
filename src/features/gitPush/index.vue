@@ -82,8 +82,10 @@
       :analyzed-at="analysisAnalyzedAt"
       :failed-count="analysisFailedCount"
       :commit-count="analysisCommitCount"
+      :selected-extensions="selectedExtensions"
       @run-analysis="runLineStatsAnalysis"
       @update-count="(n) => setCommitCount(n, true)"
+      @update:selected-extensions="(exts) => selectedExtensions = exts"
     />
 
     <!-- ========== 代码统计报告视图 ========== -->
@@ -618,6 +620,7 @@ const {
   updateViewSettings,
   projectLineRanking,
   authorLineRanking,
+  selectedExtensions,
 } = useCommitAnalysis(props.manager, projects)
 
 // ── 代码统计报告（单项目 git numstat 统计：团队总览/贡献度/技术债务/热点；进入视图自动生成）──

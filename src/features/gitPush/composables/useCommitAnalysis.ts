@@ -28,6 +28,12 @@ export const COMMIT_COUNT_OPTIONS = [30, 50, 100, 200] as const
 const PROJECT_RANK_LIMIT = 20
 const AUTHOR_RANK_LIMIT = 10
 
+/** 行数统计可选的常见文件扩展名（多选芯片按钮组，空数组 = 不过滤） */
+export const LINE_STATS_EXTENSIONS = [
+  ".ts", ".vue", ".js", ".jsx", ".tsx",
+  ".css", ".scss", ".json", ".md", ".html",
+] as const
+
 export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProject[]>) {
   /** 分析中标记（并发去重） */
   const analyzing = ref(false)
@@ -52,6 +58,9 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   /** 作者代码行数排行（按新增行降序，行数统计视图分析后填充） */
   const authorLineRanking = ref<AuthorLineRankItem[]>([])
 
+  /** 选中的文件扩展名过滤（空数组 = 不过滤所有文件，变更后即时持久化 + 下次分析生效） */
+  const selectedExtensions = ref<string[]>([])
+
   /** 从存储载入显示设置（与默认值逐字段合并，防旧数据缺字段导致渲染异常） */
   async function loadViewSettings() {
     const saved = await manager.storage.commitAnalysisView.loadOrDefault()
@@ -64,23 +73,24 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     await manager.storage.commitAnalysisView.save(viewSettings.value)
   }
 
-  /** 由各项目的 settled 结果聚合项目/作者行数排行（仅统计含 numstat 的 fulfilled 结果） */
+  /** 由各项目的 settled 结果聚合项目/作者行数排行（仅统计含 numstat 的 fulfilled 结果；extensions 可选白名单过滤） */
   function buildLineRankings(
     settled: PromiseSettledResult<{ projectId: string, projectName: string, entries: CommitAnalysisEntry[], numstat: NumstatCommit[] }>[],
     nameById: Map<string, string>,
+    extensions?: string[],
   ): { projectRanking: ProjectLineRankItem[], authorRanking: AuthorLineRankItem[] } {
     const projectLines = new Map<string, { added: number, deleted: number }>()
     const authorLines = new Map<string, { added: number, deleted: number }>()
     settled.forEach((r) => {
       if (r.status !== "fulfilled") return
       const { projectId, numstat } = r.value
-      const psum = sumProjectLines(numstat)
+      const psum = sumProjectLines(numstat, extensions)
       const prevP = projectLines.get(projectId)
       projectLines.set(projectId, {
         added: (prevP?.added ?? 0) + psum.added,
         deleted: (prevP?.deleted ?? 0) + psum.deleted,
       })
-      for (const [author, agg] of sumAuthorLines(numstat)) {
+      for (const [author, agg] of sumAuthorLines(numstat, extensions)) {
         const prevA = authorLines.get(author)
         authorLines.set(author, {
           added: (prevA?.added ?? 0) + agg.added,
@@ -172,7 +182,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
       // 行数统计请求才重算排行；提交分析不触碰已有排行，保留缓存中的行数数据供行数视图复用
       if (needNumstat) {
         const nameById = new Map(projects.value.map((p) => [p.id, p.name]))
-        const { projectRanking, authorRanking } = buildLineRankings(settled, nameById)
+        const { projectRanking, authorRanking } = buildLineRankings(settled, nameById, selectedExtensions.value)
         projectLineRanking.value = projectRanking
         authorLineRanking.value = authorRanking
       }
@@ -194,6 +204,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
           failedCount: fail,
           projectLineRanking: projectLineRanking.value,
           authorLineRanking: authorLineRanking.value,
+          selectedExtensions: selectedExtensions.value,
         })
       }
     } finally {
@@ -252,6 +263,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
       analyzedAt.value = cache.analyzedAt
       projectLineRanking.value = cache.projectLineRanking.filter((r) => validIds.has(r.id))
       authorLineRanking.value = cache.authorLineRanking
+      selectedExtensions.value = cache.selectedExtensions ?? []
       analyzed.value = true
       return
     }
@@ -319,5 +331,6 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     updateViewSettings,
     projectLineRanking,
     authorLineRanking,
+    selectedExtensions,
   }
 }

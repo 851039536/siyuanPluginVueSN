@@ -56,15 +56,56 @@
   margin-bottom: $spacing-2;
 }
 
-// ── 双栏区块（项目行数排行 | 作者行数排行 同排）──
+// ── 单栏堆叠（汇总卡片 + 项目行数排行 + 作者行数排行 纵向排列，各占整行）──
 .gls-pair {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: $spacing-3;
 
   > .gls-section {
-    margin-bottom: 0; // 网格内由 gap 控制间距，不叠加底部 margin
+    margin-bottom: 0; // flex 内由 gap 控制间距，不叠加底部 margin
   }
+}
+
+// ── 顶部汇总卡片（总新增 / 总删除 / 总净增，复用 CommitAnalysisPanel 总览卡片视觉模式）──
+.gls-cards {
+  display: grid;
+  // 三列等宽卡片（总新增 + 总删除 + 总净增）
+  grid-template-columns: repeat(3, 1fr);
+  gap: $spacing-2;
+  margin-bottom: $spacing-2;
+}
+
+.gls-card {
+  text-align: center;
+  padding: $spacing-2 $spacing-1;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-base;
+  background: var(--b3-theme-surface);
+}
+
+.gls-card-value {
+  font-size: $font-size-lg; // 数据突出展示：汇总统计数值大号字体
+  font-weight: $font-weight-bold;
+  font-family: $vp-mono;
+  line-height: $line-height-tight;
+  color: var(--b3-theme-on-surface);
+}
+
+.gls-card-label {
+  font-size: $font-size-2xs; // 辅助标签弱化展示（两级字号制）
+  opacity: 0.5;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+// 总新增 → 绿（success）；总删除 → 红（error）；总净增复用行内净增语义色（gls-net--*）
+.gls-card-value--add {
+  color: var(--b3-theme-success);
+}
+
+.gls-card-value--del {
+  color: var(--b3-theme-error);
 }
 
 .gls-section {
@@ -112,16 +153,17 @@
 
 .gls-bar-track {
   flex: 1;
-  height: 4px;
+  // 轨道高度 5px、圆角 4px（radius-sm），色块存在感更强
+  height: 5px;
   background: var(--b3-theme-surface);
-  border-radius: 2px;
+  border-radius: $radius-sm;
   overflow: hidden;
 }
 
 .gls-bar-fill {
   display: block;
   height: 100%;
-  border-radius: 2px;
+  border-radius: $radius-sm;
   background: var(--b3-theme-primary);
 }
 

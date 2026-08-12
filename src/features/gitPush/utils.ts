@@ -1,6 +1,6 @@
 // gitPush 工具函数与多路径解析
 import type { Ref } from "vue"
-import type { CommitAnalysisEntry, CommitAnalysisType, FileChange, GitProject, GitRemoteInfo, PlatformKey, RemotePushStatus } from "./types"
+import type { CommitAnalysisEntry, CommitAnalysisType, FileChange, GitOpLogEntry, GitProject, GitRemoteInfo, PlatformKey, RemotePushStatus } from "./types"
 import { COMMIT_ANALYSIS_TYPE_META, FILE_STATUS_META, HEAT_LEVEL_THRESHOLDS, PLATFORM_META } from "./types"
 import type { IconKey } from "@/config/icons"
 import { getElectronModules, getNodeFsPathOs } from "@/utils/nodeModules"
@@ -515,5 +515,33 @@ export function resolveValidPathWithSource(project: GitProject): { path: string,
   return {
     path: project.path,
     source: "fallback",
+  }
+}
+
+// ── 操作日志工具函数（LogPanel / LogDetailDialog 共用）──
+
+/** 判断操作日志条目是否包含平台明细（push/pull 且有 platforms 数据） */
+export function hasLogPlatforms(entry: GitOpLogEntry): boolean {
+  return (entry.action === "push" || entry.action === "pull") && !!entry.platforms?.length
+}
+
+/** 操作类型 → 中文标签（i18n 驱动，无匹配时降级返回原始 action） */
+export function logActionLabel(action: string, i18n: Record<string, any>): string {
+  const map: Record<string, string> = {
+    push: i18n.opPush,
+    pull: i18n.opPull,
+    commit: i18n.opCommit,
+  }
+  return map[action] ?? action
+}
+
+/** ISO 时间 → YYYY-MM-DD HH:mm（无法解析时降级返回原值） */
+export function formatLogTime(iso: string): string {
+  try {
+    const d = new Date(iso)
+    const pad = (n: number) => String(n).padStart(2, "0")
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+  } catch {
+    return iso
   }
 }

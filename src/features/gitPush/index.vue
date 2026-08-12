@@ -836,7 +836,8 @@ watch(currentView, async (view) => {
     }
   }
   if (view === "analysis" && !gitOpsPaused.value) await ensureAnalysis()
-  if (view === "linestats" && !gitOpsPaused.value) await ensureLineStats()
+  // 行数统计缓存加载是纯本地存储读取，不触发 git 操作，暂停 git 操作时仍须恢复过滤选择与上次行数数据（否则重启后勾选丢失）
+  if (view === "linestats") await ensureLineStats()
   if (view === "report" && !gitOpsPaused.value) await ensureReport()
 })
 
@@ -854,7 +855,7 @@ watch(gitOpsPaused, async (paused) => {
     await ensureAnalysis()
     return
   }
-  // 行数统计视图：暂停期间跳过的缓存加载在恢复后补齐
+  // 行数统计视图：视图 watch 已无条件加载缓存（纯存储读取），此处仅作冗余兜底
   if (currentView.value === "linestats") {
     await ensureLineStats()
     return

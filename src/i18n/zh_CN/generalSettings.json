@@ -83,6 +83,7 @@
   "enabled": "已启用",
   "disabled": "已禁用",
   "selectFont": "选择字体",
+  "builtinFontHint": "霞鹜文楷已随插件内置，未在系统安装也能正常使用",
   "lineHeight": "行高",
   "codeBlockBackground": "背景色",
   "codeBlockBorder": "边框设置",

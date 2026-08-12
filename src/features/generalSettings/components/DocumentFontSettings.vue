@@ -69,6 +69,18 @@
                 @change="applyPresetFont"
               />
             </div>
+            <!-- 内置字体提示：选中霞鹜文楷时显示（该字体已随插件内置，无需系统安装） -->
+            <p
+              v-if="isBuiltinFontSelected"
+              class="builtin-font-hint"
+            >
+              <IconWrapper
+                name="checkCircle"
+                :size="13"
+                class="builtin-font-hint-icon"
+              />
+              {{ i18n.builtinFontHint }}
+            </p>
           </div>
         </div>
 
@@ -212,6 +224,7 @@ import {
   DocumentFontSettings,
   GeneralSettingsStorage,
 } from "../types/storage"
+import { BUILTIN_FONT } from "../utils/styles"
 import SettingSlider from "./SettingSlider.vue"
 
 interface Props {
@@ -255,17 +268,20 @@ const SLIDER_FIELDS: SliderField[] = [
 
 /** 预设字体列表（字体名为专有名词，label 保留原生名称不走 i18n） */
 const PRESET_FONTS: SelectOption[] = [
-  { value: "Microsoft YaHei", label: "微软雅黑" },
   { value: "Microsoft YaHei Light", label: "微软雅黑 Light" },
   { value: "Segoe UI", label: "Segoe UI" },
   { value: "等线", label: "等线 (DengXian)" },
-  { value: "仿宋", label: "仿宋" },
   { value: "华文细黑", label: "华文细黑" },
   { value: "华文黑体", label: "华文黑体" },
-  { value: "华文楷体", label: "华文楷体" },
-  { value: "华文宋体", label: "华文宋体" },
-  { value: "黑体", label: "黑体" },
   { value: "system-ui", label: "system-ui" },
+  // 思源美化社区常用开源/免费中文字体（Source Han 思源系列提供 SC/CN 双变体以兼容不同系统）
+  { value: "Source Han Serif SC", label: "思源宋体" },
+  { value: "Source Han Serif CN", label: "思源宋体 (CN)" },
+  { value: "Source Han Sans SC", label: "思源黑体" },
+  { value: "Source Han Sans CN", label: "思源黑体 (CN)" },
+  { value: "LXGW WenKai", label: "霞鹜文楷 (LXGW WenKai)", builtin: true },
+  { value: "PingFang SC", label: "苹方 (PingFang SC)" },
+  { value: "HarmonyOS Sans SC", label: "HarmonyOS Sans" },
 ]
 
 /** 字重选项元数据（label 走 i18n 键） */
@@ -278,6 +294,11 @@ const FONT_WEIGHTS = [
 const settings = ref<DocumentFontSettings>({ ...DEFAULT_DOCUMENT_FONT_SETTINGS })
 const showPreview = ref(true)
 const presetFont = ref("")
+
+/** 当前选择是否命中内置字体（霞鹜文楷，随插件分发） */
+const isBuiltinFontSelected = computed(
+  () => settings.value.fontFamily === BUILTIN_FONT.fontFamily,
+)
 /** 加载守卫：存储数据回填期间跳过 watch 的 emit/save */
 const isLoading = ref(false)
 
@@ -328,6 +349,9 @@ async function loadSettings() {
         ...DEFAULT_DOCUMENT_FONT_SETTINGS,
         ...data,
       }
+      // 同步下拉选中：当前字体命中预设列表时显示对应项，保证内置字体提示与实际一致
+      const matched = PRESET_FONTS.find((opt) => opt.value === settings.value.fontFamily)
+      presetFont.value = matched ? String(matched.value) : ""
     }
   } catch (error) {
     console.error("加载文档字体设置失败:", error)
@@ -352,7 +376,19 @@ async function saveSettings() {
 
 onMounted(async () => {
   await loadSettings()
+  preloadBuiltinFont()
 })
+
+/** 预加载内置字体，确保用户首次选中霞鹜文楷时立即生效（避免 @font-face 首次加载延迟） */
+function preloadBuiltinFont() {
+  try {
+    if (document.fonts && typeof document.fonts.load === "function") {
+      document.fonts.load(`16px "${BUILTIN_FONT.fontFamily}"`).catch(() => {})
+    }
+  } catch (error) {
+    console.error("预加载内置字体失败:", error)
+  }
+}
 </script>
 
 <style scoped lang="scss">

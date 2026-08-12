@@ -538,6 +538,42 @@ export function generateLevelDisplayCss(
     .join("\n")
 }
 
+/**
+ * 内置字体元数据：霞鹜文楷（SIL OFL 1.1，可自由嵌入/修改/再分发）
+ * fontFamily 必须与 DocumentFontSettings.vue 的 PRESET_FONTS 中对应条目 value 一致
+ */
+export const BUILTIN_FONT = {
+  fontFamily: "LXGW WenKai",
+  fileName: "LXGWWenKai-Regular.ttf",
+  subDir: "fonts",
+} as const
+
+/** 内置字体 @font-face 注入用的 <style> 元素 id */
+export const BUILTIN_FONT_STYLE_ID = "builtin-font-face"
+
+/**
+ * 注入内置字体 @font-face：从 plugin.assetsPath（指向插件包 assets/ 目录）加载字体文件。
+ * 系统未安装该字体时，浏览器会回退使用 @font-face 声明的内置资源，实现开箱即用。
+ * @param assetsPath 插件静态资源根路径，通常为 plugin.assetsPath
+ */
+export function injectBuiltinFont(assetsPath: string): void {
+  if (!assetsPath) {
+    return
+  }
+  const base = assetsPath.replace(/\/+$/, "")
+  const fontUrl = `${base}/${BUILTIN_FONT.subDir}/${BUILTIN_FONT.fileName}`
+  injectStyle(
+    BUILTIN_FONT_STYLE_ID,
+    `@font-face {
+      font-family: '${BUILTIN_FONT.fontFamily}';
+      src: url('${fontUrl}') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }`,
+  )
+}
+
 export function applyDocumentFontStyles(fontSettings: DocumentFontSettings): void {
   try {
     const existingStyle = document.getElementById("document-font-settings")

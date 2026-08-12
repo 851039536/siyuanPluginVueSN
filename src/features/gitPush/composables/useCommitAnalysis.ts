@@ -1,4 +1,4 @@
-// 提交分析 — 批量读取各项目提交日志，聚合时间分布/提交次数/内容类型/作者排行；行数统计视图独立并行抓取 numstat 生成代码行数排行
+// 提交分析 — 批量读取各项目提交日志，聚合时间分布/提交次数/内容类型/作者排行；行数统计视图单命令抓取 numstat 生成代码行数排行
 import type { Ref } from "vue"
 import type {
   AuthorLineRankItem,
@@ -18,6 +18,7 @@ import {
   rankByCount,
   resolveValidPath,
 } from "../utils"
+import { getNodeFsPathOs } from "@/utils/nodeModules"
 import { sumAuthorLines, sumProjectLines, type NumstatCommit } from "../reportMetrics"
 
 /** 每项目抓取条数选项（仿 BranchCommitList.countOptions） */
@@ -38,7 +39,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   const analyzedAt = ref("")
   /** 跨项目合并的原始提交条目缓存 */
   const entries = ref<CommitAnalysisEntry[]>([])
-  /** 分析失败的项目数（路径无效/git 失败，getCommitLog 内部吞错时按空数组计） */
+  /** 分析失败的项目数（路径无效 throw 计入；行数统计分支 git 失败同样计入，提交分析分支 getCommitLog 内部吞错时不计入） */
   const failedCount = ref(0)
   /** 是否已尝试过从存储载入提交分析缓存（防重复读盘） */
   let cacheLoaded = false
@@ -112,32 +113,51 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     return { projectRanking, authorRanking }
   }
 
-  /** 批量分析全部项目核心（GitExecutor 自带并发限流，无需额外节流）；needNumstat 时并行抓取 numstat 生成行数排行，成功后持久化结果供下次复用 */
+  /** 批量分析全部项目核心（GitExecutor 自带并发限流，无需额外节流）；needNumstat 时单命令抓取 numstat 生成行数排行，成功后持久化结果供下次复用 */
   async function runCore(needNumstat: boolean) {
     if (analyzing.value) return
     analyzing.value = true
     try {
       const settled = await Promise.allSettled(projects.value.map(async (p) => {
         const path = resolveValidPath(p)
-        const log = await manager.getCommitLog(path, commitCount.value)
-        const itemEntries = log.map((c) => ({
-          projectId: p.id,
-          projectName: p.name,
-          hash: c.hash,
-          message: c.message,
-          author: c.author,
-          date: c.date,
-        }))
-        // 行数统计时并行抓取 numstat（失败不阻塞主流程，按空数据降级）
-        let numstat: NumstatCommit[] = []
+        // B 修复：路径无效的项目直接 throw 计入 failedCount（预检绕过 getCommitLog 内部吞错的语义，避免静默缺席）
+        const modules = getNodeFsPathOs()
+        if (modules && !modules.fs.existsSync(path)) {
+          throw new Error(`项目路径无效：${path}`)
+        }
+        // 行数统计：单命令抓取（getCommitStatsLog 自带 hash/message/author/date + 每文件增删行），
+        // git 失败直接抛错计入 failedCount（不再本地 try-catch 降级为空数据）
         if (needNumstat) {
-          try {
-            numstat = await manager.getNumstatLog(path, undefined, commitCount.value)
-          } catch {
-            numstat = []
+          const numstat = await manager.getCommitStatsLog(path, commitCount.value)
+          return {
+            projectId: p.id,
+            projectName: p.name,
+            entries: numstat.map((c) => ({
+              projectId: p.id,
+              projectName: p.name,
+              hash: c.hash ?? "",
+              message: c.message ?? "",
+              author: c.author,
+              date: c.date,
+            })),
+            numstat,
           }
         }
-        return { projectId: p.id, projectName: p.name, entries: itemEntries, numstat }
+        // 提交分析：原 getCommitLog 链路保持不动（内部吞错返回 []，路径预检已在上方兜底）
+        const log = await manager.getCommitLog(path, commitCount.value)
+        return {
+          projectId: p.id,
+          projectName: p.name,
+          entries: log.map((c) => ({
+            projectId: p.id,
+            projectName: p.name,
+            hash: c.hash,
+            message: c.message,
+            author: c.author,
+            date: c.date,
+          })),
+          numstat: [],
+        }
       }))
       let fail = 0
       const flat: CommitAnalysisEntry[] = []

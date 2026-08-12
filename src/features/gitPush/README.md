@@ -138,7 +138,8 @@ GitPushManager (facade)
 | `generateCommitMessage(path)` | AI / 启发式生成提交信息 |
 | `getAiConfig()` | 读取超级面板 AI 配置（统一入口 `@/utils/aiApi`，供 AI 错误分析弹窗使用） |
 | `getCommitLog(path, count?)` | 获取最近 N 条提交记录 |
-| `getNumstatLog(path, since?, maxCount?)` | 获取 numstat 提交日志（每文件增删行；供提交分析行数排行聚合） |
+| `getNumstatLog(path, since?, maxCount?)` | 获取 numstat 提交日志（每文件增删行；供代码统计报告聚合） |
+| `getCommitStatsLog(path, maxCount?)` | 行数统计专用单命令抓取：numstat + hash/message/author/date（替代原 getCommitLog + getNumstatLog 双命令） |
 | `getBranches(path)` | 获取本地分支列表 |
 | `switchBranch(path, branch)` | 切换分支（检测未提交变更） |
 | `getCategories / addCategory / updateCategory / deleteCategory` | 分类 CRUD |

@@ -1,0 +1,267 @@
+@use "./variables" as *;
+@use "./mixins" as *;
+
+// ── 操作日志详情弹窗（Teleport 到 body，样式全局生效） ──
+
+.gp-logd-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  // 基准字号：弹窗内未显式声明字号的文字继承内容级 12px
+  font-size: $font-size-xs;
+  outline: none;
+}
+
+.gp-logd-dialog {
+  width: 560px;
+  max-width: 90vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-lg;
+  overflow: hidden;
+}
+
+// 复用 Dialog.scss 的 gp-dialog-fade 过渡，仅补充本弹窗容器的缩放
+.gp-dialog-fade-enter-active .gp-logd-dialog,
+.gp-dialog-fade-leave-active .gp-logd-dialog {
+  transition: transform 0.12s ease;
+}
+
+.gp-dialog-fade-enter-from .gp-logd-dialog,
+.gp-dialog-fade-leave-to .gp-logd-dialog {
+  transform: scale(0.98);
+}
+
+// ── 头部 ──
+.gp-logd-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-3;
+  background: var(--b3-theme-surface);
+  border-bottom: 1px solid var(--b3-border-color);
+  flex-shrink: 0;
+}
+
+.gp-logd-title {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  min-width: 0;
+}
+
+// 操作类型徽章（LogPanel 同款视觉，弹窗自包含）
+.gp-logd-badge {
+  flex-shrink: 0;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
+  font-family: $vp-mono;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 1px 6px;
+  border-radius: $radius-sm;
+
+  &--push {
+    background: var(--b3-theme-primary-lightest);
+    color: var(--b3-theme-primary);
+  }
+
+  &--pull {
+    background: var(--b3-theme-warning-lightest);
+    color: var(--b3-theme-warning);
+  }
+
+  &--commit {
+    background: var(--b3-theme-surface);
+    color: var(--b3-theme-on-surface);
+  }
+}
+
+// 项目名（可点击跳转列表视图）
+.gp-logd-project {
+  flex-shrink: 0;
+  max-width: 220px;
+  cursor: pointer;
+  color: var(--b3-theme-primary);
+  font-weight: $font-weight-semibold;
+  font-size: $font-size-xs;
+  @include text-ellipsis;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// 整体状态徽章（成功/失败）
+.gp-logd-status {
+  flex-shrink: 0;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  padding: 1px 6px;
+  border-radius: $radius-sm;
+
+  &--ok {
+    background: var(--b3-theme-success-lightest);
+    color: var(--b3-theme-success);
+  }
+
+  &--fail {
+    background: var(--b3-theme-error-lightest);
+    color: var(--b3-theme-error);
+  }
+}
+
+// ── 内容区 ──
+.gp-logd-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: $spacing-3 $spacing-4;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+// 元信息区（操作类型 / 时间 / 状态，label-value 行）
+.gp-logd-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-1 $spacing-4;
+  margin-bottom: $spacing-3;
+  padding-bottom: $spacing-3;
+  border-bottom: 1px solid var(--b3-border-color);
+}
+
+.gp-logd-meta-item {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: $font-size-2xs;
+}
+
+.gp-logd-meta-label {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.45;
+}
+
+.gp-logd-meta-value {
+  font-family: $vp-mono;
+  color: var(--b3-theme-on-background);
+}
+
+// 区块标题（大写小标签）
+.gp-logd-section {
+  margin-bottom: $spacing-3;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.gp-logd-section-title {
+  @include gp-label-base;
+  margin-bottom: $spacing-1;
+}
+
+// 摘要：完整展示，允许换行不截断
+.gp-logd-summary {
+  font-size: $font-size-xs;
+  line-height: $line-height-normal;
+  color: var(--b3-theme-on-background);
+  white-space: pre-wrap;
+  word-break: break-word;
+  opacity: 0.85;
+}
+
+// 平台明细（逐平台行：状态 + 平台名 + 跳过标记 + 摘要）
+.gp-logd-platforms {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+}
+
+.gp-logd-platform {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: $font-size-2xs;
+  padding: $spacing-1 $spacing-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  background: var(--b3-theme-surface);
+}
+
+.gp-logd-platform-ok {
+  flex-shrink: 0;
+  width: 14px;
+  text-align: center;
+  font-family: $vp-mono;
+  font-weight: $font-weight-bold;
+}
+
+.gp-logd-platform-label {
+  flex-shrink: 0;
+  min-width: 48px;
+  opacity: 0.6;
+  font-weight: $font-weight-semibold;
+}
+
+.gp-logd-platform-skip {
+  flex-shrink: 0;
+  opacity: 0.35;
+}
+
+.gp-logd-platform-summary {
+  flex: 1;
+  min-width: 0;
+  opacity: 0.6;
+  @include text-ellipsis;
+}
+
+// 提交信息：等宽完整展示
+.gp-logd-message {
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  line-height: $line-height-normal;
+  color: var(--b3-theme-on-surface);
+  white-space: pre-wrap;
+  word-break: break-all;
+  padding: $spacing-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  background: var(--b3-theme-surface);
+}
+
+// 状态文本着色
+.gp-logd-text-ok {
+  color: var(--b3-theme-success);
+}
+
+.gp-logd-text-fail {
+  color: var(--b3-theme-error);
+}
+
+.gp-logd-text-skip {
+  color: var(--b3-theme-on-surface-light);
+  opacity: 0.6;
+}
+
+// ── 底部操作栏 ──
+.gp-logd-footer {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-3;
+  background: var(--b3-theme-surface);
+  border-top: 1px solid var(--b3-border-color);
+  flex-shrink: 0;
+}

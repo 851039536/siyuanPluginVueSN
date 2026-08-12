@@ -145,7 +145,7 @@
                 <span
                   class="gp-log-badge"
                   :class="`gp-log-badge--${entry.action}`"
-                >{{ actionLabel(entry.action) }}</span>
+                >{{ logActionLabel(entry.action, i18n) }}</span>
               </span>
               <!-- 状态点 -->
               <span class="gp-log-tcol gp-log-tcol--status">
@@ -168,12 +168,12 @@
               </span>
               <!-- 时间 -->
               <span class="gp-log-tcol gp-log-tcol--time">
-                <span class="gp-log-time">{{ formatTime(entry.time) }}</span>
+                <span class="gp-log-time">{{ formatLogTime(entry.time) }}</span>
               </span>
               <!-- 操作列：展开平台明细 + 复制 -->
               <span class="gp-log-tcol gp-log-tcol--ops">
                 <button
-                  v-if="hasPlatforms(entry)"
+                  v-if="hasLogPlatforms(entry)"
                   class="gp-log-expand-btn"
                   :title="expandedIds.has(entry.id) ? i18n.collapsePlatforms : i18n.expandPlatforms"
                   @click.stop="toggleExpand(entry.id)"
@@ -198,7 +198,7 @@
             </div>
             <!-- 平台明细子行（占位列对齐摘要列） -->
             <div
-              v-if="hasPlatforms(entry) && expandedIds.has(entry.id)"
+              v-if="hasLogPlatforms(entry) && expandedIds.has(entry.id)"
               class="gp-log-trow gp-log-trow--sub"
             >
               <span class="gp-log-tcol gp-log-tcol--action" />
@@ -269,8 +269,9 @@ import {
   watch,
 } from "vue"
 import { Icon } from "@iconify/vue"
-import type { GitOpAction, GitOpLogEntry } from "../../types"
+import type { GitOpLogEntry } from "../../types"
 import { usePagedList } from "../../composables/usePagedList"
+import { formatLogTime, hasLogPlatforms, logActionLabel } from "../../utils"
 import { copyToClipboard } from "@/utils/domUtils"
 import EmptyState from "../common/EmptyState.vue"
 import LoadMoreButton from "../common/LoadMoreButton.vue"
@@ -316,15 +317,19 @@ const filteredLogs = computed(() => {
   })
 })
 
-/** 状态统计条：按操作类型聚合成功/失败数（基于全量日志，与筛选解耦） */
+/** 状态统计条：按操作类型聚合成功/失败数（基于全量日志，一次遍历完成） */
 const stats = computed(() => {
-  const types: GitOpAction[] = ["push", "pull", "commit"]
-  return types
-    .map((t) => {
-      const items = props.logs.filter((e) => e.action === t)
-      const ok = items.filter((e) => e.ok).length
-      return { key: t, label: actionLabel(t), ok, fail: items.length - ok }
-    })
+  const acc: Record<string, { ok: number; fail: number }> = {
+    push: { ok: 0, fail: 0 },
+    pull: { ok: 0, fail: 0 },
+    commit: { ok: 0, fail: 0 },
+  }
+  for (const e of props.logs) {
+    const r = acc[e.action]
+    if (r) { e.ok ? r.ok++ : r.fail++ }
+  }
+  return Object.entries(acc)
+    .map(([key, { ok, fail }]) => ({ key, label: logActionLabel(key, props.i18n), ok, fail }))
     .filter((s) => s.ok + s.fail > 0)
 })
 
@@ -392,7 +397,7 @@ const copyTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
 /** 复制条目为 "[HH:mm] 项目名 — 摘要"（成功切换勾选图标 2s 后还原） */
 async function handleCopy(entry: GitOpLogEntry) {
-  const time = formatTime(entry.time).slice(11)
+  const time = formatLogTime(entry.time).slice(11)
   const ok = await copyToClipboard(`[${time}] ${entry.projectName} — ${entry.summary}`)
   if (!ok) return
   const next = new Set(copiedIds.value)
@@ -412,29 +417,6 @@ onUnmounted(() => {
   for (const t of copyTimers.values()) clearTimeout(t)
   copyTimers.clear()
 })
-
-function hasPlatforms(entry: GitOpLogEntry): boolean {
-  return (entry.action === "push" || entry.action === "pull") && !!entry.platforms?.length
-}
-
-function actionLabel(action: string): string {
-  const map: Record<string, string> = {
-    push: props.i18n.opPush,
-    pull: props.i18n.opPull,
-    commit: props.i18n.opCommit,
-  }
-  return map[action] ?? action
-}
-
-function formatTime(iso: string): string {
-  try {
-    const d = new Date(iso)
-    const pad = (n: number) => String(n).padStart(2, "0")
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
-  } catch {
-    return iso
-  }
-}
 
 /** 日志日期分组项（组件内部使用，不导出） */
 interface LogDateGroup {
@@ -456,17 +438,20 @@ function dateKeyOf(iso: string): string {
   }
 }
 
-/** 分组标题：今天 / 昨天 / 完整日期 */
+/** 分组标题：今天 / 昨天 / 完整日期（Date 对象比较，避免手动 pad 拼接） */
 function dateLabelOf(iso: string): string {
-  const key = dateKeyOf(iso)
-  const now = new Date()
-  const pad = (n: number) => String(n).padStart(2, "0")
-  const todayKey = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
-  if (key === todayKey) return props.i18n.logDateToday
-  const yesterday = new Date(now.getTime() - 86400000)
-  const yesterdayKey = `${yesterday.getFullYear()}-${pad(yesterday.getMonth() + 1)}-${pad(yesterday.getDate())}`
-  if (key === yesterdayKey) return props.i18n.logDateYesterday
-  return key
+  try {
+    const d = new Date(iso)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const target = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+    const diff = Math.round((today.getTime() - target.getTime()) / 86400000)
+    if (diff === 0) return props.i18n.logDateToday
+    if (diff === 1) return props.i18n.logDateYesterday
+    return dateKeyOf(iso)
+  } catch {
+    return iso
+  }
 }
 </script>
 

@@ -18,12 +18,12 @@
               <span
                 class="gp-logd-badge"
                 :class="`gp-logd-badge--${entry.action}`"
-              >{{ actionLabel(entry.action) }}</span>
+              >{{ logActionLabel(entry.action, i18n) }}</span>
               <!-- 项目名（点击跳转列表视图） -->
               <span
-                class="gp-logd-project"
-                :title="i18n.viewProject"
-                @click="handleViewProject"
+              class="gp-logd-project"
+              :title="i18n.viewProject"
+              @click="handleViewProject"
               >{{ entry.projectName }}</span>
               <!-- 整体状态徽章（"成功"/"失败"） -->
               <span
@@ -51,12 +51,12 @@
               <!-- "操作类型" -->
               <div class="gp-logd-meta-item">
                 <span class="gp-logd-meta-label">{{ i18n.logDetailAction }}</span>
-                <span class="gp-logd-meta-value">{{ actionLabel(entry.action) }}</span>
+                <span class="gp-logd-meta-value">{{ logActionLabel(entry.action, i18n) }}</span>
               </div>
               <!-- "时间" -->
               <div class="gp-logd-meta-item">
                 <span class="gp-logd-meta-label">{{ i18n.logDetailTime }}</span>
-                <span class="gp-logd-meta-value">{{ formatTime(entry.time) }}</span>
+                <span class="gp-logd-meta-value">{{ formatLogTime(entry.time) }}</span>
               </div>
               <!-- "状态" -->
               <div class="gp-logd-meta-item">
@@ -76,7 +76,7 @@
 
             <!-- 平台明细区（push/pull）："平台明细" -->
             <div
-              v-if="hasPlatforms(entry)"
+              v-if="hasLogPlatforms(entry)"
               class="gp-logd-section"
             >
               <div class="gp-logd-section-title">{{ i18n.logDetailPlatforms }}</div>
@@ -155,6 +155,7 @@ import {
   ref,
 } from "vue"
 import { copyToClipboard } from "@/utils/domUtils"
+import { formatLogTime, hasLogPlatforms, logActionLabel } from "../../utils"
 import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
 
 const props = defineProps<{
@@ -179,8 +180,8 @@ const { rootRef } = useDialogKeyboard(computed(() => !!props.entry))
 async function handleCopy() {
   if (!props.entry) return
   const text = props.entry.message
-    ? `[${formatTime(props.entry.time)}] ${props.entry.projectName}\n${props.entry.message}`
-    : `[${formatTime(props.entry.time)}] ${props.entry.projectName} — ${props.entry.summary}`
+    ? `[${formatLogTime(props.entry.time)}] ${props.entry.projectName}\n${props.entry.message}`
+    : `[${formatLogTime(props.entry.time)}] ${props.entry.projectName} — ${props.entry.summary}`
   const ok = await copyToClipboard(text)
   if (ok) {
     if (copiedTimer) clearTimeout(copiedTimer)
@@ -193,29 +194,6 @@ async function handleCopy() {
 function handleViewProject() {
   if (!props.entry) return
   emit("viewProject", props.entry.projectId)
-}
-
-function hasPlatforms(entry: GitOpLogEntry): boolean {
-  return (entry.action === "push" || entry.action === "pull") && !!entry.platforms?.length
-}
-
-function actionLabel(action: string): string {
-  const map: Record<string, string> = {
-    push: props.i18n.opPush,
-    pull: props.i18n.opPull,
-    commit: props.i18n.opCommit,
-  }
-  return map[action] ?? action
-}
-
-function formatTime(iso: string): string {
-  try {
-    const d = new Date(iso)
-    const pad = (n: number) => String(n).padStart(2, "0")
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
-  } catch {
-    return iso
-  }
 }
 
 onUnmounted(() => {

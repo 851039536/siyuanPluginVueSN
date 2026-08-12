@@ -9,11 +9,26 @@
     />
 
     <template v-else>
-      <!-- 顶部工具条：分析状态 + 条数选择 + 分析按钮 -->
+      <!-- 顶部工具条：分析状态 + 扩展名过滤 + 条数选择 + 分析按钮 -->
       <div class="gls-toolbar">
         <!-- 分析状态："分析中…/上次分析 xx/未分析" -->
         <span class="gls-status">{{ analyzing ? i18n.auditing : (analyzed ? i18n.analysisLastRun.replace("{0}", relativeTime(analyzedAt, i18n)) : i18n.lineStatsNotRun) }}</span>
         <div class="gls-toolbar-right">
+          <!-- 文件扩展名过滤（多选 chip 按钮组；空数组 = 不过滤所有文件） -->
+          <!-- 过滤提示："文件格式过滤" -->
+          <span
+            class="gls-ext-chips"
+            :title="i18n.lineStatsExtFilter"
+          >
+            <button
+              v-for="ext in LINE_STATS_EXTENSIONS"
+              :key="ext"
+              class="gls-ext-chip"
+              :class="{ 'gls-ext-chip--active': selectedExtensions.includes(ext) }"
+              :disabled="analyzing"
+              @click="toggleExt(ext)"
+            >{{ ext }}</button>
+          </span>
           <!-- 条数选择（tooltip："每项目 {0} 条"） -->
           <select
             class="gls-count-select"
@@ -206,7 +221,7 @@
 import type { AuthorLineRankItem, ProjectLineRankItem } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
-import { COMMIT_COUNT_OPTIONS } from "../../composables/useCommitAnalysis"
+import { COMMIT_COUNT_OPTIONS, LINE_STATS_EXTENSIONS } from "../../composables/useCommitAnalysis"
 import { relativeTime } from "../../utils"
 import EmptyState from "../common/EmptyState.vue"
 import Loader from "@/components/Loader.vue"
@@ -226,12 +241,23 @@ const props = defineProps<{
   /** 抓取失败的项目数 */
   failedCount: number
   commitCount: number
+  /** 选中的文件扩展名过滤（空数组 = 不过滤） */
+  selectedExtensions: string[]
 }>()
 
 const emit = defineEmits<{
   runAnalysis: []
   updateCount: [n: number]
+  'update:selectedExtensions': [exts: string[]]
 }>()
+
+/** 切换扩展名选中状态（多选 white-list 模式） */
+function toggleExt(ext: string) {
+  const set = new Set(props.selectedExtensions)
+  if (set.has(ext)) { set.delete(ext) }
+  else { set.add(ext) }
+  emit("update:selectedExtensions", [...set])
+}
 
 /** 行数排行行视图：条形宽度按新增行相对最大值（0 时退化为全空轨道）+ 新增行占总新增的百分比（保留 1 位小数，总 0 时兜底 1 防除零） */
 function withLineBarPct<T extends { added: number }>(rows: T[]): (T & { pct: string, share: string })[] {

@@ -426,6 +426,7 @@
     "lineStatsRun": "Start Line Stats",
     "lineStatsNotRun": "Click \"Start Line Stats\" to count added/deleted lines per project and generate rankings",
     "lineStatsNoData": "No line stats yet — click \"Start Line Stats\"",
+    "lineStatsExtFilter": "File filter: only count matching extensions when selected, count all files when empty",
     "lineStatsTotalAdded": "Total Added",
     "lineStatsTotalDeleted": "Total Deleted",
     "lineStatsTotalNet": "Net Lines",

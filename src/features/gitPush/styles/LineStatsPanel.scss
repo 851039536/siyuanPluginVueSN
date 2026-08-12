@@ -49,6 +49,46 @@
   }
 }
 
+// 文件扩展名过滤芯片按钮组（多选，分析中禁用降低透明度）
+.gls-ext-chips {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.gls-ext-chip {
+  font-size: $font-size-2xs; // 辅助控制文字（两级字号制）
+  font-family: $vp-mono;
+  color: var(--b3-theme-on-surface);
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  padding: 2px 6px;
+  cursor: pointer;
+  line-height: $line-height-normal;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+
+  &:hover:not(:disabled) {
+    border-color: var(--b3-theme-primary);
+  }
+
+  &:focus {
+    @include focus-ring;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// 选中态：主题色高亮
+.gls-ext-chip--active {
+  background: var(--b3-theme-primary-lightest);
+  border-color: var(--b3-theme-primary);
+  color: var(--b3-theme-primary);
+}
+
 // 抓取失败提示（弱化展示，不打断正常结果阅读）
 .gls-fail-hint {
   font-size: $font-size-2xs;

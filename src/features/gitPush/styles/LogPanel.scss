@@ -152,54 +152,109 @@
   }
 }
 
-// ── 日志列表 ──
+// ════ 日志表格（div-based table，列宽定义见 .gp-log-tcol--*）════
+
 .gp-log-list {
   display: flex;
   flex-direction: column;
 }
 
-// ── 日期分组标题（滚动时 sticky 置顶，实色背景防透出下层行）──
-.gp-log-group-title {
+// ── 表头（滚动时 sticky 置顶，实色背景防透出下层行）──
+.gp-log-thead {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-1 $spacing-2;
   position: sticky;
   top: 0;
-  z-index: 1;
-  padding: $spacing-1 $spacing-2;
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
-  font-weight: $font-weight-bold;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--b3-theme-on-surface-light);
-  background: var(--b3-theme-background);
+  z-index: 2;
+  background: var(--b3-theme-surface);
   border-bottom: 1px solid var(--b3-border-color);
 }
 
-.gp-log-item {
+.gp-log-th {
+  @include gp-label-base;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+// ── 列宽定义（表头与数据行共用，保证逐列对齐）──
+.gp-log-tcol {
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.gp-log-tcol--action {
+  width: 64px;
+}
+
+.gp-log-tcol--status {
+  width: 18px;
+  text-align: center;
+}
+
+.gp-log-tcol--project {
+  width: 140px;
+}
+
+.gp-log-tcol--summary {
+  flex: 1;
+}
+
+.gp-log-tcol--time {
+  // 容纳 "2026-08-12 14:30"（16 字符等宽）
+  width: 104px;
+}
+
+.gp-log-tcol--ops {
+  display: flex;
+  align-items: center;
+  gap: $spacing-px;
+  width: 44px;
+}
+
+// ── 数据行（点击打开详情弹窗）──
+.gp-log-trow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
   padding: $spacing-1 $spacing-2;
+  font-size: $font-size-xs;
   border-bottom: 1px solid var(--b3-border-color);
-  // 整个条目可点击打开详情弹窗
   cursor: pointer;
   transition: background 0.12s;
 
   &:hover {
     background: var(--b3-list-hover);
   }
+}
 
-  &:last-child {
-    border-bottom: none;
+// ── 展开子行（平台明细 / commit 信息，占位列对齐摘要列）──
+.gp-log-trow--sub {
+  cursor: default;
+  background: var(--b3-theme-surface);
+
+  &:hover {
+    background: var(--b3-theme-surface);
   }
 }
 
-.gp-log-item-head {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-  font-size: $font-size-xs;
+// ── 日期分组标题（表格分隔行）──
+.gp-log-group-title {
+  padding: $spacing-1 $spacing-2;
+  font-size: $font-size-2xs;
+  font-family: $vp-mono;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b3-theme-primary);
+  background: var(--b3-theme-primary-lightest);
+  border-bottom: 1px solid var(--b3-border-color);
 }
 
 // ── 操作类型徽章 ──
 .gp-log-badge {
-  flex-shrink: 0;
+  display: inline-block;
   font-size: $font-size-2xs;
   font-weight: $font-weight-bold;
   font-family: $vp-mono;
@@ -226,7 +281,7 @@
 
 // ── 状态点 ──
 .gp-log-dot {
-  flex-shrink: 0;
+  display: inline-block;
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -244,10 +299,10 @@
   }
 }
 
-// ── 项目名（可点击跳转）──
+// ── 项目名（可点击跳转列表视图，固定列宽内截断）──
 .gp-log-project-name {
-  flex-shrink: 0;
-  max-width: 160px;
+  display: block;
+  width: 100%;
   cursor: pointer;
   color: var(--b3-theme-primary);
   font-weight: $font-weight-semibold;
@@ -258,23 +313,45 @@
   }
 }
 
-// ── 摘要 ──
+// ── 摘要（剩余宽度内截断）──
 .gp-log-summary {
-  flex: 1;
-  min-width: 0;
+  display: block;
+  width: 100%;
   @include text-ellipsis;
   opacity: 0.65;
 }
 
-// ── 时间 ──
+// ── 时间（右对齐等宽）──
 .gp-log-time {
-  flex-shrink: 0;
+  display: block;
+  width: 100%;
+  text-align: right;
   font-size: $font-size-2xs;
   font-family: $vp-mono;
   opacity: 0.35;
 }
 
-// ── 复制按钮（默认隐藏，hover 条目时显示，降低视觉噪声）──
+// ── 展开/收起按钮（图标化，hover 提升）──
+.gp-log-expand-btn {
+  @include btn-reset;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: $radius-sm;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.4;
+  transition: opacity 0.12s, background 0.12s;
+
+  &:hover {
+    opacity: 1;
+    background: var(--b3-list-hover);
+  }
+}
+
+// ── 复制按钮（默认隐藏，hover 数据行时显示，降低视觉噪声）──
 .gp-log-copy-btn {
   @include btn-reset;
   flex-shrink: 0;
@@ -288,7 +365,7 @@
   opacity: 0;
   transition: opacity 0.12s, background 0.12s;
 
-  .gp-log-item:hover & {
+  .gp-log-trow:hover & {
     opacity: 0.45;
   }
 
@@ -298,23 +375,8 @@
   }
 }
 
-// ── 平台明细展开 ──
-.gp-log-expand-btn {
-  @include btn-reset;
-  font-size: $font-size-2xs;
-  opacity: 0.4;
-  padding: 2px 0;
-  margin-left: $spacing-8;
-  transition: opacity 0.12s;
-
-  &:hover {
-    opacity: 0.7;
-  }
-}
-
+// ── 平台明细（展开子行内，纵向排列）──
 .gp-log-platforms {
-  margin-top: $spacing-1;
-  padding-left: $spacing-8;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -355,14 +417,12 @@
   opacity: 0.5;
 }
 
-// ── commit 信息 ──
+// ── commit 信息（展开子行内，等宽截断）──
 .gp-log-commit-msg {
-  margin-top: $spacing-1;
-  padding-left: $spacing-8;
+  display: block;
+  width: 100%;
   font-size: $font-size-2xs;
   font-family: $vp-mono;
   opacity: 0.55;
   @include text-ellipsis;
 }
-
-

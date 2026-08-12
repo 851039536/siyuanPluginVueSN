@@ -104,96 +104,140 @@
         :text="i18n.logNoMatch"
       />
 
-      <!-- 日志列表 -->
+      <!-- 日志表格 -->
       <div
         v-else
         class="gp-log-list"
       >
+        <!-- 表头（滚动时 sticky 置顶） -->
+        <div class="gp-log-thead">
+          <!-- 表头："类型" -->
+          <span class="gp-log-th gp-log-tcol--action">{{ i18n.logColType }}</span>
+          <!-- 表头："状态" -->
+          <span class="gp-log-th gp-log-tcol--status">{{ i18n.logColStatus }}</span>
+          <!-- 表头："项目" -->
+          <span class="gp-log-th gp-log-tcol--project">{{ i18n.logColProject }}</span>
+          <!-- 表头："摘要" -->
+          <span class="gp-log-th gp-log-tcol--summary">{{ i18n.logColSummary }}</span>
+          <!-- 表头："时间" -->
+          <span class="gp-log-th gp-log-tcol--time">{{ i18n.logColTime }}</span>
+          <!-- 表头："操作" -->
+          <span class="gp-log-th gp-log-tcol--ops">{{ i18n.logColOps }}</span>
+        </div>
+
         <template
           v-for="group in groupedLogs"
           :key="group.dateKey"
         >
-          <!-- 日期分组标题（滚动时 sticky 置顶）："今天"/"昨天"/"2026-08-10" -->
+          <!-- 日期分组标题（分隔行）："今天"/"昨天"/"2026-08-10" -->
           <div class="gp-log-group-title">{{ group.dateLabel }}</div>
-          <div
+          <template
             v-for="entry in group.entries"
             :key="entry.id"
-            class="gp-log-item"
-            @click="openDetail(entry)"
           >
-            <div class="gp-log-item-head">
+            <!-- 数据行（点击打开详情弹窗） -->
+            <div
+              class="gp-log-trow"
+              @click="openDetail(entry)"
+            >
               <!-- 操作类型徽章 -->
-              <span
-                class="gp-log-badge"
-                :class="`gp-log-badge--${entry.action}`"
-              >{{ actionLabel(entry.action) }}</span>
+              <span class="gp-log-tcol gp-log-tcol--action">
+                <span
+                  class="gp-log-badge"
+                  :class="`gp-log-badge--${entry.action}`"
+                >{{ actionLabel(entry.action) }}</span>
+              </span>
               <!-- 状态点 -->
-              <span
-                class="gp-log-dot"
-                :class="entry.ok ? 'gp-log-dot--ok' : 'gp-log-dot--fail'"
-              />
-              <!-- 项目名（可点击跳转） -->
-              <span
-                class="gp-log-project-name"
-                :title="entry.summary"
-                @click.stop="emit('viewProject', entry.projectId)"
-              >
-                {{ entry.projectName }}
+              <span class="gp-log-tcol gp-log-tcol--status">
+                <span
+                  class="gp-log-dot"
+                  :class="entry.ok ? 'gp-log-dot--ok' : 'gp-log-dot--fail'"
+                />
+              </span>
+              <!-- 项目名（可点击跳转列表视图） -->
+              <span class="gp-log-tcol gp-log-tcol--project">
+                <span
+                  class="gp-log-project-name"
+                  :title="entry.summary"
+                  @click.stop="emit('viewProject', entry.projectId)"
+                >{{ entry.projectName }}</span>
               </span>
               <!-- 摘要 -->
-              <span class="gp-log-summary">{{ entry.summary }}</span>
+              <span class="gp-log-tcol gp-log-tcol--summary">
+                <span class="gp-log-summary">{{ entry.summary }}</span>
+              </span>
               <!-- 时间 -->
-              <span class="gp-log-time">{{ formatTime(entry.time) }}</span>
-              <!-- 复制条目（hover 显示，点击写入剪贴板，成功后切换勾选 2s） -->
-              <button
-                class="gp-log-copy-btn"
-                :title="i18n.logCopyEntry"
-                @click.stop="handleCopy(entry)"
-              >
-                <Icon
-                  :icon="copiedIds.has(entry.id) ? 'mdi:check' : 'mdi:content-copy'"
-                  height="12"
-                />
-              </button>
+              <span class="gp-log-tcol gp-log-tcol--time">
+                <span class="gp-log-time">{{ formatTime(entry.time) }}</span>
+              </span>
+              <!-- 操作列：展开平台明细 + 复制 -->
+              <span class="gp-log-tcol gp-log-tcol--ops">
+                <button
+                  v-if="hasPlatforms(entry)"
+                  class="gp-log-expand-btn"
+                  :title="expandedIds.has(entry.id) ? i18n.collapsePlatforms : i18n.expandPlatforms"
+                  @click.stop="toggleExpand(entry.id)"
+                >
+                  <Icon
+                    :icon="expandedIds.has(entry.id) ? 'mdi:chevron-up' : 'mdi:chevron-down'"
+                    height="12"
+                  />
+                </button>
+                <!-- 复制条目（点击写入剪贴板，成功后切换勾选 2s） -->
+                <button
+                  class="gp-log-copy-btn"
+                  :title="i18n.logCopyEntry"
+                  @click.stop="handleCopy(entry)"
+                >
+                  <Icon
+                    :icon="copiedIds.has(entry.id) ? 'mdi:check' : 'mdi:content-copy'"
+                    height="12"
+                  />
+                </button>
+              </span>
             </div>
-            <!-- 平台明细 -->
+            <!-- 平台明细子行（占位列对齐摘要列） -->
             <div
               v-if="hasPlatforms(entry) && expandedIds.has(entry.id)"
-              class="gp-log-platforms"
+              class="gp-log-trow gp-log-trow--sub"
             >
-              <div
-                v-for="p in entry.platforms!"
-                :key="p.key"
-                class="gp-log-platform-item"
-              >
-                <span
-                  class="gp-log-platform-ok"
-                  :class="p.ok ? 'gp-log-dot--ok' : p.skipped ? 'gp-log-dot--skip' : 'gp-log-dot--fail'"
-                >{{ p.ok ? '✓' : p.skipped ? '—' : '✗' }}</span>
-                <span class="gp-log-platform-label">{{ p.label }}</span>
-                <span
-                  v-if="p.skipped"
-                  class="gp-log-platform-skip"
-                >{{ i18n.opSkipped }}</span>
-                <span class="gp-log-platform-summary">{{ p.summary }}</span>
+              <span class="gp-log-tcol gp-log-tcol--action" />
+              <span class="gp-log-tcol gp-log-tcol--status" />
+              <span class="gp-log-tcol gp-log-tcol--project" />
+              <div class="gp-log-tcol gp-log-tcol--summary">
+                <div class="gp-log-platforms">
+                  <div
+                    v-for="p in entry.platforms!"
+                    :key="p.key"
+                    class="gp-log-platform-item"
+                  >
+                    <span
+                      class="gp-log-platform-ok"
+                      :class="p.ok ? 'gp-log-dot--ok' : p.skipped ? 'gp-log-dot--skip' : 'gp-log-dot--fail'"
+                    >{{ p.ok ? '✓' : p.skipped ? '—' : '✗' }}</span>
+                    <span class="gp-log-platform-label">{{ p.label }}</span>
+                    <span
+                      v-if="p.skipped"
+                      class="gp-log-platform-skip"
+                    >{{ i18n.opSkipped }}</span>
+                    <span class="gp-log-platform-summary">{{ p.summary }}</span>
+                  </div>
+                </div>
               </div>
             </div>
-            <!-- 展开/收起按钮 -->
-            <button
-              v-if="hasPlatforms(entry)"
-              class="gp-log-expand-btn"
-              @click.stop="toggleExpand(entry.id)"
-            >
-              {{ expandedIds.has(entry.id) ? (i18n.collapsePlatforms) : (i18n.expandPlatforms) }}
-            </button>
-            <!-- commit 信息 -->
+            <!-- commit 信息子行 -->
             <div
               v-if="entry.action === 'commit' && entry.message"
-              class="gp-log-commit-msg"
+              class="gp-log-trow gp-log-trow--sub"
             >
-              {{ entry.message }}
+              <span class="gp-log-tcol gp-log-tcol--action" />
+              <span class="gp-log-tcol gp-log-tcol--status" />
+              <span class="gp-log-tcol gp-log-tcol--project" />
+              <div class="gp-log-tcol gp-log-tcol--summary gp-log-commit-msg">
+                {{ entry.message }}
+              </div>
             </div>
-          </div>
+          </template>
         </template>
       </div>
 

@@ -1,4 +1,4 @@
-// gitPush 报告数据操作：git log --numstat 一次取回提交 + 每文件增删行（供代码统计报告聚合）
+// gitPush 报告数据操作：git log --numstat 一次取回提交 + 每文件增删行（供代码统计报告聚合 / 行数统计单命令抓取）
 import type { GitExecutor } from "./GitExecutor"
 import { parseNumstatBlocks, type NumstatCommit } from "../reportMetrics"
 
@@ -24,6 +24,25 @@ export class ReportOps {
     if (maxCount && maxCount > 0) args.push(`-${maxCount}`)
     if (since) args.push(`--since=${since}`)
     // 大仓库历史可能超过默认 30s，放宽到 60s
+    const raw = await this.executor.execGit(projectPath, args, undefined, 60000)
+    if (!raw) return []
+    return parseNumstatBlocks(raw)
+  }
+
+  /**
+   * 获取带提交摘要的 numstat 日志（行数统计专用，一条命令同时满足提交条目 + 行数排行）。
+   * format 在 getNumstatLog 基础上追加 %h（短 hash）与 %s（主题），
+   * parseNumstatBlocks 按 header 段数自适应解析，不影响报告视图的旧格式链路。
+   * maxCount 仅取最近 N 条提交；git 失败/路径无效时抛出错误。
+   */
+  async getCommitStatsLog(projectPath: string, maxCount?: number): Promise<NumstatCommit[]> {
+    const args = [
+      "-c", "core.quotepath=false",
+      "log", "--numstat", "--no-renames",
+      "--pretty=format:%x1e%h%x1f%an%x1f%aI%x1f%s",
+    ]
+    if (maxCount && maxCount > 0) args.push(`-${maxCount}`)
+    // 与 getNumstatLog 一致的 60s 超时（大仓库历史可能超过默认 30s）
     const raw = await this.executor.execGit(projectPath, args, undefined, 60000)
     if (!raw) return []
     return parseNumstatBlocks(raw)

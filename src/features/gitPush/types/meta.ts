@@ -245,6 +245,26 @@ export interface AuthorLineRankItem extends LineRankBase {
   author: string
 }
 
+/** 项目行数详情 — 文件明细行（弹窗内由 aggregateFileStats 即时聚合，不持久化） */
+export interface FileLineDetailRow {
+  /** 文件路径（相对仓库根） */
+  path: string
+  /** 新增行数（numstat 聚合，已按扩展名过滤） */
+  added: number
+  /** 删除行数 */
+  deleted: number
+  /** 净增行数 = added - deleted */
+  net: number
+  /** 修改次数（来自 FileAgg.modCount） */
+  modCount: number
+  /** 参与作者数（来自 FileAgg.authors.size） */
+  authorCount: number
+  /** 条形宽度百分比（新增行 / 项目最大文件新增行，0~100） */
+  pct: string
+  /** 新增行数占项目总新增的百分比（保留 1 位小数） */
+  share: string
+}
+
 /** 提交分析聚合视图（单对象 prop，与 StatsView 同模式） */
 export interface CommitAnalysisStats {
   /** 跨项目提交总数 */

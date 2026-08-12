@@ -566,6 +566,9 @@ export const COMMON_ICONS = {
   file: {
     icon: "mdi:file-document",
   },
+  fileOutline: {
+    icon: "mdi:file-document-outline",
+  },
   folder: {
     icon: "mdi:folder",
   },
@@ -574,6 +577,9 @@ export const COMMON_ICONS = {
   },
   image: {
     icon: "mdi:image",
+  },
+  accountGroup: {
+    icon: "mdi:account-group-outline",
   },
 
   // 速记 — 日历/重复/箭头

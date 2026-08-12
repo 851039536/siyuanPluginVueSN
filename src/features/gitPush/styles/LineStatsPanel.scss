@@ -193,6 +193,23 @@
   font-size: $font-size-xs;
 }
 
+// 可点击项目行：hover 时项目名变主题色，提示可打开详情（与 CommitAnalysisPanel 交互模式一致）
+.gls-bar-row--clickable {
+  cursor: pointer;
+  padding: $spacing-1;
+  margin: -$spacing-1;
+  border-radius: $radius-sm;
+  transition: background-color 0.12s;
+
+  &:hover {
+    background: var(--b3-theme-surface);
+
+    .gls-bar-label {
+      color: var(--b3-theme-primary);
+    }
+  }
+}
+
 // 排名序号列（等宽数字右对齐，弱化强调，非交互）
 .gls-bar-rank {
   flex: 0 0 20px;

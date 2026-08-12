@@ -128,7 +128,9 @@
               <div
                 v-for="(row, idx) in projectRows"
                 :key="row.id"
-                class="gls-bar-row"
+                class="gls-bar-row gls-bar-row--clickable"
+                :title="i18n.lineDetailClickHint"
+                @click="emit('viewProject', row.id)"
               >
                 <!-- 排名序号：从 1 开始 -->
                 <span class="gls-bar-rank">{{ idx + 1 }}</span>
@@ -223,10 +225,22 @@
       @close="showExtDialog = false"
       @apply="onApplyExt"
     />
+
+    <!-- 项目行数详情弹窗（点击项目行打开，展示该项目的文件/作者行数明细） -->
+    <ProjectLineDetail
+      v-if="lineDetailProjectId"
+      :i18n="i18n"
+      :project-id="lineDetailProjectId"
+      :project-name="lineDetailProjectName"
+      :get-numstat="getProjectNumstat"
+      :extensions="selectedExtensions"
+      @close="emit('closeLineDetail')"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+import type { NumstatCommit } from "../../reportMetrics"
 import type { AuthorLineRankItem, ProjectLineRankItem } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed, ref } from "vue"
@@ -235,6 +249,7 @@ import { relativeTime } from "../../utils"
 import EmptyState from "../common/EmptyState.vue"
 import ExtFilterDialog from "./ExtFilterDialog.vue"
 import Loader from "@/components/Loader.vue"
+import ProjectLineDetail from "./ProjectLineDetail.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -253,16 +268,27 @@ const props = defineProps<{
   commitCount: number
   /** 选中的文件扩展名过滤（空数组 = 不过滤） */
   selectedExtensions: string[]
+  /** 详情弹窗目标项目 id（非空即打开弹窗） */
+  lineDetailProjectId: string
+  /** 按 projectId 获取该项目原始 numstat（来自 useCommitAnalysis 内存缓存） */
+  getProjectNumstat: (projectId: string) => NumstatCommit[]
 }>()
 
 const emit = defineEmits<{
   runAnalysis: []
   updateCount: [n: number]
   'update:selectedExtensions': [exts: string[]]
+  viewProject: [projectId: string]
+  closeLineDetail: []
 }>()
 
 /** 过滤配置弹窗显示状态 */
 const showExtDialog = ref(false)
+
+/** 详情弹窗标题用项目名（从排行中查找；项目已删除时回退显示 id） */
+const lineDetailProjectName = computed(
+  () => props.projectRanking.find((r) => r.id === props.lineDetailProjectId)?.name ?? props.lineDetailProjectId,
+)
 
 /** 弹窗应用过滤：回传选中列表并关闭 */
 function onApplyExt(exts: string[]) {

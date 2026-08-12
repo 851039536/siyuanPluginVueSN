@@ -83,7 +83,7 @@ export function parseNumstatBlocks(raw: string): NumstatCommit[] {
   return commits
 }
 
-/** 解析 numstat 块内的文件变更行（"新增\t删除\t路径"，无效行跳过） */
+/** 解析 numstat 块内的文件变更行（"新增\t删除\t路径"，二进制文件 git 输出 "-\t-" 跳过，无效行跳过） */
 function parseFileLines(lines: string[]): NumstatCommit["files"] {
   const files: NumstatCommit["files"] = []
   for (let j = 1; j < lines.length; j++) {
@@ -218,14 +218,14 @@ export function aggregateFileStats(commits: NumstatCommit[]): Map<string, FileAg
 
 // ── 行数聚合：跨项目提交分析用（单项目/单作者的增删行汇总，与 aggregateAuthorStats 同源但不做文件级派生统计）──
 
-/** 文件路径是否匹配给定的扩展名白名单（空数组/undefined = 不过滤，全部通过） */
+/** 文件路径是否应纳入统计（extensions 黑名单排除语义：空数组/undefined = 不过滤，全部通过；勾选 = 排除该格式） */
 export function shouldIncludeFile(filePath: string, extensions?: string[]): boolean {
   if (!extensions || extensions.length === 0) return true
   const lower = filePath.toLowerCase()
-  return extensions.some(ext => lower.endsWith(ext.toLowerCase()))
+  return !extensions.some(ext => lower.endsWith(ext.toLowerCase()))
 }
 
-/** 从 NumstatCommit[] 汇总单项目总增删行数（extensions 可选白名单过滤） */
+/** 从 NumstatCommit[] 汇总单项目总增删行数（extensions 可选黑名单排除过滤） */
 export function sumProjectLines(commits: NumstatCommit[], extensions?: string[]): { added: number, deleted: number } {
   let added = 0
   let deleted = 0
@@ -239,7 +239,7 @@ export function sumProjectLines(commits: NumstatCommit[], extensions?: string[])
   return { added, deleted }
 }
 
-/** 从 NumstatCommit[] 汇总每人增删行数（Map<作者名, {added, deleted}>，extensions 可选白名单过滤） */
+/** 从 NumstatCommit[] 汇总每人增删行数（Map<作者名, {added, deleted}>，extensions 可选黑名单排除过滤） */
 export function sumAuthorLines(commits: NumstatCommit[], extensions?: string[]): Map<string, { added: number, deleted: number }> {
   const map = new Map<string, { added: number, deleted: number }>()
   for (const c of commits) {

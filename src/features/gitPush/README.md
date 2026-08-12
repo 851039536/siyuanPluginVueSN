@@ -17,7 +17,7 @@
 - **项目分类**：按颜色标签分组管理项目
 - **标签/状态/备注**：多标签筛选、状态徽章循环切换（活跃/维护中/暂停）、项目备注
 - **统计视图**：远程覆盖率、待处理项目合并视图（推送状态概览 + 待推送/暂存/未暂存表格）、平台配置状态
-- **行数统计视图**：独立 Tab，统计各项目/作者的代码新增、删除、净增行数排行（千位分隔数字，净增正绿负红），支持 30/50/100/200 条数选择
+- **行数统计视图**：独立 Tab，统计各项目/作者的代码新增、删除、净增行数排行（千位分隔数字，净增正绿负红），支持 30/50/100/200 条数选择；可配置文件格式过滤（扩展名多选排除列表，勾选后跳过对应格式，不选则统计所有文件）
 - **扫描导入**：递归扫描目录批量导入 Git 仓库
 - **远程配置**：添加/编辑/删除远程仓库，支持行内编辑 URL
 
@@ -79,9 +79,10 @@ src/features/gitPush/
 │   │   └── RepoLinkAuditSection.vue # 仓库链接审计
 │   ├── log/                         # 操作日志视图专属（1 个）
 │   │   └── LogPanel.vue             # 操作日志面板
-│   └── analysis/                    # 提交分析视图专属（5 个）
+│   └── analysis/                    # 提交分析视图专属（6 个）
 │       ├── CommitAnalysisPanel.vue  # 提交分析面板
-│       ├── LineStatsPanel.vue       # 行数统计面板（项目/作者行数排行）
+│       ├── LineStatsPanel.vue       # 行数统计面板（项目/作者行数排行 + 过滤配置按钮）
+│       ├── ExtFilterDialog.vue      # 文件格式过滤配置弹窗（扩展名多选排除列表）
 │       ├── CommitAnalysisSettings.vue# 分析设置
 │       ├── CommitCalendar.vue       # 提交日历
 │       └── CommitHeatmap.vue        # 提交热力图
@@ -89,7 +90,8 @@ src/features/gitPush/
     ├── index.scss                   # 主面板样式
     ├── StatsPanel.scss              # 统计视图样式
     ├── CommitAnalysisPanel.scss     # 提交分析面板样式
-    ├── LineStatsPanel.scss          # 行数统计面板样式
+    ├── LineStatsPanel.scss          # 行数统计面板样式（含过滤按钮）
+    ├── ExtFilterDialog.scss         # 文件格式过滤弹窗样式
     ├── WorkingTreePanel.scss        # 工作区面板样式
     ├── WorkingTreeDiffDialog.scss   # 差异弹窗样式
     ├── AiErrorAnalysisDialog.scss   # AI 错误分析弹窗样式
@@ -162,7 +164,7 @@ GitPushManager (facade)
 3. 面板自动检测 GitHub/Gitee/Gitea 远程
 4. **列表视图**：展开项目卡片查看工作区变更、分支列表、提交历史
 5. **统计视图**：查看远程覆盖率、待处理项目汇总、平台配置状态
-6. **行数统计视图**：点击「开始行数分析」统计各项目/作者的代码新增/删除/净增行数排行
+6. **行数统计视图**：点击「开始行数分析」统计各项目/作者的代码新增/删除/净增行数排行；可按需点击过滤按钮勾选要排除的文件格式
 7. 使用拉取/推送按钮同步远程仓库
 8. 暂存文件 → 生成/输入提交信息 → 提交
 

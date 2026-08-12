@@ -27,6 +27,10 @@ import { resolveValidPath } from "./utils"
 
 /** 单条提交的 numstat 解析结果 */
 export interface NumstatCommit {
+  /** 短 hash（7 位，仅 getCommitStatsLog 新格式解析时填充，旧格式/报告数据为 undefined） */
+  hash?: string
+  /** 提交主题（仅 getCommitStatsLog 新格式解析时填充，旧格式/报告数据为 undefined） */
+  message?: string
   /** 作者名 */
   author: string
   /** ISO 时间戳（git %aI 输出，new Date 可直接解析） */
@@ -42,8 +46,10 @@ function unquotePath(s: string): string {
 }
 
 /**
- * 解析 git log --pretty=format:%x1e%an%x1f%aI --numstat 输出。
- * 结构：每条提交 = "<RS>作者<US>ISO日期\n" + 若干 "新增\t删除\t路径\n" 行，提交间以空行分隔。
+ * 解析 git log --numstat 输出（header 段数自适应，兼容两种 format）。
+ * 结构：每条提交 = "<RS>header 段...\n" + 若干 "新增\t删除\t路径\n" 行，提交间以空行分隔。
+ * - 旧格式（getNumstatLog，报告视图）：header = "<US>作者<US>ISO日期"（2 段），解析 author/date
+ * - 新格式（getCommitStatsLog，行数统计）：header = "<US>hash<US>作者<US>ISO日期<US>主题"（4 段），额外解析 hash/message
  */
 export function parseNumstatBlocks(raw: string): NumstatCommit[] {
   const commits: NumstatCommit[] = []
@@ -52,25 +58,45 @@ export function parseNumstatBlocks(raw: string): NumstatCommit[] {
     const chunk = chunks[i]
     const lines = chunk.split("\n")
     const header = lines[0] || ""
-    const sep = header.indexOf("\x1f")
-    if (sep === -1) continue
-    const author = header.slice(0, sep).trim()
-    const date = header.slice(sep + 1).trim()
-    if (!author || !date) continue
-    const files: NumstatCommit["files"] = []
-    for (let j = 1; j < lines.length; j++) {
-      const line = lines[j]
-      if (!line) continue
-      const parts = line.split("\t")
-      if (parts.length < 3) continue
-      const added = Number.parseInt(parts[0], 10)
-      const deleted = Number.parseInt(parts[1], 10)
-      if (Number.isNaN(added) || Number.isNaN(deleted)) continue
-      files.push({ path: unquotePath(parts.slice(2).join("\t")), added, deleted })
+    const parts = header.split("\x1f")
+    // 4 段新格式：hash / author / date / message（subject 内含 \x1f 时用 slice(3) 保底还原）
+    if (parts.length >= 4) {
+      const hash = parts[0].trim()
+      const author = parts[1].trim()
+      const date = parts[2].trim()
+      const message = parts.slice(3).join("\x1f").trim()
+      if (!author || !date) continue
+      const files = parseFileLines(lines)
+      commits.push({ hash, author, date, message, files })
+      continue
     }
-    commits.push({ author, date, files })
+    // 2 段旧格式：author / date
+    if (parts.length >= 2) {
+      const author = parts[0].trim()
+      const date = parts[1].trim()
+      if (!author || !date) continue
+      const files = parseFileLines(lines)
+      commits.push({ author, date, files })
+      continue
+    }
   }
   return commits
+}
+
+/** 解析 numstat 块内的文件变更行（"新增\t删除\t路径"，无效行跳过） */
+function parseFileLines(lines: string[]): NumstatCommit["files"] {
+  const files: NumstatCommit["files"] = []
+  for (let j = 1; j < lines.length; j++) {
+    const line = lines[j]
+    if (!line) continue
+    const parts = line.split("\t")
+    if (parts.length < 3) continue
+    const added = Number.parseInt(parts[0], 10)
+    const deleted = Number.parseInt(parts[1], 10)
+    if (Number.isNaN(added) || Number.isNaN(deleted)) continue
+    files.push({ path: unquotePath(parts.slice(2).join("\t")), added, deleted })
+  }
+  return files
 }
 
 // ── 聚合：单次遍历产出作者统计 + 文件统计两张表 ──

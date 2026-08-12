@@ -316,9 +316,14 @@ export class GitPushManager {
 
   // ── 代码统计报告（ReportOps：numstat 提交日志 + 首提交日期）──
 
-  /** 获取 numstat 提交日志（供代码统计报告/提交分析行数聚合；git 失败返回空数组） */
+  /** 获取 numstat 提交日志（供代码统计报告聚合；行数统计改用 getCommitStatsLog 单命令抓取；git 失败抛出错误） */
   async getNumstatLog(projectPath: string, since?: string, maxCount?: number): Promise<NumstatCommit[]> {
     return this.reportOps.getNumstatLog(projectPath, since, maxCount)
+  }
+
+  /** 获取带提交摘要的 numstat 日志（行数统计专用单命令抓取：hash/message/author/date + 每文件增删行；git 失败抛出错误） */
+  async getCommitStatsLog(projectPath: string, maxCount?: number): Promise<NumstatCommit[]> {
+    return this.reportOps.getCommitStatsLog(projectPath, maxCount)
   }
 
   /** 获取仓库首个提交日期（ISO，无提交/失败返回空串） */

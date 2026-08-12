@@ -27,14 +27,14 @@
               :value="n"
             >{{ n }}</option>
           </select>
-          <!-- 按钮文案："开始行数分析"/"重新分析"（分析中图标转圈） -->
+          <!-- 按钮文案："开始行数分析"/"重新分析"（分析中切换为环形 loading 图标并旋转，业务图标不参与旋转） -->
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm"
             :disabled="analyzing"
             @click="emit('runAnalysis')"
           >
             <Icon
-              icon="mdi:code-tags"
+              :icon="analyzing ? 'mdi:loading' : 'mdi:code-tags'"
               height="12"
               :class="{ 'gp-spin': analyzing }"
             />

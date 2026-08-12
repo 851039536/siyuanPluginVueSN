@@ -33,7 +33,7 @@ export const LINE_STATS_EXTENSIONS = [
   ".ts", ".vue", ".js", ".jsx", ".tsx",
   ".css", ".scss", ".json", ".md", ".html",
   ".cs", ".xaml", ".py", ".go",
-  ".dll", ".sdb", ".pdb", ".ini", ".xml", ".log", ".txt", ".zip", ".7z",
+  ".dll", ".sdb", ".pdb", ".ini", ".xml", ".log", ".txt", ".zip", ".7z", ".xuv",
 ] as const
 
 export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProject[]>) {

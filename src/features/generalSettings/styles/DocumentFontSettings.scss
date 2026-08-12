@@ -99,6 +99,22 @@
   min-width: 120px;
 }
 
+/* 内置字体提示（霞鹜文楷随插件分发） */
+.builtin-font-hint {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  margin: $spacing-1 0 0 0;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-primary);
+  opacity: 0.85;
+  line-height: $line-height-normal;
+}
+
+.builtin-font-hint-icon {
+  flex-shrink: 0;
+}
+
 /* 预设按钮 */
 .preset-buttons {
   display: flex;

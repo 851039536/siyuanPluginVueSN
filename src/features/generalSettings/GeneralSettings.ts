@@ -37,6 +37,7 @@ import {
   applyTableStyleCss,
   generateLevelDisplayCss,
   generateTabPinCSS,
+  injectBuiltinFont,
   TAB_PIN_STYLE_ID,
 } from "./utils/styles"
 
@@ -62,6 +63,7 @@ export class GeneralSettings {
 
   public async init() {
     this.addDock()
+    this.injectBuiltinFonts()
     this.applySavedSettings()
     await this.applyCodeBlockStyle()
     await this.applyListStyle()
@@ -89,6 +91,20 @@ export class GeneralSettings {
         onSettingsChange: handleSettingsChange,
       },
     })
+  }
+
+  /**
+   * 注入内置字体（霞鹜文楷）@font-face：从插件 assets 目录加载字体文件，
+   * 使未在系统安装该字体的用户也能在文档字体中选用。assetsPath 为思源运行时注入属性
+   * （指向 /plugins/<name>/assets/），siyuan.d.ts 未声明，故用类型断言访问；
+   * 缺失时按 /plugins/<name>/assets/ 兜底拼接。
+   */
+  private injectBuiltinFonts() {
+    const plugin = this.plugin as unknown as { assetsPath?: string }
+    const assetsPath = plugin.assetsPath || `/plugins/${this.plugin.name}/assets/`
+    if (assetsPath) {
+      injectBuiltinFont(assetsPath)
+    }
   }
 
   private handleSettingsChange(settings: { moduleId: string, settings: Record<string, unknown> }) {

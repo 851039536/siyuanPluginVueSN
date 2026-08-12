@@ -83,9 +83,13 @@
       :failed-count="analysisFailedCount"
       :commit-count="analysisCommitCount"
       :selected-extensions="selectedExtensions"
+      :line-detail-project-id="lineDetailProjectId"
+      :get-project-numstat="getProjectNumstat"
       @run-analysis="runLineStatsAnalysis"
       @update-count="(n) => setCommitCount(n, true)"
       @update:selected-extensions="updateSelectedExtensions"
+      @view-project="lineDetailProjectId = $event"
+      @close-line-detail="lineDetailProjectId = ''"
     />
 
     <!-- ========== 代码统计报告视图 ========== -->
@@ -622,7 +626,11 @@ const {
   authorLineRanking,
   selectedExtensions,
   updateSelectedExtensions,
+  getProjectNumstat,
 } = useCommitAnalysis(props.manager, projects)
+
+/** 行数统计视图：项目详情弹窗目标项目 id（非空即打开弹窗，关闭时清空） */
+const lineDetailProjectId = ref("")
 
 // ── 代码统计报告（单项目 git numstat 统计：团队总览/贡献度/技术债务/热点；进入视图自动生成）──
 const {

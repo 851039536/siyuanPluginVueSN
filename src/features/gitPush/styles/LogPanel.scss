@@ -8,6 +8,47 @@
   padding: $spacing-1 $spacing-2 $spacing-1 0;
 }
 
+// ── 状态统计条（PUSH 12✓/2✗ · PULL 8✓ · COMMIT 45✓）──
+.gp-log-stats {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $spacing-1 $spacing-2;
+  margin-bottom: $spacing-2;
+  padding: $spacing-1 $spacing-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  background: var(--b3-theme-surface);
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+}
+
+.gp-log-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-px;
+  white-space: nowrap;
+}
+
+.gp-log-stat-label {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.5;
+  margin-right: $spacing-1;
+}
+
+.gp-log-stat-ok {
+  color: var(--b3-theme-success);
+}
+
+.gp-log-stat-fail {
+  color: var(--b3-theme-error);
+}
+
+.gp-log-stat-sep {
+  opacity: 0.25;
+}
+
 // ── 工具栏 ──
 .gp-log-toolbar {
   display: flex;
@@ -17,7 +58,42 @@
   padding: 0 $spacing-2;
 }
 
+// 项目搜索框（icon + input 组合，定宽可收缩）
+.gp-log-search {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  flex: 0 1 200px;
+  min-width: 120px;
+  padding: 2px $spacing-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  color: var(--b3-theme-on-surface-light);
+  transition: border-color 0.12s;
+
+  &:focus-within {
+    @include focus-ring;
+  }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    outline: none;
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-on-background);
+
+    &::placeholder {
+      color: var(--b3-theme-on-surface-light);
+      opacity: 0.5;
+    }
+  }
+}
+
 .gp-log-count {
+  flex-shrink: 0;
   font-size: $font-size-2xs;
   font-family: $vp-mono;
   opacity: 0.45;
@@ -27,12 +103,16 @@
 
 .gp-log-filters {
   display: flex;
+  align-items: center;
   gap: $spacing-px;
   margin-left: auto;
 }
 
 .gp-log-filter-btn {
   @include btn-reset;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
   font-size: $font-size-2xs;
   padding: 2px 8px;
   border-radius: $radius-sm;
@@ -49,6 +129,14 @@
     opacity: 1;
     background: var(--b3-theme-primary-lightest);
     color: var(--b3-theme-primary);
+  }
+
+  // 仅失败快捷筛选：active 红色高亮
+  &--fail {
+    &.active {
+      background: var(--b3-theme-error-lightest);
+      color: var(--b3-theme-error);
+    }
   }
 }
 
@@ -70,9 +158,32 @@
   flex-direction: column;
 }
 
+// ── 日期分组标题（滚动时 sticky 置顶，实色背景防透出下层行）──
+.gp-log-group-title {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: $spacing-1 $spacing-2;
+  font-size: $font-size-2xs;
+  font-family: $vp-mono;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface-light);
+  background: var(--b3-theme-background);
+  border-bottom: 1px solid var(--b3-border-color);
+}
+
 .gp-log-item {
   padding: $spacing-1 $spacing-2;
   border-bottom: 1px solid var(--b3-border-color);
+  // 整个条目可点击打开详情弹窗
+  cursor: pointer;
+  transition: background 0.12s;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
 
   &:last-child {
     border-bottom: none;
@@ -161,6 +272,30 @@
   font-size: $font-size-2xs;
   font-family: $vp-mono;
   opacity: 0.35;
+}
+
+// ── 复制按钮（默认隐藏，hover 条目时显示，降低视觉噪声）──
+.gp-log-copy-btn {
+  @include btn-reset;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: $radius-sm;
+  color: var(--b3-theme-on-surface);
+  opacity: 0;
+  transition: opacity 0.12s, background 0.12s;
+
+  .gp-log-item:hover & {
+    opacity: 0.45;
+  }
+
+  &:hover {
+    opacity: 1;
+    background: var(--b3-list-hover);
+  }
 }
 
 // ── 平台明细展开 ──

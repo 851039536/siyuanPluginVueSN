@@ -596,6 +596,10 @@ export const COMMON_ICONS = {
     icon: "mdi:alert-circle",
     color: "#ef4444",
   },
+  alertCircleOutline: {
+    icon: "mdi:alert-circle-outline",
+    color: "#ef4444",
+  },
   checkCircle: {
     icon: "mdi:check-circle",
     color: "#22c55e",

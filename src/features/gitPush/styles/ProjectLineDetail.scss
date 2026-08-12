@@ -1,0 +1,364 @@
+@use "./variables" as *;
+@use "./mixins" as *;
+
+// ── 项目行数详情弹窗：遮罩 + 双 Tab（文件明细表格 / 作者行数排行）──
+.pld-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  // 基准字号：弹窗内文字继承内容级 12px
+  font-size: $font-size-xs;
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.pld-dialog {
+  width: 720px;
+  max-width: 92vw;
+  max-height: 82vh;
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-lg;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+// 标题栏：项目名（主）+ 说明（次）+ 关闭按钮
+.pld-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+  padding: $spacing-3 $spacing-4;
+  border-bottom: 1px solid var(--b3-border-color);
+  background: var(--b3-theme-surface);
+}
+
+.pld-title-wrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: $spacing-2;
+}
+
+.pld-title {
+  font-weight: $font-weight-semibold;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-background);
+  @include text-ellipsis;
+}
+
+.pld-title-sub {
+  flex-shrink: 0;
+  font-size: $font-size-2xs; // 辅助说明（两级字号制）
+  opacity: 0.45;
+}
+
+.pld-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+  background: transparent;
+  border: none;
+  border-radius: $radius-sm;
+  cursor: pointer;
+  font-size: $font-size-sm;
+
+  &:hover {
+    opacity: 1;
+    background: var(--b3-theme-primary-lightest);
+    color: var(--b3-theme-primary);
+  }
+
+  &:focus {
+    @include focus-ring;
+  }
+}
+
+// ── Tab 切换栏 ──
+.pld-tabs {
+  display: flex;
+  gap: $spacing-1;
+  padding: $spacing-2 $spacing-4 0;
+  border-bottom: 1px solid var(--b3-border-color);
+}
+
+.pld-tab {
+  @include gp-label-base;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: $spacing-1 $spacing-3 $spacing-2;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  cursor: pointer;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+  transition: opacity 0.12s, border-color 0.12s, color 0.12s;
+
+  &:hover {
+    opacity: 0.8;
+  }
+
+  &:focus {
+    @include focus-ring;
+  }
+
+  &--active {
+    opacity: 1;
+    border-bottom-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+  }
+}
+
+// Tab 计数徽章
+.pld-tab-count {
+  font-size: $font-size-2xs;
+  font-family: $vp-mono;
+  font-weight: $font-weight-bold;
+  padding: 0 6px;
+  border-radius: $radius-full;
+  background: var(--b3-theme-primary-lightest);
+  color: var(--b3-theme-primary);
+  line-height: $line-height-normal;
+}
+
+// ── 内容区（滚动）──
+.pld-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: $spacing-3 $spacing-4;
+}
+
+// ── 文件明细表格 ──
+.pld-table-head,
+.pld-file-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: $font-size-xs;
+}
+
+.pld-table-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding-bottom: $spacing-1;
+  font-size: $font-size-2xs; // 表头弱化（两级字号制）
+  font-weight: $font-weight-bold;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--b3-theme-on-surface-light);
+  background: var(--b3-theme-background);
+}
+
+.pld-file-row {
+  padding: 4px 0;
+  @include row-divider;
+}
+
+// 单元格列宽（表头与数据行共用）
+.pld-cell {
+  flex-shrink: 0;
+
+  &--rank {
+    width: 20px;
+    font-family: $vp-mono;
+    font-size: $font-size-2xs;
+    text-align: right;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.5;
+  }
+
+  // 文件路径：占满剩余，等宽字体 + 省略，悬停显示完整路径
+  &--file {
+    flex: 1;
+    min-width: 0;
+    font-family: $vp-mono;
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-on-surface);
+    @include text-ellipsis;
+  }
+
+  // 数字列（修改/作者/新增/删除）右对齐等宽
+  &--num {
+    width: 40px;
+    text-align: right;
+    font-family: $vp-mono;
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-on-surface);
+  }
+
+  // 净增列（正绿负红）
+  &--net {
+    width: 52px;
+    text-align: right;
+    font-family: $vp-mono;
+    font-size: $font-size-2xs;
+  }
+
+  // 占比列：迷你条形 + 文本
+  &--share {
+    width: 84px;
+    display: flex;
+    align-items: center;
+    gap: $spacing-1;
+  }
+}
+
+.pld-share-track {
+  flex: 1;
+  height: 5px;
+  background: var(--b3-theme-surface);
+  border-radius: $radius-sm;
+  overflow: hidden;
+}
+
+.pld-share-fill {
+  display: block;
+  height: 100%;
+  border-radius: $radius-sm;
+  background: var(--b3-theme-primary);
+}
+
+.pld-share-text {
+  flex: 0 0 40px;
+  text-align: right;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+}
+
+// ── 作者行数排行（与面板全局作者排行同模式）──
+.pld-bar-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.pld-bar-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: $font-size-xs;
+}
+
+.pld-bar-rank {
+  flex: 0 0 20px;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  text-align: right;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+}
+
+.pld-bar-label {
+  flex: 0 0 120px; // 作者列宽放宽，容纳更长名字
+  @include text-ellipsis;
+  opacity: 0.75;
+}
+
+.pld-bar-track {
+  flex: 1;
+  height: 5px;
+  background: var(--b3-theme-surface);
+  border-radius: $radius-sm;
+  overflow: hidden;
+}
+
+.pld-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: $radius-sm;
+  background: var(--b3-theme-primary);
+}
+
+.pld-line-nums {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+}
+
+.pld-line-num {
+  flex-shrink: 0;
+  white-space: nowrap;
+  text-align: right;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+}
+
+.pld-line-num + .pld-line-num {
+  margin-left: $spacing-2;
+}
+
+.pld-bar-share {
+  flex: 0 0 42px;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+}
+
+// ── 数字着色 ──
+.pld-num--add {
+  color: var(--b3-theme-success);
+}
+
+.pld-num--del {
+  color: var(--b3-theme-error);
+}
+
+.pld-num--net {
+  font-weight: $font-weight-semibold;
+}
+
+// 净增语义色：正→绿 / 负→红 / 零→灰（数字与条形 fill 共用）
+.pld-net--pos {
+  color: var(--b3-theme-success);
+}
+
+.pld-net--neg {
+  color: var(--b3-theme-error);
+}
+
+.pld-net--zero {
+  opacity: 0.5;
+}
+
+.pld-share-fill.pld-net--pos,
+.pld-bar-fill.pld-net--pos {
+  background: var(--b3-theme-success);
+}
+
+.pld-share-fill.pld-net--neg,
+.pld-bar-fill.pld-net--neg {
+  background: var(--b3-theme-error);
+}
+
+// ── 底部操作栏 ──
+.pld-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: $spacing-3 $spacing-4;
+  border-top: 1px solid var(--b3-border-color);
+  background: var(--b3-theme-surface);
+}

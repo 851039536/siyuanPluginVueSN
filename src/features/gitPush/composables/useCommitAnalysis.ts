@@ -59,6 +59,8 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   const projectLineRanking = ref<ProjectLineRankItem[]>([])
   /** 作者代码行数排行（按新增行降序，行数统计视图分析后填充） */
   const authorLineRanking = ref<AuthorLineRankItem[]>([])
+  /** per-project 原始 numstat 数据（仅内存不持久化；行数统计分析后填充，供项目详情弹窗消费，下次分析覆盖） */
+  const perProjectNumstat = ref<Map<string, NumstatCommit[]>>(new Map())
 
   /** 选中的文件扩展名过滤（空数组 = 不过滤所有文件，变更后即时持久化 + 下次分析生效） */
   const selectedExtensions = ref<string[]>([])
@@ -187,6 +189,14 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         const { projectRanking, authorRanking } = buildLineRankings(settled, nameById, selectedExtensions.value)
         projectLineRanking.value = projectRanking
         authorLineRanking.value = authorRanking
+        // 保留 per-project 原始 numstat（仅 fulfilled 且有文件变更数据的项目），供项目详情弹窗按 projectId 即时聚合文件/作者明细
+        const numstatMap = new Map<string, NumstatCommit[]>()
+        settled.forEach((r) => {
+          if (r.status === "fulfilled" && r.value.numstat.length > 0) {
+            numstatMap.set(r.value.projectId, r.value.numstat)
+          }
+        })
+        perProjectNumstat.value = numstatMap
       }
       // 提交分析保存缓存时沿用旧缓存的行数排行，避免覆盖行数视图已分析的数据
       const oldCache = await manager.storage.commitAnalysisCache.loadOrDefault()
@@ -294,6 +304,11 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     await manager.storage.lineStatsCache.save({ ...cache, selectedExtensions: exts })
   }
 
+  /** 按 projectId 获取该项目的原始 numstat 数据（仅内存，未找到或项目无变更时返回空数组） */
+  function getProjectNumstat(projectId: string): NumstatCommit[] {
+    return perProjectNumstat.value.get(projectId) ?? []
+  }
+
   /** 分析聚合视图（CommitAnalysisPanel 唯一数据 prop，新增维度只需改这里 + 类型 + 面板三处） */
   const analysisStats = computed<CommitAnalysisStats>(() => {
     // 实时过滤已删除项目的条目（项目删除后缓存/内存中的残留数据不参与统计与展示）
@@ -343,5 +358,6 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     authorLineRanking,
     selectedExtensions,
     updateSelectedExtensions,
+    getProjectNumstat,
   }
 }

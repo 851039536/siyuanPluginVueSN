@@ -306,6 +306,7 @@ const DEFAULT_LINE_STATS_CACHE: LineStatsCache = {
   failedCount: 0,
   projectLineRanking: [],
   authorLineRanking: [],
+  selectedExtensions: [],
 }
 
 /** 提交分析显示设置默认值（热力图 + 最近一年 + 周一起始 + GitHub 绿） */

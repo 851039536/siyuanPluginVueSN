@@ -299,6 +299,8 @@ export interface LineStatsCache {
   projectLineRanking: ProjectLineRankItem[]
   /** 作者代码行数排行（按新增行降序） */
   authorLineRanking: AuthorLineRankItem[]
+  /** 选中的文件扩展名过滤（空数组 = 不过滤所有文件，持久化恢复上次选择） */
+  selectedExtensions: string[]
 }
 
 /** 提交分析显示设置（热力图/日历视图配置，持久化到 git-push-analysis-view） */

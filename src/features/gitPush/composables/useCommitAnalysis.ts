@@ -28,10 +28,12 @@ export const COMMIT_COUNT_OPTIONS = [30, 50, 100, 200] as const
 const PROJECT_RANK_LIMIT = 20
 const AUTHOR_RANK_LIMIT = 10
 
-/** 行数统计可选的常见文件扩展名（多选芯片按钮组，空数组 = 不过滤） */
+/** 行数统计可选的常见文件扩展名（配置弹窗多选排除列表，空数组 = 不过滤） */
 export const LINE_STATS_EXTENSIONS = [
   ".ts", ".vue", ".js", ".jsx", ".tsx",
   ".css", ".scss", ".json", ".md", ".html",
+  ".cs", ".xaml", ".py", ".go",
+  ".dll", ".sdb", ".pdb", ".ini", ".xml",
 ] as const
 
 export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProject[]>) {
@@ -73,7 +75,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     await manager.storage.commitAnalysisView.save(viewSettings.value)
   }
 
-  /** 由各项目的 settled 结果聚合项目/作者行数排行（仅统计含 numstat 的 fulfilled 结果；extensions 可选白名单过滤） */
+  /** 由各项目的 settled 结果聚合项目/作者行数排行（仅统计含 numstat 的 fulfilled 结果；extensions 可选黑名单排除过滤） */
   function buildLineRankings(
     settled: PromiseSettledResult<{ projectId: string, projectName: string, entries: CommitAnalysisEntry[], numstat: NumstatCommit[] }>[],
     nameById: Map<string, string>,
@@ -256,6 +258,8 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     lineStatsCacheLoaded = true
     const cache = await manager.storage.lineStatsCache.loadOrDefault()
     const validIds = new Set(projects.value.map((p) => p.id))
+    // 无条件恢复扩展名过滤选择：无论行数排行缓存是否有数据都恢复勾选，保证重开面板/重启插件后选择不丢失（排行缓存为空仅影响行数数据，与过滤选择无关）
+    selectedExtensions.value = cache.selectedExtensions ?? []
     // 独立槽位已有分析结果：直接恢复（无 entries，供行数视图独立复用）
     if (cache.projectLineRanking.length > 0 || cache.authorLineRanking.length > 0) {
       commitCount.value = cache.commitCount
@@ -263,7 +267,6 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
       analyzedAt.value = cache.analyzedAt
       projectLineRanking.value = cache.projectLineRanking.filter((r) => validIds.has(r.id))
       authorLineRanking.value = cache.authorLineRanking
-      selectedExtensions.value = cache.selectedExtensions ?? []
       analyzed.value = true
       return
     }
@@ -282,6 +285,13 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     commitCount.value = n
     analyzed.value = false
     await runCore(needNumstat)
+  }
+
+  /** 更新扩展名过滤并即时持久化到行数统计缓存（弹窗确定后调用；下次分析按新过滤生效，切换视图后选择不丢失） */
+  async function updateSelectedExtensions(exts: string[]) {
+    selectedExtensions.value = exts
+    const cache = await manager.storage.lineStatsCache.loadOrDefault()
+    await manager.storage.lineStatsCache.save({ ...cache, selectedExtensions: exts })
   }
 
   /** 分析聚合视图（CommitAnalysisPanel 唯一数据 prop，新增维度只需改这里 + 类型 + 面板三处） */
@@ -332,5 +342,6 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     projectLineRanking,
     authorLineRanking,
     selectedExtensions,
+    updateSelectedExtensions,
   }
 }

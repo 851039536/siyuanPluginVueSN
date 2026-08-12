@@ -1028,6 +1028,7 @@
   "enableCodeBlockStyle": "Enable Code Block Style Enhancement",
   "enabled": "Enabled",
   "disabled": "Disabled",
+  "builtinFontHint": "LXGW WenKai is bundled with the plugin and works without system installation",
   "codeBlockBackground": "Background Color",
   "codeBlockBorder": "Border Settings",
   "borderColor": "Border Color",

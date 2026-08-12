@@ -138,6 +138,21 @@ export default defineConfig(({
             dest: "./i18n/",
             rename: { stripBase: true },
           },
+          {
+            // 文档字体设置内置字体：霞鹜文楷（SIL OFL 1.1，可自由嵌入/再分发）
+            // 运行时经 plugin.assetsPath 拼接 /assets/fonts/<file> 供 @font-face 加载
+            // stripBase 去掉 src/features/generalSettings/assets/fonts/ 前缀，
+            // 使 dest 目标下直接是字体文件名，而非嵌套完整源路径
+            src: "./src/features/generalSettings/assets/fonts/LXGWWenKai-Regular.ttf",
+            dest: "./assets/fonts/",
+            rename: { stripBase: true },
+          },
+          {
+            // 同步携带字体 OFL 许可证，遵守分发协议
+            src: "./src/features/generalSettings/assets/fonts/OFL.txt",
+            dest: "./assets/fonts/",
+            rename: { stripBase: true },
+          },
         ],
       }),
     ],

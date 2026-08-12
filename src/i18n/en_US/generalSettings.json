@@ -83,6 +83,7 @@
   "enabled": "Enabled",
   "disabled": "Disabled",
   "selectFont": "Select Font",
+  "builtinFontHint": "LXGW WenKai is bundled with the plugin and works without system installation",
   "lineHeight": "Line Height",
   "codeBlockBackground": "Background Color",
   "codeBlockBorder": "Border Settings",

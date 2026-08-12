@@ -1,4 +1,4 @@
-<!-- gitPush 行数统计面板：顶部汇总卡片（总新增/删除/净增）+ 单栏堆叠的项目/作者代码行数排行 -->
+<!-- gitPush 行数统计面板：顶部汇总卡片 + 单栏堆叠的项目/作者代码行数排行 + 文件格式过滤配置弹窗 -->
 <template>
   <div class="gls-panel">
     <!-- 空状态：无项目 -->
@@ -9,26 +9,26 @@
     />
 
     <template v-else>
-      <!-- 顶部工具条：分析状态 + 扩展名过滤 + 条数选择 + 分析按钮 -->
+      <!-- 顶部工具条：分析状态 + 过滤配置 + 条数选择 + 分析按钮 -->
       <div class="gls-toolbar">
         <!-- 分析状态："分析中…/上次分析 xx/未分析" -->
         <span class="gls-status">{{ analyzing ? i18n.auditing : (analyzed ? i18n.analysisLastRun.replace("{0}", relativeTime(analyzedAt, i18n)) : i18n.lineStatsNotRun) }}</span>
         <div class="gls-toolbar-right">
-          <!-- 文件扩展名过滤（多选 chip 按钮组；空数组 = 不过滤所有文件） -->
-          <!-- 过滤提示："文件格式过滤" -->
-          <span
-            class="gls-ext-chips"
+          <!-- 文件格式过滤配置按钮（点击弹出扩展名多选弹窗；选中数徽标随选择变化） -->
+          <!-- 按钮提示："文件格式过滤" -->
+          <button
+            class="gls-ext-btn"
+            :class="{ 'gls-ext-btn--active': selectedExtensions.length > 0 }"
+            :disabled="analyzing"
             :title="i18n.lineStatsExtFilter"
+            @click="showExtDialog = true"
           >
-            <button
-              v-for="ext in LINE_STATS_EXTENSIONS"
-              :key="ext"
-              class="gls-ext-chip"
-              :class="{ 'gls-ext-chip--active': selectedExtensions.includes(ext) }"
-              :disabled="analyzing"
-              @click="toggleExt(ext)"
-            >{{ ext }}</button>
-          </span>
+            <Icon icon="mdi:filter-variant" />
+            <span
+              v-if="selectedExtensions.length > 0"
+              class="gls-ext-badge"
+            >{{ selectedExtensions.length }}</span>
+          </button>
           <!-- 条数选择（tooltip："每项目 {0} 条"） -->
           <select
             class="gls-count-select"
@@ -214,16 +214,26 @@
         </div>
       </template>
     </template>
+
+    <!-- 文件格式过滤配置弹窗（点击过滤按钮弹出，确定后 emit 更新扩展名排除列表） -->
+    <ExtFilterDialog
+      v-if="showExtDialog"
+      :i18n="i18n"
+      :selected="selectedExtensions"
+      @close="showExtDialog = false"
+      @apply="onApplyExt"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import type { AuthorLineRankItem, ProjectLineRankItem } from "../../types"
 import { Icon } from "@iconify/vue"
-import { computed } from "vue"
-import { COMMIT_COUNT_OPTIONS, LINE_STATS_EXTENSIONS } from "../../composables/useCommitAnalysis"
+import { computed, ref } from "vue"
+import { COMMIT_COUNT_OPTIONS } from "../../composables/useCommitAnalysis"
 import { relativeTime } from "../../utils"
 import EmptyState from "../common/EmptyState.vue"
+import ExtFilterDialog from "./ExtFilterDialog.vue"
 import Loader from "@/components/Loader.vue"
 
 const props = defineProps<{
@@ -251,12 +261,13 @@ const emit = defineEmits<{
   'update:selectedExtensions': [exts: string[]]
 }>()
 
-/** 切换扩展名选中状态（多选 white-list 模式） */
-function toggleExt(ext: string) {
-  const set = new Set(props.selectedExtensions)
-  if (set.has(ext)) { set.delete(ext) }
-  else { set.add(ext) }
-  emit("update:selectedExtensions", [...set])
+/** 过滤配置弹窗显示状态 */
+const showExtDialog = ref(false)
+
+/** 弹窗应用过滤：回传选中列表并关闭 */
+function onApplyExt(exts: string[]) {
+  showExtDialog.value = false
+  emit("update:selectedExtensions", exts)
 }
 
 /** 行数排行行视图：条形宽度按新增行相对最大值（0 时退化为全空轨道）+ 新增行占总新增的百分比（保留 1 位小数，总 0 时兜底 1 防除零） */

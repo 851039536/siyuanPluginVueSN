@@ -1,0 +1,162 @@
+@use "./variables" as *;
+@use "./mixins" as *;
+
+// ── 文件格式过滤配置弹窗 ──
+.gfe-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  // 基准字号：弹窗内文字继承内容级 12px
+  font-size: $font-size-xs;
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.gfe-dialog {
+  width: 380px;
+  max-width: 90vw;
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-lg;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+// 标题栏
+.gfe-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-3 $spacing-4;
+  font-weight: $font-weight-semibold;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-background);
+  border-bottom: 1px solid var(--b3-border-color);
+  background: var(--b3-theme-surface);
+}
+
+.gfe-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+  background: transparent;
+  border: none;
+  border-radius: $radius-sm;
+  cursor: pointer;
+  font-size: $font-size-sm;
+
+  &:hover {
+    opacity: 1;
+    background: var(--b3-theme-primary-lightest);
+    color: var(--b3-theme-primary);
+  }
+
+  &:focus {
+    @include focus-ring;
+  }
+}
+
+// 说明文字
+.gfe-hint {
+  padding: $spacing-3 $spacing-4 0;
+  font-size: $font-size-2xs; // 辅助说明（两级字号制）
+  line-height: $line-height-normal;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+}
+
+// 操作区：已选计数 + 全选/清空
+.gfe-actions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-3 $spacing-4 0;
+}
+
+.gfe-count {
+  flex: 1;
+  font-size: $font-size-2xs;
+  font-family: $vp-mono;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+}
+
+.gfe-act-btn {
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-primary);
+  background: transparent;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  padding: 2px 8px;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+    background: var(--b3-theme-primary-lightest);
+  }
+
+  &:focus {
+    @include focus-ring;
+  }
+}
+
+// 扩展名多选网格
+.gfe-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: $spacing-1;
+  padding: $spacing-3 $spacing-4;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.gfe-chip {
+  font-size: $font-size-2xs; // 辅助控制文字（两级字号制）
+  font-family: $vp-mono;
+  color: var(--b3-theme-on-surface);
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  padding: 3px 0;
+  cursor: pointer;
+  line-height: $line-height-normal;
+  text-align: center;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
+
+  &:focus {
+    @include focus-ring;
+  }
+}
+
+// 选中态：主题色高亮
+.gfe-chip--active {
+  background: var(--b3-theme-primary-lightest);
+  border-color: var(--b3-theme-primary);
+  color: var(--b3-theme-primary);
+}
+
+// 底部操作栏
+.gfe-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-2;
+  padding: $spacing-3 $spacing-4;
+  border-top: 1px solid var(--b3-border-color);
+  background: var(--b3-theme-surface);
+}

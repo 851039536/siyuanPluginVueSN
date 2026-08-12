@@ -49,27 +49,26 @@
   }
 }
 
-// 文件扩展名过滤芯片按钮组（多选，分析中禁用降低透明度）
-.gls-ext-chips {
+// 文件格式过滤配置按钮（点击弹出扩展名多选弹窗；分析中禁用降低透明度）
+.gls-ext-btn {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 2px;
-}
-
-.gls-ext-chip {
-  font-size: $font-size-2xs; // 辅助控制文字（两级字号制）
-  font-family: $vp-mono;
+  justify-content: center;
+  width: 24px;
+  height: 22px;
   color: var(--b3-theme-on-surface);
+  opacity: 0.7;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
-  padding: 2px 6px;
   cursor: pointer;
-  line-height: $line-height-normal;
   transition: background-color 0.15s, border-color 0.15s, color 0.15s;
 
   &:hover:not(:disabled) {
+    opacity: 1;
     border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
   }
 
   &:focus {
@@ -82,11 +81,30 @@
   }
 }
 
-// 选中态：主题色高亮
-.gls-ext-chip--active {
-  background: var(--b3-theme-primary-lightest);
+// 有生效过滤时：主色描边提示
+.gls-ext-btn--active {
   border-color: var(--b3-theme-primary);
   color: var(--b3-theme-primary);
+  background: var(--b3-theme-primary-lightest);
+}
+
+// 已选扩展名数量徽标（右上角悬浮）
+.gls-ext-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 13px;
+  height: 13px;
+  padding: 0 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-2xs;
+  font-family: $vp-mono;
+  line-height: 1;
+  color: #fff;
+  background: var(--b3-theme-primary);
+  border-radius: 7px;
 }
 
 // 抓取失败提示（弱化展示，不打断正常结果阅读）

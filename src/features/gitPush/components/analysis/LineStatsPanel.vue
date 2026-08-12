@@ -1,4 +1,4 @@
-<!-- gitPush 行数统计面板（项目/作者代码行数排行：+新增 / -删除 / 净增 三列） -->
+<!-- gitPush 行数统计面板：顶部汇总卡片（总新增/删除/净增）+ 单栏堆叠的项目/作者代码行数排行 -->
 <template>
   <div class="gls-panel">
     <!-- 空状态：无项目 -->
@@ -76,11 +76,33 @@
           :text="i18n.lineStatsNoData"
         />
 
-        <!-- 双栏：项目代码行数排行 | 作者代码行数排行 -->
+        <!-- 单栏堆叠：汇总卡片 + 项目代码行数排行 + 作者代码行数排行 -->
         <div
           v-else
           class="gls-pair"
         >
+          <!-- 顶部汇总卡片：总新增 / 总删除 / 总净增（总净增随正负变色） -->
+          <div class="gls-cards">
+            <!-- 卡片：总新增（绿色） -->
+            <div class="gls-card">
+              <div class="gls-card-value gls-card-value--add">{{ summary.added.toLocaleString() }}</div>
+              <div class="gls-card-label">{{ i18n.lineStatsTotalAdded }}</div>
+            </div>
+            <!-- 卡片：总删除（红色） -->
+            <div class="gls-card">
+              <div class="gls-card-value gls-card-value--del">{{ summary.deleted.toLocaleString() }}</div>
+              <div class="gls-card-label">{{ i18n.lineStatsTotalDeleted }}</div>
+            </div>
+            <!-- 卡片：总净增（正绿负红，与行内净增语义一致） -->
+            <div class="gls-card">
+              <div
+                class="gls-card-value"
+                :class="netClass(summary.net)"
+              >{{ summary.net.toLocaleString() }}</div>
+              <div class="gls-card-label">{{ i18n.lineStatsTotalNet }}</div>
+            </div>
+          </div>
+
           <!-- 项目代码行数排行（+新增 / -删除 / 净增，按新增行降序） -->
           <div class="gls-section">
             <!-- 区块标题："项目代码行数排行" -->
@@ -227,6 +249,13 @@ const projectRows = computed(() => withLineBarPct(props.projectRanking))
 
 /** 作者代码行数排行行视图 */
 const authorRows = computed(() => withLineBarPct(props.authorRanking))
+
+/** 顶部汇总：对项目排行累加总新增/总删除，净增 = 新增 − 删除 */
+const summary = computed(() => {
+  const added = props.projectRanking.reduce((s, r) => s + r.added, 0)
+  const deleted = props.projectRanking.reduce((s, r) => s + r.deleted, 0)
+  return { added, deleted, net: added - deleted }
+})
 
 /** 净增行语义色：正→success(绿)，负→error(红)，零→中性（灰） */
 function netClass(net: number): string {

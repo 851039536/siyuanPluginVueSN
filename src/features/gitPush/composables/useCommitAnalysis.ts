@@ -20,7 +20,7 @@ import {
   resolveValidPath,
 } from "../utils"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
-import { countTrackedFilesLines, sumAuthorLines, sumProjectLines, type NumstatCommit } from "../reportMetrics"
+import { countTrackedFileLinesMap, shouldIncludeFile, sumAuthorLines, sumProjectLines, type NumstatCommit } from "../reportMetrics"
 
 /** 每项目抓取条数选项（仿 BranchCommitList.countOptions） */
 export const COMMIT_COUNT_OPTIONS = [30, 50, 100, 200] as const
@@ -73,6 +73,8 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   const lineStatsSummary = ref<LineStatsSummary>({ added: 0, deleted: 0, net: 0, totalLines: 0 })
   /** per-project 原始 numstat 数据（仅内存不持久化；行数统计分析后填充，供项目详情弹窗消费，下次分析覆盖） */
   const perProjectNumstat = ref<Map<string, NumstatCommit[]>>(new Map())
+  /** per-project 已跟踪文件的存量行数 Map<路径, 行数|null>（仅内存不持久化；行数统计分析后填充，供详情弹窗文件明细查存量；null=2MB/二进制/读失败/已删除） */
+  const perProjectFileLines = ref<Map<string, Map<string, number | null>>>(new Map())
 
   /** 选中的文件扩展名过滤（空数组 = 不过滤所有文件，变更后即时持久化 + 下次分析生效） */
   const selectedExtensions = ref<string[]>([])
@@ -174,6 +176,12 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
             manager.getCommitStatsLog(path, commitCount.value),
             manager.getTrackedFiles(path),
           ])
+          // 单次遍历统计每个文件存量行数并据此聚合项目总行数（复用 countFileLines 口径，避免重复读文件）
+          const fileLines = countTrackedFileLinesMap(p, trackedFiles)
+          let totalLines = 0
+          fileLines.forEach((lines, f) => {
+            if (lines !== null && shouldIncludeFile(f, selectedExtensions.value)) totalLines += lines
+          })
           return {
             projectId: p.id,
             projectName: p.name,
@@ -186,7 +194,8 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
               date: c.date,
             })),
             numstat,
-            totalLines: countTrackedFilesLines(p, trackedFiles, selectedExtensions.value),
+            totalLines,
+            fileLines,
           }
         }
         // 提交分析：原 getCommitLog 链路保持不动（内部吞错返回 []，路径预检已在上方兜底）
@@ -224,12 +233,19 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         lineStatsSummary.value = summary
         // 保留 per-project 原始 numstat（仅 fulfilled 且有文件变更数据的项目），供项目详情弹窗按 projectId 即时聚合文件/作者明细
         const numstatMap = new Map<string, NumstatCommit[]>()
+        // per-project 已跟踪文件存量行数（仅行数统计分支携带 fileLines；有文件列表即存，供详情弹窗文件明细列查存量）
+        const fileLinesMap = new Map<string, Map<string, number | null>>()
         settled.forEach((r) => {
-          if (r.status === "fulfilled" && r.value.numstat.length > 0) {
+          if (r.status !== "fulfilled") return
+          if (r.value.numstat.length > 0) {
             numstatMap.set(r.value.projectId, r.value.numstat)
+          }
+          if ("fileLines" in r.value && r.value.fileLines) {
+            fileLinesMap.set(r.value.projectId, r.value.fileLines)
           }
         })
         perProjectNumstat.value = numstatMap
+        perProjectFileLines.value = fileLinesMap
       }
       // 提交分析保存缓存时沿用旧缓存的行数排行，避免覆盖行数视图已分析的数据
       const oldCache = await manager.storage.commitAnalysisCache.loadOrDefault()
@@ -349,6 +365,11 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     return perProjectNumstat.value.get(projectId) ?? []
   }
 
+  /** 按 projectId 获取该项目的已跟踪文件存量行数 Map（仅内存，未分析或项目无文件时返回空 Map；值 null=2MB/二进制/读失败/已删除） */
+  function getProjectFileLines(projectId: string): Map<string, number | null> {
+    return perProjectFileLines.value.get(projectId) ?? new Map<string, number | null>()
+  }
+
   /** 分析聚合视图（CommitAnalysisPanel 唯一数据 prop，新增维度只需改这里 + 类型 + 面板三处） */
   const analysisStats = computed<CommitAnalysisStats>(() => {
     // 实时过滤已删除项目的条目（项目删除后缓存/内存中的残留数据不参与统计与展示）
@@ -400,5 +421,6 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     selectedExtensions,
     updateSelectedExtensions,
     getProjectNumstat,
+    getProjectFileLines,
   }
 }

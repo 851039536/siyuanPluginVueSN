@@ -194,6 +194,20 @@ export interface PlatformMeta {
 /** docAnalysis 分片 i18n（扁平键值对，供各组件 Props 统一引用） */
 export type DocI18n = Record<string, string>
 
+/** 发布推广文案配置 */
+export interface PublishPromoteConfig {
+  /** 是否在复制内容末尾追加推广文案 */
+  enabled: boolean
+  /** 推广文案内容（支持 Markdown/HTML 语法，多行文本） */
+  text: string
+}
+
+/** 默认发布推广文案配置 */
+export const DEFAULT_PUBLISH_PROMOTE: PublishPromoteConfig = {
+  enabled: true,
+  text: "公众号搜「oykperson」，一起学习，共同成长！",
+}
+
 /** 发布平台主题定义 */
 export interface PublishTheme {
   /** 主题唯一标识 */

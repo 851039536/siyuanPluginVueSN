@@ -13,6 +13,16 @@
         >
           一键排版
         </button>
+        <!-- 推广设置：展开/收起推广文案配置条 -->
+        <button
+          class="toolbar-btn promote-btn"
+          :class="{ active: promoteOpen }"
+          :title="props.i18n.promoteBtnTitle"
+          @click="promoteOpen = !promoteOpen"
+        >
+          <Icon icon="mdi:bullhorn-variant" />
+          {{ props.i18n.promoteBtn }}
+        </button>
       </div>
       <div class="toolbar-right">
         <button
@@ -71,6 +81,36 @@
       </button>
     </div>
 
+    <!-- 推广文案设置条 -->
+    <div
+      v-if="promoteOpen"
+      class="promote-settings"
+    >
+      <div class="promote-settings-row">
+        <!-- 推广开关："复制内容末尾追加推广文案" -->
+        <label class="promote-toggle">
+          <input
+            v-model="promoteConfig.enabled"
+            type="checkbox"
+            class="promote-checkbox"
+          />
+          <span>{{ props.i18n.promoteToggle }}</span>
+        </label>
+      </div>
+      <div class="promote-settings-row">
+        <!-- 推广文案输入框 -->
+        <textarea
+          v-model="promoteConfig.text"
+          class="promote-textarea"
+          rows="2"
+          :placeholder="props.i18n.promoteTextPlaceholder"
+        />
+      </div>
+      <div class="promote-settings-hint">
+        {{ props.i18n.promoteHint }}
+      </div>
+    </div>
+
     <!-- 分屏编辑+预览区 -->
     <div class="publish-split">
       <div class="publish-editor-pane">
@@ -111,11 +151,21 @@ import {
 } from "vue"
 import { exportMdContent } from "@/api"
 import { copyToClipboard, triggerBlobDownload } from "@/utils/domUtils"
-import type { DocI18n, PublishTheme } from "../types/index"
+import type { DocI18n, PublishPromoteConfig, PublishTheme } from "../types/index"
+import { DEFAULT_PUBLISH_PROMOTE } from "../types/index"
+import { DocAnalysisStorage } from "../types/storage"
 import { parseMarkdown } from "../utils/mdRenderer"
 import { applyTheme, buildExportableHtml } from "../utils/themeApplicator"
 import { DEFAULT_THEME } from "../utils/themes"
-import { copyDocForPublish, openExternalPublish, stripFrontMatter, PROMOTE_FOOTER_MD, PROMOTE_FOOTER_HTML } from "../utils/publishActions"
+import {
+  buildPromoteFooterHtml,
+  buildPromoteFooterMd,
+  copyDocForPublish,
+  getPromoteConfig,
+  openExternalPublish,
+  setPromoteConfig,
+  stripFrontMatter,
+} from "../utils/publishActions"
 import MarkdownEditor from "./MarkdownEditor.vue"
 import PreviewPane from "./PreviewPane.vue"
 
@@ -138,6 +188,44 @@ const renderedHtml = ref("")
 const showTip = ref(true)
 
 // ============================================================
+// 推广文案设置（开关 + 自定义文案，持久化到 storage）
+// ============================================================
+const storage = new DocAnalysisStorage(props.plugin)
+const promoteOpen = ref(false)
+const promoteConfig = ref<PublishPromoteConfig>({ ...DEFAULT_PUBLISH_PROMOTE })
+let promoteSaveTimer: ReturnType<typeof setTimeout> | null = null
+
+/** 加载持久化的推广配置并同步到模块级单例（copyDocForPublish 等读取） */
+async function loadPromoteConfig() {
+  try {
+    const saved = await storage.publishPromote.loadOrDefault()
+    promoteConfig.value = { enabled: saved.enabled, text: saved.text }
+  } catch {
+    promoteConfig.value = { ...DEFAULT_PUBLISH_PROMOTE }
+  }
+  setPromoteConfig(promoteConfig.value)
+}
+
+/** 防抖保存推广配置（开关/文案变化即同步单例并写入存储） */
+function schedulePromoteSave() {
+  setPromoteConfig(promoteConfig.value)
+  if (promoteSaveTimer) {
+    clearTimeout(promoteSaveTimer)
+  }
+  promoteSaveTimer = setTimeout(async () => {
+    try {
+      await storage.publishPromote.save({ ...promoteConfig.value })
+    }
+    catch (e) {
+      console.error("保存推广文案配置失败:", e)
+    }
+  }, 300)
+}
+
+// 监听开关/文案变化自动保存
+watch(promoteConfig, schedulePromoteSave, { deep: true })
+
+// ============================================================
 // 加载文档内容（如果从文档列表打开）
 // ============================================================
 async function loadDocContent() {
@@ -153,6 +241,7 @@ async function loadDocContent() {
 }
 
 loadDocContent()
+loadPromoteConfig()
 
 // ============================================================
 // 占位文本
@@ -238,15 +327,17 @@ function handleFormat() {
 // ============================================================
 async function copyHtml() {
   if (!renderedHtml.value) return
-  // 末尾追加公众号推广文案（HTML 版）
-  await copyToClipboard(renderedHtml.value + PROMOTE_FOOTER_HTML)
+  // 末尾追加公众号推广文案（HTML 版，启用且文案非空时）
+  const footer = buildPromoteFooterHtml(getPromoteConfig())
+  await copyToClipboard(renderedHtml.value + footer)
   showMessage("HTML 已复制到剪贴板，可直接粘贴到公众号后台", 2000, "info")
 }
 
 async function copyMarkdown() {
   if (!mdText.value) return
-  // 末尾追加公众号推广文案（Markdown 版）
-  const md = mdText.value.trim() ? mdText.value + PROMOTE_FOOTER_MD : mdText.value
+  // 末尾追加公众号推广文案（Markdown 版，启用且文案非空时）
+  const footer = buildPromoteFooterMd(getPromoteConfig())
+  const md = mdText.value.trim() ? mdText.value + footer : mdText.value
   await copyToClipboard(md)
   showMessage("Markdown 原文已复制到剪贴板", 2000, "info")
 }
@@ -272,6 +363,10 @@ onUnmounted(() => {
   if (debounceTimer) {
     clearTimeout(debounceTimer)
     debounceTimer = null
+  }
+  if (promoteSaveTimer) {
+    clearTimeout(promoteSaveTimer)
+    promoteSaveTimer = null
   }
 })
 </script>

@@ -4,12 +4,46 @@
 import { showMessage } from "siyuan"
 import { exportMdContent } from "@/api"
 import { copyToClipboard } from "@/utils/domUtils"
+import type { PublishPromoteConfig } from "../types/index"
+import { DEFAULT_PUBLISH_PROMOTE } from "../types/index"
 
-/** 复制内容底部追加的公众号推广文案（Markdown 版） */
-export const PROMOTE_FOOTER_MD = "\n\n---\n\n**公众号搜「oykperson」，一起学习，共同成长！**"
+/** 当前发布推广文案配置（模块级单例，由 PublishPanel 加载持久化配置后写入） */
+let promoteConfig: PublishPromoteConfig = { ...DEFAULT_PUBLISH_PROMOTE }
 
-/** 复制内容底部追加的公众号推广文案（HTML 版） */
-export const PROMOTE_FOOTER_HTML = '<hr><p style="text-align:center;"><strong>公众号搜「oykperson」，一起学习，共同成长！</strong></p>'
+/** 设置推广文案配置（复制内容底部是否追加/追加什么内容） */
+export function setPromoteConfig(config: PublishPromoteConfig) {
+  promoteConfig = { enabled: config.enabled, text: config.text }
+}
+
+/** 读取当前推广文案配置 */
+export function getPromoteConfig(): PublishPromoteConfig {
+  return { ...promoteConfig }
+}
+
+/** 转义 HTML 特殊字符（用户自定义文案含 < > & 时安全注入） */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+}
+
+/** 根据配置生成 Markdown 版推广尾部（关闭或无文案时返回空串） */
+export function buildPromoteFooterMd(config: PublishPromoteConfig): string {
+  const text = config.text?.trim()
+  if (!config.enabled || !text) return ""
+  return `\n\n---\n\n**${text}**`
+}
+
+/** 根据配置生成 HTML 版推广尾部（关闭或无文案时返回空串；文本经 HTML 转义） */
+export function buildPromoteFooterHtml(config: PublishPromoteConfig): string {
+  const text = config.text?.trim()
+  if (!config.enabled || !text) return ""
+  const escaped = escapeHtml(text).replace(/\n/g, "<br>")
+  return `<hr><p style="text-align:center;"><strong>${escaped}</strong></p>`
+}
 
 /**
  * 思源 exportMdContent 导出的文档属性 front matter（--- ... --- YAML 块）
@@ -45,8 +79,8 @@ export async function copyDocForPublish(docId: string, title: string, i18n: Reco
     const titleRe = titleHeading ? new RegExp(`^#\\s+${escapeRegExp(titleHeading)}(?:\\s|$)`) : null
     const startsWithTitle = titleRe ? titleRe.test(stripped) : false
     const combined = startsWithTitle ? stripped : (titleHeading ? `# ${titleHeading}\n\n${stripped}` : stripped)
-    // 内容非空时在末尾追加公众号推广文案
-    const withPromote = combined.trim() ? combined + PROMOTE_FOOTER_MD : combined
+    // 内容非空且启用推广时在末尾追加公众号推广文案
+    const withPromote = combined.trim() ? combined + buildPromoteFooterMd(promoteConfig) : combined
     // copyToClipboard 失败返回 false 不抛异常，必须显式检查
     const copied = await copyToClipboard(withPromote)
     if (!copied) {

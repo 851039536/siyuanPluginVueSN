@@ -48,6 +48,11 @@
     "publishClipboardFailed": "Failed to copy to clipboard",
     "publishCopiedRedirect": "Title and content copied, redirecting to {platform}",
     "publishCopied": "Markdown content copied to clipboard",
-    "publishMarkFailed": "Failed to mark publish status, please retry"
+    "publishMarkFailed": "Failed to mark publish status, please retry",
+    "promoteBtn": "Promote",
+    "promoteBtnTitle": "Append promo text when copying content",
+    "promoteToggle": "Append promo text when copying content",
+    "promoteTextPlaceholder": "Enter promo text, e.g. Follow WeChat: oykperson, learn together!",
+    "promoteHint": "Copy HTML / Copy MD / Publish will append the promo text below (disabled when toggle off)"
   }
 }

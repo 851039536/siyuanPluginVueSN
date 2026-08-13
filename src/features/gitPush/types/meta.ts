@@ -307,6 +307,16 @@ export interface CommitAnalysisCache {
   authorLineRanking: AuthorLineRankItem[]
 }
 
+/** 行数统计全量汇总（基于全量项目数据合计，与截断后的排行解耦，避免项目数超过排行上限时「总」数字偏小） */
+export interface LineStatsSummary {
+  /** 总新增行数 */
+  added: number
+  /** 总删除行数 */
+  deleted: number
+  /** 总净增行数（added − deleted） */
+  net: number
+}
+
 /** 行数统计独立缓存（与提交分析缓存解耦，独立持久化到 git-push-line-stats-cache） */
 export interface LineStatsCache {
   /** 每项目抓取条数（缓存对应的设置，加载时回填选择器） */
@@ -321,6 +331,8 @@ export interface LineStatsCache {
   authorLineRanking: AuthorLineRankItem[]
   /** 选中的文件扩展名过滤（空数组 = 不过滤所有文件，持久化恢复上次选择） */
   selectedExtensions: string[]
+  /** 全量汇总（旧缓存无此字段时由排行降级累加） */
+  summary?: LineStatsSummary
 }
 
 /** 提交分析显示设置（热力图/日历视图配置，持久化到 git-push-analysis-view） */

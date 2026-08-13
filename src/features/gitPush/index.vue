@@ -82,6 +82,7 @@
       :analyzed-at="analysisAnalyzedAt"
       :failed-count="analysisFailedCount"
       :commit-count="analysisCommitCount"
+      :summary="lineStatsSummary"
       :selected-extensions="selectedExtensions"
       :line-detail-project-id="lineDetailProjectId"
       :get-project-numstat="getProjectNumstat"
@@ -624,6 +625,7 @@ const {
   updateViewSettings,
   projectLineRanking,
   authorLineRanking,
+  lineStatsSummary,
   selectedExtensions,
   updateSelectedExtensions,
   getProjectNumstat,

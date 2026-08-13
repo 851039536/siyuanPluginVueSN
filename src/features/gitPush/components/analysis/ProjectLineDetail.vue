@@ -14,6 +14,14 @@
           <div class="pld-title-wrap">
             <span class="pld-title">{{ projectName }}</span>
             <span class="pld-title-sub">{{ i18n.lineDetailTitleHint }}</span>
+            <!-- 当前总行数 chip："当前总行数" + 存量数值（等宽数字，tooltip 说明口径；旧缓存缺失显示 —） -->
+            <span
+              class="pld-total"
+              :title="i18n.lineStatsTotalHint"
+            >
+              <span class="pld-total-label">{{ i18n.lineStatsTotalLines }}</span>
+              <span class="pld-total-value">{{ totalLines?.toLocaleString() ?? "—" }}</span>
+            </span>
           </div>
           <button
             class="pld-close"
@@ -177,6 +185,8 @@ const props = defineProps<{
   projectId: string
   /** 目标项目名（弹窗标题展示） */
   projectName: string
+  /** 当前项目实际总行数（存量，git ls-files 统计；项目已删除或旧缓存缺失时为 undefined） */
+  totalLines?: number
   /** 按 projectId 获取该项目原始 numstat（来自 useCommitAnalysis 内存缓存） */
   getNumstat: (projectId: string) => NumstatCommit[]
   /** 扩展名排除过滤（与项目排行一致，保证明细与排行口径统一） */

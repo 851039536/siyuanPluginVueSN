@@ -285,6 +285,7 @@
       :i18n="i18n"
       :project-id="lineDetailProjectId"
       :project-name="lineDetailProjectName"
+      :total-lines="lineDetailTotalLines"
       :get-numstat="getProjectNumstat"
       :extensions="selectedExtensions"
       @close="emit('closeLineDetail')"
@@ -343,6 +344,11 @@ const showExtDialog = ref(false)
 /** 详情弹窗标题用项目名（从排行中查找；项目已删除时回退显示 id） */
 const lineDetailProjectName = computed(
   () => props.projectRanking.find((r) => r.id === props.lineDetailProjectId)?.name ?? props.lineDetailProjectId,
+)
+
+/** 详情弹窗展示用当前总行数（从排行查找，存量口径；项目已删除或旧缓存缺失时为 undefined） */
+const lineDetailTotalLines = computed(
+  () => props.projectRanking.find((r) => r.id === props.lineDetailProjectId)?.totalLines,
 )
 
 /** 弹窗应用过滤：回传选中列表并关闭 */

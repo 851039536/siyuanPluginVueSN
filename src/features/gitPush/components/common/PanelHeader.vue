@@ -168,7 +168,7 @@
           @click.stop="showRefreshMenu = !showRefreshMenu"
         >
           <Icon
-            icon="mdi:sync"
+            :icon="refreshingAllLocal || refreshingAllRemote || refreshingAll ? 'mdi:loading' : 'mdi:sync'"
             height="12"
             :class="{ 'gp-spin': refreshingAllLocal || refreshingAllRemote || refreshingAll }"
           />

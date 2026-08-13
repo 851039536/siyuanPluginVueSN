@@ -168,6 +168,7 @@
             :generating-msg="generatingMsgs[project.id]"
             :git-op-loading="gitOpLoading[project.id]"
             :remote-status-loading="remoteStatusLoading[project.id]"
+            :refreshing-working-tree="refreshingWorkingTree[project.id]"
             :tag-push-loading="tagPushLoading[project.id]"
             :gen-stash-desc-loading="genStashDescLoading[project.id]"
             :generated-stash-msg="generatedStashMsg"
@@ -732,6 +733,7 @@ const {
   showRefreshMenu,
   fetching,
   remoteStatusLoading,
+  refreshingWorkingTree,
   headHashes,
   handleRefresh,
   handleRefreshWorkingTree,

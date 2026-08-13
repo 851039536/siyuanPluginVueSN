@@ -47,7 +47,7 @@
         title="刷新提交日志"
         @click.stop="$emit('refreshCommitLog')"
       >
-        <Icon icon="mdi:refresh" height="12" :class="{ 'gp-spin': loading }" />
+        <Icon :icon="loading ? 'mdi:loading' : 'mdi:refresh'" height="12" :class="{ 'gp-spin': loading }" />
       </button>
     </div>
 

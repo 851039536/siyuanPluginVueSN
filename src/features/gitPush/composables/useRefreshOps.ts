@@ -53,6 +53,8 @@ export function useRefreshOps(deps: {
   const fetching = ref<Record<string, boolean>>({})
   /** 远程状态刷新加载中 id → true */
   const remoteStatusLoading = ref<Record<string, boolean>>({})
+  /** 工作区刷新加载中 id → true */
+  const refreshingWorkingTree = ref<Record<string, boolean>>({})
   /** HEAD hash 缓存，用于跳过无变动项目的 commit log / branches 刷新 */
   const headHashes = ref<Record<string, string>>({})
 
@@ -112,8 +114,14 @@ export function useRefreshOps(deps: {
   async function handleRefreshWorkingTree(id: string) {
     const project = projects.value.find((p) => p.id === id)
     if (!project) return
-    const branch = await manager.getBranch(resolveValidPath(project))
-    await loadWorkingTree(id, false, branch)
+    refreshingWorkingTree.value = { ...refreshingWorkingTree.value, [id]: true }
+    try {
+      const branch = await manager.getBranch(resolveValidPath(project))
+      await loadWorkingTree(id, false, branch)
+    } finally {
+      delete refreshingWorkingTree.value[id]
+      refreshingWorkingTree.value = { ...refreshingWorkingTree.value }
+    }
   }
 
   async function handleRefreshRemoteStatus(id: string) {
@@ -202,6 +210,7 @@ export function useRefreshOps(deps: {
     showRefreshMenu,
     fetching,
     remoteStatusLoading,
+    refreshingWorkingTree,
     headHashes,
     silentRefreshAll,
     handleRefresh,

@@ -27,7 +27,7 @@
               @click="runAnalysis"
             >
               <Icon
-                icon="mdi:refresh"
+                :icon="streaming ? 'mdi:loading' : 'mdi:refresh'"
                 height="12"
                 :class="{ 'gp-spin': streaming }"
               />

@@ -392,12 +392,13 @@ import {
   PLATFORM_META,
   useDocAnalysis,
 } from "./composables/useDocAnalysis"
+import type { DocI18n } from "./types/index"
 import { getCategoryLabel } from "./types/index"
 import { DEFAULT_FILTER_OPTIONS } from "./types/index"
 
 interface Props {
   /** docAnalysis 分片 i18n（index.ts 传入 plugin.i18n.docAnalysis，扁平键值） */
-  i18n: Record<string, string>
+  i18n: DocI18n
   plugin: Plugin
 }
 
@@ -483,6 +484,8 @@ const publishDocId = ref<string | undefined>(undefined)
 function handlePublishDoc(docId: string) {
   publishDocId.value = docId
   activeTab.value = "publish"
+  // 关闭属性弹窗，避免全屏遮罩盖住发布面板
+  attrsPanelVisible.value = false
 }
 
 // ============================================================

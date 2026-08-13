@@ -25,7 +25,7 @@ import { countTrackedFilesLines, sumAuthorLines, sumProjectLines, type NumstatCo
 /** 每项目抓取条数选项（仿 BranchCommitList.countOptions） */
 export const COMMIT_COUNT_OPTIONS = [30, 50, 100, 200] as const
 
-/** 项目排行上限 / 作者排行上限（超出只展示头部，避免长列表淹没关键信息） */
+/** 项目提交数排行上限 / 作者行数排行上限（仅提交数排行与作者行数排行截断；项目代码行数排行已显示全部，不再截断） */
 const PROJECT_RANK_LIMIT = 20
 const AUTHOR_RANK_LIMIT = 10
 
@@ -37,7 +37,7 @@ export const LINE_STATS_EXTENSIONS = [
   ".dll", ".sdb", ".pdb", ".ini", ".xml", ".log", ".txt", ".zip", ".7z", ".xuv",
 ] as const
 
-/** 从（可能被截断的）项目排行降级累加全量合计（旧缓存无 summary 字段时的兼容兜底） */
+/** 从项目排行累加全量合计（旧缓存无 summary 字段时的兼容兜底；更早版本缓存排行可能只含前 20，重新分析后为全量） */
 function deriveSummary(ranking: ProjectLineRankItem[]): LineStatsSummary {
   const added = ranking.reduce((s, r) => s + r.added, 0)
   const deleted = ranking.reduce((s, r) => s + r.deleted, 0)
@@ -69,7 +69,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   const projectLineRanking = ref<ProjectLineRankItem[]>([])
   /** 作者代码行数排行（按新增行降序，行数统计视图分析后填充） */
   const authorLineRanking = ref<AuthorLineRankItem[]>([])
-  /** 全量行数合计（基于全量项目数据，与截断后的排行解耦，供顶部汇总卡片展示） */
+  /** 全量行数合计（基于全量项目数据独立累加，供顶部汇总卡片展示） */
   const lineStatsSummary = ref<LineStatsSummary>({ added: 0, deleted: 0, net: 0, totalLines: 0 })
   /** per-project 原始 numstat 数据（仅内存不持久化；行数统计分析后填充，供项目详情弹窗消费，下次分析覆盖） */
   const perProjectNumstat = ref<Map<string, NumstatCommit[]>>(new Map())
@@ -119,7 +119,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         })
       }
     })
-    // 全量合计在 slice 前基于 projectLines 全量累加（避免项目数超过排行上限时「总」数字偏小）
+    // 全量合计基于 projectLines 全量累加（与排行展示无关，避免项目数变化时「总」数字失真）
     let summaryAdded = 0
     let summaryDeleted = 0
     for (const agg of projectLines.values()) {
@@ -129,7 +129,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     let summaryTotalLines = 0
     for (const t of projectTotalLines.values()) summaryTotalLines += t
     const summary: LineStatsSummary = { added: summaryAdded, deleted: summaryDeleted, net: summaryAdded - summaryDeleted, totalLines: summaryTotalLines }
-    // 按新增行降序，同新增量再按净增降序；剔除无行数变化的项目/作者
+    // 按新增行降序，同新增量再按净增降序；剔除无行数变化的项目/作者（项目排行不截断，全部展示）
     const projectRanking = [...projectLines.entries()]
       .filter(([, agg]) => agg.added + agg.deleted > 0)
       .map(([id, agg]) => ({
@@ -141,7 +141,6 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         totalLines: projectTotalLines.get(id),
       }))
       .sort((a, b) => b.added - a.added || b.net - a.net)
-      .slice(0, PROJECT_RANK_LIMIT)
     const authorRanking = [...authorLines.entries()]
       .filter(([, agg]) => agg.added + agg.deleted > 0)
       .map(([author, agg]) => ({

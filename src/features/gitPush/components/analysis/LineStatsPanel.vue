@@ -125,6 +125,25 @@
               {{ i18n.analysisLineProjectRanking }}
             </div>
             <div class="gls-bar-list">
+              <!-- 表头行："新增 / 删除 / 净增 / 占比"（净增加粗主题色 = 实际行数，悬停见说明） -->
+              <div class="gls-bar-head">
+                <span class="gls-bar-rank"></span>
+                <span class="gls-bar-label"></span>
+                <span class="gls-bar-track"></span>
+                <span class="gls-line-nums">
+                  <!-- 表头列："新增"（绿色） -->
+                  <span class="gls-line-num gls-line-num--add">{{ i18n.analysisLineAdded }}</span>
+                  <!-- 表头列："删除"（红色） -->
+                  <span class="gls-line-num gls-line-num--del">{{ i18n.analysisLineDeleted }}</span>
+                  <!-- 表头列："净增"（主题色强调，tooltip："净增 = 实际行数（新增 − 删除）"） -->
+                  <span
+                    class="gls-line-num gls-line-num--net gls-bar-head-net"
+                    :title="i18n.lineStatsNetHint"
+                  >{{ i18n.analysisLineNet }}</span>
+                </span>
+                <!-- 表头列："占比" -->
+                <span class="gls-bar-share">{{ i18n.lineDetailShare }}</span>
+              </div>
               <div
                 v-for="(row, idx) in projectRows"
                 :key="row.id"
@@ -174,6 +193,25 @@
               {{ i18n.analysisLineAuthorRanking }}
             </div>
             <div class="gls-bar-list">
+              <!-- 表头行："新增 / 删除 / 净增 / 占比"（净增加粗主题色 = 实际行数，悬停见说明） -->
+              <div class="gls-bar-head">
+                <span class="gls-bar-rank"></span>
+                <span class="gls-bar-label"></span>
+                <span class="gls-bar-track"></span>
+                <span class="gls-line-nums">
+                  <!-- 表头列："新增"（绿色） -->
+                  <span class="gls-line-num gls-line-num--add">{{ i18n.analysisLineAdded }}</span>
+                  <!-- 表头列："删除"（红色） -->
+                  <span class="gls-line-num gls-line-num--del">{{ i18n.analysisLineDeleted }}</span>
+                  <!-- 表头列："净增"（主题色强调，tooltip："净增 = 实际行数（新增 − 删除）"） -->
+                  <span
+                    class="gls-line-num gls-line-num--net gls-bar-head-net"
+                    :title="i18n.lineStatsNetHint"
+                  >{{ i18n.analysisLineNet }}</span>
+                </span>
+                <!-- 表头列："占比" -->
+                <span class="gls-bar-share">{{ i18n.lineDetailShare }}</span>
+              </div>
               <div
                 v-for="(row, idx) in authorRows"
                 :key="row.author"

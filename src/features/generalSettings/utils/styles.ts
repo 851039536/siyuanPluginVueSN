@@ -539,14 +539,23 @@ export function generateLevelDisplayCss(
 }
 
 /**
- * 内置字体元数据：霞鹜文楷（SIL OFL 1.1，可自由嵌入/修改/再分发）
+ * 内置字体元数据（多个字体随插件分发）
+ * - 霞鹜文楷（SIL OFL 1.1，可自由嵌入/修改/再分发）
+ * - 新晰黑 Code / NeoXiHei Code（IPA Font License v1.0，等宽中文，适合代码/笔记）
  * fontFamily 必须与 DocumentFontSettings.vue 的 PRESET_FONTS 中对应条目 value 一致
  */
-export const BUILTIN_FONT = {
-  fontFamily: "LXGW WenKai",
-  fileName: "LXGWWenKai-Regular.ttf",
-  subDir: "fonts",
-} as const
+export const BUILTIN_FONTS = [
+  {
+    fontFamily: "LXGW WenKai",
+    fileName: "LXGWWenKai-Regular.ttf",
+    subDir: "fonts",
+  },
+  {
+    fontFamily: "NeoXiHei Code",
+    fileName: "NeoXiHeiCode-Regular.ttf",
+    subDir: "fonts",
+  },
+] as const
 
 /** 内置字体 @font-face 注入用的 <style> 元素 id */
 export const BUILTIN_FONT_STYLE_ID = "builtin-font-face"
@@ -561,17 +570,16 @@ export function injectBuiltinFont(assetsPath: string): void {
     return
   }
   const base = assetsPath.replace(/\/+$/, "")
-  const fontUrl = `${base}/${BUILTIN_FONT.subDir}/${BUILTIN_FONT.fileName}`
-  injectStyle(
-    BUILTIN_FONT_STYLE_ID,
-    `@font-face {
-      font-family: '${BUILTIN_FONT.fontFamily}';
-      src: url('${fontUrl}') format('truetype');
+  const fontFaces = BUILTIN_FONTS.map(
+    (font) => `@font-face {
+      font-family: '${font.fontFamily}';
+      src: url('${base}/${font.subDir}/${font.fileName}') format('truetype');
       font-weight: normal;
       font-style: normal;
       font-display: swap;
     }`,
-  )
+  ).join("\n")
+  injectStyle(BUILTIN_FONT_STYLE_ID, fontFaces)
 }
 
 export function applyDocumentFontStyles(fontSettings: DocumentFontSettings): void {

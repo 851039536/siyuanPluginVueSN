@@ -148,8 +148,20 @@ export default defineConfig(({
             rename: { stripBase: true },
           },
           {
-            // 同步携带字体 OFL 许可证，遵守分发协议
+            // 内置字体：新晰黑 Code / NeoXiHei Code（IPA Font License v1.0）
+            src: "./src/features/generalSettings/assets/fonts/NeoXiHeiCode-Regular.ttf",
+            dest: "./assets/fonts/",
+            rename: { stripBase: true },
+          },
+          {
+            // 同步携带霞鹜文楷 OFL 许可证，遵守分发协议
             src: "./src/features/generalSettings/assets/fonts/OFL.txt",
+            dest: "./assets/fonts/",
+            rename: { stripBase: true },
+          },
+          {
+            // 同步携带新晰黑 IPA 许可证，遵守分发协议
+            src: "./src/features/generalSettings/assets/fonts/License.txt",
             dest: "./assets/fonts/",
             rename: { stripBase: true },
           },

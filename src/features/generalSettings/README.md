@@ -4,8 +4,12 @@
 
 ## 内置字体（文档字体设置）
 
-- **内置字体**：霞鹜文楷（LXGW WenKai）Regular，体积约 25.5MB（SIL OFL 1.1 开源协议，可自由嵌入/再分发）。
-- **文件位置**：`src/features/generalSettings/assets/fonts/`，构建时经 `viteStaticCopy` 复制到插件 `assets/fonts/` 目录，并同步携带 `OFL.txt` 许可证。
-- **加载方式**：`GeneralSettings.init()` 调用 `injectBuiltinFont(plugin.assetsPath)` 注入 `@font-face`，`src` 指向 `${assetsPath}/fonts/LXGWWenKai-Regular.ttf`。
-- **生效条件**：在「文档字体设置」预设下拉中选择「霞鹜文楷 (LXGW WenKai)」即可，无需在系统安装字体；系统已安装同名字体时优先使用系统字体。
-- **注意事项**：该字体文件较大，会显著增加插件包体积；若不再需要可删除 `assets/fonts/` 下文件，并同步移除 `vite.config.ts` 中对应的 `viteStaticCopy` target 与 `styles.ts` 的 `BUILTIN_FONT` 常量及 `injectBuiltinFont` 调用。
+- **内置字体**（随插件分发，无需系统安装）：
+  | 字体 | 文件 | 体积 | 许可证 |
+  | --- | --- | --- | --- |
+  | 霞鹜文楷（LXGW WenKai） | `LXGWWenKai-Regular.ttf` | 约 25.5MB | SIL OFL 1.1 |
+  | 新晰黑 Code（NeoXiHei Code） | `NeoXiHeiCode-Regular.ttf` | 约 8.3MB | IPA Font License v1.0 |
+- **文件位置**：`src/features/generalSettings/assets/fonts/`，构建时经 `viteStaticCopy`（带 `rename: { stripBase: true }`）复制到插件 `assets/fonts/` 目录，并同步携带 `OFL.txt`（霞鹜文楷）与 `License.txt`（新晰黑）许可证。
+- **加载方式**：`GeneralSettings.init()` 调用 `injectBuiltinFont(plugin.assetsPath)` 循环注入 `@font-face`，`src` 指向 `${assetsPath}/fonts/<文件名>`。
+- **生效条件**：在「文档字体设置」预设下拉中选择「霞鹜文楷 (LXGW WenKai)」或「新晰黑 Code (NeoXiHei)」即可，无需在系统安装字体；系统已安装同名字体时优先使用系统字体。
+- **注意事项**：字体文件会显著增加插件包体积（合计约 33.8MB）；若不再需要某字体可删除 `assets/fonts/` 下对应文件与许可证，并同步移除 `vite.config.ts` 中对应的 `viteStaticCopy` target 与 `styles.ts` 的 `BUILTIN_FONTS` 数组对应条目。

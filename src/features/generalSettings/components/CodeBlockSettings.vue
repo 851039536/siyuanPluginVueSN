@@ -193,14 +193,26 @@
                   </option>
                   <option
                     v-for="f in presetFonts"
-                    :key="f"
-                    :value="f"
+                    :key="f.value"
+                    :value="f.value"
                   >
-                    {{ f }}
+                    {{ f.label }}
                   </option>
                 </select>
               </div>
             </div>
+            <!-- 内置字体提示：选中内置字体时显示（已随插件分发，无需系统安装） -->
+            <p
+              v-if="isBuiltinCodeFontSelected"
+              class="builtin-font-hint"
+            >
+              <IconWrapper
+                name="checkCircle"
+                :size="13"
+                class="builtin-font-hint-icon"
+              />
+              {{ i18n.builtinFontHint }}
+            </p>
             <!-- 字体大小 -->
             <div class="font-row">
               <label>{{ i18n.fontSize }}</label>
@@ -311,7 +323,7 @@ import {
   DEFAULT_CODEBLOCK_SETTINGS,
   GeneralSettingsStorage,
 } from "@/features/generalSettings/types/storage"
-import { CODEBLOCK_STYLE_META } from "../utils/styles"
+import { BUILTIN_FONTS, CODEBLOCK_STYLE_META } from "../utils/styles"
 import ColorField from "./ColorField.vue"
 import SettingLabel from "./SettingLabel.vue"
 import SettingSlider from "./SettingSlider.vue"
@@ -334,12 +346,16 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>()
 
 // ── 常量 ──
+/** 代码字体预设（含内置字体，builtin 标记表示随插件分发无需系统安装） */
 const presetFonts = [
-  "Consolas",
-  "Courier New",
-  "JetBrains Mono",
-  "Cascadia Code",
-  "Hack",
+  { value: "Consolas", label: "Consolas" },
+  { value: "Courier New", label: "Courier New" },
+  { value: "JetBrains Mono", label: "JetBrains Mono" },
+  { value: "Cascadia Code", label: "Cascadia Code" },
+  { value: "Hack", label: "Hack" },
+  // 内置字体：随插件分发，未在系统安装也能使用
+  { value: "NeoXiHei Code", label: "新晰黑 Code (NeoXiHei)", builtin: true },
+  { value: "LXGW WenKai", label: "霞鹜文楷 (LXGW WenKai)", builtin: true },
 ] as const
 
 /** 代码语法着色字段（键名与 i18n 键一致） */
@@ -356,11 +372,16 @@ const colorFields = [
 const settings = ref<CodeBlockSettings>({ ...DEFAULT_CODEBLOCK_SETTINGS })
 const storage = ref<GeneralSettingsStorage | null>(null)
 
+/** 当前代码字体是否命中任一内置字体（随插件分发，无需系统安装） */
+const isBuiltinCodeFontSelected = computed(
+  () => BUILTIN_FONTS.some((font) => settings.value.codeFontFamily === font.fontFamily),
+)
+
 /** 预设字体下拉：命中预设时回显当前字体，手输非预设字体时自动复位为占位项 */
 const presetCodeFont = computed({
   get: () => {
     const family = settings.value.codeFontFamily
-    return (presetFonts as readonly string[]).includes(family) ? family : ""
+    return presetFonts.some((f) => f.value === family) ? family : ""
   },
   set: (v: string) => {
     if (v) {

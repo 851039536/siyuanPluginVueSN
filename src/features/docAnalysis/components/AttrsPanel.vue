@@ -122,6 +122,11 @@
         </div>
 
         <div class="attrs-table">
+          <!-- 表格表头："属性 / 值" -->
+          <div class="attr-row attr-head">
+            <div class="attr-key">属性</div>
+            <div class="attr-value">值</div>
+          </div>
           <div
             v-for="item in displayItems"
             :key="item.key"

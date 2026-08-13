@@ -285,7 +285,6 @@ export function applyCodeBlockCollapse(
   script.innerHTML = `
     (function() {
       const codeMaxHeight = ${height};
-      let running = false;
       const scrollCleanupFns = [];
 
       function isMobile() {
@@ -296,17 +295,15 @@ export function applyCodeBlockCollapse(
         var isSiyuanMobile = window._siyuan_mobile === true;
         return mobileUA || screenWidth || (hasTouchScreen && mobileUA) || isSiyuanMobile;
       }
+      const mobile = isMobile();
 
       function addCodeExtends(codeBlocks) {
         if(codeBlocks.length === 0) return;
-        if(running) return;
-        running = true;
-        setTimeout(() => {running = false;}, 300);
         codeBlocks.forEach(async codeBlock => {
+          if(codeBlock.querySelector('.code-collapse-bar')) return;
           if(isCursorInCodeBlock(codeBlock)) return;
           const hljs = await whenElementExist(() => codeBlock.querySelector('.hljs'));
           if(!hljs || hljs.scrollHeight <= codeMaxHeight) return;
-          if(codeBlock.querySelector('.code-collapse-bar')) return;
 
           codeBlock.classList.add('code-block-collapse-wrapper');
           codeBlock.classList.add('code-block-collapsed');
@@ -363,8 +360,9 @@ export function applyCodeBlockCollapse(
         return null;
       }
 
-      function whenElementExist(selector) {
+      function whenElementExist(selector, timeout = 5000) {
         return new Promise(resolve => {
+          const startTime = Date.now();
           const checkForElement = () => {
             let element = null;
             if (typeof selector === 'function') {
@@ -374,12 +372,27 @@ export function applyCodeBlockCollapse(
             }
             if (element) {
               resolve(element);
+            } else if (Date.now() - startTime > timeout) {
+              resolve(null);
             } else {
               requestAnimationFrame(checkForElement);
             }
           };
           checkForElement();
         });
+      }
+
+      function bindScroll(protyle) {
+        const scrollContainer = mobile ? window : protyle.querySelector(".protyle-content");
+        let debounceTimer;
+        const scrollHandler = () => {
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => {
+            addCodeExtends(protyle.querySelectorAll('.code-block'));
+          }, 100);
+        };
+        scrollContainer.addEventListener('scroll', scrollHandler, { passive: true });
+        scrollCleanupFns.push(() => scrollContainer.removeEventListener('scroll', scrollHandler));
       }
 
       function observeProtyleAddition(el, callback) {
@@ -405,23 +418,16 @@ export function applyCodeBlockCollapse(
 
       function initCodeBlockCollapse() {
         whenElementExist('body').then(async el => {
+          if(!el) return;
           let protyle;
           await whenElementExist(() => {
             protyle = el.querySelector('.protyle');
             return protyle && protyle?.dataset?.loading === 'finished';
           });
+          if(!protyle) return;
           addCodeExtends(protyle.querySelectorAll('.code-block'));
 
-          let scrollContainer = isMobile() ? window : protyle.querySelector(".protyle-content");
-          let debounceTimer;
-          const scrollHandler = () => {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-              addCodeExtends(protyle.querySelectorAll('.code-block'));
-            }, 100);
-          };
-          scrollContainer.addEventListener('scroll', scrollHandler);
-          scrollCleanupFns.push(() => scrollContainer.removeEventListener('scroll', scrollHandler));
+          bindScroll(protyle);
 
           observeProtyleAddition(el, protyles => {
             protyles.forEach(async protyle => {
@@ -429,15 +435,7 @@ export function applyCodeBlockCollapse(
                 protyle = protyle.closest('.protyle');
               }
               addCodeExtends(protyle.querySelectorAll('.code-block'));
-              let scrollContainer = isMobile() ? window : protyle.querySelector(".protyle-content");
-              const handler = () => {
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(() => {
-                  addCodeExtends(protyle.querySelectorAll('.code-block'));
-                }, 100);
-              };
-              scrollContainer.addEventListener('scroll', handler);
-              scrollCleanupFns.push(() => scrollContainer.removeEventListener('scroll', handler));
+              bindScroll(protyle);
             });
           });
         });

@@ -90,7 +90,7 @@
           <SettingLabel
             icon="codeBlockBackground"
             :text="i18n.codeBlockBackground"
-            :value="opacityPercent"
+            :value="formatPercent(settings.backgroundColorOpacity)"
           />
           <ColorField
             v-model="settings.backgroundColor"
@@ -280,7 +280,7 @@
           <SettingLabel
             icon="codeBlockHeight"
             :text="i18n.collapseHeight"
-            :value="`${settings.collapseHeight}px`"
+            :value="formatPx(settings.collapseHeight)"
           />
           <SettingSlider
             v-model="settings.collapseHeight"
@@ -384,7 +384,6 @@ const presetCodeFont = computed({
 // ── 值格式化 ──
 const formatPx = (v: number) => `${v}px`
 const formatPercent = (v: number) => `${Math.round(v * 100)}%`
-const opacityPercent = computed(() => formatPercent(settings.value.backgroundColorOpacity))
 
 const shadowOptions = computed(() => [
   { label: props.i18n.noneShadow, value: "none" },

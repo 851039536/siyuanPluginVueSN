@@ -86,14 +86,22 @@ export function applyCodeBlockStyle(style: CodeBlockStyle | string): void {
   document.body.classList.add(`codeblock-style-${style}`)
 }
 
-/** 将 hex 颜色转为 rgba，支持透明度 */
+/** 将 hex 颜色转为 rgba，支持透明度（非 hex 输入原样返回，3 位 hex 自动展开） */
 function hexToRgba(hex: string, opacity: number): string {
-  if (opacity >= 1) return hex
-  const h = hex.replace(/^#/, "")
-  const r = Number.parseInt(h.substring(0, 2), 16)
-  const g = Number.parseInt(h.substring(2, 4), 16)
-  const b = Number.parseInt(h.substring(4, 6), 16)
-  return `rgba(${r}, ${g}, ${b}, ${Number(opacity.toFixed(2))})`
+  const clamped = Math.min(1, Math.max(0, opacity))
+  if (clamped >= 1) return hex
+  if (!/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(hex)) return hex
+  let h = hex.slice(1)
+  if (h.length === 3) {
+    h = h
+      .split("")
+      .map((c) => c + c)
+      .join("")
+  }
+  const r = Number.parseInt(h.slice(0, 2), 16)
+  const g = Number.parseInt(h.slice(2, 4), 16)
+  const b = Number.parseInt(h.slice(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${Number(clamped.toFixed(2))})`
 }
 
 export function applyCodeBlockEnhancedStyles(codeSettings: CodeBlockSettings): void {
@@ -107,7 +115,7 @@ export function applyCodeBlockEnhancedStyles(codeSettings: CodeBlockSettings): v
       return
     }
 
-    const bg = hexToRgba(codeSettings.backgroundColor, codeSettings.backgroundColorOpacity ?? 1)
+    const bg = hexToRgba(codeSettings.backgroundColor, codeSettings.backgroundColorOpacity)
 
     const style = document.createElement("style")
     style.id = "codeblock-enhanced-style"
@@ -133,21 +141,11 @@ export function applyCodeBlockEnhancedStyles(codeSettings: CodeBlockSettings): v
         color: ${codeSettings.textColor} !important;
       }
 
-      /* 行号样式 */
+      /* 行号样式（关闭显示时追加 display:none 隐藏） */
       .protyle-wysiwyg .code-block .hljs .ln {
         color: ${codeSettings.lineNumberColor} !important;
         background-color: ${codeSettings.lineNumberBackground} !important;
-      }
-
-      ${
-        codeSettings.showLineNumber
-          ? ""
-          : `
-      /* 隐藏行号 */
-      .protyle-wysiwyg .code-block .hljs .ln {
-        display: none !important;
-      }
-      `
+        ${codeSettings.showLineNumber ? "" : "display: none !important;"}
       }
 
       /* 代码高亮颜色 */

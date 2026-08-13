@@ -240,21 +240,6 @@ export function applyCodeBlockCollapse(
       overflow-x: hidden;
     }
 
-    .code-block.code-block-collapse-wrapper .code-collapse-fade {
-      position: absolute;
-      bottom: 40px;
-      left: 0;
-      right: 0;
-      height: 40px;
-      background: linear-gradient(to bottom, transparent, var(--b3-theme-surface));
-      pointer-events: none;
-      z-index: 1;
-    }
-
-    .code-block.code-block-collapse-wrapper:not(.code-block-collapsed) .code-collapse-fade {
-      opacity: 0;
-    }
-
     .code-block .code-collapse-bar {
       position: sticky;
       bottom: 0;
@@ -344,11 +329,6 @@ export function applyCodeBlockCollapse(
 
           const totalLines = countLines(hljs);
           const isZh = document.documentElement.lang === 'zh_CN';
-
-          const fade = document.createElement('div');
-          fade.className = 'code-collapse-fade protyle-custom';
-          fade.contentEditable = 'false';
-          codeBlock.appendChild(fade);
 
           const bar = document.createElement('div');
           bar.className = 'code-collapse-bar protyle-custom';

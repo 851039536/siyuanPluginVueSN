@@ -58,6 +58,7 @@
             平台发布状态
           </div>
           <div class="platform-status-list">
+            <!-- 行式卡片：左侧状态图标 + 平台名 -->
             <div
               v-for="platform in platforms"
               :key="platform.id"
@@ -69,43 +70,53 @@
               :title="platform.published ? `点击取消 ${platform.name} 发布状态` : `点击标记 ${platform.name} 已发布`"
               @click="handlePlatformClick(platform)"
             >
-              <Icon
-                v-if="markingPlatform === platform.id"
-                icon="mdi:loading"
-                class="status-icon spin-icon"
-              />
-              <Icon
-                v-else
-                :icon="platform.published ? 'mdi:check-circle' : 'mdi:minus-circle-outline'"
-                class="status-icon"
-              />
-              <span class="platform-name">{{ platform.name }}</span>
-              <span class="status-text">{{ platform.published ? '已发布' : '未发布' }}</span>
-              <button
-                v-if="!platform.published && platform.url"
-                class="publish-go-btn publish-format-btn"
-                title="排版发布：在编辑器内格式化后复制发布"
-                @click.stop="handlePublishFormat"
-              >
-                <Icon icon="mdi:brush" />
-              </button>
-              <button
-                v-if="!platform.published && platform.url"
-                class="publish-go-btn"
-                title="复制标题和内容后前往发布"
-                :disabled="publishGoLoading === platform.id"
-                @click.stop="handlePublishGo(platform)"
-              >
+              <div class="platform-info">
                 <Icon
-                  v-if="publishGoLoading === platform.id"
+                  v-if="markingPlatform === platform.id"
                   icon="mdi:loading"
-                  class="spin-icon"
+                  class="status-icon spin-icon"
                 />
                 <Icon
                   v-else
-                  icon="mdi:open-in-new"
+                  :icon="platform.published ? 'mdi:check-circle' : 'mdi:minus-circle-outline'"
+                  class="status-icon"
                 />
-              </button>
+                <span class="platform-name">{{ platform.name }}</span>
+              </div>
+              <!-- 中间状态徽章："已发布/未发布" -->
+              <span
+                class="status-badge"
+                :class="platform.published ? 'is-published' : 'is-unpublished'"
+              >{{ platform.published ? '已发布' : '未发布' }}</span>
+              <!-- 右侧操作按钮组：排版发布 / 前往发布 -->
+              <div
+                v-if="!platform.published && platform.url"
+                class="platform-actions"
+              >
+                <button
+                  class="publish-go-btn publish-format-btn"
+                  title="排版发布：在编辑器内格式化后复制发布"
+                  @click.stop="handlePublishFormat"
+                >
+                  <Icon icon="mdi:brush" />
+                </button>
+                <button
+                  class="publish-go-btn"
+                  title="复制标题和内容后前往发布"
+                  :disabled="publishGoLoading === platform.id"
+                  @click.stop="handlePublishGo(platform)"
+                >
+                  <Icon
+                    v-if="publishGoLoading === platform.id"
+                    icon="mdi:loading"
+                    class="spin-icon"
+                  />
+                  <Icon
+                    v-else
+                    icon="mdi:open-in-new"
+                  />
+                </button>
+              </div>
             </div>
           </div>
         </div>

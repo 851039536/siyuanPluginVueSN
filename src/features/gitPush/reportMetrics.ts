@@ -443,6 +443,22 @@ export function countFileLines(project: GitProject, filePath: string): number | 
   }
 }
 
+/**
+ * 批量统计已跟踪文件的总行数（当前工作区存量，与 git log 增删增量解耦）。
+ * 复用 countFileLines 的统计口径：扩展名黑名单过滤 + 2MB/二进制/读失败跳过。
+ * 输入来自 git ls-files，已排除未跟踪与被 .gitignore 忽略的文件，与仓库视图一致。
+ */
+export function countTrackedFilesLines(project: GitProject, files: string[], extensions?: string[]): number {
+  let total = 0
+  for (const f of files) {
+    if (!shouldIncludeFile(f, extensions)) continue
+    const lines = countFileLines(project, f)
+    if (lines === null) continue
+    total += lines
+  }
+  return total
+}
+
 /** diff 输出截断上限（约 5KB 文本，约 100 行 diff，防止巨型文件撑爆 Modal） */
 const DIFF_MAX_CHARS = 5000
 

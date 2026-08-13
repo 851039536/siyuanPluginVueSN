@@ -644,7 +644,7 @@ export async function transferBlockRef(
 // **************************************** Attributes ****************************************
 export async function setBlockAttrs(
   id: BlockId,
-  attrs: { [key: string]: string },
+  attrs: Record<string, string | null>,
 ) {
   const data = {
     id,

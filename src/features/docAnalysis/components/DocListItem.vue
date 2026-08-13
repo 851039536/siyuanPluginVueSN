@@ -122,7 +122,7 @@
 </template>
 
 <script setup lang="ts">
-import type { DocInfo } from "../types/index"
+import type { DocI18n, DocInfo } from "../types/index"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
 import {
@@ -133,7 +133,7 @@ import {
 interface Props {
   doc: DocInfo
   /** docAnalysis 分片 i18n（提供字数单位模板等文案） */
-  i18n: Record<string, string>
+  i18n: DocI18n
 }
 
 const props = defineProps<Props>()

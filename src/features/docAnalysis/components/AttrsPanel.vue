@@ -199,9 +199,13 @@
         <button
           class="footer-btn doocs-btn"
           title="复制 Markdown 内容后跳转到 md.doocs.org"
+          :disabled="doocsLoading"
           @click="goToDoocs"
         >
-          <Icon icon="mdi:open-in-new" />
+          <Icon
+            :icon="doocsLoading ? 'mdi:loading' : 'mdi:open-in-new'"
+            :class="{ 'spin-icon': doocsLoading }"
+          />
           doocs.org
         </button>
         <button
@@ -221,6 +225,7 @@ import { showMessage } from "siyuan"
 import {
   computed,
   ref,
+  watch,
 } from "vue"
 import {
   setBlockAttrs,
@@ -232,6 +237,7 @@ import {
   getPublishedPlatformIdsFromAttrs,
 } from "../utils/platformPublish"
 import { copyDocForPublish, openExternalPublish } from "../utils/publishActions"
+import type { DocI18n, PlatformMeta } from "../types/index"
 
 interface Props {
   visible: boolean
@@ -240,7 +246,7 @@ interface Props {
   loading: boolean
   error: string
   /** docAnalysis 分片 i18n（提供发布操作提示文案） */
-  i18n: Record<string, string>
+  i18n: DocI18n
 }
 
 const props = defineProps<Props>()
@@ -254,43 +260,50 @@ const emit = defineEmits<{
 const expandedYaml = ref(new Set<string>())
 
 function toggleYaml(key: string) {
-  if (expandedYaml.value.has(key)) {
-    expandedYaml.value.delete(key)
+  const next = new Set(expandedYaml.value)
+  if (next.has(key)) {
+    next.delete(key)
   }
   else {
-    expandedYaml.value.add(key)
+    next.add(key)
   }
-  // 触发响应式
-  expandedYaml.value = new Set(expandedYaml.value)
+  expandedYaml.value = next
 }
+
+/** 切换文档时重置 YAML 折叠状态，避免跨文档残留 */
+watch(() => props.docId, () => {
+  expandedYaml.value = new Set()
+})
 
 function countYamlLines(value: string): number {
   return value.split("\n").length
 }
 
-const CORE_ATTRS = new Set([
-  "id",
-  "type",
-  "title",
-  "alias",
-  "memo",
-  "bookmark",
-  "tags",
-  "icon",
-  "updated",
-  "created",
-])
-
-interface PlatformInfo {
-  id: string
-  name: string
-  published: boolean
-  url: string
+const ATTR_LABELS: Record<string, string> = {
+  id: "ID",
+  type: "类型",
+  title: "标题",
+  alias: "别名",
+  memo: "备注",
+  bookmark: "书签",
+  tags: "标签",
+  icon: "图标",
+  updated: "更新时间",
+  created: "创建时间",
 }
+
+const CORE_ATTRS = new Set(Object.keys(ATTR_LABELS))
+
+interface PlatformInfo extends Pick<PlatformMeta, "id" | "name" | "url"> {
+  published: boolean
+}
+
+const docTitle = computed(() => props.attrs?.title || "")
 
 const markingPlatform = ref<string | null>(null)
 const mdCopyLoading = ref(false)
 const publishGoLoading = ref<string | null>(null)
+const doocsLoading = ref(false)
 
 /** 排版发布：打开发布页 */
 function handlePublishFormat() {
@@ -301,7 +314,7 @@ function handlePublishFormat() {
 async function handlePublishGo(platform: PlatformInfo) {
   if (publishGoLoading.value) return
   publishGoLoading.value = platform.id
-  const ok = await copyDocForPublish(props.docId, props.attrs?.title || "", props.i18n)
+  const ok = await copyDocForPublish(props.docId, docTitle.value, props.i18n)
   if (ok) openExternalPublish(platform.url, platform.name, props.i18n)
   publishGoLoading.value = null
 }
@@ -309,69 +322,50 @@ async function handlePublishGo(platform: PlatformInfo) {
 async function copyMdContent() {
   if (mdCopyLoading.value) return
   mdCopyLoading.value = true
-  await copyDocForPublish(props.docId, props.attrs?.title || "", props.i18n)
+  const ok = await copyDocForPublish(props.docId, docTitle.value, props.i18n)
+  if (ok) showMessage(props.i18n.publishCopied, 2000, "info")
   mdCopyLoading.value = false
 }
 
 async function handlePlatformClick(platform: PlatformInfo) {
-  if (platform.published) {
-    await unmarkAsPublished(platform.id)
-  } else {
-    await markAsPublished(platform.id)
-  }
+  await togglePublished(platform, !platform.published)
 }
 
-async function markAsPublished(platformId: string) {
+/** 标记/取消标记平台发布状态（共用「查找 config → confirm → 写入属性 → 刷新」流程） */
+async function togglePublished(platform: PlatformInfo, publish: boolean) {
   if (!props.attrs || markingPlatform.value) return
 
-  const config = PLATFORM_META.value.find((p) => p.id === platformId)
+  const config = PLATFORM_META.value.find((p) => p.id === platform.id)
   if (!config) return
 
+  const docLabel = docTitle.value || props.docId
+  const message = publish
+    ? `确认将「${docLabel}」标记为已在 ${config.name} 发布？`
+    : `确认取消「${docLabel}」在 ${config.name} 的发布状态？`
   // eslint-disable-next-line no-alert
-  if (!confirm(`确认将「${props.attrs.title || props.docId}」标记为已在 ${config.name} 发布？`)) return
+  if (!confirm(message)) return
 
-  markingPlatform.value = platformId
+  markingPlatform.value = platform.id
 
   try {
     // 查找已有的匹配 YAML key
     const yamlKeys = Object.keys(props.attrs).filter((k) => k.endsWith("-yaml"))
-    const matchKey = yamlKeys.find((k) => getPlatformIdFromAttrKey(k, PLATFORM_META.value) === platformId)
+    const matchKey = yamlKeys.find((k) => getPlatformIdFromAttrKey(k, PLATFORM_META.value) === platform.id)
 
-    const attrKey = matchKey || `custom-${config.matchers[0]}-yaml`
-    const yamlValue = buildYamlTemplate()
-
-    await setBlockAttrs(props.docId, { [attrKey]: yamlValue })
+    if (publish) {
+      const attrKey = matchKey || `custom-${config.matchers[0]}-yaml`
+      await setBlockAttrs(props.docId, { [attrKey]: buildYamlTemplate() })
+    }
+    else if (matchKey) {
+      await setBlockAttrs(props.docId, { [matchKey]: null })
+    }
     emit("refresh")
   }
   catch (e) {
-    console.error("标记已发布失败:", e)
+    console.error("标记发布状态失败:", e)
+    showMessage(props.i18n.publishMarkFailed, 3000, "error")
   }
   finally {
-    markingPlatform.value = null
-  }
-}
-
-async function unmarkAsPublished(platformId: string) {
-  if (!props.attrs || markingPlatform.value) return
-
-  const config = PLATFORM_META.value.find((p) => p.id === platformId)
-  if (!config) return
-
-  // eslint-disable-next-line no-alert
-  if (!confirm(`确认取消「${props.attrs.title || props.docId}」在 ${config.name} 的发布状态？`)) return
-
-  markingPlatform.value = platformId
-
-  try {
-    const yamlKeys = Object.keys(props.attrs).filter((k) => k.endsWith("-yaml"))
-    const matchKey = yamlKeys.find((k) => getPlatformIdFromAttrKey(k, PLATFORM_META.value) === platformId)
-    if (matchKey) {
-      await setBlockAttrs(props.docId, { [matchKey]: null as unknown as string })
-      emit("refresh")
-    }
-  } catch (e) {
-    console.error("取消发布状态失败:", e)
-  } finally {
     markingPlatform.value = null
   }
 }
@@ -421,19 +415,6 @@ const platforms = computed<PlatformInfo[]>(() => {
 
 const COPYABLE_KEYS = new Set(["id", "title", "alias", "memo", "bookmark"])
 
-const ATTR_LABELS: Record<string, string> = {
-  id: "ID",
-  type: "类型",
-  title: "标题",
-  alias: "别名",
-  memo: "备注",
-  bookmark: "书签",
-  tags: "标签",
-  icon: "图标",
-  updated: "更新时间",
-  created: "创建时间",
-}
-
 interface DisplayItem {
   key: string
   label: string
@@ -482,14 +463,28 @@ const displayItems = computed<DisplayItem[]>(() => {
 async function copyAllAttrs() {
   if (!props.attrs) return
   const text = Object.entries(props.attrs)
-    .map(([k, v]) => `${k}: ${v}`)
+    .map(([k, v]) => {
+      // 多行值（如 YAML）以冒号换行 + 两空格缩进拼接，保持可读性
+      if (v.includes("\n")) {
+        const indented = v.split("\n").map((line) => `  ${line}`).join("\n")
+        return `${k}:\n${indented}`
+      }
+      return `${k}: ${v}`
+    })
     .join("\n")
   await copyToClipboard(text)
 }
 
 async function goToDoocs() {
-  const ok = await copyDocForPublish(props.docId, props.attrs?.title || "", props.i18n)
-  if (ok) openExternalPublish("https://md.doocs.org/", "md.doocs.org", props.i18n, 400)
+  if (doocsLoading.value) return
+  doocsLoading.value = true
+  try {
+    const ok = await copyDocForPublish(props.docId, docTitle.value, props.i18n)
+    if (ok) openExternalPublish("https://md.doocs.org/", "md.doocs.org", props.i18n, 400)
+  }
+  finally {
+    doocsLoading.value = false
+  }
 }
 </script>
 

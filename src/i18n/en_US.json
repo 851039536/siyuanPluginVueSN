@@ -624,7 +624,9 @@
     "publishFromAttrs": "Format & Publish: format in editor then copy to publish",
     "publishFetchFailed": "Failed to get document content, please retry",
     "publishClipboardFailed": "Failed to copy to clipboard",
-    "publishCopiedRedirect": "Title and content copied, redirecting to {platform}"
+    "publishCopiedRedirect": "Title and content copied, redirecting to {platform}",
+    "publishCopied": "Markdown content copied to clipboard",
+    "publishMarkFailed": "Failed to mark publish status, please retry"
   },
   "enableDocNavigation": "Enable Document Navigation",
   "enableDocNavigationDesc": "Auto display navigation links to parent and child documents below title",

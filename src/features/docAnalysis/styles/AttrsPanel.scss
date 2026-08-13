@@ -291,12 +291,39 @@
 }
 
 .attrs-table {
+  margin: 14px 18px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  overflow: hidden;
+
   .attr-row {
     display: flex;
     border-bottom: 1px solid var(--b3-border-color-light, rgba(0, 0, 0, 0.04));
+    transition: background 0.12s;
 
     &:last-child {
       border-bottom: none;
+    }
+
+    // 数据行 hover 高亮（表头行除外）
+    &:not(.attr-head):hover {
+      background: var(--b3-list-hover);
+    }
+  }
+
+  // 表头行：表面底色连成整行 + 强下边框 + 等宽大写标签，与 .attr-key 风格呼应
+  .attr-head {
+    border-bottom: 1px solid var(--b3-border-color);
+
+    .attr-key,
+    .attr-value {
+      background: var(--b3-theme-surface);
+      font-family: $vp-mono;
+      font-size: $font-size-2xs;
+      font-weight: $font-weight-bold;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      opacity: 0.45;
     }
   }
 
@@ -310,6 +337,7 @@
     text-transform: uppercase;
     opacity: 0.45;
     background: var(--b3-theme-surface, rgba(0, 0, 0, 0.02));
+    border-right: 1px solid var(--b3-border-color-light, rgba(0, 0, 0, 0.04));
     word-break: break-all;
   }
 

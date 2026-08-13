@@ -265,6 +265,8 @@ export interface FileLineDetailRow {
   pct: string
   /** 新增行数占项目总新增的百分比（保留 1 位小数） */
   share: string
+  /** 该文件当前存量总行数（git ls-files 统计；null=2MB/二进制/读失败/已删除，未分析时缺失为 undefined，渲染降级 —） */
+  totalLines?: number | null
 }
 
 /** 提交分析聚合视图（单对象 prop，与 StatsView 同模式） */

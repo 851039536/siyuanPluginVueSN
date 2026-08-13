@@ -287,6 +287,7 @@
       :project-name="lineDetailProjectName"
       :total-lines="lineDetailTotalLines"
       :get-numstat="getProjectNumstat"
+      :get-file-lines="getProjectFileLines"
       :extensions="selectedExtensions"
       @close="emit('closeLineDetail')"
     />
@@ -328,6 +329,8 @@ const props = defineProps<{
   lineDetailProjectId: string
   /** 按 projectId 获取该项目原始 numstat（来自 useCommitAnalysis 内存缓存） */
   getProjectNumstat: (projectId: string) => NumstatCommit[]
+  /** 按 projectId 获取该项目已跟踪文件的存量行数 Map（来自 useCommitAnalysis 内存缓存，值 null=不可读） */
+  getProjectFileLines: (projectId: string) => Map<string, number | null>
 }>()
 
 const emit = defineEmits<{

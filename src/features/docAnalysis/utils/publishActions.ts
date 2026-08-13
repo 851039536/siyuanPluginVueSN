@@ -6,15 +6,39 @@ import { exportMdContent } from "@/api"
 import { copyToClipboard } from "@/utils/domUtils"
 
 /**
+ * 思源 exportMdContent 导出的文档属性 front matter（--- ... --- YAML 块）
+ */
+const FRONT_MATTER_RE = /^---\r?\n[\s\S]*?\r?\n---(?=\r?\n|$)/
+
+/** 转义正则特殊字符（本地工具，不跨 feature 导入） */
+function escapeRegExp(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
+
+/**
+ * 剥离思源导出 Markdown 开头的文档属性 front matter（--- ... --- 块）
+ * 无 front matter 时原样返回；剥离后清理前导空行
+ */
+export function stripFrontMatter(md: string): string {
+  return md.replace(FRONT_MATTER_RE, "").replace(/^\r?\n+/, "")
+}
+
+/**
  * 复制文档标题 + Markdown 内容到剪贴板（组合为 # title + 空行 + md；title 为空时仅复制正文）
+ * 自动剥离思源文档属性 front matter；正文首块已是 "# {title}" 标题时不再重复拼接前缀
  * @param i18n docAnalysis 分片 i18n（提供 publishFetchFailed / publishClipboardFailed 文案）
  */
 export async function copyDocForPublish(docId: string, title: string, i18n: Record<string, string>): Promise<boolean> {
   try {
     const result = await exportMdContent(docId)
     const mdContent = result?.content || ""
-    // title 为空时不生成空标题行 "# "
-    const combined = title.trim() ? `# ${title.trim()}\n\n${mdContent}` : mdContent
+    // 剥离文档属性 front matter（title/date/lastmod 等内部属性不随正文发布出去）
+    const stripped = stripFrontMatter(mdContent)
+    const titleHeading = title.trim()
+    // 正文首块已是 "# {title}" 标题时不再拼接前缀，避免标题重复
+    const titleRe = titleHeading ? new RegExp(`^#\\s+${escapeRegExp(titleHeading)}(?:\\s|$)`) : null
+    const startsWithTitle = titleRe ? titleRe.test(stripped) : false
+    const combined = startsWithTitle ? stripped : (titleHeading ? `# ${titleHeading}\n\n${stripped}` : stripped)
     // copyToClipboard 失败返回 false 不抛异常，必须显式检查
     const copied = await copyToClipboard(combined)
     if (!copied) {

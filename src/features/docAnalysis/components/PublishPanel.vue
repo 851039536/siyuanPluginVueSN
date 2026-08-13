@@ -115,7 +115,7 @@ import type { PublishTheme } from "../types/index"
 import { parseMarkdown } from "../utils/mdRenderer"
 import { applyTheme, buildExportableHtml } from "../utils/themeApplicator"
 import { DEFAULT_THEME } from "../utils/themes"
-import { copyDocForPublish, openExternalPublish } from "../utils/publishActions"
+import { copyDocForPublish, openExternalPublish, stripFrontMatter } from "../utils/publishActions"
 import MarkdownEditor from "./MarkdownEditor.vue"
 import PreviewPane from "./PreviewPane.vue"
 
@@ -144,7 +144,8 @@ async function loadDocContent() {
   if (props.docId) {
     const result = await exportMdContent(props.docId)
     if (result?.content) {
-      mdText.value = result.content
+      // 剥离文档属性 front matter，编辑器内只保留正文
+      mdText.value = stripFrontMatter(result.content)
     }
   } else if (props.initialMd) {
     mdText.value = props.initialMd

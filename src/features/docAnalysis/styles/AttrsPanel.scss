@@ -12,7 +12,7 @@
 }
 
 .attrs-panel {
-  width: 600px;
+  width: 800px;
   max-width: 90vw;
   max-height: 80vh;
   background: var(--b3-theme-background);
@@ -21,6 +21,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  font-size: $font-size-xs;
 }
 
 .attrs-panel-header {
@@ -33,27 +34,27 @@
   .header-title {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: $font-size-base;
+    gap: $spacing-2;
+    font-size: $font-size-sm;
     font-weight: $font-weight-semibold;
     color: var(--b3-theme-on-background);
     min-width: 0;
 
     .header-icon {
-      font-size: $font-size-lg;
+      font-size: $font-size-base;
       color: var(--b3-theme-primary);
       flex-shrink: 0;
     }
 
     .header-doc-title {
-      font-size: $font-size-sm;
+      font-size: $font-size-xs;
       font-weight: $font-weight-normal;
       color: var(--b3-theme-on-surface-variant);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      margin-left: 12px;
-      padding-left: 12px;
+      margin-left: $spacing-3;
+      padding-left: $spacing-3;
       border-left: 1px solid var(--b3-border-color);
     }
   }
@@ -69,7 +70,7 @@
     background: transparent;
     color: var(--b3-theme-on-surface-variant);
     cursor: pointer;
-    font-size: $font-size-lg;
+    font-size: $font-size-base;
     flex-shrink: 0;
 
     &:hover {
@@ -87,8 +88,8 @@
   justify-content: center;
   padding: 40px;
   color: var(--b3-theme-on-surface-variant);
-  font-size: $font-size-sm;
-  gap: 10px;
+  font-size: $font-size-xs;
+  gap: $spacing-2;
 
   .loading-icon {
     font-size: $font-size-4xl;
@@ -115,96 +116,101 @@
   .section-title {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: $spacing-1;
     font-size: $font-size-2xs;
     font-weight: $font-weight-bold;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     opacity: 0.45;
-    margin-bottom: 10px;
+    margin-bottom: $spacing-2;
   }
 
+  // 两列网格行式卡片，超出高度内部滚动（右侧留出滚动条呼吸空间）
   .platform-status-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: $spacing-2;
+    max-height: 260px;
+    overflow-y: auto;
+    padding-right: $spacing-1;
+    @include da-scrollbar;
   }
 
+  // 行式卡片：左（图标+平台名）→ 中（状态徽章）→ 右（操作按钮组）
   .platform-status-item {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px 10px;
-    border-radius: 14px;
+    gap: $spacing-2;
+    padding: $spacing-1 $spacing-2;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $vp-radius;
     font-size: $font-size-xs;
     background: var(--b3-theme-surface-light);
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-background);
     user-select: none;
+    transition: background 0.12s, border-color 0.12s;
+
+    .platform-info {
+      display: flex;
+      align-items: center;
+      gap: $spacing-1;
+      min-width: 0;
+      flex: 1;
+    }
 
     .status-icon {
-      font-size: $font-size-sm;
+      font-size: $font-size-xs;
       flex-shrink: 0;
     }
 
     .platform-name {
       font-weight: $font-weight-medium;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
-    .status-text {
-      opacity: 0.7;
-      font-size: $font-size-xs;
-    }
+    // 状态徽章：辅助文字字号 + 小圆角底色标签
+    .status-badge {
+      flex-shrink: 0;
+      padding: 0 $spacing-2;
+      border-radius: $radius-sm;
+      font-size: $font-size-2xs;
+      font-weight: $font-weight-bold;
+      letter-spacing: 0.04em;
+      line-height: $line-height-normal;
+      background: var(--b3-theme-surface);
+      border: 1px solid var(--b3-border-color);
+      color: var(--b3-theme-on-surface-variant);
 
-    &.clickable {
-      cursor: pointer;
-
-      &:hover {
-        background: rgba(34, 197, 94, 0.15);
+      &.is-published {
+        background: rgba(34, 197, 94, 0.12);
+        border-color: rgba(34, 197, 94, 0.3);
         color: var(--b3-theme-success, #16a34a);
-
-        .status-icon {
-          color: var(--b3-theme-success, #22c55e);
-        }
       }
     }
 
-    &.published.clickable:hover {
-      background: rgba(239, 68, 68, 0.12);
-      color: var(--b3-theme-error, #dc2626);
-
-      .status-icon {
-        color: var(--b3-theme-error, #ef4444);
-      }
-    }
-
-    &.marking {
-      cursor: wait;
-      opacity: 0.7;
-    }
-
-    &.published {
-      background: rgba(34, 197, 94, 0.1);
-      color: var(--b3-theme-success, #16a34a);
-
-      .status-icon {
-        color: var(--b3-theme-success, #22c55e);
-      }
+    .platform-actions {
+      display: flex;
+      align-items: center;
+      gap: $spacing-1;
+      margin-left: auto;
+      flex-shrink: 0;
     }
 
     .publish-go-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 22px;
-      height: 22px;
+      width: 20px;
+      height: 20px;
       border: none;
       border-radius: 50%;
       background: var(--b3-theme-primary);
       color: var(--b3-theme-on-primary);
       cursor: pointer;
-      font-size: $font-size-sm;
+      font-size: $font-size-xs;
       flex-shrink: 0;
-      margin-left: 4px;
 
       &:hover:not(:disabled) {
         opacity: 0.85;
@@ -223,6 +229,59 @@
       &:hover:not(:disabled) {
         background: var(--b3-theme-success, #16a34a);
       }
+    }
+
+    // 未发布行 hover：泛浅绿提示可标记
+    &.clickable {
+      cursor: pointer;
+
+      &:hover {
+        background: rgba(34, 197, 94, 0.12);
+        border-color: var(--b3-theme-success, #22c55e);
+
+        .status-icon {
+          color: var(--b3-theme-success, #22c55e);
+        }
+
+        .status-badge.is-unpublished {
+          background: rgba(34, 197, 94, 0.12);
+          border-color: rgba(34, 197, 94, 0.3);
+          color: var(--b3-theme-success, #16a34a);
+        }
+      }
+    }
+
+    // 已发布行：浅绿底 + 绿徽章
+    &.published {
+      background: rgba(34, 197, 94, 0.08);
+      border-color: rgba(34, 197, 94, 0.25);
+      color: var(--b3-theme-success, #16a34a);
+
+      .status-icon {
+        color: var(--b3-theme-success, #22c55e);
+      }
+
+      // 已发布行 hover：泛浅红提示可取消
+      &.clickable:hover {
+        background: rgba(239, 68, 68, 0.1);
+        border-color: var(--b3-theme-error, #dc2626);
+        color: var(--b3-theme-error, #dc2626);
+
+        .status-icon {
+          color: var(--b3-theme-error, #ef4444);
+        }
+
+        .status-badge.is-published {
+          background: rgba(239, 68, 68, 0.12);
+          border-color: rgba(239, 68, 68, 0.3);
+          color: var(--b3-theme-error, #dc2626);
+        }
+      }
+    }
+
+    &.marking {
+      cursor: wait;
+      opacity: 0.7;
     }
   }
 
@@ -257,7 +316,7 @@
   .attr-value {
     flex: 1;
     padding: 10px 16px;
-    font-size: $font-size-sm;
+    font-size: $font-size-xs;
     color: var(--b3-theme-on-background);
     word-break: break-all;
     min-width: 0;
@@ -278,14 +337,14 @@
       width: 22px;
       height: 22px;
       border: none;
-      border-radius: 4px;
+      border-radius: $radius-sm;
       background: transparent;
       color: var(--b3-theme-on-surface-variant);
       cursor: pointer;
-      font-size: $font-size-sm;
+      font-size: $font-size-xs;
       flex-shrink: 0;
       vertical-align: middle;
-      margin-left: 8px;
+      margin-left: $spacing-2;
       opacity: 0.4;
       transition: opacity 0.15s;
 
@@ -300,13 +359,13 @@
   .yaml-toggle {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: $spacing-1;
     cursor: pointer;
     padding: 2px 0;
     user-select: none;
 
     .toggle-icon {
-      font-size: $font-size-base;
+      font-size: $font-size-sm;
       flex-shrink: 0;
     }
 
@@ -326,12 +385,12 @@
   }
 
   .yaml-content {
-    margin-top: 8px;
+    margin-top: $spacing-2;
     padding: 10px 14px;
     background: var(--b3-theme-surface, rgba(0, 0, 0, 0.03));
-    border-radius: 6px;
+    border-radius: $vp-radius;
     font-size: $font-size-xs;
-    line-height: 1.6;
+    line-height: $line-height-normal;
     font-family: $vp-mono;
     white-space: pre-wrap;
     word-break: break-all;
@@ -347,7 +406,7 @@
 
     &::-webkit-scrollbar-thumb {
       background: var(--b3-scroll-color);
-      border-radius: 2px;
+      border-radius: $radius-sm;
     }
   }
 }
@@ -355,7 +414,7 @@
 .attrs-panel-footer {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: $spacing-2;
   padding: 12px 18px;
   border-top: 1px solid var(--b3-border-color);
 
@@ -366,13 +425,13 @@
   .footer-btn {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: $spacing-1;
     padding: 6px 14px;
     border: 1px solid var(--b3-border-color);
     border-radius: $vp-radius;
     background: var(--b3-theme-background);
     color: var(--b3-theme-on-background);
-    font-size: $font-size-sm;
+    font-size: $font-size-xs;
     cursor: pointer;
 
     &:hover:not(:disabled) {

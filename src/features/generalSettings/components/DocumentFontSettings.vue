@@ -70,17 +70,10 @@
               />
             </div>
             <!-- 内置字体提示：选中内置字体时显示（已随插件分发，无需系统安装） -->
-            <p
-              v-if="isBuiltinFontSelected"
-              class="builtin-font-hint"
-            >
-              <IconWrapper
-                name="checkCircle"
-                :size="13"
-                class="builtin-font-hint-icon"
-              />
-              {{ i18n.builtinFontHint }}
-            </p>
+            <BuiltinFontHint
+              :font-family="settings.fontFamily"
+              :i18n="i18n"
+            />
           </div>
         </div>
 
@@ -225,6 +218,7 @@ import {
   GeneralSettingsStorage,
 } from "../types/storage"
 import { BUILTIN_FONTS } from "../utils/styles"
+import BuiltinFontHint from "./BuiltinFontHint.vue"
 import SettingSlider from "./SettingSlider.vue"
 
 interface Props {
@@ -266,7 +260,7 @@ const SLIDER_FIELDS: SliderField[] = [
   { key: "paragraphSpacing", icon: "formatParagraph", labelKey: "paragraphSpacing", min: 0, max: 30, step: 2, unit: "px" },
 ]
 
-/** 预设字体列表（字体名为专有名词，label 保留原生名称不走 i18n） */
+/** 预设字体列表（字体名为专有名词，label 保留原生名称不走 i18n；内置字体条目由 BUILTIN_FONTS 单一来源派生） */
 const PRESET_FONTS: SelectOption[] = [
   { value: "Microsoft YaHei Light", label: "微软雅黑 Light" },
   { value: "Segoe UI", label: "Segoe UI" },
@@ -275,8 +269,11 @@ const PRESET_FONTS: SelectOption[] = [
   // 思源美化社区常用开源/免费中文字体（Source Han 思源系列提供 SC/CN 双变体以兼容不同系统）
   { value: "Source Han Serif CN", label: "思源宋体 (CN)" },
   { value: "Source Han Sans CN", label: "思源黑体 (CN)" },
-  { value: "LXGW WenKai", label: "霞鹜文楷 (LXGW WenKai)", builtin: true },
-  { value: "NeoXiHei Code", label: "新晰黑 Code (NeoXiHei)", builtin: true },
+  // 内置字体：随插件分发，未在系统安装也能使用
+  ...BUILTIN_FONTS.map((font) => ({
+    value: font.fontFamily,
+    label: font.label,
+  })),
 ]
 
 /** 字重选项元数据（label 走 i18n 键） */
@@ -290,10 +287,6 @@ const settings = ref<DocumentFontSettings>({ ...DEFAULT_DOCUMENT_FONT_SETTINGS }
 const showPreview = ref(true)
 const presetFont = ref("")
 
-/** 当前选择是否命中任一内置字体（随插件分发，无需系统安装） */
-const isBuiltinFontSelected = computed(
-  () => BUILTIN_FONTS.some((font) => settings.value.fontFamily === font.fontFamily),
-)
 /** 加载守卫：存储数据回填期间跳过 watch 的 emit/save */
 const isLoading = ref(false)
 

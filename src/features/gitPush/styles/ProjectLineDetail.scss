@@ -62,6 +62,27 @@
   opacity: 0.45;
 }
 
+// 当前总行数 chip：存量口径（标签 + 等宽数字），悬停 tooltip 说明与增量指标的区别
+.pld-total {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: 1px $spacing-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  background: var(--b3-theme-surface);
+  font-size: $font-size-2xs; // 辅助文字（两级字号制）
+  color: var(--b3-theme-on-surface);
+  opacity: 0.8;
+  cursor: help;
+}
+
+.pld-total-value {
+  font-family: $vp-mono;
+  font-weight: $font-weight-semibold;
+}
+
 .pld-close {
   display: flex;
   align-items: center;

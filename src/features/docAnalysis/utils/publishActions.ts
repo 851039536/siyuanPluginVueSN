@@ -5,6 +5,12 @@ import { showMessage } from "siyuan"
 import { exportMdContent } from "@/api"
 import { copyToClipboard } from "@/utils/domUtils"
 
+/** 复制内容底部追加的公众号推广文案（Markdown 版） */
+export const PROMOTE_FOOTER_MD = "\n\n---\n\n**公众号搜「oykperson」，一起学习，共同成长！**"
+
+/** 复制内容底部追加的公众号推广文案（HTML 版） */
+export const PROMOTE_FOOTER_HTML = '<hr><p style="text-align:center;"><strong>公众号搜「oykperson」，一起学习，共同成长！</strong></p>'
+
 /**
  * 思源 exportMdContent 导出的文档属性 front matter（--- ... --- YAML 块）
  */
@@ -39,8 +45,10 @@ export async function copyDocForPublish(docId: string, title: string, i18n: Reco
     const titleRe = titleHeading ? new RegExp(`^#\\s+${escapeRegExp(titleHeading)}(?:\\s|$)`) : null
     const startsWithTitle = titleRe ? titleRe.test(stripped) : false
     const combined = startsWithTitle ? stripped : (titleHeading ? `# ${titleHeading}\n\n${stripped}` : stripped)
+    // 内容非空时在末尾追加公众号推广文案
+    const withPromote = combined.trim() ? combined + PROMOTE_FOOTER_MD : combined
     // copyToClipboard 失败返回 false 不抛异常，必须显式检查
-    const copied = await copyToClipboard(combined)
+    const copied = await copyToClipboard(withPromote)
     if (!copied) {
       // 提示文案："复制到剪贴板失败"
       showMessage(i18n.publishClipboardFailed, 3000, "error")

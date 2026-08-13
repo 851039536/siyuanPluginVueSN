@@ -330,4 +330,9 @@ export class GitPushManager {
   async getFirstCommitDate(projectPath: string): Promise<string> {
     return this.reportOps.getFirstCommitDate(projectPath)
   }
+
+  /** 获取仓库已跟踪文件列表（git ls-files；行数统计「当前总行数」用；git 失败抛出错误） */
+  async getTrackedFiles(projectPath: string): Promise<string[]> {
+    return this.reportOps.getTrackedFiles(projectPath)
+  }
 }

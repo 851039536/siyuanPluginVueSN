@@ -116,6 +116,14 @@
               >{{ summary.net.toLocaleString() }}</div>
               <div class="gls-card-label">{{ i18n.lineStatsTotalNet }}</div>
             </div>
+            <!-- 卡片：当前总行数（存量，中性色，tooltip 说明与增量指标的区别） -->
+            <div class="gls-card">
+              <div
+                class="gls-card-value gls-card-value--total"
+                :title="i18n.lineStatsTotalHint"
+              >{{ summary.totalLines.toLocaleString() }}</div>
+              <div class="gls-card-label">{{ i18n.lineStatsTotalLines }}</div>
+            </div>
           </div>
 
           <!-- 项目代码行数排行（+新增 / -删除 / 净增，按新增行降序） -->
@@ -125,7 +133,7 @@
               {{ i18n.analysisLineProjectRanking }}
             </div>
             <div class="gls-bar-list">
-              <!-- 表头行："新增 / 删除 / 净增 / 占比"（净增加粗主题色 = 实际行数，悬停见说明） -->
+              <!-- 表头行："新增 / 删除 / 净增 / 占比 / 总行数"（净增加粗主题色 = 实际行数，悬停见说明） -->
               <div class="gls-bar-head">
                 <span class="gls-bar-rank"></span>
                 <span class="gls-bar-label"></span>
@@ -143,6 +151,11 @@
                 </span>
                 <!-- 表头列："占比" -->
                 <span class="gls-bar-share">{{ i18n.lineDetailShare }}</span>
+                <!-- 表头列："总行数"（存量，等宽右对齐，tooltip 说明口径） -->
+                <span
+                  class="gls-line-total"
+                  :title="i18n.lineStatsTotalHint"
+                >{{ i18n.analysisLineTotal }}</span>
               </div>
               <div
                 v-for="(row, idx) in projectRows"
@@ -182,6 +195,8 @@
                 </span>
                 <!-- 占比列：新增行占总新增的百分比 -->
                 <span class="gls-bar-share">{{ row.share }}</span>
+                <!-- 总行数列：当前实际行数（存量，等宽右对齐中性色；旧缓存缺失时显示 —） -->
+                <span class="gls-line-total">{{ row.totalLines?.toLocaleString() ?? "—" }}</span>
               </div>
             </div>
           </div>

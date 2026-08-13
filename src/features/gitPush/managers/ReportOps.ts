@@ -48,6 +48,17 @@ export class ReportOps {
     return parseNumstatBlocks(raw)
   }
 
+  /**
+   * 获取仓库已跟踪文件列表（git ls-files，-c core.quotepath=false 避免中文/特殊字符路径被引号转义）。
+   * 只列已跟踪文件，自动排除未跟踪与被 .gitignore 忽略的文件（如 node_modules）。
+   * git 失败/路径无效时抛出错误；空仓库返回空数组。
+   */
+  async getTrackedFiles(projectPath: string): Promise<string[]> {
+    const raw = await this.executor.execGit(projectPath, ["-c", "core.quotepath=false", "ls-files"])
+    if (!raw) return []
+    return raw.split("\n").filter((line) => line.trim().length > 0)
+  }
+
   /** 获取仓库首个提交日期（ISO，无提交/失败返回空串；"全部历史"范围用它生成时间范围标签） */
   async getFirstCommitDate(projectPath: string): Promise<string> {
     try {

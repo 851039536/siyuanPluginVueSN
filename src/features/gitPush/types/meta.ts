@@ -238,6 +238,8 @@ interface LineRankBase {
 export interface ProjectLineRankItem extends LineRankBase {
   id: string
   name: string
+  /** 当前项目实际总行数（存量，git ls-files 统计；旧缓存无此字段时为 undefined，渲染时降级 0） */
+  totalLines?: number
 }
 
 /** 作者代码行数排行条目 */
@@ -315,6 +317,8 @@ export interface LineStatsSummary {
   deleted: number
   /** 总净增行数（added − deleted） */
   net: number
+  /** 当前工作区已跟踪文件总行数（存量口径，所有项目合计，与增删增量解耦） */
+  totalLines: number
 }
 
 /** 行数统计独立缓存（与提交分析缓存解耦，独立持久化到 git-push-line-stats-cache） */

@@ -128,8 +128,8 @@
 // ── 顶部汇总卡片（总新增 / 总删除 / 总净增，复用 CommitAnalysisPanel 总览卡片视觉模式）──
 .gls-cards {
   display: grid;
-  // 三列等宽卡片（总新增 + 总删除 + 总净增）
-  grid-template-columns: repeat(3, 1fr);
+  // 四列等宽卡片（总新增 + 总删除 + 总净增 + 当前总行数）
+  grid-template-columns: repeat(4, 1fr);
   gap: $spacing-2;
   margin-bottom: $spacing-2;
 }
@@ -164,6 +164,12 @@
 
 .gls-card-value--del {
   color: var(--b3-theme-error);
+}
+
+// 当前总行数 → 中性色（存量口径，与增量指标（新增绿/删除红/净增主题色）区分）
+.gls-card-value--total {
+  color: var(--b3-theme-on-surface);
+  opacity: 0.85;
 }
 
 .gls-section {
@@ -206,7 +212,8 @@
 
   // 表头数字与占比文字不弱化（覆盖数据行的 opacity 弱化）
   .gls-line-num,
-  .gls-bar-share {
+  .gls-bar-share,
+  .gls-line-total {
     opacity: 1;
   }
 }
@@ -305,6 +312,19 @@
   white-space: nowrap;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
+}
+
+// 总行数列（当前工作区实际行数，存量口径，等宽右对齐中性色；与增量数字列区分）
+.gls-line-total {
+  flex: 0 0 auto;
+  margin-left: $spacing-2;
+  min-width: 44px; // 稳定列宽，避免大数字波动挤压轨道（与占比列同宽级别）
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
 }
 
 // 新增行 → 绿（success）

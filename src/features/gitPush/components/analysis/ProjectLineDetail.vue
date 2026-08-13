@@ -56,7 +56,7 @@
 
         <!-- 内容区 -->
         <div class="pld-body">
-          <!-- 文件明细 Tab：表头 + 文件行（路径/修改/作者/增删净/占比） -->
+          <!-- 文件明细 Tab：表头 + 文件行（路径/修改/作者/增删净/占比/总行数） -->
           <template v-if="activeTab === 'file'">
             <EmptyState
               v-if="fileRows.length === 0"
@@ -74,6 +74,11 @@
                 <span class="pld-cell pld-cell--num">{{ i18n.analysisLineDeleted }}</span>
                 <span class="pld-cell pld-cell--net">{{ i18n.analysisLineNet }}</span>
                 <span class="pld-cell pld-cell--share">{{ i18n.lineDetailShare }}</span>
+                <!-- 表头列："总行数"（存量，等宽右对齐，tooltip 说明口径） -->
+                <span
+                  class="pld-cell pld-cell--total"
+                  :title="i18n.lineStatsTotalHint"
+                >{{ i18n.analysisLineTotal }}</span>
               </div>
               <!-- 文件行 -->
               <div
@@ -104,6 +109,11 @@
                   </span>
                   <span class="pld-share-text">{{ row.share }}</span>
                 </span>
+                <!-- 总行数列：该文件当前存量行数（等宽右对齐中性色；2MB/二进制/已删除或旧数据缺失显示 —） -->
+                <span
+                  class="pld-cell pld-cell--total"
+                  :title="`${i18n.analysisLineTotal} ${row.totalLines?.toLocaleString() ?? '—'}`"
+                >{{ row.totalLines?.toLocaleString() ?? "—" }}</span>
               </div>
             </template>
           </template>
@@ -189,6 +199,8 @@ const props = defineProps<{
   totalLines?: number
   /** 按 projectId 获取该项目原始 numstat（来自 useCommitAnalysis 内存缓存） */
   getNumstat: (projectId: string) => NumstatCommit[]
+  /** 按 projectId 获取该项目已跟踪文件的存量行数 Map（来自 useCommitAnalysis 内存缓存，值 null=不可读；未传时文件行总行数列降级 —） */
+  getFileLines?: (projectId: string) => Map<string, number | null>
   /** 扩展名排除过滤（与项目排行一致，保证明细与排行口径统一） */
   extensions: string[]
 }>()
@@ -201,7 +213,10 @@ const activeTab = ref<"file" | "author">("file")
 /** 该项目的原始 numstat 提交列表（projectId 无数据时为空数组，展示空态） */
 const commits = computed(() => props.getNumstat(props.projectId))
 
-/** 文件明细行：按文件聚合增删行 + 修改次数/参与作者，按新增行降序（同增量再按净增降序）；占比条形宽度按最大新增行归一 */
+/** 该项目已跟踪文件的存量行数 Map（路径→行数|null，null=2MB/二进制/读失败/已删除；未提供 getFileLines 时为空 Map） */
+const fileLinesMap = computed(() => props.getFileLines?.(props.projectId) ?? new Map<string, number | null>())
+
+/** 文件明细行：按文件聚合增删行 + 修改次数/参与作者，按新增行降序（同增量再按净增降序）；占比条形宽度按最大新增行归一；totalLines 为该文件存量行数 */
 const fileRows = computed<FileLineDetailRow[]>(() => {
   const entries = [...aggregateFileStats(commits.value).entries()]
     .filter(([path]) => shouldIncludeFile(path, props.extensions))
@@ -215,6 +230,7 @@ const fileRows = computed<FileLineDetailRow[]>(() => {
       net: agg.added - agg.deleted,
       modCount: agg.modCount,
       authorCount: agg.authors.size,
+      totalLines: fileLinesMap.value.get(path) ?? null,
       pct: `${Math.round((agg.added / maxAdded) * 100)}%`,
       share: totalAdded > 0 ? `${((agg.added / totalAdded) * 100).toFixed(1)}%` : "0%",
     }))

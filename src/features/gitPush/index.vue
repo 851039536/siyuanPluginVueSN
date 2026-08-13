@@ -86,6 +86,7 @@
       :selected-extensions="selectedExtensions"
       :line-detail-project-id="lineDetailProjectId"
       :get-project-numstat="getProjectNumstat"
+      :get-project-file-lines="getProjectFileLines"
       @run-analysis="runLineStatsAnalysis"
       @update-count="(n) => setCommitCount(n, true)"
       @update:selected-extensions="updateSelectedExtensions"
@@ -629,6 +630,7 @@ const {
   selectedExtensions,
   updateSelectedExtensions,
   getProjectNumstat,
+  getProjectFileLines,
 } = useCommitAnalysis(props.manager, projects)
 
 /** 行数统计视图：项目详情弹窗目标项目 id（非空即打开弹窗，关闭时清空） */

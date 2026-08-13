@@ -459,6 +459,17 @@ export function countTrackedFilesLines(project: GitProject, files: string[], ext
   return total
 }
 
+/**
+ * 批量统计已跟踪文件的总行数并按文件分别记录（Map<路径, 行数|null>，供项目详情弹窗按文件路径查存量）。
+ * 复用 countFileLines 口径：2MB/二进制/读失败/工作区已删除 → null。
+ * 不做扩展名过滤（过滤属调用方口径——详情弹窗文件明细随当前扩展名配置在渲染时过滤，避免分析后改过滤导致行数缺项）。
+ */
+export function countTrackedFileLinesMap(project: GitProject, files: string[]): Map<string, number | null> {
+  const map = new Map<string, number | null>()
+  for (const f of files) map.set(f, countFileLines(project, f))
+  return map
+}
+
 /** diff 输出截断上限（约 5KB 文本，约 100 行 diff，防止巨型文件撑爆 Modal） */
 const DIFF_MAX_CHARS = 5000
 

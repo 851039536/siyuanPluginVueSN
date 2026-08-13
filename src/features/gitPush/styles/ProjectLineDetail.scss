@@ -239,6 +239,16 @@
     align-items: center;
     gap: $spacing-1;
   }
+
+  // 总行数列（该文件当前存量行数，等宽右对齐中性色；与增量数字列区分）
+  &--total {
+    min-width: 44px;
+    text-align: right;
+    font-family: $vp-mono;
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.7;
+  }
 }
 
 .pld-share-track {

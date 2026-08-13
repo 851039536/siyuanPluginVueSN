@@ -167,6 +167,71 @@
 }
 
 // ============================================================
+// 推广设置条
+// ============================================================
+.promote-btn {
+  &.active {
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+    background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.06));
+  }
+}
+
+.promote-settings {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  padding: $spacing-2 $spacing-3;
+  border-bottom: 1px solid var(--b3-border-color);
+  background: var(--b3-theme-surface);
+  flex-shrink: 0;
+}
+
+.promote-settings-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.promote-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface-variant);
+  cursor: pointer;
+}
+
+.promote-checkbox {
+  accent-color: var(--b3-theme-primary);
+  cursor: pointer;
+}
+
+.promote-textarea {
+  width: 100%;
+  padding: $spacing-1 $spacing-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-surface-variant);
+  font-size: $font-size-xs;
+  line-height: $line-height-normal;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.12s;
+
+  &:focus {
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+.promote-settings-hint {
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-variant);
+  opacity: 0.55;
+}
+
+// ============================================================
 // 分屏编辑+预览区
 // ============================================================
 .publish-split {

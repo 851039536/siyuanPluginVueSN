@@ -191,6 +191,9 @@ export interface PlatformMeta {
   hidden?: boolean
 }
 
+/** docAnalysis 分片 i18n（扁平键值对，供各组件 Props 统一引用） */
+export type DocI18n = Record<string, string>
+
 /** 发布平台主题定义 */
 export interface PublishTheme {
   /** 主题唯一标识 */

@@ -111,7 +111,7 @@ import {
 } from "vue"
 import { exportMdContent } from "@/api"
 import { copyToClipboard, triggerBlobDownload } from "@/utils/domUtils"
-import type { PublishTheme } from "../types/index"
+import type { DocI18n, PublishTheme } from "../types/index"
 import { parseMarkdown } from "../utils/mdRenderer"
 import { applyTheme, buildExportableHtml } from "../utils/themeApplicator"
 import { DEFAULT_THEME } from "../utils/themes"
@@ -124,7 +124,7 @@ interface Props {
   docId?: string
   initialMd?: string
   /** docAnalysis 分片 i18n（提供发布操作提示文案） */
-  i18n: Record<string, string>
+  i18n: DocI18n
 }
 
 const props = defineProps<Props>()

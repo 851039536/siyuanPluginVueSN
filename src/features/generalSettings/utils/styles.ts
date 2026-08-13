@@ -542,20 +542,27 @@ export function generateLevelDisplayCss(
  * 内置字体元数据（多个字体随插件分发）
  * - 霞鹜文楷（SIL OFL 1.1，可自由嵌入/修改/再分发）
  * - 新晰黑 Code / NeoXiHei Code（IPA Font License v1.0，等宽中文，适合代码/笔记）
- * fontFamily 必须与 DocumentFontSettings.vue 的 PRESET_FONTS 中对应条目 value 一致
+ * label 为预设下拉展示名，两处设置面板（代码块 / 文档正文）的内置字体条目均由此派生
  */
 export const BUILTIN_FONTS = [
   {
     fontFamily: "LXGW WenKai",
+    label: "霞鹜文楷 (LXGW WenKai)",
     fileName: "LXGWWenKai-Regular.ttf",
     subDir: "fonts",
   },
   {
     fontFamily: "NeoXiHei Code",
+    label: "新晰黑 Code (NeoXiHei)",
     fileName: "NeoXiHeiCode-Regular.ttf",
     subDir: "fonts",
   },
 ] as const
+
+/** 判断字体族是否命中任一内置字体（随插件分发，无需系统安装） */
+export function isBuiltinFontFamily(fontFamily: string): boolean {
+  return BUILTIN_FONTS.some((font) => font.fontFamily === fontFamily)
+}
 
 /** 内置字体 @font-face 注入用的 <style> 元素 id */
 export const BUILTIN_FONT_STYLE_ID = "builtin-font-face"

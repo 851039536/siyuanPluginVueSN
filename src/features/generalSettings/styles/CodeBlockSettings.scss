@@ -274,22 +274,6 @@
   }
 }
 
-/* 内置字体提示（随插件分发的字体，无需系统安装） */
-.builtin-font-hint {
-  display: flex;
-  align-items: center;
-  gap: $spacing-1;
-  margin: $spacing-1 0 0 0;
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-primary);
-  opacity: 0.85;
-  line-height: $line-height-normal;
-}
-
-.builtin-font-hint-icon {
-  flex-shrink: 0;
-}
-
 /* 代码颜色设置样式 */
 .color-settings {
   display: flex;

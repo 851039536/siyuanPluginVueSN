@@ -326,7 +326,7 @@
             @click.stop="toggleMenu('refresh')"
           >
             <Icon
-              icon="mdi:refresh"
+              :icon="isRefreshing ? 'mdi:loading' : 'mdi:refresh'"
               height="12"
               :class="{ 'gp-spin': isRefreshing }"
             />
@@ -409,7 +409,7 @@
         :title="i18n.refreshRemoteStatus"
         @click.stop="$emit('refreshRemoteStatus', project.id)"
       >
-        <Icon icon="mdi:refresh" height="12" :class="{ 'gp-spin': remoteStatusLoading }" />
+        <Icon :icon="remoteStatusLoading ? 'mdi:loading' : 'mdi:refresh'" height="12" :class="{ 'gp-spin': remoteStatusLoading }" />
       </button>
       <div
         v-for="r in remotes"
@@ -509,6 +509,7 @@
         :generated-msg="generatingMsg?.text || ''"
         :file-diffs="fileDiffs"
         :git-op-loading="gitOpLoading || false"
+        :refreshing-working-tree="refreshingWorkingTree || false"
         :commit-templates="commitTemplates"
         @stage-file="(file: string) => $emit('stageFile', project.id, file)"
         @unstage-file="(file: string) => $emit('unstageFile', project.id, file)"
@@ -589,7 +590,7 @@
             @click.stop="toggleMenu('pull')"
           >
             <Icon
-              icon="mdi:arrow-down"
+              :icon="isPulling(project.id) || fetching ? 'mdi:loading' : 'mdi:arrow-down'"
               height="12"
               :class="{ 'gp-spin': isPulling(project.id) || fetching }"
             />
@@ -653,7 +654,7 @@
               @click.stop="toggleMenu('push')"
             >
               <Icon
-                icon="mdi:arrow-up"
+                :icon="isPushing(project.id) ? 'mdi:loading' : 'mdi:arrow-up'"
                 height="12"
                 :class="{ 'gp-spin': isPushing(project.id) }"
               />
@@ -762,6 +763,7 @@ const props = defineProps<{
   refreshing: string | null
   fetching: boolean
   remoteStatusLoading?: boolean
+  refreshingWorkingTree?: boolean
   // 每项目响应式数据（单项目值，非全量 Record，避免跨卡片 re-render）
   pushStatus: PushStatusInfo
   workingTree: WorkingTreeInfo

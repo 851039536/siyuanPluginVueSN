@@ -36,7 +36,7 @@
           @click="emit('runReport')"
         >
           <Icon
-            icon="mdi:chart-box"
+            :icon="running ? 'mdi:loading' : 'mdi:chart-box'"
             height="12"
             :class="{ 'gp-spin': running }"
           />

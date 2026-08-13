@@ -9,7 +9,7 @@
         :title="i18n.refreshTags"
         @click="$emit('refresh')"
       >
-        <Icon icon="mdi:refresh" height="12" :class="{ 'gp-spin': loading }" />
+        <Icon :icon="loading ? 'mdi:loading' : 'mdi:refresh'" height="12" :class="{ 'gp-spin': loading }" />
       </button>
       <template v-if="addingTag">
         <!-- Tag 名称输入：占位符“Tag 名称（如 v1.2.0）” -->

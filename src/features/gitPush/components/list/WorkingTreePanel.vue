@@ -40,9 +40,10 @@
           </button>
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm"
+            :disabled="refreshingWorkingTree"
             @click.stop="$emit('refreshWorkingTree')"
           >
-            <Icon icon="mdi:refresh" height="12" />
+            <Icon :icon="refreshingWorkingTree ? 'mdi:loading' : 'mdi:refresh'" height="12" :class="{ 'gp-spin': refreshingWorkingTree }" />
           </button>
         </span>
       </template>
@@ -267,6 +268,8 @@ const props = defineProps<{
   fileDiffs: Record<string, string>
   generatedMsg: string
   gitOpLoading: boolean
+  /** 工作区刷新加载中 */
+  refreshingWorkingTree?: boolean
   /** 提交信息模板 */
   commitTemplates?: CommitTemplate[]
 }>()

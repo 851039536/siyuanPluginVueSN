@@ -309,7 +309,7 @@ export interface CommitAnalysisCache {
   authorLineRanking: AuthorLineRankItem[]
 }
 
-/** 行数统计全量汇总（基于全量项目数据合计，与截断后的排行解耦，避免项目数超过排行上限时「总」数字偏小） */
+/** 行数统计全量汇总（基于全量项目数据独立累加，供顶部汇总卡片展示） */
 export interface LineStatsSummary {
   /** 总新增行数 */
   added: number

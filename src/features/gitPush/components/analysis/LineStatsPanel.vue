@@ -312,7 +312,7 @@ const props = defineProps<{
   projectRanking: ProjectLineRankItem[]
   /** 作者代码行数排行（按新增行降序） */
   authorRanking: AuthorLineRankItem[]
-  /** 全量行数合计（基于全量项目数据，与截断排行解耦，来自 useCommitAnalysis） */
+  /** 全量行数合计（基于全量项目数据独立累加，来自 useCommitAnalysis） */
   summary: LineStatsSummary
   analyzing: boolean
   analyzed: boolean

@@ -428,6 +428,24 @@ src/
 
 常见 Vite 警告：`is dynamically imported by ... but also statically imported` → 改为统一静态 `import`。
 
+### viteStaticCopy 静态资源复制必须 stripBase
+
+用 `viteStaticCopy` 复制 src 子目录内的静态资源（字体/图片）时，`dest` 会附加完整源路径，导致产物嵌套（`assets/fonts/src/features/.../`）而运行时 404。**必须加 `rename: { stripBase: true }`** 扁平化输出：
+
+```ts
+{
+  src: "./src/features/generalSettings/assets/fonts/LXGWWenKai-Regular.ttf",
+  dest: "./assets/fonts/",
+  rename: { stripBase: true },  // ← 必须
+},
+```
+
+注意：`vite build --watch` 模式下修改 `vite.config.ts` **不会自动重启**，必须重启 `pnpm dev` 才能生效（否则构建产物仍为旧配置路径）。
+
+### 内置字体（@font-face）模式
+
+"开箱即用"字体（用户系统未安装也能用）的实现：字体文件放 `src/features/<feature>/assets/fonts/` + 许可证 → `viteStaticCopy` 复制（带 `stripBase`）→ `init()` 用 `plugin.assetsPath`（运行时注入，siyuan.d.ts 未声明需类型断言，缺失兜底 `/plugins/${plugin.name}/assets/`）注入 `@font-face` → 面板选中时 `document.fonts.load()` 预加载。参考实现：`src/features/generalSettings/`（`utils/styles.ts` 的 `BUILTIN_FONT` + `injectBuiltinFont()`）。
+
 ---
 
 ## 参考文件

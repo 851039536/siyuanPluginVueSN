@@ -125,6 +125,8 @@ export class GeneralSettings {
       applyListStyleEnhancedCss(settings.settings as unknown as ListStyleSettings)
     } else if (settings.moduleId === "tabPin") {
       this.applyTabPinStyles(settings.settings as unknown as TabPinSettings)
+    } else if (settings.moduleId === "docCount") {
+      this.updateDocCount(settings.settings as unknown as DocCountSettings)
     }
     emitCustomEvent("general-settings-changed", settings)
   }

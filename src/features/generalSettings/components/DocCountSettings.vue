@@ -177,7 +177,6 @@
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
-import type { GeneralSettings } from "../GeneralSettings"
 import type {
   DocCountFormat,
   DocCountSettings,
@@ -186,6 +185,7 @@ import { showMessage } from "siyuan"
 import {
   computed,
   onMounted,
+  onUnmounted,
   ref,
 } from "vue"
 import SiSwitch from "@/components/Switch.vue"
@@ -265,15 +265,11 @@ const formatOptions = (Object.keys(DOC_COUNT_FORMATTERS) as DocCountFormat[]).ma
   }),
 )
 
-/** 获取插件挂载的 GeneralSettings 实例（只调用其公开方法，不触碰内部字段） */
-const getGeneralSettings = (): GeneralSettings | null =>
-  (props.plugin as any)?.__generalSettings || null
-
-const gsStorage = computed(() => props.plugin ? new GeneralSettingsStorage(props.plugin) : null)
+const gsStorage = props.plugin ? new GeneralSettingsStorage(props.plugin) : null
 
 const ensureStorage = (): GeneralSettingsStorage => {
-  if (!gsStorage.value) throw new Error("插件实例不可用")
-  return gsStorage.value
+  if (!gsStorage) throw new Error("插件实例不可用")
+  return gsStorage
 }
 
 /** 预览用的格式化数字 */
@@ -294,9 +290,9 @@ const buildSettings = (): DocCountSettings => ({
 })
 
 const loadSettings = async () => {
-  if (!gsStorage.value) return
+  if (!gsStorage) return
   try {
-    const data = await gsStorage.value.docCount.loadOrDefault()
+    const data = await gsStorage.docCount.loadOrDefault()
     enableDocCount.value = data.enableDocCount
     updateInterval.value = data.updateInterval
     displayFormat.value = data.displayFormat
@@ -309,21 +305,23 @@ const loadSettings = async () => {
   }
 }
 
-/** 保存设置并经 GeneralSettings 公开方法应用到 Manager */
+/** 字体样式防抖定时器：颜色逐字符输入、透明度滑块拖动均连续触发，收敛为输入/拖动结束后一次保存 */
+let fontStyleTimer: ReturnType<typeof setTimeout> | null = null
+
+/** 保存设置并经父面板事件链（emit change）应用到 Manager */
 const persistAndApply = async (message: string): Promise<DocCountSettings> => {
   const settings = buildSettings()
   await ensureStorage().docCount.save(settings)
-  getGeneralSettings()?.updateDocCount(settings)
   showMessage(message, 2000, "info")
+  emit("change", settings)
   return settings
 }
 
 const handleToggleChange = async () => {
   try {
-    const settings = await persistAndApply(
+    await persistAndApply(
       enableDocCount.value ? t.value.msgEnabled : t.value.msgDisabled,
     )
-    emit("change", settings)
   } catch (e) {
     console.error("保存文档数统计设置失败:", e)
   }
@@ -337,12 +335,18 @@ const handleIntervalChange = async () => {
   }
 }
 
-const handleFontStyleChange = async () => {
-  try {
-    await persistAndApply(t.value.msgFontStyleChanged)
-  } catch (e) {
-    console.error("保存字体样式失败:", e)
+const handleFontStyleChange = () => {
+  if (fontStyleTimer) {
+    clearTimeout(fontStyleTimer)
   }
+  fontStyleTimer = setTimeout(async () => {
+    fontStyleTimer = null
+    try {
+      await persistAndApply(t.value.msgFontStyleChanged)
+    } catch (e) {
+      console.error("保存字体样式失败:", e)
+    }
+  }, 150)
 }
 
 const handleDisplayFormatChange = async () => {
@@ -354,6 +358,13 @@ const handleDisplayFormatChange = async () => {
 }
 
 onMounted(loadSettings)
+
+onUnmounted(() => {
+  if (fontStyleTimer) {
+    clearTimeout(fontStyleTimer)
+    fontStyleTimer = null
+  }
+})
 </script>
 
 <style scoped lang="scss">

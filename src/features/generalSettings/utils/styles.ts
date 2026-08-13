@@ -241,49 +241,39 @@ export function applyCodeBlockCollapse(
     }
 
     .code-block .code-collapse-bar {
-      position: sticky;
-      bottom: 0;
-      display: flex;
-      justify-content: center;
-      padding: 4px 0;
-      background: var(--b3-theme-surface);
-      border-top: 1px solid var(--b3-border-color);
+      position: absolute;
+      right: 8px;
+      bottom: 8px;
       z-index: 2;
     }
 
     .code-block .code-collapse-btn {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      padding: 2px 10px;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
       background: none;
-      border: 1px solid var(--b3-border-color);
-      border-radius: 4px;
+      border: none;
       cursor: pointer;
-      font-size: 12px;
       color: var(--b3-theme-on-surface);
-      line-height: 1.4;
+      opacity: 0.55;
+      transition: opacity .15s ease;
     }
 
     .code-block .code-collapse-btn:hover {
-      background: var(--b3-theme-surface-variant);
+      opacity: 1;
     }
 
     .code-block .code-collapse-btn svg {
-      width: 12px;
-      height: 12px;
+      width: 14px;
+      height: 14px;
       fill: currentColor;
+      transition: transform .2s ease;
     }
 
     .code-block .code-collapse-btn svg.collapsed {
-      transform: rotate(-90deg);
-    }
-
-    .code-block .code-collapse-line-info {
-      font-size: 11px;
-      color: var(--b3-theme-on-surface);
-      opacity: 0.6;
-      margin-left: 6px;
+      transform: rotate(180deg);
     }
   `
   document.head.appendChild(style)
@@ -305,13 +295,6 @@ export function applyCodeBlockCollapse(
         return mobileUA || screenWidth || (hasTouchScreen && mobileUA) || isSiyuanMobile;
       }
 
-      function countLines(hljs) {
-        const codeEl = hljs.querySelector('code');
-        if (!codeEl) return 0;
-        const text = codeEl.textContent || '';
-        return text.split('\\n').length;
-      }
-
       function addCodeExtends(codeBlocks) {
         if(codeBlocks.length === 0) return;
         if(running) return;
@@ -327,41 +310,30 @@ export function applyCodeBlockCollapse(
           codeBlock.classList.add('code-block-collapsed');
           hljs.style.maxHeight = codeMaxHeight + 'px';
 
-          const totalLines = countLines(hljs);
-          const isZh = document.documentElement.lang === 'zh_CN';
-
           const bar = document.createElement('div');
           bar.className = 'code-collapse-bar protyle-custom';
           bar.contentEditable = 'false';
-          const lineInfo = totalLines > 0
-            ? '<span class=\"code-collapse-line-info\">(' + totalLines + ' ' + (isZh ? '行' : 'lines') + ')</span>'
-            : '';
           bar.innerHTML = \`
-            <button class=\"code-collapse-btn\" contenteditable=\"false\">
-              <svg class=\"collapsed\" viewBox=\"0 0 16 16\" xmlns=\"http://www.w3.org/2000/svg\">
-                <path d=\"M12.78 6.22a.75.75 0 010 1.06l-4.25 4.25a.75.75 0 01-1.06 0L3.22 7.28a.75.75 0 011.06-1.06L8 9.94l3.72-3.72a.75.75 0 011.06 0z\"/>
+            <button class=\"code-collapse-btn\" contenteditable=\"false\" aria-label=\"expand\">
+              <svg class=\"collapsed\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\">
+                <path d=\"M7.41 8.59 12 13.17 16.59 8.59 18 10l-6 6-6-6z\"/>
               </svg>
-              <span contenteditable=\"false\">\${isZh ? '展开代码' : 'Expand'}</span>
             </button>
-            \${lineInfo}
           \`;
           codeBlock.appendChild(bar);
 
           bar.querySelector('.code-collapse-btn').onclick = () => {
             const isCollapsed = codeBlock.classList.contains('code-block-collapsed');
             const svg = bar.querySelector('svg');
-            const label = bar.querySelector('.code-collapse-btn span');
             if (isCollapsed) {
               codeBlock.classList.remove('code-block-collapsed');
               hljs.style.maxHeight = 'none';
               svg.classList.remove('collapsed');
-              label.textContent = isZh ? '收起代码' : 'Collapse';
             } else {
               codeBlock.classList.add('code-block-collapsed');
               hljs.style.maxHeight = codeMaxHeight + 'px';
               hljs.scrollTop = 0;
               svg.classList.add('collapsed');
-              label.textContent = isZh ? '展开代码' : 'Expand';
             }
           };
         });

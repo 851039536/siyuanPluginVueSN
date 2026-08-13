@@ -251,23 +251,25 @@ export function applyCodeBlockCollapse(
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 20px;
-      height: 20px;
-      background: none;
-      border: none;
+      width: 24px;
+      height: 24px;
+      background: var(--b3-theme-surface);
+      border: 1px solid var(--b3-border-color);
+      border-radius: 4px;
       cursor: pointer;
       color: var(--b3-theme-on-surface);
-      opacity: 0.55;
-      transition: opacity .15s ease;
+      opacity: 0.85;
+      transition: opacity .15s ease, background .15s ease;
     }
 
     .code-block .code-collapse-btn:hover {
       opacity: 1;
+      background: var(--b3-theme-surface-variant);
     }
 
     .code-block .code-collapse-btn svg {
-      width: 14px;
-      height: 14px;
+      width: 16px;
+      height: 16px;
       fill: currentColor;
       transition: transform .2s ease;
     }

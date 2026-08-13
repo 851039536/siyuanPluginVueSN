@@ -1638,6 +1638,7 @@
     "analysisLineAdded": "新增",
     "analysisLineDeleted": "删除",
     "analysisLineNet": "净增",
+    "lineStatsNetHint": "净增 = 实际行数（新增 − 删除）",
     "lineDetailTitleHint": "行数统计详情",
     "lineDetailFileTab": "文件明细",
     "lineDetailAuthorTab": "作者明细",

@@ -402,6 +402,24 @@ export function withBarPct<T extends { count: number }>(
   }))
 }
 
+/** 净增行语义 class：正→`<prefix>--pos` / 负→`<prefix>--neg` / 零→`<prefix>--zero`（zeroSuffix 传空串时零值返回空串，不追加 class） */
+export function netClass(net: number, prefix: string, zeroSuffix = "--zero"): string {
+  if (net > 0) return `${prefix}--pos`
+  if (net < 0) return `${prefix}--neg`
+  return zeroSuffix === "" ? "" : `${prefix}${zeroSuffix}`
+}
+
+/** 行数排行条形/占比预计算：pct=相对最大新增行，share=新增行占总新增百分比（total=0 兜底防除零） */
+export function withLineBarPct<T extends { added: number }>(rows: T[]): (T & { pct: string, share: string })[] {
+  const max = Math.max(...rows.map((r) => r.added), 1)
+  const total = rows.reduce((s, r) => s + r.added, 0) || 1
+  return rows.map((r) => ({
+    ...r,
+    pct: `${Math.round((r.added / max) * 100)}%`,
+    share: `${((r.added / total) * 100).toFixed(1)}%`,
+  }))
+}
+
 // ── 时间格式化与项目排序（纯函数，无 Vue 响应式依赖）──
 
 /** 把 ISO 时间转为相对时间文案（i18n 驱动，含 {0} 数字占位），无法解析返回空 */

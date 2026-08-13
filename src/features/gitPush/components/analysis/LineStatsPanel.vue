@@ -12,7 +12,7 @@
       <!-- 顶部工具条：分析状态 + 过滤配置 + 条数选择 + 分析按钮 -->
       <div class="gls-toolbar">
         <!-- 分析状态："分析中…/上次分析 xx/未分析" -->
-        <span class="gls-status">{{ analyzing ? i18n.auditing : (analyzed ? i18n.analysisLastRun.replace("{0}", relativeTime(analyzedAt, i18n)) : i18n.lineStatsNotRun) }}</span>
+        <span class="gls-status">{{ analyzing ? i18n.auditing : (analyzed ? i18n.analysisLastRun.replace("{0}", relativeTime(analyzedAt, i18n) || i18n.timeJustNow) : i18n.lineStatsNotRun) }}</span>
         <div class="gls-toolbar-right">
           <!-- 文件格式过滤配置按钮（点击弹出扩展名多选弹窗；选中数徽标随选择变化） -->
           <!-- 按钮提示："文件格式过滤" -->
@@ -241,11 +241,11 @@
 
 <script setup lang="ts">
 import type { NumstatCommit } from "../../reportMetrics"
-import type { AuthorLineRankItem, ProjectLineRankItem } from "../../types"
+import type { AuthorLineRankItem, LineStatsSummary, ProjectLineRankItem } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed, ref } from "vue"
 import { COMMIT_COUNT_OPTIONS } from "../../composables/useCommitAnalysis"
-import { relativeTime } from "../../utils"
+import { netClass as sharedNetClass, relativeTime, withLineBarPct } from "../../utils"
 import EmptyState from "../common/EmptyState.vue"
 import ExtFilterDialog from "./ExtFilterDialog.vue"
 import Loader from "@/components/Loader.vue"
@@ -259,6 +259,8 @@ const props = defineProps<{
   projectRanking: ProjectLineRankItem[]
   /** 作者代码行数排行（按新增行降序） */
   authorRanking: AuthorLineRankItem[]
+  /** 全量行数合计（基于全量项目数据，与截断排行解耦，来自 useCommitAnalysis） */
+  summary: LineStatsSummary
   analyzing: boolean
   analyzed: boolean
   /** 上次分析完成时间（ISO） */
@@ -296,35 +298,15 @@ function onApplyExt(exts: string[]) {
   emit("update:selectedExtensions", exts)
 }
 
-/** 行数排行行视图：条形宽度按新增行相对最大值（0 时退化为全空轨道）+ 新增行占总新增的百分比（保留 1 位小数，总 0 时兜底 1 防除零） */
-function withLineBarPct<T extends { added: number }>(rows: T[]): (T & { pct: string, share: string })[] {
-  const max = Math.max(...rows.map((r) => r.added), 1)
-  const total = rows.reduce((s, r) => s + r.added, 0) || 1
-  return rows.map((r) => ({
-    ...r,
-    pct: `${Math.round((r.added / max) * 100)}%`,
-    share: `${((r.added / total) * 100).toFixed(1)}%`,
-  }))
-}
-
-/** 项目代码行数排行行视图 */
+/** 项目代码行数排行行视图（pct=相对最大新增行条形宽度，share=新增行占总新增百分比） */
 const projectRows = computed(() => withLineBarPct(props.projectRanking))
 
 /** 作者代码行数排行行视图 */
 const authorRows = computed(() => withLineBarPct(props.authorRanking))
 
-/** 顶部汇总：对项目排行累加总新增/总删除，净增 = 新增 − 删除 */
-const summary = computed(() => {
-  const added = props.projectRanking.reduce((s, r) => s + r.added, 0)
-  const deleted = props.projectRanking.reduce((s, r) => s + r.deleted, 0)
-  return { added, deleted, net: added - deleted }
-})
-
-/** 净增行语义色：正→success(绿)，负→error(红)，零→中性（灰） */
+/** 净增行语义色（薄委托共享 netClass，前缀 gls-net，保持模板调用点零改动） */
 function netClass(net: number): string {
-  if (net > 0) return "gls-net--pos"
-  if (net < 0) return "gls-net--neg"
-  return "gls-net--zero"
+  return sharedNetClass(net, "gls-net")
 }
 
 function onCountChange(e: Event) {

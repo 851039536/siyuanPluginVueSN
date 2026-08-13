@@ -94,7 +94,7 @@ export class GeneralSettings {
   }
 
   /**
-   * 注入内置字体（霞鹜文楷）@font-face：从插件 assets 目录加载字体文件，
+   * 注入内置字体（霞鹜文楷/新晰黑 Code）@font-face：从插件 assets 目录加载字体文件，
    * 使未在系统安装该字体的用户也能在文档字体中选用。assetsPath 为思源运行时注入属性
    * （指向 /plugins/<name>/assets/），siyuan.d.ts 未声明，故用类型断言访问；
    * 缺失时按 /plugins/<name>/assets/ 兜底拼接。

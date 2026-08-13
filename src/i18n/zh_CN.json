@@ -1028,7 +1028,7 @@
   "enableCodeBlockStyle": "启用代码块样式增强",
   "enabled": "启用",
   "disabled": "禁用",
-  "builtinFontHint": "霞鹜文楷已随插件内置，未在系统安装也能正常使用",
+  "builtinFontHint": "该字体已随插件内置，未在系统安装也能正常使用",
   "codeBlockBackground": "背景色",
   "codeBlockBorder": "边框设置",
   "borderColor": "边框颜色",

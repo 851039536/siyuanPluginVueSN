@@ -69,7 +69,7 @@
                 @change="applyPresetFont"
               />
             </div>
-            <!-- 内置字体提示：选中霞鹜文楷时显示（该字体已随插件内置，无需系统安装） -->
+            <!-- 内置字体提示：选中内置字体时显示（已随插件分发，无需系统安装） -->
             <p
               v-if="isBuiltinFontSelected"
               class="builtin-font-hint"
@@ -224,7 +224,7 @@ import {
   DocumentFontSettings,
   GeneralSettingsStorage,
 } from "../types/storage"
-import { BUILTIN_FONT } from "../utils/styles"
+import { BUILTIN_FONTS } from "../utils/styles"
 import SettingSlider from "./SettingSlider.vue"
 
 interface Props {
@@ -271,17 +271,12 @@ const PRESET_FONTS: SelectOption[] = [
   { value: "Microsoft YaHei Light", label: "微软雅黑 Light" },
   { value: "Segoe UI", label: "Segoe UI" },
   { value: "等线", label: "等线 (DengXian)" },
-  { value: "华文细黑", label: "华文细黑" },
-  { value: "华文黑体", label: "华文黑体" },
   { value: "system-ui", label: "system-ui" },
   // 思源美化社区常用开源/免费中文字体（Source Han 思源系列提供 SC/CN 双变体以兼容不同系统）
-  { value: "Source Han Serif SC", label: "思源宋体" },
   { value: "Source Han Serif CN", label: "思源宋体 (CN)" },
-  { value: "Source Han Sans SC", label: "思源黑体" },
   { value: "Source Han Sans CN", label: "思源黑体 (CN)" },
   { value: "LXGW WenKai", label: "霞鹜文楷 (LXGW WenKai)", builtin: true },
-  { value: "PingFang SC", label: "苹方 (PingFang SC)" },
-  { value: "HarmonyOS Sans SC", label: "HarmonyOS Sans" },
+  { value: "NeoXiHei Code", label: "新晰黑 Code (NeoXiHei)", builtin: true },
 ]
 
 /** 字重选项元数据（label 走 i18n 键） */
@@ -295,9 +290,9 @@ const settings = ref<DocumentFontSettings>({ ...DEFAULT_DOCUMENT_FONT_SETTINGS }
 const showPreview = ref(true)
 const presetFont = ref("")
 
-/** 当前选择是否命中内置字体（霞鹜文楷，随插件分发） */
+/** 当前选择是否命中任一内置字体（随插件分发，无需系统安装） */
 const isBuiltinFontSelected = computed(
-  () => settings.value.fontFamily === BUILTIN_FONT.fontFamily,
+  () => BUILTIN_FONTS.some((font) => settings.value.fontFamily === font.fontFamily),
 )
 /** 加载守卫：存储数据回填期间跳过 watch 的 emit/save */
 const isLoading = ref(false)
@@ -379,11 +374,13 @@ onMounted(async () => {
   preloadBuiltinFont()
 })
 
-/** 预加载内置字体，确保用户首次选中霞鹜文楷时立即生效（避免 @font-face 首次加载延迟） */
+/** 预加载内置字体，确保用户首次选中时立即生效（避免 @font-face 首次加载延迟） */
 function preloadBuiltinFont() {
   try {
     if (document.fonts && typeof document.fonts.load === "function") {
-      document.fonts.load(`16px "${BUILTIN_FONT.fontFamily}"`).catch(() => {})
+      BUILTIN_FONTS.forEach((font) => {
+        document.fonts.load(`16px "${font.fontFamily}"`).catch(() => {})
+      })
     }
   } catch (error) {
     console.error("预加载内置字体失败:", error)

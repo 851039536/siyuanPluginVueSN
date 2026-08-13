@@ -168,6 +168,7 @@ import { Icon } from "@iconify/vue"
 import { computed, ref } from "vue"
 import { aggregateFileStats, shouldIncludeFile, sumAuthorLines } from "../../reportMetrics"
 import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
+import { netClass as sharedNetClass, withLineBarPct } from "../../utils"
 import EmptyState from "../common/EmptyState.vue"
 
 const props = defineProps<{
@@ -210,7 +211,7 @@ const fileRows = computed<FileLineDetailRow[]>(() => {
     .sort((a, b) => b.added - a.added || b.net - a.net)
 })
 
-/** 作者明细行：按作者聚合增删行，按新增行降序（与全局作者排行同模式） */
+/** 作者明细行：按作者聚合增删行，按新增行降序（与全局作者排行同模式；pct/share 由共享 withLineBarPct 预计算） */
 const authorRows = computed(() => {
   const lines = sumAuthorLines(commits.value, props.extensions)
   const raw = [...lines.entries()]
@@ -222,20 +223,12 @@ const authorRows = computed(() => {
       net: agg.added - agg.deleted,
     }))
     .sort((a, b) => b.added - a.added || b.net - a.net)
-  const max = Math.max(...raw.map((r) => r.added), 1)
-  const total = raw.reduce((s, r) => s + r.added, 0) || 1
-  return raw.map((r) => ({
-    ...r,
-    pct: `${Math.round((r.added / max) * 100)}%`,
-    share: `${((r.added / total) * 100).toFixed(1)}%`,
-  }))
+  return withLineBarPct(raw)
 })
 
-/** 净增行语义色：正→绿 / 负→红 / 零→中性 */
+/** 净增行语义色（薄委托共享 netClass，前缀 pld-net，保持模板调用点零改动） */
 function netClass(net: number): string {
-  if (net > 0) return "pld-net--pos"
-  if (net < 0) return "pld-net--neg"
-  return "pld-net--zero"
+  return sharedNetClass(net, "pld-net")
 }
 
 const { rootRef } = useDialogKeyboard()

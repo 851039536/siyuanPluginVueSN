@@ -175,7 +175,7 @@
 // 代码贡献度分区：作者排行表（预计算行数据消除模板重复查找/拼接；TOP3 排名徽章 + 净增 mini bar + 点击行展开详情）
 import { computed, ref } from "vue"
 import type { AuthorReportRow, FileStatRow } from "../../types"
-import { formatIsoDate } from "../../utils"
+import { formatIsoDate, netClass as sharedNetClass } from "../../utils"
 import EmptyState from "../common/EmptyState.vue"
 import FileDetailModal from "./FileDetailModal.vue"
 
@@ -204,11 +204,9 @@ const MEDAL_CLASSES = ["gpr-medal--gold", "gpr-medal--silver", "gpr-medal--bronz
 /** 排名行背景强调（前 3 名） */
 const TOP_ROW_CLASSES = ["gpr-author-row--top1", "gpr-author-row--top2", "gpr-author-row--top3"]
 
-/** 净增列正负着色：正数绿色 / 负数红色 / 零中性 */
+/** 净增列正负着色（薄委托共享 netClass，前缀 gpr-cell，零值返回空串不追加 class） */
 function netClass(n: number): string {
-  if (n > 0) return "gpr-cell--pos"
-  if (n < 0) return "gpr-cell--neg"
-  return ""
+  return sharedNetClass(n, "gpr-cell", "")
 }
 
 /** 净增格式化：正数带 + 前缀便于视觉区分 */

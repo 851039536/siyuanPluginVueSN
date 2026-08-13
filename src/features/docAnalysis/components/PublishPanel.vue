@@ -115,7 +115,7 @@ import type { DocI18n, PublishTheme } from "../types/index"
 import { parseMarkdown } from "../utils/mdRenderer"
 import { applyTheme, buildExportableHtml } from "../utils/themeApplicator"
 import { DEFAULT_THEME } from "../utils/themes"
-import { copyDocForPublish, openExternalPublish, stripFrontMatter } from "../utils/publishActions"
+import { copyDocForPublish, openExternalPublish, stripFrontMatter, PROMOTE_FOOTER_MD, PROMOTE_FOOTER_HTML } from "../utils/publishActions"
 import MarkdownEditor from "./MarkdownEditor.vue"
 import PreviewPane from "./PreviewPane.vue"
 
@@ -238,13 +238,16 @@ function handleFormat() {
 // ============================================================
 async function copyHtml() {
   if (!renderedHtml.value) return
-  await copyToClipboard(renderedHtml.value)
+  // 末尾追加公众号推广文案（HTML 版）
+  await copyToClipboard(renderedHtml.value + PROMOTE_FOOTER_HTML)
   showMessage("HTML 已复制到剪贴板，可直接粘贴到公众号后台", 2000, "info")
 }
 
 async function copyMarkdown() {
   if (!mdText.value) return
-  await copyToClipboard(mdText.value)
+  // 末尾追加公众号推广文案（Markdown 版）
+  const md = mdText.value.trim() ? mdText.value + PROMOTE_FOOTER_MD : mdText.value
+  await copyToClipboard(md)
   showMessage("Markdown 原文已复制到剪贴板", 2000, "info")
 }
 

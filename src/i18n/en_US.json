@@ -1638,6 +1638,7 @@
     "analysisLineAdded": "Added",
     "analysisLineDeleted": "Deleted",
     "analysisLineNet": "Net",
+    "lineStatsNetHint": "Net = actual lines (added − deleted)",
     "lineDetailTitleHint": "Line Stats Detail",
     "lineDetailFileTab": "Files",
     "lineDetailAuthorTab": "Authors",

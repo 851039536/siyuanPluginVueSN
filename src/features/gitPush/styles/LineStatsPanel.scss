@@ -186,6 +186,36 @@
   gap: $spacing-2;
 }
 
+// 表头行（项目/作者行数排行共用）：与数据行 flex 列结构一致，保证文字与下方数字右对齐
+.gls-bar-head {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding-bottom: $spacing-1;
+  margin-bottom: $spacing-1;
+  font-size: $font-size-2xs; // 表头弱化（两级字号制）
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.06em;
+  color: var(--b3-theme-on-surface-light);
+  border-bottom: 1px solid var(--b3-border-color);
+
+  // 排名/名称/轨道三列仅作占位，空轨道不显示背景避免视觉干扰
+  .gls-bar-track {
+    background: transparent;
+  }
+
+  // 表头数字与占比文字不弱化（覆盖数据行的 opacity 弱化）
+  .gls-line-num,
+  .gls-bar-share {
+    opacity: 1;
+  }
+}
+
+// 净增表头："实际行数"主角，主题色强调（区别于新增绿/删除红）
+.gls-bar-head-net {
+  color: var(--b3-theme-primary);
+}
+
 .gls-bar-row {
   display: flex;
   align-items: center;

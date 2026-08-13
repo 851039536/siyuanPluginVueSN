@@ -62,18 +62,11 @@
   }
 }
 
-.style-card-icon {
-  position: relative;
-  z-index: 1;
-}
-
 .style-card-name {
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-surface);
   text-align: center;
-  position: relative;
-  z-index: 1;
 }
 
 .style-card-desc {
@@ -81,8 +74,6 @@
   line-height: $line-height-tight;
   color: var(--b3-theme-on-surface-variant);
   text-align: center;
-  position: relative;
-  z-index: 1;
 }
 
 .style-card-check {

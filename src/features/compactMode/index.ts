@@ -10,6 +10,8 @@
  * 所有值均在 SCSS 编译期通过 Sass 乘法计算，无 calc()/var() 运行时依赖。
  */
 
+import "./styles/index.scss"
+
 const COMPACT_MASTER = "siyuan-compact-mode"
 const DENSITY_PREFIX = "compact-density-"
 const FONT_PREFIX = "compact-font-"

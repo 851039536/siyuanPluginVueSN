@@ -4,9 +4,8 @@
 // 1. 设计 Token（单一来源：src/_variables.scss）
 @use '@/variables.scss' as *;
 
-// 2. 功能级全局样式（非模块懒加载，随插件根加载）
-@use './features/pageLock/styles/index.scss' as pageLock;       // 页面锁定
-@use './features/compactMode/styles/index.scss' as compactMode; // 紧凑模式
+// 2. 功能级全局样式（随插件根加载一次）
+//    pageLock 样式由 LockDialog.vue 内 @use 加载；compactMode 样式由 compactMode/index.ts import 加载
 @use './features/generalSettings/styles/codeblockThemes.scss';  // 代码块美化主题
 
 // 3. 全局基准字号（两级字号制）

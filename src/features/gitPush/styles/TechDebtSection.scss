@@ -1,5 +1,5 @@
 // gitPush 代码统计报告：技术债务分区（汇总条 + 严重度分组行 + 可展开文件指标行）
-@use "./variables" as *;
+@use "@/variables.scss" as *;
 @use "./mixins" as *;
 
 // 分组标题行（表内跨行分隔：色点 + 名称 + 计数；浅色底与数据行区分，不再单独起表格）

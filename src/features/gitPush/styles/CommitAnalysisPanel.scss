@@ -1,4 +1,4 @@
-@use "./variables" as *;
+@use "@/variables.scss" as *;
 @use "./mixins" as *;
 
 // ── 面板基座（与 StatsPanel 一致：独立滚动 + 上下留白）──

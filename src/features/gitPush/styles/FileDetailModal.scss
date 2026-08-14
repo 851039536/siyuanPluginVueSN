@@ -1,5 +1,5 @@
 // gitPush 文件详情弹窗：Teleport 到 body 的居中遮罩 + 卡片（文件路径 + 指标网格）
-@use "./variables" as *;
+@use "@/variables.scss" as *;
 @use "./mixins" as *;
 
 // 遮罩（居中 + 半透明模糊底；基准字号 12px 兜底，防内部文字继承思源默认 14px）

@@ -1,4 +1,4 @@
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 
 // 下拉面板共享外壳样式（trigger/panel/header/过渡动画），供 ChildDocDropdown/SiblingDropdown/BacklinkDropdown 复用
 .doc-nav-dropdown {

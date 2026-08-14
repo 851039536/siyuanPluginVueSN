@@ -64,7 +64,7 @@
 
   .rt-error {
     font-size: $font-size-2xs;
-    color: hsl($destructive-light);
+    color: $color-danger-bright;
     flex-shrink: 0;
   }
 

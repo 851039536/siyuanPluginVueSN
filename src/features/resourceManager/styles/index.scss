@@ -32,7 +32,7 @@
   transition: border-color 0.12s;
 
   &:focus {
-    border-color: $brand-primary;
+    border-color: $color-primary;
   }
 
   &::placeholder {
@@ -351,9 +351,9 @@
 
     // 主操作
     &.primary {
-      background: $brand-primary;
+      background: $color-primary;
       color: var(--b3-theme-on-primary);
-      border-color: $brand-primary;
+      border-color: $color-primary;
       padding: $spacing-2 $spacing-3;
 
       &:hover:not(:disabled) {
@@ -363,9 +363,9 @@
 
     // 危险操作
     &.danger {
-      background: $brand-destructive;
+      background: $color-danger;
       color: var(--b3-theme-on-primary);
-      border-color: $brand-destructive;
+      border-color: $color-danger;
 
       &:hover:not(:disabled) {
         opacity: 0.88;

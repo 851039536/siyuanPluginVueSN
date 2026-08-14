@@ -10,7 +10,7 @@
   gap: $spacing-2;
   border: 1px solid transparent;
   border-radius: $vp-radius;
-  font-family: $font-body;
+  font-family: $font-zh;
   font-weight: $font-weight-medium;
   cursor: pointer;
   outline: none;
@@ -69,22 +69,22 @@
 
   // 颜色变体
   &--primary {
-    background: var(--b3-theme-primary, $brand-orange);
-    color: var(--b3-theme-on-primary, $brand-light);
+    background: var(--b3-theme-primary, $color-danger);
+    color: var(--b3-theme-on-primary, $color-bg);
     @include m.interactive-raised;
   }
 
   &--secondary {
-    background: var(--b3-theme-background, $brand-blue);
-    color: var(--b3-theme-on-background, $brand-light);
+    background: var(--b3-theme-background, $color-info);
+    color: var(--b3-theme-on-background, $color-bg);
     border: 1px solid var(--b3-theme-border, rgba(0, 0, 0, 0.1));
     @include m.interactive-raised;
   }
 
   &--success {
-    background: var(--b3-theme-success, $brand-success);
-    color: var(--b3-theme-on-primary, $brand-light);
-    @include m.interactive-raised(var(--b3-theme-success, $brand-success));
+    background: var(--b3-theme-success, $color-success);
+    color: var(--b3-theme-on-primary, $color-bg);
+    @include m.interactive-raised(var(--b3-theme-success, $color-success));
   }
 
   &--danger {
@@ -104,12 +104,12 @@
 
   &--ghost {
     background: transparent;
-    color: var(--b3-theme-on-surface, $brand-dark);
-    border-color: var(--b3-theme-surface-lighter, $brand-subtle-gray);
+    color: var(--b3-theme-on-surface, $color-fg);
+    border-color: var(--b3-theme-surface-lighter, $color-border);
 
     &:hover:not(.si-button--disabled):not(.si-button--loading) {
       background: var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.05));
-      border-color: var(--b3-theme-on-surface-variant, $brand-mid-gray);
+      border-color: var(--b3-theme-on-surface-variant, $color-muted);
     }
 
     &:active:not(.si-button--disabled):not(.si-button--loading) {

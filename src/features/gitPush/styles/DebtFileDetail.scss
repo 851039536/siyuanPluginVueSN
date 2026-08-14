@@ -1,5 +1,5 @@
 // gitPush 技术债务文件详情面板：指标网格 + 趋势条 + 近期共变列表
-@use "./variables" as *;
+@use "@/variables.scss" as *;
 @use "./mixins" as *;
 
 // 详情面板整体：缩进在文件行下方，浅色底与指标行区分

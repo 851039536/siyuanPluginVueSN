@@ -1,4 +1,4 @@
-@use "./variables" as *;
+@use "@/variables.scss" as *;
 @use "./mixins" as *;
 
 // 弹窗进出场过渡（fade + 轻微 scale，时长 0.12s 契合 Codex 规范）

@@ -107,7 +107,7 @@
       transition: border-color 0.15s;
 
       &:focus {
-        border-color: $brand-accent;
+        border-color: $color-accent;
       }
 
       &::placeholder {
@@ -339,7 +339,7 @@
     }
 
     &--danger {
-      color: $brand-destructive;
+      color: $color-danger;
       border-color: hsl(0 72% 51% / 0.3);
 
       &:hover {

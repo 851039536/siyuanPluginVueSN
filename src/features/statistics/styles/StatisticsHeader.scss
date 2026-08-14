@@ -1,5 +1,5 @@
 // 统计面板头部样式：标题栏 + 刷新按钮 + 存储路径展示
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 @use "../styles/shared" as *;
 @use "../styles/index.scss" as stats;
 
@@ -96,7 +96,7 @@ $stats-header-height: 56px;
   display: flex;
   flex-direction: column;
   gap: 3px;
-  font-family: $font-body;
+  font-family: $font-zh;
   user-select: all;
 }
 

@@ -2,7 +2,7 @@
 // 文章封面 Tab 专属样式
 // ============================================================
 
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 
 // 共用按钮交互模式（.style-btn / .size-preset-btn 共享）
 @mixin btn-interactive {

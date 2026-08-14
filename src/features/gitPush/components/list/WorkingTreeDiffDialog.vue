@@ -214,7 +214,7 @@ onUnmounted(() => window.removeEventListener("keydown", handleKeydown))
 
 <style lang="scss">
 @use "@/index.scss" as *;
-@use "../../styles/variables" as *;
+@use "@/variables.scss" as *;
 @use "../../styles/mixins" as *;
 @use "../../styles/WorkingTreeDiffDialog.scss";
 </style>

@@ -2,7 +2,7 @@
 // 封面预览面板专属样式（含随机组合候选条）
 // ============================================================
 
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 
 .candidate-strip {
   display: flex;

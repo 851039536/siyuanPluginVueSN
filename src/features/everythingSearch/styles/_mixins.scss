@@ -1,6 +1,6 @@
 // everythingSearch 模块共享 mixins — 区块容器与大写标签（消除多文件重复声明）
 
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 
 // 实底区块容器（标题栏/搜索栏）：surface 背景 + 实线下边框
 @mixin section-solid($padding-y: 10px) {

@@ -1,7 +1,7 @@
 /**
  * SkillsViewer — 核心弹窗样式
  */
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 
 // 自定义缓动（全局 Token 中无等价项）
 $sv-ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);

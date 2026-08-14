@@ -96,7 +96,7 @@ src/features/gitPush/
     ├── WorkingTreeDiffDialog.scss   # 差异弹窗样式
     ├── AiErrorAnalysisDialog.scss   # AI 错误分析弹窗样式
     ├── BranchCommitList.scss        # 提交历史列表样式
-    ├── _variables.scss              # 设计 Token
+    ├── variables.scss               # 全局 Token 透传（已废弃：引用方已统一为 @/variables.scss，可删除）
     ├── _mixins.scss                 # 共享混入
     ├── _buttons.scss                # .vp-btn 按钮体系
     └── _shared.scss                 # .gp-spin 旋转动画

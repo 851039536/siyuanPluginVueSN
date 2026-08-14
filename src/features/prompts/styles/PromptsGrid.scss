@@ -1,4 +1,4 @@
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 @use "./mixins" as m;
 
 // ==================== 网格/卡片/搜索/内容块 — PromptsGrid.vue ====================
@@ -137,7 +137,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      font-family: $font-heading;
+      font-family: $font-zh;
     }
 
     .vp-tag {
@@ -161,7 +161,7 @@
   color: var(--b3-theme-on-surface);
   margin-bottom: $spacing-2;
   line-height: $line-height-normal;
-  font-family: $font-body;
+  font-family: $font-zh;
 }
 
 .vp-card-body {

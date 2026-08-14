@@ -1,5 +1,5 @@
 // gitPush 技术债务汇总条：严重度分布堆叠条 + 图例 + Top3 治理清单
-@use "./variables" as *;
+@use "@/variables.scss" as *;
 @use "./mixins" as *;
 
 // 汇总条整体：位于区块标题下方、表格上方，与表格间留出间距

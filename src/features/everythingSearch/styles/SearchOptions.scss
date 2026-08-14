@@ -3,7 +3,7 @@
  * 三行布局：行1 开关组 / 行2 配置选单 / 行3 文件大小过滤
  */
 
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 @use "./mixins" as m;
 
 .vp-options {
@@ -59,7 +59,7 @@
     text-align: center;
 
     &:focus {
-      border-color: $brand-orange;
+      border-color: $color-danger;
     }
 
     // 隐藏数字输入框的上下箭头

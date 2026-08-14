@@ -24,8 +24,8 @@
         .stat-icon {
           flex-shrink: 0;
           &--primary { color: var(--b3-theme-primary); }
-          &--success { color: $brand-success; }
-          &--info { color: $brand-info; }
+          &--success { color: $color-success; }
+          &--info { color: $color-info; }
         }
 
         .stat-body {
@@ -78,7 +78,7 @@
 
         .progress-fill {
           height: 100%;
-          background: linear-gradient(90deg, var(--b3-theme-primary), $brand-info);
+          background: linear-gradient(90deg, var(--b3-theme-primary), $color-info);
           border-radius: 2px;
           transition: width 0.3s ease;
         }
@@ -165,15 +165,15 @@
             transition: width 0.3s ease;
 
             &--0 { background: var(--b3-theme-primary); }
-            &--1 { background: $brand-info; }
-            &--2 { background: $brand-success; }
-            &--3 { background: $brand-accent; }
+            &--1 { background: $color-info; }
+            &--2 { background: $color-success; }
+            &--3 { background: $color-accent; }
 
             .bar-value {
               font-size: $font-size-2xs;
               font-weight: $font-weight-semibold;
               font-family: $vp-mono;
-              color: $brand-light;
+              color: $color-bg;
             }
           }
         }

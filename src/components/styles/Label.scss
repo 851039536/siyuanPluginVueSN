@@ -6,7 +6,7 @@
   display: inline-flex;
   align-items: center;
   gap: m.$gap-xs; // 6px
-  font-family: $font-body;
+  font-family: $font-zh;
   font-weight: $font-weight-medium;
   line-height: $line-height-normal;
   user-select: none;
@@ -31,19 +31,19 @@
 
   // 状态变体
   &--default {
-    color: var(--b3-theme-on-background, $brand-dark);
+    color: var(--b3-theme-on-background, $color-fg);
   }
 
   &--error {
-    color: var(--b3-theme-destructive, $brand-destructive);
+    color: var(--b3-theme-destructive, $color-danger);
   }
 
   &--success {
-    color: var(--b3-theme-success, $brand-success);
+    color: var(--b3-theme-success, $color-success);
   }
 
   &--warning {
-    color: var(--b3-theme-warning, $brand-warning);
+    color: var(--b3-theme-warning, $color-warning);
   }
 
   // 禁用状态
@@ -54,7 +54,7 @@
 
   // 必填标记
   &__required {
-    color: var(--b3-theme-destructive, $brand-destructive);
+    color: var(--b3-theme-destructive, $color-danger);
     margin-left: 2px; // 2px 无对应 Token，保留
     font-weight: $font-weight-semibold;
   }
@@ -87,31 +87,31 @@
     display: inline-flex;
     padding: $spacing-1 m.$spacing-2_5; // 4px 10px
     border-radius: $radius-md;
-    background: var(--b3-theme-surface-lighter, $brand-light-gray);
+    background: var(--b3-theme-surface-lighter, $color-surface);
 
     &.si-label--primary {
-      background: var(--b3-theme-primary, $brand-orange);
-      color: var(--b3-theme-on-primary, $brand-light);
+      background: var(--b3-theme-primary, $color-danger);
+      color: var(--b3-theme-on-primary, $color-bg);
     }
 
     &.si-label--success {
-      background: var(--b3-theme-success, $brand-success);
-      color: var(--b3-theme-on-primary, $brand-light);
+      background: var(--b3-theme-success, $color-success);
+      color: var(--b3-theme-on-primary, $color-bg);
     }
 
     &.si-label--warning {
-      background: var(--b3-theme-warning, $brand-warning);
-      color: var(--b3-theme-on-primary, $brand-light);
+      background: var(--b3-theme-warning, $color-warning);
+      color: var(--b3-theme-on-primary, $color-bg);
     }
 
     &.si-label--danger {
-      background: var(--b3-theme-destructive, $brand-destructive);
-      color: var(--b3-theme-on-primary, $brand-light);
+      background: var(--b3-theme-destructive, $color-danger);
+      color: var(--b3-theme-on-primary, $color-bg);
     }
 
     &.si-label--info {
-      background: var(--b3-theme-info, $brand-info);
-      color: var(--b3-theme-on-primary, $brand-light);
+      background: var(--b3-theme-info, $color-info);
+      color: var(--b3-theme-on-primary, $color-bg);
     }
   }
 }

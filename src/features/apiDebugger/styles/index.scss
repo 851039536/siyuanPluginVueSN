@@ -7,7 +7,7 @@
   padding: $spacing-3;
   gap: $spacing-3;
   overflow-y: auto;
-  font-family: $font-body;
+  font-family: $font-zh;
   font-size: $font-size-sm;
 
   &__section {
@@ -73,8 +73,8 @@
 
     &--active {
       opacity: 1;
-      border-bottom-color: $brand-primary;
-      color: $brand-primary;
+      border-bottom-color: $color-primary;
+      color: $color-primary;
     }
   }
 

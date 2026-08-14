@@ -6,7 +6,7 @@
   display: inline-flex;
   flex-direction: column;
   position: relative;
-  font-family: $font-body;
+  font-family: $font-zh;
 
   &__wrapper {
     position: relative;
@@ -104,7 +104,7 @@
     border: 1px solid var(--b3-border-color);
     border-radius: $radius-sm;
     font-size: $font-size-sm; // 原 13px → 14px
-    font-family: $font-body;
+    font-family: $font-zh;
     outline: none;
     background: var(--b3-theme-background);
     color: var(--b3-theme-on-background);

@@ -1,5 +1,5 @@
 // gitPush 代码统计报告面板（外壳/工具条/分区 Tab）
-@use "./variables" as *;
+@use "@/variables.scss" as *;
 @use "./mixins" as *;
 
 // 面板基座（与 StatsPanel 一致：独立滚动 + 上下留白；右侧留白 8px 避免内容紧贴侧边栏）

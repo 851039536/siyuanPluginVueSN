@@ -1,5 +1,5 @@
 // gitPush 代码统计报告：代码热点分区（第一行热点表格 + 第二行统计摘要）
-@use "./variables" as *;
+@use "@/variables.scss" as *;
 @use "./mixins" as *;
 
 // ── 纵向两行布局容器（第一行表格，第二行统计摘要，均在各自行内自然排布）──

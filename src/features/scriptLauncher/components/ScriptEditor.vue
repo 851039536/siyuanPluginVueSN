@@ -252,7 +252,7 @@ watch(
   width: 560px;
   max-width: 90vw;
   max-height: 90vh;
-  background: var(--b3-theme-background, $brand-light);
+  background: var(--b3-theme-background, $color-bg);
   border: 1px solid var(--b3-theme-surface-lighter);
   border-radius: $radius-lg;
   display: flex;
@@ -264,15 +264,15 @@ watch(
     align-items: center;
     justify-content: space-between;
     padding: $spacing-4 $spacing-5;
-    border-bottom: 1px solid var(--b3-border-color, $brand-subtle-gray);
+    border-bottom: 1px solid var(--b3-border-color, $color-border);
   }
 
   &__title {
     margin: 0;
-    font-family: $font-heading;
+    font-family: $font-zh;
     font-size: $font-size-lg;
     font-weight: 600;
-    color: var(--b3-theme-on-background, $brand-dark);
+    color: var(--b3-theme-on-background, $color-fg);
   }
 
   &__body {
@@ -311,7 +311,7 @@ watch(
     justify-content: flex-end;
     gap: $spacing-2;
     padding: $spacing-3 $spacing-5;
-    border-top: 1px solid var(--b3-border-color, $brand-subtle-gray);
+    border-top: 1px solid var(--b3-border-color, $color-border);
   }
 }
 </style>

@@ -1,5 +1,13 @@
 @use "@/variables.scss" as *;
 
+.stat-section {
+  margin-bottom: $spacing-2;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
 .section-header {
   display: flex;
   align-items: center;

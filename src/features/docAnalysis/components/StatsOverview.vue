@@ -1,114 +1,79 @@
-<!-- 文档统计概览组件 - 统一平铺面板（Hero + 问题条 + 分区卡片 + 图表） -->
+<!-- 文档统计概览组件 - 统一平铺面板（Hero 汇总卡 + 工具栏 + 分区卡片 + 图表） -->
 <template>
   <div class="stats-overview">
     <template v-if="hasAnalyzed">
-      <!-- Hero：总文档 + 健康度 -->
+      <!-- Hero 汇总卡：总文档 + 健康度 + 问题速览 -->
       <div class="stats-hero">
-        <div class="hero-left">
-          <span class="hero-label">总文档</span>
-          <span class="hero-value">{{ stats.totalDocs }}</span>
-        </div>
-        <div class="hero-right">
-          <span class="hero-health-label">健康度</span>
-          <div
-            class="hero-health-bar"
-            :title="healthTooltip"
-          >
-            <div
-              class="hero-health-fill"
-              :style="{ width: `${healthPct}%` }"
-            />
+        <div class="hero-top">
+          <div class="hero-left">
+            <span class="hero-label">总文档</span>
+            <span class="hero-value">{{ stats.totalDocs }}</span>
           </div>
-          <span
-            class="hero-health-value"
-            :title="healthTooltip"
-          >{{ healthPct }}%</span>
-          <span
-            class="hero-health-info"
-            :title="healthTooltip"
+          <div class="hero-right">
+            <span class="hero-health-label">健康度</span>
+            <div
+              class="hero-health-bar"
+              :title="healthTooltip"
+            >
+              <div
+                class="hero-health-fill"
+                :style="{ width: `${healthPct}%` }"
+              />
+            </div>
+            <span
+              class="hero-health-value"
+              :title="healthTooltip"
+            >{{ healthPct }}%</span>
+            <span
+              class="hero-health-info"
+              :title="healthTooltip"
+            >
+              <Icon icon="mdi:information-outline" />
+            </span>
+          </div>
+        </div>
+        <!-- 问题速览（徽章行） -->
+        <div
+          v-if="hasIssues"
+          class="hero-issues"
+        >
+          <div
+            v-if="stats.zeroByteDocs"
+            class="issue-item critical"
+            @click="$emit('selectCategory', '0B')"
           >
-            <Icon icon="mdi:information-outline" />
-          </span>
+            <span class="issue-value">{{ stats.zeroByteDocs }}</span>
+            <span class="issue-label">0B空</span>
+          </div>
+          <div
+            v-if="effectiveDupDocs > 0"
+            class="issue-item warn"
+            @click="$emit('selectCategory', 'duplicate')"
+          >
+            <span class="issue-value">{{ effectiveDupDocs }}</span>
+            <span class="issue-label">重名</span>
+          </div>
+          <div
+            v-if="stats.pendingPublishDocs"
+            class="issue-item accent"
+            @click="$emit('selectCategory', 'pendingPublish')"
+          >
+            <span class="issue-value">{{ stats.pendingPublishDocs }}</span>
+            <span class="issue-label">待发布</span>
+          </div>
+          <div
+            v-if="stats.orphanDocs"
+            class="issue-item critical"
+            @click="$emit('selectCategory', 'orphanDoc')"
+          >
+            <span class="issue-value">{{ stats.orphanDocs }}</span>
+            <span class="issue-label">孤文档</span>
+          </div>
         </div>
       </div>
 
-      <!-- 问题摘要条 -->
-      <div
-        v-if="hasIssues"
-        class="issue-bar"
-      >
-        <div
-          v-if="stats.zeroByteDocs"
-          class="issue-item critical"
-          @click="$emit('selectCategory', '0B')"
-        >
-          <span class="issue-value">{{ stats.zeroByteDocs }}</span>
-          <span class="issue-label">0B空</span>
-        </div>
-        <div
-          v-if="effectiveDupDocs > 0"
-          class="issue-item warn"
-          @click="$emit('selectCategory', 'duplicate')"
-        >
-          <span class="issue-value">{{ effectiveDupDocs }}</span>
-          <span class="issue-label">重名</span>
-        </div>
-        <div
-          v-if="stats.pendingPublishDocs"
-          class="issue-item accent"
-          @click="$emit('selectCategory', 'pendingPublish')"
-        >
-          <span class="issue-value">{{ stats.pendingPublishDocs }}</span>
-          <span class="issue-label">待发布</span>
-        </div>
-        <div
-          v-if="stats.orphanDocs"
-          class="issue-item critical"
-          @click="$emit('selectCategory', 'orphanDoc')"
-        >
-          <span class="issue-value">{{ stats.orphanDocs }}</span>
-          <span class="issue-label">孤文档</span>
-        </div>
-      </div>
-
-      <!-- 重名文档名称排除 -->
-      <div
-        v-if="stats.duplicateNameDocs > 0"
-        class="dup-filter-bar"
-      >
-        <Icon
-          icon="mdi:filter-remove-outline"
-          class="dup-filter-icon"
-        />
-        <span class="dup-filter-label">名称排除</span>
-        <span
-          v-if="duplicateNameFilter.length > 0"
-          class="dup-filter-count"
-        >{{ duplicateNameFilter.length }}项</span>
-        <button
-          v-if="duplicateNameFilter.length > 0"
-          class="dup-filter-clear-mini"
-          title="清除全部"
-          @click="$emit('update:duplicateNameFilter', [])"
-        >
-          <Icon
-            icon="mdi:close"
-            :size="12"
-          />
-        </button>
-        <button
-          class="dup-filter-manage-btn"
-          @click="dupFilterModalVisible = true"
-        >
-          <Icon
-            icon="mdi:cog-outline"
-            :size="12"
-          />管理
-        </button>
-      </div>
-
-      <!-- 统计 Tab 切换栏 -->
-      <div class="stats-tab-bar">
+      <!-- 统计工具栏：Tab 切换 + 名称排除 + 隐藏零值 -->
+      <div class="stats-toolbar">
         <button
           v-for="tab in statsTabs"
           :key="tab.key"
@@ -121,6 +86,30 @@
             :size="13"
           />
           {{ tab.label }}
+        </button>
+        <!-- 名称排除（仅在有重名文档时可用） -->
+        <button
+          v-if="stats.duplicateNameDocs > 0"
+          class="toolbar-btn name-filter-btn"
+          title="名称排除"
+          @click="dupFilterModalVisible = true"
+        >
+          <Icon
+            icon="mdi:filter-remove-outline"
+            :size="13"
+          />
+          <span
+            v-if="duplicateNameFilter.length > 0"
+            class="toolbar-badge"
+          >{{ duplicateNameFilter.length }}</span>
+        </button>
+        <button
+          v-if="duplicateNameFilter.length > 0"
+          class="toolbar-btn"
+          title="清除全部排除名称"
+          @click="$emit('update:duplicateNameFilter', [])"
+        >
+          <Icon icon="mdi:close" :size="13" />
         </button>
         <!-- 隐藏零值开关（概览/质量 Tab 共用） -->
         <button
@@ -173,24 +162,24 @@
       <!-- Tab: 分布 — 平台 + 字数 + 书签分类 -->
       <div v-show="activeStatsTab === 'distribution'">
         <!-- 平台分布柱状图 -->
-        <div
+        <StatSection
           v-if="platformEntries.length > 0"
-          class="platform-distro"
+          title="平台分布"
+          icon="mdi:chart-bar"
         >
-          <div class="platform-distro-title">
-            <span>平台分布</span>
-            <span class="platform-metrics">
-              人均 {{ avgPlatformsPerDoc }} 平台 · 覆盖率 {{ coveragePct }}%
-            </span>
+          <template #headerExtra>
+            <span class="section-hint">人均 {{ avgPlatformsPerDoc }} 平台 · 覆盖率 {{ coveragePct }}%</span>
+          </template>
+          <div class="bar-chart">
+            <BarRow
+              v-for="entry in platformEntries"
+              :key="entry.id"
+              :label="entry.name"
+              :count="entry.count"
+              :pct="entry.pct"
+            />
           </div>
-          <BarRow
-            v-for="entry in platformEntries"
-            :key="entry.id"
-            :label="entry.name"
-            :count="entry.count"
-            :pct="entry.pct"
-          />
-        </div>
+        </StatSection>
 
         <!-- 字数分布 -->
         <StatSection
@@ -198,7 +187,7 @@
           title="字数分布"
           icon="mdi:text-short"
         >
-          <div class="wordcount-chart">
+          <div class="bar-chart">
             <BarRow
               v-for="item in stats.wordCountDistribution"
               :key="item.label"
@@ -215,7 +204,7 @@
           :title="`书签分类 Top-${stats.customBookmarkTop.length}`"
           icon="mdi:tag-outline"
         >
-          <div class="wordcount-chart">
+          <div class="bar-chart">
             <BarRow
               v-for="item in stats.customBookmarkTop"
               :key="item.value"
@@ -230,37 +219,44 @@
       <!-- Tab: 质量 — 文档质量 + 深度分布 -->
       <div v-show="activeStatsTab === 'quality'">
         <!-- 文档质量 -->
-        <div class="section-cards">
-          <StatCard
-            v-for="card in filterVisibleCards(QUALITY_CARDS)"
-            :key="card.id"
-            :card-id="card.id"
-            :value="getCardValue(card)"
-            :label="cardLabel(card)"
-            :color-class="card.colorClass"
-            :active="activeFilter === card.id"
-            :pct="pctStr(getCardValue(card))"
-            @select="(id) => $emit('selectCategory', id)"
-          />
-        </div>
-        <div
-          v-if="depthStats.depthDistribution.length > 0"
-          class="depth-chart-v2"
+        <StatSection
+          title="文档质量"
+          icon="mdi:clipboard-check-outline"
         >
-          <div class="depth-chart-title">
-            <Icon icon="mdi:chart-bar" :size="13" />深度分布
-            <span class="depth-chart-hint">均 {{ depthStats.avgDepth }} 层 · 最深 {{ depthStats.maxDepth }} 层</span>
+          <div class="section-cards">
+            <StatCard
+              v-for="card in filterVisibleCards(QUALITY_CARDS)"
+              :key="card.id"
+              :card-id="card.id"
+              :value="getCardValue(card)"
+              :label="cardLabel(card)"
+              :color-class="card.colorClass"
+              :active="activeFilter === card.id"
+              :pct="pctStr(getCardValue(card))"
+              @select="(id) => $emit('selectCategory', id)"
+            />
           </div>
-          <BarRow
-            v-for="item in depthStats.depthDistribution"
-            :key="item.depth"
-            :label="String(item.depth)"
-            :count="item.count"
-            :pct="barPct(maxDepthCount, item.count)"
-            clickable
-            @click="$emit('selectDepth', item.depth)"
-          />
-        </div>
+        </StatSection>
+        <StatSection
+          v-if="depthStats.depthDistribution.length > 0"
+          title="深度分布"
+          icon="mdi:chart-bar"
+        >
+          <template #headerExtra>
+            <span class="section-hint">均 {{ depthStats.avgDepth }} 层 · 最深 {{ depthStats.maxDepth }} 层</span>
+          </template>
+          <div class="bar-chart">
+            <BarRow
+              v-for="item in depthStats.depthDistribution"
+              :key="item.depth"
+              :label="String(item.depth)"
+              :count="item.count"
+              :pct="barPct(maxDepthCount, item.count)"
+              clickable
+              @click="$emit('selectDepth', item.depth)"
+            />
+          </div>
+        </StatSection>
       </div>
     </template>
 

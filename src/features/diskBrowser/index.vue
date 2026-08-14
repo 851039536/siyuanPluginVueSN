@@ -6,12 +6,14 @@
       class="db-all-drives"
     >
       <div class="db-all-drives-header">
-        <IconWrapper
-          name="diskBrowser"
-          :size="16"
-          color="var(--b3-theme-primary)"
-        />
-        <span>{{ i18n.panelTitle || '磁盘浏览器' }}</span>
+        <div class="db-all-drives-heading">
+          <IconWrapper
+            name="diskBrowser"
+            :size="16"
+            color="var(--b3-theme-primary)"
+          />
+          <span>{{ i18n.panelTitle || '磁盘浏览器' }}</span>
+        </div>
         <Button
           variant="ghost"
           size="xsmall"
@@ -22,42 +24,110 @@
           @click="refreshDisks"
         />
       </div>
-      <div class="db-all-drives-grid">
+
+      <div
+        v-if="disks.length > 0"
+        class="db-all-overview"
+      >
+        <div class="db-all-overview-icon">
+          <IconWrapper
+            name="diskBrowser"
+            :size="28"
+          />
+        </div>
+        <div class="db-all-overview-info">
+          <div class="db-all-overview-meta">
+            {{ disks.length }} {{ i18n.disks || '磁盘' }}
+          </div>
+          <div
+            v-if="totalCapacity > 0"
+            class="db-all-overview-capacity"
+          >
+            <span class="db-all-overview-used">
+              {{ i18n.usedSpace || '已用' }} {{ formatSize(totalUsed) }}
+            </span>
+            <span class="db-all-overview-divider">·</span>
+            <span>{{ i18n.totalSpace || '总空间' }} {{ formatSize(totalCapacity) }}</span>
+          </div>
+          <div class="db-all-overview-hint">
+            {{ i18n.clickToBrowse || '点击磁盘浏览文件' }}
+          </div>
+        </div>
+      </div>
+
+      <div
+        v-if="disks.length > 0"
+        class="db-all-drives-grid"
+      >
         <div
           v-for="disk in disks"
           :key="disk.drive"
           class="db-all-drive-card"
           @click="toggleDisk(disk)"
         >
-          <div class="db-all-drive-icon">
-            <IconWrapper
-              name="diskBrowser"
-              :size="22"
-            />
+          <div class="db-all-drive-card-head">
+            <div class="db-all-drive-icon">
+              <IconWrapper
+                name="diskBrowser"
+                :size="22"
+              />
+            </div>
+            <div class="db-all-drive-ident">
+              <span class="db-all-drive-label">{{ disk.drive }}</span>
+              <span
+                v-if="disk.label"
+                class="db-all-drive-name"
+                :title="disk.label"
+              >{{ disk.label }}</span>
+            </div>
+            <span
+              v-if="disk.total"
+              class="db-all-drive-percent"
+              :class="usageToneClass(disk.usagePercent || 0)"
+            >{{ disk.usagePercent || 0 }}%</span>
           </div>
-          <span class="db-all-drive-label">{{ disk.drive }}</span>
-          <span class="db-all-drive-name">{{ disk.label || '\u00A0' }}</span>
+
           <div
             v-if="disk.total"
             class="db-all-drive-bar"
           >
             <div
               class="db-all-drive-fill"
-              :style="{ width: `${disk.usagePercent || 0}%` }"
+              :class="usageToneClass(disk.usagePercent || 0)"
+              :style="{ width: `${Math.min(disk.usagePercent || 0, 100)}%` }"
             />
           </div>
           <div
             v-if="disk.total"
             class="db-all-drive-space"
           >
-            {{ formatSize(disk.used) }} / {{ formatSize(disk.total) }}
+            <span>{{ i18n.usedSpace || '已用' }} {{ formatSize(disk.used || 0) }}</span>
+            <span class="db-all-drive-free">
+              {{ i18n.freeSpace || '可用' }} {{ formatSize(disk.total - (disk.used || 0)) }}
+            </span>
           </div>
         </div>
       </div>
+
       <div
-        v-if="favoriteFolders.length > 0"
-        class="db-all-favorites"
+        v-else-if="loading"
+        class="db-all-empty"
       >
+        <Loader />
+      </div>
+      <div
+        v-else
+        class="db-all-empty"
+      >
+        <IconWrapper
+          name="diskBrowser"
+          :size="32"
+          color="var(--b3-theme-on-surface-light)"
+        />
+        <p>{{ i18n.loadDisksFailed || '未找到可用磁盘' }}</p>
+      </div>
+
+      <div class="db-all-favorites">
         <div class="db-all-fav-header">
           <IconWrapper
             name="star"
@@ -65,18 +135,40 @@
             color="#f97316"
           />
           <span>{{ i18n.favorites || '收藏夹' }}</span>
+          <Badge
+            v-if="favoriteFolders.length > 0"
+            :content="favoriteFolders.length"
+            variant="primary"
+            size="xsmall"
+          />
         </div>
         <div
-          v-for="path in favoriteFolders"
-          :key="path"
-          class="db-all-fav-row"
-          @click="navigateToFavorite(path)"
+          v-if="favoriteFolders.length > 0"
+          class="db-all-fav-list"
+        >
+          <div
+            v-for="path in favoriteFolders"
+            :key="path"
+            class="db-all-fav-row"
+            @click="navigateToFavorite(path)"
+          >
+            <IconWrapper
+              name="folder"
+              :size="14"
+            />
+            <span>{{ getFolderName(path) }}</span>
+          </div>
+        </div>
+        <div
+          v-else
+          class="db-all-fav-empty"
         >
           <IconWrapper
-            name="folder"
-            :size="14"
+            name="starOutline"
+            :size="20"
+            color="var(--b3-theme-on-surface-light)"
           />
-          <span>{{ getFolderName(path) }}</span>
+          <p>{{ i18n.noFavorites || '暂无收藏，浏览文件夹时点击星标即可添加' }}</p>
         </div>
       </div>
     </div>
@@ -124,12 +216,18 @@
 <script setup lang="ts">
 import type { DiskBrowserI18n } from "./types"
 import type { DiskBrowserStorage } from "./types/storage"
+import { computed } from "vue"
+import Badge from "@/components/Badge.vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import Loader from "@/components/Loader.vue"
 import FolderList from "./components/FolderList.vue"
 import Sidebar from "./components/Sidebar.vue"
 import { useDiskBrowser } from "./composables/useDiskBrowser"
-import { formatSize, getFolderName } from "./utils"
+import {
+  formatSize,
+  getFolderName,
+} from "./utils"
 
 interface Props {
   i18n: DiskBrowserI18n
@@ -164,6 +262,20 @@ const {
   copyPathToClipboard,
   formatDate,
 } = useDiskBrowser(props.i18n, props.storage)
+
+const totalCapacity = computed(() =>
+  disks.value.reduce((sum, disk) => sum + (disk.total || 0), 0),
+)
+
+const totalUsed = computed(() =>
+  disks.value.reduce((sum, disk) => sum + (disk.used || 0), 0),
+)
+
+function usageToneClass(percent: number): string {
+  if (percent >= 85) return "tone-danger"
+  if (percent >= 60) return "tone-warning"
+  return "tone-normal"
+}
 </script>
 
 <style scoped lang="scss">

@@ -68,6 +68,12 @@ export interface DiskBrowserI18n {
   name?: string
   size?: string
   date?: string
+  totalSpace?: string
+  usedSpace?: string
+  freeSpace?: string
+  disks?: string
+  clickToBrowse?: string
+  noFavorites?: string
 }
 
 export const STORAGE_KEY = "disk-browser-settings"

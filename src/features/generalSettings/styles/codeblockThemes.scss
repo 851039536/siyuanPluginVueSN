@@ -3,26 +3,35 @@
 // 用户自定义色值/尺寸等由 styles.ts 中的动态 JS 样式层覆盖（!important 优先级）
 @use '@/variables.scss' as *;
 
-// 代码块基础布局 mixin（三种预设风格共用）
-@mixin codeblock-base {
-  .protyle-wysiwyg .code-block,
-  .b3-typography .code-block,
-  .protyle-wysiwyg [data-node-id][data-type="NodeCodeBlock"],
-  .b3-typography [data-node-id][data-type="NodeCodeBlock"] {
+// 代码块根选择器集合（编辑器内 + 阅读模式 + data-type 语义节点），全文件复用
+$codeblock-roots: (
+  '.protyle-wysiwyg .code-block',
+  '.b3-typography .code-block',
+  '.protyle-wysiwyg [data-node-id][data-type="NodeCodeBlock"]',
+  '.b3-typography [data-node-id][data-type="NodeCodeBlock"]'
+);
+
+// 通用代码块样式 - 适用于所有风格
+// body 上恒有且仅有一个 codeblock-style-* class（applyCodeBlockStyle 兜底 default），
+// 公共基础样式合并至此只写一次，github/mac/default 块仅保留差异化样式
+body[class*="codeblock-style-"] {
+  #{$codeblock-roots} {
     overflow: hidden;
 
     .protyle-action {
       display: flex;
       align-items: center;
-      min-height: 1.5rem;
+      min-height: $spacing-6;
       position: relative;
 
       .protyle-action__language {
         position: absolute;
         left: 50%;
+        // 负 margin 居中微调：抵消自身宽度一半，无对应 Token，保留精确值
         margin-left: -0.375rem;
         font-size: $font-size-xs;
         font-weight: $font-weight-semibold;
+        // 语言标签字母间距，非字体三要素，保留精确值
         letter-spacing: 0.5px;
       }
 
@@ -38,24 +47,31 @@
 
     .hljs {
       background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.015) !important;
-      padding: var(--codeblock-padding, #{$codeblock-padding}) 8px;
-      padding-top: #{$codeblock-padding};
-      font-size: var(--codeblock-font-size, #{$codeblock-font-size});
-      line-height: 1.6; // 代码行高固定 1.6，贴合思源代码块基线，无对应 Token
+      padding: $codeblock-padding $spacing-2;
+      font-size: $codeblock-font-size;
+      line-height: $codeblock-line-height;
       color: var(--b3-theme-on-surface);
     }
 
+    /* 代码块内的选中效果 */
+    .hljs ::selection {
+      background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.3);
+    }
+
+    /* 代码块复制按钮优化：默认隐藏，hover 时显示 */
+    .protyle-action__copy {
+      opacity: 0;
+    }
+
+    &:hover .protyle-action__copy {
+      opacity: 1;
+    }
   }
 }
 
 /* GitHub 风格代码块 - 主题适配 */
 body.codeblock-style-github {
-  @include codeblock-base;
-
-  .protyle-wysiwyg .code-block,
-  .b3-typography .code-block,
-  .protyle-wysiwyg [data-node-id][data-type="NodeCodeBlock"],
-  .b3-typography [data-node-id][data-type="NodeCodeBlock"] {
+  #{$codeblock-roots} {
     border: 1px solid var(--b3-theme-outline);
     border-radius: $codeblock-border-radius;
     background: var(--b3-theme-surface);
@@ -67,7 +83,8 @@ body.codeblock-style-github {
     .protyle-action {
       background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.03);
       border-bottom: 1px solid var(--b3-theme-outline);
-      padding: 0.125rem 0.875rem;
+      // 0.875rem(14px) 无对应间距 Token，保留精确值
+      padding: $spacing-2px 0.875rem;
 
       .protyle-action__language {
         text-transform: uppercase;
@@ -81,7 +98,7 @@ body.codeblock-style-github {
     .hljs {
       counter-reset: line;
 
-      /* 添加行号 */
+      /* 添加行号（em 相对单位，随字号自适应） */
       .li::before {
         counter-increment: line;
         content: counter(line);
@@ -99,12 +116,7 @@ body.codeblock-style-github {
 
 /* Mac 风格代码块 - 主题适配 */
 body.codeblock-style-mac {
-  @include codeblock-base;
-
-  .protyle-wysiwyg .code-block,
-  .b3-typography .code-block,
-  .protyle-wysiwyg [data-node-id][data-type="NodeCodeBlock"],
-  .b3-typography [data-node-id][data-type="NodeCodeBlock"] {
+  #{$codeblock-roots} {
     border: 1px solid var(--b3-theme-outline);
     border-radius: $radius-lg;
 
@@ -115,21 +127,23 @@ body.codeblock-style-mac {
     .protyle-action {
       background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.04);
       border-bottom: 1px solid var(--b3-theme-outline);
-      padding: 0.125rem 0.75rem;
+      padding: $spacing-2px $spacing-3;
 
       &::before {
         content: '';
-        width: 0.75rem;
-        height: 0.75rem;
+        width: $spacing-3;
+        height: $spacing-3;
         border-radius: 50%;
-        background: var(--mac-button-red, #ff5f56);
-        border: 1px solid var(--mac-button-red-border, #e0443e);
-        // 例外：box-shadow 用于纯 CSS 渲染 Mac 红黄绿三色按钮，非页面阴影效果
+        // Mac 红黄绿三色按钮为固定品牌色，直接写死 hex（原为无注入源的 CSS 变量包装）
+        background: #ff5f56;
+        border: 1px solid #e0443e;
+        // 例外：box-shadow 用于纯 CSS 渲染三色点，非页面阴影效果
+        // 1.125rem / 2.25rem 为三色点精确间距，无对应 Token，保留
         box-shadow:
-          1.125rem 0 0 0 var(--mac-button-yellow, #ffbd2e),
-          1.125rem 0 0 1px var(--mac-button-yellow-border, #dea123),
-          2.25rem 0 0 0 var(--mac-button-green, #27c93f),
-          2.25rem 0 0 1px var(--mac-button-green-border, #1aab29);
+          1.125rem 0 0 0 #ffbd2e,
+          1.125rem 0 0 1px #dea123,
+          2.25rem 0 0 0 #27c93f,
+          2.25rem 0 0 1px #1aab29;
       }
 
       &:hover::before {
@@ -146,9 +160,9 @@ body.codeblock-style-mac {
     }
 
     .hljs {
-      /* macOS 风格的滚动条 */
+      /* macOS 风格滚动条 */
       &::-webkit-scrollbar {
-        height: 0.5rem;
+        height: $spacing-2;
       }
 
       &::-webkit-scrollbar-track {
@@ -157,7 +171,7 @@ body.codeblock-style-mac {
 
       &::-webkit-scrollbar-thumb {
         background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.2);
-        border-radius: 0.25rem;
+        border-radius: $radius-sm;
 
         &:hover {
           background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.3);
@@ -169,38 +183,11 @@ body.codeblock-style-mac {
 
 /* 默认风格代码块 - 保持思源原有样式但添加微妙增强 */
 body.codeblock-style-default {
-  @include codeblock-base;
-
-  .protyle-wysiwyg .code-block,
-  .b3-typography .code-block,
-  .protyle-wysiwyg [data-node-id][data-type="NodeCodeBlock"],
-  .b3-typography [data-node-id][data-type="NodeCodeBlock"] {
+  #{$codeblock-roots} {
     border: 1px solid transparent;
 
     &:hover {
       border-color: var(--b3-theme-outline);
-    }
-  }
-}
-
-/* 通用代码块增强 - 适用于所有风格 */
-body[class*="codeblock-style-"] {
-  .protyle-wysiwyg .code-block,
-  .b3-typography .code-block,
-  .protyle-wysiwyg [data-node-id][data-type="NodeCodeBlock"],
-  .b3-typography [data-node-id][data-type="NodeCodeBlock"] {
-    /* 代码块内的选中效果 */
-    .hljs ::selection {
-      background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.3);
-    }
-
-    /* 代码块复制按钮优化 */
-    .protyle-action__copy {
-      opacity: 0;
-    }
-
-    &:hover .protyle-action__copy {
-      opacity: 1;
     }
   }
 }

@@ -23,7 +23,7 @@
         v-if="hasAnyFilter"
         class="clear-btn"
         title="清空所有过滤条件"
-        @click="handleClearAll"
+        @click="$emit('reset')"
       >
         <Icon
           icon="mdi:filter-remove-outline"
@@ -86,14 +86,13 @@
         @input="handleDebouncedInput"
         @keyup.enter="$emit('query')"
       />
-
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { NotebookInfo } from "../types/index"
-import type { FilterOptions } from "../types/index"
+import type { FilterOptions, NotebookInfo } from "../types/index"
+import { DEFAULT_FILTER_OPTIONS } from "../types/index"
 import { Icon } from "@iconify/vue"
 import {
   computed,
@@ -128,8 +127,8 @@ const hasAnyFilter = computed(() => {
   return !!(
     o.titleKeyword
     || o.contentKeyword
-    || o.wordCountMin
-    || o.wordCountMax
+    || o.wordCountMin > 0
+    || o.wordCountMax !== DEFAULT_FILTER_OPTIONS.wordCountMax
     || o.notebookId
     || o.bookmarkName
   )
@@ -141,11 +140,6 @@ function handleDebouncedInput() {
   debounceTimer = setTimeout(() => {
     emit("query")
   }, 500)
-}
-
-/** 一键清空所有过滤条件 */
-function handleClearAll() {
-  emit("reset")
 }
 </script>
 

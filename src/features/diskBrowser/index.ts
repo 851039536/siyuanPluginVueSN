@@ -16,7 +16,7 @@ export type {
 } from "./types"
 export { DiskBrowserStorage } from "./types/storage"
 
-export function registerDiskBrowser(plugin: Plugin) {
+export function registerDiskBrowser(plugin: Plugin): void {
   const storage = new DiskBrowserStorage(plugin)
 
   const i18n = plugin.i18n.diskBrowser as DiskBrowserI18n

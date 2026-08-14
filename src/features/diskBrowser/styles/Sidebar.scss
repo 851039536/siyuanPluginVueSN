@@ -37,7 +37,7 @@
 
 .db-drive-row {
   @include flex-align-center;
-  gap: 6px;
+  gap: 8px;
   padding: 6px 10px;
   cursor: pointer;
   transition: background-color 0.12s;
@@ -61,39 +61,63 @@
   color: var(--b3-theme-on-surface-light);
 }
 
+.db-drive-arrow {
+  flex-shrink: 0;
+  color: var(--b3-theme-on-surface-light);
+  opacity: 0.35;
+  transition: opacity 0.12s;
+
+  .db-drive-row:hover & {
+    opacity: 0.7;
+  }
+}
+
 .db-drive-info {
   flex: 1;
   min-width: 0;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.db-drive-heading {
+  @include flex-align-center;
   gap: 6px;
+  min-width: 0;
 }
 
 .db-drive-label {
+  flex-shrink: 0;
   font-family: $vp-mono;
   font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
+  font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-background);
 }
 
-.db-drive-usage {
-  @include small-mono-dimmed;
+.db-drive-name {
+  flex: 1;
+  min-width: 0;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light);
+  opacity: 0.6;
+  @include text-ellipsis;
 }
 
-.db-drive-bar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--b3-theme-surface-lighter);
+.db-drive-capacity {
+  @include flex-align-center;
+  gap: 6px;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light);
+}
 
-  .db-drive-fill {
-    height: 100%;
-    background: var(--b3-theme-primary);
-    opacity: 0.4;
-    transition: width 0.3s ease;
-  }
+.db-drive-usage {
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-surface);
+}
+
+.db-drive-space {
+  opacity: 0.55;
 }
 
 .db-favorites {
@@ -116,6 +140,11 @@
     @include meta-label;
     color: var(--b3-theme-on-surface);
   }
+}
+
+.db-fav-list {
+  padding: 2px 0;
+  overflow-y: auto;
 }
 
 .db-fav-row {
@@ -147,6 +176,15 @@
 .db-fav-remove {
   opacity: 0;
   flex-shrink: 0;
+}
+
+.db-fav-empty {
+  padding: $spacing-3 10px;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light);
+  opacity: 0.55;
+  font-style: italic;
+  text-align: center;
 }
 
 .db-sidebar-footer {

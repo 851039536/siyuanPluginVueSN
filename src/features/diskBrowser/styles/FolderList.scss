@@ -10,7 +10,8 @@
 }
 
 .db-column-headers {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 68px 78px auto;
   align-items: center;
   gap: 0;
   padding: 4px 8px;
@@ -26,25 +27,23 @@
 }
 
 .db-col-name {
-  flex: 1;
   min-width: 0;
   padding-left: 22px;
+  padding-right: $spacing-2;
 }
 
 .db-col-size {
-  width: 55px;
-  flex-shrink: 0;
   text-align: right;
+  padding: 0 6px;
 }
 
 .db-col-date {
-  width: 52px;
-  flex-shrink: 0;
   text-align: right;
+  padding: 0 6px;
 }
 
 .db-col-actions {
-  width: 0;
+  min-width: 0;
 }
 
 .db-folder-items {

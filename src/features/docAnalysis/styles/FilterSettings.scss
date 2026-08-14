@@ -1,31 +1,30 @@
 @use "@/variables.scss" as *;
 
 .doc-analysis-filter {
-  padding: 6px 10px;
+  // 上下 6px 为视觉舒适值（无对应 Token），左右对齐上方 Tab 栏 8px
+  padding: 6px $spacing-2;
   border-bottom: 1px solid var(--b3-border-color);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: $spacing-1;
 
   .filter-row {
     display: flex;
     align-items: center;
-    gap: 6px;
-  }
-
-  .filter-row-secondary {
-    gap: 4px;
+    gap: $spacing-1;
   }
 
   .filter-group {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: $spacing-1;
   }
 
   .filter-input,
   .filter-select {
-    padding: 4px 6px;
+    height: $spacing-6;
+    box-sizing: border-box;
+    padding: 0 6px;
     border: 1px solid var(--b3-border-color);
     border-radius: $vp-radius;
     background: var(--b3-theme-background);
@@ -54,7 +53,7 @@
   }
 
   .bookmark-input {
-    width: 54px;
+    flex: 1;
   }
 
   .notebook-select {
@@ -71,8 +70,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
+    width: $spacing-6;
+    height: $spacing-6;
+    box-sizing: border-box;
     border: 1px solid var(--b3-border-color);
     border-radius: $vp-radius;
     background: transparent;
@@ -90,7 +90,9 @@
     display: flex;
     align-items: center;
     gap: 3px;
-    padding: 4px 12px;
+    height: $spacing-6;
+    box-sizing: border-box;
+    padding: 0 12px;
     border: 1px solid var(--b3-theme-primary);
     border-radius: $vp-radius;
     background: var(--b3-theme-primary);

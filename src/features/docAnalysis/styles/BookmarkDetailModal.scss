@@ -24,6 +24,7 @@
 
 .bookmark-detail-body {
   @extend %modal-body;
+  padding: $spacing-3;
 }
 
 .bookmark-detail-loading,
@@ -49,57 +50,72 @@
 }
 
 .bookmark-detail-list {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-1;
-}
-
-.bookmark-detail-item {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-  width: 100%;
-  padding: $spacing-2 $spacing-3;
   border: 1px solid var(--b3-border-color);
   border-radius: $vp-radius;
-  background: transparent;
-  color: var(--b3-theme-on-background);
-  cursor: pointer;
-  text-align: left;
+  overflow: hidden;
+}
+
+.bookmark-detail-table {
+  width: 100%;
+  border-collapse: collapse;
   font-size: $font-size-xs;
 
-  &:hover {
-    background: var(--b3-list-hover);
+  thead {
+    th {
+      padding: $spacing-2 $spacing-3;
+      text-align: left;
+      font-size: $font-size-2xs; // 表头辅助文字
+      font-weight: $font-weight-semibold;
+      color: var(--b3-theme-on-surface-variant);
+      background: var(--b3-theme-surface);
+      border-bottom: 1px solid var(--b3-border-color);
+      white-space: nowrap;
+    }
+
+    .bd-col-name {
+      width: 100%; // 名称列占满剩余空间
+    }
+
+    .bd-col-count {
+      width: 1%; // auto 布局下收缩到内容最小宽度
+      text-align: right;
+    }
   }
 
-  .bd-item-left {
-    flex: 1;
-    min-width: 0;
-  }
+  tbody {
+    .bookmark-detail-item {
+      cursor: pointer;
 
-  .bd-item-name {
-    font-weight: $font-weight-medium;
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+      &:hover {
+        background: var(--b3-list-hover);
+      }
 
-  .bd-item-count {
-    font-size: $font-size-xs;
-    font-family: $vp-mono;
-    color: var(--b3-theme-on-surface-variant);
-    background: var(--b3-theme-surface-light);
-    padding: $spacing-2px $spacing-2;
-    border-radius: $vp-radius;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
+      &:last-child {
+        td {
+          border-bottom: none;
+        }
+      }
+    }
 
-  .bd-item-arrow {
-    font-size: $font-size-base;
-    color: var(--b3-theme-on-surface-variant);
-    opacity: 0.5;
-    flex-shrink: 0;
+    td {
+      padding: $spacing-2 $spacing-3;
+      border-bottom: 1px solid var(--b3-border-color);
+    }
+
+    .bd-item-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: $font-weight-medium;
+      color: var(--b3-theme-on-background);
+    }
+
+    .bd-item-count {
+      width: 1%; // auto 布局下收缩到内容最小宽度，避免数字被遮挡
+      text-align: right;
+      font-family: $vp-mono;
+      color: var(--b3-theme-on-surface-variant);
+      white-space: nowrap;
+    }
   }
 }

@@ -130,10 +130,8 @@ body.codeblock-style-mac {
     .protyle-action {
       // macOS 终端/iTerm 标题栏固定深色，与三色点同为"固定品牌色 + 注释"例外
       background: #1f1f1f;
-      // 深色标题栏上的分隔线改用半透明白，避免与主题 outline 不协调
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       padding: $spacing-2px $spacing-3;
-      // 深色标题栏上所有操作文字/图标（语言标签、复制、菜单）统一反色为浅色
       color: rgba(255, 255, 255, 0.85);
 
       &::before {

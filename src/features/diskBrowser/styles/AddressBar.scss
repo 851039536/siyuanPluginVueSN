@@ -29,6 +29,7 @@
   overflow-x: auto;
   white-space: nowrap;
   @include scrollbar(3px, 3px);
+  mask-image: linear-gradient(90deg, transparent 0, #000 8px, #000 calc(100% - 8px), transparent 100%);
 }
 
 .db-crumb {
@@ -44,7 +45,9 @@
   font-weight: $font-weight-medium;
   color: var(--b3-theme-on-surface);
   cursor: pointer;
-  transition: all 0.12s;
+  transition:
+    color 0.12s,
+    background-color 0.12s;
   flex-shrink: 0;
 
   &:hover {

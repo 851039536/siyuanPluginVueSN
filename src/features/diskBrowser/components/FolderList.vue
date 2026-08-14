@@ -80,11 +80,15 @@
 </template>
 
 <script setup lang="ts">
-import type { CacheStatus, DiskBrowserI18n, FolderInfo } from "../types"
-import AddressBar from "./AddressBar.vue"
-import FolderListItem from "./FolderListItem.vue"
+import type {
+  CacheStatus,
+  DiskBrowserI18n,
+  FolderInfo,
+} from "../types"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Loader from "@/components/Loader.vue"
+import AddressBar from "./AddressBar.vue"
+import FolderListItem from "./FolderListItem.vue"
 
 interface Props {
   folders: FolderInfo[]

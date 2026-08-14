@@ -1,3 +1,7 @@
+import type {
+  ComputedRef,
+  Ref,
+} from "vue"
 // 磁盘浏览器核心逻辑 composable — 磁盘加载、文件夹浏览、缓存管理、收藏夹操作
 import type {
   CacheData,
@@ -29,7 +33,32 @@ import {
 export function useDiskBrowser(
   i18n: DiskBrowserI18n,
   storage: DiskBrowserStorage,
-) {
+): {
+  disks: Ref<DiskInfo[]>
+  expandedDisk: Ref<string>
+  folders: Ref<FolderInfo[]>
+  loading: Ref<boolean>
+  loadingFolders: Ref<boolean>
+  currentPath: Ref<string>
+  favoriteFolders: Ref<string[]>
+  favoriteSet: ComputedRef<Set<string>>
+  pathSegments: ComputedRef<string[]>
+  cacheStatus: ComputedRef<CacheStatus>
+  currentFolderCache: ComputedRef<CacheStatus>
+  toggleFavorite: (folderPath: string) => void
+  toggleDisk: (disk: DiskInfo) => Promise<void>
+  openPath: (path: string) => void
+  refreshDisks: () => void
+  refreshCurrentFolder: () => void
+  handleItemDoubleClick: (item: FolderInfo) => void
+  navigateIntoFolder: (item: FolderInfo) => Promise<void>
+  navigateBack: () => Promise<void>
+  navigateToRoot: () => Promise<void>
+  navigateToPath: (segmentIndex: number) => Promise<void>
+  navigateToFavorite: (path: string) => Promise<void>
+  copyPathToClipboard: (path: string) => Promise<void>
+  formatDate: (dateString: string) => string
+} {
   const disks = ref<DiskInfo[]>([])
   const expandedDisk = ref("")
   const folders = ref<FolderInfo[]>([])
@@ -110,7 +139,10 @@ export function useDiskBrowser(
       const info = getDiskInfo()
       if (info && info.length > 0) {
         disks.value = info
-        diskCache.value = { data: info, timestamp: Date.now() }
+        diskCache.value = {
+          data: info,
+          timestamp: Date.now(),
+        }
       } else {
         disks.value = getDefaultDisks()
       }
@@ -128,11 +160,11 @@ export function useDiskBrowser(
       expandedDisk.value = ""
       folders.value = []
       currentPath.value = ""
-    } else {
-      expandedDisk.value = disk.drive
-      currentPath.value = ""
-      await loadFolderContent(disk.drive)
+      return
     }
+
+    expandedDisk.value = disk.drive
+    await setCurrentPath("")
   }
 
   /**
@@ -158,7 +190,10 @@ export function useDiskBrowser(
       const itemList = readDirectoryContents(displayPath)
       if (itemList) {
         folders.value = itemList
-        folderCacheMap.value.set(path, { data: itemList, timestamp: Date.now() })
+        folderCacheMap.value.set(path, {
+          data: itemList,
+          timestamp: Date.now(),
+        })
       }
     } catch (error) {
       console.error("加载文件夹失败:", error)
@@ -209,38 +244,29 @@ export function useDiskBrowser(
   }
 
   async function navigateIntoFolder(item: FolderInfo): Promise<void> {
-    currentPath.value = item.path
-    await loadFolderContent(item.path)
+    await setCurrentPath(item.path)
   }
 
   async function navigateBack(): Promise<void> {
     if (!currentPath.value) return
 
     const lastSlash = currentPath.value.lastIndexOf("\\")
-    if (lastSlash > 0) {
-      const parentPath = currentPath.value.substring(0, lastSlash)
-      if (parentPath.endsWith(":")) {
-        currentPath.value = ""
-        await loadFolderContent(expandedDisk.value)
-      } else {
-        currentPath.value = parentPath
-        await loadFolderContent(parentPath)
-      }
-    } else {
-      navigateToRoot()
+    if (lastSlash <= 0) {
+      await navigateToRoot()
+      return
     }
+
+    const parentPath = currentPath.value.substring(0, lastSlash)
+    await setCurrentPath(parentPath.endsWith(":") ? "" : parentPath)
   }
 
   async function navigateToRoot(): Promise<void> {
-    currentPath.value = ""
-    await loadFolderContent(expandedDisk.value)
+    await setCurrentPath("")
   }
 
   async function navigateToPath(segmentIndex: number): Promise<void> {
     const segments = pathSegments.value.slice(0, segmentIndex + 1)
-    const newPath = `${expandedDisk.value}\\${segments.join("\\")}`
-    currentPath.value = newPath
-    await loadFolderContent(newPath)
+    await setCurrentPath(`${expandedDisk.value}\\${segments.join("\\")}`)
   }
 
   async function navigateToFavorite(path: string): Promise<void> {
@@ -254,19 +280,20 @@ export function useDiskBrowser(
       const drive = driveMatch[1]
       expandedDisk.value = drive
 
-      if (path === drive || path === `${drive}\\`) {
-        currentPath.value = ""
-        await loadFolderContent(drive)
-      } else {
-        currentPath.value = path
-        await loadFolderContent(path)
-      }
+      const targetPath = path === drive || path === `${drive}\\` ? "" : path
+      await setCurrentPath(targetPath)
 
       showMessage(i18n.navigatedToFavorite || "已跳转到收藏夹", 2000, "info")
     } catch (error) {
       console.error("导航到收藏夹失败:", error)
       showMessage(i18n.navigationFailed || "导航失败", 2000, "error")
     }
+  }
+
+  /** 统一设置当前路径并加载对应目录（空串表示当前磁盘根目录） */
+  async function setCurrentPath(path: string): Promise<void> {
+    currentPath.value = path
+    await loadFolderContent(path || expandedDisk.value)
   }
 
   async function copyPathToClipboard(path: string): Promise<void> {

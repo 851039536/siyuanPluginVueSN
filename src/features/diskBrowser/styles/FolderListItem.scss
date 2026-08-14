@@ -2,7 +2,8 @@
 @use "@/variables.scss" as *;
 
 .db-item-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 68px 78px auto;
   align-items: center;
   gap: 0;
   padding: 5px 8px;
@@ -30,11 +31,11 @@
 }
 
 .db-item-name {
-  flex: 1;
   min-width: 0;
   display: flex;
   align-items: center;
   gap: 6px;
+  padding-right: $spacing-2;
 }
 
 .db-item-icon {
@@ -49,21 +50,18 @@
 }
 
 .db-item-size {
-  width: 55px;
-  flex-shrink: 0;
   text-align: right;
+  padding: 0 6px;
   @include small-mono-dimmed;
 }
 
 .db-item-date {
-  width: 52px;
-  flex-shrink: 0;
   text-align: right;
+  padding: 0 6px;
   @include small-mono-dimmed;
 }
 
 .db-item-actions {
-  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 1px;

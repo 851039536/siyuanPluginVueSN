@@ -78,9 +78,9 @@
   background: var(--b3-theme-surface-lighter);
   border-radius: $radius-base;
   border-left: 3px solid var(--b3-theme-primary);
-  font-size: 13px;
+  font-size: $font-size-xs;
   color: var(--b3-theme-on-surface);
-  line-height: 1.5;
+  line-height: $line-height-normal;
 
   .icon {
     width: 14px;
@@ -131,7 +131,7 @@
     }
 
     h3 {
-      font-size: 15px;
+      font-size: $font-size-sm;
     }
   }
 
@@ -141,7 +141,7 @@
 
   .page-lock-dialog__hint {
     padding: $spacing-2;
-    font-size: 12px;
+    font-size: $font-size-xs;
   }
 
   .page-lock-dialog__form {
@@ -217,7 +217,7 @@
 }
 
 .hint-text {
-  font-size: 13px;
+  font-size: $font-size-xs;
   color: var(--b3-theme-primary);
   opacity: 0.7;
   display: flex;
@@ -372,11 +372,11 @@
   .page-lock-mask__text,
   .hint-text,
   .page-lock-mask__input {
-    font-size: 13px;
+    font-size: $font-size-xs;
   }
 
   .enter-key {
-    font-size: 11px;
+    font-size: $font-size-2xs;
     padding: 1px 5px;
   }
 
@@ -391,6 +391,6 @@
 
   .page-lock-mask__btn {
     padding: 9px $spacing-5;
-    font-size: 13px;
+    font-size: $font-size-xs;
   }
 }

@@ -17,7 +17,7 @@
 
   // 尺寸变体
   &--xsmall {
-    font-size: 10px; // 特小号，无对应 Token，保留
+    font-size: $font-size-2xs;
     padding: 1px 4px; // 无对应 Token
 
     .si-tag__close {

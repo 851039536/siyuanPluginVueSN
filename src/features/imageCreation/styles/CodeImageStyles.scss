@@ -2,6 +2,7 @@
 // 代码图片生成风格样式（style-* 14 种风格定义 + 主题覆盖）
 // 注意：这些样式作用于被截图生成的图片本体（产品输出），非插件 UI 样式
 // ============================================================
+@use '@/variables.scss' as *;
 
 /* GitHub 风格 */
 .style-github.theme-light {
@@ -112,13 +113,13 @@
     color: #00ffff;
     background: rgba(0, 20, 40, 0.6);
     text-shadow: 0 0 5px #0ff, 0 0 10px #0ff;
-    font-weight: 500;
+    font-weight: $font-weight-medium;
   }
   .style-neon.theme-dark & {
     color: #ff00ff;
     background: rgba(20, 0, 40, 0.6);
     text-shadow: 0 0 5px #f0f, 0 0 10px #f0f;
-    font-weight: 500;
+    font-weight: $font-weight-medium;
   }
   .style-cartoon.theme-light & {
     color: #ffffff;
@@ -162,7 +163,7 @@
 
 .style-cartoon .window-title {
   color: #ffffff;
-  font-weight: 600;
+  font-weight: $font-weight-semibold;
 }
 
 .style-neon.theme-light .window-header,

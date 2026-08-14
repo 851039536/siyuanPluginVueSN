@@ -179,7 +179,7 @@
 .no-entries {
   @include flex-center;
   padding: 40px $spacing-3;
-  font-size: 13px;
+  font-size: $font-size-xs;
   color: var(--b3-theme-on-surface-light);
   font-style: italic;
   opacity: 0.5;
@@ -224,7 +224,7 @@
 
 .storage-footer-label {
   font-family: $vp-mono;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-surface-light);
   text-transform: uppercase;

@@ -60,8 +60,8 @@
 
     h2 {
       margin: 0;
-      font-size: 16px;
-      font-weight: 600;
+      font-size: $font-size-base;
+      font-weight: $font-weight-semibold;
       color: var(--b3-theme-on-surface);
     }
   }
@@ -87,7 +87,7 @@
     color: var(--b3-theme-on-surface);
     border-radius: 4px;
     cursor: pointer;
-    font-size: 12px;
+    font-size: $font-size-xs;
     transition: all 0.2s;
 
     &.active {
@@ -130,9 +130,9 @@
   justify-content: space-between;
   padding: 8px 12px;
   background: var(--b3-theme-background-light);
-  font-size: 12px;
+  font-size: $font-size-xs;
   color: var(--b3-theme-on-surface);
-  font-weight: 500;
+  font-weight: $font-weight-medium;
   flex-shrink: 0;
 
   .panel-actions {
@@ -146,7 +146,7 @@
   border: none;
   padding: 12px;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 13px;
+  font-size: $font-size-xs;
   line-height: 1.6;
   color: var(--b3-theme-on-surface);
   background: var(--b3-theme-background);
@@ -187,7 +187,7 @@
     gap: 12px;
 
     .content-size {
-      font-size: 12px;
+      font-size: $font-size-xs;
       color: var(--b3-theme-on-surface);
       opacity: 0.5;
     }
@@ -208,8 +208,8 @@
   }
 
   .form-label {
-    font-size: 13px;
-    font-weight: 500;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
     color: var(--b3-theme-on-surface);
   }
 
@@ -219,8 +219,8 @@
     border-radius: 6px;
     padding: 10px;
     font-family: 'JetBrains Mono', 'Fira Code', monospace;
-    font-size: 12px;
-    line-height: 1.5;
+    font-size: $font-size-xs;
+    line-height: $line-height-normal;
     color: var(--b3-theme-on-surface);
     background: var(--b3-theme-background);
     resize: vertical;
@@ -262,7 +262,7 @@
     background: transparent;
     color: var(--b3-theme-on-surface);
     cursor: pointer;
-    font-size: 12px;
+    font-size: $font-size-xs;
     transition: all 0.2s;
 
     &.active {
@@ -322,8 +322,8 @@
 
     h3 {
       margin: 0;
-      font-size: 13px;
-      font-weight: 600;
+      font-size: $font-size-xs;
+      font-weight: $font-weight-semibold;
       color: var(--b3-theme-on-surface);
       overflow: hidden;
       text-overflow: ellipsis;
@@ -332,7 +332,7 @@
   }
 
   .snippet-category-tag {
-    font-size: 10px;
+    font-size: $font-size-2xs;
     padding: 2px 6px;
     border-radius: 8px;
     white-space: nowrap;
@@ -356,7 +356,7 @@
 
   .snippet-meta {
     padding: 0 12px;
-    font-size: 11px;
+    font-size: $font-size-2xs;
     color: var(--b3-theme-on-surface);
     opacity: 0.5;
   }
@@ -376,7 +376,7 @@
   padding: 40px 20px;
   color: var(--b3-theme-on-surface);
   opacity: 0.4;
-  font-size: 14px;
+  font-size: $font-size-xs;
 }
 
 // 分类管理
@@ -385,8 +385,8 @@
   margin-bottom: 16px;
 
   h3 {
-    font-size: 13px;
-    font-weight: 600;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
     color: var(--b3-theme-on-surface);
     margin: 0 0 8px;
   }
@@ -445,12 +445,12 @@
 
   .category-name {
     flex: 1;
-    font-size: 13px;
+    font-size: $font-size-xs;
     color: var(--b3-theme-on-surface);
   }
 
   .default-badge {
-    font-size: 11px;
+    font-size: $font-size-2xs;
     color: var(--b3-theme-on-surface);
     opacity: 0.5;
   }
@@ -459,7 +459,7 @@
 // JSON 格式化
 .json-btn-active {
   color: var(--b3-theme-primary) !important;
-  font-weight: 600 !important;
+  font-weight: $font-weight-semibold !important;
 }
 
 .json-format-badge {
@@ -470,13 +470,13 @@
   background: #f0fff4;
   border: 1px solid #b7eb8f;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: $font-size-xs;
   color: #135200;
   margin-bottom: 8px;
 
   .json-badge-icon {
-    font-weight: 700;
-    font-size: 14px;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-sm; // 图标尺寸
     color: #52c41a;
   }
 

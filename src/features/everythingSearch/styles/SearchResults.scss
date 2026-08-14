@@ -69,12 +69,12 @@
   padding: 30px;
 
   &__emoji {
-    font-size: 32px;
+    font-size: 32px; // 图标尺寸（空状态 emoji，无精确 Token）
     margin-bottom: $spacing-2;
   }
 
   &__msg {
-    font-size: 13px;
+    font-size: $font-size-xs;
     font-family: $font-body;
     color: var(--b3-theme-on-surface);
     opacity: 0.5;
@@ -92,7 +92,7 @@
       background: var(--b3-theme-surface);
       border: 1px solid var(--b3-border-color);
       border-radius: 2px;
-      font-size: 10px;
+      font-size: $font-size-2xs;
       opacity: 0.7;
     }
   }

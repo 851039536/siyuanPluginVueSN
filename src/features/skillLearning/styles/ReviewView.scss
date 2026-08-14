@@ -28,7 +28,7 @@
   }
   &__complete-text {
     font-size: $font-size-base;
-    font-weight: 600;
+    font-weight: $font-weight-semibold;
     color: var(--b3-theme-on-background);
   }
   &__complete-sub {
@@ -73,8 +73,8 @@
     text-align: center;
   }
   &__q-title {
-    font-size: 15px;
-    font-weight: 600;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
     line-height: 1.6;
     color: var(--b3-theme-on-background, #1e293b);
     font-family: $vp-mono;
@@ -87,8 +87,8 @@
     justify-content: center;
   }
   &__lang-tag {
-    font-size: 10px;
-    font-weight: 700;
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-bold;
     text-transform: uppercase;
     padding: 1px 6px;
     border-radius: $radius-sm;
@@ -96,7 +96,7 @@
     @include lang-tag-colors;
   }
   &__category-tag {
-    font-size: 10px;
+    font-size: $font-size-2xs;
     color: #94a3b8;
   }
   &__flip-hint {
@@ -117,8 +117,8 @@
     }
   }
   &__a-label {
-    font-size: 10px;
-    font-weight: 700;
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-bold;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--b3-theme-primary);
@@ -176,16 +176,16 @@
     }
   }
   &__rating-icon {
-    font-size: 18px;
-    font-weight: 700;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
   }
   &__rating-label {
     font-size: $font-size-xs;
-    font-weight: 600;
+    font-weight: $font-weight-semibold;
     color: var(--b3-theme-on-background, #333);
   }
   &__rating-hint {
-    font-size: 10px;
+    font-size: $font-size-2xs;
     color: #94a3b8;
   }
 }

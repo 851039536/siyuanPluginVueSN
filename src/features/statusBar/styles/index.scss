@@ -37,12 +37,12 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
     padding: 0 3px;
 
     .monitor-icon {
-      font-size: 14px;
+      font-size: $font-size-sm; // 图标尺寸
       opacity: 0.7;
     }
 
     .monitor-value {
-      font-weight: 600;
+      font-weight: $font-weight-semibold;
       font-variant-numeric: tabular-nums;
     }
 
@@ -80,7 +80,7 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
     border-left: 1px solid var(--b3-theme-border);
 
     .monitor-value {
-      font-weight: 400;
+      font-weight: $font-weight-normal;
     }
   }
 
@@ -217,7 +217,7 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
 
 .feature-drawer-title {
   font-size: $font-size-sm;
-  font-weight: 600;
+  font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-background);
 }
 
@@ -362,7 +362,7 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
 
   .feature-drawer-item-title {
     font-size: $font-size-sm;
-    font-weight: 500;
+    font-weight: $font-weight-medium;
     color: var(--b3-theme-on-background);
     flex: 1;
   }
@@ -464,7 +464,7 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
   background: transparent;
   color: var(--b3-theme-on-surface);
   font-size: $font-size-xs;
-  font-weight: 500;
+  font-weight: $font-weight-medium;
   cursor: pointer;
   transition: opacity 0.12s;
 

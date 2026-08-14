@@ -57,7 +57,7 @@
     border-radius: $radius-sm;
     background: transparent;
     color: #94a3b8;
-    font-size: 14px;
+    font-size: $font-size-sm; // 图标尺寸
     line-height: 1;
     cursor: pointer;
     opacity: 0;
@@ -83,7 +83,7 @@
   }
   &__card-title {
     font-size: $font-size-xs;
-    font-weight: 500;
+    font-weight: $font-weight-medium;
     line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -98,11 +98,11 @@
     flex-wrap: wrap;
   }
   &__card-category {
-    font-size: 10px;
+    font-size: $font-size-2xs;
     color: #94a3b8;
   }
   &__card-count {
-    font-size: 10px;
+    font-size: $font-size-2xs;
     color: #94a3b8;
     margin-left: auto;
     font-feature-settings: "tnum";

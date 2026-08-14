@@ -47,7 +47,6 @@
       :notebooks="notebooks"
       :is-querying="queryState.status === 'loading'"
       @query="handleQuery"
-      @optionsUpdate="handleOptionsUpdate"
       @reset="handleReset"
     />
 
@@ -160,29 +159,12 @@
             class="sort-select"
             @change="handleSortChange"
           >
-            <option value="wordCount">
-              按字数
-            </option>
-            <option value="title">
-              按标题
-            </option>
-            <option value="notebook">
-              按笔记本
-            </option>
-            <option value="updated">
-              按更新时间
-            </option>
-            <option value="depth">
-              按深度
-            </option>
-            <option value="refCount">
-              按引用数
-            </option>
-            <option value="imageCount">
-              按图片数
-            </option>
-            <option value="bookmark">
-              按书签
+            <option
+              v-for="opt in SORT_FIELD_OPTIONS"
+              :key="opt.value"
+              :value="opt.value"
+            >
+              {{ opt.label }}
             </option>
           </select>
           <button
@@ -225,7 +207,7 @@
           <DocListItem
             v-for="doc in visibleDocs"
             :key="doc.id"
-            v-memo="[doc.id, doc.title, doc.wordCount, doc.contentSize, doc.updated, doc.depth, doc.refCount, doc.imageCount, doc.bookmark]"
+            v-memo="[doc.id, doc.title, doc.wordCount, doc.contentSize, doc.updated, doc.depth, doc.refCount, doc.imageCount, doc.bookmark, doc.notebookName, doc.hpath, doc.unpublishedPlatforms]"
             :doc="doc"
             :i18n="i18n"
             @open="openDoc"
@@ -369,7 +351,6 @@
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
-import type { FilterOptions } from "./types/index"
 import { Icon } from "@iconify/vue"
 import {
   computed,
@@ -393,8 +374,7 @@ import {
   useDocAnalysis,
 } from "./composables/useDocAnalysis"
 import type { DocI18n } from "./types/index"
-import { getCategoryLabel } from "./types/index"
-import { DEFAULT_FILTER_OPTIONS } from "./types/index"
+import { DEFAULT_FILTER_OPTIONS, SORT_FIELD_OPTIONS, getCategoryLabel } from "./types/index"
 
 interface Props {
   /** docAnalysis 分片 i18n（index.ts 传入 plugin.i18n.docAnalysis，扁平键值） */
@@ -429,7 +409,7 @@ const {
   queryByMissingPlatform,
   openDoc,
   updateSort,
-  clearResults,
+  resetQueryState,
   loadPlatformMeta,
   savePlatformMeta,
   platformUnpublishedCounts,
@@ -464,6 +444,8 @@ const activePlatformName = computed(() => {
 function handlePlatformFilter(matcher: string) {
   if (activePlatformFilter.value === matcher) {
     activePlatformFilter.value = ""
+    // 清除过滤时同步重置列表结果，保持 chip 高亮与列表数据一致
+    resetQueryState()
     return
   }
   activePlatformFilter.value = matcher
@@ -497,19 +479,26 @@ const attrsData = ref<Record<string, string> | null>(null)
 const attrsLoading = ref(false)
 const attrsError = ref("")
 
+/** 属性加载令牌：使在途旧请求失效，避免快速切换文档时旧结果覆盖新结果 */
+let attrsToken = 0
+
 /** 加载指定文档的属性 */
 async function loadAttrs(docId: string) {
+  const token = ++attrsToken
   attrsData.value = null
   attrsError.value = ""
   attrsLoading.value = true
   try {
-    attrsData.value = await getBlockAttrs(docId)
+    const data = await getBlockAttrs(docId)
+    if (token !== attrsToken) return
+    attrsData.value = data
   }
   catch (e: unknown) {
+    if (token !== attrsToken) return
     attrsError.value = e instanceof Error ? e.message : "加载属性失败"
   }
   finally {
-    attrsLoading.value = false
+    if (token === attrsToken) attrsLoading.value = false
   }
 }
 
@@ -573,12 +562,19 @@ function setupObserver() {
   }
 }
 
-// 哨兵元素挂载后启动观察
+// 哨兵元素挂载后启动观察；元素被移除时断开旧 observer，避免面板存活期内累积失效实例
 watch(sentinelRef, (el) => {
-  if (el) setupObserver()
+  if (el) {
+    setupObserver()
+  } else if (observer) {
+    observer.disconnect()
+    observer = null
+  }
 })
 
 onBeforeUnmount(() => {
+  // 使在途属性加载失效，避免组件销毁后写响应式状态
+  attrsToken++
   if (observer) {
     observer.disconnect()
     observer = null
@@ -614,23 +610,16 @@ function handleSelectDepth(depth: number) {
 function clearStatsFilter() {
   statsFilter.value = ""
   duplicateNameFilter.value = []
-  queryState.hasQueried = false
-  clearResults()
-  queryState.status = "idle"
-}
-
-/** 更新过滤选项 */
-function handleOptionsUpdate(newOptions: Partial<FilterOptions>) {
-  Object.assign(filterOptions, newOptions)
+  resetQueryState()
 }
 
 /** 一键清空所有过滤条件 */
 function handleReset() {
   Object.assign(filterOptions, DEFAULT_FILTER_OPTIONS)
   statsFilter.value = ""
-  clearResults()
-  queryState.status = "idle"
-  queryState.hasQueried = false
+  duplicateNameFilter.value = []
+  activePlatformFilter.value = ""
+  resetQueryState()
 }
 
 /** 排序字段变更 */

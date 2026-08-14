@@ -1,5 +1,4 @@
 @use "@/variables.scss" as *;
-@use "./mixins" as *;
 
 .doc-analysis-filter {
   padding: 6px 10px;
@@ -24,7 +23,8 @@
     gap: 2px;
   }
 
-  .filter-input {
+  .filter-input,
+  .filter-select {
     padding: 4px 6px;
     border: 1px solid var(--b3-border-color);
     border-radius: $vp-radius;
@@ -39,14 +39,13 @@
     }
   }
 
-  .title-input {
-    flex: 1;
-    min-width: 0;
+  .filter-select {
+    cursor: pointer;
   }
 
+  .title-input,
   .content-input {
     flex: 1;
-    min-width: 0;
   }
 
   .wordcount-input {
@@ -58,26 +57,8 @@
     width: 54px;
   }
 
-
-  .filter-select {
-    padding: 4px 4px;
-    border: 1px solid var(--b3-border-color);
-    border-radius: $vp-radius;
-    background: var(--b3-theme-background);
-    color: var(--b3-theme-on-background);
-    font-size: $font-size-xs;
-    outline: none;
-    cursor: pointer;
-    min-width: 0;
-
-    &:focus {
-      border-color: var(--b3-theme-primary);
-    }
-  }
-
   .notebook-select {
     flex: 1;
-    min-width: 0;
   }
 
   .filter-separator {

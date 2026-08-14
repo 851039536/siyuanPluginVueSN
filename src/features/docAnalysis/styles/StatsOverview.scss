@@ -6,15 +6,20 @@
   padding: $spacing-2 0 $spacing-2 $spacing-3;
 }
 
-// ============ Hero 区域 ============
+// ============ Hero 汇总卡 ============
 .stats-hero {
   display: flex;
-  align-items: center;
-  gap: $spacing-3;
+  flex-direction: column;
   padding: $spacing-2 $spacing-3;
   margin-bottom: $spacing-2;
   border: 1px solid var(--b3-border-color);
   border-radius: $vp-radius;
+
+  .hero-top {
+    display: flex;
+    align-items: center;
+    gap: $spacing-3;
+  }
 
   .hero-left {
     display: flex;
@@ -96,43 +101,46 @@
       color: var(--b3-theme-primary);
     }
   }
+
+  // 问题速览（徽章行）
+  .hero-issues {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $spacing-1;
+    margin-top: $spacing-2;
+    padding-top: $spacing-2;
+    border-top: 1px solid var(--b3-border-color);
+  }
 }
 
-// ============ 问题摘要条 ============
-.issue-bar {
-  display: flex;
+// ============ 问题徽章（chip） ============
+.issue-item {
+  display: inline-flex;
+  align-items: center;
   gap: $spacing-1;
-  margin-bottom: $spacing-2;
+  padding: $spacing-2px $spacing-2;
+  border-radius: $vp-radius;
+  border: 1px solid var(--b3-border-color);
+  cursor: pointer;
+  transition: border-color 0.15s;
 
-  .issue-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: $spacing-1 $spacing-2px;
-    border-radius: $vp-radius;
-    border: 1px solid var(--b3-border-color);
-    cursor: pointer;
-    transition: border-color 0.15s;
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
 
-    &:hover {
-      border-color: var(--b3-theme-primary);
-    }
+  &.critical {
+    border-color: var(--b3-theme-error, #ef4444);
+    .issue-value { color: var(--b3-theme-error, #ef4444); }
+  }
 
-    &.critical {
-      border-color: var(--b3-theme-error, #ef4444);
-      .issue-value { color: var(--b3-theme-error, #ef4444); }
-    }
+  &.warn {
+    border-color: var(--b3-theme-warning, #f59e0b);
+    .issue-value { color: var(--b3-theme-warning, #f59e0b); }
+  }
 
-    &.warn {
-      border-color: var(--b3-theme-warning, #f59e0b);
-      .issue-value { color: var(--b3-theme-warning, #f59e0b); }
-    }
-
-    &.accent {
-      border-color: var(--b3-theme-info, #a855f7);
-      .issue-value { color: var(--b3-theme-info, #a855f7); }
-    }
+  &.accent {
+    border-color: var(--b3-theme-info, #a855f7);
+    .issue-value { color: var(--b3-theme-info, #a855f7); }
   }
 
   // 数据突出展示：问题数量
@@ -146,88 +154,13 @@
   .issue-label {
     font-size: $font-size-2xs;
     color: var(--b3-theme-on-surface-variant);
-    margin-top: $spacing-2px;
   }
 }
 
-// ============ 重名文档名称排除 ============
-.dup-filter-bar {
+// ============ 统计工具栏 ============
+.stats-toolbar {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  margin-bottom: $spacing-2;
-  padding: $spacing-1 $spacing-2;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
-  background: transparent;
-
-  .dup-filter-icon {
-    font-size: $font-size-xs;
-    color: var(--b3-theme-on-surface-variant);
-    opacity: 0.4;
-    flex-shrink: 0;
-  }
-
-  .dup-filter-label {
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-semibold;
-    color: var(--b3-theme-on-surface-variant);
-    white-space: nowrap;
-  }
-
-  .dup-filter-count {
-    font-size: $font-size-2xs;
-    font-family: $vp-mono;
-    color: var(--b3-theme-primary);
-    background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
-    padding: 1px 6px;
-    border-radius: $vp-radius;
-    white-space: nowrap;
-  }
-
-  .dup-filter-clear-mini {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 16px;
-    height: 16px;
-    border: 1px solid var(--b3-border-color);
-    border-radius: $vp-radius;
-    background: transparent;
-    color: var(--b3-theme-on-surface-variant);
-    cursor: pointer;
-    padding: 0;
-    flex-shrink: 0;
-
-    &:hover {
-      border-color: var(--b3-theme-primary);
-      color: var(--b3-theme-primary);
-    }
-  }
-
-  .dup-filter-manage-btn {
-    margin-left: auto;
-    display: inline-flex;
-    align-items: center;
-    gap: $spacing-2px;
-    padding: 1px 6px;
-    border: 1px solid var(--b3-theme-primary);
-    border-radius: $vp-radius;
-    background: transparent;
-    color: var(--b3-theme-primary);
-    font-size: $font-size-2xs;
-    cursor: pointer;
-    white-space: nowrap;
-
-    &:hover {
-      background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
-    }
-  }
-}
-
-// ============ 统计 Tab 切换栏 ============
-.stats-tab-bar {
-  display: flex;
   gap: $spacing-2px;
   margin-bottom: $spacing-2;
   padding: $spacing-2px;
@@ -270,11 +203,21 @@
   }
 }
 
-// ============ 卡片行（网格对齐，概览/质量 Tab 共用） ============
-.section-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
-  gap: $spacing-1;
+// 工具栏徽章（名称排除计数）
+.toolbar-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 4px;
+  border-radius: $radius-full;
+  background: var(--b3-theme-primary);
+  color: var(--b3-theme-on-primary);
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
+  font-family: $vp-mono;
+  line-height: 1;
 }
 
 // ============ 工具栏按钮 ============
@@ -293,6 +236,7 @@
   text-transform: none;
   cursor: pointer;
   white-space: nowrap;
+  flex: none;
 
   &:hover {
     background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
@@ -305,69 +249,25 @@
   }
 }
 
-// ============ 深度分布图（水平条） ============
-.depth-chart-title {
-  display: flex;
-  align-items: center;
-  gap: $spacing-1;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.45;
-  margin-bottom: $spacing-1;
-
-  .depth-chart-hint {
-    font-weight: $font-weight-normal;
-    font-size: $font-size-2xs;
-    color: var(--b3-theme-on-surface-variant);
-    margin-left: auto;
-    letter-spacing: 0;
-    text-transform: none;
-  }
-}
-
-.depth-chart-v2 {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-px;
-  margin-top: $spacing-2;
-  padding-top: $spacing-2;
-  border-top: 1px dashed var(--b3-border-color);
-}
-
-// ============ 字数分布 / 自定义书签图（复用平台柱状图布局） ============
-.wordcount-chart {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-px;
-}
-
-// ============ 平台分布图 ============
-.platform-distro {
-  margin-top: $spacing-2;
-  padding-top: $spacing-2;
-  border-top: 1px dashed var(--b3-border-color);
-}
-
-.platform-distro-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.45;
-  margin-bottom: $spacing-1;
-}
-
-.platform-metrics {
+// ============ 分区元信息弱化（headerExtra 槽位） ============
+.section-hint {
   font-weight: $font-weight-normal;
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-surface-variant);
   letter-spacing: 0;
   text-transform: none;
+}
+
+// ============ 卡片行（网格对齐，概览/质量 Tab 共用） ============
+.section-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+  gap: $spacing-1;
+}
+
+// ============ 横向柱状图列表（平台/字数/书签/深度共用） ============
+.bar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-px;
 }
 
 // ============ 占位状态 ============

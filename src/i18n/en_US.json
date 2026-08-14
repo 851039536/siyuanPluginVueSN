@@ -240,6 +240,7 @@
     "confirmClearHistory": "Clear all request history?",
     "requestCopied": "Request copied",
     "responseCopied": "Response copied",
+    "copyFailed": "Copy failed",
     "noEndpoint": "Send a request to view the response here",
     "invalidJson": "Invalid JSON in request body",
     "categories": {
@@ -543,6 +544,7 @@
     "removeFavorite": "Remove from favorites",
     "favoriteAdded": "Added to favorites",
     "favoriteRemoved": "Removed from favorites",
+    "favoriteSaveFailed": "Failed to save favorites",
     "openFolder": "Open Folder",
     "loadDisksFailed": "Failed to load disk list",
     "diskOpened": "Disk opened",
@@ -575,7 +577,13 @@
     "navigationFailed": "Navigation failed",
     "name": "Name",
     "size": "Size",
-    "date": "Date Modified"
+    "date": "Date Modified",
+    "totalSpace": "Total",
+    "usedSpace": "Used",
+    "freeSpace": "Free",
+    "disks": "disks",
+    "clickToBrowse": "Click to browse",
+    "noFavorites": "No favorites yet. Click the star on a folder while browsing to add it."
   },
   "docAnalysis": {
     "title": "Document Analysis",

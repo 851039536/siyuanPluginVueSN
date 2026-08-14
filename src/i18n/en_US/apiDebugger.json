@@ -36,6 +36,7 @@
     "confirmClearHistory": "Clear all request history?",
     "requestCopied": "Request copied",
     "responseCopied": "Response copied",
+    "copyFailed": "Copy failed",
     "noEndpoint": "Send a request to view the response here",
     "invalidJson": "Invalid JSON in request body",
     "categories": {

@@ -20,9 +20,9 @@
       v-if="folders.length > 0"
       class="db-column-headers"
     >
-      <span class="db-col-name">{{ i18n.name || '名称' }}</span>
-      <span class="db-col-size">{{ i18n.size || '大小' }}</span>
-      <span class="db-col-date">{{ i18n.date || '修改日期' }}</span>
+      <span class="db-col-name">{{ i18n.name }}</span>
+      <span class="db-col-size">{{ i18n.size }}</span>
+      <span class="db-col-date">{{ i18n.date }}</span>
       <span class="db-col-actions" />
     </div>
 
@@ -52,7 +52,7 @@
           :size="36"
           color="var(--b3-theme-on-surface-light)"
         />
-        <p>{{ i18n.emptyFolder || '此文件夹为空' }}</p>
+        <p>{{ i18n.emptyFolder }}</p>
       </div>
     </div>
     <div
@@ -73,7 +73,7 @@
         <span v-if="expandedDisk">{{ expandedDisk }}</span>
       </span>
       <span class="db-status-right">
-        {{ folders.length }} {{ i18n.items || '项' }}
+        {{ folders.length }} {{ i18n.items }}
       </span>
     </div>
   </div>

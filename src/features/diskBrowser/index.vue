@@ -12,7 +12,7 @@
             :size="16"
             color="var(--b3-theme-primary)"
           />
-          <span>{{ i18n.panelTitle || '磁盘浏览器' }}</span>
+          <span>{{ i18n.panelTitle }}</span>
         </div>
         <Button
           variant="ghost"
@@ -20,7 +20,7 @@
           icon="refresh"
           :icon-size="12"
           :loading="loading"
-          :title="i18n.refreshing || '刷新'"
+          :title="i18n.refreshing"
           @click="refreshDisks"
         />
       </div>
@@ -37,20 +37,20 @@
         </div>
         <div class="db-all-overview-info">
           <div class="db-all-overview-meta">
-            {{ disks.length }} {{ i18n.disks || '磁盘' }}
+            {{ disks.length }} {{ i18n.disks }}
           </div>
           <div
             v-if="totalCapacity > 0"
             class="db-all-overview-capacity"
           >
             <span class="db-all-overview-used">
-              {{ i18n.usedSpace || '已用' }} {{ formatSize(totalUsed) }}
+              {{ i18n.usedSpace }} {{ formatSize(totalUsed) }}
             </span>
             <span class="db-all-overview-divider">·</span>
-            <span>{{ i18n.totalSpace || '总空间' }} {{ formatSize(totalCapacity) }}</span>
+            <span>{{ i18n.totalSpace }} {{ formatSize(totalCapacity) }}</span>
           </div>
           <div class="db-all-overview-hint">
-            {{ i18n.clickToBrowse || '点击磁盘浏览文件' }}
+            {{ i18n.clickToBrowse }}
           </div>
         </div>
       </div>
@@ -101,9 +101,9 @@
             v-if="disk.total"
             class="db-all-drive-space"
           >
-            <span>{{ i18n.usedSpace || '已用' }} {{ formatSize(disk.used || 0) }}</span>
+            <span>{{ i18n.usedSpace }} {{ formatSize(disk.used || 0) }}</span>
             <span class="db-all-drive-free">
-              {{ i18n.freeSpace || '可用' }} {{ formatSize(disk.total - (disk.used || 0)) }}
+              {{ i18n.freeSpace }} {{ formatSize(disk.total - (disk.used || 0)) }}
             </span>
           </div>
         </div>
@@ -124,7 +124,7 @@
           :size="32"
           color="var(--b3-theme-on-surface-light)"
         />
-        <p>{{ i18n.loadDisksFailed || '未找到可用磁盘' }}</p>
+        <p>{{ i18n.loadDisksFailed }}</p>
       </div>
 
       <div class="db-all-favorites">
@@ -134,7 +134,7 @@
             :size="12"
             color="#f97316"
           />
-          <span>{{ i18n.favorites || '收藏夹' }}</span>
+          <span>{{ i18n.favorites }}</span>
           <Badge
             v-if="favoriteFolders.length > 0"
             :content="favoriteFolders.length"
@@ -168,7 +168,7 @@
             :size="20"
             color="var(--b3-theme-on-surface-light)"
           />
-          <p>{{ i18n.noFavorites || '暂无收藏，浏览文件夹时点击星标即可添加' }}</p>
+          <p>{{ i18n.noFavorites }}</p>
         </div>
       </div>
     </div>

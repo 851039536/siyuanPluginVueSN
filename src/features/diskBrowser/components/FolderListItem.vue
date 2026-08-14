@@ -31,7 +31,7 @@
         :icon-size="12"
         class="db-action-btn"
         :class="{ 'is-favorite': isFavorite }"
-        :title="isFavorite ? (i18n.removeFavorite || '取消收藏') : (i18n.addFavorite || '添加收藏')"
+        :title="isFavorite ? (i18n.removeFavorite) : (i18n.addFavorite)"
         @click.stop="$emit('toggleFavorite', item.path)"
       />
       <Button
@@ -41,7 +41,7 @@
         icon="chevronRight"
         :icon-size="12"
         class="db-action-btn"
-        :title="i18n.browse || '浏览'"
+        :title="i18n.browse"
         @click.stop="$emit('navigate', item)"
       />
       <Button
@@ -50,7 +50,7 @@
         icon="openInNew"
         :icon-size="12"
         class="db-action-btn"
-        :title="i18n.open || '打开'"
+        :title="i18n.open"
         @click.stop="$emit('open', item.path)"
       />
       <Button
@@ -59,7 +59,7 @@
         icon="contentCopy"
         :icon-size="12"
         class="db-action-btn"
-        :title="i18n.copyPath || '复制路径'"
+        :title="i18n.copyPath"
         @click.stop="$emit('copyPath', item.path)"
       />
     </div>

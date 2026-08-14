@@ -1,3 +1,4 @@
+// API 调试器存储层 — 历史记录持久化（PluginStorage + TypedStorage）
 import type { Plugin } from "siyuan"
 
 import type {

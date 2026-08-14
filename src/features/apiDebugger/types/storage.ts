@@ -25,18 +25,14 @@ export class ApiDebuggerStorage {
     this.settings = new TypedStorage(storage, STORAGE_KEY, DEFAULT_SETTINGS)
   }
 
-  async loadHistory(): Promise<ApiRequestRecord[]> {
-    const data = await this.settings.loadOrDefault()
-    return data.history
-  }
-
-  async addRecord(record: ApiRequestRecord): Promise<boolean> {
+  async addRecord(record: ApiRequestRecord): Promise<ApiRequestRecord[]> {
     const data = await this.settings.loadOrDefault()
     const history = [record, ...data.history].slice(0, data.maxHistory)
-    return this.settings.save({
+    await this.settings.save({
       ...data,
       history,
     })
+    return history
   }
 
   async clearHistory(): Promise<boolean> {

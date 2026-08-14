@@ -207,7 +207,7 @@
         >
           <span
             class="api-debugger__history-method"
-            :class="`api-debugger__history-method--${record.method.toLowerCase()}`"
+            :class="`api-debugger__history-method--${record.method}`"
           >
             {{ record.method }}
           </span>
@@ -245,12 +245,12 @@ import type {
   SelectGroupOption,
   SelectOption,
 } from "@/components/Select.vue"
-
+import { showMessage } from "siyuan"
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
-
+import { copyToClipboard } from "@/utils/domUtils"
 import { useApiDebugger } from "./composables/useApiDebugger"
 import { API_ENDPOINT_PRESETS } from "./types"
 
@@ -281,7 +281,6 @@ const {
   replayRecord,
   clearHistory,
   syntaxHighlight,
-  copyToClipboard,
 } = useApiDebugger(props.plugin)
 
 const methodOptions: SelectOption[] = [
@@ -322,20 +321,27 @@ const endpointGroups = computed<SelectGroupOption[]>(() => {
 
 const endpointSelectValue = computed(() => path.value)
 
-function handleEndpointChange(val: string | number | boolean | null) {
+function handleEndpointChange(val: string | number | boolean | null): void {
   const preset = API_ENDPOINT_PRESETS.find((p) => p.path === val)
   if (preset) {
     selectEndpoint(preset)
   }
 }
 
-function handleMethodChange(val: string | number | boolean | null) {
+function handleMethodChange(val: string | number | boolean | null): void {
   const valid = methodOptions.find((o) => o.value === val)
   if (valid) method.value = valid.value as typeof method.value
 }
 
-async function handleCopyResponse() {
-  await copyToClipboard(responseBody.value)
+async function handleCopyResponse(): Promise<void> {
+  const ok = await copyToClipboard(responseBody.value)
+  showMessage(
+    ok
+      ? (props.i18n.responseCopied || "响应已复制")
+      : (props.i18n.copyFailed || "复制失败"),
+    ok ? 2000 : 3000,
+    ok ? "info" : "error",
+  )
 }
 
 function formatTimestamp(ts: number): string {

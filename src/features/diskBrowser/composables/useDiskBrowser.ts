@@ -1,8 +1,8 @@
+// 磁盘浏览器核心逻辑 composable — 磁盘加载、文件夹浏览、缓存管理、收藏夹操作
 import type {
   ComputedRef,
   Ref,
 } from "vue"
-// 磁盘浏览器核心逻辑 composable — 磁盘加载、文件夹浏览、缓存管理、收藏夹操作
 import type {
   CacheData,
   CacheStatus,
@@ -98,23 +98,26 @@ export function useDiskBrowser(
     return computeCacheStatus(cached, i18n, CACHE_EXPIRY_TIME, "short")
   })
 
-  function toggleFavorite(folderPath: string): void {
+  async function toggleFavorite(folderPath: string): Promise<void> {
+    const previous = [...favoriteFolders.value]
     const index = favoriteFolders.value.indexOf(folderPath)
     if (index > -1) {
       favoriteFolders.value.splice(index, 1)
-      showMessage(i18n.favoriteRemoved || "已取消收藏", 2000, "info")
     } else {
       favoriteFolders.value.push(folderPath)
-      showMessage(i18n.favoriteAdded || "已添加收藏", 2000, "info")
     }
-    saveFavorites()
-  }
 
-  async function saveFavorites(): Promise<void> {
     try {
       await storage.saveFavorites(favoriteFolders.value)
+      showMessage(
+        index > -1 ? i18n.favoriteRemoved! : i18n.favoriteAdded!,
+        2000,
+        "info",
+      )
     } catch (error) {
+      favoriteFolders.value = previous
       console.error("保存收藏夹失败:", error)
+      showMessage(i18n.favoriteSaveFailed!, 3000, "error")
     }
   }
 
@@ -148,7 +151,7 @@ export function useDiskBrowser(
       }
     } catch (error) {
       console.error("获取磁盘列表失败:", error)
-      showMessage(i18n.loadDisksFailed || "获取磁盘列表失败", 3000, "error")
+      showMessage(i18n.loadDisksFailed!, 3000, "error")
       disks.value = getDefaultDisks()
     } finally {
       loading.value = false
@@ -197,7 +200,7 @@ export function useDiskBrowser(
       }
     } catch (error) {
       console.error("加载文件夹失败:", error)
-      showMessage(i18n.loadFoldersFailed || "加载文件夹失败", 3000, "error")
+      showMessage(i18n.loadFoldersFailed!, 3000, "error")
     } finally {
       loadingFolders.value = false
     }
@@ -206,32 +209,28 @@ export function useDiskBrowser(
   function openPath(path: string): void {
     const electron = getElectronModules()
     if (!electron) {
-      showMessage(
-        i18n.openDiskNotSupported || "当前环境不支持打开文件夹",
-        3000,
-        "error",
-      )
+      showMessage(i18n.openDiskNotSupported!, 3000, "error")
       return
     }
     try {
       electron.shell.openPath(path)
-      showMessage(i18n.opened || "已打开", 2000, "info")
+      showMessage(i18n.opened!, 2000, "info")
     } catch (error) {
       console.error("打开失败:", error)
-      showMessage(i18n.openDiskFailed || "打开失败", 3000, "error")
+      showMessage(i18n.openDiskFailed!, 3000, "error")
     }
   }
 
   function refreshDisks(): void {
-    fetchDisks(true)
-    showMessage(i18n.refreshing || "正在刷新...", 2000, "info")
+    void fetchDisks(true)
+    showMessage(i18n.refreshing!, 2000, "info")
   }
 
   function refreshCurrentFolder(): void {
     const pathToRefresh = currentPath.value || expandedDisk.value
     if (pathToRefresh) {
-      loadFolderContent(pathToRefresh, true)
-      showMessage(i18n.refreshing || "正在刷新...", 2000, "info")
+      void loadFolderContent(pathToRefresh, true)
+      showMessage(i18n.refreshing!, 2000, "info")
     }
   }
 
@@ -239,7 +238,7 @@ export function useDiskBrowser(
     if (item.isFile) {
       openPath(item.path)
     } else {
-      navigateIntoFolder(item)
+      void navigateIntoFolder(item)
     }
   }
 
@@ -273,7 +272,7 @@ export function useDiskBrowser(
     try {
       const driveMatch = path.match(/^([A-Z]:)/)
       if (!driveMatch) {
-        showMessage(i18n.invalidPath || "无效路径", 2000, "error")
+        showMessage(i18n.invalidPath!, 2000, "error")
         return
       }
 
@@ -283,10 +282,10 @@ export function useDiskBrowser(
       const targetPath = path === drive || path === `${drive}\\` ? "" : path
       await setCurrentPath(targetPath)
 
-      showMessage(i18n.navigatedToFavorite || "已跳转到收藏夹", 2000, "info")
+      showMessage(i18n.navigatedToFavorite!, 2000, "info")
     } catch (error) {
       console.error("导航到收藏夹失败:", error)
-      showMessage(i18n.navigationFailed || "导航失败", 2000, "error")
+      showMessage(i18n.navigationFailed!, 2000, "error")
     }
   }
 
@@ -299,7 +298,7 @@ export function useDiskBrowser(
   async function copyPathToClipboard(path: string): Promise<void> {
     const success = await copyToClipboard(path)
     showMessage(
-      success ? i18n.pathCopied || "路径已复制" : i18n.copyFailed || "复制失败",
+      success ? i18n.pathCopied! : i18n.copyFailed!,
       2000,
       success ? "info" : "error",
     )
@@ -309,8 +308,8 @@ export function useDiskBrowser(
     formatDate(dateString, i18n)
 
   onMounted(() => {
-    loadFavorites()
-    fetchDisks()
+    void loadFavorites()
+    void fetchDisks()
   })
 
   onUnmounted(() => {

@@ -36,6 +36,7 @@
     "confirmClearHistory": "确定清空所有请求历史吗？",
     "requestCopied": "请求已复制",
     "responseCopied": "响应已复制",
+    "copyFailed": "复制失败",
     "noEndpoint": "发送请求后在此查看响应结果",
     "invalidJson": "请求体JSON格式错误",
     "categories": {

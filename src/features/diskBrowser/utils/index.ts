@@ -102,7 +102,7 @@ const K = 1024
 
 export function formatSize(bytes?: number): string {
   if (!bytes || bytes === 0) return "0 B"
-  const i = Math.floor(Math.log(bytes) / Math.log(K))
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(K)), UNITS.length - 1)
   return `${(bytes / K ** i).toFixed(2)} ${UNITS[i]}`
 }
 
@@ -158,7 +158,11 @@ export function isCacheValid<T>(
 
 export function buildPath(basePath: string, name: string): string {
   const separator = basePath.endsWith("\\") ? "" : "\\"
-  return `${basePath}${separator}${name}`.replace(/\\\\/g, "\\")
+  return `${basePath}${separator}${name}`
+}
+
+function formatYmd(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
 }
 
 export function formatDate(dateString: string, i18n: DiskBrowserI18n): string {
@@ -171,17 +175,15 @@ export function formatDate(dateString: string, i18n: DiskBrowserI18n): string {
     const dayMs = 1000 * 60 * 60 * 24
 
     // 未来日期（系统时间或文件时间异常）直接回退为日期字符串
-    if (diff < 0) {
-      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
-    }
+    if (diff < 0) return formatYmd(date)
 
     const days = Math.floor(diff / dayMs)
 
-    if (days === 0) return i18n.today || "今天"
-    if (days === 1) return i18n.yesterday || "昨天"
-    if (days < 7) return `${days} ${i18n.daysAgo || "天前"}`
+    if (days === 0) return i18n.today!
+    if (days === 1) return i18n.yesterday!
+    if (days < 7) return `${days} ${i18n.daysAgo!}`
 
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
+    return formatYmd(date)
   } catch {
     return dateString
   }

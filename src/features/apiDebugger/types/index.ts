@@ -1,3 +1,4 @@
+// API 调试器类型与共享常量 — 请求方法、端点预设、历史记录结构
 export const HTTP_METHODS = ["POST", "GET", "PUT", "DELETE"] as const
 
 export type HttpMethod = (typeof HTTP_METHODS)[number]

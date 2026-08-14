@@ -5,6 +5,7 @@
       <!-- Hero：总文档 + 健康度 -->
       <div class="stats-hero">
         <div class="hero-left">
+          <span class="hero-label">总文档</span>
           <span class="hero-value">{{ stats.totalDocs }}</span>
         </div>
         <div class="hero-right">
@@ -97,7 +98,7 @@
         </button>
         <button
           class="dup-filter-manage-btn"
-          @click="openDupDialog"
+          @click="dupFilterModalVisible = true"
         >
           <Icon
             icon="mdi:cog-outline"
@@ -155,7 +156,7 @@
           </template>
           <div class="section-cards">
             <StatCard
-              v-for="card in getVisibleCards(section)"
+              v-for="card in filterVisibleCards(section.cards)"
               :key="card.id"
               :card-id="card.id"
               :value="getCardValue(card)"
@@ -203,7 +204,7 @@
               :key="item.label"
               :label="item.label"
               :count="item.count"
-              :pct="wcBarPct(item.count)"
+              :pct="barPct(maxWordCount, item.count)"
             />
           </div>
         </StatSection>
@@ -220,7 +221,7 @@
               :key="item.value"
               :label="item.value"
               :count="item.count"
-              :pct="customBmBarPct(item.count)"
+              :pct="barPct(maxCustomBm, item.count)"
             />
           </div>
         </StatSection>
@@ -231,7 +232,7 @@
         <!-- 文档质量 -->
         <div class="section-cards">
           <StatCard
-            v-for="card in visibleQualityCards"
+            v-for="card in filterVisibleCards(QUALITY_CARDS)"
             :key="card.id"
             :card-id="card.id"
             :value="getCardValue(card)"
@@ -255,7 +256,7 @@
             :key="item.depth"
             :label="String(item.depth)"
             :count="item.count"
-            :pct="getBarPercent(item.count)"
+            :pct="barPct(maxDepthCount, item.count)"
             clickable
             @click="$emit('selectDepth', item.depth)"
           />
@@ -273,118 +274,24 @@
       />
       <p>点击「分析」查看文档统计</p>
     </div>
+
+    <!-- 书签详情弹出面板 -->
+    <BookmarkDetailModal
+      :visible="bookmarkDetailVisible"
+      :loading="bookmarkDetailLoading"
+      :details="bookmarkDetails"
+      @close="$emit('showBookmarkDetails')"
+      @select="(value) => $emit('selectBookmark', value)"
+    />
+
+    <!-- 重名排除管理弹窗 -->
+    <DuplicateNameFilterModal
+      :visible="dupFilterModalVisible"
+      :names="duplicateNameFilter"
+      @close="dupFilterModalVisible = false"
+      @save="(names) => $emit('update:duplicateNameFilter', names)"
+    />
   </div>
-
-  <!-- 书签详情弹出面板 -->
-  <Teleport to="body">
-    <div
-      v-if="bookmarkDetailVisible"
-      class="bookmark-detail-overlay"
-      @click.self="$emit('showBookmarkDetails')"
-    >
-      <div
-        class="bookmark-detail-panel"
-        tabindex="-1"
-        @keydown.esc="$emit('showBookmarkDetails')"
-      >
-        <div class="bookmark-detail-header">
-          <span class="bookmark-detail-title">
-            <Icon icon="mdi:bookmark-outline" />
-            全部书签
-          </span>
-          <button
-            class="close-btn"
-            @click="$emit('showBookmarkDetails')"
-          >
-            <Icon icon="mdi:close" />
-          </button>
-        </div>
-        <div class="bookmark-detail-body">
-          <div
-            v-if="bookmarkDetailLoading"
-            class="bookmark-detail-loading"
-          >
-            <Icon icon="mdi:loading" class="spin-icon" /> 加载中...
-          </div>
-          <div
-            v-else-if="bookmarkDetails.length === 0"
-            class="bookmark-detail-empty"
-          >
-            <Icon icon="mdi:bookmark-off-outline" class="empty-icon" />
-            <p>暂无书签数据</p>
-          </div>
-          <div
-            v-else
-            class="bookmark-detail-list"
-          >
-            <button
-              v-for="item in bookmarkDetails"
-              :key="item.value"
-              class="bookmark-detail-item"
-              @click="$emit('selectBookmark', item.value)"
-            >
-              <div class="bd-item-left">
-                <span class="bd-item-name" :title="item.value">{{ item.value || '(空值)' }}</span>
-              </div>
-              <span class="bd-item-count">{{ item.count }} 篇</span>
-              <Icon icon="mdi:chevron-right" class="bd-item-arrow" />
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </Teleport>
-
-  <!-- 重名排除管理弹窗 -->
-  <Teleport to="body">
-    <div
-      v-if="dupDialogVisible"
-      class="dup-manage-overlay"
-      @click.self="cancelDupDialog"
-    >
-      <div
-        class="dup-manage-panel"
-        tabindex="-1"
-        @keydown.esc="cancelDupDialog"
-      >
-        <div class="dup-manage-header">
-          <span class="dup-manage-title">
-            <Icon icon="mdi:filter-remove-outline" />
-            排除重名文档
-          </span>
-          <button
-            class="close-btn"
-            @click="cancelDupDialog"
-          >
-            <Icon icon="mdi:close" />
-          </button>
-        </div>
-        <div class="dup-manage-body">
-          <p class="dup-manage-hint">每行一个文档名称，包含该名称的文档将被排除（不区分大小写）</p>
-          <textarea
-            v-model="dupDialogText"
-            class="dup-manage-textarea"
-            rows="8"
-            placeholder="输入要排除的名称，每行一个..."
-          />
-        </div>
-        <div class="dup-manage-footer">
-          <button
-            class="dup-manage-cancel"
-            @click="cancelDupDialog"
-          >
-            取消
-          </button>
-          <button
-            class="dup-manage-save"
-            @click="saveDupDialog"
-          >
-            保存
-          </button>
-        </div>
-      </div>
-    </div>
-  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -408,6 +315,8 @@ import { filterDuplicateGroups } from "../utils"
 import StatCard from "./StatCard.vue"
 import StatSection from "./StatSection.vue"
 import BarRow from "./BarRow.vue"
+import BookmarkDetailModal from "./BookmarkDetailModal.vue"
+import DuplicateNameFilterModal from "./DuplicateNameFilterModal.vue"
 
 interface Props {
   stats: DocStats
@@ -423,7 +332,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const emit = defineEmits<{
+defineEmits<{
   (e: "selectCategory", category: string): void
   (e: "showBookmarkDetails"): void
   (e: "selectBookmark", bookmark: string): void
@@ -442,28 +351,8 @@ const statsTabs = [
   { key: "quality", label: "质量", icon: "mdi:chart-box-outline" },
 ]
 
-const dupDialogVisible = ref(false)
-const dupDialogText = ref("")
-
-function openDupDialog() {
-  dupDialogText.value = props.duplicateNameFilter.join("\n")
-  dupDialogVisible.value = true
-}
-
-function saveDupDialog() {
-  const names = [...new Set(
-    dupDialogText.value
-      .split("\n")
-      .map((s) => s.trim())
-      .filter(Boolean),
-  )]
-  emit("update:duplicateNameFilter", names)
-  dupDialogVisible.value = false
-}
-
-function cancelDupDialog() {
-  dupDialogVisible.value = false
-}
+/** 重名排除管理弹窗可见性 */
+const dupFilterModalVisible = ref(false)
 
 // ============================================================
 // 重名过滤
@@ -557,20 +446,30 @@ function cardLabel(card: StatCardDef): string {
   return card.shortLabel
 }
 
-function getVisibleCards(section: StatSectionDef): StatCardDef[] {
-  if (!hideZero.value) return section.cards
-  return section.cards.filter((c) => getCardValue(c) > 0)
+/** 按 hideZero 开关过滤可见卡片（概览分区与质量 Tab 共用） */
+function filterVisibleCards(cards: StatCardDef[]): StatCardDef[] {
+  if (!hideZero.value) return cards
+  return cards.filter((c) => getCardValue(c) > 0)
 }
 
-/** 质量 Tab 卡片（复用 hideZero 过滤逻辑） */
-const visibleQualityCards = computed(() => {
-  if (!hideZero.value) return QUALITY_CARDS
-  return QUALITY_CARDS.filter((c) => getCardValue(c) > 0)
-})
-
+/** 卡片底部占比条（字符串百分比，供 StatCard 的 width 直接使用） */
 function pctStr(count: number): string {
   if (!props.stats.totalDocs) return "0%"
   return `${Math.min(100, Math.round((count / props.stats.totalDocs) * 100))}%`
+}
+
+// ============================================================
+// 横向柱状图（平台/字数/书签/深度）共用比例计算
+// ============================================================
+
+/** 数据集最大计数（空集兜底为 1，避免除零） */
+function maxCount(items: { count: number }[]): number {
+  return Math.max(...items.map((i) => i.count), 1)
+}
+
+/** 相对最大值的百分比（BarRow 直接使用数值宽度） */
+function barPct(max: number, count: number): number {
+  return Math.round((count / max) * 100)
 }
 
 // ============================================================
@@ -586,8 +485,8 @@ const platformEntries = computed(() => {
     })
     .filter((e) => e.count > 0)
     .sort((a, b) => b.count - a.count)
-  const max = Math.max(...entries.map((e) => e.count), 1)
-  return entries.map((e) => ({ ...e, pct: Math.round((e.count / max) * 100) }))
+  const max = maxCount(entries)
+  return entries.map((e) => ({ ...e, pct: barPct(max, e.count) }))
 })
 
 const docsInSystem = computed(() =>
@@ -606,39 +505,14 @@ const coveragePct = computed(() => {
 })
 
 // ============================================================
-// 字数分布 / 书签分类柱状图
+// 字数分布 / 书签分类 / 深度分布柱状图
 // ============================================================
 
-const maxWordCount = computed(() => {
-  const counts = props.stats.wordCountDistribution.map((d) => d.count)
-  return Math.max(...counts, 1)
-})
+const maxWordCount = computed(() => maxCount(props.stats.wordCountDistribution))
 
-function wcBarPct(count: number): number {
-  return Math.round((count / maxWordCount.value) * 100)
-}
+const maxCustomBm = computed(() => maxCount(props.stats.customBookmarkTop))
 
-const maxCustomBm = computed(() => {
-  const counts = props.stats.customBookmarkTop.map((d) => d.count)
-  return Math.max(...counts, 1)
-})
-
-function customBmBarPct(count: number): number {
-  return Math.round((count / maxCustomBm.value) * 100)
-}
-
-// ============================================================
-// 深度分布柱状图
-// ============================================================
-
-const maxDepthCount = computed(() => {
-  const counts = props.depthStats.depthDistribution.map((d) => d.count)
-  return Math.max(...counts, 1)
-})
-
-function getBarPercent(count: number): string {
-  return `${Math.round((count / maxDepthCount.value) * 100)}%`
-}
+const maxDepthCount = computed(() => maxCount(props.depthStats.depthDistribution))
 
 </script>
 

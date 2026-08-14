@@ -1,0 +1,87 @@
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// ============ 重名排除管理弹窗 ============
+.dup-manage-overlay {
+  @extend %modal-overlay;
+}
+
+.dup-manage-panel {
+  @extend %modal-panel;
+}
+
+.dup-manage-header {
+  @extend %modal-header;
+
+  .dup-manage-title {
+    @extend %modal-title;
+  }
+
+  .close-btn {
+    @extend %modal-close-btn;
+  }
+}
+
+.dup-manage-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: $spacing-3;
+  @include da-scrollbar;
+}
+
+.dup-manage-hint {
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface-variant);
+  margin: 0 0 $spacing-2 0;
+  opacity: 0.7;
+}
+
+.dup-manage-textarea {
+  width: 100%;
+  padding: $spacing-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-background);
+  font-size: $font-size-xs;
+  font-family: $vp-mono;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+
+  &:focus {
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+.dup-manage-footer {
+  @extend %modal-footer;
+}
+
+.dup-manage-cancel,
+.dup-manage-save {
+  padding: $spacing-1 $spacing-3;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  font-size: $font-size-xs;
+  cursor: pointer;
+}
+
+.dup-manage-cancel {
+  background: transparent;
+  color: var(--b3-theme-on-surface-variant);
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+}
+
+.dup-manage-save {
+  background: var(--b3-theme-primary);
+  color: var(--b3-theme-on-primary);
+  border-color: var(--b3-theme-primary);
+
+  &:hover {
+    opacity: 0.85;
+  }
+}

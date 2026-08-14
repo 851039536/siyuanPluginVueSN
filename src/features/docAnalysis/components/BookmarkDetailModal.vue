@@ -41,21 +41,28 @@
             v-else
             class="bookmark-detail-list"
           >
-            <button
-              v-for="item in details"
-              :key="item.value"
-              class="bookmark-detail-item"
-              @click="$emit('select', item.value)"
-            >
-              <div class="bd-item-left">
-                <span
-                  class="bd-item-name"
-                  :title="item.value"
-                >{{ item.value || '(空值)' }}</span>
-              </div>
-              <span class="bd-item-count">{{ item.count }} 篇</span>
-              <Icon icon="mdi:chevron-right" class="bd-item-arrow" />
-            </button>
+            <table class="bookmark-detail-table">
+              <thead>
+                <tr>
+                  <th class="bd-col-name">书签名称</th>
+                  <th class="bd-col-count">篇数</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="item in details"
+                  :key="item.value"
+                  class="bookmark-detail-item"
+                  @click="$emit('select', item.value)"
+                >
+                  <td
+                    class="bd-item-name"
+                    :title="item.value"
+                  >{{ item.value || '(空值)' }}</td>
+                  <td class="bd-item-count">{{ item.count }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

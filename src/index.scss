@@ -1,14 +1,10 @@
 // ========== 全局样式入口 ==========
-// 职责：统一加载全局设计 Token 与功能级全局样式（仅在插件根挂载一次）。
+// 职责：加载全局设计 Token 与全局基准字号规则（仅在插件根挂载一次）。
 
 // 1. 设计 Token（单一来源：src/_variables.scss）
 @use '@/variables.scss' as *;
 
-// 2. 功能级全局样式（随插件根加载一次）
-//    pageLock 样式由 LockDialog.vue 内 @use 加载；compactMode 样式由 compactMode/index.ts import 加载
-@use './features/generalSettings/styles/codeblockThemes.scss';  // 代码块美化主题
-
-// 3. 全局基准字号（两级字号制）
+// 2. 全局基准字号（两级字号制）
 //    Dock 面板与弹窗遮罩统一以 $font-size-xs(12px) 为基准，防止内部未声明字号的
 //    文字继承思源全局默认字号（14px+）导致偏大。
 :root {

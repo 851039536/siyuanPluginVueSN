@@ -1,9 +1,11 @@
 // 单位转换器 — Codex 风格
+@use '@/variables.scss' as *;
+
 $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
 
 @mixin label-style {
-  font-size: 10px;
-  font-weight: 700;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   opacity: 0.45;
@@ -16,7 +18,7 @@ $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   flex-direction: column;
   background: var(--b3-theme-background);
   box-sizing: border-box;
-  font-size: 13px;
+  font-size: $font-size-xs;
 
   .converter-header {
     padding: 12px 16px;
@@ -25,8 +27,8 @@ $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
     h3 {
       margin: 0;
       font-family: $mono;
-      font-size: 11px;
-      font-weight: 700;
+      font-size: $font-size-xs;
+      font-weight: $font-weight-bold;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--b3-theme-on-background);
@@ -45,8 +47,8 @@ $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   .converter-tab {
     padding: 8px 10px;
     font-family: $mono;
-    font-size: 11px;
-    font-weight: 500;
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-medium;
     color: var(--b3-theme-on-background);
     opacity: 0.45;
     cursor: pointer;
@@ -84,8 +86,8 @@ $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
 
   .result-value {
     font-family: $mono;
-    font-size: 14px;
-    font-weight: 500;
+    font-size: $font-size-sm; // 数据突出展示：转换结果数值
+    font-weight: $font-weight-medium;
     text-align: center;
     line-height: 1.6;
 
@@ -102,7 +104,7 @@ $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
 
     .output-display {
       color: var(--b3-theme-primary);
-      font-weight: 600;
+      font-weight: $font-weight-semibold;
     }
   }
 }
@@ -131,7 +133,7 @@ $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
     align-items: center;
     padding: 6px 10px;
     background: var(--b3-theme-surface);
-    font-size: 12px;
+    font-size: $font-size-xs;
 
     &:hover {
       background: var(--b3-theme-background);
@@ -146,7 +148,7 @@ $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
     .unit-value,
     .base-value {
       font-family: $mono;
-      font-weight: 500;
+      font-weight: $font-weight-medium;
       color: var(--b3-theme-primary);
     }
   }
@@ -160,7 +162,7 @@ $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   background: var(--b3-theme-error-container);
 
   .error-message {
-    font-size: 12px;
+    font-size: $font-size-xs;
     font-family: $mono;
     color: var(--b3-error);
     text-align: center;
@@ -181,7 +183,7 @@ $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   ul {
     margin: 0;
     padding-left: 16px;
-    font-size: 11px;
+    font-size: $font-size-xs;
     color: var(--b3-theme-on-surface);
     opacity: 0.7;
     line-height: 1.7;
@@ -223,11 +225,11 @@ $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
     border: 1px solid var(--b3-border-color);
     border-radius: 4px;
     font-family: $mono;
-    font-size: 12px;
+    font-size: $font-size-xs;
     color: var(--b3-theme-primary);
     min-height: 36px;
     word-break: break-all;
-    line-height: 1.5;
+    line-height: $line-height-normal;
   }
 }
 

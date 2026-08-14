@@ -18,7 +18,7 @@
 
   &__section-title {
     font-size: $font-size-xs;
-    font-weight: 600;
+    font-weight: $font-weight-semibold;
     color: var(--b3-theme-on-background);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -56,7 +56,7 @@
   &__tab {
     padding: $spacing-2 $spacing-3;
     font-size: $font-size-xs;
-    font-weight: 500;
+    font-weight: $font-weight-medium;
     color: var(--b3-theme-on-background);
     opacity: 0.6;
     cursor: pointer;
@@ -94,7 +94,7 @@
     align-items: center;
     padding: 2px 8px;
     border-radius: $radius-sm;
-    font-weight: 600;
+    font-weight: $font-weight-semibold;
     font-size: $font-size-xs;
 
     &--success {
@@ -121,7 +121,7 @@
     max-height: 400px;
     font-family: "SFMono-Regular", "Consolas", "Liberation Mono", "Menlo", monospace;
     font-size: $font-size-xs;
-    line-height: 1.5;
+    line-height: $line-height-normal;
     white-space: pre-wrap;
     word-break: break-all;
   }
@@ -181,8 +181,8 @@
     width: 48px;
     padding: 1px 4px;
     border-radius: 3px;
-    font-weight: 600;
-    font-size: 10px;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-2xs;
     flex-shrink: 0;
 
     &--post {
@@ -217,7 +217,7 @@
 
   &__history-status {
     flex-shrink: 0;
-    font-weight: 500;
+    font-weight: $font-weight-medium;
 
     &--success {
       color: #10b981;

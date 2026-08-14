@@ -165,7 +165,7 @@
     }
 
     .si-slider__value {
-      font-size: 10px; // 特小号，无对应 Token
+      font-size: $font-size-2xs;
       min-width: 24px; // 无对应 Token
     }
   }

@@ -53,7 +53,7 @@
 
   // 路径 — 等宽字体
   &__path {
-    font-size: 10px;
+    font-size: $font-size-2xs;
     font-family: $vp-mono;
     color: var(--b3-theme-on-surface);
     opacity: 0.45;
@@ -73,15 +73,15 @@
   }
 
   &__size {
-    font-size: 10px;
-    font-weight: 600;
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-semibold;
     font-family: $vp-mono;
     color: var(--b3-theme-on-surface);
     opacity: 0.6;
   }
 
   &__date {
-    font-size: 9px;
+    font-size: $font-size-2xs;
     font-family: $vp-mono;
     color: var(--b3-theme-on-surface);
     opacity: 0.4;

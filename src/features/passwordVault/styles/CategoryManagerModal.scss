@@ -16,7 +16,7 @@
 .add-category-section,
 .category-list-section {
   h3 {
-    font-size: 13px;
+    font-size: $font-size-xs;
     font-weight: $font-weight-semibold;
     color: var(--b3-theme-on-background);
     margin: 0 0 $spacing-3 0;
@@ -82,7 +82,7 @@
 
 .category-name {
   flex: 1;
-  font-size: 13px;
+  font-size: $font-size-xs;
   color: var(--b3-theme-on-background);
 }
 
@@ -91,7 +91,7 @@
   background: var(--b3-theme-primary);
   color: #fff;
   border-radius: $radius-sm;
-  font-size: 10px;
+  font-size: $font-size-2xs;
   font-weight: $font-weight-semibold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -112,7 +112,7 @@
   }
 
   .confirm-warning {
-    font-size: 13px;
+    font-size: $font-size-xs;
     color: var(--b3-theme-on-background, #333);
     margin: 0;
     text-align: center;

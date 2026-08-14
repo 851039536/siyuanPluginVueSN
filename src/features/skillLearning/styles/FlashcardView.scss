@@ -42,8 +42,8 @@
   }
 
   &__q-title {
-    font-size: 15px;
-    font-weight: 600;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
     line-height: 1.6;
     color: var(--b3-theme-on-background, #1e293b);
     display: block;
@@ -58,8 +58,8 @@
   }
 
   &__lang-tag {
-    font-size: 10px;
-    font-weight: 700;
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-bold;
     text-transform: uppercase;
     padding: 1px 6px;
     border-radius: $radius-sm;
@@ -115,13 +115,13 @@
     background: rgba(99, 102, 241, 0.1);
     color: var(--b3-theme-primary);
     font-size: $font-size-xs;
-    font-weight: 700;
+    font-weight: $font-weight-bold;
     flex-shrink: 0;
   }
 
   &__option-text {
     flex: 1;
-    line-height: 1.5;
+    line-height: $line-height-normal;
   }
 
   &__option-icon {
@@ -141,7 +141,7 @@
 
   &__feedback-banner {
     font-size: $font-size-sm;
-    font-weight: 600;
+    font-weight: $font-weight-semibold;
     padding: $spacing-2 $spacing-3;
     border-radius: $radius-md;
     border: 1px solid;
@@ -176,7 +176,7 @@
     padding: $spacing-2 $spacing-6;
     border-radius: $radius-md;
     font-size: $font-size-sm;
-    font-weight: 600;
+    font-weight: $font-weight-semibold;
     border: none;
     cursor: pointer;
     transition: all 0.12s;
@@ -205,7 +205,7 @@
 
   &__result-score {
     font-size: 2.25rem;
-    font-weight: 700;
+    font-weight: $font-weight-bold;
     color: var(--b3-theme-primary);
     font-feature-settings: "tnum";
     font-family: $vp-mono;
@@ -257,7 +257,7 @@
     gap: $spacing-2;
     padding: 6px $spacing-2;
     font-size: $font-size-xs;
-    line-height: 1.5;
+    line-height: $line-height-normal;
     border-radius: $vp-radius;
 
     &--ok { color: #16a34a; }
@@ -266,7 +266,7 @@
 
   &__result-mark {
     flex-shrink: 0;
-    font-weight: 700;
+    font-weight: $font-weight-bold;
     margin-top: 1px;
   }
 

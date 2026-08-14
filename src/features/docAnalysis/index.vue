@@ -453,14 +453,10 @@ function handlePlatformFilter(matcher: string) {
   activeTab.value = "list"
 }
 
-// ============================================================
 // Tab 切换
-// ============================================================
 const activeTab = ref<"stats" | "list" | "publish">("stats")
 
-// ============================================================
 // 发布面板状态
-// ============================================================
 const publishDocId = ref<string | undefined>(undefined)
 
 function handlePublishDoc(docId: string) {
@@ -470,9 +466,7 @@ function handlePublishDoc(docId: string) {
   attrsPanelVisible.value = false
 }
 
-// ============================================================
 // 属性面板状态
-// ============================================================
 const attrsPanelVisible = ref(false)
 const attrsPanelDocId = ref("")
 const attrsData = ref<Record<string, string> | null>(null)
@@ -518,9 +512,7 @@ function handleRefreshAttrs() {
   loadAttrs(attrsPanelDocId.value)
 }
 
-// ============================================================
 // 分批渲染：避免一次渲染上千个 DocListItem 导致卡顿
-// ============================================================
 const PAGE_SIZE = 50
 const visibleCount = ref(PAGE_SIZE)
 const isLoadingMore = ref(false)

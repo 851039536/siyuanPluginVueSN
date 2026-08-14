@@ -3,6 +3,7 @@
  */
 import { Plugin } from "siyuan"
 import { GeneralSettings } from "./GeneralSettings"
+import "./styles/codeblockThemes.scss"
 
 /**
  * 注册通用设置功能

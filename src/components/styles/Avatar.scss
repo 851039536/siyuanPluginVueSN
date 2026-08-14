@@ -8,9 +8,9 @@
   justify-content: center;
   position: relative;
   overflow: hidden;
-  background: var(--b3-theme-surface-lighter, $brand-light-gray);
-  color: var(--b3-theme-on-surface, $brand-dark);
-  font-family: $font-body;
+  background: var(--b3-theme-surface-lighter, $color-surface);
+  color: var(--b3-theme-on-surface, $color-fg);
+  font-family: $font-zh;
   font-weight: $font-weight-medium;
   user-select: none;
 
@@ -60,7 +60,7 @@
 
     &:hover:not(.si-avatar--disabled) {
       transform: scale(1.05);
-      border-color: var(--b3-theme-primary, $brand-orange);
+      border-color: var(--b3-theme-primary, $color-danger);
     }
 
     &:active:not(.si-avatar--disabled) {
@@ -70,7 +70,7 @@
 
   // 激活态 — Codex 边框优先策略（替代原 box-shadow: 0 0 0 2px）
   &--active {
-    outline: 2px solid var(--b3-theme-primary, $brand-orange);
+    outline: 2px solid var(--b3-theme-primary, $color-danger);
     outline-offset: 0;
   }
 

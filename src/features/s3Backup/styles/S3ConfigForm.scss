@@ -17,12 +17,12 @@
       border-radius: $vp-radius;
 
       &.status-connected {
-        color: $brand-success;
+        color: $color-success;
         background: hsl(142, 76%, 36%, 0.1);
       }
 
       &.status-disconnected {
-        color: $brand-destructive;
+        color: $color-danger;
         background: hsl(0, 72%, 51%, 0.1);
       }
     }
@@ -130,12 +130,12 @@
     font-size: $font-size-xs;
 
     &.success {
-      color: $brand-success;
+      color: $color-success;
       background: hsl(142, 76%, 36%, 0.08);
     }
 
     &.error {
-      color: $brand-destructive;
+      color: $color-danger;
       background: hsl(0, 72%, 51%, 0.08);
     }
   }

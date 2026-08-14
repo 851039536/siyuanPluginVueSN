@@ -3,7 +3,7 @@
  * 等宽字体标签、边框卡片、hover 高亮
  */
 
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 @use "./mixins" as m;
 
 .vp-adv-help {
@@ -19,7 +19,7 @@
   &__label {
     font-size: $font-size-xs;
     font-weight: $font-weight-semibold;
-    color: $brand-orange;
+    color: $color-danger;
   }
 
   &__hint {
@@ -50,7 +50,7 @@
       font-family: $vp-mono;
       font-size: $font-size-xs;
       font-weight: $font-weight-semibold;
-      color: $brand-orange;
+      color: $color-danger;
     }
 
     span {
@@ -59,8 +59,8 @@
     }
 
     &:hover {
-      border-color: $brand-orange;
-      background: rgba($brand-orange, 0.06);
+      border-color: $color-danger;
+      background: rgba($color-danger, 0.06);
 
       span {
         opacity: 0.8;

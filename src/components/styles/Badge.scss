@@ -14,7 +14,7 @@
     justify-content: center;
     transform: translate(0, 0);
     white-space: nowrap;
-    font-family: $font-body;
+    font-family: $font-zh;
     font-weight: $font-weight-medium;
     z-index: m.$z-local-overlay;
 
@@ -63,43 +63,43 @@
     // 默认样式（非圆点）— Codex 边框策略（替代原 box-shadow: 0 0 0 1px）
     &:not(.si-badge__content--dot) {
       border-radius: $radius-full;
-      border: 1px solid var(--b3-theme-background, $brand-light);
+      border: 1px solid var(--b3-theme-background, $color-bg);
     }
 
     // 颜色变体
     &--default {
-      background: var(--b3-theme-on-surface, $brand-dark);
-      color: var(--b3-theme-background, $brand-light);
+      background: var(--b3-theme-on-surface, $color-fg);
+      color: var(--b3-theme-background, $color-bg);
     }
 
     &--primary {
-      background: var(--b3-theme-primary, $brand-orange);
-      color: var(--b3-theme-on-primary, $brand-light);
+      background: var(--b3-theme-primary, $color-danger);
+      color: var(--b3-theme-on-primary, $color-bg);
     }
 
     &--success {
-      background: var(--b3-theme-success, $brand-success);
-      color: var(--b3-theme-on-primary, $brand-light);
+      background: var(--b3-theme-success, $color-success);
+      color: var(--b3-theme-on-primary, $color-bg);
     }
 
     &--warning {
-      background: var(--b3-theme-warning, $brand-warning);
-      color: var(--b3-theme-on-primary, $brand-light);
+      background: var(--b3-theme-warning, $color-warning);
+      color: var(--b3-theme-on-primary, $color-bg);
     }
 
     &--danger {
-      background: var(--b3-theme-destructive, $brand-destructive);
-      color: var(--b3-theme-on-primary, $brand-light);
+      background: var(--b3-theme-destructive, $color-danger);
+      color: var(--b3-theme-on-primary, $color-bg);
     }
 
     &--info {
-      background: var(--b3-theme-info, $brand-info);
-      color: var(--b3-theme-on-primary, $brand-light);
+      background: var(--b3-theme-info, $color-info);
+      color: var(--b3-theme-on-primary, $color-bg);
     }
 
     // 自定义颜色
     &--custom-color {
-      color: var(--b3-theme-on-primary, $brand-light);
+      color: var(--b3-theme-on-primary, $color-bg);
     }
 
     // 位置变体

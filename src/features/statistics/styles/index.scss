@@ -13,7 +13,7 @@ $font-mono: $vp-mono;
 $gradient-primary: linear-gradient(135deg, var(--b3-theme-primary) 0%, var(--b3-theme-primary-light, #5d87ff) 100%);
 $gradient-surface: linear-gradient(180deg, var(--b3-theme-surface) 0%, var(--b3-theme-background) 100%);
 
-// Status colors (GitHub-style, intentionally different from global $brand-success/$brand-destructive/$brand-warning)
+// Status colors (GitHub-style, intentionally different from global $color-success/$color-danger/$color-warning)
 $color-success: #2da44e;
 $color-danger: #cf222e;
 $color-warning: #d97706;
@@ -197,7 +197,7 @@ $color-rank-bronze: #cd7f32;
 
 .section-title {
   margin: 0 0 $spacing-3 0;
-  font-family: $font-heading;
+  font-family: $font-zh;
   font-size: $font-size-xs;
   font-weight: $font-weight-bold;
   letter-spacing: 0.02em;
@@ -225,7 +225,7 @@ $color-rank-bronze: #cd7f32;
   overflow: hidden;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
-  font-family: $font-body;
+  font-family: $font-zh;
   // Dock 根容器基准字号（防止继承思源全局 14px+ 默认字号）
   font-size: $font-size-xs;
 
@@ -301,7 +301,7 @@ $color-rank-bronze: #cd7f32;
   border: none;
   background: transparent;
   color: var(--b3-theme-on-surface-light);
-  font-family: $font-body;
+  font-family: $font-zh;
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   letter-spacing: 0.02em;

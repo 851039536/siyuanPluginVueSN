@@ -334,7 +334,7 @@ function formatLastRun(timestamp: number): string {
     cursor: pointer;
 
     &:hover {
-      border-color: var(--b3-theme-primary, $brand-primary);
+      border-color: var(--b3-theme-primary, $color-primary);
 
       .script-list__card-actions {
         opacity: 1;
@@ -353,7 +353,7 @@ function formatLastRun(timestamp: number): string {
   &__card-name {
     font-weight: 600;
     font-size: $font-size-sm;
-    color: var(--b3-theme-on-background, $brand-dark);
+    color: var(--b3-theme-on-background, $color-fg);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -367,7 +367,7 @@ function formatLastRun(timestamp: number): string {
 
   &__card-desc {
     font-size: $font-size-xs;
-    color: var(--b3-theme-secondary, $brand-mid-gray);
+    color: var(--b3-theme-secondary, $color-muted);
     margin: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -384,7 +384,7 @@ function formatLastRun(timestamp: number): string {
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--b3-theme-secondary, $brand-mid-gray);
+    color: var(--b3-theme-secondary, $color-muted);
     opacity: 0.45;
     margin: 0;
   }
@@ -392,7 +392,7 @@ function formatLastRun(timestamp: number): string {
   &__card-path {
     font-size: 10px;
     font-family: $vp-mono;
-    color: var(--b3-theme-secondary, $brand-mid-gray);
+    color: var(--b3-theme-secondary, $color-muted);
     opacity: 0.5;
     margin: 2px 0 0;
     overflow: hidden;
@@ -410,12 +410,12 @@ function formatLastRun(timestamp: number): string {
   }
 
   &__btn-run {
-    background: rgba($brand-success, 0.15) !important;
-    color: $brand-success !important;
-    border: 1px solid rgba($brand-success, 0.3) !important;
+    background: rgba($color-success, 0.15) !important;
+    color: $color-success !important;
+    border: 1px solid rgba($color-success, 0.3) !important;
 
     &:hover {
-      background: rgba($brand-success, 0.25) !important;
+      background: rgba($color-success, 0.25) !important;
     }
   }
 
@@ -426,7 +426,7 @@ function formatLastRun(timestamp: number): string {
     justify-content: center;
     gap: $spacing-3;
     padding: $spacing-8 $spacing-4;
-    color: var(--b3-theme-secondary, $brand-mid-gray);
+    color: var(--b3-theme-secondary, $color-muted);
     text-align: center;
   }
 }

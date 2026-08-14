@@ -8,7 +8,7 @@
   gap: m.$gap-xs; // 6px
   padding: $spacing-1 m.$spacing-2_5; // 4px 10px
   border: 1px solid transparent;
-  font-family: $font-body;
+  font-family: $font-zh;
   font-weight: $font-weight-medium;
   line-height: $line-height-normal;
   white-space: nowrap;
@@ -71,39 +71,39 @@
 
   // 变体样式
   &--default {
-    background: var(--b3-theme-surface-lighter, $brand-light-gray);
-    color: var(--b3-theme-on-surface, $brand-dark);
-    border-color: var(--b3-border-color, $brand-subtle-gray);
+    background: var(--b3-theme-surface-lighter, $color-surface);
+    color: var(--b3-theme-on-surface, $color-fg);
+    border-color: var(--b3-border-color, $color-border);
   }
 
   &--primary {
-    background: hsla(from var(--b3-theme-primary, $brand-orange) h s l / 0.1);
-    color: var(--b3-theme-primary, $brand-orange);
-    border-color: hsla(from var(--b3-theme-primary, $brand-orange) h s l / 0.2);
+    background: hsla(from var(--b3-theme-primary, $color-danger) h s l / 0.1);
+    color: var(--b3-theme-primary, $color-danger);
+    border-color: hsla(from var(--b3-theme-primary, $color-danger) h s l / 0.2);
   }
 
   &--success {
-    background: hsla(from var(--b3-theme-success, $brand-success) h s l / 0.1);
-    color: var(--b3-theme-success, $brand-success);
-    border-color: hsla(from var(--b3-theme-success, $brand-success) h s l / 0.2);
+    background: hsla(from var(--b3-theme-success, $color-success) h s l / 0.1);
+    color: var(--b3-theme-success, $color-success);
+    border-color: hsla(from var(--b3-theme-success, $color-success) h s l / 0.2);
   }
 
   &--warning {
-    background: hsla(from var(--b3-theme-warning, $brand-warning) h s l / 0.1);
-    color: var(--b3-theme-warning, $brand-warning);
-    border-color: hsla(from var(--b3-theme-warning, $brand-warning) h s l / 0.2);
+    background: hsla(from var(--b3-theme-warning, $color-warning) h s l / 0.1);
+    color: var(--b3-theme-warning, $color-warning);
+    border-color: hsla(from var(--b3-theme-warning, $color-warning) h s l / 0.2);
   }
 
   &--danger {
-    background: hsla(from var(--b3-theme-destructive, $brand-destructive) h s l / 0.1);
-    color: var(--b3-theme-destructive, $brand-destructive);
-    border-color: hsla(from var(--b3-theme-destructive, $brand-destructive) h s l / 0.2);
+    background: hsla(from var(--b3-theme-destructive, $color-danger) h s l / 0.1);
+    color: var(--b3-theme-destructive, $color-danger);
+    border-color: hsla(from var(--b3-theme-destructive, $color-danger) h s l / 0.2);
   }
 
   &--info {
-    background: hsla(from var(--b3-theme-info, $brand-info) h s l / 0.1);
-    color: var(--b3-theme-info, $brand-info);
-    border-color: hsla(from var(--b3-theme-info, $brand-info) h s l / 0.2);
+    background: hsla(from var(--b3-theme-info, $color-info) h s l / 0.1);
+    color: var(--b3-theme-info, $color-info);
+    border-color: hsla(from var(--b3-theme-info, $color-info) h s l / 0.2);
   }
 
   // 自定义颜色

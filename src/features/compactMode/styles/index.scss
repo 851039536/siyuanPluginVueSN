@@ -7,7 +7,7 @@
 //   - 5 个区域子类控制各区域独立开关
 //   - 全部通过 Sass 编译期乘法计算，无 calc()/var()
 
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 
 // ========== 间距密度（仅控制 padding/gap 等） ==========
 $density-spacings: (

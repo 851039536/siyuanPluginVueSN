@@ -1,5 +1,5 @@
 // gitPush 代码统计报告：团队总览 KPI 卡片
-@use "./variables" as *;
+@use "@/variables.scss" as *;
 @use "./mixins" as *;
 
 // KPI 卡片网格（自适应列数：窄 Dock 自动折行）

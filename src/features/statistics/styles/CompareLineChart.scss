@@ -1,5 +1,5 @@
 // 期间对比双折线图样式：A 灰线 / B 主色线 + 数据点 + 稀疏 X 轴标签 + 图例
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 @use "../styles/index.scss" as stats;
 
 .cmp-line-chart {

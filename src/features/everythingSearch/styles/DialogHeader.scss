@@ -3,7 +3,7 @@
  * 橙色品牌色标题 + 边框关闭按钮
  */
 
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 @use "./mixins" as m;
 
 .vp-header {
@@ -21,14 +21,14 @@
 
   &__icon {
     font-size: $font-size-sm;
-    color: $brand-orange;
+    color: $color-danger;
   }
 
   &__text {
     font-size: $font-size-sm;
     font-weight: $font-weight-semibold;
-    font-family: $font-heading;
-    color: $brand-orange;
+    font-family: $font-zh;
+    color: $color-danger;
   }
 }
 

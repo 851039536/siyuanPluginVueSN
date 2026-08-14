@@ -3,7 +3,7 @@
  * 橙色标签 + 提示信息 + 重试按钮
  */
 
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 @use "./mixins" as m;
 
 .vp-warning {
@@ -13,14 +13,14 @@
   align-items: center;
   gap: 10px;
   border-bottom-color: var(--b3-theme-primary);
-  font-family: $font-body;
+  font-family: $font-zh;
 
   &__tag {
     font-size: $font-size-xs;
     font-weight: $font-weight-semibold;
-    color: $brand-orange;
+    color: $color-danger;
     padding: 2px 6px;
-    border: 1px solid rgba($brand-orange, 0.3);
+    border: 1px solid rgba($color-danger, 0.3);
     border-radius: $radius-sm;
     flex-shrink: 0;
   }
@@ -37,16 +37,16 @@
     align-items: center;
     padding: 3px 10px;
     font-size: $font-size-xs;
-    color: $brand-orange;
+    color: $color-danger;
     background: transparent;
-    border: 1px solid rgba($brand-orange, 0.35);
+    border: 1px solid rgba($color-danger, 0.35);
     border-radius: $radius-sm;
     cursor: pointer;
     flex-shrink: 0;
 
     &:hover {
-      background: rgba($brand-orange, 0.08);
-      border-color: $brand-orange;
+      background: rgba($color-danger, 0.08);
+      border-color: $color-danger;
     }
   }
 }

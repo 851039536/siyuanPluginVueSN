@@ -1,5 +1,5 @@
 // 笔记本字数占比饼图组件样式：SVG 环形图 + 图例
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 @use "../styles/index.scss" as stats;
 
 .notebook-word-pie {
@@ -37,7 +37,7 @@
 }
 
 .pie-center-name {
-  font-family: $font-body;
+  font-family: $font-zh;
   font-size: $font-size-2xs;
   font-weight: $font-weight-semibold;
   fill: var(--b3-theme-on-surface);

@@ -51,11 +51,11 @@
       color: var(--b3-theme-on-surface);
 
       &.success {
-        color: hsl($success-base);
+        color: $color-success;
       }
 
       &.error {
-        color: hsl($destructive-light);
+        color: $color-danger-bright;
       }
     }
   }

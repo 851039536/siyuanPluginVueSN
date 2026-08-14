@@ -1,5 +1,5 @@
 // 提交分析显示设置菜单样式：齿轮按钮 + 下拉面板（视图分段切换 / 范围与周起始选择 / 颜色输入）
-@use "./variables" as *;
+@use "@/variables.scss" as *;
 @use "./mixins" as *;
 
 // 定位锚点（齿轮按钮）

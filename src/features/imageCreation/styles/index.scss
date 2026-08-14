@@ -3,7 +3,7 @@
 // 基准字号：弹窗遮罩显式设置 $font-size-xs，防止继承思源全局默认字号
 // ============================================================
 
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 @use "./transitions";
 
 .image-creation-overlay {

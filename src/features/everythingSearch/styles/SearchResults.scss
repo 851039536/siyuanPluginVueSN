@@ -3,7 +3,7 @@
  * 5 种状态：loading/error/idle/empty/success
  */
 
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 
 .vp-results {
   flex: 1;
@@ -31,7 +31,7 @@
 
   &__count {
     font-size: $font-size-xs;
-    font-family: $font-body;
+    font-family: $font-zh;
     color: var(--b3-theme-on-surface);
     opacity: 0.5;
   }
@@ -49,11 +49,11 @@
     }
 
     &::-webkit-scrollbar-thumb {
-      background: $brand-light-gray;
+      background: $color-surface;
       border-radius: 3px;
 
       &:hover {
-        background: $brand-mid-gray;
+        background: $color-muted;
       }
     }
   }
@@ -75,7 +75,7 @@
 
   &__msg {
     font-size: $font-size-xs;
-    font-family: $font-body;
+    font-family: $font-zh;
     color: var(--b3-theme-on-surface);
     opacity: 0.5;
   }

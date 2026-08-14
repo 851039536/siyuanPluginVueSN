@@ -2,7 +2,7 @@
 // 由 index.scss 及各组件 SCSS 共同引用
 
 @use "sass:color";
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 
 $modal-z-index: 1000;
 $modal-small-max-width: 500px;

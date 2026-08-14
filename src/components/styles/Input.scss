@@ -6,20 +6,20 @@
   display: inline-flex;
   flex-direction: column;
   position: relative;
-  font-family: $font-body;
+  font-family: $font-zh;
   width: 100%;
 
   &__wrapper {
     display: flex;
     align-items: center;
     position: relative;
-    background: var(--b3-theme-background, $brand-light);
-    border: 1px solid var(--b3-border-color, $brand-subtle-gray);
+    background: var(--b3-theme-background, $color-bg);
+    border: 1px solid var(--b3-border-color, $color-border);
     border-radius: $vp-radius;
     outline: none;
 
     &:hover:not(.si-input--disabled .si-input__wrapper) {
-      border-color: var(--b3-theme-secondary, $brand-blue);
+      border-color: var(--b3-theme-secondary, $color-info);
     }
 
     // Codex 边框优先策略 — 替代原 box-shadow: 0 0 0 3px
@@ -28,10 +28,10 @@
     }
 
     &--error {
-      border-color: var(--b3-theme-error, $brand-orange) !important;
+      border-color: var(--b3-theme-error, $color-danger) !important;
 
       &:focus-within {
-        border-color: var(--b3-theme-error, $brand-orange);
+        border-color: var(--b3-theme-error, $color-danger);
       }
     }
   }
@@ -42,13 +42,13 @@
     border: none;
     outline: none;
     background: transparent;
-    font-family: $font-body;
+    font-family: $font-zh;
     font-size: $font-size-sm;
-    color: var(--b3-theme-on-background, $brand-dark);
+    color: var(--b3-theme-on-background, $color-fg);
     padding: $spacing-2 $spacing-3;
 
     &::placeholder {
-      color: var(--b3-theme-secondary, $brand-mid-gray);
+      color: var(--b3-theme-secondary, $color-muted);
     }
 
     &:disabled {
@@ -84,11 +84,11 @@
       }
 
       &::-webkit-scrollbar-thumb {
-        background: var(--b3-theme-surface-light, $brand-light-gray);
+        background: var(--b3-theme-surface-light, $color-surface);
         border-radius: $radius-sm;
 
         &:hover {
-          background: var(--b3-theme-secondary, $brand-mid-gray);
+          background: var(--b3-theme-secondary, $color-muted);
         }
       }
     }
@@ -96,7 +96,7 @@
 
   &__icon {
     flex-shrink: 0;
-    color: var(--b3-theme-secondary, $brand-mid-gray);
+    color: var(--b3-theme-secondary, $color-muted);
 
     &--prefix {
       margin-left: $spacing-3;
@@ -114,13 +114,13 @@
     justify-content: center;
     padding: $spacing-1;
     margin-right: $spacing-2;
-    color: var(--b3-theme-secondary, $brand-mid-gray);
+    color: var(--b3-theme-secondary, $color-muted);
     cursor: pointer;
     border-radius: $radius-sm;
 
     &:hover {
-      color: var(--b3-theme-on-background, $brand-dark);
-      background: var(--b3-theme-surface-lighter, $brand-light-gray);
+      color: var(--b3-theme-on-background, $color-fg);
+      background: var(--b3-theme-surface-lighter, $color-surface);
     }
   }
 
@@ -142,8 +142,8 @@
       height: 2px;
       background: repeating-linear-gradient(
         to right,
-        var(--b3-theme-secondary, $brand-mid-gray) 0px,
-        var(--b3-theme-secondary, $brand-mid-gray) 2px,
+        var(--b3-theme-secondary, $color-muted) 0px,
+        var(--b3-theme-secondary, $color-muted) 2px,
         transparent 2px,
         transparent 4px
       );
@@ -158,8 +158,8 @@
       height: 2px;
       background: repeating-linear-gradient(
         to right,
-        var(--b3-theme-secondary, $brand-mid-gray) 0px,
-        var(--b3-theme-secondary, $brand-mid-gray) 2px,
+        var(--b3-theme-secondary, $color-muted) 0px,
+        var(--b3-theme-secondary, $color-muted) 2px,
         transparent 2px,
         transparent 4px
       );
@@ -169,8 +169,8 @@
     &:hover::after {
       background: repeating-linear-gradient(
         to right,
-        var(--b3-theme-primary, $brand-orange) 0px,
-        var(--b3-theme-primary, $brand-orange) 2px,
+        var(--b3-theme-primary, $color-danger) 0px,
+        var(--b3-theme-primary, $color-danger) 2px,
         transparent 2px,
         transparent 4px
       );
@@ -182,7 +182,7 @@
 
     &:active::before,
     &:active::after {
-      background: var(--b3-theme-primary, $brand-orange);
+      background: var(--b3-theme-primary, $color-danger);
     }
   }
 
@@ -283,20 +283,20 @@
 
   &--disabled {
     .si-input__wrapper {
-      background: var(--b3-theme-surface, $brand-light-gray);
+      background: var(--b3-theme-surface, $color-surface);
       cursor: not-allowed;
     }
   }
 
   &--readonly {
     .si-input__wrapper {
-      background: var(--b3-theme-surface-lighter, $brand-light-gray);
+      background: var(--b3-theme-surface-lighter, $color-surface);
     }
   }
 
   &--error {
     .si-input__wrapper {
-      border-color: var(--b3-theme-error, $brand-orange);
+      border-color: var(--b3-theme-error, $color-danger);
     }
   }
 }

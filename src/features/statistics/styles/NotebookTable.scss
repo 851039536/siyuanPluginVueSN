@@ -1,5 +1,5 @@
 // 笔记本详情表格样式：可排序表格（表头/行高亮/占比进度条）
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 @use "../styles/index.scss" as stats;
 
 .notebook-table-wrap {

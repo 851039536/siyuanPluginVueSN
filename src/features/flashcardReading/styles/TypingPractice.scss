@@ -192,15 +192,15 @@ $fc-pad-nav: 14px; // 14px 水平内边距（无匹配全局Token）
         transition: background-color $fc-transition, border-color $fc-transition, color $fc-transition;
 
         &--correct {
-          background: rgba($brand-success, 0.12);
-          border-color: $brand-success;
-          color: $brand-success;
+          background: rgba($color-success, 0.12);
+          border-color: $color-success;
+          color: $color-success;
         }
 
         &--incorrect {
-          background: rgba($brand-destructive, 0.08);
-          border-color: $brand-destructive;
-          color: $brand-destructive;
+          background: rgba($color-danger, 0.08);
+          border-color: $color-danger;
+          color: $color-danger;
         }
       }
     }
@@ -249,22 +249,22 @@ $fc-pad-nav: 14px; // 14px 水平内边距（无匹配全局Token）
       border: 1px solid transparent;
 
       &--correct {
-        color: $brand-success;
-        background: rgba($brand-success, 0.08);
-        border-color: rgba($brand-success, 0.3);
+        color: $color-success;
+        background: rgba($color-success, 0.08);
+        border-color: rgba($color-success, 0.3);
       }
 
       &--incorrect {
-        color: $brand-destructive;
-        background: rgba($brand-destructive, 0.08);
-        border-color: rgba($brand-destructive, 0.3);
+        color: $color-danger;
+        background: rgba($color-danger, 0.08);
+        border-color: rgba($color-danger, 0.3);
       }
     }
 
     .typing-streak {
       font-size: $font-size-xs;
       font-weight: $font-weight-bold;
-      color: $brand-accent;
+      color: $color-accent;
       font-family: $vp-mono;
       animation: streak-pulse 0.4s ease;
 

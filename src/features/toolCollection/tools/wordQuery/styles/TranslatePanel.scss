@@ -33,13 +33,13 @@
     gap: $spacing-2;
     margin-bottom: $spacing-2;
     padding-bottom: $spacing-2;
-    border-bottom: 1px solid var(--b3-border-color, $brand-subtle-gray);
+    border-bottom: 1px solid var(--b3-border-color, $color-border);
     flex-shrink: 0;
 
     .section-title {
       font-weight: $font-weight-semibold;
       font-size: $font-size-sm;
-      color: var(--b3-theme-on-background, $brand-dark);
+      color: var(--b3-theme-on-background, $color-fg);
     }
 
     .language-select {
@@ -55,14 +55,14 @@
   .translate-result {
     flex: 1;
     padding: $spacing-3;
-    background: var(--b3-theme-background, $brand-light);
-    border: 1px solid var(--b3-border-color, $brand-subtle-gray);
+    background: var(--b3-theme-background, $color-bg);
+    border: 1px solid var(--b3-border-color, $color-border);
     border-radius: $vp-radius;
     overflow-y: auto;
     min-height: 160px;
     font-size: $font-size-sm;
     line-height: $line-height-normal;
-    color: var(--b3-theme-on-background, $brand-dark);
+    color: var(--b3-theme-on-background, $color-fg);
     white-space: pre-wrap;
     overflow-wrap: break-word;
   }
@@ -74,7 +74,7 @@
     align-items: center;
     justify-content: center;
     gap: $spacing-3;
-    color: var(--b3-theme-secondary, $brand-mid-gray);
+    color: var(--b3-theme-secondary, $color-muted);
     min-height: 160px;
 
     .empty-icon {

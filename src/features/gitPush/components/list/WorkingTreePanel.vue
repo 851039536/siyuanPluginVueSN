@@ -397,7 +397,7 @@ defineExpose({ clear: () => { commitMessage.value = ""; commitType.value = "chor
 
 <style lang="scss">
 @use "@/index.scss" as *;
-@use "../../styles/variables" as *;
+@use "@/variables.scss" as *;
 @use "../../styles/mixins" as *;
 @use "../../styles/WorkingTreePanel.scss";
 </style>

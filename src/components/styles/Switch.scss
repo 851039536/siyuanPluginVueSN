@@ -10,12 +10,12 @@
   background: transparent;
   cursor: pointer;
   padding: 0;
-  font-family: $font-body;
+  font-family: $font-zh;
   user-select: none;
   vertical-align: middle;
 
   &:focus-visible {
-    outline: 2px solid var(--b3-theme-primary, $brand-orange);
+    outline: 2px solid var(--b3-theme-primary, $color-danger);
     outline-offset: 2px;
   }
 
@@ -62,7 +62,7 @@
 
     // 选中状态
     .si-switch--checked & {
-      background: var(--b3-theme-primary, $brand-orange);
+      background: var(--b3-theme-primary, $color-danger);
     }
   }
 
@@ -71,7 +71,7 @@
     position: absolute;
     top: 2px; // 2px 无对应 Token，保留
     left: 2px;
-    background: var(--b3-theme-on-primary, $brand-light);
+    background: var(--b3-theme-on-primary, $color-bg);
     border-radius: $radius-full;
     // 滑块投影 — 保留为设计需要（thumb 视觉层级）
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
@@ -127,28 +127,28 @@
       width: 10px; // 无对应 Token
       height: 10px;
       border: 2px solid rgba(255, 255, 255, 0.3);
-      border-top-color: var(--b3-theme-on-primary, $brand-light);
+      border-top-color: var(--b3-theme-on-primary, $color-bg);
     }
 
     .si-switch--small & {
       width: $spacing-4; // 16px
       height: $spacing-4;
       border: 2px solid rgba(255, 255, 255, 0.3);
-      border-top-color: var(--b3-theme-on-primary, $brand-light);
+      border-top-color: var(--b3-theme-on-primary, $color-bg);
     }
 
     .si-switch--medium & {
       width: $spacing-5; // 20px
       height: $spacing-5;
       border: 2px solid rgba(255, 255, 255, 0.3);
-      border-top-color: var(--b3-theme-on-primary, $brand-light);
+      border-top-color: var(--b3-theme-on-primary, $color-bg);
     }
 
     .si-switch--large & {
       width: $spacing-6; // 24px
       height: $spacing-6;
       border: 2px solid rgba(255, 255, 255, 0.3);
-      border-top-color: var(--b3-theme-on-primary, $brand-light);
+      border-top-color: var(--b3-theme-on-primary, $color-bg);
     }
 
     .si-switch--checked & {
@@ -159,7 +159,7 @@
   // 标签
   &__label {
     font-size: $font-size-sm;
-    color: var(--b3-theme-on-background, $brand-dark);
+    color: var(--b3-theme-on-background, $color-fg);
     line-height: $line-height-normal;
   }
 }

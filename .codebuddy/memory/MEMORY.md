@@ -15,7 +15,8 @@
 - 文件头注释：每个 .ts/.vue 顶部必须有功能说明（10~30字）
 - 模块内代码分层：共享常量→types/index.ts，纯工具函数→utils.ts，禁止复制粘贴
 - 禁止 emoji 图标，使用 Iconify 图标
-- 禁止硬编码 font-size/font-weight/line-height，使用设计 Token
+- 禁止硬编码 font-size/font-weight/line-height/颜色，使用设计 Token
+- 颜色 Token 统一用 `$color-*` 语义色（`$color-fg/bg/muted/surface/border/primary/secondary/accent/danger/danger-bright/success/warning/info`）；旧 `$brand-*` 系列已于 2026-08 全部迁移删除，禁止使用
 
 ## 重构模式（已验证可复用）
 - **巨型文件拆分**：Manager 类独立文件 + composable 按领域拆分 + 子组件提取

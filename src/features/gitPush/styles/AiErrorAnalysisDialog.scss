@@ -1,4 +1,4 @@
-@use "./variables" as *;
+@use "@/variables.scss" as *;
 @use "./mixins" as *;
 
 // ── AI 错误分析弹窗（Teleport 到 body，样式全局生效） ──

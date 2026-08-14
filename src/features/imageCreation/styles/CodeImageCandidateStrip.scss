@@ -2,7 +2,7 @@
 // 代码图片灵感模式候选条专属样式
 // ============================================================
 
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 
 .code-candidate-strip {
   display: flex;

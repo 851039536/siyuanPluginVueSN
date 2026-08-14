@@ -52,6 +52,18 @@ export interface DepthStats {
 export type SortField = "wordCount" | "title" | "notebook" | "updated" | "depth" | "refCount" | "imageCount" | "bookmark"
 export type SortOrder = "asc" | "desc"
 
+/** 排序字段下拉选项（value 与 SortField 联合类型编译期绑定，避免模板 option 硬编码脱节） */
+export const SORT_FIELD_OPTIONS: { value: SortField, label: string }[] = [
+  { value: "wordCount", label: "按字数" },
+  { value: "title", label: "按标题" },
+  { value: "notebook", label: "按笔记本" },
+  { value: "updated", label: "按更新时间" },
+  { value: "depth", label: "按深度" },
+  { value: "refCount", label: "按引用数" },
+  { value: "imageCount", label: "按图片数" },
+  { value: "bookmark", label: "按书签" },
+]
+
 /** 查询状态 */
 export type QueryStatus = "idle" | "loading" | "success" | "error" | "empty"
 

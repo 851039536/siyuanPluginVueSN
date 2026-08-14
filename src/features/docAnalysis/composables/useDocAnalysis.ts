@@ -165,6 +165,14 @@ export function useDocAnalysis(plugin: Plugin) {
     queryState.status = "empty"
   }
 
+  /** 统一重置查询视图：清空结果、清除错误并回到 idle 状态，供各过滤/重置入口复用 */
+  function resetQueryState() {
+    setResults([])
+    queryState.hasQueried = false
+    queryState.status = "idle"
+    queryState.errorMessage = ""
+  }
+
   const filterOptions = reactive<FilterOptions>({ ...DEFAULT_FILTER_OPTIONS })
 
   async function loadPlatformMeta(): Promise<PlatformMeta[]> {
@@ -341,7 +349,8 @@ export function useDocAnalysis(plugin: Plugin) {
       const nc = buildNotebookCondition()
       Object.assign(docStats, makeDefaultDocStats())
 
-      const [sizeRows, dupRows, _t, _d, _bm, platformResult, qualityResult, scanResult, _wc] = await Promise.all([
+      // 索引 2/3/4/8 为 analyzeUpdateTime/analyzeDepth/analyzeBookmarks/analyzeWordCount（仅副作用写 docStats，返回值忽略）
+      const [sizeRows, dupRows, , , , platformResult, qualityResult, scanResult] = await Promise.all([
         sql(`
           SELECT
             COUNT(*) as total,
@@ -446,9 +455,7 @@ export function useDocAnalysis(plugin: Plugin) {
   async function queryByStatsCategory(category: string) {
     if (statsFilter.value === category) {
       statsFilter.value = ""
-      queryState.hasQueried = false
-      setResults([])
-      queryState.status = "idle"
+      resetQueryState()
       return
     }
     statsFilter.value = category
@@ -629,7 +636,7 @@ export function useDocAnalysis(plugin: Plugin) {
     duplicateGroups, duplicateNameFilter,
     loadNotebooks, loadSavedOptions, loadDuplicateNameFilter, queryDocs, analyzeDocStats,
     queryByStatsCategory, fetchBookmarkDetails, queryByBookmark, queryByMissingPlatform,
-    openDoc, updateSort, clearResults,
+    openDoc, updateSort, clearResults, resetQueryState,
     loadPlatformMeta, savePlatformMeta, platformUnpublishedCounts,
   }
 }

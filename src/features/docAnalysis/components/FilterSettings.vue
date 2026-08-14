@@ -51,7 +51,6 @@
           class="filter-input wordcount-input"
           min="0"
           placeholder="字数"
-          @change="handleChange"
           @keyup.enter="$emit('query')"
         />
         <span class="filter-separator">~</span>
@@ -61,14 +60,12 @@
           class="filter-input wordcount-input"
           min="0"
           placeholder="上限"
-          @change="handleChange"
           @keyup.enter="$emit('query')"
         />
       </div>
       <select
         v-model="options.notebookId"
         class="filter-select notebook-select"
-        @change="handleChange"
       >
         <option value="">
           全部笔记本
@@ -113,7 +110,6 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<{
   (e: "query"): void
-  (e: "optionsUpdate", options: FilterOptions): void
   (e: "reset"): void
 }>()
 
@@ -139,13 +135,8 @@ const hasAnyFilter = computed(() => {
   )
 })
 
-function handleChange() {
-  emit("optionsUpdate", { ...props.options })
-}
-
 /** 标题/全文输入防抖查询 */
 function handleDebouncedInput() {
-  handleChange()
   if (debounceTimer) clearTimeout(debounceTimer)
   debounceTimer = setTimeout(() => {
     emit("query")

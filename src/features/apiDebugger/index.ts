@@ -1,3 +1,4 @@
+// API 调试器功能注册入口 — 创建 Dock 面板并注入 i18n
 import type { Plugin } from "siyuan"
 
 import { createVueDockApp } from "@/utils/vueAppHelper"

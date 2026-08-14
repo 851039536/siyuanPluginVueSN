@@ -9,6 +9,7 @@
     "removeFavorite": "取消收藏",
     "favoriteAdded": "已添加收藏",
     "favoriteRemoved": "已取消收藏",
+    "favoriteSaveFailed": "收藏夹保存失败",
     "openFolder": "打开文件夹",
     "loadDisksFailed": "获取磁盘列表失败",
     "diskOpened": "已打开磁盘",
@@ -41,6 +42,12 @@
     "navigationFailed": "导航失败",
     "name": "名称",
     "size": "大小",
-    "date": "修改日期"
+    "date": "修改日期",
+    "totalSpace": "总空间",
+    "usedSpace": "已用",
+    "freeSpace": "可用",
+    "disks": "磁盘",
+    "clickToBrowse": "点击磁盘浏览文件",
+    "noFavorites": "暂无收藏，浏览文件夹时点击星标即可添加"
   }
 }

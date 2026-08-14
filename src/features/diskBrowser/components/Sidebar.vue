@@ -7,14 +7,14 @@
         :size="16"
         color="var(--b3-theme-primary)"
       />
-      <span class="db-sidebar-title">{{ i18n.panelTitle || '磁盘浏览器' }}</span>
+      <span class="db-sidebar-title">{{ i18n.panelTitle }}</span>
       <Button
         variant="ghost"
         size="xsmall"
         icon="refresh"
         :icon-size="12"
         :loading="loading"
-        :title="i18n.refreshing || '刷新'"
+        :title="i18n.refreshing"
         class="db-sidebar-refresh"
         @click="$emit('refreshAll')"
       />
@@ -66,7 +66,7 @@
           :size="12"
           color="#f97316"
         />
-        <span>{{ i18n.favorites || '收藏夹' }}</span>
+        <span>{{ i18n.favorites }}</span>
         <Badge
           v-if="favoriteFolders.length > 0"
           :content="favoriteFolders.length"
@@ -97,7 +97,7 @@
             icon="close"
             :icon-size="10"
             class="db-fav-remove"
-            :title="i18n.removeFavorite || '取消收藏'"
+            :title="i18n.removeFavorite"
             @click.stop="$emit('removeFavorite', path)"
           />
         </div>
@@ -106,7 +106,7 @@
         v-else
         class="db-fav-empty"
       >
-        {{ i18n.noFavorites || '暂无收藏' }}
+        {{ i18n.noFavorites }}
       </div>
     </div>
 

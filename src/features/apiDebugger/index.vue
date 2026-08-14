@@ -1,14 +1,15 @@
+<!-- API 调试器 Dock 面板根组件 — 预设端点、请求发送、响应与历史 -->
 <template>
   <div class="api-debugger">
     <!-- Endpoint Selection -->
     <div class="api-debugger__section">
       <div class="api-debugger__section-title">
-        {{ i18n.endpoint || '接口端点' }}
+        {{ i18n.endpoint }}
       </div>
       <Select
-        :model-value="endpointSelectValue"
+        :model-value="path"
         :options="endpointGroups"
-        :placeholder="i18n.endpointPlaceholder || '选择预设接口'"
+        :placeholder="i18n.endpointPlaceholder"
         filterable
         size="xsmall"
         :max-height="420"
@@ -30,7 +31,7 @@
         <div class="api-debugger__path-input">
           <Input
             v-model="path"
-            :placeholder="i18n.pathPlaceholder || '/api/system/version'"
+            :placeholder="i18n.pathPlaceholder"
             size="xsmall"
           />
         </div>
@@ -40,7 +41,7 @@
     <!-- Custom Headers -->
     <div class="api-debugger__section">
       <div class="api-debugger__section-title">
-        {{ i18n.customHeaders || '自定义请求头' }}
+        {{ i18n.customHeaders }}
       </div>
       <div
         v-for="(header, index) in customHeaders"
@@ -50,14 +51,14 @@
         <div class="api-debugger__header-input">
           <Input
             v-model="header.key"
-            :placeholder="i18n.headerKey || '键名'"
+            :placeholder="i18n.headerKey"
             size="xsmall"
           />
         </div>
         <div class="api-debugger__header-input">
           <Input
             v-model="header.value"
-            :placeholder="i18n.headerValue || '值'"
+            :placeholder="i18n.headerValue"
             size="xsmall"
           />
         </div>
@@ -76,19 +77,19 @@
         icon="plus"
         @click="addHeader"
       >
-        {{ i18n.addHeader || '添加请求头' }}
+        {{ i18n.addHeader }}
       </Button>
     </div>
 
     <!-- Request Body -->
     <div class="api-debugger__section">
       <div class="api-debugger__section-title">
-        {{ i18n.requestBody || '请求体' }}
+        {{ i18n.requestBody }}
       </div>
       <Input
         v-model="requestBody"
         type="textarea"
-        :placeholder="i18n.requestBodyPlaceholder || '输入JSON格式的请求体...'"
+        :placeholder="i18n.requestBodyPlaceholder"
         :rows="6"
         size="xsmall"
         resize="vertical"
@@ -104,7 +105,7 @@
         :loading="loading"
         @click="sendRequest"
       >
-        {{ loading ? (i18n.loading || '请求中...') : (i18n.send || '发送请求') }}
+        {{ loading ? i18n.loading : i18n.send }}
       </Button>
       <Button
         variant="ghost"
@@ -112,7 +113,7 @@
         icon="eraser"
         @click="clearRequest"
       >
-        {{ i18n.clear || '清空' }}
+        {{ i18n.clear }}
       </Button>
     </div>
 
@@ -123,14 +124,14 @@
         :class="{ 'api-debugger__tab--active': activeTab === 'response' }"
         @click="activeTab = 'response'"
       >
-        {{ i18n.response || '响应结果' }}
+        {{ i18n.response }}
       </button>
       <button
         class="api-debugger__tab"
         :class="{ 'api-debugger__tab--active': activeTab === 'history' }"
         @click="activeTab = 'history'"
       >
-        {{ i18n.history || '请求历史' }}
+        {{ i18n.history }}
         <span v-if="history.length">({{ history.length }})</span>
       </button>
     </div>
@@ -154,16 +155,16 @@
             {{ statusCode }}
           </span>
           <span class="api-debugger__response-time">
-            {{ responseTime }}{{ i18n.ms || 'ms' }}
+            {{ responseTime }}{{ i18n.ms }}
           </span>
-          <div style="flex: 1;" />
+          <div class="api-debugger__response-spacer" />
           <Button
             variant="ghost"
             size="xsmall"
             icon="copy"
             @click="handleCopyResponse"
           >
-            {{ i18n.copyResponse || '复制' }}
+            {{ i18n.copyResponse }}
           </Button>
         </div>
         <div class="api-debugger__response-body">
@@ -172,7 +173,7 @@
       </template>
       <template v-else>
         <div class="api-debugger__empty">
-          {{ i18n.noEndpoint || '发送请求后在此查看响应结果' }}
+          {{ i18n.noEndpoint }}
         </div>
       </template>
     </div>
@@ -184,7 +185,7 @@
     >
       <div
         v-if="history.length > 0"
-        style="display: flex; justify-content: flex-end; margin-bottom: 4px;"
+        class="api-debugger__history-actions"
       >
         <Button
           variant="ghost"
@@ -192,7 +193,7 @@
           icon="delete"
           @click="clearHistory"
         >
-          {{ i18n.clearHistory || '清空历史' }}
+          {{ i18n.clearHistory }}
         </Button>
       </div>
       <div
@@ -232,7 +233,7 @@
         v-else
         class="api-debugger__empty"
       >
-        {{ i18n.noHistory || '暂无请求历史' }}
+        {{ i18n.noHistory }}
       </div>
     </div>
   </div>
@@ -252,7 +253,10 @@ import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
 import { copyToClipboard } from "@/utils/domUtils"
 import { useApiDebugger } from "./composables/useApiDebugger"
-import { API_ENDPOINT_PRESETS } from "./types"
+import {
+  API_ENDPOINT_PRESETS,
+  HTTP_METHODS,
+} from "./types"
 
 interface Props {
   i18n: Record<string, any>
@@ -283,24 +287,14 @@ const {
   syntaxHighlight,
 } = useApiDebugger(props.plugin)
 
-const methodOptions: SelectOption[] = [
-  {
-    value: "POST",
-    label: "POST",
-  },
-  {
-    value: "GET",
-    label: "GET",
-  },
-  {
-    value: "PUT",
-    label: "PUT",
-  },
-  {
-    value: "DELETE",
-    label: "DELETE",
-  },
-]
+const methodOptions: SelectOption[] = HTTP_METHODS.map((value) => ({
+  value,
+  label: value,
+}))
+
+const endpointPresetMap = new Map(
+  API_ENDPOINT_PRESETS.map((preset) => [preset.path, preset]),
+)
 
 const endpointGroups = computed<SelectGroupOption[]>(() => {
   const groups = new Map<string, ApiEndpointPreset[]>()
@@ -311,7 +305,7 @@ const endpointGroups = computed<SelectGroupOption[]>(() => {
   }
   return Array.from(groups.entries()).map(([, options]) => ({
     isGroup: true as const,
-    label: props.i18n.categories?.[options[0].category] || options[0].category,
+    label: props.i18n.categories[options[0].category],
     options: options.map((p) => ({
       value: p.path,
       label: p.label,
@@ -319,10 +313,8 @@ const endpointGroups = computed<SelectGroupOption[]>(() => {
   }))
 })
 
-const endpointSelectValue = computed(() => path.value)
-
 function handleEndpointChange(val: string | number | boolean | null): void {
-  const preset = API_ENDPOINT_PRESETS.find((p) => p.path === val)
+  const preset = typeof val === "string" ? endpointPresetMap.get(val) : undefined
   if (preset) {
     selectEndpoint(preset)
   }
@@ -337,8 +329,8 @@ async function handleCopyResponse(): Promise<void> {
   const ok = await copyToClipboard(responseBody.value)
   showMessage(
     ok
-      ? (props.i18n.responseCopied || "响应已复制")
-      : (props.i18n.copyFailed || "复制失败"),
+      ? props.i18n.responseCopied
+      : props.i18n.copyFailed,
     ok ? 2000 : 3000,
     ok ? "info" : "error",
   )

@@ -1,3 +1,4 @@
+// API 调试器核心逻辑 composable — 请求发送、历史记录、JSON 语法高亮
 import type { Plugin } from "siyuan"
 import type {
   Ref,
@@ -21,7 +22,6 @@ import {
   getErrorMessage,
 } from "@/utils/stringUtils"
 import { isValidHttpMethod } from "../types"
-
 import { ApiDebuggerStorage } from "../types/storage"
 
 const INITIAL_STATE = {
@@ -65,7 +65,6 @@ export function useApiDebugger(plugin: Plugin): {
   const customHeaders = ref<CustomHeader[]>([])
   const loading = ref(false)
   const activeTab = ref<"response" | "history">("response")
-  const selectedEndpoint = ref<ApiEndpointPreset | null>(null)
   const statusCode = ref(INITIAL_STATE.statusCode)
   const responseBody = ref(INITIAL_STATE.responseBody)
   const responseTime = ref(INITIAL_STATE.responseTime)
@@ -85,7 +84,6 @@ export function useApiDebugger(plugin: Plugin): {
   })
 
   function selectEndpoint(preset: ApiEndpointPreset): void {
-    selectedEndpoint.value = preset
     path.value = preset.path
     requestBody.value = preset.defaultBody
   }
@@ -110,7 +108,6 @@ export function useApiDebugger(plugin: Plugin): {
     responseTime.value = INITIAL_STATE.responseTime
     errorMessage.value = INITIAL_STATE.errorMessage
     customHeaders.value = []
-    selectedEndpoint.value = null
   }
 
   function createRecord(
@@ -191,10 +188,11 @@ export function useApiDebugger(plugin: Plugin): {
       activeTab.value = "response"
     } catch (err: unknown) {
       responseTime.value = Math.round(performance.now() - startTime)
-      errorMessage.value = getErrorMessage(err) || "请求失败"
+      const errMsg = getErrorMessage(err) || "请求失败"
+      errorMessage.value = errMsg
       statusCode.value = 0
 
-      history.value = await storage.addRecord(createRecord(false, 0, "", getErrorMessage(err)))
+      history.value = await storage.addRecord(createRecord(false, 0, "", errMsg))
       activeTab.value = "response"
     } finally {
       loading.value = false
@@ -220,20 +218,27 @@ export function useApiDebugger(plugin: Plugin): {
 
   function syntaxHighlight(json: string): string {
     if (!json) return ""
-    return json.replace(
-      /("(\\u[\da-fA-F]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
-      (match) => {
-        let cls = "json-number"
-        if (match.startsWith('"')) {
-          cls = match.endsWith(":") ? "json-key" : "json-string"
-        } else if (/true|false/.test(match)) {
-          cls = "json-boolean"
-        } else if (/null/.test(match)) {
-          cls = "json-null"
-        }
-        return `<span class="${cls}">${escapeHtml(match)}</span>`
-      },
-    )
+    const pattern = /("(\\u[\da-fA-F]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g
+    let result = ""
+    let lastIndex = 0
+
+    for (const match of json.matchAll(pattern)) {
+      const index = match.index ?? 0
+      result += escapeHtml(json.slice(lastIndex, index))
+      const token = match[0]
+      let cls = "json-number"
+      if (token.startsWith('"')) {
+        cls = token.endsWith(":") ? "json-key" : "json-string"
+      } else if (/true|false/.test(token)) {
+        cls = "json-boolean"
+      } else if (/null/.test(token)) {
+        cls = "json-null"
+      }
+      result += `<span class="${cls}">${escapeHtml(token)}</span>`
+      lastIndex = index + token.length
+    }
+
+    return result + escapeHtml(json.slice(lastIndex))
   }
 
   return {

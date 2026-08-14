@@ -38,6 +38,7 @@ export interface DiskBrowserI18n {
   addFavorite?: string
   favoriteRemoved?: string
   favoriteAdded?: string
+  favoriteSaveFailed?: string
   backToRoot?: string
   back?: string
   items?: string

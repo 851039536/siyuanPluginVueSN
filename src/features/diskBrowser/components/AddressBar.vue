@@ -9,13 +9,13 @@
         icon="back"
         :icon-size="14"
         class="db-back-btn"
-        :title="i18n.back || '返回上级'"
+        :title="i18n.back"
         @click="$emit('back')"
       />
       <div class="db-breadcrumb">
         <button
           class="db-crumb"
-          :title="i18n.backToRoot || '返回根目录'"
+          :title="i18n.backToRoot"
           @click="$emit('navigateRoot')"
         >
           <IconWrapper
@@ -50,7 +50,7 @@
         size="xsmall"
         icon="openInNew"
         :icon-size="13"
-        :title="i18n.openInExplorer || '在资源管理器中打开'"
+        :title="i18n.openInExplorer"
         @click="$emit('open', currentPath || expandedDisk)"
       />
       <Button
@@ -58,7 +58,7 @@
         size="xsmall"
         icon="contentCopy"
         :icon-size="13"
-        :title="i18n.copyPath || '复制路径'"
+        :title="i18n.copyPath"
         @click="$emit('copyPath', currentPath || expandedDisk)"
       />
       <Button
@@ -67,7 +67,7 @@
         icon="refresh"
         :icon-size="13"
         :loading="loadingFolders"
-        :title="i18n.refreshing || '刷新'"
+        :title="i18n.refreshing"
         @click="$emit('refresh')"
       />
     </div>

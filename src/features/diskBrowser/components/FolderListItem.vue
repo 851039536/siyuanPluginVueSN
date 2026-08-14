@@ -11,13 +11,16 @@
         :size="16"
         class="db-item-icon"
       />
-      <span class="db-item-label" :title="item.name">{{ item.name }}</span>
+      <span
+        class="db-item-label"
+        :title="item.name"
+      >{{ item.name }}</span>
     </div>
     <span class="db-item-size">{{
       item.isFile && item.size ? formatSize(item.size) : '\u2014'
     }}</span>
     <span class="db-item-date">{{
-      item.modifiedTime ? formatDate(item.modifiedTime) : ''
+      item.modifiedTime ? formatDate(item.modifiedTime) : '\u2014'
     }}</span>
     <div class="db-item-actions">
       <Button
@@ -64,7 +67,10 @@
 </template>
 
 <script setup lang="ts">
-import type { DiskBrowserI18n, FolderInfo } from "../types"
+import type {
+  DiskBrowserI18n,
+  FolderInfo,
+} from "../types"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { formatSize } from "../utils"

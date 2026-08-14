@@ -6,7 +6,10 @@ import type {
   DiskInfo,
   FolderInfo,
 } from "../types"
-import { getNodeModules, getNodeProcessModules } from "@/utils/nodeModules"
+import {
+  getNodeModules,
+  getNodeProcessModules,
+} from "@/utils/nodeModules"
 
 /** 读取本地磁盘信息（wmic 比 PowerShell 快 10x+） */
 export function getDiskInfo(): DiskInfo[] | null {
@@ -16,7 +19,10 @@ export function getDiskInfo(): DiskInfo[] | null {
   try {
     const stdout = node.child_process.execSync(
       "wmic logicaldisk get DeviceID,VolumeName,Size,FreeSpace /format:csv",
-      { timeout: 3000, encoding: "utf8" },
+      {
+        timeout: 3000,
+        encoding: "utf8",
+      },
     ) as string
 
     return stdout
@@ -55,8 +61,12 @@ export function readDirectoryContents(dirPath: string): FolderInfo[] | null {
       const fullPath = buildPath(dirPath, entry.name)
 
       if (entry.isDirectory()) {
-        items.push({ name: entry.name, path: fullPath })
+        items.push({
+          name: entry.name,
+          path: fullPath,
+        })
       } else if (entry.isFile()) {
+        // 仅在文件时 stat，且失败时降级为无元数据项，避免一个坏文件拖垮整个目录
         try {
           const stat = node.fs.statSync(fullPath)
           items.push({
@@ -67,7 +77,11 @@ export function readDirectoryContents(dirPath: string): FolderInfo[] | null {
             modifiedTime: stat.mtime.toISOString(),
           })
         } catch {
-          items.push({ name: entry.name, path: fullPath, isFile: true })
+          items.push({
+            name: entry.name,
+            path: fullPath,
+            isFile: true,
+          })
         }
       }
     }
@@ -103,7 +117,13 @@ export function computeCacheStatus<T>(
   cacheExpiryTime: number,
   labelType: "full" | "short" = "full",
 ): CacheStatus {
-  if (!cacheData) return { text: "", isExpired: false, tooltip: "" }
+  if (!cacheData) {
+    return {
+      text: "",
+      isExpired: false,
+      tooltip: "",
+    }
+  }
 
   const elapsed = Date.now() - cacheData.timestamp
   const remaining = cacheExpiryTime - elapsed
@@ -144,9 +164,18 @@ export function buildPath(basePath: string, name: string): string {
 export function formatDate(dateString: string, i18n: DiskBrowserI18n): string {
   try {
     const date = new Date(dateString)
+    if (Number.isNaN(date.getTime())) return dateString
+
     const now = new Date()
     const diff = now.getTime() - date.getTime()
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+    const dayMs = 1000 * 60 * 60 * 24
+
+    // 未来日期（系统时间或文件时间异常）直接回退为日期字符串
+    if (diff < 0) {
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
+    }
+
+    const days = Math.floor(diff / dayMs)
 
     if (days === 0) return i18n.today || "今天"
     if (days === 1) return i18n.yesterday || "昨天"

@@ -36,28 +36,30 @@
           />
         </div>
         <div class="db-drive-info">
-          <span class="db-drive-label">{{ disk.drive }}</span>
-          <span
-            v-if="disk.total"
-            class="db-drive-usage"
-          >{{ disk.usagePercent || 0 }}%</span>
-        </div>
-        <div
-          v-if="disk.total"
-          class="db-drive-bar"
-        >
+          <div class="db-drive-heading">
+            <span class="db-drive-label">{{ disk.drive }}</span>
+            <span class="db-drive-name">{{ disk.label || '\u00A0' }}</span>
+          </div>
           <div
-            class="db-drive-fill"
-            :style="{ width: `${disk.usagePercent || 0}%` }"
-          />
+            v-if="disk.total"
+            class="db-drive-capacity"
+          >
+            <span class="db-drive-usage">
+              {{ disk.usagePercent || 0 }}%
+            </span>
+            <span class="db-drive-space">{{ formatSize(disk.used) }} / {{ formatSize(disk.total) }}</span>
+          </div>
         </div>
+        <IconWrapper
+          v-if="expandedDisk !== disk.drive"
+          name="chevronRight"
+          :size="12"
+          class="db-drive-arrow"
+        />
       </div>
     </div>
 
-    <div
-      v-if="favoriteFolders.length > 0"
-      class="db-favorites"
-    >
+    <div class="db-favorites">
       <div class="db-favorites-title">
         <IconWrapper
           name="star"
@@ -66,33 +68,45 @@
         />
         <span>{{ i18n.favorites || '收藏夹' }}</span>
         <Badge
+          v-if="favoriteFolders.length > 0"
           :content="favoriteFolders.length"
           variant="primary"
           size="xsmall"
         />
       </div>
       <div
-        v-for="path in favoriteFolders"
-        :key="path"
-        class="db-fav-row"
-        :title="path"
-        @click="$emit('navigateFavorite', path)"
+        v-if="favoriteFolders.length > 0"
+        class="db-fav-list"
       >
-        <IconWrapper
-          name="folder"
-          :size="12"
-          color="var(--b3-theme-on-surface-light)"
-        />
-        <span class="db-fav-name">{{ getFolderName(path) }}</span>
-        <Button
-          variant="ghost"
-          size="xsmall"
-          icon="close"
-          :icon-size="10"
-          class="db-fav-remove"
-          :title="i18n.removeFavorite || '取消收藏'"
-          @click.stop="$emit('removeFavorite', path)"
-        />
+        <div
+          v-for="path in favoriteFolders"
+          :key="path"
+          class="db-fav-row"
+          :title="path"
+          @click="$emit('navigateFavorite', path)"
+        >
+          <IconWrapper
+            name="folder"
+            :size="12"
+            color="var(--b3-theme-on-surface-light)"
+          />
+          <span class="db-fav-name">{{ getFolderName(path) }}</span>
+          <Button
+            variant="ghost"
+            size="xsmall"
+            icon="close"
+            :icon-size="10"
+            class="db-fav-remove"
+            :title="i18n.removeFavorite || '取消收藏'"
+            @click.stop="$emit('removeFavorite', path)"
+          />
+        </div>
+      </div>
+      <div
+        v-else
+        class="db-fav-empty"
+      >
+        {{ i18n.noFavorites || '暂无收藏' }}
       </div>
     </div>
 
@@ -118,7 +132,10 @@ import type {
 import Badge from "@/components/Badge.vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { getFolderName } from "../utils"
+import {
+  formatSize,
+  getFolderName,
+} from "../utils"
 
 interface Props {
   disks: DiskInfo[]

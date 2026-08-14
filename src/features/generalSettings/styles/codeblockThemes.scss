@@ -87,6 +87,9 @@ body.codeblock-style-github {
       padding: $spacing-2px 0.875rem;
 
       .protyle-action__language {
+        // 覆盖通用块居中定位，改为左对齐（真实 GitHub header 语言标签居左）
+        left: $spacing-2;
+        margin-left: 0;
         text-transform: uppercase;
       }
 
@@ -125,9 +128,13 @@ body.codeblock-style-mac {
     }
 
     .protyle-action {
-      background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.04);
-      border-bottom: 1px solid var(--b3-theme-outline);
+      // macOS 终端/iTerm 标题栏固定深色，与三色点同为"固定品牌色 + 注释"例外
+      background: #1f1f1f;
+      // 深色标题栏上的分隔线改用半透明白，避免与主题 outline 不协调
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       padding: $spacing-2px $spacing-3;
+      // 深色标题栏上所有操作文字/图标（语言标签、复制、菜单）统一反色为浅色
+      color: rgba(255, 255, 255, 0.85);
 
       &::before {
         content: '';
@@ -148,14 +155,6 @@ body.codeblock-style-mac {
 
       &:hover::before {
         filter: brightness(1.1);
-      }
-
-      .protyle-action__language {
-        color: var(--b3-theme-on-surface-variant);
-      }
-
-      .protyle-icon {
-        color: var(--b3-theme-on-surface-variant);
       }
     }
 

@@ -68,7 +68,7 @@
   "defaultStyle": "Default Style",
   "defaultStyleDesc": "Near-native with subtle enhancements",
   "macStyle": "Mac Style",
-  "macStyleDesc": "macOS window style",
+  "macStyleDesc": "Dark title bar + traffic lights",
   "githubStyleDesc": "Bordered, line numbers, theme-adaptive",
   "advancedSettings": "Advanced Settings",
   "codeBlockCollapse": "Code Block Collapse",

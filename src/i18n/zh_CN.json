@@ -1021,7 +1021,7 @@
   "defaultStyle": "默认风格",
   "defaultStyleDesc": "接近原生，轻微增强",
   "macStyle": "Mac 风格",
-  "macStyleDesc": "macOS 窗口样式",
+  "macStyleDesc": "深色标题栏 + 三色点",
   "githubStyleDesc": "边框+行号+语言标签，随主题适配",
   "advancedSettings": "高级设置",
   "codeBlockCollapse": "代码块折叠",

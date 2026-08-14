@@ -1,19 +1,26 @@
 import type { Plugin } from "siyuan"
 import type {
+  Ref,
+  ShallowRef,
+} from "vue"
+import type {
   ApiEndpointPreset,
   ApiRequestRecord,
   CustomHeader,
   HttpMethod,
 } from "../types"
-
 import {
   onMounted,
+  onUnmounted,
   ref,
   shallowRef,
 } from "vue"
 import { SIYUAN_API_BASE_URL } from "@/api"
-import { copyToClipboard as _copyToClipboard } from "@/utils/domUtils"
-import { getErrorMessage } from "@/utils/stringUtils"
+import {
+  escapeHtml,
+  getErrorMessage,
+} from "@/utils/stringUtils"
+import { isValidHttpMethod } from "../types"
 
 import { ApiDebuggerStorage } from "../types/storage"
 
@@ -27,7 +34,29 @@ const INITIAL_STATE = {
   errorMessage: "",
 }
 
-export function useApiDebugger(plugin: Plugin) {
+let recordSeq = 0
+
+export function useApiDebugger(plugin: Plugin): {
+  method: Ref<HttpMethod>
+  path: Ref<string>
+  requestBody: Ref<string>
+  customHeaders: Ref<CustomHeader[]>
+  loading: Ref<boolean>
+  activeTab: Ref<"response" | "history">
+  statusCode: Ref<number | null>
+  responseBody: Ref<string>
+  responseTime: Ref<number>
+  errorMessage: Ref<string>
+  history: ShallowRef<ApiRequestRecord[]>
+  selectEndpoint: (preset: ApiEndpointPreset) => void
+  addHeader: () => void
+  removeHeader: (index: number) => void
+  clearRequest: () => void
+  sendRequest: () => Promise<void>
+  replayRecord: (record: ApiRequestRecord) => void
+  clearHistory: () => Promise<void>
+  syntaxHighlight: (json: string) => string
+} {
   const storage = new ApiDebuggerStorage(plugin)
 
   const method = ref(INITIAL_STATE.method)
@@ -43,36 +72,43 @@ export function useApiDebugger(plugin: Plugin) {
   const errorMessage = ref(INITIAL_STATE.errorMessage)
   const history = shallowRef<ApiRequestRecord[]>([])
 
+  let disposed = false
+
   onMounted(async () => {
     const data = await storage.settings.loadOrDefault()
-    history.value = data.history
+    if (disposed) return
+    history.value = data.history.filter((record) => isValidHttpMethod(record.method))
   })
 
-  function selectEndpoint(preset: ApiEndpointPreset) {
+  onUnmounted(() => {
+    disposed = true
+  })
+
+  function selectEndpoint(preset: ApiEndpointPreset): void {
     selectedEndpoint.value = preset
     path.value = preset.path
     requestBody.value = preset.defaultBody
   }
 
-  function addHeader() {
+  function addHeader(): void {
     customHeaders.value.push({
       key: "",
       value: "",
     })
   }
 
-  function removeHeader(index: number) {
+  function removeHeader(index: number): void {
     customHeaders.value.splice(index, 1)
   }
 
-  function clearRequest() {
-    Object.assign(method, INITIAL_STATE.method)
-    Object.assign(path, INITIAL_STATE.path)
-    Object.assign(requestBody, INITIAL_STATE.requestBody)
-    Object.assign(statusCode, INITIAL_STATE.statusCode)
-    Object.assign(responseBody, INITIAL_STATE.responseBody)
-    Object.assign(responseTime, INITIAL_STATE.responseTime)
-    Object.assign(errorMessage, INITIAL_STATE.errorMessage)
+  function clearRequest(): void {
+    method.value = INITIAL_STATE.method
+    path.value = INITIAL_STATE.path
+    requestBody.value = INITIAL_STATE.requestBody
+    statusCode.value = INITIAL_STATE.statusCode
+    responseBody.value = INITIAL_STATE.responseBody
+    responseTime.value = INITIAL_STATE.responseTime
+    errorMessage.value = INITIAL_STATE.errorMessage
     customHeaders.value = []
     selectedEndpoint.value = null
   }
@@ -84,10 +120,9 @@ export function useApiDebugger(plugin: Plugin) {
     errMsg?: string,
   ): ApiRequestRecord {
     return {
-      id: Date.now(),
+      id: ++recordSeq,
       timestamp: Date.now(),
       method: method.value,
-      url: `${SIYUAN_API_BASE_URL}${path.value}`,
       path: path.value,
       requestBody: requestBody.value,
       headers: [...customHeaders.value],
@@ -99,7 +134,7 @@ export function useApiDebugger(plugin: Plugin) {
     }
   }
 
-  async function sendRequest() {
+  async function sendRequest(): Promise<void> {
     if (!path.value.trim()) {
       errorMessage.value = "请输入请求路径"
       return
@@ -152,25 +187,21 @@ export function useApiDebugger(plugin: Plugin) {
           success = json.code === 0
       } catch {}
 
-      await storage.addRecord(createRecord(success, response.status, responseBody.value))
-      const data = await storage.settings.loadOrDefault()
-      history.value = data.history
+      history.value = await storage.addRecord(createRecord(success, response.status, responseBody.value))
       activeTab.value = "response"
     } catch (err: unknown) {
       responseTime.value = Math.round(performance.now() - startTime)
       errorMessage.value = getErrorMessage(err) || "请求失败"
       statusCode.value = 0
 
-      await storage.addRecord(createRecord(false, 0, "", getErrorMessage(err)))
-      const data = await storage.settings.loadOrDefault()
-      history.value = data.history
+      history.value = await storage.addRecord(createRecord(false, 0, "", getErrorMessage(err)))
       activeTab.value = "response"
     } finally {
       loading.value = false
     }
   }
 
-  function replayRecord(record: ApiRequestRecord) {
+  function replayRecord(record: ApiRequestRecord): void {
     method.value = record.method
     path.value = record.path
     requestBody.value = record.requestBody
@@ -182,7 +213,7 @@ export function useApiDebugger(plugin: Plugin) {
     activeTab.value = "response"
   }
 
-  async function clearHistory() {
+  async function clearHistory(): Promise<void> {
     await storage.clearHistory()
     history.value = []
   }
@@ -200,13 +231,9 @@ export function useApiDebugger(plugin: Plugin) {
         } else if (/null/.test(match)) {
           cls = "json-null"
         }
-        return `<span class="${cls}">${match}</span>`
+        return `<span class="${cls}">${escapeHtml(match)}</span>`
       },
     )
-  }
-
-  async function copyToClipboard(text: string) {
-    await _copyToClipboard(text)
   }
 
   return {
@@ -229,6 +256,5 @@ export function useApiDebugger(plugin: Plugin) {
     replayRecord,
     clearHistory,
     syntaxHighlight,
-    copyToClipboard,
   }
 }

@@ -1,4 +1,10 @@
-export type HttpMethod = "POST" | "GET" | "PUT" | "DELETE"
+export const HTTP_METHODS = ["POST", "GET", "PUT", "DELETE"] as const
+
+export type HttpMethod = (typeof HTTP_METHODS)[number]
+
+export function isValidHttpMethod(value: unknown): value is HttpMethod {
+  return typeof value === "string" && (HTTP_METHODS as readonly string[]).includes(value)
+}
 
 export interface ApiEndpointPreset {
   category: string
@@ -16,7 +22,6 @@ export interface ApiRequestRecord {
   id: number
   timestamp: number
   method: HttpMethod
-  url: string
   path: string
   requestBody: string
   headers: CustomHeader[]

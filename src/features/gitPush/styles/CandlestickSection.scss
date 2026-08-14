@@ -1,5 +1,5 @@
 // gitPush 提交趋势 K 线图分区（图例 + 图表容器 + 迷你节奏图 + 摘要卡片）
-@use "./variables" as *;
+@use "@/variables.scss" as *;
 @use "./mixins" as *;
 
 // ── 图例（涨/跌/平色块 + K 线语义说明）──

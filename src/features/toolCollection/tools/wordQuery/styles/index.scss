@@ -8,25 +8,25 @@
   max-height: 100vh;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
-  font-family: $font-body;
+  font-family: $font-zh;
   font-size: $font-size-sm;
   line-height: $line-height-normal;
   overflow: hidden;
 
   .query-header {
     padding: $spacing-4;
-    border-bottom: 1px solid var(--b3-border-color, $brand-subtle-gray);
+    border-bottom: 1px solid var(--b3-border-color, $color-border);
     flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: var(--b3-theme-background, $brand-light);
+    background: var(--b3-theme-background, $color-bg);
     gap: $spacing-4;
 
     .mode-tabs {
       display: flex;
       gap: $spacing-2;
-      border-bottom: 1px solid var(--b3-border-color, $brand-subtle-gray);
+      border-bottom: 1px solid var(--b3-border-color, $color-border);
       padding: 0;
     }
 
@@ -34,8 +34,8 @@
       border-bottom: 2px solid transparent;
 
       &.active {
-        color: var(--b3-theme-primary, $brand-orange);
-        border-bottom-color: var(--b3-theme-primary, $brand-orange);
+        color: var(--b3-theme-primary, $color-danger);
+        border-bottom-color: var(--b3-theme-primary, $color-danger);
       }
     }
   }

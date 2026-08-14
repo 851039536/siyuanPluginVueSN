@@ -1,7 +1,7 @@
 /**
  * SkillsViewer — SkillCard 样式
  */
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 
 .sv-skill-card {
   padding: $spacing-3 $spacing-3;

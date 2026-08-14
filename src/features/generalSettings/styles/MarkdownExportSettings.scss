@@ -176,11 +176,11 @@
     font-family: $vp-mono;
 
     &.success {
-      color: var(--b3-card-success-color, $brand-success);
+      color: var(--b3-card-success-color, $color-success);
     }
 
     &.error {
-      color: var(--b3-card-error-color, $brand-destructive);
+      color: var(--b3-card-error-color, $color-danger);
     }
 
     &.info {

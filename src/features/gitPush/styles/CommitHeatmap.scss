@@ -1,5 +1,5 @@
 // 提交热力图样式：GitHub 风格贡献图（周为列 × 7 天为行），固定 12px 格子保证星期标签行列对齐
-@use "./variables" as *;
+@use "@/variables.scss" as *;
 @use "./mixins" as *;
 
 // 热力图容器（周数由行内 CSS 变量 --gpa-heat-weeks 驱动，独立 SCSS 无法用 v-bind）

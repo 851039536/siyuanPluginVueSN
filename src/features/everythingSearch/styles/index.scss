@@ -3,7 +3,7 @@
  * 代码文档式设计语言：等宽字体、大写标签、边框卡片、分割线
  */
 
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 
 // 遮罩层
 .vp-overlay {
@@ -12,7 +12,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba($brand-dark, 0.55);
+  background: rgba($color-fg, 0.55);
   display: flex;
   align-items: flex-start;
   justify-content: center;

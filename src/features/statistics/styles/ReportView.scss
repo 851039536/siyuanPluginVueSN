@@ -1,5 +1,5 @@
 // 报告视图组件样式：年度/月度报告卡片 + 对比切换 + 明细条形图
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 @use "../styles/index.scss" as stats;
 
 .report-view {

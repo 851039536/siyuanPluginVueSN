@@ -1,5 +1,5 @@
 // 底部输入区域专属样式（RAG开关 + 选项栏）
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 
 // ============ RAG 联网搜索开关 ============
 .rag-toggle {

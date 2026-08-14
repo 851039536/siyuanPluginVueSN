@@ -1,4 +1,4 @@
-@use "./variables" as *;
+@use "@/variables.scss" as *;
 @use "./mixins" as *;
 
 // ── 项目行数详情弹窗：遮罩 + 双 Tab（文件明细表格 / 作者行数排行）──

@@ -1,4 +1,4 @@
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 @use "./mixins" as m;
 
 // ==================== 模态基座 + 共享样式 — index.vue + 子组件共用 ====================
@@ -51,7 +51,7 @@
       font-size: $font-size-xs;
       font-weight: $font-weight-semibold;
       color: var(--b3-theme-on-background);
-      font-family: $font-heading;
+      font-family: $font-zh;
     }
   }
 
@@ -74,7 +74,7 @@
   padding: $spacing-16 $spacing-4;
   color: var(--b3-theme-on-surface-light);
   font-size: $font-size-xs;
-  font-family: $font-body;
+  font-family: $font-zh;
 }
 
 .vp-empty {

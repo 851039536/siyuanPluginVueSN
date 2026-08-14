@@ -76,7 +76,7 @@
   font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-background);
   margin: 0;
-  font-family: $font-heading;
+  font-family: $font-zh;
 }
 
 // ============================================================
@@ -117,7 +117,7 @@
     font-size: $font-size-lg;
     font-weight: $font-weight-semibold;
     color: var(--b3-theme-on-background);
-    font-family: $font-heading;
+    font-family: $font-zh;
 
     :deep(.icon-wrapper),
     svg {
@@ -148,14 +148,14 @@
 @mixin error-message {
   @include flex-row-gap($spacing-2);
   padding: 10px 14px;
-  background: rgba($brand-destructive, 0.1);
-  color: $brand-destructive;
-  border: 1px solid $brand-destructive;
+  background: rgba($color-danger, 0.1);
+  color: $color-danger;
+  border: 1px solid $color-danger;
   border-radius: $vp-radius;
   font-size: $font-size-xs;
 
   :deep(.icon-wrapper) {
-    color: $brand-destructive;
+    color: $color-danger;
   }
 }
 

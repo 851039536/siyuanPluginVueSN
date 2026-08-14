@@ -6,30 +6,30 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  background: var(--b3-theme-background, $brand-light);
-  font-family: $font-body;
+  background: var(--b3-theme-background, $color-bg);
+  font-family: $font-zh;
   overflow: hidden;
 
   // 变体样式
   &--bordered {
-    border: 1px solid var(--b3-border-color, $brand-subtle-gray);
+    border: 1px solid var(--b3-border-color, $color-border);
   }
 
   &--elevated {
-    border: 1px solid var(--b3-border-color, $brand-subtle-gray);
+    border: 1px solid var(--b3-border-color, $color-border);
 
     &:hover {
-      border-color: var(--b3-theme-primary, $brand-orange);
+      border-color: var(--b3-theme-primary, $color-danger);
     }
   }
 
   &--flat {
     border: none;
-    background: var(--b3-theme-surface-lighter, $brand-light-gray);
+    background: var(--b3-theme-surface-lighter, $color-surface);
   }
 
   &--outlined {
-    border: 2px solid var(--b3-border-color, $brand-subtle-gray);
+    border: 2px solid var(--b3-border-color, $color-border);
     background: transparent;
   }
 
@@ -148,7 +148,7 @@
     cursor: pointer;
 
     &:hover:not(.si-card--disabled):not(.si-card--loading) {
-      border-color: var(--b3-theme-secondary, $brand-blue);
+      border-color: var(--b3-theme-secondary, $color-info);
       transform: translateY(-2px);
     }
 
@@ -159,7 +159,7 @@
 
   // 激活态 — Codex 边框变色策略（替代原 box-shadow: 0 0 0 1px）
   &--active {
-    border-color: var(--b3-theme-primary, $brand-orange);
+    border-color: var(--b3-theme-primary, $color-danger);
 
     &.si-card--bordered,
     &.si-card--outlined {
@@ -177,7 +177,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid var(--b3-border-color, $brand-light-gray);
+    border-bottom: 1px solid var(--b3-border-color, $color-surface);
 
     &-content {
       flex: 1;
@@ -192,17 +192,17 @@
 
   &__title {
     margin: 0;
-    font-family: $font-heading;
+    font-family: $font-zh;
     font-weight: $font-weight-semibold;
-    color: var(--b3-theme-on-background, $brand-dark);
+    color: var(--b3-theme-on-background, $color-fg);
     line-height: $line-height-tight; // 原 1.4 → 1.25
   }
 
   &__subtitle {
     margin: $spacing-1 0 0;
-    font-family: $font-body;
+    font-family: $font-zh;
     font-size: $font-size-xs;
-    color: var(--b3-theme-secondary, $brand-mid-gray);
+    color: var(--b3-theme-secondary, $color-muted);
     line-height: $line-height-tight;
   }
 
@@ -210,7 +210,7 @@
   &__cover {
     position: relative;
     overflow: hidden;
-    background: var(--b3-theme-surface, $brand-light-gray);
+    background: var(--b3-theme-surface, $color-surface);
 
     &-image {
       width: 100%;
@@ -230,7 +230,7 @@
   // 主体
   &__body {
     flex: 1;
-    color: var(--b3-theme-on-background, $brand-dark);
+    color: var(--b3-theme-on-background, $color-fg);
 
     &--no-padding {
       padding: 0;
@@ -239,7 +239,7 @@
 
   // 底部
   &__footer {
-    border-top: 1px solid var(--b3-border-color, $brand-light-gray);
+    border-top: 1px solid var(--b3-border-color, $color-surface);
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -253,7 +253,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(var(--b3-theme-background-rgb, $brand-light), m.$opacity-overlay);
+    background: rgba(var(--b3-theme-background-rgb, $color-bg), m.$opacity-overlay);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -263,8 +263,8 @@
   &__loading-spinner {
     width: 32px;
     height: 32px;
-    border: 3px solid var(--b3-theme-surface-lighter, $brand-light-gray);
-    border-top-color: var(--b3-theme-primary, $brand-orange);
+    border: 3px solid var(--b3-theme-surface-lighter, $color-surface);
+    border-top-color: var(--b3-theme-primary, $color-danger);
     border-radius: 50%;
     animation: si-spin 0.8s linear infinite;
   }

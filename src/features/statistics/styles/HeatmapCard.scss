@@ -1,5 +1,5 @@
 // 热力图组件样式：日历网格、摘要卡片、筛选栏、日详情面板、星期分布柱状图
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 @use "index.scss" as stats;
 
 .heatmap-page {

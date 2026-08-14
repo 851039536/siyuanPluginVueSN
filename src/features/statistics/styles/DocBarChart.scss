@@ -1,5 +1,5 @@
 // 横向文档柱状图组件样式：各笔记本文档数排行（行标签/进度条/计数/滚动）
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 @use "../styles/shared" as *;
 @use "../styles/index.scss" as stats;
 
@@ -63,7 +63,7 @@
       .row-label {
         flex-shrink: 0;
         width: 80px;
-        font-family: $font-body;
+        font-family: $font-zh;
         font-size: $font-size-2xs;
         font-weight: $font-weight-medium;
         color: var(--b3-theme-on-surface);

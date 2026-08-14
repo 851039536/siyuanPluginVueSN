@@ -1,5 +1,5 @@
 // 笔记本写作活跃度趋势样式：范围选择/多线折线图/tooltip/排行表
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 @use '../styles/index.scss' as stats;
 
 .activity-page {

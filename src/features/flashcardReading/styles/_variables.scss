@@ -1,8 +1,8 @@
 // 单词阅读 - 局部变量和 mixin
-@forward '../../../_variables.scss';
+@forward '@/variables.scss';
 // @forward 透传全局 Token（$vp-mono/$vp-radius/$font-size-*/$spacing-* 等）给下游
 // mixin 内部通过 @use 别名引用全局 Token（@forward 不进本地作用域）
-@use '../../../_variables.scss' as v;
+@use '@/variables.scss' as v;
 
 $fc-transition: 0.12s;
 

@@ -122,7 +122,7 @@
     transform: translateX(-50%);
     padding: $spacing-1 $spacing-3;
     border-radius: $vp-radius;
-    background: hsl($destructive-light);
+    background: $color-danger-bright;
     color: #fff;
     font-size: $font-size-2xs;
     white-space: nowrap;

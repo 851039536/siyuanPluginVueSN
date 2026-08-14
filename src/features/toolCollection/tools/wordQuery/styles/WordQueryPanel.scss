@@ -12,7 +12,7 @@
 
 .input-section {
   padding: $spacing-4;
-  border-bottom: 1px solid var(--b3-border-color, $brand-subtle-gray);
+  border-bottom: 1px solid var(--b3-border-color, $color-border);
   flex-shrink: 0;
 
   .input-wrapper {
@@ -41,7 +41,7 @@
     align-items: center;
     justify-content: center;
     height: 100%;
-    color: var(--b3-theme-on-background, $brand-dark);
+    color: var(--b3-theme-on-background, $color-fg);
   }
 
   .query-error {
@@ -49,7 +49,7 @@
     align-items: center;
     justify-content: center;
     height: 100%;
-    color: var(--b3-theme-error, $brand-orange);
+    color: var(--b3-theme-error, $color-danger);
     text-align: center;
   }
 
@@ -77,7 +77,7 @@
     justify-content: center;
     height: 100%;
     gap: $spacing-3;
-    color: var(--b3-theme-secondary, $brand-mid-gray);
+    color: var(--b3-theme-secondary, $color-muted);
     text-align: center;
     padding: $spacing-8 $spacing-4;
 
@@ -96,8 +96,8 @@
 }
 
 .common-panel {
-  border-bottom: 1px solid var(--b3-border-color, $brand-subtle-gray);
-  background: var(--b3-theme-surface-lighter, $brand-light-gray);
+  border-bottom: 1px solid var(--b3-border-color, $color-border);
+  background: var(--b3-theme-surface-lighter, $color-surface);
   max-width: 100%;
   overflow: hidden;
   max-height: 300px;
@@ -109,10 +109,10 @@
     padding: $spacing-3 $spacing-4;
     font-weight: $font-weight-semibold;
     font-size: $font-size-sm;
-    font-family: $font-heading;
-    color: var(--b3-theme-on-background, $brand-dark);
-    background: var(--b3-theme-background, $brand-light);
-    border-bottom: 1px solid var(--b3-border-color, $brand-subtle-gray);
+    font-family: $font-zh;
+    color: var(--b3-theme-on-background, $color-fg);
+    background: var(--b3-theme-background, $color-bg);
+    border-bottom: 1px solid var(--b3-border-color, $color-border);
 
     .panel-actions {
       display: flex;
@@ -141,9 +141,9 @@
         display: block;
         font-weight: $font-weight-medium;
         font-size: $font-size-sm;
-        font-family: $font-heading;
+        font-family: $font-zh;
         margin-bottom: $spacing-2;
-        color: var(--b3-theme-on-background, $brand-dark);
+        color: var(--b3-theme-on-background, $color-fg);
       }
 
       .option-row {
@@ -158,13 +158,13 @@
         align-items: center;
         gap: $spacing-2;
         font-size: $font-size-sm;
-        color: var(--b3-theme-on-background, $brand-dark);
+        color: var(--b3-theme-on-background, $color-fg);
         cursor: pointer;
         padding: $spacing-2;
         border-radius: $radius-base;
 
         &:hover {
-          background-color: var(--b3-theme-surface-lighter, $brand-light-gray);
+          background-color: var(--b3-theme-surface-lighter, $color-surface);
         }
 
         input[type="radio"],

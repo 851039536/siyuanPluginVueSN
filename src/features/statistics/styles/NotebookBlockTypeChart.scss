@@ -1,5 +1,5 @@
 // 笔记本块类型堆叠图组件样式：各笔记本块类型分布（堆叠条/图例/滚动）
-@use "@/variables" as *;
+@use "@/variables.scss" as *;
 @use "../styles/shared" as *;
 @use "../styles/index.scss" as stats;
 
@@ -48,7 +48,7 @@
     .nb-label {
       flex-shrink: 0;
       width: 80px;
-      font-family: $font-body;
+      font-family: $font-zh;
       font-size: $font-size-2xs;
       font-weight: $font-weight-medium;
       color: var(--b3-theme-on-surface);
@@ -103,7 +103,7 @@
       gap: 3px;
       font-size: $font-size-2xs;
       color: var(--b3-theme-on-surface-light);
-      font-family: $font-body;
+      font-family: $font-zh;
     }
 
     .legend-dot {

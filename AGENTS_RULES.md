@@ -505,6 +505,22 @@ toolCollection/
 所有 feature 的 `styles/*.scss` 文件首先 `@use '@/variables.scss' as *;`，以下 Token 全局可用：
 
 ```scss
+// 颜色（$color-*）— 禁止硬编码色值
+// 语义色作为思源 CSS 变量（--b3-theme-*）的 fallback，运行时思源必提供主题变量，fallback 仅防御性兜底
+$color-fg: hsl(24 10% 5%);            // 深前景/正文文本
+$color-bg: hsl(55 9% 97%);            // 浅背景
+$color-muted: hsl(30 5% 65%);         // 中灰（次要文本）
+$color-surface: hsl(45 5% 96%);       // 浅灰表面（卡片/面板背景）
+$color-border: hsl(30 6% 88%);        // 边框/分割线
+$color-primary: hsl(24 9% 10%);       // 主色（暖黑）
+$color-secondary: hsl(45 5% 96%);     // 次色（暖灰）
+$color-accent: hsl(35 85% 55%);       // 强调（琥珀金）
+$color-danger: hsl(0 72% 51%);        // 危险/错误（红）
+$color-danger-bright: hsl(0 84.2% 60.2%); // 亮红（错误提示文字/高亮背景）
+$color-success: hsl(142 76% 36%);     // 成功（绿）
+$color-warning: hsl(35 90% 50%);      // 警告（琥珀黄）
+$color-info: hsl(217 91% 60%);        // 信息（蓝）
+
 // 圆角 — 禁止硬编码 border-radius
 $radius-sm: 0.25rem;    // 4px  标签/徽章
 $radius-base: 0.375rem; // 6px  卡片/控件/字段标准圆角（≈ Codex $vp-radius）
@@ -560,6 +576,8 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 ```
 
 > 历史：`$vp-radius`/`$vp-mono` 曾由 `superPanel/styles/variables.scss` 独占，其他模块需本地声明。现已全局化。
+
+> ⚠️ **已废弃旧变量（2026-08 迁移删除，禁止再使用）**：原 `$brand-*` 系列（`$brand-dark`/`$brand-light`/`$brand-mid-gray`/`$brand-light-gray`/`$brand-subtle-gray`/`$brand-primary`/`$brand-secondary`/`$brand-accent`/`$brand-destructive`/`$brand-success`/`$brand-warning`/`$brand-info`）、`$brand-orange`/`$brand-blue`/`$brand-green`、`$font-heading`/`$font-body` 已全部迁移至 `$color-*` / `$font-zh` 并删除定义。映射：`$brand-dark`→`$color-fg`、`$brand-light`→`$color-bg`、`$brand-mid-gray`→`$color-muted`、`$brand-light-gray`→`$color-surface`、`$brand-subtle-gray`→`$color-border`、`$brand-primary`→`$color-primary`、`$brand-secondary`→`$color-secondary`、`$brand-accent`→`$color-accent`、`$brand-destructive`/`$brand-orange`→`$color-danger`、`$brand-success`/`$brand-green`→`$color-success`、`$brand-warning`→`$color-warning`、`$brand-info`/`$brand-blue`→`$color-info`、`$font-heading`/`$font-body`→`$font-zh`。
 
 ### 核心规范速查表
 

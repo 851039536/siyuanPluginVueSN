@@ -1,5 +1,5 @@
 // gitPush 代码统计报告：代码贡献度分区（作者排行表：HTML table 布局 + 排名徽章 + 净增 mini bar + 展开详情）
-@use "./variables" as *;
+@use "@/variables.scss" as *;
 @use "./mixins" as *;
 
 // 作者排行表格（table 布局强制各行列宽一致，消除 flex 模拟表格的表头/数据行错位；auto 布局下数字列按内容自适应，姓名列吃剩余空间）

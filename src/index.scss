@@ -1,23 +1,19 @@
 // ========== 全局样式入口 ==========
-// 此文件包含所有全局 CSS 样式
-// 变量定义已移至 _variables.scss，组件可按需导入
+// 职责：统一加载全局设计 Token 与功能级全局样式（仅在插件根挂载一次）。
 
-// 导入变量（用于本文件中的样式）
-@use './variables.scss' as *;
+// 1. 设计 Token（单一来源：src/_variables.scss）
+@use '@/variables.scss' as *;
 
-// 导入页面锁定功能样式
-@use './features/pageLock/styles/index.scss' as pageLock;
-// 导入紧凑模式样式
-@use './features/compactMode/styles/index.scss' as compactMode;
+// 2. 功能级全局样式（非模块懒加载，随插件根加载）
+@use './features/pageLock/styles/index.scss' as pageLock;       // 页面锁定
+@use './features/compactMode/styles/index.scss' as compactMode; // 紧凑模式
+@use './features/generalSettings/styles/codeblockThemes.scss';  // 代码块美化主题
 
-// 导入代码块美化主题样式（预设风格 + 通用增强）
-@use './features/generalSettings/styles/codeblockThemes.scss';
-
-// ========== 全局基准字号规则（两级字号制，参考 gitPush） ==========
-// Dock 面板根容器与弹窗遮罩统一以 $font-size-xs(12px) 为基准字号，
-// 防止内部未声明字号的文字继承思源全局默认字号（14px+）导致偏大。
+// 3. 全局基准字号（两级字号制）
+//    Dock 面板与弹窗遮罩统一以 $font-size-xs(12px) 为基准，防止内部未声明字号的
+//    文字继承思源全局默认字号（14px+）导致偏大。
 :root {
-  // CSS 自定义属性：桥接 SCSS Token，供 TS 内联样式（如 vueAppHelper.ts）引用
+  // CSS 变量桥接 SCSS Token，供 TS 内联样式（如 vueAppHelper.ts）引用
   --vp-font-size-xs: #{$font-size-xs};
 }
 

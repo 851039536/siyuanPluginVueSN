@@ -1,4 +1,4 @@
-@use "./variables" as *;
+@use "@/variables.scss" as *;
 @use "./mixins" as *;
 
 // Diff 弹窗（从 WorkingTreePanel.scss 迁移，随 WorkingTreeDiffDialog.vue 组件独立）

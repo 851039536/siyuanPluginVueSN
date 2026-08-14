@@ -17,7 +17,7 @@
 
   &__tag {
     font-size: $font-size-xs;
-    font-weight: 600;
+    font-weight: $font-weight-semibold;
     color: $brand-orange;
     padding: 2px 6px;
     border: 1px solid rgba($brand-orange, 0.3);

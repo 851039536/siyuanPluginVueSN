@@ -49,7 +49,7 @@
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
   border-radius: $vp-radius;
-  font-size: 13px;
+  font-size: $font-size-xs;
   color: var(--b3-theme-on-background);
   outline: none;
   transition: border-color 0.12s, box-shadow 0.12s;
@@ -152,7 +152,7 @@
   color: $brand-destructive;
   border: 1px solid $brand-destructive;
   border-radius: $vp-radius;
-  font-size: 13px;
+  font-size: $font-size-xs;
 
   :deep(.icon-wrapper) {
     color: $brand-destructive;
@@ -164,8 +164,8 @@
 // ============================================================
 
 @mixin uppercase-label {
-  font-size: 10px;
-  font-weight: 700;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--b3-theme-on-surface);

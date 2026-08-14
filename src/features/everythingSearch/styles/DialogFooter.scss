@@ -33,8 +33,8 @@
   }
 
   &__kbd {
-    font-size: 9px;
-    font-weight: 700;
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-bold;
     font-family: $vp-mono;
     letter-spacing: 0.06em;
     color: var(--b3-theme-on-surface);
@@ -45,7 +45,7 @@
   }
 
   &__sep {
-    font-size: 10px;
+    font-size: $font-size-2xs;
     color: var(--b3-theme-on-surface);
     opacity: 0.3;
     margin: 0 2px;

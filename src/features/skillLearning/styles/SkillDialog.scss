@@ -23,7 +23,7 @@
     margin: 0;
     padding: 14px $spacing-5;
     font-size: $font-size-sm;
-    font-weight: 700;
+    font-weight: $font-weight-bold;
     text-align: center;
     letter-spacing: 0.02em;
     color: var(--b3-theme-on-background);
@@ -69,8 +69,8 @@
   }
   &__label {
     display: block;
-    font-size: 10px;
-    font-weight: 700;
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-bold;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     opacity: 0.45;
@@ -138,7 +138,7 @@
     padding: $spacing-2 $spacing-5;
     border-radius: $radius-md;
     font-size: $font-size-sm;
-    font-weight: 500;
+    font-weight: $font-weight-medium;
     border: none;
     cursor: pointer;
     &--cancel {

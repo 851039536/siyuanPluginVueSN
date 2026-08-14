@@ -1,4 +1,7 @@
 // SuperPanel 模块专属变量
+// 转发全局设计 Token（$font-size-* / $font-weight-* / $line-height-* / $vp-* 等），下游 @use './variables' 即可访问
+@forward '@/variables.scss';
+@use '@/variables.scss' as *;
 
 // 面板尺寸
 $panel-width: 640px !default;
@@ -13,12 +16,6 @@ $spacing-xs: 4px !default;
 $spacing-sm: 8px !default;
 $spacing-md: 12px !default;
 $spacing-lg: 16px !default;
-
-// 等宽字体栈（Codex 规范）
-$vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace !default;
-
-// Codex 圆角
-$vp-radius: 6px !default;
 
 // 状态色（与 _variables.scss $success-light / $warning-light / $info-light / $brand-destructive 对齐）
 $status-stable: #22c55e !default;

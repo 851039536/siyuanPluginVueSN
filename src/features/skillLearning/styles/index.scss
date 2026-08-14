@@ -28,7 +28,7 @@
     background: transparent;
     color: #94a3b8;
     font-size: $font-size-xs;
-    font-weight: 500;
+    font-weight: $font-weight-medium;
     cursor: pointer;
     transition: all 0.12s;
 
@@ -80,7 +80,7 @@
     justify-content: space-between;
     padding: $spacing-2 $spacing-3;
     border-top: 1px solid var(--b3-border-color);
-    font-size: 11px;
+    font-size: $font-size-2xs;
     color: #94a3b8;
     flex-shrink: 0;
     font-feature-settings: "tnum";

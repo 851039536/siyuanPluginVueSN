@@ -25,8 +25,8 @@
     background: var(--b3-theme-surface);
   }
   &__stat-value {
-    font-size: 24px;
-    font-weight: 700;
+    font-size: $font-size-2xl; // 数据突出展示：统计数值
+    font-weight: $font-weight-bold;
     color: var(--b3-theme-on-background);
     font-feature-settings: "tnum";
     font-family: $vp-mono;
@@ -36,7 +36,7 @@
     }
   }
   &__stat-label {
-    font-size: 10px;
+    font-size: $font-size-2xs;
     color: #94a3b8;
     margin-top: 2px;
   }
@@ -58,8 +58,8 @@
     }
   }
   &__section-title {
-    font-size: 10px;
-    font-weight: 700;
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-bold;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     opacity: 0.45;
@@ -95,13 +95,13 @@
   }
   &__ring-pct {
     font-size: 1.25rem;
-    font-weight: 700;
+    font-weight: $font-weight-bold;
     color: var(--b3-theme-on-background);
     font-feature-settings: "tnum";
     font-family: $vp-mono;
   }
   &__ring-sub {
-    font-size: 10px;
+    font-size: $font-size-2xs;
     color: #94a3b8;
   }
 
@@ -164,7 +164,7 @@
     color: var(--b3-theme-on-background);
   }
   &__tag-count {
-    font-weight: 600;
+    font-weight: $font-weight-semibold;
     color: var(--b3-theme-primary);
     font-feature-settings: "tnum";
     font-family: $vp-mono;

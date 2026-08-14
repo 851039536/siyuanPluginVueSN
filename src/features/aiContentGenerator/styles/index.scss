@@ -18,8 +18,8 @@
   gap: 5px;
   width: 100%;
   padding: 6px 10px;
-  font-size: 11px;
-  font-weight: 500;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
   color: var(--b3-theme-on-surface);
   background: transparent;
   border: none;
@@ -70,8 +70,8 @@
 
 // ============ Codex 元信息标签 ============
 @mixin codex-meta-label {
-  font-size: 10px;
-  font-weight: 700;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--b3-theme-on-surface);
@@ -180,7 +180,7 @@
   align-items: center;
   gap: 3px;
   padding: 3px 7px;
-  font-size: 11px;
+  font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface);
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-theme-surface-lighter);
@@ -256,7 +256,7 @@
 }
 
 .result-title {
-  font-size: 12px;
+  font-size: $font-size-xs;
   color: var(--b3-theme-on-surface);
   display: flex;
   align-items: center;
@@ -268,7 +268,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: $font-size-xs;
   color: var(--b3-theme-primary);
 }
 
@@ -325,19 +325,19 @@
   background: var(--b3-theme-surface);
   border-radius: 4px;
   border: 1px solid var(--b3-theme-surface-lighter);
-  line-height: 1.5;
+  line-height: $line-height-normal;
   overflow-wrap: break-word;
   overflow-y: auto;
   flex: 1;
   min-height: 0;
   user-select: text;
   cursor: text;
-  font-size: 12px;
+  font-size: $font-size-xs;
 
   :deep(h1), :deep(h2), :deep(h3), :deep(h4), :deep(h5), :deep(h6) {
     margin-top: 0.6em;
     margin-bottom: 0.3em;
-    font-weight: 500;
+    font-weight: $font-weight-medium;
     &:first-child { margin-top: 0; }
   }
   :deep(h1) { font-size: 1.4em; }
@@ -375,7 +375,7 @@
 }
 
 .empty-icon { color: var(--b3-theme-primary); opacity: 0.35; margin-bottom: 12px; }
-.empty-title { font-size: 14px; font-weight: 500; margin-bottom: 12px; color: var(--b3-theme-on-background); }
+.empty-title { font-size: $font-size-xs; font-weight: $font-weight-medium; margin-bottom: 12px; color: var(--b3-theme-on-background); }
 
 .empty-steps {
   display: flex;
@@ -389,7 +389,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: $font-size-xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.7;
 }
@@ -403,8 +403,8 @@
   border-radius: 50%;
   background: var(--b3-theme-primary);
   color: var(--b3-theme-on-primary);
-  font-size: 10px;
-  font-weight: 600;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
   flex-shrink: 0;
 }
 
@@ -423,7 +423,7 @@
   align-items: center;
   gap: 4px;
   padding: 3px 8px;
-  font-size: 11px;
+  font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface-variant);
   background: transparent;
   border: 1px solid transparent;

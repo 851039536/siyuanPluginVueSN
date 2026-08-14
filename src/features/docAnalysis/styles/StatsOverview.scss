@@ -281,7 +281,7 @@
   gap: $spacing-2;
 
   .placeholder-icon {
-    font-size: 40px;
+    font-size: 40px; // 图标尺寸（占位图标，无精确 Token）
     opacity: 0.3;
   }
 

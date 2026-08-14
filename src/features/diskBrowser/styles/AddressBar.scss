@@ -40,7 +40,7 @@
   background: transparent;
   border-radius: 3px;
   font-family: $vp-mono;
-  font-size: 11px;
+  font-size: $font-size-2xs;
   font-weight: $font-weight-medium;
   color: var(--b3-theme-on-surface);
   cursor: pointer;
@@ -60,7 +60,7 @@
 
 .db-crumb-sep {
   flex-shrink: 0;
-  font-size: 9px;
+  font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface-light);
   opacity: 0.35;
   margin: 0 1px;

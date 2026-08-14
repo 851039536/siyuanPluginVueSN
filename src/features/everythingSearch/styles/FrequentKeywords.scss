@@ -60,7 +60,7 @@
     width: 16px;
     height: 16px;
     border-radius: 50%;
-    font-size: 12px;
+    font-size: $font-size-xs;
     line-height: 1;
     color: var(--b3-theme-on-surface);
     opacity: 0.4;
@@ -83,7 +83,7 @@
     background: transparent;
     color: var(--b3-theme-on-surface);
     opacity: 0.5;
-    font-size: 16px;
+    font-size: $font-size-base;
     line-height: 1;
     cursor: pointer;
     transition: opacity 0.12s, border-color 0.12s;

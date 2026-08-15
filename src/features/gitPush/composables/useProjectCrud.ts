@@ -80,24 +80,6 @@ export function useProjectCrud(manager: GitPushManager) {
     }
   }
 
-  async function appendTag(id: string, tag: string) {
-    const updated = await manager.appendTag(id, tag)
-    if (updated) {
-      patchProject(id, { tags: updated.tags })
-      allTags.value = await manager.getAllTags()
-    }
-    return updated
-  }
-
-  async function removeTag(id: string, tag: string) {
-    const updated = await manager.removeTag(id, tag)
-    if (updated) {
-      patchProject(id, { tags: updated.tags })
-      allTags.value = await manager.getAllTags()
-    }
-    return updated
-  }
-
   async function refreshRemotes(id: string) {
     const updated = await manager.refreshRemotes(id)
     if (updated) {
@@ -111,21 +93,10 @@ export function useProjectCrud(manager: GitPushManager) {
   }
 
   // ── 分类操作 ──
-  async function loadCategories() {
-    categories.value = await manager.getCategories()
-  }
-
   async function addCategory(name: string, color?: string) {
     const cat = await manager.addCategory(name, color)
     categories.value = [...categories.value, cat]
     return cat
-  }
-
-  async function updateCategory(id: string, data: { name?: string, color?: string }) {
-    await manager.updateCategory(id, data)
-    categories.value = categories.value.map((c) =>
-      c.id === id ? { ...c, ...data } : c,
-    )
   }
 
   async function deleteCategory(id: string) {
@@ -153,12 +124,8 @@ export function useProjectCrud(manager: GitPushManager) {
     removeProject,
     updateProjectMeta,
     toggleStar,
-    appendTag,
-    removeTag,
     refreshRemotes,
-    loadCategories,
     addCategory,
-    updateCategory,
     deleteCategory,
     moveProject,
   }

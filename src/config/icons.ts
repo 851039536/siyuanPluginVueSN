@@ -310,6 +310,11 @@ export const FEATURE_ICONS = {
     icon: "mdi:camera-marker",
     color: "#0ea5e9",
   },
+  // 全局关系列表
+  globalRelations: {
+    icon: "mdi:relation-many-to-many",
+    color: "#06b6d4",
+  },
   // 速记
   quickNote: {
     icon: "mdi:note-edit-outline",

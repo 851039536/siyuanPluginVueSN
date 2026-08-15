@@ -40,6 +40,7 @@ import {
   registerFormatAssistant,
   registerGeneralSettings,
   registerGitPush,
+  registerGlobalRelations,
   registerHtmlViewer,
   registerImageCompressor,
   registerImageCreation,
@@ -85,6 +86,8 @@ export default class PluginSample extends Plugin {
   public settings!: PluginSettings
   /** 浮动工具栏实例（由 floatingToolbar 功能模块注入） */
   public __floatingToolbar?: import("@/features/floatingToolbar/core/FloatingToolbar").FloatingToolbar
+  /** 全局关系列表实例（由 globalRelations 功能模块注入，onunload 经 DESTROYABLE_KEYS 销毁） */
+  private __globalRelations?: { destroy: () => void }
   /** 主题色实例（rebuildThemeColor 维护，onunload 经 DESTROYABLE_KEYS 销毁） */
   private __themeColor?: { destroy: () => void }
 
@@ -162,6 +165,9 @@ export default class PluginSample extends Plugin {
     // 清除 Markdown 渲染器缓存
     clearRendererCache()
 
+    // 全局关系列表 Modal 显式销毁（保持类型可见性）
+    this.__globalRelations?.destroy()
+
     // 统一销毁各功能实例（新增功能只需将实例字段名加入 DESTROYABLE_KEYS）
     for (const key of PluginSample.DESTROYABLE_KEYS) {
       const instance = (this as any)[key] as { destroy?: () => void } | undefined
@@ -227,6 +233,7 @@ export default class PluginSample extends Plugin {
     if (s.enableToolCollection) registerToolCollection(this)
     if (s.enableS3Backup) registerS3Backup(this)
     if (s.enableS3FileManager) registerS3FileManager(this)
+    if (s.enableGlobalRelations) this.__globalRelations = registerGlobalRelations(this)
     if (s.enableQuickNote) registerQuickNote(this)
   }
 

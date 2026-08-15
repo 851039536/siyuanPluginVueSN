@@ -270,6 +270,12 @@ onMounted(() => {
   window.addEventListener("toggleWebsiteNavigation", () => {
     showWebsiteNavigation(plugin as any)
   })
+
+  // 监听全局关系列表切换事件（来自超级面板 action）
+  window.addEventListener("toggleGlobalRelations", () => {
+    const pluginInstance = plugin as any
+    pluginInstance.__globalRelations?.toggle()
+  })
 })
 </script>
 

@@ -271,7 +271,7 @@ import {
 import { Icon } from "@iconify/vue"
 import type { GitOpLogEntry } from "../../types"
 import { usePagedList } from "../../composables/usePagedList"
-import { formatLogTime, hasLogPlatforms, logActionLabel } from "../../utils"
+import { formatLocalDate, formatLogTime, hasLogPlatforms, logActionLabel } from "../../utils"
 import { copyToClipboard } from "@/utils/domUtils"
 import EmptyState from "../common/EmptyState.vue"
 import LoadMoreButton from "../common/LoadMoreButton.vue"
@@ -430,9 +430,7 @@ interface LogDateGroup {
 /** 将 ISO 时间戳格式化为自然日键 YYYY-MM-DD */
 function dateKeyOf(iso: string): string {
   try {
-    const d = new Date(iso)
-    const pad = (n: number) => String(n).padStart(2, "0")
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+    return formatLocalDate(new Date(iso))
   } catch {
     return iso
   }

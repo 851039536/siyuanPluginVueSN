@@ -7,7 +7,7 @@ import type {
 } from "../types"
 import { ref } from "vue"
 import { showMessage } from "siyuan"
-import { findProject, getAllProjectPathsForDedup, normalizePathForDedup } from "../utils"
+import { findProject, findProjectIndex, getAllProjectPathsForDedup, normalizePathForDedup } from "../utils"
 import { UNGROUPED_ID } from "../types"
 import { getErrorMessage } from "@/utils/stringUtils"
 
@@ -51,7 +51,7 @@ export function useProjectCrud(manager: GitPushManager) {
 
   /** 本地更新单个项目并触发响应式 */
   function patchProject(id: string, patch: Partial<GitProject>) {
-    const idx = projects.value.findIndex((p) => p.id === id)
+    const idx = findProjectIndex(projects, id)
     if (idx === -1) return
     projects.value[idx] = { ...projects.value[idx], ...patch }
     projects.value = [...projects.value]
@@ -83,7 +83,7 @@ export function useProjectCrud(manager: GitPushManager) {
   async function refreshRemotes(id: string) {
     const updated = await manager.refreshRemotes(id)
     if (updated) {
-      const idx = projects.value.findIndex((p) => p.id === id)
+      const idx = findProjectIndex(projects, id)
       if (idx !== -1) {
         projects.value[idx] = updated
         projects.value = [...projects.value]

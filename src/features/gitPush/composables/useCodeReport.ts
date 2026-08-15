@@ -11,7 +11,7 @@ import { computed, ref } from "vue"
 import { DEFAULT_REPORT_PREFS, REPORT_RANGE_LABEL_KEYS } from "../types"
 import { buildEmptyReport, buildReportData, sinceForRange, DEBT_MIN_MOD_COUNT } from "../reportMetrics"
 import type { NumstatCommit } from "../reportMetrics"
-import { relativeTime, resolveValidPath } from "../utils"
+import { findProject, relativeTime, resolveValidPath } from "../utils"
 
 export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[]>, i18n: Record<string, any>) {
   /** 生成中标记（并发去重） */
@@ -37,7 +37,7 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
   /** 当前生效的项目（选中项优先，未选中或已删除回退首个项目；无项目返回 null） */
   const currentProject = computed<GitProject | null>(() => {
     if (projects.value.length === 0) return null
-    const selected = projects.value.find((p) => p.id === projectId.value)
+    const selected = findProject(projects, projectId.value)
     return selected ?? projects.value[0]
   })
 

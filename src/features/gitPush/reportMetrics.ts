@@ -21,7 +21,7 @@ import type {
 } from "./types/report"
 import { REPORT_RANGES } from "./types/report"
 import { getNodeFsPathOs, getNodeProcessModules } from "@/utils/nodeModules"
-import { resolveValidPath } from "./utils"
+import { formatLocalDate, resolveValidPath } from "./utils"
 
 // ── 解析：git log --numstat 输出 → 结构化提交块 ──
 
@@ -402,10 +402,9 @@ export function calcMovingAverage7(daily: DailyCommitStat[]): number[] {
     const endMs = Date.parse(s.date)
     let sum = 0
     for (let offset = 0; offset < 7; offset++) {
-      // 用本地日期切片，避免 toISOString 的 UTC 口径在西半球时区产生跨日偏移
+      // 复用 utils.formatLocalDate（本地日期口径，避免 toISOString 的 UTC 在西半球跨日偏移）
       const d = new Date(endMs - offset * DAY_MS)
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
-      sum += byDate.get(key) ?? 0
+      sum += byDate.get(formatLocalDate(d)) ?? 0
     }
     return Math.round((sum / 7) * 10) / 10
   })

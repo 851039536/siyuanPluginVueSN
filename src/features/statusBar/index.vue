@@ -153,6 +153,8 @@ const quickNoteI18n = (props.plugin?.i18n?.quickNote ?? {}) as unknown as Record
 const quickNoteResetI18n = (props.plugin?.i18n?.quickNoteReset ?? {}) as unknown as Record<string, string>
 // 图片生成 i18n 分片（同上，显式收窄嵌套命名空间）
 const imageCreationI18n = (props.plugin?.i18n?.imageCreation ?? {}) as unknown as Record<string, string>
+// 全局关系列表 i18n 分片（同上，显式收窄嵌套命名空间）
+const globalRelationsI18n = (props.plugin?.i18n?.globalRelations ?? {}) as unknown as Record<string, string>
 
 const FEATURES: FeatureRegistryEntry[] = [
   {
@@ -270,6 +272,18 @@ const FEATURES: FeatureRegistryEntry[] = [
       itemClass: "action-item s3-file-manager-item",
     },
     action: () => emitCustomEvent("openS3FileManager"),
+  },
+  {
+    id: "globalRelations",
+    icon: "mdi:relation-many-to-many",
+    color: "#06b6d4",
+    title: globalRelationsI18n.panelTitle || "全局关系列表",
+    pinnable: true,
+    shortcut: {
+      icon: "mdi:relation-many-to-many",
+      itemClass: "action-item global-relations-item",
+    },
+    action: () => emitCustomEvent("toggleGlobalRelations"),
   },
   {
     id: "everythingSearch",
@@ -393,7 +407,7 @@ const FEATURES: FeatureRegistryEntry[] = [
 
 // 监控项 ID 集合：由 FEATURES 的 group 字段派生（单一数据源，避免与 group:"监控" 双处维护不同步）
 const MONITOR_IDS = new Set(
-  FEATURES.filter((f) => f.group === "监控").map((f) => f.id)
+  FEATURES.filter((f) => f.group === "监控").map((f) => f.id),
 )
 
 // id → 功能映射，用于点击分发（O(1) 取代 `id in SHORTCUT_DISPLAY` + superPanel 特判）

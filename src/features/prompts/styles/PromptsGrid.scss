@@ -162,14 +162,13 @@
 
   .vp-content-value {
     background: var(--b3-theme-background);
-    border: 1px solid var(--b3-border-color);
     border-radius: $vp-radius;
     padding: $spacing-2;
     cursor: pointer;
-    transition: border-color 0.12s;
+    transition: background-color 0.12s;
 
     &:hover {
-      border-color: var(--b3-theme-primary);
+      background: var(--b3-theme-surface);
     }
 
     pre {

@@ -342,6 +342,7 @@ import {
   watch,
 } from "vue"
 import { getErrorMessage } from "@/utils/stringUtils"
+import { findProject } from "./utils"
 import AddProjectDialog from "./components/common/AddProjectDialog.vue"
 import CategoryDialog from "./components/common/CategoryDialog.vue"
 import ConfirmDialog from "./components/common/ConfirmDialog.vue"
@@ -479,7 +480,7 @@ provide(CARD_SERVICES_KEY, { manager: props.manager, updateProjectMeta, cardRefr
 /** 卡片加载提交日志后回传最近活动时间（原 useGitOps.loadCommitLog 的副作用） */
 async function recordCommitActivity(id: string, isoTime: string) {
   await props.manager.recordLastActivity(id, isoTime).catch(() => {})
-  const project = projects.value.find((p) => p.id === id)
+  const project = findProject(projects, id)
   if (project && project.lastActivity !== isoTime) {
     project.lastActivity = isoTime
     projects.value = [...projects.value]
@@ -902,7 +903,7 @@ async function handleAddFromDialog(data: ProjectPathExtras & { name: string, pat
 
 /** 从统计视图跳转到指定项目 */
 function onViewProject(projectId: string) {
-  const project = projects.value.find((p) => p.id === projectId)
+  const project = findProject(projects, projectId)
   if (!project) return
   // 切换到列表视图
   currentView.value = "list"

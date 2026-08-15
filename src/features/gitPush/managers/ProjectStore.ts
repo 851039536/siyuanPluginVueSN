@@ -6,9 +6,10 @@ import type {
   ProjectPathExtras,
 } from "../types/storage"
 import { UNGROUPED_ID } from "../types/storage"
+import { PLATFORM_META } from "../types/meta"
 import type { GitPushStorage } from "../types/storage"
 import type { GitExecutor } from "./GitExecutor"
-import { getCurrentDeviceName, resolveValidPath } from "../utils"
+import { PLATFORM_FLAG_BY_KEY, getCurrentDeviceName, resolveValidPath } from "../utils"
 
 /** 递增计数器（与时间戳组合成唯一 ID，避免同毫秒碰撞） */
 let idCounter = 0
@@ -55,6 +56,22 @@ export class ProjectStore {
   private async getProjectsForWrite(): Promise<GitProject[]> {
     const projects = await this.getProjects()
     return projects.map((p) => ({ ...p }))
+  }
+
+  /** 统一「找项目 → mutate → 决定是否保存」流程，消除各写方法的 find/save/invalidate 重复。
+   * mutate 返回是否实际修改（false 表示无需持久化，如 appendTag 去重后无变化） */
+  private async mutateProject(id: string, mutate: (p: GitProject) => boolean): Promise<{ projects: GitProject[], project: GitProject, changed: boolean } | null> {
+    const projects = await this.getProjectsForWrite()
+    const project = projects.find((p) => p.id === id)
+    if (!project) return null
+    const changed = mutate(project)
+    return { projects, project, changed }
+  }
+
+  /** 持久化并失效缓存（mutateProject 后统一调用） */
+  private async saveProjects(projects: GitProject[]): Promise<void> {
+    await this.storage.projects.save(projects)
+    this.invalidateProjectCache()
   }
 
   /** 清空全部项目缓存（写操作后调用以保证一致性） */
@@ -113,67 +130,69 @@ export class ProjectStore {
    * 更新项目元信息
    */
   async updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "path" | "tags" | "starred" | "archived" | "note" | "name" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl" | "localPaths" | "pathDevices">>): Promise<GitProject | null> {
-    const projects = await this.getProjectsForWrite()
-    const project = projects.find((p) => p.id === id)
-    if (!project) return null
-    Object.assign(project, patch)
-    await this.storage.projects.save(projects)
-    this.invalidateProjectCache()
+    const r = await this.mutateProject(id, (project) => {
+      Object.assign(project, patch)
+      return true
+    })
+    if (!r) return null
+    await this.saveProjects(r.projects)
     if (patch.tags !== undefined) await this.syncGlobalTags()
-    return project
+    return r.project
   }
 
   /** 切换收藏状态 */
   async toggleStar(id: string): Promise<GitProject | null> {
-    const projects = await this.getProjectsForWrite()
-    const project = projects.find((p) => p.id === id)
-    if (!project) return null
-    project.starred = !project.starred
-    await this.storage.projects.save(projects)
-    this.invalidateProjectCache()
-    return project
+    const r = await this.mutateProject(id, (project) => {
+      project.starred = !project.starred
+      return true
+    })
+    if (!r) return null
+    await this.saveProjects(r.projects)
+    return r.project
   }
 
   /** 添加标签（去重） */
   async appendTag(id: string, tag: string): Promise<GitProject | null> {
     const t = tag.trim()
     if (!t) return null
-    const projects = await this.getProjectsForWrite()
-    const project = projects.find((p) => p.id === id)
-    if (!project) return null
-    const tags = project.tags || []
-    if (!tags.includes(t)) {
+    const r = await this.mutateProject(id, (project) => {
+      const tags = project.tags || []
+      if (tags.includes(t)) return false
       project.tags = [...tags, t]
-      await this.storage.projects.save(projects)
-      this.invalidateProjectCache()
+      return true
+    })
+    if (!r) return null
+    if (r.changed) {
+      await this.saveProjects(r.projects)
       await this.syncGlobalTags()
     }
-    return project
+    return r.project
   }
 
   /** 移除标签 */
   async removeTag(id: string, tag: string): Promise<GitProject | null> {
-    const projects = await this.getProjectsForWrite()
-    const project = projects.find((p) => p.id === id)
-    if (!project) return null
-    if (project.tags) {
+    const r = await this.mutateProject(id, (project) => {
+      if (!project.tags) return false
       project.tags = project.tags.filter((t) => t !== tag)
       if (project.tags.length === 0) project.tags = undefined
-      await this.storage.projects.save(projects)
-      this.invalidateProjectCache()
+      return true
+    })
+    if (!r) return null
+    if (r.changed) {
+      await this.saveProjects(r.projects)
       await this.syncGlobalTags()
     }
-    return project
+    return r.project
   }
 
   /** 记录最后活动时间 */
   async recordLastActivity(id: string, isoTime: string): Promise<void> {
-    const projects = await this.getProjectsForWrite()
-    const project = projects.find((p) => p.id === id)
-    if (!project) return
-    project.lastActivity = isoTime
-    await this.storage.projects.save(projects)
-    this.invalidateProjectCache()
+    const r = await this.mutateProject(id, (project) => {
+      project.lastActivity = isoTime
+      return true
+    })
+    if (!r) return
+    await this.saveProjects(r.projects)
   }
 
   /** 同步全局标签缓存 */
@@ -193,31 +212,26 @@ export class ProjectStore {
 
   /** 重新检测项目远程仓库并更新 */
   async refreshRemotes(id: string): Promise<GitProject | null> {
-    const projects = await this.getProjectsForWrite()
-    const project = projects.find((p) => p.id === id)
-    if (!project) return null
-    this.applyRemotesToProject(project, await this.detectRemotes(resolveValidPath(project)))
-    await this.storage.projects.save(projects)
-    this.invalidateProjectCache()
-    return project
+    const r = await this.mutateProject(id, () => true)
+    if (!r) return null
+    this.applyRemotesToProject(r.project, await this.detectRemotes(resolveValidPath(r.project)))
+    await this.saveProjects(r.projects)
+    return r.project
   }
 
   /** 将检测到的远程仓库信息应用到项目对象（仅管理远程名称，不触碰用户手动输入的仓库链接） */
   private applyRemotesToProject(project: GitProject, remotes: GitRemoteInfo[]) {
     // 只清空远程名称字段（git 操作依赖），仓库链接 xxxUrl 由用户手动管理，不受检测覆盖
-    project.githubRemote = undefined
-    project.giteeRemote = undefined
-    project.giteaRemote = undefined
-    project.cnbRemote = undefined
-    const patch: Partial<GitProject> = {}
-    for (const r of remotes) {
-      if (r.isGithub && !patch.githubRemote) { patch.githubRemote = r.name }
-      if (r.isGitee && !patch.giteeRemote) { patch.giteeRemote = r.name }
-      if (r.isGitea && !patch.giteaRemote) { patch.giteaRemote = r.name }
-      if (r.isCnb && !patch.cnbRemote) { patch.cnbRemote = r.name }
+    for (const pm of PLATFORM_META) {
+      project[pm.remoteProp] = undefined
     }
-    if (Object.keys(patch).length > 0) {
-      Object.assign(project, patch)
+    // 由 PLATFORM_META 驱动：每个平台取首个检测标志命中的远程名（消除 4 连 if 重复）
+    for (const pm of PLATFORM_META) {
+      const flagProp = PLATFORM_FLAG_BY_KEY[pm.key]
+      const remote = remotes.find((r) => r[flagProp])
+      if (remote) {
+        project[pm.remoteProp] = remote.name
+      }
     }
   }
 

@@ -4,7 +4,7 @@ import { ref } from "vue"
 import { showMessage } from "siyuan"
 import type { CardDataDomain, GitProject, GitPushManager } from "../types"
 import type { RunBatch } from "./useBatchProgress"
-import { resolveValidPath } from "../utils"
+import { findProject, resolveValidPath } from "../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
 
 /** 全局刷新防抖冷却时间（毫秒） */
@@ -54,6 +54,20 @@ export function useRefreshOps(deps: {
   /** 远程刷新防抖时间戳 */
   let remoteRefreshLastTime = 0
 
+  /** 按项目 id 维护 Record 型 loading 状态（开始置 true，finally 删除 + 浅拷贝触发响应式）。
+   * 统一 refreshingWorkingTree / remoteStatusLoading / fetching 三处的重复模式 */
+  async function withRecordLoading(
+    loadingRef: Ref<Record<string, boolean>>, id: string, fn: () => Promise<void>,
+  ): Promise<void> {
+    loadingRef.value = { ...loadingRef.value, [id]: true }
+    try {
+      await fn()
+    } finally {
+      delete loadingRef.value[id]
+      loadingRef.value = { ...loadingRef.value }
+    }
+  }
+
   /** 静默刷新当前分类下的项目状态（批次处理，每批 3 个匹配 git 信号量上限） */
   async function silentRefreshAll(keepVisible = false) {
     if (gitOpsPaused.value) return
@@ -79,7 +93,7 @@ export function useRefreshOps(deps: {
   }
 
   async function handleRefresh(id: string) {
-    const project = projects.value.find((p) => p.id === id)
+    const project = findProject(projects, id)
     if (!project) return
     refreshing.value = id
     try {
@@ -104,31 +118,23 @@ export function useRefreshOps(deps: {
   // ---- 细分刷新操作 ----
 
   async function handleRefreshWorkingTree(id: string) {
-    const project = projects.value.find((p) => p.id === id)
+    const project = findProject(projects, id)
     if (!project) return
-    refreshingWorkingTree.value = { ...refreshingWorkingTree.value, [id]: true }
-    try {
+    await withRecordLoading(refreshingWorkingTree, id, async () => {
       const branch = await manager.getBranch(resolveValidPath(project))
       await loadWorkingTree(id, false, branch)
-    } finally {
-      delete refreshingWorkingTree.value[id]
-      refreshingWorkingTree.value = { ...refreshingWorkingTree.value }
-    }
+    })
   }
 
   async function handleRefreshRemoteStatus(id: string) {
-    const project = projects.value.find((p) => p.id === id)
+    const project = findProject(projects, id)
     if (!project) return
-    remoteStatusLoading.value = { ...remoteStatusLoading.value, [id]: true }
-    try {
+    await withRecordLoading(remoteStatusLoading, id, async () => {
       const branch = await manager.getBranch(resolveValidPath(project))
       // 先刷新远程配置再加载状态，避免 loadPushStatus(fetchFirst) 用陈旧的远程名 fetch（与 handleRefresh 同一致竞态）
       await refreshRemotes(id)
       await loadPushStatus(id, { fetchFirst: true, branch })
-    } finally {
-      delete remoteStatusLoading.value[id]
-      remoteStatusLoading.value = { ...remoteStatusLoading.value }
-    }
+    })
   }
 
   async function handleRefreshAll() {
@@ -179,18 +185,13 @@ export function useRefreshOps(deps: {
 
   /** Fetch 所有远程 + 刷新状态 */
   async function handleFetchAll(id: string) {
-    fetching.value = {
-      ...fetching.value,
-      [id]: true,
-    }
-    try {
-      await fetchAllRemotes(id)
-    } catch (e: unknown) {
-      showMessage(getErrorMessage(e) || tf("fetchFailed"), 5000, "error")
-    } finally {
-      delete fetching.value[id]
-      fetching.value = { ...fetching.value }
-    }
+    await withRecordLoading(fetching, id, async () => {
+      try {
+        await fetchAllRemotes(id)
+      } catch (e: unknown) {
+        showMessage(getErrorMessage(e) || tf("fetchFailed"), 5000, "error")
+      }
+    })
   }
 
   return {

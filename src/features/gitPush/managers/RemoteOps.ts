@@ -394,15 +394,8 @@ export class RemoteOps {
       needsPush: false,
     }
 
-    try {
-      status.branch = opts?.branch ?? await this.executor.execGit(cwd, ["rev-parse", "--abbrev-ref", "HEAD"])
-    } catch {
-      return emptyResult
-    }
-
-    // detached HEAD 时 rev-parse 返回字面量 "HEAD"，归一化为空并提前返回，
-    // 避免构造 remote/HEAD...HEAD 触发 ambiguous argument 被误判为 noUpstream（虚假 needsPush）
-    if (status.branch === "HEAD") { status.branch = "" }
+    // detached HEAD 时 getCurrentBranch 返回空串并提前返回，避免构造 remote/HEAD...HEAD 触发 ambiguous argument 被误判为 noUpstream（虚假 needsPush）
+    status.branch = opts?.branch ?? await this.getCurrentBranch(cwd)
     if (!status.branch) { return emptyResult }
 
     // 如果指定 fetchFirst，先并行 fetch 所有已配置远程以更新跟踪分支

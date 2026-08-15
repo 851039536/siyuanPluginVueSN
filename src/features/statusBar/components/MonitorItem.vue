@@ -33,12 +33,7 @@ interface Props {
   itemClass?: string
 }
 
-withDefaults(defineProps<Props>(), {
-  icon: undefined,
-  title: undefined,
-  level: undefined,
-  itemClass: undefined,
-})
+defineProps<Props>()
 
 defineEmits<{
   click: [event: MouseEvent]

@@ -3,18 +3,9 @@ import type { Ref } from "vue"
 import { ref } from "vue"
 import { showMessage } from "siyuan"
 import type { CardDataDomain, GitProject, GitPushManager } from "../types"
-import type { StepCtx } from "./useBatchProgress"
+import type { RunBatch } from "./useBatchProgress"
 import { resolveValidPath } from "../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
-
-/** runBatchWithProgress 的类型（由 index.vue 注入，StepCtx 复用 useBatchProgress 导出的共享定义） */
-type RunBatch = <T>(
-  items: T[],
-  label: string,
-  fn: (item: T, ctx: StepCtx) => Promise<void>,
-  getName?: (item: T) => string,
-  options?: { keepVisible?: boolean },
-) => Promise<void>
 
 /** 全局刷新防抖冷却时间（毫秒） */
 const REFRESH_COOLDOWN_MS = 500
@@ -93,11 +84,12 @@ export function useRefreshOps(deps: {
     refreshing.value = id
     try {
       await runBatchWithProgress([project], tf("refreshingLabel"), async (p, ctx) => {
-        // 一次 rev-parse 获取 branch，远程/推送/工作区并行（git 信号量自动限流到 3）
+        // 一次 rev-parse 获取 branch；先刷新远程配置再并行加载状态，
+        // 避免 loadPushStatus(fetchFirst) 用陈旧的远程名 fetch（refreshRemotes 与状态读取竞态）
         const cwd = resolveValidPath(p)
         const branch = await manager.getBranch(cwd)
+        await ctx.step(tf("stepRemote"), () => refreshRemotes(p.id))
         await Promise.all([
-          ctx.step(tf("stepRemote"), () => refreshRemotes(p.id)),
           ctx.step(tf("stepPush"), () => loadPushStatus(p.id, { fetchFirst: true, branch })),
           ctx.step(tf("stepWorkingTree"), () => loadWorkingTree(p.id, false, branch)),
         ])

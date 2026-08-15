@@ -1,9 +1,10 @@
 // 远程推送/拉取进度追踪与结构化输出（从 useGitOps 提取，降低单文件复杂度）
 import type { Ref } from "vue"
-import type { GitOpAction, GitOpLogEntry, GitProject, GitPushManager, PlatformKey } from "../types"
+import type { GitOpAction, GitProject, GitPushManager, PlatformKey } from "../types"
 import { ref } from "vue"
 import { PLATFORM_META } from "../types"
 import { findProject, pruneRecordCache, resolveValidPath } from "../utils"
+import type { AppendOpLogInput } from "./useOpLog"
 
 /** 推送/拉取进度项 */
 export interface PushOutputEntry {
@@ -16,9 +17,6 @@ export interface PushOutputEntry {
   fullStdout: string
   fullStderr: string
 }
-
-/** appendOpLog 输入类型（精简版，不含 id/time） */
-type AppendOpLogInput = Omit<GitOpLogEntry, "id" | "time">
 
 export type ProgressStatus = "pending" | "pushing" | "ok" | "fail"
 type ProgressRef = Ref<Record<string, Record<string, ProgressStatus>>>
@@ -143,9 +141,11 @@ export function useRemoteProgress(
   async function remoteOpAll(
     action: "push" | "pull", progressRef: ProgressRef, outputsRef: OutputsRef,
     managerFn: (id: string) => Promise<Record<string, any>>, id: string,
+    oppositeProgressRef?: ProgressRef,
   ) {
-    // 入口守卫：同一项目的同类操作进行中时拒绝重复触发（防双击竞态）
-    if (isOpInProgress(progressRef, id)) {
+    // 入口守卫：同一项目的同类操作进行中时拒绝重复触发（防双击竞态）；
+    // 同时拒绝与另一操作（push ↔ pull）并发写同一仓库（UI disabled 之外的后端兜底）
+    if (isOpInProgress(progressRef, id) || (oppositeProgressRef && isOpInProgress(oppositeProgressRef, id))) {
       return { success: false }
     }
     const seq = nextOpSeq(id)
@@ -213,9 +213,11 @@ export function useRemoteProgress(
     action: "push" | "pull", progressRef: ProgressRef, outputsRef: OutputsRef,
     managerFn: (id: string, target: PlatformKey) => Promise<{ ok: boolean, stdout: string, stderr: string }>,
     id: string, target: PlatformKey,
+    oppositeProgressRef?: ProgressRef,
   ) {
-    // 入口守卫：该项目该平台的同类操作进行中时拒绝重复触发（防双击竞态）
-    if (isOpInProgress(progressRef, id, target)) {
+    // 入口守卫：该项目该平台的同类操作进行中时拒绝重复触发（防双击竞态）；
+    // 同时拒绝与另一操作（push ↔ pull）并发写同一仓库（UI disabled 之外的后端兜底）
+    if (isOpInProgress(progressRef, id, target) || (oppositeProgressRef && isOpInProgress(oppositeProgressRef, id))) {
       return { ok: false, stdout: "", stderr: "操作进行中" }
     }
     const seq = nextOpSeq(id)
@@ -323,19 +325,19 @@ export function useRemoteProgress(
   }
 
   function pushToAll(id: string) {
-    return remoteOpAll("push", pushProgress, pushOutputs, manager.pushToAll.bind(manager), id)
+    return remoteOpAll("push", pushProgress, pushOutputs, manager.pushToAll.bind(manager), id, pullProgress)
   }
 
   function pushSingle(id: string, target: PlatformKey) {
-    return remoteOpSingle("push", pushProgress, pushOutputs, manager.pushSingle.bind(manager), id, target)
+    return remoteOpSingle("push", pushProgress, pushOutputs, manager.pushSingle.bind(manager), id, target, pullProgress)
   }
 
   function pullToAll(id: string) {
-    return remoteOpAll("pull", pullProgress, pullOutputs, manager.pullToAll.bind(manager), id)
+    return remoteOpAll("pull", pullProgress, pullOutputs, manager.pullToAll.bind(manager), id, pushProgress)
   }
 
   function pullSingle(id: string, target: PlatformKey) {
-    return remoteOpSingle("pull", pullProgress, pullOutputs, manager.pullSingle.bind(manager), id, target)
+    return remoteOpSingle("pull", pullProgress, pullOutputs, manager.pullSingle.bind(manager), id, target, pushProgress)
   }
 
   function cancelPush(id: string) { manager.cancelOp(id, "push") }

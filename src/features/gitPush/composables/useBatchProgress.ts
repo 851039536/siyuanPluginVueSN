@@ -8,6 +8,15 @@ export interface StepCtx {
   step: <R>(name: string, fn: () => Promise<R>) => Promise<R>
 }
 
+/** runBatch 的函数签名（供 useRefreshOps 等注入方引用，消除手写重复类型） */
+export type RunBatch = <T>(
+  items: T[],
+  label: string,
+  fn: (item: T, ctx: StepCtx) => Promise<void>,
+  getName?: (item: T) => string,
+  options?: { keepVisible?: boolean },
+) => Promise<void>
+
 const DEFAULT_STATE: LoadProgress = {
   visible: false,
   current: 0,

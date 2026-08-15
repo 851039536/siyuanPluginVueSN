@@ -44,12 +44,10 @@
 </template>
 
 <script setup lang="ts">
-import { Icon } from "@iconify/vue"
 import type { GitPushManager } from "../../types"
+import type { GitConfigScope } from "../../types/gitConfigDesc"
+import { Icon } from "@iconify/vue"
 import GitConfigSection from "./GitConfigSection.vue"
-
-/** Git 配置作用域：全局（~/.gitconfig）或项目级（<project>/.git/config） */
-type GitConfigScope = "global" | "local"
 
 defineProps<{
   i18n: Record<string, any>

@@ -28,31 +28,31 @@
           @submit.prevent="handleSave"
         >
           <div class="vp-form-group">
-              <label for="prompt-title">{{ i18n?.titleLabel }}</label>
-              <input
-                id="prompt-title"
-                v-model="form.title"
-                type="text"
-                class="vp-input"
-                :placeholder="i18n?.titlePlaceholder"
+            <label for="prompt-title">{{ i18n?.titleLabel }}</label>
+            <input
+              id="prompt-title"
+              v-model="form.title"
+              type="text"
+              class="vp-input"
+              :placeholder="i18n?.titlePlaceholder"
               required
               aria-required="true"
             />
           </div>
 
           <div class="vp-form-group">
-              <label for="prompt-description">{{ i18n?.description }}</label>
-              <textarea
-                id="prompt-description"
-                v-model="form.description"
-                class="vp-textarea"
-                :placeholder="i18n?.descriptionPlaceholder"
+            <label for="prompt-description">{{ i18n?.description }}</label>
+            <textarea
+              id="prompt-description"
+              v-model="form.description"
+              class="vp-textarea"
+              :placeholder="i18n?.descriptionPlaceholder"
               rows="3"
             />
           </div>
 
           <div class="vp-form-group">
-              <label for="prompt-category">{{ i18n?.category }}</label>
+            <label for="prompt-category">{{ i18n?.category }}</label>
             <select
               id="prompt-category"
               v-model="form.category"
@@ -92,7 +92,7 @@
                   :placeholder="i18n?.contentPlaceholder"
                   rows="5"
                   required
-                  :aria-label="`${i18n?.content || '内容'} ${index + 1}`"
+                  :aria-label="`${i18n?.content} ${index + 1}`"
                 />
               </div>
               <div class="vp-content-editor-actions">
@@ -161,9 +161,11 @@ import type {
 } from "../types"
 
 import { showMessage } from "siyuan"
-import { reactive, watch } from "vue"
+import {
+  reactive,
+  watch,
+} from "vue"
 import Button from "@/components/Button.vue"
-import IconWrapper from "@/components/IconWrapper.vue"
 
 const props = defineProps<{
   show: boolean
@@ -189,7 +191,7 @@ const form = reactive<{
   category: "",
 })
 
-function initForm() {
+function initForm(): void {
   if (props.editingPrompt) {
     const p = props.editingPrompt
     form.title = p.title
@@ -211,6 +213,7 @@ watch(
   (v) => {
     if (v) initForm()
   },
+  { immediate: true },
 )
 
 function createEmptyContentBlock(label?: string): PromptContent {
@@ -221,16 +224,16 @@ function createEmptyContentBlock(label?: string): PromptContent {
   }
 }
 
-function addContentBlock() {
+function addContentBlock(): void {
   form.contents.push(createEmptyContentBlock())
 }
 
-function removeContentBlock(index: number) {
+function removeContentBlock(index: number): void {
   if (form.contents.length <= 1) return
   form.contents.splice(index, 1)
 }
 
-function moveContentBlock(index: number, direction: -1 | 1) {
+function moveContentBlock(index: number, direction: -1 | 1): void {
   const target = index + direction
   if (target < 0 || target >= form.contents.length) return
   const tmp = form.contents[index]
@@ -238,14 +241,14 @@ function moveContentBlock(index: number, direction: -1 | 1) {
   form.contents[target] = tmp
 }
 
-function handleSave() {
+function handleSave(): void {
   if (!form.title.trim()) {
-    showMessage(props.i18n?.titleRequired, 2000, "error")
+    showMessage((props.i18n || {}).titleRequired!, 2000, "error")
     return
   }
   const validContents = form.contents.filter((c) => c.text.trim())
   if (validContents.length === 0) {
-    showMessage(props.i18n?.contentRequired, 2000, "error")
+    showMessage((props.i18n || {}).contentRequired!, 2000, "error")
     return
   }
 
@@ -257,7 +260,7 @@ function handleSave() {
       .filter((c) => c.text.trim())
       .map((c) => ({
         id: c.id,
-        label: c.label.trim() || (props.i18n?.contentBlockLabel || "内容"),
+        label: c.label.trim() || (props.i18n || {}).contentBlockLabel!,
         text: c.text.trim(),
       })),
     category: form.category,

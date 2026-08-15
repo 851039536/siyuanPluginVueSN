@@ -158,7 +158,6 @@
 import type {
   Prompt,
   PromptCategory,
-  PromptContent,
 } from "../types"
 
 import Button from "@/components/Button.vue"

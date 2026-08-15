@@ -91,17 +91,18 @@ import {
   computed,
   onMounted,
   ref,
+  shallowRef,
 } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { copyToClipboard } from "@/utils/domUtils"
-import { useCategoryManager } from "./composables/useCategoryManager"
-import { usePrompts } from "./composables/usePrompts"
-import { PromptsStorage } from "./types/storage"
 import CategoryManageModal from "./components/CategoryManageModal.vue"
 import DeleteConfirmModal from "./components/DeleteConfirmModal.vue"
 import PromptFormModal from "./components/PromptFormModal.vue"
 import PromptsGrid from "./components/PromptsGrid.vue"
+import { useCategoryManager } from "./composables/useCategoryManager"
+import { usePrompts } from "./composables/usePrompts"
+import { PromptsStorage } from "./types/storage"
 
 const props = defineProps<{
   i18n?: Record<string, string>
@@ -123,7 +124,7 @@ const selectedCategory = ref<string>("all")
 const deleteConfirmTarget = ref<string | null>(null)
 
 // --- 数据层 ---
-const storage = ref<PromptsStorage | null>(null)
+const storage = shallowRef<PromptsStorage | null>(null)
 const {
   prompts,
   loading,
@@ -152,9 +153,13 @@ const categoryCounts = computed(() => {
 // --- 过滤计算 ---
 // 缓存分类元数据，仅在分类列表变化时重建
 const categoryMetaMap = computed(() => {
-  const map = new Map<string, { name: string; color: string; bg: string }>()
+  const map = new Map<string, { name: string, color: string, bg: string }>()
   for (const cat of categoriesRaw.value) {
-    map.set(cat.id, { name: cat.name, color: cat.color, bg: `${cat.color}20` })
+    map.set(cat.id, {
+      name: cat.name,
+      color: cat.color,
+      bg: `${cat.color}20`,
+    })
   }
   return map
 })
@@ -179,7 +184,11 @@ const filteredPrompts = computed(() => {
   }
 
   const metaMap = categoryMetaMap.value
-  const defaultMeta = metaMap.get(categoriesRaw.value[0]?.id) || { name: i18n?.defaultCategory || "默认", color: "#d97757", bg: "#d9775720" }
+  const defaultMeta = metaMap.get(categoriesRaw.value[0]?.id) || {
+    name: (props.i18n || {}).defaultCategory!,
+    color: "#d97757",
+    bg: "#d9775720",
+  }
   return result.map((prompt) => {
     const cat = metaMap.get(prompt.category) || defaultMeta
     return {
@@ -193,19 +202,24 @@ const filteredPrompts = computed(() => {
 
 // --- 初始化 ---
 onMounted(async () => {
-  if (props.plugin) {
-    storage.value = new PromptsStorage(props.plugin)
+  if (!props.plugin) return
+
+  storage.value = new PromptsStorage(props.plugin)
+  try {
     await Promise.all([loadPrompts(), loadCategories()])
+  } catch (error) {
+    console.error("初始化提示词库失败:", error)
+    showMessage((props.i18n || {}).loadFailed!, 3000, "error")
   }
 })
 
 // --- 提示词操作 ---
-function closeAddModal() {
+function closeAddModal(): void {
   showAddModal.value = false
   editingPrompt.value = null
 }
 
-async function handleSave(prompt: Prompt) {
+async function handleSave(prompt: Prompt): Promise<void> {
   if (editingPrompt.value) {
     await updatePrompt(prompt)
   } else {
@@ -215,14 +229,14 @@ async function handleSave(prompt: Prompt) {
 }
 
 // --- 分类操作 ---
-function handleCategoryAdd(category: PromptCategory) {
+function handleCategoryAdd(category: PromptCategory): void {
   addCategory(category)
 }
 
-async function handleCategoryDelete(id: string) {
+async function handleCategoryDelete(id: string): Promise<void> {
   const hasPrompts = prompts.value.some((p) => p.category === id)
   if (hasPrompts) {
-    showMessage(props.i18n?.categoryNotEmpty, 3000, "error")
+    showMessage((props.i18n || {}).categoryNotEmpty!, 3000, "error")
     return
   }
   await removeCategory(id)
@@ -232,21 +246,21 @@ async function handleCategoryDelete(id: string) {
 }
 
 // --- 删除确认 ---
-async function confirmDelete() {
+async function confirmDelete(): Promise<void> {
   const id = deleteConfirmTarget.value
   if (!id) return
   await removePrompt(id)
   deleteConfirmTarget.value = null
-  showMessage(props.i18n?.promptDeleted, 2000, "info")
+  showMessage((props.i18n || {}).promptDeleted!, 2000, "info")
 }
 
 // --- 工具函数 ---
-async function copyContent(content: string) {
+async function copyContent(content: string): Promise<void> {
   const ok = await copyToClipboard(content)
-  if (!ok) showMessage(props.i18n?.copyFailed, 2000, "error")
+  if (!ok) showMessage((props.i18n || {}).copyFailed!, 2000, "error")
 }
 
-function closeModal() {
+function closeModal(): void {
   showModal.value = false
   emit("close")
   props.onClose?.()

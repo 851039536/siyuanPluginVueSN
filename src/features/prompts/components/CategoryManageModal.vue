@@ -85,7 +85,7 @@ import type { PromptCategory } from "../types"
 import { reactive } from "vue"
 import Button from "@/components/Button.vue"
 
-const props = defineProps<{
+defineProps<{
   show: boolean
   categories: PromptCategory[]
   i18n?: Record<string, string>
@@ -102,7 +102,7 @@ const form = reactive({
   color: "#d97757",
 })
 
-function handleAdd() {
+function handleAdd(): void {
   if (!form.name.trim()) return
   const newCategory: PromptCategory = {
     id: Date.now().toString(),
@@ -114,7 +114,7 @@ function handleAdd() {
   form.color = "#d97757"
 }
 
-function handleDelete(id: string) {
+function handleDelete(id: string): void {
   emit("delete", id)
 }
 </script>

@@ -16,29 +16,37 @@
     display: flex;
     align-items: center;
     gap: $spacing-1;
-    padding: $spacing-1 $spacing-3;
+    padding: $spacing-2px $spacing-2;
     border-radius: $radius-full;
     border: 1px solid var(--b3-border-color);
     background: var(--b3-theme-surface);
     color: var(--b3-theme-on-surface);
-    font-size: $font-size-xs;
+    font-size: $font-size-2xs;
     font-weight: $font-weight-medium;
+    line-height: $line-height-tight;
+    font-family: $font-zh;
     cursor: pointer;
-    transition: border-color 0.12s;
+    transition:
+      border-color 0.12s,
+      background-color 0.12s,
+      color 0.12s;
 
     .vp-chip-dot {
-      width: 8px;
-      height: 8px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       flex-shrink: 0;
     }
 
     .vp-chip-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       font-size: $font-size-2xs;
       font-weight: $font-weight-medium;
-      min-width: 18px;
-      height: 18px;
-      line-height: 18px;
+      min-width: 16px;
+      height: 16px;
+      line-height: $line-height-tight;
       text-align: center;
       border-radius: $radius-full;
       background: var(--b3-theme-on-surface-lighter);
@@ -85,6 +93,8 @@
 
     .vp-input--search {
       padding-left: 36px;
+      font-family: $font-zh;
+      line-height: $line-height-tight;
 
       &:focus {
         outline: 2px solid var(--b3-theme-primary-lightest);
@@ -112,9 +122,9 @@
 .vp-card-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: $spacing-2;
-  gap: $spacing-1;
+  gap: $spacing-2;
 
   .vp-card-title {
     display: flex;
@@ -132,6 +142,7 @@
       margin: 0;
       font-size: $font-size-xs;
       font-weight: $font-weight-semibold;
+      line-height: $line-height-tight;
       color: var(--b3-theme-on-background);
       flex: 1;
       overflow: hidden;
@@ -141,16 +152,19 @@
     }
 
     .vp-tag {
-      padding: $spacing-2px $spacing-2;
+      padding: 1px 6px;
       border-radius: $radius-sm;
-      font-size: $font-size-xs;
+      font-size: $font-size-2xs;
       font-weight: $font-weight-medium;
+      line-height: $line-height-tight;
       flex-shrink: 0;
+      font-family: $font-zh;
     }
   }
 
   .vp-card-actions {
     display: flex;
+    align-items: center;
     gap: $spacing-1;
     flex-shrink: 0;
   }
@@ -173,11 +187,12 @@
   margin-bottom: $spacing-1;
 
   .vp-content-label {
-    font-size: $font-size-xs;
-    font-weight: $font-weight-bold;
-    letter-spacing: 0.06em;
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-semibold;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
-    opacity: 0.45;
+    opacity: 0.55;
+    line-height: $line-height-tight;
     color: var(--b3-theme-on-surface);
     margin-bottom: $spacing-1;
     display: flex;
@@ -208,7 +223,7 @@
     }
 
     .vp-copy-hint {
-      font-size: $font-size-xs;
+      font-size: $font-size-2xs;
       color: var(--b3-theme-on-surface-light);
       margin-top: $spacing-1;
       text-align: right;
@@ -216,6 +231,7 @@
       align-items: center;
       justify-content: flex-end;
       gap: $spacing-1;
+      line-height: $line-height-tight;
       opacity: 0.7;
     }
 

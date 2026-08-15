@@ -13,7 +13,7 @@
 
     .vp-input {
       flex: 1;
-      @include m.form-input;
+      @include m.form-control;
     }
 
     .vp-color-input {
@@ -68,7 +68,9 @@
     .vp-category-name {
       flex: 1;
       font-size: $font-size-xs;
+      line-height: $line-height-tight;
       color: var(--b3-theme-on-background);
+      font-family: $font-zh;
     }
   }
 }

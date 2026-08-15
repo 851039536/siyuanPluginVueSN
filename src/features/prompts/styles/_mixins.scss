@@ -44,10 +44,29 @@ $card-border-radius: $radius-md;
   color: var(--b3-theme-on-background);
   font-size: $font-size-xs;
   font-family: inherit;
+  line-height: $line-height-tight;
+  box-sizing: border-box;
+
+  &::placeholder {
+    color: var(--b3-theme-on-surface-light);
+    opacity: 0.7;
+  }
 
   &:focus {
     outline: none;
     border-color: var(--b3-theme-primary);
-    outline: 2px solid var(--b3-theme-primary-lightest);
+    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+  }
+}
+
+// 表单控件基础样式（输入框/文本域/选择框共享）
+@mixin form-control {
+  @include form-input;
+  font-family: $font-zh;
+
+  &:focus {
+    outline: none;
+    border-color: var(--b3-theme-primary);
+    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
   }
 }

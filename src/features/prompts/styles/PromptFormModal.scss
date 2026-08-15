@@ -10,19 +10,20 @@
     label {
       display: block;
       font-size: $font-size-2xs;
-      font-weight: $font-weight-bold;
-      letter-spacing: 0.06em;
+      font-weight: $font-weight-semibold;
+      letter-spacing: 0.04em;
+      line-height: $line-height-tight;
       text-transform: uppercase;
-      opacity: 0.45;
+      opacity: 0.55;
       color: var(--b3-theme-on-background);
       margin-bottom: $spacing-2;
+      font-family: $font-zh;
     }
 
     .vp-input,
     .vp-textarea,
     .vp-select {
-      @include m.form-input;
-      box-sizing: border-box;
+      @include m.form-control;
     }
 
     .vp-select {
@@ -46,12 +47,14 @@
 .vp-form-label {
   display: block;
   font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
-  letter-spacing: 0.06em;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.04em;
+  line-height: $line-height-tight;
   text-transform: uppercase;
-  opacity: 0.45;
+  opacity: 0.55;
   color: var(--b3-theme-on-background);
   margin-bottom: $spacing-2;
+  font-family: $font-zh;
 }
 
 // 动态内容块编辑器
@@ -67,7 +70,7 @@
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
   border-radius: $vp-radius;
-  transition: all 0.12s;
+  transition: border-color 0.12s;
 
   &:hover {
     border-color: var(--b3-theme-primary);
@@ -82,8 +85,7 @@
   min-width: 0;
 
   .vp-input--label {
-    @include m.form-input;
-    box-sizing: border-box;
+    @include m.form-control;
     font-size: $font-size-xs;
     font-weight: $font-weight-semibold;
     color: var(--b3-theme-primary);
@@ -95,8 +97,7 @@
   }
 
   .vp-textarea {
-    @include m.form-input;
-    box-sizing: border-box;
+    @include m.form-control;
     resize: vertical;
     min-height: 80px;
     line-height: $line-height-normal;
@@ -121,7 +122,11 @@
   padding: $spacing-2 $spacing-4;
   font-size: $font-size-xs;
   font-weight: $font-weight-medium;
-  transition: all 0.12s;
+  line-height: $line-height-tight;
+  font-family: $font-zh;
+  transition:
+    border-color 0.12s,
+    background-color 0.12s;
 
   &:hover {
     border-color: var(--b3-theme-primary);

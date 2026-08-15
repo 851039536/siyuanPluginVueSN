@@ -764,9 +764,9 @@ const props = defineProps<{
   fetching: boolean
   remoteStatusLoading?: boolean
   refreshingWorkingTree?: boolean
-  // 每项目响应式数据（单项目值，非全量 Record，避免跨卡片 re-render）
-  pushStatus: PushStatusInfo
-  workingTree: WorkingTreeInfo
+  // 每项目响应式数据（单项目值，非全量 Record，避免跨卡片 re-render；首屏加载前可能为 undefined）
+  pushStatus?: PushStatusInfo
+  workingTree?: WorkingTreeInfo
   stashLoading: boolean
   commitOutput: string
   pullOutputs: PushOutputEntry[]

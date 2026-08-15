@@ -50,13 +50,7 @@
   padding: $spacing-3;
   margin-bottom: $spacing-2;
   background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
   border-radius: $vp-radius;
-  transition: border-color 0.12s;
-
-  &:hover {
-    border-color: var(--b3-theme-primary);
-  }
 }
 
 .vp-content-editor-inputs {

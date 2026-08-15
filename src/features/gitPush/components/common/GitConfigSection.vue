@@ -241,14 +241,11 @@
 import { Icon } from "@iconify/vue"
 import { onMounted, ref } from "vue"
 import type { GitPushManager } from "../../types"
-import type { GitConfigEntry } from "../../types/gitConfigDesc"
+import type { GitConfigEntry, GitConfigScope } from "../../types/gitConfigDesc"
 import { GIT_PRESET_KEYS, parseGitConfigText } from "../../types/gitConfigDesc"
 import { copyToClipboard } from "@/utils/domUtils"
 import { getErrorMessage } from "@/utils/stringUtils"
 import { openLocalPath } from "../../utils"
-
-/** Git 配置作用域：全局（~/.gitconfig）或项目级（<project>/.git/config） */
-type GitConfigScope = "global" | "local"
 
 const props = defineProps<{
   i18n: Record<string, any>

@@ -4,20 +4,22 @@ import { MAX_OP_LOG_COUNT } from "../types"
 import { onUnmounted, ref } from "vue"
 
 /** 追加日志的输入（id/time 由 appendOpLog 自动补全） */
-type AppendOpLogInput = Omit<GitOpLogEntry, "id" | "time">
+export type AppendOpLogInput = Omit<GitOpLogEntry, "id" | "time">
 
 export function useOpLog(manager: GitPushManager) {
   const opLogs = ref<GitOpLogEntry[]>([])
 
   /** 惰性首读缓存（防并发重复加载） */
   let loadPromise: Promise<void> | null = null
+  /** 是否已完成首读（无论结果是否为空），避免清空后 append 用空数组覆盖磁盘历史 */
+  let loaded = false
 
   /** 防抖定时器（合并密集写入） */
   let saveTimer: ReturnType<typeof setTimeout> | null = null
 
   /** 惰性加载首读 */
   async function ensureOpLogsLoaded(): Promise<void> {
-    if (opLogs.value.length > 0) return
+    if (loaded) return
     if (loadPromise) return loadPromise
     loadPromise = (async () => {
       try {
@@ -27,6 +29,8 @@ export function useOpLog(manager: GitPushManager) {
         }
       } catch (e: any) {
         console.warn("[gitPush] 加载操作日志失败:", e?.message || e)
+      } finally {
+        loaded = true
       }
     })()
     return loadPromise

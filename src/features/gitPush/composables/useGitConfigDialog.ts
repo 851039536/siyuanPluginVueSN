@@ -2,10 +2,8 @@
 import type { Ref } from "vue"
 import { ref } from "vue"
 import type { GitProject, GitPushManager } from "../types"
+import type { GitConfigScope } from "../types/gitConfigDesc"
 import { resolveValidPath } from "../utils"
-
-/** Git 配置作用域：全局（~/.gitconfig）或项目级（<project>/.git/config） */
-type GitConfigScope = "global" | "local"
 
 export function useGitConfigDialog(deps: {
   manager: GitPushManager

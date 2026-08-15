@@ -1,6 +1,6 @@
 // gitPush 弹窗键盘辅助：打开时自动聚焦根节点，使 Esc 关闭 / Enter 确认可被捕获
 import type { Ref } from "vue"
-import { onMounted, ref, watch } from "vue"
+import { onMounted, onUnmounted, ref, watch } from "vue"
 
 /**
  * 返回一个绑定到弹窗根节点（gp-mask/gp-confirm-mask）的 ref。
@@ -10,13 +10,25 @@ import { onMounted, ref, watch } from "vue"
  */
 export function useDialogKeyboard(visible?: Ref<boolean>) {
   const rootRef = ref<HTMLElement | null>(null)
+  let rafId: number | null = null
 
   function focusRoot() {
-    requestAnimationFrame(() => rootRef.value?.focus())
+    if (rafId !== null) cancelAnimationFrame(rafId)
+    rafId = requestAnimationFrame(() => {
+      rafId = null
+      rootRef.value?.focus()
+    })
   }
 
   onMounted(() => {
     if (!visible || visible.value) focusRoot()
+  })
+
+  onUnmounted(() => {
+    if (rafId !== null) {
+      cancelAnimationFrame(rafId)
+      rafId = null
+    }
   })
 
   if (visible) {

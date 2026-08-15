@@ -954,16 +954,29 @@ function closeMenuOnOutside(e: MouseEvent) {
   }
 }
 
-// 菜单打开时才挂载全局点击监听，关闭时移除，避免多卡片常驻监听
+// 菜单打开时才挂载全局点击监听，关闭时移除，避免多卡片常驻监听。
+// 用标志位防止菜单间切换（如 pull→push）时重复 addEventListener 累积监听器。
+let menuListenerAttached = false
+function attachMenuListener() {
+  if (menuListenerAttached) return
+  menuListenerAttached = true
+  document.addEventListener("click", closeMenuOnOutside)
+}
+function detachMenuListener() {
+  if (!menuListenerAttached) return
+  menuListenerAttached = false
+  document.removeEventListener("click", closeMenuOnOutside)
+}
+
 watch(openMenu, (open) => {
   if (open) {
-    document.addEventListener("click", closeMenuOnOutside)
+    attachMenuListener()
   } else {
-    document.removeEventListener("click", closeMenuOnOutside)
+    detachMenuListener()
   }
 })
 
 onBeforeUnmount(() => {
-  document.removeEventListener("click", closeMenuOnOutside)
+  detachMenuListener()
 })
 </script>

@@ -213,7 +213,8 @@ export class RemoteOps {
       if (!cachedStatus) return false
       const rs = cachedStatus.remotes[key]
       if (!rs) return false
-      return rs.ahead === 0 && !rs.noUpstream
+      // 状态检查失败（error 字段存在）时不能判定为已同步，否则会静默跳过应推送的远程
+      return !rs.error && rs.ahead === 0 && !rs.noUpstream
     }
 
     return this.executor.withAbortController(id, action, async (signal) => {

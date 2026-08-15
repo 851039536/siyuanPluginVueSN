@@ -88,6 +88,8 @@ export default class PluginSample extends Plugin {
   public __floatingToolbar?: import("@/features/floatingToolbar/core/FloatingToolbar").FloatingToolbar
   /** 全局关系列表实例（由 globalRelations 功能模块注入，onunload 经 DESTROYABLE_KEYS 销毁） */
   private __globalRelations?: { destroy: () => void }
+  /** Git 推送实例（由 gitPush 功能模块注入，onunload 经 DESTROYABLE_KEYS 销毁） */
+  private __gitPush?: { destroy: () => void }
   /** 主题色实例（rebuildThemeColor 维护，onunload 经 DESTROYABLE_KEYS 销毁） */
   private __themeColor?: { destroy: () => void }
 
@@ -103,7 +105,6 @@ export default class PluginSample extends Plugin {
     "__themeColor", // 主题色
     "__bookmarkMarker", // 书签标记
     "__scriptLauncher", // 脚本启动器
-    "__gitPush", // Git 推送
     "__s3Backup", // S3 备份
     "__s3FileManager", // S3 文件管理
     "__textDiff", // 文本对比
@@ -168,6 +169,9 @@ export default class PluginSample extends Plugin {
     // 全局关系列表 Modal 显式销毁（保持类型可见性）
     this.__globalRelations?.destroy()
 
+    // Git 推送显式销毁（kill 子进程 / 清空等待队列与 AbortController）
+    this.__gitPush?.destroy()
+
     // 统一销毁各功能实例（新增功能只需将实例字段名加入 DESTROYABLE_KEYS）
     for (const key of PluginSample.DESTROYABLE_KEYS) {
       const instance = (this as any)[key] as { destroy?: () => void } | undefined
@@ -228,7 +232,7 @@ export default class PluginSample extends Plugin {
     if (s.enableWebsiteNavigation) registerWebsiteNavigation(this)
     if (s.enableScriptLauncher) registerScriptLauncher(this)
     if (s.enableDataSnapshot) registerDataSnapshot(this)
-    if (s.enableGitPush) registerGitPush(this)
+    if (s.enableGitPush) this.__gitPush = registerGitPush(this)
     if (s.enableSkillLearning) registerSkillLearning(this)
     if (s.enableToolCollection) registerToolCollection(this)
     if (s.enableS3Backup) registerS3Backup(this)

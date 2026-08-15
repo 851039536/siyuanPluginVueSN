@@ -402,8 +402,10 @@ export function calcMovingAverage7(daily: DailyCommitStat[]): number[] {
     const endMs = Date.parse(s.date)
     let sum = 0
     for (let offset = 0; offset < 7; offset++) {
+      // 用本地日期切片，避免 toISOString 的 UTC 口径在西半球时区产生跨日偏移
       const d = new Date(endMs - offset * DAY_MS)
-      sum += byDate.get(d.toISOString().slice(0, 10)) ?? 0
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+      sum += byDate.get(key) ?? 0
     }
     return Math.round((sum / 7) * 10) / 10
   })
@@ -683,11 +685,13 @@ export function buildReportData(
   // 四类热度汇总（文件数 + 占比）
   // 口径说明：分母为全部现存文件（rankedFiles，含修改次数低于债务门槛的常态文件），
   // 与债务表（仅 ≥ 门槛的风险子集）口径不同——热点汇总描述全仓库热度分布，债务表描述高风险子集。
-  const totalFiles = rankedFiles.length || 1
+  // 分母防除零；analyzedFiles 使用真实文件数（空仓库应展示 0 而非 1）
+  const totalFiles = rankedFiles.length
+  const pctDenominator = totalFiles || 1
   const summary: HotspotFileRow["level"][] = ["hot", "warm", "cool", "cold"]
   const hotspotSummary = summary.map((level) => {
     const count = hotspotRows.filter((r) => r.level === level).length
-    return { level, count, pct: Math.round((count / totalFiles) * 100) }
+    return { level, count, pct: Math.round((count / pctDenominator) * 100) }
   })
   const warmPct = hotspotSummary[1].pct
   const hotPct = hotspotSummary[0].pct

@@ -26,6 +26,7 @@ export { registerFloatingToolbar } from "./floatingToolbar"
 export { registerFormatAssistant } from "./formatAssistant"
 export { registerGeneralSettings } from "./generalSettings"
 export { registerGitPush } from "./gitPush"
+export { registerGlobalRelations } from "./globalRelations"
 export { registerHtmlViewer } from "./htmlViewer"
 export {
   htmlViewerVisible,
@@ -121,6 +122,7 @@ type _Registered =
   | "formatAssistant" | "htmlViewer" | "rssReader" | "resourceManager"
   | "skillsViewer" | "themeColor" | "bookmarkMarker" | "apiDebugger"
   | "scriptLauncher" | "websiteNavigation" | "dataSnapshot" | "gitPush" | "skillLearning" | "prompts" | "toolCollection" | "s3Backup" | "s3FileManager"
+  | "globalRelations"
   | "quickNote"
 
 // --- 编译时断言辅助 ---

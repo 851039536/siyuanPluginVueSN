@@ -58,6 +58,7 @@ export interface PluginSettings {
   enableToolCollection: boolean // 是否启用工具合集功能
   enableS3Backup: boolean // 是否启用 S3 备份功能
   enableS3FileManager: boolean // 是否启用 S3 文件管理功能
+  enableGlobalRelations: boolean // 是否启用全局关系列表功能
   enableQuickNote: boolean // 是否启用速记功能
   enableQuickNoteAutoOpen: boolean // 速记子开关：启动时自动打开速记弹窗
   featureStatus: Record<string, string> // 功能状态标识: featureId -> 'stable' | 'needsFix' | 'critical' | 'minor'
@@ -127,6 +128,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableToolCollection: true,
   enableS3Backup: true,
   enableS3FileManager: true,
+  enableGlobalRelations: true,
   enableQuickNote: true,
   enableQuickNoteAutoOpen: false,
   featureStatus: {},

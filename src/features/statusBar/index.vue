@@ -481,7 +481,17 @@ const saveCategory = async (id: string) => {
   }
 }
 
-const handleToggleStatusBar = async (id: string) => {
+// 从状态栏移除一个功能（监控项从 Set 删除，功能项从数组过滤）
+const removeFromStatusBar = (id: string) => {
+  if (MONITOR_IDS.has(id)) {
+    visibleMonitors.delete(id)
+  } else {
+    statusBarShortcuts.value = statusBarShortcuts.value.filter((s) => s !== id)
+  }
+}
+
+// 切换功能在状态栏的显隐（监控项 toggle Set，功能项 toggle 数组）
+const toggleStatusBarMembership = (id: string) => {
   if (MONITOR_IDS.has(id)) {
     if (visibleMonitors.has(id)) {
       visibleMonitors.delete(id)
@@ -491,6 +501,10 @@ const handleToggleStatusBar = async (id: string) => {
   } else {
     statusBarShortcuts.value = toggleMembership(statusBarShortcuts, id)
   }
+}
+
+const handleToggleStatusBar = async (id: string) => {
+  toggleStatusBarMembership(id)
   await saveCategory(id)
 }
 
@@ -498,11 +512,7 @@ const handleToggleRarelyUsed = async (id: string) => {
   const wasRare = rarelyUsedFeatures.value.includes(id)
   rarelyUsedFeatures.value = toggleMembership(rarelyUsedFeatures, id)
   if (!wasRare) {
-    if (MONITOR_IDS.has(id)) {
-      visibleMonitors.delete(id)
-    } else {
-      statusBarShortcuts.value = statusBarShortcuts.value.filter((s) => s !== id)
-    }
+    removeFromStatusBar(id)
     await saveCategory(id)
   }
   await storage.save("statusBar-rarelyUsed", rarelyUsedFeatures.value)

@@ -11,7 +11,6 @@
       @include m.form-label;
     }
 
-    .vp-input,
     .vp-textarea,
     .vp-select {
       @include m.form-input;
@@ -61,7 +60,6 @@
   min-width: 0;
 
   .vp-input--label {
-    @include m.form-input;
     font-size: $font-size-xs;
     font-weight: $font-weight-semibold;
     color: var(--b3-theme-primary);

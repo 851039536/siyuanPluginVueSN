@@ -104,6 +104,7 @@
             @select="handleClick"
             @toggle-status-bar="emit('toggleStatusBar', $event)"
             @toggle-rarely-used="emit('toggleRarelyUsed', $event)"
+            @toggle-enabled="emit('toggleEnabled', $event)"
           />
           <div
             v-if="displayItems.length === 0"
@@ -142,6 +143,7 @@
               @select="handleClick"
               @toggle-status-bar="emit('toggleStatusBar', $event)"
               @toggle-rarely-used="emit('toggleRarelyUsed', $event)"
+              @toggle-enabled="emit('toggleEnabled', $event)"
             />
           </div>
         </div>
@@ -166,6 +168,8 @@ export interface FeatureDrawerItem {
   title: string
   pinnable: boolean
   group?: string
+  enabled?: boolean
+  toggleable?: boolean
 }
 
 interface Props {
@@ -180,6 +184,7 @@ interface Emits {
   (e: "select", id: string): void
   (e: "toggleStatusBar", id: string): void
   (e: "toggleRarelyUsed", id: string): void
+  (e: "toggleEnabled", id: string): void
 }
 
 const props = withDefaults(defineProps<Props>(), {

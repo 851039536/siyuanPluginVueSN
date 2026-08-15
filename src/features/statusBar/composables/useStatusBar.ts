@@ -74,7 +74,7 @@ export function useStatusBar() {
 
   const memoryUsageDisplay = computed(() => {
     const mbs = (state.memPercent / 100) * TOTAL_MEMORY_MB
-    return mbs > 1000 ? `${(mbs / 1024).toFixed(1)}G` : `${Math.round(mbs)}M`
+    return mbs >= 1000 ? `${(mbs / 1024).toFixed(1)}G` : `${Math.round(mbs)}M`
   })
 
   const uptimeDisplay = computed(() => {

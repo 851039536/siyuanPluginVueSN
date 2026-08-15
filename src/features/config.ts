@@ -310,6 +310,18 @@ export const FEATURE_CONFIG = [
     }],
   },
   {
+    id: "globalRelations",
+    defaultTitle: "全局关系列表",
+    defaultDesc: "基于思源 refs 表与 getBacklink2 API，查询全库文档间的双向链接关系",
+    titleI18nKey: "globalRelations.panelTitle",
+    descI18nKey: "globalRelations.description",
+    actions: [{
+      key: "openGlobalRelations",
+      label: "打开",
+      hotkey: "Ctrl+Alt+N",
+    }],
+  },
+  {
     id: "quickNote",
     defaultTitle: "速记",
     defaultDesc: "快速记录多行笔记，支持完成/待完成状态与弹窗位置设置",

@@ -1,13 +1,11 @@
 // ==================== 共享 SCSS Mixins & Variables ====================
 // 由 index.scss 及各组件 SCSS 共同引用
 
-@use "sass:color";
 @use "@/variables.scss" as *;
 
 $modal-z-index: 1000;
 $modal-small-max-width: 500px;
 $modal-form-max-width: 900px;
-$modal-large-max-width: 1200px;
 $card-border-radius: $radius-md;
 
 @mixin modal-overlay {
@@ -43,7 +41,7 @@ $card-border-radius: $radius-md;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-background);
   font-size: $font-size-xs;
-  font-family: inherit;
+  font-family: $font-zh;
   line-height: $line-height-tight;
   box-sizing: border-box;
 
@@ -59,14 +57,16 @@ $card-border-radius: $radius-md;
   }
 }
 
-// 表单控件基础样式（输入框/文本域/选择框共享）
-@mixin form-control {
-  @include form-input;
+// 表单标签公共样式（字段标签/分组标签共享）
+@mixin form-label {
+  display: block;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.04em;
+  line-height: $line-height-tight;
+  text-transform: uppercase;
+  opacity: 0.55;
+  color: var(--b3-theme-on-background);
+  margin-bottom: $spacing-2;
   font-family: $font-zh;
-
-  &:focus {
-    outline: none;
-    border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
-  }
 }

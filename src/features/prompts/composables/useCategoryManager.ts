@@ -23,7 +23,6 @@ export function useCategoryManager(
   load: () => Promise<void>
   add: (category: PromptCategory) => Promise<void>
   remove: (id: string) => Promise<void>
-  getById: (id: string) => PromptCategory
 } {
   const defName = (i18n || {}).defaultCategory!
   const allName = (i18n || {}).allCategory!
@@ -91,16 +90,11 @@ export function useCategoryManager(
     }
   }
 
-  function getById(id: string): PromptCategory {
-    return categories.value.find((c) => c.id === id) || categories.value[0]
-  }
-
   return {
     categories,
     allCategories,
     load,
     add,
     remove,
-    getById,
   }
 }

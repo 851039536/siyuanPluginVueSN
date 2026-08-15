@@ -1,0 +1,141 @@
+@use "@/variables.scss" as *;
+
+// ==================== 分类侧边栏 — CategorySidebar.vue ====================
+
+.vp-sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 180px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--b3-border-color);
+  overflow: hidden;
+}
+
+.vp-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  flex: 1;
+  overflow-y: auto;
+  padding: $spacing-2;
+}
+
+.vp-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  width: 100%;
+  padding: $spacing-2 $spacing-2;
+  border: 1px solid transparent;
+  border-radius: $vp-radius;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-tight;
+  font-family: $font-zh;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.12s,
+    background-color 0.12s,
+    color 0.12s;
+
+  .vp-sidebar-icon {
+    color: var(--b3-theme-on-surface-light);
+    flex-shrink: 0;
+  }
+
+  .vp-sidebar-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .vp-sidebar-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .vp-sidebar-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 $spacing-1;
+    border-radius: $radius-full;
+    background: var(--b3-theme-on-surface-lighter);
+    color: var(--b3-theme-on-surface);
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-medium;
+    line-height: $line-height-tight;
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+    border-color: var(--b3-border-color);
+  }
+
+  &.active {
+    background: var(--b3-theme-primary);
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-on-primary);
+
+    .vp-sidebar-icon {
+      color: var(--b3-theme-on-primary);
+    }
+
+    .vp-sidebar-count {
+      background: var(--b3-theme-primary-lighter);
+      color: var(--b3-theme-on-primary);
+    }
+  }
+}
+
+.vp-sidebar-manage {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  width: 100%;
+  padding: $spacing-2 $spacing-3;
+  border: none;
+  border-top: 1px solid var(--b3-border-color);
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-tight;
+  font-family: $font-zh;
+  cursor: pointer;
+  transition:
+    background-color 0.12s,
+    color 0.12s;
+
+  .vp-sidebar-manage-icon {
+    color: var(--b3-theme-on-surface-light);
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+    color: var(--b3-theme-primary);
+
+    .vp-sidebar-manage-icon {
+      color: var(--b3-theme-primary);
+    }
+  }
+}
+
+// ==================== 响应式 ====================
+
+@media (max-width: 768px) {
+  .vp-sidebar {
+    width: 140px;
+  }
+}

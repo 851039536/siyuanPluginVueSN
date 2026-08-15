@@ -97,7 +97,6 @@
 // 表单输入框基础样式（搜索框/表单控件统一走此基类）
 .vp-input {
   @include m.form-input;
-  font-family: $font-zh;
 }
 
 // 表单操作栏（PromptFormModal + DeleteConfirmModal 共用）

@@ -45,12 +45,6 @@
 
     .vp-input--search {
       padding-left: 36px;
-      font-family: $font-zh;
-      line-height: $line-height-tight;
-
-      &:focus {
-        outline: 2px solid var(--b3-theme-primary-lightest);
-      }
     }
   }
 }
@@ -221,12 +215,7 @@
       height: 16px;
     }
 
-    h3 {
-      font-size: $font-size-xs;
-    }
-
     .vp-tag {
-      font-size: $font-size-2xs;
       padding: 0 $spacing-1;
     }
   }

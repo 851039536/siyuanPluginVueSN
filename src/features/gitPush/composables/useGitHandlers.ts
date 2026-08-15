@@ -3,7 +3,7 @@ import type { Ref } from "vue"
 import { ref } from "vue"
 import { showMessage } from "siyuan"
 import type { CardDataDomain, GitProject } from "../types"
-import { getProjectRemoteNames, pruneRecordCache } from "../utils"
+import { findProject, getProjectRemoteNames, pruneRecordCache } from "../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
 
 export function useGitHandlers(deps: {
@@ -136,7 +136,7 @@ export function useGitHandlers(deps: {
   }
 
   async function handlePushTag(id: string, tag: string) {
-    const project = projects.value.find((p) => p.id === id)
+    const project = findProject(projects, id)
     if (!project) return
     // 收集所有已配置的远程
     const remoteNames = getProjectRemoteNames(project).map((r) => r.name)

@@ -10,6 +10,11 @@ export function findProject(projects: Ref<GitProject[]>, id: string): GitProject
   return projects.value.find((p) => p.id === id)
 }
 
+/** 按 ID 查找项目索引（消除散落在各处的 projects.value.findIndex 重复），未找到返回 -1 */
+export function findProjectIndex(projects: Ref<GitProject[]>, id: string): number {
+  return projects.value.findIndex((p) => p.id === id)
+}
+
 /** 按 ID 查找项目，未找到时抛错（错误文案经 handleGitOp/safeGitOp 展示给用户） */
 export function requireProject(projects: Ref<GitProject[]>, id: string): GitProject {
   const project = findProject(projects, id)
@@ -66,8 +71,8 @@ export function highlightSegments(text: string, query: string): HighlightSegment
   return segments
 }
 
-/** 平台 key → GitRemoteInfo 检测标志属性名映射 */
-const PLATFORM_FLAG_BY_KEY: Record<PlatformKey, "isGithub" | "isGitee" | "isGitea" | "isCnb"> = {
+/** 平台 key → GitRemoteInfo 检测标志属性名映射（供 ProjectStore.applyRemotesToProject 等按检测标志匹配复用） */
+export const PLATFORM_FLAG_BY_KEY: Record<PlatformKey, "isGithub" | "isGitee" | "isGitea" | "isCnb"> = {
   github: "isGithub",
   gitee: "isGitee",
   gitea: "isGitea",

@@ -3,7 +3,7 @@ import type { Ref } from "vue"
 import { ref } from "vue"
 import type { GitProject, GitPushManager } from "../types"
 import type { GitConfigScope } from "../types/gitConfigDesc"
-import { resolveValidPath } from "../utils"
+import { findProjectIndex, resolveValidPath } from "../utils"
 
 export function useGitConfigDialog(deps: {
   manager: GitPushManager
@@ -26,7 +26,7 @@ export function useGitConfigDialog(deps: {
 
   /** 打开项目级 Git 配置弹窗（作用域：local，带项目名标题） */
   function handleOpenProjectGitConfig(projectId: string) {
-    const index = projects.value.findIndex((p) => p.id === projectId)
+    const index = findProjectIndex(projects, projectId)
     if (index === -1) return
     const project = projects.value[index]
     gitConfigScope.value = "local"

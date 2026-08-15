@@ -81,7 +81,8 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
       } catch {
         gitFailed = true
       }
-      const firstDate = await manager.getFirstCommitDate(cwd).catch(() => "")
+      // git 失败时跳过首提交日期查询（无需额外 git 调用）
+      const firstDate = gitFailed ? "" : await manager.getFirstCommitDate(cwd).catch(() => "")
       // 全部历史时用首提交日期生成时间范围标签（如 "5 months ago"），按本地语言 i18n 格式化
       const rangeLabel = range.value === "all"
         ? (firstDate ? relativeTime(firstDate, i18n) : i18n.reportRangeAll || "")
@@ -90,7 +91,8 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
         ? buildEmptyReport(project, rangeLabel)
         : buildReportData(project, commits, rangeLabel, debtMinModCount.value)
       generatedAt.value = new Date().toISOString()
-      generated.value = true
+      // 失败（ok:false）不标记为已生成，下次进入视图可自动重试
+      generated.value = !gitFailed
       await savePrefs()
     } finally {
       running.value = false

@@ -63,6 +63,8 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   let cacheLoaded = false
   /** 是否已尝试过从存储载入行数统计独立缓存（防重复读盘） */
   let lineStatsCacheLoaded = false
+  /** 分析请求在「分析进行中」被拒绝后置位，供下次 ensureAnalysis 强制执行重跑（避免 loadCachedAnalysis 恢复 analyzed=true 吞掉重跑请求） */
+  let pendingReanalyze = false
   /** 热力图/日历显示设置（视图/范围/每周第一天/格子主色，持久化到 git-push-analysis-view） */
   const viewSettings = ref<CommitAnalysisViewSettings>({ ...DEFAULT_ANALYSIS_VIEW_SETTINGS })
   /** 项目代码行数排行（按新增行降序，行数统计视图分析后填充） */
@@ -156,9 +158,10 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     return { projectRanking, authorRanking, summary }
   }
 
-  /** 批量分析全部项目核心（GitExecutor 自带并发限流，无需额外节流）；needNumstat 时单命令抓取 numstat 生成行数排行，成功后持久化结果供下次复用 */
-  async function runCore(needNumstat: boolean) {
-    if (analyzing.value) return
+  /** 批量分析全部项目核心（GitExecutor 自带并发限流，无需额外节流）；needNumstat 时单命令抓取 numstat 生成行数排行，成功后持久化结果供下次复用。
+   * @returns 是否实际执行（false = 分析进行中被拒绝，调用方据此决定是否需后续重试） */
+  async function runCore(needNumstat: boolean): Promise<boolean> {
+    if (analyzing.value) return false
     analyzing.value = true
     try {
       const settled = await Promise.allSettled(projects.value.map(async (p) => {
@@ -272,16 +275,30 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     } finally {
       analyzing.value = false
     }
+    // 分析真正执行完成，撤销待重跑标记（本次已消费该请求）
+    pendingReanalyze = false
+    return true
   }
 
   /** 提交分析（仅抓取 commit log 聚合提交维度；行数排行沿用缓存旧值，不重新抓 numstat） */
   async function runAnalysis() {
-    await runCore(false)
+    const ran = await runCore(false)
+    // 分析进行中被拒绝：置 analyzed=false 并标记待重跑，下次进入视图由 ensureAnalysis 强制执行
+    if (!ran) {
+      analyzed.value = false
+      pendingReanalyze = true
+      console.warn("[gitPush] 分析进行中，重新分析请求已排队待下次执行")
+    }
   }
 
   /** 行数统计（始终并行抓取 numstat 生成项目/作者行数排行并覆盖缓存行数数据） */
   async function runLineStatsAnalysis() {
-    await runCore(true)
+    const ran = await runCore(true)
+    if (!ran) {
+      analyzed.value = false
+      pendingReanalyze = true
+      console.warn("[gitPush] 分析进行中，重新分析请求已排队待下次执行")
+    }
   }
 
   /** 从存储载入上次分析结果（有有效条目时直接复用，不再重新分析） */
@@ -310,8 +327,12 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   async function ensureAnalysis() {
     await loadViewSettings()
     await loadCachedAnalysis()
-    // 行数统计视图可能已置 analyzed=true 但提交条目未加载，此时仍需重新分析补全提交维度数据
-    if ((!analyzed.value || entries.value.length === 0) && !analyzing.value) await runAnalysis()
+    // 行数统计视图可能已置 analyzed=true 但提交条目未加载，此时仍需重新分析补全提交维度数据；
+    // pendingReanalyze 优先于缓存复用，保证分析进行中被拒绝的重跑请求不被 loadCachedAnalysis 覆盖
+    if ((pendingReanalyze || !analyzed.value || entries.value.length === 0) && !analyzing.value) {
+      pendingReanalyze = false
+      await runAnalysis()
+    }
   }
 
   /** 行数统计视图专用缓存加载：优先读取独立槽位 git-push-line-stats-cache，无数据时回退到提交分析旧缓存的行数数据（兼容老版本升级用户）；行数排行同样过滤已删除项目 */
@@ -350,7 +371,12 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     if (commitCount.value === n) return
     commitCount.value = n
     analyzed.value = false
-    await runCore(needNumstat)
+    const ran = await runCore(needNumstat)
+    // 分析进行中被拒绝：保持 analyzed=false 并标记待重跑，下次进入视图由 ensureAnalysis 强制执行
+    if (!ran) {
+      pendingReanalyze = true
+      console.warn("[gitPush] 分析进行中，已按新条数排队待下次重跑")
+    }
   }
 
   /** 更新扩展名过滤并即时持久化到行数统计缓存（弹窗确定后调用；下次分析按新过滤生效，切换视图后选择不丢失） */

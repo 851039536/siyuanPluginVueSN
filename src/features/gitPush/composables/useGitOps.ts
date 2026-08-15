@@ -208,26 +208,6 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     return manager.generateStashDescription(resolveValidPath(project))
   }
 
-  // ── 远程仓库 CRUD ──
-
-  async function addRemoteOp(id: string, name: string, url: string) {
-    const project = requireProject(projects, id)
-    await manager.addRemote(resolveValidPath(project), name, url)
-    await loadPushStatus(id)
-  }
-
-  async function removeRemoteOp(id: string, name: string) {
-    const project = requireProject(projects, id)
-    await manager.removeRemote(resolveValidPath(project), name)
-    await loadPushStatus(id)
-  }
-
-  async function editRemoteOp(id: string, name: string, url: string) {
-    const project = requireProject(projects, id)
-    await manager.setRemoteUrl(resolveValidPath(project), name, url)
-    await loadPushStatus(id)
-  }
-
   // ── 缓存清理 ──
 
   /** 删除项目时清理全部关联缓存（含进行中操作标记与远程进度/输出） */
@@ -263,10 +243,8 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     pullOutputs: remote.pullOutputs,
     pushToAll: remote.pushToAll,
     pushSingle: remote.pushSingle,
-    pullToAll: remote.pullToAll,
     pullSingle: remote.pullSingle,
     cancelPush: remote.cancelPush,
-    cancelPull: remote.cancelPull,
     fetchAllRemotes: remote.fetchAllRemotes,
     // 本地状态
     pushStatuses,
@@ -296,10 +274,6 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     doStashApply,
     doStashDrop,
     generateStashDesc,
-    // 远程 CRUD
-    addRemoteOp,
-    removeRemoteOp,
-    editRemoteOp,
     // 清理
     clearProjectCache,
     // 操作日志

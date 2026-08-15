@@ -103,12 +103,17 @@ export class GitExecutor {
   }
 
   /**
-   * 从 args 中提取实际命令名（跳过前导 -c <value> / -C <value> 全局参数对）
+   * 从 args 中提取实际命令名（跳过前导 -c <value> / -C <value> 全局参数对，
+   * 以及 --no-pager / --no-optional-locks 等无参数前导选项）
    */
   private static getCommandName(args: string[]): string {
     let i = 0
     while (i < args.length && (args[i] === "-c" || args[i] === "-C")) {
       i += 2
+    }
+    // 跳过无参数的前导选项（以 -- 开头且不包含 =），避免网络命令被误判为本地命令
+    while (i < args.length && /^--[^=]+$/.test(args[i])) {
+      i++
     }
     return args[i] || ""
   }

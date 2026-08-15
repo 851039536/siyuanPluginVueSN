@@ -122,10 +122,9 @@ export function useRefreshOps(deps: {
     remoteStatusLoading.value = { ...remoteStatusLoading.value, [id]: true }
     try {
       const branch = await manager.getBranch(resolveValidPath(project))
-      await Promise.all([
-        refreshRemotes(id),
-        loadPushStatus(id, { fetchFirst: true, branch }),
-      ])
+      // 先刷新远程配置再加载状态，避免 loadPushStatus(fetchFirst) 用陈旧的远程名 fetch（与 handleRefresh 同一致竞态）
+      await refreshRemotes(id)
+      await loadPushStatus(id, { fetchFirst: true, branch })
     } finally {
       delete remoteStatusLoading.value[id]
       remoteStatusLoading.value = { ...remoteStatusLoading.value }

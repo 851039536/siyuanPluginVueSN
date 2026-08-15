@@ -49,19 +49,7 @@ export function useGitTagsConflicts(manager: GitPushManager, projects: Ref<GitPr
     commitTemplates.value = await manager.getCommitTemplates()
   }
 
-  async function saveCommitTemplates(templates: CommitTemplate[]) {
-    await manager.saveCommitTemplates(templates)
-    commitTemplates.value = templates
-  }
-
-  function fillTemplate(template: CommitTemplate, branch: string, fileCount: number): string {
-    return template.pattern.replace(/\{branch\}/g, branch).replace(/\{files\}/g, String(fileCount))
-  }
-
   // ── 扫描导入 ──
-  async function checkIsGitRepo(path: string) {
-    return manager.checkIsGitRepo(path)
-  }
 
   async function startScan(dirPath: string) {
     scanning.value = true
@@ -106,11 +94,8 @@ export function useGitTagsConflicts(manager: GitPushManager, projects: Ref<GitPr
     resolveConflictOp,
     commitTemplates,
     loadCommitTemplates,
-    saveCommitTemplates,
-    fillTemplate,
     scanning,
     scanResults,
-    checkIsGitRepo,
     startScan,
     importScanResults,
   }

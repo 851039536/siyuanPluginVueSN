@@ -218,6 +218,9 @@ const result = ref("")
 const error = ref("")
 const copied = ref(false)
 const errorsExpanded = ref(true)
+/** 组件卸载标记 + 流式请求 AbortController（卸载时中止，防止 onChunk 写入已卸载组件的 ref） */
+let disposed = false
+let abortController: AbortController | null = null
 
 /** 组装 AI 分析 prompt */
 function buildPrompt(): string {
@@ -237,6 +240,7 @@ async function runAnalysis() {
   streaming.value = true
   error.value = ""
   result.value = ""
+  abortController = new AbortController()
   try {
     await callAISmart(buildPrompt(), config, {
       systemPrompt:
@@ -248,13 +252,20 @@ async function runAnalysis() {
       temperature: 0.3,
       maxTokens: 1024,
       enableThinking: false,
-      onChunk: (chunk: string) => { result.value += chunk },
+      signal: abortController.signal,
+      onChunk: (chunk: string) => {
+        if (!disposed) result.value += chunk
+      },
     })
   } catch (e: unknown) {
-    console.error("[gitPush] AI 错误分析失败:", e)
-    error.value = props.i18n.aiAnalyzeFailed
+    // 组件卸载主动中止时不报错
+    if (!disposed) {
+      console.error("[gitPush] AI 错误分析失败:", e)
+      error.value = props.i18n.aiAnalyzeFailed
+    }
   } finally {
     streaming.value = false
+    abortController = null
   }
 }
 
@@ -290,6 +301,8 @@ onMounted(() => {
   void runAnalysis()
 })
 onUnmounted(() => {
+  disposed = true
+  abortController?.abort()
   window.removeEventListener("keydown", handleKeydown)
   if (copiedTimer) clearTimeout(copiedTimer)
 })

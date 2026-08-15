@@ -89,6 +89,7 @@ item-class="uptime-item"
       @select="handleSelectFeature"
       @toggle-status-bar="handleToggleStatusBar"
       @toggle-rarely-used="handleToggleRarelyUsed"
+      @toggle-enabled="handleToggleEnabled"
     />
   </div>
 </template>
@@ -444,7 +445,12 @@ const statusBarVisible = computed(() => [
   ...visibleMonitors,
 ])
 
+// 是否有功能开关：排除监控项（无 enableXxx）与无对应设置键的特殊项（superPanel/quickNoteReset）
+const hasToggle = (id: string): boolean =>
+  !MONITOR_IDS.has(id) && featureIdToSettingKey(id) in enabledSettings.value
+
 // 抽屉常用/不常用一次遍历拆分（取代两个独立 filter）
+// 不再过滤已关闭功能：关闭的功能置灰显示，保留开关角标供用户重新开启
 const drawerPartition = computed(() => {
   const frequent: FeatureDrawerItem[] = []
   const rarely: FeatureDrawerItem[] = []
@@ -454,8 +460,11 @@ const drawerPartition = computed(() => {
     action: __,
     ...drawerItem
   } of FEATURES) {
-    if (!isFeatureEnabled(drawerItem.id)) continue
-    ;(rareSet.has(drawerItem.id) ? rarely : frequent).push(drawerItem)
+    ;(rareSet.has(drawerItem.id) ? rarely : frequent).push({
+      ...drawerItem,
+      enabled: isFeatureEnabled(drawerItem.id),
+      toggleable: hasToggle(drawerItem.id),
+    })
   }
   return {
     frequent,
@@ -531,6 +540,18 @@ const toggleFeatureDrawer = () => {
 const handleSelectFeature = (id: string) => {
   showFeatureDrawer.value = false
   featureMap.get(id)?.action?.()
+}
+
+// 切换功能开关：经 plugin.updateSettings 保存（同步 feature-flags + 广播 settingsUpdated），
+// enabledSettings 快照由 syncEnabled 监听更新，开关角标随之同步
+const handleToggleEnabled = async (id: string) => {
+  const settingKey = featureIdToSettingKey(id)
+  const pluginSample = props.plugin as any
+  const current = pluginSample.settings?.[settingKey] !== false
+  await pluginSample.updateSettings({
+    ...pluginSample.settings,
+    [settingKey]: !current,
+  })
 }
 
 // 监听设置变更事件，同步功能开关快照（statusBar 为独立挂载 app，需自行清理监听）

@@ -1,8 +1,9 @@
-<!-- 功能抽屉项组件：封装图标、标题、固定角标、隐藏角标，主列表与不常用列表复用 -->
+<!-- 功能抽屉项组件：封装图标、标题、固定角标、隐藏角标、功能开关角标，主列表与不常用列表复用 -->
 <template>
   <div
     class="feature-drawer-item"
-    @click="emit('select', item.id)"
+    :class="{ disabled: item.toggleable && !item.enabled }"
+    @click="handleClick"
   >
     <div
       class="feature-drawer-item-icon"
@@ -37,6 +38,19 @@
         :width="12"
       />
     </span>
+    <!-- 功能开关角标：仅对有 enableXxx 开关的功能显示，点击切换启用/禁用 -->
+    <span
+      v-if="item.toggleable"
+      class="feature-drawer-item-badge badge-toggle"
+      :class="{ active: item.enabled }"
+      :title="item.enabled ? '禁用该功能' : '启用该功能'"
+      @click.stop="emit('toggleEnabled', item.id)"
+    >
+      <Icon
+        :icon="item.enabled ? 'ph:toggle-right' : 'ph:toggle-left'"
+        :width="14"
+      />
+    </span>
   </div>
 </template>
 
@@ -50,7 +64,7 @@ interface Props {
   mode?: "main" | "rarely"
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   mode: "main",
 })
 
@@ -58,5 +72,12 @@ const emit = defineEmits<{
   select: [id: string]
   toggleStatusBar: [id: string]
   toggleRarelyUsed: [id: string]
+  toggleEnabled: [id: string]
 }>()
+
+// 点击主体：已关闭功能不触发 select（仅开关角标可重新开启），避免调用未注册功能
+const handleClick = () => {
+  if (props.item.toggleable && !props.item.enabled) return
+  emit("select", props.item.id)
+}
 </script>

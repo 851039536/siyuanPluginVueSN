@@ -349,6 +349,12 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
     &:hover {
       background: var(--b3-theme-surface-lighter);
     }
+
+    // 已关闭功能置灰（保留开关角标供重新开启）
+    &.disabled {
+      .feature-drawer-item-icon { opacity: 0.5; }
+      .feature-drawer-item-title { opacity: 0.5; }
+    }
   }
 
   .feature-drawer-item-icon {
@@ -401,6 +407,10 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
     &.badge-rarely.active {
       color: var(--b3-theme-on-surface-lighter);
     }
+
+    &.badge-toggle.active {
+      color: var(--b3-theme-primary);
+    }
   }
 
   // 网格模式
@@ -435,6 +445,12 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
       position: absolute;
       bottom: 1px;
       right: 1px;
+    }
+
+    .badge-toggle {
+      position: absolute;
+      bottom: 1px;
+      left: 1px;
     }
   }
 }

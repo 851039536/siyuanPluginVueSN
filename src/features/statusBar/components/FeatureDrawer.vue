@@ -77,13 +77,13 @@
             />
           </button>
         </div>
-        <!-- 分类标签栏 -->
+        <!-- 分类标签栏（全部 / 已固定 / 未固定） -->
         <div
-          v-if="!searchQuery && groupTabs.length > 1"
+          v-if="!searchQuery"
           class="feature-drawer-tabs"
         >
           <button
-            v-for="tab in groupTabs"
+            v-for="tab in pinTabs"
             :key="tab.key"
             class="feature-drawer-tab"
             :class="{ active: activeGroup === tab.key }"
@@ -234,38 +234,45 @@ const filteredRarelyItems = computed(() =>
   props.rarelyUsedItems.filter(matchSearch),
 )
 
-// 从所有项提取唯一分组标签
-const allGroups = computed(() => {
-  const set = new Set<string>()
-  for (const item of props.items) {
-    if (item.group) set.add(item.group)
-  }
-  return [...set].sort()
-})
+// 分类标签栏：按固定状态 + 监控分组分为四个固定 Tab
+const pinTabs: { key: string, label: string }[] = [
+  {
+    key: "__all__",
+    label: "全部",
+  },
+  {
+    key: "pinned",
+    label: "已固定",
+  },
+  {
+    key: "unpinned",
+    label: "未固定",
+  },
+  {
+    key: "monitor",
+    label: "监控",
+  },
+]
 
-// 标签栏选项
-const groupTabs = computed(() => {
-  const tabs: { key: string, label: string }[] = [
-    {
-      key: "__all__",
-      label: "全部",
-    },
-  ]
-  for (const g of allGroups.value) {
-    tabs.push({
-      key: g,
-      label: g,
-    })
-  }
-  return tabs
-})
+// 监控项判定：监控项有独立「监控」Tab，不混入固定状态分类
+const isMonitor = (item: FeatureDrawerItem) => item.group === "监控"
 
-// 按 activeGroup 过滤（非搜索模式），搜索时忽略分组
-// "全部"Tab 排除监控项（监控项有独立 Tab）
+// 按分类过滤（非搜索模式），搜索时忽略分类
+// "全部"/"已固定"/"未固定"排除监控项；"监控"仅显示监控项
 const displayItems = computed(() => {
   if (searchQuery.value) return filteredItems.value
-  if (activeGroup.value === "__all__") return props.items.filter((item) => item.group !== "监控")
-  return props.items.filter((item) => item.group === activeGroup.value)
+  if (activeGroup.value === "pinned") {
+    return props.items.filter((item) =>
+      !isMonitor(item) && props.statusBarVisible.includes(item.id))
+  }
+  if (activeGroup.value === "unpinned") {
+    return props.items.filter((item) =>
+      !isMonitor(item) && !props.statusBarVisible.includes(item.id))
+  }
+  if (activeGroup.value === "monitor") {
+    return props.items.filter(isMonitor)
+  }
+  return props.items.filter((item) => !isMonitor(item)) // "__all__"
 })
 
 const handleClick = (id: string) => {

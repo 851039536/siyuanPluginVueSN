@@ -119,7 +119,6 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
   --status-color-image-compressor: #ef4444;
   --status-color-format: #07c160;
   --status-color-website: #8b5cf6;
-  --status-color-backup: #10b981;
   --status-color-tool: #6366f1;
 
   .video-manager-item {
@@ -144,10 +143,6 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
 
   .website-navigation-item {
     color: var(--status-color-website);
-  }
-
-  .data-backup-item {
-    color: var(--status-color-backup);
   }
 
   .tool-collection-item {

@@ -147,7 +147,6 @@ const MONITOR_IDS = new Set([
   "monitor-memory",
   "monitor-uptime",
 ])
-const DEFAULT_MONITOR_IDS = [...MONITOR_IDS]
 
 // 单一功能注册表：抽屉展示 + 状态栏快捷 + 点击动作的统一数据源
 // 添加新功能只需在此处新增一条；title / 处理逻辑不再分散于多处
@@ -527,7 +526,7 @@ storage.load<string[]>("statusBar-monitors").then((data) => {
   if (data && data.length > 0) {
     for (const id of data) visibleMonitors.add(id)
   } else {
-    for (const id of DEFAULT_MONITOR_IDS) visibleMonitors.add(id)
+    for (const id of MONITOR_IDS) visibleMonitors.add(id)
   }
 })
 

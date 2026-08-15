@@ -44,6 +44,7 @@
       :i18n="i18n"
       @update:search-query="searchQuery = $event"
       @select-category="selectedCategory = $event"
+      @manage-categories="showCategoryManage = true"
       @add-prompt="showAddModal = true; editingPrompt = null"
       @edit-prompt="(p: Prompt) => { editingPrompt = p; showAddModal = true }"
       @request-delete="deleteConfirmTarget = $event"
@@ -67,7 +68,7 @@
     :categories="categoriesRaw"
     :i18n="i18n"
     @close="showCategoryManage = false"
-    @add="handleCategoryAdd"
+    @add="addCategory"
     @delete="handleCategoryDelete"
   />
 
@@ -82,10 +83,7 @@
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
-import type {
-  Prompt,
-  PromptCategory,
-} from "./types"
+import type { Prompt } from "./types"
 import { showMessage } from "siyuan"
 import {
   computed,
@@ -108,10 +106,6 @@ const props = defineProps<{
   i18n?: Record<string, string>
   plugin?: Plugin
   onClose?: () => void
-}>()
-
-const emit = defineEmits<{
-  (e: "close"): void
 }>()
 
 // --- UI 状态 ---
@@ -229,10 +223,6 @@ async function handleSave(prompt: Prompt): Promise<void> {
 }
 
 // --- 分类操作 ---
-function handleCategoryAdd(category: PromptCategory): void {
-  addCategory(category)
-}
-
 async function handleCategoryDelete(id: string): Promise<void> {
   const hasPrompts = prompts.value.some((p) => p.category === id)
   if (hasPrompts) {
@@ -262,7 +252,6 @@ async function copyContent(content: string): Promise<void> {
 
 function closeModal(): void {
   showModal.value = false
-  emit("close")
   props.onClose?.()
 }
 </script>

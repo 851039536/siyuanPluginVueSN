@@ -138,16 +138,6 @@ const statusBarShortcuts = ref<string[]>([])
 const rarelyUsedFeatures = ref<string[]>([])
 const visibleMonitors = reactive(new Set<string>())
 
-// 监控项 ID 集合（用于 handleToggleStatusBar 分流判断）
-const MONITOR_IDS = new Set([
-  "monitor-notes",
-  "monitor-words",
-  "monitor-today",
-  "monitor-cpu",
-  "monitor-memory",
-  "monitor-uptime",
-])
-
 // 单一功能注册表：抽屉展示 + 状态栏快捷 + 点击动作的统一数据源
 // 添加新功能只需在此处新增一条；title / 处理逻辑不再分散于多处
 interface FeatureRegistryEntry extends FeatureDrawerItem {
@@ -400,6 +390,11 @@ const FEATURES: FeatureRegistryEntry[] = [
     group: "监控",
   },
 ]
+
+// 监控项 ID 集合：由 FEATURES 的 group 字段派生（单一数据源，避免与 group:"监控" 双处维护不同步）
+const MONITOR_IDS = new Set(
+  FEATURES.filter((f) => f.group === "监控").map((f) => f.id)
+)
 
 // id → 功能映射，用于点击分发（O(1) 取代 `id in SHORTCUT_DISPLAY` + superPanel 特判）
 const featureMap = new Map(FEATURES.map((f) => [f.id, f]))

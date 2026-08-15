@@ -77,7 +77,7 @@
             />
           </button>
         </div>
-        <!-- 分类标签栏（全部 / 已固定 / 未固定） -->
+        <!-- 分类标签栏（全部 / 已固定 / 未固定 / 监控） -->
         <div
           v-if="!searchQuery"
           class="feature-drawer-tabs"

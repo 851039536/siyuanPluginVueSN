@@ -216,10 +216,10 @@ watch(
   { immediate: true },
 )
 
-function createEmptyContentBlock(label?: string): PromptContent {
+function createEmptyContentBlock(): PromptContent {
   return {
     id: `c${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    label: label || "",
+    label: "",
     text: "",
   }
 }

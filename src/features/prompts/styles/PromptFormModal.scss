@@ -8,22 +8,13 @@
     margin-bottom: $spacing-3;
 
     label {
-      display: block;
-      font-size: $font-size-2xs;
-      font-weight: $font-weight-semibold;
-      letter-spacing: 0.04em;
-      line-height: $line-height-tight;
-      text-transform: uppercase;
-      opacity: 0.55;
-      color: var(--b3-theme-on-background);
-      margin-bottom: $spacing-2;
-      font-family: $font-zh;
+      @include m.form-label;
     }
 
     .vp-input,
     .vp-textarea,
     .vp-select {
-      @include m.form-control;
+      @include m.form-input;
     }
 
     .vp-select {
@@ -45,16 +36,7 @@
 
 // 通用表单标签
 .vp-form-label {
-  display: block;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
-  letter-spacing: 0.04em;
-  line-height: $line-height-tight;
-  text-transform: uppercase;
-  opacity: 0.55;
-  color: var(--b3-theme-on-background);
-  margin-bottom: $spacing-2;
-  font-family: $font-zh;
+  @include m.form-label;
 }
 
 // 动态内容块编辑器
@@ -85,7 +67,7 @@
   min-width: 0;
 
   .vp-input--label {
-    @include m.form-control;
+    @include m.form-input;
     font-size: $font-size-xs;
     font-weight: $font-weight-semibold;
     color: var(--b3-theme-primary);
@@ -97,7 +79,7 @@
   }
 
   .vp-textarea {
-    @include m.form-control;
+    @include m.form-input;
     resize: vertical;
     min-height: 80px;
     line-height: $line-height-normal;

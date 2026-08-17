@@ -26,6 +26,8 @@ export function useS3FileOps(deps: {
   addLog: (entry: Omit<FileOpLog, "id" | "time" | "hostname">) => void
   /** 写操作完成后回调：失效全部缓存 + 刷新当前目录 */
   afterMutation: () => Promise<void>
+  /** 其他长任务是否进行中（如上传/下载），冲突时拒绝启动本操作 */
+  isTransferring?: () => boolean
 }) {
   const { i18n } = deps
 
@@ -106,7 +108,7 @@ export function useS3FileOps(deps: {
 
   /** 操作骨架：busy 状态、统一错误提示、日志与刷新 */
   async function runOp(fn: () => Promise<void>): Promise<void> {
-    if (opBusy.value) { return }
+    if (opBusy.value || deps.isTransferring?.()) { return }
     opBusy.value = true
     try {
       await fn()

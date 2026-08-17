@@ -63,6 +63,14 @@
             :label="i18n.prefix"
             :placeholder="i18n.prefixHint"
           />
+          <!-- 上传超时（秒） -->
+          <Input
+            v-model="form.uploadTimeoutSec"
+            type="number"
+            size="small"
+            :label="i18n.uploadTimeoutSec"
+            :placeholder="String(DEFAULT_S3_CONFIG.uploadTimeoutSec)"
+          />
         </div>
 
         <div class="fm-config-switches">
@@ -168,13 +176,15 @@ const testResult = ref<{ success: boolean; message: string } | null>(null)
 // Esc 关闭弹窗
 useEscClose(() => emit("close"))
 
+/** 归一化超时字段（空值/非法值回退默认） */
+function normalizeTimeout(value: unknown): number {
+  const timeout = Number(value)
+  return Number.isFinite(timeout) && timeout > 0 ? Math.round(timeout) : DEFAULT_S3_CONFIG.uploadTimeoutSec
+}
+
 /** 归一化并快照当前表单为 S3Config */
 function snapshot(): S3Config {
-  const timeout = Number(form.uploadTimeoutSec)
-  return {
-    ...form,
-    uploadTimeoutSec: Number.isFinite(timeout) && timeout > 0 ? Math.round(timeout) : DEFAULT_S3_CONFIG.uploadTimeoutSec,
-  }
+  return { ...form, uploadTimeoutSec: normalizeTimeout(form.uploadTimeoutSec) }
 }
 
 /** 挂载时自加载已保存配置（解密凭证） */
@@ -185,6 +195,7 @@ onMounted(async () => {
       ...saved,
       accessKey: await decryptSetting(saved.accessKey),
       secretKey: await decryptSetting(saved.secretKey),
+      uploadTimeoutSec: normalizeTimeout(saved.uploadTimeoutSec),
     })
   } catch (err) {
     console.error("[S3文件管理] 配置加载失败:", getErrorMessage(err))
@@ -216,6 +227,7 @@ async function handleImport(): Promise<void> {
       ...backupConfig,
       accessKey: await decryptSetting(backupConfig.accessKey),
       secretKey: await decryptSetting(backupConfig.secretKey),
+      uploadTimeoutSec: normalizeTimeout(backupConfig.uploadTimeoutSec),
     })
     showMessage(props.i18n.importSuccess, 2000, "info")
   } catch (err) {

@@ -41,14 +41,14 @@
 
 .fm-log-badge {
   flex-shrink: 0;
-  padding: 0 $spacing-1;
+  padding: $spacing-0 $spacing-1;
   border-radius: $radius-sm;
   font-size: $font-size-2xs; // 徽章为辅助文字
   border: 1px solid transparent;
 
   &.success {
-    color: var(--b3-theme-success, #22c55e);
-    border-color: var(--b3-theme-success, #22c55e);
+    color: var(--b3-theme-success, $color-success);
+    border-color: var(--b3-theme-success, $color-success);
   }
 
   &.error {

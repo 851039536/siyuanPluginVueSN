@@ -3,6 +3,16 @@
  */
 @use '@/variables.scss' as *;
 
+// 选中/拖拽悬停共用状态（详细信息行与图标网格项复用）
+%fm-item-selected {
+  background: var(--b3-theme-primary-lightest, $color-info);
+}
+
+%fm-item-drag-over {
+  outline: 1px dashed var(--b3-theme-primary);
+  outline-offset: -1px;
+}
+
 .fm-entry-list {
   flex: 1;
   overflow-y: auto;
@@ -100,14 +110,13 @@
   }
 
   &.selected {
-    background: var(--b3-theme-primary-lightest, rgba(66, 133, 244, 0.15));
+    @extend %fm-item-selected;
   }
 
   // 拖拽悬停到此文件夹（放置目标）
   &.drag-over {
-    background: var(--b3-theme-primary-lightest, rgba(66, 133, 244, 0.15));
-    outline: 1px dashed var(--b3-theme-primary);
-    outline-offset: -1px;
+    @extend %fm-item-selected;
+    @extend %fm-item-drag-over;
   }
 
   .fm-col-size,
@@ -147,14 +156,13 @@
   }
 
   &.selected {
-    background: var(--b3-theme-primary-lightest, rgba(66, 133, 244, 0.15));
+    @extend %fm-item-selected;
   }
 
   // 拖拽悬停到此文件夹（放置目标）
   &.drag-over {
-    background: var(--b3-theme-primary-lightest, rgba(66, 133, 244, 0.15));
-    outline: 1px dashed var(--b3-theme-primary);
-    outline-offset: -1px;
+    @extend %fm-item-selected;
+    @extend %fm-item-drag-over;
   }
 }
 

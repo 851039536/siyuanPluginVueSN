@@ -56,22 +56,29 @@ export function isValidEntryName(name: string): boolean {
  * 将递归全量列举结果按 / 聚合为当前层条目
  * 服务端不支持 delimiter 时的客户端降级方案
  */
-export function aggregateEntries(files: S3FileInfo[], prefix: string): { files: S3FileInfo[]; folders: string[] } {
+export function aggregateEntries(
+  files: S3FileInfo[],
+  prefix: string,
+): { files: S3FileInfo[]; folders: string[]; conflicts: string[] } {
   const directFiles: S3FileInfo[] = []
   const folderSet = new Set<string>()
+  const fileNames = new Set<string>()
   for (const f of files) {
     if (!f.key.startsWith(prefix) || f.key === prefix) { continue }
     const rest = f.key.slice(prefix.length)
     const slashIdx = rest.indexOf("/")
     if (slashIdx === -1) {
       directFiles.push(f)
+      fileNames.add(rest)
     } else {
       const seg = rest.slice(0, slashIdx)
       // 跳过双斜杠异常键（首段为空），避免聚合出与当前目录同名的假文件夹
       if (seg) { folderSet.add(`${prefix}${seg}/`) }
     }
   }
-  return { files: directFiles, folders: [...folderSet] }
+  // 同名前缀文件夹与文件并存的异常后端会导致展示冲突，交由调用方记日志诊断
+  const conflicts = [...folderSet].filter((folder) => fileNames.has(nameFromKey(folder)))
+  return { files: directFiles, folders: [...folderSet], conflicts }
 }
 
 /** 将 listDir 结果组装为统一的 S3Entry 列表（文件夹在前由排序器保证） */

@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, nextTick, ref, watch } from "vue"
 import type { IconKey } from "@/config/icons"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { useEscClose } from "../composables/useEscClose"
@@ -60,10 +60,26 @@ const emit = defineEmits<{
 // Esc 关闭菜单（组件常驻挂载，按可见性守卫）
 useEscClose(() => emit("close"), () => props.visible)
 
-// 定位：限制在视口内，避免右下角溢出（菜单预估宽 180 / 每项高 30）
+const menuRef = ref<HTMLElement | null>(null)
+const menuSize = ref({ width: 160, height: 0 })
+
+// 可见时等待 DOM 渲染后测量真实尺寸，避免右下角菜单溢出视口
+watch(
+  () => props.visible,
+  async (visible) => {
+    if (!visible) { return }
+    await nextTick()
+    const el = menuRef.value
+    if (el) {
+      menuSize.value = { width: el.offsetWidth, height: el.offsetHeight }
+    }
+  },
+)
+
+// 定位：限制在视口内，避免右下角溢出（未测量时用兜底尺寸）
 const menuStyle = computed(() => {
-  const maxX = window.innerWidth - 190
-  const maxY = window.innerHeight - (props.items.length * 32 + 12)
+  const maxX = window.innerWidth - menuSize.value.width - 10
+  const maxY = window.innerHeight - menuSize.value.height - 8
   return {
     left: `${Math.min(props.x, maxX)}px`,
     top: `${Math.min(props.y, Math.max(8, maxY))}px`,

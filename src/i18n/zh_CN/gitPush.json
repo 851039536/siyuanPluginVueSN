@@ -613,6 +613,19 @@
     "ruleCheckReasonInvalidType": "type 非法",
     "ruleCheckReasonInvalidScope": "scope 为空",
     "ruleCheckReasonBadSeparator": "分隔符错误",
-    "ruleCheckReasonEmptySubject": "描述为空"
+    "ruleCheckReasonEmptySubject": "描述为空",
+    "ruleFixOpen": "修正",
+    "ruleFixTitle": "修正提交信息",
+    "ruleFixOriginal": "原提交信息",
+    "ruleFixNewLabel": "新提交信息",
+    "ruleFixNewPlaceholder": "输入符合规则的提交信息...",
+    "ruleFixGenerate": "AI 生成修正",
+    "ruleFixGenerating": "生成中…",
+    "ruleFixSave": "保存修正",
+    "ruleFixSaving": "保存中…",
+    "ruleFixOnlyHead": "仅最近一次提交（HEAD）可自动修正，更早提交请在终端使用 git rebase 手动处理",
+    "ruleFixDirtyWorkingTree": "工作区有未提交变更，请先提交或暂存后再修正",
+    "ruleFixAiFailed": "AI 生成失败，请重试",
+    "ruleFixSaveFailed": "修正失败"
   }
 }

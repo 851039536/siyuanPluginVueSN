@@ -222,6 +222,14 @@ export class GitPushManager {
 
   async checkIsGitRepo(projectPath: string): Promise<boolean> { return this.worktreeOps.checkIsGitRepo(projectPath) }
 
+  async getCommitFixContext(projectPath: string, hash: string): Promise<string> {
+    return this.worktreeOps.getCommitFixContext(projectPath, hash)
+  }
+
+  async amendCommitMessage(projectPath: string, message: string): Promise<string> {
+    return this.worktreeOps.amendCommitMessage(projectPath, message)
+  }
+
   // ── 仓库元操作（RepoOps）──
 
   async getTags(projectPath: string, limit = 10): Promise<TagInfo[]> { return this.repoOps.getTags(projectPath, limit) }
@@ -302,6 +310,10 @@ export class GitPushManager {
 
   async generateCommitMessage(projectPath: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
     return this.commitMsgGen.generateCommitMessage(projectPath)
+  }
+
+  async generateCommitFix(projectPath: string, hash: string, currentMessage: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
+    return this.commitMsgGen.generateCommitFix(projectPath, hash, currentMessage)
   }
 
   async generateStashDescription(projectPath: string): Promise<string> {

@@ -232,3 +232,14 @@
   font-size: $font-size-2xs;
   opacity: 0.6;
 }
+
+// 违规列表中的修正按钮
+.grc-item-fix {
+  padding: 0 4px;
+  border-radius: $radius-sm;
+  opacity: 0.6;
+
+  &:hover {
+    opacity: 1;
+  }
+}

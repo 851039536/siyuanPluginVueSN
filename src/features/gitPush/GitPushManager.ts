@@ -232,8 +232,8 @@ export class GitPushManager {
     return this.worktreeOps.amendCommitMessage(projectPath, message)
   }
 
-  async rewriteCommitMessage(projectPath: string, hash: string, message: string): Promise<string> {
-    return this.worktreeOps.rewriteCommitMessage(projectPath, hash, message)
+  async rewriteCommitMessage(projectPath: string, hash: string, message: string, preserveDate = false): Promise<string> {
+    return this.worktreeOps.rewriteCommitMessage(projectPath, hash, message, preserveDate)
   }
 
   // ── 仓库元操作（RepoOps）──

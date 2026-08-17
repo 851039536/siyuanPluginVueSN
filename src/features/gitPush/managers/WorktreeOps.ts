@@ -298,7 +298,7 @@ export class WorktreeOps {
    * - 目标是 HEAD 时直接 amend；
    * - 目标是历史提交时通过非交互 rebase 自动 reword，失败自动 abort。
    */
-  async rewriteCommitMessage(projectPath: string, hash: string, message: string): Promise<string> {
+  async rewriteCommitMessage(projectPath: string, hash: string, message: string, preserveDate = false): Promise<string> {
     const node = getNodeFsPathOs()
     if (!node) throw new Error("Node 环境不可用")
 
@@ -309,6 +309,20 @@ export class WorktreeOps {
     const headHash = (await this.getHeadHash(projectPath)).trim()
     // HEAD 直接走 amend，不产生 rebase 交互
     if (headHash === fullHash) {
+      if (preserveDate) {
+        // 保留原提交的 committer date，避免 GitHub 显示为当前时间
+        const originalDate = (await this.executor.execGit(projectPath, ["log", "-1", "--format=%cI", fullHash])).trim()
+        if (originalDate) {
+          return await this.executor.execGit(
+            projectPath,
+            ["-c", "core.quotepath=false", "commit", "--amend", "-m", message],
+            undefined,
+            30000,
+            undefined,
+            { env: { GIT_COMMITTER_DATE: originalDate } },
+          )
+        }
+      }
       return await this.amendCommitMessage(projectPath, message)
     }
 
@@ -352,9 +366,10 @@ fs.writeFileSync(file, process.env.COMMIT_FIX_MESSAGE || "")
         COMMIT_FIX_SHORT: shortHash,
         COMMIT_FIX_MESSAGE: message,
       }
+      const dateArg = preserveDate ? ["--committer-date-is-author-date"] : []
       const rebaseArgs = parent
-        ? ["-c", "core.quotepath=false", "rebase", "-i", parent]
-        : ["-c", "core.quotepath=false", "rebase", "-i", "--root"]
+        ? ["-c", "core.quotepath=false", "rebase", "-i", ...dateArg, parent]
+        : ["-c", "core.quotepath=false", "rebase", "-i", ...dateArg, "--root"]
       return await this.executor.execGit(
         projectPath,
         rebaseArgs,

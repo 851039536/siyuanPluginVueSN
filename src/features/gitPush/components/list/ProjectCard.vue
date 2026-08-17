@@ -526,10 +526,12 @@
       <!-- 提交日志（数据卡内自持，刷新/换条数直调卡内重载） -->
       <BranchCommitList
         v-if="stashTagTab === 'log'"
+        :i18n="i18n"
         :entries="logEntries"
         :loading="logLoading"
         @reload-commit-log="(count: number) => reloadLog(count)"
         @refresh-commit-log="() => reloadLog()"
+        @fix-commit="openCommitFix"
       />
 
       <!-- Stash -->
@@ -744,11 +746,22 @@
       :project-name="project.name"
       :action="panel.key"
     />
+
+    <!-- 提交信息修正弹窗（LOG Tab 与规则检查共用） -->
+    <CommitFixDialog
+      v-if="fixingEntry"
+      :i18n="i18n"
+      :target="fixingEntry"
+      @close="fixingEntry = null"
+      @saved="handleFixSaved"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import type {
+  CommitFixTarget,
+  CommitLogEntry,
   GitProject,
   PlatformKey,
   ProjectCategory,
@@ -766,6 +779,7 @@ import type { PushOutputEntry } from "../../composables/useGitOps"
 import { useCardActions } from "../../composables/useCardActions"
 import { useCardData } from "../../composables/useCardData"
 import BranchCommitList from "./BranchCommitList.vue"
+import CommitFixDialog from "../analysis/CommitFixDialog.vue"
 import ConflictSection from "./ConflictSection.vue"
 import MarkdownFileBadge from "./MarkdownFileBadge.vue"
 import OutputPanel from "./OutputPanel.vue"
@@ -918,6 +932,25 @@ const uniqueCustomIdes = computed(() => {
 
 /** Stash / Tag 面板 Tab 切换 */
 const stashTagTab = ref<"worktree" | "log" | "stash" | "tag">("worktree")
+
+/** 当前正在修正的提交条目（null = 未打开修正弹窗） */
+const fixingEntry = ref<CommitFixTarget | null>(null)
+
+/** LOG Tab 点击修正按钮：把 CommitLogEntry 转为通用修正目标 */
+function openCommitFix(entry: CommitLogEntry) {
+  fixingEntry.value = {
+    projectId: props.project.id,
+    projectName: props.project.name,
+    hash: entry.hash,
+    message: entry.message,
+  }
+}
+
+/** 修正成功后关闭弹窗并刷新 LOG 数据 */
+function handleFixSaved() {
+  fixingEntry.value = null
+  void reloadLog()
+}
 
 // 切换回 worktree 时自动刷新工作区（父层数据）；切到 log/stash/tag 时懒加载卡内详情
 watch(stashTagTab, (val) => {

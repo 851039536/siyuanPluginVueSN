@@ -185,8 +185,7 @@
     <CommitFixDialog
       v-if="editingViolation"
       :i18n="i18n"
-      :project-id="editingViolation.projectId"
-      :violation="editingViolation"
+      :target="editingViolation"
       @close="editingViolation = null"
       @saved="handleFixSaved"
     />

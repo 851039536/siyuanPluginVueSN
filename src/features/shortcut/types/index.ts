@@ -47,24 +47,6 @@ export interface ShortcutGroup {
 }
 
 /**
- * 视图模式类型
- */
-export type ViewMode = "grid" | "list" | "three-col"
-
-/**
- * 对话框类型
- */
-export type DialogType = "add" | "edit" | null
-
-/**
- * 快捷筛选选项
- */
-export interface QuickFilter {
-  key: string
-  label: string
-}
-
-/**
  * 表单数据类型
  */
 export interface ShortcutFormData {
@@ -74,11 +56,6 @@ export interface ShortcutFormData {
   keys: string
   group: string
 }
-
-/**
- * 分类标签映射类型
- */
-export type CategoryLabels = Record<string, string>
 
 /**
  * 工具类分类（需要显示工具徽章的分类）

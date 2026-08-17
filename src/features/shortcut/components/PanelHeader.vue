@@ -1,7 +1,7 @@
-<!-- 快捷键面板头部工具栏：搜索框、分类下拉、添加按钮、筛选按钮组、视图切换 -->
+<!-- 快捷键面板头部工具栏：搜索框、分类下拉、添加按钮、收藏/最近筛选、总数统计 -->
 <template>
   <div class="shortcut-header">
-    <!-- Row 1: Search + Category + Add -->
+    <!-- 行1：搜索 + 分类 + 添加 -->
     <div class="toolbar-row">
       <Input
         :model-value="searchKeyword"
@@ -16,7 +16,7 @@
         :options="selectOptions"
         size="xsmall"
         class="toolbar-category"
-        @update:model-value="$emit('update:activeTab', $event)"
+        @update:model-value="onTabChange"
       />
       <Button
         variant="primary"
@@ -27,32 +27,30 @@
         @click="$emit('add')"
       />
     </div>
-    <!-- Row 2: Filters + View toggle -->
+    <!-- 行2：筛选 + 总数 -->
     <div class="toolbar-row-secondary">
       <div class="filter-group">
         <Button
-          v-for="filter in filters"
-          :key="filter.key"
-          :variant="activeFilter === filter.key ? 'primary' : 'ghost'"
+          variant="ghost"
+          :class="{ active: activeFilter === 'favorite' }"
           size="xsmall"
-          @click="$emit('update:activeFilter', filter.key)"
+          icon="star"
+          @click="$emit('update:activeFilter', toggleFilter('favorite'))"
         >
-          {{ filter.label }}
+          {{ filterFavoriteLabel }}
         </Button>
-      </div>
-      <div class="view-toggle">
         <Button
-          :variant="viewMode === 'grid' ? 'primary' : 'ghost'"
+          variant="ghost"
+          :class="{ active: activeFilter === 'recent' }"
           size="xsmall"
-          title="网格视图"
-          @click="$emit('update:viewMode', 'grid')"
+          icon="timerOutline"
+          @click="$emit('update:activeFilter', toggleFilter('recent'))"
         >
-          <span class="grid-icon">
-            <span class="square"></span>
-            <span class="square"></span>
-          </span>
+          {{ filterRecentLabel }}
         </Button>
       </div>
+      <!-- 快捷键总数 -->
+      <span class="total-count">{{ totalCount }}</span>
     </div>
   </div>
 </template>
@@ -64,22 +62,18 @@ import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
 
-interface FilterItem {
-  key: string
-  label: string
-}
-
 interface Props {
   searchKeyword: string
   placeholder: string
   addTitle: string
   activeTab: string
   activeFilter: string
-  viewMode: string
-  filters: FilterItem[]
+  filterFavoriteLabel: string
+  filterRecentLabel: string
   tabs: string[]
   getCategoryLabel: (category: string) => string
   getTabCount: (category: string) => number
+  totalCount: number
 }
 
 const props = defineProps<Props>()
@@ -88,12 +82,22 @@ const emit = defineEmits<{
   "update:searchKeyword": [value: string]
   "update:activeTab": [value: string]
   "update:activeFilter": [value: string]
-  "update:viewMode": [value: string]
   "add": []
 }>()
 
 const onSearchChange = (value: string | number | null) => {
   emit("update:searchKeyword", String(value ?? ""))
+}
+
+const onTabChange = (value: string | number | boolean | null) => {
+  emit("update:activeTab", String(value ?? "all"))
+}
+
+/**
+ * 筛选按钮切换：已选中则回到"全部"，否则选中目标筛选
+ */
+const toggleFilter = (target: string) => {
+  return props.activeFilter === target ? "all" : target
 }
 
 const selectOptions = computed((): SelectOption[] => {

@@ -10,52 +10,59 @@
     <div class="card-header">
       <div class="shortcut-name">
         <span class="name-text">{{ shortcut.name }}</span>
+        <!-- 平台限制标记 -->
         <span
           v-if="shortcut.platform"
           class="platform-badge"
         >{{ shortcut.platform }}</span>
+        <!-- 工具分类徽章 -->
         <span
           v-if="showToolBadge"
           class="tool-badge"
         >{{ categoryLabel }}</span>
       </div>
       <div class="shortcut-actions">
+        <!-- 收藏切换 -->
         <Button
           variant="ghost"
           size="xsmall"
           :icon="isFavorite ? 'star' : 'starOutline'"
           :class="{ active: isFavorite }"
-          :title="isFavorite ? unFavoriteTitle : favoriteTitle"
+          :title="isFavorite ? i18n.unFavorite : i18n.favorite"
           @click="$emit('toggleFavorite', shortcut.id)"
         />
+        <!-- 复制按键 -->
         <Button
           variant="ghost"
           size="xsmall"
           icon="contentCopy"
-          :title="copyTitle"
+          :title="i18n.copy"
           @click="$emit('copy', shortcut)"
         />
+        <!-- 编辑（仅自定义分类） -->
         <Button
           v-if="shortcut.category === 'custom'"
           variant="ghost"
           size="xsmall"
           icon="edit"
-          :title="editTitle"
+          :title="i18n.edit"
           @click="$emit('edit', shortcut)"
         />
+        <!-- 删除（仅自定义分类） -->
         <Button
           v-if="shortcut.category === 'custom'"
           variant="ghost"
           size="xsmall"
           icon="delete"
-          :title="deleteTitle"
+          :title="i18n.delete"
           @click="$emit('delete', shortcut.id)"
         />
       </div>
     </div>
+    <!-- 按键组合（点击复制） -->
     <div
       class="shortcut-keys"
-      :title="copyTitle"
+      :title="i18n.copy"
       @click="$emit('copy', shortcut)"
     >
       <span
@@ -66,6 +73,7 @@
         {{ key }}
       </span>
     </div>
+    <!-- 功能描述 -->
     <div class="shortcut-desc">
       {{ shortcut.description }}
     </div>
@@ -83,20 +91,10 @@ interface Props {
   isRecent: boolean
   categoryLabel: string
   showToolBadge: boolean
-  favoriteTitle?: string
-  unFavoriteTitle?: string
-  copyTitle?: string
-  editTitle?: string
-  deleteTitle?: string
+  i18n: Record<string, string>
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  favoriteTitle: "收藏",
-  unFavoriteTitle: "取消收藏",
-  copyTitle: "复制",
-  editTitle: "编辑",
-  deleteTitle: "删除",
-})
+const props = defineProps<Props>()
 
 defineEmits<{
   toggleFavorite: [id: string]

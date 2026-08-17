@@ -1,4 +1,3 @@
-import type { ShortcutInfo } from "./types"
 /**
  * 快捷键模块
  * 功能：在右侧边栏显示思源笔记和插件的快捷键信息
@@ -13,26 +12,37 @@ import {
   ShortcutManager,
 } from "./manager"
 import { ShortcutStorage } from "./types/storage"
+import type { ShortcutInfo } from "./types"
 
 /**
- * 注册快捷键模块
+ * 注册快捷键模块（同步注册 Dock，异步初始化数据，不产生未处理 Promise）
  */
-export async function registerShortcut(plugin: Plugin) {
-  // 先同步注册 Dock，确保侧边栏图标在 onload 阶段就出现
+export function registerShortcut(plugin: Plugin) {
+  // 同步注册 Dock，确保侧边栏图标在 onload 阶段就出现
   addShortcutDock(plugin)
-
   // 异步初始化快捷键数据
-  const manager = getShortcutManager()
-  const storage = new ShortcutStorage(plugin)
+  void initShortcutData(plugin)
+}
 
-  // 首次运行：seed 预置数据到持久化存储；后续运行：从存储恢复
-  const allShortcuts = await storage.seedIfEmpty(PRESET_SHORTCUTS)
-  manager.loadFromArray(allShortcuts)
+/**
+ * 异步初始化快捷键数据：seed 预置数据 + 绑定保存回调
+ */
+async function initShortcutData(plugin: Plugin) {
+  try {
+    const manager = getShortcutManager()
+    const storage = new ShortcutStorage(plugin)
 
-  // 设置保存回调（任何快捷键变更 → 自动同步到持久化存储）
-  manager.setSaveCallback(async (shortcuts: ShortcutInfo[]) => {
-    await storage.saveAll(shortcuts)
-  })
+    // 首次运行：seed 预置数据到持久化存储；后续运行：从存储恢复
+    const allShortcuts = await storage.seedIfEmpty(PRESET_SHORTCUTS)
+    manager.loadFromArray(allShortcuts)
+
+    // 设置保存回调（任何快捷键变更 → 自动同步到持久化存储）
+    manager.setSaveCallback(async (shortcuts: ShortcutInfo[]) => {
+      await storage.saveAll(shortcuts)
+    })
+  } catch (error) {
+    console.error("初始化快捷键数据失败:", error)
+  }
 }
 
 /**
@@ -43,7 +53,7 @@ function addShortcutDock(plugin: Plugin) {
     position: "RightTop",
     width: 480,
     icon: "iconKeymap",
-    title: plugin.i18n.shortcuts || "快捷键",
+    title: plugin.i18n.shortcuts,
     type: "shortcut-panel-dock",
     i18n: plugin.i18n,
     extraProps: { plugin },
@@ -67,23 +77,17 @@ export async function addCustomShortcuts(shortcuts: ShortcutInfo[]) {
 }
 
 /**
- * 获取快捷键管理器
+ * 导出管理器与类型
  */
 export {
   getShortcutManager,
   ShortcutManager,
 }
 
-/**
- * 导出类型
- */
 export type {
-  DialogType,
-  QuickFilter,
   ShortcutFormData,
   ShortcutGroup,
   ShortcutInfo,
-  ViewMode,
 } from "./types"
 
 export {

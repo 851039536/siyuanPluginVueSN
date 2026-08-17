@@ -8,23 +8,19 @@ import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 
 /**
- * 快捷键存储键
- */
-export const SHORTCUTS_STORAGE_KEY = "plugin-shortcuts-custom"
-/**
  * 统一存储键：存储所有快捷键（预置 + 自定义）
  */
-export const SHORTCUTS_ALL_KEY = "plugin-shortcuts-all"
+const SHORTCUTS_ALL_KEY = "plugin-shortcuts-all"
 
 /**
  * 快捷键收藏存储键
  */
-export const SHORTCUTS_FAVORITES_KEY = "plugin-shortcuts-favorites"
+const SHORTCUTS_FAVORITES_KEY = "plugin-shortcuts-favorites"
 
 /**
  * 最近使用存储键
  */
-export const SHORTCUTS_RECENT_KEY = "plugin-shortcuts-recent"
+const SHORTCUTS_RECENT_KEY = "plugin-shortcuts-recent"
 
 /**
  * 清洗数组数据，过滤掉非字符串元素
@@ -65,13 +61,6 @@ export class ShortcutStorage {
    */
   async saveFavorites(favorites: string[]): Promise<boolean> {
     return this.favorites.save(sanitizeStringArray(favorites))
-  }
-
-  /**
-   * 清空所有收藏快捷键数据
-   */
-  async clearFavorites(): Promise<boolean> {
-    return this.favorites.save([])
   }
 
   /**

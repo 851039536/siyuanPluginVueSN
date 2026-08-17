@@ -1,4 +1,4 @@
-<!-- 添加快捷键或编辑快捷键的全屏模态对话框，含名称/描述/按键/分组四个输入字段 -->
+<!-- 添加/编辑快捷键的模态对话框，含名称/描述/按键/分组四个输入字段 -->
 <template>
   <div
     v-if="visible"
@@ -7,8 +7,11 @@
   >
     <div
       class="shortcut-dialog"
+      role="dialog"
+      aria-modal="true"
       @click.stop
     >
+      <!-- 标题栏 -->
       <div class="dialog-header">
         <div class="dialog-title">
           {{ title }}
@@ -20,44 +23,52 @@
           @click="$emit('close')"
         />
       </div>
+      <!-- 表单区 -->
       <div class="dialog-body">
+        <!-- 快捷键名称 -->
         <Input
           v-model="localFormData.name"
-          :label="nameLabel"
-          :placeholder="namePlaceholder"
+          :label="i18n.shortcutName"
+          :placeholder="i18n.enterName"
           size="small"
         />
+        <!-- 功能描述 -->
         <Input
           v-model="localFormData.description"
-          :label="descLabel"
-          :placeholder="descPlaceholder"
+          :label="i18n.description"
+          :placeholder="i18n.enterDescription"
           size="small"
         />
+        <!-- 按键组合 -->
         <Input
           v-model="localFormData.keys"
-          :label="keysLabel"
-          :placeholder="keysPlaceholder"
+          :label="i18n.shortcutKeys"
+          :placeholder="i18n.keysPlaceholder"
           size="small"
         />
+        <!-- 分组 -->
         <Input
           v-model="localFormData.group"
-          :label="groupLabel"
-          :placeholder="groupPlaceholder"
+          :label="i18n.group"
+          :placeholder="i18n.enterGroup"
           size="small"
         />
       </div>
+      <!-- 底部操作栏 -->
       <div class="dialog-footer">
         <Button
           variant="secondary"
+          size="small"
           @click="$emit('close')"
         >
-          {{ cancelText }}
+          {{ i18n.cancel }}
         </Button>
         <Button
           variant="primary"
+          size="small"
           @click="handleConfirm"
         >
-          {{ confirmText }}
+          {{ i18n.confirm }}
         </Button>
       </div>
     </div>
@@ -80,37 +91,11 @@ import Input from "@/components/Input.vue"
 interface Props {
   visible: boolean
   isEdit: boolean
-  formData: ShortcutFormData
-  titleLabel?: string
-  editTitleLabel?: string
-  nameLabel?: string
-  namePlaceholder?: string
-  descLabel?: string
-  descPlaceholder?: string
-  keysLabel?: string
-  keysPlaceholder?: string
-  groupLabel?: string
-  groupPlaceholder?: string
-  cancelText?: string
-  confirmText?: string
-  fillRequiredText?: string
+  initial: ShortcutInfo | null
+  i18n: Record<string, string>
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  titleLabel: "添加快捷键",
-  editTitleLabel: "编辑快捷键",
-  nameLabel: "快捷键名称",
-  namePlaceholder: "输入快捷键名称",
-  descLabel: "描述",
-  descPlaceholder: "输入功能描述",
-  keysLabel: "快捷键",
-  keysPlaceholder: "例如: Ctrl+K",
-  groupLabel: "分组",
-  groupPlaceholder: "输入分组名称",
-  cancelText: "取消",
-  confirmText: "确认",
-  fillRequiredText: "请填写必填项",
-})
+const props = defineProps<Props>()
 
 const emit = defineEmits<{
   close: []
@@ -123,27 +108,39 @@ const localFormData = ref<ShortcutFormData>({
   name: "",
   description: "",
   keys: "",
-  group: "自定义",
+  group: props.i18n.customShortcuts,
 })
 
+// initial 变化时同步表单（新增传 null 重置，编辑回填）
 watch(
-  () => props.formData,
+  () => props.initial,
   (val) => {
-    localFormData.value = { ...val }
+    localFormData.value = val
+      ? {
+          id: val.id,
+          name: val.name,
+          description: val.description,
+          keys: val.keys,
+          group: val.group || props.i18n.customShortcuts,
+        }
+      : {
+          id: "",
+          name: "",
+          description: "",
+          keys: "",
+          group: props.i18n.customShortcuts,
+        }
   },
-  {
-    immediate: true,
-    deep: true,
-  },
+  { immediate: true },
 )
 
 const title = computed(() =>
-  props.isEdit ? props.editTitleLabel : props.titleLabel,
+  props.isEdit ? props.i18n.editShortcut : props.i18n.addCustomShortcut,
 )
 
 function handleConfirm() {
   if (!localFormData.value.name || !localFormData.value.keys) {
-    emit("error", props.fillRequiredText)
+    emit("error", props.i18n.fillRequired)
     return
   }
 
@@ -153,7 +150,7 @@ function handleConfirm() {
     description: localFormData.value.description,
     keys: localFormData.value.keys,
     category: "custom",
-    group: localFormData.value.group || "自定义",
+    group: localFormData.value.group || props.i18n.customShortcuts,
   }
 
   emit("confirm", shortcut)

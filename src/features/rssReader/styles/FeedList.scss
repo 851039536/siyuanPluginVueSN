@@ -1,0 +1,10 @@
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+.rss-reader-panel {
+  // --- 订阅源列表容器（FeedList 组件） ---
+  .rss-feed-list {
+    display: flex;
+    flex-direction: column;
+  }
+}

@@ -1,0 +1,52 @@
+@use '@/variables.scss' as *;
+
+// ===== 本地变量 =====
+$rr-accent: $color-accent;
+$rr-transition: all 0.12s;
+
+// ===== 可复用 Mixins =====
+
+// 图标按钮基础结构（不含颜色，由各按钮自行设置）
+@mixin btn-icon-base($size) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: $size;
+  height: $size;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: $rr-transition;
+}
+
+// 标准按钮 hover 效果
+@mixin btn-hover {
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+  }
+}
+
+// 输入框聚焦环（功能性 outline 替代，非装饰性阴影）
+@mixin input-focus-ring {
+  &:focus {
+    border-color: var(--b3-theme-primary);
+    outline: 2px solid var(--b3-theme-primary-lightest);
+  }
+}
+
+// 未读/计数徽章
+@mixin badge($line-h: 16px, $min-w: 16px, $pad-h: 5px) {
+  font-size: $font-size-2xs;
+  font-family: $vp-mono;
+  font-weight: $font-weight-semibold;
+  padding: 0 $pad-h;
+  line-height: $line-h;
+  border-radius: $radius-full;
+  min-width: $min-w;
+  text-align: center;
+  flex-shrink: 0;
+}

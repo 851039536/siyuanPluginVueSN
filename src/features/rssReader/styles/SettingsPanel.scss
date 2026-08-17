@@ -1,0 +1,74 @@
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+@use "./dialog" as *;
+
+.rss-reader-panel {
+  // --- OPML 导入导出 ---
+  .opml-section {
+    margin-bottom: $spacing-3;
+    padding: $spacing-2 $spacing-2 $spacing-3;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $radius-md;
+
+    .setting-label {
+      font-size: $font-size-sm;
+      font-weight: $font-weight-medium;
+      margin-bottom: $spacing-1;
+    }
+
+    .setting-desc {
+      font-size: $font-size-xs;
+      color: var(--b3-theme-on-surface-muted);
+      margin-bottom: $spacing-1;
+    }
+
+    .opml-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 10px;
+      border: 1px solid $rr-accent;
+      border-radius: $radius-sm;
+      background: transparent;
+      color: $rr-accent;
+      font-size: $font-size-sm;
+      cursor: pointer;
+      transition: $rr-transition;
+
+      &:hover {
+        background: rgba($rr-accent, 0.1);
+        border-color: $rr-accent;
+      }
+    }
+
+    .opml-import-row {
+      display: flex;
+      align-items: center;
+      gap: $spacing-2;
+
+      input[type="file"] {
+        font-size: $font-size-xs;
+        color: var(--b3-theme-on-surface);
+        &::file-selector-button {
+          padding: 4px 8px;
+          border: 1px solid var(--b3-theme-surface-lighter);
+          border-radius: $radius-sm;
+          background: var(--b3-theme-surface-lighter);
+          color: var(--b3-theme-on-surface);
+          font-size: $font-size-xs;
+          cursor: pointer;
+          margin-right: 6px;
+          &:hover { background: var(--b3-theme-surface); }
+        }
+      }
+
+      .opml-importing {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: $font-size-xs;
+        color: var(--b3-theme-on-surface-muted);
+      }
+    }
+  }
+}

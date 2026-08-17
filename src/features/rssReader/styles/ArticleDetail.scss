@@ -1,0 +1,115 @@
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+.rss-reader-panel {
+  // --- 文章详情 ---
+  .rss-item-detail {
+    display: flex; flex-direction: column; height: 100%;
+
+    .detail-header {
+      display: flex; align-items: center; gap: $spacing-1;
+      padding: 6px $spacing-3;
+      border-bottom: 1px solid var(--b3-border-color);
+      flex-shrink: 0; min-height: 36px;
+
+      .back-btn {
+        @include btn-icon-base(26px);
+        color: var(--b3-theme-on-surface);
+        @include btn-hover;
+      }
+
+      .detail-actions {
+        margin-left: auto; display: flex; gap: $spacing-1;
+        button {
+          display: flex; align-items: center; gap: 3px;
+          padding: 3px 7px;
+          border: 1px solid var(--b3-border-color);
+          border-radius: $radius-sm;
+          background: transparent; cursor: pointer;
+          color: var(--b3-theme-on-surface); font-size: $font-size-xs;
+          transition: $rr-transition;
+          .btn-label { font-size: $font-size-xs; }
+          &:hover {
+            background: var(--b3-theme-surface-lighter);
+            border-color: var(--b3-theme-primary);
+          }
+        }
+      }
+    }
+
+    .detail-content {
+      flex: 1; overflow-y: auto; padding: $spacing-3;
+
+      .detail-title {
+        font-size: $font-size-base; font-weight: $font-weight-semibold;
+        margin: 0 0 $spacing-2; line-height: 1.4;
+      }
+      .detail-meta {
+        display: flex; flex-wrap: wrap; gap: $spacing-2;
+        font-size: $font-size-xs;
+        margin-bottom: $spacing-3;
+
+        .meta-chip {
+          font-size: $font-size-xs;
+          color: var(--b3-theme-on-surface);
+          opacity: 0.7;
+        }
+
+        .meta-key {
+          font-size: $font-size-2xs;
+          font-weight: $font-weight-bold;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          color: var(--b3-theme-on-surface);
+          opacity: 0.45;
+          margin-right: 2px;
+        }
+      }
+      .detail-body {
+        font-size: $font-size-sm; line-height: 1.7;
+        color: var(--b3-theme-on-background);
+        :deep(img) { max-width: 100%; height: auto; border-radius: $radius-sm; }
+        :deep(a) { color: $rr-accent; text-decoration: none; &:hover { text-decoration: underline; } }
+        :deep(pre) {
+          background: var(--b3-theme-surface-lighter);
+          padding: $spacing-2; border-radius: $radius-sm;
+          overflow-x: auto; font-size: $font-size-xs;
+        }
+        :deep(blockquote) {
+          border-left: 3px solid $rr-accent;
+          padding-left: $spacing-2; margin-left: 0;
+          color: var(--b3-theme-on-surface-muted);
+        }
+      }
+    }
+  }
+  // --- 详情字体控制 ---
+  .detail-font-controls {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+
+    .font-btn {
+      @include btn-icon-base(22px);
+      color: var(--b3-theme-on-surface);
+      font-size: $font-size-xs;
+      line-height: 1;
+
+      sup { font-size: $font-size-2xs; }
+
+      &:hover {
+        background: var(--b3-theme-surface-lighter);
+        border-color: var(--b3-theme-primary);
+      }
+    }
+
+    .font-size-label {
+      font-size: $font-size-2xs;
+      font-family: $vp-mono;
+      color: var(--b3-theme-on-surface-muted);
+      min-width: 18px;
+      text-align: center;
+    }
+  }
+}

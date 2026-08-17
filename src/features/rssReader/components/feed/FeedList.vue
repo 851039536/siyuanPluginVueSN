@@ -15,6 +15,8 @@
       :groups="groups"
       :renaming="renamingGroupKey === groupItem.group"
       :rename-value="renamingGroupValue"
+      :move-menu-feed-id="moveMenuFeedId"
+      :new-group-value="newGroupValue"
       @toggle-collapse="handleToggleCollapse"
       @select-feed="handleSelectFeed"
       @refresh-feed="handleRefreshFeed"
@@ -24,6 +26,8 @@
       @rename-cancel="handleRenameCancel"
       @rename-value-change="handleRenameValueChange"
       @move-feed="handleMoveFeed"
+      @toggle-move-menu="handleToggleMoveMenu"
+      @new-group-value-change="handleNewGroupValueChange"
     />
   </div>
 </template>
@@ -41,6 +45,8 @@ interface Props {
   groups: string[]
   renamingGroupKey: string
   renamingGroupValue: string
+  moveMenuFeedId: string
+  newGroupValue: string
 }
 
 const props = defineProps<Props>()
@@ -55,6 +61,8 @@ const emit = defineEmits<{
   renameCancel: []
   renameValueChange: [value: string]
   moveFeed: [feedId: string, group: string]
+  toggleMoveMenu: [feedId: string]
+  newGroupValueChange: [value: string]
 }>()
 
 function handleToggleCollapse(group: string) { emit("toggleCollapse", group) }
@@ -66,6 +74,8 @@ function handleRenameStart(group: string, label: string) { emit("renameStart", g
 function handleRenameCancel() { emit("renameCancel") }
 function handleRenameValueChange(value: string) { emit("renameValueChange", value) }
 function handleMoveFeed(feedId: string, group: string) { emit("moveFeed", feedId, group) }
+function handleToggleMoveMenu(feedId: string) { emit("toggleMoveMenu", feedId) }
+function handleNewGroupValueChange(value: string) { emit("newGroupValueChange", value) }
 </script>
 
 <style lang="scss">

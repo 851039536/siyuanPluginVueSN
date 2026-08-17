@@ -68,11 +68,11 @@
         <span
           v-if="item.author"
           class="meta-chip"
-        ><span class="meta-key">AUTHOR</span> {{ item.author }}</span>
+        ><span class="meta-key">{{ i18n.author }}</span> {{ item.author }}</span>
         <span
           v-if="item.pubDate"
           class="meta-chip"
-        >{{ formatDate(item.pubDate) }}</span>
+        >{{ formatRelativeDate(item.pubDate, i18n) }}</span>
       </div>
       <!-- 正文：v-html 渲染订阅源 HTML，字体大小随设置缩放 -->
       <div
@@ -88,6 +88,7 @@
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
 import { useTtsReader } from "../../composables/useTtsReader"
+import { formatRelativeDate } from "../../utils/date"
 import type {
   RssItem,
   RssSettings,
@@ -117,24 +118,6 @@ const processedDetailContent = computed(() => {
   return raw.replace(/<img\s+/gi, '<img loading="lazy" ')
 })
 
-// ===== 日期格式化（相对时间） =====
-function formatDate(dateStr?: string): string {
-  if (!dateStr) return ""
-  try {
-    const date = new Date(dateStr)
-    const now = new Date()
-    const diffMins = Math.floor((now.getTime() - date.getTime()) / 60000)
-    const diffHours = Math.floor(diffMins / 60)
-    const diffDays = Math.floor(diffHours / 24)
-    if (diffMins < 1) return props.i18n.justNow
-    if (diffMins < 60) return `${diffMins}${props.i18n.minutesAgo}`
-    if (diffHours < 24) return `${diffHours}${props.i18n.hoursAgo}`
-    if (diffDays < 7) return `${diffDays}${props.i18n.daysAgo}`
-    return date.toLocaleDateString()
-  } catch {
-    return dateStr
-  }
-}
 </script>
 
 <style lang="scss">

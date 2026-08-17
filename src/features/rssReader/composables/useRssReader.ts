@@ -8,13 +8,13 @@ import {
   ref,
 } from "vue"
 import {
-  createRssItemFromParsed,
   generateId,
   getPubDateTimestamp,
   parseRssXml,
 } from "../utils/parser"
 import { fetchRss } from "../utils/fetchRss"
 import { trimItemsPerFeed } from "../utils/itemTrim"
+import { normalizeParsedItems } from "../utils/items"
 import type {
   RssFeed,
   RssItem,
@@ -24,6 +24,8 @@ import type {
 import { DEFAULT_RSS_SETTINGS } from "../types"
 import { RssStorage } from "../types/storage"
 import { useArticleOps } from "./useArticleOps"
+import { useAutoRefresh } from "./useAutoRefresh"
+import { useSettingsOps } from "./useSettingsOps"
 import { useOpmlTransfer } from "./useOpmlTransfer"
 import { getErrorMessage } from "@/utils/stringUtils"
 
@@ -48,6 +50,7 @@ export function useRssReader(plugin: Plugin) {
   const showSettingsDialog = ref(false)
   const refreshingFeedIds = ref<Set<string>>(new Set())
   const collapsedGroups = ref<Set<string>>(new Set())
+  const refreshingAll = ref(false)
 
   // ========== 计算属性 ==========
 
@@ -167,9 +170,24 @@ export function useRssReader(plugin: Plugin) {
       settings.value = data.settings
       feeds.value = Array.isArray(data.feeds) ? data.feeds : []
       items.value = Array.isArray(data.items) ? data.items : []
+      startAutoRefresh()
     } catch (err) {
       console.error("[RSS] 初始化失败:", err)
     }
+  }
+
+  // ========== 自动刷新 ==========
+  const autoRefresh = useAutoRefresh({
+    settings,
+    refreshAll: refreshAllFeeds,
+  })
+
+  function startAutoRefresh() {
+    autoRefresh.start()
+  }
+
+  function stopAutoRefresh() {
+    autoRefresh.stop()
   }
 
   // ========== 订阅源操作 ==========
@@ -177,10 +195,10 @@ export function useRssReader(plugin: Plugin) {
   /**
    * 添加新的RSS订阅源
    */
-  async function addFeed(url: string, group?: string) {
+  async function addFeed(url: string, group?: string, options?: { silent?: boolean }) {
     url = url.trim()
     if (!url) {
-      showMessage(rssI18n.feedUrlRequired, 3000, "error")
+      if (!options?.silent) showMessage(rssI18n.feedUrlRequired, 3000, "error")
       return false
     }
 
@@ -191,7 +209,7 @@ export function useRssReader(plugin: Plugin) {
 
     // 检查重复
     if (feeds.value.some((f) => f.url === url)) {
-      showMessage(rssI18n.feedExisted, 3000, "error")
+      if (!options?.silent) showMessage(rssI18n.feedExisted, 3000, "error")
       return false
     }
 
@@ -217,19 +235,18 @@ export function useRssReader(plugin: Plugin) {
         enabled: true,
       }
 
-      const newItems: RssItem[] = parsedItems.map((pi) =>
-        createRssItemFromParsed(pi, newFeed.id, newFeed.title, rssI18n.untitled))
+      const newItems: RssItem[] = normalizeParsedItems(parsedItems, newFeed.id, newFeed.title, rssI18n.untitled)
 
       feeds.value.push(newFeed)
       items.value.push(...newItems)
 
       await saveData()
       loadingStatus.value = "success"
-      showMessage(`${rssI18n.feedAddedDetail}: ${newFeed.title}`, 3000, "info")
+      if (!options?.silent) showMessage(`${rssI18n.feedAddedDetail}: ${newFeed.title}`, 3000, "info")
       return true
     } catch (err: unknown) {
       loadingStatus.value = "error"
-      showMessage(getErrorMessage(err) || rssI18n.feedAddFailed, 5000, "error")
+      if (!options?.silent) showMessage(getErrorMessage(err) || rssI18n.feedAddFailed, 5000, "error")
       return false
     }
   }
@@ -245,6 +262,12 @@ export function useRssReader(plugin: Plugin) {
       currentFeedFilter.value = "all"
     }
 
+    // 若当前分组过滤已无任何源，重置为“全部”
+    if (currentGroupFilter.value !== "all"
+      && !feeds.value.some((f) => f.group === currentGroupFilter.value)) {
+      currentGroupFilter.value = "all"
+    }
+
     await saveData()
     showMessage(rssI18n.feedDeleted, 2000, "info")
   }
@@ -253,6 +276,7 @@ export function useRssReader(plugin: Plugin) {
    * 刷新单个订阅源
    */
   async function refreshFeed(feedId: string) {
+    if (refreshingFeedIds.value.has(feedId)) return
     const feed = feeds.value.find((f) => f.id === feedId)
     if (!feed) return
 
@@ -279,20 +303,17 @@ export function useRssReader(plugin: Plugin) {
           : [],
       )
 
-      const newItems: RssItem[] = []
-      for (const pi of parsedItems) {
-        const link = pi.link || ""
-        if (link && !existingLinks.has(link)) {
-          newItems.push(createRssItemFromParsed(pi, feedId, feed.title, rssI18n.untitled))
-          existingLinks.add(link)
-        }
-      }
+      const currentFeed = feeds.value.find((f) => f.id === feedId)
+      if (!currentFeed) return
+
+      const newItems: RssItem[] = normalizeParsedItems(parsedItems, feedId, currentFeed.title, rssI18n.untitled)
+        .filter((item) => !existingLinks.has(item.link))
 
       if (newItems.length > 0) {
         items.value.push(...newItems)
-        showMessage(`${feed.title}: ${newItems.length}${rssI18n.newArticlesDetail}`, 3000, "info")
+        showMessage(`${currentFeed.title}: ${newItems.length}${rssI18n.newArticlesDetail}`, 3000, "info")
       } else {
-        showMessage(`${feed.title}: ${rssI18n.noNewArticlesDetail}`, 2000, "info")
+        showMessage(`${currentFeed.title}: ${rssI18n.noNewArticlesDetail}`, 2000, "info")
       }
 
       // 限制每个源的文章数
@@ -310,46 +331,19 @@ export function useRssReader(plugin: Plugin) {
    * 刷新所有订阅源
    */
   async function refreshAllFeeds() {
+    if (refreshingAll.value) return
+    refreshingAll.value = true
     loadingStatus.value = "loading"
-    const enabledFeeds = feeds.value.filter((f) => f.enabled)
+    try {
+      const enabledFeeds = feeds.value.filter((f) => f.enabled)
 
-    for (const feed of enabledFeeds) {
-      await refreshFeed(feed.id)
+      for (const feed of enabledFeeds) {
+        await refreshFeed(feed.id)
+      }
+    } finally {
+      loadingStatus.value = "idle"
+      refreshingAll.value = false
     }
-
-    loadingStatus.value = "idle"
-  }
-
-  // ========== 文章详情操作 ==========
-
-  /**
-   * 增大/减小字体
-   */
-  function changeDetailFontSize(delta: number) {
-    const current = settings.value.detailFontSize
-    const newSize = Math.max(12, Math.min(24, current + delta))
-    if (newSize !== current) {
-      settings.value.detailFontSize = newSize
-      storage.settings.save(settings.value)
-    }
-  }
-
-  /**
-   * 更新订阅源分组
-   */
-  async function updateFeedGroup(feedId: string, group: string) {
-    const feed = feeds.value.find((f) => f.id === feedId)
-    if (feed) {
-      feed.group = group
-      await saveData()
-    }
-  }
-
-  // ========== 设置操作 ==========
-
-  async function updateSettings(newSettings: Partial<RssSettings>) {
-    Object.assign(settings.value, newSettings)
-    await storage.settings.save(settings.value)
   }
 
   // ========== 过滤操作 ==========
@@ -372,26 +366,6 @@ export function useRssReader(plugin: Plugin) {
     }
   }
 
-  /**
-   * 重命名分组（更新该分组下所有订阅源的 group 字段）
-   */
-  async function renameGroup(oldName: string, newName: string) {
-    if (!oldName || !newName.trim() || oldName === newName.trim()) return
-    const trimmed = newName.trim()
-    for (const feed of feeds.value) {
-      if (feed.group === oldName) {
-        feed.group = trimmed
-      }
-    }
-    // 同步折叠状态
-    if (collapsedGroups.value.has(oldName)) {
-      collapsedGroups.value.delete(oldName)
-      collapsedGroups.value.add(trimmed)
-    }
-    await saveData()
-    showMessage(`${rssI18n.groupRenamedTo}: ${trimmed}`, 2000, "info")
-  }
-
   // ========== 内部方法 ==========
 
   /**
@@ -403,6 +377,18 @@ export function useRssReader(plugin: Plugin) {
       storage.items.save(items.value),
     ])
   }
+
+  // ========== 设置/分组操作（独立 composable） ==========
+  const settingsOps = useSettingsOps({
+    settings,
+    feeds,
+    collapsedGroups,
+    currentGroupFilter,
+    saveData,
+    saveSettings: (newSettings) => storage.settings.save(newSettings),
+    startAutoRefresh,
+    i18n: rssI18n,
+  })
 
   // ========== 文章操作（独立 composable，共享 items/selectedItem 状态） ==========
   const articleOps = useArticleOps({
@@ -449,17 +435,17 @@ export function useRssReader(plugin: Plugin) {
     removeFeed,
     refreshFeed,
     refreshAllFeeds,
-    updateFeedGroup,
+    updateFeedGroup: settingsOps.updateFeedGroup,
     markAllAsRead: articleOps.markAllAsRead,
     toggleStar: articleOps.toggleStar,
     openItemDetail: articleOps.openItemDetail,
     closeItemDetail: articleOps.closeItemDetail,
     openInBrowser: articleOps.openInBrowser,
-    updateSettings,
+    updateSettings: settingsOps.updateSettings,
     setFeedFilter,
     setGroupFilter,
     toggleGroupCollapse,
-    renameGroup,
+    renameGroup: settingsOps.renameGroup,
     collapsedGroups,
 
     // OPML
@@ -467,6 +453,10 @@ export function useRssReader(plugin: Plugin) {
     importOpml: opmlOps.importOpml,
 
     // 阅读体验
-    changeDetailFontSize,
+    changeDetailFontSize: settingsOps.changeDetailFontSize,
+
+    // 自动刷新
+    startAutoRefresh,
+    stopAutoRefresh,
   }
 }

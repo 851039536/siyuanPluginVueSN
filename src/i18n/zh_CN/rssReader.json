@@ -69,7 +69,8 @@
     "feedExisted": "该订阅源已存在",
     "feedAddedDetail": "已添加订阅源",
     "newArticlesDetail": "篇新文章",
-    "noNewArticlesDetail": "暂无新文章"
+    "noNewArticlesDetail": "暂无新文章",
+    "author": "作者"
   },
   "enableRssReader": "启用RSS订阅功能",
   "enableRssReaderDesc": "订阅和管理RSS/Atom源，在右侧边栏阅读文章"

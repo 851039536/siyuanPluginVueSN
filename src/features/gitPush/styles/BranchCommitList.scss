@@ -127,15 +127,28 @@
   display: flex;
   gap: $spacing-1;
   flex-shrink: 0;
-  opacity: 0.4;
   font-size: $font-size-2xs;
 }
 
 .bcl-author {
   max-width: 60px;
   @include text-ellipsis;
+  opacity: 0.4;
+}
+
+// 提交条目修正按钮（打开通用 CommitFixDialog，不继承 meta 淡显）
+.bcl-fix-btn {
+  padding: 0 4px;
+  border-radius: $radius-sm;
+  opacity: 0.7;
+  line-height: 1;
+
+  &:hover {
+    opacity: 1;
+  }
 }
 
 .bcl-date {
   white-space: nowrap;
+  opacity: 0.4;
 }

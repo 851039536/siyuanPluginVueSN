@@ -29,16 +29,19 @@
           <template v-else>
             <!-- 项目信息 + 提交 hash -->
             <div class="gp-fix-meta">
-              <span class="gp-fix-project">{{ project?.name || violation.projectName }}</span>
-              <span class="gp-fix-hash">{{ violation.hash }}</span>
-              <span class="gp-fix-reason">{{ i18n[COMMIT_RULE_REASON_META[violation.reason].labelKey] }}</span>
+              <span class="gp-fix-project">{{ project?.name || target.projectName }}</span>
+              <span class="gp-fix-hash">{{ target.hash }}</span>
+              <span
+                v-if="target.reason"
+                class="gp-fix-reason"
+              >{{ i18n[COMMIT_RULE_REASON_META[target.reason].labelKey] }}</span>
             </div>
 
             <!-- 原提交信息 -->
             <div class="gp-fix-block">
               <!-- 标签："原提交信息" -->
               <label class="gp-label">{{ i18n.ruleFixOriginal }}</label>
-              <pre class="gp-fix-original">{{ violation.message }}</pre>
+              <pre class="gp-fix-original">{{ target.message }}</pre>
             </div>
 
             <!-- 新提交信息 -->
@@ -133,7 +136,7 @@
 </template>
 
 <script setup lang="ts">
-import type { CommitRuleViolation, GitProject } from "../../types"
+import type { CommitFixTarget, GitProject } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed, inject, onMounted, onUnmounted, ref } from "vue"
 import { COMMIT_RULE_REASON_META } from "../../types"
@@ -145,8 +148,7 @@ import Loader from "@/components/Loader.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
-  projectId: string
-  violation: CommitRuleViolation
+  target: CommitFixTarget
 }>()
 
 const emit = defineEmits<{
@@ -159,7 +161,7 @@ const { manager } = services
 
 const project = ref<GitProject | null>(null)
 const loading = ref(true)
-const newMessage = ref(props.violation.message)
+const newMessage = ref(props.target.message)
 const aiLoading = ref(false)
 const aiError = ref("")
 const saving = ref(false)
@@ -169,7 +171,7 @@ const workingTreeClean = ref(false)
 const projectPath = computed(() => project.value ? resolveValidPath(project.value) : "")
 
 /** 是否历史提交（非 HEAD） */
-const isHistoryCommit = computed(() => !!projectPath.value && !!headHash.value && !headHash.value.startsWith(props.violation.hash))
+const isHistoryCommit = computed(() => !!projectPath.value && !!headHash.value && !headHash.value.startsWith(props.target.hash))
 
 /** 是否可执行修正：项目有效且工作区干净（HEAD 走 amend，历史提交走 rebase） */
 const canAmend = computed(() => !!projectPath.value && !!headHash.value && workingTreeClean.value)
@@ -202,7 +204,7 @@ onUnmounted(() => {
 
 async function init() {
   try {
-    const p = await manager.getProjectById(props.projectId)
+    const p = await manager.getProjectById(props.target.projectId)
     project.value = p ?? null
     if (!p) return
     const path = resolveValidPath(p)
@@ -223,7 +225,7 @@ async function runAiFix() {
   aiLoading.value = true
   aiError.value = ""
   try {
-    const result = await manager.generateCommitFix(projectPath.value, props.violation.hash, props.violation.message)
+    const result = await manager.generateCommitFix(projectPath.value, props.target.hash, props.target.message)
     if (result.message) {
       newMessage.value = result.message
     } else {
@@ -242,7 +244,7 @@ async function save() {
   if (!canAmend.value || !projectPath.value || !newMessage.value.trim() || validationReason.value) return
   saving.value = true
   try {
-    await manager.rewriteCommitMessage(projectPath.value, props.violation.hash, newMessage.value.trim())
+    await manager.rewriteCommitMessage(projectPath.value, props.target.hash, newMessage.value.trim())
     emit("saved")
     emit("close")
   } catch (e: unknown) {

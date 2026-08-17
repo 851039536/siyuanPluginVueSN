@@ -50,15 +50,15 @@
       class="rss-item-list"
     >
       <div
-        v-for="item in items"
-        :key="item.link"
+        v-for="(item, index) in items"
+        :key="item.link || index"
         class="rss-item"
         :class="{ unread: !item.read }"
         @click="emit('openItem', item)"
       >
         <div class="item-header">
           <span class="item-feed-tag">{{ item.feedTitle }}</span>
-          <span class="item-date">{{ formatDate(item.pubDate) }}</span>
+          <span class="item-date">{{ formatRelativeDate(item.pubDate, i18n) }}</span>
         </div>
         <div class="item-title">
           {{ item.title }}
@@ -87,6 +87,7 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
+import { formatRelativeDate } from "../../utils/date"
 import type { RssItem } from "../../types"
 
 interface Props {
@@ -105,23 +106,6 @@ const emit = defineEmits<{
   toggleStar: [item: RssItem]
 }>()
 
-function formatDate(dateStr?: string): string {
-  if (!dateStr) return ""
-  try {
-    const date = new Date(dateStr)
-    const now = new Date()
-    const diffMins = Math.floor((now.getTime() - date.getTime()) / 60000)
-    const diffHours = Math.floor(diffMins / 60)
-    const diffDays = Math.floor(diffHours / 24)
-    if (diffMins < 1) return props.i18n.justNow
-    if (diffMins < 60) return `${diffMins}${props.i18n.minutesAgo}`
-    if (diffHours < 24) return `${diffHours}${props.i18n.hoursAgo}`
-    if (diffDays < 7) return `${diffDays}${props.i18n.daysAgo}`
-    return date.toLocaleDateString()
-  } catch {
-    return dateStr
-  }
-}
 </script>
 
 <style lang="scss">

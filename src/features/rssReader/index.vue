@@ -152,6 +152,8 @@
             :groups="groups"
             :renaming-group-key="renamingGroupKey"
             :renaming-group-value="renamingGroupValue"
+            :move-menu-feed-id="moveMenuFeedId"
+            :new-group-value="newGroupValue"
             @toggle-collapse="toggleGroupCollapse"
             @select-feed="setFeedFilter"
             @refresh-feed="refreshFeed"
@@ -161,6 +163,8 @@
             @rename-cancel="cancelRenameGroup"
             @rename-value-change="renamingGroupValue = $event"
             @move-feed="handleMoveFeed"
+            @toggle-move-menu="handleToggleMoveMenu"
+            @new-group-value-change="newGroupValue = $event"
           />
 
           <!-- 文章列表模式 -->
@@ -171,7 +175,7 @@
             :filter-title="getFilterTitle()"
             :show-description="settings.showDescription"
             @reset-filters="resetFilters"
-            @mark-all-read="markAllAsRead"
+            @mark-all-read="markAllAsRead(filteredItems)"
             @open-item="openItemDetail"
             @toggle-star="toggleStar($event.link)"
           />
@@ -197,6 +201,7 @@ import { Icon } from "@iconify/vue"
 import { showMessage } from "siyuan"
 import {
   computed,
+  onBeforeUnmount,
   onMounted,
   ref,
 } from "vue"
@@ -208,6 +213,7 @@ import FeedList from "./components/feed/FeedList.vue"
 import SettingsPanel from "./components/settings/SettingsPanel.vue"
 import { useRssReader } from "./composables/useRssReader"
 import { triggerBlobDownload } from "@/utils/domUtils"
+import { getErrorMessage } from "@/utils/stringUtils"
 
 interface Props {
   i18n: Record<string, string>
@@ -255,6 +261,7 @@ const {
   exportOpml,
   importOpml,
   changeDetailFontSize,
+  stopAutoRefresh,
 } = useRssReader(props.plugin)
 
 // ===== 添加订阅源 =====
@@ -285,6 +292,8 @@ async function handleAddFeed(url: string, group?: string) {
 // ===== 分组重命名 =====
 const renamingGroupKey = ref("")
 const renamingGroupValue = ref("")
+const moveMenuFeedId = ref("")
+const newGroupValue = ref("")
 
 function startRenameGroup(groupKey: string, currentLabel: string) {
   renamingGroupKey.value = groupKey
@@ -299,6 +308,19 @@ function cancelRenameGroup() {
 // ===== 移动订阅源到分组 =====
 async function handleMoveFeed(feedId: string, group: string) {
   await updateFeedGroup(feedId, group)
+  moveMenuFeedId.value = ""
+}
+
+function handleToggleMoveMenu(feedId: string) {
+  moveMenuFeedId.value = moveMenuFeedId.value === feedId ? "" : feedId
+  newGroupValue.value = ""
+}
+
+function handleGlobalClick() {
+  if (moveMenuFeedId.value) {
+    moveMenuFeedId.value = ""
+    newGroupValue.value = ""
+  }
 }
 
 // ===== OPML 导入导出 =====
@@ -315,7 +337,7 @@ async function handleImportOpml(xml: string) {
   try {
     await importOpml(xml)
   } catch (err: unknown) {
-    showMessage(`${props.i18n.opmlImportFailed}: ${err instanceof Error ? err.message : String(err)}`, 5000, "error")
+    showMessage(`${props.i18n.opmlImportFailed}: ${getErrorMessage(err)}`, 5000, "error")
   }
 }
 
@@ -350,6 +372,12 @@ function getFilterTitle(): string {
 
 onMounted(() => {
   init()
+  document.addEventListener("click", handleGlobalClick)
+})
+
+onBeforeUnmount(() => {
+  stopAutoRefresh()
+  document.removeEventListener("click", handleGlobalClick)
 })
 </script>
 

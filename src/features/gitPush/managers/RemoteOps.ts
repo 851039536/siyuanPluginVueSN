@@ -119,14 +119,20 @@ export class RemoteOps {
     action: "push" | "pull",
     signal?: AbortSignal,
     pullBranch?: string,
+    opts?: { forceWithLease?: boolean, forceBranch?: string },
   ): Promise<RemoteOpResult> {
     if (!remoteName) return RemoteOps.skippedResult
 
     let args: string[]
     if (action === "push") {
-      args = this.pushBranchMode === "head"
-        ? ["push", remoteName, "HEAD"]
-        : ["push", remoteName, "--all"]
+      if (opts?.forceWithLease) {
+        // 强制推送固定推当前分支，不受「全部分支/仅当前分支」设置影响
+        args = ["push", "--force-with-lease", remoteName, opts.forceBranch || "HEAD"]
+      } else {
+        args = this.pushBranchMode === "head"
+          ? ["push", remoteName, "HEAD"]
+          : ["push", remoteName, "--all"]
+      }
     } else {
       // 显式指定分支，避免非默认上游远程时 Git 报 "did not specify a branch" 错误
       args = pullBranch
@@ -199,8 +205,8 @@ export class RemoteOps {
     return this.remoteOpAll(id, "pull")
   }
 
-  /** 全平台 push/pull 通用实现（并行 + 智能跳过） */
-  private async remoteOpAll(id: string, action: "push" | "pull"): Promise<AllPlatformResult> {
+  /** 全平台 push/pull 通用实现（并行 + 智能跳过；forceWithLease=true 时禁用智能跳过） */
+  private async remoteOpAll(id: string, action: "push" | "pull", forceWithLease = false): Promise<AllPlatformResult> {
     const project = await this.store.getProjectById(id)
     if (!project) return this.notFoundResult
 
@@ -218,13 +224,17 @@ export class RemoteOps {
     }
 
     return this.executor.withAbortController(id, action, async (signal) => {
-      // pull 时预解析当前分支，供 tryRemoteOp 显式指定拉取分支
+      // pull 时预解析当前分支，供 tryRemoteOp 显式指定拉取分支；强制推送时同样需要分支名
       const pullBranch = action === "pull" ? await this.getCurrentBranch(cwd) : undefined
+      const forceBranch = action === "push" && forceWithLease ? await this.getCurrentBranch(cwd) : undefined
+      if (forceWithLease && !forceBranch) {
+        throw new Error("无法确定当前分支，已取消强制推送")
+      }
       // 智能跳过的静态结果
       const skippedResults: Record<string, RemoteOpResult> = {}
       const entries: { key: PlatformKey, remoteName: string | undefined }[] = []
       for (const { key, name } of getProjectRemoteNames(project)) {
-        if (shouldSkip(key)) {
+        if (shouldSkip(key) && !forceWithLease) {
           skippedResults[key] = { ok: true, stdout: "已同步（跳过）", stderr: "", skipped: true }
         } else {
           entries.push({ key, remoteName: name })
@@ -240,7 +250,7 @@ export class RemoteOps {
       type SettledEntry = { key: PlatformKey } & RemoteOpResult
       const results = await Promise.allSettled(
         entries.map(({ key, remoteName }): Promise<SettledEntry> =>
-          this.tryRemoteOp(cwd, remoteName, action, signal, pullBranch).then((r) => ({ key, ...r })),
+          this.tryRemoteOp(cwd, remoteName, action, signal, pullBranch, { forceWithLease, forceBranch }).then((r) => ({ key, ...r })),
         ),
       )
 
@@ -283,6 +293,13 @@ export class RemoteOps {
         cnb,
       }
     })
+  }
+
+  /**
+   * 使用 --force-with-lease 强制推送当前分支到全部已配置远程
+   */
+  async forcePushToAll(id: string): Promise<AllPlatformResult> {
+    return this.remoteOpAll(id, "push", true)
   }
 
   /**

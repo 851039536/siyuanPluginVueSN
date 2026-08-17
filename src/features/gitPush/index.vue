@@ -230,6 +230,7 @@
             @confirm-pull="confirmPullSingle"
             @push-single="pushSingle"
             @push-to-all="pushToAll"
+            @force-push-to-all="handleForcePushToAll"
             @cancel-push="cancelPush"
             @fetch-all="handleFetchAll"
           />
@@ -441,6 +442,7 @@ const {
   removeProject,
   refreshRemotes,
   pushToAll,
+  forcePushToAll,
   pushSingle,
   pullSingle,
   cancelPush,
@@ -930,6 +932,16 @@ function onViewProject(projectId: string) {
   }
   // 设置搜索词为项目名称，方便快速定位
   searchQuery.value = project.name
+}
+
+/** 强制推送二次确认：--force-with-lease 覆盖远程历史，需明确同意 */
+function handleForcePushToAll(id: string) {
+  showConfirm(
+    tf("forcePushConfirm"),
+    tf("forcePushConfirmBody"),
+    () => { void forcePushToAll(id) },
+    tf("forcePush"),
+  )
 }
 
 function handleRemove(project: GitProject) {

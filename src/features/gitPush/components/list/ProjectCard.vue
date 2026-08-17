@@ -640,10 +640,35 @@
         </div>
       </div>
 
-      <!-- 推送区：区标签"推送" + 单远程菜单 + 推送全部/取消 -->
+      <!-- 推送区：区标签"推送" + 分支状态检查 + 强制推送 + 单远程菜单 + 推送全部/取消 -->
       <div class="gp-actions-section">
         <span class="gp-actions-label">{{ i18n.push }}</span>
         <div class="gp-actions-btns">
+          <!-- 检查当前分支状态（复用远程状态刷新，展示当前分支名 + 各远程 ↑/↓） -->
+          <button
+            class="vp-btn vp-btn--ghost vp-btn--sm gp-action-btn"
+            :disabled="remoteStatusLoading || isPushing(project.id) || isPulling(project.id)"
+            :title="i18n.checkBranchStatus"
+            @click="$emit('refreshRemoteStatus', project.id)"
+          >
+            <Icon
+              :icon="remoteStatusLoading ? 'mdi:loading' : 'mdi:source-branch'"
+              height="12"
+              :class="{ 'gp-spin': remoteStatusLoading }"
+            />
+            <span v-if="pushStatus?.branch">{{ pushStatus.branch }}</span>
+            <span v-else>{{ i18n.checkBranchStatus }}</span>
+          </button>
+          <!-- 强制推送（--force-with-lease，二次确认） -->
+          <button
+            class="vp-btn vp-btn--danger vp-btn--sm gp-action-btn"
+            :disabled="!hasAnyRemote(project) || isPushing(project.id) || isPulling(project.id) || !pushStatus?.needsPush"
+            :title="i18n.forcePushHint"
+            @click="$emit('forcePushToAll', project.id)"
+          >
+            <Icon icon="mdi:alert-circle-outline" height="12" />
+            <span>{{ i18n.forcePush }}</span>
+          </button>
           <!-- 单远程推送（下拉菜单） -->
           <div class="gp-inline-menu-wrap gp-menu-wrap">
             <button
@@ -829,6 +854,7 @@ const emit = defineEmits<{
   "confirmPull": [id: string, key: PlatformKey]
   "pushSingle": [id: string, key: PlatformKey]
   "pushToAll": [id: string]
+  "forcePushToAll": [id: string]
   "cancelPush": [id: string]
   "fetchAll": [id: string]
   // Markdown 预览

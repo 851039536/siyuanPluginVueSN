@@ -242,6 +242,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     isPulling: remote.isPulling,
     pullOutputs: remote.pullOutputs,
     pushToAll: remote.pushToAll,
+    forcePushToAll: remote.forcePushToAll,
     pushSingle: remote.pushSingle,
     pullSingle: remote.pullSingle,
     cancelPush: remote.cancelPush,

@@ -140,6 +140,8 @@ export class GitPushManager {
 
   async pushToAll(id: string): Promise<AllPlatformResult> { return this.remoteOps.pushToAll(id) }
 
+  async forcePushToAll(id: string): Promise<AllPlatformResult> { return this.remoteOps.forcePushToAll(id) }
+
   async pullToAll(id: string): Promise<AllPlatformResult> { return this.remoteOps.pullToAll(id) }
 
   async pushSingle(id: string, target: PlatformKey): Promise<{ ok: boolean, stdout: string, stderr: string }> {

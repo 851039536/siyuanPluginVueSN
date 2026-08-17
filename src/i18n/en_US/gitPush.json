@@ -628,6 +628,11 @@
     "ruleFixAiFailed": "AI generation failed. Please retry.",
     "ruleFixSaveFailed": "Failed to fix commit message.",
     "ruleFixNoHead": "Cannot detect HEAD. Make sure the project path is a valid Git repository.",
-    "ruleFixForcePushHint": "This is a historical commit. Fixing it will rewrite its hash and all later commit hashes. If already pushed, run git push --force-with-lease manually."
+    "ruleFixForcePushHint": "This is a historical commit. Fixing it will rewrite its hash and all later commit hashes. If already pushed, run git push --force-with-lease manually.",
+    "forcePush": "Force Push",
+    "forcePushHint": "git push --force-with-lease: overwrite remote branch history (personal projects)",
+    "forcePushConfirm": "Confirm Force Push",
+    "forcePushConfirmBody": "This will overwrite the remote branch history using git push --force-with-lease. This cannot be undone. Continue?",
+    "checkBranchStatus": "Check Branch Status"
   }
 }

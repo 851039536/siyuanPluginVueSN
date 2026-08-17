@@ -775,6 +775,7 @@ import {
   REMOTES,
 } from "../../types"
 import { activityLevel, hasAnyRemote, highlightSegments, openLocalPath, openRepoWebUrl, relativeTime, resolveValidPath } from "../../utils"
+import { checkCommitRule } from "../../commitRuleChecker"
 import type { PushOutputEntry } from "../../composables/useGitOps"
 import { useCardActions } from "../../composables/useCardActions"
 import { useCardData } from "../../composables/useCardData"
@@ -943,6 +944,7 @@ function openCommitFix(entry: CommitLogEntry) {
     projectName: props.project.name,
     hash: entry.hash,
     message: entry.message,
+    reason: checkCommitRule(entry.message) ?? undefined,
   }
 }
 

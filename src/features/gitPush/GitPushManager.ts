@@ -224,14 +224,6 @@ export class GitPushManager {
 
   async checkIsGitRepo(projectPath: string): Promise<boolean> { return this.worktreeOps.checkIsGitRepo(projectPath) }
 
-  async getCommitFixContext(projectPath: string, hash: string): Promise<string> {
-    return this.worktreeOps.getCommitFixContext(projectPath, hash)
-  }
-
-  async amendCommitMessage(projectPath: string, message: string): Promise<string> {
-    return this.worktreeOps.amendCommitMessage(projectPath, message)
-  }
-
   async rewriteCommitMessage(projectPath: string, hash: string, message: string, preserveDate = false): Promise<string> {
     return this.worktreeOps.rewriteCommitMessage(projectPath, hash, message, preserveDate)
   }

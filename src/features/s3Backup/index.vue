@@ -64,7 +64,6 @@
         v-if="isAnyTaskRunning"
         :progress="backupProgress"
         :phase-label="phaseLabel"
-        :i18n="i18n"
       />
 
       <!-- 手动备份 -->
@@ -202,7 +201,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from "vue"
-import { Plugin, showMessage } from "siyuan"
+import { showMessage } from "siyuan"
 import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import { encryptSetting, decryptSetting } from "@/utils/settingsCrypto"
@@ -236,13 +235,11 @@ import Button from "@/components/Button.vue"
 
 interface Props {
   i18n?: Record<string, string>
-  plugin?: Plugin | null
   onClose?: () => void
 }
 
 const props = withDefaults(defineProps<Props>(), {
   i18n: () => ({}),
-  plugin: null,
   onClose: () => {},
 })
 
@@ -725,8 +722,8 @@ async function handleAutoBackupTrigger(): Promise<void> {
       success: false,
       message: props.i18n.autoBackupSkippedBusy,
     })
-    // 回滚防重标记，下一分钟 tick 自动补跑（否则当天/该小时不再重试）
-    getS3BackupInstance()?.resetExecutionMarks()
+    // 忙碌时不回滚防重标记：任务正在执行，完成后 updateLastBackupTime 会恢复标记；
+    // 若在任务进行中回滚，长任务结束后会触发“完成后 1 分钟再次备份”的重复调度。
     return
   }
   // performManualBackup 内部吞掉所有错误并返回是否成功；失败/跳过时回滚标记，允许下一 tick 重试

@@ -407,7 +407,10 @@ export class S3Client {
           if (ok && saveToPath) {
             const { fs, fsRaw } = requireFsPath()
             const output = fsRaw.createWriteStream(saveToPath)
+            let settled = false
             const fail = (err: Error) => {
+              if (settled) return
+              settled = true
               // 清理半成品文件，避免残留损坏文件被当作有效备份
               output.destroy()
               fs.unlink(saveToPath).catch(() => { /* 忽略清理失败 */ })
@@ -416,6 +419,8 @@ export class S3Client {
             res.on("error", fail)
             output.on("error", fail)
             output.on("finish", () => {
+              if (settled) return
+              settled = true
               resolve({
                 ok: true,
                 status: res.statusCode,
@@ -430,6 +435,9 @@ export class S3Client {
           const chunks: Buffer[] = []
           res.on("data", (chunk: Buffer) => {
             chunks.push(chunk)
+          })
+          res.on("error", (err: Error) => {
+            reject(new Error(`S3 响应读取失败: ${err.message}`))
           })
           res.on("end", () => {
             const responseBody = Buffer.concat(chunks)

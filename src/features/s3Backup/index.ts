@@ -49,7 +49,6 @@ export class S3Backup {
       buildProps: () => ({
         onClose: this.close,
         i18n: this.plugin.i18n,
-        plugin: this.plugin,
       }),
     })
   }
@@ -197,6 +196,13 @@ export class S3Backup {
 
   public updateLastBackupTime(timestamp: number) {
     this.lastBackupTimestamp = timestamp
+    // 备份完成后立即恢复防重标记，避免长时间任务期间 busy 分支反复 resetExecutionMarks
+    // 导致每天/每小时任务在完成后被下一分钟重复触发。
+    const backupDate = new Date(timestamp)
+    if (backupDate.toDateString() === new Date().toDateString()) {
+      this.lastExecutedDateStr = backupDate.toDateString()
+      this.lastExecutedHour = backupDate.getHours()
+    }
   }
 
   /**

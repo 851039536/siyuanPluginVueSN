@@ -28,7 +28,6 @@ import type { BackupProgress } from "../modules/BackupManager"
 defineProps<{
   progress: BackupProgress
   phaseLabel: string
-  i18n: Record<string, string>
 }>()
 </script>
 

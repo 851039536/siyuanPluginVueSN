@@ -13,7 +13,7 @@ import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import type { BackupManager, BackupProgress, BackupResult, WorkspaceFile } from "../modules/BackupManager"
 import type { BackupLog, S3Config } from "../types"
-import { FULL_UPLOAD_CONCURRENCY, MSG_DESKTOP_ONLY, TRANSFER_MAX_RETRIES } from "../types"
+import { FULL_UPLOAD_CONCURRENCY, LARGE_FILE_WARN_SIZE, MSG_DESKTOP_ONLY, TRANSFER_MAX_RETRIES } from "../types"
 import { buildS3Key, getBaseName, makeBackupTimestamp, runWithConcurrency } from "../utils"
 
 /** 依赖注入：全部来自 index.vue 已有的状态与方法 */
@@ -93,7 +93,6 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
     try {
       existingKeys = await deps.listExistingKeys()
       existingBaseNames = new Set([...existingKeys].map((k) => getBaseName(k)))
-      console.log(`[S3备份] 去重检查：S3 已有 ${existingKeys.size} 个文件`)
     } catch (err: unknown) {
       listFailed = true
       console.warn("[S3备份] 无法获取 S3 文件列表，将上传全部文件:", err)
@@ -134,6 +133,11 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
 
         let content: Buffer
         try {
+          // 全量上传同样整体读入内存，大文件给出显式警告（与增量备份口径一致）
+          const stats = await fs.stat(file.fullPath)
+          if (stats.size > LARGE_FILE_WARN_SIZE) {
+            console.warn(`[S3备份] 大文件整体读入内存上传: ${file.relativePath}（${stats.size} 字节）`)
+          }
           content = await fs.readFile(file.fullPath)
         } catch (readErr: unknown) {
           console.warn(`跳过无法读取的文件: ${file.relativePath}`, getErrorMessage(readErr))
@@ -216,7 +220,7 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
       type: "s3Upload",
       action: i18n.s3Upload,
       // 日志文件名："N 个文件"（多文件时）
-      fileName: uploadedCount > 1 ? i18n.filesCount.replace("{count}", String(uploadedCount)) : (uploadedNames[0] || ""),
+      fileName: uploadedCount > 1 ? i18n.filesCount.replace("{count}", String(uploadedCount)) : uploadedNames[0],
       success: failedCount === 0,
       message: msg,
     })

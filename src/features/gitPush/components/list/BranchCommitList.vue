@@ -92,6 +92,16 @@
         >{{ entry.message }}</span>
         <span class="bcl-meta">
           <span class="bcl-author">{{ entry.author }}</span>
+          <button
+            class="vp-btn vp-btn--ghost vp-btn--sm bcl-fix-btn"
+            :title="i18n.ruleFixOpen"
+            @click.stop="$emit('fixCommit', entry)"
+          >
+            <Icon
+              icon="mdi:pencil-outline"
+              height="12"
+            />
+          </button>
           <span
             class="bcl-date"
             :title="entry.date"
@@ -111,6 +121,7 @@ import {
 } from "vue"
 
 const props = defineProps<{
+  i18n: Record<string, any>
   entries: CommitLogEntry[]
   loading: boolean
 }>()
@@ -118,6 +129,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   reloadCommitLog: [count: number]
   refreshCommitLog: []
+  fixCommit: [entry: CommitLogEntry]
 }>()
 
 const countOptions = [10, 20, 30, 50, 100]

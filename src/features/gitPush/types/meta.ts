@@ -255,6 +255,17 @@ export interface CommitRuleViolation extends CommitAnalysisEntry {
   reason: CommitRuleReasonKey
 }
 
+/** 提交信息修正目标（规则检查违规项与提交日志条目共用，reason 仅规则检查场景提供） */
+export interface CommitFixTarget {
+  projectId: string
+  hash: string
+  message: string
+  /** 违规原因（提交日志场景无此字段） */
+  reason?: CommitRuleReasonKey
+  /** 项目名称（弹窗加载到项目前用于占位展示） */
+  projectName?: string
+}
+
 /** 提交规则检查聚合统计（含违规列表，供提交规则检查面板消费） */
 export interface CommitRuleCheckStats {
   /** 检查的提交总数 */

@@ -226,8 +226,8 @@ export const FEATURE_CONFIG = [
   },
   {
     id: "superPanel",
-    defaultTitle: "超级面板（假）",
-    defaultDesc: "test",
+    defaultTitle: "超级面板",
+    defaultDesc: "统一的插件功能入口面板，集中展示与管理所有功能",
     titleI18nKey: "superPanel.title",
     descI18nKey: "superPanel.description",
   },

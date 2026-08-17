@@ -7,7 +7,6 @@
 import type { ProviderModels } from "@/config/aiModels"
 import { PROVIDER_MODELS } from "@/config/aiModels"
 
-export { PROVIDER_MODELS }
 
 export interface ProviderMeta {
   id: string

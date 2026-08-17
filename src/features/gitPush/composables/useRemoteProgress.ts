@@ -328,6 +328,10 @@ export function useRemoteProgress(
     return remoteOpAll("push", pushProgress, pushOutputs, manager.pushToAll.bind(manager), id, pullProgress)
   }
 
+  function forcePushToAll(id: string) {
+    return remoteOpAll("push", pushProgress, pushOutputs, manager.forcePushToAll.bind(manager), id, pullProgress)
+  }
+
   function pushSingle(id: string, target: PlatformKey) {
     return remoteOpSingle("push", pushProgress, pushOutputs, manager.pushSingle.bind(manager), id, target, pullProgress)
   }
@@ -371,6 +375,7 @@ export function useRemoteProgress(
     isPulling,
     pullOutputs,
     pushToAll,
+    forcePushToAll,
     pushSingle,
     pullToAll,
     pullSingle,

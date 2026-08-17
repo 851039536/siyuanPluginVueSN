@@ -8,7 +8,7 @@
 import { computed, ref } from "vue"
 import type { S3Config, S3FileInfo } from "../types"
 import { DEFAULT_S3_CONFIG, INCREMENTAL_SUBDIR } from "../types"
-import { S3Client } from "../types/s3Client"
+import { S3Client } from "@/utils/s3/s3Client"
 import type { BackupProgress } from "../modules/BackupManager"
 import { buildS3Key } from "../utils"
 import { getErrorMessage } from "@/utils/stringUtils"

@@ -8,6 +8,7 @@
  */
 import JSZip from "jszip"
 import { getNodeModules, getNodeCrypto } from "@/utils/nodeModules"
+import { getErrorMessage } from "@/utils/stringUtils"
 import { makeBackupTimestamp, isArchiveFile, createLazyReadStream } from "../utils"
 import { DEFAULT_BACKUP_DIR, MSG_DESKTOP_ONLY } from "../types"
 import type { LocalBackupInfo, IncrementalFileEntry } from "../types"
@@ -475,8 +476,11 @@ export class BackupManager {
     let entries
     try {
       entries = await this.fs.readdir(dirPath, { withFileTypes: true })
-    } catch {
-      return
+    } catch (err: unknown) {
+      // 目录不可读会导致整个子树被静默遗漏：
+      // 全量备份会产出不完整 ZIP，增量备份则会把“本地不存在”的远端文件误判为已删除。
+      // 因此这里不再吞错，由调用方决定中止还是降级。
+      throw new Error(`无法读取目录 ${dirPath}: ${getErrorMessage(err)}`)
     }
 
     for (const entry of entries) {
@@ -495,8 +499,10 @@ export class BackupManager {
             mtime: stats.mtime.getTime(),
             size: stats.size,
           })
-        } catch {
-          // 跳过无法读取的文件
+        } catch (err: unknown) {
+          // 单个文件 stat 失败仍继续（与 performFullBackup 的可跳过语义一致），
+          // 但至少把问题暴露给上层调用方。
+          throw new Error(`无法读取文件信息 ${fullPath}: ${getErrorMessage(err)}`)
         }
       }
     }

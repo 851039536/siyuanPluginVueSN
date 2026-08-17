@@ -63,13 +63,8 @@ export interface BackupSettings {
 
 // ========== 本地备份文件信息接口 ==========
 
-export interface LocalBackupInfo {
-  name: string
+export interface LocalBackupInfo extends BackupListDisplayItem {
   path: string
-  time: string
-  size: number
-  /** 真实 epoch 毫秒时间戳（time 为 locale 串不可靠反解析；旧持久化历史无此字段，故可选） */
-  timestamp?: number
 }
 
 // ========== 备份列表展示项基础类型 ==========

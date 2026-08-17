@@ -282,8 +282,17 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
       throw new Error(`${i18n.incrementalManifestCorrupt}: ${getErrorMessage(err)}`)
     }
 
+    // 路径穿越防护：manifest 中的 relativePath 必须被限制在 targetDir 内。
+    // 校验通过后再拼接到下载路径，防止恶意/损坏清单覆盖工作区外文件。
+    const safeRelativePaths = Object.keys(manifest.files).filter((relativePath) => {
+      if (relativePath.startsWith("/") || relativePath.startsWith("\\")) return false
+      if (/^[A-Za-z]:[\/]/.test(relativePath)) return false
+      const parts = relativePath.split(/[\/]+/)
+      return parts.every((part) => part !== ".." && part !== "")
+    })
+
     // 2. 并发下载（复用备份的并发池与重试次数；download 内部自动创建中间目录）
-    const relativePaths = Object.keys(manifest.files)
+    const relativePaths = safeRelativePaths
     const totalFiles = relativePaths.length
     let processed = 0
     let downloaded = 0

@@ -49,6 +49,18 @@
             height="12"
           />
         </button>
+        <!-- 按钮（tooltip："提交规则检查"） -->
+        <button
+          class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
+          :class="{ active: currentView === 'rulecheck' }"
+          :title="i18n.ruleCheckView"
+          @click="currentView = 'rulecheck'"
+        >
+          <Icon
+            icon="mdi:clipboard-check-outline"
+            height="12"
+          />
+        </button>
         <!-- 按钮（tooltip："操作日志"） -->
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"

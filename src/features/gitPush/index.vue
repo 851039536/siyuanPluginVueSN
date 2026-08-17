@@ -70,6 +70,21 @@
       @view-project="onViewProject"
     />
 
+    <!-- ========== 提交规则检查视图 ========== -->
+    <CommitRuleCheckPanel
+      v-if="currentView === 'rulecheck'"
+      :i18n="i18n"
+      :stats="commitRuleStats"
+      :project-count="projects.length"
+      :analyzing="analysisAnalyzing"
+      :analyzed="analysisAnalyzed"
+      :analyzed-at="analysisAnalyzedAt"
+      :commit-count="analysisCommitCount"
+      @run-analysis="runAnalysis"
+      @update-count="setCommitCount"
+      @view-project="onViewProject"
+    />
+
     <!-- ========== 行数统计视图 ========== -->
     <LineStatsPanel
       v-if="currentView === 'linestats'"
@@ -357,6 +372,7 @@ import SettingsDialog from "./components/common/SettingsDialog.vue"
 import StatsPanel from "./components/stats/StatsPanel.vue"
 import LogPanel from "./components/log/LogPanel.vue"
 import CommitAnalysisPanel from "./components/analysis/CommitAnalysisPanel.vue"
+import CommitRuleCheckPanel from "./components/analysis/CommitRuleCheckPanel.vue"
 import LineStatsPanel from "./components/analysis/LineStatsPanel.vue"
 import CodeReportPanel from "./components/report/CodeReportPanel.vue"
 import BatchProgressBar from "./components/common/BatchProgressBar.vue"
@@ -614,6 +630,7 @@ const {
 // ── 提交分析（批量读取各项目提交日志；结果持久化，首次进入复用缓存，无缓存时自动分析一次）──
 const {
   analysisStats,
+  commitRuleStats,
   analyzing: analysisAnalyzing,
   analyzed: analysisAnalyzed,
   analyzedAt: analysisAnalyzedAt,
@@ -850,7 +867,7 @@ watch(currentView, async (view) => {
       opLogsLoading.value = false
     }
   }
-  if (view === "analysis" && !gitOpsPaused.value) await ensureAnalysis()
+  if ((view === "analysis" || view === "rulecheck") && !gitOpsPaused.value) await ensureAnalysis()
   // 行数统计缓存加载是纯本地存储读取，不触发 git 操作，暂停 git 操作时仍须恢复过滤选择与上次行数数据（否则重启后勾选丢失）
   if (view === "linestats") await ensureLineStats()
   if (view === "report" && !gitOpsPaused.value) await ensureReport()
@@ -865,8 +882,8 @@ watch(viewMode, async (mode) => {
 /** 解除暂停时按当前上下文补载数据（暂停期间跳过的加载在恢复后立即补齐） */
 watch(gitOpsPaused, async (paused) => {
   if (paused) return
-  // 提交分析视图：暂停期间跳过的缓存加载/首次分析在恢复后补齐
-  if (currentView.value === "analysis") {
+  // 提交分析/提交规则检查视图：暂停期间跳过的缓存加载/首次分析在恢复后补齐
+  if (currentView.value === "analysis" || currentView.value === "rulecheck") {
     await ensureAnalysis()
     return
   }

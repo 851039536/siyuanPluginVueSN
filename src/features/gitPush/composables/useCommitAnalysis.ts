@@ -6,6 +6,7 @@ import type {
   CommitAnalysisStats,
   CommitAnalysisType,
   CommitAnalysisViewSettings,
+  CommitRuleCheckStats,
   GitProject,
   GitPushManager,
   LineStatsSummary,
@@ -19,6 +20,7 @@ import {
   rankByCount,
   resolveValidPath,
 } from "../utils"
+import { analyzeCommitRuleCompliance } from "../commitRuleChecker"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 import { countTrackedFileLinesMap, shouldIncludeFile, sumAuthorLines, sumProjectLines, type NumstatCommit } from "../reportMetrics"
 
@@ -427,8 +429,12 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     }
   })
 
+  /** 提交规则检查聚合视图（复用 analysisStats 已过滤的有效条目，集中暴露不合规提交） */
+  const commitRuleStats = computed<CommitRuleCheckStats>(() => analyzeCommitRuleCompliance(analysisStats.value.entries))
+
   return {
     analysisStats,
+    commitRuleStats,
     analyzing,
     analyzed,
     analyzedAt,

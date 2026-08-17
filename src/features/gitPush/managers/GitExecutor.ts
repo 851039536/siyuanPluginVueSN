@@ -139,8 +139,9 @@ export class GitExecutor {
    * @param signal 可选 AbortSignal，触发后 kill 子进程并清等待队列
    * @param timeoutMs 子进程超时（默认 30 秒；clone 等长耗时操作可传更大值）
    * @param onOutput 可选流式输出回调，实时回传 stdout/stderr 原始块（clone --progress 等长任务日志展示）
+   * @param options 可选额外参数（如 rebase 编辑器所需环境变量）
    */
-  async execGit(cwd: string, args: string[], signal?: AbortSignal, timeoutMs = 30000, onOutput?: (chunk: string) => void): Promise<string> {
+  async execGit(cwd: string, args: string[], signal?: AbortSignal, timeoutMs = 30000, onOutput?: (chunk: string) => void, options?: { env?: Record<string, string> }): Promise<string> {
     const isNetwork = GitExecutor.NETWORK_COMMANDS.has(GitExecutor.getCommandName(args))
 
     return new Promise<string>((resolve, reject) => {
@@ -167,7 +168,14 @@ export class GitExecutor {
 
         const child = cp.execFile(
           "git", args,
-          { cwd, timeout: timeoutMs, encoding: "utf8", windowsHide: true, maxBuffer: GitExecutor.MAX_BUFFER },
+          {
+            cwd,
+            timeout: timeoutMs,
+            encoding: "utf8",
+            windowsHide: true,
+            maxBuffer: GitExecutor.MAX_BUFFER,
+            ...(options?.env ? { env: { ...process.env, ...options.env } } : {}),
+          },
           (error: Error & { code?: number } | null, stdout: string, stderr: string) => {
             if (isNetwork) {
               this.networkRunning--

@@ -230,6 +230,10 @@ export class GitPushManager {
     return this.worktreeOps.amendCommitMessage(projectPath, message)
   }
 
+  async rewriteCommitMessage(projectPath: string, hash: string, message: string): Promise<string> {
+    return this.worktreeOps.rewriteCommitMessage(projectPath, hash, message)
+  }
+
   // ── 仓库元操作（RepoOps）──
 
   async getTags(projectPath: string, limit = 10): Promise<TagInfo[]> { return this.repoOps.getTags(projectPath, limit) }

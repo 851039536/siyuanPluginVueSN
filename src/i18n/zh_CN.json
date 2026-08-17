@@ -1838,7 +1838,9 @@
     "ruleFixOnlyHead": "仅最近一次提交（HEAD）可自动修正，更早提交请在终端使用 git rebase 手动处理",
     "ruleFixDirtyWorkingTree": "工作区有未提交变更，请先提交或暂存后再修正",
     "ruleFixAiFailed": "AI 生成失败，请重试",
-    "ruleFixSaveFailed": "修正失败"
+    "ruleFixSaveFailed": "修正失败",
+    "ruleFixNoHead": "无法识别当前 HEAD，请确认项目路径有效且为 Git 仓库",
+    "ruleFixForcePushHint": "这是历史提交，修正将重写它及其后所有提交 hash；若已推送，请自行使用 git push --force-with-lease 覆盖远程"
   },
   "enableGlobalRelations": "启用全局关系列表功能",
   "enableGlobalRelationsDesc": "基于思源 refs 表与 getBacklink2 API，查询全库文档间的双向链接关系",

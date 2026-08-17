@@ -1838,7 +1838,9 @@
     "ruleFixOnlyHead": "Only the latest commit (HEAD) can be fixed automatically. For older commits, use git rebase in a terminal.",
     "ruleFixDirtyWorkingTree": "Working tree has uncommitted changes. Commit or stash them before fixing.",
     "ruleFixAiFailed": "AI generation failed. Please retry.",
-    "ruleFixSaveFailed": "Failed to fix commit message."
+    "ruleFixSaveFailed": "Failed to fix commit message.",
+    "ruleFixNoHead": "Cannot detect HEAD. Make sure the project path is a valid Git repository.",
+    "ruleFixForcePushHint": "This is a historical commit. Fixing it will rewrite its hash and all later commit hashes. If already pushed, run git push --force-with-lease manually."
   },
   "enableGlobalRelations": "Enable Global Relations",
   "enableGlobalRelationsDesc": "Query bidirectional link relations across the whole library via refs table and getBacklink2 API",

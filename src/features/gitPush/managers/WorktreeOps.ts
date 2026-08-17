@@ -6,6 +6,7 @@ import type {
   StashEntry,
   WorkingTreeInfo,
 } from "../types/storage"
+import { getNodeFsPathOs } from "@/utils/nodeModules"
 import type { GitExecutor } from "./GitExecutor"
 
 export class WorktreeOps {
@@ -287,5 +288,86 @@ export class WorktreeOps {
     return await this.executor.execGit(projectPath, [
       "-c", "core.quotepath=false", "commit", "--amend", "-m", message,
     ])
+  }
+
+  /**
+   * 重写指定提交信息（个人项目安全版）：
+   * - 目标是 HEAD 时直接 amend；
+   * - 目标是历史提交时通过非交互 rebase 自动 reword，失败自动 abort。
+   */
+  async rewriteCommitMessage(projectPath: string, hash: string, message: string): Promise<string> {
+    const node = getNodeFsPathOs()
+    if (!node) throw new Error("Node 环境不可用")
+
+    // 解析完整 hash，避免短 hash 在 rebase todo 中匹配错误
+    const fullHash = (await this.executor.execGit(projectPath, ["rev-parse", `${hash}^{commit}`])).trim()
+    if (!fullHash) throw new Error("找不到指定提交")
+
+    const headHash = (await this.getHeadHash(projectPath)).trim()
+    // HEAD 直接走 amend，不产生 rebase 交互
+    if (headHash === fullHash) {
+      return await this.amendCommitMessage(projectPath, message)
+    }
+
+    // 目标提交的父提交；若不存在说明是根提交，rebase 需使用 --root
+    const parent = await this.executor.execGit(projectPath, ["rev-parse", `${fullHash}^`]).catch(() => "")
+
+    const { fs, os, path } = node
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gpfix-"))
+    const seqScript = path.join(dir, "sequence-editor.cjs")
+    const msgScript = path.join(dir, "commit-editor.cjs")
+    const shortHash = fullHash.slice(0, 7)
+
+    const seqCode = `
+const fs = require("node:fs")
+const file = process.argv[2]
+const target = process.env.COMMIT_FIX_HASH
+const short = target.slice(0, 7)
+let text = fs.readFileSync(file, "utf8")
+const lines = text.split("\\n").map((line) => {
+  if (line.startsWith("pick ") && (line.includes(target) || line.includes(short))) {
+    return "reword" + line.slice(4)
+  }
+  return line
+})
+fs.writeFileSync(file, lines.join("\\n"))
+`
+    const msgCode = `
+const fs = require("node:fs")
+const file = process.argv[2]
+fs.writeFileSync(file, process.env.COMMIT_FIX_MESSAGE || "")
+`
+    try {
+      fs.writeFileSync(seqScript, seqCode)
+      fs.writeFileSync(msgScript, msgCode)
+
+      const toPosix = (p: string) => p.split("\\").join("/")
+      const env: Record<string, string> = {
+        GIT_SEQUENCE_EDITOR: `node "${toPosix(seqScript)}"`,
+        GIT_EDITOR: `node "${toPosix(msgScript)}"`,
+        COMMIT_FIX_HASH: fullHash,
+        COMMIT_FIX_SHORT: shortHash,
+        COMMIT_FIX_MESSAGE: message,
+      }
+      const rebaseArgs = parent
+        ? ["-c", "core.quotepath=false", "rebase", "-i", parent]
+        : ["-c", "core.quotepath=false", "rebase", "-i", "--root"]
+      return await this.executor.execGit(
+        projectPath,
+        rebaseArgs,
+        undefined,
+        120000,
+        undefined,
+        { env },
+      )
+    } catch (e) {
+      // 失败时回滚 rebase，避免仓库停留在 rebase 中断状态
+      try {
+        await this.executor.execGit(projectPath, ["rebase", "--abort"])
+      } catch { /* 忽略 abort 失败，保留原始错误 */ }
+      throw e
+    } finally {
+      try { fs.rmSync(dir, { recursive: true, force: true }) } catch { /* 忽略清理失败 */ }
+    }
   }
 }

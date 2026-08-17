@@ -1,22 +1,18 @@
+<!-- 超级面板主视图：功能搜索、状态统计与功能卡片列表 -->
 <template>
   <!-- 面板容器 -->
   <div class="super-panel-container">
     <!-- 头部 -->
     <SuperPanelHeader
       :title="i18n.title || '超级面板'"
-      :active-tab="activeTab"
       :i18n="i18n"
       @toggle-ai-settings="props.onOpenAiSettings?.()"
       @refresh="emit('refresh')"
       @close="emit('close')"
-      @change-tab="activeTab = $event"
     />
 
-    <!-- 搜索栏（仅功能列表 Tab） -->
-    <div
-      v-if="activeTab === 'features'"
-      class="super-panel-search"
-    >
+    <!-- 搜索栏 -->
+    <div class="super-panel-search">
       <div class="search-input-wrapper">
         <IconWrapper
           name="search"
@@ -47,11 +43,8 @@
       >{{ filteredFeatures.length }}/{{ features.length }}</span>
     </div>
 
-    <!-- 状态统计（仅功能列表 Tab） -->
-    <div
-      v-if="activeTab === 'features'"
-      class="super-panel-stats"
-    >
+    <!-- 状态统计 -->
+    <div class="super-panel-stats">
       <span
         v-for="s in FEATURE_STATUSES"
         :key="s"
@@ -66,50 +59,41 @@
 
     <!-- 内容区 -->
     <div class="super-panel-content">
-      <!-- 版本汇总 Tab -->
-      <VersionSummary
-        v-if="activeTab === 'versions'"
-        :i18n="i18n"
-        :feature-versions="featureVersions"
-        @open-versions="emit('openVersions', $event)"
-      />
+      <!-- 空结果提示 -->
+      <div
+        v-if="searchQuery && filteredFeatures.length === 0"
+        class="search-empty"
+      >
+        <IconWrapper
+          name="search"
+          :size="32"
+          class="search-empty-icon"
+        />
+        <span class="search-empty-text">{{ i18n.noResults || '未找到匹配的功能' }}</span>
+      </div>
 
-      <!-- 功能列表 Tab -->
-      <template v-else>
-        <div
-          v-if="searchQuery && filteredFeatures.length === 0"
-          class="search-empty"
-        >
-          <IconWrapper
-            name="search"
-            :size="32"
-            class="search-empty-icon"
-          />
-          <span class="search-empty-text">{{ i18n.noResults || '未找到匹配的功能' }}</span>
-        </div>
-        <TransitionGroup
-          name="feature-list"
-          tag="div"
-          class="feature-list-inner"
-        >
-          <FeatureCard
-            v-for="feature in filteredFeatures"
-            :key="feature.id"
-            :feature="feature"
-            :enabled="getFeatureEnabled(feature.id)"
-            :show-toggle="canToggle(feature.id)"
-            :selector-options="getSelectorOptions(feature.id)"
-            :selected-option="getSelectedOption(feature.id)"
-            :status-labels="statusLabels"
-            @action="emit('action', $event)"
-            @toggle="emit('toggleFeature', feature.id, $event)"
-            @select="emit('selectFeature', feature.id, $event)"
-            @status-change="emit('statusFeature', feature.id, $event)"
-            @open-versions="emit('openVersions', feature.id)"
-            @toggle-sub-feature="emit('toggleSubFeature', $event)"
-          />
-        </TransitionGroup>
-      </template>
+      <!-- 功能卡片列表 -->
+      <TransitionGroup
+        name="feature-list"
+        tag="div"
+        class="feature-list-inner"
+      >
+        <FeatureCard
+          v-for="feature in filteredFeatures"
+          :key="feature.id"
+          :feature="feature"
+          :enabled="getFeatureEnabled(feature.id)"
+          :show-toggle="canToggle(feature.id)"
+          :selector-options="getSelectorOptions(feature.id)"
+          :selected-option="getSelectedOption(feature.id)"
+          :status-labels="statusLabels"
+          @action="emit('action', $event)"
+          @toggle="emit('toggleFeature', feature.id, $event)"
+          @select="emit('selectFeature', feature.id, $event)"
+          @status-change="emit('statusFeature', feature.id, $event)"
+          @toggle-sub-feature="emit('toggleSubFeature', $event)"
+        />
+      </TransitionGroup>
     </div>
   </div>
 </template>
@@ -119,7 +103,6 @@ import type { SelectorOption } from "./components/FeatureCard.vue"
 import type {
   Feature,
   FeatureStatus,
-  FeatureVersionEntry,
   SubFeature,
 } from "./types"
 import type { IconKey } from "@/config/icons"
@@ -140,16 +123,11 @@ import { FEATURE_CONFIG } from "@/features/config"
 import { THEMES } from "@/features/themeColor"
 import FeatureCard from "./components/FeatureCard.vue"
 import SuperPanelHeader from "./components/SuperPanelHeader.vue"
-import VersionSummary from "./components/VersionSummary.vue"
-import {
-  DEFAULT_VERSION,
-  FEATURE_STATUSES,
-} from "./types"
+import { FEATURE_STATUSES } from "./types"
 
 interface Props {
   settings: PluginSettings
   i18n: Record<string, any>
-  featureVersions?: Record<string, FeatureVersionEntry[]>
   onOpenAiSettings?: () => void
 }
 
@@ -160,15 +138,11 @@ interface Emits {
   (e: "toggleFeature", featureId: string, enabled: boolean): void
   (e: "selectFeature", featureId: string, value: string): void
   (e: "statusFeature", featureId: string, status: string): void
-  (e: "openVersions", featureId: string): void
   (e: "toggleSubFeature", featureId: string): void
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
-
-// Tab 状态
-const activeTab = ref<"features" | "versions">("features")
 
 // 搜索状态
 const searchQuery = ref("")
@@ -192,7 +166,6 @@ const features = computed<Feature[]>(() =>
     actions,
     subFeatures,
   }) => {
-    const versions = props.featureVersions?.[id] || []
     return {
       id,
       iconKey: id as IconKey,
@@ -200,7 +173,6 @@ const features = computed<Feature[]>(() =>
       desc: (descI18nKey ? resolveI18n(props.i18n, descI18nKey) : props.i18n[`${id}Desc`]) || defaultDesc,
       actions: actions || [],
       status: (props.settings.featureStatus?.[id] || "") as FeatureStatus,
-      version: versions.length > 0 ? versions[0].version : DEFAULT_VERSION,
       subFeatures: subFeatures?.map((sub: SubFeatureMeta): SubFeature => ({
         id: sub.id,
         label: (sub.labelI18nKey ? resolveI18n(props.i18n, sub.labelI18nKey) : "") || sub.defaultLabel,

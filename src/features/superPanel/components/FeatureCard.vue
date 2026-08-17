@@ -1,3 +1,4 @@
+<!-- 超级面板功能卡片：状态标记、开关与快捷操作 -->
 <template>
   <div
     class="feature-card"
@@ -13,11 +14,6 @@
         </div>
         <div class="feature-info">
           <span class="feature-title">{{ feature.title }}</span>
-          <span
-            class="version-badge"
-            title="点击查看版本信息"
-            @click.stop="emit('openVersions')"
-          >{{ feature.version || '1.0.0.0' }}</span>
           <span class="status-badge-wrapper">
             <span
               ref="statusBadgeRef"
@@ -162,7 +158,6 @@ interface Emits {
   (e: "toggle", value: boolean): void
   (e: "select", value: string): void
   (e: "statusChange", status: FeatureStatus): void
-  (e: "openVersions"): void
   (e: "toggleSubFeature", featureId: string): void
 }
 

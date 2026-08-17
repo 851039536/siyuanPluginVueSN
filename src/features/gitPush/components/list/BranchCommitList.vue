@@ -81,8 +81,9 @@
           :title="entry.hash"
         >{{ entry.hash }}</span>
         <span
-          class="bcl-msg"
-          :title="entry.message"
+          class="bcl-msg bcl-msg--clickable"
+          :title="i18n.ruleFixOpen + ': ' + entry.message"
+          @click.stop="$emit('fixCommit', entry)"
         >{{ entry.message }}</span>
         <span class="bcl-meta">
           <span class="bcl-author">{{ entry.author }}</span>

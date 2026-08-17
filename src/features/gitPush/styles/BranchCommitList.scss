@@ -120,6 +120,15 @@
   font-size: $font-size-2xs;
 }
 
+// 可点击提交信息（打开修正弹窗）
+.bcl-msg--clickable {
+  cursor: pointer;
+
+  &:hover {
+    color: var(--b3-theme-primary);
+  }
+}
+
 .bcl-meta {
   display: flex;
   gap: $spacing-1;

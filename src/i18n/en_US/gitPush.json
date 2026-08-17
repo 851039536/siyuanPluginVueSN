@@ -623,7 +623,6 @@
     "ruleFixGenerating": "Generating…",
     "ruleFixSave": "Save Fix",
     "ruleFixSaving": "Saving…",
-    "ruleFixOnlyHead": "Only the latest commit (HEAD) can be fixed automatically. For older commits, use git rebase in a terminal.",
     "ruleFixDirtyWorkingTree": "Working tree has uncommitted changes. Commit or stash them before fixing.",
     "ruleFixAiFailed": "AI generation failed. Please retry.",
     "ruleFixSaveFailed": "Failed to fix commit message.",

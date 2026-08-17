@@ -1835,7 +1835,6 @@
     "ruleFixGenerating": "生成中…",
     "ruleFixSave": "保存修正",
     "ruleFixSaving": "保存中…",
-    "ruleFixOnlyHead": "仅最近一次提交（HEAD）可自动修正，更早提交请在终端使用 git rebase 手动处理",
     "ruleFixDirtyWorkingTree": "工作区有未提交变更，请先提交或暂存后再修正",
     "ruleFixAiFailed": "AI 生成失败，请重试",
     "ruleFixSaveFailed": "修正失败",

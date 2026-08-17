@@ -1845,7 +1845,10 @@
     "forcePushHint": "git push --force-with-lease: overwrite remote branch history (personal projects)",
     "forcePushConfirm": "Confirm Force Push",
     "forcePushConfirmBody": "This will overwrite the remote branch history using git push --force-with-lease. This cannot be undone. Continue?",
-    "checkBranchStatus": "Check Branch Status"
+    "checkBranchStatus": "Check Branch Status",
+    "ruleFixDateChoice": "Choose how to set commit dates",
+    "ruleFixPreserveDate": "Keep original commit dates",
+    "ruleFixDefaultDate": "Use current time"
   },
   "enableGlobalRelations": "Enable Global Relations",
   "enableGlobalRelationsDesc": "Query bidirectional link relations across the whole library via refs table and getBacklink2 API",

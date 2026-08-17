@@ -85,6 +85,32 @@
               <span>{{ amendBlockedReason }}</span>
             </div>
 
+            <!-- 提交时间保留选择（点击保存时展开） -->
+            <div
+              v-if="dateChoiceVisible"
+              class="gp-fix-warning gp-fix-date-choice"
+            >
+              <span>{{ i18n.ruleFixDateChoice }}</span>
+              <div class="gp-fix-date-actions">
+                <!-- 按钮："保留原始提交时间" -->
+                <button
+                  class="vp-btn vp-btn--ghost vp-btn--sm"
+                  :disabled="saving"
+                  @click="performSave(true)"
+                >
+                  {{ i18n.ruleFixPreserveDate }}
+                </button>
+                <!-- 按钮："按当前时间提交" -->
+                <button
+                  class="vp-btn vp-btn--ghost vp-btn--sm"
+                  :disabled="saving"
+                  @click="performSave(false)"
+                >
+                  {{ i18n.ruleFixDefaultDate }}
+                </button>
+              </div>
+            </div>
+
             <!-- AI 生成失败提示 -->
             <div
               v-if="aiError"
@@ -165,6 +191,7 @@ const newMessage = ref(props.target.message)
 const aiLoading = ref(false)
 const aiError = ref("")
 const saving = ref(false)
+const dateChoiceVisible = ref(false)
 const headHash = ref("")
 const workingTreeClean = ref(false)
 
@@ -239,12 +266,19 @@ async function runAiFix() {
   }
 }
 
-/** 保存 amend，成功后通知父级刷新 */
-async function save() {
+/** 点击保存：先弹出提交时间选择 */
+function save() {
+  if (!canAmend.value || !newMessage.value.trim() || validationReason.value) return
+  dateChoiceVisible.value = true
+}
+
+/** 执行修正：preserveDate=true 保留原始提交时间，false 使用当前时间 */
+async function performSave(preserveDate: boolean) {
   if (!canAmend.value || !projectPath.value || !newMessage.value.trim() || validationReason.value) return
   saving.value = true
+  dateChoiceVisible.value = false
   try {
-    await manager.rewriteCommitMessage(projectPath.value, props.target.hash, newMessage.value.trim())
+    await manager.rewriteCommitMessage(projectPath.value, props.target.hash, newMessage.value.trim(), preserveDate)
     emit("saved")
     emit("close")
   } catch (e: unknown) {

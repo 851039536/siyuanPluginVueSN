@@ -1,6 +1,7 @@
 @use "@/variables.scss" as *;
 
-.shortcut-dialog-overlay {
+// 全屏确认遮罩：Codex 风格（边框代替 box-shadow，无硬编码色值）
+.shortcut-confirm-overlay {
   position: fixed;
   inset: 0;
   background: var(--b3-mask-background, rgba(0, 0, 0, 0.5));
@@ -11,59 +12,37 @@
   font-size: $font-size-xs;
 }
 
-.shortcut-dialog {
+.shortcut-confirm-dialog {
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
   border-radius: $vp-radius;
-  max-width: 450px;
+  max-width: 360px;
   width: 90%;
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
 }
 
-.dialog-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: $spacing-3 $spacing-4;
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+.confirm-header {
+  padding: $spacing-4 $spacing-4 0;
 }
 
-.dialog-title {
+.confirm-title {
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   line-height: $line-height-tight;
   color: var(--b3-theme-on-background);
 }
 
-.dialog-body {
-  flex: 1;
-  padding: $spacing-4;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-3;
+.confirm-body {
+  padding: $spacing-3 $spacing-4;
+  font-size: $font-size-xs;
+  line-height: $line-height-normal;
+  color: var(--b3-theme-on-surface-variant);
 }
 
-.dialog-footer {
+.confirm-footer {
   display: flex;
   gap: $spacing-2;
   padding: $spacing-3 $spacing-4;
   border-top: 1px solid var(--b3-theme-surface-lighter);
   background: var(--b3-theme-surface);
   justify-content: flex-end;
-}
-
-.dialog-body::-webkit-scrollbar {
-  width: 5px;
-}
-
-.dialog-body::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.dialog-body::-webkit-scrollbar-thumb {
-  background: var(--b3-theme-surface-lighter);
-  border-radius: 2px;
 }

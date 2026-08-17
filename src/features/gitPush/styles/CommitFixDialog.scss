@@ -103,3 +103,15 @@
   background: var(--b3-theme-error-background, transparent);
   border-color: var(--b3-theme-error, $color-danger);
 }
+
+// 提交时间保留选择弹层
+.gp-fix-date-choice {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.gp-fix-date-actions {
+  display: flex;
+  gap: $spacing-2;
+  flex-wrap: wrap;
+}

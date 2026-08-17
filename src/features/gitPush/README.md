@@ -16,6 +16,7 @@
 - **Stash 暂存**：Git stash 存取恢复，支持 AI 生成描述
 - **项目分类**：按颜色标签分组管理项目
 - **标签/状态/备注**：多标签筛选、状态徽章循环切换（活跃/维护中/暂停）、项目备注
+- **提交规则检查**：校验各项目提交信息是否符合 Conventional Commits 规则（type 限 feat/fix/chore/docs/style/refactor/test），集中展示不合规提交及原因
 - **统计视图**：远程覆盖率、待处理项目合并视图（推送状态概览 + 待推送/暂存/未暂存表格）、平台配置状态
 - **行数统计视图**：独立 Tab，统计各项目/作者的代码新增、删除、净增行数排行（千位分隔数字，净增正绿负红），支持 30/50/100/200 条数选择；可配置文件格式过滤（扩展名多选排除列表，勾选后跳过对应格式，不选则统计所有文件）
 - **扫描导入**：递归扫描目录批量导入 Git 仓库
@@ -79,8 +80,9 @@ src/features/gitPush/
 │   │   └── RepoLinkAuditSection.vue # 仓库链接审计
 │   ├── log/                         # 操作日志视图专属（1 个）
 │   │   └── LogPanel.vue             # 操作日志面板
-│   └── analysis/                    # 提交分析视图专属（6 个）
+│   └── analysis/                    # 提交分析视图专属（7 个）
 │       ├── CommitAnalysisPanel.vue  # 提交分析面板
+│       ├── CommitRuleCheckPanel.vue # 提交规则检查面板
 │       ├── LineStatsPanel.vue       # 行数统计面板（项目/作者行数排行 + 过滤配置按钮）
 │       ├── ExtFilterDialog.vue      # 文件格式过滤配置弹窗（扩展名多选排除列表）
 │       ├── CommitAnalysisSettings.vue# 分析设置
@@ -90,6 +92,7 @@ src/features/gitPush/
     ├── index.scss                   # 主面板样式
     ├── StatsPanel.scss              # 统计视图样式
     ├── CommitAnalysisPanel.scss     # 提交分析面板样式
+    ├── CommitRuleCheckPanel.scss    # 提交规则检查面板样式
     ├── LineStatsPanel.scss          # 行数统计面板样式（含过滤按钮）
     ├── ExtFilterDialog.scss         # 文件格式过滤弹窗样式
     ├── WorkingTreePanel.scss        # 工作区面板样式

@@ -1,14 +1,16 @@
 <!-- 快捷键网格容器：按 group 分组渲染，组名+数量徽章，2列网格布局，空数据提示 -->
 <template>
   <div class="shortcut-content">
+    <!-- 空数据提示 -->
     <div
       v-if="shortcuts.length === 0"
       class="shortcut-empty"
     >
       <svg class="empty-icon"><use xlink:href="#iconSearch"></use></svg>
-      <p>{{ emptyText }}</p>
+      <p>{{ i18n.noResults }}</p>
     </div>
 
+    <!-- 分组渲染 -->
     <div
       v-for="group in groupedShortcuts"
       :key="group.name"
@@ -18,9 +20,7 @@
         <span class="group-name">{{ group.name }}</span>
         <span class="group-count">{{ group.shortcuts.length }}</span>
       </div>
-      <div
-        class="shortcut-grid"
-      >
+      <div class="shortcut-grid">
         <ShortcutCard
           v-for="shortcut in group.shortcuts"
           :key="shortcut.id"
@@ -29,11 +29,7 @@
           :is-recent="isRecent(shortcut.id)"
           :category-label="getCategoryLabel(shortcut.category)"
           :show-tool-badge="showToolBadge(shortcut.category)"
-          :favorite-title="favoriteTitle"
-          :un-favorite-title="unFavoriteTitle"
-          :copy-title="copyTitle"
-          :edit-title="editTitle"
-          :delete-title="deleteTitle"
+          :i18n="i18n"
           @toggle-favorite="$emit('toggleFavorite', $event)"
           @copy="$emit('copy', $event)"
           @edit="$emit('edit', $event)"
@@ -58,24 +54,10 @@ interface Props {
   isRecent: (id: string) => boolean
   getCategoryLabel: (category: string) => string
   showToolBadge: (category: string) => boolean
-  emptyText?: string
-  favoriteTitle?: string
-  unFavoriteTitle?: string
-  copyTitle?: string
-  editTitle?: string
-  deleteTitle?: string
-  otherGroupLabel?: string
+  i18n: Record<string, string>
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  emptyText: "未找到快捷键",
-  favoriteTitle: "收藏",
-  unFavoriteTitle: "取消收藏",
-  copyTitle: "复制",
-  editTitle: "编辑",
-  deleteTitle: "删除",
-  otherGroupLabel: "其他",
-})
+const props = defineProps<Props>()
 
 defineEmits<{
   toggleFavorite: [id: string]
@@ -88,7 +70,7 @@ const groupedShortcuts = computed((): ShortcutGroup[] => {
   const groupMap = new Map<string, ShortcutInfo[]>()
 
   props.shortcuts.forEach((shortcut) => {
-    const group = shortcut.group || props.otherGroupLabel
+    const group = shortcut.group || props.i18n.other
     if (!groupMap.has(group)) {
       groupMap.set(group, [])
     }

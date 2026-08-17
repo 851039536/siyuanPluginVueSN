@@ -2,27 +2,29 @@
  * RSS订阅功能 - 核心逻辑组合式函数
  */
 import type { Plugin } from "siyuan"
+import { showMessage } from "siyuan"
+import {
+  computed,
+  ref,
+} from "vue"
+import {
+  createRssItemFromParsed,
+  generateId,
+  getPubDateTimestamp,
+  parseRssXml,
+} from "../utils/parser"
+import { fetchRss } from "../utils/fetchRss"
+import { trimItemsPerFeed } from "../utils/itemTrim"
 import type {
   RssFeed,
   RssItem,
   RssLoadingStatus,
   RssSettings,
 } from "../types"
-import { showMessage } from "siyuan"
-import {
-  computed,
-  ref,
-} from "vue"
 import { DEFAULT_RSS_SETTINGS } from "../types"
 import { RssStorage } from "../types/storage"
-import {
-  exportToOpml,
-  parseOpml,
-} from "../utils/opml"
-import {
-  generateId,
-  parseRssXml,
-} from "../utils/parser"
+import { useArticleOps } from "./useArticleOps"
+import { useOpmlTransfer } from "./useOpmlTransfer"
 import { getErrorMessage } from "@/utils/stringUtils"
 
 export function useRssReader(plugin: Plugin) {
@@ -82,7 +84,7 @@ export function useRssReader(plugin: Plugin) {
     for (const key of sortedKeys) {
       result.push({
         group: key,
-        label: key || rssI18n.ungrouped || "Ungrouped",
+        label: key || rssI18n.ungrouped,
         feeds: map.get(key)!,
       })
     }
@@ -129,8 +131,8 @@ export function useRssReader(plugin: Plugin) {
 
     // 排序
     result.sort((a, b) => {
-      const dateA = a.pubDate ? new Date(a.pubDate).getTime() : 0
-      const dateB = b.pubDate ? new Date(b.pubDate).getTime() : 0
+      const dateA = getPubDateTimestamp(a.pubDate)
+      const dateB = getPubDateTimestamp(b.pubDate)
       return settings.value.sortOrder === "newest"
         ? dateB - dateA
         : dateA - dateB
@@ -178,7 +180,7 @@ export function useRssReader(plugin: Plugin) {
   async function addFeed(url: string, group?: string) {
     url = url.trim()
     if (!url) {
-      showMessage(rssI18n.feedUrlRequired || "Please enter RSS feed URL", 3000, "error")
+      showMessage(rssI18n.feedUrlRequired, 3000, "error")
       return false
     }
 
@@ -189,7 +191,7 @@ export function useRssReader(plugin: Plugin) {
 
     // 检查重复
     if (feeds.value.some((f) => f.url === url)) {
-      showMessage(rssI18n.feedAddFailed || "该订阅源已存在", 3000, "error")
+      showMessage(rssI18n.feedExisted, 3000, "error")
       return false
     }
 
@@ -215,31 +217,19 @@ export function useRssReader(plugin: Plugin) {
         enabled: true,
       }
 
-      const newItems: RssItem[] = parsedItems.map((pi) => ({
-        title: pi.title || rssI18n.untitled || "Untitled",
-        link: pi.link || "",
-        description: pi.description,
-        pubDate: pi.pubDate,
-        author: pi.author,
-        feedId: newFeed.id,
-        feedTitle: newFeed.title,
-        read: false,
-        starred: false,
-        content: pi.content,
-        coverImage: pi.coverImage,
-        categories: pi.categories,
-      }))
+      const newItems: RssItem[] = parsedItems.map((pi) =>
+        createRssItemFromParsed(pi, newFeed.id, newFeed.title, rssI18n.untitled))
 
       feeds.value.push(newFeed)
       items.value.push(...newItems)
 
       await saveData()
       loadingStatus.value = "success"
-      showMessage(`${rssI18n.feedAddedDetail || "Feed added"}: ${newFeed.title}`, 3000, "info")
+      showMessage(`${rssI18n.feedAddedDetail}: ${newFeed.title}`, 3000, "info")
       return true
     } catch (err: unknown) {
       loadingStatus.value = "error"
-      showMessage(getErrorMessage(err) || rssI18n.feedAddFailed || "Failed to add feed", 5000, "error")
+      showMessage(getErrorMessage(err) || rssI18n.feedAddFailed, 5000, "error")
       return false
     }
   }
@@ -256,7 +246,7 @@ export function useRssReader(plugin: Plugin) {
     }
 
     await saveData()
-    showMessage(rssI18n.feedDeleted || "Feed deleted", 2000, "info")
+    showMessage(rssI18n.feedDeleted, 2000, "info")
   }
 
   /**
@@ -293,37 +283,24 @@ export function useRssReader(plugin: Plugin) {
       for (const pi of parsedItems) {
         const link = pi.link || ""
         if (link && !existingLinks.has(link)) {
-          newItems.push({
-            title: pi.title || rssI18n.untitled || "Untitled",
-            link,
-            description: pi.description,
-            pubDate: pi.pubDate,
-            author: pi.author,
-            feedId,
-            feedTitle: feed.title,
-            read: false,
-            starred: false,
-            content: pi.content,
-            coverImage: pi.coverImage,
-            categories: pi.categories,
-          })
+          newItems.push(createRssItemFromParsed(pi, feedId, feed.title, rssI18n.untitled))
           existingLinks.add(link)
         }
       }
 
       if (newItems.length > 0) {
         items.value.push(...newItems)
-        showMessage(`${feed.title}: ${newItems.length}${rssI18n.newArticlesDetail || "new articles"}`, 3000, "info")
+        showMessage(`${feed.title}: ${newItems.length}${rssI18n.newArticlesDetail}`, 3000, "info")
       } else {
-        showMessage(`${feed.title}: ${rssI18n.noNewArticlesDetail || "No new articles"}`, 2000, "info")
+        showMessage(`${feed.title}: ${rssI18n.noNewArticlesDetail}`, 2000, "info")
       }
 
       // 限制每个源的文章数
-      trimItemsPerFeed()
+      trimItemsPerFeed(items, settings.value.maxItemsPerFeed)
 
       await saveData()
     } catch (err: unknown) {
-      showMessage(`${rssI18n.refreshDetailFailed || "Refresh failed"}: ${getErrorMessage(err)}`, 5000, "error")
+      showMessage(`${rssI18n.refreshDetailFailed}: ${getErrorMessage(err)}`, 5000, "error")
     } finally {
       refreshingFeedIds.value.delete(feedId)
     }
@@ -341,46 +318,6 @@ export function useRssReader(plugin: Plugin) {
     }
 
     loadingStatus.value = "idle"
-  }
-
-  // ========== OPML 导入导出 ==========
-
-  /**
-   * 导出 OPML 文件
-   */
-  function exportOpml(): string {
-    return exportToOpml(feeds.value)
-  }
-
-  /**
-   * 导入 OPML 文件
-   */
-  async function importOpml(xml: string): Promise<{ success: number, failed: number }> {
-    const outlines = parseOpml(xml)
-    if (outlines.length === 0) {
-      showMessage(rssI18n.noValidFeeds || "No valid RSS feeds found", 3000, "error")
-      return {
-        success: 0,
-        failed: 0,
-      }
-    }
-
-    let success = 0
-    let failed = 0
-    for (const outline of outlines) {
-      try {
-        const ok = await addFeed(outline.url, outline.group)
-        if (ok) success++
-        else failed++
-      } catch {
-        failed++
-      }
-    }
-    showMessage(`${rssI18n.opmlImportResult || "OPML import complete"}: ${success} succeeded, ${failed} failed`, 4000, "info")
-    return {
-      success,
-      failed,
-    }
   }
 
   // ========== 文章详情操作 ==========
@@ -405,62 +342,6 @@ export function useRssReader(plugin: Plugin) {
     if (feed) {
       feed.group = group
       await saveData()
-    }
-  }
-
-  // ========== 文章操作 ==========
-
-  /**
-   * 标记所有文章为已读
-   */
-  async function markAllAsRead() {
-    if (!Array.isArray(items.value)) return
-    items.value.forEach((i) => {
-      i.read = true
-    })
-    await saveData()
-    showMessage(rssI18n.markAllRead || "All marked as read", 2000, "info")
-  }
-
-  /**
-   * 切换收藏状态
-   */
-  async function toggleStar(itemId: string) {
-    if (!Array.isArray(items.value)) return
-    const item = items.value.find((i) => i.link === itemId || (i as any).id === itemId)
-    if (item) {
-      item.starred = !item.starred
-      await saveData()
-    }
-  }
-
-  /**
-   * 打开文章详情
-   */
-  function openItemDetail(item: RssItem) {
-    // 标记为已读
-    if (!item.read) {
-      item.read = true
-      saveData()
-    }
-    selectedItem.value = item
-    showItemDetail.value = true
-  }
-
-  /**
-   * 关闭文章详情
-   */
-  function closeItemDetail() {
-    showItemDetail.value = false
-    selectedItem.value = null
-  }
-
-  /**
-   * 在浏览器中打开文章
-   */
-  function openInBrowser(item: RssItem) {
-    if (item.link) {
-      window.open(item.link, "_blank")
     }
   }
 
@@ -508,154 +389,10 @@ export function useRssReader(plugin: Plugin) {
       collapsedGroups.value.add(trimmed)
     }
     await saveData()
-    showMessage(`${rssI18n.groupRenamedTo || "Group renamed to"}: ${trimmed}`, 2000, "info")
+    showMessage(`${rssI18n.groupRenamedTo}: ${trimmed}`, 2000, "info")
   }
 
   // ========== 内部方法 ==========
-
-  /**
-   * 创建 AbortSignal（兼容旧版浏览器，手动管理超时）
-   */
-  function createTimeoutSignal(ms: number): { signal: AbortSignal, clear: () => void } {
-    const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), ms)
-    return {
-      signal: controller.signal,
-      clear: () => clearTimeout(timer),
-    }
-  }
-
-  /**
-   * 带超时的 fetch 封装
-   */
-  async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 10000): Promise<Response> {
-    const {
-      signal,
-      clear,
-    } = createTimeoutSignal(timeoutMs)
-    try {
-      const response = await fetch(url, {
-        ...options,
-        signal,
-      })
-      clear()
-      return response
-    } catch (err) {
-      clear()
-      throw err
-    }
-  }
-
-  /**
-   * 检测文本是否为有效 XML（以 < 开头）
-   */
-  function looksLikeXml(text: string): boolean {
-    return /^\s*</.test(text)
-  }
-
-  /**
-   * 获取RSS内容（多层 fallback：直连 → 多个代理 → 重试）
-   */
-  async function fetchRss(url: string): Promise<string> {
-    // 浏览器模拟头（部分 CDN 屏蔽无 UA 的请求）
-    const browserHeaders: Record<string, string> = {
-      "Accept": "application/rss+xml, application/xml, text/xml, application/atom+xml, */*",
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-    }
-
-    // 尝试列表：直连 + 多个代理
-    const attempts: Array<{ url: string, label: string, timeout: number, useBrowserHeaders: boolean }> = [
-      {
-        url,
-        label: "直连",
-        timeout: 15000,
-        useBrowserHeaders: true,
-      },
-      {
-        url: `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-        label: "allorigins",
-        timeout: 20000,
-        useBrowserHeaders: false,
-      },
-      {
-        url: `https://corsproxy.io/?${encodeURIComponent(url)}`,
-        label: "corsproxy",
-        timeout: 20000,
-        useBrowserHeaders: false,
-      },
-      {
-        url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-        label: "codetabs",
-        timeout: 20000,
-        useBrowserHeaders: false,
-      },
-    ]
-
-    // 收集失败原因
-    const errors: string[] = []
-
-    for (const attempt of attempts) {
-      try {
-        const headers = attempt.useBrowserHeaders ? browserHeaders : {}
-        const response = await fetchWithTimeout(attempt.url, {
-          method: "GET",
-          headers,
-        }, attempt.timeout)
-
-        if (response.ok) {
-          const text = await response.text()
-          // 检查是否为有效 XML（防止代理返回 HTML 错误页）
-          if (looksLikeXml(text)) {
-            return text
-          } else {
-            errors.push(`${attempt.label}: 返回内容不是 XML (可能被屏蔽)`)
-          }
-        } else {
-          errors.push(`${attempt.label}: HTTP ${response.status}`)
-        }
-      } catch (err: unknown) {
-        errors.push(`${attempt.label}: ${getErrorMessage(err) || "超时/失败"}`)
-      }
-    }
-
-    throw new Error(`无法获取 RSS 内容。${errors.join("；")}`)
-  }
-
-  /**
-   * 限制每个订阅源的文章数量
-   */
-  function trimItemsPerFeed() {
-    const maxItems = settings.value.maxItemsPerFeed
-    const feedItemMap = new Map<string, RssItem[]>()
-
-    if (!Array.isArray(items.value)) return
-    for (const item of items.value) {
-      if (!feedItemMap.has(item.feedId)) {
-        feedItemMap.set(item.feedId, [])
-      }
-      feedItemMap.get(item.feedId)!.push(item)
-    }
-
-    const trimmedItems: RssItem[] = []
-    for (const [, feedItems] of feedItemMap) {
-      // 保留收藏的，从非收藏中截断
-      const starred = feedItems.filter((i) => i.starred)
-      const unstarred = feedItems.filter((i) => !i.starred)
-
-      // 按日期排序
-      unstarred.sort((a, b) => {
-        const dateA = a.pubDate ? new Date(a.pubDate).getTime() : 0
-        const dateB = b.pubDate ? new Date(b.pubDate).getTime() : 0
-        return dateB - dateA
-      })
-
-      const kept = unstarred.slice(0, Math.max(0, maxItems - starred.length))
-      trimmedItems.push(...starred, ...kept)
-    }
-
-    items.value = trimmedItems
-  }
 
   /**
    * 保存数据
@@ -666,6 +403,21 @@ export function useRssReader(plugin: Plugin) {
       storage.items.save(items.value),
     ])
   }
+
+  // ========== 文章操作（独立 composable，共享 items/selectedItem 状态） ==========
+  const articleOps = useArticleOps({
+    items,
+    selectedItem,
+    showItemDetail,
+    persist: saveData,
+  })
+
+  // ========== OPML 导入导出（独立 composable） ==========
+  const opmlOps = useOpmlTransfer({
+    feeds,
+    i18n: rssI18n,
+    addFeed,
+  })
 
   return {
     // 状态
@@ -698,11 +450,11 @@ export function useRssReader(plugin: Plugin) {
     refreshFeed,
     refreshAllFeeds,
     updateFeedGroup,
-    markAllAsRead,
-    toggleStar,
-    openItemDetail,
-    closeItemDetail,
-    openInBrowser,
+    markAllAsRead: articleOps.markAllAsRead,
+    toggleStar: articleOps.toggleStar,
+    openItemDetail: articleOps.openItemDetail,
+    closeItemDetail: articleOps.closeItemDetail,
+    openInBrowser: articleOps.openInBrowser,
     updateSettings,
     setFeedFilter,
     setGroupFilter,
@@ -711,8 +463,8 @@ export function useRssReader(plugin: Plugin) {
     collapsedGroups,
 
     // OPML
-    exportOpml,
-    importOpml,
+    exportOpml: opmlOps.exportOpml,
+    importOpml: opmlOps.importOpml,
 
     // 阅读体验
     changeDetailFontSize,

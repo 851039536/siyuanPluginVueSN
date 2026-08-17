@@ -14,14 +14,7 @@ export function parseRssXml(xml: string, feedUrl: string): {
   feed: Partial<RssFeed>
   items: Partial<RssItem>[]
 } {
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(xml, "text/xml")
-
-  // 检查解析错误
-  const parseError = doc.querySelector("parsererror")
-  if (parseError) {
-    throw new Error(`XML解析失败: ${parseError.textContent}`)
-  }
+  const doc = parseXmlDocument(xml, "XML解析失败")
 
   // 尝试检测 RSS 或 Atom 格式
   const isAtom = doc.querySelector("feed") !== null
@@ -62,27 +55,17 @@ function parseRss(doc: Document, feedUrl: string): {
   itemElements.forEach((item) => {
     const link = getTextContent(item, "link") || getAttributeValue(item, "link", "href")
     const description = getTextContent(item, "description")
-    const content = getTextContent(item, "content\\:encoded") || getTextContent(item, "content")
-
-    // 尝试提取封面图片
-    let coverImage: string | undefined
-    const enclosure = item.querySelector("enclosure")
-    if (enclosure?.getAttribute("type")?.startsWith("image/")) {
-      coverImage = enclosure.getAttribute("url") || undefined
-    }
-    if (!coverImage && description) {
-      coverImage = extractFirstImage(description)
-    }
+    const content = getTextContent(item, "content\:encoded") || getTextContent(item, "content")
 
     items.push({
       title: getTextContent(item, "title") || "无标题",
       link,
       description: stripHtml(description)?.slice(0, 300),
       pubDate: getTextContent(item, "pubDate"),
-      author: getTextContent(item, "dc\\:creator") || getTextContent(item, "author"),
+      author: getTextContent(item, "dc\:creator") || getTextContent(item, "author"),
       content: content || description,
-      coverImage,
-      categories: Array.from(item.querySelectorAll("category")).map((c) => c.textContent || "").filter(Boolean),
+      coverImage: extractCoverImage(item, description),
+      categories: extractCategories(item),
     })
   })
 
@@ -120,11 +103,7 @@ function parseAtom(doc: Document, feedUrl: string): {
       || getAttributeValue(entry, "link", "href")
     const summary = getTextContent(entry, "summary")
     const content = getTextContent(entry, "content")
-
-    let coverImage: string | undefined
-    if (content || summary) {
-      coverImage = extractFirstImage((content || summary)!)
-    }
+    const rawHtml = content || summary
 
     items.push({
       title: getTextContent(entry, "title") || "无标题",
@@ -132,9 +111,9 @@ function parseAtom(doc: Document, feedUrl: string): {
       description: stripHtml(summary)?.slice(0, 300),
       pubDate: getTextContent(entry, "published") || getTextContent(entry, "updated"),
       author: getAttributeValue(entry, "author name", ""),
-      content: content || summary,
-      coverImage,
-      categories: Array.from(entry.querySelectorAll("category")).map((c) => c.getAttribute("term") || "").filter(Boolean),
+      content: rawHtml,
+      coverImage: extractCoverImage(entry, rawHtml),
+      categories: extractCategories(entry),
     })
   })
 
@@ -145,6 +124,19 @@ function parseAtom(doc: Document, feedUrl: string): {
 }
 
 // ========== 辅助函数 ==========
+
+/**
+ * 解析 XML 文本，并统一检查解析错误（RSS/Atom/OPML 共用）
+ */
+export function parseXmlDocument(xml: string, errorPrefix = "XML解析失败"): Document {
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(xml, "text/xml")
+  const parseError = doc.querySelector("parsererror")
+  if (parseError) {
+    throw new Error(`${errorPrefix}: ${parseError.textContent}`)
+  }
+  return doc
+}
 
 function getTextContent(parent: Element, selector: string): string | undefined {
   const el = parent.querySelector(selector)
@@ -158,9 +150,28 @@ function getAttributeValue(parent: Element, selector: string, attr: string): str
 
 function getIconUrl(channel: Element): string | undefined {
   // RSS 2.0 没有 icon 标准标签，尝试 image/url
-  const imageUrl = getTextContent(channel, "image url")
-  if (imageUrl) return imageUrl
-  return undefined
+  return getTextContent(channel, "image url")
+}
+
+/**
+ * 提取封面图片：优先 enclosure 图片，其次 HTML 中第一张 <img>
+ */
+function extractCoverImage(parent: Element, html?: string): string | undefined {
+  const enclosure = parent.querySelector("enclosure")
+  if (enclosure?.getAttribute("type")?.startsWith("image/")) {
+    const url = enclosure.getAttribute("url")
+    if (url) return url
+  }
+  return html ? extractFirstImage(html) : undefined
+}
+
+/**
+ * 提取分类标签（RSS category 文本 / Atom category term 共用）
+ */
+function extractCategories(parent: Element): string[] {
+  return Array.from(parent.querySelectorAll("category"))
+    .map((c) => c.textContent?.trim() || c.getAttribute("term") || "")
+    .filter(Boolean)
 }
 
 /**
@@ -169,6 +180,40 @@ function getIconUrl(channel: Element): string | undefined {
 function extractFirstImage(html: string): string | undefined {
   const match = html.match(/<img[^>]+src=["']([^"']+)["']/)
   return match?.[1]
+}
+
+/**
+ * 将解析结果转换为完整的 RssItem（addFeed/refreshFeed 共用）
+ */
+export function createRssItemFromParsed(
+  pi: Partial<RssItem>,
+  feedId: string,
+  feedTitle: string,
+  untitledLabel: string,
+): RssItem {
+  return {
+    title: pi.title || untitledLabel,
+    link: pi.link || "",
+    description: pi.description,
+    pubDate: pi.pubDate,
+    author: pi.author,
+    feedId,
+    feedTitle,
+    read: false,
+    starred: false,
+    content: pi.content,
+    coverImage: pi.coverImage,
+    categories: pi.categories,
+  }
+}
+
+/**
+ * 提取发布时间戳（无效/缺失返回 0，用于排序比较）
+ */
+export function getPubDateTimestamp(dateStr?: string): number {
+  if (!dateStr) return 0
+  const time = new Date(dateStr).getTime()
+  return Number.isNaN(time) ? 0 : time
 }
 
 /**

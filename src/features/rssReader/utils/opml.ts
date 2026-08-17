@@ -4,6 +4,7 @@
  */
 
 import { escapeXml } from "@/utils/stringUtils"
+import { parseXmlDocument } from "./parser"
 
 export interface OpmlOutline {
   url: string
@@ -48,11 +49,7 @@ export function exportToOpml(feeds: { title: string, url: string, group?: string
  * 解析 OPML XML 文本，提取订阅源列表
  */
 export function parseOpml(xml: string): OpmlOutline[] {
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(xml, "text/xml")
-
-  const parseError = doc.querySelector("parsererror")
-  if (parseError) throw new Error(`OPML 解析失败: ${parseError.textContent}`)
+  const doc = parseXmlDocument(xml, "OPML 解析失败")
 
   const outlines: OpmlOutline[] = []
   doc.querySelectorAll("outline").forEach((el) => {

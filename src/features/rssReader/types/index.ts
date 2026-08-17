@@ -74,6 +74,13 @@ export type RssSortOrder = "newest" | "oldest"
 /** 查询状态 */
 export type RssLoadingStatus = "idle" | "loading" | "success" | "error"
 
+/** 分组订阅源列表项 */
+export interface RssGroupItem {
+  group: string
+  label: string
+  feeds: RssFeed[]
+}
+
 /** 默认设置 */
 export const DEFAULT_RSS_SETTINGS: RssSettings = {
   refreshInterval: 30,

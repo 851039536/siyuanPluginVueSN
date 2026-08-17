@@ -58,6 +58,18 @@
               >{{ i18n[COMMIT_RULE_REASON_META[validationReason].labelKey] }}</span>
             </div>
 
+            <!-- 历史重写警告 -->
+            <div
+              v-if="isHistoryCommit && workingTreeClean"
+              class="gp-fix-warning"
+            >
+              <Icon
+                icon="mdi:alert-circle-outline"
+                height="12"
+              />
+              <span>{{ i18n.ruleFixForcePushHint }}</span>
+            </div>
+
             <!-- 可编辑状态提示 -->
             <div
               v-if="!canAmend"
@@ -156,16 +168,19 @@ const workingTreeClean = ref(false)
 
 const projectPath = computed(() => project.value ? resolveValidPath(project.value) : "")
 
-/** 是否可执行 amend：仅 HEAD 且工作区干净 */
-const canAmend = computed(() => !!projectPath.value && !!headHash.value && headHash.value.startsWith(props.violation.hash) && workingTreeClean.value)
+/** 是否历史提交（非 HEAD） */
+const isHistoryCommit = computed(() => !!projectPath.value && !!headHash.value && !headHash.value.startsWith(props.violation.hash))
+
+/** 是否可执行修正：项目有效且工作区干净（HEAD 走 amend，历史提交走 rebase） */
+const canAmend = computed(() => !!projectPath.value && !!headHash.value && workingTreeClean.value)
 
 /** 当前新提交信息命中规则问题（合规时为 null） */
 const validationReason = computed(() => checkCommitRule(newMessage.value))
 
 /** 不可保存时的提示文案 */
 const amendBlockedReason = computed(() => {
-  if (!headHash.value || !headHash.value.startsWith(props.violation.hash)) {
-    return props.i18n.ruleFixOnlyHead
+  if (!headHash.value) {
+    return props.i18n.ruleFixNoHead
   }
   if (!workingTreeClean.value) {
     return props.i18n.ruleFixDirtyWorkingTree
@@ -227,7 +242,7 @@ async function save() {
   if (!canAmend.value || !projectPath.value || !newMessage.value.trim() || validationReason.value) return
   saving.value = true
   try {
-    await manager.amendCommitMessage(projectPath.value, newMessage.value.trim())
+    await manager.rewriteCommitMessage(projectPath.value, props.violation.hash, newMessage.value.trim())
     emit("saved")
     emit("close")
   } catch (e: unknown) {

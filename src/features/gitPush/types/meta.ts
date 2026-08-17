@@ -188,8 +188,8 @@ export interface StatsView {
   platformStatusProjects: PlatformStatusItem[]
 }
 
-/** 面板头部视图（列表/统计/操作日志/提交分析/行数统计/代码统计报告），与 ViewMode（列表内筛选模式 all/needsPush/...）语义不同 */
-export type PanelView = "list" | "stats" | "log" | "analysis" | "linestats" | "report"
+/** 面板头部视图（列表/统计/操作日志/提交分析/提交规则检查/行数统计/代码统计报告），与 ViewMode（列表内筛选模式 all/needsPush/...）语义不同 */
+export type PanelView = "list" | "stats" | "log" | "analysis" | "rulecheck" | "linestats" | "report"
 
 // ── 提交分析视图（useCommitAnalysis 产出 / CommitAnalysisPanel 消费）──
 
@@ -222,6 +222,51 @@ export const COMMIT_ANALYSIS_TYPE_META: Record<CommitAnalysisType, { labelKey: s
   ci: { labelKey: "commitTypeCi", color: "#06b6d4" },
   chore: { labelKey: "commitTypeChore", color: "#64748b" },
   other: { labelKey: "commitTypeOther", color: "#9ca3af" },
+}
+
+// ── 提交规则检查（useCommitAnalysis 产出 / CommitRuleCheckPanel 消费）──
+
+/** 提交信息不合规原因（Conventional Commits 规则，type 限 COMMIT_TYPE_VALUES 中的值） */
+export const COMMIT_RULE_REASON_KEYS = [
+  "whitespace",
+  "missingType",
+  "invalidType",
+  "invalidScope",
+  "badSeparator",
+  "emptySubject",
+] as const
+
+/** 提交信息不合规原因类型 */
+export type CommitRuleReasonKey = typeof COMMIT_RULE_REASON_KEYS[number]
+
+/** 提交规则原因元数据（labelKey 对应 i18n 键 ruleCheckReason*） */
+export const COMMIT_RULE_REASON_META: Record<CommitRuleReasonKey, { labelKey: string }> = {
+  whitespace: { labelKey: "ruleCheckReasonWhitespace" },
+  missingType: { labelKey: "ruleCheckReasonMissingType" },
+  invalidType: { labelKey: "ruleCheckReasonInvalidType" },
+  invalidScope: { labelKey: "ruleCheckReasonInvalidScope" },
+  badSeparator: { labelKey: "ruleCheckReasonBadSeparator" },
+  emptySubject: { labelKey: "ruleCheckReasonEmptySubject" },
+}
+
+/** 单条不合规提交（提交信息 + 命中原因） */
+export interface CommitRuleViolation extends CommitAnalysisEntry {
+  /** 不合规原因 */
+  reason: CommitRuleReasonKey
+}
+
+/** 提交规则检查聚合统计（含违规列表，供提交规则检查面板消费） */
+export interface CommitRuleCheckStats {
+  /** 检查的提交总数 */
+  totalCommits: number
+  /** 不合规提交数 */
+  violationCount: number
+  /** 合规提交数 */
+  compliantCount: number
+  /** 各原因计数（降序） */
+  byReason: { reason: CommitRuleReasonKey, count: number }[]
+  /** 不合规提交列表（按日期降序） */
+  violations: CommitRuleViolation[]
 }
 
 /** 行数排行基础字段（新增/删除/净增三要素） */

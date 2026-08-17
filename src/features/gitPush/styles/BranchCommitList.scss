@@ -51,12 +51,9 @@
   }
 }
 
-.bcl-search-author {
-  max-width: 70px;
-}
-
 .bcl-count-select {
-  width: 44px;
+  min-width: 44px;
+  width: auto;
   padding: 2px 2px 2px 4px;
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;

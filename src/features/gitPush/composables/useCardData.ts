@@ -38,7 +38,7 @@ export function useCardData(project: () => GitProject) {
   }
 
   /** 加载提交日志并同步项目最近活动时间（原 useGitOps.loadCommitLog 的副作用经服务回传父层） */
-  async function loadLog(count?: number) {
+  async function loadLog(count?: number | "all") {
     const entries = await manager.getCommitLog(path(), count)
     logEntries.value = entries
     const latest = entries[0]?.date
@@ -75,7 +75,7 @@ export function useCardData(project: () => GitProject) {
   }
 
   /** LOG Tab 手动刷新 / 变更显示条数 */
-  async function reloadLog(count?: number) {
+  async function reloadLog(count?: number | "all") {
     logLoading.value = true
     try {
       await loadLog(count)

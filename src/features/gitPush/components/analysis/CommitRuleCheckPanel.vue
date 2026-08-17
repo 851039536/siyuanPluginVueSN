@@ -149,6 +149,13 @@
                   >{{ row.projectName }}</span>
                   <span class="grc-item-hash">{{ row.hash }}</span>
                   <span class="grc-item-reason">{{ i18n[COMMIT_RULE_REASON_META[row.reason].labelKey] }}</span>
+                  <button
+                    class="vp-btn vp-btn--ghost vp-btn--sm grc-item-fix"
+                    :title="i18n.ruleFixOpen"
+                    @click.stop="openFix(row)"
+                  >
+                    <Icon icon="mdi:pencil-outline" height="12" />
+                  </button>
                   <span class="grc-item-date">{{ relativeTime(row.date, i18n) }}</span>
                 </div>
                 <div
@@ -173,17 +180,28 @@
         </template>
       </template>
     </template>
+
+    <!-- 提交信息修正弹窗（自包含：内部校验 HEAD/工作区并执行 amend） -->
+    <CommitFixDialog
+      v-if="editingViolation"
+      :i18n="i18n"
+      :project-id="editingViolation.projectId"
+      :violation="editingViolation"
+      @close="editingViolation = null"
+      @saved="handleFixSaved"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import type { CommitRuleCheckStats } from "../../types"
+import type { CommitRuleCheckStats, CommitRuleViolation } from "../../types"
 import { Icon } from "@iconify/vue"
-import { computed } from "vue"
+import { computed, ref } from "vue"
 import { COMMIT_TYPE_VALUES, COMMIT_RULE_REASON_META } from "../../types"
 import { COMMIT_COUNT_OPTIONS } from "../../composables/useCommitAnalysis"
 import { relativeTime, withBarPct } from "../../utils"
 import { usePagedList } from "../../composables/usePagedList"
+import CommitFixDialog from "./CommitFixDialog.vue"
 import EmptyState from "../common/EmptyState.vue"
 import Loader from "@/components/Loader.vue"
 import LoadMoreButton from "../common/LoadMoreButton.vue"
@@ -224,6 +242,19 @@ const {
   hasMore: pagedHasMore,
   loadMore: pagedLoadMore,
 } = usePagedList(pagedSource, 50)
+
+/** 当前正在编辑的违规提交（null = 未打开弹窗） */
+const editingViolation = ref<CommitRuleViolation | null>(null)
+
+function openFix(violation: CommitRuleViolation) {
+  editingViolation.value = violation
+}
+
+/** 修正成功后关闭弹窗并重新运行分析，刷新违规列表 */
+function handleFixSaved() {
+  editingViolation.value = null
+  emit("runAnalysis")
+}
 
 function onCountChange(e: Event) {
   emit("updateCount", Number((e.target as HTMLSelectElement).value))

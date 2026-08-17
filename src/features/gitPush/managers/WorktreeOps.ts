@@ -269,4 +269,23 @@ export class WorktreeOps {
       return false
     }
   }
+
+  /** 获取某次提交的变更摘要（供 AI 修正提交信息时理解改动内容），失败返回空串 */
+  async getCommitFixContext(projectPath: string, hash: string): Promise<string> {
+    try {
+      const raw = await this.executor.execGit(projectPath, [
+        "-c", "core.quotepath=false", "show", "--stat", "--format=%B", hash,
+      ])
+      return (raw || "").substring(0, 3000)
+    } catch {
+      return ""
+    }
+  }
+
+  /** 修改当前 HEAD 提交信息（仅允许最近一次提交，调用方负责前置校验） */
+  async amendCommitMessage(projectPath: string, message: string): Promise<string> {
+    return await this.executor.execGit(projectPath, [
+      "-c", "core.quotepath=false", "commit", "--amend", "-m", message,
+    ])
+  }
 }

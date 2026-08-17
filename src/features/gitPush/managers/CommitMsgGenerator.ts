@@ -2,6 +2,7 @@
 import type { Plugin } from "siyuan"
 import { COMMIT_TYPE_VALUES } from "../types/storage"
 import type { CommitTemplate, GitPushStorage } from "../types/storage"
+import { checkCommitRule, fixCommitMessageHeuristically } from "../commitRuleChecker"
 import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi"
 import type { GitExecutor } from "./GitExecutor"
 import type { WorktreeOps } from "./WorktreeOps"
@@ -87,6 +88,47 @@ export class CommitMsgGenerator {
     const more = files.length > 3 ? ` 等 ${files.length} 个文件` : ""
 
     return `${type}: ${fileList}${more}`
+  }
+
+  /** 根据原提交信息 + 提交变更摘要，生成符合提交规则的修正提交信息 */
+  async generateCommitFix(projectPath: string, hash: string, currentMessage: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
+    const aiConfig = getApiConfigFromPlugin(this.plugin)
+    const context = await this.worktreeOps.getCommitFixContext(projectPath, hash)
+
+    const heuristic = fixCommitMessageHeuristically(currentMessage)
+    if (!aiConfig.apiKey) {
+      return { message: heuristic, source: "heuristic" }
+    }
+
+    try {
+      const result = await callAI(
+        `请修正以下不符合提交规则的 Git 提交信息。
+规则：type(scope)!: 描述
+type 必须为 ${COMMIT_TYPE_VALUES.join("/")} 之一。
+要求：保留原意；只输出一行修正后的提交信息，不要输出解释、分析、Markdown 或任何别的内容。
+
+原提交信息：${currentMessage}
+
+提交变更摘要：
+${context || "（无变更摘要）"}`,
+        aiConfig,
+        {
+          systemPrompt: "输出要求：只输出一行 conventional commit 格式的提交信息。禁止输出解释、分析、额外文字。",
+          temperature: 0.1,
+          maxTokens: 60,
+          enableThinking: false,
+        },
+      )
+      const trimmed = result?.trim() ?? ""
+      if (trimmed && checkCommitRule(trimmed) === null) {
+        return { message: trimmed, source: "ai" }
+      }
+      console.warn("[gitPush] AI 未返回有效提交规则格式，降级启发式:", trimmed.substring(0, 80))
+    } catch (e: unknown) {
+      console.error("[gitPush] AI 修正提交信息失败:", e)
+    }
+
+    return { message: heuristic, source: "heuristic" }
   }
 
   /** AI 生成 stash 描述 */

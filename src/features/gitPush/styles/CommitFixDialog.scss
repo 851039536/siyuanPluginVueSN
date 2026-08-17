@@ -1,0 +1,105 @@
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// 提交信息修正弹窗
+.gp-fix-dialog {
+  width: 480px;
+  max-width: 92vw;
+}
+
+.gp-fix-meta {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  flex-wrap: wrap;
+  font-size: $font-size-2xs;
+}
+
+.gp-fix-project {
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-primary);
+  @include text-ellipsis;
+  max-width: 40%;
+}
+
+.gp-fix-hash {
+  font-family: $vp-mono;
+  opacity: 0.5;
+}
+
+.gp-fix-reason {
+  padding: 0 6px;
+  border-radius: $radius-full;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-warning);
+  background: var(--b3-theme-warning-lightest);
+  border: 1px solid var(--b3-theme-warning-lighter, var(--b3-theme-warning));
+}
+
+.gp-fix-block {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+}
+
+.gp-fix-original {
+  margin: 0;
+  padding: $spacing-2;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  line-height: $line-height-normal;
+  white-space: pre-wrap;
+  word-break: break-all;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-base;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+}
+
+.gp-fix-input {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: $font-size-xs;
+  line-height: $line-height-normal;
+  color: var(--b3-theme-on-surface);
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-base;
+  padding: $spacing-2;
+  resize: vertical;
+
+  &:focus {
+    @include focus-ring;
+  }
+}
+
+.gp-fix-invalid {
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-error, $color-danger);
+}
+
+.gp-fix-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-1;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-warning);
+  background: var(--b3-theme-warning-lightest);
+  border: 1px solid var(--b3-theme-warning-lighter, var(--b3-theme-warning));
+  border-radius: $radius-base;
+  padding: $spacing-2;
+  line-height: $line-height-normal;
+}
+
+.gp-fix-hint {
+  font-size: $font-size-2xs;
+  opacity: 0.5;
+}
+
+.gp-fix-warning--error {
+  color: var(--b3-theme-error, $color-danger);
+  background: var(--b3-theme-error-background, transparent);
+  border-color: var(--b3-theme-error, $color-danger);
+}

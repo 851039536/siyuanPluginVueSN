@@ -28,7 +28,7 @@ $status-colors: (
   }
 }
 
-// ---- 标题行：图标 + 标题/版本/状态 ----
+// ---- 标题行：图标 + 标题/状态 ----
 .feature-header {
   display: flex;
   align-items: center;
@@ -71,22 +71,6 @@ $status-colors: (
   color: var(--b3-theme-on-background);
   line-height: 1.4;
   word-break: break-word;
-}
-
-.version-badge {
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.4;
-  cursor: pointer;
-  flex-shrink: 0;
-  font-variant-numeric: tabular-nums;
-  transition: opacity 0.15s, color 0.15s;
-
-  &:hover {
-    opacity: 0.9;
-    color: var(--b3-theme-primary);
-  }
 }
 
 // ---- 描述文字 ----

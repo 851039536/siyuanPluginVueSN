@@ -1,4 +1,3 @@
-import type { VersionManager } from "../composables/useVersionManager"
 import type { IconKey } from "@/config/icons"
 import type { PluginSettings } from "@/config/settings"
 import type { FeatureAction } from "@/features/config"
@@ -13,31 +12,14 @@ import {
 import { reactive } from "vue"
 import { FEATURE_ICONS } from "@/config/icons"
 import { featureIdToSettingKey } from "@/config/settings"
-import { FEATURE_CONFIG } from "@/features/config"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { replaceTopBarIcon } from "@/utils/iconHelper"
-import { PluginStorage } from "@/utils/pluginStorage"
 import { createModalVueApp } from "@/utils/vueAppHelper"
 import AiSettingsPanel from "../components/AiSettingsPanel.vue"
-import VersionPanel from "../components/VersionPanel.vue"
-import {
-  createVersionManager,
-
-} from "../composables/useVersionManager"
 import SuperPanelPanel from "../index.vue"
-
-export type { FeatureAction }
 
 export const FEATURE_STATUSES = ["stable", "needsFix", "critical", "minor"] as const
 export type FeatureStatus = typeof FEATURE_STATUSES[number] | ""
-
-export const DEFAULT_VERSION = "1.0.0.0"
-
-export interface FeatureVersionEntry {
-  version: string
-  date: string
-  description: string
-}
 
 /**
  * 子功能配置
@@ -71,8 +53,6 @@ export interface Feature {
   actions: FeatureAction[]
   /** 状态标识 */
   status: FeatureStatus
-  /** 当前版本号 */
-  version: string
   /** 子功能列表 */
   subFeatures?: SubFeature[]
 }
@@ -129,16 +109,11 @@ export class SuperPanelManager {
   private boundToggleHandler: () => void
   private panel: ModalAppInstance
   private aiSettingsModal: ModalAppInstance
-  private versionModal: ModalAppInstance | null = null
-  private versionMgr: VersionManager
   private reactiveSettings: PluginSettings | null = null
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
     this.boundToggleHandler = this.toggle.bind(this)
-    const dataDir = ((plugin as any).dataDir || (plugin as any).getDataDir?.()) || ""
-    const storage = new PluginStorage(plugin)
-    this.versionMgr = createVersionManager(storage, dataDir)
 
     this.panel = createModalVueApp(SuperPanelPanel, {
       maskId: "super-panel-mask",
@@ -148,7 +123,6 @@ export class SuperPanelManager {
       buildProps: () => ({
         settings: this.reactiveSettings!,
         i18n: (this.plugin.i18n as any).superPanel || {},
-        featureVersions: this.versionMgr.featureVersions,
         onClose: () => {
           this.close()
         },
@@ -157,9 +131,6 @@ export class SuperPanelManager {
         },
         onRefresh: async () => {
           await this.handleRefresh()
-        },
-        onUpdateAiSettings: async (aiSettings: AiSettings) => {
-          await this.handleUpdateAiSettings(aiSettings)
         },
         onToggleFeature: async (featureId: string, enabled: boolean) => {
           await this.handleToggleFeature(featureId, enabled)
@@ -177,9 +148,6 @@ export class SuperPanelManager {
         },
         onOpenAiSettings: () => {
           this.openAiSettings()
-        },
-        onOpenVersions: (featureId: string) => {
-          this.openVersions(featureId)
         },
       }),
     })
@@ -236,8 +204,7 @@ export class SuperPanelManager {
     }
   }
 
-  private async open() {
-    await this.versionMgr.loadVersions()
+  private open() {
     this.reactiveSettings = reactive<PluginSettings>((this.plugin as any).settings)
     this.panel.open()
   }
@@ -390,59 +357,9 @@ export class SuperPanelManager {
     }
   }
 
-  // ==================== 版本管理 ====================
-
-  public openVersions(featureId: string) {
-    const featureMeta = [...FEATURE_CONFIG].find((f: any) => f.id === featureId) as any
-    const featureTitle = featureMeta?.defaultTitle || featureId
-    const storagePath = this.versionMgr.getStoragePath()
-
-    this.versionModal = createModalVueApp(VersionPanel, {
-      maskId: "super-panel-version-mask",
-      width: "624px",
-      height: "auto",
-      getCloseHandler: () => this.closeVersions.bind(this),
-      buildProps: () => ({
-        featureId,
-        featureTitle,
-        versions: this.versionMgr.featureVersions[featureId] || [],
-        storagePath,
-        onAddVersion: async (entry: FeatureVersionEntry) => {
-          await this.versionMgr.addVersion(featureId, entry)
-          this.refreshVersionModal(featureId)
-        },
-        onUpdateVersion: async (index: number, entry: FeatureVersionEntry) => {
-          await this.versionMgr.updateVersion(featureId, index, entry)
-          this.refreshVersionModal(featureId)
-        },
-        onDeleteVersion: async (index: number) => {
-          await this.versionMgr.deleteVersion(featureId, index)
-          this.refreshVersionModal(featureId)
-        },
-        onClose: () => {
-          this.closeVersions()
-        },
-      }),
-    })
-
-    this.versionModal.open()
-  }
-
-  public closeVersions() {
-    this.versionModal?.close()
-    this.versionModal = null
-  }
-
-  private refreshVersionModal(featureId: string) {
-    if (!this.versionModal) return
-    this.versionModal.close()
-    this.openVersions(featureId)
-  }
-
   public destroy() {
     this.panel.destroy()
     this.closeAiSettings()
-    this.closeVersions()
     window.removeEventListener("toggleSuperPanel", this.boundToggleHandler)
   }
 }

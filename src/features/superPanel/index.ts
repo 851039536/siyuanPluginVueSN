@@ -10,6 +10,7 @@ import { SuperPanelManager } from "./types"
 export function registerSuperPanel(plugin: Plugin) {
   const manager = new SuperPanelManager(plugin)
   manager.init()
+  ;(plugin as any).__superPanel = manager
   return manager
 }
 

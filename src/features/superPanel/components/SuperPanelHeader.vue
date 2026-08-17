@@ -1,3 +1,4 @@
+<!-- 超级面板头部：标题与 AI 配置/刷新/关闭操作按钮 -->
 <template>
   <div class="super-panel-header">
     <div class="header-left">
@@ -7,22 +8,6 @@
           :size="20"
         />
         <span>{{ title }}</span>
-      </div>
-      <div class="header-tabs">
-        <button
-          class="header-tab"
-          :class="{ 'header-tab--active': activeTab === 'features' }"
-          @click="emit('changeTab', 'features')"
-        >
-          {{ i18n.tabFeatures || '功能列表' }}
-        </button>
-        <button
-          class="header-tab"
-          :class="{ 'header-tab--active': activeTab === 'versions' }"
-          @click="emit('changeTab', 'versions')"
-        >
-          {{ i18n.tabVersions || '版本汇总' }}
-        </button>
       </div>
     </div>
     <div class="header-actions">
@@ -55,7 +40,6 @@ interface HeaderAction {
 
 interface Props {
   title?: string
-  activeTab?: "features" | "versions"
   i18n: Record<string, any>
 }
 
@@ -63,7 +47,6 @@ interface Emits {
   (e: "toggleAiSettings"): void
   (e: "refresh"): void
   (e: "close"): void
-  (e: "changeTab", tab: "features" | "versions"): void
 }
 
 const props = defineProps<Props>()

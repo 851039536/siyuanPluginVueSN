@@ -111,6 +111,7 @@ export default class PluginSample extends Plugin {
     "__quickNote", // 速记（persistent Modal）
     "__toolCollection", // 工具合集（Vue app + 容器 DOM）
     "__docNavigation", // 文档层级导航（IntersectionObserver + 事件监听 + Vue app）
+    "__superPanel", // 超级面板（持久 Modal + 事件监听器）
   ] as const
 
   onload() {

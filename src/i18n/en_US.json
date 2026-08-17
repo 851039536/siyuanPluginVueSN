@@ -2592,7 +2592,8 @@
     "feedExisted": "Feed already exists",
     "feedAddedDetail": "Feed added",
     "newArticlesDetail": "new articles",
-    "noNewArticlesDetail": "No new articles"
+    "noNewArticlesDetail": "No new articles",
+    "author": "Author"
   },
   "enableRssReader": "Enable RSS Reader",
   "enableRssReaderDesc": "Subscribe to and manage RSS/Atom feeds, read articles in the right sidebar",

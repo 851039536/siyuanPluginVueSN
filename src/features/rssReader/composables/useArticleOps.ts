@@ -27,9 +27,10 @@ export function useArticleOps(deps: ArticleOpsDeps) {
   /**
    * 标记所有文章为已读
    */
-  async function markAllAsRead() {
-    if (!Array.isArray(items.value)) return
-    items.value.forEach((i) => {
+  async function markAllAsRead(itemsToMark?: RssItem[]) {
+    const target = itemsToMark ?? items.value
+    if (!Array.isArray(target)) return
+    target.forEach((i) => {
       i.read = true
     })
     await persist()
@@ -38,9 +39,9 @@ export function useArticleOps(deps: ArticleOpsDeps) {
   /**
    * 切换收藏状态
    */
-  async function toggleStar(itemId: string) {
+  async function toggleStar(itemLink: string) {
     if (!Array.isArray(items.value)) return
-    const item = items.value.find((i) => i.link === itemId || (i as any).id === itemId)
+    const item = items.value.find((i) => i.link === itemLink)
     if (item) {
       item.starred = !item.starred
       await persist()
@@ -54,7 +55,7 @@ export function useArticleOps(deps: ArticleOpsDeps) {
     // 标记为已读
     if (!item.read) {
       item.read = true
-      persist()
+      void persist().catch(() => {})
     }
     selectedItem.value = item
     showItemDetail.value = true

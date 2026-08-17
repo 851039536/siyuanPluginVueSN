@@ -9,16 +9,10 @@ import {
 export function useTtsReader() {
   const ttsPlaying = ref(false)
 
-  function stopTts() {
+  function speakArticle(item: { title?: string, content?: string, description?: string }) {
     if (ttsPlaying.value) {
       window.speechSynthesis.cancel()
       ttsPlaying.value = false
-    }
-  }
-
-  function speakArticle(item: { title?: string, content?: string, description?: string }) {
-    if (ttsPlaying.value) {
-      stopTts()
       return
     }
     const text = [item.title, item.content || item.description].filter(Boolean).join(". ")
@@ -32,11 +26,13 @@ export function useTtsReader() {
     window.speechSynthesis.speak(utterance)
   }
 
-  onBeforeUnmount(stopTts)
+  onBeforeUnmount(() => {
+    window.speechSynthesis.cancel()
+    ttsPlaying.value = false
+  })
 
   return {
     ttsPlaying,
     speakArticle,
-    stopTts,
   }
 }

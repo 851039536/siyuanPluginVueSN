@@ -120,7 +120,7 @@
           <div class="move-option new-group-option">
             <!-- 新分组名称输入框 -->
             <input
-              v-model="newGroup"
+              :value="newGroupValue" @input="emit('newGroupValueChange', ($event.target as HTMLInputElement).value)"
               :placeholder="i18n.newGroup"
               @keydown.enter="moveToNewGroup(feed.id)"
             >
@@ -135,7 +135,6 @@
 import { Icon } from "@iconify/vue"
 import {
   computed,
-  ref,
 } from "vue"
 import type { RssGroupItem } from "../../types"
 
@@ -153,12 +152,17 @@ interface Props {
   renaming: boolean
   /** 重命名输入框当前值（外部初始化） */
   renameValue: string
+  /** 当前打开的移动菜单 feedId（外部控制，保证跨分组互斥） */
+  moveMenuFeedId: string
+  /** 新分组输入框值（外部控制，便于菜单关闭时清空） */
+  newGroupValue: string
 }
 
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
   toggleCollapse: [group: string]
+  toggleMoveMenu: [feedId: string]
   selectFeed: [feedId: string]
   refreshFeed: [feedId: string]
   deleteFeed: [feedId: string]
@@ -167,10 +171,8 @@ const emit = defineEmits<{
   renameCancel: []
   renameValueChange: [value: string]
   moveFeed: [feedId: string, group: string]
+  newGroupValueChange: [value: string]
 }>()
-
-const moveMenuFeedId = ref("")
-const newGroup = ref("")
 
 const renameValue = computed({
   get: () => props.renameValue,
@@ -182,6 +184,7 @@ function startRename() {
 }
 
 function confirmRename() {
+  if (!props.renaming) return
   const value = renameValue.value.trim()
   if (value) {
     emit("renameGroup", props.groupItem.group, value)
@@ -190,25 +193,25 @@ function confirmRename() {
 }
 
 function cancelRename() {
+  if (!props.renaming) return
   emit("renameCancel")
 }
 
 function toggleMoveMenu(feedId: string) {
-  moveMenuFeedId.value = moveMenuFeedId.value === feedId ? "" : feedId
-  newGroup.value = ""
+  emit("toggleMoveMenu", feedId)
 }
 
 function moveFeed(feedId: string, group: string) {
   emit("moveFeed", feedId, group)
-  moveMenuFeedId.value = ""
+  emit("toggleMoveMenu", "")
 }
 
 function moveToNewGroup(feedId: string) {
-  const g = newGroup.value.trim()
+  const g = props.newGroupValue.trim()
   if (!g) return
   emit("moveFeed", feedId, g)
-  moveMenuFeedId.value = ""
-  newGroup.value = ""
+  emit("toggleMoveMenu", "")
+  emit("newGroupValueChange", "")
 }
 </script>
 

@@ -12,7 +12,7 @@ import {
 export interface OpmlTransferDeps {
   feeds: Ref<RssFeed[]>
   i18n: Record<string, string>
-  addFeed: (url: string, group?: string) => Promise<boolean>
+  addFeed: (url: string, group?: string, options?: { silent?: boolean }) => Promise<boolean>
 }
 
 export function useOpmlTransfer(deps: OpmlTransferDeps) {
@@ -46,7 +46,7 @@ export function useOpmlTransfer(deps: OpmlTransferDeps) {
     let failed = 0
     for (const outline of outlines) {
       try {
-        const ok = await addFeed(outline.url, outline.group)
+        const ok = await addFeed(outline.url, outline.group, { silent: true })
         if (ok) success++
         else failed++
       } catch {

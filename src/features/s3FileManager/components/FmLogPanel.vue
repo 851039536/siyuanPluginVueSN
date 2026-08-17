@@ -89,6 +89,7 @@
 
 <script setup lang="ts">
 import { showMessage } from "siyuan"
+import { computed } from "vue"
 import Button from "@/components/Button.vue"
 import { formatRelativeTime } from "@/utils/format"
 import type { FileOpLog, S3FileManagerI18n } from "../types"
@@ -97,6 +98,8 @@ import { useEscClose } from "../composables/useEscClose"
 const props = defineProps<{
   logs: FileOpLog[]
   i18n: S3FileManagerI18n
+  /** 清空确认回调（由父组件统一确认框承载） */
+  requestClearConfirm?: () => void
 }>()
 
 const emit = defineEmits<{
@@ -111,8 +114,14 @@ function relativeTime(time: string): string {
   return formatRelativeTime(time) || time
 }
 
-/** 清空确认（统一确认提示） */
+const hasConfirmHost = computed(() => typeof props.requestClearConfirm === "function")
+
+/** 清空确认（有父级确认框时委托父组件，否则回退原生确认） */
 function handleClear(): void {
+  if (hasConfirmHost.value && props.requestClearConfirm) {
+    props.requestClearConfirm()
+    return
+  }
   if (!confirm(props.i18n.confirmClearLogs)) { return }
   emit("clear")
   showMessage(props.i18n.logsCleared, 2000, "info")

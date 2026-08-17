@@ -194,8 +194,22 @@
       v-if="showLog"
       :logs="logs"
       :i18n="i18n"
+      :request-clear-confirm="requestClearLogsConfirm"
       @clear="clearLogs"
       @close="showLog = false"
+    />
+
+    <!-- 通用确认框（删除/清空日志等危险操作） -->
+    <FmConfirmDialog
+      v-if="confirmState"
+      :visible="true"
+      :title="confirmState.title"
+      :message="confirmState.message"
+      :confirm-text="confirmState.confirmText"
+      :cancel-text="confirmState.cancelText"
+      :danger="confirmState.danger"
+      @confirm="handleConfirmAccept"
+      @close="handleConfirmCancel"
     />
   </div>
 </template>
@@ -223,6 +237,7 @@ import FmConfigDialog from "./components/FmConfigDialog.vue"
 import FmNameDialog from "./components/FmNameDialog.vue"
 import FmMoveCopyDialog from "./components/FmMoveCopyDialog.vue"
 import FmLogPanel from "./components/FmLogPanel.vue"
+import FmConfirmDialog from "./components/FmConfirmDialog.vue"
 
 const props = defineProps<{
   storage: S3FileManagerStorage
@@ -246,6 +261,16 @@ const { selectedEntries, selectedCount, isSelected, handleItemClick: selectItemC
 
 const { logs, loadLogs, addLog, clearLogs } = useFileOpLogs({ storage })
 
+/** 清空日志确认（与删除共用统一确认框） */
+function requestClearLogsConfirm(): void {
+  requestConfirm(
+    i18n.clearLogs,
+    i18n.confirmClearLogs,
+    () => { void clearLogs() },
+    i18n.clearLogs,
+  )
+}
+
 /** 写操作后：失效缓存 + 刷新 + 清空选中 */
 async function afterMutation(): Promise<void> {
   invalidateCache()
@@ -255,6 +280,7 @@ async function afterMutation(): Promise<void> {
 
 const { opBusy, opProgress, createNewFolder, renameEntry, copyEntries, moveEntries, deleteEntries } = useS3FileOps({
   requireClient, i18n, addLog, afterMutation,
+  isTransferring: () => transferring.value,
 })
 
 const { transferring, transferProgress, uploadFiles, uploadDropped, downloadEntries } = useS3Transfer({
@@ -262,6 +288,7 @@ const { transferring, transferProgress, uploadFiles, uploadDropped, downloadEntr
   currentPrefix,
   getEntries: () => entries.value,
   addLog, afterMutation,
+  confirmAction: requestConfirmAsync,
 })
 
 // 外部文件/文件夹拖入浏览区 → 上传到当前目录
@@ -270,6 +297,54 @@ const externalDrop = useExternalDrop((files) => { void uploadDropped(files) })
 // ========== 本地 UI 状态 ==========
 
 const prefs = ref<FmPrefs>({ ...DEFAULT_FM_PREFS })
+
+/** 待确认动作：由统一确认框承载，确认后执行 onConfirm 回调 */
+const confirmState = ref<{
+  title: string
+  message: string
+  confirmText?: string
+  cancelText?: string
+  danger?: boolean
+  onConfirm: () => void
+  onCancel?: () => void
+} | null>(null)
+
+function requestConfirm(
+  title: string,
+  message: string,
+  onConfirm: () => void,
+  confirmText?: string,
+): void {
+  confirmState.value = { title, message, onConfirm, confirmText }
+}
+
+/** 供传输层等待确认结果的 Promise 版本 */
+function requestConfirmAsync(title: string, message: string, confirmText?: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    confirmState.value = {
+      title,
+      message,
+      confirmText,
+      onConfirm: () => resolve(true),
+      onCancel: () => resolve(false),
+    }
+  })
+}
+
+function handleConfirmAccept(): void {
+  const state = confirmState.value
+  if (!state) { return }
+  confirmState.value = null
+  state.onConfirm()
+}
+
+function handleConfirmCancel(): void {
+  const state = confirmState.value
+  if (!state) { return }
+  confirmState.value = null
+  state.onCancel?.()
+}
+
 const showConfig = ref(false)
 const showNewFolder = ref(false)
 const showLog = ref(false)
@@ -405,8 +480,12 @@ function handleNewFolderConfirm(name: string): void {
 function handleDelete(): void {
   if (selectedEntries.value.length === 0) { return }
   // 删除确认："确定删除选中的 N 项？文件夹将递归删除，此操作不可撤销"
-  if (!confirm(`${i18n.confirmDelete} (${selectedEntries.value.length})`)) { return }
-  void deleteEntries(selectedEntries.value)
+  requestConfirm(
+    i18n.delete,
+    `${i18n.confirmDelete} (${selectedEntries.value.length})`,
+    () => { void deleteEntries(selectedEntries.value) },
+    i18n.delete,
+  )
 }
 
 // ========== 视图偏好 ==========

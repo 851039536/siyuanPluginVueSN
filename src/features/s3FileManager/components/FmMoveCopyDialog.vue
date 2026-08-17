@@ -93,9 +93,11 @@
           >
             {{ i18n.cancel }}
           </Button>
+          <!-- 加载中/加载失败时禁止确认，避免误用未成功列举的目录作为目标 -->
           <Button
             variant="primary"
             size="small"
+            :disabled="loading || !!loadError"
             @click="$emit('confirm', currentPrefix)"
           >
             {{ i18n.confirm }}
@@ -160,6 +162,9 @@ async function navigate(prefix: string): Promise<void> {
     // 从扁平递归列举折叠出子目录，与主列表 loadDir 同口径，否则选不到目标文件夹
     const agg = aggregateEntries(listing.files, prefix)
     folders.value = [...new Set([...listing.folders, ...agg.folders])]
+    if (agg.conflicts.length > 0) {
+      console.warn("[S3文件管理] 目标目录发现同名文件夹/文件冲突:", agg.conflicts.join(", "))
+    }
   } catch (err) {
     // 列举失败显示错误态，与“无子目录”空态区分
     console.warn("[S3文件管理] 目标目录列举失败:", getErrorMessage(err))

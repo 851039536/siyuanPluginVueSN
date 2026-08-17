@@ -19,6 +19,9 @@ import type { FileOpLog, S3Entry, S3FileManagerI18n } from "../types"
 import { TRANSFER_CONCURRENCY, TRANSFER_MAX_RETRIES } from "../types"
 import { buildFailDetail, nameFromKey } from "../utils"
 
+/** 并发上传时允许驻留内存的 Buffer 总预算（多文件/大文件场景防 OOM） */
+const UPLOAD_MEMORY_BUDGET = 256 * 1024 * 1024
+
 /** 传输进度状态 */
 export interface TransferProgress {
   label: string
@@ -36,8 +39,16 @@ export function useS3Transfer(deps: {
   addLog: (entry: Omit<FileOpLog, "id" | "time" | "hostname">) => void
   /** 传输完成后回调：失效缓存 + 刷新当前目录（下载不改远端可不刷新，由实现决定） */
   afterMutation: () => Promise<void>
+  /** 确认回调（由宿主统一确认框承载，返回 Promise<boolean>；缺省回退原生 confirm） */
+  confirmAction?: (title: string, message: string, confirmText?: string) => Promise<boolean>
 }) {
   const { i18n } = deps
+
+  /** 统一确认入口：优先宿主确认框，未注入时回退原生 confirm */
+  async function confirmWithHost(title: string, message: string, confirmText?: string): Promise<boolean> {
+    if (deps.confirmAction) { return deps.confirmAction(title, message, confirmText) }
+    return confirm(message)
+  }
 
   const transferring = ref(false)
   const transferProgress = ref<TransferProgress | null>(null)
@@ -115,12 +126,48 @@ export function useS3Transfer(deps: {
         reportProgress(i18n.statusUploading, currentFile, done, tasks.length, fractionSum)
       }
 
+      // 内存预算信号量：readFile 整包驻留内存，超过预算时暂停读下一个文件，
+      // 待前序 Buffer 上传完成释放后才继续，避免多文件/大文件并发读入导致 OOM
+      let bytesInFlight = 0
+      const waiters: Array<() => void> = []
+      const reserveMemory = (bytes: number): Promise<void> => {
+        if (bytes <= UPLOAD_MEMORY_BUDGET) {
+          return new Promise((resolve) => {
+            const wait = (): void => {
+              if (bytesInFlight + bytes <= UPLOAD_MEMORY_BUDGET) {
+                bytesInFlight += bytes
+                resolve()
+                return
+              }
+              waiters.push(wait)
+            }
+            wait()
+          })
+        }
+        bytesInFlight += bytes
+        return Promise.resolve()
+      }
+      const releaseMemory = (bytes: number): void => {
+        bytesInFlight = Math.max(0, bytesInFlight - bytes)
+        while (waiters.length > 0) {
+          const before = waiters.length
+          const next = waiters.shift()!
+          next()
+          // next() 未获批时会重新入队；队列长度未减少说明本次唤醒未获批，停止唤醒避免忙等
+          if (waiters.length === before) { break }
+        }
+      }
+
       await runWithConcurrency(tasks, TRANSFER_CONCURRENCY, async (task) => {
+        let buffer: Buffer | null = null
         try {
-          const buffer = await fs.promises.readFile(task.path)
+          const bytes = sizeMap.get(task.key) ?? Number.POSITIVE_INFINITY
+          await reserveMemory(bytes)
+          buffer = await fs.promises.readFile(task.path)
+          if (buffer) { buffer = Buffer.from(buffer) }
           fractions.set(task.key, 0)
           reportUpload(task.name)
-          await withRetries(() => client.uploadBuffer(buffer, task.key, (sent, total) => {
+          await withRetries(() => client.uploadBuffer(buffer as Buffer, task.key, (sent, total) => {
             fractions.set(task.key, sent / Math.max(total, 1))
             reportUpload(task.name)
           }))
@@ -128,8 +175,10 @@ export function useS3Transfer(deps: {
         } catch (err) {
           console.warn("[S3文件管理] 上传失败:", task.path, getErrorMessage(err))
           failed.push(task.name)
+        } finally {
+          if (buffer) { releaseMemory(buffer.length) }
+          fractions.delete(task.key)
         }
-        fractions.delete(task.key)
         done++
         reportUpload(task.name)
       })
@@ -193,10 +242,11 @@ export function useS3Transfer(deps: {
 
     // 重名覆盖确认
     const existingNames = new Set(deps.getEntries().filter((e) => !e.isFolder).map((e) => e.name))
-    const conflicts = paths.map((p) => path.basename(p)).filter((name) => existingNames.has(name))
+    // Set 去重：从不同目录选择同名文件时，确认清单不应重复
+    const conflicts = [...new Set(paths.map((p) => path.basename(p)))].filter((name) => existingNames.has(name))
     if (conflicts.length > 0) {
       // 覆盖确认："以下文件已存在，继续上传将覆盖："
-      if (!confirm(`${i18n.overwriteConfirm}\n${conflicts.join("\n")}`)) { return }
+      if (!await confirmWithHost(i18n.upload, i18n.overwriteConfirm + "\n" + conflicts.join("\n"), i18n.upload)) { return }
     }
 
     const tasks: UploadTask[] = paths.map((p) => {
@@ -251,10 +301,10 @@ export function useS3Transfer(deps: {
 
     // 重名覆盖确认（基于顶层名比对现有条目）
     const existingNames = new Set(deps.getEntries().map((e) => e.name))
-    const conflicts = topLevelNames.filter((name) => existingNames.has(name))
+    const conflicts = [...new Set(topLevelNames)].filter((name) => existingNames.has(name))
     if (conflicts.length > 0) {
       // 覆盖确认："以下文件已存在，继续上传将覆盖："
-      if (!confirm(`${i18n.overwriteConfirm}\n${conflicts.join("\n")}`)) { return }
+      if (!await confirmWithHost(i18n.upload, i18n.overwriteConfirm + "\n" + conflicts.join("\n"), i18n.upload)) { return }
     }
 
     await runUpload(tasks, `${tasks.length} ${i18n.itemsUnit}`)
@@ -275,8 +325,11 @@ export function useS3Transfer(deps: {
       for (const f of all) {
         // 跳过文件夹占位对象（key 以 / 结尾）
         if (f.key.endsWith("/")) { continue }
+        // 防止恶意 key 通过 ../ 越界写入目标目录之外
         const relative = f.key.slice(entry.key.length)
-        tasks.push({ key: f.key, dest: pathMod.join(destDir, entry.name, ...relative.split("/")) })
+        const dest = pathMod.join(destDir, entry.name, ...relative.split("/"))
+        if (!dest.startsWith(destDir)) { continue }
+        tasks.push({ key: f.key, dest })
       }
     }
     return tasks
@@ -297,8 +350,17 @@ export function useS3Transfer(deps: {
     transferring.value = true
     const failed: string[] = []
     let done = 0
+    let taskCount = 0
     try {
       const tasks = await collectDownloadTasks(entries, destDir, node.path)
+      taskCount = tasks.length
+      if (tasks.length === 0) {
+        showMessage(i18n.downloadFailed, 5000, "error")
+        return
+      }
+      // 并发下载前统一预建目录，避免多文件同时 mkdir 时目录尚不存在导致写盘失败
+      const taskDirs = new Set(tasks.map((task) => node.path.dirname(task.dest)))
+      await Promise.all([...taskDirs].map((dir) => node.fs.promises.mkdir(dir, { recursive: true })))
       await runWithConcurrency(tasks, TRANSFER_CONCURRENCY, async (task) => {
         const displayName = nameFromKey(task.key)
         try {
@@ -331,6 +393,14 @@ export function useS3Transfer(deps: {
     } catch (err) {
       statusTask.fail(i18n.downloadFailed)
       showMessage(`${i18n.downloadFailed}: ${getErrorMessage(err)}`, 5000, "error")
+      // 任务构建失败也要写入操作日志，保持所有文件操作可追溯
+      deps.addLog({
+        type: "download", action: i18n.actionDownload,
+        fileName: entries.length === 1 ? entries[0].name : `${entries.length} ${i18n.itemsUnit}`,
+        itemCount: taskCount,
+        success: false,
+        message: getErrorMessage(err),
+      })
     } finally {
       transferring.value = false
       transferProgress.value = null

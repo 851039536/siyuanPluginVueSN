@@ -95,6 +95,9 @@ export function useS3Entries(deps: {
         const agg = aggregateEntries(listing.files, prefix)
         files = agg.files
         folders = [...new Set([...listing.folders, ...agg.folders])]
+        if (agg.conflicts.length > 0) {
+          console.warn("[S3文件管理] 发现同名文件夹/文件冲突:", agg.conflicts.join(", "))
+        }
         // 探测到 delimiter 被忽略（无 CommonPrefixes 却聚合出子目录）→ 后续直接走全量列举，省一次无效 delimiter 请求
         if (listing.folders.length === 0 && agg.folders.length > 0) {
           delimiterUnsupported = true
@@ -104,6 +107,9 @@ export function useS3Entries(deps: {
         const agg = aggregateEntries(all, prefix)
         files = agg.files
         folders = agg.folders
+        if (agg.conflicts.length > 0) {
+          console.warn("[S3文件管理] 发现同名文件夹/文件冲突:", agg.conflicts.join(", "))
+        }
       }
 
       const built = buildEntries(files, folders)

@@ -2800,6 +2800,7 @@
     "pathStyle": "Path Style",
     "useSSL": "使用 HTTPS",
     "allowSelfSigned": "允许自签名证书",
+    "uploadTimeoutSec": "上传超时（秒）",
     "testConnection": "测试连接",
     "testException": "测试异常",
     "save": "保存",

@@ -2800,6 +2800,7 @@
     "pathStyle": "Path Style",
     "useSSL": "Use HTTPS",
     "allowSelfSigned": "Allow Self-Signed Certificate",
+    "uploadTimeoutSec": "Upload timeout (seconds)",
     "testConnection": "Test Connection",
     "testException": "Test failed",
     "save": "Save",

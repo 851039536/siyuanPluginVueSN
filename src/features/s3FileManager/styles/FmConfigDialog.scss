@@ -29,8 +29,8 @@
   border: 1px solid transparent;
 
   &.success {
-    color: var(--b3-theme-success, #22c55e);
-    border-color: var(--b3-theme-success, #22c55e);
+    color: var(--b3-theme-success, $color-success);
+    border-color: var(--b3-theme-success, $color-success);
   }
 
   &.error {

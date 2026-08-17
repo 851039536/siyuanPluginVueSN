@@ -212,7 +212,7 @@ export class GitPushManager {
 
   async stashDrop(projectPath: string, index = 0): Promise<void> { return this.worktreeOps.stashDrop(projectPath, index) }
 
-  async getCommitLog(projectPath: string, count = 30): Promise<CommitLogEntry[]> {
+  async getCommitLog(projectPath: string, count: number | "all" = 30): Promise<CommitLogEntry[]> {
     return this.worktreeOps.getCommitLog(projectPath, count)
   }
 

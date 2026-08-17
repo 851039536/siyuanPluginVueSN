@@ -529,7 +529,7 @@
         :i18n="i18n"
         :entries="logEntries"
         :loading="logLoading"
-        @reload-commit-log="(count: number) => reloadLog(count)"
+        @reload-commit-log="(count: number | 'all') => reloadLog(count)"
         @refresh-commit-log="() => reloadLog()"
         @fix-commit="openCommitFix"
       />

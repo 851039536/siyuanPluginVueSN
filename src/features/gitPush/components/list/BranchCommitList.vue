@@ -14,16 +14,10 @@
         placeholder="搜索提交信息..."
         @keyup.escape="searchKeyword = ''"
       />
-      <input
-        v-model="searchAuthor"
-        class="bcl-search-input bcl-search-author"
-        placeholder="作者..."
-        @keyup.escape="searchAuthor = ''"
-      />
       <button
-        v-if="searchKeyword || searchAuthor"
+        v-if="searchKeyword"
         class="vp-btn vp-btn--ghost vp-btn--sm"
-        @click.stop="searchKeyword = ''; searchAuthor = ''"
+        @click.stop="searchKeyword = ''"
       >
         <Icon
           icon="mdi:close"
@@ -39,7 +33,7 @@
           v-for="n in countOptions"
           :key="n"
           :value="n"
-        >{{ n }}</option>
+        >{{ n === "all" ? i18n.logFilterAll : n }}</option>
       </select>
       <button
         class="vp-btn vp-btn--ghost vp-btn--sm bcl-refresh-btn"
@@ -69,7 +63,7 @@
       v-else-if="filteredEntries.length === 0"
       class="bcl-empty"
     >
-      {{ (searchKeyword || searchAuthor) ? '无匹配结果' : '暂无提交记录' }}
+      {{ searchKeyword ? '无匹配结果' : '暂无提交记录' }}
     </div>
 
     <!-- 提交记录列表 -->
@@ -127,15 +121,14 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  reloadCommitLog: [count: number]
+  reloadCommitLog: [count: number | "all"]
   refreshCommitLog: []
   fixCommit: [entry: CommitLogEntry]
 }>()
 
-const countOptions = [10, 20, 30, 50, 100]
+const countOptions = [200, 300, 500, 1000, 2000, "all"] as const
 const searchKeyword = ref("")
-const searchAuthor = ref("")
-const displayCount = ref(30)
+const displayCount = ref<number | "all">(200)
 
 const filteredEntries = computed(() => {
   let list = props.entries
@@ -143,11 +136,7 @@ const filteredEntries = computed(() => {
     const kw = searchKeyword.value.toLowerCase()
     list = list.filter((e) => e.message.toLowerCase().includes(kw))
   }
-  if (searchAuthor.value) {
-    const au = searchAuthor.value.toLowerCase()
-    list = list.filter((e) => e.author.toLowerCase().includes(au))
-  }
-  return list.slice(0, displayCount.value)
+  return displayCount.value === "all" ? list : list.slice(0, displayCount.value)
 })
 
 function onCountChange() {

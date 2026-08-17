@@ -206,11 +206,14 @@ export class WorktreeOps {
   /**
    * 获取当前分支最近 N 条提交记录
    */
-  async getCommitLog(projectPath: string, count = 30): Promise<CommitLogEntry[]> {
+  async getCommitLog(projectPath: string, count: number | "all" = 30): Promise<CommitLogEntry[]> {
     try {
       // 依赖 %s(subject) 单行，勿加入 %b(body) 等多行字段，否则 5 行固定切分错位
       const format = "%h%n%s%n%an%n%ar%n%aI"
-      const raw = await this.executor.execGit(projectPath, ["log", `-${count}`, `--format=${format}`])
+      const args = count === "all"
+        ? ["log", `--format=${format}`]
+        : ["log", `-${count}`, `--format=${format}`]
+      const raw = await this.executor.execGit(projectPath, args)
       if (!raw) return []
 
       const allLines = raw.split("\n")

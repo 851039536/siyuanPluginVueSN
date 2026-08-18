@@ -1,0 +1,39 @@
+// 极简浏览器 — 顶部工具栏样式
+@use '@/variables.scss' as *;
+
+.mb-toolbar {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-2;
+  border-bottom: 1px solid $color-border;
+  background: var(--b3-theme-background);
+}
+
+// 地址栏容器
+.mb-address-bar {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  margin: 0 $spacing-1;
+}
+
+.mb-address-input {
+  width: 100%;
+  height: 28px;
+  padding: 0 $spacing-3;
+  border: 1px solid $color-border;
+  border-radius: $radius-full;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-xs;
+  font-family: $vp-mono;
+  outline: none;
+  transition: border-color 0.15s;
+
+  &:focus {
+    border-color: $color-info;
+    background: var(--b3-theme-background);
+  }
+}

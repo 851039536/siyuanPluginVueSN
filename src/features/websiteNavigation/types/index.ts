@@ -6,35 +6,14 @@ import type { ModalAppInstance } from "@/utils/vueAppHelper"
 import { createModalVueApp } from "@/utils/vueAppHelper"
 import WebsiteNavigationPanel from "../index.vue"
 
-export interface WebsiteEntry {
-  id: string
-  name: string
-  url: string
-  category: string
-  description: string
-  createdAt: number
-  updatedAt: number
-}
-
-export interface CreateWebsiteDTO {
-  name: string
-  url: string
-  category: string
-  description: string
-}
-
-export interface UpdateWebsiteDTO {
-  name?: string
-  url?: string
-  category?: string
-  description?: string
-}
-
-export interface WebsiteCategory {
-  id: string
-  name: string
-  color: string
-}
+// 数据模型下沉至共享层（utils/sharedStorage/websiteStorage），
+// 网站导航与极简浏览器共用同一份类型与存储；此处保持原有导出名不变
+export type {
+  CreateWebsiteDTO,
+  UpdateWebsiteDTO,
+  WebsiteCategory,
+  WebsiteEntry,
+} from "@/utils/sharedStorage/websiteStorage"
 
 export {
   ALL_CATEGORY_ID,

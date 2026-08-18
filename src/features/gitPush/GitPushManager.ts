@@ -1,5 +1,8 @@
 // Git 推送任务管理门面：组合各领域协作者（managers/），对外暴露统一 API
 import type { Plugin } from "siyuan"
+import type { AllPlatformResult } from "./managers/RemoteOps"
+import type { NumstatCommit } from "./reportMetrics"
+import type { PlatformKey } from "./types/meta"
 import type {
   BranchInfo,
   CommitLogEntry,
@@ -17,19 +20,16 @@ import type {
 } from "./types/storage"
 import type { AiApiConfig } from "@/utils/aiApi"
 import { getApiConfigFromPlugin } from "@/utils/aiApi"
-import type { PlatformKey } from "./types/meta"
-import type { NumstatCommit } from "./reportMetrics"
-import { GitPushStorage } from "./types/storage"
 import { createVueDockApp } from "@/utils/vueAppHelper"
 import GitPushPanel from "./index.vue"
+import { CommitMsgGenerator } from "./managers/CommitMsgGenerator"
 import { GitExecutor } from "./managers/GitExecutor"
 import { ProjectStore } from "./managers/ProjectStore"
 import { RemoteOps } from "./managers/RemoteOps"
-import type { AllPlatformResult } from "./managers/RemoteOps"
-import { WorktreeOps } from "./managers/WorktreeOps"
 import { RepoOps } from "./managers/RepoOps"
-import { CommitMsgGenerator } from "./managers/CommitMsgGenerator"
 import { ReportOps } from "./managers/ReportOps"
+import { WorktreeOps } from "./managers/WorktreeOps"
+import { GitPushStorage } from "./types/storage"
 
 export class GitPushManager {
   private plugin: Plugin
@@ -116,7 +116,9 @@ export class GitPushManager {
 
   async getAllTags(): Promise<string[]> { return this.store.getAllTags() }
 
-  async refreshRemotes(id: string): Promise<GitProject | null> { return this.store.refreshRemotes(id) }
+  async refreshRemotes(id: string, path?: string): Promise<GitProject | null> { return this.store.refreshRemotes(id, path) }
+
+  async applyRemotes(id: string, remotes: GitRemoteInfo[]): Promise<GitProject | null> { return this.store.applyRemotes(id, remotes) }
 
   async detectRemotes(projectPath: string): Promise<GitRemoteInfo[]> { return this.store.detectRemotes(projectPath) }
 

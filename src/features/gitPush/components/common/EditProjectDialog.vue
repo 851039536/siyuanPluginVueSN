@@ -315,8 +315,15 @@ const cloning = ref(false)
 const saving = ref(false)
 // 递增序号：丢弃过期/乱序的远程检测结果
 let remoteDetectSeq = 0
+// 最近一次已写入 remoteList 的检测路径（相同路径不重复执行 git remote -v）
+let lastDetectedPath = ""
 // 初始化填充路径行时跳过 watch 触发，避免与 onMounted 的显式 loadRemotes 重复
 let isInitializingPaths = false
+
+/** 组件仍挂载时返回 true（异步落点的统一守卫） */
+function alive(): boolean {
+  return !isUnmounted.value
+}
 
 // ── 项目数据（从 manager 加载） ──
 const project = ref<GitProject | null>(null)
@@ -342,6 +349,9 @@ const {
   toPayload: pathsToPayload,
 } = usePathRows(() => props.i18n.selectLocalPath)
 const showHelp = ref(false)
+
+// ── 路径候选（currentRepoPath 与防抖 watch 共用，避免重复 map）──
+const pathCandidates = computed(() => allPathsList.value.map((r) => r.path))
 
 // ── 仓库链接（EditableRemoteList 数据源与操作回调）──
 const repoLinkError = ref("")
@@ -371,7 +381,7 @@ const linkAddOptions = computed<SelectOption[]>(() =>
 
 /** 将 urlInputs 全量持久化，返回是否成功（失败写入 repoLinkError） */
 async function persistUrls(): Promise<boolean> {
-  if (!project.value || isUnmounted.value) {
+  if (!project.value || !alive()) {
     return false
   }
   try {
@@ -382,19 +392,19 @@ async function persistUrls(): Promise<boolean> {
     }
     const updated = await props.manager.updateProjectMeta(props.projectId, patch)
     if (!updated) {
-      if (!isUnmounted.value) {
+      if (alive()) {
         repoLinkError.value = props.i18n.errSaveRepoLinks
       }
       return false
     }
-    if (isUnmounted.value) {
+    if (!alive()) {
       return false
     }
     repoLinkError.value = ""
     emit("urlsUpdated")
     return true
   } catch (e: unknown) {
-    if (!isUnmounted.value) {
+    if (alive()) {
       repoLinkError.value = getErrorMessage(e) || props.i18n.errSaveRepoLinks
     }
     return false
@@ -430,6 +440,36 @@ function copyRepoLink(platform: string): void {
   copyUrlToClipboard(pl ? urlInputs[pl.urlProp] : "")
 }
 
+/**
+ * 构建路径持久化载荷（save 与克隆后持久化共用）。
+ * - 有有效路径行：使用实时载荷；
+ * - 无有效路径行且传 clonedPath：仅保存克隆路径（含设备名）；
+ * - 均无：回退原主路径与设备映射（避免误清）。
+ */
+function buildPathPatch(clonedPath?: string, deviceName?: string): Partial<Pick<GitProject, "path" | "localPaths" | "pathDevices">> {
+  const payload = pathsToPayload()
+  if (payload) {
+    return {
+      path: payload.path,
+      localPaths: payload.localPaths,
+      pathDevices: payload.pathDevices,
+    }
+  }
+  if (clonedPath) {
+    const device = deviceName ?? getCurrentDeviceName()
+    return {
+      path: clonedPath,
+      localPaths: undefined,
+      pathDevices: device ? { [clonedPath]: device } : undefined,
+    }
+  }
+  return {
+    path: project.value?.path ?? "",
+    localPaths: undefined,
+    pathDevices: project.value?.pathDevices,
+  }
+}
+
 /** 下载（克隆）仓库链接：选目录 → clone 到同名子目录（实时日志）→ 新路径追加到路径行并立即持久化 */
 async function downloadRepoLink(platform: string): Promise<boolean> {
   const pl = PLATFORM_META.find((p) => p.key === platform)
@@ -438,7 +478,7 @@ async function downloadRepoLink(platform: string): Promise<boolean> {
     return false
   }
   const dir = await pickDirectory(props.i18n.selectCloneDir)
-  if (!dir || isUnmounted.value) {
+  if (!dir || !alive()) {
     return false
   }
   repoLinkError.value = ""
@@ -446,11 +486,11 @@ async function downloadRepoLink(platform: string): Promise<boolean> {
   cloning.value = true
   try {
     const clonedPath = await props.manager.cloneRepo(dir, url, (chunk) => {
-      if (!isUnmounted.value) {
+      if (alive()) {
         cloneLog.append(chunk)
       }
     })
-    if (isUnmounted.value) {
+    if (!alive()) {
       return false
     }
     const deviceName = getCurrentDeviceName()
@@ -459,18 +499,7 @@ async function downloadRepoLink(platform: string): Promise<boolean> {
       device: deviceName,
     })
     // 立即持久化全部路径行（首行为主路径），并通知父组件刷新列表
-    const payload = pathsToPayload()
-    const patch = payload
-      ? {
-          path: payload.path,
-          localPaths: payload.localPaths,
-          pathDevices: payload.pathDevices,
-        }
-      : {
-          path: clonedPath,
-          localPaths: undefined,
-          pathDevices: deviceName ? { [clonedPath]: deviceName } : undefined,
-        }
+    const patch = buildPathPatch(clonedPath, deviceName)
     try {
       const updated = await props.manager.updateProjectMeta(props.projectId, patch)
       if (!updated) {
@@ -479,13 +508,13 @@ async function downloadRepoLink(platform: string): Promise<boolean> {
     } catch (e: unknown) {
       // 克隆本身已成功，仅持久化失败：提示路径保存错误，不误报克隆失败
       const persistErr = getErrorMessage(e) || props.i18n.errSavePathsFailed
-      if (!isUnmounted.value) {
+      if (alive()) {
         repoLinkError.value = persistErr
         cloneLog.finish(`${props.i18n.errSavePathsFailed}: ${persistErr}`)
       }
       return false
     }
-    if (isUnmounted.value) {
+    if (!alive()) {
       return false
     }
     emit("urlsUpdated")
@@ -496,13 +525,13 @@ async function downloadRepoLink(platform: string): Promise<boolean> {
     return true
   } catch (e: unknown) {
     const errMsg = getErrorMessage(e) || props.i18n.errCloneRepo
-    if (!isUnmounted.value) {
+    if (alive()) {
       repoLinkError.value = errMsg
       cloneLog.finish(`${props.i18n.errCloneRepo}: ${errMsg}`)
     }
     return false
   } finally {
-    if (!isUnmounted.value) {
+    if (alive()) {
       cloning.value = false
     }
   }
@@ -535,7 +564,7 @@ const remoteOptions = computed<SelectOption[]>(() =>
 
 /** 当前编辑表单解析出的有效仓库路径（基于实时路径行，而非已持久化的 project，确保输入路径后立即用于远程检测） */
 function currentRepoPath(strict = false): string {
-  return resolveValidPathFromPaths(allPathsList.value.map((r) => r.path), { strict })
+  return resolveValidPathFromPaths(pathCandidates.value, { strict })
 }
 
 async function loadRemotes(): Promise<void> {
@@ -549,26 +578,32 @@ async function loadRemotes(): Promise<void> {
     if (seq === remoteDetectSeq) {
       remoteList.value = []
       remoteError.value = ""
+      lastDetectedPath = ""
     }
+    return
+  }
+  // 同一路径已有最新检测结果时跳过重复检测（打开弹窗/路径变化/远程操作后的重复调用）
+  if (lastDetectedPath === path) {
     return
   }
   try {
     const list = await props.manager.detectRemotes(path)
     // 丢弃过期结果；组件已卸载时也不写状态
-    if (seq !== remoteDetectSeq || isUnmounted.value) {
+    if (seq !== remoteDetectSeq || !alive()) {
       return
     }
     remoteList.value = list
     remoteError.value = ""
+    lastDetectedPath = path
   } catch (e: unknown) {
-    if (seq !== remoteDetectSeq || isUnmounted.value) {
+    if (seq !== remoteDetectSeq || !alive()) {
       return
     }
     remoteError.value = getErrorMessage(e) || props.i18n.errDetectRemotes
   }
 }
 
-/** 统一远程操作骨架：清错 → 严格路径校验 → 执行 → 重新检测 + 刷新项目远程映射，失败写入 remoteError，返回是否成功 */
+/** 统一远程操作骨架：清错 → 严格路径校验 → 执行 → 单次重新检测并写回，失败写入 remoteError，返回是否成功 */
 async function runRemoteOp(fallbackMsg: string, op: (repoPath: string) => Promise<void>): Promise<boolean> {
   if (!project.value) {
     return false
@@ -581,15 +616,21 @@ async function runRemoteOp(fallbackMsg: string, op: (repoPath: string) => Promis
   }
   try {
     await op(repoPath)
-    await loadRemotes()
-    // 仅当表单路径与已持久化有效路径一致时才刷新项目远程映射；
-    // 否则路径草稿尚未保存，刷新会基于旧路径覆盖，留到 save() 成功后统一刷新
-    if (!isUnmounted.value && repoPath === resolveValidPath(project.value)) {
-      await props.manager.refreshRemotes(props.projectId)
+    // 单次检测同时刷新界面列表；路径与持久化路径一致时再写回项目远程映射，
+    // 路径草稿未保存时只更新 UI，留到 save() 成功后统一写回
+    const list = await props.manager.detectRemotes(repoPath)
+    if (!alive()) {
+      return false
+    }
+    remoteList.value = list
+    remoteError.value = ""
+    lastDetectedPath = repoPath
+    if (repoPath === resolveValidPath(project.value)) {
+      await props.manager.applyRemotes(props.projectId, list)
     }
     return true
   } catch (e: unknown) {
-    if (!isUnmounted.value) {
+    if (alive()) {
       remoteError.value = getErrorMessage(e) || fallbackMsg
     }
     return false
@@ -659,7 +700,7 @@ onMounted(async () => {
     // 检测远程仓库
     await loadRemotes()
   } catch (e: unknown) {
-    if (!isUnmounted.value) {
+    if (alive()) {
       showMessage(getErrorMessage(e) || props.i18n.errSaveProject, 4000, "error")
       emit("close")
     }
@@ -679,7 +720,7 @@ watch(
 // 路径行变动时防抖重新检测远程（输入本地路径后无需关闭重开，Git 远程列表即时刷新）
 let remoteDetectTimer: ReturnType<typeof setTimeout> | null = null
 watch(
-  () => allPathsList.value.map((r) => r.path).join("\n"),
+  () => pathCandidates.value.join("\n"),
   () => {
     if (!project.value || isInitializingPaths) {
       return
@@ -706,39 +747,43 @@ async function save(): Promise<void> {
   if (!project.value || saving.value) {
     return
   }
-  const payload = pathsToPayload()
   saving.value = true
   try {
+    // 路径字段与 buildPathPatch 共用单一构建逻辑
+    const pathPatch = buildPathPatch()
     const updated = await props.manager.updateProjectMeta(props.projectId, {
       name: localName.value.trim() || project.value.name,
       starred: localStarred.value,
       archived: localArchived.value,
       note: localNote.value,
-      // 全部路径行为空时保留原主路径及设备映射，避免误清 pathDevices
-      path: payload?.path ?? project.value.path,
-      localPaths: payload?.localPaths,
-      pathDevices: payload?.pathDevices ?? project.value.pathDevices,
+      ...pathPatch,
     })
     if (!updated) {
       showMessage(props.i18n.errSaveProject, 4000, "error")
       return
     }
-    if (!isUnmounted.value) {
-      // 路径可能已修改，保存后按新持久化路径刷新项目远程映射
-      try {
-        await props.manager.refreshRemotes(props.projectId)
-      } catch {
-        // 保存本身成功，远程刷新失败不阻塞关闭
-      }
-      if (isUnmounted.value) {
-        return
-      }
-      emit("saved")
+    if (!alive()) {
+      return
     }
+    // 保存后同步远程映射：路径未变化且已有检测结果时直接复用，否则按新路径检测
+    const savedPath = pathPatch.path ?? project.value.path
+    try {
+      if (lastDetectedPath === savedPath) {
+        await props.manager.applyRemotes(props.projectId, remoteList.value)
+      } else {
+        await props.manager.refreshRemotes(props.projectId, savedPath)
+      }
+    } catch {
+      // 保存本身成功，远程刷新失败不阻塞关闭
+    }
+    if (!alive()) {
+      return
+    }
+    emit("saved")
   } catch (e: unknown) {
     showMessage(getErrorMessage(e) || props.i18n.errSaveProject, 4000, "error")
   } finally {
-    if (!isUnmounted.value) {
+    if (alive()) {
       saving.value = false
     }
   }

@@ -50,7 +50,10 @@
           :title="i18n.copyRepoLink"
           @click="onCopy(row.key)"
         >
-          <Icon icon="mdi:content-copy" height="10" />
+          <Icon
+            icon="mdi:content-copy"
+            height="10"
+          />
         </button>
         <!-- 按钮：下载到本地（仅传入 onDownload 回调时显示，克隆进行中转圈） -->
         <button
@@ -72,7 +75,10 @@
           :title="i18n.edit"
           @click="editKey = row.key; editUrl = row.url"
         >
-          <Icon icon="mdi:pencil-outline" height="10" />
+          <Icon
+            icon="mdi:pencil-outline"
+            height="10"
+          />
         </button>
         <!-- 按钮：删除（图标按钮，tooltip："删除"） -->
         <button
@@ -80,7 +86,10 @@
           :title="i18n.delete"
           @click="onRemove(row.key)"
         >
-          <Icon icon="mdi:delete-outline" height="10" />
+          <Icon
+            icon="mdi:delete-outline"
+            height="10"
+          />
         </button>
       </template>
     </div>
@@ -130,10 +139,14 @@
 </template>
 
 <script setup lang="ts">
-import { Icon } from "@iconify/vue"
-import { onUnmounted, ref, watch } from "vue"
-import Input from "@/components/Input.vue"
 import type { SelectOption } from "@/components/Select.vue"
+import { Icon } from "@iconify/vue"
+import {
+  onUnmounted,
+  ref,
+  watch,
+} from "vue"
+import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
 
 /** 列表行：key 为唯一标识（平台 key / remote 名），name 为显示名，icon 可选 */
@@ -179,7 +192,7 @@ watch(() => props.addOptions, (opts) => {
   }
 }, { immediate: true })
 
-async function submitAdd() {
+async function submitAdd(): Promise<void> {
   if (!newKey.value || !newUrl.value.trim()) { return }
   // 成功才清空 URL 输入，失败保留以便修正后重试
   if (await props.onAdd(newKey.value, newUrl.value.trim()) && !disposed) {
@@ -187,14 +200,14 @@ async function submitAdd() {
   }
 }
 
-async function submitEdit(key: string) {
+async function submitEdit(key: string): Promise<void> {
   // 成功才退出编辑态，失败保留输入并展示错误
   if (await props.onSaveEdit(key, editUrl.value) && !disposed) {
     editKey.value = ""
   }
 }
 
-async function submitDownload(key: string) {
+async function submitDownload(key: string): Promise<void> {
   if (!props.onDownload || downloadingKey.value) { return }
   downloadingKey.value = key
   try {

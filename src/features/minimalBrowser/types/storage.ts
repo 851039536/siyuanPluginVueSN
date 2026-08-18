@@ -9,10 +9,13 @@ import { TypedStorage } from "@/utils/typedStorage"
 export interface BrowserSettings {
   /** 主页网址（空字符串 = 打开收藏列表作为主页） */
   homeUrl: string
+  /** 收藏侧栏宽度（px，拖拽缩放后持久化） */
+  sidebarWidth: number
 }
 
 export const DEFAULT_BROWSER_SETTINGS: BrowserSettings = {
   homeUrl: "",
+  sidebarWidth: 200,
 }
 
 const SETTINGS_KEY = "minimal-browser-settings"

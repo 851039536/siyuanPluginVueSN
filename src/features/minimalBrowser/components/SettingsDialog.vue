@@ -92,7 +92,11 @@ onMounted(() => {
 const handleSave = async () => {
   saving.value = true
   try {
-    const ok = await saveBrowserSettings({ homeUrl: homeUrl.value.trim() })
+    // 合并保存：只改 homeUrl，保留 sidebarWidth 等其他字段
+    const ok = await saveBrowserSettings({
+      ...browserSettings.value,
+      homeUrl: homeUrl.value.trim(),
+    })
     emit(ok ? "saved" : "saveFailed")
   } finally {
     saving.value = false

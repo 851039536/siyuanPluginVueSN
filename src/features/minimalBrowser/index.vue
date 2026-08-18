@@ -45,6 +45,12 @@
           allowfullscreen
           @load="handleFrameLoad"
         ></iframe>
+
+        <!-- 拖拽缩放置顶遮罩：拖动期间拦截指针事件，防止 iframe 吞掉拖拽 -->
+        <div
+          v-if="sidebarResizing"
+          class="mb-resize-overlay"
+        />
       </div>
     </div>
 
@@ -130,6 +136,7 @@ import {
   removeFavorite,
   renameFavorite,
   resolveHomeUrl,
+  sidebarResizing,
   useBrowserState,
 } from "./composables/useBrowserState"
 import type { I18n } from "./types"

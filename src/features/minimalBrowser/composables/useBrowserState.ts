@@ -13,7 +13,10 @@ import {
   shallowRef,
 } from "vue"
 import type { BrowserSettings } from "../types/storage"
-import { BrowserSettingsStorage } from "../types/storage"
+import {
+  BrowserSettingsStorage,
+  DEFAULT_BROWSER_SETTINGS,
+} from "../types/storage"
 
 let storage: WebsiteNavigationStorage | null = null
 let settingsStorage: BrowserSettingsStorage | null = null
@@ -34,8 +37,8 @@ function requireSettingsStorage(): BrowserSettingsStorage {
 
 export const entries = ref<WebsiteEntry[]>([])
 export const categories = ref<WebsiteCategory[]>([])
-/** 浏览器设置（主页等） */
-export const browserSettings = ref<BrowserSettings>({ homeUrl: "" })
+/** 浏览器设置（主页/侧栏宽度） */
+export const browserSettings = ref<BrowserSettings>({ ...DEFAULT_BROWSER_SETTINGS })
 
 /** 当前 iframe 元素引用（导航/刷新共用） */
 export const frameRef = shallowRef<HTMLIFrameElement | null>(null)
@@ -47,6 +50,8 @@ export const historyIndex = ref(-1)
 export const historyStack = ref<string[]>([])
 /** 页面加载中标记 */
 export const loading = ref(false)
+/** 侧栏拖拽缩放中标记（拖拽期间禁用 iframe 交互，避免鼠标事件被 iframe 吞掉） */
+export const sidebarResizing = ref(false)
 
 /**
  * 初始化数据层：仅在面板 setup 中调用一次。
@@ -93,13 +98,25 @@ export async function loadBrowserSettings(): Promise<boolean> {
   }
 }
 
-/** 保存主页设置 */
+/** 保存设置（调用方需传入完整对象，避免覆盖其他字段） */
 export async function saveBrowserSettings(next: BrowserSettings): Promise<boolean> {
   const ok = await requireSettingsStorage().save(next)
   if (ok) {
     browserSettings.value = next
   }
   return ok
+}
+
+/**
+ * 保存侧栏宽度（钳制在 [140, 480] 区间）。
+ * 基于当前设置合并保存，防止覆盖主页等其他字段。
+ */
+export async function saveSidebarWidth(width: number): Promise<boolean> {
+  const clamped = Math.min(480, Math.max(140, Math.round(width)))
+  return saveBrowserSettings({
+    ...browserSettings.value,
+    sidebarWidth: clamped,
+  })
 }
 
 /** 分类 ID → 分类 映射缓存 */

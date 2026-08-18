@@ -22,14 +22,15 @@
         </button>
       </div>
       <div class="gp-dialog-body">
-        <!-- 表单项："项目名称" -->
-        <Input
-          v-model="localName"
-          :label="i18n.projectName"
-          size="xsmall"
-          @keydown.enter="save()"
-        />
+        <!-- 表单项："项目名称" + "标记" 同行 -->
         <div class="gp-edit-row">
+          <Input
+            v-model="localName"
+            :label="i18n.projectName"
+            size="xsmall"
+            class="gp-edit-name"
+            @keydown.enter="save()"
+          />
           <div class="gp-form-group gp-edit-toggles">
             <!-- 标签："标记" -->
             <label class="gp-label">{{ i18n.markLabel }}</label>

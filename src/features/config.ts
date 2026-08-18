@@ -258,6 +258,18 @@ export const FEATURE_CONFIG = [
     descI18nKey: "enableWebsiteNavigationDesc",
   },
   {
+    id: "minimalBrowser",
+    defaultTitle: "极简浏览器",
+    defaultDesc: "内置极简浏览器，支持网页浏览与收藏",
+    titleI18nKey: "minimalBrowser.title",
+    descI18nKey: "enableMinimalBrowserDesc",
+    actions: [{
+      key: "openMinimalBrowser",
+      label: "打开",
+      hotkey: "Ctrl+Alt+B",
+    }],
+  },
+  {
     id: "scriptLauncher",
     defaultTitle: "脚本启动器",
     defaultDesc: "快速启动和管理自定义脚本，支持多种语言分类",

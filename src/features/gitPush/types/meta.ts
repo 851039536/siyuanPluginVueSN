@@ -227,18 +227,14 @@ export const COMMIT_ANALYSIS_TYPE_META: Record<CommitAnalysisType, { labelKey: s
 // ── 提交规则检查（useCommitAnalysis 产出 / CommitRuleCheckPanel 消费）──
 
 /** 提交信息不合规原因（Conventional Commits 规则，type 限 COMMIT_TYPE_VALUES 中的值） */
-export const COMMIT_RULE_REASON_KEYS = [
-  "whitespace",
-  "missingType",
-  "invalidType",
-  "invalidScope",
-  "badSeparator",
-  "emptySubject",
-  "notChinese",
-] as const
-
-/** 提交信息不合规原因类型 */
-export type CommitRuleReasonKey = typeof COMMIT_RULE_REASON_KEYS[number]
+export type CommitRuleReasonKey =
+  | "whitespace"
+  | "missingType"
+  | "invalidType"
+  | "invalidScope"
+  | "badSeparator"
+  | "emptySubject"
+  | "notChinese"
 
 /** 提交规则原因元数据（labelKey 对应 i18n 键 ruleCheckReason*） */
 export const COMMIT_RULE_REASON_META: Record<CommitRuleReasonKey, { labelKey: string }> = {
@@ -258,14 +254,9 @@ export interface CommitRuleViolation extends CommitAnalysisEntry {
 }
 
 /** 提交信息修正目标（规则检查违规项与提交日志条目共用，reason 仅规则检查场景提供） */
-export interface CommitFixTarget {
-  projectId: string
-  hash: string
-  message: string
+export type CommitFixTarget = Pick<CommitAnalysisEntry, "projectId" | "projectName" | "hash" | "message"> & {
   /** 违规原因（提交日志场景无此字段） */
   reason?: CommitRuleReasonKey
-  /** 项目名称（弹窗加载到项目前用于占位展示） */
-  projectName?: string
 }
 
 /** 提交规则检查聚合统计（含违规列表，供提交规则检查面板消费） */

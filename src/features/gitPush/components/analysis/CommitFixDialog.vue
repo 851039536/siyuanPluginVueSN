@@ -145,7 +145,7 @@
           <!-- 保存修正 -->
           <button
             class="vp-btn vp-btn--primary vp-btn--sm"
-            :disabled="!canAmend || !newMessage.trim() || !!validationReason || saving"
+            :disabled="!canAmend || !!validationReason || saving"
             @click="save"
           >
             <Icon
@@ -268,13 +268,13 @@ async function runAiFix() {
 
 /** 点击保存：先弹出提交时间选择 */
 function save() {
-  if (!canAmend.value || !newMessage.value.trim() || validationReason.value) return
+  if (!canAmend.value || validationReason.value) return
   dateChoiceVisible.value = true
 }
 
 /** 执行修正：preserveDate=true 保留原始提交时间，false 使用当前时间 */
 async function performSave(preserveDate: boolean) {
-  if (!canAmend.value || !projectPath.value || !newMessage.value.trim() || validationReason.value) return
+  if (!canAmend.value || !projectPath.value || validationReason.value) return
   saving.value = true
   dateChoiceVisible.value = false
   try {

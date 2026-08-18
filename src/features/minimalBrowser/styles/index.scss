@@ -51,6 +51,15 @@
   background: var(--b3-theme-background);
 }
 
+// 拖拽缩放置顶遮罩：拖动期间拦截指针事件（防止 iframe 吞掉 move/up）
+.mb-resize-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  cursor: col-resize;
+  background: transparent;
+}
+
 // ==================== 弹窗遮罩（收藏命名 / 改名） ====================
 
 .mb-dialog-mask {

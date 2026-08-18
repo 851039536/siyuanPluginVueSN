@@ -2,22 +2,96 @@
 @use '@/variables.scss' as *;
 
 .mb-favorites {
+  position: relative;
   display: flex;
   flex-direction: column;
-  width: 200px;
   flex-shrink: 0;
+  // 宽度由组件内联 style 绑定（默认 200px，可拖拽缩放），此处不写死
   border-right: 1px solid $color-border;
   background: var(--b3-theme-background);
   overflow: hidden;
+}
+
+// 拖拽缩放手柄（完全在容器内：right 0 + 5px 宽，避免边缘超出裁剪）
+.mb-favorites-resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 5px;
+  cursor: col-resize;
+  z-index: 5;
+  background: transparent;
+  transition: background-color 0.15s;
+
+  &:hover,
+  &:active {
+    background: $color-info;
+    opacity: 0.4;
+  }
 }
 
 .mb-favorites-header {
   display: flex;
   align-items: center;
   gap: $spacing-2;
+  // 头部左内边距与条目/分组对齐（$spacing-3 = 12px）
   padding: $spacing-2 $spacing-3;
+  flex-shrink: 0;
   border-bottom: 1px solid $color-border;
   color: $color-accent;
+}
+
+// 收起/展开切换按钮（展开态靠右，收起态居中）
+.mb-collapse-btn {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.collapsed .mb-favorites-header {
+  justify-content: center;
+  padding: $spacing-2 $spacing-1;
+}
+
+.collapsed .mb-collapse-btn {
+  margin-left: 0;
+}
+
+// ==================== 收起态：缩略图栏 ====================
+
+.mb-favorites-thumbs {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-2;
+  flex: 1;
+  min-height: 0;
+  padding: $spacing-2 $spacing-1;
+  overflow-y: auto;
+}
+
+.mb-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: 1px solid;
+  border-radius: $vp-radius;
+  cursor: pointer;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  transition: transform 0.15s, border-color 0.15s;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+
+  // 高亮用边框实现（不占额外空间，避免 outline 撑破布局）
+  &.active {
+    border-width: 2px;
+  }
 }
 
 .mb-favorites-title {
@@ -35,9 +109,11 @@
 
 .mb-favorites-list {
   flex: 1;
+  min-height: 0;
   // 滚动区右侧留出呼吸空间（Dock 面板侧边栏间距规则）
-  padding: $spacing-2 $spacing-2 $spacing-2 $spacing-2;
+  padding: $spacing-2 $spacing-2 $spacing-2 $spacing-3;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .mb-favorites-group {
@@ -46,7 +122,7 @@
 
 .mb-favorites-group-name {
   display: block;
-  padding: $spacing-1 $spacing-2;
+  padding: $spacing-1 $spacing-1;
   font-size: $font-size-2xs;
   font-weight: $font-weight-medium;
   color: $color-muted;
@@ -64,9 +140,12 @@
     background: var(--b3-theme-surface);
   }
 
+  // 高亮用内阴影避免布局位移：border 换色占位方案（border 常驻 1px 透明）
+  border: 1px solid transparent;
+
   &.active {
     background: var(--b3-theme-surface);
-    outline: 1px solid $color-info;
+    border-color: $color-info;
   }
 }
 

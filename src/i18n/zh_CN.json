@@ -1847,7 +1847,8 @@
     "checkBranchStatus": "检查当前分支状态",
     "ruleFixDateChoice": "选择提交时间处理方式",
     "ruleFixPreserveDate": "保留原始提交时间",
-    "ruleFixDefaultDate": "按当前时间提交"
+    "ruleFixDefaultDate": "按当前时间提交",
+    "ruleCheckReasonNotChinese": "描述非中文"
   },
   "enableGlobalRelations": "启用全局关系列表功能",
   "enableGlobalRelationsDesc": "基于思源 refs 表与 getBacklink2 API，查询全库文档间的双向链接关系",

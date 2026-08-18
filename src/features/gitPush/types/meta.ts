@@ -234,6 +234,7 @@ export const COMMIT_RULE_REASON_KEYS = [
   "invalidScope",
   "badSeparator",
   "emptySubject",
+  "notChinese",
 ] as const
 
 /** 提交信息不合规原因类型 */
@@ -247,6 +248,7 @@ export const COMMIT_RULE_REASON_META: Record<CommitRuleReasonKey, { labelKey: st
   invalidScope: { labelKey: "ruleCheckReasonInvalidScope" },
   badSeparator: { labelKey: "ruleCheckReasonBadSeparator" },
   emptySubject: { labelKey: "ruleCheckReasonEmptySubject" },
+  notChinese: { labelKey: "ruleCheckReasonNotChinese" },
 }
 
 /** 单条不合规提交（提交信息 + 命中原因） */

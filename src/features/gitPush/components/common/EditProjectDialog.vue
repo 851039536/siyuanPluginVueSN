@@ -287,6 +287,7 @@ import {
   getCurrentDeviceName,
   hasPlatformRemote,
   resolveRemotePlatform,
+  resolveValidPath,
   resolveValidPathFromPaths,
 } from "../../utils"
 import CloneLogPanel from "./CloneLogPanel.vue"
@@ -370,11 +371,15 @@ const linkAddOptions = computed<SelectOption[]>(() =>
 
 /** 将 urlInputs 全量持久化，返回是否成功（失败写入 repoLinkError） */
 async function persistUrls(): Promise<boolean> {
-  if (!project.value || isUnmounted.value) { return false }
+  if (!project.value || isUnmounted.value) {
+    return false
+  }
   try {
     // 键由 PLATFORM_META 单一数据源推导，避免硬编码 Pick 重复维护
     const patch = {} as Partial<Record<(typeof PLATFORM_META)[number]["urlProp"], string>>
-    for (const pl of PLATFORM_META) { patch[pl.urlProp] = urlInputs[pl.urlProp] || undefined }
+    for (const pl of PLATFORM_META) {
+      patch[pl.urlProp] = urlInputs[pl.urlProp] || undefined
+    }
     const updated = await props.manager.updateProjectMeta(props.projectId, patch)
     if (!updated) {
       if (!isUnmounted.value) {
@@ -382,7 +387,9 @@ async function persistUrls(): Promise<boolean> {
       }
       return false
     }
-    if (isUnmounted.value) { return false }
+    if (isUnmounted.value) {
+      return false
+    }
     repoLinkError.value = ""
     emit("urlsUpdated")
     return true
@@ -397,7 +404,9 @@ async function persistUrls(): Promise<boolean> {
 /** 添加与编辑共用：写入平台 URL 后持久化 */
 async function upsertRepoLink(platform: string, url: string): Promise<boolean> {
   const pl = PLATFORM_META.find((p) => p.key === platform)
-  if (!pl) { return false }
+  if (!pl) {
+    return false
+  }
   urlInputs[pl.urlProp] = url
   return persistUrls()
 }
@@ -408,7 +417,9 @@ async function removeRepoLink(platform: string): Promise<boolean> {
 
 /** 复制 URL 到剪贴板并提示（仓库链接/Git 远程共用） */
 function copyUrlToClipboard(url: string): void {
-  if (!url) { return }
+  if (!url) {
+    return
+  }
   void copyToClipboard(url)
   showMessage(props.i18n.copiedLink, 2000, "info")
 }
@@ -423,17 +434,25 @@ function copyRepoLink(platform: string): void {
 async function downloadRepoLink(platform: string): Promise<boolean> {
   const pl = PLATFORM_META.find((p) => p.key === platform)
   const url = pl ? urlInputs[pl.urlProp] : ""
-  if (!url) { return false }
+  if (!url) {
+    return false
+  }
   const dir = await pickDirectory(props.i18n.selectCloneDir)
-  if (!dir || isUnmounted.value) { return false }
+  if (!dir || isUnmounted.value) {
+    return false
+  }
   repoLinkError.value = ""
   cloneLog.start(`$ git clone --progress ${url}`)
   cloning.value = true
   try {
     const clonedPath = await props.manager.cloneRepo(dir, url, (chunk) => {
-      if (!isUnmounted.value) { cloneLog.append(chunk) }
+      if (!isUnmounted.value) {
+        cloneLog.append(chunk)
+      }
     })
-    if (isUnmounted.value) { return false }
+    if (isUnmounted.value) {
+      return false
+    }
     const deviceName = getCurrentDeviceName()
     allPathsList.value.push({
       path: clonedPath,
@@ -466,7 +485,9 @@ async function downloadRepoLink(platform: string): Promise<boolean> {
       }
       return false
     }
-    if (isUnmounted.value) { return false }
+    if (isUnmounted.value) {
+      return false
+    }
     emit("urlsUpdated")
     // 克隆完成：日志收尾 + 全局提示（含克隆到的完整路径）
     const doneMsg = props.i18n.cloneSuccess.replace("{0}", clonedPath)
@@ -518,7 +539,9 @@ function currentRepoPath(strict = false): string {
 }
 
 async function loadRemotes(): Promise<void> {
-  if (!project.value) { return }
+  if (!project.value) {
+    return
+  }
   const seq = ++remoteDetectSeq
   const path = currentRepoPath()
   // 无有效路径时清空远程列表（避免沿用旧路径的检测结果）
@@ -532,18 +555,24 @@ async function loadRemotes(): Promise<void> {
   try {
     const list = await props.manager.detectRemotes(path)
     // 丢弃过期结果；组件已卸载时也不写状态
-    if (seq !== remoteDetectSeq || isUnmounted.value) { return }
+    if (seq !== remoteDetectSeq || isUnmounted.value) {
+      return
+    }
     remoteList.value = list
     remoteError.value = ""
   } catch (e: unknown) {
-    if (seq !== remoteDetectSeq || isUnmounted.value) { return }
+    if (seq !== remoteDetectSeq || isUnmounted.value) {
+      return
+    }
     remoteError.value = getErrorMessage(e) || props.i18n.errDetectRemotes
   }
 }
 
 /** 统一远程操作骨架：清错 → 严格路径校验 → 执行 → 重新检测 + 刷新项目远程映射，失败写入 remoteError，返回是否成功 */
 async function runRemoteOp(fallbackMsg: string, op: (repoPath: string) => Promise<void>): Promise<boolean> {
-  if (!project.value) { return false }
+  if (!project.value) {
+    return false
+  }
   remoteError.value = ""
   const repoPath = currentRepoPath(true)
   if (!repoPath) {
@@ -553,7 +582,9 @@ async function runRemoteOp(fallbackMsg: string, op: (repoPath: string) => Promis
   try {
     await op(repoPath)
     await loadRemotes()
-    if (!isUnmounted.value) {
+    // 仅当表单路径与已持久化有效路径一致时才刷新项目远程映射；
+    // 否则路径草稿尚未保存，刷新会基于旧路径覆盖，留到 save() 成功后统一刷新
+    if (!isUnmounted.value && repoPath === resolveValidPath(project.value)) {
       await props.manager.refreshRemotes(props.projectId)
     }
     return true
@@ -618,7 +649,9 @@ onMounted(async () => {
     localArchived.value = !!p.archived
     localNote.value = p.note || ""
     // 平台 URL 由 PLATFORM_META 单一数据源驱动回填
-    for (const pl of PLATFORM_META) { urlInputs[pl.urlProp] = p[pl.urlProp] || "" }
+    for (const pl of PLATFORM_META) {
+      urlInputs[pl.urlProp] = p[pl.urlProp] || ""
+    }
     // 填充路径行时抑制 watch，由下方显式 loadRemotes 完成初始检测
     isInitializingPaths = true
     initPathRows(p.path, p.localPaths, p.pathDevices)
@@ -637,7 +670,9 @@ onMounted(async () => {
 watch(
   () => PLATFORM_META.map((pl) => urlInputs[pl.urlProp]).join("\n"),
   () => {
-    if (repoLinkError.value) { repoLinkError.value = "" }
+    if (repoLinkError.value) {
+      repoLinkError.value = ""
+    }
   },
 )
 
@@ -646,10 +681,16 @@ let remoteDetectTimer: ReturnType<typeof setTimeout> | null = null
 watch(
   () => allPathsList.value.map((r) => r.path).join("\n"),
   () => {
-    if (!project.value || isInitializingPaths) { return }
+    if (!project.value || isInitializingPaths) {
+      return
+    }
     remoteError.value = ""
-    if (remoteDetectTimer) { clearTimeout(remoteDetectTimer) }
-    remoteDetectTimer = setTimeout(() => { void loadRemotes() }, 500)
+    if (remoteDetectTimer) {
+      clearTimeout(remoteDetectTimer)
+    }
+    remoteDetectTimer = setTimeout(() => {
+      void loadRemotes()
+    }, 500)
   },
 )
 onUnmounted(() => {
@@ -662,7 +703,9 @@ onUnmounted(() => {
 
 // ── 保存 ──
 async function save(): Promise<void> {
-  if (!project.value || saving.value) { return }
+  if (!project.value || saving.value) {
+    return
+  }
   const payload = pathsToPayload()
   saving.value = true
   try {
@@ -681,6 +724,15 @@ async function save(): Promise<void> {
       return
     }
     if (!isUnmounted.value) {
+      // 路径可能已修改，保存后按新持久化路径刷新项目远程映射
+      try {
+        await props.manager.refreshRemotes(props.projectId)
+      } catch {
+        // 保存本身成功，远程刷新失败不阻塞关闭
+      }
+      if (isUnmounted.value) {
+        return
+      }
       emit("saved")
     }
   } catch (e: unknown) {

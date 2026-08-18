@@ -36,6 +36,13 @@ export interface WebsiteCategory {
   color: string
 }
 
+export {
+  ALL_CATEGORY_ID,
+  DEFAULT_CATEGORY_COLOR,
+  DEFAULT_CATEGORY_ID,
+  PRESET_CATEGORY_COLORS,
+} from "./constants"
+
 export interface I18n {
   panelTitle?: string
   title?: string
@@ -73,6 +80,7 @@ export interface I18n {
   saveFailed?: string
   deleteFailed?: string
   urlCopied?: string
+  uncategorized?: string
 }
 
 /**
@@ -96,16 +104,24 @@ export class WebsiteNavigation {
       maskId: "website-navigation-mask",
       width: "min(42vw, 630px)",
       height: "75vh",
-      getCloseHandler: () => () => {
-        this.modal?.close()
-        this.modal = null
-      },
+      getCloseHandler: () => () => this.closeModal(),
       buildProps: () => ({
         plugin: this.plugin,
         i18n: (this.plugin.i18n?.websiteNavigation as I18n) || ({} as I18n),
+        onClose: () => this.closeModal(),
       }),
     })
     this.modal.open()
+  }
+
+  private closeModal() {
+    this.modal?.close()
+    this.modal = null
+  }
+
+  public destroy() {
+    this.modal?.destroy()
+    this.modal = null
   }
 }
 
@@ -113,6 +129,14 @@ let _instance: WebsiteNavigation | null = null
 
 /** 公共 API：显示网站导航弹窗 */
 export function showWebsiteNavigation(plugin?: Plugin) {
+  const mounted = plugin
+    ? (plugin as any).__websiteNavigation as WebsiteNavigation | undefined
+    : undefined
+  if (mounted) {
+    mounted.showModal()
+    return
+  }
+
   if (!_instance && plugin) {
     _instance = new WebsiteNavigation(plugin)
   }

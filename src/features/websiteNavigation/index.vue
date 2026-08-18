@@ -1,5 +1,5 @@
 <!--
-  网站导航主面板 — 网站书签管理，支持分类筛选、搜索、拖拽排序与一键打开
+  网站导航主面板 — 网站书签管理，支持分类筛选、搜索与一键打开
 -->
 <template>
   <div class="website-navigation-panel">
@@ -15,7 +15,7 @@
       :categories="categories"
       :search-query="searchQuery"
       :selected-category="selectedCategory"
-      @update:search-query="searchQuery = $event"
+      @update:searchQuery="searchQuery = $event"
       @update:selected-category="selectedCategory = $event"
       @manage-categories="showCategoryMgr = true"
     />
@@ -26,8 +26,6 @@
         :key="entry.id"
         :entry="entry"
         :i18n="i18n"
-        :category-color="getCategoryById(entry.category)?.color || '#b0aea5'"
-        :category-name="getCategoryById(entry.category)?.name || '未分类'"
         @edit="editEntry"
         @delete="deleteEntry"
         @copy-url="copyUrl"
@@ -42,6 +40,7 @@
           name="browser"
           :size="48"
         />
+        <!-- 无匹配/无网站文案 -->
         <p>{{ searchQuery ? i18n.notFound : i18n.noWebsites }}</p>
       </div>
     </div>
@@ -49,34 +48,29 @@
     <WebsiteDialog
       :visible="showDialog"
       :i18n="i18n"
-      :categories="categories"
-      :editing-entry="editingEntry"
+      :entry-id="editingId"
       @close="closeDialog"
-      @save="saveEntry"
+      @saved="closeDialog"
     />
 
     <CategoryManager
       :visible="showCategoryMgr"
       :i18n="i18n"
-      :categories="categories"
       @close="showCategoryMgr = false"
-      @add="addCategory"
-      @remove="removeCategory"
+      @saved="handleCategoriesSaved"
     />
   </div>
 </template>
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
-import type {
-  I18n,
-  WebsiteCategory,
-  WebsiteEntry,
-} from "./types"
+import type { I18n } from "./types"
+import { ALL_CATEGORY_ID } from "./types/constants"
 import { showMessage } from "siyuan"
 import {
   computed,
   ref,
+  watch,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { copyToClipboard } from "@/utils/domUtils"
@@ -85,97 +79,73 @@ import FilterBar from "./components/FilterBar.vue"
 import PanelHeader from "./components/PanelHeader.vue"
 import WebsiteCard from "./components/WebsiteCard.vue"
 import WebsiteDialog from "./components/WebsiteDialog.vue"
-import { useWebsiteNavigation } from "./composables/useWebsiteNavigation"
+import {
+  categories,
+  deleteEntry as removeEntry,
+  entries,
+  loadData,
+  useWebsiteNavigation,
+} from "./composables/useWebsiteNavigation"
 
 interface Props {
   i18n: I18n
   plugin: Plugin
+  onClose?: () => void
 }
 
 const props = defineProps<Props>()
 
-const {
-  storage,
-  entries,
-  categories,
-  loadData,
-} = useWebsiteNavigation(props.plugin)
+useWebsiteNavigation(props.plugin)
 
 const searchQuery = ref("")
-const selectedCategory = ref<string>("all")
+const selectedCategory = ref<string>(ALL_CATEGORY_ID)
 const showDialog = ref(false)
-const editingEntry = ref<WebsiteEntry | null>(null)
+const editingId = ref<string | null>(null)
 const showCategoryMgr = ref(false)
 
-const categoriesMap = computed(() => {
-  const map = new Map<string, WebsiteCategory>()
-  for (const cat of categories.value) {
-    map.set(cat.id, cat)
-  }
-  return map
-})
-
-const getCategoryById = (id: string): WebsiteCategory | undefined => {
-  return categoriesMap.value.get(id)
-}
-
 const filteredEntries = computed(() => {
-  let result = entries.value
+  const query = searchQuery.value.trim().toLowerCase()
   const cat = selectedCategory.value
-  const query = searchQuery.value.toLowerCase().trim()
 
-  if (cat !== "all") {
-    result = result.filter((e) => e.category === cat)
-  }
-
-  if (query) {
-    result = result.filter(
-      (e) =>
-        e.name.toLowerCase().includes(query)
-        || e.description.toLowerCase().includes(query)
-        || e.url.toLowerCase().includes(query),
+  return entries.value.filter((entry) => {
+    if (cat !== ALL_CATEGORY_ID && entry.category !== cat) return false
+    if (!query) return true
+    return (
+      entry.name.toLowerCase().includes(query)
+      || entry.description.toLowerCase().includes(query)
+      || entry.url.toLowerCase().includes(query)
     )
-  }
-
-  return result
+  })
 })
 
-const reloadAfterMutation = async () => {
-  try {
-    await loadData()
-  } catch {
-    showMessage(props.i18n.loadFailed, 3000, "error")
+// 分类被删除后若正处于该分类筛选，自动回到全部
+watch(categories, (list) => {
+  if (selectedCategory.value !== ALL_CATEGORY_ID && !list.some((c) => c.id === selectedCategory.value)) {
+    selectedCategory.value = ALL_CATEGORY_ID
   }
-}
+})
 
 const openAddDialog = () => {
-  editingEntry.value = null
+  editingId.value = null
   showDialog.value = true
 }
 
-const editEntry = (entry: WebsiteEntry) => {
-  editingEntry.value = entry
+const editEntry = (entry: { id: string }) => {
+  editingId.value = entry.id
   showDialog.value = true
 }
 
 const closeDialog = () => {
   showDialog.value = false
-  editingEntry.value = null
+  editingId.value = null
+  props.onClose?.()
 }
 
-const saveEntry = async (data: { name: string, url: string, category: string, description: string }) => {
-  try {
-    if (editingEntry.value) {
-      await storage.updateEntry(editingEntry.value.id, data)
-      showMessage(props.i18n.updateSuccess, 2000, "info")
-    } else {
-      await storage.createEntry(data)
-      showMessage(props.i18n.createSuccess, 2000, "info")
-    }
-    closeDialog()
-    await reloadAfterMutation()
-  } catch {
-    showMessage(props.i18n.saveFailed, 3000, "error")
+const handleCategoriesSaved = async () => {
+  // 分类弹窗自包含保存，父组件仅负责刷新筛选状态
+  const ok = await loadData()
+  if (!ok) {
+    showMessage(props.i18n.loadFailed, 3000, "error")
   }
 }
 
@@ -189,9 +159,10 @@ const deleteEntry = async (id: string) => {
   }
 
   try {
-    await storage.deleteEntry(id)
-    showMessage(props.i18n.deleteSuccess, 2000, "info")
-    await reloadAfterMutation()
+    const ok = await removeEntry(id)
+    if (ok) {
+      showMessage(props.i18n.deleteSuccess, 2000, "info")
+    }
   } catch {
     showMessage(props.i18n.deleteFailed, 3000, "error")
   }
@@ -207,36 +178,6 @@ const copyUrl = async (url: string) => {
     showMessage(props.i18n.urlCopied, 2000, "info")
   } catch {
     showMessage(props.i18n.copyUrl, 2000, "error")
-  }
-}
-
-const addCategory = async (name: string, color: string) => {
-  if (categories.value.some((c) => c.name === name)) {
-    showMessage(props.i18n.categoryExists, 2000, "error")
-    return
-  }
-
-  const cat: WebsiteCategory = {
-    id: Date.now().toString(),
-    name,
-    color,
-  }
-  categories.value = [...categories.value, cat]
-  await storage.saveCategories(categories.value)
-}
-
-const removeCategory = async (catId: string) => {
-  const hasEntries = entries.value.some((e) => e.category === catId)
-  if (hasEntries) {
-    showMessage(props.i18n.categoryNotEmpty, 2000, "error")
-    return
-  }
-
-  categories.value = categories.value.filter((c) => c.id !== catId)
-  await storage.saveCategories(categories.value)
-
-  if (selectedCategory.value === catId) {
-    selectedCategory.value = "all"
   }
 }
 </script>

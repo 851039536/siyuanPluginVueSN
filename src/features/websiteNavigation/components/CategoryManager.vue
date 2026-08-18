@@ -3,19 +3,20 @@
 -->
 <template>
   <Teleport to="body">
-    <Transition name="fade">
+    <Transition name="website-fade">
       <div
         v-if="visible"
         class="website-dialog-overlay"
         @click.self="handleClose"
       >
-        <Transition name="scale">
+        <Transition name="website-scale">
           <div
             v-if="visible"
             class="website-dialog category-manager"
             @click.stop
           >
             <div class="dialog-header">
+              <!-- 管理类别 -->
               <h3>{{ i18n.manageCategories }}</h3>
               <Button
                 icon="close"
@@ -26,15 +27,16 @@
             </div>
             <div class="dialog-body">
               <div class="add-category-row">
+                <!-- 类别名称 -->
                 <Input
                   v-model="catName"
                   type="text"
                   :placeholder="i18n.categoryName"
-                  size="xsmall"
+                  size="small"
                 />
                 <div class="color-picker">
                   <button
-                    v-for="color in presetColors"
+                    v-for="color in PRESET_CATEGORY_COLORS"
                     :key="color"
                     class="color-option"
                     :class="{ selected: catColor === color }"
@@ -42,11 +44,13 @@
                     @click="catColor = color"
                   />
                 </div>
+                <!-- 添加 -->
                 <Button
                   icon="add"
                   variant="primary"
                   size="xsmall"
                   :disabled="!catName.trim()"
+                  :loading="saving"
                   @click="handleAdd"
                 >
                   {{ i18n.add }}
@@ -64,12 +68,14 @@
                   ></span>
                   <span class="cat-name">{{ cat.name }}</span>
                   <Button
-                    v-if="cat.id !== 'default'"
+                    v-if="cat.id !== DEFAULT_CATEGORY_ID"
                     icon="delete"
                     variant="ghost"
                     size="xsmall"
-                    @click="emit('remove', cat.id)"
+                    :loading="removingId === cat.id"
+                    @click="handleRemove(cat.id)"
                   />
+                  <!-- 默认分类标记 -->
                   <span
                     v-else
                     class="default-badge"
@@ -85,51 +91,82 @@
 </template>
 
 <script setup lang="ts">
-import type {
-  I18n,
-  WebsiteCategory,
-} from "../types"
+import type { I18n } from "../types"
 import { ref } from "vue"
+import { showMessage } from "siyuan"
 import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
+import {
+  DEFAULT_CATEGORY_ID,
+  PRESET_CATEGORY_COLORS,
+} from "../types/constants"
+import {
+  addCategory,
+  categories,
+  removeCategory,
+} from "../composables/useWebsiteNavigation"
 
-defineProps<{
+const props = defineProps<{
   visible: boolean
   i18n: I18n
-  categories: WebsiteCategory[]
 }>()
 
 const emit = defineEmits<{
   (e: "close"): void
-  (e: "add", name: string, color: string): void
-  (e: "remove", id: string): void
+  (e: "saved"): void
 }>()
 
-const presetColors = [
-  "#3b82f6",
-  "#10b981",
-  "#f59e0b",
-  "#ef4444",
-  "#8b5cf6",
-  "#ec4899",
-  "#06b6d4",
-  "#84cc16",
-  "#b0aea5",
-] as const
-
 const catName = ref("")
-const catColor = ref("#3b82f6")
+const catColor = ref<string>(PRESET_CATEGORY_COLORS[0])
+const saving = ref(false)
+const removingId = ref<string | null>(null)
 
-const handleAdd = () => {
-  if (!catName.value.trim()) return
-  emit("add", catName.value.trim(), catColor.value)
+const resetForm = () => {
   catName.value = ""
-  catColor.value = "#3b82f6"
+  catColor.value = PRESET_CATEGORY_COLORS[0]
+}
+
+const handleAdd = async () => {
+  const name = catName.value.trim()
+  if (!name || saving.value) return
+
+  saving.value = true
+  try {
+    const ok = await addCategory(name, catColor.value)
+    if (!ok) {
+      showMessage(props.i18n.categoryExists, 2000, "error")
+      return
+    }
+    resetForm()
+    emit("saved")
+  } catch {
+    showMessage(props.i18n.saveFailed, 3000, "error")
+  } finally {
+    saving.value = false
+  }
+}
+
+const handleRemove = async (id: string) => {
+  if (removingId.value) return
+
+  removingId.value = id
+  try {
+    const ok = await removeCategory(id)
+    if (!ok) {
+      showMessage(props.i18n.categoryNotEmpty, 2000, "error")
+      return
+    }
+    emit("saved")
+  } catch {
+    showMessage(props.i18n.saveFailed, 3000, "error")
+  } finally {
+    removingId.value = null
+  }
 }
 
 const handleClose = () => {
-  catName.value = ""
-  catColor.value = "#3b82f6"
+  if (saving.value || removingId.value) return
+  resetForm()
   emit("close")
 }
 </script>

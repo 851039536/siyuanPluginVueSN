@@ -9,12 +9,13 @@
         :size="14"
         class="search-icon"
       />
+      <!-- 搜索网站名称、网址或描述... -->
       <Input
         :model-value="searchQuery"
         type="text"
         :placeholder="i18n.searchPlaceholder"
         size="xsmall"
-        @update:model-value="emit('update:searchQuery', $event)"
+        @update:modelValue="emit('update:searchQuery', $event)"
       />
     </div>
 
@@ -31,8 +32,10 @@
           class="chip-dot"
           :style="{ backgroundColor: cat.color }"
         ></span>
+        <!-- 全部/分类名称 -->
         {{ cat.name }}
       </button>
+      <!-- 管理类别 -->
       <Button
         icon="settings"
         variant="ghost"
@@ -53,6 +56,7 @@ import { computed } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
+import { ALL_CATEGORY_ID, DEFAULT_CATEGORY_COLOR } from "../types/constants"
 
 const props = defineProps<{
   i18n: I18n
@@ -69,9 +73,9 @@ const emit = defineEmits<{
 
 const allCategories = computed(() => [
   {
-    id: "all",
+    id: ALL_CATEGORY_ID,
     name: props.i18n.allCategories,
-    color: "#b0aea5",
+    color: DEFAULT_CATEGORY_COLOR,
   },
   ...props.categories,
 ])

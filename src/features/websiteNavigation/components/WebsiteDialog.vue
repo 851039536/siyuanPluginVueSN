@@ -3,19 +3,20 @@
 -->
 <template>
   <Teleport to="body">
-    <Transition name="fade">
+    <Transition name="website-fade">
       <div
         v-if="visible"
         class="website-dialog-overlay"
         @click.self="handleClose"
       >
-        <Transition name="scale">
+        <Transition name="website-scale">
           <div
             v-if="visible"
             class="website-dialog"
             @click.stop
           >
             <div class="dialog-header">
+              <!-- 弹窗标题：添加网站/编辑网站 -->
               <h3>{{ isEdit ? i18n.editWebsite : i18n.addWebsite }}</h3>
               <Button
                 icon="close"
@@ -26,6 +27,7 @@
             </div>
             <div class="dialog-body">
               <div class="form-group">
+                <!-- 名称 -->
                 <label>{{ i18n.name }}</label>
                 <Input
                   v-model="form.name"
@@ -35,6 +37,7 @@
                 />
               </div>
               <div class="form-group">
+                <!-- 网址 -->
                 <label>{{ i18n.url }}</label>
                 <Input
                   v-model="form.url"
@@ -44,6 +47,7 @@
                 />
               </div>
               <div class="form-group">
+                <!-- 类别 -->
                 <label>{{ i18n.category }}</label>
                 <Select
                   v-model="form.category"
@@ -51,6 +55,7 @@
                 />
               </div>
               <div class="form-group">
+                <!-- 描述 -->
                 <label>{{ i18n.description }}</label>
                 <Input
                   v-model="form.description"
@@ -60,15 +65,18 @@
               </div>
             </div>
             <div class="dialog-footer">
+              <!-- 取消 -->
               <Button
                 variant="ghost"
                 @click="handleClose"
               >
                 {{ i18n.cancel }}
               </Button>
+              <!-- 保存 -->
               <Button
                 variant="primary"
                 :disabled="!form.name.trim() || !form.url.trim()"
+                :loading="saving"
                 @click="handleSave"
               >
                 {{ i18n.save }}
@@ -83,60 +91,97 @@
 
 <script setup lang="ts">
 import type {
+  CreateWebsiteDTO,
   I18n,
-  WebsiteCategory,
   WebsiteEntry,
 } from "../types"
+import { DEFAULT_CATEGORY_ID } from "../types/constants"
 import {
   computed,
   reactive,
+  ref,
   watch,
 } from "vue"
+import { showMessage } from "siyuan"
 import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
+import {
+  categories,
+  createEntry,
+  entries,
+  updateEntry,
+} from "../composables/useWebsiteNavigation"
 
 const props = defineProps<{
   visible: boolean
   i18n: I18n
-  categories: WebsiteCategory[]
-  editingEntry: WebsiteEntry | null
+  entryId: string | null
 }>()
 
 const emit = defineEmits<{
   (e: "close"): void
-  (e: "save", data: { name: string, url: string, category: string, description: string }): void
+  (e: "saved"): void
 }>()
 
-const isEdit = computed(() => !!props.editingEntry)
+const isEdit = computed(() => !!props.entryId)
+const saving = ref(false)
 
-const initForm = () => ({
-  name: props.editingEntry?.name || "",
-  url: props.editingEntry?.url || "",
-  category: props.editingEntry?.category || "default",
-  description: props.editingEntry?.description || "",
+const currentEntry = computed<WebsiteEntry | null>(() =>
+  props.entryId ? entries.value.find((e) => e.id === props.entryId) ?? null : null,
+)
+
+const initForm = (): CreateWebsiteDTO => ({
+  name: currentEntry.value?.name || "",
+  url: currentEntry.value?.url || "",
+  category: currentEntry.value?.category || DEFAULT_CATEGORY_ID,
+  description: currentEntry.value?.description || "",
 })
 
-const form = reactive(initForm())
+const form = reactive<CreateWebsiteDTO>(initForm())
 
 watch(
-  () => props.editingEntry,
-  () => Object.assign(form, initForm()),
+  () => props.visible,
+  (visible) => {
+    if (visible) {
+      Object.assign(form, initForm())
+    }
+  },
 )
 
 const categoryOptions = computed(() =>
-  props.categories.map((c) => ({
+  categories.value.map((c) => ({
     value: c.id,
     label: c.name,
   })),
 )
 
-const handleSave = () => {
-  if (!form.name.trim() || !form.url.trim()) return
-  emit("save", { ...form })
+const handleSave = async () => {
+  if (!form.name.trim() || !form.url.trim() || saving.value) return
+
+  saving.value = true
+  try {
+    if (props.entryId) {
+      const ok = await updateEntry(props.entryId, form)
+      if (!ok) {
+        showMessage(props.i18n.saveFailed, 3000, "error")
+        return
+      }
+      showMessage(props.i18n.updateSuccess, 2000, "info")
+    } else {
+      await createEntry(form)
+      showMessage(props.i18n.createSuccess, 2000, "info")
+    }
+    emit("saved")
+  } catch {
+    showMessage(props.i18n.saveFailed, 3000, "error")
+  } finally {
+    saving.value = false
+  }
 }
 
 const handleClose = () => {
+  if (saving.value) return
   emit("close")
 }
 </script>

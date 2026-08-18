@@ -51,6 +51,7 @@ export interface PluginSettings {
   enableApiDebugger: boolean // 是否启用API调试器功能
   enableImageCreation: boolean // 是否启用图片生成功能
   enableWebsiteNavigation: boolean // 是否启用网站导航功能
+  enableMinimalBrowser: boolean // 是否启用极简浏览器功能
   enableScriptLauncher: boolean // 是否启用脚本启动器功能
   enableDataSnapshot: boolean // 是否启用数据快照功能
   enableGitPush: boolean // 是否启用Git推送功能
@@ -121,6 +122,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableImageCreation: true,
   enableApiDebugger: true,
   enableWebsiteNavigation: true,
+  enableMinimalBrowser: true,
   enableScriptLauncher: true,
   enableDataSnapshot: true,
   enableGitPush: true,

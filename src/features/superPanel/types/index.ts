@@ -99,6 +99,7 @@ const ACTION_EVENT_MAP: Record<
   openTextDiff: { event: "openTextDiff" },
   openS3FileManager: { event: "openS3FileManager" },
   openGlobalRelations: { event: "toggleGlobalRelations" },
+  openMinimalBrowser: { event: "openMinimalBrowser" },
 }
 
 /**

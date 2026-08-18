@@ -291,6 +291,12 @@ export const FEATURE_ICONS = {
     color: "#6366f1",
   },
 
+  // 极简浏览器
+  minimalBrowser: {
+    icon: "mdi:earth",
+    color: "#0ea5e9",
+  },
+
   // RSS 订阅
   rssReader: {
     icon: "mdi:rss",
@@ -710,6 +716,9 @@ export const COMMON_ICONS = {
   },
   browser: {
     icon: "mdi:web",
+  },
+  home: {
+    icon: "mdi:home",
   },
   play: {
     icon: "mdi:play",

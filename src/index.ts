@@ -44,6 +44,7 @@ import {
   registerHtmlViewer,
   registerImageCompressor,
   registerImageCreation,
+  registerMinimalBrowser,
   registerPageLock,
   registerPasswordVault,
   registerPrompts,
@@ -113,6 +114,7 @@ export default class PluginSample extends Plugin {
     "__docNavigation", // 文档层级导航（IntersectionObserver + 事件监听 + Vue app）
     "__superPanel", // 超级面板（持久 Modal + 事件监听器）
     "__websiteNavigation", // 网站导航（非持久 Modal，卸载时清理打开的 DOM）
+    "__minimalBrowser", // 极简浏览器（addTab 模型 + 独立窗口 + 全局事件监听）
   ] as const
 
   onload() {
@@ -232,6 +234,7 @@ export default class PluginSample extends Plugin {
     if (s.enableBookmarkMarker) registerBookmarkMarker(this)
     if (s.enableApiDebugger) registerApiDebugger(this)
     if (s.enableWebsiteNavigation) registerWebsiteNavigation(this)
+    if (s.enableMinimalBrowser) registerMinimalBrowser(this)
     if (s.enableScriptLauncher) registerScriptLauncher(this)
     if (s.enableDataSnapshot) registerDataSnapshot(this)
     if (s.enableGitPush) this.__gitPush = registerGitPush(this)

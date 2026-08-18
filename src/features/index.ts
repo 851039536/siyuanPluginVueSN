@@ -31,13 +31,14 @@ export { registerHtmlViewer } from "./htmlViewer"
 export {
   htmlViewerVisible,
 } from "./htmlViewer/state"
-export { registerImageCompressor } from "./imageCompressor"
 export {
   hideImageCreation,
   imageCreationVisible,
   registerImageCreation,
   showImageCreation,
 } from "./imageCreation"
+export { registerImageCompressor } from "./imageCompressor"
+export { registerMinimalBrowser, showMinimalBrowser } from "./minimalBrowser"
 /**
  * 功能模块统一导出
  *
@@ -120,7 +121,7 @@ type _Registered =
   | "flashcardReading" | "passwordVault" | "docAnalysis"
   | "formatAssistant" | "htmlViewer" | "rssReader" | "resourceManager"
   | "skillsViewer" | "themeColor" | "bookmarkMarker" | "apiDebugger"
-  | "scriptLauncher" | "websiteNavigation" | "dataSnapshot" | "gitPush" | "skillLearning" | "prompts" | "toolCollection" | "s3Backup" | "s3FileManager"
+  | "scriptLauncher" | "websiteNavigation" | "minimalBrowser" | "dataSnapshot" | "gitPush" | "skillLearning" | "prompts" | "toolCollection" | "s3Backup" | "s3FileManager"
   | "globalRelations"
   | "quickNote"
 

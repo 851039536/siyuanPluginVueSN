@@ -238,6 +238,18 @@ const FEATURES: FeatureRegistryEntry[] = [
     action: () => emitCustomEvent("toggleWebsiteNavigation"),
   },
   {
+    id: "minimalBrowser",
+    icon: "mdi:earth",
+    color: "#0ea5e9",
+    title: props.plugin?.i18n?.minimalBrowser?.title || "极简浏览器",
+    pinnable: true,
+    shortcut: {
+      icon: "mdi:earth",
+      itemClass: "action-item minimal-browser-item",
+    },
+    action: () => emitCustomEvent("openMinimalBrowser"),
+  },
+  {
     id: "imageCreation",
     icon: "mdi:image-text",
     color: "#f59e0b",

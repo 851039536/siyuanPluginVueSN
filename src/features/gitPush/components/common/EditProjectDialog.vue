@@ -15,7 +15,10 @@
           class="vp-btn vp-btn--ghost vp-btn--xs"
           @click="$emit('close')"
         >
-          <Icon icon="mdi:close" height="10" />
+          <Icon
+            icon="mdi:close"
+            height="10"
+          />
         </button>
       </div>
       <div class="gp-dialog-body">
@@ -81,6 +84,7 @@
                 size="xsmall"
                 :placeholder="i18n.devicePathPlaceholder.replace('{0}', String(idx + 1))"
                 :disabled="cloning"
+                @keydown.enter="save()"
               />
               <!-- 设备电脑名（可选）：占位符"电脑名（可选）"，新增路径时自动填入当前主机名 -->
               <div class="gp-path-device">
@@ -97,7 +101,10 @@
                 :disabled="cloning"
                 @click="pickLocalPath(idx)"
               >
-                <Icon icon="mdi:folder-outline" height="10" />
+                <Icon
+                  icon="mdi:folder-outline"
+                  height="10"
+                />
               </button>
               <button
                 class="vp-btn vp-btn--ghost vp-btn--xs"
@@ -105,7 +112,10 @@
                 :disabled="cloning || allPathsList.length <= 1"
                 @click="removeLocalPath(idx)"
               >
-                <Icon icon="mdi:delete-outline" height="10" />
+                <Icon
+                  icon="mdi:delete-outline"
+                  height="10"
+                />
               </button>
             </div>
           </div>
@@ -115,7 +125,10 @@
             :disabled="cloning"
             @click="addLocalPath"
           >
-            <Icon icon="mdi:plus" height="10" />
+            <Icon
+              icon="mdi:plus"
+              height="10"
+            />
             <span>{{ i18n.addLocalPath }}</span>
           </button>
         </div>
@@ -170,7 +183,10 @@
             :title="i18n.help"
             @click="showHelp = !showHelp"
           >
-            <Icon icon="mdi:help-circle-outline" height="10" />
+            <Icon
+              icon="mdi:help-circle-outline"
+              height="10"
+            />
           </button>
           <!-- 帮助说明弹层 -->
           <div
@@ -179,14 +195,20 @@
             @click.stop
           >
             <div class="gp-help-header">
-              <Icon icon="mdi:information-outline" height="12" />
+              <Icon
+                icon="mdi:information-outline"
+                height="12"
+              />
               <!-- 弹层标题："帮助说明" -->
               <span>{{ i18n.help }}</span>
               <button
                 class="vp-btn vp-btn--ghost vp-btn--xs gp-help-close"
                 @click="showHelp = false"
               >
-                <Icon icon="mdi:close" height="10" />
+                <Icon
+                  icon="mdi:close"
+                  height="10"
+                />
               </button>
             </div>
             <div class="gp-help-body">
@@ -195,7 +217,11 @@
                 :key="item.icon"
                 class="gp-help-item"
               >
-                <Icon :icon="item.icon" height="12" class="gp-help-item-icon" />
+                <Icon
+                  :icon="item.icon"
+                  height="12"
+                  class="gp-help-item-icon"
+                />
                 <!-- 帮助条目正文（本地路径/仓库链接/Git 远程/数据持久化说明） -->
                 <p>{{ item.text }}</p>
               </div>
@@ -237,7 +263,8 @@ import type {
   GitPushManager,
   GitRemoteInfo,
 } from "../../types"
-import { PLATFORM_META } from "../../types"
+import type { RemoteRowItem } from "./EditableRemoteList.vue"
+import type { SelectOption } from "@/components/Select.vue"
 import { Icon } from "@iconify/vue"
 import { showMessage } from "siyuan"
 import {
@@ -249,17 +276,21 @@ import {
   watch,
 } from "vue"
 import Input from "@/components/Input.vue"
-import type { SelectOption } from "@/components/Select.vue"
-import type { RemoteRowItem } from "./EditableRemoteList.vue"
-import EditableRemoteList from "./EditableRemoteList.vue"
-import CloneLogPanel from "./CloneLogPanel.vue"
-import { getCurrentDeviceName, hasPlatformRemote, resolveRemotePlatform, resolveValidPathFromPaths } from "../../utils"
-import { getErrorMessage } from "@/utils/stringUtils"
 import { copyToClipboard } from "@/utils/domUtils"
 import { pickDirectory } from "@/utils/electronDialog"
+import { getErrorMessage } from "@/utils/stringUtils"
 import { useCloneLog } from "../../composables/useCloneLog"
 import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
 import { usePathRows } from "../../composables/usePathRows"
+import { PLATFORM_META } from "../../types"
+import {
+  getCurrentDeviceName,
+  hasPlatformRemote,
+  resolveRemotePlatform,
+  resolveValidPathFromPaths,
+} from "../../utils"
+import CloneLogPanel from "./CloneLogPanel.vue"
+import EditableRemoteList from "./EditableRemoteList.vue"
 
 
 const props = defineProps<{
@@ -269,9 +300,9 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  "close": []
-  "saved": [] // 通知父组件刷新列表并关闭弹窗
-  "urlsUpdated": [] // 通知父组件刷新列表（不关闭弹窗）
+  close: []
+  saved: [] // 通知父组件刷新列表并关闭弹窗
+  urlsUpdated: [] // 通知父组件刷新列表（不关闭弹窗）
 }>()
 
 // 弹窗打开时自动聚焦遮罩，使 Esc 关闭生效
@@ -331,7 +362,10 @@ const repoLinkRows = computed<RemoteRowItem[]>(() =>
 const linkAddOptions = computed<SelectOption[]>(() =>
   PLATFORM_META
     .filter((pl) => !urlInputs[pl.urlProp])
-    .map((pl) => ({ value: pl.key, label: `${pl.label}${props.i18n.notConfiguredSuffix}` })),
+    .map((pl) => ({
+      value: pl.key,
+      label: `${pl.label}${props.i18n.notConfiguredSuffix}`,
+    })),
 )
 
 /** 将 urlInputs 全量持久化，返回是否成功（失败写入 repoLinkError） */
@@ -400,10 +434,13 @@ async function downloadRepoLink(platform: string): Promise<boolean> {
       if (!isUnmounted.value) { cloneLog.append(chunk) }
     })
     if (isUnmounted.value) { return false }
-    allPathsList.value.push({ path: clonedPath, device: getCurrentDeviceName() })
+    const deviceName = getCurrentDeviceName()
+    allPathsList.value.push({
+      path: clonedPath,
+      device: deviceName,
+    })
     // 立即持久化全部路径行（首行为主路径），并通知父组件刷新列表
     const payload = pathsToPayload()
-    const deviceName = getCurrentDeviceName()
     const patch = payload
       ? {
           path: payload.path,
@@ -469,7 +506,10 @@ const remoteRows = computed<RemoteRowItem[]>(() =>
 const remoteOptions = computed<SelectOption[]>(() =>
   PLATFORM_META
     .filter((pl) => !hasPlatformRemote(remoteList.value, pl.key))
-    .map((pl) => ({ value: pl.key, label: pl.label })),
+    .map((pl) => ({
+      value: pl.key,
+      label: pl.label,
+    })),
 )
 
 /** 当前编辑表单解析出的有效仓库路径（基于实时路径行，而非已持久化的 project，确保输入路径后立即用于远程检测） */
@@ -477,7 +517,7 @@ function currentRepoPath(strict = false): string {
   return resolveValidPathFromPaths(allPathsList.value.map((r) => r.path), { strict })
 }
 
-async function loadRemotes() {
+async function loadRemotes(): Promise<void> {
   if (!project.value) { return }
   const seq = ++remoteDetectSeq
   const path = currentRepoPath()
@@ -545,10 +585,22 @@ function copyRemoteUrl(name: string): void {
 
 // ── 帮助项（文案来自 i18n 分片 gitPush.json 的 help* 键）──
 const helpItems = [
-  { icon: "mdi:folder-outline", text: props.i18n.helpLocalPaths },
-  { icon: "mdi:link-variant", text: props.i18n.helpRepoLinks },
-  { icon: "mdi:source-repository", text: props.i18n.helpGitRemotes },
-  { icon: "mdi:database-outline", text: props.i18n.helpPersistence },
+  {
+    icon: "mdi:folder-outline",
+    text: props.i18n.helpLocalPaths,
+  },
+  {
+    icon: "mdi:link-variant",
+    text: props.i18n.helpRepoLinks,
+  },
+  {
+    icon: "mdi:source-repository",
+    text: props.i18n.helpGitRemotes,
+  },
+  {
+    icon: "mdi:database-outline",
+    text: props.i18n.helpPersistence,
+  },
 ]
 
 // ── 初始化：从 manager 加载项目数据 ──
@@ -609,7 +661,7 @@ onUnmounted(() => {
 })
 
 // ── 保存 ──
-async function save() {
+async function save(): Promise<void> {
   if (!project.value || saving.value) { return }
   const payload = pathsToPayload()
   saving.value = true

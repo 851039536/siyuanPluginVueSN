@@ -112,6 +112,7 @@ export default class PluginSample extends Plugin {
     "__toolCollection", // 工具合集（Vue app + 容器 DOM）
     "__docNavigation", // 文档层级导航（IntersectionObserver + 事件监听 + Vue app）
     "__superPanel", // 超级面板（持久 Modal + 事件监听器）
+    "__websiteNavigation", // 网站导航（非持久 Modal，卸载时清理打开的 DOM）
   ] as const
 
   onload() {

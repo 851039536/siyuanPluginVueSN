@@ -15,11 +15,12 @@
           <span
             class="entry-category-tag"
             :style="{
-              backgroundColor: `${categoryColor || '#b0aea5'}20`,
-              color: categoryColor || '#b0aea5',
+              backgroundColor: `${category.color}20`,
+              color: category.color,
             }"
           >
-            {{ categoryName }}
+            <!-- 分类/未分类 -->
+            {{ category.name }}
           </span>
         </div>
         <div
@@ -40,6 +41,7 @@
         </div>
       </div>
       <div class="entry-actions">
+        <!-- 复制网址 -->
         <Button
           icon="contentCopy"
           variant="ghost"
@@ -47,6 +49,7 @@
           :title="i18n.copyUrl"
           @click="emit('copyUrl', entry.url)"
         />
+        <!-- 编辑网站 -->
         <Button
           icon="edit"
           variant="ghost"
@@ -54,6 +57,7 @@
           :title="i18n.editWebsite"
           @click="emit('edit', entry)"
         />
+        <!-- 删除网站 -->
         <Button
           icon="delete"
           variant="ghost"
@@ -71,14 +75,18 @@ import type {
   I18n,
   WebsiteEntry,
 } from "../types"
+import { computed } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import {
+  DEFAULT_CATEGORY_COLOR,
+  DEFAULT_CATEGORY_ID,
+} from "../types/constants"
+import { getCategoryById } from "../composables/useWebsiteNavigation"
 
-defineProps<{
+const props = defineProps<{
   entry: WebsiteEntry
   i18n: I18n
-  categoryColor: string
-  categoryName: string
 }>()
 
 const emit = defineEmits<{
@@ -87,4 +95,12 @@ const emit = defineEmits<{
   (e: "copyUrl", url: string): void
   (e: "openUrl", url: string): void
 }>()
+
+const category = computed(() =>
+  getCategoryById(props.entry.category) ?? {
+    id: DEFAULT_CATEGORY_ID,
+    name: props.i18n.uncategorized ?? "",
+    color: DEFAULT_CATEGORY_COLOR,
+  },
+)
 </script>

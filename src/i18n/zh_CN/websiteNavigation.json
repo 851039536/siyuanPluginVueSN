@@ -35,7 +35,8 @@
     "saveFailed": "保存失败",
     "deleteFailed": "删除失败",
     "urlCopied": "网址已复制",
-    "defaultBadge": "默认"
+    "defaultBadge": "默认",
+    "uncategorized": "未分类"
   },
   "enableWebsiteNavigation": "启用网站导航功能",
   "enableWebsiteNavigationDesc": "管理常用网站链接，支持分类筛选和快捷访问"

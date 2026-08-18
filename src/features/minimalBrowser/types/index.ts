@@ -28,6 +28,9 @@ export interface I18n {
   unfavorite?: string
   favoritesTitle?: string
   noFavorites?: string
+  resizeSidebar?: string
+  collapseSidebar?: string
+  expandSidebar?: string
   saveFavoriteTitle?: string
   favoriteName?: string
   favoriteNamePlaceholder?: string

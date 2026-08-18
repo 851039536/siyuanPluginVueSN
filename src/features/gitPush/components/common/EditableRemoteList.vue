@@ -194,21 +194,34 @@ watch(() => props.addOptions, (opts) => {
   }
 }, { immediate: true })
 
+/** 异步操作成功后且组件未卸载时执行收敛动作 */
+async function runIfAlive(op: () => Promise<boolean>, done: () => void): Promise<void> {
+  if (await op() && !disposed) {
+    done()
+  }
+}
+
 async function submitAdd(): Promise<void> {
   if (!newKey.value || !newUrl.value.trim()) {
     return
   }
   // 成功才清空 URL 输入，失败保留以便修正后重试
-  if (await props.onAdd(newKey.value, newUrl.value.trim()) && !disposed) {
-    newUrl.value = ""
-  }
+  await runIfAlive(
+    () => props.onAdd(newKey.value, newUrl.value.trim()),
+    () => {
+      newUrl.value = ""
+    },
+  )
 }
 
 async function submitEdit(key: string): Promise<void> {
   // 成功才退出编辑态，失败保留输入并展示错误
-  if (await props.onSaveEdit(key, editUrl.value) && !disposed) {
-    editKey.value = ""
-  }
+  await runIfAlive(
+    () => props.onSaveEdit(key, editUrl.value),
+    () => {
+      editKey.value = ""
+    },
+  )
 }
 
 async function submitDownload(key: string): Promise<void> {

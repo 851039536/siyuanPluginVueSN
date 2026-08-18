@@ -17,22 +17,8 @@
               height="12"
             />
           </button>
-          <input
-            v-if="editingName"
-            v-model="nameInput"
-            class="gp-card-name-input"
-            @blur="saveNameEdit"
-            @keyup.enter="($event.target as HTMLInputElement).blur()"
-            @keyup.escape="cancelNameEdit"
-            @click.stop
-          />
-          <!-- 项目名（悬停提示："点击修改名称"，含搜索命中高亮分段） -->
-          <span
-            v-else
-            class="gp-card-name"
-            :title="i18n.clickToRename"
-            @click.stop="startNameEdit"
-          ><template
+          <!-- 项目名（含搜索命中高亮分段） -->
+          <span class="gp-card-name"><template
             v-for="(seg, i) in nameSegments"
             :key="i"
           ><span
@@ -880,16 +866,11 @@ const emit = defineEmits<{
 /** 项目名搜索高亮分段（按当前 searchQuery 切分） */
 const nameSegments = computed(() => highlightSegments(props.project.name, props.searchQuery || ""))
 
-// ── 卡片本地动作（行内改名 / IDE 删除确认 / 复制链接，服务经 CardServices 注入）──
+// ── 卡片本地动作（IDE 删除确认 / 复制链接）──
 const {
-  editingName,
-  nameInput,
-  startNameEdit,
-  cancelNameEdit,
-  saveNameEdit,
   confirmingDelName,
   handleCopyUrl,
-} = useCardActions({ project: () => props.project, i18n: props.i18n })
+} = useCardActions({ i18n: props.i18n })
 
 // ── 卡片自持 Tab 数据（log/branches/stash/tags/冲突/diff/md，经 manager 直取 + 父层信号重载）──
 const {

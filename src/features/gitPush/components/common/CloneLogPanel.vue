@@ -18,7 +18,10 @@
         class="vp-btn vp-btn--ghost vp-btn--sm gp-clone-log-close"
         @click="$emit('clear')"
       >
-        <Icon icon="mdi:close" height="12" />
+        <Icon
+          icon="mdi:close"
+          height="12"
+        />
       </button>
     </div>
     <div
@@ -38,7 +41,11 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
-import { nextTick, ref, watch } from "vue"
+import {
+  onUnmounted,
+  ref,
+  watch,
+} from "vue"
 
 const props = defineProps<{
   lines: string[]
@@ -52,11 +59,26 @@ defineEmits<{
 
 const bodyRef = ref<HTMLElement | null>(null)
 
+// 高频进度输出时合并为每帧最多滚动一次，避免 deep watch 触发大量 nextTick/布局抖动
+let scrollRafId: number | null = null
+
+function scheduleScrollToBottom(): void {
+  if (scrollRafId !== null) { return }
+  scrollRafId = requestAnimationFrame(() => {
+    scrollRafId = null
+    if (bodyRef.value) {
+      bodyRef.value.scrollTop = bodyRef.value.scrollHeight
+    }
+  })
+}
+
 // 日志内容变化后自动滚动到底部（进度行原地刷新也触发）
-watch(() => props.lines, async () => {
-  await nextTick()
-  if (bodyRef.value) {
-    bodyRef.value.scrollTop = bodyRef.value.scrollHeight
+watch(() => props.lines, scheduleScrollToBottom, { deep: true })
+
+onUnmounted(() => {
+  if (scrollRafId !== null) {
+    cancelAnimationFrame(scrollRafId)
+    scrollRafId = null
   }
-}, { deep: true })
+})
 </script>

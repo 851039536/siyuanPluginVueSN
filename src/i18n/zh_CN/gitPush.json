@@ -635,6 +635,7 @@
     "checkBranchStatus": "检查当前分支状态",
     "ruleFixDateChoice": "选择提交时间处理方式",
     "ruleFixPreserveDate": "保留原始提交时间",
-    "ruleFixDefaultDate": "按当前时间提交"
+    "ruleFixDefaultDate": "按当前时间提交",
+    "ruleCheckReasonNotChinese": "描述非中文"
   }
 }

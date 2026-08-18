@@ -105,7 +105,10 @@ export class CommitMsgGenerator {
         `请修正以下不符合提交规则的 Git 提交信息。
 规则：type(scope)!: 描述
 type 必须为 ${COMMIT_TYPE_VALUES.join("/")} 之一。
-要求：保留原意；只输出一行修正后的提交信息，不要输出解释、分析、Markdown 或任何别的内容。
+要求：
+1. 描述部分必须是中文（例如：fix: 修复登录失败问题）
+2. 保留原意，只输出一行修正后的提交信息
+3. 不要输出解释、分析、Markdown 或任何别的内容
 
 原提交信息：${currentMessage}
 

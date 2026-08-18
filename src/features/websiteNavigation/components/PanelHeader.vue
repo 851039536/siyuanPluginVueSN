@@ -8,10 +8,12 @@
         name="browser"
         :size="20"
       />
+      <!-- 面板标题 -->
       <h2>{{ i18n.panelTitle }}</h2>
       <span class="entry-count">{{ count }}/{{ totalCount }}</span>
     </div>
     <div class="header-actions">
+      <!-- 添加网站 -->
       <Button
         icon="add"
         variant="primary"

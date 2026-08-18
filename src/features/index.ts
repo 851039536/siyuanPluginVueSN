@@ -99,8 +99,7 @@ export {
 // unitConverter 已迁移至 toolCollection/tools/unitConverter/
 // wordQuery 已迁移至 toolCollection/tools/wordQuery/
 export { registerVideo } from "./video"
-export { registerWebsiteNavigation } from "./websiteNavigation"
-export { showWebsiteNavigation } from "./websiteNavigation/types"
+export { registerWebsiteNavigation, showWebsiteNavigation } from "./websiteNavigation"
 
 /**
  * 白名单：仅用于 UI 配置展示、不需要 register 函数的功能

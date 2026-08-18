@@ -35,7 +35,8 @@
     "saveFailed": "Save failed",
     "deleteFailed": "Delete failed",
     "urlCopied": "URL copied",
-    "defaultBadge": "Default"
+    "defaultBadge": "Default",
+    "uncategorized": "Uncategorized"
   },
   "enableWebsiteNavigation": "Enable Website Navigation",
   "enableWebsiteNavigationDesc": "Manage frequently-used website links with categories and quick access"

@@ -1,10 +1,18 @@
+/**
+ * 网站导航 — 数据持久化层
+ */
+import type { Plugin } from "siyuan"
 import type {
   CreateWebsiteDTO,
   UpdateWebsiteDTO,
   WebsiteCategory,
   WebsiteEntry,
 } from "./index"
-import { Plugin } from "siyuan"
+import {
+  DEFAULT_CATEGORY_COLOR,
+  DEFAULT_CATEGORY_ID,
+  PRESET_CATEGORY_COLORS,
+} from "./constants"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 
@@ -15,29 +23,29 @@ export const STORAGE_KEYS = {
 
 const DEFAULT_CATEGORIES: WebsiteCategory[] = [
   {
-    id: "default",
+    id: DEFAULT_CATEGORY_ID,
     name: "默认",
-    color: "#b0aea5",
+    color: DEFAULT_CATEGORY_COLOR,
   },
   {
     id: "dev",
     name: "开发",
-    color: "#3b82f6",
+    color: PRESET_CATEGORY_COLORS[0],
   },
   {
     id: "tools",
     name: "工具",
-    color: "#10b981",
+    color: PRESET_CATEGORY_COLORS[1],
   },
   {
     id: "social",
     name: "社交",
-    color: "#f59e0b",
+    color: PRESET_CATEGORY_COLORS[2],
   },
   {
     id: "media",
     name: "媒体",
-    color: "#ef4444",
+    color: PRESET_CATEGORY_COLORS[3],
   },
 ]
 
@@ -53,30 +61,13 @@ export class WebsiteNavigationStorage {
     this.categories = new TypedStorage(this.storage, STORAGE_KEYS.CATEGORIES, DEFAULT_CATEGORIES)
   }
 
-  async init(): Promise<void> {
-    const cats = await this.categories.load()
-    if (!cats || cats.length === 0) {
-      await this.categories.save(DEFAULT_CATEGORIES)
-    }
-  }
-
   async getAllEntries(): Promise<WebsiteEntry[]> {
-    try {
-      const data = await this.entries.loadOrDefault()
-      return data
-    } catch (error) {
-      console.error("Failed to load website entries:", error)
-      return []
-    }
+    const data = await this.entries.loadOrDefault()
+    return data
   }
 
   async getCategories(): Promise<WebsiteCategory[]> {
-    try {
-      return await this.categories.loadOrDefault()
-    } catch (error) {
-      console.error("Failed to load categories:", error)
-      return DEFAULT_CATEGORIES
-    }
+    return this.categories.loadOrDefault()
   }
 
   async createEntry(data: CreateWebsiteDTO): Promise<WebsiteEntry> {
@@ -85,7 +76,7 @@ export class WebsiteNavigationStorage {
       id: `ws-${now}`,
       name: data.name,
       url: data.url,
-      category: data.category || "default",
+      category: data.category || DEFAULT_CATEGORY_ID,
       description: data.description,
       createdAt: now,
       updatedAt: now,
@@ -93,25 +84,33 @@ export class WebsiteNavigationStorage {
 
     const entries = await this.getAllEntries()
     entries.push(entry)
-    await this.entries.save(entries)
+    const saved = await this.entries.save(entries)
+    if (!saved) {
+      throw new Error("Failed to save website entries")
+    }
 
     return entry
   }
 
-  async updateEntry(id: string, data: UpdateWebsiteDTO): Promise<boolean> {
+  async updateEntry(id: string, data: UpdateWebsiteDTO): Promise<WebsiteEntry | null> {
     const entries = await this.getAllEntries()
     const index = entries.findIndex((e) => e.id === id)
 
-    if (index === -1) return false
+    if (index === -1) return null
 
-    entries[index] = {
+    const updated: WebsiteEntry = {
       ...entries[index],
       ...data,
       updatedAt: Date.now(),
     }
+    entries[index] = updated
 
-    await this.entries.save(entries)
-    return true
+    const saved = await this.entries.save(entries)
+    if (!saved) {
+      throw new Error("Failed to save website entries")
+    }
+
+    return updated
   }
 
   async deleteEntry(id: string): Promise<boolean> {
@@ -120,11 +119,15 @@ export class WebsiteNavigationStorage {
 
     if (filtered.length === entries.length) return false
 
-    await this.entries.save(filtered)
+    const saved = await this.entries.save(filtered)
+    if (!saved) {
+      throw new Error("Failed to save website entries")
+    }
+
     return true
   }
 
-  async saveCategories(categories: WebsiteCategory[]): Promise<void> {
-    await this.categories.save(categories)
+  async saveCategories(categories: WebsiteCategory[]): Promise<boolean> {
+    return this.categories.save(categories)
   }
 }

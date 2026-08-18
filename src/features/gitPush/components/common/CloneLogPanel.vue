@@ -63,7 +63,9 @@ const bodyRef = ref<HTMLElement | null>(null)
 let scrollRafId: number | null = null
 
 function scheduleScrollToBottom(): void {
-  if (scrollRafId !== null) { return }
+  if (scrollRafId !== null) {
+    return
+  }
   scrollRafId = requestAnimationFrame(() => {
     scrollRafId = null
     if (bodyRef.value) {

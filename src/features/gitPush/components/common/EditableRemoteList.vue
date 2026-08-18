@@ -183,7 +183,9 @@ const newUrl = ref("")
 const downloadingKey = ref("")
 // 组件卸载后跳过异步回调状态写入，避免克隆/保存等操作在弹窗关闭后污染已卸载实例
 let disposed = false
-onUnmounted(() => { disposed = true })
+onUnmounted(() => {
+  disposed = true
+})
 
 // 当前选中项被占用/移除后自动切换到第一个可用选项（含首次初始化）
 watch(() => props.addOptions, (opts) => {
@@ -193,7 +195,9 @@ watch(() => props.addOptions, (opts) => {
 }, { immediate: true })
 
 async function submitAdd(): Promise<void> {
-  if (!newKey.value || !newUrl.value.trim()) { return }
+  if (!newKey.value || !newUrl.value.trim()) {
+    return
+  }
   // 成功才清空 URL 输入，失败保留以便修正后重试
   if (await props.onAdd(newKey.value, newUrl.value.trim()) && !disposed) {
     newUrl.value = ""
@@ -208,7 +212,9 @@ async function submitEdit(key: string): Promise<void> {
 }
 
 async function submitDownload(key: string): Promise<void> {
-  if (!props.onDownload || downloadingKey.value) { return }
+  if (!props.onDownload || downloadingKey.value) {
+    return
+  }
   downloadingKey.value = key
   try {
     await props.onDownload(key)

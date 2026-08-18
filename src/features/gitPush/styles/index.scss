@@ -115,14 +115,8 @@
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   margin-bottom: 1px;
-  cursor: pointer;
   border-radius: $radius-sm;
   padding: 1px 4px;
-  transition: background 0.15s;
-
-  &:hover {
-    background: var(--b3-theme-primary-lightest);
-  }
 
   // 搜索关键词高亮片段
   .gp-hl {
@@ -130,22 +124,6 @@
     color: var(--b3-theme-primary);
     border-radius: $radius-sm;
   }
-}
-
-.gp-card-name-input {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-  margin-bottom: 2px;
-  padding: 1px 4px;
-  border: 1px solid var(--b3-theme-primary);
-  border-radius: $radius-sm;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  width: calc(100% - 10px);
-  max-width: 220px;
-  font-family: inherit;
-  outline: 2px solid var(--b3-theme-primary-lightest);
-  outline-offset: 0;
 }
 
 .gp-card-note {

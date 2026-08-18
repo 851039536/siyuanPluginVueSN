@@ -102,7 +102,8 @@
   bottom: 100%;
   left: 0;
   margin-bottom: 8px;
-  width: 340px;
+  width: 420px;
+  max-width: min(420px, calc(100vw - 48px));
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-md;
@@ -113,18 +114,20 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 12px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--b3-border-color);
-  font-size: $font-size-xs;
+  font-size: 0.875rem;
   font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-surface);
 }
 
 .gp-help-body {
-  padding: 10px 12px;
+  padding: 12px 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  max-height: min(420px, calc(100vh - 220px));
+  overflow-y: auto;
 }
 
 .gp-help-item {
@@ -134,15 +137,15 @@
 
   .gp-help-item-icon {
     flex-shrink: 0;
-    margin-top: 2px;
+    margin-top: 3px;
     opacity: 0.45;
     color: var(--b3-theme-on-surface);
   }
 
   p {
     margin: 0;
-    font-size: $font-size-2xs;
-    line-height: 1.55;
+    font-size: 0.8125rem;
+    line-height: 1.65;
     color: var(--b3-theme-on-surface-light);
     white-space: pre-line;
   }
@@ -151,6 +154,6 @@
 .gp-help-footer {
   display: flex;
   justify-content: flex-end;
-  padding: 8px 12px;
+  padding: 10px 16px;
   border-top: 1px solid var(--b3-border-color);
 }

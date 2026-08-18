@@ -32,6 +32,8 @@ export function checkCommitRule(message: string): CommitRuleReasonKey | null {
   if (afterColon.length > 1 && afterColon[1] === " ") return "badSeparator"
   const subject = afterColon.slice(1)
   if (!subject) return "emptySubject"
+  // 描述必须包含中文（type/scope 保持英文 conventional commit 格式）
+  if (!/[一-鿿]/.test(subject)) return "notChinese"
   return null
 }
 
@@ -80,6 +82,8 @@ export function fixCommitMessageHeuristically(message: string): string {
 
   const subject = rest.trim()
   if (!subject) return ""
+  // 无法自动生成中文描述时视为不可修复，交由 AI 处理
+  if (!/[一-鿿]/.test(subject)) return ""
 
   const scopePart = scope ? `(${scope})` : ""
   const bangPart = bang || ""

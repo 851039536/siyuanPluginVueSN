@@ -635,6 +635,7 @@
     "checkBranchStatus": "Check Branch Status",
     "ruleFixDateChoice": "Choose how to set commit dates",
     "ruleFixPreserveDate": "Keep original commit dates",
-    "ruleFixDefaultDate": "Use current time"
+    "ruleFixDefaultDate": "Use current time",
+    "ruleCheckReasonNotChinese": "Description not in Chinese"
   }
 }

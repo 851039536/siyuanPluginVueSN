@@ -1,15 +1,19 @@
 // 项目/分类/标签的持久化 CRUD 与内存缓存
 import type {
   GitProject,
+  GitPushStorage,
   GitRemoteInfo,
   ProjectCategory,
   ProjectPathExtras,
 } from "../types/storage"
-import { UNGROUPED_ID } from "../types/storage"
-import { PLATFORM_META } from "../types/meta"
-import type { GitPushStorage } from "../types/storage"
 import type { GitExecutor } from "./GitExecutor"
-import { PLATFORM_FLAG_BY_KEY, getCurrentDeviceName, resolveValidPath } from "../utils"
+import { PLATFORM_META } from "../types/meta"
+import { UNGROUPED_ID } from "../types/storage"
+import {
+  getCurrentDeviceName,
+  PLATFORM_FLAG_BY_KEY,
+  resolveValidPath,
+} from "../utils"
 
 /** 递增计数器（与时间戳组合成唯一 ID，避免同毫秒碰撞） */
 let idCounter = 0
@@ -58,14 +62,20 @@ export class ProjectStore {
     return projects.map((p) => ({ ...p }))
   }
 
-  /** 统一「找项目 → mutate → 决定是否保存」流程，消除各写方法的 find/save/invalidate 重复。
-   * mutate 返回是否实际修改（false 表示无需持久化，如 appendTag 去重后无变化） */
+  /**
+   * 统一「找项目 → mutate → 决定是否保存」流程，消除各写方法的 find/save/invalidate 重复。
+   * mutate 返回是否实际修改（false 表示无需持久化，如 appendTag 去重后无变化）
+   */
   private async mutateProject(id: string, mutate: (p: GitProject) => boolean): Promise<{ projects: GitProject[], project: GitProject, changed: boolean } | null> {
     const projects = await this.getProjectsForWrite()
     const project = projects.find((p) => p.id === id)
     if (!project) return null
     const changed = mutate(project)
-    return { projects, project, changed }
+    return {
+      projects,
+      project,
+      changed,
+    }
   }
 
   /** 持久化并失效缓存（mutateProject 后统一调用） */
@@ -210,11 +220,20 @@ export class ProjectStore {
     return this.storage.tags.loadOrDefault()
   }
 
-  /** 重新检测项目远程仓库并更新 */
-  async refreshRemotes(id: string): Promise<GitProject | null> {
+  /** 重新检测项目远程仓库并更新（path 缺省时按项目持久化路径检测） */
+  async refreshRemotes(id: string, path?: string): Promise<GitProject | null> {
     const r = await this.mutateProject(id, () => true)
     if (!r) return null
-    this.applyRemotesToProject(r.project, await this.detectRemotes(resolveValidPath(r.project)))
+    this.applyRemotesToProject(r.project, await this.detectRemotes(path || resolveValidPath(r.project)))
+    await this.saveProjects(r.projects)
+    return r.project
+  }
+
+  /** 将已检测的远程列表写入项目（避免调用方为"按指定路径刷新"重复执行 git remote -v） */
+  async applyRemotes(id: string, remotes: GitRemoteInfo[]): Promise<GitProject | null> {
+    const r = await this.mutateProject(id, () => true)
+    if (!r) return null
+    this.applyRemotesToProject(r.project, remotes)
     await this.saveProjects(r.projects)
     return r.project
   }
@@ -282,7 +301,12 @@ export class ProjectStore {
   async addCategory(name: string, color = "#4a9eff"): Promise<ProjectCategory> {
     const cats = await this.getCategories()
     idCounter++
-    const cat: ProjectCategory = { id: `${Date.now().toString(36)}-${idCounter}`, name, color, order: cats.length }
+    const cat: ProjectCategory = {
+      id: `${Date.now().toString(36)}-${idCounter}`,
+      name,
+      color,
+      order: cats.length,
+    }
     cats.push(cat)
     await this.storage.categories.save(cats)
     return cat

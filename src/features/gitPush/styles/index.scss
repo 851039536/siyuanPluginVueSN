@@ -1243,11 +1243,19 @@
 // ========== 编辑弹窗 ==========
 .gp-edit-row {
   display: flex;
+  align-items: flex-end;
   gap: 10px;
+}
+
+.gp-edit-name {
+  flex: 1;
+  min-width: 0;
 }
 
 .gp-edit-toggles {
   display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
 }
 
 .gp-toggle-row {
@@ -1255,6 +1263,7 @@
   gap: $spacing-1;
   align-items: center;
   height: 32px;
+  flex-wrap: nowrap;
 }
 
 .gp-toggle-chip {
@@ -1270,6 +1279,8 @@
   cursor: pointer;
   transition: opacity 0.15s, border-color 0.15s, background 0.15s;
   opacity: 0.55;
+  flex-shrink: 0;
+  white-space: nowrap;
 
   &:hover { opacity: 0.85; }
 

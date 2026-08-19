@@ -87,11 +87,14 @@
           :selector-options="getSelectorOptions(feature.id)"
           :selected-option="getSelectedOption(feature.id)"
           :status-labels="statusLabels"
+          :color-value="getColorValue(feature.id)"
+          :color-label="feature.id === 'themeColor' ? (props.themeColorI18n.customColorLabel || '自定义颜色') : undefined"
           @action="emit('action', $event)"
           @toggle="emit('toggleFeature', feature.id, $event)"
           @select="emit('selectFeature', feature.id, $event)"
           @status-change="emit('statusFeature', feature.id, $event)"
           @toggle-sub-feature="emit('toggleSubFeature', $event)"
+          @color-change="(value) => emit('colorChange', feature.id, value)"
         />
       </TransitionGroup>
     </div>
@@ -144,6 +147,7 @@ interface Emits {
   (e: "selectFeature", featureId: string, value: string): void
   (e: "statusFeature", featureId: string, status: string): void
   (e: "toggleSubFeature", featureId: string): void
+  (e: "colorChange", featureId: string, value: string): void
 }
 
 const props = defineProps<Props>()
@@ -235,13 +239,18 @@ const statusLabels = computed<Record<string, string>>(() => ({
   minor: props.i18n.statusMinor || "",
 }))
 
-const themeSchemeOptions = computed<SelectorOption[]>(() =>
-  Object.entries(THEMES).map(([id, scheme]) => ({
+const themeSchemeOptions = computed<SelectorOption[]>(() => [
+  ...Object.entries(THEMES).map(([id, scheme]) => ({
     value: id,
     label: props.themeColorI18n[id] || scheme.name,
     color: scheme.primary,
   })),
-)
+  {
+    value: "custom",
+    label: props.themeColorI18n.custom || "自定义",
+    color: props.settings.customThemeColor || "#d97757",
+  },
+])
 
 const getSelectorOptions = (featureId: string): SelectorOption[] => {
   if (featureId === "themeColor") return themeSchemeOptions.value
@@ -254,6 +263,11 @@ const getSelectedOption = (featureId: string): string => {
     return isThemeColorSchemeId(scheme) ? scheme : DEFAULT_THEME_SCHEME
   }
   return ""
+}
+
+const getColorValue = (featureId: string): string | undefined => {
+  if (featureId === "themeColor") return props.settings.customThemeColor || "#d97757"
+  return undefined
 }
 
 </script>

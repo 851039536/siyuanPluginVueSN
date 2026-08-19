@@ -65,7 +65,8 @@ export interface PluginSettings {
   enableQuickNote: boolean // 是否启用速记功能
   enableQuickNoteAutoOpen: boolean // 速记子开关：启动时自动打开速记弹窗
   featureStatus: Record<string, string> // 功能状态标识: featureId -> 'stable' | 'needsFix' | 'critical' | 'minor'
-  themeColorScheme: ThemeColorSchemeId // 主题色方案 ID（由 THEMES 注册表自动推导）
+  themeColorScheme: ThemeColorSchemeId // 主题色方案 ID（内置主题 + "custom"）
+  customThemeColor: string // 自定义主题色（schemeId 为 "custom" 时使用）
   videoCategories?: string[] // 视频分类列表
   compactMode: boolean // 是否启用全局紧凑模式
   compactModeDensity: 'moderate' | 'compact' | 'extreme' // 密度级别
@@ -137,6 +138,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableQuickNoteAutoOpen: false,
   featureStatus: {},
   themeColorScheme: "orange",
+  customThemeColor: "#d97757",
   videoCategories: ["默认分类", "教程", "演示", "其他"],
   compactMode: true,
   compactModeDensity: 'compact',

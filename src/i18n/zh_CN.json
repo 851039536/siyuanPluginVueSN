@@ -3437,7 +3437,9 @@
     "orange": "暖橙色",
     "github": "GitHub 蓝",
     "sakura": "樱花动漫",
-    "codex": "Codex"
+    "codex": "Codex",
+    "custom": "自定义",
+    "customColorLabel": "自定义颜色"
   },
   "toolCollection": "工具合集",
   "toolCollectionDesc": "底部面板集成多种实用小工具",

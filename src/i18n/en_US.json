@@ -3375,7 +3375,7 @@
     "skillsViewer": "Skills Viewer",
     "skillsViewerDesc": "View and manage AI coding tools Skills configuration files",
     "themeColor": "Theme Color",
-    "themeColorDesc": "Apply warm orange global theme color"
+    "themeColorDesc": "Override SiYuan CSS variables to switch global theme color"
   },
   "toggleSuperPanel": "Toggle Super Panel",
   "tableOfContents": "Index Plugin",
@@ -3433,7 +3433,7 @@
     "title": "Theme Color",
     "description": "Override SiYuan CSS variables for global theme color switching",
     "enableThemeColor": "Enable Theme Color",
-    "enableThemeColorDesc": "Apply a warm orange global theme color",
+    "enableThemeColorDesc": "Override SiYuan CSS variables to switch global theme color",
     "orange": "Warm Orange",
     "github": "GitHub Blue",
     "sakura": "Sakura Anime",

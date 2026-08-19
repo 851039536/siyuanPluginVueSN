@@ -6,8 +6,10 @@
  * 已统一迁移至各 feature 的 types/storage.ts，
  * 此处仅保留插件全局配置（PluginSettings）。
  */
+import type { ThemeColorSchemeId } from "@/features/themeColor"
 import { Plugin } from "siyuan"
 import { getNodeModules } from "@/utils/nodeModules"
+
 import {
   decryptSetting,
   encryptSetting,
@@ -63,7 +65,7 @@ export interface PluginSettings {
   enableQuickNote: boolean // 是否启用速记功能
   enableQuickNoteAutoOpen: boolean // 速记子开关：启动时自动打开速记弹窗
   featureStatus: Record<string, string> // 功能状态标识: featureId -> 'stable' | 'needsFix' | 'critical' | 'minor'
-  themeColorScheme: string // 主题色方案: 'orange' | 'github'
+  themeColorScheme: ThemeColorSchemeId // 主题色方案 ID（由 THEMES 注册表自动推导）
   videoCategories?: string[] // 视频分类列表
   compactMode: boolean // 是否启用全局紧凑模式
   compactModeDensity: 'moderate' | 'compact' | 'extreme' // 密度级别

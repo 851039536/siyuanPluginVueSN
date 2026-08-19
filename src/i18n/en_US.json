@@ -3773,6 +3773,8 @@
     "spanish": "Spanish",
     "enterTextToTranslate": "Enter text to translate, auto-translate after 2 seconds...",
     "swapLanguages": "Swap Languages",
+    "autoDetectCannotSwap": "Cannot swap when source language is auto-detect",
+    "translateFailed": "Translation failed",
     "translating": "Translating...",
     "translate": "Translate",
     "translationWillAppearHere": "Translation will appear here",

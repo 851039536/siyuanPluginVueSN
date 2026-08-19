@@ -4,10 +4,9 @@
  */
 
 export interface MatchResult {
-  success: boolean
   matches: MatchItem[]
+  /** 正则构造/执行错误信息（空输入与正常匹配均无 error） */
   error?: string
-  total: number
 }
 
 export interface MatchItem {
@@ -19,11 +18,11 @@ export interface MatchItem {
 /**
  * 安全执行正则匹配
  * @param pattern 正则表达式文本（不含定界符）
- * @param flags 标志字符串（g/i/m/s/u）
+ * @param flags 标志字符串（g/i/m/s）
  * @param text 测试文本
  */
 export function safeMatch(pattern: string, flags: string, text: string): MatchResult {
-  if (!pattern) return { success: false, matches: [], error: "empty", total: 0 }
+  if (!pattern) return { matches: [] }
 
   let regex: RegExp
   try {
@@ -32,10 +31,8 @@ export function safeMatch(pattern: string, flags: string, text: string): MatchRe
     regex = new RegExp(pattern, effectiveFlags)
   } catch (e) {
     return {
-      success: false,
       matches: [],
       error: e instanceof Error ? e.message : String(e),
-      total: 0,
     }
   }
 
@@ -56,8 +53,11 @@ export function safeMatch(pattern: string, flags: string, text: string): MatchRe
       if (match[0].length === 0) regex.lastIndex++
     }
   } catch {
-    return { success: false, matches: [], error: "Execution error", total: 0 }
+    return {
+      matches: [],
+      error: "Execution error",
+    }
   }
 
-  return { success: true, matches, total: matches.length }
+  return { matches }
 }

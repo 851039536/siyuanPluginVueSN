@@ -1,5 +1,20 @@
 @use '@/variables.scss' as *;
 
+// 输入框公共样式（pattern 输入框与测试文本 textarea 复用）
+@mixin rt-input-field {
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-background);
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  outline: none;
+
+  &:focus {
+    border-color: var(--b3-theme-primary);
+  }
+}
+
 .regex-tester {
   display: flex;
   flex-direction: column;
@@ -24,17 +39,7 @@
     .rt-pattern-input {
       flex: 1;
       padding: $spacing-1 $spacing-2;
-      border: 1px solid var(--b3-border-color);
-      border-radius: $vp-radius;
-      background: var(--b3-theme-surface);
-      color: var(--b3-theme-on-background);
-      font-family: $vp-mono;
-      font-size: $font-size-2xs;
-      outline: none;
-
-      &:focus {
-        border-color: var(--b3-theme-primary);
-      }
+      @include rt-input-field;
     }
 
     .rt-flags {
@@ -84,19 +89,9 @@
     textarea {
       flex: 1;
       resize: none;
-      border: 1px solid var(--b3-border-color);
-      border-radius: $vp-radius;
       padding: $spacing-2;
-      background: var(--b3-theme-surface);
-      color: var(--b3-theme-on-background);
-      font-family: $vp-mono;
-      font-size: $font-size-2xs;
       line-height: $line-height-normal;
-      outline: none;
-
-      &:focus {
-        border-color: var(--b3-theme-primary);
-      }
+      @include rt-input-field;
     }
   }
 

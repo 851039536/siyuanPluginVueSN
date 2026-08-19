@@ -1,16 +1,36 @@
 @use "../../../variables" as *;
 @use "./index.scss" as *;
 
-// ============ 通用可折叠区块 ============
+// ============ 折叠卡片基础样式（原共享 mixin 内联，仅本组件消费） ============
 .collapsible-section {
-  @include collapsible-section;
+  margin: 0 0px;
+  border-radius: 6px;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  background: var(--b3-theme-surface);
+  overflow: hidden;
 }
 
 .collapsible-toggle {
-  @include collapsible-toggle;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  padding: 6px 10px;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: var(--b3-theme-on-surface);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  user-select: none;
 
-  &.toggle-success svg {
-    color: var(--b3-theme-success);
+  svg {
+    color: var(--b3-theme-primary);
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    background: var(--b3-theme-surface-light);
   }
 }
 
@@ -30,5 +50,7 @@
 }
 
 .collapsible-body {
-  @include collapsible-body;
+  padding: 8px 10px 10px;
+  border-top: 1px solid var(--b3-theme-surface-lighter);
+  margin: 0 2px 4px;
 }

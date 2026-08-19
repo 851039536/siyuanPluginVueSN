@@ -68,12 +68,16 @@ export function useReview(deps: UseReviewDeps) {
     isReviewing.value = true
     reviewResult.value = null
 
-    reviewResult.value = await onReview(
-      userRequest,
-      generatedContent.value,
-      currentSkill.value || undefined,
-    )
-    isReviewing.value = false
+    try {
+      reviewResult.value = await onReview(
+        userRequest,
+        generatedContent.value,
+        currentSkill.value || undefined,
+      )
+    } finally {
+      // 无论成功/异常都复位审核态，避免 isReviewing 卡死导致 canApplyEdit 永久禁用
+      isReviewing.value = false
+    }
     // 新一轮审核完成，重置自动修复计数（上限按审核周期计）
     autoFixCount.value = 0
   }
@@ -82,9 +86,9 @@ export function useReview(deps: UseReviewDeps) {
    * 手动重新审核
    */
   const handleReReview = () => {
-    reviewResult.value = null
-    isReviewing.value = false
-    performReview()
+    if (!generatedContent.value) return
+    // 重新审核语义上等同强制审核：首次经"直接审查"进入时 enableReview 可能为关
+    performReview(undefined, true)
   }
 
   /**

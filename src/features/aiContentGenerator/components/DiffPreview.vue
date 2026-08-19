@@ -77,13 +77,18 @@ const checkTheme = () => {
   isDarkTheme.value = html.getAttribute("data-theme-mode") === "dark"
 }
 
-// 监听思源主题切换
+// 监听思源主题切换（RAF 节流，避免高频属性变化时重复执行）
 let observer: MutationObserver | null = null
+let themeCheckRaf: number | null = null
 
 onMounted(() => {
   checkTheme()
   observer = new MutationObserver(() => {
-    checkTheme()
+    if (themeCheckRaf !== null) return
+    themeCheckRaf = requestAnimationFrame(() => {
+      themeCheckRaf = null
+      checkTheme()
+    })
   })
   observer.observe(document.documentElement, {
     attributes: true,
@@ -93,6 +98,10 @@ onMounted(() => {
 
 onUnmounted(() => {
   observer?.disconnect()
+  if (themeCheckRaf !== null) {
+    cancelAnimationFrame(themeCheckRaf)
+    themeCheckRaf = null
+  }
 })
 
 const dmp = new DiffMatchPatch()

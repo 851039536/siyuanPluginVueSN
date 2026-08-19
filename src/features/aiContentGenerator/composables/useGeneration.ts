@@ -68,6 +68,8 @@ export function useGeneration(opts: UseGenerationOptions) {
   let rafId: number | null = null
   let streamingInCodeBlock = false
   let headingCount = 0
+  /** 组件卸载后禁止再调度 RAF（cleanupRaf 与 handleStop 竞态时防回调重新排队） */
+  let disposed = false
 
   // ===== 推理内容 =====
   const reasoningContent = ref("")
@@ -208,6 +210,7 @@ export function useGeneration(opts: UseGenerationOptions) {
 
   /** 默认流式输出回调（即时更新 generatedContent，RAF 节流更新 displayedContent） */
   const defaultOnChunk = (chunk: string) => {
+    if (disposed) return
     generatedContent.value += chunk
     chunkBuffer += chunk
     if (!rafId) {
@@ -217,6 +220,7 @@ export function useGeneration(opts: UseGenerationOptions) {
 
   /** 思考过程回调 */
   const defaultOnReasoningChunk = (chunk: string) => {
+    if (disposed) return
     reasoningBuffer += chunk
     if (!rafId) {
       rafId = requestAnimationFrame(flushChunkBuffer)
@@ -294,6 +298,9 @@ export function useGeneration(opts: UseGenerationOptions) {
     onSuccess?: () => void,
     execOptions: ExecuteGenerationOptions = {},
   ) => {
+    // 防重入：生成进行中忽略新的生成请求（Ctrl+Enter/连点快捷操作可绕过按钮禁用）
+    if (isGenerating.value) return
+
     const { skipReview = false, reviewUserRequest } = execOptions
     let failed = false
     startGeneration()
@@ -301,6 +308,12 @@ export function useGeneration(opts: UseGenerationOptions) {
       const options = buildOptions()
       const userInput = options.userInput
       await opts.onGenerate(options)
+      // 用户主动停止（signal 中止）时流可能已返回部分内容：
+      // 视为失败，不把半截内容写入对话历史、不触发审核
+      if (options.signal?.aborted) {
+        failed = true
+        return
+      }
       addConversationTurns(userInput)
       onSuccess?.()
     } catch (error) {
@@ -328,6 +341,7 @@ export function useGeneration(opts: UseGenerationOptions) {
 
   /** 清理 RAF（供 onUnmounted 调用） */
   const cleanupRaf = () => {
+    disposed = true
     if (rafId) {
       cancelAnimationFrame(rafId)
       rafId = null

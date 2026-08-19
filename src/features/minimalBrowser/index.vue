@@ -9,6 +9,8 @@
       @open-settings="showSettings = true"
       @toggle-favorite="handleToggleFavorite"
       @open-external="handleOpenExternal"
+      @embed-to-siyuan="handleEmbedToSiyuan"
+      @toggle-floating="handleToggleFloating"
       @invalid-url="handleInvalidUrl"
     />
 
@@ -139,6 +141,7 @@ import {
   sidebarResizing,
   useBrowserState,
 } from "./composables/useBrowserState"
+import { embedCurrentUrl } from "./composables/useEmbed"
 import type { I18n } from "./types"
 
 interface Props {
@@ -268,6 +271,42 @@ const handleOpenExternal = () => {
   } else {
     window.open(url, "_blank", "noopener,noreferrer")
   }
+}
+
+// ==================== 嵌入思源 ====================
+
+const embedding = ref(false)
+
+const handleEmbedToSiyuan = async () => {
+  const url = currentUrl.value
+  if (!url || embedding.value) return
+  embedding.value = true
+  try {
+    const result = await embedCurrentUrl(url)
+    if (result === "ok") {
+      showMessage(props.i18n.embedSuccess, 2000, "info")
+    } else if (result === "no-doc") {
+      showMessage(props.i18n.embedNoDoc, 3000, "error")
+    } else {
+      showMessage(props.i18n.embedFailed, 3000, "error")
+    }
+  } finally {
+    embedding.value = false
+  }
+}
+
+// ==================== 承载形态切换（主窗口 tab ⇄ 独立窗口） ====================
+
+/**
+ * 把浏览器页签移入独立浮动窗口（纯官方 API openWindow({tab})）。
+ * 关闭浮动窗口时思源会自动把页签移回主窗口，无需反向操作。
+ */
+const handleToggleFloating = () => {
+  const manager = (props.plugin as any).__minimalBrowser as
+    | { openFloating: () => void }
+    | undefined
+  if (!manager) return
+  void manager.openFloating()
 }
 
 // ==================== 设置 ====================

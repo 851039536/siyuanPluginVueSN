@@ -3773,6 +3773,8 @@
     "spanish": "西班牙文",
     "enterTextToTranslate": "输入要翻译的文本，2秒后自动翻译...",
     "swapLanguages": "交换语言",
+    "autoDetectCannotSwap": "自动检测语言无法交换",
+    "translateFailed": "翻译失败",
     "translating": "翻译中...",
     "translate": "翻译",
     "translationWillAppearHere": "翻译结果将显示在这里",

@@ -1,5 +1,8 @@
 // 单词查询 API 封装与共享工具函数
-import type { AiApiConfig } from "@/types/ai"
+import type {
+  AiApiConfig,
+  AiCallOptions,
+} from "@/types/ai"
 import { callAI } from "@/utils/aiApi"
 import { LANGUAGE_MAP } from "../types"
 
@@ -79,9 +82,11 @@ export function buildTranslatePrompt(
 export async function callWordQueryAPI(
   prompt: string,
   config: ApiConfig,
+  options?: AiCallOptions,
 ): Promise<string> {
   return callAI(prompt, config, {
     systemPrompt:
       "你是一个专业的多语言教学助手，擅长提供单词的详细释义、音标、谐音和例句。",
+    ...options,
   })
 }

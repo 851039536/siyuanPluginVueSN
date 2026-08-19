@@ -1,9 +1,10 @@
 /**
  * 极简浏览器 — 类型定义 + BrowserManager 类 + 公开 API
  *
- * 窗口承载方案：plugin.addTab 注册自定义 Tab 模型（init 回调的 this 为 Custom 实例，
- * this.element 为挂载点）→ openTab 在主窗口创建自定义页签 → openWindow({tab}) 将页签
- * 移入独立窗口；若移动失败页签保留在主窗口（优雅降级）。
+ * 承载方案（纯官方 API，双形态）：
+ * 1. 主窗口 tab：plugin.addTab 注册自定义 Tab 模型 → openTab({custom}) 创建页签。
+ *    嵌入思源文档依赖此形态（getActiveEditor 与编辑器同窗口）。
+ * 2. 独立窗口：openWindow({tab}) 把同一页签移入浮动窗口，可随时移回（关闭浮动窗口）。
  */
 import type { Plugin } from "siyuan"
 import {
@@ -40,6 +41,11 @@ export interface I18n {
   delete?: string
   confirmDelete?: string
   openExternal?: string
+  embedToSiyuan?: string
+  embedSuccess?: string
+  embedNoDoc?: string
+  embedFailed?: string
+  openFloatingWindow?: string
   settings?: string
   settingsTitle?: string
   homeUrl?: string
@@ -145,14 +151,34 @@ export class BrowserManager {
   }
 
   /**
-   * 打开极简浏览器：
-   * 1. openTab 在主窗口创建自定义页签（文档化 API，custom.id = 插件名 + tab.type）
-   * 2. openWindow({tab}) 将页签移入独立窗口；失败时页签保留在主窗口（降级可用）
+   * 打开极简浏览器（主窗口 tab）：openTab 创建/聚焦自定义页签（文档化 API，
+   * custom.id = 插件名 + tab.type）。页签已打开时思源会直接聚焦它。
+   * 若当前已在独立窗口中，会先把页签移回主窗口再聚焦。
    */
   public async open() {
+    await this.openTabInMainWindow()
+  }
+
+  /** 打开极简浏览器（独立浮动窗口）：先创建/聚焦主窗口页签，再移入浮动窗口 */
+  public async openFloating() {
+    const tab = await this.openTabInMainWindow()
+    if (!tab) return
+    try {
+      openWindow({
+        width: 1100,
+        height: 760,
+        tab,
+      })
+    } catch (error) {
+      console.error("[MinimalBrowser] openWindow failed, tab stays in main window:", error)
+    }
+  }
+
+  /** 在主窗口创建/聚焦浏览器页签，返回 Tab（供移入浮动窗口）；失败返回 null */
+  private async openTabInMainWindow() {
     try {
       const title = (this.plugin.i18n as any)?.minimalBrowser?.title || "极简浏览器"
-      const tab = await openTab({
+      return await openTab({
         app: this.plugin.app,
         custom: {
           id: `${this.plugin.name}${TAB_TYPE}`,
@@ -161,17 +187,9 @@ export class BrowserManager {
         },
         position: "right",
       })
-      try {
-        openWindow({
-          width: 1100,
-          height: 760,
-          tab,
-        })
-      } catch (error) {
-        console.error("[MinimalBrowser] openWindow failed, tab stays in main window:", error)
-      }
     } catch (error) {
       console.error("[MinimalBrowser] openTab failed:", error)
+      return null
     }
   }
 

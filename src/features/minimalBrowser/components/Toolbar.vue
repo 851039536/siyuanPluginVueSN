@@ -74,6 +74,25 @@
       @click="onOpenExternal"
     />
 
+    <!-- 嵌入到思源文档（追加 iframe 块到当前活动文档） -->
+    <Button
+      icon="fileOutline"
+      variant="ghost"
+      size="xsmall"
+      :title="i18n.embedToSiyuan"
+      @click="emit('embedToSiyuan')"
+    />
+
+    <!-- 在独立窗口打开（主窗口内显示；浮动窗口内隐藏——关闭浮动窗口即自动移回主窗口） -->
+    <Button
+      v-if="!isFloating"
+      icon="dockWindow"
+      variant="ghost"
+      size="xsmall"
+      :title="i18n.openFloatingWindow"
+      @click="emit('toggleFloating')"
+    />
+
     <!-- 设置 -->
     <Button
       icon="settings"
@@ -86,6 +105,7 @@
 </template>
 
 <script setup lang="ts">
+import { getFrontend } from "siyuan"
 import type { I18n } from "../types"
 import {
   computed,
@@ -114,8 +134,23 @@ const emit = defineEmits<{
   (e: "openSettings"): void
   (e: "toggleFavorite"): void
   (e: "openExternal"): void
+  (e: "embedToSiyuan"): void
+  (e: "toggleFloating"): void
   (e: "invalidUrl"): void
 }>()
+
+/**
+ * 当前是否运行在独立浮动窗口中。
+ * 思源官方 API：getFrontend() 返回 "desktop"（主窗口）/ "desktop-window"（新窗口）。
+ * 浮动窗口中的按钮语义反转为「移回主窗口」。
+ */
+const isFloating = computed(() => {
+  try {
+    return getFrontend() === "desktop-window"
+  } catch {
+    return false
+  }
+})
 
 // 地址栏输入（与当前 URL 双向同步）
 const addressInput = ref(currentUrl.value)

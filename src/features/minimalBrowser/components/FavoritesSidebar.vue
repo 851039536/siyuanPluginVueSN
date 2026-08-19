@@ -187,11 +187,9 @@ const endResize = () => {
   void saveSidebarWidth(sidebarWidth.value)
 }
 
-/** 缩略图首字母（名称首字符大写，空名用 hostname 首字符） */
-const thumbLetter = (name: string): string => {
-  const source = (name.trim() || "?").charAt(0).toUpperCase()
-  return source || "?"
-}
+/** 缩略图首字母（名称首字符大写，空名显示问号） */
+const thumbLetter = (name: string): string =>
+  (name.trim().charAt(0) || "?").toUpperCase()
 
 /** 缩略图配色：按分类色生成 32px 圆形图标 */
 const thumbStyle = (entry: WebsiteEntry): Record<string, string> => {

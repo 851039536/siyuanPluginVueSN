@@ -10,7 +10,7 @@
       size="xsmall"
       :disabled="!canGoBack"
       :title="i18n.back"
-      @click="onBack"
+      @click="goBack()"
     />
     <Button
       icon="forward"
@@ -18,14 +18,14 @@
       size="xsmall"
       :disabled="!canGoForward"
       :title="i18n.forward"
-      @click="onForward"
+      @click="goForward()"
     />
     <Button
       icon="refresh"
       variant="ghost"
       size="xsmall"
       :title="i18n.refresh"
-      @click="onRefresh"
+      @click="refreshPage()"
     />
     <Button
       icon="home"
@@ -53,7 +53,7 @@
       :variant="isCurrentFavorite ? 'primary' : 'ghost'"
       size="xsmall"
       :title="isCurrentFavorite ? i18n.unfavorite : i18n.favorite"
-      @click="onToggleFavorite"
+      @click="emit('toggleFavorite')"
     />
 
     <!-- 收藏侧栏开关 -->
@@ -71,16 +71,7 @@
       variant="ghost"
       size="xsmall"
       :title="i18n.openExternal"
-      @click="onOpenExternal"
-    />
-
-    <!-- 嵌入到思源文档（追加 iframe 块到当前活动文档） -->
-    <Button
-      icon="fileOutline"
-      variant="ghost"
-      size="xsmall"
-      :title="i18n.embedToSiyuan"
-      @click="emit('embedToSiyuan')"
+      @click="emit('openExternal')"
     />
 
     <!-- 在独立窗口打开（主窗口内显示；浮动窗口内隐藏——关闭浮动窗口即自动移回主窗口） -->
@@ -134,7 +125,6 @@ const emit = defineEmits<{
   (e: "openSettings"): void
   (e: "toggleFavorite"): void
   (e: "openExternal"): void
-  (e: "embedToSiyuan"): void
   (e: "toggleFloating"): void
   (e: "invalidUrl"): void
 }>()
@@ -142,7 +132,7 @@ const emit = defineEmits<{
 /**
  * 当前是否运行在独立浮动窗口中。
  * 思源官方 API：getFrontend() 返回 "desktop"（主窗口）/ "desktop-window"（新窗口）。
- * 浮动窗口中的按钮语义反转为「移回主窗口」。
+ * 浮动窗口内隐藏「在独立窗口打开」按钮（关闭浮动窗口即自动移回主窗口）。
  */
 const isFloating = computed(() => {
   try {
@@ -173,18 +163,6 @@ const handleGo = () => {
   }
 }
 
-const onBack = () => {
-  goBack()
-}
-
-const onForward = () => {
-  goForward()
-}
-
-const onRefresh = () => {
-  refreshPage()
-}
-
 /** 主页：已配置则导航，未配置则回到起始页（收藏列表） */
 const onHome = () => {
   const home = resolveHomeUrl()
@@ -194,14 +172,6 @@ const onHome = () => {
   }
   currentUrl.value = ""
   addressInput.value = ""
-}
-
-const onToggleFavorite = () => {
-  emit("toggleFavorite")
-}
-
-const onOpenExternal = () => {
-  emit("openExternal")
 }
 </script>
 

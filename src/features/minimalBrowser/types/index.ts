@@ -3,7 +3,6 @@
  *
  * 承载方案（纯官方 API，双形态）：
  * 1. 主窗口 tab：plugin.addTab 注册自定义 Tab 模型 → openTab({custom}) 创建页签。
- *    嵌入思源文档依赖此形态（getActiveEditor 与编辑器同窗口）。
  * 2. 独立窗口：openWindow({tab}) 把同一页签移入浮动窗口，可随时移回（关闭浮动窗口）。
  */
 import type { Plugin } from "siyuan"
@@ -41,10 +40,6 @@ export interface I18n {
   delete?: string
   confirmDelete?: string
   openExternal?: string
-  embedToSiyuan?: string
-  embedSuccess?: string
-  embedNoDoc?: string
-  embedFailed?: string
   openFloatingWindow?: string
   settings?: string
   settingsTitle?: string
@@ -56,8 +51,6 @@ export interface I18n {
   saveFailed?: string
   favoriteAdded?: string
   favoriteRemoved?: string
-  favoriteExists?: string
-  favoritesLoadFailed?: string
   noHomeConfigured?: string
 }
 
@@ -105,15 +98,11 @@ export class BrowserManager {
     const destroy = () => {
       self.unmountPanel()
     }
-    const resize = () => {
-      // iframe 自适应容器尺寸，无需额外处理；保留钩子供后续扩展
-    }
 
     this.plugin.addTab({
       type: TAB_TYPE,
       init: init as () => void,
       destroy,
-      resize,
     })
   }
 

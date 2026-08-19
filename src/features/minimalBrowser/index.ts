@@ -14,7 +14,6 @@ export function registerMinimalBrowser(plugin: Plugin) {
   // 注册快捷键命令（⌃⌥B：Mac 为 Ctrl+Alt+B，Windows 自动转换）
   plugin.addCommand({
     langKey: "openMinimalBrowser",
-    langText: "极简浏览器",
     hotkey: "⌃⌥B",
     callback: () => {
       void instance.open()

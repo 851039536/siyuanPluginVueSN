@@ -73,7 +73,7 @@ import {
   saveBrowserSettings,
 } from "../composables/useBrowserState"
 
-const props = defineProps<{
+defineProps<{
   i18n: I18n
 }>()
 
@@ -92,11 +92,8 @@ onMounted(() => {
 const handleSave = async () => {
   saving.value = true
   try {
-    // 合并保存：只改 homeUrl，保留 sidebarWidth 等其他字段
-    const ok = await saveBrowserSettings({
-      ...browserSettings.value,
-      homeUrl: homeUrl.value.trim(),
-    })
+    // 只传 homeUrl，保存函数内部与当前设置合并
+    const ok = await saveBrowserSettings({ homeUrl: homeUrl.value.trim() })
     emit(ok ? "saved" : "saveFailed")
   } finally {
     saving.value = false

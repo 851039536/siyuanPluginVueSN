@@ -48,8 +48,6 @@ export const currentUrl = ref("")
 export const historyIndex = ref(-1)
 /** 历史栈（iframe onload 时推进） */
 export const historyStack = ref<string[]>([])
-/** 页面加载中标记 */
-export const loading = ref(false)
 /** 侧栏拖拽缩放中标记（拖拽期间禁用 iframe 交互，避免鼠标事件被 iframe 吞掉） */
 export const sidebarResizing = ref(false)
 
@@ -63,11 +61,6 @@ export function useBrowserState(plugin: Plugin) {
   }
   if (!settingsStorage) {
     settingsStorage = new BrowserSettingsStorage(plugin)
-  }
-
-  return {
-    storage,
-    settingsStorage,
   }
 }
 
@@ -98,8 +91,9 @@ export async function loadBrowserSettings(): Promise<boolean> {
   }
 }
 
-/** 保存设置（调用方需传入完整对象，避免覆盖其他字段） */
-export async function saveBrowserSettings(next: BrowserSettings): Promise<boolean> {
+/** 保存设置（传入部分字段，与当前设置合并持久化） */
+export async function saveBrowserSettings(patch: Partial<BrowserSettings>): Promise<boolean> {
+  const next = { ...browserSettings.value, ...patch }
   const ok = await requireSettingsStorage().save(next)
   if (ok) {
     browserSettings.value = next
@@ -107,16 +101,10 @@ export async function saveBrowserSettings(next: BrowserSettings): Promise<boolea
   return ok
 }
 
-/**
- * 保存侧栏宽度（钳制在 [140, 480] 区间）。
- * 基于当前设置合并保存，防止覆盖主页等其他字段。
- */
-export async function saveSidebarWidth(width: number): Promise<boolean> {
+/** 保存侧栏宽度（钳制在 [140, 480] 区间） */
+export function saveSidebarWidth(width: number): Promise<boolean> {
   const clamped = Math.min(480, Math.max(140, Math.round(width)))
-  return saveBrowserSettings({
-    ...browserSettings.value,
-    sidebarWidth: clamped,
-  })
+  return saveBrowserSettings({ sidebarWidth: clamped })
 }
 
 /** 分类 ID → 分类 映射缓存 */
@@ -194,60 +182,46 @@ export function hostnameOf(url: string): string {
   }
 }
 
-/** 导航到指定地址（更新地址栏 + 触发 iframe 加载） */
-export function navigate(url: string, options: { pushHistory?: boolean, fromHistory?: boolean } = {}) {
-  const resolved = resolveBrowsableUrl(url)
-  if (!resolved) return false
+/** 加载 iframe 地址（导航/前进/后退/刷新共用的底层操作） */
+function loadFrame(url: string) {
   const frame = frameRef.value
   if (!frame) return false
-
-  currentUrl.value = resolved
-  if (!options.fromHistory) {
-    // 截断前进分支后追加新地址
-    historyStack.value = [...historyStack.value.slice(0, historyIndex.value + 1), resolved]
-    historyIndex.value = historyStack.value.length - 1
-  }
-  if (frame.src !== resolved) {
-    loading.value = true
-    frame.src = resolved
+  currentUrl.value = url
+  if (frame.src !== url) {
+    frame.src = url
   }
   return true
+}
+
+/** 导航到指定地址（更新地址栏 + 触发 iframe 加载） */
+export function navigate(url: string) {
+  const resolved = resolveBrowsableUrl(url)
+  if (!resolved) return false
+  // 截断前进分支后追加新地址
+  historyStack.value = [...historyStack.value.slice(0, historyIndex.value + 1), resolved]
+  historyIndex.value = historyStack.value.length - 1
+  return loadFrame(resolved)
 }
 
 /** 后退 */
 export function goBack() {
   if (historyIndex.value <= 0) return false
   historyIndex.value -= 1
-  const target = historyStack.value[historyIndex.value]
-  const frame = frameRef.value
-  if (!frame || !target) return false
-  currentUrl.value = target
-  loading.value = true
-  frame.src = target
-  return true
+  return loadFrame(historyStack.value[historyIndex.value] ?? "")
 }
 
 /** 前进 */
 export function goForward() {
   if (historyIndex.value >= historyStack.value.length - 1) return false
   historyIndex.value += 1
-  const target = historyStack.value[historyIndex.value]
-  const frame = frameRef.value
-  if (!frame || !target) return false
-  currentUrl.value = target
-  loading.value = true
-  frame.src = target
-  return true
+  return loadFrame(historyStack.value[historyIndex.value] ?? "")
 }
 
 /** 刷新当前页 */
 export function refreshPage() {
-  const frame = frameRef.value
   const url = currentUrl.value
-  if (!frame || !url) return false
-  loading.value = true
-  frame.src = url
-  return true
+  if (!url) return false
+  return loadFrame(url)
 }
 
 /** 主页：设置的主页 URL；未配置时返回 null（面板展示收藏列表作为起始页） */

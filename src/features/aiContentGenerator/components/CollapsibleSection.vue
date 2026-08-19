@@ -3,7 +3,6 @@
   <div class="collapsible-section">
     <button
       class="collapsible-toggle"
-      :class="{ 'toggle-success': accent === 'success' }"
       @click="$emit('update:open', !open)"
     >
       <svg
@@ -48,8 +47,6 @@ defineProps<{
   open: boolean
   /** 是否显示加载状态点（primary 色，闪烁动画） */
   statusDot?: boolean
-  /** 强调色变体（success 用于审核面板） */
-  accent?: "success"
 }>()
 
 defineEmits<{

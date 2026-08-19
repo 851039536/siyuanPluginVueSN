@@ -192,8 +192,8 @@
           </Button>
           <!-- 对话控制 -->
           <Button
-            v-if="!isGenerating && (conversationCount || 0) > 0"
-            :title="`清空对话历史（${conversationCount || 0} 轮）`"
+            v-if="!isGenerating && conversationCount > 0"
+            :title="`清空对话历史（${conversationCount} 轮）`"
             variant="ghost"
             size="xsmall"
             @click="$emit('clearConversation')"
@@ -202,7 +202,7 @@
               width="14"
               height="14"
             ><use xlink:href="#iconRefresh"></use></svg>
-            <span class="conv-count">{{ (conversationCount || 0) / 2 }}</span>
+            <span class="conv-count">{{ conversationCount }}</span>
           </Button>
           <Button
             title="清除"
@@ -338,7 +338,7 @@ interface Props {
   // 自动修复
   isAutoFixing?: boolean
 
-  // 对话
+  // 对话（轮次数，父组件已按 2 条/轮折算）
   conversationCount?: number
 
   // 流式输出增强
@@ -350,6 +350,7 @@ const props = withDefaults(defineProps<Props>(), {
   showReasoning: false,
   searchStatus: "",
   generationElapsed: "",
+  conversationCount: 0,
 })
 
 defineEmits<{

@@ -2,39 +2,9 @@
 
 // AI内容生成器面板样式
 
-// ============ 可折叠区块 mixin ============
-// 统一 思考过程 / 搜索来源 / 交叉审核 三处重复的折叠卡片模式
-@mixin collapsible-section {
-  margin: 0 0px;
-  border-radius: 6px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  background: var(--b3-theme-surface);
-  overflow: hidden;
-}
-
-@mixin collapsible-toggle($icon-color: var(--b3-theme-primary)) {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  width: 100%;
-  padding: 6px 10px;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-  color: var(--b3-theme-on-surface);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  user-select: none;
-
-  svg {
-    color: $icon-color;
-    flex-shrink: 0;
-  }
-
-  &:hover {
-    background: var(--b3-theme-surface-light);
-  }
-}
+// ============ 可折叠区块 mixin（复用于 ReviewPanel 等跨组件场景） ============
+// collapsible-section / collapsible-toggle / collapsible-body 仅被 CollapsibleSection.scss
+// 消费，已下放到该文件内联；此处仅保留被多处复用的部分
 
 @mixin collapsible-chevron {
   transition: transform 0.2s;
@@ -42,12 +12,6 @@
   &.expanded {
     transform: rotate(90deg);
   }
-}
-
-@mixin collapsible-body {
-  padding: 8px 10px 10px;
-  border-top: 1px solid var(--b3-theme-surface-lighter);
-  margin: 0 2px 4px;
 }
 
 @mixin collapsible-status-dot($color: var(--b3-theme-primary)) {

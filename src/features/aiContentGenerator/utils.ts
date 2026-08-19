@@ -1,7 +1,9 @@
 /**
  * AI 内容生成器共享工具函数
  */
+import type { Tokens } from "marked"
 import type { SkillItem } from "@/types/ai"
+import { AI_TOOL_META } from "@/config/aiTools"
 import { parseMarkdown } from "@/utils/mdRenderer"
 
 // ============ 系统提示词构建 ============
@@ -19,27 +21,15 @@ export function buildSkillSystemPrompt(
   return fallback
 }
 
-// ============ 本地工具元数据（替代跨功能导入 skillsViewer）============
-
-/** AI 工具元数据（仅 id/name/color，用于技能来源展示） */
-interface ToolMeta {
-  id: string;
-  name: string;
-  color: string;
-}
-
-const TOOL_META: ToolMeta[] = [
-  { id: "claude", name: "Claude", color: "#D97757" },
-  { id: "codebuddy", name: "CodeBuddy", color: "#4A90D9" },
-  { id: "qoder", name: "Qoder", color: "#9B59B6" },
-  { id: "trae", name: "Trae", color: "#27AE60" },
-  { id: "opencode", name: "Opencode", color: "#00ACC1" },
-]
-
 // ============ 文本/UI 工具 ============
 
 /**
  * 统一的 Markdown 渲染函数
+ *
+ * 安全说明：marked 默认透传原始 HTML，而本函数输出会被 v-html 渲染
+ * （MainContentArea / SkillPreviewModal），AI 生成内容或技能文件可能携带
+ * 恶意 HTML（<script> / <img onerror> 等）。此处通过 marked 扩展将
+ * html 块/标签渲染为转义文本，从源头杜绝 XSS 注入。
  */
 export function renderMarkdown(content: string, stripHeadingBold = true): string {
   if (!content) return ""
@@ -52,11 +42,30 @@ export function renderMarkdown(content: string, stripHeadingBold = true): string
         "$1 $2",
       )
     }
-    return parseMarkdown(processedContent)
+    return parseMarkdown(processedContent, {
+      extensions: [{
+        name: "html",
+        renderer(token: Tokens.Generic) {
+          // 转义原始 HTML：保留可见文本，丢弃标签语义
+          return escapeHtmlText((token as { text?: string }).text ?? "")
+        },
+      }],
+    })
   } catch (error) {
     console.error("Markdown渲染失败:", error)
-    return `<pre>${content}</pre>`
+    // 兜底输出也需转义，防止原始内容注入
+    return `<pre>${escapeHtmlText(content)}</pre>`
   }
+}
+
+/** 简单 HTML 转义（本地实现，避免与共享工具循环依赖） */
+function escapeHtmlText(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;")
 }
 
 export function truncateTitle(title: string, maxLen = 12): string {
@@ -71,7 +80,7 @@ export function truncateTitle(title: string, maxLen = 12): string {
 export function getSourceDotColors(skill: SkillItem | null): string[] {
   if (!skill?.sources || skill.sources.length === 0) return []
   return skill.sources.map((s) => {
-    const tool = TOOL_META.find((t) => t.id === s.tool)
+    const tool = AI_TOOL_META.find((t) => t.id === s.tool)
     return tool?.color || "#999"
   })
 }

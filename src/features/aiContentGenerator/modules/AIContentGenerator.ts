@@ -4,6 +4,7 @@
  */
 import type {
   GenerateOptions,
+  ReviewRating,
   ReviewResult,
   SkillItem,
 } from "@/types/ai"
@@ -23,6 +24,8 @@ import AIContentGeneratorPanel from "../index.vue"
 
 /**
  * 从任意文本中提取 JSON 对象。
+ * 仅支持完整 JSON（callAI 非流式返回完整响应体，无截断场景），
+ * 删除旧版"截断 JSON 修复"分支（该分支在完整 JSON 下不可达）。
  */
 function extractJsonFromText(text: string): string | null {
   const codeBlock = text.match(/```(?:json)?\s*([\s\S]*?)\n?```/)
@@ -51,24 +54,14 @@ function extractJsonFromText(text: string): string | null {
     }
   }
 
-  if (depth > 0) {
-    let partial = trimmed.slice(firstBrace)
-    if (inString) partial += '"'
-    partial = partial.replace(/,\s*"[^"]*$/, "")
-    for (let d = depth; d > 0; d--) partial += "}"
-    try {
-      JSON.parse(partial)
-      return partial
-    } catch {
-    }
-  }
-
   return null
 }
 
-function validateRating(rating: unknown): "优秀" | "良好" | "需改进" {
-  const valid = ["优秀", "良好", "需改进"]
-  if (typeof rating === "string" && valid.includes(rating)) return rating as any
+function validateRating(rating: unknown): ReviewRating {
+  const valid: ReviewRating[] = ["优秀", "良好", "需改进"]
+  if (typeof rating === "string" && (valid as string[]).includes(rating)) {
+    return rating as ReviewRating
+  }
   return "良好"
 }
 
@@ -180,6 +173,10 @@ export class AIContentGenerator {
       if (first.hasReasoning) {
         options.onTruncationRetry?.()
         showMessage("思考被截断，正在以更大输出预算自动重试...", 3000, "info")
+        // 重试前替换已可能被中止的 signal：复用已 abort 的 signal 会让重试立即失败
+        if (options.signal?.aborted) {
+          options.signal = undefined
+        }
         const retryTokens = Math.min(options.maxTokens * 2, RETRY_MAX_TOKENS_CAP)
         const retry = await this.runOnce(fullPrompt, apiConfig, options, retryTokens)
         if (retry.result) {

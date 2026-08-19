@@ -3437,7 +3437,9 @@
     "orange": "Warm Orange",
     "github": "GitHub Blue",
     "sakura": "Sakura Anime",
-    "codex": "Codex"
+    "codex": "Codex",
+    "custom": "Custom",
+    "customColorLabel": "Custom Color"
   },
   "toolCollection": "Tool Collection",
   "toolCollectionDesc": "Bottom panel integrating various utility tools",

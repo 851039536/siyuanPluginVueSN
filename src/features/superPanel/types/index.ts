@@ -149,6 +149,9 @@ export class SuperPanelManager {
         onSelectFeature: async (featureId: string, value: string) => {
           await this.handleSelectFeature(featureId, value)
         },
+        onColorChange: async (featureId: string, value: string) => {
+          await this.handleColorChange(featureId, value)
+        },
         onOpenAiSettings: () => {
           this.openAiSettings()
         },
@@ -322,6 +325,15 @@ export class SuperPanelManager {
     if (featureId === "themeColor" && isThemeColorSchemeId(value)) {
       await this._updatePluginSettings({
         themeColorScheme: value,
+      })
+    }
+  }
+
+  private async handleColorChange(featureId: string, value: string) {
+    if (featureId === "themeColor" && /^#[\da-f]{6}$/i.test(value)) {
+      await this._updatePluginSettings({
+        themeColorScheme: "custom",
+        customThemeColor: value.toLowerCase(),
       })
     }
   }

@@ -11,4 +11,6 @@ export interface ThemeColorScheme {
   name: string
   /** 主色 hex 值，RGB 由 hexToRgb() 自动推导 */
   primary: HexColor
+  /** 暗色模式主色（可选，缺省时复用 primary） */
+  darkPrimary?: HexColor
 }

@@ -19,13 +19,9 @@ import {
   saveSettings,
   setFeatureFlagsDir,
 } from "@/config/settings"
-import { emitCustomEvent } from "@/utils/eventBus"
-import { clearRendererCache } from "@/utils/mdRenderer"
-
 import {
   getStatisticsInstance,
   registerAIContentGenerator,
-  scanSkills as scanSkillsFromViewer,
   registerApiDebugger,
   registerBookmarkMarker,
   registerDataSnapshot,
@@ -59,7 +55,6 @@ import {
   registerSkillsViewer,
   registerStatistics,
   registerStatusBar,
-  unregisterStatusBar,
   registerSuperPanel,
   registerTableOfContents,
   registerTextDiff,
@@ -69,6 +64,8 @@ import {
   // wordQuery 已迁移至 toolCollection/tools/wordQuery/
   registerVideo,
   registerWebsiteNavigation,
+  scanSkills as scanSkillsFromViewer,
+  unregisterStatusBar,
 } from "@/features"
 import { applyCompactMode } from "@/features/compactMode"
 
@@ -76,7 +73,10 @@ import {
   destroy,
   init,
 } from "@/main"
+import { emitCustomEvent } from "@/utils/eventBus"
+
 import { setupIconifyOffline } from "@/utils/iconifySetup"
+import { clearRendererCache } from "@/utils/mdRenderer"
 // ========== 全局样式导入 ==========
 // 使用普通 import 而非 @use，确保 CSS 在插件加载时就注入
 // Vite 会将此 CSS 编译到 index.css 并在入口点立即注入
@@ -160,7 +160,7 @@ export default class PluginSample extends Plugin {
   private rebuildThemeColor() {
     this.__themeColor?.destroy()
     this.__themeColor = this.settings.enableThemeColor
-      ? registerThemeColor(this, this.settings.themeColorScheme)
+      ? registerThemeColor(this.settings.themeColorScheme)
       : undefined
   }
 
@@ -255,6 +255,8 @@ export default class PluginSample extends Plugin {
     if (success) {
       // 广播设置变更，供 statusBar 等独立挂载模块同步功能开关状态
       emitCustomEvent("settingsUpdated")
+      // 主题色支持即时生效：开关或方案变化后立即重建实例
+      this.rebuildThemeColor()
     }
     return success
   }

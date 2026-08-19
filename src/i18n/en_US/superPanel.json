@@ -46,7 +46,7 @@
     "skillsViewer": "Skills Viewer",
     "skillsViewerDesc": "View and manage AI coding tools Skills configuration files",
     "themeColor": "Theme Color",
-    "themeColorDesc": "Apply warm orange global theme color"
+    "themeColorDesc": "Override SiYuan CSS variables to switch global theme color"
   },
   "toggleSuperPanel": "Toggle Super Panel"
 }

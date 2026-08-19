@@ -234,7 +234,7 @@ export const FEATURE_CONFIG = [
   {
     id: "themeColor",
     defaultTitle: "主题色",
-    defaultDesc: "应用暖橙色全局主题色",
+    defaultDesc: "覆盖思源笔记 CSS 变量，切换全局主题色",
   },
   {
     id: "bookmarkMarker",

@@ -12,6 +12,7 @@ import {
 import { reactive } from "vue"
 import { FEATURE_ICONS } from "@/config/icons"
 import { featureIdToSettingKey } from "@/config/settings"
+import { isThemeColorSchemeId } from "@/features/themeColor"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { replaceTopBarIcon } from "@/utils/iconHelper"
 import { createModalVueApp } from "@/utils/vueAppHelper"
@@ -124,6 +125,7 @@ export class SuperPanelManager {
       buildProps: () => ({
         settings: this.reactiveSettings!,
         i18n: (this.plugin.i18n as any).superPanel || {},
+        themeColorI18n: (this.plugin.i18n as any).themeColor || {},
         onClose: () => {
           this.close()
         },
@@ -317,7 +319,7 @@ export class SuperPanelManager {
   }
 
   private async handleSelectFeature(featureId: string, value: string) {
-    if (featureId === "themeColor") {
+    if (featureId === "themeColor" && isThemeColorSchemeId(value)) {
       await this._updatePluginSettings({
         themeColorScheme: value,
       })

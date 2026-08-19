@@ -3,7 +3,11 @@
  */
 import type { IssueSeverity, ReviewRating, SkillItem } from "@/types/ai"
 
-/** 技能扫描原始条目（skillsViewer scanSkills 返回类型的本地投影，避免跨功能导入） */
+/**
+ * 技能扫描原始条目（skillsViewer scanSkills 返回类型的本地投影，避免跨功能导入）
+ * 注意：skillsViewer 的 SkillInfo 含 fileSize 字段，此处按需投影；
+ * 若未来消费方需要该字段，需同步补充（保持与 SkillInfo 结构兼容）。
+ */
 export interface SkillScanEntry {
   filePath: string
   name: string

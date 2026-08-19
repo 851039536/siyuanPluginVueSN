@@ -24,16 +24,16 @@
         :can-apply="canApplyEdit"
         :can-insert-sub-doc="canInsertSubDoc"
         :can-undo="canUndoEdit"
+        :conversation-count="Math.floor(conversationHistory.length / 2)"
+        :generation-tip="generationTip"
         @stop="handleStop"
-        @applyEdit="applyEdit"
+        @applyEdit="handleApplyEdit"
         @insertSubdoc="insertSubDocument"
-        @undoEdit="undoEdit"
+        @undoEdit="handleUndoEdit"
         @copy="copyContent"
         @clear="handleClearAll"
         @toggleReasoning="showReasoning = !showReasoning"
         @autoFix="handleAutoFix"
-        :conversation-count="conversationHistory.length"
-        :generation-tip="generationTip"
         @reReview="handleReReview"
         @directReview="handleDirectReview"
         @fixIssue="handleFixIssue"
@@ -86,7 +86,7 @@ import "highlight.js/styles/github.css"
 // 类型
 import type { DeepSeekReasoningEffort, GenerateOptions, ReviewResult, SkillItem, TargetDoc } from "@/types/ai"
 import { DEFAULT_SYSTEM_PROMPTS } from "./types"
-import type { EditActionKey, SkillScanEntry } from "./types"
+import type { EditActionKey, ScanSkillsFn } from "./types"
 
 // 模块内部导入
 import { AIGeneratorStorage } from "./types/storage"
@@ -108,7 +108,7 @@ interface Props {
   /** 交叉审核回调（modules 侧 addDock 始终注入） */
   onReview: (userRequest: string, generatedContent: string, skill?: SkillItem) => Promise<ReviewResult>
   /** 技能扫描回调（modules 侧仅在注入时透传，故为可选） */
-  scanSkills?: (projectPath?: string) => Promise<SkillScanEntry[]>
+  scanSkills?: ScanSkillsFn
 }
 
 const props = defineProps<Props>()
@@ -206,6 +206,17 @@ onAfterGenerateCallback = performReview
 /** 「直接审查」按钮：跳过 enableReview 开关强制对当前内容发起审核 */
 const handleDirectReview = () => {
   performReview(undefined, true)
+}
+
+// 应用/撤回编辑后旧审核结果必然失效：清空审核态，避免拿旧 review 评价新内容
+const handleApplyEdit = async () => {
+  await applyEdit()
+  clearReviewState()
+}
+
+const handleUndoEdit = async () => {
+  await undoEdit()
+  clearReviewState()
 }
 
 // 编辑可用性计算（依赖审核状态，须在 useReview 之后定义）
@@ -422,6 +433,8 @@ onUnmounted(() => {
     clearTimeout(settingsSaveTimer)
     settingsSaveTimer = null
   }
+  // 卸载前 flush 最后一次设置变更（防抖窗口内的修改不落盘）
+  saveSettings()
 })
 </script>
 

@@ -72,7 +72,6 @@
         v-for="action in quickActions"
         :key="action.key"
         class="quick-action-btn"
-        :class="{ active: isGenerating }"
         :disabled="isGenerating"
         :title="action.label"
         @click="$emit('aiEdit', action.key)"

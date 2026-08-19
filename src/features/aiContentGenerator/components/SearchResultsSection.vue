@@ -20,12 +20,20 @@
       >
         <div class="search-result-header">
           <span class="search-result-index">{{ idx + 1 }}.</span>
+          <!-- 仅允许 http/https 协议渲染链接，防 javascript: 等协议注入 -->
           <a
+            v-if="isSafeUrl(result.url)"
             :href="result.url"
             class="search-result-link"
             target="_blank"
+            rel="noopener noreferrer"
             :title="result.url"
           >{{ result.title || result.url }}</a>
+          <span
+            v-else
+            class="search-result-link"
+            :title="result.url"
+          >{{ result.title || result.url }}</span>
         </div>
         <div
           v-if="result.content"
@@ -37,8 +45,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
 import type { SearchResult } from "@/types/ai"
+import { ref } from "vue"
 import CollapsibleSection from "./CollapsibleSection.vue"
 
 defineProps<{
@@ -47,6 +55,9 @@ defineProps<{
 }>()
 
 const showPanel = ref(true)
+
+/** 搜索结果链接协议白名单校验（仅 http/https，防 javascript: 等协议注入） */
+const isSafeUrl = (url: string): boolean => /^https?:\/\//i.test(url)
 </script>
 
 <style scoped lang="scss">

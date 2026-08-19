@@ -57,17 +57,12 @@ export function useEditOperations(deps: UseEditOperationsDeps) {
     generationElapsed.value = ""
   }
 
-  /** 清理编辑模式状态 */
-  const clearEditState = () => {
+  /** 清除目标文档（含编辑模式状态与内容显示） */
+  const clearTargetDocument = () => {
     editTargetDoc.value = null
     originalContent.value = ""
     // editCustomInput is managed externally
     editHistoryStack.value = []
-  }
-
-  /** 清除目标文档 */
-  const clearTargetDocument = () => {
-    clearEditState()
     clearContent()
   }
 
@@ -119,11 +114,16 @@ export function useEditOperations(deps: UseEditOperationsDeps) {
             if (!insertResult || insertResult.length === 0) {
               throw new Error("insertBlock API 返回为空，追加内容可能未生效")
             }
-            const newBlockId = insertResult[0]?.doOperations?.[0]?.id
-            if (newBlockId) {
-              insertedBlockIds.push(newBlockId)
-              prevId = newBlockId
+            // insertBlock 返回 IResdoOperations[]（数组元素是 { doOperations } 对象），
+            // 需在 doOperations 中查找 insert 动作对应的新块 ID
+            const newBlockId = insertResult[0]?.doOperations?.find(
+              (op) => op.action === "insert",
+            )?.id ?? insertResult[0]?.doOperations?.[0]?.id
+            if (!newBlockId) {
+              throw new Error("insertBlock 未返回新块 ID，追加内容可能未生效")
             }
+            insertedBlockIds.push(newBlockId)
+            prevId = newBlockId
           }
         }
       } else {
@@ -202,22 +202,31 @@ export function useEditOperations(deps: UseEditOperationsDeps) {
       return
     }
 
-    const parentHPath = await api.getHPathByID(editTargetDoc.value.id)
-    const parentDocName = parentHPath ? parentHPath.split("/").pop() || "文档" : "文档"
-    const subDocTitle = `${parentDocName}总结`
-    const timestamp = new Date().toLocaleDateString("zh-CN").replace(/\//g, "-")
-    const finalSubDocTitle = `${subDocTitle}_${timestamp}`
-
     isInsertingSubDoc.value = true
 
     try {
-      const siyuanContent = processContentByType(generatedContent.value, false)
       const parentDoc = await api.getBlockByID(editTargetDoc.value.id)
       if (!parentDoc || !parentDoc.box) {
         throw new Error("无法获取父文档信息")
       }
 
-      const subDocPath = `${parentHPath}/${finalSubDocTitle}`
+      // 父文档路径以文档 ID 解析：块模式下目标 ID 是块 ID，getHPathByID 对块 ID 无效
+      // （返回空串导致子文档被创建到笔记本根目录）
+      const parentDocId = editTargetDoc.value.isBlock
+        ? parentDoc.root_id
+        : editTargetDoc.value.id
+      const parentDocHPath = await api.getHPathByID(parentDocId)
+      if (!parentDocHPath) {
+        throw new Error("无法获取父文档路径")
+      }
+      const parentDocName = parentDocHPath.split("/").pop() || "文档"
+      const subDocTitle = `${parentDocName}总结`
+      const timestamp = new Date().toLocaleDateString("zh-CN").replace(/\//g, "-")
+      const finalSubDocTitle = `${subDocTitle}_${timestamp}`
+
+      const siyuanContent = processContentByType(generatedContent.value, false)
+
+      const subDocPath = `${parentDocHPath}/${finalSubDocTitle}`
       const subDocId = await api.createDocWithMd(parentDoc.box, subDocPath, siyuanContent)
 
       if (subDocId) {

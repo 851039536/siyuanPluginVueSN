@@ -45,8 +45,8 @@
   transition: all 0.12s;
 
   &:hover {
-    background: rgba(255, 77, 79, 0.1);
-    color: #ff4d4f;
+    background: rgba($color-danger, 0.1);
+    color: $color-danger;
     opacity: 1;
     border-color: transparent;
   }

@@ -2,12 +2,15 @@
 
 import type { BookmarkRule, RowStyleProps } from "./types"
 
-/** hex 颜色转 rgba 字符串 */
+/** hex 颜色转 rgba 字符串；非法输入回退为透明色，alpha 钳制到 0~1 */
 export function hexToRgba(hex: string, alpha: number): string {
-  const r = Number.parseInt(hex.slice(1, 3), 16)
-  const g = Number.parseInt(hex.slice(3, 5), 16)
-  const b = Number.parseInt(hex.slice(5, 7), 16)
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+  const match = /^#([0-9a-fA-F]{6})$/.exec(hex)
+  const a = Number.isFinite(alpha) ? Math.min(1, Math.max(0, alpha)) : 0.25
+  if (!match) return "rgba(0, 0, 0, 0)"
+  const r = Number.parseInt(match[1].slice(0, 2), 16)
+  const g = Number.parseInt(match[1].slice(2, 4), 16)
+  const b = Number.parseInt(match[1].slice(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${a})`
 }
 
 export function resolveMode(rule: BookmarkRule): string {
@@ -18,15 +21,17 @@ export function resolveAlpha(rule: BookmarkRule): number {
   return rule.alpha ?? 0.25
 }
 
-/** 归一化规则：兼容旧格式 bookmarkName（单数）→ bookmarkNames（数组），兼容字段缺失 */
+/** 归一化规则：兼容旧格式 bookmarkName（单数）→ bookmarkNames（数组），过滤空书签名与无书签名的空规则 */
 export function normalizeRules(rules: any[]): BookmarkRule[] {
   if (!Array.isArray(rules)) return []
-  return rules.map((r) => ({
-    ...r,
-    bookmarkNames: Array.isArray(r.bookmarkNames)
-      ? r.bookmarkNames
-      : (r.bookmarkName ? [r.bookmarkName] : []),
-  }))
+  return rules
+    .map((r) => ({
+      ...r,
+      bookmarkNames: Array.isArray(r.bookmarkNames)
+        ? r.bookmarkNames.filter((n: unknown) => typeof n === "string" && n.trim().length > 0)
+        : (r.bookmarkName ? [r.bookmarkName] : []),
+    }))
+    .filter((r) => r.bookmarkNames.length > 0)
 }
 
 /** 生成规则样式签名，用于判断已渲染标记是否需要重建 */

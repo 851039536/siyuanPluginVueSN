@@ -70,20 +70,12 @@ export class BookmarkMarker {
     this.cacheLoaded = false
   }
 
-  get isActive(): boolean {
-    return this.active
-  }
-
   setUpdateInterval(interval: number): void {
     this.options.updateInterval = interval
     if (this.updateTimer) {
       this.stopAutoUpdate()
       this.startAutoUpdate()
     }
-  }
-
-  getRules(): BookmarkRule[] {
-    return this.options.rules
   }
 
   // ============================================================
@@ -127,67 +119,47 @@ export class BookmarkMarker {
   }
 
   private applyMarkersToDOM(): void {
+    this.applyMarkersFor(
+      'ul[data-url] li[data-node-id]:not([data-type="navigation-root"])',
+      (el, name, rule) => this.applyMarkerToItem(el, name, rule),
+      (el) => this.removeMarkerFromItem(el),
+    )
+  }
+
+  /** 通用遍历：对匹配元素按缓存书签应用或移除标记 */
+  private applyMarkersFor(
+    selector: string,
+    apply: (el: HTMLElement, bookmarkName: string, rule: BookmarkRule) => void,
+    remove: (el: HTMLElement) => void,
+  ): void {
     if (!this.active || !this.cacheLoaded) return
+    for (const el of document.querySelectorAll(selector)) {
+      const target = el as HTMLElement
+      const nodeId = target.dataset.nodeId
+      if (!nodeId) continue
 
-    for (const container of document.querySelectorAll("ul[data-url]")) {
-      const docItems = container.querySelectorAll(
-        'li[data-node-id]:not([data-type="navigation-root"])',
-      )
-      for (const item of docItems) {
-        const el = item as HTMLElement
-        const nodeId = el.dataset.nodeId
-        if (!nodeId) continue
-
-        const bookmarkName = this.bookmarkCache.get(nodeId)
-        if (!bookmarkName) {
-          this.removeMarkerFromItem(el)
-          continue
-        }
-
-        const rule = this.findRuleForBookmark(bookmarkName)
-        if (rule) {
-          this.applyMarkerToItem(el, bookmarkName, rule)
-        } else {
-          this.removeMarkerFromItem(el)
-        }
+      const bookmarkName = this.bookmarkCache.get(nodeId)
+      if (!bookmarkName) {
+        remove(target)
+        continue
       }
+
+      const rule = this.findRuleForBookmark(bookmarkName)
+      if (rule) apply(target, bookmarkName, rule)
+      else remove(target)
     }
   }
 
   private applyMarkerToItem(item: HTMLElement, bookmarkName: string, rule: BookmarkRule): void {
-    const mode = resolveMode(rule)
     const textEl = item.querySelector(".b3-list-item__text") as HTMLElement | null
     if (!textEl) return
-
-    if (mode === "row") {
-      // 模式切换对称清理：移除旧徽章，避免与行样式叠加
-      textEl.querySelector(`.${BOOKMARK_MARKER_CLASS}`)?.remove()
-      applyRowStyle(textEl, buildRowStyle(rule), bookmarkName)
-      return
-    }
-
-    // 模式切换对称清理：清除旧行样式，避免与徽章叠加
-    if (textEl.dataset.bookmarkRow) clearRowStyle(textEl)
-
-    const existingMarker = textEl.querySelector(`.${BOOKMARK_MARKER_CLASS}`) as HTMLElement | null
-    if (
-      existingMarker?.dataset.bookmark === bookmarkName
-      && existingMarker.dataset.sig === buildRuleSignature(rule)
-    ) {
-      return
-    }
-    existingMarker?.remove()
-
-    textEl.appendChild(createMarkerElement(BOOKMARK_MARKER_CLASS, bookmarkName, rule))
+    this.applyMarkerToTarget(textEl, textEl, BOOKMARK_MARKER_CLASS, bookmarkName, rule)
   }
 
   private removeMarkerFromItem(item: HTMLElement): void {
     const textEl = item.querySelector(".b3-list-item__text") as HTMLElement | null
     if (!textEl) return
-
-    if (textEl.dataset.bookmarkRow) clearRowStyle(textEl)
-
-    textEl.querySelector(`.${BOOKMARK_MARKER_CLASS}`)?.remove()
+    this.removeMarkerFromTarget(textEl, textEl, BOOKMARK_MARKER_CLASS)
   }
 
   // ============================================================
@@ -195,45 +167,46 @@ export class BookmarkMarker {
   // ============================================================
 
   private applyMarkersToProtyle(): void {
-    if (!this.active || !this.cacheLoaded) return
-
-    for (const title of document.querySelectorAll(".protyle-title[data-node-id]")) {
-      const el = title as HTMLElement
-      const nodeId = el.dataset.nodeId
-      if (!nodeId) continue
-
-      const bookmarkName = this.bookmarkCache.get(nodeId)
-      if (!bookmarkName) {
-        this.removeMarkerFromProtyle(el)
-        continue
-      }
-
-      const rule = this.findRuleForBookmark(bookmarkName)
-      if (rule) {
-        this.applyMarkerToProtyle(el, bookmarkName, rule)
-      } else {
-        this.removeMarkerFromProtyle(el)
-      }
-    }
+    this.applyMarkersFor(
+      ".protyle-title[data-node-id]",
+      (el, name, rule) => this.applyMarkerToProtyle(el, name, rule),
+      (el) => this.removeMarkerFromProtyle(el),
+    )
   }
 
   private applyMarkerToProtyle(title: HTMLElement, bookmarkName: string, rule: BookmarkRule): void {
+    const inputEl = title.querySelector(".protyle-title__input") as HTMLElement | null
+    if (!inputEl) return
+    this.applyMarkerToTarget(inputEl, title, BOOKMARK_PROTYLE_CLASS, bookmarkName, rule)
+  }
+
+  private removeMarkerFromProtyle(title: HTMLElement): void {
+    const inputEl = title.querySelector(".protyle-title__input") as HTMLElement | null
+    if (!inputEl) return
+    this.removeMarkerFromTarget(inputEl, title, BOOKMARK_PROTYLE_CLASS)
+  }
+
+  /** 通用标记应用：row 行样式 / 徽章模式的对称切换清理与幂等判断 */
+  private applyMarkerToTarget(
+    textEl: HTMLElement,
+    markerHost: HTMLElement,
+    markerClass: string,
+    bookmarkName: string,
+    rule: BookmarkRule,
+  ): void {
     const mode = resolveMode(rule)
 
     if (mode === "row") {
-      const inputEl = title.querySelector(".protyle-title__input") as HTMLElement | null
-      if (!inputEl) return
       // 模式切换对称清理：移除旧徽章，避免与行样式叠加
-      title.querySelector(`.${BOOKMARK_PROTYLE_CLASS}`)?.remove()
-      applyRowStyle(inputEl, buildRowStyle(rule), bookmarkName)
+      markerHost.querySelector(`.${markerClass}`)?.remove()
+      applyRowStyle(textEl, buildRowStyle(rule), bookmarkName)
       return
     }
 
     // 模式切换对称清理：清除旧行样式，避免与徽章叠加
-    const rowEl = title.querySelector(".protyle-title__input") as HTMLElement | null
-    if (rowEl?.dataset.bookmarkRow) clearRowStyle(rowEl)
+    if (textEl.dataset.bookmarkRow) clearRowStyle(textEl)
 
-    const existingMarker = title.querySelector(`.${BOOKMARK_PROTYLE_CLASS}`) as HTMLElement | null
+    const existingMarker = markerHost.querySelector(`.${markerClass}`) as HTMLElement | null
     if (
       existingMarker?.dataset.bookmark === bookmarkName
       && existingMarker.dataset.sig === buildRuleSignature(rule)
@@ -242,14 +215,17 @@ export class BookmarkMarker {
     }
     existingMarker?.remove()
 
-    title.appendChild(createMarkerElement(BOOKMARK_PROTYLE_CLASS, bookmarkName, rule))
+    markerHost.appendChild(createMarkerElement(markerClass, bookmarkName, rule))
   }
 
-  private removeMarkerFromProtyle(title: HTMLElement): void {
-    const inputEl = title.querySelector(".protyle-title__input") as HTMLElement | null
-    if (inputEl?.dataset.bookmarkRow) clearRowStyle(inputEl)
-
-    title.querySelector(`.${BOOKMARK_PROTYLE_CLASS}`)?.remove()
+  /** 通用标记移除 */
+  private removeMarkerFromTarget(
+    textEl: HTMLElement,
+    markerHost: HTMLElement,
+    markerClass: string,
+  ): void {
+    if (textEl.dataset.bookmarkRow) clearRowStyle(textEl)
+    markerHost.querySelector(`.${markerClass}`)?.remove()
   }
 
   // ============================================================
@@ -468,6 +444,8 @@ export class BookmarkMarker {
   // ============================================================
 
   private startAutoUpdate(): void {
+    // 防御：确保无残留定时器，避免异常路径下重复 interval
+    this.stopAutoUpdate()
     this.updateTimer = window.setInterval(() => this.applyMarkers(), this.options.updateInterval)
   }
 

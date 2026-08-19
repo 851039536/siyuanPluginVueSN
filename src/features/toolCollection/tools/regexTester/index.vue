@@ -48,7 +48,7 @@
     <div class="rt-results">
       <!-- 结果统计 -->
       <span class="rt-results-header">
-        {{ i18n.regexTester?.matches }}: {{ result.total }}
+        {{ i18n.regexTester?.matches }}: {{ result.matches.length }}
       </span>
       <div class="rt-match-list">
         <div
@@ -99,10 +99,7 @@ const toggleFlag = (flag: string) => {
 }
 
 const result = computed(() => safeMatch(pattern.value, activeFlags.value, testText.value))
-const errorMsg = computed(() => {
-  if (!result.value.success && result.value.error !== "empty") return result.value.error
-  return ""
-})
+const errorMsg = computed(() => result.value.error ?? "")
 </script>
 
 <style lang="scss" scoped>

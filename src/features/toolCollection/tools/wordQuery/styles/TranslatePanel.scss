@@ -1,107 +1,206 @@
 @use '@/variables.scss' as *;
 
-// 翻译面板样式
+// ========== 翻译面板 — 紧凑单列布局 ==========
+// 工具集底部面板宽度通常在 500~900px，双栏会挤压输入/译文，
+// 这里采用「语言栏 + 上下结构」，在窄容器中更友好。
 
-.translate-mode-content {
-  padding: $spacing-4;
+.translate-panel {
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  flex: 1;
-  overflow: hidden;
-}
-
-.translate-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: $spacing-3;
   height: 100%;
   min-height: 0;
+  padding: $spacing-3;
+  background: var(--b3-theme-background, $color-bg);
 }
 
-.translate-input-section,
-.translate-output-section {
+// ========== 语言选择栏 ==========
+.translate-toolbar {
+  flex-shrink: 0;
+}
+
+.language-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: $spacing-2;
+  flex-wrap: wrap;
+
+  .language-item {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-1;
+    min-width: 120px;
+    flex: 1 1 0;
+  }
+
+  .language-label {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    color: var(--b3-theme-secondary, $color-muted);
+    line-height: 1;
+  }
+
+  .language-select {
+    width: 100%;
+  }
+
+  .swap-btn {
+    flex-shrink: 0;
+  }
+}
+
+// ========== 主体：上输入 / 下译文 ==========
+.translate-body {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  min-width: 0;
+  gap: $spacing-3;
+}
 
-  .section-header {
+.translate-source {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  min-height: 0;
+
+  .source-actions {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: flex-end;
     gap: $spacing-2;
-    margin-bottom: $spacing-2;
-    padding-bottom: $spacing-2;
-    border-bottom: 1px solid var(--b3-border-color, $color-border);
     flex-shrink: 0;
 
-    .section-title {
-      font-weight: $font-weight-semibold;
-      font-size: $font-size-sm;
-      color: var(--b3-theme-on-background, $color-fg);
-    }
-
-    .language-select {
-      min-width: 100px;
+    .char-count {
+      margin-right: auto;
+      font-size: $font-size-2xs;
+      color: var(--b3-theme-secondary, $color-muted);
+      font-variant-numeric: tabular-nums;
     }
   }
 
   .translate-textarea {
+    // 让 textarea 占满可用高度
     flex: 1;
-    min-height: 160px;
+    min-height: 0;
+  }
+}
+
+.translate-result-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--b3-border-color, $color-border);
+  border-radius: $vp-radius;
+  background: var(--b3-theme-background, $color-bg);
+  overflow: hidden;
+
+  .result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $spacing-2;
+    padding: $spacing-2 $spacing-3;
+    border-bottom: 1px solid var(--b3-border-color, $color-border);
+    background: var(--b3-theme-surface, $color-surface);
+    flex-shrink: 0;
+
+    .result-title {
+      display: inline-flex;
+      align-items: center;
+      gap: $spacing-1;
+      font-size: $font-size-xs;
+      font-weight: $font-weight-semibold;
+      color: var(--b3-theme-on-background, $color-fg);
+    }
   }
 
   .translate-result {
     flex: 1;
+    min-height: 0;
     padding: $spacing-3;
-    background: var(--b3-theme-background, $color-bg);
-    border: 1px solid var(--b3-border-color, $color-border);
-    border-radius: $vp-radius;
     overflow-y: auto;
-    min-height: 160px;
     font-size: $font-size-sm;
-    line-height: $line-height-normal;
+    line-height: $line-height-relaxed;
     color: var(--b3-theme-on-background, $color-fg);
     white-space: pre-wrap;
     overflow-wrap: break-word;
   }
 
-  .translate-empty {
+  .translate-state {
     flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: $spacing-3;
+    gap: $spacing-2;
+    padding: $spacing-4;
     color: var(--b3-theme-secondary, $color-muted);
-    min-height: 160px;
-
-    .empty-icon {
-      font-size: $font-size-2xl;
-      opacity: 0.5;
-      line-height: 1;
-    }
+    text-align: center;
 
     p {
+      margin: 0;
       font-size: $font-size-sm;
-      opacity: 0.6;
+      opacity: 0.65;
     }
-  }
 
-  .input-actions,
-  .output-actions {
-    display: flex;
-    gap: $spacing-2;
-    margin-top: $spacing-2;
-    justify-content: flex-end;
-    flex-shrink: 0;
+    &.is-error {
+      color: var(--b3-theme-error, $color-danger);
+
+      p {
+        opacity: 1;
+        max-width: 100%;
+        overflow-wrap: break-word;
+      }
+    }
   }
 }
 
-// 小屏幕双栏变单栏
-@media (max-width: 480px) {
-  .translate-container {
-    grid-template-columns: 1fr;
+// ========== 底部操作栏 ==========
+.translate-footer {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  flex-shrink: 0;
+
+  .auto-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: $spacing-1;
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-secondary, $color-muted);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+// ========== 加载动画 ==========
+.loading-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--b3-theme-surface-lighter, $color-surface);
+  border-top-color: var(--b3-theme-primary, $color-danger);
+  border-radius: $radius-full;
+  animation: translate-spin 0.7s linear infinite;
+}
+
+@keyframes translate-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ========== 响应式 ==========
+// 面板足够宽时恢复左右双栏，兼顾大屏用户
+@media (min-width: 720px) {
+  .translate-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    align-items: stretch;
   }
 }

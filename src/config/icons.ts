@@ -720,6 +720,9 @@ export const COMMON_ICONS = {
   home: {
     icon: "mdi:home",
   },
+  dockWindow: {
+    icon: "mdi:dock-window",
+  },
   play: {
     icon: "mdi:play",
   },

@@ -7,6 +7,8 @@
     "orange": "Warm Orange",
     "github": "GitHub Blue",
     "sakura": "Sakura Anime",
-    "codex": "Codex"
+    "codex": "Codex",
+    "custom": "Custom",
+    "customColorLabel": "Custom Color"
   }
 }

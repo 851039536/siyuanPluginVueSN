@@ -303,3 +303,28 @@ $status-colors: (
 .sub-feature-toggle {
   margin-left: auto;
 }
+
+// ---- 自定义主题色输入框 ----
+.feature-color-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 4px 0;
+}
+
+.feature-color-label {
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.75;
+}
+
+.feature-color-input input[type="color"] {
+  width: 28px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--b3-border-color);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}

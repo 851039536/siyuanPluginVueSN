@@ -160,7 +160,7 @@ export default class PluginSample extends Plugin {
   private rebuildThemeColor() {
     this.__themeColor?.destroy()
     this.__themeColor = this.settings.enableThemeColor
-      ? registerThemeColor(this.settings.themeColorScheme)
+      ? registerThemeColor(this.settings.themeColorScheme, this.settings.customThemeColor)
       : undefined
   }
 

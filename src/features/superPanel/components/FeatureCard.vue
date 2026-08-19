@@ -118,6 +118,17 @@
           {{ opt.label }}
         </button>
       </div>
+      <div
+        v-if="colorValue !== undefined"
+        class="feature-color-input"
+      >
+        <span class="feature-color-label">{{ colorLabel || '' }}</span>
+        <input
+          type="color"
+          :value="colorValue"
+          @input="onColorInput"
+        >
+      </div>
     </div>
   </div>
 </template>
@@ -151,6 +162,8 @@ interface Props {
   selectorOptions?: SelectorOption[]
   selectedOption?: string
   statusLabels?: Record<string, string>
+  colorValue?: string
+  colorLabel?: string
 }
 
 interface Emits {
@@ -159,6 +172,7 @@ interface Emits {
   (e: "select", value: string): void
   (e: "statusChange", status: FeatureStatus): void
   (e: "toggleSubFeature", featureId: string): void
+  (e: "colorChange", value: string): void
 }
 
 const props = defineProps<Props>()
@@ -191,5 +205,10 @@ const selectStatus = (status: FeatureStatus): void => {
 
 const handleAction = (actionKey: string): void => {
   emit("action", actionKey)
+}
+
+const onColorInput = (event: Event): void => {
+  const input = event.target as HTMLInputElement
+  emit("colorChange", input.value)
 }
 </script>

@@ -39,8 +39,8 @@
             class="tag-input"
             :placeholder="i18n.bookmarkNamePlaceholder"
             @keydown.enter.prevent="addTag($event)"
-            @keydown.,.prevent="addTag($event)"
             @keydown.backspace="handleTagBackspace($event)"
+            @keydown="handleKeydown"
           />
         </div>
       </div>
@@ -396,6 +396,14 @@ const addTag = (event: KeyboardEvent) => {
     props.rule.bookmarkNames.push(value)
     input.value = ""
     emit("change")
+  }
+}
+
+const handleKeydown = (event: KeyboardEvent) => {
+  // 逗号键快捷添加标签；其余按键不做拦截，保证正常输入
+  if (event.key === ",") {
+    event.preventDefault()
+    addTag(event)
   }
 }
 

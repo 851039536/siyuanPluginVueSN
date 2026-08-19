@@ -9,7 +9,6 @@
       @open-settings="showSettings = true"
       @toggle-favorite="handleToggleFavorite"
       @open-external="handleOpenExternal"
-      @embed-to-siyuan="handleEmbedToSiyuan"
       @toggle-floating="handleToggleFloating"
       @invalid-url="handleInvalidUrl"
     />
@@ -133,7 +132,6 @@ import {
   isFavorite,
   loadBrowserSettings,
   loadFavorites,
-  loading,
   navigate,
   removeFavorite,
   renameFavorite,
@@ -141,7 +139,6 @@ import {
   sidebarResizing,
   useBrowserState,
 } from "./composables/useBrowserState"
-import { embedCurrentUrl } from "./composables/useEmbed"
 import type { I18n } from "./types"
 
 interface Props {
@@ -187,7 +184,6 @@ const handleInvalidUrl = () => {
 }
 
 const handleFrameLoad = () => {
-  loading.value = false
   // 跨域页面无法读 title，以 hostname 兜底显示在收藏命名框中
   if (!favoriteNameInput.value) {
     favoriteNameInput.value = hostnameOf(currentUrl.value)
@@ -270,28 +266,6 @@ const handleOpenExternal = () => {
     void electron.shell.openExternal(url)
   } else {
     window.open(url, "_blank", "noopener,noreferrer")
-  }
-}
-
-// ==================== 嵌入思源 ====================
-
-const embedding = ref(false)
-
-const handleEmbedToSiyuan = async () => {
-  const url = currentUrl.value
-  if (!url || embedding.value) return
-  embedding.value = true
-  try {
-    const result = await embedCurrentUrl(url)
-    if (result === "ok") {
-      showMessage(props.i18n.embedSuccess, 2000, "info")
-    } else if (result === "no-doc") {
-      showMessage(props.i18n.embedNoDoc, 3000, "error")
-    } else {
-      showMessage(props.i18n.embedFailed, 3000, "error")
-    }
-  } finally {
-    embedding.value = false
   }
 }
 

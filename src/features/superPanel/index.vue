@@ -120,7 +120,11 @@ import {
 import IconWrapper from "@/components/IconWrapper.vue"
 import { featureIdToSettingKey } from "@/config/settings"
 import { FEATURE_CONFIG } from "@/features/config"
-import { THEMES } from "@/features/themeColor"
+import {
+  DEFAULT_THEME_SCHEME,
+  isThemeColorSchemeId,
+  THEMES,
+} from "@/features/themeColor"
 import FeatureCard from "./components/FeatureCard.vue"
 import SuperPanelHeader from "./components/SuperPanelHeader.vue"
 import { FEATURE_STATUSES } from "./types"
@@ -128,6 +132,7 @@ import { FEATURE_STATUSES } from "./types"
 interface Props {
   settings: PluginSettings
   i18n: Record<string, any>
+  themeColorI18n: Record<string, any>
   onOpenAiSettings?: () => void
 }
 
@@ -233,7 +238,7 @@ const statusLabels = computed<Record<string, string>>(() => ({
 const themeSchemeOptions = computed<SelectorOption[]>(() =>
   Object.entries(THEMES).map(([id, scheme]) => ({
     value: id,
-    label: scheme.name,
+    label: props.themeColorI18n[id] || scheme.name,
     color: scheme.primary,
   })),
 )
@@ -244,7 +249,10 @@ const getSelectorOptions = (featureId: string): SelectorOption[] => {
 }
 
 const getSelectedOption = (featureId: string): string => {
-  if (featureId === "themeColor") return props.settings.themeColorScheme || "orange"
+  if (featureId === "themeColor") {
+    const scheme = props.settings.themeColorScheme
+    return isThemeColorSchemeId(scheme) ? scheme : DEFAULT_THEME_SCHEME
+  }
   return ""
 }
 

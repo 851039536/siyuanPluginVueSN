@@ -1,15 +1,24 @@
 <template>
-  <Teleport to="body">
+  <Teleport
+    to="body"
+    :disabled="mode === 'tab'"
+  >
     <div
-      v-if="visible"
-      class="vp-overlay"
-      @click.self="closeDialog"
+      v-if="mode === 'tab' || visible"
+      :class="mode === 'tab' ? 'vp-search-tab-root' : 'vp-overlay'"
+      @click.self="mode === 'overlay' && closeDialog()"
     >
-      <div class="vp-dialog">
+      <div
+        class="vp-dialog"
+        :class="{ 'vp-dialog--tab': mode === 'tab' }"
+      >
         <!-- 头部 -->
         <DialogHeader
           :i18n="i18n"
+          :mode="mode"
+          :is-floating="isFloating"
           @close="closeDialog"
+          @open-floating="handleOpenFloating"
         />
 
         <!-- 搜索栏 -->
@@ -81,7 +90,10 @@ import type {
   SearchOptions as SearchOptionsType,
   SearchState,
 } from "./types"
-import { showMessage } from "siyuan"
+import {
+  getFrontend,
+  showMessage,
+} from "siyuan"
 import {
   computed,
   nextTick,
@@ -119,9 +131,13 @@ import {
 // Props
 interface Props {
   visible: boolean
+  /** 承载模式：overlay = Teleport 弹窗；tab = 独立窗口页签 */
+  mode?: "overlay" | "tab"
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  mode: "overlay",
+})
 
 // Emits
 const emit = defineEmits<{
@@ -288,6 +304,25 @@ const handleClear = () => {
   searchQuery.value = ""
   resetSearchState()
   searchBarRef.value?.focus()
+}
+
+/** 当前是否运行在独立浮动窗口中（getFrontend()：desktop=主窗口 / desktop-window=新窗口） */
+const isFloating = computed(() => {
+  try {
+    return getFrontend() === "desktop-window"
+  } catch {
+    return false
+  }
+})
+
+/** 打开独立浮动窗口：经 __everythingSearch 挂载的 Manager 调度，同时关闭 overlay 弹窗避免双实例 */
+const handleOpenFloating = () => {
+  const manager = (plugin as any).__everythingSearch as
+    | { openFloating: () => void }
+    | undefined
+  if (!manager) return
+  closeDialog()
+  void manager.openFloating()
 }
 
 /** 关闭弹窗 */

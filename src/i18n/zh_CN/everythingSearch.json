@@ -40,6 +40,7 @@
     "wildcardSingle": "匹配单个字符",
     "resultsCount": "找到 {count} 个结果",
     "closeDialog": "关闭对话框",
+    "openFloatingWindow": "在独立窗口打开",
     "frequentKeywords": "常用关键字",
     "noKeywords": "暂无，点击 + 添加",
     "keywordPlaceholder": "输入关键字",

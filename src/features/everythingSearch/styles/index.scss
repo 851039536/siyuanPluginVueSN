@@ -33,3 +33,21 @@
   flex-direction: column;
   overflow: hidden;
 }
+
+// ========== tab 模式（独立窗口页签）==========
+// 页签容器：静态全高布局，无遮罩（Manager 挂载容器已补 vp-dock-root）
+.vp-search-tab-root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+// tab 模式对话框：铺满页签容器，去掉弹窗圆角/边框
+.vp-dialog--tab {
+  width: 100%;
+  max-width: none;
+  max-height: none;
+  flex: 1;
+  border-radius: 0;
+  border: none;
+}

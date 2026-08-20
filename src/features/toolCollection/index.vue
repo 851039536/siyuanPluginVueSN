@@ -1,23 +1,30 @@
 <template>
   <Transition name="slide-up">
     <div
-      v-if="visible.value"
+      v-if="mode === 'overlay' ? visible?.value : true"
       class="tool-collection-overlay"
-      @click.self="close"
+      :class="{ 'tab-mode': mode === 'tab' }"
+      @click.self="mode === 'overlay' ? close() : undefined"
     >
       <div
         class="tool-collection-panel"
-        :style="panelStyle"
+        :class="{ 'tab-mode': mode === 'tab' }"
+        :style="mode === 'overlay' ? panelStyle : undefined"
       >
-        <!-- 拖拽调整高度手柄 -->
+        <!-- 拖拽调整高度手柄（仅底部面板模式显示） -->
         <div
+          v-if="mode === 'overlay'"
           class="resize-handle"
           @mousedown="onResizeStart"
         />
         <!-- 头部 -->
         <div class="tool-collection-header">
           <span class="header-title">{{ i18n.toolCollection }}</span>
-          <div class="header-resize">
+          <!-- 尺寸调整按钮组（仅底部面板模式显示） -->
+          <div
+            v-if="mode === 'overlay'"
+            class="header-resize"
+          >
             <!-- 按钮提示："变窄" -->
             <button
               class="resize-btn"
@@ -70,7 +77,21 @@
               />
             </button>
           </div>
+          <!-- 在独立窗口打开（浮动窗口内隐藏；关闭浮动窗口自动移回主窗口） -->
           <button
+            v-if="!isFloating"
+            class="header-float"
+            :title="i18n.toolCollectionPanel.openFloatingWindow"
+            @click="openFloatingWindow"
+          >
+            <Icon
+              icon="mdi:dock-window"
+              :size="14"
+            />
+          </button>
+          <!-- 关闭按钮（仅底部面板模式显示） -->
+          <button
+            v-if="mode === 'overlay'"
             class="header-close"
             @click="close"
           >
@@ -145,10 +166,11 @@
 
 <script setup lang="ts">
 /**
- * 工具合集 - 底部面板主组件
- * Tab 切换多个实用小工具，支持键盘导航与面板尺寸持久化
+ * 工具合集 - 主组件（overlay 底部面板 / tab 独立页签双形态）
+ * Tab 切换多个实用小工具，支持键盘导航、面板尺寸持久化与独立窗口承载
  */
 import type { Plugin } from "siyuan"
+import { getFrontend } from "siyuan"
 import type { Ref } from "vue"
 import type { ToolMeta } from "./types"
 import { Icon } from "@iconify/vue"
@@ -178,20 +200,46 @@ interface PanelI18n {
     taller: string
     prevTool: string
     nextTool: string
+    openFloatingWindow: string
   }
 }
 
 interface Props {
   plugin: Plugin
-  visible: Ref<boolean>
+  visible?: Ref<boolean>
+  /** 承载模式：overlay = 底部滑入面板；tab = 独立页签/浮动窗口 */
+  mode?: "overlay" | "tab"
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  mode: "overlay",
+})
 
 const i18n = props.plugin.i18n as unknown as PanelI18n
 
 const close = () => {
-  props.visible.value = false
+  if (props.visible) {
+    props.visible.value = false
+  }
+}
+
+/** 当前是否运行在独立浮动窗口中（思源 getFrontend()：desktop=主窗口 / desktop-window=新窗口） */
+const isFloating = computed(() => {
+  try {
+    return getFrontend() === "desktop-window"
+  } catch {
+    return false
+  }
+})
+
+/** 打开独立浮动窗口：经 __toolCollection 挂载的 Manager 调度，同时关闭底部面板避免双实例 */
+const openFloatingWindow = () => {
+  const manager = (props.plugin as any).__toolCollection as
+    | { openFloating: () => void }
+    | undefined
+  if (!manager) return
+  close()
+  void manager.openFloating()
 }
 
 // ==================== 面板尺寸 ====================
@@ -208,9 +256,11 @@ const tools = ref<ToolMeta[]>(TOOL_REGISTRY.map((t) => ({
 const { dragIndex, onDragStart, onDragOver, onDrop, onDragEnd } = useTabReorder(tools, props.plugin)
 
 // ==================== Tab 导航 + 键盘交互 ====================
+// tab 模式无 visible prop，键盘交互视为始终可见
+const visibleForNav = computed(() => props.visible?.value ?? true)
 const { currentTool, prevTool, nextTool, handleKeydown } = useToolNavigation(
   tools,
-  props.visible,
+  visibleForNav,
   close
 )
 
@@ -222,7 +272,7 @@ const currentToolMeta = computed(() =>
 const activeTabRef = ref<HTMLButtonElement | null>(null)
 
 watch(
-  () => props.visible.value,
+  () => props.visible?.value,
   (val) => {
     if (val) {
       nextTick(() => activeTabRef.value?.focus())

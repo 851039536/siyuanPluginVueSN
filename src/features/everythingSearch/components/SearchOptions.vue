@@ -94,7 +94,7 @@
           class="vp-options__size-input"
           :value="options.minSize"
           min="0"
-          @input="onMinSizeInput"
+          @input="onSizeInput('minSize', $event)"
         />
         <Select
           :model-value="options.minSizeUnit"
@@ -108,7 +108,7 @@
           class="vp-options__size-input"
           :value="options.maxSize"
           min="0"
-          @input="onMaxSizeInput"
+          @input="onSizeInput('maxSize', $event)"
         />
         <Select
           :model-value="options.maxSizeUnit"
@@ -225,16 +225,10 @@ const updateOption = (
   emit("update:options", key, value)
 }
 
-/** 处理最小尺寸输入 */
-const onMinSizeInput = (event: Event) => {
+/** 处理文件大小输入（minSize/maxSize 共用） */
+const onSizeInput = (key: "minSize" | "maxSize", event: Event) => {
   const val = (event.target as HTMLInputElement).valueAsNumber
-  emit("update:options", "minSize", isNaN(val) || val < 0 ? 0 : val)
-}
-
-/** 处理最大尺寸输入 */
-const onMaxSizeInput = (event: Event) => {
-  const val = (event.target as HTMLInputElement).valueAsNumber
-  emit("update:options", "maxSize", isNaN(val) || val < 0 ? 0 : val)
+  emit("update:options", key, Number.isNaN(val) || val < 0 ? 0 : val)
 }
 </script>
 

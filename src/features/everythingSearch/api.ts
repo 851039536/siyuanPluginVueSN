@@ -143,7 +143,7 @@ function formatDate(timestamp: number | string): string {
     date = new Date(timestamp)
   }
 
-  if (isNaN(date.getTime())) return ""
+  if (Number.isNaN(date.getTime())) return ""
 
   const locale = (typeof navigator !== "undefined" && navigator.language) || "zh-CN"
   return date.toLocaleString(locale, {
@@ -176,7 +176,7 @@ const SYSTEM_ROOT_DIRS = [
 ]
 
 /** 提取 Windows 路径盘符后的一级目录名（如 "C:\\Windows\\System32" → "Windows"） */
-const ROOT_DIR_REGEX = /^[a-zA-Z]:\\([^\\]+)(?:\\|$)/i
+const ROOT_DIR_REGEX = /^[a-z]:\\([^\\]+)(?:\\|$)/i
 
 /**
  * 判断完整路径是否位于系统关键目录下
@@ -186,155 +186,4 @@ export function isSystemPath(fullPath: string): boolean {
   const match = ROOT_DIR_REGEX.exec(fullPath)
   if (!match) return false
   return SYSTEM_ROOT_DIRS.includes(match[1].toLowerCase())
-}
-
-/**
- * 获取文件扩展名
- */
-function getFileExtension(filename: string): string {
-  const lastDot = filename.lastIndexOf(".")
-  if (lastDot === -1 || lastDot === 0) return ""
-  return filename.substring(lastDot + 1).toLowerCase()
-}
-
-/** 扩展名 → 文件图标类型映射（模块级常量，避免每次调用重建） */
-const EXT_ICON_MAP: Record<string, string> = {
-  // 文档
-  "pdf": "pdf",
-  "doc": "word",
-  "docx": "word",
-  "xls": "excel",
-  "xlsx": "excel",
-  "ppt": "ppt",
-  "pptx": "ppt",
-  "txt": "text",
-  "md": "markdown",
-  // 图片
-  "jpg": "image",
-  "jpeg": "image",
-  "png": "image",
-  "gif": "image",
-  "svg": "image",
-  "webp": "image",
-  "bmp": "image",
-  "ico": "image",
-  // 视频
-  "mp4": "video",
-  "avi": "video",
-  "mkv": "video",
-  "mov": "video",
-  "wmv": "video",
-  "flv": "video",
-  // 音频
-  "mp3": "audio",
-  "wav": "audio",
-  "flac": "audio",
-  "aac": "audio",
-  "ogg": "audio",
-  // 压缩包
-  "zip": "archive",
-  "rar": "archive",
-  "7z": "archive",
-  "tar": "archive",
-  "gz": "archive",
-  // 代码
-  "js": "code",
-  "ts": "code",
-  "jsx": "code",
-  "tsx": "code",
-  "vue": "code",
-  "html": "code",
-  "css": "code",
-  "scss": "code",
-  "less": "code",
-  "json": "code",
-  "xml": "code",
-  "py": "code",
-  "java": "code",
-  "c": "code",
-  "cpp": "code",
-  "h": "code",
-  "go": "code",
-  "rs": "code",
-  "rb": "code",
-  "php": "code",
-  "sql": "code",
-  "sh": "code",
-  "bat": "code",
-  // 可执行文件
-  "exe": "executable",
-  "msi": "executable",
-  "dll": "executable",
-  // 思源笔记
-  "sy": "siyuan",
-}
-
-/**
- * 根据扩展名获取文件图标类型
- */
-export function getFileIconType(filename: string, isFolder: boolean): string {
-  if (isFolder) return "folder"
-  return EXT_ICON_MAP[getFileExtension(filename)] || "file"
-}
-
-/** 获取 Electron shell 模块（懒加载单例） */
-let _shell: any
-function getElectronShell() {
-  if (!_shell) {
-    _shell = window.require("@electron/remote").shell
-  }
-  return _shell
-}
-
-/**
- * 用系统默认程序打开文件
- */
-export async function openFile(filePath: string): Promise<void> {
-  try {
-    await getElectronShell().openPath(filePath)
-  } catch (error) {
-    console.error("打开文件失败:", error)
-    throw error
-  }
-}
-
-/**
- * 在资源管理器中显示文件
- */
-export function showInExplorer(filePath: string): void {
-  try {
-    getElectronShell().showItemInFolder(filePath)
-  } catch (error) {
-    console.error("显示文件失败:", error)
-    throw error
-  }
-}
-
-/**
- * 删除文件（移入回收站）
- * 优先使用 Electron shell.trashItem，不可用时通过 PowerShell 移入回收站
- */
-export async function deleteFile(filePath: string): Promise<void> {
-  try {
-    const shell = getElectronShell()
-    // Electron 22+ 标准 API
-    if (typeof shell.trashItem === "function") {
-      await shell.trashItem(filePath)
-      return
-    }
-    // 旧版 Electron 备选 API
-    if (typeof shell.moveItemToTrash === "function") {
-      shell.moveItemToTrash(filePath)
-      return
-    }
-    // 兜底：PowerShell 移入回收站
-    const { execSync } = window.require("child_process") as typeof import("child_process")
-    execSync(
-      `powershell -NoProfile -Command "Add-Type -AssemblyName Microsoft.VisualBasic;[Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile('${filePath.replace(/'/g, "''")}','OnlyErrorDialogs','SendToRecycleBin')"`,
-      { timeout: 5000 },
-    )
-  } catch (error) {
-    console.error("删除文件失败:", error)
-    throw error
-  }
 }

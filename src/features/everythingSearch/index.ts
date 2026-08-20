@@ -16,11 +16,6 @@ export function showEverythingSearch() {
   everythingSearchVisible.value = true
 }
 
-/** 隐藏 Everything 搜索弹窗 */
-export function hideEverythingSearch() {
-  everythingSearchVisible.value = false
-}
-
 // ============================================================
 // 功能注册
 // ============================================================

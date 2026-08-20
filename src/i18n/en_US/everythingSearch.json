@@ -1,9 +1,6 @@
 {
   "everythingSearch": {
     "title": "Everything Search",
-    "description": "Quick local file search tool",
-    "enableEverythingSearch": "Enable Everything Search",
-    "enableEverythingSearchDesc": "Search local files quickly via Everything HTTP service",
     "searchPlaceholder": "Enter keywords to search local files...",
     "search": "Search",
     "emptyHint": "Enter keywords to auto-search local files",

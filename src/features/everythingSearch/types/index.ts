@@ -54,6 +54,4 @@ export interface SearchState {
   results: EverythingSearchResult[]
   /** 错误信息 */
   errorMessage: string
-  /** 是否已搜索过 */
-  hasSearched: boolean
 }

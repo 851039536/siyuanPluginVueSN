@@ -36,8 +36,9 @@
     white-space: nowrap;
   }
 
-  // 文件大小数值输入框
+  // 文件大小数值输入框（border-box 保证外高 28px，与 Select xsmall 一致）
   &__size-input {
+    box-sizing: border-box;
     width: 48px;
     height: 28px;
     padding: 0 6px;

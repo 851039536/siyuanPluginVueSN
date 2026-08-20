@@ -496,6 +496,59 @@ toolCollection/
 
 **注册新工具到面板**：在 `toolCollection/index.vue` 的 `tools` computed 中添加条目 + 在 `<div class="tool-collection-content">` 中添加 `v-if` 组件引用。无需修改注册清单。
 
+## 独立窗口承载（addTab + openTab + openWindow）
+
+需要「独立窗口 / 浮动窗口」承载 UI 的功能，使用思源官方 API 的 `addTab + openTab + openWindow` 组合实现**双形态承载**：主窗口页签（tab）⇄ 独立浮动窗口。参考实现：`src/features/minimalBrowser/`（BrowserManager）、`src/features/toolCollection/`（ToolCollectionManager，底部面板 + 独立窗口双形态）。
+
+**核心流程**：`plugin.addTab()` 注册自定义页签模型 → `openTab({ custom })` 创建/聚焦主窗口页签 → `openWindow({ tab })` 把同一页签移入浮动窗口。**关闭浮动窗口时思源自动把页签移回主窗口，无需反向操作。**
+
+### API 签名（`siyuan` 包）
+
+```typescript
+// 注册自定义页签模型（init 的 this 指向 Custom 实例，this.element 为页签容器）
+plugin.addTab({
+  type: string,          // 自定义页签类型，如 "minimal-browser-tab"
+  init: () => void,      // 挂载 Vue 面板到 this.element
+  destroy?: () => void,
+})
+
+// 创建/聚焦主窗口页签（页签已打开时思源自动聚焦）
+await openTab({
+  app: plugin.app,
+  custom: { id, icon, title, data? },  // id = `${plugin.name}${TAB_TYPE}`
+  position?: "right" | "bottom",
+}): Promise<Tab>
+
+// 把页签移入独立浮动窗口
+openWindow({ tab, width?, height?, position?: { x, y } })
+```
+
+### 实现步骤（Manager 类模式）
+
+1. **Manager 类放 `types/index.ts`**（不在 index.ts），模块级 `let tabRegistered = false` 防重复注册（多窗口场景每个渲染进程只注册一次）：
+   - `registerTabModel()`：构造时同步调用 `plugin.addTab`；`init` 回调里 `this.element` 挂载面板（容器补 `vp-dock-root` 类 + 全高 + `overflow: hidden`）
+   - `openFloating()`：`await openTab(...)` 成功后 `openWindow({ width, height, tab })`，失败时页签留在主窗口，catch 后 `console.error`
+   - `destroy()`：unmount Vue app + 移除容器 DOM
+2. **`index.vue` 支持双模式**：新增 `mode` prop（`"overlay" | "tab"`），面板按 mode 条件渲染——tab 模式隐藏 overlay 专属元素（拖拽手柄、尺寸调整、关闭按钮），CSS 用 `.tab-mode` 类覆盖 fixed 定位为静态全高布局
+3. **`index.ts` 注册**：register 函数内实例化 Manager + `plugin.addIcons()` 注册页签图标 symbol，挂载 `(plugin as any).__xxx = { openFloating, destroy }` 并加入 `DESTROYABLE_KEYS`
+4. **双实例隔离**：底部面板/常驻弹窗打开时点击「在独立窗口打开」应先关闭自身 UI，避免两处同时渲染同一功能
+5. **浮动窗口识别**：`getFrontend() === "desktop-window"` 表示当前在独立浮动窗口中，此形态隐藏「在独立窗口打开」按钮
+
+### 关键点速查表
+
+| 关键点 | 说明 |
+|--------|------|
+| tab 注册时机 | `registerTabModel()` 在 Manager 构造时同步调用（addTab 需同步注册） |
+| init 挂载 | init 回调 `this.element` 为页签容器，重复 init 先 unmount 旧实例 |
+| 防重复注册 | 模块级 `tabRegistered` 标志，多窗口每渲染进程只注册一次 |
+| 页签 id 规范 | `custom.id = ${plugin.name}${TAB_TYPE}` |
+| 页签图标 | `plugin.addIcons()` 注册自定义 symbol 后，`custom.icon` 引用该 id |
+| openWindow 失败 | 页签自动留在主窗口，catch 后 `console.error` 即可 |
+| getFrontend | `"desktop"` = 主窗口 / `"desktop-window"` = 浮动窗口 |
+| Vue 面板挂载 | `createApp` + `h(Panel, { plugin, mode: "tab" })`，容器补 `vp-dock-root` 类 |
+
+> 参考实现：`src/features/minimalBrowser/types/index.ts`（BrowserManager）+ `src/features/toolCollection/types/index.ts`（ToolCollectionManager，overlay/tab 双形态）
+
 ## UI 风格：Codex
 
 **强制规则**：所有新增 feature 的 UI 必须遵循 Codex 风格，使用设计 Token，禁止硬编码。

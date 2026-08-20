@@ -219,11 +219,15 @@ const checkService = async () => {
   serviceAvailable.value = await checkEverythingService(config)
 }
 
+/** 是否有路径过滤（仅搜索/排除路径任一非空即视为有效搜索条件） */
+const hasPathFilter = () =>
+  options.includePaths.length > 0 || options.excludePaths.length > 0
+
 /** 搜索 */
 const handleSearch = async (forceEmpty = false) => {
   // 拼接基础查询与文件大小过滤条件
   const rawQuery = searchQuery.value.trim()
-  if (!rawQuery && !forceEmpty) return
+  if (!rawQuery && !forceEmpty && !hasPathFilter()) return
 
   let query = rawQuery
   if (forceEmpty) {
@@ -258,6 +262,8 @@ const handleSearch = async (forceEmpty = false) => {
         maxResults: options.maxResults,
         sort: options.sort,
         ascending: options.ascending,
+        includePaths: options.includePaths,
+        excludePaths: options.excludePaths,
       },
       config,
     )
@@ -289,7 +295,7 @@ const debouncedSearch = () => {
   }
 
   const query = searchQuery.value.trim()
-  if (!query) {
+  if (!query && !hasPathFilter()) {
     resetSearchState()
     return
   }
@@ -336,8 +342,8 @@ const handleOptionUpdate = (
   value: SearchOptionsType[keyof SearchOptionsType],
 ) => {
   Object.assign(options, { [key]: value })
-  // 当前有搜索词时立即重新搜索
-  if (searchQuery.value.trim()) {
+  // 当前有搜索词或路径过滤时立即重新搜索
+  if (searchQuery.value.trim() || hasPathFilter()) {
     handleSearch()
   }
 }

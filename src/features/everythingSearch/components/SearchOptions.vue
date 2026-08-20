@@ -118,6 +118,32 @@
         />
       </div>
     </div>
+
+    <!-- 行4：路径范围过滤（仅搜索路径 / 排除路径，每行一个，支持多个） -->
+    <div class="vp-options__row vp-options__row--paths">
+      <div class="vp-options__path-group">
+        <!-- 标签："仅搜索路径" -->
+        <span class="vp-options__key">{{ i18n.includePathsLabel }}</span>
+        <textarea
+          class="vp-options__path-input"
+          :value="includePathsText"
+          rows="2"
+          :placeholder="i18n.includePathsPlaceholder"
+          @input="onPathsInput('includePaths', $event)"
+        ></textarea>
+      </div>
+      <div class="vp-options__path-group">
+        <!-- 标签："排除路径" -->
+        <span class="vp-options__key">{{ i18n.excludePathsLabel }}</span>
+        <textarea
+          class="vp-options__path-input"
+          :value="excludePathsText"
+          rows="2"
+          :placeholder="i18n.excludePathsPlaceholder"
+          @input="onPathsInput('excludePaths', $event)"
+        ></textarea>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -229,6 +255,22 @@ const updateOption = (
 const onSizeInput = (key: "minSize" | "maxSize", event: Event) => {
   const val = (event.target as HTMLInputElement).valueAsNumber
   emit("update:options", key, Number.isNaN(val) || val < 0 ? 0 : val)
+}
+
+/** 仅搜索路径文本（数组 ↔ 换行文本，每行一个路径） */
+const includePathsText = computed(() => props.options.includePaths.join("\n"))
+
+/** 排除路径文本（数组 ↔ 换行文本，每行一个路径） */
+const excludePathsText = computed(() => props.options.excludePaths.join("\n"))
+
+/** 处理路径文本输入：按换行拆分、去空行后写回数组 */
+const onPathsInput = (key: "includePaths" | "excludePaths", event: Event) => {
+  const raw = (event.target as HTMLTextAreaElement).value
+  const paths = raw
+    .split(/[\r\n]+/)
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0)
+  emit("update:options", key, paths)
 }
 </script>
 

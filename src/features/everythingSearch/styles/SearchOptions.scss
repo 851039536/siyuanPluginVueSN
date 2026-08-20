@@ -71,4 +71,43 @@
     opacity: 0.3;
     font-weight: $font-weight-bold;
   }
+
+  // 路径范围过滤区块（行4）
+  &__row--paths {
+    align-items: flex-start;
+  }
+
+  &__path-group {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-1;
+    min-width: 260px;
+    flex: 1;
+  }
+
+  // 路径输入框（每行一个路径，换行分隔）
+  &__path-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 52px;
+    padding: $spacing-1 $spacing-2;
+    font-size: $font-size-2xs;
+    font-family: $vp-mono;
+    line-height: $line-height-normal;
+    color: var(--b3-theme-on-surface);
+    background: var(--b3-theme-background);
+    border: 1px solid var(--b3-border-color);
+    border-radius: $radius-sm;
+    outline: none;
+    resize: vertical;
+
+    &:focus {
+      border-color: $color-danger;
+    }
+
+    &::placeholder {
+      color: var(--b3-theme-on-surface);
+      opacity: 0.35;
+    }
+  }
 }

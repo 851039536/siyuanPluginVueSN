@@ -2,19 +2,21 @@
 
 底部面板集成多种实用小工具，通过 Tab 标签页切换。遵循跨功能通信规则，通过 App.vue 中枢调度 + emitCustomEvent 事件总线实现零依赖解耦。
 
+支持**双形态承载**：底部面板（默认）+ 独立窗口（`addTab` + `openWindow` 官方 API，参考 minimalBrowser）。
+
 ## 架构
 
 ```
 toolCollection/
-├── index.ts              # registerToolCollection() + 公开 API
-├── index.vue             # 面板容器：Overlay + Header + Tab 栏 + 动态组件内容区
-├── types/index.ts        # ToolMeta 接口定义（含可选 component 字段）
+├── index.ts              # registerToolCollection() + 公开 API + Manager 实例挂载
+├── index.vue             # 面板容器：Overlay + Header + Tab 栏 + 动态组件内容区（overlay/tab 双模式）
+├── types/index.ts        # ToolMeta 接口定义 + ToolCollectionManager（addTab 模型 + openWindow）
 ├── composables/          # 可复用逻辑
 │   ├── usePanelResize.ts     # 面板尺寸管理（持久化 + 调整）
 │   ├── useDragResize.ts      # 拖拽调整高度
 │   ├── useToolNavigation.ts  # Tab 循环切换 + 键盘交互
 │   └── useTabReorder.ts      # Tab 拖拽排序 + 顺序持久化
-├── styles/index.scss     # 面板样式（固定底部定位、Tab 栏、动画、拖拽手柄）
+├── styles/index.scss     # 面板样式（固定底部定位、Tab 栏、动画、拖拽手柄、tab 模式覆盖）
 └── tools/                # 各工具模块（独立子目录，互不依赖）
     ├── registry.ts       # 集中式工具注册表（新增工具唯一修改点）
     └── <toolName>/
@@ -30,6 +32,14 @@ toolCollection/
 2. **调度**：`App.vue` 监听事件 → 调用 `toggleToolCollection()`
 3. **响应**：模块级 `ref(visible)` 控制面板显隐
 4. **清理**：`onunload()` 中 `app.unmount()` + `container.remove()` + 重置 `ref`
+
+## 独立窗口承载
+
+- **入口**：面板头部「在独立窗口打开」按钮（浮动窗口内自动隐藏，关闭浮动窗口页签自动移回主窗口）
+- **流程**：`ToolCollectionManager.openFloating()` → `openTab` 创建/聚焦主窗口页签 → `openWindow({ tab })` 移入浮动窗口
+- **页签**：`plugin.addTab` 注册 `tool-collection-tab` 类型，`init` 回调以 `mode="tab"` 挂载 `index.vue`
+- **双实例隔离**：底部面板打开时点击浮动按钮会先关闭面板，避免两处同时渲染
+- **卸载**：`destroy()` 移除页签 Vue app 与容器 DOM
 
 ## 已集成工具
 

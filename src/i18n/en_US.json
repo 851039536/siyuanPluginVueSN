@@ -3523,7 +3523,8 @@
     "shorter": "Shorter",
     "taller": "Taller",
     "prevTool": "Previous tool (←)",
-    "nextTool": "Next tool (→)"
+    "nextTool": "Next tool (→)",
+    "openFloatingWindow": "Open in floating window"
   },
   "pdfViewer": {
     "title": "PDF Viewer",

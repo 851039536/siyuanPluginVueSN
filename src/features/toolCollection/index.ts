@@ -1,7 +1,8 @@
 /**
  * 工具合集功能模块
  *
- * 底部面板集成多种实用小工具，通过 Tab 标签页切换
+ * 底部面板集成多种实用小工具，通过 Tab 标签页切换。
+ * 支持双形态承载：底部面板（document.body 挂载）+ 独立窗口（addTab + openWindow 官方 API）。
  * 遵循跨功能通信规则：通过 App.vue 中枢调度 + emitCustomEvent 事件总线
  */
 import type { Plugin } from "siyuan"
@@ -11,6 +12,7 @@ import {
   ref,
 } from "vue"
 import ToolCollectionPanel from "./index.vue"
+import { ToolCollectionManager } from "./types"
 import "./styles/index.scss"
 
 // ============================================================
@@ -46,6 +48,12 @@ let container: HTMLElement | null = null
 export function registerToolCollection(plugin: Plugin) {
   if (app) return // 避免重复注册
 
+  // 注册自定义图标（openTab custom.icon 引用）
+  plugin.addIcons(`<symbol id="iconToolCollection" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>`)
+
+  // 独立页签/浮动窗口管理器（addTab + openWindow 官方 API）
+  const manager = new ToolCollectionManager(plugin)
+
   // 注册快捷键命令 Ctrl+T
   plugin.addCommand({
     langKey: "toggleToolCollection",
@@ -68,9 +76,13 @@ export function registerToolCollection(plugin: Plugin) {
   })
   app.mount(container)
 
-  // 挂载到 plugin 实例，供 onunload 经 DESTROYABLE_KEYS 统一销毁
+  // 挂载到 plugin 实例，供面板「在独立窗口打开」按钮与 onunload 统一销毁
   ;(plugin as any).__toolCollection = {
-    destroy: unregisterToolCollection,
+    openFloating: () => void manager.openFloating(),
+    destroy: () => {
+      manager.destroy()
+      unregisterToolCollection()
+    },
   }
 }
 

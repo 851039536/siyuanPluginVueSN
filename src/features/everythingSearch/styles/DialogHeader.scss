@@ -32,23 +32,41 @@
   }
 }
 
+.vp-header__actions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+}
+
+.vp-header__float,
 .vp-header__close {
+  // 按钮重置：清除思源主题 button 默认样式（padding/font 等）
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  // 尺寸与外观
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   width: 24px;
   height: 24px;
-  padding: 0;
-  background: transparent;
-  border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
   cursor: pointer;
   color: var(--b3-theme-on-surface);
   font-size: $font-size-xs;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+
+  svg {
+    width: $font-size-xs;
+    height: $font-size-xs;
+    flex-shrink: 0;
+  }
 
   &:hover {
     background: var(--b3-theme-surface-lighter);
-    border-color: var(--b3-theme-primary);
     color: var(--b3-theme-primary);
   }
 }

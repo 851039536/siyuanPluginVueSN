@@ -743,6 +743,7 @@
     "wildcardSingle": "matches a single character",
     "resultsCount": "Found {count} results",
     "closeDialog": "Close dialog",
+    "openFloatingWindow": "Open in floating window",
     "frequentKeywords": "Frequent keywords",
     "noKeywords": "None yet, click + to add",
     "keywordPlaceholder": "Enter keyword",

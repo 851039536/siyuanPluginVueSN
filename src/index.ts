@@ -115,6 +115,7 @@ export default class PluginSample extends Plugin {
     "__superPanel", // 超级面板（持久 Modal + 事件监听器）
     "__websiteNavigation", // 网站导航（非持久 Modal，卸载时清理打开的 DOM）
     "__minimalBrowser", // 极简浏览器（addTab 模型 + 独立窗口 + 全局事件监听）
+    "__everythingSearch", // Everything 搜索（addTab 模型 + 独立窗口）
   ] as const
 
   onload() {

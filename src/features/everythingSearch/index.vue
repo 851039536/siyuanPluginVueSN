@@ -19,9 +19,8 @@
           :i18n="i18n"
           :is-searching="searchState.status === 'loading'"
           @search="handleSearch"
-          @empty-search="handleEmptyFoldersSearch"
+          @empty-search="handleSearch(true)"
           @clear="handleClear"
-          @escape="closeDialog"
         />
 
         <!-- 搜索选项 -->
@@ -94,13 +93,14 @@ import {
 import { usePlugin } from "@/main"
 import { copyToClipboard } from "@/utils/domUtils"
 import {
+  getElectronModules,
+  getElectronRemoteShell,
+} from "@/utils/nodeModules"
+import {
   checkEverythingService,
-  deleteFile,
   getFullPath,
   isSystemPath,
-  openFile,
   searchFiles,
-  showInExplorer,
 } from "./api"
 import AdvancedHelpPanel from "./components/AdvancedHelpPanel.vue"
 import DialogFooter from "./components/DialogFooter.vue"
@@ -154,13 +154,15 @@ const config = reactive<EverythingConfig>({ ...DEFAULT_CONFIG })
 // 搜索选项
 const options = reactive<SearchOptionsType>({ ...DEFAULT_OPTIONS })
 
-// 搜索状态
-const searchState = reactive<SearchState>({
+/** 初始搜索状态（初始化与重置共用，消除重复字面量） */
+const createEmptySearchState = (): SearchState => ({
   status: "idle",
   results: [],
   errorMessage: "",
-  hasSearched: false,
 })
+
+// 搜索状态
+const searchState = reactive<SearchState>(createEmptySearchState())
 
 /** 从插件存储加载配置 */
 const loadConfig = async () => {
@@ -228,7 +230,6 @@ const handleSearch = async (forceEmpty = false) => {
 
   searchState.status = "loading"
   searchState.errorMessage = ""
-  searchState.hasSearched = true
 
   try {
     const results = await searchFiles(
@@ -260,17 +261,9 @@ const handleSearch = async (forceEmpty = false) => {
   }
 }
 
-/** 点击空文件夹按钮直接查询空文件夹 */
-const handleEmptyFoldersSearch = () => {
-  handleSearch(true)
-}
-
 /** 重置搜索状态 */
 const resetSearchState = () => {
-  searchState.results = []
-  searchState.status = "idle"
-  searchState.hasSearched = false
-  searchState.errorMessage = ""
+  Object.assign(searchState, createEmptySearchState())
 }
 
 /** 防抖搜索 */
@@ -349,10 +342,21 @@ const handleKeywordDelete = (keyword: string) => {
   }
 }
 
+/** 获取 Electron shell（nodeModules 统一封装，非 Electron 环境返回 null） */
+const getShell = () => getElectronModules()?.shell
+
+/** 获取主进程 remote shell（trashItem 依赖主进程 FileOperation，渲染进程直调会失败） */
+const getRemoteShell = () => getElectronRemoteShell()
+
 /** 打开项目 */
 const handleItemOpen = async (item: EverythingSearchResult) => {
+  const shell = getShell()
+  if (!shell) {
+    showMessage(`${i18n.value.openFailed}`, 3000, "error")
+    return
+  }
   try {
-    await openFile(getFullPath(item))
+    await shell.openPath(getFullPath(item))
   } catch (error) {
     // 错误提示："打开失败"
     showMessage(`${i18n.value.openFailed}: ${(error as Error).message}`, 3000, "error")
@@ -361,8 +365,13 @@ const handleItemOpen = async (item: EverythingSearchResult) => {
 
 /** 在文件夹中显示 */
 const handleItemShowInFolder = (item: EverythingSearchResult) => {
+  const shell = getShell()
+  if (!shell) {
+    showMessage(`${i18n.value.operationFailed}`, 3000, "error")
+    return
+  }
   try {
-    showInExplorer(getFullPath(item))
+    shell.showItemInFolder(getFullPath(item))
   } catch (error) {
     // 错误提示："操作失败"
     showMessage(`${i18n.value.operationFailed}: ${(error as Error).message}`, 3000, "error")
@@ -376,11 +385,27 @@ const handleItemCopyPath = async (item: EverythingSearchResult) => {
   showMessage(ok ? i18n.value.pathCopied : i18n.value.copyFailed, 2000, ok ? "info" : "error")
 }
 
-/** 删除文件 */
+/** 删除文件（移入回收站：主进程 trashItem → moveItemToTrash → PowerShell 兜底） */
 const handleItemDelete = async (item: EverythingSearchResult) => {
+  const shell = getRemoteShell() ?? getShell()
+  if (!shell) {
+    showMessage(`${i18n.value.deleteFailed}`, 3000, "error")
+    return
+  }
   const fullPath = getFullPath(item)
   try {
-    await deleteFile(fullPath)
+    if (typeof shell.trashItem === "function") {
+      await shell.trashItem(fullPath)
+    } else if (typeof shell.moveItemToTrash === "function") {
+      shell.moveItemToTrash(fullPath)
+    } else {
+      // 兜底：PowerShell 移入回收站
+      const { execSync } = window.require("child_process") as typeof import("child_process")
+      execSync(
+        `powershell -NoProfile -Command "Add-Type -AssemblyName Microsoft.VisualBasic;[Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile('${fullPath.replace(/'/g, "''")}','OnlyErrorDialogs','SendToRecycleBin')"`,
+        { timeout: 5000 },
+      )
+    }
     searchState.results = searchState.results.filter((r) => r !== item)
     if (searchState.results.length === 0) {
       searchState.status = "empty"

@@ -54,9 +54,8 @@ interface Props {
 interface Emits {
   (e: "update:modelValue", value: string): void
   (e: "search"): void
-  (e: "empty-search"): void
+  (e: "emptySearch"): void
   (e: "clear"): void
-  (e: "escape"): void
 }
 
 defineProps<Props>()
@@ -70,12 +69,10 @@ const handleInput = (value: string | number | null) => {
   emit("update:modelValue", String(value || ""))
 }
 
-/** 处理键盘事件 */
+/** 处理键盘事件（Escape 由父组件 document 级监听统一处理） */
 const handleKeydown = (event: KeyboardEvent) => {
   if (event.key === "Enter") {
     emit("search")
-  } else if (event.key === "Escape") {
-    emit("escape")
   }
 }
 
@@ -92,7 +89,7 @@ const handleSearch = () => {
 
 /** 处理空文件夹搜索 */
 const handleEmptySearch = () => {
-  emit("empty-search")
+  emit("emptySearch")
 }
 
 /** 聚焦输入框 */

@@ -18,6 +18,8 @@
     "imageCompressorDesc": "Batch compress images in documents",
     "docNavigation": "Document Navigation",
     "docNavigationDesc": "Display parent-child document navigation links",
+    "everythingSearch": "Everything Search",
+    "everythingSearchDesc": "Quick local file search tool",
     "pageLock": "Page Lock",
     "pageLockDesc": "Lock page to prevent accidental editing",
     "generalSettings": "General Settings",

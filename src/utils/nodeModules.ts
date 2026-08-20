@@ -28,6 +28,7 @@ type NodeHttps = typeof import("node:https")
 interface ElectronShell {
   openPath: (path: string) => Promise<string>
   openExternal: (url: string) => Promise<void>
+  showItemInFolder: (path: string) => void
   trashItem?: (path: string) => Promise<void>
   moveItemToTrash?: (path: string) => boolean
 }
@@ -103,13 +104,16 @@ export function getNodeHttp(): { http: NodeHttp, https: NodeHttps } | null {
   try {
     const http = require("node:http") as NodeHttp
     const https = require("node:https") as NodeHttps
-    return { http, https }
+    return {
+      http,
+      https,
+    }
   } catch {
     return null
   }
 }
 
-/** 获取 Electron 模块（shell） */
+/** 获取 Electron 模块（渲染进程 shell） */
 export function getElectronModules(): { shell: ElectronShell } | null {
   try {
     const { shell } = (window as any).require("electron") as { shell: ElectronShell }
@@ -117,4 +121,32 @@ export function getElectronModules(): { shell: ElectronShell } | null {
   } catch {
     return null
   }
+}
+
+/**
+ * 获取 Electron remote shell（经 IPC 转发到主进程执行）
+ * 渲染进程 shell.trashItem 依赖主进程 FileOperation，新内核直接调用会抛
+ * "Failed to create FileOperation instance"，必须走 @electron/remote 桥
+ */
+export function getElectronRemoteShell(): ElectronShell | null {
+  if (typeof (window as any).require !== "function") {
+    return null
+  }
+  try {
+    const remote = (window as any).require("@electron/remote") as { shell: ElectronShell }
+    if (remote?.shell) {
+      return remote.shell
+    }
+  } catch {
+    // 未内置 @electron/remote → 回退 electron.remote
+  }
+  try {
+    const { remote } = (window as any).require("electron") as { remote?: { shell: ElectronShell } }
+    if (remote?.shell) {
+      return remote.shell
+    }
+  } catch {
+    // 均不可用
+  }
+  return null
 }

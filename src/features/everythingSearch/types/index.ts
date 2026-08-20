@@ -52,8 +52,12 @@ export interface SearchOptions {
   maxSizeUnit: 'KB' | 'MB' | 'GB'
   /** 常用关键字列表 */
   frequentKeywords: string[]
+  /** 是否启用仅搜索路径过滤（关闭时 includePaths 不生效） */
+  includePathsEnabled: boolean
   /** 仅搜索路径列表（每项一个路径，走 Everything path: 语法，AND 关系） */
   includePaths: string[]
+  /** 是否启用排除路径过滤（关闭时 excludePaths 不生效） */
+  excludePathsEnabled: boolean
   /** 排除路径列表（每项一个路径，走 Everything !path: 语法） */
   excludePaths: string[]
 }

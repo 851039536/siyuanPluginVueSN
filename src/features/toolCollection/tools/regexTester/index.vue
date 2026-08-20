@@ -34,6 +34,23 @@
       {{ errorMsg }}
     </div>
 
+    <!-- 正则逐段解释（有 pattern 时实时拆解含义） -->
+    <div
+      v-if="pattern && explainTokens.length"
+      class="rt-explain"
+    >
+      <span
+        v-for="(tok, idx) in explainTokens"
+        :key="idx"
+        class="rt-explain-token"
+        :class="{ meta: tok.isMeta }"
+        :title="i18n.regexTester?.[tok.meaningKey]"
+      >
+        <code class="rt-explain-raw">{{ tok.raw }}</code>
+        <span class="rt-explain-mean">{{ i18n.regexTester?.[tok.meaningKey] }}</span>
+      </span>
+    </div>
+
     <!-- 首次空态引导：无正则且无测试文本时显示可点击示例 -->
     <div
       v-if="showIntro"
@@ -71,6 +88,13 @@
         <!-- 结果统计 -->
         <span class="rt-results-header">
           {{ i18n.regexTester?.matches }}: {{ result.matches.length }}
+        </span>
+        <!-- 匹配数达到上限被截断提示 -->
+        <span
+          v-if="result.truncated"
+          class="rt-no-match"
+        >
+          {{ i18n.regexTester?.truncatedHint }}
         </span>
         <!-- 无匹配提示 -->
         <span
@@ -153,6 +177,7 @@ import {
   ref,
 } from "vue"
 import { escapeHtml } from "@/utils/stringUtils"
+import { explainRegex } from "./utils/explain"
 import { safeMatch } from "./utils/match"
 
 interface Props {
@@ -314,6 +339,9 @@ const result = computed(() => safeMatch(pattern.value, activeFlags.value, testTe
 
 /** 是否显示首次空态引导 */
 const showIntro = computed(() => !pattern.value && !testText.value)
+
+/** 正则逐段解释 token（非法正则也能尽力拆解） */
+const explainTokens = computed(() => explainRegex(pattern.value))
 
 /** 错误信息（原始报错 → 友好化中文提示） */
 const errorMsg = computed(() => {

@@ -7,6 +7,8 @@ export interface MatchResult {
   matches: MatchItem[]
   /** 正则构造/执行错误信息（空输入与正常匹配均无 error） */
   error?: string
+  /** 匹配数达到 maxMatches 上限被截断时为 true */
+  truncated?: boolean
 }
 
 export interface MatchItem {
@@ -59,5 +61,8 @@ export function safeMatch(pattern: string, flags: string, text: string): MatchRe
     }
   }
 
-  return { matches }
+  return {
+    matches,
+    truncated: matches.length >= maxMatches,
+  }
 }

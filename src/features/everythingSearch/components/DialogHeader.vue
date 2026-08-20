@@ -1,5 +1,13 @@
 <template>
   <div class="vp-header">
+    <div class="vp-title">
+      <span
+        class="vp-title__icon"
+        aria-hidden="true"
+      >⌘</span>
+      <!-- 弹窗标题："Everything搜索" -->
+      <span class="vp-title__text">{{ i18n.title }}</span>
+    </div>
     <div class="vp-header__actions">
       <!-- 在独立窗口打开（浮动窗口内隐藏；overlay 弹窗与主窗口页签均显示） -->
       <button

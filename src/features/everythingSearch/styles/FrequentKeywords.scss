@@ -101,8 +101,9 @@
   }
 
   &__add-input {
+    box-sizing: border-box;
     width: 120px;
-    height: 26px;
+    height: 28px;
     padding: 0 $spacing-2;
     border-radius: $radius-sm;
     border: 1px solid var(--b3-theme-primary-lighter);
@@ -119,7 +120,8 @@
 
   &__add-btn,
   &__add-cancel {
-    height: 26px;
+    box-sizing: border-box;
+    height: 28px;
     padding: 0 $spacing-2;
     border-radius: $radius-sm;
     font-size: $font-size-xs;

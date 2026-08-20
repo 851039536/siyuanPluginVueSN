@@ -531,6 +531,7 @@
     "platformSites": "平台官网",
     "gitConfigLabel": "Git 配置",
     "settings": "设置",
+    "openFloatingWindow": "在独立窗口打开",
     "pushAllPending": "推送所有待推送项目",
     "cancelAllPush": "取消全部推送",
     "searchPlaceholder": "搜索项目...",

@@ -1,4 +1,4 @@
-<!-- gitPush Git 项目管理主面板 -->
+<!-- gitPush Git 项目管理主面板（Dock 侧栏 / 独立窗口 tab 双形态） -->
 <template>
   <div class="git-push-panel">
     <!-- 头部 -->
@@ -13,6 +13,7 @@
       :refreshing-all="refreshingAll"
       :refreshing-all-local="refreshingAllLocal"
       :refreshing-all-remote="refreshingAllRemote"
+      :is-floating="isFloating"
       @open-category="showCatDialog = true"
       @open-settings="showSettings = true"
       @refresh-all="handleRefreshAll"
@@ -22,6 +23,7 @@
       @open-scan="handleOpenScan"
       @open-web="openRepoWebUrl"
       @open-git-config="handleOpenGitConfig"
+      @open-floating="openFloatingWindow"
     />
 
     <BatchProgressBar
@@ -348,7 +350,10 @@ import type {
   ProjectPathExtras,
 } from "./types"
 import type { Plugin } from "siyuan"
-import { showMessage } from "siyuan"
+import {
+  getFrontend,
+  showMessage,
+} from "siyuan"
 import {
   computed,
   onMounted,
@@ -404,6 +409,8 @@ const props = defineProps<{
   i18n: Record<string, any>
   plugin: Plugin
   manager: GitPushManager
+  /** 承载模式：dock = 侧边栏面板；tab = 独立页签/浮动窗口 */
+  mode?: "dock" | "tab"
 }>()
 
 /** i18n 取值 + {n} 占位替换（i18n 是唯一文案数据源，不设兜底） */
@@ -411,6 +418,20 @@ function tf(key: string, ...args: (string | number)[]): string {
   let s: string = props.i18n[key]
   args.forEach((a, i) => { s = s.replace(`{${i}}`, String(a)) })
   return s
+}
+
+/** 当前是否运行在独立浮动窗口中（思源 getFrontend()：desktop=主窗口 / desktop-window=新窗口） */
+const isFloating = computed(() => {
+  try {
+    return getFrontend() === "desktop-window"
+  } catch {
+    return false
+  }
+})
+
+/** 打开独立浮动窗口：经 GitPushManager 调度（openTab + openWindow 官方 API） */
+const openFloatingWindow = () => {
+  void props.manager.openFloating()
 }
 
 const {

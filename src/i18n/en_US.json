@@ -704,9 +704,6 @@
   "saveToArchiveFailed": "Failed to save to AI Archive",
   "everythingSearch": {
     "title": "Everything Search",
-    "description": "Quick local file search tool",
-    "enableEverythingSearch": "Enable Everything Search",
-    "enableEverythingSearchDesc": "Search local files quickly via Everything HTTP service",
     "searchPlaceholder": "Enter keywords to search local files...",
     "search": "Search",
     "emptyHint": "Enter keywords to auto-search local files",
@@ -3417,6 +3414,8 @@
     "imageCompressorDesc": "Batch compress images in documents",
     "docNavigation": "Document Navigation",
     "docNavigationDesc": "Display parent-child document navigation links",
+    "everythingSearch": "Everything Search",
+    "everythingSearchDesc": "Quick local file search tool",
     "pageLock": "Page Lock",
     "pageLockDesc": "Lock page to prevent accidental editing",
     "generalSettings": "General Settings",

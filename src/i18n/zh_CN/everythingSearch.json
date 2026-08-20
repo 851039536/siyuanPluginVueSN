@@ -1,9 +1,6 @@
 {
   "everythingSearch": {
     "title": "Everything搜索",
-    "description": "本地文件快速搜索工具",
-    "enableEverythingSearch": "启用Everything搜索",
-    "enableEverythingSearchDesc": "通过 Everything HTTP 服务快速搜索本地文件",
     "searchPlaceholder": "输入关键词搜索本地文件...",
     "search": "搜索",
     "emptyHint": "输入关键词自动搜索本地文件",

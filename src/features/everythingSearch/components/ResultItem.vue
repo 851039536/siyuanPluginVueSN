@@ -84,10 +84,7 @@ import type { IconKey } from "@/config/icons"
 import { computed } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { formatFileSize } from "@/utils/format"
-import {
-  getFileIconType,
-  getFullPath,
-} from "../api"
+import { getFullPath } from "../api"
 
 interface Props {
   item: EverythingSearchResult
@@ -105,23 +102,80 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-/** 文件图标类型 → IconWrapper 图标键映射（模块级常量，避免每次求值重建） */
-const ICON_KEY_MAP: Record<string, IconKey> = {
-  folder: "folder",
-  file: "file",
-  image: "image",
-  video: "play",
-  audio: "play",
-  archive: "folder",
-  code: "code",
-  executable: "settings",
-  siyuan: "file",
-  text: "file",
-  markdown: "edit",
-  pdf: "file",
-  word: "file",
-  excel: "file",
-  ppt: "file",
+/** 扩展名 → IconWrapper 图标键一级映射（模块级常量，避免每次求值重建） */
+const EXT_ICON_KEY_MAP: Record<string, IconKey> = {
+  // 文档
+  "pdf": "file",
+  "doc": "file",
+  "docx": "file",
+  "xls": "file",
+  "xlsx": "file",
+  "ppt": "file",
+  "pptx": "file",
+  "txt": "file",
+  "md": "edit",
+  // 图片
+  "jpg": "image",
+  "jpeg": "image",
+  "png": "image",
+  "gif": "image",
+  "svg": "image",
+  "webp": "image",
+  "bmp": "image",
+  "ico": "image",
+  // 视频/音频
+  "mp4": "play",
+  "avi": "play",
+  "mkv": "play",
+  "mov": "play",
+  "wmv": "play",
+  "flv": "play",
+  "mp3": "play",
+  "wav": "play",
+  "flac": "play",
+  "aac": "play",
+  "ogg": "play",
+  // 压缩包
+  "zip": "folder",
+  "rar": "folder",
+  "7z": "folder",
+  "tar": "folder",
+  "gz": "folder",
+  // 代码
+  "js": "code",
+  "ts": "code",
+  "jsx": "code",
+  "tsx": "code",
+  "vue": "code",
+  "html": "code",
+  "css": "code",
+  "scss": "code",
+  "less": "code",
+  "json": "code",
+  "xml": "code",
+  "py": "code",
+  "java": "code",
+  "c": "code",
+  "cpp": "code",
+  "h": "code",
+  "go": "code",
+  "rs": "code",
+  "rb": "code",
+  "php": "code",
+  "sql": "code",
+  "sh": "code",
+  "bat": "code",
+  // 可执行文件
+  "exe": "settings",
+  "msi": "settings",
+  "dll": "settings",
+}
+
+/** 提取文件扩展名（小写，无扩展名或点开头返回空串） */
+const getFileExtension = (filename: string): string => {
+  const lastDot = filename.lastIndexOf(".")
+  if (lastDot === -1 || lastDot === 0) return ""
+  return filename.substring(lastDot + 1).toLowerCase()
 }
 
 const fullPath = computed(() => getFullPath(props.item))
@@ -129,8 +183,7 @@ const formattedSize = computed(() => formatFileSize(props.item.size))
 
 const iconKey = computed<IconKey>(() => {
   if (props.item.type === "folder") return "folder"
-  const iconType = getFileIconType(props.item.name, false)
-  return ICON_KEY_MAP[iconType] || "file"
+  return EXT_ICON_KEY_MAP[getFileExtension(props.item.name)] || "file"
 })
 
 // 打开按钮提示文案："打开文件夹" / "打开文件"

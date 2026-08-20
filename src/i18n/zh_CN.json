@@ -704,9 +704,6 @@
   "saveToArchiveFailed": "保存到AI问答封存失败",
   "everythingSearch": {
     "title": "Everything搜索",
-    "description": "本地文件快速搜索工具",
-    "enableEverythingSearch": "启用Everything搜索",
-    "enableEverythingSearchDesc": "通过 Everything HTTP 服务快速搜索本地文件",
     "searchPlaceholder": "输入关键词搜索本地文件...",
     "search": "搜索",
     "emptyHint": "输入关键词自动搜索本地文件",
@@ -3417,6 +3414,8 @@
     "imageCompressorDesc": "批量压缩文档中的图片",
     "docNavigation": "文档导航",
     "docNavigationDesc": "显示父子文档导航链接",
+    "everythingSearch": "Everything搜索",
+    "everythingSearchDesc": "本地文件快速搜索工具",
     "pageLock": "页面锁定",
     "pageLockDesc": "锁定页面防止误编辑",
     "generalSettings": "通用设置",

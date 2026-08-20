@@ -1,13 +1,13 @@
 <template>
   <div class="vp-freq-keywords">
     <div class="vp-freq-keywords__row">
-      <span class="vp-freq-keywords__label">常用关键字</span>
+      <span class="vp-freq-keywords__label">{{ i18n.frequentKeywords }}</span>
 
       <div
         v-if="keywords.length === 0"
         class="vp-freq-keywords__empty"
       >
-        暂无，点击 + 添加
+        {{ i18n.noKeywords }}
       </div>
 
       <template
@@ -16,13 +16,13 @@
       >
         <button
           class="vp-freq-keywords__chip"
-          :title="`搜索: ${kw}`"
+          :title="`${i18n.searchKeyword}: ${kw}`"
           @click="emit('insert', kw)"
         >
           <span class="vp-freq-keywords__chip-text">{{ kw }}</span>
           <span
             class="vp-freq-keywords__chip-del"
-            title="删除"
+            :title="i18n.deleteKeyword"
             @click.stop="handleDelete(kw)"
           >×</span>
         </button>
@@ -38,7 +38,7 @@
           v-model="newKeyword"
           type="text"
           class="vp-freq-keywords__add-input"
-          placeholder="输入关键字"
+          :placeholder="i18n.keywordPlaceholder"
           maxlength="60"
           @keydown.enter.prevent="handleAdd"
           @keydown.escape="cancelAdd"
@@ -48,19 +48,19 @@
           :disabled="!newKeyword.trim()"
           @click="handleAdd"
         >
-          确定
+          {{ i18n.confirm }}
         </button>
         <button
           class="vp-freq-keywords__add-cancel"
           @click="cancelAdd"
         >
-          取消
+          {{ i18n.cancel }}
         </button>
       </div>
       <button
         v-else
         class="vp-freq-keywords__plus"
-        title="添加常用关键字"
+        :title="i18n.addKeyword"
         @click="startAdd"
       >
         +
@@ -77,6 +77,8 @@ import {
 
 interface Props {
   keywords: string[]
+  /** everythingSearch 命名空间的 i18n 文案 */
+  i18n: Record<string, string>
 }
 
 interface Emits {

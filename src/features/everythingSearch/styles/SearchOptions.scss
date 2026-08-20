@@ -26,14 +26,6 @@
     display: flex;
     align-items: center;
     gap: $spacing-1;
-
-    &--select {
-      gap: $spacing-1;
-    }
-
-    &--size {
-      gap: $spacing-1;
-    }
   }
 
   // 选项标签（数量/延迟/排序/大小）

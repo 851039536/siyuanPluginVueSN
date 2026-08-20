@@ -13,7 +13,6 @@ export { registerDocNavigation } from "./docNavigation"
 export { registerEncryption } from "./encryption"
 export {
   everythingSearchVisible,
-  hideEverythingSearch,
   registerEverythingSearch,
   showEverythingSearch,
 } from "./everythingSearch"

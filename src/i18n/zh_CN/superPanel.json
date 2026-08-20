@@ -18,6 +18,8 @@
     "imageCompressorDesc": "批量压缩文档中的图片",
     "docNavigation": "文档导航",
     "docNavigationDesc": "显示父子文档导航链接",
+    "everythingSearch": "Everything搜索",
+    "everythingSearchDesc": "本地文件快速搜索工具",
     "pageLock": "页面锁定",
     "pageLockDesc": "锁定页面防止误编辑",
     "generalSettings": "通用设置",

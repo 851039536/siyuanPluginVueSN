@@ -472,7 +472,10 @@ const handleKeyDown = (event: KeyboardEvent) => {
   }
 }
 
-/** 监听 visible 变化 */
+/**
+ * 监听 visible 变化（immediate：tab 模式挂载时 visible 恒为 true 不变化，
+ * 必须立即触发一次以加载持久化配置，否则常用关键字等保持默认空值）
+ */
 watch(
   () => props.visible,
   async (newVal) => {
@@ -486,6 +489,7 @@ watch(
       document.removeEventListener("keydown", handleKeyDown)
     }
   },
+  { immediate: true },
 )
 
 /** 监听搜索查询变化 */

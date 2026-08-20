@@ -1,6 +1,6 @@
 /**
  * SearchOptions — 搜索选项面板
- * 三行布局：行1 开关组 / 行2 配置选单 / 行3 文件大小过滤
+ * 三行布局：行1 开关组 / 行2 配置选单（数量·大小·延迟·排序）/ 行3 路径范围过滤
  */
 
 @use "@/variables.scss" as *;
@@ -85,6 +85,14 @@
     flex: 1;
   }
 
+  // 路径组头部：标签 + 启用开关同行
+  &__path-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $spacing-2;
+  }
+
   // 路径输入框（每行一个路径，换行分隔）
   &__path-input {
     box-sizing: border-box;
@@ -108,6 +116,13 @@
     &::placeholder {
       color: var(--b3-theme-on-surface);
       opacity: 0.35;
+    }
+
+    // 开关关闭时：置灰不可编辑
+    &--disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      background: var(--b3-theme-surface-light);
     }
   }
 }

@@ -20,6 +20,10 @@ export interface EverythingSearchOptions {
   regex?: boolean
   sort?: "name" | "path" | "size" | "date_modified"
   ascending?: boolean
+  /** 仅搜索路径列表（拼 path:"..."，多个 AND） */
+  includePaths?: string[]
+  /** 排除路径列表（拼 !path:"..."） */
+  excludePaths?: string[]
 }
 
 export interface EverythingConfig {
@@ -64,11 +68,27 @@ export async function searchFiles(
     regex = false,
     sort = "date_modified",
     ascending = false,
+    includePaths = [],
+    excludePaths = [],
   } = options
+
+  // 路径过滤：仅搜索路径 path:"..."（多个 AND）+ 排除路径 !path:"..."（引号转义空格）
+  const pathParts: string[] = []
+  for (const p of includePaths) {
+    const trimmed = p.trim()
+    if (trimmed) pathParts.push(`path:"${trimmed}"`)
+  }
+  for (const p of excludePaths) {
+    const trimmed = p.trim()
+    if (trimmed) pathParts.push(`!path:"${trimmed}"`)
+  }
+  const searchQuery = pathParts.length > 0
+    ? `${query} ${pathParts.join(" ")}`.trim()
+    : query
 
   // 构建URL参数
   const params = new URLSearchParams({
-    search: query,
+    search: searchQuery,
     json: "1",
     count: maxResults.toString(),
     path_column: "1",

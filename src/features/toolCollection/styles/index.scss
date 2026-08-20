@@ -253,7 +253,8 @@
     flex-shrink: 0;
   }
 
-  .header-close {
+  .header-close,
+  .header-float {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -319,4 +320,32 @@
   .tool-collection-content {
     padding: $spacing-2;
   }
+}
+
+// ==================== tab 模式（独立页签 / 浮动窗口） ====================
+// 覆盖 overlay 固定定位：根节点与面板改为静态布局，全高填充页签容器
+.tool-collection-overlay.tab-mode {
+  position: static;
+  inset: auto;
+  display: flex;
+  height: 100%;
+  background: var(--b3-theme-background);
+}
+
+.tool-collection-panel.tab-mode {
+  position: static;
+  bottom: auto;
+  left: auto;
+  transform: none;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  border-radius: 0;
+  border: none;
+}
+
+// tab 模式头部无尺寸调整组，浮动按钮靠右
+.tool-collection-panel.tab-mode .header-float {
+  margin-left: auto;
 }

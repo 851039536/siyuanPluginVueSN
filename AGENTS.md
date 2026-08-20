@@ -267,6 +267,14 @@ App.vue onMounted 监听 ───────────────┘
 
 ---
 
+## 独立窗口承载（addTab + openTab + openWindow）
+
+需要「独立窗口 / 浮动窗口」承载 UI 的功能，使用思源官方 API 的 `addTab + openTab + openWindow` 组合实现双形态承载（主窗口页签 ⇄ 独立浮动窗口）。核心流程：`plugin.addTab()` 注册自定义页签模型 → `openTab({ custom })` 创建/聚焦主窗口页签 → `openWindow({ tab })` 移入浮动窗口；关闭浮动窗口页签自动移回主窗口。Manager 类放 `types/index.ts`（模块级 `tabRegistered` 防重复注册），`index.vue` 以 `mode` prop 支持双形态。参考实现：`src/features/minimalBrowser/`、`src/features/toolCollection/`。
+
+> 完整 API 签名、实现步骤与关键点速查表见 [AGENTS_RULES.md § 独立窗口承载](./AGENTS_RULES.md#独立窗口承载addtab-opentab-openwindow)
+
+---
+
 ## 快捷键注册
 
 通过 `plugin.addCommand()` 注册全局快捷键（macOS 符号风格 hotkey，如 `⌃⌥T`，Windows 自动转换），在 `registerFeature()` 中调用；`langKey` 需对应 i18n 分片中的翻译键。
@@ -437,6 +445,7 @@ src/
 | 跨功能联动示例 | floatingToolbar → passwordVault 完整联动代码 |
 | Vue 实例常驻模式 | 持久化 Modal 的 4 步实现 + 关键点速查表 |
 | 底部面板模式（Tab 切换） | toolCollection 目录结构与通信流程 |
+| 独立窗口承载 | addTab + openTab + openWindow API、Manager 类实现步骤、关键点速查表 |
 | 文件路径 | `getFile`/`putFile` 路径规则、工作区目录、插件数据目录、Vite 外部模块声明 |
 | UI 风格：Codex | 全局设计 Token 全表、核心规范速查表、`.vp-*` 组件模式库（弹窗/输入框/标签）、禁止事项清单 |
 | 强制规则：SCSS 分离 | 目录结构模式、正误示例对比 |

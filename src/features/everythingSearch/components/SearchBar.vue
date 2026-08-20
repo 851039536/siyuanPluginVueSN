@@ -69,7 +69,7 @@ const handleInput = (value: string | number | null) => {
   emit("update:modelValue", String(value || ""))
 }
 
-/** 处理键盘事件（Escape 由父组件 document 级监听统一处理） */
+/** 处理键盘事件（Enter 触发搜索） */
 const handleKeydown = (event: KeyboardEvent) => {
   if (event.key === "Enter") {
     emit("search")

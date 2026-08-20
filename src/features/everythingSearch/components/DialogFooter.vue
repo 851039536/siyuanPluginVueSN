@@ -23,9 +23,7 @@
       />
     </div>
     <div class="vp-footer__hints">
-      <!-- 快捷键提示："ESC 关闭" / "ENTER 搜索" -->
-      <span class="vp-footer__kbd">ESC</span>
-      <span class="vp-footer__sep">{{ i18n.close }}</span>
+      <!-- 快捷键提示："ENTER 搜索" -->
       <span class="vp-footer__kbd">ENTER</span>
       <span class="vp-footer__sep">{{ i18n.search }}</span>
     </div>

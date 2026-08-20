@@ -385,11 +385,20 @@ const handleItemCopyPath = async (item: EverythingSearchResult) => {
   showMessage(ok ? i18n.value.pathCopied : i18n.value.copyFailed, 2000, ok ? "info" : "error")
 }
 
+/** 正在删除的 item 集合（防止异步删除窗口内重复触发） */
+const deletingItems = new Set<EverythingSearchResult>()
+
 /** 删除文件（移入回收站：主进程 trashItem → moveItemToTrash → PowerShell 兜底） */
 const handleItemDelete = async (item: EverythingSearchResult) => {
+  // 同一 item 的删除正在进行时直接忽略（快速双击时第二击可能在 await 窗口内到达）
+  if (deletingItems.has(item)) {
+    return
+  }
+  deletingItems.add(item)
   const shell = getRemoteShell() ?? getShell()
   if (!shell) {
     showMessage(`${i18n.value.deleteFailed}`, 3000, "error")
+    deletingItems.delete(item)
     return
   }
   const fullPath = getFullPath(item)
@@ -415,6 +424,9 @@ const handleItemDelete = async (item: EverythingSearchResult) => {
   } catch (error) {
     // 错误提示："删除失败"
     showMessage(`${i18n.value.deleteFailed}: ${(error as Error).message}`, 3000, "error")
+  } finally {
+    // 清理标记，失败后允许再次尝试
+    deletingItems.delete(item)
   }
 }
 

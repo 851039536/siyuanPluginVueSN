@@ -36,8 +36,11 @@
       <span class="vp-result-item__date">{{ item.dateModified }}</span>
     </div>
 
-    <!-- 操作按钮 -->
-    <div class="vp-result-item__actions">
+    <!-- 操作按钮（@dblclick.stop 防止快速双击删除/复制时冒泡触发行双击打开） -->
+    <div
+      class="vp-result-item__actions"
+      @dblclick.stop
+    >
       <!-- 打开按钮提示："打开文件夹" / "打开文件" -->
       <button
         class="vp-result-item__action"

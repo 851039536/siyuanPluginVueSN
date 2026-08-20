@@ -219,9 +219,10 @@ const checkService = async () => {
   serviceAvailable.value = await checkEverythingService(config)
 }
 
-/** 是否有路径过滤（仅搜索/排除路径任一非空即视为有效搜索条件） */
+/** 是否有路径过滤（对应开关开启且路径非空才视为有效搜索条件） */
 const hasPathFilter = () =>
-  options.includePaths.length > 0 || options.excludePaths.length > 0
+  (options.includePathsEnabled && options.includePaths.length > 0)
+  || (options.excludePathsEnabled && options.excludePaths.length > 0)
 
 /** 搜索 */
 const handleSearch = async (forceEmpty = false) => {
@@ -262,7 +263,9 @@ const handleSearch = async (forceEmpty = false) => {
         maxResults: options.maxResults,
         sort: options.sort,
         ascending: options.ascending,
+        includePathsEnabled: options.includePathsEnabled,
         includePaths: options.includePaths,
+        excludePathsEnabled: options.excludePathsEnabled,
         excludePaths: options.excludePaths,
       },
       config,

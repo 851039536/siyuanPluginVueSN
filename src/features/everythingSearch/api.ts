@@ -20,8 +20,12 @@ export interface EverythingSearchOptions {
   regex?: boolean
   sort?: "name" | "path" | "size" | "date_modified"
   ascending?: boolean
+  /** 是否启用仅搜索路径过滤（默认 false） */
+  includePathsEnabled?: boolean
   /** 仅搜索路径列表（拼 path:"..."，多个 AND） */
   includePaths?: string[]
+  /** 是否启用排除路径过滤（默认 false） */
+  excludePathsEnabled?: boolean
   /** 排除路径列表（拼 !path:"..."） */
   excludePaths?: string[]
 }
@@ -68,19 +72,25 @@ export async function searchFiles(
     regex = false,
     sort = "date_modified",
     ascending = false,
+    includePathsEnabled = false,
     includePaths = [],
+    excludePathsEnabled = false,
     excludePaths = [],
   } = options
 
-  // 路径过滤：仅搜索路径 path:"..."（多个 AND）+ 排除路径 !path:"..."（引号转义空格）
+  // 路径过滤（仅对应开关开启时生效）：仅搜索路径 path:"..."（多个 AND）+ 排除路径 !path:"..."（引号转义空格）
   const pathParts: string[] = []
-  for (const p of includePaths) {
-    const trimmed = p.trim()
-    if (trimmed) pathParts.push(`path:"${trimmed}"`)
+  if (includePathsEnabled) {
+    for (const p of includePaths) {
+      const trimmed = p.trim()
+      if (trimmed) pathParts.push(`path:"${trimmed}"`)
+    }
   }
-  for (const p of excludePaths) {
-    const trimmed = p.trim()
-    if (trimmed) pathParts.push(`!path:"${trimmed}"`)
+  if (excludePathsEnabled) {
+    for (const p of excludePaths) {
+      const trimmed = p.trim()
+      if (trimmed) pathParts.push(`!path:"${trimmed}"`)
+    }
   }
   const searchQuery = pathParts.length > 0
     ? `${query} ${pathParts.join(" ")}`.trim()

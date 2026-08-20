@@ -56,36 +56,7 @@
           @update:model-value="updateOption('maxResults', $event as number)"
         />
       </div>
-      <div class="vp-options__item vp-options__item--select">
-        <!-- 选项标签："延迟" -->
-        <span class="vp-options__key">{{ i18n.debounceLabel }}</span>
-        <Select
-          :model-value="options.debounceDelay"
-          :options="DEBOUNCE_OPTIONS"
-          size="xsmall"
-          @update:model-value="updateOption('debounceDelay', $event as number)"
-        />
-      </div>
-      <div class="vp-options__item vp-options__item--select">
-        <!-- 选项标签："排序" -->
-        <span class="vp-options__key">{{ i18n.sortLabel }}</span>
-        <Select
-          :model-value="options.sort"
-          :options="sortOptions"
-          size="xsmall"
-          @update:model-value="updateOption('sort', ($event as unknown) as SearchOptions['sort'])"
-        />
-        <Switch
-          :model-value="options.ascending"
-          size="xsmall"
-          :label="options.ascending ? '↑' : '↓'"
-          @update:model-value="updateOption('ascending', $event)"
-        />
-      </div>
-    </div>
-
-    <!-- 行3：文件大小过滤 -->
-    <div class="vp-options__row">
+      <!-- 大小过滤（与数量同行） -->
       <div class="vp-options__item vp-options__item--size">
         <!-- 选项标签："大小" -->
         <span class="vp-options__key">{{ i18n.sizeLabel }}</span>
@@ -117,28 +88,72 @@
           @update:model-value="updateOption('maxSizeUnit', $event as SearchOptions['maxSizeUnit'])"
         />
       </div>
+      <div class="vp-options__item vp-options__item--select">
+        <!-- 选项标签："延迟" -->
+        <span class="vp-options__key">{{ i18n.debounceLabel }}</span>
+        <Select
+          :model-value="options.debounceDelay"
+          :options="DEBOUNCE_OPTIONS"
+          size="xsmall"
+          @update:model-value="updateOption('debounceDelay', $event as number)"
+        />
+      </div>
+      <div class="vp-options__item vp-options__item--select">
+        <!-- 选项标签："排序" -->
+        <span class="vp-options__key">{{ i18n.sortLabel }}</span>
+        <Select
+          :model-value="options.sort"
+          :options="sortOptions"
+          size="xsmall"
+          @update:model-value="updateOption('sort', ($event as unknown) as SearchOptions['sort'])"
+        />
+        <Switch
+          :model-value="options.ascending"
+          size="xsmall"
+          :label="options.ascending ? '↑' : '↓'"
+          @update:model-value="updateOption('ascending', $event)"
+        />
+      </div>
     </div>
 
-    <!-- 行4：路径范围过滤（仅搜索路径 / 排除路径，每行一个，支持多个） -->
+    <!-- 行3：路径范围过滤（仅搜索路径 / 排除路径，每行一个，支持多个；开关开启才生效） -->
     <div class="vp-options__row vp-options__row--paths">
       <div class="vp-options__path-group">
-        <!-- 标签："仅搜索路径" -->
-        <span class="vp-options__key">{{ i18n.includePathsLabel }}</span>
+        <div class="vp-options__path-head">
+          <!-- 标签："仅搜索路径" + 启用开关 -->
+          <span class="vp-options__key">{{ i18n.includePathsLabel }}</span>
+          <Switch
+            :model-value="options.includePathsEnabled"
+            size="xsmall"
+            @update:model-value="updateOption('includePathsEnabled', $event)"
+          />
+        </div>
         <textarea
           class="vp-options__path-input"
+          :class="{ 'vp-options__path-input--disabled': !options.includePathsEnabled }"
           :value="includePathsText"
           rows="2"
+          :disabled="!options.includePathsEnabled"
           :placeholder="i18n.includePathsPlaceholder"
           @input="onPathsInput('includePaths', $event)"
         ></textarea>
       </div>
       <div class="vp-options__path-group">
-        <!-- 标签："排除路径" -->
-        <span class="vp-options__key">{{ i18n.excludePathsLabel }}</span>
+        <div class="vp-options__path-head">
+          <!-- 标签："排除路径" + 启用开关 -->
+          <span class="vp-options__key">{{ i18n.excludePathsLabel }}</span>
+          <Switch
+            :model-value="options.excludePathsEnabled"
+            size="xsmall"
+            @update:model-value="updateOption('excludePathsEnabled', $event)"
+          />
+        </div>
         <textarea
           class="vp-options__path-input"
+          :class="{ 'vp-options__path-input--disabled': !options.excludePathsEnabled }"
           :value="excludePathsText"
           rows="2"
+          :disabled="!options.excludePathsEnabled"
           :placeholder="i18n.excludePathsPlaceholder"
           @input="onPathsInput('excludePaths', $event)"
         ></textarea>

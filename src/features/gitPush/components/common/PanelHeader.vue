@@ -170,6 +170,18 @@
           height="12"
         />
       </button>
+      <!-- 在独立窗口打开（浮动窗口内隐藏；关闭浮动窗口自动移回主窗口） -->
+      <button
+        v-if="!isFloating"
+        class="vp-btn vp-btn--ghost vp-btn--sm"
+        :title="i18n.openFloatingWindow"
+        @click="emit('openFloating')"
+      >
+        <Icon
+          icon="mdi:dock-window"
+          height="12"
+        />
+      </button>
       <!-- 刷新下拉菜单 -->
       <div class="gp-header-refresh-wrap">
         <!-- 按钮（tooltip："刷新选项"，刷新进行中图标转圈） -->
@@ -299,11 +311,14 @@ withDefaults(defineProps<{
   refreshingAll?: boolean
   refreshingAllLocal?: boolean
   refreshingAllRemote?: boolean
+  /** 当前是否运行在独立浮动窗口中（浮动窗口内隐藏「在独立窗口打开」按钮） */
+  isFloating?: boolean
 }>(), {
   projectCount: 0,
   refreshingAll: false,
   refreshingAllLocal: false,
   refreshingAllRemote: false,
+  isFloating: false,
 })
 
 // ── 双向绑定（defineModel 收敛 props + update: emit 样板） ──
@@ -323,6 +338,7 @@ const emit = defineEmits<{
   openAddProject: []
   openScan: []
   openWeb: [url: string]
+  openFloating: []
 }>()
 </script>
 

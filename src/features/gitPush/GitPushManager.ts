@@ -1,5 +1,14 @@
 // Git 推送任务管理门面：组合各领域协作者（managers/），对外暴露统一 API
 import type { Plugin } from "siyuan"
+import {
+  openTab,
+  openWindow,
+} from "siyuan"
+import type { App } from "vue"
+import {
+  createApp,
+  h,
+} from "vue"
 import type { AllPlatformResult } from "./managers/RemoteOps"
 import type { NumstatCommit } from "./reportMetrics"
 import type { PlatformKey } from "./types/meta"
@@ -31,6 +40,17 @@ import { ReportOps } from "./managers/ReportOps"
 import { WorktreeOps } from "./managers/WorktreeOps"
 import { GitPushStorage } from "./types/storage"
 
+/** 自定义 Tab 模型实例的最小结构（init 回调的 this） */
+interface TabCustom {
+  element?: Element
+}
+
+/** 独立窗口自定义页签类型 */
+export const GIT_PUSH_TAB_TYPE = "git-push-tab"
+
+/** 模块级重复注册防护：多窗口场景下每个渲染进程只注册一次 */
+let tabRegistered = false
+
 export class GitPushManager {
   private plugin: Plugin
   storage: GitPushStorage
@@ -41,6 +61,9 @@ export class GitPushManager {
   private repoOps: RepoOps
   private commitMsgGen: CommitMsgGenerator
   private reportOps: ReportOps
+  /** 独立窗口页签 Vue app 与容器（addTab 承载） */
+  private tabApp: App | null = null
+  private tabContainer: HTMLElement | null = null
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
@@ -52,14 +75,14 @@ export class GitPushManager {
     this.repoOps = new RepoOps(this.executor)
     this.commitMsgGen = new CommitMsgGenerator(plugin, this.executor, this.worktreeOps, this.storage)
     this.reportOps = new ReportOps(this.executor)
+    this.registerTabModel()
   }
 
   async init() {
     await this.storage.init()
     await this.executor.loadGitConcurrency()
     await this.remoteOps.loadPushBranchMode()
-    const pluginI18n = (this.plugin.i18n as Record<string, any>) || {}
-    const i18n = pluginI18n.gitPush || pluginI18n
+    const i18n = this.getPanelI18n()
 
     createVueDockApp(this.plugin, GitPushPanel, {
       icon: "iconGitPush",
@@ -75,6 +98,102 @@ export class GitPushManager {
 
   destroy() {
     this.executor.destroy()
+    this.unmountTabPanel()
+  }
+
+  // ── 独立窗口承载（addTab + openTab + openWindow 官方 API）──
+
+  /** 注册独立窗口自定义页签模型（addTab 需同步注册，构造时调用） */
+  private registerTabModel() {
+    if (tabRegistered) return
+    tabRegistered = true
+
+    const self = this
+    const init = function (this: TabCustom) {
+      if (this.element) {
+        self.mountTabPanel(this.element as HTMLElement)
+      }
+    }
+    const destroy = () => {
+      self.unmountTabPanel()
+    }
+
+    this.plugin.addTab({
+      type: GIT_PUSH_TAB_TYPE,
+      init: init as () => void,
+      destroy,
+    })
+  }
+
+  /** 挂载 Vue 面板到独立页签容器（容器补全局基准字号类 + 全高，与 createVueDockApp 一致） */
+  private mountTabPanel(element: HTMLElement) {
+    this.unmountTabPanel()
+    const container = document.createElement("div")
+    container.classList.add("vp-dock-root")
+    container.style.height = "100%"
+    container.style.overflow = "hidden"
+    this.tabContainer = container
+    element.appendChild(container)
+    this.tabApp = createApp({
+      setup: () => () => h(GitPushPanel as any, {
+        i18n: this.getPanelI18n(),
+        plugin: this.plugin,
+        manager: this,
+        mode: "tab",
+      }),
+    })
+    this.tabApp.mount(container)
+  }
+
+  private unmountTabPanel() {
+    if (this.tabApp) {
+      this.tabApp.unmount()
+      this.tabApp = null
+    }
+    if (this.tabContainer) {
+      this.tabContainer.remove()
+      this.tabContainer = null
+    }
+  }
+
+  /** 打开独立浮动窗口：先创建/聚焦主窗口页签，再移入浮动窗口（关闭浮动窗口页签自动移回主窗口） */
+  async openFloating(): Promise<void> {
+    const tab = await this.openTabInMainWindow()
+    if (!tab) return
+    try {
+      openWindow({
+        width: 1280,
+        height: 800,
+        tab,
+      })
+    } catch (error) {
+      console.error("[GitPush] openWindow failed, tab stays in main window:", error)
+    }
+  }
+
+  /** 在主窗口创建/聚焦页签，返回 Tab（供移入浮动窗口）；失败返回 null */
+  private async openTabInMainWindow() {
+    try {
+      const title = this.getPanelI18n().title || "Git 推送"
+      return await openTab({
+        app: this.plugin.app,
+        custom: {
+          id: `${this.plugin.name}${GIT_PUSH_TAB_TYPE}`,
+          icon: "iconGitPush",
+          title,
+        },
+        position: "right",
+      })
+    } catch (error) {
+      console.error("[GitPush] openTab failed:", error)
+      return null
+    }
+  }
+
+  /** 面板 i18n 提取（gitPush 嵌套键存在则用之，否则回退到根 i18n） */
+  private getPanelI18n(): Record<string, any> {
+    const pluginI18n = (this.plugin.i18n as Record<string, any>) || {}
+    return pluginI18n.gitPush || pluginI18n
   }
 
   // ── 执行器（并发上限 / 取消）──

@@ -531,6 +531,7 @@
     "platformSites": "Platform sites",
     "gitConfigLabel": "Git config",
     "settings": "Settings",
+    "openFloatingWindow": "Open in floating window",
     "pushAllPending": "Push all pending projects",
     "cancelAllPush": "Cancel all pushes",
     "searchPlaceholder": "Search projects...",

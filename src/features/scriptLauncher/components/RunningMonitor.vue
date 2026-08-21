@@ -16,7 +16,7 @@
           :size="14"
         />
         <span class="sc-monitor__title">
-          {{ i18n.monitorTitle || "运行监控" }}
+          {{ i18n.monitorTitle }}
         </span>
         <Badge
           :variant="runningCount > 0 ? 'success' : 'default'"
@@ -28,7 +28,7 @@
           v-if="expanded && runningCount > 0"
           class="sc-monitor__hint"
         >
-          {{ i18n.windowHiddenHint || "控制台已隐藏" }}
+          {{ i18n.windowHiddenHint }}
         </span>
       </button>
 
@@ -41,14 +41,14 @@
           variant="danger"
           size="xsmall"
           icon="stop"
-          :title="i18n.stopProcess || '停止'"
+          :title="i18n.stopProcess"
           @click="handleStopAll"
         />
         <Button
           variant="ghost"
           size="xsmall"
           icon="refresh"
-          :title="i18n.clearOutput || '清空输出'"
+          :title="i18n.clearOutput"
           @click="handleClearAll"
         />
       </div>
@@ -62,7 +62,7 @@
         v-if="processes.length === 0"
         class="sc-monitor__empty"
       >
-        {{ i18n.emptyMonitor || "暂无运行中的脚本" }}
+        {{ i18n.emptyMonitor }}
       </div>
 
       <div
@@ -81,14 +81,14 @@
             :variant="statusVariant(proc.status)"
             size="xsmall"
           >
-            {{ statusLabel(proc.status) }}
+            {{ statusLabel(proc.status, i18n) }}
           </Badge>
           <Badge
             v-if="proc.persisted"
             variant="warning"
             size="xsmall"
           >
-            {{ i18n.restoredProcess || "上次遗留" }}
+            {{ i18n.restoredBadge }}
           </Badge>
           <span class="sc-monitor__item-meta">
             {{ formatTime(proc.startedAt) }}
@@ -120,13 +120,13 @@
           v-if="!proc.stdout && !proc.stderr"
           class="sc-monitor__no-output"
         >
-          {{ i18n.noProcessOutput || "（暂无输出）" }}
+          {{ i18n.noProcessOutput }}
         </p>
         <p
           v-if="proc.status !== 'running' && proc.exitCode !== undefined && proc.exitCode !== null"
           class="sc-monitor__exit"
         >
-          {{ i18n.exitCode || "退出码" }}: {{ proc.exitCode }}
+          {{ i18n.exitCode }}: {{ proc.exitCode }}
         </p>
 
         <div class="sc-monitor__item-actions">
@@ -137,7 +137,7 @@
             icon="stop"
             @click="handleStop(proc.id)"
           >
-            {{ i18n.stopProcess || "停止" }}
+            {{ i18n.stopProcess }}
           </Button>
           <Button
             variant="ghost"
@@ -145,7 +145,7 @@
             icon="close"
             @click="handleDismiss(proc.id)"
           >
-            {{ i18n.close || "关闭" }}
+            {{ i18n.close }}
           </Button>
         </div>
       </div>
@@ -180,17 +180,18 @@ const emit = defineEmits<{
 
 const runningCount = computed(() => props.processes.filter((p) => p.status === "running").length)
 
-const runningCountLabel = computed(() =>
-  props.processes.length > 0 ? String(props.processes.length) : "0",
-)
+/** 计数徽标显示运行中数量，与 Badge variant 的 runningCount 判断语义一致 */
+const runningCountLabel = computed(() => String(runningCount.value))
 
-function statusLabel(status: RunningProcess["status"]): string {
-  return {
-    running: "运行中",
-    exited: "已结束",
-    killed: "已停止",
-    error: "错误",
-  }[status] || status
+function statusLabel(status: RunningProcess["status"], i18n: I18n): string {
+  const map: Record<RunningProcess["status"], string | undefined> = {
+    running: i18n.statusRunning,
+    exited: i18n.statusExited,
+    killed: i18n.statusKilled,
+    error: i18n.statusError,
+  }
+  // i18n 缺失时回退到英文状态字面量，避免硬编码中文兜底
+  return map[status] || status
 }
 
 function statusVariant(status: RunningProcess["status"]): "success" | "warning" | "danger" | "info" | "default" {

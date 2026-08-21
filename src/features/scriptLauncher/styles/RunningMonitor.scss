@@ -1,0 +1,192 @@
+@use "@/variables.scss" as *;
+
+.sc-monitor {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--b3-border-color, $color-border);
+  border-radius: $radius-lg;
+  margin: 0 $spacing-3 $spacing-3;
+  background: var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.02));
+  overflow: hidden;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $spacing-2;
+    padding: $spacing-1 $spacing-2;
+    border-bottom: 1px solid var(--b3-border-color, $color-border);
+  }
+
+  &__toggle {
+    display: flex;
+    align-items: center;
+    gap: $spacing-1;
+    padding: $spacing-1;
+    background: none;
+    border: none;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    min-width: 0;
+    flex: 1;
+  }
+
+  &__title {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    color: var(--b3-theme-on-background, $color-fg);
+  }
+
+  &__hint {
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-secondary, $color-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: $spacing-1;
+    flex-shrink: 0;
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-2;
+    padding: $spacing-2;
+    max-height: 320px;
+    overflow-y: auto;
+  }
+
+  &__empty {
+    padding: $spacing-4 $spacing-2;
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-secondary, $color-muted);
+    text-align: center;
+  }
+
+  &__item {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-1;
+    padding: $spacing-2;
+    border: 1px solid var(--b3-border-color, $color-border);
+    border-radius: $radius-sm;
+    background: var(--b3-theme-background, $color-bg);
+  }
+
+  &__item-head {
+    display: flex;
+    align-items: center;
+    gap: $spacing-1;
+    min-width: 0;
+  }
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+
+    &--running {
+      background: $color-success;
+      animation: sc-monitor-pulse 1.2s ease-in-out infinite;
+    }
+
+    &--exited {
+      background: var(--b3-theme-secondary, $color-muted);
+    }
+
+    &--killed {
+      background: var(--b3-warning, #d97706);
+    }
+
+    &--error {
+      background: var(--b3-theme-error, #dc2626);
+    }
+  }
+
+  &__item-name {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    color: var(--b3-theme-on-background, $color-fg);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__item-meta {
+    margin-left: auto;
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-secondary, $color-muted);
+    white-space: nowrap;
+  }
+
+  &__item-desc {
+    margin: 0;
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-secondary, $color-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__item-cmd {
+    margin: 0;
+    font-size: $font-size-2xs;
+    font-family: $vp-mono;
+    color: var(--b3-theme-secondary, $color-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__output {
+    margin: 0;
+    padding: $spacing-2;
+    border-radius: $radius-sm;
+    background: var(--b3-theme-surface, rgba(0, 0, 0, 0.04));
+    font-family: $vp-mono;
+    font-size: $font-size-2xs;
+    line-height: $line-height-normal;
+    color: var(--b3-theme-on-background, $color-fg);
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 160px;
+    overflow-y: auto;
+
+    &--err {
+      color: var(--b3-theme-error, #dc2626);
+    }
+  }
+
+  &__no-output {
+    margin: 0;
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-secondary, $color-muted);
+    opacity: 0.6;
+  }
+
+  &__exit {
+    margin: 0;
+    font-size: $font-size-2xs;
+    font-family: $vp-mono;
+    color: var(--b3-theme-secondary, $color-muted);
+  }
+
+  &__item-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: $spacing-1;
+  }
+}
+
+@keyframes sc-monitor-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}

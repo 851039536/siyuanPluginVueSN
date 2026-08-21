@@ -274,7 +274,7 @@ import MarkdownPreviewDialog from "./components/common/MarkdownPreviewDialog.vue
 import PanelHeader from "./components/common/PanelHeader.vue"
 import ScanImportDialog from "./components/common/ScanImportDialog.vue"
 import SettingsDialog from "./components/common/SettingsDialog.vue"
-import StatsPanel from "./components/stats/StatsPanel.vue"
+import StatsPanel from "./components/StatsView/index.vue"
 import LogPanel from "./components/log/LogPanel.vue"
 import CommitAnalysisPanel from "./components/analysis/CommitAnalysisPanel.vue"
 import CommitRuleCheckPanel from "./components/analysis/CommitRuleCheckPanel.vue"

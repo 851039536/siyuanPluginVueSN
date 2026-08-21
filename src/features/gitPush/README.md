@@ -86,9 +86,14 @@ src/features/gitPush/
 │   │   ├── TagPanel.vue             # 标签面板
 │   │   ├── WorkingTreePanel.vue     # 工作区变更面板
 │   │   └── WorkingTreeDiffDialog.vue# 差异查看弹窗
-│   ├── stats/                       # 统计视图专属（2 个）
-│   │   ├── StatsPanel.vue           # 统计视图
-│   │   └── RepoLinkAuditSection.vue # 仓库链接审计
+│   ├── StatsView/                   # 统计视图专属（7 个）
+│   │   ├── index.vue               # 统计视图入口容器（空态 + 瀑布流组合各区块）
+│   │   ├── OverviewCards.vue       # 总览卡片区（总项目数/已配远程/待推送/未提交/收藏/已归档）
+│   │   ├── CoverageSection.vue     # 远程覆盖率区块（四平台 + 多远程合计）
+│   │   ├── CategoryDistributionSection.vue # 分类分布区块（category.color 着色条形）
+│   │   ├── PendingProjectsSection.vue # 待处理项目区块（推送状态 chips + 待处理表格）
+│   │   ├── PlatformStatusSection.vue # 平台配置状态区块（每项目各平台是否已配置）
+│   │   └── RepoLinkAuditSection.vue # 仓库链接一致性审计
 │   ├── log/                         # 操作日志视图专属（1 个）
 │   │   └── LogPanel.vue             # 操作日志面板
 │   └── analysis/                    # 提交分析视图专属（8 个）

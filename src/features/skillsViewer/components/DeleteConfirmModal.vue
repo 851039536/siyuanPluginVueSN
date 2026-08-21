@@ -13,28 +13,32 @@
             name="warning"
             :size="16"
           />
-          <span class="sv-modal-title">{{ i18n.deleteSkillTitle || '确认删除 Skill' }}</span>
+          <!-- 弹窗标题："确认删除 Skill" -->
+          <span class="sv-modal-title">{{ i18n.deleteSkillTitle }}</span>
         </div>
         <div class="sv-modal-body">
-          <p>{{ i18n.deleteSkillConfirm || '确定要删除以下 Skill 吗？此操作不可恢复。' }}</p>
+          <!-- 删除确认提示 -->
+          <p>{{ i18n.deleteSkillConfirm }}</p>
           <p class="sv-modal-skill-name">{{ skillName }}</p>
           <p class="sv-modal-skill-path">{{ skillPath }}</p>
         </div>
         <div class="sv-modal-footer">
+          <!-- 取消按钮 -->
           <SiButton
             variant="ghost"
             size="xsmall"
             @click="$emit('cancel')"
           >
-            {{ i18n.cancel || '取消' }}
+            {{ i18n.cancel }}
           </SiButton>
+          <!-- 确认删除按钮 -->
           <SiButton
             variant="danger"
             size="xsmall"
             :loading="loading"
             @click="$emit('confirm')"
           >
-            {{ i18n.confirmDelete || '确认删除' }}
+            {{ i18n.confirmDelete }}
           </SiButton>
         </div>
       </div>
@@ -61,6 +65,5 @@ defineEmits<{
 </script>
 
 <style scoped lang="scss">
-@use "../styles/DeleteConfirmModal.scss";
-@use "../styles/index.scss";
+@use "../styles/modal";
 </style>

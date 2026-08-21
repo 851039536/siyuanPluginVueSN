@@ -20,10 +20,11 @@
         <span class="sv-skill-size">{{ formatFileSize(skill.fileSize) }}</span>
       </div>
       <div class="sv-skill-header-actions">
+        <!-- 操作按钮：编辑 -->
         <button
           v-if="!editing"
           class="sv-skill-action-btn sv-skill-action-btn--edit"
-          :title="i18n.editSkill || '编辑'"
+          :title="i18n.editSkill"
           @click="$emit('edit')"
         >
           <IconWrapper
@@ -31,10 +32,11 @@
             :size="14"
           />
         </button>
+        <!-- 操作按钮：复制到其他工具 -->
         <button
           v-if="!editing"
           class="sv-skill-action-btn sv-skill-action-btn--copy"
-          :title="i18n.copySkill || '复制到其他工具'"
+          :title="i18n.copySkill"
           @click="$emit('copy')"
         >
           <IconWrapper
@@ -43,9 +45,10 @@
           />
         </button>
         <template v-if="editing">
+          <!-- 操作按钮：保存 -->
           <button
             class="sv-skill-action-btn sv-skill-action-btn--save"
-            :title="i18n.saveSkill || '保存'"
+            :title="i18n.saveSkill"
             :disabled="savingSkill"
             @click="$emit('save', editContent)"
           >
@@ -56,18 +59,20 @@
             />
             <span v-else>...</span>
           </button>
+          <!-- 操作按钮：取消编辑 -->
           <button
             class="sv-skill-action-btn sv-skill-action-btn--cancel"
-            :title="i18n.cancelEdit || '取消'"
+            :title="i18n.cancelEdit"
             @click="$emit('cancelEdit')"
           >
             <IconWrapper name="close" :size="12" />
           </button>
         </template>
+        <!-- 操作按钮：删除 -->
         <button
           v-if="!editing"
           class="sv-skill-action-btn sv-skill-action-btn--delete"
-          :title="i18n.deleteSkill || '删除'"
+          :title="i18n.deleteSkill"
           @click="$emit('delete')"
         >
           <IconWrapper
@@ -95,22 +100,24 @@
         <textarea
           :value="editContent"
           class="sv-skill-editor-textarea"
-          :placeholder="i18n.editSkillPlaceholder || '编辑 Skill 内容...'"
+          :placeholder="i18n.editSkillPlaceholder"
           spellcheck="false"
           @input="$emit('update:editContent', ($event.target as HTMLTextAreaElement).value)"
         ></textarea>
         <div class="sv-skill-editor-footer">
-          <span class="sv-skill-editor-hint">{{ i18n.editSkillHint || '修改完成后点击保存按钮写入文件' }}</span>
+          <!-- 编辑提示文案 -->
+          <span class="sv-skill-editor-hint">{{ i18n.editSkillHint }}</span>
         </div>
       </div>
     </template>
 
     <template v-else>
+      <!-- 展开/收起按钮 -->
       <button
         class="sv-skill-expand-btn"
         @click="$emit('toggleExpand')"
       >
-        {{ i18n.expand || '展开' }}
+        {{ i18n.expand }}
         <span class="sv-expand-arrow">{{ expanded ? '▾' : '▸' }}</span>
       </button>
       <div
@@ -126,6 +133,7 @@
 import type { SkillInfo } from "../types/SkillsViewerManager"
 import { computed } from "vue"
 import { parseMarkdown } from "@/utils/mdRenderer"
+import { formatFileSize } from "../utils"
 import IconWrapper from "@/components/IconWrapper.vue"
 
 interface Props {
@@ -151,15 +159,6 @@ defineEmits<{
   'update:editContent': [value: string]
 }>()
 
-function formatFileSize(bytes: number): string {
-  if (bytes === 0) return "0 B"
-  const units = ["B", "KB", "MB", "GB"]
-  const k = 1024
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  const size = bytes / k ** i
-  return `${size.toFixed(i > 0 ? 1 : 0)} ${units[i]}`
-}
-
 function renderMarkdown(content: string): string {
   try {
     return parseMarkdown(content)
@@ -173,5 +172,4 @@ const renderedContent = computed(() => renderMarkdown(props.skill.content))
 
 <style scoped lang="scss">
 @use "../styles/SkillCard.scss";
-@use "../styles/index.scss";
 </style>

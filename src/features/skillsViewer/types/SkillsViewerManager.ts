@@ -4,7 +4,8 @@
  * 兼容 Claude, CodeBuddy, Qoder, Trae, Opencode
  */
 
-import type { IconKey } from "@/config/icons"
+import { AI_TOOLS } from "@/config/aiTools"
+import type { AIToolConfig, AIToolType } from "@/config/aiTools"
 
 export interface SkillInfo {
   name: string
@@ -14,60 +15,6 @@ export interface SkillInfo {
   tool: AIToolType
   fileSize: number
 }
-
-export type AIToolType = "claude" | "codebuddy" | "qoder" | "trae" | "opencode"
-
-export interface AIToolConfig {
-  id: AIToolType
-  name: string
-  icon: IconKey
-  color: string
-  skillPaths: string[]
-  projectPaths: string[]
-}
-
-export const AI_TOOLS: AIToolConfig[] = [
-  {
-    id: "claude",
-    name: "Claude",
-    icon: "claudeTool",
-    color: "#D97757",
-    skillPaths: [".claude/skills"],
-    projectPaths: [".claude/skills"],
-  },
-  {
-    id: "codebuddy",
-    name: "CodeBuddy",
-    icon: "codeBraces",
-    color: "#4A90D9",
-    skillPaths: [".codebuddy/skills"],
-    projectPaths: [".codebuddy/skills"],
-  },
-  {
-    id: "qoder",
-    name: "Qoder",
-    icon: "qoderTool",
-    color: "#9B59B6",
-    skillPaths: [".qoder/skills"],
-    projectPaths: [".qoder/skills"],
-  },
-  {
-    id: "trae",
-    name: "Trae",
-    icon: "traeTool",
-    color: "#27AE60",
-    skillPaths: [".trae/skills"],
-    projectPaths: [".trae/skills"],
-  },
-  {
-    id: "opencode",
-    name: "Opencode",
-    icon: "opencodeTool",
-    color: "#00ACC1",
-    skillPaths: [".config/opencode/skills", ".agents/skills"],
-    projectPaths: [".opencode/skills"],
-  },
-]
 
 export class SkillsViewerManager {
   private fs: any = null
@@ -322,15 +269,6 @@ export class SkillsViewerManager {
     } catch {
       return false
     }
-  }
-
-  formatFileSize(bytes: number): string {
-    if (bytes === 0) return "0 B"
-    const units = ["B", "KB", "MB", "GB"]
-    const k = 1024
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    const size = bytes / k ** i
-    return `${size.toFixed(i > 0 ? 1 : 0)} ${units[i]}`
   }
 
   destroy() {

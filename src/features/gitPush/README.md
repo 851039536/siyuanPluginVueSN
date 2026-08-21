@@ -96,14 +96,22 @@ src/features/gitPush/
 │   │   └── RepoLinkAuditSection.vue # 仓库链接一致性审计
 │   ├── log/                         # 操作日志视图专属（1 个）
 │   │   └── LogPanel.vue             # 操作日志面板
-│   └── analysis/                    # 提交分析视图专属（8 个）
-│       ├── CommitAnalysisPanel.vue  # 提交分析面板
+│   ├── CommitAnalysis/              # 提交分析视图专属（10 个）
+│   │   ├── index.vue                # 提交分析视图入口容器（状态编排 + 各区块组合）
+│   │   ├── AnalysisToolbar.vue      # 顶部工具条（分析状态 + 条数 + 分析按钮 + 显示设置）
+│   │   ├── AnalysisOverviewCards.vue# 总览卡片（总提交/已分析项目 + 失败提示）
+│   │   ├── ProjectRankingSection.vue# 项目提交排行区块（条形 + 百分比，点击跳转）
+│   │   ├── RecentCommitsSection.vue # 最近提交记录区块（条目 + 分页加载）
+│   │   ├── HeatmapCalendarSection.vue# 热力图/日历区块（viewSettings 切换）
+│   │   ├── DailyTrendSection.vue    # 最近 30 天提交趋势区块（每日柱状）
+│   │   ├── AuthorTypeSection.vue    # 作者排行 + 内容类型双栏区块
+│   │   ├── CommitAnalysisSettings.vue# 分析设置
+│   │   ├── CommitCalendar.vue       # 提交日历
+│   │   └── CommitHeatmap.vue        # 提交热力图
+│   └── analysis/                    # 规则检查 + 行数统计专属（4 个）
 │       ├── CommitRuleCheckPanel.vue # 提交规则检查面板
 │       ├── LineStatsPanel.vue       # 行数统计面板（项目/作者行数排行 + 过滤配置按钮）
 │       ├── ExtFilterDialog.vue      # 文件格式过滤配置弹窗（扩展名多选排除列表）
-│       ├── CommitAnalysisSettings.vue# 分析设置
-│       ├── CommitCalendar.vue       # 提交日历
-│       ├── CommitHeatmap.vue        # 提交热力图
 │       └── ProjectLineDetail.vue    # 项目行数详情弹窗
 └── styles/
     ├── index.scss                   # 主面板样式（卡片骨架 + Tab 区 + Stash/Tag/Output/Conflict 保留）

@@ -155,6 +155,16 @@ const quickNoteResetI18n = (props.plugin?.i18n?.quickNoteReset ?? {}) as unknown
 const imageCreationI18n = (props.plugin?.i18n?.imageCreation ?? {}) as unknown as Record<string, string>
 // 全局关系列表 i18n 分片（同上，显式收窄嵌套命名空间）
 const globalRelationsI18n = (props.plugin?.i18n?.globalRelations ?? {}) as unknown as Record<string, string>
+// 极简浏览器 i18n 分片（同上，显式收窄嵌套命名空间）
+const minimalBrowserI18n = (props.plugin?.i18n?.minimalBrowser ?? {}) as unknown as Record<string, string>
+// S3 文件管理 i18n 分片（同上，显式收窄嵌套命名空间）
+const s3FileManagerI18n = (props.plugin?.i18n?.s3FileManager ?? {}) as unknown as Record<string, string>
+// 图片压缩 i18n 分片（同上，显式收窄嵌套命名空间）
+const imageCompressorI18n = (props.plugin?.i18n?.imageCompressor ?? {}) as unknown as Record<string, string>
+// 书签标记 i18n 分片（同上，显式收窄嵌套命名空间）
+const bookmarkMarkerI18n = (props.plugin?.i18n?.bookmarkMarker ?? {}) as unknown as Record<string, string>
+// 状态栏监控项 i18n 分片（同上，显式收窄嵌套命名空间）
+const statusBarI18n = (props.plugin?.i18n?.statusBar ?? {}) as unknown as Record<string, string>
 
 const FEATURES: FeatureRegistryEntry[] = [
   {
@@ -241,7 +251,7 @@ const FEATURES: FeatureRegistryEntry[] = [
     id: "minimalBrowser",
     icon: "mdi:earth",
     color: "#0ea5e9",
-    title: props.plugin?.i18n?.minimalBrowser?.title || "极简浏览器",
+    title: minimalBrowserI18n.title || "极简浏览器",
     pinnable: true,
     shortcut: {
       icon: "mdi:earth",
@@ -277,7 +287,7 @@ const FEATURES: FeatureRegistryEntry[] = [
     id: "s3FileManager",
     icon: "mdi:folder-network",
     color: "#0ea5e9",
-    title: props.plugin?.i18n?.s3FileManager?.s3FileManager || "S3 文件管理",
+    title: s3FileManagerI18n.s3FileManager || "S3 文件管理",
     pinnable: true,
     shortcut: {
       icon: "mdi:folder-network",
@@ -313,7 +323,7 @@ const FEATURES: FeatureRegistryEntry[] = [
     id: "imageCompressor",
     icon: "mdi:image",
     color: "#ef4444",
-    title: props.plugin?.i18n?.imageCompressor?.title || "图片压缩",
+    title: imageCompressorI18n.title || "图片压缩",
     pinnable: true,
     shortcut: {
       icon: "ph:image",
@@ -337,7 +347,7 @@ const FEATURES: FeatureRegistryEntry[] = [
     id: "bookmarkMarker",
     icon: "mdi:bookmark-multiple",
     color: "#10b981",
-    title: props.plugin?.i18n?.bookmarkMarker?.title || "书签标记",
+    title: bookmarkMarkerI18n.title || "书签标记",
     pinnable: true,
     shortcut: {
       icon: "ph:bookmark-simple",
@@ -371,7 +381,7 @@ const FEATURES: FeatureRegistryEntry[] = [
     id: "monitor-notes",
     icon: "ph:file-text",
     color: "#3b82f6",
-    title: props.plugin?.i18n?.statusBar?.monitorNotes || "文档数",
+    title: statusBarI18n.monitorNotes || "文档数",
     pinnable: true,
     group: "监控",
   },
@@ -379,7 +389,7 @@ const FEATURES: FeatureRegistryEntry[] = [
     id: "monitor-words",
     icon: "ph:text-aa",
     color: "#8b5cf6",
-    title: props.plugin?.i18n?.statusBar?.monitorWords || "总字数",
+    title: statusBarI18n.monitorWords || "总字数",
     pinnable: true,
     group: "监控",
   },
@@ -387,7 +397,7 @@ const FEATURES: FeatureRegistryEntry[] = [
     id: "monitor-today",
     icon: "ph:chart-line-up",
     color: "#22c55e",
-    title: props.plugin?.i18n?.statusBar?.monitorToday || "今日活动",
+    title: statusBarI18n.monitorToday || "今日活动",
     pinnable: true,
     group: "监控",
   },
@@ -395,7 +405,7 @@ const FEATURES: FeatureRegistryEntry[] = [
     id: "monitor-cpu",
     icon: "ph:cpu",
     color: "#ef4444",
-    title: props.plugin?.i18n?.statusBar?.monitorCpu || "CPU 使用率",
+    title: statusBarI18n.monitorCpu || "CPU 使用率",
     pinnable: true,
     group: "监控",
   },
@@ -403,7 +413,7 @@ const FEATURES: FeatureRegistryEntry[] = [
     id: "monitor-memory",
     icon: "ph:memory",
     color: "#f59e0b",
-    title: props.plugin?.i18n?.statusBar?.monitorMemory || "内存使用",
+    title: statusBarI18n.monitorMemory || "内存使用",
     pinnable: true,
     group: "监控",
   },
@@ -411,7 +421,7 @@ const FEATURES: FeatureRegistryEntry[] = [
     id: "monitor-uptime",
     icon: "ph:timer",
     color: "#6b7280",
-    title: props.plugin?.i18n?.statusBar?.monitorUptime || "运行时间",
+    title: statusBarI18n.monitorUptime || "运行时间",
     pinnable: true,
     group: "监控",
   },

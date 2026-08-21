@@ -126,7 +126,7 @@ src/features/gitPush/
 │       ├── LineRankingSection.vue   # 项目/作者行数排行通用区块（mode prop 区分）
 │       ├── ExtFilterDialog.vue      # 文件格式过滤配置弹窗（扩展名多选排除列表）
 │       └── ProjectLineDetail.vue    # 项目行数详情弹窗
-│   └── Report/                      # 代码统计报告视图专属（9 个）
+│   └── CodeReport/                  # 代码统计报告视图专属（9 个）
 │       ├── index.vue                # 报告视图入口容器（项目/时间范围选择 + 分区 Tab 编排）
 │       ├── TeamOverviewSection.vue  # 团队总览分区（KPI 卡片：成员/总提交/总代码量/最活跃）
 │       ├── AuthorContributionSection.vue # 代码贡献度分区（作者贡献排行）

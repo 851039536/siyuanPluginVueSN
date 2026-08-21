@@ -1,22 +1,13 @@
 // 远程推送/拉取进度追踪与结构化输出（从 useGitOps 提取，降低单文件复杂度）
 import type { Ref } from "vue"
-import type { GitOpAction, GitProject, GitPushManager, PlatformKey } from "../types"
+import type { GitOpAction, GitProject, GitPushManager, PlatformKey, PushOutputEntry } from "../types"
 import { ref } from "vue"
 import { PLATFORM_META } from "../types"
 import { findProject, pruneRecordCache, resolveValidPath } from "../utils"
 import type { AppendOpLogInput } from "./useOpLog"
 
-/** 推送/拉取进度项 */
-export interface PushOutputEntry {
-  platform: PlatformKey
-  label: string
-  ok: boolean
-  skipped: boolean
-  duration: number
-  summary: string
-  fullStdout: string
-  fullStderr: string
-}
+/** 推送/拉取单平台结构化输出（类型定义迁移至 types/storage.ts，此处 re-export 保持向后兼容） */
+export type { PushOutputEntry } from "../types"
 
 export type ProgressStatus = "pending" | "pushing" | "ok" | "fail"
 type ProgressRef = Ref<Record<string, Record<string, ProgressStatus>>>

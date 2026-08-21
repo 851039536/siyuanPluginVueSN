@@ -1,0 +1,359 @@
+// gitPush 卡片顶栏样式（信息区 + 操作按钮区，从 index.scss 提取）
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+.gp-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.gp-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.gp-card-name {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  margin-bottom: 1px;
+  border-radius: $radius-sm;
+  padding: 1px 4px;
+
+  // 搜索关键词高亮片段
+  .gp-hl {
+    background: var(--b3-theme-primary-lightest);
+    color: var(--b3-theme-primary);
+    border-radius: $radius-sm;
+  }
+}
+
+.gp-card-note {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-1;
+  margin-top: 3px;
+  padding: 3px 6px;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.55;
+  background: var(--b3-theme-surface);
+  border-radius: $radius-sm;
+  line-height: $line-height-normal;
+  @include text-ellipsis;
+
+  span {
+    @include text-ellipsis;
+  }
+}
+
+// Markdown 文件标识行（位于路径行下方、分支行上方）
+.gp-md-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 3px;
+}
+
+.gp-card-path {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: $font-size-2xs;
+  font-family: $vp-mono;
+  opacity: 0.5;
+  max-width: 280px;
+
+  .gp-path-icon {
+    flex-shrink: 0;
+    opacity: 0.55;
+  }
+
+  .gp-path-text {
+    @include text-ellipsis;
+    min-width: 0;
+  }
+}
+
+.gp-branch-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  margin-top: 3px;
+  flex-wrap: wrap;
+}
+
+.gp-branch-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 6px;
+  font-size: $font-size-2xs;
+  font-family: $vp-mono;
+  font-weight: $font-weight-semibold;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+  cursor: pointer;
+  transition: opacity 0.15s, border-color 0.15s;
+
+  &:hover {
+    opacity: 0.8;
+    border-color: var(--b3-theme-primary);
+  }
+
+  &.current {
+    opacity: 1;
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+    background: var(--b3-theme-primary-lightest);
+  }
+}
+
+.gp-card-actions {
+  display: flex;
+  gap: $spacing-1;
+  flex-shrink: 0;
+}
+
+.gp-refresh-wrap {
+  position: relative;
+}
+
+.gp-refresh-popover {
+  @include popover-base;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 6px;
+  min-width: 140px;
+}
+
+.gp-refresh-item {
+  @include popover-item;
+
+  &--all {
+    color: var(--b3-theme-primary);
+    &:hover { background: var(--b3-theme-primary-lightest); }
+  }
+}
+
+.gp-refresh-divider {
+  height: 1px;
+  margin: $spacing-1 6px;
+  background: var(--b3-border-color);
+}
+
+// 下拉菜单按钮尾部的展开箭头图标（IDE/拉取/推送菜单共用）
+.gp-caret-icon {
+  margin-left: $spacing-px;
+  opacity: 0.5;
+}
+
+.gp-ide-wrap {
+  position: relative;
+}
+
+// 平台链接下拉菜单（复用 IDE 弹出层同款 mixin）
+.gp-platform-wrap {
+  position: relative;
+}
+
+.gp-platform-popover {
+  @include popover-base;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 6px;
+  min-width: 140px;
+}
+
+.gp-platform-item {
+  @include popover-item;
+
+  &--none {
+    opacity: 0.5;
+    cursor: default;
+    &:hover { background: none; }
+  }
+}
+
+.gp-ide-popover {
+  @include popover-base;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 6px;
+  min-width: 160px;
+}
+
+.gp-ide-item {
+  @include popover-item;
+
+  &--none {
+    opacity: 0.5;
+    cursor: default;
+    &:hover { background: none; }
+  }
+
+  &--add {
+    color: var(--b3-theme-primary);
+    &:hover { background: var(--b3-theme-primary-lightest); }
+  }
+}
+
+.gp-ide-item--custom {
+  // 为删除按钮留空间
+  padding-right: 4px;
+}
+
+.gp-ide-item-del {
+  margin-left: auto;
+  padding: 2px 4px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0;
+  background: none;
+  border: none;
+  border-radius: $radius-sm;
+  cursor: pointer;
+  transition: opacity 0.12s;
+
+  .gp-ide-item--custom:hover & {
+    opacity: 0.35;
+  }
+}
+
+.gp-ide-item--custom .gp-ide-item-del {
+  &:hover {
+    opacity: 1;
+    color: var(--b3-theme-error);
+    background: var(--b3-theme-error-lightest, rgba(231, 76, 60, 0.08));
+  }
+}
+
+.gp-ide-del-confirm {
+  margin-left: auto;
+  font-size: $font-size-2xs;
+  opacity: 0.6;
+  white-space: nowrap;
+}
+
+.gp-ide-del-yes,
+.gp-ide-del-no {
+  padding: 1px 6px;
+  font-size: $font-size-2xs;
+  border-radius: $radius-sm;
+  border: none;
+  cursor: pointer;
+  line-height: $line-height-normal;
+}
+
+.gp-ide-del-yes {
+  color: var(--b3-theme-on-primary, #fff);
+  background: var(--b3-theme-error);
+  &:hover { filter: brightness(0.92); }
+}
+
+.gp-ide-del-no {
+  color: var(--b3-theme-on-surface);
+  background: var(--b3-list-hover);
+  &:hover { background: var(--b3-border-color); }
+}
+
+.gp-ide-divider {
+  height: 1px;
+  margin: $spacing-1 6px;
+  background: var(--b3-border-color);
+}
+
+// 分类选择框（卡片内联）
+.gp-cat-select {
+  background: transparent;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-2xs;
+  padding: 1px 2px;
+  cursor: pointer;
+  max-width: 60px;
+  opacity: 0.5;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+// ========== 卡片增强（顶栏信息区专属） ==========
+.gp-card-name-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  margin-bottom: 2px;
+}
+
+.gp-star-btn {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.3;
+  transition: opacity 0.15s, transform 0.1s;
+
+  &:hover { opacity: 0.7; }
+  &:active { transform: scale(0.9); }
+
+  &.active {
+    opacity: 1;
+    color: var(--b3-theme-warning, #f5a623);
+  }
+}
+
+.gp-archived-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 5px;
+  border-radius: $radius-sm;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  background: var(--b3-theme-on-surface);
+  color: var(--b3-theme-background);
+  opacity: 0.5;
+}
+
+.gp-activity {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: $font-size-2xs;
+  font-family: $vp-mono;
+  white-space: nowrap;
+
+  &.gp-act-fresh { color: var(--b3-theme-success); opacity: 0.8; }
+  &.gp-act-recent { opacity: 0.55; }
+  &.gp-act-stale { opacity: 0.4; }
+  &.gp-act-dead { opacity: 0.3; color: var(--b3-theme-warning); }
+}
+
+// 卡片上的多路径标记
+.gp-multi-path-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  padding: 0 5px;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-tight;
+  border-radius: $radius-sm;
+  background: var(--b3-theme-primary-lightest);
+  color: var(--b3-theme-primary);
+  opacity: 0.7;
+  white-space: nowrap;
+  cursor: default;
+}

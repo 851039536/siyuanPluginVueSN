@@ -22,7 +22,7 @@ import { GitPushManager } from '@gitPush/types'
 import { resolveValidPath } from '@gitPush/utils'
 ```
 
-> **强制规则**：新增功能模块时，必须同步在 `vite.config.ts`（`resolve.alias`）与 `tsconfig.json`（`paths`）注册 `@<featureName>` 别名，并更新本清单与 `CODEBUDDY.md` 的「构建流程」章节。遗漏任一文件会导致别名不一致。
+> **强制规则**：新增功能模块时，必须同步在 `vite.config.ts`（`resolve.alias`）与 `tsconfig.json`（`paths`）注册 `@<featureName>` 别名，并更新本清单。遗漏任一文件会导致别名不一致。
 
 ---
 
@@ -1062,7 +1062,7 @@ export function useXxx(deps: {
 
 | 条件 | 判定 |
 |------|------|
-| 被 **2 个以上**文件使用 | **必须提取**（已有规则，CODEBUDDY.md § 功能模块内代码分层） |
+| 被 **2 个以上**文件使用 | **必须提取**（已有规则，AGENTS.md § 功能模块内代码分层） |
 | 被 1 个文件使用，但逻辑复杂（**>30 行**） | **可提取**，提取可改善父文件可读性 |
 | 被 1 个文件使用，且逻辑简单（**≤10 行**简单映射/常量） | **不应提取**，提取反而增加引用跳转成本 |
 
@@ -1265,20 +1265,6 @@ const files = await fg([
 - 代码中通过 `pluginI18n.gitPush || pluginI18n` 兼容嵌套/扁平两种结构
 - 模板中已移除所有 `|| '硬编码中文'` 兜底值，i18n 是唯一数据源
 - 本项目思源工作区路径：`E:/siyuan2/data/plugins/siyuan-plugin-vite-vue-sn/`
-
-## 强制规则：i18n 只改分片文件
-
-**只改分片文件**（`src/i18n/{zh_CN,en_US}/<feature>.json`）；顶层合并 JSON（`src/i18n/zh_CN.json` / `en_US.json`）由 `pnpm i18n:merge` 脚本自动生成，**禁止手动修改**。
-
-**原因**：
-- 顶层两个 JSON 是构建产物，由 `scripts/merge-i18n.mjs` 在构建时自动合并生成，手动修改会被下一次构建覆盖
-- 分片文件才是源文件，按 feature 模块组织（`src/i18n/{zh_CN,en_US}/featureName.json`），便于并行协作与 diff
-
-**操作规范**：
-- 不确定 key 属于哪个分片？→ 在 `src/i18n/zh_CN/` 目录下 grep 搜索
-- 全新增模块？→ 新建 `src/i18n/zh_CN/<feature>.json` + `src/i18n/en_US/<feature>.json`
-- 新增键必须中英分片同步添加，修改后运行 `pnpm i18n:verify` 确保键对齐
-- 顶层合并文件需要更新时 → 运行 `pnpm i18n:merge` 重新生成（构建时也会自动执行）
 
 ## 强制规则：禁止 i18n 硬编码兜底值
 

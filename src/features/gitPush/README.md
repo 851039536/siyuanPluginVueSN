@@ -94,8 +94,13 @@ src/features/gitPush/
 │   │   ├── PendingProjectsSection.vue # 待处理项目区块（推送状态 chips + 待处理表格）
 │   │   ├── PlatformStatusSection.vue # 平台配置状态区块（每项目各平台是否已配置）
 │   │   └── RepoLinkAuditSection.vue # 仓库链接一致性审计
-│   ├── log/                         # 操作日志视图专属（1 个）
-│   │   └── LogPanel.vue             # 操作日志面板
+│   ├── LogPanel/                    # 操作日志视图专属（6 个）
+│   │   ├── index.vue                # 操作日志视图入口容器（筛选/分页/日期分组编排 + 区块组合）
+│   │   ├── LogStatsBar.vue          # 状态统计条（按操作类型聚合成功/失败）
+│   │   ├── LogToolbar.vue           # 顶部工具条（搜索 + 类型筛选 + 仅失败 + 清空）
+│   │   ├── LogTable.vue             # 日志表格（表头 + 日期分组循环）
+│   │   ├── LogTableRow.vue          # 日志表格行（数据行 + 平台/commit 子行，展开/复制状态自持）
+│   │   └── LogDetailDialog.vue      # 日志条目详情弹窗
 │   ├── CommitAnalysis/              # 提交分析视图专属（10 个）
 │   │   ├── index.vue                # 提交分析视图入口容器（状态编排 + 各区块组合）
 │   │   ├── AnalysisToolbar.vue      # 顶部工具条（分析状态 + 条数 + 分析按钮 + 显示设置）

@@ -23,7 +23,7 @@ interface UseSkillsViewerProps {
 
 export function useSkillsViewer(props: UseSkillsViewerProps) {
   const i18n = computed<Record<string, string>>(
-    () => (props.plugin?.i18n?.skillsViewer as Record<string, string>) || {},
+    () => (props.plugin?.i18n?.skillsViewer as unknown as Record<string, string>) || {},
   )
 
   const manager = new SkillsViewerManager()

@@ -121,33 +121,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 **功能模块之间禁止直接相互导入**。跨功能联动必须通过事件总线 + App.vue 中心调度实现零依赖解耦。
 
-### 正确模式（唯一允许）
-
-```
-Feature A（发起方）                 Feature B（响应方）
-  │                                   ▲
-  │ emitCustomEvent("eventName",      │
-  │   { detail })                     │ 导出 public API
-  │                                   │ (ref / function)
-  ▼                                   │
-App.vue onMounted 监听 ───────────────┘
-  window.addEventListener("eventName",
-    handler → 调用 Feature B 的 public API
-  )
-```
-
-### 错误模式与规则清单
-
-| 规则 | 禁止反例（含原因） |
-|------|---------------------|
-| **Feature 间零直接导入**：任何 feature 目录下的文件不得 `import` 其他 feature（`@/features/*` 的子目录） | `import { xxx } from "@/features/FeatureB"` — 产生硬依赖，破坏模块独立性 |
-| **单向数据流**：发起方只负责 `emitCustomEvent`，绝不触碰响应方的状态 | 直接修改 Feature B 的 ref — 跨越模块边界，状态归属混乱 |
-| **App.vue 是唯一调度中心**：所有跨功能的事件监听统一在 App.vue 的 `onMounted` 中注册 | 通过全局变量 `(window as any).xxx` 访问 Feature B — 类型不安全，无契约约束 |
-| **Public API 契约**：响应方 feature 的 `index.ts` 导出的函数/ref 即为它的 public API | 其他 feature 直接调用（只允许 App.vue 调用） |
-| **事件名规范**：使用 camelCase 动词短语（如 `openPasswordVaultAdd`），在 eventBus 中保持唯一 | — |
-| **数据透传**：事件 detail 中携带的数据由 App.vue 透传给响应方，双方不共享类型定义 | — |
-
-> 完整代码示例（floatingToolbar → passwordVault 联动）见 [AGENTS_API.md § 跨功能联动示例](./AGENTS_API.md#跨功能联动示例)
+> 正确模式、错误模式规则清单与完整代码示例见 [AGENTS_API.md § 跨功能联动规则](./AGENTS_API.md#跨功能联动规则强制) 及 [§ 跨功能联动示例](./AGENTS_API.md#跨功能联动示例)。
 
 ---
 
@@ -349,10 +323,6 @@ Codex UI 风格要求（禁用 `box-shadow`、全套设计 Token、字体三要�
   src/i18n/zh_CN/wordQuery.json     → plugin.i18n.wordQuery.title
   src/i18n/zh_CN/imageCompressor.json → plugin.i18n.imageCompressor.quality
 
-⚠️ 遗留 — base64Image 使用下划线前缀，暂不重构
-  src/i18n/zh_CN/base64Image.json   → plugin.i18n.base64Image_encode
-```
-
 ### 构建流程
 
 ```
@@ -438,7 +408,7 @@ src/
 
 | 分片文件 | 内容 | 使用场景 |
 |------|------|------|
-| [AGENTS_API.md](./AGENTS_API.md) | API 参考（存储/Dock/Modal/事件/状态栏/DOM/Node/加密/AI/开关/设置/快捷键）、路径别名、文件路径、承载模式（Vue 实例常驻/底部面板/独立窗口）、AI 调用规则 | 新功能开发时查询 API 用法与跨功能联动示例 |
+| [AGENTS_API.md](./AGENTS_API.md) | API 参考（存储/Dock/Modal/事件/状态栏/DOM/Node/加密/AI/开关/设置/快捷键）、路径别名、文件路径、承载模式（Vue 实例常驻/底部面板/独立窗口）、跨功能联动规则与示例、AI 调用规则 | 新功能开发时查询 API 用法、跨功能联动规则与示例 |
 | [AGENTS_STYLE.md](./AGENTS_STYLE.md) | UI 风格 Codex（设计 Token 全表/核心规范/`.vp-*` 组件模式库/禁止事项）、字号层级、Dock 侧边栏间距、SCSS 分离、内置字体 | 编写或审查 SCSS 样式时 |
 | [AGENTS_ARCH.md](./AGENTS_ARCH.md) | Composable 提取、文件头注释、单文件行数上限、模块提取判定标准、组件文件夹组织标准 | 代码组织、组件拆分、目录结构规划时 |
 | [AGENTS_I18N.md](./AGENTS_I18N.md) | i18n 不生效问题排查、禁止 i18n 硬编码兜底值 | 处理 i18n 文案或排查翻译不生效时 |

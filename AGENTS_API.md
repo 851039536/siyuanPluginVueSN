@@ -182,9 +182,41 @@ emitCustomEvent("openDialog", { content }, { useMicrotask: true })
 // 默认值: bubbles=true, cancelable=true, target=window, useMicrotask=false
 ```
 
+## 跨功能联动规则（强制）
+
+**功能模块之间禁止直接相互导入**。跨功能联动必须通过事件总线 + App.vue 中心调度实现零依赖解耦。
+
+### 正确模式（唯一允许）
+
+```
+Feature A（发起方）                 Feature B（响应方）
+  │                                   ▲
+  │ emitCustomEvent("eventName",      │
+  │   { detail })                     │ 导出 public API
+  │                                   │ (ref / function)
+  ▼                                   │
+App.vue onMounted 监听 ───────────────┘
+  window.addEventListener("eventName",
+    handler → 调用 Feature B 的 public API
+  )
+```
+
+### 错误模式与规则清单
+
+| 规则 | 禁止反例（含原因） |
+|------|---------------------|
+| **Feature 间零直接导入**：任何 feature 目录下的文件不得 `import` 其他 feature（`@/features/*` 的子目录） | `import { xxx } from "@/features/FeatureB"` — 产生硬依赖，破坏模块独立性 |
+| **单向数据流**：发起方只负责 `emitCustomEvent`，绝不触碰响应方的状态 | 直接修改 Feature B 的 ref — 跨越模块边界，状态归属混乱 |
+| **App.vue 是唯一调度中心**：所有跨功能的事件监听统一在 App.vue 的 `onMounted` 中注册 | 通过全局变量 `(window as any).xxx` 访问 Feature B — 类型不安全，无契约约束 |
+| **Public API 契约**：响应方 feature 的 `index.ts` 导出的函数/ref 即为它的 public API | 其他 feature 直接调用（只允许 App.vue 调用） |
+| **事件名规范**：使用 camelCase 动词短语（如 `openPasswordVaultAdd`），在 eventBus 中保持唯一 | — |
+| **数据透传**：事件 detail 中携带的数据由 App.vue 透传给响应方，双方不共享类型定义 | — |
+
+> 完整代码示例（floatingToolbar → passwordVault 联动）见下方「跨功能联动示例」章节。
+
 ### 跨功能联动示例
 
-规则见 AGENTS.md 「跨功能联动规则」章节，完整正确示例：
+完整正确示例：
 
 ```typescript
 // ===== Feature A（如 floatingToolbar/actions/passwordVault.ts）=====

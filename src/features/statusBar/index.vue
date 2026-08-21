@@ -199,7 +199,7 @@ const FEATURES: FeatureRegistryEntry[] = [
       icon: "ph:puzzle-piece",
       itemClass: "action-item skills-viewer-item",
     },
-    action: () => emitCustomEvent("toggleSkillsViewer"),
+    action: () => emitCustomEvent("openSkillsViewer"),
   },
   {
     id: "htmlViewer",

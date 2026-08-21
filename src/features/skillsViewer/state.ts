@@ -12,7 +12,3 @@ export function showSkillsViewer() {
 export function hideSkillsViewer() {
   skillsViewerVisible.value = false
 }
-
-export function toggleSkillsViewer() {
-  skillsViewerVisible.value = !skillsViewerVisible.value
-}

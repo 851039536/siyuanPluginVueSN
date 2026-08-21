@@ -1,7 +1,9 @@
 import type {
   CreateScriptDTO,
+  RunningProcess,
   Script,
   ScriptLanguage,
+  ScriptLauncherSettings,
   UpdateScriptDTO,
 } from "./index"
 import { Plugin } from "siyuan"
@@ -23,11 +25,8 @@ import { TypedStorage } from "@/utils/typedStorage"
  * 元数据通过 TypedStorage 持久化。
  */
 import {
-
-
+  DEFAULT_SCRIPT_LAUNCHER_SETTINGS,
   SCRIPT_LANGUAGE_CONFIG,
-
-
 } from "./index"
 
 const SC_DIR = "data/storage/sc"
@@ -51,14 +50,35 @@ function detectLanguage(fileName: string): ScriptLanguage {
 export class ScriptStorage {
   private storage: PluginStorage
   private scripts: TypedStorage<Script[]>
-  private plugin: Plugin
+  private settings: TypedStorage<ScriptLauncherSettings>
+  private runningProcesses: TypedStorage<RunningProcess[]>
   private readonly STORAGE_KEY = "scriptLauncher-scripts"
+  private readonly SETTINGS_KEY = "scriptLauncher-settings"
+  private readonly PROCESSES_KEY = "scriptLauncher-running-processes"
   private cachedWorkspaceRoot: string | null = null
 
   constructor(plugin: Plugin, _dataDir: string) {
-    this.plugin = plugin
     this.storage = new PluginStorage(plugin)
     this.scripts = new TypedStorage(this.storage, this.STORAGE_KEY, [])
+    this.settings = new TypedStorage(this.storage, this.SETTINGS_KEY, DEFAULT_SCRIPT_LAUNCHER_SETTINGS)
+    this.runningProcesses = new TypedStorage(this.storage, this.PROCESSES_KEY, [])
+  }
+
+  // ========== 运行中进程持久化（思源重启后恢复查看） ==========
+
+  /** 加载上次会话持久化的进程记录 */
+  async loadRunningProcesses(): Promise<RunningProcess[]> {
+    return this.runningProcesses.loadOrDefault()
+  }
+
+  /** 保存运行中进程记录（启动/停止/退出时同步落盘） */
+  async saveRunningProcesses(processes: RunningProcess[]): Promise<boolean> {
+    return this.runningProcesses.save(processes)
+  }
+
+  /** 清除全部进程持久化记录 */
+  async clearRunningProcesses(): Promise<boolean> {
+    return this.runningProcesses.remove()
   }
 
   /** 获取工作区根目录（通过思源 API） — public，供外部使用 */
@@ -105,6 +125,18 @@ export class ScriptStorage {
     try {
       await removeFile(this.scPath(fileName))
     } catch { /* 忽略 */ }
+  }
+
+  // ========== 设置 ==========
+
+  /** 加载启动器设置（内置监听开关等） */
+  async loadSettings(): Promise<ScriptLauncherSettings> {
+    return this.settings.loadOrDefault()
+  }
+
+  /** 保存启动器设置 */
+  async saveSettings(data: ScriptLauncherSettings): Promise<boolean> {
+    return this.settings.save(data)
   }
 
   // ========== CRUD ==========
@@ -237,7 +269,9 @@ export class ScriptStorage {
   removeTempFile(filePath: string): void {
     const node = getNodeFsPathOs()
     if (!node) return
-    try { if (node.fs.existsSync(filePath)) node.fs.unlinkSync(filePath) } catch { /* ignore */ }
+    try {
+      if (node.fs.existsSync(filePath)) node.fs.unlinkSync(filePath)
+    } catch { /* ignore */ }
   }
 
   /** 从 SCRIPT_LANGUAGE_CONFIG 获取扩展名 */

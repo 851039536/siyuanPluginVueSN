@@ -36,6 +36,43 @@ export interface UpdateScriptDTO {
   content?: string
 }
 
+/**
+ * 脚本启动器可选设置
+ * - builtinMonitor: 内置监听模式，启动后不显示系统控制台窗口，
+ *   在面板内显示运行状态与输出，并支持停止进程
+ */
+export interface ScriptLauncherSettings {
+  /** 内置监听模式（隐藏控制台窗口，面板内显示输出） */
+  builtinMonitor: boolean
+  /** 内置监听面板是否展开显示 */
+  monitorExpanded: boolean
+}
+
+export const DEFAULT_SCRIPT_LAUNCHER_SETTINGS: ScriptLauncherSettings = {
+  builtinMonitor: false,
+  monitorExpanded: true,
+}
+
+/** 内置监听运行中的进程条目 */
+export interface RunningProcess {
+  id: string
+  /** 子进程 PID（Windows 下用于 taskkill 结束进程树） */
+  pid?: number
+  scriptId: string
+  name: string
+  language: ScriptLanguage
+  description: string
+  command: string
+  status: "running" | "exited" | "killed" | "error"
+  startedAt: number
+  finishedAt?: number
+  exitCode?: number | null
+  stdout: string
+  stderr: string
+  /** 是否来自上次会话持久化恢复（思源重启后遗留进程） */
+  persisted?: boolean
+}
+
 export const SCRIPT_LANGUAGE_CONFIG: Record<ScriptLanguage, {
   label: string
   labelEn: string
@@ -90,6 +127,7 @@ export const SCRIPT_LANGUAGE_CONFIG: Record<ScriptLanguage, {
 export interface I18n {
   panelTitle?: string
   addScript?: string
+  importScript?: string
   editScript?: string
   deleteScript?: string
   runScript?: string
@@ -125,11 +163,32 @@ export interface I18n {
   stderr?: string
   exitCode?: string
   outputTitle?: string
+  /** 内置监听开关 */
+  builtinMonitor?: string
+  builtinMonitorDesc?: string
+  /** 运行监控区标题/状态 */
+  monitorTitle?: string
+  monitorCollapse?: string
+  monitorExpand?: string
+  runningCount?: string
+  stopped?: string
+  stopProcess?: string
+  stopProcessConfirm?: string
+  processStopped?: string
+  processExited?: string
+  startedAt?: string
+  emptyMonitor?: string
+  clearOutput?: string
+  noProcessOutput?: string
+  windowHiddenHint?: string
+  /** 上次会话遗留进程标记 */
+  restoredProcess?: string
 }
 
 export class ScriptLauncher {
   private plugin: Plugin
   private storage: ScriptStorage
+  private onDestroy: (() => void) | null = null
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
@@ -162,5 +221,14 @@ export class ScriptLauncher {
     return this.storage
   }
 
-  public destroy() {}
+  /** 插件卸载时释放内置监听注册的清理钩子（运行中进程的退出兜底） */
+  public destroy() {
+    this.onDestroy?.()
+    this.onDestroy = null
+  }
+
+  /** 供 useScriptRunner 注册卸载清理钩子（运行中进程的退出兜底） */
+  public setOnDestroy(handler: () => void) {
+    this.onDestroy = handler
+  }
 }

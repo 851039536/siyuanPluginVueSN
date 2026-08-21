@@ -152,6 +152,7 @@ import Card from "@/components/Card.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
+import type { SelectOption } from "@/components/Select.vue"
 import { SCRIPT_LANGUAGE_CONFIG } from "../types"
 
 interface Props {
@@ -172,10 +173,10 @@ const selectedLanguage = ref("all")
 const selectedCategory = ref("all")
 const localSearchQuery = ref("")
 
-const languageOptions = computed(() => [
+const languageOptions = computed<SelectOption[]>(() => [
   {
     value: "all",
-    label: props.i18n.allLanguages,
+    label: props.i18n.allLanguages ?? "",
   },
   ...Object.entries(SCRIPT_LANGUAGE_CONFIG).map(([key, cfg]) => ({
     value: key,
@@ -183,12 +184,12 @@ const languageOptions = computed(() => [
   })),
 ])
 
-const categoryOptions = computed(() => {
+const categoryOptions = computed<SelectOption[]>(() => {
   const categories = new Set(props.scripts.map((s) => s.category))
   return [
     {
       value: "all",
-      label: props.i18n.allCategories,
+      label: props.i18n.allCategories ?? "",
     },
     ...Array.from(categories).sort().map((cat) => ({
       value: cat,

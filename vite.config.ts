@@ -49,7 +49,7 @@ export default defineConfig(({
       alias: {
         "@": resolve(__dirname, "src"),
         // ===== 功能模块别名：@<featureName> → src/features/<featureName> =====
-        // 新增功能模块时，务必同时更新 vite.config.ts / tsconfig.json / AGENTS_RULES.md / CODEBUDDY.md
+        // 新增功能模块时，务必同时更新 vite.config.ts / tsconfig.json / AGENTS.md / AGENTS_API.md
         "@aiContentGenerator": resolve(__dirname, "src/features/aiContentGenerator"),
         "@apiDebugger": resolve(__dirname, "src/features/apiDebugger"),
         "@bookmarkMarker": resolve(__dirname, "src/features/bookmarkMarker"),

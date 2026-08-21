@@ -88,12 +88,12 @@ feature/
 
 **验证链条**：完成全部 8 步后，由用户自行验证以下 4 项检查：
 ```bash
-pnpm lint           # ESLint 代码规范（用户自行执行，AI 不运行）
+pnpm lint           # ESLint 代码规范（用户执行，AI 不运行）
 pnpm i18n:verify    # 中英文键对齐
 pnpm validate:icons # 图标注册有效性
 npx tsc --noEmit    # TypeScript 编译类型检查
 ```
-> **重要**：AI 不得执行 `pnpm vite build` 和 `pnpm lint`。这些验证由用户自行完成。
+> **重要**：AI 不执行 `pnpm vite build` 和 `pnpm lint`。验证由用户自行完成。
 
 ### 功能模块内代码分层（强制）
 
@@ -147,7 +147,7 @@ App.vue onMounted 监听 ───────────────┘
 | **事件名规范**：使用 camelCase 动词短语（如 `openPasswordVaultAdd`），在 eventBus 中保持唯一 | — |
 | **数据透传**：事件 detail 中携带的数据由 App.vue 透传给响应方，双方不共享类型定义 | — |
 
-> 完整代码示例（floatingToolbar → passwordVault 联动）见 [AGENTS_RULES.md § 跨功能联动示例](./AGENTS_RULES.md#跨功能联动示例)
+> 完整代码示例（floatingToolbar → passwordVault 联动）见 [AGENTS_API.md § 跨功能联动示例](./AGENTS_API.md#跨功能联动示例)
 
 ---
 
@@ -175,7 +175,7 @@ App.vue onMounted 监听 ───────────────┘
 
 唯一例外：`src/config/settings.ts` 允许直接调用 `plugin.loadData/saveData`，仅用于单一的 `plugin-settings` 键。
 
-> 上述各 API 的详细代码示例见 [AGENTS_RULES.md § API 参考](./AGENTS_RULES.md#api-参考)
+> 上述各 API 的详细代码示例见 [AGENTS_API.md § API 参考](./AGENTS_API.md#api-参考)
 
 ---
 
@@ -211,15 +211,15 @@ App.vue onMounted 监听 ───────────────┘
 - **全局样式**：`@use "@/index.scss" as *;`
 - **优先思源内置图标** 或 @iconify/vue
 - **图标规则**：禁止使用 emoji 表情作为图标。使用 `src/config/icons.ts` 中 `FEATURE_ICONS` / `COMMON_ICONS` 已注册的 Iconify 图标（`mdi:xxx`、`carbon:xxx` 等）。需要新图标时在 `icons.ts` 注册映射后引用，浏览图标 https://icon-sets.iconify.design/
-- **文件头注释**：每个 `.ts` / `.vue` 文件顶部必须包含简要功能说明注释（`.scss` 不适用），格式见 [AGENTS_RULES.md § 强制规则：文件头注释](./AGENTS_RULES.md#强制规则文件头注释)
+- **文件头注释**：每个 `.ts` / `.vue` 文件顶部必须包含简要功能说明注释（`.scss` 不适用），格式见 [AGENTS_ARCH.md § 强制规则：文件头注释](./AGENTS_ARCH.md#强制规则文件头注释)
 - **功能模块内代码分层**：模块内共享常量/工具函数禁止复制粘贴，提取到 `types/index.ts` / `utils.ts`（见上方「功能模块内代码分层」）
-- **单文件行数上限**：300 行警戒线，500 行硬阈值，≥1000 行必须重构；单一函数 ≤30 行最佳。详见 [AGENTS_RULES.md § 强制规则：单文件行数上限](./AGENTS_RULES.md#强制规则单文件行数上限)
-- **模块提取判定**：重复远比错误抽象便宜，同一问题第 3 次出现前不要抽象（Rule of Three）。详见 [AGENTS_RULES.md § 强制规则：模块提取判定标准](./AGENTS_RULES.md#强制规则模块提取判定标准)
-- **组件文件夹组织**：按功能单元建语义化文件夹、入口统一 `index.vue`、复用组件放 `common/`、复用逻辑放 `composables/`。详见 [AGENTS_RULES.md § 四、组件文件夹组织标准](./AGENTS_RULES.md#四组件文件夹组织标准components-子目录)
-- **字号层级规范**：两级字号制（`$font-size-xs` 12px / `$font-size-2xs` 10px），根容器显式设置基准字号。详见 [AGENTS_RULES.md § 强制规则：字号层级与全局基准字号](./AGENTS_RULES.md#强制规则字号层级与全局基准字号)
-- **Dock 面板侧边栏间距**：滚动内容不得紧贴侧边栏，根容器必须 `padding-right` ≥ `$spacing-2`。详见 [AGENTS_RULES.md § 强制规则：Dock 面板侧边栏间距](./AGENTS_RULES.md#强制规则dock-面板侧边栏间距)
-- **AI 调用统一入口**：必须走 `@/utils/aiApi` 的 `callAI` / `callAISmart` / `callAIChat`，禁止直接 `fetch` 或硬编码 Key/端点。详见 [AGENTS_RULES.md § 强制规则：AI 调用](./AGENTS_RULES.md#强制规则ai-调用) 与 [docs/ai-api-usage.md](./docs/ai-api-usage.md)
-- **禁止 i18n 硬编码兜底**：`{{ i18n.xxx || '中文兜底' }}` 模式禁止使用。详见 [AGENTS_RULES.md § 强制规则：禁止 i18n 硬编码兜底值](./AGENTS_RULES.md#强制规则禁止-i18n-硬编码兜底值)
+- **单文件行数上限**：300 行警戒线，500 行硬阈值，≥1000 行必须重构；单一函数 ≤30 行最佳。详见 [AGENTS_ARCH.md § 强制规则：单文件行数上限](./AGENTS_ARCH.md#强制规则单文件行数上限)
+- **模块提取判定**：重复远比错误抽象便宜，同一问题第 3 次出现前不要抽象（Rule of Three）。详见 [AGENTS_ARCH.md § 强制规则：模块提取判定标准](./AGENTS_ARCH.md#强制规则模块提取判定标准)
+- **组件文件夹组织**：按功能单元建语义化文件夹、入口统一 `index.vue`、复用组件放 `common/`、复用逻辑放 `composables/`。详见 [AGENTS_ARCH.md § 四、组件文件夹组织标准](./AGENTS_ARCH.md#四组件文件夹组织标准components-子目录)
+- **字号层级规范**：两级字号制（`$font-size-xs` 12px / `$font-size-2xs` 10px），根容器显式设置基准字号。详见 [AGENTS_STYLE.md § 强制规则：字号层级与全局基准字号](./AGENTS_STYLE.md#强制规则字号层级与全局基准字号)
+- **Dock 面板侧边栏间距**：滚动内容不得紧贴侧边栏，根容器必须 `padding-right` ≥ `$spacing-2`。详见 [AGENTS_STYLE.md § 强制规则：Dock 面板侧边栏间距](./AGENTS_STYLE.md#强制规则dock-面板侧边栏间距)
+- **AI 调用统一入口**：必须走 `@/utils/aiApi` 的 `callAI` / `callAISmart` / `callAIChat`，禁止直接 `fetch` 或硬编码 Key/端点。详见 [AGENTS_API.md § 强制规则：AI 调用](./AGENTS_API.md#强制规则ai-调用) 与 [docs/ai-api-usage.md](./docs/ai-api-usage.md)
+- **禁止 i18n 硬编码兜底**：`{{ i18n.xxx || '中文兜底' }}` 模式禁止使用。详见 [AGENTS_I18N.md § 强制规则：禁止 i18n 硬编码兜底值](./AGENTS_I18N.md#强制规则禁止-i18n-硬编码兜底值)
 - **i18n 中文注释**：模板中每处使用 i18n 键渲染文案的位置，必须在其上方添加中文 HTML 注释标明实际显示的中文文案（如 `<!-- 弹窗标题："Git 全局配置" -->`）；模板的主要结构区块同样必须添加中文区块注释（如 `<!-- 底部操作栏 -->`）。i18n 键名是英文，缺少注释会降低模板可读性。
 
 ---
@@ -254,7 +254,7 @@ App.vue onMounted 监听 ───────────────┘
 - `destroy()` 调用 `modal.destroy()` + `clearInterval()` → `onUnmounted` 清理监听器
 - 参考实现：`src/features/dataBackup/`
 
-> 完整实现步骤与关键点速查表见 [AGENTS_RULES.md § Vue 实例常驻模式](./AGENTS_RULES.md#vue-实例常驻模式persistent-modal--customevent--定时器)
+> 完整实现步骤与关键点速查表见 [AGENTS_API.md § Vue 实例常驻模式](./AGENTS_API.md#vue-实例常驻模式persistent-modal--customevent--定时器)
 
 ---
 
@@ -262,7 +262,7 @@ App.vue onMounted 监听 ───────────────┘
 
 部分工具类功能不需要独立 Dock 面板，适合整合到统一的"底部面板 + Tab 切换"容器中。参考实现：`src/features/toolCollection/`。注册新工具只需在 `toolCollection/index.vue` 的 `tools` computed 添加条目 + 内容区添加 `v-if` 组件引用，无需修改注册清单。
 
-> 完整目录结构与通信流程见 [AGENTS_RULES.md § 底部面板模式（Tab 切换）](./AGENTS_RULES.md#底部面板模式tab-切换)
+> 完整目录结构与通信流程见 [AGENTS_API.md § 底部面板模式（Tab 切换）](./AGENTS_API.md#底部面板模式tab-切换)
 
 ---
 
@@ -270,7 +270,7 @@ App.vue onMounted 监听 ───────────────┘
 
 需要「独立窗口 / 浮动窗口」承载 UI 的功能，使用思源官方 API 的 `addTab + openTab + openWindow` 组合实现双形态承载（主窗口页签 ⇄ 独立浮动窗口）。核心流程：`plugin.addTab()` 注册自定义页签模型 → `openTab({ custom })` 创建/聚焦主窗口页签 → `openWindow({ tab })` 移入浮动窗口；关闭浮动窗口页签自动移回主窗口。Manager 类放 `types/index.ts`（模块级 `tabRegistered` 防重复注册），`index.vue` 以 `mode` prop 支持双形态。参考实现：`src/features/minimalBrowser/`、`src/features/toolCollection/`。
 
-> 完整 API 签名、实现步骤与关键点速查表见 [AGENTS_RULES.md § 独立窗口承载](./AGENTS_RULES.md#独立窗口承载addtab-opentab-openwindow)
+> 完整 API 签名、实现步骤与关键点速查表见 [AGENTS_API.md § 独立窗口承载](./AGENTS_API.md#独立窗口承载addtab-opentab-openwindow)
 
 ---
 
@@ -278,7 +278,7 @@ App.vue onMounted 监听 ───────────────┘
 
 通过 `plugin.addCommand()` 注册全局快捷键（macOS 符号风格 hotkey，如 `⌃⌥T`，Windows 自动转换），在 `registerFeature()` 中调用；`langKey` 需对应 i18n 分片中的翻译键。
 
-> 完整代码示例与 hotkey 符号表见 [AGENTS_RULES.md § 快捷键注册](./AGENTS_RULES.md#快捷键注册)
+> 完整代码示例与 hotkey 符号表见 [AGENTS_API.md § 快捷键注册](./AGENTS_API.md#快捷键注册)
 
 ---
 
@@ -286,7 +286,7 @@ App.vue onMounted 监听 ───────────────┘
 
 **强制规则**：所有新增 feature 的 UI 必须遵循 Codex 风格。禁止硬编码尺寸——使用全局设计 Token（`src/_variables.scss` 提供 `$color-*` / `$vp-radius` / `$spacing-*` / `$vp-mono` / `$radius-*`），禁止硬编码色值（使用 `$color-*` 语义色），禁止 `box-shadow`（改用边框）。字体三要素（`font-size` / `font-weight` / `line-height`）同样禁止硬编码 px/数字值，必须使用 `$font-size-*` / `$font-weight-*` / `$line-height-*` Token。
 
-> 完整 Token 表、组件模式库、禁止事项见 [AGENTS_RULES.md § UI 风格：Codex](./AGENTS_RULES.md#ui-风格codex)
+> 完整 Token 表、组件模式库、禁止事项见 [AGENTS_STYLE.md § UI 风格：Codex](./AGENTS_STYLE.md#ui-风格codex)
 
 ---
 
@@ -315,9 +315,9 @@ App.vue onMounted 监听 ───────────────┘
 
 Codex UI 风格要求（禁用 `box-shadow`、全套设计 Token、字体三要素禁止硬编码、弹窗表单 `<Input>`/`<Select>` 必须 `size="small"`）见上方「UI 风格：Codex」章节。
 
-> 完整设计 Token 表、核心规范速查表、`.vp-*` 组件模式库（弹窗/输入框/标签）、禁止事项清单见 [AGENTS_RULES.md § UI 风格：Codex](./AGENTS_RULES.md#ui-风格codex)
+> 完整设计 Token 表、核心规范速查表、`.vp-*` 组件模式库（弹窗/输入框/标签）、禁止事项清单见 [AGENTS_STYLE.md § UI 风格：Codex](./AGENTS_STYLE.md#ui-风格codex)
 >
-> SCSS 分离的强制规则与正误示例见 [AGENTS_RULES.md § 强制规则：SCSS 必须分离到 styles/ 目录](./AGENTS_RULES.md#强制规则scss-必须分离到-styles-目录)
+> SCSS 分离的强制规则与正误示例见 [AGENTS_STYLE.md § 强制规则：SCSS 必须分离到 styles/ 目录](./AGENTS_STYLE.md#强制规则scss-必须分离到-styles-目录)
 
 ---
 
@@ -428,25 +428,19 @@ src/
 
 ## 构建与验证
 
-> AI 不得执行 `pnpm vite build` 和 `pnpm lint`，验证由用户自行完成。常见 Vite 警告与处理方法见 [AGENTS_RULES.md § 构建与验证](./AGENTS_RULES.md#构建与验证)。
+> AI 不得执行 `pnpm vite build` 和 `pnpm lint`，验证由用户自行完成。常见 Vite 警告与处理方法见 [AGENTS_BUILD.md § 构建与验证](./AGENTS_BUILD.md#构建与验证)。
 
 ---
 
-## 参考文件
+## 规则分片索引
 
-本文件提供架构"大图"和规则要点。**详细代码示例、完整 API 参数说明、组件模式库请查阅 [AGENTS_RULES.md](./AGENTS_RULES.md)**，其内容组织如下：
+本文件提供架构"大图"和规则要点。**详细代码示例、完整 API 参数说明、组件模式库请按主题查阅以下分片文件**：
 
-| 章节 | 内容 |
-|------|------|
-| API 参考 | 存储/Dock/Modal/事件/状态栏/DOM/Node/加密/AI/开关/设置/快捷键的完整调用示例 |
-| 跨功能联动示例 | floatingToolbar → passwordVault 完整联动代码 |
-| Vue 实例常驻模式 | 持久化 Modal 的 4 步实现 + 关键点速查表 |
-| 底部面板模式（Tab 切换） | toolCollection 目录结构与通信流程 |
-| 独立窗口承载 | addTab + openTab + openWindow API、Manager 类实现步骤、关键点速查表 |
-| 文件路径 | `getFile`/`putFile` 路径规则、工作区目录、插件数据目录、Vite 外部模块声明 |
-| UI 风格：Codex | 全局设计 Token 全表、核心规范速查表、`.vp-*` 组件模式库（弹窗/输入框/标签）、禁止事项清单 |
-| 强制规则：SCSS 分离 | 目录结构模式、正误示例对比 |
-| 强制规则：文件头注释 | .ts/.vue 文件头注释格式规范 |
-| 强制规则：Composable 提取 | 工厂函数 + 依赖注入模式、判断标准、禁止事项 |
-| AI 调用文档 | `docs/ai-api-usage.md` — 完整 AI 调用用法（标准/流式/思考模式/RAG/多轮对话 + 调用方清单） |
-| 构建与验证 | 常见 Vite 警告原因与处理方法 |
+| 分片文件 | 内容 | 使用场景 |
+|------|------|------|
+| [AGENTS_API.md](./AGENTS_API.md) | API 参考（存储/Dock/Modal/事件/状态栏/DOM/Node/加密/AI/开关/设置/快捷键）、路径别名、文件路径、承载模式（Vue 实例常驻/底部面板/独立窗口）、AI 调用规则 | 新功能开发时查询 API 用法与跨功能联动示例 |
+| [AGENTS_STYLE.md](./AGENTS_STYLE.md) | UI 风格 Codex（设计 Token 全表/核心规范/`.vp-*` 组件模式库/禁止事项）、字号层级、Dock 侧边栏间距、SCSS 分离、内置字体 | 编写或审查 SCSS 样式时 |
+| [AGENTS_ARCH.md](./AGENTS_ARCH.md) | Composable 提取、文件头注释、单文件行数上限、模块提取判定标准、组件文件夹组织标准 | 代码组织、组件拆分、目录结构规划时 |
+| [AGENTS_I18N.md](./AGENTS_I18N.md) | i18n 不生效问题排查、禁止 i18n 硬编码兜底值 | 处理 i18n 文案或排查翻译不生效时 |
+| [AGENTS_BUILD.md](./AGENTS_BUILD.md) | 构建与验证、viteStaticCopy stripBase、依赖清单 | 构建配置、静态资源复制、验证流程时 |
+| [docs/ai-api-usage.md](./docs/ai-api-usage.md) | 完整 AI 调用用法（标准/流式/思考模式/RAG/多轮对话 + 调用方清单） | 需要实现 AI 功能时（唯一 AI 调用参考文档） |

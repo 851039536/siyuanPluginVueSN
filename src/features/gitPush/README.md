@@ -119,8 +119,11 @@ src/features/gitPush/
 │   │   ├── RuleCheckOverview.vue    # 总览区块（检查数/不合规/合规率卡片 + 规则提示）
 │   │   ├── ReasonDistributionSection.vue # 违规类型分布区块（条形）
 │   │   └── ViolationListSection.vue # 不合规提交列表区块（条目 + 修正入口 + 分页）
-│   └── analysis/                    # 行数统计专属（3 个）
-│       ├── LineStatsPanel.vue       # 行数统计面板（项目/作者行数排行 + 过滤配置按钮）
+│   └── LineStats/                   # 行数统计专属（6 个）
+│       ├── index.vue                # 行数统计视图入口容器（状态编排 + 汇总卡片 + 排行 + 弹窗）
+│       ├── LineStatsToolbar.vue     # 顶部工具条（分析状态 + 过滤配置 + 条数 + 分析按钮）
+│       ├── LineStatsCards.vue       # 顶部汇总卡片（总新增/删除/净增/当前总行数）
+│       ├── LineRankingSection.vue   # 项目/作者行数排行通用区块（mode prop 区分）
 │       ├── ExtFilterDialog.vue      # 文件格式过滤配置弹窗（扩展名多选排除列表）
 │       └── ProjectLineDetail.vue    # 项目行数详情弹窗
 └── styles/

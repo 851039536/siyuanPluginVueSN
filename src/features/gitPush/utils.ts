@@ -391,6 +391,12 @@ export function barPct(count: number, max: number): string {
   return `${Math.round((count / max) * 100)}%`
 }
 
+/** 计数占比百分比（count/total，total=0 兜底 0%），统计视图远程覆盖率/分类分布共用 */
+export function ratioPct(count: number, total: number): string {
+  if (total === 0) { return "0%" }
+  return `${Math.round((count / total) * 100)}%`
+}
+
 /**
  * 为排行条目预计算条形宽度百分比。
  * max 取所有行中的最大值（兼容已排序降序的排行数据以及未排序的时间序列如 dailyCommits）。

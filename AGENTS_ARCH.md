@@ -21,7 +21,7 @@
 
 **反面案例**（下放给子组件）：
 ```
-BranchCommitList.vue 导入 useGitOps → 自己调用 loadCommitLog()
+ProjectCommitList.vue 导入 useGitOps → 自己调用 loadCommits()
   ↓ 后果：
   · 组件从展示变为容器，职责越界
   · 同一操作在父层和子层各有一份状态管理，产生冲突
@@ -30,9 +30,9 @@ BranchCommitList.vue 导入 useGitOps → 自己调用 loadCommitLog()
 
 **正确做法**（提取 composable，父层编排）：
 ```
-useCommitLog.ts ← 封装状态 + 函数
+useGitOps.ts ← 封装状态 + 函数
   ↑ index.vue 调用，将返回的 ref/函数通过 props 传给子组件
-  ↓ BranchCommitList.vue 仅 emit 事件 → 父层 composable 方法处理
+  ↓ ProjectCommitList.vue 仅 emit 事件（如 reloadCommitLog）→ 父层 composable 方法处理
 ```
 
 ### Composable 模式要求
@@ -74,13 +74,14 @@ export function useXxx(deps: {
 
 ### 参考实现
 
-`src/features/gitPush/composables/` 目录是标准模式集：
+`src/features/gitPush/composables/` 目录是标准模式集（共 29 个 composable）：
 
 | Composable | 行数 | 依赖数 | 类型 |
 |------------|------|--------|------|
-| `useCommitLog.ts` | 62 | 5 个（commitLogs/loadCommitLog/loadBranches/loadStashList/loadTags） | 从 index.vue 提取子领域状态 + 方法 |
-| `useProjectFilters.ts` | 139 | 10 个（含 TypedStorage + 多个 Ref） | 筛选/排序管道，options 对象注入 |
-| `useTimeUtils.ts` | 50 | 0（纯工具函数，但方便统一 import） | 无响应式依赖的工具集合 |
+| `useGitPush.ts` | ~400 | 1 个（GitPushManager） | 主聚合入口：按职责分解为 useProjectCrud / useGitOps / useGitTagsConflicts / useGitStats 4 个领域 composable |
+| `useProjectFilters.ts` | 162 | 8 个（2 TypedStorage + 6 Ref） | 筛选/排序/分类管道，options 对象注入 |
+| `useCardServices.ts` | 83 | 1 个（CARD_SERVICES_KEY inject） | 卡片服务注入 + 按 project.id 派生单项目 computed，被 ProjectCard/CardHeader/CardRemotes/CardActionBar 共用 |
+| `usePagedList.ts` | 27 | 0 | 通用分页（被 CommitAnalysisPanel / LogPanel 两处复用，消除重复） |
 
 ## 强制规则：文件头注释
 
@@ -240,17 +241,20 @@ export function useXxx(deps: {
 ```
 # gitPush/components/（语义化功能文件夹 + common/ + 入口 index.vue）
 components/
-├── common/            # 复用组件（跨 ≥2 视图）：EmptyState/LoadMoreButton/CommitFixDialog 等
+├── common/            # 复用组件（跨 ≥2 视图）：EmptyState/LoadMoreButton/CommitFixDialog 等 18 个
 ├── ListView/          # 列表视图功能单元 —— 文件夹名即功能
 │   ├── index.vue      # 列表视图入口容器（纯渲染）
 │   ├── ProjectCard.vue# 卡片编排层（仅 project prop，数据/操作全注入）
 │   ├── CardHeader.vue # 顶栏区块
 │   ├── CardRemotes.vue# 远程状态区块
 │   ├── CardActionBar.vue # 操作栏区块
-│   └── ...            # Tab 子组件/弹窗
-├── stats/             # 统计视图功能单元
-├── log/               # 操作日志视图功能单元
-└── analysis/          # 提交分析视图功能单元
+│   └── ...            # BranchCommitList/WorkingTree/Conflict/Stash/Tag 等区块
+├── StatsView/         # 统计视图功能单元
+├── CommitAnalysis/    # 提交分析功能单元
+├── CommitRuleCheck/   # 提交规则检查功能单元
+├── LogPanel/          # 操作日志功能单元
+├── LineStats/         # 行数统计功能单元
+└── CodeReport/        # 代码报告功能单元
 ```
 
 #### 反面案例
@@ -265,9 +269,9 @@ components/
 # 复用组件散落在功能文件夹内（被两处引用）
 components/
 ├── ListView/
-│   └── CommitFixDialog.vue   # ← 被列表 + 规则检查两视图引用，应放 common/
-└── analysis/
-    └── CommitFixDialog.vue   # 复制粘贴两份，应共用 common/ 一份
+│   └── ShareDialog.vue   # ← 被列表 + 规则检查两视图引用，应放 common/
+└── CommitRuleCheck/
+    └── ShareDialog.vue   # 复制粘贴两份，应共用 common/ 一份
 
 # 入口文件不用 index.vue
 components/

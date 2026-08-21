@@ -5,19 +5,19 @@
         v-model="selectedLanguage"
         :options="languageOptions"
         size="xsmall"
-        :placeholder="i18n.selectLanguage || '语言'"
+        :placeholder="i18n.selectLanguage"
       />
       <Select
         v-model="selectedCategory"
         :options="categoryOptions"
         size="xsmall"
-        :placeholder="i18n.selectCategory || '分类'"
+        :placeholder="i18n.selectCategory"
       />
       <Input
         v-model="localSearchQuery"
         type="search"
         size="xsmall"
-        :placeholder="i18n.searchPlaceholder || '搜索脚本...'"
+        :placeholder="i18n.searchPlaceholder"
         prefix-icon="search"
       />
     </div>
@@ -78,7 +78,7 @@
               <p class="script-list__card-meta">
                 <span>{{ script.category }}</span>
                 <span v-if="script.lastRunAt">{{ formatLastRun(script.lastRunAt) }}</span>
-                <span v-else>{{ i18n.neverRun || "未运行" }}</span>
+                <span v-else>{{ i18n.neverRun }}</span>
               </p>
               <p class="script-list__card-path">
                 data/storage/sc/{{ script.fileName }}
@@ -92,21 +92,21 @@
                   size="xsmall"
                   icon="play"
                   class="script-list__btn-run"
-                  :title="i18n.runScript || '运行'"
+                  :title="i18n.runScript"
                   @click="emit('run', script)"
                 />
                 <Button
                   variant="secondary"
                   size="xsmall"
                   icon="edit"
-                  :title="i18n.editScript || '编辑'"
+                  :title="i18n.editScript"
                   @click="emit('edit', script)"
                 />
                 <Button
                   variant="danger"
                   size="xsmall"
                   icon="delete"
-                  :title="i18n.deleteScript || '删除'"
+                  :title="i18n.deleteScript"
                   @click="emit('delete', script)"
                 />
               </div>
@@ -124,13 +124,13 @@
         name="file"
         :size="48"
       />
-      <p>{{ i18n.noScripts || "暂无脚本" }}</p>
+      <p>{{ i18n.noScripts }}</p>
       <Button
         variant="primary"
         icon="add"
         @click="emit('add')"
       >
-        {{ i18n.addScript || "添加脚本" }}
+        {{ i18n.addScript }}
       </Button>
     </div>
   </div>
@@ -156,32 +156,26 @@ import { SCRIPT_LANGUAGE_CONFIG } from "../types"
 
 interface Props {
   scripts: Script[]
-  language?: string
-  searchQuery?: string
   i18n: I18n
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  language: "all",
-  searchQuery: "",
-})
+const props = defineProps<Props>()
 
 const emit = defineEmits<{
-  select: [script: Script]
   delete: [script: Script]
   add: []
   edit: [script: Script]
   run: [script: Script]
 }>()
 
-const selectedLanguage = ref(props.language)
+const selectedLanguage = ref("all")
 const selectedCategory = ref("all")
-const localSearchQuery = ref(props.searchQuery)
+const localSearchQuery = ref("")
 
 const languageOptions = computed(() => [
   {
     value: "all",
-    label: props.i18n.allLanguages || "全部语言",
+    label: props.i18n.allLanguages,
   },
   ...Object.entries(SCRIPT_LANGUAGE_CONFIG).map(([key, cfg]) => ({
     value: key,
@@ -194,7 +188,7 @@ const categoryOptions = computed(() => {
   return [
     {
       value: "all",
-      label: props.i18n.allCategories || "全部分类",
+      label: props.i18n.allCategories,
     },
     ...Array.from(categories).sort().map((cat) => ({
       value: cat,
@@ -252,7 +246,8 @@ const groupedScripts = computed(() => {
 })
 
 function getLanguageColor(language: ScriptLanguage): string {
-  return SCRIPT_LANGUAGE_CONFIG[language]?.color || "#6B7280"
+  // SCRIPT_LANGUAGE_CONFIG 覆盖全部语言，color 必存在，无需兜底
+  return SCRIPT_LANGUAGE_CONFIG[language].color
 }
 
 function getLanguageLabel(language: ScriptLanguage): string {
@@ -272,162 +267,5 @@ function formatLastRun(timestamp: number): string {
 </script>
 
 <style lang="scss" scoped>
-@use "@/variables.scss" as *;
-
-.script-list {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-3;
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-
-  &__filters {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: $spacing-2;
-    padding: $spacing-2;
-
-    .si-input {
-      grid-column: 1 / -1;
-    }
-  }
-
-  &__groups {
-    display: flex;
-    flex-direction: column;
-    gap: $spacing-3;
-    padding: 0 $spacing-2 $spacing-2;
-  }
-
-  &__group {
-    display: flex;
-    flex-direction: column;
-    gap: $spacing-2;
-  }
-
-  &__group-header {
-    display: flex;
-    align-items: center;
-    gap: $spacing-2;
-    padding: $spacing-2 $spacing-3;
-    border-left: 3px solid transparent;
-    background: var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.03));
-    border-radius: $radius-sm;
-  }
-
-  &__group-title {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    flex: 1;
-  }
-
-  &__cards {
-    display: flex;
-    flex-direction: column;
-    gap: $spacing-2;
-  }
-
-  &__card {
-    cursor: pointer;
-
-    &:hover {
-      border-color: var(--b3-theme-primary, $color-primary);
-
-      .script-list__card-actions {
-        opacity: 1;
-      }
-    }
-  }
-
-  &__card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: $spacing-2;
-    width: 100%;
-  }
-
-  &__card-name {
-    font-weight: 600;
-    font-size: $font-size-sm;
-    color: var(--b3-theme-on-background, $color-fg);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  &__card-body {
-    display: flex;
-    flex-direction: column;
-    gap: $spacing-1;
-  }
-
-  &__card-desc {
-    font-size: $font-size-xs;
-    color: var(--b3-theme-secondary, $color-muted);
-    margin: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-  }
-
-  &__card-meta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--b3-theme-secondary, $color-muted);
-    opacity: 0.45;
-    margin: 0;
-  }
-
-  &__card-path {
-    font-size: 10px;
-    font-family: $vp-mono;
-    color: var(--b3-theme-secondary, $color-muted);
-    opacity: 0.5;
-    margin: 2px 0 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  &__card-actions {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: $spacing-1;
-    opacity: 0;
-    transition: opacity 0.15s ease;
-  }
-
-  &__btn-run {
-    background: rgba($color-success, 0.15) !important;
-    color: $color-success !important;
-    border: 1px solid rgba($color-success, 0.3) !important;
-
-    &:hover {
-      background: rgba($color-success, 0.25) !important;
-    }
-  }
-
-  &__empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: $spacing-3;
-    padding: $spacing-8 $spacing-4;
-    color: var(--b3-theme-secondary, $color-muted);
-    text-align: center;
-  }
-}
+@use "../styles/ScriptList.scss";
 </style>

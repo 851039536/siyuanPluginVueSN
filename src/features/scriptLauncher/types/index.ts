@@ -20,21 +20,13 @@ export interface Script {
   lastRunAt?: number
 }
 
-export interface CreateScriptDTO {
-  name: string
-  language: ScriptLanguage
-  category: string
-  description: string
+/** 创建脚本的入参（Script 可编辑字段 + 内容） */
+export type CreateScriptDTO = Pick<Script, "name" | "language" | "category" | "description"> & {
   content: string
 }
 
-export interface UpdateScriptDTO {
-  name?: string
-  language?: ScriptLanguage
-  category?: string
-  description?: string
-  content?: string
-}
+/** 更新脚本的入参（全部字段可选） */
+export type UpdateScriptDTO = Partial<CreateScriptDTO>
 
 /**
  * 脚本启动器可选设置
@@ -75,49 +67,42 @@ export interface RunningProcess {
 
 export const SCRIPT_LANGUAGE_CONFIG: Record<ScriptLanguage, {
   label: string
-  labelEn: string
   extension: string
   icon: string
   color: string
 }> = {
   python: {
     label: "Python",
-    labelEn: "Python",
     extension: ".py",
     icon: "mdi:language-python",
     color: "#3776AB",
   },
   bash: {
     label: "Bash",
-    labelEn: "Bash",
     extension: ".sh",
     icon: "mdi:bash",
     color: "#4EAA25",
   },
   powershell: {
     label: "PowerShell",
-    labelEn: "PowerShell",
     extension: ".ps1",
     icon: "mdi:powershell",
     color: "#5391FE",
   },
   nodejs: {
     label: "Node.js",
-    labelEn: "Node.js",
     extension: ".js",
     icon: "mdi:nodejs",
     color: "#339933",
   },
   batch: {
     label: "Batch",
-    labelEn: "Batch",
     extension: ".bat",
     icon: "mdi:console",
     color: "#8B8B8B",
   },
   other: {
     label: "Other",
-    labelEn: "Other",
     extension: ".txt",
     icon: "mdi:file-code",
     color: "#6B7280",
@@ -126,6 +111,7 @@ export const SCRIPT_LANGUAGE_CONFIG: Record<ScriptLanguage, {
 
 export interface I18n {
   panelTitle?: string
+  description?: string
   addScript?: string
   importScript?: string
   editScript?: string
@@ -137,7 +123,6 @@ export interface I18n {
   name?: string
   language?: string
   category?: string
-  description?: string
   content?: string
   selectLanguage?: string
   selectCategory?: string
@@ -152,17 +137,10 @@ export interface I18n {
   deleteFailed?: string
   createSuccess?: string
   updateSuccess?: string
-  nameEmpty?: string
-  nameDuplicate?: string
   allCategories?: string
   allLanguages?: string
-  lastRun?: string
   neverRun?: string
-  running?: string
-  stdout?: string
-  stderr?: string
   exitCode?: string
-  outputTitle?: string
   /** 内置监听开关 */
   builtinMonitor?: string
   builtinMonitorDesc?: string
@@ -170,19 +148,29 @@ export interface I18n {
   monitorTitle?: string
   monitorCollapse?: string
   monitorExpand?: string
-  runningCount?: string
-  stopped?: string
   stopProcess?: string
-  stopProcessConfirm?: string
   processStopped?: string
   processExited?: string
-  startedAt?: string
   emptyMonitor?: string
   clearOutput?: string
   noProcessOutput?: string
   windowHiddenHint?: string
-  /** 上次会话遗留进程标记 */
+  /** 上次会话遗留进程提示 */
   restoredProcess?: string
+  /** 遗留进程徽标 */
+  restoredBadge?: string
+  /** 进程状态标签 */
+  statusRunning?: string
+  statusExited?: string
+  statusKilled?: string
+  statusError?: string
+  /** 主面板提示 */
+  envNotSupported?: string
+  openFailed?: string
+  scriptPathNotFound?: string
+  launchFailedEnvNotSupported?: string
+  importSuccess?: string
+  importFailed?: string
 }
 
 export class ScriptLauncher {
@@ -215,10 +203,6 @@ export class ScriptLauncher {
       type: "scriptLauncher-dock",
       i18n: (this.plugin.i18n?.scriptLauncher as I18n) || ({} as I18n),
     })
-  }
-
-  public getStorage(): ScriptStorage {
-    return this.storage
   }
 
   /** 插件卸载时释放内置监听注册的清理钩子（运行中进程的退出兜底） */

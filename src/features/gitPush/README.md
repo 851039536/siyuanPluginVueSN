@@ -126,6 +126,16 @@ src/features/gitPush/
 │       ├── LineRankingSection.vue   # 项目/作者行数排行通用区块（mode prop 区分）
 │       ├── ExtFilterDialog.vue      # 文件格式过滤配置弹窗（扩展名多选排除列表）
 │       └── ProjectLineDetail.vue    # 项目行数详情弹窗
+│   └── Report/                      # 代码统计报告视图专属（9 个）
+│       ├── index.vue                # 报告视图入口容器（项目/时间范围选择 + 分区 Tab 编排）
+│       ├── TeamOverviewSection.vue  # 团队总览分区（KPI 卡片：成员/总提交/总代码量/最活跃）
+│       ├── AuthorContributionSection.vue # 代码贡献度分区（作者贡献排行）
+│       ├── TechDebtSection.vue      # 技术债务分区（债务摘要 + 文件列表）
+│       ├── HotspotSection.vue       # 代码热点分区（热点文件）
+│       ├── CandlestickSection.vue   # 提交趋势分区（K 线/趋势图）
+│       ├── DebtSummaryBar.vue       # 债务摘要条
+│       ├── DebtFileDetail.vue       # 债务文件详情
+│       └── FileDetailModal.vue      # 文件详情弹窗
 └── styles/
     ├── index.scss                   # 主面板样式（卡片骨架 + Tab 区 + Stash/Tag/Output/Conflict 保留）
     ├── CardHeader.scss              # 卡片顶栏样式（从 index.scss 提取）

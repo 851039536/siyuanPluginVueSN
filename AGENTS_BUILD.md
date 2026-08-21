@@ -1,6 +1,6 @@
 # AGENTS_BUILD.md
 
-思源笔记插件 — 构建与验证流程、viteStaticCopy 资源复制规则与依赖清单。
+构建与验证流程、viteStaticCopy 资源复制规则与依赖清单。
 
 ## 构建与验证
 

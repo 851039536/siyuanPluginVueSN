@@ -1,6 +1,6 @@
 # AGENTS_I18N.md
 
-思源笔记插件 — i18n 分片架构、不生效排查与文案兜底禁止规范。
+ i18n 分片架构、不生效排查与文案兜底禁止规范。
 
 ## i18n 不生效问题排查
 
@@ -71,23 +71,16 @@ const files = await fg([
 
 模板中 `{{ i18n.xxx || '中文兜底' }}` 模式**禁止使用**。i18n 是 UI 文案的唯一数据源，兜底值会掩盖 i18n 未加载/缺失的 bug。
 
-**❌ 错误**：
+**错误**：
 ```html
 <span>{{ i18n.workingTreeClean || '工作区干净' }}</span>
 <button :title="i18n.refreshWorkingTree || '刷新工作空间'" />
 :placeholder="i18n.commitMessagePlaceholder || '输入提交信息...'"
 ```
 
-**✅ 正确**：
+**正确**：
 ```html
 <span>{{ i18n.workingTreeClean }}</span>
 <button :title="i18n.refreshWorkingTree" />
 :placeholder="i18n.commitMessagePlaceholder"
 ```
-
-**原因**：
-- 兜底值让 i18n 加载失败变成"静默成功"，开发者永远不知道 key 不存在
-- 所有文案应定义在 i18n JSON 的分片中，不在模板中重复
-- 如果 i18n 有値 → 显示 i18n 值；如果无值 → 显示空白（暴露问题，及时排查）
-
-> 此规则 2026-07-24 正式生效，从 gitPush 模块 (`WorkingTreePanel.vue`) 移除 17 处兜底值开始推广到全项目。

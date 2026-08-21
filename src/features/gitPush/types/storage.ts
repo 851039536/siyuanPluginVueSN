@@ -1,6 +1,6 @@
 // Git 项目持久化存储与类型定义
 import type { Plugin } from "siyuan"
-import type { CommitAnalysisCache, CommitAnalysisViewSettings, LineStatsCache } from "./meta"
+import type { CommitAnalysisCache, CommitAnalysisViewSettings, LineStatsCache, PlatformKey } from "./meta"
 import type { CodeReportPrefs } from "./report"
 import { DEFAULT_REPORT_PREFS } from "./report"
 import { PluginStorage } from "@/utils/pluginStorage"
@@ -18,6 +18,17 @@ export function clampGitConcurrency(n: number): number {
   const num = Math.round(Number(n) || GIT_CONCURRENCY_MIN)
   return Math.max(GIT_CONCURRENCY_MIN, Math.min(GIT_CONCURRENCY_MAX, num))
 }
+
+/** 预设 IDE 条目（扫描结果与预设列表共用，useIdeManagement 持有） */
+export interface IdeEntry {
+  name: string
+  icon: string
+  cmds: string[]
+  knownPaths: string[]
+}
+
+/** 自定义 IDE 条目（仅 name + 可执行路径，多路径按同名聚合） */
+export interface CustomIde { name: string, path: string }
 
 /** 项目映射条目 */
 export interface GitProject {
@@ -210,6 +221,18 @@ export interface ConflictFile {
 
 /** 操作类型 */
 export type GitOpAction = "push" | "pull" | "commit"
+
+/** 推送/拉取单平台结构化输出（useRemoteProgress 产出，卡片 OutputPanel 消费） */
+export interface PushOutputEntry {
+  platform: PlatformKey
+  label: string
+  ok: boolean
+  skipped: boolean
+  duration: number
+  summary: string
+  fullStdout: string
+  fullStderr: string
+}
 
 /** 操作日志单平台结果（PushOutputEntry 的精简投影，不存 fullStdout/fullStderr 防撑爆存储） */
 export interface GitOpLogPlatform {

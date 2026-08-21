@@ -1,0 +1,87 @@
+// gitPush 卡片远程状态区样式（远程列表 + 状态徽章 + 冲突警告，从 index.scss 提取）
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+.gp-remotes {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin: 3px 0;
+}
+
+.gp-remotes-label {
+  @include gp-label-base;
+  margin-right: 2px;
+}
+
+.gp-section-refresh {
+  flex-shrink: 0;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.gp-remote-item {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  font-size: $font-size-2xs;
+  font-family: $vp-mono;
+  opacity: 0.35;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+
+  &.active {
+    opacity: 1;
+    color: var(--b3-theme-primary);
+  }
+}
+
+.gp-remote-none {
+  opacity: 0.35;
+}
+
+.gp-conflict-warn {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: 4px 8px;
+  margin-top: 6px;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-warning);
+  background: var(--b3-theme-warning-lightest);
+  border: 1px solid var(--b3-theme-warning-lighter, var(--b3-theme-warning));
+  border-radius: $radius-sm;
+}
+
+.gp-status-badge {
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
+  padding: 1px 5px;
+  border-radius: $radius-sm;
+  margin-left: 4px;
+  letter-spacing: 0;
+
+  &.gp-ahead {
+    background: var(--b3-theme-primary-lightest);
+    color: var(--b3-theme-primary);
+  }
+
+  &.gp-behind {
+    background: var(--b3-theme-warning-lightest);
+    color: var(--b3-theme-warning);
+  }
+
+  &.gp-diverged {
+    background: var(--b3-theme-error-lightest);
+    color: var(--b3-theme-error);
+  }
+
+  &.gp-synced {
+    background: var(--b3-theme-success-lightest);
+    color: var(--b3-theme-success);
+  }
+}

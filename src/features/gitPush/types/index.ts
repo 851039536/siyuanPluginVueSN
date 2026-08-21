@@ -10,6 +10,7 @@ export type {
   CommitTemplate,
   CommitType,
   ConflictFile,
+  CustomIde,
   FileChange,
   FileChangeStatus,
   GitOpAction,
@@ -17,8 +18,10 @@ export type {
   GitOpLogPlatform,
   GitProject,
   GitRemoteInfo,
+  IdeEntry,
   ProjectCategory,
   ProjectPathExtras,
+  PushOutputEntry,
   PushStatusInfo,
   RemotePushStatus,
   ScannedGitRepo,
@@ -39,7 +42,15 @@ export {
 
 // ── 重导出卡片注入契约（provide/inject 消除中间人 props/emits）──
 export { CARD_SERVICES_KEY } from "./cardServices"
-export type { CardDataDomain, CardRefreshSignals, CardServices } from "./cardServices"
+export type {
+  CardDataDomain,
+  CardDerivedFns,
+  CardOps,
+  CardRecordData,
+  CardRefreshSignals,
+  CardServices,
+  CardSharedData,
+} from "./cardServices"
 
 // ── 重导出元数据（来自 meta.ts，独立模块切断循环引用）──
 export {

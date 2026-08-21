@@ -1072,59 +1072,74 @@ export function useXxx(deps: {
 
 ### 四、组件文件夹组织标准（`components/` 子目录）
 
-当 feature 的 UI 含 **≥3 个（含 3 个）Tab/子功能**时，`components/` **必须按 Tab/子功能创建子文件夹**分类；平铺大量组件会使目录难以导航（文件数 ≥15 时问题尤为突出）。必须遵循以下分级标准：
+`components/` 按**功能单元**组织：每个独立的视图/功能单元建一个**语义化文件夹**（文件夹名即功能名，一眼可定位）；该功能**专属**的组件全部归入其中；**复用**组件与复用逻辑归入各自的公共目录。平铺大量组件会使目录难以导航（文件数 ≥15 时问题尤为突出）。必须遵循以下分级标准：
 
-#### 必须创建子文件夹（强制）
+#### 功能专属文件夹（强制）
 
 | 条件 | 说明 | 示例 |
 |------|------|------|
-| Tab/子功能 **≥3 个** | 每个 Tab/子功能一个文件夹，该 Tab 专属的全部组件（含其图表、列表、弹窗等子组件）归入同一文件夹 | `overview/`、`trend/`、`heatmap/` |
-| 存在跨 Tab 复用/面板级常驻组件 | 被 ≥2 个 Tab 引用的组件，或面板级常驻组件（如顶部操作栏），统一放 `common/` 通用文件夹 | `common/StatisticsHeader.vue` |
+| 视图/功能单元组件较多 | 该功能专属的全部组件（含其区块、子组件、弹窗）归入同一语义化文件夹 | `ListView/`、`LogPanel/` |
+| **入口统一为 `index.vue`** | 每个功能文件夹的入口组件统一命名 `index.vue`——文件夹名已表达功能，`index.vue` 即入口，看目录即可直达 | `ListView/index.vue` |
 
-#### 不应创建子文件夹
+#### 复用组件 → `common/`（强制）
 
 | 条件 | 说明 |
 |------|------|
-| Tab/子功能 **< 3 个** | 扁平结构即可，1-2 个视图分组与平铺无本质区别，反而增加 1 层导航成本 |
-| 按组件类型与按 Tab 双重混合分类 | 禁止在 Tab 文件夹之外再保留 `charts/` 这类类型文件夹——同一 Tab 的组件会分散在两处；图表等类型组件应并入其所属 Tab 文件夹 |
+| 被 **≥2 个视图/功能**引用的组件 | 统一归入 `common/` 通用文件夹，禁止散落在某个功能文件夹内 |
+| 面板级常驻组件 | 如顶部操作栏、空态提示、通用弹窗，统一放 `common/` |
 
-#### 子文件夹命名规范
+#### 复用逻辑 → `composables/`（强制）
 
-- 使用 **Tab 语义的小写短名**：`overview/` ✅、`distribution/`（对应 notebookDistribution Tab）✅
-- 通用文件夹固定命名 `common/`
-- 保持小写（遵循项目目录命名惯例）
-- 子文件夹数量以 **Tab 数 + common/** 为准，不设额外上限
+| 条件 | 说明 |
+|------|------|
+| 跨组件/跨视图共享的逻辑（`ref`/函数/computed） | 统一归入 `composables/`，禁止在功能文件夹内重复定义 |
 
-#### 正面案例
+#### 禁止事项
+
+| 条件 | 说明 |
+|------|------|
+| 按组件类型分类 | 禁止 `charts/`、`dialogs/` 这类类型文件夹——同一功能的组件会分散在两处；图表等类型组件应并入其所属功能文件夹 |
+| 复用组件混入功能文件夹 | 禁止被 ≥2 处引用的组件留在某个功能文件夹内，必须移到 `common/` |
+| 功能入口使用非 index 名 | 入口文件必须叫 `index.vue`，禁止 `XxxView.vue` 之类分散入口命名 |
+
+#### 正面案例（gitPush 重构后）
 
 ```
-# ✅ statistics/components/（7 个 Tab → 7 个 Tab 文件夹 + common/）
+# ✅ gitPush/components/（语义化功能文件夹 + common/ + 入口 index.vue）
 components/
-├── common/            # 1 个文件：StatisticsHeader（面板级常驻头部）
-├── overview/          # 7 个文件（含 BarChart 图表）
-├── heatmap/           # 2 个文件
-├── activity/          # 2 个文件
-├── trend/             # 4 个文件
-├── distribution/      # 4 个文件（含 3 个图表）
-├── report/            # 5 个文件（含 2 个图表）
-└── milestones/        # 6 个文件
+├── common/            # 复用组件（跨 ≥2 视图）：EmptyState/LoadMoreButton/CommitFixDialog 等
+├── ListView/          # 列表视图功能单元 —— 文件夹名即功能
+│   ├── index.vue      # 列表视图入口容器（纯渲染）
+│   ├── ProjectCard.vue# 卡片编排层（仅 project prop，数据/操作全注入）
+│   ├── CardHeader.vue # 顶栏区块
+│   ├── CardRemotes.vue# 远程状态区块
+│   ├── CardActionBar.vue # 操作栏区块
+│   └── ...            # Tab 子组件/弹窗
+├── stats/             # 统计视图功能单元
+├── log/               # 操作日志视图功能单元
+└── analysis/          # 提交分析视图功能单元
 ```
 
 #### 反面案例
 
 ```
-# ❌ 类型文件夹与 Tab 文件夹混用 — report Tab 的组件分散在两处
+# ❌ 类型文件夹与功能文件夹混用 — 同一功能的组件分散在两处
 components/
-├── charts/            # ReportTrendChart 在这里
-│   └── ReportTrendChart.vue
-└── report/            # ReportView 却在这里 ← 同一 Tab 两处找
-    └── ReportView.vue
+├── charts/            # 按类型分类，同一功能的组件被拆散
+└── ListView/
+    └── CardChart.vue  # 图表应并入所属功能文件夹
 
-# ❌ 跨 Tab 共享组件散落在某个 Tab 文件夹内
+# ❌ 复用组件散落在功能文件夹内（被两处引用）
 components/
-├── overview/
-│   └── StatisticsHeader.vue   # ← 面板级常驻组件，应放 common/
-└── trend/
+├── ListView/
+│   └── CommitFixDialog.vue   # ← 被列表 + 规则检查两视图引用，应放 common/
+└── analysis/
+    └── CommitFixDialog.vue   # 复制粘贴两份，应共用 common/ 一份
+
+# ❌ 入口文件不用 index.vue
+components/
+└── ListView/
+    └── ListView.vue   # ← 应命名 index.vue，文件夹名已表达功能
 ```
 
 ### 快速自检清单

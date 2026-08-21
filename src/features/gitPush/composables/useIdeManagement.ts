@@ -6,16 +6,10 @@ import {
 } from "@/utils/nodeModules"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
+import type { CustomIde, IdeEntry } from "../types"
 
-// Types
-export interface IdeEntry {
-  name: string
-  icon: string
-  cmds: string[]
-  knownPaths: string[]
-}
-
-export interface CustomIde { name: string, path: string }
+// Types（定义下沉至 types/storage.ts，此处 re-export 保持向后兼容）
+export type { CustomIde, IdeEntry } from "../types"
 
 // Constants
 export const IDE_ENTRIES: IdeEntry[] = [

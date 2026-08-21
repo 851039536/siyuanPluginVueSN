@@ -1,0 +1,118 @@
+// gitPush 卡片操作栏样式（拉取/推送/强制推送/Fetch，从 index.scss 提取）
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// 拉取/推送内联下拉菜单
+.gp-inline-menu-wrap {
+  position: relative;
+}
+
+.gp-inline-menu-popover {
+  @include popover-base;
+  top: 100%;
+  left: 0;
+  margin-top: 6px;
+  min-width: 140px;
+}
+
+.gp-inline-menu-item {
+  @include popover-item;
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    &:hover { background: none; }
+  }
+
+  &--active {
+    color: var(--b3-theme-primary);
+  }
+
+  &--muted {
+    color: var(--b3-theme-on-surface-light);
+  }
+}
+
+.gp-inline-menu-divider {
+  height: 1px;
+  margin: $spacing-1 6px;
+  background: var(--b3-border-color);
+}
+
+// ── 操作栏（拉取/推送）──
+.gp-actions-bar {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 4px;
+  padding: 2px 0;
+}
+
+.gp-actions-section {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gp-actions-label {
+  @include gp-label-base;
+  flex-shrink: 0;
+  font-size: $font-size-2xs;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface-light);
+  line-height: 1;
+  padding: 2px 0;
+}
+
+.gp-actions-hint-icon {
+  flex-shrink: 0;
+  color: var(--b3-theme-on-surface-light);
+  cursor: help;
+  opacity: 0.7;
+  transition: opacity 0.12s;
+
+  &:hover {
+    opacity: 1;
+    color: var(--b3-theme-primary);
+  }
+}
+
+.gp-actions-btns {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: wrap;
+}
+
+.gp-actions-sep {
+  display: none;
+}
+
+.gp-action-btn {
+  gap: 1px;
+  padding: 1px 1px;
+  font-size: $font-size-2xs;
+  line-height: 1;
+  white-space: nowrap;
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  &--active {
+    border-color: var(--b3-theme-primary) !important;
+    color: var(--b3-theme-primary);
+  }
+
+  &--ok {
+    border-color: var(--b3-theme-success) !important;
+    color: var(--b3-theme-success);
+  }
+
+  &--fail {
+    border-color: var(--b3-theme-error) !important;
+    color: var(--b3-theme-error);
+  }
+}

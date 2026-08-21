@@ -127,118 +127,18 @@
     />
 
     <!-- ========== 列表视图 ========== -->
-    <template v-if="currentView === 'list'">
-      <!-- 筛选工具栏 + 分类 TAB -->
-      <ListViewToolbar
-        v-model:view-mode="viewMode"
-        v-model:active-category="activeCategory"
-        v-model:show-archived="showArchived"
-        v-model:git-ops-paused="gitOpsPaused"
-        :i18n="i18n"
-        :projects="projects"
-        :grouped-projects="groupedProjects"
-      />
-
-      <!-- 项目列表 -->
-      <div
-        v-if="loading"
-        class="gp-loading"
-      >
-        <Loader />
-        <span class="gp-loading-text">{{ i18n.loading }}</span>
-      </div>
-
-      <EmptyState
-        v-else-if="projects.length === 0"
-        icon="mdi:source-repository"
-        :text="i18n.noProjects"
-      />
-
-      <div
-        v-else
-        class="gp-list"
-      >
-        <template
-          v-for="group in filteredGroups"
-          :key="group.category.id"
-        >
-          <ProjectCard
-            v-for="project in group.projects"
-            :key="project.id"
-            :project="project"
-            :i18n="i18n"
-            :categories="categories"
-            :platform-meta="PLATFORM_META"
-            :remotes="REMOTES"
-            :detected-ides="detectedIdes"
-            :custom-ides="customIdes"
-            :search-query="searchQuery"
-            :refreshing="refreshing"
-            :fetching="fetching[project.id]"
-            :push-status="pushStatuses[project.id]"
-            :working-tree="workingTrees[project.id]"
-            :stash-loading="stashLoading[project.id]"
-            :commit-output="commitOutputs[project.id]"
-            :pull-outputs="pullOutputs[project.id]"
-            :push-outputs="pushOutputs[project.id]"
-            :committing="committing[project.id]"
-            :generating-msg="generatingMsgs[project.id]"
-            :git-op-loading="gitOpLoading[project.id]"
-            :remote-status-loading="remoteStatusLoading[project.id]"
-            :refreshing-working-tree="refreshingWorkingTree[project.id]"
-            :tag-push-loading="tagPushLoading[project.id]"
-            :gen-stash-desc-loading="genStashDescLoading[project.id]"
-            :generated-stash-msg="generatedStashMsg"
-            :commit-templates="commitTemplates"
-            :status-badge-class="statusBadgeClass"
-            :status-label="statusLabel"
-            :has-behind="hasBehind"
-            :is-pulling="isPulling"
-            :is-pushing="isPushing"
-            :needs-push-for="needsPushFor"
-            :get-push-status="getPushStatus"
-            @toggle-star="toggleStar"
-            @switch-branch="handleSwitchBranch"
-            @remove="handleRemove"
-            @open-edit-dialog="openEditDialog"
-            @open-markdown-preview="openMarkdownPreview"
-            @open-project-git-config="handleOpenProjectGitConfig"
-            @move-project="moveProject"
-            @open-ide="handleOpenIde"
-            @open-custom-ide="handleOpenCustomIde"
-            @show-ide-dialog="showIdeDialog = true"
-            @remove-custom-ide="removeCustomIdeByName"
-            @refresh="handleRefresh"
-            @refresh-working-tree="handleRefreshWorkingTree"
-            @refresh-remote-status="handleRefreshRemoteStatus"
-            @stage-file="(id: string, file: string) => handleGitOp(tf('stageFailed'), () => stageItem(id, file), id)"
-            @unstage-file="(id: string, file: string) => handleGitOp(tf('unstageFailed'), () => unstageItem(id, file), id)"
-            @stage-all="(id: string) => handleGitOp(tf('stageFailed'), () => stageAllItems(id), id)"
-            @unstage-all="(id: string) => handleGitOp(tf('unstageFailed'), () => unstageAllItems(id), id)"
-            @commit="(id: string, msg: string) => handleCommit(id, msg)"
-            @generate-msg="handleGenerateMsg"
-            @clear-output="(id: string) => commitOutputs[id] = ''"
-            @discard-file="handleDiscard"
-            @stash-confirm-msg="handleStashConfirmMsg"
-            @gen-stash-desc="handleGenStashDesc"
-            @stash-pop="handleStashPop"
-            @stash-apply="handleStashApply"
-            @stash-drop="handleStashDrop"
-            @create-tag="handleCreateTag"
-            @push-tag="handlePushTag"
-            @delete-tag="handleDeleteTag"
-            @resolve-conflict="handleResolveConflict"
-            @abort-merge="handleAbortMerge"
-            @confirm-pull="confirmPullSingle"
-            @push-single="pushSingle"
-            @push-to-all="pushToAll"
-            @force-push-to-all="handleForcePushToAll"
-            @cancel-push="cancelPush"
-            @fetch-all="handleFetchAll"
-          />
-        </template>
-      </div>
-    </template>
+    <ListView
+      v-if="currentView === 'list'"
+      v-model:view-mode="viewMode"
+      v-model:active-category="activeCategory"
+      v-model:show-archived="showArchived"
+      v-model:git-ops-paused="gitOpsPaused"
+      :i18n="i18n"
+      :loading="loading"
+      :projects="projects"
+      :grouped-projects="groupedProjects"
+      :filtered-groups="filteredGroups"
+    />
     <!-- 列表视图结束 -->
 
     <Transition name="gp-dialog-fade">
@@ -369,10 +269,9 @@ import CategoryDialog from "./components/common/CategoryDialog.vue"
 import ConfirmDialog from "./components/common/ConfirmDialog.vue"
 import EditProjectDialog from "./components/common/EditProjectDialog.vue"
 import IdeManagementDialog from "./components/common/IdeManagementDialog.vue"
-import ListViewToolbar from "./components/list/ListViewToolbar.vue"
+import ListView from "./components/ListView/index.vue"
 import MarkdownPreviewDialog from "./components/common/MarkdownPreviewDialog.vue"
 import PanelHeader from "./components/common/PanelHeader.vue"
-import ProjectCard from "./components/list/ProjectCard.vue"
 import ScanImportDialog from "./components/common/ScanImportDialog.vue"
 import SettingsDialog from "./components/common/SettingsDialog.vue"
 import StatsPanel from "./components/stats/StatsPanel.vue"
@@ -382,9 +281,7 @@ import CommitRuleCheckPanel from "./components/analysis/CommitRuleCheckPanel.vue
 import LineStatsPanel from "./components/analysis/LineStatsPanel.vue"
 import CodeReportPanel from "./components/report/CodeReportPanel.vue"
 import BatchProgressBar from "./components/common/BatchProgressBar.vue"
-import EmptyState from "./components/common/EmptyState.vue"
 import GitConfigDialog from "./components/common/GitConfigDialog.vue"
-import Loader from "@/components/Loader.vue"
 import { useGitPush } from "./composables/useGitPush"
 import { useBatchProgress } from "./composables/useBatchProgress"
 import { usePushStatusView } from "./composables/usePushStatusView"
@@ -399,7 +296,7 @@ import { useRefreshOps } from "./composables/useRefreshOps"
 import { useRepoLinkAudit } from "./composables/useRepoLinkAudit"
 import { useCommitAnalysis } from "./composables/useCommitAnalysis"
 import { useCodeReport } from "./composables/useCodeReport"
-import { CARD_SERVICES_KEY, PLATFORM_META, REMOTES } from "./types"
+import { CARD_SERVICES_KEY, PLATFORM_META } from "./types"
 import {
   openLocalPath,
   openRepoWebUrl,
@@ -512,9 +409,6 @@ const {
   updateProjectMeta,
   toggleStar,
 } = useGitPush(props.manager)
-
-// 卡片服务注入（ProjectCard 自包含下沉：卡片直连父层服务与刷新信号，消除中间人 props/emits）
-provide(CARD_SERVICES_KEY, { manager: props.manager, updateProjectMeta, cardRefreshSignals, recordCommitActivity })
 
 /** 卡片加载提交日志后回传最近活动时间（原 useGitOps.loadCommitLog 的副作用） */
 async function recordCommitActivity(id: string, isoTime: string) {
@@ -1038,6 +932,92 @@ async function handleSaveBranchMode(mode: "all" | "head") {
 
 // 推送状态派生视图（徽章文案/样式类/推送判定，供 ProjectCard 函数 props）
 const { statusLabel, statusBadgeClass, needsPushFor, hasBehind } = usePushStatusView(pushStatuses)
+
+// ── 卡片服务注入（五分组契约，消除中间人 props/emits：共享数据 / 响应式 Record / 派生函数 / 操作集群）──
+provide(CARD_SERVICES_KEY, {
+  manager: props.manager,
+  updateProjectMeta,
+  cardRefreshSignals,
+  recordCommitActivity,
+  shared: {
+    i18n: props.i18n,
+    categories,
+    detectedIdes,
+    customIdes,
+    commitTemplates,
+    searchQuery,
+  },
+  records: {
+    pushStatuses,
+    workingTrees,
+    committing,
+    stashLoading,
+    pushOutputs,
+    pullOutputs,
+    commitOutputs,
+    generatingMsgs,
+    gitOpLoading,
+    genStashDescLoading,
+    generatedStashMsg,
+    tagPushLoading,
+    fetching,
+    remoteStatusLoading,
+    refreshingWorkingTree,
+    refreshing,
+  },
+  derived: {
+    getPushStatus,
+    isPulling,
+    isPushing,
+    statusLabel,
+    statusBadgeClass,
+    needsPushFor,
+    hasBehind,
+  },
+  ops: {
+    toggleStar,
+    moveProject,
+    switchBranch: handleSwitchBranch,
+    handleRemove,
+    openEditDialog,
+    openMarkdownPreview,
+    openProjectGitConfig: handleOpenProjectGitConfig,
+    handleOpenIde,
+    handleOpenCustomIde,
+    showIdeDialog: (show = true) => { showIdeDialog.value = show },
+    removeCustomIdeByName,
+    handleRefresh,
+    handleRefreshWorkingTree,
+    handleRefreshRemoteStatus,
+    handleGitOp,
+    stageItem,
+    unstageItem,
+    stageAllItems,
+    unstageAllItems,
+    handleCommit,
+    handleGenerateMsg,
+    clearOutput: (id: string) => { commitOutputs.value[id] = "" },
+    handleDiscard,
+    handleStashConfirmMsg,
+    handleGenStashDesc,
+    handleStashPop,
+    handleStashApply,
+    handleStashDrop,
+    handleCreateTag,
+    handlePushTag,
+    handleDeleteTag,
+    handleResolveConflict,
+    handleAbortMerge,
+    confirmPullSingle,
+    pushSingle,
+    pushToAll,
+    handleForcePushToAll,
+    cancelPush,
+    handleFetchAll,
+    openRepoWebUrl,
+    openLocalPath,
+  },
+})
 </script>
 
 <style lang="scss">

@@ -46,9 +46,12 @@ src/features/gitPush/
 │   ├── useProjectCrud.ts            # 项目 CRUD 响应式封装
 │   ├── useGitOps.ts                 # 推送/拉取/工作区/stash 响应式封装
 │   ├── useGitTagsConflicts.ts       # Tag/冲突/模板/扫描导入
-│   └── useGitStats.ts               # 统计视图 computed
+│   ├── useGitStats.ts               # 统计视图 computed
+│   ├── useCardServices.ts           # 卡片服务注入（inject CARD_SERVICES_KEY + 按项目 id 派生单项目 computed）
+│   ├── useCardMenu.ts               # 卡片内联下拉菜单共享（provide/inject，顶栏与操作栏菜单互斥）
+│   └── useCardData.ts               # 卡片 Tab 数据自包含（log/branches/stash/tags/冲突/diff/md）
 ├── components/
-│   ├── common/                      # 面板常驻 + 全局弹窗 + 弹窗子组件（15 个）
+│   ├── common/                      # 复用组件（跨 ≥2 个视图引用，18 个）
 │   │   ├── PanelHeader.vue          # 面板头部（搜索 + 视图切换）
 │   │   ├── BatchProgressBar.vue     # 批量进度条
 │   │   ├── ConfirmDialog.vue        # 通用确认弹窗
@@ -63,10 +66,17 @@ src/features/gitPush/
 │   │   ├── GitConfigDialog.vue      # Git 配置弹窗（内嵌 GitConfigSection，可读写）
 │   │   ├── SearchBox.vue            # 搜索框
 │   │   ├── EditableRemoteList.vue   # 可编辑远程列表
-│   │   └── CloneLogPanel.vue        # 克隆日志面板
-│   ├── list/                        # 列表视图专属（11 个）
+│   │   ├── CloneLogPanel.vue        # 克隆日志面板
+│   │   ├── EmptyState.vue           # 空态提示（无项目/无数据）
+│   │   ├── LoadMoreButton.vue       # 加载更多按钮
+│   │   └── CommitFixDialog.vue      # 提交信息修正弹窗（HEAD amend + AI 生成，列表 LOG Tab 与规则检查共用）
+│   ├── ListView/                    # 列表视图专属（15 个）
+│   │   ├── index.vue               # 列表视图入口容器（工具栏 + 加载态 + 空态 + 分组循环卡片，纯渲染）
 │   │   ├── ListViewToolbar.vue      # 列表工具栏
-│   │   ├── ProjectCard.vue          # 项目卡片
+│   │   ├── ProjectCard.vue          # 项目卡片编排层（仅 project prop，数据/操作全注入）
+│   │   ├── CardHeader.vue           # 卡片顶栏（信息区 + 操作按钮区：分类/平台/IDE/刷新/编辑/Git配置/删除）
+│   │   ├── CardRemotes.vue          # 远程仓库状态 + 冲突警告
+│   │   ├── CardActionBar.vue        # 拉取/推送操作栏（单远程/推送全部/强制推送/Fetch）
 │   │   ├── BranchCommitList.vue     # 提交历史（含搜索）
 │   │   ├── ConflictSection.vue      # 冲突区
 │   │   ├── MarkdownFileBadge.vue    # Markdown 文件标记
@@ -81,17 +91,20 @@ src/features/gitPush/
 │   │   └── RepoLinkAuditSection.vue # 仓库链接审计
 │   ├── log/                         # 操作日志视图专属（1 个）
 │   │   └── LogPanel.vue             # 操作日志面板
-│   └── analysis/                    # 提交分析视图专属（7 个）
+│   └── analysis/                    # 提交分析视图专属（8 个）
 │       ├── CommitAnalysisPanel.vue  # 提交分析面板
 │       ├── CommitRuleCheckPanel.vue # 提交规则检查面板
-│       ├── CommitFixDialog.vue      # 提交信息修正弹窗（HEAD amend + AI 生成）
 │       ├── LineStatsPanel.vue       # 行数统计面板（项目/作者行数排行 + 过滤配置按钮）
 │       ├── ExtFilterDialog.vue      # 文件格式过滤配置弹窗（扩展名多选排除列表）
 │       ├── CommitAnalysisSettings.vue# 分析设置
 │       ├── CommitCalendar.vue       # 提交日历
-│       └── CommitHeatmap.vue        # 提交热力图
+│       ├── CommitHeatmap.vue        # 提交热力图
+│       └── ProjectLineDetail.vue    # 项目行数详情弹窗
 └── styles/
-    ├── index.scss                   # 主面板样式
+    ├── index.scss                   # 主面板样式（卡片骨架 + Tab 区 + Stash/Tag/Output/Conflict 保留）
+    ├── CardHeader.scss              # 卡片顶栏样式（从 index.scss 提取）
+    ├── CardRemotes.scss             # 远程状态区样式（从 index.scss 提取）
+    ├── CardActionBar.scss           # 操作栏样式（从 index.scss 提取）
     ├── StatsPanel.scss              # 统计视图样式
     ├── CommitAnalysisPanel.scss     # 提交分析面板样式
     ├── CommitRuleCheckPanel.scss    # 提交规则检查面板样式

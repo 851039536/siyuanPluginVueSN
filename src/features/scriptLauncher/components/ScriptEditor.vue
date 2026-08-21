@@ -11,7 +11,7 @@
       >
         <div class="script-editor__header">
           <h3 class="script-editor__title">
-            {{ isEditMode ? (i18n.editScript || "编辑脚本") : (i18n.addScript || "添加脚本") }}
+            {{ isEditMode ? i18n.editScript : i18n.addScript }}
           </h3>
           <Button
             variant="ghost"
@@ -24,8 +24,8 @@
         <div class="script-editor__body">
           <Input
             v-model="form.name"
-            :label="i18n.name || '名称'"
-            :placeholder="i18n.name || '脚本名称'"
+            :label="i18n.name"
+            :placeholder="i18n.name"
             :error="errors.name"
             required
           />
@@ -33,7 +33,7 @@
           <Select
             v-model="form.language"
             :options="languageOptions"
-            :label="i18n.language || '语言'"
+            :label="i18n.language"
             required
           />
 
@@ -41,28 +41,28 @@
             <Select
               v-model="selectedCategory"
               :options="categoryOptions"
-              :label="i18n.category || '分类'"
+              :label="i18n.category"
               class="script-editor__category-select"
             />
             <Input
               v-if="selectedCategory === '__custom__'"
               v-model="customCategory"
-              :placeholder="i18n.customCategory || '自定义分类'"
+              :placeholder="i18n.customCategory"
               class="script-editor__category-input"
             />
           </div>
 
           <Input
             v-model="form.description"
-            :label="i18n.description || '描述'"
-            :placeholder="i18n.description || '脚本描述（可选）'"
+            :label="i18n.description"
+            :placeholder="i18n.description"
           />
 
           <Input
             v-model="form.content"
             type="textarea"
-            :label="i18n.content || '脚本内容'"
-            :placeholder="i18n.content || '在此输入脚本代码...'"
+            :label="i18n.content"
+            :placeholder="i18n.content"
             :rows="10"
             required
           />
@@ -73,14 +73,14 @@
             variant="secondary"
             @click="emit('close')"
           >
-            {{ i18n.cancel || "取消" }}
+            {{ i18n.cancel }}
           </Button>
           <Button
             variant="primary"
             :disabled="!isValid"
             @click="handleSave"
           >
-            {{ i18n.save || "保存" }}
+            {{ i18n.save }}
           </Button>
         </div>
       </div>
@@ -118,18 +118,18 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   close: []
-  save: [data: {
-    name: string
-    language: string
-    category: string
-    description: string
-    content: string
-  }]
+  save: [data: CreateScriptDTO]
 }>()
 
 const PRESET_CATEGORIES = ["工具", "备份", "数据处理", "系统", "其他"]
 
-const form = ref({
+const form = ref<{
+  name: string
+  language: ScriptLanguage
+  category: string
+  description: string
+  content: string
+}>({
   name: "",
   language: "python",
   category: "",
@@ -153,11 +153,11 @@ const languageOptions = computed(() =>
 const categoryOptions = computed(() => [
   {
     value: "",
-    label: props.i18n.selectCategory || "请选择分类",
+    label: props.i18n.selectCategory,
   },
   {
     value: "__custom__",
-    label: props.i18n.customCategory || "自定义...",
+    label: props.i18n.customCategory,
   },
   ...PRESET_CATEGORIES.map((cat) => ({
     value: cat,
@@ -233,85 +233,5 @@ watch(
 </script>
 
 <style lang="scss" scoped>
-@use "@/variables.scss" as *;
-
-.script-editor-mask {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.script-editor {
-  width: 560px;
-  max-width: 90vw;
-  max-height: 90vh;
-  background: var(--b3-theme-background, $color-bg);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-lg;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-
-  &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: $spacing-4 $spacing-5;
-    border-bottom: 1px solid var(--b3-border-color, $color-border);
-  }
-
-  &__title {
-    margin: 0;
-    font-family: $font-zh;
-    font-size: $font-size-lg;
-    font-weight: 600;
-    color: var(--b3-theme-on-background, $color-fg);
-  }
-
-  &__body {
-    display: flex;
-    flex-direction: column;
-    gap: $spacing-3;
-    padding: $spacing-4 $spacing-5;
-    overflow-y: auto;
-    flex: 1;
-
-    /* 脚本内容区域使用等宽字体（Codex 风格） */
-    :deep(.si-input__field--textarea) {
-      font-family: $vp-mono;
-      font-size: 13px;
-      line-height: 1.5;
-    }
-  }
-
-  &__category-row {
-    display: flex;
-    align-items: flex-end;
-    gap: $spacing-2;
-  }
-
-  &__category-select {
-    flex: 1;
-  }
-
-  &__category-input {
-    flex: 1;
-  }
-
-  &__footer {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: $spacing-2;
-    padding: $spacing-3 $spacing-5;
-    border-top: 1px solid var(--b3-border-color, $color-border);
-  }
-}
+@use "../styles/ScriptEditor.scss";
 </style>

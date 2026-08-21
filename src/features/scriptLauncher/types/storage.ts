@@ -1,3 +1,10 @@
+/**
+ * 脚本启动器 - 文件驱动存储层（思源 API 版）
+ *
+ * 所有文件操作通过 plugin.putFile / plugin.getFile + HTTP API，
+ * 路径相对于 workspace data/ 目录。
+ * 元数据通过 TypedStorage 持久化。
+ */
 import type {
   CreateScriptDTO,
   RunningProcess,
@@ -12,18 +19,10 @@ import {
   getWorkspaceDir,
   putFile,
   removeFile,
-
 } from "@/api"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
-/**
- * 脚本启动器 - 文件驱动存储层（思源 API 版）
- *
- * 所有文件操作通过 plugin.putFile / plugin.getFile + HTTP API，
- * 路径相对于 workspace data/ 目录。
- * 元数据通过 TypedStorage 持久化。
- */
 import {
   DEFAULT_SCRIPT_LAUNCHER_SETTINGS,
   SCRIPT_LANGUAGE_CONFIG,
@@ -31,6 +30,12 @@ import {
 
 const SC_DIR = "data/storage/sc"
 
+/**
+ * 从文件名识别脚本语言。
+ * 注意：此映射覆盖 SCRIPT_LANGUAGE_CONFIG.extension 之外的别名扩展名
+ * （.pyw / .bash / .mjs / .cmd），无法直接从单一 extension 字段派生，
+ * 因此单独维护完整映射。
+ */
 function detectLanguage(fileName: string): ScriptLanguage {
   const ext = fileName.split(".").pop()?.toLowerCase() || ""
   const map: Record<string, ScriptLanguage> = {
@@ -155,7 +160,7 @@ export class ScriptStorage {
     if (!(await this.isNameUnique(data.name))) throw new Error("Script name already exists")
 
     const now = Date.now()
-    const ext = this.getExtension(data.language)
+    const ext = SCRIPT_LANGUAGE_CONFIG[data.language].extension
     const fileName = `${data.name}${ext}`
 
     const script: Script = {
@@ -248,34 +253,5 @@ export class ScriptStorage {
 
   async loadContent(fileName: string): Promise<string | null> {
     return this.getContent(fileName)
-  }
-
-  // ========== 运行 ==========
-
-  /** 将脚本内容写入临时文件并返回路径（用于执行），用完需调用 removeTempFile */
-  writeTempFile(script: Script, content: string): string | null {
-    const node = getNodeFsPathOs()
-    if (!node) return null
-    const ext = this.getExtension(script.language)
-    try {
-      const tmpDir = node.path.join(node.os.tmpdir(), "siyuan-scripts")
-      if (!node.fs.existsSync(tmpDir)) node.fs.mkdirSync(tmpDir, { recursive: true })
-      const tmpPath = node.path.join(tmpDir, `${script.id}${ext}`)
-      node.fs.writeFileSync(tmpPath, content, "utf-8")
-      return tmpPath
-    } catch { return null }
-  }
-
-  removeTempFile(filePath: string): void {
-    const node = getNodeFsPathOs()
-    if (!node) return
-    try {
-      if (node.fs.existsSync(filePath)) node.fs.unlinkSync(filePath)
-    } catch { /* ignore */ }
-  }
-
-  /** 从 SCRIPT_LANGUAGE_CONFIG 获取扩展名 */
-  private getExtension(language: ScriptLanguage): string {
-    return SCRIPT_LANGUAGE_CONFIG[language].extension
   }
 }

@@ -12,11 +12,7 @@ import type {
   Script,
   ScriptLauncherSettings,
 } from "../types"
-import {
-  getElectronRemoteShell,
-  getNodeFsPathOs,
-  getNodeProcessModules,
-} from "@/utils/nodeModules"
+import { getNodeProcessModules } from "@/utils/nodeModules"
 
 /** 进程管理器类型（child_process.spawn 返回值的最小接口） */
 type BufferLike = Uint8Array & { toString: (encoding?: string) => string }
@@ -51,7 +47,7 @@ function getSpawnOptions(): Record<string, unknown> | undefined {
 }
 
 /** 使用系统默认程序打开脚本（类似双击本地文件） */
-function openWithDefaultApp(_script: Script, filePath: string): boolean {
+function openWithDefaultApp(filePath: string): boolean {
   const node = getNodeProcessModules()
   if (!node) return false
   const platform = node.os.platform()
@@ -69,11 +65,6 @@ function openWithDefaultApp(_script: Script, filePath: string): boolean {
   } catch {
     return false
   }
-}
-
-/** 获取 Electron shell（用于打开目录等） */
-function getShell() {
-  return getElectronRemoteShell()
 }
 
 export interface ProcessPersistApi {
@@ -98,20 +89,19 @@ export function useScriptLauncher(deps?: {
    * 启动脚本
    * @param script 脚本元数据
    * @param filePath 脚本文件绝对路径
-   * @param content 脚本内容（内置监听模式可选的注入内容；未提供时使用文件路径执行）
    */
-  const launchScript = async (script: Script, filePath: string, content?: string): Promise<boolean> => {
+  const launchScript = async (script: Script, filePath: string): Promise<boolean> => {
     if (!settings?.value.builtinMonitor) {
-      return openWithDefaultApp(script, filePath)
+      return openWithDefaultApp(filePath)
     }
     if (!processes || !onProcessUpdated) {
       return false
     }
-    return startMonitored(script, filePath, content)
+    return startMonitored(script, filePath)
   }
 
   /** 内置监听模式：spawn 执行，隐藏窗口，记录输出，支持停止 */
-  const startMonitored = async (script: Script, filePath: string, content?: string): Promise<boolean> => {
+  const startMonitored = async (script: Script, filePath: string): Promise<boolean> => {
     const node = getNodeProcessModules()
     if (!node || !processes || !onProcessUpdated) return false
 
@@ -153,7 +143,7 @@ export function useScriptLauncher(deps?: {
 
     try {
       const spawnOpts = getSpawnOptions()
-      const child = spawnProcess(node, script, filePath, content, spawnOpts)
+      const child = spawnProcess(node, script, filePath, spawnOpts)
       if (!child) {
         updateEntry(id, {
           status: "error",
@@ -213,39 +203,19 @@ export function useScriptLauncher(deps?: {
     }
   }
 
-  /** 创建子进程（按脚本语言选择命令；content 提供时写入临时文件执行） */
+  /** 创建子进程（按脚本语言选择命令，直接执行脚本文件路径） */
   function spawnProcess(
     node: NonNullable<ReturnType<typeof getNodeProcessModules>>,
     script: Script,
     filePath: string,
-    content: string | undefined,
     spawnOpts: Record<string, unknown> | undefined,
   ): SpawnedProcess | null {
     try {
-      const target = content !== undefined && content !== ""
-        ? writeTempScript(script, content) || filePath
-        : filePath
       const {
         command,
         args,
-      } = getCommandAndArgs(node, script, target)
+      } = getCommandAndArgs(node, script, filePath)
       return node.child_process.spawn(command, args, spawnOpts as never) as SpawnedProcess
-    } catch {
-      return null
-    }
-  }
-
-  /** 将内容写入临时脚本文件并返回路径 */
-  function writeTempScript(script: Script, content: string): string | null {
-    const node = getNodeFsPathOs()
-    if (!node) return null
-    const ext = getExtension(script.language)
-    try {
-      const tmpDir = node.path.join(node.os.tmpdir(), "siyuan-scripts")
-      if (!node.fs.existsSync(tmpDir)) node.fs.mkdirSync(tmpDir, { recursive: true })
-      const tmpPath = node.path.join(tmpDir, `${script.id}-${Date.now()}${ext}`)
-      node.fs.writeFileSync(tmpPath, content, "utf-8")
-      return tmpPath
     } catch {
       return null
     }
@@ -399,11 +369,14 @@ export function useScriptLauncher(deps?: {
       }
     }
 
-    // 3) 句柄兜底（非 Windows 或 taskkill 失败时）
+    // 3) 句柄兜底（非 Windows 或 taskkill 失败时），记录 kill 是否成功
+    let killOk = false
     if (proc?.kill) {
       try {
-        proc.kill("SIGKILL")
-      } catch { /* 忽略 */ }
+        killOk = proc.kill("SIGKILL")
+      } catch {
+        killOk = false
+      }
     }
 
     procHandles.delete(id)
@@ -414,12 +387,16 @@ export function useScriptLauncher(deps?: {
     }
     onProcessUpdated?.()
     persistProcesses()
-    return winKillOk
-      ? { ok: true }
-      : {
-          ok: true,
-          message: notes.join(" | "),
-        }
+
+    // 终止成功判定：Windows 以 taskkill 结果为准；非 Windows 以 kill 句柄返回值为准
+    const terminated = node.os.platform() === "win32" ? winKillOk : killOk
+    if (terminated) {
+      return { ok: true }
+    }
+    return {
+      ok: false,
+      message: notes.join(" | ") || "进程停止失败",
+    }
   }
 
   /** 停止全部运行中的进程 */
@@ -479,19 +456,5 @@ export function useScriptLauncher(deps?: {
     stopAllProcesses,
     cleanupOnDestroy,
     restoreProcesses,
-    getShell,
   }
-}
-
-/** 语言 → 临时文件扩展名 */
-function getExtension(language: Script["language"]): string {
-  const map: Record<Script["language"], string> = {
-    python: ".py",
-    bash: ".sh",
-    powershell: ".ps1",
-    nodejs: ".js",
-    batch: ".bat",
-    other: ".txt",
-  }
-  return map[language]
 }

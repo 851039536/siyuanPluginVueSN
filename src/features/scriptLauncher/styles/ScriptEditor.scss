@@ -1,0 +1,82 @@
+@use "@/variables.scss" as *;
+
+.script-editor-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.script-editor {
+  width: 560px;
+  max-width: 90vw;
+  max-height: 90vh;
+  background: var(--b3-theme-background, $color-bg);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-lg;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $spacing-4 $spacing-5;
+    border-bottom: 1px solid var(--b3-border-color, $color-border);
+  }
+
+  &__title {
+    margin: 0;
+    font-family: $font-zh;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: var(--b3-theme-on-background, $color-fg);
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-3;
+    padding: $spacing-4 $spacing-5;
+    overflow-y: auto;
+    flex: 1;
+
+    /* 脚本内容区域使用等宽字体（Codex 风格） */
+    :deep(.si-input__field--textarea) {
+      font-family: $vp-mono;
+      // 13px 与代码块字号一致（$codeblock-font-size）
+      font-size: $codeblock-font-size;
+      line-height: $line-height-normal;
+    }
+  }
+
+  &__category-row {
+    display: flex;
+    align-items: flex-end;
+    gap: $spacing-2;
+  }
+
+  &__category-select {
+    flex: 1;
+  }
+
+  &__category-input {
+    flex: 1;
+  }
+
+  &__footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: $spacing-2;
+    padding: $spacing-3 $spacing-5;
+    border-top: 1px solid var(--b3-border-color, $color-border);
+  }
+}

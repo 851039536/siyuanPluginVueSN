@@ -90,7 +90,7 @@
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
-import type { Script } from "../types"
+import type { CreateScriptDTO, Script, ScriptLanguage } from "../types"
 import type { I18n } from "../types/index"
 import {
   computed,
@@ -100,6 +100,7 @@ import {
 import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
+import type { SelectOption } from "@/components/Select.vue"
 import { SCRIPT_LANGUAGE_CONFIG } from "../types"
 
 interface Props {
@@ -150,14 +151,14 @@ const languageOptions = computed(() =>
   })),
 )
 
-const categoryOptions = computed(() => [
+const categoryOptions = computed<SelectOption[]>(() => [
   {
     value: "",
-    label: props.i18n.selectCategory,
+    label: props.i18n.selectCategory ?? "",
   },
   {
     value: "__custom__",
-    label: props.i18n.customCategory,
+    label: props.i18n.customCategory ?? "",
   },
   ...PRESET_CATEGORIES.map((cat) => ({
     value: cat,
@@ -168,7 +169,6 @@ const categoryOptions = computed(() => [
 const isValid = computed(() => {
   return (
     form.value.name.trim() !== ""
-    && form.value.language !== ""
     && form.value.content.trim() !== ""
     && Object.keys(errors.value).length === 0
   )

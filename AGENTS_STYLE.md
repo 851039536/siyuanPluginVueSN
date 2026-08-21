@@ -1,6 +1,6 @@
 # AGENTS_STYLE.md
 
-思源笔记插件 — UI 风格 Codex、设计 Token、字号层级、SCSS 分离与内置字体规范。
+ UI 风格 Codex、设计 Token、字号层级、SCSS 分离与内置字体规范。
 
 ## UI 风格：Codex
 
@@ -70,7 +70,7 @@ $line-height-normal: 1.5;
 $line-height-relaxed: 1.75;
 ```
 
-> ⚠️ **重要**：上述变量名是 `$spacing-1`~`$spacing-4`（数字后缀），**不是** `$spacing-xs`~`$spacing-lg`。`$spacing-xs/sm/md/lg` 是 superPanel 模块的本地别名，**不存在于全局 `_variables.scss` 中**。错误使用会导致 `Undefined variable` 编译错误。
+> **重要**：上述变量名是 `$spacing-1`~`$spacing-4`（数字后缀），**不是** `$spacing-xs`~`$spacing-lg`。`$spacing-xs/sm/md/lg` 是 superPanel 模块的本地别名，**不存在于全局 `_variables.scss` 中**。错误使用会导致 `Undefined variable` 编译错误。
 
 ### Codex 增强 Token（`src/_variables.scss` 已全局定义）
 
@@ -82,8 +82,6 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 ```
 
 > 历史：`$vp-radius`/`$vp-mono` 曾由 `superPanel/styles/variables.scss` 独占，其他模块需本地声明。现已全局化。
-
-> ⚠️ **已废弃旧变量（2026-08 迁移删除，禁止再使用）**：原 `$brand-*` 系列（`$brand-dark`/`$brand-light`/`$brand-mid-gray`/`$brand-light-gray`/`$brand-subtle-gray`/`$brand-primary`/`$brand-secondary`/`$brand-accent`/`$brand-destructive`/`$brand-success`/`$brand-warning`/`$brand-info`）、`$brand-orange`/`$brand-blue`/`$brand-green`、`$font-heading`/`$font-body` 已全部迁移至 `$color-*` / `$font-zh` 并删除定义。映射：`$brand-dark`→`$color-fg`、`$brand-light`→`$color-bg`、`$brand-mid-gray`→`$color-muted`、`$brand-light-gray`→`$color-surface`、`$brand-subtle-gray`→`$color-border`、`$brand-primary`→`$color-primary`、`$brand-secondary`→`$color-secondary`、`$brand-accent`→`$color-accent`、`$brand-destructive`/`$brand-orange`→`$color-danger`、`$brand-success`/`$brand-green`→`$color-success`、`$brand-warning`→`$color-warning`、`$brand-info`/`$brand-blue`→`$color-info`、`$font-heading`/`$font-body`→`$font-zh`。
 
 ### 核心规范速查表
 
@@ -138,11 +136,11 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 > **强制规则**：所有 `<Input>` 和 `<Select>` 共享组件在弹窗/表单场景中**必须显式指定 `size="small"`**。默认 `size="medium"` 的输入框高度（36px）与 Codex 紧凑风格不匹配，会显得过大。
 >
 > ```html
-> <!-- ✅ 正确 -->
+> <!-- 正确 -->
 > <Input v-model="name" size="small" placeholder="名称" />
 > <Select v-model="category" size="small" :options="opts" />
 >
-> <!-- ❌  错误 — 默认 medium，过大 -->
+> <!-- 错误 — 默认 medium，过大 -->
 > <Input v-model="name" placeholder="名称" />
 > ```
 >
@@ -175,7 +173,7 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 
 ### 禁止事项
 
-| ❌ 禁止 | ✅ 必须 |
+| 禁止 | 必须 |
 |----------|--------|
 | `box-shadow` 作为卡片/弹窗主要样式 | `border: 1px solid var(--b3-border-color)` + hover `border-color` 变色 |
 | `border-radius: 6px` / `12px` 等硬编码 | `$vp-radius` / `$radius-base` / `$radius-lg` 等全局 Token |
@@ -297,7 +295,7 @@ src/features/myFeature/
 
 ### 示例
 
-**❌ 错误（内联 SCSS）**:
+**错误（内联 SCSS）**:
 ```vue
 <style lang="scss" scoped>
 .my-component {
@@ -307,7 +305,7 @@ src/features/myFeature/
 </style>
 ```
 
-**✅ 正确（分离到外部文件）**:
+**正确（分离到外部文件）**:
 ```vue
 <style lang="scss" scoped>
 @use "../styles/MyComponent.scss";

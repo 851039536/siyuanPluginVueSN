@@ -1,6 +1,6 @@
 # AGENTS_ARCH.md
 
-思源笔记插件 — 代码组织规范：Composable 提取、文件头注释、单文件行数上限、模块提取判定与组件文件夹组织。
+代码组织规范：Composable 提取、文件头注释、单文件行数上限、模块提取判定与组件文件夹组织。
 
 ## 强制规则：Composable 提取
 
@@ -238,7 +238,7 @@ export function useXxx(deps: {
 #### 正面案例（gitPush 重构后）
 
 ```
-# ✅ gitPush/components/（语义化功能文件夹 + common/ + 入口 index.vue）
+# gitPush/components/（语义化功能文件夹 + common/ + 入口 index.vue）
 components/
 ├── common/            # 复用组件（跨 ≥2 视图）：EmptyState/LoadMoreButton/CommitFixDialog 等
 ├── ListView/          # 列表视图功能单元 —— 文件夹名即功能
@@ -256,20 +256,20 @@ components/
 #### 反面案例
 
 ```
-# ❌ 类型文件夹与功能文件夹混用 — 同一功能的组件分散在两处
+# 类型文件夹与功能文件夹混用 — 同一功能的组件分散在两处
 components/
 ├── charts/            # 按类型分类，同一功能的组件被拆散
 └── ListView/
     └── CardChart.vue  # 图表应并入所属功能文件夹
 
-# ❌ 复用组件散落在功能文件夹内（被两处引用）
+# 复用组件散落在功能文件夹内（被两处引用）
 components/
 ├── ListView/
 │   └── CommitFixDialog.vue   # ← 被列表 + 规则检查两视图引用，应放 common/
 └── analysis/
     └── CommitFixDialog.vue   # 复制粘贴两份，应共用 common/ 一份
 
-# ❌ 入口文件不用 index.vue
+# 入口文件不用 index.vue
 components/
 └── ListView/
     └── ListView.vue   # ← 应命名 index.vue，文件夹名已表达功能

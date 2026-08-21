@@ -7,7 +7,7 @@ import { showSkillsViewer } from "./state"
 
 export function registerSkillsViewer(plugin: Plugin) {
   plugin.addCommand({
-    langKey: "skillsViewerTitle",
+    langKey: "skillsViewer",
     langText: "Skills 查看器",
     hotkey: "",
     callback: () => {
@@ -20,7 +20,6 @@ export {
   hideSkillsViewer,
   showSkillsViewer,
   skillsViewerVisible,
-  toggleSkillsViewer,
 } from "./state"
 
 export { type SkillInfo, SkillsViewerManager } from "./types/SkillsViewerManager"
@@ -28,5 +27,9 @@ export { type SkillInfo, SkillsViewerManager } from "./types/SkillsViewerManager
 /** 公共 API：扫描所有 AI 工具的 Skills 配置，供其他功能模块通过依赖注入调用 */
 export async function scanSkills(projectPath?: string): Promise<SkillInfo[]> {
   const manager = new SkillsViewerManager()
-  return await manager.scanAllSkills(projectPath)
+  try {
+    return await manager.scanAllSkills(projectPath)
+  } finally {
+    manager.destroy()
+  }
 }

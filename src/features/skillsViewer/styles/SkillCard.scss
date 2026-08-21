@@ -2,42 +2,43 @@
  * SkillsViewer — SkillCard 样式
  */
 @use "@/variables.scss" as *;
+@use "./mixins" as *;
 
 .sv-skill-card {
-  padding: $spacing-3 $spacing-3;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
+  padding: $spacing-3;
+  background: var(--b3-theme-surface, $color-surface);
+  border: 1px solid var(--b3-border-color, $color-border);
   border-radius: $vp-radius;
   position: relative;
   transition:
-    border-color 0.15s ease,
-    background 0.15s ease;
+    border-color 0.12s ease,
+    background 0.12s ease;
 
   &::before {
     content: "";
     position: absolute;
     left: 0;
-    top: 5px;
-    bottom: 5px;
-    width: 3px;
-    background: var(--tool-color, var(--b3-theme-primary));
-    border-radius: 0 2px 2px 0;
+    top: $spacing-1;
+    bottom: $spacing-1;
+    width: $spacing-px;
+    background: var(--tool-color, var(--b3-theme-primary, $color-primary));
+    border-radius: 0 $radius-sm $radius-sm 0;
   }
 
   &:hover {
-    border-color: var(--b3-theme-surface-variant);
+    border-color: var(--b3-theme-surface-variant, $color-border);
   }
 
   &--editing {
-    border-color: var(--b3-theme-primary);
-    background: var(--b3-theme-primary-lightest);
+    border-color: var(--b3-theme-primary, $color-primary);
+    background: var(--b3-theme-primary-lightest, $color-secondary);
   }
 
   .sv-skill-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 5px;
+    margin-bottom: $spacing-1;
 
     .sv-skill-header-left {
       display: flex;
@@ -49,7 +50,7 @@
       .sv-skill-name {
         font-size: $font-size-sm;
         font-weight: $font-weight-semibold;
-        color: var(--b3-theme-on-surface);
+        color: var(--b3-theme-on-surface, $color-fg);
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -59,10 +60,10 @@
     .sv-skill-header-actions {
       display: flex;
       align-items: center;
-      gap: 1px;
+      gap: $spacing-2px;
       flex-shrink: 0;
       opacity: 0;
-      transition: opacity 0.15s ease;
+      transition: opacity 0.12s ease;
     }
   }
 
@@ -73,8 +74,8 @@
   .sv-skill-tool-badge {
     font-size: $font-size-2xs;
     font-family: $vp-mono;
-    padding: 2px 7px;
-    border-radius: 3px;
+    padding: $spacing-px $spacing-2;
+    border-radius: $radius-sm;
     font-weight: $font-weight-semibold;
     flex-shrink: 0;
     line-height: $line-height-tight;
@@ -83,7 +84,7 @@
   .sv-skill-size {
     font-size: $font-size-2xs;
     font-family: $vp-mono;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-variant, $color-muted);
     opacity: 0.45;
     flex-shrink: 0;
     font-variant-numeric: tabular-nums;
@@ -95,25 +96,25 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid var(--b3-border-color);
-    border-radius: 4px;
+    border: 1px solid var(--b3-border-color, $color-border);
+    border-radius: $radius-sm;
     cursor: pointer;
     font-size: $font-size-xs;
-    background: var(--b3-theme-background);
-    color: var(--b3-theme-on-surface-variant);
+    background: var(--b3-theme-background, $color-bg);
+    color: var(--b3-theme-on-surface-variant, $color-muted);
     transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
 
     &--edit:hover {
-      border-color: var(--b3-theme-primary);
-      color: var(--b3-theme-primary);
-      background: var(--b3-theme-surface-lighter);
+      border-color: var(--b3-theme-primary, $color-primary);
+      color: var(--b3-theme-primary, $color-primary);
+      background: var(--b3-theme-surface-lighter, $color-secondary);
     }
 
     &--save {
       &:hover:not(:disabled) {
-        border-color: #22c55e;
-        color: #22c55e;
-        background: var(--b3-theme-surface-lighter);
+        border-color: var(--b3-theme-success, $color-success);
+        color: var(--b3-theme-success, $color-success);
+        background: var(--b3-theme-surface-lighter, $color-secondary);
       }
       &:disabled {
         opacity: 0.4;
@@ -122,40 +123,40 @@
     }
 
     &--cancel:hover {
-      background: var(--b3-theme-surface-lighter);
+      background: var(--b3-theme-surface-lighter, $color-secondary);
     }
 
     &--delete:hover {
-      border-color: #ef4444;
-      color: #ef4444;
-      background: var(--b3-theme-surface-lighter);
+      border-color: var(--b3-theme-error, $color-danger);
+      color: var(--b3-theme-error, $color-danger);
+      background: var(--b3-theme-surface-lighter, $color-secondary);
     }
 
     &--copy:hover {
-      border-color: var(--b3-theme-primary);
-      color: var(--b3-theme-primary);
-      background: var(--b3-theme-surface-lighter);
+      border-color: var(--b3-theme-primary, $color-primary);
+      color: var(--b3-theme-primary, $color-primary);
+      background: var(--b3-theme-surface-lighter, $color-secondary);
     }
   }
 
   .sv-skill-desc {
     font-size: $font-size-xs;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-variant, $color-muted);
     line-height: $line-height-normal;
-    margin-bottom: 6px;
+    margin-bottom: $spacing-1;
     opacity: 0.8;
   }
 
   .sv-skill-path {
     font-size: $font-size-2xs;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-variant, $color-muted);
     opacity: 0.45;
     font-family: $vp-mono;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    padding: $spacing-px 7px;
-    background: var(--b3-theme-background);
+    padding: $spacing-px $spacing-2;
+    background: var(--b3-theme-background, $color-bg);
     border-radius: $radius-sm;
     display: inline-block;
     max-width: 100%;
@@ -164,7 +165,7 @@
   .sv-skill-expand-btn {
     margin-top: $spacing-2;
     font-size: $font-size-xs;
-    color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary, $color-primary);
     cursor: pointer;
     background: none;
     border: none;
@@ -173,7 +174,7 @@
     align-items: center;
     gap: $spacing-1;
     font-weight: $font-weight-medium;
-    transition: opacity 0.15s;
+    transition: opacity 0.12s;
     opacity: 0.75;
 
     &:hover {
@@ -182,38 +183,25 @@
 
     .sv-expand-arrow {
       display: inline-block;
-      transition: transform 0.2s ease;
+      transition: transform 0.12s ease;
       font-size: $font-size-2xs;
     }
   }
 
   .sv-skill-content {
     margin-top: $spacing-3;
-    padding: $spacing-3 $spacing-3;
-    background: var(--b3-theme-background);
-    border: 1px solid var(--b3-border-color);
+    padding: $spacing-3;
+    background: var(--b3-theme-background, $color-bg);
+    border: 1px solid var(--b3-border-color, $color-border);
     border-radius: $vp-radius;
     max-height: 320px;
     overflow-y: auto;
     font-size: $font-size-xs;
-    line-height: 1.6;
-    color: var(--b3-theme-on-background);
+    line-height: $line-height-relaxed;
+    color: var(--b3-theme-on-background, $color-fg);
     word-break: break-word;
 
-    &::-webkit-scrollbar {
-      width: 5px;
-      height: 5px;
-    }
-    &::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    &::-webkit-scrollbar-thumb {
-      background: var(--b3-theme-surface-lighter);
-      border-radius: 3px;
-      &:hover {
-        background: var(--b3-theme-on-surface);
-      }
-    }
+    @include sv-custom-scrollbar;
 
     :deep(h1),
     :deep(h2),
@@ -221,7 +209,7 @@
     :deep(h4),
     :deep(h5),
     :deep(h6) {
-      color: var(--b3-theme-on-surface);
+      color: var(--b3-theme-on-surface, $color-fg);
       margin: $spacing-3 0 6px;
       font-weight: $font-weight-semibold;
       line-height: $line-height-tight;
@@ -237,40 +225,40 @@
     :deep(h3) { font-size: $font-size-sm; }
 
     :deep(p) {
-      margin: 5px 0;
+      margin: $spacing-1 0;
     }
 
     :deep(ul),
     :deep(ol) {
-      margin: 5px 0;
-      padding-left: 18px;
+      margin: $spacing-1 0;
+      padding-left: $spacing-5;
     }
 
     :deep(li) {
-      margin: 3px 0;
+      margin: $spacing-px 0;
     }
 
     :deep(code) {
       font-family: $vp-mono;
       font-size: $font-size-xs;
-      padding: 1.5px 5px;
-      border-radius: 3px;
-      background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.08);
-      color: var(--b3-theme-primary);
+      padding: $spacing-2px $spacing-1;
+      border-radius: $radius-sm;
+      background: color-mix(in srgb, var(--b3-theme-primary, $color-primary) 8%, transparent);
+      color: var(--b3-theme-primary, $color-primary);
     }
 
     :deep(pre) {
       margin: $spacing-2 0;
-      padding: $spacing-3 $spacing-3;
+      padding: $spacing-3;
       border-radius: $vp-radius;
-      background: var(--b3-theme-surface);
-      border: 1px solid var(--b3-border-color);
+      background: var(--b3-theme-surface, $color-surface);
+      border: 1px solid var(--b3-border-color, $color-border);
       overflow-x: auto;
 
       code {
         padding: 0;
         background: none;
-        color: var(--b3-theme-on-surface);
+        color: var(--b3-theme-on-surface, $color-fg);
         font-size: $font-size-xs;
       }
     }
@@ -278,13 +266,13 @@
     :deep(blockquote) {
       margin: $spacing-2 0;
       padding: $spacing-1 $spacing-3;
-      border-left: 3px solid var(--b3-theme-primary);
-      background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.04);
-      color: var(--b3-theme-on-surface-variant);
+      border-left: $spacing-px solid var(--b3-theme-primary, $color-primary);
+      background: color-mix(in srgb, var(--b3-theme-primary, $color-primary) 4%, transparent);
+      color: var(--b3-theme-on-surface-variant, $color-muted);
     }
 
     :deep(a) {
-      color: var(--b3-theme-primary);
+      color: var(--b3-theme-primary, $color-primary);
       text-decoration: none;
       &:hover {
         text-decoration: underline;
@@ -299,13 +287,13 @@
 
       th,
       td {
-        padding: 6px 10px;
-        border: 1px solid var(--b3-border-color);
+        padding: $spacing-1 $spacing-2;
+        border: 1px solid var(--b3-border-color, $color-border);
         text-align: left;
       }
 
       th {
-        background: var(--b3-theme-surface);
+        background: var(--b3-theme-surface, $color-surface);
         font-weight: $font-weight-semibold;
       }
     }
@@ -313,12 +301,12 @@
     :deep(hr) {
       margin: $spacing-3 0;
       border: none;
-      border-top: 1px dashed var(--b3-border-color);
+      border-top: 1px dashed var(--b3-border-color, $color-border);
     }
 
     :deep(strong) {
       font-weight: $font-weight-semibold;
-      color: var(--b3-theme-on-surface);
+      color: var(--b3-theme-on-surface, $color-fg);
     }
 
     :deep(em) {
@@ -333,20 +321,19 @@
       width: 100%;
       min-height: 140px;
       max-height: 300px;
-      padding: $spacing-3 $spacing-3;
+      padding: $spacing-3;
       font-size: $font-size-xs;
       font-family: $vp-mono;
-      line-height: 1.6;
-      color: var(--b3-theme-on-background);
-      background: var(--b3-theme-background);
-      border: 1px solid var(--b3-border-color);
+      line-height: $line-height-relaxed;
+      color: var(--b3-theme-on-background, $color-fg);
+      background: var(--b3-theme-background, $color-bg);
+      border: 1px solid var(--b3-theme-primary, $color-primary);
       border-radius: $vp-radius;
       outline: none;
       resize: vertical;
-      border-color: var(--b3-theme-primary);
 
       &::placeholder {
-        color: var(--b3-theme-on-surface-variant);
+        color: var(--b3-theme-on-surface-variant, $color-muted);
         opacity: 0.4;
       }
     }
@@ -355,11 +342,11 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-top: 6px;
+      margin-top: $spacing-1;
 
       .sv-skill-editor-hint {
         font-size: $font-size-2xs;
-        color: var(--b3-theme-on-surface-variant);
+        color: var(--b3-theme-on-surface-variant, $color-muted);
         opacity: 0.5;
       }
     }

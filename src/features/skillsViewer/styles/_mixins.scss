@@ -1,0 +1,22 @@
+// SkillsViewer — 共享 Mixins
+@use "@/variables.scss" as *;
+
+// 滚动条宽度（无精确 Token，作为模块内局部变量统一管理）
+$sv-scrollbar-size: 5px;
+
+@mixin sv-custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: $sv-scrollbar-size;
+    height: $sv-scrollbar-size;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--b3-theme-surface-lighter, $color-surface);
+    border-radius: $radius-sm;
+    &:hover {
+      background: var(--b3-theme-on-surface, $color-muted);
+    }
+  }
+}

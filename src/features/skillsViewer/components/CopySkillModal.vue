@@ -13,10 +13,12 @@
             name="list"
             :size="16"
           />
-          <span class="sv-modal-title">{{ i18n.copySkillTitle || '复制 Skill 到其他工具' }}</span>
+          <!-- 弹窗标题："复制 Skill 到其他工具" -->
+          <span class="sv-modal-title">{{ i18n.copySkillTitle }}</span>
         </div>
         <div class="sv-modal-body">
-          <p>{{ i18n.copySkillConfirm || '选择目标 AI 编程工具，将当前 Skill 复制到对应 skills 目录' }}</p>
+          <!-- 复制说明 -->
+          <p>{{ i18n.copySkillConfirm }}</p>
           <p
             v-if="sourceSkill"
             class="sv-modal-skill-name"
@@ -38,13 +40,15 @@
           </div>
         </div>
         <div class="sv-modal-footer">
+          <!-- 取消按钮 -->
           <SiButton
             variant="ghost"
             size="xsmall"
             @click="$emit('cancel')"
           >
-            {{ i18n.cancel || '取消' }}
+            {{ i18n.cancel }}
           </SiButton>
+          <!-- 复制确认按钮（显示目标工具名） -->
           <SiButton
             variant="primary"
             size="xsmall"
@@ -52,7 +56,7 @@
             :disabled="!selectedToolId"
             @click="$emit('confirm', selectedToolId!)"
           >
-            {{ i18n.copyTo || '复制到' }} {{ selectedToolId && toolNameMap.get(selectedToolId) }}
+            {{ i18n.copyTo }} {{ selectedToolId && toolNameMap.get(selectedToolId) }}
           </SiButton>
         </div>
       </div>
@@ -61,12 +65,12 @@
 </template>
 
 <script setup lang="ts">
-import type { AIToolType } from "../types/SkillsViewerManager"
+import type { AIToolType } from "@/config/aiTools"
 import type { SkillInfo } from "../types/SkillsViewerManager"
 import { computed, ref, watch } from "vue"
 import SiButton from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { AI_TOOLS } from "../types/SkillsViewerManager"
+import { AI_TOOLS } from "@/config/aiTools"
 
 interface Props {
   visible: boolean
@@ -99,5 +103,4 @@ watch(() => props.visible, (v) => {
 
 <style scoped lang="scss">
 @use "../styles/CopySkillModal.scss";
-@use "../styles/index.scss";
 </style>

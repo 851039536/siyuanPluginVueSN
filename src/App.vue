@@ -261,8 +261,8 @@ onMounted(() => {
     toggleToolCollection()
   })
 
-  // 监听 Skills 查看器切换事件
-  window.addEventListener("toggleSkillsViewer", () => {
+  // 监听 Skills 查看器打开事件（来自状态栏）
+  window.addEventListener("openSkillsViewer", () => {
     skillsViewerVisible.value = true
   })
 

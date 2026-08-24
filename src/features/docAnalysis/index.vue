@@ -117,11 +117,13 @@
         :bookmark-detail-loading="bookmarkDetailLoading"
         :effective-duplicate-groups="effectiveDuplicateGroups"
         :duplicate-name-filter="duplicateNameFilter"
+        :health-settings="healthSettings"
         @selectCategory="handleSelectCategory"
         @showBookmarkDetails="fetchBookmarkDetails"
         @selectBookmark="queryByBookmark"
         @selectDepth="handleSelectDepth"
         @update:duplicate-name-filter="(val: string[]) => duplicateNameFilter = val"
+        @update:health-settings="handleUpdateHealthSettings"
       />
     </div>
 
@@ -247,7 +249,7 @@ import StatsOverview from "./components/StatsView/index.vue"
 import PlatformManageModal from "./components/PlatformManage/index.vue"
 import { useDocAnalysis } from "./composables/useDocAnalysis"
 import { PLATFORM_META } from "./composables/platformMeta"
-import type { DocI18n } from "./types/index"
+import type { DocI18n, HealthSettings } from "./types/index"
 import { DEFAULT_FILTER_OPTIONS } from "./types/index"
 
 interface Props {
@@ -294,6 +296,8 @@ const {
   bookmarkDetailLoading,
   effectiveDuplicateGroups,
   duplicateNameFilter,
+  healthSettings,
+  loadHealthSettings,
   loadNotebooks,
   loadSavedOptions,
   loadDuplicateNameFilter,
@@ -445,6 +449,11 @@ function clearStatsFilter() {
   resetQueryState()
 }
 
+/** 更新健康度扣分项配置（useDocAnalysis 内 watch 自动持久化） */
+function handleUpdateHealthSettings(settings: HealthSettings) {
+  healthSettings.value = settings
+}
+
 /** 一键清空所有过滤条件 */
 function handleReset() {
   Object.assign(filterOptions, DEFAULT_FILTER_OPTIONS)
@@ -470,6 +479,7 @@ onMounted(async () => {
   await loadNotebooks()
   await loadSavedOptions()
   await loadDuplicateNameFilter()
+  await loadHealthSettings()
 })
 </script>
 

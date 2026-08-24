@@ -1,6 +1,7 @@
 /**
  * 文档分析功能 - 类型定义
  */
+import { WC_TOP_BIN_LABEL } from "../utils/docStatsAnalyzer"
 
 // ============================================================
 // 类型定义
@@ -466,5 +467,83 @@ export const QUALITY_CARDS: StatCardDef[] = [
   { id: "duplicate", shortLabel: "重名", colorClass: "dup",
     resolveValue: (_s, ctx) => ctx.effectiveDupDocs,
     suffixValue: (_s, ctx) => `${ctx.effectiveDupGroupCount}组` },
+]
+
+// ============================================================
+// 健康度扣分项（可配置）
+// ============================================================
+
+/** 健康度扣分项 key（可配置项标识） */
+export type DeductionKey =
+  | "zeroByte"
+  | "duplicate"
+  | "unused"
+  | "noBookmark"
+  | "partialPublish"
+  | "deepGt7"
+  | "wcGt20000"
+
+/** 健康度扣分项定义（元数据驱动，resolve 与旧硬编码公式逐项一致） */
+export interface DeductionOptionDef {
+  key: DeductionKey
+  /** 显示名称 */
+  label: string
+  /** 计算当前扣分数量（depthStats 仅供深度项使用） */
+  resolve: (stats: DocStats, ctx: CardValueContext, depthStats: DepthStats) => number
+}
+
+/** 健康度设置（持久化结构） */
+export interface HealthSettings {
+  /** 参与扣分计算的扣分项 key 列表 */
+  enabledDeductions: DeductionKey[]
+}
+
+/** 健康度扣分项明细行（供 HeroCard 弹出面板渲染） */
+export interface DeductionRow {
+  key: DeductionKey
+  /** 显示名称 */
+  label: string
+  /** 当前扣分数量 */
+  count: number
+  /** 是否参与扣分计算 */
+  enabled: boolean
+}
+
+/** 默认健康度设置：全部扣分项启用（与旧版健康度行为一致） */
+export const DEFAULT_HEALTH_SETTINGS: HealthSettings = {
+  enabledDeductions: ["zeroByte", "duplicate", "unused", "noBookmark", "partialPublish", "deepGt7", "wcGt20000"],
+}
+
+/** 可选扣分项注册表（按当前功能已有统计指标生成） */
+export const DEDUCTION_OPTIONS: DeductionOptionDef[] = [
+  { key: "zeroByte", label: "0B空", resolve: (stats) => stats.zeroByteDocs },
+  {
+    key: "duplicate",
+    label: "重名超出",
+    resolve: (_stats, ctx) => Math.max(0, ctx.effectiveDupDocs - ctx.effectiveDupGroupCount),
+  },
+  { key: "unused", label: "不使用", resolve: (stats) => stats.unusedDocs },
+  {
+    key: "noBookmark",
+    label: "无书签(排除0B)",
+    resolve: (stats) => Math.max(0, stats.noBookmarkDocs - stats.zeroByteDocs),
+  },
+  { key: "partialPublish", label: "部分发布", resolve: (stats) => stats.partialPublishDocs },
+  {
+    key: "deepGt7",
+    label: "深度>7",
+    resolve: (_stats, _ctx, depthStats) =>
+      depthStats.depthDistribution
+        .filter((d) => d.depth > 7)
+        .reduce((sum, d) => sum + d.count, 0),
+  },
+  {
+    key: "wcGt20000",
+    label: "字数>2万",
+    resolve: (stats) =>
+      stats.wordCountDistribution
+        .filter((d) => d.label === WC_TOP_BIN_LABEL)
+        .reduce((sum, d) => sum + d.count, 0),
+  },
 ]
 

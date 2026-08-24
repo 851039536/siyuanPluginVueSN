@@ -2,7 +2,7 @@
  * 文档分析功能 - 核心业务聚合入口（查询执行器 + 平台操作 + 统计逻辑组装）
  */
 import type { Plugin } from "siyuan"
-import { onScopeDispose, reactive, ref } from "vue"
+import { nextTick, onScopeDispose, reactive, ref, watch } from "vue"
 import {
   lsNotebooks,
   sql,
@@ -10,12 +10,14 @@ import {
 import type {
   DocInfo,
   FilterOptions,
+  HealthSettings,
   NotebookInfo,
   PlatformMeta,
   QueryState,
 } from "../types/index"
 import {
   DEFAULT_FILTER_OPTIONS,
+  DEFAULT_HEALTH_SETTINGS,
   DEFAULT_PLATFORM_META,
 } from "../types/index"
 import {
@@ -48,6 +50,41 @@ import { PLATFORM_META } from "./platformMeta"
 export function useDocAnalysis(plugin: Plugin) {
   const storage = new DocAnalysisStorage(plugin)
   const notebooks = ref<NotebookInfo[]>([])
+
+  // ============================================================
+  // 健康度扣分项设置（加载 + watch 持久化，防回写覆盖）
+  // ============================================================
+
+  /** 首次加载完成前跳过持久化（避免加载回填触发回写覆盖存储） */
+  let healthSettingsLoaded = false
+
+  /** 深拷贝默认健康度设置（避免与 DEFAULT_HEALTH_SETTINGS 共享数组引用） */
+  function makeDefaultHealthSettings(): HealthSettings {
+    return { enabledDeductions: [...DEFAULT_HEALTH_SETTINGS.enabledDeductions] }
+  }
+
+  const healthSettings = ref<HealthSettings>(makeDefaultHealthSettings())
+
+  async function loadHealthSettings() {
+    try {
+      const saved = await storage.healthSettings.loadOrDefault()
+      healthSettings.value = {
+        enabledDeductions: saved.enabledDeductions.length > 0
+          ? [...saved.enabledDeductions]
+          : [...DEFAULT_HEALTH_SETTINGS.enabledDeductions],
+      }
+    } catch {
+      healthSettings.value = makeDefaultHealthSettings()
+    }
+    // 等 watch 刷新完成后再放行持久化，避免加载回填（或加载失败置空）触发回写覆盖存储
+    await nextTick()
+    healthSettingsLoaded = true
+  }
+
+  watch(healthSettings, async (val) => {
+    if (!healthSettingsLoaded) return
+    await storage.healthSettings.save(val)
+  })
 
   const queryState = reactive<QueryState>({
     status: "idle",
@@ -308,6 +345,7 @@ export function useDocAnalysis(plugin: Plugin) {
 
   return {
     notebooks, queryState, filterOptions,
+    healthSettings, loadHealthSettings,
     ...stats,
     loadNotebooks, loadSavedOptions, queryDocs,
     openDoc, updateSort, clearResults, resetQueryState,

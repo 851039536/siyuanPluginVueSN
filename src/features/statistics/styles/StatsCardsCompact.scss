@@ -1,4 +1,4 @@
-// 核心指标卡片样式：概览总览卡片（核心大卡 + 次要紧凑网格）
+// 核心指标卡片样式：概览总览（无界分隔——列间竖线 + 区段横线）
 @use "@/variables.scss" as *;
 @use "../styles/shared" as *;
 @use "../styles/index.scss" as stats;
@@ -6,23 +6,26 @@
 .stats-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   padding-top: 4px;
 }
 
-// 核心指标：4 列大卡片
+// 核心指标：4 列大卡片（无界——仅列间竖线分隔）
 .core-cards {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 4px;
 }
 
 .core-card {
-  @include stats.stats-card-base;
   display: flex;
   flex-direction: column;
-  padding: 8px 4px;
+  padding: 6px 4px;
   text-align: center;
+  border-left: 1px solid var(--b3-border-color);
+
+  &:first-child {
+    border-left: none;
+  }
 }
 
 .core-label {
@@ -70,16 +73,14 @@
   color: stats.$color-danger;
 }
 
-// 次要指标：紧凑网格
+// 次要指标：紧凑网格（顶部横线 + 列间竖线分隔）
 .secondary-grid {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
   gap: 1px;
+  border-top: 1px solid var(--b3-border-color);
   background: var(--b3-border-color);
-  border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
-  overflow: hidden;
 }
 
 .secondary-item {
@@ -114,6 +115,18 @@
 @include mobile-only {
   .core-cards {
     grid-template-columns: repeat(2, 1fr);
+
+    .core-card:nth-child(even) {
+      border-left: 1px solid var(--b3-border-color);
+    }
+
+    .core-card:nth-child(odd) {
+      border-left: none;
+    }
+
+    .core-card:nth-child(n + 3) {
+      border-top: 1px solid var(--b3-border-color);
+    }
   }
 
   .secondary-grid {

@@ -1,7 +1,7 @@
 <!-- 核心指标卡片：概览总览（核心大卡 + 次要紧凑网格） -->
 <template>
   <div class="stats-section">
-    <!-- 核心指标：3 列大卡片 -->
+    <!-- 核心指标：4 列大卡片 -->
     <div class="core-cards">
       <div
         v-for="item in coreItems"
@@ -15,7 +15,7 @@
             v-if="item.change !== null"
             class="core-change"
             :class="item.change > 0 ? 'up' : (item.change < 0 ? 'down' : '')"
-          >{{ item.isPercent ? formatPercent(item.change) : formatDelta(item.change) }}</span>
+          >{{ formatChange(item.change, item.isPercent) }}</span>
         </div>
       </div>
     </div>
@@ -85,7 +85,6 @@ const props = withDefaults(defineProps<Props>(), {
     todayCreated: "今日新增",
     todayModified: "今日修改",
     avgWordsPerDoc: "平均字数",
-    moreStats: "详细统计",
   }),
 })
 
@@ -143,18 +142,13 @@ const secondaryItems = computed(() => [
   },
 ])
 
-function formatPercent(change: number | null): string {
+// 涨跌角标：isPercent 时追加 % 后缀，否则显示绝对值
+function formatChange(change: number | null, isPercent: boolean): string {
   if (change === null) return ""
-  if (change === 0) return "0%"
+  if (change === 0) return isPercent ? "0%" : "0"
   const prefix = change > 0 ? "↑" : "↓"
-  return `${prefix}${Math.abs(change).toFixed(0)}%`
-}
-
-function formatDelta(change: number | null): string {
-  if (change === null) return ""
-  if (change === 0) return "0"
-  const prefix = change > 0 ? "↑" : "↓"
-  return `${prefix}${Math.abs(change)}`
+  const value = isPercent ? Math.abs(change).toFixed(0) : String(Math.abs(change))
+  return `${prefix}${value}${isPercent ? "%" : ""}`
 }
 </script>
 

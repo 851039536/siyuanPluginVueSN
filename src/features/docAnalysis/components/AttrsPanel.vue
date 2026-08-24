@@ -231,7 +231,7 @@ import {
   setBlockAttrs,
 } from "@/api"
 import { copyToClipboard } from "@/utils/domUtils"
-import { PLATFORM_META } from "../composables/useDocAnalysis"
+import { PLATFORM_META } from "../composables/platformMeta"
 import {
   getPlatformIdFromAttrKey,
   getPublishedPlatformIdsFromAttrs,

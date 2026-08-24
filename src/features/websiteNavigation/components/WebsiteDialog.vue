@@ -90,12 +90,12 @@
 </template>
 
 <script setup lang="ts">
+import type { I18n } from "../types"
 import type {
   CreateWebsiteDTO,
-  I18n,
   WebsiteEntry,
-} from "../types"
-import { DEFAULT_CATEGORY_ID } from "../types/constants"
+} from "@/utils/sharedStorage/websiteStorage"
+import { DEFAULT_CATEGORY_ID } from "@/utils/sharedStorage/websiteStorage"
 import {
   computed,
   reactive,

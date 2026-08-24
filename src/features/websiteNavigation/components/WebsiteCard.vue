@@ -71,17 +71,15 @@
 </template>
 
 <script setup lang="ts">
-import type {
-  I18n,
-  WebsiteEntry,
-} from "../types"
+import type { I18n } from "../types"
+import type { WebsiteEntry } from "@/utils/sharedStorage/websiteStorage"
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import {
   DEFAULT_CATEGORY_COLOR,
   DEFAULT_CATEGORY_ID,
-} from "../types/constants"
+} from "@/utils/sharedStorage/websiteStorage"
 import { getCategoryById } from "../composables/useWebsiteNavigation"
 
 const props = defineProps<{

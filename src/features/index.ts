@@ -26,6 +26,10 @@ export { registerFormatAssistant } from "./formatAssistant"
 export { registerGeneralSettings } from "./generalSettings"
 export { registerGitPush } from "./gitPush"
 export { registerGlobalRelations } from "./globalRelations"
+export {
+  registerIdeaGenerator,
+  showIdeaGenerator,
+} from "./ideaGenerator"
 export { registerHtmlViewer } from "./htmlViewer"
 export {
   htmlViewerVisible,
@@ -123,6 +127,7 @@ type _Registered =
   | "scriptLauncher" | "websiteNavigation" | "minimalBrowser" | "dataSnapshot" | "gitPush" | "skillLearning" | "prompts" | "toolCollection" | "s3Backup" | "s3FileManager"
   | "globalRelations"
   | "quickNote"
+  | "ideaGenerator"
 
 // --- 编译时断言辅助 ---
 // 利用泛型接口约束 T extends true 产生 TypeScript 编译错误，无运行时开销

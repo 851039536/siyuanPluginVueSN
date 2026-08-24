@@ -1,0 +1,36 @@
+{
+  "ideaGenerator": {
+    "title": "灵感生成器",
+    "keywordPlaceholder": "输入关键词（可选）",
+    "categoryLabel": "开发方向",
+    "generate": "生成灵感",
+    "generating": "生成中...",
+    "empty": "选择分类，点击「生成灵感」获取创意",
+    "emptyHint": "AI 批量生成程序开发与小功能开发灵感",
+    "copy": "复制",
+    "copied": "已复制到剪贴板",
+    "expand": "查看详情",
+    "collapse": "收起",
+    "refine": "AI 细化",
+    "refineLoading": "正在生成技术方案...",
+    "refineCancel": "停止生成",
+    "detailTitle": "灵感详情",
+    "detailPlan": "技术方案",
+    "detailPlanEmpty": "选中灵感后点击「AI 细化」生成完整技术方案",
+    "copyDetail": "复制方案",
+    "statusDone": "已生成 {count} 条灵感",
+    "generateError": "AI 生成失败",
+    "refineError": "技术方案生成失败",
+    "category": {
+      "desktopTool": "桌面工具",
+      "cliScript": "命令行脚本",
+      "siyuanPlugin": "思源插件",
+      "webApp": "Web 应用",
+      "productivity": "效率工具",
+      "automation": "自动化"
+    }
+  },
+  "openIdeaGenerator": "打开灵感生成器",
+  "enableIdeaGenerator": "启用灵感生成器功能",
+  "enableIdeaGeneratorDesc": "AI 批量生成程序开发与小功能开发创意灵感"
+}

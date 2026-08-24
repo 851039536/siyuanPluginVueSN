@@ -297,6 +297,12 @@ export const FEATURE_ICONS = {
     color: "#0ea5e9",
   },
 
+  // 灵感生成器
+  ideaGenerator: {
+    icon: "mdi:lightbulb-on-outline",
+    color: "#9333ea",
+  },
+
   // RSS 订阅
   rssReader: {
     icon: "mdi:rss",
@@ -591,6 +597,26 @@ export const COMMON_ICONS = {
   },
   accountGroup: {
     icon: "mdi:account-group-outline",
+  },
+
+  // 灵感生成器 — 预设分类图标
+  ideaCatDesktop: {
+    icon: "mdi:monitor",
+  },
+  ideaCatCli: {
+    icon: "mdi:console",
+  },
+  ideaCatSiyuan: {
+    icon: "mdi:puzzle",
+  },
+  ideaCatWeb: {
+    icon: "mdi:web",
+  },
+  ideaCatProductivity: {
+    icon: "mdi:lightning-bolt",
+  },
+  ideaCatAutomation: {
+    icon: "mdi:robot",
   },
 
   // 速记 — 日历/重复/箭头

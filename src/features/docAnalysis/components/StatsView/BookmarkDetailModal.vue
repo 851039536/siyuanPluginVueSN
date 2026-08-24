@@ -72,7 +72,7 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
-import type { BookmarkDetail } from "../types/index"
+import type { BookmarkDetail } from "../../types/index"
 
 interface Props {
   visible: boolean
@@ -89,6 +89,6 @@ defineEmits<{
 </script>
 
 <style lang="scss" scoped>
-@use "../styles/BookmarkDetailModal.scss";
-@use "../styles/index.scss";
+@use "../../styles/BookmarkDetailModal.scss";
+@use "../../styles/index.scss";
 </style>

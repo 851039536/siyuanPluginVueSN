@@ -91,8 +91,8 @@
 </template>
 
 <script setup lang="ts">
-import type { FilterOptions, NotebookInfo } from "../types/index"
-import { DEFAULT_FILTER_OPTIONS } from "../types/index"
+import type { FilterOptions, NotebookInfo } from "../../types/index"
+import { DEFAULT_FILTER_OPTIONS } from "../../types/index"
 import { Icon } from "@iconify/vue"
 import {
   computed,
@@ -144,5 +144,5 @@ function handleDebouncedInput() {
 </script>
 
 <style lang="scss" scoped>
-@use "../styles/FilterSettings.scss";
+@use "../../styles/FilterSettings.scss";
 </style>

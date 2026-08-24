@@ -1,4 +1,4 @@
-<!-- 文档统计概览组件 - 表格化单页布局（Hero 汇总 + 工具栏 + 九个表格区块） -->
+<!-- 文档统计概览组件 - 表格化 2 列布局（Hero 汇总 + 工具栏 + 九个表格区块） -->
 <template>
   <div class="stats-overview">
     <template v-if="hasAnalyzed">
@@ -111,79 +111,82 @@
         </button>
       </div>
 
-      <!-- 卡片类表格（大小/时间/书签/发布，元数据驱动） -->
-      <StatTable
-        v-for="section in statSections"
-        :key="section.key"
-        :title="section.title"
-        :icon="section.icon"
-        :rows="filterZeroRows(cardRowsMap[section.key])"
-        :active-id="activeFilter"
-        @select="(id) => $emit('selectCategory', id)"
-      >
-        <template
-          v-if="section.key === 'bookmark'"
-          #headerExtra
+      <!-- 统计表格区块：2 列网格布局 -->
+      <div class="stats-grid">
+        <!-- 卡片类表格（大小/时间/书签/发布，元数据驱动） -->
+        <StatTable
+          v-for="section in statSections"
+          :key="section.key"
+          :title="section.title"
+          :icon="section.icon"
+          :rows="filterZeroRows(cardRowsMap[section.key])"
+          :active-id="activeFilter"
+          @select="(id) => $emit('selectCategory', id)"
         >
-          <button
-            class="bookmark-detail-btn"
-            title="查看全部书签"
-            @click.stop="$emit('showBookmarkDetails')"
+          <template
+            v-if="section.key === 'bookmark'"
+            #headerExtra
           >
-            <Icon icon="mdi:format-list-bulleted" :size="13" />详情
-          </button>
-        </template>
-      </StatTable>
+            <button
+              class="bookmark-detail-btn"
+              title="查看全部书签"
+              @click.stop="$emit('showBookmarkDetails')"
+            >
+              <Icon icon="mdi:format-list-bulleted" :size="13" />详情
+            </button>
+          </template>
+        </StatTable>
 
-      <!-- 文档质量表 -->
-      <StatTable
-        title="文档质量"
-        icon="mdi:clipboard-check-outline"
-        :rows="filterZeroRows(qualityRows)"
-        :active-id="activeFilter"
-        @select="(id) => $emit('selectCategory', id)"
-      />
+        <!-- 文档质量表 -->
+        <StatTable
+          title="文档质量"
+          icon="mdi:clipboard-check-outline"
+          :rows="filterZeroRows(qualityRows)"
+          :active-id="activeFilter"
+          @select="(id) => $emit('selectCategory', id)"
+        />
 
-      <!-- 平台分布表 -->
-      <StatTable
-        v-if="platformEntries.length > 0"
-        title="平台分布"
-        icon="mdi:chart-bar"
-        :rows="filterZeroRows(platformRows)"
-      >
-        <template #headerExtra>
-          <span class="section-hint">人均 {{ avgPlatformsPerDoc }} 平台 · 覆盖率 {{ coveragePct }}%</span>
-        </template>
-      </StatTable>
+        <!-- 平台分布表 -->
+        <StatTable
+          v-if="platformEntries.length > 0"
+          title="平台分布"
+          icon="mdi:chart-bar"
+          :rows="filterZeroRows(platformRows)"
+        >
+          <template #headerExtra>
+            <span class="section-hint">人均 {{ avgPlatformsPerDoc }} 平台 · 覆盖率 {{ coveragePct }}%</span>
+          </template>
+        </StatTable>
 
-      <!-- 字数分布表 -->
-      <StatTable
-        v-if="stats.wordCountDistribution.length > 0"
-        title="字数分布"
-        icon="mdi:text-short"
-        :rows="filterZeroRows(wordCountRows)"
-      />
+        <!-- 字数分布表 -->
+        <StatTable
+          v-if="stats.wordCountDistribution.length > 0"
+          title="字数分布"
+          icon="mdi:text-short"
+          :rows="filterZeroRows(wordCountRows)"
+        />
 
-      <!-- 深度分布表 -->
-      <StatTable
-        v-if="depthStats.depthDistribution.length > 0"
-        title="深度分布"
-        icon="mdi:chart-bar"
-        :rows="filterZeroRows(depthRows)"
-        @select="(id) => $emit('selectDepth', Number(id))"
-      >
-        <template #headerExtra>
-          <span class="section-hint">均 {{ depthStats.avgDepth }} 层 · 最深 {{ depthStats.maxDepth }} 层</span>
-        </template>
-      </StatTable>
+        <!-- 深度分布表 -->
+        <StatTable
+          v-if="depthStats.depthDistribution.length > 0"
+          title="深度分布"
+          icon="mdi:chart-bar"
+          :rows="filterZeroRows(depthRows)"
+          @select="(id) => $emit('selectDepth', Number(id))"
+        >
+          <template #headerExtra>
+            <span class="section-hint">均 {{ depthStats.avgDepth }} 层 · 最深 {{ depthStats.maxDepth }} 层</span>
+          </template>
+        </StatTable>
 
-      <!-- 书签分类表 -->
-      <StatTable
-        v-if="stats.customBookmarkTop.length > 0"
-        :title="`书签分类 Top-${stats.customBookmarkTop.length}`"
-        icon="mdi:tag-outline"
-        :rows="filterZeroRows(customBookmarkRows)"
-      />
+        <!-- 书签分类表 -->
+        <StatTable
+          v-if="stats.customBookmarkTop.length > 0"
+          :title="`书签分类 Top-${stats.customBookmarkTop.length}`"
+          icon="mdi:tag-outline"
+          :rows="filterZeroRows(customBookmarkRows)"
+        />
+      </div>
     </template>
 
     <div

@@ -149,10 +149,10 @@ const deleteEntry = async (id: string) => {
   try {
     const ok = await removeEntry(id)
     if (ok) {
-      showMessage(props.i18n.deleteSuccess, 2000, "info")
+      showMessage(props.i18n.deleteSuccess ?? "", 2000, "info")
     }
   } catch {
-    showMessage(props.i18n.deleteFailed, 3000, "error")
+    showMessage(props.i18n.deleteFailed ?? "", 3000, "error")
   }
 }
 
@@ -163,9 +163,9 @@ const openUrl = (url: string) => {
 const copyUrl = async (url: string) => {
   try {
     await copyToClipboard(url)
-    showMessage(props.i18n.urlCopied, 2000, "info")
+    showMessage(props.i18n.urlCopied ?? "", 2000, "info")
   } catch {
-    showMessage(props.i18n.copyUrl, 2000, "error")
+    showMessage(props.i18n.copyUrl ?? "", 2000, "error")
   }
 }
 </script>

@@ -133,12 +133,12 @@ const handleAdd = async () => {
   try {
     const ok = await addCategory(name, catColor.value)
     if (!ok) {
-      showMessage(props.i18n.categoryExists, 2000, "error")
+      showMessage(props.i18n.categoryExists ?? "", 2000, "error")
       return
     }
     resetForm()
   } catch {
-    showMessage(props.i18n.saveFailed, 3000, "error")
+    showMessage(props.i18n.saveFailed ?? "", 3000, "error")
   } finally {
     saving.value = false
   }
@@ -151,11 +151,11 @@ const handleRemove = async (id: string) => {
   try {
     const ok = await removeCategory(id)
     if (!ok) {
-      showMessage(props.i18n.categoryNotEmpty, 2000, "error")
+      showMessage(props.i18n.categoryNotEmpty ?? "", 2000, "error")
       return
     }
   } catch {
-    showMessage(props.i18n.saveFailed, 3000, "error")
+    showMessage(props.i18n.saveFailed ?? "", 3000, "error")
   } finally {
     removingId.value = null
   }

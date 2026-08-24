@@ -2,19 +2,20 @@
  * 网站导航 — 数据层 composable（模块级单例，面板与弹窗共享同一份数据）
  */
 import type { Plugin } from "siyuan"
+import {
+  onMounted,
+  ref,
+} from "vue"
 import type {
   CreateWebsiteDTO,
   UpdateWebsiteDTO,
   WebsiteCategory,
   WebsiteEntry,
-} from "../types"
+} from "@/utils/sharedStorage/websiteStorage"
 import {
-  computed,
-  onMounted,
-  ref,
-} from "vue"
-import { DEFAULT_CATEGORY_ID } from "../types/constants"
-import { WebsiteNavigationStorage } from "../types/storage"
+  DEFAULT_CATEGORY_ID,
+  WebsiteNavigationStorage,
+} from "@/utils/sharedStorage/websiteStorage"
 
 let storage: WebsiteNavigationStorage | null = null
 
@@ -28,17 +29,8 @@ function requireStorage(): WebsiteNavigationStorage {
 export const entries = ref<WebsiteEntry[]>([])
 export const categories = ref<WebsiteCategory[]>([])
 
-/** 分类 ID → 分类 映射缓存 */
-export const categoriesMap = computed(() => {
-  const map = new Map<string, WebsiteCategory>()
-  for (const cat of categories.value) {
-    map.set(cat.id, cat)
-  }
-  return map
-})
-
 export function getCategoryById(id: string): WebsiteCategory | undefined {
-  return categoriesMap.value.get(id)
+  return categories.value.find((c) => c.id === id)
 }
 
 /** 加载全部数据，返回是否成功 */
@@ -125,18 +117,4 @@ export function useWebsiteNavigation(plugin: Plugin) {
   onMounted(async () => {
     await loadData()
   })
-
-  return {
-    storage,
-    entries,
-    categories,
-    categoriesMap,
-    getCategoryById,
-    loadData,
-    createEntry,
-    updateEntry,
-    deleteEntry,
-    addCategory,
-    removeCategory,
-  }
 }

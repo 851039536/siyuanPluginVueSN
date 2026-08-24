@@ -48,15 +48,16 @@
 </template>
 
 <script setup lang="ts">
-import type {
-  I18n,
-  WebsiteCategory,
-} from "../types"
+import type { I18n } from "../types"
+import type { WebsiteCategory } from "@/utils/sharedStorage/websiteStorage"
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
-import { ALL_CATEGORY_ID, DEFAULT_CATEGORY_COLOR } from "../types/constants"
+import {
+  ALL_CATEGORY_ID,
+  DEFAULT_CATEGORY_COLOR,
+} from "@/utils/sharedStorage/websiteStorage"
 
 const props = defineProps<{
   i18n: I18n

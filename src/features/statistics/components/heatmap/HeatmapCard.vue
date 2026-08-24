@@ -184,13 +184,14 @@
 <script setup lang="ts">
 import type {
   ChangedDoc,
+  DateChangedResult,
   HeatmapMetric,
 } from "../../types"
 import {
   computed,
   ref,
 } from "vue"
-import { formatDate } from "../../utils"
+import { formatDate, parseYmd } from "../../utils"
 import HeatmapDailyDetail from "./HeatmapDailyDetail.vue"
 
 interface Props {
@@ -199,10 +200,7 @@ interface Props {
     metric: HeatmapMetric,
     notebookId?: string,
   ) => Promise<Map<string, number>>
-  onGetDailyDetail?: (dateStr: string) => Promise<{
-    newDocs: ChangedDoc[]
-    modifiedDocs: ChangedDoc[]
-  }>
+  onGetDailyDetail?: (dateStr: string) => Promise<DateChangedResult>
   notebooks?: Array<{ id: string, name: string }>
   writingStreak?: number
   activeDays?: number
@@ -217,6 +215,9 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const LEVEL_THRESHOLDS = [0, 1, 6, 16, 31] as const
+
+// 月份标签（日历网格列头）
+const MONTH_NAMES = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
 
 // ---- 筛选状态 ----
 const selectedRange = ref(12)
@@ -392,7 +393,6 @@ const totalWeeks = computed(() => Math.ceil(calendarCells.value.length / 7))
 
 const monthLabels = computed(() => {
   const labels: { text: string, col: number }[] = []
-  const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
   let lastMonth = -1
 
   for (let week = 0; week < totalWeeks.value; week++) {
@@ -402,7 +402,7 @@ const monthLabels = computed(() => {
     const m = Number(cell.date.slice(5, 7)) - 1
     if (m !== lastMonth) {
       labels.push({
-        text: monthNames[m],
+        text: MONTH_NAMES[m],
         col: week + 1,
       })
       lastMonth = m
@@ -435,7 +435,8 @@ const weekdayDistribution = computed(() => {
   const totals: number[] = Array.from({ length: 7 }).fill(0) as number[]
 
   for (const [dateStr, count] of activityMap.value.entries()) {
-    const d = new Date(dateStr)
+    // 本地时区解析，避免 new Date("YYYY-MM-DD") 按 UTC 解析在西半区时区错位一天
+    const d = parseYmd(dateStr.replace(/-/g, ""))
     totals[d.getDay()] += count
   }
 

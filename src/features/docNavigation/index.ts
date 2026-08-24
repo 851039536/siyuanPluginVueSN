@@ -70,7 +70,7 @@ export function registerDocNavigation(plugin: Plugin) {
         ref.__docNavContainer = null
       }
       mountedProtyles.clear()
-      visibilityMap.clear()
+      // visibilityMap 为 WeakMap，键（DOM Element）为弱引用，随元素被 GC 自动回收，无需手动清理
       // 4. 清空文档层级/面包屑/同级数据缓存
       disposeCache()
     },

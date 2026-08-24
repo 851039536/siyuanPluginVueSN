@@ -3,7 +3,6 @@
  */
 import { Plugin, showMessage } from "siyuan"
 import { emitCustomEvent } from "@/utils/eventBus"
-// @ts-expect-error
 
 /**
  * 视频文件信息

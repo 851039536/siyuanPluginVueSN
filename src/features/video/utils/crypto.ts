@@ -4,40 +4,6 @@
  */
 
 /**
- * 从密码派生加密密钥
- */
-async function deriveKey(password: string): Promise<CryptoKey> {
-  const encoder = new TextEncoder()
-  const passwordData = encoder.encode(password)
-
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw",
-    passwordData,
-    { name: "PBKDF2" },
-    false,
-    ["deriveKey"],
-  )
-
-  const salt = encoder.encode("siyuan-video-encryption-salt-v1")
-
-  return await crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2",
-      salt,
-      iterations: 100000,
-      hash: "SHA-256",
-    },
-    keyMaterial,
-    {
-      name: "AES-GCM",
-      length: 256,
-    },
-    false,
-    ["encrypt", "decrypt"],
-  )
-}
-
-/**
  * 压缩数据（使用 CompressionStream）
  */
 async function compressData(data: Uint8Array): Promise<Uint8Array> {
@@ -57,56 +23,6 @@ async function decompressData(data: Uint8Array): Promise<Uint8Array> {
   )
   const decompressedBlob = await new Response(decompressedStream).blob()
   return new Uint8Array(await decompressedBlob.arrayBuffer())
-}
-
-/**
- * 加密数据
- */
-async function encryptData(
-  data: Uint8Array,
-  password: string,
-): Promise<Uint8Array> {
-  const key = await deriveKey(password)
-  const iv = crypto.getRandomValues(new Uint8Array(12))
-
-  const encryptedData = await crypto.subtle.encrypt(
-    {
-      name: "AES-GCM",
-      iv,
-    },
-    key,
-    data.buffer as ArrayBuffer,
-  )
-
-  // 组合 IV 和加密数据
-  const combined = new Uint8Array(iv.length + encryptedData.byteLength)
-  combined.set(iv, 0)
-  combined.set(new Uint8Array(encryptedData), iv.length)
-
-  return combined
-}
-
-/**
- * 解密数据
- */
-async function decryptData(
-  data: Uint8Array,
-  password: string,
-): Promise<Uint8Array> {
-  const key = await deriveKey(password)
-  const iv = data.slice(0, 12)
-  const encryptedData = data.slice(12)
-
-  const decryptedData = await crypto.subtle.decrypt(
-    {
-      name: "AES-GCM",
-      iv,
-    },
-    key,
-    encryptedData,
-  )
-
-  return new Uint8Array(decryptedData)
 }
 
 /**
@@ -157,7 +73,8 @@ export async function decryptVideo(
     const dataWithoutHeader = encryptedData.slice(1)
 
     // 直接解压（无需密码）
-    let processedData = dataWithoutHeader
+    // slice 结果为 Uint8Array<ArrayBuffer>，解压返回 Uint8Array<ArrayBufferLike>，显式标注宽类型承接
+    let processedData: Uint8Array = dataWithoutHeader
 
     // 解压（如果是双重压缩，需要解压两次）
     if (isDoubleCompressed) {

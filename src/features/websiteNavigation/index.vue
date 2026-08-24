@@ -57,7 +57,6 @@
       :visible="showCategoryMgr"
       :i18n="i18n"
       @close="showCategoryMgr = false"
-      @saved="handleCategoriesSaved"
     />
   </div>
 </template>
@@ -65,7 +64,7 @@
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
 import type { I18n } from "./types"
-import { ALL_CATEGORY_ID } from "./types/constants"
+import { ALL_CATEGORY_ID } from "@/utils/sharedStorage/websiteStorage"
 import { showMessage } from "siyuan"
 import {
   computed,
@@ -83,7 +82,6 @@ import {
   categories,
   deleteEntry as removeEntry,
   entries,
-  loadData,
   useWebsiteNavigation,
 } from "./composables/useWebsiteNavigation"
 
@@ -137,14 +135,6 @@ const editEntry = (entry: { id: string }) => {
 const closeDialog = () => {
   showDialog.value = false
   editingId.value = null
-}
-
-const handleCategoriesSaved = async () => {
-  // 分类弹窗自包含保存，父组件仅负责刷新筛选状态
-  const ok = await loadData()
-  if (!ok) {
-    showMessage(props.i18n.loadFailed, 3000, "error")
-  }
 }
 
 const deleteEntry = async (id: string) => {

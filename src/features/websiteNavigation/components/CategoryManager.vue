@@ -99,7 +99,7 @@ import Input from "@/components/Input.vue"
 import {
   DEFAULT_CATEGORY_ID,
   PRESET_CATEGORY_COLORS,
-} from "../types/constants"
+} from "@/utils/sharedStorage/websiteStorage"
 import {
   addCategory,
   categories,
@@ -113,7 +113,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: "close"): void
-  (e: "saved"): void
 }>()
 
 const catName = ref("")
@@ -138,7 +137,6 @@ const handleAdd = async () => {
       return
     }
     resetForm()
-    emit("saved")
   } catch {
     showMessage(props.i18n.saveFailed, 3000, "error")
   } finally {
@@ -156,7 +154,6 @@ const handleRemove = async (id: string) => {
       showMessage(props.i18n.categoryNotEmpty, 2000, "error")
       return
     }
-    emit("saved")
   } catch {
     showMessage(props.i18n.saveFailed, 3000, "error")
   } finally {

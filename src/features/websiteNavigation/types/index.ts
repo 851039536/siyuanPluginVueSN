@@ -1,26 +1,11 @@
 /**
- * 网站导航 — 类型定义 + Manager 类 + 公开 API
+ * 网站导航 — I18n 接口 + Manager 类 + 公开 API
+ * （类型与常量已下沉至 utils/sharedStorage/websiteStorage，直接由共享层导入）
  */
 import type { Plugin } from "siyuan"
 import type { ModalAppInstance } from "@/utils/vueAppHelper"
 import { createModalVueApp } from "@/utils/vueAppHelper"
 import WebsiteNavigationPanel from "../index.vue"
-
-// 数据模型下沉至共享层（utils/sharedStorage/websiteStorage），
-// 网站导航与极简浏览器共用同一份类型与存储；此处保持原有导出名不变
-export type {
-  CreateWebsiteDTO,
-  UpdateWebsiteDTO,
-  WebsiteCategory,
-  WebsiteEntry,
-} from "@/utils/sharedStorage/websiteStorage"
-
-export {
-  ALL_CATEGORY_ID,
-  DEFAULT_CATEGORY_COLOR,
-  DEFAULT_CATEGORY_ID,
-  PRESET_CATEGORY_COLORS,
-} from "./constants"
 
 export interface I18n {
   panelTitle?: string

@@ -45,33 +45,17 @@
     </div>
 
 
-    <!-- 日视图范围选择 -->
+    <!-- 日/月视图范围选择 -->
     <div
-      v-if="modelValue === 'day'"
+      v-if="modelValue === 'day' || modelValue === 'month'"
       class="range-selector"
     >
       <button
-        v-for="range in dayRanges"
+        v-for="range in currentRanges"
         :key="range.value"
         class="range-btn"
-        :class="{ active: dayRange === range.value }"
-        @click="onRangeChange('day', range.value)"
-      >
-        {{ range.label }}
-      </button>
-    </div>
-
-    <!-- 月视图范围选择 -->
-    <div
-      v-if="modelValue === 'month'"
-      class="range-selector"
-    >
-      <button
-        v-for="range in monthRanges"
-        :key="range.value"
-        class="range-btn"
-        :class="{ active: monthYearRange === range.value }"
-        @click="onRangeChange('month', range.value)"
+        :class="{ active: currentRangeValue === range.value }"
+        @click="onRangeChange(range.value)"
       >
         {{ range.label }}
       </button>
@@ -85,7 +69,7 @@
       <select
         :value="selectedYear"
         class="year-select"
-        @change="$emit('update:selectedYear', Number(($event.target as HTMLSelectElement).value)); $emit('refresh')"
+        @change="$emit('update:selectedYear', Number(($event.target as HTMLSelectElement).value))"
       >
         <option
           v-for="year in availableYears"
@@ -122,7 +106,6 @@ interface Emits {
   (e: "update:dayRange", value: 7 | 15 | 30 | 90 | 180 | 365): void
   (e: "update:monthYearRange", value: 1 | 2 | 3): void
   (e: "update:selectedYear", value: number): void
-  (e: "refresh"): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -157,13 +140,12 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
-function onRangeChange(mode: "day" | "month", value: number): void {
-  if (mode === "day") {
-    emit("update:dayRange", value as 7 | 15 | 30 | 90 | 180 | 365)
-  } else {
+function onRangeChange(value: number): void {
+  if (props.modelValue === "month") {
     emit("update:monthYearRange", value as 1 | 2 | 3)
+  } else {
+    emit("update:dayRange", value as 7 | 15 | 30 | 90 | 180 | 365)
   }
-  emit("refresh")
 }
 
 // 视图模式选项（日/周/月/年）
@@ -186,7 +168,7 @@ const periodModes = computed(() => [
   {
     value: "year" as const,
     label: props.i18n.year,
-    icon: undefined,
+    icon: "calendar" as const,
   },
 ])
 
@@ -233,6 +215,15 @@ const monthRanges = computed(() => [
     label: props.i18n.last3Years,
   },
 ])
+
+// 当前视图的范围选项与激活值（日/月共用 range-selector 模板）
+const currentRanges = computed(() =>
+  props.modelValue === "month" ? monthRanges.value : dayRanges.value,
+)
+
+const currentRangeValue = computed(() =>
+  props.modelValue === "month" ? props.monthYearRange : props.dayRange,
+)
 
 const availableYears = computed(() => {
   const currentYear = new Date().getFullYear()

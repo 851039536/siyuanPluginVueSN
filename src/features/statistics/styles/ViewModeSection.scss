@@ -99,7 +99,7 @@
 
       &:focus {
         border-color: var(--b3-theme-primary);
-        box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest, rgba(var(--b3-theme-primary-rgb), 0.12));
+        outline: none;
       }
     }
   }
@@ -107,17 +107,21 @@
   .period-stats-cards {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    margin-top: 4px;
+    gap: 0;
+    border-top: 1px solid var(--b3-border-color);
+    margin-top: 6px;
   }
 
   .period-stat-card {
-    @include stats.stats-card-base;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    padding: 4px 12px;
-    background: stats.$gradient-surface;
+    padding: 6px 12px;
+    border-left: 1px solid var(--b3-border-color);
+
+    &:first-child {
+      border-left: none;
+    }
 
     .stat-label {
       font-family: stats.$font-mono;

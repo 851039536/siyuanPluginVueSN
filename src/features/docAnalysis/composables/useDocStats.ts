@@ -2,7 +2,7 @@
  * 文档分析功能 - 统计维度逻辑（状态 + 分析 + 分类下钻）
  */
 import type { Plugin } from "siyuan"
-import { nextTick, onScopeDispose, reactive, ref, watch } from "vue"
+import { computed, nextTick, onScopeDispose, reactive, ref, watch } from "vue"
 import { sql } from "@/api"
 import type {
   BookmarkDetail,
@@ -125,16 +125,10 @@ export function useDocStats(plugin: Plugin, storage: DocAnalysisStorage, deps: U
         docStats.xlargeDocs = r.xlarge_count || 0
       }
 
-      // 汇总重名统计
-      if (dupRows?.length) {
-        docStats.duplicateNameGroups = dupRows.length
-        docStats.duplicateNameDocs = dupRows.reduce((s: number, r: any) => s + (r.cnt || 0), 0)
-        duplicateGroups.value = dupRows.map((r: any) => ({ title: r.doc_title || "无标题", count: r.cnt || 0 }))
-      } else {
-        docStats.duplicateNameGroups = 0
-        docStats.duplicateNameDocs = 0
-        duplicateGroups.value = []
-      }
+      // 汇总重名统计（组数/总数由 duplicateGroups 派生，见 effectiveDuplicateGroups）
+      duplicateGroups.value = dupRows?.length
+        ? dupRows.map((r: any) => ({ title: r.doc_title || "无标题", count: r.cnt || 0 }))
+        : []
 
       // 后处理：书签数修正 + 缓存写入
       const effectiveBm = Math.max(0, docStats.bookmarkedDocs - docStats.noneBookmarkDocs)
@@ -199,10 +193,9 @@ export function useDocStats(plugin: Plugin, storage: DocAnalysisStorage, deps: U
     }
     statsFilter.value = category
 
-    // 重名
+    // 重名（使用 effectiveDuplicateGroups 单一过滤入口）
     if (category === "duplicate") {
-      const groups = filterDuplicateGroups(duplicateGroups.value, duplicateNameFilter.value)
-      const titles = groups.map((g) => g.title)
+      const titles = effectiveDuplicateGroups.value.map((g) => g.title)
       if (titles.length === 0) { deps.setEmptyState(); return }
       await deps.runDocQuery({ extraWhere: `AND b.content IN (${quoteSqlList(titles)})`, orderBy: "b.content ASC, content_size ASC" })
       return
@@ -278,8 +271,13 @@ export function useDocStats(plugin: Plugin, storage: DocAnalysisStorage, deps: U
   }
 
   // ============================================================
-  // 重名排除名称持久化
+  // 重名过滤（统一入口 + 排除名称持久化）
   // ============================================================
+
+  /** 重名过滤统一入口（视图展示与下钻查询共用，过滤逻辑唯一出处） */
+  const effectiveDuplicateGroups = computed(() =>
+    filterDuplicateGroups(duplicateGroups.value, duplicateNameFilter.value),
+  )
 
   /** 首次加载完成前跳过持久化 */
   let dupFilterLoaded = false
@@ -300,7 +298,7 @@ export function useDocStats(plugin: Plugin, storage: DocAnalysisStorage, deps: U
   return {
     docStats, depthStats, statsLoading, hasAnalyzed, statsFilter,
     bookmarkDetails, bookmarkDetailVisible, bookmarkDetailLoading,
-    duplicateGroups, duplicateNameFilter, platformUnpublishedCounts,
+    duplicateGroups, effectiveDuplicateGroups, duplicateNameFilter, platformUnpublishedCounts,
     analyzeDocStats, fetchBookmarkDetails, queryByBookmark, queryByStatsCategory,
     loadDuplicateNameFilter,
   }

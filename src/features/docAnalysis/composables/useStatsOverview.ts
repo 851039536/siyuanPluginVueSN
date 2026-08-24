@@ -3,6 +3,7 @@
  */
 import { computed } from "vue"
 import type {
+  CardValueContext,
   DepthStats,
   DocStats,
   DuplicateNameGroup,
@@ -10,14 +11,13 @@ import type {
 } from "../types/index"
 import { PLATFORM_META } from "./platformMeta"
 import { WC_TOP_BIN_LABEL } from "../utils/docStatsAnalyzer"
-import { filterDuplicateGroups } from "../utils"
 
 /** useStatsOverview 入参（仅取计算逻辑需要的 props 字段） */
 export interface UseStatsOverviewProps {
   stats: DocStats
   depthStats: DepthStats
-  duplicateGroups: DuplicateNameGroup[]
-  duplicateNameFilter: string[]
+  /** 过滤后的重名组（由 useDocStats 的 effectiveDuplicateGroups 提供，过滤逻辑唯一出处） */
+  effectiveDuplicateGroups: DuplicateNameGroup[]
 }
 
 /**
@@ -25,12 +25,10 @@ export interface UseStatsOverviewProps {
  */
 export function useStatsOverview(props: UseStatsOverviewProps) {
   // ============================================================
-  // 重名过滤
+  // 重名统计（消费 useDocStats 的 effectiveDuplicateGroups 过滤结果）
   // ============================================================
 
-  const effectiveDupGroups = computed(() =>
-    filterDuplicateGroups(props.duplicateGroups, props.duplicateNameFilter),
-  )
+  const effectiveDupGroups = computed(() => props.effectiveDuplicateGroups)
 
   const effectiveDupDocs = computed(() =>
     effectiveDupGroups.value.reduce((sum, g) => sum + g.count, 0),
@@ -104,14 +102,19 @@ export function useStatsOverview(props: UseStatsOverviewProps) {
   // 卡片值计算
   // ============================================================
 
+  /** 卡片计算上下文（resolveValue/suffixValue 动态取值） */
+  const valueCtx = computed<CardValueContext>(() => ({
+    effectiveDupDocs: effectiveDupDocs.value,
+    effectiveDupGroupCount: effectiveDupGroupCount.value,
+  }))
+
   function getCardValue(card: StatCardDef): number {
-    if (card.id === "duplicate") return effectiveDupDocs.value
-    if (card.resolveValue) return card.resolveValue(props.stats)
-    return (props.stats[card.statKey] as number) || 0
+    if (card.resolveValue) return card.resolveValue(props.stats, valueCtx.value)
+    return card.statKey ? ((props.stats[card.statKey] as number) || 0) : 0
   }
 
   function cardLabel(card: StatCardDef): string {
-    if (card.id === "duplicate") return `重名(${effectiveDupGroupCount.value}组)`
+    if (card.suffixValue) return `${card.shortLabel}(${card.suffixValue(props.stats, valueCtx.value)})`
     if (card.suffixStatKey) return `${card.shortLabel}(${props.stats[card.suffixStatKey]})`
     return card.shortLabel
   }

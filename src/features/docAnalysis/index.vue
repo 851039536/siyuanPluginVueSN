@@ -103,7 +103,7 @@
         :bookmark-details="bookmarkDetails"
         :bookmark-detail-visible="bookmarkDetailVisible"
         :bookmark-detail-loading="bookmarkDetailLoading"
-        :duplicate-groups="duplicateGroups"
+        :effective-duplicate-groups="effectiveDuplicateGroups"
         :duplicate-name-filter="duplicateNameFilter"
         @selectCategory="handleSelectCategory"
         @showBookmarkDetails="fetchBookmarkDetails"
@@ -255,7 +255,7 @@ const {
   bookmarkDetails,
   bookmarkDetailVisible,
   bookmarkDetailLoading,
-  duplicateGroups,
+  effectiveDuplicateGroups,
   duplicateNameFilter,
   loadNotebooks,
   loadSavedOptions,

@@ -69,10 +69,10 @@ export function padZero(num: number): string {
 }
 
 /**
- * 计算进度条百分比宽度（最小 1%）
+ * 计算进度条百分比宽度（默认最小 1%，可指定最小宽度）
  */
-export function barPct(val: number, max: number): string {
-  return `${Math.max((val / max) * 100, 1)}%`
+export function barPct(val: number, max: number, minWidth = 1): string {
+  return `${Math.max((val / max) * 100, minWidth)}%`
 }
 
 /**

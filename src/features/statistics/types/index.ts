@@ -23,6 +23,14 @@ export interface ChangedDoc {
 }
 
 /**
+ * 单日新增/修改文档分组
+ */
+export interface DateChangedResult {
+  newDocs: ChangedDoc[]
+  modifiedDocs: ChangedDoc[]
+}
+
+/**
  * 被删除的文档（来源：思源数据历史，无法再打开）
  */
 export interface DeletedDoc {

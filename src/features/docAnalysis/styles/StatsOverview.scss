@@ -266,15 +266,15 @@
   }
 }
 
-// ============ 表格区块 2 列网格布局 ============
+// ============ 表格区块 2 列瀑布流布局 ============
 .stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: $spacing-2;
-  align-items: start;
+  // CSS 多列瀑布流：各列独立堆叠，高度参差（列内纵向填充，首列填满再入次列）
+  columns: 2;
+  column-gap: $spacing-2;
 
-  // 网格布局下由 gap 提供间距，去除 StatTable 自带底部外边距
+  // 瀑布流列内完整块：防止表格跨列拆分，垂直间距由自身底部外边距提供
   .stat-table {
-    margin-bottom: 0;
+    break-inside: avoid;
+    margin-bottom: $spacing-2;
   }
 }

@@ -89,7 +89,7 @@
         </button>
         <!-- 名称排除（仅在有重名文档时可用） -->
         <button
-          v-if="stats.duplicateNameDocs > 0"
+          v-if="effectiveDupDocs > 0"
           class="toolbar-btn name-filter-btn"
           title="名称排除"
           @click="dupFilterModalVisible = true"
@@ -316,7 +316,7 @@ interface Props {
   bookmarkDetails: BookmarkDetail[]
   bookmarkDetailVisible: boolean
   bookmarkDetailLoading: boolean
-  duplicateGroups: DuplicateNameGroup[]
+  effectiveDuplicateGroups: DuplicateNameGroup[]
   duplicateNameFilter: string[]
 }
 

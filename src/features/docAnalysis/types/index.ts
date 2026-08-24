@@ -117,10 +117,6 @@ export interface DocStats {
   smallDocs: number
   /** 1~10KB 文档数 */
   mediumDocs: number
-  /** 重名文档组数（有多少组同名文档） */
-  duplicateNameGroups: number
-  /** 重名文档总数（所有重名组的文档数之和） */
-  duplicateNameDocs: number
   /** 7天内更新的文档数 */
   updatedIn7Days: number
   /** 7~30天未更新的文档数 */
@@ -278,8 +274,6 @@ export const DEFAULT_DOC_STATS: DocStats = {
   mediumDocs: 0,
   largeDocs: 0,
   xlargeDocs: 0,
-  duplicateNameGroups: 0,
-  duplicateNameDocs: 0,
   updatedIn7Days: 0,
   updatedIn30Days: 0,
   updatedIn1To2Months: 0,
@@ -368,16 +362,26 @@ export type CardColorClass =
   | "pending-color" | "published-color" | "unused-color"
   | "full-publish-color" | "partial-publish-color" | "no-publish-color"
 
+/** 统计卡片计算上下文（供 resolveValue/suffixValue 动态取值，如重名卡片需要过滤后结果） */
+export interface CardValueContext {
+  /** 排除后重名文档总数 */
+  effectiveDupDocs: number
+  /** 排除后重名组数 */
+  effectiveDupGroupCount: number
+}
+
 /** 单个统计卡片定义 */
 export interface StatCardDef {
   id: string
   shortLabel: string
-  statKey: keyof DocStats
+  statKey?: keyof DocStats
   colorClass: CardColorClass
   /** 卡片后缀（如重名卡片显示 "(N组)"）：对应 DocStats 字段 */
   suffixStatKey?: keyof DocStats
   /** 函数计算值（如无标签 = totalDocs - taggedDocs），优先级高于 statKey */
-  resolveValue?: (stats: DocStats) => number
+  resolveValue?: (stats: DocStats, ctx: CardValueContext) => number
+  /** 函数计算后缀（优先级高于 suffixStatKey），返回字符串或数字 */
+  suffixValue?: (stats: DocStats, ctx: CardValueContext) => string | number
 }
 
 /** 统计分区定义 */
@@ -399,7 +403,6 @@ export const STAT_SECTIONS: StatSectionDef[] = [
       { id: "medium", shortLabel: "1~10KB", statKey: "mediumDocs", colorClass: "medium" },
       { id: "large", shortLabel: "10~100KB", statKey: "largeDocs", colorClass: "large" },
       { id: "xlarge", shortLabel: ">100KB", statKey: "xlargeDocs", colorClass: "xlarge" },
-      { id: "duplicate", shortLabel: "重名", statKey: "duplicateNameDocs", colorClass: "dup", suffixStatKey: "duplicateNameGroups" },
     ],
   },
   {
@@ -444,5 +447,8 @@ export const QUALITY_CARDS: StatCardDef[] = [
   { id: "hasRef", shortLabel: "含引用", statKey: "refDocs", colorClass: "ref-color", suffixStatKey: "totalRefs" },
   { id: "incomingRef", shortLabel: "被引用", statKey: "incomingRefDocs", colorClass: "time-cyan" },
   { id: "orphanDoc", shortLabel: "孤文档", statKey: "orphanDocs", colorClass: "zero" },
+  { id: "duplicate", shortLabel: "重名", colorClass: "dup",
+    resolveValue: (_s, ctx) => ctx.effectiveDupDocs,
+    suffixValue: (_s, ctx) => `${ctx.effectiveDupGroupCount}组` },
 ]
 

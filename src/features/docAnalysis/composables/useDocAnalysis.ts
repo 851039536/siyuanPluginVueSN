@@ -25,6 +25,7 @@ import {
 } from "../types/storage"
 import {
   computeUnpublishedPlatformNames,
+  fetchDocPlatformSets,
   getPlatformIdFromAttrKey,
 } from "../utils/platformPublish"
 import {
@@ -68,11 +69,9 @@ export function useDocAnalysis(plugin: Plugin) {
   async function loadHealthSettings() {
     try {
       const saved = await storage.healthSettings.loadOrDefault()
-      healthSettings.value = {
-        enabledDeductions: saved.enabledDeductions.length > 0
-          ? [...saved.enabledDeductions]
-          : [...DEFAULT_HEALTH_SETTINGS.enabledDeductions],
-      }
+      healthSettings.value = saved.enabledDeductions.length > 0
+        ? { enabledDeductions: [...saved.enabledDeductions] }
+        : makeDefaultHealthSettings()
     } catch {
       healthSettings.value = makeDefaultHealthSettings()
     }
@@ -263,8 +262,6 @@ export function useDocAnalysis(plugin: Plugin) {
     saveOptions()
   }
 
-  function clearResults() { setResults([]) }
-
   // ============================================================
   // 平台操作
   // ============================================================
@@ -307,29 +304,8 @@ export function useDocAnalysis(plugin: Plugin) {
     const targetIds = new Set(platformEntry ? [platformEntry.id] : [platformMatcher])
     const nc = buildNotebookCondition()
 
-    // 与分析阶段(analyzePlatformPublish)使用完全相同的 JS 判定逻辑，消除 SQL LIKE 与 JS 的语义差异
-    const yamlRows = await sql(`
-      SELECT block_id, name FROM attributes
-      WHERE name LIKE '%yaml%'
-      AND block_id IN (
-        SELECT b.id FROM blocks b
-        LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
-        WHERE b.type = 'd' AND COALESCE(sw.total_size, 0) > 0 ${nc}
-      )
-      LIMIT 50000
-    `)
-
-    // 逐文档聚合已发布平台（与 analyzePlatformPublish 同逻辑）
-    const docPlatforms = new Map<string, Set<string>>()
-    if (yamlRows) {
-      for (const row of yamlRows) {
-        const id = String(row.block_id)
-        const pid = getPlatformIdFromAttrKey(String(row.name), PLATFORM_META.value)
-        if (!pid) continue
-        if (!docPlatforms.has(id)) docPlatforms.set(id, new Set())
-        docPlatforms.get(id)!.add(pid)
-      }
-    }
+    // 复用 analyzePlatformPublish 同一套 SQL + 判定逻辑，消除两处实现的语义漂移
+    const docPlatforms = await fetchDocPlatformSets(nc, PLATFORM_META.value)
 
     // 筛选：已发布到至少一个平台、但未发布到目标平台的文档
     const matchingIds: string[] = []
@@ -348,7 +324,7 @@ export function useDocAnalysis(plugin: Plugin) {
     healthSettings, loadHealthSettings,
     ...stats,
     loadNotebooks, loadSavedOptions, queryDocs,
-    openDoc, updateSort, clearResults, resetQueryState,
+    openDoc, updateSort, resetQueryState,
     loadPlatformMeta, savePlatformMeta, queryByMissingPlatform,
   }
 }

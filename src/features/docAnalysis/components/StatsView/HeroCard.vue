@@ -129,7 +129,7 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
-import { computed, ref } from "vue"
+import { ref } from "vue"
 import type {
   DeductionKey,
   DeductionRow,
@@ -145,6 +145,7 @@ interface Props {
   effectiveDupDocs: number
   healthSettings: HealthSettings
   deductionRows: DeductionRow[]
+  healthyDocs: number
 }
 
 const props = defineProps<Props>()
@@ -156,16 +157,6 @@ const emit = defineEmits<{
 
 /** 健康度详情弹出面板可见性 */
 const detailVisible = ref(false)
-
-/** 健康文档数（总文档 - 启用扣分项合计，与健康度百分比口径一致） */
-const healthyDocs = computed(() => {
-  const total = props.stats.totalDocs
-  if (!total) return 0
-  const issues = props.deductionRows
-    .filter((r) => r.enabled)
-    .reduce((sum, r) => sum + r.count, 0)
-  return Math.max(0, total - Math.min(total, issues))
-})
 
 /** 切换扣分项启用状态（emit 到父级，健康度随配置实时重算） */
 function toggleDeduction(key: DeductionKey, checked: boolean) {

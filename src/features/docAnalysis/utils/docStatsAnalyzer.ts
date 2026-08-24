@@ -3,8 +3,9 @@
  */
 import { sql } from "@/api"
 import type { DocStats, DepthStats, PlatformMeta } from "../types/index"
+import { TIME_BIN_DAYS } from "./categoryQueryConfig"
 import { daysAgoStr } from "./sqlHelpers"
-import { getPlatformIdFromAttrKey } from "./platformPublish"
+import { fetchDocPlatformSets } from "./platformPublish"
 import { SIZE_WORDCOUNT_SUBQUERY, DOC_DEPTH_EXPR } from "./sqlConstants"
 
 /** 字数分布最高档标签（健康度扣分项引用此常量，避免字符串耦合） */
@@ -16,11 +17,11 @@ export const WC_TOP_BIN_LABEL = ">2万字"
 
 export async function analyzeUpdateTime(notebookCondition: string, docStats: DocStats) {
   try {
-    const ts7 = daysAgoStr(7)
-    const ts30 = daysAgoStr(30)
-    const ts60 = daysAgoStr(60)
-    const ts90 = daysAgoStr(90)
-    const ts180 = daysAgoStr(180)
+    const ts7 = daysAgoStr(TIME_BIN_DAYS["7days"])
+    const ts30 = daysAgoStr(TIME_BIN_DAYS["30days"])
+    const ts60 = daysAgoStr(TIME_BIN_DAYS["1to2month"])
+    const ts90 = daysAgoStr(TIME_BIN_DAYS["2to3month"])
+    const ts180 = daysAgoStr(TIME_BIN_DAYS.halfYear)
 
     // 注：90~180 天区间无对应统计桶（UI 无 3~6 月卡片），各桶之和不等于文档总数，属现状设计
     const rows = await sql(`
@@ -208,40 +209,11 @@ export async function analyzePlatformPublish(
     noPublishDocIds: new Set<string>(),
   }
   try {
-    const allDocs = await sql(`
-      SELECT b.id FROM blocks b
-      LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
-      WHERE b.type = 'd' AND COALESCE(sw.total_size, 0) > 0 ${notebookCondition}
-      LIMIT 10000
-    `)
-    if (!allDocs?.length) return result
+    const docMap = await fetchDocPlatformSets(notebookCondition, platformMeta)
+    if (docMap.size === 0) return result
 
-    const yamlRows = await sql(`
-      SELECT block_id, name FROM attributes
-      WHERE name LIKE '%yaml%'
-      AND block_id IN (
-        SELECT b.id FROM blocks b
-        LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
-        WHERE b.type = 'd' AND COALESCE(sw.total_size, 0) > 0 ${notebookCondition}
-      )
-      LIMIT 50000
-    `)
-
-    const docMap = new Map<string, number>()
-    for (const doc of allDocs) docMap.set(String(doc.id), 0)
-
-    // 平台 id → 位掩码；归属判据统一走 getPlatformIdFromAttrKey，与列表徽章/属性面板保持一致
+    // 平台 id → 位掩码；归属判据统一走 fetchDocPlatformSets 内的 getPlatformIdFromAttrKey，与列表徽章/属性面板保持一致
     const idToBit = new Map(platformMeta.map((p, i) => [p.id, 1 << i]))
-
-    if (yamlRows) {
-      for (const row of yamlRows) {
-        const id = String(row.block_id)
-        if (!docMap.has(id)) continue
-        const pid = getPlatformIdFromAttrKey(String(row.name), platformMeta)
-        const mask = pid ? idToBit.get(pid) ?? 0 : 0
-        if (mask > 0) docMap.set(id, docMap.get(id)! | mask)
-      }
-    }
 
     let full = 0; let partial = 0; let no = 0
     const fullSet = new Set<string>()
@@ -250,7 +222,9 @@ export async function analyzePlatformPublish(
     for (const p of platformMeta) pCounts[p.id] = 0
     const allMask = (1 << platformMeta.length) - 1
 
-    for (const [id, mask] of docMap) {
+    for (const [id, set] of docMap) {
+      let mask = 0
+      for (const pid of set) mask |= idToBit.get(pid) ?? 0
       if (mask === 0) { no++; noSet.add(id); continue }
       if (mask === allMask) { full++; fullSet.add(id) } else { partial++ }
       for (let i = 0; i < platformMeta.length; i++) {

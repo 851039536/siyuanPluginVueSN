@@ -35,228 +35,70 @@
       <Loader />
     </div>
 
-    <!-- 主要内容 -->
+    <!-- 主要内容：各 Tab 入口容器 -->
     <div
       v-else-if="stats"
       class="statistics-content"
     >
-      <!-- 概览 Tab -->
-      <div v-show="activeTab === 'overview'">
-        <!-- 核心指标横幅（常驻） -->
-        <StatsCardsCompact
-          :total-notes="stats.totalNotes"
-          :total-words="stats.totalWords"
-          :total-blocks="stats.totalBlocks"
-          :total-assets="stats.totalAssets"
-          :total-images="stats.totalImages"
-          :total-tags="stats.totalTags"
-          :total-backlinks="stats.totalBacklinks"
-          :today-created="stats.todayCreated"
-          :today-modified="stats.todayModified"
-          :avg-words-per-doc="stats.avgWordsPerDoc"
-          :created-change="createdChange"
-          :modified-change="modifiedChange"
-          :notes-change="notesChange"
-          :words-change="wordsChange"
-          :i18n="i18n"
-        />
+      <OverviewTab
+        v-show="activeTab === 'overview'"
+        v-model="viewMode"
+        v-model:day-range="dayRange"
+        v-model:month-year-range="monthYearRange"
+        v-model:selected-year="selectedYear"
+        :stats="stats"
+        :changes="{
+          createdChange,
+          modifiedChange,
+          notesChange,
+          wordsChange,
+        }"
+        :period-avg-words="periodAvgWords"
+        :queries="overviewQueries"
+        :i18n="i18n"
+      />
 
-        <!-- 文档变化详情（日期范围 + 柱状图 + 详情列表 + 最近更新） -->
-        <DocChangeSection
-          class="doc-change-section"
-          :on-get-date-changed-docs="getDateChangedDocs"
-          :on-get-date-range-change-stats="getDateRangeChangeStats"
-          :on-get-recent-updated-docs="getRecentUpdatedDocs"
-          :on-get-deleted-docs="getDeletedDocs"
-          :on-get-deleted-docs-in-range="getDeletedDocsInRange"
-          :i18n="i18n"
-        />
-
-        <!-- 视图模式切换 + 时段统计 + 图表 -->
-        <ViewModeSection
-          v-model="viewMode"
-          v-model:day-range="dayRange"
-          v-model:month-year-range="monthYearRange"
-          v-model:selected-year="selectedYear"
-          :period-avg-words="periodAvgWords"
-          :period-total-words="stats.periodTotalWords"
-          :i18n="i18n"
-        />
-
-        <div class="chart-section">
-          <h3 class="section-title">
-            {{ chartTitle }}
-          </h3>
-          <BarChart
-            :title="chartTitle"
-            :chart-data="stats.dailyStats"
-            :i18n="i18n"
-          />
-
-          <WordRanking
-            :chart-data="stats.dailyStats"
-            :i18n="i18n"
-          />
-        </div>
-
-      </div>
-
-      <!-- 趋势 Tab -->
-      <div
-        v-show="activeTab === 'trend'"
-        class="trend-tab"
-      >
-        <TrendView
-          :historical-data="historicalData"
-          :i18n="i18n"
-        />
-        <TrendPrediction
-          :on-get-trend-prediction="getTrendPrediction"
-          :i18n="i18n"
-        />
-      </div>
-
-      <!-- 笔记分布 Tab -->
-      <div
-        v-show="activeTab === 'notebookDistribution'"
-        class="notebook-distribution-tab"
-      >
-        <!-- 汇总摘要 -->
-        <div
-          v-if="distSummary"
-          class="dist-summary-bar"
-        >
-          <span class="dist-summary-item">
-            <span class="dist-summary-label">{{ i18n.notebookName }}</span>
-            <span class="dist-summary-value">{{ distSummary.notebookCount }}</span>
-          </span>
-          <span class="dist-summary-sep">·</span>
-          <span class="dist-summary-item">
-            <span class="dist-summary-label">{{ i18n.docBarChartTitle }}</span>
-            <span class="dist-summary-value">{{ distSummary.totalDocs.toLocaleString() }}</span>
-          </span>
-          <span class="dist-summary-sep">·</span>
-          <span class="dist-summary-item">
-            <span class="dist-summary-label">{{ i18n.totalWords }}</span>
-            <span class="dist-summary-value">{{ distSummary.totalWords.toLocaleString() }} {{ i18n.wordsUnit }}</span>
-          </span>
-        </div>
-
-        <!-- 左侧：文档数条形图（全高） -->
-        <section class="dist-section dist-left">
-          <DocBarChart
-            :title="i18n.docBarChartTitle"
-            :chart-data="notebookDocStats"
-            :loading="docChartLoading"
-            :i18n="i18n"
-          />
-        </section>
-
-        <!-- 右侧上：块类型分布 -->
-        <section class="dist-section dist-right-top">
-          <DocBarChart
-            :title="i18n.blockTypeStats"
-            :chart-data="stats.blockTypeStats.map(item => ({
-              name: item.label,
-              count: item.count,
-            }))"
-            :i18n="i18n"
-          />
-        </section>
-
-        <!-- 右侧下：饼图 -->
-        <section class="dist-section dist-right-bottom">
-          <h3 class="dist-section-title">
-            {{ i18n.notebookWordPie }}
-          </h3>
-          <NotebookWordPie
-            :data="notebookWordStats"
-          />
-        </section>
-
-        <!-- 底部全宽：堆叠条形图 -->
-        <section class="dist-section dist-bottom">
-          <h3 class="dist-section-title">
-            {{ i18n.notebookBlockTypeTitle }}
-          </h3>
-          <NotebookBlockTypeChart
-            :data="notebookBlockTypeStats"
-          />
-        </section>
-
-        <!-- 表格视图：可排序详情 -->
-        <section class="dist-section dist-table">
-          <h3 class="dist-section-title">
-            {{ i18n.notebookRanking }}
-          </h3>
-          <NotebookTable
-            :doc-stats="notebookDocStats"
-            :word-stats="notebookWordStats"
-          />
-        </section>
-      </div>
-
-      <!-- 报告 Tab -->
-      <div
-        v-show="activeTab === 'report'"
-        class="report-tab"
-      >
-        <ReportView
-          :on-get-report-data="getReportData"
-          :on-get-comparison-data="getComparisonData"
-          :i18n="i18n"
-        />
-      </div>
-
-      <!-- 里程碑 Tab -->
-      <div
-        v-show="activeTab === 'milestones'"
-        class="milestones-tab"
-      >
-        <MilestonesCard
-          :plugin="plugin"
-          :total-notes="stats.totalNotes"
-          :total-words="stats.totalWords"
-          :total-blocks="stats.totalBlocks"
-          :total-tags="stats.totalTags"
-          :total-backlinks="stats.totalBacklinks"
-          :total-assets="stats.totalAssets"
-          :total-images="stats.totalImages"
-          :notebook-count="stats.notebookCount"
-          :code-blocks="stats.codeBlocks"
-          :writing-streak="stats.writingStreak"
-          :active-days="stats.activeDays"
-          :i18n="i18n"
-        />
-      </div>
-
-      <!-- 热力图 Tab -->
-      <div
+      <HeatmapTab
         v-show="activeTab === 'heatmap'"
-        class="heatmap-tab"
-      >
-        <HeatmapCard
-          :on-get-activity-data="getHeatmapActivityData"
-          :on-get-daily-detail="getHeatmapDailyDetail"
-          :notebooks="heatmapNotebooks"
-          :writing-streak="stats?.writingStreak ?? 0"
-          :active-days="stats?.activeDays ?? 0"
-          :i18n="i18n"
-        />
-      </div>
+        :stats="stats"
+        :queries="heatmapQueries"
+        :i18n="i18n"
+      />
 
-      <!-- 写作活跃度 Tab -->
-      <div
+      <ActivityTab
         v-show="activeTab === 'activity'"
-        class="activity-tab"
-      >
-        <NotebookActivityTrend
-          :on-get-notebook-activity-trend="getNotebookActivityTrend"
-          :i18n="i18n"
-        />
-      </div>
-    </div>
+        :get-notebook-activity-trend="getNotebookActivityTrend"
+        :i18n="i18n"
+      />
 
+      <TrendTab
+        v-show="activeTab === 'trend'"
+        :historical-data="historicalData"
+        :get-trend-prediction="getTrendPrediction"
+        :i18n="i18n"
+      />
+
+      <DistributionTab
+        v-show="activeTab === 'notebookDistribution'"
+        :active="activeTab === 'notebookDistribution'"
+        :stats="stats"
+        :i18n="i18n"
+      />
+
+      <ReportTab
+        v-show="activeTab === 'report'"
+        :get-report-data="getReportData"
+        :get-comparison-data="getComparisonData"
+        :i18n="i18n"
+      />
+
+      <MilestonesTab
+        v-show="activeTab === 'milestones'"
+        :plugin="plugin"
+        :stats="stats"
+        :i18n="i18n"
+      />
+    </div>
   </div>
 </template>
 
@@ -269,26 +111,16 @@ import {
   watch,
 } from "vue"
 import Loader from "@/components/Loader.vue"
-import BarChart from "./components/overview/BarChart.vue"
-import DocBarChart from "./components/distribution/DocBarChart.vue"
-import DocChangeSection from "./components/overview/DocChangeSection.vue"
-import HeatmapCard from "./components/heatmap/HeatmapCard.vue"
-import MilestonesCard from "./components/milestones/MilestonesCard.vue"
-import NotebookActivityTrend from "./components/activity/NotebookActivityTrend.vue"
-import NotebookBlockTypeChart from "./components/distribution/NotebookBlockTypeChart.vue"
-import NotebookTable from "./components/distribution/NotebookTable.vue"
-import NotebookWordPie from "./components/distribution/NotebookWordPie.vue"
-import ReportView from "./components/report/ReportView.vue"
+import ActivityTab from "./components/activity/index.vue"
+import DistributionTab from "./components/distribution/index.vue"
+import HeatmapTab from "./components/heatmap/index.vue"
+import MilestonesTab from "./components/milestones/index.vue"
+import OverviewTab from "./components/overview/index.vue"
+import ReportTab from "./components/report/index.vue"
+import TrendTab from "./components/trend/index.vue"
 import StatisticsHeader from "./components/common/StatisticsHeader.vue"
-import StatsCardsCompact from "./components/overview/StatsCardsCompact.vue"
-import TrendPrediction from "./components/trend/TrendPrediction.vue"
-import TrendView from "./components/trend/TrendView.vue"
-import ViewModeSection from "./components/overview/ViewModeSection.vue"
-import WordRanking from "./components/overview/WordRanking.vue"
 import { useHistoryData } from "./composables/useHistoryData"
 import { useMilestoneStorage } from "./composables/useMilestoneStorage"
-import { provideNotebookHover } from "./composables/useNotebookHover"
-import { useNotebookStats } from "./composables/useNotebookStats"
 import { useStatistics } from "./composables/useStatistics"
 import {
   getDateChangedDocs,
@@ -300,7 +132,6 @@ import {
 import {
   getHeatmapActivityData,
   getHeatmapDailyDetail,
-  getHeatmapNotebooks,
 } from "./queries/heatmapStats"
 import { getNotebookActivityTrend } from "./queries/notebookStats"
 import {
@@ -370,18 +201,6 @@ const {
   refreshPeriodOnly,
 } = useStatistics()
 
-// 图表标题：查询层返回周期 i18n 键，此处映射为文案（年视图带年份占位符）
-const chartTitle = computed(() => {
-  const key = stats.value?.currentPeriod
-  if (!key) return ""
-  if (key === "periodYears") {
-    return String(i18n.value.periodYears || "")
-      .replace("{start}", String(selectedYear.value - 4))
-      .replace("{end}", String(selectedYear.value))
-  }
-  return i18n.value[key] || ""
-})
-
 const {
   historicalData,
   createdChange,
@@ -391,32 +210,8 @@ const {
   loadHistoricalData,
 } = useHistoryData(props.plugin, stats)
 
-const {
-  notebookDocStats,
-  docChartLoading,
-  notebookWordStats,
-  notebookBlockTypeStats,
-  loadNotebookDocStats,
-  loadNotebookWordStats,
-  loadNotebookBlockTypeStats,
-} = useNotebookStats()
-
-// 笔记本分布 hover 联动
-provideNotebookHover()
-
-// 分布 Tab 汇总摘要
-const distSummary = computed(() => {
-  const docs = notebookDocStats.value
-  const words = notebookWordStats.value
-  if (!docs.length && !words.length) return null
-  const totalDocs = docs.reduce((s, d) => s + d.count, 0)
-  const totalWords = words.reduce((s, d) => s + d.words, 0)
-  return {
-    notebookCount: docs.length || words.length,
-    totalDocs,
-    totalWords,
-  }
-})
+// 里程碑自定义规则：与编辑弹窗共享同一份 composable 状态
+const { customRules, initMilestoneStorage } = useMilestoneStorage()
 
 const milestonesAchievedCount = computed(() => {
   const s = stats.value
@@ -427,8 +222,19 @@ const milestonesAchievedCount = computed(() => {
   }, 0)
 })
 
-// 里程碑自定义规则：与编辑弹窗共享同一份 composable 状态
-const { customRules, initMilestoneStorage } = useMilestoneStorage()
+// 下发给子入口的查询函数聚合对象
+const overviewQueries = {
+  getDateChangedDocs,
+  getDateRangeChangeStats,
+  getRecentUpdatedDocs,
+  getDeletedDocs,
+  getDeletedDocsInRange,
+}
+
+const heatmapQueries = {
+  getHeatmapActivityData,
+  getHeatmapDailyDetail,
+}
 
 const storagePaths = computed(() => {
   const dataDir = (props.plugin as any).dataDir || ""
@@ -443,7 +249,6 @@ const storagePaths = computed(() => {
   ]
 })
 
-
 // 切换视图模式/时间范围时只重查时段统计（柱状图），避免重跑全量统计导致卡顿
 watch([viewMode, dayRange, monthYearRange, selectedYear], async () => {
   loading.value = true
@@ -456,9 +261,7 @@ watch([viewMode, dayRange, monthYearRange, selectedYear], async () => {
   }
 })
 
-let notebookStatsLoaded = false
 let refreshSeq = 0
-const heatmapNotebooks = ref<Array<{ id: string, name: string }>>([])
 
 async function refreshData(): Promise<void> {
   const seq = ++refreshSeq
@@ -467,10 +270,6 @@ async function refreshData(): Promise<void> {
     await refreshCore()
     if (seq !== refreshSeq) return
     await loadHistoricalData()
-    if (seq !== refreshSeq) return
-    if (activeTab.value === 'notebookDistribution' && !notebookStatsLoaded) {
-      await loadNotebookStats()
-    }
   } catch (error) {
     console.error("刷新统计数据失败:", error)
   } finally {
@@ -480,26 +279,9 @@ async function refreshData(): Promise<void> {
   }
 }
 
-async function loadNotebookStats(): Promise<void> {
-  if (notebookStatsLoaded) return
-  await Promise.all([
-    loadNotebookDocStats(),
-    loadNotebookWordStats(),
-    loadNotebookBlockTypeStats(),
-  ])
-  notebookStatsLoaded = true
-}
-
-watch(activeTab, (tab) => {
-  if (tab === 'notebookDistribution') {
-    loadNotebookStats()
-  }
-})
-
 onMounted(async () => {
   refreshData()
   props.onRegisterRefresh?.(refreshData)
-  heatmapNotebooks.value = await getHeatmapNotebooks()
   await initMilestoneStorage(props.plugin)
 })
 </script>

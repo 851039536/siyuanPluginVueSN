@@ -157,6 +157,8 @@ const imageCreationI18n = (props.plugin?.i18n?.imageCreation ?? {}) as unknown a
 const globalRelationsI18n = (props.plugin?.i18n?.globalRelations ?? {}) as unknown as Record<string, string>
 // 极简浏览器 i18n 分片（同上，显式收窄嵌套命名空间）
 const minimalBrowserI18n = (props.plugin?.i18n?.minimalBrowser ?? {}) as unknown as Record<string, string>
+// 灵感生成器 i18n 分片（同上，显式收窄嵌套命名空间）
+const ideaGeneratorI18n = (props.plugin?.i18n?.ideaGenerator ?? {}) as unknown as Record<string, string>
 // S3 文件管理 i18n 分片（同上，显式收窄嵌套命名空间）
 const s3FileManagerI18n = (props.plugin?.i18n?.s3FileManager ?? {}) as unknown as Record<string, string>
 // 图片压缩 i18n 分片（同上，显式收窄嵌套命名空间）
@@ -258,6 +260,14 @@ const FEATURES: FeatureRegistryEntry[] = [
       itemClass: "action-item minimal-browser-item",
     },
     action: () => emitCustomEvent("openMinimalBrowser"),
+  },
+  {
+    id: "ideaGenerator",
+    icon: "mdi:lightbulb-on-outline",
+    color: "#9333ea",
+    title: ideaGeneratorI18n.title,
+    pinnable: true,
+    action: () => emitCustomEvent("openIdeaGenerator"),
   },
   {
     id: "imageCreation",

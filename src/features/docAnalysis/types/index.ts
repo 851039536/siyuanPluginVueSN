@@ -394,6 +394,22 @@ export interface StatSectionDef {
   collapsed?: boolean
 }
 
+/** 统计表格行（表格化布局的渲染单元，由卡片元数据或分布数组映射而来） */
+export interface StatTableRow {
+  /** 行唯一标识（下钻用，如卡片 id 或分布项 label） */
+  id: string
+  /** 显示标签（名称列） */
+  label: string
+  /** 数量 */
+  count: number
+  /** 占比字符串（如 "25%"） */
+  pct: string
+  /** 数量列语义色类名（对应 CardColorClass） */
+  colorClass?: string
+  /** 是否可点击下钻 */
+  clickable?: boolean
+}
+
 export const STAT_SECTIONS: StatSectionDef[] = [
   {
     key: "size", title: "大小分布", icon: "mdi:harddisk",

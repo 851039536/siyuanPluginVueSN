@@ -90,7 +90,6 @@ import {
 interface Props {
   i18n: I18n
   plugin: Plugin
-  onClose?: () => void
 }
 
 const props = defineProps<Props>()
@@ -138,7 +137,6 @@ const editEntry = (entry: { id: string }) => {
 const closeDialog = () => {
   showDialog.value = false
   editingId.value = null
-  props.onClose?.()
 }
 
 const handleCategoriesSaved = async () => {

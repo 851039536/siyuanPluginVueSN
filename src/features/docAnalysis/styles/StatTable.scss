@@ -1,0 +1,128 @@
+@use "@/variables.scss" as *;
+
+// ============ 表格区块容器 ============
+.stat-table {
+  margin-bottom: $spacing-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  overflow: hidden;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// ============ 表格标题区 ============
+.st-header {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2px;
+  padding: $spacing-2 $spacing-2 $spacing-1;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface-variant);
+
+  .st-header-spacer {
+    flex: 1;
+  }
+}
+
+// ============ 表格主体 ============
+.st-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: $font-size-2xs;
+}
+
+.st-th {
+  padding: $spacing-1 $spacing-2;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-surface-variant);
+  text-align: left;
+  background: var(--b3-theme-surface);
+  border-bottom: 1px solid var(--b3-border-color);
+}
+
+.st-th-name {
+  width: auto;
+}
+
+.st-th-count {
+  width: 64px;
+  text-align: right;
+}
+
+.st-th-pct {
+  width: 56px;
+  text-align: right;
+}
+
+.st-row {
+  border-bottom: 1px solid var(--b3-border-color);
+  transition: background 0.12s;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.st-row-clickable {
+  cursor: pointer;
+
+  &:hover {
+    background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.06));
+  }
+}
+
+.st-row-active {
+  background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
+}
+
+.st-td {
+  padding: $spacing-1 $spacing-2;
+  color: var(--b3-theme-on-surface-variant);
+}
+
+.st-td-name {
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// 数据突出展示：数量列（等宽字体 + 语义色）
+.st-td-count {
+  text-align: right;
+  font-family: $vp-mono;
+  font-weight: $font-weight-semibold;
+}
+
+.st-td-pct {
+  text-align: right;
+  font-family: $vp-mono;
+  opacity: 0.6;
+}
+
+// ============ 数量列语义色（原卡片 colorClass 迁移） ============
+.st-td-count {
+  &.zero { color: var(--b3-theme-error, #ef4444); }
+  &.small, &.time-yellow { color: var(--b3-theme-warning, #eab308); }
+  &.medium, &.large, &.xlarge, &.time-cyan { color: var(--b3-theme-info, #3b82f6); }
+  &.dup, &.time-orange { color: var(--b3-theme-warning-dark, #ea580c); }
+  &.time-green { color: var(--b3-theme-success, #22c55e); }
+  &.time-red { color: var(--b3-theme-error, #ef4444); }
+  &.time-purple { color: var(--b3-theme-on-surface-variant, #8b5cf6); }
+  &.depth-color { color: var(--b3-theme-primary, #6366f1); }
+  &.ref-color { color: var(--b3-theme-info-dark, #1d4ed8); }
+  &.img-color { color: var(--b3-theme-success-dark, #059669); }
+  &.bookmark-color, &.pending-color { color: var(--b3-theme-warning-dark, #b45309); }
+  &.no-bookmark-color, &.none-bookmark-color { color: var(--b3-theme-on-surface-variant); }
+  &.published-color { color: var(--b3-theme-info-dark, #1d4ed8); }
+  &.unused-color { color: var(--b3-theme-error-dark, #991b1b); }
+  &.full-publish-color { color: var(--b3-theme-success, #22c55e); }
+  &.partial-publish-color { color: var(--b3-theme-warning, #eab308); }
+  &.no-publish-color { color: var(--b3-theme-on-surface-variant); }
+}

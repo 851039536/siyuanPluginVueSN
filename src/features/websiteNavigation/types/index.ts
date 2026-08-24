@@ -87,7 +87,6 @@ export class WebsiteNavigation {
       buildProps: () => ({
         plugin: this.plugin,
         i18n: (this.plugin.i18n?.websiteNavigation as I18n) || ({} as I18n),
-        onClose: () => this.closeModal(),
       }),
     })
     this.modal.open()

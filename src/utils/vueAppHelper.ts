@@ -74,7 +74,7 @@ export function createVueDockApp(
     },
     data: {},
     type,
-    init: (dock: { element?: Element }) => {
+    init: function (this: { element?: Element }) {
       const container = document.createElement("div")
       // 全局基准字号类：index.scss 中 .vp-dock-root 统一设为 $font-size-xs(12px)
       container.classList.add("vp-dock-root")
@@ -92,7 +92,8 @@ export function createVueDockApp(
       })
 
       app.mount(container)
-      dock.element?.appendChild(container)
+      // addDock 的 init 回调通过 this 指向 Dock 模型，this.element 为 Dock 容器 DOM
+      this.element?.appendChild(container)
       // Dock 的 Vue 实例生命周期交给思源 dock 管理，卸载时随 dock DOM 移除后被 GC
     },
   })

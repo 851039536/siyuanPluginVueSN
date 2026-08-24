@@ -482,6 +482,9 @@ export type DeductionKey =
   | "partialPublish"
   | "deepGt7"
   | "wcGt20000"
+  | "orphan"
+  | "noTag"
+  | "noPublish"
 
 /** 健康度扣分项定义（元数据驱动，resolve 与旧硬编码公式逐项一致） */
 export interface DeductionOptionDef {
@@ -509,9 +512,12 @@ export interface DeductionRow {
   enabled: boolean
 }
 
-/** 默认健康度设置：全部扣分项启用（与旧版健康度行为一致） */
+/** 默认健康度设置：全部扣分项启用（新增项默认开启，用户可在健康度面板取消） */
 export const DEFAULT_HEALTH_SETTINGS: HealthSettings = {
-  enabledDeductions: ["zeroByte", "duplicate", "unused", "noBookmark", "partialPublish", "deepGt7", "wcGt20000"],
+  enabledDeductions: [
+    "zeroByte", "duplicate", "unused", "noBookmark", "partialPublish",
+    "deepGt7", "wcGt20000", "orphan", "noTag", "noPublish",
+  ],
 }
 
 /** 可选扣分项注册表（按当前功能已有统计指标生成） */
@@ -545,5 +551,12 @@ export const DEDUCTION_OPTIONS: DeductionOptionDef[] = [
         .filter((d) => d.label === WC_TOP_BIN_LABEL)
         .reduce((sum, d) => sum + d.count, 0),
   },
+  { key: "orphan", label: "孤文档", resolve: (stats) => stats.orphanDocs },
+  {
+    key: "noTag",
+    label: "无标签",
+    resolve: (stats) => Math.max(0, stats.totalDocs - stats.taggedDocs),
+  },
+  { key: "noPublish", label: "未发布", resolve: (stats) => stats.noPublishDocs },
 ]
 

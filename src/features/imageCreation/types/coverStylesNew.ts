@@ -4,7 +4,7 @@
 // ============================================================
 
 import type { StyleDefinition } from "./coverStylesShared"
-import { tagColoredStyles, tagCommonStyles } from "./coverStylesShared"
+import {  tagCommonStyles } from "./coverStylesShared"
 
 export const NEW_COVER_STYLES: StyleDefinition[] = [
   {

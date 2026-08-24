@@ -4,16 +4,22 @@
 // 类型与标签助手见 types/coverStylesShared.ts（本文件 re-export）
 // ============================================================
 
-import type { StyleDefinition } from "./coverStylesShared"
-import { tagColoredStyles, tagCommonStyles } from "./coverStylesShared"
-import { NEW_COVER_STYLES } from "./coverStylesNew"
-
-export type {
+import type {
   CoverSizePreset,
   CoverStylePreset,
   StyleColors,
   StyleDefinition,
 } from "./coverStylesShared"
+import { tagColoredStyles, tagCommonStyles } from "./coverStylesShared"
+import { NEW_COVER_STYLES } from "./coverStylesNew"
+
+// re-export 共享类型（先 import type 建立本地绑定，供本文件注解使用；再转发导出给外部）
+export type {
+  CoverSizePreset,
+  CoverStylePreset,
+  StyleColors,
+  StyleDefinition,
+}
 
 /** 封面字体族常量（避免每次 buildCoverHtml 重新定义） */
 export const COVER_FONT_FAMILY = '-apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif'

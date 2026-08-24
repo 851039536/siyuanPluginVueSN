@@ -32,8 +32,8 @@ export class FormatAssistantManager {
 
   private addCommand() {
     this.plugin.addCommand({
-      command: "openFormatAssistant",
-      title: "打开排版助手",
+      langKey: "openFormatAssistant",
+      langText: "打开排版助手",
       hotkey: "⌃⌥G",
       callback: () => {
         this.open()

@@ -24,12 +24,13 @@ export function resolveCoverStyle(styleId: string): StyleDefinition {
   return COVER_STYLE_REGISTRY.find((s) => s.id === styleId) ?? COVER_STYLE_REGISTRY[0]
 }
 
-/** 应用主题色覆盖层：enabled 时覆盖 bg/titleColor/accent，accentAlt 沿用风格默认 */
+/** 应用主题色覆盖层：enabled 时覆盖 bg/titleColor/accent，subtitleColor/accentAlt 沿用风格默认 */
 export function resolveCoverColors(style: StyleDefinition, settings: CoverSettings): StyleColors {
   if (!settings.colors.enabled) return style.colors
   return {
     bg: settings.colors.bg,
     titleColor: settings.colors.titleColor,
+    subtitleColor: style.colors.subtitleColor,
     accent: settings.colors.accent,
     accentAlt: style.colors.accentAlt,
   }

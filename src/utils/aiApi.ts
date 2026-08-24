@@ -693,10 +693,11 @@ export function getApiConfigFromPlugin(plugin: any): AiApiConfig {
   // 先解析 provider（带默认值），再据此查找 apiKey，
   // 避免 aiApiProvider 未设置时 aiApiKeys[undefined] 取不到已配置的 key
   // 兼容迁移：已废弃的 openai/zhipu 供应商降级为 tongyi
-  let provider: AiProvider = settings.aiApiProvider || "tongyi"
-  if (provider === "openai" || provider === "zhipu") {
-    provider = "tongyi"
-  }
+  // 先以字符串读取旧值再收窄为 AiProvider，避免联合类型不含旧值导致比较不成立
+  const rawProvider: string = settings.aiApiProvider || "tongyi"
+  let provider: AiProvider = rawProvider === "openai" || rawProvider === "zhipu"
+    ? "tongyi"
+    : (rawProvider as AiProvider)
 
   return {
     provider,

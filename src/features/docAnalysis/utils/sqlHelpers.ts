@@ -14,11 +14,6 @@ export function escapeSql(value: string): string {
   return value.replace(/'/g, "''")
 }
 
-/** LIKE 模式转义（单引号 + 通配符 \ % _），须配套 ESCAPE '\' 子句使用 */
-export function escapeSqlLike(value: string): string {
-  return escapeSql(value).replace(/([\\%_])/g, "\\$1")
-}
-
 /** SQL 字符串加引号（已含转义） */
 export function quoteSql(value: string): string {
   return `'${escapeSql(value)}'`

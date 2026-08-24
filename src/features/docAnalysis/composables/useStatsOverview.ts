@@ -34,15 +34,19 @@ export function useStatsOverview(props: UseStatsOverviewProps) {
   // 重名统计（消费 useDocStats 的 effectiveDuplicateGroups 过滤结果）
   // ============================================================
 
-  const effectiveDupGroups = computed(() => props.effectiveDuplicateGroups)
-
   const effectiveDupDocs = computed(() =>
-    effectiveDupGroups.value.reduce((sum, g) => sum + g.count, 0),
+    props.effectiveDuplicateGroups.reduce((sum, g) => sum + g.count, 0),
   )
 
   const effectiveDupGroupCount = computed(() =>
-    effectiveDupGroups.value.length,
+    props.effectiveDuplicateGroups.length,
   )
+
+  /** 卡片计算上下文（resolveValue/suffixValue/DEDUCTION_OPTIONS resolve 动态取值共用） */
+  const valueCtx = computed<CardValueContext>(() => ({
+    effectiveDupDocs: effectiveDupDocs.value,
+    effectiveDupGroupCount: effectiveDupGroupCount.value,
+  }))
 
   // ============================================================
   // 健康度
@@ -51,14 +55,10 @@ export function useStatsOverview(props: UseStatsOverviewProps) {
   const _healthBreakdown = computed(() => {
     const total = props.stats.totalDocs
     const enabled = new Set(props.healthSettings.enabledDeductions)
-    const ctx: CardValueContext = {
-      effectiveDupDocs: effectiveDupDocs.value,
-      effectiveDupGroupCount: effectiveDupGroupCount.value,
-    }
     const counts = new Map<DeductionKey, number>()
     let issues = 0
     for (const opt of DEDUCTION_OPTIONS) {
-      const count = opt.resolve(props.stats, ctx, props.depthStats)
+      const count = opt.resolve(props.stats, valueCtx.value, props.depthStats)
       counts.set(opt.key, count)
       if (enabled.has(opt.key)) issues += count
     }
@@ -103,15 +103,15 @@ export function useStatsOverview(props: UseStatsOverviewProps) {
     || props.stats.pendingPublishDocs > 0 || props.stats.orphanDocs > 0,
   )
 
+  /** 健康文档数（总文档 - 启用扣分项合计，供 HeroCard 面板展示，与健康度百分比口径一致） */
+  const healthyDocs = computed(() => {
+    const { total, issues } = _healthBreakdown.value
+    return Math.max(0, total - Math.min(total, issues))
+  })
+
   // ============================================================
   // 卡片值计算
   // ============================================================
-
-  /** 卡片计算上下文（resolveValue/suffixValue 动态取值） */
-  const valueCtx = computed<CardValueContext>(() => ({
-    effectiveDupDocs: effectiveDupDocs.value,
-    effectiveDupGroupCount: effectiveDupGroupCount.value,
-  }))
 
   function getCardValue(card: StatCardDef): number {
     if (card.resolveValue) return card.resolveValue(props.stats, valueCtx.value)
@@ -176,8 +176,8 @@ export function useStatsOverview(props: UseStatsOverviewProps) {
   })
 
   return {
-    effectiveDupGroups, effectiveDupDocs, effectiveDupGroupCount,
-    healthPct, healthTooltip, hasIssues, deductionRows,
+    effectiveDupDocs,
+    healthPct, healthTooltip, hasIssues, deductionRows, healthyDocs,
     getCardValue, cardLabel, pctStr, toCardRows,
     platformEntries, docsInSystem, avgPlatformsPerDoc, coveragePct,
   }

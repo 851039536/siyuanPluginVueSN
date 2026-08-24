@@ -11,6 +11,7 @@
         :effective-dup-docs="effectiveDupDocs"
         :health-settings="healthSettings"
         :deduction-rows="deductionRows"
+        :healthy-docs="healthyDocs"
         @selectCategory="$emit('selectCategory', $event)"
         @update:health-settings="$emit('update:healthSettings', $event)"
       />
@@ -214,6 +215,7 @@ const {
   healthTooltip,
   hasIssues,
   deductionRows,
+  healthyDocs,
   pctStr,
   toCardRows,
   platformEntries,

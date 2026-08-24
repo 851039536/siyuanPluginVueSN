@@ -11,6 +11,29 @@
 // ========== Summary Cards ==========
 @include stats.summary-cards-base;
 
+// 无界化覆盖：摘要卡去卡片盒子，改为列间竖线 + 底部横线分隔
+.summary-cards {
+  gap: 0;
+  border-bottom: 1px solid var(--b3-border-color);
+  padding-bottom: 6px;
+}
+
+.summary-card {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 6px 4px;
+  border-left: 1px solid var(--b3-border-color);
+
+  &:first-child {
+    border-left: none;
+  }
+
+  &:hover {
+    border-color: transparent;
+  }
+}
+
 .summary-card .summary-value {
   font-size: $font-size-lg; // 数据突出展示（摘要卡数值，与活跃度页对齐）
   font-family: stats.$font-mono;
@@ -87,10 +110,9 @@
 
 // ========== Calendar ==========
 .calendar-wrapper {
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
-  padding: 14px; // 无精确 Token
+  // 无界化：去卡片盒子，保留顶部横线分隔
+  border-top: 1px solid var(--b3-border-color);
+  padding: 14px 0 0; // 无精确 Token
   overflow-x: auto;
 }
 
@@ -323,10 +345,9 @@
 
 // ========== Weekday Distribution ==========
 .weekday-section {
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
-  padding: 14px; // 无精确 Token
+  // 无界化：去卡片盒子，保留顶部横线分隔
+  border-top: 1px solid var(--b3-border-color);
+  padding: 14px 0 0; // 无精确 Token
 
   .section-title {
     @include stats.codex-label;

@@ -242,7 +242,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 ## 独立窗口承载（addTab + openTab + openWindow）
 
-需要「独立窗口 / 浮动窗口」承载 UI 的功能，使用思源官方 API 的 `addTab + openTab + openWindow` 组合实现双形态承载（主窗口页签 ⇄ 独立浮动窗口）。核心流程：`plugin.addTab()` 注册自定义页签模型 → `openTab({ custom })` 创建/聚焦主窗口页签 → `openWindow({ tab })` 移入浮动窗口；关闭浮动窗口页签自动移回主窗口。Manager 类放 `types/index.ts`（模块级 `tabRegistered` 防重复注册），`index.vue` 以 `mode` prop 支持双形态。参考实现：`src/features/minimalBrowser/`、`src/features/toolCollection/`。
+需要「独立窗口 / 浮动窗口」承载 UI 的功能，使用思源官方 API 的 `addTab + openTab + openWindow` 组合实现双形态承载（主窗口页签 ⇄ 独立浮动窗口）。核心流程：`plugin.addTab()` 注册自定义页签模型 → `openTab({ custom })` 创建/聚焦主窗口页签 → `openWindow({ tab })` 移入浮动窗口；关闭浮动窗口页签自动移回主窗口。Manager 类放 `types/index.ts`（模块级 `tabRegistered` 防重复注册），`index.vue` 以 `mode` prop 支持双形态。**独立窗体 UI 精简（强制）**：浮动窗口页签标题已标识功能名，面板头部不再显示重复标题字样，通过 `isFloating`（`getFrontend() === "desktop-window"`）隐藏，仅移除显示、不动功能逻辑。参考实现：`src/features/minimalBrowser/`、`src/features/toolCollection/`。
 
 > 完整 API 签名、实现步骤与关键点速查表见 [AGENTS_API.md § 独立窗口承载](./AGENTS_API.md#独立窗口承载addtab-opentab-openwindow)
 

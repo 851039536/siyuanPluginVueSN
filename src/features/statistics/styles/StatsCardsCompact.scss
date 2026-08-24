@@ -51,14 +51,6 @@
   line-height: $line-height-tight;
 }
 
-.core-unit {
-  font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.4;
-  white-space: nowrap;
-}
-
 .core-change {
   padding: 1px 3px;
   border-radius: stats.$radius-sm;

@@ -122,13 +122,13 @@
 </template>
 
 <script setup lang="ts">
-import type { DocI18n, DocInfo } from "../types/index"
+import type { DocI18n, DocInfo } from "../../types/index"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
 import {
   formatBytes,
   formatWordCount,
-} from "../utils/format"
+} from "../../utils/format"
 
 interface Props {
   doc: DocInfo
@@ -188,5 +188,5 @@ function formatTime(ts: string): string {
 </script>
 
 <style lang="scss" scoped>
-@use "../styles/DocListItem.scss";
+@use "../../styles/DocListItem.scss";
 </style>

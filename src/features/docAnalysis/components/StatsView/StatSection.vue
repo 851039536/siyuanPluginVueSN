@@ -24,5 +24,5 @@ defineProps<Props>()
 </script>
 
 <style lang="scss" scoped>
-@use "../styles/StatSection.scss";
+@use "../../styles/StatSection.scss";
 </style>

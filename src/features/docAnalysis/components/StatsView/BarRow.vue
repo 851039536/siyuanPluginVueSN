@@ -30,5 +30,5 @@ defineEmits<{
 </script>
 
 <style lang="scss" scoped>
-@use "../styles/BarRow.scss";
+@use "../../styles/BarRow.scss";
 </style>

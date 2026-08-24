@@ -156,9 +156,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue"
 import { Icon } from "@iconify/vue"
-import type { PlatformMeta } from "../types/index"
-import { DEFAULT_PLATFORM_META } from "../types/index"
-import { PLATFORM_META } from "../composables/platformMeta"
+import type { PlatformMeta } from "../../types/index"
+import { DEFAULT_PLATFORM_META } from "../../types/index"
+import { PLATFORM_META } from "../../composables/platformMeta"
 
 interface Props {
   visible: boolean
@@ -278,5 +278,5 @@ async function handleSave() {
 </script>
 
 <style lang="scss" scoped>
-@use "../styles/PlatformManageModal.scss";
+@use "../../styles/PlatformManageModal.scss";
 </style>

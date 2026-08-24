@@ -231,13 +231,13 @@ import {
   setBlockAttrs,
 } from "@/api"
 import { copyToClipboard } from "@/utils/domUtils"
-import { PLATFORM_META } from "../composables/platformMeta"
+import { PLATFORM_META } from "../../composables/platformMeta"
 import {
   getPlatformIdFromAttrKey,
   getPublishedPlatformIdsFromAttrs,
-} from "../utils/platformPublish"
-import { copyDocForPublish, openExternalPublish } from "../utils/publishActions"
-import type { DocI18n, PlatformMeta } from "../types/index"
+} from "../../utils/platformPublish"
+import { copyDocForPublish, openExternalPublish } from "../../utils/publishActions"
+import type { DocI18n, PlatformMeta } from "../../types/index"
 
 interface Props {
   visible: boolean
@@ -489,5 +489,5 @@ async function goToDoocs() {
 </script>
 
 <style lang="scss" scoped>
-@use "../styles/AttrsPanel.scss";
+@use "../../styles/AttrsPanel.scss";
 </style>

@@ -32,5 +32,5 @@ defineEmits<{
 </script>
 
 <style lang="scss" scoped>
-@use "../styles/StatCard.scss";
+@use "../../styles/StatCard.scss";
 </style>

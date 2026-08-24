@@ -52,5 +52,5 @@ function handleScroll() {
 </script>
 
 <style lang="scss" scoped>
-@use "../styles/MarkdownEditor.scss";
+@use "../../styles/MarkdownEditor.scss";
 </style>

@@ -151,12 +151,12 @@ import {
 } from "vue"
 import { exportMdContent } from "@/api"
 import { copyToClipboard, triggerBlobDownload } from "@/utils/domUtils"
-import type { DocI18n, PublishPromoteConfig, PublishTheme } from "../types/index"
-import { DEFAULT_PUBLISH_PROMOTE } from "../types/index"
-import { DocAnalysisStorage } from "../types/storage"
-import { parseMarkdown } from "../utils/mdRenderer"
-import { applyTheme, buildExportableHtml } from "../utils/themeApplicator"
-import { DEFAULT_THEME } from "../utils/themes"
+import type { DocI18n, PublishPromoteConfig, PublishTheme } from "../../types/index"
+import { DEFAULT_PUBLISH_PROMOTE } from "../../types/index"
+import { DocAnalysisStorage } from "../../types/storage"
+import { parseMarkdown } from "../../utils/mdRenderer"
+import { applyTheme, buildExportableHtml } from "../../utils/themeApplicator"
+import { DEFAULT_THEME } from "../../utils/themes"
 import {
   buildPromoteFooterHtml,
   buildPromoteFooterMd,
@@ -165,7 +165,7 @@ import {
   openExternalPublish,
   setPromoteConfig,
   stripFrontMatter,
-} from "../utils/publishActions"
+} from "../../utils/publishActions"
 import MarkdownEditor from "./MarkdownEditor.vue"
 import PreviewPane from "./PreviewPane.vue"
 
@@ -372,5 +372,5 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@use "../styles/PublishPanel.scss";
+@use "../../styles/PublishPanel.scss";
 </style>

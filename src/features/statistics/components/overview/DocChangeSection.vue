@@ -100,8 +100,8 @@
         >
           <input
             type="date"
-            :value="docChangeDate"
-            :max="todayDateStr"
+            :value="formattedDocDate"
+            :max="todayDashed"
             class="changed-date-input"
             @change="onDocDateChange"
           >
@@ -178,7 +178,7 @@
 
 <script setup lang="ts">
 import type {
-  ChangedDoc,
+  DateChangedResult,
   DeletedDoc,
   RangeStatItem,
   RecentUpdatedDoc,
@@ -189,14 +189,11 @@ import {
   ref,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { formatYmd, toDashedYmd } from "../../utils"
+import { barPct, formatYmd, toDashedYmd } from "../../utils"
 import DocChangeList from "./DocChangeList.vue"
 import RecentUpdatedList from "./RecentUpdatedList.vue"
 interface Props {
-  onGetDateChangedDocs?: (dateStr: string) => Promise<{
-    newDocs: ChangedDoc[]
-    modifiedDocs: ChangedDoc[]
-  }>
+  onGetDateChangedDocs?: (dateStr: string) => Promise<DateChangedResult>
   onGetDateRangeChangeStats?: (startStr: string, endStr: string) => Promise<RangeStatItem[]>
   onGetRecentUpdatedDocs?: (limit: number) => Promise<RecentUpdatedDoc[]>
   onGetDeletedDocs?: (dateStr: string) => Promise<DeletedDoc[]>
@@ -218,11 +215,14 @@ function getTodayStr(): string {
   return formatYmd(new Date())
 }
 
-const docChangeDate = ref(getTodayStr())
-const changedDocs = ref<{ newDocs: ChangedDoc[], modifiedDocs: ChangedDoc[] }>({
+// 单日变更分组空态（避免多处重复内联对象）
+const EMPTY_CHANGED_DOCS: DateChangedResult = {
   newDocs: [],
   modifiedDocs: [],
-})
+}
+
+const docChangeDate = ref(getTodayStr())
+const changedDocs = ref<DateChangedResult>(EMPTY_CHANGED_DOCS)
 const changedDocsLoading = ref(false)
 const deletedDocs = ref<DeletedDoc[]>([])
 const rangeDeletedDocs = ref<DeletedDoc[]>([])
@@ -271,6 +271,8 @@ let reqSeq = 0
 // ---- 现有逻辑 ----
 
 const todayDateStr = computed(() => getTodayStr())
+// 日期选择器 max 需 YYYY-MM-DD 格式（date input 不接受紧凑格式）
+const todayDashed = computed(() => toDashedYmd(todayDateStr.value))
 
 const rangeLabel = computed(() => {
   if (docRange.value === 'recent') return dateRangeOptions.value.find((r) => r.value === 'recent')?.label || ''
@@ -329,7 +331,7 @@ function formatChartDate(dateStr: string): string {
 }
 
 function barWidth(count: number): string {
-  return `${Math.max((count / maxBarCount.value) * 100, 4)}%`
+  return barPct(count, maxBarCount.value, 4)
 }
 
 function sortByDate(items: RangeStatItem[]) {
@@ -340,10 +342,7 @@ async function switchDocRange(range: DocRangeType) {
   const seq = ++reqSeq
   docRange.value = range
   selectedChartDate.value = null
-  changedDocs.value = {
-    newDocs: [],
-    modifiedDocs: [],
-  }
+  changedDocs.value = EMPTY_CHANGED_DOCS
   deletedDocs.value = []
   rangeDeletedDocs.value = []
   rangeStats.value = []
@@ -441,10 +440,7 @@ async function loadDateChangedDocs(dateStr: string, seq: number) {
   } catch (error) {
     console.error("加载文档变化失败:", error)
     if (seq === reqSeq) {
-      changedDocs.value = {
-        newDocs: [],
-        modifiedDocs: [],
-      }
+      changedDocs.value = EMPTY_CHANGED_DOCS
       deletedDocs.value = []
     }
   } finally {

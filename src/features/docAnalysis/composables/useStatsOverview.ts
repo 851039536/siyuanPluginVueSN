@@ -4,14 +4,17 @@
 import { computed } from "vue"
 import type {
   CardValueContext,
+  DeductionKey,
+  DeductionRow,
   DepthStats,
   DocStats,
   DuplicateNameGroup,
+  HealthSettings,
   StatCardDef,
   StatTableRow,
 } from "../types/index"
+import { DEDUCTION_OPTIONS } from "../types/index"
 import { PLATFORM_META } from "./platformMeta"
-import { WC_TOP_BIN_LABEL } from "../utils/docStatsAnalyzer"
 
 /** useStatsOverview 入参（仅取计算逻辑需要的 props 字段） */
 export interface UseStatsOverviewProps {
@@ -19,6 +22,8 @@ export interface UseStatsOverviewProps {
   depthStats: DepthStats
   /** 过滤后的重名组（由 useDocStats 的 effectiveDuplicateGroups 提供，过滤逻辑唯一出处） */
   effectiveDuplicateGroups: DuplicateNameGroup[]
+  /** 健康度设置（启用的扣分项） */
+  healthSettings: HealthSettings
 }
 
 /**
@@ -44,24 +49,20 @@ export function useStatsOverview(props: UseStatsOverviewProps) {
   // ============================================================
 
   const _healthBreakdown = computed(() => {
-    const s = props.stats
-    const total = s.totalDocs
-    const excessDupes = Math.max(0, effectiveDupDocs.value - effectiveDupGroupCount.value)
-    const noBmExclude0B = Math.max(0, s.noBookmarkDocs - s.zeroByteDocs)
-    const depthGt7 = props.depthStats.depthDistribution
-      .filter((d) => d.depth > 7)
-      .reduce((sum, d) => sum + d.count, 0)
-    const wcGt20000 = s.wordCountDistribution
-      .filter((d) => d.label === WC_TOP_BIN_LABEL)
-      .reduce((sum, d) => sum + d.count, 0)
-    const issues = s.zeroByteDocs
-      + excessDupes
-      + s.unusedDocs
-      + noBmExclude0B
-      + s.partialPublishDocs
-      + depthGt7
-      + wcGt20000
-    return { total, excessDupes, noBmExclude0B, depthGt7, wcGt20000, issues }
+    const total = props.stats.totalDocs
+    const enabled = new Set(props.healthSettings.enabledDeductions)
+    const ctx: CardValueContext = {
+      effectiveDupDocs: effectiveDupDocs.value,
+      effectiveDupGroupCount: effectiveDupGroupCount.value,
+    }
+    const counts = new Map<DeductionKey, number>()
+    let issues = 0
+    for (const opt of DEDUCTION_OPTIONS) {
+      const count = opt.resolve(props.stats, ctx, props.depthStats)
+      counts.set(opt.key, count)
+      if (enabled.has(opt.key)) issues += count
+    }
+    return { total, issues, counts }
   })
 
   const healthPct = computed(() => {
@@ -71,27 +72,30 @@ export function useStatsOverview(props: UseStatsOverviewProps) {
   })
 
   const healthTooltip = computed(() => {
-    const {
-      total,
-      excessDupes,
-      noBmExclude0B,
-      depthGt7,
-      wcGt20000,
-      issues,
-    } = _healthBreakdown.value
+    const { total, issues, counts } = _healthBreakdown.value
     if (!total) return "暂无数据"
     const healthy = Math.max(0, total - Math.min(total, issues))
+    const enabled = new Set(props.healthSettings.enabledDeductions)
+    const lines = DEDUCTION_OPTIONS
+      .filter((opt) => enabled.has(opt.key))
+      .map((opt) => `  ${opt.label} ${counts.get(opt.key) ?? 0}`)
     return [
       `健康文档 ${healthy} / ${total}（同一文档可能有多类问题，故百分比可能偏低）`,
       `扣分项:`,
-      `  0B空 ${props.stats.zeroByteDocs}`,
-      `  重名超出 ${excessDupes}`,
-      `  不使用 ${props.stats.unusedDocs}`,
-      `  无书签(排除0B) ${noBmExclude0B}`,
-      `  部分发布 ${props.stats.partialPublishDocs}`,
-      `  深度>7 ${depthGt7}`,
-      `  字数>2万 ${wcGt20000}`,
+      ...lines,
     ].join("\n")
+  })
+
+  /** 各扣分项当前值明细（供 HeroCard 弹出面板渲染，禁用项也展示数值） */
+  const deductionRows = computed<DeductionRow[]>(() => {
+    const { counts } = _healthBreakdown.value
+    const enabled = new Set(props.healthSettings.enabledDeductions)
+    return DEDUCTION_OPTIONS.map((opt) => ({
+      key: opt.key,
+      label: opt.label,
+      count: counts.get(opt.key) ?? 0,
+      enabled: enabled.has(opt.key),
+    }))
   })
 
   const hasIssues = computed(() =>
@@ -173,7 +177,7 @@ export function useStatsOverview(props: UseStatsOverviewProps) {
 
   return {
     effectiveDupGroups, effectiveDupDocs, effectiveDupGroupCount,
-    healthPct, healthTooltip, hasIssues,
+    healthPct, healthTooltip, hasIssues, deductionRows,
     getCardValue, cardLabel, pctStr, toCardRows,
     platformEntries, docsInSystem, avgPlatformsPerDoc, coveragePct,
   }

@@ -2,75 +2,18 @@
 <template>
   <div class="stats-overview">
     <template v-if="hasAnalyzed">
-      <!-- Hero 汇总卡：总文档 + 健康度 + 问题速览 -->
-      <div class="stats-hero">
-        <div class="hero-top">
-          <div class="hero-left">
-            <span class="hero-label">总文档</span>
-            <span class="hero-value">{{ stats.totalDocs }}</span>
-          </div>
-          <div class="hero-right">
-            <span class="hero-health-label">健康度</span>
-            <div
-              class="hero-health-bar"
-              :title="healthTooltip"
-            >
-              <div
-                class="hero-health-fill"
-                :style="{ width: `${healthPct}%` }"
-              />
-            </div>
-            <span
-              class="hero-health-value"
-              :title="healthTooltip"
-            >{{ healthPct }}%</span>
-            <span
-              class="hero-health-info"
-              :title="healthTooltip"
-            >
-              <Icon icon="mdi:information-outline" />
-            </span>
-          </div>
-        </div>
-        <!-- 问题速览（徽章行） -->
-        <div
-          v-if="hasIssues"
-          class="hero-issues"
-        >
-          <div
-            v-if="stats.zeroByteDocs"
-            class="issue-item critical"
-            @click="$emit('selectCategory', '0B')"
-          >
-            <span class="issue-value">{{ stats.zeroByteDocs }}</span>
-            <span class="issue-label">0B空</span>
-          </div>
-          <div
-            v-if="effectiveDupDocs > 0"
-            class="issue-item warn"
-            @click="$emit('selectCategory', 'duplicate')"
-          >
-            <span class="issue-value">{{ effectiveDupDocs }}</span>
-            <span class="issue-label">重名</span>
-          </div>
-          <div
-            v-if="stats.pendingPublishDocs"
-            class="issue-item accent"
-            @click="$emit('selectCategory', 'pendingPublish')"
-          >
-            <span class="issue-value">{{ stats.pendingPublishDocs }}</span>
-            <span class="issue-label">待发布</span>
-          </div>
-          <div
-            v-if="stats.orphanDocs"
-            class="issue-item critical"
-            @click="$emit('selectCategory', 'orphanDoc')"
-          >
-            <span class="issue-value">{{ stats.orphanDocs }}</span>
-            <span class="issue-label">孤文档</span>
-          </div>
-        </div>
-      </div>
+      <!-- Hero 汇总卡：总文档 + 健康度 + 问题速览（点击信息图标弹出扣分项配置） -->
+      <HeroCard
+        :stats="stats"
+        :health-pct="healthPct"
+        :health-tooltip="healthTooltip"
+        :has-issues="hasIssues"
+        :effective-dup-docs="effectiveDupDocs"
+        :health-settings="healthSettings"
+        :deduction-rows="deductionRows"
+        @selectCategory="$emit('selectCategory', $event)"
+        @update:health-settings="$emit('update:healthSettings', $event)"
+      />
 
       <!-- 统计工具栏：名称排除 + 隐藏零值 -->
       <div class="stats-toolbar">
@@ -225,6 +168,7 @@ import type {
   DepthStats,
   DocStats,
   DuplicateNameGroup,
+  HealthSettings,
   StatSectionDef,
   StatTableRow,
 } from "../../types/index"
@@ -232,6 +176,7 @@ import { QUALITY_CARDS, STAT_SECTIONS } from "../../types/index"
 import { Icon } from "@iconify/vue"
 import { computed, ref } from "vue"
 import { useStatsOverview } from "../../composables/useStatsOverview"
+import HeroCard from "./HeroCard.vue"
 import StatTable from "./StatTable.vue"
 import BookmarkDetailModal from "./BookmarkDetailModal.vue"
 import DuplicateNameFilterModal from "./DuplicateNameFilterModal.vue"
@@ -246,6 +191,7 @@ interface Props {
   bookmarkDetailLoading: boolean
   effectiveDuplicateGroups: DuplicateNameGroup[]
   duplicateNameFilter: string[]
+  healthSettings: HealthSettings
 }
 
 const props = defineProps<Props>()
@@ -256,6 +202,7 @@ defineEmits<{
   (e: "selectBookmark", bookmark: string): void
   (e: "selectDepth", depth: number): void
   (e: "update:duplicateNameFilter", value: string[]): void
+  (e: "update:healthSettings", settings: HealthSettings): void
 }>()
 
 const statSections = STAT_SECTIONS as readonly StatSectionDef[]
@@ -266,6 +213,7 @@ const {
   healthPct,
   healthTooltip,
   hasIssues,
+  deductionRows,
   pctStr,
   toCardRows,
   platformEntries,

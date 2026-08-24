@@ -265,3 +265,16 @@
     background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
   }
 }
+
+// ============ 表格区块 2 列网格布局 ============
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $spacing-2;
+  align-items: start;
+
+  // 网格布局下由 gap 提供间距，去除 StatTable 自带底部外边距
+  .stat-table {
+    margin-bottom: 0;
+  }
+}

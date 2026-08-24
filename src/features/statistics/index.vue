@@ -111,8 +111,8 @@ import {
   watch,
 } from "vue"
 import Loader from "@/components/Loader.vue"
-import ActivityTab from "./components/activity/index.vue"
-import DistributionTab from "./components/distribution/index.vue"
+import ActivityTab from "./components/NotebookActivity/index.vue"
+import DistributionTab from "./components/NotebookDistribution/index.vue"
 import HeatmapTab from "./components/heatmap/index.vue"
 import MilestonesTab from "./components/milestones/index.vue"
 import OverviewTab from "./components/overview/index.vue"

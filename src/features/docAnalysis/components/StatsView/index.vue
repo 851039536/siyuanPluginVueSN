@@ -1,4 +1,4 @@
-<!-- 文档统计概览组件 - 统一平铺面板（Hero 汇总卡 + 工具栏 + 分区卡片 + 图表） -->
+<!-- 文档统计概览组件 - 表格化单页布局（Hero 汇总 + 工具栏 + 九个表格区块） -->
 <template>
   <div class="stats-overview">
     <template v-if="hasAnalyzed">
@@ -72,22 +72,8 @@
         </div>
       </div>
 
-      <!-- 统计工具栏：Tab 切换 + 名称排除 + 隐藏零值 -->
+      <!-- 统计工具栏：名称排除 + 隐藏零值 -->
       <div class="stats-toolbar">
-        <button
-          v-for="tab in statsTabs"
-          :key="tab.key"
-          class="stats-tab-btn"
-          :class="{ active: activeStatsTab === tab.key }"
-          @click="activeStatsTab = tab.key"
-        >
-          <Icon
-            :icon="tab.icon"
-            :size="13"
-          />
-          {{ tab.label }}
-        </button>
-        <!-- 名称排除（仅在有重名文档时可用） -->
         <button
           v-if="effectiveDupDocs > 0"
           class="toolbar-btn name-filter-btn"
@@ -111,11 +97,11 @@
         >
           <Icon icon="mdi:close" :size="13" />
         </button>
-        <!-- 隐藏零值开关（概览/质量 Tab 共用） -->
+        <!-- 隐藏零值开关（作用于全部表格） -->
         <button
           class="toolbar-btn hide-zero-btn"
           :class="{ active: hideZero }"
-          title="隐藏零值卡片"
+          title="隐藏零值行"
           @click.stop="hideZero = !hideZero"
         >
           <Icon
@@ -125,139 +111,79 @@
         </button>
       </div>
 
-      <!-- Tab: 概览 — 元数据驱动分区 -->
-      <div v-show="activeStatsTab === 'overview'">
-        <StatSection
-          v-for="section in statSections"
-          :key="section.key"
-          :title="section.title"
-          :icon="section.icon"
+      <!-- 卡片类表格（大小/时间/书签/发布，元数据驱动） -->
+      <StatTable
+        v-for="section in statSections"
+        :key="section.key"
+        :title="section.title"
+        :icon="section.icon"
+        :rows="filterZeroRows(cardRowsMap[section.key])"
+        :active-id="activeFilter"
+        @select="(id) => $emit('selectCategory', id)"
+      >
+        <template
+          v-if="section.key === 'bookmark'"
+          #headerExtra
         >
-          <template #headerExtra>
-            <button
-              v-if="section.key === 'bookmark'"
-              class="bookmark-detail-btn"
-              title="查看全部书签"
-              @click.stop="$emit('showBookmarkDetails')"
-            >
-              <Icon icon="mdi:format-list-bulleted" :size="13" />详情
-            </button>
-          </template>
-          <div class="section-cards">
-            <StatCard
-              v-for="card in filterVisibleCards(section.cards, hideZero)"
-              :key="card.id"
-              :card-id="card.id"
-              :value="getCardValue(card)"
-              :label="cardLabel(card)"
-              :color-class="card.colorClass"
-              :active="activeFilter === card.id"
-              :pct="pctStr(getCardValue(card))"
-              @select="(id) => $emit('selectCategory', id)"
-            />
-          </div>
-        </StatSection>
-      </div>
+          <button
+            class="bookmark-detail-btn"
+            title="查看全部书签"
+            @click.stop="$emit('showBookmarkDetails')"
+          >
+            <Icon icon="mdi:format-list-bulleted" :size="13" />详情
+          </button>
+        </template>
+      </StatTable>
 
-      <!-- Tab: 分布 — 平台 + 字数 + 书签分类 -->
-      <div v-show="activeStatsTab === 'distribution'">
-        <!-- 平台分布柱状图 -->
-        <StatSection
-          v-if="platformEntries.length > 0"
-          title="平台分布"
-          icon="mdi:chart-bar"
-        >
-          <template #headerExtra>
-            <span class="section-hint">人均 {{ avgPlatformsPerDoc }} 平台 · 覆盖率 {{ coveragePct }}%</span>
-          </template>
-          <div class="bar-chart">
-            <BarRow
-              v-for="entry in platformEntries"
-              :key="entry.id"
-              :label="entry.name"
-              :count="entry.count"
-              :pct="entry.pct"
-            />
-          </div>
-        </StatSection>
+      <!-- 文档质量表 -->
+      <StatTable
+        title="文档质量"
+        icon="mdi:clipboard-check-outline"
+        :rows="filterZeroRows(qualityRows)"
+        :active-id="activeFilter"
+        @select="(id) => $emit('selectCategory', id)"
+      />
 
-        <!-- 字数分布 -->
-        <StatSection
-          v-if="stats.wordCountDistribution.length > 0"
-          title="字数分布"
-          icon="mdi:text-short"
-        >
-          <div class="bar-chart">
-            <BarRow
-              v-for="item in stats.wordCountDistribution"
-              :key="item.label"
-              :label="item.label"
-              :count="item.count"
-              :pct="barPct(maxWordCount, item.count)"
-            />
-          </div>
-        </StatSection>
+      <!-- 平台分布表 -->
+      <StatTable
+        v-if="platformEntries.length > 0"
+        title="平台分布"
+        icon="mdi:chart-bar"
+        :rows="filterZeroRows(platformRows)"
+      >
+        <template #headerExtra>
+          <span class="section-hint">人均 {{ avgPlatformsPerDoc }} 平台 · 覆盖率 {{ coveragePct }}%</span>
+        </template>
+      </StatTable>
 
-        <!-- 自定义书签 -->
-        <StatSection
-          v-if="stats.customBookmarkTop.length > 0"
-          :title="`书签分类 Top-${stats.customBookmarkTop.length}`"
-          icon="mdi:tag-outline"
-        >
-          <div class="bar-chart">
-            <BarRow
-              v-for="item in stats.customBookmarkTop"
-              :key="item.value"
-              :label="item.value"
-              :count="item.count"
-              :pct="barPct(maxCustomBm, item.count)"
-            />
-          </div>
-        </StatSection>
-      </div>
+      <!-- 字数分布表 -->
+      <StatTable
+        v-if="stats.wordCountDistribution.length > 0"
+        title="字数分布"
+        icon="mdi:text-short"
+        :rows="filterZeroRows(wordCountRows)"
+      />
 
-      <!-- Tab: 质量 — 文档质量 + 深度分布 -->
-      <div v-show="activeStatsTab === 'quality'">
-        <!-- 文档质量 -->
-        <StatSection
-          title="文档质量"
-          icon="mdi:clipboard-check-outline"
-        >
-          <div class="section-cards">
-            <StatCard
-              v-for="card in filterVisibleCards(QUALITY_CARDS, hideZero)"
-              :key="card.id"
-              :card-id="card.id"
-              :value="getCardValue(card)"
-              :label="cardLabel(card)"
-              :color-class="card.colorClass"
-              :active="activeFilter === card.id"
-              :pct="pctStr(getCardValue(card))"
-              @select="(id) => $emit('selectCategory', id)"
-            />
-          </div>
-        </StatSection>
-        <StatSection
-          v-if="depthStats.depthDistribution.length > 0"
-          title="深度分布"
-          icon="mdi:chart-bar"
-        >
-          <template #headerExtra>
-            <span class="section-hint">均 {{ depthStats.avgDepth }} 层 · 最深 {{ depthStats.maxDepth }} 层</span>
-          </template>
-          <div class="bar-chart">
-            <BarRow
-              v-for="item in depthStats.depthDistribution"
-              :key="item.depth"
-              :label="String(item.depth)"
-              :count="item.count"
-              :pct="barPct(maxDepthCount, item.count)"
-              clickable
-              @click="$emit('selectDepth', item.depth)"
-            />
-          </div>
-        </StatSection>
-      </div>
+      <!-- 深度分布表 -->
+      <StatTable
+        v-if="depthStats.depthDistribution.length > 0"
+        title="深度分布"
+        icon="mdi:chart-bar"
+        :rows="filterZeroRows(depthRows)"
+        @select="(id) => $emit('selectDepth', Number(id))"
+      >
+        <template #headerExtra>
+          <span class="section-hint">均 {{ depthStats.avgDepth }} 层 · 最深 {{ depthStats.maxDepth }} 层</span>
+        </template>
+      </StatTable>
+
+      <!-- 书签分类表 -->
+      <StatTable
+        v-if="stats.customBookmarkTop.length > 0"
+        :title="`书签分类 Top-${stats.customBookmarkTop.length}`"
+        icon="mdi:tag-outline"
+        :rows="filterZeroRows(customBookmarkRows)"
+      />
     </template>
 
     <div
@@ -297,14 +223,13 @@ import type {
   DocStats,
   DuplicateNameGroup,
   StatSectionDef,
+  StatTableRow,
 } from "../../types/index"
 import { QUALITY_CARDS, STAT_SECTIONS } from "../../types/index"
 import { Icon } from "@iconify/vue"
-import { ref } from "vue"
+import { computed, ref } from "vue"
 import { useStatsOverview } from "../../composables/useStatsOverview"
-import StatCard from "./StatCard.vue"
-import StatSection from "./StatSection.vue"
-import BarRow from "./BarRow.vue"
+import StatTable from "./StatTable.vue"
 import BookmarkDetailModal from "./BookmarkDetailModal.vue"
 import DuplicateNameFilterModal from "./DuplicateNameFilterModal.vue"
 
@@ -332,38 +257,82 @@ defineEmits<{
 
 const statSections = STAT_SECTIONS as readonly StatSectionDef[]
 
-/** 统计视图计算逻辑（健康度/卡片值/柱状图比例/平台分布/重名过滤） */
+/** 统计视图计算逻辑（健康度/卡片值/占比/平台分布） */
 const {
   effectiveDupDocs,
   healthPct,
   healthTooltip,
   hasIssues,
-  getCardValue,
-  cardLabel,
-  filterVisibleCards,
   pctStr,
-  barPct,
+  toCardRows,
   platformEntries,
   avgPlatformsPerDoc,
   coveragePct,
-  maxWordCount,
-  maxCustomBm,
-  maxDepthCount,
 } = useStatsOverview(props)
 
-/** 隐藏零值开关（概览/质量 Tab 共用） */
+/** 隐藏零值开关（作用于全部表格） */
 const hideZero = ref(false)
-
-const activeStatsTab = ref("overview")
-const statsTabs = [
-  { key: "overview", label: "概览", icon: "mdi:view-dashboard-outline" },
-  { key: "distribution", label: "分布", icon: "mdi:chart-bar" },
-  { key: "quality", label: "质量", icon: "mdi:chart-box-outline" },
-]
 
 /** 重名排除管理弹窗可见性 */
 const dupFilterModalVisible = ref(false)
 
+/** 卡片分区表格行映射（按分区 key 缓存） */
+const cardRowsMap = computed<Record<string, StatTableRow[]>>(() => {
+  const map: Record<string, StatTableRow[]> = {}
+  for (const section of statSections) {
+    map[section.key] = toCardRows(section.cards)
+  }
+  return map
+})
+
+/** 文档质量表格行 */
+const qualityRows = computed(() => toCardRows(QUALITY_CARDS))
+
+/** 平台分布表格行（不可下钻） */
+const platformRows = computed<StatTableRow[]>(() =>
+  platformEntries.value.map((e) => ({
+    id: e.id,
+    label: e.name,
+    count: e.count,
+    pct: pctStr(e.count),
+  })),
+)
+
+/** 字数分布表格行（不可下钻） */
+const wordCountRows = computed<StatTableRow[]>(() =>
+  props.stats.wordCountDistribution.map((item) => ({
+    id: item.label,
+    label: item.label,
+    count: item.count,
+    pct: pctStr(item.count),
+  })),
+)
+
+/** 深度分布表格行（可下钻） */
+const depthRows = computed<StatTableRow[]>(() =>
+  props.depthStats.depthDistribution.map((item) => ({
+    id: String(item.depth),
+    label: String(item.depth),
+    count: item.count,
+    pct: pctStr(item.count),
+    clickable: true,
+  })),
+)
+
+/** 书签分类表格行（不可下钻） */
+const customBookmarkRows = computed<StatTableRow[]>(() =>
+  props.stats.customBookmarkTop.map((item) => ({
+    id: item.value,
+    label: item.value || "(空值)",
+    count: item.count,
+    pct: pctStr(item.count),
+  })),
+)
+
+/** 隐藏零值行过滤（作用于全部表格） */
+function filterZeroRows(rows: StatTableRow[]): StatTableRow[] {
+  return hideZero.value ? rows.filter((r) => r.count > 0) : rows
+}
 </script>
 
 <style lang="scss" scoped>

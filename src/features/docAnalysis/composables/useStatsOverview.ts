@@ -1,5 +1,5 @@
 /**
- * 文档分析功能 - StatsOverview 视图计算逻辑（健康度/卡片值/柱状图比例/平台分布）
+ * 文档分析功能 - StatsOverview 视图计算逻辑（健康度/卡片值/表格行/平台分布）
  */
 import { computed } from "vue"
 import type {
@@ -8,6 +8,7 @@ import type {
   DocStats,
   DuplicateNameGroup,
   StatCardDef,
+  StatTableRow,
 } from "../types/index"
 import { PLATFORM_META } from "./platformMeta"
 import { WC_TOP_BIN_LABEL } from "../utils/docStatsAnalyzer"
@@ -119,30 +120,25 @@ export function useStatsOverview(props: UseStatsOverviewProps) {
     return card.shortLabel
   }
 
-  /** 按 hideZero 开关过滤可见卡片（概览分区与质量 Tab 共用） */
-  function filterVisibleCards(cards: StatCardDef[], hideZero: boolean): StatCardDef[] {
-    if (!hideZero) return cards
-    return cards.filter((c) => getCardValue(c) > 0)
-  }
-
-  /** 卡片底部占比条（字符串百分比，供 StatCard 的 width 直接使用） */
+  /** 数量占总文档数百分比（平台分布可超 100%，故不加 100 上限） */
   function pctStr(count: number): string {
     if (!props.stats.totalDocs) return "0%"
-    return `${Math.min(100, Math.round((count / props.stats.totalDocs) * 100))}%`
+    return `${Math.round((count / props.stats.totalDocs) * 100)}%`
   }
 
-  // ============================================================
-  // 横向柱状图（平台/字数/书签/深度）共用比例计算
-  // ============================================================
-
-  /** 数据集最大计数（空集兜底为 1，避免除零） */
-  function maxCount(items: { count: number }[]): number {
-    return Math.max(...items.map((i) => i.count), 1)
-  }
-
-  /** 相对最大值的百分比（BarRow 直接使用数值宽度） */
-  function barPct(max: number, count: number): number {
-    return Math.round((count / max) * 100)
+  /** 将卡片元数据映射为表格行（label/count/pct/colorClass/clickable） */
+  function toCardRows(cards: StatCardDef[]): StatTableRow[] {
+    return cards.map((card) => {
+      const count = getCardValue(card)
+      return {
+        id: card.id,
+        label: cardLabel(card),
+        count,
+        pct: pctStr(count),
+        colorClass: card.colorClass,
+        clickable: true,
+      }
+    })
   }
 
   // ============================================================
@@ -151,15 +147,13 @@ export function useStatsOverview(props: UseStatsOverviewProps) {
 
   const platformEntries = computed(() => {
     const counts = props.stats.platformCounts
-    const entries = Object.entries(counts)
+    return Object.entries(counts)
       .map(([id, count]) => {
         const meta = PLATFORM_META.value.find((p) => p.id === id)
         return { id, name: meta?.name || id, count }
       })
       .filter((e) => e.count > 0)
       .sort((a, b) => b.count - a.count)
-    const max = maxCount(entries)
-    return entries.map((e) => ({ ...e, pct: barPct(max, e.count) }))
   })
 
   const docsInSystem = computed(() =>
@@ -177,22 +171,10 @@ export function useStatsOverview(props: UseStatsOverviewProps) {
     return Math.round((docsInSystem.value / props.stats.totalDocs) * 100)
   })
 
-  // ============================================================
-  // 字数分布 / 书签分类 / 深度分布柱状图
-  // ============================================================
-
-  const maxWordCount = computed(() => maxCount(props.stats.wordCountDistribution))
-
-  const maxCustomBm = computed(() => maxCount(props.stats.customBookmarkTop))
-
-  const maxDepthCount = computed(() => maxCount(props.depthStats.depthDistribution))
-
   return {
     effectiveDupGroups, effectiveDupDocs, effectiveDupGroupCount,
     healthPct, healthTooltip, hasIssues,
-    getCardValue, cardLabel, filterVisibleCards, pctStr,
-    maxCount, barPct,
+    getCardValue, cardLabel, pctStr, toCardRows,
     platformEntries, docsInSystem, avgPlatformsPerDoc, coveragePct,
-    maxWordCount, maxCustomBm, maxDepthCount,
   }
 }

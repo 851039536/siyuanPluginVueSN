@@ -174,35 +174,6 @@
   }
 }
 
-.stats-tab-btn {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: $spacing-px;
-  padding: 4px 6px;
-  border: none;
-  border-radius: $vp-radius;
-  background: transparent;
-  color: var(--b3-theme-on-surface-variant);
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-normal;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.12s, color 0.12s;
-
-  &:hover {
-    color: var(--b3-theme-on-background);
-  }
-
-  &.active {
-    background: var(--b3-theme-background);
-    color: var(--b3-theme-primary);
-    font-weight: $font-weight-semibold;
-    border: 1px solid var(--b3-border-color);
-  }
-}
-
 // 工具栏徽章（名称排除计数）
 .toolbar-badge {
   display: inline-flex;
@@ -254,20 +225,8 @@
   font-weight: $font-weight-normal;
   letter-spacing: 0;
   text-transform: none;
-}
-
-// ============ 卡片行（网格对齐，概览/质量 Tab 共用） ============
-.section-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
-  gap: $spacing-1;
-}
-
-// ============ 横向柱状图列表（平台/字数/书签/深度共用） ============
-.bar-chart {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-px;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-variant);
 }
 
 // ============ 占位状态 ============
@@ -290,7 +249,6 @@
 
 // ============ 书签详情按钮 ============
 .bookmark-detail-btn {
-  margin-left: auto;
   display: inline-flex;
   align-items: center;
   gap: $spacing-2px;

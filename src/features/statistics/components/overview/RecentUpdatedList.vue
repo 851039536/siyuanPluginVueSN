@@ -57,7 +57,7 @@
 import type { RecentUpdatedDoc } from "../../types"
 import { computed } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { formatYmd, openDocById } from "../../utils"
+import { formatYmd, getTodayStr, openDocById, parseYmd } from "../../utils"
 
 interface Props {
   docs?: RecentUpdatedDoc[]
@@ -70,10 +70,6 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false,
   i18n: () => ({}),
 })
-
-function getTodayStr(): string {
-  return formatYmd(new Date())
-}
 
 function getYesterdayStr(): string {
   const d = new Date()
@@ -93,12 +89,7 @@ function getTimeGroup(updated: string): TimeGroup {
   if (date8 === getTodayStr()) return 'today'
   if (date8 === getYesterdayStr()) return 'yesterday'
 
-  const today = new Date()
-  const y = Number.parseInt(updated.substring(0, 4))
-  const mo = Number.parseInt(updated.substring(4, 6)) - 1
-  const d = Number.parseInt(updated.substring(6, 8))
-  const docDate = new Date(y, mo, d)
-  const diffDay = Math.floor((today.getTime() - docDate.getTime()) / 86400000)
+  const diffDay = Math.floor((Date.now() - parseYmd(date8).getTime()) / 86400000)
   if (diffDay < 7) return 'thisWeek'
   return 'earlier'
 }

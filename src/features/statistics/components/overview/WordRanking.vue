@@ -68,7 +68,7 @@ import {
   ref,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { formatNumber } from "../../utils"
+import { barPct, formatNumber } from "../../utils"
 
 interface Props {
   chartData?: DailyWordCount[]
@@ -97,8 +97,7 @@ const maxWords = computed(() => {
 })
 
 function getBarWidth(words: number): string {
-  if (maxWords.value === 0) return "0%"
-  return `${(words / maxWords.value) * 100}%`
+  return barPct(words, maxWords.value)
 }
 
 function getRankClass(index: number): string {

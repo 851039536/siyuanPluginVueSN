@@ -565,6 +565,7 @@ openWindow({ tab, width?, height?, position?: { x, y } })
 3. **`index.ts` 注册**：register 函数内实例化 Manager + `plugin.addIcons()` 注册页签图标 symbol，挂载 `(plugin as any).__xxx = { openFloating, destroy }` 并加入 `DESTROYABLE_KEYS`
 4. **双实例隔离**：底部面板/常驻弹窗打开时点击「在独立窗口打开」应先关闭自身 UI，避免两处同时渲染同一功能
 5. **浮动窗口识别**：`getFrontend() === "desktop-window"` 表示当前在独立浮动窗口中，此形态隐藏「在独立窗口打开」按钮
+6. **独立窗体 UI 精简（强制）**：浮动窗口页签/窗口标题已标识功能名，面板头部不再显示重复标题字样（如 toolCollection 的 `header-title`"工具合集"）。判定统一用 `isFloating` computed（`getFrontend() === "desktop-window"`）加 `v-if="!isFloating"` 隐藏，仅移除显示字样，功能逻辑零改动
 
 ### 关键点速查表
 
@@ -577,6 +578,7 @@ openWindow({ tab, width?, height?, position?: { x, y } })
 | 页签图标 | `plugin.addIcons()` 注册自定义 symbol 后，`custom.icon` 引用该 id |
 | openWindow 失败 | 页签自动留在主窗口，catch 后 `console.error` 即可 |
 | getFrontend | `"desktop"` = 主窗口 / `"desktop-window"` = 浮动窗口 |
+| 独立窗体 UI | `isFloating` 时隐藏面板头部标题等重复字样（页签标题已标识功能名），仅移除显示、不动功能逻辑 |
 | Vue 面板挂载 | `createApp` + `h(Panel, { plugin, mode: "tab" })`，容器补 `vp-dock-root` 类 |
 
 > 参考实现：`src/features/minimalBrowser/types/index.ts`（BrowserManager）+ `src/features/toolCollection/types/index.ts`（ToolCollectionManager，overlay/tab 双形态）

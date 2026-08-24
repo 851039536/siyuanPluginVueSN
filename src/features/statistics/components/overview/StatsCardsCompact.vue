@@ -12,10 +12,6 @@
         <div class="core-value-row">
           <span class="core-value">{{ item.value }}</span>
           <span
-            v-if="item.unitText"
-            class="core-unit"
-          >（{{ item.unitText }}）</span>
-          <span
             v-if="item.change !== null"
             class="core-change"
             :class="item.change > 0 ? 'up' : (item.change < 0 ? 'down' : '')"
@@ -93,41 +89,28 @@ const props = withDefaults(defineProps<Props>(), {
   }),
 })
 
-function formatChineseUnit(num: number): string {
-  if (num >= 100000000) {
-    return `${(num / 100000000).toFixed(1)}亿`
-  } else if (num >= 10000) {
-    return `${(num / 10000).toFixed(1)}万`
-  }
-  return ""
-}
-
 const coreItems = computed(() => [
   {
     value: formatNumber(props.totalNotes),
     label: props.i18n.totalNotes,
-    unitText: formatChineseUnit(props.totalNotes),
     change: props.notesChange,
     isPercent: false,
   },
   {
     value: formatNumber(props.totalWords),
     label: props.i18n.totalWords,
-    unitText: formatChineseUnit(props.totalWords),
     change: props.wordsChange,
     isPercent: false,
   },
   {
     value: String(props.todayCreated),
     label: props.i18n.todayCreated,
-    unitText: "",
     change: props.createdChange,
     isPercent: true,
   },
   {
     value: String(props.todayModified),
     label: props.i18n.todayModified,
-    unitText: "",
     change: props.modifiedChange,
     isPercent: true,
   },

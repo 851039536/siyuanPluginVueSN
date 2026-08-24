@@ -189,7 +189,7 @@ import {
   ref,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { barPct, formatYmd, toDashedYmd } from "../../utils"
+import { barPct, formatYmd, getTodayStr, toDashedYmd } from "../../utils"
 import DocChangeList from "./DocChangeList.vue"
 import RecentUpdatedList from "./RecentUpdatedList.vue"
 interface Props {
@@ -209,10 +209,6 @@ const expanded = ref(true)
 
 function toggleExpanded() {
   expanded.value = !expanded.value
-}
-
-function getTodayStr(): string {
-  return formatYmd(new Date())
 }
 
 // 单日变更分组空态（避免多处重复内联对象）

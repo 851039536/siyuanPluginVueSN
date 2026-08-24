@@ -90,6 +90,13 @@ export function formatYmd(date: Date): string {
 }
 
 /**
+ * 今天的紧凑日期字符串 YYYYMMDD
+ */
+export function getTodayStr(): string {
+  return formatYmd(new Date())
+}
+
+/**
  * 紧凑日期字符串 YYYYMMDD → 带连字符的 YYYY-MM-DD
  */
 export function toDashedYmd(ymd: string): string {

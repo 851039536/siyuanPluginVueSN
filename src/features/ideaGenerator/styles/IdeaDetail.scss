@@ -4,8 +4,8 @@
 .ig-detail {
   display: flex;
   flex-direction: column;
-  width: 300px;
-  flex-shrink: 0;
+  flex: 0 1 300px;
+  min-width: 280px;
   border-left: 1px solid $color-border;
   background: var(--b3-theme-surface);
   overflow: hidden;

@@ -1,0 +1,66 @@
+// 引导发散 — 方向卡片样式（边框卡片 + hover 高亮上浮）
+@use '@/variables.scss' as *;
+
+.gd-dir {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-3 $spacing-4;
+  border: 1px solid $color-border;
+  border-radius: $vp-radius;
+  background: var(--b3-theme-surface);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    transform 0.15s;
+
+  &:hover {
+    border-color: $color-accent;
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: $color-accent;
+  }
+}
+
+.gd-dir-index {
+  flex-shrink: 0;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  line-height: $line-height-normal;
+  color: $color-accent;
+}
+
+.gd-dir-content {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-px;
+  flex: 1;
+  min-width: 0;
+}
+
+.gd-dir-label {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  line-height: $line-height-normal;
+  color: var(--b3-theme-on-background);
+}
+
+.gd-dir-desc {
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-normal;
+  line-height: $line-height-normal;
+  color: $color-muted;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gd-dir-arrow {
+  flex-shrink: 0;
+  color: $color-muted;
+}

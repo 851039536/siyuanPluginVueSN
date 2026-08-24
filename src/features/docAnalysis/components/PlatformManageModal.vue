@@ -158,7 +158,7 @@ import { computed, ref, watch } from "vue"
 import { Icon } from "@iconify/vue"
 import type { PlatformMeta } from "../types/index"
 import { DEFAULT_PLATFORM_META } from "../types/index"
-import { PLATFORM_META } from "../composables/useDocAnalysis"
+import { PLATFORM_META } from "../composables/platformMeta"
 
 interface Props {
   visible: boolean

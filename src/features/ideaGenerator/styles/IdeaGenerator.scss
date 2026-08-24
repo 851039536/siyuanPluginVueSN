@@ -12,6 +12,51 @@
   background: var(--b3-theme-background);
 }
 
+// ==================== 模式 Tab ====================
+
+.ig-mode-tabs {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+  padding: 0 $spacing-4;
+  border-bottom: 1px solid $color-border;
+  background: var(--b3-theme-surface);
+}
+
+.ig-mode-tab {
+  position: relative;
+  padding: $spacing-2 $spacing-1;
+  border: none;
+  background: transparent;
+  color: $color-muted;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-normal;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: color 0.15s;
+
+  &:hover {
+    color: var(--b3-theme-on-surface);
+  }
+}
+
+.ig-mode-tab--active {
+  color: var(--b3-theme-on-background);
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    background: $color-accent;
+  }
+}
+
 // ==================== 顶部操作区 ====================
 
 .ig-toolbar {
@@ -74,13 +119,15 @@
   display: flex;
   flex: 1;
   min-height: 0;
+  // 窄容器下详情区换行到下方而非溢出被裁切
+  flex-wrap: wrap;
 }
 
 .ig-list {
   display: flex;
   flex-direction: column;
   gap: $spacing-3;
-  flex: 1;
+  flex: 1 1 400px;
   min-width: 0;
   padding: $spacing-4;
   // 滚动内容与右侧详情区保持间距，避免紧贴

@@ -40,6 +40,16 @@ export interface IdeaItem {
   description: string
 }
 
+/** 引导发散阶段 */
+export type GuideStage = "input" | "guiding" | "ideas"
+
+/** 引导发散中的单个方向选项 */
+export interface GuideDirection {
+  id: string
+  label: string
+  description: string
+}
+
 /** 灵感生成器 i18n 键接口 */
 export interface IdeaGeneratorI18n {
   title?: string
@@ -66,6 +76,19 @@ export interface IdeaGeneratorI18n {
   statusDone?: string
   generateError?: string
   refineError?: string
+  // 引导发散相关
+  quickTab?: string
+  guideTab?: string
+  guideTopicPlaceholder?: string
+  guideTopicHint?: string
+  guideStart?: string
+  guideChooseHint?: string
+  guideRegenerate?: string
+  guideStepBack?: string
+  guideDiverge?: string
+  guideRestart?: string
+  guideEmptyTopic?: string
+  guideDirectionsLoading?: string
 }
 
 export const TAB_TYPE = "idea-generator-tab"

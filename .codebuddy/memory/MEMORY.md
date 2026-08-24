@@ -8,6 +8,7 @@
 - 优先思源内置图标或 @iconify/vue
 - if 语句必须有花括号 `{}`，即使只有一行
 - i18n 只改分片文件（`src/i18n/{zh_CN,en_US}/<feature>.json`）；顶层合并 JSON（`src/i18n/zh_CN.json` / `en_US.json`）由 `pnpm i18n:merge` 脚本自动生成，**禁止手动修改**
+- **独立窗体 UI 精简规则**（2026-08-24）：addTab + openWindow 独立窗体/浮动窗口中，页签标题已标识功能名，面板头部不再显示重复标题字样（如 toolCollection 的"工具合集" header-title），用 `isFloating`（`getFrontend() === "desktop-window"`）+ `v-if="!isFloating"` 隐藏，仅移除显示、功能逻辑零改动。规则已写入 AGENTS.md / AGENTS_API.md
 
 ## 代码风格硬规则
 - 单文件行数：300 行警戒，500 行硬阈值，≥1000 行必须重构

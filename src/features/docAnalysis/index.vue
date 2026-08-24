@@ -28,6 +28,18 @@
         排版
       </button>
       <div class="tab-bar-spacer" />
+      <!-- 在独立窗口打开（浮动窗口内隐藏；关闭浮动窗口自动移回主窗口） -->
+      <button
+        v-if="!isFloating"
+        class="float-btn"
+        :title="i18n.openFloatingWindow"
+        @click="openFloatingWindow"
+      >
+        <Icon
+          icon="mdi:open-in-new"
+          :size="14"
+        />
+      </button>
       <button
         class="analyze-btn"
         :disabled="statsLoading"
@@ -214,6 +226,9 @@
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
+import {
+  getFrontend,
+} from "siyuan"
 import { Icon } from "@iconify/vue"
 import {
   computed,
@@ -239,9 +254,31 @@ interface Props {
   /** docAnalysis 分片 i18n（index.ts 传入 plugin.i18n.docAnalysis，扁平键值） */
   i18n: DocI18n
   plugin: Plugin
+  /** 承载模式：dock = 侧边栏面板；tab = 独立页签/浮动窗口 */
+  mode?: "dock" | "tab"
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  mode: "dock",
+})
+
+/** 当前是否运行在独立浮动窗口中（思源 getFrontend()：desktop=主窗口 / desktop-window=新窗口） */
+const isFloating = computed(() => {
+  try {
+    return getFrontend() === "desktop-window"
+  } catch {
+    return false
+  }
+})
+
+/** 打开独立浮动窗口：经 __docAnalysis 挂载的 Manager 调度 */
+const openFloatingWindow = () => {
+  const manager = (props.plugin as any).__docAnalysis as
+    | { openFloating: () => void }
+    | undefined
+  if (!manager) return
+  void manager.openFloating()
+}
 
 const {
   notebooks,

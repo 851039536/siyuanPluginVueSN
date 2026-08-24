@@ -53,6 +53,7 @@
     "promoteBtnTitle": "复制内容末尾是否追加推广文案",
     "promoteToggle": "复制内容末尾追加推广文案",
     "promoteTextPlaceholder": "输入推广文案，如：公众号搜「oykperson」，一起学习，共同成长！",
-    "promoteHint": "复制 HTML / 复制 MD / 发布时，内容末尾将自动追加以下文案（关闭开关则不追加）"
+    "promoteHint": "复制 HTML / 复制 MD / 发布时，内容末尾将自动追加以下文案（关闭开关则不追加）",
+    "openFloatingWindow": "在独立窗口打开"
   }
 }

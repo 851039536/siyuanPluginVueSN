@@ -639,7 +639,8 @@
     "promoteBtnTitle": "Append promo text when copying content",
     "promoteToggle": "Append promo text when copying content",
     "promoteTextPlaceholder": "Enter promo text, e.g. Follow WeChat: oykperson, learn together!",
-    "promoteHint": "Copy HTML / Copy MD / Publish will append the promo text below (disabled when toggle off)"
+    "promoteHint": "Copy HTML / Copy MD / Publish will append the promo text below (disabled when toggle off)",
+    "openFloatingWindow": "Open in floating window"
   },
   "enableDocNavigation": "Enable Document Navigation",
   "enableDocNavigationDesc": "Auto display navigation links to parent and child documents below title",

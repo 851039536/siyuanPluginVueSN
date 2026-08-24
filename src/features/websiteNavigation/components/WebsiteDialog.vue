@@ -164,17 +164,17 @@ const handleSave = async () => {
     if (props.entryId) {
       const ok = await updateEntry(props.entryId, form)
       if (!ok) {
-        showMessage(props.i18n.saveFailed, 3000, "error")
+        showMessage(props.i18n.saveFailed ?? "", 3000, "error")
         return
       }
-      showMessage(props.i18n.updateSuccess, 2000, "info")
+      showMessage(props.i18n.updateSuccess ?? "", 2000, "info")
     } else {
       await createEntry(form)
-      showMessage(props.i18n.createSuccess, 2000, "info")
+      showMessage(props.i18n.createSuccess ?? "", 2000, "info")
     }
     emit("saved")
   } catch {
-    showMessage(props.i18n.saveFailed, 3000, "error")
+    showMessage(props.i18n.saveFailed ?? "", 3000, "error")
   } finally {
     saving.value = false
   }

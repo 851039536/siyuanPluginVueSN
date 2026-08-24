@@ -64,6 +64,7 @@ export interface PluginSettings {
   enableGlobalRelations: boolean // 是否启用全局关系列表功能
   enableQuickNote: boolean // 是否启用速记功能
   enableQuickNoteAutoOpen: boolean // 速记子开关：启动时自动打开速记弹窗
+  enableIdeaGenerator: boolean // 是否启用灵感生成器功能
   featureStatus: Record<string, string> // 功能状态标识: featureId -> 'stable' | 'needsFix' | 'critical' | 'minor'
   themeColorScheme: ThemeColorSchemeId // 主题色方案 ID（内置主题 + "custom"）
   customThemeColor: string // 自定义主题色（schemeId 为 "custom" 时使用）
@@ -136,6 +137,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableGlobalRelations: true,
   enableQuickNote: true,
   enableQuickNoteAutoOpen: false,
+  enableIdeaGenerator: true,
   featureStatus: {},
   themeColorScheme: "orange",
   customThemeColor: "#d97757",

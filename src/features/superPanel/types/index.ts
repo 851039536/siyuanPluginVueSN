@@ -101,6 +101,7 @@ const ACTION_EVENT_MAP: Record<
   openS3FileManager: { event: "openS3FileManager" },
   openGlobalRelations: { event: "toggleGlobalRelations" },
   openMinimalBrowser: { event: "openMinimalBrowser" },
+  openIdeaGenerator: { event: "openIdeaGenerator" },
 }
 
 /**

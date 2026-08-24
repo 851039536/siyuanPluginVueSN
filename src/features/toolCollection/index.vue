@@ -17,8 +17,11 @@
           class="resize-handle"
           @mousedown="onResizeStart"
         />
-        <!-- 头部 -->
-        <div class="tool-collection-header">
+        <!-- 头部（独立浮动窗口内隐藏：窗口页签标题已标识"工具合集"，避免重复字样；底部面板正常显示） -->
+        <div
+          v-if="!isFloating"
+          class="tool-collection-header"
+        >
           <span class="header-title">{{ i18n.toolCollection }}</span>
           <!-- 尺寸调整按钮组（仅底部面板模式显示） -->
           <div

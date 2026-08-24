@@ -1,0 +1,149 @@
+// 灵感生成器 — 主面板布局样式（操作区/状态条/卡片列表/骨架/空状态）
+@use '@/variables.scss' as *;
+
+.ig-panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  // 根容器显式基准字号（Dock 面板兜底规则）
+  font-size: $font-size-xs;
+  background: var(--b3-theme-background);
+}
+
+// ==================== 顶部操作区 ====================
+
+.ig-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: $spacing-3;
+  padding: $spacing-3 $spacing-4;
+  border-bottom: 1px solid $color-border;
+  background: var(--b3-theme-surface);
+}
+
+.ig-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.ig-toolbar-input {
+  width: 180px;
+  padding: $spacing-1 $spacing-3;
+  border: 1px solid $color-border;
+  border-radius: $vp-radius;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  font-size: $font-size-xs;
+  font-weight: $font-weight-normal;
+  line-height: $line-height-normal;
+  outline: none;
+  transition: border-color 0.15s;
+
+  &::placeholder {
+    color: $color-muted;
+  }
+
+  &:focus {
+    border-color: $color-accent;
+  }
+}
+
+// ==================== 状态条 ====================
+
+.ig-statusbar {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-4;
+  border-bottom: 1px solid $color-border;
+  background: var(--b3-theme-surface);
+  color: $color-muted;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-normal;
+  line-height: $line-height-normal;
+}
+
+// ==================== 主区域 ====================
+
+.ig-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.ig-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  flex: 1;
+  min-width: 0;
+  padding: $spacing-4;
+  // 滚动内容与右侧详情区保持间距，避免紧贴
+  padding-right: $spacing-4;
+  overflow-y: auto;
+}
+
+// 生成中骨架占位
+.ig-skeleton {
+  height: 96px;
+  flex-shrink: 0;
+  border: 1px solid $color-border;
+  border-radius: $vp-radius;
+  background: var(--b3-theme-surface);
+  animation: ig-pulse 1.4s ease-in-out infinite;
+}
+
+// 空状态
+.ig-list-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  flex: 1;
+  color: $color-muted;
+}
+
+.ig-list-empty-title {
+  margin: 0;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-normal;
+  color: var(--b3-theme-on-surface);
+}
+
+.ig-list-empty-hint {
+  margin: 0;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-normal;
+  line-height: $line-height-normal;
+}
+
+// ==================== 动画 ====================
+
+@keyframes ig-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.ig-icon--spin {
+  animation: ig-spin 1s linear infinite;
+}
+
+@keyframes ig-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

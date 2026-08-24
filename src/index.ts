@@ -38,6 +38,7 @@ import {
   registerGitPush,
   registerGlobalRelations,
   registerHtmlViewer,
+  registerIdeaGenerator,
   registerImageCompressor,
   registerImageCreation,
   registerMinimalBrowser,
@@ -116,6 +117,7 @@ export default class PluginSample extends Plugin {
     "__websiteNavigation", // 网站导航（非持久 Modal，卸载时清理打开的 DOM）
     "__minimalBrowser", // 极简浏览器（addTab 模型 + 独立窗口 + 全局事件监听）
     "__everythingSearch", // Everything 搜索（addTab 模型 + 独立窗口）
+    "__ideaGenerator", // 灵感生成器（addTab 模型 + 独立窗口 + 全局事件监听）
   ] as const
 
   onload() {
@@ -245,6 +247,7 @@ export default class PluginSample extends Plugin {
     if (s.enableS3FileManager) registerS3FileManager(this)
     if (s.enableGlobalRelations) this.__globalRelations = registerGlobalRelations(this)
     if (s.enableQuickNote) registerQuickNote(this)
+    if (s.enableIdeaGenerator) registerIdeaGenerator(this)
   }
 
   /**

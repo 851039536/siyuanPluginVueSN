@@ -349,6 +349,18 @@ export const FEATURE_CONFIG = [
       },
     ],
   },
+  {
+    id: "ideaGenerator",
+    defaultTitle: "灵感生成器",
+    defaultDesc: "AI 批量生成程序开发与小功能开发创意灵感",
+    titleI18nKey: "ideaGenerator.title",
+    descI18nKey: "enableIdeaGeneratorDesc",
+    actions: [{
+      key: "openIdeaGenerator",
+      label: "打开",
+      hotkey: "Ctrl+Alt+I",
+    }],
+  },
 ] as const
 
 /**

@@ -1,0 +1,36 @@
+{
+  "ideaGenerator": {
+    "title": "Idea Generator",
+    "keywordPlaceholder": "Enter keywords (optional)",
+    "categoryLabel": "Category",
+    "generate": "Generate Ideas",
+    "generating": "Generating...",
+    "empty": "Pick a category and click \u201cGenerate Ideas\u201d",
+    "emptyHint": "AI generates ideas for apps and mini-tools",
+    "copy": "Copy",
+    "copied": "Copied to clipboard",
+    "expand": "Details",
+    "collapse": "Collapse",
+    "refine": "AI Refine",
+    "refineLoading": "Generating technical plan...",
+    "refineCancel": "Stop",
+    "detailTitle": "Idea Details",
+    "detailPlan": "Technical Plan",
+    "detailPlanEmpty": "Select an idea and click \u201cAI Refine\u201d to generate a full plan",
+    "copyDetail": "Copy Plan",
+    "statusDone": "{count} ideas generated",
+    "generateError": "AI generation failed",
+    "refineError": "Plan generation failed",
+    "category": {
+      "desktopTool": "Desktop Tools",
+      "cliScript": "CLI Scripts",
+      "siyuanPlugin": "SiYuan Plugins",
+      "webApp": "Web Apps",
+      "productivity": "Productivity",
+      "automation": "Automation"
+    }
+  },
+  "openIdeaGenerator": "Open Idea Generator",
+  "enableIdeaGenerator": "Enable Idea Generator",
+  "enableIdeaGeneratorDesc": "AI generates ideas for app and mini-tool development"
+}

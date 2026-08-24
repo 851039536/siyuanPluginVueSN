@@ -369,10 +369,8 @@ import PublishPanel from "./components/PublishPanel.vue"
 
 import StatsOverview from "./components/StatsOverview.vue"
 import PlatformManageModal from "./components/PlatformManageModal.vue"
-import {
-  PLATFORM_META,
-  useDocAnalysis,
-} from "./composables/useDocAnalysis"
+import { useDocAnalysis } from "./composables/useDocAnalysis"
+import { PLATFORM_META } from "./composables/platformMeta"
 import type { DocI18n } from "./types/index"
 import { DEFAULT_FILTER_OPTIONS, SORT_FIELD_OPTIONS, getCategoryLabel } from "./types/index"
 

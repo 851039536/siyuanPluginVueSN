@@ -1,146 +1,46 @@
 /**
- * 文档分析功能 - 核心业务逻辑
+ * 文档分析功能 - 核心业务聚合入口（查询执行器 + 平台操作 + 统计逻辑组装）
  */
 import type { Plugin } from "siyuan"
+import { onScopeDispose, reactive, ref } from "vue"
+import {
+  lsNotebooks,
+  sql,
+} from "@/api"
 import type {
-  BookmarkDetail,
-  DepthStats,
   DocInfo,
-  DocStats,
-  DuplicateNameGroup,
   FilterOptions,
   NotebookInfo,
   PlatformMeta,
   QueryState,
 } from "../types/index"
 import {
-  nextTick,
-  onScopeDispose,
-  reactive,
-  ref,
-  watch,
-} from "vue"
-import {
-  lsNotebooks,
-  sql,
-} from "@/api"
+  DEFAULT_FILTER_OPTIONS,
+  DEFAULT_PLATFORM_META,
+} from "../types/index"
 import {
   DocAnalysisStorage,
 } from "../types/storage"
-import { DEFAULT_FILTER_OPTIONS, DEFAULT_PLATFORM_META, makeDefaultDocStats } from "../types/index"
 import {
   computeUnpublishedPlatformNames,
   getPlatformIdFromAttrKey,
 } from "../utils/platformPublish"
 import {
   buildIdInClause,
-  buildIdNotInClause,
-  daysAgoStr,
   escapeSql,
   quoteSql,
   quoteSqlList,
 } from "../utils/sqlHelpers"
 import {
   BOOKMARK_SUBQUERY,
-  DOC_DEPTH_EXPR,
   DOC_SELECT,
   DOC_SELECT_NO_SIZE,
-  IMAGE_SUBQUERY,
-  REF_SUBQUERY,
   SIZE_WORDCOUNT_SUBQUERY,
 } from "../utils/sqlConstants"
-import {
-  analyzeBookmarks,
-  analyzeContentQuality,
-  analyzeContentScan,
-  analyzeDepth,
-  analyzePlatformPublish,
-  analyzeUpdateTime,
-  analyzeWordCount,
-} from "../utils/docStatsAnalyzer"
-import { filterDuplicateGroups } from "../utils"
-
-/** 平台元数据（模块级响应式单例） */
-export const PLATFORM_META = ref<PlatformMeta[]>([...DEFAULT_PLATFORM_META])
-
-// ============================================================
-// 模块级纯常量 / 纯函数（不依赖组件实例状态）
-// ============================================================
-
-/** 文档查询配置 */
-interface DocQueryConfig {
-  extraSelect?: string
-  extraJoin?: string
-  extraWhere?: string
-  orderBy?: string
-  limit?: number
-  bookmarkInner?: boolean
-  skipSizeJoin?: boolean
-}
-
-/** 排序比较器映射 */
-const SORT_CMP: Record<string, (a: DocInfo, b: DocInfo) => number> = {
-  title: (a, b) => a.title.localeCompare(b.title, "zh-CN"),
-  notebook: (a, b) => a.notebookName.localeCompare(b.notebookName, "zh-CN"),
-  updated: (a, b) => (a.updated || "").localeCompare(b.updated || ""),
-  depth: (a, b) => (a.depth || 0) - (b.depth || 0),
-  refCount: (a, b) => (a.refCount || 0) - (b.refCount || 0),
-  imageCount: (a, b) => (a.imageCount || 0) - (b.imageCount || 0),
-  bookmark: (a, b) => (a.bookmark || "").localeCompare(b.bookmark || "", "zh-CN"),
-  wordCount: (a, b) => a.wordCount - b.wordCount,
-}
-
-function sortDocs(docs: DocInfo[], field: string, order: string): DocInfo[] {
-  const cmp = SORT_CMP[field] || SORT_CMP.wordCount
-  return [...docs].sort((a, b) => order === "desc" ? -cmp(a, b) : cmp(a, b))
-}
-
-/** 大小分档条件 */
-const SIZE_CONDITIONS: Record<string, string> = {
-  "0B": "AND COALESCE(sw.total_size, 0) = 0",
-  "small": "AND COALESCE(sw.total_size, 0) > 0 AND COALESCE(sw.total_size, 0) < 1024",
-  "medium": "AND COALESCE(sw.total_size, 0) >= 1024 AND COALESCE(sw.total_size, 0) < 10240",
-  "large": "AND COALESCE(sw.total_size, 0) >= 10240 AND COALESCE(sw.total_size, 0) < 102400",
-  "xlarge": "AND COALESCE(sw.total_size, 0) >= 102400",
-}
-
-/** 时间区间相邻策略：7days→(>=7d), 30days→(>=30d,<7d)，以此类推 */
-const TIME_INTERVALS: Record<string, [number, number | null]> = {
-  "7days": [7, null],
-  "30days": [30, 7],
-  "1to2month": [60, 30],
-  "2to3month": [90, 60],
-}
-
-/** 按分类实时生成时间过滤条件（每次调用重新计算，避免时间戳在初始化时冻结） */
-function buildTimeConfig(category: string): DocQueryConfig | null {
-  if (category === "halfYear") return { extraWhere: `AND b.updated < '${daysAgoStr(180)}'` }
-  const interval = TIME_INTERVALS[category]
-  if (!interval) return null
-  const [lower, upper] = interval
-  let w = `AND b.updated >= '${daysAgoStr(lower)}'`
-  if (upper !== null) w += ` AND b.updated < '${daysAgoStr(upper)}'`
-  return { extraWhere: w }
-}
-
-/** EXISTS 模式书签/属性查询 */
-function existsCond(attr: string, value?: string): string {
-  const valCond = value ? ` AND a.value = '${escapeSql(value)}'` : " AND a.value != ''"
-  return `AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = '${attr}'${valCond} AND a.block_id = b.id LIMIT 1)`
-}
-
-/** EXISTS 模式分类条件映射 */
-const EXISTS_MAP: Record<string, string> = {
-  hasBookmark: "AND bm.bookmark != '无'",
-  noBookmark: "AND b.id NOT IN (SELECT block_id FROM attributes WHERE name = 'bookmark')",
-  noneBookmark: existsCond("bookmark", "无"),
-  pendingPublish: existsCond("bookmark", "待发布"),
-  published: existsCond("bookmark", "已发布"),
-  unused: existsCond("bookmark", "不使用"),
-  hasAlias: existsCond("alias"),
-  hasMemo: existsCond("memo"),
-}
-
+import type { DocQueryConfig } from "../utils/categoryQueryConfig"
+import { sortDocs } from "../utils/sortDocs"
+import { useDocStats } from "./useDocStats"
+import { PLATFORM_META } from "./platformMeta"
 
 /**
  * 文档分析 composable（须在组件 setup 中调用，watch/onScopeDispose 依赖当前 effect 作用域自动回收）
@@ -174,40 +74,6 @@ export function useDocAnalysis(plugin: Plugin) {
   }
 
   const filterOptions = reactive<FilterOptions>({ ...DEFAULT_FILTER_OPTIONS })
-
-  async function loadPlatformMeta(): Promise<PlatformMeta[]> {
-    try {
-      const saved = await storage.platformMeta.loadOrDefault()
-      if (Array.isArray(saved) && saved.length > 0) PLATFORM_META.value = saved
-    } catch { PLATFORM_META.value = [...DEFAULT_PLATFORM_META] }
-    return PLATFORM_META.value
-  }
-
-  async function savePlatformMeta(meta: PlatformMeta[]): Promise<boolean> {
-    PLATFORM_META.value = meta
-    return storage.platformMeta.save(meta)
-  }
-
-  const docStats = reactive<DocStats>(makeDefaultDocStats())
-  const statsLoading = ref(false)
-  const hasAnalyzed = ref(false)
-  const duplicateGroups = ref<DuplicateNameGroup[]>([])
-  const duplicateNameFilter = ref<string[]>([])
-
-  let orphanDocIds: Set<string> = new Set()
-  let incomingRefDocIds: Set<string> = new Set()
-  let taggedDocIds: Set<string> = new Set()
-  let fullPublishDocIds: Set<string> = new Set()
-  let noPublishDocIds: Set<string> = new Set()
-  /** 上次成功分析时的笔记本过滤 ID（null 表示尚未分析），用于检测 ID 集是否过期 */
-  let analyzedNotebookId: string | null = null
-
-  const platformUnpublishedCounts = ref<Record<string, number>>({})
-  const depthStats = ref<DepthStats>({ depthDistribution: [], maxDepth: 0, avgDepth: 0 })
-  const statsFilter = ref<string>("")
-  const bookmarkDetails = ref<BookmarkDetail[]>([])
-  const bookmarkDetailVisible = ref(false)
-  const bookmarkDetailLoading = ref(false)
 
   // ============================================================
   // 辅助函数
@@ -248,11 +114,8 @@ export function useDocAnalysis(plugin: Plugin) {
 
   /** 查询世代 token：新查询自增，使在途旧查询结果失效，避免竞态覆盖 */
   let queryToken = 0
-  /** 分析世代 token */
-  let analyzeToken = 0
-
-  // 组件卸载后使所有在途查询/分析结果失效，避免写入已废弃的响应式状态
-  onScopeDispose(() => { queryToken++; analyzeToken++ })
+  // 组件卸载后使在途查询失效，避免写入已废弃的响应式状态
+  onScopeDispose(() => { queryToken++ })
 
   async function runDocQuery(config: DocQueryConfig) {
     const token = ++queryToken
@@ -298,7 +161,21 @@ export function useDocAnalysis(plugin: Plugin) {
   }
 
   // ============================================================
-  // 业务操作
+  // 统计逻辑（独立 composable，保持状态与接口由 useDocStats 提供）
+  // ============================================================
+
+  const stats = useDocStats(plugin, storage, {
+    filterOptions,
+    queryState,
+    buildNotebookCondition,
+    runDocQuery,
+    setEmptyState,
+    resetQueryState,
+  })
+  const { statsFilter } = stats
+
+  // ============================================================
+  // 笔记本与查询配置
   // ============================================================
 
   async function loadNotebooks() {
@@ -320,223 +197,6 @@ export function useDocAnalysis(plugin: Plugin) {
   async function saveOptions() {
     try { await storage.options.save({ ...filterOptions }) }
     catch (e) { console.error("保存文档分析配置失败:", e) }
-  }
-
-  /** 首次加载完成前跳过持久化 */
-  let dupFilterLoaded = false
-
-  async function loadDuplicateNameFilter() {
-    try { duplicateNameFilter.value = await storage.duplicateNameFilter.load() || [] }
-    catch { duplicateNameFilter.value = [] }
-    // 等 watch 刷新完成后再放行持久化，避免加载回填（或加载失败置空）触发回写覆盖存储
-    await nextTick()
-    dupFilterLoaded = true
-  }
-
-  watch(duplicateNameFilter, async (val) => {
-    if (!dupFilterLoaded) return
-    await storage.duplicateNameFilter.save(val)
-  })
-
-  // ============================================================
-  // 统计维度分析（委托 analyze* 工具函数）
-  // ============================================================
-
-  async function analyzeDocStats() {
-    const token = ++analyzeToken
-    statsLoading.value = true
-    try {
-      const nc = buildNotebookCondition()
-      Object.assign(docStats, makeDefaultDocStats())
-
-      // 索引 2/3/4/8 为 analyzeUpdateTime/analyzeDepth/analyzeBookmarks/analyzeWordCount（仅副作用写 docStats，返回值忽略）
-      const [sizeRows, dupRows, , , , platformResult, qualityResult, scanResult] = await Promise.all([
-        sql(`
-          SELECT
-            COUNT(*) as total,
-            SUM(CASE WHEN COALESCE(sw.total_size, 0) = 0 THEN 1 ELSE 0 END) as zero_count,
-            SUM(CASE WHEN COALESCE(sw.total_size, 0) > 0 AND COALESCE(sw.total_size, 0) < 1024 THEN 1 ELSE 0 END) as small_count,
-            SUM(CASE WHEN COALESCE(sw.total_size, 0) >= 1024 AND COALESCE(sw.total_size, 0) < 10240 THEN 1 ELSE 0 END) as medium_count,
-            SUM(CASE WHEN COALESCE(sw.total_size, 0) >= 10240 AND COALESCE(sw.total_size, 0) < 102400 THEN 1 ELSE 0 END) as large_count,
-            SUM(CASE WHEN COALESCE(sw.total_size, 0) >= 102400 THEN 1 ELSE 0 END) as xlarge_count
-          FROM blocks b LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
-          WHERE b.type = 'd' ${nc}
-        `),
-        sql(`SELECT b.content as doc_title, COUNT(*) as cnt FROM blocks b WHERE b.type = 'd' ${nc} GROUP BY b.content HAVING COUNT(*) > 1 ORDER BY cnt DESC LIMIT 500`),
-        analyzeUpdateTime(nc, docStats),
-        analyzeDepth(nc, docStats, depthStats.value),
-        analyzeBookmarks(nc, docStats),
-        analyzePlatformPublish(nc, docStats, PLATFORM_META.value),
-        analyzeContentQuality(nc, docStats),
-        analyzeContentScan(nc, docStats),
-        analyzeWordCount(nc, docStats),
-      ])
-
-      // 已有更新的分析发起，丢弃过期结果
-      if (token !== analyzeToken) return
-
-      platformUnpublishedCounts.value = platformResult.platformUnpublishedCounts
-      fullPublishDocIds = platformResult.fullPublishDocIds
-      noPublishDocIds = platformResult.noPublishDocIds
-      taggedDocIds = qualityResult.taggedDocIds
-      incomingRefDocIds = scanResult.incomingRefDocIds
-      orphanDocIds = scanResult.orphanDocIds
-
-      // 汇总大小统计
-      if (sizeRows?.[0]) {
-        const r = sizeRows[0]
-        docStats.totalDocs = r.total || 0
-        docStats.zeroByteDocs = r.zero_count || 0
-        docStats.smallDocs = r.small_count || 0
-        docStats.mediumDocs = r.medium_count || 0
-        docStats.largeDocs = r.large_count || 0
-        docStats.xlargeDocs = r.xlarge_count || 0
-      }
-
-      // 汇总重名统计
-      if (dupRows?.length) {
-        docStats.duplicateNameGroups = dupRows.length
-        docStats.duplicateNameDocs = dupRows.reduce((s: number, r: any) => s + (r.cnt || 0), 0)
-        duplicateGroups.value = dupRows.map((r: any) => ({ title: r.doc_title || "无标题", count: r.cnt || 0 }))
-      } else { docStats.duplicateNameGroups = 0; docStats.duplicateNameDocs = 0; duplicateGroups.value = [] }
-
-      // 后处理：书签数修正 + 缓存写入
-      const effectiveBm = Math.max(0, docStats.bookmarkedDocs - docStats.noneBookmarkDocs)
-      docStats.bookmarkedDocs = effectiveBm
-      docStats.noBookmarkDocs = Math.max(0, docStats.totalDocs - effectiveBm - docStats.noneBookmarkDocs)
-
-      hasAnalyzed.value = true
-      analyzedNotebookId = filterOptions.notebookId
-    } catch (e) { console.error("分析文档统计失败:", e) }
-    finally { if (token === analyzeToken) statsLoading.value = false }
-  }
-
-  // ============================================================
-  // 书签详情
-  // ============================================================
-
-  async function fetchBookmarkDetails() {
-    if (bookmarkDetailVisible.value) { bookmarkDetailVisible.value = false; return }
-    bookmarkDetailLoading.value = true
-    try {
-      const rows = await sql(`
-        SELECT a.value as bookmark_value, COUNT(DISTINCT a.block_id) as doc_count
-        FROM attributes a WHERE a.name = 'bookmark'
-        AND a.block_id IN (SELECT b.id FROM blocks b WHERE b.type = 'd' ${buildNotebookCondition()})
-        GROUP BY a.value ORDER BY doc_count DESC
-      `)
-      bookmarkDetails.value = rows ? rows.map((r: any) => ({ value: r.bookmark_value || "", count: r.doc_count || 0 })) : []
-      bookmarkDetailVisible.value = true
-    } catch (e) { console.error("查询书签详情失败:", e); bookmarkDetails.value = [] }
-    finally { bookmarkDetailLoading.value = false }
-  }
-
-  async function queryByBookmark(bookmarkValue: string) {
-    bookmarkDetailVisible.value = false
-    statsFilter.value = ""
-    await runDocQuery({ bookmarkInner: true, extraWhere: `AND bm.bookmark = ${quoteSql(bookmarkValue)}`, orderBy: "b.updated DESC" })
-  }
-
-  // ============================================================
-  // 分类查询 — 配置表驱动
-  // ============================================================
-
-  /** ID 集来自上次分析；笔记本过滤已变化时阻断查询并提示重新分析 */
-  function requireReAnalyze(): boolean {
-    if (analyzedNotebookId === filterOptions.notebookId) return false
-    setResults([])
-    queryState.hasQueried = true
-    // 提示文案："筛选条件已变化，请重新分析"
-    queryState.errorMessage = (plugin.i18n as any)?.docAnalysis?.reAnalyzeRequired || ""
-    queryState.status = "error"
-    return true
-  }
-
-  async function queryByStatsCategory(category: string) {
-    if (statsFilter.value === category) {
-      statsFilter.value = ""
-      resetQueryState()
-      return
-    }
-    statsFilter.value = category
-
-    // 重名
-    if (category === "duplicate") {
-      const groups = filterDuplicateGroups(duplicateGroups.value, duplicateNameFilter.value)
-      const titles = groups.map((g) => g.title)
-      if (titles.length === 0) { setEmptyState(); return }
-      await runDocQuery({ extraWhere: `AND b.content IN (${quoteSqlList(titles)})`, orderBy: "b.content ASC, content_size ASC" })
-      return
-    }
-
-    // 大小
-    if (SIZE_CONDITIONS[category]) {
-      await runDocQuery({ extraWhere: SIZE_CONDITIONS[category], orderBy: "word_count ASC" })
-      return
-    }
-
-    // 时间（实时生成条件，避免时间戳冻结）
-    const timeConfig = buildTimeConfig(category)
-    if (timeConfig) { await runDocQuery(timeConfig); return }
-
-    // 深度
-    if (category === "deep") {
-      await runDocQuery({ extraWhere: `AND ${DOC_DEPTH_EXPR} >= 5`, orderBy: "doc_depth DESC" })
-      return
-    }
-    if (category.startsWith("depth_")) {
-      const d = Number.parseInt(category.slice(6), 10)
-      if (!isNaN(d)) { await runDocQuery({ extraWhere: `AND ${DOC_DEPTH_EXPR} = ${d}`, orderBy: "b.updated DESC" }); return }
-    }
-
-
-    // 引用/图片（特殊 JOIN）
-    if (category === "hasRef") {
-      await runDocQuery({ extraSelect: "COALESCE(r.ref_count, 0) as ref_count, 0 as image_count,", extraJoin: `INNER JOIN (${REF_SUBQUERY}) r ON b.id = r.root_id`, orderBy: "r.ref_count DESC" })
-      return
-    }
-    if (category === "hasImage") {
-      await runDocQuery({ extraSelect: "0 as ref_count, COALESCE(img.image_count, 0) as image_count,", extraJoin: `INNER JOIN (${IMAGE_SUBQUERY}) img ON b.id = img.root_id`, orderBy: "img.image_count DESC" })
-      return
-    }
-
-    // ID 集映射
-    const ID_SET_MAP: Record<string, Set<string>> = {
-      fullPublish: fullPublishDocIds,
-      noPublish: noPublishDocIds,
-      hasTag: taggedDocIds,
-      incomingRef: incomingRefDocIds,
-      orphanDoc: orphanDocIds,
-    }
-    if (ID_SET_MAP[category]) {
-      if (requireReAnalyze()) return
-      await runDocQuery({ extraWhere: buildIdInClause(ID_SET_MAP[category]) })
-      return
-    }
-    if (category === "partialPublish") {
-      if (requireReAnalyze()) return
-      const partialCond = fullPublishDocIds.size === 0 && noPublishDocIds.size === 0 ? "AND 1 = 0" : buildIdNotInClause(new Set([...fullPublishDocIds, ...noPublishDocIds]))
-      await runDocQuery({ extraWhere: partialCond })
-      return
-    }
-    if (category === "noTag") {
-      if (requireReAnalyze()) return
-      await runDocQuery({ extraWhere: buildIdNotInClause(taggedDocIds) })
-      return
-    }
-
-    // EXISTS 模式
-    if (EXISTS_MAP[category]) {
-      const cfg: DocQueryConfig = { extraWhere: EXISTS_MAP[category] }
-      if (category === "hasBookmark") {
-        cfg.bookmarkInner = true
-        cfg.orderBy = "bm.bookmark ASC"
-      }
-      await runDocQuery(cfg)
-      return
-    }
-
-    setEmptyState()
   }
 
   async function queryDocs() {
@@ -567,6 +227,23 @@ export function useDocAnalysis(plugin: Plugin) {
   }
 
   function clearResults() { setResults([]) }
+
+  // ============================================================
+  // 平台操作
+  // ============================================================
+
+  async function loadPlatformMeta(): Promise<PlatformMeta[]> {
+    try {
+      const saved = await storage.platformMeta.loadOrDefault()
+      if (Array.isArray(saved) && saved.length > 0) PLATFORM_META.value = saved
+    } catch { PLATFORM_META.value = [...DEFAULT_PLATFORM_META] }
+    return PLATFORM_META.value
+  }
+
+  async function savePlatformMeta(meta: PlatformMeta[]): Promise<boolean> {
+    PLATFORM_META.value = meta
+    return storage.platformMeta.save(meta)
+  }
 
   async function enrichWithPublishedPlatforms(docs: DocInfo[]) {
     if (docs.length === 0) return
@@ -630,13 +307,10 @@ export function useDocAnalysis(plugin: Plugin) {
   }
 
   return {
-    notebooks, queryState, filterOptions, docStats, depthStats,
-    statsLoading, hasAnalyzed, statsFilter,
-    bookmarkDetails, bookmarkDetailVisible, bookmarkDetailLoading,
-    duplicateGroups, duplicateNameFilter,
-    loadNotebooks, loadSavedOptions, loadDuplicateNameFilter, queryDocs, analyzeDocStats,
-    queryByStatsCategory, fetchBookmarkDetails, queryByBookmark, queryByMissingPlatform,
+    notebooks, queryState, filterOptions,
+    ...stats,
+    loadNotebooks, loadSavedOptions, queryDocs,
     openDoc, updateSort, clearResults, resetQueryState,
-    loadPlatformMeta, savePlatformMeta, platformUnpublishedCounts,
+    loadPlatformMeta, savePlatformMeta, queryByMissingPlatform,
   }
 }

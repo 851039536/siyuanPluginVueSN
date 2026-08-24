@@ -87,6 +87,6 @@ function save() {
 </script>
 
 <style lang="scss" scoped>
-@use "../styles/DuplicateNameFilterModal.scss";
-@use "../styles/index.scss";
+@use "../../styles/DuplicateNameFilterModal.scss";
+@use "../../styles/index.scss";
 </style>

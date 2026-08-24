@@ -114,157 +114,20 @@
     </div>
 
     <!-- 文档列表面板 -->
-    <div
+    <DocListView
       v-show="activeTab === 'list'"
-      class="tab-panel doc-list-panel"
-    >
-      <!-- 排序和结果数 -->
-      <div
-        v-if="queryState.hasQueried"
-        class="result-bar"
-      >
-        <div class="result-count">
-          <span v-if="queryState.status === 'success'">
-            共找到 <strong>{{ queryState.results.length }}</strong> 个文档
-            <span
-              v-if="statsFilter"
-              class="filter-tag"
-            >
-              ({{ getCategoryLabel(statsFilter) }})
-              <button
-                class="filter-tag-close"
-                @click="clearStatsFilter"
-              >&times;</button>
-            </span>
-          </span>
-          <span
-            v-else-if="queryState.status === 'empty'"
-            class="empty-hint"
-          >
-            未找到符合条件的文档
-          </span>
-          <span
-            v-else-if="queryState.status === 'error'"
-            class="error-hint"
-          >
-            {{ queryState.errorMessage }}
-          </span>
-        </div>
-        <div
-          v-if="queryState.results.length > 0"
-          class="sort-controls"
-        >
-          <select
-            :value="filterOptions.sortField"
-            class="sort-select"
-            @change="handleSortChange"
-          >
-            <option
-              v-for="opt in SORT_FIELD_OPTIONS"
-              :key="opt.value"
-              :value="opt.value"
-            >
-              {{ opt.label }}
-            </option>
-          </select>
-          <button
-            class="sort-order-btn"
-            @click="toggleSortOrder"
-          >
-            <Icon :icon="filterOptions.sortOrder === 'asc' ? 'mdi:sort-ascending' : 'mdi:sort-descending'" />
-          </button>
-        </div>
-      </div>
-
-      <!-- 文档列表 -->
-      <div class="doc-list-container">
-        <div
-          v-if="queryState.status === 'loading'"
-          class="loading-state"
-        >
-          <Icon
-            icon="mdi:loading"
-            class="loading-icon"
-          />
-          <span>正在查询文档...</span>
-        </div>
-
-        <div
-          v-else-if="queryState.status === 'idle' && !queryState.hasQueried"
-          class="empty-state"
-        >
-          <Icon
-            icon="mdi:file-document-multiple-outline"
-            class="empty-icon"
-          />
-          <p>设置筛选条件后点击查询，或从统计面板点击卡片查看</p>
-          <p class="empty-desc">
-            支持标题搜索、全文搜索、字数范围筛选、书签过滤、多平台发布
-          </p>
-        </div>
-
-        <template v-else-if="queryState.results.length > 0">
-          <DocListItem
-            v-for="doc in visibleDocs"
-            :key="doc.id"
-            v-memo="[doc.id, doc.title, doc.wordCount, doc.contentSize, doc.updated, doc.depth, doc.refCount, doc.imageCount, doc.bookmark, doc.notebookName, doc.hpath, doc.unpublishedPlatforms]"
-            :doc="doc"
-            :i18n="i18n"
-            @open="openDoc"
-            @attrs="handleShowAttrs"
-          />
-          <div
-            v-if="hasMoreDocs"
-            ref="sentinelRef"
-            class="load-more-sentinel"
-          >
-            <Icon
-              v-if="isLoadingMore"
-              icon="mdi:loading"
-              class="loading-icon"
-            />
-            <span
-              v-else
-              class="load-more-text"
-            >滚动加载更多 ({{ visibleCount }}/{{ queryState.results.length }})</span>
-          </div>
-        </template>
-
-        <div
-          v-else-if="queryState.status === 'empty'"
-          class="empty-state"
-          :class="{ 'empty-state--done': activePlatformFilter }"
-        >
-          <Icon
-            icon="mdi:file-check-outline"
-            class="empty-icon"
-          />
-          <p v-if="activePlatformFilter">
-            {{ activePlatformName }} 已全部发布
-          </p>
-          <p v-else>
-            没有找到符合条件的文档
-          </p>
-          <p class="empty-desc">
-            尝试调整搜索条件或选择其他笔记本
-          </p>
-        </div>
-
-        <div
-          v-else-if="queryState.status === 'error'"
-          class="empty-state"
-        >
-          <Icon
-            icon="mdi:alert-circle-outline"
-            class="empty-icon error"
-          />
-          <p>查询出错</p>
-          <p class="empty-desc">
-            {{ queryState.errorMessage }}
-          </p>
-        </div>
-      </div>
-    </div>
+      :query-state="queryState"
+      :filter-options="filterOptions"
+      :stats-filter="statsFilter"
+      :active-platform-filter="activePlatformFilter"
+      :active-platform-name="activePlatformName"
+      :i18n="i18n"
+      @open="openDoc"
+      @attrs="handleShowAttrs"
+      @sort-change="handleSortChange"
+      @toggle-sort-order="toggleSortOrder"
+      @clear-stats-filter="clearStatsFilter"
+    />
 
     <!-- 底部信息 -->
     <div class="panel-footer">
@@ -357,22 +220,20 @@ import {
   onBeforeUnmount,
   onMounted,
   ref,
-  watch,
 } from "vue"
 import {
   getBlockAttrs,
 } from "@/api"
-import AttrsPanel from "./components/AttrsPanel.vue"
-import DocListItem from "./components/DocListItem.vue"
-import FilterSettings from "./components/FilterSettings.vue"
-import PublishPanel from "./components/PublishPanel.vue"
-
-import StatsOverview from "./components/StatsOverview.vue"
-import PlatformManageModal from "./components/PlatformManageModal.vue"
+import AttrsPanel from "./components/AttrsPanel/index.vue"
+import DocListView from "./components/DocListView/index.vue"
+import FilterSettings from "./components/DocListView/FilterSettings.vue"
+import PublishPanel from "./components/PublishPanel/index.vue"
+import StatsOverview from "./components/StatsView/index.vue"
+import PlatformManageModal from "./components/PlatformManage/index.vue"
 import { useDocAnalysis } from "./composables/useDocAnalysis"
 import { PLATFORM_META } from "./composables/platformMeta"
 import type { DocI18n } from "./types/index"
-import { DEFAULT_FILTER_OPTIONS, SORT_FIELD_OPTIONS, getCategoryLabel } from "./types/index"
+import { DEFAULT_FILTER_OPTIONS } from "./types/index"
 
 interface Props {
   /** docAnalysis 分片 i18n（index.ts 传入 plugin.i18n.docAnalysis，扁平键值） */
@@ -510,65 +371,9 @@ function handleRefreshAttrs() {
   loadAttrs(attrsPanelDocId.value)
 }
 
-// 分批渲染：避免一次渲染上千个 DocListItem 导致卡顿
-const PAGE_SIZE = 50
-const visibleCount = ref(PAGE_SIZE)
-const isLoadingMore = ref(false)
-const sentinelRef = ref<HTMLElement | null>(null)
-let observer: IntersectionObserver | null = null
-
-const visibleDocs = computed(() => queryState.results.slice(0, visibleCount.value))
-const hasMoreDocs = computed(() => visibleCount.value < queryState.results.length)
-
-function loadMore() {
-  if (hasMoreDocs.value && !isLoadingMore.value) {
-    isLoadingMore.value = true
-    // 用 requestAnimationFrame 避免阻塞主线程
-    requestAnimationFrame(() => {
-      visibleCount.value = Math.min(visibleCount.value + PAGE_SIZE, queryState.results.length)
-      isLoadingMore.value = false
-    })
-  }
-}
-
-// 当查询结果变化时重置可见数量
-watch(() => queryState.results, () => {
-  visibleCount.value = PAGE_SIZE
-})
-
-function setupObserver() {
-  if (observer) observer.disconnect()
-  observer = new IntersectionObserver(
-    (entries) => {
-      if (entries[0]?.isIntersecting) {
-        loadMore()
-      }
-    },
-    { rootMargin: "200px" },
-  )
-  // Vue watch 触发时 DOM 已更新，直接观察
-  if (sentinelRef.value) {
-    observer.observe(sentinelRef.value)
-  }
-}
-
-// 哨兵元素挂载后启动观察；元素被移除时断开旧 observer，避免面板存活期内累积失效实例
-watch(sentinelRef, (el) => {
-  if (el) {
-    setupObserver()
-  } else if (observer) {
-    observer.disconnect()
-    observer = null
-  }
-})
-
 onBeforeUnmount(() => {
   // 使在途属性加载失效，避免组件销毁后写响应式状态
   attrsToken++
-  if (observer) {
-    observer.disconnect()
-    observer = null
-  }
 })
 
 /** 执行查询 */
@@ -612,10 +417,9 @@ function handleReset() {
   resetQueryState()
 }
 
-/** 排序字段变更 */
-function handleSortChange(event: Event) {
-  const target = event.target as HTMLSelectElement
-  updateSort(target.value, filterOptions.sortOrder)
+/** 排序字段变更（来自 DocListView 转发） */
+function handleSortChange(field: string) {
+  updateSort(field, filterOptions.sortOrder)
 }
 
 /** 切换排序方向 */

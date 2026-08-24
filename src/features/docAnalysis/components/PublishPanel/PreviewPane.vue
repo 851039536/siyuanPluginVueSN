@@ -55,5 +55,5 @@ function handleScroll() {
 </script>
 
 <style lang="scss" scoped>
-@use "../styles/PreviewPane.scss";
+@use "../../styles/PreviewPane.scss";
 </style>

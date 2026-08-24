@@ -297,11 +297,11 @@ import type {
   DocStats,
   DuplicateNameGroup,
   StatSectionDef,
-} from "../types/index"
-import { QUALITY_CARDS, STAT_SECTIONS } from "../types/index"
+} from "../../types/index"
+import { QUALITY_CARDS, STAT_SECTIONS } from "../../types/index"
 import { Icon } from "@iconify/vue"
 import { ref } from "vue"
-import { useStatsOverview } from "../composables/useStatsOverview"
+import { useStatsOverview } from "../../composables/useStatsOverview"
 import StatCard from "./StatCard.vue"
 import StatSection from "./StatSection.vue"
 import BarRow from "./BarRow.vue"
@@ -367,5 +367,5 @@ const dupFilterModalVisible = ref(false)
 </script>
 
 <style lang="scss" scoped>
-@use "../styles/StatsOverview.scss";
+@use "../../styles/StatsOverview.scss";
 </style>

@@ -21,6 +21,8 @@
   .chart-body {
     display: flex;
     flex-direction: column;
+    // 行数少于卡片高度时均匀分布，消除卡片内留白
+    justify-content: space-evenly;
     gap: 4px;
     flex: 1;
     min-height: 0;

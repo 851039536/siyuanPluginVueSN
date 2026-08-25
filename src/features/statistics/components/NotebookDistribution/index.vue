@@ -128,19 +128,15 @@ const distSummary = computed(() => {
   }
 })
 
-let notebookStatsLoaded = false
-
 async function loadNotebookStats(): Promise<void> {
-  if (notebookStatsLoaded) return
   await Promise.all([
     loadNotebookDocStats(),
     loadNotebookWordStats(),
     loadNotebookBlockTypeStats(),
   ])
-  notebookStatsLoaded = true
 }
 
-// 首次切换到分布 Tab 时懒加载
+// 每次切换到分布 Tab 时重新加载，保证数据最新
 watch(() => props.active, (active) => {
   if (active) {
     loadNotebookStats()

@@ -24,12 +24,12 @@
         <span class="nb-label">{{ item.notebook }}</span>
         <div class="nb-bar-wrap">
           <div
-            v-for="(bt, bi) in item.blockTypes"
+            v-for="bt in item.blockTypes"
             :key="bt.name"
             class="nb-segment"
             :style="{
               flex: bt.count,
-              backgroundColor: segmentColor(bi),
+              backgroundColor: colorByType.get(bt.name),
             }"
             :title="`${bt.label}: ${bt.count}`"
           ></div>
@@ -39,13 +39,13 @@
 
       <div class="legend">
         <span
-          v-for="(label, name, idx) in legendLabels"
+          v-for="(label, name) in legendLabels"
           :key="name"
           class="legend-item"
         >
           <span
             class="legend-dot"
-            :style="{ backgroundColor: segmentColor(idx) }"
+            :style="{ backgroundColor: colorByType.get(name) }"
           ></span>
           {{ label }}
         </span>
@@ -75,21 +75,25 @@ const {
   onHover,
 } = useNotebookHover()
 
-const legendLabels = computed(() => {
-  const seen = new Map<string, string>()
+// 块类型图例顺序 + 颜色映射（按全局首次出现顺序分配，段与图例颜色一致）
+const legendMeta = computed(() => {
+  const labels: Record<string, string> = {}
+  const colors = new Map<string, string>()
+  let i = 0
   for (const nb of props.data) {
     for (const bt of nb.blockTypes) {
-      if (!seen.has(bt.name)) {
-        seen.set(bt.name, bt.label)
+      if (!(bt.name in labels)) {
+        labels[bt.name] = bt.label
+        colors.set(bt.name, NOTEBOOK_COLORS[i % NOTEBOOK_COLORS.length])
+        i++
       }
     }
   }
-  return Object.fromEntries(seen.entries())
+  return { labels, colors }
 })
 
-function segmentColor(idx: number): string {
-  return NOTEBOOK_COLORS[idx % NOTEBOOK_COLORS.length]
-}
+const legendLabels = computed(() => legendMeta.value.labels)
+const colorByType = computed(() => legendMeta.value.colors)
 
 function totalCount(item: NotebookBlockTypeStat): number {
   return item.blockTypes.reduce((sum, bt) => sum + bt.count, 0)

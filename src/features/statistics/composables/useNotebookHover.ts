@@ -6,6 +6,7 @@ import type {
 } from "vue"
 import {
   inject,
+  onUnmounted,
   provide,
   ref,
 } from "vue"
@@ -49,6 +50,15 @@ export function provideNotebookHover(): NotebookHoverState {
     onHover,
   }
   provide(KEY, state)
+
+  // 组件卸载时清理挂起的清除定时器，防止残留
+  onUnmounted(() => {
+    if (clearTimer) {
+      clearTimeout(clearTimer)
+      clearTimer = null
+    }
+  })
+
   return state
 }
 

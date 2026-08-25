@@ -154,11 +154,13 @@ const mergedRows = computed(() => {
   const totalDocs = rows.reduce((sum, r) => sum + r.docs, 0)
   const totalWords = rows.reduce((sum, r) => sum + r.words, 0)
 
-  // 文档数/字数各自占比，总占比取两者平均
+  // 文档数/字数各自占比（整数），总占比用未舍入比值平均，避免二次舍入精度损失
   for (const r of rows) {
-    r.docPct = totalDocs > 0 ? Math.round((r.docs / totalDocs) * 100) : 0
-    r.wordPct = totalWords > 0 ? Math.round((r.words / totalWords) * 100) : 0
-    r.pct = Math.round((r.docPct + r.wordPct) / 2)
+    const docRatio = totalDocs > 0 ? r.docs / totalDocs : 0
+    const wordRatio = totalWords > 0 ? r.words / totalWords : 0
+    r.docPct = Math.round(docRatio * 100)
+    r.wordPct = Math.round(wordRatio * 100)
+    r.pct = Math.round(((docRatio + wordRatio) / 2) * 100)
   }
   return rows
 })

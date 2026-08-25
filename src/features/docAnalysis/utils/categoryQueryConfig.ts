@@ -57,13 +57,10 @@ function existsCond(attr: string, value?: string): string {
   return `AND EXISTS (SELECT 1 FROM attributes a WHERE a.name = '${attr}'${valCond} AND a.block_id = b.id LIMIT 1)`
 }
 
-/** EXISTS 模式分类条件映射 */
+/** EXISTS 模式分类条件映射（不写死具体书签值，仅保留二元维度） */
 export const EXISTS_MAP: Record<string, string> = {
-  hasBookmark: "AND bm.bookmark != '无'",
+  hasBookmark: "AND bm.bookmark != ''",
   noBookmark: "AND b.id NOT IN (SELECT block_id FROM attributes WHERE name = 'bookmark')",
-  noneBookmark: existsCond("bookmark", "无"),
-  pendingPublish: existsCond("bookmark", "待发布"),
-  published: existsCond("bookmark", "已发布"),
   hasAlias: existsCond("alias"),
   hasMemo: existsCond("memo"),
 }

@@ -57,7 +57,7 @@
 
       <!-- 统计表格区块：2 列网格布局 -->
       <div class="stats-grid">
-        <!-- 卡片类表格（大小/时间/书签/发布，元数据驱动） -->
+        <!-- 卡片类表格（大小/时间/书签/发布，元数据驱动；书签分区追加动态书签值行） -->
         <StatTable
           v-for="section in statSections"
           :key="section.key"
@@ -65,7 +65,7 @@
           :icon="section.icon"
           :rows="filterZeroRows(cardRowsMap[section.key])"
           :active-id="activeFilter"
-          @select="(id) => $emit('selectCategory', id)"
+          @select="(id) => handleRowSelect(section.key, id)"
         >
           <template
             v-if="section.key === 'bookmark'"
@@ -123,13 +123,6 @@
           </template>
         </StatTable>
 
-        <!-- 书签分类表 -->
-        <StatTable
-          v-if="stats.customBookmarkTop.length > 0"
-          :title="`书签分类 Top-${stats.customBookmarkTop.length}`"
-          icon="mdi:tag-outline"
-          :rows="filterZeroRows(customBookmarkRows)"
-        />
       </div>
     </template>
 
@@ -197,7 +190,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: "selectCategory", category: string): void
   (e: "showBookmarkDetails"): void
   (e: "selectBookmark", bookmark: string): void
@@ -229,11 +222,25 @@ const hideZero = ref(false)
 /** 重名排除管理弹窗可见性 */
 const dupFilterModalVisible = ref(false)
 
-/** 卡片分区表格行映射（按分区 key 缓存） */
+/** 书签分布表格行（动态统计，点击下钻该书签文档） */
+const bookmarkRows = computed<StatTableRow[]>(() =>
+  props.stats.bookmarkDistribution.map((item) => ({
+    id: item.value,
+    label: item.value || "(空值)",
+    count: item.count,
+    pct: pctStr(item.count),
+    clickable: true,
+  })),
+)
+
+/** 卡片分区表格行映射（按分区 key 缓存；书签分区在汇总行后追加全部具体书签值行） */
 const cardRowsMap = computed<Record<string, StatTableRow[]>>(() => {
   const map: Record<string, StatTableRow[]> = {}
   for (const section of statSections) {
-    map[section.key] = toCardRows(section.cards)
+    const rows = toCardRows(section.cards)
+    map[section.key] = section.key === "bookmark"
+      ? [...rows, ...bookmarkRows.value]
+      : rows
   }
   return map
 })
@@ -272,15 +279,18 @@ const depthRows = computed<StatTableRow[]>(() =>
   })),
 )
 
-/** 书签分类表格行（不可下钻） */
-const customBookmarkRows = computed<StatTableRow[]>(() =>
-  props.stats.customBookmarkTop.map((item) => ({
-    id: item.value,
-    label: item.value || "(空值)",
-    count: item.count,
-    pct: pctStr(item.count),
-  })),
-)
+/** 表格行点击分流：书签分区区分汇总行（selectCategory）与具体书签值（selectBookmark），其余分区统一 selectCategory */
+function handleRowSelect(sectionKey: string, id: string) {
+  if (sectionKey !== "bookmark") {
+    emit("selectCategory", id)
+    return
+  }
+  if (id === "hasBookmark" || id === "noBookmark") {
+    emit("selectCategory", id)
+    return
+  }
+  emit("selectBookmark", id)
+}
 
 /** 隐藏零值行过滤（作用于全部表格） */
 function filterZeroRows(rows: StatTableRow[]): StatTableRow[] {

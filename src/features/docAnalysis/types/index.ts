@@ -142,12 +142,6 @@ export interface DocStats {
   bookmarkedDocs: number
   /** 没有书签的文档数 */
   noBookmarkDocs: number
-  /** 标记"待发布"的文档数 */
-  pendingPublishDocs: number
-  /** 标记"已发布"的文档数 */
-  publishedDocs: number
-  /** 标记"无"的文档数 */
-  noneBookmarkDocs: number
   /** 全平台已发布文档数 */
   fullPublishDocs: number
   /** 部分平台已发布文档数 */
@@ -172,8 +166,8 @@ export interface DocStats {
   xlargeDocs: number
   /** 字数分布 */
   wordCountDistribution: WordCountBin[]
-  /** 自定义书签 Top-N（排除系统书签：待发布/已发布/无） */
-  customBookmarkTop: BookmarkDetail[]
+  /** 书签值分布（动态 GROUP BY 全量统计，不含空值） */
+  bookmarkDistribution: BookmarkDetail[]
 }
 
 /** 字数分档 */
@@ -285,9 +279,6 @@ export const DEFAULT_DOC_STATS: DocStats = {
   totalImages: 0,
   bookmarkedDocs: 0,
   noBookmarkDocs: 0,
-  pendingPublishDocs: 0,
-  publishedDocs: 0,
-  noneBookmarkDocs: 0,
   fullPublishDocs: 0,
   partialPublishDocs: 0,
   noPublishDocs: 0,
@@ -298,12 +289,12 @@ export const DEFAULT_DOC_STATS: DocStats = {
   orphanDocs: 0,
   platformCounts: {},
   wordCountDistribution: [],
-  customBookmarkTop: [],
+  bookmarkDistribution: [],
 }
 
 /** 生成全新的默认统计对象（嵌套字段深拷贝，避免与 DEFAULT_DOC_STATS 常量共享引用被意外污染） */
 export function makeDefaultDocStats(): DocStats {
-  return { ...DEFAULT_DOC_STATS, platformCounts: {}, wordCountDistribution: [], customBookmarkTop: [] }
+  return { ...DEFAULT_DOC_STATS, platformCounts: {}, wordCountDistribution: [], bookmarkDistribution: [] }
 }
 
 // ============================================================
@@ -327,9 +318,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   "hasImage": "含图片",
   "hasBookmark": "有书签",
   "noBookmark": "无书签",
-  "pendingPublish": "待发布",
-  "published": "已发布",
-  "noneBookmark": "书签「无」",
   "fullPublish": "完整发布",
   "partialPublish": "部分发布",
   "noPublish": "未发布",
@@ -355,8 +343,7 @@ export type CardColorClass =
   | "zero" | "small" | "medium" | "large" | "xlarge" | "dup"
   | "time-green" | "time-yellow" | "time-red" | "time-cyan" | "time-orange" | "time-purple"
   | "depth-color" | "ref-color" | "img-color"
-  | "bookmark-color" | "no-bookmark-color" | "none-bookmark-color"
-  | "pending-color" | "published-color"
+  | "bookmark-color" | "no-bookmark-color"
   | "full-publish-color" | "partial-publish-color" | "no-publish-color"
 
 /** 统计卡片计算上下文（供 resolveValue/suffixValue 动态取值，如重名卡片需要过滤后结果） */
@@ -431,9 +418,6 @@ export const STAT_SECTIONS: StatSectionDef[] = [
   {
     key: "bookmark", title: "书签", icon: "mdi:bookmark-outline",
     cards: [
-      { id: "pendingPublish", shortLabel: "待发布", statKey: "pendingPublishDocs", colorClass: "pending-color" },
-      { id: "published", shortLabel: "已发布", statKey: "publishedDocs", colorClass: "published-color" },
-      { id: "noneBookmark", shortLabel: "无", statKey: "noneBookmarkDocs", colorClass: "none-bookmark-color" },
       { id: "hasBookmark", shortLabel: "有书签", statKey: "bookmarkedDocs", colorClass: "bookmark-color" },
       { id: "noBookmark", shortLabel: "无书签", statKey: "noBookmarkDocs", colorClass: "no-bookmark-color" },
     ],

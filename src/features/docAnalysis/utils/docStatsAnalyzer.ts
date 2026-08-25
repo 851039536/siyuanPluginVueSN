@@ -2,7 +2,7 @@
  * 文档分析功能 - 统计维度分析器（纯 SQL 查询 + reactive 赋值）
  */
 import { sql } from "@/api"
-import type { DocStats, DepthStats, PlatformMeta } from "../types/index"
+import type { BookmarkDetail, DocStats, DepthStats, PlatformMeta } from "../types/index"
 import { TIME_BIN_DAYS } from "./categoryQueryConfig"
 import { daysAgoStr } from "./sqlHelpers"
 import { fetchDocPlatformSets } from "./platformPublish"
@@ -165,34 +165,19 @@ export async function analyzeContentScan(
 
 export async function analyzeBookmarks(notebookCondition: string, docStats: DocStats) {
   try {
+    // 完全动态化：单一 GROUP BY 查询所有书签值，不写死任何系统书签
     const rows = await sql(`
-      SELECT
-        COUNT(DISTINCT a.block_id) as bookmarked_docs,
-        SUM(CASE WHEN a.value = '待发布' THEN 1 ELSE 0 END) as pending_count,
-        SUM(CASE WHEN a.value = '已发布' THEN 1 ELSE 0 END) as published_count,
-        SUM(CASE WHEN a.value = '无' THEN 1 ELSE 0 END) as none_count
-      FROM attributes a
-      WHERE a.name = 'bookmark'
-      AND a.block_id IN (SELECT b.id FROM blocks b WHERE b.type = 'd' ${notebookCondition})
-    `)
-    if (rows?.length > 0) {
-      const r = rows[0]
-      docStats.bookmarkedDocs = r.bookmarked_docs || 0
-      docStats.pendingPublishDocs = r.pending_count || 0
-      docStats.publishedDocs = r.published_count || 0
-      docStats.noneBookmarkDocs = r.none_count || 0
-    }
-
-    const customRows = await sql(`
       SELECT a.value, COUNT(DISTINCT a.block_id) as cnt FROM attributes a
       WHERE a.name = 'bookmark'
-      AND a.value NOT IN ('待发布', '已发布', '无', '')
+      AND a.value != ''
       AND a.block_id IN (SELECT b.id FROM blocks b WHERE b.type = 'd' ${notebookCondition})
-      GROUP BY a.value ORDER BY cnt DESC LIMIT 8
+      GROUP BY a.value ORDER BY cnt DESC
     `)
-    docStats.customBookmarkTop = customRows
-      ? customRows.map((r: any) => ({ value: r.value || "", count: r.cnt || 0 }))
+    const distribution: BookmarkDetail[] = rows
+      ? rows.map((r: any) => ({ value: r.value || "", count: r.cnt || 0 }))
       : []
+    docStats.bookmarkDistribution = distribution
+    docStats.bookmarkedDocs = distribution.reduce((sum, d) => sum + d.count, 0)
   } catch (e) { console.error("书签分析失败:", e) }
 }
 

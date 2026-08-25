@@ -53,14 +53,6 @@
         <span class="issue-label">重名</span>
       </div>
       <div
-        v-if="stats.pendingPublishDocs"
-        class="issue-item accent"
-        @click="$emit('selectCategory', 'pendingPublish')"
-      >
-        <span class="issue-value">{{ stats.pendingPublishDocs }}</span>
-        <span class="issue-label">待发布</span>
-      </div>
-      <div
         v-if="stats.orphanDocs"
         class="issue-item critical"
         @click="$emit('selectCategory', 'orphanDoc')"

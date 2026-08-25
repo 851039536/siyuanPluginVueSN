@@ -100,7 +100,7 @@ export function useStatsOverview(props: UseStatsOverviewProps) {
 
   const hasIssues = computed(() =>
     props.stats.zeroByteDocs > 0 || effectiveDupDocs.value > 0
-    || props.stats.pendingPublishDocs > 0 || props.stats.orphanDocs > 0,
+    || props.stats.orphanDocs > 0,
   )
 
   /** 健康文档数（总文档 - 启用扣分项合计，供 HeroCard 面板展示，与健康度百分比口径一致） */

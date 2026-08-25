@@ -177,10 +177,6 @@
           <span>无需理会操作</span>
         </li>
         <li>
-          <span class="tip-badge unused">不使用</span>
-          <span>废弃文档（归档）</span>
-        </li>
-        <li>
           <span class="tip-badge none">无</span>
           <span>暂未分类的文档，不计入统计数据</span>
         </li>

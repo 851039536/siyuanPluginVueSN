@@ -30,13 +30,13 @@
       <span
         v-if="doc.updated"
         class="badge time-badge"
-        :class="timeClass"
+        :class="timeInfo.class"
       >
         <Icon
           icon="mdi:clock-outline"
           class="badge-icon"
         />
-        {{ formatTime(doc.updated) }}
+        {{ timeInfo.label }}
       </span>
       <span
         v-if="doc.depth !== undefined && doc.depth >= 3"
@@ -49,7 +49,7 @@
         {{ doc.depth }}层
       </span>
       <span
-        v-if="doc.refCount && doc.refCount > 0"
+        v-if="(doc.refCount ?? 0) > 0"
         class="badge ref-badge"
       >
         <Icon
@@ -59,7 +59,7 @@
         {{ doc.refCount }}引用
       </span>
       <span
-        v-if="doc.imageCount && doc.imageCount > 0"
+        v-if="(doc.imageCount ?? 0) > 0"
         class="badge img-badge"
       >
         <Icon
@@ -159,32 +159,32 @@ function parseSiyuanTime(ts: string): Date | null {
   return new Date(year, month, day, hour, min, sec)
 }
 
-/** 根据更新时间判断样式 */
-const timeClass = computed(() => {
-  if (!props.doc.updated) return ""
-  const date = parseSiyuanTime(props.doc.updated)
-  if (!date) return ""
-  const diffDays = (Date.now() - date.getTime()) / 86400000
-  if (diffDays <= 7) return "time-green"
-  if (diffDays <= 30) return "time-yellow"
-  if (diffDays > 180) return "time-red"
-  return ""
-})
-
-/** 格式化时间为可读字符串 */
-function formatTime(ts: string): string {
+/** 更新时间派生信息（样式类 + 可读标签），一次解析时间避免重复计算 */
+const timeInfo = computed<{ class: string, label: string }>(() => {
+  const ts = props.doc.updated
+  if (!ts) return { class: "", label: "" }
   const date = parseSiyuanTime(ts)
-  if (!date) return ts
+  if (!date) return { class: "", label: ts }
   const diffMs = Date.now() - date.getTime()
   const diffSec = Math.floor(diffMs / 1000)
-  if (diffSec < 60) return "刚刚"
-  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}分钟前`
-  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}小时前`
-  const diffDays = Math.floor(diffSec / 86400)
-  if (diffDays < 30) return `${diffDays}天前`
-  if (diffDays < 180) return `${Math.floor(diffDays / 30)}月前`
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
-}
+  const diffDays = diffMs / 86400000
+
+  let cls = ""
+  if (diffDays <= 7) cls = "time-green"
+  else if (diffDays <= 30) cls = "time-yellow"
+  else if (diffDays > 180) cls = "time-red"
+
+  let label: string
+  if (diffSec < 60) label = "刚刚"
+  else if (diffSec < 3600) label = `${Math.floor(diffSec / 60)}分钟前`
+  else if (diffSec < 86400) label = `${Math.floor(diffSec / 3600)}小时前`
+  else if (diffDays < 30) label = `${Math.floor(diffDays)}天前`
+  else if (diffDays < 180) label = `${Math.floor(diffDays / 30)}月前`
+  else {
+    label = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
+  }
+  return { class: cls, label }
+})
 </script>
 
 <style lang="scss" scoped>

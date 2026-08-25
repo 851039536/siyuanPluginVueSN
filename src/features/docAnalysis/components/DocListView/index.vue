@@ -195,7 +195,7 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
 import { computed, onBeforeUnmount, ref, watch } from "vue"
-import type { DocI18n, FilterOptions, QueryState } from "../../types/index"
+import type { DocI18n, FilterOptions, PlatformMeta, QueryState } from "../../types/index"
 import { SORT_FIELD_OPTIONS, getCategoryLabel } from "../../types/index"
 import DocListItem from "./DocListItem.vue"
 
@@ -208,7 +208,7 @@ interface Props {
   /** 当前过滤平台的显示名称 */
   activePlatformName: string
   /** 可见平台列表（过滤栏 chips，不含隐藏平台） */
-  visiblePlatforms: { id: string, name: string }[]
+  visiblePlatforms: Pick<PlatformMeta, "id" | "name">[]
   /** 各平台待补发文档数（过滤栏 badge） */
   platformUnpublishedCounts: Record<string, number>
   i18n: DocI18n

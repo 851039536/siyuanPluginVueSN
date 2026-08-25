@@ -96,25 +96,6 @@
   p { margin: 0; }
 }
 
-// ============ 书签详情按钮 ============
-.bookmark-detail-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: $spacing-2px;
-  padding: 1px 6px;
-  border: 1px solid var(--b3-theme-primary);
-  border-radius: $vp-radius;
-  background: transparent;
-  color: var(--b3-theme-primary);
-  font-size: $font-size-2xs;
-  cursor: pointer;
-  white-space: nowrap;
-
-  &:hover {
-    background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
-  }
-}
-
 // ============ 表格区块 2 列瀑布流布局 ============
 .stats-grid {
   // CSS 多列瀑布流：各列独立堆叠，高度参差（列内纵向填充，首列填满再入次列）

@@ -18,7 +18,7 @@
       </div>
       <div class="tier-points-grid">
         <div
-          v-for="tier in ['common', 'rare', 'epic', 'legendary']"
+          v-for="tier in ['common', 'rare', 'epic', 'legendary'] as const"
           :key="tier"
           class="tier-point-item"
         >
@@ -63,7 +63,7 @@
             :key="lv"
             class="curve-preview-lv"
           >
-            Lv.{{ lv }}: {{ pointsForLevelPreview(lv) }}
+            Lv.{{ lv }}: {{ pointsForLevel(lv, editableLevelConfig.curveMultiplier) }}
           </span>
         </span>
       </div>
@@ -82,6 +82,7 @@
 
 <script setup lang="ts">
 import type { LevelConfig } from "../../types/milestoneRules"
+import type { Tier } from "../../types/milestoneData"
 import {
   ref,
   watch,
@@ -91,6 +92,7 @@ import {
   DEFAULT_LEVEL_CONFIG,
   TIER_LABELS,
 } from "../../types/milestoneRules"
+import { pointsForLevel } from "../../utils/achievements"
 
 interface Props {
   visible: boolean
@@ -111,18 +113,12 @@ watch(() => [props.visible, levelConfig.value], () => {
   }
 }, { immediate: true })
 
-function onTierPointChange(tier: string, val: number) {
+function onTierPointChange(tier: Tier, val: number) {
   editableLevelConfig.value.tierPoints[tier] = Math.max(1, val)
 }
 
 function onCurveMultiplierChange(val: number) {
   editableLevelConfig.value.curveMultiplier = Math.max(1, val)
-}
-
-function pointsForLevelPreview(level: number): number {
-  const m = editableLevelConfig.value.curveMultiplier
-  if (level <= 1) return 0
-  return Math.floor(m * (level - 1) * Math.sqrt(level - 1))
 }
 
 function onSaveLevelConfig() {

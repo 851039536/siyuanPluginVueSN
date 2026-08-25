@@ -17,11 +17,13 @@ const customAchievements = ref<CustomAchievement[]>([])
 const levelConfig = ref<LevelConfig>({ ...DEFAULT_LEVEL_CONFIG })
 
 let storage: PluginStorage | undefined
+let boundPlugin: Plugin | null = null
 
 export function useMilestoneStorage() {
-  /** 初始化：绑定 plugin 并一次性加载三项持久化数据 */
+  /** 初始化：绑定 plugin 并一次性加载三项持久化数据（幂等：同一 plugin 只初始化一次） */
   async function initMilestoneStorage(plugin?: Plugin) {
-    if (!plugin) return
+    if (!plugin || boundPlugin === plugin) return
+    boundPlugin = plugin
     storage = new PluginStorage(plugin)
     const rules = await storage.load<Record<string, number[]>>(STORAGE_KEY_MILESTONE_RULES)
     if (rules) customRules.value = rules

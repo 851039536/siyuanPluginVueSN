@@ -14,7 +14,7 @@
       :code-blocks="stats?.codeBlocks ?? 0"
       :writing-streak="stats?.writingStreak ?? 0"
       :active-days="stats?.activeDays ?? 0"
-      :i18n="i18n"
+      :i18n="props.i18n"
     />
   </div>
 </template>
@@ -22,9 +22,6 @@
 <script setup lang="ts">
 // 里程碑 Tab 入口容器：纯渲染编排
 import type { Plugin } from "siyuan"
-import {
-  computed,
-} from "vue"
 import type { StatisticsData } from "../../types"
 import MilestonesCard from "./MilestonesCard.vue"
 
@@ -34,13 +31,12 @@ interface Props {
   i18n?: Record<string, any>
 }
 
+// withDefaults 保证 i18n 默认 {}，模板经 props 直接访问
 const props = withDefaults(defineProps<Props>(), {
   plugin: undefined,
   stats: null,
   i18n: () => ({}),
 })
-
-const i18n = computed(() => props.i18n || {})
 </script>
 
 <style scoped lang="scss">

@@ -66,6 +66,7 @@ export function registerDocNavigation(plugin: Plugin) {
         const ref = protyle as any
         ref.__docNavApp?.unmount()
         ref.__docNavApp = null
+        ref.__docNavDocId = null
         ref.__docNavContainer?.remove()
         ref.__docNavContainer = null
       }
@@ -118,11 +119,17 @@ async function updateDocNavigation(
     if (!target) return
 
     const protyleRef = protyle as any
+    if (protyleRef.__docNavApp && protyleRef.__docNavDocId === docId) {
+      // 同一 protyle 同一文档重复触发（如块内焦点切换、编辑器重绘）时导航栏已挂载，
+      // 直接复用避免卸载重建造成页面跳动/闪烁
+      return
+    }
     if (protyleRef.__docNavApp) {
-      // 同一文档二次导航时先卸载旧 app，容器 DOM 会被复用于后续挂载
+      // 切换到另一文档时先卸载旧 app，容器 DOM 会被复用于后续挂载
       protyleRef.__docNavApp.unmount()
       protyleRef.__docNavApp = null
     }
+    protyleRef.__docNavDocId = docId
 
     let container = protyleRef.__docNavContainer
     if (!container) {

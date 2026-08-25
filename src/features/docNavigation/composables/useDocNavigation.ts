@@ -35,7 +35,6 @@ export interface UseDocNavigationReturn {
   breadcrumbs: Ref<BreadcrumbItem[]>
   siblingDocs: Ref<SiblingDocs>
   backlinks: Ref<BacklinkItem[]>
-  backlinkCount: ComputedRef<number>
   hasBacklinks: ComputedRef<boolean>
   docMeta: Ref<DocMeta | null>
   hasMeta: ComputedRef<boolean>
@@ -88,10 +87,6 @@ export function useDocNavigation(): UseDocNavigationReturn {
 
   const childCount = computed(() => {
     return childDocs.value.length
-  })
-
-  const backlinkCount = computed(() => {
-    return backlinks.value.length
   })
 
   const hasBacklinks = computed(() => {
@@ -192,7 +187,6 @@ export function useDocNavigation(): UseDocNavigationReturn {
     breadcrumbs,
     siblingDocs,
     backlinks,
-    backlinkCount,
     hasBacklinks,
     docMeta,
     hasMeta,

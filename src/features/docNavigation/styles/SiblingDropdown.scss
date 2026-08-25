@@ -1,7 +1,6 @@
 @use "@/variables.scss" as *;
-@use "./dropdown-shell";
 
-// 同级下拉面板样式：外壳由 _dropdown-shell.scss 共享提供，此处仅同级文档列表项样式
+// 同级下拉面板样式：外壳由 DropdownShell 组件引入 _dropdown-shell.scss，此处仅同级文档列表项样式
 .doc-nav-sibling-item {
   display: flex;
   align-items: center;

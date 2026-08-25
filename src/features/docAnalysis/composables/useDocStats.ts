@@ -130,10 +130,8 @@ export function useDocStats(plugin: Plugin, storage: DocAnalysisStorage, deps: U
         ? dupRows.map((r: any) => ({ title: r.doc_title || "无标题", count: r.cnt || 0 }))
         : []
 
-      // 后处理：书签数修正 + 缓存写入
-      const effectiveBm = Math.max(0, docStats.bookmarkedDocs - docStats.noneBookmarkDocs)
-      docStats.bookmarkedDocs = effectiveBm
-      docStats.noBookmarkDocs = Math.max(0, docStats.totalDocs - effectiveBm - docStats.noneBookmarkDocs)
+      // 后处理：无书签 = 总文档 - 有书签（bookmarkedDocs 已在 analyzeBookmarks 动态统计）
+      docStats.noBookmarkDocs = Math.max(0, docStats.totalDocs - docStats.bookmarkedDocs)
 
       hasAnalyzed.value = true
       analyzedNotebookId = deps.filterOptions.notebookId
@@ -155,6 +153,7 @@ export function useDocStats(plugin: Plugin, storage: DocAnalysisStorage, deps: U
       const rows = await sql(`
         SELECT a.value as bookmark_value, COUNT(DISTINCT a.block_id) as doc_count
         FROM attributes a WHERE a.name = 'bookmark'
+        AND a.value != ''
         AND a.block_id IN (SELECT b.id FROM blocks b WHERE b.type = 'd' ${deps.buildNotebookCondition()})
         GROUP BY a.value ORDER BY doc_count DESC
       `)

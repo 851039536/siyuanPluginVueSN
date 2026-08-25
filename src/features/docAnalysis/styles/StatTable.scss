@@ -118,9 +118,8 @@
   &.depth-color { color: var(--b3-theme-primary, #6366f1); }
   &.ref-color { color: var(--b3-theme-info-dark, #1d4ed8); }
   &.img-color { color: var(--b3-theme-success-dark, #059669); }
-  &.bookmark-color, &.pending-color { color: var(--b3-theme-warning-dark, #b45309); }
-  &.no-bookmark-color, &.none-bookmark-color { color: var(--b3-theme-on-surface-variant); }
-  &.published-color { color: var(--b3-theme-info-dark, #1d4ed8); }
+  &.bookmark-color { color: var(--b3-theme-warning-dark, #b45309); }
+  &.no-bookmark-color { color: var(--b3-theme-on-surface-variant); }
   &.full-publish-color { color: var(--b3-theme-success, #22c55e); }
   &.partial-publish-color { color: var(--b3-theme-warning, #eab308); }
   &.no-publish-color { color: var(--b3-theme-on-surface-variant); }

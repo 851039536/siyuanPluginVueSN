@@ -142,11 +142,6 @@
     .issue-value { color: var(--b3-theme-warning, #f59e0b); }
   }
 
-  &.accent {
-    border-color: var(--b3-theme-info, #a855f7);
-    .issue-value { color: var(--b3-theme-info, #a855f7); }
-  }
-
   // 数据突出展示：问题数量
   .issue-value {
     font-size: $font-size-base;

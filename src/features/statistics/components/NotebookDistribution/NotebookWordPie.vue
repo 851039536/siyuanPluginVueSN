@@ -41,7 +41,8 @@
                 text-anchor="middle"
                 dy="1.8em"
               >
-                {{ formatNumber(pieArcs[activeIndex].words) }} 字
+                <!-- 饼图中心字数单位："字" -->
+                {{ formatNumber(pieArcs[activeIndex].words) }} {{ i18n.wordsUnit }}
               </text>
             </g>
           </g>
@@ -62,7 +63,8 @@
           ></span>
           <span class="legend-label">{{ item.name }}</span>
           <span class="legend-pct">{{ item.percentage }}%</span>
-          <span class="legend-words">{{ formatNumber(item.words) }} 字</span>
+          <!-- 图例字数单位："字" -->
+          <span class="legend-words">{{ formatNumber(item.words) }} {{ i18n.wordsUnit }}</span>
         </div>
       </div>
     </div>
@@ -81,10 +83,12 @@ import { formatNumber } from "../../utils"
 
 interface Props {
   data?: NotebookWordStat[]
+  i18n?: Record<string, any>
 }
 
 const props = withDefaults(defineProps<Props>(), {
   data: () => [],
+  i18n: () => ({}),
 })
 
 const {

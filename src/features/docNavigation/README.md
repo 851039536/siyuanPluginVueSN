@@ -17,4 +17,5 @@
 - **数据源**：`getPathByID` / `listDocsByPath`（层级）、`getBacklink`（反链，内部走 `getBacklink2`）、`getDoc` + SQL（元数据）
 - **缓存**：`DocNavigationCache` 内存缓存，TTL 60s，LRU 驱逐上限 20 条；层级/面包屑/同级/反链/元数据各用独立槽位，`clearAll()` 统一清理
 - **时间格式化**：`utils.ts` 提供 `formatRelativeTime`（7 天内显示"X 天前"，之后回退短日期）、`formatShortDate`、`formatFullTime`
-- **下拉外壳共享**：`styles/_dropdown-shell.scss` 提取触发按钮/面板/过渡动画通用样式，供同级/下级/反向链接三个下拉组件复用
+- **下拉外壳共享**：`components/DropdownShell.vue` 统一触发按钮 + 弹出面板 + 开合状态机，供同级/下级/反向链接三个下拉组件复用；外壳样式 `styles/_dropdown-shell.scss` 同步归位到 DropdownShell
+- **点击外部关闭**：`composables/useClickOutside.ts` 统一管理"点击面板外部关闭"的监听注册/销毁，供所有弹出面板组件复用

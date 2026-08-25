@@ -1,7 +1,6 @@
 @use "@/variables.scss" as *;
-@use "./dropdown-shell";
 
-// 反向链接下拉面板样式：搜索输入框、扁平反链列表项、匹配高亮
+// 反向链接下拉面板样式：外壳由 DropdownShell 组件引入 _dropdown-shell.scss，此处仅搜索框/列表项/高亮样式
 .doc-nav-backlink-search {
   display: flex;
   align-items: center;

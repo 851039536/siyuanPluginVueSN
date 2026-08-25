@@ -1,116 +1,81 @@
-<!-- 反向链接下拉面板：触发按钮 + 搜索过滤 + 扁平反链文档列表，点击外部关闭 -->
+<!-- 反向链接下拉面板：DropdownShell 外壳 + 搜索过滤 + 扁平反链文档列表 -->
 <template>
-  <div
-    class="doc-nav-dropdown"
-    ref="rootRef"
+  <DropdownShell
+    trigger-icon="docNavBacklink"
+    :trigger-text="i18n.docNavBacklinks"
+    :count="backlinks.length"
+    panel-role="listbox"
+    :panel-aria-label="i18n.docNavBacklinkPanelTitle"
+    :panel-title="i18n.docNavBacklinkPanelTitle"
+    @toggle="handlePanelToggle"
   >
-    <!-- 下拉触发按钮：反向链接 (N) -->
-    <button
-      class="doc-nav-dropdown-trigger"
-      :class="{ 'doc-nav-dropdown-trigger-open': isOpen }"
-      type="button"
-      :aria-expanded="isOpen"
-      @click="togglePanel"
-    >
+    <!-- 搜索输入框："搜索..." -->
+    <div class="doc-nav-backlink-search">
       <IconWrapper
-        name="docNavBacklink"
-        size="14"
-        aria-hidden="true"
-      />
-      <span class="doc-nav-dropdown-trigger-text">{{ i18n.docNavBacklinks }} ({{ backlinkCount }})</span>
-      <IconWrapper
-        name="chevronDown"
-        class="doc-nav-dropdown-caret"
+        name="docNavBacklinkSearch"
         size="12"
+        class="doc-nav-backlink-search-icon"
         aria-hidden="true"
       />
-    </button>
-
-    <!-- 下拉面板：搜索框 + 扁平反链文档列表 -->
-    <Transition name="doc-nav-dropdown-fade">
+      <input
+        v-model="searchQuery"
+        class="doc-nav-backlink-search-input"
+        type="text"
+        :placeholder="i18n.docNavBacklinkSearchPlaceholder"
+        :aria-label="i18n.docNavBacklinkSearchPlaceholder"
+      />
+    </div>
+    <!-- 反链文档列表 -->
+    <template v-if="filteredBacklinks.length">
       <div
-        v-if="isOpen"
-        class="doc-nav-dropdown-panel"
-        role="listbox"
-        :aria-label="i18n.docNavBacklinkPanelTitle"
+        v-for="item in filteredBacklinks"
+        :key="item.id"
+        class="doc-nav-backlink-item"
+        role="option"
+        :title="stripHtml(item.content)"
+        @click="openDoc(item.id)"
       >
-        <!-- 面板标题："反向链接" -->
-        <div class="doc-nav-dropdown-header">{{ i18n.docNavBacklinkPanelTitle }}</div>
-        <!-- 搜索输入框："搜索..." -->
-        <div class="doc-nav-backlink-search">
-          <IconWrapper
-            name="docNavBacklinkSearch"
-            size="12"
-            class="doc-nav-backlink-search-icon"
-            aria-hidden="true"
-          />
-          <input
-            v-model="searchQuery"
-            class="doc-nav-backlink-search-input"
-            type="text"
-            :placeholder="i18n.docNavBacklinkSearchPlaceholder"
-            :aria-label="i18n.docNavBacklinkSearchPlaceholder"
-          />
-        </div>
-        <!-- 反链文档列表 -->
-        <template v-if="filteredBacklinks.length">
-          <div
-            v-for="item in filteredBacklinks"
-            :key="item.id"
-            class="doc-nav-backlink-item"
-            role="option"
-            :title="stripHtml(item.content)"
-            @click="openDoc(item.id)"
+        <span class="doc-nav-backlink-item-text">
+          <template
+            v-for="(seg, index) in highlightSegments(stripHtml(item.content))"
+            :key="index"
           >
-            <span class="doc-nav-backlink-item-text">
-              <template
-                v-for="(seg, index) in highlightSegments(stripHtml(item.content))"
-                :key="index"
-              >
-                <mark
-                  v-if="seg.match"
-                  class="doc-nav-backlink-mark"
-                >{{ seg.text }}</mark>
-                <template v-else>{{ seg.text }}</template>
-              </template>
-            </span>
-          </div>
-        </template>
-        <!-- 无匹配结果："无结果" -->
-        <div
-          v-else
-          class="doc-nav-backlink-empty"
-        >
-          {{ i18n.docNavBacklinkNoResults }}
-        </div>
+            <mark
+              v-if="seg.match"
+              class="doc-nav-backlink-mark"
+            >{{ seg.text }}</mark>
+            <template v-else>{{ seg.text }}</template>
+          </template>
+        </span>
       </div>
-    </Transition>
-  </div>
+    </template>
+    <!-- 无匹配结果："无结果" -->
+    <div
+      v-else
+      class="doc-nav-backlink-empty"
+    >
+      {{ i18n.docNavBacklinkNoResults }}
+    </div>
+  </DropdownShell>
 </template>
 
 <script setup lang="ts">
 import {
   computed,
-  onMounted,
-  onUnmounted,
   ref,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import type { BacklinkItem } from "../types"
+import DropdownShell from "./DropdownShell.vue"
 
 const props = defineProps<{
   backlinks: BacklinkItem[]
-  backlinkCount: number
   i18n: Record<string, string>
   openDoc: (docId: string) => void
   stripHtml: (html: string) => string
 }>()
 
-const rootRef = ref<HTMLElement | null>(null)
-const isOpen = ref(false)
 const searchQuery = ref("")
-/** 防止同一点击事件中 togglePanel 打开面板后 handleDocumentClick 立即关闭 */
-let justOpened = false
 
 /** 高亮片段：text 为文本内容，match 标记是否命中搜索关键词 */
 interface HighlightSegment {
@@ -157,35 +122,12 @@ const filteredBacklinks = computed(() => {
   )
 })
 
-/** 打开面板时重置搜索框，避免残留上次查询；设置 justOpened 防止 document click 立即关闭 */
-function togglePanel(): void {
-  isOpen.value = !isOpen.value
-  if (isOpen.value) {
+/** 面板打开时重置搜索框，避免残留上次查询 */
+function handlePanelToggle(open: boolean): void {
+  if (open) {
     searchQuery.value = ""
-    justOpened = true
-    requestAnimationFrame(() => {
-      justOpened = false
-    })
   }
 }
-
-/** 点击下拉面板外部区域时关闭面板（justOpened 时跳过，防止打开即关闭） */
-function handleDocumentClick(event: MouseEvent) {
-  if (justOpened) {
-    return
-  }
-  if (rootRef.value && !rootRef.value.contains(event.target as Node)) {
-    isOpen.value = false
-  }
-}
-
-onMounted(() => {
-  document.addEventListener("click", handleDocumentClick)
-})
-
-onUnmounted(() => {
-  document.removeEventListener("click", handleDocumentClick)
-})
 </script>
 
 <style scoped lang="scss">

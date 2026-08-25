@@ -1,4 +1,4 @@
-<!-- 笔记本详情表格：可排序的文档数/字数/占比表格 -->
+<!-- 笔记本详情表格：可排序的文档数/字数/总占比表格（数值列内联占比） -->
 <template>
   <div class="notebook-table-wrap">
     <table class="notebook-table">
@@ -36,10 +36,10 @@
             {{ row.name }}
           </td>
           <td class="nb-td nb-td-num">
-            {{ row.docs.toLocaleString() }}
+            {{ row.docs.toLocaleString() }} ({{ row.docPct }}%)
           </td>
           <td class="nb-td nb-td-num">
-            {{ row.words.toLocaleString() }}
+            {{ row.words.toLocaleString() }} ({{ row.wordPct }}%)
           </td>
           <td class="nb-td nb-td-num nb-td-pct">
             <div class="pct-bar-wrap">
@@ -90,7 +90,7 @@ const {
 
 type SortKey = 'name' | 'docs' | 'words' | 'pct'
 
-// 表头映射 i18n：笔记本/文档数/字数/占比
+// 表头映射 i18n：笔记本/文档数/字数/总占比
 const columns = computed(() => [
   {
     key: 'name' as SortKey,
@@ -106,7 +106,7 @@ const columns = computed(() => [
   },
   {
     key: 'pct' as SortKey,
-    label: props.i18n.proportion,
+    label: props.i18n.totalProportion,
   },
 ])
 
@@ -127,7 +127,15 @@ const mergedRows = computed(() => {
   const wordMap = new Map(props.wordStats.map((d) => [d.name, d]))
 
   const names = new Set([...docMap.keys(), ...wordMap.keys()])
-  const rows: Array<{ name: string, docs: number, words: number, pct: number, color: string }> = []
+  const rows: Array<{
+    name: string
+    docs: number
+    words: number
+    docPct: number
+    wordPct: number
+    pct: number
+    color: string
+  }> = []
 
   for (const name of names) {
     const docs = docMap.get(name) ?? 0
@@ -136,9 +144,21 @@ const mergedRows = computed(() => {
       name,
       docs,
       words: ws?.words ?? 0,
-      pct: ws?.percentage ?? 0,
+      docPct: 0,
+      wordPct: 0,
+      pct: 0,
       color: ws?.color ?? '#888',
     })
+  }
+
+  const totalDocs = rows.reduce((sum, r) => sum + r.docs, 0)
+  const totalWords = rows.reduce((sum, r) => sum + r.words, 0)
+
+  // 文档数/字数各自占比，总占比取两者平均
+  for (const r of rows) {
+    r.docPct = totalDocs > 0 ? Math.round((r.docs / totalDocs) * 100) : 0
+    r.wordPct = totalWords > 0 ? Math.round((r.words / totalWords) * 100) : 0
+    r.pct = Math.round((r.docPct + r.wordPct) / 2)
   }
   return rows
 })

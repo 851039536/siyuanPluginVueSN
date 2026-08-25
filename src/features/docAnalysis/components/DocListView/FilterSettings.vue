@@ -9,7 +9,7 @@
         class="filter-input title-input"
         placeholder="标题搜索"
         @input="handleDebouncedInput"
-        @keyup.enter="$emit('query')"
+        @keyup.enter="triggerQuery"
       />
       <input
         v-model="options.contentKeyword"
@@ -17,7 +17,7 @@
         class="filter-input content-input"
         placeholder="全文搜索"
         @input="handleDebouncedInput"
-        @keyup.enter="$emit('query')"
+        @keyup.enter="triggerQuery"
       />
       <button
         v-if="hasAnyFilter"
@@ -33,13 +33,14 @@
       <button
         class="query-btn"
         :disabled="isQuerying"
-        @click="$emit('query')"
+        @click="triggerQuery"
       >
         <Icon
-          icon="mdi:magnify"
+          :icon="isQuerying ? 'mdi:loading' : 'mdi:magnify'"
+          :class="{ 'spin-icon': isQuerying }"
           class="btn-icon"
         />
-        {{ isQuerying ? '...' : '查询' }}
+        {{ isQuerying ? '查询中' : '查询' }}
       </button>
     </div>
     <!-- 第二行：辅助过滤 -->
@@ -51,7 +52,7 @@
           class="filter-input wordcount-input"
           min="0"
           placeholder="字数"
-          @keyup.enter="$emit('query')"
+          @keyup.enter="triggerQuery"
         />
         <span class="filter-separator">~</span>
         <input
@@ -60,7 +61,7 @@
           class="filter-input wordcount-input"
           min="0"
           placeholder="上限"
-          @keyup.enter="$emit('query')"
+          @keyup.enter="triggerQuery"
         />
       </div>
       <select
@@ -84,7 +85,7 @@
         class="filter-input bookmark-input"
         placeholder="书签"
         @input="handleDebouncedInput"
-        @keyup.enter="$emit('query')"
+        @keyup.enter="triggerQuery"
       />
     </div>
   </div>
@@ -134,10 +135,20 @@ const hasAnyFilter = computed(() => {
   )
 })
 
-/** 标题/全文输入防抖查询 */
+/** 统一触发查询：清除待执行的防抖查询，避免回车/按钮与防抖重复触发 */
+function triggerQuery() {
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
+    debounceTimer = null
+  }
+  emit("query")
+}
+
+/** 标题/全文输入防抖查询（输入停顿 500ms 后自动触发） */
 function handleDebouncedInput() {
   if (debounceTimer) clearTimeout(debounceTimer)
   debounceTimer = setTimeout(() => {
+    debounceTimer = null
     emit("query")
   }, 500)
 }

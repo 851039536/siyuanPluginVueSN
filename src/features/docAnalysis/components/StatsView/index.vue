@@ -68,16 +68,8 @@
           @select="(id) => handleRowSelect(section.key, id)"
         >
           <template #headerExtra>
-            <button
-              v-if="section.key === 'bookmark'"
-              class="bookmark-detail-btn"
-              title="查看全部书签"
-              @click.stop="$emit('showBookmarkDetails')"
-            >
-              <Icon icon="mdi:format-list-bulleted" :size="13" />详情
-            </button>
             <span
-              v-else-if="section.key === 'publish'"
+              v-if="section.key === 'publish'"
               class="section-hint"
             >人均 {{ avgPlatformsPerDoc }} 平台 · 覆盖率 {{ coveragePct }}%</span>
           </template>
@@ -127,15 +119,6 @@
       <p>点击「分析」查看文档统计</p>
     </div>
 
-    <!-- 书签详情弹出面板 -->
-    <BookmarkDetailModal
-      :visible="bookmarkDetailVisible"
-      :loading="bookmarkDetailLoading"
-      :details="bookmarkDetails"
-      @close="$emit('showBookmarkDetails')"
-      @select="(value) => $emit('selectBookmark', value)"
-    />
-
     <!-- 重名排除管理弹窗 -->
     <DuplicateNameFilterModal
       :visible="dupFilterModalVisible"
@@ -148,7 +131,6 @@
 
 <script setup lang="ts">
 import type {
-  BookmarkDetail,
   DepthStats,
   DocStats,
   DuplicateNameGroup,
@@ -162,7 +144,6 @@ import { computed, ref } from "vue"
 import { useStatsOverview } from "../../composables/useStatsOverview"
 import HeroCard from "./HeroCard.vue"
 import StatTable from "./StatTable.vue"
-import BookmarkDetailModal from "./BookmarkDetailModal.vue"
 import DuplicateNameFilterModal from "./DuplicateNameFilterModal.vue"
 
 interface Props {
@@ -170,9 +151,6 @@ interface Props {
   hasAnalyzed: boolean
   activeFilter: string
   depthStats: DepthStats
-  bookmarkDetails: BookmarkDetail[]
-  bookmarkDetailVisible: boolean
-  bookmarkDetailLoading: boolean
   effectiveDuplicateGroups: DuplicateNameGroup[]
   duplicateNameFilter: string[]
   healthSettings: HealthSettings
@@ -182,7 +160,6 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<{
   (e: "selectCategory", category: string): void
-  (e: "showBookmarkDetails"): void
   (e: "selectBookmark", bookmark: string): void
   (e: "selectPlatform", platformId: string): void
   (e: "selectDepth", depth: number): void

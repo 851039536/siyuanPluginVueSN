@@ -112,14 +112,10 @@
         :has-analyzed="hasAnalyzed"
         :active-filter="statsFilter"
         :depth-stats="depthStats"
-        :bookmark-details="bookmarkDetails"
-        :bookmark-detail-visible="bookmarkDetailVisible"
-        :bookmark-detail-loading="bookmarkDetailLoading"
         :effective-duplicate-groups="effectiveDuplicateGroups"
         :duplicate-name-filter="duplicateNameFilter"
         :health-settings="healthSettings"
         @selectCategory="handleSelectCategory"
-        @showBookmarkDetails="fetchBookmarkDetails"
         @selectBookmark="queryByBookmark"
         @selectPlatform="handleSelectPlatform"
         @selectDepth="handleSelectDepth"
@@ -288,9 +284,6 @@ const {
   statsLoading,
   hasAnalyzed,
   statsFilter,
-  bookmarkDetails,
-  bookmarkDetailVisible,
-  bookmarkDetailLoading,
   effectiveDuplicateGroups,
   duplicateNameFilter,
   healthSettings,
@@ -301,7 +294,6 @@ const {
   queryDocs,
   analyzeDocStats,
   queryByStatsCategory,
-  fetchBookmarkDetails,
   queryByBookmark,
   queryByMissingPlatform,
   queryByPlatformPublished,

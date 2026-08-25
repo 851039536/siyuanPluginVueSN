@@ -2,7 +2,13 @@
 /**
  * 格式化时间戳为 HH:MM 字符串
  */
-import type { ChangedDoc, DocBlockRow } from "../types"
+import type {
+  ActivitySummary,
+  ChangedDoc,
+  DocBlockRow,
+  NotebookActivityItem,
+  NotebookRankingRow,
+} from "../types"
 
 export function formatTime(ts: string | undefined): string {
   if (!ts || ts.length < 12) return ""
@@ -129,4 +135,58 @@ export function isToday(dateStr: string): boolean {
  */
 export function isValidDateStr(dateStr: string): boolean {
   return /^\d{8}$/.test(dateStr)
+}
+
+/**
+ * 汇总笔记本活跃度指标（摘要 + 排行），一次遍历同时产出两组数据，供摘要卡与排行表共享
+ */
+export function computeActivityMetrics(
+  notebooks: NotebookActivityItem[],
+): { summary: ActivitySummary, ranking: NotebookRankingRow[] } {
+  let totalWords = 0
+  let mostActiveNb = ""
+  let mostActiveWords = 0
+  const activeDaysSet = new Set<string>()
+
+  const ranking: NotebookRankingRow[] = []
+  for (const nb of notebooks) {
+    let nbTotal = 0
+    let nbActiveDays = 0
+    for (const d of nb.data) {
+      if (d.words > 0) {
+        nbTotal += d.words
+        nbActiveDays++
+        activeDaysSet.add(d.date)
+      }
+    }
+    totalWords += nbTotal
+    if (nbTotal > mostActiveWords) {
+      mostActiveWords = nbTotal
+      mostActiveNb = nb.notebook
+    }
+    ranking.push({
+      notebook: nb.notebook,
+      color: nb.color,
+      totalWords: nbTotal,
+      activeDays: nbActiveDays,
+      dailyAvg: nbActiveDays > 0 ? Math.round(nbTotal / nbActiveDays) : 0,
+      percent: 0,
+    })
+  }
+
+  for (const row of ranking) {
+    row.percent = totalWords > 0 ? Math.round((row.totalWords / totalWords) * 100) : 0
+  }
+
+  ranking.sort((a, b) => b.totalWords - a.totalWords)
+
+  return {
+    summary: {
+      activeCount: notebooks.length,
+      mostActive: mostActiveNb || "-",
+      totalWords,
+      dailyAvg: activeDaysSet.size > 0 ? Math.round(totalWords / activeDaysSet.size) : 0,
+    },
+    ranking,
+  }
 }

@@ -1,4 +1,4 @@
-// 笔记本写作活跃度趋势样式：范围选择/多线折线图/tooltip/排行表
+// 笔记本活跃度样式：范围选择/摘要卡/多线折线图/tooltip/排行表
 @use "@/variables.scss" as *;
 @use '../styles/index.scss' as stats;
 
@@ -11,6 +11,7 @@
 // ========== Range Selector ==========
 .range-selector {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
@@ -52,8 +53,35 @@
   white-space: nowrap;
 }
 
+// 窄屏摘要卡降为 2 列
+@media (max-width: 560px) {
+  .summary-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 // ========== Loading / Empty ==========
-.trend-loading,
+.trend-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px 20px;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+
+  &::before {
+    content: '';
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--b3-theme-primary);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: activity-spin 0.8s linear infinite;
+  }
+}
+
 .trend-empty {
   text-align: center;
   padding: 40px 20px;
@@ -62,12 +90,29 @@
   opacity: 0.5;
 }
 
+@keyframes activity-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 // ========== Chart ==========
 .chart-card {
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
   border-radius: stats.$radius-sm;
   padding: 14px;
+}
+
+// 卡片标题（图表卡与排行卡共用）
+.card-title {
+  font-family: stats.$font-mono;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-surface);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .chart-legend {
@@ -151,6 +196,7 @@
 
 .hit-area {
   fill: transparent;
+  cursor: crosshair;
 }
 
 .hover-line {
@@ -210,16 +256,6 @@
   padding: 14px;
 }
 
-.ranking-title {
-  font-family: stats.$font-mono;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-  color: var(--b3-theme-on-surface);
-  margin-bottom: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-}
-
 .ranking-table {
   display: flex;
   flex-direction: column;
@@ -254,11 +290,33 @@
 }
 
 .col-rank {
-  width: 28px;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
   text-align: center;
+  border-radius: 50%;
   flex-shrink: 0;
   font-size: $font-size-2xs;
-  opacity: 0.5;
+  color: var(--b3-theme-on-surface-light);
+
+  // 前三名奖牌色徽章（装饰色，非语义色）
+  &.rank-gold {
+    background: rgba(stats.$color-rank-gold, 0.16);
+    color: stats.$color-rank-gold-text;
+    font-weight: $font-weight-bold;
+  }
+
+  &.rank-silver {
+    background: rgba(stats.$color-rank-silver, 0.22);
+    color: #4b5563;
+    font-weight: $font-weight-bold;
+  }
+
+  &.rank-bronze {
+    background: rgba(stats.$color-rank-bronze, 0.2);
+    color: #92400e;
+    font-weight: $font-weight-bold;
+  }
 }
 
 .col-name {

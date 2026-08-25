@@ -959,6 +959,7 @@ export async function version(): Promise<string> {
   return request("/api/system/version", {})
 }
 
+// 获取思源笔记当前系统时间
 export async function currentTime(): Promise<number> {
   return request("/api/system/currentTime", {})
 }

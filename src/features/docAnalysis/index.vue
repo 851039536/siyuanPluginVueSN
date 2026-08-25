@@ -62,46 +62,6 @@
       @reset="handleReset"
     />
 
-    <!-- 平台快捷过滤栏 -->
-    <div class="platform-filter-bar">
-      <span class="platform-filter-label">平台过滤</span>
-      <button
-        v-for="platform in visiblePlatforms"
-        :key="platform.id"
-        class="platform-chip"
-        :class="{ active: activePlatformFilter === platform.id }"
-        @click="handlePlatformFilter(platform.id)"
-      >
-        {{ platform.name }}
-        <span
-          v-if="platformUnpublishedCounts[platform.id]"
-          class="platform-chip-badge"
-        >{{ platformUnpublishedCounts[platform.id] }}</span>
-      </button>
-      <button
-        v-if="activePlatformFilter"
-        class="platform-chip-clear"
-        title="清除平台过滤"
-        @click="handlePlatformFilter(activePlatformFilter)"
-      >
-        <Icon icon="mdi:close" />
-      </button>
-      <button
-        class="platform-manage-btn"
-        title="管理平台"
-        @click="platformManageVisible = true"
-      >
-        <Icon icon="mdi:cog-outline" />
-      </button>
-    </div>
-    <div
-      v-if="activePlatformFilter"
-      class="platform-filter-hint"
-    >
-      <Icon icon="mdi:information-outline" />
-      <span>显示已发布到其他平台、但还没发布到<strong>{{ activePlatformName }}</strong>的文档</span>
-    </div>
-
     <!-- 统计面板 -->
     <div
       v-show="activeTab === 'stats'"
@@ -132,12 +92,16 @@
       :stats-filter="statsFilter"
       :active-platform-filter="activePlatformFilter"
       :active-platform-name="activePlatformName"
+      :visible-platforms="visiblePlatforms"
+      :platform-unpublished-counts="platformUnpublishedCounts"
       :i18n="i18n"
       @open="openDoc"
       @attrs="handleShowAttrs"
       @sort-change="handleSortChange"
       @toggle-sort-order="toggleSortOrder"
       @clear-stats-filter="clearStatsFilter"
+      @select-platform="handlePlatformFilter"
+      @open-platform-manage="platformManageVisible = true"
     />
 
     <!-- 底部信息 -->
@@ -330,7 +294,7 @@ const activePlatformName = computed(() => {
   return meta ? meta.name : activePlatformFilter.value
 })
 
-/** 切换平台过滤：点击显示该平台未发布的文档 */
+/** 切换平台过滤：点击显示该平台未发布的文档（列表 Tab 内调用，无需再切 Tab） */
 function handlePlatformFilter(matcher: string) {
   if (activePlatformFilter.value === matcher) {
     activePlatformFilter.value = ""
@@ -340,7 +304,6 @@ function handlePlatformFilter(matcher: string) {
   }
   activePlatformFilter.value = matcher
   queryByMissingPlatform(matcher)
-  activeTab.value = "list"
 }
 
 // Tab 切换

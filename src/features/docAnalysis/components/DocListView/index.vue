@@ -1,6 +1,48 @@
-<!-- 文档列表视图 - 排序/结果计数 + 列表渲染 + 分批滚动加载 -->
+<!-- 文档列表视图 - 平台快捷过滤栏 + 排序/结果计数 + 列表渲染 + 分批滚动加载 -->
 <template>
   <div class="tab-panel doc-list-panel">
+    <!-- 平台快捷过滤栏：查看已发布其他平台、但未发布至所选平台的文档 -->
+    <div class="platform-filter-bar">
+      <span class="platform-filter-label">平台过滤</span>
+      <button
+        v-for="platform in visiblePlatforms"
+        :key="platform.id"
+        class="platform-chip"
+        :class="{ active: activePlatformFilter === platform.id }"
+        :title="`查看未发布至${platform.name}的文档`"
+        @click="$emit('selectPlatform', platform.id)"
+      >
+        {{ platform.name }}
+        <span
+          v-if="platformUnpublishedCounts[platform.id]"
+          class="platform-chip-badge"
+        >{{ platformUnpublishedCounts[platform.id] }}</span>
+      </button>
+      <button
+        v-if="activePlatformFilter"
+        class="platform-chip-clear"
+        title="清除平台过滤"
+        @click="$emit('selectPlatform', activePlatformFilter)"
+      >
+        <Icon icon="mdi:close" />
+      </button>
+      <button
+        class="platform-manage-btn"
+        title="管理平台"
+        @click="$emit('openPlatformManage')"
+      >
+        <Icon icon="mdi:cog-outline" />
+      </button>
+    </div>
+    <!-- 平台过滤提示（激活时显示，说明当前列表筛选语义） -->
+    <div
+      v-if="activePlatformFilter"
+      class="platform-filter-hint"
+    >
+      <Icon icon="mdi:information-outline" />
+      <span>已发布其他平台 · 待发布至<strong>{{ activePlatformName }}</strong></span>
+    </div>
+
     <!-- 排序和结果数 -->
     <div
       v-if="queryState.hasQueried"
@@ -165,6 +207,10 @@ interface Props {
   activePlatformFilter: string
   /** 当前过滤平台的显示名称 */
   activePlatformName: string
+  /** 可见平台列表（过滤栏 chips，不含隐藏平台） */
+  visiblePlatforms: { id: string, name: string }[]
+  /** 各平台待补发文档数（过滤栏 badge） */
+  platformUnpublishedCounts: Record<string, number>
   i18n: DocI18n
 }
 
@@ -176,6 +222,8 @@ const emit = defineEmits<{
   (e: "sortChange", field: string): void
   (e: "toggleSortOrder"): void
   (e: "clearStatsFilter"): void
+  (e: "selectPlatform", platformId: string): void
+  (e: "openPlatformManage"): void
 }>()
 
 // 分批渲染：避免一次渲染上千个 DocListItem 导致卡顿
@@ -245,5 +293,6 @@ function handleSortChange(event: Event) {
 </script>
 
 <style lang="scss" scoped>
+@use "../../styles/DocListView.scss";
 @use "../../styles/index.scss";
 </style>

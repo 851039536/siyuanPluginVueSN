@@ -346,7 +346,7 @@ $color-rank-bronze: #cd7f32;
 .notebook-distribution-tab {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto 1fr auto auto auto;
+  grid-template-rows: auto auto auto auto;
   gap: $spacing-1 $spacing-3; // 模块上下间距统一 4px，列间距保持 12px
   align-items: stretch;
 }
@@ -393,23 +393,18 @@ $color-rank-bronze: #cd7f32;
   grid-column: 1;
 }
 
-.dist-right-top {
+.dist-right-pie {
   grid-row: 2;
   grid-column: 2;
 }
 
-.dist-right-bottom {
+.dist-right-stack {
   grid-row: 3;
   grid-column: 2;
 }
 
-.dist-bottom {
-  grid-row: 4;
-  grid-column: 1 / -1;
-}
-
 .dist-table {
-  grid-row: 5;
+  grid-row: 4;
   grid-column: 1 / -1;
   min-height: 200px;
 }

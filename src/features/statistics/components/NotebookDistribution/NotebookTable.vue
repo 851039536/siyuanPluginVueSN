@@ -60,6 +60,7 @@
 </template>
 
 <script setup lang="ts">
+// 笔记本详情表格：可排序表格，表头文案走 i18n
 import type {
   NotebookDocCount,
   NotebookWordStat,
@@ -73,11 +74,13 @@ import { useNotebookHover } from "../../composables/useNotebookHover"
 interface Props {
   docStats?: NotebookDocCount[]
   wordStats?: NotebookWordStat[]
+  i18n?: Record<string, any>
 }
 
 const props = withDefaults(defineProps<Props>(), {
   docStats: () => [],
   wordStats: () => [],
+  i18n: () => ({}),
 })
 
 const {
@@ -85,30 +88,27 @@ const {
   onHover,
 } = useNotebookHover()
 
-const columns = [
-  {
-    key: 'name',
-    label: '笔记本',
-    type: 'string' as const,
-  },
-  {
-    key: 'docs',
-    label: '文档数',
-    type: 'number' as const,
-  },
-  {
-    key: 'words',
-    label: '字数',
-    type: 'number' as const,
-  },
-  {
-    key: 'pct',
-    label: '占比',
-    type: 'number' as const,
-  },
-] as const
+type SortKey = 'name' | 'docs' | 'words' | 'pct'
 
-type SortKey = typeof columns[number]['key']
+// 表头映射 i18n：笔记本/文档数/字数/占比
+const columns = computed(() => [
+  {
+    key: 'name' as SortKey,
+    label: props.i18n.notebookName,
+  },
+  {
+    key: 'docs' as SortKey,
+    label: props.i18n.docCount,
+  },
+  {
+    key: 'words' as SortKey,
+    label: props.i18n.words,
+  },
+  {
+    key: 'pct' as SortKey,
+    label: props.i18n.proportion,
+  },
+])
 
 const sortKey = ref<SortKey>('docs')
 const sortDir = ref<'asc' | 'desc'>('desc')

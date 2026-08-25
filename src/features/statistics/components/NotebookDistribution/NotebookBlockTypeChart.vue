@@ -5,7 +5,8 @@
       v-if="!data || data.length === 0"
       class="empty-hint"
     >
-      暂无数据
+      <!-- 空状态："暂无数据" -->
+      {{ i18n.emptyText }}
     </div>
 
     <div
@@ -61,10 +62,12 @@ import { NOTEBOOK_COLORS } from "../../types/constants"
 
 interface Props {
   data?: NotebookBlockTypeStat[]
+  i18n?: Record<string, any>
 }
 
 const props = withDefaults(defineProps<Props>(), {
   data: () => [],
+  i18n: () => ({}),
 })
 
 const {

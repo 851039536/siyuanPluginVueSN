@@ -1,10 +1,6 @@
 <!-- 横向文档柱状图：各笔记本文档数排行可视化 -->
 <template>
   <div class="doc-bar-chart-section">
-    <div class="section-title">
-      {{ title }}
-    </div>
-
     <!-- 加载中 -->
     <div
       v-if="loading"
@@ -18,7 +14,8 @@
       v-else-if="!chartData || chartData.length === 0"
       class="empty-hint"
     >
-      暂无数据
+      <!-- 空状态："暂无数据" -->
+      {{ i18n.emptyText }}
     </div>
 
     <!-- 水平条形图 -->
@@ -50,9 +47,7 @@
 
 <script setup lang="ts">
 import type { NotebookDocCount } from "../../types"
-import {
-  computed,
-} from "vue"
+import { computed } from "vue"
 import Loader from "@/components/Loader.vue"
 import { useNotebookHover } from "../../composables/useNotebookHover"
 import {
@@ -62,7 +57,6 @@ import {
 } from "../../utils"
 
 interface Props {
-  title?: string
   chartData?: NotebookDocCount[]
   loading?: boolean
   sortBy?: "count" | "name"
@@ -71,15 +65,11 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  title: "各笔记本文档数",
   chartData: () => [],
   loading: false,
   sortBy: "count",
   sortOrder: "desc",
-  i18n: () => ({
-    loading: "加载中...",
-    docsUnit: "篇",
-  }),
+  i18n: () => ({}),
 })
 
 const {

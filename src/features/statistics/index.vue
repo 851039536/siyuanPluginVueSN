@@ -81,7 +81,6 @@
       <DistributionTab
         v-show="activeTab === 'notebookDistribution'"
         :active="activeTab === 'notebookDistribution'"
-        :stats="stats"
         :i18n="i18n"
       />
 

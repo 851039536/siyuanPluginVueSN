@@ -3,6 +3,11 @@
 @use "../styles/index.scss" as stats;
 
 .notebook-word-pie {
+  // 填满卡片剩余高度，饼图内容垂直居中，避免卡片内留白
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   padding: 8px 0;
 }
 

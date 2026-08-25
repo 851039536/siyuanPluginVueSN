@@ -8,17 +8,6 @@
   flex-direction: column;
   min-height: 0;
 
-  .section-title {
-    margin: 0 0 10px 0;
-    font-family: stats.$font-mono;
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-bold;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--b3-theme-on-surface);
-    opacity: 0.6;
-  }
-
   .loading-wrapper {
     position: relative;
     height: 100px;
@@ -37,6 +26,8 @@
   .horizontal-chart {
     display: flex;
     flex-direction: column;
+    // 行数少于卡片高度时均匀分布，避免卡片底部大片空白；超出时自然滚动
+    justify-content: space-evenly;
     gap: 3px;
     flex: 1;
     min-height: 0;

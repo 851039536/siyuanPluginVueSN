@@ -1,4 +1,4 @@
-<!-- 笔记本分布 Tab 入口容器：自加载笔记本统计并编排分布图表 -->
+<!-- 笔记本分布 Tab 入口容器：自加载笔记本统计并编排双列均衡布局 -->
 <template>
   <div class="notebook-distribution-tab">
     <!-- 汇总摘要 -->
@@ -22,52 +22,53 @@
       </span>
     </div>
 
-    <!-- 左侧：文档数条形图（全高） -->
+    <!-- 左列：文档数条形图（全高） -->
     <section class="dist-section dist-left">
+      <h3 class="dist-section-title">
+        <!-- 卡片标题："各笔记本文档数" -->
+        {{ i18n.docBarChartTitle }}
+      </h3>
       <DocBarChart
-        :title="i18n.docBarChartTitle"
         :chart-data="notebookDocStats"
         :loading="docChartLoading"
         :i18n="i18n"
       />
     </section>
 
-    <!-- 右侧上：块类型分布 -->
-    <section class="dist-section dist-right-top">
-      <DocBarChart
-        :title="i18n.blockTypeStats"
-        :chart-data="(stats?.blockTypeStats ?? []).map(item => ({
-          name: item.label,
-          count: item.count,
-        }))"
+    <!-- 右列上：字数占比饼图 -->
+    <section class="dist-section dist-right-pie">
+      <h3 class="dist-section-title">
+        <!-- 卡片标题："笔记本字数占比" -->
+        {{ i18n.notebookWordPie }}
+      </h3>
+      <NotebookWordPie
+        :data="notebookWordStats"
         :i18n="i18n"
       />
     </section>
 
-    <!-- 右侧下：饼图 -->
-    <section class="dist-section dist-right-bottom">
+    <!-- 右列下：各笔记本块类型堆叠图 -->
+    <section class="dist-section dist-right-stack">
       <h3 class="dist-section-title">
-        {{ i18n.notebookWordPie }}
-      </h3>
-      <NotebookWordPie :data="notebookWordStats" />
-    </section>
-
-    <!-- 底部全宽：堆叠条形图 -->
-    <section class="dist-section dist-bottom">
-      <h3 class="dist-section-title">
+        <!-- 卡片标题："各笔记本块类型分布" -->
         {{ i18n.notebookBlockTypeTitle }}
       </h3>
-      <NotebookBlockTypeChart :data="notebookBlockTypeStats" />
+      <NotebookBlockTypeChart
+        :data="notebookBlockTypeStats"
+        :i18n="i18n"
+      />
     </section>
 
-    <!-- 表格视图：可排序详情 -->
+    <!-- 底部全宽：可排序详情表格 -->
     <section class="dist-section dist-table">
       <h3 class="dist-section-title">
+        <!-- 卡片标题："笔记本排行" -->
         {{ i18n.notebookRanking }}
       </h3>
       <NotebookTable
         :doc-stats="notebookDocStats"
         :word-stats="notebookWordStats"
+        :i18n="i18n"
       />
     </section>
   </div>
@@ -79,7 +80,6 @@ import {
   computed,
   watch,
 } from "vue"
-import type { StatisticsData } from "../../types"
 import {
   provideNotebookHover,
 } from "../../composables/useNotebookHover"
@@ -91,17 +91,15 @@ import NotebookWordPie from "./NotebookWordPie.vue"
 
 interface Props {
   active?: boolean
-  stats?: StatisticsData | null
   i18n?: Record<string, any>
 }
 
 const props = withDefaults(defineProps<Props>(), {
   active: false,
-  stats: null,
   i18n: () => ({}),
 })
 
-const i18n = computed(() => props.i18n || {})
+const i18n = computed(() => props.i18n)
 
 const {
   notebookDocStats,

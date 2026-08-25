@@ -82,6 +82,9 @@ export function useOpLog(manager: GitPushManager) {
   /** 立即落盘未保存缓冲（组件卸载时调用） */
   function flush() {
     if (saveTimer) { clearTimeout(saveTimer); saveTimer = null }
+    // 未发生过加载/追加时（loaded=false），内存仍是初始空数组，
+    // 无条件 save 会用空数组覆盖磁盘上已有的历史日志 —— 必须跳过
+    if (!loaded) return
     manager.storage.opLogs.save(opLogs.value).catch((e: any) => {
       console.warn("[gitPush] flush 操作日志失败:", e?.message || e)
     })

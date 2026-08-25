@@ -26,6 +26,7 @@
     "tagsLabel": "Tags (optional, comma-separated)",
     "tagsPlaceholder": "e.g. frontend, personal, long-term",
     "pendingChanges": "files changed",
+    "workingTreeClean": "Working tree clean",
     "refreshWorkingTree": "Refresh Working Tree",
     "stageAll": "Stage All",
     "unstageAll": "Unstage All",

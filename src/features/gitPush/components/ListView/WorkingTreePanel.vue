@@ -47,9 +47,6 @@
           </button>
         </span>
       </template>
-      <template v-else-if="tree">
-        <span class="wt-clean">{{ i18n.workingTreeClean }}</span>
-      </template>
     </div>
 
     <!-- 工作区详情 -->

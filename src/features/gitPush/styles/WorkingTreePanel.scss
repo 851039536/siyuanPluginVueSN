@@ -48,13 +48,6 @@
   .vp-btn { font-size: $font-size-2xs; padding: 1px 6px; }
 }
 
-.wt-clean {
-  color: var(--b3-theme-success);
-  font-weight: $font-weight-semibold;
-  // 辅助状态提示，与周围 10px 辅助信息一致
-  font-size: $font-size-2xs;
-}
-
 .wt-body {
   max-height: 420px;
   overflow-y: auto;

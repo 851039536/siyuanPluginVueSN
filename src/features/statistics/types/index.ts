@@ -139,6 +139,28 @@ export interface NotebookActivityItem {
 }
 
 /**
+ * 活跃度摘要统计
+ */
+export interface ActivitySummary {
+  activeCount: number
+  mostActive: string
+  totalWords: number
+  dailyAvg: number
+}
+
+/**
+ * 笔记本排行行数据（按总字数降序）
+ */
+export interface NotebookRankingRow {
+  notebook: string
+  color: string
+  totalWords: number
+  activeDays: number
+  dailyAvg: number
+  percent: number
+}
+
+/**
  * 报告数据
  */
 export interface ReportData {

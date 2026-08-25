@@ -1,7 +1,6 @@
 {
   "resourceManager": {
     "panelTitle": "Resource Manager",
-    "description": "Manage Siyuan asset files: browse, categorize, move, and clean up resources",
     "imageAssets": "Image Assets",
     "fileAssets": "File Assets",
     "missingAssets": "Missing Assets",
@@ -23,7 +22,6 @@
     "copyPath": "Copy Path",
     "pathCopied": "Path copied",
     "newPath": "New Path",
-    "allCategories": "All Categories",
     "uncategorized": "Uncategorized",
     "assetCount": "Asset Count",
     "moveAsset": "Move",

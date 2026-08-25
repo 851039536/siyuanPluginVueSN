@@ -28,8 +28,8 @@ import {
   buildAssetList,
   buildVariantPairs,
   escapeRegExp,
-  escapeSqlLike,
   isValidAssetMovePath,
+  queryBlocksByMarkdown,
   resolveDiskPath,
   safeDecodeURI,
   scanAssetDir,
@@ -43,16 +43,8 @@ const UPDATE_BATCH_SIZE = 10
 /** 加载数量输入非法时的默认值 */
 const DEFAULT_LOAD_LIMIT = 30
 
-// 存储实例模块级单例，避免组件重建时重复实例化
-let sharedStorage: PluginStorage | null = null
-
-function getStorage(plugin: Plugin): PluginStorage {
-  if (!sharedStorage) sharedStorage = new PluginStorage(plugin)
-  return sharedStorage
-}
-
 export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
-  const storage = getStorage(plugin)
+  const storage = new PluginStorage(plugin)
   const isMounted = ref(false)
   const activeTab = ref("imageAssets")
   const loading = ref(false)
@@ -245,19 +237,20 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     customCategory.value = ""
   }
 
-  async function applyCategory(currentPath: string, category: string) {
+  async function applyCategory(currentPath: string, category: string): Promise<boolean> {
     const fileName = currentPath.split("/").pop() || currentPath
     moveNewPath.value = `assets/${category}/${fileName}`
     // 点击分类即直接执行移动，避免"填入路径后未点确认"的静默无操作陷阱
-    await handleMoveAsset(currentPath)
+    return await handleMoveAsset(currentPath)
   }
 
   async function applyCustomCategory(currentPath: string) {
     const cat = customCategory.value.trim()
     if (!cat) return
-    await applyCategory(currentPath, cat)
+    const moved = await applyCategory(currentPath, cat)
 
-    if (!BUILT_IN_CATEGORY_KEYS.has(cat) && !customCategories.value.includes(cat)) {
+    // 仅移动成功时才把自定义分类写入持久化，避免移动失败仍新增分类
+    if (moved && !BUILT_IN_CATEGORY_KEYS.has(cat) && !customCategories.value.includes(cat)) {
       customCategories.value = [...customCategories.value, cat]
       await storage.save(STORAGE_KEY, customCategories.value)
     }
@@ -272,9 +265,7 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
 
   /** 按 LIKE 片段查询含该资源引用的块；sql 静默失败时返回 null */
   async function queryRefBlocks(likeNeedle: string): Promise<{ id: string, markdown: string }[] | null> {
-    return await sql(
-      `SELECT id, markdown FROM blocks WHERE markdown LIKE '%${escapeSqlLike(likeNeedle)}%' ESCAPE '\\' LIMIT 1000`,
-    ) as { id: string, markdown: string }[] | null
+    return await queryBlocksByMarkdown(likeNeedle, 1000)
   }
 
   /**
@@ -285,8 +276,9 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
    * @returns 成功更新的块数量
    */
   async function updateAssetReferences(oldPath: string, newPath: string): Promise<number> {
+    const oldBase = safeDecodeURI(oldPath)
     const newBase = safeDecodeURI(newPath)
-    const variants = buildVariantPairs(safeDecodeURI(oldPath), newBase)
+    const variants = buildVariantPairs(oldBase, newBase)
 
     // 各形态分别查询，按块 id 去重
     const blockMap = new Map<string, string>()
@@ -302,9 +294,9 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
       }
     }
 
-    // 文件名兜底：按文件名（含编码形态）补查引用了旧目录路径的块；
+    // 文件名兜底：按【旧路径】文件名（含编码形态）补查引用了旧目录路径的块；
     // pair.to 为同编码形态的新完整路径，替换时保持形态一致
-    const baseName = newBase.split("/").pop() ?? ""
+    const baseName = oldBase.split("/").pop() ?? ""
     const namePairs = baseName ? buildVariantPairs(baseName, newBase) : []
     for (const pair of namePairs) {
       const rows = await queryRefBlocks(`/${pair.from}`)
@@ -344,20 +336,20 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     return updatedCount
   }
 
-  async function handleMoveAsset(oldPath: string) {
+  async function handleMoveAsset(oldPath: string): Promise<boolean> {
     const newPath = moveNewPath.value.trim()
     if (!newPath) {
       cancelMove()
-      return
+      return false
     }
     if (newPath === oldPath) {
       // 路径未变化时明确提示，避免静默关闭被误认为移动成功
       showMsg(i18n.samePathHint)
-      return
+      return false
     }
     if (!isValidAssetMovePath(newPath)) {
       showMsg(i18n.invalidPath)
-      return
+      return false
     }
     try {
       // 磁盘操作使用真实（解码）路径；markdown 引用更新仍按列表中的原形态
@@ -385,18 +377,20 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
       // 移动成功后自动复制新路径，便于直接粘贴引用
       const copied = await copyToClipboard(newPath)
 
-      if (!isMounted.value) return
+      if (!isMounted.value) return true
       const refMsg = updatedCount > 0 ? `（${i18n.updatedRefs.replace("{count}", String(updatedCount))}）` : ""
       const copyMsg = copied ? `（${i18n.pathCopied}）` : ""
       showMsg(`${i18n.moveSuccess}${refMsg}（${i18n.newPath}: ${newPath}）${copyMsg}`)
       updateAssetPathAfterMove(oldPath, newPath)
       cancelMove()
+      return true
     }
     catch (e: unknown) {
       if (isMounted.value) {
         const msg = e instanceof Error ? e.message : String(e)
         showMsg(`${i18n.moveFailed}: ${msg}`)
       }
+      return false
     }
   }
 

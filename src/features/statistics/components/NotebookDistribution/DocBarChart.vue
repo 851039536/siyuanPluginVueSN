@@ -49,20 +49,17 @@
 </template>
 
 <script setup lang="ts">
+import type { NotebookDocCount } from "../../types"
 import {
   computed,
 } from "vue"
 import Loader from "@/components/Loader.vue"
 import { useNotebookHover } from "../../composables/useNotebookHover"
 import {
+  barPct,
   formatNumber,
   formatShortNumber,
 } from "../../utils"
-
-interface NotebookDocCount {
-  name: string
-  count: number
-}
 
 interface Props {
   title?: string
@@ -110,9 +107,8 @@ const sortedData = computed(() => {
 })
 
 function getBarWidth(count: number): string {
-  const max = maxCount.value
-  if (max === 0) return "0%"
-  return `${Math.max((count / max) * 100, count > 0 ? 1 : 0)}%`
+  if (maxCount.value === 0) return "0%"
+  return barPct(count, maxCount.value, count > 0 ? 1 : 0)
 }
 </script>
 

@@ -3,6 +3,7 @@
 import type { Ref } from "vue"
 import type {
   NotebookBlockTypeStat,
+  NotebookDocCount,
   NotebookWordStat,
 } from "../types"
 import { ref } from "vue"
@@ -13,7 +14,7 @@ import {
 } from "../queries"
 
 export function useNotebookStats(): {
-  notebookDocStats: Ref<Array<{ name: string, count: number }>>
+  notebookDocStats: Ref<NotebookDocCount[]>
   docChartLoading: Ref<boolean>
   notebookWordStats: Ref<NotebookWordStat[]>
   notebookBlockTypeStats: Ref<NotebookBlockTypeStat[]>
@@ -21,7 +22,7 @@ export function useNotebookStats(): {
   loadNotebookWordStats: () => Promise<void>
   loadNotebookBlockTypeStats: () => Promise<void>
 } {
-  const notebookDocStats = ref<Array<{ name: string, count: number }>>([])
+  const notebookDocStats = ref<NotebookDocCount[]>([])
   const docChartLoading = ref(false)
   const notebookWordStats = ref<NotebookWordStat[]>([])
   const notebookBlockTypeStats = ref<NotebookBlockTypeStat[]>([])

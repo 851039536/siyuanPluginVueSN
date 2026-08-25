@@ -60,20 +60,18 @@
 </template>
 
 <script setup lang="ts">
-import type { NotebookWordStat } from "../../types"
+import type {
+  NotebookDocCount,
+  NotebookWordStat,
+} from "../../types"
 import {
   computed,
   ref,
 } from "vue"
 import { useNotebookHover } from "../../composables/useNotebookHover"
 
-interface DocStat {
-  name: string
-  count: number
-}
-
 interface Props {
-  docStats?: DocStat[]
+  docStats?: NotebookDocCount[]
   wordStats?: NotebookWordStat[]
 }
 

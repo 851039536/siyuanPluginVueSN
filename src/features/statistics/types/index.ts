@@ -112,6 +112,14 @@ export interface HistoricalDataItem {
 }
 
 /**
+ * 笔记本文档数统计项（分布柱状图/表格共用）
+ */
+export interface NotebookDocCount {
+  name: string
+  count: number
+}
+
+/**
  * 笔记本字数统计（饼图用）
  */
 export interface NotebookWordStat {

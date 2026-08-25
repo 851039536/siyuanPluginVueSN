@@ -147,8 +147,9 @@ const pieArcs = computed<PieArc[]>(() => {
   let startAngle = 0
 
   return nonZero.map((item) => {
-    const percentage = (item.words / total) * 100
-    const sweepAngle = (item.words / total) * 360
+    const ratio = item.words / total
+    const percentage = ratio * 100
+    const sweepAngle = ratio * 360
     const endAngle = startAngle + sweepAngle
     const d = describeArc(0, 0, RADIUS, startAngle, endAngle)
     const result = {

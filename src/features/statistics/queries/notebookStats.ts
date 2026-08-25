@@ -6,6 +6,7 @@ import type {
   NotebookActivityRow,
   NotebookBlockTypeRow,
   NotebookBlockTypeStat,
+  NotebookDocCount,
   NotebookDocCountRow,
   NotebookWordRow,
   NotebookWordStat,
@@ -62,7 +63,7 @@ async function getOpenNotebooks(): Promise<OpenNotebooks> {
   return result
 }
 
-export async function getNotebookDocStats(): Promise<Array<{ name: string, count: number }>> {
+export async function getNotebookDocStats(): Promise<NotebookDocCount[]> {
   try {
     const {
       notebooks,
@@ -79,7 +80,7 @@ export async function getNotebookDocStats(): Promise<Array<{ name: string, count
       ORDER BY doc_count DESC
     `)
 
-    const result: Array<{ name: string, count: number }> = []
+    const result: NotebookDocCount[] = []
     const seen = new Set<string>()
 
     if (rows && rows.length > 0) {

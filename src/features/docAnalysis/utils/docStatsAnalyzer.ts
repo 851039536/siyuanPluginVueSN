@@ -195,29 +195,39 @@ export async function analyzePlatformPublish(
     const docMap = await fetchDocPlatformSets(notebookCondition, platformMeta)
     if (docMap.size === 0) return result
 
+    // 参与完整发布判定的平台（fullCheck !== false；全部关闭时回退到全部平台）
+    const checkMeta = platformMeta.filter((p) => p.fullCheck !== false)
+    const judgeMeta = checkMeta.length > 0 ? checkMeta : platformMeta
+
     // 平台 id → 位掩码；归属判据统一走 fetchDocPlatformSets 内的 getPlatformIdFromAttrKey，与列表徽章/属性面板保持一致
     const idToBit = new Map(platformMeta.map((p, i) => [p.id, 1 << i]))
+    const judgeIdToBit = new Map(judgeMeta.map((p, i) => [p.id, 1 << i]))
+    const allMask = (1 << judgeMeta.length) - 1
 
     let full = 0; let partial = 0; let no = 0
     const fullSet = new Set<string>()
     const noSet = new Set<string>()
     const pCounts: Record<string, number> = {}
     for (const p of platformMeta) pCounts[p.id] = 0
-    const allMask = (1 << platformMeta.length) - 1
+
+    // 有任意平台发布记录的文档数（过滤栏徽章口径，不受勾选平台影响）
+    let anyPublished = 0
 
     for (const [id, set] of docMap) {
       let mask = 0
       for (const pid of set) mask |= idToBit.get(pid) ?? 0
-      if (mask === 0) { no++; noSet.add(id); continue }
-      if (mask === allMask) { full++; fullSet.add(id) } else { partial++ }
+      if (mask !== 0) anyPublished++
+      // 判定掩码仅考虑勾选平台；发布数量统计仍按全部平台
+      let judgeMask = 0
+      for (const pid of set) if (judgeIdToBit.has(pid)) judgeMask |= judgeIdToBit.get(pid)!
+      if (judgeMask === 0) { no++; noSet.add(id) } else if (judgeMask === allMask) { full++; fullSet.add(id) } else { partial++ }
       for (let i = 0; i < platformMeta.length; i++) {
         if (mask & (1 << i)) pCounts[platformMeta[i].id]++
       }
     }
 
-    const inSystem = docMap.size - no
     const unpubCounts: Record<string, number> = {}
-    for (const p of platformMeta) unpubCounts[p.id] = inSystem - pCounts[p.id]
+    for (const p of platformMeta) unpubCounts[p.id] = anyPublished - pCounts[p.id]
 
     docStats.fullPublishDocs = full; docStats.partialPublishDocs = partial; docStats.noPublishDocs = no
     docStats.platformCounts = pCounts

@@ -2,6 +2,7 @@
 
 import type { IconKey } from "@/config/icons"
 import type { StatisticsData } from "./index"
+import type { Tier } from "./milestoneData"
 
 /** Milestone 类型 → StatisticsData 字段名映射 */
 export const MILESTONE_FIELD_MAP: Record<string, keyof StatisticsData> = {
@@ -19,18 +20,11 @@ export const MILESTONE_FIELD_MAP: Record<string, keyof StatisticsData> = {
 }
 
 /** 稀有度中文标签（规则编辑弹窗各 Tab 共用） */
-export const TIER_LABELS: Record<string, string> = {
+export const TIER_LABELS: Record<Tier, string> = {
   common: "普通",
   rare: "稀有",
   epic: "史诗",
   legendary: "传说",
-}
-
-/** 自定义里程碑规则持久化结构 */
-export interface MilestoneRulesData {
-  _version: 1
-  /** 各类型的里程碑目标值数组，key=类型名，value=从小到大排列的目标值列表 */
-  rules: Record<string, number[]>
 }
 
 /** 10 种里程碑类型 */
@@ -116,7 +110,7 @@ export const STORAGE_KEY_LEVEL_CONFIG = "milestone-level-config"
 /** 等级系统配置 */
 export interface LevelConfig {
   /** 各稀有度里程碑对应的成就点 */
-  tierPoints: Record<string, number>
+  tierPoints: Record<Tier, number>
   /** 等级曲线乘数（越大升级越慢） */
   curveMultiplier: number
 }
@@ -137,7 +131,7 @@ export interface CustomAchievement {
   icon: IconKey
   title: string
   description: string
-  tier: "common" | "rare" | "epic" | "legendary"
+  tier: Tier
   /** 关联的统计类型 */
   type: string
   /** 达标阈值 */

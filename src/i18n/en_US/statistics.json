@@ -146,6 +146,8 @@
     "catKnowledge": "Knowledge Management",
     "catRich": "Rich Content",
     "catPersistence": "Persistence",
+    "catAll": "All",
+    "catMeta": "Special",
     "untitled": "Untitled",
     "openDocHint": "Click to open document",
     "noRangeChanges": "No changes in this range",

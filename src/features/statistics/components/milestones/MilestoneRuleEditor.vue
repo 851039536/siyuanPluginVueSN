@@ -90,7 +90,7 @@
             </div>
           </div>
           <div
-            v-for="row in rows"
+            v-for="row in editableRows"
             :key="row.key"
             class="rule-row"
           >
@@ -116,8 +116,8 @@
                 type="number"
                 class="rule-input"
                 :value="row.targets[idx]"
-                min="1"
-                @change="(e: Event) => onTargetChange(row.key, idx, parseInt((e.target as HTMLInputElement).value) || 1)"
+                min="0"
+                @change="(e: Event) => onTargetChange(row.key, idx, (e.target as HTMLInputElement).value)"
               />
             </div>
           </div>
@@ -212,17 +212,17 @@ watch(() => [props.visible, customRules.value], () => {
   }
 }, { immediate: true })
 
-const rows = computed(() => editableRows.value)
-
 const levelCount = computed(() => {
   const first = editableRows.value[0]
   return first ? first.targets.length : 10
 })
 
-function onTargetChange(typeKey: MilestoneTypeKey, idx: number, val: number) {
+function onTargetChange(typeKey: MilestoneTypeKey, idx: number, raw: string) {
   const row = editableRows.value.find((r) => r.key === typeKey)
   if (row && idx < row.targets.length) {
-    row.targets[idx] = val
+    const v = Number.parseInt(raw)
+    // 留空/非数字视为 0：0 表示该等级及之后不再生成里程碑
+    row.targets[idx] = Number.isNaN(v) ? 0 : Math.max(0, v)
   }
 }
 
@@ -254,7 +254,12 @@ function onResetAll() {
 function onSave() {
   const rules: Record<string, number[]> = {}
   for (const row of editableRows.value) {
-    rules[row.key] = [...row.targets]
+    const targets = [...row.targets]
+    // 裁剪末尾 0（0 表示该等级起不再生成）；全 0 时保留单个 0 使该类型整体不生成
+    while (targets.length > 1 && targets[targets.length - 1] <= 0) {
+      targets.pop()
+    }
+    rules[row.key] = targets
   }
   saveRules(rules)
   emit("close")

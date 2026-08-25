@@ -42,7 +42,6 @@
       <SiblingDropdown
         v-if="hasSiblings"
         :siblings="siblingDocs.siblings"
-        :sibling-count="siblingDocs.siblings.length"
         :current-doc-id="currentDocId"
         :i18n="i18n"
         :open-doc="openDoc"
@@ -77,7 +76,6 @@
         :child-docs="childDocs"
         :notebook="notebook"
         :current-doc-id="currentDocId"
-        :child-count="childCount"
         :i18n="i18n"
         :open-doc="openDoc"
         :strip-html="stripHtml"
@@ -91,7 +89,6 @@
         :child-docs="filteredChildDocs"
         :notebook="notebook"
         :current-doc-id="currentDocId"
-        :child-count="filteredChildCount"
         :i18n="i18n"
         :open-doc="openDoc"
         :strip-html="stripHtml"
@@ -111,7 +108,6 @@
       <BacklinkDropdown
         v-if="hasBacklinks"
         :backlinks="backlinks"
-        :backlink-count="backlinkCount"
         :i18n="i18n"
         :open-doc="openDoc"
         :strip-html="stripHtml"
@@ -161,7 +157,6 @@ const {
   breadcrumbs,
   siblingDocs,
   backlinks,
-  backlinkCount,
   hasBacklinks,
   docMeta,
   hasMeta,

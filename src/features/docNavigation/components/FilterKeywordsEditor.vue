@@ -66,11 +66,10 @@
 <script setup lang="ts">
 import {
   nextTick,
-  onMounted,
-  onUnmounted,
   ref,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import { useClickOutside } from "../composables/useClickOutside"
 
 const props = defineProps<{
   /** 当前关键词数组，面板打开时预填 */
@@ -84,10 +83,10 @@ const emit = defineEmits<{
   (event: "saved", keywords: string[]): void
 }>()
 
-const rootRef = ref<HTMLElement | null>(null)
-const inputRef = ref<HTMLInputElement | null>(null)
 const isOpen = ref(false)
 const inputValue = ref("")
+const inputRef = ref<HTMLInputElement | null>(null)
+const rootRef = useClickOutside(isOpen)
 
 /** 打开面板时预填当前关键词（逗号分隔）并聚焦输入框 */
 function togglePanel(): void {
@@ -114,21 +113,6 @@ function save(): void {
 function cancel(): void {
   isOpen.value = false
 }
-
-/** 点击外部关闭面板（复用 document click handler 模式，@click.stop 已阻止触发按钮冒泡） */
-function handleDocumentClick(event: MouseEvent) {
-  if (rootRef.value && !rootRef.value.contains(event.target as Node)) {
-    isOpen.value = false
-  }
-}
-
-onMounted(() => {
-  document.addEventListener("click", handleDocumentClick)
-})
-
-onUnmounted(() => {
-  document.removeEventListener("click", handleDocumentClick)
-})
 </script>
 
 <style scoped lang="scss">

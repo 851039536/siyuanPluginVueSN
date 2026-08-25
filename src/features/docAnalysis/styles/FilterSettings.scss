@@ -1,4 +1,5 @@
 @use "@/variables.scss" as *;
+@use "./mixins" as *;
 
 .doc-analysis-filter {
   // 上下 6px 为视觉舒适值（无对应 Token），左右对齐上方 Tab 栏 8px
@@ -113,6 +114,10 @@
 
     .btn-icon {
       font-size: $font-size-sm;
+
+      &.spin-icon {
+        @include da-spin-icon;
+      }
     }
   }
 }

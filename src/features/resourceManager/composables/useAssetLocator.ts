@@ -1,7 +1,7 @@
 // 资源定位 composable：查询引用资源的块并以 siyuan:// 协议跳转（assets 等值 → blocks 全路径 → 文件名兜底）
 import type { ResourceManagerI18n } from "../types"
 import { sql } from "@/api"
-import { buildPathVariants, escapeSqlLike, escapeSqlString } from "../utils"
+import { buildPathVariants, escapeSqlString, queryBlocksByMarkdown } from "../utils"
 
 /** assets 表单资源引用查询上限 */
 const ASSET_REF_LIMIT = 32
@@ -28,9 +28,7 @@ async function queryAssetRefs(path: string): Promise<Set<string> | null> {
 async function queryBlockRefs(needle: string): Promise<Set<string>> {
   const ids = new Set<string>()
   for (const variant of buildPathVariants(needle)) {
-    const rows = await sql(
-      `SELECT DISTINCT id, root_id FROM blocks WHERE markdown LIKE '%${escapeSqlLike(variant)}%' ESCAPE '\\' ORDER BY updated DESC LIMIT ${BLOCK_REF_LIMIT}`,
-    ) as { id: string, root_id: string }[] | null
+    const rows = await queryBlocksByMarkdown(variant, BLOCK_REF_LIMIT)
     for (const row of rows || []) {
       const id = row.id || row.root_id
       if (id) ids.add(id)

@@ -1,7 +1,6 @@
 {
   "resourceManager": {
     "panelTitle": "资源管理",
-    "description": "管理思源笔记资源文件：查看、分类、移动、清理资源",
     "imageAssets": "图片资源",
     "fileAssets": "文件资源",
     "missingAssets": "丢失资源",
@@ -23,7 +22,6 @@
     "copyPath": "复制路径",
     "pathCopied": "路径已复制",
     "newPath": "新路径",
-    "allCategories": "全部分类",
     "uncategorized": "待分类",
     "assetCount": "资源数量",
     "moveAsset": "移动",

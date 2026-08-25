@@ -3,7 +3,6 @@
 /** 资源管理器国际化类型 */
 export interface ResourceManagerI18n {
   panelTitle: string
-  description: string
   imageAssets: string
   fileAssets: string
   missingAssets: string
@@ -25,7 +24,6 @@ export interface ResourceManagerI18n {
   copyPath: string
   pathCopied: string
   newPath: string
-  allCategories: string
   uncategorized: string
   assetCount: string
   loadLimit: string

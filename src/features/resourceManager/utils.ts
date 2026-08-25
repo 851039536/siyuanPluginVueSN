@@ -1,5 +1,5 @@
 // 资源管理模块纯工具函数与共享常量：路径过滤、SQL 转义、目录扫描
-import { readDir } from "@/api"
+import { readDir, sql } from "@/api"
 
 /** 图片扩展名匹配 */
 const IMAGE_EXT = /\.(?:png|jpg|jpeg|gif|svg|webp|bmp|ico|tiff|avif)$/i
@@ -26,9 +26,20 @@ export function escapeSqlString(str: string): string {
   return str.replace(/\\/g, "\\\\").replace(/'/g, "''")
 }
 
-/** 校验移动目标路径：必须位于 assets/ 下、不含路径穿越、不以 / 结尾 */
+/** 按 markdown LIKE 片段查询 blocks（含 id/root_id/markdown），sql 静默失败时返回 null */
+export async function queryBlocksByMarkdown(
+  needle: string,
+  limit: number,
+): Promise<{ id: string, root_id: string, markdown: string }[] | null> {
+  return await sql(
+    `SELECT id, root_id, markdown FROM blocks WHERE markdown LIKE '%${escapeSqlLike(needle)}%' ESCAPE '\\' ORDER BY updated DESC LIMIT ${limit}`,
+  ) as { id: string, root_id: string, markdown: string }[] | null
+}
+
+/** 校验移动目标路径：先解码再校验，必须位于 assets/ 下、不含路径穿越（含 %2e%2e 等编码形态）、不以 / 结尾 */
 export function isValidAssetMovePath(path: string): boolean {
-  return path.startsWith("assets/") && !path.includes("..") && !path.endsWith("/")
+  const decoded = safeDecodeURI(path)
+  return decoded.startsWith("assets/") && !decoded.includes("..") && !decoded.endsWith("/")
 }
 
 /** 判断路径是否为图片资源 */

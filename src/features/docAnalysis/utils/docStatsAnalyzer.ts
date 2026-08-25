@@ -170,7 +170,6 @@ export async function analyzeBookmarks(notebookCondition: string, docStats: DocS
         COUNT(DISTINCT a.block_id) as bookmarked_docs,
         SUM(CASE WHEN a.value = '待发布' THEN 1 ELSE 0 END) as pending_count,
         SUM(CASE WHEN a.value = '已发布' THEN 1 ELSE 0 END) as published_count,
-        SUM(CASE WHEN a.value = '不使用' THEN 1 ELSE 0 END) as unused_count,
         SUM(CASE WHEN a.value = '无' THEN 1 ELSE 0 END) as none_count
       FROM attributes a
       WHERE a.name = 'bookmark'
@@ -181,14 +180,13 @@ export async function analyzeBookmarks(notebookCondition: string, docStats: DocS
       docStats.bookmarkedDocs = r.bookmarked_docs || 0
       docStats.pendingPublishDocs = r.pending_count || 0
       docStats.publishedDocs = r.published_count || 0
-      docStats.unusedDocs = r.unused_count || 0
       docStats.noneBookmarkDocs = r.none_count || 0
     }
 
     const customRows = await sql(`
       SELECT a.value, COUNT(DISTINCT a.block_id) as cnt FROM attributes a
       WHERE a.name = 'bookmark'
-      AND a.value NOT IN ('待发布', '已发布', '不使用', '无', '')
+      AND a.value NOT IN ('待发布', '已发布', '无', '')
       AND a.block_id IN (SELECT b.id FROM blocks b WHERE b.type = 'd' ${notebookCondition})
       GROUP BY a.value ORDER BY cnt DESC LIMIT 8
     `)

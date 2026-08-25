@@ -64,7 +64,6 @@ export const EXISTS_MAP: Record<string, string> = {
   noneBookmark: existsCond("bookmark", "无"),
   pendingPublish: existsCond("bookmark", "待发布"),
   published: existsCond("bookmark", "已发布"),
-  unused: existsCond("bookmark", "不使用"),
   hasAlias: existsCond("alias"),
   hasMemo: existsCond("memo"),
 }

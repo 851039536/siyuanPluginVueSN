@@ -532,11 +532,6 @@
       color: var(--b3-theme-on-surface-variant, #6b7280);
     }
 
-    &.unused {
-      background: var(--b3-theme-error-light, #fee2e2);
-      color: var(--b3-theme-error-dark, #991b1b);
-    }
-
     &.category {
       background: var(--b3-theme-success-light, #d1fae5);
       color: var(--b3-theme-success-dark, #065f46);

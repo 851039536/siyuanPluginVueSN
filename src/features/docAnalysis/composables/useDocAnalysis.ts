@@ -19,6 +19,7 @@ import {
   DEFAULT_FILTER_OPTIONS,
   DEFAULT_HEALTH_SETTINGS,
   DEFAULT_PLATFORM_META,
+  DEDUCTION_OPTIONS,
 } from "../types/index"
 import {
   DocAnalysisStorage,
@@ -69,8 +70,12 @@ export function useDocAnalysis(plugin: Plugin) {
   async function loadHealthSettings() {
     try {
       const saved = await storage.healthSettings.loadOrDefault()
-      healthSettings.value = saved.enabledDeductions.length > 0
-        ? { enabledDeductions: [...saved.enabledDeductions] }
+      /** 过滤已移除的扣分项 key（如旧的 "unused"），避免残留项进入运行态 */
+      const validKeys = saved.enabledDeductions.filter((key) =>
+        DEDUCTION_OPTIONS.some((opt) => opt.key === key),
+      )
+      healthSettings.value = validKeys.length > 0
+        ? { enabledDeductions: validKeys }
         : makeDefaultHealthSettings()
     } catch {
       healthSettings.value = makeDefaultHealthSettings()

@@ -146,8 +146,6 @@ export interface DocStats {
   pendingPublishDocs: number
   /** 标记"已发布"的文档数 */
   publishedDocs: number
-  /** 标记"不使用"的文档数 */
-  unusedDocs: number
   /** 标记"无"的文档数 */
   noneBookmarkDocs: number
   /** 全平台已发布文档数 */
@@ -174,7 +172,7 @@ export interface DocStats {
   xlargeDocs: number
   /** 字数分布 */
   wordCountDistribution: WordCountBin[]
-  /** 自定义书签 Top-N（排除系统书签：待发布/已发布/不使用/无） */
+  /** 自定义书签 Top-N（排除系统书签：待发布/已发布/无） */
   customBookmarkTop: BookmarkDetail[]
 }
 
@@ -289,7 +287,6 @@ export const DEFAULT_DOC_STATS: DocStats = {
   noBookmarkDocs: 0,
   pendingPublishDocs: 0,
   publishedDocs: 0,
-  unusedDocs: 0,
   noneBookmarkDocs: 0,
   fullPublishDocs: 0,
   partialPublishDocs: 0,
@@ -332,7 +329,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   "noBookmark": "无书签",
   "pendingPublish": "待发布",
   "published": "已发布",
-  "unused": "不使用",
   "noneBookmark": "书签「无」",
   "fullPublish": "完整发布",
   "partialPublish": "部分发布",
@@ -360,7 +356,7 @@ export type CardColorClass =
   | "time-green" | "time-yellow" | "time-red" | "time-cyan" | "time-orange" | "time-purple"
   | "depth-color" | "ref-color" | "img-color"
   | "bookmark-color" | "no-bookmark-color" | "none-bookmark-color"
-  | "pending-color" | "published-color" | "unused-color"
+  | "pending-color" | "published-color"
   | "full-publish-color" | "partial-publish-color" | "no-publish-color"
 
 /** 统计卡片计算上下文（供 resolveValue/suffixValue 动态取值，如重名卡片需要过滤后结果） */
@@ -437,7 +433,6 @@ export const STAT_SECTIONS: StatSectionDef[] = [
     cards: [
       { id: "pendingPublish", shortLabel: "待发布", statKey: "pendingPublishDocs", colorClass: "pending-color" },
       { id: "published", shortLabel: "已发布", statKey: "publishedDocs", colorClass: "published-color" },
-      { id: "unused", shortLabel: "不使用", statKey: "unusedDocs", colorClass: "unused-color" },
       { id: "noneBookmark", shortLabel: "无", statKey: "noneBookmarkDocs", colorClass: "none-bookmark-color" },
       { id: "hasBookmark", shortLabel: "有书签", statKey: "bookmarkedDocs", colorClass: "bookmark-color" },
       { id: "noBookmark", shortLabel: "无书签", statKey: "noBookmarkDocs", colorClass: "no-bookmark-color" },
@@ -477,7 +472,6 @@ export const QUALITY_CARDS: StatCardDef[] = [
 export type DeductionKey =
   | "zeroByte"
   | "duplicate"
-  | "unused"
   | "noBookmark"
   | "partialPublish"
   | "deepGt7"
@@ -515,7 +509,7 @@ export interface DeductionRow {
 /** 默认健康度设置：全部扣分项启用（新增项默认开启，用户可在健康度面板取消） */
 export const DEFAULT_HEALTH_SETTINGS: HealthSettings = {
   enabledDeductions: [
-    "zeroByte", "duplicate", "unused", "noBookmark", "partialPublish",
+    "zeroByte", "duplicate", "noBookmark", "partialPublish",
     "deepGt7", "wcGt20000", "orphan", "noTag", "noPublish",
   ],
 }
@@ -528,7 +522,6 @@ export const DEDUCTION_OPTIONS: DeductionOptionDef[] = [
     label: "重名超出",
     resolve: (_stats, ctx) => Math.max(0, ctx.effectiveDupDocs - ctx.effectiveDupGroupCount),
   },
-  { key: "unused", label: "不使用", resolve: (stats) => stats.unusedDocs },
   {
     key: "noBookmark",
     label: "无书签(排除0B)",

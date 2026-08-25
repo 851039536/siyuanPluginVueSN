@@ -121,6 +121,7 @@
         @selectCategory="handleSelectCategory"
         @showBookmarkDetails="fetchBookmarkDetails"
         @selectBookmark="queryByBookmark"
+        @selectPlatform="handleSelectPlatform"
         @selectDepth="handleSelectDepth"
         @update:duplicate-name-filter="(val: string[]) => duplicateNameFilter = val"
         @update:health-settings="handleUpdateHealthSettings"
@@ -303,6 +304,7 @@ const {
   fetchBookmarkDetails,
   queryByBookmark,
   queryByMissingPlatform,
+  queryByPlatformPublished,
   openDoc,
   updateSort,
   resetQueryState,
@@ -435,6 +437,12 @@ function handleSelectCategory(category: string) {
 /** 点击深度柱状图 */
 function handleSelectDepth(depth: number) {
   queryByStatsCategory(`depth_${depth}`)
+  activeTab.value = "list"
+}
+
+/** 点击发布状态分区的平台分布行：查询已发布到该平台的文档 */
+function handleSelectPlatform(platformId: string) {
+  queryByPlatformPublished(platformId)
   activeTab.value = "list"
 }
 

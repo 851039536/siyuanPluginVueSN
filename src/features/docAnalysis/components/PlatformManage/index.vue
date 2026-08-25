@@ -26,6 +26,19 @@
           class="platform-row"
           :class="{ 'platform-row--hidden': p.hidden }"
         >
+          <!-- 完整发布判定切换 -->
+          <span class="cell-fullcheck">
+            <label class="cell-label">判定完整发布</label>
+            <button
+              class="row-btn-icon fullcheck-toggle"
+              :class="{ active: p.fullCheck !== false }"
+              :title="(p.fullCheck !== false) ? '参与完整发布判定' : '不参与完整发布判定'"
+              @click="toggleFullCheck(idx)"
+            >
+              <Icon :icon="(p.fullCheck !== false) ? 'mdi:check-circle' : 'mdi:circle-outline'" />
+            </button>
+          </span>
+
           <!-- 可见性切换 -->
           <span class="cell-vis">
             <button
@@ -223,7 +236,7 @@ const isValid = computed(() =>
 )
 
 function addPlatform() {
-  localPlatforms.value.push({ id: "", matchers: [], name: "", url: "" })
+  localPlatforms.value.push({ id: "", matchers: [], name: "", url: "", fullCheck: true })
   validate()
 }
 
@@ -234,6 +247,11 @@ function removePlatform(idx: number) {
 
 function toggleHidden(idx: number) {
   localPlatforms.value[idx].hidden = !localPlatforms.value[idx].hidden
+}
+
+function toggleFullCheck(idx: number) {
+  // 默认参与判定（undefined 视为 true），显式置 false 表示不参与
+  localPlatforms.value[idx].fullCheck = localPlatforms.value[idx].fullCheck === false
 }
 
 function moveUp(idx: number) {

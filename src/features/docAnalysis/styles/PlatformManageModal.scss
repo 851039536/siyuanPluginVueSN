@@ -113,6 +113,27 @@
 }
 
 // ============================================================
+// 完整发布判定切换
+// ============================================================
+.cell-fullcheck {
+  width: 96px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 0 6px;
+
+  .fullcheck-toggle {
+    color: var(--b3-theme-on-surface-variant);
+
+    &.active {
+      color: var(--b3-theme-success, #22c55e);
+    }
+  }
+}
+
+// ============================================================
 // 可见性切换
 // ============================================================
 .cell-vis {

@@ -5,7 +5,6 @@ import type { Plugin } from "siyuan"
 import { computed, nextTick, onScopeDispose, reactive, ref, watch } from "vue"
 import { sql } from "@/api"
 import type {
-  BookmarkDetail,
   DepthStats,
   DocStats,
   DuplicateNameGroup,
@@ -49,9 +48,6 @@ export function useDocStats(plugin: Plugin, storage: DocAnalysisStorage, deps: U
   const statsLoading = ref(false)
   const hasAnalyzed = ref(false)
   const statsFilter = ref<string>("")
-  const bookmarkDetails = ref<BookmarkDetail[]>([])
-  const bookmarkDetailVisible = ref(false)
-  const bookmarkDetailLoading = ref(false)
   const duplicateGroups = ref<DuplicateNameGroup[]>([])
   const duplicateNameFilter = ref<string[]>([])
   const platformUnpublishedCounts = ref<Record<string, number>>({})
@@ -139,32 +135,7 @@ export function useDocStats(plugin: Plugin, storage: DocAnalysisStorage, deps: U
     finally { if (token === analyzeToken) statsLoading.value = false }
   }
 
-  // ============================================================
-  // 书签详情
-  // ============================================================
-
-  async function fetchBookmarkDetails() {
-    if (bookmarkDetailVisible.value) {
-      bookmarkDetailVisible.value = false
-      return
-    }
-    bookmarkDetailLoading.value = true
-    try {
-      const rows = await sql(`
-        SELECT a.value as bookmark_value, COUNT(DISTINCT a.block_id) as doc_count
-        FROM attributes a WHERE a.name = 'bookmark'
-        AND a.value != ''
-        AND a.block_id IN (SELECT b.id FROM blocks b WHERE b.type = 'd' ${deps.buildNotebookCondition()})
-        GROUP BY a.value ORDER BY doc_count DESC
-      `)
-      bookmarkDetails.value = rows ? rows.map((r: any) => ({ value: r.bookmark_value || "", count: r.doc_count || 0 })) : []
-      bookmarkDetailVisible.value = true
-    } catch (e) { console.error("查询书签详情失败:", e); bookmarkDetails.value = [] }
-    finally { bookmarkDetailLoading.value = false }
-  }
-
   async function queryByBookmark(bookmarkValue: string) {
-    bookmarkDetailVisible.value = false
     statsFilter.value = ""
     await deps.runDocQuery({ bookmarkInner: true, extraWhere: `AND bm.bookmark = ${quoteSql(bookmarkValue)}`, orderBy: "b.updated DESC" })
   }
@@ -296,9 +267,8 @@ export function useDocStats(plugin: Plugin, storage: DocAnalysisStorage, deps: U
 
   return {
     docStats, depthStats, statsLoading, hasAnalyzed, statsFilter,
-    bookmarkDetails, bookmarkDetailVisible, bookmarkDetailLoading,
     duplicateGroups, effectiveDuplicateGroups, duplicateNameFilter, platformUnpublishedCounts,
-    analyzeDocStats, fetchBookmarkDetails, queryByBookmark, queryByStatsCategory,
+    analyzeDocStats, queryByBookmark, queryByStatsCategory,
     loadDuplicateNameFilter,
   }
 }

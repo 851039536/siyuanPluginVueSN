@@ -39,7 +39,9 @@ export function milestoneTargetOfWithRules(
 ): number {
   if (customRules?.[type] && customRules[type].length > 0) {
     if (n <= customRules[type].length) {
-      return customRules[type][n - 1]
+      const v = customRules[type][n - 1]
+      // 目标值 <= 0 表示该等级及之后不再生成里程碑
+      return v > 0 ? v : Infinity
     }
     return Infinity
   }
@@ -116,17 +118,22 @@ export function generateMilestones(
   let n = 1
   while (n <= 200) {
     const target = milestoneTargetOfWithRules(type, n, customRules)
-    if (!isFinite(target) || target > upperBound) break
+    // 0/Infinity 均表示该等级起终止（0 语义：该等级及之后不再生成里程碑）
+    if (!isFinite(target) || target <= 0 || target > upperBound) break
     result.push({
       id: `${type}-${n}`,
       icon: meta.icon as IconKey,
       label: meta.labelFn(target),
       target,
       type,
-      tier: tierOf(n - 1, 50),
+      tier: "common",
     })
     n++
   }
+  // 稀有度按实际生成的里程碑总数动态分配，避免固定分母导致占比失真
+  result.forEach((m, i) => {
+    m.tier = tierOf(i, result.length)
+  })
   return result
 }
 

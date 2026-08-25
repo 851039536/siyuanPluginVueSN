@@ -146,7 +146,13 @@ const showLocked = ref(false)
 const activeAchCategory = ref("all")
 const activeAchTier = ref("all")
 
-const achCategories = ACH_CATEGORIES
+// 分类 Tab：i18nKey → 文案（新增 catAll/catMeta 键）
+const achCategories = computed(() =>
+  ACH_CATEGORIES.map((cat) => ({
+    ...cat,
+    name: props.i18n[cat.i18nKey] ?? cat.i18nKey,
+  })),
+)
 
 // 稀有度筛选 Tab："全部" + 由 tierLabels 派生的四级稀有度（避免重复枚举 tier id）
 const achTiers = computed(() => [

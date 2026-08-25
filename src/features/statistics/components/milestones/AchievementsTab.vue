@@ -136,7 +136,7 @@
   </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 // 模块级常量与纯工具：只构建一次，不随组件实例重建
 import type { CustomAchievement } from "../../types/milestoneRules"
 import type { IconKey } from "@/config/icons"
@@ -144,7 +144,17 @@ import {
   COMMON_ICONS,
   FEATURE_ICONS,
 } from "@/config/icons"
-import { MILESTONE_TYPES } from "../../types/milestoneRules"
+import {
+  computed,
+  ref,
+} from "vue"
+import IconWrapper from "@/components/IconWrapper.vue"
+import { useMilestoneStorage } from "../../composables/useMilestoneStorage"
+import {
+  MILESTONE_TYPES,
+  STAT_TYPE_DESCRIPTIONS,
+  TIER_LABELS,
+} from "../../types/milestoneRules"
 
 /** 类型 key → 图标/标签映射（成就列表项展示用） */
 const TYPE_LABEL_MAP = Object.fromEntries(
@@ -174,19 +184,6 @@ function generateAchievementId(): string {
 function normalizeIconKey(key: string): IconKey {
   return (key in FEATURE_ICONS || key in COMMON_ICONS) ? key as IconKey : "star"
 }
-</script>
-
-<script setup lang="ts">
-import {
-  computed,
-  ref,
-} from "vue"
-import IconWrapper from "@/components/IconWrapper.vue"
-import { useMilestoneStorage } from "../../composables/useMilestoneStorage"
-import {
-  STAT_TYPE_DESCRIPTIONS,
-  TIER_LABELS,
-} from "../../types/milestoneRules"
 
 const {
   customAchievements,

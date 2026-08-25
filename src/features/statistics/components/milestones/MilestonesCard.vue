@@ -207,14 +207,17 @@ const props = withDefaults(defineProps<Props>(), {
     encourageAlmost: "只差一点点，加油！",
     encourageHalfway: "已完成过半，继续努力！",
     encourageStart: "千里之行，始于足下",
+    tierAll: "全部",
     tierCommon: "普通",
     tierRare: "稀有",
     tierEpic: "史诗",
     tierLegendary: "传说",
+    catAll: "全部",
     catWriting: "写作达人",
     catKnowledge: "知识管理",
     catRich: "内容丰富",
     catPersistence: "坚持不懈",
+    catMeta: "特殊",
   }),
 })
 
@@ -399,15 +402,16 @@ const levelProgress = computed(() => {
 // ===== 成就 partition（数据见 milestoneData，构建见 achievements） =====
 /** 一次性 partition：避免 unlocked/locked 双重遍历 */
 const achievementPartition = computed(() => {
-  const metaChecks: (() => boolean)[] = [
-    () => allMilestones.value.filter((m) => m.tier === "common").every((m) => (statCounts.value[m.type] ?? 0) >= m.target),
-    () => achievedCount.value >= allMilestones.value.length / 2,
-    () => allMilestones.value.filter((m) => m.tier === "rare").every((m) => (statCounts.value[m.type] ?? 0) >= m.target),
-    () => currentLevel.value.level >= 10,
-  ]
-  const metaDefs: AchievementDef[] = META_ACHIEVEMENTS.map((meta, i) => ({
+  // 按 meta 成就 id 显式映射 check，避免与 META_ACHIEVEMENTS 数组长度隐式耦合
+  const metaChecks: Record<string, () => boolean> = {
+    "ach-all-common": () => allMilestones.value.filter((m) => m.tier === "common").every((m) => (statCounts.value[m.type] ?? 0) >= m.target),
+    "ach-half-all": () => achievedCount.value >= allMilestones.value.length / 2,
+    "ach-all-rare": () => allMilestones.value.filter((m) => m.tier === "rare").every((m) => (statCounts.value[m.type] ?? 0) >= m.target),
+    "ach-level-10": () => currentLevel.value.level >= 10,
+  }
+  const metaDefs: AchievementDef[] = META_ACHIEVEMENTS.map((meta) => ({
     ...meta,
-    check: metaChecks[i],
+    check: metaChecks[meta.id] ?? (() => false),
   }))
   const customDefs: AchievementDef[] = customAchievements.value.map((a) => ({
     id: a.id,

@@ -240,15 +240,15 @@ export const CATEGORY_DEFS: CategoryI18nDef[] = [
   { id: "persistence", icon: "star", types: ["streak", "activeDays"], i18nKey: "catPersistence" },
 ]
 
-/** 成就墙分类 Tab 定义 */
-export interface AchCategory { id: string, icon: string, name: string, types?: string[] }
+/** 成就墙分类 Tab 定义（名称由组件侧按 i18nKey 渲染） */
+export interface AchCategory { id: string, icon: string, i18nKey: string, types?: string[] }
 export const ACH_CATEGORIES: AchCategory[] = [
-  { id: "all", icon: "star", name: "全部" },
-  { id: "writing", icon: "edit", name: "写作达人", types: ["notes", "words", "notebooks"] },
-  { id: "knowledge", icon: "lightbulb", name: "知识管理", types: ["tags", "backlinks"] },
-  { id: "rich", icon: "folder", name: "内容丰富", types: ["blocks", "assets", "images", "code"] },
-  { id: "persistence", icon: "star", name: "坚持不懈", types: ["streak", "activeDays"] },
-  { id: "meta", icon: "star", name: "特殊", types: ["meta", "custom"] },
+  { id: "all", icon: "star", i18nKey: "catAll" },
+  { id: "writing", icon: "edit", i18nKey: "catWriting", types: ["notes", "words", "notebooks"] },
+  { id: "knowledge", icon: "lightbulb", i18nKey: "catKnowledge", types: ["tags", "backlinks"] },
+  { id: "rich", icon: "folder", i18nKey: "catRich", types: ["blocks", "assets", "images", "code"] },
+  { id: "persistence", icon: "star", i18nKey: "catPersistence", types: ["streak", "activeDays"] },
+  { id: "meta", icon: "star", i18nKey: "catMeta", types: ["meta", "custom"] },
 ]
 
 /** 里程碑类型元数据（图标 + 标签格式化函数） */

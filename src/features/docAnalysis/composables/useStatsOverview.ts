@@ -124,10 +124,11 @@ export function useStatsOverview(props: UseStatsOverviewProps) {
     return card.shortLabel
   }
 
-  /** 数量占总文档数百分比（平台分布可超 100%，故不加 100 上限） */
+  /** 数量占总文档数百分比（平台分布可超 100%，故不加 100 上限；保留 1 位小数，避免小数量被取整为 0%/1%） */
   function pctStr(count: number): string {
     if (!props.stats.totalDocs) return "0%"
-    return `${Math.round((count / props.stats.totalDocs) * 100)}%`
+    const pct = (count / props.stats.totalDocs) * 100
+    return `${Number(pct.toFixed(1))}%`
   }
 
   /** 将卡片元数据映射为表格行（label/count/pct/colorClass/clickable） */

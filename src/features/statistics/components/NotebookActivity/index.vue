@@ -1,4 +1,4 @@
-<!-- 活跃度 Tab 入口容器：编排笔记本活跃度趋势 -->
+<!-- 写作活跃度 Tab 入口容器：编排笔记本活跃度趋势 -->
 <template>
   <div class="activity-tab">
     <NotebookActivityTrend

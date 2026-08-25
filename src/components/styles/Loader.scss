@@ -1,9 +1,25 @@
 // ========== Loader.scss ==========
-// 纯 CSS 动画 Loader（飞船造型）→ 转为 SCSS
+// 纯 CSS 动画 Loader（飞船造型 + 长光带穿越）→ 转为 SCSS
 // 注：此组件主要使用绝对定位和固定像素值实现动画效果，
 // 大部分数值为动画数学计算结果，不适用设计 Token 替换
 @use '@/variables.scss' as *;
 
+$loader-color: var(--b3-theme-on-background);
+
+// 定位容器：自包含相对定位，避免 .loader 绝对定位逃逸到视口/上层容器中心。
+// 高度优先铺满父容器（height: 100%）；父级仅声明 min-height（如 gitPush 的 .gp-loading）时继承之。
+// pointer-events: none 防止光带层遮挡并拦截点击。
+.loader-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: inherit;
+  // 作为 flex 子元素时强制交叉轴拉伸，避免 align-items: center 使宽度塌陷为 0
+  align-self: stretch;
+  pointer-events: none;
+}
+
+// ========== 飞船 ==========
 .loader {
   position: absolute;
   top: 50%;
@@ -12,22 +28,64 @@
   animation: speeder 0.4s linear infinite;
 }
 
-.loader > span {
+// 发动机管
+.loader > .thruster {
   height: 5px;
   width: 35px;
-  background: var(--b3-theme-on-background);
+  background: $loader-color;
   position: absolute;
   top: -19px;
   left: 60px;
   border-radius: 2px 10px 1px 0;
 }
 
+// 4 根尾焰射线：共用 keyframes，位移距离由 --ray-dist 变量控制
+.loader .thruster-ray {
+  width: 30px;
+  height: 1px;
+  background: $loader-color;
+  position: absolute;
+  will-change: transform, opacity;
+}
+
+.loader .thruster-ray:nth-child(1) {
+  animation: thruster-ray 0.2s linear infinite;
+  --ray-dist: -80px;
+}
+
+.loader .thruster-ray:nth-child(2) {
+  top: 3px;
+  animation: thruster-ray 0.4s linear infinite;
+  --ray-dist: -100px;
+}
+
+.loader .thruster-ray:nth-child(3) {
+  top: 1px;
+  animation: thruster-ray 0.4s linear infinite;
+  --ray-dist: -50px;
+  animation-delay: -1s;
+}
+
+.loader .thruster-ray:nth-child(4) {
+  top: 4px;
+  animation: thruster-ray 1s linear infinite;
+  --ray-dist: -150px;
+  animation-delay: -1s;
+}
+
+// 尾焰位移动画：使用 transform 替代 left，避免触发布局重排
+@keyframes thruster-ray {
+  from { transform: translateX(0); }
+  to { transform: translateX(var(--ray-dist, -80px)); opacity: 0; }
+}
+
+// 船体
 .base span {
   position: absolute;
   width: 0;
   height: 0;
   border-top: 6px solid transparent;
-  border-right: 100px solid var(--b3-theme-on-background);
+  border-right: 100px solid $loader-color;
   border-bottom: 6px solid transparent;
 }
 
@@ -36,7 +94,7 @@
   height: 22px;
   width: 22px;
   border-radius: 50%;
-  background: var(--b3-theme-on-background);
+  background: $loader-color;
   position: absolute;
   right: -110px;
   top: -16px;
@@ -48,7 +106,7 @@
   width: 0;
   height: 0;
   border-top: 0 solid transparent;
-  border-right: 55px solid var(--b3-theme-on-background);
+  border-right: 55px solid $loader-color;
   border-bottom: 16px solid transparent;
   top: -16px;
   right: -98px;
@@ -58,7 +116,7 @@
   position: absolute;
   height: 12px;
   width: 20px;
-  background: var(--b3-theme-on-background);
+  background: $loader-color;
   border-radius: 20px 20px 0 0;
   transform: rotate(-40deg);
   right: -125px;
@@ -69,61 +127,13 @@
   content: "";
   height: 12px;
   width: 12px;
-  background: var(--b3-theme-on-background);
+  background: $loader-color;
   right: 4px;
   top: 7px;
   position: absolute;
   transform: rotate(40deg);
   transform-origin: 50% 50%;
   border-radius: 0 0 0 2px;
-}
-
-.loader > span > span:nth-child(1),
-.loader > span > span:nth-child(2),
-.loader > span > span:nth-child(3),
-.loader > span > span:nth-child(4) {
-  width: 30px;
-  height: 1px;
-  background: var(--b3-theme-on-background);
-  position: absolute;
-  animation: fazer1 0.2s linear infinite;
-}
-
-.loader > span > span:nth-child(2) {
-  top: 3px;
-  animation: fazer2 0.4s linear infinite;
-}
-
-.loader > span > span:nth-child(3) {
-  top: 1px;
-  animation: fazer3 0.4s linear infinite;
-  animation-delay: -1s;
-}
-
-.loader > span > span:nth-child(4) {
-  top: 4px;
-  animation: fazer4 1s linear infinite;
-  animation-delay: -1s;
-}
-
-@keyframes fazer1 {
-  0% { left: 0; }
-  100% { left: -80px; opacity: 0; }
-}
-
-@keyframes fazer2 {
-  0% { left: 0; }
-  100% { left: -100px; opacity: 0; }
-}
-
-@keyframes fazer3 {
-  0% { left: 0; }
-  100% { left: -50px; opacity: 0; }
-}
-
-@keyframes fazer4 {
-  0% { left: 0; }
-  100% { left: -150px; opacity: 0; }
 }
 
 @keyframes speeder {
@@ -140,6 +150,7 @@
   100% { transform: translate(1px, -2px) rotate(-1deg); }
 }
 
+// ========== 长光带 ==========
 .longfazers {
   position: absolute;
   width: 100%;
@@ -150,48 +161,40 @@
   position: absolute;
   height: 2px;
   width: 20%;
-  background: var(--b3-theme-on-background);
+  background: $loader-color;
+  will-change: left, opacity;
 }
 
+// 光带需穿越整容器宽度，位移距离依赖容器宽度百分比，保留 left 动画
 .longfazers span:nth-child(1) {
   top: 20%;
-  animation: lf 0.6s linear infinite;
+  animation: lf-far 0.6s linear infinite;
   animation-delay: -5s;
 }
 
 .longfazers span:nth-child(2) {
   top: 40%;
-  animation: lf2 0.8s linear infinite;
+  animation: lf-far 0.8s linear infinite;
   animation-delay: -1s;
 }
 
 .longfazers span:nth-child(3) {
   top: 60%;
-  animation: lf3 0.6s linear infinite;
+  animation: lf-near 0.6s linear infinite;
 }
 
 .longfazers span:nth-child(4) {
   top: 80%;
-  animation: lf4 0.5s linear infinite;
+  animation: lf-near 0.5s linear infinite;
   animation-delay: -3s;
 }
 
-@keyframes lf {
-  0% { left: 200%; }
-  100% { left: -200%; opacity: 0; }
+@keyframes lf-far {
+  from { left: 200%; }
+  to { left: -200%; opacity: 0; }
 }
 
-@keyframes lf2 {
-  0% { left: 200%; }
-  100% { left: -200%; opacity: 0; }
-}
-
-@keyframes lf3 {
-  0% { left: 200%; }
-  100% { left: -100%; opacity: 0; }
-}
-
-@keyframes lf4 {
-  0% { left: 200%; }
-  100% { left: -100%; opacity: 0; }
+@keyframes lf-near {
+  from { left: 200%; }
+  to { left: -100%; opacity: 0; }
 }

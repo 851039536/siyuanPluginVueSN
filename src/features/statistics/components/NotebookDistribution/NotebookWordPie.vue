@@ -15,7 +15,7 @@
               :fill="arc.color"
               :class="{ 'pie-arc-hover': activeIndex === idx }"
               class="pie-arc"
-              @mouseenter="onArcEnter(idx)"
+              @mouseenter="onArcEnter(arc.name)"
               @mouseleave="onArcLeave"
             />
             <g
@@ -53,8 +53,8 @@
           v-for="(item, idx) in data"
           :key="idx"
           class="legend-item"
-          :class="{ active: activeIndex === idx }"
-          @mouseenter="onArcEnter(idx)"
+          :class="{ active: hoveredName === item.name }"
+          @mouseenter="onArcEnter(item.name)"
           @mouseleave="onArcLeave"
         >
           <span
@@ -98,29 +98,29 @@ const {
 
 const SIZE = 160
 const RADIUS = 68
-const localHover = ref(-1)
+const localHover = ref<string | null>(null)
 
-// Combine local hover and shared hover
+// 合并本地与共享 hover（以名称统一，避免 data 索引与 pieArcs 索引错位）
+const hoveredName = computed(() => localHover.value ?? hoveredNotebook.value)
+
+// 在非零弧中的索引（pieArcs 已过滤 words=0 的笔记本）
 const activeIndex = computed(() => {
-  if (localHover.value >= 0) return localHover.value
-  if (hoveredNotebook.value) {
-    const idx = props.data.findIndex((d) => d.name === hoveredNotebook.value)
-    if (idx >= 0) return idx
-  }
-  return -1
+  const name = hoveredName.value
+  if (!name) return -1
+  return pieArcs.value.findIndex((a) => a.name === name)
 })
 
-// Sync to shared state
-watch(localHover, (idx) => {
-  onHover(idx >= 0 ? props.data[idx]?.name ?? null : null)
+// 本地 hover 同步到共享状态
+watch(localHover, (name) => {
+  onHover(name)
 })
 
-function onArcEnter(idx: number) {
-  localHover.value = idx
+function onArcEnter(name: string) {
+  localHover.value = name
 }
 
 function onArcLeave() {
-  localHover.value = -1
+  localHover.value = null
 }
 
 function truncateName(name: string): string {

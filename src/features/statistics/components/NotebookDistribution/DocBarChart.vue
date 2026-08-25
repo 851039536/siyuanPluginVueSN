@@ -40,6 +40,8 @@
           ></div>
         </div>
         <span class="row-count">{{ formatShortNumber(item.count) }}</span>
+        <!-- 文档数占比 -->
+        <span class="row-pct">{{ pctOf(item.count) }}%</span>
       </div>
     </div>
   </div>
@@ -99,6 +101,17 @@ const sortedData = computed(() => {
 function getBarWidth(count: number): string {
   if (maxCount.value === 0) return "0%"
   return barPct(count, maxCount.value, count > 0 ? 1 : 0)
+}
+
+// 全部笔记本文档数总和，用于计算占比
+const totalCount = computed(() =>
+  props.chartData.reduce((sum, d) => sum + d.count, 0),
+)
+
+// 单本文档数占比（四舍五入，总量为 0 时返回 0）
+function pctOf(count: number): number {
+  if (totalCount.value <= 0) return 0
+  return Math.round((count / totalCount.value) * 100)
 }
 </script>
 

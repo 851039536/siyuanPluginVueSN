@@ -324,12 +324,27 @@ export function useDocAnalysis(plugin: Plugin) {
     await runDocQuery({ extraWhere: buildIdInClause(new Set(matchingIds)) })
   }
 
+  /** 按平台 ID 查询已发布到该平台的文档（统计面板发布分区平台分布行下钻） */
+  async function queryByPlatformPublished(platformId: string) {
+    statsFilter.value = ""
+    const nc = buildNotebookCondition()
+    const docPlatforms = await fetchDocPlatformSets(nc, PLATFORM_META.value)
+
+    const matchingIds: string[] = []
+    for (const [id, platforms] of docPlatforms) {
+      if (platforms.has(platformId)) matchingIds.push(id)
+    }
+
+    if (matchingIds.length === 0) { setEmptyState(); return }
+    await runDocQuery({ extraWhere: buildIdInClause(new Set(matchingIds)), orderBy: "b.updated DESC" })
+  }
+
   return {
     notebooks, queryState, filterOptions,
     healthSettings, loadHealthSettings,
     ...stats,
     loadNotebooks, loadSavedOptions, queryDocs,
     openDoc, updateSort, resetQueryState,
-    loadPlatformMeta, savePlatformMeta, queryByMissingPlatform,
+    loadPlatformMeta, savePlatformMeta, queryByMissingPlatform, queryByPlatformPublished,
   }
 }

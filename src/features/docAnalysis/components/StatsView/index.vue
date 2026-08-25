@@ -57,7 +57,7 @@
 
       <!-- 统计表格区块：2 列网格布局 -->
       <div class="stats-grid">
-        <!-- 卡片类表格（大小/时间/书签/发布，元数据驱动；书签分区追加动态书签值行） -->
+        <!-- 卡片类表格（大小/时间/书签/发布，元数据驱动；书签分区追加动态书签值行，发布分区追加平台分布行） -->
         <StatTable
           v-for="section in statSections"
           :key="section.key"
@@ -67,17 +67,19 @@
           :active-id="activeFilter"
           @select="(id) => handleRowSelect(section.key, id)"
         >
-          <template
-            v-if="section.key === 'bookmark'"
-            #headerExtra
-          >
+          <template #headerExtra>
             <button
+              v-if="section.key === 'bookmark'"
               class="bookmark-detail-btn"
               title="查看全部书签"
               @click.stop="$emit('showBookmarkDetails')"
             >
               <Icon icon="mdi:format-list-bulleted" :size="13" />详情
             </button>
+            <span
+              v-else-if="section.key === 'publish'"
+              class="section-hint"
+            >人均 {{ avgPlatformsPerDoc }} 平台 · 覆盖率 {{ coveragePct }}%</span>
           </template>
         </StatTable>
 
@@ -89,18 +91,6 @@
           :active-id="activeFilter"
           @select="(id) => $emit('selectCategory', id)"
         />
-
-        <!-- 平台分布表 -->
-        <StatTable
-          v-if="platformEntries.length > 0"
-          title="平台分布"
-          icon="mdi:chart-bar"
-          :rows="filterZeroRows(platformRows)"
-        >
-          <template #headerExtra>
-            <span class="section-hint">人均 {{ avgPlatformsPerDoc }} 平台 · 覆盖率 {{ coveragePct }}%</span>
-          </template>
-        </StatTable>
 
         <!-- 字数分布表 -->
         <StatTable
@@ -194,6 +184,7 @@ const emit = defineEmits<{
   (e: "selectCategory", category: string): void
   (e: "showBookmarkDetails"): void
   (e: "selectBookmark", bookmark: string): void
+  (e: "selectPlatform", platformId: string): void
   (e: "selectDepth", depth: number): void
   (e: "update:duplicateNameFilter", value: string[]): void
   (e: "update:healthSettings", settings: HealthSettings): void
@@ -233,14 +224,14 @@ const bookmarkRows = computed<StatTableRow[]>(() =>
   })),
 )
 
-/** 卡片分区表格行映射（按分区 key 缓存；书签分区在汇总行后追加全部具体书签值行） */
+/** 卡片分区表格行映射（按分区 key 缓存；书签分区在汇总行后追加全部具体书签值行，发布分区在汇总行后追加平台分布行） */
 const cardRowsMap = computed<Record<string, StatTableRow[]>>(() => {
   const map: Record<string, StatTableRow[]> = {}
   for (const section of statSections) {
     const rows = toCardRows(section.cards)
-    map[section.key] = section.key === "bookmark"
-      ? [...rows, ...bookmarkRows.value]
-      : rows
+    if (section.key === "bookmark") { map[section.key] = [...rows, ...bookmarkRows.value]; continue }
+    if (section.key === "publish") { map[section.key] = [...rows, ...platformRows.value]; continue }
+    map[section.key] = rows
   }
   return map
 })
@@ -248,13 +239,14 @@ const cardRowsMap = computed<Record<string, StatTableRow[]>>(() => {
 /** 文档质量表格行 */
 const qualityRows = computed(() => toCardRows(QUALITY_CARDS))
 
-/** 平台分布表格行（不可下钻） */
+/** 平台分布表格行（点击下钻查看该平台已发布文档） */
 const platformRows = computed<StatTableRow[]>(() =>
   platformEntries.value.map((e) => ({
     id: e.id,
     label: e.name,
     count: e.count,
     pct: pctStr(e.count),
+    clickable: true,
   })),
 )
 
@@ -279,17 +271,28 @@ const depthRows = computed<StatTableRow[]>(() =>
   })),
 )
 
-/** 表格行点击分流：书签分区区分汇总行（selectCategory）与具体书签值（selectBookmark），其余分区统一 selectCategory */
+/** 发布状态分区汇总行 id（完整发布/部分发布/未发布，走 selectCategory 分类下钻） */
+const PUBLISH_SUMMARY_IDS = new Set(["fullPublish", "partialPublish", "noPublish"])
+
+/** 表格行点击分流：书签分区区分汇总行与具体书签值；发布分区区分汇总行与平台分布行；其余分区统一 selectCategory */
 function handleRowSelect(sectionKey: string, id: string) {
-  if (sectionKey !== "bookmark") {
-    emit("selectCategory", id)
+  if (sectionKey === "bookmark") {
+    if (id === "hasBookmark" || id === "noBookmark") {
+      emit("selectCategory", id)
+      return
+    }
+    emit("selectBookmark", id)
     return
   }
-  if (id === "hasBookmark" || id === "noBookmark") {
-    emit("selectCategory", id)
+  if (sectionKey === "publish") {
+    if (PUBLISH_SUMMARY_IDS.has(id)) {
+      emit("selectCategory", id)
+      return
+    }
+    emit("selectPlatform", id)
     return
   }
-  emit("selectBookmark", id)
+  emit("selectCategory", id)
 }
 
 /** 隐藏零值行过滤（作用于全部表格） */

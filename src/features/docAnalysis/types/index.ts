@@ -190,6 +190,8 @@ export interface PlatformMeta {
   url: string
   /** 隐藏该平台（不在过滤栏显示，分析仍纳入统计） */
   hidden?: boolean
+  /** 是否参与完整发布判定（false 时该平台不纳入完整发布/部分发布/未发布统计；默认 true） */
+  fullCheck?: boolean
 }
 
 /** docAnalysis 分片 i18n（扁平键值对，供各组件 Props 统一引用） */
@@ -246,17 +248,17 @@ export const DEFAULT_FILTER_OPTIONS: FilterOptions = {
 
 /** 默认平台元数据（用户未自定义时使用） */
 export const DEFAULT_PLATFORM_META: PlatformMeta[] = [
-  { id: "csdn",         matchers: ["csdn"],                    name: "CSDN",    url: "https://mp.csdn.net/mp_blog/creation/editor" },
-  { id: "zhihu",        matchers: ["zhihu"],                   name: "知乎",    url: "https://zhuanlan.zhihu.com/write" },
-  { id: "juejin",       matchers: ["juejin"],                  name: "掘金",    url: "https://juejin.cn/editor/drafts/new" },
-  { id: "cnblogs",      matchers: ["cnblogs", "blog"],         name: "博客园",  url: "https://i.cnblogs.com/posts/edit" },
-  { id: "bili",         matchers: ["bili", "bibi"],            name: "B站",     url: "https://www.bilibili.com/" },
-  { id: "gzh",          matchers: ["gzh"],                     name: "公众号",  url: "" },
-  { id: "jianshu",      matchers: ["jianshu"],                 name: "简书",    url: "https://www.jianshu.com/writer" },
-  { id: "cto51",        matchers: ["cto51"],                   name: "51CTO",   url: "https://blog.51cto.com/writer" },
-  { id: "segmentfault", matchers: ["segmentfault", "sifou"],   name: "思否",    url: "https://segmentfault.com/write" },
-  { id: "oschina",      matchers: ["oschina"],                 name: "开源中国", url: "https://oschina.net/writer" },
-  { id: "infoq",        matchers: ["infoq"],                   name: "InfoQ",   url: "https://www.infoq.com/" },
+  { id: "csdn",         matchers: ["csdn"],                    name: "CSDN",    url: "https://mp.csdn.net/mp_blog/creation/editor", fullCheck: true },
+  { id: "zhihu",        matchers: ["zhihu"],                   name: "知乎",    url: "https://zhuanlan.zhihu.com/write", fullCheck: true },
+  { id: "juejin",       matchers: ["juejin"],                  name: "掘金",    url: "https://juejin.cn/editor/drafts/new", fullCheck: true },
+  { id: "cnblogs",      matchers: ["cnblogs", "blog"],         name: "博客园",  url: "https://i.cnblogs.com/posts/edit", fullCheck: true },
+  { id: "bili",         matchers: ["bili", "bibi"],            name: "B站",     url: "https://www.bilibili.com/", fullCheck: true },
+  { id: "gzh",          matchers: ["gzh"],                     name: "公众号",  url: "", fullCheck: true },
+  { id: "jianshu",      matchers: ["jianshu"],                 name: "简书",    url: "https://www.jianshu.com/writer", fullCheck: true },
+  { id: "cto51",        matchers: ["cto51"],                   name: "51CTO",   url: "https://blog.51cto.com/writer", fullCheck: true },
+  { id: "segmentfault", matchers: ["segmentfault", "sifou"],   name: "思否",    url: "https://segmentfault.com/write", fullCheck: true },
+  { id: "oschina",      matchers: ["oschina"],                 name: "开源中国", url: "https://oschina.net/writer", fullCheck: true },
+  { id: "infoq",        matchers: ["infoq"],                   name: "InfoQ",   url: "https://www.infoq.com/", fullCheck: true },
 ]
 
 /** 默认文档统计零值 */

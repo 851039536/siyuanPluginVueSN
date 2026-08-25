@@ -128,6 +128,7 @@
     "docCount": "文档数",
     "dailyAvg": "日均",
     "proportion": "占比",
+    "totalProportion": "总占比",
     "days60": "60天",
     "days90": "90天",
     "days180": "180天",

@@ -3403,6 +3403,7 @@
     "docCount": "Docs",
     "dailyAvg": "Daily Avg",
     "proportion": "Proportion",
+    "totalProportion": "Total %",
     "days60": "60 Days",
     "days90": "90 Days",
     "days180": "180 Days",

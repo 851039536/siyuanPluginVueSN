@@ -4,28 +4,14 @@
     <!-- Tab 切换栏 -->
     <div class="tab-bar">
       <button
+        v-for="tab in TABS"
+        :key="tab.key"
         class="tab-btn"
-        :class="{ active: activeTab === 'stats' }"
-        @click="activeTab = 'stats'"
+        :class="{ active: activeTab === tab.key }"
+        @click="activeTab = tab.key"
       >
-        <Icon icon="mdi:chart-bar" />
-        统计
-      </button>
-      <button
-        class="tab-btn"
-        :class="{ active: activeTab === 'list' }"
-        @click="activeTab = 'list'"
-      >
-        <Icon icon="mdi:format-list-bulleted" />
-        文档列表
-      </button>
-      <button
-        class="tab-btn"
-        :class="{ active: activeTab === 'publish' }"
-        @click="activeTab = 'publish'"
-      >
-        <Icon icon="mdi:brush" />
-        排版
+        <Icon :icon="tab.icon" />
+        {{ tab.label }}
       </button>
       <div class="tab-bar-spacer" />
       <!-- 在独立窗口打开（浮动窗口内隐藏；关闭浮动窗口自动移回主窗口） -->
@@ -46,7 +32,7 @@
         @click="handleAnalyze"
       >
         <Icon
-          :icon="statsLoading ? 'mdi:loading' : 'mdi:chart-bar'"
+          :icon="statsLoading ? 'mdi:loading' : 'mdi:play'"
           :class="{ 'spin-icon': statsLoading }"
         />
         {{ statsLoading ? '分析中...' : '分析' }}
@@ -213,13 +199,9 @@ interface Props {
   /** docAnalysis 分片 i18n（index.ts 传入 plugin.i18n.docAnalysis，扁平键值） */
   i18n: DocI18n
   plugin: Plugin
-  /** 承载模式：dock = 侧边栏面板；tab = 独立页签/浮动窗口 */
-  mode?: "dock" | "tab"
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  mode: "dock",
-})
+const props = defineProps<Props>()
 
 /** 当前是否运行在独立浮动窗口中（思源 getFrontend()：desktop=主窗口 / desktop-window=新窗口） */
 const isFloating = computed(() => {
@@ -306,8 +288,23 @@ function handlePlatformFilter(matcher: string) {
   queryByMissingPlatform(matcher)
 }
 
+// Tab 定义（元数据驱动渲染，新增 Tab 只需在此加一项）
+type TabKey = "stats" | "list" | "publish"
+
+interface TabDef {
+  key: TabKey
+  label: string
+  icon: string
+}
+
+const TABS: TabDef[] = [
+  { key: "stats", label: "统计", icon: "mdi:chart-bar" },
+  { key: "list", label: "文档列表", icon: "mdi:format-list-bulleted" },
+  { key: "publish", label: "排版", icon: "mdi:brush" },
+]
+
 // Tab 切换
-const activeTab = ref<"stats" | "list" | "publish">("stats")
+const activeTab = ref<TabKey>("stats")
 
 // 发布面板状态
 const publishDocId = ref<string | undefined>(undefined)

@@ -84,7 +84,6 @@ export class DocAnalysisManager {
     return {
       plugin: this.plugin,
       i18n: (this.plugin.i18n as any)?.docAnalysis || {},
-      mode: "tab",
     }
   }
 

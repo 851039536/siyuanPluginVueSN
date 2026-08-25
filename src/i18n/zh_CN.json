@@ -1241,6 +1241,7 @@
     "tagsLabel": "标签（可选，逗号分隔）",
     "tagsPlaceholder": "如：前端, 个人作品, 长期维护",
     "pendingChanges": "个文件变更",
+    "workingTreeClean": "工作区干净",
     "refreshWorkingTree": "刷新工作空间",
     "stageAll": "暂存全部",
     "unstageAll": "取消暂存全部",

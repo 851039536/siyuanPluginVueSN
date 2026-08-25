@@ -91,6 +91,16 @@
         text-align: right;
         white-space: nowrap;
       }
+
+      .row-pct {
+        flex-shrink: 0;
+        width: 34px;
+        font-family: stats.$font-mono;
+        font-size: $font-size-2xs;
+        color: var(--b3-theme-on-surface-light);
+        text-align: right;
+        white-space: nowrap;
+      }
     }
   }
 }

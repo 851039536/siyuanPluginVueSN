@@ -70,14 +70,17 @@
         v-if="mdFiles.length"
         class="gp-md-files"
       >
-        <MarkdownFileBadge
+        <!-- 文件徽章（点击预览，tooltip："预览 <文件名>"） -->
+        <button
           v-for="f in visibleMdFiles"
           :key="f.name"
-          :filename="f.name"
-          :variant="f.variant"
-          :i18n="i18n"
-          @select="ops.openMarkdownPreview(project, f.name)"
-        />
+          class="gp-md-badge"
+          :class="`gp-md-badge--${f.variant}`"
+          :title="i18n.previewFileTitle.replace('{0}', f.name)"
+          @click.stop="ops.openMarkdownPreview(project, f.name)"
+        >
+          {{ getMdLabel(f.name, f.variant) }}
+        </button>
         <!-- 折叠按钮（tooltip：展开/收起其余 Markdown 文件） -->
         <button
           v-if="hiddenMdCount > 0"
@@ -399,7 +402,7 @@
 <script setup lang="ts">
 // gitPush 项目卡片顶栏（信息区 + 操作区，共享数据与操作经 CARD_SERVICES_KEY 注入）
 import type { BranchInfo, GitProject } from "../../types"
-import type { MdFileEntry } from "../../composables/useMarkdownFiles"
+import { getMdLabel, type MdFileEntry } from "../../composables/useMarkdownFiles"
 import { Icon } from "@iconify/vue"
 import { computed, ref } from "vue"
 import { PLATFORM_META } from "../../types"
@@ -407,7 +410,6 @@ import { activityLevel, highlightSegments, openLocalPath, openRepoWebUrl, relati
 import { useCardActions } from "../../composables/useCardActions"
 import { useCardServices } from "../../composables/useCardServices"
 import { useCardMenu } from "../../composables/useCardMenu"
-import MarkdownFileBadge from "./MarkdownFileBadge.vue"
 
 const props = defineProps<{
   project: GitProject

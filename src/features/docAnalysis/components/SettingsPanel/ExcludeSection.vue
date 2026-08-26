@@ -6,7 +6,7 @@
     <textarea
       :value="text"
       class="settings-textarea"
-      rows="5"
+      rows="3"
       placeholder="输入要排除的名称，每行一个..."
       @input="handleInput"
     />

@@ -666,6 +666,7 @@
   "docNavMetaBytes": "bytes",
   "docNavUnpublished": "Unpublished",
   "docNavShowPublishStatus": "Show publish status badge",
+  "docNavPublishPlatforms": "Publish platforms",
   "docNavMetaCreatedAt": "Created at",
   "docNavMetaUpdatedAt": "Updated at",
   "docNavFilterKeywordsEdit": "Edit Keywords",

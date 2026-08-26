@@ -8,15 +8,12 @@
     :data-doc-id="docId"
   >
     <div class="doc-navigation">
-      <!-- 发布状态徽章：已发布（绿）仅显示平台名如"CSDN、知乎"，未发布（灰）显示"未发布"，位于面包屑旁最醒目位置 -->
-      <span
+      <!-- 发布状态徽章：图标触发，悬停/点击展开显示所有发布平台，位于面包屑旁 -->
+      <PublishBadge
         v-if="enablePublishStatus && docMeta"
-        class="doc-nav-publish-badge"
-        :class="docMeta.publishedPlatforms.length > 0 ? 'is-published' : 'is-unpublished'"
-        :title="publishBadgeText"
-      >
-        {{ publishBadgeText }}
-      </span>
+        :published-platforms="docMeta.publishedPlatforms"
+        :i18n="i18n"
+      />
       <!-- 面包屑导航 -->
       <div
         v-if="hasBreadcrumbs"
@@ -137,7 +134,6 @@
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
 import {
-  computed,
   onMounted,
   ref,
   watch,
@@ -154,6 +150,7 @@ import BacklinkDropdown from "./BacklinkDropdown.vue"
 import ChildDocDropdown from "./ChildDocDropdown.vue"
 import DocMetaBar from "./DocMetaBar.vue"
 import FilterKeywordsEditor from "./FilterKeywordsEditor.vue"
+import PublishBadge from "./PublishBadge.vue"
 import SiblingDropdown from "./SiblingDropdown.vue"
 
 const props = defineProps<{
@@ -190,14 +187,6 @@ const {
   stripHtml,
   setFilterKeywords,
 } = useDocNavigation()
-
-/** 发布状态徽章文案：已发布时仅显示平台名（如"CSDN、知乎"），未发布显示"未发布" */
-const publishBadgeText = computed(() => {
-  if (!docMeta.value) return ""
-  return docMeta.value.publishedPlatforms.length > 0
-    ? docMeta.value.publishedPlatforms.join("、")
-    : i18n.docNavUnpublished
-})
 
 /** 持久化存储实例，启动时创建，后续保存关键词时复用 */
 let settingsStorage: DocNavSettingsStorage

@@ -11,7 +11,7 @@
 - **过滤下拉树形面板**：仅显示标题命中过滤关键词（默认 `["参考"]`，可在 `DocNavSettings.filterKeywords` 中配置，与旧版硬编码行为一致）的子文档；点击面板外部自动关闭
 - **反向链接下拉面板**：点击"反向链接 (N)"按钮弹出下拉面板，展示所有引用/提及当前文档的文档（`getBacklink2` 一次获取反链与反提及合并去重，上限 50 条）；面板内置搜索框，输入关键词即时过滤列表并高亮匹配文本，点击条目跳转对应文档，点击面板外部自动关闭
 - **文档元数据信息条**：导航栏最右侧展示当前文档的创建时间（短日期）、最后更新时间（相对时间）与块数统计（`getDoc` + SQL 块数统计）；hover 时显示完整时间戳与文件大小
-- **发布状态徽章**：导航栏面包屑旁常驻显示当前文档发布状态（已发布绿、未发布灰，纯文字无图标）；已发布时仅显示具体平台名（如"CSDN、知乎"）；判定标准与 docAnalysis 一致——存在任一 `custom-<平台>-yaml` 属性（值非空）即视为已发布（`getBlockAttrs` 读取属性，`getPublishedPlatformNames` 按 `PLATFORM_MATCHERS` 识别平台，随 `DocMeta` 一并缓存）；由 `DocNavSettings.enablePublishStatus` 开关控制（默认开启，可在导航栏关键词编辑面板（铅笔图标）中切换）
+- **发布状态徽章**：导航栏面包屑旁以图标形式展示当前文档发布状态（已发布绿云勾、未发布灰云）；悬停或点击图标展开浮层显示所有发布平台（未发布显示"未发布"）；判定标准与 docAnalysis 一致——存在任一 `custom-<平台>-yaml` 属性（值非空）即视为已发布（`getBlockAttrs` 读取属性，`getPublishedPlatformNames` 按 `PLATFORM_MATCHERS` 识别平台，随 `DocMeta` 一并缓存）；由 `DocNavSettings.enablePublishStatus` 开关控制（默认开启，可在导航栏关键词编辑面板（铅笔图标）中切换）
 
 ## 技术实现
 

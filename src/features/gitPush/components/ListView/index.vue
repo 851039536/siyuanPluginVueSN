@@ -1,4 +1,4 @@
-<!-- 列表视图入口容器：工具栏 + 加载/空态 + 分组循环卡片（纯渲染，领域状态由 gitPush 根组件经 CARD_SERVICES_KEY 注入） -->
+<!-- 列表视图入口容器：工具栏 + 分组循环卡片（纯渲染，领域状态由 gitPush 根组件经 CARD_SERVICES_KEY 注入） -->
 <template>
   <!-- 筛选工具栏 + 分类 TAB -->
   <ListViewToolbar
@@ -11,18 +11,8 @@
     :grouped-projects="groupedProjects"
   />
 
-  <!-- 空态：无任何项目 -->
-  <EmptyState
-    v-if="projects.length === 0"
-    icon="mdi:source-repository"
-    :text="i18n.noProjects"
-  />
-
   <!-- 分组循环卡片列表 -->
-  <div
-    v-else
-    class="gp-list"
-  >
+  <div class="gp-list">
     <template
       v-for="group in filteredGroups"
       :key="group.category.id"
@@ -39,7 +29,6 @@
 <script setup lang="ts">
 // 列表视图容器（纯渲染，卡片数据与操作全部经 useCardServices 注入，无领域状态）
 import type { GitProject, ProjectCategory, ViewMode } from "../../types"
-import EmptyState from "../common/EmptyState.vue"
 import ListViewToolbar from "./ListViewToolbar.vue"
 import ProjectCard from "./ProjectCard.vue"
 

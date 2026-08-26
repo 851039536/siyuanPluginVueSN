@@ -134,7 +134,6 @@
       v-model:show-archived="showArchived"
       v-model:git-ops-paused="gitOpsPaused"
       :i18n="i18n"
-      :loading="loading"
       :projects="projects"
       :grouped-projects="groupedProjects"
       :filtered-groups="filteredGroups"
@@ -335,7 +334,6 @@ const {
   projects,
   categories,
   groupedProjects,
-  loading,
   getPushStatus,
   isPushing,
   pushOutputs,

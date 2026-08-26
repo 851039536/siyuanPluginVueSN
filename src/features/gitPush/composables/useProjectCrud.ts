@@ -14,18 +14,12 @@ import { getErrorMessage } from "@/utils/stringUtils"
 export function useProjectCrud(manager: GitPushManager) {
   const projects = ref<GitProject[]>([])
   const categories = ref<ProjectCategory[]>([])
-  const loading = ref(false)
   const allTags = ref<string[]>([])
 
   async function loadProjects() {
-    loading.value = true
-    try {
-      categories.value = await manager.getCategories()
-      projects.value = await manager.getProjects()
-      allTags.value = await manager.getAllTags()
-    } finally {
-      loading.value = false
-    }
+    categories.value = await manager.getCategories()
+    projects.value = await manager.getProjects()
+    allTags.value = await manager.getAllTags()
   }
 
   async function addProject(name: string, path: string, categoryId = UNGROUPED_ID, tags?: string[], extras?: ProjectPathExtras) {
@@ -117,7 +111,6 @@ export function useProjectCrud(manager: GitPushManager) {
   return {
     projects,
     categories,
-    loading,
     allTags,
     loadProjects,
     addProject,

@@ -5,7 +5,6 @@ import { computed } from "vue"
 import type {
   CardValueContext,
   DeductionKey,
-  DeductionRow,
   DepthStats,
   DocStats,
   DuplicateNameGroup,
@@ -86,29 +85,6 @@ export function useStatsOverview(props: UseStatsOverviewProps) {
     ].join("\n")
   })
 
-  /** 各扣分项当前值明细（供 HeroCard 弹出面板渲染，禁用项也展示数值） */
-  const deductionRows = computed<DeductionRow[]>(() => {
-    const { counts } = _healthBreakdown.value
-    const enabled = new Set(props.healthSettings.enabledDeductions)
-    return DEDUCTION_OPTIONS.map((opt) => ({
-      key: opt.key,
-      label: opt.label,
-      count: counts.get(opt.key) ?? 0,
-      enabled: enabled.has(opt.key),
-    }))
-  })
-
-  const hasIssues = computed(() =>
-    props.stats.zeroByteDocs > 0 || effectiveDupDocs.value > 0
-    || props.stats.orphanDocs > 0,
-  )
-
-  /** 健康文档数（总文档 - 启用扣分项合计，供 HeroCard 面板展示，与健康度百分比口径一致） */
-  const healthyDocs = computed(() => {
-    const { total, issues } = _healthBreakdown.value
-    return Math.max(0, total - Math.min(total, issues))
-  })
-
   // ============================================================
   // 卡片值计算
   // ============================================================
@@ -178,8 +154,8 @@ export function useStatsOverview(props: UseStatsOverviewProps) {
 
   return {
     effectiveDupDocs,
-    healthPct, healthTooltip, hasIssues, deductionRows, healthyDocs,
-    getCardValue, cardLabel, pctStr, toCardRows,
-    platformEntries, docsInSystem, avgPlatformsPerDoc, coveragePct,
+    healthPct, healthTooltip,
+    pctStr, toCardRows,
+    platformEntries, avgPlatformsPerDoc, coveragePct,
   }
 }

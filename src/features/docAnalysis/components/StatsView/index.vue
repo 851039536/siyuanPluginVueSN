@@ -1,15 +1,12 @@
-<!-- 文档统计概览组件 - 表格化 2 列布局（Hero 汇总 + 九个表格区块） -->
+<!-- 文档统计概览组件 - 表格化 2 列布局（Hero 汇总 + 各分区统计表格） -->
 <template>
   <div class="stats-overview">
     <template v-if="hasAnalyzed">
-      <!-- Hero 汇总卡：总文档 + 健康度 + 问题速览（健康度配置已在设置弹窗） -->
+      <!-- Hero 汇总卡：总文档 + 健康度（问题详情见下方各统计表格） -->
       <HeroCard
         :stats="stats"
         :health-pct="healthPct"
         :health-tooltip="healthTooltip"
-        :has-issues="hasIssues"
-        :effective-dup-docs="effectiveDupDocs"
-        @selectCategory="$emit('selectCategory', $event)"
       />
 
       <!-- 统计表格区块：2 列网格布局 -->
@@ -83,6 +80,7 @@ import type {
   DepthStats,
   DocStats,
   DuplicateNameGroup,
+  ExtraRowKind,
   HealthSettings,
   StatSectionDef,
   StatTableRow,
@@ -118,10 +116,8 @@ const statSections = STAT_SECTIONS as readonly StatSectionDef[]
 
 /** 统计视图计算逻辑（健康度/卡片值/占比/平台分布） */
 const {
-  effectiveDupDocs,
   healthPct,
   healthTooltip,
-  hasIssues,
   pctStr,
   toCardRows,
   platformEntries,
@@ -140,14 +136,12 @@ const bookmarkRows = computed<StatTableRow[]>(() =>
   })),
 )
 
-/** 卡片分区表格行映射（按分区 key 缓存；书签分区在汇总行后追加全部具体书签值行，发布分区在汇总行后追加平台分布行） */
+/** 卡片分区表格行映射（按分区 key 缓存；声明 extraRows 的分区在汇总卡片行后追加动态分布行） */
 const cardRowsMap = computed<Record<string, StatTableRow[]>>(() => {
   const map: Record<string, StatTableRow[]> = {}
   for (const section of statSections) {
     const rows = toCardRows(section.cards)
-    if (section.key === "bookmark") { map[section.key] = [...rows, ...bookmarkRows.value]; continue }
-    if (section.key === "publish") { map[section.key] = [...rows, ...platformRows.value]; continue }
-    map[section.key] = rows
+    map[section.key] = section.extraRows ? [...rows, ...EXTRA_ROW_SOURCES[section.extraRows]()] : rows
   }
   return map
 })
@@ -165,6 +159,18 @@ const platformRows = computed<StatTableRow[]>(() =>
     clickable: true,
   })),
 )
+
+/** 分区动态追加行来源注册表（extraRows 元数据 → 行生成器） */
+const EXTRA_ROW_SOURCES: Record<ExtraRowKind, () => StatTableRow[]> = {
+  bookmarkDistribution: () => bookmarkRows.value,
+  platformDistribution: () => platformRows.value,
+}
+
+/** 分区追加行点击下钻事件注册表（extraRows 元数据 → emit 分发） */
+const EXTRA_SELECT_DISPATCH: Record<ExtraRowKind, (id: string) => void> = {
+  bookmarkDistribution: (id) => emit("selectBookmark", id),
+  platformDistribution: (id) => emit("selectPlatform", id),
+}
 
 /** 字数分布表格行（不可下钻） */
 const wordCountRows = computed<StatTableRow[]>(() =>
@@ -187,25 +193,16 @@ const depthRows = computed<StatTableRow[]>(() =>
   })),
 )
 
-/** 发布状态分区汇总行 id（完整发布/部分发布/未发布，走 selectCategory 分类下钻） */
-const PUBLISH_SUMMARY_IDS = new Set(["fullPublish", "partialPublish", "noPublish"])
-
-/** 表格行点击分流：书签分区区分汇总行与具体书签值；发布分区区分汇总行与平台分布行；其余分区统一 selectCategory */
+/** 表格行点击分流：分区汇总卡片行走 selectCategory，声明 extraRows 的追加行走对应专属下钻事件（id 全部由 STAT_SECTIONS 元数据推导，无硬编码） */
 function handleRowSelect(sectionKey: string, id: string) {
-  if (sectionKey === "bookmark") {
-    if (id === "hasBookmark" || id === "noBookmark") {
-      emit("selectCategory", id)
-      return
-    }
-    emit("selectBookmark", id)
+  const section = statSections.find((s) => s.key === sectionKey)
+  const summaryIds = new Set((section?.cards ?? []).map((c) => c.id))
+  if (summaryIds.has(id)) {
+    emit("selectCategory", id)
     return
   }
-  if (sectionKey === "publish") {
-    if (PUBLISH_SUMMARY_IDS.has(id)) {
-      emit("selectCategory", id)
-      return
-    }
-    emit("selectPlatform", id)
+  if (section?.extraRows) {
+    EXTRA_SELECT_DISPATCH[section.extraRows](id)
     return
   }
   emit("selectCategory", id)

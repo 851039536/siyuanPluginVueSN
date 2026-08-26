@@ -1,7 +1,7 @@
 /**
  * gitPush — 项目根目录 Markdown 文件扫描工具
  *
- * 读取指定目录下的 *.md 文件，按约定排序（README → CLAUDE → CODEBUDDY → 其他），
+ * 读取指定目录下的 *.md 文件，按约定排序（README → AGENTS → CLAUDE → CODEBUDDY → 其他），
  * 返回标准化的文件元数据列表供 badge 展示与弹窗预览使用。
  */
 import { getNodeFsPathOs } from "@/utils/nodeModules"
@@ -17,12 +17,20 @@ export interface MdFileEntry {
   path: string
   /** 变体类型（决定 badge 颜色与排序） */
   variant: MdFileVariant
-  /** 显示标签（README / CLAUDE / CODEBUDDY / 原始文件名） */
-  label: string
   /** 文件大小（bytes） */
   size: number
   /** 是否超过 1MB 阈值 */
   oversized: boolean
+}
+
+/**
+ * 生成 Markdown 文件徽章显示标签（约定文件去扩展名大写，其他保留原始文件名）
+ * @param name 原始文件名（如 README.md / notes.md）
+ * @param variant 变体类型
+ * @returns 显示标签（README / NOTES / notes.md）
+ */
+export function getMdLabel(name: string, variant: MdFileVariant): string {
+  return variant === "other" ? name : name.replace(/\.md$/i, "").toUpperCase()
 }
 
 /** 文件大小阈值：1MB */
@@ -64,8 +72,6 @@ export function scanMarkdownFiles(dir: string): MdFileEntry[] {
         const lowerName = e.name.toLowerCase()
         const variant = MD_VARIANT_MAP[lowerName] ?? ("other" as MdFileVariant)
         const filePath = path.join(dir, e.name)
-        const baseName = e.name.replace(/\.md$/i, "")
-        const label = variant === "other" ? e.name : baseName.toUpperCase()
 
         let size = 0
         try {
@@ -78,7 +84,6 @@ export function scanMarkdownFiles(dir: string): MdFileEntry[] {
           name: e.name,
           path: filePath,
           variant,
-          label,
           size,
           oversized: size > OVERSIZE_THRESHOLD,
         } satisfies MdFileEntry

@@ -51,6 +51,25 @@
   text-overflow: ellipsis;
 }
 
+// ── Markdown 徽章基础（.gp-md-badge 与折叠按钮 .gp-md-more 共享）──
+@mixin md-badge-base {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px; // 徽章微内边距：垂直 1px 保持行高紧凑，水平 6px 无对应 Token
+  font-size: $font-size-2xs;
+  font-family: $vp-mono;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.03em;
+  line-height: $line-height-normal;
+  border: 1px solid transparent;
+  border-radius: $radius-sm;
+  background: none;
+  cursor: pointer;
+  color: var(--b3-theme-on-surface);
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
 // 隐藏水平滚动条（keep vertical scroll functional）
 @mixin hide-h-scrollbar {
   &::-webkit-scrollbar { height: 0; }

@@ -74,7 +74,6 @@
           v-for="f in visibleMdFiles"
           :key="f.name"
           :filename="f.name"
-          :label="f.label"
           :variant="f.variant"
           :i18n="i18n"
           @select="ops.openMarkdownPreview(project, f.name)"
@@ -447,7 +446,7 @@ const nameSegments = computed(() => highlightSegments(props.project.name, search
 const MD_VISIBLE_LIMIT = 3
 /** 是否已展开全部 Markdown 徽章 */
 const mdExpanded = ref(false)
-/** 实际展示的徽章列表（折叠时仅前 N 个，mdFiles 已按 README→CLAUDE→其他 排序） */
+/** 实际展示的徽章列表（折叠时仅前 N 个，mdFiles 已按 README→AGENTS→CLAUDE→CODEBUDDY→其他 排序） */
 const visibleMdFiles = computed(() =>
   mdExpanded.value ? props.mdFiles : props.mdFiles.slice(0, MD_VISIBLE_LIMIT),
 )

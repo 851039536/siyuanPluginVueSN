@@ -42,7 +42,7 @@
           :class="{ active: f.name === currentFile?.name }"
           @click="selectFile(f.name)"
         >
-          {{ f.label }}
+          {{ getMdLabel(f.name, f.variant) }}
           <!-- 超大文件警示图标（tooltip："文件较大"） -->
           <span
             v-if="f.oversized"
@@ -136,6 +136,7 @@ import { Icon } from "@iconify/vue"
 import { parseMarkdown } from "@/utils/mdRenderer"
 import { copyToClipboard } from "@/utils/domUtils"
 import {
+  getMdLabel,
   readMarkdownFile,
   scanMarkdownFiles,
 } from "../../composables/useMarkdownFiles"

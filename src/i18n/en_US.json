@@ -665,6 +665,7 @@
   "docNavMetaBlocks": "blocks",
   "docNavMetaBytes": "bytes",
   "docNavUnpublished": "Unpublished",
+  "docNavShowPublishStatus": "Show publish status badge",
   "docNavMetaCreatedAt": "Created at",
   "docNavMetaUpdatedAt": "Updated at",
   "docNavFilterKeywordsEdit": "Edit Keywords",

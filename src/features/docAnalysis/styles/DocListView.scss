@@ -98,28 +98,6 @@
       color: var(--b3-theme-on-primary);
     }
   }
-
-  .platform-manage-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    border: 1px solid var(--b3-border-color);
-    border-radius: $radius-sm;
-    background: transparent;
-    color: var(--b3-theme-on-surface-variant);
-    cursor: pointer;
-    font-size: $font-size-xs;
-    flex-shrink: 0;
-    margin-left: auto;
-
-    &:hover {
-      border-color: var(--b3-theme-primary);
-      color: var(--b3-theme-primary);
-      background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.06));
-    }
-  }
 }
 
 .platform-filter-hint {

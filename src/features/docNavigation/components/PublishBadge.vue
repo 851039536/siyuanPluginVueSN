@@ -1,4 +1,4 @@
-<!-- 发布状态徽章：图标触发，悬停/点击展开显示所有发布平台 -->
+<!-- 发布状态徽章：文字触发（已发布/未发布），悬停/点击展开显示所有发布平台 -->
 <template>
   <div
     ref="rootRef"
@@ -6,7 +6,7 @@
     @mouseenter="handleEnter"
     @mouseleave="handleLeave"
   >
-    <!-- 发布状态图标按钮：已发布绿 / 未发布灰 -->
+    <!-- 发布状态触发文字：已发布（绿）/ 未发布（灰） -->
     <button
       class="doc-nav-publish-trigger"
       :class="isPublished ? 'is-published' : 'is-unpublished'"
@@ -15,11 +15,7 @@
       :title="i18n.docNavShowPublishStatus"
       @click.stop="handleToggle"
     >
-      <IconWrapper
-        :name="isPublished ? 'docNavPublished' : 'docNavUnpublished'"
-        size="14"
-        aria-hidden="true"
-      />
+      {{ isPublished ? i18n.docNavPublished : i18n.docNavUnpublished }}
     </button>
 
     <!-- 发布平台浮层：悬停/点击展开 -->
@@ -59,7 +55,6 @@ import {
   ref,
   watch,
 } from "vue"
-import IconWrapper from "@/components/IconWrapper.vue"
 import { useClickOutside } from "../composables/useClickOutside"
 
 const props = defineProps<{

@@ -7,19 +7,27 @@
   align-items: center;
 }
 
-// 图标触发按钮：纯图标无背景无边框，hover 仅提升不透明度
+// 文字触发按钮：无背景无边框，已发布绿 / 未发布灰，hover 仅提升不透明度
 .doc-nav-publish-trigger {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  padding: 0;
+  padding: 0 $spacing-1;
   border: none;
   background: transparent;
   cursor: pointer;
-  opacity: 0.75;
+  font-size: $font-size-2xs;
+  line-height: $line-height-tight;
+  white-space: nowrap;
+  opacity: 0.85;
   transition: opacity 0.15s ease;
+
+  &.is-published {
+    color: $color-success;
+  }
+
+  &.is-unpublished {
+    color: $color-muted;
+  }
 
   &:hover,
   &:focus-visible {

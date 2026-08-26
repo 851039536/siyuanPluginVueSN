@@ -81,14 +81,6 @@ export const FEATURE_ICONS = {
     icon: "mdi:pencil",
     color: "#8b5cf6",
   },
-  docNavPublished: {
-    icon: "mdi:cloud-check",
-    color: "#16a34a",
-  },
-  docNavUnpublished: {
-    icon: "mdi:cloud-outline",
-    color: "#9ca3af",
-  },
 
   // 页面锁定
   pageLock: {

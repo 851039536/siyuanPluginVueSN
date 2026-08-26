@@ -35,3 +35,13 @@ export function buildIdNotInClause(ids: Set<string>): string {
   if (ids.size === 0) return ""
   return `AND b.id NOT IN (${quoteSqlList(ids)})`
 }
+
+/**
+ * 0B 排除书签 SQL 子句：带被排除书签的文档整体剔除（空列表返回空串，零开销）
+ * @param bookmarks 排除书签值列表
+ * @param idExpr 文档 ID 列表达式（默认无别名 id，兼容无别名 SQL；带别名的调用传 "b.id"）
+ */
+export function buildBookmarkExcludeClause(bookmarks: string[], idExpr = "id"): string {
+  if (bookmarks.length === 0) return ""
+  return `AND ${idExpr} NOT IN (SELECT block_id FROM attributes WHERE name = 'bookmark' AND value IN (${quoteSqlList(bookmarks)}))`
+}

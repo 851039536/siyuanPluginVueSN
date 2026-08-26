@@ -30,6 +30,7 @@ import {
   getPlatformIdFromAttrKey,
 } from "../utils/platformPublish"
 import {
+  buildBookmarkExcludeClause,
   buildIdInClause,
   escapeSql,
   quoteSql,
@@ -62,7 +63,10 @@ export function useDocAnalysis(plugin: Plugin) {
 
   /** 深拷贝默认健康度设置（避免与 DEFAULT_HEALTH_SETTINGS 共享数组引用） */
   function makeDefaultHealthSettings(): HealthSettings {
-    return { enabledDeductions: [...DEFAULT_HEALTH_SETTINGS.enabledDeductions] }
+    return {
+      enabledDeductions: [...DEFAULT_HEALTH_SETTINGS.enabledDeductions],
+      zeroByteExcludeBookmarks: [],
+    }
   }
 
   const healthSettings = ref<HealthSettings>(makeDefaultHealthSettings())
@@ -74,9 +78,11 @@ export function useDocAnalysis(plugin: Plugin) {
       const validKeys = saved.enabledDeductions.filter((key) =>
         DEDUCTION_OPTIONS.some((opt) => opt.key === key),
       )
-      healthSettings.value = validKeys.length > 0
-        ? { enabledDeductions: validKeys }
-        : makeDefaultHealthSettings()
+      // 兼容旧存储：zeroByteExcludeBookmarks 缺省时兜底为空数组
+      healthSettings.value = {
+        enabledDeductions: validKeys.length > 0 ? validKeys : [...DEFAULT_HEALTH_SETTINGS.enabledDeductions],
+        zeroByteExcludeBookmarks: saved.zeroByteExcludeBookmarks ?? [],
+      }
     } catch {
       healthSettings.value = makeDefaultHealthSettings()
     }
@@ -170,13 +176,17 @@ export function useDocAnalysis(plugin: Plugin) {
       const bmJoinType = config.bookmarkInner ? "INNER JOIN" : "LEFT JOIN"
       const bmJoin = `${bmJoinType} (${BOOKMARK_SUBQUERY}) bm ON b.id = bm.block_id`
       const doctSelect = config.skipSizeJoin ? DOC_SELECT_NO_SIZE : DOC_SELECT
+      // 统计下钻开启排除书签：带被勾选书签的文档不出现在下钻列表（主动查询不传此标志保持全量）
+      const excludeClause = config.excludeBookmarked
+        ? buildBookmarkExcludeClause(healthSettings.value.zeroByteExcludeBookmarks, "b.id")
+        : ""
 
       const rows = await sql(`
         SELECT ${doctSelect},
           ${config.extraSelect || "0 as ref_count, 0 as image_count,"}
           COALESCE(bm.bookmark, '') as bookmark
         FROM blocks b ${sizeJoin} ${bmJoin} ${config.extraJoin || ""}
-        WHERE b.type = 'd' ${notebookCondition} ${config.extraWhere || ""}
+        WHERE b.type = 'd' ${notebookCondition} ${excludeClause} ${config.extraWhere || ""}
         ORDER BY ${config.orderBy || "b.updated DESC"}
         LIMIT ${config.limit || 2000}
       `)
@@ -212,6 +222,7 @@ export function useDocAnalysis(plugin: Plugin) {
     runDocQuery,
     setEmptyState,
     resetQueryState,
+    getZeroByteExcludeBookmarks: () => healthSettings.value.zeroByteExcludeBookmarks,
   })
   const { statsFilter } = stats
 
@@ -336,7 +347,7 @@ export function useDocAnalysis(plugin: Plugin) {
     }
 
     if (matchingIds.length === 0) { setEmptyState(); return }
-    await runDocQuery({ extraWhere: buildIdInClause(new Set(matchingIds)), orderBy: "b.updated DESC" })
+    await runDocQuery({ extraWhere: buildIdInClause(new Set(matchingIds)), orderBy: "b.updated DESC", excludeBookmarked: true })
   }
 
   return {

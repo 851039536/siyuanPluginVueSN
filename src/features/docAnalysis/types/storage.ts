@@ -2,8 +2,8 @@
  * 文档分析功能 - 数据存储管理
  */
 import type { Plugin } from "siyuan"
-import type { FilterOptions, HealthSettings, PlatformMeta, PublishPromoteConfig } from "./index"
-import { DEFAULT_FILTER_OPTIONS, DEFAULT_HEALTH_SETTINGS, DEFAULT_PLATFORM_META, DEFAULT_PUBLISH_PROMOTE } from "./index"
+import type { FilterOptions, HealthSettings, PlatformMeta, PublishPromoteConfig, ViewSettings } from "./index"
+import { DEFAULT_FILTER_OPTIONS, DEFAULT_HEALTH_SETTINGS, DEFAULT_PLATFORM_META, DEFAULT_PUBLISH_PROMOTE, DEFAULT_VIEW_SETTINGS } from "./index"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 
@@ -16,6 +16,7 @@ export class DocAnalysisStorage {
   readonly duplicateNameFilter: TypedStorage<string[]>
   readonly publishPromote: TypedStorage<PublishPromoteConfig>
   readonly healthSettings: TypedStorage<HealthSettings>
+  readonly viewSettings: TypedStorage<ViewSettings>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
@@ -24,5 +25,6 @@ export class DocAnalysisStorage {
     this.duplicateNameFilter = new TypedStorage(storage, "doc-analysis-dup-filter", [])
     this.publishPromote = new TypedStorage(storage, "doc-analysis-publish-promote", DEFAULT_PUBLISH_PROMOTE)
     this.healthSettings = new TypedStorage(storage, "doc-analysis-health-settings", DEFAULT_HEALTH_SETTINGS)
+    this.viewSettings = new TypedStorage(storage, "doc-analysis-view-settings", DEFAULT_VIEW_SETTINGS)
   }
 }

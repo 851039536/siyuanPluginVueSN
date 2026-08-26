@@ -14,11 +14,13 @@ import type {
   NotebookInfo,
   PlatformMeta,
   QueryState,
+  ViewSettings,
 } from "../types/index"
 import {
   DEFAULT_FILTER_OPTIONS,
   DEFAULT_HEALTH_SETTINGS,
   DEFAULT_PLATFORM_META,
+  DEFAULT_VIEW_SETTINGS,
   DEDUCTION_OPTIONS,
 } from "../types/index"
 import {
@@ -251,6 +253,17 @@ export function useDocAnalysis(plugin: Plugin) {
     catch (e) { console.error("保存文档分析配置失败:", e) }
   }
 
+  async function loadViewSettings(): Promise<ViewSettings> {
+    try { return await storage.viewSettings.loadOrDefault() }
+    catch { return { ...DEFAULT_VIEW_SETTINGS } }
+  }
+
+  async function saveViewSettings(settings: ViewSettings): Promise<boolean> {
+    try { return await storage.viewSettings.save(settings) }
+    catch (e) { console.error("保存视图设置失败:", e) }
+    return false
+  }
+
   async function queryDocs() {
     const needWcFilter = filterOptions.wordCountMin > 0 || filterOptions.wordCountMax > 0
     let conds = ""
@@ -354,8 +367,9 @@ export function useDocAnalysis(plugin: Plugin) {
     notebooks, queryState, filterOptions,
     healthSettings, loadHealthSettings,
     ...stats,
-    loadNotebooks, loadSavedOptions, queryDocs,
+    loadNotebooks, loadSavedOptions, saveOptions, queryDocs,
     openDoc, updateSort, resetQueryState,
     loadPlatformMeta, savePlatformMeta, queryByMissingPlatform, queryByPlatformPublished,
+    loadViewSettings, saveViewSettings,
   }
 }

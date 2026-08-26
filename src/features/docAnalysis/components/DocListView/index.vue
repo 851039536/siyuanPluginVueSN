@@ -26,13 +26,6 @@
       >
         <Icon icon="mdi:close" />
       </button>
-      <button
-        class="platform-manage-btn"
-        title="管理平台"
-        @click="$emit('openPlatformManage')"
-      >
-        <Icon icon="mdi:cog-outline" />
-      </button>
     </div>
     <!-- 平台过滤提示（激活时显示，说明当前列表筛选语义） -->
     <div
@@ -223,7 +216,6 @@ const emit = defineEmits<{
   (e: "toggleSortOrder"): void
   (e: "clearStatsFilter"): void
   (e: "selectPlatform", platformId: string): void
-  (e: "openPlatformManage"): void
 }>()
 
 // 分批渲染：避免一次渲染上千个 DocListItem 导致卡顿

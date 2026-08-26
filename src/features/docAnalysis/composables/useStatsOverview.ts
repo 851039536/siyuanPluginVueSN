@@ -68,7 +68,7 @@ export function useStatsOverview(props: UseStatsOverviewProps) {
   const healthPct = computed(() => {
     const { total, issues } = _healthBreakdown.value
     if (!total) return 100
-    return Math.round(((total - Math.min(total, issues)) / total) * 100)
+    return Number((((total - Math.min(total, issues)) / total) * 100).toFixed(2))
   })
 
   const healthTooltip = computed(() => {

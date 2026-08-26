@@ -6,7 +6,7 @@
         v-model="searchQuery"
         type="text"
         class="skill-list-view__input"
-        :placeholder="t.searchPlaceholder || '搜索卡片...'"
+        :placeholder="t.searchPlaceholder"
       />
     </div>
     <CategoryFilter
@@ -35,7 +35,7 @@
       >
         <button
           class="skill-list-view__card-delete"
-          :title="t.deleteCard || '删除卡片'"
+          :title="t.deleteCard"
           @click.stop="$emit('delete', card.id)"
         >×</button>
         <div class="skill-list-view__card-top">
@@ -88,7 +88,7 @@ import DifficultyBadge from "./DifficultyBadge.vue"
 
 const props = defineProps<{
   cards: SkillCard[]
-  i18n: SkillI18n
+  i18n: Required<SkillI18n>
 }>()
 
 const emit = defineEmits<{

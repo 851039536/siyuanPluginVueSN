@@ -15,11 +15,11 @@ export const DIFFICULTY_COLORS: Record<Difficulty, string> = {
   advanced: "#ef4444",
 }
 
-/** 难度中文回退标签 */
-export const DIFFICULTY_CHINESE: Record<Difficulty, string> = {
-  beginner: "初级",
-  intermediate: "中级",
-  advanced: "高级",
+/** 难度对应的 i18n 键映射（组件从 Required<SkillI18n> 取值） */
+export const DIFFICULTY_I18N_KEYS: Record<Difficulty, keyof SkillI18n> = {
+  beginner: "beginner",
+  intermediate: "intermediate",
+  advanced: "advanced",
 }
 
 /** 视图模式 */
@@ -141,5 +141,15 @@ export interface SkillI18n {
   correctCountLabel?: string
   wrongCountLabel?: string
   notPracticed?: string
-  [key: string]: string | undefined
+  aiGenerate?: string
+  correct?: string
+  incorrect?: string
+  retry?: string
+  viewCode?: string
+  hideCode?: string
+  nextQuestion?: string
+  viewResult?: string
+  quizScore?: string
+  showDetails?: string
+  hideDetails?: string
 }

@@ -60,15 +60,6 @@ export function useSkillStorage(plugin: Plugin) {
     return ok
   }
 
-  async function incrementPracticeCount(id: string): Promise<boolean> {
-    const ok = await storage.incrementPracticeCount(id)
-    if (ok) {
-      const card = cards.value.find((c) => c.id === id)
-      if (card) card.practiceCount++
-    }
-    return ok
-  }
-
   /** 闪卡答题后更新：练习计数 + 对错计数（乐观更新） */
   async function incrementPracticeWithAccuracy(id: string, isCorrect: boolean): Promise<boolean> {
     const ok = await storage.incrementPracticeCount(id)
@@ -104,15 +95,6 @@ export function useSkillStorage(plugin: Plugin) {
     return ok
   }
 
-  async function updateReviewData(id: string, data: ReviewData): Promise<boolean> {
-    const ok = await storage.updateReviewData(id, data)
-    if (ok) {
-      const card = cards.value.find((c) => c.id === id)
-      if (card) card.reviewData = { ...data }
-    }
-    return ok
-  }
-
   return {
     storage,
     cards,
@@ -121,9 +103,7 @@ export function useSkillStorage(plugin: Plugin) {
     createCard,
     updateCard,
     deleteCard,
-    incrementPracticeCount,
     incrementPracticeWithAccuracy,
-    updateReviewData,
     updateReviewAndPractice,
   }
 }

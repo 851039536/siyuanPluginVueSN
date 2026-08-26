@@ -24,7 +24,7 @@
           {{ dueCount }}
         </div>
         <div class="stats-view__stat-label">
-          {{ t.dueForReview || '待复习' }}
+          {{ t.dueForReview }}
         </div>
       </div>
     </div>
@@ -35,7 +35,7 @@
       class="stats-view__rings-row"
     >
       <ProgressRing
-        :title="t.practiceProgress || '练习覆盖'"
+        :title="t.practiceProgress"
         :pct="practicedPct"
         :current="practicedCount"
         :total="cards.length"
@@ -43,7 +43,7 @@
       />
       <ProgressRing
         v-if="practicedCount > 0"
-        :title="t.accuracyRate || '正确率'"
+        :title="t.accuracyRate"
         :pct="accuracyPct"
         :current="totalCorrect"
         :total="totalAttempts"
@@ -57,30 +57,30 @@
       class="stats-view__section"
     >
       <div class="stats-view__section-title">
-        {{ t.accuracyRate || '正确率' }} {{ t.difficulty || '分布' }}
+        {{ t.accuracyRate }} {{ t.difficulty }}
       </div>
       <div class="stats-view__bars">
         <div class="stats-view__bar-row">
-          <span class="stats-view__bar-label">{{ t.correctCountLabel || '正确' }}</span>
+          <span class="stats-view__bar-label">{{ t.correctCountLabel }}</span>
           <div class="stats-view__bar-track">
             <div
               class="stats-view__bar-fill"
               :style="{
                 width: `${accuracyPct}%`,
-                background: '#22c55e',
+                background: DIFFICULTY_COLORS.beginner,
               }"
             />
           </div>
           <span class="stats-view__bar-count">{{ totalCorrect }}</span>
         </div>
         <div class="stats-view__bar-row">
-          <span class="stats-view__bar-label">{{ t.wrongCountLabel || '错误' }}</span>
+          <span class="stats-view__bar-label">{{ t.wrongCountLabel }}</span>
           <div class="stats-view__bar-track">
             <div
               class="stats-view__bar-fill"
               :style="{
                 width: `${wrongPct}%`,
-                background: '#ef4444',
+                background: DIFFICULTY_COLORS.advanced,
               }"
             />
           </div>
@@ -95,7 +95,7 @@
       class="stats-view__section"
     >
       <div class="stats-view__section-title">
-        {{ t.language || '语言' }}
+        {{ t.language }}
       </div>
       <div class="stats-view__bars">
         <div
@@ -124,7 +124,7 @@
       class="stats-view__section"
     >
       <div class="stats-view__section-title">
-        {{ t.difficulty || '难度' }}
+        {{ t.difficulty }}
       </div>
       <div class="stats-view__bars">
         <div
@@ -153,7 +153,7 @@
       class="stats-view__section"
     >
       <div class="stats-view__section-title">
-        {{ t.category || '分类' }}
+        {{ t.category }}
       </div>
       <div class="stats-view__tags">
         <span
@@ -179,6 +179,7 @@
 
 <script setup lang="ts">
 import type {
+  Difficulty,
   SkillCard,
   SkillI18n,
 } from "../types"
@@ -188,7 +189,7 @@ import {
   langLabel,
 } from "../composables/useLangLabel"
 import { useCardStats } from "../composables/useCardStats"
-import { DIFFICULTY_CHINESE, DIFFICULTY_COLORS } from "../types"
+import { DIFFICULTY_COLORS, DIFFICULTY_I18N_KEYS } from "../types"
 import ProgressRing from "./ProgressRing.vue"
 
 const props = defineProps<{
@@ -210,10 +211,13 @@ const {
 
 const wrongPct = computed(() => 100 - accuracyPct.value)
 
+/** 语言/难度分布条的默认兜底色 */
+const DEFAULT_BAR_COLOR = "#94a3b8"
+
 const accuracyColor = computed(() => {
-  if (accuracyPct.value >= 80) return "#22c55e"
-  if (accuracyPct.value >= 50) return "#f59e0b"
-  return "#ef4444"
+  if (accuracyPct.value >= 80) return DIFFICULTY_COLORS.beginner
+  if (accuracyPct.value >= 50) return DIFFICULTY_COLORS.intermediate
+  return DIFFICULTY_COLORS.advanced
 })
 
 // 语言分布
@@ -226,7 +230,7 @@ const langStats = computed(() => {
       label: langLabel(lang),
       count,
       pct: Math.round((count / props.cards.length) * 100),
-      color: LANG_COLORS[lang] || "#94a3b8",
+      color: LANG_COLORS[lang] || DEFAULT_BAR_COLOR,
     }))
 })
 
@@ -237,10 +241,10 @@ const diffStats = computed(() => {
   return [...map.entries()]
     .sort((a, b) => b[1] - a[1])
     .map(([diff, count]) => ({
-      label: (t.value as any)[diff] || DIFFICULTY_CHINESE[diff as keyof typeof DIFFICULTY_CHINESE] || diff,
+      label: t.value[DIFFICULTY_I18N_KEYS[diff as Difficulty]] || diff,
       count,
       pct: Math.round((count / props.cards.length) * 100),
-      color: DIFFICULTY_COLORS[diff as keyof typeof DIFFICULTY_COLORS] || "#94a3b8",
+      color: DIFFICULTY_COLORS[diff as Difficulty] || DEFAULT_BAR_COLOR,
     }))
 })
 

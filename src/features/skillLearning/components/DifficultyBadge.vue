@@ -13,18 +13,15 @@ import type {
   Difficulty,
   SkillI18n,
 } from "../types"
-import { DIFFICULTY_CHINESE } from "../types"
+import { DIFFICULTY_I18N_KEYS } from "../types"
 import { computed } from "vue"
 
 const props = defineProps<{
   difficulty: Difficulty
-  i18n: SkillI18n
+  i18n: Required<SkillI18n>
 }>()
 
-const label = computed(() => {
-  const i18nKey = props.difficulty as keyof SkillI18n
-  return props.i18n[i18nKey] || DIFFICULTY_CHINESE[props.difficulty] || props.difficulty
-})
+const label = computed(() => props.i18n[DIFFICULTY_I18N_KEYS[props.difficulty]])
 </script>
 
 <style lang="scss" scoped>

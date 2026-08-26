@@ -6,11 +6,11 @@ const LANG_MAP: Record<string, string> = {
   javascript: "JavaScript",
   typescript: "TypeScript",
   vue: "Vue",
+  other: "Other",
 }
 
 /** 语言选项列表（含 other） */
 export const LANGUAGE_OPTIONS = Object.entries(LANG_MAP).map(([key, label]) => ({ key, label }))
-LANGUAGE_OPTIONS.push({ key: "other", label: "Other" })
 
 export function langLabel(lang: string): string {
   return LANG_MAP[lang] || lang

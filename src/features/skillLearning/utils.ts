@@ -3,7 +3,7 @@
  */
 import type { SkillCard } from "./types"
 
-interface CardOption {
+export interface CardOption {
   text: string
   correct: boolean
 }
@@ -22,6 +22,12 @@ export function shuffle<T>(arr: T[]): T[] {
     ;[a[i], a[j]] = [a[j], a[i]]
   }
   return a
+}
+
+/** 判断卡片是否到期待复习（复习队列与统计共用） */
+export function isDue(card: SkillCard, now: number): boolean {
+  if (!card.reviewData) return true
+  return card.reviewData.nextReview <= now
 }
 
 /** 构建答题池：预建按语言分组的答案池，为每张卡片生成 3 个干扰项 */

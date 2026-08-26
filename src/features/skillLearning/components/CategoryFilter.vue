@@ -60,15 +60,13 @@
 
 <script setup lang="ts">
 import type {
-  Difficulty,
-  Language,
   SkillI18n,
 } from "../types"
 import { computed } from "vue"
 import { langLabel } from "../composables/useLangLabel"
 
 const props = defineProps<{
-  i18n: SkillI18n
+  i18n: Required<SkillI18n>
   languages: string[]
   categories: string[]
   selectedLanguage: string

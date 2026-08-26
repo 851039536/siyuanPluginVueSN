@@ -11,6 +11,7 @@ import type {
   SkillCard,
 } from "../types"
 import { computed } from "vue"
+import { isDue } from "../utils"
 
 const DEFAULT_EF = 2.5
 const MIN_EF = 1.3
@@ -53,9 +54,8 @@ export function calcNextReview(rating: ReviewRating, prev?: ReviewData): ReviewD
 }
 
 export function useReviewQueue(cardsRef: Ref<SkillCard[]> | ComputedRef<SkillCard[]>) {
-  const now = Date.now()
   const dueCards = computed(() =>
-    cardsRef.value.filter((c) => !c.reviewData || c.reviewData.nextReview <= now),
+    cardsRef.value.filter((c) => isDue(c, Date.now())),
   )
   const allReviewed = computed(() => dueCards.value.length === 0)
   return {

@@ -15,14 +15,14 @@
       class="review-view__complete"
     >
       <IconWrapper
-        name="mdi:check-circle-outline"
+        name="checkCircleOutline"
         class="review-view__complete-icon"
       />
       <div class="review-view__complete-text">
         {{ t.reviewComplete }}
       </div>
       <div class="review-view__complete-sub">
-        {{ t.nextReviewHint || '下一轮复习将在卡片到期后自动出现' }}
+        {{ t.nextReviewHint }}
       </div>
     </div>
 
@@ -64,7 +64,7 @@
             <span class="review-view__category-tag">{{ currentCard.category }}</span>
           </div>
           <div class="review-view__flip-hint">
-            {{ t.tapToReveal || '点击卡片查看答案' }}
+            {{ t.tapToReveal }}
           </div>
         </div>
 
@@ -99,7 +99,7 @@
             class="review-view__rating-icon"
           />
           <span class="review-view__rating-label">{{ t.forgot }}</span>
-          <span class="review-view__rating-hint">{{ t.forgotHint || '1天后重来' }}</span>
+          <span class="review-view__rating-hint">{{ t.forgotHint }}</span>
         </button>
         <button
           class="review-view__rating review-view__rating--fuzzy"
@@ -136,8 +136,8 @@ import {
   computed,
   onActivated,
   onDeactivated,
+  onUnmounted,
   ref,
-
 } from "vue"
 
 import IconWrapper from "@/components/IconWrapper.vue"
@@ -151,7 +151,7 @@ import DifficultyBadge from "./DifficultyBadge.vue"
 
 const props = defineProps<{
   cards: SkillCard[]
-  i18n: SkillI18n
+  i18n: Required<SkillI18n>
 }>()
 
 const emit = defineEmits<{
@@ -185,7 +185,6 @@ const rememberedHint = computed(() => {
 })
 
 function formatInterval(days: number): string {
-  if (days < 1) return `< 1天`
   if (days === 1) return "1天后"
   if (days < 30) return `${days}天后`
   const months = Math.round(days / 30)
@@ -202,15 +201,9 @@ function rate(rating: ReviewRating) {
   const data = calcNextReview(rating, card.reviewData)
   emit("rate", card.id, rating, data)
 
-  // 移到下一张卡片
-  if (queueIndex.value < queue.value.length - 1) {
-    queueIndex.value++
-    flipped.value = false
-  } else {
-    // 本轮完成
-    queueIndex.value = 0
-    flipped.value = false
-  }
+  // 被评分的卡片将随 reviewData 更新移出 dueCards，索引归零让下一张自动顶上
+  queueIndex.value = 0
+  flipped.value = false
 }
 
 // --- 键盘快捷键 ---
@@ -228,8 +221,10 @@ function onKeydown(e: KeyboardEvent) {
     else if (e.key === "3") rate("remembered")
   }
 }
+const cleanup = () => window.removeEventListener("keydown", onKeydown)
 onActivated(() => window.addEventListener("keydown", onKeydown))
-onDeactivated(() => window.removeEventListener("keydown", onKeydown))
+onDeactivated(cleanup)
+onUnmounted(cleanup)
 </script>
 
 <style lang="scss" scoped>

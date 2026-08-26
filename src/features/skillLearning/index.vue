@@ -17,7 +17,7 @@
       <div class="skill-learning-panel__actions">
         <button
           class="skill-learning-panel__btn"
-          :title="t.addCard"
+          :title="fullI18n.addCard"
           @click="openAddDialog"
         >
           +
@@ -57,8 +57,8 @@
 
     <!-- 底部统计 -->
     <div class="skill-learning-panel__footer">
-      <span>{{ t.totalCards }}: {{ cards.length }}</span>
-      <span>{{ t.practicedCards }}: {{ practicedCount }}</span>
+      <span>{{ fullI18n.totalCards }}: {{ cards.length }}</span>
+      <span>{{ fullI18n.practicedCards }}: {{ practicedCount }}</span>
     </div>
 
     <!-- 新建/编辑弹窗 -->
@@ -76,6 +76,7 @@
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
+import { showMessage } from "siyuan"
 import type {
   CreateSkillDTO,
   ReviewData,
@@ -104,7 +105,6 @@ const props = defineProps<{
   plugin: Plugin
 }>()
 
-const t = computed(() => fullI18n.value as Record<string, string>)
 const fullI18n = useI18n(props.i18n)
 const {
   cards,
@@ -127,19 +127,19 @@ const editingCard = ref<SkillCard | null>(null)
 const tabs = computed(() => [
   {
     id: "list" as ViewMode,
-    label: fullI18n.value.listView || "列表",
+    label: fullI18n.value.listView,
   },
   {
     id: "flashcard" as ViewMode,
-    label: fullI18n.value.flashcardView || "闪卡",
+    label: fullI18n.value.flashcardView,
   },
   {
     id: "review" as ViewMode,
-    label: fullI18n.value.reviewView || "复习",
+    label: fullI18n.value.reviewView,
   },
   {
     id: "stats" as ViewMode,
-    label: fullI18n.value.statsView || "统计",
+    label: fullI18n.value.statsView,
   },
 ])
 
@@ -153,7 +153,7 @@ onMounted(async () => {
     if (cards.value.length === 0) {
       await storage.bulkCreate(PRESET_CARDS)
       await loadCards()
-      console.log(fullI18n.value.presetDataLoaded)
+      showMessage(fullI18n.value.presetDataLoaded, 2000, "info")
     }
   }
 })
@@ -184,10 +184,10 @@ async function handleUpdate(id: string, dto: CreateSkillDTO) {
 }
 
 async function handleDeleteCard(cardId: string) {
-  if (!confirm(fullI18n.value.confirmDelete || "确定要删除这张卡片吗？")) return
+  if (!confirm(fullI18n.value.confirmDelete)) return
   const ok = await deleteCard(cardId)
   if (ok) {
-    console.log(fullI18n.value.deleteSuccess || "卡片已删除")
+    showMessage(fullI18n.value.deleteSuccess, 2000, "info")
   }
 }
 

@@ -246,6 +246,17 @@ export const DEFAULT_FILTER_OPTIONS: FilterOptions = {
   bookmarkName: "",
 }
 
+/** 视图偏好设置 */
+export interface ViewSettings {
+  /** 统计表格是否隐藏零值行 */
+  hideZero: boolean
+}
+
+/** 默认视图偏好设置 */
+export const DEFAULT_VIEW_SETTINGS: ViewSettings = {
+  hideZero: false,
+}
+
 /** 默认平台元数据（用户未自定义时使用） */
 export const DEFAULT_PLATFORM_META: PlatformMeta[] = [
   { id: "csdn",         matchers: ["csdn"],                    name: "CSDN",    url: "https://mp.csdn.net/mp_blog/creation/editor", fullCheck: true },

@@ -1,59 +1,16 @@
-<!-- 文档统计概览组件 - 表格化 2 列布局（Hero 汇总 + 工具栏 + 九个表格区块） -->
+<!-- 文档统计概览组件 - 表格化 2 列布局（Hero 汇总 + 九个表格区块） -->
 <template>
   <div class="stats-overview">
     <template v-if="hasAnalyzed">
-      <!-- Hero 汇总卡：总文档 + 健康度 + 问题速览（点击信息图标弹出扣分项配置） -->
+      <!-- Hero 汇总卡：总文档 + 健康度 + 问题速览（健康度配置已在设置弹窗） -->
       <HeroCard
         :stats="stats"
         :health-pct="healthPct"
         :health-tooltip="healthTooltip"
         :has-issues="hasIssues"
         :effective-dup-docs="effectiveDupDocs"
-        :health-settings="healthSettings"
-        :deduction-rows="deductionRows"
-        :healthy-docs="healthyDocs"
         @selectCategory="$emit('selectCategory', $event)"
-        @update:health-settings="$emit('update:healthSettings', $event)"
       />
-
-      <!-- 统计工具栏：名称排除 + 隐藏零值 -->
-      <div class="stats-toolbar">
-        <button
-          v-if="effectiveDupDocs > 0"
-          class="toolbar-btn name-filter-btn"
-          title="名称排除"
-          @click="dupFilterModalVisible = true"
-        >
-          <Icon
-            icon="mdi:filter-remove-outline"
-            :size="13"
-          />
-          <span
-            v-if="duplicateNameFilter.length > 0"
-            class="toolbar-badge"
-          >{{ duplicateNameFilter.length }}</span>
-        </button>
-        <button
-          v-if="duplicateNameFilter.length > 0"
-          class="toolbar-btn"
-          title="清除全部排除名称"
-          @click="$emit('update:duplicateNameFilter', [])"
-        >
-          <Icon icon="mdi:close" :size="13" />
-        </button>
-        <!-- 隐藏零值开关（作用于全部表格） -->
-        <button
-          class="toolbar-btn hide-zero-btn"
-          :class="{ active: hideZero }"
-          title="隐藏零值行"
-          @click.stop="hideZero = !hideZero"
-        >
-          <Icon
-            :icon="hideZero ? 'mdi:eye-off-outline' : 'mdi:eye-outline'"
-            :size="13"
-          />
-        </button>
-      </div>
 
       <!-- 统计表格区块：2 列网格布局 -->
       <div class="stats-grid">
@@ -118,14 +75,6 @@
       />
       <p>点击「分析」查看文档统计</p>
     </div>
-
-    <!-- 重名排除管理弹窗 -->
-    <DuplicateNameFilterModal
-      :visible="dupFilterModalVisible"
-      :names="duplicateNameFilter"
-      @close="dupFilterModalVisible = false"
-      @save="(names) => $emit('update:duplicateNameFilter', names)"
-    />
   </div>
 </template>
 
@@ -140,11 +89,10 @@ import type {
 } from "../../types/index"
 import { QUALITY_CARDS, STAT_SECTIONS } from "../../types/index"
 import { Icon } from "@iconify/vue"
-import { computed, ref } from "vue"
+import { computed } from "vue"
 import { useStatsOverview } from "../../composables/useStatsOverview"
 import HeroCard from "./HeroCard.vue"
 import StatTable from "./StatTable.vue"
-import DuplicateNameFilterModal from "./DuplicateNameFilterModal.vue"
 
 interface Props {
   stats: DocStats
@@ -152,8 +100,9 @@ interface Props {
   activeFilter: string
   depthStats: DepthStats
   effectiveDuplicateGroups: DuplicateNameGroup[]
-  duplicateNameFilter: string[]
   healthSettings: HealthSettings
+  /** 是否隐藏零值行（设置弹窗持久化，父级传入） */
+  hideZero: boolean
 }
 
 const props = defineProps<Props>()
@@ -163,8 +112,6 @@ const emit = defineEmits<{
   (e: "selectBookmark", bookmark: string): void
   (e: "selectPlatform", platformId: string): void
   (e: "selectDepth", depth: number): void
-  (e: "update:duplicateNameFilter", value: string[]): void
-  (e: "update:healthSettings", settings: HealthSettings): void
 }>()
 
 const statSections = STAT_SECTIONS as readonly StatSectionDef[]
@@ -175,20 +122,12 @@ const {
   healthPct,
   healthTooltip,
   hasIssues,
-  deductionRows,
-  healthyDocs,
   pctStr,
   toCardRows,
   platformEntries,
   avgPlatformsPerDoc,
   coveragePct,
 } = useStatsOverview(props)
-
-/** 隐藏零值开关（作用于全部表格） */
-const hideZero = ref(false)
-
-/** 重名排除管理弹窗可见性 */
-const dupFilterModalVisible = ref(false)
 
 /** 书签分布表格行（动态统计，点击下钻该书签文档） */
 const bookmarkRows = computed<StatTableRow[]>(() =>
@@ -272,9 +211,9 @@ function handleRowSelect(sectionKey: string, id: string) {
   emit("selectCategory", id)
 }
 
-/** 隐藏零值行过滤（作用于全部表格） */
+/** 隐藏零值行过滤（开关来自设置弹窗持久化） */
 function filterZeroRows(rows: StatTableRow[]): StatTableRow[] {
-  return hideZero.value ? rows.filter((r) => r.count > 0) : rows
+  return props.hideZero ? rows.filter((r) => r.count > 0) : rows
 }
 </script>
 

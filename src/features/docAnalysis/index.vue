@@ -26,6 +26,17 @@
           :size="14"
         />
       </button>
+      <!-- 设置入口：齿轮打开统一设置弹窗 -->
+      <button
+        class="settings-btn"
+        title="设置"
+        @click="settingsVisible = true"
+      >
+        <Icon
+          icon="mdi:cog-outline"
+          :size="14"
+        />
+      </button>
       <button
         class="analyze-btn"
         :disabled="statsLoading"
@@ -59,14 +70,12 @@
         :active-filter="statsFilter"
         :depth-stats="depthStats"
         :effective-duplicate-groups="effectiveDuplicateGroups"
-        :duplicate-name-filter="duplicateNameFilter"
         :health-settings="healthSettings"
+        :hide-zero="viewSettings.hideZero"
         @selectCategory="handleSelectCategory"
         @selectBookmark="queryByBookmark"
         @selectPlatform="handleSelectPlatform"
         @selectDepth="handleSelectDepth"
-        @update:duplicate-name-filter="(val: string[]) => duplicateNameFilter = val"
-        @update:health-settings="handleUpdateHealthSettings"
       />
     </div>
 
@@ -87,7 +96,6 @@
       @toggle-sort-order="toggleSortOrder"
       @clear-stats-filter="clearStatsFilter"
       @select-platform="handlePlatformFilter"
-      @open-platform-manage="platformManageVisible = true"
     />
 
     <!-- 底部信息 -->
@@ -159,12 +167,18 @@
       @publish="handlePublishDoc"
     />
 
-    <!-- 平台管理弹窗 -->
-    <PlatformManageModal
-      :visible="platformManageVisible"
-      :save-platform-meta="savePlatformMeta"
-      @close="platformManageVisible = false"
-      @saved="onPlatformSaved"
+    <!-- 统一设置弹窗（齿轮打开；健康度/排除/平台/查询默认统一保存） -->
+    <SettingsPanel
+      :visible="settingsVisible"
+      :health-settings="healthSettings"
+      :duplicate-name-filter="duplicateNameFilter"
+      :view-settings="viewSettings"
+      :platforms="PLATFORM_META"
+      :filter-options="filterOptions"
+      :notebooks="notebooks"
+      :stats="docStats"
+      @close="settingsVisible = false"
+      @saved="handleSettingsSaved"
     />
   </div>
 </template>
@@ -188,12 +202,13 @@ import AttrsPanel from "./components/AttrsPanel/index.vue"
 import DocListView from "./components/DocListView/index.vue"
 import FilterSettings from "./components/DocListView/FilterSettings.vue"
 import PublishPanel from "./components/PublishPanel/index.vue"
+import SettingsPanel from "./components/SettingsPanel/index.vue"
 import StatsOverview from "./components/StatsView/index.vue"
-import PlatformManageModal from "./components/PlatformManage/index.vue"
 import { useDocAnalysis } from "./composables/useDocAnalysis"
 import { PLATFORM_META } from "./composables/platformMeta"
-import type { DocI18n, HealthSettings } from "./types/index"
-import { DEFAULT_FILTER_OPTIONS } from "./types/index"
+import type { SettingsDraft } from "./components/SettingsPanel/index.vue"
+import type { DocI18n, PlatformMeta, ViewSettings } from "./types/index"
+import { DEFAULT_FILTER_OPTIONS, DEFAULT_VIEW_SETTINGS } from "./types/index"
 
 interface Props {
   /** docAnalysis 分片 i18n（index.ts 传入 plugin.i18n.docAnalysis，扁平键值） */
@@ -236,6 +251,7 @@ const {
   loadHealthSettings,
   loadNotebooks,
   loadSavedOptions,
+  saveOptions,
   loadDuplicateNameFilter,
   queryDocs,
   analyzeDocStats,
@@ -249,6 +265,8 @@ const {
   loadPlatformMeta,
   savePlatformMeta,
   platformUnpublishedCounts,
+  loadViewSettings,
+  saveViewSettings,
 } = useDocAnalysis(props.plugin)
 
 /** 非隐藏平台（过滤栏显示用） */
@@ -256,16 +274,11 @@ const visiblePlatforms = computed(() => PLATFORM_META.value.filter((p) => !p.hid
 
 const showPublishTip = ref(false)
 
-/** 平台管理弹窗可见性 */
-const platformManageVisible = ref(false)
+/** 统一设置弹窗可见性 */
+const settingsVisible = ref(false)
 
-/** 平台配置保存后重新分析 */
-function onPlatformSaved() {
-  // 平台变更后清空旧分析结果，用户下次点击「分析」时使用新平台列表
-  if (hasAnalyzed.value) {
-    handleAnalyze()
-  }
-}
+/** 视图偏好（隐藏零值等，由设置弹窗统一保存） */
+const viewSettings = ref<ViewSettings>({ ...DEFAULT_VIEW_SETTINGS })
 
 /** 当前选中的平台过滤 */
 const activePlatformFilter = ref("")
@@ -405,13 +418,40 @@ function clearStatsFilter() {
   resetQueryState()
 }
 
-/** 更新健康度扣分项配置（useDocAnalysis 内 watch 自动持久化） */
-function handleUpdateHealthSettings(settings: HealthSettings) {
-  // 0B 排除书签在 SQL 统计层生效：检测到变化且已分析时自动重新分析，保证大小分布/健康度/下钻即时按新口径显示
+/** 平台列表是否发生变化（JSON 序列化比对，顺序敏感） */
+function platformsEqual(a: PlatformMeta[], b: PlatformMeta[]): boolean {
+  return JSON.stringify(a) === JSON.stringify(b)
+}
+
+/** 统一设置保存：一次性写入各持久化槽位，SQL 层配置变化时自动重新分析 */
+async function handleSettingsSaved(draft: SettingsDraft) {
+  // 健康度（watch 自动持久化）；0B 排除书签在 SQL 层生效，变化需重新分析
   const excludeChanged =
-    settings.zeroByteExcludeBookmarks.join("\u0000") !== healthSettings.value.zeroByteExcludeBookmarks.join("\u0000")
-  healthSettings.value = settings
-  if (excludeChanged && hasAnalyzed.value) handleAnalyze()
+    draft.zeroByteExcludeBookmarks.join("\u0000") !== healthSettings.value.zeroByteExcludeBookmarks.join("\u0000")
+  healthSettings.value = {
+    enabledDeductions: draft.enabledDeductions,
+    zeroByteExcludeBookmarks: draft.zeroByteExcludeBookmarks,
+  }
+
+  // 重名排除（watch 自动持久化）
+  duplicateNameFilter.value = draft.duplicateNames
+
+  // 视图偏好（隐藏零值，显式保存）
+  const platformChanged = !platformsEqual(draft.platforms, PLATFORM_META.value)
+  viewSettings.value = { hideZero: draft.hideZero }
+  await saveViewSettings(viewSettings.value)
+
+  // 平台管理（显式保存 + 变更需重新分析）
+  await savePlatformMeta(draft.platforms)
+
+  // 默认笔记本/排序（显式保存）
+  filterOptions.notebookId = draft.notebookId
+  filterOptions.sortField = draft.sortField
+  filterOptions.sortOrder = draft.sortOrder
+  await saveOptions()
+
+  // SQL 层配置（排除书签/平台）变化且已分析时自动重新分析
+  if (hasAnalyzed.value && (excludeChanged || platformChanged)) handleAnalyze()
 }
 
 /** 一键清空所有过滤条件 */
@@ -440,6 +480,7 @@ onMounted(async () => {
   await loadSavedOptions()
   await loadDuplicateNameFilter()
   await loadHealthSettings()
+  viewSettings.value = await loadViewSettings()
 })
 </script>
 

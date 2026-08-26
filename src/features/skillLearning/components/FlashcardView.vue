@@ -6,7 +6,7 @@
       v-if="quizItems.length === 0"
       class="flashcard-quiz__empty"
     >
-      {{ t.noCards || '暂无卡片' }}
+      {{ t.noCards }}
     </div>
 
     <!-- 结果页 -->
@@ -16,10 +16,10 @@
           {{ correctCount }} / {{ quizItems.length }}
         </div>
         <div class="flashcard-quiz__result-label">
-          {{ t.quizScore || '正确率' }}: {{ accuracy }}%
+          {{ t.quizScore }}: {{ accuracy }}%
         </div>
         <IconWrapper
-          :name="accuracy >= 80 ? 'mdi:trophy-outline' : accuracy >= 50 ? 'mdi:thumb-up-outline' : 'mdi:arm-flex-outline'"
+          :name="accuracy >= 80 ? 'trophyOutline' : accuracy >= 50 ? 'thumbUpOutline' : 'armFlexOutline'"
           class="flashcard-quiz__result-icon"
         />
 
@@ -50,13 +50,13 @@
             class="flashcard-quiz__result-detail-btn"
             @click="detailExpanded = !detailExpanded"
           >
-            {{ detailExpanded ? (t.hideDetails || '收起详情') : (t.showDetails || '查看详情') }}
+            {{ detailExpanded ? t.hideDetails : t.showDetails }}
           </button>
           <button
             class="flashcard-quiz__btn flashcard-quiz__btn--primary"
             @click="resetQuiz"
           >
-            ↺ {{ t.retry || '重来' }}
+            ↺ {{ t.retry }}
           </button>
         </div>
       </div>
@@ -153,7 +153,7 @@
             :class="currentItem.isCorrect ? 'flashcard-quiz__feedback-banner--ok' : 'flashcard-quiz__feedback-banner--fail'"
           >
             <IconWrapper :name="currentItem.isCorrect ? 'check' : 'close'" />
-            {{ currentItem.isCorrect ? (t.correct || '正确') : (t.incorrect || '错误') }}
+            {{ currentItem.isCorrect ? t.correct : t.incorrect }}
           </div>
 
           <button
@@ -161,7 +161,7 @@
             class="flashcard-quiz__toggle-code"
             @click="showCode = !showCode"
           >
-            {{ showCode ? (t.hideCode || '收起代码') : (t.viewCode || '查看代码') }}
+            {{ showCode ? t.hideCode : t.viewCode }}
           </button>
 
           <div
@@ -175,7 +175,7 @@
             class="flashcard-quiz__btn flashcard-quiz__btn--primary flashcard-quiz__btn--next"
             @click="goNext"
           >
-            {{ currentIndex < quizItems.length - 1 ? `${t.nextQuestion || '下一题'} →` : (t.viewResult || '查看结果') }}
+            {{ currentIndex < quizItems.length - 1 ? `${t.nextQuestion} →` : t.viewResult }}
           </button>
         </div>
       </div>
@@ -192,6 +192,7 @@ import {
   computed,
   onActivated,
   onDeactivated,
+  onUnmounted,
   ref,
   watch,
 } from "vue"
@@ -205,7 +206,7 @@ import DifficultyBadge from "./DifficultyBadge.vue"
 
 const props = defineProps<{
   cards: SkillCard[]
-  i18n: SkillI18n
+  i18n: Required<SkillI18n>
 }>()
 
 const emit = defineEmits<{
@@ -303,12 +304,10 @@ function onKeydown(e: KeyboardEvent) {
   }
 }
 
-onActivated(() => {
-  window.addEventListener("keydown", onKeydown)
-})
-onDeactivated(() => {
-  window.removeEventListener("keydown", onKeydown)
-})
+const cleanup = () => window.removeEventListener("keydown", onKeydown)
+onActivated(() => window.addEventListener("keydown", onKeydown))
+onDeactivated(cleanup)
+onUnmounted(cleanup)
 
 </script>
 

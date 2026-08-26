@@ -534,6 +534,18 @@ export const COMMON_ICONS = {
     icon: "mdi:trophy",
     color: "#eab308",
   },
+  trophyOutline: {
+    icon: "mdi:trophy-outline",
+  },
+  thumbUpOutline: {
+    icon: "mdi:thumb-up-outline",
+  },
+  armFlexOutline: {
+    icon: "mdi:arm-flex-outline",
+  },
+  checkCircleOutline: {
+    icon: "mdi:check-circle-outline",
+  },
 
   // 导航类
   menu: {

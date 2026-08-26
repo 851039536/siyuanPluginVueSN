@@ -1,0 +1,99 @@
+@use "@/variables.scss" as *;
+
+// 发布状态徽章：图标触发 + 悬停/点击展开平台列表浮层
+.doc-nav-publish-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+// 图标触发按钮：纯图标无背景无边框，hover 仅提升不透明度
+.doc-nav-publish-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0.75;
+  transition: opacity 0.15s ease;
+
+  &:hover,
+  &:focus-visible {
+    opacity: 1;
+  }
+
+  &:focus-visible {
+    outline: none;
+  }
+}
+
+// 浮层面板
+.doc-nav-publish-panel {
+  position: absolute;
+  top: calc(100% + $spacing-1);
+  left: 0;
+  z-index: 100;
+  min-width: 120px;
+  padding: $spacing-2;
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $vp-radius;
+  font-size: $font-size-xs;
+  line-height: $line-height-normal;
+}
+
+// 面板标题
+.doc-nav-publish-panel-title {
+  margin-bottom: $spacing-1;
+  padding-bottom: $spacing-2px;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-tight;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  opacity: 0.7;
+}
+
+// 平台列表
+.doc-nav-publish-panel-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.doc-nav-publish-panel-item {
+  padding: $spacing-2px 0;
+  color: var(--b3-theme-on-surface);
+}
+
+// 未发布空态
+.doc-nav-publish-panel-empty {
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-2xs;
+  line-height: $line-height-tight;
+  opacity: 0.5;
+}
+
+// 过渡动画
+.doc-nav-publish-fade-enter-active,
+.doc-nav-publish-fade-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.doc-nav-publish-fade-enter-from,
+.doc-nav-publish-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-$spacing-1);
+}
+
+.doc-nav-publish-fade-enter-to,
+.doc-nav-publish-fade-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}

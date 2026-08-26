@@ -88,3 +88,25 @@
   font-weight: $font-weight-semibold;
   opacity: 1 !important;
 }
+
+// 发布状态徽章样式：面包屑旁常驻显示，已发布绿 / 未发布灰，边框分隔、无阴影
+.doc-nav-publish-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-2px $spacing-1;
+  border-radius: $radius-sm;
+  border: 1px solid $color-border;
+  font-size: $font-size-2xs;
+  line-height: $line-height-tight;
+  white-space: nowrap;
+
+  &.is-published {
+    color: $color-success;
+    border-color: $color-success;
+  }
+
+  &.is-unpublished {
+    color: $color-muted;
+  }
+}

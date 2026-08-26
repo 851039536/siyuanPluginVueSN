@@ -8,6 +8,15 @@
     :data-doc-id="docId"
   >
     <div class="doc-navigation">
+      <!-- 发布状态徽章：已发布（绿）仅显示平台名如"CSDN、知乎"，未发布（灰）显示"未发布"，位于面包屑旁最醒目位置 -->
+      <span
+        v-if="enablePublishStatus && docMeta"
+        class="doc-nav-publish-badge"
+        :class="docMeta.publishedPlatforms.length > 0 ? 'is-published' : 'is-unpublished'"
+        :title="publishBadgeText"
+      >
+        {{ publishBadgeText }}
+      </span>
       <!-- 面包屑导航 -->
       <div
         v-if="hasBreadcrumbs"
@@ -126,7 +135,9 @@
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
 import {
+  computed,
   onMounted,
+  ref,
   watch,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
@@ -150,6 +161,9 @@ const props = defineProps<{
 
 /** 功能 i18n 文案（合并后平铺在 plugin.i18n 顶层，与 tableOfContents 等同级模块一致） */
 const i18n = props.plugin.i18n as Record<string, string>
+
+/** 是否显示发布状态徽章（默认开启，由 DocNavSettings.enablePublishStatus 持久化控制） */
+const enablePublishStatus = ref(DEFAULT_NAV_SETTINGS.enablePublishStatus)
 
 const {
   parentDoc,
@@ -175,6 +189,14 @@ const {
   setFilterKeywords,
 } = useDocNavigation()
 
+/** 发布状态徽章文案：已发布时仅显示平台名（如"CSDN、知乎"），未发布显示"未发布" */
+const publishBadgeText = computed(() => {
+  if (!docMeta.value) return ""
+  return docMeta.value.publishedPlatforms.length > 0
+    ? docMeta.value.publishedPlatforms.join("、")
+    : i18n.docNavUnpublished
+})
+
 /** 持久化存储实例，启动时创建，后续保存关键词时复用 */
 let settingsStorage: DocNavSettingsStorage
 
@@ -184,14 +206,16 @@ let settingsStorage: DocNavSettingsStorage
  */
 async function handleFilterKeywordsSaved(keywords: string[]): Promise<void> {
   setFilterKeywords(keywords)
-  await settingsStorage.settings.set("filterKeywords", keywords)
+  const settings = await settingsStorage.settings.loadOrDefault()
+  await settingsStorage.settings.save({ ...settings, filterKeywords: keywords })
 }
 
-/** 启动时加载设置并应用过滤关键词（默认 ["参考"]，向后兼容旧版硬编码行为） */
+/** 启动时加载设置并应用过滤关键词（默认 ["参考"]，向后兼容旧版硬编码行为）与发布状态徽章开关（默认开启） */
 onMounted(async () => {
   settingsStorage = new DocNavSettingsStorage(props.plugin)
   const settings = await settingsStorage.settings.loadOrDefault()
   setFilterKeywords(settings.filterKeywords ?? DEFAULT_NAV_SETTINGS.filterKeywords)
+  enablePublishStatus.value = settings.enablePublishStatus ?? DEFAULT_NAV_SETTINGS.enablePublishStatus
 })
 
 watch(

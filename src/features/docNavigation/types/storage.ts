@@ -21,6 +21,7 @@ import {
   DEFAULT_NAV_SETTINGS,
   DEFAULT_OPTIONS,
 } from "./index"
+import { getPublishedPlatformNames } from "../utils"
 
 export class DocNavSettingsStorage {
   readonly settings: TypedStorage<DocNavSettings>
@@ -508,8 +509,8 @@ export async function fetchBacklinks(
 }
 
 /**
- * 获取文档元数据（创建/更新时间、块数、图标、备注、大小）
- * 时间从 blocks 表 SQL 查询（最可靠），块数同表统计，图标/备注/大小来自 getDoc
+ * 获取文档元数据（创建/更新时间、块数、图标、备注、大小、发布状态）
+ * 时间从 blocks 表 SQL 查询（最可靠），块数同表统计，图标/备注/大小来自 getDoc，发布状态来自 getBlockAttrs 属性
  */
 export async function fetchDocMeta(
   currentDoc: Block,
@@ -525,8 +526,8 @@ export async function fetchDocMeta(
       return cached.meta
     }
 
-    // 同时查块数统计和根块时间（blocks 表 created/updated 为 YYYYMMDDHHMMSS 格式）
-    const [docResult, blockInfo] = await Promise.all([
+    // 同时查块数统计、根块时间（blocks 表 created/updated 为 YYYYMMDDHHMMSS 格式）与文档属性（判定发布状态）
+    const [docResult, blockInfo, attrs] = await Promise.all([
       api.getDoc(currentDoc.id),
       api.sql(
         `select ` +
@@ -534,6 +535,7 @@ export async function fetchDocMeta(
           `(select created from blocks where id = '${currentDoc.id}') as created, ` +
           `(select updated from blocks where id = '${currentDoc.id}') as updated`,
       ),
+      api.getBlockAttrs(currentDoc.id),
     ])
     if (!docResult) {
       return null
@@ -551,6 +553,7 @@ export async function fetchDocMeta(
       icon: docResult.icon ?? "",
       memo: docResult.memo ?? "",
       size: docResult.size ?? 0,
+      publishedPlatforms: getPublishedPlatformNames(attrs),
     }
 
     cache.setCachedMeta(currentDoc.box, currentDoc.id, meta)

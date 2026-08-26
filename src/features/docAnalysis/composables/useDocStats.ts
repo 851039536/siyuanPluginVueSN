@@ -26,7 +26,7 @@ import {
 import { filterDuplicateGroups } from "../utils"
 import type { DocQueryConfig } from "../utils/categoryQueryConfig"
 import { EXISTS_MAP, SIZE_CONDITIONS, buildTimeConfig } from "../utils/categoryQueryConfig"
-import { buildIdInClause, buildIdNotInClause, quoteSql, quoteSqlList } from "../utils/sqlHelpers"
+import { buildBookmarkExcludeClause, buildIdInClause, buildIdNotInClause, quoteSql, quoteSqlList } from "../utils/sqlHelpers"
 import { DOC_DEPTH_EXPR, IMAGE_SUBQUERY, REF_SUBQUERY, SIZE_WORDCOUNT_SUBQUERY } from "../utils/sqlConstants"
 
 /** useDocStats 依赖注入接口（由 useDocAnalysis 提供共享状态与查询执行器） */
@@ -37,6 +37,8 @@ export interface UseDocStatsDeps {
   runDocQuery: (config: DocQueryConfig) => Promise<void>
   setEmptyState: () => void
   resetQueryState: () => void
+  /** 获取 0B 排除书签列表（带这些书签的文档整体剔除出统计口径） */
+  getZeroByteExcludeBookmarks: () => string[]
 }
 
 /**
@@ -77,6 +79,9 @@ export function useDocStats(plugin: Plugin, storage: DocAnalysisStorage, deps: U
       const nc = deps.buildNotebookCondition()
       Object.assign(docStats, makeDefaultDocStats())
 
+      // 0B 排除书签：带被勾选书签的文档整体剔除出全部统计维度（ncWithExclude 统一口径，避免各维度 totalDocs 漂移）
+      const ncWithExclude = `${nc} ${buildBookmarkExcludeClause(deps.getZeroByteExcludeBookmarks())}`.trim()
+
       // 索引 2/3/4/8 为 analyzeUpdateTime/analyzeDepth/analyzeBookmarks/analyzeWordCount（仅副作用写 docStats，返回值忽略）
       const [sizeRows, dupRows, , , , platformResult, qualityResult, scanResult] = await Promise.all([
         sql(`
@@ -88,16 +93,16 @@ export function useDocStats(plugin: Plugin, storage: DocAnalysisStorage, deps: U
             SUM(CASE WHEN COALESCE(sw.total_size, 0) >= 10240 AND COALESCE(sw.total_size, 0) < 102400 THEN 1 ELSE 0 END) as large_count,
             SUM(CASE WHEN COALESCE(sw.total_size, 0) >= 102400 THEN 1 ELSE 0 END) as xlarge_count
           FROM blocks b LEFT JOIN (${SIZE_WORDCOUNT_SUBQUERY}) sw ON b.id = sw.root_id
-          WHERE b.type = 'd' ${nc}
+          WHERE b.type = 'd' ${ncWithExclude}
         `),
-        sql(`SELECT b.content as doc_title, COUNT(*) as cnt FROM blocks b WHERE b.type = 'd' ${nc} GROUP BY b.content HAVING COUNT(*) > 1 ORDER BY cnt DESC LIMIT 500`),
-        analyzeUpdateTime(nc, docStats),
-        analyzeDepth(nc, docStats, depthStats.value),
-        analyzeBookmarks(nc, docStats),
-        analyzePlatformPublish(nc, docStats, PLATFORM_META.value),
-        analyzeContentQuality(nc, docStats),
-        analyzeContentScan(nc, docStats),
-        analyzeWordCount(nc, docStats),
+        sql(`SELECT b.content as doc_title, COUNT(*) as cnt FROM blocks b WHERE b.type = 'd' ${ncWithExclude} GROUP BY b.content HAVING COUNT(*) > 1 ORDER BY cnt DESC LIMIT 500`),
+        analyzeUpdateTime(ncWithExclude, docStats),
+        analyzeDepth(ncWithExclude, docStats, depthStats.value),
+        analyzeBookmarks(ncWithExclude, docStats),
+        analyzePlatformPublish(ncWithExclude, docStats, PLATFORM_META.value),
+        analyzeContentQuality(ncWithExclude, docStats),
+        analyzeContentScan(ncWithExclude, docStats),
+        analyzeWordCount(ncWithExclude, docStats),
       ])
 
       // 已有更新的分析发起，丢弃过期结果
@@ -135,9 +140,12 @@ export function useDocStats(plugin: Plugin, storage: DocAnalysisStorage, deps: U
     finally { if (token === analyzeToken) statsLoading.value = false }
   }
 
+  /** 统计下钻统一查询入口：开启 0B 排除书签，保证列表与统计口径一致（主动 queryDocs 走 runDocQuery 不排除） */
+  const runStatsQuery = (cfg: DocQueryConfig) => deps.runDocQuery({ ...cfg, excludeBookmarked: true })
+
   async function queryByBookmark(bookmarkValue: string) {
     statsFilter.value = ""
-    await deps.runDocQuery({ bookmarkInner: true, extraWhere: `AND bm.bookmark = ${quoteSql(bookmarkValue)}`, orderBy: "b.updated DESC" })
+    await runStatsQuery({ bookmarkInner: true, extraWhere: `AND bm.bookmark = ${quoteSql(bookmarkValue)}`, orderBy: "b.updated DESC" })
   }
 
   // ============================================================
@@ -167,37 +175,37 @@ export function useDocStats(plugin: Plugin, storage: DocAnalysisStorage, deps: U
     if (category === "duplicate") {
       const titles = effectiveDuplicateGroups.value.map((g) => g.title)
       if (titles.length === 0) { deps.setEmptyState(); return }
-      await deps.runDocQuery({ extraWhere: `AND b.content IN (${quoteSqlList(titles)})`, orderBy: "b.content ASC, content_size ASC" })
+      await runStatsQuery({ extraWhere: `AND b.content IN (${quoteSqlList(titles)})`, orderBy: "b.content ASC, content_size ASC" })
       return
     }
 
     // 大小
     if (SIZE_CONDITIONS[category]) {
-      await deps.runDocQuery({ extraWhere: SIZE_CONDITIONS[category], orderBy: "word_count ASC" })
+      await runStatsQuery({ extraWhere: SIZE_CONDITIONS[category], orderBy: "word_count ASC" })
       return
     }
 
     // 时间（实时生成条件，避免时间戳冻结）
     const timeConfig = buildTimeConfig(category)
-    if (timeConfig) { await deps.runDocQuery(timeConfig); return }
+    if (timeConfig) { await runStatsQuery(timeConfig); return }
 
     // 深度
     if (category === "deep") {
-      await deps.runDocQuery({ extraWhere: `AND ${DOC_DEPTH_EXPR} >= 5`, orderBy: "doc_depth DESC" })
+      await runStatsQuery({ extraWhere: `AND ${DOC_DEPTH_EXPR} >= 5`, orderBy: "doc_depth DESC" })
       return
     }
     if (category.startsWith("depth_")) {
       const d = Number.parseInt(category.slice(6), 10)
-      if (!isNaN(d)) { await deps.runDocQuery({ extraWhere: `AND ${DOC_DEPTH_EXPR} = ${d}`, orderBy: "b.updated DESC" }); return }
+      if (!isNaN(d)) { await runStatsQuery({ extraWhere: `AND ${DOC_DEPTH_EXPR} = ${d}`, orderBy: "b.updated DESC" }); return }
     }
 
     // 引用/图片（特殊 JOIN）
     if (category === "hasRef") {
-      await deps.runDocQuery({ extraSelect: "COALESCE(r.ref_count, 0) as ref_count, 0 as image_count,", extraJoin: `INNER JOIN (${REF_SUBQUERY}) r ON b.id = r.root_id`, orderBy: "r.ref_count DESC" })
+      await runStatsQuery({ extraSelect: "COALESCE(r.ref_count, 0) as ref_count, 0 as image_count,", extraJoin: `INNER JOIN (${REF_SUBQUERY}) r ON b.id = r.root_id`, orderBy: "r.ref_count DESC" })
       return
     }
     if (category === "hasImage") {
-      await deps.runDocQuery({ extraSelect: "0 as ref_count, COALESCE(img.image_count, 0) as image_count,", extraJoin: `INNER JOIN (${IMAGE_SUBQUERY}) img ON b.id = img.root_id`, orderBy: "img.image_count DESC" })
+      await runStatsQuery({ extraSelect: "0 as ref_count, COALESCE(img.image_count, 0) as image_count,", extraJoin: `INNER JOIN (${IMAGE_SUBQUERY}) img ON b.id = img.root_id`, orderBy: "img.image_count DESC" })
       return
     }
 
@@ -211,18 +219,18 @@ export function useDocStats(plugin: Plugin, storage: DocAnalysisStorage, deps: U
     }
     if (ID_SET_MAP[category]) {
       if (requireReAnalyze()) return
-      await deps.runDocQuery({ extraWhere: buildIdInClause(ID_SET_MAP[category]) })
+      await runStatsQuery({ extraWhere: buildIdInClause(ID_SET_MAP[category]) })
       return
     }
     if (category === "partialPublish") {
       if (requireReAnalyze()) return
       const partialCond = fullPublishDocIds.size === 0 && noPublishDocIds.size === 0 ? "AND 1 = 0" : buildIdNotInClause(new Set([...fullPublishDocIds, ...noPublishDocIds]))
-      await deps.runDocQuery({ extraWhere: partialCond })
+      await runStatsQuery({ extraWhere: partialCond })
       return
     }
     if (category === "noTag") {
       if (requireReAnalyze()) return
-      await deps.runDocQuery({ extraWhere: buildIdNotInClause(taggedDocIds) })
+      await runStatsQuery({ extraWhere: buildIdNotInClause(taggedDocIds) })
       return
     }
 
@@ -233,7 +241,7 @@ export function useDocStats(plugin: Plugin, storage: DocAnalysisStorage, deps: U
         cfg.bookmarkInner = true
         cfg.orderBy = "bm.bookmark ASC"
       }
-      await deps.runDocQuery(cfg)
+      await runStatsQuery(cfg)
       return
     }
 

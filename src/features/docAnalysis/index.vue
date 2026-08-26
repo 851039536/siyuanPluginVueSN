@@ -407,7 +407,11 @@ function clearStatsFilter() {
 
 /** 更新健康度扣分项配置（useDocAnalysis 内 watch 自动持久化） */
 function handleUpdateHealthSettings(settings: HealthSettings) {
+  // 0B 排除书签在 SQL 统计层生效：检测到变化且已分析时自动重新分析，保证大小分布/健康度/下钻即时按新口径显示
+  const excludeChanged =
+    settings.zeroByteExcludeBookmarks.join("\u0000") !== healthSettings.value.zeroByteExcludeBookmarks.join("\u0000")
   healthSettings.value = settings
+  if (excludeChanged && hasAnalyzed.value) handleAnalyze()
 }
 
 /** 一键清空所有过滤条件 */

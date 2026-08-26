@@ -20,7 +20,7 @@
         <span
           class="hero-health-value"
           :title="healthTooltip"
-        >{{ healthPct }}%</span>
+        >{{ healthPct.toFixed(2) }}%</span>
         <!-- 信息图标：点击弹出健康度详情 + 扣分项配置 -->
         <button
           class="hero-health-info"

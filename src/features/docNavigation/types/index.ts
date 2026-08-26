@@ -66,6 +66,8 @@ export interface DocMeta {
   memo: string
   /** 文件大小（字节） */
   size: number
+  /** 已发布到的平台显示名列表（空数组表示未发布，来自 custom-<平台>-yaml 属性） */
+  publishedPlatforms: string[]
 }
 
 /** 反链缓存条目 */
@@ -103,13 +105,31 @@ export interface DocNavSettings {
   position: "top" | "bottom"
   /** 子文档过滤关键词列表，默认 ["参考"] 与旧版硬编码行为一致 */
   filterKeywords: string[]
+  /** 是否显示当前文档的发布状态徽章（默认开启） */
+  enablePublishStatus: boolean
 }
 
 export const DEFAULT_NAV_SETTINGS: DocNavSettings = {
   maxVisibleChildren: 5,
   position: "top",
   filterKeywords: ["参考"],
+  enablePublishStatus: true,
 }
+
+/** 平台标识→显示名映射（与 docAnalysis 默认平台元数据一致，供发布状态徽章显示具体平台名） */
+export const PLATFORM_MATCHERS: Array<{ matchers: string[]; name: string }> = [
+  { matchers: ["csdn"], name: "CSDN" },
+  { matchers: ["zhihu"], name: "知乎" },
+  { matchers: ["juejin"], name: "掘金" },
+  { matchers: ["cnblogs", "blog"], name: "博客园" },
+  { matchers: ["bili", "bibi"], name: "B站" },
+  { matchers: ["gzh"], name: "公众号" },
+  { matchers: ["jianshu"], name: "简书" },
+  { matchers: ["cto51"], name: "51CTO" },
+  { matchers: ["segmentfault", "sifou"], name: "思否" },
+  { matchers: ["oschina"], name: "开源中国" },
+  { matchers: ["infoq"], name: "InfoQ" },
+]
 
 export interface ProtyleLike {
   block?: { rootID: string }

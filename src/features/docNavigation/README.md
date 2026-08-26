@@ -11,10 +11,11 @@
 - **过滤下拉树形面板**：仅显示标题命中过滤关键词（默认 `["参考"]`，可在 `DocNavSettings.filterKeywords` 中配置，与旧版硬编码行为一致）的子文档；点击面板外部自动关闭
 - **反向链接下拉面板**：点击"反向链接 (N)"按钮弹出下拉面板，展示所有引用/提及当前文档的文档（`getBacklink2` 一次获取反链与反提及合并去重，上限 50 条）；面板内置搜索框，输入关键词即时过滤列表并高亮匹配文本，点击条目跳转对应文档，点击面板外部自动关闭
 - **文档元数据信息条**：导航栏最右侧展示当前文档的创建时间（短日期）、最后更新时间（相对时间）与块数统计（`getDoc` + SQL 块数统计）；hover 时显示完整时间戳与文件大小
+- **发布状态徽章**：导航栏面包屑旁常驻显示当前文档发布状态（已发布绿、未发布灰，纯文字无图标）；已发布时仅显示具体平台名（如"CSDN、知乎"）；判定标准与 docAnalysis 一致——存在任一 `custom-<平台>-yaml` 属性（值非空）即视为已发布（`getBlockAttrs` 读取属性，`getPublishedPlatformNames` 按 `PLATFORM_MATCHERS` 识别平台，随 `DocMeta` 一并缓存）；由 `DocNavSettings.enablePublishStatus` 开关控制（默认开启）
 
 ## 技术实现
 
-- **数据源**：`getPathByID` / `listDocsByPath`（层级）、`getBacklink`（反链，内部走 `getBacklink2`）、`getDoc` + SQL（元数据）
+- **数据源**：`getPathByID` / `listDocsByPath`（层级）、`getBacklink`（反链，内部走 `getBacklink2`）、`getDoc` + SQL + `getBlockAttrs`（元数据/发布状态）
 - **缓存**：`DocNavigationCache` 内存缓存，TTL 60s，LRU 驱逐上限 20 条；层级/面包屑/同级/反链/元数据各用独立槽位，`clearAll()` 统一清理
 - **时间格式化**：`utils.ts` 提供 `formatRelativeTime`（7 天内显示"X 天前"，之后回退短日期）、`formatShortDate`、`formatFullTime`
 - **下拉外壳共享**：`components/DropdownShell.vue` 统一触发按钮 + 弹出面板 + 开合状态机，供同级/下级/反向链接三个下拉组件复用；外壳样式 `styles/_dropdown-shell.scss` 同步归位到 DropdownShell

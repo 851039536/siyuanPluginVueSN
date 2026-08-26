@@ -1,4 +1,5 @@
-// 文档导航工具函数：思源时间格式解析、相对时间/短日期格式化
+// 文档导航工具函数：思源时间解析/格式化、发布平台识别
+import { PLATFORM_MATCHERS } from "./types"
 /** 思源时间戳格式（YYYYMMDDHHMMSS）正则 */
 const SIYUAN_TIME_REGEX = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/
 
@@ -51,4 +52,19 @@ export function formatFullTime(dateStr: string): string {
   if (!date) return ""
   const pad = (n: number): string => String(n).padStart(2, "0")
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+/** 提取已发布平台显示名列表：扫描 custom-<平台>-yaml 属性（值非空），按 PLATFORM_MATCHERS 匹配并返回显示名（空数组表示未发布） */
+export function getPublishedPlatformNames(attrs: Record<string, string> | null | undefined): string[] {
+  if (!attrs) return []
+  const found = new Set<string>()
+  for (const key of Object.keys(attrs)) {
+    const lower = key.toLowerCase()
+    if (!lower.startsWith("custom-") || !lower.endsWith("-yaml")) continue
+    if (!attrs[key]?.trim()) continue
+    const name = PLATFORM_MATCHERS.find((p) => p.matchers.some((m) => lower.includes(m.toLowerCase())))?.name
+    if (name) found.add(name)
+  }
+  // 按 PLATFORM_MATCHERS 定义顺序输出，保证多平台显示顺序稳定
+  return PLATFORM_MATCHERS.map((p) => p.name).filter((name) => found.has(name))
 }

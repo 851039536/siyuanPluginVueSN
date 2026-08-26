@@ -7,17 +7,12 @@
     :title="i18n.previewFileTitle.replace('{0}', filename)"
     @click.stop="$emit('select')"
   >
-    <Icon
-      icon="mdi:file-document-outline"
-      height="10"
-    />
     <span class="gp-md-badge-label">{{ label }}</span>
   </button>
 </template>
 
 <script setup lang="ts">
 import type { MdFileVariant } from "../../composables/useMarkdownFiles"
-import { Icon } from "@iconify/vue"
 
 defineProps<{
   filename: string

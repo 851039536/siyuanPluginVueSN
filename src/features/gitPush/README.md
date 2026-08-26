@@ -74,12 +74,11 @@ src/features/gitPush/
 │   │   ├── index.vue               # 列表视图入口容器（工具栏 + 加载态 + 空态 + 分组循环卡片，纯渲染）
 │   │   ├── ListViewToolbar.vue      # 列表工具栏
 │   │   ├── ProjectCard.vue          # 项目卡片编排层（仅 project prop，数据/操作全注入）
-│   │   ├── CardHeader.vue           # 卡片顶栏（信息区 + 操作按钮区：分类/平台/IDE/刷新/编辑/Git配置/删除）
+│   │   ├── CardHeader.vue           # 卡片顶栏（信息区 + 操作按钮区：分类/平台/IDE/刷新/编辑/Git配置/删除；含 Markdown 文件徽章内联渲染）
 │   │   ├── CardRemotes.vue          # 远程仓库状态 + 冲突警告
 │   │   ├── CardActionBar.vue        # 拉取/推送操作栏（单远程/推送全部/强制推送/Fetch）
 │   │   ├── BranchCommitList.vue     # 提交历史（含搜索）
 │   │   ├── ConflictSection.vue      # 冲突区
-│   │   ├── MarkdownFileBadge.vue    # Markdown 文件标记
 │   │   ├── OutputPanel.vue          # 命令输出面板（失败时内置 AI 分析入口）
 │   │   ├── AiErrorAnalysisDialog.vue# AI 错误日志分析弹窗（流式）
 │   │   ├── StashSection.vue         # Stash 管理区

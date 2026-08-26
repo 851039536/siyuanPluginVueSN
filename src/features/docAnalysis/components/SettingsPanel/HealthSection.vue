@@ -22,20 +22,25 @@
     <!-- 0B 排除书签区：带被勾选书签的文档整体剔除出统计口径 -->
     <div class="settings-subsection">
       <div class="settings-subsection-title">0B 排除书签（带以下书签的文档不计入统计）</div>
-      <label
-        v-for="bk in bookmarkOptions"
-        :key="bk"
-        class="settings-check-row"
+      <div
+        v-if="bookmarkOptions.length > 0"
+        class="bookmark-list"
       >
-        <input
-          type="checkbox"
-          :checked="zeroByteExcludeBookmarks.includes(bk)"
-          @change="toggleBookmark(bk, ($event.target as HTMLInputElement).checked)"
-        />
-        <span class="settings-check-label">{{ bk || "(空值)" }}</span>
-      </label>
+        <label
+          v-for="bk in bookmarkOptions"
+          :key="bk"
+          class="settings-check-row"
+        >
+          <input
+            type="checkbox"
+            :checked="zeroByteExcludeBookmarks.includes(bk)"
+            @change="toggleBookmark(bk, ($event.target as HTMLInputElement).checked)"
+          />
+          <span class="settings-check-label">{{ bk || "(空值)" }}</span>
+        </label>
+      </div>
       <p
-        v-if="bookmarkOptions.length === 0"
+        v-else
         class="settings-empty-tip"
       >暂无书签，可先在思源中为文档添加书签</p>
     </div>

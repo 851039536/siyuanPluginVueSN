@@ -381,12 +381,17 @@ export interface StatCardDef {
   suffixValue?: (stats: DocStats, ctx: CardValueContext) => string | number
 }
 
+/** 统计分区动态追加行来源（书签值分布/平台分布，点击下钻事件与来源一一对应） */
+export type ExtraRowKind = "bookmarkDistribution" | "platformDistribution"
+
 /** 统计分区定义 */
 export interface StatSectionDef {
   key: string
   title: string
   icon: string
   cards: StatCardDef[]
+  /** 分区动态追加行来源（默认无；声明后表格在汇总卡片行后追加该分布行，点击 emit 对应下钻事件） */
+  extraRows?: ExtraRowKind
   /** 默认折叠 */
   collapsed?: boolean
 }
@@ -430,6 +435,7 @@ export const STAT_SECTIONS: StatSectionDef[] = [
   },
   {
     key: "bookmark", title: "书签", icon: "mdi:bookmark-outline",
+    extraRows: "bookmarkDistribution",
     cards: [
       { id: "hasBookmark", shortLabel: "有书签", statKey: "bookmarkedDocs", colorClass: "bookmark-color" },
       { id: "noBookmark", shortLabel: "无书签", statKey: "noBookmarkDocs", colorClass: "no-bookmark-color" },
@@ -492,17 +498,6 @@ export interface HealthSettings {
   enabledDeductions: DeductionKey[]
   /** 0B 排除书签值：带这些书签的文档整体排除出统计口径（不计入总文档数与 0B 数） */
   zeroByteExcludeBookmarks: string[]
-}
-
-/** 健康度扣分项明细行（供 HeroCard 弹出面板渲染） */
-export interface DeductionRow {
-  key: DeductionKey
-  /** 显示名称 */
-  label: string
-  /** 当前扣分数量 */
-  count: number
-  /** 是否参与扣分计算 */
-  enabled: boolean
 }
 
 /** 默认健康度设置：全部扣分项启用（新增项默认开启，用户可在健康度面板取消） */

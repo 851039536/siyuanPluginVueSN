@@ -7,16 +7,17 @@
     :title="i18n.previewFileTitle.replace('{0}', filename)"
     @click.stop="$emit('select')"
   >
-    <span class="gp-md-badge-label">{{ label }}</span>
+    {{ label }}
   </button>
 </template>
 
 <script setup lang="ts">
 import type { MdFileVariant } from "../../composables/useMarkdownFiles"
+import { computed } from "vue"
+import { getMdLabel } from "../../composables/useMarkdownFiles"
 
-defineProps<{
+const props = defineProps<{
   filename: string
-  label: string
   variant: MdFileVariant
   i18n: Record<string, any>
 }>()
@@ -24,6 +25,9 @@ defineProps<{
 defineEmits<{
   select: []
 }>()
+
+/** 徽章显示标签（约定文件去扩展名大写，其他保留原始文件名） */
+const label = computed(() => getMdLabel(props.filename, props.variant))
 </script>
 
 <style lang="scss">

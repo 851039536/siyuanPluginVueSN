@@ -19,7 +19,7 @@
           <button
             class="skill-dialog__ai-btn"
             :disabled="!form.title.trim() || aiGenerating"
-            :title="t.aiGenerate || 'AI 生成全部内容'"
+            :title="t.aiGenerate"
             @click="aiGenerate"
           >
             <span
@@ -44,21 +44,21 @@
           placeholder="输入正确答案..."
         />
 
-        <label class="skill-dialog__label">{{ t.distractors || '干扰项（错误选项）' }}</label>
+        <label class="skill-dialog__label">{{ t.distractors }}</label>
         <input
           v-model="form.distractor1"
           class="skill-dialog__input"
-          :placeholder="t.distractor1 || '错误选项 1'"
+          :placeholder="t.distractor1"
         />
         <input
           v-model="form.distractor2"
           class="skill-dialog__input"
-          :placeholder="t.distractor2 || '错误选项 2'"
+          :placeholder="t.distractor2"
         />
         <input
           v-model="form.distractor3"
           class="skill-dialog__input"
-          :placeholder="t.distractor3 || '错误选项 3'"
+          :placeholder="t.distractor3"
         />
 
         <label class="skill-dialog__label">{{ t.codeSnippet }}</label>
@@ -159,7 +159,7 @@ import IconWrapper from "@/components/IconWrapper.vue"
 import { LANGUAGE_OPTIONS } from "../composables/useLangLabel"
 
 const props = defineProps<{
-  i18n: SkillI18n
+  i18n: Required<SkillI18n>
   plugin: Plugin
   editCard?: SkillCard | null
 }>()
@@ -238,7 +238,7 @@ async function aiGenerate() {
       tagsInput.value = parsed.tags.join(", ")
     }
   } catch (err: unknown) {
-    aiError.value = t.value.aiGenerateFailed || "AI 生成失败，请检查 API 配置"
+    aiError.value = t.value.aiGenerateFailed
     console.warn("AI 生成失败:", err)
   } finally {
     aiGenerating.value = false

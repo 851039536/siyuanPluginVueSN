@@ -4,16 +4,12 @@
 import type { ComputedRef, Ref } from "vue"
 import type { SkillCard } from "../types"
 import { computed } from "vue"
+import { isDue } from "../utils"
 
 export function useCardStats(cardsRef: Ref<SkillCard[]> | ComputedRef<SkillCard[]>) {
   const practicedCount = computed(() => cardsRef.value.filter((c) => c.practiceCount > 0).length)
 
-  const dueCount = computed(() =>
-    cardsRef.value.filter((c) => {
-      if (!c.reviewData) return true
-      return c.reviewData.nextReview <= Date.now()
-    }).length,
-  )
+  const dueCount = computed(() => cardsRef.value.filter((c) => isDue(c, Date.now())).length)
 
   const practicedPct = computed(() => {
     if (cardsRef.value.length === 0) return 0

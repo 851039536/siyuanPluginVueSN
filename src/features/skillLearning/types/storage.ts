@@ -90,12 +90,12 @@ export class SkillStorage {
 
   /** 创建卡片 */
   async createCard(dto: CreateSkillDTO): Promise<SkillCard> {
-    const isUnique = await this.isTitleUnique(dto.title)
-    if (!isUnique) throw new Error("Title already exists")
+    const cards = await this.getAllCards()
+    if (cards.some((c) => c.title === dto.title)) throw new Error("Title already exists")
 
     const now = Date.now()
     const card: SkillCard = {
-      id: `skill-${now}`,
+      id: `skill-${now}-${Math.random().toString(36).slice(2, 8)}`,
       title: dto.title,
       answer: dto.answer,
       distractors: dto.distractors || [],
@@ -109,7 +109,6 @@ export class SkillStorage {
       updatedAt: now,
     }
 
-    const cards = await this.getAllCards()
     cards.push(card)
     await this.storage.save(STORAGE_KEY, cards)
     return card
@@ -150,17 +149,6 @@ export class SkillStorage {
     const idx = cards.findIndex((c) => c.id === id)
     if (idx === -1) return false
     cards[idx].practiceCount = (cards[idx].practiceCount || 0) + 1
-    cards[idx].updatedAt = Date.now()
-    await this.storage.save(STORAGE_KEY, cards)
-    return true
-  }
-
-  /** 更新复习数据（SM-2 间隔重复） */
-  async updateReviewData(id: string, data: ReviewData): Promise<boolean> {
-    const cards = await this.getAllCards()
-    const idx = cards.findIndex((c) => c.id === id)
-    if (idx === -1) return false
-    cards[idx].reviewData = { ...data }
     cards[idx].updatedAt = Date.now()
     await this.storage.save(STORAGE_KEY, cards)
     return true

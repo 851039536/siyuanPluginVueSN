@@ -11,18 +11,9 @@
     :grouped-projects="groupedProjects"
   />
 
-  <!-- 项目列表加载态 -->
-  <div
-    v-if="loading"
-    class="gp-loading"
-  >
-    <Loader />
-    <span class="gp-loading-text">{{ i18n.loading }}</span>
-  </div>
-
   <!-- 空态：无任何项目 -->
   <EmptyState
-    v-else-if="projects.length === 0"
+    v-if="projects.length === 0"
     icon="mdi:source-repository"
     :text="i18n.noProjects"
   />
@@ -48,7 +39,6 @@
 <script setup lang="ts">
 // 列表视图容器（纯渲染，卡片数据与操作全部经 useCardServices 注入，无领域状态）
 import type { GitProject, ProjectCategory, ViewMode } from "../../types"
-import Loader from "@/components/Loader.vue"
 import EmptyState from "../common/EmptyState.vue"
 import ListViewToolbar from "./ListViewToolbar.vue"
 import ProjectCard from "./ProjectCard.vue"
@@ -61,7 +51,6 @@ export interface GroupedProject {
 
 defineProps<{
   i18n: Record<string, any>
-  loading: boolean
   projects: GitProject[]
   groupedProjects: GroupedProject[]
   filteredGroups: GroupedProject[]

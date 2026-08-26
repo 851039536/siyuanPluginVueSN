@@ -112,6 +112,26 @@
                 >{{ row.count }}</span>
               </label>
             </div>
+            <!-- 0B 排除书签区：勾选的书签值整体剔除出统计口径，重新分析后生效 -->
+            <div class="exclude-section">
+              <div class="exclude-section-title">0B 排除书签（勾选后自动重新分析）</div>
+              <label
+                v-for="bk in excludeBookmarkOptions"
+                :key="bk"
+                class="exclude-bookmark-item"
+              >
+                <input
+                  type="checkbox"
+                  :checked="healthSettings.zeroByteExcludeBookmarks.includes(bk)"
+                  @change="toggleExcludeBookmark(bk, ($event.target as HTMLInputElement).checked)"
+                />
+                <span class="exclude-bookmark-label">{{ bk || "(空值)" }}</span>
+              </label>
+              <p
+                v-if="excludeBookmarkOptions.length === 0"
+                class="exclude-empty-tip"
+              >暂无书签，可先在思源中为文档添加书签</p>
+            </div>
           </div>
         </div>
       </div>
@@ -121,7 +141,7 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
-import { ref } from "vue"
+import { computed, ref } from "vue"
 import type {
   DeductionKey,
   DeductionRow,
@@ -155,7 +175,22 @@ function toggleDeduction(key: DeductionKey, checked: boolean) {
   const current = new Set(props.healthSettings.enabledDeductions)
   if (checked) current.add(key)
   else current.delete(key)
-  emit("update:healthSettings", { enabledDeductions: [...current] })
+  emit("update:healthSettings", { ...props.healthSettings, enabledDeductions: [...current] })
+}
+
+/** 0B 排除书签可选项：动态书签分布 ∪ 已勾选书签（去重），保证已排除的书签仍可取消勾选 */
+const excludeBookmarkOptions = computed(() => {
+  const seen = new Set(props.healthSettings.zeroByteExcludeBookmarks)
+  for (const b of props.stats.bookmarkDistribution) seen.add(b.value)
+  return [...seen]
+})
+
+/** 切换 0B 排除书签（emit 保留全量字段，watch 自动持久化；SQL 层统计需重新分析后生效） */
+function toggleExcludeBookmark(bookmark: string, checked: boolean) {
+  const current = new Set(props.healthSettings.zeroByteExcludeBookmarks)
+  if (checked) current.add(bookmark)
+  else current.delete(bookmark)
+  emit("update:healthSettings", { ...props.healthSettings, zeroByteExcludeBookmarks: [...current] })
 }
 
 /** 关闭详情面板 */

@@ -12,6 +12,8 @@ export interface DocQueryConfig {
   limit?: number
   bookmarkInner?: boolean
   skipSizeJoin?: boolean
+  /** 统计下钻时应用 0B 排除书签条件（主动文档查询保持全量，不开启） */
+  excludeBookmarked?: boolean
 }
 
 /** 大小分档条件 */

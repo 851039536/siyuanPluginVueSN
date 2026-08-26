@@ -479,6 +479,8 @@ export interface DeductionOptionDef {
 export interface HealthSettings {
   /** 参与扣分计算的扣分项 key 列表 */
   enabledDeductions: DeductionKey[]
+  /** 0B 排除书签值：带这些书签的文档整体排除出统计口径（不计入总文档数与 0B 数） */
+  zeroByteExcludeBookmarks: string[]
 }
 
 /** 健康度扣分项明细行（供 HeroCard 弹出面板渲染） */
@@ -498,6 +500,7 @@ export const DEFAULT_HEALTH_SETTINGS: HealthSettings = {
     "zeroByte", "duplicate", "noBookmark", "partialPublish",
     "deepGt7", "wcGt20000", "orphan", "noTag", "noPublish",
   ],
+  zeroByteExcludeBookmarks: [],
 }
 
 /** 可选扣分项注册表（按当前功能已有统计指标生成） */

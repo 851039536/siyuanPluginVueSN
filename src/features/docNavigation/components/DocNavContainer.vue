@@ -106,11 +106,13 @@
         trigger-icon="docNavFilter"
       />
 
-      <!-- 过滤关键词编辑按钮：铅笔图标，内联编辑面板 -->
+      <!-- 过滤关键词编辑按钮：铅笔图标，内联编辑面板（含发布状态徽章开关） -->
       <FilterKeywordsEditor
         :filter-keywords="filterKeywords"
+        :enable-publish-status="enablePublishStatus"
         :i18n="i18n"
         @saved="handleFilterKeywordsSaved"
+        @publish-status-change="handlePublishStatusChange"
       />
 
       <!-- 反向链接下拉面板：展示引用/提及当前文档的文档 -->
@@ -208,6 +210,13 @@ async function handleFilterKeywordsSaved(keywords: string[]): Promise<void> {
   setFilterKeywords(keywords)
   const settings = await settingsStorage.settings.loadOrDefault()
   await settingsStorage.settings.save({ ...settings, filterKeywords: keywords })
+}
+
+/** 切换发布状态徽章开关：更新运行时状态并持久化（合并保存避免覆盖其他设置） */
+async function handlePublishStatusChange(value: boolean): Promise<void> {
+  enablePublishStatus.value = value
+  const settings = await settingsStorage.settings.loadOrDefault()
+  await settingsStorage.settings.save({ ...settings, enablePublishStatus: value })
 }
 
 /** 启动时加载设置并应用过滤关键词（默认 ["参考"]，向后兼容旧版硬编码行为）与发布状态徽章开关（默认开启） */

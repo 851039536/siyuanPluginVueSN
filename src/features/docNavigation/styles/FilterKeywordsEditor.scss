@@ -99,6 +99,13 @@
   opacity: 0.5;
 }
 
+// 发布状态开关行（与关键词编辑区分隔）
+.doc-nav-filter-editor-toggle {
+  margin-bottom: $spacing-2;
+  padding-top: $spacing-1;
+  border-top: 1px solid var(--b3-theme-surface-lighter);
+}
+
 // 操作按钮行
 .doc-nav-filter-editor-actions {
   display: flex;

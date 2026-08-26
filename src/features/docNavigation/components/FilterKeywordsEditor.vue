@@ -41,6 +41,15 @@
         />
         <!-- 提示："逗号分隔多个关键词" -->
         <div class="doc-nav-filter-editor-hint">{{ i18n.docNavFilterKeywordsHint }}</div>
+        <!-- 开关："显示发布状态徽章" -->
+        <div class="doc-nav-filter-editor-toggle">
+          <Switch
+            :model-value="enablePublishStatus"
+            size="small"
+            :label="i18n.docNavShowPublishStatus"
+            @update:model-value="handleTogglePublishStatus"
+          />
+        </div>
         <!-- 操作按钮行 -->
         <div class="doc-nav-filter-editor-actions">
           <button
@@ -69,11 +78,14 @@ import {
   ref,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import Switch from "@/components/Switch.vue"
 import { useClickOutside } from "../composables/useClickOutside"
 
 const props = defineProps<{
   /** 当前关键词数组，面板打开时预填 */
   filterKeywords: string[]
+  /** 是否显示发布状态徽章（开关状态，切换后父组件持久化） */
+  enablePublishStatus: boolean
   /** 功能 i18n（与父组件共享，平铺在 plugin.i18n 顶层） */
   i18n: Record<string, string>
 }>()
@@ -81,6 +93,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   /** 保存时提交新关键词列表 */
   (event: "saved", keywords: string[]): void
+  /** 切换发布状态徽章开关 */
+  (event: "publishStatusChange", value: boolean): void
 }>()
 
 const isOpen = ref(false)
@@ -107,6 +121,11 @@ function save(): void {
     .filter((kw) => kw !== "")
   emit("saved", keywords)
   isOpen.value = false
+}
+
+/** 切换发布状态徽章开关：立即上报父组件持久化 */
+function handleTogglePublishStatus(value: boolean): void {
+  emit("publishStatusChange", value)
 }
 
 /** 取消编辑 */

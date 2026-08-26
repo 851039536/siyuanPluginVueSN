@@ -1367,6 +1367,8 @@
     "headerRefreshRemote": "Refresh Remote",
     "previewMarkdown": "Docs Preview",
     "previewFileTitle": "Preview {0}",
+    "mdFilesExpand": "Show all {0} Markdown files",
+    "mdFilesCollapse": "Collapse Markdown files",
     "noMarkdownFiles": "No Markdown files found",
     "fileTooLarge": "Large file",
     "errReadFile": "Failed to read file",

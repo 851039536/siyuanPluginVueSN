@@ -56,6 +56,36 @@
   margin-top: 3px;
 }
 
+// Markdown 徽章折叠按钮（文件过多时 "+N" 展开/收起，虚线边框区分可交互）
+.gp-md-more {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px; // 徽章微内边距：垂直 1px 保持行高紧凑，水平 6px 无对应 Token
+  font-size: $font-size-2xs;
+  font-family: $vp-mono;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.03em;
+  line-height: $line-height-normal;
+  border: 1px dashed var(--b3-theme-on-surface);
+  border-radius: $radius-sm;
+  background: none;
+  cursor: pointer;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.55;
+  transition: opacity 0.12s, background 0.12s;
+
+  &:hover {
+    opacity: 1;
+    background: var(--b3-list-hover);
+  }
+
+  &.expanded {
+    border-style: solid;
+    border-color: var(--b3-theme-primary-lightest);
+    color: var(--b3-theme-primary);
+  }
+}
+
 .gp-card-path {
   display: flex;
   align-items: center;

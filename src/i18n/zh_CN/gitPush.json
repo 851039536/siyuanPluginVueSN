@@ -148,6 +148,8 @@
     "headerRefreshRemote": "刷新远程状态",
     "previewMarkdown": "文档预览",
     "previewFileTitle": "预览 {0}",
+    "mdFilesExpand": "展开全部 {0} 个 Markdown 文件",
+    "mdFilesCollapse": "收起 Markdown 文件",
     "noMarkdownFiles": "未找到 Markdown 文件",
     "fileTooLarge": "文件较大",
     "errReadFile": "读取文件失败",

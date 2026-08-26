@@ -65,13 +65,13 @@
           {{ relativeTime(project.lastActivity, i18n) }}
         </span>
       </div>
-      <!-- Markdown 文件标识 -->
+      <!-- Markdown 文件标识（前 3 个直接展示，其余折叠为 "+N" 按钮，点击展开/收起） -->
       <div
         v-if="mdFiles.length"
         class="gp-md-files"
       >
         <MarkdownFileBadge
-          v-for="f in mdFiles"
+          v-for="f in visibleMdFiles"
           :key="f.name"
           :filename="f.name"
           :label="f.label"
@@ -79,6 +79,18 @@
           :i18n="i18n"
           @select="ops.openMarkdownPreview(project, f.name)"
         />
+        <!-- 折叠按钮（tooltip：展开/收起其余 Markdown 文件） -->
+        <button
+          v-if="hiddenMdCount > 0"
+          class="gp-md-more"
+          :class="{ expanded: mdExpanded }"
+          :title="mdExpanded
+            ? i18n.mdFilesCollapse
+            : i18n.mdFilesExpand.replace('{0}', String(hiddenMdCount))"
+          @click.stop="mdExpanded = !mdExpanded"
+        >
+          {{ mdExpanded ? `-${hiddenMdCount}` : `+${hiddenMdCount}` }}
+        </button>
       </div>
       <!-- 分支标签（悬停："当前分支"/"切换到 {0}"） -->
       <div
@@ -390,7 +402,7 @@
 import type { BranchInfo, GitProject } from "../../types"
 import type { MdFileEntry } from "../../composables/useMarkdownFiles"
 import { Icon } from "@iconify/vue"
-import { computed } from "vue"
+import { computed, ref } from "vue"
 import { PLATFORM_META } from "../../types"
 import { activityLevel, highlightSegments, openLocalPath, openRepoWebUrl, relativeTime, resolveValidPath } from "../../utils"
 import { useCardActions } from "../../composables/useCardActions"
@@ -429,6 +441,18 @@ const {
 
 /** 项目名搜索高亮分段（按当前 searchQuery 切分） */
 const nameSegments = computed(() => highlightSegments(props.project.name, searchQuery.value))
+
+// ── Markdown 徽章折叠（文件过多时默认只展示高优先级的前 3 个，其余折叠）──
+/** 默认直接展示的徽章数量上限 */
+const MD_VISIBLE_LIMIT = 3
+/** 是否已展开全部 Markdown 徽章 */
+const mdExpanded = ref(false)
+/** 实际展示的徽章列表（折叠时仅前 N 个，mdFiles 已按 README→CLAUDE→其他 排序） */
+const visibleMdFiles = computed(() =>
+  mdExpanded.value ? props.mdFiles : props.mdFiles.slice(0, MD_VISIBLE_LIMIT),
+)
+/** 被折叠的 Markdown 文件数量（<=0 时不显示折叠按钮） */
+const hiddenMdCount = computed(() => props.mdFiles.length - MD_VISIBLE_LIMIT)
 
 /** 当前项目有效路径（多设备路径解析，点击时实时检测磁盘存在性，不用 computed 缓存） */
 function projectPath(): string {

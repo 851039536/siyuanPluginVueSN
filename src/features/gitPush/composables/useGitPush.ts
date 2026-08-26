@@ -35,7 +35,6 @@ export function useGitPush(manager: GitPushManager) {
     // ── 项目 CRUD ──
     projects: projectCrud.projects,
     categories: projectCrud.categories,
-    loading: projectCrud.loading,
     allTags: projectCrud.allTags,
     loadProjects: projectCrud.loadProjects,
     addProject: projectCrud.addProject,

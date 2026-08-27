@@ -8,10 +8,11 @@
         height="12"
         class="bcl-search-icon"
       />
+      <!-- 搜索输入框（placeholder："搜索提交信息..."） -->
       <input
         v-model="searchKeyword"
         class="bcl-search-input"
-        placeholder="搜索提交信息..."
+        :placeholder="i18n.commitSearchPlaceholder"
         @keyup.escape="searchKeyword = ''"
       />
       <button
@@ -24,6 +25,7 @@
           height="12"
         />
       </button>
+      <!-- 显示条数下拉（"全部" / 数字） -->
       <select
         v-model="displayCount"
         class="bcl-count-select"
@@ -55,15 +57,16 @@
         class="gp-spin"
         height="12"
       />
-      <span>加载中...</span>
+      <!-- "加载中..." -->
+      <span>{{ i18n.loading }}</span>
     </div>
 
-    <!-- 空状态 -->
+    <!-- 空状态（"暂无提交记录" / 有搜索词时"无匹配结果"） -->
     <div
       v-else-if="filteredEntries.length === 0"
       class="bcl-empty"
     >
-      {{ searchKeyword ? '无匹配结果' : '暂无提交记录' }}
+      {{ searchKeyword ? i18n.commitListNoMatch : i18n.commitListEmpty }}
     </div>
 
     <!-- 提交记录列表 -->

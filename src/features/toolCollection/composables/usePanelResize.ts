@@ -7,6 +7,14 @@ import type { ComputedRef, Ref } from "vue"
 import { computed, ref } from "vue"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
+import {
+  PANEL_HEIGHT_MAX,
+  PANEL_HEIGHT_MIN,
+  PANEL_MAX_HEIGHT,
+  PANEL_WIDTH_MAX,
+  PANEL_WIDTH_MIN,
+  type PanelDimension,
+} from "../types"
 
 const DEFAULT_WIDTH = 1060
 const DEFAULT_HEIGHT = 60 // vh
@@ -15,7 +23,7 @@ export interface PanelResizeReturn {
   panelWidth: Ref<number>
   panelHeight: Ref<number>
   panelStyle: ComputedRef<Record<string, string>>
-  adjustDimension: (key: "width" | "height", delta: number, min: number, max: number) => Promise<void>
+  adjustDimension: (key: PanelDimension, delta: number, min: number, max: number) => Promise<void>
   loadPersistedSize: () => Promise<void>
   saveHeight: (value: number) => void
 }
@@ -31,19 +39,19 @@ export function usePanelResize(plugin: Plugin): PanelResizeReturn {
   const panelStyle = computed(() => ({
     maxWidth: `${panelWidth.value}px`,
     height: `${panelHeight.value}vh`,
-    maxHeight: `calc(88vh - 36px)`,
+    maxHeight: PANEL_MAX_HEIGHT,
   }))
 
   /** 从持久化存储加载尺寸（仅在仍为默认值时应用） */
   const loadPersistedSize = async () => {
     const [w, h] = await Promise.all([widthSlot.loadOrDefault(), heightSlot.loadOrDefault()])
-    if (w >= 500 && w <= 1600 && panelWidth.value === DEFAULT_WIDTH) panelWidth.value = w
-    if (h >= 30 && h <= 100 && panelHeight.value === DEFAULT_HEIGHT) panelHeight.value = h
+    if (w >= PANEL_WIDTH_MIN && w <= PANEL_WIDTH_MAX && panelWidth.value === DEFAULT_WIDTH) panelWidth.value = w
+    if (h >= PANEL_HEIGHT_MIN && h <= PANEL_HEIGHT_MAX && panelHeight.value === DEFAULT_HEIGHT) panelHeight.value = h
   }
 
   /** 调整指定维度并持久化 */
   const adjustDimension = async (
-    key: "width" | "height",
+    key: PanelDimension,
     delta: number,
     min: number,
     max: number

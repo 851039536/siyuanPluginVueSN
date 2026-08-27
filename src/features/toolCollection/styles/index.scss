@@ -1,5 +1,11 @@
 @use '@/variables.scss' as *;
 
+// ==================== 文件内动效变量 ====================
+// Codex 统一缓动曲线；微交互用快档，面板滑入滑出用慢档
+$tc-ease: cubic-bezier(0.4, 0, 0.2, 1);
+$tc-dur-fast: 0.15s;
+$tc-dur-slide: 0.25s;
+
 // ==================== 遮罩层 ====================
 // 仅用于点击外部关闭，不参与面板定位
 .tool-collection-overlay {
@@ -10,14 +16,15 @@
 }
 
 // ==================== 底部面板 ====================
-// 独立 fixed 定位（参考 FeatureDrawer 的 bottom: 36px），避让底部状态栏
+// 独立 fixed 定位，避让底部状态栏与留白
 .tool-collection-panel {
   position: fixed;
   bottom: 32px;
   left: 50%;
   width: 100%;
   // max-width / height 由内联 panelStyle 动态控制（默认值定义于 JS）
-  max-height: calc(88vh - 32px);
+  // maxHeight 与 types/index.ts 的 PANEL_MAX_HEIGHT 保持一致
+  max-height: calc(88vh - 36px);
   background: var(--b3-theme-background);
   border-radius: $radius-lg $radius-lg 0 0;
   border: 1px solid var(--b3-border-color);
@@ -37,7 +44,7 @@
   cursor: row-resize;
   flex-shrink: 0;
   background: transparent;
-  transition: background 0.15s;
+  transition: background $tc-dur-fast;
 
   &:hover {
     background: var(--b3-theme-primary);
@@ -64,7 +71,7 @@
   .header-resize {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: $spacing-2px;
     margin-left: auto;
     margin-right: $spacing-2;
   }
@@ -73,17 +80,16 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 22px;
-    height: 22px;
+    width: 26px;
+    height: 26px;
     border: 1px solid var(--b3-border-color);
     border-radius: $radius-sm;
     background: transparent;
     color: var(--b3-theme-on-surface);
     cursor: pointer;
     font-size: $font-size-2xs;
-    line-height: 1;
     opacity: 0.5;
-    transition: opacity 0.12s, color 0.12s, border-color 0.12s;
+    transition: opacity $tc-dur-fast, color $tc-dur-fast, border-color $tc-dur-fast;
 
     &:hover {
       opacity: 1;
@@ -111,7 +117,7 @@
   .resize-divider {
     width: 1px;
     height: 14px;
-    margin: 0 2px;
+    margin: 0 $spacing-2px;
     background: var(--b3-border-color);
     flex-shrink: 0;
   }
@@ -121,15 +127,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     border: 1px solid var(--b3-border-color);
     border-radius: $radius-sm;
     background: transparent;
     color: var(--b3-theme-on-surface);
     cursor: pointer;
     opacity: 0.6;
-    transition: opacity 0.12s, color 0.12s, border-color 0.12s;
+    transition: opacity $tc-dur-fast, color $tc-dur-fast, border-color $tc-dur-fast;
 
     &:hover {
       opacity: 1;
@@ -192,7 +198,7 @@
   text-align: left;
   cursor: pointer;
   user-select: none;
-  transition: color 0.15s, background 0.15s;
+  transition: color $tc-dur-fast, background $tc-dur-fast;
 
   &:hover {
     color: var(--b3-theme-primary);
@@ -267,18 +273,18 @@
 // ==================== 过渡动画 ====================
 // panel 底部固定，scaleY 从 0→1 实现从下往上展开
 .slide-up-enter-active {
-  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity $tc-dur-slide $tc-ease;
 
   .tool-collection-panel {
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform $tc-dur-slide $tc-ease;
   }
 }
 
 .slide-up-leave-active {
-  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity $tc-dur-slide $tc-ease;
 
   .tool-collection-panel {
-    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform $tc-dur-slide $tc-ease;
   }
 }
 
@@ -302,7 +308,6 @@
 @media (max-width: 860px) {
   .tool-collection-panel {
     max-width: 100%;
-    border-radius: $radius-lg $radius-lg 0 0;
   }
 
   // 窄屏收缩侧栏宽度，让内容区获得更多空间

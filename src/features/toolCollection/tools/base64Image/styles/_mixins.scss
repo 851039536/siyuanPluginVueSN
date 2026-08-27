@@ -1,0 +1,120 @@
+/**
+ * base64Image 样式公共 Mixins
+ *
+ * 原 index.scss 的 %placeholder 在按组件拆分后无法跨文件 @extend，
+ * 统一转换为真 mixin；由各组件专属样式与共享基座按需 @include。
+ */
+@use "@/variables.scss" as *;
+
+// 区块标题（h4）
+@mixin section-title {
+  margin: 0 0 $spacing-3 0;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-surface);
+}
+
+// 信息文本段落（含加粗强调色）
+@mixin info-text {
+  margin: $spacing-1 0;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface-variant);
+
+  strong {
+    color: var(--b3-theme-on-surface);
+  }
+}
+
+// 滑块（含 webkit/moz 圆形拖拽点）
+@mixin range-slider {
+  width: 100%;
+  height: 4px;
+  background: var(--b3-theme-surface-lighter);
+  border-radius: $radius-sm;
+  outline: none;
+  cursor: pointer;
+
+  &::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--b3-theme-primary);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  &::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--b3-theme-primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+  }
+}
+
+// 文本输入框
+@mixin text-input {
+  width: 100%;
+  padding: $spacing-2 $spacing-3;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-base;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-xs;
+
+  &:focus {
+    outline: none;
+    border-color: var(--b3-theme-primary);
+  }
+
+  &::placeholder {
+    color: var(--b3-theme-on-surface-variant);
+  }
+}
+
+// 设置卡片容器外观（标题 + 底色边框内衬）
+@mixin card-surface {
+  background: var(--b3-theme-surface-lighter);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-base;
+  padding: $spacing-3;
+  margin-bottom: $spacing-4;
+
+  h4 {
+    @include section-title;
+  }
+}
+
+// 设置项分组：外距 + label 排版 + 复选框行
+// compression/filter/watermark/qrcode 四处卡片共用
+@mixin setting-group {
+  .setting-group {
+    margin-bottom: $spacing-3;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: block;
+      margin-bottom: $spacing-2;
+      font-size: $font-size-2xs;
+      color: var(--b3-theme-on-surface-variant);
+      font-weight: $font-weight-medium;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: $spacing-2;
+      cursor: pointer;
+
+      input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+      }
+    }
+  }
+}

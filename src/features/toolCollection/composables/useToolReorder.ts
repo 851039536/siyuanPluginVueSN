@@ -1,5 +1,5 @@
 /**
- * 工具合集 - Tab 拖拽排序 composable
+ * 工具合集 - 工具列表拖拽排序 composable
  * 使用 HTML5 Drag & Drop API，排序持久化到 TypedStorage
  */
 import type { Plugin } from "siyuan"
@@ -9,7 +9,7 @@ import { ref } from "vue"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 
-export interface TabReorderReturn {
+export interface ToolReorderReturn {
   dragIndex: Ref<number>
   onDragStart: (index: number) => void
   onDragOver: (e: DragEvent) => void
@@ -17,12 +17,13 @@ export interface TabReorderReturn {
   onDragEnd: () => void
 }
 
-export function useTabReorder(
+export function useToolReorder(
   tools: Ref<ToolMeta[]>,
   plugin: Plugin
-): TabReorderReturn {
+): ToolReorderReturn {
   const dragIndex = ref(-1)
   const storage = new PluginStorage(plugin)
+  // 存储键沿用历史的 "toolCollection-tabOrder"，避免丢失用户已持久化的排序数据
   const orderSlot = new TypedStorage<string[]>(storage, "toolCollection-tabOrder", [])
 
   // 启动时恢复持久化排序

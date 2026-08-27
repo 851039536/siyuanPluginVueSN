@@ -1,70 +1,11 @@
-@use "@/variables.scss" as *;
-
-// 公共样式
-%section-title {
-  margin: 0 0 $spacing-3 0;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-  color: var(--b3-theme-on-surface);
-}
-
-%info-text {
-  margin: $spacing-1 0;
-  font-size: $font-size-xs;
-  color: var(--b3-theme-on-surface-variant);
-
-  strong {
-    color: var(--b3-theme-on-surface);
-  }
-}
-
-// 滑块公共样式
-%range-slider {
-  width: 100%;
-  height: 4px;
-  background: var(--b3-theme-surface-lighter);
-  border-radius: $radius-sm;
-  outline: none;
-  cursor: pointer;
-
-  &::-webkit-slider-thumb {
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    background: var(--b3-theme-primary);
-    border-radius: 50%;
-    cursor: pointer;
-  }
-
-  &::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    background: var(--b3-theme-primary);
-    border-radius: 50%;
-    cursor: pointer;
-    border: none;
-  }
-}
-
-// 文本输入框样式
-%text-input {
-  width: 100%;
-  padding: $spacing-2 $spacing-3;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-base;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  font-size: $font-size-xs;
-
-  &:focus {
-    outline: none;
-    border-color: var(--b3-theme-primary);
-  }
-
-  &::placeholder {
-    color: var(--b3-theme-on-surface-variant);
-  }
-}
+/**
+ * base64Image 共享样式基座（父容器面板 + 父/QrcodeGenerator 共用的区块）
+ *
+ * 组件专属规则已按 AGENTS 子组件双行导入规范拆分至同目录 PascalCase 文件，
+ * 公共 Mixins 见 _mixins.scss。
+ */
+@use '@/variables.scss' as *;
+@use './mixins' as m;
 
 .base64-image-panel {
   display: flex;
@@ -110,42 +51,7 @@
   padding: $spacing-4;
 
   > h4 {
-    @extend %section-title;
-  }
-}
-
-.upload-section {
-  margin-bottom: $spacing-4;
-
-  .upload-area {
-    border: 2px dashed var(--b3-theme-surface-lighter);
-    border-radius: $radius-md;
-    padding: $spacing-8;
-    text-align: center;
-    background: var(--b3-theme-surface);
-
-    &.drag-over {
-      border-color: var(--b3-theme-primary);
-      background: var(--b3-theme-primary-container);
-    }
-
-    .upload-content {
-      .upload-icon {
-        color: var(--b3-theme-on-surface-variant);
-        margin-bottom: $spacing-3;
-      }
-
-      .upload-text {
-        // 上传区操作提示（辅助文字）
-        margin: 0 0 $spacing-3 0;
-        color: var(--b3-theme-on-surface-variant);
-        font-size: $font-size-2xs;
-      }
-    }
-  }
-
-  .hidden-file-input {
-    display: none;
+    @include m.section-title;
   }
 }
 
@@ -162,66 +68,22 @@
 .preview-section,
 .output-section {
   > h4 {
-    @extend %section-title;
+    @include m.section-title;
   }
 }
 
-.settings-card {
-  background: var(--b3-theme-surface-lighter);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-base;
-  padding: $spacing-3;
-  margin-bottom: $spacing-4;
+// 压缩设置卡片（压缩参数在父组件模板内联渲染）
+.compression-settings {
+  @include m.card-surface;
+  @include m.setting-group;
 
-  h4 {
-    margin: 0 0 $spacing-3 0;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-semibold;
-    color: var(--b3-theme-on-surface);
+  .setting-group .quality-slider,
+  .setting-group .width-slider {
+    @include m.range-slider;
   }
-}
 
-.compression-settings,
-.filter-settings,
-.watermark-settings {
-  @extend .settings-card;
-
-  .setting-group {
-    margin-bottom: $spacing-3;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-
-    label {
-      display: block;
-      margin-bottom: $spacing-2;
-      font-size: $font-size-2xs;
-      color: var(--b3-theme-on-surface-variant);
-      font-weight: $font-weight-medium;
-    }
-
-    .quality-slider,
-    .width-slider {
-      @extend %range-slider;
-    }
-
-    .checkbox-label {
-      display: flex;
-      align-items: center;
-      gap: $spacing-2;
-      cursor: pointer;
-
-      input[type="checkbox"] {
-        width: 16px;
-        height: 16px;
-        cursor: pointer;
-      }
-    }
-
-    .text-input {
-      @extend %text-input;
-    }
+  .setting-group .text-input {
+    @include m.text-input;
   }
 }
 
@@ -247,69 +109,27 @@
 .file-info,
 .output-info {
   p {
-    @extend %info-text;
+    @include m.info-text;
   }
 }
 
+// 输出操作条（内部复制下拉菜单见 CopyDropdown.scss）
 .output-controls {
   display: flex;
   gap: $spacing-2;
   margin-bottom: $spacing-2;
-
-  .copy-dropdown {
-    position: relative;
-
-    .dropdown-arrow {
-      margin-left: $spacing-1;
-      font-size: $font-size-2xs;
-    }
-
-    .dropdown-menu {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      margin-top: $spacing-1;
-      background: var(--b3-theme-surface);
-      border: 1px solid var(--b3-theme-surface-lighter);
-      border-radius: $radius-sm;
-      z-index: 1000;
-      min-width: 180px;
-
-      .dropdown-item {
-        width: 100%;
-        padding: $spacing-2 $spacing-3;
-        border: none;
-        background: transparent;
-        color: var(--b3-theme-on-surface);
-        cursor: pointer;
-        font-size: $font-size-xs;
-        text-align: left;
-
-        &:hover {
-          background: var(--b3-theme-surface-lighter);
-        }
-
-        &:first-child {
-          border-radius: $radius-sm $radius-sm 0 0;
-        }
-
-        &:last-child {
-          border-radius: 0 0 $radius-sm $radius-sm;
-        }
-      }
-    }
-  }
 }
 
+// Base64/URL 输入区（父组件与 QrcodeGenerator 共用）
 .input-section {
   margin-bottom: $spacing-4;
 
   > h4 {
-    @extend %section-title;
+    @include m.section-title;
   }
 
   .text-input {
-    @extend %text-input;
+    @include m.text-input;
     margin-bottom: $spacing-3;
   }
 
@@ -320,113 +140,6 @@
   .fetch-btn,
   .generate-btn {
     width: 100%;
-  }
-}
-
-// 统计对比
-.stats-section {
-  background: var(--b3-theme-surface-lighter);
-  border-radius: $radius-base;
-  padding: $spacing-3;
-  margin-top: $spacing-3;
-
-  h4 {
-    margin: 0 0 $spacing-3 0;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-semibold;
-    color: var(--b3-theme-on-surface);
-  }
-
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: $spacing-3;
-  }
-
-  .stat-item {
-    text-align: center;
-    padding: $spacing-2;
-    background: var(--b3-theme-surface);
-    border-radius: $radius-sm;
-
-    .stat-label {
-      display: block;
-      font-size: $font-size-2xs;
-      color: var(--b3-theme-on-surface-variant);
-      margin-bottom: $spacing-1;
-    }
-
-    .stat-value {
-      // 统计数值为数据突出展示，使用 sm 字号
-      font-size: $font-size-sm;
-      font-weight: $font-weight-semibold;
-      color: var(--b3-theme-on-surface);
-
-      &.positive {
-        color: var(--b3-card-success-color, #22c55e);
-      }
-
-      &.negative {
-        color: var(--b3-card-error-color, #ef4444);
-      }
-
-      &.neutral {
-        color: var(--b3-theme-on-surface);
-      }
-    }
-  }
-}
-
-// 二维码设置
-.qrcode-settings {
-  margin-top: $spacing-3;
-
-  .setting-group {
-    margin-bottom: $spacing-3;
-
-    label {
-      display: block;
-      margin-bottom: $spacing-2;
-      font-size: $font-size-2xs;
-      color: var(--b3-theme-on-surface-variant);
-      font-weight: $font-weight-medium;
-    }
-
-    .quality-slider {
-      @extend %range-slider;
-    }
-
-    .checkbox-label {
-      display: flex;
-      align-items: center;
-      gap: $spacing-2;
-      cursor: pointer;
-
-      input[type="checkbox"] {
-        width: 16px;
-        height: 16px;
-        cursor: pointer;
-      }
-    }
-  }
-}
-
-// 二维码结果
-.qrcode-result {
-  .qrcode-preview {
-    border: 1px solid var(--b3-theme-surface-lighter);
-    border-radius: $radius-base;
-    padding: $spacing-4;
-    background: var(--b3-theme-background);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 150px;
-
-    img {
-      max-width: 200px;
-      border-radius: $radius-sm;
-    }
   }
 }
 

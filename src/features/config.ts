@@ -299,7 +299,7 @@ export const FEATURE_CONFIG = [
   {
     id: "toolCollection",
     defaultTitle: "工具合集",
-    defaultDesc: "底部面板集成多种实用小工具，支持 Tab 切换",
+    defaultDesc: "底部面板集成多种实用小工具，左侧工具列表切换",
     titleI18nKey: "toolCollection",
     descI18nKey: "toolCollectionDesc",
   },

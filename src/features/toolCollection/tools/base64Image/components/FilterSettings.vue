@@ -112,5 +112,6 @@ const update = (key: keyof FilterSettings, event: Event) => {
 </script>
 
 <style scoped lang="scss">
+@use "../styles/FilterSettings.scss";
 @use "../styles/index.scss";
 </style>

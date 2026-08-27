@@ -1,0 +1,16 @@
+/** 水印设置卡片（WatermarkSettings 组件专属样式） */
+@use '@/variables.scss' as *;
+@use './mixins' as m;
+
+.watermark-settings {
+  @include m.card-surface;
+  @include m.setting-group;
+
+  .setting-group .quality-slider {
+    @include m.range-slider;
+  }
+
+  .setting-group .text-input {
+    @include m.text-input;
+  }
+}

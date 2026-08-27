@@ -124,5 +124,6 @@ const onContentChange = (value: string | null) => {
 </script>
 
 <style scoped lang="scss">
+@use "../styles/QrcodeGenerator.scss";
 @use "../styles/index.scss";
 </style>

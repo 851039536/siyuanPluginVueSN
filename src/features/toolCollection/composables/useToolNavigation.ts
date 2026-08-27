@@ -67,7 +67,7 @@ export function useToolNavigation(
       e.preventDefault()
       currentTool.value = tools.value[tools.value.length - 1].id
     } else if (e.ctrlKey && e.key >= "1" && e.key <= "9") {
-      // Ctrl+1~9 直接跳转第 N 个 Tab
+      // Ctrl+1~9 直接跳转第 N 个工具
       e.preventDefault()
       const idx = Number(e.key) - 1
       if (idx < tools.value.length) currentTool.value = tools.value[idx].id

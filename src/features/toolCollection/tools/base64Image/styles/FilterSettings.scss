@@ -1,0 +1,12 @@
+/** 滤镜设置卡片（FilterSettings 组件专属样式） */
+@use '@/variables.scss' as *;
+@use './mixins' as m;
+
+.filter-settings {
+  @include m.card-surface;
+  @include m.setting-group;
+
+  .setting-group .quality-slider {
+    @include m.range-slider;
+  }
+}

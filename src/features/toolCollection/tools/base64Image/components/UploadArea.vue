@@ -97,5 +97,6 @@ const handleDrop = (e: DragEvent) => {
 </script>
 
 <style scoped lang="scss">
+@use "../styles/UploadArea.scss";
 @use "../styles/index.scss";
 </style>

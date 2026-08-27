@@ -1,10 +1,10 @@
 <template>
   <Transition name="slide-up">
     <div
-      v-if="mode === 'overlay' ? visible?.value : true"
+      v-if="mode === 'tab' || !!visible?.value"
       class="tool-collection-overlay"
       :class="{ 'tab-mode': mode === 'tab' }"
-      @click.self="mode === 'overlay' ? close() : undefined"
+      @click.self="close"
     >
       <div
         class="tool-collection-panel"
@@ -23,73 +23,55 @@
           class="tool-collection-header"
         >
           <span class="header-title">{{ i18n.toolCollection }}</span>
-          <!-- 尺寸调整按钮组（仅底部面板模式显示） -->
+          <!-- 尺寸调整按钮组（仅底部面板模式显示），每个维度为 [减小] 数值 [增大]，如 "变窄 1060px 变宽" -->
           <div
             v-if="mode === 'overlay'"
             class="header-resize"
           >
-            <!-- 按钮提示："变窄" -->
-            <button
-              class="resize-btn"
-              :title="i18n.toolCollectionPanel.narrower"
-              :disabled="panelWidth <= 500"
-              @click="adjustDimension('width', -80, 500, 1600)"
+            <template
+              v-for="(axis, axisIndex) in resizeAxes"
+              :key="axis.dimension"
             >
-              <Icon
-                icon="mdi:chevron-left"
-                :size="12"
+              <span
+                v-if="axisIndex > 0"
+                class="resize-divider"
               />
-            </button>
-            <span class="resize-label">{{ panelWidth }}</span>
-            <!-- 按钮提示："变宽" -->
-            <button
-              class="resize-btn"
-              :title="i18n.toolCollectionPanel.wider"
-              :disabled="panelWidth >= 1600"
-              @click="adjustDimension('width', 80, 500, 1600)"
-            >
-              <Icon
-                icon="mdi:chevron-right"
-                :size="12"
-              />
-            </button>
-            <span class="resize-divider" />
-            <!-- 按钮提示："变矮" -->
-            <button
-              class="resize-btn"
-              :title="i18n.toolCollectionPanel.shorter"
-              :disabled="panelHeight <= 30"
-              @click="adjustDimension('height', -10, 30, 100)"
-            >
-              <Icon
-                icon="mdi:chevron-down"
-                :size="12"
-              />
-            </button>
-            <span class="resize-label">{{ panelHeight }}</span>
-            <!-- 按钮提示："变高" -->
-            <button
-              class="resize-btn"
-              :title="i18n.toolCollectionPanel.taller"
-              :disabled="panelHeight >= 100"
-              @click="adjustDimension('height', 10, 30, 100)"
-            >
-              <Icon
-                icon="mdi:chevron-up"
-                :size="12"
-              />
-            </button>
+              <!-- 减小按钮："变窄"/"变矮" -->
+              <button
+                class="resize-btn"
+                :title="axis.decrease.title"
+                :disabled="currentSize(axis.dimension) <= axis.min"
+                @click="adjustDimension(axis.dimension, -axis.step, axis.min, axis.max)"
+              >
+                <Icon
+                  :icon="axis.decrease.icon"
+                  :size="16"
+                />
+              </button>
+              <span class="resize-label">{{ currentSize(axis.dimension) }}{{ axis.unit }}</span>
+              <!-- 增大按钮："变宽"/"变高" -->
+              <button
+                class="resize-btn"
+                :title="axis.increase.title"
+                :disabled="currentSize(axis.dimension) >= axis.max"
+                @click="adjustDimension(axis.dimension, axis.step, axis.min, axis.max)"
+              >
+                <Icon
+                  :icon="axis.increase.icon"
+                  :size="16"
+                />
+              </button>
+            </template>
           </div>
-          <!-- 在独立窗口打开（浮动窗口内隐藏；关闭浮动窗口自动移回主窗口） -->
+          <!-- 在独立窗口打开："在独立窗口打开"（经 __toolCollection 的 Manager 调度；浮动窗口时整个头部已隐藏） -->
           <button
-            v-if="!isFloating"
             class="header-float"
             :title="i18n.toolCollectionPanel.openFloatingWindow"
             @click="openFloatingWindow"
           >
             <Icon
               icon="mdi:dock-window"
-              :size="14"
+              :size="16"
             />
           </button>
           <!-- 关闭按钮（仅底部面板模式显示） -->
@@ -100,7 +82,7 @@
           >
             <Icon
               icon="mdi:close"
-              :size="14"
+              :size="16"
             />
           </button>
         </div>
@@ -115,7 +97,7 @@
                 :key="tool.id"
                 class="tool-item"
                 :class="{ active: currentTool === tool.id, dragging: dragIndex === idx }"
-                :ref="(el) => { if (currentTool === tool.id) activeTabRef = el as HTMLButtonElement | null }"
+                :ref="(el) => { if (currentTool === tool.id) activeToolRef = el as HTMLButtonElement | null }"
                 draggable="true"
                 :title="tool.label"
                 @click="currentTool = tool.id"
@@ -131,8 +113,8 @@
                 <span class="tool-item-label">{{ tool.label }}</span>
               </button>
             </div>
-            <!-- 键盘导航提示 -->
-            <div class="tool-keyhint">←→ ↑↓</div>
+            <!-- 键盘导航提示："↑↓←→ 切换 · Ctrl+数字跳转" -->
+            <div class="tool-keyhint">{{ i18n.toolCollectionPanel.keyhint }}</div>
           </nav>
           <!-- 右侧工具内容区（动态组件，由 registry 驱动） -->
           <div class="tool-collection-content">
@@ -157,6 +139,13 @@
 import type { Plugin } from "siyuan"
 import { getFrontend } from "siyuan"
 import type { Ref } from "vue"
+import {
+  PANEL_HEIGHT_MAX,
+  PANEL_HEIGHT_MIN,
+  PANEL_WIDTH_MAX,
+  PANEL_WIDTH_MIN,
+  type PanelDimension,
+} from "./types"
 import type { ToolMeta } from "./types"
 import { Icon } from "@iconify/vue"
 import {
@@ -168,7 +157,7 @@ import {
 } from "vue"
 import { usePanelResize } from "./composables/usePanelResize"
 import { useDragResize } from "./composables/useDragResize"
-import { useTabReorder } from "./composables/useTabReorder"
+import { useToolReorder } from "./composables/useToolReorder"
 import { useToolNavigation } from "./composables/useToolNavigation"
 import {
   TOOL_LABEL_KEYS,
@@ -183,9 +172,8 @@ interface PanelI18n {
     wider: string
     shorter: string
     taller: string
-    prevTool: string
-    nextTool: string
     openFloatingWindow: string
+    keyhint: string
   }
 }
 
@@ -231,6 +219,47 @@ const openFloatingWindow = () => {
 const { panelWidth, panelHeight, panelStyle, adjustDimension, loadPersistedSize, saveHeight } = usePanelResize(props.plugin)
 const { onResizeStart } = useDragResize(panelHeight, saveHeight)
 
+/** 尺寸调整轴配置：宽度步长 ±80px、高度步长 ±10vh，边界常量定义于 types/index.ts */
+interface ResizeAxisButton {
+  icon: string
+  title: string
+}
+interface ResizeAxis {
+  dimension: PanelDimension
+  unit: "px" | "vh"
+  min: number
+  max: number
+  step: number
+  decrease: ResizeAxisButton
+  increase: ResizeAxisButton
+}
+
+const panelAxisTitles = i18n.toolCollectionPanel
+const resizeAxes: ResizeAxis[] = [
+  {
+    dimension: "width",
+    unit: "px",
+    min: PANEL_WIDTH_MIN,
+    max: PANEL_WIDTH_MAX,
+    step: 80,
+    decrease: { icon: "mdi:chevron-left", title: panelAxisTitles.narrower },
+    increase: { icon: "mdi:chevron-right", title: panelAxisTitles.wider },
+  },
+  {
+    dimension: "height",
+    unit: "vh",
+    min: PANEL_HEIGHT_MIN,
+    max: PANEL_HEIGHT_MAX,
+    step: 10,
+    decrease: { icon: "mdi:chevron-down", title: panelAxisTitles.shorter },
+    increase: { icon: "mdi:chevron-up", title: panelAxisTitles.taller },
+  },
+]
+
+/** 当前维度数值（供按钮禁用态与标签渲染） */
+const currentSize = (dimension: PanelDimension) =>
+  dimension === "width" ? panelWidth.value : panelHeight.value
+
 // ==================== 工具注册表（由 registry.ts 驱动） ====================
 const tools = ref<ToolMeta[]>(TOOL_REGISTRY.map((t) => ({
   ...t,
@@ -238,7 +267,7 @@ const tools = ref<ToolMeta[]>(TOOL_REGISTRY.map((t) => ({
 })))
 
 // ==================== 工具拖拽排序 ====================
-const { dragIndex, onDragStart, onDragOver, onDrop, onDragEnd } = useTabReorder(tools, props.plugin)
+const { dragIndex, onDragStart, onDragOver, onDrop, onDragEnd } = useToolReorder(tools, props.plugin)
 
 // ==================== 工具导航 + 键盘交互 ====================
 // tab 模式无 visible prop，键盘交互视为始终可见
@@ -254,13 +283,13 @@ const currentToolMeta = computed(() =>
 )
 
 // 当前激活的工具项按钮 ref（打开时聚焦于此，兼顾键盘上下文与无障碍）
-const activeTabRef = ref<HTMLButtonElement | null>(null)
+const activeToolRef = ref<HTMLButtonElement | null>(null)
 
 watch(
   () => props.visible?.value,
   (val) => {
     if (val) {
-      nextTick(() => activeTabRef.value?.focus())
+      nextTick(() => activeToolRef.value?.focus())
     }
   },
 )

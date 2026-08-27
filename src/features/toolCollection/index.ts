@@ -1,7 +1,7 @@
 /**
  * 工具合集功能模块
  *
- * 底部面板集成多种实用小工具，通过 Tab 标签页切换。
+ * 底部面板集成多种实用小工具，左侧工具列表选择工具（支持键盘导航与拖拽排序）。
  * 支持双形态承载：底部面板（document.body 挂载）+ 独立窗口（addTab + openWindow 官方 API）。
  * 遵循跨功能通信规则：通过 App.vue 中枢调度 + emitCustomEvent 事件总线
  */
@@ -13,7 +13,6 @@ import {
 } from "vue"
 import ToolCollectionPanel from "./index.vue"
 import { ToolCollectionManager } from "./types"
-import "./styles/index.scss"
 
 // ============================================================
 // 公开 API（供 App.vue 中枢调度调用）

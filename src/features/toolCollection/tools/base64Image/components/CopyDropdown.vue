@@ -74,5 +74,6 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside))
 </script>
 
 <style scoped lang="scss">
+@use "../styles/CopyDropdown.scss";
 @use "../styles/index.scss";
 </style>

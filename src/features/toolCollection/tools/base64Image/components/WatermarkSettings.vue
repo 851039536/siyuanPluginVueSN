@@ -100,5 +100,6 @@ const update = (
 </script>
 
 <style scoped lang="scss">
+@use "../styles/WatermarkSettings.scss";
 @use "../styles/index.scss";
 </style>

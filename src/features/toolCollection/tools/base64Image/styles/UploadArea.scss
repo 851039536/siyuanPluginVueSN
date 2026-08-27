@@ -1,0 +1,37 @@
+/** 上传区（UploadArea 组件专属样式） */
+@use '@/variables.scss' as *;
+
+.upload-section {
+  margin-bottom: $spacing-4;
+
+  .upload-area {
+    border: 2px dashed var(--b3-theme-surface-lighter);
+    border-radius: $radius-md;
+    padding: $spacing-8;
+    text-align: center;
+    background: var(--b3-theme-surface);
+
+    &.drag-over {
+      border-color: var(--b3-theme-primary);
+      background: var(--b3-theme-primary-container);
+    }
+
+    .upload-content {
+      .upload-icon {
+        color: var(--b3-theme-on-surface-variant);
+        margin-bottom: $spacing-3;
+      }
+
+      .upload-text {
+        // 上传区操作提示（辅助文字）
+        margin: 0 0 $spacing-3 0;
+        color: var(--b3-theme-on-surface-variant);
+        font-size: $font-size-2xs;
+      }
+    }
+  }
+
+  .hidden-file-input {
+    display: none;
+  }
+}

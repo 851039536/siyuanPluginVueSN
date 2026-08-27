@@ -54,5 +54,6 @@ const ratioClass = computed(() => {
 </script>
 
 <style scoped lang="scss">
+@use "../styles/StatsSection.scss";
 @use "../styles/index.scss";
 </style>

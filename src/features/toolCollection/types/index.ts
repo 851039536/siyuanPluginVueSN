@@ -32,6 +32,22 @@ export interface ToolMeta {
 /** 工具合集自定义页签类型 */
 export const TOOL_COLLECTION_TAB_TYPE = "tool-collection-tab"
 
+/** 面板可调维度 */
+export type PanelDimension = "width" | "height"
+
+/**
+ * 面板尺寸边界与样式常量
+ * 共用于三处：index.vue 头部调整按钮组、usePanelResize 持久化校验、useDragResize 拖拽钳制
+ */
+export const PANEL_WIDTH_MIN = 500
+export const PANEL_WIDTH_MAX = 1600
+/** 单位 vh */
+export const PANEL_HEIGHT_MIN = 30
+/** 单位 vh */
+export const PANEL_HEIGHT_MAX = 100
+/** overlay 模式面板最大高度（避让状态栏与底部留白）；styles/index.scss 中同值需保持一致 */
+export const PANEL_MAX_HEIGHT = "calc(88vh - 36px)"
+
 /** 自定义 Tab 模型实例的最小结构（init 回调的 this） */
 interface TabCustom {
   element?: Element

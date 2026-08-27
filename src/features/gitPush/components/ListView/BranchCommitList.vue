@@ -90,20 +90,13 @@
         >{{ entry.message }}</span>
         <span class="bcl-meta">
           <span class="bcl-author">{{ entry.author }}</span>
-          <button
-            class="vp-btn vp-btn--ghost vp-btn--sm bcl-fix-btn"
-            :title="i18n.ruleFixOpen"
-            @click.stop="$emit('fixCommit', entry)"
-          >
-            <Icon
-              icon="mdi:pencil-outline"
-              height="12"
-            />
-          </button>
           <span
             class="bcl-date"
             :title="entry.date"
-          >{{ entry.relativeDate }}</span>
+          >
+            <span class="bcl-date-relative">{{ entry.relativeDate }}</span>
+            <span class="bcl-date-absolute">{{ formatDate(entry.date) }}</span>
+          </span>
         </span>
       </div>
     </div>
@@ -145,6 +138,15 @@ const filteredEntries = computed(() => {
 
 function onCountChange() {
   emit("reloadCommitLog", displayCount.value)
+}
+
+/** 将 ISO 绝对时间格式化为 YYYY-MM-DD HH:mm */
+function formatDate(iso: string): string {
+  if (!iso) return ""
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 </script>
 

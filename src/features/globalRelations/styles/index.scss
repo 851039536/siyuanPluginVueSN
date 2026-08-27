@@ -1,6 +1,9 @@
 // 全局关系列表面板样式
 // 对齐项目 compact 风格：基准字号继承 .vp-dock-root / Modal 容器 12px，使用思源 CSS 变量
 
+// 双向关系强调色（与 icons.ts globalRelations 图标色保持一致）
+$gr-accent: #06b6d4;
+
 .global-relations-panel {
   display: flex;
   flex-direction: column;
@@ -117,7 +120,7 @@
   }
 
   &--bidirectional .gr-stat-card__value {
-    color: #06b6d4;
+    color: $gr-accent;
   }
 }
 
@@ -370,9 +373,9 @@
   white-space: nowrap;
 
   &--bidirectional {
-    color: #06b6d4;
-    background: color-mix(in srgb, #06b6d4 14%, transparent);
-    border: 1px solid color-mix(in srgb, #06b6d4 40%, transparent);
+    color: $gr-accent;
+    background: color-mix(in srgb, $gr-accent 14%, transparent);
+    border: 1px solid color-mix(in srgb, $gr-accent 40%, transparent);
   }
 
   &--count {

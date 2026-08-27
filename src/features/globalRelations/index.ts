@@ -4,7 +4,7 @@ import { GlobalRelationsManager } from "./types"
 
 /**
  * 注册全局关系列表功能
- * 返回管理器实例，供插件卸载时调用 destroy() 清理 Modal 与命令资源。
+ * 在 register 内部自挂载管理器实例，供 onunload 经 DESTROYABLE_KEYS 统一销毁 Modal 与命令资源。
  */
 export function registerGlobalRelations(plugin: Plugin): GlobalRelationsManager {
   const manager = new GlobalRelationsManager(plugin)
@@ -19,5 +19,7 @@ export function registerGlobalRelations(plugin: Plugin): GlobalRelationsManager 
     },
   })
 
+  // 实例自挂载（AGENTS.md 强制：register 内部挂载，字段名同步加入 DESTROYABLE_KEYS）
+  ;(plugin as any).__globalRelations = manager
   return manager
 }

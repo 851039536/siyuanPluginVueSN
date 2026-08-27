@@ -105,62 +105,44 @@
           </button>
         </div>
 
-        <!-- Tab 标签栏（左右箭头 + 可滚动 Tab 条） -->
-        <div class="tool-collection-tab-bar">
-          <!-- 按钮提示："上一个工具 (←)" -->
-          <button
-            class="tab-nav-btn tab-nav-left"
-            :title="i18n.toolCollectionPanel.prevTool"
-            @click="prevTool"
-          >
-            <Icon
-              icon="mdi:arrow-left"
-              :size="12"
+        <!-- 主内容区：左侧工具导航栏 + 右侧工具视图（横向双栏布局） -->
+        <div class="tool-collection-body">
+          <!-- 左侧工具导航栏（图标 + 名称竖排列表，可滚动 / 可拖拽排序 / 键盘导航） -->
+          <nav class="tool-collection-sidebar">
+            <div class="tool-list">
+              <button
+                v-for="(tool, idx) in tools"
+                :key="tool.id"
+                class="tool-item"
+                :class="{ active: currentTool === tool.id, dragging: dragIndex === idx }"
+                :ref="(el) => { if (currentTool === tool.id) activeTabRef = el as HTMLButtonElement | null }"
+                draggable="true"
+                :title="tool.label"
+                @click="currentTool = tool.id"
+                @dragstart="onDragStart(idx)"
+                @dragover="onDragOver"
+                @drop="onDrop(idx)"
+                @dragend="onDragEnd"
+              >
+                <Icon
+                  :icon="tool.icon"
+                  :size="14"
+                />
+                <span class="tool-item-label">{{ tool.label }}</span>
+              </button>
+            </div>
+            <!-- 键盘导航提示 -->
+            <div class="tool-keyhint">←→ ↑↓</div>
+          </nav>
+          <!-- 右侧工具内容区（动态组件，由 registry 驱动） -->
+          <div class="tool-collection-content">
+            <component
+              :is="currentToolMeta.component"
+              :key="currentTool"
+              :plugin="plugin"
+              :i18n="plugin.i18n"
             />
-          </button>
-          <div class="tool-collection-tabs">
-            <button
-              v-for="(tool, idx) in tools"
-              :key="tool.id"
-              class="tab-btn"
-              :class="{ active: currentTool === tool.id, dragging: dragIndex === idx }"
-              :ref="(el) => { if (currentTool === tool.id) activeTabRef = el as HTMLButtonElement | null }"
-              draggable="true"
-              @click="currentTool = tool.id"
-              @dragstart="onDragStart(idx)"
-              @dragover="onDragOver"
-              @drop="onDrop(idx)"
-              @dragend="onDragEnd"
-            >
-              <Icon
-                :icon="tool.icon"
-                :size="14"
-              />
-              {{ tool.label }}
-            </button>
           </div>
-          <!-- 按钮提示："下一个工具 (→)" -->
-          <button
-            class="tab-nav-btn tab-nav-right"
-            :title="i18n.toolCollectionPanel.nextTool"
-            @click="nextTool"
-          >
-            <Icon
-              icon="mdi:arrow-right"
-              :size="12"
-            />
-          </button>
-          <span class="tab-keyhint">← →</span>
-        </div>
-
-        <!-- 工具内容区（动态组件，由 registry 驱动） -->
-        <div class="tool-collection-content">
-          <component
-            :is="currentToolMeta.component"
-            :key="currentTool"
-            :plugin="plugin"
-            :i18n="plugin.i18n"
-          />
         </div>
       </div>
     </div>
@@ -170,7 +152,7 @@
 <script setup lang="ts">
 /**
  * 工具合集 - 主组件（overlay 底部面板 / tab 独立页签双形态）
- * Tab 切换多个实用小工具，支持键盘导航、面板尺寸持久化与独立窗口承载
+ * 左侧工具列表 + 右侧内容双栏布局，支持键盘导航、面板尺寸持久化与独立窗口承载
  */
 import type { Plugin } from "siyuan"
 import { getFrontend } from "siyuan"
@@ -255,13 +237,13 @@ const tools = ref<ToolMeta[]>(TOOL_REGISTRY.map((t) => ({
   label: TOOL_LABEL_KEYS[t.id]?.(props.plugin.i18n) ?? t.id,
 })))
 
-// ==================== Tab 拖拽排序 ====================
+// ==================== 工具拖拽排序 ====================
 const { dragIndex, onDragStart, onDragOver, onDrop, onDragEnd } = useTabReorder(tools, props.plugin)
 
-// ==================== Tab 导航 + 键盘交互 ====================
+// ==================== 工具导航 + 键盘交互 ====================
 // tab 模式无 visible prop，键盘交互视为始终可见
 const visibleForNav = computed(() => props.visible?.value ?? true)
-const { currentTool, prevTool, nextTool, handleKeydown } = useToolNavigation(
+const { currentTool, handleKeydown } = useToolNavigation(
   tools,
   visibleForNav,
   close
@@ -271,7 +253,7 @@ const currentToolMeta = computed(() =>
   tools.value.find((t) => t.id === currentTool.value) ?? tools.value[0]
 )
 
-// 当前激活的 Tab 按钮 ref（打开时聚焦于此，兼顾键盘上下文与无障碍）
+// 当前激活的工具项按钮 ref（打开时聚焦于此，兼顾键盘上下文与无障碍）
 const activeTabRef = ref<HTMLButtonElement | null>(null)
 
 watch(

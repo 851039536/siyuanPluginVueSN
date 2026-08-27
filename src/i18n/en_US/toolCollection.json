@@ -11,8 +11,8 @@
     "wider": "Wider",
     "shorter": "Shorter",
     "taller": "Taller",
-    "prevTool": "Previous tool (←)",
-    "nextTool": "Next tool (→)",
+    "prevTool": "Previous tool (← / ↑)",
+    "nextTool": "Next tool (→ / ↓)",
     "openFloatingWindow": "Open in floating window"
   },
   "pdfViewer": {

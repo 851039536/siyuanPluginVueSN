@@ -1,6 +1,6 @@
 /**
- * 工具合集 - Tab 导航与键盘交互 composable
- * 封装循环切换、键盘监听（Escape/ArrowLeft/ArrowRight）
+ * 工具合集 - 工具导航与键盘交互 composable
+ * 封装循环切换、键盘监听（Escape/ArrowLeft/ArrowRight/ArrowUp/ArrowDown）
  */
 import type { Ref } from "vue"
 import type { ToolMeta } from "../types"
@@ -52,10 +52,12 @@ export function useToolNavigation(
     if (e.key === "Escape") {
       e.preventDefault()
       close()
-    } else if (e.key === "ArrowLeft") {
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      // ← / ↑ 均为上一个工具（纵向列表布局下 ↑↓ 为自然导航方向）
       e.preventDefault()
       prevTool()
-    } else if (e.key === "ArrowRight") {
+    } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      // → / ↓ 均为下一个工具
       e.preventDefault()
       nextTool()
     } else if (e.key === "Home") {

@@ -5,6 +5,7 @@
  * 通过共享 Modal 辅助工具创建弹窗界面。
  */
 import type { Plugin } from "siyuan"
+import type { IRefFile } from "@/api"
 import type { ModalAppInstance } from "@/utils/vueAppHelper"
 import { createModalVueApp } from "@/utils/vueAppHelper"
 import GlobalRelationsPanel from "../index.vue"
@@ -26,18 +27,48 @@ export interface GlobalRelationsI18n {
   bidirectionalCount: string
   unidirectionalCount: string
   refCount: string
-  source: string
-  target: string
   anchorText: string
   backlinkDocs: string
   noAnchorText: string
   noBacklinkDocs: string
   close: string
-  openDoc: string
   bidirectionalBadge: string
-  rows: string
   loadDetailFailed: string
+  truncatedHint: string
 }
+
+/** 单条文档间关系记录 */
+export interface GlobalRelationRow {
+  /** 引用方文档 ID */
+  sourceId: string
+  /** 引用方文档标题 */
+  sourceName: string
+  /** 引用方文档路径 */
+  sourceHPath: string
+  /** 被引用方文档 ID */
+  targetId: string
+  /** 被引用方文档标题 */
+  targetName: string
+  /** 被引用方文档路径 */
+  targetHPath: string
+  /** 引用次数 */
+  refCount: number
+  /** 是否为双向引用（对方也引用了本方） */
+  bidirectional: boolean
+  /** 引用锚文本详情（按需加载） */
+  contents?: string[]
+  /** 反向链接文档列表（getBacklink2 按需加载，复用 @/api IRefFile） */
+  backlinkDocs?: IRefFile[]
+  /** 详情加载中 */
+  detailsLoading?: boolean
+  /** 详情已展开 */
+  detailsExpanded?: boolean
+  /** 详情加载失败标记 */
+  detailsFailed?: boolean
+}
+
+/** 方向筛选类型 */
+export type DirectionFilter = "all" | "bidirectional" | "unidirectional"
 
 /**
  * 全局关系列表管理器
@@ -54,7 +85,6 @@ export class GlobalRelationsManager {
       getCloseHandler: () => this.close,
       buildProps: () => ({
         i18n: (plugin.i18n as unknown as { globalRelations?: GlobalRelationsI18n }).globalRelations || {},
-        plugin,
         onClose: this.close,
       }),
     })

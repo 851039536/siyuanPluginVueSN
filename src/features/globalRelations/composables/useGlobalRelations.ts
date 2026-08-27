@@ -12,58 +12,23 @@ import {
 import {
   getBacklink,
   sql,
+  type IRefFile,
 } from "@/api"
+import { escapeSql } from "@/utils/sqlHelpers"
 import { getErrorMessage } from "@/utils/stringUtils"
+import type {
+  DirectionFilter,
+  GlobalRelationsI18n,
+  GlobalRelationRow,
+} from "../types"
 
-/** 反向链接文档条目（getBacklink2 返回） */
-export interface BacklinkDoc {
-  id: string
-  name: string
-  hPath: string
-  box: string
-}
-
-/** 单条文档间关系记录 */
-export interface GlobalRelationRow {
-  /** 引用方文档 ID */
-  sourceId: string
-  /** 引用方文档标题 */
-  sourceName: string
-  /** 引用方文档路径 */
-  sourceHPath: string
-  /** 被引用方文档 ID */
-  targetId: string
-  /** 被引用方文档标题 */
-  targetName: string
-  /** 被引用方文档路径 */
-  targetHPath: string
-  /** 引用次数 */
-  refCount: number
-  /** 是否为双向引用（对方也引用了本方） */
-  bidirectional: boolean
-  /** 引用锚文本详情（按需加载） */
-  contents?: string[]
-  /** 反向链接文档列表（getBacklink2 按需加载） */
-  backlinkDocs?: BacklinkDoc[]
-  /** 详情加载中 */
-  detailsLoading?: boolean
-  /** 详情已展开 */
-  detailsExpanded?: boolean
-  /** 详情加载失败标记 */
-  detailsFailed?: boolean
-}
-
-export type DirectionFilter = "all" | "bidirectional" | "unidirectional"
-
-/** SQL 字符串字面量转义（防御性，防止 id 中的单引号破坏查询） */
-function escapeSql(value: string): string {
-  return value.replace(/'/g, "''")
-}
+/** 主列表最大行数（超出后截断并提示） */
+const MAX_RELATION_ROWS = 500
 
 /**
  * 解析 refs.content 字段：可能是锚文本明文，也可能是 JSON 字符串/数组/对象
  */
-export function parseAnchorText(raw: unknown): string {
+function parseAnchorText(raw: unknown): string {
   if (raw === null || raw === undefined) return ""
   if (typeof raw !== "string") {
     return String(raw)
@@ -91,6 +56,12 @@ export function parseAnchorText(raw: unknown): string {
   }
 }
 
+/** 主列表查询结果：关系行 + 是否因超限被截断 */
+interface GlobalRelationsQueryResult {
+  rows: GlobalRelationRow[]
+  truncated: boolean
+}
+
 /**
  * 查询全局文档间双向链接关系（SQL refs 表按文档对聚合）
  *
@@ -98,8 +69,10 @@ export function parseAnchorText(raw: unknown): string {
  *   block_id / root_id             → 引用方块 / 引用方文档
  *   def_block_id / def_block_root_id → 被引用块 / 被引用方文档
  * blocks 表中文档块（type='d'）的标题存于 content 字段，name 为空。
+ *
+ * 多取一条（LIMIT + 1）用于判断是否超过 MAX_RELATION_ROWS，超限则截断并标记 truncated。
  */
-async function queryGlobalRelations(): Promise<GlobalRelationRow[]> {
+async function queryGlobalRelations(): Promise<GlobalRelationsQueryResult> {
   // 按文档对聚合跨文档引用，EXISTS 判断是否双向引用。
   const stmt = `
     SELECT
@@ -121,10 +94,11 @@ async function queryGlobalRelations(): Promise<GlobalRelationRow[]> {
     WHERE r.root_id != r.def_block_root_id
     GROUP BY r.root_id, r.def_block_root_id
     ORDER BY refCount DESC, sourceName ASC
+    LIMIT ${MAX_RELATION_ROWS + 1}
   `
   const data = await sql(stmt)
-  if (!Array.isArray(data)) return []
-  return (data as Array<Record<string, unknown>>).map((item) => ({
+  if (!Array.isArray(data)) return { rows: [], truncated: false }
+  const mapped = (data as Array<Record<string, unknown>>).map((item) => ({
     sourceId: String(item.sourceId ?? ""),
     sourceName: String(item.sourceName ?? ""),
     sourceHPath: String(item.sourceHPath ?? ""),
@@ -134,6 +108,11 @@ async function queryGlobalRelations(): Promise<GlobalRelationRow[]> {
     refCount: Number(item.refCount ?? 0),
     bidirectional: item.bidirectional === 1 || item.bidirectional === "1" || item.bidirectional === true,
   }))
+  const truncated = mapped.length > MAX_RELATION_ROWS
+  return {
+    rows: truncated ? mapped.slice(0, MAX_RELATION_ROWS) : mapped,
+    truncated,
+  }
 }
 
 /**
@@ -162,11 +141,11 @@ async function queryRelationContents(
  * 查询某个文档的反向链接文档列表（getBacklink2 官方 API）
  * 合并 backlinks + backmentions 并按 id 去重，与思源前端反链面板同源。
  */
-async function queryBacklinkDocs(targetId: string): Promise<BacklinkDoc[]> {
+async function queryBacklinkDocs(targetId: string): Promise<IRefFile[]> {
   if (!targetId) return []
   const res = await getBacklink(targetId)
   const seen = new Set<string>()
-  const docs: BacklinkDoc[] = []
+  const docs: IRefFile[] = []
   const files = [
     ...(res?.backlinks ?? []),
     ...(res?.backmentions ?? []),
@@ -185,13 +164,14 @@ async function queryBacklinkDocs(targetId: string): Promise<BacklinkDoc[]> {
 }
 
 export function useGlobalRelations(
-  i18n: Record<string, string>,
+  i18n: GlobalRelationsI18n,
 ) {
   const loading = ref(false)
   const error = ref("")
   const rows = ref<GlobalRelationRow[]>([])
   const searchQuery = ref("")
   const directionFilter = ref<DirectionFilter>("all")
+  const truncated = ref(false)
 
   // 关系数量统计
   const stats = computed(() => {
@@ -238,9 +218,11 @@ export function useGlobalRelations(
     loading.value = true
     error.value = ""
     try {
-      rows.value = await queryGlobalRelations()
+      const result = await queryGlobalRelations()
+      rows.value = result.rows
+      truncated.value = result.truncated
     } catch (e: unknown) {
-      error.value = getErrorMessage(e) || i18n.loadFailed || "加载失败"
+      error.value = getErrorMessage(e) || i18n.loadFailed
       console.error("[globalRelations] 查询全局关系失败:", e)
     } finally {
       loading.value = false
@@ -289,11 +271,11 @@ export function useGlobalRelations(
   return {
     loading,
     error,
-    rows,
     searchQuery,
     directionFilter,
     stats,
     filtered,
+    truncated,
     refresh,
     toggleDetails,
     openDoc,

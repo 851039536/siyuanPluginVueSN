@@ -17,16 +17,13 @@
     "bidirectionalCount": "Bidirectional",
     "unidirectionalCount": "Unidirectional",
     "refCount": "Refs",
-    "source": "Source",
-    "target": "Target",
     "anchorText": "Anchor Text",
     "backlinkDocs": "Backlink Documents",
     "noAnchorText": "No anchor text",
     "noBacklinkDocs": "No backlink documents",
     "close": "Close",
-    "openDoc": "Open Document",
     "bidirectionalBadge": "Bidirectional",
-    "rows": "rows",
-    "loadDetailFailed": "Failed to load details or no data"
+    "loadDetailFailed": "Failed to load details or no data",
+    "truncatedHint": "Showing only the top 500 relations by reference count"
   }
 }

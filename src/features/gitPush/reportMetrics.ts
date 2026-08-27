@@ -109,7 +109,6 @@ interface AuthorAgg {
   files: Set<string>
   /** 文件 → 修改次数（派生 Top 修改文件） */
   fileMods: Map<string, number>
-  days: Set<string>
   firstDate: number
   lastDate: number
   /** 最早提交 ISO（保留原始格式用于展示活跃时间范围） */
@@ -149,7 +148,7 @@ export function aggregateAuthorStats(commits: NumstatCommit[]): AuthorReportRow[
     if (!a) {
       a = {
         commits: 0, added: 0, deleted: 0, files: new Set(), fileMods: new Map(),
-        days: new Set(), firstDate: 0, lastDate: 0, firstIso: "", lastIso: "",
+        firstDate: 0, lastDate: 0, firstIso: "", lastIso: "",
       }
       map.set(c.author, a)
     }
@@ -158,7 +157,6 @@ export function aggregateAuthorStats(commits: NumstatCommit[]): AuthorReportRow[
     if (ms > 0) {
       if (a.firstDate === 0 || ms < a.firstDate) { a.firstDate = ms; a.firstIso = c.date }
       if (ms > a.lastDate) { a.lastDate = ms; a.lastIso = c.date }
-      a.days.add(c.date.slice(0, 10))
     }
     for (const f of c.files) {
       a.added += f.added
@@ -277,10 +275,12 @@ function hourOfDay(iso: string): number {
 export function aggregateDailyStats(commits: NumstatCommit[]): DailyCommitStat[] {
   const byDate = new Map<string, { open: number, close: number, count: number }>()
   for (const c of commits) {
-    const dateKey = c.date.slice(0, 10)
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) continue
-    const h = hourOfDay(c.date)
-    if (h < 0) continue
+    const t = Date.parse(c.date)
+    if (Number.isNaN(t)) continue
+    const d = new Date(t)
+    // 本地日历日口径（与 weekday/streak 统计统一，避免提交时区与查看时区不一致导致跨日错位）
+    const dateKey = formatLocalDate(d)
+    const h = d.getHours() + d.getMinutes() / 60
     let agg = byDate.get(dateKey)
     if (!agg) {
       agg = { open: h, close: h, count: 0 }
@@ -349,7 +349,8 @@ export function maxCommitStreak(commits: NumstatCommit[]): number {
   for (const c of commits) {
     const t = parseIsoMs(c.date)
     if (t <= 0) continue
-    days.add(new Date(t).toISOString().slice(0, 10))
+    // 本地日历日去重（与 aggregateWeekdayStats/aggregateDailyStats 口径统一；toISOString 取 UTC 日会在非零时区跨日错位）
+    days.add(formatLocalDate(new Date(t)))
   }
   if (days.size === 0) return 0
   const sorted = [...days].sort()
@@ -357,7 +358,8 @@ export function maxCommitStreak(commits: NumstatCommit[]): number {
   let cur = 1
   for (let i = 1; i < sorted.length; i++) {
     const gap = (Date.parse(sorted[i]) - Date.parse(sorted[i - 1])) / (24 * 60 * 60 * 1000)
-    if (gap === 1) {
+    // gap < 2 视为相邻日历日（DST 时区相邻日跨度可能为 23/25h，避免严格 === 1 误断连续）
+    if (gap < 2) {
       cur++
       if (cur > best) best = cur
     } else {
@@ -442,22 +444,6 @@ export function countFileLines(project: GitProject, filePath: string): number | 
   } catch {
     return null
   }
-}
-
-/**
- * 批量统计已跟踪文件的总行数（当前工作区存量，与 git log 增删增量解耦）。
- * 复用 countFileLines 的统计口径：扩展名黑名单过滤 + 2MB/二进制/读失败跳过。
- * 输入来自 git ls-files，已排除未跟踪与被 .gitignore 忽略的文件，与仓库视图一致。
- */
-export function countTrackedFilesLines(project: GitProject, files: string[], extensions?: string[]): number {
-  let total = 0
-  for (const f of files) {
-    if (!shouldIncludeFile(f, extensions)) continue
-    const lines = countFileLines(project, f)
-    if (lines === null) continue
-    total += lines
-  }
-  return total
 }
 
 /**
@@ -551,6 +537,11 @@ export function debtSeverity(riskScore: number): DebtSeverity {
 /** 技术债务问题总数（严重度计数合计；面板 Tab 徽章与 TechDebtSection 表头徽章/空态共用，消除双份 reduce） */
 export function countDebtFiles(debtSummary: Record<DebtSeverity, number>): number {
   return Object.values(debtSummary).reduce((sum, n) => sum + n, 0)
+}
+
+/** 严重度零值计数（buildReportData 与 buildEmptyReport 共用，消除双份手写对象） */
+function emptyDebtSummary(): Record<DebtSeverity, number> {
+  return { severe: 0, high: 0, medium: 0, low: 0 }
 }
 
 // ── 代码热点 ──
@@ -687,8 +678,8 @@ export function buildReportData(
   // 分母防除零；analyzedFiles 使用真实文件数（空仓库应展示 0 而非 1）
   const totalFiles = rankedFiles.length
   const pctDenominator = totalFiles || 1
-  const summary: HotspotFileRow["level"][] = ["hot", "warm", "cool", "cold"]
-  const hotspotSummary = summary.map((level) => {
+  // 复用 HOTSPOT_LEVEL_ORDER 单一数据源（buildEmptyReport 同源），避免手写数组漂移
+  const hotspotSummary = HOTSPOT_LEVEL_ORDER.map((level) => {
     const count = hotspotRows.filter((r) => r.level === level).length
     return { level, count, pct: Math.round((count / pctDenominator) * 100) }
   })
@@ -741,7 +732,7 @@ export function buildEmptyReport(project: GitProject, rangeLabel: string): CodeR
     teamOverview: { memberCount: 0, totalCommits: 0, totalLines: 0, topAuthor: "" },
     authors: [],
     debtFiles: [],
-    debtSummary: { severe: 0, high: 0, medium: 0, low: 0 },
+    debtSummary: emptyDebtSummary(),
     hotspots: [],
     hotspotSummary: HOTSPOT_LEVEL_ORDER.map((level) => ({ level, count: 0, pct: 0 })),
     suggestionKey: "",

@@ -141,7 +141,7 @@ function activeDaysBetween(firstMs: number, lastMs: number): number {
 }
 
 /** 聚合作者统计（提交数/行数/活跃天数/文件数；返回数组按提交数降序） */
-export function aggregateAuthorStats(commits: NumstatCommit[]): AuthorReportRow[] {
+function aggregateAuthorStats(commits: NumstatCommit[]): AuthorReportRow[] {
   const map = new Map<string, AuthorAgg>()
   for (const c of commits) {
     let a = map.get(c.author)
@@ -223,8 +223,14 @@ export function shouldIncludeFile(filePath: string, extensions?: string[]): bool
   return !extensions.some(ext => lower.endsWith(ext.toLowerCase()))
 }
 
+/** 行数增量（新增/删除行） */
+interface LineDelta {
+  added: number
+  deleted: number
+}
+
 /** 从 NumstatCommit[] 汇总单项目总增删行数（extensions 可选黑名单排除过滤） */
-export function sumProjectLines(commits: NumstatCommit[], extensions?: string[]): { added: number, deleted: number } {
+export function sumProjectLines(commits: NumstatCommit[], extensions?: string[]): LineDelta {
   let added = 0
   let deleted = 0
   for (const c of commits) {
@@ -238,8 +244,8 @@ export function sumProjectLines(commits: NumstatCommit[], extensions?: string[])
 }
 
 /** 从 NumstatCommit[] 汇总每人增删行数（Map<作者名, {added, deleted}>，extensions 可选黑名单排除过滤） */
-export function sumAuthorLines(commits: NumstatCommit[], extensions?: string[]): Map<string, { added: number, deleted: number }> {
-  const map = new Map<string, { added: number, deleted: number }>()
+export function sumAuthorLines(commits: NumstatCommit[], extensions?: string[]): Map<string, LineDelta> {
+  const map = new Map<string, LineDelta>()
   for (const c of commits) {
     let agg = map.get(c.author)
     if (!agg) {
@@ -258,7 +264,7 @@ export function sumAuthorLines(commits: NumstatCommit[], extensions?: string[]):
 // ── K 线图：按日期聚合每日提交统计 ──
 
 /** 影线外扩量（小时）：实体上下各留 0.5h 形成 K 线影线视觉 */
-export const WICK_PAD_HOURS = 0.5
+const WICK_PAD_HOURS = 0.5
 
 /** 解析 ISO 时刻为一天中的小时小数（0~24），解析失败返回 -1 */
 function hourOfDay(iso: string): number {
@@ -272,7 +278,7 @@ function hourOfDay(iso: string): number {
  * 从 NumstatCommit[] 按日期聚合每日提交统计（单次 O(n) 遍历，输出按日期升序）。
  * 忽略无法解析的 ISO 时间戳条目；无有效提交时返回空数组。
  */
-export function aggregateDailyStats(commits: NumstatCommit[]): DailyCommitStat[] {
+function aggregateDailyStats(commits: NumstatCommit[]): DailyCommitStat[] {
   const byDate = new Map<string, { open: number, close: number, count: number }>()
   for (const c of commits) {
     const t = Date.parse(c.date)
@@ -312,7 +318,7 @@ const HOUR_BUCKET_STEP = 2
  * 按星期聚合提交分布（单次 O(n) 遍历，输出固定 7 项，下标 0=周日 ~ 6=周六，与 Date.getDay 对齐）。
  * 解析失败的日期条目忽略；无提交的星期 count 保持 0。
  */
-export function aggregateWeekdayStats(commits: NumstatCommit[]): WeekdayStat[] {
+function aggregateWeekdayStats(commits: NumstatCommit[]): WeekdayStat[] {
   const counts = new Array<number>(7).fill(0)
   for (const c of commits) {
     const t = parseIsoMs(c.date)
@@ -326,7 +332,7 @@ export function aggregateWeekdayStats(commits: NumstatCommit[]): WeekdayStat[] {
  * 按 2 小时分桶聚合时段分布（单次 O(n) 遍历，输出固定 12 桶，每桶 [start, start+2)）。
  * 解析失败/越界时刻忽略；无提交的时段 count 保持 0。
  */
-export function aggregateHourlyStats(commits: NumstatCommit[]): HourBucketStat[] {
+function aggregateHourlyStats(commits: NumstatCommit[]): HourBucketStat[] {
   const counts = new Array<number>(24 / HOUR_BUCKET_STEP).fill(0)
   for (const c of commits) {
     const h = hourOfDay(c.date)
@@ -344,7 +350,7 @@ export function aggregateHourlyStats(commits: NumstatCommit[]): HourBucketStat[]
  * 最长连续提交天数（按本地日历日去重后识别最大连续天数，O(n log n)）。
  * 思路：日期集合排序后相邻两日相差 1 天则 streak 递增，否则重置；无提交返回 0。
  */
-export function maxCommitStreak(commits: NumstatCommit[]): number {
+function maxCommitStreak(commits: NumstatCommit[]): number {
   const days = new Set<string>()
   for (const c of commits) {
     const t = parseIsoMs(c.date)
@@ -369,14 +375,24 @@ export function maxCommitStreak(commits: NumstatCommit[]): number {
   return best
 }
 
-/** 提交节奏空结构（git 失败/零提交时报告填充用） */
-export function emptyRhythmStats(): CommitRhythmStats {
-  const weekday = Array.from({ length: 7 }, (_, dow) => ({ dow, count: 0 }))
-  const hourly = Array.from({ length: 24 / HOUR_BUCKET_STEP }, (_, i) => ({
+/** 7 项星期空桶（dow 0=周日 ~ 6=周六，count 全 0） */
+function emptyWeekdayBuckets(): WeekdayStat[] {
+  return Array.from({ length: 7 }, (_, dow) => ({ dow, count: 0 }))
+}
+
+/** 12 项时段空桶（每桶 2 小时，count 全 0） */
+function emptyHourBuckets(): HourBucketStat[] {
+  return Array.from({ length: 24 / HOUR_BUCKET_STEP }, (_, i) => ({
     start: i * HOUR_BUCKET_STEP,
     end: (i + 1) * HOUR_BUCKET_STEP,
     count: 0,
   }))
+}
+
+/** 提交节奏空结构（git 失败/零提交时报告填充用） */
+function emptyRhythmStats(): CommitRhythmStats {
+  const weekday = emptyWeekdayBuckets()
+  const hourly = emptyHourBuckets()
   return { weekday, hourly, topWeekday: weekday[1], peakHours: hourly[0], maxStreak: 0 }
 }
 
@@ -384,7 +400,7 @@ export function emptyRhythmStats(): CommitRhythmStats {
  * 组装提交节奏聚合（星期分布 + 时段分布 + 最长连续提交 + 高峰时段 + 最活跃星期）。
  * 全部为 0 时：最活跃星期取周一（dow=1），高峰时段取首桶（0-2），避免 UI 索引越界。
  */
-export function buildRhythmStats(commits: NumstatCommit[]): CommitRhythmStats {
+function buildRhythmStats(commits: NumstatCommit[]): CommitRhythmStats {
   const weekday = aggregateWeekdayStats(commits)
   const hourly = aggregateHourlyStats(commits)
   const topWeekday = weekday.reduce((best, w) => (w.count > best.count ? w : best), weekday[1])
@@ -465,7 +481,7 @@ const DIFF_MAX_CHARS = 5000
  * 仅取最近 5 条提交的 patch，超长截断以控制 Modal 体积。
  * 返回 null 表示获取失败（文件不存在 / 二进制 / 命令失败）。
  */
-export function fetchFileDiff(project: GitProject, filePath: string): string | null {
+function fetchFileDiff(project: GitProject, filePath: string): string | null {
   try {
     const modules = getNodeProcessModules()
     if (!modules) return null
@@ -483,7 +499,7 @@ export function fetchFileDiff(project: GitProject, filePath: string): string | n
 }
 
 /** 判断仓库内文件当前是否仍存在于工作区（过滤 git 历史中已删除的"幽灵文件"） */
-export function fileExistsInRepo(project: GitProject, filePath: string): boolean {
+function fileExistsInRepo(project: GitProject, filePath: string): boolean {
   try {
     const modules = getNodeFsPathOs()
     const { fs, path } = modules || {}
@@ -495,7 +511,7 @@ export function fileExistsInRepo(project: GitProject, filePath: string): boolean
 }
 
 /** 判断是否为代码文件（排除 .md 文档：Markdown 不属于代码，不计入债务/热点/分析文件统计） */
-export function isCodeFile(filePath: string): boolean {
+function isCodeFile(filePath: string): boolean {
   return !filePath.toLowerCase().endsWith(".md")
 }
 
@@ -522,12 +538,12 @@ function recencyBonus(lastModified: string): number {
  * 风险评分（技术债务"评分"列）：sqrt(修改次数)*10 + 参与人数*6 + 近期修改加分，clamp 0~100。
  * sqrt 使 churn 边际收益递减，避免线性公式在活跃文件上过早饱和（modCount 25/40/100 仍可区分）。
  */
-export function debtRiskScore(modCount: number, authorCount: number, lastModified: string): number {
+function debtRiskScore(modCount: number, authorCount: number, lastModified: string): number {
   return clamp100(Math.sqrt(modCount) * 10 + authorCount * 6 + recencyBonus(lastModified))
 }
 
 /** 严重度分级（基于统一风险分分档）：≥50 严重 / ≥30 高 / ≥15 中 / 其余 低 */
-export function debtSeverity(riskScore: number): DebtSeverity {
+function debtSeverity(riskScore: number): DebtSeverity {
   if (riskScore >= 50) return "severe"
   if (riskScore >= 30) return "high"
   if (riskScore >= 15) return "medium"
@@ -547,7 +563,7 @@ function emptyDebtSummary(): Record<DebtSeverity, number> {
 // ── 代码热点 ──
 
 /** 热度等级阈值：≥75 热点 / ≥45 温热 / ≥25 冷却 / 其余冷门 */
-export function heatLevel(heat: number): HotspotLevel {
+function heatLevel(heat: number): HotspotLevel {
   if (heat >= 75) return "hot"
   if (heat >= 45) return "warm"
   if (heat >= 25) return "cool"
@@ -555,12 +571,12 @@ export function heatLevel(heat: number): HotspotLevel {
 }
 
 /** 热度评分：修改次数*2.2 + 参与人数*7 + 近期修改加分（recencyBonus 与债务评分共用），clamp 0~100 */
-export function heatScore(modCount: number, authorCount: number, lastModified: string): number {
+function heatScore(modCount: number, authorCount: number, lastModified: string): number {
   return clamp100(modCount * 2.2 + authorCount * 7 + recencyBonus(lastModified))
 }
 
 /** 热点建议文案的 i18n 键（按等级选择；由 UI 层解析 i18n，数据层只存键名避免语言快照） */
-export function heatAdviceKey(level: HotspotLevel): string {
+function heatAdviceKey(level: HotspotLevel): string {
   if (level === "hot") return "reportHeatAdviceHot"
   if (level === "warm") return "reportHeatAdviceWarm"
   if (level === "cool") return "reportHeatAdviceCool"
@@ -568,7 +584,7 @@ export function heatAdviceKey(level: HotspotLevel): string {
 }
 
 /** 优化建议文案（按热点文件数占比阈值选择，返回键由调用方取 i18n） */
-export function suggestionKey(hotPct: number, warmPct: number): "reportSugNormal" | "reportSugAttention" | "reportSugWarning" {
+function suggestionKey(hotPct: number, warmPct: number): "reportSugNormal" | "reportSugAttention" | "reportSugWarning" {
   if (hotPct >= 10) return "reportSugWarning"
   if (hotPct > 0 || warmPct >= 20) return "reportSugAttention"
   return "reportSugNormal"
@@ -689,7 +705,7 @@ export function buildReportData(
   const totalCommits = commits.length
   const totalLines = authors.reduce((sum, a) => sum + a.linesAdded, 0)
 
-  const debtSummary: Record<DebtSeverity, number> = { severe: 0, high: 0, medium: 0, low: 0 }
+  const debtSummary = emptyDebtSummary()
   debtRows.forEach((r) => { debtSummary[r.severity]++ })
 
   const suggestionKeyName = suggestionKey(hotPct, warmPct)
@@ -743,8 +759,8 @@ export function buildEmptyReport(project: GitProject, rangeLabel: string): CodeR
   }
 }
 
-/** 展示用常量：热点等级顺序（供 UI 遍历汇总表） */
-export const HOTSPOT_LEVEL_ORDER: HotspotLevel[] = ["hot", "warm", "cool", "cold"]
+/** 热点等级顺序（hotspotSummary 遍历与 buildEmptyReport 共用） */
+const HOTSPOT_LEVEL_ORDER: HotspotLevel[] = ["hot", "warm", "cool", "cold"]
 
 /** 展示用常量：严重度顺序（供 UI 遍历分组） */
 export const DEBT_SEVERITY_ORDER: DebtSeverity[] = ["severe", "high", "medium", "low"]

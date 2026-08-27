@@ -11,8 +11,8 @@
     "wider": "变宽",
     "shorter": "变矮",
     "taller": "变高",
-    "prevTool": "上一个工具 (←)",
-    "nextTool": "下一个工具 (→)",
+    "prevTool": "上一个工具 (← / ↑)",
+    "nextTool": "下一个工具 (→ / ↓)",
     "openFloatingWindow": "在独立窗口打开"
   },
   "pdfViewer": {

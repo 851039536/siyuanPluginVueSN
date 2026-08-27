@@ -10,3 +10,9 @@
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+// 下拉菜单按钮尾部的展开箭头图标（IDE/拉取/推送菜单共用）
+.gp-caret-icon {
+  margin-left: $spacing-px;
+  opacity: 0.5;
+}

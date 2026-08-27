@@ -1,0 +1,170 @@
+// gitPush 卡片顶栏操作按钮区样式（自 CardHeader.scss 迁出）
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+.gp-card-actions {
+  display: flex;
+  gap: $spacing-1;
+  flex-shrink: 0;
+}
+
+.gp-refresh-wrap {
+  position: relative;
+}
+
+.gp-refresh-popover {
+  @include popover-base;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 6px;
+  min-width: 140px;
+}
+
+.gp-refresh-item {
+  @include popover-item;
+
+  &--all {
+    color: var(--b3-theme-primary);
+    &:hover { background: var(--b3-theme-primary-lightest); }
+  }
+}
+
+.gp-refresh-divider {
+  height: 1px;
+  margin: $spacing-1 6px;
+  background: var(--b3-border-color);
+}
+
+.gp-ide-wrap {
+  position: relative;
+}
+
+// 平台链接下拉菜单（复用 IDE 弹出层同款 mixin）
+.gp-platform-wrap {
+  position: relative;
+}
+
+.gp-platform-popover {
+  @include popover-base;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 6px;
+  min-width: 140px;
+}
+
+.gp-platform-item {
+  @include popover-item;
+
+  &--none {
+    opacity: 0.5;
+    cursor: default;
+    &:hover { background: none; }
+  }
+}
+
+.gp-ide-popover {
+  @include popover-base;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 6px;
+  min-width: 160px;
+}
+
+.gp-ide-item {
+  @include popover-item;
+
+  &--none {
+    opacity: 0.5;
+    cursor: default;
+    &:hover { background: none; }
+  }
+
+  &--add {
+    color: var(--b3-theme-primary);
+    &:hover { background: var(--b3-theme-primary-lightest); }
+  }
+}
+
+.gp-ide-item--custom {
+  // 为删除按钮留空间
+  padding-right: 4px;
+}
+
+.gp-ide-item-del {
+  margin-left: auto;
+  padding: 2px 4px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0;
+  background: none;
+  border: none;
+  border-radius: $radius-sm;
+  cursor: pointer;
+  transition: opacity 0.12s;
+
+  .gp-ide-item--custom:hover & {
+    opacity: 0.35;
+  }
+}
+
+.gp-ide-item--custom .gp-ide-item-del {
+  &:hover {
+    opacity: 1;
+    color: var(--b3-theme-error);
+    background: var(--b3-theme-error-lightest, rgba(231, 76, 60, 0.08));
+  }
+}
+
+.gp-ide-del-confirm {
+  margin-left: auto;
+  font-size: $font-size-2xs;
+  opacity: 0.6;
+  white-space: nowrap;
+}
+
+.gp-ide-del-yes,
+.gp-ide-del-no {
+  padding: 1px 6px;
+  font-size: $font-size-2xs;
+  border-radius: $radius-sm;
+  border: none;
+  cursor: pointer;
+  line-height: $line-height-normal;
+}
+
+.gp-ide-del-yes {
+  color: var(--b3-theme-on-primary, #fff);
+  background: var(--b3-theme-error);
+  &:hover { filter: brightness(0.92); }
+}
+
+.gp-ide-del-no {
+  color: var(--b3-theme-on-surface);
+  background: var(--b3-list-hover);
+  &:hover { background: var(--b3-border-color); }
+}
+
+.gp-ide-divider {
+  height: 1px;
+  margin: $spacing-1 6px;
+  background: var(--b3-border-color);
+}
+
+// 分类选择框（卡片内联）
+.gp-cat-select {
+  background: transparent;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-2xs;
+  padding: 1px 2px;
+  cursor: pointer;
+  max-width: 60px;
+  opacity: 0.5;
+
+  &:hover {
+    opacity: 1;
+  }
+}

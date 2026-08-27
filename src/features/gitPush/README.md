@@ -70,13 +70,15 @@ src/features/gitPush/
 │   │   ├── EmptyState.vue           # 空态提示（无项目/无数据）
 │   │   ├── LoadMoreButton.vue       # 加载更多按钮
 │   │   └── CommitFixDialog.vue      # 提交信息修正弹窗（HEAD amend + AI 生成，列表 LOG Tab 与规则检查共用）
-│   ├── ListView/                    # 列表视图专属（15 个）
-│   │   ├── index.vue               # 列表视图入口容器（工具栏 + 加载态 + 空态 + 分组循环卡片，纯渲染）
+│   ├── ListView/                    # 列表视图专属（17 个）
+│   │   ├── index.vue               # 列表视图入口容器（工具栏 + 分组循环卡片，纯渲染）
 │   │   ├── ListViewToolbar.vue      # 列表工具栏
-│   │   ├── ProjectCard.vue          # 项目卡片编排层（仅 project prop，数据/操作全注入）
-│   │   ├── CardHeader.vue           # 卡片顶栏（信息区 + 操作按钮区：分类/平台/IDE/刷新/编辑/Git配置/删除；含 Markdown 文件徽章内联渲染）
+│   │   ├── ProjectCard.vue          # 项目卡片编排层（仅 project prop，数据/操作全注入 + CardTabs 面板切换）
+│   │   ├── CardHeader.vue           # 卡片顶栏信息区（星标/名称/路径/md 徽章/分支/备注；操作按钮区委托 CardHeaderActions）
+│   │   ├── CardHeaderActions.vue    # 卡片顶栏操作按钮区（分类/平台/IDE/刷新/编辑/Git配置/删除，自包含 services/menu）
 │   │   ├── CardRemotes.vue          # 远程仓库状态 + 冲突警告
 │   │   ├── CardActionBar.vue        # 拉取/推送操作栏（单远程/推送全部/强制推送/Fetch）
+│   │   ├── CardTabs.vue             # 多面板 Tab 切换条（CHANGES/LOG/STASH/TAG + 计数徽标，v-model）
 │   │   ├── BranchCommitList.vue     # 提交历史（含搜索）
 │   │   ├── ConflictSection.vue      # 冲突区
 │   │   ├── OutputPanel.vue          # 命令输出面板（失败时内置 AI 分析入口）
@@ -136,8 +138,10 @@ src/features/gitPush/
 │       ├── DebtFileDetail.vue       # 债务文件详情
 │       └── FileDetailModal.vue      # 文件详情弹窗
 └── styles/
-    ├── index.scss                   # 主面板样式（卡片骨架 + Tab 区 + Stash/Tag/Output/Conflict 保留）
-    ├── CardHeader.scss              # 卡片顶栏样式（从 index.scss 提取）
+    ├── index.scss                   # 主面板样式（卡片骨架 + Stash/Tag/Output/Conflict 等；Tab 条已迁出）
+    ├── CardHeader.scss              # 卡片顶栏信息区样式（操作按钮区 → CardHeaderActions.scss）
+    ├── CardHeaderActions.scss       # 卡片顶栏操作按钮区样式（自 CardHeader.scss 迁出）
+    ├── CardTabs.scss                # 多面板 Tab 切换条样式（自 index.scss 迁出）
     ├── CardRemotes.scss             # 远程状态区样式（从 index.scss 提取）
     ├── CardActionBar.scss           # 操作栏样式（从 index.scss 提取）
     ├── StatsPanel.scss              # 统计视图样式

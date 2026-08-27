@@ -1881,17 +1881,14 @@
     "bidirectionalCount": "双向关系",
     "unidirectionalCount": "单向关系",
     "refCount": "引用",
-    "source": "引用方",
-    "target": "被引用方",
     "anchorText": "引用锚文本",
     "backlinkDocs": "反向链接文档",
     "noAnchorText": "无锚文本",
     "noBacklinkDocs": "无反链文档",
     "close": "关闭",
-    "openDoc": "打开文档",
     "bidirectionalBadge": "双向",
-    "rows": "条",
-    "loadDetailFailed": "详情加载失败或无数据"
+    "loadDetailFailed": "详情加载失败或无数据",
+    "truncatedHint": "仅显示引用数最高的前 500 条关系"
   },
   "heatmapMarker": {
     "title": "热力图标记",

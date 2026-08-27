@@ -1,6 +1,6 @@
 # 工具合集
 
-底部面板集成多种实用小工具，通过 Tab 标签页切换。遵循跨功能通信规则，通过 App.vue 中枢调度 + emitCustomEvent 事件总线实现零依赖解耦。
+底部面板集成多种实用小工具，通过左侧工具列表切换。遵循跨功能通信规则，通过 App.vue 中枢调度 + emitCustomEvent 事件总线实现零依赖解耦。
 
 支持**双形态承载**：底部面板（默认）+ 独立窗口（`addTab` + `openWindow` 官方 API，参考 minimalBrowser）。
 
@@ -9,14 +9,14 @@
 ```
 toolCollection/
 ├── index.ts              # registerToolCollection() + 公开 API + Manager 实例挂载
-├── index.vue             # 面板容器：Overlay + Header + Tab 栏 + 动态组件内容区（overlay/tab 双模式）
+├── index.vue             # 面板容器：Overlay + Header + 左侧工具列表 + 右侧动态组件内容区（overlay/tab 双模式）
 ├── types/index.ts        # ToolMeta 接口定义 + ToolCollectionManager（addTab 模型 + openWindow）
 ├── composables/          # 可复用逻辑
 │   ├── usePanelResize.ts     # 面板尺寸管理（持久化 + 调整）
 │   ├── useDragResize.ts      # 拖拽调整高度
-│   ├── useToolNavigation.ts  # Tab 循环切换 + 键盘交互
-│   └── useTabReorder.ts      # Tab 拖拽排序 + 顺序持久化
-├── styles/index.scss     # 面板样式（固定底部定位、Tab 栏、动画、拖拽手柄、tab 模式覆盖）
+│   ├── useToolNavigation.ts  # 工具循环切换 + 键盘交互
+│   └── useTabReorder.ts      # 工具拖拽排序 + 顺序持久化
+├── styles/index.scss     # 面板样式（固定底部定位、左侧工具列表、双栏布局、动画、拖拽手柄、tab 模式覆盖）
 └── tools/                # 各工具模块（独立子目录，互不依赖）
     ├── registry.ts       # 集中式工具注册表（新增工具唯一修改点）
     └── <toolName>/
@@ -67,7 +67,7 @@ toolCollection/
 
 | 按键 | 功能 |
 |------|------|
-| `←` / `→` | 循环切换 Tab |
+| `←` / `→` / `↑` / `↓` | 循环切换工具 |
 | `Ctrl+1~9` | 直接跳转第 N 个 Tab |
 | `Home` / `End` | 跳转首 / 末 Tab |
 | `Escape` | 关闭面板 |
@@ -75,5 +75,5 @@ toolCollection/
 ## 交互增强
 
 - **拖拽调高**：面板顶部边缘 4px 手柄，向上拖增大高度，松手自动持久化
-- **Tab 拖拽排序**：拖动 Tab 按钮可重新排序，顺序持久化到 `toolCollection-tabOrder`
+- **工具拖拽排序**：拖动左侧工具列表项可重新排序，顺序持久化到 `toolCollection-tabOrder`
 - **尺寸持久化**：宽/高通过 `TypedStorage<number>` 存储，启动时自动恢复

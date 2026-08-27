@@ -45,143 +45,6 @@
   }
 }
 
-// ==================== Tab 标签栏 ====================
-.tool-collection-tab-bar {
-  display: flex;
-  align-items: center;
-  border-bottom: 1px solid var(--b3-border-color);
-  flex-shrink: 0;
-  min-height: 0;
-}
-
-.tool-collection-tabs {
-  display: flex;
-  gap: 0;
-  padding: $spacing-2 $spacing-3 0;
-  flex: 1;
-  min-width: 0;
-  overflow-x: auto;
-
-  &::-webkit-scrollbar {
-    height: 0;
-  }
-}
-
-.tab-nav-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
-  background: transparent;
-  color: var(--b3-theme-on-surface);
-  cursor: pointer;
-  flex-shrink: 0;
-  opacity: 0.5;
-  transition: opacity 0.12s, color 0.12s, border-color 0.12s;
-
-  &:hover {
-    opacity: 1;
-    color: var(--b3-theme-primary);
-    border-color: var(--b3-theme-primary);
-  }
-
-  &.tab-nav-left {
-    margin-left: $spacing-3;
-  }
-
-  &.tab-nav-right {
-    margin-right: $spacing-3;
-  }
-}
-
-.tab-btn {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-2 $spacing-4;
-  border: none;
-  background: transparent;
-  color: var(--b3-theme-on-surface);
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: color 0.15s;
-  user-select: none;
-  flex-shrink: 0;
-
-  &:hover {
-    color: var(--b3-theme-primary);
-  }
-
-  &.active {
-    color: var(--b3-theme-primary);
-
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: $spacing-2;
-      right: $spacing-2;
-      height: 2px;
-      background: var(--b3-theme-primary);
-      border-radius: 2px 2px 0 0;
-      transform: scaleX(1);
-      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-  }
-
-  &:not(.active)::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: $spacing-2;
-    right: $spacing-2;
-    height: 2px;
-    background: var(--b3-theme-primary);
-    border-radius: 2px 2px 0 0;
-    transform: scaleX(0);
-    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  // 拖拽排序视觉反馈
-  &.dragging {
-    opacity: 0.4;
-  }
-}
-
-// Tab 栏键盘提示
-.tab-keyhint {
-  flex-shrink: 0;
-  padding: 0 $spacing-2;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.35;
-  user-select: none;
-}
-
-// ==================== 工具内容区 ====================
-.tool-collection-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: $spacing-3;
-  min-height: 0;
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--b3-scrollbar-color);
-    border-radius: 3px;
-  }
-}
-
 // ==================== 面板头部 ====================
 .tool-collection-header {
   display: flex;
@@ -276,6 +139,131 @@
   }
 }
 
+// ==================== 主内容区（横向双栏布局） ====================
+.tool-collection-body {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  min-height: 0;
+}
+
+// ==================== 左侧工具导航栏 ====================
+.tool-collection-sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 176px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--b3-border-color);
+  min-height: 0;
+}
+
+// 工具列表（可滚动，预留右侧滚动条空间避免贴边）
+.tool-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: $spacing-2;
+  min-height: 0;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--b3-scrollbar-color);
+    border-radius: 2px;
+  }
+}
+
+// 单个工具项（图标 + 名称，click 切换 / drag 排序）
+.tool-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  width: 100%;
+  padding: $spacing-2 $spacing-3;
+  border: 1px solid transparent;
+  border-radius: $radius-sm;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-normal;
+  text-align: left;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s, background 0.15s;
+
+  &:hover {
+    color: var(--b3-theme-primary);
+    background: var(--b3-theme-surface);
+  }
+
+  // 活动项：主色文字 + 左侧指示条 + 浅色底衬托
+  &.active {
+    color: var(--b3-theme-primary);
+    background: var(--b3-theme-surface);
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 2px;
+      height: $font-size-sm;
+      border-radius: 0 2px 2px 0;
+      background: var(--b3-theme-primary);
+    }
+  }
+
+  // 拖拽排序视觉反馈
+  &.dragging {
+    opacity: 0.4;
+  }
+}
+
+// 工具名文本（超长省略）
+.tool-item-label {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// 侧栏底部键盘提示
+.tool-keyhint {
+  flex-shrink: 0;
+  padding: $spacing-2;
+  border-top: 1px solid var(--b3-border-color);
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  line-height: $line-height-normal;
+  text-align: center;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.35;
+  user-select: none;
+}
+
+// ==================== 右侧工具内容区 ====================
+.tool-collection-content {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: $spacing-3;
+  min-height: 0;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--b3-scrollbar-color);
+    border-radius: 3px;
+  }
+}
+
 // ==================== 过渡动画 ====================
 // panel 底部固定，scaleY 从 0→1 实现从下往上展开
 .slide-up-enter-active {
@@ -315,6 +303,11 @@
   .tool-collection-panel {
     max-width: 100%;
     border-radius: $radius-lg $radius-lg 0 0;
+  }
+
+  // 窄屏收缩侧栏宽度，让内容区获得更多空间
+  .tool-collection-sidebar {
+    width: 140px;
   }
 
   .tool-collection-content {

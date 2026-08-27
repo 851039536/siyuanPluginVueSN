@@ -1,0 +1,55 @@
+/** 统计对比（StatsSection 组件专属样式） */
+@use '@/variables.scss' as *;
+
+.stats-section {
+  background: var(--b3-theme-surface-lighter);
+  border-radius: $radius-base;
+  padding: $spacing-3;
+  margin-top: $spacing-3;
+
+  h4 {
+    margin: 0 0 $spacing-3 0;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    color: var(--b3-theme-on-surface);
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: $spacing-3;
+  }
+
+  .stat-item {
+    text-align: center;
+    padding: $spacing-2;
+    background: var(--b3-theme-surface);
+    border-radius: $radius-sm;
+
+    .stat-label {
+      display: block;
+      font-size: $font-size-2xs;
+      color: var(--b3-theme-on-surface-variant);
+      margin-bottom: $spacing-1;
+    }
+
+    .stat-value {
+      // 统计数值为数据突出展示，使用 sm 字号
+      font-size: $font-size-sm;
+      font-weight: $font-weight-semibold;
+      color: var(--b3-theme-on-surface);
+
+      &.positive {
+        color: var(--b3-card-success-color, #22c55e);
+      }
+
+      &.negative {
+        color: var(--b3-card-error-color, #ef4444);
+      }
+
+      &.neutral {
+        color: var(--b3-theme-on-surface);
+      }
+    }
+  }
+}

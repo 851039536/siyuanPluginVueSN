@@ -4,6 +4,7 @@
  */
 import type { Ref } from "vue"
 import { ref } from "vue"
+import { PANEL_HEIGHT_MAX, PANEL_HEIGHT_MIN } from "../types"
 
 export interface DragResizeReturn {
   isResizing: Ref<boolean>
@@ -19,8 +20,8 @@ export interface DragResizeReturn {
 export function useDragResize(
   panelHeight: Ref<number>,
   onSave: (value: number) => void,
-  min = 30,
-  max = 100
+  min = PANEL_HEIGHT_MIN,
+  max = PANEL_HEIGHT_MAX
 ): DragResizeReturn {
   const isResizing = ref(false)
   let startY = 0

@@ -1,0 +1,32 @@
+/** 二维码生成（QrcodeGenerator 组件专属样式） */
+@use '@/variables.scss' as *;
+@use './mixins' as m;
+
+// 二维码设置卡片
+.qrcode-settings {
+  margin-top: $spacing-3;
+  @include m.setting-group;
+
+  .setting-group .quality-slider {
+    @include m.range-slider;
+  }
+}
+
+// 二维码结果预览
+.qrcode-result {
+  .qrcode-preview {
+    border: 1px solid var(--b3-theme-surface-lighter);
+    border-radius: $radius-base;
+    padding: $spacing-4;
+    background: var(--b3-theme-background);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 150px;
+
+    img {
+      max-width: 200px;
+      border-radius: $radius-sm;
+    }
+  }
+}

@@ -22,11 +22,8 @@ export class HeatmapMarker {
   private styleAdded = false
   private wordHeatMap = new Map<string, number>()
   private bodyObserver: MutationObserver | null = null
-  private contentObservers = new Map<Element, MutationObserver>()
   private scanTimer: ReturnType<typeof setTimeout> | null = null
   private readonly SCAN_DEBOUNCE_MS = 2000
-  private lastScanTime = 0
-  private readonly MIN_SCAN_INTERVAL_MS = 3000
   private cacheTimestamp = 0
   private readonly CACHE_TTL_MS = 30000
 
@@ -66,9 +63,6 @@ export class HeatmapMarker {
       this.bodyObserver.disconnect()
       this.bodyObserver = null
     }
-
-    this.contentObservers.forEach((obs) => obs.disconnect())
-    this.contentObservers.clear()
 
     this.clearAllMarks()
     this.removeStyles()
@@ -170,48 +164,12 @@ export class HeatmapMarker {
     })
   }
 
-  private observeDocumentContent(protyle: Element) {
-    if (this.contentObservers.has(protyle)) return
-
-    const wysiwyg = protyle.querySelector(".protyle-wysiwyg")
-    if (!wysiwyg) return
-
-    const observer = new MutationObserver((mutations) => {
-      if (this.isScanning) return
-
-      for (const m of mutations) {
-        if (m.type === "childList") {
-          for (const node of m.addedNodes) {
-            if (node instanceof HTMLElement && node.classList.contains(HEATMAP_WORD_CLASS)) {
-              return
-            }
-          }
-          for (const node of m.removedNodes) {
-            if (node instanceof HTMLElement && node.classList.contains(HEATMAP_WORD_CLASS)) {
-              return
-            }
-          }
-        }
-      }
-
-      this.debounceScan()
-    })
-
-    observer.observe(wysiwyg, {
-      childList: true,
-      subtree: true,
-    })
-
-    this.contentObservers.set(protyle, observer)
-  }
-
   private debounceScan() {
     if (this.isScanning) return
     if (this.scanTimer) clearTimeout(this.scanTimer)
     this.scanTimer = setTimeout(() => {
       this.scanTimer = null
       if (!this.active || this.isScanning) return
-      if (Date.now() - this.lastScanTime < this.MIN_SCAN_INTERVAL_MS) return
       if (this.wordHeatMap.size === 0) {
         this.refreshWordCache().then(() => {
           if (this.wordHeatMap.size > 0) {
@@ -243,28 +201,27 @@ export class HeatmapMarker {
 
       const visibleDocs: HTMLElement[] = []
       for (const doc of documents) {
-        if (doc.offsetParent !== null) {
-          visibleDocs.push(doc)
+        if (doc.offsetParent === null) continue
+        // 已扫描过的文档跳过（每个文档只标记一次，编辑时不再重扫）
+        if (
+          doc
+            .querySelector(".protyle-wysiwyg")
+            ?.hasAttribute(HEATMAP_SCANNED_ATTR)
+        ) {
+          continue
         }
+        // 正在编辑（光标所在块）的文档跳过，避免改写 DOM 打断输入
+        if (doc.querySelector(".protyle-wysiwyg--focus")) continue
+        visibleDocs.push(doc)
       }
 
       if (visibleDocs.length === 0) return
 
-      // console.log(`[HeatmapMarker] 扫描 ${visibleDocs.length} 个可见文档`)
-
-      let totalMarks = 0
       for (const doc of visibleDocs) {
-        const count = this.scanDocument(doc)
-        totalMarks += count
-        this.observeDocumentContent(doc)
-      }
-
-      if (totalMarks > 0) {
-        // console.log(`[HeatmapMarker] 标记了 ${totalMarks} 个单词`)
+        this.scanDocument(doc)
       }
     } finally {
       this.isScanning = false
-      this.lastScanTime = Date.now()
     }
   }
 

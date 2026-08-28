@@ -10,8 +10,21 @@
     >
       <template #header>
         <div class="card-header">
-          <span class="card-title">{{ card.title }}</span>
+          <!-- 卡片标题：已标记（边学边写隐藏）时弱化显示 -->
+          <span
+            class="card-title"
+            :class="{ 'card-title--typing-hidden': card.typingHidden }"
+          >{{ card.title }}</span>
           <div class="card-actions">
+            <!-- 标记切换按钮："标记后边学边写不显示" / "已标记：边学边写中隐藏，点击恢复" -->
+            <Button
+              variant="ghost"
+              size="xsmall"
+              :icon="card.typingHidden ? 'eyeOff' : 'eye'"
+              :iconSize="14"
+              :title="card.typingHidden ? t.unmarkForTypingHide : t.markForTypingHide"
+              @click="$emit('toggleTypingHidden', card)"
+            />
             <Button
               variant="ghost"
               size="xsmall"
@@ -83,6 +96,7 @@ const props = defineProps<{
 }>()
 
 defineEmits<{
+  toggleTypingHidden: [card: Flashcard]
   play: [card: Flashcard]
   copyTitle: [card: Flashcard]
   copyContent: [card: Flashcard]

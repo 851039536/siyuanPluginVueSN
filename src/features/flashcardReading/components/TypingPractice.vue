@@ -61,6 +61,22 @@
             {{ timerEnabled ? t.typingTimerOn : t.typingTimerOff }}
           </span>
         </button>
+        <!-- 标记过滤开关："隐藏标记" / "显示标记" -->
+        <button
+          class="typing-case-toggle"
+          :class="{ 'typing-case-toggle--active': hideMarked }"
+          :title="hideMarked ? t.typingTitleHideMarkedOn : t.typingTitleHideMarkedOff"
+          @click="emit('update:hideMarked', !hideMarked)"
+        >
+          <IconWrapper
+            :name="hideMarked ? 'eyeOff' : 'eye'"
+            :size="14"
+            class="typing-case-toggle__icon"
+          />
+          <span class="typing-case-toggle__text">
+            {{ hideMarked ? t.typingHideMarkedOn : t.typingHideMarkedOff }}
+          </span>
+        </button>
       </div>
       <div class="typing-controls__config">
         <span class="typing-session-config__label">{{ t.sessionSizeLabel }}</span>
@@ -105,6 +121,15 @@
             <span class="tag tag-small tag-info">{{ currentCard.category }}</span>
             <span class="tag tag-small tag-contrast">{{ t.practiceCount }}: {{ currentCard.practiceCount || 0 }}</span>
           </span>
+          <!-- 标记当前词按钮："标记后边学边写不显示" / "已标记：边学边写中隐藏，点击恢复" -->
+          <Button
+            variant="ghost"
+            size="xsmall"
+            :icon="currentCard.typingHidden ? 'eye' : 'eyeOff'"
+            :iconSize="12"
+            :title="currentCard.typingHidden ? t.unmarkForTypingHide : t.markForTypingHide"
+            @click="$emit('toggleHidden', currentCard)"
+          />
           <Button
             variant="ghost"
             size="xsmall"
@@ -263,6 +288,7 @@ const props = defineProps<{
   instantReset: boolean
   coverMode: boolean
   timerEnabled: boolean
+  hideMarked: boolean
   sessionSize: number
   sessionTotal: number
   sessionCorrect: number
@@ -283,7 +309,9 @@ const emit = defineEmits<{
   "update:instantReset": [value: boolean]
   "update:coverMode": [value: boolean]
   "update:timerEnabled": [value: boolean]
+  "update:hideMarked": [value: boolean]
   "update:sessionSize": [value: number]
+  "toggleHidden": [card: Flashcard]
 }>()
 
 const t = useI18n(props.i18n)

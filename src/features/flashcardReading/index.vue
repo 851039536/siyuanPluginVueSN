@@ -25,6 +25,7 @@
         v-if="viewMode === 'list'"
         :cards="paginatedCards"
         :i18n="i18n"
+        @toggleTypingHidden="toggleTypingHidden"
         @play="playWord"
         @copyTitle="(c: Flashcard) => handleCopy(c.title, t.copiedTitle)"
         @copyContent="(c: Flashcard) => handleCopy(c.content, t.copiedContent)"
@@ -38,9 +39,9 @@
         :i18n="i18n"
       />
 
-      <!-- 打字练习视图（筛选结果为空时显示空态） -->
+      <!-- 打字练习视图（过滤已标记单词后为空时显示空态） -->
       <TypingPractice
-        v-else-if="viewMode === 'typing' && filteredCards.length > 0"
+        v-else-if="viewMode === 'typing' && typingCards.length > 0"
         :currentCard="typingQueue.currentCard.value"
         :currentIndex="typingQueue.currentIndex.value"
         :totalCards="typingQueue.queue.value.length"
@@ -48,6 +49,7 @@
         :instantReset="instantReset"
         :coverMode="coverMode"
         :timerEnabled="timerEnabled"
+        :hideMarked="hideMarked"
         :sessionSize="sessionSize"
         :sessionTotal="sessionTotal"
         :sessionCorrect="sessionCorrect"
@@ -61,10 +63,12 @@
         @correct="onTypingCorrect"
         @wrong="() => sessionTotal++"
         @restartRound="restartRound"
+        @toggleHidden="toggleTypingHidden"
         @update:caseInsensitive="caseInsensitive = $event"
         @update:instantReset="instantReset = $event"
         @update:coverMode="coverMode = $event"
         @update:timerEnabled="onTimerToggle"
+        @update:hideMarked="onHideMarkedToggle"
         @update:sessionSize="onSessionSizeChange"
       />
 
@@ -182,6 +186,7 @@ import {
 } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import { emitCustomEvent } from "@/utils/eventBus"
 import CardDialog from "./components/CardDialog.vue"
 import CardList from "./components/CardList.vue"
 import CategoryFilter from "./components/CategoryFilter.vue"
@@ -245,6 +250,7 @@ const caseInsensitive = ref(false)
 const instantReset = ref(false)
 const coverMode = ref(false)
 const timerEnabled = ref(true)
+const hideMarked = ref(false)
 const sessionSize = ref(10)
 const sessionTotal = ref(0)
 const sessionCorrect = ref(0)
@@ -289,7 +295,13 @@ const filteredCards = computed(() => {
   return result
 })
 
-const typingQueue = useTypingQueue(filteredCards)
+// 边学边写专用列表：总开关开启时剔除已标记（typingHidden）的单词，列表/统计视图不受影响
+const typingCards = computed(() => {
+  if (!hideMarked.value) return filteredCards.value
+  return filteredCards.value.filter((card) => !card.typingHidden)
+})
+
+const typingQueue = useTypingQueue(typingCards)
 
 const totalPages = computed(() =>
   Math.ceil(filteredCards.value.length / CARD_CONFIG.PAGE_SIZE),
@@ -383,6 +395,44 @@ const onTimerToggle = (val: boolean) => {
   saveTypingSettings()
 }
 
+const onHideMarkedToggle = (val: boolean) => {
+  hideMarked.value = val
+  saveTypingSettings()
+  typingQueue.rebuild()
+  typingQueue.currentIndex.value = 0
+}
+
+// 边学边写中标记当前词：从队列原位剔除并保持进度，不打断练习节奏
+const removeFromTypingQueue = (cardId: string) => {
+  const queue = typingQueue.queue.value
+  const idx = queue.findIndex((c) => c.id === cardId)
+  if (idx === -1) return
+  queue.splice(idx, 1)
+  if (idx < typingQueue.currentIndex.value) {
+    typingQueue.currentIndex.value--
+  } else if (typingQueue.currentIndex.value >= queue.length) {
+    typingQueue.currentIndex.value = Math.max(0, queue.length - 1)
+  }
+}
+
+const toggleTypingHidden = async (card: Flashcard) => {
+  try {
+    const next = !card.typingHidden
+    await storage.updateCard(card.id, { typingHidden: next })
+    // 广播数据变更，保证 Dock/弹窗多入口同步
+    emitCustomEvent("flashcardDataChanged")
+    await reload()
+    // 队列持有构建时的旧卡片对象引用，需同步标记字段才能即时刷新图标
+    const queued = typingQueue.queue.value.find((c) => c.id === card.id)
+    if (queued) queued.typingHidden = next
+    if (viewMode.value === "typing" && hideMarked.value && next) {
+      removeFromTypingQueue(card.id)
+    }
+  } catch {
+    showMessage(t.value.saveFailed, 3000, "error")
+  }
+}
+
 const onSessionSizeChange = (val: number) => {
   sessionSize.value = val
   saveTypingSettings()
@@ -392,6 +442,7 @@ const saveTypingSettings = () => {
   storage.saveTypingSettings({
     sessionSize: sessionSize.value,
     timerEnabled: timerEnabled.value,
+    hideMarked: hideMarked.value,
   })
 }
 
@@ -400,6 +451,7 @@ onMounted(async () => {
   const settings = await storage.getTypingSettings()
   timerEnabled.value = settings.timerEnabled
   sessionSize.value = settings.sessionSize
+  hideMarked.value = settings.hideMarked
 })
 
 watch([searchQuery, selectedCategory], () => {

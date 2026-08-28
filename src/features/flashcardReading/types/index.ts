@@ -133,5 +133,12 @@ export interface I18n {
   retryTyping?: string
   summaryCorrect?: string
   startNextRound?: string
+  /** 边学边写标记过滤 */
+  typingHideMarkedOn?: string
+  typingHideMarkedOff?: string
+  typingTitleHideMarkedOn?: string
+  typingTitleHideMarkedOff?: string
+  markForTypingHide?: string
+  unmarkForTypingHide?: string
 }
 

@@ -45,6 +45,12 @@ src/features/flashcardReading/
 - **数据同步事件**：任何入口（CardDialog 保存、列表删除、浮动工具栏收藏）写入后均通过 `emitCustomEvent("flashcardDataChanged")` 广播，监听侧统一刷新共享状态。
 - **弹窗自包含**：CardDialog 只接收 `visible` + `editingCard` + `i18n` + `plugin`，表单校验与持久化全部在弹窗内部完成，仅 emit `saved`/`close` 极简通知。
 
+## 单词标记与边学边写过滤
+
+- **标记入口**：列表卡片操作区的眼睛按钮（`CardList.vue`）与边学边写当前词旁的标记按钮（`TypingPractice.vue`），写入 `Flashcard.typingHidden`（共享模型字段，见 `@/utils/sharedStorage/flashcardStorage.ts`）；已标记单词在列表中标题弱化显示。
+- **过滤开关**：边学边写顶部"隐藏标记/显示标记"toggle，持久化到 `TypingSettings.hideMarked`（默认开启：标记即从练习队列排除；切到"显示标记"可临时把已标记词放回练习）；开启时 `index.vue` 的 `typingCards` computed 剔除已标记单词，仅影响练习队列，列表/统计视图不受影响。
+- **练习中标记**：边学边写内标记当前词且开关开启时，该词从队列原位剔除（保持当前进度），不整队重建。
+
 ## 扩展建议
 
 ### 1. 导入/导出功能

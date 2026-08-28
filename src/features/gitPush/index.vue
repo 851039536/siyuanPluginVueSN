@@ -77,6 +77,8 @@
       v-if="currentView === 'rulecheck'"
       :i18n="i18n"
       :stats="commitRuleStats"
+      :projects="projects"
+      :project-id="effectiveRuleCheckProjectId"
       :project-count="projects.length"
       :analyzing="analysisAnalyzing"
       :analyzed="analysisAnalyzed"
@@ -84,6 +86,7 @@
       :commit-count="analysisCommitCount"
       @run-analysis="runAnalysis"
       @update-count="setCommitCount"
+      @update-project="setRuleCheckProject"
       @view-project="onViewProject"
     />
 
@@ -558,6 +561,8 @@ const {
   ensureLineStats,
   viewSettings: analysisViewSettings,
   updateViewSettings,
+  effectiveRuleCheckProjectId,
+  setRuleCheckProject,
   projectLineRanking,
   authorLineRanking,
   lineStatsSummary,

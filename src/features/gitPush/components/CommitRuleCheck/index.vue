@@ -12,12 +12,15 @@
       <!-- 顶部工具条 -->
       <RuleCheckToolbar
         :i18n="i18n"
+        :projects="projects"
+        :project-id="projectId"
         :analyzing="analyzing"
         :analyzed="analyzed"
         :analyzed-at="analyzedAt"
         :commit-count="commitCount"
         @run-analysis="emit('runAnalysis')"
         @update-count="emit('updateCount', $event)"
+        @update-project="emit('updateProject', $event)"
       />
 
       <!-- 首次分析中占位 -->
@@ -70,6 +73,7 @@
             v-else
             :i18n="i18n"
             :stats="stats"
+            :scoped="scoped"
             @view-project="emit('viewProject', $event)"
             @open-fix="openFix"
           />
@@ -90,8 +94,8 @@
 
 <script setup lang="ts">
 // gitPush 提交规则检查视图入口容器（状态编排 + 各功能区块组合 + 修正弹窗）
-import type { CommitRuleCheckStats, CommitRuleViolation } from "../../types"
-import { ref } from "vue"
+import type { CommitRuleCheckStats, CommitRuleViolation, GitProject } from "../../types"
+import { computed, ref } from "vue"
 import CommitFixDialog from "../common/CommitFixDialog.vue"
 import EmptyState from "../common/EmptyState.vue"
 import Loader from "@/components/Loader.vue"
@@ -100,9 +104,13 @@ import RuleCheckOverview from "./RuleCheckOverview.vue"
 import RuleCheckToolbar from "./RuleCheckToolbar.vue"
 import ViolationListSection from "./ViolationListSection.vue"
 
-defineProps<{
+const props = defineProps<{
   i18n: Record<string, any>
   stats: CommitRuleCheckStats
+  /** 项目列表（供工具栏项目过滤下拉选择） */
+  projects: GitProject[]
+  /** 当前选中的过滤项目 ID（"" = 全部项目） */
+  projectId: string
   projectCount: number
   analyzing: boolean
   analyzed: boolean
@@ -114,8 +122,12 @@ defineProps<{
 const emit = defineEmits<{
   runAnalysis: []
   updateCount: [n: number]
+  updateProject: [projectId: string]
   viewProject: [projectId: string]
 }>()
+
+/** 是否限定到单个项目（违规列表隐藏重复的项目名 chip，减少视觉噪音） */
+const scoped = computed(() => !!props.projectId)
 
 /** 当前正在编辑的违规提交（null = 未打开弹窗） */
 const editingViolation = ref<CommitRuleViolation | null>(null)

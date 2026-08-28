@@ -82,6 +82,10 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
 
   /** 选中的文件扩展名过滤（空数组 = 不过滤所有文件，变更后即时持久化 + 下次分析生效） */
   const selectedExtensions = ref<string[]>([])
+  /** 提交规则检查选中的过滤项目 ID（"" = 全部项目；仅过滤展示，分析仍覆盖全部项目，共享缓存零影响） */
+  const ruleCheckProjectId = ref<string>("")
+  /** 是否已从存储载入提交规则检查偏好（防重复读盘） */
+  let ruleCheckPrefsLoaded = false
 
   /** 从存储载入显示设置（与默认值逐字段合并，防旧数据缺字段导致渲染异常） */
   async function loadViewSettings() {
@@ -325,9 +329,10 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     analyzed.value = true
   }
 
-  /** 进入分析视图的统一入口：先尝试复用持久化缓存，无有效缓存时才重新分析；同时加载显示设置 */
+  /** 进入分析视图的统一入口：先尝试复用持久化缓存，无有效缓存时才重新分析；同时加载显示设置与规则检查项目偏好 */
   async function ensureAnalysis() {
     await loadViewSettings()
+    await loadRuleCheckPrefs()
     await loadCachedAnalysis()
     // 行数统计视图可能已置 analyzed=true 但提交条目未加载，此时仍需重新分析补全提交维度数据；
     // pendingReanalyze 优先于缓存复用，保证分析进行中被拒绝的重跑请求不被 loadCachedAnalysis 覆盖
@@ -388,6 +393,27 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     await manager.storage.lineStatsCache.save({ ...cache, selectedExtensions: exts })
   }
 
+  /** 从存储载入提交规则检查偏好（上次选中的过滤项目；项目已删时由 effectiveRuleCheckProjectId 回退全部项目） */
+  async function loadRuleCheckPrefs() {
+    if (ruleCheckPrefsLoaded) return
+    ruleCheckPrefsLoaded = true
+    const saved = await manager.storage.ruleCheckPrefs.loadOrDefault()
+    ruleCheckProjectId.value = saved.projectId
+  }
+
+  /** 当前生效的规则检查过滤项目 ID（选中项目已删除时自动回退 ""，与 analysisStats 失效过滤语义一致） */
+  const effectiveRuleCheckProjectId = computed(() => {
+    if (!ruleCheckProjectId.value) return ""
+    return projects.value.some((p) => p.id === ruleCheckProjectId.value) ? ruleCheckProjectId.value : ""
+  })
+
+  /** 切换提交规则检查过滤项目（"" = 全部项目；选择即时持久化） */
+  async function setRuleCheckProject(id: string) {
+    if (ruleCheckProjectId.value === id) return
+    ruleCheckProjectId.value = id
+    await manager.storage.ruleCheckPrefs.save({ projectId: id })
+  }
+
   /** 按 projectId 获取该项目的原始 numstat 数据（仅内存，未找到或项目无变更时返回空数组） */
   function getProjectNumstat(projectId: string): NumstatCommit[] {
     return perProjectNumstat.value.get(projectId) ?? []
@@ -429,12 +455,21 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     }
   })
 
-  /** 提交规则检查聚合视图（复用 analysisStats 已过滤的有效条目，集中暴露不合规提交） */
-  const commitRuleStats = computed<CommitRuleCheckStats>(() => analyzeCommitRuleCompliance(analysisStats.value.entries))
+  /** 提交规则检查聚合视图（复用 analysisStats 已过滤的有效条目；选中项目时仅对该项目聚合，未选中时全量） */
+  const commitRuleStats = computed<CommitRuleCheckStats>(() => {
+    const scopedId = effectiveRuleCheckProjectId.value
+    const entries = scopedId
+      ? analysisStats.value.entries.filter((e) => e.projectId === scopedId)
+      : analysisStats.value.entries
+    return analyzeCommitRuleCompliance(entries)
+  })
 
   return {
     analysisStats,
     commitRuleStats,
+    ruleCheckProjectId,
+    effectiveRuleCheckProjectId,
+    setRuleCheckProject,
     analyzing,
     analyzed,
     analyzedAt,

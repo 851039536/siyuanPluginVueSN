@@ -14,6 +14,7 @@
       >
         <div class="grc-item-head">
           <span
+            v-if="!scoped"
             class="grc-item-project"
             :title="row.projectName"
             @click.stop="emit('viewProject', row.projectId)"
@@ -64,6 +65,8 @@ const props = defineProps<{
   i18n: Record<string, any>
   /** 规则检查聚合视图（取 violations + violationCount） */
   stats: CommitRuleCheckStats
+  /** 是否限定到单个项目（隐藏每行重复的项目名 chip） */
+  scoped?: boolean
 }>()
 
 const emit = defineEmits<{

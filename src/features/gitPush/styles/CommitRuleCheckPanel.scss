@@ -9,44 +9,34 @@
   padding: $spacing-1 $spacing-2 $spacing-1 0;
 }
 
-// 顶部工具条
+// 顶部工具条（两行：第一行控件，第二行状态文案）
 .grc-toolbar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: $spacing-2;
+  flex-direction: column;
+  gap: $spacing-1;
   margin-bottom: $spacing-3;
 }
 
-// 分析状态文案（占满剩余空间，超长省略避免挤压右侧控件）
+// 工具条第一行：项目过滤 + 条数选择 + 分析按钮（窄列自动折行）
+.grc-toolbar-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $spacing-1;
+}
+
+// 项目过滤下拉（xsmall 紧凑尺寸，与条数选择/分析按钮同高；固定宽度可收缩）
+.grc-project-select {
+  flex: 0 1 210px;
+  min-width: 0;
+}
+
+// 分析状态文案（满宽第二行，超长省略）
 .grc-status {
-  flex: 1;
   min-width: 0;
   @include text-ellipsis;
   font-size: $font-size-xs;
   opacity: 0.6;
-}
-
-.grc-toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: $spacing-1;
-}
-
-// 条数选择（每项目抓取条数）
-.grc-count-select {
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
-  color: var(--b3-theme-on-surface);
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
-  padding: 2px 4px;
-  cursor: pointer;
-
-  &:focus {
-    @include focus-ring;
-  }
 }
 
 // 总览卡片

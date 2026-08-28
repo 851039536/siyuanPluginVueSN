@@ -15,6 +15,7 @@ import {
   resetFlashcardStorage,
 } from "./composables/useFlashcardStorage"
 import { DEFAULT_I18N } from "./composables/useI18n"
+import { FlashcardTabManager } from "./types"
 import FlashcardReadingPanel from "./index.vue"
 
 let flashcardModal: ModalAppInstance | null = null
@@ -62,11 +63,14 @@ export function toggleFlashcardDialog(plugin?: Plugin, i18n?: any) {
 export class FlashcardReading {
   private plugin: Plugin
   private storage: FlashcardStorage
+  private tabManager: FlashcardTabManager
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
     // 复用模块级共享 storage 单例，避免与 Dock/弹窗重复实例化
     this.storage = getSharedFlashcardStorage(plugin)
+    // 独立窗口页签管理器（addTab 需在注册期同步调用，构造时完成）
+    this.tabManager = new FlashcardTabManager(plugin)
   }
 
   public async init() {
@@ -75,6 +79,11 @@ export class FlashcardReading {
 
     if (!dialogPlugin) dialogPlugin = this.plugin
     if (!dialogI18n) dialogI18n = this.plugin.i18n?.flashcardReading || {}
+  }
+
+  /** 在独立浮动窗口打开单词阅读（openTab + openWindow 双形态） */
+  public openFloating() {
+    return this.tabManager.openFloating()
   }
 
   private addDock() {
@@ -91,12 +100,13 @@ export class FlashcardReading {
     })
   }
 
-  /** 插件卸载时清理：销毁浮动弹窗 + 重置模块级引用，dock 交由思源框架回收 */
+  /** 插件卸载时清理：销毁浮动弹窗 + 页签面板 + 重置模块级引用，dock 交由思源框架回收 */
   public destroy() {
     flashcardModal?.destroy()
     flashcardModal = null
     dialogPlugin = null
     dialogI18n = null
+    this.tabManager.destroy()
     resetFlashcardStorage()
   }
 }

@@ -2,11 +2,14 @@
 <template>
   <div class="panel-header-wrapper">
     <div class="panel-header">
-      <!-- 面板标题："单词阅读" -->
-      <h4 class="panel-title">
+      <!-- 面板标题："单词阅读"（独立浮动窗口内隐藏：窗口页签标题已标识功能名，避免重复字样） -->
+      <h4
+        v-if="!floating"
+        class="panel-title"
+      >
         <span>{{ t.panelTitle }}</span>
       </h4>
-      <!-- 头部操作区：添加/刷新/打开存储文件 -->
+      <!-- 头部操作区：添加/刷新/在独立窗口打开/打开存储文件 -->
       <div class="header-actions">
         <Button
           variant="ghost"
@@ -21,6 +24,15 @@
           icon="refresh"
           :title="t.refresh"
           @click="$emit('refresh')"
+        />
+        <!-- 在独立窗口打开（经 __flashcardReading 的 FlashcardTabManager 调度；浮动窗口内隐藏） -->
+        <Button
+          v-if="!floating"
+          variant="ghost"
+          size="xsmall"
+          icon="openInNew"
+          :title="t.openInWindow"
+          @click="$emit('openWindow')"
         />
         <Button
           variant="ghost"
@@ -43,14 +55,22 @@ import Button from "@/components/Button.vue"
 import { useI18n } from "../composables/useI18n"
 import { STORAGE_KEY } from "../types/storage"
 
-const props = defineProps<{
-  i18n: I18n
-  plugin: Plugin
-}>()
+const props = withDefaults(
+  defineProps<{
+    i18n: I18n
+    plugin: Plugin
+    /** 独立浮动窗口形态：隐藏重复标题与"在独立窗口打开"按钮 */
+    floating?: boolean
+  }>(),
+  {
+    floating: false,
+  },
+)
 
 defineEmits<{
   addCard: []
   refresh: []
+  openWindow: []
 }>()
 
 const t = useI18n(props.i18n)

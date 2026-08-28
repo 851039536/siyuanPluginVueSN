@@ -17,7 +17,5 @@ export function registerFlashcardReading(plugin: Plugin) {
   flashcardReading.init();
 
   (plugin as any).__flashcardReading = flashcardReading
-
-  return flashcardReading
 }
 

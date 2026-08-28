@@ -96,6 +96,7 @@ export const DEFAULT_I18N: Required<I18n> = {
   typingTitleHideMarkedOff: "当前：边学边写显示已标记单词",
   markForTypingHide: "标记后边学边写不显示",
   unmarkForTypingHide: "已标记：边学边写中隐藏，点击恢复",
+  openInWindow: "在独立窗口打开",
 }
 
 /**

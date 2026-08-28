@@ -907,7 +907,8 @@
     "typingTitleHideMarkedOn": "Current: marked words hidden in typing",
     "typingTitleHideMarkedOff": "Current: marked words shown in typing",
     "markForTypingHide": "Mark to hide in typing practice",
-    "unmarkForTypingHide": "Marked: hidden in typing practice, click to restore"
+    "unmarkForTypingHide": "Marked: hidden in typing practice, click to restore",
+    "openInWindow": "Open in Independent Window"
   },
   "floatingBox": {
     "title": "Floating Toolbox",
@@ -3294,9 +3295,9 @@
     "lastUpdate": "Last Update",
     "autoRefresh": "Auto Refresh",
     "refreshOff": "Off",
-    "statusRefreshing": "Refreshing...",
-    "statusRefreshDone": "Refreshed",
-    "statusRefreshFailed": "Refresh failed",
+    "statusRefreshing": "Analyzing...",
+    "statusRefreshDone": "Analysis complete",
+    "statusRefreshFailed": "Analysis failed",
     "interval1min": "1 min",
     "interval5min": "5 min",
     "interval10min": "10 min",

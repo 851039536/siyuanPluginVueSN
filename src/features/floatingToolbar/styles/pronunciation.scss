@@ -47,11 +47,18 @@
 // 输入区域
 // ========================================
 .input-section {
-  @include ft.flex-column(g.$spacing-2);
+  display: flex;
+  align-items: flex-end;
+  gap: g.$spacing-2;
+
+  .input-main {
+    flex: 1;
+    min-width: 0;
+  }
 }
 
-.btn-generate-small {
-  margin-top: g.$spacing-2;
+.btn-generate {
+  flex-shrink: 0;
 }
 
 // ========================================
@@ -111,18 +118,8 @@
   font-size: g.$font-size-sm;
   line-height: g.$line-height-relaxed;
   color: var(--b3-theme-on-background);
-  white-space: pre-wrap;
   word-break: break-word;
   padding: g.$spacing-2 0;
-
-  :deep(h4) {
-    margin: 0 0 g.$spacing-3 0;
-    font-size: g.$font-size-lg;
-    color: var(--b3-theme-primary);
-    font-weight: g.$font-weight-semibold;
-    border-bottom: 1px solid var(--b3-theme-surface-lighter);
-    padding-bottom: g.$spacing-2;
-  }
 
   :deep(strong) {
     color: var(--b3-theme-on-background);
@@ -130,12 +127,7 @@
   }
 
   @media (max-width: ft.$breakpoint-sm) {
-    font-size: g.$font-size-sm;
     line-height: g.$line-height-normal;
-
-    :deep(h4) {
-      font-size: g.$font-size-base;
-    }
   }
 }
 
@@ -159,6 +151,12 @@
   margin: 0;
   color: var(--b3-theme-on-surface);
   line-height: g.$line-height-normal;
+}
+
+// 生成中加载区域
+.loading-wrapper {
+  position: relative;
+  height: 200px;
 }
 
 

@@ -90,6 +90,12 @@ export const DEFAULT_I18N: Required<I18n> = {
   retryTyping: "重新输入",
   summaryCorrect: "正确",
   startNextRound: "开始下一轮",
+  typingHideMarkedOn: "隐藏标记",
+  typingHideMarkedOff: "显示标记",
+  typingTitleHideMarkedOn: "当前：边学边写隐藏已标记单词",
+  typingTitleHideMarkedOff: "当前：边学边写显示已标记单词",
+  markForTypingHide: "标记后边学边写不显示",
+  unmarkForTypingHide: "已标记：边学边写中隐藏，点击恢复",
 }
 
 /**

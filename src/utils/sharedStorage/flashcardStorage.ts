@@ -18,6 +18,8 @@ export interface Flashcard {
   createdAt: number
   updatedAt: number
   practiceCount: number
+  /** 边学边写中隐藏（标记后练习队列不再出现） */
+  typingHidden?: boolean
 }
 
 /** 创建卡片数据传输对象 */
@@ -32,12 +34,15 @@ export interface UpdateFlashcardDTO {
   title?: string
   content?: string
   category?: string
+  typingHidden?: boolean
 }
 
 /** 打字练习设置 */
 export interface TypingSettings {
   sessionSize: number
   timerEnabled: boolean
+  /** 隐藏已标记（typingHidden）的单词 */
+  hideMarked: boolean
 }
 
 // ========================================
@@ -57,6 +62,8 @@ export class FlashcardStorage {
   static readonly DEFAULT_SETTINGS: TypingSettings = {
     sessionSize: 10,
     timerEnabled: true,
+    // 默认过滤已标记单词：标记即从边学边写隐藏，开关仅用于临时放回
+    hideMarked: true,
   }
 
   constructor(plugin: Plugin) {
@@ -82,6 +89,7 @@ export class FlashcardStorage {
       return (data || []).map((card: Flashcard) => ({
         ...card,
         practiceCount: card.practiceCount ?? 0,
+        typingHidden: card.typingHidden ?? false,
       }))
     } catch (error) {
       console.error("Failed to load cards:", error)

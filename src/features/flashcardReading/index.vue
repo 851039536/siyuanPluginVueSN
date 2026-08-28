@@ -422,11 +422,12 @@ const toggleTypingHidden = async (card: Flashcard) => {
     // 广播数据变更，保证 Dock/弹窗多入口同步
     emitCustomEvent("flashcardDataChanged")
     await reload()
-    // 队列持有构建时的旧卡片对象引用，需同步标记字段才能即时刷新图标
-    const queued = typingQueue.queue.value.find((c) => c.id === card.id)
-    if (queued) queued.typingHidden = next
     if (viewMode.value === "typing" && hideMarked.value && next) {
       removeFromTypingQueue(card.id)
+    } else {
+      // 词留在队列时（非练习视图 / 总开关关闭），同步队列内旧对象的标记字段以即时刷新图标
+      const queued = typingQueue.queue.value.find((c) => c.id === card.id)
+      if (queued) queued.typingHidden = next
     }
   } catch {
     showMessage(t.value.saveFailed, 3000, "error")

@@ -633,6 +633,7 @@
     "ruleFixGenerating": "生成中…",
     "ruleFixSave": "保存修正",
     "ruleFixSaving": "保存中…",
+    "ruleFixRewriting": "正在重写历史提交（rebase）…",
     "ruleFixDirtyWorkingTree": "工作区有未提交变更，请先提交或暂存后再修正",
     "ruleFixAiFailed": "AI 生成失败，请重试",
     "ruleFixSaveFailed": "修正失败",

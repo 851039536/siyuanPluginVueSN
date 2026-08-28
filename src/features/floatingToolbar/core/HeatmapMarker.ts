@@ -1,5 +1,4 @@
-import { Plugin } from "siyuan"
-import { FlashcardStorage } from "@/utils/sharedStorage/flashcardStorage"
+import { WordPracticeCache } from "./wordCache"
 
 const HEATMAP_STYLE_ID = "heatmap-marker-styles"
 const HEATMAP_WORD_CLASS = "heatmap-word"
@@ -16,30 +15,27 @@ function getHeatLevel(practiceCount: number): number {
 }
 
 export class HeatmapMarker {
-  private flashcardStorage: FlashcardStorage
+  private wordCache: WordPracticeCache
   private active = false
   private isScanning = false
   private styleAdded = false
-  private wordHeatMap = new Map<string, number>()
   private bodyObserver: MutationObserver | null = null
   private scanTimer: ReturnType<typeof setTimeout> | null = null
   private readonly SCAN_DEBOUNCE_MS = 2000
-  private cacheTimestamp = 0
-  private readonly CACHE_TTL_MS = 30000
 
-  constructor(plugin: Plugin) {
-    this.flashcardStorage = new FlashcardStorage(plugin)
+  constructor(wordCache: WordPracticeCache) {
+    this.wordCache = wordCache
   }
 
   async enable() {
     if (this.active) return
     this.active = true
 
-    await this.refreshWordCache()
+    await this.wordCache.refresh()
     this.addStyles()
     this.startBodyObserver()
 
-    if (this.wordHeatMap.size === 0) {
+    if (this.wordCache.size === 0) {
       console.warn("[HeatmapMarker] 单词本为空，热力图标记已启用，添加单词后自动生效")
       return
     }
@@ -70,31 +66,6 @@ export class HeatmapMarker {
 
   isActive(): boolean {
     return this.active
-  }
-
-  async refreshWordCache() {
-    try {
-      const cards = await this.flashcardStorage.getAllCards()
-      this.wordHeatMap.clear()
-      for (const card of cards) {
-        const word = card.title.toLowerCase().trim()
-        if (word && /^[a-z]+$/i.test(word)) {
-          const existing = this.wordHeatMap.get(word)
-          if (existing === undefined || card.practiceCount > existing) {
-            this.wordHeatMap.set(word, card.practiceCount)
-          }
-        }
-      }
-      this.cacheTimestamp = Date.now()
-    } catch (error) {
-      console.error("[HeatmapMarker] 刷新单词缓存失败:", error)
-    }
-  }
-
-  private async ensureCacheFresh() {
-    if (Date.now() - this.cacheTimestamp > this.CACHE_TTL_MS) {
-      await this.refreshWordCache()
-    }
   }
 
   private addStyles() {
@@ -165,19 +136,10 @@ export class HeatmapMarker {
   }
 
   private debounceScan() {
-    if (this.isScanning) return
     if (this.scanTimer) clearTimeout(this.scanTimer)
     this.scanTimer = setTimeout(() => {
       this.scanTimer = null
-      if (!this.active || this.isScanning) return
-      if (this.wordHeatMap.size === 0) {
-        this.refreshWordCache().then(() => {
-          if (this.wordHeatMap.size > 0) {
-            this.scanVisibleDocuments()
-          }
-        })
-        return
-      }
+      // 缓存为空/过期的刷新逻辑由 scanVisibleDocuments 内部处理
       this.scanVisibleDocuments()
     }, this.SCAN_DEBOUNCE_MS)
   }
@@ -185,12 +147,12 @@ export class HeatmapMarker {
   async scanVisibleDocuments() {
     if (!this.active || this.isScanning) return
 
-    if (this.wordHeatMap.size === 0) {
-      await this.refreshWordCache()
-      if (this.wordHeatMap.size === 0) return
+    if (this.wordCache.size === 0) {
+      await this.wordCache.refresh()
+      if (this.wordCache.size === 0) return
     }
 
-    await this.ensureCacheFresh()
+    await this.wordCache.ensureFresh()
 
     this.isScanning = true
 
@@ -225,9 +187,9 @@ export class HeatmapMarker {
     }
   }
 
-  private scanDocument(protyle: Element): number {
+  private scanDocument(protyle: Element) {
     const wysiwyg = protyle.querySelector(".protyle-wysiwyg")
-    if (!wysiwyg) return 0
+    if (!wysiwyg) return
 
     this.clearDocumentMarks(wysiwyg as HTMLElement)
 
@@ -263,18 +225,16 @@ export class HeatmapMarker {
       textNodes.push(node as Text)
     }
 
-    let markCount = 0
     for (let i = textNodes.length - 1; i >= 0; i--) {
-      markCount += this.markWordsInTextNode(textNodes[i])
+      this.markWordsInTextNode(textNodes[i])
     }
 
-    wysiwyg.setAttribute(HEATMAP_SCANNED_ATTR, String(Date.now()))
-    return markCount
+    wysiwyg.setAttribute(HEATMAP_SCANNED_ATTR, "true")
   }
 
-  private markWordsInTextNode(textNode: Text): number {
+  private markWordsInTextNode(textNode: Text) {
     const text = textNode.textContent
-    if (!text) return 0
+    if (!text) return
 
     const matches: { start: number, end: number, heat: number, word: string }[] = []
     let match: RegExpExecArray | null
@@ -282,7 +242,7 @@ export class HeatmapMarker {
     ENGLISH_WORD_RE.lastIndex = 0
     while ((match = ENGLISH_WORD_RE.exec(text)) !== null) {
       const word = match[0].toLowerCase()
-      const practiceCount = this.wordHeatMap.get(word)
+      const practiceCount = this.wordCache.getPracticeCount(word)
       if (practiceCount !== undefined) {
         matches.push({
           start: match.index,
@@ -293,10 +253,10 @@ export class HeatmapMarker {
       }
     }
 
-    if (matches.length === 0) return 0
+    if (matches.length === 0) return
 
     const parent = textNode.parentNode
-    if (!parent) return 0
+    if (!parent) return
 
     const fragment = document.createDocumentFragment()
     let lastEnd = 0
@@ -322,7 +282,6 @@ export class HeatmapMarker {
     }
 
     parent.replaceChild(fragment, textNode)
-    return matches.length
   }
 
   /**

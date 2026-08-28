@@ -2508,7 +2508,7 @@
   "qrcodeCopy": "复制图片",
   "qrcodeDownload": "下载",
   "qrcodeNotGenerated": "请先生成二维码",
-  "qrcodeCopied": "二维码已复制到剩贴板",
+  "qrcodeCopied": "二维码已复制到剪贴板",
   "qrcodeCopyFailed": "复制失败",
   "qrcodeDownloaded": "二维码已下载",
   "qrcodeDownloadFailed": "下载失败",

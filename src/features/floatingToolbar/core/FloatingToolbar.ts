@@ -1,11 +1,11 @@
 import { Plugin } from "siyuan"
-import { FlashcardStorage } from "@/utils/sharedStorage/flashcardStorage"
 import { copyToClipboard } from "@/utils/domUtils"
 import {
   ToolbarAction,
   ToolbarActionManager,
 } from "../types"
 import { HeatmapMarker } from "./HeatmapMarker"
+import { WordPracticeCache } from "./wordCache"
 import {
   debounce,
   showI18nMessage,
@@ -18,7 +18,7 @@ import {
 export class FloatingToolbar {
   private plugin: Plugin
   private actionManager: ToolbarActionManager
-  private flashcardStorage: FlashcardStorage
+  private wordCache: WordPracticeCache
   private heatmapMarker: HeatmapMarker
   private lastSelectionText: string = ""
   private observers: Map<HTMLElement, MutationObserver> = new Map()
@@ -26,18 +26,12 @@ export class FloatingToolbar {
   private readonly debouncedHandleMouseUp: () => void
   private readonly styleId = "floating-toolbar-enhanced-styles"
   private readonly notebookHighlightClass = "word-from-notebook"
-  /** 单词本标题缓存（小写），避免每次 mouseup 都全量 I/O 查询 */
-  private wordSetCache: Set<string> = new Set()
-  /** 缓存时间戳，用于 TTL 过期刷新 */
-  private wordCacheTimestamp: number = 0
-  /** 缓存 TTL（毫秒），与 HeatmapMarker 保持一致 */
-  private readonly WORD_CACHE_TTL_MS = 30000
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
     this.actionManager = new ToolbarActionManager()
-    this.flashcardStorage = new FlashcardStorage(plugin)
-    this.heatmapMarker = new HeatmapMarker(plugin)
+    this.wordCache = new WordPracticeCache(plugin)
+    this.heatmapMarker = new HeatmapMarker(this.wordCache)
     // 防抖处理选择事件，避免频繁触发
     this.debouncedHandleMouseUp = debounce(
       this.handleSelectionChange.bind(this),
@@ -147,34 +141,6 @@ export class FloatingToolbar {
   }
 
   /**
-   * 刷新单词本缓存
-   * 仅在缓存过期或首次使用时调用
-   */
-  private async refreshWordCache(): Promise<void> {
-    try {
-      const allCards = await this.flashcardStorage.getAllCards()
-      this.wordSetCache.clear()
-      for (const card of allCards) {
-        if (card.title) {
-          this.wordSetCache.add(card.title.toLowerCase())
-        }
-      }
-      this.wordCacheTimestamp = Date.now()
-    } catch {
-      // 缓存刷新失败，下次重试
-    }
-  }
-
-  /**
-   * 确保单词缓存有效
-   */
-  private async ensureWordCacheFresh(): Promise<void> {
-    if (Date.now() - this.wordCacheTimestamp > this.WORD_CACHE_TTL_MS) {
-      await this.refreshWordCache()
-    }
-  }
-
-  /**
    * 检测选中的英文单词是否来自单词本，并高亮背景
    * 仅当选中内容为纯英文字母时进行检测
    */
@@ -185,8 +151,8 @@ export class FloatingToolbar {
     }
 
     try {
-      await this.ensureWordCacheFresh()
-      const found = this.wordSetCache.has(selectedText.toLowerCase())
+      await this.wordCache.ensureFresh()
+      const found = this.wordCache.getPracticeCount(selectedText) !== undefined
 
       if (found) {
         document.body.classList.add(this.notebookHighlightClass)

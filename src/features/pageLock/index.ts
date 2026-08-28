@@ -8,12 +8,9 @@ import { setBlockAttrs } from "@/api"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { createIconElement } from "@/utils/iconHelper"
 import { createModalVueApp } from "@/utils/vueAppHelper"
-import { TimerRegistry } from "@/utils/timerRegistry"
 import LockDialog from "./components/LockDialog.vue"
 import { PageLockStorage as PageLockStorageClass } from "./types/storage"
 import {
-  CACHE_CLEANUP_INTERVAL,
-  cleanupCache,
   clearAllCache,
   getCachedLockState,
   setCachedLockState,
@@ -377,13 +374,9 @@ export function registerPageLock(plugin: Plugin) {
   plugin.eventBus.on("loaded-protyle-static", staticHandler)
   window.addEventListener("openPasswordDialog", dialogHandler)
 
-  const timers = new TimerRegistry()
-  timers.setInterval(cleanupCache, CACHE_CLEANUP_INTERVAL)
-
   /** 清理函数挂载到 plugin 实例，供 onunload 经 DESTROYABLE_KEYS 统一销毁 */
   const instance = {
     destroy() {
-      timers.clearAll()
       plugin.eventBus.off("switch-protyle", updateButton)
       plugin.eventBus.off("loaded-protyle-dynamic", updateButton)
       plugin.eventBus.off("loaded-protyle-static", staticHandler)

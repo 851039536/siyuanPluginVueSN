@@ -352,8 +352,8 @@ export interface CommitAnalysisStats {
 
 /** 提交分析结果缓存（持久化到插件存储，进入视图直接复用上次结果，避免每次重跑 git log） */
 export interface CommitAnalysisCache {
-  /** 每项目抓取条数（缓存对应的设置，加载时回填选择器） */
-  commitCount: number
+  /** 每项目抓取条数（"all" = 全部提交；缓存对应的设置，加载时回填选择器） */
+  commitCount: number | "all"
   /** 上次分析完成时间（ISO，面板展示"上次分析"文案） */
   analyzedAt: string
   /** 抓取失败的项目数 */
@@ -380,8 +380,8 @@ export interface LineStatsSummary {
 
 /** 行数统计独立缓存（与提交分析缓存解耦，独立持久化到 git-push-line-stats-cache） */
 export interface LineStatsCache {
-  /** 每项目抓取条数（缓存对应的设置，加载时回填选择器） */
-  commitCount: number
+  /** 每项目抓取条数（"all" = 全部提交；缓存对应的设置，加载时回填选择器） */
+  commitCount: number | "all"
   /** 上次分析完成时间（ISO，面板展示"上次分析"文案） */
   analyzedAt: string
   /** 抓取失败的项目数 */

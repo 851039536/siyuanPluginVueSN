@@ -24,8 +24,10 @@ import { analyzeCommitRuleCompliance } from "../commitRuleChecker"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 import { countTrackedFileLinesMap, shouldIncludeFile, sumAuthorLines, sumProjectLines, type NumstatCommit } from "../reportMetrics"
 
-/** 每项目抓取条数选项（仿 BranchCommitList.countOptions） */
-export const COMMIT_COUNT_OPTIONS = [30, 50, 100, 200] as const
+/** 每项目抓取条数选项（"all" = 全部提交，省略 git log -n 限制；仿 BranchCommitList.countOptions） */
+export const COMMIT_COUNT_OPTIONS = [30, 50, 100, 200, 300, 500, "all"] as const
+/** 提交抓取条数类型（数字 = 条数上限；"all" = 全部提交） */
+export type CommitCount = number | "all"
 
 /** 项目提交数排行上限 / 作者行数排行上限（仅提交数排行与作者行数排行截断；项目代码行数排行已显示全部，不再截断） */
 const PROJECT_RANK_LIMIT = 20
@@ -53,8 +55,8 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   const analyzing = ref(false)
   /** 是否已完成过至少一轮分析（区分"未分析"与"分析结果为空"） */
   const analyzed = ref(false)
-  /** 每项目抓取的提交条数（默认 100，可改 30/50/100/200） */
-  const commitCount = ref<number>(100)
+  /** 每项目抓取的提交条数（默认 100，可改 30/50/100/200/300/500 或 "all" 全部） */
+  const commitCount = ref<CommitCount>(100)
   /** 上次分析完成时间（ISO，缓存加载/分析完成后回填，供面板展示） */
   const analyzedAt = ref("")
   /** 跨项目合并的原始提交条目缓存 */
@@ -180,9 +182,10 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         // 行数统计：单命令抓取（getCommitStatsLog 自带 hash/message/author/date + 每文件增删行），
         // git 失败直接抛错计入 failedCount（不再本地 try-catch 降级为空数据）
         if (needNumstat) {
-          // 并行抓取 numstat（增删增量）与 git ls-files（存量文件列表），互不阻塞
+          // 并行抓取 numstat（增删增量）与 git ls-files（存量文件列表），互不阻塞；
+          // "all" 时不传上限（getCommitStatsLog 省略 -n 即抓取全部提交）
           const [numstat, trackedFiles] = await Promise.all([
-            manager.getCommitStatsLog(path, commitCount.value),
+            manager.getCommitStatsLog(path, typeof commitCount.value === "number" ? commitCount.value : undefined),
             manager.getTrackedFiles(path),
           ])
           // 单次遍历统计每个文件存量行数并据此聚合项目总行数（复用 countFileLines 口径，避免重复读文件）
@@ -374,7 +377,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   }
 
   /** 修改抓取条数后置为未分析并自动重跑；needNumstat 表示来自行数统计视图，重跑时同步抓 numstat 刷新行数排行 */
-  async function setCommitCount(n: number, needNumstat = false) {
+  async function setCommitCount(n: CommitCount, needNumstat = false) {
     if (commitCount.value === n) return
     commitCount.value = n
     analyzed.value = false

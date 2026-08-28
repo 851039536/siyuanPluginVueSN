@@ -113,6 +113,7 @@
 <script setup lang="ts">
 // gitPush 行数统计视图入口容器（状态编排 + 汇总卡片 + 排行区块 + 弹窗）
 import type { NumstatCommit } from "../../reportMetrics"
+import type { CommitCount } from "../../composables/useCommitAnalysis"
 import type { AuthorLineRankItem, LineStatsSummary, ProjectLineRankItem } from "../../types"
 import { computed, ref } from "vue"
 import EmptyState from "../common/EmptyState.vue"
@@ -139,7 +140,7 @@ const props = defineProps<{
   analyzedAt: string
   /** 抓取失败的项目数 */
   failedCount: number
-  commitCount: number
+  commitCount: CommitCount
   /** 选中的文件扩展名过滤（空数组 = 不过滤） */
   selectedExtensions: string[]
   /** 详情弹窗目标项目 id（非空即打开弹窗） */
@@ -152,7 +153,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   runAnalysis: []
-  updateCount: [n: number]
+  updateCount: [n: CommitCount]
   updateSelectedExtensions: [exts: string[]]
   viewProject: [projectId: string]
   closeLineDetail: []

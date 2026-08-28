@@ -10,7 +10,7 @@
         size="xsmall"
         :options="projectOptions"
         :placeholder="i18n.ruleCheckSelectProject"
-        :max-height="100"
+        :max-height="200"
         :filterable="projects.length >= 10"
         :filter-placeholder="i18n.searchPlaceholder"
         @change="onProjectChange"
@@ -43,6 +43,7 @@
 <script setup lang="ts">
 // gitPush 提交规则检查顶部工具条（项目过滤 + 分析状态 + 条数选择 + 分析按钮）
 import type { GitProject } from "../../types"
+import type { CommitCount } from "../../composables/useCommitAnalysis"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
 import Select from "@/components/Select.vue"
@@ -59,12 +60,12 @@ const props = defineProps<{
   analyzed: boolean
   /** 上次分析完成时间（ISO） */
   analyzedAt: string
-  commitCount: number
+  commitCount: CommitCount
 }>()
 
 const emit = defineEmits<{
   runAnalysis: []
-  updateCount: [n: number]
+  updateCount: [n: CommitCount]
   updateProject: [projectId: string]
 }>()
 

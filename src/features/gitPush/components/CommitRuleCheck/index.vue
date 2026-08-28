@@ -95,6 +95,7 @@
 <script setup lang="ts">
 // gitPush 提交规则检查视图入口容器（状态编排 + 各功能区块组合 + 修正弹窗）
 import type { CommitRuleCheckStats, CommitRuleViolation, GitProject } from "../../types"
+import type { CommitCount } from "../../composables/useCommitAnalysis"
 import { computed, ref } from "vue"
 import CommitFixDialog from "../common/CommitFixDialog.vue"
 import EmptyState from "../common/EmptyState.vue"
@@ -116,7 +117,7 @@ const props = defineProps<{
   analyzed: boolean
   /** 上次分析完成时间（ISO） */
   analyzedAt: string
-  commitCount: number
+  commitCount: CommitCount
 }>()
 
 const emit = defineEmits<{

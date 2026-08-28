@@ -38,6 +38,7 @@
 <script setup lang="ts">
 // gitPush 提交分析顶部工具条（分析状态 + 条数选择 + 分析按钮 + 显示设置）
 import type { CommitAnalysisViewSettings } from "../../types"
+import type { CommitCount } from "../../composables/useCommitAnalysis"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
 import CommitAnalysisSettings from "./CommitAnalysisSettings.vue"
@@ -50,7 +51,7 @@ const props = defineProps<{
   analyzed: boolean
   /** 上次分析完成时间（ISO） */
   analyzedAt: string
-  commitCount: number
+  commitCount: CommitCount
   viewSettings: CommitAnalysisViewSettings
   /** 数据中的年份列表（供设置弹窗年份选择） */
   yearOptions: number[]
@@ -58,7 +59,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   runAnalysis: []
-  updateCount: [n: number]
+  updateCount: [n: CommitCount]
   updateViewSettings: [patch: Partial<CommitAnalysisViewSettings>]
 }>()
 

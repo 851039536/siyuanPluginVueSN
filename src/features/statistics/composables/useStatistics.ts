@@ -9,19 +9,6 @@ import {
   ref,
 } from "vue"
 import { getPeriodStats, getStatistics } from "../queries"
-// 状态栏任务为统一入口（AGENTS.md 允许跨功能使用），刷新过程在底部状态栏可见
-import { useStatusBarTask } from "@/features/statusBar/composables/useStatusBarTask"
-
-// 状态栏任务：启动预载 / 手动刷新 / 定时刷新共用同一任务（模块级 store 去重）
-const statusTask = useStatusBarTask("statistics-refresh", "mdi:chart-bar")
-
-/** 状态栏文案 i18n（由 core/面板注入，来源为 statistics 分片） */
-let statusI18n: Record<string, any> = {}
-
-/** 注入状态栏文案（core 启动时注入 plugin.i18n.statistics，面板可重复覆盖） */
-export function setStatisticsI18n(i18n: Record<string, any>): void {
-  statusI18n = i18n
-}
 
 const loading = ref(false)
 const stats = ref<StatisticsData | null>(null)
@@ -40,12 +27,10 @@ const periodAvgWords = computed(() => {
 
 /**
  * 全量刷新：core 启动预载、手动刷新、定时刷新共用入口。
- * loading 防重：启动预载与面板打开并发时避免重复全量查询
+ * 并发防重由 dockPreload 注册表 state（loading）承担，此处仅维护面板 UI 的 loading
  */
 export async function refreshStatisticsData(): Promise<void> {
-  if (loading.value) return
   loading.value = true
-  statusTask.progress({ label: statusI18n.statusRefreshing })
   try {
     stats.value = await getStatistics(viewMode.value, {
       dayRange: dayRange.value,
@@ -53,10 +38,6 @@ export async function refreshStatisticsData(): Promise<void> {
       selectedYear: selectedYear.value,
     })
     lastUpdateTime.value = new Date().toLocaleString("zh-CN")
-    statusTask.complete(statusI18n.statusRefreshDone)
-  } catch (error) {
-    console.error("刷新统计数据失败:", error)
-    statusTask.fail(statusI18n.statusRefreshFailed)
   } finally {
     loading.value = false
   }

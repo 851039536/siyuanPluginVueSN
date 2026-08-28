@@ -112,6 +112,7 @@ import {
   watch,
 } from "vue"
 import Loader from "@/components/Loader.vue"
+import { getDockPreloadState } from "@/utils/dockPreload"
 import ActivityTab from "./components/NotebookActivity/index.vue"
 import DistributionTab from "./components/NotebookDistribution/index.vue"
 import HeatmapTab from "./components/heatmap/index.vue"
@@ -323,13 +324,14 @@ async function refreshData(): Promise<void> {
 
 onMounted(async () => {
   await initMilestoneStorage(props.plugin)
-  // 启动预载已由 core.preload 完成（Dock init 懒加载，启动时不触发 onMounted）：
-  // - stats 就绪 → 仅补历史数据，避免重复全量刷新
-  // - 预载进行中 → 等待数据到达后补历史
-  // - 预载失败/未开始 → 兜底全量刷新
-  if (stats.value) {
+  // 启动预载由 dockPreload 注册表统一执行（Dock init 懒加载，启动时不触发 onMounted）：
+  // - ready → 仅补历史数据，避免重复全量刷新
+  // - loading → 等待数据到达后补历史
+  // - idle/error → 兜底全量刷新
+  const preloadState = getDockPreloadState("statistics")
+  if (preloadState === "ready") {
     await loadHistoricalData()
-  } else if (loading.value) {
+  } else if (preloadState === "loading") {
     const stopWatch = watch(stats, async (s) => {
       if (!s) return
       stopWatch()

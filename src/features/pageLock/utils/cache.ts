@@ -1,4 +1,4 @@
-// 页面锁定状态缓存：内存缓存文档锁定状态，带过期时间与容量上限，定期清理
+// 页面锁定状态缓存：内存缓存文档锁定状态，带过期时间与容量上限，读写时惰性清理
 
 import { DEFAULT_OPTIONS } from "../types"
 
@@ -46,10 +46,14 @@ export function getCachedLockState(docId: string): boolean | null {
   if (cached && Date.now() - cached.timestamp < CACHE_EXPIRE_TIME) {
     return cached.value
   }
+  // 惰性清理：命中已过期条目时顺带删除，避免残留
+  lockStateCache.delete(docId)
   return null
 }
 
 export function setCachedLockState(docId: string, isLocked: boolean) {
+  // 惰性清理：写入时顺带淘汰过期/超量条目，替代定时器定期清理
+  cleanupCache()
   lockStateCache.set(docId, {
     value: isLocked,
     timestamp: Date.now(),

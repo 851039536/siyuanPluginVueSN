@@ -29,91 +29,74 @@
       <!-- 对话框内容 -->
       <div class="dialog-body">
         <!-- 输入内容 -->
-        <div class="input-section">
-          <Input
-            v-model="inputContent"
-            type="textarea"
-            :placeholder="t('qrcodePlaceholder', '输入或选择内容生成二维码...')"
-            :rows="3"
+        <Input
+          v-model="inputContent"
+          type="textarea"
+          :placeholder="t('qrcodePlaceholder', '输入或选择内容生成二维码...')"
+          :rows="3"
+          @input="debouncedRegenerate"
+        />
+
+        <!-- 二维码预览（无输入时显示空状态） -->
+        <div
+          v-if="inputContent"
+          ref="qrcodeContainer"
+          class="qrcode-preview"
+        ></div>
+        <div
+          v-else
+          class="qrcode-preview qrcode-empty"
+        >
+          <!-- 空状态提示："请先生成二维码" -->
+          <span>{{ t('qrcodeNotGenerated', '请先生成二维码') }}</span>
+        </div>
+
+        <!-- 设置行：大小滑块 + 纠错级别 -->
+        <div class="settings-row">
+          <Slider
+            v-model="qrcodeSize"
+            class="setting-size"
+            :label="t('qrcodeSize', '大小')"
+            :min="100"
+            :max="500"
+            :step="10"
+            :showValue="true"
+            :formatValue="v => `${v}px`"
+            size="xsmall"
             @input="debouncedRegenerate"
+          />
+          <Select
+            v-model="errorCorrection"
+            class="setting-level"
+            :label="t('qrcodeErrorCorrection', '纠错级别')"
+            :options="errorCorrectionOptions"
+            @change="debouncedRegenerate"
           />
         </div>
 
-        <!-- 二维码预览（无输入时显示空状态） -->
-        <div class="qrcode-section">
-          <!-- 标签："二维码预览" -->
-          <Label
-            tag="span"
-            size="xsmall"
-          >{{ t('qrcodePreview', '二维码预览') }}</Label>
-          <div
-            v-if="inputContent"
-            ref="qrcodeContainer"
-            class="qrcode-preview"
-          ></div>
-          <div
-            v-else
-            class="qrcode-preview qrcode-empty"
+        <!-- 操作行：复制 / 下载 -->
+        <div class="actions-row">
+          <!-- 按钮："复制图片" -->
+          <Button
+            variant="secondary"
+            size="small"
+            icon="copy"
+            :disabled="!inputContent"
+            @click="copyQRCode"
           >
-            <!-- 空状态提示："请先生成二维码" -->
-            <span>{{ t('qrcodeNotGenerated', '请先生成二维码') }}</span>
-          </div>
+            {{ t('qrcodeCopy', '复制图片') }}
+          </Button>
+          <!-- 按钮："下载" -->
+          <Button
+            variant="primary"
+            size="small"
+            icon="download"
+            :disabled="!inputContent"
+            @click="downloadQRCode"
+          >
+            {{ t('qrcodeDownload', '下载') }}
+          </Button>
         </div>
-
-        <!-- 设置选项 -->
-        <div class="settings-section">
-          <div class="setting-item">
-            <Slider
-              v-model="qrcodeSize"
-              :label="t('qrcodeSize', '大小')"
-              :min="100"
-              :max="500"
-              :step="10"
-              :showValue="true"
-              :formatValue="v => `${v}px`"
-              size="xsmall"
-              @input="debouncedRegenerate"
-            />
-          </div>
-
-          <div class="setting-item">
-            <Select
-              v-model="errorCorrection"
-              :label="t('qrcodeErrorCorrection', '纠错级别')"
-              :options="errorCorrectionOptions"
-              @change="debouncedRegenerate"
-            />
-          </div>
-        </div>
-      </div>
-
-      <!-- 对话框底部：右对齐紧凑按钮 -->
-      <div class="dialog-footer">
-        <!-- 按钮："复制图片" -->
-        <Button
-          variant="secondary"
-          icon="copy"
-          :disabled="!inputContent"
-          @click="copyQRCode"
-        >
-          {{ t('qrcodeCopy', '复制图片') }}
-        </Button>
-        <!-- 按钮："下载" -->
-        <Button
-          variant="secondary"
-          icon="download"
-          :disabled="!inputContent"
-          @click="downloadQRCode"
-        >
-          {{ t('qrcodeDownload', '下载') }}
-        </Button>
-        <!-- 按钮："关闭" -->
-        <Button
-          variant="primary"
-          @click="closeDialog"
-        >
-          {{ t('close', '关闭') }}
-        </Button>
       </div>
     </div>
   </div>
@@ -131,7 +114,6 @@ import {
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
-import Label from "@/components/Label.vue"
 import Select from "@/components/Select.vue"
 import Slider from "@/components/Slider.vue"
 import { triggerBlobDownload } from "@/utils/domUtils"

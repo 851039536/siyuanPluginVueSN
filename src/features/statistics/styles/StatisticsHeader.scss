@@ -89,6 +89,30 @@ $stats-header-height: 56px;
   }
 }
 
+// 自动刷新间隔下拉：紧凑样式，hover 前淡显与存储路径按钮一致
+.refresh-interval-select {
+  height: 24px;
+  border: 1px solid var(--b3-border-color);
+  border-radius: stats.$radius-sm;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-normal;
+  padding: 0 $spacing-1;
+  cursor: pointer;
+  opacity: 0.35;
+  transition: opacity 0.2s, border-color 0.2s;
+
+  .statistics-header:hover & {
+    opacity: 0.7;
+  }
+
+  &:hover {
+    opacity: 1;
+    border-color: var(--b3-theme-primary);
+  }
+}
+
 .storage-paths {
   padding: 6px 12px;
   background: var(--b3-theme-background);

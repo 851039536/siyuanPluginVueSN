@@ -4,8 +4,10 @@
     <PanelHeader
       :i18n="i18n"
       :plugin="plugin"
+      :floating="isFloating"
       @addCard="openCreateDialog"
       @refresh="reload"
+      @openWindow="openInWindow"
     />
 
     <CategoryFilter
@@ -177,7 +179,7 @@ import type {
 } from "./types"
 
 import type { SelectOption } from "@/components/Select.vue"
-import { showMessage } from "siyuan"
+import { showMessage, getFrontend } from "siyuan"
 import {
   computed,
   onMounted,
@@ -206,11 +208,23 @@ import { copyAndNotify, syncIncrementPractice } from "./utils"
 interface Props {
   i18n: I18n
   plugin: Plugin
+  /** 承载形态：dock = 主窗口 Dock 面板（默认）/ tab = 独立窗口页签 */
+  mode?: "dock" | "tab"
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  mode: "dock",
+})
 
 const t = useI18n(props.i18n)
+
+// 独立浮动窗口识别：desktop = 主窗口 / desktop-window = 浮动窗口（隐藏重复标题与打开按钮）
+const isFloating = computed(() => getFrontend() === "desktop-window")
+
+/** 在独立浮动窗口打开单词阅读（经 FlashcardReading 挂载的 FlashcardTabManager 调度） */
+const openInWindow = () => {
+  void (props.plugin as any).__flashcardReading?.openFloating()
+}
 
 const {
   storage,

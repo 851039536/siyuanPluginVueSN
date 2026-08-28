@@ -111,6 +111,7 @@
     "typingTitleHideMarkedOn": "Current: marked words hidden in typing",
     "typingTitleHideMarkedOff": "Current: marked words shown in typing",
     "markForTypingHide": "Mark to hide in typing practice",
-    "unmarkForTypingHide": "Marked: hidden in typing practice, click to restore"
+    "unmarkForTypingHide": "Marked: hidden in typing practice, click to restore",
+    "openInWindow": "Open in Independent Window"
   }
 }

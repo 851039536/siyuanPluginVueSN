@@ -12,7 +12,7 @@ src/features/flashcardReading/
 ├── utils.ts                         # 纯工具函数（syncIncrementPractice / copyAndNotify）
 ├── README.md
 ├── types/
-│   ├── index.ts                     # 类型定义（Flashcard, I18n, ViewMode 等）+ CARD_CONFIG 共享常量
+│   ├── index.ts                     # 类型定义（Flashcard, I18n, ViewMode 等）+ CARD_CONFIG 共享常量 + FlashcardTabManager 独立窗口管理器
 │   └── storage.ts                   # FlashcardStorage 存储层（导出 STORAGE_KEY）
 ├── composables/
 │   ├── useFlashcardStorage.ts       # 存储 composable（模块级共享单例：storage + cards/categories）
@@ -50,6 +50,13 @@ src/features/flashcardReading/
 - **标记入口**：列表卡片操作区的眼睛按钮（`CardList.vue`）与边学边写当前词旁的标记按钮（`TypingPractice.vue`），写入 `Flashcard.typingHidden`（共享模型字段，见 `@/utils/sharedStorage/flashcardStorage.ts`）；已标记单词在列表中标题弱化显示。
 - **过滤开关**：边学边写顶部"隐藏标记/显示标记"toggle，持久化到 `TypingSettings.hideMarked`（默认开启：标记即从练习队列排除；切到"显示标记"可临时把已标记词放回练习）；开启时 `index.vue` 的 `typingCards` computed 剔除已标记单词，仅影响练习队列，列表/统计视图不受影响。
 - **练习中标记**：边学边写内标记当前词且开关开启时，该词从队列原位剔除（保持当前进度），不整队重建。
+
+## 双形态承载（Dock 面板 + 独立窗口）
+
+- **独立窗口**：面板头部"在独立窗口打开"按钮（浮动窗口内经 `isFloating` 自动隐藏）→ `FlashcardTabManager.openFloating()`（`types/index.ts`）：`openTab` 创建/聚焦主窗口页签（`iconBookmark` 图标）→ `openWindow` 移入浮动窗口；关闭浮动窗口时页签自动移回主窗口。
+- **页签模型**：`plugin.addTab({ type: "flashcard-reading-tab" })` 在 Manager 构造时同步注册，模块级 `tabRegistered` 防多进程重复注册；页签内以 `mode: "tab"` 挂载同一 `index.vue`，容器补 `vp-dock-root` 全局基准字号。
+- **独立窗体 UI 精简**：浮动窗口中 `PanelHeader` 传 `floating` 隐藏重复标题（页签标题已标识功能名），添加/刷新等操作按钮保留，功能逻辑零改动。
+- **跨窗口同步限制**：独立窗口是独立渲染进程，`flashcardDataChanged` 事件不跨窗口；打开时经共享存储加载全量数据，另一侧的增删改在本窗口需刷新（刷新按钮）后可见。
 
 ## 扩展建议
 

@@ -907,7 +907,8 @@
     "typingTitleHideMarkedOn": "当前：边学边写隐藏已标记单词",
     "typingTitleHideMarkedOff": "当前：边学边写显示已标记单词",
     "markForTypingHide": "标记后边学边写不显示",
-    "unmarkForTypingHide": "已标记：边学边写中隐藏，点击恢复"
+    "unmarkForTypingHide": "已标记：边学边写中隐藏，点击恢复",
+    "openInWindow": "在独立窗口打开"
   },
   "floatingBox": {
     "title": "悬浮工具箱",
@@ -3294,9 +3295,9 @@
     "lastUpdate": "最后更新",
     "autoRefresh": "自动刷新",
     "refreshOff": "关闭",
-    "statusRefreshing": "刷新中",
-    "statusRefreshDone": "刷新完成",
-    "statusRefreshFailed": "刷新失败",
+    "statusRefreshing": "统计中",
+    "statusRefreshDone": "统计完成",
+    "statusRefreshFailed": "统计失败",
     "interval1min": "1分钟",
     "interval5min": "5分钟",
     "interval10min": "10分钟",

@@ -152,7 +152,11 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
   .status-bar-task-item {
     color: var(--b3-theme-primary);
     font-family: $vp-mono;
-    font-size: $font-size-xs;
+    font-size: $font-size-2xs;
+
+    .monitor-value {
+      font-weight: $font-weight-normal; // 覆盖默认 semibold，任务文案更轻量
+    }
 
     &[data-level="medium"] {
       will-change: opacity;

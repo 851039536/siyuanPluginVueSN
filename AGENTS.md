@@ -146,6 +146,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 | 状态栏任务 | `useStatusBarTask` | `@/features/statusBar/composables/useStatusBarTask` |
 | Markdown 渲染 | `parseMarkdown` / `convertHljsToInlineStyles` | `@/utils/mdRenderer` |
 | 定时器 | `TimerRegistry`（`setInterval` / `setTimeout` / `clear` / `clearAll`） | `@/utils/timerRegistry` |
+| Dock 预加载 | `registerDockPreload` / `runAllDockPreloads` / `refreshDockPreload` / `getDockPreloadState` | `@/utils/dockPreload` |
 | 全局 `siyuan` | Props 传入的 `Plugin` 实例 | 禁止使用 `(window as any).siyuan` |
 
 唯一例外：`src/config/settings.ts` 允许直接调用 `plugin.loadData/saveData`，仅用于单一的 `plugin-settings` 键。
@@ -195,6 +196,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 - **Dock 面板侧边栏间距**：滚动内容不得紧贴侧边栏，根容器必须 `padding-right` ≥ `$spacing-2`。详见 [AGENTS_STYLE.md § 强制规则：Dock 面板侧边栏间距](./AGENTS_STYLE.md#强制规则dock-面板侧边栏间距)
 - **AI 调用统一入口**：必须走 `@/utils/aiApi` 的 `callAI` / `callAISmart` / `callAIChat`，禁止直接 `fetch` 或硬编码 Key/端点。详见 [AGENTS_API.md § 强制规则：AI 调用](./AGENTS_API.md#强制规则ai-调用) 与 [docs/ai-api-usage.md](./docs/ai-api-usage.md)
 - **定时任务统一入口**：新增定时任务必须走 `@/utils/timerRegistry` 的 `TimerRegistry`（`setInterval` / `setTimeout` / `clear` / `clearAll`），禁止裸 `setInterval` / `setTimeout`；句柄类型统一为 `TimerHandle`（`ReturnType<typeof setInterval>`），动态启停必须通过 `clear(handle)` / `clearAll()`，生命周期随功能实例 destroy/stop 清理。详见 [AGENTS_API.md § 定时器](./AGENTS_API.md#定时器)
+- **Dock 预加载统一入口**：需要启动预载的 Dock 功能必须通过 `@/utils/dockPreload` 的 `registerDockPreload` 注册（labels 从 `plugin.i18n.<feature>` 提取），启动预载由插件启动链路 `runAllDockPreloads()` 统一执行；手动/定时刷新走 `refreshDockPreload(id)`（带状态栏三态与 loading 防重），面板打开用 `getDockPreloadState(id)` 分流（ready→直接用 / loading→等待 / idle|error→兜底刷新），禁止在 register/init 中自行散落预载逻辑或面板打开时重复全量刷新。详见 [AGENTS_API.md § Dock 预加载](./AGENTS_API.md#dock-预加载)
 - **禁止 i18n 硬编码兜底**：`{{ i18n.xxx || '中文兜底' }}` 模式禁止使用。详见 [AGENTS_I18N.md § 强制规则：禁止 i18n 硬编码兜底值](./AGENTS_I18N.md#强制规则禁止-i18n-硬编码兜底值)
 - **i18n 中文注释**：模板中每处使用 i18n 键渲染文案的位置，必须在其上方添加中文 HTML 注释标明实际显示的中文文案（如 `<!-- 弹窗标题："Git 全局配置" -->`）；模板的主要结构区块同样必须添加中文区块注释（如 `<!-- 底部操作栏 -->`）。i18n 键名是英文，缺少注释会降低模板可读性。
 

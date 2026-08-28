@@ -75,6 +75,10 @@ import {
   init,
 } from "@/main"
 import { emitCustomEvent } from "@/utils/eventBus"
+import {
+  clearDockPreloads,
+  runAllDockPreloads,
+} from "@/utils/dockPreload"
 
 import { setupIconifyOffline } from "@/utils/iconifySetup"
 import { clearRendererCache } from "@/utils/mdRenderer"
@@ -137,6 +141,9 @@ export default class PluginSample extends Plugin {
     }
     this.registerFeatures()
 
+    // 统一执行各 Dock 功能的启动预载（registerDockPreload 已完成注册，异步不阻塞启动）
+    void runAllDockPreloads()
+
     // 初始化斜杠命令
     initCommands(this)
 
@@ -186,6 +193,9 @@ export default class PluginSample extends Plugin {
 
     // 清理统计数据资源（模块级单例，不挂在 plugin 实例上）
     getStatisticsInstance()?.destroy()
+
+    // 清理 Dock 预加载注册表
+    clearDockPreloads()
 
     // 清理状态栏资源
     unregisterStatusBar()

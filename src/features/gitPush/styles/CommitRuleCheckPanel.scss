@@ -29,6 +29,16 @@
 .grc-project-select {
   flex: 0 1 210px;
   min-width: 0;
+
+  // 下拉面板放宽：默认 width:100% 跟随触发框（210px），长项目名易截断；至少 260px 容纳更多文字
+  .si-select__dropdown {
+    min-width: 260px;
+  }
+
+  // 选项单行省略：长项目名不换行撑高面板，超出省略（完整名 hover 显示，title 由 Select 组件提供）
+  .si-select__option {
+    @include text-ellipsis;
+  }
 }
 
 // 分析状态文案（满宽第二行，超长省略）

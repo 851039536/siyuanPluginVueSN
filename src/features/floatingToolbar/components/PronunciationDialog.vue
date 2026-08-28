@@ -33,23 +33,21 @@
           <Input
             v-model="inputWord"
             class="input-main"
-            :label="t('inputLabel', '输入内容')"
+            size="small"
             :placeholder="t('inputPlaceholder', '输入中文或英文...')"
             @keyup.enter="generatePronunciation"
           />
-          <!-- 按钮："生成" / "生成中..." -->
+          <!-- 生成按钮：生成中显示加载动画，悬停提示"生成谐音" -->
           <Button
             class="btn-generate"
             :disabled="!inputWord || isGenerating"
             :title="isGenerating ? t('generating', '生成中...') : t('generateTitle', '生成谐音')"
             variant="primary"
-            size="xsmall"
+            size="small"
             icon="refresh"
             :loading="isGenerating"
             @click="generatePronunciation"
-          >
-            {{ isGenerating ? t('generating', '生成中...') : t('generateBtn', '生成') }}
-          </Button>
+          />
         </div>
 
         <!-- 结果展示 -->
@@ -134,14 +132,13 @@
         </div>
       </div>
 
-      <!-- 对话框底部 -->
+      <!-- 对话框底部：右对齐紧凑按钮 -->
       <div class="dialog-footer">
         <!-- 按钮："复制结果" -->
         <Button
           variant="secondary"
           icon="copy"
           :disabled="!result"
-          block
           @click="copyResult"
         >
           {{ t('copyResult', '复制结果') }}
@@ -149,7 +146,6 @@
         <!-- 按钮："关闭" -->
         <Button
           variant="primary"
-          block
           @click="closeDialog"
         >
           {{ t('close', '关闭') }}
@@ -203,7 +199,6 @@
           <!-- 按钮："取消" -->
           <Button
             variant="secondary"
-            block
             @click="showAddToCardDialog = false"
           >
             {{ t('cancel', '取消') }}
@@ -212,7 +207,6 @@
           <Button
             variant="primary"
             :disabled="!selectedCategory || (selectedCategory === '__custom__' && !customCategoryInput)"
-            block
             @click="addToFlashcard"
           >
             {{ t('add', '添加') }}

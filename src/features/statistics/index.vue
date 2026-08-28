@@ -6,8 +6,10 @@
       :loading="loading"
       :last-update-time="lastUpdateTime"
       :storage-paths="storagePaths"
+      :auto-refresh-interval="autoRefreshInterval"
       :i18n="i18n"
       @refresh="refreshData"
+      @autoRefreshChange="handleAutoRefreshChange"
     />
 
     <!-- Tab 栏 -->
@@ -139,12 +141,18 @@ import {
   getTrendPrediction,
 } from "./queries/reportStats"
 import { MILESTONE_FIELD_MAP, MILESTONE_TYPES } from "./types/milestoneRules"
-import { STATISTICS_STORAGE_KEYS } from "./types/storage"
+import {
+  DEFAULT_STATISTICS_SETTINGS,
+  STATISTICS_STORAGE_KEYS,
+  StatisticsStorage,
+  type StatisticsSettings,
+} from "./types/storage"
 import { countMilestonesReached } from "./utils/milestones"
 
 interface Props {
   plugin: Plugin
   onRegisterRefresh?: (fn: () => Promise<void>) => void
+  onAutoRefreshChange?: (settings: StatisticsSettings) => void
   i18n?: Record<string, any>
 }
 
@@ -248,6 +256,41 @@ const storagePaths = computed(() => {
   ]
 })
 
+// ============================================================
+// 定时自动刷新
+// ============================================================
+
+/** 当前自动刷新间隔（分钟，0 = 关闭），Header 下拉绑定值 */
+const autoRefreshInterval = ref(0)
+
+/** 启动时读取持久化设置：启用则立即应用定时器（加载起点在面板挂载，而非设置面板） */
+async function initAutoRefresh(): Promise<void> {
+  try {
+    const settings = await new StatisticsStorage(props.plugin).loadSettings()
+    autoRefreshInterval.value = settings.autoRefreshEnabled
+      ? settings.refreshInterval
+      : 0
+    props.onAutoRefreshChange?.(settings)
+  } catch (error) {
+    console.error("加载统计自动刷新设置失败:", error)
+  }
+}
+
+/** Header 下拉变更：interval 0 = 关闭，否则按分钟启动定时器 */
+function handleAutoRefreshChange(interval: number): void {
+  const settings: StatisticsSettings = {
+    autoRefreshEnabled: interval > 0,
+    refreshInterval: interval > 0 ? interval : DEFAULT_STATISTICS_SETTINGS.refreshInterval,
+  }
+  autoRefreshInterval.value = interval
+  new StatisticsStorage(props.plugin)
+    .saveSettings(settings)
+    .catch((error) => {
+      console.error("保存统计自动刷新设置失败:", error)
+    })
+  props.onAutoRefreshChange?.(settings)
+}
+
 // 切换视图模式/时间范围时只重查时段统计（柱状图），避免重跑全量统计导致卡顿
 watch([viewMode, dayRange, monthYearRange, selectedYear], async () => {
   loading.value = true
@@ -282,6 +325,7 @@ onMounted(async () => {
   refreshData()
   props.onRegisterRefresh?.(refreshData)
   await initMilestoneStorage(props.plugin)
+  await initAutoRefresh()
 })
 </script>
 

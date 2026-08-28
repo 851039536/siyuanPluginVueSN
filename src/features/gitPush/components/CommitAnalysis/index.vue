@@ -121,7 +121,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   runAnalysis: []
-  updateCount: [n: number]
+  updateCount: [n: CommitCount]
   updateViewSettings: [patch: Partial<CommitAnalysisViewSettings>]
   viewProject: [projectId: string]
 }>()

@@ -1859,6 +1859,7 @@
     "ruleFixGenerating": "Generating…",
     "ruleFixSave": "Save Fix",
     "ruleFixSaving": "Saving…",
+    "ruleFixRewriting": "Rewriting history commits (rebase)...",
     "ruleFixDirtyWorkingTree": "Working tree has uncommitted changes. Commit or stash them before fixing.",
     "ruleFixAiFailed": "AI generation failed. Please retry.",
     "ruleFixSaveFailed": "Failed to fix commit message.",

@@ -168,11 +168,19 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
 
   /** 批量分析全部项目核心（GitExecutor 自带并发限流，无需额外节流）；needNumstat 时单命令抓取 numstat 生成行数排行，成功后持久化结果供下次复用。
    * @returns 是否实际执行（false = 分析进行中被拒绝，调用方据此决定是否需后续重试） */
-  async function runCore(needNumstat: boolean): Promise<boolean> {
+  async function runCore(needNumstat: boolean, projectIds?: string[]): Promise<boolean> {
     if (analyzing.value) return false
     analyzing.value = true
     try {
-      const settled = await Promise.allSettled(projects.value.map(async (p) => {
+      // 目标子集：仅保存后局部刷新（!needNumstat + 指定 projectIds）时只抓目标项目，其余情况全量
+      const targets = projectIds?.length && !needNumstat
+        ? projects.value.filter((p) => projectIds.includes(p.id))
+        : projects.value
+      // 子集目标全部不存在（项目已被删除）：无操作返回，避免 oldContribution 误判导致 failedCount 错误递减
+      if (projectIds?.length && !needNumstat && targets.length === 0) {
+        return true
+      }
+      const settled = await Promise.allSettled(targets.map(async (p) => {
         const path = resolveValidPath(p)
         // B 修复：路径无效的项目直接 throw 计入 failedCount（预检绕过 getCommitLog 内部吞错的语义，避免静默缺席）
         const modules = getNodeFsPathOs()
@@ -232,8 +240,22 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         if (r.status === "fulfilled") flat.push(...r.value.entries)
         else fail++
       })
-      entries.value = flat
-      failedCount.value = fail
+      // 子集局部刷新（保存修正后）：按项目合并——移除目标项目旧条目（amend/rebase 后 hash 已变，整体替换）+ 追加新数据，其他项目保留
+      const idSet = projectIds?.length && !needNumstat ? new Set(projectIds) : new Set<string>()
+      if (idSet.size > 0) {
+        const prevEntries = entries.value
+        // 目标项目旧失败贡献（缺席旧 entries 计 1）+ 本次新失败数（单项目 0/1），增量校正 failedCount
+        const oldContribution = [...idSet].filter((id) => !prevEntries.some((e) => e.projectId === id)).length
+        failedCount.value = failedCount.value - oldContribution + fail
+        const merged = [...prevEntries.filter((e) => !idSet.has(e.projectId)), ...flat]
+        // 按项目配置顺序重排，保持显示稳定
+        const order = new Map(projects.value.map((p, i) => [p.id, i]))
+        merged.sort((a, b) => (order.get(a.projectId) ?? Number.MAX_SAFE_INTEGER) - (order.get(b.projectId) ?? Number.MAX_SAFE_INTEGER))
+        entries.value = merged
+      } else {
+        failedCount.value = fail
+        entries.value = flat
+      }
       analyzedAt.value = new Date().toISOString()
       analyzed.value = true
       // 行数统计请求才重算排行；提交分析不触碰已有排行，保留缓存中的行数数据供行数视图复用
@@ -264,8 +286,8 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
       await manager.storage.commitAnalysisCache.save({
         commitCount: commitCount.value,
         analyzedAt: analyzedAt.value,
-        failedCount: fail,
-        entries: flat,
+        failedCount: failedCount.value,
+        entries: entries.value,
         projectLineRanking: needNumstat ? projectLineRanking.value : (oldCache.projectLineRanking ?? []),
         authorLineRanking: needNumstat ? authorLineRanking.value : (oldCache.authorLineRanking ?? []),
       })
@@ -284,19 +306,24 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     } finally {
       analyzing.value = false
     }
-    // 分析真正执行完成，撤销待重跑标记（本次已消费该请求）
-    pendingReanalyze = false
+    // 分析真正执行完成，撤销待重跑标记（仅全量模式消费；子集局部刷新不消费排队请求，避免覆盖其他保存的排队标记）
+    if (!projectIds?.length) pendingReanalyze = false
     return true
   }
 
-  /** 提交分析（仅抓取 commit log 聚合提交维度；行数排行沿用缓存旧值，不重新抓 numstat） */
-  async function runAnalysis() {
-    const ran = await runCore(false)
-    // 分析进行中被拒绝：置 analyzed=false 并标记待重跑，下次进入视图由 ensureAnalysis 强制执行
+  /** 提交分析（仅抓取 commit log 聚合提交维度；行数排行沿用缓存旧值，不重新抓 numstat；projectId 指定时仅局部重抓该项目，用于保存修正后的快速刷新） */
+  async function runAnalysis(projectId?: string) {
+    const ran = await runCore(false, projectId ? [projectId] : undefined)
+    // 分析进行中被拒绝：全量请求置 analyzed=false 并标记待重跑；子集请求仅排队（保持界面数据，避免白屏）
     if (!ran) {
-      analyzed.value = false
-      pendingReanalyze = true
-      console.warn("[gitPush] 分析进行中，重新分析请求已排队待下次执行")
+      if (projectId) {
+        pendingReanalyze = true
+        console.warn("[gitPush] 分析进行中，该项目局部刷新已排队待下次全量执行")
+      } else {
+        analyzed.value = false
+        pendingReanalyze = true
+        console.warn("[gitPush] 分析进行中，重新分析请求已排队待下次执行")
+      }
     }
   }
 

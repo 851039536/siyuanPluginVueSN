@@ -121,8 +121,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  runAnalysis: []
-  updateCount: [n: number]
+  runAnalysis: [projectId?: string]
+  updateCount: [n: CommitCount]
   updateProject: [projectId: string]
   viewProject: [projectId: string]
 }>()
@@ -137,10 +137,12 @@ function openFix(violation: CommitRuleViolation) {
   editingViolation.value = violation
 }
 
-/** 修正成功后关闭弹窗并重新运行分析，刷新违规列表 */
+/** 修正成功后关闭弹窗并仅重抓该项目的提交日志（局部刷新，避免全量重跑所有项目） */
 function handleFixSaved() {
+  // 先捕获 projectId 再清空（saved 事件派发早于 close，此处仍可读到目标）
+  const projectId = editingViolation.value?.projectId
   editingViolation.value = null
-  emit("runAnalysis")
+  emit("runAnalysis", projectId)
 }
 </script>
 

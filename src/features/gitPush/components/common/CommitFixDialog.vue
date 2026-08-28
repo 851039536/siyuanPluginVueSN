@@ -111,6 +111,18 @@
               </div>
             </div>
 
+            <!-- 历史提交 rebase 重写耗时提示（仅保存历史提交时显示，明确等待原因） -->
+            <div
+              v-if="saving && isHistoryCommit"
+              class="gp-fix-warning"
+            >
+              <Icon
+                icon="mdi:alert-circle-outline"
+                height="12"
+              />
+              <span>{{ i18n.ruleFixRewriting }}</span>
+            </div>
+
             <!-- AI 生成失败提示 -->
             <div
               v-if="aiError"
@@ -153,7 +165,7 @@
               height="12"
               :class="{ 'gp-spin': saving }"
             />
-            <span>{{ saving ? i18n.ruleFixSaving : i18n.ruleFixSave }}</span>
+            <span>{{ saving ? (isHistoryCommit ? i18n.ruleFixRewriting : i18n.ruleFixSaving) : i18n.ruleFixSave }}</span>
           </button>
         </div>
       </div>

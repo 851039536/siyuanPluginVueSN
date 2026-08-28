@@ -20,14 +20,24 @@ const categories = ref<string[]>([])
 let listenerCount = 0
 let dataChangeHandler: (() => void) | null = null
 
-const loadCards = async () => {
+// 进行中的加载请求：并发调用（事件广播 + 显式 reload 等）复用同一 Promise，避免重复 IO
+let loadInFlight: Promise<void> | null = null
+
+const loadCards = async (): Promise<void> => {
   if (!sharedStorage) return
-  try {
-    cards.value = await sharedStorage.getAllCards()
-    categories.value = await sharedStorage.getCategories()
-  } catch (error) {
-    console.error("Failed to load cards:", error)
-  }
+  if (loadInFlight) return loadInFlight
+  const storage = sharedStorage
+  loadInFlight = (async () => {
+    try {
+      cards.value = await storage.getAllCards()
+      categories.value = await storage.getCategories()
+    } catch (error) {
+      console.error("Failed to load cards:", error)
+    } finally {
+      loadInFlight = null
+    }
+  })()
+  return loadInFlight
 }
 
 /** 获取（或创建）模块级共享 storage 实例，供 FlashcardReading 类与组件复用 */

@@ -3,21 +3,14 @@
   <!-- 顶部工具条：分析状态 + 条数选择 + 分析按钮 -->
   <div class="gpa-toolbar">
     <!-- 分析状态："分析中…/上次分析 xx/未分析" -->
-    <span class="gpa-status">{{ analyzing ? i18n.auditing : (analyzed ? i18n.analysisLastRun.replace("{0}", relativeTime(analyzedAt, i18n)) : i18n.analysisNotRun) }}</span>
+    <span class="gpa-status">{{ statusText }}</span>
     <div class="gpa-toolbar-right">
       <!-- 条数选择（tooltip："每项目 {0} 条"） -->
-      <select
-        class="gpa-count-select"
-        :value="commitCount"
-        :title="i18n.analysisCommitsPerProject.replace('{0}', String(commitCount))"
-        @change="onCountChange"
-      >
-        <option
-          v-for="n in COMMIT_COUNT_OPTIONS"
-          :key="n"
-          :value="n"
-        >{{ n }}</option>
-      </select>
+      <CommitCountSelect
+        :i18n="i18n"
+        :commit-count="commitCount"
+        @update-count="emit('updateCount', $event)"
+      />
       <!-- 按钮文案："开始分析"/"重新分析"（分析中切换为环形 loading 图标并旋转，业务图标不参与旋转） -->
       <button
         class="vp-btn vp-btn--ghost vp-btn--sm"
@@ -46,9 +39,10 @@
 // gitPush 提交分析顶部工具条（分析状态 + 条数选择 + 分析按钮 + 显示设置）
 import type { CommitAnalysisViewSettings } from "../../types"
 import { Icon } from "@iconify/vue"
-import { COMMIT_COUNT_OPTIONS } from "../../composables/useCommitAnalysis"
-import { relativeTime } from "../../utils"
+import { computed } from "vue"
 import CommitAnalysisSettings from "./CommitAnalysisSettings.vue"
+import CommitCountSelect from "../common/CommitCountSelect.vue"
+import { analysisStatusText } from "../../utils"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -68,9 +62,14 @@ const emit = defineEmits<{
   updateViewSettings: [patch: Partial<CommitAnalysisViewSettings>]
 }>()
 
-function onCountChange(e: Event) {
-  emit("updateCount", Number((e.target as HTMLSelectElement).value))
-}
+/** 分析状态文案（与提交规则检查工具条共用统一逻辑，notRunKey 区分未分析提示） */
+const statusText = computed(() => analysisStatusText({
+  analyzing: props.analyzing,
+  analyzed: props.analyzed,
+  analyzedAt: props.analyzedAt,
+  i18n: props.i18n,
+  notRunKey: "analysisNotRun",
+}))
 </script>
 
 <style lang="scss">

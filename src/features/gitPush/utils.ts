@@ -448,6 +448,23 @@ export function relativeTime(iso: string | undefined, i18n: Record<string, any>)
   return i18n.timeYearsAgo.replace("{0}", String(Math.floor(diff / (365 * day))))
 }
 
+/**
+ * 分析状态文案统一："分析中… / 上次分析 xx / 未分析"（提交分析与提交规则检查工具条共用，
+ * notRunKey 区分 analysisNotRun / ruleCheckNotRun，消除跨工具条重复三元表达式）。
+ */
+export function analysisStatusText(opts: {
+  analyzing: boolean
+  analyzed: boolean
+  analyzedAt: string
+  i18n: Record<string, any>
+  notRunKey: string
+}): string {
+  const { analyzing, analyzed, analyzedAt, i18n, notRunKey } = opts
+  if (analyzing) return i18n.auditing
+  if (analyzed) return i18n.analysisLastRun.replace("{0}", relativeTime(analyzedAt, i18n))
+  return i18n[notRunKey]
+}
+
 /** 按活动时间分级（用于卡片颜色提示） */
 export function activityLevel(iso?: string): "fresh" | "recent" | "stale" | "dead" {
   if (!iso) return "dead"

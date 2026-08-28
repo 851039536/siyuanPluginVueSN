@@ -1,6 +1,6 @@
 // Git 项目持久化存储与类型定义
 import type { Plugin } from "siyuan"
-import type { CommitAnalysisCache, CommitAnalysisViewSettings, LineStatsCache, PlatformKey } from "./meta"
+import type { CommitAnalysisCache, CommitAnalysisViewSettings, LineStatsCache, PlatformKey, RuleCheckPrefs } from "./meta"
 import type { CodeReportPrefs } from "./report"
 import { DEFAULT_REPORT_PREFS } from "./report"
 import { PluginStorage } from "@/utils/pluginStorage"
@@ -340,6 +340,9 @@ export const DEFAULT_ANALYSIS_VIEW_SETTINGS: CommitAnalysisViewSettings = {
   color: "#2ea44f",
 }
 
+/** 提交规则检查偏好默认值（默认过滤全部项目） */
+const DEFAULT_RULE_CHECK_PREFS: RuleCheckPrefs = { projectId: "" }
+
 const DEFAULT_UNGROUPED: ProjectCategory = {
   id: UNGROUPED_ID,
   name: "未分组",
@@ -371,6 +374,8 @@ export class GitPushStorage {
   readonly commitAnalysisView: TypedStorage<CommitAnalysisViewSettings>
   /** 代码统计报告偏好（上次选中项目 + 时间范围，进入视图恢复选择） */
   readonly reportPrefs: TypedStorage<CodeReportPrefs>
+  /** 提交规则检查偏好（上次选中的过滤项目，跨会话恢复选择） */
+  readonly ruleCheckPrefs: TypedStorage<RuleCheckPrefs>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
@@ -387,6 +392,7 @@ export class GitPushStorage {
     this.lineStatsCache = new TypedStorage(storage, "git-push-line-stats-cache", DEFAULT_LINE_STATS_CACHE)
     this.commitAnalysisView = new TypedStorage(storage, "git-push-analysis-view", DEFAULT_ANALYSIS_VIEW_SETTINGS)
     this.reportPrefs = new TypedStorage(storage, "git-push-report-prefs", DEFAULT_REPORT_PREFS)
+    this.ruleCheckPrefs = new TypedStorage(storage, "git-push-rulecheck-prefs", DEFAULT_RULE_CHECK_PREFS)
   }
 
   async init(): Promise<void> {

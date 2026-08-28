@@ -33,22 +33,6 @@
   gap: $spacing-1;
 }
 
-// 条数选择（每项目抓取条数）
-.gpa-count-select {
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
-  color: var(--b3-theme-on-surface);
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
-  padding: 2px 4px;
-  cursor: pointer;
-
-  &:focus {
-    @include focus-ring;
-  }
-}
-
 // ── 总览卡片（复用 gp-stat-card 视觉模式）──
 .gpa-cards {
   display: grid;

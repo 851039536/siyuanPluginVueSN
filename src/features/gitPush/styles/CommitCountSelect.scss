@@ -1,0 +1,18 @@
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// 公共条数选择（每项目抓取条数，提交分析与规则检查工具条共用）
+.gp-count-select {
+  font-size: $font-size-2xs;
+  font-family: $vp-mono;
+  color: var(--b3-theme-on-surface);
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  padding: 2px 4px;
+  cursor: pointer;
+
+  &:focus {
+    @include focus-ring;
+  }
+}

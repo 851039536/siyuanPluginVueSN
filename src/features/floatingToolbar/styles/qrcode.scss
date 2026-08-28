@@ -16,10 +16,6 @@
 .qrcode-dialog {
   @include ft.dialog-container(420px);
   // 使用 mixin 默认 $radius-xl (12px)，符合 Codex 弹窗圆角规范
-
-  @media (max-width: ft.$breakpoint-md) {
-    max-height: 90vh;
-  }
 }
 
 // ========================================
@@ -38,10 +34,6 @@
   @include ft.dialog-title(false);
   font-size: g.$font-size-sm;
   gap: g.$spacing-1;
-
-  @media (max-width: ft.$breakpoint-md) {
-    font-size: g.$font-size-sm;
-  }
 }
 
 .dialog-icon {
@@ -88,7 +80,8 @@
   @include ft.flex-center;
   padding: g.$spacing-3;
 
-  canvas {
+  // 画布由 QRCode.toCanvas 运行时创建，无 scope 属性，需用 :deep 穿透
+  :deep(canvas) {
     max-width: 100%;
     height: auto;
   }
@@ -99,6 +92,16 @@
   }
 }
 
+// 空状态（复用预览容器尺寸，虚线边框区分）
+.qrcode-empty {
+  border-style: dashed;
+
+  span {
+    font-size: g.$font-size-xs;
+    color: var(--b3-theme-on-surface-variant);
+  }
+}
+
 // ========================================
 // 设置区域
 // ========================================
@@ -106,6 +109,7 @@
   @include ft.flex-column(g.$spacing-2);
   padding: g.$spacing-3;
   background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-theme-surface-lighter);
   border-radius: g.$radius-sm;
 
   @media (max-width: ft.$breakpoint-md) {
@@ -122,6 +126,7 @@
 // ========================================
 .dialog-footer {
   @include ft.dialog-footer;
+  justify-content: flex-end;
 
   @media (max-width: ft.$breakpoint-md) {
     flex-direction: column;

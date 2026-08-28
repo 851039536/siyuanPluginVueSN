@@ -273,6 +273,12 @@ export interface CommitRuleCheckStats {
   violations: CommitRuleViolation[]
 }
 
+/** 提交规则检查偏好（上次选中的过滤项目，持久化到 git-push-rulecheck-prefs；空串 = 全部项目） */
+export interface RuleCheckPrefs {
+  /** 选中的项目 ID（"" = 全部项目） */
+  projectId: string
+}
+
 /** 行数排行基础字段（新增/删除/净增三要素） */
 interface LineRankBase {
   /** 新增行数（numstat 聚合） */

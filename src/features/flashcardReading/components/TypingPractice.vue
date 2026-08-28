@@ -441,6 +441,20 @@ watch(
   },
 )
 
+// 队列原位移除/重建可能保持索引数值不变而仅换卡对象（如练习中标记当前词），
+// 仅靠 currentIndex watch 会把已输入状态残留到新词上；同时清掉未触发的对错
+// 延迟回调（如答对后 600ms 的跳卡），防止作用于新词
+watch(
+  () => props.currentCard,
+  () => {
+    if (correctTimeout) clearTimeout(correctTimeout)
+    if (resetTimeout) clearTimeout(resetTimeout)
+    correctTimeout = null
+    resetTimeout = null
+    resetTyping()
+  },
+)
+
 watch(
   () => props.roundComplete,
   (val) => {

@@ -95,7 +95,7 @@
             :title="entry.date"
           >
             <span class="bcl-date-relative">{{ entry.relativeDate }}</span>
-            <span class="bcl-date-absolute">{{ formatDate(entry.date) }}</span>
+            <span class="bcl-date-absolute">{{ formatDateTime(entry.date) }}</span>
           </span>
         </span>
       </div>
@@ -110,6 +110,7 @@ import {
   computed,
   ref,
 } from "vue"
+import { formatDateTime } from "../../utils"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -138,15 +139,6 @@ const filteredEntries = computed(() => {
 
 function onCountChange() {
   emit("reloadCommitLog", displayCount.value)
-}
-
-/** 将 ISO 绝对时间格式化为 YYYY-MM-DD HH:mm */
-function formatDate(iso: string): string {
-  if (!iso) return ""
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return iso
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 </script>
 

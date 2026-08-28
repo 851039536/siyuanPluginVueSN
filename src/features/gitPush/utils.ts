@@ -448,6 +448,15 @@ export function relativeTime(iso: string | undefined, i18n: Record<string, any>)
   return i18n.timeYearsAgo.replace("{0}", String(Math.floor(diff / (365 * day))))
 }
 
+/** 将 ISO 绝对时间格式化为 "YYYY-MM-DD HH:mm"（空值返回空串，无效日期返回原字符串；提交列表等处共用） */
+export function formatDateTime(iso: string): string {
+  if (!iso) return ""
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 /**
  * 分析状态文案统一："分析中… / 上次分析 xx / 未分析"（提交分析与提交规则检查工具条共用，
  * notRunKey 区分 analysisNotRun / ruleCheckNotRun，消除跨工具条重复三元表达式）。

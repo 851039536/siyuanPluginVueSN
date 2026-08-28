@@ -36,7 +36,8 @@
         >{{ row.message }}</div>
         <div class="grc-item-meta">
           <span>{{ row.author }}</span>
-          <span :title="row.date">{{ row.date }}</span>
+          <!-- 提交时间："YYYY-MM-DD HH:mm"（title 保留 ISO 原值） -->
+          <span :title="row.date">{{ formatDateTime(row.date) }}</span>
         </div>
       </div>
     </div>
@@ -57,7 +58,7 @@ import type { CommitRuleCheckStats, CommitRuleViolation } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
 import { COMMIT_RULE_REASON_META } from "../../types"
-import { relativeTime } from "../../utils"
+import { formatDateTime, relativeTime } from "../../utils"
 import { usePagedList } from "../../composables/usePagedList"
 import LoadMoreButton from "../common/LoadMoreButton.vue"
 

@@ -166,19 +166,20 @@
   opacity: 0.5;
 }
 
-// 不合规提交列表
+// 不合规提交列表（2 列网格；minmax(0,1fr) 防长内容撑破列宽）
 .grc-list {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $spacing-1 $spacing-2;
 }
 
 .grc-item {
   display: flex;
   flex-direction: column;
   gap: $spacing-px;
-  padding: $spacing-1 0;
-  @include row-divider;
+  padding: $spacing-1 $spacing-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
 }
 
 .grc-item-head {

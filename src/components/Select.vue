@@ -99,6 +99,7 @@
                     'si-select__option--disabled': groupOption.disabled,
                     'si-select__option--hovered': hoveredGroupKey === `${index}-${groupIndex}`,
                   }"
+                  :title="groupOption.label"
                   @click.stop="selectOption(groupOption)"
                   @mouseenter="setHoveredGroupOption(index, groupIndex)"
                 >
@@ -120,6 +121,7 @@
                   'si-select__option--disabled': option.disabled,
                   'si-select__option--hovered': hoveredIndex === index,
                 }"
+                :title="option.label"
                 @click.stop="selectOption(option)"
                 @mouseenter="setHoveredIndex(index)"
               >

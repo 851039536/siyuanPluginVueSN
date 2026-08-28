@@ -402,6 +402,8 @@
     "analysisTotalCommits": "Total Commits",
     "analysisCoveredProjects": "Projects Analyzed",
     "analysisCommitsPerProject": "{0} per project",
+    "analysisCommitsAll": "All",
+    "analysisCommitsPerProjectAll": "All commits per project",
     "analysisFailedCount": "{0} project(s) failed to load commits",
     "analysisProjectRanking": "Top Projects",
     "analysisDailyTitle": "Commits (Last 30 Days)",

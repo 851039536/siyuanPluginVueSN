@@ -33,22 +33,6 @@
   gap: $spacing-1;
 }
 
-// 条数选择（每项目抓取条数）
-.gls-count-select {
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
-  color: var(--b3-theme-on-surface);
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
-  padding: 2px 4px;
-  cursor: pointer;
-
-  &:focus {
-    @include focus-ring;
-  }
-}
-
 // 文件格式过滤配置按钮（点击弹出扩展名多选弹窗；分析中禁用降低透明度）
 .gls-ext-btn {
   position: relative;

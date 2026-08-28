@@ -1628,6 +1628,8 @@
     "analysisTotalCommits": "总提交次数",
     "analysisCoveredProjects": "已分析项目",
     "analysisCommitsPerProject": "每项目 {0} 条",
+    "analysisCommitsAll": "全部",
+    "analysisCommitsPerProjectAll": "每项目全部提交",
     "analysisFailedCount": "{0} 个项目获取提交失败",
     "analysisProjectRanking": "项目提交排行",
     "analysisDailyTitle": "最近 30 天提交趋势",

@@ -20,19 +20,12 @@
           class="gls-ext-badge"
         >{{ selectedExtensions.length }}</span>
       </button>
-      <!-- 条数选择（tooltip："每项目 {0} 条"） -->
-      <select
-        class="gls-count-select"
-        :value="commitCount"
-        :title="i18n.analysisCommitsPerProject.replace('{0}', String(commitCount))"
-        @change="onCountChange"
-      >
-        <option
-          v-for="n in COMMIT_COUNT_OPTIONS"
-          :key="n"
-          :value="n"
-        >{{ n }}</option>
-      </select>
+      <!-- 条数选择（公共组件：数字直显，"all" 显示「全部」） -->
+      <CommitCountSelect
+        :i18n="i18n"
+        :commit-count="commitCount"
+        @update-count="emit('updateCount', $event)"
+      />
       <!-- 按钮文案："开始行数分析"/"重新分析"（分析中切换为环形 loading 图标并旋转，业务图标不参与旋转） -->
       <button
         class="vp-btn vp-btn--ghost vp-btn--sm"
@@ -52,8 +45,9 @@
 
 <script setup lang="ts">
 // gitPush 行数统计顶部工具条（分析状态 + 过滤配置 + 条数选择 + 分析按钮）
+import type { CommitCount } from "../../composables/useCommitAnalysis"
 import { Icon } from "@iconify/vue"
-import { COMMIT_COUNT_OPTIONS } from "../../composables/useCommitAnalysis"
+import CommitCountSelect from "../common/CommitCountSelect.vue"
 import { relativeTime } from "../../utils"
 
 defineProps<{
@@ -62,20 +56,16 @@ defineProps<{
   analyzed: boolean
   /** 上次分析完成时间（ISO） */
   analyzedAt: string
-  commitCount: number
+  commitCount: CommitCount
   /** 选中的文件扩展名过滤（空数组 = 不过滤） */
   selectedExtensions: string[]
 }>()
 
 const emit = defineEmits<{
   runAnalysis: []
-  updateCount: [n: number]
+  updateCount: [n: CommitCount]
   openExtDialog: []
 }>()
-
-function onCountChange(e: Event) {
-  emit("updateCount", Number((e.target as HTMLSelectElement).value))
-}
 </script>
 
 <style lang="scss">

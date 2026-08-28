@@ -96,6 +96,7 @@
 <script setup lang="ts">
 // gitPush 提交分析视图入口容器（状态编排 + 各功能区块组合，纯编排无领域状态）
 import type { CommitAnalysisStats, CommitAnalysisViewSettings } from "../../types"
+import type { CommitCount } from "../../composables/useCommitAnalysis"
 import { computed } from "vue"
 import EmptyState from "../common/EmptyState.vue"
 import Loader from "@/components/Loader.vue"
@@ -114,7 +115,7 @@ const props = defineProps<{
   analyzed: boolean
   /** 上次分析完成时间（ISO） */
   analyzedAt: string
-  commitCount: number
+  commitCount: CommitCount
   viewSettings: CommitAnalysisViewSettings
 }>()
 

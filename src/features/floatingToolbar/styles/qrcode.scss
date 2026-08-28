@@ -1,83 +1,63 @@
 /**
- * QRCode Dialog 样式 - Codex 合规版本
- * 使用全局设计 Token 和公共混合宏，禁止硬编码间距
+ * 二维码生成弹窗样式 - Codex 简约风格
+ * 平面头部 + 预览画布 + 单行设置 + 内联操作行（无底部按钮条）
  */
 
 @use "../styles" as ft;
 @use "@/variables.scss" as g;
 
 // ========================================
-// 遮罩层和对话框主体
+// 遮罩与对话框
 // ========================================
 .qrcode-overlay {
   @include ft.dialog-overlay;
 }
 
 .qrcode-dialog {
-  @include ft.dialog-container(420px);
-  // 使用 mixin 默认 $radius-xl (12px)，符合 Codex 弹窗圆角规范
+  @include ft.dialog-container(400px);
 }
 
 // ========================================
-// 对话框头部
+// 头部（平面风格）
 // ========================================
 .dialog-header {
   @include ft.dialog-header(false);
   padding: g.$spacing-3 g.$spacing-4;
-
-  @media (max-width: ft.$breakpoint-md) {
-    padding: g.$spacing-2 g.$spacing-3;
-  }
 }
 
 .dialog-title {
   @include ft.dialog-title(false);
   font-size: g.$font-size-sm;
-  gap: g.$spacing-1;
+  gap: g.$spacing-2;
 }
 
 .dialog-icon {
-  @include ft.dialog-icon(20px, false);
+  @include ft.dialog-icon(18px, false);
 }
 
 // ========================================
-// 对话框主体
+// 内容主体
 // ========================================
 .dialog-body {
   @include ft.dialog-body;
-  padding: g.$spacing-3;
-  gap: g.$spacing-2;
+  padding: g.$spacing-4;
+  gap: g.$spacing-3;
   @include ft.custom-scrollbar;
 
   @media (max-width: ft.$breakpoint-md) {
-    padding: g.$spacing-2;
-    gap: g.$spacing-2;
+    padding: g.$spacing-3;
   }
 }
 
 // ========================================
-// 输入区域
+// 二维码预览
 // ========================================
-.input-section {
-  @include ft.flex-column(g.$spacing-1);
-}
-
-// ========================================
-// 二维码区域
-// ========================================
-.qrcode-section {
-  @include ft.flex-column(g.$spacing-1);
-  align-items: center;
-}
-
 .qrcode-preview {
-  width: 100%;
-  height: auto;
+  @include ft.flex-center;
   min-height: 180px;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-theme-surface-lighter);
   border-radius: g.$radius-sm;
-  @include ft.flex-center;
   padding: g.$spacing-3;
 
   // 画布由 QRCode.toCanvas 运行时创建，无 scope 属性，需用 :deep 穿透
@@ -103,34 +83,39 @@
 }
 
 // ========================================
-// 设置区域
+// 设置行：大小滑块 + 纠错级别
 // ========================================
-.settings-section {
-  @include ft.flex-column(g.$spacing-2);
-  padding: g.$spacing-3;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: g.$radius-sm;
+.settings-row {
+  display: flex;
+  align-items: flex-start;
+  gap: g.$spacing-3;
 
-  @media (max-width: ft.$breakpoint-md) {
-    padding: g.$spacing-2;
+  .setting-size {
+    flex: 1;
+    min-width: 0;
   }
-}
 
-.setting-item {
-  @include ft.flex-column(g.$spacing-1);
-}
+  // 下拉固定宽度，与滑块同行
+  .setting-level {
+    width: 160px; // 布局尺寸，非间距 Token
+    flex-shrink: 0;
+  }
 
-// ========================================
-// 对话框底部
-// ========================================
-.dialog-footer {
-  @include ft.dialog-footer;
-  justify-content: flex-end;
-
-  @media (max-width: ft.$breakpoint-md) {
+  @media (max-width: ft.$breakpoint-sm) {
     flex-direction: column;
-    gap: g.$spacing-2;
-    padding: g.$spacing-2 g.$spacing-3;
+    align-items: stretch;
+
+    .setting-level {
+      width: 100%;
+    }
   }
+}
+
+// ========================================
+// 操作行：复制 / 下载
+// ========================================
+.actions-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: g.$spacing-2;
 }

@@ -1,14 +1,17 @@
-// 统计功能核心：Statistics 类（注册 Dock 面板、绑定事件、手动/定时刷新）
+// 统计功能核心：Statistics 类（注册 Dock 面板、绑定事件、启动预载、定时/手动刷新）
 import { Plugin } from "siyuan"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { createVueDockApp } from "@/utils/vueAppHelper"
 import { TimerRegistry, type TimerHandle } from "@/utils/timerRegistry"
+import {
+  refreshStatisticsData,
+  setStatisticsI18n,
+} from "./composables/useStatistics"
 import StatisticsPanel from "./index.vue"
 import type { StatisticsSettings } from "./types/storage"
 
 export class Statistics {
   private plugin: Plugin
-  private panelRefreshFn: (() => Promise<void>) | null = null
   private handleOpenStatistics: (() => void) | null = null
   private readonly timers = new TimerRegistry()
   private refreshTimer: TimerHandle | null = null
@@ -29,8 +32,25 @@ export class Statistics {
   }
 
   async init(): Promise<void> {
+    // 注入状态栏文案（Dock 懒加载，面板挂载晚于启动，需 core 侧先注入）
+    const pluginI18n = (this.plugin.i18n as Record<string, any>) || {}
+    setStatisticsI18n(pluginI18n.statistics || pluginI18n)
     this.registerDock()
     this.bindEvents()
+    // 启动预载：Dock init 懒加载，面板 onMounted 不会在启动时触发，需在此主动刷新一次
+    void this.preload()
+  }
+
+  /**
+   * 启动预载统计数据：插件加载即刷新一次（底部状态栏可见），
+   * 面板首次展开时直接显示预载结果，无需等待
+   */
+  async preload(): Promise<void> {
+    try {
+      await refreshStatisticsData()
+    } catch (error) {
+      console.error("启动预载统计数据失败:", error)
+    }
   }
 
   private bindEvents(): void {
@@ -52,9 +72,6 @@ export class Statistics {
       type: "statistics-dock",
       i18n,
       extraProps: {
-        onRegisterRefresh: (fn: () => Promise<void>) => {
-          this.panelRefreshFn = fn
-        },
         onAutoRefreshChange: (settings: StatisticsSettings) => {
           this.applyAutoRefresh(settings)
         },
@@ -63,9 +80,7 @@ export class Statistics {
   }
 
   async manualRefresh(): Promise<void> {
-    if (this.panelRefreshFn) {
-      await this.panelRefreshFn()
-    }
+    await refreshStatisticsData()
   }
 
   destroy(): void {
@@ -73,7 +88,6 @@ export class Statistics {
       window.removeEventListener("openStatistics", this.handleOpenStatistics)
       this.handleOpenStatistics = null
     }
-    this.panelRefreshFn = null
     this.timers.clearAll()
     this.refreshTimer = null
   }

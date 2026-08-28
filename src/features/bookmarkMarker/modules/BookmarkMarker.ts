@@ -4,6 +4,7 @@
  */
 import { sql } from "@/api"
 import { injectStyle, removeStyle } from "@/utils/domUtils"
+import { TimerRegistry, type TimerHandle } from "@/utils/timerRegistry"
 import type { AttrRow, BookmarkMarkerOptions, BookmarkRule } from "../types"
 import {
   BOOKMARK_MARKER_CLASS,
@@ -22,18 +23,19 @@ import {
 } from "../utils"
 
 export class BookmarkMarker {
-  private updateTimer: number | null = null
+  private readonly timers = new TimerRegistry()
+  private updateTimer: TimerHandle | null = null
   private options: BookmarkMarkerOptions
   private active = false
   private styleAdded = false
   private fileTreeObserver: MutationObserver | null = null
   private protyleObserver: MutationObserver | null = null
-  private debounceTimer: number | null = null
-  private protyleDebounceTimer: number | null = null
+  private debounceTimer: TimerHandle | null = null
+  private protyleDebounceTimer: TimerHandle | null = null
   private protyleRetryCount = 0
-  private protyleRetryTimer: number | null = null
+  private protyleRetryTimer: TimerHandle | null = null
   private fileTreeRetryCount = 0
-  private fileTreeRetryTimer: number | null = null
+  private fileTreeRetryTimer: TimerHandle | null = null
   private bookmarkCache = new Map<string, string>()
   private cacheLoaded = false
 
@@ -64,6 +66,7 @@ export class BookmarkMarker {
     this.stopObservingProtyle()
     this.stopProtyleRetry()
     this.stopAutoUpdate()
+    this.timers.clearAll()
     this.clearAllMarkers()
     this.removeStyles()
     this.bookmarkCache.clear()
@@ -258,7 +261,7 @@ export class BookmarkMarker {
   private startFileTreeRetry(): void {
     if (this.fileTreeRetryTimer) return
     this.fileTreeRetryCount = 0
-    this.fileTreeRetryTimer = window.setInterval(() => {
+    this.fileTreeRetryTimer = this.timers.setInterval(() => {
       if (!this.active) {
         this.stopFileTreeRetry()
         return
@@ -276,10 +279,8 @@ export class BookmarkMarker {
   }
 
   private stopFileTreeRetry(): void {
-    if (this.fileTreeRetryTimer) {
-      clearInterval(this.fileTreeRetryTimer)
-      this.fileTreeRetryTimer = null
-    }
+    this.timers.clear(this.fileTreeRetryTimer)
+    this.fileTreeRetryTimer = null
     this.fileTreeRetryCount = 0
   }
 
@@ -360,24 +361,22 @@ export class BookmarkMarker {
   // ============================================================
 
   private debounce(fn: () => void, timerKey: "debounceTimer" | "protyleDebounceTimer"): void {
-    if (this[timerKey]) clearTimeout(this[timerKey] as number)
-    this[timerKey] = window.setTimeout(() => {
+    this.timers.clear(this[timerKey])
+    this[timerKey] = this.timers.setTimeout(() => {
       if (!this.active) return
       fn()
     }, 300)
   }
 
   private clearDebounce(timerKey: "debounceTimer" | "protyleDebounceTimer"): void {
-    if (this[timerKey]) {
-      clearTimeout(this[timerKey] as number)
-      this[timerKey] = null
-    }
+    this.timers.clear(this[timerKey])
+    this[timerKey] = null
   }
 
   private startProtyleRetry(): void {
     if (this.protyleRetryTimer) return
     this.protyleRetryCount = 0
-    this.protyleRetryTimer = window.setInterval(() => {
+    this.protyleRetryTimer = this.timers.setInterval(() => {
       if (!this.active) {
         this.stopProtyleRetry()
         return
@@ -389,10 +388,8 @@ export class BookmarkMarker {
   }
 
   private stopProtyleRetry(): void {
-    if (this.protyleRetryTimer) {
-      clearInterval(this.protyleRetryTimer)
-      this.protyleRetryTimer = null
-    }
+    this.timers.clear(this.protyleRetryTimer)
+    this.protyleRetryTimer = null
     this.protyleRetryCount = 0
   }
 
@@ -446,13 +443,11 @@ export class BookmarkMarker {
   private startAutoUpdate(): void {
     // 防御：确保无残留定时器，避免异常路径下重复 interval
     this.stopAutoUpdate()
-    this.updateTimer = window.setInterval(() => this.applyMarkers(), this.options.updateInterval)
+    this.updateTimer = this.timers.setInterval(() => this.applyMarkers(), this.options.updateInterval)
   }
 
   private stopAutoUpdate(): void {
-    if (this.updateTimer) {
-      clearInterval(this.updateTimer)
-      this.updateTimer = null
-    }
+    this.timers.clear(this.updateTimer)
+    this.updateTimer = null
   }
 }

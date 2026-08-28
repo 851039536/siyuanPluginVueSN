@@ -9,6 +9,7 @@ import type { ModalAppInstance } from "@/utils/vueAppHelper"
 import { Plugin } from "siyuan"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { createModalVueApp } from "@/utils/vueAppHelper"
+import { TimerRegistry, type TimerHandle } from "@/utils/timerRegistry"
 import { getWorkspaceDir } from "@/api"
 import S3BackupPanel from "./index.vue"
 import { S3BackupStorage, DEFAULT_BACKUP_SETTINGS } from "./types"
@@ -26,7 +27,8 @@ export class S3Backup {
   private storage: S3BackupStorage
   private modal: ModalAppInstance
   private _openHandler: (() => void) | null = null
-  private autoBackupTimer: number | null = null
+  private readonly timers = new TimerRegistry()
+  private autoBackupTimer: TimerHandle | null = null
   private lastBackupTimestamp = 0
   /** A6 修复：防重复执行状态提升为实例字段，避免重启定时器时丢失 */
   private lastExecutedHour = -1
@@ -184,14 +186,12 @@ export class S3Backup {
       }
     }
 
-    this.autoBackupTimer = window.setInterval(checkAndBackup, 60000)
+    this.autoBackupTimer = this.timers.setInterval(checkAndBackup, 60000)
   }
 
   public stopAutoBackupTimer() {
-    if (this.autoBackupTimer) {
-      clearInterval(this.autoBackupTimer)
-      this.autoBackupTimer = null
-    }
+    this.timers.clear(this.autoBackupTimer)
+    this.autoBackupTimer = null
   }
 
   public updateLastBackupTime(timestamp: number) {

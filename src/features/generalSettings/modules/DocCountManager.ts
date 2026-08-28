@@ -1,5 +1,6 @@
 import { sql } from "@/api"
 import type { DocCountFormat } from "../types/storage"
+import { TimerRegistry, type TimerHandle } from "@/utils/timerRegistry"
 import {
   DOC_COUNT_FORMATTERS,
 } from "../types/storage"
@@ -14,8 +15,9 @@ export class DocCountManager {
   /** 启动重试次数上限（约 30 秒等待窗口） */
   private static readonly INIT_RETRY_MAX = 15
 
-  private updateTimer: number | null = null
-  private initRetryTimer: number | null = null
+  private readonly timers = new TimerRegistry()
+  private updateTimer: TimerHandle | null = null
+  private initRetryTimer: TimerHandle | null = null
   private updateInterval = 3600000 // 默认1小时
   private displayFormat: DocCountFormat = "bracket"
   private fontStyle: {
@@ -48,7 +50,7 @@ export class DocCountManager {
       return
     }
     if (attempt >= DocCountManager.INIT_RETRY_MAX) return
-    this.initRetryTimer = window.setTimeout(() => {
+    this.initRetryTimer = this.timers.setTimeout(() => {
       this.renderWhenTreeReady(attempt + 1)
     }, DocCountManager.INIT_RETRY_DELAY)
   }
@@ -57,11 +59,10 @@ export class DocCountManager {
    * 停止文档数统计功能
    */
   public stop(): void {
-    if (this.initRetryTimer) {
-      clearTimeout(this.initRetryTimer)
-      this.initRetryTimer = null
-    }
+    this.timers.clear(this.initRetryTimer)
+    this.initRetryTimer = null
     this.stopAutoUpdate()
+    this.timers.clearAll()
     this.clearAllCounts()
   }
 
@@ -173,7 +174,7 @@ export class DocCountManager {
    * 启动自动更新定时器
    */
   private startAutoUpdate(): void {
-    this.updateTimer = window.setInterval(() => {
+    this.updateTimer = this.timers.setInterval(() => {
       this.setBoxCount()
     }, this.updateInterval)
   }
@@ -182,10 +183,8 @@ export class DocCountManager {
    * 停止自动更新定时器
    */
   private stopAutoUpdate(): void {
-    if (this.updateTimer) {
-      clearInterval(this.updateTimer)
-      this.updateTimer = null
-    }
+    this.timers.clear(this.updateTimer)
+    this.updateTimer = null
   }
 
   /**

@@ -47,6 +47,9 @@ export interface TypingSettings {
 /** 存储键 */
 export const STORAGE_KEY = "flashcard-cards"
 
+/** 卡片标题重复错误（调用方按此常量判断，避免与错误文案硬耦合） */
+export const ERR_TITLE_EXISTS = "Title already exists"
+
 export class FlashcardStorage {
   private storage: PluginStorage
   private readonly SETTINGS_KEY = "flashcard-typing-settings"
@@ -103,7 +106,7 @@ export class FlashcardStorage {
   async createCard(data: CreateFlashcardDTO): Promise<Flashcard> {
     const isUnique = await this.isTitleUnique(data.title)
     if (!isUnique) {
-      throw new Error("Title already exists")
+      throw new Error(ERR_TITLE_EXISTS)
     }
 
     const now = Date.now()
@@ -136,7 +139,7 @@ export class FlashcardStorage {
     if (data.title && data.title !== cards[index].title) {
       const isUnique = await this.isTitleUnique(data.title, id)
       if (!isUnique) {
-        throw new Error("Title already exists")
+        throw new Error(ERR_TITLE_EXISTS)
       }
     }
 

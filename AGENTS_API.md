@@ -409,6 +409,45 @@ class MyFeature {
 - `clear` 幂等且接受 `null`，`clearAll` 供 destroy/stop 兜底清理
 - 业务回调与有界轮询语义保持原样，仅注册/清理入口统一
 
+### Dock 预加载
+
+统一入口：`@/utils/dockPreload`。需要启动预载的 Dock 功能（Dock `init` 懒加载，面板挂载晚于插件启动）通过注册表集中管理启动预载、手动/定时刷新与状态栏提示。
+
+```typescript
+import {
+  getDockPreloadState,
+  registerDockPreload,
+  refreshDockPreload,
+} from '@/utils/dockPreload'
+import { refreshStatisticsData } from './composables/useStatistics'
+
+// 1. registerFeature 内注册（同步；labels 从 plugin.i18n.<feature> 提取）
+const i18n = (plugin.i18n as Record<string, any>).statistics || plugin.i18n
+registerDockPreload({
+  id: 'statistics',
+  icon: 'mdi:chart-bar',
+  labels: {
+    refreshing: i18n.statusRefreshing,
+    done: i18n.statusRefreshDone,
+    failed: i18n.statusRefreshFailed,
+  },
+  refresh: refreshStatisticsData, // 模块级共享刷新函数
+})
+
+// 2. 手动/定时刷新统一入口（带状态栏三态提示 + loading 防重）
+await refreshDockPreload('statistics')
+
+// 3. 面板 onMounted 分流：ready→直接用；loading→等待数据到达；idle/error→兜底刷新
+const preloadState = getDockPreloadState('statistics')
+```
+
+要点：
+- 注册表为模块级 `Map`，`registerDockPreload` 幂等（重复注册仅覆盖配置，不重置已达成状态）
+- 启动预载由插件启动链路 `runAllDockPreloads()` **串行统一执行**，避免多功能并发全量 SQL 查询形成风暴
+- 状态栏文案由注册时 `labels` 提供，解决启动预载时面板未挂载、无法从 props 取 i18n 的问题
+- 数据状态由功能自身维护模块级单例（如 statistics 的 `useStatistics`），预载状态由注册表管理
+- 插件卸载时 `clearDockPreloads()` 统一清理注册表
+
 ### AI 调用
 
 完整用法见 [docs/ai-api-usage.md](./docs/ai-api-usage.md)（唯一 AI 调用参考文档）。

@@ -375,6 +375,40 @@ const {
 const plaintext = await aesGcmDecrypt(ciphertext, key, iv)
 ```
 
+### 定时器
+
+统一入口：`TimerRegistry`（`@/utils/timerRegistry`）。所有定时任务（周期/一次性）必须通过它注册，禁止裸 `setInterval` / `setTimeout`。
+
+```typescript
+import { TimerRegistry, type TimerHandle } from '@/utils/timerRegistry'
+
+class MyFeature {
+  private readonly timers = new TimerRegistry()
+  private updateTimer: TimerHandle | null = null
+
+  private startTimer(): void {
+    this.updateTimer = this.timers.setInterval(() => {
+      // 周期任务回调
+    }, 60000)
+  }
+
+  private stopTimer(): void {
+    this.timers.clear(this.updateTimer)
+    this.updateTimer = null
+  }
+
+  public destroy(): void {
+    this.timers.clearAll() // 兜底清理全部句柄
+  }
+}
+```
+
+要点：
+- `TimerRegistry` 为实例级工具（非全局单例），随功能实例生命周期创建与销毁，避免多实例句柄串扰
+- 句柄类型统一为 `TimerHandle`（`ReturnType<typeof setInterval>`），消除 `number` / `ReturnType<...>` 混用
+- `clear` 幂等且接受 `null`，`clearAll` 供 destroy/stop 兜底清理
+- 业务回调与有界轮询语义保持原样，仅注册/清理入口统一
+
 ### AI 调用
 
 完整用法见 [docs/ai-api-usage.md](./docs/ai-api-usage.md)（唯一 AI 调用参考文档）。

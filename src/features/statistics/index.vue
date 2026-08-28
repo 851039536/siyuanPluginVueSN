@@ -112,8 +112,6 @@ import {
   watch,
 } from "vue"
 import Loader from "@/components/Loader.vue"
-// 状态栏任务为统一入口（AGENTS.md 允许跨功能使用），用于展示统计刷新过程
-import { useStatusBarTask } from "@/features/statusBar/composables/useStatusBarTask"
 import ActivityTab from "./components/NotebookActivity/index.vue"
 import DistributionTab from "./components/NotebookDistribution/index.vue"
 import HeatmapTab from "./components/heatmap/index.vue"
@@ -153,7 +151,6 @@ import { countMilestonesReached } from "./utils/milestones"
 
 interface Props {
   plugin: Plugin
-  onRegisterRefresh?: (fn: () => Promise<void>) => void
   onAutoRefreshChange?: (settings: StatisticsSettings) => void
   i18n?: Record<string, any>
 }
@@ -307,25 +304,16 @@ watch([viewMode, dayRange, monthYearRange, selectedYear], async () => {
 
 let refreshSeq = 0
 
-// 状态栏任务：刷新过程在思源底部状态栏可见（含启动默认刷新与定时刷新）
-const statusTask = useStatusBarTask("statistics-refresh", "mdi:chart-bar")
-
+/** 手动/兜底全量刷新：核心统计（模块级，含状态栏提示）+ 历史数据 */
 async function refreshData(): Promise<void> {
   const seq = ++refreshSeq
   loading.value = true
-  statusTask.progress({ label: i18n.value.statusRefreshing })
   try {
     await refreshCore()
     if (seq !== refreshSeq) return
     await loadHistoricalData()
-    if (seq === refreshSeq) {
-      statusTask.complete(i18n.value.statusRefreshDone)
-    }
   } catch (error) {
     console.error("刷新统计数据失败:", error)
-    if (seq === refreshSeq) {
-      statusTask.fail(i18n.value.statusRefreshFailed)
-    }
   } finally {
     if (seq === refreshSeq) {
       loading.value = false
@@ -334,9 +322,22 @@ async function refreshData(): Promise<void> {
 }
 
 onMounted(async () => {
-  refreshData()
-  props.onRegisterRefresh?.(refreshData)
   await initMilestoneStorage(props.plugin)
+  // 启动预载已由 core.preload 完成（Dock init 懒加载，启动时不触发 onMounted）：
+  // - stats 就绪 → 仅补历史数据，避免重复全量刷新
+  // - 预载进行中 → 等待数据到达后补历史
+  // - 预载失败/未开始 → 兜底全量刷新
+  if (stats.value) {
+    await loadHistoricalData()
+  } else if (loading.value) {
+    const stopWatch = watch(stats, async (s) => {
+      if (!s) return
+      stopWatch()
+      await loadHistoricalData()
+    })
+  } else {
+    await refreshData()
+  }
   await initAutoRefresh()
 })
 </script>

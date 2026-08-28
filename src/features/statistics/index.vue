@@ -112,6 +112,8 @@ import {
   watch,
 } from "vue"
 import Loader from "@/components/Loader.vue"
+// 状态栏任务为统一入口（AGENTS.md 允许跨功能使用），用于展示统计刷新过程
+import { useStatusBarTask } from "@/features/statusBar/composables/useStatusBarTask"
 import ActivityTab from "./components/NotebookActivity/index.vue"
 import DistributionTab from "./components/NotebookDistribution/index.vue"
 import HeatmapTab from "./components/heatmap/index.vue"
@@ -305,15 +307,25 @@ watch([viewMode, dayRange, monthYearRange, selectedYear], async () => {
 
 let refreshSeq = 0
 
+// 状态栏任务：刷新过程在思源底部状态栏可见（含启动默认刷新与定时刷新）
+const statusTask = useStatusBarTask("statistics-refresh", "mdi:chart-bar")
+
 async function refreshData(): Promise<void> {
   const seq = ++refreshSeq
   loading.value = true
+  statusTask.progress({ label: i18n.value.statusRefreshing })
   try {
     await refreshCore()
     if (seq !== refreshSeq) return
     await loadHistoricalData()
+    if (seq === refreshSeq) {
+      statusTask.complete(i18n.value.statusRefreshDone)
+    }
   } catch (error) {
     console.error("刷新统计数据失败:", error)
+    if (seq === refreshSeq) {
+      statusTask.fail(i18n.value.statusRefreshFailed)
+    }
   } finally {
     if (seq === refreshSeq) {
       loading.value = false

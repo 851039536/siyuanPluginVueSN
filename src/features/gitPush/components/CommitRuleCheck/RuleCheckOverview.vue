@@ -39,9 +39,8 @@ const props = defineProps<{
   stats: CommitRuleCheckStats
 }>()
 
-/** 合规率（保留 1 位小数；0 提交时视为 100%） */
+/** 合规率（保留 1 位小数；本组件仅在 totalCommits > 0 时由父级渲染，无需除零兜底） */
 const complianceRate = computed(() => {
-  if (props.stats.totalCommits === 0) return 100
   return Number(((props.stats.compliantCount / props.stats.totalCommits) * 100).toFixed(1))
 })
 </script>

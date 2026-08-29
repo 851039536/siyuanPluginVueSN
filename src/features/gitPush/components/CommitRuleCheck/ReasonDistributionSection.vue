@@ -28,8 +28,8 @@
 <script setup lang="ts">
 // gitPush 提交规则检查违规类型分布区块（条形相对最大值）
 import type { CommitRuleCheckStats } from "../../types"
-import { computed } from "vue"
 import { COMMIT_RULE_REASON_META } from "../../types"
+import { computed } from "vue"
 import { withBarPct } from "../../utils"
 
 const props = defineProps<{

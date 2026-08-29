@@ -12,6 +12,8 @@ export interface BatchFixResult {
   failed: number
   /** 被跳过的违规原因（去重，供结果提示解释为什么无法自动修复） */
   skippedReasons: CommitRuleReasonKey[]
+  /** 成功修复涉及的项目 id（去重，供调用方按项目局部刷新，避免全量重跑） */
+  projectIds: string[]
 }
 
 /** 违规项唯一 key（与 ViolationListSection 渲染 key 一致：projectId-hash-reason） */
@@ -74,11 +76,12 @@ export function useBatchCommitFix(manager: GitPushManager, violations: Ref<Commi
    * 返回结果统计（含跳过原因），调用方据此决定是否刷新分析。
    */
   async function fixSelected(): Promise<BatchFixResult> {
-    const result: BatchFixResult = { fixed: 0, skipped: 0, failed: 0, skippedReasons: [] }
+    const result: BatchFixResult = { fixed: 0, skipped: 0, failed: 0, skippedReasons: [], projectIds: [] }
     if (fixing.value || selectedCount.value === 0) return result
     const targets = violations.value.filter((v) => selectedMap.value[violationKey(v)])
     if (targets.length === 0) return result
     const skippedReasonSet = new Set<CommitRuleReasonKey>()
+    const fixedProjectIds = new Set<string>()
     fixing.value = true
     try {
       for (const v of targets) {
@@ -96,6 +99,7 @@ export function useBatchCommitFix(manager: GitPushManager, violations: Ref<Commi
           }
           await manager.rewriteCommitMessage(resolveValidPath(project), v.hash, fixed, true)
           result.fixed++
+          fixedProjectIds.add(v.projectId)
         } catch {
           result.failed++
         }
@@ -104,12 +108,12 @@ export function useBatchCommitFix(manager: GitPushManager, violations: Ref<Commi
       fixing.value = false
     }
     result.skippedReasons = [...skippedReasonSet]
+    result.projectIds = [...fixedProjectIds]
     lastResult.value = result
     return result
   }
 
   return {
-    selectedMap,
     selectedCount,
     fixing,
     lastResult,

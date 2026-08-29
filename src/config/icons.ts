@@ -450,6 +450,12 @@ export const COMMON_ICONS = {
   eraser: {
     icon: "mdi:eraser",
   },
+  checkboxMultipleOutline: {
+    icon: "mdi:checkbox-multiple-outline",
+  },
+  pencilMultiple: {
+    icon: "mdi:pencil-multiple",
+  },
   add: {
     icon: "mdi:plus",
   },

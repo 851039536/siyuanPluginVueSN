@@ -10,6 +10,9 @@ import { COMMIT_TYPE_VALUES } from "./types/storage"
 /** 提交类型白名单（Set 加速校验，与 storage.ts 的 COMMIT_TYPE_VALUES 保持一致） */
 const ALLOWED_TYPES = new Set<string>(COMMIT_TYPE_VALUES)
 
+/** 匹配 CJK 统一表意文字（常用汉字，U+4E00–U+9FFF），用于"描述必须含中文"规则判定 */
+const HAN_CHAR_REGEX = /[\u4E00-\u9FFF]/
+
 /**
  * 校验单条提交信息，返回不合规原因；合规返回 null。
  * 规则：type(scope)!: 描述，type 限 feat/fix/chore/docs/style/refactor/test。
@@ -33,7 +36,7 @@ export function checkCommitRule(message: string): CommitRuleReasonKey | null {
   const subject = afterColon.slice(1)
   if (!subject) return "emptySubject"
   // 描述必须包含中文（type/scope 保持英文 conventional commit 格式）
-  if (!/[一-鿿]/.test(subject)) return "notChinese"
+  if (!HAN_CHAR_REGEX.test(subject)) return "notChinese"
   return null
 }
 
@@ -67,15 +70,19 @@ export function analyzeCommitRuleCompliance(entries: CommitAnalysisEntry[]): Com
 
 /**
  * 启发式修正提交信息；无法可靠修复时返回空串。
- * 仅处理可确定性修正的格式问题（trim、空 scope、多余空格），
- * 缺少 type / 非法 type / 空描述无法自动推断，返回空串。
+ * 可确定性修正的格式问题（trim、空 scope、多余空格）+ 缺少 type（按描述关键词推断 type 补全）；
+ * 非法 type / 空描述 / 非中文描述无法可靠推断，返回空串。
  */
 export function fixCommitMessageHeuristically(message: string): string {
   const raw = (message ?? "").trim()
   if (!raw) return ""
 
   const prefix = /^([A-Za-z]+)(?:\(([^)]*)\))?(!)?:\s*(.*)$/.exec(raw)
-  if (!prefix) return ""
+  // 缺少 type 前缀：从描述关键词推断 type 补全（描述非中文仍不可修，保持中文强制）
+  if (!prefix) {
+    if (!/[一-鿿]/.test(raw)) return ""
+    return `${inferType(raw)}: ${raw}`
+  }
 
   const [, type, scope, bang, rest] = prefix
   if (!ALLOWED_TYPES.has(type)) return ""
@@ -83,10 +90,21 @@ export function fixCommitMessageHeuristically(message: string): string {
   const subject = rest.trim()
   if (!subject) return ""
   // 无法自动生成中文描述时视为不可修复，交由 AI 处理
-  if (!/[一-鿿]/.test(subject)) return ""
+  if (!HAN_CHAR_REGEX.test(subject)) return ""
 
   // scope trim 后为空（如 feat( ):）时省略 scope 段，避免生成结果再次校验失败
   const scopePart = scope && scope.trim() ? `(${scope.trim()})` : ""
   const bangPart = bang || ""
   return `${type}${scopePart}${bangPart}: ${subject}`
+}
+
+/** 从描述关键词推断 conventional commit type（命中顺序即优先级，无匹配默认 chore） */
+function inferType(subject: string): string {
+  if (/修复|解决|错误|异常|缺陷|崩溃|bug/i.test(subject)) return "fix"
+  if (/新增|添加|实现|支持|功能|feat/i.test(subject)) return "feat"
+  if (/重构|优化|精简|拆分|合并|提取|抽象|调整/i.test(subject)) return "refactor"
+  if (/文档|注释|说明|readme/i.test(subject)) return "docs"
+  if (/测试|用例|单测/i.test(subject)) return "test"
+  if (/样式|格式|布局|排版/i.test(subject)) return "style"
+  return "chore"
 }

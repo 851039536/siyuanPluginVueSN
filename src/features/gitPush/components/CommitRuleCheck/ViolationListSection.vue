@@ -4,7 +4,7 @@
     <!-- 区块标题："不合规提交列表" + 条数徽章 + 批量操作 -->
     <div class="grc-section-title">
       {{ i18n.ruleCheckTitle }}
-      <span class="grc-section-count">{{ stats.violationCount }}</span>
+      <span class="grc-section-count">{{ pagedSource.length }}</span>
       <span class="grc-section-actions">
         <!-- 全选当前可见项 -->
         <button
@@ -44,8 +44,8 @@
 
     <div class="grc-list">
       <div
-        v-for="row in pagedViolations"
-        :key="violationKey(row)"
+        v-for="row in pagedRows"
+        :key="row.key"
         class="grc-item"
       >
         <div class="grc-item-head">
@@ -54,7 +54,7 @@
             type="checkbox"
             class="grc-item-check"
             :checked="isSelected(row)"
-            @change="toggle(violationKey(row))"
+            @change="toggle(row.key)"
           />
           <span
             v-if="!scoped"
@@ -66,7 +66,7 @@
           <span class="grc-item-reason">{{ i18n[COMMIT_RULE_REASON_META[row.reason].labelKey] }}</span>
           <!-- 可自动修复标记（仅格式类问题可确定性修复，语义类需 AI/手动） -->
           <Icon
-            v-if="isAutoFixable(row)"
+            v-if="row.autoFixable"
             class="grc-item-autofix"
             icon="mdi:auto-fix"
             height="12"
@@ -106,18 +106,23 @@
 <script setup lang="ts">
 // gitPush 提交规则检查不合规提交列表区块（本地分页 + 批量修复 + 修正入口）
 import type { CommitRuleCheckStats, CommitRuleViolation } from "../../types"
-import { CARD_SERVICES_KEY } from "../../types"
+import { CARD_SERVICES_KEY, COMMIT_RULE_REASON_META } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed, inject, ref, watch } from "vue"
-import { COMMIT_RULE_REASON_META } from "../../types"
 import { formatDateTime, relativeTime } from "../../utils"
 import { usePagedList } from "../../composables/usePagedList"
 import { isAutoFixable, useBatchCommitFix, violationKey } from "../../composables/useBatchCommitFix"
 import LoadMoreButton from "../common/LoadMoreButton.vue"
 
+/** 违规行视图：预计算唯一 key 与可自动修复标记（isAutoFixable 内含正则，模板内不再逐行重复执行） */
+interface ViolationRow extends CommitRuleViolation {
+  key: string
+  autoFixable: boolean
+}
+
 const props = defineProps<{
   i18n: Record<string, any>
-  /** 规则检查聚合视图（取 violations + violationCount） */
+  /** 规则检查聚合视图（取 violations） */
   stats: CommitRuleCheckStats
   /** 是否限定到单个项目（隐藏每行重复的项目名 chip） */
   scoped?: boolean
@@ -126,8 +131,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   viewProject: [projectId: string]
   openFix: [violation: CommitRuleViolation]
-  /** 批量修复完成且存在成功项，父级应全量刷新分析 */
-  batchFixed: []
+  /** 批量修复完成且存在成功项，父级按这些项目局部刷新分析 */
+  batchFixed: [projectIds: string[]]
 }>()
 
 /** 通过卡片依赖注入获取 manager（批量修复需直接执行 git 改写，参考 CommitFixDialog） */
@@ -145,6 +150,15 @@ const {
   loadMore: pagedLoadMore,
   reset: pagedReset,
 } = usePagedList(pagedSource, 50)
+
+/** 分页行视图：行 key 与可自动修复标记随数据源变化各算一次，不在每次渲染重复计算 */
+const pagedRows = computed<ViolationRow[]>(() =>
+  pagedViolations.value.map((v) => ({
+    ...v,
+    key: violationKey(v),
+    autoFixable: isAutoFixable(v),
+  })),
+)
 
 /** 批量修复状态与操作（选中映射 / 串行修复 / 结果统计） */
 const {
@@ -176,7 +190,7 @@ watch(pagedSource, () => {
   lastResult.value = null
 })
 
-/** 批量修复选中项：未勾选时提示引导；成功修复后清空选择并通知父级全量刷新 */
+/** 批量修复选中项：未勾选时提示引导；成功修复后清空选择并通知父级按受影响项目局部刷新 */
 async function runBatchFix() {
   if (selectedCount.value === 0) {
     batchNotice.value = props.i18n.ruleCheckSelectHint
@@ -186,7 +200,7 @@ async function runBatchFix() {
   const result = await fixSelected()
   if (result.fixed > 0) {
     clearSelection()
-    emit("batchFixed")
+    emit("batchFixed", result.projectIds)
   }
 }
 </script>

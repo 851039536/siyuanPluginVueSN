@@ -311,12 +311,18 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     return true
   }
 
-  /** 提交分析（仅抓取 commit log 聚合提交维度；行数排行沿用缓存旧值，不重新抓 numstat；projectId 指定时仅局部重抓该项目，用于保存修正后的快速刷新） */
-  async function runAnalysis(projectId?: string) {
-    const ran = await runCore(false, projectId ? [projectId] : undefined)
+  /**
+   * 提交分析（仅抓取 commit log 聚合提交维度；行数排行沿用缓存旧值，不重新抓 numstat）。
+   * @param projectId 单项目 id 或 id 数组 = 仅局部重抓指定项目（修正保存/批量修复后的快速刷新）；不传 = 全量重跑。
+   */
+  async function runAnalysis(projectId?: string | string[]) {
+    // 归一化：空数组回退 undefined，否则 runCore 的 `projectIds?.length` 判据会误走全量分支
+    const ids = Array.isArray(projectId) ? projectId : projectId ? [projectId] : undefined
+    const scoped = ids?.length ? ids : undefined
+    const ran = await runCore(false, scoped)
     // 分析进行中被拒绝：全量请求置 analyzed=false 并标记待重跑；子集请求仅排队（保持界面数据，避免白屏）
     if (!ran) {
-      if (projectId) {
+      if (scoped) {
         pendingReanalyze = true
         console.warn("[gitPush] 分析进行中，该项目局部刷新已排队待下次全量执行")
       } else {

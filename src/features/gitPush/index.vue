@@ -79,7 +79,6 @@
       :stats="commitRuleStats"
       :projects="projects"
       :project-id="effectiveRuleCheckProjectId"
-      :project-count="projects.length"
       :analyzing="analysisAnalyzing"
       :analyzed="analysisAnalyzed"
       :analyzed-at="analysisAnalyzedAt"

@@ -3,7 +3,7 @@
   <div class="grc-panel">
     <!-- 空状态：无项目 -->
     <EmptyState
-      v-if="projectCount === 0"
+      v-if="projects.length === 0"
       icon="mdi:source-repository"
       :text="i18n.noProjectsStats"
     />
@@ -76,7 +76,7 @@
             :scoped="scoped"
             @view-project="emit('viewProject', $event)"
             @open-fix="openFix"
-            @batch-fixed="emit('runAnalysis')"
+            @batch-fixed="emit('runAnalysis', $event)"
           />
         </template>
       </template>
@@ -113,7 +113,6 @@ const props = defineProps<{
   projects: GitProject[]
   /** 当前选中的过滤项目 ID（"" = 全部项目） */
   projectId: string
-  projectCount: number
   analyzing: boolean
   analyzed: boolean
   /** 上次分析完成时间（ISO） */
@@ -122,7 +121,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  runAnalysis: [projectId?: string]
+  /** 不传 = 全量重跑；传单项目 id 或 id 数组 = 仅局部重抓指定项目 */
+  runAnalysis: [projectId?: string | string[]]
   updateCount: [n: CommitCount]
   updateProject: [projectId: string]
   viewProject: [projectId: string]

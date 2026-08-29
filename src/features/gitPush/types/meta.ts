@@ -279,6 +279,12 @@ export interface RuleCheckPrefs {
   projectId: string
 }
 
+/** 提交信息修正偏好（上次选择的提交时间策略，持久化到 git-push-commitfix-prefs） */
+export interface CommitFixPrefs {
+  /** true = 保留原始提交时间，false = 按当前时间提交 */
+  preserveDate: boolean
+}
+
 /** 行数排行基础字段（新增/删除/净增三要素） */
 interface LineRankBase {
   /** 新增行数（numstat 聚合） */

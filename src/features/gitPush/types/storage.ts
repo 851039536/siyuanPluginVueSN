@@ -1,6 +1,6 @@
 // Git 项目持久化存储与类型定义
 import type { Plugin } from "siyuan"
-import type { CommitAnalysisCache, CommitAnalysisViewSettings, LineStatsCache, PlatformKey, RuleCheckPrefs } from "./meta"
+import type { CommitAnalysisCache, CommitAnalysisViewSettings, CommitFixPrefs, LineStatsCache, PlatformKey, RuleCheckPrefs } from "./meta"
 import type { CodeReportPrefs } from "./report"
 import { DEFAULT_REPORT_PREFS } from "./report"
 import { PluginStorage } from "@/utils/pluginStorage"
@@ -343,6 +343,9 @@ export const DEFAULT_ANALYSIS_VIEW_SETTINGS: CommitAnalysisViewSettings = {
 /** 提交规则检查偏好默认值（默认过滤全部项目） */
 const DEFAULT_RULE_CHECK_PREFS: RuleCheckPrefs = { projectId: "" }
 
+/** 提交信息修正偏好默认值（默认保留原始提交时间） */
+const DEFAULT_COMMIT_FIX_PREFS: CommitFixPrefs = { preserveDate: true }
+
 const DEFAULT_UNGROUPED: ProjectCategory = {
   id: UNGROUPED_ID,
   name: "未分组",
@@ -376,6 +379,8 @@ export class GitPushStorage {
   readonly reportPrefs: TypedStorage<CodeReportPrefs>
   /** 提交规则检查偏好（上次选中的过滤项目，跨会话恢复选择） */
   readonly ruleCheckPrefs: TypedStorage<RuleCheckPrefs>
+  /** 提交信息修正偏好（上次选择的提交时间策略，跨会话恢复选择） */
+  readonly commitFixPrefs: TypedStorage<CommitFixPrefs>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
@@ -393,6 +398,7 @@ export class GitPushStorage {
     this.commitAnalysisView = new TypedStorage(storage, "git-push-analysis-view", DEFAULT_ANALYSIS_VIEW_SETTINGS)
     this.reportPrefs = new TypedStorage(storage, "git-push-report-prefs", DEFAULT_REPORT_PREFS)
     this.ruleCheckPrefs = new TypedStorage(storage, "git-push-rulecheck-prefs", DEFAULT_RULE_CHECK_PREFS)
+    this.commitFixPrefs = new TypedStorage(storage, "git-push-commitfix-prefs", DEFAULT_COMMIT_FIX_PREFS)
   }
 
   async init(): Promise<void> {

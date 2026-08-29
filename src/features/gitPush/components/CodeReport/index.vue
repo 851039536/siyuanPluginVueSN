@@ -113,12 +113,15 @@
         </div>
 
         <!-- 分区内容（v-if 首次激活后才挂载 + v-show 显隐保留内部状态；团队总览与代码贡献度合并展示：KPI 卡片 + 作者排行表） -->
+
+        <!-- 团队总览：KPI 卡片（成员数/总提交/总代码量/最活跃贡献者） -->
         <TeamOverviewSection
           v-if="visited.has('overview')"
           v-show="activeTab === 'overview'"
           :i18n="i18n"
           :report="report"
         />
+        <!-- 代码贡献度：作者排行表（点击行展开详情） -->
         <AuthorContributionSection
           v-if="visited.has('overview')"
           v-show="activeTab === 'overview'"
@@ -127,6 +130,7 @@
           :file-details-map="report.fileDetailsMap"
           :get-file-patch="getFilePatch"
         />
+        <!-- 技术债务：汇总条 + 严重度分组可展开表 -->
         <TechDebtSection
           v-if="visited.has('debt')"
           v-show="activeTab === 'debt'"
@@ -134,6 +138,7 @@
           :report="report"
           :project="currentProject"
         />
+        <!-- 代码热点：热点文件表 + 热度分布汇总 + 优化建议 -->
         <HotspotSection
           v-if="visited.has('hotspot')"
           v-show="activeTab === 'hotspot'"
@@ -141,11 +146,13 @@
           :report="report"
           :project="currentProject"
         />
+        <!-- 提交趋势（active 下传：非激活时卸载 canvas，避免 chart.js 实例常驻） -->
         <CandlestickSection
           v-if="visited.has('candlestick')"
           v-show="activeTab === 'candlestick'"
           :i18n="i18n"
           :report="report"
+          :active="activeTab === 'candlestick'"
         />
       </template>
     </template>
@@ -198,11 +205,15 @@ const emit = defineEmits<{
 /** 分区 Tab 类型（团队总览已合并代码贡献度） */
 type ReportTabId = "overview" | "debt" | "hotspot" | "candlestick"
 
-/** 分区 Tab 配置（labelKey 为 i18n 键，count 为分区条数徽章：总览=贡献作者数，债务=问题数，热点=分析文件数，趋势=提交天数） */
+/**
+ * 分区 Tab 配置（labelKey 为 i18n 键，count 为分区条数徽章）。
+ * count 口径必须与分区内实际可见条目数一致：
+ * 总览=贡献作者数，债务=问题数，热点=榜单条目数（HOTSPOT_LIMIT 截断后，非全量 analyzedFiles），趋势=提交天数。
+ */
 const reportTabs = computed<ReadonlyArray<{ id: ReportTabId, labelKey: string, icon: string, count: number }>>(() => [
   { id: "overview", labelKey: "reportTabOverview", icon: "mdi:account-group", count: props.report.authors.length },
   { id: "debt", labelKey: "reportTabDebt", icon: "mdi:alert-octagon-outline", count: countDebtFiles(props.report.debtSummary) },
-  { id: "hotspot", labelKey: "reportTabHotspot", icon: "mdi:fire", count: props.report.analyzedFiles },
+  { id: "hotspot", labelKey: "reportTabHotspot", icon: "mdi:fire", count: props.report.hotspots.length },
   { id: "candlestick", labelKey: "reportTabCandlestick", icon: "mdi:chart-finance", count: props.report.dailyStats.length },
 ])
 

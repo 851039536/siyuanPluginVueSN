@@ -1,13 +1,13 @@
-<!-- gitPush 代码统计报告：提交趋势分区（chart.js 蜡烛图 + 7日均线 + 工作时间底色 + 日提交标注 + 迷你节奏图 + 6 张摘要卡片） -->
+<!-- gitPush 代码统计报告：提交趋势分区（日期数超限时先分桶压缩，再渲染 chart.js 蜡烛图 + 7日均线 + 工作时间底色 + 日提交标注 + 迷你节奏图 + 6 张摘要卡片） -->
 <template>
   <div class="gpr-section">
-    <!-- 区块标题："提交趋势" + 活跃天数徽章（悬浮说明统计口径） -->
+    <!-- 区块标题："提交趋势" + 活跃天数徽章（悬浮说明统计口径；用原始 dailyStats 保证与聚合无关） -->
     <div class="gpr-section-title">
       {{ i18n.reportCandlestickTitle }}
       <span
         class="gpr-section-count"
         :title="i18n.reportCandlestickTotalDays"
-      >{{ stats.length }}</span>
+      >{{ dailyStats.length }}</span>
     </div>
 
     <!-- 空状态：范围内无提交 -->
@@ -37,6 +37,11 @@
           <span class="gpc-legend-line" />
           {{ i18n.reportAvg7 }}
         </span>
+        <!-- 聚合提示：日期数超上限时按连续天数分桶，提示"每根 K 线代表 N 天" -->
+        <span
+          v-if="aggregatedHint"
+          class="gpc-legend-agg"
+        >{{ aggregatedHint }}</span>
         <span class="gpc-legend-hint">{{ i18n.reportCandlestickHint }}</span>
       </div>
 
@@ -50,7 +55,9 @@
             class="gpc-chart-wrap"
             :style="{ minWidth: `${minChartWidth}px` }"
           >
+            <!-- 非激活 Tab 卸载 canvas：避免 chart.js 实例与画布内存常驻、且 display:none 下尺寸归零触发 resize 抖动 -->
             <Bar
+              v-if="active"
               :data="barData"
               :options="chartOptions"
               :plugins="chartPlugins"
@@ -166,8 +173,8 @@
 </template>
 
 <script setup lang="ts">
-// 提交趋势分区：聚合 dailyStats → chart.js 蜡烛图（实体=首末提交时刻跨度、影线=±0.5h 缓冲、颜色=提交量涨跌）+ 7日均线 + 工作时间底色 + 日提交标注 + 迷你节奏图 + 摘要卡片
-import type { Chart, ChartData, ChartOptions, Plugin } from "chart.js"
+// 提交趋势分区：dailyStats 分桶压缩（日期数超 MAX_CANDLES 时）→ chart.js 蜡烛图（实体=首末提交时刻跨度、影线=±0.5h 缓冲、颜色=提交量涨跌）+ 7日均线 + 工作时间底色 + 日提交标注 + 迷你节奏图 + 摘要卡片
+import type { Plugin } from "chart.js"
 import {
   BarController,
   BarElement,
@@ -185,46 +192,49 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import type { CodeReportData } from "../../types"
 import { WEEKDAY_LABEL_KEYS } from "../../types/report"
 import type { DailyCommitStat } from "../../types/report"
-import { calcMovingAverage7 } from "../../reportMetrics"
+import { collapseDailyStats } from "../../reportMetrics"
+import {
+  buildCandleChartData,
+  buildCandleChartOptions,
+  createCandlestickPlugin,
+  formatHour,
+  MAX_CHART_WIDTH,
+  MIN_WIDTH_PER_DAY,
+} from "../../reportChart"
+import { maxOf } from "../../utils"
 import EmptyState from "../common/EmptyState.vue"
 
 ChartJS.register(BarController, BarElement, CategoryScale, LinearScale, LineController, LineElement, PointElement, Tooltip)
 
-/** K 线涨跌色：较前一活跃日提交量增加=绿（涨），减少=红（跌），持平/首日=灰 */
-const UP_COLOR = "#10b981"
-const DOWN_COLOR = "#ef4444"
-const FLAT_COLOR = "#64748b"
-/** 7 日均线颜色（琥珀色，与 K 线实体形成对比） */
-const MA_COLOR = "#f59e0b"
-/** 工作时间区（08:00-18:00）底色：极淡中性色，canvas 不支持 CSS var 故用固定色 */
-const WORK_START_HOUR = 8
-const WORK_END_HOUR = 18
-const WORK_BG_COLOR = "rgba(148, 163, 184, 0.08)"
-/** 坐标轴刻度色（半透明灰，浅/深主题均可见；canvas 不支持 CSS var 故用固定色） */
-const AXIS_COLOR = "rgba(128, 128, 128, 0.8)"
-/** 网格线色 */
-const GRID_COLOR = "rgba(128, 128, 128, 0.12)"
-
-/** 最低实体高度（小时）：单条提交（open==close）时外扩到该厚度保证实体可见 */
-const MIN_BODY_HOURS = 0.3
-
-/** 每根蜡烛最小占地宽度（px）：实体 16px + 左右间距，保证多日期时不被挤压 */
-const MIN_WIDTH_PER_DAY = 30
-
 /** 单次点击滚动距离（px）：约 10 根蜡烛宽度，步长适中便于快速定位 */
 const SCROLL_AMOUNT = 300
-
-/** 日提交数标注字号（canvas 字体不受 CSS Token 约束，取与 10px 标签接近的小字号） */
-const LABEL_FONT = "500 9px ui-monospace, SFMono-Regular, Menlo, monospace"
 
 const props = defineProps<{
   i18n: Record<string, any>
   /** 报告聚合数据（仅读取 dailyStats / rhythm） */
   report: CodeReportData
+  /** 所在 Tab 是否激活（非激活时卸载 canvas，避免 chart.js 实例与画布内存常驻） */
+  active: boolean
 }>()
 
-/** 每日提交统计（按日期升序，来自报告聚合） */
-const stats = computed(() => props.report.dailyStats)
+/** 原始每日提交统计（按日期升序，来自报告聚合；节奏图与摘要卡片使用原始口径以保证语义准确） */
+const dailyStats = computed(() => props.report.dailyStats)
+
+/**
+ * K 线数据（分桶压缩后）：日期数超过 MAX_CANDLES 时按连续天数聚合，
+ * 使画布宽度有界（≤5400px）且不至于把 1800 根蜡烛挤成不可读的细条。
+ */
+const candles = computed(() => collapseDailyStats(props.report.dailyStats))
+
+/** 图表实际消费的统计序列（压缩后的 K 线） */
+const stats = computed(() => candles.value.list)
+
+/** 聚合提示文案（bucketDays > 1 时提示每根 K 线代表的天数；未聚合时为空串，模板隐藏提示） */
+const aggregatedHint = computed(() => {
+  const days = candles.value.bucketDays
+  if (days <= 1) return ""
+  return props.i18n.reportChartAggregated.replace("{0}", String(days))
+})
 
 /** K 线图横向滚动容器 DOM 引用 */
 const scrollRef = ref<HTMLElement | null>(null)
@@ -233,12 +243,31 @@ const scrollRef = ref<HTMLElement | null>(null)
 const canScrollLeft = ref(false)
 const canScrollRight = ref(false)
 
+/** 滚动状态检测的 rAF 句柄（合并同一帧内的多次 scroll 事件，避免逐事件强制 layout + 重渲染） */
+let scrollRaf = 0
+
+/**
+ * 已保存的横向滚动位置（px）。
+ * 非激活 Tab 会卸载 canvas，容器内容宽度归零导致浏览器把 scrollLeft 重置为 0，
+ * 切回时需在 canvas 重建后恢复，避免用户视角跳回最左端。
+ */
+let savedScrollLeft = 0
+
 /** 依据滚动容器当前偏移量更新左右按钮可用状态（1px 容差避免浮点抖动） */
 function updateScrollState() {
   const el = scrollRef.value
   if (!el) return
   canScrollLeft.value = el.scrollLeft > 1
   canScrollRight.value = el.scrollLeft < el.scrollWidth - el.clientWidth - 1
+}
+
+/** scroll 事件回调：合并到下一帧执行，一帧内最多读一次几何属性 */
+function onScroll() {
+  if (scrollRaf) return
+  scrollRaf = requestAnimationFrame(() => {
+    scrollRaf = 0
+    updateScrollState()
+  })
 }
 
 /** 向左平滑滚动 300px（查看更早日期数据） */
@@ -254,232 +283,69 @@ function handleScrollRight() {
 onMounted(() => {
   const el = scrollRef.value
   if (!el) return
-  el.addEventListener("scroll", updateScrollState, { passive: true })
+  el.addEventListener("scroll", onScroll, { passive: true })
   // 初始状态：图表可能尚未渲染完成，待 DOM 稳定后再检测一次滚动边界
   nextTick(updateScrollState)
 })
 
-// 卸载前移除监听：Vue 3.5 在 unmounted 钩子执行前模板 ref 已被置空，用 unmounted 会静默移除失败
+// 卸载前移除监听与未执行的 rAF：Vue 3.5 在 unmounted 钩子执行前模板 ref 已被置空，用 unmounted 会静默移除失败
 onBeforeUnmount(() => {
-  scrollRef.value?.removeEventListener("scroll", updateScrollState)
+  scrollRef.value?.removeEventListener("scroll", onScroll)
+  if (scrollRaf) {
+    cancelAnimationFrame(scrollRaf)
+    scrollRaf = 0
+  }
 })
 
 // 切换项目/时间范围导致数据变化时：滚动回最左并重新检测边界状态，避免停留在旧数据位置
-watch(stats, () => {
+watch(dailyStats, () => {
   const el = scrollRef.value
   if (!el) return
   el.scrollLeft = 0
+  savedScrollLeft = 0
   nextTick(updateScrollState)
 })
 
-/** 图表最小宽度（px）：日期数 × 每根蜡烛占地宽；超过容器宽度时外层滚动容器出现横向滚动条 */
-const minChartWidth = computed(() => stats.value.length * MIN_WIDTH_PER_DAY)
+/**
+ * 图表最小宽度（px）：K 线根数 × 每根蜡烛占地宽，硬上限 MAX_CHART_WIDTH。
+ * 超过容器宽度时外层滚动容器出现横向滚动条。
+ */
+const minChartWidth = computed(() => Math.min(stats.value.length * MIN_WIDTH_PER_DAY, MAX_CHART_WIDTH))
 
-/** 当日相对前一活跃日的提交量涨跌（首日视为持平） */
-function trendOf(list: DailyCommitStat[], i: number): "up" | "down" | "flat" {
-  if (i === 0) return "flat"
-  const prev = list[i - 1].count
-  const cur = list[i].count
-  if (cur > prev) return "up"
-  if (cur < prev) return "down"
-  return "flat"
-}
-
-/** 实体/影线颜色（按涨跌语义） */
-function colorOf(list: DailyCommitStat[], i: number): string {
-  const t = trendOf(list, i)
-  if (t === "up") return UP_COLOR
-  if (t === "down") return DOWN_COLOR
-  return FLAT_COLOR
-}
-
-/** 实体柱范围 [下沿, 上沿]：正常取 [min(open,close), max(open,close)]，跨度过小时外扩保证可见 */
-function bodyRange(s: DailyCommitStat): [number, number] {
-  const lo = Math.min(s.open, s.close)
-  const hi = Math.max(s.open, s.close)
-  if (hi - lo >= MIN_BODY_HOURS) return [lo, hi]
-  return [Math.max(0, lo - MIN_BODY_HOURS), Math.min(24, hi + MIN_BODY_HOURS)]
-}
-
-/** 小时小数 → "HH:mm"（分钟四舍五入，如 9.25 → 09:15） */
-function formatHour(h: number): string {
-  const total = Math.round(h * 60)
-  const hh = Math.floor(total / 60)
-  const mm = total % 60
-  return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`
-}
-
-/** chart.js 数据集：浮动条（实体）+ 7日均线折线（右侧独立 yCount 轴），影线数据经 candlestick 字段供插件读取 */
-const barData = computed<ChartData<"bar">>(() => {
-  const list = stats.value
-  const barDataset = {
-    data: list.map((s) => bodyRange(s)),
-    backgroundColor: list.map((_, i) => colorOf(list, i)),
-    borderColor: list.map((_, i) => colorOf(list, i)),
-    borderWidth: 1,
-    maxBarThickness: 16,
-    // 自定义字段：影线插件从数据集读取原始统计（避免闭包快照）
-    candlestick: list,
-  } as ChartData<"bar">["datasets"][number] & { candlestick: DailyCommitStat[] }
-  // 7 日均线：与蜡烛共用 x 类别轴，量纲（提交数）挂到右侧 yCount 轴避免干扰时刻刻度
-  const maDataset = {
-    type: "line" as const,
-    data: calcMovingAverage7(list),
-    yAxisID: "yCount",
-    borderColor: MA_COLOR,
-    borderWidth: 1.5,
-    pointRadius: 0,
-    tension: 0.35,
-    fill: false,
-    spanGaps: true,
-  } as unknown as ChartData<"bar">["datasets"][number]
-  return {
-    labels: list.map((s) => s.date),
-    datasets: [barDataset, maDataset],
+// Tab 切换导致 canvas 销毁/重建时保存与恢复滚动位置：
+// 切走（active=false）时 watcher 先于 DOM 更新触发，此时 scrollLeft 仍有效，先存下；
+// 切回（active=true）时 canvas 尚未重建，需等 nextTick 容器宽度恢复后再写回。
+watch(() => props.active, (isActive) => {
+  if (!isActive) {
+    savedScrollLeft = scrollRef.value?.scrollLeft ?? 0
+    return
   }
+  nextTick(() => {
+    const el = scrollRef.value
+    if (el) el.scrollLeft = savedScrollLeft
+    updateScrollState()
+  })
 })
 
-/** chart.js 配置：y 轴 0~24 小时 + 右侧 yCount 提交数量纲，x 轴日期自动抽样，tooltip 展示提交数/首末时刻 */
-const chartOptions = computed<ChartOptions<"bar">>(() => {
-  const list = stats.value
-  const maxCount = Math.max(1, ...list.map((s) => s.count))
-  return {
-    responsive: true,
-    maintainAspectRatio: false,
-    animation: { duration: 400 },
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: "#1f2937",
-        titleColor: "#e5e7eb",
-        bodyColor: "#e5e7eb",
-        padding: 8,
-        callbacks: {
-          title: (items) => {
-            const s = list[items[0].dataIndex]
-            return s ? s.date : ""
-          },
-          label: (item) => {
-            const s = list[item.dataIndex]
-            if (!s) return ""
-            return [
-              `${props.i18n.reportCandlestickCount}: ${s.count}`,
-              `${props.i18n.reportCandlestickOpen}: ${formatHour(s.open)}`,
-              `${props.i18n.reportCandlestickClose}: ${formatHour(s.close)}`,
-            ]
-          },
-        },
-      },
-    },
-    scales: {
-      x: {
-        ticks: {
-          maxTicksLimit: 8,
-          maxRotation: 0,
-          autoSkip: true,
-          color: AXIS_COLOR,
-          // 紧凑日期标签（去掉年份前缀，完整日期在 tooltip 中展示）
-          callback: (value) => String(value).slice(5),
-        },
-        grid: { display: false },
-      },
-      y: {
-        min: 0,
-        max: 24,
-        ticks: {
-          stepSize: 6,
-          color: AXIS_COLOR,
-          callback: (value) => `${value}:00`,
-        },
-        grid: { color: GRID_COLOR },
-      },
-      yCount: {
-        position: "right",
-        min: 0,
-        max: maxCount,
-        ticks: {
-          maxTicksLimit: 4,
-          color: AXIS_COLOR,
-          callback: (value) => `${value}`,
-        },
-        grid: { display: false },
-        border: { display: false },
-      },
-    },
-  }
-})
+/** chart.js 数据集（浮动条实体 + 7 日均线折线；构建细节见 reportChart 模块） */
+const barData = computed(() => buildCandleChartData(stats.value))
 
-/** 图表插件：①beforeDatasetsDraw 画工作时间（08:00-18:00）底色 ②afterDatasetsDraw 画影线 + 日提交数标注 */
-const chartPlugins = computed<Plugin[]>(() => [
-  {
-    id: "gpcWick",
-    beforeDatasetsDraw(chart: Chart) {
-      const yScale = chart.scales.y
-      // chartArea 在首次布局完成前为 undefined（此处不能靠 !left 判断：left 为 0 是合法值）
-      const area = chart.chartArea
-      if (!yScale || !area) return
-      const { left, right, top } = area
-      const yTop = yScale.getPixelForValue(WORK_START_HOUR)
-      const yBottom = yScale.getPixelForValue(WORK_END_HOUR)
-      if (yTop < top) return
-      const ctx = chart.ctx
-      ctx.save()
-      ctx.fillStyle = WORK_BG_COLOR
-      ctx.fillRect(left, yTop, right - left, yBottom - yTop)
-      ctx.restore()
-    },
-    afterDatasetsDraw(chart: Chart) {
-      const dataset = chart.data.datasets[0] as { candlestick?: DailyCommitStat[] } | undefined
-      const list = dataset?.candlestick
-      if (!list || list.length === 0) return
-      const meta = chart.getDatasetMeta(0)
-      if (!meta.data || meta.data.length === 0) return
-      const yScale = chart.scales.y
-      const ctx = chart.ctx
-      ctx.save()
-      ctx.lineWidth = 1
-      list.forEach((s, i) => {
-        const bar = meta.data[i]
-        if (!bar) return
-        const x = bar.x
-        const yHigh = yScale.getPixelForValue(s.high)
-        const yLow = yScale.getPixelForValue(s.low)
-        const color = colorOf(list, i)
-        ctx.strokeStyle = color
-        // 影线竖线（low → high）
-        ctx.beginPath()
-        ctx.moveTo(x, yHigh)
-        ctx.lineTo(x, yLow)
-        ctx.stroke()
-        // 影线端点横线（K 线细节，上下各 2px）
-        ctx.beginPath()
-        ctx.moveTo(x - 2, yHigh)
-        ctx.lineTo(x + 2, yHigh)
-        ctx.moveTo(x - 2, yLow)
-        ctx.lineTo(x + 2, yLow)
-        ctx.stroke()
-      })
-      // 日提交数标注（仅 >1 条时显示，避免单日提交时画面过挤）
-      ctx.textAlign = "center"
-      ctx.textBaseline = "bottom"
-      ctx.font = LABEL_FONT
-      list.forEach((s, i) => {
-        if (s.count <= 1) return
-        const bar = meta.data[i]
-        if (!bar) return
-        const yBodyTop = yScale.getPixelForValue(Math.max(s.open, s.close))
-        ctx.fillStyle = colorOf(list, i)
-        ctx.fillText(String(s.count), bar.x, yBodyTop - 3)
-      })
-      ctx.restore()
-    },
-  },
-])
+/** chart.js 配置（左轴 0~24 时刻 + 右轴提交数量纲；构建细节见 reportChart 模块） */
+const chartOptions = computed(() =>
+  buildCandleChartOptions(stats.value, props.i18n, maxOf(stats.value.map((s) => s.count), 1)),
+)
+
+/**
+ * K 线绘制插件数组（工作时间底色 + 影线 + 日提交数标注）。
+ * 该 computed 读取不到任何响应式依赖，只会求值一次并常驻缓存，
+ * 因此传给 vue-chartjs 的 plugins 数组引用稳定，不会触发图表重建。
+ */
+const chartPlugins = computed<Plugin[]>(() => [createCandlestickPlugin()])
 
 /** 星期迷你柱（7 根，高度按该周提交数占比；isPeak 标记最活跃星期） */
 const weekdayBars = computed(() => {
   const rhythm = props.report.rhythm
-  const max = Math.max(1, ...rhythm.weekday.map((w) => w.count))
+  const max = maxOf(rhythm.weekday.map((w) => w.count), 1)
   return rhythm.weekday.map((w) => ({
     dow: w.dow,
     count: w.count,
@@ -493,7 +359,7 @@ const weekdayBars = computed(() => {
 /** 时段热力格（12 格，每格 2 小时；颜色透明度按提交频率，isPeak 标记高峰桶） */
 const hourlyHeat = computed(() => {
   const rhythm = props.report.rhythm
-  const max = Math.max(1, ...rhythm.hourly.map((h) => h.count))
+  const max = maxOf(rhythm.hourly.map((h) => h.count), 1)
   return rhythm.hourly.map((h) => ({
     start: h.start,
     count: h.count,
@@ -512,7 +378,8 @@ const peakHoursText = computed(() => {
 
 /** 摘要卡片：提交天数/总提交/日均提交/最高单日/最活跃星期/高峰时段（最高单日与最活跃星期值悬浮显示明细） */
 const summaryCards = computed(() => {
-  const list = stats.value
+  // 用原始 dailyStats 而非压缩后的 K 线：摘要统计的是真实日历日口径，不应随图表分桶变化
+  const list = dailyStats.value
   const total = list.reduce((sum, s) => sum + s.count, 0)
   const avg = list.length > 0 ? (total / list.length).toFixed(1) : "0"
   let peak: DailyCommitStat | undefined

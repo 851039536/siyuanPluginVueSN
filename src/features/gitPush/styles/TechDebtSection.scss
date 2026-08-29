@@ -107,9 +107,11 @@
   }
 }
 
-// 最后修改列（相对时间文本，宽度容纳 "3 个月前" 等较长文案）
+// 最后修改列（相对时间文本）
+// 96px 而非 72px：列内还有 $spacing-1 右内边距，可用宽度约 84px 才能完整容纳
+// 中文「3 个月前」与英文「3 months ago」等较长文案（72px 时会被省略号截断）
 .gpr-cell--date {
-  width: 72px;
+  width: 96px;
   text-align: right;
   padding-right: $spacing-1;
   font-size: $font-size-2xs;

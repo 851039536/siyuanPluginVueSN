@@ -9,27 +9,14 @@
   gap: $spacing-1;
 }
 
+// 卡片（与提交趋势摘要卡同构，复用共享 mixin）
 .gpr-card {
-  text-align: center;
-  padding: $spacing-2 $spacing-1;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $radius-base;
-  background: var(--b3-theme-surface);
-  transition: border-color 0.15s;
-
-  &:hover {
-    border-color: var(--b3-theme-primary);
-  }
+  @include stat-card;
 }
 
 // 卡片数值：等宽大号突出展示
 .gpr-card-value {
-  font-size: $font-size-lg; // 数据突出展示：统计数值大号字体
-  font-weight: $font-weight-bold;
-  font-family: $vp-mono;
-  line-height: $line-height-tight;
-  margin-bottom: 1px; // 数值与标签的最小视觉间隔（小于 $spacing-2px，刻意紧贴）
-  color: var(--b3-theme-on-surface);
+  @include stat-card-value;
   // 文本类数值（最活跃贡献者）可长，超出省略
   overflow: hidden;
   text-overflow: ellipsis;
@@ -38,10 +25,7 @@
 
 // 卡片标签：两级字号制（辅助标签）
 .gpr-card-label {
-  font-size: $font-size-2xs;
-  opacity: 0.5;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  @include stat-card-label;
 }
 
 // 最活跃贡献者卡：主题色强调

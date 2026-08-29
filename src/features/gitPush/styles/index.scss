@@ -890,10 +890,16 @@
 }
 
 // 表格（技术债务/贡献度/热点汇总共用）：sticky 表头 + 行分割 + 等宽右对齐数字
+//
+// max-height 是 sticky 生效的前提：容器高度必须小于内容高度才有滚动行程，
+// 否则 sticky 表头没有可吸附的区间，会随外层面板一起滚走（此前只有 overflow-y:auto 无高度上限，吸顶实为失效）。
+// contain: paint 把重排范围限制在表格内，长表格（技术债务数百行）滚动时的布局计算不再外溢到整个面板。
 .gpr-table-wrap {
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
   overflow-y: auto;
+  max-height: 50vh;
+  contain: paint;
 }
 
 .gpr-row {

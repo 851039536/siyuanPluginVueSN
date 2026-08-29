@@ -42,9 +42,19 @@
   gap: $spacing-1;
 }
 
-// 提交时间策略选择框：xsmall 紧凑尺寸 + 限制宽度不占满整行
-.gp-fix-date-select {
-  max-width: 240px;
+// 提交时间策略勾选（radio 横向排列；accent-color 由全局 radio 样式提供）
+.gp-fix-date-options {
+  display: flex;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+}
+
+.gp-fix-date-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: $font-size-xs;
+  cursor: pointer;
 }
 
 .gp-fix-original {

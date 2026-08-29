@@ -1,12 +1,12 @@
-// gitPush 技术债务洞察计算引擎：趋势推断 + 近期共变耦合 + 严重度汇总（纯函数，无 Vue 响应式依赖）
+// gitPush 技术债务洞察纯函数模块：趋势推断 + 近期共变耦合 + 严重度汇总（无 Vue 响应式，与 reportMetrics 同层）
 //
 // 数据来源说明（透明标注启发式边界）：
 // - 趋势为"单快照推断"：复用 recencyBonus 的 7d/30d 阈值语义，从 lastModified 距今天数 + 修改次数派生方向，
 //   而非真正的双周期对比（CodeScene 趋势分析需跨周期快照，当前 CodeReportData 仅含本周期聚合）
 // - 耦合为"近期共变"代理信号：lastModified 日期相同的债务文件聚类（同日修改≈同批提交），
 //   非完整 commit 级共现矩阵，UI 文案已标注为启发式推断
-import type { DebtFileRow, DebtSeverity } from "../types"
-import { DEBT_SEVERITY_ORDER } from "../reportMetrics"
+import type { DebtFileRow, DebtSeverity } from "./types"
+import { DEBT_SEVERITY_ORDER } from "./types"
 
 // ── 趋势推断 ──
 
@@ -46,25 +46,19 @@ export function inferDebtTrend(row: Pick<DebtFileRow, "lastModified" | "modCount
 
 // ── 近期共变耦合 ──
 
-/** 近期共变文件信息（与某文件 lastModified 日期相同的债务文件） */
-export interface CoupledFile {
-  /** 文件路径 */
-  path: string
-  /** 修改次数 */
-  modCount: number
-  /** 风险评分 */
-  riskScore: number
-  /** 严重度 */
-  severity: DebtSeverity
-}
+/** 近期共变文件信息（与某文件 lastModified 日期相同的债务文件；DebtFileRow 的展示投影） */
+export type CoupledFile = Pick<DebtFileRow, "path" | "modCount" | "riskScore" | "severity">
 
 /** 关联日期键：取 ISO 日期部分（YYYY-MM-DD），空串统一为无效键 */
 function dateKey(iso: string): string {
   return iso.slice(0, 10)
 }
 
-/** 按 lastModified 日期聚类，产出路径 → 近期共变文件列表（同日期聚类、排除自身、按修改次数降序；无共变的路径不出现） */
-export function buildCoupledMap(files: DebtFileRow[]): Map<string, CoupledFile[]> {
+/**
+ * 建立按 lastModified 日期聚类的共变索引（O(n) 单次遍历，取代逐文件 filter+sort 的 O(n² log n) 预计算）。
+ * get(path) 按需取该文件的近期共变列表（同日期聚类、排除自身、按修改次数降序），无共变返回空数组。
+ */
+export function createCoupledIndex(files: DebtFileRow[]): { get(path: string): CoupledFile[] } {
   const byDate = new Map<string, DebtFileRow[]>()
   for (const f of files) {
     const key = dateKey(f.lastModified)
@@ -73,23 +67,26 @@ export function buildCoupledMap(files: DebtFileRow[]): Map<string, CoupledFile[]
     if (list) list.push(f)
     else byDate.set(key, [f])
   }
-  const map = new Map<string, CoupledFile[]>()
-  for (const f of files) {
-    const key = dateKey(f.lastModified)
-    if (!key) continue
-    const peers = (byDate.get(key) ?? [])
-      .filter((p) => p.path !== f.path)
-      .sort((a, b) => b.modCount - a.modCount)
-    if (peers.length > 0) {
-      map.set(f.path, peers.map((p) => ({ path: p.path, modCount: p.modCount, riskScore: p.riskScore, severity: p.severity })))
-    }
+  const byPath = new Map(files.map((f) => [f.path, f]))
+  return {
+    get(path: string): CoupledFile[] {
+      const self = byPath.get(path)
+      if (!self) return []
+      const peers = (byDate.get(dateKey(self.lastModified)) ?? [])
+        .filter((p) => p.path !== path)
+        .sort((a, b) => b.modCount - a.modCount)
+      return peers.map((p) => ({ path: p.path, modCount: p.modCount, riskScore: p.riskScore, severity: p.severity }))
+    },
   }
-  return map
 }
 
 // ── 严重度汇总 ──
 
-/** 严重度分布条目（汇总条数据源；pct 为四舍五入整数百分比） */
+/**
+ * 严重度分布条目（汇总条数据源；pct 为四舍五入整数百分比）。
+ * 与 HotspotLevelSummary 结构同构但语义域不同（严重度分布 vs 热度等级分布），
+ * 各自仅一处使用，按 Rule of Three 保留独立定义。
+ */
 export interface SeverityDistItem {
   severity: DebtSeverity
   /** 该严重度文件数 */

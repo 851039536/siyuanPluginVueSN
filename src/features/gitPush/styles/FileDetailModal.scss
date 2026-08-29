@@ -140,6 +140,16 @@
   flex-shrink: 0;
 }
 
+// 补丁加载态（打开弹窗后异步取补丁期间的占位提示）
+.gpr-fm-diff-loading {
+  padding: $spacing-2;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+}
+
 // diff 内容等宽代码块（行级着色 + 滚动，仿 git diff 视图）
 .gpr-fm-diff {
   font-family: $vp-mono;

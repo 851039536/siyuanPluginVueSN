@@ -466,4 +466,9 @@ export class GitPushManager {
   async getTrackedFiles(projectPath: string): Promise<string[]> {
     return this.reportOps.getTrackedFiles(projectPath)
   }
+
+  /** 获取文件最近 5 条提交的补丁内容（文件详情弹窗打开时按需懒取；since 限定统计范围；git 失败抛出错误） */
+  async getFileHistoryPatch(projectPath: string, file: string, since?: string): Promise<string> {
+    return this.reportOps.getFileHistoryPatch(projectPath, file, since)
+  }
 }

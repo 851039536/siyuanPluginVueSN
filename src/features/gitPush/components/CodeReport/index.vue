@@ -112,31 +112,37 @@
           </button>
         </div>
 
-        <!-- 分区内容（v-show 保留各分区内部状态；团队总览与代码贡献度合并展示：KPI 卡片 + 作者排行表） -->
+        <!-- 分区内容（v-if 首次激活后才挂载 + v-show 显隐保留内部状态；团队总览与代码贡献度合并展示：KPI 卡片 + 作者排行表） -->
         <TeamOverviewSection
+          v-if="visited.has('overview')"
           v-show="activeTab === 'overview'"
           :i18n="i18n"
           :report="report"
         />
         <AuthorContributionSection
+          v-if="visited.has('overview')"
           v-show="activeTab === 'overview'"
           :i18n="i18n"
           :authors="report.authors"
           :file-details-map="report.fileDetailsMap"
+          :get-file-patch="getFilePatch"
         />
         <TechDebtSection
+          v-if="visited.has('debt')"
           v-show="activeTab === 'debt'"
           :i18n="i18n"
           :report="report"
           :project="currentProject"
         />
         <HotspotSection
+          v-if="visited.has('hotspot')"
           v-show="activeTab === 'hotspot'"
           :i18n="i18n"
           :report="report"
           :project="currentProject"
         />
         <CandlestickSection
+          v-if="visited.has('candlestick')"
           v-show="activeTab === 'candlestick'"
           :i18n="i18n"
           :report="report"
@@ -147,10 +153,10 @@
 </template>
 
 <script setup lang="ts">
-// 代码统计报告面板：项目/时间范围选择 + 3 分区 Tab（团队总览[含代码贡献度]/技术债务/代码热点）
+// 代码统计报告面板：项目/时间范围选择 + 4 分区 Tab（团队总览[含代码贡献度]/技术债务/代码热点/提交趋势）
 import type { CodeReportData, GitProject, ReportRange } from "../../types"
 import { Icon } from "@iconify/vue"
-import { computed, ref } from "vue"
+import { computed, ref, watch } from "vue"
 import { REPORT_RANGE_LABEL_KEYS, REPORT_RANGES } from "../../types"
 import { relativeTime } from "../../utils"
 import { countDebtFiles } from "../../reportMetrics"
@@ -175,8 +181,12 @@ const props = defineProps<{
   projects: GitProject[]
   /** 当前选中项目 ID */
   projectId: string
+  /** 当前生效项目（选中项优先、未选中回退首个，由 useCodeReport 统一推导；供债务/热点分区懒加载） */
+  currentProject: GitProject | null
   /** 时间范围 */
   range: ReportRange
+  /** 按当前项目+范围懒取文件补丁（文件详情弹窗打开时异步加载） */
+  getFilePatch: (path: string) => Promise<string>
 }>()
 
 const emit = defineEmits<{
@@ -199,11 +209,11 @@ const reportTabs = computed<ReadonlyArray<{ id: ReportTabId, labelKey: string, i
 /** 当前分区 Tab */
 const activeTab = ref<ReportTabId>("overview")
 
-/** 当前选中项目（选中项优先，未选中或已删除回退首个项目；与 useCodeReport 同一回退逻辑，供 TechDebtSection LOC 懒加载） */
-const currentProject = computed<GitProject | null>(() => {
-  if (props.projects.length === 0) return null
-  const selected = props.projects.find((p) => p.id === props.projectId)
-  return selected ?? props.projects[0]
+/** 已激活过的分区集合（首次激活后才挂载分区，避免首屏为未访问分区创建 chart.js 实例与派生计算） */
+const visited = ref<Set<ReportTabId>>(new Set(["overview"]))
+
+watch(activeTab, (tab) => {
+  visited.value.add(tab)
 })
 
 /** 项目下拉选项（名称，路径在编辑弹窗可见） */

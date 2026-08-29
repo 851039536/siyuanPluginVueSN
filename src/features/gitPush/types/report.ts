@@ -64,6 +64,9 @@ export const DEBT_SEVERITY_META: Record<DebtSeverity, { labelKey: string, color:
   low: { labelKey: "reportDebtLow", color: "#9ca3af" },
 }
 
+/** 严重度顺序（由 META 键序派生的唯一源：severe → high → medium → low，分组遍历与组间排序共用） */
+export const DEBT_SEVERITY_ORDER: DebtSeverity[] = Object.keys(DEBT_SEVERITY_META) as DebtSeverity[]
+
 /** 文件统计基础行（技术债务/热点共用，由 git numstat + fs 读取派生） */
 export interface FileStatRow {
   /** 相对仓库根目录路径 */
@@ -80,8 +83,6 @@ export interface FileStatRow {
   added: number
   /** 删除代码行数（numstat 汇总，分析范围内该文件被删除的总行数） */
   deleted: number
-  /** 文件最近修改的 diff 内容（git log -p 输出，null=暂无/获取失败；供文件详情弹窗展示代码变更） */
-  diffContent: string | null
 }
 
 /** 技术债务文件行（含风险评分；由修改次数+参与人数派生） */
@@ -104,13 +105,14 @@ export const HOTSPOT_LEVEL_META: Record<HotspotLevel, { labelKey: string, color:
   cold: { labelKey: "reportHeatCold", color: "#9ca3af" },
 }
 
-/** 热点文件行（含热度评分与建议文案键） */
+/** 热点等级顺序（由 META 键序派生的唯一源：hot → warm → cool → cold，汇总表遍历共用） */
+export const HOTSPOT_LEVEL_ORDER: HotspotLevel[] = Object.keys(HOTSPOT_LEVEL_META) as HotspotLevel[]
+
+/** 热点文件行（含热度评分） */
 export interface HotspotFileRow extends FileStatRow {
   level: HotspotLevel
   /** 热度评分 0~100 */
   heat: number
-  /** 建议文案的 i18n 键（如 reportHeatAdviceHot，由 UI 层解析，避免语言快照烤入数据层） */
-  adviceKey: string
 }
 
 /** 热点等级汇总（统计摘要表行） */
@@ -199,10 +201,6 @@ export const WEEKDAY_LABEL_KEYS: readonly string[] = [
 export interface CodeReportData {
   /** 是否成功（false = git 命令失败/路径无效/非仓库） */
   ok: boolean
-  /** 项目 ID */
-  projectId: string
-  /** 项目名称 */
-  projectName: string
   /** 分析时间范围标签（all 时为首次提交的相对时间，如 "5 months ago"；其余为范围名） */
   rangeLabel: string
   /** 生成时间（ISO） */
@@ -222,7 +220,7 @@ export interface CodeReportData {
   }
   /** 作者贡献度排行（按提交次数降序） */
   authors: AuthorReportRow[]
-  /** 技术债务文件（按严重度分组、组内按风险分升序排列） */
+  /** 技术债务文件（按严重度分组、组内按风险分降序排列） */
   debtFiles: DebtFileRow[]
   /** 严重度计数（无数据的分组为 0） */
   debtSummary: Record<DebtSeverity, number>
@@ -248,8 +246,6 @@ export interface CodeReportPrefs {
   projectId: string
   /** 时间范围 */
   range: ReportRange
-  /** 技术债务门槛（修改次数低于该值不列为债务；可选字段兼容旧存储，缺省用 DEBT_MIN_MOD_COUNT） */
-  debtMinModCount?: number
 }
 
 /** 统计报告偏好默认值 */

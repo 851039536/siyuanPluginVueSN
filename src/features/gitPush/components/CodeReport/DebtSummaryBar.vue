@@ -69,7 +69,7 @@
 import type { DebtFileRow } from "../../types"
 import { computed } from "vue"
 import { DEBT_SEVERITY_META } from "../../types"
-import { buildSeverityDist, buildTopDebts } from "../../composables/useDebtInsights"
+import { buildSeverityDist, buildTopDebts } from "../../debtInsights"
 
 const props = defineProps<{
   i18n: Record<string, any>

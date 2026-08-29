@@ -1,6 +1,9 @@
-// gitPush 报告数据操作：git log --numstat 一次取回提交 + 每文件增删行（供代码统计报告聚合 / 行数统计单命令抓取）
+// gitPush 报告数据操作：numstat 提交日志 + 首提交日期 + 已跟踪文件 + 文件历史补丁（代码统计报告 / 行数统计共用）
 import type { GitExecutor } from "./GitExecutor"
 import { parseNumstatBlocks, type NumstatCommit } from "../reportMetrics"
+
+/** diff 补丁截断上限（约 5KB 文本，防止巨型文件撑爆弹窗） */
+const DIFF_MAX_CHARS = 5000
 
 export class ReportOps {
   private executor: GitExecutor
@@ -66,5 +69,19 @@ export class ReportOps {
     } catch {
       return ""
     }
+  }
+
+  /**
+   * 获取文件最近 5 条提交的补丁内容（git log -p，供文件详情弹窗打开时按需懒取）。
+   * since 非空时限定在所选统计范围内，保证 diff 与报告时间口径一致；
+   * 超长截断防撑爆弹窗；git 失败/路径无效时抛出错误，由调用方兜底隐藏区块。
+   */
+  async getFileHistoryPatch(projectPath: string, file: string, since?: string): Promise<string> {
+    const args = ["-c", "core.quotepath=false", "log", "-p", "--max-count=5"]
+    if (since) args.push(`--since=${since}`)
+    args.push("--", file)
+    const raw = await this.executor.execGit(projectPath, args, undefined, 10000)
+    if (!raw) return ""
+    return raw.length > DIFF_MAX_CHARS ? raw.slice(0, DIFF_MAX_CHARS) + "\n…(truncated)" : raw
   }
 }

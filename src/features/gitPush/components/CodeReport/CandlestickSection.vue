@@ -181,7 +181,7 @@ import {
 } from "chart.js"
 import { Bar } from "vue-chartjs"
 import { Icon } from "@iconify/vue"
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue"
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import type { CodeReportData } from "../../types"
 import { WEEKDAY_LABEL_KEYS } from "../../types/report"
 import type { DailyCommitStat } from "../../types/report"
@@ -259,7 +259,8 @@ onMounted(() => {
   nextTick(updateScrollState)
 })
 
-onUnmounted(() => {
+// 卸载前移除监听：Vue 3.5 在 unmounted 钩子执行前模板 ref 已被置空，用 unmounted 会静默移除失败
+onBeforeUnmount(() => {
   scrollRef.value?.removeEventListener("scroll", updateScrollState)
 })
 
@@ -414,8 +415,10 @@ const chartPlugins = computed<Plugin[]>(() => [
     id: "gpcWick",
     beforeDatasetsDraw(chart: Chart) {
       const yScale = chart.scales.y
-      const { left, right, top } = chart.chartArea
-      if (!yScale || !left || !right) return
+      // chartArea 在首次布局完成前为 undefined（此处不能靠 !left 判断：left 为 0 是合法值）
+      const area = chart.chartArea
+      if (!yScale || !area) return
+      const { left, right, top } = area
       const yTop = yScale.getPixelForValue(WORK_START_HOUR)
       const yBottom = yScale.getPixelForValue(WORK_END_HOUR)
       if (yTop < top) return

@@ -1,4 +1,4 @@
-<!-- gitPush 文件详情弹窗：展示作者 Top 修改文件的完整统计（路径/修改次数/LOC/参与作者数/最后修改），Teleport 到 body -->
+<!-- gitPush 文件详情弹窗：展示文件完整统计（路径/修改次数/增删行/作者数/最后修改）+ 按需懒取的变更 diff，Teleport 到 body -->
 <template>
   <Teleport to="body">
     <div
@@ -71,14 +71,22 @@
             </div>
           </div>
 
-          <!-- 变更详情：git log -p diff 内容（行级着色，仅当 diffContent 非空时展示） -->
+          <!-- 变更详情：git log -p diff 内容（打开弹窗时按需异步加载，失败静默隐藏） -->
           <div
-            v-if="fileStat.diffContent"
+            v-if="patchLoading || patchContent"
             class="gpr-fm-diff-section"
           >
             <!-- 分区标签："变更详情" -->
             <span class="gpr-fm-label gpr-fm-diff-label">{{ i18n.reportFileDetailDiff }}</span>
-            <div class="gpr-fm-diff">
+            <!-- 加载态文案："加载中..."（复用全局 loading 键） -->
+            <div
+              v-if="patchLoading"
+              class="gpr-fm-diff-loading"
+            >{{ i18n.loading }}</div>
+            <div
+              v-else
+              class="gpr-fm-diff"
+            >
               <div
                 v-for="(line, i) in diffLines"
                 :key="i"
@@ -101,9 +109,9 @@
 </template>
 
 <script setup lang="ts">
-// 文件详情弹窗：受控显示（fileStat 非空即展示），ESC/遮罩/关闭按钮触发 close
+// 文件详情弹窗：受控显示 + 变更 diff 按需懒取（打开时异步加载），ESC/遮罩/关闭按钮触发 close
 import { Icon } from "@iconify/vue"
-import { computed, onBeforeUnmount, onMounted } from "vue"
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import type { FileStatRow } from "../../types"
 import { formatIsoDate, parseDiffLines, type DiffLineType } from "../../utils"
 
@@ -111,11 +119,36 @@ const props = defineProps<{
   i18n: Record<string, any>
   /** 目标文件完整统计行（null = 隐藏） */
   fileStat: FileStatRow | null
+  /** 按当前项目+范围懒取文件补丁（弹窗打开时异步加载，失败返回空串） */
+  getFilePatch: (path: string) => Promise<string>
 }>()
 
 const emit = defineEmits<{
   close: []
 }>()
+
+/** 补丁内容（弹窗本地状态，打开时异步加载；空串 = 加载失败/无内容，隐藏区块） */
+const patchContent = ref("")
+/** 补丁加载中标记 */
+const patchLoading = ref(false)
+/** 请求序号（快速切换目标文件时丢弃过期响应，防竞态） */
+let patchReqSeq = 0
+
+// 目标文件变化（含弹窗打开）时按需加载补丁
+watch(() => props.fileStat, async (stat) => {
+  patchContent.value = ""
+  if (!stat) {
+    patchLoading.value = false
+    return
+  }
+  const seq = ++patchReqSeq
+  patchLoading.value = true
+  const content = await props.getFilePatch(stat.path).catch(() => "")
+  // 响应返回前目标已切换时丢弃过期结果
+  if (seq !== patchReqSeq) return
+  patchContent.value = content
+  patchLoading.value = false
+})
 
 /** 净增行数（新增 - 删除；fileStat 为 null 时显示 —） */
 const netLines = computed(() => {
@@ -133,10 +166,8 @@ const DIFF_SIGN: Record<DiffLineType, string> = {
   meta: " ",
 }
 
-/** 将 diffContent 解析为带类型/行号的行数组（供行级着色渲染） */
-const diffLines = computed(() =>
-  props.fileStat?.diffContent ? parseDiffLines(props.fileStat.diffContent) : [],
-)
+/** 将补丁文本解析为带类型/行号的行数组（供行级着色渲染） */
+const diffLines = computed(() => (patchContent.value ? parseDiffLines(patchContent.value) : []))
 
 /** ESC 关闭（Teleport 到 body 后键盘事件在 document 层监听） */
 function onKeydown(e: KeyboardEvent) {

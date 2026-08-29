@@ -100,7 +100,8 @@
               :i18n="i18n"
               :project="project"
               :row="row"
-              :coupled="coupledMap.get(row.path) ?? []"
+              :trend="trendMap.get(row.path) ?? 'calm'"
+              :coupled="coupledIndex.get(row.path)"
             />
           </div>
         </template>
@@ -111,13 +112,13 @@
 
 <script setup lang="ts">
 // 技术债务分区：汇总条 + 严重度分组可展开表（趋势徽章/最后修改/详情懒加载；手风琴展开）
-import type { CodeReportData, GitProject } from "../../types"
+import type { CodeReportData, DebtFileRow, DebtSeverity, GitProject } from "../../types"
 import { Icon } from "@iconify/vue"
-import { computed, ref } from "vue"
-import { DEBT_SEVERITY_META } from "../../types"
-import { countDebtFiles, DEBT_SEVERITY_ORDER } from "../../reportMetrics"
-import { buildCoupledMap, DEBT_TREND_META, inferDebtTrend } from "../../composables/useDebtInsights"
-import type { CoupledFile, DebtTrend } from "../../composables/useDebtInsights"
+import { computed, ref, watch } from "vue"
+import { DEBT_SEVERITY_META, DEBT_SEVERITY_ORDER } from "../../types"
+import { countDebtFiles } from "../../reportMetrics"
+import { createCoupledIndex, DEBT_TREND_META, inferDebtTrend } from "../../debtInsights"
+import type { DebtTrend } from "../../debtInsights"
 import { relativeTime } from "../../utils"
 import EmptyState from "../common/EmptyState.vue"
 import DebtSummaryBar from "./DebtSummaryBar.vue"
@@ -134,16 +135,26 @@ const props = defineProps<{
 /** 问题总数（严重度计数合计，与面板 Tab 徽章共用 countDebtFiles） */
 const totalCount = computed(() => countDebtFiles(props.report.debtSummary))
 
-/** 按严重度预分组（严重/高/中/低，组内已按风险分降序；单次过滤替代模板中重复 filter 调用；空分组不渲染） */
-const groups = computed(() =>
-  DEBT_SEVERITY_ORDER.map((sev) => ({
-    sev,
-    rows: props.report.debtFiles.filter((r) => r.severity === sev),
-  })).filter((g) => g.rows.length > 0),
-)
+/** 按严重度预分组（单次遍历分桶替代逐严重度 filter；组内保持父级已排序的风险分降序；空分组不渲染） */
+const groups = computed(() => {
+  const buckets = new Map<DebtSeverity, DebtFileRow[]>()
+  for (const r of props.report.debtFiles) {
+    const list = buckets.get(r.severity)
+    if (list) list.push(r)
+    else buckets.set(r.severity, [r])
+  }
+  return DEBT_SEVERITY_ORDER
+    .map((sev) => ({ sev, rows: buckets.get(sev) ?? [] }))
+    .filter((g) => g.rows.length > 0)
+})
 
 /** 当前展开的文件路径（手风琴模式：同时只展开一个；重复点击收起） */
 const expandedPath = ref<string>("")
+
+// 报告重新生成（切换项目/时间范围）后收起展开行，避免残留指向上一份报告的路径
+watch(() => props.report, () => {
+  expandedPath.value = ""
+})
 
 /** 路径 → 趋势方向 预计算映射（避免模板中每行重复推断） */
 const trendMap = computed<Record<string, DebtTrend>>(() => {
@@ -154,8 +165,8 @@ const trendMap = computed<Record<string, DebtTrend>>(() => {
   return map
 })
 
-/** 路径 → 近期共变文件 预计算映射（详情面板展开时直接取用，避免展开瞬间重复聚类） */
-const coupledMap = computed<Map<string, CoupledFile[]>>(() => buildCoupledMap(props.report.debtFiles))
+/** 按日期聚类的共变索引（O(n) 建索引；展开行时按需取该文件的共变列表，避免全量预计算） */
+const coupledIndex = computed(() => createCoupledIndex(props.report.debtFiles))
 
 /** 切换行展开态（手风琴：展开其他行时自动收起当前行） */
 function toggleExpand(path: string) {

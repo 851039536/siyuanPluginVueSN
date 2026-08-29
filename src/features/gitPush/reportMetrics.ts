@@ -19,8 +19,8 @@ import type {
   ReportRange,
   WeekdayStat,
 } from "./types/report"
-import { REPORT_RANGES } from "./types/report"
-import { getNodeFsPathOs, getNodeProcessModules } from "@/utils/nodeModules"
+import { DEBT_SEVERITY_ORDER, HOTSPOT_LEVEL_ORDER, REPORT_RANGES } from "./types/report"
+import { getNodeFsPathOs } from "@/utils/nodeModules"
 import { formatLocalDate, resolveValidPath } from "./utils"
 
 // ── 解析：git log --numstat 输出 → 结构化提交块 ──
@@ -122,6 +122,8 @@ interface FileAgg {
   modCount: number
   authors: Set<string>
   lastIso: string
+  /** lastIso 对应的毫秒时间戳（0 = 无有效日期），用于跨时区按真实时刻比较 */
+  lastMs: number
   /** numstat 新增行汇总 */
   added: number
   /** numstat 删除行汇总 */
@@ -201,14 +203,19 @@ export function aggregateFileStats(commits: NumstatCommit[]): Map<string, FileAg
     for (const f of c.files) {
       let agg = map.get(f.path)
       if (!agg) {
-        agg = { modCount: 0, authors: new Set(), lastIso: "", added: 0, deleted: 0 }
+        agg = { modCount: 0, authors: new Set(), lastIso: "", lastMs: 0, added: 0, deleted: 0 }
         map.set(f.path, agg)
       }
       agg.modCount++
       agg.added += f.added
       agg.deleted += f.deleted
       agg.authors.add(c.author)
-      if (c.date > agg.lastIso) agg.lastIso = c.date
+      // 按时间戳比较取最后修改：ISO 字符串字典序会因时区偏移符号 +/− 误判先后（如 +08:00 > -07:00）
+      const ms = parseIsoMs(c.date)
+      if (ms > agg.lastMs) {
+        agg.lastMs = ms
+        agg.lastIso = c.date
+      }
     }
   }
   return map
@@ -415,14 +422,16 @@ function buildRhythmStats(commits: NumstatCommit[]): CommitRhythmStats {
  */
 export function calcMovingAverage7(daily: DailyCommitStat[]): number[] {
   const byDate = new Map(daily.map((s) => [s.date, s.count]))
-  const DAY_MS = 24 * 60 * 60 * 1000
   return daily.map((s) => {
-    const endMs = Date.parse(s.date)
+    // 本地日历日构造窗口起点：Date.parse("YYYY-MM-DD") 得到 UTC 午夜，
+    // 在 UTC 负偏移时区经 formatLocalDate 会前移一天，导致均线窗口与日聚合键错位
+    const [y, m, d] = s.date.split("-").map(Number)
+    if (!y || !m || !d) return 0
+    const cursor = new Date(y, m - 1, d)
     let sum = 0
     for (let offset = 0; offset < 7; offset++) {
-      // 复用 utils.formatLocalDate（本地日期口径，避免 toISOString 的 UTC 在西半球跨日偏移）
-      const d = new Date(endMs - offset * DAY_MS)
-      sum += byDate.get(formatLocalDate(d)) ?? 0
+      sum += byDate.get(formatLocalDate(cursor)) ?? 0
+      cursor.setDate(cursor.getDate() - 1)
     }
     return Math.round((sum / 7) * 10) / 10
   })
@@ -471,31 +480,6 @@ export function countTrackedFileLinesMap(project: GitProject, files: string[]): 
   const map = new Map<string, number | null>()
   for (const f of files) map.set(f, countFileLines(project, f))
   return map
-}
-
-/** diff 输出截断上限（约 5KB 文本，约 100 行 diff，防止巨型文件撑爆 Modal） */
-const DIFF_MAX_CHARS = 5000
-
-/**
- * 获取文件最近的 git log -p 差异内容（同步 execFileSync，与 countFileLines 一致）。
- * 仅取最近 5 条提交的 patch，超长截断以控制 Modal 体积。
- * 返回 null 表示获取失败（文件不存在 / 二进制 / 命令失败）。
- */
-function fetchFileDiff(project: GitProject, filePath: string): string | null {
-  try {
-    const modules = getNodeProcessModules()
-    if (!modules) return null
-    const repoPath = resolveValidPath(project)
-    const raw = modules.child_process.execFileSync(
-      "git",
-      ["log", "-p", "--max-count=5", "--", filePath],
-      { cwd: repoPath, encoding: "utf8", maxBuffer: 2 * 1024 * 1024, timeout: 5000 },
-    ) as string
-    if (!raw) return null
-    return raw.length > DIFF_MAX_CHARS ? raw.slice(0, DIFF_MAX_CHARS) + "\n…(truncated)" : raw
-  } catch {
-    return null
-  }
 }
 
 /** 判断仓库内文件当前是否仍存在于工作区（过滤 git 历史中已删除的"幽灵文件"） */
@@ -562,8 +546,8 @@ function emptyDebtSummary(): Record<DebtSeverity, number> {
 
 // ── 代码热点 ──
 
-/** 热度等级阈值：≥75 热点 / ≥45 温热 / ≥25 冷却 / 其余冷门 */
-function heatLevel(heat: number): HotspotLevel {
+/** 热点等级阈值：≥75 热点 / ≥45 温热 / ≥25 冷却 / 其余冷门（与 utils.heatLevel 热力图 0~4 级同名不同义，故用此命名区分） */
+function hotspotLevel(heat: number): HotspotLevel {
   if (heat >= 75) return "hot"
   if (heat >= 45) return "warm"
   if (heat >= 25) return "cool"
@@ -573,14 +557,6 @@ function heatLevel(heat: number): HotspotLevel {
 /** 热度评分：修改次数*2.2 + 参与人数*7 + 近期修改加分（recencyBonus 与债务评分共用），clamp 0~100 */
 function heatScore(modCount: number, authorCount: number, lastModified: string): number {
   return clamp100(modCount * 2.2 + authorCount * 7 + recencyBonus(lastModified))
-}
-
-/** 热点建议文案的 i18n 键（按等级选择；由 UI 层解析 i18n，数据层只存键名避免语言快照） */
-function heatAdviceKey(level: HotspotLevel): string {
-  if (level === "hot") return "reportHeatAdviceHot"
-  if (level === "warm") return "reportHeatAdviceWarm"
-  if (level === "cool") return "reportHeatAdviceCool"
-  return ""
 }
 
 /** 优化建议文案（按热点文件数占比阈值选择，返回键由调用方取 i18n） */
@@ -600,27 +576,21 @@ export function sinceForRange(range: ReportRange): string {
 /** 热点文件榜单上限（超出只展示头部，避免长列表淹没关键信息） */
 const HOTSPOT_LIMIT = 12
 
-/** 债务/热点按严重度排序权重（用于组内排序） */
-const SEVERITY_ORDER: Record<DebtSeverity, number> = { severe: 0, high: 1, medium: 2, low: 3 }
-
 /**
  * 由解析结果组装完整报告。
  * @param project 项目（用于读取当前存在性/代码行数）
  * @param commits 解析后的提交块（空数组 = 无提交或 git 失败）
  * @param rangeLabel 时间范围标签
- * @param debtMinModCount 债务门槛（修改次数低于该值不列为债务；默认 DEBT_MIN_MOD_COUNT）
  */
 export function buildReportData(
   project: GitProject,
   commits: NumstatCommit[],
   rangeLabel: string,
-  debtMinModCount: number = DEBT_MIN_MOD_COUNT,
 ): CodeReportData {
   const authors = aggregateAuthorStats(commits)
   const fileMap = aggregateFileStats(commits)
 
-  // 作者 Top 修改文件详情查找表（供文件详情弹窗随机访问）
-  // 每个作者的 Top3 路径去重后逐条读取 LOC（fs 受 2MB 上限约束且数量受 作者数×3 约束，开销可控）
+  // 作者 Top 修改文件详情查找表（供文件详情弹窗随机访问；完全由已聚合的 fileMap 派生，零 IO）
   const fileDetailsMap: Record<string, FileStatRow> = {}
   for (const author of authors) {
     for (const f of author.topFiles) {
@@ -631,18 +601,17 @@ export function buildReportData(
         modCount: agg?.modCount ?? f.count,
         authorCount: agg?.authors.size ?? 0,
         lastModified: agg?.lastIso ?? "",
-        loc: countFileLines(project, f.path),
+        loc: null,
         added: agg?.added ?? 0,
         deleted: agg?.deleted ?? 0,
-        diffContent: fetchFileDiff(project, f.path),
       }
     }
   }
 
   // 文件 → 完整统计行（loc 仅在榜单 Top 读取行数控制开销）
-  // 过滤链：①已从工作区删除的"幽灵文件"（历史记录不因删除而消失，需按当前磁盘存在性剔除）②非代码文件（.md 文档不属代码）
+  // 过滤链：①非代码文件（.md 文档不属代码，廉价判断前置减少 statSync 次数）②已从工作区删除的"幽灵文件"（历史记录不因删除而消失，需按当前磁盘存在性剔除）
   const rankedFiles = [...fileMap.entries()]
-    .filter(([path]: [string, FileAgg]) => fileExistsInRepo(project, path) && isCodeFile(path))
+    .filter(([path]: [string, FileAgg]) => isCodeFile(path) && fileExistsInRepo(project, path))
     .sort((a, b) => b[1].modCount - a[1].modCount)
   const debtRows: DebtFileRow[] = []
   const hotspotRows: HotspotFileRow[] = []
@@ -658,10 +627,9 @@ export function buildReportData(
       loc: null,
       added: agg.added,
       deleted: agg.deleted,
-      diffContent: null,
     }
-    // 债务门槛：修改次数低于 debtMinModCount 的文件视为正常迭代，仅进入热点榜不列为技术债务
-    if (agg.modCount >= debtMinModCount) {
+    // 债务门槛：修改次数低于 DEBT_MIN_MOD_COUNT 的文件视为正常迭代，仅进入热点榜不列为技术债务
+    if (agg.modCount >= DEBT_MIN_MOD_COUNT) {
       const riskScore = debtRiskScore(agg.modCount, agg.authors.size, agg.lastIso)
       debtRows.push({
         ...base,
@@ -670,16 +638,15 @@ export function buildReportData(
       })
     }
     const heat = heatScore(agg.modCount, agg.authors.size, agg.lastIso)
-    const level = heatLevel(heat)
+    const level = hotspotLevel(heat)
     hotspotRows.push({
       ...base,
       heat,
       level,
-      adviceKey: heatAdviceKey(level),
     })
   })
 
-  debtRows.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity] || b.riskScore - a.riskScore)
+  debtRows.sort((a, b) => DEBT_SEVERITY_ORDER.indexOf(a.severity) - DEBT_SEVERITY_ORDER.indexOf(b.severity) || b.riskScore - a.riskScore)
   hotspotRows.sort((a, b) => b.heat - a.heat)
 
   // 仅对热度排序后的最终前 HOTSPOT_LIMIT 条读取 LOC：fs 读取受 2MB 上限约束且数量可控，
@@ -699,8 +666,10 @@ export function buildReportData(
     const count = hotspotRows.filter((r) => r.level === level).length
     return { level, count, pct: Math.round((count / pctDenominator) * 100) }
   })
-  const warmPct = hotspotSummary[1].pct
-  const hotPct = hotspotSummary[0].pct
+  // 按等级名查找占比（消除对 HOTSPOT_LEVEL_ORDER 下标的隐式顺序耦合）
+  const pctByLevel = new Map(hotspotSummary.map((s) => [s.level, s.pct]))
+  const hotPct = pctByLevel.get("hot") ?? 0
+  const warmPct = pctByLevel.get("warm") ?? 0
 
   const totalCommits = commits.length
   const totalLines = authors.reduce((sum, a) => sum + a.linesAdded, 0)
@@ -712,8 +681,6 @@ export function buildReportData(
 
   return {
     ok: true,
-    projectId: project.id,
-    projectName: project.name,
     rangeLabel,
     generatedAt: new Date().toISOString(),
     totalCommits,
@@ -737,11 +704,9 @@ export function buildReportData(
 }
 
 /** 空报告（git 失败/非仓库时返回，UI 展示错误态） */
-export function buildEmptyReport(project: GitProject, rangeLabel: string): CodeReportData {
+export function buildEmptyReport(rangeLabel: string): CodeReportData {
   return {
     ok: false,
-    projectId: project.id,
-    projectName: project.name,
     rangeLabel,
     generatedAt: new Date().toISOString(),
     totalCommits: 0,
@@ -759,8 +724,4 @@ export function buildEmptyReport(project: GitProject, rangeLabel: string): CodeR
   }
 }
 
-/** 热点等级顺序（hotspotSummary 遍历与 buildEmptyReport 共用） */
-const HOTSPOT_LEVEL_ORDER: HotspotLevel[] = ["hot", "warm", "cool", "cold"]
-
-/** 展示用常量：严重度顺序（供 UI 遍历分组） */
-export const DEBT_SEVERITY_ORDER: DebtSeverity[] = ["severe", "high", "medium", "low"]
+/** 展示用常量：严重度顺序已迁至 types/report.ts（由 DEBT_SEVERITY_META 键序派生，组件从 ../../types 导入） */

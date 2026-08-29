@@ -15,7 +15,7 @@
         <Select
           :model-value="projectId"
           class="gpr-project-select"
-          size="small"
+          size="xsmall"
           :options="projectOptions"
           :placeholder="i18n.reportSelectProject"
           @change="onProjectChange"
@@ -24,7 +24,7 @@
         <Select
           :model-value="range"
           class="gpr-range-select"
-          size="small"
+          size="xsmall"
           :options="rangeOptions"
           @change="onRangeChange"
         />

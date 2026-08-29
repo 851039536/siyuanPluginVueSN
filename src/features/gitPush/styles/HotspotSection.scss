@@ -3,26 +3,32 @@
 @use "./mixins" as *;
 
 // ── 纵向两行布局容器（第一行表格，第二行统计摘要，均在各自行内自然排布）──
+// 间距与同面板其它分区一致（$spacing-3），此前误用 $spacing-4 导致本分区区块间距明显偏大
 .gpr-hot-grid {
   display: flex;
   flex-direction: column;
-  gap: $spacing-4;
+  gap: $spacing-3;
 }
 
 // 第一行：表格 + 截断提示（全宽）
-.gpr-hot-left {
+// overflow-x 兜底：表格有 420px 保底宽度，窄 Dock 下横向滚动仅限于表格区，不牵连整个面板
+.gpr-hot-main {
   width: 100%;
   min-width: 0;
+  overflow-x: auto;
 }
 
 // 第二行：统计摘要面板（全宽，汇总表 + 优化建议）
-.gpr-hot-right {
+.gpr-hot-summary {
   width: 100%;
 }
 
 // ── 热点表格 ──
+// min-width 保底：固定布局下等级列 40px + 三个数字列 168px + 时间列 72px = 280px 硬占宽，
+// 容器更窄时路径列会被压到只剩几十像素（几乎全是省略号），故给路径列留出最小可读宽度后转为横向滚动
 .gpr-hot-table {
   width: 100%;
+  min-width: 420px;
   border-collapse: collapse;
   font-size: $font-size-xs;
   table-layout: fixed;

@@ -70,11 +70,11 @@
                   class="gpr-debt-path"
                   :title="row.path"
                 >{{ row.path }}</span>
-                <!-- 趋势徽章（箭头 + 方向文案，颜色由趋势方向驱动） -->
+                <!-- 趋势徽章（箭头 + 方向文案，样式与文案由 groups 预计算，避免逐行重复推断） -->
                 <span
                   class="gpr-debt-trend-chip"
-                  :style="trendChipStyle(row.path)"
-                >{{ trendChipText(row.path) }}</span>
+                  :style="row.trendStyle"
+                >{{ row.trendText }}</span>
                 <!-- 展开箭头（展开时旋转） -->
                 <Icon
                   icon="mdi:chevron-down"
@@ -87,11 +87,11 @@
               <span class="gpr-cell gpr-cell--num">{{ row.modCount }}</span>
               <span class="gpr-cell gpr-cell--num">{{ row.authorCount }}</span>
               <span class="gpr-cell gpr-cell--num">{{ row.riskScore }}</span>
-              <!-- 最后修改时间（相对时间，完整 ISO 悬停可见） -->
+              <!-- 最后修改时间（相对时间预计算，完整 ISO 悬停可见） -->
               <span
                 class="gpr-cell gpr-cell--date"
                 :title="row.lastModified"
-              >{{ row.lastModified ? relativeTime(row.lastModified, i18n) : "-" }}</span>
+              >{{ row.lastModifiedText }}</span>
             </div>
 
             <!-- 展开详情面板：LOC 懒加载 + 趋势解释 + 近期共变文件 -->
@@ -100,7 +100,7 @@
               :i18n="i18n"
               :project="project"
               :row="row"
-              :trend="trendMap.get(row.path) ?? 'calm'"
+              :trend="row.trend"
               :coupled="coupledIndex.get(row.path)"
             />
           </div>
@@ -135,8 +135,20 @@ const props = defineProps<{
 /** 问题总数（严重度计数合计，与面板 Tab 徽章共用 countDebtFiles） */
 const totalCount = computed(() => countDebtFiles(props.report.debtSummary))
 
+/** 分组内的展示行（DebtFileRow + 预计算的派生展示字段） */
+interface DebtGroupRow extends DebtFileRow {
+  /** 趋势方向（详情面板复用，避免二次推断） */
+  trend: DebtTrend
+  /** 趋势徽章内联样式（对象引用稳定，避免父组件重渲染时逐行 patch style） */
+  trendStyle: Record<string, string>
+  /** 趋势徽章文案（箭头 + 方向短文案） */
+  trendText: string
+  /** 最后修改的相对时间文案（无日期时为 "-"） */
+  lastModifiedText: string
+}
+
 /** 按严重度预分组（单次遍历分桶替代逐严重度 filter；组内保持父级已排序的风险分降序；空分组不渲染） */
-const groups = computed(() => {
+const groups = computed<Array<{ sev: DebtSeverity, rows: DebtGroupRow[] }>>(() => {
   const buckets = new Map<DebtSeverity, DebtFileRow[]>()
   for (const r of props.report.debtFiles) {
     const list = buckets.get(r.severity)
@@ -144,7 +156,22 @@ const groups = computed(() => {
     else buckets.set(r.severity, [r])
   }
   return DEBT_SEVERITY_ORDER
-    .map((sev) => ({ sev, rows: buckets.get(sev) ?? [] }))
+    .map((sev) => ({
+      sev,
+      // 趋势/相对时间一次性预计算：模板只读字段，不调函数，
+      // 消除每行每次渲染的 Date.parse 与新 style 对象分配
+      rows: (buckets.get(sev) ?? []).map((row) => {
+        const trend = inferDebtTrend(row)
+        const meta = DEBT_TREND_META[trend]
+        return {
+          ...row,
+          trend,
+          trendStyle: { borderColor: meta.color, color: meta.color },
+          trendText: `${meta.arrow} ${props.i18n[meta.labelKey]}`,
+          lastModifiedText: row.lastModified ? relativeTime(row.lastModified, props.i18n) : "-",
+        }
+      }),
+    }))
     .filter((g) => g.rows.length > 0)
 })
 
@@ -156,33 +183,12 @@ watch(() => props.report, () => {
   expandedPath.value = ""
 })
 
-/** 路径 → 趋势方向 预计算映射（避免模板中每行重复推断） */
-const trendMap = computed<Record<string, DebtTrend>>(() => {
-  const map: Record<string, DebtTrend> = {}
-  for (const row of props.report.debtFiles) {
-    map[row.path] = inferDebtTrend(row)
-  }
-  return map
-})
-
 /** 按日期聚类的共变索引（O(n) 建索引；展开行时按需取该文件的共变列表，避免全量预计算） */
 const coupledIndex = computed(() => createCoupledIndex(props.report.debtFiles))
 
 /** 切换行展开态（手风琴：展开其他行时自动收起当前行） */
 function toggleExpand(path: string) {
   expandedPath.value = expandedPath.value === path ? "" : path
-}
-
-/** 趋势徽章颜色（边框 + 文字取趋势方向色） */
-function trendChipStyle(path: string): Record<string, string> {
-  const color = DEBT_TREND_META[trendMap.value[path] ?? "calm"].color
-  return { borderColor: color, color }
-}
-
-/** 趋势徽章文案（箭头 + 方向短文案） */
-function trendChipText(path: string): string {
-  const meta = DEBT_TREND_META[trendMap.value[path] ?? "calm"]
-  return `${meta.arrow} ${props.i18n[meta.labelKey]}`
 }
 </script>
 

@@ -420,6 +420,15 @@ export function netClass(net: number, prefix: string, zeroSuffix = "--zero"): st
   return zeroSuffix === "" ? "" : `${prefix}${zeroSuffix}`
 }
 
+/**
+ * 取数组最大值，结果不小于 min。
+ * 用 reduce 而非 Math.max(...arr)：扩展运算符在元素极多时会因参数个数超限抛 RangeError
+ * （报告的日统计/债务行在大仓库「全部」范围下可达数千条）。
+ */
+export function maxOf(list: ReadonlyArray<number>, min: number): number {
+  return list.reduce((acc, n) => (n > acc ? n : acc), min)
+}
+
 /** 行数排行条形/占比预计算：pct=相对最大新增行，share=新增行占总新增百分比（total=0 兜底防除零） */
 export function withLineBarPct<T extends { added: number }>(rows: T[]): (T & { pct: string, share: string })[] {
   const max = Math.max(...rows.map((r) => r.added), 1)

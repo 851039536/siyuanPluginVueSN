@@ -147,6 +147,28 @@ export interface DailyCommitStat {
   count: number
 }
 
+/**
+ * K 线图配色（canvas 绘制与 CSS 图例的单一语义源）。
+ * canvas 上下文无法解析 CSS 自定义属性，故在 TS 侧集中定义；
+ * styles/CandlestickSection.scss 中的同色字面量必须与此保持一致（SCSS 无法 import TS，靠命名对齐防漂移）。
+ */
+export const REPORT_CHART_COLORS = {
+  /** 涨：较前一活跃日提交量增加 */
+  up: "#10b981",
+  /** 跌：较前一活跃日提交量减少 */
+  down: "#ef4444",
+  /** 平：首日或持平 */
+  flat: "#64748b",
+  /** 7 日均线（与 K 线实体形成对比） */
+  ma: "#f59e0b",
+  /** 网格线 */
+  grid: "rgba(128, 128, 128, 0.12)",
+  /** 坐标轴刻度（半透明灰，浅/深主题均可见） */
+  axis: "rgba(128, 128, 128, 0.8)",
+  /** 工作时间区（08:00-18:00）底色 */
+  workBg: "rgba(148, 163, 184, 0.08)",
+} as const
+
 // ── 提交节奏（星期分布 / 时段分布 / 最长连续提交）──
 
 /** 星期分布统计（7 项，下标 0=周日 ~ 6=周六，与 Date.getDay 对齐） */

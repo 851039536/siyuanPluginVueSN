@@ -59,16 +59,17 @@
   }
 
   // 前三名行背景微着色（金/银/铜，半透明不压正文）
+  // 色值与下方 .gpr-medal--* 一一对应；排行榜配色无对应语义 Token，属刻意保留的具名色
   &--top1 {
-    background: rgba(245, 158, 11, 0.06);
+    background: rgba(245, 158, 11, 0.06); // 金
   }
 
   &--top2 {
-    background: rgba(148, 163, 184, 0.06);
+    background: rgba(148, 163, 184, 0.06); // 银
   }
 
   &--top3 {
-    background: rgba(205, 127, 50, 0.06);
+    background: rgba(205, 127, 50, 0.06); // 铜
   }
 }
 
@@ -110,6 +111,7 @@
   font-weight: $font-weight-bold;
   color: #fff;
 
+  // 奖牌实色背景 + 白字，色值与上方 .gpr-author-row--top1/2/3 的底色一一对应
   &--gold {
     background: #d4a017;
   }
@@ -145,19 +147,26 @@
   font-size: $font-size-2xs;
 }
 
-// 净增 mini bar（量级可视化：宽度按最大净增归一化）
+// 净增 mini bar（量级可视化：填充比例按最大净增归一化）
 .gpr-net-bar {
   width: 48px;
   height: 3px;
   border-radius: 1px;
   background: var(--b3-border-color);
+  // 裁剪 scaleX 填充的溢出部分（填充条满宽做 transform，由容器裁到实际比例）
+  overflow: hidden;
 
-  // 填充条（内联宽度由 JS 计算，色随正负）
+  // 填充条（--gpr-net-fill 为 0~1 比例，由 JS 注入）
+  // 用 transform 而非 width：width 是布局属性，N 行同时变化会触发连续回流；
+  // scaleX 走合成层，且 transform-origin: left 与原先从左向右增长的视觉一致
   &-fill {
     display: block;
     height: 100%;
+    width: 100%;
     border-radius: 1px;
-    transition: width 0.2s ease;
+    transform: scaleX(var(--gpr-net-fill, 0));
+    transform-origin: left;
+    transition: transform 0.2s ease;
   }
 
   &--pos .gpr-net-bar-fill {

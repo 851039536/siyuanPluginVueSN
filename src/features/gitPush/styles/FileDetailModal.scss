@@ -115,13 +115,14 @@
 }
 
 // 新增行数（绿色强调，与 git diff 一致）
+// 复用 .gpr-fm-overlay 上 gp-diff-color-vars 注入的变量，随主题明暗自动切换，避免硬编码色在暗色下对比度不足
 .gpr-fm-added {
-  color: #28a745;
+  color: var(--gp-diff-add-color);
 }
 
 // 删除行数（红色强调，与 git diff 一致）
 .gpr-fm-deleted {
-  color: #dc3545;
+  color: var(--gp-diff-del-color);
 }
 
 // ── 变更详情（diff 代码块） ──
@@ -165,12 +166,26 @@
   tab-size: 4;
 }
 
+// 超出渲染上限的截断提示（"还有 N 行未显示"）
+.gpr-fm-diff-more {
+  padding: $spacing-1 $spacing-2;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light);
+  border-top: 1px solid var(--b3-border-color);
+  text-align: center;
+}
+
 // ── diff 行着色（复用 WorkingTreeDiffDialog 的 add/del/hunk/ctx/meta 语义） ──
 
 // 行容器（行号双列 + 符号列 + 文本列）
+// content-visibility: auto 让浏览器跳过屏外行的渲染与布局：diff 可见区只有约 280px 高，
+// 而渲染上限内仍可能有上千行，屏外部分不必参与每帧计算。contain-intrinsic-size 提供占位尺寸，
+// 保证未渲染行的滚动条高度估算稳定，避免滚动时抖动。
 .gpr-fm-dl {
   display: flex;
   padding: 0 8px 0 0;
+  content-visibility: auto;
+  contain-intrinsic-size: auto $font-size-2xs * $line-height-normal;
 
   // 新增行：绿色背景 + 绿色符号
   &.gpr-fm-dl-add {

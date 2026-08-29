@@ -109,6 +109,40 @@
   }
 }
 
+// ── 统计卡片（团队总览 KPI 卡与提交趋势摘要卡同构，避免两处逐行重复定义）──
+// 数值文本省略需由调用方按需追加：仅团队总览的「最活跃贡献者」是长文本，
+// 提交趋势的数值（如 "14:00-16:00"）在窄卡片下应换行而非截断。
+@mixin stat-card {
+  text-align: center;
+  padding: $spacing-2 $spacing-1;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-base;
+  background: var(--b3-theme-surface);
+  transition: border-color 0.15s;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+// 卡片数值（等宽大号突出展示）
+@mixin stat-card-value {
+  font-size: $font-size-lg; // 数据突出展示：统计数值大号字体
+  font-weight: $font-weight-bold;
+  font-family: $vp-mono;
+  line-height: $line-height-tight;
+  margin-bottom: 1px; // 数值与标签的最小视觉间隔（小于 $spacing-2px，刻意紧贴）
+  color: var(--b3-theme-on-surface);
+}
+
+// 卡片标签（两级字号制：辅助标签）
+@mixin stat-card-label {
+  font-size: $font-size-2xs;
+  opacity: 0.5;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 // ── 列表行底部边框分割（最后一项无边框）──
 @mixin row-divider {
   border-bottom: 1px solid var(--b3-border-color);

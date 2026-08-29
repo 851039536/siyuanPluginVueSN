@@ -138,9 +138,7 @@ function openFix(violation: CommitRuleViolation) {
 }
 
 /** 修正成功后关闭弹窗并仅重抓该项目的提交日志（局部刷新，避免全量重跑所有项目） */
-function handleFixSaved() {
-  // 先捕获 projectId 再清空（saved 事件派发早于 close，此处仍可读到目标）
-  const projectId = editingViolation.value?.projectId
+function handleFixSaved(projectId: string) {
   editingViolation.value = null
   emit("runAnalysis", projectId)
 }

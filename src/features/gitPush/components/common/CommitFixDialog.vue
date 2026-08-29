@@ -85,30 +85,17 @@
               <span>{{ amendBlockedReason }}</span>
             </div>
 
-            <!-- 提交时间保留选择（点击保存时展开） -->
-            <div
-              v-if="dateChoiceVisible"
-              class="gp-fix-warning gp-fix-date-choice"
-            >
-              <span>{{ i18n.ruleFixDateChoice }}</span>
-              <div class="gp-fix-date-actions">
-                <!-- 按钮："保留原始提交时间" -->
-                <button
-                  class="vp-btn vp-btn--ghost vp-btn--sm"
-                  :disabled="saving"
-                  @click="performSave(true)"
-                >
-                  {{ i18n.ruleFixPreserveDate }}
-                </button>
-                <!-- 按钮："按当前时间提交" -->
-                <button
-                  class="vp-btn vp-btn--ghost vp-btn--sm"
-                  :disabled="saving"
-                  @click="performSave(false)"
-                >
-                  {{ i18n.ruleFixDefaultDate }}
-                </button>
-              </div>
+            <!-- 提交时间策略选择（常驻选择框，保存时直接按此执行并持久化） -->
+            <div class="gp-fix-block">
+              <!-- 标签："提交时间" -->
+              <label class="gp-label">{{ i18n.ruleFixDateChoice }}</label>
+              <Select
+                :model-value="preserveDate ? 'preserve' : 'current'"
+                class="gp-fix-date-select"
+                size="xsmall"
+                :options="dateOptions"
+                @change="onDateChoiceChange"
+              />
             </div>
 
             <!-- 历史提交 rebase 重写耗时提示（仅保存历史提交时显示，明确等待原因） -->
@@ -183,6 +170,7 @@ import { resolveValidPath } from "../../utils"
 import { CARD_SERVICES_KEY } from "../../types"
 import { getErrorMessage } from "@/utils/stringUtils"
 import Loader from "@/components/Loader.vue"
+import Select from "@/components/Select.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -203,7 +191,13 @@ const newMessage = ref(props.target.message)
 const aiLoading = ref(false)
 const aiError = ref("")
 const saving = ref(false)
-const dateChoiceVisible = ref(false)
+/** 提交时间策略：true = 保留原始提交时间，false = 按当前时间提交（持久化跨会话恢复） */
+const preserveDate = ref(true)
+/** 提交时间策略选择框选项（复用现有 i18n 文案） */
+const dateOptions = [
+  { value: "preserve", label: props.i18n.ruleFixPreserveDate },
+  { value: "current", label: props.i18n.ruleFixDefaultDate },
+]
 const headHash = ref("")
 const workingTreeClean = ref(false)
 
@@ -241,8 +235,17 @@ onUnmounted(() => {
   window.removeEventListener("keydown", handleKeydown)
 })
 
+/** 切换提交时间策略并即时持久化（下次打开弹窗恢复选择） */
+async function onDateChoiceChange(v: string | number | boolean | null) {
+  preserveDate.value = v === "preserve"
+  await manager.storage.commitFixPrefs.save({ preserveDate: preserveDate.value })
+}
+
 async function init() {
   try {
+    // 恢复上次选择的提交时间策略（持久化偏好，无记录时默认保留原始时间）
+    const prefs = await manager.storage.commitFixPrefs.loadOrDefault()
+    preserveDate.value = prefs.preserveDate
     const p = await manager.getProjectById(props.target.projectId)
     project.value = p ?? null
     if (!p) return
@@ -278,19 +281,18 @@ async function runAiFix() {
   }
 }
 
-/** 点击保存：先弹出提交时间选择 */
+/** 点击保存：校验通过后按已选时间策略直接执行修正（选择框已常驻，无需二次确认） */
 function save() {
   if (!canAmend.value || validationReason.value) return
-  dateChoiceVisible.value = true
+  void performSave(preserveDate.value)
 }
 
-/** 执行修正：preserveDate=true 保留原始提交时间，false 使用当前时间 */
-async function performSave(preserveDate: boolean) {
+/** 执行修正：preserve=true 保留原始提交时间，false 使用当前时间 */
+async function performSave(preserve: boolean) {
   if (!canAmend.value || !projectPath.value || validationReason.value) return
   saving.value = true
-  dateChoiceVisible.value = false
   try {
-    await manager.rewriteCommitMessage(projectPath.value, props.target.hash, newMessage.value.trim(), preserveDate)
+    await manager.rewriteCommitMessage(projectPath.value, props.target.hash, newMessage.value.trim(), preserve)
     emit("saved", props.target.projectId)
     emit("close")
   } catch (e: unknown) {

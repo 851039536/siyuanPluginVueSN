@@ -17,15 +17,15 @@
   margin-bottom: $spacing-2;
 }
 
-// 项目下拉：占据剩余宽度（名称超长省略）
+// 项目下拉：固定基准宽度（名称超长省略；不再拉伸占满整行，容器过窄时可收缩）
 .gpr-project-select {
-  flex: 1;
+  flex: 0 1 180px;
   min-width: 0;
 }
 
 // 时间范围下拉：固定窄宽
 .gpr-range-select {
-  flex: 0 0 88px;
+  flex: 0 0 72px;
 }
 
 // 生成/重新生成按钮（紧凑，与头部按钮一致）

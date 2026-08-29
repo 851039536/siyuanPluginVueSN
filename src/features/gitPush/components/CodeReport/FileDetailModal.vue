@@ -101,6 +101,11 @@
                 <span class="gpr-fm-dl-text">{{ line.text }}</span>
               </div>
             </div>
+            <!-- 超出渲染上限的截断提示："还有 N 行未显示" -->
+            <div
+              v-if="hiddenDiffCount > 0"
+              class="gpr-fm-diff-more"
+            >{{ i18n.reportDiffTruncated.replace("{0}", String(hiddenDiffCount)) }}</div>
           </div>
         </div>
       </div>
@@ -111,7 +116,7 @@
 <script setup lang="ts">
 // 文件详情弹窗：受控显示 + 变更 diff 按需懒取（打开时异步加载），ESC/遮罩/关闭按钮触发 close
 import { Icon } from "@iconify/vue"
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue"
+import { computed, onBeforeUnmount, ref, watch } from "vue"
 import type { FileStatRow } from "../../types"
 import { formatIsoDate, parseDiffLines, type DiffLineType } from "../../utils"
 
@@ -166,16 +171,31 @@ const DIFF_SIGN: Record<DiffLineType, string> = {
   meta: " ",
 }
 
-/** 将补丁文本解析为带类型/行号的行数组（供行级着色渲染） */
-const diffLines = computed(() => (patchContent.value ? parseDiffLines(patchContent.value) : []))
+/**
+ * diff 渲染行数上限。
+ * 每行渲染 4 个 span（行号×2 + 符号 + 文本），「全部」范围下热门文件的补丁可达成万行，
+ * 全量建虚拟 DOM 会让弹窗打开瞬间卡死；解析本身是纯 JS 成本远低于 DOM，故解析全量、只截断渲染。
+ */
+const MAX_DIFF_LINES = 1500
+
+/** 全量解析结果（供截断计数；diff 文本为空时为空数组） */
+const parsedDiffLines = computed(() => (patchContent.value ? parseDiffLines(patchContent.value) : []))
+
+/** 实际渲染的 diff 行（超过上限时只取前 MAX_DIFF_LINES 行） */
+const diffLines = computed(() => parsedDiffLines.value.slice(0, MAX_DIFF_LINES))
+
+/** 因超出上限而未渲染的行数（0 表示未截断，模板隐藏提示） */
+const hiddenDiffCount = computed(() => Math.max(0, parsedDiffLines.value.length - MAX_DIFF_LINES))
 
 /** ESC 关闭（Teleport 到 body 后键盘事件在 document 层监听） */
 function onKeydown(e: KeyboardEvent) {
   if (e.key === "Escape" && props.fileStat) emit("close")
 }
 
-onMounted(() => {
-  document.addEventListener("keydown", onKeydown)
+// 组件随作者排行表常驻，但弹窗多数时间不可见：按 fileStat 开关注销监听，避免常驻回调
+watch(() => props.fileStat, (stat) => {
+  if (stat) document.addEventListener("keydown", onKeydown)
+  else document.removeEventListener("keydown", onKeydown)
 })
 
 onBeforeUnmount(() => {

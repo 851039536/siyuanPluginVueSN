@@ -92,7 +92,7 @@
                   >
                     <span
                       class="gpr-net-bar-fill"
-                      :style="{ width: row.netBarWidth }"
+                      :style="{ '--gpr-net-fill': row.netBarFill }"
                     />
                   </div>
                 </div>
@@ -176,7 +176,7 @@
 // 代码贡献度分区：作者排行表（预计算行数据消除模板重复查找/拼接；TOP3 排名徽章 + 净增 mini bar + 点击行展开详情）
 import { computed, ref, watch } from "vue"
 import type { AuthorReportRow, FileStatRow } from "../../types"
-import { formatIsoDate, netClass } from "../../utils"
+import { formatIsoDate, maxOf, netClass as sharedNetClass } from "../../utils"
 import EmptyState from "../common/EmptyState.vue"
 import FileDetailModal from "./FileDetailModal.vue"
 
@@ -223,10 +223,22 @@ function churnText(rate: number): string {
   return `${Math.round(rate * 100)}%`
 }
 
-/** 行数据（模板渲染源）：预计算颜色/星级/徽章/mini bar 宽度等派生值，消除模板内重复查找与拼接 */
+/**
+ * 净增正负着色类（复用 index.scss 的 .gpr-cell--pos / --neg）。
+ * 净增为 0 时返回空串：项目无 .gpr-cell--zero 样式，挂上去是无意义的死类名。
+ */
+function netClass(net: number): string {
+  return sharedNetClass(net, "gpr-cell", "")
+}
+
+/**
+ * 行数据（模板渲染源）：预计算颜色/徽章/mini bar 填充比例等派生值，消除模板内重复查找与拼接。
+ * netBarFill 为 0~1 的比例（供 CSS scaleX 使用）：按最大净增归一化，至少 0.03 保证可见，
+ * 净增 0 恒为 0（不留残段）。用 transform 代替 width 可让填充动画走合成层，不触发布局回流。
+ */
 const rows = computed(() => {
   // 净增 mini bar 基准：全部作者净增绝对值的最大值（避免单个大数值压缩其余 bar）
-  const maxNet = Math.max(...props.authors.map((a) => Math.abs(a.netLines)), 0)
+  const maxNet = maxOf(props.authors.map((a) => Math.abs(a.netLines)), 0)
   return props.authors.map((a, i) => {
     const medalClass = i < MEDAL_CLASSES.length ? MEDAL_CLASSES[i] : ""
     return {
@@ -236,8 +248,7 @@ const rows = computed(() => {
       topClass: i < TOP_ROW_CLASSES.length ? TOP_ROW_CLASSES[i] : "",
       netClass: netClass(a.netLines),
       netText: formatNet(a.netLines),
-      // bar 宽度：按最大净增归一化，至少 3% 保证可见；净增 0 恒为 0%（不留残段）
-      netBarWidth: a.netLines === 0 || maxNet <= 0 ? "0%" : `${Math.max(3, Math.round((Math.abs(a.netLines) / maxNet) * 100))}%`,
+      netBarFill: a.netLines === 0 || maxNet <= 0 ? 0 : Math.max(0.03, Math.abs(a.netLines) / maxNet),
       netBarClass: a.netLines > 0 ? "gpr-net-bar--pos" : a.netLines < 0 ? "gpr-net-bar--neg" : "",
     }
   })

@@ -1607,6 +1607,8 @@
     "reportWeekSat": "Sat",
     "reportScrollLeft": "Scroll left (view earlier dates)",
     "reportScrollRight": "Scroll right (view latest dates)",
+    "reportChartAggregated": "Aggregated per {0} days",
+    "reportDiffTruncated": "{0} more lines not shown",
     "reportHotspotTruncated": "Showing top {0} hotspot files, {1} analyzed in total",
     "reportOpenFileTitle": "{0} (click to open file)",
     "reportDebtDistTitle": "Severity Distribution",

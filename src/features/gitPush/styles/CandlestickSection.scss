@@ -20,6 +20,8 @@
 }
 
 // 涨/跌/平色块（与 canvas 实心颜色一致）
+// 下列色值必须与 types/report.ts 的 REPORT_CHART_COLORS 保持一致：
+// canvas 上下文无法解析 CSS 自定义属性，颜色只能在 TS 侧定义，SCSS 侧以同名注释对齐防漂移
 .gpc-legend-dot {
   width: $spacing-2;
   height: $spacing-2;
@@ -27,15 +29,23 @@
 }
 
 .gpc-legend-dot--up {
-  background: #10b981;
+  background: #10b981; // REPORT_CHART_COLORS.up
 }
 
 .gpc-legend-dot--down {
-  background: #ef4444;
+  background: #ef4444; // REPORT_CHART_COLORS.down
 }
 
 .gpc-legend-dot--flat {
-  background: #64748b;
+  background: #64748b; // REPORT_CHART_COLORS.flat
+}
+
+// 聚合提示（日期数超上限时按连续天数分桶，提示"每根 K 线代表 N 天"）
+.gpc-legend-agg {
+  padding: 0 $spacing-1;
+  border: 1px dashed var(--b3-border-color);
+  border-radius: $radius-sm;
+  color: var(--b3-theme-on-surface-light);
 }
 
 // 语义说明（右对齐，弱化显示）
@@ -129,42 +139,26 @@
   margin-top: $spacing-2;
 }
 
+// 卡片（与团队总览 KPI 卡同构，复用共享 mixin）
 .gpc-card {
-  text-align: center;
-  padding: $spacing-2 $spacing-1;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $radius-base;
-  background: var(--b3-theme-surface);
-  transition: border-color 0.15s;
-
-  &:hover {
-    border-color: var(--b3-theme-primary);
-  }
+  @include stat-card;
 }
 
-// 卡片数值（等宽字体突出展示）
+// 卡片数值（等宽字体突出展示；此处不做文本省略：高峰时段等数值在窄卡片下换行优于截断）
 .gpc-card-value {
-  font-size: $font-size-lg; // 数据突出展示：统计数值大号字体
-  font-weight: $font-weight-bold;
-  font-family: $vp-mono;
-  line-height: $line-height-tight;
-  margin-bottom: 1px; // 数值与标签的最小视觉间隔（小于 $spacing-2px，刻意紧贴）
-  color: var(--b3-theme-on-surface);
+  @include stat-card-value;
 }
 
 // 卡片标签（两级字号制：辅助标签）
 .gpc-card-label {
-  font-size: $font-size-2xs;
-  opacity: 0.5;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  @include stat-card-label;
 }
 
 // ── 图例 7 日均线（琥珀色横线，与 canvas 折线颜色一致）──
 .gpc-legend-line {
   width: 14px;
   height: 2px;
-  background: #f59e0b;
+  background: #f59e0b; // REPORT_CHART_COLORS.ma
   border-radius: 1px;
 }
 
@@ -211,7 +205,7 @@
 
 // 高峰时段徽章（琥珀色描边强调）
 .gpc-rhythm-badge--accent {
-  border-color: #f59e0b;
+  border-color: #f59e0b; // REPORT_CHART_COLORS.ma
   color: #f59e0b;
 }
 
@@ -247,7 +241,7 @@
   width: 55%;
   min-height: 2px;
   border-radius: 2px 2px 0 0;
-  background: #64748b;
+  background: #64748b; // REPORT_CHART_COLORS.flat（非高峰星期用中性色）
   transition: background 0.15s;
 }
 
@@ -292,7 +286,7 @@
 
 // 高峰时段格（琥珀色描边强调）
 .gpc-hour-cell--peak {
-  border-color: #f59e0b;
+  border-color: #f59e0b; // REPORT_CHART_COLORS.ma
 }
 
 // 时间轴刻度（0/6/12/18/24 时）

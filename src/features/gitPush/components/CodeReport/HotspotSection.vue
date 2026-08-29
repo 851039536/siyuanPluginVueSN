@@ -18,13 +18,13 @@
       :text="i18n.reportNoData"
     />
 
-    <!-- 两栏布局：左侧表格（flex:1 自适应）+ 右侧汇总面板（定宽，顶部对齐不留空隙） -->
+    <!-- 纵向两行布局：第一行热点表格（全宽），第二行热度分布汇总 + 优化建议 -->
     <div
       v-else
       class="gpr-hot-grid"
     >
-      <!-- 左侧：热点表格 + 截断提示 -->
-      <div class="gpr-hot-left">
+      <!-- 第一行：热点表格 + 截断提示 -->
+      <div class="gpr-hot-main">
         <table class="gpr-hot-table">
           <thead>
             <tr>
@@ -71,11 +71,11 @@
               <td class="gpr-hot-cell gpr-hot-cell--num">{{ h.authorCount }}</td>
               <!-- 代码行数 -->
               <td class="gpr-hot-cell gpr-hot-cell--num">{{ h.loc ?? "-" }}</td>
-              <!-- 最后修改时间 -->
+              <!-- 最后修改时间（相对时间预计算，完整 ISO 悬停可见） -->
               <td
                 class="gpr-hot-cell gpr-hot-cell--time"
                 :title="h.lastModified"
-              >{{ h.lastModified ? relativeTime(h.lastModified, i18n) : "-" }}</td>
+              >{{ h.lastModifiedText }}</td>
             </tr>
           </tbody>
         </table>
@@ -94,7 +94,7 @@
       </div>
 
       <!-- 第二行：统计摘要面板（全宽，汇总表 + 优化建议） -->
-      <div class="gpr-hot-right">
+      <div class="gpr-hot-summary">
         <!-- 热度分布汇总表 -->
         <div class="gpr-subsection">
           <div class="gpr-section-title">
@@ -169,11 +169,16 @@ const props = defineProps<{
   project: GitProject | null
 }>()
 
-/** 热点行预映射：预先拆分路径为 dir/base，避免模板中同一路径重复 splitPath 求值 */
+/** 热点行预映射：预先拆分路径为 dir/base 并算好相对时间，避免模板中每行重复求值 */
 const preparedHotspots = computed(() =>
   props.report.hotspots.map((h) => {
     const { dir, base } = splitPath(h.path)
-    return { ...h, dir, base }
+    return {
+      ...h,
+      dir,
+      base,
+      lastModifiedText: h.lastModified ? relativeTime(h.lastModified, props.i18n) : "-",
+    }
   }),
 )
 

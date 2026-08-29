@@ -68,14 +68,20 @@ export function createCoupledIndex(files: DebtFileRow[]): { get(path: string): C
     else byDate.set(key, [f])
   }
   const byPath = new Map(files.map((f) => [f.path, f]))
+  // 结果缓存：展开行会随父组件重渲染反复取同一 path，避免重复的 filter + sort
+  const cache = new Map<string, CoupledFile[]>()
   return {
     get(path: string): CoupledFile[] {
+      const cached = cache.get(path)
+      if (cached) return cached
       const self = byPath.get(path)
       if (!self) return []
       const peers = (byDate.get(dateKey(self.lastModified)) ?? [])
         .filter((p) => p.path !== path)
         .sort((a, b) => b.modCount - a.modCount)
-      return peers.map((p) => ({ path: p.path, modCount: p.modCount, riskScore: p.riskScore, severity: p.severity }))
+      const result = peers.map((p) => ({ path: p.path, modCount: p.modCount, riskScore: p.riskScore, severity: p.severity }))
+      cache.set(path, result)
+      return result
     },
   }
 }
@@ -95,14 +101,21 @@ export interface SeverityDistItem {
   pct: number
 }
 
-/** 严重度分布：仅含 count>0 的条目，按 DEBT_SEVERITY_ORDER 顺序；空列表返回空数组 */
+/**
+ * 严重度分布：仅含 count>0 的条目，按 DEBT_SEVERITY_ORDER 顺序；空列表返回空数组。
+ * 单次遍历计数（O(n)）替代按严重度逐个 filter 的 O(等级数 × n)，并直接跳过零值档。
+ */
 export function buildSeverityDist(files: DebtFileRow[]): SeverityDistItem[] {
   const total = files.length
   if (total === 0) return []
+  const counts = new Map<DebtSeverity, number>()
+  for (const f of files) {
+    counts.set(f.severity, (counts.get(f.severity) ?? 0) + 1)
+  }
   return DEBT_SEVERITY_ORDER
-    .map((sev) => {
-      const count = files.filter((f) => f.severity === sev).length
-      return { severity: sev, count, pct: Math.round((count / total) * 100) }
+    .map((severity) => {
+      const count = counts.get(severity) ?? 0
+      return { severity, count, pct: Math.round((count / total) * 100) }
     })
     .filter((d) => d.count > 0)
 }

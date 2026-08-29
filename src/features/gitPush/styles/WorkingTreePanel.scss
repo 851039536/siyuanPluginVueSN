@@ -270,6 +270,12 @@
   justify-content: flex-end;
 }
 
+// 提交信息实时校验违规提示（与 CommitFixDialog 的 gp-fix-invalid 同风格）
+.wt-commit-invalid {
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-error, $color-danger);
+}
+
 .wt-commit-output {
   position: relative;
   padding: 6px 8px;

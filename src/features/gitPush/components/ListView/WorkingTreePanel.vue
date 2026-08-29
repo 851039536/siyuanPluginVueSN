@@ -192,6 +192,11 @@
           rows="4"
           :placeholder="i18n.commitMessagePlaceholder"
         />
+        <!-- 提交信息违规提示（实时校验，硬阻止提交） -->
+        <span
+          v-if="validationReason"
+          class="wt-commit-invalid"
+        >{{ i18n[COMMIT_RULE_REASON_META[validationReason].labelKey] }}</span>
         <div class="wt-commit-actions">
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm"
@@ -207,7 +212,7 @@
           </button>
           <button
             class="vp-btn vp-btn--primary vp-btn--sm"
-            :disabled="!commitMessage.trim() || committing"
+            :disabled="!commitMessage.trim() || committing || !!validationReason"
             @click.stop="handleCommit"
           >
             <Icon
@@ -243,7 +248,8 @@ import type {
   FileChange,
   WorkingTreeInfo,
 } from "../../types"
-import { COMMIT_TYPE_VALUES } from "../../types"
+import { COMMIT_RULE_REASON_META, COMMIT_TYPE_VALUES } from "../../types"
+import { checkCommitRule } from "../../commitRuleChecker"
 import { fileStatusIcon, fileStatusIconKey, fileStatusTitle, isIconFileStatus } from "../../utils"
 import { useGeneratedMsgSync } from "../../composables/useGeneratedMsgSync"
 import WorkingTreeDiffDialog from "./WorkingTreeDiffDialog.vue"
@@ -288,6 +294,9 @@ const emit = defineEmits<{
 const commitType = ref("chore")
 const commitMessage = ref("")
 const activeDiffFile = ref<FileChange | null>(null)
+
+/** 当前提交信息命中规则问题（合规时为 null；硬阻止提交按钮并显示原因） */
+const validationReason = computed(() => checkCommitRule(commitMessage.value))
 
 // 监听外部生成的消息，自动填充
 useGeneratedMsgSync(toRef(props, "generatedMsg"), commitMessage)
@@ -386,6 +395,7 @@ function handleSelectTemplate(tplId: string) {
 
 function handleCommit() {
   if (!commitMessage.value.trim()) return
+  if (validationReason.value) return
   emit("commit", commitMessage.value.trim())
 }
 

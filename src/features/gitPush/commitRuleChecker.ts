@@ -24,7 +24,7 @@ export function checkCommitRule(message: string): CommitRuleReasonKey | null {
 
   const [, type, scope] = prefix
   if (!ALLOWED_TYPES.has(type)) return "invalidType"
-  if (scope !== undefined && scope === "") return "invalidScope"
+  if (scope !== undefined && scope.trim() === "") return "invalidScope"
 
   // 冒号后必须恰好一个空格，再接非空描述
   const afterColon = raw.slice(prefix[0].length)
@@ -46,7 +46,7 @@ export function analyzeCommitRuleCompliance(entries: CommitAnalysisEntry[]): Com
       violations.push({ ...entry, reason })
     }
   }
-  violations.sort((a, b) => Date.parse(b.date) - Date.parse(a.date))
+  violations.sort((a, b) => (Date.parse(b.date) || 0) - (Date.parse(a.date) || 0))
 
   const countByReason = new Map<CommitRuleReasonKey, number>()
   for (const v of violations) {
@@ -85,7 +85,8 @@ export function fixCommitMessageHeuristically(message: string): string {
   // 无法自动生成中文描述时视为不可修复，交由 AI 处理
   if (!/[一-鿿]/.test(subject)) return ""
 
-  const scopePart = scope ? `(${scope})` : ""
+  // scope trim 后为空（如 feat( ):）时省略 scope 段，避免生成结果再次校验失败
+  const scopePart = scope && scope.trim() ? `(${scope.trim()})` : ""
   const bangPart = bang || ""
   return `${type}${scopePart}${bangPart}: ${subject}`
 }

@@ -56,7 +56,7 @@
 // gitPush 提交规则检查不合规提交列表区块（本地分页 + 修正入口）
 import type { CommitRuleCheckStats, CommitRuleViolation } from "../../types"
 import { Icon } from "@iconify/vue"
-import { computed } from "vue"
+import { computed, watch } from "vue"
 import { COMMIT_RULE_REASON_META } from "../../types"
 import { formatDateTime, relativeTime } from "../../utils"
 import { usePagedList } from "../../composables/usePagedList"
@@ -84,7 +84,11 @@ const {
   paged: pagedViolations,
   hasMore: pagedHasMore,
   loadMore: pagedLoadMore,
+  reset: pagedReset,
 } = usePagedList(pagedSource, 50)
+
+/** 数据源变化（重新分析/切换过滤项目）时重置分页到首页，防止新结果集停留在旧页码 */
+watch(pagedSource, () => pagedReset())
 </script>
 
 <style lang="scss">

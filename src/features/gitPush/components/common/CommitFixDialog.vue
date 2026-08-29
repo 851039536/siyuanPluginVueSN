@@ -191,7 +191,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   close: []
-  saved: []
+  saved: [projectId: string]
 }>()
 
 const services = inject(CARD_SERVICES_KEY)!
@@ -291,7 +291,7 @@ async function performSave(preserveDate: boolean) {
   dateChoiceVisible.value = false
   try {
     await manager.rewriteCommitMessage(projectPath.value, props.target.hash, newMessage.value.trim(), preserveDate)
-    emit("saved")
+    emit("saved", props.target.projectId)
     emit("close")
   } catch (e: unknown) {
     console.error("[gitPush] 修正提交信息失败:", e)

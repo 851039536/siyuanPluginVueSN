@@ -75,8 +75,8 @@ import type { DebtFileRow, GitProject } from "../../types"
 import { computed, onMounted, ref } from "vue"
 import { DEBT_SEVERITY_META } from "../../types"
 import { countFileLines } from "../../reportMetrics"
-import { DEBT_TREND_META, inferDebtTrend } from "../../composables/useDebtInsights"
-import type { CoupledFile } from "../../composables/useDebtInsights"
+import { DEBT_TREND_META } from "../../debtInsights"
+import type { CoupledFile, DebtTrend } from "../../debtInsights"
 import { relativeTime } from "../../utils"
 
 const props = defineProps<{
@@ -85,7 +85,9 @@ const props = defineProps<{
   project: GitProject | null
   /** 当前债务文件行 */
   row: DebtFileRow
-  /** 近期共变文件列表（父组件预计算的耦合映射） */
+  /** 趋势方向（父组件 trendMap 预计算下传，避免逐行重复推断） */
+  trend: DebtTrend
+  /** 近期共变文件列表（父组件按需取自共变索引） */
   coupled: CoupledFile[]
 }>()
 
@@ -101,9 +103,6 @@ onMounted(() => {
 
 /** LOC 展示文本（null → 占位符 -） */
 const locText = computed(() => (loc.value === null ? "-" : String(loc.value)))
-
-/** 趋势方向（由 lastModified 距今天数 + 修改次数推断） */
-const trend = computed(() => inferDebtTrend(props.row))
 </script>
 
 <style lang="scss">

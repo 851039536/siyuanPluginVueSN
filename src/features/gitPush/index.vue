@@ -124,6 +124,8 @@
       :projects="projects"
       :project-id="reportProjectId"
       :range="reportRange"
+      :current-project="reportCurrentProject"
+      :get-file-patch="fetchFilePatch"
       @run-report="runReport"
       @change-project="setProject"
       @change-range="setRange"
@@ -582,10 +584,12 @@ const {
   generated: reportGenerated,
   projectId: reportProjectId,
   range: reportRange,
+  currentProject: reportCurrentProject,
   runReport,
   setRange,
   setProject,
   ensureReport,
+  fetchFilePatch,
 } = useCodeReport(props.manager, projects, props.i18n)
 
 const {

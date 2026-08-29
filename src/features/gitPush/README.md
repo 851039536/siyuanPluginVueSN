@@ -30,9 +30,12 @@ src/features/gitPush/
 ├── index.ts                         # registerGitPush() 入口
 ├── index.vue                        # 主面板（Dock / 独立窗口 tab 双形态，列表/统计/日志/分析/行数统计/报告多视图）
 ├── GitPushManager.ts                # 门面：组合 managers/ 协作者 + addTab/openWindow 独立窗口承载
+├── reportMetrics.ts                 # 代码统计报告纯函数层：numstat 解析 + 作者/文件聚合 + 债务/热点评分
+├── debtInsights.ts                  # 技术债务洞察纯函数：趋势推断 + 共变索引 + 严重度汇总（自 composables 迁出）
 ├── managers/
 │   ├── GitExecutor.ts               # git 子进程执行器（双池信号量限流 + abort 生命周期）
 │   ├── ProjectStore.ts              # 项目/分类/标签 CRUD 与内存缓存
+│   ├── ReportOps.ts                 # numstat 提交日志/首提交日期/已跟踪文件/文件历史补丁（弹窗懒取）
 │   ├── RemoteOps.ts                 # push/pull/fetch 全平台与单平台、推送状态检查
 │   ├── WorktreeOps.ts               # 工作区状态/差异/暂存/提交/stash/分支/提交日志
 │   ├── RepoOps.ts                   # Tag 管理、冲突检测、远程配置、Git 配置查看、仓库扫描
@@ -127,16 +130,16 @@ src/features/gitPush/
 │       ├── LineRankingSection.vue   # 项目/作者行数排行通用区块（mode prop 区分）
 │       ├── ExtFilterDialog.vue      # 文件格式过滤配置弹窗（扩展名多选排除列表）
 │       └── ProjectLineDetail.vue    # 项目行数详情弹窗
-│   └── CodeReport/                  # 代码统计报告视图专属（9 个）
+│   └── CodeReport/                  # 代码统计报告视图专属（9 个；分区首次激活后才挂载）
 │       ├── index.vue                # 报告视图入口容器（项目/时间范围选择 + 分区 Tab 编排）
 │       ├── TeamOverviewSection.vue  # 团队总览分区（KPI 卡片：成员/总提交/总代码量/最活跃）
-│       ├── AuthorContributionSection.vue # 代码贡献度分区（作者贡献排行）
-│       ├── TechDebtSection.vue      # 技术债务分区（债务摘要 + 文件列表）
+│       ├── AuthorContributionSection.vue # 代码贡献度分区（作者贡献排行 + 文件详情弹窗）
+│       ├── TechDebtSection.vue      # 技术债务分区（债务摘要 + 严重度分组列表）
 │       ├── HotspotSection.vue       # 代码热点分区（热点文件）
 │       ├── CandlestickSection.vue   # 提交趋势分区（K 线/趋势图）
 │       ├── DebtSummaryBar.vue       # 债务摘要条
-│       ├── DebtFileDetail.vue       # 债务文件详情
-│       └── FileDetailModal.vue      # 文件详情弹窗
+│       ├── DebtFileDetail.vue       # 债务文件详情（LOC 懒加载）
+│       └── FileDetailModal.vue      # 文件详情弹窗（diff 打开时按需懒取）
 └── styles/
     ├── index.scss                   # 主面板样式（卡片骨架 + Stash/Tag/Output/Conflict 等；Tab 条已迁出）
     ├── CardHeader.scss              # 卡片顶栏信息区样式（操作按钮区 → CardHeaderActions.scss）

@@ -162,10 +162,11 @@
       </table>
     </div>
 
-    <!-- 文件详情弹窗（点击 Top 修改文件项触发，fileStat 非空即展示） -->
+    <!-- 文件详情弹窗（点击 Top 修改文件项触发，fileStat 非空即展示；diff 按需懒取） -->
     <FileDetailModal
       :i18n="i18n"
       :file-stat="selectedFile"
+      :get-file-patch="getFilePatch"
       @close="selectedFile = null"
     />
   </div>
@@ -173,9 +174,9 @@
 
 <script setup lang="ts">
 // 代码贡献度分区：作者排行表（预计算行数据消除模板重复查找/拼接；TOP3 排名徽章 + 净增 mini bar + 点击行展开详情）
-import { computed, ref } from "vue"
+import { computed, ref, watch } from "vue"
 import type { AuthorReportRow, FileStatRow } from "../../types"
-import { formatIsoDate, netClass as sharedNetClass } from "../../utils"
+import { formatIsoDate, netClass } from "../../utils"
 import EmptyState from "../common/EmptyState.vue"
 import FileDetailModal from "./FileDetailModal.vue"
 
@@ -185,6 +186,8 @@ const props = defineProps<{
   authors: AuthorReportRow[]
   /** 文件详情查找表（路径 → 完整统计行，Top 修改文件点击弹窗数据源） */
   fileDetailsMap: Record<string, FileStatRow>
+  /** 按当前项目+范围懒取文件补丁（透传给文件详情弹窗） */
+  getFilePatch: (path: string) => Promise<string>
 }>()
 
 /** 展开详情的作者名（空串 = 全部收起） */
@@ -192,6 +195,12 @@ const expanded = ref("")
 
 /** 弹窗展示的文件详情（null = 隐藏） */
 const selectedFile = ref<FileStatRow | null>(null)
+
+// 报告重新生成（切换项目/时间范围）后复位展开行与弹窗，避免残留上一份报告的交互态（authors 引用随重生成更换）
+watch(() => props.authors, () => {
+  expanded.value = ""
+  selectedFile.value = null
+})
 
 /** 点击 Top 修改文件项：从查找表取完整统计行弹出详情弹窗 */
 function openFileDetail(path: string) {
@@ -203,11 +212,6 @@ const MEDAL_CLASSES = ["gpr-medal--gold", "gpr-medal--silver", "gpr-medal--bronz
 
 /** 排名行背景强调（前 3 名） */
 const TOP_ROW_CLASSES = ["gpr-author-row--top1", "gpr-author-row--top2", "gpr-author-row--top3"]
-
-/** 净增列正负着色（薄委托共享 netClass，前缀 gpr-cell，零值返回空串不追加 class） */
-function netClass(n: number): string {
-  return sharedNetClass(n, "gpr-cell", "")
-}
 
 /** 净增格式化：正数带 + 前缀便于视觉区分 */
 function formatNet(n: number): string {
@@ -232,9 +236,9 @@ const rows = computed(() => {
       topClass: i < TOP_ROW_CLASSES.length ? TOP_ROW_CLASSES[i] : "",
       netClass: netClass(a.netLines),
       netText: formatNet(a.netLines),
-      // bar 宽度：按最大净增归一化，至少 3% 保证可见；净增 0 时 0%
-      netBarWidth: maxNet > 0 ? `${Math.max(3, Math.round((Math.abs(a.netLines) / maxNet) * 100))}%` : "0%",
-      netBarClass: a.netLines > 0 ? "gpr-net-bar--pos" : a.netLines < 0 ? "gpr-net-bar--neg" : "gpr-net-bar--zero",
+      // bar 宽度：按最大净增归一化，至少 3% 保证可见；净增 0 恒为 0%（不留残段）
+      netBarWidth: a.netLines === 0 || maxNet <= 0 ? "0%" : `${Math.max(3, Math.round((Math.abs(a.netLines) / maxNet) * 100))}%`,
+      netBarClass: a.netLines > 0 ? "gpr-net-bar--pos" : a.netLines < 0 ? "gpr-net-bar--neg" : "",
     }
   })
 })

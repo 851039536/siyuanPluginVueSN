@@ -1,0 +1,145 @@
+// Diff 对比预览专属样式（DiffPreview.vue）
+@use "../../../variables" as *;
+
+// ============ Diff 对比预览 ============
+.diff-preview {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  border-radius: $radius-sm;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  overflow: hidden;
+}
+
+.diff-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  background: var(--b3-theme-surface);
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  flex-shrink: 0;
+}
+
+.diff-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.diff-toolbar-title {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: var(--b3-theme-on-surface);
+}
+
+.diff-stats {
+  display: flex;
+  gap: 6px;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-medium;
+}
+
+.stat-added {
+  color: var(--b3-theme-success);
+}
+
+.stat-removed {
+  color: var(--b3-theme-error);
+}
+
+.diff-toolbar-right {
+  display: flex;
+  align-items: center;
+}
+
+.diff-mode-toggle {
+  display: inline-flex;
+  gap: 2px;
+  background: var(--b3-theme-surface-lighter);
+  border-radius: 3px;
+  padding: 1px;
+}
+
+.mode-btn {
+  padding: 2px 8px;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-variant);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: $radius-sm;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--b3-theme-on-background);
+  }
+
+  &.active {
+    background: var(--b3-theme-background);
+    color: var(--b3-theme-primary);
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+.diff-viewer-wrapper {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+  font-size: $font-size-xs;
+
+  // vue-diff 根容器（类名为 .vue-diff-wrapper，非 .vue-diff）
+  :deep(.vue-diff-wrapper) {
+    height: 100%;
+    font-size: $font-size-xs;
+    background: var(--b3-theme-background) !important;
+  }
+
+  // 覆盖 vue-diff 第三方硬编码 font-size: 16px / line-height: 1.5（定义在 .vue-diff-viewer 上）
+  :deep(.vue-diff-viewer) {
+    font-size: $font-size-xs !important;
+    line-height: $line-height-normal !important;
+    background: var(--b3-theme-background) !important;
+  }
+
+  // 内部所有元素继承内容级 12px 字号（含行号 .lineNum 默认 .9em 相对 16px）
+  :deep(.vue-diff-wrapper *),
+  :deep(.vue-diff-viewer *) {
+    font-size: inherit !important;
+  }
+
+  // 行号列降为辅助字号
+  :deep(.vue-diff-row .lineNum) {
+    font-size: $font-size-2xs !important;
+  }
+
+  // 清除第三方 hljs 硬编码背景，融入 b3 主题
+  :deep(.vue-diff-viewer .hljs) {
+    background: transparent !important;
+  }
+
+  // 覆盖 vue-diff 默认高亮背景以适配明暗主题（类名 .vue-diff-cell-removed/.vue-diff-cell-added）
+  &.is-dark {
+    :deep(.vue-diff-cell-removed) {
+      background: rgba(239, 68, 68, 0.15) !important;
+    }
+
+    :deep(.vue-diff-cell-added) {
+      background: rgba(34, 197, 94, 0.15) !important;
+    }
+
+    :deep(.lineNum) {
+      color: var(--b3-theme-on-surface-variant) !important;
+    }
+  }
+
+  &:not(.is-dark) {
+    :deep(.vue-diff-cell-removed) {
+      background: rgba(239, 68, 68, 0.08) !important;
+    }
+
+    :deep(.vue-diff-cell-added) {
+      background: rgba(34, 197, 94, 0.08) !important;
+    }
+  }
+}

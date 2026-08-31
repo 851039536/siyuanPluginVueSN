@@ -6,7 +6,7 @@ import { ref, computed, type Ref, type ComputedRef } from "vue"
 import { showMessage } from "siyuan"
 import type { Plugin } from "siyuan"
 import type { DeepSeekReasoningEffort, GenerateOptions, SearchResult, SkillItem, TargetDoc } from "@/types/ai"
-import { PROVIDER_MODELS } from "@/config/aiModels"
+import { PROVIDER_MODELS, DEEPSEEK_V4_MODEL_PREFIX } from "@/config/aiModels"
 
 // ============ 类型定义 ============
 
@@ -96,7 +96,7 @@ export function useGeneration(opts: UseGenerationOptions) {
   })
   const supportsThinking = computed(() =>
     providerRef.value === "deepseek"
-    && opts.selectedModel.value.startsWith("deepseek-v4-"),
+    && opts.selectedModel.value.startsWith(DEEPSEEK_V4_MODEL_PREFIX),
   )
 
   // ===== 搜索稳定回调（避免每次 buildGenerateOptions 重新创建闭包） =====

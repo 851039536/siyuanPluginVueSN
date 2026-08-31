@@ -6,6 +6,7 @@ import { ref, computed, type Ref } from "vue"
 import { showMessage } from "siyuan"
 import type { TargetDoc } from "@/types/ai"
 import * as api from "@/api"
+import { copyToClipboard } from "@/utils/domUtils"
 import {
   processContentByType,
   splitMarkdownBlocks,
@@ -71,7 +72,10 @@ export function useEditOperations(deps: UseEditOperationsDeps) {
     if (!generatedContent.value) return
     try {
       const siyuanContent = convertToSiyuanMarkdown(generatedContent.value)
-      await navigator.clipboard.writeText(siyuanContent)
+      const ok = await copyToClipboard(siyuanContent)
+      if (!ok) {
+        throw new Error("剪贴板写入失败")
+      }
     } catch (error) {
       console.error("复制失败:", error)
       showMessage("复制失败", 2000, "error")

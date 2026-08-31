@@ -119,5 +119,6 @@
     "suggestionsLabel": "建议",
     "patternLabel": "正则表达式",
     "examplesLabel": "示例"
-  }
+  },
+  "suggestions": "优化建议"
 }

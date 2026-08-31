@@ -119,5 +119,6 @@
     "suggestionsLabel": "Suggestions",
     "patternLabel": "Pattern",
     "examplesLabel": "Examples"
-  }
+  },
+  "suggestions": "Suggestions"
 }

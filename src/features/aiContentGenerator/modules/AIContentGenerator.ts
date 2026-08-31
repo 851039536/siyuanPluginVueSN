@@ -10,6 +10,8 @@ import type {
 } from "@/types/ai"
 import type { AiApiConfig } from "@/utils/aiApi"
 import type { ScanSkillsFn } from "../types"
+import { RATING_NEEDS_FIX, RATING_VALUES, SEVERITY_LEVELS } from "../types"
+import { DEEPSEEK_V4_PRO } from "@/config/aiModels"
 import {
   Plugin,
   showMessage,
@@ -58,8 +60,7 @@ function extractJsonFromText(text: string): string | null {
 }
 
 function validateRating(rating: unknown): ReviewRating {
-  const valid: ReviewRating[] = ["优秀", "良好", "需改进"]
-  if (typeof rating === "string" && (valid as string[]).includes(rating)) {
+  if (typeof rating === "string" && (RATING_VALUES as readonly string[]).includes(rating)) {
     return rating as ReviewRating
   }
   return "良好"
@@ -98,7 +99,7 @@ export class AIContentGenerator {
       position: "RightTop",
       width: 400,
       icon: "iconSparkles",
-      title: "AI信息生成",
+      title: this.plugin.i18n.aiContentGenerator,
       type: "ai-content-generator-dock",
       i18n: this.plugin.i18n,
       extraProps: {
@@ -248,9 +249,9 @@ ${options.userInput}`
 
       "## 输出格式（严格JSON，禁止任何额外文字）",
       `{`,
-      `  "rating":"优秀|良好|需改进",`,
+      `  "rating":"${RATING_VALUES.join("|")}",`,
       `  "summary":"总体评价（1-2句话）",`,
-      `  "issues":[{"description":"具体问题描述","severity":"高|中|低"}],`,
+      `  "issues":[{"description":"具体问题描述","severity":"${SEVERITY_LEVELS.join("|")}"}],`,
       `  "suggestions":["可操作改进建议"],`,
       `  "detailedScore":{"accuracy":8,"structure":7,"quality":9,"format":8,"coverage":7,"titleQuality":8}`,
       `}`,
@@ -263,7 +264,7 @@ ${options.userInput}`
 
     const apiConfig = this.getApiConfig()
     if (apiConfig.provider === "deepseek") {
-      apiConfig.model = "deepseek-v4-pro"
+      apiConfig.model = DEEPSEEK_V4_PRO
     }
 
     try {
@@ -299,11 +300,11 @@ ${options.userInput}`
     } catch (error) {
       console.error("审核失败:", error)
       return {
-        rating: "需改进",
+        rating: RATING_NEEDS_FIX,
         summary: `审核异常: ${(error as Error).message}`,
         issues: [],
         suggestions: [],
-        reviewModel: apiConfig.model || "deepseek-v4-pro",
+        reviewModel: apiConfig.model || DEEPSEEK_V4_PRO,
         reviewedAt: Date.now(),
       }
     }

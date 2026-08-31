@@ -4,6 +4,7 @@
 import type { Tokens } from "marked"
 import type { SkillItem } from "@/types/ai"
 import { AI_TOOL_META } from "@/config/aiTools"
+import { escapeHtml } from "@/utils/stringUtils"
 import { parseMarkdown } from "@/utils/mdRenderer"
 
 // ============ 系统提示词构建 ============
@@ -30,6 +31,9 @@ export function buildSkillSystemPrompt(
  * （MainContentArea / SkillPreviewModal），AI 生成内容或技能文件可能携带
  * 恶意 HTML（<script> / <img onerror> 等）。此处通过 marked 扩展将
  * html 块/标签渲染为转义文本，从源头杜绝 XSS 注入。
+ *
+ * 代码高亮走共享 mdRenderer 的 codeHighlight 通道（hljs class + 全局主题 CSS），
+ * 模块内不再自建 highlightElement 后处理路径。
  */
 export function renderMarkdown(content: string, stripHeadingBold = true): string {
   if (!content) return ""
@@ -43,29 +47,20 @@ export function renderMarkdown(content: string, stripHeadingBold = true): string
       )
     }
     return parseMarkdown(processedContent, {
+      codeHighlight: true,
       extensions: [{
         name: "html",
         renderer(token: Tokens.Generic) {
           // 转义原始 HTML：保留可见文本，丢弃标签语义
-          return escapeHtmlText((token as { text?: string }).text ?? "")
+          return escapeHtml((token as { text?: string }).text ?? "")
         },
       }],
     })
   } catch (error) {
     console.error("Markdown渲染失败:", error)
     // 兜底输出也需转义，防止原始内容注入
-    return `<pre>${escapeHtmlText(content)}</pre>`
+    return `<pre>${escapeHtml(content)}</pre>`
   }
-}
-
-/** 简单 HTML 转义（本地实现，避免与共享工具循环依赖） */
-function escapeHtmlText(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;")
 }
 
 export function truncateTitle(title: string, maxLen = 12): string {

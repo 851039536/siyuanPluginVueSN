@@ -1,5 +1,119 @@
-// 底部输入区域专属样式（RAG开关 + 选项栏）
+// 底部输入区域专属样式（顶栏 + 快捷操作 + 选项栏 + 输入行）
 @use "@/variables.scss" as *;
+
+// ============ 区块壳层 ============
+.bottom-input-section {
+  padding: 6px;
+  background: var(--b3-theme-surface);
+  border-top: 1px solid var(--b3-theme-surface-lighter);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.top-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.top-bar-center {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.top-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+// ============ 文档/块选择器 ============
+.doc-selector {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 200px;
+
+  .doc-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .clear-btn {
+    opacity: 0.6;
+    &:hover { opacity: 1; }
+  }
+}
+
+// ============ AI 快捷操作栏（平铺按钮） ============
+.quick-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-wrap: wrap;
+  padding: 2px 0;
+}
+
+.quick-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 7px;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface);
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  line-height: 1.4;
+
+  svg {
+    color: var(--b3-theme-primary);
+    opacity: 0.8;
+    flex-shrink: 0;
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--b3-theme-surface-light);
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-on-background);
+
+    svg { opacity: 1; }
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+// ============ 输入行 ============
+.input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+
+  .input-field { flex: 1; min-width: 0; }
+  .execute-btn { flex-shrink: 0; padding: 6px 10px !important; }
+}
 
 // ============ RAG 联网搜索开关 ============
 .rag-toggle {

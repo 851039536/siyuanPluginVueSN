@@ -1,5 +1,5 @@
 <template>
-  <div ref="panelRoot" class="ai-content-panel">
+  <div class="ai-content-panel">
     <!-- 内容显示区域 -->
     <div class="content-display-section">
       <MainContentArea
@@ -77,16 +77,15 @@
 
 <script setup lang="ts">
 // 核心导入
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from "vue"
+import { ref, computed, watch, onMounted, onUnmounted } from "vue"
 import type { Plugin } from "siyuan"
 import { showMessage } from "siyuan"
-import hljs from "highlight.js"
-import "highlight.js/styles/github.css"
 
 // 类型
 import type { DeepSeekReasoningEffort, GenerateOptions, ReviewResult, SkillItem, TargetDoc } from "@/types/ai"
-import { DEFAULT_SYSTEM_PROMPTS } from "./types"
+import { ACTION_META, DEFAULT_SYSTEM_PROMPTS } from "./types"
 import type { EditActionKey, ScanSkillsFn } from "./types"
+import { TimerRegistry, type TimerHandle } from "@/utils/timerRegistry"
 
 // 模块内部导入
 import { AIGeneratorStorage } from "./types/storage"
@@ -113,8 +112,6 @@ interface Props {
 
 const props = defineProps<Props>()
 const storage = ref<AIGeneratorStorage | null>(null)
-/** 面板根容器引用（代码高亮等 DOM 查询限定在面板内，避免误伤 Teleport 到 body 的弹窗） */
-const panelRoot = ref<HTMLElement | null>(null)
 
 // ============ 顶层独立状态（供多个 composable 共享）============
 
@@ -229,45 +226,10 @@ const canInsertSubDoc = computed(() =>
 
 // ============ 视图层逻辑 ============
 
-// Markdown 渲染
+// Markdown 渲染（代码高亮由 renderMarkdown → parseMarkdown 的 codeHighlight 通道完成）
 const renderedDisplayedMarkdown = computed(() => renderMarkdown(displayedContent.value))
 
-// 代码高亮（查询限定在面板根内，避免误伤 Teleport 到 body 的 SkillPreviewModal 等其他组件）
-const applyCodeHighlighting = async (selector: string) => {
-  await nextTick()
-  if (!panelRoot.value) return
-  const preBlocks = panelRoot.value.querySelectorAll(selector)
-  preBlocks.forEach((block) => {
-    if (!(block as HTMLElement).dataset.highlighted) {
-      hljs.highlightElement(block as HTMLElement)
-    }
-  })
-}
-
-watch(renderedDisplayedMarkdown, () =>
-  applyCodeHighlighting(".markdown-preview pre code"),
-)
-
 // ============ AI 编辑动作（薄壳包装，调用 composable 核心）============
-
-const actionPrompts: Record<EditActionKey, string> = {
-  polish: "请对以下文档进行润色优化，保持原有结构，提升语言质量和可读性，使表达更加专业、流畅。保持Markdown格式，直接输出优化后的完整文档内容：",
-  expand: "请对以下文档进行扩写，增加更详细的说明、例子和补充信息，使内容更加丰富和全面。保持Markdown格式，直接输出扩写后的完整文档内容：",
-  condense: "请对以下文档进行精简，去除冗余内容，保留核心要点，使表达更加简洁有力。保持Markdown格式，直接输出精简后的完整文档内容：",
-  fix: "请对以下文档进行错误检查和修正，包括拼写错误、语法错误、逻辑错误等。保持Markdown格式，直接输出修正后的完整文档内容：",
-  rewrite: "请用不同的表达方式重写以下文档，保持核心意思不变，但使用全新的语言风格和句式结构。保持Markdown格式，直接输出改写后的完整文档内容：",
-  summary: "请为以下文档生成一个简洁的总结，包括主要内容和关键要点。总结应该清晰明了，突出文档的核心信息。保持Markdown格式，直接输出总结内容：",
-}
-
-/** 快捷动作对应的审核指令描述（供审核阶段理解"用户需求"） */
-const ACTION_REVIEW_LABELS: Record<EditActionKey, string> = {
-  polish: "对文档进行润色优化",
-  expand: "对文档进行扩写",
-  condense: "对文档进行精简",
-  fix: "对文档进行错误修正",
-  rewrite: "对文档进行改写",
-  summary: "为文档生成总结",
-}
 
 const aiEditAction = async (action: EditActionKey) => {
   if (!editTargetDoc.value) {
@@ -284,11 +246,11 @@ const aiEditAction = async (action: EditActionKey) => {
   await executeGeneration(
     "AI编辑",
     () => buildGenerateOptions(
-      `${actionPrompts[action]}\n\n${editTargetDoc.value!.content}`,
+      `${ACTION_META[action].prompt}\n\n${editTargetDoc.value!.content}`,
       systemPromptText,
     ),
     undefined,
-    { reviewUserRequest: ACTION_REVIEW_LABELS[action] },
+    { reviewUserRequest: ACTION_META[action].reviewLabel },
   )
 }
 
@@ -345,7 +307,8 @@ ${editTargetDoc.value.content}`
 // ============ 设置持久化 ============
 
 let isSettingsLoaded = false
-let settingsSaveTimer: number | null = null
+const settingsSaveTimers = new TimerRegistry()
+let settingsSaveTimer: TimerHandle | null = null
 const SETTINGS_SAVE_DEBOUNCE_MS = 300
 /** 持久化的技能 id（null = 设置未加载/首次无记录，"" = 明确选择"无技能"） */
 let savedSkillId: string | null = null
@@ -371,16 +334,19 @@ const saveSettings = async () => {
 const loadSettings = async () => {
   if (!storage.value) return
   try {
-    const settings = await storage.value.settings.load()
-    if (settings) {
-      selectedModel.value = settings.model || ""
-      customModel.value = settings.customModel || ""
-      enableThinking.value = settings.enableThinking ?? false
-      reasoningEffort.value = settings.reasoningEffort ?? "high"
-      webSearch.value = settings.webSearch ?? false
-      enableReview.value = settings.enableReview ?? false
-      savedSkillId = settings.skillId ?? null
-    }
+    // 启动即以默认值兜底应用（无记录时按 DEFAULT_AI_SETTINGS 生效）；
+    // skillId 需区分"无记录"（保留 loadSkills 首技能默认选中）与 ""（明确无技能），故以 exists() 判定
+    const [hasSaved, settings] = await Promise.all([
+      storage.value.settings.exists(),
+      storage.value.settings.loadOrDefault(),
+    ])
+    selectedModel.value = settings.model || ""
+    customModel.value = settings.customModel || ""
+    enableThinking.value = settings.enableThinking
+    reasoningEffort.value = settings.reasoningEffort
+    webSearch.value = settings.webSearch
+    enableReview.value = settings.enableReview
+    savedSkillId = hasSaved ? settings.skillId : null
     isSettingsLoaded = true
   } catch (error) {
     console.error("从插件存储加载设置失败:", error)
@@ -389,8 +355,8 @@ const loadSettings = async () => {
 
 /** 防抖调度设置保存（多个 watcher 共用同一定时器） */
 const scheduleSaveSettings = () => {
-  if (settingsSaveTimer) clearTimeout(settingsSaveTimer)
-  settingsSaveTimer = window.setTimeout(() => saveSettings(), SETTINGS_SAVE_DEBOUNCE_MS)
+  settingsSaveTimers.clear(settingsSaveTimer)
+  settingsSaveTimer = settingsSaveTimers.setTimeout(() => saveSettings(), SETTINGS_SAVE_DEBOUNCE_MS)
 }
 
 watch(
@@ -429,10 +395,7 @@ onUnmounted(() => {
   cleanupRaf()
   handleStop() // 中止仍在进行中的生成请求，避免卸载后回调滞留
   window.removeEventListener("settingsUpdated", refreshProvider)
-  if (settingsSaveTimer) {
-    clearTimeout(settingsSaveTimer)
-    settingsSaveTimer = null
-  }
+  settingsSaveTimers.clearAll()
   // 卸载前 flush 最后一次设置变更（防抖窗口内的修改不落盘）
   saveSettings()
 })

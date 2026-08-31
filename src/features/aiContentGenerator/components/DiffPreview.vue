@@ -1,3 +1,4 @@
+<!-- Diff 对比预览组件：原文/新文差异视图（vue-diff），支持合并/分栏切换、增删行数统计与暗色主题适配 -->
 <template>
   <div class="diff-preview">
     <div class="diff-toolbar">
@@ -122,5 +123,6 @@ const diffStats = computed(() => {
 </script>
 
 <style scoped lang="scss">
+@use "../styles/DiffPreview.scss" as *;
 @use "../styles/index.scss";
 </style>

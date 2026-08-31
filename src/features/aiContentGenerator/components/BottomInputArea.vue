@@ -182,13 +182,8 @@ import Tag from "@/components/Tag.vue"
 import SkillSection from "./SkillSection.vue"
 import SkillPreviewModal from "./SkillPreviewModal.vue"
 import { truncateTitle } from "../utils"
+import { ACTION_META } from "../types"
 import type { EditActionKey } from "../types"
-
-interface QuickAction {
-  key: EditActionKey
-  label: string
-  icon: string
-}
 
 interface Props {
   isGenerating: boolean
@@ -227,14 +222,11 @@ const emit = defineEmits<{
   'update:enableReview': [value: boolean]
 }>()
 
-const quickActions: QuickAction[] = [
-  { key: "polish", label: "润色", icon: "#iconEdit" },
-  { key: "expand", label: "扩写", icon: "#iconAdd" },
-  { key: "condense", label: "精简", icon: "#iconMin" },
-  { key: "fix", label: "纠错", icon: "#iconCheck" },
-  { key: "rewrite", label: "改写", icon: "#iconRefresh" },
-  { key: "summary", label: "总结", icon: "#iconList" },
-]
+const quickActions = (Object.keys(ACTION_META) as EditActionKey[]).map((key) => ({
+  key,
+  label: ACTION_META[key].label,
+  icon: ACTION_META[key].icon,
+}))
 
 // 技能预览弹窗状态
 const showSkillPreview = ref(false)

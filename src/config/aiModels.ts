@@ -12,6 +12,12 @@ export interface ProviderModels {
   all: ModelOption[]
 }
 
+/** DeepSeek V4 系列模型名前缀（思考模式开关等前缀判断依赖） */
+export const DEEPSEEK_V4_MODEL_PREFIX = "deepseek-v4-"
+
+/** DeepSeek V4 Pro（审核等需要最强模型的场景默认使用） */
+export const DEEPSEEK_V4_PRO = "deepseek-v4-pro"
+
 export const PROVIDER_MODELS: Record<string, ProviderModels> = {
   tongyi: {
     common: [
@@ -28,7 +34,7 @@ export const PROVIDER_MODELS: Record<string, ProviderModels> = {
   deepseek: {
     common: [
       { value: "deepseek-v4-flash", label: "V4 Flash (快速)" },
-      { value: "deepseek-v4-pro", label: "V4 Pro (最强)" },
+      { value: DEEPSEEK_V4_PRO, label: "V4 Pro (最强)" },
     ],
     all: [],
   },

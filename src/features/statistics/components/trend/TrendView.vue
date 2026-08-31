@@ -37,22 +37,55 @@
         <h4 class="subsection-title">
           {{ i18n.historicalData }}
         </h4>
-        <div class="chart-metric-tabs">
-          <button
-            v-for="tab in metricTabs"
-            :key="tab.key"
-            class="metric-tab"
-            :class="{ active: activeMetric === tab.key }"
-            @click="activeMetric = tab.key"
-          >
-            <IconWrapper
-              :name="tab.icon"
-              :size="12"
-            /> {{ tab.label }}
-          </button>
+        <div class="chart-header-controls">
+          <!-- 图表模式切换：折线图 / K线图 -->
+          <div class="chart-mode-tabs">
+            <!-- 模式按钮："折线图" -->
+            <button
+              class="metric-tab"
+              :class="{ active: chartMode === 'line' }"
+              :title="i18n.chartModeLine"
+              @click="switchChartMode('line')"
+            >
+              <IconWrapper
+                name="chartLine"
+                :size="12"
+              />
+            </button>
+            <!-- 模式按钮："K线图" -->
+            <button
+              class="metric-tab"
+              :class="{ active: chartMode === 'kline' }"
+              :title="i18n.chartModeKLine"
+              @click="switchChartMode('kline')"
+            >
+              <IconWrapper
+                name="chartCandlestick"
+                :size="12"
+              />
+            </button>
+          </div>
+          <div class="chart-metric-tabs">
+            <button
+              v-for="tab in metricTabs"
+              :key="tab.key"
+              class="metric-tab"
+              :class="{ active: activeMetric === tab.key }"
+              @click="activeMetric = tab.key"
+            >
+              <IconWrapper
+                :name="tab.icon"
+                :size="12"
+              /> {{ tab.label }}
+            </button>
+          </div>
         </div>
       </div>
-      <div class="trend-chart-container">
+      <!-- 折线模式：手写 SVG 趋势图 -->
+      <div
+        v-if="chartMode === 'line'"
+        class="trend-chart-container"
+      >
         <svg
           class="trend-chart-svg"
           :viewBox="`0 0 ${chartWidth} ${chartHeight}`"
@@ -147,6 +180,15 @@
           </div>
         </div>
       </div>
+
+      <!-- K 线模式：chart.js 蜡烛图（实体=开盘/收盘，影线=最高/最低，叠加 7 日均线） -->
+      <KLineChart
+        v-else
+        :active="chartMode === 'kline'"
+        :historical-data="historicalData"
+        :metric="klineMetric"
+        :i18n="i18n"
+      />
     </div>
 
     <!-- 历史数据表格 -->
@@ -159,6 +201,7 @@
 
 <script setup lang="ts">
 import type { HistoricalDataItem } from "../../types"
+import type { KLineMetric } from "../../types/storage"
 import {
   computed,
   ref,
@@ -169,6 +212,7 @@ import {
   formatShortNumber,
 } from "../../utils"
 import HistoryTable from "./HistoryTable.vue"
+import KLineChart from "./KLineChart/index.vue"
 import PeriodCompareCard from "./PeriodCompareCard.vue"
 
 interface Props {
@@ -182,10 +226,31 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 // ===== 趋势图表状态 =====
-const activeMetric = ref<"totalWords" | "totalNotes" | "totalBlocks" | "todayCreated" | "todayModified">("totalWords")
+type MetricKey = "totalWords" | "totalNotes" | "totalBlocks" | "todayCreated" | "todayModified"
+
+/** 图表模式：折线（手写 SVG）/ K 线（chart.js 蜡烛图） */
+const chartMode = ref<"line" | "kline">("line")
+
+/** K 线模式支持的指标（仅累计型指标具备开盘/收盘语义） */
+const KLINE_METRIC_KEYS: KLineMetric[] = ["totalWords", "totalNotes"]
+
+const activeMetric = ref<MetricKey>("totalWords")
 const hoveredIndex = ref(-1)
 
-const metricTabs = computed(() => [
+/** 传给 KLineChart 的指标（收窄为 KLineMetric） */
+const klineMetric = computed<KLineMetric>(() =>
+  activeMetric.value === "totalNotes" ? "totalNotes" : "totalWords",
+)
+
+/** 切换图表模式：K 线模式下当前指标不受支持时重置为总字数 */
+function switchChartMode(mode: "line" | "kline"): void {
+  chartMode.value = mode
+  if (mode === "kline" && !KLINE_METRIC_KEYS.includes(activeMetric.value as KLineMetric)) {
+    activeMetric.value = "totalWords"
+  }
+}
+
+const ALL_METRIC_TABS = [
   {
     key: "totalWords" as const,
     icon: "edit" as const,
@@ -216,7 +281,12 @@ const metricTabs = computed(() => [
     label: props.i18n.modified,
     unit: props.i18n.notesUnit,
   },
-])
+]
+
+// K 线模式下指标仅剩累计型（总字数/总笔记）
+const metricTabs = computed(() => chartMode.value === "kline"
+  ? ALL_METRIC_TABS.filter((t) => KLINE_METRIC_KEYS.includes(t.key))
+  : ALL_METRIC_TABS)
 
 const activeMetricObj = computed(() => metricTabs.value.find((t) => t.key === activeMetric.value) || metricTabs.value[0])
 

@@ -11,6 +11,34 @@ export const STATISTICS_STORAGE_KEYS = {
   SETTINGS: "statistics-settings",
 } as const
 
+/** K 线图支持的指标（仅累计型指标具备开盘/收盘语义） */
+export type KLineMetric = "totalWords" | "totalNotes"
+
+/**
+ * 单指标日内采样：
+ * open = 当日首次快照值，high/low = 期间采样包络；
+ * close 即快照主体的最新值，不重复存储
+ */
+export interface OhlcSample {
+  open: number
+  high: number
+  low: number
+}
+
+/** 每日历史快照（statistics-history 键的存储结构） */
+export interface DailySnapshot {
+  date: string
+  dateLabel: string
+  totalNotes: number
+  totalWords: number
+  totalBlocks: number
+  todayCreated: number
+  todayModified: number
+  avgWordsPerDoc: number
+  /** 日内 OHLC 采样（旧数据无此字段 → 消费侧按日增量近似兜底） */
+  ohlc?: Partial<Record<KLineMetric, OhlcSample>>
+}
+
 /** 统计面板设置 */
 export interface StatisticsSettings {
   /** 是否开启定时自动刷新 */

@@ -1,0 +1,81 @@
+// K 线图（蜡烛图）样式：图例 + 横向滚动图表容器
+@use "@/variables.scss" as *;
+@use "./index.scss" as stats;
+
+.kline-chart {
+  padding: 8px 4px 4px;
+
+  // ===== 图例行 =====
+  .kline-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: $spacing-2;
+    padding: 0 6px $spacing-1;
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-on-surface);
+
+    .kline-legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      opacity: 0.7;
+    }
+
+    // 涨/跌/平色块（字面量须与 chartConfig.ts 的 UP/DOWN/FLAT_COLOR 保持一致）
+    .kline-legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+
+      &.kline-legend-dot--up {
+        background: #ef4444; // chartConfig UP_COLOR
+      }
+
+      &.kline-legend-dot--down {
+        background: #10b981; // chartConfig DOWN_COLOR
+      }
+
+      &.kline-legend-dot--flat {
+        background: #64748b; // chartConfig FLAT_COLOR
+      }
+    }
+
+    // 7 日均线（琥珀色横线，与 canvas 折线颜色一致）
+    .kline-legend-line {
+      width: 14px;
+      height: 2px;
+      background: #f59e0b; // chartConfig MA_COLOR
+      border-radius: 1px;
+    }
+
+    // 近似数据提示（存在无日内采样的历史日时展示）
+    .kline-legend-approx {
+      margin-left: auto;
+      opacity: 0.5;
+    }
+  }
+
+  // ===== 图表滚动容器（日期多时横向滚动，细滚动条便于拖动） =====
+  .kline-chart-scroll {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    &::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: var(--b3-border-color);
+      border-radius: 2px;
+    }
+  }
+
+  // 图表画布容器（固定高度撑起 canvas；min-width 由行内样式按蜡烛数动态控制）
+  .kline-chart-wrap {
+    height: 260px;
+    padding: $spacing-1 6px;
+  }
+}

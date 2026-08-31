@@ -1,6 +1,8 @@
 /**
  * 统计模块类型导出
  */
+import type { KLineMetric, OhlcSample } from "./storage"
+
 export * from "./storage"
 export * from "./rows"
 
@@ -109,6 +111,8 @@ export interface HistoricalDataItem {
   totalBlocks: number
   todayCreated: number
   todayModified: number
+  /** 日内 OHLC 采样（旧数据缺失 → K 线走近似兜底） */
+  ohlc?: Partial<Record<KLineMetric, OhlcSample>>
 }
 
 /**

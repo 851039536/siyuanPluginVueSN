@@ -14,8 +14,13 @@ import {
   executeSql,
   formatDateTime,
 } from "../queries/executeSql"
-import { StatisticsStorage } from "../types/storage"
+import {
+  type KLineMetric,
+  type OhlcSample,
+  StatisticsStorage,
+} from "../types/storage"
 import { formatDate } from "../utils"
+import { mergeOhlcSamples } from "../utils/candlestick"
 
 /**
  * 通过 SQL 查询指定日期的新建/修改文档数
@@ -143,6 +148,12 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
       const today = new Date()
       const dateKey = formatDate(today)
       const existingData = await storage.loadHistory()
+      // 合并当日旧条目的日内采样（首次写入时旧条目为空 → 采样以当前值为起点）
+      const prevOhlc = existingData[dateKey]?.ohlc
+      const currentOhlcValues: Record<KLineMetric, number> = {
+        totalWords: s.totalWords,
+        totalNotes: s.totalNotes,
+      }
       existingData[dateKey] = {
         date: dateKey,
         dateLabel: `${today.getMonth() + 1}/${today.getDate()}`,
@@ -152,6 +163,7 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
         todayCreated: s.todayCreated,
         todayModified: s.todayModified,
         avgWordsPerDoc: s.avgWordsPerDoc,
+        ohlc: mergeOhlcSamples(prevOhlc, currentOhlcValues),
       }
       await storage.saveHistory(existingData)
     } catch (error) {
@@ -219,6 +231,7 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
             dayData.todayCreated ?? 0,
             dayData.todayModified ?? 0,
             dayData.avgWordsPerDoc ?? 0,
+            dayData.ohlc,
           )
           result.push(record)
           lastKnownStats = {
@@ -290,6 +303,7 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
     todayCreated: number,
     todayModified: number,
     avgWordsPerDoc: number,
+    ohlc?: Partial<Record<KLineMetric, OhlcSample>>,
   ): {
     date: string
     dateLabel: string
@@ -299,6 +313,7 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
     todayCreated: number
     todayModified: number
     avgWordsPerDoc: number
+    ohlc?: Partial<Record<KLineMetric, OhlcSample>>
   } {
     return {
       date: formatDate(date),
@@ -309,6 +324,7 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
       todayCreated,
       todayModified,
       avgWordsPerDoc,
+      ohlc,
     }
   }
 

@@ -33,7 +33,7 @@
           :key="d.date"
           class="gpa-cal-day"
           :class="{ 'is-future': d.future, 'is-today': d.today }"
-          :style="{ background: heatCellColor(d.level, color) }"
+          :style="d.style"
           :title="d.tooltip"
         >
           <span class="gpa-cal-day-num">{{ d.dayNum }}</span>
@@ -49,7 +49,8 @@
 
 <script setup lang="ts">
 import { computed } from "vue"
-import { formatLocalDate, heatCellColor, heatLevel } from "../../utils"
+import { formatLocalDate, heatCellColor, heatCellTooltip, heatLevel } from "../../utils"
+import { ANALYSIS_WEEKDAY_KEYS } from "../../types"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -64,34 +65,23 @@ const props = defineProps<{
   color: string
 }>()
 
-/** 星期短名 i18n 键（数组下标 = Date.getDay） */
-const WEEKDAY_KEYS = [
-  "analysisWdSun", "analysisWdMon", "analysisWdTue", "analysisWdWed",
-  "analysisWdThu", "analysisWdFri", "analysisWdSat",
-]
-
-/** 单元格 tooltip（与热力图同款） */
-function cellTooltip(date: string, count: number): string {
-  const [y, m, d] = date.split("-").map(Number)
-  const dow = new Date(y, m - 1, d).getDay()
-  return String(props.i18n.analysisHeatTooltip || "")
-    .replace("{0}", date)
-    .replace("{1}", props.i18n[WEEKDAY_KEYS[dow]] || "")
-    .replace("{2}", String(count))
-}
-
 /** 按 weekStart 排序的星期表头（周一开头或周日开头） */
 const weekhead = computed(() => {
   const order: number[] = []
   for (let i = 0; i < 7; i++) order.push((props.weekStart + i) % 7)
-  return order.map((d) => props.i18n[WEEKDAY_KEYS[d]] || "")
+  return order.map((d) => props.i18n[ANALYSIS_WEEKDAY_KEYS[d]] || "")
 })
 
 interface DayCell {
   date: string
   dayNum: number
   count: number
-  level: number
+  /**
+   * 预计算的格子内联样式对象。
+   * 存对象而非颜色串：模板绑定同一引用后，Vue 不会把每次重渲染都当成 style 变更去 patch
+   * （一年 12 个月 × 31 天 ≈ 372 格，逐格 patch 是明显浪费）。
+   */
+  style: Record<string, string>
   future: boolean
   today: boolean
   tooltip: string
@@ -111,6 +101,8 @@ const months = computed<MonthCell[]>(() => {
   const [sy, sm, sd] = props.start.split("-").map(Number)
   const [ey, em, ed] = props.end.split("-").map(Number)
   const end = new Date(ey, em - 1, ed)
+  // 提到循环外：原先在每日分支里重复调用，12 个月 × 31 天会多算约 370 次格式化
+  const endStr = formatLocalDate(end)
   const todayStr = formatLocalDate(new Date())
   const list: MonthCell[] = []
   const cursor = new Date(sy, sm - 1, 1)
@@ -129,11 +121,11 @@ const months = computed<MonthCell[]>(() => {
         date,
         dayNum: d,
         count,
-        level: heatLevel(count),
+        style: { background: heatCellColor(heatLevel(count), props.color) },
         // 当前月内超出范围末尾（今天之后）的日期弱化展示
-        future: date > formatLocalDate(end),
+        future: date > endStr,
         today: date === todayStr,
-        tooltip: cellTooltip(date, count),
+        tooltip: heatCellTooltip(props.i18n, date, count),
       })
     }
     list.push({

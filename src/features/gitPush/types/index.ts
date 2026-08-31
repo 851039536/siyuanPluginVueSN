@@ -54,6 +54,8 @@ export type {
 
 // ── 重导出元数据（来自 meta.ts，独立模块切断循环引用）──
 export {
+  ANALYSIS_MONTH_KEYS,
+  ANALYSIS_WEEKDAY_KEYS,
   PLATFORM_META,
   FILE_STATUS_META,
   REMOTES,

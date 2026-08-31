@@ -8,7 +8,7 @@
     </div>
     <div class="gpa-commit-list">
       <div
-        v-for="c in pagedEntries"
+        v-for="c in pagedRows"
         :key="`${c.projectId}-${c.hash}`"
         class="gpa-commit-item"
       >
@@ -28,10 +28,11 @@
             @click.stop="emit('viewProject', c.projectId)"
           >{{ c.projectName }}</span>
           <span class="gpa-commit-author">{{ c.author }}</span>
+          <!-- 提交时间（相对时间预计算，完整 ISO 悬停可见） -->
           <span
             class="gpa-commit-date"
             :title="c.date"
-          >{{ relativeTime(c.date, i18n) }}</span>
+          >{{ c.timeText }}</span>
         </span>
       </div>
     </div>
@@ -64,9 +65,17 @@ const emit = defineEmits<{
   viewProject: [projectId: string]
 }>()
 
-/** 跨项目合并、按日期降序的提交流 */
+/**
+ * 跨项目合并、按日期降序的提交流。
+ * 先做一次时间戳映射再排序（Schwartzian transform）：直接写 `Date.parse(b.date) - Date.parse(a.date)`
+ * 会在每次比较时解析两次，条数上限选 "all" 时是 O(n log n) 次解析（万条 ≈ 28 万次），
+ * 预解析后降到 O(n) 次。
+ */
 const sortedEntries = computed(() =>
-  [...props.stats.entries].sort((a, b) => Date.parse(b.date) - Date.parse(a.date)),
+  props.stats.entries
+    .map((e) => ({ e, t: Date.parse(e.date) }))
+    .sort((a, b) => b.t - a.t)
+    .map((x) => x.e),
 )
 
 /** 本地分页（usePagedList 消除与 LogPanel 的 visibleCount/slice/loadMore 重复） */
@@ -76,6 +85,14 @@ const {
   hasMore,
   loadMore,
 } = usePagedList(sortedEntries, 50)
+
+/**
+ * 当前页行视图：相对时间在此预计算而非写在模板里。
+ * 只对已分页的可见行求值（初始 50 条），若挂在 sortedEntries 上则会对数万条全量求值。
+ */
+const pagedRows = computed(() =>
+  pagedEntries.value.map((c) => ({ ...c, timeText: relativeTime(c.date, props.i18n) })),
+)
 </script>
 
 <style lang="scss">

@@ -42,27 +42,18 @@
   margin-bottom: $spacing-3;
 }
 
+// 卡片三件套复用共享 mixin（与代码统计报告的 .gpr-card / .gpc-card 同构，消除第三份逐行重复）。
+// 复用后与另两处卡片一致地获得 hover 描边效果，属跨分区交互统一。
 .gpa-card {
-  text-align: center;
-  padding: $spacing-2 $spacing-1;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $radius-base;
-  background: var(--b3-theme-surface);
+  @include stat-card;
 }
 
 .gpa-card-value {
-  font-size: $font-size-lg; // 数据突出展示：统计数值大号字体
-  font-weight: $font-weight-bold;
-  font-family: $vp-mono;
-  line-height: $line-height-tight;
-  color: var(--b3-theme-on-surface);
+  @include stat-card-value;
 }
 
 .gpa-card-label {
-  font-size: $font-size-2xs; // 大写辅助标签语义，与 gp-label-base 一致（两级字号制）
-  opacity: 0.5;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  @include stat-card-label;
 }
 
 // 抓取失败提示（弱化展示，不打断正常结果阅读）
@@ -78,9 +69,11 @@
 }
 
 // ── 双栏区块（项目排行+最近记录 / 作者+内容类型 同排）──
+// auto-fit + minmax：窄 Dock 下自动降为单列。原先写死两列时，窄面板每栏仅约 140px，
+// 而条形行固定占掉 72px 标签 + 24px 计数 + 16px 间距，轨道只剩不到 30px，项目名几乎全是省略号。
 .gpa-pair {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: $spacing-3;
   margin-bottom: $spacing-3;
 
@@ -89,9 +82,11 @@
   }
 }
 
-// ── 固定高度区块（Pair 1 双栏：内容超高时列表内部滚动，标题保持可见）──
+// ── 限高区块（Pair 1 双栏：内容超高时列表内部滚动，标题保持可见）──
+// 用 max-height 而非固定 height：项目少时容器随内容收缩，不再撑出大片空白；
+// 网格 align 默认为 stretch，两栏仍以较高一侧为准，等高观感不变。
 .gpa-section--scroll {
-  height: 320px; // 固定高度（约 8 行），超出滚动
+  max-height: 320px; // 上限约 8 行，超出内部滚动
   display: flex;
   flex-direction: column;
 

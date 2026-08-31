@@ -417,6 +417,22 @@ export interface CommitAnalysisViewSettings {
 /** 热力等级阈值：0 次 → level 0；≥1 / ≥3 / ≥6 / ≥12 次 → level 1~4（提交粒度，区别于 statistics 的文档操作阈值） */
 export const HEAT_LEVEL_THRESHOLDS = [0, 1, 3, 6, 12] as const
 
+/**
+ * 提交分析星期短名 i18n 键（数组下标 = Date.getDay）。
+ * 热力图与日历共用：两者都需按 weekStart 取星期名，各存一份会漂移。
+ */
+export const ANALYSIS_WEEKDAY_KEYS = [
+  "analysisWdSun", "analysisWdMon", "analysisWdTue", "analysisWdWed",
+  "analysisWdThu", "analysisWdFri", "analysisWdSat",
+] as const
+
+/** 提交分析月份短名 i18n 键（数组下标 = 月份 0~11，热力图月份标签使用） */
+export const ANALYSIS_MONTH_KEYS = [
+  "analysisMonthJan", "analysisMonthFeb", "analysisMonthMar", "analysisMonthApr",
+  "analysisMonthMay", "analysisMonthJun", "analysisMonthJul", "analysisMonthAug",
+  "analysisMonthSep", "analysisMonthOct", "analysisMonthNov", "analysisMonthDec",
+] as const
+
 /** 项目列表视图模式（单一事实源，ViewMode 联合类型由此推导） */
 export const VIEW_MODES = ["all", "needsPush", "uncommitted", "starred", "archived"] as const
 export type ViewMode = typeof VIEW_MODES[number]

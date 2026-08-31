@@ -2,6 +2,10 @@
 @use "@/variables.scss" as *;
 @use "./mixins" as *;
 
+// 星期标签列宽度：月份标签行的左内边距与主体首列必须取同一个值，
+// 否则月份标签与周列错位，提取为变量杜绝两处硬编码漂移。
+$gpa-weekday-col: 28px;
+
 // 热力图容器（周数由行内 CSS 变量 --gpa-heat-weeks 驱动，独立 SCSS 无法用 v-bind）
 .gpa-heat {
   margin-bottom: $spacing-2;
@@ -18,7 +22,7 @@
   display: grid;
   grid-template-columns: repeat(var(--gpa-heat-weeks), 12px);
   gap: $spacing-px;
-  padding-left: calc(28px + #{$spacing-px}); // 对齐星期标签列（28px）+ 网格 gap
+  padding-left: calc(#{$gpa-weekday-col} + #{$spacing-px}); // 对齐星期标签列 + 网格 gap
   margin-bottom: $spacing-1;
 }
 
@@ -36,7 +40,7 @@
 // 主体：星期标签列 + 周网格（同 gap 同尺寸，行对齐）
 .gpa-heat-body {
   display: grid;
-  grid-template-columns: 28px 1fr;
+  grid-template-columns: $gpa-weekday-col 1fr;
   gap: $spacing-px;
 }
 

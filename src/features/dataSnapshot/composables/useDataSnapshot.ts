@@ -41,10 +41,8 @@ export function useDataSnapshot(plugin: Plugin) {
   const op = reactive<SnapshotOperationState>({
     creating: false,
     restoring: null,
-    uploading: null,
     downloading: null,
     removing: null,
-    loadingContent: null,
   })
 
   async function loadLocalSnapshots() {
@@ -60,16 +58,16 @@ export function useDataSnapshot(plugin: Plugin) {
 
   async function createSnapshotAction() {
     if (op.creating) return
-    const memoText = memo.value.trim() || `${i18n.value.createSnapshot || "快照"} ${new Date().toLocaleString()}`
+    const memoText = memo.value.trim() || `${i18n.value.createSnapshot} ${new Date().toLocaleString()}`
     op.creating = true
-    snapshotTask.progress({ label: i18n.value.createSnapshot || "创建快照" })
+    snapshotTask.progress({ label: i18n.value.createSnapshot })
     try {
       await createSnapshot(memoText)
       memo.value = ""
       await loadLocalSnapshots()
-      snapshotTask.complete(i18n.value.createSuccess || "快照创建成功")
+      snapshotTask.complete(i18n.value.createSuccess)
     } catch {
-      snapshotTask.fail(i18n.value.createFailed || "快照创建失败")
+      snapshotTask.fail(i18n.value.createFailed)
     } finally {
       op.creating = false
     }
@@ -83,13 +81,13 @@ export function useDataSnapshot(plugin: Plugin) {
   async function restoreSnapshot(id: string) {
     if (op.restoring) return
     op.restoring = id
-    snapshotTask.progress({ label: i18n.value.restoring || "正在恢复..." })
+    snapshotTask.progress({ label: i18n.value.restoring })
     try {
       await importRepo(id)
-      snapshotTask.complete(i18n.value.restoreSuccess || "快照恢复成功")
+      snapshotTask.complete(i18n.value.restoreSuccess)
     } catch (e: unknown) {
       console.error("[dataSnapshot] restore error:", e)
-      snapshotTask.fail(getErrorMessage(e) || i18n.value.restoreFailed || "快照恢复失败")
+      snapshotTask.fail(getErrorMessage(e) || i18n.value.restoreFailed)
     } finally {
       op.restoring = null
     }
@@ -109,14 +107,14 @@ export function useDataSnapshot(plugin: Plugin) {
   async function downloadFromCloud(tag: string, id: string) {
     if (op.downloading) return
     op.downloading = id
-    snapshotTask.progress({ label: i18n.value.downloading || "正在下载..." })
+    snapshotTask.progress({ label: i18n.value.downloading })
     try {
       await downloadCloudSnapshot(tag, id)
       await loadLocalSnapshots()
-      snapshotTask.complete(i18n.value.downloadSuccess || "快照下载成功")
+      snapshotTask.complete(i18n.value.downloadSuccess)
     } catch (e: unknown) {
       console.error("[dataSnapshot] download error:", e)
-      snapshotTask.fail(getErrorMessage(e) || i18n.value.downloadFailed || "快照下载失败")
+      snapshotTask.fail(getErrorMessage(e) || i18n.value.downloadFailed)
     } finally {
       op.downloading = null
     }
@@ -125,11 +123,14 @@ export function useDataSnapshot(plugin: Plugin) {
   async function removeCloudTag(tag: string) {
     if (op.removing) return
     op.removing = tag
+    snapshotTask.progress({ label: i18n.value.removeCloudTag })
     try {
       await removeCloudRepoTag(tag)
       await loadCloudSnapshots()
-    } catch {
-      // ignore
+      snapshotTask.complete(i18n.value.removeSuccess)
+    } catch (e: unknown) {
+      console.error("[dataSnapshot] removeCloudTag error:", e)
+      snapshotTask.fail(getErrorMessage(e) || i18n.value.removeFailed)
     } finally {
       op.removing = null
     }
@@ -140,7 +141,7 @@ export function useDataSnapshot(plugin: Plugin) {
     selectedSnapshot.value = null
   }
 
-  function switchTab(tab: SnapshotView) {
+  function switchTab(tab: "local" | "cloud") {
     currentView.value = tab
     selectedSnapshot.value = null
     if (tab === "cloud" && cloudTags.value.length === 0) {

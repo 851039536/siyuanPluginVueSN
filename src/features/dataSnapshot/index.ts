@@ -13,6 +13,5 @@ export function registerDataSnapshot(plugin: Plugin) {
     title: (plugin.i18n as any)?.dataSnapshot?.title || "数据快照",
     type: "data-snapshot-dock",
     width: 400,
-    i18n: (plugin.i18n as any)?.dataSnapshot || {},
   })
 }

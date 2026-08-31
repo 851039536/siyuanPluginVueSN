@@ -120,15 +120,15 @@
             class="chart-line"
             fill="none"
           />
-          <!-- 数据点 -->
+          <!-- 数据点（今日点放大高亮） -->
           <circle
             v-for="(pt, idx) in chartPoints"
             :key="`pt-${idx}`"
             :cx="pt.x"
             :cy="pt.y"
-            :r="isLastPoint(idx) ? 4 : 2.5"
+            :r="isTodayPoint(idx) ? 4 : 2.5"
             class="chart-dot"
-            :class="[{ 'chart-dot-today': isLastPoint(idx) }]"
+            :class="[{ 'chart-dot-today': isTodayPoint(idx) }]"
           />
           <!-- X轴日期标签 -->
           <text
@@ -184,7 +184,6 @@
       <!-- K 线模式：chart.js 蜡烛图（实体=开盘/收盘，影线=最高/最低，叠加 7 日均线） -->
       <KLineChart
         v-else
-        :active="chartMode === 'kline'"
         :historical-data="historicalData"
         :metric="klineMetric"
         :i18n="i18n"
@@ -211,6 +210,7 @@ import {
   formatNumber,
   formatShortNumber,
 } from "../../utils"
+import { KLINE_METRICS } from "../../utils/candlestick"
 import HistoryTable from "./HistoryTable.vue"
 import KLineChart from "./KLineChart/index.vue"
 import PeriodCompareCard from "./PeriodCompareCard.vue"
@@ -231,9 +231,6 @@ type MetricKey = "totalWords" | "totalNotes" | "totalBlocks" | "todayCreated" | 
 /** 图表模式：折线（手写 SVG）/ K 线（chart.js 蜡烛图） */
 const chartMode = ref<"line" | "kline">("line")
 
-/** K 线模式支持的指标（仅累计型指标具备开盘/收盘语义） */
-const KLINE_METRIC_KEYS: KLineMetric[] = ["totalWords", "totalNotes"]
-
 const activeMetric = ref<MetricKey>("totalWords")
 const hoveredIndex = ref(-1)
 
@@ -245,7 +242,7 @@ const klineMetric = computed<KLineMetric>(() =>
 /** 切换图表模式：K 线模式下当前指标不受支持时重置为总字数 */
 function switchChartMode(mode: "line" | "kline"): void {
   chartMode.value = mode
-  if (mode === "kline" && !KLINE_METRIC_KEYS.includes(activeMetric.value as KLineMetric)) {
+  if (mode === "kline" && !KLINE_METRICS.includes(activeMetric.value as KLineMetric)) {
     activeMetric.value = "totalWords"
   }
 }
@@ -285,7 +282,7 @@ const ALL_METRIC_TABS = [
 
 // K 线模式下指标仅剩累计型（总字数/总笔记）
 const metricTabs = computed(() => chartMode.value === "kline"
-  ? ALL_METRIC_TABS.filter((t) => KLINE_METRIC_KEYS.includes(t.key))
+  ? ALL_METRIC_TABS.filter((t) => KLINE_METRICS.includes(t.key))
   : ALL_METRIC_TABS)
 
 const activeMetricObj = computed(() => metricTabs.value.find((t) => t.key === activeMetric.value) || metricTabs.value[0])
@@ -435,8 +432,9 @@ function getXLabel(idx: number): string {
   return ""
 }
 
-function isLastPoint(idx: number): boolean {
-  return idx === props.historicalData.length - 1
+function isTodayPoint(idx: number): boolean {
+  // historicalData 为降序（最新在前）：索引 0 即今日
+  return idx === 0
 }
 
 // 标题行内联统计（日均新增/日均修改）

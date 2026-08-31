@@ -7,6 +7,8 @@ $modal-z-index: 1000;
 $modal-small-max-width: 500px;
 $modal-form-max-width: 900px;
 $card-border-radius: $radius-md;
+// 遮罩底色（模块内唯一透明度控制点；思源未提供遮罩语义 Token，故以局部变量收敛）
+$modal-overlay-bg: rgba(0, 0, 0, 0.5);
 
 @mixin modal-overlay {
   position: fixed;
@@ -14,7 +16,7 @@ $card-border-radius: $radius-md;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: $modal-overlay-bg;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -51,9 +53,9 @@ $card-border-radius: $radius-md;
   }
 
   &:focus {
-    outline: none;
     border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+    outline: 2px solid var(--b3-theme-primary-lightest);
+    outline-offset: -2px;
   }
 }
 

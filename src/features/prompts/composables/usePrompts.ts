@@ -1,3 +1,7 @@
+/**
+ * 提示词数据管理 composable
+ * 负责 prompts 列表的内存态与增删改（加载/迁移逻辑见 PromptsStorage.loadPromptsWithMigration）
+ */
 import type {
   Ref,
   ShallowRef,
@@ -6,18 +10,17 @@ import type { Prompt } from "../types"
 import type { PromptsStorage } from "../types/storage"
 import { ref } from "vue"
 
-/**
- * 提示词数据管理 composable
- * 负责 prompts 列表的加载、增删改及旧格式迁移
- */
-export function usePrompts(storageRef: ShallowRef<PromptsStorage | null>): {
+/** 提示词管理器对外接口（供弹窗组件以 manager 实例形式消费） */
+export type PromptsManager = {
   prompts: Ref<Prompt[]>
   loading: Ref<boolean>
   load: () => Promise<void>
   add: (prompt: Prompt) => Promise<void>
   update: (updated: Prompt) => Promise<void>
   remove: (id: string) => Promise<void>
-} {
+}
+
+export function usePrompts(storageRef: ShallowRef<PromptsStorage | null>): PromptsManager {
   const prompts = ref<Prompt[]>([])
   const loading = ref(true)
 
@@ -29,21 +32,9 @@ export function usePrompts(storageRef: ShallowRef<PromptsStorage | null>): {
     }
 
     try {
+      // 旧 key 回退与旧格式迁移均在 Storage 内完成
       const loaded = await s.loadPromptsWithMigration()
-      if (Array.isArray(loaded)) {
-        const needMigration = loaded.some(
-          (p) =>
-            !p.contents
-            || !Array.isArray(p.contents)
-            || (p.content && (!p.contents || p.contents.length === 0)),
-        )
-        if (needMigration && s.migratePrompts(loaded)) {
-          await s.prompts.save(loaded)
-        }
-        prompts.value = loaded
-      } else {
-        prompts.value = []
-      }
+      prompts.value = Array.isArray(loaded) ? loaded : []
     } catch (error) {
       console.error("加载提示词失败:", error)
       prompts.value = []

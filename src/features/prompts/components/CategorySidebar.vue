@@ -7,7 +7,7 @@
     <nav
       class="vp-sidebar-nav"
       role="navigation"
-      aria-label="分类导航"
+      :aria-label="i18n?.categoryNav"
     >
       <button
         v-for="cat in allCategories"
@@ -51,6 +51,7 @@
         :size="16"
         class="vp-sidebar-manage-icon"
       />
+      <!-- 入口文案："管理分类" -->
       {{ i18n?.manageCategories }}
     </button>
   </aside>
@@ -75,4 +76,5 @@ defineEmits<{
 
 <style lang="scss" scoped>
 @use '../styles/CategorySidebar.scss';
+@use '../styles/index.scss';
 </style>

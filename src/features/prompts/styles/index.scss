@@ -109,7 +109,7 @@
 
 // ==================== 响应式（仅模态基座 + 公共样式） ====================
 
-@media (max-width: 768px) {
+@media (max-width: $mobile-breakpoint) {
   .vp-modal {
     width: 95%;
     max-height: 95vh;

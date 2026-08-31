@@ -1,3 +1,7 @@
+/**
+ * 提示词库存储管理类
+ * PluginStorage + TypedStorage 槽位封装，含旧 key（siyuan-skills）与旧格式（content* → contents）迁移
+ */
 import type {
   Prompt,
   PromptCategory,
@@ -6,9 +10,6 @@ import { Plugin } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 
-/**
- * 提示词库存储管理类
- */
 export class PromptsStorage {
   private static readonly KEY_PROMPTS = "siyuan-prompts"
   private static readonly KEY_CATEGORIES = "siyuan-categories"
@@ -29,7 +30,8 @@ export class PromptsStorage {
   }
 
   /**
-   * 加载提示词数据：优先读取新 key，若为空则回退旧 key 并自动迁移
+   * 加载提示词数据：优先读取新 key，若为空则回退旧 key；
+   * 检测到旧格式（content/content2/content3）时自动迁移并回写，调用方无需关心迁移
    */
   async loadPromptsWithMigration(): Promise<Prompt[]> {
     let data = await this.prompts.loadOrDefault()
@@ -40,7 +42,28 @@ export class PromptsStorage {
         data = oldData
       }
     }
+    if (Array.isArray(data) && data.length > 0 && PromptsStorage.needsMigration(data)) {
+      if (this.migratePrompts(data)) {
+        await this.prompts.save(data)
+      }
+    }
     return data
+  }
+
+  /** 单条判定：是否为待迁移的旧格式条目（迁移触发检测与 migratePrompts 跳过条件共用） */
+  private static isLegacyFormat(prompt: Prompt): boolean {
+    if (prompt.contents && Array.isArray(prompt.contents) && prompt.contents.length > 0) {
+      return false
+    }
+    if (prompt.contents && Array.isArray(prompt.contents) && prompt.contents.length === 0 && !prompt.content) {
+      return false
+    }
+    return true
+  }
+
+  /** 批量判定：列表中是否存在待迁移条目 */
+  static needsMigration(prompts: Prompt[]): boolean {
+    return prompts.some((p) => PromptsStorage.isLegacyFormat(p))
   }
 
   /**
@@ -50,10 +73,7 @@ export class PromptsStorage {
   migratePrompts(prompts: Prompt[]): boolean {
     let migrated = false
     for (const prompt of prompts) {
-      if (prompt.contents && Array.isArray(prompt.contents) && prompt.contents.length > 0) {
-        continue
-      }
-      if (prompt.contents && Array.isArray(prompt.contents) && prompt.contents.length === 0 && !prompt.content) {
+      if (!PromptsStorage.isLegacyFormat(prompt)) {
         continue
       }
 

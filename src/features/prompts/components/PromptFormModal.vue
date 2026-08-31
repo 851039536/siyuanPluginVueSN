@@ -1,5 +1,5 @@
 <!--
-  提示词库 — 添加/编辑表单弹窗，支持动态内容块管理
+  提示词库 — 添加/编辑表单弹窗（自包含：按 editingId 自行查数，保存直调 promptManager）
 -->
 <template>
   <div
@@ -13,6 +13,7 @@
       @click.stop
     >
       <div class="vp-modal-header">
+        <!-- 弹窗标题："编辑提示词" / "添加提示词" -->
         <h2>{{ editingPrompt ? i18n?.editPrompt : i18n?.addPrompt }}</h2>
         <Button
           variant="ghost"
@@ -27,8 +28,11 @@
           class="vp-form"
           @submit.prevent="handleSave"
         >
+          <!-- 标题字段 -->
           <div class="vp-form-group">
+            <!-- 标签文案："标题" -->
             <label for="prompt-title">{{ i18n?.titleLabel }}</label>
+            <!-- 占位文案："请输入提示词标题" -->
             <input
               id="prompt-title"
               v-model="form.title"
@@ -40,8 +44,11 @@
             />
           </div>
 
+          <!-- 描述字段 -->
           <div class="vp-form-group">
+            <!-- 标签文案："描述" -->
             <label for="prompt-description">{{ i18n?.description }}</label>
+            <!-- 占位文案："请输入提示词描述" -->
             <textarea
               id="prompt-description"
               v-model="form.description"
@@ -51,7 +58,9 @@
             />
           </div>
 
+          <!-- 分类字段 -->
           <div class="vp-form-group">
+            <!-- 标签文案："分类" -->
             <label for="prompt-category">{{ i18n?.category }}</label>
             <select
               id="prompt-category"
@@ -72,6 +81,7 @@
 
           <!-- 动态内容块编辑区 -->
           <div class="vp-content-editor">
+            <!-- 标签文案："内容块" -->
             <label class="vp-form-label">{{ i18n?.contents }}</label>
             <div
               v-for="(block, index) in form.contents"
@@ -79,6 +89,7 @@
               class="vp-content-editor-item"
             >
               <div class="vp-content-editor-inputs">
+                <!-- 占位文案："内容标签"；无障碍标签："内容标签 N" -->
                 <input
                   v-model="block.label"
                   type="text"
@@ -86,6 +97,7 @@
                   :placeholder="i18n?.contentLabelPlaceholder"
                   :aria-label="`${i18n?.contentLabel} ${index + 1}`"
                 />
+                <!-- 占位文案："请输入提示词内容"；无障碍标签："内容 N" -->
                 <textarea
                   v-model="block.text"
                   class="vp-textarea"
@@ -96,6 +108,7 @@
                 />
               </div>
               <div class="vp-content-editor-actions">
+                <!-- 按钮提示："上移" -->
                 <Button
                   variant="ghost"
                   icon="up"
@@ -104,6 +117,7 @@
                   :disabled="index === 0"
                   @click="moveContentBlock(index, -1)"
                 />
+                <!-- 按钮提示："下移" -->
                 <Button
                   variant="ghost"
                   icon="down"
@@ -112,6 +126,7 @@
                   :disabled="index === form.contents.length - 1"
                   @click="moveContentBlock(index, 1)"
                 />
+                <!-- 按钮提示："删除内容块" -->
                 <Button
                   variant="danger"
                   icon="delete"
@@ -122,6 +137,7 @@
                 />
               </div>
             </div>
+            <!-- 按钮文案："添加内容块" -->
             <Button
               variant="secondary"
               icon="add"
@@ -133,6 +149,7 @@
           </div>
 
           <div class="vp-form-actions">
+            <!-- 按钮文案："取消" -->
             <Button
               type="button"
               variant="secondary"
@@ -140,6 +157,7 @@
             >
               {{ i18n?.cancel }}
             </Button>
+            <!-- 按钮文案："保存" -->
             <Button
               type="submit"
               variant="primary"
@@ -156,12 +174,14 @@
 <script setup lang="ts">
 import type {
   Prompt,
-  PromptCategory,
   PromptContent,
 } from "../types"
+import type { CategoryManager } from "../composables/useCategoryManager"
+import type { PromptsManager } from "../composables/usePrompts"
 
 import { showMessage } from "siyuan"
 import {
+  computed,
   reactive,
   watch,
 } from "vue"
@@ -169,15 +189,24 @@ import Button from "@/components/Button.vue"
 
 const props = defineProps<{
   show: boolean
-  editingPrompt: Prompt | null
-  categories: PromptCategory[]
+  /** 正在编辑的提示词 id（null = 新增） */
+  editingId: string | null
+  promptManager: PromptsManager
+  categoryManager: CategoryManager
   i18n?: Record<string, string>
 }>()
 
 const emit = defineEmits<{
   (e: "close"): void
-  (e: "save", prompt: Prompt): void
 }>()
+
+// manager 内的 Ref 经 props 传入不会自动解包，统一以 computed 暴露
+const editingPrompt = computed(() =>
+  props.editingId
+    ? props.promptManager.prompts.value.find((p) => p.id === props.editingId) ?? null
+    : null,
+)
+const categories = computed(() => props.categoryManager.categories.value)
 
 const form = reactive<{
   title: string
@@ -192,8 +221,8 @@ const form = reactive<{
 })
 
 function initForm(): void {
-  if (props.editingPrompt) {
-    const p = props.editingPrompt
+  if (editingPrompt.value) {
+    const p = editingPrompt.value
     form.title = p.title
     form.description = p.description
     form.contents =
@@ -205,7 +234,7 @@ function initForm(): void {
     form.title = ""
     form.description = ""
     form.contents = [createEmptyContentBlock()]
-    form.category = props.categories[0]?.id || "default"
+    form.category = categories.value[0]?.id || "default"
   }
 }
 watch(
@@ -241,7 +270,7 @@ function moveContentBlock(index: number, direction: -1 | 1): void {
   form.contents[target] = tmp
 }
 
-function handleSave(): void {
+async function handleSave(): Promise<void> {
   if (!form.title.trim()) {
     showMessage((props.i18n || {}).titleRequired!, 2000, "error")
     return
@@ -253,7 +282,7 @@ function handleSave(): void {
   }
 
   const prompt: Prompt = {
-    id: props.editingPrompt?.id || Date.now().toString(),
+    id: editingPrompt.value?.id || Date.now().toString(),
     title: form.title.trim(),
     description: form.description.trim(),
     contents: form.contents
@@ -266,7 +295,18 @@ function handleSave(): void {
     category: form.category,
   }
 
-  emit("save", prompt)
+  // 直接持久化：失败时 manager 已回滚内存态，弹窗保持打开供修改重试
+  try {
+    if (editingPrompt.value) {
+      await props.promptManager.update(prompt)
+    } else {
+      await props.promptManager.add(prompt)
+    }
+  } catch {
+    showMessage((props.i18n || {}).saveFailed!, 2000, "error")
+    return
+  }
+  emit("close")
 }
 </script>
 

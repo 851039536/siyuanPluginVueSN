@@ -1,5 +1,6 @@
 <!--
   提示词库主面板 — Modal 容器，管理提示词 CRUD + 分类 + 删除确认
+  编辑/分类弹窗自包含（父只传 editingId 最小标识符 + manager 实例）
 -->
 <template>
   <!-- 主弹窗 -->
@@ -15,9 +16,11 @@
           :size="24"
           class="vp-modal-icon"
         />
+        <!-- 面板标题："提示词库" -->
         <h2>{{ i18n?.title }}</h2>
       </div>
       <div class="vp-modal-actions">
+        <!-- 按钮提示："管理分类" -->
         <Button
           variant="ghost"
           size="xsmall"
@@ -42,34 +45,33 @@
       :category-counts="categoryCounts"
       :loading="loading"
       :i18n="i18n"
-      @update:search-query="searchQuery = $event"
-      @select-category="selectedCategory = $event"
-      @manage-categories="showCategoryManage = true"
-      @add-prompt="showAddModal = true; editingPrompt = null"
-      @edit-prompt="(p: Prompt) => { editingPrompt = p; showAddModal = true }"
-      @request-delete="deleteConfirmTarget = $event"
-      @copy-content="copyContent"
+      @update:searchQuery="searchQuery = $event"
+      @selectCategory="selectedCategory = $event"
+      @manageCategories="showCategoryManage = true"
+      @addPrompt="showAddModal = true; editingId = null"
+      @editPrompt="(p: Prompt) => { editingId = p.id; showAddModal = true }"
+      @requestDelete="deleteConfirmTarget = $event"
+      @copyContent="copyContent"
     />
   </div>
 
-  <!-- 添加/编辑弹窗 -->
+  <!-- 添加/编辑弹窗（自包含） -->
   <PromptFormModal
     :show="showAddModal"
-    :editing-prompt="editingPrompt"
-    :categories="categoriesRaw"
+    :editing-id="editingId"
+    :prompt-manager="promptsManager"
+    :category-manager="categoryManager"
     :i18n="i18n"
     @close="closeAddModal"
-    @save="handleSave"
   />
 
-  <!-- 分类管理弹窗 -->
+  <!-- 分类管理弹窗（自包含） -->
   <CategoryManageModal
     :show="showCategoryManage"
-    :categories="categoriesRaw"
+    :category-manager="categoryManager"
+    :prompt-manager="promptsManager"
     :i18n="i18n"
     @close="showCategoryManage = false"
-    @add="addCategory"
-    @delete="handleCategoryDelete"
   />
 
   <!-- 删除确认弹窗 -->
@@ -90,6 +92,7 @@ import {
   onMounted,
   ref,
   shallowRef,
+  watch,
 } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
@@ -100,6 +103,7 @@ import PromptFormModal from "./components/PromptFormModal.vue"
 import PromptsGrid from "./components/PromptsGrid.vue"
 import { useCategoryManager } from "./composables/useCategoryManager"
 import { usePrompts } from "./composables/usePrompts"
+import { DEFAULT_CATEGORY_COLOR } from "./types"
 import { PromptsStorage } from "./types/storage"
 
 const props = defineProps<{
@@ -112,28 +116,18 @@ const props = defineProps<{
 const showModal = ref(true)
 const showAddModal = ref(false)
 const showCategoryManage = ref(false)
-const editingPrompt = ref<Prompt | null>(null)
+/** 正在编辑的提示词 id（null = 新增；完整表单数据由 PromptFormModal 自行加载） */
+const editingId = ref<string | null>(null)
 const searchQuery = ref("")
 const selectedCategory = ref<string>("all")
 const deleteConfirmTarget = ref<string | null>(null)
 
 // --- 数据层 ---
 const storage = shallowRef<PromptsStorage | null>(null)
-const {
-  prompts,
-  loading,
-  load: loadPrompts,
-  add: addPrompt,
-  update: updatePrompt,
-  remove: removePrompt,
-} = usePrompts(storage)
-const {
-  categories: categoriesRaw,
-  allCategories,
-  load: loadCategories,
-  add: addCategory,
-  remove: removeCategory,
-} = useCategoryManager(storage, props.i18n)
+const promptsManager = usePrompts(storage)
+const { prompts, loading, load: loadPrompts, remove: removePrompt } = promptsManager
+const categoryManager = useCategoryManager(storage, props.i18n)
+const { categories: categoriesRaw, allCategories, load: loadCategories } = categoryManager
 
 // --- 分类统计 ---
 const categoryCounts = computed(() => {
@@ -180,8 +174,8 @@ const filteredPrompts = computed(() => {
   const metaMap = categoryMetaMap.value
   const defaultMeta = metaMap.get(categoriesRaw.value[0]?.id) || {
     name: (props.i18n || {}).defaultCategory!,
-    color: "#d97757",
-    bg: "#d9775720",
+    color: DEFAULT_CATEGORY_COLOR,
+    bg: `${DEFAULT_CATEGORY_COLOR}20`,
   }
   return result.map((prompt) => {
     const cat = metaMap.get(prompt.category) || defaultMeta
@@ -207,32 +201,17 @@ onMounted(async () => {
   }
 })
 
+// 所选分类被删除后回退"全部"（分类增删已下沉 CategoryManageModal，此处仅做视图状态对账）
+watch(categoriesRaw, (cats) => {
+  if (selectedCategory.value !== "all" && !cats.some((c) => c.id === selectedCategory.value)) {
+    selectedCategory.value = "all"
+  }
+})
+
 // --- 提示词操作 ---
 function closeAddModal(): void {
   showAddModal.value = false
-  editingPrompt.value = null
-}
-
-async function handleSave(prompt: Prompt): Promise<void> {
-  if (editingPrompt.value) {
-    await updatePrompt(prompt)
-  } else {
-    await addPrompt(prompt)
-  }
-  closeAddModal()
-}
-
-// --- 分类操作 ---
-async function handleCategoryDelete(id: string): Promise<void> {
-  const hasPrompts = prompts.value.some((p) => p.category === id)
-  if (hasPrompts) {
-    showMessage((props.i18n || {}).categoryNotEmpty!, 3000, "error")
-    return
-  }
-  await removeCategory(id)
-  if (selectedCategory.value === id) {
-    selectedCategory.value = "all"
-  }
+  editingId.value = null
 }
 
 // --- 删除确认 ---

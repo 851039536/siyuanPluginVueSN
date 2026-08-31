@@ -9,6 +9,7 @@
       class="vp-loading"
       role="status"
     >
+      <!-- 加载文案："加载中..." -->
       {{ i18n?.loading }}
     </div>
 
@@ -33,16 +34,18 @@
               :size="18"
               class="vp-search-icon"
             />
+            <!-- 搜索占位文案："搜索提示词..."；无障碍标签："搜索提示词" -->
             <input
               :value="searchQuery"
               type="text"
               :placeholder="i18n?.search"
               class="vp-input vp-input--search"
-              aria-label="搜索提示词"
+              :aria-label="i18n?.searchPrompts"
               @input="$emit('update:searchQuery', ($event.target as HTMLInputElement).value)"
             />
           </div>
 
+          <!-- 按钮提示："添加提示词" -->
           <Button
             variant="primary"
             size="xsmall"
@@ -59,7 +62,7 @@
             :key="prompt.id"
             class="vp-card"
             role="article"
-            :aria-label="`提示词: ${prompt.title}`"
+            :aria-label="`${i18n?.promptCardLabel}: ${prompt.title}`"
           >
             <div class="vp-card-header">
               <div class="vp-card-title">
@@ -115,7 +118,7 @@
                   class="vp-content-value"
                   role="button"
                   tabindex="0"
-                  :aria-label="`点击复制${slot.label}: ${prompt.title}`"
+                  :aria-label="`${i18n?.clickCopyAria}${slot.label}: ${prompt.title}`"
                   @click="$emit('copyContent', slot.text)"
                   @keydown.enter="$emit('copyContent', slot.text)"
                   @keydown.space.prevent="$emit('copyContent', slot.text)"
@@ -126,6 +129,7 @@
                       name="contentCopy"
                       :size="14"
                     />
+                    <!-- 提示文案："复制" -->
                     {{ i18n?.clickToCopy }}
                   </div>
                 </div>
@@ -138,6 +142,7 @@
             class="vp-empty"
             role="status"
           >
+            <!-- 空态文案："暂无提示词，点击添加" / "未找到匹配的提示词" -->
             {{ searchQuery ? i18n?.noPromptsFound : i18n?.noPrompts }}
           </div>
         </div>

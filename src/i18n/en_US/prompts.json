@@ -47,7 +47,13 @@
       "contentRequired": "At least one non-empty content block is required",
       "defaultCategory": "Default",
       "allCategory": "All",
-      "contentBlockLabel": "Content Block"
+      "contentBlockLabel": "Content Block",
+      "saveFailed": "Save failed",
+      "searchPrompts": "Search prompts",
+      "promptCardLabel": "Prompt",
+      "clickCopyAria": "Click to copy",
+      "categoryColor": "Category color",
+      "categoryNav": "Category navigation"
     }
   }
 }

@@ -1,3 +1,7 @@
+/**
+ * 分类数据管理 composable
+ * 负责 categories 列表的加载与增删（含"默认/全部"内置分类）
+ */
 import type {
   ComputedRef,
   Ref,
@@ -9,34 +13,34 @@ import {
   computed,
   ref,
 } from "vue"
+import { DEFAULT_CATEGORY_COLOR } from "../types"
 
-/**
- * 分类数据管理 composable
- * 负责 categories 列表的加载与增删
- */
-export function useCategoryManager(
-  storageRef: ShallowRef<PromptsStorage | null>,
-  i18n?: Record<string, string>,
-): {
+/** 分类管理器对外接口（供弹窗组件以 manager 实例形式消费） */
+export type CategoryManager = {
   categories: Ref<PromptCategory[]>
   allCategories: ComputedRef<PromptCategory[]>
   load: () => Promise<void>
   add: (category: PromptCategory) => Promise<void>
   remove: (id: string) => Promise<void>
-} {
+}
+
+export function useCategoryManager(
+  storageRef: ShallowRef<PromptsStorage | null>,
+  i18n?: Record<string, string>,
+): CategoryManager {
   const defName = (i18n || {}).defaultCategory!
   const allName = (i18n || {}).allCategory!
 
   const DEFAULT_CATEGORY: PromptCategory = {
     id: "default",
     name: defName,
-    color: "#d97757",
+    color: DEFAULT_CATEGORY_COLOR,
   }
 
   const ALL_CATEGORY: PromptCategory = {
     id: "all",
     name: allName,
-    color: "#d97757",
+    color: DEFAULT_CATEGORY_COLOR,
   }
 
   const categories = ref<PromptCategory[]>([{ ...DEFAULT_CATEGORY }])
@@ -52,7 +56,7 @@ export function useCategoryManager(
       if (Array.isArray(loaded) && loaded.length > 0) {
         categories.value = loaded.map((cat) => ({
           ...cat,
-          color: cat.color || "#d97757",
+          color: cat.color || DEFAULT_CATEGORY_COLOR,
         }))
       }
     } catch (error) {

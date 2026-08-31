@@ -17,6 +17,7 @@ src/features/everythingSearch/
 ├── types/
 │   ├── index.ts    # 类型定义 + EverythingSearchManager（addTab + openWindow）
 │   └── storage.ts  # 配置持久化
+├── composables/    # useSearchConfig（配置持久化）/ useResultActions（结果操作）
 ├── components/     # DialogHeader/SearchBar/SearchOptions/... 子组件
 └── styles/         # 组件专属 SCSS + _mixins
 ```

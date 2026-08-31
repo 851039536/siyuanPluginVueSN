@@ -27,6 +27,7 @@
           v-model="searchQuery"
           :i18n="i18n"
           :is-searching="searchState.status === 'loading'"
+          :can-search="hasPathFilter()"
           @search="handleSearch"
           @empty-search="handleSearch(true)"
           @clear="handleClear"
@@ -86,14 +87,11 @@
 <script setup lang="ts">
 import type {
   EverythingConfig,
-  EverythingSearchResult,
   SearchOptions as SearchOptionsType,
   SearchState,
 } from "./types"
-import {
-  getFrontend,
-  showMessage,
-} from "siyuan"
+import type { EverythingSearchOptions } from "./api"
+import { getFrontend } from "siyuan"
 import {
   computed,
   nextTick,
@@ -103,11 +101,10 @@ import {
   watch,
 } from "vue"
 import { usePlugin } from "@/main"
-import { copyToClipboard } from "@/utils/domUtils"
 import {
-  getElectronModules,
-  getElectronRemoteShell,
-} from "@/utils/nodeModules"
+  TimerRegistry,
+  type TimerHandle,
+} from "@/utils/timerRegistry"
 import {
   checkEverythingService,
   getFullPath,
@@ -122,11 +119,8 @@ import SearchBar from "./components/SearchBar.vue"
 import SearchOptions from "./components/SearchOptions.vue"
 import SearchResults from "./components/SearchResults.vue"
 import ServiceWarning from "./components/ServiceWarning.vue"
-import {
-  DEFAULT_CONFIG,
-  DEFAULT_OPTIONS,
-  EverythingSearchStorage,
-} from "./types/storage"
+import { useResultActions } from "./composables/useResultActions"
+import { useSearchConfig } from "./composables/useSearchConfig"
 
 // Props
 interface Props {
@@ -153,22 +147,24 @@ const plugin = usePlugin()
 // everythingSearch 命名空间的 i18n 文案（传递给各子组件）
 const i18n = computed(() => plugin.i18n.everythingSearch as unknown as Record<string, string>)
 
-// 存储管理
-const storage = new EverythingSearchStorage(plugin)
+// 配置持久化（存储加载/防抖保存/选项与配置更新/常用关键字管理）
+const {
+  config,
+  options,
+  loadConfig,
+  updateOption,
+  updateConfig,
+  addKeyword,
+  deleteKeyword,
+} = useSearchConfig(plugin)
 
 // 状态
 const searchQuery = ref("")
 const serviceAvailable = ref(true)
-const debounceTimer = ref<number | null>(null)
-const saveConfigTimer = ref<number | null>(null)
-// 正在从存储加载配置（避免加载触发 deep watch 回写）
-let isLoadingConfig = false
-
-// 配置
-const config = reactive<EverythingConfig>({ ...DEFAULT_CONFIG })
-
-// 搜索选项
-const options = reactive<SearchOptionsType>({ ...DEFAULT_OPTIONS })
+const searchTimerRegistry = new TimerRegistry()
+let debounceTimer: TimerHandle | null = null
+// 搜索请求序号（竞态守卫：并发搜索时丢弃过期响应，防止旧结果覆盖新结果）
+let searchSeq = 0
 
 /** 初始搜索状态（初始化与重置共用，消除重复字面量） */
 const createEmptySearchState = (): SearchState => ({
@@ -180,40 +176,6 @@ const createEmptySearchState = (): SearchState => ({
 // 搜索状态
 const searchState = reactive<SearchState>(createEmptySearchState())
 
-/** 从插件存储加载配置 */
-const loadConfig = async () => {
-  isLoadingConfig = true
-  try {
-    const savedData = await storage.init()
-    Object.assign(config, savedData.config)
-    Object.assign(options, savedData.options)
-  } catch (error) {
-    console.error("从插件存储加载配置失败:", error)
-  } finally {
-    // 延迟一个 tick 重置，确保 deep watch 已跳过本次加载触发的回调
-    await nextTick()
-    isLoadingConfig = false
-  }
-}
-
-/** 保存配置到插件存储（带防抖） */
-const saveConfigToPlugin = async () => {
-  // 清除之前的定时器
-  if (saveConfigTimer.value) {
-    clearTimeout(saveConfigTimer.value)
-  }
-
-  // 延迟保存，避免频繁写入
-  saveConfigTimer.value = window.setTimeout(async () => {
-    try {
-      await storage.config.save(config)
-      await storage.options.save(options)
-    } catch (error) {
-      console.error("保存配置到插件存储失败:", error)
-    }
-  }, 500)
-}
-
 /** 检查服务 */
 const checkService = async () => {
   serviceAvailable.value = await checkEverythingService(config)
@@ -223,6 +185,22 @@ const checkService = async () => {
 const hasPathFilter = () =>
   (options.includePathsEnabled && options.includePaths.length > 0)
   || (options.excludePathsEnabled && options.excludePaths.length > 0)
+
+/** 构造 API 请求参数（UI 搜索选项 → Everything 查询参数的显式映射） */
+const buildApiRequest = (query: string): EverythingSearchOptions => ({
+  query,
+  matchCase: options.matchCase,
+  matchWholeWord: options.matchWholeWord,
+  matchPath: options.matchPath,
+  regex: options.regex,
+  maxResults: options.maxResults,
+  sort: options.sort,
+  ascending: options.ascending,
+  includePathsEnabled: options.includePathsEnabled,
+  includePaths: options.includePaths,
+  excludePathsEnabled: options.excludePathsEnabled,
+  excludePaths: options.excludePaths,
+})
 
 /** 搜索 */
 const handleSearch = async (forceEmpty = false) => {
@@ -244,33 +222,17 @@ const handleSearch = async (forceEmpty = false) => {
   }
 
   // 取消之前的防抖定时器
-  if (debounceTimer.value) {
-    clearTimeout(debounceTimer.value)
-    debounceTimer.value = null
-  }
+  searchTimerRegistry.clear(debounceTimer)
+  debounceTimer = null
 
+  // 记录本次请求序号：并发场景下更早发起、更晚返回的响应直接丢弃
+  const seq = ++searchSeq
   searchState.status = "loading"
   searchState.errorMessage = ""
 
   try {
-    const results = await searchFiles(
-      {
-        query,
-        matchCase: options.matchCase,
-        matchWholeWord: options.matchWholeWord,
-        matchPath: options.matchPath,
-        regex: options.regex,
-        maxResults: options.maxResults,
-        sort: options.sort,
-        ascending: options.ascending,
-        includePathsEnabled: options.includePathsEnabled,
-        includePaths: options.includePaths,
-        excludePathsEnabled: options.excludePathsEnabled,
-        excludePaths: options.excludePaths,
-      },
-      config,
-    )
-
+    const results = await searchFiles(buildApiRequest(query), config)
+    if (seq !== searchSeq) return
     // 空文件夹查询模式下排除系统关键路径下的结果，防止误删导致系统异常
     searchState.results = forceEmpty
       ? results.filter(
@@ -279,6 +241,7 @@ const handleSearch = async (forceEmpty = false) => {
       : results
     searchState.status = searchState.results.length === 0 ? "empty" : "success"
   } catch (error) {
+    if (seq !== searchSeq) return
     // 搜索失败提示："搜索失败"
     searchState.errorMessage = (error as Error).message || i18n.value.searchFailed
     searchState.status = "error"
@@ -293,9 +256,7 @@ const resetSearchState = () => {
 
 /** 防抖搜索 */
 const debouncedSearch = () => {
-  if (debounceTimer.value) {
-    clearTimeout(debounceTimer.value)
-  }
+  searchTimerRegistry.clear(debounceTimer)
 
   const query = searchQuery.value.trim()
   if (!query && !hasPathFilter()) {
@@ -303,8 +264,9 @@ const debouncedSearch = () => {
     return
   }
 
-  debounceTimer.value = window.setTimeout(() => {
-    handleSearch()
+  debounceTimer = searchTimerRegistry.setTimeout(() => {
+    debounceTimer = null
+    void handleSearch()
   }, options.debounceDelay)
 }
 
@@ -339,24 +301,26 @@ const closeDialog = () => {
   emit("update:visible", false)
 }
 
-/** 处理选项更新 */
+/** 处理选项更新（当前有搜索词或路径过滤时立即重新搜索） */
 const handleOptionUpdate = (
   key: keyof SearchOptionsType,
   value: SearchOptionsType[keyof SearchOptionsType],
 ) => {
-  Object.assign(options, { [key]: value })
-  // 当前有搜索词或路径过滤时立即重新搜索
+  updateOption(key, value)
   if (searchQuery.value.trim() || hasPathFilter()) {
-    handleSearch()
+    void handleSearch()
   }
 }
 
-/** 处理配置更新 */
+/** 处理配置更新（host/port 变更后重检服务可用性） */
 const handleConfigUpdate = (
   key: keyof EverythingConfig,
   value: EverythingConfig[keyof EverythingConfig],
 ) => {
-  Object.assign(config, { [key]: value })
+  updateConfig(key, value)
+  if (key === "host" || key === "port") {
+    void checkService()
+  }
 }
 
 /** 插入高级搜索语法 */
@@ -375,104 +339,21 @@ const handleKeywordInsert = (keyword: string) => {
 
 /** 添加常用关键字 */
 const handleKeywordAdd = (keyword: string) => {
-  options.frequentKeywords.push(keyword)
+  addKeyword(keyword)
 }
 
 /** 删除常用关键字 */
 const handleKeywordDelete = (keyword: string) => {
-  const idx = options.frequentKeywords.indexOf(keyword)
-  if (idx !== -1) {
-    options.frequentKeywords.splice(idx, 1)
-  }
+  deleteKeyword(keyword)
 }
 
-/** 获取 Electron shell（nodeModules 统一封装，非 Electron 环境返回 null） */
-const getShell = () => getElectronModules()?.shell
-
-/** 获取主进程 remote shell（trashItem 依赖主进程 FileOperation，渲染进程直调会失败） */
-const getRemoteShell = () => getElectronRemoteShell()
-
-/** 打开项目 */
-const handleItemOpen = async (item: EverythingSearchResult) => {
-  const shell = getShell()
-  if (!shell) {
-    showMessage(`${i18n.value.openFailed}`, 3000, "error")
-    return
-  }
-  try {
-    await shell.openPath(getFullPath(item))
-  } catch (error) {
-    // 错误提示："打开失败"
-    showMessage(`${i18n.value.openFailed}: ${(error as Error).message}`, 3000, "error")
-  }
-}
-
-/** 在文件夹中显示 */
-const handleItemShowInFolder = (item: EverythingSearchResult) => {
-  const shell = getShell()
-  if (!shell) {
-    showMessage(`${i18n.value.operationFailed}`, 3000, "error")
-    return
-  }
-  try {
-    shell.showItemInFolder(getFullPath(item))
-  } catch (error) {
-    // 错误提示："操作失败"
-    showMessage(`${i18n.value.operationFailed}: ${(error as Error).message}`, 3000, "error")
-  }
-}
-
-/** 复制路径 */
-const handleItemCopyPath = async (item: EverythingSearchResult) => {
-  const ok = await copyToClipboard(getFullPath(item))
-  // 提示："路径已复制" / "复制失败"
-  showMessage(ok ? i18n.value.pathCopied : i18n.value.copyFailed, 2000, ok ? "info" : "error")
-}
-
-/** 正在删除的 item 集合（防止异步删除窗口内重复触发） */
-const deletingItems = new Set<EverythingSearchResult>()
-
-/** 删除文件（移入回收站：主进程 trashItem → moveItemToTrash → PowerShell 兜底） */
-const handleItemDelete = async (item: EverythingSearchResult) => {
-  // 同一 item 的删除正在进行时直接忽略（快速双击时第二击可能在 await 窗口内到达）
-  if (deletingItems.has(item)) {
-    return
-  }
-  deletingItems.add(item)
-  const shell = getRemoteShell() ?? getShell()
-  if (!shell) {
-    showMessage(`${i18n.value.deleteFailed}`, 3000, "error")
-    deletingItems.delete(item)
-    return
-  }
-  const fullPath = getFullPath(item)
-  try {
-    if (typeof shell.trashItem === "function") {
-      await shell.trashItem(fullPath)
-    } else if (typeof shell.moveItemToTrash === "function") {
-      shell.moveItemToTrash(fullPath)
-    } else {
-      // 兜底：PowerShell 移入回收站
-      const { execSync } = window.require("child_process") as typeof import("child_process")
-      execSync(
-        `powershell -NoProfile -Command "Add-Type -AssemblyName Microsoft.VisualBasic;[Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile('${fullPath.replace(/'/g, "''")}','OnlyErrorDialogs','SendToRecycleBin')"`,
-        { timeout: 5000 },
-      )
-    }
-    searchState.results = searchState.results.filter((r) => r !== item)
-    if (searchState.results.length === 0) {
-      searchState.status = "empty"
-    }
-    // 提示："文件已移入回收站"
-    showMessage(i18n.value.deletedToTrash, 2000, "info")
-  } catch (error) {
-    // 错误提示："删除失败"
-    showMessage(`${i18n.value.deleteFailed}: ${(error as Error).message}`, 3000, "error")
-  } finally {
-    // 清理标记，失败后允许再次尝试
-    deletingItems.delete(item)
-  }
-}
+// 结果操作（打开/资源管理器显示/复制路径/移入回收站，shell 瀑布 + PowerShell 兜底）
+const {
+  handleItemOpen,
+  handleItemShowInFolder,
+  handleItemCopyPath,
+  handleItemDelete,
+} = useResultActions(i18n, searchState)
 
 /**
  * 监听 visible 变化（immediate：tab 模式挂载时 visible 恒为 true 不变化，
@@ -485,7 +366,7 @@ watch(
       await nextTick()
       await loadConfig()
       searchBarRef.value?.focus()
-      checkService()
+      void checkService()
     }
   },
   { immediate: true },
@@ -496,26 +377,8 @@ watch(searchQuery, () => {
   debouncedSearch()
 })
 
-/** 监听配置变化 */
-watch(
-  [config, options],
-  () => {
-    // 加载配置触发的变更不回写存储（消除"读后即写"）
-    if (isLoadingConfig) return
-    saveConfigToPlugin().catch((error) => {
-      console.error("保存配置时出错:", error)
-    })
-  },
-  { deep: true },
-)
-
 onUnmounted(() => {
-  if (debounceTimer.value) {
-    clearTimeout(debounceTimer.value)
-  }
-  if (saveConfigTimer.value) {
-    clearTimeout(saveConfigTimer.value)
-  }
+  searchTimerRegistry.clearAll()
 })
 
 </script>

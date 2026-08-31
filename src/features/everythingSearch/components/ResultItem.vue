@@ -48,7 +48,10 @@
         :aria-label="openButtonTitle"
         @click.stop="handleOpen"
       >
-        <svg><use xlink:href="#iconOpen" /></svg>
+        <IconWrapper
+          name="openInNew"
+          :size="12"
+        />
       </button>
       <!-- 操作按钮提示："在资源管理器中显示" -->
       <button
@@ -57,7 +60,10 @@
         :aria-label="i18n.showInExplorer"
         @click.stop="handleShowInFolder"
       >
-        <svg><use xlink:href="#iconFolder" /></svg>
+        <IconWrapper
+          name="folder"
+          :size="12"
+        />
       </button>
       <!-- 操作按钮提示："复制路径" -->
       <button
@@ -66,7 +72,10 @@
         :aria-label="i18n.copyPath"
         @click.stop="handleCopyPath"
       >
-        <svg><use xlink:href="#iconCopy" /></svg>
+        <IconWrapper
+          name="copy"
+          :size="12"
+        />
       </button>
       <!-- 操作按钮提示："删除" -->
       <button
@@ -75,37 +84,20 @@
         :aria-label="i18n.delete"
         @click.stop="handleDelete"
       >
-        <svg><use xlink:href="#iconTrashcan" /></svg>
+        <IconWrapper
+          name="delete"
+          :size="12"
+        />
       </button>
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
-import type { EverythingSearchResult } from "../types"
+<!-- 模块级常量与纯函数（普通 script 块：每渲染进程仅执行一次，避免 script setup 内每实例重建） -->
+<script lang="ts">
 import type { IconKey } from "@/config/icons"
-import { computed } from "vue"
-import IconWrapper from "@/components/IconWrapper.vue"
-import { formatFileSize } from "@/utils/format"
-import { getFullPath } from "../api"
 
-interface Props {
-  item: EverythingSearchResult
-  /** everythingSearch 命名空间的 i18n 文案 */
-  i18n: Record<string, string>
-}
-
-interface Emits {
-  (e: "open", item: EverythingSearchResult): void
-  (e: "showInFolder", item: EverythingSearchResult): void
-  (e: "copyPath", item: EverythingSearchResult): void
-  (e: "delete", item: EverythingSearchResult): void
-}
-
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
-
-/** 扩展名 → IconWrapper 图标键一级映射（模块级常量，避免每次求值重建） */
+/** 扩展名 → IconWrapper 图标键映射 */
 const EXT_ICON_KEY_MAP: Record<string, IconKey> = {
   // 文档
   "pdf": "file",
@@ -180,6 +172,30 @@ const getFileExtension = (filename: string): string => {
   if (lastDot === -1 || lastDot === 0) return ""
   return filename.substring(lastDot + 1).toLowerCase()
 }
+</script>
+
+<script setup lang="ts">
+import type { EverythingSearchResult } from "../types"
+import { computed } from "vue"
+import IconWrapper from "@/components/IconWrapper.vue"
+import { formatFileSize } from "@/utils/format"
+import { getFullPath } from "../api"
+
+interface Props {
+  item: EverythingSearchResult
+  /** everythingSearch 命名空间的 i18n 文案 */
+  i18n: Record<string, string>
+}
+
+interface Emits {
+  (e: "open", item: EverythingSearchResult): void
+  (e: "showInFolder", item: EverythingSearchResult): void
+  (e: "copyPath", item: EverythingSearchResult): void
+  (e: "delete", item: EverythingSearchResult): void
+}
+
+const props = defineProps<Props>()
+const emit = defineEmits<Emits>()
 
 const fullPath = computed(() => getFullPath(props.item))
 const formattedSize = computed(() => formatFileSize(props.item.size))

@@ -4,7 +4,7 @@ import type { App } from "vue"
  * Everything本地搜索功能 - 类型定义 + 独立窗口 Manager
  * 承载方案（纯官方 API，双形态）：overlay 弹窗（index.vue Teleport）+ 独立窗口（addTab + openWindow）
  */
-import type { EverythingSearchResult } from "../api"
+import type { EverythingSearchOptions, EverythingSearchResult } from "../api"
 import {
   openTab,
   openWindow,
@@ -22,24 +22,13 @@ export type {
   EverythingSearchResult,
 } from "../api"
 
-/** 搜索选项 */
-export interface SearchOptions {
-  /** 区分大小写 */
-  matchCase: boolean
-  /** 全词匹配 */
-  matchWholeWord: boolean
-  /** 匹配路径 */
-  matchPath: boolean
-  /** 正则表达式 */
-  regex: boolean
-  /** 最大结果数 */
-  maxResults: number
+/**
+ * 搜索选项 = API 透传字段（必选化，见 api.ts EverythingSearchOptions）
+ * + UI 专属字段，消除与 API 参数类型的字段重复定义
+ */
+export interface SearchOptions extends Required<Omit<EverythingSearchOptions, "query">> {
   /** 防抖延迟（毫秒） */
   debounceDelay: number
-  /** 排序字段 */
-  sort: "name" | "path" | "size" | "date_modified"
-  /** 升序 */
-  ascending: boolean
   /** 高级搜索模式（显示语法帮助面板） */
   advancedMode: boolean
   /** 最小文件大小过滤值（0=禁用） */
@@ -52,14 +41,6 @@ export interface SearchOptions {
   maxSizeUnit: 'KB' | 'MB' | 'GB'
   /** 常用关键字列表 */
   frequentKeywords: string[]
-  /** 是否启用仅搜索路径过滤（关闭时 includePaths 不生效） */
-  includePathsEnabled: boolean
-  /** 仅搜索路径列表（每项一个路径，走 Everything path: 语法，AND 关系） */
-  includePaths: string[]
-  /** 是否启用排除路径过滤（关闭时 excludePaths 不生效） */
-  excludePathsEnabled: boolean
-  /** 排除路径列表（每项一个路径，走 Everything !path: 语法） */
-  excludePaths: string[]
 }
 
 /** 搜索结果状态 */

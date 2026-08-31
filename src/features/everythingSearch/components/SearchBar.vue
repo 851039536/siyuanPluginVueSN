@@ -12,11 +12,11 @@
       @keydown="handleKeydown"
       @clear="handleClear"
     />
-    <!-- 搜索按钮："搜索" -->
+    <!-- 搜索按钮："搜索"（无关键词时若路径过滤生效仍可搜索） -->
     <Button
       variant="primary"
       size="xsmall"
-      :disabled="isSearching || !modelValue?.trim()"
+      :disabled="isSearching || !(modelValue?.trim() || canSearch)"
       :loading="isSearching"
       @click="handleSearch"
     >
@@ -47,6 +47,8 @@ interface Props {
   modelValue: string
   /** 是否正在搜索 */
   isSearching: boolean
+  /** 无关键词时是否仍可搜索（路径过滤生效时为 true） */
+  canSearch?: boolean
   /** everythingSearch 命名空间的 i18n 文案 */
   i18n: Record<string, string>
 }
@@ -58,7 +60,9 @@ interface Emits {
   (e: "clear"): void
 }
 
-defineProps<Props>()
+withDefaults(defineProps<Props>(), {
+  canSearch: false,
+})
 
 const emit = defineEmits<Emits>()
 

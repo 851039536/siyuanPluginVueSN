@@ -83,6 +83,7 @@
 import type PluginSample from "@/index"
 import {
   onMounted,
+  onUnmounted,
   ref,
 } from "vue"
 import {
@@ -155,61 +156,70 @@ const handleDecryptReplace = (decryptedText: string) => {
   }
 }
 
+// window 事件监听器注册表（onUnmounted 统一移除，防止插件重载后累积重复监听器）
+const windowListeners: Array<{ type: string, listener: EventListener }> = []
+
+/** 注册 window 监听器并登记到注册表 */
+const addWindowListener = (type: string, listener: EventListener) => {
+  window.addEventListener(type, listener)
+  windowListeners.push({ type, listener })
+}
+
 onMounted(() => {
   window._sy_plugin_sample = {}
   window._sy_plugin_sample.openQRCodeDialog = openQRCodeDialog
   window._sy_plugin_sample.openPronunciationDialog = openPronunciationDialog
 
   // 监听打开二维码对话框事件
-  window.addEventListener("openQRCodeDialog", ((event: any) => {
+  addWindowListener("openQRCodeDialog", ((event: any) => {
     if (event.detail?.content) openQRCodeDialog(event.detail.content)
   }) as EventListener)
 
   // 监听打开谐音翻译对话框事件
-  window.addEventListener("openPronunciationDialog", ((event: any) => {
+  addWindowListener("openPronunciationDialog", ((event: any) => {
     if (event.detail?.content) openPronunciationDialog(event.detail.content)
   }) as EventListener)
 
   // 监听打开图片压缩器事件
-  window.addEventListener("openImageCompressor", () => {
+  addWindowListener("openImageCompressor", () => {
     showImageViewer.value = true
   })
 
   // 监听打开视频管理器事件
-  window.addEventListener("openVideoManager", () => {
+  addWindowListener("openVideoManager", () => {
     showVideoManager.value = true
   })
 
   // 监听打开图片生成事件（来自状态栏功能抽屉）
-  window.addEventListener("openImageCreation", () => {
+  addWindowListener("openImageCreation", () => {
     showImageCreation()
   })
 
   // 监听打开Everything搜索事件
-  window.addEventListener("openEverythingSearch", () => {
+  addWindowListener("openEverythingSearch", () => {
     everythingSearchVisible.value = true
   })
 
   // 监听打开密码箱事件
-  window.addEventListener("openPasswordVault", () => {
+  addWindowListener("openPasswordVault", () => {
     passwordVaultVisible.value = true
   })
 
   // 监听浮动工具栏"存密码"事件（携带选中文本）
-  window.addEventListener("openPasswordVaultAdd", ((event: any) => {
+  addWindowListener("openPasswordVaultAdd", ((event: any) => {
     if (event.detail?.content) {
       openPasswordVaultWithText(event.detail.content)
     }
   }) as EventListener)
 
   // 监听打开解密对话框事件
-  window.addEventListener("openDecryptDialog", ((event: any) => {
+  addWindowListener("openDecryptDialog", ((event: any) => {
     if (event.detail?.encryptedText)
       openDecryptDialogAction(event.detail.encryptedText)
   }) as EventListener)
 
   // 监听打开排版助手事件
-  window.addEventListener("openFormatAssistant", () => {
+  addWindowListener("openFormatAssistant", () => {
     const pluginInstance = plugin as any
     if (pluginInstance.__formatAssistant) {
       pluginInstance.__formatAssistant.open()
@@ -217,7 +227,7 @@ onMounted(() => {
   })
 
   // 监听打开书签标记设置事件
-  window.addEventListener("openBookmarkMarker", () => {
+  addWindowListener("openBookmarkMarker", () => {
     const pluginInstance = plugin as any
     if (pluginInstance.__bookmarkMarker) {
       pluginInstance.__bookmarkMarker.open()
@@ -225,57 +235,65 @@ onMounted(() => {
   })
 
   // 监听速记面板切换事件（来自状态栏按钮/功能抽屉）
-  window.addEventListener("toggleQuickNote", () => {
+  addWindowListener("toggleQuickNote", () => {
     const pluginInstance = plugin as any
     pluginInstance.__quickNote?.toggle()
   })
 
   // 监听速记弹窗一键恢复事件（来自状态栏恢复按钮，弹窗卡死时复位为居中展开态）
-  window.addEventListener("resetQuickNote", () => {
+  addWindowListener("resetQuickNote", () => {
     const pluginInstance = plugin as any
     pluginInstance.__quickNote?.reset()
   })
 
   // 监听打开HTML展示事件
-  window.addEventListener("openHtmlViewer", ((event: any) => {
+  addWindowListener("openHtmlViewer", ((event: any) => {
     htmlViewerVisible.value = true
   }) as EventListener)
 
   // 监听打开文本对比事件（来自超级面板 / 悬浮框）
-  window.addEventListener("openTextDiff", () => {
+  addWindowListener("openTextDiff", () => {
     getTextDiffManager()?.toggle()
   })
 
   // 监听打开单词阅读事件（来自悬浮框）
-  window.addEventListener("openFlashcardReading", () => {
+  addWindowListener("openFlashcardReading", () => {
     toggleFlashcardDialog()
   })
 
   // 监听打开提示词库事件（来自悬浮框）
-  window.addEventListener("openPrompts", () => {
+  addWindowListener("openPrompts", () => {
     showPromptsModal(plugin as any)
   })
 
   // 监听工具合集面板切换事件
-  window.addEventListener("toggleToolCollection", () => {
+  addWindowListener("toggleToolCollection", () => {
     toggleToolCollection()
   })
 
   // 监听 Skills 查看器打开事件（来自状态栏）
-  window.addEventListener("openSkillsViewer", () => {
+  addWindowListener("openSkillsViewer", () => {
     skillsViewerVisible.value = true
   })
 
   // 监听网站导航切换事件（来自状态栏）
-  window.addEventListener("toggleWebsiteNavigation", () => {
+  addWindowListener("toggleWebsiteNavigation", () => {
     showWebsiteNavigation(plugin as any)
   })
 
   // 监听全局关系列表切换事件（来自超级面板 action）
-  window.addEventListener("toggleGlobalRelations", () => {
+  addWindowListener("toggleGlobalRelations", () => {
     const pluginInstance = plugin as any
     pluginInstance.__globalRelations?.toggle()
   })
+})
+
+// 卸载时移除全部 window 监听器（插件重载不残留）
+onUnmounted(() => {
+  for (const { type, listener } of windowListeners) {
+    window.removeEventListener(type, listener)
+  }
+  windowListeners.length = 0
 })
 </script>
 

@@ -23,6 +23,20 @@
       }
     }
 
+    .chart-header-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    // 图表模式切换（折线 / K 线）：与指标 tabs 同构，右侧分隔线区分两组控件
+    .chart-mode-tabs {
+      display: flex;
+      gap: 4px;
+      padding-right: 8px;
+      border-right: 1px solid var(--b3-border-color);
+    }
+
     .chart-metric-tabs {
       display: flex;
       gap: 4px;

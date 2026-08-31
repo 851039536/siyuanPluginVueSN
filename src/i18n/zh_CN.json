@@ -669,7 +669,6 @@
     "excludePathsPlaceholder": "每行一个路径，如：D:\\备份",
     "host": "地址",
     "port": "端口",
-    "close": "关闭",
     "serviceNotConnected": "服务未连接",
     "retry": "重试",
     "advHelpTitle": "高级搜索语法",

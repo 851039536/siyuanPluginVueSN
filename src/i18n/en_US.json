@@ -669,7 +669,6 @@
     "excludePathsPlaceholder": "One path per line, e.g.: D:\\Backup",
     "host": "Host",
     "port": "Port",
-    "close": "Close",
     "serviceNotConnected": "Service not connected",
     "retry": "Retry",
     "advHelpTitle": "Advanced search syntax",

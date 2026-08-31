@@ -57,7 +57,7 @@ export function createVueDockApp(
     icon,
     title,
     type,
-    i18n = {},
+    i18n,
     extraProps = {},
   } = options
 
@@ -84,7 +84,8 @@ export function createVueDockApp(
       const app = createApp({
         setup() {
           return () => h(component as any, {
-            i18n,
+            // i18n 未传时不传该 prop，避免空对象以 attr 形式落到组件根元素
+            ...(i18n ? { i18n } : {}),
             plugin,
             ...extraProps,
           })

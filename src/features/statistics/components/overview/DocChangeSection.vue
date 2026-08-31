@@ -178,6 +178,13 @@
 
 <script setup lang="ts">
 import type {
+  getDateChangedDocs,
+  getDateRangeChangeStats,
+  getDeletedDocs,
+  getDeletedDocsInRange,
+  getRecentUpdatedDocs,
+} from "../../queries/docChangeStats"
+import type {
   DateChangedResult,
   DeletedDoc,
   RangeStatItem,
@@ -193,11 +200,12 @@ import { barPct, formatYmd, getTodayStr, toDashedYmd } from "../../utils"
 import DocChangeList from "./DocChangeList.vue"
 import RecentUpdatedList from "./RecentUpdatedList.vue"
 interface Props {
-  onGetDateChangedDocs?: (dateStr: string) => Promise<DateChangedResult>
-  onGetDateRangeChangeStats?: (startStr: string, endStr: string) => Promise<RangeStatItem[]>
-  onGetRecentUpdatedDocs?: (limit: number) => Promise<RecentUpdatedDoc[]>
-  onGetDeletedDocs?: (dateStr: string) => Promise<DeletedDoc[]>
-  onGetDeletedDocsInRange?: (startStr: string, endStr: string) => Promise<DeletedDoc[]>
+  // 查询函数签名直接从 queries 模块投影，避免手写镜像
+  onGetDateChangedDocs?: typeof getDateChangedDocs
+  onGetDateRangeChangeStats?: typeof getDateRangeChangeStats
+  onGetRecentUpdatedDocs?: typeof getRecentUpdatedDocs
+  onGetDeletedDocs?: typeof getDeletedDocs
+  onGetDeletedDocsInRange?: typeof getDeletedDocsInRange
   i18n?: Record<string, any>
 }
 
@@ -364,8 +372,9 @@ async function switchDocRange(range: DocRangeType) {
   switch (range) {
     case '3d': start.setDate(today.getDate() - 2); break
     case '7d': start.setDate(today.getDate() - 6); break
-    case '1m': start.setMonth(today.getMonth() - 1); break
-    case '6m': start.setMonth(today.getMonth() - 6); break
+    // 先置 1 再减月，避免 31 日等溢出进位（3/31 → 3/3）
+    case '1m': start.setDate(1); start.setMonth(today.getMonth() - 1); break
+    case '6m': start.setDate(1); start.setMonth(today.getMonth() - 6); break
   }
   const startStr = formatYmd(start)
 

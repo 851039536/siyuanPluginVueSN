@@ -107,6 +107,7 @@
 import type { Plugin } from "siyuan"
 import {
   computed,
+  onBeforeUnmount,
   onMounted,
   ref,
   watch,
@@ -208,6 +209,9 @@ const {
   refreshPeriodOnly,
 } = useStatistics()
 
+// 面板共享的存储实例（历史快照/自动刷新设置读写共用）
+const statisticsStorage = new StatisticsStorage(props.plugin)
+
 const {
   historicalData,
   createdChange,
@@ -215,7 +219,7 @@ const {
   notesChange,
   wordsChange,
   loadHistoricalData,
-} = useHistoryData(props.plugin, stats)
+} = useHistoryData(statisticsStorage, stats)
 
 // 里程碑自定义规则：与编辑弹窗共享同一份 composable 状态
 const { customRules, initMilestoneStorage } = useMilestoneStorage()
@@ -266,7 +270,7 @@ const autoRefreshInterval = ref(0)
 /** 启动时读取持久化设置：启用则立即应用定时器（加载起点在面板挂载，而非设置面板） */
 async function initAutoRefresh(): Promise<void> {
   try {
-    const settings = await new StatisticsStorage(props.plugin).loadSettings()
+    const settings = await statisticsStorage.loadSettings()
     autoRefreshInterval.value = settings.autoRefreshEnabled
       ? settings.refreshInterval
       : 0
@@ -283,7 +287,7 @@ function handleAutoRefreshChange(interval: number): void {
     refreshInterval: interval > 0 ? interval : DEFAULT_STATISTICS_SETTINGS.refreshInterval,
   }
   autoRefreshInterval.value = interval
-  new StatisticsStorage(props.plugin)
+  statisticsStorage
     .saveSettings(settings)
     .catch((error) => {
       console.error("保存统计自动刷新设置失败:", error)
@@ -322,6 +326,9 @@ async function refreshData(): Promise<void> {
   }
 }
 
+// 预载等待用 watcher：提升至组件作用域，卸载时必须停止（否则刷新失败时 watcher 泄露）
+let preloadStopWatch: (() => void) | null = null
+
 onMounted(async () => {
   await initMilestoneStorage(props.plugin)
   // 启动预载由 dockPreload 注册表统一执行（Dock init 懒加载，启动时不触发 onMounted）：
@@ -332,15 +339,21 @@ onMounted(async () => {
   if (preloadState === "ready") {
     await loadHistoricalData()
   } else if (preloadState === "loading") {
-    const stopWatch = watch(stats, async (s) => {
+    preloadStopWatch = watch(stats, async (s) => {
       if (!s) return
-      stopWatch()
+      preloadStopWatch?.()
+      preloadStopWatch = null
       await loadHistoricalData()
     })
   } else {
     await refreshData()
   }
   await initAutoRefresh()
+})
+
+onBeforeUnmount(() => {
+  preloadStopWatch?.()
+  preloadStopWatch = null
 })
 </script>
 

@@ -48,10 +48,10 @@
                 {{ i18n.metricLabel }}
               </th>
               <th class="col-value">
-                {{ data.periodALabel }}
+                {{ periodALabel }}
               </th>
               <th class="col-value">
-                {{ data.periodBLabel }}
+                {{ periodBLabel }}
               </th>
               <th class="col-delta">
                 <!-- 表头："变化" -->
@@ -96,8 +96,8 @@
         <!-- A/B 两期各子时段字数以双折线叠加对比（A 灰 / B 主色） -->
         <CompareLineChart
           :points="mergedBreakdown"
-          :period-a-label="data.periodALabel"
-          :period-b-label="data.periodBLabel"
+          :period-a-label="periodALabel"
+          :period-b-label="periodBLabel"
         />
       </div>
     </div>
@@ -118,7 +118,10 @@ import {
   computed,
   ref,
 } from "vue"
-import { formatNumber } from "../../utils"
+import {
+  formatNumber,
+  formatReportPeriod,
+} from "../../utils"
 import CompareLineChart from "./CompareLineChart.vue"
 import PeriodPicker from "./PeriodPicker.vue"
 
@@ -145,6 +148,14 @@ const monthB = ref(curMonth)
 
 const data = ref<ComparisonData | null>(null)
 const loading = ref(false)
+
+// 报告期本地化标签（结构化期间 → i18n 模板）
+const periodALabel = computed(() =>
+  data.value ? formatReportPeriod(data.value.periodA, i18n.value) : "",
+)
+const periodBLabel = computed(() =>
+  data.value ? formatReportPeriod(data.value.periodB, i18n.value) : "",
+)
 
 const yearOptions = computed(() => {
   const years = []

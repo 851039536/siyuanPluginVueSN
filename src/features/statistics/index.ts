@@ -4,19 +4,11 @@
 import { Plugin } from "siyuan"
 import { Statistics } from "./core"
 
-let statisticsInstance: Statistics | null = null
-
 /**
- * 注册数据统计功能
+ * 注册数据统计功能（实例自挂载到 plugin.__statistics，onunload 经 DESTROYABLE_KEYS 统一销毁）
  */
 export function registerStatistics(plugin: Plugin) {
-  statisticsInstance = new Statistics(plugin)
-  statisticsInstance.init()
-}
-
-/**
- * 获取统计实例
- */
-export function getStatisticsInstance(): Statistics | null {
-  return statisticsInstance
+  const instance = new Statistics(plugin)
+  ;(plugin as any).__statistics = instance
+  instance.init()
 }

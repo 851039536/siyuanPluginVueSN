@@ -44,13 +44,17 @@ export async function refreshStatisticsData(): Promise<void> {
 }
 
 // 仅刷新时段统计（柱状图数据）：切换时间范围时避免重跑全量统计
+// 请求时序计数：快速切换视图/范围时丢弃过期响应，防止旧数据覆盖新结果
+let periodSeq = 0
 export async function refreshPeriodStatistics(): Promise<void> {
   if (!stats.value) return
+  const seq = ++periodSeq
   const period = await getPeriodStats(viewMode.value, {
     dayRange: dayRange.value,
     monthYearRange: monthYearRange.value,
     selectedYear: selectedYear.value,
   })
+  if (seq !== periodSeq) return
   stats.value = {
     ...stats.value,
     ...period,

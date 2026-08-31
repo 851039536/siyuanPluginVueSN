@@ -423,11 +423,11 @@ const gridLines = computed(() => {
 function getXLabel(idx: number): string {
   const data = props.historicalData
   const total = data.length
-  if (total <= 8) return data[idx]?.dateLabel?.split(" ")[0] || ""
+  if (total <= 8) return data[idx]?.dateLabel || ""
   // 间隔显示
   const step = Math.ceil(total / 8)
   if (idx % step === 0 || idx === total - 1) {
-    return data[idx]?.dateLabel?.split(" ")[0] || ""
+    return data[idx]?.dateLabel || ""
   }
   return ""
 }

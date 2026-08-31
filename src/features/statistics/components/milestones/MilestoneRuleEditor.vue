@@ -8,7 +8,8 @@
     <div class="rule-editor-panel">
       <div class="rule-editor-header">
         <h3 class="rule-editor-title">
-          规则设置
+          <!-- 弹窗标题："规则设置" -->
+          {{ i18n.ruleEditorTitle }}
         </h3>
         <button
           class="rule-editor-close"
@@ -27,17 +28,26 @@
           class="tab-btn"
           :class="{ active: activeTab === 'milestones' }"
           @click="activeTab = 'milestones'"
-        >里程碑规则</button>
+        >
+          <!-- Tab："里程碑规则" -->
+          {{ i18n.rulesTab }}
+        </button>
         <button
           class="tab-btn"
           :class="{ active: activeTab === 'achievements' }"
           @click="activeTab = 'achievements'"
-        >自定义成就</button>
+        >
+          <!-- Tab："自定义成就" -->
+          {{ i18n.achievementsTab }}
+        </button>
         <button
           class="tab-btn"
           :class="{ active: activeTab === 'level' }"
           @click="activeTab = 'level'"
-        >等级设置</button>
+        >
+          <!-- Tab："等级设置" -->
+          {{ i18n.levelsTab }}
+        </button>
       </div>
 
       <!-- Milestones tab toolbar -->
@@ -46,7 +56,8 @@
         class="rule-editor-toolbar"
       >
         <label class="level-count-label">
-          每类里程碑级数:
+          <!-- 标签："每类里程碑级数:" -->
+          {{ i18n.levelCountLabel }}
           <input
             type="number"
             class="level-count-input"
@@ -59,7 +70,8 @@
           class="btn-reset-all"
           @click="onResetAll"
         >
-          恢复默认值
+          <!-- 按钮："恢复默认值" -->
+          {{ i18n.resetToDefault }}
         </button>
       </div>
 
@@ -68,14 +80,15 @@
         <div v-show="activeTab === 'milestones'">
           <div class="rule-editor-help">
             <p class="help-title">
-              使用说明
+              <!-- 帮助标题："使用说明" -->
+              {{ i18n.ruleHelpTitle }}
             </p>
             <ul class="help-list">
-              <li>每行对应一种统计类型，输入框为该类型各<b>等级</b>的达标目标值。</li>
-              <li>等级从 <b>Lv.1</b> 开始递增，值必须从小到大排列（第一个里程碑最简单，越往后越难）。</li>
-              <li>修改「每类里程碑级数」可统一调整所有类型的等级数量，新增的等级会自动按 1.3 倍递增。</li>
-              <li>留空某个等级或填入 0 表示该等级及之后不再生成里程碑。</li>
-              <li>点击「恢复默认值」将重置为系统预设的公式计算值。</li>
+              <li>{{ i18n.ruleHelp1 }}</li>
+              <li>{{ i18n.ruleHelp2 }}</li>
+              <li>{{ i18n.ruleHelp3 }}</li>
+              <li>{{ i18n.ruleHelp4 }}</li>
+              <li>{{ i18n.ruleHelp5 }}</li>
             </ul>
           </div>
 
@@ -103,7 +116,7 @@
               <span class="rule-row-label">{{ row.label }}</span>
               <button
                 class="btn-reset-row"
-                title="恢复此行默认值"
+                :title="i18n.resetRowHint"
                 @click="onResetRow(row.key)"
               >
                 ↺
@@ -124,12 +137,16 @@
         </div>
 
         <!-- ═══ Achievements Tab（自定义成就管理） ═══ -->
-        <AchievementsTab v-show="activeTab === 'achievements'" />
+        <AchievementsTab
+          v-show="activeTab === 'achievements'"
+          :i18n="i18n"
+        />
 
         <!-- ═══ Level Tab（等级设置） ═══ -->
         <LevelConfigTab
           v-show="activeTab === 'level'"
           :visible="visible"
+          :i18n="i18n"
         />
       </div>
 
@@ -138,14 +155,16 @@
           class="btn-cancel"
           @click="$emit('close')"
         >
-          关闭
+          <!-- 按钮："关闭" -->
+          {{ i18n.closeLabel }}
         </button>
         <button
           v-if="activeTab === 'milestones'"
           class="btn-save"
           @click="onSave"
         >
-          保存规则
+          <!-- 按钮："保存规则" -->
+          {{ i18n.saveRules }}
         </button>
       </div>
     </div>
@@ -176,9 +195,12 @@ interface Row {
 
 interface Props {
   visible: boolean
+  i18n?: Record<string, any>
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  i18n: () => ({}),
+})
 const emit = defineEmits<{
   close: []
 }>()
@@ -200,7 +222,7 @@ function buildRows(rules: Record<string, number[]>): Row[] {
   return MILESTONE_TYPES.map((t) => ({
     key: t.key,
     icon: t.icon,
-    label: t.label,
+    label: props.i18n[t.labelKey] ?? t.key,
     targets: [...(rules[t.key] ?? defaults?.[t.key] ?? [])],
   }))
 }

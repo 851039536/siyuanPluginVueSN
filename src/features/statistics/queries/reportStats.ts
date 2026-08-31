@@ -164,7 +164,7 @@ export async function getReportData(year?: number, month?: number): Promise<Repo
         : (new Date(reportYear, 1, 29).getDate() === 29 ? 366 : 365)
 
       return {
-        periodLabel: `${reportYear}年`,
+        period: { kind: "year", year: reportYear },
         totalWords: core.totalWords,
         totalNotesCreated: core.totalNotesCreated,
         avgDailyWords: daysInYear > 0 ? Math.round(core.totalWords / daysInYear) : 0,
@@ -204,7 +204,7 @@ export async function getReportData(year?: number, month?: number): Promise<Repo
       })
 
       return {
-        periodLabel: `${reportYear}年${reportMonth}月`,
+        period: { kind: "month", year: reportYear, month: reportMonth },
         totalWords: core.totalWords,
         totalNotesCreated: core.totalNotesCreated,
         avgDailyWords: lastDay > 0 ? Math.round(core.totalWords / lastDay) : 0,
@@ -218,7 +218,7 @@ export async function getReportData(year?: number, month?: number): Promise<Repo
   } catch (error) {
     console.error("获取报告数据失败:", error)
     return {
-      periodLabel: "",
+      period: { kind: "year", year: reportYear },
       totalWords: 0,
       totalNotesCreated: 0,
       avgDailyWords: 0,
@@ -363,8 +363,8 @@ export async function getComparisonData(
     getReportData(yearB, monthB),
   ])
   return {
-    periodALabel: a.periodLabel,
-    periodBLabel: b.periodLabel,
+    periodA: a.period,
+    periodB: b.period,
     a,
     b,
     deltas: {

@@ -74,18 +74,7 @@ const props = withDefaults(defineProps<Props>(), {
   modifiedChange: null,
   notesChange: null,
   wordsChange: null,
-  i18n: () => ({
-    totalNotes: "笔记总数",
-    totalWords: "总字数",
-    totalBlocks: "内容块",
-    totalAssets: "附件",
-    totalImages: "图片",
-    totalTags: "标签",
-    totalBacklinks: "双链",
-    todayCreated: "今日新增",
-    todayModified: "今日修改",
-    avgWordsPerDoc: "平均字数",
-  }),
+  i18n: () => ({}),
 })
 
 const coreItems = computed(() => [

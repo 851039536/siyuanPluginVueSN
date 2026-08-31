@@ -1,7 +1,7 @@
 // gitPush 工具函数与多路径解析
 import type { Ref } from "vue"
 import type { CommitAnalysisEntry, CommitAnalysisType, FileChange, GitOpLogEntry, GitProject, GitRemoteInfo, PlatformKey, RemotePushStatus } from "./types"
-import { COMMIT_ANALYSIS_TYPE_META, FILE_STATUS_META, HEAT_LEVEL_THRESHOLDS, PLATFORM_META } from "./types"
+import { ANALYSIS_WEEKDAY_KEYS, COMMIT_ANALYSIS_TYPE_META, FILE_STATUS_META, HEAT_LEVEL_THRESHOLDS, PLATFORM_META } from "./types"
 import type { IconKey } from "@/config/icons"
 import { getElectronModules, getNodeFsPathOs } from "@/utils/nodeModules"
 
@@ -356,6 +356,19 @@ export function heatCellColor(level: number, main: string): string {
   return `${main}${["33", "66", "99", "D9"][Math.min(level, 4) - 1]}`
 }
 
+/**
+ * 热力图/日历格子 tooltip："2026-08-01（周六）：3 次提交"。
+ * 两个视图共用同一文案口径（i18n 键 analysisHeatTooltip 占位 {0}日期 {1}星期 {2}次数）。
+ */
+export function heatCellTooltip(i18n: Record<string, any>, date: string, count: number): string {
+  const [y, m, d] = date.split("-").map(Number)
+  const dow = new Date(y, m - 1, d).getDay()
+  return String(i18n.analysisHeatTooltip || "")
+    .replace("{0}", date)
+    .replace("{1}", i18n[ANALYSIS_WEEKDAY_KEYS[dow]] || "")
+    .replace("{2}", String(count))
+}
+
 /** 通用计数排行：按 keyFn 分组计数，降序取前 limit 条（项目/作者/类型排行共用） */
 export function rankByCount<T>(items: T[], keyFn: (item: T) => string, limit: number): { key: string, count: number }[] {
   const map = new Map<string, number>()
@@ -406,7 +419,7 @@ export function withBarPct<T extends { count: number }>(
   rows: T[],
   opts?: { zeroAsEmpty?: boolean },
 ): (T & { pct: string })[] {
-  const max = Math.max(...rows.map((r) => r.count), 1)
+  const max = maxOf(rows.map((r) => r.count), 1)
   return rows.map((r) => ({
     ...r,
     pct: opts?.zeroAsEmpty && r.count === 0 ? "0%" : barPct(r.count, max),
@@ -431,7 +444,7 @@ export function maxOf(list: ReadonlyArray<number>, min: number): number {
 
 /** 行数排行条形/占比预计算：pct=相对最大新增行，share=新增行占总新增百分比（total=0 兜底防除零） */
 export function withLineBarPct<T extends { added: number }>(rows: T[]): (T & { pct: string, share: string })[] {
-  const max = Math.max(...rows.map((r) => r.added), 1)
+  const max = maxOf(rows.map((r) => r.added), 1)
   const total = rows.reduce((s, r) => s + r.added, 0) || 1
   return rows.map((r) => ({
     ...r,

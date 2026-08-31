@@ -124,8 +124,12 @@ function onColorChange(e: Event) {
   update({ color: (e.target as HTMLInputElement).value })
 }
 
-/** 点击菜单外部任意位置自动关闭 */
+/**
+ * 点击菜单外部任意位置自动关闭。
+ * 菜单未展开时直接返回：监听器随组件常驻，不加这道判断会让页面上每一次点击都白跑一次 closest() 查询。
+ */
 function closeOnOutside(e: MouseEvent) {
+  if (!show.value) return
   const target = e.target as HTMLElement | null
   if (target && !target.closest(".gpa-settings-wrap")) show.value = false
 }

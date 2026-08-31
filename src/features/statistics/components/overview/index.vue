@@ -52,12 +52,12 @@
       </h3>
       <BarChart
         :title="chartTitle"
-        :chart-data="stats?.dailyStats ?? []"
+        :chart-data="displayDailyStats"
         :i18n="i18n"
       />
 
       <WordRanking
-        :chart-data="stats?.dailyStats ?? []"
+        :chart-data="displayDailyStats"
         :i18n="i18n"
       />
     </div>
@@ -70,12 +70,13 @@ import {
   computed,
 } from "vue"
 import type {
-  ChangedDoc,
-  DeletedDoc,
-  RangeStatItem,
-  RecentUpdatedDoc,
-  StatisticsData,
-} from "../../types"
+  getDateChangedDocs,
+  getDateRangeChangeStats,
+  getDeletedDocs,
+  getDeletedDocsInRange,
+  getRecentUpdatedDocs,
+} from "../../queries/docChangeStats"
+import type { StatisticsData } from "../../types"
 import BarChart from "./BarChart.vue"
 import DocChangeSection from "./DocChangeSection.vue"
 import StatsCardsCompact from "./StatsCardsCompact.vue"
@@ -89,15 +90,13 @@ interface Changes {
   wordsChange: number | null
 }
 
+// 查询函数聚合：直接从 queries 模块投影类型，避免手写镜像签名
 interface OverviewQueries {
-  getDateChangedDocs: (dateStr: string) => Promise<{
-    newDocs: ChangedDoc[]
-    modifiedDocs: ChangedDoc[]
-  }>
-  getDateRangeChangeStats: (startStr: string, endStr: string) => Promise<RangeStatItem[]>
-  getRecentUpdatedDocs: (limit: number) => Promise<RecentUpdatedDoc[]>
-  getDeletedDocs: (dateStr: string) => Promise<DeletedDoc[]>
-  getDeletedDocsInRange: (startStr: string, endStr: string) => Promise<DeletedDoc[]>
+  getDateChangedDocs: typeof getDateChangedDocs
+  getDateRangeChangeStats: typeof getDateRangeChangeStats
+  getRecentUpdatedDocs: typeof getRecentUpdatedDocs
+  getDeletedDocs: typeof getDeletedDocs
+  getDeletedDocsInRange: typeof getDeletedDocsInRange
 }
 
 interface Props {
@@ -143,6 +142,32 @@ const chartTitle = computed(() => {
       .replace("{end}", String(props.selectedYear))
   }
   return i18n.value[key] || ""
+})
+
+// 星期名按 Date.getDay() 映射到 i18n 键（0=周日）
+const WEEKDAY_KEYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"]
+
+// 图表数据的本地化标签：日视图追加星期、年视图按 yearLabel 模板渲染（查询层只产出结构化值）
+const displayDailyStats = computed(() => {
+  const items = props.stats?.dailyStats ?? []
+  const periodKey = props.stats?.currentPeriod
+  if (periodKey === "periodYears") {
+    return items.map((item) => ({
+      ...item,
+      dateLabel: String(i18n.value.yearLabel || "")
+        .replace("{year}", item.date),
+    }))
+  }
+  if (periodKey?.startsWith("periodDays")) {
+    return items.map((item) => {
+      const weekday = i18n.value[WEEKDAY_KEYS[new Date(item.date).getDay()]]
+      return {
+        ...item,
+        dateLabel: weekday ? `${item.dateLabel} ${weekday}` : item.dateLabel,
+      }
+    })
+  }
+  return items
 })
 </script>
 

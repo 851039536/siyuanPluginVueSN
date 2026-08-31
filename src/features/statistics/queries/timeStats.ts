@@ -14,7 +14,7 @@ import {
   formatDateTime,
 } from "./executeSql"
 
-export async function getWordCountAggregation(
+async function getWordCountAggregation(
   startDate: string,
   endDate: string,
   subStrLen: number,
@@ -65,7 +65,7 @@ export async function getDailyStats(days: number): Promise<DailyWordCount[]> {
     result.push({
       date: formatDate(date),
       words,
-      dateLabel: `${date.getMonth() + 1}/${date.getDate()} ${["周日", "周一", "周二", "周三", "周四", "周五", "周六"][date.getDay()]}`,
+      dateLabel: `${date.getMonth() + 1}/${date.getDate()}`,
     })
   }
 
@@ -179,7 +179,7 @@ export async function getYearlyStats(selectedYear: number): Promise<DailyWordCou
     result.push({
       date: `${year}`,
       words,
-      dateLabel: `${year}年`,
+      dateLabel: `${year}`,
     })
   }
 

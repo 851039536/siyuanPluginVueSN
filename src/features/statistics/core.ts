@@ -66,7 +66,7 @@ export class Statistics {
       position: "RightBottom",
       width: 350,
       icon: "iconDatabase",
-      title: i18n.title || "数据统计",
+      title: i18n.title,
       type: "statistics-dock",
       i18n,
       extraProps: {

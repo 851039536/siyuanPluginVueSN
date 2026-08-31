@@ -1,25 +1,27 @@
 // 历史数据状态管理：快照保存/加载、环比计算
 
-import type { Plugin } from "siyuan"
 import type {
   ComputedRef,
   Ref,
 } from "vue"
-import type { StatisticsData } from "../types"
+import type {
+  HistoricalDataItem,
+  StatisticsData,
+} from "../types"
 import {
   computed,
   ref,
 } from "vue"
-import {
-  executeSql,
-  formatDateTime,
-} from "../queries/executeSql"
+import { executeSql } from "../queries/executeSql"
 import {
   type KLineMetric,
   type OhlcSample,
   StatisticsStorage,
 } from "../types/storage"
-import { formatDate } from "../utils"
+import {
+  formatDate,
+  formatYmd,
+} from "../utils"
 import { mergeOhlcSamples } from "../utils/candlestick"
 
 /**
@@ -27,7 +29,7 @@ import { mergeOhlcSamples } from "../utils/candlestick"
  * 替代本地 JSON 快照，数据始终从数据库实时查询
  */
 async function getDayCounts(date: Date): Promise<{ created: number, modified: number }> {
-  const dateStr = formatDateTime(date).substring(0, 8)
+  const dateStr = formatYmd(date)
   const rows = await executeSql(`
     SELECT
       (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d' AND substr(created, 1, 8) = '${dateStr}') as created,
@@ -40,16 +42,15 @@ async function getDayCounts(date: Date): Promise<{ created: number, modified: nu
   }
 }
 
-export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>): {
-  historicalData: Ref<any[]>
+export function useHistoryData(storage: StatisticsStorage, stats: Ref<StatisticsData | null>): {
+  historicalData: Ref<HistoricalDataItem[]>
   createdChange: ComputedRef<number | null>
   modifiedChange: ComputedRef<number | null>
   notesChange: ComputedRef<number | null>
   wordsChange: ComputedRef<number | null>
   loadHistoricalData: (days?: number) => Promise<void>
 } {
-  const storage = new StatisticsStorage(plugin)
-  const historicalData = ref<any[]>([])
+  const historicalData = ref<HistoricalDataItem[]>([])
 
   // 最近有活跃数据的日期（非 0 新增/修改）：回溯最多 7 天，
   // 避免前一天为 0 时显示"骤降/骤升"的误导性对比
@@ -140,14 +141,17 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
   /**
    * 将当前 stats 快照写入本地 JSON，供趋势/热力图使用
    * 替代原来的 60 秒定时采集，改为用户主动刷新时写入
+   * @param seq 发起时的请求序号，写回前比对，过期则放弃（避免并发读改写相互覆盖）
    */
-  async function saveTodaySnapshot(): Promise<void> {
+  async function saveTodaySnapshot(seq: number): Promise<void> {
     const s = stats.value
     if (!s) return
     try {
       const today = new Date()
       const dateKey = formatDate(today)
       const existingData = await storage.loadHistory()
+      // 时序控制：已有更新的加载发起，放弃本次写入
+      if (seq !== loadSeq) return
       // 合并当日旧条目的日内采样（首次写入时旧条目为空 → 采样以当前值为起点）
       const prevOhlc = existingData[dateKey]?.ohlc
       const currentOhlcValues: Record<KLineMetric, number> = {
@@ -162,7 +166,6 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
         totalBlocks: s.totalBlocks,
         todayCreated: s.todayCreated,
         todayModified: s.todayModified,
-        avgWordsPerDoc: s.avgWordsPerDoc,
         ohlc: mergeOhlcSamples(prevOhlc, currentOhlcValues),
       }
       await storage.saveHistory(existingData)
@@ -171,7 +174,11 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
     }
   }
 
+  // 请求时序计数：并发加载（手动刷新与预载回填）时丢弃过期结果
+  let loadSeq = 0
+
   async function loadHistoricalData(days?: number): Promise<void> {
+    const seq = ++loadSeq
     // 每次刷新时重置缓存，获取最新数据
     previousLoaded = false
     previousSnapshotLoaded = false
@@ -179,27 +186,24 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
     await ensurePreviousSnapshotLoaded()
 
     // 先写入当天快照，确保趋势/热力图数据是最新的
-    await saveTodaySnapshot()
+    await saveTodaySnapshot(seq)
+    if (seq !== loadSeq) return
 
     try {
       const data = await getHistoricalStatistics(days)
+      if (seq !== loadSeq) return
       historicalData.value = [...data].reverse()
     } catch (error) {
       console.error("加载历史数据失败:", error)
     }
   }
 
-  async function getHistoricalStatistics(days?: number): Promise<any[]> {
+  async function getHistoricalStatistics(days?: number): Promise<HistoricalDataItem[]> {
     try {
       const historyData = await storage.loadHistory()
       const today = new Date()
-      const result: any[] = []
-      let lastKnownStats: {
-        totalNotes: number
-        totalWords: number
-        totalBlocks: number
-        avgWordsPerDoc: number
-      } | null = null
+      const result: HistoricalDataItem[] = []
+      let lastKnownStats: Pick<HistoricalDataItem, "totalNotes" | "totalWords" | "totalBlocks"> | null = null
 
       let daysToProcess = days
       if (days === undefined) {
@@ -230,7 +234,6 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
             dayData.totalBlocks ?? 0,
             dayData.todayCreated ?? 0,
             dayData.todayModified ?? 0,
-            dayData.avgWordsPerDoc ?? 0,
             dayData.ohlc,
           )
           result.push(record)
@@ -238,7 +241,6 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
             totalNotes: record.totalNotes,
             totalWords: record.totalWords,
             totalBlocks: record.totalBlocks,
-            avgWordsPerDoc: record.avgWordsPerDoc,
           }
         } else if (isToday) {
           const s = stats.value
@@ -250,7 +252,6 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
                 s.totalBlocks,
                 s.todayCreated,
                 s.todayModified,
-                s.avgWordsPerDoc,
               )
             : lastKnownStats
               ? createHistoryRecord(
@@ -260,16 +261,14 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
                   lastKnownStats.totalBlocks,
                   0,
                   0,
-                  lastKnownStats.avgWordsPerDoc,
                 )
-              : createHistoryRecord(date, 0, 0, 0, 0, 0, 0)
+              : createHistoryRecord(date, 0, 0, 0, 0, 0)
           result.push(record)
           if (s) {
             lastKnownStats = {
               totalNotes: s.totalNotes,
               totalWords: s.totalWords,
               totalBlocks: s.totalBlocks,
-              avgWordsPerDoc: s.avgWordsPerDoc,
             }
           }
         } else {
@@ -281,9 +280,8 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
                 lastKnownStats.totalBlocks,
                 0,
                 0,
-                lastKnownStats.avgWordsPerDoc,
               )
-            : createHistoryRecord(date, 0, 0, 0, 0, 0, 0)
+            : createHistoryRecord(date, 0, 0, 0, 0, 0)
           result.push(record)
         }
       }
@@ -295,6 +293,7 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
     }
   }
 
+  /** 构造历史快照记录（统一为 HistoricalDataItem，视图层趋势/热力图/表格共用） */
   function createHistoryRecord(
     date: Date,
     totalNotes: number,
@@ -302,19 +301,8 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
     totalBlocks: number,
     todayCreated: number,
     todayModified: number,
-    avgWordsPerDoc: number,
     ohlc?: Partial<Record<KLineMetric, OhlcSample>>,
-  ): {
-    date: string
-    dateLabel: string
-    totalNotes: number
-    totalWords: number
-    totalBlocks: number
-    todayCreated: number
-    todayModified: number
-    avgWordsPerDoc: number
-    ohlc?: Partial<Record<KLineMetric, OhlcSample>>
-  } {
+  ): HistoricalDataItem {
     return {
       date: formatDate(date),
       dateLabel: `${date.getMonth() + 1}/${date.getDate()}`,
@@ -323,7 +311,6 @@ export function useHistoryData(plugin: Plugin, stats: Ref<StatisticsData | null>
       totalBlocks,
       todayCreated,
       todayModified,
-      avgWordsPerDoc,
       ohlc,
     }
   }

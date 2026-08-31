@@ -1,7 +1,6 @@
 // 里程碑工具函数：目标值计算 + 已达成数量统计 + 里程碑列表生成
 import type { IconKey } from "@/config/icons"
 import type { MilestoneDef, Tier, TypeMeta } from "../types/milestoneData"
-import type { MilestoneTypeKey } from "../types/milestoneRules"
 import { MILESTONE_LABEL_FNS, MILESTONE_TYPES } from "../types/milestoneRules"
 
 /**
@@ -102,11 +101,13 @@ export function tierOf(idx: number, total: number): Tier {
 
 /**
  * 生成某类型的里程碑列表（公式化无限里程碑，上界随当前值动态扩展）。
+ * @param i18n 用于标签本地化的 i18n 对象
  */
 export function generateMilestones(
   type: string,
   current: number,
-  customRules?: Record<string, number[]>,
+  customRules: Record<string, number[]> | undefined,
+  i18n: Record<string, any>,
   extra = 20,
 ): MilestoneDef[] {
   const meta = TYPE_META[type]
@@ -123,7 +124,7 @@ export function generateMilestones(
     result.push({
       id: `${type}-${n}`,
       icon: meta.icon as IconKey,
-      label: meta.labelFn(target),
+      label: meta.labelFn(target, i18n),
       target,
       type,
       tier: "common",
@@ -141,22 +142,9 @@ export function generateMilestones(
  * 生成所有类型的默认里程碑目标值（每种类型前 10 级），供编辑器初始化和重置使用。
  */
 export function generateDefaultRules(levels = 10): Record<string, number[]> {
-  const types: MilestoneTypeKey[] = [
-    "notes",
-    "words",
-    "blocks",
-    "tags",
-    "backlinks",
-    "assets",
-    "images",
-    "notebooks",
-    "code",
-    "streak",
-    "activeDays",
-  ]
   const rules: Record<string, number[]> = {}
-  for (const type of types) {
-    rules[type] = Array.from({ length: levels }, (_, i) => milestoneTargetOf(type, i + 1))
+  for (const { key } of MILESTONE_TYPES) {
+    rules[key] = Array.from({ length: levels }, (_, i) => milestoneTargetOf(key, i + 1))
   }
   return rules
 }

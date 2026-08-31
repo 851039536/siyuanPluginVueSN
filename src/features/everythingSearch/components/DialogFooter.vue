@@ -19,7 +19,7 @@
         size="xsmall"
         placeholder="80"
         :aria-label="i18n.port"
-        @update:model-value="updateConfig('port', Number($event))"
+        @update:model-value="updatePort"
       />
     </div>
     <div class="vp-footer__hints">
@@ -59,6 +59,14 @@ const updateConfig = (
   value: EverythingConfig[keyof EverythingConfig],
 ) => {
   emit("update:config", key, value)
+}
+
+/** 更新端口（非法值/空输入/越界不回写，防止 port 被置 0 导致请求静默失败） */
+const updatePort = (value: string | number | null) => {
+  const port = Number(value)
+  if (Number.isFinite(port) && port > 0 && port <= 65535) {
+    updateConfig("port", port)
+  }
 }
 </script>
 

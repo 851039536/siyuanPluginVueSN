@@ -11,6 +11,9 @@ export interface EverythingSearchResult {
   type: "file" | "folder"
 }
 
+/** 排序字段（单一定义，SearchOptions 经派生复用，避免联合类型重复声明） */
+export type EverythingSortField = "name" | "path" | "size" | "date_modified"
+
 export interface EverythingSearchOptions {
   query: string
   maxResults?: number
@@ -18,7 +21,7 @@ export interface EverythingSearchOptions {
   matchWholeWord?: boolean
   matchPath?: boolean
   regex?: boolean
-  sort?: "name" | "path" | "size" | "date_modified"
+  sort?: EverythingSortField
   ascending?: boolean
   /** 是否启用仅搜索路径过滤（默认 false） */
   includePathsEnabled?: boolean

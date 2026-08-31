@@ -30,15 +30,14 @@
       >{{ i18n.klineApproxHint }}</span>
     </div>
 
-    <!-- K 线图（chart.js 浮动条 + 影线插件；外层滚动容器保证日期多时可横向滑动） -->
+    <!-- K 线图（chart.js 浮动条 + 影线插件；外层滚动容器保证日期多时可横向滑动；
+         挂载/卸载由父组件模式分支控制，切走折线模式即销毁 canvas） -->
     <div class="kline-chart-scroll">
       <div
         class="kline-chart-wrap"
         :style="{ minWidth: `${minChartWidth}px` }"
       >
-        <!-- 非激活时卸载 canvas：避免 chart.js 实例与画布内存常驻 -->
         <Bar
-          v-if="active"
           :data="barData"
           :options="chartOptions"
           :plugins="chartPlugins"
@@ -81,8 +80,6 @@ interface Props {
   /** K 线主体指标（仅支持累计型指标） */
   metric: KLineMetric
   i18n: Record<string, any>
-  /** 是否处于激活展示状态（非激活时卸载 canvas） */
-  active: boolean
 }
 
 const props = defineProps<Props>()

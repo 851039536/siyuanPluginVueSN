@@ -1,9 +1,8 @@
 // K 线图（蜡烛图）样式：图例 + 横向滚动图表容器
 @use "@/variables.scss" as *;
-@use "./index.scss" as stats;
 
 .kline-chart {
-  padding: 8px 4px 4px;
+  padding: $spacing-2 $spacing-1 $spacing-1;
 
   // ===== 图例行 =====
   .kline-legend {
@@ -18,7 +17,7 @@
     .kline-legend-item {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: $spacing-1;
       opacity: 0.7;
     }
 

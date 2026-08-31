@@ -26,46 +26,46 @@
     .chart-header-controls {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: $spacing-2;
     }
 
     // 图表模式切换（折线 / K 线）：与指标 tabs 同构，右侧分隔线区分两组控件
-    .chart-mode-tabs {
+    .chart-mode-tabs,
+    .chart-metric-tabs {
       display: flex;
-      gap: 4px;
-      padding-right: 8px;
+      gap: $spacing-1;
+    }
+
+    .chart-mode-tabs {
+      padding-right: $spacing-2;
       border-right: 1px solid var(--b3-border-color);
     }
 
-    .chart-metric-tabs {
-      display: flex;
-      gap: 4px;
+    // 模式按钮与指标按钮共用（.chart-mode-tabs / .chart-metric-tabs 内的 .metric-tab）
+    .metric-tab {
+      padding: 3px 8px;
+      border-radius: stats.$radius-sm;
+      border: 1px solid transparent;
+      background: transparent;
+      font-family: stats.$font-mono;
+      font-size: $font-size-2xs;
+      font-weight: $font-weight-semibold;
+      color: var(--b3-theme-on-surface);
+      opacity: 0.55;
+      cursor: pointer;
+      white-space: nowrap;
 
-      .metric-tab {
-        padding: 3px 8px;
-        border-radius: stats.$radius-sm;
-        border: 1px solid transparent;
-        background: transparent;
-        font-family: stats.$font-mono;
-        font-size: $font-size-2xs;
-        font-weight: $font-weight-semibold;
-        color: var(--b3-theme-on-surface);
-        opacity: 0.55;
-        cursor: pointer;
-        white-space: nowrap;
+      &:hover {
+        opacity: 0.85;
+        background: rgba(var(--b3-theme-on-surface-rgb), 0.05);
+      }
 
-        &:hover {
-          opacity: 0.85;
-          background: rgba(var(--b3-theme-on-surface-rgb), 0.05);
-        }
-
-        &.active {
-          opacity: 1;
-          background: rgba(var(--b3-theme-primary-rgb), 0.1);
-          border-color: var(--b3-theme-primary);
-          color: var(--b3-theme-primary);
-          font-weight: $font-weight-bold;
-        }
+      &.active {
+        opacity: 1;
+        background: rgba(var(--b3-theme-primary-rgb), 0.1);
+        border-color: var(--b3-theme-primary);
+        color: var(--b3-theme-primary);
+        font-weight: $font-weight-bold;
       }
     }
 
@@ -233,6 +233,7 @@
 @include tablet-only {
   .trend-view {
     .trend-chart-section {
+      .chart-mode-tabs,
       .chart-metric-tabs {
         flex-wrap: wrap;
       }
@@ -255,13 +256,13 @@
         gap: 6px;
       }
 
-      .chart-metric-tabs {
+      .chart-header-controls {
         flex-wrap: wrap;
+      }
 
-        .metric-tab {
-          font-size: $font-size-2xs;
-          padding: 2px 6px;
-        }
+      .metric-tab {
+        font-size: $font-size-2xs;
+        padding: 2px 6px;
       }
     }
   }

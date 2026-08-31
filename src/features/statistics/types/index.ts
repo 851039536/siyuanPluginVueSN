@@ -67,7 +67,7 @@ export interface RangeStatItem {
 }
 
 /**
- * 块类型分布统计
+ * 块类型分布统计（label 为 i18n 键，渲染时查 i18n）
  */
 export interface BlockTypeStat {
   name: string
@@ -165,10 +165,19 @@ export interface NotebookRankingRow {
 }
 
 /**
+ * 报告期（结构化，文案由视图层按 i18n 模板组装）
+ */
+export interface ReportPeriod {
+  kind: "year" | "month"
+  year: number
+  month?: number
+}
+
+/**
  * 报告数据
  */
 export interface ReportData {
-  periodLabel: string
+  period: ReportPeriod
   totalWords: number
   totalNotesCreated: number
   avgDailyWords: number
@@ -204,8 +213,8 @@ export interface TrendPrediction {
  * 对比分析数据
  */
 export interface ComparisonData {
-  periodALabel: string
-  periodBLabel: string
+  periodA: ReportPeriod
+  periodB: ReportPeriod
   a: ReportData
   b: ReportData
   deltas: {

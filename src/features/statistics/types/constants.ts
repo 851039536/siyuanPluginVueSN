@@ -20,24 +20,25 @@ export const NOTEBOOK_COLORS = [
   "#10b981",
 ]
 
+// 块类型 → i18n 键（视图层渲染时查 i18n，数据层不存中文文案）
 export const BLOCK_TYPE_LABELS: Record<string, string> = {
-  d: "文档",
-  p: "段落",
-  h: "标题",
-  l: "有序列表",
-  i: "无序列表",
-  c: "代码块",
-  t: "表格",
-  b: "引用块",
-  html: "HTML块",
-  query_embed: "嵌入查询",
-  img: "图片",
-  audio: "音频",
-  video: "视频",
-  widget: "挂件",
-  iframe: "框架",
-  super: "超级块",
-  tag: "标签",
+  d: "blockTypeD",
+  p: "blockTypeP",
+  h: "blockTypeH",
+  l: "blockTypeL",
+  i: "blockTypeI",
+  c: "blockTypeC",
+  t: "blockTypeT",
+  b: "blockTypeB",
+  html: "blockTypeHtml",
+  query_embed: "blockTypeQueryEmbed",
+  img: "blockTypeImg",
+  audio: "blockTypeAudio",
+  video: "blockTypeVideo",
+  widget: "blockTypeWidget",
+  iframe: "blockTypeIframe",
+  super: "blockTypeSuper",
+  tag: "blockTypeTag",
 }
 
 export const IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"]

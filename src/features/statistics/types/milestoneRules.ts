@@ -19,88 +19,93 @@ export const MILESTONE_FIELD_MAP: Record<string, keyof StatisticsData> = {
   activeDays: "activeDays",
 }
 
-/** 稀有度中文标签（规则编辑弹窗各 Tab 共用） */
+/** 稀有度 i18n 键（规则编辑弹窗各 Tab 共用，渲染时查 i18n） */
 export const TIER_LABELS: Record<Tier, string> = {
-  common: "普通",
-  rare: "稀有",
-  epic: "史诗",
-  legendary: "传说",
+  common: "tierCommon",
+  rare: "tierRare",
+  epic: "tierEpic",
+  legendary: "tierLegendary",
 }
 
-/** 10 种里程碑类型 */
+/** 11 种里程碑类型（labelKey 为 i18n 键，渲染时查 i18n） */
 export const MILESTONE_TYPES = [
   {
     key: "notes",
-    label: "笔记数",
+    labelKey: "msTypeNotes",
     icon: "edit" as IconKey,
   },
   {
     key: "words",
-    label: "总字数",
+    labelKey: "msTypeWords",
     icon: "edit" as IconKey,
   },
   {
     key: "blocks",
-    label: "内容块数",
+    labelKey: "msTypeBlocks",
     icon: "format" as IconKey,
   },
   {
     key: "tags",
-    label: "标签数",
+    labelKey: "msTypeTags",
     icon: "list" as IconKey,
   },
   {
     key: "backlinks",
-    label: "双链数",
+    labelKey: "msTypeBacklinks",
     icon: "forward" as IconKey,
   },
   {
     key: "assets",
-    label: "附件数",
+    labelKey: "msTypeAssets",
     icon: "folder" as IconKey,
   },
   {
     key: "images",
-    label: "图片数",
+    labelKey: "msTypeImages",
     icon: "image" as IconKey,
   },
   {
     key: "notebooks",
-    label: "笔记本数",
+    labelKey: "msTypeNotebooks",
     icon: "folder" as IconKey,
   },
   {
     key: "code",
-    label: "代码块数",
+    labelKey: "msTypeCode",
     icon: "code" as IconKey,
   },
   {
     key: "streak",
-    label: "连续写作天数",
+    labelKey: "msTypeStreak",
     icon: "star" as IconKey,
   },
   {
     key: "activeDays",
-    label: "活跃天数",
+    labelKey: "msTypeActiveDays",
     icon: "list" as IconKey,
   },
 ] as const
 
 export type MilestoneTypeKey = typeof MILESTONE_TYPES[number]["key"]
 
-/** 各类型的显示格式化函数（供里程碑 chip 标签使用） */
-export const MILESTONE_LABEL_FNS: Record<string, (v: number) => string> = {
-  notes: (v) => v >= 10000 ? `${v / 10000}万篇` : `${v}篇`,
-  words: (v) => v >= 10000 ? `${v / 10000}万字` : `${v}字`,
-  blocks: (v) => v >= 1000 ? `${v / 1000}k块` : `${v}个内容块`,
-  tags: (v) => `${v}个标签`,
-  backlinks: (v) => `${v}条双链`,
-  assets: (v) => `${v}个附件`,
-  images: (v) => `${v}张图片`,
-  notebooks: (v) => `${v}个笔记本`,
-  code: (v) => `${v}个代码块`,
-  streak: (v) => v >= 365 ? `${Math.floor(v / 365)}年` : `连续${v}天`,
-  activeDays: (v) => v >= 365 ? `活跃${Math.floor(v / 365)}年` : `活跃${v}天`,
+/** 各类型的显示格式化函数（供里程碑 chip 标签使用；单位词走 i18n 占位符模板） */
+export const MILESTONE_LABEL_FNS: Record<string, (v: number, i18n: Record<string, any>) => string> = {
+  notes: (v, i18n) => v >= 10000 ? fillTemplate(i18n.mlNotesWan, v / 10000) : fillTemplate(i18n.mlNotes, v),
+  words: (v, i18n) => v >= 10000 ? fillTemplate(i18n.mlWordsWan, v / 10000) : fillTemplate(i18n.mlWords, v),
+  blocks: (v, i18n) => v >= 1000 ? fillTemplate(i18n.mlBlocksK, v / 1000) : fillTemplate(i18n.mlBlocks, v),
+  tags: (v, i18n) => fillTemplate(i18n.mlTags, v),
+  backlinks: (v, i18n) => fillTemplate(i18n.mlBacklinks, v),
+  assets: (v, i18n) => fillTemplate(i18n.mlAssets, v),
+  images: (v, i18n) => fillTemplate(i18n.mlImages, v),
+  notebooks: (v, i18n) => fillTemplate(i18n.mlNotebooks, v),
+  code: (v, i18n) => fillTemplate(i18n.mlCode, v),
+  streak: (v, i18n) => v >= 365 ? fillTemplate(i18n.mlStreakYear, Math.floor(v / 365)) : fillTemplate(i18n.mlStreak, v),
+  activeDays: (v, i18n) => v >= 365 ? fillTemplate(i18n.mlActiveDaysYear, Math.floor(v / 365)) : fillTemplate(i18n.mlActiveDays, v),
+}
+
+/** 将 {v} 占位符替换为数值（模板缺失时返回空串，避免键名裸露） */
+function fillTemplate(template: string | undefined, v: number): string {
+  return String(template ?? "").replace("{v}", String(v))
 }
 
 export const STORAGE_KEY_MILESTONE_RULES = "milestone-rules"
@@ -138,17 +143,17 @@ export interface CustomAchievement {
   threshold: number
 }
 
-/** 统计类型描述（供自定义成就编辑器使用） */
+/** 统计类型描述 i18n 键（供自定义成就编辑器使用，渲染时查 i18n） */
 export const STAT_TYPE_DESCRIPTIONS: Record<string, string> = {
-  notes: "笔记总数达到指定值",
-  words: "总字数达到指定值",
-  blocks: "内容块数达到指定值",
-  tags: "标签数达到指定值",
-  backlinks: "双链数达到指定值",
-  assets: "附件数达到指定值",
-  images: "图片数达到指定值",
-  notebooks: "笔记本数达到指定值",
-  code: "代码块数达到指定值",
-  streak: "连续写作天数达到指定值",
-  activeDays: "活跃天数达到指定值",
+  notes: "statTypeDescNotes",
+  words: "statTypeDescWords",
+  blocks: "statTypeDescBlocks",
+  tags: "statTypeDescTags",
+  backlinks: "statTypeDescBacklinks",
+  assets: "statTypeDescAssets",
+  images: "statTypeDescImages",
+  notebooks: "statTypeDescNotebooks",
+  code: "statTypeDescCode",
+  streak: "statTypeDescStreak",
+  activeDays: "statTypeDescActiveDays",
 }

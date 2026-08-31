@@ -20,23 +20,17 @@ import {
   ref,
 } from "vue"
 import type {
-  ChangedDoc,
-  HeatmapMetric,
-  StatisticsData,
-} from "../../types"
+  getHeatmapActivityData,
+  getHeatmapDailyDetail,
+} from "../../queries/heatmapStats"
+import type { StatisticsData } from "../../types"
 import { getHeatmapNotebooks } from "../../queries/heatmapStats"
 import HeatmapCard from "./HeatmapCard.vue"
 
+// 查询函数聚合：直接从 queries 模块投影类型，避免手写镜像签名
 interface HeatmapQueries {
-  getHeatmapActivityData: (
-    months: number,
-    metric: HeatmapMetric,
-    notebookId?: string,
-  ) => Promise<Map<string, number>>
-  getHeatmapDailyDetail: (dateStr: string) => Promise<{
-    newDocs: ChangedDoc[]
-    modifiedDocs: ChangedDoc[]
-  }>
+  getHeatmapActivityData: typeof getHeatmapActivityData
+  getHeatmapDailyDetail: typeof getHeatmapDailyDetail
 }
 
 interface Props {

@@ -15,18 +15,24 @@ export function pointsForLevel(level: number, curveMultiplier: number): number {
   return Math.floor(curveMultiplier * (level - 1) * Math.sqrt(level - 1))
 }
 
-/** 根据等级推导图标与称号（阶级前缀 + 基础称号循环） */
-export function getLevelInfo(level: number): { icon: string, title: string } {
+/** 阈值成就文案 i18n 键：ach{Type}{v}{Title|Desc}（type 首字母大写） */
+export function achI18nKey(type: string, v: number, suffix: "Title" | "Desc"): string {
+  return `ach${type.charAt(0).toUpperCase()}${type.slice(1)}${v}${suffix}`
+}
+
+/** 根据等级推导图标与称号键（阶级前缀键 + 基础称号键，渲染时查 i18n 拼接） */
+export function getLevelInfo(level: number): { icon: string, prefixKey: string, titleKey: string } {
   const tierIdx = Math.min(Math.floor((level - 1) / TIER_SIZE), TIER_PREFIXES.length - 1)
   const stage = (level - 1) % TIER_SIZE
   const base = BASE_TITLES[stage % BASE_TITLES.length]
   return {
     icon: base.icon,
-    title: TIER_PREFIXES[tierIdx] + base.title,
+    prefixKey: TIER_PREFIXES[tierIdx],
+    titleKey: base.title,
   }
 }
 
-/** 从阈值配置生成 AchievementDef 数组（check 闭包捕获传入的统计值快照） */
+/** 从阈值配置生成 AchievementDef 数组（title/description 为 i18n 键；check 闭包捕获传入的统计值快照） */
 export function buildThresholdAchievements(statCounts: Record<string, number>): AchievementDef[] {
   const result: AchievementDef[] = []
   for (const group of THRESHOLD_ACHIEVEMENTS) {
@@ -34,8 +40,8 @@ export function buildThresholdAchievements(statCounts: Record<string, number>): 
       result.push({
         id: `${group.prefix}-${group.type}-${item.v}`,
         icon: item.icon,
-        title: item.title,
-        description: item.desc,
+        title: achI18nKey(group.type, item.v, "Title"),
+        description: achI18nKey(group.type, item.v, "Desc"),
         tier: item.tier,
         check: () => (statCounts[group.type] ?? 0) >= item.v,
       })

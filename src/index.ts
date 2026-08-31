@@ -20,7 +20,6 @@ import {
   setFeatureFlagsDir,
 } from "@/config/settings"
 import {
-  getStatisticsInstance,
   registerAIContentGenerator,
   registerApiDebugger,
   registerBookmarkMarker,
@@ -98,6 +97,8 @@ export default class PluginSample extends Plugin {
   private __gitPush?: { destroy: () => void }
   /** 主题色实例（rebuildThemeColor 维护，onunload 经 DESTROYABLE_KEYS 销毁） */
   private __themeColor?: { destroy: () => void }
+  /** 数据统计实例（由 statistics 功能模块 register 内部自挂载，onunload 经 DESTROYABLE_KEYS 销毁） */
+  private __statistics?: { destroy: () => void }
 
   /** 持有持久资源（定时器/监听器/Modal）、需在 onunload 统一 destroy 的实例字段清单 */
   private static readonly DESTROYABLE_KEYS = [
@@ -125,6 +126,7 @@ export default class PluginSample extends Plugin {
     "__everythingSearch", // Everything 搜索（addTab 模型 + 独立窗口）
     "__ideaGenerator", // 灵感生成器（addTab 模型 + 独立窗口 + 全局事件监听）
     "__globalRelations", // 全局关系列表（Modal，register 内部自挂载）
+    "__statistics", // 数据统计（自动刷新定时器 + 事件监听器，register 内部自挂载）
   ] as const
 
   onload() {
@@ -191,9 +193,6 @@ export default class PluginSample extends Plugin {
       const instance = (this as any)[key] as { destroy?: () => void } | undefined
       instance?.destroy?.()
     }
-
-    // 清理统计数据资源（模块级单例，不挂在 plugin 实例上）
-    getStatisticsInstance()?.destroy()
 
     // 清理 Dock 预加载注册表
     clearDockPreloads()

@@ -258,14 +258,14 @@ const xLabels = computed(() => {
   for (let i = 0; i < n; i += labelStep.value) {
     labels.push({
       x: toX(i),
-      label: nb.data[i]?.dateLabel.split(" ")[0] ?? "",
+      label: nb.data[i]?.dateLabel ?? "",
     })
   }
   // 末点必显，保证终点日期可见
   if (n > 1 && (n - 1) % labelStep.value !== 0) {
     labels.push({
       x: toX(n - 1),
-      label: nb.data[n - 1]?.dateLabel.split(" ")[0] ?? "",
+      label: nb.data[n - 1]?.dateLabel ?? "",
     })
   }
   return labels

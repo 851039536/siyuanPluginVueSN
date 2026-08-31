@@ -11,12 +11,16 @@
           name="settings"
           :size="14"
         />
-        <span>规则设置</span>
+        <span>
+          <!-- 按钮："规则设置" -->
+          {{ i18n.ruleSettings }}
+        </span>
       </button>
     </div>
 
     <MilestoneRuleEditor
       :visible="showRuleEditor"
+      :i18n="i18n"
       @close="showRuleEditor = false"
     />
 
@@ -36,17 +40,20 @@
           {{ currentLevel.title }}
         </div>
         <div class="hero-meta">
-          {{ totalPoints }} 成就点
+          <!-- 成就点："{n} 成就点" -->
+          {{ pointsLine }}
         </div>
         <div class="hero-stats">
           <span class="hero-stat">
             <span class="hero-stat-num">{{ achievedCount }}</span>
-            <span class="hero-stat-key">里程碑</span>
+            <!-- 统计标签："里程碑" -->
+            <span class="hero-stat-key">{{ i18n.milestones }}</span>
           </span>
           <span class="hero-stat-divider">·</span>
           <span class="hero-stat">
             <span class="hero-stat-num">{{ unlockedAchievements.length }}</span>
-            <span class="hero-stat-key">成就</span>
+            <!-- 统计标签："成就" -->
+            <span class="hero-stat-key">{{ i18n.achievementsLabel }}</span>
           </span>
         </div>
       </div>
@@ -81,7 +88,8 @@
       v-if="nextLevel"
       class="level-next-row"
     >
-      <span class="level-next-label">距 Lv.{{ nextLevel.level }} {{ nextLevel.title }}</span>
+      <!-- 升级提示："距 Lv.N 称号" -->
+      <span class="level-next-label">{{ nextLevelHint }}</span>
       <div class="level-bar">
         <div
           class="level-bar-fill"
@@ -200,25 +208,7 @@ const props = withDefaults(defineProps<Props>(), {
   codeBlocks: 0,
   writingStreak: 0,
   activeDays: 0,
-  i18n: () => ({
-    milestones: "里程碑",
-    showAllMilestones: "显示全部 {count} 个里程碑",
-    nextGoal: "下一目标",
-    encourageAlmost: "只差一点点，加油！",
-    encourageHalfway: "已完成过半，继续努力！",
-    encourageStart: "千里之行，始于足下",
-    tierAll: "全部",
-    tierCommon: "普通",
-    tierRare: "稀有",
-    tierEpic: "史诗",
-    tierLegendary: "传说",
-    catAll: "全部",
-    catWriting: "写作达人",
-    catKnowledge: "知识管理",
-    catRich: "内容丰富",
-    catPersistence: "坚持不懈",
-    catMeta: "特殊",
-  }),
+  i18n: () => ({}),
 })
 
 const showRuleEditor = ref(false)
@@ -273,7 +263,7 @@ const statCounts = computed<Record<string, number>>(() => ({
 const allMilestones = computed((): MilestoneDef[] => {
   const result: MilestoneDef[] = []
   for (const type of Object.keys(TYPE_META)) {
-    result.push(...generateMilestones(type, statCounts.value[type] ?? 0, customRules.value))
+    result.push(...generateMilestones(type, statCounts.value[type] ?? 0, customRules.value, props.i18n))
   }
   return result
 })
@@ -368,13 +358,19 @@ const totalPoints = computed(() => {
     .reduce((sum, m) => sum + (tierPoints.value[m.tier] ?? 0), 0)
 })
 
+/** 称号本地化：阶级前缀键 + 基础称号键（中文前缀自带「·」、英文前缀自带空格） */
+function levelTitle(info: { prefixKey: string, titleKey: string }): string {
+  return `${props.i18n[info.prefixKey] ?? ""}${props.i18n[info.titleKey] ?? ""}`
+}
+
 const currentLevel = computed(() => {
   let level = 1
   while (pointsForLevel(level + 1, levelConfig.value.curveMultiplier) <= totalPoints.value) level++
   const info = getLevelInfo(level)
   return {
     level,
-    ...info,
+    icon: info.icon,
+    title: levelTitle(info),
     pointsRequired: pointsForLevel(level, levelConfig.value.curveMultiplier),
   }
 })
@@ -384,10 +380,23 @@ const nextLevel = computed(() => {
   const info = getLevelInfo(lv)
   return {
     level: lv,
-    ...info,
+    icon: info.icon,
+    title: levelTitle(info),
     pointsRequired: pointsForLevel(lv, levelConfig.value.curveMultiplier),
   }
 })
+
+// 成就点行文案（{n} 占位符）
+const pointsLine = computed(() =>
+  String(props.i18n.achievementPoints ?? "").replace("{n}", String(totalPoints.value)),
+)
+
+// 距下一级提示（{level}/{title} 占位符）
+const nextLevelHint = computed(() =>
+  String(props.i18n.nextLevelHint ?? "")
+    .replace("{level}", String(nextLevel.value.level))
+    .replace("{title}", nextLevel.value.title),
+)
 
 const levelProgress = computed(() => {
   const cur = currentLevel.value.pointsRequired

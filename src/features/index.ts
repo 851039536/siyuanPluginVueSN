@@ -79,10 +79,7 @@ export {
   registerPrompts,
   showPromptsModal,
 } from "./prompts"
-export {
-  getStatisticsInstance,
-  registerStatistics,
-} from "./statistics"
+export { registerStatistics } from "./statistics"
 export {
   registerStatusBar,
   unregisterStatusBar,

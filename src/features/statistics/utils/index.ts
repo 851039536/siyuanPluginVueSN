@@ -8,7 +8,25 @@ import type {
   DocBlockRow,
   NotebookActivityItem,
   NotebookRankingRow,
+  ReportPeriod,
 } from "../types"
+
+/**
+ * 解析成就文案：内置成就的 title/description 为 i18n 键，自定义成就为用户输入的字面文本。
+ * 命中键 → 返回译文；未命中 → 原样返回（用户数据，非硬编码兜底）
+ */
+export function resolveI18nText(i18n: Record<string, any>, keyOrText: string): string {
+  const resolved = i18n[keyOrText]
+  return typeof resolved === "string" ? resolved : keyOrText
+}
+
+/** 结构化报告期 → 本地化标签（模板键含 {year}/{month} 占位符） */
+export function formatReportPeriod(period: ReportPeriod, i18n: Record<string, any>): string {
+  const template = period.kind === "year" ? i18n.reportYearLabel : i18n.reportMonthLabel
+  return String(template ?? "")
+    .replace("{year}", String(period.year))
+    .replace("{month}", String(period.month ?? ""))
+}
 
 export function formatTime(ts: string | undefined): string {
   if (!ts || ts.length < 12) return ""

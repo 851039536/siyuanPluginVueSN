@@ -67,8 +67,8 @@
           class="ach-icon"
           :name="ach.icon as IconKey"
         />
-        <span class="ach-title">{{ ach.title }}</span>
-        <span class="ach-desc">{{ ach.description }}</span>
+        <span class="ach-title">{{ achText(ach.title) }}</span>
+        <span class="ach-desc">{{ achText(ach.description) }}</span>
       </div>
     </div>
 
@@ -115,8 +115,8 @@
           name="pageLock"
           :size="18"
         />
-        <span class="ach-title">{{ ach.title }}</span>
-        <span class="ach-desc">{{ ach.description }}</span>
+        <span class="ach-title">{{ achText(ach.title) }}</span>
+        <span class="ach-desc">{{ achText(ach.description) }}</span>
       </div>
     </div>
   </div>
@@ -129,6 +129,7 @@ import { computed, ref } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { ACH_CATEGORIES } from "../../types/milestoneData"
 import { matchCategory, matchTier } from "../../utils/achievements"
+import { resolveI18nText } from "../../utils"
 
 interface Props {
   unlocked: AchievementDef[]
@@ -145,6 +146,11 @@ const emit = defineEmits<{
 const showLocked = ref(false)
 const activeAchCategory = ref("all")
 const activeAchTier = ref("all")
+
+/** 成就文案解析：内置成就为 i18n 键，自定义成就为用户字面文本 */
+function achText(keyOrText: string): string {
+  return resolveI18nText(props.i18n, keyOrText)
+}
 
 // 分类 Tab：i18nKey → 文案（新增 catAll/catMeta 键）
 const achCategories = computed(() =>

@@ -56,9 +56,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   chartData: () => [],
-  i18n: () => ({
-    wordsUnit: "字",
-  }),
+  i18n: () => ({}),
 })
 
 const MAX_BAR_HEIGHT = 150

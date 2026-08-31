@@ -7,12 +7,18 @@
         class="mode-btn"
         :class="[{ active: reportMode === 'single' }]"
         @click="reportMode = 'single'"
-      >单期报告</button>
+      >
+        <!-- 模式按钮："单期报告" -->
+        {{ i18n.reportSingleMode }}
+      </button>
       <button
         class="mode-btn"
         :class="[{ active: reportMode === 'compare' }]"
         @click="reportMode = 'compare'"
-      >对比分析</button>
+      >
+        <!-- 模式按钮："对比分析" -->
+        {{ i18n.reportCompareMode }}
+      </button>
     </div>
 
     <!-- Comparison view -->
@@ -35,7 +41,7 @@
               :key="y"
               :value="y"
             >
-              {{ y }}年
+              {{ yearText(y) }}
             </option>
           </select>
           <select
@@ -43,21 +49,23 @@
             class="report-select"
           >
             <option :value="0">
-              全年报告
+              <!-- 月份选项："全年报告" -->
+              {{ i18n.fullYearReport }}
             </option>
             <option
               v-for="m in 12"
               :key="m"
               :value="m"
             >
-              {{ m }}月
+              {{ monthText(m) }}
             </option>
           </select>
           <button
             class="report-generate-btn"
             @click="generate"
           >
-            生成报告
+            <!-- 按钮："生成报告" -->
+            {{ i18n.generateReport }}
           </button>
         </div>
       </div>
@@ -66,14 +74,16 @@
         v-if="reports.length === 0 && !loading"
         class="report-prompt"
       >
-        选择年份/月份，点击"生成报告"
+        <!-- 空态提示："选择年份/月份，点击"生成报告"" -->
+        {{ i18n.reportPrompt }}
       </div>
 
       <div
         v-if="loading"
         class="report-loading"
       >
-        生成中...
+        <!-- 加载提示："生成中..." -->
+        {{ i18n.generating }}
       </div>
 
       <div
@@ -83,7 +93,8 @@
       >
         <div class="report-card-header">
           <h3 class="report-title">
-            {{ report.periodLabel }} 统计报告
+            <!-- 报告标题："2024年 统计报告" -->
+            {{ reportTitle(report) }}
           </h3>
           <button
             class="report-close-btn"
@@ -103,7 +114,8 @@
               :size="16"
             /></span>
             <span class="stat-value">{{ formatNumber(report.totalWords) }}</span>
-            <span class="stat-label">总字数</span>
+            <!-- 指标标签："总字数" -->
+            <span class="stat-label">{{ i18n.totalWords }}</span>
           </div>
           <div class="report-stat">
             <span class="stat-icon"><IconWrapper
@@ -111,7 +123,8 @@
               :size="16"
             /></span>
             <span class="stat-value">{{ formatNumber(report.totalNotesCreated) }}</span>
-            <span class="stat-label">新增笔记</span>
+            <!-- 指标标签："新增笔记" -->
+            <span class="stat-label">{{ i18n.notesCreated }}</span>
           </div>
           <div class="report-stat">
             <span class="stat-icon"><IconWrapper
@@ -119,7 +132,8 @@
               :size="16"
             /></span>
             <span class="stat-value">{{ report.avgDailyWords.toLocaleString() }}</span>
-            <span class="stat-label">日均字数</span>
+            <!-- 指标标签："日均字数" -->
+            <span class="stat-label">{{ i18n.dailyAvgWords }}</span>
           </div>
           <div class="report-stat">
             <span class="stat-icon"><IconWrapper
@@ -127,7 +141,8 @@
               :size="16"
             /></span>
             <span class="stat-value">{{ report.activeDays }}</span>
-            <span class="stat-label">活跃天数</span>
+            <!-- 指标标签："活跃天数" -->
+            <span class="stat-label">{{ i18n.activeDaysLabel }}</span>
           </div>
           <div class="report-stat">
             <span class="stat-icon"><IconWrapper
@@ -135,7 +150,8 @@
               :size="16"
             /></span>
             <span class="stat-value">{{ report.longestStreak }}</span>
-            <span class="stat-label">最长连续</span>
+            <!-- 指标标签："最长连续" -->
+            <span class="stat-label">{{ i18n.longestStreak }}</span>
           </div>
           <div class="report-stat">
             <span class="stat-icon"><IconWrapper
@@ -143,7 +159,8 @@
               :size="16"
             /></span>
             <span class="stat-value">{{ formatNumber(report.maxWordsDay.words) }}</span>
-            <span class="stat-label">最高单日</span>
+            <!-- 指标标签："最高单日" -->
+            <span class="stat-label">{{ i18n.maxWordsDayLabel }}</span>
             <template v-if="report.maxWordsDay.words">
               <span
                 class="stat-sub"
@@ -159,16 +176,17 @@
           <IconWrapper
             name="file"
             :size="14"
-          /> 最高产笔记本：<strong>{{ report.mostProductiveNotebook.name }}</strong>
-          （{{ formatNumber(report.mostProductiveNotebook.words) }} 字）
+          />
+          <!-- 亮点提示："最高产笔记本：xxx（n 字）" -->
+          {{ nbHint(report) }}
         </div>
 
         <div
           v-if="report.maxWordsDay.date"
           class="report-highlight"
         >
-          最高产日：<strong>{{ report.maxWordsDay.date }}</strong>
-          （{{ formatNumber(report.maxWordsDay.words) }} 字）
+          <!-- 亮点提示："最高产日：xxxx-xx-xx（n 字）" -->
+          {{ maxDayHint(report) }}
         </div>
 
         <div
@@ -176,12 +194,13 @@
           class="report-breakdown"
         >
           <h4 class="breakdown-title">
-            各时段明细
+            <!-- 区块标题："各时段明细" -->
+            {{ i18n.reportBreakdownTitle }}
           </h4>
           <!-- 各子时段字数以单序列面积折线呈现，峰值高亮，新增数走悬浮提示 -->
           <ReportTrendChart
             :points="report.monthlyBreakdown"
-            i18n-words-unit="字"
+            :i18n-words-unit="i18n.wordsUnit"
           />
         </div>
       </div>
@@ -199,7 +218,10 @@ import {
   ref,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { formatNumber } from "../../utils"
+import {
+  formatNumber,
+  formatReportPeriod,
+} from "../../utils"
 import ReportTrendChart from "./ReportTrendChart.vue"
 import ComparisonView from "./ComparisonView.vue"
 
@@ -210,6 +232,38 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+const i18n = computed(() => props.i18n || {})
+
+/** 年份选项文案（{year} 占位符模板） */
+function yearText(y: number): string {
+  return String(i18n.value.yearLabel ?? "").replace("{year}", String(y))
+}
+
+/** 月份选项文案（{m} 占位符模板） */
+function monthText(m: number): string {
+  return String(i18n.value.reportMonthOption ?? "").replace("{m}", String(m))
+}
+
+/** 报告卡片标题：本地化期间 + 「统计报告」模板 */
+function reportTitle(report: ReportData): string {
+  const label = formatReportPeriod(report.period, i18n.value)
+  return String(i18n.value.reportCardTitle ?? "").replace("{label}", label)
+}
+
+/** 最高产笔记本提示（模板含 {name}/{words} 占位符） */
+function nbHint(report: ReportData): string {
+  return String(i18n.value.mostProductiveNbHint ?? "")
+    .replace("{name}", report.mostProductiveNotebook.name)
+    .replace("{words}", formatNumber(report.mostProductiveNotebook.words))
+}
+
+/** 最高产日提示（模板含 {date}/{words} 占位符） */
+function maxDayHint(report: ReportData): string {
+  return String(i18n.value.maxDayHint ?? "")
+    .replace("{date}", report.maxWordsDay.date)
+    .replace("{words}", formatNumber(report.maxWordsDay.words))
+}
 
 const now = new Date()
 const reportMode = ref<'single' | 'compare'>('single')

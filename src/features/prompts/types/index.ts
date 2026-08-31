@@ -1,3 +1,10 @@
+/**
+ * 提示词库类型定义与共享常量
+ */
+
+/** 默认分类色（新分类表单初值 / 默认与"全部"分类兜底色，全模块单源） */
+export const DEFAULT_CATEGORY_COLOR = "#d97757"
+
 /** 提示词内容块 */
 export interface PromptContent {
   id: string

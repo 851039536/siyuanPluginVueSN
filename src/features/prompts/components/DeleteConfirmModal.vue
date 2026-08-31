@@ -19,6 +19,7 @@
             :size="20"
             class="vp-modal-icon vp-modal-icon--danger"
           />
+          <!-- 弹窗标题："确认删除" -->
           <h2>{{ i18n?.deleteConfirmTitle }}</h2>
         </div>
         <Button
@@ -29,10 +30,12 @@
         />
       </div>
       <div class="vp-modal-body">
+        <!-- 确认文案："确定要删除此提示词吗？此操作不可撤销。" -->
         <p class="vp-delete-msg">
           {{ i18n?.deleteConfirmMsg }}
         </p>
         <div class="vp-form-actions">
+          <!-- 按钮文案："取消" -->
           <Button
             variant="secondary"
             size="xsmall"
@@ -40,6 +43,7 @@
           >
             {{ i18n?.cancel }}
           </Button>
+          <!-- 按钮文案："确认删除" -->
           <Button
             variant="danger"
             size="xsmall"

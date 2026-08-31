@@ -2393,7 +2393,13 @@
       "contentRequired": "至少需要一个非空内容块",
       "defaultCategory": "默认",
       "allCategory": "全部",
-      "contentBlockLabel": "内容块"
+      "contentBlockLabel": "内容块",
+      "saveFailed": "保存失败",
+      "searchPrompts": "搜索提示词",
+      "promptCardLabel": "提示词",
+      "clickCopyAria": "点击复制",
+      "categoryColor": "分类颜色",
+      "categoryNav": "分类导航"
     }
   },
   "pronunciation": "谐音翻译",

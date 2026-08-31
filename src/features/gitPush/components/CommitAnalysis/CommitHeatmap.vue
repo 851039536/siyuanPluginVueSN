@@ -32,8 +32,8 @@
             :key="idx"
             class="gpa-heat-cell"
             :class="{ 'is-empty': !cell.date }"
-            :style="cell.date ? { background: heatCellColor(cell.level, color) } : undefined"
-            :title="cell.date ? cell.tooltip : ''"
+            :style="cell.style"
+            :title="cell.tooltip"
           />
         </div>
       </div>
@@ -46,7 +46,7 @@
           v-for="lvl in 5"
           :key="lvl"
           class="gpa-heat-legend-cell"
-          :style="{ background: heatCellColor(lvl - 1, color) }"
+          :style="legendStyles[lvl - 1]"
         />
         <!-- 图例文案："多" -->
         <span class="gpa-heat-legend-text">{{ i18n.analysisMore }}</span>
@@ -57,7 +57,8 @@
 
 <script setup lang="ts">
 import { computed } from "vue"
-import { formatLocalDate, heatCellColor, heatLevel } from "../../utils"
+import { formatLocalDate, heatCellColor, heatCellTooltip, heatLevel } from "../../utils"
+import { ANALYSIS_MONTH_KEYS, ANALYSIS_WEEKDAY_KEYS } from "../../types"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -72,50 +73,42 @@ const props = defineProps<{
   color: string
 }>()
 
-/** 星期短名 i18n 键（数组下标 = Date.getDay） */
-const WEEKDAY_KEYS = [
-  "analysisWdSun", "analysisWdMon", "analysisWdTue", "analysisWdWed",
-  "analysisWdThu", "analysisWdFri", "analysisWdSat",
-]
-
-/** 月份短名 i18n 键（数组下标 = 月份 0~11） */
-const MONTH_KEYS = [
-  "analysisMonthJan", "analysisMonthFeb", "analysisMonthMar", "analysisMonthApr",
-  "analysisMonthMay", "analysisMonthJun", "analysisMonthJul", "analysisMonthAug",
-  "analysisMonthSep", "analysisMonthOct", "analysisMonthNov", "analysisMonthDec",
-]
-
-/** 单元格 tooltip："2026-08-01（周六）：3 次提交" */
-function cellTooltip(date: string, count: number): string {
-  const [y, m, d] = date.split("-").map(Number)
-  const dow = new Date(y, m - 1, d).getDay()
-  return String(props.i18n.analysisHeatTooltip || "")
-    .replace("{0}", date)
-    .replace("{1}", props.i18n[WEEKDAY_KEYS[dow]] || "")
-    .replace("{2}", String(count))
-}
-
-/** 周列 × 7 行单元格：起点回退到 weekStart 对齐，范围末尾补齐完整周（空单元格隐藏） */
-const cells = computed(() => {
+/**
+ * 周列 × 7 行单元格：起点回退到 weekStart 对齐，范围末尾补齐完整周（空单元格隐藏）。
+ * style 对象一并预计算：模板直接绑定引用，避免每格每次渲染都新建 style 对象触发 patch
+ * （一年 53 周 × 7 行 = 371 格，逐格 patch 是明显浪费）。
+ */
+const cells = computed<{ date: string, tooltip: string, style: Record<string, string> | undefined }[]>(() => {
   const [sy, sm, sd] = props.start.split("-").map(Number)
   const [ey, em, ed] = props.end.split("-").map(Number)
   const start = new Date(sy, sm - 1, sd)
   const end = new Date(ey, em - 1, ed)
-  while (start.getDay() !== props.weekStart) start.setDate(start.getDate() - 1)
-  const list: { date: string, level: number, tooltip: string }[] = []
+  // 取模而非 while 自减：weekStart 若被异常值污染（设置来自持久化存储，非 0/1 时 while 永不满足）会死循环卡死页面
+  const offset = (start.getDay() - props.weekStart + 7) % 7
+  start.setDate(start.getDate() - offset)
+  const list: { date: string, tooltip: string, style: Record<string, string> }[] = []
   const cursor = new Date(start)
   while (cursor <= end) {
     const date = formatLocalDate(cursor)
     const count = props.dayCounts.get(date) || 0
-    list.push({ date, level: heatLevel(count), tooltip: cellTooltip(date, count) })
+    list.push({
+      date,
+      tooltip: heatCellTooltip(props.i18n, date, count),
+      style: { background: heatCellColor(heatLevel(count), props.color) },
+    })
     cursor.setDate(cursor.getDate() + 1)
   }
   const remainder = list.length % 7
-  for (let i = 0; i < (7 - remainder) % 7; i++) list.push({ date: "", level: 0, tooltip: "" })
+  for (let i = 0; i < (7 - remainder) % 7; i++) list.push({ date: "", tooltip: "", style: {} })
   return list
 })
 
 const totalWeeks = computed(() => Math.ceil(cells.value.length / 7))
+
+/** 图例色块（0~4 级）：style 对象预计算，与格子同一套取值口径 */
+const legendStyles = computed(() =>
+  [0, 1, 2, 3, 4].map((level) => ({ background: heatCellColor(level, props.color) })),
+)
 
 /** 月份标签：周首格月份变化处落标签（key 含年月保证跨年范围去重） */
 const monthLabels = computed(() => {
@@ -129,7 +122,7 @@ const monthLabels = computed(() => {
     if (m !== lastMonth) {
       labels.push({
         key: `${cell.date.slice(0, 7)}-${week}`,
-        text: props.i18n[MONTH_KEYS[m]] || "",
+        text: props.i18n[ANALYSIS_MONTH_KEYS[m]] || "",
         col: week + 1,
       })
       lastMonth = m
@@ -141,7 +134,7 @@ const monthLabels = computed(() => {
 /** 左侧星期标签：weekStart 起的第 1/3/5 行（如 周一/周三/周五 或 周日/周二/周四） */
 const weekdayLabels = computed(() => {
   const rows = [props.weekStart, (props.weekStart + 2) % 7, (props.weekStart + 4) % 7]
-  return rows.map((d) => props.i18n[WEEKDAY_KEYS[d]] || "")
+  return rows.map((d) => props.i18n[ANALYSIS_WEEKDAY_KEYS[d]] || "")
 })
 </script>
 

@@ -198,7 +198,7 @@ onMounted(async () => {
       uploadTimeoutSec: normalizeTimeout(saved.uploadTimeoutSec),
     })
   } catch (err) {
-    console.error("[S3文件管理] 配置加载失败:", getErrorMessage(err))
+    // console.error("[S3文件管理] 配置加载失败:", getErrorMessage(err))
   }
 })
 

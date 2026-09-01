@@ -441,14 +441,14 @@ export class S3Client {
           })
           res.on("end", () => {
             const responseBody = Buffer.concat(chunks)
-            if (!ok) {
-              const allowHeader = res.headers["allow"] ? ` (Allow: ${res.headers["allow"]})` : ""
-              const bodyPreview = responseBody.toString("utf-8").slice(0, 300)
-              console.warn(`[S3] 请求失败 ${method} ${currentUrl} → HTTP ${res.statusCode}${allowHeader}`)
-              if (bodyPreview) {
-                console.warn(`[S3] 响应体: ${bodyPreview}`)
-              }
-            }
+            // if (!ok) {
+            //   const allowHeader = res.headers["allow"] ? ` (Allow: ${res.headers["allow"]})` : ""
+            //   const bodyPreview = responseBody.toString("utf-8").slice(0, 300)
+            //   console.warn(`[S3] 请求失败 ${method} ${currentUrl} → HTTP ${res.statusCode}${allowHeader}`)
+            //   if (bodyPreview) {
+            //     console.warn(`[S3] 响应体: ${bodyPreview}`)
+            //   }
+            // }
             resolve({
               ok,
               status: res.statusCode,

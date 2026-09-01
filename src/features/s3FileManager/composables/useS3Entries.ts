@@ -81,7 +81,7 @@ export function useS3Entries(deps: {
           listing = await listDir(client, prefix)
         } catch (err) {
           // 代理不支持 delimiter 时降级为全量列举 + 客户端按 / 聚合（能力探测结果缓存）
-          console.warn("[S3文件管理] delimiter 列举失败，降级为全量聚合:", getErrorMessage(err))
+          // console.warn("[S3文件管理] delimiter 列举失败，降级为全量聚合:", getErrorMessage(err))
           delimiterUnsupported = true
         }
       }
@@ -96,7 +96,7 @@ export function useS3Entries(deps: {
         files = agg.files
         folders = [...new Set([...listing.folders, ...agg.folders])]
         if (agg.conflicts.length > 0) {
-          console.warn("[S3文件管理] 发现同名文件夹/文件冲突:", agg.conflicts.join(", "))
+          // console.warn("[S3文件管理] 发现同名文件夹/文件冲突:", agg.conflicts.join(", "))
         }
         // 探测到 delimiter 被忽略（无 CommonPrefixes 却聚合出子目录）→ 后续直接走全量列举，省一次无效 delimiter 请求
         if (listing.folders.length === 0 && agg.folders.length > 0) {
@@ -108,7 +108,7 @@ export function useS3Entries(deps: {
         files = agg.files
         folders = agg.folders
         if (agg.conflicts.length > 0) {
-          console.warn("[S3文件管理] 发现同名文件夹/文件冲突:", agg.conflicts.join(", "))
+          // console.warn("[S3文件管理] 发现同名文件夹/文件冲突:", agg.conflicts.join(", "))
         }
       }
 

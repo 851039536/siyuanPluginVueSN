@@ -19,7 +19,7 @@ export function useFileOpLogs(deps: { storage: S3FileManagerStorage }) {
     try {
       logs.value = (await deps.storage.logs.loadOrDefault()).logs
     } catch (err) {
-      console.error("[S3文件管理] 加载日志失败:", getErrorMessage(err))
+      // console.error("[S3文件管理] 加载日志失败:", getErrorMessage(err))
     }
   }
 
@@ -42,7 +42,7 @@ export function useFileOpLogs(deps: { storage: S3FileManagerStorage }) {
     try {
       await deps.storage.logs.save({ logs: logs.value })
     } catch (err) {
-      console.warn("[S3文件管理] 日志落盘失败:", getErrorMessage(err))
+      // console.warn("[S3文件管理] 日志落盘失败:", getErrorMessage(err))
     }
   }
 

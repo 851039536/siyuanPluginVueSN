@@ -139,7 +139,7 @@ export function useS3Backup(options: { i18n: Record<string, string>; getSubPrefi
     try {
       return await fetchBackupList()
     } catch (err: unknown) {
-      console.error("列举 S3 备份失败:", err)
+      // console.error("列举 S3 备份失败:", err)
       backupList.value = []
       return []
     } finally {

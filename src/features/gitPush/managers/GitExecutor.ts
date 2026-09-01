@@ -14,9 +14,7 @@ export class GitExecutor {
   private gitWaitQueue: { run: () => void, reject: (e: Error) => void, signal?: AbortSignal }[] = []
   /** 识别网络 IO 类 git 命令，自动路由到独立并发池 */
   private static readonly NETWORK_COMMANDS = new Set(["fetch", "push", "pull", "clone", "ls-remote"])
-  /** 网络命令最大并发（常量，避免被 GitHub/Gitee 限流） */
-  private readonly networkMaxConcurrent = 2
-  /** 当前正在执行的网络类 git 子进程数 */
+  /** 网络命令当前并发（动态跟随 gitMaxConcurrent；双池分离使本地命令洪流不挤占 push/fetch 通道） */
   private networkRunning = 0
   /** 网络命令等待队列 */
   private networkWaitQueue: { run: () => void, reject: (e: Error) => void, signal?: AbortSignal }[] = []
@@ -228,7 +226,7 @@ export class GitExecutor {
       }
 
       if (isNetwork) {
-        if (this.networkRunning < this.networkMaxConcurrent) {
+        if (this.networkRunning < this.gitMaxConcurrent) {
           run()
         } else {
           this.networkWaitQueue.push({ run, reject, signal })

@@ -62,7 +62,7 @@ src/features/gitPush/
 │   │   ├── ConfirmDialog.vue        # 通用确认弹窗
 │   │   ├── AddProjectDialog.vue     # 添加项目弹窗
 │   │   ├── CategoryDialog.vue       # 分类管理弹窗
-│   │   ├── SettingsDialog.vue       # 设置弹窗（并发数 + 分支模式）
+│   │   ├── SettingsDialog.vue       # 设置汇总弹窗（左侧分区导航：常规=并发数+分支模式 / 显示=分析显示设置 / Git 配置=全局 Git 配置管理）
 │   │   ├── GitConfigSection.vue     # Git 配置管理面板（查看/编辑/新增/删除，全局/项目级）
 │   │   ├── IdeManagementDialog.vue  # IDE 管理弹窗
 │   │   ├── ScanImportDialog.vue     # 扫描导入弹窗
@@ -117,7 +117,8 @@ src/features/gitPush/
 │   │   ├── HeatmapCalendarSection.vue# 热力图/日历区块（viewSettings 切换）
 │   │   ├── DailyTrendSection.vue    # 最近 30 天提交趋势区块（每日柱状）
 │   │   ├── AuthorTypeSection.vue    # 作者排行 + 内容类型双栏区块
-│   │   ├── CommitAnalysisSettings.vue# 分析设置
+│   │   ├── CommitAnalysisSettings.vue# 分析设置（齿轮 popover 薄壳，表单复用 AnalysisSettingsForm）
+│   │   ├── AnalysisSettingsForm.vue # 分析显示设置表单（视图/范围/周起始/颜色，popover 与设置汇总弹窗共用）
 │   │   ├── CommitCalendar.vue       # 提交日历
 │   │   └── CommitHeatmap.vue        # 提交热力图
 │   ├── CommitRuleCheck/             # 提交规则检查视图专属（5 个）

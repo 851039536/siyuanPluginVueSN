@@ -56,6 +56,15 @@
   }
 }
 
+// 导航底部固定操作（管理分类）：推至底部并以分隔线与分区导航区隔
+// （置于 .gp-settings-nav-btn 之后，确保 border-top/padding-top 覆盖其简写声明）
+.gp-settings-nav-manage {
+  margin-top: auto;
+  border-top: 1px solid var(--b3-border-color);
+  border-radius: 0 0 $radius-sm $radius-sm;
+  padding-top: $spacing-2;
+}
+
 // 右侧内容区（可滚动）
 .gp-settings-content {
   flex: 1;

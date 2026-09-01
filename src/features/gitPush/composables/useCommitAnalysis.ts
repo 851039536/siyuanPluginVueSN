@@ -517,6 +517,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     ensureAnalysis,
     ensureLineStats,
     viewSettings,
+    loadViewSettings,
     updateViewSettings,
     projectLineRanking,
     authorLineRanking,

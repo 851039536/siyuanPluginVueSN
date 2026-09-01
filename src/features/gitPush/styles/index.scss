@@ -506,10 +506,7 @@
   }
 }
 
-// 设置弹窗：窄布局（仅两个设置项）
-.gp-dialog--settings {
-  width: 300px;
-}
+// 设置汇总弹窗布局 → SettingsDialog.scss
 
 // 扫描导入弹窗：加宽以容纳扫描结果的完整路径展示
 .gp-dialog--scan {

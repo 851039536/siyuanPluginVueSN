@@ -2,6 +2,21 @@
 <template>
   <div class="gp-header">
     <div class="gp-header-left">
+      <!-- 批量操作旋转进度指示器（tooltip："操作名 n/m"） -->
+      <div
+        v-if="progress?.visible"
+        class="gp-header-progress"
+        :class="{ 'is-done': progress.done }"
+        :title="`${progress.label} ${progress.current}/${progress.total}`"
+      >
+        <Icon
+          :icon="progress.done ? 'mdi:check-circle-outline' : 'mdi:loading'"
+          height="14"
+          :class="{ 'gp-header-progress-spin': !progress.done }"
+        />
+        <span class="gp-header-progress-count">{{ progress.current }}/{{ progress.total }}</span>
+      </div>
+
       <!-- 面板标题："Git" -->
       <span class="gp-title">{{ i18n.panelTitle }}</span>
       <span
@@ -247,21 +262,6 @@
           clearable
           autocomplete="off"
         />
-      </div>
-
-      <!-- 批量操作旋转进度指示器（tooltip："操作名 n/m"） -->
-      <div
-        v-if="progress?.visible"
-        class="gp-header-progress"
-        :class="{ 'is-done': progress.done }"
-        :title="`${progress.label} ${progress.current}/${progress.total}`"
-      >
-        <Icon
-          :icon="progress.done ? 'mdi:check-circle-outline' : 'mdi:loading'"
-          height="14"
-          :class="{ 'gp-header-progress-spin': !progress.done }"
-        />
-        <span class="gp-header-progress-count">{{ progress.current }}/{{ progress.total }}</span>
       </div>
     </div>
   </div>

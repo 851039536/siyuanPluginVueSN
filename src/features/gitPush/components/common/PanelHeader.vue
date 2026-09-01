@@ -11,7 +11,7 @@
       >
         <Icon
           :icon="progress.done ? 'mdi:check-circle-outline' : 'mdi:loading'"
-          height="14"
+          height="12"
           :class="{ 'gp-header-progress-spin': !progress.done }"
         />
         <span class="gp-header-progress-count">{{ progress.current }}/{{ progress.total }}</span>

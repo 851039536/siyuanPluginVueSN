@@ -502,8 +502,10 @@ function confirmClearOpLogs() {
   )
 }
 
-// ── 批量加载进度条（runBatchWithProgress 编排已下沉 useBatchProgress.runBatch）──
-const { state: progressState, logEntries: progressLogEntries, hide: progressHide, runBatch: runBatchWithProgress } = useBatchProgress()
+// ── 批量加载进度条（runBatchWithProgress 编排已下沉 useBatchProgress.runBatch；批内并发跟随 git 并发设置）──
+const { state: progressState, logEntries: progressLogEntries, hide: progressHide, runBatch: runBatchWithProgress } = useBatchProgress({
+  getBatchSize: () => props.manager.getGitConcurrency(),
+})
 
 /** 正在加载中的项目 id（跨所有自动加载触发器共享，防止来回切换重复入队同一项目导致成倍加载） */
 const loadingProjectIds = new Set<string>()

@@ -21,8 +21,22 @@
           </button>
         </div>
 
-        <!-- 工具栏：fetch 开关 + 仅显示问题开关 + 分析按钮 -->
+        <!-- 工具栏：项目数量选择 + fetch 开关 + 仅显示问题开关 + 分析按钮 -->
         <div class="gca-toolbar">
+          <!-- 选择框："全部项目/10/20/30/50/100"（本次分析的项目数量上限） -->
+          <select
+            class="gca-limit-select"
+            :value="String(projectLimit)"
+            :title="i18n.consistencyProjectLimitTitle"
+            :disabled="analyzing"
+            @change="onLimitChange"
+          >
+            <option
+              v-for="opt in PROJECT_LIMIT_OPTIONS"
+              :key="String(opt)"
+              :value="String(opt)"
+            >{{ limitLabel(opt) }}</option>
+          </select>
           <!-- 开关："分析前先 fetch 远程"（悬停提示解释 fetch 含义与开关影响） -->
           <label
             class="gca-switch-item"
@@ -231,10 +245,12 @@ import type {
   ConsistencyProjectRow,
   ConsistencyState,
   GitPushManager,
+  ProjectLimit,
 } from "../../types"
 import { Icon } from "@iconify/vue"
 import { onMounted, ref } from "vue"
 import SiSwitch from "@/components/Switch.vue"
+import { PROJECT_LIMIT_OPTIONS } from "../../types"
 import { relativeTime, formatDateTime } from "../../utils"
 import { useConsistencyAudit } from "../../composables/useConsistencyAudit"
 import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
@@ -255,11 +271,23 @@ const {
   analyzed,
   analyzedAt,
   fetchFirst,
+  projectLimit,
   issueOnly,
   progress,
   summary,
   runAudit,
 } = useConsistencyAudit(props.manager)
+
+/** 选项显示文案："all" 显示"全部项目"，数字直显 */
+function limitLabel(opt: ProjectLimit): string {
+  return opt === "all" ? props.i18n.consistencyProjectsAll : String(opt)
+}
+
+/** 选择框变更：映射回 "all" | number */
+function onLimitChange(e: Event) {
+  const v = (e.target as HTMLSelectElement).value
+  projectLimit.value = v === "all" ? "all" : Number(v)
+}
 
 /** 项目总数（空态判断用，挂载时快照） */
 const projectCount = ref(0)

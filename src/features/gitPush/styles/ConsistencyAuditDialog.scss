@@ -101,6 +101,17 @@
   line-height: $line-height-relaxed;
 }
 
+// 上次分析时间行（相对时间，悬停显示绝对时间）
+.gca-analyzed-at {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-4 0;
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-2xs;
+  line-height: $line-height-normal;
+}
+
 .gca-progress {
   display: flex;
   align-items: center;

@@ -1,6 +1,8 @@
 // Git 项目持久化存储与类型定义
 import type { Plugin } from "siyuan"
 import type { CommitAnalysisCache, CommitAnalysisViewSettings, CommitFixPrefs, LineStatsCache, PlatformKey, RuleCheckPrefs } from "./meta"
+import type { ConsistencyCache } from "./consistency"
+import { EMPTY_CONSISTENCY_CACHE } from "./consistency"
 import type { CodeReportPrefs } from "./report"
 import { DEFAULT_REPORT_PREFS } from "./report"
 import { PluginStorage } from "@/utils/pluginStorage"
@@ -377,6 +379,8 @@ export class GitPushStorage {
   readonly commitAnalysisView: TypedStorage<CommitAnalysisViewSettings>
   /** 代码统计报告偏好（上次选中项目 + 时间范围，进入视图恢复选择） */
   readonly reportPrefs: TypedStorage<CodeReportPrefs>
+  /** 远程与本地一致性分析结果缓存（跨会话复用，打开弹窗直接展示上次结果） */
+  readonly consistencyCache: TypedStorage<ConsistencyCache>
   /** 提交规则检查偏好（上次选中的过滤项目，跨会话恢复选择） */
   readonly ruleCheckPrefs: TypedStorage<RuleCheckPrefs>
   /** 提交信息修正偏好（上次选择的提交时间策略，跨会话恢复选择） */
@@ -397,6 +401,7 @@ export class GitPushStorage {
     this.lineStatsCache = new TypedStorage(storage, "git-push-line-stats-cache", DEFAULT_LINE_STATS_CACHE)
     this.commitAnalysisView = new TypedStorage(storage, "git-push-analysis-view", DEFAULT_ANALYSIS_VIEW_SETTINGS)
     this.reportPrefs = new TypedStorage(storage, "git-push-report-prefs", DEFAULT_REPORT_PREFS)
+    this.consistencyCache = new TypedStorage(storage, "git-push-consistency-cache", EMPTY_CONSISTENCY_CACHE)
     this.ruleCheckPrefs = new TypedStorage(storage, "git-push-rulecheck-prefs", DEFAULT_RULE_CHECK_PREFS)
     this.commitFixPrefs = new TypedStorage(storage, "git-push-commitfix-prefs", DEFAULT_COMMIT_FIX_PREFS)
   }

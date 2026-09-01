@@ -23,20 +23,17 @@
       {{ pushStatus.branch }}
     </span>
     <div
-      v-for="r in remotes"
+      v-for="r in visibleRemotes"
       :key="r.key"
-      class="gp-remote-item"
-      :class="{ active: !!project[r.remoteProp] }"
-      :title="!project[r.remoteProp] ? i18n.notDetected : undefined"
+      class="gp-remote-item active"
     >
       <Icon
         :icon="r.icon"
         height="12"
       />
-      <!-- 未配置远程：仅灰色图标占位（tooltip："未检测到"），不渲染文字降低噪音 -->
-      <span v-if="project[r.remoteProp]">{{ project[r.remoteProp] }}</span>
+      <span>{{ project[r.remoteProp] }}</span>
       <span
-        v-if="project[r.remoteProp] && pushStatus?.remotes[r.key]"
+        v-if="pushStatus?.remotes[r.key]"
         class="gp-status-badge"
         :class="derived.statusBadgeClass(project.id, r.key)"
       >
@@ -59,9 +56,10 @@
 </template>
 
 <script setup lang="ts">
-// gitPush 项目卡片远程状态区（远程列表 + 状态徽章 + 冲突警告）
+// gitPush 项目卡片远程状态区（已配置远程列表 + 状态徽章 + 冲突警告）
 import type { GitProject } from "../../types"
 import { Icon } from "@iconify/vue"
+import { computed } from "vue"
 import { REMOTES } from "../../types"
 import { useCardServices } from "../../composables/useCardServices"
 
@@ -72,7 +70,9 @@ const props = defineProps<{
 const { services, pushStatus, remoteStatusLoading } = useCardServices(() => props.project)
 const { shared, derived, ops } = services
 const i18n = shared.i18n
-const remotes = REMOTES
+
+/** 已配置 URL 的远程（未配置的整项不显示，避免灰色图标噪音） */
+const visibleRemotes = computed(() => REMOTES.filter((r) => !!props.project[r.remoteProp]))
 </script>
 
 <style lang="scss">

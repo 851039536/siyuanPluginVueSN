@@ -862,6 +862,8 @@
 }
 
 // ════ 代码统计报告（gpr-）共享基座：表格/徽章/区块标题原语（4 个分区 SCSS 复用，避免重复定义）════
+// 注：.gpr-section-title/-count 与 StatsPanel.scss 的 .gp-stats-section-title/-count 几乎逐字重复，
+// 属第 2 次出现（Rule of Three），第 3 处出现时再提取共享 mixin
 .gpr-section {
   margin-bottom: $spacing-3;
 }

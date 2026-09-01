@@ -58,17 +58,14 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
       : undefined)
   }
 
-  async function loadWorkingTree(id: string, skipRefresh = false, branch?: string) {
+  async function loadWorkingTree(id: string, branch?: string) {
     const project = findProject(projects, id)
     if (!project) return
-    workingTrees.value[id] = await manager.getWorkingTreeStatus(resolveValidPath(project), {
-      skipRefresh,
-      branch,
-    })
+    workingTrees.value[id] = await manager.getWorkingTreeStatus(resolveValidPath(project), { branch })
   }
 
   /** 合并加载 pushStatus + workingTree（共享 rev-parse HEAD，减少子进程调用） */
-  async function loadProjectGitStatus(id: string, skipRefresh = true) {
+  async function loadProjectGitStatus(id: string) {
     const project = findProject(projects, id)
     if (!project) return
     const cwd = resolveValidPath(project)
@@ -76,7 +73,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     if (!branch) return
     await Promise.all([
       loadPushStatus(id, { branch }),
-      loadWorkingTree(id, skipRefresh, branch),
+      loadWorkingTree(id, branch),
     ])
   }
 
@@ -88,7 +85,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     if (!branch) return
     await Promise.all([
       pushStatuses.value[id] ? Promise.resolve() : loadPushStatus(id, { branch }),
-      workingTrees.value[id] ? Promise.resolve() : loadWorkingTree(id, true, branch),
+      workingTrees.value[id] ? Promise.resolve() : loadWorkingTree(id, branch),
     ])
   }
 

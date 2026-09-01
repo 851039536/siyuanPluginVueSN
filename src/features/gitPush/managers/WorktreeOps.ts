@@ -19,7 +19,7 @@ export class WorktreeOps {
   /**
    * 获取工作区变更状态
    */
-  async getWorkingTreeStatus(projectPath: string, opts?: { skipRefresh?: boolean, branch?: string }): Promise<WorkingTreeInfo> {
+  async getWorkingTreeStatus(projectPath: string, opts?: { branch?: string }): Promise<WorkingTreeInfo> {
     const empty: WorkingTreeInfo = {
       branch: "",
       files: [],
@@ -42,9 +42,8 @@ export class WorktreeOps {
     }
 
     try {
-      if (!opts?.skipRefresh) {
-        await this.executor.execGit(projectPath, ["update-index", "--refresh", "-q"]).catch(() => {})
-      }
+      // git status 内部自带 index stat 刷新（无 --no-optional-locks 时会回写 index），
+      // 无需先跑 update-index --refresh——那等于对工作区做两次全量扫描
       const raw = await this.executor.execGit(projectPath, ["-c", "core.quotepath=false", "status", "--porcelain"])
       if (!raw) { return { ...empty, branch } }
 
@@ -153,7 +152,7 @@ export class WorktreeOps {
    * 切换分支
    */
   async switchBranch(projectPath: string, branch: string): Promise<string> {
-    const wtInfo = await this.getWorkingTreeStatus(projectPath, { skipRefresh: true })
+    const wtInfo = await this.getWorkingTreeStatus(projectPath)
     if (wtInfo.hasChanges) {
       throw new Error(
         `工作区有 ${wtInfo.stagedCount + wtInfo.unstagedCount + wtInfo.untrackedCount} 个未提交的变更，请先提交或暂存`,

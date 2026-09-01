@@ -253,7 +253,6 @@
     "deleteCategoryTitle": "删除分类",
     "deleteCategoryConfirm": "确定删除分类 \"{0}\"？\n该分类下的项目将移至「未分组」。",
     "stepStatus": "状态",
-    "stepHead": "HEAD",
     "batchLogToggle": "日志",
     "stepStats": "统计",
     "stepRemote": "远程",

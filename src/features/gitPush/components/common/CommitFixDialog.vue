@@ -259,7 +259,7 @@ async function init() {
     const path = resolveValidPath(p)
     const [head, wt] = await Promise.all([
       manager.getHeadHash(path),
-      manager.getWorkingTreeStatus(path, { skipRefresh: true }),
+      manager.getWorkingTreeStatus(path),
     ])
     headHash.value = head
     workingTreeClean.value = !wt.hasChanges

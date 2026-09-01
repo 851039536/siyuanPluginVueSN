@@ -10,6 +10,7 @@
       :i18n="i18n"
       :project-count="projectCount"
       :is-floating="isFloating"
+      :progress="progressState"
       @open-category="showCatDialog = true"
       @open-settings="openSettings"
       @open-add-project="showAddDialog = true"
@@ -18,13 +19,6 @@
       @open-git-config="handleOpenGitConfig"
       @open-consistency="showConsistencyDialog = true"
       @open-floating="openFloatingWindow"
-    />
-
-    <BatchProgressBar
-      :state="progressState"
-      :log-entries="progressLogEntries"
-      :i18n="i18n"
-      @close="progressHide"
     />
 
     <!-- ========== 统计视图 ========== -->
@@ -292,7 +286,6 @@ import CommitAnalysisPanel from "./components/CommitAnalysis/index.vue"
 import CommitRuleCheckPanel from "./components/CommitRuleCheck/index.vue"
 import LineStatsPanel from "./components/LineStats/index.vue"
 import CodeReportPanel from "./components/CodeReport/index.vue"
-import BatchProgressBar from "./components/common/BatchProgressBar.vue"
 import GitConfigDialog from "./components/common/GitConfigDialog.vue"
 import { useGitPush } from "./composables/useGitPush"
 import { useBatchProgress } from "./composables/useBatchProgress"
@@ -502,8 +495,8 @@ function confirmClearOpLogs() {
   )
 }
 
-// ── 批量加载进度条（runBatchWithProgress 编排已下沉 useBatchProgress.runBatch；批内并发跟随 git 并发设置）──
-const { state: progressState, logEntries: progressLogEntries, hide: progressHide, runBatch: runBatchWithProgress } = useBatchProgress({
+// ── 批量加载旋转进度指示器（数据经 PanelHeader 头部最右侧展示；runBatch 编排已下沉 useBatchProgress，批内并发跟随 git 并发设置）──
+const { state: progressState, runBatch: runBatchWithProgress } = useBatchProgress({
   getBatchSize: () => props.manager.getGitConcurrency(),
 })
 
@@ -516,14 +509,14 @@ const loadingProjectIds = new Set<string>()
  * 既不重复入队同一项目，也不破坏进度计数。
  */
 async function runProjectLoadBatch(
-  candidates: GitProject[], stepKey: string, loader: (id: string) => Promise<void>,
+  candidates: GitProject[], loader: (id: string) => Promise<void>,
 ) {
   const pending = candidates.filter((p) => !loadingProjectIds.has(p.id))
   if (pending.length === 0) return
   pending.forEach((p) => loadingProjectIds.add(p.id))
-  await runBatchWithProgress(pending, tf("loadingLabel"), async (p, ctx) => {
+  await runBatchWithProgress(pending, tf("loadingLabel"), async (p) => {
     try {
-      await ctx.step(tf(stepKey), () => loader(p.id))
+      await loader(p.id)
     } finally {
       loadingProjectIds.delete(p.id)
     }
@@ -747,7 +740,7 @@ onMounted(async () => {
     if (gitOpsPaused.value) return
     const catId = activeCategory.value
     const projList = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
-    await runProjectLoadBatch(projList, "stepStatus", (id) => loadProjectGitStatus(id))
+    await runProjectLoadBatch(projList, (id) => loadProjectGitStatus(id))
   }, 200)
 })
 
@@ -772,7 +765,7 @@ async function loadCurrentCategoryList() {
   const catId = activeCategory.value
   const projList = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
   const pending = projList.filter((p) => !workingTrees.value[p.id])
-  await runProjectLoadBatch(pending, "stepStatus", (id) => loadProjectGitStatus(id))
+  await runProjectLoadBatch(pending, (id) => loadProjectGitStatus(id))
 }
 
 /** 切换分类时懒加载该分类下项目的数据（仅列表视图需要；非列表视图由 ensureStats 统一加载，避免看不见的预加载） */
@@ -791,7 +784,7 @@ watch(activeCategory, async (catId) => {
 async function ensureStatsDataLoaded() {
   if (gitOpsPaused.value) return
   const pending = projects.value.filter((p) => !pushStatuses.value[p.id] || !workingTrees.value[p.id])
-  return runProjectLoadBatch(pending, "stepStats", (id) => loadStatsData(id))
+  return runProjectLoadBatch(pending, (id) => loadStatsData(id))
 }
 
 /** 切换视图时按目标视图补齐数据：列表→当前分类状态；统计→全量统计；日志→同步置 loading（pre-flush，避免 LogPanel 首渲闪空态）；分析→复用缓存或首次自动分析；行数统计→复用缓存（无缓存需手动分析）；报告→自动生成一次 */

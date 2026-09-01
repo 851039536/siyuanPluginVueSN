@@ -253,7 +253,6 @@
     "deleteCategoryTitle": "Delete Category",
     "deleteCategoryConfirm": "Delete category \"{0}\"?\nProjects will move to Ungrouped.",
     "stepStatus": "Status",
-    "stepHead": "HEAD",
     "batchLogToggle": "Log",
     "stepStats": "Stats",
     "stepRemote": "Remote",

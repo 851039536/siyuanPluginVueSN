@@ -198,9 +198,6 @@ export class GitPushManager {
 
   // ── 执行器（并发上限 / 取消）──
 
-  /** 外部只读：当前活跃 git 操作数 */
-  get activeGitOps(): number { return this.executor.activeGitOps }
-
   getGitConcurrency(): number { return this.executor.getGitConcurrency() }
 
   async setGitConcurrency(n: number): Promise<void> { return this.executor.setGitConcurrency(n) }
@@ -314,7 +311,7 @@ export class GitPushManager {
 
   // ── 工作区本地操作（WorktreeOps）──
 
-  async getWorkingTreeStatus(projectPath: string, opts?: { skipRefresh?: boolean, branch?: string }): Promise<WorkingTreeInfo> {
+  async getWorkingTreeStatus(projectPath: string, opts?: { branch?: string }): Promise<WorkingTreeInfo> {
     return this.worktreeOps.getWorkingTreeStatus(projectPath, opts)
   }
 

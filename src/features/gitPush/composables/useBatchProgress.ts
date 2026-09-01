@@ -1,7 +1,7 @@
 // 批量操作进度状态管理 composable（含带进度条的批量执行编排 runBatch）
 import { ref, onUnmounted } from "vue"
 import type { LoadProgress, LogEntry, LogStep } from "../types/batchProgress"
-import { batchProcess } from "../utils"
+import { poolProcess } from "../utils"
 
 /** 步骤上下文：在批量任务 fn 内部用 ctx.step(name, fn) 测量并记录每个 git 操作的耗时 */
 export interface StepCtx {
@@ -137,7 +137,7 @@ export function useBatchProgress(options?: {
       await prev
       start(items.length, label)
       try {
-        await batchProcess(items, getBatchSize(), async (item, index) => {
+        await poolProcess(items, getBatchSize(), async (item, index) => {
           const name = getName?.(item) ?? ""
           const displayName = name || `#${index + 1}`
           const logIdx = beginLog(displayName)

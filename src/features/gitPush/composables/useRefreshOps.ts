@@ -15,7 +15,7 @@ export function useRefreshOps(deps: {
   /** 按域通知卡片重载自持数据（log/branches/stash 已下沉 ProjectCard） */
   bumpCardRefresh: (id: string, ...domains: CardDataDomain[]) => void
   loadPushStatus: (id: string, opts?: { fetchFirst?: boolean, branch?: string }) => Promise<void>
-  loadWorkingTree: (id: string, skipRefresh?: boolean, branch?: string) => Promise<void>
+  loadWorkingTree: (id: string, branch?: string) => Promise<void>
   refreshRemotes: (id: string) => Promise<unknown>
   fetchAllRemotes: (id: string) => Promise<unknown>
 }) {
@@ -61,7 +61,7 @@ export function useRefreshOps(deps: {
         await ctx.step(tf("stepRemote"), () => refreshRemotes(p.id))
         await Promise.all([
           ctx.step(tf("stepPush"), () => loadPushStatus(p.id, { fetchFirst: true, branch })),
-          ctx.step(tf("stepWorkingTree"), () => loadWorkingTree(p.id, false, branch)),
+          ctx.step(tf("stepWorkingTree"), () => loadWorkingTree(p.id, branch)),
         ])
         // 日志/分支/stash 已下沉卡片，按域通知重载
         bumpCardRefresh(p.id, "log", "branches", "stash")
@@ -78,7 +78,7 @@ export function useRefreshOps(deps: {
     if (!project) return
     await withRecordLoading(refreshingWorkingTree, id, async () => {
       const branch = await manager.getBranch(resolveValidPath(project))
-      await loadWorkingTree(id, false, branch)
+      await loadWorkingTree(id, branch)
     })
   }
 

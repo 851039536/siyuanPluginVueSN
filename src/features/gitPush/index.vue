@@ -742,12 +742,12 @@ onMounted(async () => {
   // 首屏只加载显示卡片所需的最小集：工作区变更摘要 + 推送状态。
   // commitLog/branches/stash 改为展开工作区面板时按需懒加载（见 @expand）。
   // getHeadHash 仅刷新去重用，首屏无历史值可对比，跳过。
-  // 使用 loadProjectGitStatus 合并 rev-parse HEAD，skipRefresh=true 跳过 update-index --refresh
+  // 使用 loadProjectGitStatus 合并 rev-parse HEAD 共享分支名
   initTimer = setTimeout(async () => {
     if (gitOpsPaused.value) return
     const catId = activeCategory.value
     const projList = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
-    await runProjectLoadBatch(projList, "stepStatus", (id) => loadProjectGitStatus(id, true))
+    await runProjectLoadBatch(projList, "stepStatus", (id) => loadProjectGitStatus(id))
   }, 200)
 })
 
@@ -772,7 +772,7 @@ async function loadCurrentCategoryList() {
   const catId = activeCategory.value
   const projList = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
   const pending = projList.filter((p) => !workingTrees.value[p.id])
-  await runProjectLoadBatch(pending, "stepStatus", (id) => loadProjectGitStatus(id, true))
+  await runProjectLoadBatch(pending, "stepStatus", (id) => loadProjectGitStatus(id))
 }
 
 /** 切换分类时懒加载该分类下项目的数据（仅列表视图需要；非列表视图由 ensureStats 统一加载，避免看不见的预加载） */

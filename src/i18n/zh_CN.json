@@ -1221,6 +1221,8 @@
     "consistencyAnalyzing": "分析中…",
     "consistencyFetchFirst": "分析前先 fetch 远程",
     "consistencyFetchFirstTip": "fetch：从远程仓库下载最新分支信息（只更新记录，不改本地代码）。\n开启后比对结果更准确，但项目多时较慢；\n关闭则使用上次获取的远程信息，速度快但可能已过期。",
+    "consistencyProjectsAll": "全部项目",
+    "consistencyProjectLimitTitle": "本次分析的项目数量上限（按项目列表顺序取前 N 个）",
     "consistencyIssueOnly": "仅显示问题",
     "consistencySynced": "一致",
     "consistencyAhead": "需推送",

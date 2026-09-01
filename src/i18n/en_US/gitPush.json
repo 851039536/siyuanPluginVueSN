@@ -91,6 +91,8 @@
     "consistencyAnalyzing": "Analyzing…",
     "consistencyFetchFirst": "Fetch remotes before analysis",
     "consistencyFetchFirstTip": "Fetch: downloads the latest branch info from remotes (updates records only, never touches local code).\nEnabled gives more accurate results but is slower with many projects;\ndisabled uses previously fetched remote info — faster but possibly outdated.",
+    "consistencyProjectsAll": "All projects",
+    "consistencyProjectLimitTitle": "Max projects to analyze (takes the first N in project list order)",
     "consistencyIssueOnly": "Issues only",
     "consistencySynced": "Synced",
     "consistencyAhead": "Needs Push",

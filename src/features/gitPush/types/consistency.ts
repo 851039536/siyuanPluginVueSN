@@ -45,13 +45,21 @@ export interface ConsistencySummary {
   error: number
 }
 
+/** 单次分析的项目数量上限（"all" = 全部项目，数字 = 按项目列表顺序取前 N 个） */
+export type ProjectLimit = number | "all"
+
+/** 项目数量选择框选项（"all" 在首位 = 默认项） */
+export const PROJECT_LIMIT_OPTIONS: readonly ProjectLimit[] = ["all", 10, 20, 30, 50, 100]
+
 /** 一致性分析结果持久化缓存（跨会话复用，打开弹窗直接展示上次结果） */
 export interface ConsistencyCache {
   /** 上次分析完成时间（ISO，弹窗展示"上次分析"文案） */
   analyzedAt: string
+  /** 项目数量上限（跨会话恢复选择框） */
+  projectLimit: ProjectLimit
   /** 全部项目比对结果行 */
   rows: ConsistencyProjectRow[]
 }
 
 /** 空缓存默认值（从未分析过时使用） */
-export const EMPTY_CONSISTENCY_CACHE: ConsistencyCache = { analyzedAt: "", rows: [] }
+export const EMPTY_CONSISTENCY_CACHE: ConsistencyCache = { analyzedAt: "", projectLimit: "all", rows: [] }

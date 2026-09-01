@@ -11,7 +11,6 @@
       :project-count="projectCount"
       :is-floating="isFloating"
       :progress="progressState"
-      @open-category="showCatDialog = true"
       @open-settings="openSettings"
       @open-add-project="showAddDialog = true"
       @open-scan="handleOpenScan"
@@ -164,6 +163,7 @@
         @save="setGitConcurrency"
         @save-branch-mode="handleSaveBranchMode"
         @update-view-settings="updateViewSettings"
+        @open-category="openCategoryFromSettings"
       />
     </Transition>
     <!-- 通用确认弹窗（删除/丢弃/恢复/分类/拉取等需二次确认的操作） -->
@@ -432,6 +432,12 @@ const showSettings = ref(false)
 function openSettings() {
   showSettings.value = true
   void loadViewSettings()
+}
+
+/** 设置弹窗内「管理分类」入口：关闭设置并打开分类弹窗（避免弹窗叠放） */
+function openCategoryFromSettings() {
+  showSettings.value = false
+  showCatDialog.value = true
 }
 
 /** 远程与本地一致性分析弹窗 */

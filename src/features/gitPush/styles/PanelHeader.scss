@@ -12,8 +12,8 @@
 
 // 项目搜索框（头部按钮区末位）
 .gp-header-search {
-  flex: 0 0 280px; // 固定 280px 基准宽，窄面板下最低压缩到 220px
-  min-width: 220px;
+  flex: 0 0 200px; 
+  min-width: 130px;
 
   // 搜索前缀图标缩小到 12px 与头部图标规格一致
   .si-input__prefix-icon,

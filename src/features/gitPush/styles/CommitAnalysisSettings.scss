@@ -26,6 +26,13 @@
   padding: $spacing-px 0;
 }
 
+// 表单根容器（AnalysisSettingsForm 复用于 popover 与设置汇总弹窗）：flex 列布局保持行间距与原 popover gap 一致
+.gpa-settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+}
+
 .gpa-settings-label {
   font-size: $font-size-2xs;
   opacity: 0.6;

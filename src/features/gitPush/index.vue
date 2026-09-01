@@ -6,19 +6,12 @@
       v-model:currentView="currentView"
       v-model:showPlatformMenu="showPlatformMenu"
       v-model:showAddMenu="showAddMenu"
-      v-model:showRefreshMenu="showRefreshMenu"
       v-model:searchQuery="searchQuery"
       :i18n="i18n"
       :project-count="projectCount"
-      :refreshing-all="refreshingAll"
-      :refreshing-all-local="refreshingAllLocal"
-      :refreshing-all-remote="refreshingAllRemote"
       :is-floating="isFloating"
       @open-category="showCatDialog = true"
       @open-settings="openSettings"
-      @refresh-all="handleRefreshAll"
-      @refresh-all-local="handleRefreshAllLocal"
-      @refresh-all-remote="handleRefreshAllRemote"
       @open-add-project="showAddDialog = true"
       @open-scan="handleOpenScan"
       @open-web="openRepoWebUrl"
@@ -700,25 +693,17 @@ const {
 // ── 刷新操作集群 ──
 const {
   refreshing,
-  refreshingAll,
-  refreshingAllLocal,
-  refreshingAllRemote,
-  showRefreshMenu,
   fetching,
   remoteStatusLoading,
   refreshingWorkingTree,
-  headHashes,
   handleRefresh,
   handleRefreshWorkingTree,
   handleRefreshRemoteStatus,
-  handleRefreshAll,
-  handleRefreshAllLocal,
-  handleRefreshAllRemote,
   handleFetchAll,
 } = useRefreshOps({
-  manager: props.manager, projects, activeCategory, gitOpsPaused, runBatchWithProgress, tf,
+  manager: props.manager, projects, runBatchWithProgress, tf,
   bumpCardRefresh,
-  loadProjectGitStatus, loadPushStatus, loadWorkingTree,
+  loadPushStatus, loadWorkingTree,
   refreshRemotes, fetchAllRemotes,
 })
 /** 项目编辑弹窗状态 */
@@ -769,7 +754,7 @@ onUnmounted(() => {
   document.removeEventListener("click", closeIdeMenuOnOutside)
 })
 
-/** 点击外部关闭顶栏菜单（添加/平台过滤/刷新；卡片内菜单由 ProjectCard 自行管理） */
+/** 点击外部关闭顶栏菜单（添加/平台过滤；卡片内菜单由 ProjectCard 自行管理） */
 function closeIdeMenuOnOutside(e: MouseEvent) {
   const target = e.target as HTMLElement | null
   if (target && !target.closest(".gp-add-wrap")) {
@@ -777,9 +762,6 @@ function closeIdeMenuOnOutside(e: MouseEvent) {
   }
   if (target && !target.closest(".gp-platform-wrap")) {
     showPlatformMenu.value = false
-  }
-  if (target && !target.closest(".gp-header-refresh-wrap")) {
-    showRefreshMenu.value = false
   }
 }
 
@@ -900,8 +882,6 @@ function handleForcePushToAll(id: string) {
 function handleRemove(project: GitProject) {
   showConfirm(tf("deleteProjectTitle"), tf("deleteProjectConfirm", project.name), () => {
     removeProject(project.id)
-    // 清理 HEAD hash 缓存中已删除项目的条目
-    delete headHashes.value[project.id]
   })
 }
 

@@ -193,65 +193,6 @@
           height="12"
         />
       </button>
-      <!-- 刷新下拉菜单 -->
-      <div class="gp-header-refresh-wrap">
-        <!-- 按钮（tooltip："刷新选项"，刷新进行中图标转圈） -->
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm"
-          :title="i18n.refreshOptions"
-          :disabled="refreshingAllLocal || refreshingAllRemote || refreshingAll"
-          @click.stop="showRefreshMenu = !showRefreshMenu"
-        >
-          <Icon
-            :icon="refreshingAllLocal || refreshingAllRemote || refreshingAll ? 'mdi:loading' : 'mdi:sync'"
-            height="12"
-            :class="{ 'gp-spin': refreshingAllLocal || refreshingAllRemote || refreshingAll }"
-          />
-        </button>
-        <div
-          v-if="showRefreshMenu"
-          class="gp-refresh-popover"
-          @click.stop
-        >
-          <!-- 菜单项："刷新本地状态"（点击后关闭菜单，进度由头部 sync 图标转圈体现） -->
-          <button
-            class="gp-refresh-item"
-            :disabled="refreshingAllLocal"
-            @click="showRefreshMenu = false; emit('refreshAllLocal')"
-          >
-            <Icon
-              icon="mdi:file-document-outline"
-              height="12"
-            />
-            <span>{{ i18n.headerRefreshLocal }}</span>
-          </button>
-          <!-- 菜单项："刷新远程状态" -->
-          <button
-            class="gp-refresh-item"
-            :disabled="refreshingAllRemote"
-            @click="showRefreshMenu = false; emit('refreshAllRemote')"
-          >
-            <Icon
-              icon="mdi:cloud-refresh-outline"
-              height="12"
-            />
-            <span>{{ i18n.headerRefreshRemote }}</span>
-          </button>
-          <div class="gp-refresh-divider" />
-          <!-- 菜单项："全部刷新" -->
-          <button
-            class="gp-refresh-item gp-refresh-item--all"
-            :disabled="refreshingAll"
-            @click="showRefreshMenu = false; emit('refreshAll')"
-          >
-            <Icon
-              icon="mdi:refresh-circle"
-              height="12"
-            />
-            <span>{{ i18n.refreshAll }}</span>
-          </button>
-        </div>
-      </div>
       <!-- 添加/导入合并下拉 -->
       <div class="gp-add-wrap">
         <button
@@ -319,16 +260,10 @@ import { PLATFORM_META, type PanelView } from "../../types"
 withDefaults(defineProps<{
   i18n: Record<string, any>
   projectCount?: number
-  refreshingAll?: boolean
-  refreshingAllLocal?: boolean
-  refreshingAllRemote?: boolean
   /** 当前是否运行在独立浮动窗口中（浮动窗口内隐藏「在独立窗口打开」按钮） */
   isFloating?: boolean
 }>(), {
   projectCount: 0,
-  refreshingAll: false,
-  refreshingAllLocal: false,
-  refreshingAllRemote: false,
   isFloating: false,
 })
 
@@ -336,7 +271,6 @@ withDefaults(defineProps<{
 const currentView = defineModel<PanelView>("currentView", { required: true })
 const showPlatformMenu = defineModel<boolean>("showPlatformMenu", { default: false })
 const showAddMenu = defineModel<boolean>("showAddMenu", { default: false })
-const showRefreshMenu = defineModel<boolean>("showRefreshMenu", { default: false })
 const searchQuery = defineModel<string>("searchQuery", { default: "" })
 
 const emit = defineEmits<{
@@ -344,9 +278,6 @@ const emit = defineEmits<{
   openGitConfig: []
   openConsistency: []
   openSettings: []
-  refreshAll: []
-  refreshAllLocal: []
-  refreshAllRemote: []
   openAddProject: []
   openScan: []
   openWeb: [url: string]

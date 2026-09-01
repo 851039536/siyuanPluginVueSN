@@ -1306,8 +1306,6 @@
     "refreshTags": "Refresh Tags",
     "refreshRemoteStatus": "Refresh Remote Status",
     "refreshAll": "Refresh All",
-    "headerRefreshLocal": "Refresh Local",
-    "headerRefreshRemote": "Refresh Remote",
     "previewMarkdown": "Docs Preview",
     "previewFileTitle": "Preview {0}",
     "mdFilesExpand": "Show all {0} Markdown files",

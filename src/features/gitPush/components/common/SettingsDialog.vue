@@ -36,6 +36,16 @@
             <!-- 导航项文案："常规"/"显示"/"Git 配置" -->
             <span>{{ i18n[sec.labelKey] }}</span>
           </button>
+          <!-- 底部固定操作（tooltip："管理分类"）：点击后关闭设置并打开分类弹窗 -->
+          <button
+            class="gp-settings-nav-btn gp-settings-nav-manage"
+            :title="i18n.manageCategories"
+            @click="$emit('openCategory')"
+          >
+            <Icon icon="mdi:tag-outline" height="14" />
+            <!-- 操作文案："管理分类" -->
+            <span>{{ i18n.manageCategories }}</span>
+          </button>
         </nav>
 
         <!-- 右侧内容区 -->
@@ -159,6 +169,8 @@ const emit = defineEmits<{
   save: [value: number]
   saveBranchMode: [mode: "all" | "head"]
   updateViewSettings: [patch: Partial<CommitAnalysisViewSettings>]
+  /** 底部「管理分类」操作：由父级关闭设置弹窗并打开分类弹窗 */
+  openCategory: []
 }>()
 
 const localConcurrency = ref(clampGitConcurrency(props.concurrency))

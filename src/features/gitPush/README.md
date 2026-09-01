@@ -14,7 +14,7 @@
 - **提交历史**：查看当前分支最近 N 条提交记录，支持关键词/作者搜索过滤
 - **分支管理**：查看本地分支列表，一键切换分支（自动检测未提交变更）
 - **Stash 暂存**：Git stash 存取恢复，支持 AI 生成描述
-- **项目分类**：按颜色标签分组管理项目
+- **项目分类**：按颜色标签分组管理项目（管理入口在设置弹窗左侧导航底部）
 - **标签/状态/备注**：多标签筛选、状态徽章循环切换（活跃/维护中/暂停）、项目备注
 - **提交规则检查**：校验各项目提交信息是否符合 Conventional Commits 规则（type 限 feat/fix/chore/docs/style/refactor/test），集中展示不合规提交及原因；支持 AI 生成修正建议，并可修正 HEAD 或任意本地历史提交（个人项目版，历史重写后需自行 force push）
 - **统计视图**：远程覆盖率、待处理项目合并视图（推送状态概览 + 待推送/暂存/未暂存表格）、平台配置状态
@@ -61,7 +61,7 @@ src/features/gitPush/
 │   │   ├── ConfirmDialog.vue        # 通用确认弹窗
 │   │   ├── AddProjectDialog.vue     # 添加项目弹窗
 │   │   ├── CategoryDialog.vue       # 分类管理弹窗
-│   │   ├── SettingsDialog.vue       # 设置汇总弹窗（左侧分区导航：常规=并发数+分支模式 / 显示=分析显示设置 / Git 配置=全局 Git 配置管理）
+│   │   ├── SettingsDialog.vue       # 设置汇总弹窗（左侧分区导航：常规=并发数+分支模式 / 显示=分析显示设置 / Git 配置=全局 Git 配置管理；导航底部=管理分类入口）
 │   │   ├── GitConfigSection.vue     # Git 配置管理面板（查看/编辑/新增/删除，全局/项目级）
 │   │   ├── IdeManagementDialog.vue  # IDE 管理弹窗
 │   │   ├── ScanImportDialog.vue     # 扫描导入弹窗

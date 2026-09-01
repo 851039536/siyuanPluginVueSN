@@ -152,17 +152,6 @@
         </div>
       </div>
       <span class="gp-header-sep" />
-      <!-- 按钮（tooltip："管理分类"） -->
-      <button
-        class="vp-btn vp-btn--ghost vp-btn--sm"
-        :title="i18n.manageCategories"
-        @click="emit('openCategory')"
-      >
-        <Icon
-          icon="mdi:tag-outline"
-          height="12"
-        />
-      </button>
       <!-- 按钮（tooltip："Git 配置"） -->
       <button
         class="vp-btn vp-btn--ghost vp-btn--sm"
@@ -292,7 +281,6 @@ const showAddMenu = defineModel<boolean>("showAddMenu", { default: false })
 const searchQuery = defineModel<string>("searchQuery", { default: "" })
 
 const emit = defineEmits<{
-  openCategory: []
   openGitConfig: []
   openConsistency: []
   openSettings: []

@@ -252,6 +252,8 @@
         height="12"
       />
     </button>
+    <!-- 危险操作分隔线：删除与常规操作分组 -->
+    <span class="gp-actions-divider" />
     <!-- 悬停提示："删除"（移除项目） -->
     <button
       class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"

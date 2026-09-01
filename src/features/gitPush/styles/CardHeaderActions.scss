@@ -4,7 +4,17 @@
 
 .gp-card-actions {
   display: flex;
+  align-items: center;
   gap: $spacing-1;
+  flex-shrink: 0;
+}
+
+// 危险操作分隔线：常规操作与删除之间的视觉分组
+.gp-actions-divider {
+  width: 1px;
+  height: 14px;
+  margin: 0 $spacing-px;
+  background: var(--b3-border-color);
   flex-shrink: 0;
 }
 

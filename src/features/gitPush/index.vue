@@ -23,6 +23,7 @@
       @open-scan="handleOpenScan"
       @open-web="openRepoWebUrl"
       @open-git-config="handleOpenGitConfig"
+      @open-consistency="showConsistencyDialog = true"
       @open-floating="openFloatingWindow"
     />
 
@@ -241,6 +242,16 @@
         @close="closeGitConfig"
       />
     </Transition>
+    <!-- 远程与本地一致性分析弹窗（自包含：仅传 manager + i18n，内部自行取项目快照与分析） -->
+    <Transition name="gp-dialog-fade">
+      <ConsistencyAuditDialog
+        v-if="showConsistencyDialog"
+        :i18n="i18n"
+        :manager="props.manager"
+        @close="showConsistencyDialog = false"
+        @view-project="handleViewProjectFromConsistency"
+      />
+    </Transition>
   </div>
 </template>
 
@@ -270,6 +281,7 @@ import { findProject } from "./utils"
 import AddProjectDialog from "./components/common/AddProjectDialog.vue"
 import CategoryDialog from "./components/common/CategoryDialog.vue"
 import ConfirmDialog from "./components/common/ConfirmDialog.vue"
+import ConsistencyAuditDialog from "./components/common/ConsistencyAuditDialog.vue"
 import EditProjectDialog from "./components/common/EditProjectDialog.vue"
 import IdeManagementDialog from "./components/common/IdeManagementDialog.vue"
 import ListView from "./components/ListView/index.vue"
@@ -425,6 +437,14 @@ async function recordCommitActivity(id: string, isoTime: string) {
 const showAddDialog = ref(false)
 const showCatDialog = ref(false)
 const showSettings = ref(false)
+/** 远程与本地一致性分析弹窗 */
+const showConsistencyDialog = ref(false)
+
+/** 一致性弹窗内点击项目：关闭弹窗并跳转项目卡片 */
+function handleViewProjectFromConsistency(projectId: string) {
+  showConsistencyDialog.value = false
+  onViewProject(projectId)
+}
 const showAddMenu = ref(false)
 const showPlatformMenu = ref(false)
 /** 拉取二次确认：复用通用确认弹窗，正文 {0} 填充平台名 */

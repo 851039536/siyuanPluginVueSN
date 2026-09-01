@@ -80,3 +80,11 @@ export {
   WEEKDAY_LABEL_KEYS,
 } from "./report"
 export type { AuthorReportRow, CodeReportData, CodeReportPrefs, CommitRhythmStats, DailyCommitStat, DebtFileRow, DebtSeverity, FileStatRow, HotspotFileRow, HotspotLevel, HotspotLevelSummary, HourBucketStat, ReportRange, WeekdayStat } from "./report"
+
+// ── 重导出远程与本地一致性分析类型（来自 consistency.ts）──
+export type {
+  ConsistencyBranchRow,
+  ConsistencyProjectRow,
+  ConsistencyState,
+  ConsistencySummary,
+} from "./consistency"

@@ -257,6 +257,35 @@ export class WorktreeOps {
     }
   }
 
+  /** 列出全部远程跟踪分支短名（如 origin/main），供一致性比对（本地读取，失败返回 []） */
+  async getRemoteTrackingRefs(projectPath: string): Promise<string[]> {
+    try {
+      const raw = await this.executor.execGit(projectPath, [
+        "for-each-ref", "refs/remotes", "--format=%(refname:short)",
+      ])
+      // 排除 origin/HEAD 之类的符号 ref（其 short 名为 origin -> origin/HEAD 形式或直接以 /HEAD 结尾）
+      return raw.split("\n").map((l) => l.trim()).filter((l) => l && !l.endsWith("/HEAD"))
+    } catch {
+      return []
+    }
+  }
+
+  /**
+   * 计算 localBranch 相对 remoteRef 的领先/落后提交数
+   * rev-list --left-right --count remoteRef...localBranch：左侧(remote)独有计入 behind，右侧(local)独有计入 ahead
+   * 调换 ... 两侧会静默反转 ahead/behind，切勿改动顺序
+   */
+  async countAheadBehind(projectPath: string, remoteRef: string, localBranch: string): Promise<{ ahead: number, behind: number }> {
+    const counts = await this.executor.execGit(projectPath, [
+      "rev-list", "--left-right", "--count", `${remoteRef}...${localBranch}`,
+    ])
+    const parts = counts.split("\t")
+    return {
+      behind: Number.parseInt(parts[0] || "0", 10) || 0,
+      ahead: Number.parseInt(parts[1] || "0", 10) || 0,
+    }
+  }
+
   async getHeadHash(projectPath: string): Promise<string> {
     try {
       return (await this.executor.execGit(projectPath, ["rev-parse", "HEAD"])).trim()

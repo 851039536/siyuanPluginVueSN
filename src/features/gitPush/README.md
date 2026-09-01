@@ -18,6 +18,7 @@
 - **标签/状态/备注**：多标签筛选、状态徽章循环切换（活跃/维护中/暂停）、项目备注
 - **提交规则检查**：校验各项目提交信息是否符合 Conventional Commits 规则（type 限 feat/fix/chore/docs/style/refactor/test），集中展示不合规提交及原因；支持 AI 生成修正建议，并可修正 HEAD 或任意本地历史提交（个人项目版，历史重写后需自行 force push）
 - **统计视图**：远程覆盖率、待处理项目合并视图（推送状态概览 + 待推送/暂存/未暂存表格）、平台配置状态
+- **远程与本地一致性分析**：头部按钮打开弹窗，批量比对所有项目各本地分支与各远程分支（存在性/领先/落后/分叉），可选先 fetch --prune（默认开启），支持进度显示、七态汇总与"仅显示问题"过滤
 - **行数统计视图**：独立 Tab，统计各项目/作者的代码新增、删除、净增行数排行（千位分隔数字，净增正绿负红），支持 30/50/100/200 条数选择；可配置文件格式过滤（扩展名多选排除列表，勾选后跳过对应格式，不选则统计所有文件）
 - **扫描导入**：递归扫描目录批量导入 Git 仓库
 - **远程配置**：添加/编辑/删除远程仓库，支持行内编辑 URL
@@ -55,7 +56,7 @@ src/features/gitPush/
 │   ├── useCardMenu.ts               # 卡片内联下拉菜单共享（provide/inject，顶栏与操作栏菜单互斥）
 │   └── useCardData.ts               # 卡片 Tab 数据自包含（log/branches/stash/tags/冲突/diff/md）
 ├── components/
-│   ├── common/                      # 复用组件（跨 ≥2 个视图引用，18 个）
+│   ├── common/                      # 复用组件（跨 ≥2 个视图引用，19 个）
 │   │   ├── PanelHeader.vue          # 面板头部（搜索 + 视图切换）
 │   │   ├── BatchProgressBar.vue     # 批量进度条
 │   │   ├── ConfirmDialog.vue        # 通用确认弹窗
@@ -68,6 +69,7 @@ src/features/gitPush/
 │   │   ├── EditProjectDialog.vue    # 编辑项目弹窗
 │   │   ├── MarkdownPreviewDialog.vue# Markdown 预览弹窗
 │   │   ├── GitConfigDialog.vue      # Git 配置弹窗（内嵌 GitConfigSection，可读写）
+│   │   ├── ConsistencyAuditDialog.vue # 远程与本地一致性分析弹窗（自包含，内嵌 useConsistencyAudit）
 │   │   ├── SearchBox.vue            # 搜索框
 │   │   ├── EditableRemoteList.vue   # 可编辑远程列表
 │   │   ├── CloneLogPanel.vue        # 克隆日志面板

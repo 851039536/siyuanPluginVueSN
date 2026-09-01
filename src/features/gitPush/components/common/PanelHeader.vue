@@ -162,7 +162,7 @@
       <!-- 按钮（tooltip："远程与本地一致性分析"） -->
       <button
         class="vp-btn vp-btn--ghost vp-btn--sm"
-        :title="i18n.consistencyOpen"
+        :title="i18n.consistencyTitle"
         @click="emit('openConsistency')"
       >
         <Icon

@@ -95,7 +95,6 @@
           :title="i18n.forcePushHint"
           @click="ops.handleForcePushToAll(project.id)"
         >
-          <Icon icon="mdi:alert-circle-outline" height="12" />
           <span>{{ i18n.forcePush }}</span>
         </button>
         <!-- 单远程推送（下拉菜单） -->

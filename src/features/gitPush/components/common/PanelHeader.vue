@@ -2,7 +2,7 @@
 <template>
   <div class="gp-header">
     <div class="gp-header-left">
-      <!-- 面板标题："Git 推送" -->
+      <!-- 面板标题："Git" -->
       <span class="gp-title">{{ i18n.panelTitle }}</span>
       <span
         v-if="projectCount > 0"

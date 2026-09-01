@@ -100,7 +100,7 @@
     min-height: 0; // 允许 flex 子项收缩，触发内部滚动
     overflow-y: auto;
 
-    // 细滚动条（仿 BatchProgressBar 先例，窄列下减少宽度侵占）
+    // 细滚动条（窄列下减少宽度侵占）
     &::-webkit-scrollbar {
       width: 4px;
     }

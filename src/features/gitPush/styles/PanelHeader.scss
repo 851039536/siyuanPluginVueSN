@@ -27,22 +27,29 @@
   }
 }
 
-// 批量操作旋转进度指示器（头部最左侧，标题之前）
+// 批量操作旋转进度指示器（头部最左侧，标题之前；胶囊徽章风格与 gp-count-badge 统一）
 .gp-header-progress {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-1;
-  flex-shrink: 0;
+  gap: 4px; // 徽章内图标与计数间距，无对应尺寸 Token
+  height: 18px; // 与 gp-count-badge 徽章同高
+  padding: 0 7px;
+  border-radius: $radius-full;
+  background: var(--b3-theme-primary-lightest);
+  color: var(--b3-theme-primary);
   font-size: $font-size-2xs;
   font-family: $vp-mono;
   font-weight: $font-weight-bold;
-  color: var(--b3-theme-primary);
+  font-variant-numeric: tabular-nums; // 计数递增时数字宽度稳定不抖动
   white-space: nowrap;
   cursor: default;
+  flex-shrink: 0;
+  transition: background 0.2s, color 0.2s;
 
-  // 完成态：图标变绿并停止旋转
+  // 完成态：切换为成功色徽章，图标停止旋转
   &.is-done {
-    color: var(--b3-theme-success);
+    background: hsla(from var(--b3-theme-success, $color-success) h s l / 0.12);
+    color: var(--b3-theme-success, $color-success);
 
     .gp-header-progress-spin {
       animation: none;

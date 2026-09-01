@@ -33,7 +33,7 @@
       />
       <span>{{ project[r.remoteProp] }}</span>
       <span
-        v-if="pushStatus?.remotes[r.key]"
+        v-if="pushStatus?.remotes[r.key] && derived.statusLabel(project.id, r.key)"
         class="gp-status-badge"
         :class="derived.statusBadgeClass(project.id, r.key)"
       >

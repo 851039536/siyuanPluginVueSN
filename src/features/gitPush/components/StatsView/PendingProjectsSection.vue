@@ -13,6 +13,7 @@
         :key="chip.field"
         class="gp-status-chip"
         :class="`gp-status-chip--${chip.cls}`"
+        :title="i18n[chip.labelKey]"
       >
         <Icon
           :icon="chip.icon"
@@ -125,12 +126,12 @@ const emit = defineEmits<{
   viewProject: [projectId: string]
 }>()
 
-// 推送状态 chip 配置：待推送/待拉取/已同步/无远程
+// 推送状态 chip 配置：待推送/待拉取/已同步/无远程（labelKey 复用现有 i18n 键作 hover 提示）
 const STATUS_CHIPS = [
-  { field: "ahead", icon: "mdi:cloud-upload-outline", cls: "ahead" },
-  { field: "behind", icon: "mdi:cloud-download-outline", cls: "behind" },
-  { field: "synced", icon: "mdi:check-circle-outline", cls: "synced" },
-  { field: "noRemote", icon: "mdi:lan-disconnect", cls: "none" },
+  { field: "ahead", icon: "mdi:cloud-upload-outline", cls: "ahead", labelKey: "needsPush" },
+  { field: "behind", icon: "mdi:cloud-download-outline", cls: "behind", labelKey: "needsPullShort" },
+  { field: "synced", icon: "mdi:check-circle-outline", cls: "synced", labelKey: "synced" },
+  { field: "noRemote", icon: "mdi:lan-disconnect", cls: "none", labelKey: "noRemoteLabel" },
 ] as const
 
 // 变更计数列配置：已暂存/未暂存/未跟踪（field 同时作为表头 i18n 键）

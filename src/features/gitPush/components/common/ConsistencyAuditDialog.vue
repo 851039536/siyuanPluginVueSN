@@ -80,6 +80,19 @@
         </div>
 
         <template v-else>
+          <!-- 上次分析时间（缓存恢复或分析完成后显示，悬停显示绝对时间） -->
+          <div
+            v-if="analyzedAt"
+            class="gca-analyzed-at"
+            :title="formatDateTime(analyzedAt)"
+          >
+            <Icon
+              icon="mdi:history"
+              height="12"
+            />
+            <!-- 文案："上次分析：{0}分钟前"（相对时间，解析失败回退绝对时间） -->
+            <span>{{ i18n.analysisLastRun.replace("{0}", relativeTime(analyzedAt, i18n) || formatDateTime(analyzedAt)) }}</span>
+          </div>
           <!-- 暂无项目空态 -->
           <div
             v-if="projectCount === 0"
@@ -222,6 +235,7 @@ import type {
 import { Icon } from "@iconify/vue"
 import { onMounted, ref } from "vue"
 import SiSwitch from "@/components/Switch.vue"
+import { relativeTime, formatDateTime } from "../../utils"
 import { useConsistencyAudit } from "../../composables/useConsistencyAudit"
 import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
 
@@ -239,6 +253,7 @@ const {
   displayRows,
   analyzing,
   analyzed,
+  analyzedAt,
   fetchFirst,
   issueOnly,
   progress,

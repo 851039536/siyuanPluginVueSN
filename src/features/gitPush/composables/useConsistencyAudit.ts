@@ -31,8 +31,10 @@ export function useConsistencyAudit(manager: GitPushManager) {
   const rows = ref<ConsistencyProjectRow[]>([])
   /** 是否正在批量分析 */
   const analyzing = ref(false)
-  /** 是否已完成过至少一轮分析（区分"未分析"与"分析结果为空"） */
+  /** 是否已完成过至少一轮分析（区分"未分析"与"分析结果为空"；缓存恢复时同样置 true） */
   const analyzed = ref(false)
+  /** 上次分析完成时间（ISO，弹窗展示"上次分析"文案） */
+  const analyzedAt = ref("")
   /** 分析前是否先 fetch 远程（默认开启，结果最准确） */
   const fetchFirst = ref(true)
   /** 仅显示存在问题的项目 */
@@ -41,6 +43,38 @@ export function useConsistencyAudit(manager: GitPushManager) {
   const progress = ref({ done: 0, total: 0 })
   /** 当前一轮分析的取消句柄 */
   let abortController: AbortController | null = null
+
+  // ── 结果持久化缓存（跨会话复用：打开弹窗直接展示上次结果，无需重复分析）──
+
+  /** 缓存是否已尝试加载（防重复读盘 + 防与 runAudit 竞态） */
+  let cacheLoaded = false
+
+  /** 加载持久化缓存（有历史结果时恢复 rows/analyzedAt） */
+  async function loadCache() {
+    if (cacheLoaded) { return }
+    cacheLoaded = true
+    try {
+      const cache = await manager.storage.consistencyCache.loadOrDefault()
+      // 分析中/已完成时跳过（用户可能先点了分析按钮），避免覆盖新结果
+      if (!analyzing.value && !analyzed.value && cache.rows.length > 0) {
+        rows.value = cache.rows
+        analyzedAt.value = cache.analyzedAt
+        analyzed.value = true
+      }
+    } catch (e: unknown) {
+      console.warn("[gitPush] 一致性分析：加载缓存失败", getErrorMessage(e))
+    }
+  }
+  void loadCache()
+
+  /** 保存当前结果到持久化缓存 */
+  async function saveCache() {
+    try {
+      await manager.storage.consistencyCache.save({ analyzedAt: analyzedAt.value, rows: rows.value })
+    } catch (e: unknown) {
+      console.warn("[gitPush] 一致性分析：保存缓存失败", getErrorMessage(e))
+    }
+  }
 
   /** 对单个项目执行分析（路径无效/git 失败 → error 行） */
   async function auditProject(p: GitProject): Promise<ConsistencyProjectRow> {
@@ -169,7 +203,9 @@ export function useConsistencyAudit(manager: GitPushManager) {
       rows.value = settled
         .filter((r): r is PromiseFulfilledResult<ConsistencyProjectRow> => r.status === "fulfilled")
         .map((r) => r.value)
+      analyzedAt.value = new Date().toISOString()
       analyzed.value = true
+      await saveCache()
     } finally {
       analyzing.value = false
       abortController = null
@@ -215,6 +251,7 @@ export function useConsistencyAudit(manager: GitPushManager) {
     displayRows,
     analyzing,
     analyzed,
+    analyzedAt,
     fetchFirst,
     issueOnly,
     progress,

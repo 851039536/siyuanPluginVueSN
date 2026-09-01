@@ -14,7 +14,7 @@
           height="12"
           :class="{ 'gp-header-progress-spin': !progress.done }"
         />
-        <span class="gp-header-progress-count">{{ progress.current }}/{{ progress.total }}</span>
+        <span>{{ progress.current }}/{{ progress.total }}</span>
       </div>
 
       <!-- 面板标题："Git" -->

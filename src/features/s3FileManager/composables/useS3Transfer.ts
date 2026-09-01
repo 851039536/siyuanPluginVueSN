@@ -173,7 +173,7 @@ export function useS3Transfer(deps: {
           }))
           uploadedBytes += sizeMap.get(task.key) ?? buffer.length
         } catch (err) {
-          console.warn("[S3文件管理] 上传失败:", task.path, getErrorMessage(err))
+          // console.warn("[S3文件管理] 上传失败:", task.path, getErrorMessage(err))
           failed.push(task.name)
         } finally {
           if (buffer) { releaseMemory(buffer.length) }
@@ -367,7 +367,7 @@ export function useS3Transfer(deps: {
           reportProgress(i18n.statusDownloading, displayName, done, tasks.length, 0)
           await withRetries(() => client.download(task.key, task.dest))
         } catch (err) {
-          console.warn("[S3文件管理] 下载失败:", task.key, getErrorMessage(err))
+          // console.warn("[S3文件管理] 下载失败:", task.key, getErrorMessage(err))
           failed.push(task.key)
         }
         done++

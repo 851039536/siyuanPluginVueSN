@@ -49,7 +49,7 @@ export function useS3FmClient(deps: { storage: S3FileManagerStorage; i18n: S3Fil
         client = null
       }
     } catch (err) {
-      console.error("[S3文件管理] 加载配置失败:", getErrorMessage(err))
+      // console.error("[S3文件管理] 加载配置失败:", getErrorMessage(err))
     }
   }
 

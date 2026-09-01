@@ -9,11 +9,11 @@
   max-width: 90vw;
 }
 
-// 左导航 + 右内容的水平布局
+// 左导航 + 右内容的水平布局（高度较初版上调 30%：380→494 / 640→832；vh 上限 90vh 封顶避免近全屏）
 .gp-settings-layout {
   display: flex;
-  min-height: 380px;
-  max-height: min(640px, 76vh);
+  min-height: min(494px, 70vh);
+  max-height: min(832px, 90vh);
 }
 
 // 左侧分区导航栏

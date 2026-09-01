@@ -163,11 +163,11 @@ async function navigate(prefix: string): Promise<void> {
     const agg = aggregateEntries(listing.files, prefix)
     folders.value = [...new Set([...listing.folders, ...agg.folders])]
     if (agg.conflicts.length > 0) {
-      console.warn("[S3文件管理] 目标目录发现同名文件夹/文件冲突:", agg.conflicts.join(", "))
+      // console.warn("[S3文件管理] 目标目录发现同名文件夹/文件冲突:", agg.conflicts.join(", "))
     }
   } catch (err) {
     // 列举失败显示错误态，与“无子目录”空态区分
-    console.warn("[S3文件管理] 目标目录列举失败:", getErrorMessage(err))
+    // console.warn("[S3文件管理] 目标目录列举失败:", getErrorMessage(err))
     loadError.value = getErrorMessage(err)
     folders.value = []
   } finally {

@@ -78,7 +78,7 @@ export function useS3FileOps(deps: {
       try {
         await copyObject(client, pair.src, pair.dest)
       } catch (err) {
-        console.warn("[S3文件管理] 复制失败:", pair.src, getErrorMessage(err))
+        // console.warn("[S3文件管理] 复制失败:", pair.src, getErrorMessage(err))
         failed.push(pair.src)
       }
       done++
@@ -97,7 +97,7 @@ export function useS3FileOps(deps: {
       try {
         await client.delete(key)
       } catch (err) {
-        console.warn("[S3文件管理] 删除失败:", key, getErrorMessage(err))
+        // console.warn("[S3文件管理] 删除失败:", key, getErrorMessage(err))
         failed.push(key)
       }
       done++

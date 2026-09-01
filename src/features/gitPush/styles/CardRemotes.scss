@@ -3,10 +3,11 @@
 @use "./mixins" as *;
 
 .gp-remotes {
-  display: flex;
+  display: inline-flex; // 收缩为内容宽度：远程项少时行不占满卡片，杜绝任何拉伸导致的松散观感
   align-items: center;
-  gap: $spacing-2;
+  gap: $spacing-1; // 4px：隐藏未配置远程后项变短，8px 间距视觉上被放大，收紧与项内间距一致
   margin: 3px 0;
+  max-width: 100%;
 }
 
 .gp-remotes-label {
@@ -39,6 +40,7 @@
   display: flex;
   align-items: center;
   gap: $spacing-1;
+  flex: none; // 显式禁止伸缩，项宽恒为内容宽
   font-size: $font-size-2xs;
   font-family: $vp-mono;
   opacity: 0.35;

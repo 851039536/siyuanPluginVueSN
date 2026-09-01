@@ -1132,8 +1132,8 @@
   "enableGitPush": "启用 Git 推送功能",
   "enableGitPushDesc": "同时推送项目到 GitHub 和 Gitee，持久化项目路径映射",
   "gitPush": {
-    "panelTitle": "Git 推送",
-    "title": "Git 推送",
+    "panelTitle": "Git",
+    "title": "Git",
     "addProject": "添加",
     "loading": "加载中...",
     "notDetected": "未检测到",

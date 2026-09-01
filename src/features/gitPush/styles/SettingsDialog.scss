@@ -1,0 +1,68 @@
+// 设置汇总弹窗样式：左侧分区导航 + 右侧内容区布局（宽版，容纳 Git 配置列表）
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// 汇总弹窗宽版布局（三分区导航 + 内容区，替代旧的 300px 窄版）
+// 双类选择器提优先级：组件专属 SCSS 按规范先于 index.scss 加载，单类会被基础 .gp-dialog 的 420px 同优先级覆盖
+.gp-dialog.gp-dialog--settings {
+  width: 720px;
+  max-width: 90vw;
+}
+
+// 左导航 + 右内容的水平布局
+.gp-settings-layout {
+  display: flex;
+  min-height: 380px;
+  max-height: min(640px, 76vh);
+}
+
+// 左侧分区导航栏
+.gp-settings-nav {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  padding: $spacing-3 $spacing-2;
+  border-right: 1px solid var(--b3-border-color);
+  flex-shrink: 0;
+}
+
+// 导航项按钮（图标 + 文案，激活态主色 + 左侧指示条）
+.gp-settings-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-2;
+  border: none;
+  border-left: 2px solid transparent;
+  border-radius: $radius-sm;
+  background: transparent;
+  color: var(--b3-theme-on-surface-light);
+  font-size: $font-size-xs;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s;
+
+  &:hover {
+    background: var(--b3-list-hover);
+    color: var(--b3-theme-on-surface);
+  }
+
+  &.active {
+    background: var(--b3-theme-primary-lightest);
+    border-left-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+    font-weight: $font-weight-semibold;
+  }
+}
+
+// 右侧内容区（可滚动）
+.gp-settings-content {
+  flex: 1;
+  min-width: 0;
+  padding: $spacing-3 $spacing-4;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}

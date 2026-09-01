@@ -15,7 +15,7 @@
       :refreshing-all-remote="refreshingAllRemote"
       :is-floating="isFloating"
       @open-category="showCatDialog = true"
-      @open-settings="showSettings = true"
+      @open-settings="openSettings"
       @refresh-all="handleRefreshAll"
       @refresh-all-local="handleRefreshAllLocal"
       @refresh-all-remote="handleRefreshAllRemote"
@@ -168,11 +168,15 @@
       <SettingsDialog
         v-if="showSettings"
         :i18n="i18n"
+        :manager="props.manager"
         :concurrency="gitConcurrency"
         :push-branch-mode="pushBranchMode"
+        :view-settings="analysisViewSettings"
+        :year-options="settingsYearOptions"
         @close="showSettings = false"
         @save="setGitConcurrency"
         @save-branch-mode="handleSaveBranchMode"
+        @update-view-settings="updateViewSettings"
       />
     </Transition>
     <!-- 通用确认弹窗（删除/丢弃/恢复/分类/拉取等需二次确认的操作） -->
@@ -277,7 +281,7 @@ import {
   watch,
 } from "vue"
 import { getErrorMessage } from "@/utils/stringUtils"
-import { findProject } from "./utils"
+import { buildYearOptions, findProject } from "./utils"
 import AddProjectDialog from "./components/common/AddProjectDialog.vue"
 import CategoryDialog from "./components/common/CategoryDialog.vue"
 import ConfirmDialog from "./components/common/ConfirmDialog.vue"
@@ -437,6 +441,13 @@ async function recordCommitActivity(id: string, isoTime: string) {
 const showAddDialog = ref(false)
 const showCatDialog = ref(false)
 const showSettings = ref(false)
+
+/** 打开设置汇总弹窗：先预载显示设置，防止未进分析视图时以默认值覆盖已保存设置 */
+function openSettings() {
+  showSettings.value = true
+  void loadViewSettings()
+}
+
 /** 远程与本地一致性分析弹窗 */
 const showConsistencyDialog = ref(false)
 
@@ -581,6 +592,7 @@ const {
   ensureAnalysis,
   ensureLineStats,
   viewSettings: analysisViewSettings,
+  loadViewSettings,
   updateViewSettings,
   effectiveRuleCheckProjectId,
   setRuleCheckProject,
@@ -955,6 +967,11 @@ async function handleSaveBranchMode(mode: "all" | "head") {
   pushBranchMode.value = mode
   await props.manager.setPushBranchMode(mode)
 }
+
+/** 设置汇总弹窗的显示设置年份选项（数据年份 ∪ 今年 ∪ 已保存年份，与分析视图共用逻辑） */
+const settingsYearOptions = computed(() =>
+  buildYearOptions(analysisStats.value.entries, analysisViewSettings.value.range),
+)
 
 // 推送状态派生视图（徽章文案/样式类/推送判定，供 ProjectCard 函数 props）
 const { statusLabel, statusBadgeClass, needsPushFor, hasBehind } = usePushStatusView(pushStatuses)

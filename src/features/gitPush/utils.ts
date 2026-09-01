@@ -479,6 +479,17 @@ export function formatDateTime(iso: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
+/** 显示设置年份选项：数据年份 ∪ 今年 ∪ 已保存 range 年份，降序（分析视图 popover 与设置汇总弹窗共用） */
+export function buildYearOptions(entries: { date: string }[], range: "lastYear" | number): number[] {
+  const years = new Set<number>([new Date().getFullYear()])
+  if (typeof range === "number") years.add(range)
+  for (const e of entries) {
+    const d = new Date(e.date)
+    if (!Number.isNaN(d.getTime())) years.add(d.getFullYear())
+  }
+  return [...years].sort((a, b) => b - a)
+}
+
 /**
  * 分析状态文案统一："分析中… / 上次分析 xx / 未分析"（提交分析与提交规则检查工具条共用，
  * notRunKey 区分 analysisNotRun / ruleCheckNotRun，消除跨工具条重复三元表达式）。

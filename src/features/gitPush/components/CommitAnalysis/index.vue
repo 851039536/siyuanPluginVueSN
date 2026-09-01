@@ -100,6 +100,7 @@ import type { CommitCount } from "../../composables/useCommitAnalysis"
 import { computed } from "vue"
 import EmptyState from "../common/EmptyState.vue"
 import Loader from "@/components/Loader.vue"
+import { buildYearOptions } from "../../utils"
 import AnalysisOverviewCards from "./AnalysisOverviewCards.vue"
 import AnalysisToolbar from "./AnalysisToolbar.vue"
 import AuthorTypeSection from "./AuthorTypeSection.vue"
@@ -126,17 +127,8 @@ const emit = defineEmits<{
   viewProject: [projectId: string]
 }>()
 
-/** 年份选项：数据年份 ∪ 今年 ∪ 已保存年份，降序（供工具条设置弹窗） */
-const yearOptions = computed(() => {
-  const years = new Set<number>()
-  years.add(new Date().getFullYear())
-  if (typeof props.viewSettings.range === "number") years.add(props.viewSettings.range)
-  for (const e of props.stats.entries) {
-    const d = new Date(e.date)
-    if (!Number.isNaN(d.getTime())) years.add(d.getFullYear())
-  }
-  return [...years].sort((a, b) => b - a)
-})
+/** 年份选项：数据年份 ∪ 今年 ∪ 已保存年份，降序（供工具条设置弹窗与设置汇总弹窗共用逻辑） */
+const yearOptions = computed(() => buildYearOptions(props.stats.entries, props.viewSettings.range))
 </script>
 
 <style lang="scss">

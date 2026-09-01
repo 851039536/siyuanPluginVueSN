@@ -53,19 +53,19 @@ export function useRefreshOps(deps: {
     if (!project) return
     refreshing.value = id
     try {
-      await runBatchWithProgress([project], tf("refreshingLabel"), async (p, ctx) => {
+      await runBatchWithProgress([project], tf("refreshingLabel"), async (p) => {
         // 一次 rev-parse 获取 branch；先刷新远程配置再并行加载状态，
         // 避免 loadPushStatus(fetchFirst) 用陈旧的远程名 fetch（refreshRemotes 与状态读取竞态）
         const cwd = resolveValidPath(p)
         const branch = await manager.getBranch(cwd)
-        await ctx.step(tf("stepRemote"), () => refreshRemotes(p.id))
+        await refreshRemotes(p.id)
         await Promise.all([
-          ctx.step(tf("stepPush"), () => loadPushStatus(p.id, { fetchFirst: true, branch })),
-          ctx.step(tf("stepWorkingTree"), () => loadWorkingTree(p.id, branch)),
+          loadPushStatus(p.id, { fetchFirst: true, branch }),
+          loadWorkingTree(p.id, branch),
         ])
         // 日志/分支/stash 已下沉卡片，按域通知重载
         bumpCardRefresh(p.id, "log", "branches", "stash")
-      }, (p) => p.name, { keepVisible: true })
+      })
     } finally {
       refreshing.value = null
     }

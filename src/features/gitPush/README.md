@@ -56,9 +56,8 @@ src/features/gitPush/
 │   ├── useCardMenu.ts               # 卡片内联下拉菜单共享（provide/inject，顶栏与操作栏菜单互斥）
 │   └── useCardData.ts               # 卡片 Tab 数据自包含（log/branches/stash/tags/冲突/diff/md）
 ├── components/
-│   ├── common/                      # 复用组件（跨 ≥2 个视图引用，19 个）
-│   │   ├── PanelHeader.vue          # 面板头部（搜索 + 视图切换）
-│   │   ├── BatchProgressBar.vue     # 批量进度条
+│   ├── common/                      # 复用组件（跨 ≥2 个视图引用，18 个）
+│   │   ├── PanelHeader.vue          # 面板头部（搜索 + 视图切换 + 批量旋转进度指示器）
 │   │   ├── ConfirmDialog.vue        # 通用确认弹窗
 │   │   ├── AddProjectDialog.vue     # 添加项目弹窗
 │   │   ├── CategoryDialog.vue       # 分类管理弹窗

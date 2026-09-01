@@ -248,6 +248,21 @@
           autocomplete="off"
         />
       </div>
+
+      <!-- 批量操作旋转进度指示器（tooltip："操作名 n/m"） -->
+      <div
+        v-if="progress?.visible"
+        class="gp-header-progress"
+        :class="{ 'is-done': progress.done }"
+        :title="`${progress.label} ${progress.current}/${progress.total}`"
+      >
+        <Icon
+          :icon="progress.done ? 'mdi:check-circle-outline' : 'mdi:loading'"
+          height="14"
+          :class="{ 'gp-header-progress-spin': !progress.done }"
+        />
+        <span class="gp-header-progress-count">{{ progress.current }}/{{ progress.total }}</span>
+      </div>
     </div>
   </div>
 </template>
@@ -256,12 +271,15 @@
 import { Icon } from "@iconify/vue"
 import Input from "@/components/Input.vue"
 import { PLATFORM_META, type PanelView } from "../../types"
+import type { LoadProgress } from "../../types/batchProgress"
 
 withDefaults(defineProps<{
   i18n: Record<string, any>
   projectCount?: number
   /** 当前是否运行在独立浮动窗口中（浮动窗口内隐藏「在独立窗口打开」按钮） */
   isFloating?: boolean
+  /** 批量操作进度状态（运行中/完成时在头部最右侧显示旋转进度指示器） */
+  progress?: LoadProgress
 }>(), {
   projectCount: 0,
   isFloating: false,

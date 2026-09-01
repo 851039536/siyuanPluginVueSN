@@ -12,7 +12,7 @@
 
 // 项目搜索框（头部按钮区末位）
 .gp-header-search {
-  flex: 0 0 200px; 
+  flex: 0 0 200px;
   min-width: 130px;
 
   // 搜索前缀图标缩小到 12px 与头部图标规格一致
@@ -25,6 +25,38 @@
       height: 12px;
     }
   }
+}
+
+// 批量操作旋转进度指示器（头部最右侧）
+.gp-header-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  flex-shrink: 0;
+  font-size: $font-size-2xs;
+  font-family: $vp-mono;
+  font-weight: $font-weight-bold;
+  color: var(--b3-theme-primary);
+  white-space: nowrap;
+  cursor: default;
+
+  // 完成态：图标变绿并停止旋转
+  &.is-done {
+    color: var(--b3-theme-success);
+
+    .gp-header-progress-spin {
+      animation: none;
+    }
+  }
+}
+
+.gp-header-progress-spin {
+  animation: gp-header-spin 1s linear infinite;
+}
+
+@keyframes gp-header-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .gp-header-left {

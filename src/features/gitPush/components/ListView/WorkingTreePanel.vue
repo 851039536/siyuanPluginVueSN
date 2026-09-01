@@ -64,7 +64,9 @@
           v-for="file in sortedFiles"
           :key="file.path"
           class="wt-file-row"
-          :class="{ staged: file.staged }"
+          :class="{ staged: file.staged, 'diff-active': activeDiffFile?.path === file.path }"
+          :title="i18n.clickViewDiff + ' — ' + file.path"
+          @click="toggleDiff(file)"
         >
           <!-- 勾选框 -->
           <button
@@ -99,25 +101,8 @@
             </template>
           </span>
 
-          <!-- 文件名（点击查看差异） -->
-          <span
-            class="wt-file-path"
-            :title="i18n.clickViewDiff + ' — ' + file.path"
-            @click="toggleDiff(file)"
-          >{{ file.path }}</span>
-
-          <!-- 查看差异 -->
-          <button
-            class="vp-btn vp-btn--ghost vp-btn--sm wt-diff-btn"
-            :title="activeDiffFile?.path === file.path ? i18n.closeDiff : i18n.viewDiffColored"
-            @click.stop="toggleDiff(file)"
-          >
-            <Icon
-              icon="mdi:file-compare"
-              height="12"
-            />
-            <span class="wt-diff-btn-label">{{ i18n.diff }}</span>
-          </button>
+          <!-- 文件名（整行可点击查看差异） -->
+          <span class="wt-file-path">{{ file.path }}</span>
 
           <!-- 丢弃更改 -->
           <button

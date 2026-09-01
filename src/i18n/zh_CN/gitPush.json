@@ -84,7 +84,6 @@
     "auditLinkPrefix": "链接",
     "auditRemotePrefix": "远程",
     "consistencyTitle": "远程与本地一致性分析",
-    "consistencyOpen": "远程与本地一致性分析",
     "consistencyHint": "点击开始分析，将比对所有项目各本地分支与各远程分支的一致性（是否存在、领先、落后、分叉）",
     "consistencyRun": "开始分析",
     "consistencyRerun": "重新分析",

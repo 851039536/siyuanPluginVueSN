@@ -355,14 +355,7 @@ export class RemoteOps {
   }
 
   /**
-   * Fetch 单个远程（仅更新远程跟踪分支，不合并代码）
-   */
-  private async fetchRemote(cwd: string, remoteName: string): Promise<string> {
-    return await this.executor.execGit(cwd, ["fetch", remoteName])
-  }
-
-  /**
-   * 按路径 fetch 指定远程（--prune 清理已删除远程分支的跟踪引用），供一致性分析使用
+   * 按路径 fetch 指定远程（--prune 清理已删除远程分支的跟踪引用），供一致性分析与批量刷新使用
    * 支持取消（signal 触发后 kill 子进程）
    */
   async fetchRemoteAt(cwd: string, remoteName: string, opts?: { prune?: boolean, signal?: AbortSignal }): Promise<void> {
@@ -387,7 +380,7 @@ export class RemoteOps {
     const fetched: string[] = []
     const errors: string[] = []
     const results = await Promise.allSettled(
-      remotesToFetch.map((name) => this.fetchRemote(cwd, name).then(() => name)),
+      remotesToFetch.map((name) => this.fetchRemoteAt(cwd, name).then(() => name)),
     )
 
     for (const r of results) {

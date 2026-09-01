@@ -174,9 +174,9 @@
                   >{{ i18n.consistencyNoBranches }}</span>
                   <!-- fetch 失败徽章（tooltip 列出各远程失败原因） -->
                   <span
-                    v-if="fetchErrorTitle(row)"
+                    v-if="fetchErrorTitles[row.id]"
                     class="gca-badge gca-badge--warn"
-                    :title="fetchErrorTitle(row)"
+                    :title="fetchErrorTitles[row.id]"
                   >{{ i18n.consistencyFetchFailed }}</span>
                 </div>
                 <!-- 分支比对表 -->
@@ -242,13 +242,12 @@
 <script setup lang="ts">
 import type {
   ConsistencyBranchRow,
-  ConsistencyProjectRow,
   ConsistencyState,
   GitPushManager,
   ProjectLimit,
 } from "../../types"
 import { Icon } from "@iconify/vue"
-import { onMounted, ref } from "vue"
+import { computed } from "vue"
 import SiSwitch from "@/components/Switch.vue"
 import { PROJECT_LIMIT_OPTIONS } from "../../types"
 import { relativeTime, formatDateTime } from "../../utils"
@@ -274,6 +273,7 @@ const {
   projectLimit,
   issueOnly,
   progress,
+  projectCount,
   summary,
   runAudit,
 } = useConsistencyAudit(props.manager)
@@ -289,16 +289,6 @@ function onLimitChange(e: Event) {
   projectLimit.value = v === "all" ? "all" : Number(v)
 }
 
-/** 项目总数（空态判断用，挂载时快照） */
-const projectCount = ref(0)
-onMounted(async () => {
-  try {
-    projectCount.value = (await props.manager.getProjects()).length
-  } catch {
-    projectCount.value = 0
-  }
-})
-
 // 七态图标 + 文案键（cls 对应 gca-chip--*/gca-state--* 修饰类）
 const STATE_META: Record<ConsistencyState, { icon: string, labelKey: string }> = {
   synced: { icon: "mdi:check-circle-outline", labelKey: "consistencySynced" },
@@ -310,16 +300,9 @@ const STATE_META: Record<ConsistencyState, { icon: string, labelKey: string }> =
   error: { icon: "mdi:alert-circle-outline", labelKey: "consistencyStateError" },
 }
 
-// 汇总 chips 顺序
-const SUMMARY_CHIPS: { state: ConsistencyState, icon: string, labelKey: string }[] = [
-  { state: "synced", icon: STATE_META.synced.icon, labelKey: STATE_META.synced.labelKey },
-  { state: "ahead", icon: STATE_META.ahead.icon, labelKey: STATE_META.ahead.labelKey },
-  { state: "behind", icon: STATE_META.behind.icon, labelKey: STATE_META.behind.labelKey },
-  { state: "diverged", icon: STATE_META.diverged.icon, labelKey: STATE_META.diverged.labelKey },
-  { state: "localOnly", icon: STATE_META.localOnly.icon, labelKey: STATE_META.localOnly.labelKey },
-  { state: "remoteOnly", icon: STATE_META.remoteOnly.icon, labelKey: STATE_META.remoteOnly.labelKey },
-  { state: "error", icon: STATE_META.error.icon, labelKey: STATE_META.error.labelKey },
-]
+// 汇总 chips（键序 = 定义序，从 STATE_META 派生避免逐项复制）
+const SUMMARY_CHIPS = (Object.keys(STATE_META) as ConsistencyState[])
+  .map((state) => ({ state, ...STATE_META[state] }))
 
 /** 领先/落后列文案（synced/localOnly/remoteOnly/error 显示 "-"） */
 function diffText(b: ConsistencyBranchRow): string {
@@ -331,12 +314,17 @@ function diffText(b: ConsistencyBranchRow): string {
   return "-"
 }
 
-/** 项目 fetch 失败 tooltip："远程名: 错误信息" 多行拼接（无失败返回空串以隐藏徽章） */
-function fetchErrorTitle(row: ConsistencyProjectRow): string {
-  const entries = Object.entries(row.fetchErrors)
-  if (entries.length === 0) { return "" }
-  return entries.map(([remote, msg]) => `${remote}: ${msg}`).join("\n")
-}
+/** 各项目 fetch 失败 tooltip（"远程名: 错误信息" 多行；computed 缓存避免模板重复调用） */
+const fetchErrorTitles = computed<Record<string, string>>(() => {
+  const map: Record<string, string> = {}
+  for (const row of displayRows.value) {
+    const entries = Object.entries(row.fetchErrors)
+    if (entries.length > 0) {
+      map[row.id] = entries.map(([remote, msg]) => `${remote}: ${msg}`).join("\n")
+    }
+  }
+  return map
+})
 
 const { rootRef } = useDialogKeyboard()
 </script>

@@ -61,12 +61,13 @@
         class="gp-table-wrap"
       >
         <div class="gp-table-row gp-table-row--head">
-          <!-- 表头："项目名称" -->
+          <!-- 表头："项目名称"（平台表头结构与 PlatformStatusSection 重复，第 2 次出现，暂不提取共享组件） -->
           <span class="gp-table-cell gp-table-cell--name">{{ i18n.projectName }}</span>
           <span
             v-for="pm in PLATFORM_META"
             :key="pm.key"
             class="gp-table-cell gp-table-cell--platform-status"
+            :title="pm.label"
           >
             <Icon
               :icon="pm.icon"

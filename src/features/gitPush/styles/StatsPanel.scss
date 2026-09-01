@@ -54,7 +54,10 @@
 
 // ── 瀑布流布局（CSS 多列）──
 .gp-stats-masonry {
-  column-count: 2; // 固定两列瀑布：区块按列填充、两列高度自动平衡
+  // 自适应列数：容器 ≥ ~684px（21rem×2 + gap）时双列瀑布（宽屏体验与现状一致），
+  // 窄 Dock 自动退为单列，待处理表格获得全宽不再挤压
+  column-width: 21rem;
+  column-count: 2;
   column-gap: $spacing-3;
 
   // 区块作为瀑布流单元：整体不可跨列拆分，各列高度独立填充，无等高行空隙
@@ -64,6 +67,8 @@
 }
 
 // ── 区块标题 ──
+// 注：.gp-stats-section-title/-count 与 index.scss 的 .gpr-section-title/-count 几乎逐字重复，
+// 属第 2 次出现（Rule of Three），第 3 处出现时再提取共享 mixin
 .gp-stats-section {
   margin-bottom: $spacing-3;
 }

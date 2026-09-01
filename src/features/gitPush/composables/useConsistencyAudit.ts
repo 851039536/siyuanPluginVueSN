@@ -44,6 +44,8 @@ export function useConsistencyAudit(manager: GitPushManager) {
   const issueOnly = ref(true)
   /** 进度：已处理 / 总项目数 */
   const progress = ref({ done: 0, total: 0 })
+  /** 项目总数（弹窗空态判断用，加载缓存时快照） */
+  const projectCount = ref(0)
   /** 当前一轮分析的取消句柄 */
   let abortController: AbortController | null = null
 
@@ -52,11 +54,12 @@ export function useConsistencyAudit(manager: GitPushManager) {
   /** 缓存是否已尝试加载（防重复读盘 + 防与 runAudit 竞态） */
   let cacheLoaded = false
 
-  /** 加载持久化缓存（有历史结果时恢复 rows/analyzedAt） */
+  /** 加载持久化缓存（有历史结果时恢复 rows/analyzedAt；顺带快照项目总数） */
   async function loadCache() {
     if (cacheLoaded) { return }
     cacheLoaded = true
     try {
+      projectCount.value = (await manager.getProjects()).length
       const cache = await manager.storage.consistencyCache.loadOrDefault()
       // 分析中/已完成时跳过（用户可能先点了分析按钮），避免覆盖新结果
       if (!analyzing.value && !analyzed.value && cache.rows.length > 0) {
@@ -140,6 +143,7 @@ export function useConsistencyAudit(manager: GitPushManager) {
 
     // fetch 失败且无任何缓存跟踪 ref 的远程不可信（缓存可能为空），跳过其比对避免误报
     const validRemoteNames = remoteNames.filter((name) => !row.fetchErrors[name] || trackingRefs.some((r) => r.startsWith(`${name}/`)))
+    const validRemoteSet = new Set(validRemoteNames)
     if (validRemoteNames.length === 0 && branches.length === 0) {
       row.noBranches = true
       return row
@@ -149,7 +153,7 @@ export function useConsistencyAudit(manager: GitPushManager) {
     const refsByRemote = new Map<string, Set<string>>()
     for (const ref of trackingRefs) {
       const { remote, branch } = resolveRefRemote(ref, remoteNames)
-      if (!validRemoteNames.includes(remote)) { continue }
+      if (!validRemoteSet.has(remote)) { continue }
       const set = refsByRemote.get(remote)
       if (set) { set.add(branch) }
       else { refsByRemote.set(remote, new Set([branch])) }
@@ -209,7 +213,7 @@ export function useConsistencyAudit(manager: GitPushManager) {
       progress.value = { done: 0, total: limited.length }
       const settled = await Promise.allSettled(limited.map(async (p) => {
         const row = await auditProject(p)
-        progress.value = { ...progress.value, done: progress.value.done + 1 }
+        progress.value.done++
         return row
       }))
       rows.value = settled
@@ -259,7 +263,6 @@ export function useConsistencyAudit(manager: GitPushManager) {
   })
 
   return {
-    rows,
     displayRows,
     analyzing,
     analyzed,
@@ -268,8 +271,8 @@ export function useConsistencyAudit(manager: GitPushManager) {
     projectLimit,
     issueOnly,
     progress,
+    projectCount,
     summary,
     runAudit,
-    cancel,
   }
 }

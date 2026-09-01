@@ -159,6 +159,17 @@
           height="12"
         />
       </button>
+      <!-- 按钮（tooltip："远程与本地一致性分析"） -->
+      <button
+        class="vp-btn vp-btn--ghost vp-btn--sm"
+        :title="i18n.consistencyOpen"
+        @click="emit('openConsistency')"
+      >
+        <Icon
+          icon="mdi:source-branch-check"
+          height="12"
+        />
+      </button>
       <!-- 按钮（tooltip："设置"） -->
       <button
         class="vp-btn vp-btn--ghost vp-btn--sm"
@@ -331,6 +342,7 @@ const searchQuery = defineModel<string>("searchQuery", { default: "" })
 const emit = defineEmits<{
   openCategory: []
   openGitConfig: []
+  openConsistency: []
   openSettings: []
   refreshAll: []
   refreshAllLocal: []

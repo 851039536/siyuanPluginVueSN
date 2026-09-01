@@ -277,6 +277,21 @@ export class GitPushManager {
     return this.remoteOps.fetchAllForProject(id)
   }
 
+  /** 按路径 fetch 指定远程（--prune 可选，支持取消），供一致性分析使用 */
+  async fetchRemoteAt(cwd: string, remoteName: string, opts?: { prune?: boolean, signal?: AbortSignal }): Promise<void> {
+    return this.remoteOps.fetchRemoteAt(cwd, remoteName, opts)
+  }
+
+  /** 列出全部远程跟踪分支短名（如 origin/main），供一致性比对 */
+  async getRemoteTrackingRefs(projectPath: string): Promise<string[]> {
+    return this.worktreeOps.getRemoteTrackingRefs(projectPath)
+  }
+
+  /** 计算 localBranch 相对 remoteRef 的领先/落后提交数（左=remote→behind，右=local→ahead） */
+  async countAheadBehind(projectPath: string, remoteRef: string, localBranch: string): Promise<{ ahead: number, behind: number }> {
+    return this.worktreeOps.countAheadBehind(projectPath, remoteRef, localBranch)
+  }
+
   async checkPushStatus(id: string, opts?: { branch?: string, fetchFirst?: boolean }): Promise<PushStatusInfo> {
     return this.remoteOps.checkPushStatus(id, opts)
   }

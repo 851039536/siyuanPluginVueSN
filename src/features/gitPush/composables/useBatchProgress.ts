@@ -25,10 +25,15 @@ const DEFAULT_STATE: LoadProgress = {
   elapsedSeconds: 0,
 }
 
-export function useBatchProgress() {
+export function useBatchProgress(options?: {
+  /** 批内并发项目数（默认 3；传入 manager.getGitConcurrency 可跟随 git 并发设置） */
+  getBatchSize?: () => number
+}) {
   const state = ref<LoadProgress>({ ...DEFAULT_STATE })
   const logEntries = ref<LogEntry[]>([])
   let progressTimer: ReturnType<typeof setInterval> | null = null
+  /** 批内并发数（runBatch 时动态求值，跟随 git 并发设置） */
+  const getBatchSize = () => Math.max(1, options?.getBatchSize?.() ?? 3)
 
   function start(total: number, label: string) {
     if (progressTimer) {
@@ -124,7 +129,7 @@ export function useBatchProgress() {
     items: T[], label: string, fn: (item: T, ctx: StepCtx) => Promise<void>, getName?: (item: T) => string, options?: { keepVisible?: boolean },
   ) {
     if (items.length === 0) { return }
-    // 跨批次串行：等上一批完全结束再启动本批（批内仍保留 3 路并发，仅跨批次串行）
+    // 跨批次串行：等上一批完全结束再启动本批（批内并发数跟随 git 并发设置，仅跨批次串行）
     const prev = runChain
     let release!: () => void
     runChain = new Promise<void>((r) => { release = r })
@@ -132,7 +137,7 @@ export function useBatchProgress() {
       await prev
       start(items.length, label)
       try {
-        await batchProcess(items, 3, async (item, index) => {
+        await batchProcess(items, getBatchSize(), async (item, index) => {
           const name = getName?.(item) ?? ""
           const displayName = name || `#${index + 1}`
           const logIdx = beginLog(displayName)

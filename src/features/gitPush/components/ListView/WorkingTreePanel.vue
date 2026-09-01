@@ -24,16 +24,19 @@
           {{ i18n.pendingChanges }}
         </span>
         <span class="wt-summary-actions">
+          <!-- 无可暂存内容时隐藏按钮，避免 disabled 常驻占位 -->
           <button
+            v-if="hasUnstaged"
             class="vp-btn vp-btn--ghost vp-btn--sm"
-            :disabled="!hasUnstaged || gitOpLoading"
+            :disabled="gitOpLoading"
             @click.stop="$emit('stageAll')"
           >
             {{ i18n.stageAll }}
           </button>
           <button
+            v-if="hasStaged"
             class="vp-btn vp-btn--ghost vp-btn--sm"
-            :disabled="!hasStaged || gitOpLoading"
+            :disabled="gitOpLoading"
             @click.stop="$emit('unstageAll')"
           >
             {{ i18n.unstageAll }}

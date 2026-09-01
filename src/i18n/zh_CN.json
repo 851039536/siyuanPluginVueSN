@@ -1795,7 +1795,6 @@
     "forcePushHint": "git push --force-with-lease：覆盖远程分支历史（个人项目使用）",
     "forcePushConfirm": "确认强制推送",
     "forcePushConfirmBody": "将使用 git push --force-with-lease 覆盖远程分支历史，此操作不可撤销。确定继续吗？",
-    "checkBranchStatus": "检查当前分支状态",
     "ruleFixDateChoice": "选择提交时间处理方式",
     "ruleFixPreserveDate": "保留原始提交时间",
     "ruleFixDefaultDate": "按当前时间提交",

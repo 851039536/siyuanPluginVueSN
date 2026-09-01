@@ -18,11 +18,6 @@
           :title="i18n.pull"
           @click.stop="toggleMenu('pull')"
         >
-          <Icon
-            :icon="derived.isPulling(project.id) || fetching ? 'mdi:loading' : 'mdi:arrow-down'"
-            height="12"
-            :class="{ 'gp-spin': derived.isPulling(project.id) || fetching }"
-          />
           <span>{{ i18n.pull }}</span>
           <Icon
             icon="mdi:unfold-more-horizontal"
@@ -44,10 +39,6 @@
             :title="`${i18n.pull} ${r.label} — ${i18n.pullBtnHint}`"
             @click="ops.confirmPullSingle(project.id, r.key); openMenu = null"
           >
-            <Icon
-              icon="mdi:arrow-down"
-              height="12"
-            />
             <span>{{ r.label }}</span>
           </button>
           <div class="gp-inline-menu-divider" />
@@ -106,11 +97,6 @@
             :title="i18n.push"
             @click.stop="toggleMenu('push')"
           >
-            <Icon
-              :icon="derived.isPushing(project.id) ? 'mdi:loading' : 'mdi:arrow-up'"
-              height="12"
-              :class="{ 'gp-spin': derived.isPushing(project.id) }"
-            />
             <span>{{ i18n.push }}</span>
             <Icon
               icon="mdi:unfold-more-horizontal"
@@ -132,10 +118,6 @@
               :title="`${i18n.push} ${r.label}`"
               @click="ops.pushSingle(project.id, r.key); openMenu = null"
             >
-              <Icon
-                icon="mdi:arrow-up"
-                height="12"
-              />
               <span>{{ pushBtnText(derived.getPushStatus(project.id, r.key), r.label) }}</span>
             </button>
           </div>

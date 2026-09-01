@@ -580,7 +580,7 @@
     "noCustomIde": "暂无自定义 IDE，在下方添加",
     "confirmShort": "确认?",
     "gitConcurrency": "Git 并发数",
-    "concurrencyHint": "同时执行的 git 子进程数上限（1~10）",
+    "concurrencyHint": "本地与网络命令各自的 git 子进程并发上限（1~10）",
     "pushBranchModeLabel": "推送分支模式",
     "pushBranchAllOpt": "全部分支 (--all)",
     "pushBranchHeadOpt": "仅当前分支 (HEAD)",

@@ -1710,7 +1710,7 @@
     "noCustomIde": "No custom IDEs, add below",
     "confirmShort": "Confirm?",
     "gitConcurrency": "Git Concurrency",
-    "concurrencyHint": "Max concurrent git subprocesses (1-10)",
+    "concurrencyHint": "Max concurrent git subprocesses per pool, local & network (1-10)",
     "pushBranchModeLabel": "Push Branch Mode",
     "pushBranchAllOpt": "All branches (--all)",
     "pushBranchHeadOpt": "Current branch only (HEAD)",

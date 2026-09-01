@@ -24,6 +24,17 @@
   }
 }
 
+// 当前分支名徽章（mono 小字，弱化展示）
+.gp-remote-branch {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-px;
+  font-size: $font-size-2xs;
+  font-family: $vp-mono;
+  color: var(--b3-theme-on-surface-light);
+  white-space: nowrap;
+}
+
 .gp-remote-item {
   display: flex;
   align-items: center;
@@ -33,15 +44,12 @@
   opacity: 0.35;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  cursor: default;
 
   &.active {
     opacity: 1;
     color: var(--b3-theme-primary);
   }
-}
-
-.gp-remote-none {
-  opacity: 0.35;
 }
 
 .gp-conflict-warn {

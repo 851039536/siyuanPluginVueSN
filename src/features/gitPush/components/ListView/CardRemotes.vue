@@ -11,24 +11,32 @@
     >
       <Icon :icon="remoteStatusLoading ? 'mdi:loading' : 'mdi:refresh'" height="12" :class="{ 'gp-spin': remoteStatusLoading }" />
     </button>
+    <!-- 当前分支名（原操作栏分支检查按钮的信息价值合并至此） -->
+    <span
+      v-if="pushStatus?.branch"
+      class="gp-remote-branch"
+    >
+      <Icon
+        icon="mdi:source-branch"
+        height="12"
+      />
+      {{ pushStatus.branch }}
+    </span>
     <div
       v-for="r in remotes"
       :key="r.key"
       class="gp-remote-item"
       :class="{ active: !!project[r.remoteProp] }"
+      :title="!project[r.remoteProp] ? i18n.notDetected : undefined"
     >
       <Icon
         :icon="r.icon"
         height="12"
       />
+      <!-- 未配置远程：仅灰色图标占位（tooltip："未检测到"），不渲染文字降低噪音 -->
       <span v-if="project[r.remoteProp]">{{ project[r.remoteProp] }}</span>
-      <!-- 未配置占位："未检测到" -->
       <span
-        v-else
-        class="gp-remote-none"
-      >{{ i18n.notDetected }}</span>
-      <span
-        v-if="pushStatus?.remotes[r.key]"
+        v-if="project[r.remoteProp] && pushStatus?.remotes[r.key]"
         class="gp-status-badge"
         :class="derived.statusBadgeClass(project.id, r.key)"
       >

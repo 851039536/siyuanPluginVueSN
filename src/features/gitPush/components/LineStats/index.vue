@@ -128,9 +128,9 @@ const props = defineProps<{
   i18n: Record<string, any>
   /** 全部项目数（空状态判断） */
   projectCount: number
-  /** 项目代码行数排行（按新增行降序） */
+  /** 项目代码行数排行（按净增降序） */
   projectRanking: ProjectLineRankItem[]
-  /** 作者代码行数排行（按新增行降序） */
+  /** 作者代码行数排行（按净增降序） */
   authorRanking: AuthorLineRankItem[]
   /** 全量行数合计（基于全量项目数据独立累加，来自 useCommitAnalysis） */
   summary: LineStatsSummary

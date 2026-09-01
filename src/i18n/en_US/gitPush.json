@@ -464,6 +464,7 @@
     "analysisLineDeleted": "Deleted",
     "analysisLineNet": "Net",
     "lineStatsNetHint": "Net = actual lines (added − deleted)",
+    "lineStatsShareHint": "Share = |net| as a percentage of total |net|",
     "lineDetailTitleHint": "Line Stats Detail",
     "lineDetailFileTab": "Files",
     "lineDetailAuthorTab": "Authors",

@@ -73,7 +73,11 @@
                 <span class="pld-cell pld-cell--num">{{ i18n.analysisLineAdded }}</span>
                 <span class="pld-cell pld-cell--num">{{ i18n.analysisLineDeleted }}</span>
                 <span class="pld-cell pld-cell--net">{{ i18n.analysisLineNet }}</span>
-                <span class="pld-cell pld-cell--share">{{ i18n.lineDetailShare }}</span>
+                <!-- 表头列："占比"（净增绝对值占比，tooltip 说明口径） -->
+                <span
+                  class="pld-cell pld-cell--share"
+                  :title="i18n.lineStatsShareHint"
+                >{{ i18n.lineDetailShare }}</span>
                 <!-- 表头列："总行数"（存量，等宽右对齐，tooltip 说明口径） -->
                 <span
                   class="pld-cell pld-cell--total"
@@ -216,13 +220,10 @@ const commits = computed(() => props.getNumstat(props.projectId))
 /** 该项目已跟踪文件的存量行数 Map（路径→行数|null，null=2MB/二进制/读失败/已删除；未提供 getFileLines 时为空 Map） */
 const fileLinesMap = computed(() => props.getFileLines?.(props.projectId) ?? new Map<string, number | null>())
 
-/** 文件明细行：按文件聚合增删行 + 修改次数/参与作者，按新增行降序（同增量再按净增降序）；占比条形宽度按最大新增行归一；totalLines 为该文件存量行数 */
+/** 文件明细行：按文件聚合增删行 + 修改次数/参与作者，按净增降序（同净增量再按新增降序，与全局排行同口径）；pct/share 由共享 withLineBarPct 按净增绝对值预计算；totalLines 为该文件存量行数 */
 const fileRows = computed<FileLineDetailRow[]>(() => {
-  const entries = [...aggregateFileStats(commits.value).entries()]
+  const raw = [...aggregateFileStats(commits.value).entries()]
     .filter(([path]) => shouldIncludeFile(path, props.extensions))
-  const totalAdded = entries.reduce((s, [, agg]) => s + agg.added, 0)
-  const maxAdded = Math.max(...entries.map(([, agg]) => agg.added), 1)
-  return entries
     .map(([path, agg]) => ({
       path,
       added: agg.added,
@@ -231,13 +232,12 @@ const fileRows = computed<FileLineDetailRow[]>(() => {
       modCount: agg.modCount,
       authorCount: agg.authors.size,
       totalLines: fileLinesMap.value.get(path) ?? null,
-      pct: `${Math.round((agg.added / maxAdded) * 100)}%`,
-      share: totalAdded > 0 ? `${((agg.added / totalAdded) * 100).toFixed(1)}%` : "0%",
     }))
-    .sort((a, b) => b.added - a.added || b.net - a.net)
+    .sort((a, b) => b.net - a.net || b.added - a.added)
+  return withLineBarPct(raw)
 })
 
-/** 作者明细行：按作者聚合增删行，按新增行降序（与全局作者排行同模式；pct/share 由共享 withLineBarPct 预计算） */
+/** 作者明细行：按作者聚合增删行，按净增降序（与全局作者排行同模式；pct/share 由共享 withLineBarPct 预计算） */
 const authorRows = computed(() => {
   const lines = sumAuthorLines(commits.value, props.extensions)
   const raw = [...lines.entries()]
@@ -248,7 +248,7 @@ const authorRows = computed(() => {
       deleted: agg.deleted,
       net: agg.added - agg.deleted,
     }))
-    .sort((a, b) => b.added - a.added || b.net - a.net)
+    .sort((a, b) => b.net - a.net || b.added - a.added)
   return withLineBarPct(raw)
 })
 

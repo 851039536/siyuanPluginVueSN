@@ -30,7 +30,7 @@ export function useGitHandlers(deps: {
   resolveConflictOp: (id: string, file: string, strategy: "theirs" | "ours") => Promise<void>
   /** 按域通知卡片重载自持数据（log/tags/conflicts 已下沉 ProjectCard） */
   bumpCardRefresh: (id: string, ...domains: CardDataDomain[]) => void
-  loadWorkingTree: (id: string, skipRefresh?: boolean, branch?: string) => Promise<void>
+  loadWorkingTree: (id: string, branch?: string) => Promise<void>
 }) {
   const {
     projects, showConfirm, safeGitOp, tf,

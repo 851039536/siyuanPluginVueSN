@@ -8,8 +8,6 @@ export class GitExecutor {
   private storage: GitPushStorage
   /** 当前正在执行的 git 子进程数 */
   private gitRunning = 0
-  /** 外部只读：当前活跃 git 操作数 */
-  get activeGitOps(): number { return this.gitRunning }
   /** 最大并发 git 子进程数（从存储加载，可通过 setGitConcurrency 修改） */
   private gitMaxConcurrent = 3
   /** 等待队列（关联 signal + reject 以便 abort/destroy 时精准拒绝） */

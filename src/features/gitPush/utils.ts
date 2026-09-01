@@ -41,12 +41,19 @@ export function pruneRecordCache(record: Record<string, any>, max = 30) {
   }
 }
 
-/** 批次化并发处理：避免所有项目同时涌入 git 信号量导致排队拥堵 */
-export async function batchProcess<T>(items: T[], batchSize: number, fn: (item: T, index: number) => Promise<void>) {
-  for (let i = 0; i < items.length; i += batchSize) {
-    const batch = items.slice(i, i + batchSize)
-    await Promise.all(batch.map((item, j) => fn(item, i + j)))
-  }
+/** 连续并发池：恒定 N 个任务在飞（无批次屏障），单个长任务不再阻塞其他槽位；
+ *  替代旧 batchProcess 的"整批等待"语义——长短仓混杂时屏障会让先完成的槽位空转 */
+export async function poolProcess<T>(items: T[], concurrency: number, fn: (item: T, index: number) => Promise<void>) {
+  let next = 0
+  const workerCount = Math.max(1, Math.min(concurrency, items.length))
+  const workers = Array.from({ length: workerCount }, async () => {
+    while (true) {
+      const i = next++
+      if (i >= items.length) return
+      await fn(items[i], i)
+    }
+  })
+  await Promise.all(workers)
 }
 
 /** 搜索高亮片段：命中(hit=true)片段供模板包裹 <span class="gp-hl">，避免 v-html 带来的 XSS 风险 */

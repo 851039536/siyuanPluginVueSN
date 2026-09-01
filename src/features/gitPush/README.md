@@ -67,7 +67,7 @@ src/features/gitPush/
 │   │   ├── ScanImportDialog.vue     # 扫描导入弹窗
 │   │   ├── EditProjectDialog.vue    # 编辑项目弹窗
 │   │   ├── MarkdownPreviewDialog.vue# Markdown 预览弹窗
-│   │   ├── GitConfigDialog.vue      # Git 配置弹窗（内嵌 GitConfigSection，可读写）
+│   │   ├── GitConfigDialog.vue      # 项目级 Git 配置弹窗（内嵌 GitConfigSection，可读写；全局配置走设置弹窗分区）
 │   │   ├── ConsistencyAuditDialog.vue # 远程与本地一致性分析弹窗（自包含，内嵌 useConsistencyAudit）
 │   │   ├── SearchBox.vue            # 搜索框
 │   │   ├── EditableRemoteList.vue   # 可编辑远程列表

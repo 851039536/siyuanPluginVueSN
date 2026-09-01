@@ -555,7 +555,6 @@
     "gitOpsPauseTip": "暂停 Git 状态加载",
     "gitOpsPausedLabel": "已暂停",
     "platformSites": "平台官网",
-    "gitConfigLabel": "Git 配置",
     "settings": "设置",
     "settingsSectionGeneral": "常规",
     "settingsSectionDisplay": "显示",

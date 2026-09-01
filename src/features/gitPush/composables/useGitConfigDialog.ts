@@ -1,4 +1,4 @@
-// Git 配置弹窗开关与作用域参数（查询/编辑逻辑已下沉至 GitConfigDialog 内自包含组件）
+// Git 配置弹窗开关与作用域参数（项目级入口；全局配置走设置弹窗 GitConfigSection 分区，查询/编辑逻辑已下沉至 GitConfigDialog 内自包含组件）
 import type { Ref } from "vue"
 import { ref } from "vue"
 import type { GitProject, GitPushManager } from "../types"
@@ -12,17 +12,9 @@ export function useGitConfigDialog(deps: {
   const { projects } = deps
 
   const showGitConfig = ref(false)
-  const gitConfigScope = ref<GitConfigScope>("global")
+  const gitConfigScope = ref<GitConfigScope>("local")
   const gitConfigProjectPath = ref("")
   const gitConfigTitle = ref("")
-
-  /** 打开 Git 全局配置弹窗（作用域：global） */
-  function handleOpenGitConfig() {
-    gitConfigScope.value = "global"
-    gitConfigProjectPath.value = ""
-    gitConfigTitle.value = ""
-    showGitConfig.value = true
-  }
 
   /** 打开项目级 Git 配置弹窗（作用域：local，带项目名标题） */
   function handleOpenProjectGitConfig(projectId: string) {
@@ -45,7 +37,6 @@ export function useGitConfigDialog(deps: {
     gitConfigScope,
     gitConfigProjectPath,
     gitConfigTitle,
-    handleOpenGitConfig,
     handleOpenProjectGitConfig,
     closeGitConfig,
   }

@@ -93,6 +93,27 @@
   margin-left: auto;
 }
 
+// 项目数量选择框（全部项目/10/20/30/50/100）
+.gca-limit-select {
+  font-size: $font-size-2xs;
+  font-family: $vp-mono;
+  color: var(--b3-theme-on-surface);
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  padding: $spacing-2px $spacing-1;
+  cursor: pointer;
+
+  &:focus {
+    @include focus-ring;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
 // 未分析/进度提示
 .gca-hint {
   padding: $spacing-4;

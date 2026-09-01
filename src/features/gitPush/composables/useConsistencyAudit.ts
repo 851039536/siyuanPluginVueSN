@@ -7,6 +7,7 @@ import type {
   GitProject,
   GitPushManager,
   GitRemoteInfo,
+  ProjectLimit,
 } from "../types"
 import { computed, onUnmounted, ref } from "vue"
 import { resolveValidPath } from "../utils"
@@ -37,6 +38,8 @@ export function useConsistencyAudit(manager: GitPushManager) {
   const analyzedAt = ref("")
   /** 分析前是否先 fetch 远程（默认开启，结果最准确） */
   const fetchFirst = ref(true)
+  /** 单次分析的项目数量上限（"all" = 全部项目；选择跨会话持久化） */
+  const projectLimit = ref<ProjectLimit>("all")
   /** 仅显示存在问题的项目 */
   const issueOnly = ref(true)
   /** 进度：已处理 / 总项目数 */
@@ -61,6 +64,10 @@ export function useConsistencyAudit(manager: GitPushManager) {
         analyzedAt.value = cache.analyzedAt
         analyzed.value = true
       }
+      // 恢复项目数量选择（老版本缓存无此字段时保持默认 "all"）
+      if (cache.projectLimit !== undefined) {
+        projectLimit.value = cache.projectLimit
+      }
     } catch (e: unknown) {
       console.warn("[gitPush] 一致性分析：加载缓存失败", getErrorMessage(e))
     }
@@ -70,7 +77,11 @@ export function useConsistencyAudit(manager: GitPushManager) {
   /** 保存当前结果到持久化缓存 */
   async function saveCache() {
     try {
-      await manager.storage.consistencyCache.save({ analyzedAt: analyzedAt.value, rows: rows.value })
+      await manager.storage.consistencyCache.save({
+        analyzedAt: analyzedAt.value,
+        projectLimit: projectLimit.value,
+        rows: rows.value,
+      })
     } catch (e: unknown) {
       console.warn("[gitPush] 一致性分析：保存缓存失败", getErrorMessage(e))
     }
@@ -192,10 +203,11 @@ export function useConsistencyAudit(manager: GitPushManager) {
     abortController = new AbortController()
     progress.value = { done: 0, total: 0 }
     try {
-      // 分析期间项目增删不影响本轮：开始时快照
+      // 分析期间项目增删不影响本轮：开始时快照，并按数量上限截取前 N 个
       const projects = await manager.getProjects()
-      progress.value = { done: 0, total: projects.length }
-      const settled = await Promise.allSettled(projects.map(async (p) => {
+      const limited = projectLimit.value === "all" ? projects : projects.slice(0, projectLimit.value)
+      progress.value = { done: 0, total: limited.length }
+      const settled = await Promise.allSettled(limited.map(async (p) => {
         const row = await auditProject(p)
         progress.value = { ...progress.value, done: progress.value.done + 1 }
         return row
@@ -253,6 +265,7 @@ export function useConsistencyAudit(manager: GitPushManager) {
     analyzed,
     analyzedAt,
     fetchFirst,
+    projectLimit,
     issueOnly,
     progress,
     summary,

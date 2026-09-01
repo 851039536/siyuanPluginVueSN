@@ -84,6 +84,7 @@ export type { AuthorReportRow, CodeReportData, CodeReportPrefs, CommitRhythmStat
 // ── 重导出远程与本地一致性分析类型与常量（来自 consistency.ts）──
 export {
   EMPTY_CONSISTENCY_CACHE,
+  PROJECT_LIMIT_OPTIONS,
 } from "./consistency"
 export type {
   ConsistencyBranchRow,
@@ -91,4 +92,5 @@ export type {
   ConsistencyProjectRow,
   ConsistencyState,
   ConsistencySummary,
+  ProjectLimit,
 } from "./consistency"

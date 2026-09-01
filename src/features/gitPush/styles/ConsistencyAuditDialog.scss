@@ -1,0 +1,317 @@
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// ── 远程与本地一致性分析弹窗（gca- 前缀自包含，不依赖 StatsPanel 的 gp-* 基类）──
+.gca-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  // 基准字号：弹窗内文字继承内容级 12px
+  font-size: $font-size-xs;
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.gca-dialog {
+  width: 560px;
+  max-width: 92vw;
+  max-height: 72vh;
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-lg;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+// 标题栏
+.gca-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-3 $spacing-4;
+  font-weight: $font-weight-semibold;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-background);
+  border-bottom: 1px solid var(--b3-border-color);
+  background: var(--b3-theme-surface);
+}
+
+.gca-title {
+  line-height: $line-height-tight;
+}
+
+.gca-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+  background: transparent;
+  border: none;
+  border-radius: $radius-sm;
+  cursor: pointer;
+  font-size: $font-size-sm;
+
+  &:hover {
+    opacity: 1;
+    background: var(--b3-theme-surface);
+  }
+}
+
+// 工具栏：开关 + 分析按钮
+.gca-toolbar {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-2 $spacing-4;
+  border-bottom: 1px solid var(--b3-border-color);
+  flex-wrap: wrap;
+}
+
+.gca-switch-item {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-2xs;
+  line-height: $line-height-normal;
+  cursor: pointer;
+  user-select: none;
+}
+
+.gca-run-btn {
+  margin-left: auto;
+}
+
+// 未分析/进度提示
+.gca-hint {
+  padding: $spacing-4;
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-xs;
+  line-height: $line-height-relaxed;
+}
+
+.gca-progress {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-4;
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-xs;
+  line-height: $line-height-normal;
+}
+
+// 全部一致空态
+.gca-all-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-1;
+  padding: $spacing-6 $spacing-4;
+  color: var(--b3-theme-on-surface);
+  font-size: $font-size-xs;
+  line-height: $line-height-normal;
+}
+
+// 七态汇总 chips
+.gca-summary {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-4;
+  border-bottom: 1px solid var(--b3-border-color);
+  flex-wrap: wrap;
+}
+
+.gca-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2px;
+  padding: $spacing-2px $spacing-1;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-full;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-tight;
+  color: var(--b3-theme-on-surface);
+}
+
+.gca-state--synced,
+.gca-chip--synced { color: $color-success; }
+
+.gca-state--ahead,
+.gca-chip--ahead { color: $color-info; }
+
+.gca-state--behind,
+.gca-chip--behind { color: $color-warning; }
+
+.gca-state--diverged,
+.gca-chip--diverged { color: $color-danger; }
+
+.gca-state--localOnly,
+.gca-chip--localOnly { color: $color-muted; }
+
+.gca-state--remoteOnly,
+.gca-chip--remoteOnly { color: $color-accent; }
+
+.gca-state--error,
+.gca-chip--error { color: $color-danger-bright; }
+
+// 结果滚动区
+.gca-results {
+  flex: 1;
+  overflow-y: auto;
+  padding: $spacing-2 $spacing-4 $spacing-3;
+  // 滚动内容与右边缘预留间距
+  padding-right: $spacing-3;
+}
+
+// 项目分组
+.gca-project {
+  margin-bottom: $spacing-3;
+}
+
+.gca-project-head {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-1 0;
+  color: var(--b3-theme-on-background);
+  font-weight: $font-weight-medium;
+  font-size: $font-size-xs;
+  line-height: $line-height-tight;
+  cursor: pointer;
+  border-radius: $radius-sm;
+
+  &:hover {
+    color: $color-accent;
+  }
+}
+
+.gca-project-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// 项目级问题徽章
+.gca-badge {
+  flex-shrink: 0;
+  padding: 0 $spacing-1;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-full;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-normal;
+  line-height: $line-height-tight;
+  color: var(--b3-theme-on-surface);
+}
+
+.gca-badge--error {
+  color: $color-danger;
+  border-color: $color-danger;
+}
+
+.gca-badge--warn {
+  color: $color-warning;
+  border-color: $color-warning;
+}
+
+// 分支比对表
+.gca-table {
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  overflow: hidden;
+}
+
+.gca-tr {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, 1.6fr);
+  align-items: center;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid var(--b3-border-color);
+  }
+
+  &--head {
+    background: var(--b3-theme-surface);
+    font-weight: $font-weight-medium;
+    color: var(--b3-theme-on-surface);
+  }
+}
+
+.gca-td {
+  padding: $spacing-2px $spacing-2;
+  font-size: $font-size-2xs;
+  line-height: $line-height-normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2px;
+
+  &--branch {
+    color: var(--b3-theme-on-background);
+    font-family: $vp-mono;
+  }
+
+  &--remote {
+    color: var(--b3-theme-on-surface);
+  }
+
+  &--state {
+    gap: $spacing-1;
+  }
+
+  &--diff {
+    color: var(--b3-theme-on-surface);
+  }
+}
+
+// 当前分支圆点标记
+.gca-current-dot {
+  color: $color-accent;
+  flex-shrink: 0;
+}
+
+// 底部操作栏
+.gca-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-4;
+  border-top: 1px solid var(--b3-border-color);
+  background: var(--b3-theme-surface);
+}
+
+// 旋转动画（分析中图标）
+.gca-spin {
+  animation: gca-rotate 1s linear infinite;
+}
+
+@keyframes gca-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+// 窄屏适配
+@media (max-width: $mobile-breakpoint) {
+  .gca-dialog {
+    width: 96vw;
+    max-height: 80vh;
+  }
+
+  .gca-tr {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr);
+  }
+}

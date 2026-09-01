@@ -362,6 +362,15 @@ export class RemoteOps {
   }
 
   /**
+   * 按路径 fetch 指定远程（--prune 清理已删除远程分支的跟踪引用），供一致性分析使用
+   * 支持取消（signal 触发后 kill 子进程）
+   */
+  async fetchRemoteAt(cwd: string, remoteName: string, opts?: { prune?: boolean, signal?: AbortSignal }): Promise<void> {
+    const args = opts?.prune ? ["fetch", "--prune", remoteName] : ["fetch", remoteName]
+    await this.executor.execGit(cwd, args, opts?.signal)
+  }
+
+  /**
    * Fetch 项目所有已配置远程，仅更新跟踪分支不合并代码
    */
   async fetchAllForProject(id: string): Promise<{ fetched: string[]; errors: string[] }> {

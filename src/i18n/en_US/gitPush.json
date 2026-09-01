@@ -555,7 +555,6 @@
     "gitOpsPauseTip": "Pause Git status loading",
     "gitOpsPausedLabel": "Paused",
     "platformSites": "Platform sites",
-    "gitConfigLabel": "Git config",
     "settings": "Settings",
     "settingsSectionGeneral": "General",
     "settingsSectionDisplay": "Display",

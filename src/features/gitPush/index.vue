@@ -15,7 +15,6 @@
       @open-add-project="showAddDialog = true"
       @open-scan="handleOpenScan"
       @open-web="openRepoWebUrl"
-      @open-git-config="handleOpenGitConfig"
       @open-consistency="showConsistencyDialog = true"
       @open-floating="openFloatingWindow"
     />
@@ -649,13 +648,12 @@ const {
   scanResults, activeCategory, startScan, importScanResults, loadProjects, tf,
 })
 
-// ── Git 配置弹窗 ──
+// ── Git 配置弹窗（项目级入口；全局配置走设置弹窗 GitConfigSection 分区）──
 const {
   showGitConfig,
   gitConfigScope,
   gitConfigProjectPath,
   gitConfigTitle,
-  handleOpenGitConfig,
   handleOpenProjectGitConfig,
   closeGitConfig,
 } = useGitConfigDialog({ manager: props.manager, projects })

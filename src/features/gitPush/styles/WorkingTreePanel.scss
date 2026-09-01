@@ -75,6 +75,7 @@
   padding: 4px 6px;
   font-size: $font-size-xs;
   @include row-divider;
+  cursor: pointer; // 整行可点击查看差异
   transition: background 0.1s;
 
   &:hover {
@@ -83,6 +84,13 @@
 
   &.staged {
     opacity: 0.5;
+  }
+
+  // 当前查看差异的文件行：主色左边条 + 淡背景标记
+  &.diff-active {
+    background: var(--b3-theme-primary-lightest);
+    border-left: 2px solid var(--b3-theme-primary);
+    padding-left: 4px;
   }
 }
 
@@ -137,34 +145,10 @@
   font-family: $vp-mono;
   font-size: $font-size-2xs;
   @include text-ellipsis;
-  cursor: pointer;
-
-  &:hover {
-    color: var(--b3-theme-primary);
-  }
-}
-
-.wt-diff-btn {
-  flex-shrink: 0;
-  opacity: 0.45;
-  gap: 2px;
-  font-size: $font-size-2xs;
-  padding: 1px 6px;
-  transition: opacity 0.15s;
 
   .wt-file-row:hover & {
-    opacity: 1;
+    color: var(--b3-theme-primary);
   }
-
-  &:hover {
-    opacity: 1;
-    border-color: var(--b3-theme-primary);
-  }
-}
-
-.wt-diff-btn-label {
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
 }
 
 .wt-discard-btn {

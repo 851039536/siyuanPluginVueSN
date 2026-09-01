@@ -22,8 +22,11 @@
             :title="i18n.lineStatsNetHint"
           >{{ i18n.analysisLineNet }}</span>
         </span>
-        <!-- 表头列："占比" -->
-        <span class="gls-bar-share">{{ i18n.lineDetailShare }}</span>
+        <!-- 表头列："占比"（净增绝对值占比，tooltip 说明口径） -->
+        <span
+          class="gls-bar-share"
+          :title="i18n.lineStatsShareHint"
+        >{{ i18n.lineDetailShare }}</span>
         <!-- 表头列："总行数"（存量，等宽右对齐，tooltip 说明口径；仅项目模式） -->
         <span
           v-if="mode === 'project'"
@@ -68,7 +71,7 @@
             :title="`${i18n.analysisLineNet} ${row.net}`"
           >{{ row.net.toLocaleString() }}</span>
         </span>
-        <!-- 占比列：新增行占总新增的百分比 -->
+        <!-- 占比列：净增绝对值占总净增绝对值的百分比（与排序同口径） -->
         <span class="gls-bar-share">{{ row.share }}</span>
         <!-- 总行数列：当前实际行数（存量，等宽右对齐中性色；旧缓存缺失时显示 —；仅项目模式） -->
         <span
@@ -90,9 +93,9 @@ const props = defineProps<{
   i18n: Record<string, any>
   /** 排行模式：project 显示总行数列且行可点击；author 仅数字列 */
   mode: "project" | "author"
-  /** 项目代码行数排行（按新增行降序） */
+  /** 项目代码行数排行（按净增降序） */
   projectRanking: ProjectLineRankItem[]
-  /** 作者代码行数排行（按新增行降序） */
+  /** 作者代码行数排行（按净增降序） */
   authorRanking: AuthorLineRankItem[]
 }>()
 
@@ -100,7 +103,7 @@ const emit = defineEmits<{
   viewProject: [projectId: string]
 }>()
 
-/** 通用行视图（pct=相对最大新增行条形宽度，share=新增行占总新增百分比） */
+/** 通用行视图（pct=相对最大净增绝对值的条形宽度，share=净增绝对值占比，与净增排序同口径） */
 const rows = computed(() => withLineBarPct(props.mode === "project" ? props.projectRanking : props.authorRanking))
 
 /** 净增行语义色（薄委托共享 netClass，前缀 gls-net，保持模板调用点零改动） */

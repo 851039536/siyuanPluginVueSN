@@ -71,9 +71,9 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   let pendingReanalyze = false
   /** 热力图/日历显示设置（视图/范围/每周第一天/格子主色，持久化到 git-push-analysis-view） */
   const viewSettings = ref<CommitAnalysisViewSettings>({ ...DEFAULT_ANALYSIS_VIEW_SETTINGS })
-  /** 项目代码行数排行（按新增行降序，行数统计视图分析后填充） */
+  /** 项目代码行数排行（按净增降序，行数统计视图分析后填充） */
   const projectLineRanking = ref<ProjectLineRankItem[]>([])
-  /** 作者代码行数排行（按新增行降序，行数统计视图分析后填充） */
+  /** 作者代码行数排行（按净增降序，行数统计视图分析后填充） */
   const authorLineRanking = ref<AuthorLineRankItem[]>([])
   /** 全量行数合计（基于全量项目数据独立累加，供顶部汇总卡片展示） */
   const lineStatsSummary = ref<LineStatsSummary>({ added: 0, deleted: 0, net: 0, totalLines: 0 })
@@ -141,7 +141,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     let summaryTotalLines = 0
     for (const t of projectTotalLines.values()) summaryTotalLines += t
     const summary: LineStatsSummary = { added: summaryAdded, deleted: summaryDeleted, net: summaryAdded - summaryDeleted, totalLines: summaryTotalLines }
-    // 按新增行降序，同新增量再按净增降序；剔除无行数变化的项目/作者（项目排行不截断，全部展示）
+    // 按净增降序（净增 = 实际行数，与表头 tooltip 口径一致），同净增量再按新增降序；剔除无行数变化的项目/作者（项目排行不截断，全部展示）
     const projectRanking = [...projectLines.entries()]
       .filter(([, agg]) => agg.added + agg.deleted > 0)
       .map(([id, agg]) => ({
@@ -152,7 +152,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         net: agg.added - agg.deleted,
         totalLines: projectTotalLines.get(id),
       }))
-      .sort((a, b) => b.added - a.added || b.net - a.net)
+      .sort((a, b) => b.net - a.net || b.added - a.added)
     const authorRanking = [...authorLines.entries()]
       .filter(([, agg]) => agg.added + agg.deleted > 0)
       .map(([author, agg]) => ({
@@ -161,7 +161,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         deleted: agg.deleted,
         net: agg.added - agg.deleted,
       }))
-      .sort((a, b) => b.added - a.added || b.net - a.net)
+      .sort((a, b) => b.net - a.net || b.added - a.added)
       .slice(0, AUTHOR_RANK_LIMIT)
     return { projectRanking, authorRanking, summary }
   }

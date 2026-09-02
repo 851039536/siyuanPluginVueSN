@@ -130,7 +130,7 @@
  */
 import type { Plugin } from "siyuan"
 import type { TextDiffSettings } from "./types/storage"
-import { computed, onMounted, ref } from "vue"
+import { onMounted, ref } from "vue"
 import { Icon } from "@iconify/vue"
 import { Diff } from "vue-diff"
 import { TextDiffStorage } from "./types/storage"
@@ -165,20 +165,20 @@ const FONT_SIZE_OPTIONS = [
   { value: 24, label: "24px" },
 ]
 
-// 显示模式选项（"分栏" / "统一"）
-const modeOptions = computed(() => [
-  { value: "split" as const, label: $t("splitMode") },
-  { value: "unified" as const, label: $t("unifiedMode") },
-])
-
-// 主题选项（"浅色" / "深色"）
-const themeOptions = computed(() => [
-  { value: "light" as const, label: $t("lightTheme") },
-  { value: "dark" as const, label: $t("darkTheme") },
-])
-
 // 国际化
 const $t = (key: string): string => textDiffI18n(props.i18n, key)
+
+// 显示模式选项（"分栏" / "统一"；i18n 对象静态传入，无需 computed）
+const modeOptions = [
+  { value: "split" as const, label: $t("splitMode") },
+  { value: "unified" as const, label: $t("unifiedMode") },
+]
+
+// 主题选项（"浅色" / "深色"）
+const themeOptions = [
+  { value: "light" as const, label: $t("lightTheme") },
+  { value: "dark" as const, label: $t("darkTheme") },
+]
 
 // 加载设置
 const loadSettings = async () => {
@@ -239,9 +239,7 @@ const swapTexts = () => {
   modifiedFileName.value = tempName
 }
 
-onMounted(() => {
-  loadSettings()
-})
+onMounted(loadSettings)
 </script>
 
 <style scoped lang="scss">

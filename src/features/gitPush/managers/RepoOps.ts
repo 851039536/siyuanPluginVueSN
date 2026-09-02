@@ -69,30 +69,30 @@ export class RepoOps {
     await this.executor.execGit(projectPath, ["add", "--", file])
   }
 
-  // ── 远程配置 ──
+  // ── 远程配置（"--" 分隔防止以 "-" 开头的 remote 名被 git 解析为选项，与 Tag 管理同源防护）──
 
   async addRemote(projectPath: string, name: string, url: string): Promise<void> {
-    await this.executor.execGit(projectPath, ["remote", "add", name, url])
+    await this.executor.execGit(projectPath, ["remote", "add", "--", name, url])
   }
 
   async removeRemote(projectPath: string, name: string): Promise<void> {
-    await this.executor.execGit(projectPath, ["remote", "remove", name])
+    await this.executor.execGit(projectPath, ["remote", "remove", "--", name])
   }
 
   async renameRemote(projectPath: string, oldName: string, newName: string): Promise<void> {
-    await this.executor.execGit(projectPath, ["remote", "rename", oldName, newName])
+    await this.executor.execGit(projectPath, ["remote", "rename", "--", oldName, newName])
   }
 
   async getRemoteUrl(projectPath: string, name: string): Promise<string> {
     try {
-      return (await this.executor.execGit(projectPath, ["remote", "get-url", name])).trim()
+      return (await this.executor.execGit(projectPath, ["remote", "get-url", "--", name])).trim()
     } catch {
       return ""
     }
   }
 
   async setRemoteUrl(projectPath: string, name: string, url: string): Promise<void> {
-    await this.executor.execGit(projectPath, ["remote", "set-url", name, url])
+    await this.executor.execGit(projectPath, ["remote", "set-url", "--", name, url])
   }
 
   // ── 仓库克隆 ──
@@ -183,54 +183,60 @@ export class RepoOps {
 
   // ── 仓库扫描 ──
 
+  /** 递归扫描目录查找 Git 仓库（异步层级 BFS，不阻塞渲染进程；MAX_DEPTH/MAX_RESULTS 兜底防失控） */
   async scanForGitRepos(dirPath: string): Promise<ScannedGitRepo[]> {
     const nodeModules = getNodeFsPathOs()
     if (!nodeModules) throw new Error("Node 环境不可用")
     const { fs, path } = nodeModules
 
     if (!fs.existsSync(dirPath)) throw new Error("路径不存在")
-    // statSync 包 try-catch：existsSync 与 statSync 之间存在 TOCTOU 窗口（目录被删除时抛原始 ENOENT）
-    let rootIsDir = false
-    try { rootIsDir = fs.statSync(dirPath).isDirectory() } catch { /* 视同不存在 */ }
-    if (!rootIsDir) throw new Error("路径不存在或不是目录")
+    // stat 包 try-catch：existsSync 与 stat 之间存在 TOCTOU 窗口（目录被删除时抛原始 ENOENT）
+    try {
+      if (!(await fs.promises.stat(dirPath)).isDirectory()) throw new Error("路径不存在或不是目录")
+    } catch (e: unknown) {
+      if (e instanceof Error && e.message.includes("目录")) throw e
+      throw new Error("路径不存在或不是目录")
+    }
 
     const SKIP_DIRS = new Set([
       "node_modules", ".git", "__pycache__", ".venv", "venv",
       "dist", "build", "target", "bin", "obj",
     ])
-    // 同步 BFS 扫描边界：防止选错大目录（如磁盘根）同步阻塞 Electron 渲染进程
+    // 扫描边界：防止选错大目录（如磁盘根）耗尽资源
     const MAX_DEPTH = 8
     const MAX_RESULTS = 500
 
     const results: ScannedGitRepo[] = []
-    const queue: { dir: string, depth: number }[] = [{ dir: dirPath, depth: 0 }]
-    let head = 0
+    // 层级 BFS：每层并行读各目录（fs.promises 异步，不阻塞渲染进程），层内发现 .git 的目录不再下钻
+    let level: { dir: string, depth: number }[] = [{ dir: dirPath, depth: 0 }]
 
-    while (head < queue.length) {
-      const { dir: currentDir, depth } = queue[head++]
-      try {
-        const entries = fs.readdirSync(currentDir, { withFileTypes: true })
-        let hasGitDir = false
-        const queueLenBefore = queue.length
-
-        for (const entry of entries) {
-          const fullPath = path.join(currentDir, entry.name)
-          if (entry.name === ".git" && entry.isDirectory()) {
-            hasGitDir = true
-          } else if (entry.isDirectory() && !entry.isSymbolicLink() && !SKIP_DIRS.has(entry.name) && depth < MAX_DEPTH) {
-            queue.push({ dir: fullPath, depth: depth + 1 })
+    while (level.length > 0 && results.length < MAX_RESULTS) {
+      type LevelScan = { repos: ScannedGitRepo[], nextDirs: { dir: string, depth: number }[] }
+      const scans: LevelScan[] = await Promise.all(level.map(async ({ dir, depth }) => {
+        try {
+          const entries = await fs.promises.readdir(dir, { withFileTypes: true })
+          const nextDirs: { dir: string, depth: number }[] = []
+          let hasGitDir = false
+          for (const entry of entries) {
+            if (entry.name === ".git" && entry.isDirectory()) {
+              hasGitDir = true
+            } else if (entry.isDirectory() && !entry.isSymbolicLink() && !SKIP_DIRS.has(entry.name) && depth < MAX_DEPTH) {
+              nextDirs.push({ dir: path.join(dir, entry.name), depth: depth + 1 })
+            }
           }
+          // 找到 .git 即为仓库根，不深入其子目录（避免递归扫描仓库内部）
+          return { repos: hasGitDir ? [{ name: path.basename(dir), path: dir }] : [], nextDirs: hasGitDir ? [] : nextDirs }
+        } catch {
+          // 单目录读取失败（权限/删除竞态）跳过，不中断整体扫描
+          return { repos: [], nextDirs: [] }
         }
+      }))
 
-        if (hasGitDir) {
-          results.push({ name: path.basename(currentDir), path: currentDir })
-          // 不深入已找到 .git 的目录的子目录，避免递归扫描仓库内部
-          queue.length = queueLenBefore
-          if (results.length >= MAX_RESULTS) break
-        }
-      } catch {
-        continue
+      for (const scan of scans) {
+        results.push(...scan.repos)
+        if (results.length >= MAX_RESULTS) break
       }
+      level = results.length >= MAX_RESULTS ? [] : scans.flatMap((s) => s.nextDirs)
     }
 
     return results

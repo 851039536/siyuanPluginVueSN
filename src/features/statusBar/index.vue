@@ -82,14 +82,25 @@ item-class="uptime-item"
 
     <FeatureDrawer
       :visible="showFeatureDrawer"
-      :items="drawerPartition.frequent"
-      :rarely-used-items="drawerPartition.rarely"
+      :items="drawerItems"
       :status-bar-visible="statusBarVisible"
+      :category-manager="categoryManager"
       @close="showFeatureDrawer = false"
       @select="handleSelectFeature"
       @toggle-status-bar="handleToggleStatusBar"
-      @toggle-rarely-used="handleToggleRarelyUsed"
+      @assign-category="openAssignMenu"
       @toggle-enabled="handleToggleEnabled"
+    />
+
+    <!-- 分类分配弹出菜单 -->
+    <CategoryAssignMenu
+      :visible="assignMenu.visible"
+      :categories="categoryManager.categories.value"
+      :current-id="assignMenu.featureId ? categoryManager.categoryOf(assignMenu.featureId) : null"
+      :x="assignMenu.x"
+      :y="assignMenu.y"
+      @close="assignMenu.visible = false"
+      @select="handleAssignSelect"
     />
   </div>
 </template>
@@ -97,7 +108,6 @@ item-class="uptime-item"
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
 import type { Ref } from "vue"
-import type { FeatureDrawerItem } from "./components/FeatureDrawer.vue"
 import {
   computed,
   onBeforeUnmount,
@@ -108,16 +118,25 @@ import {
 import { featureIdToSettingKey } from "@/config/settings"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { PluginStorage } from "@/utils/pluginStorage"
+import CategoryAssignMenu from "./components/CategoryAssignMenu.vue"
 import FeatureDrawer from "./components/FeatureDrawer.vue"
 import MonitorItem from "./components/MonitorItem.vue"
+import { useFeatureCategories } from "./composables/useFeatureCategories"
 import { useStatusBar } from "./composables/useStatusBar"
 import { activeTasks } from "./composables/useStatusBarTask"
+import { createFeatureRegistry } from "./featureRegistry"
 
 const props = defineProps<{
   plugin: Plugin
 }>()
 
 const storage = new PluginStorage(props.plugin)
+
+// 单一功能注册表：抽屉展示 + 状态栏快捷 + 点击动作的统一数据源（详见 featureRegistry.ts）
+const { features, MONITOR_IDS, featureMap } = createFeatureRegistry(props.plugin)
+
+// 自定义分类管理：分类 CRUD + 功能归属分配（详见 useFeatureCategories.ts）
+const categoryManager = useFeatureCategories(storage)
 
 const {
   state,
@@ -135,315 +154,7 @@ const {
 } = useStatusBar()
 
 const statusBarShortcuts = ref<string[]>([])
-const rarelyUsedFeatures = ref<string[]>([])
 const visibleMonitors = reactive(new Set<string>())
-
-// 单一功能注册表：抽屉展示 + 状态栏快捷 + 点击动作的统一数据源
-// 添加新功能只需在此处新增一条；title / 处理逻辑不再分散于多处
-interface FeatureRegistryEntry extends FeatureDrawerItem {
-  // 状态栏快捷项，缺省则不在状态栏显示
-  shortcut?: { icon: string, itemClass: string }
-  // 点击（抽屉选中或快捷点击）触发的动作（监控项无动作）
-  action?: () => void
-}
-
-// 速记 i18n 分片（思源类型将 i18n 声明为扁平 IObject，嵌套命名空间需显式收窄）
-const quickNoteI18n = (props.plugin?.i18n?.quickNote ?? {}) as unknown as Record<string, string>
-// 速记恢复 i18n 分片（同上，显式收窄嵌套命名空间）
-const quickNoteResetI18n = (props.plugin?.i18n?.quickNoteReset ?? {}) as unknown as Record<string, string>
-// 图片生成 i18n 分片（同上，显式收窄嵌套命名空间）
-const imageCreationI18n = (props.plugin?.i18n?.imageCreation ?? {}) as unknown as Record<string, string>
-// 全局关系列表 i18n 分片（同上，显式收窄嵌套命名空间）
-const globalRelationsI18n = (props.plugin?.i18n?.globalRelations ?? {}) as unknown as Record<string, string>
-// 极简浏览器 i18n 分片（同上，显式收窄嵌套命名空间）
-const minimalBrowserI18n = (props.plugin?.i18n?.minimalBrowser ?? {}) as unknown as Record<string, string>
-// 灵感生成器 i18n 分片（同上，显式收窄嵌套命名空间）
-const ideaGeneratorI18n = (props.plugin?.i18n?.ideaGenerator ?? {}) as unknown as Record<string, string>
-// S3 文件管理 i18n 分片（同上，显式收窄嵌套命名空间）
-const s3FileManagerI18n = (props.plugin?.i18n?.s3FileManager ?? {}) as unknown as Record<string, string>
-// 图片压缩 i18n 分片（同上，显式收窄嵌套命名空间）
-const imageCompressorI18n = (props.plugin?.i18n?.imageCompressor ?? {}) as unknown as Record<string, string>
-// 书签标记 i18n 分片（同上，显式收窄嵌套命名空间）
-const bookmarkMarkerI18n = (props.plugin?.i18n?.bookmarkMarker ?? {}) as unknown as Record<string, string>
-// 状态栏监控项 i18n 分片（同上，显式收窄嵌套命名空间）
-const statusBarI18n = (props.plugin?.i18n?.statusBar ?? {}) as unknown as Record<string, string>
-
-const FEATURES: FeatureRegistryEntry[] = [
-  {
-    id: "superPanel",
-    icon: "mdi:view-dashboard",
-    color: "#3b82f6",
-    title: "超级面板",
-    pinnable: false,
-    action: () => emitCustomEvent("toggleSuperPanel"),
-  },
-  {
-    id: "video",
-    icon: "mdi:video",
-    color: "#6366f1",
-    title: "视频管理器",
-    pinnable: true,
-    shortcut: {
-      icon: "ph:video",
-      itemClass: "action-item video-manager-item",
-    },
-    action: () => emitCustomEvent("openVideoManager"),
-  },
-  {
-    id: "passwordVault",
-    icon: "mdi:lock",
-    color: "#22c55e",
-    title: "密码箱",
-    pinnable: true,
-    shortcut: {
-      icon: "ph:lock-key",
-      itemClass: "action-item password-vault-item",
-    },
-    action: () => emitCustomEvent("openPasswordVault"),
-  },
-  {
-    id: "skillsViewer",
-    icon: "mdi:puzzle",
-    color: "#f59e0b",
-    title: "Skills 查看器",
-    pinnable: true,
-    shortcut: {
-      icon: "ph:puzzle-piece",
-      itemClass: "action-item skills-viewer-item",
-    },
-    action: () => emitCustomEvent("openSkillsViewer"),
-  },
-  {
-    id: "htmlViewer",
-    icon: "mdi:language-html5",
-    color: "#e67e22",
-    title: "HTML 展示",
-    pinnable: true,
-    shortcut: {
-      icon: "ph:code",
-      itemClass: "action-item html-viewer-item",
-    },
-    action: () => emitCustomEvent("openHtmlViewer"),
-  },
-  {
-    id: "formatAssistant",
-    icon: "mdi:format-align-left",
-    color: "#07c160",
-    title: "排版助手",
-    pinnable: true,
-    shortcut: {
-      icon: "ph:text-align-left",
-      itemClass: "action-item format-assistant-item",
-    },
-    action: () => emitCustomEvent("openFormatAssistant"),
-  },
-  {
-    id: "websiteNavigation",
-    icon: "mdi:link-variant",
-    color: "#8b5cf6",
-    title: "网站导航",
-    pinnable: true,
-    shortcut: {
-      icon: "ph:link",
-      itemClass: "action-item website-navigation-item",
-    },
-    action: () => emitCustomEvent("toggleWebsiteNavigation"),
-  },
-  {
-    id: "minimalBrowser",
-    icon: "mdi:earth",
-    color: "#0ea5e9",
-    title: minimalBrowserI18n.title || "极简浏览器",
-    pinnable: true,
-    shortcut: {
-      icon: "mdi:earth",
-      itemClass: "action-item minimal-browser-item",
-    },
-    action: () => emitCustomEvent("openMinimalBrowser"),
-  },
-  {
-    id: "ideaGenerator",
-    icon: "mdi:lightbulb-on-outline",
-    color: "#9333ea",
-    title: ideaGeneratorI18n.title,
-    pinnable: true,
-    action: () => emitCustomEvent("openIdeaGenerator"),
-  },
-  {
-    id: "imageCreation",
-    icon: "mdi:image-text",
-    color: "#f59e0b",
-    title: imageCreationI18n.title,
-    pinnable: false,
-    shortcut: {
-      icon: "ph:image-square",
-      itemClass: "action-item image-creation-item",
-    },
-    action: () => emitCustomEvent("openImageCreation"),
-  },
-  {
-    id: "s3Backup",
-    icon: "mdi:cloud-upload",
-    color: "#f59e0b",
-    title: props.plugin?.i18n?.s3Backup || "S3 备份",
-    pinnable: true,
-    shortcut: {
-      icon: "mdi:cloud-upload",
-      itemClass: "action-item s3-backup-item",
-    },
-    action: () => emitCustomEvent("openS3Backup"),
-  },
-  {
-    id: "s3FileManager",
-    icon: "mdi:folder-network",
-    color: "#0ea5e9",
-    title: s3FileManagerI18n.s3FileManager || "S3 文件管理",
-    pinnable: true,
-    shortcut: {
-      icon: "mdi:folder-network",
-      itemClass: "action-item s3-file-manager-item",
-    },
-    action: () => emitCustomEvent("openS3FileManager"),
-  },
-  {
-    id: "globalRelations",
-    icon: "mdi:relation-many-to-many",
-    color: "#06b6d4",
-    title: globalRelationsI18n.panelTitle || "全局关系列表",
-    pinnable: true,
-    shortcut: {
-      icon: "mdi:relation-many-to-many",
-      itemClass: "action-item global-relations-item",
-    },
-    action: () => emitCustomEvent("toggleGlobalRelations"),
-  },
-  {
-    id: "everythingSearch",
-    icon: "ph:binoculars",
-    color: "#d97706",
-    title: "Everything 搜索",
-    pinnable: true,
-    shortcut: {
-      icon: "ph:binoculars",
-      itemClass: "action-item everything-search-item",
-    },
-    action: () => emitCustomEvent("openEverythingSearch"),
-  },
-  {
-    id: "imageCompressor",
-    icon: "mdi:image",
-    color: "#ef4444",
-    title: imageCompressorI18n.title || "图片压缩",
-    pinnable: true,
-    shortcut: {
-      icon: "ph:image",
-      itemClass: "action-item image-compressor-item",
-    },
-    action: () => emitCustomEvent("openImageCompressor"),
-  },
-  {
-    id: "toolCollection",
-    icon: "mdi:toolbox-outline",
-    color: "#6366f1",
-    title: props.plugin?.i18n?.toolCollection || "工具合集",
-    pinnable: true,
-    shortcut: {
-      icon: "mdi:toolbox-outline",
-      itemClass: "action-item tool-collection-item",
-    },
-    action: () => emitCustomEvent("toggleToolCollection"),
-  },
-  {
-    id: "bookmarkMarker",
-    icon: "mdi:bookmark-multiple",
-    color: "#10b981",
-    title: bookmarkMarkerI18n.title || "书签标记",
-    pinnable: true,
-    shortcut: {
-      icon: "ph:bookmark-simple",
-      itemClass: "action-item bookmark-marker-item",
-    },
-    action: () => emitCustomEvent("openBookmarkMarker"),
-  },
-  {
-    id: "quickNote",
-    icon: "mdi:note-edit-outline",
-    color: "#f59e0b",
-    title: quickNoteI18n.title,
-    pinnable: true,
-    shortcut: {
-      icon: "ph:note-pencil",
-      itemClass: "action-item quick-note-item",
-    },
-    action: () => emitCustomEvent("toggleQuickNote"),
-  },
-  // 速记恢复：弹窗卡死/位置异常时的应急兜底，点击即复位为居中展开态
-  {
-    id: "quickNoteReset",
-    icon: "ph:arrow-counter-clockwise",
-    color: "#f59e0b",
-    title: quickNoteResetI18n.title,
-    pinnable: false,
-    action: () => emitCustomEvent("resetQuickNote"),
-  },
-  // ========== 状态栏监控项（可固定控制显隐） ==========
-  {
-    id: "monitor-notes",
-    icon: "ph:file-text",
-    color: "#3b82f6",
-    title: statusBarI18n.monitorNotes || "文档数",
-    pinnable: true,
-    group: "监控",
-  },
-  {
-    id: "monitor-words",
-    icon: "ph:text-aa",
-    color: "#8b5cf6",
-    title: statusBarI18n.monitorWords || "总字数",
-    pinnable: true,
-    group: "监控",
-  },
-  {
-    id: "monitor-today",
-    icon: "ph:chart-line-up",
-    color: "#22c55e",
-    title: statusBarI18n.monitorToday || "今日活动",
-    pinnable: true,
-    group: "监控",
-  },
-  {
-    id: "monitor-cpu",
-    icon: "ph:cpu",
-    color: "#ef4444",
-    title: statusBarI18n.monitorCpu || "CPU 使用率",
-    pinnable: true,
-    group: "监控",
-  },
-  {
-    id: "monitor-memory",
-    icon: "ph:memory",
-    color: "#f59e0b",
-    title: statusBarI18n.monitorMemory || "内存使用",
-    pinnable: true,
-    group: "监控",
-  },
-  {
-    id: "monitor-uptime",
-    icon: "ph:timer",
-    color: "#6b7280",
-    title: statusBarI18n.monitorUptime || "运行时间",
-    pinnable: true,
-    group: "监控",
-  },
-]
-
-// 监控项 ID 集合：由 FEATURES 的 group 字段派生（单一数据源，避免与 group:"监控" 双处维护不同步）
-const MONITOR_IDS = new Set(
-  FEATURES.filter((f) => f.group === "监控").map((f) => f.id),
-)
-
-// id → 功能映射，用于点击分发（O(1) 取代 `id in SHORTCUT_DISPLAY` + superPanel 特判）
-const featureMap = new Map(FEATURES.map((f) => [f.id, f]))
 
 // 功能开关快照：superPanel 关闭某功能后，抽屉与快捷入口应同步隐藏
 const enabledSettings = ref<Record<string, any>>({ ...(props.plugin as any).settings })
@@ -453,6 +164,20 @@ const isFeatureEnabled = (id: string): boolean => {
   if (id === "superPanel" || MONITOR_IDS.has(id)) return true
   return enabledSettings.value[featureIdToSettingKey(id)] !== false
 }
+
+// 是否有功能开关：排除监控项（无 enableXxx）与无对应设置键的特殊项（superPanel/quickNoteReset）
+const hasToggle = (id: string): boolean =>
+  !MONITOR_IDS.has(id) && featureIdToSettingKey(id) in enabledSettings.value
+
+// 抽屉条目：注册表剥离快捷/动作字段，附加开关状态与分类归属
+const drawerItems = computed(() =>
+  features.map(({ shortcut: _, action: __, ...item }) => ({
+    ...item,
+    enabled: isFeatureEnabled(item.id),
+    toggleable: hasToggle(item.id),
+    categoryId: categoryManager.categoryOf(item.id),
+  })),
+)
 
 // 状态栏快捷：按 statusBarShortcuts 顺序映射出可渲染项（含 title / handler）
 const visibleShortcuts = computed(() => {
@@ -485,54 +210,18 @@ const statusBarVisible = computed(() => [
   ...visibleMonitors,
 ])
 
-// 是否有功能开关：排除监控项（无 enableXxx）与无对应设置键的特殊项（superPanel/quickNoteReset）
-const hasToggle = (id: string): boolean =>
-  !MONITOR_IDS.has(id) && featureIdToSettingKey(id) in enabledSettings.value
-
-// 抽屉常用/不常用一次遍历拆分（取代两个独立 filter）
-// 不再过滤已关闭功能：关闭的功能置灰显示，保留开关角标供用户重新开启
-const drawerPartition = computed(() => {
-  const frequent: FeatureDrawerItem[] = []
-  const rarely: FeatureDrawerItem[] = []
-  const rareSet = new Set(rarelyUsedFeatures.value)
-  for (const {
-    shortcut: _,
-    action: __,
-    ...drawerItem
-  } of FEATURES) {
-    ;(rareSet.has(drawerItem.id) ? rarely : frequent).push({
-      ...drawerItem,
-      enabled: isFeatureEnabled(drawerItem.id),
-      toggleable: hasToggle(drawerItem.id),
-    })
-  }
-  return {
-    frequent,
-    rarely,
-  }
-})
-
 // 切换数组归属（存在则移除，不存在则追加）
 const toggleMembership = (target: Ref<string[]>, id: string) =>
   target.value.includes(id)
     ? target.value.filter((s) => s !== id)
     : [...target.value, id]
 
-// 按分类（监控/功能）保存状态，消除 handleToggleStatusBar 与 handleToggleRarelyUsed 中的重复 save 模式
+// 按分类（监控/功能）保存状态，消除 handleToggleStatusBar 中的重复 save 模式
 const saveCategory = async (id: string) => {
   if (MONITOR_IDS.has(id)) {
     await storage.save("statusBar-monitors", [...visibleMonitors])
   } else {
     await storage.save("statusBar-shortcuts", statusBarShortcuts.value)
-  }
-}
-
-// 从状态栏移除一个功能（监控项从 Set 删除，功能项从数组过滤）
-const removeFromStatusBar = (id: string) => {
-  if (MONITOR_IDS.has(id)) {
-    visibleMonitors.delete(id)
-  } else {
-    statusBarShortcuts.value = statusBarShortcuts.value.filter((s) => s !== id)
   }
 }
 
@@ -554,22 +243,8 @@ const handleToggleStatusBar = async (id: string) => {
   await saveCategory(id)
 }
 
-const handleToggleRarelyUsed = async (id: string) => {
-  const wasRare = rarelyUsedFeatures.value.includes(id)
-  rarelyUsedFeatures.value = toggleMembership(rarelyUsedFeatures, id)
-  if (!wasRare) {
-    removeFromStatusBar(id)
-    await saveCategory(id)
-  }
-  await storage.save("statusBar-rarelyUsed", rarelyUsedFeatures.value)
-}
-
 storage.load<string[]>("statusBar-shortcuts").then((data) => {
   if (data) statusBarShortcuts.value = data
-})
-
-storage.load<string[]>("statusBar-rarelyUsed").then((data) => {
-  if (data) rarelyUsedFeatures.value = data
 })
 
 // 加载监控项可见性偏好：有存储数据则按存储，否则默认全显
@@ -590,6 +265,42 @@ const toggleFeatureDrawer = () => {
 const handleSelectFeature = (id: string) => {
   showFeatureDrawer.value = false
   featureMap.get(id)?.action?.()
+}
+
+// ============================================================
+// 分类分配弹出菜单
+// ============================================================
+
+// 菜单尺寸估算值（用于视口边界钳制）
+const MENU_WIDTH = 180
+const MENU_ESTIMATED_HEIGHT = 180
+
+const assignMenu = reactive({
+  visible: false,
+  x: 0,
+  y: 0,
+  featureId: "",
+})
+
+// 打开分配菜单：定位到分类角标旁，超出视口时向上/向左钳制
+const openAssignMenu = (id: string, event: MouseEvent) => {
+  const badge = (event.target as HTMLElement).closest?.(".badge-category") as HTMLElement | null
+  const rect = badge?.getBoundingClientRect()
+  const right = rect?.right ?? event.clientX
+  const top = rect?.top ?? event.clientY
+  const bottom = rect?.bottom ?? event.clientY
+  assignMenu.featureId = id
+  assignMenu.x = Math.max(8, Math.min(right, window.innerWidth - MENU_WIDTH - 8))
+  assignMenu.y = bottom + 4 + MENU_ESTIMATED_HEIGHT > window.innerHeight
+    ? Math.max(8, top - MENU_ESTIMATED_HEIGHT - 4)
+    : bottom + 4
+  assignMenu.visible = true
+}
+
+const handleAssignSelect = (categoryId: string | null) => {
+  if (assignMenu.featureId) {
+    categoryManager.assignFeature(assignMenu.featureId, categoryId)
+  }
 }
 
 // 切换功能开关：经 plugin.updateSettings 保存（同步 feature-flags + 广播 settingsUpdated），

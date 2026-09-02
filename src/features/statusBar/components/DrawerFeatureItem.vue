@@ -1,4 +1,4 @@
-<!-- 功能抽屉项组件：封装图标、标题、固定角标、隐藏角标、功能开关角标，主列表与不常用列表复用 -->
+<!-- 功能抽屉项组件：封装图标、标题、固定角标、分类角标、功能开关角标 -->
 <template>
   <div
     class="feature-drawer-item"
@@ -27,14 +27,16 @@
         :width="12"
       />
     </span>
+    <!-- 分类角标：仅非监控项显示，点击弹出分类分配菜单 -->
     <span
-      class="feature-drawer-item-badge badge-rarely"
-      :class="{ active: mode === 'rarely' }"
-      :title="mode === 'rarely' ? '恢复为常用' : '标记为不常用'"
-      @click.stop="emit('toggleRarelyUsed', item.id)"
+      v-if="!item.monitor"
+      class="feature-drawer-item-badge badge-category"
+      :class="{ active: !!item.categoryId }"
+      :title="item.categoryId ? '更改分类' : '分配分类'"
+      @click.stop="emit('assignCategory', item.id, $event)"
     >
       <Icon
-        icon="ph:eye-slash"
+        icon="ph:tag-simple"
         :width="12"
       />
     </span>
@@ -61,17 +63,14 @@ import type { FeatureDrawerItem } from "./FeatureDrawer.vue"
 interface Props {
   item: FeatureDrawerItem
   statusBarVisible: string[]
-  mode?: "main" | "rarely"
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  mode: "main",
-})
+const props = defineProps<Props>()
 
 const emit = defineEmits<{
   select: [id: string]
   toggleStatusBar: [id: string]
-  toggleRarelyUsed: [id: string]
+  assignCategory: [id: string, event: MouseEvent]
   toggleEnabled: [id: string]
 }>()
 

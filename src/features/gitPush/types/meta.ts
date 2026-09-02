@@ -350,7 +350,7 @@ export interface CommitAnalysisStats {
   typeDistribution: { type: CommitAnalysisType, count: number }[]
   /** 作者提交排行（降序） */
   authorRanking: { author: string, count: number }[]
-  /** 项目代码行数排行（按净增降序，行数统计视图分析后非空） */
+  /** 项目代码行数排行（按总行数降序，行数统计视图分析后非空） */
   projectLineRanking: ProjectLineRankItem[]
   /** 作者代码行数排行（按净增降序，行数统计视图分析后非空） */
   authorLineRanking: AuthorLineRankItem[]
@@ -392,7 +392,7 @@ export interface LineStatsCache {
   analyzedAt: string
   /** 抓取失败的项目数 */
   failedCount: number
-  /** 项目代码行数排行（按净增降序） */
+  /** 项目代码行数排行（按总行数降序） */
   projectLineRanking: ProjectLineRankItem[]
   /** 作者代码行数排行（按净增降序） */
   authorLineRanking: AuthorLineRankItem[]

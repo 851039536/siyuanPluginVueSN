@@ -449,15 +449,19 @@ export function maxOf(list: ReadonlyArray<number>, min: number): number {
   return list.reduce((acc, n) => (n > acc ? n : acc), min)
 }
 
-/** 行数排行条形/占比预计算（净增口径，与排行「按净增降序」一致）：pct=相对最大净增绝对值的条形宽度，share=净增绝对值占总净增绝对值百分比（total=0 兜底防除零；净增可为负，取绝对值保证宽度/占比恒非负） */
-export function withLineBarPct<T extends { net: number }>(rows: T[]): (T & { pct: string, share: string })[] {
-  const max = maxOf(rows.map((r) => Math.abs(r.net)), 1)
-  const total = rows.reduce((s, r) => s + Math.abs(r.net), 0) || 1
-  return rows.map((r) => ({
-    ...r,
-    pct: `${Math.round((Math.abs(r.net) / max) * 100)}%`,
-    share: `${((Math.abs(r.net) / total) * 100).toFixed(1)}%`,
-  }))
+/** 行数排行条形/占比预计算（按 pick 指定的行数指标取绝对值，负值安全）：pct=相对最大值的条形宽度，share=占总和的百分比（total=0 兜底防除零）。
+ * 项目排行传 totalLines（存量口径，与「按总行数降序」一致）；详情弹窗文件/作者明细传 net（净增口径）。 */
+export function withLineBarPct<T>(rows: T[], pick: (r: T) => number): (T & { pct: string, share: string })[] {
+  const max = maxOf(rows.map((r) => Math.abs(pick(r))), 1)
+  const total = rows.reduce((s, r) => s + Math.abs(pick(r)), 0) || 1
+  return rows.map((r) => {
+    const v = Math.abs(pick(r))
+    return {
+      ...r,
+      pct: `${Math.round((v / max) * 100)}%`,
+      share: `${((v / total) * 100).toFixed(1)}%`,
+    }
+  })
 }
 
 // ── 时间格式化与项目排序（纯函数，无 Vue 响应式依赖）──

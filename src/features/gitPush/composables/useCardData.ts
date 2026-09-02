@@ -14,6 +14,9 @@ import { CARD_SERVICES_KEY } from "../types"
 import { pruneRecordCache, resolveValidPath } from "../utils"
 import { scanMarkdownFiles } from "./useMarkdownFiles"
 
+/** Tag→commit 映射拉取上限（防异常大仓库失控） */
+const TAG_COMMIT_MAP_LIMIT = 500
+
 export function useCardData(project: () => GitProject) {
   const services = inject(CARD_SERVICES_KEY)!
   const { manager } = services
@@ -25,6 +28,8 @@ export function useCardData(project: () => GitProject) {
   const stashList = ref<StashEntry[]>([])
   const tags = ref<TagInfo[]>([])
   const tagsLoading = ref(false)
+  /** Tag 指向 commit 的映射（hash → Tag 名数组），供 LOG Tab 行内展示；上限 500 防异常大仓库失控 */
+  const tagCommitMap = ref<Map<string, string[]>>(new Map())
   const conflicts = ref<ConflictFile[]>([])
   /** 文件差异缓存（键 = staged 标记 + 文件名，如 "u::src/a.ts"） */
   const fileDiffs = ref<Record<string, string>>({})
@@ -50,7 +55,17 @@ export function useCardData(project: () => GitProject) {
   }
 
   async function loadTags() {
-    tags.value = await manager.getTags(path())
+    // 一次拉取足够多的 Tag：前 10 条供 TagPanel 展示（保持原 limit 10 行为），全量构建 hash → Tag 名映射供 LOG Tab 使用
+    const all = await manager.getTags(path(), TAG_COMMIT_MAP_LIMIT)
+    tags.value = all.slice(0, 10)
+    const map = new Map<string, string[]>()
+    for (const t of all) {
+      if (!t.hash) continue
+      const names = map.get(t.hash)
+      if (names) names.push(t.name)
+      else map.set(t.hash, [t.name])
+    }
+    tagCommitMap.value = map
   }
 
   async function loadConflicts() {
@@ -128,6 +143,7 @@ export function useCardData(project: () => GitProject) {
     stashList,
     tags,
     tagsLoading,
+    tagCommitMap,
     conflicts,
     fileDiffs,
     mdFiles,

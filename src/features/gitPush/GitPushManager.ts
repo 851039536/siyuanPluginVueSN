@@ -418,8 +418,8 @@ export class GitPushManager {
 
   async getTags(projectPath: string, limit = 10): Promise<TagInfo[]> { return this.repoOps.getTags(projectPath, limit) }
 
-  async createTag(projectPath: string, name: string, message?: string): Promise<void> {
-    return this.writeLock.runExclusive(projectPath, () => this.repoOps.createTag(projectPath, name, message))
+  async createTag(projectPath: string, name: string, message?: string, commitRef?: string): Promise<void> {
+    return this.writeLock.runExclusive(projectPath, () => this.repoOps.createTag(projectPath, name, message, commitRef))
   }
 
   async deleteTag(projectPath: string, name: string): Promise<void> {

@@ -211,6 +211,8 @@ export interface TagInfo {
   message?: string
   /** 创建日期（ISO） */
   date?: string
+  /** Tag 指向的 commit hash（annotated tag 为解引用后的 commit，lightweight tag 即 object 本身） */
+  hash?: string
 }
 
 /** 冲突文件信息 */

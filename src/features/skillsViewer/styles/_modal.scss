@@ -4,12 +4,12 @@
 .sv-modal-overlay {
   position: fixed;
   inset: 0;
-  background: color-mix(in srgb, $color-fg 50%, transparent);
+  // 遮罩：对齐 gitPush/websiteNavigation（无 backdrop-filter）
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10000;
-  backdrop-filter: blur(4px) saturate(0.8);
   font-size: $font-size-xs;
 }
 

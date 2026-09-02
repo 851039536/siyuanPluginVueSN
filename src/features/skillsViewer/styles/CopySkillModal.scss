@@ -30,11 +30,6 @@
         background: color-mix(in srgb, var(--tool-color) 8%, var(--b3-theme-surface, $color-surface));
       }
 
-      .sv-modal-tool-option-icon {
-        font-size: $font-size-base;
-        line-height: $line-height-tight;
-      }
-
       .sv-modal-tool-option-name {
         font-size: $font-size-sm;
         font-weight: $font-weight-semibold;

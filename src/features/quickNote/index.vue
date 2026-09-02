@@ -268,22 +268,16 @@ onMounted(async () => {
   await projectsApi.load()
   syncPosition()
   minimized.value = props.manager.isMinimized()
-  // 周起始时间周期刷新随复盘 Tab 启停（防止面板常驻跨周后复盘统计锁死，且避免非复盘 Tab 空转）
   window.addEventListener("click", handleWindowClick)
   window.addEventListener("quickNoteMaskMinimize", handleMaskMinimize)
 })
 
-// 复盘 Tab 激活时启动周起始校准，离开时停止
+// 进入复盘 Tab 时校准周界基准（纯派生无定时器，防止面板常驻跨天后周界过期）
 watch(activeTab, (tab) => {
-  if (tab === "review") {
-    review.startWatch()
-  } else {
-    review.stopWatch()
-  }
+  if (tab === "review") review.refreshNow()
 })
 
 onUnmounted(() => {
-  review.stopWatch()
   window.removeEventListener("click", handleWindowClick)
   window.removeEventListener("quickNoteMaskMinimize", handleMaskMinimize)
 })

@@ -33,10 +33,11 @@
 
 ### 每周复盘
 
-- 展示本周完成事项数量（数字卡片）
-- 优先级分布环形图（紧急/高/中/低各完成多少）
-- 项目精力分布条形图（各项目关联待办完成数）
-- 卡点汇总清单（所有项目的 blocker 汇总）
+- 周切换头：← 更早 / → 更近，可回看本周及最近 7 周历史（纯派生，从待办 doneAt 实时回溯，无快照存储）
+- 统计卡片行：本期完成数、环比上周（升绿/降红/持平灰）、日均完成
+- 优先级分布环形图（所选周紧急/高/中/低各完成多少）
+- 项目精力分布条形图（所选周各项目关联待办完成数）
+- 卡点汇总清单（实时状态快照，带「当前」徽章标注，非所选周历史）
 
 ## 视觉风格
 
@@ -60,14 +61,14 @@ quickNote/
 │   ├── project/ProjectTab.vue  # 项目 Tab（表单 + 卡片列表，持有编辑中状态）
 │   ├── project/ProjectItem.vue # 项目卡片（状态徽章/进度条/关联待办折叠）
 │   ├── project/ProjectForm.vue # 项目新增表单
-│   ├── review/ReviewTab.vue    # 复盘 Tab（透传 useWeeklyReview 派生数据）
-│   └── review/WeeklyReview.vue # 每周复盘（数字卡片 + 环形图 + 条形图 + 卡点清单）
+│   ├── review/ReviewTab.vue    # 复盘 Tab（透传 useWeeklyReview 周切换派生数据）
+│   └── review/WeeklyReview.vue # 每周复盘（周切换头 + 统计卡片行 + 环形图 + 条形图 + 卡点清单）
 ├── composables/
 │   ├── useAiPolish.ts          # AI 润色：并发锁 + API Key 校验 + callAISmart 流式 + 错误码
 │   ├── useTodoList.ts          # 待办 CRUD + 每日自动顺延 + 逾期检测 + 日期分组
 │   ├── useInspirations.ts      # 灵感 CRUD + 标签提取/筛选
 │   ├── useProjects.ts          # 项目 CRUD + 关联待办进度计算 + 卡住筛选（todosRef 构造参数注入）
-│   └── useWeeklyReview.ts      # 复盘纯计算派生（图表数据 + 卡点汇总）
+│   └── useWeeklyReview.ts      # 复盘周切换纯派生（weekOffset 回溯任意周统计 + 卡点汇总）
 ├── types/
 │   ├── index.ts                # 类型入口（re-export position + data，外部导入路径不变）
 │   ├── position.ts             # 弹窗位置类型 + 位置 → 对齐/最小化方向映射表

@@ -3,87 +3,84 @@
 -->
 <template>
   <Teleport to="body">
-    <Transition name="website-fade">
+    <Transition name="wn-dialog-fade">
       <div
         v-if="visible"
-        class="website-dialog-overlay"
+        class="wn-mask"
         @click.self="handleClose"
       >
-        <Transition name="website-scale">
-          <div
-            v-if="visible"
-            class="website-dialog"
-            @click.stop
-          >
-            <div class="dialog-header">
-              <!-- 弹窗标题：添加网站/编辑网站 -->
-              <h3>{{ isEdit ? i18n.editWebsite : i18n.addWebsite }}</h3>
-              <Button
-                icon="close"
-                variant="ghost"
-                size="xsmall"
-                @click="handleClose"
+        <div
+          class="wn-dialog"
+          @click.stop
+        >
+          <div class="wn-dialog-header">
+            <!-- 弹窗标题：添加网站/编辑网站 -->
+            <h3>{{ isEdit ? i18n.editWebsite : i18n.addWebsite }}</h3>
+            <Button
+              icon="close"
+              variant="ghost"
+              size="xsmall"
+              @click="handleClose"
+            />
+          </div>
+          <div class="wn-dialog-body">
+            <div class="wn-form-group">
+              <!-- 名称 -->
+              <label class="wn-label">{{ i18n.name }}</label>
+              <Input
+                v-model="form.name"
+                type="text"
+                :placeholder="i18n.namePlaceholder"
+                required
               />
             </div>
-            <div class="dialog-body">
-              <div class="form-group">
-                <!-- 名称 -->
-                <label>{{ i18n.name }}</label>
-                <Input
-                  v-model="form.name"
-                  type="text"
-                  :placeholder="i18n.namePlaceholder"
-                  required
-                />
-              </div>
-              <div class="form-group">
-                <!-- 网址 -->
-                <label>{{ i18n.url }}</label>
-                <Input
-                  v-model="form.url"
-                  type="text"
-                  :placeholder="i18n.urlPlaceholder"
-                  required
-                />
-              </div>
-              <div class="form-group">
-                <!-- 类别 -->
-                <label>{{ i18n.category }}</label>
-                <Select
-                  v-model="form.category"
-                  :options="categoryOptions"
-                />
-              </div>
-              <div class="form-group">
-                <!-- 描述 -->
-                <label>{{ i18n.description }}</label>
-                <Input
-                  v-model="form.description"
-                  type="text"
-                  :placeholder="i18n.descriptionPlaceholder"
-                />
-              </div>
+            <div class="wn-form-group">
+              <!-- 网址 -->
+              <label class="wn-label">{{ i18n.url }}</label>
+              <Input
+                v-model="form.url"
+                type="text"
+                :placeholder="i18n.urlPlaceholder"
+                required
+              />
             </div>
-            <div class="dialog-footer">
-              <!-- 取消 -->
-              <Button
-                variant="ghost"
-                @click="handleClose"
-              >
-                {{ i18n.cancel }}
-              </Button>
-              <!-- 保存 -->
-              <Button
-                variant="primary"
-                :disabled="!form.name.trim() || !form.url.trim()"
-                :loading="saving"
-                @click="handleSave"
-              >
-                {{ i18n.save }}
-              </Button>
+            <div class="wn-form-group">
+              <!-- 类别 -->
+              <label class="wn-label">{{ i18n.category }}</label>
+              <Select
+                v-model="form.category"
+                :options="categoryOptions"
+              />
+            </div>
+            <div class="wn-form-group">
+              <!-- 描述 -->
+              <label class="wn-label">{{ i18n.description }}</label>
+              <Input
+                v-model="form.description"
+                type="text"
+                :placeholder="i18n.descriptionPlaceholder"
+              />
             </div>
           </div>
-        </Transition>
+          <div class="wn-dialog-footer">
+            <!-- 取消 -->
+            <Button
+              variant="ghost"
+              @click="handleClose"
+            >
+              {{ i18n.cancel }}
+            </Button>
+            <!-- 保存 -->
+            <Button
+              variant="primary"
+              :disabled="!form.name.trim() || !form.url.trim()"
+              :loading="saving"
+              @click="handleSave"
+            >
+              {{ i18n.save }}
+            </Button>
+          </div>
+        </div>
       </div>
     </Transition>
   </Teleport>
@@ -185,3 +182,7 @@ const handleClose = () => {
   emit("close")
 }
 </script>
+
+<style lang="scss">
+@use '../styles/index.scss';
+</style>

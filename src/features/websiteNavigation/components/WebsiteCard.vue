@@ -2,18 +2,18 @@
   网站导航条目卡片 — 展示网站名称/URL/描述 + 操作按钮
 -->
 <template>
-  <div class="entry-card">
-    <div class="entry-main">
-      <div class="entry-info">
-        <div class="entry-name-row">
+  <div class="wn-card">
+    <div class="wn-card-main">
+      <div class="wn-card-info">
+        <div class="wn-card-name-row">
           <IconWrapper
             name="browser"
             :size="16"
-            class="entry-icon"
+            class="wn-card-icon"
           />
-          <span class="entry-name">{{ entry.name }}</span>
+          <span class="wn-card-name">{{ entry.name }}</span>
           <span
-            class="entry-category-tag"
+            class="wn-card-tag"
             :style="{
               backgroundColor: `${category.color}20`,
               color: category.color,
@@ -24,7 +24,8 @@
           </span>
         </div>
         <div
-          class="entry-url"
+          class="wn-card-url"
+          :title="i18n.openUrl"
           @click="emit('openUrl', entry.url)"
         >
           <IconWrapper
@@ -35,12 +36,12 @@
         </div>
         <div
           v-if="entry.description"
-          class="entry-desc"
+          class="wn-card-desc"
         >
           {{ entry.description }}
         </div>
       </div>
-      <div class="entry-actions">
+      <div class="wn-card-actions">
         <!-- 复制网址 -->
         <Button
           icon="contentCopy"
@@ -102,3 +103,8 @@ const category = computed(() =>
   },
 )
 </script>
+
+<style lang="scss">
+@use "../styles/WebsiteCard.scss";
+@use "../styles/index.scss";
+</style>

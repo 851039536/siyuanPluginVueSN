@@ -4088,7 +4088,6 @@
     "savePath": "保存路径"
   },
   "websiteNavigation": {
-    "title": "网站导航",
     "panelTitle": "网站导航",
     "description": "描述",
     "addWebsite": "添加网站",
@@ -4106,7 +4105,6 @@
     "save": "保存",
     "cancel": "取消",
     "manageCategories": "管理类别",
-    "newCategory": "新建类别",
     "categoryName": "类别名称",
     "add": "添加",
     "openUrl": "打开网站",
@@ -4115,8 +4113,6 @@
     "notFound": "未找到匹配的网站",
     "categoryExists": "类别已存在",
     "categoryNotEmpty": "该类别下有网站，无法删除",
-    "loadFailed": "加载失败",
-    "saveSuccess": "保存成功",
     "createSuccess": "网站已添加",
     "updateSuccess": "网站已更新",
     "deleteSuccess": "网站已删除",

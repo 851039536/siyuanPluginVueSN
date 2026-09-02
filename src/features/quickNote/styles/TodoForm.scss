@@ -22,6 +22,12 @@
   min-width: 0;
 }
 
+// 多行输入框（Enter 换行，Ctrl+Enter 提交）
+.qn-todo-form__textarea {
+  resize: vertical;
+  min-height: 0;
+}
+
 // AI 润色图标按钮（新增/编辑模式共用，hover 色覆盖占位类默认值为品牌蓝）
 .qn-todo-form__icon-btn {
   @extend %qn-icon-btn-28;

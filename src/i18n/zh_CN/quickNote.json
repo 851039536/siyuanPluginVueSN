@@ -29,7 +29,7 @@
     "tabInspiration": "灵感",
     "tabProject": "项目",
     "tabReview": "复盘",
-    "todoPlaceholder": "输入待办事项",
+    "todoPlaceholder": "输入待办事项，Enter 换行，Ctrl+Enter 快速添加",
     "priorityUrgent": "紧急",
     "priorityHigh": "高",
     "priorityMedium": "中",

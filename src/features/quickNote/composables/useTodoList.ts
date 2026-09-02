@@ -28,6 +28,9 @@ function parseDateStr(str: string): Date | null {
 /** 日期分组标签：今天 / 明天 / 本周 / 更远 */
 export type DateGroup = "today" | "tomorrow" | "week" | "future"
 
+/** 聚焦区条目（今日到期 + 逾期，overdue 标记供红色警示样式） */
+export type TodoFocusItem = TodoItem & { overdue: boolean }
+
 export function useTodoList(storage: QuickNoteStorage) {
   const todos: Ref<TodoItem[]> = ref([])
 
@@ -107,11 +110,14 @@ export function useTodoList(storage: QuickNoteStorage) {
     await persist()
   }
 
-  /** 更新待办内容/优先级/截止日期/关联项目 */
+  /** 更新待办内容/优先级/截止日期/关联项目（content 与新增模式一致做 trim） */
   const update = async (id: string, patch: Partial<Pick<TodoItem, "content" | "priority" | "dueDate" | "projectId">>) => {
     const todo = todos.value.find((t) => t.id === id)
     if (!todo) return
-    Object.assign(todo, patch, { updatedAt: Date.now() })
+    const normalized = patch.content !== undefined
+      ? { ...patch, content: patch.content.trim() }
+      : patch
+    Object.assign(todo, normalized, { updatedAt: Date.now() })
     await persist()
   }
 
@@ -152,12 +158,17 @@ export function useTodoList(storage: QuickNoteStorage) {
     return todayStart ? due < todayStart : false
   }
 
-  /** 逾期未完成待办（顶部「今天要处理的」聚焦区用，按优先级排序） */
-  const overdueTodos = computed(() =>
-    todos.value
-      .filter((t) => isOverdue(t))
-      .sort((a, b) => PRIORITY_META[a.priority].rank - PRIORITY_META[b.priority].rank),
-  )
+  /** 「今天要处理的」聚焦区条目：今日到期 + 逾期未完成（自动顺延会把逾期项截止日期改为今天，故按 dueDate <= today 合并筛选），逾期项排前 */
+  const todayFocus = computed<TodoFocusItem[]>(() => {
+    const today = toDateStr(new Date())
+    return todos.value
+      .filter((t) => !t.done && t.dueDate?.trim() && (isOverdue(t) || t.dueDate === today))
+      .map((t) => ({ ...t, overdue: isOverdue(t) }))
+      .sort((a, b) => {
+        if (a.overdue !== b.overdue) return a.overdue ? -1 : 1
+        return PRIORITY_META[a.priority].rank - PRIORITY_META[b.priority].rank
+      })
+  })
 
   /** 未完成待办计数（最小化条徽标用） */
   const pendingCount = computed(() => todos.value.filter((t) => !t.done).length)
@@ -207,7 +218,7 @@ export function useTodoList(storage: QuickNoteStorage) {
 
   return {
     todos,
-    overdueTodos,
+    todayFocus,
     pendingCount,
     groupedPending,
     doneTodos,
@@ -218,6 +229,5 @@ export function useTodoList(storage: QuickNoteStorage) {
     rolloverToTomorrow,
     remove,
     isOverdue,
-    groupOf,
   }
 }

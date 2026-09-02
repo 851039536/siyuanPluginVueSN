@@ -33,7 +33,7 @@
  * 项目新增/编辑表单 + 项目卡片列表；持有编辑中项目状态，
  * CRUD 与关联待办/进度计算直达 projectsApi composable
  */
-import type { ProjectItem as ProjectItemType } from "../../types"
+import type { ProjectItem as ProjectItemType, ProjectSubmitPayload } from "../../types"
 import { ref } from "vue"
 import ProjectForm from "./ProjectForm.vue"
 import ProjectItem from "./ProjectItem.vue"
@@ -72,14 +72,7 @@ const startEdit = (project: ProjectItemType) => {
 }
 
 /** 提交项目（分发新增/更新） */
-const handleProjectSubmit = (payload: {
-  id?: string
-  name: string
-  status: ProjectItemType["status"]
-  currentStep: string
-  nextStep: string
-  blockers: string
-}) => {
+const handleProjectSubmit = (payload: ProjectSubmitPayload) => {
   if (payload.id) {
     const { id, ...patch } = payload
     projectsApi.update(id, patch)

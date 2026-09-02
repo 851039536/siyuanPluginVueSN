@@ -103,9 +103,9 @@
         </div>
       </div>
 
-      <!-- 「今天要处理的」聚焦区（逾期任务 + 卡住项目标红） -->
+      <!-- 「今天要处理的」聚焦区（今日到期/逾期任务 + 卡住项目标红） -->
       <TodayFocus
-        :overdue-todos="overdueTodos"
+        :focus-todos="todayFocus"
         :blocked-projects="blockedProjects"
         :i18n="i18n"
       />
@@ -170,7 +170,7 @@
 import type { Plugin } from "siyuan"
 import type { QuickNoteManager } from "./index"
 import type { QuickNotePlacement, QuickNotePosition } from "./types"
-import { computed, onMounted, onUnmounted, ref } from "vue"
+import { computed, onMounted, onUnmounted, ref, watch } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import TodayFocus from "./components/today/TodayFocus.vue"
 import TodoTab from "./components/todo/TodoTab.vue"
@@ -224,8 +224,8 @@ const menuWrapRef = ref<HTMLElement | null>(null)
 // ==================== 壳层数据访问 ====================
 /** 未完成待办计数（最小化条徽标用） */
 const pendingCount = todoList.pendingCount
-/** 逾期未完成任务（聚焦区用） */
-const overdueTodos = todoList.overdueTodos
+/** 今日到期 + 逾期未完成任务（聚焦区用） */
+const todayFocus = todoList.todayFocus
 /** 卡住项目（聚焦区用） */
 const blockedProjects = projectsApi.blockedProjects
 
@@ -268,10 +268,18 @@ onMounted(async () => {
   await projectsApi.load()
   syncPosition()
   minimized.value = props.manager.isMinimized()
-  // 启动周起始时间周期刷新（防止面板常驻跨周后复盘统计锁死）
-  review.startWatch()
+  // 周起始时间周期刷新随复盘 Tab 启停（防止面板常驻跨周后复盘统计锁死，且避免非复盘 Tab 空转）
   window.addEventListener("click", handleWindowClick)
   window.addEventListener("quickNoteMaskMinimize", handleMaskMinimize)
+})
+
+// 复盘 Tab 激活时启动周起始校准，离开时停止
+watch(activeTab, (tab) => {
+  if (tab === "review") {
+    review.startWatch()
+  } else {
+    review.stopWatch()
+  }
 })
 
 onUnmounted(() => {

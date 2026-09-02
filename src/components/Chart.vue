@@ -50,6 +50,7 @@ import type {
   ChartData as ChartJsData,
   ChartOptions as ChartJsOptions,
 } from "chart.js"
+import type { ChartData, ChartOptions } from "./chart.types"
 import {
   ArcElement,
   BarController,
@@ -80,22 +81,8 @@ import {
 type ChartType = "line" | "bar" | "pie" | "doughnut" | "area"
 type ChartSize = "xsmall" | "small" | "medium" | "large" | "full"
 
-export interface ChartData {
-  label: string
-  value: number
-  color?: string
-}
-
-export interface ChartOptions {
-  showLegend?: boolean
-  showGrid?: boolean
-  showLabels?: boolean
-  showTooltip?: boolean
-  animationDuration?: number
-  minY?: number
-  maxY?: number
-  colors?: string[]
-}
+// 类型定义迁移至 ./chart.types.ts，保留 re-export 兼容既有导入路径
+export type { ChartData, ChartOptions }
 
 interface Props {
   type?: ChartType

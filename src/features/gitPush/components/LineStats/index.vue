@@ -105,6 +105,8 @@
       :get-numstat="getProjectNumstat"
       :get-file-lines="getProjectFileLines"
       :extensions="selectedExtensions"
+      :refresh-project="refreshProject"
+      :refreshing="lineDetailRefreshing"
       @close="emit('closeLineDetail')"
     />
   </div>
@@ -149,6 +151,10 @@ const props = defineProps<{
   getProjectNumstat: (projectId: string) => NumstatCommit[]
   /** 按 projectId 获取该项目已跟踪文件的存量行数 Map（来自 useCommitAnalysis 内存缓存，值 null=不可读） */
   getProjectFileLines: (projectId: string) => Map<string, number | null>
+  /** 单项目行数刷新（详情弹窗刷新按钮，透传给 ProjectLineDetail） */
+  refreshProject: (projectId: string) => void
+  /** 单项目刷新进行中（详情弹窗刷新按钮旋转禁用） */
+  lineDetailRefreshing: boolean
 }>()
 
 const emit = defineEmits<{

@@ -474,6 +474,7 @@
     "lineDetailShare": "Share",
     "lineDetailFileEmpty": "No file change data for this project",
     "lineDetailAuthorEmpty": "No author line data for this project",
+    "lineDetailRefreshHint": "Re-fetch line stats for this project",
     "lineDetailClickHint": "Click to view file/author line details",
     "lineDetailModsCount": "{0} mods",
     "lineDetailAuthorCount": "{0} authors",

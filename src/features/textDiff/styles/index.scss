@@ -151,14 +151,15 @@
 
 // ==================== Result Section ====================
 
+// 拼接线分割：结果区不做浮动卡片，通栏面板 + 1px 顶边线与输入区拼接（消除窗台感）
 .result-section {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   min-height: 200px;
-  @include m.codex-border-card;
-  margin: 0 $spacing-2 $spacing-2;
+  background: var(--b3-theme-surface);
+  border-top: 1px solid var(--b3-border-color);
 }
 
 // 空状态：双文本均为空时占位提示（对齐 gitPush .gp-empty：非斜体，仅图标淡化）
@@ -227,9 +228,5 @@
   .input-section {
     grid-template-columns: 1fr;
     max-height: 45vh;
-  }
-
-  .result-section {
-    margin: 0 $spacing-1 $spacing-1;
   }
 }

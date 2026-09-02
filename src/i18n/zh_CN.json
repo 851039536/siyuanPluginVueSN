@@ -312,7 +312,6 @@
   "base64Image_cssUnavailable": "当前模式不支持CSS格式",
   "bookmarkMarker": {
     "title": "书签标记",
-    "enableBookmarkMarker": "书签标记",
     "bookmarkMarkerDescription": "根据文档书签内容在文件树中显示颜色标记",
     "bookmarkRules": "标记规则",
     "bookmarkName": "书签名称",

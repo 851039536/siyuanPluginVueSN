@@ -135,11 +135,11 @@ export function useGitHandlers(deps: {
     })
   }
 
-  async function handlePushTag(id: string, tag: string) {
+  async function handlePushTag(id: string, tag: string, remoteName?: string) {
     const project = findProject(projects, id)
     if (!project) return
-    // 收集所有已配置的远程
-    const remoteNames = getProjectRemoteNames(project).map((r) => r.name)
+    // 指定远程时只推该远程；未指定时收集所有已配置的远程全部推送
+    const remoteNames = remoteName ? [remoteName] : getProjectRemoteNames(project).map((r) => r.name)
     if (remoteNames.length === 0) { showMessage(tf("noRemoteFound"), 3000, "error"); return }
     tagPushLoading.value = {
       ...tagPushLoading.value,

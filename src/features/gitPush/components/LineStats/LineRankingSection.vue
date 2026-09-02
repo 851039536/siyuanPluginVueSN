@@ -1,12 +1,12 @@
-<!-- gitPush 行数统计排行区块（项目/作者通用：带表头 + 新增/删除/净增/占比列，mode prop 区分点击行为） -->
+<!-- gitPush 行数统计项目代码行数排行区块（表头 + 条形 + 数字列 + 总行数列，行可点击打开详情弹窗） -->
 <template>
   <div class="gls-section">
-    <!-- 区块标题（mode 区分） -->
+    <!-- 区块标题："项目代码行数排行" -->
     <div class="gls-section-title">
-      {{ mode === "project" ? i18n.analysisLineProjectRanking : i18n.analysisLineAuthorRanking }}
+      {{ i18n.analysisLineProjectRanking }}
     </div>
     <div class="gls-bar-list">
-      <!-- 表头行："新增 / 删除 / 净增 / 占比"（净增加粗主题色 = 实际行数，悬停见说明；项目模式多"总行数"列） -->
+      <!-- 表头行："新增 / 删除 / 净增 / 占比 / 总行数"（净增加粗主题色 = 实际行数，悬停见说明） -->
       <div class="gls-bar-head">
         <span class="gls-bar-rank"></span>
         <span class="gls-bar-label"></span>
@@ -27,20 +27,18 @@
           class="gls-bar-share"
           :title="i18n.lineStatsShareHint"
         >{{ i18n.lineDetailShare }}</span>
-        <!-- 表头列："总行数"（存量，等宽右对齐，tooltip 说明口径；仅项目模式） -->
+        <!-- 表头列："总行数"（存量，等宽右对齐，tooltip 说明口径） -->
         <span
-          v-if="mode === 'project'"
           class="gls-line-total"
           :title="i18n.lineStatsTotalHint"
         >{{ i18n.analysisLineTotal }}</span>
       </div>
       <div
         v-for="(row, idx) in rows"
-        :key="row.key"
-        class="gls-bar-row"
-        :class="{ 'gls-bar-row--clickable': mode === 'project' }"
-        :title="mode === 'project' ? i18n.lineDetailClickHint : undefined"
-        @click="mode === 'project' && emit('viewProject', row.id)"
+        :key="row.id"
+        class="gls-bar-row gls-bar-row--clickable"
+        :title="i18n.lineDetailClickHint"
+        @click="emit('viewProject', row.id)"
       >
         <!-- 排名序号：从 1 开始 -->
         <span class="gls-bar-rank">{{ idx + 1 }}</span>
@@ -73,38 +71,31 @@
         </span>
         <!-- 占比列：净增绝对值占总净增绝对值的百分比（与排序同口径） -->
         <span class="gls-bar-share">{{ row.share }}</span>
-        <!-- 总行数列：当前实际行数（存量，等宽右对齐中性色；旧缓存缺失时显示 —；仅项目模式） -->
-        <span
-          v-if="mode === 'project'"
-          class="gls-line-total"
-        >{{ (row as ProjectLineRankItem).totalLines?.toLocaleString() ?? "—" }}</span>
+        <!-- 总行数列：当前实际行数（存量，等宽右对齐中性色；旧缓存缺失时显示 —） -->
+        <span class="gls-line-total">{{ row.totalLines?.toLocaleString() ?? "—" }}</span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-// gitPush 行数统计排行区块（项目/作者通用：表头 + 条形 + 数字列，mode prop 区分）
-import type { AuthorLineRankItem, ProjectLineRankItem } from "../../types"
+// gitPush 行数统计项目代码行数排行区块（表头 + 条形 + 数字列，行点击打开详情弹窗）
+import type { ProjectLineRankItem } from "../../types"
 import { computed } from "vue"
 import { netClass as sharedNetClass, withLineBarPct } from "../../utils"
 
 const props = defineProps<{
   i18n: Record<string, any>
-  /** 排行模式：project 显示总行数列且行可点击；author 仅数字列 */
-  mode: "project" | "author"
   /** 项目代码行数排行（按净增降序） */
   projectRanking: ProjectLineRankItem[]
-  /** 作者代码行数排行（按净增降序） */
-  authorRanking: AuthorLineRankItem[]
 }>()
 
 const emit = defineEmits<{
   viewProject: [projectId: string]
 }>()
 
-/** 通用行视图（pct=相对最大净增绝对值的条形宽度，share=净增绝对值占比，与净增排序同口径） */
-const rows = computed(() => withLineBarPct(props.mode === "project" ? props.projectRanking : props.authorRanking))
+/** 行视图（pct=相对最大净增绝对值的条形宽度，share=净增绝对值占比，与净增排序同口径） */
+const rows = computed(() => withLineBarPct(props.projectRanking))
 
 /** 净增行语义色（薄委托共享 netClass，前缀 gls-net，保持模板调用点零改动） */
 function netClass(net: number): string {

@@ -20,7 +20,7 @@
               @click="manageMode = !manageMode"
             >
               <Icon
-                icon="ph:tags"
+                icon="ph:tag"
                 :width="14"
               />
             </button>

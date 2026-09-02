@@ -321,7 +321,7 @@
   color: var(--b3-theme-error);
 }
 
-// 净增行语义色：正→绿 / 负→红 / 零→灰（条形 fill 与数字共用）
+// 净增行语义色：正→绿 / 负→红 / 零→灰（净增数字列专用；条形按总行数（存量）宽度渲染，着主题色）
 .gls-net--pos {
   color: var(--b3-theme-success);
 }
@@ -332,13 +332,4 @@
 
 .gls-net--zero {
   opacity: 0.5;
-}
-
-// 条形 fill 按净增语义着色（正绿负红，与数字列呼应）
-.gls-bar-fill.gls-net--pos {
-  background: var(--b3-theme-success);
-}
-
-.gls-bar-fill.gls-net--neg {
-  background: var(--b3-theme-error);
 }

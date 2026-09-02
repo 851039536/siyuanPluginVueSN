@@ -312,7 +312,6 @@
   "base64Image_cssUnavailable": "CSS format is not supported in this mode",
   "bookmarkMarker": {
     "title": "Bookmark Marker",
-    "enableBookmarkMarker": "Bookmark Marker",
     "bookmarkMarkerDescription": "Display color markers in the file tree based on document bookmarks",
     "bookmarkRules": "Marker Rules",
     "bookmarkName": "Bookmark Name",

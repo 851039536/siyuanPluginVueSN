@@ -67,32 +67,26 @@
 
 // ========== 功能开关区 ==========
 
-.setting-label {
+// 开关与描述内联成行（面板标题已标识功能名，不再重复功能名标签）
+.toggle-row {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  color: var(--b3-theme-on-surface);
-  margin-bottom: $spacing-3;
+  gap: $spacing-3;
 }
 
 .toggle-description {
   font-size: $font-size-xs;
   color: var(--b3-theme-on-surface-variant);
-  margin-top: $spacing-2;
+  margin: 0;
   line-height: $line-height-normal;
 }
 
 
 // ========== 规则设置区 ==========
 
+// 区块不做外盒：仅作分组间距，避免与内部规则卡片双层嵌套边框
 .rules-settings {
   margin-top: $spacing-5;
-  padding: $spacing-3 $spacing-3;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  border-radius: $radius-md;
 }
 
 .settings-title {
@@ -129,12 +123,9 @@
 
 // ========== 更新间隔 ==========
 
+// 区块不做外盒：与规则设置区保持一致的扁平分组
 .update-interval {
   margin-top: $spacing-5;
-  padding: $spacing-3 $spacing-3;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  border-radius: $radius-md;
 }
 
 .interval-label {
@@ -162,7 +153,9 @@
   }
 
   &:focus {
+    // Codex 规范：focus 用 outline，禁用 box-shadow
     border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
+    outline: 2px solid var(--b3-theme-primary-lightest);
+    outline-offset: 0;
   }
 }

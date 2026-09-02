@@ -42,7 +42,8 @@ export class BookmarkMarkerManager {
   destroy(): void {
     this.bookmarkMarker?.stop()
     this.bookmarkMarker = null
-    this.modal.close()
+    // destroy 卸载 Vue 实例并移除遮罩 DOM，仅 close 会残留（对齐 websiteNavigation 的 Manager 写法）
+    this.modal.destroy()
   }
 
   open(): void {

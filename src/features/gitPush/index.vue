@@ -81,7 +81,6 @@
       :i18n="i18n"
       :project-count="projects.length"
       :project-ranking="projectLineRanking"
-      :author-ranking="authorLineRanking"
       :analyzing="analysisAnalyzing"
       :analyzed="analysisAnalyzed"
       :analyzed-at="analysisAnalyzedAt"
@@ -592,7 +591,6 @@ const {
   effectiveRuleCheckProjectId,
   setRuleCheckProject,
   projectLineRanking,
-  authorLineRanking,
   lineStatsSummary,
   selectedExtensions,
   updateSelectedExtensions,

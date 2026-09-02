@@ -50,12 +50,12 @@
 
         <!-- 空状态：分析完成但无行数数据 -->
         <EmptyState
-          v-if="projectRanking.length === 0 && authorRanking.length === 0"
+          v-if="projectRanking.length === 0"
           icon="mdi:source-commit"
           :text="i18n.lineStatsNoData"
         />
 
-        <!-- 单栏堆叠：汇总卡片 + 项目代码行数排行 + 作者代码行数排行 -->
+        <!-- 单栏堆叠：汇总卡片 + 项目代码行数排行 -->
         <div
           v-else
           class="gls-pair"
@@ -69,18 +69,8 @@
           <!-- 项目代码行数排行 -->
           <LineRankingSection
             :i18n="i18n"
-            mode="project"
             :project-ranking="projectRanking"
-            :author-ranking="authorRanking"
             @view-project="emit('viewProject', $event)"
-          />
-
-          <!-- 作者代码行数排行 -->
-          <LineRankingSection
-            :i18n="i18n"
-            mode="author"
-            :project-ranking="projectRanking"
-            :author-ranking="authorRanking"
           />
         </div>
       </template>
@@ -116,7 +106,7 @@
 // gitPush 行数统计视图入口容器（状态编排 + 汇总卡片 + 排行区块 + 弹窗）
 import type { NumstatCommit } from "../../reportMetrics"
 import type { CommitCount } from "../../composables/useCommitAnalysis"
-import type { AuthorLineRankItem, LineStatsSummary, ProjectLineRankItem } from "../../types"
+import type { LineStatsSummary, ProjectLineRankItem } from "../../types"
 import { computed, ref } from "vue"
 import EmptyState from "../common/EmptyState.vue"
 import ExtFilterDialog from "./ExtFilterDialog.vue"
@@ -132,8 +122,6 @@ const props = defineProps<{
   projectCount: number
   /** 项目代码行数排行（按净增降序） */
   projectRanking: ProjectLineRankItem[]
-  /** 作者代码行数排行（按净增降序） */
-  authorRanking: AuthorLineRankItem[]
   /** 全量行数合计（基于全量项目数据独立累加，来自 useCommitAnalysis） */
   summary: LineStatsSummary
   analyzing: boolean

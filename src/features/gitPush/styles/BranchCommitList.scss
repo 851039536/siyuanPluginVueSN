@@ -133,7 +133,7 @@
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  max-width: 90px;
+  max-width: 150px;
   @include text-ellipsis;
   padding: 0 4px;
   font-family: $vp-mono;
@@ -143,6 +143,18 @@
   background: color-mix(in srgb, var(--b3-theme-primary) 10%, transparent);
   border-radius: $radius-sm;
   white-space: nowrap;
+}
+
+// 徽标内已推送的远程名（淡化小字）
+.bcl-tag-chip-remotes {
+  font-size: $font-size-2xs;
+  opacity: 0.5;
+}
+
+// 徽标内未推送提示（淡化小字）
+.bcl-tag-chip-unpushed {
+  font-size: $font-size-2xs;
+  opacity: 0.5;
 }
 
 .bcl-tag-more {

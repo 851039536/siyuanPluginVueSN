@@ -83,7 +83,7 @@
           class="bcl-hash"
           :title="entry.hash"
         >{{ entry.hash }}</span>
-        <!-- 该提交已命中的 Tag 徽标（tag→hash 映射） -->
+        <!-- 该提交已命中的 Tag 徽标（tag→hash 映射；徽标内附已推送远程名，未推送时提示） -->
         <span
           v-if="entryTags(entry.hash).length"
           class="bcl-tags"
@@ -93,12 +93,22 @@
             v-for="tagName in entryTags(entry.hash).slice(0, 2)"
             :key="tagName"
             class="bcl-tag-chip"
+            :title="tagPushTitle(tagName)"
           >
             <Icon
               icon="mdi:tag-outline"
               height="10"
             />
             {{ tagName }}
+            <!-- 已推送的远程名（远程数据缺失时不显示，避免误标） -->
+            <span
+              v-if="tagRemotes(tagName).length"
+              class="bcl-tag-chip-remotes"
+            >{{ tagRemotes(tagName).join(" ") }}</span>
+            <span
+              v-else-if="hasRemoteData"
+              class="bcl-tag-chip-unpushed"
+            >{{ i18n.tagNotPushed }}</span>
           </span>
           <span
             v-if="entryTags(entry.hash).length > 2"
@@ -151,6 +161,8 @@ const props = defineProps<{
   loading: boolean
   /** Tag 指向 commit 的映射（完整 hash → Tag 名数组），供行内展示 */
   tagCommitMap?: Map<string, string[]>
+  /** 各远程已有的 Tag 名列表（remote 名 → Tag 名数组），供推送状态展示 */
+  remoteTags?: Map<string, string[]>
 }>()
 
 const emit = defineEmits<{
@@ -188,6 +200,33 @@ const shortTagMap = computed(() => {
 
 function entryTags(hash: string): string[] {
   return shortTagMap.value.get(hash) ?? []
+}
+
+/** 是否已获取到任一远程的 Tag 数据（全失败/无远程时 UI 不显示推送状态，避免误标） */
+const hasRemoteData = computed(() => !!props.remoteTags && props.remoteTags.size > 0)
+
+/** Tag 名 → 已推送的远程名数组 */
+const tagRemoteMap = computed(() => {
+  const map = new Map<string, string[]>()
+  if (!props.remoteTags) return map
+  for (const [remote, tags] of props.remoteTags) {
+    for (const t of tags) {
+      const arr = map.get(t)
+      if (arr) arr.push(remote)
+      else map.set(t, [remote])
+    }
+  }
+  return map
+})
+
+function tagRemotes(tag: string): string[] {
+  return tagRemoteMap.value.get(tag) ?? []
+}
+
+/** Tag 徽标 tooltip：列出已推送的远程名，未推送（且远程数据可用）时提示 */
+function tagPushTitle(tag: string): string {
+  const remotes = tagRemotes(tag)
+  return remotes.length ? `${tag} → ${remotes.join(", ")}` : `${tag} · ${props.i18n.tagNotPushed}`
 }
 
 function onCountChange() {

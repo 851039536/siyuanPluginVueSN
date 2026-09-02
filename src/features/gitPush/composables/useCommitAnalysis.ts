@@ -86,6 +86,9 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   const selectedExtensions = ref<string[]>([])
   /** 提交规则检查选中的过滤项目 ID（"" = 全部项目；仅过滤展示，分析仍覆盖全部项目，共享缓存零影响） */
   const ruleCheckProjectId = ref<string>("")
+
+  /** 有效项目 id 集合（项目删除后缓存/内存中的残留数据统一按此过滤，避免各处重复构建 Set） */
+  const validProjectIds = computed(() => new Set(projects.value.map((p) => p.id)))
   /** 是否已从存储载入提交规则检查偏好（防重复读盘） */
   let ruleCheckPrefsLoaded = false
 
@@ -350,15 +353,14 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     const cache = await manager.storage.commitAnalysisCache.loadOrDefault()
     if (cache.entries.length === 0) return
     // 过滤已删除项目的残留条目（项目删除后缓存不再展示其数据）
-    const validIds = new Set(projects.value.map((p) => p.id))
-    const valid = cache.entries.filter((e) => validIds.has(e.projectId))
+    const valid = cache.entries.filter((e) => validProjectIds.value.has(e.projectId))
     if (valid.length === 0) return
     commitCount.value = cache.commitCount
     failedCount.value = cache.failedCount
     analyzedAt.value = cache.analyzedAt
     entries.value = valid
     // 行数排行随缓存恢复（旧缓存无此字段时按空数组兜底；行数数据同样过滤已删除项目）
-    projectLineRanking.value = (cache.projectLineRanking ?? []).filter((r) => validIds.has(r.id))
+    projectLineRanking.value = (cache.projectLineRanking ?? []).filter((r) => validProjectIds.value.has(r.id))
     authorLineRanking.value = cache.authorLineRanking ?? []
     // commitAnalysisCache 不含 summary 字段，降级从排行累加（重新点「重新分析」后得到精确值）
     lineStatsSummary.value = deriveSummary(projectLineRanking.value)
@@ -383,7 +385,6 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     if (lineStatsCacheLoaded) return
     lineStatsCacheLoaded = true
     const cache = await manager.storage.lineStatsCache.loadOrDefault()
-    const validIds = new Set(projects.value.map((p) => p.id))
     // 无条件恢复扩展名过滤选择：无论行数排行缓存是否有数据都恢复勾选，保证重开面板/重启插件后选择不丢失（排行缓存为空仅影响行数数据，与过滤选择无关）
     selectedExtensions.value = cache.selectedExtensions ?? []
     // 独立槽位已有分析结果：直接恢复（无 entries，供行数视图独立复用）
@@ -391,7 +392,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
       commitCount.value = cache.commitCount
       failedCount.value = cache.failedCount
       analyzedAt.value = cache.analyzedAt
-      projectLineRanking.value = cache.projectLineRanking.filter((r) => validIds.has(r.id))
+      projectLineRanking.value = cache.projectLineRanking.filter((r) => validProjectIds.value.has(r.id))
       authorLineRanking.value = cache.authorLineRanking
       // 旧缓存无 summary / totalLines 字段时降级：summary 缺失从排行累加，totalLines 缺失补 0
       lineStatsSummary.value = cache.summary
@@ -463,8 +464,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   /** 分析聚合视图（CommitAnalysisPanel 唯一数据 prop，新增维度只需改这里 + 类型 + 面板三处） */
   const analysisStats = computed<CommitAnalysisStats>(() => {
     // 实时过滤已删除项目的条目（项目删除后缓存/内存中的残留数据不参与统计与展示）
-    const validIds = new Set(projects.value.map((p) => p.id))
-    const list = entries.value.filter((e) => validIds.has(e.projectId))
+    const list = entries.value.filter((e) => validProjectIds.value.has(e.projectId))
     const nameById = new Map(projects.value.map((p) => [p.id, p.name]))
     return {
       totalCommits: list.length,
@@ -486,7 +486,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         author: r.key,
         count: r.count,
       })),
-      projectLineRanking: projectLineRanking.value.filter((r) => validIds.has(r.id)),
+      projectLineRanking: projectLineRanking.value.filter((r) => validProjectIds.value.has(r.id)),
       authorLineRanking: authorLineRanking.value,
     }
   })

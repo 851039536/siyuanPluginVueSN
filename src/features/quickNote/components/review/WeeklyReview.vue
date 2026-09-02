@@ -1,12 +1,57 @@
 <template>
   <div class="qn-review">
-    <!-- 本周完成数字卡片 -->
-    <div class="qn-review__stat">
-      <!-- 辅助文字："本周完成" -->
-      <span class="qn-review__stat-label">{{ i18n.weekCompleted }}</span>
-      <span class="qn-review__stat-value">{{ weekTotal }}</span>
-      <!-- 辅助文字："件事" -->
-      <span class="qn-review__stat-unit">{{ i18n.weekUnit }}</span>
+    <!-- 周切换头（← 更早 / 周标签 + 日期范围 / → 更近） -->
+    <div class="qn-review__week-bar">
+      <button
+        class="qn-icon-btn"
+        :disabled="weekOffset >= maxWeekOffset"
+        :title="i18n.reviewPrevWeek"
+        @click="weekOffset++"
+      >
+        <IconWrapper
+          name="chevronLeft"
+          :size="12"
+        />
+      </button>
+      <div class="qn-review__week-info">
+        <!-- 周标签："本周 / 上周 / N 周前" -->
+        <span class="qn-review__week-label">{{ weekLabelText }}</span>
+        <!-- 周日期范围："MM/DD - MM/DD" -->
+        <span class="qn-review__week-range">{{ weekRangeText }}</span>
+      </div>
+      <button
+        class="qn-icon-btn"
+        :disabled="weekOffset === 0"
+        :title="i18n.reviewNextWeek"
+        @click="weekOffset--"
+      >
+        <IconWrapper
+          name="chevronRight"
+          :size="12"
+        />
+      </button>
+    </div>
+
+    <!-- 统计卡片行（本期完成 / 环比上周 / 日均完成） -->
+    <div class="qn-review__stats">
+      <div class="qn-review__stat">
+        <!-- 统计标签："本期完成" -->
+        <span class="qn-review__stat-label">{{ i18n.statCompleted }}</span>
+        <span class="qn-review__stat-value">{{ weekTotal }}</span>
+      </div>
+      <div class="qn-review__stat">
+        <!-- 统计标签："较上周" -->
+        <span class="qn-review__stat-label">{{ i18n.statVsLast }}</span>
+        <span
+          class="qn-review__stat-value qn-review__stat-value--trend"
+          :class="trendClass"
+        >{{ trendText }}</span>
+      </div>
+      <div class="qn-review__stat">
+        <!-- 统计标签："日均完成" -->
+        <span class="qn-review__stat-label">{{ i18n.statAvgDaily }}</span>
+        <span class="qn-review__stat-value">{{ avgText }}</span>
+      </div>
     </div>
 
     <!-- 双图表区 -->
@@ -49,10 +94,14 @@
       </div>
     </div>
 
-    <!-- 卡点汇总 -->
+    <!-- 卡点汇总（实时状态快照，非所选周历史） -->
     <div class="qn-review__blocks">
-      <!-- 区块标题："卡点汇总" -->
-      <span class="qn-review__section-title">{{ i18n.blockSummaryTitle }}</span>
+      <div class="qn-review__section-head">
+        <!-- 区块标题："卡点汇总" -->
+        <span class="qn-review__section-title">{{ i18n.blockSummaryTitle }}</span>
+        <!-- 实时状态徽章："当前" -->
+        <span class="qn-review__block-now">{{ i18n.blockersCurrent }}</span>
+      </div>
       <ul
         v-if="blockSummary.length > 0"
         class="qn-review__block-list"
@@ -81,36 +130,73 @@
 
 <script setup lang="ts">
 /**
- * 速记功能 — 每周复盘面板
- * 顶部本周完成数字卡片；左侧优先级分布环形图 + 右侧项目精力分布条形图（Chart.vue 渲染）；
- * 底部卡点汇总清单；数据由 useWeeklyReview 纯计算派生，经 props 注入
+ * 速记功能 — 每周复盘面板（完整重构版）
+ * 顶部周切换头（本周/上周/…最近 7 周，纯派生回溯）；统计卡片行（本期完成/环比上周/日均完成）；
+ * 中部优先级分布环形图 + 项目精力分布条形图（随周切换）；底部卡点汇总（实时状态快照）；
+ * 数据由 useWeeklyReview 从待办 doneAt 实时派生，经 props 注入
  */
-import type { ChartData } from "@/components/Chart.vue"
-import type { ChartOptions } from "@/components/Chart.vue"
-import type { BlockSummary } from "../../composables/useWeeklyReview"
+import type { ChartData, ChartOptions } from "@/components/chart.types"
+import type { useWeeklyReview } from "../../composables/useWeeklyReview"
 import { computed } from "vue"
 import Chart from "@/components/Chart.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { PRIORITY_META } from "../../types"
 
+type ReviewApi = ReturnType<typeof useWeeklyReview>
+
 const props = defineProps<{
-  /** 本周完成事项总数 */
-  weekTotal: number
-  /** 优先级分布数据（label 为优先级类型字符串，需经 PRIORITY_META 转 i18n 文案） */
-  priorityDistribution: ChartData[]
-  /** 项目精力分布数据 */
-  projectEffort: ChartData[]
-  /** 卡点汇总清单 */
-  blockSummary: BlockSummary[]
+  /** 复盘数据 API（weekOffset 周切换 + 派生统计） */
+  review: ReviewApi
   i18n: Record<string, string>
 }>()
 
+// 解构出响应式引用（模板中顶层 ref 自动解包，可直接 weekOffset++ 切换周）
+const { weekOffset, maxWeekOffset, weekStart, weekEnd, weekTotal, trend, weekAvg, priorityDistribution, projectEffort, blockSummary } = props.review
+
+// ==================== 周切换文案 ====================
+
+/** 周标签："本周 / 上周 / N 周前" */
+const weekLabelText = computed(() => {
+  if (weekOffset.value === 0) return props.i18n.reviewThisWeek
+  if (weekOffset.value === 1) return props.i18n.reviewLastWeek
+  return props.i18n.reviewWeeksAgo.replace("{n}", String(weekOffset.value))
+})
+
+/** 时间戳 → "MM/DD" 短格式 */
+const formatMD = (ts: number): string => {
+  const d = new Date(ts)
+  return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`
+}
+
+/** 周日期范围："MM/DD - MM/DD"（weekEnd 为下周一零点，不含） */
+const weekRangeText = computed(() => `${formatMD(weekStart.value)} - ${formatMD(weekEnd.value - 1)}`)
+
+// ==================== 统计卡片 ====================
+
+/** 环比文案：正数带 + 号，负数自然带 - 号，零显示持平 */
+const trendText = computed(() => {
+  if (trend.value === 0) return props.i18n.trendFlat
+  return trend.value > 0 ? `+${trend.value}` : String(trend.value)
+})
+
+/** 环比涨跌样式（升绿 / 降红 / 平灰） */
+const trendClass = computed(() => {
+  if (trend.value > 0) return "qn-review__trend--up"
+  if (trend.value < 0) return "qn-review__trend--down"
+  return "qn-review__trend--flat"
+})
+
+/** 日均文案：整数不带小数点 */
+const avgText = computed(() => String(Number(weekAvg.value.toFixed(1))))
+
+// ==================== 图表 ====================
+
 /** 环形图是否存在数据（任一优先级有完成数） */
-const hasPriorityData = computed(() => props.priorityDistribution.some((d) => d.value > 0))
+const hasPriorityData = computed(() => priorityDistribution.value.some((d) => d.value > 0))
 
 /** 环形图数据：label 经 PRIORITY_META 转 i18n 文案（未知优先级原样显示） */
 const priorityChartData = computed<ChartData[]>(() =>
-  props.priorityDistribution.map((d) => {
+  priorityDistribution.value.map((d) => {
     const meta = PRIORITY_META[d.label as keyof typeof PRIORITY_META]
     return {
       label: meta ? props.i18n[meta.labelKey] || d.label : d.label,
@@ -121,9 +207,9 @@ const priorityChartData = computed<ChartData[]>(() =>
 )
 
 /** 条形图是否存在数据（任一项目有完成数） */
-const hasEffortData = computed(() => props.projectEffort.some((d) => d.value > 0))
+const hasEffortData = computed(() => projectEffort.value.some((d) => d.value > 0))
 
-// 环形图选项：紧凑布局，隐藏图例改由小图例自行标注（简单起见显示图例）
+// 环形图选项：显示图例与提示
 const doughnutOptions: ChartOptions = {
   showLegend: true,
   showTooltip: true,

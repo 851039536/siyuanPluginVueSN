@@ -9,30 +9,85 @@
   gap: $spacing-3;
 }
 
-// 本周完成数字卡片
-.qn-review__stat {
+// ========== 周切换头（← 更早 / 周标签 + 日期范围 / → 更近） ==========
+
+.qn-review__week-bar {
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  justify-content: space-between;
   gap: $spacing-2;
-  padding: $spacing-3;
+  padding: $spacing-1 $spacing-2;
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-base;
   background: var(--b3-theme-surface);
 }
 
-// 辅助文字：统计标签
-.qn-review__stat-label,
-.qn-review__stat-unit {
+.qn-review__week-info {
+  display: flex;
+  align-items: baseline;
+  gap: $spacing-2;
+  min-width: 0;
+}
+
+// 周标签（本周/上周/N 周前）
+.qn-review__week-label {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-surface);
+}
+
+// 周日期范围（辅助文字）
+.qn-review__week-range {
+  @extend %qn-helper-text;
+}
+
+// ========== 统计卡片行（本期完成 / 环比上周 / 日均完成） ==========
+
+.qn-review__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $spacing-2;
+}
+
+.qn-review__stat {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  padding: $spacing-2 $spacing-3;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-base;
+  background: var(--b3-theme-surface);
+}
+
+.qn-review__stat-label {
   @extend %qn-helper-text;
 }
 
 // 突出数字（数据突出展示，允许 $font-size-sm 以上）
 .qn-review__stat-value {
-  // 数据突出展示
   font-size: $font-size-lg;
   font-weight: $font-weight-bold;
   color: var(--b3-theme-primary);
   line-height: 1;
+  font-variant-numeric: tabular-nums;
+
+  // 环比趋势变体（数字较小，由涨跌修饰类着色）
+  &--trend {
+    font-size: $font-size-sm;
+  }
+}
+
+// 环比涨跌着色（升绿 / 降红 / 平灰）
+.qn-review__trend--up {
+  color: var(--b3-theme-success);
+}
+
+.qn-review__trend--down {
+  color: var(--b3-card-error-color);
+}
+
+.qn-review__trend--flat {
+  color: var(--b3-theme-on-surface-variant);
 }
 
 // ========== 双图表区 ==========
@@ -77,7 +132,7 @@
   justify-content: center;
 }
 
-// ========== 卡点汇总 ==========
+// ========== 卡点汇总（实时状态快照） ==========
 
 .qn-review__blocks {
   display: flex;
@@ -89,6 +144,14 @@
   background: var(--b3-theme-surface);
 }
 
+// 区块标题行（标题 + 实时徽章）
+.qn-review__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+}
+
 // 区块标题
 .qn-review__section-title {
   // 辅助文字
@@ -97,6 +160,15 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--b3-theme-on-surface);
+}
+
+// 实时状态徽章（"当前"，提示卡点非所选周历史）
+.qn-review__block-now {
+  @extend %qn-helper-text;
+  padding: 0 $spacing-1;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-full;
+  background: var(--b3-theme-surface-lighter);
 }
 
 .qn-review__block-list {

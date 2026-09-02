@@ -1,11 +1,8 @@
 <template>
   <section class="panel-section">
-    <!-- 每周复盘（统计卡片 + 双图表 + 卡点汇总） -->
+    <!-- 每周复盘（周切换头 + 统计卡片行 + 双图表 + 卡点汇总） -->
     <WeeklyReview
-      :week-total="weekTotal"
-      :priority-distribution="priorityDistribution"
-      :project-effort="projectEffort"
-      :block-summary="blockSummary"
+      :review="review"
       :i18n="i18n"
     />
   </section>
@@ -14,7 +11,7 @@
 <script setup lang="ts">
 /**
  * 速记功能 — 每周复盘 Tab
- * 纯展示壳：透传 useWeeklyReview 派生的统计/图表/卡点数据给 WeeklyReview 子组件
+ * 纯展示壳：透传 useWeeklyReview 周切换派生数据给 WeeklyReview 子组件
  */
 import WeeklyReview from "./WeeklyReview.vue"
 import { useWeeklyReview } from "../../composables/useWeeklyReview"
@@ -26,14 +23,7 @@ const props = defineProps<{
   review: ReviewApi
 }>()
 
-/** 本周完成事项总数 */
-const weekTotal = props.review.weekTotal
-/** 优先级分布（环形图数据） */
-const priorityDistribution = props.review.priorityDistribution
-/** 项目精力分布（条形图数据） */
-const projectEffort = props.review.projectEffort
-/** 卡点汇总清单 */
-const blockSummary = props.review.blockSummary
+const review = props.review
 </script>
 
 <style scoped lang="scss">

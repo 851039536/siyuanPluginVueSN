@@ -82,9 +82,10 @@
       :tags="tags"
       :loading="tagsLoading"
       :push-loaded="tagPushLoading"
+      :remotes="remoteNames"
       :i18n="i18n"
       @create="(name: string, message?: string) => ops.handleCreateTag(project.id, name, message)"
-      @push="(tag: string) => ops.handlePushTag(project.id, tag)"
+      @push="(tag: string, remote?: string) => ops.handlePushTag(project.id, tag, remote)"
       @delete="(tag: string) => ops.handleDeleteTag(project.id, tag)"
       @refresh="refreshTags"
     />
@@ -146,6 +147,7 @@ import { checkCommitRule } from "../../commitRuleChecker"
 import { useCardData } from "../../composables/useCardData"
 import { useCardServices } from "../../composables/useCardServices"
 import { provideCardMenu } from "../../composables/useCardMenu"
+import { getProjectRemoteNames } from "../../utils"
 import BranchCommitList from "./BranchCommitList.vue"
 import CardActionBar from "./CardActionBar.vue"
 import CardHeader from "./CardHeader.vue"
@@ -192,6 +194,9 @@ const {
 
 /** Stash / Tag 面板 Tab 切换 */
 const stashTagTab = ref<CardTabId>("worktree")
+
+/** 项目已配置的远程名列表（Tag 推送远程选择用） */
+const remoteNames = computed(() => getProjectRemoteNames(props.project).map((r) => r.name))
 
 /** 当前正在修正的提交条目（null = 未打开修正弹窗） */
 const fixingEntry = ref<CommitFixTarget | null>(null)

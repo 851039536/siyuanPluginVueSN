@@ -98,7 +98,7 @@ export interface CardOps {
   handleStashApply: (id: string, index: number) => void
   handleStashDrop: (id: string, index: number) => void
   handleCreateTag: (id: string, name: string, message?: string, commitRef?: string) => void
-  handlePushTag: (id: string, tag: string) => void
+  handlePushTag: (id: string, tag: string, remoteName?: string) => void
   handleDeleteTag: (id: string, tag: string) => void
   handleResolveConflict: (id: string, file: string, strategy: "theirs" | "ours") => void
   handleAbortMerge: (id: string) => void

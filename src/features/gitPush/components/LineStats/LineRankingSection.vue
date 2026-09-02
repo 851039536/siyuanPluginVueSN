@@ -22,10 +22,10 @@
             :title="i18n.lineStatsNetHint"
           >{{ i18n.analysisLineNet }}</span>
         </span>
-        <!-- 表头列："占比"（净增绝对值占比，tooltip 说明口径） -->
+        <!-- 表头列："占比"（总行数占比，tooltip 说明口径） -->
         <span
           class="gls-bar-share"
-          :title="i18n.lineStatsShareHint"
+          :title="i18n.lineStatsTotalShareHint"
         >{{ i18n.lineDetailShare }}</span>
         <!-- 表头列："总行数"（存量，等宽右对齐，tooltip 说明口径） -->
         <span
@@ -47,9 +47,9 @@
           :title="row.name"
         >{{ row.name }}</span>
         <span class="gls-bar-track">
+          <!-- 条形按总行数（存量）宽度渲染，与排序同口径；净增语义色仅用于数字列 -->
           <span
             class="gls-bar-fill"
-            :class="netClass(row.net)"
             :style="{ width: row.pct }"
           />
         </span>
@@ -69,7 +69,7 @@
             :title="`${i18n.analysisLineNet} ${row.net}`"
           >{{ row.net.toLocaleString() }}</span>
         </span>
-        <!-- 占比列：净增绝对值占总净增绝对值的百分比（与排序同口径） -->
+        <!-- 占比列：该项目总行数占全部项目总行数的百分比（与排序同口径） -->
         <span class="gls-bar-share">{{ row.share }}</span>
         <!-- 总行数列：当前实际行数（存量，等宽右对齐中性色；旧缓存缺失时显示 —） -->
         <span class="gls-line-total">{{ row.totalLines?.toLocaleString() ?? "—" }}</span>
@@ -94,8 +94,8 @@ const emit = defineEmits<{
   viewProject: [projectId: string]
 }>()
 
-/** 行视图（pct=相对最大净增绝对值的条形宽度，share=净增绝对值占比，与净增排序同口径） */
-const rows = computed(() => withLineBarPct(props.projectRanking))
+/** 行视图（pct=相对最大总行数的条形宽度，share=总行数占比，与「按总行数降序」排序同口径） */
+const rows = computed(() => withLineBarPct(props.projectRanking, (r) => r.totalLines ?? 0))
 
 /** 净增行语义色（薄委托共享 netClass，前缀 gls-net，保持模板调用点零改动） */
 function netClass(net: number): string {

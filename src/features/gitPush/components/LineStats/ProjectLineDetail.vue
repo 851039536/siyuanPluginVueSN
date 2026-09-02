@@ -250,7 +250,7 @@ const fileRows = computed<FileLineDetailRow[]>(() => {
       totalLines: fileLinesMap.value.get(path) ?? null,
     }))
     .sort((a, b) => b.net - a.net || b.added - a.added)
-  return withLineBarPct(raw)
+  return withLineBarPct(raw, (r) => r.net)
 })
 
 /** 作者明细行：按作者聚合增删行，按净增降序（与全局作者排行同模式；pct/share 由共享 withLineBarPct 预计算） */
@@ -265,7 +265,7 @@ const authorRows = computed(() => {
       net: agg.added - agg.deleted,
     }))
     .sort((a, b) => b.net - a.net || b.added - a.added)
-  return withLineBarPct(raw)
+  return withLineBarPct(raw, (r) => r.net)
 })
 
 /** 净增行语义色（薄委托共享 netClass，前缀 pld-net，保持模板调用点零改动） */

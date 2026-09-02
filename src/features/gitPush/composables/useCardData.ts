@@ -11,7 +11,7 @@ import type {
 import type { MdFileEntry } from "./useMarkdownFiles"
 import { inject, onMounted, ref, watch } from "vue"
 import { CARD_SERVICES_KEY } from "../types"
-import { pruneRecordCache, resolveValidPath } from "../utils"
+import { getProjectRemoteNames, pruneRecordCache, resolveValidPath } from "../utils"
 import { scanMarkdownFiles } from "./useMarkdownFiles"
 
 /** Tag→commit 映射拉取上限（防异常大仓库失控） */
@@ -30,6 +30,8 @@ export function useCardData(project: () => GitProject) {
   const tagsLoading = ref(false)
   /** Tag 指向 commit 的映射（hash → Tag 名数组），供 LOG Tab 行内展示；上限 500 防异常大仓库失控 */
   const tagCommitMap = ref<Map<string, string[]>>(new Map())
+  /** 各远程已有的 Tag 名列表（remote 名 → Tag 名数组），供 LOG Tab 展示 Tag 推送状态；失败远程不记录 */
+  const remoteTags = ref<Map<string, string[]>>(new Map())
   const conflicts = ref<ConflictFile[]>([])
   /** 文件差异缓存（键 = staged 标记 + 文件名，如 "u::src/a.ts"） */
   const fileDiffs = ref<Record<string, string>>({})
@@ -68,6 +70,28 @@ export function useCardData(project: () => GitProject) {
     tagCommitMap.value = map
   }
 
+  /** 后台拉取各远程已有的 Tag 名列表（ls-remote 网络命令并行执行，失败远程静默跳过，不阻塞 UI） */
+  async function loadRemoteTags() {
+    const names = getProjectRemoteNames(project()).map((r) => r.name)
+    if (names.length === 0) {
+      remoteTags.value = new Map()
+      return
+    }
+    const results = await Promise.all(names.map(async (name) => {
+      try {
+        return [name, await manager.getRemoteTags(path(), name)] as const
+      } catch {
+        // 单远程拉取失败（网络/超时）不记录，UI 不显示该远程的推送状态，避免误标"未推送"
+        return null
+      }
+    }))
+    const map = new Map<string, string[]>()
+    for (const r of results) {
+      if (r) map.set(r[0], r[1])
+    }
+    remoteTags.value = map
+  }
+
   async function loadConflicts() {
     conflicts.value = await manager.getConflictFiles(path())
   }
@@ -82,6 +106,8 @@ export function useCardData(project: () => GitProject) {
     try {
       await Promise.all([loadLog(), loadBranches(), loadStash(), loadTags()])
       detailsLoaded = true
+      // 远程 Tag 状态为网络命令，后台异步刷新不阻塞详情展示
+      void loadRemoteTags()
     } catch {
       // 加载失败不标记为已加载，允许重试
     } finally {
@@ -128,7 +154,11 @@ export function useCardData(project: () => GitProject) {
   onSignal("log", () => reloadLog())
   onSignal("branches", loadBranches)
   onSignal("stash", loadStash)
-  onSignal("tags", loadTags)
+  onSignal("tags", async () => {
+    await loadTags()
+    // 推送/删除 Tag 后同步刷新远程 Tag 状态（网络命令后台执行）
+    void loadRemoteTags()
+  })
   onSignal("conflicts", loadConflicts)
 
   // Markdown 文件标识：挂载时扫描一次（原父层懒扫描缓存的卡内版）
@@ -144,6 +174,7 @@ export function useCardData(project: () => GitProject) {
     tags,
     tagsLoading,
     tagCommitMap,
+    remoteTags,
     conflicts,
     fileDiffs,
     mdFiles,

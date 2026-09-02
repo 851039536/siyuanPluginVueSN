@@ -49,6 +49,18 @@ export class RepoOps {
     return await this.executor.execGit(projectPath, ["push", remoteName, "--", tag])
   }
 
+  /** 获取远程已存在的 Tag 名列表（git ls-remote --tags，网络命令走 NETWORK_TIMEOUT_MS） */
+  async getRemoteTags(projectPath: string, remoteName: string): Promise<string[]> {
+    const raw = await this.executor.execGit(projectPath, ["ls-remote", "--tags", "--", remoteName])
+    const names: string[] = []
+    for (const line of raw.trim().split("\n").filter(Boolean)) {
+      const m = line.match(/refs\/tags\/(.+)$/)
+      // 过滤 annotated tag 的 ^{} peel 行，仅保留 tag 名
+      if (m && !m[1].endsWith("^{}")) names.push(m[1])
+    }
+    return names
+  }
+
   // ── 冲突检测 ──
 
   async hasConflict(projectPath: string): Promise<boolean> {

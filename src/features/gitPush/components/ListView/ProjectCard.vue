@@ -54,6 +54,7 @@
       :entries="logEntries"
       :loading="logLoading"
       :tag-commit-map="tagCommitMap"
+      :remote-tags="remoteTags"
       @reload-commit-log="(count: number | 'all') => reloadLog(count)"
       @refresh-commit-log="() => reloadLog()"
       @fix-commit="openCommitFix"
@@ -183,6 +184,7 @@ const {
   tags,
   tagsLoading,
   tagCommitMap,
+  remoteTags,
   conflicts,
   fileDiffs,
   mdFiles,

@@ -1,0 +1,78 @@
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// 在指定提交上打 Tag 弹窗
+.gp-tagc-dialog {
+  width: 420px;
+  max-width: 92vw;
+}
+
+.gp-tagc-meta {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  flex-wrap: wrap;
+  font-size: $font-size-2xs;
+}
+
+.gp-tagc-project {
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-primary);
+  @include text-ellipsis;
+  max-width: 40%;
+}
+
+.gp-tagc-label {
+  opacity: 0.5;
+}
+
+.gp-tagc-hash {
+  font-family: $vp-mono;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.5;
+}
+
+.gp-tagc-message {
+  margin: 0;
+  padding: $spacing-2;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  line-height: $line-height-normal;
+  white-space: pre-wrap;
+  word-break: break-all;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-base;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+}
+
+.gp-tagc-block {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+}
+
+// 该提交已有的 Tag 徽标
+.gp-tagc-existing {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  flex-wrap: wrap;
+}
+
+.gp-tagc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 160px;
+  @include text-ellipsis;
+  padding: 0 6px;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  line-height: 18px;
+  color: var(--b3-theme-primary);
+  background: color-mix(in srgb, var(--b3-theme-primary) 10%, transparent);
+  border-radius: $radius-sm;
+  white-space: nowrap;
+}

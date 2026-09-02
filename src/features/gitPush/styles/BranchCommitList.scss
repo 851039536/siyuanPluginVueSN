@@ -120,6 +120,55 @@
   font-size: $font-size-2xs;
 }
 
+// 行内 Tag 徽标（该提交已命中的 Tag）
+.bcl-tags {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.bcl-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 90px;
+  @include text-ellipsis;
+  padding: 0 4px;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  line-height: 14px;
+  color: var(--b3-theme-primary);
+  background: color-mix(in srgb, var(--b3-theme-primary) 10%, transparent);
+  border-radius: $radius-sm;
+  white-space: nowrap;
+}
+
+.bcl-tag-more {
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  opacity: 0.4;
+  white-space: nowrap;
+}
+
+// 打 Tag 按钮（行 hover 时显示）
+.bcl-tag-btn {
+  flex-shrink: 0;
+  padding: 0 2px;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+
+  .bcl-entry:hover & {
+    opacity: 0.6;
+  }
+
+  .bcl-entry:hover &:hover {
+    opacity: 1;
+    color: var(--b3-theme-primary);
+  }
+}
+
 // 可点击提交信息（打开修正弹窗）
 .bcl-msg--clickable {
   cursor: pointer;

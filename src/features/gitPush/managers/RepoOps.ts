@@ -20,17 +20,24 @@ export class RepoOps {
     try {
       // 用不可见分隔符 0x1F（Unit Separator）替代 |，避免 subject 含 | 时解析错乱
       // 注意：git tag --format 是 for-each-ref 语法，十六进制转义为 %1f；%x1f 是 git log --pretty 专属，在此会被原样输出导致切分失败
-      const raw = await this.executor.execGit(projectPath, ["tag", "-l", `--sort=-creatordate`, `--format=%(refname:short)%1f%(subject)%1f%(creatordate:iso)`])
+      // hash 段：annotated tag 取 %(*objectname)（解引用后的 commit），lightweight tag 回落 %(objectname)（即 commit 本身）
+      const raw = await this.executor.execGit(projectPath, ["tag", "-l", `--sort=-creatordate`, `--format=%(refname:short)%1f%(subject)%1f%(creatordate:iso)%1f%(*objectname)%1f%(objectname)`])
       return raw.trim().split("\n").filter(Boolean).slice(0, limit).map((line) => {
-        const [name, message, date] = line.split("\x1F")
-        return { name, message: message || undefined, date: date || undefined }
+        const [name, message, date, peeledHash, objectHash] = line.split("\x1F")
+        return {
+          name,
+          message: message || undefined,
+          date: date || undefined,
+          hash: peeledHash || objectHash || undefined,
+        }
       })
     } catch { return [] }
   }
 
-  async createTag(projectPath: string, name: string, message?: string): Promise<void> {
-    // "--" 分隔符防止以 "-" 开头的 tag 名被 git 解析为命令行选项
+  async createTag(projectPath: string, name: string, message?: string, commitRef?: string): Promise<void> {
+    // "--" 分隔符防止以 "-" 开头的 tag 名被 git 解析为命令行选项；commitRef 在 "--" 之后同样无选项注入面
     const args = message ? ["tag", "-m", message, "--", name] : ["tag", "--", name]
+    if (commitRef) args.push(commitRef)
     await this.executor.execGit(projectPath, args)
   }
 

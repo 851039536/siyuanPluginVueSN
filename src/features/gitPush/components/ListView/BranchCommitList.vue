@@ -83,11 +83,44 @@
           class="bcl-hash"
           :title="entry.hash"
         >{{ entry.hash }}</span>
+        <!-- 该提交已命中的 Tag 徽标（tag→hash 映射） -->
+        <span
+          v-if="entryTags(entry.hash).length"
+          class="bcl-tags"
+          :title="entryTags(entry.hash).join(', ')"
+        >
+          <span
+            v-for="tagName in entryTags(entry.hash).slice(0, 2)"
+            :key="tagName"
+            class="bcl-tag-chip"
+          >
+            <Icon
+              icon="mdi:tag-outline"
+              height="10"
+            />
+            {{ tagName }}
+          </span>
+          <span
+            v-if="entryTags(entry.hash).length > 2"
+            class="bcl-tag-more"
+          >+{{ entryTags(entry.hash).length - 2 }}</span>
+        </span>
         <span
           class="bcl-msg bcl-msg--clickable"
           :title="i18n.ruleFixOpen + ': ' + entry.message"
           @click.stop="$emit('fixCommit', entry)"
         >{{ entry.message }}</span>
+        <!-- 打 Tag 按钮（hover 显示） -->
+        <button
+          class="vp-btn vp-btn--ghost vp-btn--sm bcl-tag-btn"
+          :title="i18n.createTag"
+          @click.stop="$emit('addTag', entry)"
+        >
+          <Icon
+            icon="mdi:tag-plus-outline"
+            height="12"
+          />
+        </button>
         <span class="bcl-meta">
           <span class="bcl-author">{{ entry.author }}</span>
           <span
@@ -116,12 +149,15 @@ const props = defineProps<{
   i18n: Record<string, any>
   entries: CommitLogEntry[]
   loading: boolean
+  /** Tag 指向 commit 的映射（完整 hash → Tag 名数组），供行内展示 */
+  tagCommitMap?: Map<string, string[]>
 }>()
 
 const emit = defineEmits<{
   reloadCommitLog: [count: number | "all"]
   refreshCommitLog: []
   fixCommit: [entry: CommitLogEntry]
+  addTag: [entry: CommitLogEntry]
 }>()
 
 const countOptions = [200, 300, 500, 1000, 2000, "all"] as const
@@ -136,6 +172,23 @@ const filteredEntries = computed(() => {
   }
   return displayCount.value === "all" ? list : list.slice(0, displayCount.value)
 })
+
+/** 短 hash（7 位）→ Tag 名数组（日志列表 hash 为短 hash，映射键为完整 hash，按前缀截取匹配） */
+const shortTagMap = computed(() => {
+  const map = new Map<string, string[]>()
+  if (!props.tagCommitMap) return map
+  for (const [fullHash, names] of props.tagCommitMap) {
+    const short = fullHash.slice(0, 7)
+    const existing = map.get(short)
+    if (existing) existing.push(...names)
+    else map.set(short, [...names])
+  }
+  return map
+})
+
+function entryTags(hash: string): string[] {
+  return shortTagMap.value.get(hash) ?? []
+}
 
 function onCountChange() {
   emit("reloadCommitLog", displayCount.value)

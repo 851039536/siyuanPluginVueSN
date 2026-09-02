@@ -23,7 +23,7 @@ export function useGitHandlers(deps: {
   doStashApply: (id: string, index: number) => Promise<void>
   doStashDrop: (id: string, index: number) => Promise<void>
   generateStashDesc: (id: string) => Promise<string>
-  createTagOp: (id: string, name: string, message?: string) => Promise<void>
+  createTagOp: (id: string, name: string, message?: string, commitRef?: string) => Promise<void>
   deleteTagOp: (id: string, tag: string) => Promise<void>
   pushTagOp: (id: string, remote: string, tag: string) => Promise<string>
   abortMergeOp: (id: string) => Promise<void>
@@ -125,8 +125,8 @@ export function useGitHandlers(deps: {
 
   // ── Tag 操作 ──
 
-  function handleCreateTag(id: string, name: string, message?: string) {
-    safeGitOp(tf("createTagFailed"), () => createTagOp(id, name, message).then(() => { bumpCardRefresh(id, "tags") }))
+  function handleCreateTag(id: string, name: string, message?: string, commitRef?: string) {
+    safeGitOp(tf("createTagFailed"), () => createTagOp(id, name, message, commitRef).then(() => { bumpCardRefresh(id, "tags") }))
   }
 
   function handleDeleteTag(id: string, tag: string) {

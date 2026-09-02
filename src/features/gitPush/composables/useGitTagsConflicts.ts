@@ -18,9 +18,9 @@ export function useGitTagsConflicts(manager: GitPushManager, projects: Ref<GitPr
   const scanResults = ref<(ScannedGitRepo & { alreadyImported: boolean })[]>([])
 
   // ── Tag 管理（列表数据已下沉卡片，此处仅保留写操作）──
-  async function createTagOp(id: string, name: string, message?: string) {
+  async function createTagOp(id: string, name: string, message?: string, commitRef?: string) {
     const project = requireProject(projects, id)
-    await manager.createTag(resolveValidPath(project), name, message)
+    await manager.createTag(resolveValidPath(project), name, message, commitRef)
   }
 
   async function deleteTagOp(id: string, name: string) {

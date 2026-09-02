@@ -57,9 +57,10 @@
   font-size: $font-size-xs;
   white-space: nowrap;
 
+  // 选中态对齐 gitPush 范式：淡主色底 + 主色文字（不用实心主色块）
   &.active {
-    background: var(--b3-theme-primary);
-    color: var(--b3-theme-on-primary);
+    background: var(--b3-theme-primary-lightest);
+    color: var(--b3-theme-primary);
     border-color: var(--b3-theme-primary);
 
     &:hover {
@@ -172,7 +173,7 @@
   margin: 0 $spacing-2 $spacing-2;
 }
 
-// 空状态：双文本均为空时占位提示
+// 空状态：双文本均为空时占位提示（对齐 gitPush .gp-empty：非斜体，仅图标淡化）
 .empty-state {
   flex: 1;
   display: flex;
@@ -180,10 +181,13 @@
   align-items: center;
   justify-content: center;
   gap: $spacing-2;
-  font-style: italic;
-  opacity: 0.5;
-  color: var(--b3-theme-on-surface);
+  color: var(--b3-theme-on-surface-light);
   min-height: 0;
+
+  // 空状态图标淡化
+  > :first-child {
+    opacity: 0.3;
+  }
 
   p {
     margin: 0;

@@ -234,6 +234,33 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 - `src/index.scss`（全局基准规则 + `--vp-font-size-xs` 变量）
 - `src/utils/vueAppHelper.ts`（`vp-dock-root` / `vp-modal-mask` 类的自动挂载点）
 
+## 强制规则：背景与过渡对齐 gitPush 范式（2026-09-02）
+
+**所有功能的背景层级与过渡动效必须对齐 `src/features/gitPush/styles/` 范式**，禁止各功能自创背景方案（如 surface 弹窗内嵌 background 内容的反向层级、backdrop-filter 毛玻璃、回弹缓动等）。
+
+### 规则
+
+1. **背景层级「底—卡」关系**：弹窗/面板根容器底色用 `var(--b3-theme-background)`，卡片用 `var(--b3-theme-surface)` 凸出（gitPush：`.git-push-panel` background + `.gp-card` surface）；卡片内嵌内容区/路径条再回落 `background` 形成三级层次
+2. **遮罩统一**：`background: rgba(0, 0, 0, 0.5)`；**禁止 `backdrop-filter`**（blur/saturate 在 Electron 下有滚动性能开销，且偏离全局观感）
+3. **过渡统一 0.12s ease**：fade（遮罩/弹窗 opacity）+ 内层 scale 0.98；禁止自定义缓动曲线（ease-out-back/expo）、`translateY` 位移、超时长（0.18s/0.25s 等）
+4. **禁止装饰性排版属性**：`letter-spacing` 负值/自定义字距等非 Token 声明
+5. **z-index 对齐**：全屏遮罩统一 `z-index: 10000`（子级弹窗可叠加，同 gitPush 先例）
+6. **等宽数字场景用 `$vp-mono` + `font-variant-numeric: tabular-nums`**：计数徽章、进度 n/m、文件大小等数值文本（gitPush `.gp-count-badge` 先例）
+
+### 审查检查点（新增/修改弹窗、卡片样式时逐条核对）
+
+1. 弹窗/面板底色是否为 `background`？卡片是否为 `surface`？禁止反向（surface 底 + background 内嵌）
+2. 遮罩是否为 `rgba(0, 0, 0, 0.5)`？grep `backdrop-filter` 应零命中
+3. 过渡是否为 0.12s？grep `0.18s|0.2s|0.25s|cubic-bezier` 应零命中（旋转动画 spin 1s linear 除外）
+4. 图标尺寸是否由 `IconWrapper :size` 控制？SCSS 内不得出现针对图标容器的无效 `font-size`
+5. z-index 基准是否为 10000？
+
+### 参考实现
+
+- `src/features/gitPush/styles/index.scss`（`.git-push-panel` 底色 + `.gp-card` 卡片范式）
+- `src/features/gitPush/styles/Dialog.scss`（遮罩 + `.gp-dialog` + 0.12s fade/scale 过渡）
+- `src/features/gitPush/styles/PanelHeader.scss`（`.gp-count-badge` 等宽计数徽章）
+
 ## 强制规则：Dock 面板侧边栏间距（2026-08-07）
 
 **Dock 面板/弹窗内的滚动内容不得紧贴侧边栏或滚动条**，必须在容器根节点预留右侧间距，否则内容视觉上"贴合"侧边栏，观感拥挤。

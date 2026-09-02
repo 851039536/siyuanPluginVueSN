@@ -9,7 +9,8 @@ import type { PlatformKey } from "../types/meta"
 import { PLATFORM_META } from "../types/meta"
 import type { GitExecutor } from "./GitExecutor"
 import type { ProjectStore } from "./ProjectStore"
-import { getProjectRemoteNames, resolveValidPath } from "../utils"
+import type { ProjectWriteLock } from "./ProjectWriteLock"
+import { getProjectRemoteNames, resolveValidPath, resolveValidPathWithSource } from "../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
 
 /** 远程操作结果 */
@@ -33,15 +34,18 @@ export class RemoteOps {
   private executor: GitExecutor
   private store: ProjectStore
   private storage: GitPushStorage
+  /** 项目级写锁：push/pull 主体在锁内执行，与 commit/stash/discard 等写操作互斥（防 index.lock 竞争） */
+  private writeLock: ProjectWriteLock
   /** 推送分支模式：all=全部分支, head=仅当前分支 */
   private pushBranchMode: "all" | "head" = "all"
   /** 推送状态缓存（用于智能跳过） */
   private pushStatusCache: Record<string, PushStatusInfo> = {}
 
-  constructor(executor: GitExecutor, store: ProjectStore, storage: GitPushStorage) {
+  constructor(executor: GitExecutor, store: ProjectStore, storage: GitPushStorage, writeLock: ProjectWriteLock) {
     this.executor = executor
     this.store = store
     this.storage = storage
+    this.writeLock = writeLock
   }
 
   /** 从存储加载推送分支模式（init 时调用） */
@@ -210,7 +214,16 @@ export class RemoteOps {
     const project = await this.store.getProjectById(id)
     if (!project) return this.notFoundResult
 
-    const cwd = resolveValidPath(project)
+    const resolved = resolveValidPathWithSource(project)
+    const cwd = resolved.path
+    // 全部已知路径均不存在时 resolveValidPath 降级返回主路径（可能不存在），
+    // 告警呈现到各平台输出而非伪装成底层 git 报错（ENOENT 等）
+    const pathWarning = resolved.source === "fallback"
+      ? "⚠ 所有已知路径均不存在，已回退主路径，请检查项目路径配置"
+      : ""
+    /** 仅对实际执行的结果前置路径告警（skipped 未执行，不注水） */
+    const withPathWarning = (r: RemoteOpResult): RemoteOpResult =>
+      pathWarning && !r.skipped ? { ...r, stderr: pathWarning + (r.stderr ? `\n${r.stderr}` : "") } : r
 
     // 智能跳过：推送前检查缓存，跳过 ahead===0 的远程
     const cachedStatus = this.pushStatusCache[id]
@@ -223,76 +236,79 @@ export class RemoteOps {
       return !rs.error && rs.ahead === 0 && !rs.noUpstream
     }
 
-    return this.executor.withAbortController(id, action, async (signal) => {
-      // pull 时预解析当前分支，供 tryRemoteOp 显式指定拉取分支；强制推送时同样需要分支名
-      const pullBranch = action === "pull" ? await this.getCurrentBranch(cwd) : undefined
-      const forceBranch = action === "push" && forceWithLease ? await this.getCurrentBranch(cwd) : undefined
-      if (forceWithLease && !forceBranch) {
-        throw new Error("无法确定当前分支，已取消强制推送")
-      }
-      // 智能跳过的静态结果
-      const skippedResults: Record<string, RemoteOpResult> = {}
-      const entries: { key: PlatformKey, remoteName: string | undefined }[] = []
-      for (const { key, name } of getProjectRemoteNames(project)) {
-        if (shouldSkip(key) && !forceWithLease) {
-          skippedResults[key] = { ok: true, stdout: "已同步（跳过）", stderr: "", skipped: true }
-        } else {
-          entries.push({ key, remoteName: name })
+    // 写锁：push/pull 主体与本地写操作（commit/stash/discard 等）按项目路径互斥
+    return this.writeLock.runExclusive(cwd, () =>
+      this.executor.withAbortController(id, action, async (signal) => {
+        // pull 时预解析当前分支，供 tryRemoteOp 显式指定拉取分支；强制推送时同样需要分支名
+        const pullBranch = action === "pull" ? await this.getCurrentBranch(cwd) : undefined
+        const forceBranch = action === "push" && forceWithLease ? await this.getCurrentBranch(cwd) : undefined
+        if (forceWithLease && !forceBranch) {
+          throw new Error("无法确定当前分支，已取消强制推送")
         }
-      }
-      // 处理未配置的远程：标记为 skipped
-      for (const pm of PLATFORM_META) {
-        if (skippedResults[pm.key] === undefined && !entries.some((e) => e.key === pm.key)) {
-          skippedResults[pm.key] = RemoteOps.skippedResult
+        // 智能跳过的静态结果
+        const skippedResults: Record<string, RemoteOpResult> = {}
+        const entries: { key: PlatformKey, remoteName: string | undefined }[] = []
+        for (const { key, name } of getProjectRemoteNames(project)) {
+          if (shouldSkip(key) && !forceWithLease) {
+            skippedResults[key] = { ok: true, stdout: "已同步（跳过）", stderr: "", skipped: true }
+          } else {
+            entries.push({ key, remoteName: name })
+          }
         }
-      }
-
-      type SettledEntry = { key: PlatformKey } & RemoteOpResult
-      const results = await Promise.allSettled(
-        entries.map(({ key, remoteName }): Promise<SettledEntry> =>
-          this.tryRemoteOp(cwd, remoteName, action, signal, pullBranch, { forceWithLease, forceBranch }).then((r) => ({ key, ...r })),
-        ),
-      )
-
-      // 单次遍历建 Map，避免 4 次 results.find() O(4N) 开销
-      const resultMap = new Map<PlatformKey, RemoteOpResult>()
-      let rejectedError = ""
-      for (const r of results) {
-        if (r.status === "fulfilled") {
-          const { key, ...rest } = r.value
-          resultMap.set(key, rest)
-        } else {
-          rejectedError = rejectedError || String(r.reason?.message || r.reason || "未知错误")
+        // 处理未配置的远程：标记为 skipped
+        for (const pm of PLATFORM_META) {
+          if (skippedResults[pm.key] === undefined && !entries.some((e) => e.key === pm.key)) {
+            skippedResults[pm.key] = RemoteOps.skippedResult
+          }
         }
-      }
 
-      const build = (key: PlatformKey): RemoteOpResult => {
-        // 优先返回跳过结果
-        if (skippedResults[key]) return skippedResults[key]
-        const mapped = resultMap.get(key)
-        if (mapped) return mapped
-        // 已配置但 rejected → 错误
-        return entries.some((e) => e.key === key)
-          ? { ok: false, stdout: "", stderr: rejectedError || "未知错误" }
-          : RemoteOps.skippedResult
-      }
+        type SettledEntry = { key: PlatformKey } & RemoteOpResult
+        const results = await Promise.allSettled(
+          entries.map(({ key, remoteName }): Promise<SettledEntry> =>
+            this.tryRemoteOp(cwd, remoteName, action, signal, pullBranch, { forceWithLease, forceBranch }).then((r) => ({ key, ...r })),
+          ),
+        )
 
-      const github = build("github")
-      const gitee = build("gitee")
-      const gitea = build("gitea")
-      const cnb = build("cnb")
+        // 单次遍历建 Map，避免 4 次 results.find() O(4N) 开销
+        const resultMap = new Map<PlatformKey, RemoteOpResult>()
+        let rejectedError = ""
+        for (const r of results) {
+          if (r.status === "fulfilled") {
+            const { key, ...rest } = r.value
+            resultMap.set(key, rest)
+          } else {
+            rejectedError = rejectedError || String(r.reason?.message || r.reason || "未知错误")
+          }
+        }
 
-      // push 成功后失效智能跳过缓存，保证下次 shouldSkip 走真实状态检查（commit 路径已失效，但 push 本身也需收尾）
-      if (action === "push") { this.invalidatePushStatusCache(id) }
+        const build = (key: PlatformKey): RemoteOpResult => {
+          // 优先返回跳过结果
+          if (skippedResults[key]) return skippedResults[key]
+          const mapped = resultMap.get(key)
+          if (mapped) return mapped
+          // 已配置但 rejected → 错误
+          return entries.some((e) => e.key === key)
+            ? { ok: false, stdout: "", stderr: rejectedError || "未知错误" }
+            : RemoteOps.skippedResult
+        }
 
-      return {
-        success: github.ok || gitee.ok || gitea.ok || cnb.ok,
-        github,
-        gitee,
-        gitea,
-        cnb,
-      }
-    })
+        const github = withPathWarning(build("github"))
+        const gitee = withPathWarning(build("gitee"))
+        const gitea = withPathWarning(build("gitea"))
+        const cnb = withPathWarning(build("cnb"))
+
+        // push 成功后失效智能跳过缓存，保证下次 shouldSkip 走真实状态检查（commit 路径已失效，但 push 本身也需收尾）
+        if (action === "push") { this.invalidatePushStatusCache(id) }
+
+        return {
+          success: github.ok || gitee.ok || gitea.ok || cnb.ok,
+          github,
+          gitee,
+          gitea,
+          cnb,
+        }
+      }),
+    )
   }
 
   /**
@@ -333,25 +349,33 @@ export class RemoteOps {
       return { ok: false, stdout: "", stderr: "项目未找到" }
     }
 
-    const cwd = resolveValidPath(project)
+    const resolved = resolveValidPathWithSource(project)
+    const cwd = resolved.path
+    // 路径回退告警只在失败时前置（成功说明回退路径实际可用，无需打扰）
+    const pathWarning = resolved.source === "fallback"
+      ? "⚠ 所有已知路径均不存在，已回退主路径，请检查项目路径配置"
+      : ""
     const remoteName = this.getRemoteName(project, target)
     // 纵深防御：未配置该平台远程时直接返回，避免对不存在的远程执行 git 命令
     if (!remoteName) {
       return { ok: false, stdout: "", stderr: "该平台远程未配置" }
     }
 
-    return this.executor.withAbortController(id, action, async (signal) => {
-      // pull 时预解析当前分支，显式指定拉取分支
-      const pullBranch = action === "pull" ? await this.getCurrentBranch(cwd) : undefined
-      const result = await this.tryRemoteOp(cwd, remoteName, action, signal, pullBranch)
-      // push 成功后失效智能跳过缓存
-      if (action === "push") { this.invalidatePushStatusCache(id) }
-      return {
-        ok: result.ok,
-        stdout: result.stdout,
-        stderr: result.stderr,
-      }
-    })
+    // 写锁：push/pull 主体与本地写操作（commit/stash/discard 等）按项目路径互斥
+    return this.writeLock.runExclusive(cwd, () =>
+      this.executor.withAbortController(id, action, async (signal) => {
+        // pull 时预解析当前分支，显式指定拉取分支
+        const pullBranch = action === "pull" ? await this.getCurrentBranch(cwd) : undefined
+        const result = await this.tryRemoteOp(cwd, remoteName, action, signal, pullBranch)
+        // push 成功后失效智能跳过缓存
+        if (action === "push") { this.invalidatePushStatusCache(id) }
+        return {
+          ok: result.ok,
+          stdout: result.stdout,
+          stderr: pathWarning && !result.ok ? `${pathWarning}\n${result.stderr}` : result.stderr,
+        }
+      }),
+    )
   }
 
   /**
@@ -370,7 +394,12 @@ export class RemoteOps {
     const project = await this.store.getProjectById(id)
     if (!project) return { fetched: [], errors: [] }
 
-    const cwd = resolveValidPath(project)
+    const resolved = resolveValidPathWithSource(project)
+    const cwd = resolved.path
+    // 路径回退告警前置到错误列表（fetch 失败时用户先看到路径配置问题，而非底层 ENOENT）
+    const pathWarning = resolved.source === "fallback"
+      ? "⚠ 所有已知路径均不存在，已回退主路径，请检查项目路径配置"
+      : ""
     const remotesToFetch = getProjectRemoteNames(project).map((r) => r.name)
 
     if (remotesToFetch.length === 0) {
@@ -388,6 +417,7 @@ export class RemoteOps {
       else { errors.push(r.reason?.message || String(r.reason)) }
     }
 
+    if (pathWarning && errors.length > 0) { errors.unshift(pathWarning) }
     return { fetched, errors }
   }
 
@@ -405,7 +435,11 @@ export class RemoteOps {
 
     if (!project) return emptyResult
 
-    const cwd = resolveValidPath(project)
+    const resolved = resolveValidPathWithSource(project)
+    const cwd = resolved.path
+    const pathWarning = resolved.source === "fallback"
+      ? "⚠ 所有已知路径均不存在，已回退主路径，请检查项目路径配置"
+      : ""
 
     const status: PushStatusInfo = {
       branch: "",
@@ -415,7 +449,15 @@ export class RemoteOps {
 
     // detached HEAD 时 getCurrentBranch 返回空串并提前返回，避免构造 remote/HEAD...HEAD 触发 ambiguous argument 被误判为 noUpstream（虚假 needsPush）
     status.branch = opts?.branch ?? await this.getCurrentBranch(cwd)
-    if (!status.branch) { return emptyResult }
+    if (!status.branch) {
+      // 路径回退场景不再静默返回空结果（空态假象）：把告警挂到各已配置远程的 error 字段呈现
+      if (pathWarning) {
+        for (const { key } of getProjectRemoteNames(project)) {
+          status.remotes[key] = { ahead: 0, behind: 0, noUpstream: false, error: pathWarning }
+        }
+      }
+      return status
+    }
 
     // 如果指定 fetchFirst，先并行 fetch 所有已配置远程以更新跟踪分支
     if (opts?.fetchFirst) {

@@ -618,6 +618,23 @@ export function resolveValidPathWithSource(project: GitProject): { path: string,
   }
 }
 
+// ── Record 型 loading 标志引用计数（并发同类操作时防止先完成者提前清除他人标志）──
+
+/** 进入操作：标志计数 +1 */
+export function acquireFlag(record: Record<string, number>, id: string): void {
+  record[id] = (record[id] || 0) + 1
+}
+
+/** 离开操作：标志计数 -1，归零后移除键 */
+export function releaseFlag(record: Record<string, number>, id: string): void {
+  const next = (record[id] || 0) - 1
+  if (next <= 0) {
+    delete record[id]
+  } else {
+    record[id] = next
+  }
+}
+
 // ── 操作日志工具函数（LogPanel / LogDetailDialog 共用）──
 
 /** 判断操作日志条目是否包含平台明细（push/pull 且有 platforms 数据） */

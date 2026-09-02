@@ -3,7 +3,7 @@ import type { Ref } from "vue"
 import { ref } from "vue"
 import { showMessage } from "siyuan"
 import type { CardDataDomain, GitProject } from "../types"
-import { findProject, getProjectRemoteNames, pruneRecordCache } from "../utils"
+import { findProject, getProjectRemoteNames, pruneRecordCache, acquireFlag, releaseFlag } from "../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
 
 export function useGitHandlers(deps: {
@@ -45,8 +45,8 @@ export function useGitHandlers(deps: {
   const commitOutputs = ref<Record<string, string>>({})
   /** AI 生成状态 id → { generating, text } */
   const generatingMsgs = ref<Record<string, { generating: boolean, text: string }>>({})
-  /** 暂存/取消操作加载中 id → true */
-  const gitOpLoading = ref<Record<string, boolean>>({})
+  /** 暂存/取消操作加载中 id → 计数（引用计数防止并发同类操作先完成者提前清除标志） */
+  const gitOpLoading = ref<Record<string, number>>({})
   /** Stash 描述生成加载中 id → true */
   const genStashDescLoading = ref<Record<string, boolean>>({})
   /** 外部生成的 stash 描述文案 */
@@ -57,14 +57,14 @@ export function useGitHandlers(deps: {
   /** 统一的 git 操作错误处理包装（含 loading 状态） */
   async function handleGitOp(label: string, fn: () => Promise<void>, id: string) {
     commitOutputs.value[id] = ""
-    gitOpLoading.value[id] = true
+    acquireFlag(gitOpLoading.value, id)
     try {
       await fn()
     } catch (e: unknown) {
       console.error(`[gitPush] ${label} 失败:`, e)
       commitOutputs.value[id] = `${label}: ${getErrorMessage(e)}`
     } finally {
-      delete gitOpLoading.value[id]
+      releaseFlag(gitOpLoading.value, id)
       pruneRecordCache(commitOutputs.value)
     }
   }
@@ -78,14 +78,14 @@ export function useGitHandlers(deps: {
 
   async function doDiscard(id: string, file: string, staged: boolean, status: string, label: string) {
     commitOutputs.value[id] = ""
-    gitOpLoading.value[id] = true
+    acquireFlag(gitOpLoading.value, id)
     try {
       await discardFile(id, file, staged, status)
       await loadWorkingTree(id)
     } catch (e: unknown) {
       commitOutputs.value[id] = tf("discardOpFailed", label, getErrorMessage(e))
     } finally {
-      delete gitOpLoading.value[id]
+      releaseFlag(gitOpLoading.value, id)
     }
   }
 
@@ -146,9 +146,14 @@ export function useGitHandlers(deps: {
       [id]: tag,
     }
     try {
-      await Promise.all(remoteNames.map((name) => pushTagOp(id, name, tag)))
-    } catch (e: unknown) {
-      showMessage(tf("pushTagFailed", getErrorMessage(e)), 5000, "error")
+      // allSettled 汇总全部失败远程：Promise.all 会 fast-fail，多远程部分成功时只报第一个错
+      const results = await Promise.allSettled(remoteNames.map((name) => pushTagOp(id, name, tag)))
+      const failures = results
+        .filter((r): r is PromiseRejectedResult => r.status === "rejected")
+        .map((r) => getErrorMessage(r.reason) || String(r.reason))
+      if (failures.length > 0) {
+        showMessage(tf("pushTagFailed", failures.join("; ")), 5000, "error")
+      }
     } finally {
       delete tagPushLoading.value[id]
       // ref<Record> 的 delete 不被 Vue 深层响应式追踪检测到，需手动触发浅拷贝
@@ -165,7 +170,10 @@ export function useGitHandlers(deps: {
   }
 
   function handleResolveConflict(id: string, file: string, strategy: "theirs" | "ours") {
-    safeGitOp(tf("resolveConflictFailed"), () => resolveConflictOp(id, file, strategy).then(() => { bumpCardRefresh(id, "conflicts") }))
+    // ours/theirs 直接覆盖冲突文件，另一侧未保留的改动不可恢复，必须先确认
+    showConfirm(tf("resolveConflictTitle"), tf("resolveConflictConfirm", file, strategy), () => {
+      safeGitOp(tf("resolveConflictFailed"), () => resolveConflictOp(id, file, strategy).then(() => { bumpCardRefresh(id, "conflicts") }))
+    })
   }
 
   async function handleCommit(id: string, message: string) {

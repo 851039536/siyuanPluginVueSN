@@ -128,6 +128,26 @@ export function useRemoteProgress(
     }, 3000)
   }
 
+  /** 被入口守卫拒绝时的占位输出条目（写入卡片输出区，替代静默拒绝——UI disabled 失效时用户仍可感知） */
+  function blockedEntry(id: string, target?: PlatformKey): PushOutputEntry {
+    let key = target
+    if (!key) {
+      const project = findProject(projects, id)
+      key = (project && PLATFORM_META.find((pm) => project[pm.remoteProp])?.key) || "github"
+    }
+    const label = PLATFORM_META.find((m) => m.key === key)?.label ?? key
+    return {
+      platform: key,
+      label,
+      ok: false,
+      skipped: false,
+      duration: 0,
+      summary: "操作进行中，请稍候",
+      fullStdout: "",
+      fullStderr: "操作进行中，请稍候",
+    }
+  }
+
   /** 通用全平台 remote 操作（pushToAll / pullToAll 共用实现） */
   async function remoteOpAll(
     action: "push" | "pull", progressRef: ProgressRef, outputsRef: OutputsRef,
@@ -137,6 +157,8 @@ export function useRemoteProgress(
     // 入口守卫：同一项目的同类操作进行中时拒绝重复触发（防双击竞态）；
     // 同时拒绝与另一操作（push ↔ pull）并发写同一仓库（UI disabled 之外的后端兜底）
     if (isOpInProgress(progressRef, id) || (oppositeProgressRef && isOpInProgress(oppositeProgressRef, id))) {
+      outputsRef.value[id] = [blockedEntry(id)]
+      pruneRecordCache(outputsRef.value)
       return { success: false }
     }
     const seq = nextOpSeq(id)
@@ -209,7 +231,9 @@ export function useRemoteProgress(
     // 入口守卫：该项目该平台的同类操作进行中时拒绝重复触发（防双击竞态）；
     // 同时拒绝与另一操作（push ↔ pull）并发写同一仓库（UI disabled 之外的后端兜底）
     if (isOpInProgress(progressRef, id, target) || (oppositeProgressRef && isOpInProgress(oppositeProgressRef, id))) {
-      return { ok: false, stdout: "", stderr: "操作进行中" }
+      outputsRef.value[id] = [blockedEntry(id, target)]
+      pruneRecordCache(outputsRef.value)
+      return { ok: false, stdout: "", stderr: "操作进行中，请稍候" }
     }
     const seq = nextOpSeq(id)
     progressRef.value = {

@@ -403,8 +403,8 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
       color: var(--b3-theme-primary);
     }
 
-    &.badge-rarely.active {
-      color: var(--b3-theme-on-surface-lighter);
+    &.badge-category.active {
+      color: var(--b3-theme-primary);
     }
 
     &.badge-toggle.active {
@@ -440,7 +440,7 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
       right: 1px;
     }
 
-    .badge-rarely {
+    .badge-category {
       position: absolute;
       bottom: 1px;
       right: 1px;
@@ -454,41 +454,126 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
-// 不常用分组
-.feature-drawer-rarely {
-  @extend %flex-shrink-0;
-  border-top: 1px dashed var(--b3-border-color);
-  background: var(--b3-theme-surface);
+// 分类管理面板
+.feature-drawer-manage {
+  flex: 1;
+  overflow-y: auto;
+  padding: $spacing-2 $spacing-3;
 
-  .rarely-list {
-    padding-top: 0;
+  .feature-drawer-manage-row,
+  .feature-drawer-manage-add {
+    @extend %flex-center;
+    gap: $spacing-2;
+    padding: $spacing-1 0;
+  }
 
-    .feature-drawer-item-title {
-      opacity: 0.7;
+  .feature-drawer-manage-add {
+    border-top: 1px dashed var(--b3-border-color);
+    margin-top: $spacing-1;
+    padding-top: $spacing-2;
+  }
+
+  .manage-input {
+    flex: 1;
+    min-width: 0;
+    padding: $spacing-px $spacing-2;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $vp-radius;
+    background: transparent;
+    color: var(--b3-theme-on-background);
+    font-size: $font-size-xs;
+    outline: none;
+
+    &:focus {
+      border-color: var(--b3-theme-primary);
     }
+
+    &.invalid {
+      border-color: var(--b3-theme-error);
+    }
+  }
+
+  .manage-count {
+    @extend %flex-shrink-0;
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.6;
+  }
+
+  .manage-btn {
+    @extend %flex-shrink-0;
+    @extend %flex-center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $radius-sm;
+    background: transparent;
+    color: var(--b3-theme-on-surface);
+    cursor: pointer;
+    opacity: 0.6;
+    transition: border-color 0.12s, color 0.12s;
+
+    &:hover {
+      border-color: var(--b3-theme-primary);
+      color: var(--b3-theme-primary);
+      opacity: 1;
+    }
+  }
+
+  .manage-error {
+    padding: $spacing-px 0;
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-error);
   }
 }
 
-.feature-drawer-rarely-header {
-  @extend %flex-center;
-  @include hover-lift(0.8);
-  gap: $spacing-1;
-  width: 100%;
-  padding: $spacing-2 $spacing-3;
-  border: none;
-  background: transparent;
-  color: var(--b3-theme-on-surface);
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-  cursor: pointer;
-  transition: opacity 0.12s;
+// 分类分配弹出菜单
+.category-assign-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+}
 
-  .feature-drawer-rarely-caret {
-    transition: transform 0.2s;
+.category-assign-menu {
+  position: fixed;
+  z-index: 10000;
+  min-width: 160px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: $spacing-1;
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-lg;
+
+  .category-assign-item {
+    @extend %flex-center;
+    width: 100%;
+    padding: $spacing-1 $spacing-2;
+    border: none;
+    border-radius: $vp-radius;
+    background: transparent;
+    color: var(--b3-theme-on-background);
+    font-size: $font-size-xs;
+    cursor: pointer;
+    text-align: left;
+    white-space: nowrap;
+
+    &:hover {
+      background: var(--b3-theme-surface-lighter);
+    }
+
+    &.active {
+      background: var(--b3-theme-primary-lightest);
+      color: var(--b3-theme-primary);
+    }
   }
 
-  &.collapsed .feature-drawer-rarely-caret {
-    transform: rotate(-90deg);
+  .category-assign-empty {
+    padding: $spacing-2;
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.5;
   }
 }
 

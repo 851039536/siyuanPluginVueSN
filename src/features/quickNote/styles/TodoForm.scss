@@ -16,6 +16,11 @@
   gap: $spacing-2;
 }
 
+// 首行修饰（多行输入框 + 按钮组：按钮贴输入框底沿，避免居中悬空）
+.qn-todo-form__row--top {
+  align-items: flex-end;
+}
+
 // 待办内容输入框
 .qn-todo-form__input {
   flex: 1;

@@ -48,11 +48,19 @@ export function useProjects(storage: QuickNoteStorage, todosRef?: Ref<TodoItem[]
     await persist()
   }
 
-  /** 更新项目 */
+  /** 更新项目（文本字段与新增模式一致做 trim） */
   const update = async (id: string, patch: Partial<Omit<ProjectItem, "id" | "createdAt">>) => {
     const project = projects.value.find((p) => p.id === id)
     if (!project) return
-    Object.assign(project, patch, { updatedAt: Date.now() })
+    const { name, currentStep, nextStep, blockers, ...rest } = patch
+    const normalized = {
+      ...rest,
+      ...(name !== undefined ? { name: name.trim() } : {}),
+      ...(currentStep !== undefined ? { currentStep: currentStep.trim() } : {}),
+      ...(nextStep !== undefined ? { nextStep: nextStep.trim() } : {}),
+      ...(blockers !== undefined ? { blockers: blockers.trim() } : {}),
+    }
+    Object.assign(project, normalized, { updatedAt: Date.now() })
     await persist()
   }
 

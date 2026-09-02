@@ -4,19 +4,11 @@
  * 卡点汇总清单。不产生额外存储，数据完全由待办/项目派生
  */
 import type { Ref } from "vue"
+import type { ChartData } from "@/components/chart.types"
 import type { ProjectItem, TodoItem } from "../types"
 import { computed, ref } from "vue"
+import { TimerRegistry } from "@/utils/timerRegistry"
 import { PRIORITY_META, STATUS_META } from "../types"
-
-/**
- * 图表数据项结构（与 Chart.vue 的 ChartData 对齐）
- * .ts 文件无法导入 .vue 的命名类型导出，此处依赖结构类型与 WeeklyReview.vue 的 ChartData[] prop 契约兼容
- */
-type ChartDatum = {
-  label: string
-  value: number
-  color?: string
-}
 
 /** 卡点汇总条目 */
 export interface BlockSummary {
@@ -45,23 +37,24 @@ export function useWeeklyReview(
   /** 本周起始时间戳（周一零点），由 startWatch 周期刷新以支持跨周切换 */
   const weekStart = ref(getWeekStart())
 
-  /** 周期刷新定时器句柄（null = 未启动） */
-  let watchTimer: ReturnType<typeof setInterval> | null = null
+  /** 周期刷新定时器托管（TimerRegistry 统一定时器入口） */
+  const timerRegistry = new TimerRegistry()
 
-  /** 启动周期刷新：每 60s 校准本周起始时间，面板挂载时调用 */
+  /** 周期刷新定时器句柄（null = 未启动） */
+  let watchTimer: TimerHandle | null = null
+
+  /** 启动周期刷新：每 60s 校准本周起始时间，复盘 Tab 激活时调用 */
   const startWatch = () => {
-    if (watchTimer) return
-    watchTimer = setInterval(() => {
+    if (watchTimer !== null) return
+    watchTimer = timerRegistry.setInterval(() => {
       weekStart.value = getWeekStart()
     }, WEEK_START_REFRESH_MS)
   }
 
-  /** 停止周期刷新并清理定时器，面板卸载时调用 */
+  /** 停止周期刷新并清理定时器，复盘 Tab 离开/面板卸载时调用 */
   const stopWatch = () => {
-    if (watchTimer) {
-      clearInterval(watchTimer)
-      watchTimer = null
-    }
+    timerRegistry.clear(watchTimer)
+    watchTimer = null
   }
 
   /** 本周完成的事项（doneAt 落在本周） */
@@ -73,7 +66,7 @@ export function useWeeklyReview(
   const weekTotal = computed(() => completedThisWeek.value.length)
 
   /** 优先级分布（环形图数据）：紧急/高/中/低各完成数 */
-  const priorityDistribution = computed<ChartDatum[]>(() => {
+  const priorityDistribution = computed<ChartData[]>(() => {
     const priorities = (Object.keys(PRIORITY_META) as Array<keyof typeof PRIORITY_META>)
     return priorities.map((p) => ({
       label: p, // 由图表层经 i18n 转文案
@@ -83,7 +76,7 @@ export function useWeeklyReview(
   })
 
   /** 项目精力分布（条形图数据）：各项目关联待办完成数（本周） */
-  const projectEffort = computed<ChartDatum[]>(() => {
+  const projectEffort = computed<ChartData[]>(() => {
     return projectsRef.value.map((proj) => ({
       label: proj.name,
       value: completedThisWeek.value.filter((t) => t.projectId === proj.id).length,

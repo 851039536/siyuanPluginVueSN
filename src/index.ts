@@ -266,6 +266,8 @@ export default class PluginSample extends Plugin {
     this.settings = newSettings
     const success = await saveSettings(this, newSettings)
     if (success) {
+      // 同步回文件缓存：确保依赖 flags 的子开关（如速记启动自动打开）下次启动即可读到最新值
+      saveFeatureFlagsSync(newSettings)
       // 广播设置变更，供 statusBar 等独立挂载模块同步功能开关状态
       emitCustomEvent("settingsUpdated")
       // 主题色支持即时生效：开关或方案变化后立即重建实例

@@ -70,7 +70,7 @@
  * CRUD 直达 todoList composable，关联项目名经 projectsApi 解析
  */
 import type { Plugin } from "siyuan"
-import type { TodoItem as TodoItemType } from "../../types"
+import type { TodoItem as TodoItemType, TodoSubmitPayload } from "../../types"
 import { computed, ref } from "vue"
 import TodoForm from "./TodoForm.vue"
 import TodoItem from "./TodoItem.vue"
@@ -126,13 +126,7 @@ const startTodoEdit = (todo: TodoItemType) => {
 }
 
 /** 提交待办（分发新增/更新） */
-const handleTodoSubmit = (payload: {
-  id?: string
-  content: string
-  priority: TodoItemType["priority"]
-  dueDate: string | null
-  projectId: string | null
-}) => {
+const handleTodoSubmit = (payload: TodoSubmitPayload) => {
   if (payload.id) {
     const { id, ...patch } = payload
     todoList.update(id, patch)

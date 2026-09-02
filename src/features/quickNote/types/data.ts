@@ -79,6 +79,27 @@ export interface AppData {
   lastRolloverDate: string | null
 }
 
+/** 待办表单提交载荷（新增无 id，编辑携带 id），TodoForm/TodoTab 共用 */
+export interface TodoSubmitPayload {
+  /** 编辑模式时携带待办 id */
+  id?: string
+  content: string
+  priority: TodoPriority
+  dueDate: string | null
+  projectId: string | null
+}
+
+/** 项目表单提交载荷（新增无 id，编辑携带 id），ProjectForm/ProjectTab 共用 */
+export interface ProjectSubmitPayload {
+  /** 编辑模式时携带项目 id */
+  id?: string
+  name: string
+  status: ProjectStatus
+  currentStep: string
+  nextStep: string
+  blockers: string
+}
+
 /** 优先级选项列表（表单 Select 与元数据映射共用的单一数据源） */
 export const TODO_PRIORITIES: TodoPriority[] = ["urgent", "high", "medium", "low"]
 

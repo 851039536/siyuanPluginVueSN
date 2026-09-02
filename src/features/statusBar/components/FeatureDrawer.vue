@@ -359,7 +359,9 @@ const displayItems = computed(() => {
     return filtered.filter(isMonitor)
   }
   if (activeGroup.value === "__all__") {
-    return filtered.filter((item) => !isMonitor(item))
+    // 已分类出去的功能不重复出现在「全部」，仅显示未分类项
+    return filtered.filter((item) =>
+      !isMonitor(item) && !assignment.value[item.id])
   }
   // 自定义分类 Tab：仅显示归属该分类的非监控项
   return filtered.filter((item) =>

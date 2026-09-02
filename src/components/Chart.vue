@@ -8,25 +8,25 @@
       v-if="type === 'bar'"
       ref="chartRef"
       :data="barData"
-      :options="mergedOptions"
+      :options="mergedOptions as ChartJsOptions<'bar'>"
     />
     <Line
       v-else-if="type === 'line' || type === 'area'"
       ref="chartRef"
       :data="lineData"
-      :options="mergedOptions"
+      :options="mergedOptions as ChartJsOptions<'line'>"
     />
     <Pie
       v-else-if="type === 'pie'"
       ref="chartRef"
-      :data="pieData"
-      :options="mergedOptions"
+      :data="pieData as ChartJsData<'pie'>"
+      :options="mergedOptions as ChartJsOptions<'pie'>"
     />
     <Doughnut
       v-else-if="type === 'doughnut'"
       ref="chartRef"
-      :data="pieData"
-      :options="mergedOptions"
+      :data="pieData as ChartJsData<'doughnut'>"
+      :options="mergedOptions as ChartJsOptions<'doughnut'>"
     />
     <div
       v-if="loading"
@@ -69,6 +69,8 @@ import {
 } from "chart.js"
 import {
   computed,
+  onMounted,
+  onUnmounted,
   ref,
 } from "vue"
 import {
@@ -94,7 +96,8 @@ interface Props {
   loading?: boolean
   emptyText?: string
   options?: ChartOptions
-  theme?: "light" | "dark"
+  /** 主题：auto = 跟随思源当前明暗模式（默认），light/dark = 强制指定 */
+  theme?: "light" | "dark" | "auto"
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -102,7 +105,7 @@ const props = withDefaults(defineProps<Props>(), {
   size: "small",
   loading: false,
   emptyText: "暂无数据",
-  theme: "light",
+  theme: "auto",
   options: () => ({}),
 })
 
@@ -168,12 +171,46 @@ const chartStyle = computed(() => {
   return style
 })
 
+/** 检测思源当前是否暗色模式（data-theme-mode / 主题 class 三重判定，与 themeColor 模块一致） */
+function isSiYuanDarkMode(): boolean {
+  const html = document.documentElement
+  return html.getAttribute("data-theme-mode") === "dark"
+    || html.classList.contains("theme-dark")
+    || html.classList.contains("b3-theme-dark")
+}
+
+/** 主题切换 tick（MutationObserver 触发递增，驱动 isDark 重算实现图表配色实时跟随主题） */
+const themeTick = ref(0)
+let themeObserver: MutationObserver | null = null
+
+onMounted(() => {
+  themeObserver = new MutationObserver(() => {
+    themeTick.value++
+  })
+  themeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-theme-mode", "class"],
+  })
+})
+
+onUnmounted(() => {
+  themeObserver?.disconnect()
+  themeObserver = null
+})
+
+/** 实际生效的暗色判定（auto 跟随思源模式，light/dark 强制指定） */
+const isDark = computed(() => {
+  void themeTick.value // 主题切换时触发重算
+  if (props.theme === "auto") return isSiYuanDarkMode()
+  return props.theme === "dark"
+})
+
 const textColor = computed(() =>
-  props.theme === "dark" ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.7)",
+  isDark.value ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.7)",
 )
 
 const gridColor = computed(() =>
-  props.theme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+  isDark.value ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
 )
 
 const baseOptions = computed<ChartJsOptions>(() => ({

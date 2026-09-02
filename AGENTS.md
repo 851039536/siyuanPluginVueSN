@@ -193,6 +193,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 - **模块提取判定**：重复远比错误抽象便宜，同一问题第 3 次出现前不要抽象（Rule of Three）。详见 [AGENTS_ARCH.md § 强制规则：模块提取判定标准](./AGENTS_ARCH.md#强制规则模块提取判定标准)
 - **组件文件夹组织**：按功能单元建语义化文件夹、入口统一 `index.vue`、复用组件放 `common/`、复用逻辑放 `composables/`。详见 [AGENTS_ARCH.md § 四、组件文件夹组织标准](./AGENTS_ARCH.md#四组件文件夹组织标准components-子目录)
 - **字号层级规范**：两级字号制（`$font-size-xs` 12px / `$font-size-2xs` 10px），根容器显式设置基准字号。详见 [AGENTS_STYLE.md § 强制规则：字号层级与全局基准字号](./AGENTS_STYLE.md#强制规则字号层级与全局基准字号)
+- **背景与过渡 gitPush 范式**：弹窗/面板底色 `background` + 卡片 `surface` 凸出；遮罩 `rgba(0,0,0,0.5)` 禁 `backdrop-filter`；过渡统一 0.12s ease（fade + scale 0.98），禁自定义缓动与装饰性 `letter-spacing`；全屏遮罩 `z-index: 10000`。详见 [AGENTS_STYLE.md § 强制规则：背景与过渡对齐 gitPush 范式](./AGENTS_STYLE.md#强制规则背景与过渡对齐-gitpush-范式2026-09-02)
 - **Dock 面板侧边栏间距**：滚动内容不得紧贴侧边栏，根容器必须 `padding-right` ≥ `$spacing-2`。详见 [AGENTS_STYLE.md § 强制规则：Dock 面板侧边栏间距](./AGENTS_STYLE.md#强制规则dock-面板侧边栏间距)
 - **AI 调用统一入口**：必须走 `@/utils/aiApi` 的 `callAI` / `callAISmart` / `callAIChat`，禁止直接 `fetch` 或硬编码 Key/端点。详见 [AGENTS_API.md § 强制规则：AI 调用](./AGENTS_API.md#强制规则ai-调用) 与 [docs/ai-api-usage.md](./docs/ai-api-usage.md)
 - **定时任务统一入口**：新增定时任务必须走 `@/utils/timerRegistry` 的 `TimerRegistry`（`setInterval` / `setTimeout` / `clear` / `clearAll`），禁止裸 `setInterval` / `setTimeout`；句柄类型统一为 `TimerHandle`（`ReturnType<typeof setInterval>`），动态启停必须通过 `clear(handle)` / `clearAll()`，生命周期随功能实例 destroy/stop 清理。详见 [AGENTS_API.md § 定时器](./AGENTS_API.md#定时器)

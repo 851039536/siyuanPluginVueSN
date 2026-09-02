@@ -13,6 +13,8 @@ import {
   findProject,
   requireProject,
   resolveValidPath,
+  acquireFlag,
+  releaseFlag,
 } from "../utils"
 import { useRemoteProgress } from "./useRemoteProgress"
 import { useOpLog } from "./useOpLog"
@@ -25,8 +27,8 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
   const workingTrees = ref<Record<string, WorkingTreeInfo>>({})
   /** 正在提交的项目 id → true */
   const committing = ref<Record<string, boolean>>({})
-  /** Stash 操作加载中 */
-  const stashLoading = ref<Record<string, boolean>>({})
+  /** Stash 操作加载中（引用计数防并发同类操作先完成者提前清除标志） */
+  const stashLoading = ref<Record<string, number>>({})
   /** 卡片自持数据的按域刷新信号（log/branches/stash/tags/conflicts 已下沉 ProjectCard，父层操作后经此通知重载） */
   const cardRefreshSignals = ref<CardRefreshSignals>({})
 
@@ -170,7 +172,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
   // ── Stash 操作 ──
 
   async function withProjectPathStash(id: string, fn: (path: string) => Promise<void>) {
-    stashLoading.value[id] = true
+    acquireFlag(stashLoading.value, id)
     try {
       // 变更类操作统一抛错（而非静默跳过），由调用方的 handleGitOp 展示错误
       const project = requireProject(projects, id)
@@ -179,7 +181,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
       bumpCardRefresh(id, "stash")
       await loadWorkingTree(id)
     } finally {
-      delete stashLoading.value[id]
+      releaseFlag(stashLoading.value, id)
     }
   }
 

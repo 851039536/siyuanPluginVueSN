@@ -244,6 +244,8 @@
     "abortMergeTitle": "Abort Merge",
     "abortMergeConfirm": "Abort the merge? All merge progress will be lost.",
     "abortMergeFailed": "Abort merge failed",
+    "resolveConflictTitle": "Resolve Conflict File",
+    "resolveConflictConfirm": "Resolve \"{0}\" using the {1} version? Changes on the other side will be lost.",
     "resolveConflictFailed": "Resolve conflict failed",
     "commitSuccess": "Commit succeeded",
     "commitFailed": "Commit failed: {0}",

@@ -7,6 +7,7 @@ import type {
   ProjectPathExtras,
 } from "../types/storage"
 import type { GitExecutor } from "./GitExecutor"
+import { ProjectWriteLock } from "./ProjectWriteLock"
 import { PLATFORM_META } from "../types/meta"
 import { UNGROUPED_ID } from "../types/storage"
 import {
@@ -25,10 +26,17 @@ export class ProjectStore {
   private projectCache: Map<string, GitProject> = new Map()
   /** 全量项目列表缓存（null 表示未初始化） */
   private projectsCache: GitProject[] | null = null
+  /** 项目写操作串行链（防止并发 mutate 的 lost update：后写覆盖先写） */
+  private writeLock = new ProjectWriteLock()
 
   constructor(storage: GitPushStorage, executor: GitExecutor) {
     this.storage = storage
     this.executor = executor
+  }
+
+  /** 项目写操作串行化：读改写全程（mutateProject → saveProjects）在单一 Promise 链上排队 */
+  private serializeWrite<T>(fn: () => Promise<T>): Promise<T> {
+    return this.writeLock.runExclusive("projects", fn)
   }
 
   /**
@@ -94,115 +102,134 @@ export class ProjectStore {
    * 添加项目映射
    */
   async addProject(name: string, path: string, categoryId = UNGROUPED_ID, tags?: string[], extras?: ProjectPathExtras): Promise<GitProject> {
-    const projects = await this.getProjectsForWrite()
-    idCounter++
-    // 主路径无设备标注时自动补当前电脑名（与编辑弹窗新增路径行为对称）
-    const pathDevices = { ...(extras?.pathDevices || {}) }
-    if (!pathDevices[path]) {
-      const device = getCurrentDeviceName()
-      if (device) { pathDevices[path] = device }
-    }
-    const project: GitProject = {
-      id: `${Date.now().toString(36)}-${idCounter}`,
-      name,
-      path,
-      categoryId,
-      addedAt: Date.now(),
-      tags: tags && tags.length > 0 ? tags : undefined,
-      archived: false,
-      starred: false,
-      localPaths: extras?.localPaths?.length ? extras.localPaths : undefined,
-      pathDevices: Object.keys(pathDevices).length > 0 ? pathDevices : undefined,
-    }
-    this.applyRemotesToProject(project, await this.detectRemotes(path))
-    projects.push(project)
-    await this.storage.projects.save(projects)
-    this.invalidateProjectCache()
-    if (tags && tags.length > 0) await this.syncGlobalTags()
-    return project
+    return this.serializeWrite(async () => {
+      const projects = await this.getProjectsForWrite()
+      idCounter++
+      // 主路径无设备标注时自动补当前电脑名（与编辑弹窗新增路径行为对称）
+      const pathDevices = { ...(extras?.pathDevices || {}) }
+      if (!pathDevices[path]) {
+        const device = getCurrentDeviceName()
+        if (device) { pathDevices[path] = device }
+      }
+      const project: GitProject = {
+        id: `${Date.now().toString(36)}-${idCounter}`,
+        name,
+        path,
+        categoryId,
+        addedAt: Date.now(),
+        tags: tags && tags.length > 0 ? tags : undefined,
+        archived: false,
+        starred: false,
+        localPaths: extras?.localPaths?.length ? extras.localPaths : undefined,
+        pathDevices: Object.keys(pathDevices).length > 0 ? pathDevices : undefined,
+      }
+      this.applyRemotesToProject(project, await this.detectRemotes(path))
+      projects.push(project)
+      await this.storage.projects.save(projects)
+      this.invalidateProjectCache()
+      if (tags && tags.length > 0) await this.syncGlobalTags()
+      return project
+    })
   }
 
   /**
    * 删除项目映射
    */
   async removeProject(id: string): Promise<void> {
-    const projects = await this.getProjectsForWrite()
-    const idx = projects.findIndex((p) => p.id === id)
-    if (idx !== -1) {
-      projects.splice(idx, 1)
-      await this.storage.projects.save(projects)
-      this.invalidateProjectCache()
-      await this.syncGlobalTags()
-    }
+    await this.serializeWrite(async () => {
+      const projects = await this.getProjectsForWrite()
+      const idx = projects.findIndex((p) => p.id === id)
+      if (idx !== -1) {
+        projects.splice(idx, 1)
+        await this.storage.projects.save(projects)
+        this.invalidateProjectCache()
+        await this.syncGlobalTags()
+      }
+    })
   }
 
   /**
    * 更新项目元信息
    */
   async updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "path" | "tags" | "starred" | "archived" | "note" | "name" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl" | "localPaths" | "pathDevices">>): Promise<GitProject | null> {
-    const r = await this.mutateProject(id, (project) => {
-      Object.assign(project, patch)
-      return true
+    return this.serializeWrite(async () => {
+      // patch 中的数组/对象先浅拷贝：避免 Object.assign 后项目与调用方 patch 共享引用，外部改动穿透污染缓存
+      const normalized: typeof patch = { ...patch }
+      if (patch.tags) normalized.tags = [...patch.tags]
+      if (patch.localPaths) normalized.localPaths = [...patch.localPaths]
+      if (patch.pathDevices) normalized.pathDevices = { ...patch.pathDevices }
+      const r = await this.mutateProject(id, (project) => {
+        Object.assign(project, normalized)
+        return true
+      })
+      if (!r) return null
+      await this.saveProjects(r.projects)
+      if (patch.tags !== undefined) await this.syncGlobalTags()
+      return r.project
     })
-    if (!r) return null
-    await this.saveProjects(r.projects)
-    if (patch.tags !== undefined) await this.syncGlobalTags()
-    return r.project
   }
 
   /** 切换收藏状态 */
   async toggleStar(id: string): Promise<GitProject | null> {
-    const r = await this.mutateProject(id, (project) => {
-      project.starred = !project.starred
-      return true
+    return this.serializeWrite(async () => {
+      const r = await this.mutateProject(id, (project) => {
+        project.starred = !project.starred
+        return true
+      })
+      if (!r) return null
+      await this.saveProjects(r.projects)
+      return r.project
     })
-    if (!r) return null
-    await this.saveProjects(r.projects)
-    return r.project
   }
 
   /** 添加标签（去重） */
   async appendTag(id: string, tag: string): Promise<GitProject | null> {
     const t = tag.trim()
     if (!t) return null
-    const r = await this.mutateProject(id, (project) => {
-      const tags = project.tags || []
-      if (tags.includes(t)) return false
-      project.tags = [...tags, t]
-      return true
+    return this.serializeWrite(async () => {
+      const r = await this.mutateProject(id, (project) => {
+        const tags = project.tags || []
+        if (tags.includes(t)) return false
+        project.tags = [...tags, t]
+        return true
+      })
+      if (!r) return null
+      if (r.changed) {
+        await this.saveProjects(r.projects)
+        await this.syncGlobalTags()
+      }
+      return r.project
     })
-    if (!r) return null
-    if (r.changed) {
-      await this.saveProjects(r.projects)
-      await this.syncGlobalTags()
-    }
-    return r.project
   }
 
   /** 移除标签 */
   async removeTag(id: string, tag: string): Promise<GitProject | null> {
-    const r = await this.mutateProject(id, (project) => {
-      if (!project.tags) return false
-      project.tags = project.tags.filter((t) => t !== tag)
-      if (project.tags.length === 0) project.tags = undefined
-      return true
+    return this.serializeWrite(async () => {
+      const r = await this.mutateProject(id, (project) => {
+        if (!project.tags) return false
+        project.tags = project.tags.filter((t) => t !== tag)
+        if (project.tags.length === 0) project.tags = undefined
+        return true
+      })
+      if (!r) return null
+      if (r.changed) {
+        await this.saveProjects(r.projects)
+        await this.syncGlobalTags()
+      }
+      return r.project
     })
-    if (!r) return null
-    if (r.changed) {
-      await this.saveProjects(r.projects)
-      await this.syncGlobalTags()
-    }
-    return r.project
   }
 
   /** 记录最后活动时间 */
   async recordLastActivity(id: string, isoTime: string): Promise<void> {
-    const r = await this.mutateProject(id, (project) => {
-      project.lastActivity = isoTime
-      return true
+    await this.serializeWrite(async () => {
+      const r = await this.mutateProject(id, (project) => {
+        project.lastActivity = isoTime
+        return true
+      })
+      if (!r) return
+      await this.saveProjects(r.projects)
     })
-    if (!r) return
-    await this.saveProjects(r.projects)
   }
 
   /** 同步全局标签缓存 */
@@ -222,20 +249,24 @@ export class ProjectStore {
 
   /** 重新检测项目远程仓库并更新（path 缺省时按项目持久化路径检测） */
   async refreshRemotes(id: string, path?: string): Promise<GitProject | null> {
-    const r = await this.mutateProject(id, () => true)
-    if (!r) return null
-    this.applyRemotesToProject(r.project, await this.detectRemotes(path || resolveValidPath(r.project)))
-    await this.saveProjects(r.projects)
-    return r.project
+    return this.serializeWrite(async () => {
+      const r = await this.mutateProject(id, () => true)
+      if (!r) return null
+      this.applyRemotesToProject(r.project, await this.detectRemotes(path || resolveValidPath(r.project)))
+      await this.saveProjects(r.projects)
+      return r.project
+    })
   }
 
   /** 将已检测的远程列表写入项目（避免调用方为"按指定路径刷新"重复执行 git remote -v） */
   async applyRemotes(id: string, remotes: GitRemoteInfo[]): Promise<GitProject | null> {
-    const r = await this.mutateProject(id, () => true)
-    if (!r) return null
-    this.applyRemotesToProject(r.project, remotes)
-    await this.saveProjects(r.projects)
-    return r.project
+    return this.serializeWrite(async () => {
+      const r = await this.mutateProject(id, () => true)
+      if (!r) return null
+      this.applyRemotesToProject(r.project, remotes)
+      await this.saveProjects(r.projects)
+      return r.project
+    })
   }
 
   /** 将检测到的远程仓库信息应用到项目对象（仅管理远程名称，不触碰用户手动输入的仓库链接） */
@@ -323,21 +354,23 @@ export class ProjectStore {
 
   async deleteCategory(id: string): Promise<void> {
     if (id === UNGROUPED_ID) return
-    const cats = await this.getCategories()
-    const idx = cats.findIndex((c) => c.id === id)
-    if (idx === -1) return
-    cats.splice(idx, 1)
-    await this.storage.categories.save(cats)
+    await this.serializeWrite(async () => {
+      const cats = await this.getCategories()
+      const idx = cats.findIndex((c) => c.id === id)
+      if (idx === -1) return
+      cats.splice(idx, 1)
+      await this.storage.categories.save(cats)
 
-    const projs = await this.getProjectsForWrite()
-    let changed = false
-    for (const p of projs) {
-      if (p.categoryId === id) { p.categoryId = UNGROUPED_ID; changed = true }
-    }
-    if (changed) {
-      await this.storage.projects.save(projs)
-      this.invalidateProjectCache()
-    }
+      const projs = await this.getProjectsForWrite()
+      let changed = false
+      for (const p of projs) {
+        if (p.categoryId === id) { p.categoryId = UNGROUPED_ID; changed = true }
+      }
+      if (changed) {
+        await this.storage.projects.save(projs)
+        this.invalidateProjectCache()
+      }
+    })
   }
 
   async moveProject(projectId: string, categoryId: string): Promise<void> {
@@ -346,11 +379,13 @@ export class ProjectStore {
       const cats = await this.getCategories()
       if (!cats.some((c) => c.id === categoryId)) return
     }
-    const projs = await this.getProjectsForWrite()
-    const p = projs.find((x) => x.id === projectId)
-    if (!p || p.categoryId === categoryId) return
-    p.categoryId = categoryId
-    await this.storage.projects.save(projs)
-    this.invalidateProjectCache()
+    await this.serializeWrite(async () => {
+      const projs = await this.getProjectsForWrite()
+      const p = projs.find((x) => x.id === projectId)
+      if (!p || p.categoryId === categoryId) return
+      p.categoryId = categoryId
+      await this.storage.projects.save(projs)
+      this.invalidateProjectCache()
+    })
   }
 }

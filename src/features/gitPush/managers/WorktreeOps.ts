@@ -135,8 +135,9 @@ export class WorktreeOps {
 
   async discardFile(projectPath: string, file: string, staged: boolean, status: string): Promise<void> {
     if (staged) {
-      await this.executor.execGit(projectPath, ["reset", "HEAD", "--", file]).catch(() => {})
-      await this.executor.execGit(projectPath, ["checkout", "--", file]).catch(() => {})
+      // 破坏性操作失败必须向上抛（由调用方呈现），不得静默吞错——否则用户以为已丢弃实际未丢弃
+      await this.executor.execGit(projectPath, ["reset", "HEAD", "--", file])
+      await this.executor.execGit(projectPath, ["checkout", "--", file])
     } else if (status === "untracked") {
       await this.executor.execGit(projectPath, ["clean", "-f", "--", file])
     } else {
@@ -209,8 +210,9 @@ export class WorktreeOps {
     try {
       // 依赖 %s(subject) 单行，勿加入 %b(body) 等多行字段，否则 5 行固定切分错位
       const format = "%h%n%s%n%an%n%ar%n%aI"
+      // "all" 加 -n 5000 保护上限：全量输出在大仓库可能超 10MB maxBuffer 直接 reject
       const args = count === "all"
-        ? ["log", `--format=${format}`]
+        ? ["log", "-n", "5000", `--format=${format}`]
         : ["log", `-${count}`, `--format=${format}`]
       const raw = await this.executor.execGit(projectPath, args)
       if (!raw) return []

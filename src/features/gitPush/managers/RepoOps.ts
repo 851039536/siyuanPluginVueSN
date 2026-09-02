@@ -29,17 +29,17 @@ export class RepoOps {
   }
 
   async createTag(projectPath: string, name: string, message?: string): Promise<void> {
-    const args = ["tag", name]
-    if (message) args.push("-m", message)
+    // "--" 分隔符防止以 "-" 开头的 tag 名被 git 解析为命令行选项
+    const args = message ? ["tag", "-m", message, "--", name] : ["tag", "--", name]
     await this.executor.execGit(projectPath, args)
   }
 
   async deleteTag(projectPath: string, name: string): Promise<void> {
-    await this.executor.execGit(projectPath, ["tag", "-d", name])
+    await this.executor.execGit(projectPath, ["tag", "-d", "--", name])
   }
 
   async pushTag(projectPath: string, remoteName: string, tag: string): Promise<string> {
-    return await this.executor.execGit(projectPath, ["push", remoteName, tag])
+    return await this.executor.execGit(projectPath, ["push", remoteName, "--", tag])
   }
 
   // ── 冲突检测 ──
@@ -64,8 +64,9 @@ export class RepoOps {
   }
 
   async resolveConflictFile(projectPath: string, file: string, strategy: "theirs" | "ours"): Promise<void> {
-    await this.executor.execGit(projectPath, ["checkout", `--${strategy}`, file])
-    await this.executor.execGit(projectPath, ["add", file])
+    // "--" 分隔符防止以 "-" 开头的文件路径被 git 解析为选项
+    await this.executor.execGit(projectPath, ["checkout", `--${strategy}`, "--", file])
+    await this.executor.execGit(projectPath, ["add", "--", file])
   }
 
   // ── 远程配置 ──
@@ -111,6 +112,12 @@ export class RepoOps {
     const { fs, path } = nodeModules
 
     if (!fs.existsSync(parentDir)) throw new Error("路径不存在")
+    // URL 以 "-" 开头会被 git 解析为命令行选项（选项注入面），直接拒绝
+    if (url.trim().startsWith("-")) throw new Error("仓库 URL 不合法：不能以 \"-\" 开头")
+    // statSync 包 try-catch：existsSync 与 statSync 之间存在 TOCTOU 窗口（目录被删除时抛原始 ENOENT）
+    let parentIsDir = false
+    try { parentIsDir = fs.statSync(parentDir).isDirectory() } catch { /* 视同不存在 */ }
+    if (!parentIsDir) throw new Error("路径不存在或不是目录")
     const target = path.join(parentDir, this.repoNameFromUrl(url))
     if (fs.existsSync(target)) throw new Error("目标目录已存在")
 
@@ -182,7 +189,10 @@ export class RepoOps {
     const { fs, path } = nodeModules
 
     if (!fs.existsSync(dirPath)) throw new Error("路径不存在")
-    if (!fs.statSync(dirPath).isDirectory()) throw new Error("路径不是目录")
+    // statSync 包 try-catch：existsSync 与 statSync 之间存在 TOCTOU 窗口（目录被删除时抛原始 ENOENT）
+    let rootIsDir = false
+    try { rootIsDir = fs.statSync(dirPath).isDirectory() } catch { /* 视同不存在 */ }
+    if (!rootIsDir) throw new Error("路径不存在或不是目录")
 
     const SKIP_DIRS = new Set([
       "node_modules", ".git", "__pycache__", ".venv", "venv",

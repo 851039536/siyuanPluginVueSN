@@ -94,7 +94,7 @@
       :get-project-file-lines="getProjectFileLines"
       @run-analysis="runLineStatsAnalysis"
       @update-count="(n) => setCommitCount(n, true)"
-      @update:selected-extensions="updateSelectedExtensions"
+      @update-selected-extensions="updateSelectedExtensions"
       @view-project="lineDetailProjectId = $event"
       @close-line-detail="lineDetailProjectId = ''"
     />

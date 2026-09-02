@@ -29,7 +29,7 @@
     "tabInspiration": "Ideas",
     "tabProject": "Projects",
     "tabReview": "Review",
-    "todoPlaceholder": "Type a todo item",
+    "todoPlaceholder": "Type a todo item; Enter for new line, Ctrl+Enter to add",
     "priorityUrgent": "Urgent",
     "priorityHigh": "High",
     "priorityMedium": "Medium",

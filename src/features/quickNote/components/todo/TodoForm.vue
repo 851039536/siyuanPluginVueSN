@@ -1,12 +1,14 @@
 <template>
   <div class="qn-todo-form">
     <div class="qn-todo-form__row">
-      <!-- 输入框占位："输入待办事项，Enter 快速添加" -->
-      <input
+      <!-- 内容输入框（多行，Enter 换行，Ctrl+Enter 快速提交）："输入待办事项，Enter 换行，Ctrl+Enter 快速添加" -->
+      <textarea
         v-model="content"
-        class="vp-input qn-todo-form__input"
+        class="vp-input qn-todo-form__input qn-todo-form__textarea"
+        rows="2"
         :placeholder="i18n.todoPlaceholder"
-        @keydown.enter.prevent="handleSubmit"
+        @keydown.enter.ctrl.prevent="handleSubmit"
+        @keydown.enter.meta.prevent="handleSubmit"
       />
       <!-- AI 润色按钮（新增/编辑模式均可用，流式回填内容） -->
       <button

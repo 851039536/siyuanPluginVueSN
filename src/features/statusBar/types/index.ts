@@ -8,6 +8,12 @@
 
 export type ResourceLevel = "normal" | "medium" | "high"
 
+/** 用户自定义分类（功能抽屉 Tab） */
+export interface StatusBarCategory {
+  id: string
+  name: string
+}
+
 export interface StatusBarState {
   cpuPercent: number
   memPercent: number

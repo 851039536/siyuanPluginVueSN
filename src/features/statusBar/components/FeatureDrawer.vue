@@ -246,7 +246,7 @@ interface Props {
   visible: boolean
   items: FeatureDrawerItem[]
   statusBarVisible?: string[]
-  categoryManager?: CategoryManager
+  categoryManager: CategoryManager
 }
 
 interface Emits {
@@ -259,7 +259,6 @@ interface Emits {
 
 const props = withDefaults(defineProps<Props>(), {
   statusBarVisible: () => [],
-  categoryManager: undefined,
 })
 const emit = defineEmits<Emits>()
 
@@ -274,18 +273,18 @@ const addError = ref("")
 const renameErrors = ref<Record<string, string>>({})
 
 // 模板友好的解包视图
-const categories = computed(() => props.categoryManager?.categories.value ?? [])
-const assignment = computed(() => props.categoryManager?.assignment.value ?? {})
+const categories = computed(() => props.categoryManager.categories.value)
+const assignment = computed(() => props.categoryManager.assignment.value)
 
 const onAdd = () => {
-  const error = props.categoryManager?.addCategory(newCategoryName.value) ?? ""
+  const error = props.categoryManager.addCategory(newCategoryName.value)
   addError.value = error
   if (!error) newCategoryName.value = ""
 }
 
 const onRename = (id: string, event: Event) => {
   const name = (event.target as HTMLInputElement).value
-  const error = props.categoryManager?.renameCategory(id, name) ?? ""
+  const error = props.categoryManager.renameCategory(id, name)
   if (error) {
     renameErrors.value = { ...renameErrors.value, [id]: error }
   } else {
@@ -295,9 +294,10 @@ const onRename = (id: string, event: Event) => {
 }
 
 const onDelete = (id: string) => {
-  props.categoryManager?.removeCategory(id)
-  // 被删分类正被选中时回退到「全部」
-  if (activeGroup.value === id) activeGroup.value = "__all__"
+  props.categoryManager.removeCategory(id)
+  // 同步清理该分类的重命名错误提示，避免孤儿文案残留渲染
+  const { [id]: _removed, ...rest } = renameErrors.value
+  renameErrors.value = rest
 }
 
 // 成员计数

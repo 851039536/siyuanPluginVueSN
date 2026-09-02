@@ -25,11 +25,17 @@ export function useFeatureCategories(storage: PluginStorage) {
   const assignment = ref<AssignmentMap>({})
 
   // 启动时异步加载（与 shortcuts/monitors 加载模式一致）
+  // 先加载分类列表，再加载归属映射并按有效分类过滤悬挂引用
+  // （存储损坏/外部篡改可能残留指向已不存在分类的 id，导致 badge 常亮但无对应 Tab）
   storage.load<StatusBarCategory[]>(CATEGORIES_KEY).then((data) => {
-    if (Array.isArray(data)) categories.value = data
-  })
-  storage.load<AssignmentMap>(ASSIGNMENT_KEY).then((data) => {
-    if (data && typeof data === "object") assignment.value = data
+    categories.value = Array.isArray(data) ? data : []
+    return storage.load<AssignmentMap>(ASSIGNMENT_KEY)
+  }).then((data) => {
+    if (!data || typeof data !== "object") return
+    assignment.value = Object.fromEntries(
+      Object.entries(data).filter(([, cid]) =>
+        categories.value.some((c) => c.id === cid)),
+    )
   })
 
   const categoryOf = (featureId: string): string | null =>

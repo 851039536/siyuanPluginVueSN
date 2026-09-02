@@ -20,7 +20,6 @@
     "save": "保存",
     "cancel": "取消",
     "polish": "AI 润色",
-    "polishing": "正在润色…",
     "polishFailed": "润色失败，请重试",
     "polishNoApiKey": "请先在超级面板中配置 AI API 密钥",
     "todayFocus": "今天要处理的",

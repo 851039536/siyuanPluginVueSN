@@ -76,7 +76,7 @@
  * 新增模式：提交后清空表单；编辑模式：通过 editingProject prop 回填，
  * 保存 emit(submit + id)、取消 emit(cancel)，表单由 watch(editingProject) 自动复位
  */
-import type { ProjectItem } from "../../types"
+import type { ProjectItem, ProjectSubmitPayload } from "../../types"
 import { ref, watch } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { PROJECT_STATUSES, STATUS_META } from "../../types"
@@ -88,15 +88,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  submit: [payload: {
-    /** 编辑模式时携带项目 id */
-    id?: string
-    name: string
-    status: ProjectItem["status"]
-    currentStep: string
-    nextStep: string
-    blockers: string
-  }]
+  submit: [payload: ProjectSubmitPayload]
   cancel: []
 }>()
 
@@ -131,14 +123,7 @@ watch(
 /** 提交：编辑模式带 id 提交（不清空，由父清空 editingProject 触发 watch 复位），新增模式提交后清空 */
 const handleSubmit = () => {
   if (!name.value.trim()) return
-  const payload: {
-    id?: string
-    name: string
-    status: ProjectItem["status"]
-    currentStep: string
-    nextStep: string
-    blockers: string
-  } = {
+  const payload: ProjectSubmitPayload = {
     name: name.value,
     status: status.value,
     currentStep: currentStep.value,

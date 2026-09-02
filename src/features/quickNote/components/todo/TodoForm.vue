@@ -1,6 +1,6 @@
 <template>
   <div class="qn-todo-form">
-    <div class="qn-todo-form__row">
+    <div class="qn-todo-form__row qn-todo-form__row--top">
       <!-- 内容输入框（多行，Enter 换行，Ctrl+Enter 快速提交）："输入待办事项，Enter 换行，Ctrl+Enter 快速添加" -->
       <textarea
         v-model="content"
@@ -105,7 +105,7 @@
  * AI 润色走 useAiPolish 流式回填内容，新增/编辑模式均可使用
  */
 import type { Plugin } from "siyuan"
-import type { ProjectItem, TodoItem } from "../../types"
+import type { ProjectItem, TodoItem, TodoSubmitPayload } from "../../types"
 import { ref, watch } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { PRIORITY_META, TODO_PRIORITIES } from "../../types"
@@ -122,14 +122,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  submit: [payload: {
-    /** 编辑模式时携带待办 id */
-    id?: string
-    content: string
-    priority: TodoItem["priority"]
-    dueDate: string | null
-    projectId: string | null
-  }]
+  submit: [payload: TodoSubmitPayload]
   cancel: []
 }>()
 
@@ -171,13 +164,7 @@ const handlePolish = async () => {
 /** 提交：编辑模式带 id 提交（不清空，由父清空 editingTodo 触发 watch 复位），新增模式提交后清空 */
 const handleSubmit = () => {
   if (!content.value.trim()) return
-  const payload: {
-    id?: string
-    content: string
-    priority: TodoItem["priority"]
-    dueDate: string | null
-    projectId: string | null
-  } = {
+  const payload: TodoSubmitPayload = {
     content: content.value,
     priority: priority.value,
     dueDate: dueDate.value || null,

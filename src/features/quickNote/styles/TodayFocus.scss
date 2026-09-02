@@ -95,3 +95,9 @@
   flex-shrink: 0;
   opacity: 0.75;
 }
+
+// 逾期条目截止日期强调（与今日到期条目区分）
+.qn-today-focus__due--overdue {
+  opacity: 1;
+  font-weight: $font-weight-semibold;
+}

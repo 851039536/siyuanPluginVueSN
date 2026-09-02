@@ -25,14 +25,14 @@
       {{ i18n.todayFocusEmpty }}
     </div>
 
-    <!-- 逾期任务 + 卡住项目列表 -->
+    <!-- 今日到期 + 逾期任务 + 卡住项目列表 -->
     <ul
       v-else
       class="qn-today-focus__list"
     >
       <!-- 逾期未完成的任务 -->
       <li
-        v-for="todo in overdueTodos"
+        v-for="todo in focusTodos"
         :key="`t-${todo.id}`"
         class="qn-today-focus__item qn-today-focus__item--todo"
       >
@@ -44,6 +44,7 @@
         <span
           v-if="todo.dueDate"
           class="qn-today-focus__due"
+          :class="{ 'qn-today-focus__due--overdue': todo.overdue }"
         >{{ todo.dueDate }}</span>
       </li>
       <!-- 卡住的项目 -->
@@ -69,23 +70,24 @@
 <script setup lang="ts">
 /**
  * 速记功能 — 「今天要处理的」聚焦区
- * 顶部固定展示逾期未完成任务与卡住项目，红色文字警示；
- * 数据由父层经 props 注入（逾期待办 + 卡住项目），无紧急事项时显示绿色柔和提示
+ * 顶部固定展示今日到期/逾期未完成任务与卡住项目，逾期项红色警示；
+ * 数据由父层经 props 注入（todayFocus 条目 + 卡住项目），无紧急事项时显示绿色柔和提示
  */
-import type { ProjectItem, TodoItem } from "../../types"
+import type { ProjectItem } from "../../types"
+import type { TodoFocusItem } from "../../composables/useTodoList"
 import { computed } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 
 const props = defineProps<{
-  /** 逾期未完成任务（已按优先级排序） */
-  overdueTodos: TodoItem[]
+  /** 今日到期 + 逾期未完成任务（逾期项排前，含 overdue 标记） */
+  focusTodos: TodoFocusItem[]
   /** 卡住项目 */
   blockedProjects: ProjectItem[]
   i18n: Record<string, string>
 }>()
 
-/** 总条数 = 逾期任务 + 卡住项目 */
-const totalCount = computed(() => props.overdueTodos.length + props.blockedProjects.length)
+/** 总条数 = 今日/逾期任务 + 卡住项目 */
+const totalCount = computed(() => props.focusTodos.length + props.blockedProjects.length)
 </script>
 
 <style scoped lang="scss">

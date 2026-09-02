@@ -4,10 +4,12 @@
  * registerQuickNote 供插件注册链调用，toggle 由 App.vue 中心调度触发
  */
 import type { Plugin } from "siyuan"
+import type { TimerHandle } from "@/utils/timerRegistry"
 import type { ModalAppInstance } from "@/utils/vueAppHelper"
 import type { QuickNotePlacement, QuickNotePosition } from "./types"
 import { injectStyle, removeStyle } from "@/utils/domUtils"
 import { emitCustomEvent } from "@/utils/eventBus"
+import { TimerRegistry } from "@/utils/timerRegistry"
 import { createModalVueApp } from "@/utils/vueAppHelper"
 import { POSITION_ALIGN_MAP } from "./types"
 import { DEFAULT_QUICK_NOTE_SETTINGS, QuickNoteStorage } from "./types/storage"
@@ -41,6 +43,10 @@ export class QuickNoteManager {
   private dragMoved = false
   /** 当前拖拽会话的 window 监听清理函数（destroy 兜底） */
   private dragCleanup: (() => void) | null = null
+  /** 定时器托管（TimerRegistry 统一定时器入口） */
+  private timerRegistry = new TimerRegistry()
+  /** 拖拽点击吞没标记的复位定时器句柄 */
+  private dragMovedResetTimer: TimerHandle | null = null
 
   constructor(plugin: Plugin) {
     this.storage = new QuickNoteStorage(plugin)
@@ -232,8 +238,10 @@ export class QuickNoteManager {
       this.position = "custom"
       this.dragMoved = true
       // click 事件在 pointerup 后同步派发，延时复位避免标记残留吞掉后续正常点击
-      setTimeout(() => {
+      this.timerRegistry.clear(this.dragMovedResetTimer)
+      this.dragMovedResetTimer = this.timerRegistry.setTimeout(() => {
         this.dragMoved = false
+        this.dragMovedResetTimer = null
       }, 0)
       this.persistSettings().catch((err) => {
         console.error("[quickNote] 拖拽位置保存失败:", err)
@@ -305,8 +313,9 @@ export class QuickNoteManager {
 
   /** 彻底销毁（persistent Modal 必须 destroy 而非 close，否则残留 DOM） */
   destroy(): void {
-    // 兜底清理拖拽会话未释放的 window 监听与最小化动态样式
+    // 兜底清理拖拽会话未释放的 window 监听、复位定时器与最小化动态样式
     this.dragCleanup?.()
+    this.timerRegistry.clear(this.dragMovedResetTimer)
     removeStyle(MINIMIZED_STYLE_ID)
     this.modal.destroy()
   }
@@ -315,7 +324,7 @@ export class QuickNoteManager {
 /**
  * 注册速记功能
  */
-export function registerQuickNote(plugin: Plugin): QuickNoteManager {
+export function registerQuickNote(plugin: Plugin): void {
   const manager = new QuickNoteManager(plugin)
   manager.init().then(() => {
     // 超级面板子开关「启动时自动打开」：init 完成后再 open，保证持久化位置缓存已加载
@@ -327,5 +336,4 @@ export function registerQuickNote(plugin: Plugin): QuickNoteManager {
   })
   // 挂载到 plugin 实例：onunload 经 DESTROYABLE_KEYS 销毁，App.vue 经 __quickNote.toggle() 调度
   ;(plugin as any).__quickNote = manager
-  return manager
 }

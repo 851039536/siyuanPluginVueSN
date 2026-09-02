@@ -20,7 +20,6 @@
     "save": "Save",
     "cancel": "Cancel",
     "polish": "AI Polish",
-    "polishing": "Polishing…",
     "polishFailed": "Polish failed, please retry",
     "polishNoApiKey": "Please configure an AI API key in the Super Panel first",
     "todayFocus": "Focus Today",

@@ -77,6 +77,8 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   const authorLineRanking = ref<AuthorLineRankItem[]>([])
   /** 全量行数合计（基于全量项目数据独立累加，供顶部汇总卡片展示） */
   const lineStatsSummary = ref<LineStatsSummary>({ added: 0, deleted: 0, net: 0, totalLines: 0 })
+  /** 行数详情弹窗单项目刷新中标记（防并发点击） */
+  const lineDetailRefreshing = ref(false)
   /** per-project 原始 numstat 数据（仅内存不持久化；行数统计分析后填充，供项目详情弹窗消费，下次分析覆盖） */
   const perProjectNumstat = ref<Map<string, NumstatCommit[]>>(new Map())
   /** per-project 已跟踪文件的存量行数 Map<路径, 行数|null>（仅内存不持久化；行数统计分析后填充，供详情弹窗文件明细查存量；null=2MB/二进制/读失败/已删除） */
@@ -169,6 +171,22 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     return { projectRanking, authorRanking, summary }
   }
 
+  /** 抓取单项目行数数据：并行抓 numstat（增量）与 git ls-files（存量文件列表），统计每文件存量行数与项目总行数（全量分析与详情弹窗单项目刷新共用） */
+  async function fetchProjectLineStats(p: GitProject, path: string) {
+    // "all" 时不传上限（getCommitStatsLog 省略 -n 即抓取全部提交）
+    const [numstat, trackedFiles] = await Promise.all([
+      manager.getCommitStatsLog(path, typeof commitCount.value === "number" ? commitCount.value : undefined),
+      manager.getTrackedFiles(path),
+    ])
+    // 单次遍历统计每个文件存量行数并据此聚合项目总行数（复用 countFileLines 口径，避免重复读文件）
+    const fileLines = countTrackedFileLinesMap(p, trackedFiles)
+    let totalLines = 0
+    fileLines.forEach((lines, f) => {
+      if (lines !== null && shouldIncludeFile(f, selectedExtensions.value)) totalLines += lines
+    })
+    return { numstat, fileLines, totalLines }
+  }
+
   /** 批量分析全部项目核心（GitExecutor 自带并发限流，无需额外节流）；needNumstat 时单命令抓取 numstat 生成行数排行，成功后持久化结果供下次复用。
    * @returns 是否实际执行（false = 分析进行中被拒绝，调用方据此决定是否需后续重试） */
   async function runCore(needNumstat: boolean, projectIds?: string[]): Promise<boolean> {
@@ -193,18 +211,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         // 行数统计：单命令抓取（getCommitStatsLog 自带 hash/message/author/date + 每文件增删行），
         // git 失败直接抛错计入 failedCount（不再本地 try-catch 降级为空数据）
         if (needNumstat) {
-          // 并行抓取 numstat（增删增量）与 git ls-files（存量文件列表），互不阻塞；
-          // "all" 时不传上限（getCommitStatsLog 省略 -n 即抓取全部提交）
-          const [numstat, trackedFiles] = await Promise.all([
-            manager.getCommitStatsLog(path, typeof commitCount.value === "number" ? commitCount.value : undefined),
-            manager.getTrackedFiles(path),
-          ])
-          // 单次遍历统计每个文件存量行数并据此聚合项目总行数（复用 countFileLines 口径，避免重复读文件）
-          const fileLines = countTrackedFileLinesMap(p, trackedFiles)
-          let totalLines = 0
-          fileLines.forEach((lines, f) => {
-            if (lines !== null && shouldIncludeFile(f, selectedExtensions.value)) totalLines += lines
-          })
+          const { numstat, fileLines, totalLines } = await fetchProjectLineStats(p, path)
           return {
             projectId: p.id,
             projectName: p.name,
@@ -430,6 +437,56 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     await manager.storage.lineStatsCache.save({ ...cache, selectedExtensions: exts })
   }
 
+  /** 单项目行数刷新（详情弹窗刷新按钮）：重抓该项目 numstat + 存量行数，更新 per-project 内存缓存、
+   * 项目排行对应条目（upsert 重排）与汇总增量；作者排行为跨项目聚合，单项目刷新不重算（完整重算走「重新分析」）。
+   * 结果持久化到行数统计缓存供下次复用；analyzedAt 语义为全量分析完成时间，不因单项目刷新改动。 */
+  async function refreshLineStatsProject(projectId: string) {
+    if (lineDetailRefreshing.value || analyzing.value) return
+    const p = projects.value.find((x) => x.id === projectId)
+    if (!p) return
+    lineDetailRefreshing.value = true
+    try {
+      const path = resolveValidPath(p)
+      const modules = getNodeFsPathOs()
+      if (modules && !modules.fs.existsSync(path)) {
+        throw new Error(`项目路径无效：${path}`)
+      }
+      const { numstat, fileLines, totalLines } = await fetchProjectLineStats(p, path)
+      // 更新 per-project 内存缓存（numstat 为空时移除键，与全量分析「仅存有变更数据项目」口径一致）
+      if (numstat.length > 0) perProjectNumstat.value.set(projectId, numstat)
+      else perProjectNumstat.value.delete(projectId)
+      perProjectFileLines.value.set(projectId, fileLines)
+      // 项目排行 upsert：剔除旧条目后重插并按净增降序重排（与 buildLineRankings 同口径），弹窗「当前总行数」chip 随之更新
+      const agg = sumProjectLines(numstat, selectedExtensions.value)
+      const old = projectLineRanking.value.find((r) => r.id === projectId)
+      projectLineRanking.value = [
+        ...projectLineRanking.value.filter((r) => r.id !== projectId),
+        { id: projectId, name: p.name, added: agg.added, deleted: agg.deleted, net: agg.added - agg.deleted, totalLines },
+      ].sort((a, b) => b.net - a.net || b.added - a.added)
+      // 汇总增量校正（旧条目缺席视为 0 贡献）
+      const added = lineStatsSummary.value.added + agg.added - (old?.added ?? 0)
+      const deleted = lineStatsSummary.value.deleted + agg.deleted - (old?.deleted ?? 0)
+      lineStatsSummary.value = {
+        added,
+        deleted,
+        net: added - deleted,
+        totalLines: lineStatsSummary.value.totalLines + totalLines - (old?.totalLines ?? 0),
+      }
+      // 持久化到独立行数统计缓存（commitCount/analyzedAt/扩展名沿用现有缓存值）
+      const cache = await manager.storage.lineStatsCache.loadOrDefault()
+      await manager.storage.lineStatsCache.save({
+        ...cache,
+        projectLineRanking: projectLineRanking.value,
+        summary: lineStatsSummary.value,
+      })
+    } catch (e) {
+      // 刷新失败仅控制台告警：不改全局 failedCount 口径（详情弹窗局部操作，重试成本低）
+      console.warn("[gitPush] 单项目行数刷新失败", e)
+    } finally {
+      lineDetailRefreshing.value = false
+    }
+  }
+
   /** 从存储载入提交规则检查偏好（上次选中的过滤项目；项目已删时由 effectiveRuleCheckProjectId 回退全部项目） */
   async function loadRuleCheckPrefs() {
     if (ruleCheckPrefsLoaded) return
@@ -526,5 +583,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     updateSelectedExtensions,
     getProjectNumstat,
     getProjectFileLines,
+    refreshLineStatsProject,
+    lineDetailRefreshing,
   }
 }

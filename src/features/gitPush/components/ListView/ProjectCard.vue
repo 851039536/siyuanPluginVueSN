@@ -53,9 +53,11 @@
       :i18n="i18n"
       :entries="logEntries"
       :loading="logLoading"
+      :tag-commit-map="tagCommitMap"
       @reload-commit-log="(count: number | 'all') => reloadLog(count)"
       @refresh-commit-log="() => reloadLog()"
       @fix-commit="openCommitFix"
+      @add-tag="openTagCreate"
     />
 
     <!-- Stash -->
@@ -120,6 +122,15 @@
       @close="fixingEntry = null"
       @saved="handleFixSaved"
     />
+
+    <!-- 在指定提交上打 Tag 弹窗（LOG Tab 行内入口） -->
+    <TagCommitDialog
+      v-if="taggingEntry"
+      :i18n="i18n"
+      :target="tagDialogTarget"
+      @create="handleTagCreate"
+      @close="taggingEntry = null"
+    />
   </div>
 </template>
 
@@ -130,7 +141,7 @@ import type {
   CommitLogEntry,
   GitProject,
 } from "../../types"
-import { ref, watch } from "vue"
+import { computed, ref, watch } from "vue"
 import { checkCommitRule } from "../../commitRuleChecker"
 import { useCardData } from "../../composables/useCardData"
 import { useCardServices } from "../../composables/useCardServices"
@@ -144,6 +155,7 @@ import CommitFixDialog from "../common/CommitFixDialog.vue"
 import ConflictSection from "./ConflictSection.vue"
 import OutputPanel from "./OutputPanel.vue"
 import StashSection from "./StashSection.vue"
+import TagCommitDialog from "../common/TagCommitDialog.vue"
 import TagPanel from "./TagPanel.vue"
 import WorkingTreePanel from "./WorkingTreePanel.vue"
 
@@ -168,6 +180,7 @@ const {
   stashList,
   tags,
   tagsLoading,
+  tagCommitMap,
   conflicts,
   fileDiffs,
   mdFiles,
@@ -198,6 +211,41 @@ function openCommitFix(entry: CommitLogEntry) {
 function handleFixSaved() {
   fixingEntry.value = null
   void reloadLog()
+}
+
+/** 当前正在打 Tag 的提交条目（null = 未打开打 Tag 弹窗） */
+const taggingEntry = ref<CommitLogEntry | null>(null)
+
+/** 打 Tag 弹窗目标（含该提交已命中的 Tag，来自 tagCommitMap 短 hash 匹配） */
+const tagDialogTarget = computed(() => {
+  const entry = taggingEntry.value
+  if (!entry) {
+    return {
+      projectName: props.project.name,
+      hash: "",
+      message: "",
+      existingTags: [],
+    }
+  }
+  return {
+    projectName: props.project.name,
+    hash: entry.hash,
+    message: entry.message,
+    existingTags: tagCommitMap.value.get(entry.hash) ?? [],
+  }
+})
+
+/** LOG Tab 点击打 Tag 按钮：打开打 Tag 弹窗 */
+function openTagCreate(entry: CommitLogEntry) {
+  taggingEntry.value = entry
+}
+
+/** 弹窗确认打 Tag：在指定 commit 上创建（失败由统一 toast 提示），成功后关闭并重载 Tag 数据 */
+function handleTagCreate(name: string, message?: string) {
+  const entry = taggingEntry.value
+  if (!entry) return
+  ops.handleCreateTag(props.project.id, name, message, entry.hash)
+  taggingEntry.value = null
 }
 
 // 切换回 worktree 时自动刷新工作区（父层数据）；切到 log/stash/tag 时懒加载卡内详情

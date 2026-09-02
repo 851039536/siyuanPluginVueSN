@@ -46,7 +46,7 @@
                 <div class="sv-unsupported-icon">
                   <IconWrapper
                     name="warning"
-                    :size="16"
+                    :size="32"
                   />
                 </div>
                 <!-- 不支持提示文案 -->
@@ -165,7 +165,7 @@
                   <div class="sv-empty-icon">
                     <IconWrapper
                       name="search"
-                      :size="16"
+                      :size="40"
                     />
                   </div>
                   <!-- 空状态文案（区分全局/单工具） -->

@@ -17,8 +17,7 @@
         :class="{ active: currentId === null }"
         @click="handleSelect(null)"
       >
-        <!-- 未分类选项文案 -->
-        未分类
+        <span class="category-assign-label"><!-- 未分类选项文案 -->未分类</span>
       </button>
       <!-- 自定义分类选项列表 -->
       <button
@@ -28,7 +27,7 @@
         :class="{ active: currentId === cat.id }"
         @click="handleSelect(cat.id)"
       >
-        {{ cat.name }}
+        <span class="category-assign-label">{{ cat.name }}</span>
       </button>
       <!-- 空分类提示 -->
       <div

@@ -271,8 +271,8 @@ const handleSelectFeature = (id: string) => {
 // 分类分配弹出菜单
 // ============================================================
 
-// 菜单尺寸估算值（用于视口边界钳制）
-const MENU_WIDTH = 180
+// 菜单尺寸上限（与 .category-assign-menu 的 max-width 对齐，用于视口边界钳制）
+const MENU_WIDTH = 240
 const MENU_ESTIMATED_HEIGHT = 180
 
 const assignMenu = reactive({

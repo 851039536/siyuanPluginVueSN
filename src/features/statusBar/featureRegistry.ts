@@ -11,8 +11,6 @@ import { emitCustomEvent } from "@/utils/eventBus"
 // ============================================================
 
 export interface FeatureRegistryEntry extends FeatureDrawerItem {
-  // 监控项标志：进入「监控」Tab，不参与自定义分类与功能开关
-  monitor?: boolean
   // 状态栏快捷项，缺省则不在状态栏显示
   shortcut?: { icon: string, itemClass: string }
   // 点击（抽屉选中或快捷点击）触发的动作（监控项无动作）
@@ -27,7 +25,7 @@ export interface FeatureRegistryEntry extends FeatureDrawerItem {
 type I18nShard = Record<string, string>
 
 /** 读取插件的 i18n 分片（嵌套命名空间），缺失时返回空对象 */
-export function getI18nShard(plugin: Plugin | undefined, name: string): I18nShard {
+function getI18nShard(plugin: Plugin | undefined, name: string): I18nShard {
   return ((plugin?.i18n as unknown as Record<string, I18nShard>)?.[name]) ?? {}
 }
 

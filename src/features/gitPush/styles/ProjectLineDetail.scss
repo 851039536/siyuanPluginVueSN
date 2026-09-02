@@ -109,6 +109,38 @@
   }
 }
 
+// 刷新按钮（与关闭按钮同视觉模式，紧贴其左；刷新中图标 gp-spin 旋转 + 禁用）
+.pld-refresh {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  margin-right: 2px;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+  background: transparent;
+  border: none;
+  border-radius: $radius-sm;
+  cursor: pointer;
+  font-size: $font-size-sm;
+
+  &:hover:not(:disabled) {
+    opacity: 1;
+    background: var(--b3-theme-primary-lightest);
+    color: var(--b3-theme-primary);
+  }
+
+  &:focus {
+    @include focus-ring;
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+}
+
 // ── Tab 切换栏 ──
 .pld-tabs {
   display: flex;

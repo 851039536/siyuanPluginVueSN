@@ -23,6 +23,18 @@
               <span class="pld-total-value">{{ totalLines?.toLocaleString() ?? "—" }}</span>
             </span>
           </div>
+          <!-- 刷新按钮：重抓该项目行数数据（刷新中旋转禁用） -->
+          <button
+            class="pld-refresh"
+            :title="i18n.lineDetailRefreshHint"
+            :disabled="refreshing"
+            @click="refreshProject(projectId)"
+          >
+            <Icon
+              icon="mdi:refresh"
+              :class="{ 'gp-spin': refreshing }"
+            />
+          </button>
           <button
             class="pld-close"
             :title="i18n.close"
@@ -207,6 +219,10 @@ const props = defineProps<{
   getFileLines?: (projectId: string) => Map<string, number | null>
   /** 扩展名排除过滤（与项目排行一致，保证明细与排行口径统一） */
   extensions: string[]
+  /** 单项目行数刷新（重抓该项目 numstat + 存量行数，由父级 composable 处理） */
+  refreshProject: (projectId: string) => void
+  /** 刷新进行中（按钮禁用 + 图标旋转） */
+  refreshing: boolean
 }>()
 
 const emit = defineEmits<{ close: [] }>()

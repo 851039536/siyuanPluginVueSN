@@ -539,6 +539,7 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
   position: fixed;
   z-index: 10000;
   min-width: 160px;
+  max-width: 240px; // 防止长分类名撑宽菜单溢出视口（与 openAssignMenu 的 MENU_WIDTH 钳制对齐）
   max-height: 220px;
   overflow-y: auto;
   padding: $spacing-1;
@@ -557,7 +558,6 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
     font-size: $font-size-xs;
     cursor: pointer;
     text-align: left;
-    white-space: nowrap;
 
     &:hover {
       background: var(--b3-theme-surface-lighter);
@@ -567,6 +567,14 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
       background: var(--b3-theme-primary-lightest);
       color: var(--b3-theme-primary);
     }
+  }
+
+  // 长分类名截断显示（nowrap + ellipsis 由 label 层承担）
+  .category-assign-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .category-assign-empty {

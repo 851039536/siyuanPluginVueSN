@@ -12,6 +12,7 @@ import {
   reactive,
 } from "vue"
 import { sql } from "@/api"
+import { TimerRegistry } from "@/utils/timerRegistry"
 import {
   DEFAULT_TOTAL_MEMORY_GB,
   INITIAL_DELAY_MS,
@@ -63,8 +64,9 @@ export function useStatusBar() {
     yesterdayModified: 0,
   })
 
-  let intervalIds: ReturnType<typeof setInterval>[] = []
-  let timeoutId: ReturnType<typeof setTimeout> | null = null
+  // 定时器统一托管（TimerRegistry），clearAll 同时覆盖启动延迟 timeout 与周期 interval
+  const timerRegistry = new TimerRegistry()
+  let started = false
   let lastCPU: NodeJS.CpuUsage | null = null
   let lastTime: number | null = null
   let lastMemPercent = -1
@@ -216,30 +218,28 @@ export function useStatusBar() {
   }
 
   function start() {
-    if (intervalIds.length) return
+    if (started) return
+    started = true
     updateStats()
     fetchStatistics()
-    intervalIds = [
-      setInterval(updateStats, MONITOR_INTERVAL_MS),
-      setInterval(fetchStatistics, STATISTICS_INTERVAL_MS),
-    ]
+    timerRegistry.setInterval(updateStats, MONITOR_INTERVAL_MS)
+    timerRegistry.setInterval(fetchStatistics, STATISTICS_INTERVAL_MS)
   }
 
   function stop() {
-    intervalIds.forEach(clearInterval)
-    intervalIds = []
+    timerRegistry.clearAll()
+    started = false
   }
 
   onMounted(() => {
-    timeoutId = setTimeout(() => {
+    timerRegistry.setTimeout(() => {
       state.showMonitor = true
       start()
     }, INITIAL_DELAY_MS)
   })
 
   onUnmounted(() => {
-    if (timeoutId) clearTimeout(timeoutId)
-    stop()
+    timerRegistry.clearAll()
   })
 
   return {

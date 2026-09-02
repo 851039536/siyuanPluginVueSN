@@ -12,10 +12,12 @@
  */
 
 import type { ResourceLevel } from "../types/index"
+import type { TimerHandle } from "@/utils/timerRegistry"
 import {
   computed,
   reactive,
 } from "vue"
+import { TimerRegistry } from "@/utils/timerRegistry"
 
 // ============================================================
 // 类型
@@ -51,7 +53,9 @@ export interface TaskHandle {
 // ============================================================
 
 const tasks = reactive<Map<string, StatusBarTaskInfo>>(new Map())
-const clearTimers = new Map<string, ReturnType<typeof setTimeout>>()
+// 定时器统一托管（TimerRegistry）：3s/5s 自清定时器随 clear 句柄管理，无游离句柄
+const timerRegistry = new TimerRegistry()
+const clearTimers = new Map<string, TimerHandle>()
 const AUTO_CLEAR_MS = 5000
 const FAIL_CLEAR_MS = 3000
 
@@ -84,7 +88,7 @@ export function useStatusBarTask(taskId: string, icon: string): TaskHandle {
   const cancelTimer = () => {
     const t = clearTimers.get(taskId)
     if (t) {
-      clearTimeout(t)
+      timerRegistry.clear(t)
       clearTimers.delete(taskId)
     }
   }
@@ -101,7 +105,7 @@ export function useStatusBarTask(taskId: string, icon: string): TaskHandle {
     info.display = label
     info.tooltip = tooltip || label
     info.level = level
-    clearTimers.set(taskId, setTimeout(remove, delayMs))
+    clearTimers.set(taskId, timerRegistry.setTimeout(remove, delayMs))
   }
 
   return {

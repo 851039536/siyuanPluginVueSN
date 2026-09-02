@@ -23,23 +23,17 @@
     </div>
 
     <div class="panel-content">
-      <!-- 功能开关区 -->
-      <!-- 开关标签："书签标记" -->
-      <label class="setting-label">
-        <IconWrapper
-          name="bookmarkMarker"
-          :size="14"
+      <!-- 功能开关区：面板标题已标识功能名，开关行不再重复"书签标记"文案 -->
+      <div class="toggle-row">
+        <SiSwitch
+          v-model="settings.enableBookmarkMarker.value"
+          @change="handleToggleChange"
         />
-        {{ i18n.enableBookmarkMarker }}
-      </label>
-      <SiSwitch
-        v-model="settings.enableBookmarkMarker.value"
-        @change="handleToggleChange"
-      />
-      <!-- 功能描述："根据文档书签内容在文件树中显示颜色标记" -->
-      <p class="toggle-description">
-        {{ i18n.bookmarkMarkerDescription }}
-      </p>
+        <!-- 功能描述："根据文档书签内容在文件树中显示颜色标记" -->
+        <p class="toggle-description">
+          {{ i18n.bookmarkMarkerDescription }}
+        </p>
+      </div>
 
       <!-- 标记规则设置区 -->
       <template v-if="settings.enableBookmarkMarker.value">

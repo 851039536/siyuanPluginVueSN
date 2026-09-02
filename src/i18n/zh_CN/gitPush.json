@@ -244,6 +244,8 @@
     "abortMergeTitle": "中止合并",
     "abortMergeConfirm": "确定中止合并操作？所有合并进度将丢失。",
     "abortMergeFailed": "中止合并失败",
+    "resolveConflictTitle": "解决冲突文件",
+    "resolveConflictConfirm": "将用 {1} 侧版本覆盖 \"{0}\" 的冲突内容，另一侧的改动将丢失，是否继续？",
     "resolveConflictFailed": "解决冲突失败",
     "commitSuccess": "提交成功",
     "commitFailed": "提交失败: {0}",

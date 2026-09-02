@@ -4,7 +4,7 @@ import { ref } from "vue"
 import { showMessage } from "siyuan"
 import type { CardDataDomain, GitProject, GitPushManager } from "../types"
 import type { RunBatch } from "./useBatchProgress"
-import { findProject, resolveValidPath } from "../utils"
+import { findProject, resolveValidPath, acquireFlag, releaseFlag } from "../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
 
 export function useRefreshOps(deps: {
@@ -27,23 +27,24 @@ export function useRefreshOps(deps: {
   } = deps
 
   const refreshing = ref<string | null>(null)
-  /** FETCH 操作加载中 id → true */
-  const fetching = ref<Record<string, boolean>>({})
-  /** 远程状态刷新加载中 id → true */
-  const remoteStatusLoading = ref<Record<string, boolean>>({})
-  /** 工作区刷新加载中 id → true */
-  const refreshingWorkingTree = ref<Record<string, boolean>>({})
+  /** FETCH 操作加载中 id → 计数 */
+  const fetching = ref<Record<string, number>>({})
+  /** 远程状态刷新加载中 id → 计数 */
+  const remoteStatusLoading = ref<Record<string, number>>({})
+  /** 工作区刷新加载中 id → 计数 */
+  const refreshingWorkingTree = ref<Record<string, number>>({})
 
-  /** 按项目 id 维护 Record 型 loading 状态（开始置 true，finally 删除 + 浅拷贝触发响应式）。
-   * 统一 refreshingWorkingTree / remoteStatusLoading / fetching 三处的重复模式 */
+  /** 按项目 id 维护 Record 型 loading 状态（引用计数 + finally 浅拷贝触发响应式）。
+   * 计数防止并发同类操作时先完成者提前清除标志；统一 refreshingWorkingTree / remoteStatusLoading / fetching 三处重复模式 */
   async function withRecordLoading(
-    loadingRef: Ref<Record<string, boolean>>, id: string, fn: () => Promise<void>,
+    loadingRef: Ref<Record<string, number>>, id: string, fn: () => Promise<void>,
   ): Promise<void> {
-    loadingRef.value = { ...loadingRef.value, [id]: true }
+    acquireFlag(loadingRef.value, id)
+    loadingRef.value = { ...loadingRef.value }
     try {
       await fn()
     } finally {
-      delete loadingRef.value[id]
+      releaseFlag(loadingRef.value, id)
       loadingRef.value = { ...loadingRef.value }
     }
   }
@@ -51,6 +52,8 @@ export function useRefreshOps(deps: {
   async function handleRefresh(id: string) {
     const project = findProject(projects, id)
     if (!project) return
+    // 重入守卫：连点"全部刷新"会并发执行且先结束者 finally 置 null 使旋转指示提前消失
+    if (refreshing.value) return
     refreshing.value = id
     try {
       await runBatchWithProgress([project], tf("refreshingLabel"), async (p) => {

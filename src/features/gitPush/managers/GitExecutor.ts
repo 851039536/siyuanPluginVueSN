@@ -4,6 +4,13 @@ import { getNodeProcessModules } from "@/utils/nodeModules"
 import type { GitPushStorage } from "../types/storage"
 import { clampGitConcurrency } from "../types/storage"
 
+/** 等待队列条目（本地池/网络池共用结构） */
+interface WaitQueueItem {
+  run: () => void
+  reject: (e: Error) => void
+  signal?: AbortSignal
+}
+
 export class GitExecutor {
   private storage: GitPushStorage
   /** 当前正在执行的 git 子进程数 */
@@ -11,13 +18,13 @@ export class GitExecutor {
   /** 最大并发 git 子进程数（从存储加载，可通过 setGitConcurrency 修改） */
   private gitMaxConcurrent = 3
   /** 等待队列（关联 signal + reject 以便 abort/destroy 时精准拒绝） */
-  private gitWaitQueue: { run: () => void, reject: (e: Error) => void, signal?: AbortSignal }[] = []
+  private gitWaitQueue: WaitQueueItem[] = []
   /** 识别网络 IO 类 git 命令，自动路由到独立并发池 */
   private static readonly NETWORK_COMMANDS = new Set(["fetch", "push", "pull", "clone", "ls-remote"])
   /** 网络命令当前并发（动态跟随 gitMaxConcurrent；双池分离使本地命令洪流不挤占 push/fetch 通道） */
   private networkRunning = 0
   /** 网络命令等待队列 */
-  private networkWaitQueue: { run: () => void, reject: (e: Error) => void, signal?: AbortSignal }[] = []
+  private networkWaitQueue: WaitQueueItem[] = []
   /** 记录当前正在执行的子进程引用（用于取消操作时 kill） */
   private activeProcesses: Set<ChildProcess> = new Set()
   /** 项目 push/pull 的 AbortController 数组（同项目多操作不覆盖） */
@@ -172,7 +179,7 @@ export class GitExecutor {
             maxBuffer: GitExecutor.MAX_BUFFER,
             ...(options?.env ? { env: { ...process.env, ...options.env } } : {}),
           },
-          (error: Error & { code?: number } | null, stdout: string, stderr: string) => {
+          (error: (Error & { code?: number | string, killed?: boolean }) | null, stdout: string, stderr: string) => {
             if (isNetwork) {
               this.networkRunning--
             } else {
@@ -188,7 +195,13 @@ export class GitExecutor {
 
             if (killed) { reject(new Error("操作已取消")); return }
             if (error) {
-              reject(new Error(stderr || error.message))
+              // 错误信息自带超时/退出码标识：execFile 超时以 SIGTERM 终止（killed=true）时 stderr 可能为空，
+              // 否则用户只能看到通用 "Command failed" 文案，无从得知是超时
+              // "timed out" 字样供 RemoteOps 网络错误重试正则识别（超时视为瞬态网络错误）
+              const reason = error.killed
+                ? `git 命令超时（timed out, ${timeoutMs}ms，已终止子进程）`
+                : `git 命令执行失败（exit code: ${error.code ?? "未知"}）`
+              reject(new Error(stderr ? `${reason}\n${stderr}` : `${reason}: ${error.message}`))
             } else {
               resolve(stdout.replace(/[\r\n]+$/, ""))
             }
@@ -206,7 +219,7 @@ export class GitExecutor {
           killed = true
           try { child.kill("SIGTERM") } catch {}
           // 过滤并 reject 与当前 signal 关联的排队项，防止僵尸 Promise
-          const removeFromQueue = (queue: typeof this.gitWaitQueue): typeof this.gitWaitQueue => {
+          const removeFromQueue = (queue: WaitQueueItem[]): WaitQueueItem[] => {
             const remaining: typeof this.gitWaitQueue = []
             for (const item of queue) {
               if (item.signal === signal) {

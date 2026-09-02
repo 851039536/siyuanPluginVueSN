@@ -29,11 +29,13 @@ import type {
 } from "./types/storage"
 import type { AiApiConfig } from "@/utils/aiApi"
 import { getApiConfigFromPlugin } from "@/utils/aiApi"
+import { getNodeFsPathOs } from "@/utils/nodeModules"
 import { createVueDockApp } from "@/utils/vueAppHelper"
 import GitPushPanel from "./index.vue"
 import { CommitMsgGenerator } from "./managers/CommitMsgGenerator"
 import { GitExecutor } from "./managers/GitExecutor"
 import { ProjectStore } from "./managers/ProjectStore"
+import { ProjectWriteLock } from "./managers/ProjectWriteLock"
 import { RemoteOps } from "./managers/RemoteOps"
 import { RepoOps } from "./managers/RepoOps"
 import { ReportOps } from "./managers/ReportOps"
@@ -61,6 +63,8 @@ export class GitPushManager {
   private repoOps: RepoOps
   private commitMsgGen: CommitMsgGenerator
   private reportOps: ReportOps
+  /** 项目级写锁：git 写操作（本地写 + push/pull）按项目路径串行，防 index.lock 竞争 */
+  private writeLock = new ProjectWriteLock()
   /** 独立窗口页签 Vue app 与容器（addTab 承载） */
   private tabApp: App | null = null
   private tabContainer: HTMLElement | null = null
@@ -70,7 +74,7 @@ export class GitPushManager {
     this.storage = new GitPushStorage(plugin)
     this.executor = new GitExecutor(this.storage)
     this.store = new ProjectStore(this.storage, this.executor)
-    this.remoteOps = new RemoteOps(this.executor, this.store, this.storage)
+    this.remoteOps = new RemoteOps(this.executor, this.store, this.storage, this.writeLock)
     this.worktreeOps = new WorktreeOps(this.executor)
     this.repoOps = new RepoOps(this.executor)
     this.commitMsgGen = new CommitMsgGenerator(plugin, this.executor, this.worktreeOps, this.storage)
@@ -97,6 +101,7 @@ export class GitPushManager {
   }
 
   destroy() {
+    this.writeLock.destroy()
     this.executor.destroy()
     this.unmountTabPanel()
   }
@@ -213,6 +218,17 @@ export class GitPushManager {
   invalidateProjectCache(): void { return this.store.invalidateProjectCache() }
 
   async addProject(name: string, path: string, categoryId?: string, tags?: string[], extras?: ProjectPathExtras): Promise<GitProject> {
+    // 入库前路径校验：存在性 + 是目录 + 是 git 仓库（此前坏路径项目可静默入库，卡片呈"正常空态"假象）
+    const nodeModules = getNodeFsPathOs()
+    if (nodeModules) {
+      const { fs } = nodeModules
+      let isDir = false
+      try { isDir = fs.existsSync(path) && fs.statSync(path).isDirectory() } catch { /* 视同不存在 */ }
+      if (!isDir) throw new Error(`路径不存在或不是目录：${path}`)
+    }
+    if (!(await this.worktreeOps.checkIsGitRepo(path))) {
+      throw new Error(`不是 Git 仓库（缺少 .git）：${path}`)
+    }
     return this.store.addProject(name, path, categoryId, tags, extras)
   }
 
@@ -309,7 +325,7 @@ export class GitPushManager {
     return this.remoteOps.checkCanPushToCloud(id)
   }
 
-  // ── 工作区本地操作（WorktreeOps）──
+  // ── 工作区本地操作（WorktreeOps；写操作经项目级写锁串行，防 index.lock 竞争）──
 
   async getWorkingTreeStatus(projectPath: string, opts?: { branch?: string }): Promise<WorkingTreeInfo> {
     return this.worktreeOps.getWorkingTreeStatus(projectPath, opts)
@@ -319,31 +335,51 @@ export class GitPushManager {
     return this.worktreeOps.getFileDiff(projectPath, file, staged)
   }
 
-  async stageFile(projectPath: string, file: string): Promise<void> { return this.worktreeOps.stageFile(projectPath, file) }
-
-  async stageAll(projectPath: string): Promise<void> { return this.worktreeOps.stageAll(projectPath) }
-
-  async unstageFile(projectPath: string, file: string): Promise<void> { return this.worktreeOps.unstageFile(projectPath, file) }
-
-  async unstageAll(projectPath: string): Promise<void> { return this.worktreeOps.unstageAll(projectPath) }
-
-  async discardFile(projectPath: string, file: string, staged: boolean, status: string): Promise<void> {
-    return this.worktreeOps.discardFile(projectPath, file, staged, status)
+  async stageFile(projectPath: string, file: string): Promise<void> {
+    return this.writeLock.runExclusive(projectPath, () => this.worktreeOps.stageFile(projectPath, file))
   }
 
-  async commit(projectPath: string, message: string): Promise<string> { return this.worktreeOps.commit(projectPath, message) }
+  async stageAll(projectPath: string): Promise<void> {
+    return this.writeLock.runExclusive(projectPath, () => this.worktreeOps.stageAll(projectPath))
+  }
 
-  async switchBranch(projectPath: string, branch: string): Promise<string> { return this.worktreeOps.switchBranch(projectPath, branch) }
+  async unstageFile(projectPath: string, file: string): Promise<void> {
+    return this.writeLock.runExclusive(projectPath, () => this.worktreeOps.unstageFile(projectPath, file))
+  }
 
-  async stashSave(projectPath: string, message?: string): Promise<void> { return this.worktreeOps.stashSave(projectPath, message) }
+  async unstageAll(projectPath: string): Promise<void> {
+    return this.writeLock.runExclusive(projectPath, () => this.worktreeOps.unstageAll(projectPath))
+  }
+
+  async discardFile(projectPath: string, file: string, staged: boolean, status: string): Promise<void> {
+    return this.writeLock.runExclusive(projectPath, () => this.worktreeOps.discardFile(projectPath, file, staged, status))
+  }
+
+  async commit(projectPath: string, message: string): Promise<string> {
+    return this.writeLock.runExclusive(projectPath, () => this.worktreeOps.commit(projectPath, message))
+  }
+
+  async switchBranch(projectPath: string, branch: string): Promise<string> {
+    return this.writeLock.runExclusive(projectPath, () => this.worktreeOps.switchBranch(projectPath, branch))
+  }
+
+  async stashSave(projectPath: string, message?: string): Promise<void> {
+    return this.writeLock.runExclusive(projectPath, () => this.worktreeOps.stashSave(projectPath, message))
+  }
 
   async stashList(projectPath: string): Promise<StashEntry[]> { return this.worktreeOps.stashList(projectPath) }
 
-  async stashPop(projectPath: string, index = 0): Promise<void> { return this.worktreeOps.stashPop(projectPath, index) }
+  async stashPop(projectPath: string, index = 0): Promise<void> {
+    return this.writeLock.runExclusive(projectPath, () => this.worktreeOps.stashPop(projectPath, index))
+  }
 
-  async stashApply(projectPath: string, index = 0): Promise<void> { return this.worktreeOps.stashApply(projectPath, index) }
+  async stashApply(projectPath: string, index = 0): Promise<void> {
+    return this.writeLock.runExclusive(projectPath, () => this.worktreeOps.stashApply(projectPath, index))
+  }
 
-  async stashDrop(projectPath: string, index = 0): Promise<void> { return this.worktreeOps.stashDrop(projectPath, index) }
+  async stashDrop(projectPath: string, index = 0): Promise<void> {
+    return this.writeLock.runExclusive(projectPath, () => this.worktreeOps.stashDrop(projectPath, index))
+  }
 
   async getCommitLog(projectPath: string, count: number | "all" = 30): Promise<CommitLogEntry[]> {
     return this.worktreeOps.getCommitLog(projectPath, count)
@@ -358,31 +394,52 @@ export class GitPushManager {
   async checkIsGitRepo(projectPath: string): Promise<boolean> { return this.worktreeOps.checkIsGitRepo(projectPath) }
 
   async rewriteCommitMessage(projectPath: string, hash: string, message: string, preserveDate = false): Promise<string> {
-    return this.worktreeOps.rewriteCommitMessage(projectPath, hash, message, preserveDate)
+    const result = await this.writeLock.runExclusive(projectPath, () =>
+      this.worktreeOps.rewriteCommitMessage(projectPath, hash, message, preserveDate),
+    )
+    // 改写后失效推送状态缓存（D6：与 commit 路径语义一致；调用方仅持有 path，按 path 反查项目 id）
+    void this.invalidatePushStatusCacheByPath(projectPath)
+    return result
   }
 
-  // ── 仓库元操作（RepoOps）──
+  /** 按项目路径反查并失效推送状态缓存（rewriteCommitMessage 等只有 path 的调用方使用） */
+  private async invalidatePushStatusCacheByPath(projectPath: string): Promise<void> {
+    try {
+      const projects = await this.store.getProjects()
+      for (const p of projects) {
+        if (p.path === projectPath || p.localPaths?.includes(projectPath)) {
+          this.remoteOps.invalidatePushStatusCache(p.id)
+        }
+      }
+    } catch { /* 缓存失效失败不影响主流程 */ }
+  }
+
+  // ── 仓库元操作（RepoOps；写操作经项目级写锁串行）──
 
   async getTags(projectPath: string, limit = 10): Promise<TagInfo[]> { return this.repoOps.getTags(projectPath, limit) }
 
   async createTag(projectPath: string, name: string, message?: string): Promise<void> {
-    return this.repoOps.createTag(projectPath, name, message)
+    return this.writeLock.runExclusive(projectPath, () => this.repoOps.createTag(projectPath, name, message))
   }
 
-  async deleteTag(projectPath: string, name: string): Promise<void> { return this.repoOps.deleteTag(projectPath, name) }
+  async deleteTag(projectPath: string, name: string): Promise<void> {
+    return this.writeLock.runExclusive(projectPath, () => this.repoOps.deleteTag(projectPath, name))
+  }
 
   async pushTag(projectPath: string, remoteName: string, tag: string): Promise<string> {
-    return this.repoOps.pushTag(projectPath, remoteName, tag)
+    return this.writeLock.runExclusive(projectPath, () => this.repoOps.pushTag(projectPath, remoteName, tag))
   }
 
   async hasConflict(projectPath: string): Promise<boolean> { return this.repoOps.hasConflict(projectPath) }
 
   async getConflictFiles(projectPath: string): Promise<ConflictFile[]> { return this.repoOps.getConflictFiles(projectPath) }
 
-  async abortMerge(projectPath: string): Promise<void> { return this.repoOps.abortMerge(projectPath) }
+  async abortMerge(projectPath: string): Promise<void> {
+    return this.writeLock.runExclusive(projectPath, () => this.repoOps.abortMerge(projectPath))
+  }
 
   async resolveConflictFile(projectPath: string, file: string, strategy: "theirs" | "ours"): Promise<void> {
-    return this.repoOps.resolveConflictFile(projectPath, file, strategy)
+    return this.writeLock.runExclusive(projectPath, () => this.repoOps.resolveConflictFile(projectPath, file, strategy))
   }
 
   async addRemote(projectPath: string, name: string, url: string): Promise<void> {

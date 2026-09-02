@@ -34,19 +34,24 @@ export interface CardRecordData {
   pushStatuses: Ref<Record<string, PushStatusInfo>>
   workingTrees: Ref<Record<string, WorkingTreeInfo>>
   committing: Ref<Record<string, boolean>>
-  stashLoading: Ref<Record<string, boolean>>
+  /** 引用计数（>0 视为 loading），防并发同类操作先完成者提前清除标志 */
+  stashLoading: Ref<Record<string, number>>
   pushOutputs: Ref<Record<string, PushOutputEntry[]>>
   pullOutputs: Ref<Record<string, PushOutputEntry[]>>
   commitOutputs: Ref<Record<string, string>>
   generatingMsgs: Ref<Record<string, { generating: boolean, text: string }>>
-  gitOpLoading: Ref<Record<string, boolean>>
+  /** 引用计数（>0 视为 loading） */
+  gitOpLoading: Ref<Record<string, number>>
   genStashDescLoading: Ref<Record<string, boolean>>
   /** 全局单值（非按 id）：外部生成的 stash 描述文案 */
   generatedStashMsg: Ref<string>
   tagPushLoading: Ref<Record<string, string>>
-  fetching: Ref<Record<string, boolean>>
-  remoteStatusLoading: Ref<Record<string, boolean>>
-  refreshingWorkingTree: Ref<Record<string, boolean>>
+  /** 引用计数（>0 视为 loading） */
+  fetching: Ref<Record<string, number>>
+  /** 引用计数（>0 视为 loading） */
+  remoteStatusLoading: Ref<Record<string, number>>
+  /** 引用计数（>0 视为 loading） */
+  refreshingWorkingTree: Ref<Record<string, number>>
   /** 当前"全部刷新"的项目 id（仅该卡片旋转图标） */
   refreshing: Ref<string | null>
 }

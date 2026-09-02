@@ -4088,7 +4088,6 @@
     "savePath": "Save path"
   },
   "websiteNavigation": {
-    "title": "Website Navigation",
     "panelTitle": "Website Navigation",
     "description": "Description",
     "addWebsite": "Add Website",
@@ -4106,7 +4105,6 @@
     "save": "Save",
     "cancel": "Cancel",
     "manageCategories": "Manage Categories",
-    "newCategory": "New Category",
     "categoryName": "Category Name",
     "add": "Add",
     "openUrl": "Open Website",
@@ -4115,8 +4113,6 @@
     "notFound": "No matching websites found",
     "categoryExists": "Category already exists",
     "categoryNotEmpty": "Cannot delete category with existing websites",
-    "loadFailed": "Load failed",
-    "saveSuccess": "Saved successfully",
     "createSuccess": "Website added",
     "updateSuccess": "Website updated",
     "deleteSuccess": "Website deleted",

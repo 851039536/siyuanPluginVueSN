@@ -9,7 +9,6 @@ import WebsiteNavigationPanel from "../index.vue"
 
 export interface I18n {
   panelTitle?: string
-  title?: string
   addWebsite?: string
   editWebsite?: string
   deleteWebsite?: string
@@ -26,7 +25,6 @@ export interface I18n {
   save?: string
   cancel?: string
   manageCategories?: string
-  newCategory?: string
   categoryName?: string
   add?: string
   openUrl?: string
@@ -36,8 +34,6 @@ export interface I18n {
   categoryExists?: string
   categoryNotEmpty?: string
   defaultBadge?: string
-  loadFailed?: string
-  saveSuccess?: string
   createSuccess?: string
   updateSuccess?: string
   deleteSuccess?: string

@@ -430,6 +430,10 @@ export class GitPushManager {
     return this.writeLock.runExclusive(projectPath, () => this.repoOps.pushTag(projectPath, remoteName, tag))
   }
 
+  async getRemoteTags(projectPath: string, remoteName: string): Promise<string[]> {
+    return this.repoOps.getRemoteTags(projectPath, remoteName)
+  }
+
   async hasConflict(projectPath: string): Promise<boolean> { return this.repoOps.hasConflict(projectPath) }
 
   async getConflictFiles(projectPath: string): Promise<ConflictFile[]> { return this.repoOps.getConflictFiles(projectPath) }

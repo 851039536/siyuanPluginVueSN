@@ -25,7 +25,6 @@ export class TextDiffManager {
       height: "80vh",
       getCloseHandler: () => this.close,
       buildProps: () => ({
-        onClose: this.close,
         i18n: this.plugin.i18n,
         plugin: this.plugin,
       }),

@@ -2,7 +2,11 @@
   文本对比功能主面板 — 并排输入 + diff 查看器，支持拖拽导入与主题/模式/字号切换
 -->
 <template>
-  <div class="text-diff-container">
+  <!-- 字号变量仅作用于面板容器：不写 :root，避免弹窗级设置泄漏全局 -->
+  <div
+    class="text-diff-container"
+    :style="{ '--diff-font-size': `${fontSize}px` }"
+  >
     <!-- 工具栏：显示模式 / 字号 / 主题 + 清空 / 交换 -->
     <div class="diff-toolbar">
       <div class="toolbar-left">
@@ -144,7 +148,6 @@ import InputPanel from "./components/InputPanel.vue"
 import "vue-diff/dist/index.css"
 
 const props = defineProps<{
-  onClose?: () => void
   i18n?: Record<string, any>
   plugin?: Plugin
 }>()
@@ -186,11 +189,6 @@ const themeOptions = computed(() => [
 // 国际化
 const $t = (key: string): string => textDiffI18n(props.i18n, key)
 
-// 设置字体大小（用户可调字号，写入全局 CSS 变量）
-const setFontSize = (size: number) => {
-  document.documentElement.style.setProperty("--diff-font-size", `${size}px`)
-}
-
 // 加载设置
 const loadSettings = async () => {
   if (!storage) return
@@ -199,7 +197,6 @@ const loadSettings = async () => {
     diffMode.value = settings.diffMode
     diffTheme.value = settings.theme
     fontSize.value = settings.fontSize
-    setFontSize(settings.fontSize)
   } catch (error) {
     console.error("加载设置失败:", error)
   }
@@ -232,7 +229,6 @@ const updateTheme = (theme: "light" | "dark") => {
 
 const updateFontSize = (size: number) => {
   fontSize.value = size
-  setFontSize(size)
   saveSettings()
 }
 
@@ -254,7 +250,6 @@ const swapTexts = () => {
 
 onMounted(() => {
   loadSettings()
-  setFontSize(fontSize.value)
 })
 </script>
 

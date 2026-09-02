@@ -144,6 +144,7 @@
     "tagOnCommitTitle": "在此提交上打 Tag",
     "tagOnCommitHash": "提交",
     "commitTagsLabel": "已有 Tag",
+    "pushAllRemotes": "全部远程",
     "noTags": "暂无 Tag",
     "conflictDetected": "检测到合并冲突",
     "keepOurs": "保留本地版本",

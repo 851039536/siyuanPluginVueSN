@@ -144,6 +144,7 @@
     "tagOnCommitTitle": "Tag This Commit",
     "tagOnCommitHash": "Commit",
     "commitTagsLabel": "Existing Tags",
+    "pushAllRemotes": "All Remotes",
     "noTags": "No Tags",
     "conflictDetected": "Merge conflict detected",
     "keepOurs": "Keep local version",

@@ -81,12 +81,43 @@
           v-if="t.date"
           class="gp-tag-date"
         >{{ t.date.slice(0, 10) }}</span>
-        <!-- 推送按钮：文案/提示“推送”，推送中显示旋转图标 -->
+        <!-- 推送按钮：文案/提示"推送"，推送中显示旋转图标；多远程时展开远程选择 -->
+        <template v-if="pushingTag === t.name">
+          <!-- 指定远程：只推该远程 -->
+          <button
+            v-for="r in remotes"
+            :key="r"
+            class="vp-btn vp-btn--ghost vp-btn--sm gp-tag-push-btn"
+            :title="`${i18n.push}: ${r}`"
+            @click="handlePushRemote(t.name, r)"
+          >
+            {{ r }}
+          </button>
+          <!-- 全部远程：推所有已配置远程 -->
+          <button
+            class="vp-btn vp-btn--ghost vp-btn--sm gp-tag-push-btn"
+            :title="i18n.pushAllRemotes"
+            @click="handlePushRemote(t.name)"
+          >
+            {{ i18n.pushAllRemotes }}
+          </button>
+          <button
+            class="vp-btn vp-btn--ghost vp-btn--sm"
+            :title="i18n.cancel"
+            @click="pushingTag = null"
+          >
+            <Icon
+              icon="mdi:close"
+              height="12"
+            />
+          </button>
+        </template>
         <button
+          v-else
           class="vp-btn vp-btn--ghost vp-btn--sm gp-tag-push-btn"
           :title="i18n.push"
           :disabled="pushLoaded === t.name"
-          @click="emit('push', t.name)"
+          @click="handlePushClick(t.name)"
         >
           <Icon
             v-if="pushLoaded === t.name"
@@ -98,8 +129,9 @@
             {{ i18n.push }}
           </template>
         </button>
-        <!-- 删除按钮提示：“删除” -->
+        <!-- 删除按钮提示：“删除”（展开远程选择时隐藏，避免行内拥挤） -->
         <button
+          v-if="pushingTag !== t.name"
           class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
           :title="i18n.delete"
           :disabled="loading"
@@ -131,16 +163,18 @@ import { Icon } from "@iconify/vue"
 import { ref } from "vue"
 import Input from "@/components/Input.vue"
 
-defineProps<{
+const props = defineProps<{
   tags: TagInfo[]
   loading?: boolean
   pushLoaded?: string
+  /** 已配置远程名列表；多于 1 个时推送按钮展开远程选择 */
+  remotes?: string[]
   i18n: Record<string, any>
 }>()
 
 const emit = defineEmits<{
   create: [name: string, message?: string]
-  push: [tag: string]
+  push: [tag: string, remote?: string]
   delete: [tag: string]
   refresh: []
 }>()
@@ -148,6 +182,8 @@ const emit = defineEmits<{
 const addingTag = ref(false)
 const newTagName = ref("")
 const newTagMsg = ref("")
+/** 当前展开远程选择的 tag 行（null = 未展开） */
+const pushingTag = ref<string | null>(null)
 
 function startAdd() {
   addingTag.value = true
@@ -160,5 +196,20 @@ function handleCreate() {
   if (!name) return
   emit("create", name, newTagMsg.value.trim() || undefined)
   addingTag.value = false
+}
+
+/** 点击推送：单远程直接推送，多远程展开远程选择 */
+function handlePushClick(tag: string) {
+  if (props.remotes && props.remotes.length > 1) {
+    pushingTag.value = tag
+    return
+  }
+  emit("push", tag)
+}
+
+/** 选择远程后推送（remote 为空 = 全部远程）并收起选择 */
+function handlePushRemote(tag: string, remote?: string) {
+  emit("push", tag, remote)
+  pushingTag.value = null
 }
 </script>

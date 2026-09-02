@@ -132,7 +132,7 @@
   max-height: 35vh;
 }
 
-// ==================== Panel Header（结果区 + InputPanel 头部共用）====================
+// ==================== Panel Header（InputPanel 头部共用）====================
 
 .panel-header {
   display: flex;
@@ -146,18 +146,6 @@
 
 .panel-title {
   @include m.codex-meta-label;
-  flex-shrink: 0;
-}
-
-// ==================== Divider ====================
-
-.divider {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: $spacing-px; // 3px 微间距，分隔条尽量细
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface-variant);
   flex-shrink: 0;
 }
 

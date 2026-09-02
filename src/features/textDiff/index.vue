@@ -101,17 +101,8 @@
         />
       </div>
 
-      <!-- 分割线 -->
-      <div class="divider">
-        <Icon icon="mdi:chevron-down" :width="14" :height="14" />
-      </div>
-
-      <!-- 差异结果 -->
+      <!-- 差异结果（与输入区留白分隔，不再叠加装饰性分隔条与内部标题条） -->
       <div class="result-section">
-        <div class="panel-header">
-          <!-- 差异结果标题（"差异结果"） -->
-          <span class="panel-title">{{ $t("diffResult") }}</span>
-        </div>
         <!-- 空状态：双文本均为空时提示（"请输入文本以查看差异"） -->
         <div v-if="!originalText && !modifiedText" class="empty-state">
           <Icon icon="mdi:file-compare-outline" :width="48" :height="48" />

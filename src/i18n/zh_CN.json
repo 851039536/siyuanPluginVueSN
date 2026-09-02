@@ -3834,7 +3834,6 @@
     "title": "文本对比工具",
     "original": "原文本",
     "modified": "修改后文本",
-    "diffResult": "差异结果",
     "chars": "字符",
     "clear": "清空",
     "swap": "交换",

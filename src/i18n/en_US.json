@@ -3834,7 +3834,6 @@
     "title": "Text Diff Tool",
     "original": "Original Text",
     "modified": "Modified Text",
-    "diffResult": "Diff Result",
     "chars": "characters",
     "clear": "Clear",
     "swap": "Swap",

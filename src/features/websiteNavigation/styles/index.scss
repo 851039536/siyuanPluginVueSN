@@ -1,370 +1,147 @@
-@use '@/variables.scss' as *;
+// websiteNavigation 共享基座：面板根容器 / 分隔线 / 空状态 / 弹窗基座 / 过渡
+// （组件专属样式见 PanelHeader.scss / FilterBar.scss / WebsiteCard.scss / CategoryManager.scss）
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
 
-// 无匹配全局 Token 的固定尺寸（Codex 规范：注释说明）
-$dot-size: 6px; // 分类圆点
-$color-option-size: 20px; // 颜色选择点
-$transition-fast: 0.12s; // 微交互动效
-
-.website-navigation-panel {
+.wn-panel {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  font-size: $font-size-xs;
-  padding: $spacing-4;
-  gap: $spacing-3;
+  // 紧凑留白：与 gitPush 面板一致，无对应尺寸 Token
+  padding: 5px 3px;
   overflow: hidden;
+  // 基准字号：未显式声明字号的文字继承内容级 12px
+  font-size: $font-size-xs;
 }
 
-.panel-header {
-  display: flex;
-  flex-shrink: 0;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: $spacing-3;
+// 头部与内容分隔线（对齐 gitPush .gp-divider）
+.wn-divider {
   border-bottom: 1px solid var(--b3-border-color);
-
-  .header-title {
-    display: flex;
-    align-items: center;
-    gap: $spacing-2;
-
-    h2 {
-      margin: 0;
-      font-size: $font-size-xs;
-      font-weight: $font-weight-semibold;
-    }
-
-    .entry-count {
-      font-size: $font-size-2xs;
-      color: var(--b3-theme-secondary);
-      background: var(--b3-theme-surface);
-      padding: $spacing-2px $spacing-2;
-      border-radius: $radius-base;
-    }
-  }
-
-  .header-actions {
-    display: flex;
-    gap: $spacing-2;
-  }
+  margin: 10px 0;
 }
 
-.filter-bar {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-  flex-shrink: 0;
-  margin-bottom: $spacing-2;
-
-  .search-icon {
-    flex-shrink: 0;
-    color: var(--b3-theme-secondary);
-  }
-
-  :deep(.si-input) {
-    flex: 1;
-    max-width: 100%;
-  }
-}
-
-.category-filter {
-  display: flex;
-  align-items: center;
-  gap: $spacing-1;
-  flex-shrink: 0;
-
-  .category-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: $spacing-1;
-    padding: $spacing-2px $spacing-2;
-    border-radius: $vp-radius;
-    font-size: $font-size-xs;
-    border: 1px solid var(--b3-border-color);
-    background: var(--b3-theme-background);
-    color: var(--b3-theme-on-background);
-    cursor: pointer;
-    transition: border-color $transition-fast, background $transition-fast, color $transition-fast;
-
-    &:hover {
-      border-color: var(--cat-color, var(--b3-theme-primary));
-    }
-
-    &.active {
-      background: color-mix(in srgb, var(--cat-color, var(--b3-theme-primary)) 15%, transparent);
-      border-color: var(--cat-color, var(--b3-theme-primary));
-      color: var(--cat-color, var(--b3-theme-primary));
-    }
-
-    .chip-dot {
-      width: $dot-size;
-      height: $dot-size;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-  }
-}
-
-.entries-list {
+// 条目列表（单列形态，细滚动条对齐 gitPush .gp-list）
+.wn-list {
   flex: 1;
-  overflow-y: auto;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  gap: 4px;
   min-height: 0;
+  overflow-y: auto;
+  padding-right: $spacing-1;
 
-  .entry-card {
-    background: var(--b3-theme-surface);
-    border: 1px solid var(--b3-border-color);
-    border-radius: $vp-radius;
-    padding: $spacing-3;
-    transition: border-color $transition-fast;
-
-    &:hover {
-      border-color: var(--b3-theme-primary);
-    }
-
-    .entry-main {
-      display: flex;
-      justify-content: space-between;
-      gap: $spacing-2;
-
-      .entry-info {
-        flex: 1;
-        min-width: 0;
-
-        .entry-name-row {
-          display: flex;
-          align-items: center;
-          gap: $spacing-2;
-          margin-bottom: $spacing-1;
-
-          .entry-icon {
-            flex-shrink: 0;
-            color: var(--b3-theme-primary);
-          }
-
-          .entry-name {
-            font-size: $font-size-xs;
-            font-weight: $font-weight-semibold;
-            color: var(--b3-theme-on-background);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-          }
-
-          .entry-category-tag {
-            font-size: $font-size-2xs;
-            font-weight: $font-weight-bold;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            padding: $spacing-px $spacing-2;
-            border-radius: $radius-sm;
-            flex-shrink: 0;
-          }
-        }
-
-        .entry-url {
-          display: flex;
-          align-items: center;
-          gap: $spacing-1;
-          margin-bottom: $spacing-2px;
-          cursor: pointer;
-          color: var(--b3-theme-primary);
-          font-size: $font-size-xs;
-
-          .url-text {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            opacity: 0.8;
-          }
-
-          &:hover {
-            text-decoration: underline;
-          }
-        }
-
-        .entry-desc {
-          font-size: $font-size-xs;
-          color: var(--b3-theme-secondary);
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-      }
-
-      .entry-actions {
-        display: flex;
-        gap: $spacing-2px;
-        flex-shrink: 0;
-        align-items: flex-start;
-      }
-    }
-  }
-
-  .empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: $spacing-3;
-    padding: $spacing-10 $spacing-5;
-    color: var(--b3-theme-on-surface);
-    font-style: italic;
-    opacity: 0.35;
-
-    p {
-      font-size: $font-size-xs;
-      margin: 0;
-    }
+  // 细滚动条：内容增减导致滚动条出现/消失时宽度占用仅 4px
+  &::-webkit-scrollbar {
+    width: 4px;
   }
 }
 
-.website-dialog-overlay {
+// 空状态（对齐 gitPush .gp-empty）
+.wn-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-3;
+  flex: 1;
+  padding: $spacing-10 $spacing-5;
+  color: var(--b3-theme-on-surface-light);
+
+  p {
+    margin: 0;
+    font-size: $font-size-xs;
+  }
+
+  // 空状态图标淡化
+  > :first-child {
+    opacity: 0.3;
+  }
+}
+
+// ── 弹窗共享基座（WebsiteDialog / CategoryManager 共用，对齐 gitPush Dialog.scss）──
+.wn-mask {
   position: fixed;
   inset: 0;
-  background: color-mix(in srgb, $color-fg 50%, transparent);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10001;
+  z-index: 10000;
+  // 基准字号：弹窗内未显式声明字号的提示文字继承内容级 12px
   font-size: $font-size-xs;
 }
 
-.website-dialog {
+.wn-dialog {
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-lg;
-  width: 90vw;
-  max-width: 440px;
+  border-radius: $radius-md;
+  width: 440px;
+  max-width: 90vw;
   max-height: 85vh;
   overflow-y: auto;
+}
 
-  .dialog-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: $spacing-4;
-    border-bottom: 1px solid var(--b3-border-color);
+.wn-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-3 $spacing-4;
+  border-bottom: 1px solid var(--b3-border-color);
 
-    h3 {
-      margin: 0;
-      font-size: $font-size-xs;
-      font-weight: $font-weight-semibold;
-    }
-  }
-
-  .dialog-body {
-    padding: $spacing-4;
-    display: flex;
-    flex-direction: column;
-    gap: $spacing-4;
-  }
-
-  .dialog-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: $spacing-2;
-    padding: $spacing-3 $spacing-4;
-    border-top: 1px solid var(--b3-border-color);
-  }
-
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: $spacing-1;
-
-    label {
-      font-size: $font-size-2xs;
-      font-weight: $font-weight-bold;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      opacity: 0.45;
-      color: var(--b3-theme-on-background);
-    }
-  }
-
-  &.category-manager {
-    .add-category-row {
-      display: flex;
-      align-items: center;
-      gap: $spacing-2;
-      flex-wrap: wrap;
-
-      .color-picker {
-        display: flex;
-        gap: $spacing-1;
-      }
-
-      .color-option {
-        width: $color-option-size;
-        height: $color-option-size;
-        border-radius: 50%;
-        border: 2px solid transparent;
-        cursor: pointer;
-        padding: 0;
-        transition: transform $transition-fast;
-
-        &.selected {
-          border-color: var(--b3-theme-on-background);
-          transform: scale(1.15);
-        }
-      }
-    }
-
-    .category-list {
-      display: flex;
-      flex-direction: column;
-      gap: $spacing-2;
-
-      .category-row {
-        display: flex;
-        align-items: center;
-        gap: $spacing-2;
-        padding: $spacing-1 $spacing-2;
-        border-radius: $vp-radius;
-        background: var(--b3-theme-surface);
-
-        .cat-dot {
-          width: $spacing-2;
-          height: $spacing-2;
-          border-radius: 50%;
-          flex-shrink: 0;
-        }
-
-        .cat-name {
-          flex: 1;
-          font-size: $font-size-xs;
-        }
-
-        .default-badge {
-          font-size: $font-size-2xs;
-          color: var(--b3-theme-secondary);
-        }
-      }
-    }
+  h3 {
+    margin: 0;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
   }
 }
 
-// Vue Transition classes
-.website-fade-enter-active,
-.website-fade-leave-active {
-  transition: opacity 0.2s ease;
+.wn-dialog-body {
+  padding: $spacing-4;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
 }
-.website-fade-enter-from,
-.website-fade-leave-to {
+
+.wn-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-2;
+  padding: $spacing-3 $spacing-4;
+  border-top: 1px solid var(--b3-border-color);
+}
+
+.wn-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+
+  .wn-label {
+    // 对齐 gitPush gp-label-base：大写辅助标签
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-bold;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.45;
+    color: var(--b3-theme-on-background);
+  }
+}
+
+// ── 弹窗进出场过渡（fade + 内层轻微 scale，0.12s 契合 Codex 规范）──
+.wn-dialog-fade-enter-active,
+.wn-dialog-fade-leave-active {
+  transition: opacity 0.12s ease;
+
+  .wn-dialog {
+    transition: transform 0.12s ease;
+  }
+}
+
+.wn-dialog-fade-enter-from,
+.wn-dialog-fade-leave-to {
   opacity: 0;
-}
 
-.website-scale-enter-active,
-.website-scale-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-.website-scale-enter-from,
-.website-scale-leave-to {
-  opacity: 0;
-  transform: scale(0.95);
+  .wn-dialog {
+    transform: scale(0.98);
+  }
 }

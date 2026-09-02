@@ -2,25 +2,27 @@
   网站导航主面板 — 网站书签管理，支持分类筛选、搜索与一键打开
 -->
 <template>
-  <div class="website-navigation-panel">
+  <div class="wn-panel">
     <PanelHeader
+      v-model:search-query="searchQuery"
       :i18n="i18n"
       :count="filteredEntries.length"
       :total-count="entries.length"
       @add="openAddDialog"
     />
 
+    <!-- 头部与内容分隔线 -->
+    <div class="wn-divider" />
+
     <FilterBar
       :i18n="i18n"
       :categories="categories"
-      :search-query="searchQuery"
       :selected-category="selectedCategory"
-      @update:searchQuery="searchQuery = $event"
       @update:selected-category="selectedCategory = $event"
       @manage-categories="showCategoryMgr = true"
     />
 
-    <div class="entries-list">
+    <div class="wn-list">
       <WebsiteCard
         v-for="entry in filteredEntries"
         :key="entry.id"
@@ -34,7 +36,7 @@
 
       <div
         v-if="filteredEntries.length === 0"
-        class="empty-state"
+        class="wn-empty"
       >
         <IconWrapper
           name="browser"

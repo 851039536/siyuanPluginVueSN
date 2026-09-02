@@ -3,88 +3,85 @@
 -->
 <template>
   <Teleport to="body">
-    <Transition name="website-fade">
+    <Transition name="wn-dialog-fade">
       <div
         v-if="visible"
-        class="website-dialog-overlay"
+        class="wn-mask"
         @click.self="handleClose"
       >
-        <Transition name="website-scale">
-          <div
-            v-if="visible"
-            class="website-dialog category-manager"
-            @click.stop
-          >
-            <div class="dialog-header">
-              <!-- 管理类别 -->
-              <h3>{{ i18n.manageCategories }}</h3>
-              <Button
-                icon="close"
-                variant="ghost"
-                size="xsmall"
-                @click="handleClose"
+        <div
+          class="wn-dialog wn-category-manager"
+          @click.stop
+        >
+          <div class="wn-dialog-header">
+            <!-- 管理类别 -->
+            <h3>{{ i18n.manageCategories }}</h3>
+            <Button
+              icon="close"
+              variant="ghost"
+              size="xsmall"
+              @click="handleClose"
+            />
+          </div>
+          <div class="wn-dialog-body">
+            <div class="wn-add-category-row">
+              <!-- 类别名称 -->
+              <Input
+                v-model="catName"
+                type="text"
+                :placeholder="i18n.categoryName"
+                size="small"
               />
-            </div>
-            <div class="dialog-body">
-              <div class="add-category-row">
-                <!-- 类别名称 -->
-                <Input
-                  v-model="catName"
-                  type="text"
-                  :placeholder="i18n.categoryName"
-                  size="small"
+              <div class="color-picker">
+                <button
+                  v-for="color in PRESET_CATEGORY_COLORS"
+                  :key="color"
+                  class="color-option"
+                  :class="{ selected: catColor === color }"
+                  :style="{ backgroundColor: color }"
+                  @click="catColor = color"
                 />
-                <div class="color-picker">
-                  <button
-                    v-for="color in PRESET_CATEGORY_COLORS"
-                    :key="color"
-                    class="color-option"
-                    :class="{ selected: catColor === color }"
-                    :style="{ backgroundColor: color }"
-                    @click="catColor = color"
-                  />
-                </div>
-                <!-- 添加 -->
-                <Button
-                  icon="add"
-                  variant="primary"
-                  size="xsmall"
-                  :disabled="!catName.trim()"
-                  :loading="saving"
-                  @click="handleAdd"
-                >
-                  {{ i18n.add }}
-                </Button>
               </div>
-              <div class="category-list">
-                <div
-                  v-for="cat in categories"
-                  :key="cat.id"
-                  class="category-row"
-                >
-                  <span
-                    class="cat-dot"
-                    :style="{ backgroundColor: cat.color }"
-                  ></span>
-                  <span class="cat-name">{{ cat.name }}</span>
-                  <Button
-                    v-if="cat.id !== DEFAULT_CATEGORY_ID"
-                    icon="delete"
-                    variant="ghost"
-                    size="xsmall"
-                    :loading="removingId === cat.id"
-                    @click="handleRemove(cat.id)"
-                  />
-                  <!-- 默认分类标记 -->
-                  <span
-                    v-else
-                    class="default-badge"
-                  >{{ i18n.defaultBadge }}</span>
-                </div>
+              <!-- 添加 -->
+              <Button
+                icon="add"
+                variant="primary"
+                size="xsmall"
+                :disabled="!catName.trim()"
+                :loading="saving"
+                @click="handleAdd"
+              >
+                {{ i18n.add }}
+              </Button>
+            </div>
+            <div class="wn-category-list">
+              <div
+                v-for="cat in categories"
+                :key="cat.id"
+                class="wn-category-row"
+              >
+                <span
+                  class="cat-dot"
+                  :style="{ backgroundColor: cat.color }"
+                ></span>
+                <span class="cat-name">{{ cat.name }}</span>
+                <Button
+                  v-if="cat.id !== DEFAULT_CATEGORY_ID"
+                  icon="delete"
+                  variant="ghost"
+                  size="xsmall"
+                  :loading="removingId === cat.id"
+                  @click="handleRemove(cat.id)"
+                />
+                <!-- 默认分类标记 -->
+                <span
+                  v-else
+                  class="default-badge"
+                >{{ i18n.defaultBadge }}</span>
               </div>
             </div>
           </div>
-        </Transition>
+        </div>
       </div>
     </Transition>
   </Teleport>
@@ -167,3 +164,8 @@ const handleClose = () => {
   emit("close")
 }
 </script>
+
+<style lang="scss">
+@use '../styles/CategoryManager.scss';
+@use '../styles/index.scss';
+</style>

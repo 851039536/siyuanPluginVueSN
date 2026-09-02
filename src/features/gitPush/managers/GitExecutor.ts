@@ -31,6 +31,10 @@ export class GitExecutor {
   private abortControllers: Map<string, AbortController[]> = new Map()
   /** execFile maxBuffer 10MB（防止全量 diff / 大仓库 status 超 Node 默认 1MB 报错） */
   private static readonly MAX_BUFFER = 10 * 1024 * 1024
+  /** 本地命令默认超时 */
+  private static readonly DEFAULT_TIMEOUT_MS = 30000
+  /** 网络命令默认超时（push/pull/fetch 大仓库弱网络 30s 偏短，自动路由放宽到 120s） */
+  private static readonly NETWORK_TIMEOUT_MS = 120000
 
   constructor(storage: GitPushStorage) {
     this.storage = storage
@@ -140,12 +144,13 @@ export class GitExecutor {
   /**
    * 执行 git 命令（双池信号量限流：网络命令与本地命令独立并发池）
    * @param signal 可选 AbortSignal，触发后 kill 子进程并清等待队列
-   * @param timeoutMs 子进程超时（默认 30 秒；clone 等长耗时操作可传更大值）
+   * @param timeoutMs 显式超时（不传时自动路由：网络命令默认 120s，本地命令默认 30s；clone 等长耗时操作可传更大值）
    * @param onOutput 可选流式输出回调，实时回传 stdout/stderr 原始块（clone --progress 等长任务日志展示）
    * @param options 可选额外参数（如 rebase 编辑器所需环境变量）
    */
-  async execGit(cwd: string, args: string[], signal?: AbortSignal, timeoutMs = 30000, onOutput?: (chunk: string) => void, options?: { env?: Record<string, string> }): Promise<string> {
+  async execGit(cwd: string, args: string[], signal?: AbortSignal, timeoutMs?: number, onOutput?: (chunk: string) => void, options?: { env?: Record<string, string> }): Promise<string> {
     const isNetwork = GitExecutor.NETWORK_COMMANDS.has(GitExecutor.getCommandName(args))
+    const effectiveTimeout = timeoutMs ?? (isNetwork ? GitExecutor.NETWORK_TIMEOUT_MS : GitExecutor.DEFAULT_TIMEOUT_MS)
 
     return new Promise<string>((resolve, reject) => {
       let killed = false
@@ -173,7 +178,7 @@ export class GitExecutor {
           "git", args,
           {
             cwd,
-            timeout: timeoutMs,
+            timeout: effectiveTimeout,
             encoding: "utf8",
             windowsHide: true,
             maxBuffer: GitExecutor.MAX_BUFFER,
@@ -199,7 +204,7 @@ export class GitExecutor {
               // 否则用户只能看到通用 "Command failed" 文案，无从得知是超时
               // "timed out" 字样供 RemoteOps 网络错误重试正则识别（超时视为瞬态网络错误）
               const reason = error.killed
-                ? `git 命令超时（timed out, ${timeoutMs}ms，已终止子进程）`
+                ? `git 命令超时（timed out, ${effectiveTimeout}ms，已终止子进程）`
                 : `git 命令执行失败（exit code: ${error.code ?? "未知"}）`
               reject(new Error(stderr ? `${reason}\n${stderr}` : `${reason}: ${error.message}`))
             } else {

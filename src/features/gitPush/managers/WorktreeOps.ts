@@ -6,6 +6,7 @@ import type {
   StashEntry,
   WorkingTreeInfo,
 } from "../types/storage"
+import { getErrorMessage } from "@/utils/stringUtils"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 import type { GitExecutor } from "./GitExecutor"
 
@@ -323,6 +324,39 @@ export class WorktreeOps {
     ])
   }
 
+  /** 仓库是否处于 rebase 中断状态（rebase-merge/rebase-apply 目录存在，如上次重写失败的残留） */
+  async isInRebaseState(projectPath: string): Promise<boolean> {
+    const node = getNodeFsPathOs()
+    if (!node) return false
+    const { fs, path } = node
+    try {
+      // --git-path 无论目录是否存在都返回相对 projectPath 的路径，需 existsSync 判定
+      const [mergeDir, applyDir] = await Promise.all([
+        this.executor.execGit(projectPath, ["rev-parse", "--git-path", "rebase-merge"]),
+        this.executor.execGit(projectPath, ["rev-parse", "--git-path", "rebase-apply"]),
+      ])
+      return [mergeDir, applyDir].some((d) => !!d.trim() && fs.existsSync(path.resolve(projectPath, d.trim())))
+    } catch {
+      return false
+    }
+  }
+
+  /**
+   * 中止进行中的 rebase（带重试）：rebase 进程刚被超时终止或 reset 遇到被占用文件时
+   * abort 会瞬时失败，重试等待文件句柄释放；每轮先检测残留状态，已无残留立即返回。
+   */
+  private async abortRebaseWithRetry(projectPath: string): Promise<void> {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (!(await this.isInRebaseState(projectPath))) return
+      try {
+        await this.executor.execGit(projectPath, ["rebase", "--abort"])
+        return
+      } catch {
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+      }
+    }
+  }
+
   /**
    * 重写指定提交信息（个人项目安全版）：
    * - 目标是 HEAD 时直接 amend；
@@ -331,6 +365,12 @@ export class WorktreeOps {
   async rewriteCommitMessage(projectPath: string, hash: string, message: string, preserveDate = false): Promise<string> {
     const node = getNodeFsPathOs()
     if (!node) throw new Error("Node 环境不可用")
+
+    // 前置检测：仓库处于 rebase 中断状态（上次重写失败的残留）时直接报错，
+    // 避免在其上 amend 到游离 HEAD 或触发 "already a rebase in progress" 连环失败
+    if (await this.isInRebaseState(projectPath)) {
+      throw new Error("仓库处于 rebase 中断状态（可能由上次修正操作失败残留），请先在终端执行 git rebase --abort 恢复后重试")
+    }
 
     // 解析完整 hash，避免短 hash 在 rebase todo 中匹配错误
     const fullHash = (await this.executor.execGit(projectPath, ["rev-parse", `${hash}^{commit}`])).trim()
@@ -409,10 +449,12 @@ fs.writeFileSync(file, process.env.COMMIT_FIX_MESSAGE || "")
         { env },
       )
     } catch (e) {
-      // 失败时回滚 rebase，避免仓库停留在 rebase 中断状态
-      try {
-        await this.executor.execGit(projectPath, ["rebase", "--abort"])
-      } catch { /* 忽略 abort 失败，保留原始错误 */ }
+      // 失败时回滚 rebase，避免仓库停留在 rebase 中断状态；
+      // abort 本身也可能失败（重放涉及的文件被 IDE/资源管理器预览等占用导致 unlink 失败），需带重试
+      await this.abortRebaseWithRetry(projectPath)
+      if (await this.isInRebaseState(projectPath)) {
+        throw new Error(`${getErrorMessage(e)}\n自动回滚未完成：仓库仍处于 rebase 中断状态，多为重放涉及的文件被其他程序占用所致，请关闭占用程序（IDE/资源管理器预览等）后在终端执行 git rebase --abort 手动恢复`)
+      }
       throw e
     } finally {
       try { fs.rmSync(dir, { recursive: true, force: true }) } catch { /* 忽略清理失败 */ }

@@ -665,6 +665,7 @@
     "ruleFixAiFailed": "AI generation failed. Please retry.",
     "ruleFixSaveFailed": "Failed to fix commit message.",
     "ruleFixNoHead": "Cannot detect HEAD. Make sure the project path is a valid Git repository.",
+    "ruleFixRebaseStuck": "Repository is stuck in an interrupted rebase (leftover from a previous failed fix). Run git rebase --abort in a terminal to recover, then retry.",
     "ruleFixForcePushHint": "This is a historical commit. Fixing it will rewrite its hash and all later commit hashes. If already pushed, run git push --force-with-lease manually.",
     "forcePush": "Force Push",
     "forcePushHint": "git push --force-with-lease: overwrite remote branch history (personal projects)",

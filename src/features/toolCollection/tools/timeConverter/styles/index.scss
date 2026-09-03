@@ -121,12 +121,7 @@
     opacity: 0.5;
     transition: opacity 0.15s, color 0.15s, border-color 0.15s;
 
-    &:hover {
-      opacity: 1;
-      color: var(--b3-theme-primary);
-      border-color: var(--b3-theme-primary);
-    }
-
+    &:hover,
     &.copied {
       opacity: 1;
       color: var(--b3-theme-primary);

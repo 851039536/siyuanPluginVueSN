@@ -202,6 +202,8 @@ export interface CommitAnalysisEntry {
   author: string
   /** ISO 时间戳（git %aI 输出，new Date 可直接解析） */
   date: string
+  /** 是否 merge 提交（父提交数 > 1；规则检查豁免，不判违规） */
+  isMerge?: boolean
 }
 
 /** Conventional Commits 类型（提交内容分析分类，other 兜底无前缀提交；与 storage.ts 的 CommitType 提交模板类型语义不同） */
@@ -257,6 +259,8 @@ export interface CommitRuleViolation extends CommitAnalysisEntry {
 export type CommitFixTarget = Pick<CommitAnalysisEntry, "projectId" | "projectName" | "hash" | "message"> & {
   /** 违规原因（提交日志场景无此字段） */
   reason?: CommitRuleReasonKey
+  /** 是否 merge 提交（修正弹窗据此阻止保存；来自提交日志的 merge 提交仍可打开查看但不可修正） */
+  isMerge?: boolean
 }
 
 /** 提交规则检查聚合统计（含违规列表，供提交规则检查面板消费） */

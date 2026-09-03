@@ -6,7 +6,6 @@ import type {
   StashEntry,
   WorkingTreeInfo,
 } from "../types/storage"
-import { getErrorMessage } from "@/utils/stringUtils"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 import type { GitExecutor } from "./GitExecutor"
 
@@ -209,8 +208,9 @@ export class WorktreeOps {
    */
   async getCommitLog(projectPath: string, count: number | "all" = 30): Promise<CommitLogEntry[]> {
     try {
-      // 依赖 %s(subject) 单行，勿加入 %b(body) 等多行字段，否则 5 行固定切分错位
-      const format = "%h%n%s%n%an%n%ar%n%aI"
+      // 依赖 %s(subject) 单行，勿加入 %b(body) 等多行字段，否则固定切分错位
+      // %p（父 hash 列表）用于识别 merge 提交（父数 > 1）
+      const format = "%h%n%s%n%an%n%ar%n%aI%n%p"
       // "all" 加 -n 5000 保护上限：全量输出在大仓库可能超 10MB maxBuffer 直接 reject
       const args = count === "all"
         ? ["log", "-n", "5000", `--format=${format}`]
@@ -220,13 +220,14 @@ export class WorktreeOps {
 
       const allLines = raw.split("\n")
       const entries: CommitLogEntry[] = []
-      for (let i = 0; i + 4 < allLines.length; i += 5) {
+      for (let i = 0; i + 5 < allLines.length; i += 6) {
         entries.push({
           hash: allLines[i],
           message: allLines[i + 1],
           author: allLines[i + 2],
           relativeDate: allLines[i + 3],
           date: allLines[i + 4],
+          isMerge: allLines[i + 5].trim().split(/\s+/).filter(Boolean).length > 1,
         })
       }
       return entries
@@ -342,42 +343,34 @@ export class WorktreeOps {
   }
 
   /**
-   * 中止进行中的 rebase（带重试）：rebase 进程刚被超时终止或 reset 遇到被占用文件时
-   * abort 会瞬时失败，重试等待文件句柄释放；每轮先检测残留状态，已无残留立即返回。
-   */
-  private async abortRebaseWithRetry(projectPath: string): Promise<void> {
-    for (let attempt = 0; attempt < 3; attempt++) {
-      if (!(await this.isInRebaseState(projectPath))) return
-      try {
-        await this.executor.execGit(projectPath, ["rebase", "--abort"])
-        return
-      } catch {
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-      }
-    }
-  }
-
-  /**
    * 重写指定提交信息（个人项目安全版）：
    * - 目标是 HEAD 时直接 amend；
-   * - 目标是历史提交时通过非交互 rebase 自动 reword，失败自动 abort。
+   * - 历史提交用 commit-tree 逐条重建提交图（纯消息改写：树与父子结构原样保留），
+   *   不走 rebase——线性 rebase 会拍平下游 merge 的侧链导致必现冲突，且重放触碰
+   *   工作区文件（可能被 IDE/资源管理器占用）；commit-tree 全程只建对象不碰工作区，
+   *   失败时引用未被更新，仓库保持原状。
    */
   async rewriteCommitMessage(projectPath: string, hash: string, message: string, preserveDate = false): Promise<string> {
     const node = getNodeFsPathOs()
     if (!node) throw new Error("Node 环境不可用")
 
-    // 前置检测：仓库处于 rebase 中断状态（上次重写失败的残留）时直接报错，
-    // 避免在其上 amend 到游离 HEAD 或触发 "already a rebase in progress" 连环失败
+    // 前置检测：仓库处于 rebase 中断状态（如用户终端操作残留）时直接报错，避免在其上叠加改写
     if (await this.isInRebaseState(projectPath)) {
-      throw new Error("仓库处于 rebase 中断状态（可能由上次修正操作失败残留），请先在终端执行 git rebase --abort 恢复后重试")
+      throw new Error("仓库处于 rebase 中断状态（可能由上次操作失败残留），请先在终端执行 git rebase --abort 恢复后重试")
     }
 
-    // 解析完整 hash，避免短 hash 在 rebase todo 中匹配错误
+    // 解析完整 hash，避免短 hash 在后续定位中匹配错误
     const fullHash = (await this.executor.execGit(projectPath, ["rev-parse", `${hash}^{commit}`])).trim()
     if (!fullHash) throw new Error("找不到指定提交")
 
+    // merge 提交直接拒绝：其消息由 git 自动生成（非用户书写），修正无意义
+    const secondParent = (await this.executor.execGit(projectPath, ["rev-parse", "--verify", `${fullHash}^2`]).catch(() => "")).trim()
+    if (secondParent) {
+      throw new Error("该提交是 merge 提交，不支持修正：merge 消息由 git 自动生成")
+    }
+
     const headHash = (await this.getHeadHash(projectPath)).trim()
-    // HEAD 直接走 amend，不产生 rebase 交互
+    // HEAD 直接走 amend，无后代需重建
     if (headHash === fullHash) {
       if (preserveDate) {
         // 保留原提交的 committer date，避免 GitHub 显示为当前时间
@@ -396,66 +389,97 @@ export class WorktreeOps {
       return await this.amendCommitMessage(projectPath, message)
     }
 
-    // 目标提交的父提交；若不存在说明是根提交，rebase 需使用 --root
-    const parent = await this.executor.execGit(projectPath, ["rev-parse", `${fullHash}^`]).catch(() => "")
-
-    const { fs, os, path } = node
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gpfix-"))
-    const seqScript = path.join(dir, "sequence-editor.cjs")
-    const msgScript = path.join(dir, "commit-editor.cjs")
-    const shortHash = fullHash.slice(0, 7)
-
-    const seqCode = `
-const fs = require("node:fs")
-const file = process.argv[2]
-const target = process.env.COMMIT_FIX_HASH
-const short = target.slice(0, 7)
-let text = fs.readFileSync(file, "utf8")
-const lines = text.split("\\n").map((line) => {
-  if (line.startsWith("pick ") && (line.includes(target) || line.includes(short))) {
-    return "reword" + line.slice(4)
+    return await this.rebuildHistoryWithNewMessage(projectPath, fullHash, headHash, message, preserveDate)
   }
-  return line
-})
-fs.writeFileSync(file, lines.join("\\n"))
-`
-    const msgCode = `
-const fs = require("node:fs")
-const file = process.argv[2]
-fs.writeFileSync(file, process.env.COMMIT_FIX_MESSAGE || "")
-`
-    try {
-      fs.writeFileSync(seqScript, seqCode)
-      fs.writeFileSync(msgScript, msgCode)
 
-      const toPosix = (p: string) => p.split("\\").join("/")
+  /**
+   * commit-tree 图重建（历史提交改写核心）：
+   * 按拓扑序（父先子后）遍历目标提交到 HEAD，依赖目标的后代逐条用 commit-tree 以
+   * 原树/原父子结构重建（仅消息或父指针变化），侧链等无关提交保持原 hash；
+   * 最后以 CAS（旧值校验）更新分支引用。全程不触碰工作区与暂存区。
+   */
+  private async rebuildHistoryWithNewMessage(projectPath: string, fullHash: string, headHash: string, message: string, preserveDate: boolean): Promise<string> {
+    const node = getNodeFsPathOs()
+    if (!node) throw new Error("Node 环境不可用")
+    const { fs, os, path } = node
+
+    // 字段：hash/tree/parents/作者三件套/提交者三件套/完整消息；\x1e 分记录
+    const FMT = "%H%x00%T%x00%P%x00%an%x00%ae%x00%aI%x00%cn%x00%ce%x00%cI%x00%B%x1e"
+    // 按 \x1e 单字符分割：execGit 会剥离输出末尾换行，若按 "\x1e\n" 复合分割，
+    // 最后一条记录的分隔符会残缺导致 \x1e 字节泄漏进消息字段
+    const parseLog = (raw: string) => raw.split("\x1e")
+      .map((r, i) => (i > 0 && r.startsWith("\n") ? r.slice(1) : r))
+      .filter((r) => r.trim() !== "")
+      .map((record) => {
+        const f = record.split("\x00")
+        return {
+          hash: f[0],
+          tree: f[1],
+          parents: f[2] ? f[2].split(" ").filter(Boolean) : [],
+          an: f[3],
+          ae: f[4],
+          aI: f[5],
+          cn: f[6],
+          ce: f[7],
+          cI: f[8],
+          message: f[9] ?? "",
+        }
+      })
+
+    const [tgtRaw, restRaw] = await Promise.all([
+      this.executor.execGit(projectPath, ["log", "-1", `--format=${FMT}`, fullHash]),
+      // topological + reverse = 父先子后；范围含并入的侧链提交（不依赖目标者保持原 hash）
+      this.executor.execGit(projectPath, ["log", "--topo-order", "--reverse", `--format=${FMT}`, `${fullHash}..HEAD`]),
+    ])
+    const target = parseLog(tgtRaw)[0]
+    if (!target) throw new Error("找不到指定提交")
+    const rest = parseLog(restRaw)
+
+    const branch = (await this.executor.execGit(projectPath, ["rev-parse", "--abbrev-ref", "HEAD"])).trim()
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gprw-"))
+    /** 旧 hash → 新 hash 映射（含 identity 映射） */
+    const map = new Map<string, string>()
+
+    /** 以原树/映射后的父指针重建一条提交；preserveDate=true 时精确保留作者与提交者三件套 */
+    const rebuild = async (rec: typeof target, msg: string) => {
+      const msgFile = path.join(dir, "msg.txt")
+      fs.writeFileSync(msgFile, msg.endsWith("\n") ? msg : `${msg}\n`, "utf8")
       const env: Record<string, string> = {
-        GIT_SEQUENCE_EDITOR: `node "${toPosix(seqScript)}"`,
-        GIT_EDITOR: `node "${toPosix(msgScript)}"`,
-        COMMIT_FIX_HASH: fullHash,
-        COMMIT_FIX_SHORT: shortHash,
-        COMMIT_FIX_MESSAGE: message,
+        GIT_AUTHOR_NAME: rec.an,
+        GIT_AUTHOR_EMAIL: rec.ae,
+        GIT_AUTHOR_DATE: rec.aI,
       }
-      const dateArg = preserveDate ? ["--committer-date-is-author-date"] : []
-      const rebaseArgs = parent
-        ? ["-c", "core.quotepath=false", "rebase", "-i", ...dateArg, parent]
-        : ["-c", "core.quotepath=false", "rebase", "-i", ...dateArg, "--root"]
-      return await this.executor.execGit(
-        projectPath,
-        rebaseArgs,
-        undefined,
-        120000,
-        undefined,
-        { env },
-      )
-    } catch (e) {
-      // 失败时回滚 rebase，避免仓库停留在 rebase 中断状态；
-      // abort 本身也可能失败（重放涉及的文件被 IDE/资源管理器预览等占用导致 unlink 失败），需带重试
-      await this.abortRebaseWithRetry(projectPath)
-      if (await this.isInRebaseState(projectPath)) {
-        throw new Error(`${getErrorMessage(e)}\n自动回滚未完成：仓库仍处于 rebase 中断状态，多为重放涉及的文件被其他程序占用所致，请关闭占用程序（IDE/资源管理器预览等）后在终端执行 git rebase --abort 手动恢复`)
+      if (preserveDate) {
+        env.GIT_COMMITTER_NAME = rec.cn
+        env.GIT_COMMITTER_EMAIL = rec.ce
+        env.GIT_COMMITTER_DATE = rec.cI
       }
-      throw e
+      const parents = rec.parents.flatMap((p) => ["-p", map.get(p) ?? p])
+      const newHash = (await this.executor.execGit(projectPath, ["commit-tree", rec.tree, ...parents, "-F", msgFile], undefined, 30000, undefined, { env })).trim()
+      map.set(rec.hash, newHash)
+    }
+
+    try {
+      // 1. 重建目标提交（其父提交均在范围之外，保持原样）
+      await rebuild(target, message)
+      // 2. 按拓扑序重建依赖目标的后代；父指针未变化的（如并入侧链）保持原 hash
+      for (const rec of rest) {
+        const newParents = rec.parents.map((p) => map.get(p) ?? p)
+        if (newParents.join(" ") === rec.parents.join(" ")) {
+          map.set(rec.hash, rec.hash)
+          continue
+        }
+        await rebuild(rec, rec.message)
+      }
+      // 3. CAS 更新引用：当前值与开始时不一致（期间有其他改动）则失败，避免覆盖
+      const newTip = map.get(headHash)
+      if (!newTip) throw new Error("重写失败：无法定位新提交链顶端")
+      if (branch === "HEAD") {
+        await this.executor.execGit(projectPath, ["update-ref", "--no-deref", "HEAD", newTip, headHash])
+      } else {
+        await this.executor.execGit(projectPath, ["update-ref", `refs/heads/${branch}`, newTip, headHash])
+      }
+      return newTip
     } finally {
       try { fs.rmSync(dir, { recursive: true, force: true }) } catch { /* 忽略清理失败 */ }
     }

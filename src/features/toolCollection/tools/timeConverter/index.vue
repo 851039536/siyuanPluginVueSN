@@ -26,7 +26,7 @@
     >
       <!-- 结果徽标："当前时间"（空输入默认模式） -->
       <div
-        v-if="isNowMode"
+        v-if="isInputEmpty"
         class="tc-now-badge"
       >{{ t.currentBadge }}</div>
       <div class="tc-result-rows">
@@ -62,35 +62,21 @@
       <!-- 区块标题："当前标准时间" -->
       <h4>{{ t.currentStandardTime }}</h4>
       <div class="tc-result-rows">
-        <div class="tc-result-row">
-          <!-- 行标签："本地标准时间" -->
-          <span class="tc-row-label">{{ t.labelLocal }}</span>
-          <span class="tc-row-value">{{ nowInfo.local }}</span>
-        </div>
-        <div class="tc-result-row">
-          <!-- 行标签："Unix 秒（10位）" -->
-          <span class="tc-row-label">{{ t.labelUnixSec }}</span>
-          <span class="tc-row-value">{{ nowInfo.unixSec }}</span>
+        <div
+          v-for="row in nowRows"
+          :key="row.key"
+          class="tc-result-row"
+        >
+          <!-- 行标签："本地标准时间 / Unix 秒（10位）/ Unix 毫秒（13位）" -->
+          <span class="tc-row-label">{{ row.label }}</span>
+          <span class="tc-row-value">{{ row.value }}</span>
           <!-- 复制按钮："复制" / "已复制" -->
           <button
             class="tc-copy-btn"
-            :class="{ copied: copiedKey === 'now-sec' }"
-            @click="copyValue(nowInfo.unixSec, 'now-sec')"
+            :class="{ copied: copiedKey === row.key }"
+            @click="copyValue(row.value, row.key)"
           >
-            {{ copiedKey === 'now-sec' ? t.copied : t.copy }}
-          </button>
-        </div>
-        <div class="tc-result-row">
-          <!-- 行标签："Unix 毫秒（13位）" -->
-          <span class="tc-row-label">{{ t.labelUnixMs }}</span>
-          <span class="tc-row-value">{{ nowInfo.unixMs }}</span>
-          <!-- 复制按钮："复制" / "已复制" -->
-          <button
-            class="tc-copy-btn"
-            :class="{ copied: copiedKey === 'now-ms' }"
-            @click="copyValue(nowInfo.unixMs, 'now-ms')"
-          >
-            {{ copiedKey === 'now-ms' ? t.copied : t.copy }}
+            {{ copiedKey === row.key ? t.copied : t.copy }}
           </button>
         </div>
       </div>
@@ -182,10 +168,7 @@ const recognizeText = computed(() => {
 })
 
 // ==================== 转换结果 ====================
-/** 空输入 → 当前时间模式（uTools 打开即所得） */
-const isNowMode = computed(() => isInputEmpty.value)
-
-/** 转换目标 Date：有效输入用解析结果，否则取当前时间 */
+/** 转换目标 Date：有效输入用解析结果，否则取当前时间（空输入 = 当前时间模式，uTools 打开即所得） */
 const sourceDate = computed(() => parsed.value?.date ?? new Date())
 const parts = computed(() => formatDateParts(sourceDate.value))
 
@@ -197,33 +180,24 @@ interface ResultRow {
 
 /** 结果行按输入类型分流：时间戳输入补齐另一单位实现双向转换 */
 const resultRows = computed<ResultRow[]>(() => {
-  if (!parsed.value) {
-    // 当前时间模式：本地时间 + 双单位时间戳 + ISO
-    return [
-      { key: "local", label: t.labelLocal, value: parts.value.local },
-      { key: "sec", label: t.labelUnixSec, value: parts.value.unixSec },
-      { key: "ms", label: t.labelUnixMs, value: parts.value.unixMs },
-      { key: "iso", label: t.labelIso, value: parts.value.iso },
-    ]
-  }
-  const kind = parsed.value.kind
-  if (kind === "date") {
-    // 日期输入 → 时间戳方向
-    return [
-      { key: "local", label: t.labelLocal, value: parts.value.local },
-      { key: "iso", label: t.labelIso, value: parts.value.iso },
-      { key: "sec", label: t.labelUnixSec, value: parts.value.unixSec },
-      { key: "ms", label: t.labelUnixMs, value: parts.value.unixMs },
-    ]
-  }
+  const kind = parsed.value?.kind
   // 时间戳输入 → 日期方向（含另一单位时间戳）
+  if (kind === "seconds" || kind === "milliseconds") {
+    return [
+      { key: "local", label: t.labelLocal, value: parts.value.local },
+      { key: "iso", label: t.labelIso, value: parts.value.iso },
+      { key: "utc", label: t.labelUtc, value: parts.value.utc },
+      kind === "seconds"
+        ? { key: "ms", label: t.labelUnixMs, value: parts.value.unixMs }
+        : { key: "sec", label: t.labelUnixSec, value: parts.value.unixSec },
+    ]
+  }
+  // 空输入（当前时间）与日期输入：本地时间 + ISO + 双单位时间戳
   return [
     { key: "local", label: t.labelLocal, value: parts.value.local },
     { key: "iso", label: t.labelIso, value: parts.value.iso },
-    { key: "utc", label: t.labelUtc, value: parts.value.utc },
-    kind === "seconds"
-      ? { key: "ms", label: t.labelUnixMs, value: parts.value.unixMs }
-      : { key: "sec", label: t.labelUnixSec, value: parts.value.unixSec },
+    { key: "sec", label: t.labelUnixSec, value: parts.value.unixSec },
+    { key: "ms", label: t.labelUnixMs, value: parts.value.unixMs },
   ]
 })
 
@@ -245,6 +219,13 @@ const copyValue = async (value: string | number, key: string) => {
 
 // ==================== 当前时间实时刷新 ====================
 const nowInfo = ref(getNowInfo())
+
+/** 当前时间区行（键加 now- 前缀，避免与结果区 copiedKey 冲突） */
+const nowRows = computed<ResultRow[]>(() => [
+  { key: "now-local", label: t.labelLocal, value: nowInfo.value.local },
+  { key: "now-sec", label: t.labelUnixSec, value: nowInfo.value.unixSec },
+  { key: "now-ms", label: t.labelUnixMs, value: nowInfo.value.unixMs },
+])
 
 onMounted(() => {
   timer.setInterval(() => {

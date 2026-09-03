@@ -55,8 +55,8 @@ export function parseTimeInput(input: string): TimeParseResult {
   return null
 }
 
-/** 本地时间格式：YYYY-MM-DD HH:mm:ss */
-export function formatLocal(date: Date): string {
+/** 本地时间格式：YYYY-MM-DD HH:mm:ss（模块内私有） */
+function formatLocal(date: Date): string {
   return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`
     + ` ${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`
 }
@@ -93,12 +93,8 @@ export interface NowInfo {
   unixMs: number
 }
 
-/** 获取当前本地标准时间与时间戳 */
+/** 获取当前本地标准时间与时间戳（复用 formatDateParts） */
 export function getNowInfo(): NowInfo {
-  const now = new Date()
-  return {
-    local: `${formatLocal(now)} ${WEEKDAYS[now.getDay()]}`,
-    unixSec: Math.floor(now.getTime() / 1000),
-    unixMs: now.getTime(),
-  }
+  const { local, unixSec, unixMs } = formatDateParts(new Date())
+  return { local, unixSec, unixMs }
 }

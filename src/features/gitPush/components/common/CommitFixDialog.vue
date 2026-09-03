@@ -215,14 +215,17 @@ const projectPath = computed(() => project.value ? resolveValidPath(project.valu
 /** 是否历史提交（非 HEAD） */
 const isHistoryCommit = computed(() => !!projectPath.value && !!headHash.value && !headHash.value.startsWith(props.target.hash))
 
-/** 是否可执行修正：项目有效、非 rebase 残留且工作区干净（HEAD 走 amend，历史提交走 rebase） */
-const canAmend = computed(() => !!projectPath.value && !!headHash.value && workingTreeClean.value && !rebaseStuck.value)
+/** 是否可执行修正：目标非 merge、项目有效、非 rebase 残留且工作区干净（HEAD 走 amend，历史提交走 rebase） */
+const canAmend = computed(() => !props.target.isMerge && !!projectPath.value && !!headHash.value && workingTreeClean.value && !rebaseStuck.value)
 
 /** 当前新提交信息命中规则问题（合规时为 null） */
 const validationReason = computed(() => checkCommitRule(newMessage.value))
 
 /** 不可保存时的提示文案 */
 const amendBlockedReason = computed(() => {
+  if (props.target.isMerge) {
+    return props.i18n.ruleFixMergeBlocked
+  }
   if (rebaseStuck.value) {
     return props.i18n.ruleFixRebaseStuck
   }

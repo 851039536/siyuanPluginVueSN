@@ -40,10 +40,12 @@ export function checkCommitRule(message: string): CommitRuleReasonKey | null {
   return null
 }
 
-/** 聚合提交条目为提交规则检查统计结果（违规列表按日期降序） */
+/** 聚合提交条目为提交规则检查统计结果（违规列表按日期降序；merge 提交豁免——消息由 git 自动生成） */
 export function analyzeCommitRuleCompliance(entries: CommitAnalysisEntry[]): CommitRuleCheckStats {
   const violations: CommitRuleViolation[] = []
   for (const entry of entries) {
+    // merge 提交（"Merge branch ..." 等）非用户书写，且线性 rebase 无法修正，不计违规
+    if (entry.isMerge) continue
     const reason = checkCommitRule(entry.message)
     if (reason) {
       violations.push({ ...entry, reason })

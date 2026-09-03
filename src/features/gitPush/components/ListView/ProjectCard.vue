@@ -211,6 +211,7 @@ function openCommitFix(entry: CommitLogEntry) {
     hash: entry.hash,
     message: entry.message,
     reason: checkCommitRule(entry.message) ?? undefined,
+    isMerge: entry.isMerge,
   }
 }
 

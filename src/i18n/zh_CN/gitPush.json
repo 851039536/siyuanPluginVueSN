@@ -665,6 +665,7 @@
     "ruleFixAiFailed": "AI 生成失败，请重试",
     "ruleFixSaveFailed": "修正失败",
     "ruleFixNoHead": "无法识别当前 HEAD，请确认项目路径有效且为 Git 仓库",
+    "ruleFixMergeBlocked": "该提交是 merge 提交，不支持修正：merge 消息由 git 自动生成",
     "ruleFixRebaseStuck": "仓库处于 rebase 中断状态（上次修正失败残留），请在终端执行 git rebase --abort 恢复后重试",
     "ruleFixForcePushHint": "这是历史提交，修正将重写它及其后所有提交 hash；若已推送，请自行使用 git push --force-with-lease 覆盖远程",
     "forcePush": "强制推送",

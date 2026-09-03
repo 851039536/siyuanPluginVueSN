@@ -177,6 +177,8 @@ export interface CommitLogEntry {
   relativeDate: string
   /** 绝对时间（ISO 格式） */
   date: string
+  /** 是否 merge 提交（父提交数 > 1；规则检查豁免、修正弹窗阻止） */
+  isMerge: boolean
 }
 
 /** 分支信息 */

@@ -240,6 +240,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
             message: c.message,
             author: c.author,
             date: c.date,
+            isMerge: c.isMerge,
           })),
           numstat: [],
         }

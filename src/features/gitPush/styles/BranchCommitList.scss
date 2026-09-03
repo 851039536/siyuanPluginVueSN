@@ -145,13 +145,8 @@
   white-space: nowrap;
 }
 
-// 徽标内已推送的远程名（淡化小字）
-.bcl-tag-chip-remotes {
-  font-size: $font-size-2xs;
-  opacity: 0.5;
-}
-
-// 徽标内未推送提示（淡化小字）
+// 徽标内附加信息（已推送的远程名 / 未推送提示，统一淡化小字）
+.bcl-tag-chip-remotes,
 .bcl-tag-chip-unpushed {
   font-size: $font-size-2xs;
   opacity: 0.5;

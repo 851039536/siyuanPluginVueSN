@@ -1,0 +1,22 @@
+{
+  "timeConverter": {
+    "title": "Time Converter",
+    "inputPlaceholder": "Enter a timestamp (10-digit s / 13-digit ms) or date time, auto-detected",
+    "recognizedSeconds": "Detected: Unix seconds (10-digit)",
+    "recognizedMilliseconds": "Detected: Unix milliseconds (13-digit)",
+    "recognizedDate": "Detected: date time",
+    "currentBadge": "Current time",
+    "currentStandardTime": "Current Standard Time",
+    "labelLocal": "Local time",
+    "labelIso": "ISO 8601",
+    "labelUtc": "UTC time",
+    "labelUnixSec": "Unix seconds (10-digit)",
+    "labelUnixMs": "Unix milliseconds (13-digit)",
+    "copy": "Copy",
+    "copied": "Copied",
+    "errorHint": "Unrecognized input, please enter a timestamp or date time",
+    "usageTitle": "Usage",
+    "usageTimestamp": "Enter a 10-digit second / 13-digit millisecond timestamp to convert to date time",
+    "usageDate": "Enter a date time (e.g. 2026-09-03 12:30:00) to convert to timestamp"
+  }
+}

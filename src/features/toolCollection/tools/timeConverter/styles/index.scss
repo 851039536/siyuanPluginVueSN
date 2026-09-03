@@ -1,0 +1,173 @@
+// 时间转换工具 — Codex 风格（对齐 unitConverter 样式基座）
+@use '@/variables.scss' as *;
+
+@mixin label-style {
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.45;
+  color: var(--b3-theme-on-surface);
+}
+
+.time-converter {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-size: $font-size-xs;
+
+  // ========== 智能识别输入区 ==========
+  .tc-input-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .tc-recognize-badge {
+    align-self: flex-start;
+    padding: 2px 8px;
+    border: 1px solid var(--b3-theme-primary);
+    border-radius: $radius-sm;
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-primary);
+
+    &.invalid {
+      border-color: var(--b3-error);
+      color: var(--b3-error);
+    }
+  }
+
+  // ========== 转换结果区 ==========
+  .tc-result-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .tc-now-badge {
+    @include label-style;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+
+    &::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--b3-theme-primary);
+      opacity: 1;
+    }
+  }
+
+  .tc-result-rows {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--b3-border-color);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .tc-result-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--b3-theme-surface);
+    border-bottom: 1px solid var(--b3-border-color);
+    transition: background 0.15s;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background: var(--b3-theme-background);
+
+      .tc-copy-btn {
+        opacity: 1;
+      }
+    }
+  }
+
+  .tc-row-label {
+    @include label-style;
+    width: 108px;
+    flex-shrink: 0;
+  }
+
+  .tc-row-value {
+    flex: 1;
+    min-width: 0;
+    font-family: $vp-mono;
+    font-variant-numeric: tabular-nums;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    color: var(--b3-theme-primary);
+    word-break: break-all;
+    line-height: $line-height-normal;
+  }
+
+  .tc-copy-btn {
+    flex-shrink: 0;
+    padding: 2px 8px;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $radius-sm;
+    background: transparent;
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-on-surface);
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.15s, color 0.15s, border-color 0.15s;
+
+    &:hover {
+      opacity: 1;
+      color: var(--b3-theme-primary);
+      border-color: var(--b3-theme-primary);
+    }
+
+    &.copied {
+      opacity: 1;
+      color: var(--b3-theme-primary);
+      border-color: var(--b3-theme-primary);
+    }
+  }
+
+  // ========== 错误提示 ==========
+  .tc-error {
+    padding: 10px 12px;
+    border: 1px solid var(--b3-error);
+    border-radius: 4px;
+    background: var(--b3-theme-error-container);
+    font-family: $vp-mono;
+    font-size: $font-size-xs;
+    color: var(--b3-error);
+    text-align: center;
+  }
+
+  // ========== 当前时间区 / 使用说明 ==========
+  .tc-now-section,
+  .tc-info {
+    border-top: 1px dashed var(--b3-border-color);
+    padding-top: 10px;
+  }
+
+  h4 {
+    @include label-style;
+    margin: 0 0 8px;
+  }
+
+  .tc-info ul {
+    margin: 0;
+    padding-left: 16px;
+    font-size: $font-size-xs;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.7;
+    line-height: 1.7;
+
+    li {
+      margin-bottom: 2px;
+    }
+  }
+}

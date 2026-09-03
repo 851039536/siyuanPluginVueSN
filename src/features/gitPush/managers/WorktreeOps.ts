@@ -351,9 +351,6 @@ export class WorktreeOps {
    *   失败时引用未被更新，仓库保持原状。
    */
   async rewriteCommitMessage(projectPath: string, hash: string, message: string, preserveDate = false): Promise<string> {
-    const node = getNodeFsPathOs()
-    if (!node) throw new Error("Node 环境不可用")
-
     // 前置检测：仓库处于 rebase 中断状态（如用户终端操作残留）时直接报错，避免在其上叠加改写
     if (await this.isInRebaseState(projectPath)) {
       throw new Error("仓库处于 rebase 中断状态（可能由上次操作失败残留），请先在终端执行 git rebase --abort 恢复后重试")

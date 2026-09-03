@@ -45,7 +45,7 @@
               >
                 <Icon
                   :icon="axis.decrease.icon"
-                  :size="16"
+                  :size="14"
                 />
               </button>
               <span class="resize-label">{{ currentSize(axis.dimension) }}{{ axis.unit }}</span>
@@ -58,7 +58,7 @@
               >
                 <Icon
                   :icon="axis.increase.icon"
-                  :size="16"
+                  :size="14"
                 />
               </button>
             </template>
@@ -71,7 +71,7 @@
           >
             <Icon
               icon="mdi:dock-window"
-              :size="16"
+              :size="14"
             />
           </button>
           <!-- 关闭按钮（仅底部面板模式显示） -->
@@ -82,14 +82,14 @@
           >
             <Icon
               icon="mdi:close"
-              :size="16"
+              :size="14"
             />
           </button>
         </div>
 
         <!-- 主内容区：左侧工具导航栏 + 右侧工具视图（横向双栏布局） -->
         <div class="tool-collection-body">
-          <!-- 左侧工具导航栏（图标 + 名称竖排列表，可滚动 / 可拖拽排序 / 键盘导航） -->
+          <!-- 左侧工具导航栏（名称竖排列表，可滚动 / 可拖拽排序 / 键盘导航） -->
           <nav class="tool-collection-sidebar">
             <div class="tool-list">
               <button
@@ -106,10 +106,6 @@
                 @drop="onDrop(idx)"
                 @dragend="onDragEnd"
               >
-                <Icon
-                  :icon="tool.icon"
-                  :size="14"
-                />
                 <span class="tool-item-label">{{ tool.label }}</span>
               </button>
             </div>

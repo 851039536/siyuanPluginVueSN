@@ -22,49 +22,41 @@ export const TOOL_REGISTRY: ToolMeta[] = [
   {
     id: "deepSeekCost",
     label: "",
-    icon: "mdi:chart-line",
     component: DeepSeekCostTool,
   },
   {
     id: "wordQuery",
     label: "",
-    icon: "mdi:book",
     component: WordQueryTool,
   },
   {
     id: "jsonFormatter",
     label: "",
-    icon: "mdi:code-json",
     component: JsonFormatterTool,
   },
   {
     id: "regexTester",
     label: "",
-    icon: "mdi:regex",
     component: RegexTesterTool,
   },
   {
     id: "colorPicker",
     label: "",
-    icon: "mdi:palette",
     component: ColorPickerTool,
   },
   {
     id: "base64Image",
     label: "",
-    icon: "mdi:code-brackets",
     component: Base64ImageTool,
   },
   {
     id: "unitConverter",
     label: "",
-    icon: "mdi:swap-horizontal",
     component: UnitConverterTool,
   },
   {
     id: "pdfViewer",
     label: "",
-    icon: "mdi:file-pdf-box",
     component: PdfViewerTool,
   },
 ]

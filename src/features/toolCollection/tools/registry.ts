@@ -9,6 +9,7 @@ import DeepSeekCostTool from "./deepSeekCost/index.vue"
 import JsonFormatterTool from "./jsonFormatter/index.vue"
 import RegexTesterTool from "./regexTester/index.vue"
 import UnitConverterTool from "./unitConverter/index.vue"
+import TimeConverterTool from "./timeConverter/index.vue"
 import WordQueryTool from "./wordQuery/index.vue"
 import PdfViewerTool from "./pdfViewer/index.vue"
 
@@ -55,6 +56,11 @@ export const TOOL_REGISTRY: ToolMeta[] = [
     component: UnitConverterTool,
   },
   {
+    id: "timeConverter",
+    label: "",
+    component: TimeConverterTool,
+  },
+  {
     id: "pdfViewer",
     label: "",
     component: PdfViewerTool,
@@ -70,5 +76,6 @@ export const TOOL_LABEL_KEYS: Record<string, (i18n: any) => string> = {
   colorPicker: (i18n) => i18n.colorPicker?.title ?? "Color Picker",
   base64Image: (i18n) => i18n.base64Image ?? "Base64 Image",
   unitConverter: (i18n) => i18n.unitConverter ?? "Unit Converter",
+  timeConverter: (i18n) => i18n.timeConverter?.title ?? "Time Converter",
   pdfViewer: (i18n) => i18n.pdfViewer?.title ?? "PDF Viewer",
 }

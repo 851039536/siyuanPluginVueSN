@@ -207,20 +207,25 @@ const saving = ref(false)
 const preserveDate = ref(true)
 const headHash = ref("")
 const workingTreeClean = ref(false)
+/** 仓库是否处于 rebase 中断状态（上次修正失败的残留，此时任何重写都必须阻止） */
+const rebaseStuck = ref(false)
 
 const projectPath = computed(() => project.value ? resolveValidPath(project.value) : "")
 
 /** 是否历史提交（非 HEAD） */
 const isHistoryCommit = computed(() => !!projectPath.value && !!headHash.value && !headHash.value.startsWith(props.target.hash))
 
-/** 是否可执行修正：项目有效且工作区干净（HEAD 走 amend，历史提交走 rebase） */
-const canAmend = computed(() => !!projectPath.value && !!headHash.value && workingTreeClean.value)
+/** 是否可执行修正：项目有效、非 rebase 残留且工作区干净（HEAD 走 amend，历史提交走 rebase） */
+const canAmend = computed(() => !!projectPath.value && !!headHash.value && workingTreeClean.value && !rebaseStuck.value)
 
 /** 当前新提交信息命中规则问题（合规时为 null） */
 const validationReason = computed(() => checkCommitRule(newMessage.value))
 
 /** 不可保存时的提示文案 */
 const amendBlockedReason = computed(() => {
+  if (rebaseStuck.value) {
+    return props.i18n.ruleFixRebaseStuck
+  }
   if (!headHash.value) {
     return props.i18n.ruleFixNoHead
   }
@@ -257,12 +262,14 @@ async function init() {
     project.value = p ?? null
     if (!p) return
     const path = resolveValidPath(p)
-    const [head, wt] = await Promise.all([
+    const [head, wt, stuck] = await Promise.all([
       manager.getHeadHash(path),
       manager.getWorkingTreeStatus(path),
+      manager.isInRebaseState(path),
     ])
     headHash.value = head
     workingTreeClean.value = !wt.hasChanges
+    rebaseStuck.value = stuck
   } finally {
     loading.value = false
   }

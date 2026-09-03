@@ -393,6 +393,9 @@ export class GitPushManager {
 
   async checkIsGitRepo(projectPath: string): Promise<boolean> { return this.worktreeOps.checkIsGitRepo(projectPath) }
 
+  /** 仓库是否处于 rebase 中断状态（上次重写失败残留等，供修正弹窗给出准确提示） */
+  async isInRebaseState(projectPath: string): Promise<boolean> { return this.worktreeOps.isInRebaseState(projectPath) }
+
   async rewriteCommitMessage(projectPath: string, hash: string, message: string, preserveDate = false): Promise<string> {
     const result = await this.writeLock.runExclusive(projectPath, () =>
       this.worktreeOps.rewriteCommitMessage(projectPath, hash, message, preserveDate),

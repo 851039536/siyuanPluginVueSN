@@ -78,7 +78,19 @@ export class RepoOps {
     } catch { return [] }
   }
 
+  /**
+   * 中止进行中的合并：先检测 MERGE_HEAD 存在才执行（stash pop 冲突等非 merge 场景
+   * `git merge --abort` 只会报模糊的 "no merge to abort"，需前置识别给出明确指引）
+   */
   async abortMerge(projectPath: string): Promise<void> {
+    const node = getNodeFsPathOs()
+    if (node) {
+      const mergeHead = (await this.executor.execGit(projectPath, ["rev-parse", "--git-path", "MERGE_HEAD"]).catch(() => "")).trim()
+      const inMerge = !!mergeHead && node.fs.existsSync(node.path.resolve(projectPath, mergeHead))
+      if (!inMerge) {
+        throw new Error("当前无进行中的合并（不存在 MERGE_HEAD）。若这是 stash 恢复产生的冲突：stash 条目并未删除，数据不会丢失，请解决冲突或参考终端操作恢复")
+      }
+    }
     await this.executor.execGit(projectPath, ["merge", "--abort"])
   }
 

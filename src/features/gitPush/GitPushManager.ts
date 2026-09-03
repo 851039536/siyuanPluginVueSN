@@ -449,20 +449,23 @@ export class GitPushManager {
     return this.writeLock.runExclusive(projectPath, () => this.repoOps.resolveConflictFile(projectPath, file, strategy))
   }
 
+  // remote/config 写操作写 .git/config，与本地写操作（commit/stash 等）包同一把项目写锁，消除并发写竞争窗口
   async addRemote(projectPath: string, name: string, url: string): Promise<void> {
-    return this.repoOps.addRemote(projectPath, name, url)
+    return this.writeLock.runExclusive(projectPath, () => this.repoOps.addRemote(projectPath, name, url))
   }
 
-  async removeRemote(projectPath: string, name: string): Promise<void> { return this.repoOps.removeRemote(projectPath, name) }
+  async removeRemote(projectPath: string, name: string): Promise<void> {
+    return this.writeLock.runExclusive(projectPath, () => this.repoOps.removeRemote(projectPath, name))
+  }
 
   async renameRemote(projectPath: string, oldName: string, newName: string): Promise<void> {
-    return this.repoOps.renameRemote(projectPath, oldName, newName)
+    return this.writeLock.runExclusive(projectPath, () => this.repoOps.renameRemote(projectPath, oldName, newName))
   }
 
   async getRemoteUrl(projectPath: string, name: string): Promise<string> { return this.repoOps.getRemoteUrl(projectPath, name) }
 
   async setRemoteUrl(projectPath: string, name: string, url: string): Promise<void> {
-    return this.repoOps.setRemoteUrl(projectPath, name, url)
+    return this.writeLock.runExclusive(projectPath, () => this.repoOps.setRemoteUrl(projectPath, name, url))
   }
 
   async cloneRepo(parentDir: string, url: string, onOutput?: (chunk: string) => void): Promise<string> {
@@ -484,11 +487,11 @@ export class GitPushManager {
   async getProjectGitConfig(projectPath: string): Promise<string> { return this.repoOps.getProjectGitConfig(projectPath) }
 
   async setProjectGitConfig(projectPath: string, key: string, value: string): Promise<void> {
-    return this.repoOps.setProjectGitConfig(projectPath, key, value)
+    return this.writeLock.runExclusive(projectPath, () => this.repoOps.setProjectGitConfig(projectPath, key, value))
   }
 
   async unsetProjectGitConfig(projectPath: string, key: string): Promise<void> {
-    return this.repoOps.unsetProjectGitConfig(projectPath, key)
+    return this.writeLock.runExclusive(projectPath, () => this.repoOps.unsetProjectGitConfig(projectPath, key))
   }
 
   getProjectGitConfigFilePath(projectPath: string): string { return this.repoOps.getProjectGitConfigFilePath(projectPath) }

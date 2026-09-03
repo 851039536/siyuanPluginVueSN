@@ -32,7 +32,7 @@
       </span>
     </div>
 
-    <!-- 批量修复提示 / 结果（含跳过原因） -->
+    <!-- 批量修复提示 / 结果（含跳过原因 + 状态异常被整组跳过的项目） -->
     <div
       v-if="batchNotice"
       class="grc-batch-result grc-batch-result--hint"
@@ -41,6 +41,11 @@
       v-else-if="lastResult"
       class="grc-batch-result"
     >{{ i18n.ruleCheckBatchResult.replace("{0}", String(lastResult.fixed)).replace("{1}", String(lastResult.skipped)).replace("{2}", String(lastResult.failed)) }}<span v-if="skippedReasonText">（{{ skippedReasonText }}）</span></div>
+    <!-- 状态异常整组跳过的项目提示（dirty / rebase 残留，未启动重写） -->
+    <div
+      v-if="lastResult && lastResult.blockedProjects.length > 0"
+      class="grc-batch-result grc-batch-result--hint"
+    >{{ i18n.ruleCheckBlockedProjects.replace("{0}", String(lastResult.blockedProjects.length)).replace("{1}", lastResult.blockedProjects.join("、")) }}</div>
 
     <div class="grc-list">
       <div

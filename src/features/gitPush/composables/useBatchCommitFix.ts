@@ -5,7 +5,7 @@ import { computed, ref } from "vue"
 import { fixCommitMessageHeuristically } from "../commitRuleChecker"
 import { resolveValidPath } from "../utils"
 
-/** 批量修复结果统计（skipped = 不可自动修复，failed = 执行改写失败） */
+/** 批量修复结果统计（skipped = 不可自动修复，failed = 执行改写失败，blockedProjects = 状态异常整组跳过） */
 export interface BatchFixResult {
   fixed: number
   skipped: number
@@ -14,6 +14,8 @@ export interface BatchFixResult {
   skippedReasons: CommitRuleReasonKey[]
   /** 成功修复涉及的项目 id（去重，供调用方按项目局部刷新，避免全量重跑） */
   projectIds: string[]
+  /** 状态异常被整组跳过的项目名（工作区未清理 / rebase 中断残留，与 failed 语义区分） */
+  blockedProjects: string[]
 }
 
 /** 违规项唯一 key（与 ViolationListSection 渲染 key 一致：projectId-hash-reason） */
@@ -71,12 +73,14 @@ export function useBatchCommitFix(manager: GitPushManager, violations: Ref<Commi
   }
 
   /**
-   * 批量修复选中项：仅可确定性修复的违规（fixCommitMessageHeuristically 返回非空）执行重写，
+   * 批量修复选中项：按项目分组后先做状态前置检查（工作区干净且无 rebase 残留才执行），
+   * 状态异常的项目整组跳过（记入 blockedProjects），避免在坏状态上反复启动 rebase→失败→abort。
+   * 组内仅可确定性修复的违规（fixCommitMessageHeuristically 返回非空）执行重写，
    * 串行执行避免历史提交 rebase 并发冲突；preserveDate=true 保持提交时间线稳定。
    * 返回结果统计（含跳过原因），调用方据此决定是否刷新分析。
    */
   async function fixSelected(): Promise<BatchFixResult> {
-    const result: BatchFixResult = { fixed: 0, skipped: 0, failed: 0, skippedReasons: [], projectIds: [] }
+    const result: BatchFixResult = { fixed: 0, skipped: 0, failed: 0, skippedReasons: [], projectIds: [], blockedProjects: [] }
     if (fixing.value || selectedCount.value === 0) return result
     const targets = violations.value.filter((v) => selectedMap.value[violationKey(v)])
     if (targets.length === 0) return result
@@ -84,24 +88,46 @@ export function useBatchCommitFix(manager: GitPushManager, violations: Ref<Commi
     const fixedProjectIds = new Set<string>()
     fixing.value = true
     try {
+      // 按项目分组：前置状态检查每项目只做一次，不逐条重复
+      const groups = new Map<string, CommitRuleViolation[]>()
       for (const v of targets) {
-        const fixed = fixCommitMessageHeuristically(v.message)
-        if (!fixed) {
-          result.skipped++
-          skippedReasonSet.add(v.reason)
+        const list = groups.get(v.projectId)
+        if (list) {
+          list.push(v)
+        } else {
+          groups.set(v.projectId, [v])
+        }
+      }
+      for (const [projectId, group] of groups) {
+        const project = await manager.getProjectById(projectId)
+        if (!project) {
+          result.failed += group.length
           continue
         }
-        try {
-          const project = await manager.getProjectById(v.projectId)
-          if (!project) {
-            result.failed++
+        const path = resolveValidPath(project)
+        const [wt, stuck] = await Promise.all([
+          manager.getWorkingTreeStatus(path),
+          manager.isInRebaseState(path),
+        ])
+        // dirty / rebase 残留整组跳过，不启动 rebase（与单条修正弹窗 canAmend 同一校验口径）
+        if (wt.hasChanges || stuck) {
+          result.blockedProjects.push(project.name)
+          continue
+        }
+        for (const v of group) {
+          const fixed = fixCommitMessageHeuristically(v.message)
+          if (!fixed) {
+            result.skipped++
+            skippedReasonSet.add(v.reason)
             continue
           }
-          await manager.rewriteCommitMessage(resolveValidPath(project), v.hash, fixed, true)
-          result.fixed++
-          fixedProjectIds.add(v.projectId)
-        } catch {
-          result.failed++
+          try {
+            await manager.rewriteCommitMessage(path, v.hash, fixed, true)
+            result.fixed++
+            fixedProjectIds.add(projectId)
+          } catch {
+            result.failed++
+          }
         }
       }
     } finally {

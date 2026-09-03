@@ -206,7 +206,11 @@ export class GitExecutor {
               const reason = error.killed
                 ? `git 命令超时（timed out, ${effectiveTimeout}ms，已终止子进程）`
                 : `git 命令执行失败（exit code: ${error.code ?? "未知"}）`
-              reject(new Error(stderr ? `${reason}\n${stderr}` : `${reason}: ${error.message}`))
+              // index.lock 残留（超时硬终止 commit/add 等可导致）附加解法指引，避免后续写操作全部失败却无从下手
+              const lockHint = /index\.lock|another git process/i.test(`${stderr}\n${error.message}`)
+                ? "\n检测到 index.lock 冲突：若确认无其他 git 进程运行（IDE/终端），可删除仓库下 .git/index.lock 后重试"
+                : ""
+              reject(new Error((stderr ? `${reason}\n${stderr}` : `${reason}: ${error.message}`) + lockHint))
             } else {
               resolve(stdout.replace(/[\r\n]+$/, ""))
             }

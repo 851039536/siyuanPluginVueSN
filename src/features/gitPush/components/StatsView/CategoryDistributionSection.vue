@@ -6,12 +6,12 @@
   >
     <!-- 区块标题："分类分布" -->
     <div class="gp-coverage-list">
-      <!-- 分类条目：分类色点 + 名称 + 计数；hover 显示百分比 -->
+      <!-- 分类条目：分类色点 + 名称 + 占比；hover 显示项目数明细 -->
       <div
         v-for="c in categoryRows"
         :key="c.id"
         class="gp-coverage-item"
-        :title="c.pct"
+        :title="c.counts"
       >
         <div class="gp-coverage-head">
           <span
@@ -19,7 +19,7 @@
             :style="{ background: c.color }"
           />
           <span>{{ c.name }}</span>
-          <span class="gp-coverage-num">{{ c.count }} / {{ stats.projectCount }}</span>
+          <span class="gp-coverage-num">{{ c.pct }}</span>
         </div>
         <div class="gp-coverage-bar">
           <div
@@ -45,10 +45,14 @@ const props = defineProps<{
   stats: StatsView
 }>()
 
-/** 分类分布行视图：预计算条形宽度百分比，消除模板中每条目 2 次 ratioPct 调用 */
+/** 分类分布行视图：预计算占比（右侧显示）与计数明细（hover 提示），消除模板中重复计算 */
 const categoryRows = computed(() => {
   const total = props.stats.projectCount
-  return props.stats.categoryDistribution.map((c) => ({ ...c, pct: ratioPct(c.count, total) }))
+  return props.stats.categoryDistribution.map((c) => ({
+    ...c,
+    pct: ratioPct(c.count, total),
+    counts: `${c.count} / ${total}`,
+  }))
 })
 </script>
 

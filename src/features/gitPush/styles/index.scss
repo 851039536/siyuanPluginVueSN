@@ -270,9 +270,27 @@
   // 运行中过程行：主题色 + 旋转图标（gp-spin 为全局既有类）
   &--run {
     display: inline-flex;
-    align-items: center;
+    align-items: baseline;
     gap: $spacing-1;
     color: var(--b3-theme-primary);
+  }
+
+  // 运行中动作文案（"推送中..."/"拉取中..."）：弱化，主题让位于平台列表
+  .gp-console-action {
+    color: var(--b3-theme-on-surface-light);
+  }
+
+  // 运行中平台名列表：主题色强调（当前仍在推送/拉取的平台）
+  .gp-console-remotes {
+    color: var(--b3-theme-primary);
+    font-weight: $font-weight-medium;
+  }
+
+  // 运行中实时耗时：等宽 + 表格数字对齐（数值文本规范）
+  .gp-console-elapsed {
+    font-family: $vp-mono;
+    font-variant-numeric: tabular-nums;
+    color: var(--b3-theme-on-surface-light);
   }
 
   &--ok {

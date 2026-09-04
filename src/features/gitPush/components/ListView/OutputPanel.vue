@@ -1,23 +1,21 @@
-<!-- Git 推送/拉取操作输出面板：运行中显示逐平台过程行，完成后展示结构化结果，失败时提供 AI 错误分析入口 -->
+<!-- Git 推送/拉取操作输出面板：运行中单行汇总过程状态，完成后展示结构化结果，失败时提供 AI 错误分析入口 -->
 <template>
-  <!-- 过程视图：操作进行中，逐平台显示实时状态行（旧结果此时暂不展示，避免误导） -->
+  <!-- 过程视图：操作进行中，单行汇总正在推送/拉取的平台（旧结果此时暂不展示，避免误导） -->
   <div
     v-if="runningStates?.length"
     class="gp-output"
   >
     <div class="gp-output-scroll">
-      <!-- 运行中过程行：旋转图标 + 平台名 + 进行中文案 -->
-      <div
-        v-for="r in runningStates"
-        :key="r.key"
-        class="gp-console-line gp-console-line--run"
-      >
+      <!-- 运行中过程行：旋转图标 + 进行中文案 + 平台名列表 + 实时累计耗时 -->
+      <div class="gp-console-line gp-console-line--run">
         <Icon
           icon="mdi:loading"
           height="12"
           class="gp-spin"
         />
-        <span>{{ r.label }} · {{ runningText }}</span>
+        <span class="gp-console-action">{{ runningText }}</span>
+        <span class="gp-console-remotes">{{ runningLabels }}</span>
+        <span class="gp-console-elapsed">{{ elapsed }}s</span>
       </div>
     </div>
   </div>
@@ -68,7 +66,8 @@
 <script setup lang="ts">
 import type { PushOutputEntry } from "../../composables/useGitOps"
 import { Icon } from "@iconify/vue"
-import { computed, ref } from "vue"
+import { computed, onMounted, onUnmounted, ref, watch } from "vue"
+import { TimerRegistry } from "@/utils/timerRegistry"
 import AiErrorAnalysisDialog from "./AiErrorAnalysisDialog.vue"
 
 /** stdout 预览截断上限（字符数） */
@@ -101,6 +100,38 @@ const hasFailed = computed(() =>
 
 /** 进行中文案：按操作类型取既有 i18n 键 */
 const runningText = computed(() => (props.action === "push" ? props.i18n.pushing : props.i18n.pulling))
+
+/** 运行中平台名汇总：单行展示当前仍在推送/拉取的平台（逐平台完成的自动从列表滑出） */
+const runningLabels = computed(() =>
+  (props.runningStates ?? []).map((r) => r.label).join(" · "),
+)
+
+// ── 运行中实时累计耗时（过程视图行尾显示 "Ns"）──
+
+/** 定时器统一托管（TimerRegistry，随组件卸载清理） */
+const elapsedTimer = new TimerRegistry()
+/** 已累计秒数（过程视图实时刷新显示） */
+const elapsed = ref(0)
+/** 操作批次开始时间戳 */
+let startTime = 0
+
+/** 随 runningStates 启停计时：非空开始累计，清空停止并复位 */
+function syncElapsedTimer() {
+  const running = (props.runningStates?.length ?? 0) > 0
+  elapsedTimer.clearAll()
+  elapsed.value = 0
+  if (running) {
+    startTime = Date.now()
+    elapsedTimer.setInterval(() => {
+      elapsed.value = Math.floor((Date.now() - startTime) / 1000)
+    }, 1000)
+  }
+}
+
+watch(() => props.runningStates?.length, syncElapsedTimer)
+// 视图切换回来时若操作仍在进行，补齐计时
+onMounted(syncElapsedTimer)
+onUnmounted(() => elapsedTimer.clearAll())
 
 /** AI 分析弹窗开关 */
 const showAiDialog = ref(false)

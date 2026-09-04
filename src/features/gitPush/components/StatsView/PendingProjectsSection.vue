@@ -1,27 +1,15 @@
 <!-- gitPush 统计视图待处理项目区块（推送状态概览 chips + 待处理表格合并） -->
 <template>
-  <div class="gp-stats-section">
-    <div class="gp-stats-section-title">
-      <!-- 区块标题："待处理项目" -->
-      {{ i18n.pendingProjects }}
-      <span class="gp-stats-section-count">{{ stats.pendingProjects.length }}</span>
-    </div>
+  <StatsSection
+    :title="i18n.pendingProjects"
+    :count="stats.pendingProjects.length"
+  >
+    <!-- 区块标题："待处理项目" -->
     <!-- 推送状态概览：待推送/待拉取/已同步/无远程（配置驱动） -->
-    <div class="gp-status-bar">
-      <div
-        v-for="chip in STATUS_CHIPS"
-        :key="chip.field"
-        class="gp-status-chip"
-        :class="`gp-status-chip--${chip.cls}`"
-        :title="i18n[chip.labelKey]"
-      >
-        <Icon
-          :icon="chip.icon"
-          height="12"
-        />
-        <span>{{ stats.pushStatusStats[chip.field] }}</span>
-      </div>
-    </div>
+    <StatusChipBar
+      :i18n="i18n"
+      :chips="statusChips"
+    />
     <!-- 待处理项目表格 -->
     <div
       v-if="stats.pendingProjects.length > 0"
@@ -98,25 +86,24 @@
         </span>
       </div>
     </div>
-    <div
+    <!-- 空态："所有项目状态正常" -->
+    <AllClear
       v-else
-      class="gp-status-all-clear"
-    >
-      <Icon
-        icon="mdi:check-all"
-        height="12"
-      />
-      <span>{{ i18n.allClear }}</span>
-    </div>
-  </div>
+      :text="i18n.allClear"
+    />
+  </StatsSection>
 </template>
 
 <script setup lang="ts">
 // gitPush 统计视图待处理项目区块（推送状态概览 + 待处理表格）
 import type { StatsView } from "../../types"
 import { Icon } from "@iconify/vue"
+import { computed } from "vue"
+import AllClear from "./common/AllClear.vue"
+import StatsSection from "./common/StatsSection.vue"
+import StatusChipBar from "./common/StatusChipBar.vue"
 
-defineProps<{
+const props = defineProps<{
   i18n: Record<string, any>
   /** 统计聚合视图（取 pushStatusStats + pendingProjects） */
   stats: StatsView
@@ -128,11 +115,16 @@ const emit = defineEmits<{
 
 // 推送状态 chip 配置：待推送/待拉取/已同步/无远程（labelKey 复用现有 i18n 键作 hover 提示）
 const STATUS_CHIPS = [
-  { field: "ahead", icon: "mdi:cloud-upload-outline", cls: "ahead", labelKey: "needsPush" },
-  { field: "behind", icon: "mdi:cloud-download-outline", cls: "behind", labelKey: "needsPullShort" },
-  { field: "synced", icon: "mdi:check-circle-outline", cls: "synced", labelKey: "synced" },
-  { field: "noRemote", icon: "mdi:lan-disconnect", cls: "none", labelKey: "noRemoteLabel" },
+  { key: "ahead", icon: "mdi:cloud-upload-outline", cls: "ahead", labelKey: "needsPush" },
+  { key: "behind", icon: "mdi:cloud-download-outline", cls: "behind", labelKey: "needsPullShort" },
+  { key: "synced", icon: "mdi:check-circle-outline", cls: "synced", labelKey: "synced" },
+  { key: "noRemote", icon: "mdi:lan-disconnect", cls: "none", labelKey: "noRemoteLabel" },
 ] as const
+
+/** chip 数值视图：从推送状态统计取数 */
+const statusChips = computed(() =>
+  STATUS_CHIPS.map((c) => ({ ...c, value: props.stats.pushStatusStats[c.key] })),
+)
 
 // 变更计数列配置：已暂存/未暂存/未跟踪（field 同时作为表头 i18n 键）
 const COUNT_COLUMNS = [

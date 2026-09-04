@@ -32,11 +32,3 @@
 .gp-audit-mismatch { color: var(--b3-theme-error); }
 .gp-audit-linkonly { color: var(--b3-theme-warning); }
 .gp-audit-remoteonly { color: var(--b3-theme-primary); }
-
-// 项目名后的错误标注（路径无效/检测失败）
-.gp-audit-error-text {
-  margin-left: $spacing-1;
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-error);
-  opacity: 0.8;
-}

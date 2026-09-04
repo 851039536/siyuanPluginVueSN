@@ -676,13 +676,6 @@
     "ruleFixDateChoice": "选择提交时间处理方式",
     "ruleFixPreserveDate": "保留原始提交时间",
     "ruleFixDefaultDate": "按当前时间提交",
-    "ruleCheckReasonNotChinese": "描述非中文",
-    "ruleCheckSelectAll": "全选",
-    "ruleCheckBatchFix": "批量修复",
-    "ruleCheckBatchFixTip": "批量修复选中提交（仅可自动修复项生效）",
-    "ruleCheckBatchResult": "修复成功 {0} 项，跳过 {1} 项，失败 {2} 项",
-    "ruleCheckBlockedProjects": "已跳过 {0} 个状态异常的项目（工作区未清理或处于 rebase 中断状态）：{1}",
-    "ruleCheckSelectHint": "请先勾选要修复的违规项",
-    "ruleCheckAutoFixable": "可自动修复"
+    "ruleCheckReasonNotChinese": "描述非中文"
   }
 }

@@ -49,7 +49,7 @@ export class RepoOps {
     return await this.executor.execGit(projectPath, ["push", remoteName, "--", tag])
   }
 
-  /** 获取远程已存在的 Tag 名列表（git ls-remote --tags，网络命令走 NETWORK_TIMEOUT_MS） */
+  /** 获取远程已存在的 Tag 名列表（git ls-remote --tags，网络命令走可配置的网络超时） */
   async getRemoteTags(projectPath: string, remoteName: string): Promise<string[]> {
     const raw = await this.executor.execGit(projectPath, ["ls-remote", "--tags", "--", remoteName])
     const names: string[] = []

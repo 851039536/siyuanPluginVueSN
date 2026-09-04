@@ -102,15 +102,17 @@
     <!-- 操作栏：拉取 / 推送 -->
     <CardActionBar :project="project" />
 
-    <!-- 拉取/推送输出（失败时内置 AI 分析入口） -->
+    <!-- 拉取/推送输出（运行中显示逐平台过程行；失败时内置 AI 分析入口） -->
     <OutputPanel
       :entries="pullOutputs"
+      :running-states="pullRunningStates"
       :i18n="i18n"
       :project-name="project.name"
       action="pull"
     />
     <OutputPanel
       :entries="pushOutputs"
+      :running-states="pushRunningStates"
       :i18n="i18n"
       :project-name="project.name"
       action="push"
@@ -148,6 +150,7 @@ import { checkCommitRule } from "../../commitRuleChecker"
 import { useCardData } from "../../composables/useCardData"
 import { useCardServices } from "../../composables/useCardServices"
 import { provideCardMenu } from "../../composables/useCardMenu"
+import { PLATFORM_META } from "../../types"
 import { getProjectRemoteNames } from "../../utils"
 import BranchCommitList from "./BranchCommitList.vue"
 import CardActionBar from "./CardActionBar.vue"
@@ -199,6 +202,22 @@ const stashTagTab = ref<CardTabId>("worktree")
 
 /** 项目已配置的远程名列表（Tag 推送远程选择用） */
 const remoteNames = computed(() => getProjectRemoteNames(props.project).map((r) => r.name))
+
+// 运行中的推送/拉取平台（useRemoteProgress 启动时显式置 "pushing"，空闲默认 "pending" 不会误入；
+// 供输出面板过程视图逐平台显示实时状态）
+const pushRunningStates = computed(() =>
+  buildRunningStates((key) => services.derived.getPushStatus(props.project.id, key) === "pushing"),
+)
+const pullRunningStates = computed(() =>
+  buildRunningStates((key) => services.derived.isPulling(props.project.id, key)),
+)
+
+/** 按运行判据过滤已配置远程，产出输出面板过程视图条目 */
+function buildRunningStates(isRunning: (key: string) => boolean) {
+  return getProjectRemoteNames(props.project)
+    .filter(({ key }) => isRunning(key))
+    .map(({ key }) => ({ key, label: PLATFORM_META.find((pm) => pm.key === key)?.label ?? key }))
+}
 
 /** 当前正在修正的提交条目（null = 未打开修正弹窗） */
 const fixingEntry = ref<CommitFixTarget | null>(null)

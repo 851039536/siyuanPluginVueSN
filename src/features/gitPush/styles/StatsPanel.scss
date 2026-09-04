@@ -290,14 +290,17 @@
   opacity: 0.2;
 }
 
-.gp-badge-unstaged {
-  @extend .gp-badge-ahead;
-  background: var(--b3-theme-warning-lightest);
-  color: var(--b3-theme-warning);
+// 项目名后的错误标注（路径无效/检测失败；PlatformTable 的 nameSuffix 共享渲染）
+.gp-audit-error-text {
+  margin-left: $spacing-1;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-error);
+  opacity: 0.8;
 }
 
-// 待拉取徽章：与状态 chip --behind 同色系（警告色）
-.gp-badge-behind {
+// 待拉取/未暂存徽章：与状态 chip --behind 同色系（警告色），两选择器样式相同合并声明
+.gp-badge-behind,
+.gp-badge-unstaged {
   @extend .gp-badge-ahead;
   background: var(--b3-theme-warning-lightest);
   color: var(--b3-theme-warning);

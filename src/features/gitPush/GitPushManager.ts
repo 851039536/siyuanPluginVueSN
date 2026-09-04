@@ -85,6 +85,7 @@ export class GitPushManager {
   async init() {
     await this.storage.init()
     await this.executor.loadGitConcurrency()
+    await this.executor.loadNetworkTimeout()
     await this.remoteOps.loadPushBranchMode()
     const i18n = this.getPanelI18n()
 
@@ -201,11 +202,17 @@ export class GitPushManager {
     return pluginI18n.gitPush || pluginI18n
   }
 
-  // ── 执行器（并发上限 / 取消）──
+  // ── 执行器（并发上限 / 网络超时 / 取消）──
 
   getGitConcurrency(): number { return this.executor.getGitConcurrency() }
 
   async setGitConcurrency(n: number): Promise<void> { return this.executor.setGitConcurrency(n) }
+
+  /** 获取网络命令超时（秒，供设置面板显示） */
+  getNetworkTimeout(): number { return this.executor.getNetworkTimeout() }
+
+  /** 设置网络命令超时（秒）并持久化 */
+  async setNetworkTimeout(n: number): Promise<void> { return this.executor.setNetworkTimeout(n) }
 
   cancelOp(id: string, action?: "push" | "pull"): void { return this.executor.cancelOp(id, action) }
 

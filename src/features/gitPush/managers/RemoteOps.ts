@@ -150,8 +150,9 @@ export class RemoteOps {
         return { ok: true, stdout: stdout || "", stderr: "" }
       } catch (e: unknown) {
         const msg = this.enhancePullError(action, getErrorMessage(e) || String(e))
-        // 判断是否为瞬态网络错误（可重试）
-        const isNetworkErr = /(could not resolve|timed out|connection refused|connection reset|unable to access|early EOF|RPC failed)/i.test(msg)
+        // 超时不重试：一次超时已等满整个超时窗口（重试会翻倍耗时才反馈），且可调大超时解决；仅 DNS/连接类瞬态抖动保留 1 次重试
+        const isTimeoutErr = /(git 命令超时|timed out)/i.test(msg)
+        const isNetworkErr = !isTimeoutErr && /(could not resolve|connection refused|connection reset|unable to access|early EOF|RPC failed)/i.test(msg)
         if (!isNetworkErr) {
           return { ok: false, stdout: "", stderr: msg }
         }

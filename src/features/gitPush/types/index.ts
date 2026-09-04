@@ -31,12 +31,16 @@ export type {
 } from "./storage"
 export {
   clampGitConcurrency,
+  clampNetworkTimeout,
   COMMIT_TYPE_VALUES,
   DEFAULT_ANALYSIS_VIEW_SETTINGS,
+  DEFAULT_NETWORK_TIMEOUT,
   GIT_CONCURRENCY_MAX,
   GIT_CONCURRENCY_MIN,
   GitPushStorage,
   MAX_OP_LOG_COUNT,
+  NETWORK_TIMEOUT_MAX,
+  NETWORK_TIMEOUT_MIN,
   UNGROUPED_ID,
 } from "./storage"
 

@@ -267,6 +267,14 @@
   white-space: pre-wrap;
   word-break: break-all;
 
+  // 运行中过程行：主题色 + 旋转图标（gp-spin 为全局既有类）
+  &--run {
+    display: inline-flex;
+    align-items: center;
+    gap: $spacing-1;
+    color: var(--b3-theme-primary);
+  }
+
   &--ok {
     color: var(--b3-theme-success);
   }

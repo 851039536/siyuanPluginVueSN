@@ -106,6 +106,31 @@
             <div class="gp-set-hint">
               {{ i18n.pushBranchHint }}
             </div>
+            <!-- 网络超时设置行 -->
+            <div class="gp-set-row gp-set-row--spaced">
+              <!-- 设置项标签："网络超时（秒）" -->
+              <label class="gp-set-label">{{ i18n.networkTimeout }}</label>
+              <div class="gp-set-input-row">
+                <Input
+                  :model-value="localNetworkTimeout"
+                  type="number"
+                  size="xsmall"
+                  class="gp-set-concurrency-input"
+                  @update:model-value="localNetworkTimeout = clampNetworkTimeout(Number($event))"
+                />
+                <button
+                  class="vp-btn vp-btn--primary vp-btn--sm"
+                  @click="saveNetworkTimeout"
+                >
+                  <!-- 按钮文案："保存" -->
+                  {{ i18n.save }}
+                </button>
+              </div>
+            </div>
+            <!-- 提示文案："网络/推送命令超时上限（30~600 秒），推送大仓库时网络较慢可将值调大" -->
+            <div class="gp-set-hint">
+              {{ i18n.networkTimeoutHint }}
+            </div>
           </template>
 
           <!-- ── 显示分区：提交分析显示设置 ── -->
@@ -141,7 +166,7 @@ import { ref, watch } from "vue"
 import Input from "@/components/Input.vue"
 import GitConfigSection from "./GitConfigSection.vue"
 import AnalysisSettingsForm from "../CommitAnalysis/AnalysisSettingsForm.vue"
-import { clampGitConcurrency } from "../../types"
+import { clampGitConcurrency, clampNetworkTimeout } from "../../types"
 import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
 
 type SettingsSection = "general" | "display" | "gitconfig"
@@ -157,6 +182,8 @@ const props = defineProps<{
   i18n: Record<string, any>
   manager: GitPushManager
   concurrency: number
+  /** 网络命令超时（秒） */
+  networkTimeout: number
   pushBranchMode: "all" | "head"
   /** 提交分析显示设置（父级预载后下发，与 popover 入口同源） */
   viewSettings: CommitAnalysisViewSettings
@@ -167,6 +194,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: []
   save: [value: number]
+  saveNetworkTimeout: [value: number]
   saveBranchMode: [mode: "all" | "head"]
   updateViewSettings: [patch: Partial<CommitAnalysisViewSettings>]
   /** 底部「管理分类」操作：由父级关闭设置弹窗并打开分类弹窗 */
@@ -174,6 +202,7 @@ const emit = defineEmits<{
 }>()
 
 const localConcurrency = ref(clampGitConcurrency(props.concurrency))
+const localNetworkTimeout = ref(clampNetworkTimeout(props.networkTimeout))
 const localBranchMode = ref<"all" | "head">(props.pushBranchMode)
 const activeSection = ref<SettingsSection>("general")
 const { rootRef } = useDialogKeyboard()
@@ -186,9 +215,17 @@ function saveConcurrency() {
   emit("save", localConcurrency.value)
 }
 
-/** Enter 键仅在常规分区保存并发数（Git 配置分区输入由组件内 stop 拦截，显示分区无提交语义） */
+/** 保存网络超时（保存按钮 / Enter 键共用） */
+function saveNetworkTimeout() {
+  emit("saveNetworkTimeout", localNetworkTimeout.value)
+}
+
+/** Enter 键仅在常规分区保存并发数与网络超时（Git 配置分区输入由组件内 stop 拦截，显示分区无提交语义） */
 function onEnterKey() {
-  if (activeSection.value === "general") saveConcurrency()
+  if (activeSection.value === "general") {
+    saveConcurrency()
+    saveNetworkTimeout()
+  }
 }
 </script>
 

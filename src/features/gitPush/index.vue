@@ -156,11 +156,13 @@
         :i18n="i18n"
         :manager="props.manager"
         :concurrency="gitConcurrency"
+        :network-timeout="networkTimeout"
         :push-branch-mode="pushBranchMode"
         :view-settings="analysisViewSettings"
         :year-options="settingsYearOptions"
         @close="showSettings = false"
         @save="setGitConcurrency"
+        @save-network-timeout="setNetworkTimeout"
         @save-branch-mode="handleSaveBranchMode"
         @update-view-settings="updateViewSettings"
         @open-category="openCategoryFromSettings"
@@ -379,6 +381,9 @@ const {
   gitConcurrency,
   loadGitConcurrency,
   setGitConcurrency,
+  networkTimeout,
+  loadNetworkTimeout,
+  setNetworkTimeout,
   stashLoading,
   doStashSave,
   doStashPop,
@@ -738,6 +743,7 @@ onMounted(async () => {
     activeCategory.value = groupedProjects.value[0].category.id
   }
   loadGitConcurrency()
+  loadNetworkTimeout()
   // 首屏只加载显示卡片所需的最小集：工作区变更摘要 + 推送状态。
   // commitLog/branches/stash 改为展开工作区面板时按需懒加载（见 @expand）。
   // getHeadHash 仅刷新去重用，首屏无历史值可对比，跳过。

@@ -2,7 +2,7 @@
 import type { ChildProcess } from "node:child_process"
 import { getNodeProcessModules } from "@/utils/nodeModules"
 import type { GitPushStorage } from "../types/storage"
-import { clampGitConcurrency } from "../types/storage"
+import { clampGitConcurrency, clampNetworkTimeout, DEFAULT_NETWORK_TIMEOUT } from "../types/storage"
 
 /** 等待队列条目（本地池/网络池共用结构） */
 interface WaitQueueItem {
@@ -17,6 +17,8 @@ export class GitExecutor {
   private gitRunning = 0
   /** 最大并发 git 子进程数（从存储加载，可通过 setGitConcurrency 修改） */
   private gitMaxConcurrent = 3
+  /** 网络命令超时（ms，从存储加载，可通过 setNetworkTimeout 修改；默认 240s） */
+  private networkTimeoutMs = DEFAULT_NETWORK_TIMEOUT * 1000
   /** 等待队列（关联 signal + reject 以便 abort/destroy 时精准拒绝） */
   private gitWaitQueue: WaitQueueItem[] = []
   /** 识别网络 IO 类 git 命令，自动路由到独立并发池 */
@@ -33,8 +35,6 @@ export class GitExecutor {
   private static readonly MAX_BUFFER = 10 * 1024 * 1024
   /** 本地命令默认超时 */
   private static readonly DEFAULT_TIMEOUT_MS = 30000
-  /** 网络命令默认超时（push/pull/fetch 大仓库弱网络 30s 偏短，自动路由放宽到 120s） */
-  private static readonly NETWORK_TIMEOUT_MS = 120000
 
   constructor(storage: GitPushStorage) {
     this.storage = storage
@@ -55,6 +55,23 @@ export class GitExecutor {
     const clamped = clampGitConcurrency(n)
     this.gitMaxConcurrent = clamped
     await this.storage.gitConcurrency.save(clamped)
+  }
+
+  /** 从存储加载网络命令超时（秒 → ms，init 时调用） */
+  async loadNetworkTimeout(): Promise<void> {
+    this.networkTimeoutMs = (await this.storage.networkTimeout.loadOrDefault()) * 1000
+  }
+
+  /** 获取当前网络命令超时（秒，供设置面板显示） */
+  getNetworkTimeout(): number {
+    return Math.round(this.networkTimeoutMs / 1000)
+  }
+
+  /** 设置网络命令超时（秒）并持久化 */
+  async setNetworkTimeout(n: number): Promise<void> {
+    const clamped = clampNetworkTimeout(n)
+    this.networkTimeoutMs = clamped * 1000
+    await this.storage.networkTimeout.save(clamped)
   }
 
   /** 获取 child_process 模块（简写） */
@@ -144,13 +161,13 @@ export class GitExecutor {
   /**
    * 执行 git 命令（双池信号量限流：网络命令与本地命令独立并发池）
    * @param signal 可选 AbortSignal，触发后 kill 子进程并清等待队列
-   * @param timeoutMs 显式超时（不传时自动路由：网络命令默认 120s，本地命令默认 30s；clone 等长耗时操作可传更大值）
+   * @param timeoutMs 显式超时（不传时自动路由：网络命令默认按设置项（240s），本地命令默认 30s；clone 等长耗时操作可传更大值）
    * @param onOutput 可选流式输出回调，实时回传 stdout/stderr 原始块（clone --progress 等长任务日志展示）
    * @param options 可选额外参数（如 rebase 编辑器所需环境变量）
    */
   async execGit(cwd: string, args: string[], signal?: AbortSignal, timeoutMs?: number, onOutput?: (chunk: string) => void, options?: { env?: Record<string, string> }): Promise<string> {
     const isNetwork = GitExecutor.NETWORK_COMMANDS.has(GitExecutor.getCommandName(args))
-    const effectiveTimeout = timeoutMs ?? (isNetwork ? GitExecutor.NETWORK_TIMEOUT_MS : GitExecutor.DEFAULT_TIMEOUT_MS)
+    const effectiveTimeout = timeoutMs ?? (isNetwork ? this.networkTimeoutMs : GitExecutor.DEFAULT_TIMEOUT_MS)
 
     return new Promise<string>((resolve, reject) => {
       let killed = false
@@ -202,7 +219,7 @@ export class GitExecutor {
             if (error) {
               // 错误信息自带超时/退出码标识：execFile 超时以 SIGTERM 终止（killed=true）时 stderr 可能为空，
               // 否则用户只能看到通用 "Command failed" 文案，无从得知是超时
-              // "timed out" 字样供 RemoteOps 网络错误重试正则识别（超时视为瞬态网络错误）
+              // "timed out" 字样同时供用户识别超时（超时不参与 RemoteOps 网络错误重试）
               const reason = error.killed
                 ? `git 命令超时（timed out, ${effectiveTimeout}ms，已终止子进程）`
                 : `git 命令执行失败（exit code: ${error.code ?? "未知"}）`
@@ -210,7 +227,11 @@ export class GitExecutor {
               const lockHint = /index\.lock|another git process/i.test(`${stderr}\n${error.message}`)
                 ? "\n检测到 index.lock 冲突：若确认无其他 git 进程运行（IDE/终端），可删除仓库下 .git/index.lock 后重试"
                 : ""
-              reject(new Error((stderr ? `${reason}\n${stderr}` : `${reason}: ${error.message}`) + lockHint))
+              // 超时附加解法指引：指向设置面板可调的网络超时项（大仓库弱网络超时的直接对应解法）
+              const timeoutHint = error.killed
+                ? "\n推送/拉取大仓库时网络较慢易超时，可在 gitPush 设置中调大「网络超时」后重试"
+                : ""
+              reject(new Error((stderr ? `${reason}\n${stderr}` : `${reason}: ${error.message}`) + lockHint + timeoutHint))
             } else {
               resolve(stdout.replace(/[\r\n]+$/, ""))
             }

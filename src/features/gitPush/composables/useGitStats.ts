@@ -13,7 +13,7 @@ import type {
   WorkingTreeInfo,
 } from "../types"
 import { computed, ref } from "vue"
-import { PLATFORM_META, UNGROUPED_ID, type PlatformStatusItem } from "../types"
+import { PLATFORM_META, UNGROUPED_ID, DEFAULT_NETWORK_TIMEOUT, type PlatformStatusItem } from "../types"
 
 export function useGitStats(
   manager: GitPushManager,
@@ -23,6 +23,8 @@ export function useGitStats(
   workingTrees: Ref<Record<string, WorkingTreeInfo>>,
 ) {
   const gitConcurrency = ref(3)
+  /** 网络命令超时（秒，默认 240s，设置面板展示与修改） */
+  const networkTimeout = ref(DEFAULT_NETWORK_TIMEOUT)
 
   function loadGitConcurrency() {
     gitConcurrency.value = manager.getGitConcurrency()
@@ -32,6 +34,16 @@ export function useGitStats(
     await manager.setGitConcurrency(n)
     // 回读 manager 钳位后的实际值，避免 UI 显示与持久化值不一致
     gitConcurrency.value = manager.getGitConcurrency()
+  }
+
+  function loadNetworkTimeout() {
+    networkTimeout.value = manager.getNetworkTimeout()
+  }
+
+  async function setNetworkTimeout(n: number) {
+    await manager.setNetworkTimeout(n)
+    // 回读 manager 钳位后的实际值，避免 UI 显示与持久化值不一致
+    networkTimeout.value = manager.getNetworkTimeout()
   }
 
   /**
@@ -221,6 +233,9 @@ export function useGitStats(
     gitConcurrency,
     loadGitConcurrency,
     setGitConcurrency,
+    networkTimeout,
+    loadNetworkTimeout,
+    setNetworkTimeout,
     groupedProjects,
     projectCount,
     needsPushProjects,

@@ -21,6 +21,18 @@ export function clampGitConcurrency(n: number): number {
   return Math.max(GIT_CONCURRENCY_MIN, Math.min(GIT_CONCURRENCY_MAX, num))
 }
 
+/** Git 网络命令超时允许范围（秒，设置弹窗输入与 GitExecutor 钳位的单一数据源） */
+export const NETWORK_TIMEOUT_MIN = 30
+export const NETWORK_TIMEOUT_MAX = 600
+/** 网络命令默认超时（秒）：大仓库弱网络 120s 偏短，默认放宽到 240s */
+export const DEFAULT_NETWORK_TIMEOUT = 240
+
+/** 将网络超时（秒）整数化并钳位到允许范围 */
+export function clampNetworkTimeout(n: number): number {
+  const num = Math.round(Number(n) || DEFAULT_NETWORK_TIMEOUT)
+  return Math.max(NETWORK_TIMEOUT_MIN, Math.min(NETWORK_TIMEOUT_MAX, num))
+}
+
 /** 预设 IDE 条目（扫描结果与预设列表共用，useIdeManagement 持有） */
 export interface IdeEntry {
   name: string
@@ -363,6 +375,8 @@ export class GitPushStorage {
   readonly projects: TypedStorage<GitProject[]>
   readonly categories: TypedStorage<ProjectCategory[]>
   readonly gitConcurrency: TypedStorage<number>
+  /** 网络命令超时（秒，GitExecutor 加载后转换为毫秒生效；默认 240s） */
+  readonly networkTimeout: TypedStorage<number>
   /** 全局标签缓存（所有用过的标签，用于筛选条与输入建议） */
   readonly tags: TypedStorage<string[]>
   /** 提交信息模板 */
@@ -395,6 +409,7 @@ export class GitPushStorage {
     this.projects = new TypedStorage(storage, "git-push-projects", DEFAULT_PROJECTS)
     this.categories = new TypedStorage(storage, "git-push-categories", [DEFAULT_UNGROUPED])
     this.gitConcurrency = new TypedStorage(storage, "git-push-concurrency", 3)
+    this.networkTimeout = new TypedStorage(storage, "git-push-network-timeout", DEFAULT_NETWORK_TIMEOUT)
     this.tags = new TypedStorage(storage, "git-push-tags", [])
     this.commitTemplates = new TypedStorage(storage, "git-push-commit-templates", DEFAULT_TEMPLATES)
     this.gitOpsPaused = new TypedStorage(storage, "git-push-ops-paused", false)

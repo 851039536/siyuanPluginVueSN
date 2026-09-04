@@ -1,7 +1,29 @@
-<!-- Git 推送/拉取操作输出面板：结构化结果拍平为控制台逐行输出，失败时提供 AI 错误分析入口 -->
+<!-- Git 推送/拉取操作输出面板：运行中显示逐平台过程行，完成后展示结构化结果，失败时提供 AI 错误分析入口 -->
 <template>
+  <!-- 过程视图：操作进行中，逐平台显示实时状态行（旧结果此时暂不展示，避免误导） -->
   <div
-    v-if="lines.length"
+    v-if="runningStates?.length"
+    class="gp-output"
+  >
+    <div class="gp-output-scroll">
+      <!-- 运行中过程行：旋转图标 + 平台名 + 进行中文案 -->
+      <div
+        v-for="r in runningStates"
+        :key="r.key"
+        class="gp-console-line gp-console-line--run"
+      >
+        <Icon
+          icon="mdi:loading"
+          height="12"
+          class="gp-spin"
+        />
+        <span>{{ r.label }} · {{ runningText }}</span>
+      </div>
+    </div>
+  </div>
+  <!-- 结果视图：操作完成后展示 -->
+  <div
+    v-else-if="lines.length"
     class="gp-output"
   >
     <div class="gp-output-scroll">
@@ -66,14 +88,19 @@ const props = defineProps<{
   i18n: Record<string, any>
   /** 当前项目名（AI 分析上下文） */
   projectName: string
-  /** 操作类型：推送或拉取（AI 分析上下文 + 弹窗徽标） */
+  /** 操作类型：推送或拉取（AI 分析上下文 + 弹窗徽标 + 进行中文案选择） */
   action: "push" | "pull"
+  /** 运行中的平台实时状态（非空 = 操作进行中，渲染过程视图替代旧结果） */
+  runningStates?: { key: string, label: string }[]
 }>()
 
 /** 是否存在失败条目（非跳过且失败，控制 AI 分析按钮显隐） */
 const hasFailed = computed(() =>
   (props.entries ?? []).some((e) => !e.ok && !e.skipped),
 )
+
+/** 进行中文案：按操作类型取既有 i18n 键 */
+const runningText = computed(() => (props.action === "push" ? props.i18n.pushing : props.i18n.pulling))
 
 /** AI 分析弹窗开关 */
 const showAiDialog = ref(false)

@@ -111,7 +111,7 @@
               </div>
             </div>
 
-            <!-- 历史提交 rebase 重写耗时提示（仅保存历史提交时显示，明确等待原因） -->
+            <!-- 历史提交重写耗时提示（仅保存历史提交时显示，明确等待原因；有进度时显示计数 + 进度条） -->
             <div
               v-if="saving && isHistoryCommit"
               class="gp-fix-warning"
@@ -120,7 +120,14 @@
                 icon="mdi:alert-circle-outline"
                 height="12"
               />
-              <span>{{ i18n.ruleFixRewriting }}</span>
+              <span>{{ rewriteProgress ? i18n.ruleFixRewritingProgress.replace("{0}", String(rewriteProgress.current)).replace("{1}", String(rewriteProgress.total)) : i18n.ruleFixRewriting }}</span>
+              <!-- 重写进度条（细条，宽度随计数实时更新） -->
+              <div class="gp-fix-progress">
+                <div
+                  class="gp-fix-progress-bar"
+                  :style="{ width: (rewriteProgress ? Math.round(rewriteProgress.current / rewriteProgress.total * 100) : 0) + '%' }"
+                />
+              </div>
             </div>
 
             <!-- AI 生成失败提示 -->
@@ -203,6 +210,8 @@ const newMessage = ref(props.target.message)
 const aiLoading = ref(false)
 const aiError = ref("")
 const saving = ref(false)
+/** 历史提交重写进度（{current, total}，null = 尚未开始）；仅历史提交保存时使用 */
+const rewriteProgress = ref<{ current: number, total: number } | null>(null)
 /** 提交时间策略：true = 保留原始提交时间，false = 按当前时间提交（持久化跨会话恢复） */
 const preserveDate = ref(true)
 const headHash = ref("")
@@ -308,8 +317,11 @@ function save() {
 async function performSave(preserve: boolean) {
   if (!canAmend.value || !projectPath.value || validationReason.value) return
   saving.value = true
+  rewriteProgress.value = null
   try {
-    await manager.rewriteCommitMessage(projectPath.value, props.target.hash, newMessage.value.trim(), preserve)
+    await manager.rewriteCommitMessage(projectPath.value, props.target.hash, newMessage.value.trim(), preserve, (current, total) => {
+      rewriteProgress.value = { current, total }
+    })
     emit("saved", props.target.projectId)
     emit("close")
   } catch (e: unknown) {
@@ -317,6 +329,7 @@ async function performSave(preserve: boolean) {
     aiError.value = getErrorMessage(e) || props.i18n.ruleFixSaveFailed
   } finally {
     saving.value = false
+    rewriteProgress.value = null
   }
 }
 </script>

@@ -97,6 +97,7 @@
 
 .gp-fix-warning {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   gap: $spacing-1;
   font-size: $font-size-2xs;
@@ -117,4 +118,20 @@
   color: var(--b3-theme-error, $color-danger);
   background: var(--b3-theme-error-background, transparent);
   border-color: var(--b3-theme-error, $color-danger);
+}
+
+/* 历史提交重写进度条（细条：主色填充随计数实时变化） */
+.gp-fix-progress {
+  flex-basis: 100%;
+  height: 4px;
+  border-radius: $radius-full;
+  background: color-mix(in srgb, var(--b3-theme-primary) 12%, transparent);
+  overflow: hidden;
+}
+
+.gp-fix-progress-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--b3-theme-primary);
+  transition: width 0.12s ease;
 }

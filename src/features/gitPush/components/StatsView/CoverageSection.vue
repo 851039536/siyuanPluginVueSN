@@ -3,12 +3,12 @@
   <StatsSection :title="i18n.remoteCoverage">
     <!-- 区块标题："远程仓库覆盖率" -->
     <div class="gp-coverage-list">
-      <!-- 覆盖率条目：四个平台 + 多远程合计（配置驱动，多远程标签为"多远程项目"；hover 显示百分比） -->
+      <!-- 覆盖率条目：四个平台 + 多远程合计（配置驱动，多远程标签为"多远程项目"；hover 显示项目数明细） -->
       <div
         v-for="c in coverageItems"
         :key="c.key"
         class="gp-coverage-item"
-        :title="c.pct"
+        :title="c.counts"
       >
         <div class="gp-coverage-head">
           <Icon
@@ -16,7 +16,7 @@
             height="12"
           />
           <span>{{ c.label }}</span>
-          <span class="gp-coverage-num">{{ c.count }} / {{ stats.projectCount }}</span>
+          <span class="gp-coverage-num">{{ c.pct }}</span>
         </div>
         <div class="gp-coverage-bar">
           <div
@@ -45,24 +45,31 @@ const props = defineProps<{
   stats: StatsView
 }>()
 
-/** 覆盖率条目：四个平台（PLATFORM_META 投影）+ 多远程合计（pct 预计算；key 同时作为 gp-coverage-fill 修饰类后缀） */
+/** 覆盖率条目：四个平台（PLATFORM_META 投影）+ 多远程合计（预计算占比与计数明细；key 同时作为 gp-coverage-fill 修饰类后缀） */
 const coverageItems = computed(() => {
   const total = props.stats.projectCount
-  return [
-    ...PLATFORM_META.map((pm) => ({
+  const platformItems = PLATFORM_META.map((pm) => {
+    const count = props.stats.remoteCoverage[pm.key]
+    return {
       key: pm.key,
       icon: pm.icon,
       label: pm.label,
-      count: props.stats.remoteCoverage[pm.key],
-      pct: ratioPct(props.stats.remoteCoverage[pm.key], total),
-    })),
+      count,
+      pct: ratioPct(count, total),
+      counts: `${count} / ${total}`,
+    }
+  })
+  const multiple = props.stats.remoteCoverage.multiple
+  return [
+    ...platformItems,
     // 多远程项目条目："多远程项目"
     {
       key: "multi",
       icon: "mdi:layers",
       label: props.i18n.multipleRemotes,
-      count: props.stats.remoteCoverage.multiple,
-      pct: ratioPct(props.stats.remoteCoverage.multiple, total),
+      count: multiple,
+      pct: ratioPct(multiple, total),
+      counts: `${multiple} / ${total}`,
     },
   ]
 })

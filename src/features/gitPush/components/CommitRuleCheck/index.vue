@@ -76,7 +76,6 @@
             :scoped="scoped"
             @view-project="emit('viewProject', $event)"
             @open-fix="openFix"
-            @batch-fixed="emit('runAnalysis', $event)"
           />
         </template>
       </template>

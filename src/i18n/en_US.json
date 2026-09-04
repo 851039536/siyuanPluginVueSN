@@ -1805,14 +1805,7 @@
     "ruleFixDateChoice": "Choose how to set commit dates",
     "ruleFixPreserveDate": "Keep original commit dates",
     "ruleFixDefaultDate": "Use current time",
-    "ruleCheckReasonNotChinese": "Description not in Chinese",
-    "ruleCheckSelectAll": "Select All",
-    "ruleCheckBatchFix": "Batch Fix",
-    "ruleCheckBatchFixTip": "Batch fix selected commits (only auto-fixable items)",
-    "ruleCheckBatchResult": "Fixed {0}, skipped {1}, failed {2}",
-    "ruleCheckBlockedProjects": "Skipped {0} project(s) in an unsafe state (dirty working tree or interrupted rebase): {1}",
-    "ruleCheckSelectHint": "Select violations first to batch fix",
-    "ruleCheckAutoFixable": "Auto-fixable"
+    "ruleCheckReasonNotChinese": "Description not in Chinese"
   },
   "enableGlobalRelations": "Enable Global Relations",
   "enableGlobalRelationsDesc": "Query bidirectional link relations across the whole library via refs table and getBacklink2 API",

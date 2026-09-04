@@ -245,37 +245,4 @@
   }
 }
 
-// 批量修复：标题区操作按钮组（右对齐）
-.grc-section-actions {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: $spacing-1;
-}
 
-// 行勾选复选框（批量修复）
-.grc-item-check {
-  flex: 0 0 auto;
-  accent-color: var(--b3-theme-primary);
-  cursor: pointer;
-}
-
-// 批量修复结果提示
-.grc-batch-result {
-  font-size: $font-size-2xs;
-  margin-bottom: $spacing-2;
-  opacity: 0.8;
-}
-
-// 批量修复引导提示（未勾选时点击）
-.grc-batch-result--hint {
-  color: var(--b3-theme-warning);
-  opacity: 1;
-}
-
-// 可自动修复标记（绿色，与失败/警告语义区分）
-.grc-item-autofix {
-  flex: 0 0 auto;
-  color: var(--b3-theme-success);
-  opacity: 0.85;
-}

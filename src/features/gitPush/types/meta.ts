@@ -169,6 +169,28 @@ export interface RepoLinkAuditSummary {
   remoteOnly: number
 }
 
+// ── 统计视图平台矩阵表格视图模型（PlatformTable / PlatformStatusSection / RepoLinkAuditSection 共用）──
+/** 平台单元格视图（icon 为空串时渲染占位符 -） */
+export interface PlatformTableCellView {
+  key: string
+  /** hover 提示原文（状态名 / 审计链接与远程 URL 原文等，由调用方预计算） */
+  title: string
+  /** 图标名（空串 = 渲染占位符 -） */
+  icon: string
+  /** 图标颜色修饰类（如 gp-platform-ok / gp-audit-mismatch） */
+  iconCls?: string
+}
+
+/** 平台矩阵表格行视图（项目名 + 平台单元格序列） */
+export interface PlatformTableRowView {
+  id: string
+  name: string
+  path: string
+  /** 名称后缀标注（审计"路径无效或检测失败"；空串不渲染） */
+  nameSuffix?: string
+  cells: PlatformTableCellView[]
+}
+
 /** 统计面板聚合视图（单对象 prop，消除 useGitStats → useGitPush → index.vue → StatsPanel 四层透传的字段遗漏风险） */
 export interface StatsView {
   projectCount: number

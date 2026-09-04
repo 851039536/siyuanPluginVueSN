@@ -1,13 +1,11 @@
 <!-- 仓库链接一致性区块（统计面板子区块：按需批量比对手动仓库链接与实际 git 远程 URL） -->
 <template>
-  <div class="gp-stats-section">
-    <div class="gp-stats-section-title">
-      <!-- 区块标题："仓库链接一致性" -->
-      {{ i18n.repoLinkAudit }}
-      <span
-        v-if="audited"
-        class="gp-stats-section-count"
-      >{{ issueRows.length }}</span>
+  <StatsSection
+    :title="i18n.repoLinkAudit"
+    :count="audited ? issueRows.length : undefined"
+  >
+    <!-- 区块标题："仓库链接一致性" -->
+    <template #action>
       <!-- 按钮："开始分析"/"重新分析"（分析中转圈禁用） -->
       <button
         class="vp-btn vp-btn--ghost vp-btn--sm gp-audit-run-btn"
@@ -21,7 +19,7 @@
         />
         <span>{{ audited ? i18n.auditRerun : i18n.auditRun }}</span>
       </button>
-    </div>
+    </template>
 
     <!-- 未分析提示："点击开始分析，将对所有项目执行 git remote -v 比对" -->
     <div
@@ -40,109 +38,40 @@
 
     <template v-else>
       <!-- 四态汇总 chips：一致/不一致/仅配置链接/仅存在远程（hover 显示状态名） -->
-      <div class="gp-status-bar">
-        <div
-          v-for="chip in AUDIT_CHIPS"
-          :key="chip.state"
-          class="gp-status-chip"
-          :class="`gp-status-chip--${chip.cls}`"
-          :title="i18n[chip.labelKey]"
-        >
-          <Icon
-            :icon="chip.icon"
-            height="12"
-          />
-          <span>{{ summary[chip.state] }}</span>
-        </div>
-      </div>
+      <StatusChipBar
+        :i18n="i18n"
+        :chips="auditChips"
+      />
       <!-- 问题项目表格（仅展示存在不一致/缺失/检测失败的项目） -->
-      <div
+      <PlatformTable
         v-if="issueRows.length > 0"
-        class="gp-table-wrap"
-      >
-        <div class="gp-table-row gp-table-row--head">
-          <!-- 表头："项目名称"（平台表头结构与 PlatformStatusSection 重复，第 2 次出现，暂不提取共享组件） -->
-          <span class="gp-table-cell gp-table-cell--name">{{ i18n.projectName }}</span>
-          <span
-            v-for="pm in PLATFORM_META"
-            :key="pm.key"
-            class="gp-table-cell gp-table-cell--platform-status"
-            :title="pm.label"
-          >
-            <Icon
-              :icon="pm.icon"
-              height="12"
-            />
-          </span>
-          <span class="gp-table-cell gp-table-cell--act"></span>
-        </div>
-        <div
-          v-for="row in issueRows"
-          :key="row.id"
-          class="gp-table-row gp-table-row--clickable"
-          @click="emit('viewProject', row.id)"
-        >
-          <span
-            class="gp-table-cell gp-table-cell--name"
-            :title="row.path"
-          >
-            {{ row.name }}
-            <!-- 错误标注："路径无效或检测失败" -->
-            <span
-              v-if="row.error"
-              class="gp-audit-error-text"
-            >{{ i18n.auditError }}</span>
-          </span>
-          <!-- 平台单元格：四态图标（tooltip 同时展示状态名 + 链接与远程 URL 原文） -->
-          <span
-            v-for="cell in row.cells"
-            :key="cell.key"
-            class="gp-table-cell gp-table-cell--platform-status"
-            :title="cellTitle(cell)"
-          >
-            <Icon
-              v-if="cell.state !== 'none'"
-              :icon="STATE_META[cell.state].icon"
-              height="12"
-              :class="STATE_META[cell.state].cls"
-            />
-            <span
-              v-else
-              class="gp-cell-empty"
-            >-</span>
-          </span>
-          <span class="gp-table-cell gp-table-cell--act">
-            <Icon
-              icon="mdi:arrow-right"
-              height="12"
-            />
-          </span>
-        </div>
-      </div>
+        :i18n="i18n"
+        :rows="issueRows"
+        @view-project="emit('viewProject', $event)"
+      />
       <!-- 全部一致空态："链接与远程全部一致" -->
-      <div
+      <AllClear
         v-else
-        class="gp-status-all-clear"
-      >
-        <Icon
-          icon="mdi:check-all"
-          height="12"
-        />
-        <span>{{ i18n.auditAllMatch }}</span>
-      </div>
+        :text="i18n.auditAllMatch"
+      />
     </template>
-  </div>
+  </StatsSection>
 </template>
 
 <script setup lang="ts">
 import type {
+  PlatformTableRowView,
   RepoLinkAuditCell,
   RepoLinkAuditRow,
+  RepoLinkAuditState,
   RepoLinkAuditSummary,
 } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
-import { PLATFORM_META } from "../../types"
+import AllClear from "./common/AllClear.vue"
+import PlatformTable from "./common/PlatformTable.vue"
+import StatsSection from "./common/StatsSection.vue"
+import StatusChipBar from "./common/StatusChipBar.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -157,29 +86,51 @@ const emit = defineEmits<{
   viewProject: [projectId: string]
 }>()
 
-// 汇总 chip 配置：一致/不一致/仅配置链接/仅存在远程（cls 对应 gp-status-chip 修饰类）
-const AUDIT_CHIPS = [
-  { state: "match", icon: "mdi:check-circle-outline", cls: "synced", labelKey: "auditMatch" },
-  { state: "mismatch", icon: "mdi:alert-circle-outline", cls: "error", labelKey: "auditMismatch" },
-  { state: "linkOnly", icon: "mdi:link-variant-off", cls: "behind", labelKey: "auditLinkOnly" },
-  { state: "remoteOnly", icon: "mdi:source-branch", cls: "ahead", labelKey: "auditRemoteOnly" },
-] as const
+// 审计四态元数据（chip 轮廓图标 + 单元格实心图标 + chip 修饰类 + 单元格颜色类 + 状态名 i18n 键；
+// 合并原 AUDIT_CHIPS / STATE_META 两份配置，linkOnly/remoteOnly 图标本就相同）
+const AUDIT_STATE_META: Record<Exclude<RepoLinkAuditState, "none">, {
+  chipIcon: string
+  cellIcon: string
+  chipCls: string
+  cellCls: string
+  labelKey: string
+}> = {
+  match: { chipIcon: "mdi:check-circle-outline", cellIcon: "mdi:check-circle", chipCls: "synced", cellCls: "gp-audit-match", labelKey: "auditMatch" },
+  mismatch: { chipIcon: "mdi:alert-circle-outline", cellIcon: "mdi:alert-circle", chipCls: "error", cellCls: "gp-audit-mismatch", labelKey: "auditMismatch" },
+  linkOnly: { chipIcon: "mdi:link-variant-off", cellIcon: "mdi:link-variant-off", chipCls: "behind", cellCls: "gp-audit-linkonly", labelKey: "auditLinkOnly" },
+  remoteOnly: { chipIcon: "mdi:source-branch", cellIcon: "mdi:source-branch", chipCls: "ahead", cellCls: "gp-audit-remoteonly", labelKey: "auditRemoteOnly" },
+}
 
-// 单元格四态图标 + 颜色类（none 直接渲染占位符）
-const STATE_META = {
-  match: { icon: "mdi:check-circle", cls: "gp-audit-match", labelKey: "auditMatch" },
-  mismatch: { icon: "mdi:alert-circle", cls: "gp-audit-mismatch", labelKey: "auditMismatch" },
-  linkOnly: { icon: "mdi:link-variant-off", cls: "gp-audit-linkonly", labelKey: "auditLinkOnly" },
-  remoteOnly: { icon: "mdi:source-branch", cls: "gp-audit-remoteonly", labelKey: "auditRemoteOnly" },
-} as const
+/** 四态汇总 chips（数值取 summary） */
+const auditChips = computed(() =>
+  (Object.keys(AUDIT_STATE_META) as Exclude<RepoLinkAuditState, "none">[]).map((state) => ({
+    key: state,
+    icon: AUDIT_STATE_META[state].chipIcon,
+    cls: AUDIT_STATE_META[state].chipCls,
+    labelKey: AUDIT_STATE_META[state].labelKey,
+    value: props.summary[state],
+  })),
+)
 
-/** 仅展示存在问题的项目行 */
-const issueRows = computed(() => props.rows.filter((r) => r.hasIssue))
+/** 仅展示存在问题的项目行（视图模型：单元格图标 + tooltip 原文） */
+const issueRows = computed<PlatformTableRowView[]>(() =>
+  props.rows.filter((r) => r.hasIssue).map((r) => ({
+    id: r.id,
+    name: r.name,
+    path: r.path,
+    nameSuffix: r.error ? props.i18n.auditError : "",
+    cells: r.cells.map((c) => {
+      if (c.state === "none") { return { key: c.key, title: "", icon: "" } }
+      const m = AUDIT_STATE_META[c.state]
+      return { key: c.key, title: cellTitle(c), icon: m.cellIcon, iconCls: m.cellCls }
+    }),
+  })),
+)
 
-/** 单元格 tooltip：状态名 + 链接与远程 URL 原文（便于排错） */
+/** 单元格 tooltip：状态名 + 链接与远程 URL 原文（便于排错；none 态不展示） */
 function cellTitle(cell: RepoLinkAuditCell): string {
   if (cell.state === "none") { return "" }
-  const label = props.i18n[STATE_META[cell.state].labelKey]
+  const label = props.i18n[AUDIT_STATE_META[cell.state].labelKey]
   return `${label}\n${props.i18n.auditLinkPrefix}: ${cell.link || "-"}\n${props.i18n.auditRemotePrefix}: ${cell.remoteUrl || "-"}`
 }
 </script>

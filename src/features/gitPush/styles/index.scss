@@ -862,30 +862,17 @@
 }
 
 // ════ 代码统计报告（gpr-）共享基座：表格/徽章/区块标题原语（4 个分区 SCSS 复用，避免重复定义）════
-// 注：.gpr-section-title/-count 与 StatsPanel.scss 的 .gp-stats-section-title/-count 几乎逐字重复，
-// 属第 2 次出现（Rule of Three），第 3 处出现时再提取共享 mixin
+// 标题/计数样式与 StatsPanel.scss 的 .gp-stats-section-* 共用 _mixins.scss 的 gp-section-title-base / gp-section-count-base
 .gpr-section {
   margin-bottom: $spacing-3;
 }
 
 .gpr-section-title {
-  @include gp-label-base;
-  font-size: $font-size-xs;
-  margin-bottom: $spacing-2;
-  display: flex;
-  align-items: center;
-  gap: $spacing-1;
+  @include gp-section-title-base;
 }
 
 .gpr-section-count {
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
-  padding: 0 6px;
-  border-radius: $radius-sm;
-  background: var(--b3-theme-primary-lightest);
-  color: var(--b3-theme-primary);
-  font-weight: $font-weight-semibold;
-  letter-spacing: 0;
+  @include gp-section-count-base;
 }
 
 // 表格（技术债务/贡献度/热点汇总共用）：sticky 表头 + 行分割 + 等宽右对齐数字

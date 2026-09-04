@@ -396,9 +396,15 @@ export class GitPushManager {
   /** 仓库是否处于 rebase 中断状态（上次重写失败残留等，供修正弹窗给出准确提示） */
   async isInRebaseState(projectPath: string): Promise<boolean> { return this.worktreeOps.isInRebaseState(projectPath) }
 
-  async rewriteCommitMessage(projectPath: string, hash: string, message: string, preserveDate = false): Promise<string> {
+  async rewriteCommitMessage(
+    projectPath: string,
+    hash: string,
+    message: string,
+    preserveDate = false,
+    onProgress?: (current: number, total: number) => void,
+  ): Promise<string> {
     const result = await this.writeLock.runExclusive(projectPath, () =>
-      this.worktreeOps.rewriteCommitMessage(projectPath, hash, message, preserveDate),
+      this.worktreeOps.rewriteCommitMessage(projectPath, hash, message, preserveDate, onProgress),
     )
     // 改写后失效推送状态缓存（D6：与 commit 路径语义一致；调用方仅持有 path，按 path 反查项目 id）
     void this.invalidatePushStatusCacheByPath(projectPath)

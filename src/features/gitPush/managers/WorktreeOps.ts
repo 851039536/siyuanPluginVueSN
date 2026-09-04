@@ -350,7 +350,13 @@ export class WorktreeOps {
    *   工作区文件（可能被 IDE/资源管理器占用）；commit-tree 全程只建对象不碰工作区，
    *   失败时引用未被更新，仓库保持原状。
    */
-  async rewriteCommitMessage(projectPath: string, hash: string, message: string, preserveDate = false): Promise<string> {
+  async rewriteCommitMessage(
+    projectPath: string,
+    hash: string,
+    message: string,
+    preserveDate = false,
+    onProgress?: (current: number, total: number) => void,
+  ): Promise<string> {
     // 前置检测：仓库处于 rebase 中断状态（如用户终端操作残留）时直接报错，避免在其上叠加改写
     if (await this.isInRebaseState(projectPath)) {
       throw new Error("仓库处于 rebase 中断状态（可能由上次操作失败残留），请先在终端执行 git rebase --abort 恢复后重试")
@@ -386,7 +392,7 @@ export class WorktreeOps {
       return await this.amendCommitMessage(projectPath, message)
     }
 
-    return await this.rebuildHistoryWithNewMessage(projectPath, fullHash, headHash, message, preserveDate)
+    return await this.rebuildHistoryWithNewMessage(projectPath, fullHash, headHash, message, preserveDate, onProgress)
   }
 
   /**
@@ -395,7 +401,14 @@ export class WorktreeOps {
    * 原树/原父子结构重建（仅消息或父指针变化），侧链等无关提交保持原 hash；
    * 最后以 CAS（旧值校验）更新分支引用。全程不触碰工作区与暂存区。
    */
-  private async rebuildHistoryWithNewMessage(projectPath: string, fullHash: string, headHash: string, message: string, preserveDate: boolean): Promise<string> {
+  private async rebuildHistoryWithNewMessage(
+    projectPath: string,
+    fullHash: string,
+    headHash: string,
+    message: string,
+    preserveDate: boolean,
+    onProgress?: (current: number, total: number) => void,
+  ): Promise<string> {
     const node = getNodeFsPathOs()
     if (!node) throw new Error("Node 环境不可用")
     const { fs, os, path } = node
@@ -457,8 +470,23 @@ export class WorktreeOps {
     }
 
     try {
+      // 预计算必要重建数（纯逻辑，不执行 git）：目标必重建；后代中任一父已被重写的才重建，
+      // 侧链等无关提交不计入 total，保证进度分母准确（与下方 identity 跳过分支等价判定）
+      const replaced = new Set<string>([fullHash])
+      let total = 1
+      for (const rec of rest) {
+        if (rec.parents.some((p) => replaced.has(p))) {
+          replaced.add(rec.hash)
+          total++
+        }
+      }
+      let done = 0
+      const progress = () => onProgress?.(done, total)
+
       // 1. 重建目标提交（其父提交均在范围之外，保持原样）
       await rebuild(target, message)
+      done++
+      progress()
       // 2. 按拓扑序重建依赖目标的后代；父指针未变化的（如并入侧链）保持原 hash
       for (const rec of rest) {
         const newParents = rec.parents.map((p) => map.get(p) ?? p)
@@ -467,6 +495,8 @@ export class WorktreeOps {
           continue
         }
         await rebuild(rec, rec.message)
+        done++
+        progress()
       }
       // 3. CAS 更新引用：当前值与开始时不一致（期间有其他改动）则失败，避免覆盖
       const newTip = map.get(headHash)

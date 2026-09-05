@@ -1,0 +1,95 @@
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// 提交内文件清单面板（无遮罩纯展示区；供提交文件弹窗 / 修正信息弹窗内嵌复用）
+.gcl-head {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin-bottom: $spacing-1;
+  font-size: $font-size-2xs;
+}
+
+// 小节标题（宿主传入时显示，如修正弹窗的"修改的文件"）
+.gcl-head-label {
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-primary);
+}
+
+// 文件计数（无标题时靠右显示）
+.gcl-count {
+  margin-left: auto;
+  font-family: $vp-mono;
+  opacity: 0.6;
+
+  &--alone {
+    margin-left: 0;
+  }
+}
+
+// 加载中 / 空态 / 加载失败信息条
+.gcl-state,
+.gcl-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: $spacing-1;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light, var(--b3-theme-on-surface));
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  padding: $spacing-1 $spacing-2;
+
+  &--error {
+    color: var(--b3-theme-error, $color-danger);
+    background: var(--b3-theme-error-background, transparent);
+    border-color: var(--b3-theme-error, $color-danger);
+  }
+}
+
+// 文件列表滚动区（高度经 --gcl-list-max-height CSS 变量由宿主按容器高控制）
+.gcl-list {
+  display: flex;
+  flex-direction: column;
+  max-height: var(--gcl-list-max-height, 240px);
+  overflow-y: auto;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+}
+
+// 文件行（状态标记/路径复用 .wt-file-status/.wt-file-path；整行可点击查看差异）
+.gcl-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: 3px $spacing-2;
+  cursor: pointer;
+  border-radius: $radius-sm;
+
+  & + & {
+    border-top: 1px solid color-mix(in srgb, var(--b3-border-color) 60%, transparent);
+  }
+
+  &:hover {
+    background: var(--b3-theme-surface);
+
+    .wt-file-path {
+      color: var(--b3-theme-primary);
+    }
+  }
+
+  &.is-active {
+    background: color-mix(in srgb, var(--b3-theme-primary) 8%, transparent);
+  }
+}
+
+// 重命名/复制旧路径（弱化靠右）
+.gcl-old {
+  flex-shrink: 0;
+  max-width: 45%;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  @include text-ellipsis;
+  opacity: 0.45;
+}

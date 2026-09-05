@@ -105,6 +105,25 @@
               <Icon icon="mdi:alert-circle-outline" height="12" />
               <span>{{ error }}</span>
             </div>
+
+            <!-- 备份完成信息条：显示 bundle 完整路径，点击打开备份所在文件夹（删除前完整历史的唯一恢复点） -->
+            <div
+              v-if="backupPath"
+              class="gp-drop-backup"
+              role="button"
+              tabindex="0"
+              :title="i18n.dropCommitOpenBackupTip"
+              @click="openBackupFolder"
+              @keydown.enter="openBackupFolder"
+            >
+              <Icon icon="mdi:content-save-check-outline" height="12" />
+              <span class="gp-drop-backup-label">{{ i18n.dropCommitBackupDone }}</span>
+              <span class="gp-drop-backup-path">{{ backupPath }}</span>
+              <span class="gp-drop-backup-open">
+                <Icon icon="mdi:folder-open" height="12" />
+                {{ i18n.openFolder }}
+              </span>
+            </div>
           </template>
         </div>
 
@@ -112,27 +131,38 @@
           <!-- 底部提示：reflog 可恢复 -->
           <span class="gp-drop-hint">{{ i18n.dropCommitRecoverHint }}</span>
           <div class="gp-grow" />
-          <!-- 取消 -->
+          <!-- 完成（删除成功后展示备份路径，由用户点击关闭） -->
           <button
-            class="vp-btn vp-btn--ghost vp-btn--sm"
-            :disabled="busy"
+            v-if="done"
+            class="vp-btn vp-btn--primary vp-btn--sm"
             @click="emit('close')"
           >
-            {{ i18n.cancel }}
+            <Icon icon="mdi:check" height="12" />
+            <span>{{ i18n.dropCommitDone }}</span>
           </button>
-          <!-- 确认删除（危险操作，红色） -->
-          <button
-            class="vp-btn vp-btn--danger vp-btn--sm"
-            :disabled="!canDrop || busy"
-            @click="performDrop"
-          >
-            <Icon
-              :icon="dropping ? 'mdi:loading' : 'mdi:delete-outline'"
-              height="12"
-              :class="{ 'gp-spin': dropping }"
-            />
-            <span>{{ i18n.dropCommitConfirm }}</span>
-          </button>
+          <template v-else>
+            <!-- 取消 -->
+            <button
+              class="vp-btn vp-btn--ghost vp-btn--sm"
+              :disabled="busy"
+              @click="emit('close')"
+            >
+              {{ i18n.cancel }}
+            </button>
+            <!-- 确认删除（危险操作，红色） -->
+            <button
+              class="vp-btn vp-btn--danger vp-btn--sm"
+              :disabled="!canDrop || busy"
+              @click="performDrop"
+            >
+              <Icon
+                :icon="dropping ? 'mdi:loading' : 'mdi:delete-outline'"
+                height="12"
+                :class="{ 'gp-spin': dropping }"
+              />
+              <span>{{ i18n.dropCommitConfirm }}</span>
+            </button>
+          </template>
         </div>
       </div>
     </div>
@@ -144,8 +174,9 @@
 import type { CommitFixTarget, GitProject } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed, inject, onMounted, onUnmounted, ref } from "vue"
-import { resolveValidPath } from "../../utils"
+import { openLocalPath, resolveValidPath } from "../../utils"
 import { CARD_SERVICES_KEY } from "../../types"
+import { getNodeFsPathOs } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import Loader from "@/components/Loader.vue"
 
@@ -172,6 +203,10 @@ const dropping = ref(false)
 const dropProgress = ref<{ current: number, total: number } | null>(null)
 /** 执行失败信息 */
 const error = ref("")
+/** 已生成的 bundle 备份文件完整路径（删除执行前的唯一恢复点；空 = 尚未生成） */
+const backupPath = ref("")
+/** 删除是否已成功完成（完成后停留展示备份路径，由用户点「完成」关闭） */
+const done = ref(false)
 const headHash = ref("")
 /** 仓库是否处于 rebase 中断状态（上次重写失败的残留，此时任何重写都必须阻止） */
 const rebaseStuck = ref(false)
@@ -236,21 +271,24 @@ async function init() {
   }
 }
 
-/** 执行删除：先 bundle 全量备份（失败即中止），再 commit-tree 图重建删除 */
+/** 执行删除：先 bundle 全量备份（失败即中止），再 commit-tree 图重建删除；成功后停留展示备份位置 */
 async function performDrop() {
   if (!canDrop.value || busy.value || !projectPath.value) return
   error.value = ""
+  done.value = false
+  backupPath.value = ""
   backingUp.value = true
   try {
-    await manager.createProjectBackup(projectPath.value)
+    // 先备份后删除，成功后保留弹窗展示备份路径（撤销恢复点需用户主动关闭）
+    backupPath.value = await manager.createProjectBackup(projectPath.value)
     backingUp.value = false
     dropping.value = true
     dropProgress.value = null
     await manager.dropCommit(projectPath.value, props.target.hash, (current, total) => {
       dropProgress.value = { current, total }
     })
+    done.value = true
     emit("saved", props.target.projectId)
-    emit("close")
   } catch (e: unknown) {
     console.error("[gitPush] 删除历史提交失败:", e)
     error.value = getErrorMessage(e) || props.i18n.dropCommitFailed
@@ -259,6 +297,14 @@ async function performDrop() {
     dropping.value = false
     dropProgress.value = null
   }
+}
+
+/** 在文件管理器中打开备份文件所在文件夹（bundle 保留删除前完整历史，可 git clone 恢复） */
+async function openBackupFolder() {
+  if (!backupPath.value) return
+  const nodePath = getNodeFsPathOs()?.path
+  if (!nodePath) return
+  await openLocalPath(nodePath.dirname(backupPath.value))
 }
 </script>
 

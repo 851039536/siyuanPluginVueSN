@@ -342,6 +342,14 @@ export class WorktreeOps {
     }
   }
 
+  /** 是否 merge 提交（存在第二父；批量修正弹窗据此标记不可修正项），无法解析时按非 merge 处理 */
+  async isMergeCommit(projectPath: string, hash: string): Promise<boolean> {
+    const fullHash = (await this.executor.execGit(projectPath, ["rev-parse", `${hash}^{commit}`]).catch(() => "")).trim()
+    if (!fullHash) return false
+    const secondParent = (await this.executor.execGit(projectPath, ["rev-parse", "--verify", `${fullHash}^2`]).catch(() => "")).trim()
+    return !!secondParent
+  }
+
   /**
    * 重写指定提交信息（个人项目安全版）：
    * - 目标是 HEAD 时直接 amend；

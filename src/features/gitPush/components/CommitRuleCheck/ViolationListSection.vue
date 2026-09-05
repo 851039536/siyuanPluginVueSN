@@ -1,10 +1,36 @@
 <!-- gitPush 提交规则检查不合规提交列表区块（条目 + 修正入口 + 分页加载） -->
 <template>
   <div class="grc-section">
-    <!-- 区块标题："不合规提交列表" + 条数徽章 -->
+    <!-- 区块标题："不合规提交列表" + 条数徽章 + 全选 + 批量修正 -->
     <div class="grc-section-title">
-      {{ i18n.ruleCheckTitle }}
+      <span>{{ i18n.ruleCheckTitle }}</span>
       <span class="grc-section-count">{{ pagedSource.length }}</span>
+      <span class="grc-title-actions">
+        <!-- 全选 checkbox（勾选 = 选中全部违规项） -->
+        <label class="grc-select-all">
+          <input
+            type="checkbox"
+            :checked="allSelected"
+            :title="i18n.ruleCheckSelectAll"
+            @change="toggleSelectAll"
+          />
+          {{ i18n.ruleCheckSelectAll }}
+        </label>
+        <!-- 批量修正按钮（显示选中计数，未选中时禁用） -->
+        <button
+          class="vp-btn vp-btn--ghost vp-btn--sm"
+          :disabled="selectedCount === 0"
+          :title="i18n.ruleFixOpen"
+          @click="openBatch"
+        >
+          <Icon icon="mdi:auto-fix" height="12" />
+          {{ i18n.ruleCheckBatchFix }}
+          <span
+            v-if="selectedCount > 0"
+            class="grc-select-count"
+          >{{ selectedCount }}</span>
+        </button>
+      </span>
     </div>
 
     <div class="grc-list">
@@ -14,6 +40,14 @@
         class="grc-item"
       >
         <div class="grc-item-head">
+          <!-- 批量选择复选框（选中键 = 行 key：projectId-hash-reason） -->
+          <input
+            type="checkbox"
+            class="grc-item-check"
+            :checked="selectedKeys.has(row.key)"
+            :title="i18n.ruleCheckBatchFix"
+            @change="toggleSelect(row.key)"
+          />
           <span
             v-if="!scoped"
             class="grc-item-project"
@@ -58,7 +92,7 @@
 import type { CommitRuleCheckStats, CommitRuleViolation } from "../../types"
 import { COMMIT_RULE_REASON_META } from "../../types"
 import { Icon } from "@iconify/vue"
-import { computed, watch } from "vue"
+import { computed, ref, watch } from "vue"
 import { formatDateTime, relativeTime } from "../../utils"
 import { usePagedList } from "../../composables/usePagedList"
 import LoadMoreButton from "../common/LoadMoreButton.vue"
@@ -79,7 +113,36 @@ const props = defineProps<{
 const emit = defineEmits<{
   viewProject: [projectId: string]
   openFix: [violation: CommitRuleViolation]
+  openBatchFix: [violations: CommitRuleViolation[]]
 }>()
+
+/** 选中项 key 集合（key = projectId-hash-reason，与行 key 一致） */
+const selectedKeys = ref<Set<string>>(new Set())
+
+/** 选中项数量 */
+const selectedCount = computed(() => selectedKeys.value.size)
+
+/** 全选态：非空列表且全部选中 */
+const allSelected = computed(() => pagedSource.value.length > 0 && selectedKeys.value.size === pagedSource.value.length)
+
+function toggleSelect(key: string) {
+  const next = new Set(selectedKeys.value)
+  if (next.has(key)) next.delete(key)
+  else next.add(key)
+  selectedKeys.value = next
+}
+
+function toggleSelectAll() {
+  selectedKeys.value = allSelected.value
+    ? new Set()
+    : new Set(pagedSource.value.map((v) => `${v.projectId}-${v.hash}-${v.reason}`))
+}
+
+/** 批量修正：按 stats.violations 顺序（日期降序）传出选中项，保证同项目祖先-后代违规"新→旧"处理 */
+function openBatch() {
+  const selected = props.stats.violations.filter((v) => selectedKeys.value.has(`${v.projectId}-${v.hash}-${v.reason}`))
+  if (selected.length > 0) emit("openBatchFix", selected)
+}
 
 /** 违规列表分页数据源 */
 const pagedSource = computed(() => props.stats.violations)
@@ -101,9 +164,10 @@ const pagedRows = computed<ViolationRow[]>(() =>
   })),
 )
 
-/** 数据源变化（重新分析/切换过滤项目）时重置分页，防止新结果集停留在旧页码 */
+/** 数据源变化（重新分析/切换过滤项目）时重置分页并清空选择，防止旧结果集的页码/选中项残留 */
 watch(pagedSource, () => {
   pagedReset()
+  selectedKeys.value = new Set()
 })
 </script>
 

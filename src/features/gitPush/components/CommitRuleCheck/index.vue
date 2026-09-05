@@ -76,6 +76,7 @@
             :scoped="scoped"
             @view-project="emit('viewProject', $event)"
             @open-fix="openFix"
+            @open-batch-fix="openBatchFix"
           />
         </template>
       </template>
@@ -89,6 +90,15 @@
       @close="editingViolation = null"
       @saved="handleFixSaved"
     />
+
+    <!-- 提交信息批量修正弹窗（自包含：多项目/多条违规校验、AI 批量生成、批量保存） -->
+    <BatchFixDialog
+      v-if="editingBatch"
+      :i18n="i18n"
+      :targets="editingBatch"
+      @close="editingBatch = null"
+      @saved="handleBatchSaved"
+    />
   </div>
 </template>
 
@@ -97,6 +107,7 @@
 import type { CommitRuleCheckStats, CommitRuleViolation, GitProject } from "../../types"
 import type { CommitCount } from "../../composables/useCommitAnalysis"
 import { computed, ref } from "vue"
+import BatchFixDialog from "../common/BatchFixDialog.vue"
 import CommitFixDialog from "../common/CommitFixDialog.vue"
 import EmptyState from "../common/EmptyState.vue"
 import Loader from "@/components/Loader.vue"
@@ -133,14 +144,27 @@ const scoped = computed(() => !!props.projectId)
 /** 当前正在编辑的违规提交（null = 未打开弹窗） */
 const editingViolation = ref<CommitRuleViolation | null>(null)
 
+/** 当前批量修正的违规提交集合（null = 未打开批量弹窗） */
+const editingBatch = ref<CommitRuleViolation[] | null>(null)
+
 function openFix(violation: CommitRuleViolation) {
   editingViolation.value = violation
+}
+
+/** 打开批量修正弹窗（违规列表按日期降序传入，批量弹窗内按新→旧顺序处理） */
+function openBatchFix(violations: CommitRuleViolation[]) {
+  editingBatch.value = violations
 }
 
 /** 修正成功后关闭弹窗并仅重抓该项目的提交日志（局部刷新，避免全量重跑所有项目） */
 function handleFixSaved(projectId: string) {
   editingViolation.value = null
   emit("runAnalysis", projectId)
+}
+
+/** 批量修正保存完成：仅重抓受影响项目（数组），弹窗保持打开由"完成"按钮关闭 */
+function handleBatchSaved(projectIds: string[]) {
+  emit("runAnalysis", projectIds)
 }
 </script>
 

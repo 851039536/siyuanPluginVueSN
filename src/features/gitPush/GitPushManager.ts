@@ -412,6 +412,11 @@ export class GitPushManager {
   /** 仓库是否处于 rebase 中断状态（上次重写失败残留等，供修正弹窗给出准确提示） */
   async isInRebaseState(projectPath: string): Promise<boolean> { return this.worktreeOps.isInRebaseState(projectPath) }
 
+  /** 是否 merge 提交（存在第二父；批量修正弹窗据此标记不可修正项） */
+  async isMergeCommit(projectPath: string, hash: string): Promise<boolean> {
+    return this.worktreeOps.isMergeCommit(projectPath, hash)
+  }
+
   async rewriteCommitMessage(
     projectPath: string,
     hash: string,

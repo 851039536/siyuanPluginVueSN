@@ -111,6 +111,43 @@
   gap: $spacing-1;
 }
 
+// 标题右侧操作区（全选 + 批量修正按钮），右对齐并重置 label 基座的 uppercase/字距
+.grc-title-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  letter-spacing: 0;
+  text-transform: none;
+  opacity: 1;
+}
+
+.grc-select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: $font-size-2xs;
+  cursor: pointer;
+  opacity: 0.75;
+
+  input[type="checkbox"] {
+    accent-color: var(--b3-theme-primary);
+  }
+}
+
+// 批量选中计数（等宽 + tabular-nums，对齐数值文本规范）
+.grc-select-count {
+  font-family: $vp-mono;
+  font-variant-numeric: tabular-nums;
+}
+
+// 列表行复选框
+.grc-item-check {
+  margin: 0;
+  accent-color: var(--b3-theme-primary);
+  cursor: pointer;
+}
+
 .grc-section-count {
   font-size: $font-size-2xs;
   font-family: $vp-mono;

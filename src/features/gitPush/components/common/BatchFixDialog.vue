@@ -166,6 +166,11 @@
                     v-if="item.error"
                     class="gp-fix-invalid"
                   >{{ item.error }}</span>
+                  <!-- AI 生成失败提示："AI 生成失败，请重试"（可再次批量生成重试） -->
+                  <span
+                    v-if="item.aiError"
+                    class="gp-fix-invalid"
+                  >{{ item.aiError }}</span>
                 </div>
 
                 <!-- 历史提交重写警告（非 HEAD 且可修正） -->
@@ -273,6 +278,8 @@ interface BatchFixItem {
   status: "pending" | "saved" | "error"
   /** 保存失败错误文案 */
   error: string
+  /** AI 批量生成失败文案（成功或重试时清除，与单条修正弹窗同文案） */
+  aiError: string
 }
 
 /** 每个项目的 HEAD/工作区/rebase 前置状态（init 时一次加载） */
@@ -390,7 +397,11 @@ async function init() {
     const built: BatchFixItem[] = []
     await Promise.all([...byProject.entries()].map(async ([projectId, targets]) => {
       const p = await manager.getProjectById(projectId)
-      if (!p) return
+      if (!p) {
+        // 项目记录已不存在（分析缓存残留已删除项目等）：告警后跳过该组，避免条目静默消失无从排查
+        console.warn(`[gitPush] 批量修正：项目 ${projectId} 不存在，已跳过其 ${targets.length} 条违规`)
+        return
+      }
       const path = resolveValidPath(p)
       const [head, wt, stuck] = await Promise.all([
         manager.getHeadHash(path),
@@ -417,6 +428,7 @@ async function init() {
           blockedReason: computeBlockedReason({ isMerge }, rt),
           status: "pending",
           error: "",
+          aiError: "",
         })
       }))
     }))
@@ -438,11 +450,19 @@ async function runAiFixAll() {
   genTotal.value = targets.length
   try {
     for (const item of targets) {
+      // 每条重试前清除上次生成失败标记
+      item.aiError = ""
       try {
         const result = await manager.generateCommitFix(item.projectPath, item.hash, item.message)
-        if (result.message) item.newMessage = result.message
+        if (result.message) {
+          item.newMessage = result.message
+        } else {
+          // AI 与启发式均未产出（与单条修正弹窗一致：提示可重试）
+          item.aiError = props.i18n.ruleFixAiFailed
+        }
       } catch (e) {
         console.error("[gitPush] AI 批量生成失败:", e)
+        item.aiError = props.i18n.ruleFixAiFailed
       }
       genDone.value++
     }

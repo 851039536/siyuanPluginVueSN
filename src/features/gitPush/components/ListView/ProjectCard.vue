@@ -61,6 +61,7 @@
       @fix-commit="openCommitFix"
       @add-tag="openTagCreate"
       @drop-commit="openCommitDrop"
+      @view-files="openCommitFiles"
     />
 
     <!-- Stash -->
@@ -138,6 +139,14 @@
       @saved="handleDropSaved"
     />
 
+    <!-- 提交文件弹窗（LOG Tab 行内入口；列出该提交修改的文件清单） -->
+    <CommitFilesDialog
+      v-if="filesTarget"
+      :i18n="i18n"
+      :target="filesTarget"
+      @close="filesTarget = null"
+    />
+
     <!-- 在指定提交上打 Tag 弹窗（LOG Tab 行内入口） -->
     <TagCommitDialog
       v-if="taggingEntry"
@@ -168,6 +177,7 @@ import CardActionBar from "./CardActionBar.vue"
 import CardHeader from "./CardHeader.vue"
 import CardRemotes from "./CardRemotes.vue"
 import CardTabs, { type CardTabId } from "./CardTabs.vue"
+import CommitFilesDialog from "../common/CommitFilesDialog.vue"
 import CommitFixDialog from "../common/CommitFixDialog.vue"
 import DropCommitDialog from "../common/DropCommitDialog.vue"
 import ConflictSection from "./ConflictSection.vue"
@@ -271,6 +281,20 @@ function openCommitDrop(entry: CommitLogEntry) {
 /** 删除成功后刷新 LOG 数据（hash 已变，列表必须重抓）；弹窗停留展示备份路径，关闭交由 close 事件 */
 function handleDropSaved() {
   void reloadLog()
+}
+
+/** 当前正在查看文件的提交条目（null = 未打开提交文件弹窗） */
+const filesTarget = ref<CommitFixTarget | null>(null)
+
+/** LOG Tab 点击查看文件：把 CommitLogEntry 转为通用查看目标（复用 CommitFixTarget 形状） */
+function openCommitFiles(entry: CommitLogEntry) {
+  filesTarget.value = {
+    projectId: props.project.id,
+    projectName: props.project.name,
+    hash: entry.hash,
+    message: entry.message,
+    isMerge: entry.isMerge,
+  }
 }
 
 /** 当前正在打 Tag 的提交条目（null = 未打开打 Tag 弹窗） */

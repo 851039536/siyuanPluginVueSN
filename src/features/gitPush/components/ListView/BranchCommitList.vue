@@ -120,6 +120,14 @@
           :title="i18n.ruleFixOpen + ': ' + entry.message"
           @click.stop="$emit('fixCommit', entry)"
         >{{ entry.message }}</span>
+        <!-- 查看提交文件按钮（hover 显示；点击弹出该提交修改的文件清单） -->
+        <button
+          class="vp-btn vp-btn--ghost vp-btn--sm bcl-files-btn"
+          :title="i18n.commitFilesOpen"
+          @click.stop="$emit('viewFiles', entry)"
+        >
+          <Icon icon="mdi:file-document-outline" height="12" />
+        </button>
         <!-- 打 Tag 按钮（hover 显示） -->
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm bcl-tag-btn"
@@ -181,6 +189,7 @@ const emit = defineEmits<{
   fixCommit: [entry: CommitLogEntry]
   addTag: [entry: CommitLogEntry]
   dropCommit: [entry: CommitLogEntry]
+  viewFiles: [entry: CommitLogEntry]
 }>()
 
 const countOptions = [200, 300, 500, 1000, 2000, "all"] as const

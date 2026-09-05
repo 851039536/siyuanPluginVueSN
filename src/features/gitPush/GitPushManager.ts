@@ -401,6 +401,11 @@ export class GitPushManager {
     return this.worktreeOps.getCommitLog(projectPath, count)
   }
 
+  /** 解析某次提交涉及的文件变更列表（提交日志行内查看提交文件用） */
+  async getCommitFiles(projectPath: string, hash: string) {
+    return this.worktreeOps.getCommitFiles(projectPath, hash)
+  }
+
   async getBranches(projectPath: string): Promise<BranchInfo[]> { return this.worktreeOps.getBranches(projectPath) }
 
   async getBranch(projectPath: string): Promise<string> { return this.worktreeOps.getBranch(projectPath) }

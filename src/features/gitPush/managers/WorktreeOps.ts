@@ -3,6 +3,7 @@ import type {
   BranchInfo,
   CommitLogEntry,
   FileChange,
+  FileChangeStatus,
   StashEntry,
   WorkingTreeInfo,
 } from "../types/storage"
@@ -319,6 +320,41 @@ export class WorktreeOps {
       return (raw || "").substring(0, 3000)
     } catch {
       return ""
+    }
+  }
+
+  /** 解析某次提交涉及的文件变更列表（git show --name-status；merge/无文件提交返回空数组，UI 据 isMerge 提示） */
+  async getCommitFiles(projectPath: string, hash: string): Promise<FileChange[]> {
+    try {
+      const raw = await this.executor.execGit(projectPath, [
+        "-c", "core.quotepath=false", "show", "--name-status", "--format=", hash,
+      ])
+      if (!raw) return []
+      const files: FileChange[] = []
+      for (const line of raw.split("\n")) {
+        const parts = line.split("\t")
+        if (parts.length < 2) continue
+        // 状态首字母映射；R/C 行带相似度数字（如 "R100"），路径按 tab 切分（rename 为 旧名\t新名）
+        let status: FileChangeStatus
+        switch ((parts[0] || "").charAt(0).toUpperCase()) {
+          case "A": status = "added"; break
+          case "D": status = "deleted"; break
+          case "R": status = "renamed"; break
+          case "C": status = "copied"; break
+          case "U": status = "unmerged"; break
+          default: status = "modified"; break
+        }
+        const oldPath = (status === "renamed" || status === "copied") && parts.length > 2 ? parts[1] : undefined
+        files.push({
+          path: parts[parts.length - 1],
+          status,
+          staged: false,
+          oldPath,
+        })
+      }
+      return files
+    } catch {
+      return []
     }
   }
 

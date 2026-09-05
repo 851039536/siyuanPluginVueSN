@@ -1,0 +1,107 @@
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// 提交文件弹窗（LOG 行内查看该提交修改的文件清单）
+.gp-dialog.gcf-dialog {
+  width: 560px;
+  max-width: 92vw;
+}
+
+// 项目 + hash + 文件数元信息行
+.gcf-meta {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  flex-wrap: wrap;
+  font-size: $font-size-2xs;
+}
+
+.gcf-project {
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-primary);
+  @include text-ellipsis;
+  max-width: 40%;
+}
+
+.gcf-hash {
+  font-family: $vp-mono;
+  opacity: 0.5;
+}
+
+.gcf-count {
+  margin-left: auto;
+  font-family: $vp-mono;
+  opacity: 0.6;
+}
+
+// 提交信息（弱化展示，单行超长省略）
+.gcf-message {
+  margin: 0;
+  padding: $spacing-1 $spacing-2;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  line-height: $line-height-normal;
+  white-space: nowrap;
+  @include text-ellipsis;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+}
+
+// 空态 / 加载失败信息条
+.gcf-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: $spacing-1;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light, var(--b3-theme-on-surface));
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  padding: $spacing-1 $spacing-2;
+
+  &--error {
+    color: var(--b3-theme-error, $color-danger);
+    background: var(--b3-theme-error-background, transparent);
+    border-color: var(--b3-theme-error, $color-danger);
+  }
+}
+
+// 文件列表滚动区
+.gcf-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 320px;
+  overflow-y: auto;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+}
+
+// 文件行（状态标记/路径样式复用 WorkingTreePanel 的 .wt-file-status/.wt-file-path）
+.gcf-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: 3px $spacing-2;
+
+  & + & {
+    border-top: 1px solid color-mix(in srgb, var(--b3-border-color) 60%, transparent);
+  }
+
+  &:hover {
+    background: var(--b3-theme-surface);
+  }
+}
+
+// 重命名/复制旧路径（弱化靠右）
+.gcf-old {
+  flex-shrink: 0;
+  max-width: 45%;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  @include text-ellipsis;
+  opacity: 0.45;
+}

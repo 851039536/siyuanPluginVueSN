@@ -42,6 +42,11 @@
   gap: $spacing-1;
 }
 
+// 该提交修改的文件面板（内嵌 CommitFilesList）与上方表单区块留白
+.gp-fix-files {
+  margin-top: $spacing-2;
+}
+
 // 提交时间策略勾选（radio 横向排列；accent-color 由全局 radio 样式提供）
 .gp-fix-date-options {
   display: flex;

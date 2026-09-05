@@ -61,6 +61,18 @@
               >{{ i18n[COMMIT_RULE_REASON_META[validationReason].labelKey] }}</span>
             </div>
 
+            <!-- 该提交修改的文件清单（辅助理解改动范围；行点击可查看差异） -->
+            <div class="gp-fix-files">
+              <CommitFilesList
+                v-if="project"
+                :i18n="i18n"
+                :project="project"
+                :hash="target.hash"
+                :heading-text="i18n.commitFilesTitle"
+                :list-height="170"
+              />
+            </div>
+
             <!-- 历史重写警告 -->
             <div
               v-if="isHistoryCommit && workingTreeClean"
@@ -190,6 +202,7 @@ import { resolveValidPath } from "../../utils"
 import { CARD_SERVICES_KEY } from "../../types"
 import { getErrorMessage } from "@/utils/stringUtils"
 import Loader from "@/components/Loader.vue"
+import CommitFilesList from "./CommitFilesList.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>

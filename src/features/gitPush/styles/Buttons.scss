@@ -34,6 +34,17 @@
     }
   }
 
+  // 危险主操作（BFG 历史清理等不可逆确认按钮）：错误色实底
+  &--danger {
+    background: var(--b3-theme-error, $color-danger);
+    color: #fff;
+    border-color: var(--b3-theme-error, $color-danger);
+
+    &:hover {
+      opacity: 0.85;
+    }
+  }
+
   &--ghost {
     background: transparent;
     border-color: var(--b3-border-color);

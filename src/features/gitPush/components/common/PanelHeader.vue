@@ -112,6 +112,18 @@
             height="12"
           />
         </button>
+        <!-- 按钮（tooltip："仓库清理"） -->
+        <button
+          class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
+          :class="{ active: currentView === 'repoclean' }"
+          :title="i18n.repoCleanView"
+          @click="currentView = 'repoclean'"
+        >
+          <Icon
+            icon="mdi:broom"
+            height="12"
+          />
+        </button>
       </div>
       <!-- 平台官网快捷入口 -->
       <span class="gp-header-sep" />

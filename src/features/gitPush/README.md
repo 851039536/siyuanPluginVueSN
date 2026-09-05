@@ -17,6 +17,7 @@
 - **项目分类**：按颜色标签分组管理项目（管理入口在设置弹窗左侧导航底部）
 - **标签/状态/备注**：多标签筛选、状态徽章循环切换（活跃/维护中/暂停）、项目备注
 - **提交规则检查**：校验各项目提交信息是否符合 Conventional Commits 规则（type 限 feat/fix/chore/docs/style/refactor/test），集中展示不合规提交及原因；支持 AI 生成修正建议，并可修正 HEAD 或任意本地历史提交（个人项目版，历史重写后需自行 force push）
+- **仓库清理视图**：两段式 — ① 仓库体检（纯 git：.git 打包体积/对象总数 + 可达大文件 Top 50 与占比条形）；② BFG 历史清理（[BFG Repo-Cleaner](https://github.com/rtyley/bfg-repo-cleaner)）：大文件阈值清理 / 按名删除文件·文件夹 / 敏感文本全历史替换，走 mirror 裸仓库安全工作流（bundle 全量备份 → clone --mirror → BFG → gc → CAS 回写），六步步骤条 + 实时日志；Java 运行时自动探测，bfg.jar 首次使用自动下载（Maven Central 主源 + GitHub 备源），结果页一键强推远端
 - **统计视图**：远程覆盖率、待处理项目合并视图（推送状态概览 + 待推送/暂存/未暂存表格）、平台配置状态
 - **远程与本地一致性分析**：头部按钮打开弹窗，批量比对所有项目各本地分支与各远程分支（存在性/领先/落后/分叉），可选先 fetch --prune（默认开启），支持进度显示、七态汇总与"仅显示问题"过滤；结果持久化缓存（打开弹窗直接展示上次结果并显示分析时间）
 - **行数统计视图**：独立 Tab，统计各项目/作者的代码新增、删除、净增行数排行（千位分隔数字，净增正绿负红），支持 30/50/100/200 条数选择；可配置文件格式过滤（扩展名多选排除列表，勾选后跳过对应格式，不选则统计所有文件）
@@ -39,8 +40,10 @@ src/features/gitPush/
 │   ├── ProjectStore.ts              # 项目/分类/标签 CRUD 与内存缓存
 │   ├── ReportOps.ts                 # numstat 提交日志/首提交日期/已跟踪文件/文件历史补丁（弹窗懒取）
 │   ├── RemoteOps.ts                 # push/pull/fetch 全平台与单平台、推送状态检查
-│   ├── WorktreeOps.ts               # 工作区状态/差异/暂存/提交/stash/分支/提交日志
+│   ├── WorktreeOps.ts               # 工作区状态/差异/暂存/提交/stash/分支/提交日志（含历史提交消息重写）
 │   ├── RepoOps.ts                   # Tag 管理、冲突检测、远程配置、Git 配置查看、仓库扫描
+│   ├── BfgOps.ts                    # BFG 运行时层：Java 探测 + bfg.jar 下载缓存 + bfg 进程执行
+│   ├── RepoCleanOps.ts              # 仓库清理编排：体检扫描（纯 git）+ BFG mirror 六步工作流
 │   └── CommitMsgGenerator.ts        # AI 提交信息与 stash 描述生成（含启发式降级）
 ├── types/
 │   ├── index.ts                     # 类型桶（重导出 meta/storage + GitPushManager）
@@ -127,6 +130,12 @@ src/features/gitPush/
 │   │   ├── RuleCheckOverview.vue    # 总览区块（检查数/不合规/合规率卡片 + 规则提示）
 │   │   ├── ReasonDistributionSection.vue # 违规类型分布区块（条形）
 │   │   └── ViolationListSection.vue # 不合规提交列表区块（条目 + 修正入口 + 分页）
+│   ├── RepoCleanPanel/              # 仓库清理视图专属（4 个）
+│   │   ├── index.vue                # 仓库清理视图入口容器（体检扫描编排 + 区块组合 + 清理向导入口）
+│   │   ├── RepoCleanToolbar.vue     # 顶部工具条（项目选择 + 大文件阈值 + 扫描按钮）
+│   │   ├── LargeBlobSection.vue     # 大文件列表区块（体积 + 占比条形 + 分页）
+│   │   ├── CleanWizardDialog.vue    # BFG 清理向导弹窗（策略表单 → 前置检查 → 执行 → 结果，四段式）
+│   │   └── format.ts                # 字节人类可读化工具（formatBytes）
 │   └── LineStats/                   # 行数统计专属（6 个）
 │       ├── index.vue                # 行数统计视图入口容器（状态编排 + 汇总卡片 + 排行 + 弹窗）
 │       ├── LineStatsToolbar.vue     # 顶部工具条（分析状态 + 过滤配置 + 条数 + 分析按钮）
@@ -155,6 +164,7 @@ src/features/gitPush/
     ├── CommitAnalysisPanel.scss     # 提交分析面板样式
     ├── CommitRuleCheckPanel.scss    # 提交规则检查面板样式
     ├── CommitFixDialog.scss         # 提交信息修正弹窗样式
+    ├── RepoCleanPanel.scss          # 仓库清理面板样式（体检卡片 + 大文件列表 + BFG 向导弹窗）
     ├── LineStatsPanel.scss          # 行数统计面板样式（含过滤按钮）
     ├── ExtFilterDialog.scss         # 文件格式过滤弹窗样式
     ├── WorkingTreePanel.scss        # 工作区面板样式
@@ -169,15 +179,17 @@ src/features/gitPush/
 
 ## 架构
 
-`GitPushManager` 为**门面（Facade）**，自身不含业务逻辑，按职责委托给 6 个协作者：
+`GitPushManager` 为**门面（Facade）**，自身不含业务逻辑，按职责委托给 8 个协作者：
 
 ```
 GitPushManager (facade)
   ├── GitExecutor      ← 唯一接触 child_process 的类；execGit 双池并发 + abort/destroy
   ├── ProjectStore     ← 依赖 Executor（detectRemotes）+ Storage；项目/分类/标签 CRUD
   ├── RemoteOps        ← 依赖 Executor + Store + Storage；push/pull/fetch/checkPushStatus
-  ├── WorktreeOps      ← 依赖 Executor；工作区/stash/分支/提交日志
+  ├── WorktreeOps      ← 依赖 Executor；工作区/stash/分支/提交日志/历史消息重写
   ├── RepoOps          ← 依赖 Executor；Tag/冲突/远程配置/Git 配置/扫描
+  ├── BfgOps           ← Java 探测 + bfg.jar 下载缓存 + bfg 进程执行（直接接触 child_process/https）
+  ├── RepoCleanOps     ← 依赖 Executor + BfgOps + WorktreeOps；体检扫描 + BFG 六步清理编排
   └── CommitMsgGenerator ← 依赖 Executor + WorktreeOps + Storage；AI 提交信息
 ```
 

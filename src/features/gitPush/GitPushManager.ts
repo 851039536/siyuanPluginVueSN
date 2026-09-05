@@ -11,7 +11,8 @@ import {
 } from "vue"
 import type { AllPlatformResult } from "./managers/RemoteOps"
 import type { NumstatCommit } from "./reportMetrics"
-import type { PlatformKey } from "./types/meta"
+import type { BfgCleanPlan, BfgCleanResult, BfgRuntimeState, PlatformKey, RepoScanResult } from "./types/meta"
+import type { RepoCleanStep } from "./managers/RepoCleanOps"
 import type {
   BranchInfo,
   CommitLogEntry,
@@ -41,6 +42,8 @@ import { RepoOps } from "./managers/RepoOps"
 import { ReportOps } from "./managers/ReportOps"
 import { WorktreeOps } from "./managers/WorktreeOps"
 import { GitPushStorage } from "./types/storage"
+import { BfgOps } from "./managers/BfgOps"
+import { RepoCleanOps } from "./managers/RepoCleanOps"
 
 /** 自定义 Tab 模型实例的最小结构（init 回调的 this） */
 interface TabCustom {
@@ -63,6 +66,10 @@ export class GitPushManager {
   private repoOps: RepoOps
   private commitMsgGen: CommitMsgGenerator
   private reportOps: ReportOps
+  /** BFG 运行时层（Java 探测 + jar 下载 + 进程执行） */
+  private bfgOps: BfgOps
+  /** 仓库清理编排（体检扫描 + BFG 六步工作流） */
+  private repoCleanOps: RepoCleanOps
   /** 项目级写锁：git 写操作（本地写 + push/pull）按项目路径串行，防 index.lock 竞争 */
   private writeLock = new ProjectWriteLock()
   /** 独立窗口页签 Vue app 与容器（addTab 承载） */
@@ -79,6 +86,8 @@ export class GitPushManager {
     this.repoOps = new RepoOps(this.executor)
     this.commitMsgGen = new CommitMsgGenerator(plugin, this.executor, this.worktreeOps, this.storage)
     this.reportOps = new ReportOps(this.executor)
+    this.bfgOps = new BfgOps(plugin, { load: () => this.storage.bfgPrefs.loadOrDefault() })
+    this.repoCleanOps = new RepoCleanOps(this.executor, this.bfgOps, this.worktreeOps, plugin.name)
     this.registerTabModel()
   }
 
@@ -562,5 +571,50 @@ export class GitPushManager {
   /** 获取文件最近 5 条提交的补丁内容（文件详情弹窗打开时按需懒取；since 限定统计范围；git 失败抛出错误） */
   async getFileHistoryPatch(projectPath: string, file: string, since?: string): Promise<string> {
     return this.reportOps.getFileHistoryPatch(projectPath, file, since)
+  }
+
+  // ── 仓库清理（RepoCleanOps：体检扫描 + BFG 六步工作流）──
+
+  /** 仓库体检：.git 体积汇总 + 可达大文件 Top N（纯 git，只读） */
+  async scanRepoObjects(projectPath: string, thresholdMb: number): Promise<RepoScanResult> {
+    return this.repoCleanOps.scan(projectPath, thresholdMb)
+  }
+
+  /** BFG 运行时探测（Java + jar 就绪状态，供清理向导检查清单） */
+  async getBfgRuntime(): Promise<BfgRuntimeState> {
+    const java = await this.bfgOps.detectJava()
+    const jar = await this.bfgOps.getJarState()
+    return {
+      javaOk: java.ok,
+      javaVersion: java.version,
+      javaPath: java.path,
+      jarOk: jar.jarOk,
+      jarPath: jar.jarPath,
+    }
+  }
+
+  /** 下载 bfg.jar 到插件数据目录（主源失败切备源；进度回调 0~100） */
+  async downloadBfgJar(onProgress?: (pct: number) => void): Promise<string> {
+    return this.bfgOps.downloadJar(onProgress)
+  }
+
+  /**
+   * BFG 清理执行（六步：备份→镜像→重写→压缩→回写）。
+   * 写锁串行 + 完成后失效推送状态缓存（与 rewriteCommitMessage 同模式）。
+   */
+  async runBfgClean(
+    projectPath: string,
+    plan: BfgCleanPlan,
+    callbacks: {
+      onStep?: (step: RepoCleanStep, current: number, total: number) => void
+      onOutput?: (chunk: string) => void
+    } = {},
+  ): Promise<BfgCleanResult> {
+    const result = await this.writeLock.runExclusive(projectPath, () =>
+      this.repoCleanOps.cleanRepo(projectPath, plan, callbacks),
+    )
+    // 历史重写后失效推送状态缓存（D6：与 rewriteCommitMessage 语义一致）
+    void this.invalidatePushStatusCacheByPath(projectPath)
+    return result
   }
 }

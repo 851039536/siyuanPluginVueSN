@@ -19,6 +19,12 @@
             class="grcp-item-size"
             :title="`${row.size} B`"
           >{{ formatBytes(row.size) }}</span>
+          <!-- 锚定来源徽章（仅非本地引用锚定时显示："远程引用"/"其他引用"） -->
+          <span
+            v-if="row.anchor"
+            class="grcp-item-anchor"
+            :title="row.anchor === 'remote' ? i18n.repoCleanAnchorRemoteTip : i18n.repoCleanAnchorOtherTip"
+          >{{ row.anchor === "remote" ? i18n.repoCleanAnchorRemote : i18n.repoCleanAnchorOther }}</span>
           <!-- 路径（超长省略，title 保留全文） -->
           <span
             class="grcp-item-path"

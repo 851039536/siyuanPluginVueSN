@@ -1,6 +1,6 @@
 // Git 项目持久化存储与类型定义
 import type { Plugin } from "siyuan"
-import type { CommitAnalysisCache, CommitAnalysisViewSettings, CommitFixPrefs, LineStatsCache, PlatformKey, RuleCheckPrefs } from "./meta"
+import type { BfgPrefs, CommitAnalysisCache, CommitAnalysisViewSettings, CommitFixPrefs, LineStatsCache, PlatformKey, RepoCleanPrefs, RuleCheckPrefs } from "./meta"
 import type { ConsistencyCache } from "./consistency"
 import { EMPTY_CONSISTENCY_CACHE } from "./consistency"
 import type { CodeReportPrefs } from "./report"
@@ -364,6 +364,12 @@ const DEFAULT_RULE_CHECK_PREFS: RuleCheckPrefs = { projectId: "" }
 /** 提交信息修正偏好默认值（默认保留原始提交时间） */
 const DEFAULT_COMMIT_FIX_PREFS: CommitFixPrefs = { preserveDate: true }
 
+/** 仓库清理视图偏好默认值（默认取第一个项目 + 10MB 阈值） */
+const DEFAULT_REPO_CLEAN_PREFS: RepoCleanPrefs = { projectId: "", thresholdMb: 10 }
+
+/** BFG 运行时路径覆盖默认值（空 = 自动探测 java + 默认缓存 jar） */
+const DEFAULT_BFG_PREFS: BfgPrefs = { javaPath: "", jarPath: "" }
+
 const DEFAULT_UNGROUPED: ProjectCategory = {
   id: UNGROUPED_ID,
   name: "未分组",
@@ -403,6 +409,10 @@ export class GitPushStorage {
   readonly ruleCheckPrefs: TypedStorage<RuleCheckPrefs>
   /** 提交信息修正偏好（上次选择的提交时间策略，跨会话恢复选择） */
   readonly commitFixPrefs: TypedStorage<CommitFixPrefs>
+  /** 仓库清理视图偏好（上次选中项目 + 大文件阈值，跨会话恢复选择） */
+  readonly repoCleanPrefs: TypedStorage<RepoCleanPrefs>
+  /** BFG 运行时路径覆盖（自定义 java / jar 路径，空 = 自动） */
+  readonly bfgPrefs: TypedStorage<BfgPrefs>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
@@ -423,6 +433,8 @@ export class GitPushStorage {
     this.consistencyCache = new TypedStorage(storage, "git-push-consistency-cache", EMPTY_CONSISTENCY_CACHE)
     this.ruleCheckPrefs = new TypedStorage(storage, "git-push-rulecheck-prefs", DEFAULT_RULE_CHECK_PREFS)
     this.commitFixPrefs = new TypedStorage(storage, "git-push-commitfix-prefs", DEFAULT_COMMIT_FIX_PREFS)
+    this.repoCleanPrefs = new TypedStorage(storage, "git-push-repoclean-prefs", DEFAULT_REPO_CLEAN_PREFS)
+    this.bfgPrefs = new TypedStorage(storage, "git-push-bfg-prefs", DEFAULT_BFG_PREFS)
   }
 
   async init(): Promise<void> {

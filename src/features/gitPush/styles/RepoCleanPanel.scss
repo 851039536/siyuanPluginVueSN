@@ -1,0 +1,342 @@
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// ── 仓库清理视图（RepoCleanPanel + CleanWizardDialog，前缀 grcp-）──
+
+// 面板根容器（与 .grc-panel 同范式：滚动 + 右侧留白）
+.grcp-panel {
+  flex: 1;
+  overflow-y: auto;
+  // 右侧留白 8px，避免滚动条/内容紧贴侧边栏（规则见 AGENTS_STYLE §Dock 面板侧边栏间距）
+  padding: $spacing-1 $spacing-2 $spacing-1 0;
+}
+
+// 顶部工具条（两行：第一行控件，第二行状态文案）
+.grcp-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  margin-bottom: $spacing-3;
+}
+
+.grcp-toolbar-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $spacing-1;
+}
+
+// 项目选择下拉（xsmall 紧凑；下拉面板放宽容纳长项目名）
+.grcp-project-select {
+  flex: 0 1 210px;
+  min-width: 0;
+
+  .si-select__dropdown {
+    min-width: 260px;
+  }
+
+  .si-select__option {
+    @include text-ellipsis;
+  }
+}
+
+// 阈值选择下拉（窄宽度）
+.grcp-threshold-select {
+  flex: 0 0 auto;
+}
+
+// 状态文案（满宽第二行，超长省略）
+.grcp-status {
+  min-width: 0;
+  @include text-ellipsis;
+  font-size: $font-size-xs;
+  opacity: 0.6;
+}
+
+// 总览卡片（三列网格，与 .grc-cards 同范式）
+.grcp-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $spacing-2;
+  margin-bottom: $spacing-3;
+}
+
+.grcp-card {
+  text-align: center;
+  padding: $spacing-2 $spacing-1;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-base;
+  background: var(--b3-theme-surface);
+}
+
+.grcp-card-value {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  font-family: $vp-mono;
+  font-variant-numeric: tabular-nums;
+  line-height: $line-height-tight;
+  color: var(--b3-theme-on-surface);
+}
+
+.grcp-card-value--danger {
+  color: var(--b3-theme-error, $color-danger);
+}
+
+.grcp-card-label {
+  margin-top: $spacing-1;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light, var(--b3-theme-on-surface));
+  opacity: 0.7;
+}
+
+// 大文件区块（标题 + 列表 + 分页）
+.grcp-section {
+  margin-bottom: $spacing-3;
+}
+
+.grcp-section-title {
+  @include gp-section-title-base;
+  margin-bottom: $spacing-2;
+}
+
+.grcp-section-count {
+  font-family: $vp-mono;
+  font-variant-numeric: tabular-nums;
+  font-size: $font-size-2xs;
+  opacity: 0.6;
+}
+
+// 大文件列表（条目：体积 + 路径行 + 占比条形行）
+.grcp-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.grcp-item {
+  padding: $spacing-1 $spacing-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-base;
+  background: var(--b3-theme-surface);
+}
+
+.grcp-item-head {
+  display: flex;
+  align-items: baseline;
+  gap: $spacing-2;
+  min-width: 0;
+}
+
+// 体积（mono 数值，不收缩）
+.grcp-item-size {
+  flex: 0 0 auto;
+  font-family: $vp-mono;
+  font-variant-numeric: tabular-nums;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-surface);
+}
+
+// 文件路径（超长省略，title 保留全文）
+.grcp-item-path {
+  min-width: 0;
+  @include text-ellipsis;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface-light, var(--b3-theme-on-surface));
+  opacity: 0.8;
+}
+
+// 占比条形（细条，随 size/packSize 宽度变化）
+.grcp-item-bar-wrap {
+  margin-top: $spacing-1;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--b3-theme-background-light, var(--b3-border-color));
+  overflow: hidden;
+}
+
+.grcp-item-bar {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--b3-theme-primary-lighter, var(--b3-theme-primary));
+  transition: width 0.12s ease;
+}
+
+// 历史清理入口行
+.grcp-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: $spacing-2;
+}
+
+// ── BFG 清理向导弹窗（复用 gp-mask / gp-dialog 基座）──
+
+.grcp-wizard {
+  width: 520px;
+  max-width: calc(100vw - #{$spacing-4 * 2});
+}
+
+// 项目信息行（向导顶部）
+.grcp-wizard-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-3;
+  padding-bottom: $spacing-1;
+  border-bottom: 1px solid var(--b3-border-color);
+  color: var(--b3-theme-on-surface-light, var(--b3-theme-on-surface));
+}
+
+.grcp-wizard-project {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-surface);
+}
+
+// 表单区块
+.grcp-wizard-block {
+  margin-bottom: $spacing-3;
+}
+
+// 单个字段（标签 + 控件纵向排列）
+.grcp-wizard-field {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  margin-top: $spacing-2;
+}
+
+.grcp-wizard-field-label {
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light, var(--b3-theme-on-surface));
+  opacity: 0.8;
+}
+
+.grcp-wizard-select {
+  width: 180px;
+}
+
+// 替换规则多行文本域
+.grcp-wizard-textarea {
+  width: 100%;
+  padding: $spacing-1;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-surface);
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  line-height: $line-height-normal;
+  resize: vertical;
+
+  &:focus {
+    outline: none;
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+// 警告条（普通 / 危险两态，与 .gp-fix-warning 同范式：图标 + 文案 + flex-wrap）
+.grcp-wizard-warning {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $spacing-1;
+  margin-bottom: $spacing-2;
+  padding: $spacing-1 $spacing-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light, var(--b3-theme-on-surface));
+
+  &--danger {
+    border-color: var(--b3-theme-error, $color-danger);
+    color: var(--b3-theme-error, $color-danger);
+  }
+}
+
+.grcp-backup-path {
+  min-width: 0;
+  word-break: break-all;
+}
+
+// 前置检查清单
+.grcp-check-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+}
+
+.grcp-check-item {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface);
+}
+
+.grcp-check-ok {
+  color: var(--b3-theme-primary);
+}
+
+.grcp-check-fail {
+  color: var(--b3-theme-error, $color-danger);
+}
+
+.grcp-check-progress {
+  font-family: $vp-mono;
+  font-variant-numeric: tabular-nums;
+  font-size: $font-size-2xs;
+  opacity: 0.7;
+}
+
+// 六步步骤条
+.grcp-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-1 $spacing-2;
+  margin-bottom: $spacing-2;
+}
+
+.grcp-step {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light, var(--b3-theme-on-surface));
+  opacity: 0.6;
+
+  &.is-active {
+    opacity: 1;
+    color: var(--b3-theme-primary);
+    font-weight: $font-weight-semibold;
+  }
+
+  &.is-done {
+    opacity: 1;
+    color: var(--b3-theme-primary);
+  }
+}
+
+// 结果对比卡片（两列）
+.grcp-result-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-2;
+  margin-bottom: $spacing-3;
+}
+
+.grcp-result-card {
+  text-align: center;
+  padding: $spacing-2 $spacing-1;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-base;
+  background: var(--b3-theme-surface);
+}
+
+// 底部提示（耗时/错误/备份说明，超长省略）
+.grcp-wizard-hint {
+  min-width: 0;
+  @include text-ellipsis;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-error, $color-danger);
+}

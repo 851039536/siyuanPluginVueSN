@@ -210,8 +210,8 @@ export interface StatsView {
   platformStatusProjects: PlatformStatusItem[]
 }
 
-/** 面板头部视图（列表/统计/操作日志/提交分析/提交规则检查/行数统计/代码统计报告），与 ViewMode（列表内筛选模式 all/needsPush/...）语义不同 */
-export type PanelView = "list" | "stats" | "log" | "analysis" | "rulecheck" | "linestats" | "report"
+/** 面板头部视图（列表/统计/操作日志/提交分析/提交规则检查/行数统计/代码统计报告/仓库清理），与 ViewMode（列表内筛选模式 all/needsPush/...）语义不同 */
+export type PanelView = "list" | "stats" | "log" | "analysis" | "rulecheck" | "linestats" | "report" | "repoclean"
 
 // ── 提交分析视图（useCommitAnalysis 产出 / CommitAnalysisPanel 消费）──
 
@@ -470,4 +470,88 @@ export const VIEW_MODE_META: Record<ViewMode, { labelKey: string, icon: string }
   uncommitted: { labelKey: "viewModeUncommitted", icon: "mdi:source-branch" },
   starred: { labelKey: "viewModeStarred", icon: "mdi:star" },
   archived: { labelKey: "viewModeArchived", icon: "mdi:archive-outline" },
+}
+
+// ── 仓库清理视图（RepoCleanOps 产出 / RepoCleanPanel 消费）──
+
+/** 单个大文件 blob 条目（可达对象扫描聚合） */
+export interface RepoBlobItem {
+  /** blob 完整 hash */
+  hash: string
+  /** 最后出现的路径（rev-list --objects 输出；树对象无路径，blob 均有） */
+  path: string
+  /** 字节大小 */
+  size: number
+}
+
+/** 仓库体检扫描结果（体积汇总 + 可达大文件 Top N） */
+export interface RepoScanResult {
+  /** .git 打包体积（count-objects size-pack，字节） */
+  packSize: number
+  /** 松散对象体积（count-objects size，字节） */
+  looseSize: number
+  /** 全部对象总数（count-objects count + in-pack） */
+  objectCount: number
+  /** 最大 blob Top N（降序，默认 50） */
+  topBlobs: RepoBlobItem[]
+  /** 超过阈值的可达 blob 数 */
+  oversizedCount: number
+  /** 超过阈值 blob 的累计字节（含 Top N 之外的） */
+  oversizedBytes: number
+  /** 扫描完成时间（ISO） */
+  scannedAt: string
+}
+
+/** 仓库清理视图偏好（上次选中项目 + 大文件阈值，持久化到 git-push-repoclean-prefs） */
+export interface RepoCleanPrefs {
+  /** 上次选中的项目 ID（空串 = 取项目列表第一个） */
+  projectId: string
+  /** 大文件阈值（MB，默认 10） */
+  thresholdMb: number
+}
+
+/** BFG 运行时探测状态（Java + bfg.jar 就绪情况，供清理向导检查清单展示） */
+export interface BfgRuntimeState {
+  /** Java 可用 */
+  javaOk: boolean
+  /** Java 版本串（如 openjdk 17.0.2） */
+  javaVersion: string
+  /** 实际解析的 java 可执行文件路径 */
+  javaPath: string
+  /** bfg.jar 已就绪（文件存在） */
+  jarOk: boolean
+  /** jar 实际路径 */
+  jarPath: string
+}
+
+/** BFG 清理计划（向导弹窗表单产出，RepoCleanOps 组装为 bfg 命令行参数） */
+export interface BfgCleanPlan {
+  /** 清理大于此值的 blob（MB；0 = 不启用 → --strip-blobs-bigger-than） */
+  stripBiggerThanMb: number
+  /** 按名删除文件 glob（文件名匹配非路径；多值合并为 {g1,g2} → --delete-files） */
+  deleteFileGlobs: string[]
+  /** 按名删除文件夹 glob（多值合并 → --delete-folders） */
+  deleteFolderGlobs: string[]
+  /** 敏感文本替换规则（每行一条："原文" 或 "原文==>替换值" 或 "regex:..."，写临时文件 → --replace-text） */
+  replaceRules: string[]
+}
+
+/** BFG 清理结果（前后体积 + 备份路径 + 各阶段耗时） */
+export interface BfgCleanResult {
+  /** 清理前 .git 体积（字节） */
+  sizeBefore: number
+  /** 清理后 .git 体积（字节） */
+  sizeAfter: number
+  /** 备份 bundle 文件路径（git clone <bundle> 可恢复） */
+  backupPath: string
+  /** 各阶段耗时（ms，键为 backup/mirror/bfg/gc/sync） */
+  durations: Record<string, number>
+}
+
+/** BFG 运行时路径覆盖偏好（空串 = 自动探测/默认缓存路径，持久化到 git-push-bfg-prefs） */
+export interface BfgPrefs {
+  /** 自定义 java 可执行文件路径（空 = JAVA_HOME → PATH 自动探测） */
+  javaPath: string
+  /** 自定义 bfg.jar 路径（空 = 插件数据目录 bin/ 下自动管理） */
+  jarPath: string
 }

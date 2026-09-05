@@ -117,6 +117,14 @@
       @change-range="setRange"
     />
 
+    <!-- ========== 仓库清理视图 ========== -->
+    <RepoCleanPanel
+      v-if="currentView === 'repoclean'"
+      :i18n="i18n"
+      :manager="props.manager"
+      :projects="projects"
+    />
+
     <!-- ========== 列表视图 ========== -->
     <ListView
       v-if="currentView === 'list'"
@@ -288,6 +296,7 @@ import CommitAnalysisPanel from "./components/CommitAnalysis/index.vue"
 import CommitRuleCheckPanel from "./components/CommitRuleCheck/index.vue"
 import LineStatsPanel from "./components/LineStats/index.vue"
 import CodeReportPanel from "./components/CodeReport/index.vue"
+import RepoCleanPanel from "./components/RepoCleanPanel/index.vue"
 import GitConfigDialog from "./components/common/GitConfigDialog.vue"
 import { useGitPush } from "./composables/useGitPush"
 import { useBatchProgress } from "./composables/useBatchProgress"

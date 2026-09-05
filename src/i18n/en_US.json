@@ -1882,6 +1882,7 @@
     "commitFilesEmpty": "No file changes",
     "commitFilesEmptyMerge": "File changes not shown for merge commits",
     "commitFilesLoadFailed": "Failed to load file list",
+    "commitFilesOpenDiff": "Click to view this file's changes",
     "bfgStepBackup": "Backup",
     "bfgStepMirror": "Mirror Clone",
     "bfgStepBfg": "BFG Rewrite",

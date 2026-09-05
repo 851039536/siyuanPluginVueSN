@@ -159,9 +159,10 @@
   white-space: nowrap;
 }
 
-// 打 Tag / 删除提交按钮（行 hover 时显示；两者同为行内 ghost 按钮共用规则）
+// 查看文件 / 打 Tag / 删除提交按钮（行 hover 时显示；同为行内 ghost 按钮共用规则）
 .bcl-tag-btn,
-.bcl-drop-btn {
+.bcl-drop-btn,
+.bcl-files-btn {
   flex-shrink: 0;
   padding: 0 2px;
   opacity: 0;

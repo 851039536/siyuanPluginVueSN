@@ -1,0 +1,48 @@
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+@use "./WorkingTreeDiffDialog.scss";
+
+// 提交内文件差异弹窗遮罩：gp-mask 基座 + 更高层级 + 重新注入 diff 着色变量
+.gp-mask.cdf-overlay {
+  z-index: 10001;
+  @include gp-diff-color-vars;
+}
+
+// 内容容器（宽高与工作区差异弹窗保持一致）
+.cdf-dialog {
+  width: 90vw;
+  max-width: 800px;
+  height: 760px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-md;
+  overflow: hidden;
+}
+
+// 提交 hash 徽标（配合 .wt-diff-badge 的基座样式，额外加深主色）
+.cdf-hash-badge {
+  color: var(--b3-theme-primary);
+}
+
+// 重命名/复制旧路径（弱化，超长省略）
+.cdf-old {
+  flex-shrink: 0;
+  max-width: 30%;
+  font-size: $font-size-2xs;
+  font-family: $vp-mono;
+  @include text-ellipsis;
+  opacity: 0.45;
+}
+
+// 加载中占位（内容区居中）
+.cdf-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-1;
+  padding: $spacing-6 0;
+  opacity: 0.5;
+}

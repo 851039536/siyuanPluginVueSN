@@ -71,6 +71,9 @@
                 v-for="file in files"
                 :key="`${file.status}:${file.path}`"
                 class="gcf-row"
+                :class="{ 'is-active': diffFile === file }"
+                :title="i18n.commitFilesOpenDiff"
+                @click="openDiff(file)"
               >
                 <!-- 状态标记：复用 WorkingTreePanel 的 .wt-file-status/.wt-s-* 着色，hover 可见含义 -->
                 <span
@@ -113,6 +116,18 @@
       </div>
     </div>
   </Teleport>
+
+  <!-- 文件修改差异弹窗（点击文件行打开，复用工作区 diff 着色渲染与行号） -->
+  <CommitFileDiffDialog
+    v-if="diffFile && project"
+    :i18n="i18n"
+    :project="project"
+    :hash="target.hash"
+    :file="diffFile"
+    :files="files"
+    @close="diffFile = null"
+    @navigate="navigateDiff"
+  />
 </template>
 
 <script setup lang="ts">
@@ -125,6 +140,7 @@ import { fileStatusIcon, fileStatusIconKey, fileStatusTitle, isIconFileStatus, r
 import { getErrorMessage } from "@/utils/stringUtils"
 import Loader from "@/components/Loader.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import CommitFileDiffDialog from "./CommitFileDiffDialog.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -143,9 +159,23 @@ const files = ref<FileChange[]>([])
 const loading = ref(true)
 /** 加载失败信息 */
 const error = ref("")
+/** 当前正在查看修改差异的文件（null = 未打开差异弹窗） */
+const diffFile = ref<FileChange | null>(null)
 
+/** 点击文件行：打开该文件在本次提交中的差异弹窗 */
+function openDiff(file: FileChange) {
+  if (!project.value) return
+  diffFile.value = file
+}
+
+/** 差异弹窗内上下文件导航（更新当前查看目标） */
+function navigateDiff(file: FileChange) {
+  diffFile.value = file
+}
+
+/** Esc：优先关闭上层差异弹窗；无差异弹窗时才关闭当前提交文件弹窗 */
 function handleKeydown(e: KeyboardEvent) {
-  if (e.key === "Escape") emit("close")
+  if (e.key === "Escape" && !diffFile.value) emit("close")
 }
 
 onMounted(() => {

@@ -753,6 +753,7 @@
     "commitFilesEmpty": "无文件变更",
     "commitFilesEmptyMerge": "merge 提交不展示合并差异",
     "commitFilesLoadFailed": "文件列表加载失败",
+    "commitFilesOpenDiff": "点击查看该文件的修改差异",
     "bfgStepBackup": "备份",
     "bfgStepMirror": "镜像克隆",
     "bfgStepBfg": "BFG 重写",

@@ -159,10 +159,9 @@
   white-space: nowrap;
 }
 
-// 查看文件 / 打 Tag / 删除提交按钮（行 hover 时显示；同为行内 ghost 按钮共用规则）
+// 打 Tag / 删除提交按钮（仅行 hover 时浮现）
 .bcl-tag-btn,
-.bcl-drop-btn,
-.bcl-files-btn {
+.bcl-drop-btn {
   flex-shrink: 0;
   padding: 0 2px;
   opacity: 0;
@@ -173,6 +172,21 @@
   }
 
   .bcl-entry:hover &:hover {
+    opacity: 1;
+    color: var(--b3-theme-primary);
+  }
+}
+
+// 查看文件按钮（常显，点击进入提交文件清单；弱化色随 hover 增强）
+.bcl-files-btn {
+  flex-shrink: 0;
+  padding: 0 2px;
+  opacity: 0.7;
+  transition:
+    opacity 0.12s ease,
+    color 0.12s ease;
+
+  &:hover {
     opacity: 1;
     color: var(--b3-theme-primary);
   }

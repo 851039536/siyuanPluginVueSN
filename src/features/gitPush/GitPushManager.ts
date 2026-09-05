@@ -406,6 +406,11 @@ export class GitPushManager {
     return this.worktreeOps.getCommitFiles(projectPath, hash)
   }
 
+  /** 获取某次提交对指定文件的补丁（提交文件弹窗内点击查看修改差异用） */
+  async getCommitFilePatch(projectPath: string, hash: string, filePath: string) {
+    return this.worktreeOps.getCommitFilePatch(projectPath, hash, filePath)
+  }
+
   async getBranches(projectPath: string): Promise<BranchInfo[]> { return this.worktreeOps.getBranches(projectPath) }
 
   async getBranch(projectPath: string): Promise<string> { return this.worktreeOps.getBranch(projectPath) }

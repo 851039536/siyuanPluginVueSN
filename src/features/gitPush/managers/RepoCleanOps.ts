@@ -98,6 +98,30 @@ export class RepoCleanOps {
     }
     all.sort((a, b) => b.size - a.size)
 
+    // 5. 锚定来源分类（BFG 清理后残留诊断）：
+    //    本地分支/标签可达集（--branches --tags）与远程跟踪引用可达集（--glob refs/remotes/*）各跑一遍，
+    //    仅被远程跟踪引用锚定 → "remote"（远端仍是旧历史）；两者皆非 → "other"（stash 等其他引用）
+    if (all.length > 0) {
+      const hashSetOf = (raw: string): Set<string> => {
+        const set = new Set<string>()
+        for (const line of raw.split("\n")) {
+          const hash = line.split(" ")[0]
+          if (hash) set.add(hash)
+        }
+        return set
+      }
+      const [localRaw, remoteRaw] = await Promise.all([
+        this.executor.execGit(projectPath, ["rev-list", "--objects", "--branches", "--tags"], undefined, SCAN_TIMEOUT_MS),
+        this.executor.execGit(projectPath, ["rev-list", "--objects", "--glob=refs/remotes/*"], undefined, SCAN_TIMEOUT_MS),
+      ])
+      const localSet = hashSetOf(localRaw)
+      const remoteSet = hashSetOf(remoteRaw)
+      for (const item of all) {
+        if (localSet.has(item.hash)) continue
+        item.anchor = remoteSet.has(item.hash) ? "remote" : "other"
+      }
+    }
+
     const oversized = all.filter((b) => b.size > thresholdBytes)
     return {
       packSize,
@@ -300,7 +324,34 @@ export class RepoCleanOps {
     for (const line of countRaw.split("\n")) {
       const [k, v] = line.split(":").map((p) => p.trim())
       if (k === "size-pack") return parseHumanSizeToBytes(v || "")
-    }
+      }
     return 0
+  }
+
+  /**
+   * BFG 强推后收尾：fetch --prune 同步全部远程跟踪引用（推送已更新的引用随 push 即时刷新，
+   * 远端已删除的分支被 prune）+ reflog 过期 + gc 物理清除本地残留。
+   * 注意：远端仍存在的未重写分支（如旧发布分支）不会被 prune —— 体检将以「远程引用」标注其锚定的大文件。
+   */
+  async finalizeBfgClean(
+    projectPath: string,
+    onOutput?: (chunk: string) => void,
+  ): Promise<{ fetchErrors: { remote: string, error: string }[] }> {
+    const remotesRaw = await this.executor.execGit(projectPath, ["remote"])
+    const remotes = remotesRaw.split("\n").map((s) => s.trim()).filter(Boolean)
+
+    const fetchErrors: { remote: string, error: string }[] = []
+    for (const remote of remotes) {
+      try {
+        await this.executor.execGit(projectPath, ["fetch", "--prune", remote], undefined, CLEAN_TIMEOUT_MS, onOutput)
+      } catch (e) {
+        // 单个远程 fetch 失败不阻断收尾（其余远程 + gc 照常执行）
+        fetchErrors.push({ remote, error: e instanceof Error ? e.message : String(e) })
+      }
+    }
+
+    await this.executor.execGit(projectPath, ["reflog", "expire", "--expire=now", "--all"], undefined, CLEAN_TIMEOUT_MS)
+    await this.executor.execGit(projectPath, ["gc", "--prune=now"], undefined, CLEAN_TIMEOUT_MS, onOutput)
+    return { fetchErrors }
   }
 }

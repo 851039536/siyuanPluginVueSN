@@ -622,4 +622,20 @@ export class GitPushManager {
     void this.invalidatePushStatusCacheByPath(projectPath)
     return result
   }
+
+  /**
+   * BFG 强推后收尾：fetch --prune 全部远程 + reflog 过期 + gc 物理清除本地残留
+   * （远端仍存在的未重写分支不会被 prune，体检将以「远程引用」标注）
+   */
+  async finalizeBfgClean(
+    projectPath: string,
+    onOutput?: (chunk: string) => void,
+  ): Promise<{ fetchErrors: { remote: string, error: string }[] }> {
+    const result = await this.writeLock.runExclusive(projectPath, () =>
+      this.repoCleanOps.finalizeBfgClean(projectPath, onOutput),
+    )
+    // 远程跟踪引用已同步，推送状态缓存随之过期
+    void this.invalidatePushStatusCacheByPath(projectPath)
+    return result
+  }
 }

@@ -55,7 +55,8 @@
       :loading="logLoading"
       :tag-commit-map="tagCommitMap"
       :remote-tags="remoteTags"
-      @reload-commit-log="(count: number | 'all') => reloadLog(count)"
+      :initial-count="logLimit"
+      @reload-commit-log="handleLogCountReload"
       @refresh-commit-log="() => reloadLog()"
       @fix-commit="openCommitFix"
       @add-tag="openTagCreate"
@@ -206,6 +207,8 @@ const {
   reloadLog,
   refreshTags,
   loadDiff,
+  logLimit,
+  setLogLimit,
 } = useCardData(() => props.project)
 
 /** Stash / Tag 面板 Tab 切换 */
@@ -303,6 +306,12 @@ function handleTagCreate(name: string, message?: string) {
   if (!entry) return
   ops.handleCreateTag(props.project.id, name, message, entry.hash)
   taggingEntry.value = null
+}
+
+/** LOG 列表变更显示条数：同步卡片级 logLimit 并按新条数重载（保证后续无参刷新沿用该值） */
+function handleLogCountReload(count: number | "all") {
+  setLogLimit(count)
+  void reloadLog(count)
 }
 
 // 切换回 worktree 时自动刷新工作区（父层数据）；切到 log/stash/tag 时懒加载卡内详情

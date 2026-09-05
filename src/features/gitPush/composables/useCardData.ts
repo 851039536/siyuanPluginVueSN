@@ -44,9 +44,17 @@ export function useCardData(project: () => GitProject) {
     branches.value = await manager.getBranches(path())
   }
 
-  /** 加载提交日志并同步项目最近活动时间（原 useGitOps.loadCommitLog 的副作用经服务回传父层） */
+  /** 提交日志显示条数（卡片级共享真源：决定无参加载/重载的抓取条数；默认与 LOG 列表选择框一致） */
+  const logLimit = ref<number | "all">(200)
+
+  /** 更新显示条数（LOG 列表选择框变化时同步，保证后续无参刷新沿用当前选择） */
+  function setLogLimit(count: number | "all") {
+    logLimit.value = count
+  }
+
+  /** 加载提交日志并同步项目最近活动时间（count 缺省走 logLimit，即列表选择框当前值，替代原 30 条默认） */
   async function loadLog(count?: number | "all") {
-    const entries = await manager.getCommitLog(path(), count)
+    const entries = await manager.getCommitLog(path(), count ?? logLimit.value)
     logEntries.value = entries
     const latest = entries[0]?.date
     if (latest) await services.recordCommitActivity(project().id, latest)
@@ -182,5 +190,7 @@ export function useCardData(project: () => GitProject) {
     reloadLog,
     refreshTags,
     loadDiff,
+    logLimit,
+    setLogLimit,
   }
 }

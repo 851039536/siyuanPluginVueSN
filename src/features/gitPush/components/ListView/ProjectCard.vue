@@ -265,9 +265,8 @@ function openCommitDrop(entry: CommitLogEntry) {
   }
 }
 
-/** 删除成功后关闭弹窗并刷新 LOG 数据（hash 已变，列表必须重抓） */
+/** 删除成功后刷新 LOG 数据（hash 已变，列表必须重抓）；弹窗停留展示备份路径，关闭交由 close 事件 */
 function handleDropSaved() {
-  droppingEntry.value = null
   void reloadLog()
 }
 

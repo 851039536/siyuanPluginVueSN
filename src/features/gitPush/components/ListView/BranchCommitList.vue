@@ -171,6 +171,8 @@ const props = defineProps<{
   tagCommitMap?: Map<string, string[]>
   /** 各远程已有的 Tag 名列表（remote 名 → Tag 名数组），供推送状态展示 */
   remoteTags?: Map<string, string[]>
+  /** 显示条数初始值（卡片级 logLimit 传入，与抓取条数保持一致；不传回退 200） */
+  initialCount?: number | "all"
 }>()
 
 const emit = defineEmits<{
@@ -183,7 +185,8 @@ const emit = defineEmits<{
 
 const countOptions = [200, 300, 500, 1000, 2000, "all"] as const
 const searchKeyword = ref("")
-const displayCount = ref<number | "all">(200)
+/** 选择框当前值：以卡片级 logLimit（initialCount prop）为初始值，切换 Tab 重建后仍沿用用户上次选择 */
+const displayCount = ref<number | "all">(props.initialCount ?? 200)
 
 const filteredEntries = computed(() => {
   let list = props.entries

@@ -358,6 +358,17 @@ export class WorktreeOps {
     }
   }
 
+  /** 获取某次提交对指定文件的补丁（git show --format= <hash> -- <path>），无内容/失败返回空串 */
+  async getCommitFilePatch(projectPath: string, hash: string, filePath: string): Promise<string> {
+    try {
+      return await this.executor.execGit(projectPath, [
+        "-c", "core.quotepath=false", "show", "--format=", hash, "--", filePath,
+      ])
+    } catch {
+      return ""
+    }
+  }
+
   /** 修改当前 HEAD 提交信息（仅允许最近一次提交，调用方负责前置校验） */
   async amendCommitMessage(projectPath: string, message: string): Promise<string> {
     return await this.executor.execGit(projectPath, [

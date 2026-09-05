@@ -81,11 +81,14 @@
 }
 
 // 文件行（状态标记/路径样式复用 WorkingTreePanel 的 .wt-file-status/.wt-file-path）
+// 整行可点击：打开该文件在本次提交中的差异弹窗
 .gcf-row {
   display: flex;
   align-items: center;
   gap: $spacing-1;
   padding: 3px $spacing-2;
+  cursor: pointer;
+  border-radius: $radius-sm;
 
   & + & {
     border-top: 1px solid color-mix(in srgb, var(--b3-border-color) 60%, transparent);
@@ -93,6 +96,14 @@
 
   &:hover {
     background: var(--b3-theme-surface);
+
+    .wt-file-path {
+      color: var(--b3-theme-primary);
+    }
+  }
+
+  &.is-active {
+    background: color-mix(in srgb, var(--b3-theme-primary) 8%, transparent);
   }
 }
 

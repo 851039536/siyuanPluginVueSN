@@ -1,0 +1,61 @@
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+@use "./CommitFixDialog.scss"; // 复用单条修正弹窗基础样式（gp-fix-input/original/warning/progress/date-options 等）
+
+// 批量修正弹窗（更宽，容纳多条违规条目）
+.gp-fix-batch-dialog {
+  width: 640px;
+  max-width: 92vw;
+}
+
+// 批量条目列表（纵向排列，超出滚动）
+.gp-fix-batch-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  max-height: 42vh;
+  overflow-y: auto;
+}
+
+// 单条违规修正卡（surface 凸出）
+.gp-fix-batch-item {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  padding: $spacing-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-base;
+  background: var(--b3-theme-surface);
+}
+
+// 已成功修正的条目边框强调（成功绿，弱化提示）
+.gp-fix-batch-item--saved {
+  border-color: color-mix(in srgb, var(--b3-theme-success) 45%, var(--b3-border-color));
+}
+
+// 条目序号（等宽弱化，tabular-nums 对齐数值规范）
+.gp-fix-batch-index {
+  font-family: $vp-mono;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.4;
+}
+
+// 条目状态图标（右对齐，成功/失败着色）
+.gp-fix-batch-state {
+  margin-left: auto;
+  display: inline-flex;
+}
+
+.gp-fix-batch-state--saved {
+  color: var(--b3-theme-success);
+}
+
+.gp-fix-batch-state--error {
+  color: var(--b3-theme-error, $color-danger);
+}
+
+// 重写计数文案（与进度条同行前置）
+.gp-fix-rewrite-count {
+  font-family: $vp-mono;
+  font-variant-numeric: tabular-nums;
+}

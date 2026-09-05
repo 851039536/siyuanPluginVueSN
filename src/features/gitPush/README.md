@@ -16,7 +16,7 @@
 - **Stash 暂存**：Git stash 存取恢复，支持 AI 生成描述
 - **项目分类**：按颜色标签分组管理项目（管理入口在设置弹窗左侧导航底部）
 - **标签/状态/备注**：多标签筛选、状态徽章循环切换（活跃/维护中/暂停）、项目备注
-- **提交规则检查**：校验各项目提交信息是否符合 Conventional Commits 规则（type 限 feat/fix/chore/docs/style/refactor/test），集中展示不合规提交及原因；支持 AI 生成修正建议，并可修正 HEAD 或任意本地历史提交（个人项目版，历史重写后需自行 force push）
+- **提交规则检查**：校验各项目提交信息是否符合 Conventional Commits 规则（type 限 feat/fix/chore/docs/style/refactor/test），集中展示不合规提交及原因；支持 AI 生成修正建议，并可修正 HEAD 或任意本地历史提交（个人项目版，历史重写后需自行 force push）；支持多选违规提交进行批量修正（批量弹窗内 AI 逐条生成 + 逐条保存，同项目内按新→旧顺序处理保证链式违规不丢修正）
 - **仓库清理视图**：两段式 — ① 仓库体检（纯 git：.git 打包体积/对象总数 + 可达大文件 Top 50 与占比条形）；② BFG 历史清理（[BFG Repo-Cleaner](https://github.com/rtyley/bfg-repo-cleaner)）：大文件阈值清理 / 按名删除文件·文件夹 / 敏感文本全历史替换，走 mirror 裸仓库安全工作流（bundle 全量备份 → clone --mirror → BFG → gc → CAS 回写），六步步骤条 + 实时日志；Java 运行时自动探测，bfg.jar 首次使用自动下载（Maven Central 主源 + GitHub 备源），结果页一键强推远端
 - **统计视图**：远程覆盖率、待处理项目合并视图（推送状态概览 + 待推送/暂存/未暂存表格）、平台配置状态
 - **远程与本地一致性分析**：头部按钮打开弹窗，批量比对所有项目各本地分支与各远程分支（存在性/领先/落后/分叉），可选先 fetch --prune（默认开启），支持进度显示、七态汇总与"仅显示问题"过滤；结果持久化缓存（打开弹窗直接展示上次结果并显示分析时间）
@@ -77,7 +77,8 @@ src/features/gitPush/
 │   │   ├── CloneLogPanel.vue        # 克隆日志面板
 │   │   ├── EmptyState.vue           # 空态提示（无项目/无数据）
 │   │   ├── LoadMoreButton.vue       # 加载更多按钮
-│   │   └── CommitFixDialog.vue      # 提交信息修正弹窗（HEAD amend + AI 生成，列表 LOG Tab 与规则检查共用）
+│   │   ├── CommitFixDialog.vue      # 提交信息修正弹窗（HEAD amend + AI 生成，列表 LOG Tab 与规则检查共用）
+│   │   └── BatchFixDialog.vue       # 提交信息批量修正弹窗（规则检查多选：AI 逐条生成 + 逐条保存 + 逐项状态）
 │   ├── ListView/                    # 列表视图专属（17 个）
 │   │   ├── index.vue               # 列表视图入口容器（工具栏 + 分组循环卡片，纯渲染）
 │   │   ├── ListViewToolbar.vue      # 列表工具栏
@@ -164,6 +165,7 @@ src/features/gitPush/
     ├── CommitAnalysisPanel.scss     # 提交分析面板样式
     ├── CommitRuleCheckPanel.scss    # 提交规则检查面板样式
     ├── CommitFixDialog.scss         # 提交信息修正弹窗样式
+    ├── BatchFixDialog.scss          # 提交信息批量修正弹窗样式
     ├── RepoCleanPanel.scss          # 仓库清理面板样式（体检卡片 + 大文件列表 + BFG 向导弹窗）
     ├── LineStatsPanel.scss          # 行数统计面板样式（含过滤按钮）
     ├── ExtFilterDialog.scss         # 文件格式过滤弹窗样式

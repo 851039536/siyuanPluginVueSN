@@ -137,6 +137,19 @@
   color: var(--b3-theme-on-surface);
 }
 
+// 锚定来源徽章（BFG 清理后残留诊断："远程引用"= 仅被 refs/remotes 锚定；"其他引用"= stash 等）
+.grcp-item-anchor {
+  flex: 0 0 auto;
+  padding: 0 $spacing-1;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  font-size: $font-size-2xs;
+  line-height: $line-height-tight;
+  color: var(--b3-theme-on-surface-light, var(--b3-theme-on-surface));
+  opacity: 0.8;
+  cursor: help;
+}
+
 // 文件路径（超长省略，title 保留全文）
 .grcp-item-path {
   min-width: 0;

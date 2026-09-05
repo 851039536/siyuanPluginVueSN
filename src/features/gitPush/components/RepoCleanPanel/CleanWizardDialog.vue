@@ -194,6 +194,14 @@
               <Icon icon="mdi:alert-circle-outline" height="12" />
               <span>{{ i18n.bfgWarnForcePushAfter }}</span>
             </div>
+
+            <!-- 执行/收尾实时日志（保留清理过程输出，收尾 fetch/gc 追加显示） -->
+            <CloneLogPanel
+              :lines="log.lines.value"
+              :running="finalizing"
+              :i18n="i18n"
+              @clear="log.clear"
+            />
           </template>
         </div>
 
@@ -237,19 +245,20 @@
           <template v-if="phase === 'result'">
             <button
               class="vp-btn vp-btn--ghost vp-btn--sm"
-              :disabled="forcePushing"
+              :disabled="forcePushing || finalizing"
               @click="forcePush"
             >
               <Icon
-                :icon="forcePushing ? 'mdi:loading' : 'mdi:cloud-upload-outline'"
+                :icon="forcePushing || finalizing ? 'mdi:loading' : 'mdi:cloud-upload-outline'"
                 height="12"
-                :class="{ 'gp-spin': forcePushing }"
+                :class="{ 'gp-spin': forcePushing || finalizing }"
               />
-              <!-- 按钮文案："强推远端" -->
-              {{ i18n.bfgForcePush }}
+              <!-- 按钮文案："强推远端"/"收尾中…" -->
+              {{ finalizing ? i18n.bfgFinalizingBtn : i18n.bfgForcePush }}
             </button>
             <button
               class="vp-btn vp-btn--primary vp-btn--sm"
+              :disabled="forcePushing || finalizing"
               @click="finishWizard"
             >
               <!-- 按钮文案："完成" -->
@@ -353,6 +362,8 @@ const stepIndex = ref(0)
 const resultData = ref<BfgCleanResult | null>(null)
 /** 强推状态 */
 const forcePushing = ref(false)
+/** 收尾状态（强推后自动 fetch --prune + gc） */
+const finalizing = ref(false)
 /** 强推/下载错误提示 */
 const actionError = ref("")
 
@@ -449,22 +460,40 @@ function startClean() {
   })()
 }
 
-/** 强推远端（复用现有 forcePushToAll；弹窗保持打开让用户看到结果提示） */
+/** 强推远端（复用现有 forcePushToAll；成功后自动收尾 fetch --prune + gc 清除本地残留） */
 async function forcePush() {
-  if (forcePushing.value) return
+  if (forcePushing.value || finalizing.value) return
   forcePushing.value = true
   actionError.value = ""
   try {
     const res = await props.manager.forcePushToAll(props.project.id)
     const platforms = [res.github, res.gitee, res.gitea, res.cnb]
     const failed = platforms.filter((r) => !r.ok)
-    actionError.value = failed.length > 0
+    const pushMsg = failed.length > 0
       ? `${props.i18n.bfgForcePushDone}（${failed.length} ${props.i18n.bfgForcePushFailedCount}）`
       : props.i18n.bfgForcePushDone
+    await runFinalize(pushMsg)
   } catch (e) {
     actionError.value = getErrorMessage(e)
   } finally {
     forcePushing.value = false
+  }
+}
+
+/** 收尾：fetch --prune 全部远程 + reflog 过期 + gc（同步远程跟踪引用并物理清除本地残留） */
+async function runFinalize(prefixMsg?: string) {
+  finalizing.value = true
+  try {
+    log.append(`\n${props.i18n.bfgFinalizing}\n`)
+    const { fetchErrors } = await props.manager.finalizeBfgClean(props.project.path, (chunk) => log.append(chunk))
+    const suffix = fetchErrors.length > 0
+      ? props.i18n.bfgFinalizeFetchFailed.replace("{0}", fetchErrors.map((e) => e.remote).join(", "))
+      : props.i18n.bfgFinalizeDone
+    actionError.value = prefixMsg ? `${prefixMsg}；${suffix}` : suffix
+  } catch (e) {
+    actionError.value = getErrorMessage(e)
+  } finally {
+    finalizing.value = false
   }
 }
 

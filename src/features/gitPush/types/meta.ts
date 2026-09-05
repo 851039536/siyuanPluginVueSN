@@ -482,6 +482,13 @@ export interface RepoBlobItem {
   path: string
   /** 字节大小 */
   size: number
+  /**
+   * 锚定来源（BFG 清理后残留诊断）：
+   * undefined = 本地分支/标签可达（正常状态）；
+   * "remote" = 仅被远程跟踪引用（refs/remotes/*）锚定 → 远端仍保留旧历史或存在未重写的远程分支；
+   * "other" = 被其他引用（stash 等）锚定
+   */
+  anchor?: "remote" | "other"
 }
 
 /** 仓库体检扫描结果（体积汇总 + 可达大文件 Top N） */

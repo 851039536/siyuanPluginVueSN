@@ -146,6 +146,24 @@ export class RepoCleanOps {
     return args
   }
 
+  /**
+   * 创建 bundle 全量备份（单文件可用 git clone <备份文件> 恢复；每项目保留最近 3 份，超出按时间戳轮换删除）。
+   * BFG 清理与删除历史提交等破坏性操作前调用。
+   */
+  async createBackup(projectPath: string): Promise<string> {
+    const node = getNodeFsPathOs()
+    if (!node) throw new Error("Node 环境不可用")
+    const { fs, path } = node
+
+    const backupDir = await this.backupDirFor(projectPath)
+    fs.mkdirSync(backupDir, { recursive: true })
+    const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19)
+    const backupPath = path.join(backupDir, `${path.basename(projectPath)}-${ts}.bundle`)
+    await this.executor.execGit(projectPath, ["bundle", "create", backupPath, "--all"], undefined, CLEAN_TIMEOUT_MS)
+    this.pruneBackups(backupDir)
+    return backupPath
+  }
+
   /** 备份 bundle 目录（<workspace>/data/storage/petal/<plugin.name>/bfg-backups/<项目名>/） */
   private async backupDirFor(projectPath: string): Promise<string> {
     const node = getNodeFsPathOs()
@@ -221,12 +239,7 @@ export class RepoCleanOps {
 
       callbacks.onStep?.("backup", 1, stepTotal)
       stepStart("backup")
-      const backupDir = await this.backupDirFor(projectPath)
-      fs.mkdirSync(backupDir, { recursive: true })
-      const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19)
-      const backupPath = path.join(backupDir, `${path.basename(projectPath)}-${ts}.bundle`)
-      await this.executor.execGit(projectPath, ["bundle", "create", backupPath, "--all"], undefined, CLEAN_TIMEOUT_MS)
-      this.pruneBackups(backupDir)
+      const backupPath = await this.createBackup(projectPath)
       stepEnd("backup")
 
       // ── 步骤 2：mirror 裸仓库克隆（本地克隆，对象 hardlink 共享）──

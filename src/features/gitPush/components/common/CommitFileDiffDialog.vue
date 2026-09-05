@@ -217,17 +217,21 @@ async function load() {
 watch(() => props.file.path, () => { void load() })
 
 // Esc 关闭 / ← → 切换文件（组件仅在打开时挂载，onMounted/onUnmounted 即等价于开关监听）
+// 捕获阶段拦截并阻止继续派发，避免按键穿透触发下层弹窗（如提交文件/修正信息弹窗）的 Esc 监听
 function handleKeydown(e: KeyboardEvent) {
+  const handled = e.key === "Escape" || e.key === "ArrowLeft" || e.key === "ArrowRight"
+  if (!handled) return
+  e.stopImmediatePropagation()
   if (e.key === "Escape") emit("close")
   else if (e.key === "ArrowLeft") navigate(-1)
   else if (e.key === "ArrowRight") navigate(1)
 }
 onMounted(() => {
-  window.addEventListener("keydown", handleKeydown)
+  window.addEventListener("keydown", handleKeydown, true)
   void load()
 })
 onUnmounted(() => {
-  window.removeEventListener("keydown", handleKeydown)
+  window.removeEventListener("keydown", handleKeydown, true)
 })
 </script>
 

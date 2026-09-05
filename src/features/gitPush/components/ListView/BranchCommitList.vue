@@ -131,6 +131,14 @@
             height="12"
           />
         </button>
+        <!-- 删除提交按钮（hover 显示；点击弹出删除确认弹窗） -->
+        <button
+          class="vp-btn vp-btn--ghost vp-btn--sm bcl-drop-btn"
+          :title="i18n.dropCommitOpen"
+          @click.stop="$emit('dropCommit', entry)"
+        >
+          <Icon icon="mdi:delete-outline" height="12" />
+        </button>
         <span class="bcl-meta">
           <span class="bcl-author">{{ entry.author }}</span>
           <span
@@ -170,6 +178,7 @@ const emit = defineEmits<{
   refreshCommitLog: []
   fixCommit: [entry: CommitLogEntry]
   addTag: [entry: CommitLogEntry]
+  dropCommit: [entry: CommitLogEntry]
 }>()
 
 const countOptions = [200, 300, 500, 1000, 2000, "all"] as const

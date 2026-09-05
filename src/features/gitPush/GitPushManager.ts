@@ -444,6 +444,24 @@ export class GitPushManager {
     } catch { /* 缓存失效失败不影响主流程 */ }
   }
 
+  /**
+   * 删除指定历史提交（记录级删除、内容不变语义）：
+   * 写锁串行 + 完成后失效推送状态缓存（与 rewriteCommitMessage 同模式）。
+   */
+  async dropCommit(projectPath: string, hash: string, onProgress?: (current: number, total: number) => void): Promise<string> {
+    const result = await this.writeLock.runExclusive(projectPath, () =>
+      this.worktreeOps.dropCommit(projectPath, hash, onProgress),
+    )
+    // 历史重写后失效推送状态缓存（与 rewriteCommitMessage 语义一致）
+    void this.invalidatePushStatusCacheByPath(projectPath)
+    return result
+  }
+
+  /** 目标提交是否为当前 HEAD 的祖先（删除提交弹窗前置校验用；hash 支持短/完整） */
+  async isAncestorOfHead(projectPath: string, hash: string): Promise<boolean> {
+    return this.worktreeOps.isAncestorOfHead(projectPath, hash)
+  }
+
   // ── 仓库元操作（RepoOps；写操作经项目级写锁串行）──
 
   async getTags(projectPath: string, limit = 10): Promise<TagInfo[]> { return this.repoOps.getTags(projectPath, limit) }
@@ -601,6 +619,11 @@ export class GitPushManager {
   /** 下载 bfg.jar 到插件数据目录（主源失败切备源；进度回调 0~100） */
   async downloadBfgJar(onProgress?: (pct: number) => void): Promise<string> {
     return this.bfgOps.downloadJar(onProgress)
+  }
+
+  /** 创建项目 bundle 全量备份（BFG 清理/删除历史提交等破坏性操作前调用；复用 BFG 备份目录与 3 份轮换） */
+  async createProjectBackup(projectPath: string): Promise<string> {
+    return this.repoCleanOps.createBackup(projectPath)
   }
 
   /**

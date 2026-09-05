@@ -59,6 +59,7 @@
       @refresh-commit-log="() => reloadLog()"
       @fix-commit="openCommitFix"
       @add-tag="openTagCreate"
+      @drop-commit="openCommitDrop"
     />
 
     <!-- Stash -->
@@ -127,6 +128,15 @@
       @saved="handleFixSaved"
     />
 
+    <!-- 删除历史提交弹窗（LOG Tab 行内入口；记录级删除、内容不变语义） -->
+    <DropCommitDialog
+      v-if="droppingEntry"
+      :i18n="i18n"
+      :target="droppingEntry"
+      @close="droppingEntry = null"
+      @saved="handleDropSaved"
+    />
+
     <!-- 在指定提交上打 Tag 弹窗（LOG Tab 行内入口） -->
     <TagCommitDialog
       v-if="taggingEntry"
@@ -158,6 +168,7 @@ import CardHeader from "./CardHeader.vue"
 import CardRemotes from "./CardRemotes.vue"
 import CardTabs, { type CardTabId } from "./CardTabs.vue"
 import CommitFixDialog from "../common/CommitFixDialog.vue"
+import DropCommitDialog from "../common/DropCommitDialog.vue"
 import ConflictSection from "./ConflictSection.vue"
 import OutputPanel from "./OutputPanel.vue"
 import StashSection from "./StashSection.vue"
@@ -237,6 +248,26 @@ function openCommitFix(entry: CommitLogEntry) {
 /** 修正成功后关闭弹窗并刷新 LOG 数据 */
 function handleFixSaved() {
   fixingEntry.value = null
+  void reloadLog()
+}
+
+/** 当前正在删除的提交条目（null = 未打开删除弹窗） */
+const droppingEntry = ref<CommitFixTarget | null>(null)
+
+/** LOG Tab 点击删除按钮：把 CommitLogEntry 转为通用删除目标（复用 CommitFixTarget 形状） */
+function openCommitDrop(entry: CommitLogEntry) {
+  droppingEntry.value = {
+    projectId: props.project.id,
+    projectName: props.project.name,
+    hash: entry.hash,
+    message: entry.message,
+    isMerge: entry.isMerge,
+  }
+}
+
+/** 删除成功后关闭弹窗并刷新 LOG 数据（hash 已变，列表必须重抓） */
+function handleDropSaved() {
+  droppingEntry.value = null
   void reloadLog()
 }
 

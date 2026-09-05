@@ -11,7 +11,7 @@
 - **工作区变更**：查看暂存/未暂存/未跟踪文件，支持暂存、取消暂存、查看着色 diff、丢弃更改
 - **提交功能**：Conventional Commit 快捷类型选择、AI 生成提交信息（支持思考模式控制）
 - **AI 错误分析**：推送/拉取失败时日志面板提供「AI 分析」按钮，弹窗内流式分析失败日志，输出错误原因、解决方案与预防建议
-- **提交历史**：查看当前分支最近 N 条提交记录，支持关键词/作者搜索过滤
+- **提交历史**：查看当前分支最近 N 条提交记录，支持关键词/作者搜索过滤；行内支持删除任意历史提交（记录级删除、内容不变语义——被删提交的变更并入下一提交，最终文件内容不变；merge/HEAD 提交阻止；执行前自动 bundle 备份，可经 reflog 恢复；后代 hash 必然重写，已推送需手动强推）
 - **分支管理**：查看本地分支列表，一键切换分支（自动检测未提交变更）
 - **Stash 暂存**：Git stash 存取恢复，支持 AI 生成描述
 - **项目分类**：按颜色标签分组管理项目（管理入口在设置弹窗左侧导航底部）
@@ -42,6 +42,7 @@ src/features/gitPush/
 │   ├── RemoteOps.ts                 # push/pull/fetch 全平台与单平台、推送状态检查
 │   ├── WorktreeOps.ts               # 工作区状态/差异/暂存/提交/stash/分支/提交日志（含历史提交消息重写）
 │   ├── RepoOps.ts                   # Tag 管理、冲突检测、远程配置、Git 配置查看、仓库扫描
+│   ├── HistoryRewriter.ts           # 提交历史 DAG 重建器（消息改写 / 提交删除双策略共享 commit-tree 骨架）
 │   ├── BfgOps.ts                    # BFG 运行时层：Java 探测 + bfg.jar 下载缓存 + bfg 进程执行
 │   ├── RepoCleanOps.ts              # 仓库清理编排：体检扫描（纯 git）+ BFG mirror 六步工作流
 │   └── CommitMsgGenerator.ts        # AI 提交信息与 stash 描述生成（含启发式降级）
@@ -78,6 +79,7 @@ src/features/gitPush/
 │   │   ├── EmptyState.vue           # 空态提示（无项目/无数据）
 │   │   ├── LoadMoreButton.vue       # 加载更多按钮
 │   │   ├── CommitFixDialog.vue      # 提交信息修正弹窗（HEAD amend + AI 生成，列表 LOG Tab 与规则检查共用）
+│   │   ├── DropCommitDialog.vue     # 删除历史提交弹窗（四项前置校验 + bundle 备份 + commit-tree 删除执行）
 │   │   └── BatchFixDialog.vue       # 提交信息批量修正弹窗（规则检查多选：AI 逐条生成 + 逐条保存 + 逐项状态）
 │   ├── ListView/                    # 列表视图专属（17 个）
 │   │   ├── index.vue               # 列表视图入口容器（工具栏 + 分组循环卡片，纯渲染）
@@ -165,6 +167,7 @@ src/features/gitPush/
     ├── CommitAnalysisPanel.scss     # 提交分析面板样式
     ├── CommitRuleCheckPanel.scss    # 提交规则检查面板样式
     ├── CommitFixDialog.scss         # 提交信息修正弹窗样式
+    ├── DropCommitDialog.scss        # 删除历史提交弹窗样式
     ├── BatchFixDialog.scss          # 提交信息批量修正弹窗样式
     ├── RepoCleanPanel.scss          # 仓库清理面板样式（体检卡片 + 大文件列表 + BFG 向导弹窗）
     ├── LineStatsPanel.scss          # 行数统计面板样式（含过滤按钮）

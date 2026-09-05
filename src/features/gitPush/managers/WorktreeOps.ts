@@ -8,12 +8,16 @@ import type {
 } from "../types/storage"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 import type { GitExecutor } from "./GitExecutor"
+import { HistoryRewriter } from "./HistoryRewriter"
 
 export class WorktreeOps {
   private executor: GitExecutor
+  /** 提交历史 DAG 重建器（消息改写 / 提交删除共享骨架） */
+  private historyRewriter: HistoryRewriter
 
   constructor(executor: GitExecutor) {
     this.executor = executor
+    this.historyRewriter = new HistoryRewriter(executor)
   }
 
   /**
@@ -400,123 +404,56 @@ export class WorktreeOps {
       return await this.amendCommitMessage(projectPath, message)
     }
 
-    return await this.rebuildHistoryWithNewMessage(projectPath, fullHash, headHash, message, preserveDate, onProgress)
+    return await this.historyRewriter.rewriteMessage(projectPath, fullHash, headHash, message, preserveDate, onProgress)
   }
 
   /**
-   * commit-tree 图重建（历史提交改写核心）：
-   * 按拓扑序（父先子后）遍历目标提交到 HEAD，依赖目标的后代逐条用 commit-tree 以
-   * 原树/原父子结构重建（仅消息或父指针变化），侧链等无关提交保持原 hash；
-   * 最后以 CAS（旧值校验）更新分支引用。全程不触碰工作区与暂存区。
+   * 删除指定历史提交（记录级删除、内容不变语义，个人项目安全版）：
+   * 目标提交从历史跳过，其变更并入下一提交（后代以原树重建、父指针重指向目标的父），
+   * 最终 HEAD 的 tree 与删除前完全一致；后代 hash 必然重写，已推送需 --force-with-lease 强推。
+   * 走 commit-tree 图重建（同 rewriteCommitMessage，不碰工作区，失败时引用未更新仓库保持原状）。
    */
-  private async rebuildHistoryWithNewMessage(
+  async dropCommit(
     projectPath: string,
-    fullHash: string,
-    headHash: string,
-    message: string,
-    preserveDate: boolean,
+    hash: string,
     onProgress?: (current: number, total: number) => void,
   ): Promise<string> {
-    const node = getNodeFsPathOs()
-    if (!node) throw new Error("Node 环境不可用")
-    const { fs, os, path } = node
-
-    // 字段：hash/tree/parents/作者三件套/提交者三件套/完整消息；\x1e 分记录
-    const FMT = "%H%x00%T%x00%P%x00%an%x00%ae%x00%aI%x00%cn%x00%ce%x00%cI%x00%B%x1e"
-    // 按 \x1e 单字符分割：execGit 会剥离输出末尾换行，若按 "\x1e\n" 复合分割，
-    // 最后一条记录的分隔符会残缺导致 \x1e 字节泄漏进消息字段
-    const parseLog = (raw: string) => raw.split("\x1e")
-      .map((r, i) => (i > 0 && r.startsWith("\n") ? r.slice(1) : r))
-      .filter((r) => r.trim() !== "")
-      .map((record) => {
-        const f = record.split("\x00")
-        return {
-          hash: f[0],
-          tree: f[1],
-          parents: f[2] ? f[2].split(" ").filter(Boolean) : [],
-          an: f[3],
-          ae: f[4],
-          aI: f[5],
-          cn: f[6],
-          ce: f[7],
-          cI: f[8],
-          message: f[9] ?? "",
-        }
-      })
-
-    const [tgtRaw, restRaw] = await Promise.all([
-      this.executor.execGit(projectPath, ["log", "-1", `--format=${FMT}`, fullHash]),
-      // topological + reverse = 父先子后；范围含并入的侧链提交（不依赖目标者保持原 hash）
-      this.executor.execGit(projectPath, ["log", "--topo-order", "--reverse", `--format=${FMT}`, `${fullHash}..HEAD`]),
-    ])
-    const target = parseLog(tgtRaw)[0]
-    if (!target) throw new Error("找不到指定提交")
-    const rest = parseLog(restRaw)
-
-    const branch = (await this.executor.execGit(projectPath, ["rev-parse", "--abbrev-ref", "HEAD"])).trim()
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gprw-"))
-    /** 旧 hash → 新 hash 映射（含 identity 映射） */
-    const map = new Map<string, string>()
-
-    /** 以原树/映射后的父指针重建一条提交；preserveDate=true 时精确保留作者与提交者三件套 */
-    const rebuild = async (rec: typeof target, msg: string) => {
-      const msgFile = path.join(dir, "msg.txt")
-      fs.writeFileSync(msgFile, msg.endsWith("\n") ? msg : `${msg}\n`, "utf8")
-      const env: Record<string, string> = {
-        GIT_AUTHOR_NAME: rec.an,
-        GIT_AUTHOR_EMAIL: rec.ae,
-        GIT_AUTHOR_DATE: rec.aI,
-      }
-      if (preserveDate) {
-        env.GIT_COMMITTER_NAME = rec.cn
-        env.GIT_COMMITTER_EMAIL = rec.ce
-        env.GIT_COMMITTER_DATE = rec.cI
-      }
-      const parents = rec.parents.flatMap((p) => ["-p", map.get(p) ?? p])
-      const newHash = (await this.executor.execGit(projectPath, ["commit-tree", rec.tree, ...parents, "-F", msgFile], undefined, 30000, undefined, { env })).trim()
-      map.set(rec.hash, newHash)
+    // 前置检测：仓库处于 rebase 中断状态（如用户终端操作残留）时直接报错，避免在其上叠加改写
+    if (await this.isInRebaseState(projectPath)) {
+      throw new Error("仓库处于 rebase 中断状态（可能由上次操作失败残留），请先在终端执行 git rebase --abort 恢复后重试")
     }
 
-    try {
-      // 预计算必要重建数（纯逻辑，不执行 git）：目标必重建；后代中任一父已被重写的才重建，
-      // 侧链等无关提交不计入 total，保证进度分母准确（与下方 identity 跳过分支等价判定）
-      const replaced = new Set<string>([fullHash])
-      let total = 1
-      for (const rec of rest) {
-        if (rec.parents.some((p) => replaced.has(p))) {
-          replaced.add(rec.hash)
-          total++
-        }
-      }
-      let done = 0
-      const progress = () => onProgress?.(done, total)
+    // 解析完整 hash，避免短 hash 在后续定位中匹配错误
+    const fullHash = (await this.executor.execGit(projectPath, ["rev-parse", `${hash}^{commit}`])).trim()
+    if (!fullHash) throw new Error("找不到指定提交")
 
-      // 1. 重建目标提交（其父提交均在范围之外，保持原样）
-      await rebuild(target, message)
-      done++
-      progress()
-      // 2. 按拓扑序重建依赖目标的后代；父指针未变化的（如并入侧链）保持原 hash
-      for (const rec of rest) {
-        const newParents = rec.parents.map((p) => map.get(p) ?? p)
-        if (newParents.join(" ") === rec.parents.join(" ")) {
-          map.set(rec.hash, rec.hash)
-          continue
-        }
-        await rebuild(rec, rec.message)
-        done++
-        progress()
-      }
-      // 3. CAS 更新引用：当前值与开始时不一致（期间有其他改动）则失败，避免覆盖
-      const newTip = map.get(headHash)
-      if (!newTip) throw new Error("重写失败：无法定位新提交链顶端")
-      if (branch === "HEAD") {
-        await this.executor.execGit(projectPath, ["update-ref", "--no-deref", "HEAD", newTip, headHash])
-      } else {
-        await this.executor.execGit(projectPath, ["update-ref", `refs/heads/${branch}`, newTip, headHash])
-      }
-      return newTip
-    } finally {
-      try { fs.rmSync(dir, { recursive: true, force: true }) } catch { /* 忽略清理失败 */ }
+    const headHash = (await this.getHeadHash(projectPath)).trim()
+    // HEAD 拒绝：删 HEAD = reset 语义（记录与内容一并丢失），与"内容不变"语义相悖
+    if (headHash === fullHash) {
+      throw new Error("不支持删除最新提交（HEAD）：该操作会同时丢失其内容变更，请使用丢弃变更或重置功能")
+    }
+    // merge 拒绝：多父提交被跳过后，子提交的父指向存在歧义（该接第一父还是合并两侧？）
+    if (await this.isMergeCommit(projectPath, fullHash)) {
+      throw new Error("该提交是 merge 提交，不支持删除：跳过后子提交的父指向存在歧义")
+    }
+    // 祖先校验：目标不在 HEAD 历史上时重建范围抓不到它的后代，操作会静默无效，必须显式报错
+    if (!(await this.isAncestorOfHead(projectPath, fullHash))) {
+      throw new Error("该提交不在当前分支的历史上（可能在其他分支），无法从当前分支删除")
+    }
+
+    return await this.historyRewriter.drop(projectPath, fullHash, headHash, onProgress)
+  }
+
+  /** 目标提交是否为当前 HEAD 的祖先（hash 支持短/完整；merge-base --is-ancestor 退出码判定；解析失败按否处理） */
+  async isAncestorOfHead(projectPath: string, hash: string): Promise<boolean> {
+    try {
+      const fullHash = (await this.executor.execGit(projectPath, ["rev-parse", `${hash}^{commit}`])).trim()
+      if (!fullHash) return false
+      const headHash = await this.getHeadHash(projectPath)
+      await this.executor.execGit(projectPath, ["merge-base", "--is-ancestor", fullHash, headHash])
+      return true
+    } catch {
+      return false
     }
   }
 }

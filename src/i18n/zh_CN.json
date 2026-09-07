@@ -1792,7 +1792,7 @@
     "ruleFixGenerating": "生成中…",
     "ruleFixDeepAnalyze": "AI 深度分析",
     "ruleFixDeepAnalyzing": "深度分析中…",
-    "ruleFixDeepAnalyzeTip": "读取该提交完整 diff，基于实际改动生成更贴合的提交信息",
+    "ruleFixDeepAnalyzeTip": "读取该提交完整 diff，基于实际改动生成多行提交信息（标题行 + 改动要点）",
     "ruleFixDeepAnalyzeFailed": "AI 深度分析失败",
     "ruleFixSave": "保存修正",
     "ruleFixSaving": "保存中…",

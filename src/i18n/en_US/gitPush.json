@@ -663,7 +663,7 @@
     "ruleFixGenerating": "Generating…",
     "ruleFixDeepAnalyze": "AI deep-analyze",
     "ruleFixDeepAnalyzing": "Deep analyzing…",
-    "ruleFixDeepAnalyzeTip": "Read the full diff of this commit and generate a message based on actual changes",
+    "ruleFixDeepAnalyzeTip": "Read the full diff of this commit and generate a multi-line message (title + change bullets) based on actual changes",
     "ruleFixDeepAnalyzeFailed": "AI deep analysis failed",
     "ruleFixSave": "Save Fix",
     "ruleFixSaving": "Saving…",

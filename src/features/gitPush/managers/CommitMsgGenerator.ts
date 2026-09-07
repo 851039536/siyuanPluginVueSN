@@ -90,35 +90,39 @@ export class CommitMsgGenerator {
     return `${type}: ${fileList}${more}`
   }
 
-  /** 根据原提交信息 + 提交变更摘要，生成符合提交规则的修正提交信息 */
+  /** 根据原提交信息 + 完整 diff 实际改动，生成符合提交规则的单行修正提交信息（降级启发式） */
   async generateCommitFix(projectPath: string, hash: string, currentMessage: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
     const aiConfig = getApiConfigFromPlugin(this.plugin)
-    const context = await this.worktreeOps.getCommitFixContext(projectPath, hash)
-
     const heuristic = fixCommitMessageHeuristically(currentMessage)
     if (!aiConfig.apiKey) {
       return { message: heuristic, source: "heuristic" }
     }
 
     try {
+      // 与深度分析同源：读取完整 diff 理解实际改动，仅输出格式不同（单行 vs 多行）
+      const diffContext = await this.worktreeOps.getCommitDeepContext(projectPath, hash)
+      if (!diffContext) {
+        return { message: heuristic, source: "heuristic" }
+      }
       const result = await callAI(
-        `请修正以下不符合提交规则的 Git 提交信息。
-规则：type(scope)!: 描述
-type 必须为 ${COMMIT_TYPE_VALUES.join("/")} 之一。
+        `请基于以下某次 Git 提交的完整改动内容（diff），分析这次提交实际做了什么，生成一条最贴合实际改动的修正提交信息。
+输出格式：只输出一行，格式为 type(scope): 中文描述（type 必须为 ${COMMIT_TYPE_VALUES.join("/")} 之一，scope 可选）
 要求：
-1. 描述部分必须是中文（例如：fix: 修复登录失败问题）
-2. 保留原意，只输出一行修正后的提交信息
+1. 描述部分使用中文，概括本次提交的主要改动
+2. 原提交信息仅供参考（可能不准确），以 diff 实际改动为准
 3. 不要输出解释、分析、Markdown 或任何别的内容
+
+示例：fix: 修复订单列表空指针异常
 
 原提交信息：${currentMessage}
 
-提交变更摘要：
-${context || "（无变更摘要）"}`,
+完整改动内容（diff）：
+${diffContext}`,
         aiConfig,
         {
           systemPrompt: "输出要求：只输出一行 conventional commit 格式的提交信息。禁止输出解释、分析、额外文字。",
           temperature: 0.1,
-          maxTokens: 60,
+          maxTokens: 100,
           enableThinking: false,
         },
       )

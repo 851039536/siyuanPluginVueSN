@@ -311,19 +311,7 @@ export class WorktreeOps {
     }
   }
 
-  /** 获取某次提交的变更摘要（供 AI 修正提交信息时理解改动内容），失败返回空串 */
-  async getCommitFixContext(projectPath: string, hash: string): Promise<string> {
-    try {
-      const raw = await this.executor.execGit(projectPath, [
-        "-c", "core.quotepath=false", "show", "--stat", "--format=%B", hash,
-      ])
-      return (raw || "").substring(0, 3000)
-    } catch {
-      return ""
-    }
-  }
-
-  /** 获取某次提交的完整 diff 补丁（供 AI 深度分析实际改动；截断 10000 字符防 token 爆量），失败返回空串 */
+  /** 获取某次提交的完整 diff 补丁（供 AI 修正/深度分析理解实际改动；截断 10000 字符防 token 爆量），失败返回空串 */
   async getCommitDeepContext(projectPath: string, hash: string): Promise<string> {
     try {
       const raw = await this.executor.execGit(projectPath, [

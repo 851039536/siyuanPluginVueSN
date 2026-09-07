@@ -100,10 +100,11 @@
 
   &__filter-input {
     width: 100%;
+    box-sizing: border-box; // 含 padding+border 计入 100% 宽：默认 content-box 会右溢出被面板裁切
     padding: m.$gap-xs m.$spacing-2_5; // 6px 10px
     border: 1px solid var(--b3-border-color);
     border-radius: $radius-sm;
-    font-size: $font-size-sm; // 原 13px → 14px
+    font-size: $font-size-xs; // 与下拉选项字号一致（原 14px 在 12px 选项上方显突兀）
     font-family: $font-zh;
     outline: none;
     background: var(--b3-theme-background);
@@ -113,8 +114,10 @@
       border-color: var(--b3-theme-primary);
     }
 
+    // 占位符弱化：原 secondary 在部分主题下为高饱和琥珀色，在下拉内过于抢眼
     &::placeholder {
-      color: var(--b3-theme-secondary);
+      color: var(--b3-theme-on-background);
+      opacity: 0.4;
     }
   }
 
@@ -177,8 +180,10 @@
 
     &--selected {
       background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.15);
-      color: var(--b3-theme-primary);
-      font-weight: $font-weight-medium;
+      // 选中态文字改用常规前景色 + 加粗：原 primary 在部分暗色主题下偏灰暗，文字几乎不可读，
+      // 选中辨识改由高亮背景 + 字重承担
+      color: var(--b3-theme-on-background);
+      font-weight: $font-weight-semibold;
 
       &:hover,
       &.si-select__option--hovered {
@@ -201,7 +206,7 @@
     }
 
     .si-select__option {
-      padding: $spacing-1 $spacing-2;
+      padding: $spacing-1 $spacing-4; // 水平 16px：避免选项文字贴近下拉面板左缘（原 8px 过贴），与 large 一致
       font-size: $font-size-xs;
     }
   }
@@ -214,7 +219,7 @@
     }
 
     .si-select__option {
-      padding: $spacing-1 $spacing-2;
+      padding: $spacing-1 $spacing-4; // 水平 16px：与 xsmall/large 同步
       font-size: $font-size-xs;
     }
   }
@@ -227,7 +232,7 @@
     }
 
     .si-select__option {
-      padding: $spacing-2 $spacing-3;
+      padding: $spacing-2 $spacing-4; // 水平 16px：全尺寸统一缩进
       font-size: $font-size-sm;
     }
   }

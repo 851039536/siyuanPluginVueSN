@@ -1,4 +1,4 @@
-<!-- gitPush 提交规则检查视图入口容器（状态编排 + 各功能区块组合 + 修正弹窗，纯编排无领域状态） -->
+<!-- gitPush 提交规则检查视图入口容器（状态编排 + 各功能区块组合 + 修正/删除/批量修正弹窗，纯编排无领域状态） -->
 <template>
   <div class="grc-panel">
     <!-- 空状态：无项目 -->
@@ -76,6 +76,7 @@
             :scoped="scoped"
             @view-project="emit('viewProject', $event)"
             @open-fix="openFix"
+            @open-drop="openDrop"
             @open-batch-fix="openBatchFix"
           />
         </template>
@@ -91,6 +92,15 @@
       @saved="handleFixSaved"
     />
 
+    <!-- 删除历史提交弹窗（与 LOG Tab 共用，自包含：校验 HEAD/merge/祖先/rebase + bundle 备份 + commit-tree 删除） -->
+    <DropCommitDialog
+      v-if="droppingViolation"
+      :i18n="i18n"
+      :target="droppingViolation"
+      @close="droppingViolation = null"
+      @saved="handleDropSaved"
+    />
+
     <!-- 提交信息批量修正弹窗（自包含：多项目/多条违规校验、AI 批量生成、批量保存） -->
     <BatchFixDialog
       v-if="editingBatch"
@@ -103,12 +113,13 @@
 </template>
 
 <script setup lang="ts">
-// gitPush 提交规则检查视图入口容器（状态编排 + 各功能区块组合 + 修正弹窗）
+// gitPush 提交规则检查视图入口容器（状态编排 + 各功能区块组合 + 修正/删除/批量修正弹窗）
 import type { CommitRuleCheckStats, CommitRuleViolation, GitProject } from "../../types"
 import type { CommitCount } from "../../composables/useCommitAnalysis"
 import { computed, ref } from "vue"
 import BatchFixDialog from "../common/BatchFixDialog.vue"
 import CommitFixDialog from "../common/CommitFixDialog.vue"
+import DropCommitDialog from "../common/DropCommitDialog.vue"
 import EmptyState from "../common/EmptyState.vue"
 import Loader from "@/components/Loader.vue"
 import ReasonDistributionSection from "./ReasonDistributionSection.vue"
@@ -144,11 +155,19 @@ const scoped = computed(() => !!props.projectId)
 /** 当前正在编辑的违规提交（null = 未打开弹窗） */
 const editingViolation = ref<CommitRuleViolation | null>(null)
 
+/** 当前待删除的违规提交（null = 未打开删除弹窗） */
+const droppingViolation = ref<CommitRuleViolation | null>(null)
+
 /** 当前批量修正的违规提交集合（null = 未打开批量弹窗） */
 const editingBatch = ref<CommitRuleViolation[] | null>(null)
 
 function openFix(violation: CommitRuleViolation) {
   editingViolation.value = violation
+}
+
+/** 打开删除历史提交弹窗（violation 直接传 target 兼容 CommitFixTarget，merge 等场景由弹窗内部拦截） */
+function openDrop(violation: CommitRuleViolation) {
+  droppingViolation.value = violation
 }
 
 /** 打开批量修正弹窗（违规列表按日期降序传入，批量弹窗内按新→旧顺序处理） */
@@ -159,6 +178,12 @@ function openBatchFix(violations: CommitRuleViolation[]) {
 /** 修正成功后关闭弹窗并仅重抓该项目的提交日志（局部刷新，避免全量重跑所有项目） */
 function handleFixSaved(projectId: string) {
   editingViolation.value = null
+  emit("runAnalysis", projectId)
+}
+
+/** 删除成功后关闭弹窗并仅重抓该项目的提交日志（与修正成功同模式局部刷新） */
+function handleDropSaved(projectId: string) {
+  droppingViolation.value = null
   emit("runAnalysis", projectId)
 }
 

@@ -1,4 +1,4 @@
-<!-- gitPush 提交规则检查不合规提交列表区块（条目 + 修正入口 + 分页加载） -->
+<!-- gitPush 提交规则检查不合规提交列表区块（条目 + 修正/删除入口 + 分页加载） -->
 <template>
   <div class="grc-section">
     <!-- 区块标题："不合规提交列表" + 条数徽章 + 全选 + 批量修正 -->
@@ -63,6 +63,14 @@
           >
             <Icon icon="mdi:pencil-outline" height="12" />
           </button>
+          <!-- 删除提交按钮（常显；打开 DropCommitDialog，merge/HEAD 等不可删场景由弹窗内部拦截） -->
+          <button
+            class="vp-btn vp-btn--ghost vp-btn--sm grc-item-drop"
+            :title="i18n.dropCommitTitle"
+            @click.stop="emit('openDrop', row)"
+          >
+            <Icon icon="mdi:delete-outline" height="12" />
+          </button>
           <span class="grc-item-date">{{ relativeTime(row.date, i18n) }}</span>
         </div>
         <div
@@ -88,7 +96,7 @@
 </template>
 
 <script setup lang="ts">
-// gitPush 提交规则检查不合规提交列表区块（本地分页 + 修正入口）
+// gitPush 提交规则检查不合规提交列表区块（本地分页 + 修正/删除入口）
 import type { CommitRuleCheckStats, CommitRuleViolation } from "../../types"
 import { COMMIT_RULE_REASON_META } from "../../types"
 import { Icon } from "@iconify/vue"
@@ -113,6 +121,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   viewProject: [projectId: string]
   openFix: [violation: CommitRuleViolation]
+  openDrop: [violation: CommitRuleViolation]
   openBatchFix: [violations: CommitRuleViolation[]]
 }>()
 

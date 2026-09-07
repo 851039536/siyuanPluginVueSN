@@ -385,6 +385,12 @@
   width: 70px;
 }
 
+// 设置弹窗：可选规则开关 checkbox（与 radio 同主题色）
+.gp-set-switch {
+  accent-color: var(--b3-theme-primary);
+  cursor: pointer;
+}
+
 .gp-set-hint {
   font-size: $font-size-2xs;
   opacity: 0.4;

@@ -31,6 +31,7 @@ export type {
 } from "./storage"
 export {
   clampGitConcurrency,
+  clampMaxBodyLineLength,
   clampMinSubjectLength,
   clampNetworkTimeout,
   COMMIT_TYPE_VALUES,
@@ -72,6 +73,7 @@ export {
   COMMIT_ANALYSIS_TYPE_META,
   COMMIT_RULE_REASON_META,
   HEAT_LEVEL_THRESHOLDS,
+  readCommitRuleConfig,
 } from "./meta"
 export type { AuthorLineRankItem, BfgCleanPlan, BfgCleanResult, BfgPrefs, BfgRuntimeState, CategoryDistributionItem, CommitAnalysisCache, CommitAnalysisEntry, CommitAnalysisStats, CommitAnalysisType, CommitAnalysisViewSettings, CommitFixTarget, CommitRuleCheckStats, CommitRuleConfig, CommitRuleReasonKey, CommitRuleViolation, FileLineDetailRow, LineStatsCache, LineStatsSummary, NeedsPullItem, NeedsPushItem, PanelView, PendingProjectItem, PlatformKey, PlatformStatusItem, PlatformTableCellView, PlatformTableRowView, ProjectLineRankItem, PushStatusStats, RemoteCoverage, RepoBlobItem, RepoCleanPrefs, RepoLinkAuditCell, RepoLinkAuditRow, RepoLinkAuditState, RepoLinkAuditSummary, RepoScanResult, StatsView, UncommittedItem, ViewMode } from "./meta"
 export { getPlatformStatus } from "./meta"

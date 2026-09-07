@@ -263,6 +263,9 @@ export type CommitRuleReasonKey =
   | "subjectEndsWithPeriod"
   | "subjectTooShort"
   | "missingBlankLine"
+  | "subjectNotCapitalized"
+  | "wipSubject"
+  | "bodyLineTooLong"
 
 /** 提交规则原因元数据（labelKey 对应 i18n 键 ruleCheckReason*） */
 export const COMMIT_RULE_REASON_META: Record<CommitRuleReasonKey, { labelKey: string }> = {
@@ -277,16 +280,44 @@ export const COMMIT_RULE_REASON_META: Record<CommitRuleReasonKey, { labelKey: st
   subjectEndsWithPeriod: { labelKey: "ruleCheckReasonEndsWithPeriod" },
   subjectTooShort: { labelKey: "ruleCheckReasonSubjectTooShort" },
   missingBlankLine: { labelKey: "ruleCheckReasonMissingBlankLine" },
+  subjectNotCapitalized: { labelKey: "ruleCheckReasonNotCapitalized" },
+  wipSubject: { labelKey: "ruleCheckReasonWipSubject" },
+  bodyLineTooLong: { labelKey: "ruleCheckReasonBodyLineTooLong" },
 }
 
 /** 提交规则可配置项（规则引擎纯函数的显式配置注入，不依赖模块级状态） */
 export interface CommitRuleConfig {
   /** 描述最短字数（冒号后 subject 少于此值判违规；设置弹窗可自定义） */
   minSubjectLength: number
+  /** 可选规则：描述首字母大写（仅描述以小写英文字母开头判违规，中文开头天然合规） */
+  requireCapitalizedSubject: boolean
+  /** 可选规则：WIP 临时提交检测（描述以 wip/todo/fixme/tbd 开头判违规） */
+  detectWipSubject: boolean
+  /** 可选规则：正文行长限制开关（多行消息 body 每行超限判违规） */
+  bodyLineLimitEnabled: boolean
+  /** 正文单行最大字符数（bodyLineLimitEnabled 开启时生效） */
+  maxBodyLineLength: number
 }
 
-/** 提交规则默认配置（描述过短阈值默认 10 字） */
-export const DEFAULT_COMMIT_RULE_CONFIG: CommitRuleConfig = { minSubjectLength: 10 }
+/** 提交规则默认配置（描述过短阈值 10 字 + 可选规则全部开启） */
+export const DEFAULT_COMMIT_RULE_CONFIG: CommitRuleConfig = {
+  minSubjectLength: 10,
+  requireCapitalizedSubject: true,
+  detectWipSubject: true,
+  bodyLineLimitEnabled: true,
+  maxBodyLineLength: 72,
+}
+
+/** 从规则检查偏好读取规则配置（旧数据缺字段时逐字段回退默认值，默认语义 = 可选规则全开） */
+export function readCommitRuleConfig(prefs: RuleCheckPrefs): CommitRuleConfig {
+  return {
+    minSubjectLength: prefs.minSubjectLength ?? DEFAULT_COMMIT_RULE_CONFIG.minSubjectLength,
+    requireCapitalizedSubject: prefs.requireCapitalizedSubject ?? DEFAULT_COMMIT_RULE_CONFIG.requireCapitalizedSubject,
+    detectWipSubject: prefs.detectWipSubject ?? DEFAULT_COMMIT_RULE_CONFIG.detectWipSubject,
+    bodyLineLimitEnabled: prefs.bodyLineLimitEnabled ?? DEFAULT_COMMIT_RULE_CONFIG.bodyLineLimitEnabled,
+    maxBodyLineLength: prefs.maxBodyLineLength ?? DEFAULT_COMMIT_RULE_CONFIG.maxBodyLineLength,
+  }
+}
 
 /** 单条不合规提交（提交信息 + 命中原因） */
 export interface CommitRuleViolation extends CommitAnalysisEntry {
@@ -316,12 +347,20 @@ export interface CommitRuleCheckStats {
   violations: CommitRuleViolation[]
 }
 
-/** 提交规则检查偏好（上次选中的过滤项目 + 描述过短阈值，持久化到 git-push-rulecheck-prefs；空串 = 全部项目） */
+/** 提交规则检查偏好（上次选中的过滤项目 + 规则配置，持久化到 git-push-rulecheck-prefs；空串 = 全部项目） */
 export interface RuleCheckPrefs {
   /** 选中的项目 ID（"" = 全部项目） */
   projectId: string
   /** 描述最短字数（"描述过短"规则阈值，缺省回退 DEFAULT_COMMIT_RULE_CONFIG.minSubjectLength） */
   minSubjectLength?: number
+  /** 描述首字母大写开关（缺省回退默认值 true） */
+  requireCapitalizedSubject?: boolean
+  /** WIP 临时提交检测开关（缺省回退默认值 true） */
+  detectWipSubject?: boolean
+  /** 正文行长限制开关（缺省回退默认值 true） */
+  bodyLineLimitEnabled?: boolean
+  /** 正文单行最大字符数（缺省回退 DEFAULT_COMMIT_RULE_CONFIG.maxBodyLineLength） */
+  maxBodyLineLength?: number
 }
 
 /** 提交信息修正偏好（上次选择的提交时间策略，持久化到 git-push-commitfix-prefs） */

@@ -156,6 +156,72 @@
             <div class="gp-set-hint">
               {{ i18n.ruleCheckMinSubjectLengthHint }}
             </div>
+            <!-- 可选规则开关：描述首字母大写（勾选即时保存） -->
+            <div class="gp-set-row gp-set-row--spaced">
+              <!-- 设置项标签："描述首字母大写" -->
+              <label class="gp-set-label">{{ i18n.ruleCheckOptCapitalized }}</label>
+              <div class="gp-set-input-row">
+                <input
+                  type="checkbox"
+                  class="gp-set-switch"
+                  :checked="ruleConfig.requireCapitalizedSubject"
+                  @change="onRuleToggle('requireCapitalizedSubject', $event)"
+                />
+              </div>
+            </div>
+            <!-- 提示文案："描述以小写英文字母开头时判违规，中文/数字开头不受影响" -->
+            <div class="gp-set-hint">
+              {{ i18n.ruleCheckOptCapitalizedHint }}
+            </div>
+            <!-- 可选规则开关：WIP 临时提交检测（勾选即时保存） -->
+            <div class="gp-set-row gp-set-row--spaced">
+              <!-- 设置项标签："WIP 临时提交检测" -->
+              <label class="gp-set-label">{{ i18n.ruleCheckOptWip }}</label>
+              <div class="gp-set-input-row">
+                <input
+                  type="checkbox"
+                  class="gp-set-switch"
+                  :checked="ruleConfig.detectWipSubject"
+                  @change="onRuleToggle('detectWipSubject', $event)"
+                />
+              </div>
+            </div>
+            <!-- 提示文案："描述以 wip/todo/fixme/tbd 等临时标记开头判违规" -->
+            <div class="gp-set-hint">
+              {{ i18n.ruleCheckOptWipHint }}
+            </div>
+            <!-- 可选规则开关：正文行长限制（勾选即时保存 + 行长阈值输入） -->
+            <div class="gp-set-row gp-set-row--spaced">
+              <!-- 设置项标签："正文行长限制" -->
+              <label class="gp-set-label">{{ i18n.ruleCheckOptBodyLineLimit }}</label>
+              <div class="gp-set-input-row">
+                <input
+                  type="checkbox"
+                  class="gp-set-switch"
+                  :checked="ruleConfig.bodyLineLimitEnabled"
+                  @change="onRuleToggle('bodyLineLimitEnabled', $event)"
+                />
+                <Input
+                  :model-value="localMaxBodyLineLength"
+                  type="number"
+                  size="xsmall"
+                  class="gp-set-concurrency-input"
+                  :disabled="!ruleConfig.bodyLineLimitEnabled"
+                  @update:model-value="localMaxBodyLineLength = clampMaxBodyLineLength(Number($event))"
+                />
+                <button
+                  class="vp-btn vp-btn--primary vp-btn--sm"
+                  @click="saveBodyLineLimit"
+                >
+                  <!-- 按钮文案："保存" -->
+                  {{ i18n.save }}
+                </button>
+              </div>
+            </div>
+            <!-- 提示文案："多行提交信息正文每行超过该字符数判违规（1~500），空行不检查" -->
+            <div class="gp-set-hint">
+              {{ i18n.ruleCheckOptBodyLineLimitHint }}
+            </div>
           </template>
 
           <!-- ── 显示分区：提交分析显示设置 ── -->
@@ -185,13 +251,13 @@
 
 <script setup lang="ts">
 // gitPush 设置汇总弹窗（分区导航：常规 / 显示 / Git 配置，各分区改动即时或按钮保存）
-import type { CommitAnalysisViewSettings, GitPushManager } from "../../types"
+import type { CommitAnalysisViewSettings, CommitRuleConfig, GitPushManager } from "../../types"
 import { Icon } from "@iconify/vue"
 import { ref, watch } from "vue"
 import Input from "@/components/Input.vue"
 import GitConfigSection from "./GitConfigSection.vue"
 import AnalysisSettingsForm from "../CommitAnalysis/AnalysisSettingsForm.vue"
-import { clampGitConcurrency, clampMinSubjectLength, clampNetworkTimeout } from "../../types"
+import { clampGitConcurrency, clampMaxBodyLineLength, clampMinSubjectLength, clampNetworkTimeout } from "../../types"
 import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
 
 type SettingsSection = "general" | "display" | "gitconfig"
@@ -209,8 +275,8 @@ const props = defineProps<{
   concurrency: number
   /** 网络命令超时（秒） */
   networkTimeout: number
-  /** 描述最短字数（提交规则检查"描述过短"阈值） */
-  minSubjectLength: number
+  /** 提交规则配置（最短描述阈值 + 可选规则开关） */
+  ruleConfig: CommitRuleConfig
   pushBranchMode: "all" | "head"
   /** 提交分析显示设置（父级预载后下发，与 popover 入口同源） */
   viewSettings: CommitAnalysisViewSettings
@@ -222,7 +288,8 @@ const emit = defineEmits<{
   close: []
   save: [value: number]
   saveNetworkTimeout: [value: number]
-  saveMinSubjectLength: [value: number]
+  /** 提交规则配置局部更新（开关即时/阈值保存按钮与 Enter 键共用） */
+  saveRuleConfig: [patch: Partial<CommitRuleConfig>]
   saveBranchMode: [mode: "all" | "head"]
   updateViewSettings: [patch: Partial<CommitAnalysisViewSettings>]
   /** 底部「管理分类」操作：由父级关闭设置弹窗并打开分类弹窗 */
@@ -231,7 +298,8 @@ const emit = defineEmits<{
 
 const localConcurrency = ref(clampGitConcurrency(props.concurrency))
 const localNetworkTimeout = ref(clampNetworkTimeout(props.networkTimeout))
-const localMinSubjectLength = ref(clampMinSubjectLength(props.minSubjectLength))
+const localMinSubjectLength = ref(clampMinSubjectLength(props.ruleConfig.minSubjectLength))
+const localMaxBodyLineLength = ref(clampMaxBodyLineLength(props.ruleConfig.maxBodyLineLength))
 const localBranchMode = ref<"all" | "head">(props.pushBranchMode)
 const activeSection = ref<SettingsSection>("general")
 const { rootRef } = useDialogKeyboard()
@@ -251,15 +319,28 @@ function saveNetworkTimeout() {
 
 /** 保存描述最短字数（保存按钮 / Enter 键共用） */
 function saveMinSubjectLength() {
-  emit("saveMinSubjectLength", localMinSubjectLength.value)
+  emit("saveRuleConfig", { minSubjectLength: localMinSubjectLength.value })
 }
 
-/** Enter 键仅在常规分区保存并发数、网络超时与描述最短字数（Git 配置分区输入由组件内 stop 拦截，显示分区无提交语义） */
+/** 保存正文行长上限（保存按钮 / Enter 键共用） */
+function saveBodyLineLimit() {
+  emit("saveRuleConfig", { maxBodyLineLength: localMaxBodyLineLength.value })
+}
+
+/** 可选规则开关切换（checkbox 即时保存，同分支模式 radio 即时语义） */
+function onRuleToggle(key: "requireCapitalizedSubject" | "detectWipSubject" | "bodyLineLimitEnabled", e: Event) {
+  const patch: Partial<CommitRuleConfig> = {}
+  patch[key] = (e.target as HTMLInputElement).checked
+  emit("saveRuleConfig", patch)
+}
+
+/** Enter 键仅在常规分区保存并发数、网络超时、描述最短字数与正文行长（Git 配置分区输入由组件内 stop 拦截，显示分区无提交语义） */
 function onEnterKey() {
   if (activeSection.value === "general") {
     saveConcurrency()
     saveNetworkTimeout()
     saveMinSubjectLength()
+    saveBodyLineLimit()
   }
 }
 </script>

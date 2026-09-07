@@ -44,6 +44,16 @@ export function clampMinSubjectLength(n: number): number {
   return Math.max(MIN_SUBJECT_LENGTH_MIN, Math.min(MIN_SUBJECT_LENGTH_MAX, num))
 }
 
+/** 提交正文单行最大字符数允许范围（设置弹窗输入与规则检查钳位的单一数据源） */
+export const BODY_LINE_LENGTH_MIN = 1
+export const BODY_LINE_LENGTH_MAX = 500
+
+/** 将正文单行最大字符数整数化并钳位到允许范围 */
+export function clampMaxBodyLineLength(n: number): number {
+  const num = Math.round(Number(n) || DEFAULT_COMMIT_RULE_CONFIG.maxBodyLineLength)
+  return Math.max(BODY_LINE_LENGTH_MIN, Math.min(BODY_LINE_LENGTH_MAX, num))
+}
+
 /** 预设 IDE 条目（扫描结果与预设列表共用，useIdeManagement 持有） */
 export interface IdeEntry {
   name: string
@@ -369,8 +379,15 @@ export const DEFAULT_ANALYSIS_VIEW_SETTINGS: CommitAnalysisViewSettings = {
   color: "#2ea44f",
 }
 
-/** 提交规则检查偏好默认值（默认过滤全部项目 + 描述过短阈值 10 字） */
-const DEFAULT_RULE_CHECK_PREFS: RuleCheckPrefs = { projectId: "", minSubjectLength: DEFAULT_COMMIT_RULE_CONFIG.minSubjectLength }
+/** 提交规则检查偏好默认值（默认过滤全部项目 + 规则配置全默认：过短阈值 10 字 + 可选规则全开） */
+const DEFAULT_RULE_CHECK_PREFS: RuleCheckPrefs = {
+  projectId: "",
+  minSubjectLength: DEFAULT_COMMIT_RULE_CONFIG.minSubjectLength,
+  requireCapitalizedSubject: DEFAULT_COMMIT_RULE_CONFIG.requireCapitalizedSubject,
+  detectWipSubject: DEFAULT_COMMIT_RULE_CONFIG.detectWipSubject,
+  bodyLineLimitEnabled: DEFAULT_COMMIT_RULE_CONFIG.bodyLineLimitEnabled,
+  maxBodyLineLength: DEFAULT_COMMIT_RULE_CONFIG.maxBodyLineLength,
+}
 
 /** 提交信息修正偏好默认值（默认保留原始提交时间） */
 const DEFAULT_COMMIT_FIX_PREFS: CommitFixPrefs = { preserveDate: true }

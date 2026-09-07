@@ -2,8 +2,8 @@
 @use "./mixins" as *;
 @use "./CommitFixDialog.scss"; // 复用单条修正弹窗基础样式（gp-fix-input/original/warning/progress/date-options 等）
 
-// 批量修正弹窗（更宽，容纳多条违规条目）
-.gp-fix-batch-dialog {
+// 批量修正弹窗（更宽，容纳多条违规条目；组合选择器提优先级：单类会被基础 .gp-dialog 的 420px 同优先级后置覆盖）
+.gp-dialog.gp-fix-batch-dialog {
   width: 640px;
   max-width: 92vw;
 }

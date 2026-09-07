@@ -76,70 +76,38 @@
           </div>
         </div>
 
-        <!-- 图例："+ 新增 / − 删除 / ⋯ 未变" -->
-        <div class="wt-diff-legend">
-          <span class="wt-legend-add">+ {{ i18n.legendAdd }}</span>
-          <span class="wt-legend-del">− {{ i18n.legendDel }}</span>
-          <span class="wt-legend-ctx">⋯ {{ i18n.legendCtx }}</span>
+        <!-- 加载中（异步 git show 期间，图例暂不展示） -->
+        <div
+          v-if="loading"
+          class="wt-diff-content cdf-loading"
+        >
+          <Icon
+            icon="mdi:loading"
+            height="12"
+            class="gp-spin"
+          />
+          <span>{{ i18n.loading }}</span>
         </div>
 
-        <!-- diff 内容区（加载中 / 空态 / 着色行） -->
-        <div class="wt-diff-content">
-          <div
-            v-if="loading"
-            class="cdf-loading"
-          >
-            <Icon
-              icon="mdi:loading"
-              height="12"
-              class="gp-spin"
-            />
-            <span>{{ i18n.loading }}</span>
-          </div>
-          <div
-            v-else-if="!lines.length"
-            class="wt-diff-empty"
-          >
-            {{ i18n.diffEmpty }}
-          </div>
-          <template v-else>
-            <div
-              v-for="(line, i) in lines"
-              :key="i"
-              class="wt-diff-line"
-              :class="`wt-dl-${line.type}`"
-            >
-              <!-- 旧/新文件行号双列（hunk/meta 行无行号，留空保持对齐） -->
-              <span class="wt-dl-no">{{ line.oldNo ?? "" }}</span>
-              <span class="wt-dl-no">{{ line.newNo ?? "" }}</span>
-              <span class="wt-dl-sign">{{ DIFF_SIGN[line.type] }}</span>
-              <span class="wt-dl-text">
-                <!-- 词级差异：配对成功的行按分段渲染，变化片段加深底色 -->
-                <template v-if="line.segments">
-                  <span
-                    v-for="(seg, j) in line.segments"
-                    :key="j"
-                    :class="{ 'wt-dl-seg-changed': seg.changed }"
-                  >{{ seg.text }}</span>
-                </template>
-                <template v-else>{{ line.text }}</template>
-              </span>
-            </div>
-          </template>
-        </div>
+        <!-- 图例 + 着色行（复用共享 DiffLines 片段） -->
+        <DiffLines
+          v-else
+          :i18n="i18n"
+          :lines="lines"
+        />
       </div>
     </div>
   </Teleport>
 </template>
 
 <script setup lang="ts">
-// gitPush 提交内文件 diff 弹窗（自包含：按 hash+file 拉取补丁并着色展示，复用工作区 diff 视觉类）
+// gitPush 提交内文件 diff 弹窗（自包含：按 hash+file 拉取补丁并着色展示，复用共享 DiffLines 片段）
 import type { FileChange, GitProject } from "../../types"
-import type { DiffLineType } from "../../utils"
-import { parseDiffLines, resolveValidPath } from "../../utils"
+import { countDiffStats, parseDiffLines, resolveValidPath } from "../../utils"
 import { Icon } from "@iconify/vue"
 import { computed, inject, onMounted, onUnmounted, ref, watch } from "vue"
 import { CARD_SERVICES_KEY } from "../../types"
+import DiffLines from "./DiffLines.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -161,15 +129,6 @@ const emit = defineEmits<{
 const services = inject(CARD_SERVICES_KEY)!
 const { manager } = services
 
-// diff 行类型 → 行首符号（替代模板中的三元链）
-const DIFF_SIGN: Record<DiffLineType, string> = {
-  add: "+",
-  del: "−",
-  hunk: "@",
-  ctx: " ",
-  meta: " ",
-}
-
 /** 原始 diff 文本（按文件加载） */
 const diffText = ref("")
 const loading = ref(true)
@@ -178,15 +137,7 @@ const loading = ref(true)
 const lines = computed(() => parseDiffLines(diffText.value))
 
 /** 增/删行数统计（标题行展示） */
-const stats = computed(() => {
-  let add = 0
-  let del = 0
-  for (const line of lines.value) {
-    if (line.type === "add") add++
-    else if (line.type === "del") del++
-  }
-  return { add, del }
-})
+const stats = computed(() => countDiffStats(lines.value))
 
 /** 当前文件在列表中的下标（路径匹配；单个提交内路径唯一） */
 const fileIndex = computed(() => props.files.findIndex((f) => f.path === props.file.path))

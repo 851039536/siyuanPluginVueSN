@@ -92,43 +92,11 @@
             </button>
           </div>
         </div>
-        <!-- 图例："+ 新增 / − 删除 / ⋯ 未变" -->
-        <div class="wt-diff-legend">
-          <span class="wt-legend-add">+ {{ i18n.legendAdd }}</span>
-          <span class="wt-legend-del">− {{ i18n.legendDel }}</span>
-          <span class="wt-legend-ctx">⋯ {{ i18n.legendCtx }}</span>
-        </div>
-        <div class="wt-diff-content">
-          <!-- 空态：差异尚未加载完成或无内容（如二进制文件） -->
-          <div
-            v-if="!coloredDiffLines.length"
-            class="wt-diff-empty"
-          >
-            {{ i18n.diffEmpty }}
-          </div>
-          <div
-            v-for="(line, i) in coloredDiffLines"
-            :key="i"
-            class="wt-diff-line"
-            :class="`wt-dl-${line.type}`"
-          >
-            <!-- 旧/新文件行号双列（hunk/meta 行无行号，留空保持对齐） -->
-            <span class="wt-dl-no">{{ line.oldNo ?? "" }}</span>
-            <span class="wt-dl-no">{{ line.newNo ?? "" }}</span>
-            <span class="wt-dl-sign">{{ DIFF_SIGN[line.type] }}</span>
-            <span class="wt-dl-text">
-              <!-- 词级差异：配对成功的行按分段渲染，变化片段加深底色 -->
-              <template v-if="line.segments">
-                <span
-                  v-for="(seg, j) in line.segments"
-                  :key="j"
-                  :class="{ 'wt-dl-seg-changed': seg.changed }"
-                >{{ seg.text }}</span>
-              </template>
-              <template v-else>{{ line.text }}</template>
-            </span>
-          </div>
-        </div>
+        <!-- 图例 + 着色行（复用共享 DiffLines 片段） -->
+        <DiffLines
+          :i18n="i18n"
+          :lines="coloredDiffLines"
+        />
       </div>
     </div>
   </Teleport>
@@ -136,14 +104,14 @@
 
 <script setup lang="ts">
 import type { FileChange } from "../../types"
-import type { DiffLineType } from "../../utils"
-import { parseDiffLines } from "../../utils"
+import { countDiffStats, parseDiffLines } from "../../utils"
 import { Icon } from "@iconify/vue"
 import {
   computed,
   onMounted,
   onUnmounted,
 } from "vue"
+import DiffLines from "../common/DiffLines.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -162,30 +130,13 @@ const emit = defineEmits<{
   discard: []
 }>()
 
-// diff 行类型 → 行首符号（替代模板中的三元链）
-const DIFF_SIGN: Record<DiffLineType, string> = {
-  add: "+",
-  del: "−",
-  hunk: "@",
-  ctx: " ",
-  meta: " ",
-}
-
 const diffText = computed(() => props.fileDiffs[`${props.file.staged ? "s" : "u"}::${props.file.path}`] || "")
 
 /** 将 diff 文本解析为带类型/行号/词级分段的行数组 */
 const coloredDiffLines = computed(() => parseDiffLines(diffText.value))
 
 /** 增/删行数统计（标题行展示） */
-const diffStats = computed(() => {
-  let add = 0
-  let del = 0
-  for (const line of coloredDiffLines.value) {
-    if (line.type === "add") add++
-    else if (line.type === "del") del++
-  }
-  return { add, del }
-})
+const diffStats = computed(() => countDiffStats(coloredDiffLines.value))
 
 /** 当前文件在列表中的下标（路径 + 暂存状态双键匹配） */
 const fileIndex = computed(() => props.files.findIndex((f) => f.path === props.file.path && f.staged === props.file.staged))

@@ -133,7 +133,7 @@ src/features/gitPush/
 │   │   ├── index.vue                # 提交规则检查视图入口容器（状态编排 + 区块组合 + 修正弹窗）
 │   │   ├── RuleCheckToolbar.vue     # 顶部工具条（分析状态 + 条数 + 分析按钮）
 │   │   ├── RuleCheckOverview.vue    # 总览区块（检查数/不合规/合规率卡片 + 规则提示）
-│   │   ├── ReasonDistributionSection.vue # 违规类型分布区块（条形）
+│   │   ├── ReasonDistributionSection.vue # 违规类型分布区块（紧凑 chips：标题与计数圆片同行）
 │   │   └── ViolationListSection.vue # 不合规提交列表区块（条目 + 修正/删除入口 + 分页）
 │   ├── RepoCleanPanel/              # 仓库清理视图专属（4 个）
 │   │   ├── index.vue                # 仓库清理视图入口容器（体检扫描编排 + 区块组合 + 清理向导入口）

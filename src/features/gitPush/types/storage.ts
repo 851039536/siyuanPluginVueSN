@@ -380,14 +380,7 @@ export const DEFAULT_ANALYSIS_VIEW_SETTINGS: CommitAnalysisViewSettings = {
 }
 
 /** 提交规则检查偏好默认值（默认过滤全部项目 + 规则配置全默认：过短阈值 10 字 + 可选规则全开） */
-const DEFAULT_RULE_CHECK_PREFS: RuleCheckPrefs = {
-  projectId: "",
-  minSubjectLength: DEFAULT_COMMIT_RULE_CONFIG.minSubjectLength,
-  requireCapitalizedSubject: DEFAULT_COMMIT_RULE_CONFIG.requireCapitalizedSubject,
-  detectWipSubject: DEFAULT_COMMIT_RULE_CONFIG.detectWipSubject,
-  bodyLineLimitEnabled: DEFAULT_COMMIT_RULE_CONFIG.bodyLineLimitEnabled,
-  maxBodyLineLength: DEFAULT_COMMIT_RULE_CONFIG.maxBodyLineLength,
-}
+const DEFAULT_RULE_CHECK_PREFS: RuleCheckPrefs = { projectId: "", ...DEFAULT_COMMIT_RULE_CONFIG }
 
 /** 提交信息修正偏好默认值（默认保留原始提交时间） */
 const DEFAULT_COMMIT_FIX_PREFS: CommitFixPrefs = { preserveDate: true }

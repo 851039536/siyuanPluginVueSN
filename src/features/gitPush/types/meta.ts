@@ -285,8 +285,8 @@ export interface CommitRuleConfig {
   minSubjectLength: number
 }
 
-/** 提交规则默认配置（描述过短阈值默认 15 字） */
-export const DEFAULT_COMMIT_RULE_CONFIG: CommitRuleConfig = { minSubjectLength: 15 }
+/** 提交规则默认配置（描述过短阈值默认 10 字） */
+export const DEFAULT_COMMIT_RULE_CONFIG: CommitRuleConfig = { minSubjectLength: 10 }
 
 /** 单条不合规提交（提交信息 + 命中原因） */
 export interface CommitRuleViolation extends CommitAnalysisEntry {

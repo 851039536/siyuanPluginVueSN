@@ -2,7 +2,9 @@
 import type { Plugin } from "siyuan"
 import { COMMIT_TYPE_VALUES } from "../types/storage"
 import type { CommitTemplate, GitPushStorage } from "../types/storage"
-import { checkCommitRule, fixCommitMessageHeuristically } from "../commitRuleChecker"
+import type { CommitRuleConfig } from "../types/meta"
+import { DEFAULT_COMMIT_RULE_CONFIG } from "../types/meta"
+import { buildCommitRulePrompt, checkCommitRule, fixCommitMessageHeuristically } from "../commitRuleChecker"
 import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi"
 import type { GitExecutor } from "./GitExecutor"
 import type { WorktreeOps } from "./WorktreeOps"
@@ -18,6 +20,12 @@ export class CommitMsgGenerator {
     this.executor = executor
     this.worktreeOps = worktreeOps
     this.storage = storage
+  }
+
+  /** 读取用户配置的提交规则（描述最短字数阈值；未配置时回退默认值，prompt 与生成后校验共用同一口径） */
+  private async getRuleConfig(): Promise<CommitRuleConfig> {
+    const prefs = await this.storage.ruleCheckPrefs.loadOrDefault()
+    return { minSubjectLength: prefs.minSubjectLength ?? DEFAULT_COMMIT_RULE_CONFIG.minSubjectLength }
   }
 
   /**
@@ -39,15 +47,16 @@ export class CommitMsgGenerator {
         "-c", "core.quotepath=false", "diff", "--text", "--cached",
       ])
       const diffSnippet = (fullDiff || diffText).substring(0, 3000)
+      const ruleConfig = await this.getRuleConfig()
 
       try {
         const result = await callAI(
-          `根据以下 git diff，生成一条中文 conventional commit 信息。\n格式：type: 中文描述\ntype 必须为 ${COMMIT_TYPE_VALUES.join("/")} 之一。\n示例：refactor: 重构 userService 为策略模式\n示例：fix: 修复订单列表空指针异常\n示例：feat: 新增导出 PDF 功能\n重要：只输出一行提交信息，不要输出分析、解释、Markdown 或任何别的内容。\nDiff:\n${diffSnippet}`,
+          `根据以下 git diff，生成一条中文 conventional commit 信息。\n格式：type: 中文描述\n${buildCommitRulePrompt(ruleConfig.minSubjectLength)}。\n示例：refactor: 重构用户服务模块为策略模式提升扩展性\n示例：fix: 修复订单列表分页加载时的空指针异常\n示例：feat: 新增导出报表为 PDF 文件的功能支持\n重要：只输出一行提交信息，不要输出分析、解释、Markdown 或任何别的内容。\nDiff:\n${diffSnippet}`,
           aiConfig,
           {
             systemPrompt: "输出要求：只输出一行 conventional commit 格式的提交信息。禁止输出解释、分析、额外文字。",
             temperature: 0.1,
-            maxTokens: 60,
+            maxTokens: 100,
             enableThinking: false,
           },
         )
@@ -55,7 +64,9 @@ export class CommitMsgGenerator {
         const typesPattern = COMMIT_TYPE_VALUES.join("|")
         const match = trimmed.match(new RegExp(`(${typesPattern})(?:\\([^)]+\\))?\\s*:\\s*(.+)`, "i"))
         if (match) {
-          return { message: `${match[1].toLowerCase()}: ${match[2].trim()}`, source: "ai" }
+          // 去掉结尾句号（可确定性修正），保证生成结果不触发"句号结尾"规则
+          const subject = match[2].trim().replace(/[.。]+$/, "").trim()
+          return { message: `${match[1].toLowerCase()}: ${subject}`, source: "ai" }
         }
         console.warn("[gitPush] AI 未返回有效 commit 格式，降级启发式:", trimmed.substring(0, 80))
       } catch (e: unknown) {
@@ -93,7 +104,8 @@ export class CommitMsgGenerator {
   /** 根据原提交信息 + 完整 diff 实际改动，生成符合提交规则的单行修正提交信息（降级启发式） */
   async generateCommitFix(projectPath: string, hash: string, currentMessage: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
     const aiConfig = getApiConfigFromPlugin(this.plugin)
-    const heuristic = fixCommitMessageHeuristically(currentMessage)
+    const ruleConfig = await this.getRuleConfig()
+    const heuristic = fixCommitMessageHeuristically(currentMessage, ruleConfig)
     if (!aiConfig.apiKey) {
       return { message: heuristic, source: "heuristic" }
     }
@@ -106,13 +118,13 @@ export class CommitMsgGenerator {
       }
       const result = await callAI(
         `请基于以下某次 Git 提交的完整改动内容（diff），分析这次提交实际做了什么，生成一条最贴合实际改动的修正提交信息。
-输出格式：只输出一行，格式为 type(scope): 中文描述（type 必须为 ${COMMIT_TYPE_VALUES.join("/")} 之一，scope 可选）
+输出格式：只输出一行，格式为 type(scope): 中文描述（${buildCommitRulePrompt(ruleConfig.minSubjectLength)}）
 要求：
 1. 描述部分使用中文，概括本次提交的主要改动
 2. 原提交信息仅供参考（可能不准确），以 diff 实际改动为准
 3. 不要输出解释、分析、Markdown 或任何别的内容
 
-示例：fix: 修复订单列表空指针异常
+示例：fix: 修复订单列表分页加载时的空指针异常
 
 原提交信息：${currentMessage}
 
@@ -127,7 +139,7 @@ ${diffContext}`,
         },
       )
       const trimmed = result?.trim() ?? ""
-      if (trimmed && checkCommitRule(trimmed) === null) {
+      if (trimmed && checkCommitRule(trimmed, ruleConfig) === null) {
         return { message: trimmed, source: "ai" }
       }
       console.warn("[gitPush] AI 未返回有效提交规则格式，降级启发式:", trimmed.substring(0, 80))
@@ -141,7 +153,8 @@ ${diffContext}`,
   /** 深度分析修正：基于完整 diff 补丁让 AI 理解实际改动，生成贴合改动的修正提交信息（降级启发式） */
   async deepAnalyzeCommitFix(projectPath: string, hash: string, currentMessage: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
     const aiConfig = getApiConfigFromPlugin(this.plugin)
-    const heuristic = fixCommitMessageHeuristically(currentMessage)
+    const ruleConfig = await this.getRuleConfig()
+    const heuristic = fixCommitMessageHeuristically(currentMessage, ruleConfig)
     if (!aiConfig.apiKey) {
       return { message: heuristic, source: "heuristic" }
     }
@@ -154,14 +167,14 @@ ${diffContext}`,
       const result = await callAI(
         `请基于以下某次 Git 提交的完整改动内容（diff），深度分析这次提交实际做了什么，生成一条最贴合实际改动的修正提交信息。
 输出格式（多行）：
-1. 第一行为标题行：type(scope): 中文描述（type 必须为 ${COMMIT_TYPE_VALUES.join("/")} 之一，scope 可选）
-2. 空一行后，输出 3~6 条改动要点，每条以 "- " 开头，概括本次提交的主要改动维度（如新增功能、修复问题、补充文案与样式、优化逻辑等）
+1. 第一行为标题行：type(scope): 中文描述（${buildCommitRulePrompt(ruleConfig.minSubjectLength)}）
+2. 标题行必须空一行后，再输出 3~6 条改动要点，每条以 "- " 开头，概括本次提交的主要改动维度（如新增功能、修复问题、补充文案与样式、优化逻辑等）
 3. 全部使用中文；要点仅用纯文本加 "- " 前缀，不要使用其他 Markdown 语法
 4. 原提交信息仅供参考（可能不准确），以 diff 实际改动为准
 5. 只输出上述格式的提交信息本身，不要输出分析过程、解释或任何其他内容
 
 示例：
-feat(gitPush): 实现提交规则违规的批量修正功能，包含：
+feat: 实现提交规则违规的批量修正功能，包含：
 
 - 违规列表新增全选/批量修正入口与多选交互
 - 新增批量修正弹窗，支持 AI 批量生成、逐条保存与进度展示
@@ -180,7 +193,7 @@ ${diffContext}`,
         },
       )
       const trimmed = result?.trim() ?? ""
-      if (trimmed && checkCommitRule(trimmed) === null) {
+      if (trimmed && checkCommitRule(trimmed, ruleConfig) === null) {
         return { message: trimmed, source: "ai" }
       }
       console.warn("[gitPush] AI 深度分析未返回有效提交规则格式，降级启发式:", trimmed.substring(0, 80))

@@ -22,6 +22,19 @@ const SCOPE_FORMAT_REGEX = /^[a-z0-9-]+$/
 const TRAILING_PERIOD_REGEX = /[.。]$/
 
 /**
+ * 构建 AI 生成提交信息的规则约束 prompt 片段（单一事实源：AI 生成与生成后校验共用同一套规则描述）。
+ * @param minSubjectLength 描述最短字数（用户配置阈值，与 checkCommitRule 校验口径一致）
+ */
+export function buildCommitRulePrompt(minSubjectLength: number): string {
+  return [
+    `type 必须为 ${COMMIT_TYPE_VALUES.join("/")} 之一`,
+    "scope（可选）仅允许小写字母、数字、连字符",
+    "描述使用中文，不得以句号（. 或 。）结尾",
+    `描述不少于 ${minSubjectLength} 个字`,
+  ].join("；")
+}
+
+/**
  * 校验单条提交信息，返回不合规原因；合规返回 null。
  * 规则：type(scope)!: 描述，type 限 feat/fix/chore/docs/style/refactor/test；
  * 另含 GitHub 建议（scope 格式/句号结尾/最短字数/标题正文空行）。

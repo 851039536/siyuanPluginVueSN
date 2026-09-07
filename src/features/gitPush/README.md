@@ -36,13 +36,15 @@ src/features/gitPush/
 ├── reportChart.ts                   # 提交 K 线图绘制配置：chart.js 数据集/坐标轴/影线插件（自 CandlestickSection 迁出）
 ├── debtInsights.ts                  # 技术债务洞察纯函数：趋势推断 + 共变索引 + 严重度汇总（自 composables 迁出）
 ├── managers/
-│   ├── GitExecutor.ts               # git 子进程执行器（双池信号量限流 + abort 生命周期）
+│   ├── GitExecutor.ts               # git 子进程执行器（双池信号量限流 + abort 生命周期 + stdin 流式长驻进程）
 │   ├── ProjectStore.ts              # 项目/分类/标签 CRUD 与内存缓存
 │   ├── ReportOps.ts                 # numstat 提交日志/首提交日期/已跟踪文件/文件历史补丁（弹窗懒取）
 │   ├── RemoteOps.ts                 # push/pull/fetch 全平台与单平台、推送状态检查
 │   ├── WorktreeOps.ts               # 工作区状态/差异/暂存/提交/stash/分支/提交日志（含历史提交消息重写）
 │   ├── RepoOps.ts                   # Tag 管理、冲突检测、远程配置、Git 配置查看、仓库扫描
-│   ├── HistoryRewriter.ts           # 提交历史 DAG 重建器（消息改写 / 提交删除双策略共享 commit-tree 骨架）
+│   ├── HistoryRewriter.ts           # 提交历史 DAG 重建器（消息改写/提交删除双策略：预计算重建计划 + 侧链 identity 跳过 + CAS 切回）
+│   ├── FastImportRewriter.ts        # fast-import 流式重建执行器（cat-file --batch 批量查 tree + deleteall 全量 M 导入临时 ref）
+│   ├── historyRewritePlan.ts        # 历史重写计划类型（RewriteEntry/RewritePlan，HistoryRewriter 与 FastImportRewriter 共享）
 │   ├── BfgOps.ts                    # BFG 运行时层：Java 探测 + bfg.jar 下载缓存 + bfg 进程执行
 │   ├── RepoCleanOps.ts              # 仓库清理编排：体检扫描（纯 git）+ BFG mirror 六步工作流
 │   └── CommitMsgGenerator.ts        # AI 提交信息与 stash 描述生成（含启发式降级）
@@ -79,7 +81,7 @@ src/features/gitPush/
 │   │   ├── EmptyState.vue           # 空态提示（无项目/无数据）
 │   │   ├── LoadMoreButton.vue       # 加载更多按钮
 │   │   ├── CommitFixDialog.vue      # 提交信息修正弹窗（HEAD amend + AI 生成，列表 LOG Tab 与规则检查共用）
-│   │   ├── DropCommitDialog.vue     # 删除历史提交弹窗（四项前置校验 + bundle 备份 + commit-tree 删除执行，LOG Tab 与规则检查共用）
+│   │   ├── DropCommitDialog.vue     # 删除历史提交弹窗（四项前置校验 + bundle 备份 + fast-import 历史重建删除，LOG Tab 与规则检查共用）
 │   │   └── BatchFixDialog.vue       # 提交信息批量修正弹窗（规则检查多选：AI 逐条生成 + 逐条保存 + 逐项状态）
 │   ├── ListView/                    # 列表视图专属（17 个）
 │   │   ├── index.vue               # 列表视图入口容器（工具栏 + 分组循环卡片，纯渲染）

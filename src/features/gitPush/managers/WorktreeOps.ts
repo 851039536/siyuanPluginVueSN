@@ -428,9 +428,9 @@ export class WorktreeOps {
   /**
    * 重写指定提交信息（个人项目安全版）：
    * - 目标是 HEAD 时直接 amend；
-   * - 历史提交用 commit-tree 逐条重建提交图（纯消息改写：树与父子结构原样保留），
+   * - 历史提交用 fast-import 单进程流式重建提交图（纯消息改写：树与父子结构原样保留），
    *   不走 rebase——线性 rebase 会拍平下游 merge 的侧链导致必现冲突，且重放触碰
-   *   工作区文件（可能被 IDE/资源管理器占用）；commit-tree 全程只建对象不碰工作区，
+   *   工作区文件（可能被 IDE/资源管理器占用）；fast-import 全程只建对象不碰工作区，
    *   失败时引用未被更新，仓库保持原状。
    */
   async rewriteCommitMessage(
@@ -482,7 +482,7 @@ export class WorktreeOps {
    * 删除指定历史提交（记录级删除、内容不变语义，个人项目安全版）：
    * 目标提交从历史跳过，其变更并入下一提交（后代以原树重建、父指针重指向目标的父），
    * 最终 HEAD 的 tree 与删除前完全一致；后代 hash 必然重写，已推送需 --force-with-lease 强推。
-   * 走 commit-tree 图重建（同 rewriteCommitMessage，不碰工作区，失败时引用未更新仓库保持原状）。
+   * 走 fast-import 图重建（同 rewriteCommitMessage，不碰工作区，失败时引用未更新仓库保持原状）。
    */
   async dropCommit(
     projectPath: string,

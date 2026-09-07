@@ -26,7 +26,7 @@
 - **响应式布局**：纯 CSS flex-wrap 替代 JS 监听
 
 ## 功能模块状态
-- gitPush：已完成多本地路径配置、响应式双列、commit log 数量选择
+- gitPush：已完成多本地路径配置、响应式双列、commit log 数量选择；历史重写已 fast-import 化（2026-09-07）：cat-file --batch 批量查 tree + deleteall/全量 M 完整 tree 模型 + 临时 ref refs/gprw/<branch> + CAS 切回，managers/ 内 GitExecutor.execGitStreaming（spawn stdin 流式）+ FastImportRewriter.ts + historyRewritePlan.ts（共享类型）+ HistoryRewriter.ts（buildPlan 预计算）协作，拒绝 fast-export 增量模型（drop 会引入冲突），drop 根提交由静默无效改为显式报错
 - S3 备份：已改为直接上传模式（无 zip 打包），状态栏集成
 - toolCollection：底部面板 + Tab 切换，首个工具 base64Image
 - compactMode：独立模块，3 档密度 + 5 档字号 + 5 区域开关

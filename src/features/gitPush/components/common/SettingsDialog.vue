@@ -131,6 +131,31 @@
             <div class="gp-set-hint">
               {{ i18n.networkTimeoutHint }}
             </div>
+            <!-- 描述最短字数设置行（提交规则检查"描述过短"阈值） -->
+            <div class="gp-set-row gp-set-row--spaced">
+              <!-- 设置项标签："描述最短字数" -->
+              <label class="gp-set-label">{{ i18n.ruleCheckMinSubjectLength }}</label>
+              <div class="gp-set-input-row">
+                <Input
+                  :model-value="localMinSubjectLength"
+                  type="number"
+                  size="xsmall"
+                  class="gp-set-concurrency-input"
+                  @update:model-value="localMinSubjectLength = clampMinSubjectLength(Number($event))"
+                />
+                <button
+                  class="vp-btn vp-btn--primary vp-btn--sm"
+                  @click="saveMinSubjectLength"
+                >
+                  <!-- 按钮文案："保存" -->
+                  {{ i18n.save }}
+                </button>
+              </div>
+            </div>
+            <!-- 提示文案："提交规则检查中描述少于该字数判为'描述过短'（1~100），修改后需重新分析生效" -->
+            <div class="gp-set-hint">
+              {{ i18n.ruleCheckMinSubjectLengthHint }}
+            </div>
           </template>
 
           <!-- ── 显示分区：提交分析显示设置 ── -->
@@ -166,7 +191,7 @@ import { ref, watch } from "vue"
 import Input from "@/components/Input.vue"
 import GitConfigSection from "./GitConfigSection.vue"
 import AnalysisSettingsForm from "../CommitAnalysis/AnalysisSettingsForm.vue"
-import { clampGitConcurrency, clampNetworkTimeout } from "../../types"
+import { clampGitConcurrency, clampMinSubjectLength, clampNetworkTimeout } from "../../types"
 import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
 
 type SettingsSection = "general" | "display" | "gitconfig"
@@ -184,6 +209,8 @@ const props = defineProps<{
   concurrency: number
   /** 网络命令超时（秒） */
   networkTimeout: number
+  /** 描述最短字数（提交规则检查"描述过短"阈值） */
+  minSubjectLength: number
   pushBranchMode: "all" | "head"
   /** 提交分析显示设置（父级预载后下发，与 popover 入口同源） */
   viewSettings: CommitAnalysisViewSettings
@@ -195,6 +222,7 @@ const emit = defineEmits<{
   close: []
   save: [value: number]
   saveNetworkTimeout: [value: number]
+  saveMinSubjectLength: [value: number]
   saveBranchMode: [mode: "all" | "head"]
   updateViewSettings: [patch: Partial<CommitAnalysisViewSettings>]
   /** 底部「管理分类」操作：由父级关闭设置弹窗并打开分类弹窗 */
@@ -203,6 +231,7 @@ const emit = defineEmits<{
 
 const localConcurrency = ref(clampGitConcurrency(props.concurrency))
 const localNetworkTimeout = ref(clampNetworkTimeout(props.networkTimeout))
+const localMinSubjectLength = ref(clampMinSubjectLength(props.minSubjectLength))
 const localBranchMode = ref<"all" | "head">(props.pushBranchMode)
 const activeSection = ref<SettingsSection>("general")
 const { rootRef } = useDialogKeyboard()
@@ -220,11 +249,17 @@ function saveNetworkTimeout() {
   emit("saveNetworkTimeout", localNetworkTimeout.value)
 }
 
-/** Enter 键仅在常规分区保存并发数与网络超时（Git 配置分区输入由组件内 stop 拦截，显示分区无提交语义） */
+/** 保存描述最短字数（保存按钮 / Enter 键共用） */
+function saveMinSubjectLength() {
+  emit("saveMinSubjectLength", localMinSubjectLength.value)
+}
+
+/** Enter 键仅在常规分区保存并发数、网络超时与描述最短字数（Git 配置分区输入由组件内 stop 拦截，显示分区无提交语义） */
 function onEnterKey() {
   if (activeSection.value === "general") {
     saveConcurrency()
     saveNetworkTimeout()
+    saveMinSubjectLength()
   }
 }
 </script>

@@ -27,6 +27,7 @@
 
 ## 功能模块状态
 - gitPush：已完成多本地路径配置、响应式双列、commit log 数量选择；历史重写已 fast-import 化（2026-09-07）：cat-file --batch 批量查 tree + deleteall/全量 M 完整 tree 模型 + 临时 ref refs/gprw/<branch> + CAS 切回，managers/ 内 GitExecutor.execGitStreaming（spawn stdin 流式）+ FastImportRewriter.ts + historyRewritePlan.ts（共享类型）+ HistoryRewriter.ts（buildPlan 预计算）协作，拒绝 fast-export 增量模型（drop 会引入冲突），drop 根提交由静默无效改为显式报错
+- gitPush 提交规则检查共 11 条规则（2026-09-07 扩展）：原 7 条 + 新 4 条（invalidScopeFormat scope 格式非法 / subjectEndsWithPeriod 句号结尾 / subjectTooShort 描述过短 / missingBlankLine 正文未空行）。架构要点：checkCommitRule 等纯函数用可选参数 `config: CommitRuleConfig = DEFAULT_COMMIT_RULE_CONFIG` 向后兼容 6 处调用点；阈值持久化在 ruleCheckPrefs 槽位 `minSubjectLength?` 可选字段（默认 15，clampMinSubjectLength 钳位 1~100）；setRuleCheckProject/setMinSubjectLength 均 load-merge-save 防覆盖；subject 按首个换行拆分，长度/句号/中文判定只作用于首行；启发式修正结果经 checkCommitRule 终验，仅返回完全合规结果（过短/未空行走 AI）；设置入口 SettingsDialog 常规分区「描述最短字数」，index.vue init 中 `void loadRuleCheckPrefs()` 预载
 - S3 备份：已改为直接上传模式（无 zip 打包），状态栏集成
 - toolCollection：底部面板 + Tab 切换，首个工具 base64Image
 - compactMode：独立模块，3 档密度 + 5 档字号 + 5 区域开关

@@ -165,12 +165,14 @@
         :manager="props.manager"
         :concurrency="gitConcurrency"
         :network-timeout="networkTimeout"
+        :min-subject-length="minSubjectLength"
         :push-branch-mode="pushBranchMode"
         :view-settings="analysisViewSettings"
         :year-options="settingsYearOptions"
         @close="showSettings = false"
         @save="setGitConcurrency"
         @save-network-timeout="setNetworkTimeout"
+        @save-min-subject-length="setMinSubjectLength"
         @save-branch-mode="handleSaveBranchMode"
         @update-view-settings="updateViewSettings"
         @open-category="openCategoryFromSettings"
@@ -604,6 +606,9 @@ const {
   updateViewSettings,
   effectiveRuleCheckProjectId,
   setRuleCheckProject,
+  loadRuleCheckPrefs,
+  minSubjectLength,
+  setMinSubjectLength,
   projectLineRanking,
   lineStatsSummary,
   selectedExtensions,
@@ -753,6 +758,8 @@ onMounted(async () => {
   }
   loadGitConcurrency()
   loadNetworkTimeout()
+  // 预载提交规则检查偏好（含描述最短字数阈值），保证设置弹窗打开即显示已保存值
+  void loadRuleCheckPrefs()
   // 首屏只加载显示卡片所需的最小集：工作区变更摘要 + 推送状态。
   // commitLog/branches/stash 改为展开工作区面板时按需懒加载（见 @expand）。
   // getHeadHash 仅刷新去重用，首屏无历史值可对比，跳过。

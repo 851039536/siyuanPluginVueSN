@@ -48,6 +48,11 @@
   opacity: 0.7;
 }
 
+// 该提交修改的文件面板（内嵌 CommitFilesList）与上方信息区块留白
+.gp-drop-files {
+  margin-top: $spacing-2;
+}
+
 // 内容不变说明（本操作的核心语义，普通信息条）
 .gp-drop-note {
   display: flex;

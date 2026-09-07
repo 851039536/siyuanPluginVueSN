@@ -41,6 +41,18 @@
               <pre class="gp-drop-original">{{ target.message }}</pre>
             </div>
 
+            <!-- 该提交修改的文件清单（辅助判断删除影响范围；行点击可查看差异） -->
+            <div class="gp-drop-files">
+              <CommitFilesList
+                v-if="project"
+                :i18n="i18n"
+                :project="project"
+                :hash="target.hash"
+                :heading-text="i18n.commitFilesTitle"
+                :list-height="170"
+              />
+            </div>
+
             <!-- 内容不变说明（本操作的核心语义） -->
             <div class="gp-drop-note">
               <Icon icon="mdi:information-outline" height="12" />
@@ -214,6 +226,7 @@ import { CARD_SERVICES_KEY } from "../../types"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import Loader from "@/components/Loader.vue"
+import CommitFilesList from "./CommitFilesList.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>

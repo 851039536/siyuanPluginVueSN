@@ -1,4 +1,4 @@
-<!-- gitPush 统计视图入口容器（空态 + 总览卡片 + 瀑布流组合各功能区块） -->
+<!-- gitPush 统计视图入口容器（空态 + 总览卡片 + 自适应网格组合各功能区块） -->
 <template>
   <div class="gp-stats-panel">
     <!-- 空状态：无项目时显示"暂无项目统计" -->
@@ -15,8 +15,8 @@
         :stats="stats"
       />
 
-      <!-- 瀑布流布局：容器 ≥ 约 684px 时双列瀑布，窄面板自动单列（列数由容器宽度决定），消除并排等高行的空隙 -->
-      <div class="gp-stats-masonry">
+      <!-- 自适应网格：窄卡（覆盖率/分类分布）并排，表格区块跨全宽（--full）；容器 < 约 672px 自动单列（容器宽度驱动） -->
+      <div class="gp-stats-grid">
         <!-- 远程覆盖率 -->
         <CoverageSection
           :i18n="i18n"
@@ -29,22 +29,25 @@
           :stats="stats"
         />
 
-        <!-- 待处理项目（推送状态概览 + 待处理表格合并） -->
+        <!-- 待处理项目（推送状态概览 + 待处理表格合并，全宽） -->
         <PendingProjectsSection
+          class="gp-stats-section--full"
           :i18n="i18n"
           :stats="stats"
           @view-project="emit('viewProject', $event)"
         />
 
-        <!-- 平台配置状态 -->
+        <!-- 平台配置状态（矩阵表格，全宽） -->
         <PlatformStatusSection
+          class="gp-stats-section--full"
           :i18n="i18n"
           :stats="stats"
           @view-project="emit('viewProject', $event)"
         />
 
-        <!-- 仓库链接一致性（按需批量比对手动链接与实际远程 URL） -->
+        <!-- 仓库链接一致性（按需批量比对手动链接与实际远程 URL，全宽） -->
         <RepoLinkAuditSection
+          class="gp-stats-section--full"
           :i18n="i18n"
           :rows="auditRows"
           :auditing="auditing"
@@ -59,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-// gitPush 统计视图入口容器（空态 + 瀑布流组合各功能区块，纯编排无领域状态）
+// gitPush 统计视图入口容器（空态 + 自适应网格组合各功能区块，纯编排无领域状态）
 import type { RepoLinkAuditRow, RepoLinkAuditSummary, StatsView } from "../../types"
 import EmptyState from "../common/EmptyState.vue"
 import CategoryDistributionSection from "./CategoryDistributionSection.vue"

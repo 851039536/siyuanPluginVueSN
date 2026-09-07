@@ -29,13 +29,13 @@ const props = defineProps<{
   stats: StatsView
 }>()
 
-/** 总览卡片配置：总项目数 / 已配远程 / 待推送 / 未提交 / 收藏 / 已归档 */
+/** 总览卡片配置：总项目数 / 已配远程 / 待推送 / 未提交 / 收藏 / 已归档（cls 决定数值语义色） */
 const overviewCards = computed(() => [
   { value: props.stats.projectCount, label: props.i18n.totalProjects, cls: "" },
   { value: props.stats.remoteCoverage.hasRemote, label: props.i18n.remoteConfigured, cls: "gp-stat-card--info" },
   { value: props.stats.pushStatusStats.ahead, label: props.i18n.needsPush, cls: "gp-stat-card--warn" },
   { value: props.stats.uncommittedCount, label: props.i18n.uncommitted, cls: "gp-stat-card--accent" },
-  // 收藏卡："收藏"（与列表星标按钮同色）
+  // 收藏卡："收藏"（与列表星标按钮同色系）
   { value: props.stats.starredCount, label: props.i18n.starred, cls: "gp-stat-card--star" },
   // 归档卡："已归档"（弱化展示）
   { value: props.stats.archivedCount, label: props.i18n.archivedTitle, cls: "gp-stat-card--muted" },

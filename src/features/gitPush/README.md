@@ -101,7 +101,7 @@ src/features/gitPush/
 │   │   ├── WorkingTreePanel.vue     # 工作区变更面板
 │   │   └── WorkingTreeDiffDialog.vue# 差异查看弹窗
 │   ├── StatsView/                   # 统计视图专属（5 个区块 + common/ 共享组件）
-│   │   ├── index.vue               # 统计视图入口容器（空态 + 瀑布流组合各区块）
+│   │   ├── index.vue               # 统计视图入口容器（空态 + 自适应网格组合各区块；窄卡并排 + 表格区块全宽）
 │   │   ├── OverviewCards.vue       # 总览卡片区（总项目数/已配远程/待推送/未提交/收藏/已归档）
 │   │   ├── CoverageSection.vue     # 远程覆盖率区块（四平台 + 多远程合计）
 │   │   ├── CategoryDistributionSection.vue # 分类分布区块（category.color 着色条形）

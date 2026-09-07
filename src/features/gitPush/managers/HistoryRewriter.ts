@@ -1,9 +1,9 @@
-// 提交历史 DAG 重建器：commit-tree 图重建核心（消息改写 / 提交删除双策略共享骨架）。
-// 按拓扑序（父先子后）遍历目标提交到 HEAD，依赖目标的后代逐条用 commit-tree 以
-// 原树/原父子结构重建（仅消息或父指针变化），侧链等无关提交保持原 hash；
+// 提交历史 DAG 重建器：预计算重建计划（拓扑序遍历 + 侧链 identity 跳过 + drop 别名重定向），
+// 委托 FastImportRewriter 以 git fast-import 单进程流式重建（完整 tree 模型，不碰工作区），
 // 最后以 CAS（旧值校验）更新分支引用。全程不触碰工作区与暂存区。
 import type { GitExecutor } from "./GitExecutor"
-import { getNodeFsPathOs } from "@/utils/nodeModules"
+import type { RewriteEntry, RewritePlan } from "./historyRewritePlan"
+import { FastImportRewriter } from "./FastImportRewriter"
 
 /** 日志记录（FMT 字段切分产物） */
 interface CommitRecord {
@@ -13,41 +13,38 @@ interface CommitRecord {
   an: string
   ae: string
   aI: string
+  /** 作者 Unix epoch（%at，fast-import raw 时间格式用） */
+  at: number
   cn: string
   ce: string
   cI: string
+  /** 提交者 Unix epoch（%ct） */
+  ct: number
   message: string
 }
 
-/** 目标提交处理策略上下文（onTarget 通过 rebuild 重建目标，或直接写 map 实现"跳过"） */
-interface TargetContext {
-  target: CommitRecord
-  /** 以指定消息重建一条提交（保留原树/父映射/作者三件套），并写入 hash 映射 */
-  rebuild: (rec: CommitRecord, msg: string) => Promise<void>
-  /** 旧 hash → 新 hash 映射（策略可直接写入映射实现"跳过"） */
-  map: Map<string, string>
-}
+/** 目标处理策略：改消息重建（rewrite）/ 跳过删除（drop：目标 hash 别名到其父，后代父指针重定向） */
+type TargetAction = { kind: "rewrite", message: string } | { kind: "drop" }
 
 /** 重建配置（目标处理策略 + 进度/日期行为） */
 interface RebuildOptions {
-  /** 目标提交处理策略（改消息重建 / 跳过删除） */
-  onTarget: (ctx: TargetContext) => Promise<void>
-  /** 目标自身是否计入进度分母（drop 不重建目标，不计入） */
-  targetCountsInTotal: boolean
-  /** 保留提交者三件套（姓名/邮箱/时间）；作者三件套恒保留 */
+  action: TargetAction
+  /** 保留提交者三件套原始时间；false = 提交者时间刷新为当前时间（作者三件套恒保留） */
   preserveDate: boolean
   onProgress?: (current: number, total: number) => void
 }
 
 export class HistoryRewriter {
   private executor: GitExecutor
+  private fastImportRewriter: FastImportRewriter
 
   constructor(executor: GitExecutor) {
     this.executor = executor
+    this.fastImportRewriter = new FastImportRewriter(executor)
   }
 
-  // 字段：hash/tree/parents/作者三件套/提交者三件套/完整消息；\x1e 分记录
-  private static readonly FMT = "%H%x00%T%x00%P%x00%an%x00%ae%x00%aI%x00%cn%x00%ce%x00%cI%x00%B%x1e"
+  // 字段：hash/tree/parents/作者三件套+epoch/提交者三件套+epoch/完整消息；\x1e 分记录
+  private static readonly FMT = "%H%x00%T%x00%P%x00%an%x00%ae%x00%aI%x00%at%x00%cn%x00%ce%x00%cI%x00%ct%x00%B%x1e"
 
   /**
    * 按 \x1e 单字符分割：execGit 会剥离输出末尾换行，若按 "\x1e\n" 复合分割，
@@ -66,10 +63,12 @@ export class HistoryRewriter {
           an: f[3],
           ae: f[4],
           aI: f[5],
-          cn: f[6],
-          ce: f[7],
-          cI: f[8],
-          message: f[9] ?? "",
+          at: Number.parseInt(f[6] || "0", 10) || 0,
+          cn: f[7],
+          ce: f[8],
+          cI: f[9],
+          ct: Number.parseInt(f[10] || "0", 10) || 0,
+          message: f[11] ?? "",
         }
       })
   }
@@ -84,10 +83,7 @@ export class HistoryRewriter {
     onProgress?: (current: number, total: number) => void,
   ): Promise<string> {
     return this.rebuildDag(projectPath, fullHash, headHash, {
-      onTarget: async ({ target, rebuild }) => {
-        await rebuild(target, message)
-      },
-      targetCountsInTotal: true,
+      action: { kind: "rewrite", message },
       preserveDate,
       onProgress,
     })
@@ -106,26 +102,23 @@ export class HistoryRewriter {
     onProgress?: (current: number, total: number) => void,
   ): Promise<string> {
     return this.rebuildDag(projectPath, fullHash, headHash, {
-      onTarget: async ({ target, map }) => {
-        map.set(target.hash, target.parents[0])
-      },
-      targetCountsInTotal: false,
+      action: { kind: "drop" },
       preserveDate: true,
       onProgress,
     })
   }
 
-  /** DAG 重建骨架（解析/拓扑遍历/侧链 identity/CAS 引用更新），目标处理由策略注入 */
+  /**
+   * DAG 重建骨架：解析 → 预计算重建计划（纯逻辑）→ fast-import 流式导入临时 ref →
+   * CAS 更新原分支引用。与旧 commit-tree 逐条方案相比，1000+ 条重建从 N 次进程收敛为
+   * cat-file --batch + fast-import 两次长驻进程，性能提升 1~2 个数量级。
+   */
   private async rebuildDag(
     projectPath: string,
     fullHash: string,
     headHash: string,
     opts: RebuildOptions,
   ): Promise<string> {
-    const node = getNodeFsPathOs()
-    if (!node) throw new Error("Node 环境不可用")
-    const { fs, os, path } = node
-
     const [tgtRaw, restRaw] = await Promise.all([
       this.executor.execGit(projectPath, ["log", "-1", `--format=${HistoryRewriter.FMT}`, fullHash]),
       // topological + reverse = 父先子后；范围含并入的侧链提交（不依赖目标者保持原 hash）
@@ -136,71 +129,94 @@ export class HistoryRewriter {
     const rest = this.parseLog(restRaw)
 
     const branch = (await this.executor.execGit(projectPath, ["rev-parse", "--abbrev-ref", "HEAD"])).trim()
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gprw-"))
-    /** 旧 hash → 新 hash 映射（含 identity 映射） */
-    const map = new Map<string, string>()
 
-    /** 以原树/映射后的父指针重建一条提交；preserveDate=true 时精确保留作者与提交者三件套 */
-    const rebuild = async (rec: CommitRecord, msg: string) => {
-      const msgFile = path.join(dir, "msg.txt")
-      fs.writeFileSync(msgFile, msg.endsWith("\n") ? msg : `${msg}\n`, "utf8")
-      const env: Record<string, string> = {
-        GIT_AUTHOR_NAME: rec.an,
-        GIT_AUTHOR_EMAIL: rec.ae,
-        GIT_AUTHOR_DATE: rec.aI,
-      }
-      if (opts.preserveDate) {
-        env.GIT_COMMITTER_NAME = rec.cn
-        env.GIT_COMMITTER_EMAIL = rec.ce
-        env.GIT_COMMITTER_DATE = rec.cI
-      }
-      const parents = rec.parents.flatMap((p) => ["-p", map.get(p) ?? p])
-      const newHash = (await this.executor.execGit(projectPath, ["commit-tree", rec.tree, ...parents, "-F", msgFile], undefined, 30000, undefined, { env })).trim()
-      map.set(rec.hash, newHash)
+    // 预计算重建计划（纯逻辑，不执行 git）：拓扑序构造条目，父指针未变化的侧链保持原 hash 不入列
+    const plan = this.buildPlan(target, rest, opts, branch)
+
+    // 祖先守卫：目标必须是 HEAD 祖先（HEAD 必然落入重建集）。
+    // 不满足时（目标来自其他分支/校验后用户切换了分支等竞态），newTip 会指向与当前分支
+    // 无关的提交链，CAS 校验却仍能通过——分支引用将被错误移动到无关历史，必须显式拦截。
+    // 同时兜底空重建集（drop 异常路径等）：零条目导入无意义，直接报错优于静默无操作。
+    if (!plan.markedHashes.has(headHash)) {
+      throw new Error("该提交不在当前分支的历史上（可能在其他分支），无法从当前分支重写")
     }
 
-    try {
-      // 预计算必要重建数（纯逻辑，不执行 git）：目标计入时 +1；后代中任一父已被重写的才重建，
-      // 侧链等无关提交不计入 total，保证进度分母准确（与下方 identity 跳过分支等价判定）
-      const replaced = new Set<string>([fullHash])
-      let total = opts.targetCountsInTotal ? 1 : 0
-      for (const rec of rest) {
-        if (rec.parents.some((p) => replaced.has(p))) {
-          replaced.add(rec.hash)
-          total++
-        }
-      }
-      let done = 0
-      const progress = () => opts.onProgress?.(done, total)
+    // 流式重建（fast-import 导入临时 ref；失败时临时 ref 已清理、原分支引用未动，仓库保持原状）
+    const newTip = await this.fastImportRewriter.rewrite(projectPath, plan, opts.onProgress)
 
-      // 1. 目标处理（策略注入：改消息重建 / 跳过映射到父）
-      await opts.onTarget({ target, rebuild, map })
-      if (opts.targetCountsInTotal) {
-        done++
-        progress()
+    // CAS 更新引用：当前值与开始时不一致（期间有其他改动）则失败，避免覆盖
+    if (branch === "HEAD") {
+      await this.executor.execGit(projectPath, ["update-ref", "--no-deref", "HEAD", newTip, headHash])
+    } else {
+      await this.executor.execGit(projectPath, ["update-ref", `refs/heads/${branch}`, newTip, headHash])
+    }
+    return newTip
+  }
+
+  /**
+   * 预计算重建计划：应用目标策略（rewrite 入列重建 / drop 记别名），再拓扑序遍历后代，
+   * 任一父被重写或别名重定向的提交入列重建，无关侧链跳过（保持原 hash，等价旧 identity 逻辑）。
+   * 每条的父引用在预计算时即解析为最终形态（mark 或原 hash），执行层无需再做映射。
+   */
+  private buildPlan(target: CommitRecord, rest: CommitRecord[], opts: RebuildOptions, branch: string): RewritePlan {
+    /** drop 别名：目标 hash → 其父（后代父指针经此重定向；rewrite 无别名） */
+    const aliases = new Map<string, string>()
+    if (opts.action.kind === "drop") {
+      if (!target.parents[0]) throw new Error("该提交无父提交，无法执行删除")
+      aliases.set(target.hash, target.parents[0])
+    }
+
+    /** mark 分配：重建条目 hash → mark 序号（后代父引用解析依据） */
+    const markOf = new Map<string, number>()
+    let markSeq = 0
+
+    /** 父引用解析：先消化别名链，再映射到 mark（已重建）或原 hash（identity 侧链/未涉及提交） */
+    const resolveParent = (p: string): string => {
+      let cur = p
+      while (aliases.has(cur)) {
+        cur = aliases.get(cur)!
       }
-      // 2. 按拓扑序重建依赖目标的后代；父指针未变化的（如并入侧链）保持原 hash
-      for (const rec of rest) {
-        const newParents = rec.parents.map((p) => map.get(p) ?? p)
-        if (newParents.join(" ") === rec.parents.join(" ")) {
-          map.set(rec.hash, rec.hash)
-          continue
-        }
-        await rebuild(rec, rec.message)
-        done++
-        progress()
-      }
-      // 3. CAS 更新引用：当前值与开始时不一致（期间有其他改动）则失败，避免覆盖
-      const newTip = map.get(headHash)
-      if (!newTip) throw new Error("重写失败：无法定位新提交链顶端")
-      if (branch === "HEAD") {
-        await this.executor.execGit(projectPath, ["update-ref", "--no-deref", "HEAD", newTip, headHash])
-      } else {
-        await this.executor.execGit(projectPath, ["update-ref", `refs/heads/${branch}`, newTip, headHash])
-      }
-      return newTip
-    } finally {
-      try { fs.rmSync(dir, { recursive: true, force: true }) } catch { /* 忽略清理失败 */ }
+      const mark = markOf.get(cur)
+      return mark !== undefined ? `:${mark}` : cur
+    }
+
+    const entries: RewriteEntry[] = []
+    const entryOf = (rec: CommitRecord, message: string, mark: number): RewriteEntry => ({
+      mark,
+      tree: rec.tree,
+      an: rec.an,
+      ae: rec.ae,
+      aI: rec.aI,
+      at: rec.at,
+      cn: rec.cn,
+      ce: rec.ce,
+      cI: rec.cI,
+      ct: rec.ct,
+      message: message.endsWith("\n") ? message : `${message}\n`,
+      parents: rec.parents.map(resolveParent),
+    })
+
+    // 1. 目标处理：rewrite 以新消息入列重建；drop 记别名（目标不重建，不占 mark）
+    if (opts.action.kind === "rewrite") {
+      const mark = ++markSeq
+      markOf.set(target.hash, mark)
+      entries.push(entryOf(target, opts.action.message, mark))
+    }
+
+    // 2. 拓扑序遍历后代：任一父被重写/别名重定向的才重建，侧链等无关提交保持原 hash
+    for (const rec of rest) {
+      if (!rec.parents.some((p) => resolveParent(p) !== p)) continue
+      const mark = ++markSeq
+      markOf.set(rec.hash, mark)
+      entries.push(entryOf(rec, rec.message, mark))
+    }
+
+    return {
+      tempRef: `refs/gprw/${branch}`,
+      entries,
+      preserveDate: opts.preserveDate,
+      /** 全部被重写提交的原始 hash 集合（含目标；调用方据 HEAD 是否在内做祖先守卫） */
+      markedHashes: new Set(markOf.keys()),
     }
   }
 }

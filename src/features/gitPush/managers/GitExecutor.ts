@@ -284,6 +284,97 @@ export class GitExecutor {
     })
   }
 
+  /**
+   * 执行 git 命令（stdin 流式长驻进程）：全量 input 写入 stdin，进程退出后返回 stdout 原始字节。
+   * 供 fast-import / cat-file --batch 等需要 stdin 批量输入的 plumbing 命令使用（历史重写用）；
+   * 与 execGit 共用本地并发池与 activeProcesses 生命周期（destroy 时统一 kill）。
+   * 全程持续消费 stdout/stderr，防止管道缓冲写满导致进程在写侧阻塞死锁。
+   * @returns stdout 全量原始字节（tree 内容为二进制，由调用方自行解析，不做 UTF-8 解码）
+   */
+  async execGitStreaming(
+    cwd: string,
+    args: string[],
+    input: string | Buffer,
+    options?: { timeoutMs?: number, env?: Record<string, string> },
+  ): Promise<Buffer> {
+    const timeoutMs = options?.timeoutMs ?? 600000
+    return new Promise<Buffer>((resolve, reject) => {
+      let killed = false
+      let settled = false
+      let stderrTail = ""
+
+      const run = () => {
+        const cp = this.getProcess()
+        if (!cp) {
+          reject(new Error("Node 环境不可用"))
+          this.scheduleNext(false)
+          return
+        }
+        this.gitRunning++
+
+        const child = cp.spawn(
+          "git", args,
+          {
+            cwd,
+            windowsHide: true,
+            ...(options?.env ? { env: { ...process.env, ...options.env } } : {}),
+          },
+        )
+        this.activeProcesses.add(child)
+
+        const timer = setTimeout(() => {
+          killed = true
+          try { child.kill("SIGTERM") } catch { /* 忽略 */ }
+        }, timeoutMs)
+
+        const stdoutChunks: Buffer[] = []
+        child.stdout?.on("data", (d: Buffer) => { stdoutChunks.push(d) })
+        child.stderr?.on("data", (d: Buffer | string) => {
+          stderrTail = (stderrTail + String(d)).slice(-2000)
+        })
+
+        // 进程提前退出时 stdin 写入触发 EPIPE，此处吞掉由 close 统一按退出码报错
+        child.stdin?.on("error", () => { /* 由 close 统一处理 */ })
+
+        child.on("error", (err: Error) => {
+          if (settled) return
+          settled = true
+          clearTimeout(timer)
+          this.activeProcesses.delete(child)
+          this.gitRunning--
+          this.scheduleNext(false)
+          reject(new Error(killed ? "操作已取消" : `git 命令执行失败: ${err.message}`))
+        })
+
+        child.on("close", (code: number | null) => {
+          if (settled) return
+          settled = true
+          clearTimeout(timer)
+          this.activeProcesses.delete(child)
+          this.gitRunning--
+          this.scheduleNext(false)
+          const stdout = Buffer.concat(stdoutChunks)
+          if (killed) {
+            reject(new Error(`git 命令超时（timed out, ${timeoutMs}ms，已终止子进程）${stderrTail ? `\n${stderrTail}` : ""}`))
+          } else if (code !== 0) {
+            reject(new Error(`git 命令执行失败（exit code: ${code ?? "未知"}）${stderrTail ? `\n${stderrTail}` : ""}`))
+          } else {
+            resolve(stdout)
+          }
+        })
+
+        // 全量写入后立即关闭写端（Node 内部处理背压排队，不阻塞事件循环）
+        child.stdin?.end(input)
+      }
+
+      if (this.gitRunning < this.gitMaxConcurrent) {
+        run()
+      } else {
+        this.gitWaitQueue.push({ run, reject: (e: Error) => { if (!settled) { settled = true; reject(e) } } })
+      }
+    })
+  }
+
   destroy() {
     // 取消所有进行中的操作
     for (const list of this.abortControllers.values()) {

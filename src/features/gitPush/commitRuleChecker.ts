@@ -21,17 +21,31 @@ const SCOPE_FORMAT_REGEX = /^[a-z0-9-]+$/
 /** 描述结尾句号（英文句点或中文句号，GitHub 建议标题不以句号结尾） */
 const TRAILING_PERIOD_REGEX = /[.。]$/
 
+/** 描述以小写英文字母开头（可选规则"首字母大写"仅此情形判违规，中文/大写/数字/符号开头天然合规） */
+const SUBJECT_NOT_CAPITALIZED_REGEX = /^[a-z]/
+
+/** 描述以临时提交标记开头（wip/todo/fixme/tbd，大小写不敏感；\b 在字母→中文边界成立，"WIP登录"可命中） */
+const WIP_SUBJECT_REGEX = /^(wip|todo|fixme|tbd)\b/i
+
 /**
  * 构建 AI 生成提交信息的规则约束 prompt 片段（单一事实源：AI 生成与生成后校验共用同一套规则描述）。
- * @param minSubjectLength 描述最短字数（用户配置阈值，与 checkCommitRule 校验口径一致）
+ * @param config 规则配置（可选规则按开关动态拼接，与 checkCommitRule 校验口径一致）
  */
-export function buildCommitRulePrompt(minSubjectLength: number): string {
-  return [
+export function buildCommitRulePrompt(config: CommitRuleConfig): string {
+  const parts = [
     `type 必须为 ${COMMIT_TYPE_VALUES.join("/")} 之一`,
-    "scope（可选）仅允许小写字母、数字、连字符",
+    "scope（可选）仅允许小写字母、数字、连字符；引用模块名时转为小写连字符形式（如 HidHelper → hid-helper）",
     "描述使用中文，不得以句号（. 或 。）结尾",
-    `描述不少于 ${minSubjectLength} 个字`,
-  ].join("；")
+    `描述不少于 ${config.minSubjectLength} 个字`,
+  ]
+  // 首字母大写规则无需 prompt：描述使用中文即天然合规
+  if (config.detectWipSubject) {
+    parts.push("不要以 wip/todo/fixme 等临时标记开头")
+  }
+  if (config.bodyLineLimitEnabled) {
+    parts.push(`若输出多行，每行不超过 ${config.maxBodyLineLength} 个字符`)
+  }
+  return parts.join("；")
 }
 
 /**
@@ -70,10 +84,16 @@ export function checkCommitRule(
   if (!subject) return "emptySubject"
   // 描述必须包含中文（type/scope 保持英文 conventional commit 格式）；优先于过短/句号判定，避免英文描述误报为过短
   if (!HAN_CHAR_REGEX.test(subject)) return "notChinese"
+  // 可选规则：描述首字母大写（仅小写英文字母开头判违规，中文/大写/数字/符号开头天然合规）
+  if (config.requireCapitalizedSubject && SUBJECT_NOT_CAPITALIZED_REGEX.test(subject)) return "subjectNotCapitalized"
+  // 可选规则：WIP 临时提交检测（"wip: xxx" 已被 missingType 拦截，此处针对 "feat: WIP xxx" 描述开头标记）
+  if (config.detectWipSubject && WIP_SUBJECT_REGEX.test(subject)) return "wipSubject"
   if (TRAILING_PERIOD_REGEX.test(subject)) return "subjectEndsWithPeriod"
   if (subject.length < config.minSubjectLength) return "subjectTooShort"
   // 多行消息：body 首行去空白后非空 = subject 与正文之间缺少空行（单行提交 body 为空串不受影响）
   if (body && body.split("\n")[0].trim() !== "") return "missingBlankLine"
+  // 可选规则：正文行长限制（body 逐行超限判违规，空行长度 0 天然合规）
+  if (config.bodyLineLimitEnabled && body.split("\n").some((line) => line.length > config.maxBodyLineLength)) return "bodyLineTooLong"
   return null
 }
 
@@ -134,7 +154,9 @@ export function fixCommitMessageHeuristically(
   }
 
   const [, type, scope, bang, rest] = prefix
-  if (!ALLOWED_TYPES.has(type)) return ""
+  // type 大小写规范化（AI/手输大写 type 常见笔误，如 Feat → feat）
+  const normalizedType = type.toLowerCase()
+  if (!ALLOWED_TYPES.has(normalizedType)) return ""
 
   // 去掉结尾句号（可确定性修正），trim 后为空视为不可修
   const subject = rest.trim().replace(/[.。]+$/, "").trim()
@@ -146,7 +168,23 @@ export function fixCommitMessageHeuristically(
   const normalizedScope = scope && scope.trim() ? scope.trim().replace(/[^a-z0-9-]/g, "-").toLowerCase() : ""
   const scopePart = normalizedScope ? `(${normalizedScope})` : ""
   const bangPart = bang || ""
-  const fixed = `${type}${scopePart}${bangPart}: ${subject}`
+  const fixed = `${normalizedType}${scopePart}${bangPart}: ${subject}`
+  return checkCommitRule(fixed, config) === null ? fixed : ""
+}
+
+/**
+ * AI 输出的确定性后处理：仅对标题行做 type 小写、scope 规范化与句号去除，正文行原样保留；
+ * 规范化后仍违规返回空串（交由调用方降级启发式），避免 AI 输出因 scope 大写等可修问题被整体丢弃。
+ */
+export function normalizeCommitMessageFormat(message: string, config: CommitRuleConfig): string {
+  const raw = (message ?? "").trim()
+  if (!raw) return ""
+  const newlineIdx = raw.indexOf("\n")
+  const subjectLine = newlineIdx === -1 ? raw : raw.slice(0, newlineIdx)
+  const rest = newlineIdx === -1 ? "" : `\n${raw.slice(newlineIdx + 1)}`
+  const fixedSubject = fixCommitMessageHeuristically(subjectLine, config)
+  if (!fixedSubject) return ""
+  const fixed = `${fixedSubject}${rest}`
   return checkCommitRule(fixed, config) === null ? fixed : ""
 }
 

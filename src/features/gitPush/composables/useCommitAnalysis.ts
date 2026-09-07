@@ -7,13 +7,14 @@ import type {
   CommitAnalysisType,
   CommitAnalysisViewSettings,
   CommitRuleCheckStats,
+  CommitRuleConfig,
   GitProject,
   GitPushManager,
   LineStatsSummary,
   ProjectLineRankItem,
 } from "../types"
 import { computed, ref } from "vue"
-import { clampMinSubjectLength, DEFAULT_ANALYSIS_VIEW_SETTINGS, DEFAULT_COMMIT_RULE_CONFIG } from "../types"
+import { clampMaxBodyLineLength, clampMinSubjectLength, DEFAULT_ANALYSIS_VIEW_SETTINGS, DEFAULT_COMMIT_RULE_CONFIG, readCommitRuleConfig } from "../types"
 import {
   buildDailyCommitBuckets,
   parseCommitAnalysisType,
@@ -88,8 +89,8 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   const selectedExtensions = ref<string[]>([])
   /** 提交规则检查选中的过滤项目 ID（"" = 全部项目；仅过滤展示，分析仍覆盖全部项目，共享缓存零影响） */
   const ruleCheckProjectId = ref<string>("")
-  /** 描述最短字数阈值（"描述过短"规则判定依据；从规则偏好恢复，设置弹窗可修改） */
-  const minSubjectLength = ref<number>(DEFAULT_COMMIT_RULE_CONFIG.minSubjectLength)
+  /** 提交规则配置（最短描述阈值 + 可选规则开关；从规则偏好恢复，设置弹窗可修改） */
+  const ruleConfig = ref<CommitRuleConfig>({ ...DEFAULT_COMMIT_RULE_CONFIG })
 
   /** 有效项目 id 集合（项目删除后缓存/内存中的残留数据统一按此过滤，避免各处重复构建 Set） */
   const validProjectIds = computed(() => new Set(projects.value.map((p) => p.id)))
@@ -490,14 +491,14 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     }
   }
 
-  /** 从存储载入提交规则检查偏好（上次选中的过滤项目 + 描述过短阈值；项目已删时由 effectiveRuleCheckProjectId 回退全部项目） */
+  /** 从存储载入提交规则检查偏好（上次选中的过滤项目 + 规则配置；项目已删时由 effectiveRuleCheckProjectId 回退全部项目） */
   async function loadRuleCheckPrefs() {
     if (ruleCheckPrefsLoaded) return
     ruleCheckPrefsLoaded = true
     const saved = await manager.storage.ruleCheckPrefs.loadOrDefault()
     ruleCheckProjectId.value = saved.projectId
-    // 旧数据无 minSubjectLength 字段时回退默认阈值（向后兼容）
-    minSubjectLength.value = saved.minSubjectLength ?? DEFAULT_COMMIT_RULE_CONFIG.minSubjectLength
+    // 旧数据缺字段时 readCommitRuleConfig 逐字段回退默认值（可选规则全开）
+    ruleConfig.value = readCommitRuleConfig(saved)
   }
 
   /** 当前生效的规则检查过滤项目 ID（选中项目已删除时自动回退 ""，与 analysisStats 失效过滤语义一致） */
@@ -514,13 +515,18 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     await manager.storage.ruleCheckPrefs.save({ ...saved, projectId: id })
   }
 
-  /** 更新描述最短字数阈值（整数化钳位后即时持久化；load-merge-save 保留 projectId；下次规则检查按新阈值判定） */
-  async function setMinSubjectLength(n: number) {
-    const clamped = clampMinSubjectLength(n)
-    if (minSubjectLength.value === clamped) return
-    minSubjectLength.value = clamped
+  /** 更新提交规则配置（patch 局部合并，阈值整数化钳位；load-merge-save 保留 projectId；下次规则检查按新配置判定） */
+  async function updateCommitRuleConfig(patch: Partial<CommitRuleConfig>) {
+    const merged: CommitRuleConfig = {
+      ...ruleConfig.value,
+      ...patch,
+      minSubjectLength: patch.minSubjectLength !== undefined ? clampMinSubjectLength(patch.minSubjectLength) : ruleConfig.value.minSubjectLength,
+      maxBodyLineLength: patch.maxBodyLineLength !== undefined ? clampMaxBodyLineLength(patch.maxBodyLineLength) : ruleConfig.value.maxBodyLineLength,
+    }
+    if (JSON.stringify(merged) === JSON.stringify(ruleConfig.value)) return
+    ruleConfig.value = merged
     const saved = await manager.storage.ruleCheckPrefs.loadOrDefault()
-    await manager.storage.ruleCheckPrefs.save({ ...saved, minSubjectLength: clamped })
+    await manager.storage.ruleCheckPrefs.save({ ...saved, ...merged })
   }
 
   /** 按 projectId 获取该项目的原始 numstat 数据（仅内存，未找到或项目无变更时返回空数组） */
@@ -569,7 +575,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     const entries = scopedId
       ? analysisStats.value.entries.filter((e) => e.projectId === scopedId)
       : analysisStats.value.entries
-    return analyzeCommitRuleCompliance(entries, { minSubjectLength: minSubjectLength.value })
+    return analyzeCommitRuleCompliance(entries, ruleConfig.value)
   })
 
   return {
@@ -578,8 +584,8 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     ruleCheckProjectId,
     effectiveRuleCheckProjectId,
     setRuleCheckProject,
-    minSubjectLength,
-    setMinSubjectLength,
+    ruleConfig,
+    updateCommitRuleConfig,
     analyzing,
     analyzed,
     analyzedAt,

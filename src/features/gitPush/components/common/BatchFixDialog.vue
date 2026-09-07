@@ -249,7 +249,7 @@
 <script setup lang="ts">
 // gitPush 提交信息批量修正弹窗（自包含：多条违规校验、AI 批量生成、批量保存、逐项状态）
 import type { CommitRuleReasonKey, CommitRuleViolation } from "../../types"
-import { CARD_SERVICES_KEY, COMMIT_RULE_REASON_META, DEFAULT_COMMIT_RULE_CONFIG } from "../../types"
+import { CARD_SERVICES_KEY, COMMIT_RULE_REASON_META, DEFAULT_COMMIT_RULE_CONFIG, readCommitRuleConfig } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed, inject, onMounted, onUnmounted, ref } from "vue"
 import { checkCommitRule } from "../../commitRuleChecker"
@@ -305,8 +305,8 @@ const { manager } = services
 const loading = ref(true)
 /** 提交时间策略：true = 保留原始提交时间，false = 按当前时间提交（持久化跨会话恢复） */
 const preserveDate = ref(true)
-/** 描述最短字数阈值（init 时从规则偏好恢复，与规则检查面板/AI 生成同口径） */
-const minSubjectLength = ref<number>(DEFAULT_COMMIT_RULE_CONFIG.minSubjectLength)
+/** 提交规则配置（init 时从规则偏好恢复，与规则检查面板/AI 生成同口径） */
+const ruleConfig = ref({ ...DEFAULT_COMMIT_RULE_CONFIG })
 const items = ref<BatchFixItem[]>([])
 const generating = ref(false)
 const saving = ref(false)
@@ -339,9 +339,9 @@ const summaryText = computed(() => {
     .replace("{2}", String(summary.value.skipped))
 })
 
-/** 新提交信息命中规则问题（合规为 null；实时跟随编辑；与规则检查面板同阈值口径） */
+/** 新提交信息命中规则问题（合规为 null；实时跟随编辑；与规则检查面板同配置口径） */
 function validationOf(item: BatchFixItem): CommitRuleReasonKey | null {
-  return checkCommitRule(item.newMessage, { minSubjectLength: minSubjectLength.value })
+  return checkCommitRule(item.newMessage, ruleConfig.value)
 }
 
 /** 条目状态图标 tooltip 文案（"已修正"/"修正失败"） */
@@ -387,9 +387,9 @@ async function init() {
     // 恢复上次选择的提交时间策略（持久化偏好，无记录时默认保留原始时间）
     const prefs = await manager.storage.commitFixPrefs.loadOrDefault()
     preserveDate.value = prefs.preserveDate
-    // 恢复描述最短字数阈值（旧数据无此字段时回退默认值，校验与规则检查面板同口径）
+    // 恢复提交规则配置（旧数据缺字段时回退默认值，校验与规则检查面板同口径）
     const rulePrefs = await manager.storage.ruleCheckPrefs.loadOrDefault()
-    minSubjectLength.value = rulePrefs.minSubjectLength ?? DEFAULT_COMMIT_RULE_CONFIG.minSubjectLength
+    ruleConfig.value = readCommitRuleConfig(rulePrefs)
 
     // 按项目分组，每组一次加载 HEAD/工作区/rebase；每条检测 merge
     const byProject = new Map<string, CommitRuleViolation[]>()

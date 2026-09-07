@@ -165,14 +165,14 @@
         :manager="props.manager"
         :concurrency="gitConcurrency"
         :network-timeout="networkTimeout"
-        :min-subject-length="minSubjectLength"
+        :rule-config="ruleConfig"
         :push-branch-mode="pushBranchMode"
         :view-settings="analysisViewSettings"
         :year-options="settingsYearOptions"
         @close="showSettings = false"
         @save="setGitConcurrency"
         @save-network-timeout="setNetworkTimeout"
-        @save-min-subject-length="setMinSubjectLength"
+        @save-rule-config="updateCommitRuleConfig"
         @save-branch-mode="handleSaveBranchMode"
         @update-view-settings="updateViewSettings"
         @open-category="openCategoryFromSettings"
@@ -607,8 +607,8 @@ const {
   effectiveRuleCheckProjectId,
   setRuleCheckProject,
   loadRuleCheckPrefs,
-  minSubjectLength,
-  setMinSubjectLength,
+  ruleConfig,
+  updateCommitRuleConfig,
   projectLineRanking,
   lineStatsSummary,
   selectedExtensions,

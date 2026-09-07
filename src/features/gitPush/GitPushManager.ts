@@ -636,6 +636,16 @@ export class GitPushManager {
     return this.repoCleanOps.createBackup(projectPath)
   }
 
+  /** 清空项目备份目录下全部 bundle 备份（删除历史提交弹窗内用户主动清理；返回清理份数） */
+  async deleteProjectBackups(projectPath: string): Promise<number> {
+    return this.repoCleanOps.deleteBackups(projectPath)
+  }
+
+  /** 获取项目备份目录路径（删除历史提交弹窗常驻操作条展示用） */
+  async getProjectBackupDir(projectPath: string): Promise<string> {
+    return this.repoCleanOps.backupDirOf(projectPath)
+  }
+
   /**
    * BFG 清理执行（六步：备份→镜像→重写→压缩→回写）。
    * 写锁串行 + 完成后失效推送状态缓存（与 rewriteCommitMessage 同模式）。

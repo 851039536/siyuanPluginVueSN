@@ -163,7 +163,7 @@
           <!-- AI 生成修正 -->
           <button
             class="vp-btn vp-btn--ghost vp-btn--sm"
-            :disabled="loading || aiLoading || !project"
+            :disabled="loading || aiLoading || deepLoading || !project"
             @click="runAiFix"
           >
             <Icon
@@ -172,6 +172,20 @@
               :class="{ 'gp-spin': aiLoading }"
             />
             <span>{{ aiLoading ? i18n.ruleFixGenerating : i18n.ruleFixGenerate }}</span>
+          </button>
+          <!-- AI 深度分析修正（读取该提交完整 diff 理解实际改动后生成） -->
+          <button
+            class="vp-btn vp-btn--ghost vp-btn--sm"
+            :disabled="loading || deepLoading || aiLoading || !project"
+            :title="i18n.ruleFixDeepAnalyzeTip"
+            @click="runDeepAnalyze"
+          >
+            <Icon
+              :icon="deepLoading ? 'mdi:loading' : 'mdi:text-search'"
+              height="12"
+              :class="{ 'gp-spin': deepLoading }"
+            />
+            <span>{{ deepLoading ? i18n.ruleFixDeepAnalyzing : i18n.ruleFixDeepAnalyze }}</span>
           </button>
           <!-- 保存修正 -->
           <button
@@ -221,6 +235,8 @@ const project = ref<GitProject | null>(null)
 const loading = ref(true)
 const newMessage = ref(props.target.message)
 const aiLoading = ref(false)
+/** AI 深度分析中（读取完整 diff 理解实际改动，耗时高于普通生成） */
+const deepLoading = ref(false)
 const aiError = ref("")
 const saving = ref(false)
 /** 历史提交重写进度（{current, total}，null = 尚未开始）；仅历史提交保存时使用 */
@@ -317,6 +333,26 @@ async function runAiFix() {
     aiError.value = props.i18n.ruleFixAiFailed
   } finally {
     aiLoading.value = false
+  }
+}
+
+/** AI 深度分析修正：读取该提交完整 diff 理解实际改动，生成贴合改动的提交信息（失败时提示，可重试） */
+async function runDeepAnalyze() {
+  if (!projectPath.value || deepLoading.value) return
+  deepLoading.value = true
+  aiError.value = ""
+  try {
+    const result = await manager.deepAnalyzeCommitFix(projectPath.value, props.target.hash, props.target.message)
+    if (result.message) {
+      newMessage.value = result.message
+    } else {
+      aiError.value = props.i18n.ruleFixDeepAnalyzeFailed
+    }
+  } catch (e: unknown) {
+    console.error("[gitPush] AI 深度分析修正提交信息失败:", e)
+    aiError.value = getErrorMessage(e) || props.i18n.ruleFixDeepAnalyzeFailed
+  } finally {
+    deepLoading.value = false
   }
 }
 

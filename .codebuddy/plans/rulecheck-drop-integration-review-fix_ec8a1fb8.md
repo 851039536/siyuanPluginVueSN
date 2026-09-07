@@ -10,49 +10,48 @@ todos:
     status: completed
 ---
 
-## 产品概述
+## 需求描述
 
-对「删除历史提交功能集成到规则检查视图」的改动进行越界与冗余审查后，修复审查发现的 2 处问题（纯注释与类名语义修正，不改变任何运行行为与视觉效果）。
+将「AI 深度分析修正提交信息」的输出格式从"一句话"升级为多行结构化格式，参考用户样例：
 
-## 审查结论（只读已完成）
+```
+feat(gitPush): 实现提交规则违规的批量修正功能，包含：
 
-### 越界检查（全部通过）
+- 违规列表新增全选/批量修正入口与多选交互
+- 新增批量修正弹窗，支持AI批量生成、逐条保存与进度展示
+- 新增merge提交检测逻辑，标记不可修正的merge提交
+- 补充多语言文案与样式文件
+- 优化同项目多违规的处理顺序，避免链式修正失效
+```
 
-- 未触碰 DropCommitDialog.vue 本体（复用零改动，符合计划约束）
-- 无跨 feature 直接导入（均在 gitPush 模块内部，import 路径为相对路径 `../common/`）
-- emit 命名合规：emit 定义侧 camelCase（`openDrop`），模板监听侧 `@open-drop` 与既有 `@open-fix`/`@open-batch-fix` 模式一致
-- 弹窗接入符合自包含规范：父组件只传 target + 开关状态，无中间人/props 膨胀
-- 删除成功回调照抄 handleFixSaved 既有模式，runAnalysis 复用既有签名（支持单项目重抓）
+即：第一行为 Conventional Commits 标题行（type(scope): 中文描述），空行后为逐条要点列表，概括 diff 中的主要改动维度。
 
-### 冗余检查
+## 范围与边界
 
-- 可接受项（不修改）：handleFixSaved/handleDropSaved 为两个两行函数（Rule of Three：仅 2 实例，抽象降低可读性）；openDrop 透传 ViolationRow 含 key 字段，与既有 openFix 模式一致
-- 需修正项：
+- 仅改 AI 深度分析（`deepAnalyzeCommitFix`）；普通「AI 生成修正」（`generateCommitFix`，基于统计摘要的单行版）保持不变
+- 已验证多行链路兼容，下游零改动：
+  - `checkCommitRule` 仅校验开头 type 前缀 + 冒号分隔 + 描述含中文，多行 body 兼容（生成侧已有 `.trim()` 满足首尾空白规则）
+  - `amendCommitMessage`（`commit --amend -m`）与 `HistoryRewriter.rewriteMessage`（commit-tree）均以字符串参数传递，git 保留换行
+  - `CommitFixDialog` 的 `newMessage` textarea（rows=4）可滚动展示多行
 
-1. `CommitRuleCheck/index.vue` 文件头 HTML 注释（L1）与 script 顶部注释（L116）仍写「修正弹窗」，但模板实际挂载 3 个弹窗（CommitFixDialog/DropCommitDialog/BatchFixDialog），注释过时
-2. `ViolationListSection.vue` 删除按钮复用了 `.grc-item-fix` 类名（"fix"语义 = 修正），类名与功能不符，应改为语义化的 `grc-item-drop` 并在 SCSS 中合并声明共用规则
+## 技术方案
 
-## 核心功能
+### 修改点（集中于 `src/features/gitPush/managers/CommitMsgGenerator.ts` 的 `deepAnalyzeCommitFix`）
 
-- 更新 index.vue 两处过时注释为「修正/删除/批量修正弹窗」表述
-- 删除按钮类名改为 `grc-item-drop`，SCSS 将 `.grc-item-fix` 扩展为 `.grc-item-fix, .grc-item-drop` 合并声明，样式零变化
+1. **user prompt 重写**：
+   - 明确输出格式：第一行 `type(scope): 中文标题`（type 限 COMMIT_TYPE_VALUES；scope 可选；标题概括核心改动意图）
+   - 空一行后输出 `- ` 要点列表，3~6 条，覆盖 diff 中的主要改动维度（新增功能/修复/文案/样式/优化等）
+   - 给出具体格式示例（对照用户样例），强调：以 diff 实际改动为准、不要输出解释/Markdown 代码块、不要用 ``` 包裹
+2. **systemPrompt 同步**：改为"第一行输出 conventional commit 标题，随后空一行输出改动要点列表"
+3. **maxTokens：60 → 600**（多行要点列表需要更多输出空间）
+4. **校验逻辑零改动**：`checkCommitRule(trimmed)` 多行兼容已验证，校验失败/异常仍降级启发式单行结果（`fixCommitMessageHeuristically`）
+5. **temperature 0.1 保持**（格式稳定性优先）
 
-## Tech Stack
+### 性能与回归
 
-- 复用现有 Vue 3 + TypeScript + SCSS 体系，无新增依赖、无新增 i18n 键
+- 仅 prompt/参数调整，无 UI、无链路、无持久化改动；多行输出经 `--amend -m`（单 argv 参数保留换行）与 commit-tree 重写均正常落盘
+- 若 AI 输出格式偶发不合格，降级为单行启发式结果，功能不中断
 
-## 实现方案
+### README（可选同步）
 
-### 修改 1：index.vue 注释修正
-
-- L1 文件头 HTML 注释：「状态编排 + 各功能区块组合 + 修正弹窗，纯编排无领域状态」→「…+ 修正/删除/批量修正弹窗…」
-- L116 script 注释：「状态编排 + 各功能区块组合 + 修正弹窗」→「…+ 修正/删除/批量修正弹窗」
-
-### 修改 2：删除按钮类名语义化
-
-- `ViolationListSection.vue` L68：删除按钮 class 由 `grc-item-fix` 改为 `grc-item-drop`（修正按钮保留 `grc-item-fix` 不动）
-- `CommitRuleCheckPanel.scss` L274-283：选择器由 `.grc-item-fix` 改为 `.grc-item-fix, .grc-item-drop`，注释由「违规列表中的修正按钮」改为「违规列表中的修正/删除按钮（共用样式）」；规则体（padding/border-radius/opacity 0.6 + hover 1）零改动
-
-### 性能与回归风险
-
-- 纯注释与 CSS 类名变更：产物样式字节级等价（同一规则合并声明），零运行时行为变化、零回归风险
+- `src/features/gitPush/README.md` 提交历史条目中深度分析描述补充"多行要点格式"表述

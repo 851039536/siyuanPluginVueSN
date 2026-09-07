@@ -569,6 +569,11 @@ export class GitPushManager {
     return this.commitMsgGen.generateCommitFix(projectPath, hash, currentMessage)
   }
 
+  /** 深度分析修正：基于完整 diff 让 AI 生成贴合实际改动的修正提交信息 */
+  async deepAnalyzeCommitFix(projectPath: string, hash: string, currentMessage: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
+    return this.commitMsgGen.deepAnalyzeCommitFix(projectPath, hash, currentMessage)
+  }
+
   async generateStashDescription(projectPath: string): Promise<string> {
     return this.commitMsgGen.generateStashDescription(projectPath)
   }

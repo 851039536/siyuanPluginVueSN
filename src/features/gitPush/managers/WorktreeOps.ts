@@ -323,6 +323,18 @@ export class WorktreeOps {
     }
   }
 
+  /** 获取某次提交的完整 diff 补丁（供 AI 深度分析实际改动；截断 10000 字符防 token 爆量），失败返回空串 */
+  async getCommitDeepContext(projectPath: string, hash: string): Promise<string> {
+    try {
+      const raw = await this.executor.execGit(projectPath, [
+        "-c", "core.quotepath=false", "show", "--text", "--format=%B", hash,
+      ])
+      return (raw || "").substring(0, 10000)
+    } catch {
+      return ""
+    }
+  }
+
   /** 解析某次提交涉及的文件变更列表（git show --name-status；merge/无文件提交返回空数组，UI 据 isMerge 提示） */
   async getCommitFiles(projectPath: string, hash: string): Promise<FileChange[]> {
     try {

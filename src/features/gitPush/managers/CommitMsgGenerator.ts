@@ -134,6 +134,59 @@ ${context || "（无变更摘要）"}`,
     return { message: heuristic, source: "heuristic" }
   }
 
+  /** 深度分析修正：基于完整 diff 补丁让 AI 理解实际改动，生成贴合改动的修正提交信息（降级启发式） */
+  async deepAnalyzeCommitFix(projectPath: string, hash: string, currentMessage: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
+    const aiConfig = getApiConfigFromPlugin(this.plugin)
+    const heuristic = fixCommitMessageHeuristically(currentMessage)
+    if (!aiConfig.apiKey) {
+      return { message: heuristic, source: "heuristic" }
+    }
+
+    try {
+      const diffContext = await this.worktreeOps.getCommitDeepContext(projectPath, hash)
+      if (!diffContext) {
+        return { message: heuristic, source: "heuristic" }
+      }
+      const result = await callAI(
+        `请基于以下某次 Git 提交的完整改动内容（diff），深度分析这次提交实际做了什么，生成一条最贴合实际改动的修正提交信息。
+输出格式（多行）：
+1. 第一行为标题行：type(scope): 中文描述（type 必须为 ${COMMIT_TYPE_VALUES.join("/")} 之一，scope 可选）
+2. 空一行后，输出 3~6 条改动要点，每条以 "- " 开头，概括本次提交的主要改动维度（如新增功能、修复问题、补充文案与样式、优化逻辑等）
+3. 全部使用中文；要点仅用纯文本加 "- " 前缀，不要使用其他 Markdown 语法
+4. 原提交信息仅供参考（可能不准确），以 diff 实际改动为准
+5. 只输出上述格式的提交信息本身，不要输出分析过程、解释或任何其他内容
+
+示例：
+feat(gitPush): 实现提交规则违规的批量修正功能，包含：
+
+- 违规列表新增全选/批量修正入口与多选交互
+- 新增批量修正弹窗，支持 AI 批量生成、逐条保存与进度展示
+- 补充多语言文案与样式文件
+
+原提交信息：${currentMessage}
+
+完整改动内容（diff）：
+${diffContext}`,
+        aiConfig,
+        {
+          systemPrompt: "输出要求：第一行输出 conventional commit 格式的提交标题，空一行后输出 \"- \" 开头的中文改动要点列表。禁止输出解释、分析、Markdown 代码块或任何额外内容。",
+          temperature: 0.2,
+          maxTokens: 600,
+          enableThinking: false,
+        },
+      )
+      const trimmed = result?.trim() ?? ""
+      if (trimmed && checkCommitRule(trimmed) === null) {
+        return { message: trimmed, source: "ai" }
+      }
+      console.warn("[gitPush] AI 深度分析未返回有效提交规则格式，降级启发式:", trimmed.substring(0, 80))
+    } catch (e: unknown) {
+      console.error("[gitPush] AI 深度分析修正提交信息失败:", e)
+    }
+
+    return { message: heuristic, source: "heuristic" }
+  }
+
   /** AI 生成 stash 描述 */
   async generateStashDescription(projectPath: string): Promise<string> {
     const wt = await this.worktreeOps.getWorkingTreeStatus(projectPath)

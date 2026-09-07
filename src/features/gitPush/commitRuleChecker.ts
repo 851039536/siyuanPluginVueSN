@@ -51,8 +51,8 @@ export function buildCommitRulePrompt(config: CommitRuleConfig): string {
 /**
  * 校验单条提交信息，返回不合规原因；合规返回 null。
  * 规则：type(scope)!: 描述，type 限 feat/fix/chore/docs/style/refactor/test；
- * 另含 GitHub 建议（scope 格式/句号结尾/最短字数/标题正文空行）。
- * @param config 可选规则配置（minSubjectLength 阈值），缺省用默认配置，调用点向后兼容
+ * 另含 GitHub 建议（scope 格式/句号结尾/最短字数/标题正文空行）与可选规则（首字母大写/WIP/正文行长）。
+ * @param config 规则配置（阈值 + 可选规则开关），缺省用默认配置，调用点向后兼容
  */
 export function checkCommitRule(
   message: string,
@@ -67,8 +67,11 @@ export function checkCommitRule(
 
   const [, type, scope] = prefix
   if (!ALLOWED_TYPES.has(type)) return "invalidType"
-  if (scope !== undefined && scope.trim() === "") return "invalidScope"
-  if (scope !== undefined && !SCOPE_FORMAT_REGEX.test(scope.trim())) return "invalidScopeFormat"
+  if (scope !== undefined) {
+    const trimmedScope = scope.trim()
+    if (!trimmedScope) return "invalidScope"
+    if (!SCOPE_FORMAT_REGEX.test(trimmedScope)) return "invalidScopeFormat"
+  }
 
   // 冒号后必须恰好一个空格，再接非空描述
   const afterColon = raw.slice(prefix[0].length)
@@ -146,7 +149,7 @@ export function fixCommitMessageHeuristically(
   const prefix = /^([A-Za-z]+)(?:\(([^)]*)\))?(!)?:\s*(.*)$/.exec(raw)
   // 缺少 type 前缀：从描述关键词推断 type 补全（描述非中文仍不可修，保持中文强制）
   if (!prefix) {
-    if (!/[一-鿿]/.test(raw)) return ""
+    if (!HAN_CHAR_REGEX.test(raw)) return ""
     const subject = raw.replace(/[.。]+$/, "").trim()
     if (!subject) return ""
     const fixed = `${inferType(subject)}: ${subject}`

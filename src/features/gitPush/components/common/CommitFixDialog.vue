@@ -210,7 +210,7 @@
 import type { CommitFixTarget, GitProject } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed, inject, onMounted, onUnmounted, ref } from "vue"
-import { COMMIT_RULE_REASON_META } from "../../types"
+import { COMMIT_RULE_REASON_META, DEFAULT_COMMIT_RULE_CONFIG } from "../../types"
 import { checkCommitRule } from "../../commitRuleChecker"
 import { resolveValidPath } from "../../utils"
 import { CARD_SERVICES_KEY } from "../../types"
@@ -258,8 +258,11 @@ const isHistoryCommit = computed(() => !!projectPath.value && !!headHash.value &
 /** 是否可执行修正：目标非 merge、项目有效、非 rebase 残留且工作区干净（HEAD 走 amend，历史提交走 rebase） */
 const canAmend = computed(() => !props.target.isMerge && !!projectPath.value && !!headHash.value && workingTreeClean.value && !rebaseStuck.value)
 
+/** 描述最短字数阈值（init 时从规则偏好恢复，与规则检查面板/AI 生成同口径） */
+const minSubjectLength = ref<number>(DEFAULT_COMMIT_RULE_CONFIG.minSubjectLength)
+
 /** 当前新提交信息命中规则问题（合规时为 null） */
-const validationReason = computed(() => checkCommitRule(newMessage.value))
+const validationReason = computed(() => checkCommitRule(newMessage.value, { minSubjectLength: minSubjectLength.value }))
 
 /** 不可保存时的提示文案 */
 const amendBlockedReason = computed(() => {
@@ -301,6 +304,9 @@ async function init() {
     // 恢复上次选择的提交时间策略（持久化偏好，无记录时默认保留原始时间）
     const prefs = await manager.storage.commitFixPrefs.loadOrDefault()
     preserveDate.value = prefs.preserveDate
+    // 恢复描述最短字数阈值（旧数据无此字段时回退默认值，校验与规则检查面板同口径）
+    const rulePrefs = await manager.storage.ruleCheckPrefs.loadOrDefault()
+    minSubjectLength.value = rulePrefs.minSubjectLength ?? DEFAULT_COMMIT_RULE_CONFIG.minSubjectLength
     const p = await manager.getProjectById(props.target.projectId)
     project.value = p ?? null
     if (!p) return

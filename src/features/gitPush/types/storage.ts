@@ -369,7 +369,7 @@ export const DEFAULT_ANALYSIS_VIEW_SETTINGS: CommitAnalysisViewSettings = {
   color: "#2ea44f",
 }
 
-/** 提交规则检查偏好默认值（默认过滤全部项目 + 描述过短阈值 15 字） */
+/** 提交规则检查偏好默认值（默认过滤全部项目 + 描述过短阈值 10 字） */
 const DEFAULT_RULE_CHECK_PREFS: RuleCheckPrefs = { projectId: "", minSubjectLength: DEFAULT_COMMIT_RULE_CONFIG.minSubjectLength }
 
 /** 提交信息修正偏好默认值（默认保留原始提交时间） */

@@ -128,7 +128,7 @@
         >
           <Icon icon="mdi:file-document-outline" height="12" />
         </button>
-        <!-- 打 Tag 按钮（hover 显示） -->
+        <!-- 打 Tag 按钮（常显） -->
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm bcl-tag-btn"
           :title="i18n.createTag"
@@ -139,7 +139,7 @@
             height="12"
           />
         </button>
-        <!-- 删除提交按钮（hover 显示；点击弹出删除确认弹窗） -->
+        <!-- 删除提交按钮（常显；点击弹出删除确认弹窗） -->
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm bcl-drop-btn"
           :title="i18n.dropCommitOpen"
@@ -153,7 +153,7 @@
             class="bcl-date"
             :title="entry.date"
           >
-            <span class="bcl-date-relative">{{ entry.relativeDate }}</span>
+            <span class="bcl-date-relative">{{ relativeTime(entry.date, i18n) }}</span>
             <span class="bcl-date-absolute">{{ formatDateTime(entry.date) }}</span>
           </span>
         </span>
@@ -169,7 +169,7 @@ import {
   computed,
   ref,
 } from "vue"
-import { DEFAULT_LOG_LIMIT, formatDateTime } from "../../utils"
+import { DEFAULT_LOG_LIMIT, formatDateTime, relativeTime } from "../../utils"
 
 const props = defineProps<{
   i18n: Record<string, any>

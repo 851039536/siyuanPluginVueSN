@@ -13,7 +13,7 @@ import type {
   ProjectLineRankItem,
 } from "../types"
 import { computed, ref } from "vue"
-import { DEFAULT_ANALYSIS_VIEW_SETTINGS } from "../types"
+import { clampMinSubjectLength, DEFAULT_ANALYSIS_VIEW_SETTINGS, DEFAULT_COMMIT_RULE_CONFIG } from "../types"
 import {
   buildDailyCommitBuckets,
   parseCommitAnalysisType,
@@ -88,6 +88,8 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   const selectedExtensions = ref<string[]>([])
   /** 提交规则检查选中的过滤项目 ID（"" = 全部项目；仅过滤展示，分析仍覆盖全部项目，共享缓存零影响） */
   const ruleCheckProjectId = ref<string>("")
+  /** 描述最短字数阈值（"描述过短"规则判定依据；从规则偏好恢复，设置弹窗可修改） */
+  const minSubjectLength = ref<number>(DEFAULT_COMMIT_RULE_CONFIG.minSubjectLength)
 
   /** 有效项目 id 集合（项目删除后缓存/内存中的残留数据统一按此过滤，避免各处重复构建 Set） */
   const validProjectIds = computed(() => new Set(projects.value.map((p) => p.id)))
@@ -488,12 +490,14 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     }
   }
 
-  /** 从存储载入提交规则检查偏好（上次选中的过滤项目；项目已删时由 effectiveRuleCheckProjectId 回退全部项目） */
+  /** 从存储载入提交规则检查偏好（上次选中的过滤项目 + 描述过短阈值；项目已删时由 effectiveRuleCheckProjectId 回退全部项目） */
   async function loadRuleCheckPrefs() {
     if (ruleCheckPrefsLoaded) return
     ruleCheckPrefsLoaded = true
     const saved = await manager.storage.ruleCheckPrefs.loadOrDefault()
     ruleCheckProjectId.value = saved.projectId
+    // 旧数据无 minSubjectLength 字段时回退默认阈值（向后兼容）
+    minSubjectLength.value = saved.minSubjectLength ?? DEFAULT_COMMIT_RULE_CONFIG.minSubjectLength
   }
 
   /** 当前生效的规则检查过滤项目 ID（选中项目已删除时自动回退 ""，与 analysisStats 失效过滤语义一致） */
@@ -502,11 +506,21 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     return projects.value.some((p) => p.id === ruleCheckProjectId.value) ? ruleCheckProjectId.value : ""
   })
 
-  /** 切换提交规则检查过滤项目（"" = 全部项目；选择即时持久化） */
+  /** 切换提交规则检查过滤项目（"" = 全部项目；选择即时持久化；load-merge-save 保留 minSubjectLength） */
   async function setRuleCheckProject(id: string) {
     if (ruleCheckProjectId.value === id) return
     ruleCheckProjectId.value = id
-    await manager.storage.ruleCheckPrefs.save({ projectId: id })
+    const saved = await manager.storage.ruleCheckPrefs.loadOrDefault()
+    await manager.storage.ruleCheckPrefs.save({ ...saved, projectId: id })
+  }
+
+  /** 更新描述最短字数阈值（整数化钳位后即时持久化；load-merge-save 保留 projectId；下次规则检查按新阈值判定） */
+  async function setMinSubjectLength(n: number) {
+    const clamped = clampMinSubjectLength(n)
+    if (minSubjectLength.value === clamped) return
+    minSubjectLength.value = clamped
+    const saved = await manager.storage.ruleCheckPrefs.loadOrDefault()
+    await manager.storage.ruleCheckPrefs.save({ ...saved, minSubjectLength: clamped })
   }
 
   /** 按 projectId 获取该项目的原始 numstat 数据（仅内存，未找到或项目无变更时返回空数组） */
@@ -549,13 +563,13 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     }
   })
 
-  /** 提交规则检查聚合视图（复用 analysisStats 已过滤的有效条目；选中项目时仅对该项目聚合，未选中时全量） */
+  /** 提交规则检查聚合视图（复用 analysisStats 已过滤的有效条目；选中项目时仅对该项目聚合，未选中时全量；传入用户配置的最短描述阈值） */
   const commitRuleStats = computed<CommitRuleCheckStats>(() => {
     const scopedId = effectiveRuleCheckProjectId.value
     const entries = scopedId
       ? analysisStats.value.entries.filter((e) => e.projectId === scopedId)
       : analysisStats.value.entries
-    return analyzeCommitRuleCompliance(entries)
+    return analyzeCommitRuleCompliance(entries, { minSubjectLength: minSubjectLength.value })
   })
 
   return {
@@ -564,6 +578,8 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     ruleCheckProjectId,
     effectiveRuleCheckProjectId,
     setRuleCheckProject,
+    minSubjectLength,
+    setMinSubjectLength,
     analyzing,
     analyzed,
     analyzedAt,
@@ -574,6 +590,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     runLineStatsAnalysis,
     ensureAnalysis,
     ensureLineStats,
+    loadRuleCheckPrefs,
     viewSettings,
     loadViewSettings,
     updateViewSettings,

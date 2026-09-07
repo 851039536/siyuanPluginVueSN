@@ -250,15 +250,19 @@ export const COMMIT_ANALYSIS_TYPE_META: Record<CommitAnalysisType, { labelKey: s
 
 // ── 提交规则检查（useCommitAnalysis 产出 / CommitRuleCheckPanel 消费）──
 
-/** 提交信息不合规原因（Conventional Commits 规则，type 限 COMMIT_TYPE_VALUES 中的值） */
+/** 提交信息不合规原因（Conventional Commits 规则 + GitHub 建议，type 限 COMMIT_TYPE_VALUES 中的值） */
 export type CommitRuleReasonKey =
   | "whitespace"
   | "missingType"
   | "invalidType"
   | "invalidScope"
+  | "invalidScopeFormat"
   | "badSeparator"
   | "emptySubject"
   | "notChinese"
+  | "subjectEndsWithPeriod"
+  | "subjectTooShort"
+  | "missingBlankLine"
 
 /** 提交规则原因元数据（labelKey 对应 i18n 键 ruleCheckReason*） */
 export const COMMIT_RULE_REASON_META: Record<CommitRuleReasonKey, { labelKey: string }> = {
@@ -266,10 +270,23 @@ export const COMMIT_RULE_REASON_META: Record<CommitRuleReasonKey, { labelKey: st
   missingType: { labelKey: "ruleCheckReasonMissingType" },
   invalidType: { labelKey: "ruleCheckReasonInvalidType" },
   invalidScope: { labelKey: "ruleCheckReasonInvalidScope" },
+  invalidScopeFormat: { labelKey: "ruleCheckReasonInvalidScopeFormat" },
   badSeparator: { labelKey: "ruleCheckReasonBadSeparator" },
   emptySubject: { labelKey: "ruleCheckReasonEmptySubject" },
   notChinese: { labelKey: "ruleCheckReasonNotChinese" },
+  subjectEndsWithPeriod: { labelKey: "ruleCheckReasonEndsWithPeriod" },
+  subjectTooShort: { labelKey: "ruleCheckReasonSubjectTooShort" },
+  missingBlankLine: { labelKey: "ruleCheckReasonMissingBlankLine" },
 }
+
+/** 提交规则可配置项（规则引擎纯函数的显式配置注入，不依赖模块级状态） */
+export interface CommitRuleConfig {
+  /** 描述最短字数（冒号后 subject 少于此值判违规；设置弹窗可自定义） */
+  minSubjectLength: number
+}
+
+/** 提交规则默认配置（描述过短阈值默认 15 字） */
+export const DEFAULT_COMMIT_RULE_CONFIG: CommitRuleConfig = { minSubjectLength: 15 }
 
 /** 单条不合规提交（提交信息 + 命中原因） */
 export interface CommitRuleViolation extends CommitAnalysisEntry {
@@ -299,10 +316,12 @@ export interface CommitRuleCheckStats {
   violations: CommitRuleViolation[]
 }
 
-/** 提交规则检查偏好（上次选中的过滤项目，持久化到 git-push-rulecheck-prefs；空串 = 全部项目） */
+/** 提交规则检查偏好（上次选中的过滤项目 + 描述过短阈值，持久化到 git-push-rulecheck-prefs；空串 = 全部项目） */
 export interface RuleCheckPrefs {
   /** 选中的项目 ID（"" = 全部项目） */
   projectId: string
+  /** 描述最短字数（"描述过短"规则阈值，缺省回退 DEFAULT_COMMIT_RULE_CONFIG.minSubjectLength） */
+  minSubjectLength?: number
 }
 
 /** 提交信息修正偏好（上次选择的提交时间策略，持久化到 git-push-commitfix-prefs） */

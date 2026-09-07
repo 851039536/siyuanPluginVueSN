@@ -31,6 +31,7 @@ export type {
 } from "./storage"
 export {
   clampGitConcurrency,
+  clampMinSubjectLength,
   clampNetworkTimeout,
   COMMIT_TYPE_VALUES,
   DEFAULT_ANALYSIS_VIEW_SETTINGS,
@@ -39,6 +40,8 @@ export {
   GIT_CONCURRENCY_MIN,
   GitPushStorage,
   MAX_OP_LOG_COUNT,
+  MIN_SUBJECT_LENGTH_MAX,
+  MIN_SUBJECT_LENGTH_MIN,
   NETWORK_TIMEOUT_MAX,
   NETWORK_TIMEOUT_MIN,
   UNGROUPED_ID,
@@ -60,6 +63,7 @@ export type {
 export {
   ANALYSIS_MONTH_KEYS,
   ANALYSIS_WEEKDAY_KEYS,
+  DEFAULT_COMMIT_RULE_CONFIG,
   PLATFORM_META,
   FILE_STATUS_META,
   REMOTES,
@@ -69,7 +73,7 @@ export {
   COMMIT_RULE_REASON_META,
   HEAT_LEVEL_THRESHOLDS,
 } from "./meta"
-export type { AuthorLineRankItem, BfgCleanPlan, BfgCleanResult, BfgPrefs, BfgRuntimeState, CategoryDistributionItem, CommitAnalysisCache, CommitAnalysisEntry, CommitAnalysisStats, CommitAnalysisType, CommitAnalysisViewSettings, CommitFixTarget, CommitRuleCheckStats, CommitRuleReasonKey, CommitRuleViolation, FileLineDetailRow, LineStatsCache, LineStatsSummary, NeedsPullItem, NeedsPushItem, PanelView, PendingProjectItem, PlatformKey, PlatformStatusItem, PlatformTableCellView, PlatformTableRowView, ProjectLineRankItem, PushStatusStats, RemoteCoverage, RepoBlobItem, RepoCleanPrefs, RepoLinkAuditCell, RepoLinkAuditRow, RepoLinkAuditState, RepoLinkAuditSummary, RepoScanResult, StatsView, UncommittedItem, ViewMode } from "./meta"
+export type { AuthorLineRankItem, BfgCleanPlan, BfgCleanResult, BfgPrefs, BfgRuntimeState, CategoryDistributionItem, CommitAnalysisCache, CommitAnalysisEntry, CommitAnalysisStats, CommitAnalysisType, CommitAnalysisViewSettings, CommitFixTarget, CommitRuleCheckStats, CommitRuleConfig, CommitRuleReasonKey, CommitRuleViolation, FileLineDetailRow, LineStatsCache, LineStatsSummary, NeedsPullItem, NeedsPushItem, PanelView, PendingProjectItem, PlatformKey, PlatformStatusItem, PlatformTableCellView, PlatformTableRowView, ProjectLineRankItem, PushStatusStats, RemoteCoverage, RepoBlobItem, RepoCleanPrefs, RepoLinkAuditCell, RepoLinkAuditRow, RepoLinkAuditState, RepoLinkAuditSummary, RepoScanResult, StatsView, UncommittedItem, ViewMode } from "./meta"
 export { getPlatformStatus } from "./meta"
 
 // ── 重导出代码统计报告类型与常量（来自 report.ts）──

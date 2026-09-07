@@ -335,6 +335,18 @@ export class WorktreeOps {
     }
   }
 
+  /** 获取某次提交的完整原始提交信息（%B 含多行 body；提交日志的 %s 会把多行折叠成单行导致格式丢失），失败返回空串 */
+  async getCommitFullMessage(projectPath: string, hash: string): Promise<string> {
+    try {
+      const raw = await this.executor.execGit(projectPath, [
+        "-c", "core.quotepath=false", "show", "-s", "--format=%B", hash,
+      ])
+      return (raw || "").trim()
+    } catch {
+      return ""
+    }
+  }
+
   /** 解析某次提交涉及的文件变更列表（git show --name-status；merge/无文件提交返回空数组，UI 据 isMerge 提示） */
   async getCommitFiles(projectPath: string, hash: string): Promise<FileChange[]> {
     try {

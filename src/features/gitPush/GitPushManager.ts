@@ -574,6 +574,11 @@ export class GitPushManager {
     return this.commitMsgGen.deepAnalyzeCommitFix(projectPath, hash, currentMessage)
   }
 
+  /** 获取某次提交的完整原始提交信息（多行 body 原文，修正弹窗展示用） */
+  async getCommitFullMessage(projectPath: string, hash: string): Promise<string> {
+    return this.worktreeOps.getCommitFullMessage(projectPath, hash)
+  }
+
   async generateStashDescription(projectPath: string): Promise<string> {
     return this.commitMsgGen.generateStashDescription(projectPath)
   }

@@ -1,9 +1,9 @@
 @use "@/variables.scss" as *;
 @use "./mixins" as *;
 
-// 提交信息修正弹窗
-.gp-fix-dialog {
-  width: 576px;
+// 提交信息修正弹窗（组合选择器提升优先级：.gp-dialog 基础规则经 index.scss 后置加载会覆盖单类宽度）
+.gp-dialog.gp-fix-dialog {
+  width: 692px;
   max-width: 92vw;
 }
 

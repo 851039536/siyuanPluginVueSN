@@ -1,8 +1,8 @@
 @use "@/variables.scss" as *;
 @use "./mixins" as *;
 
-// 在指定提交上打 Tag 弹窗
-.gp-tagc-dialog {
+// 在指定提交上打 Tag 弹窗（组合选择器提优先级：防 max-width 被基础 .gp-dialog 的 90vw 同优先级后置覆盖）
+.gp-dialog.gp-tagc-dialog {
   width: 420px;
   max-width: 92vw;
 }

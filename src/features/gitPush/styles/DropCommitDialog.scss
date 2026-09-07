@@ -1,8 +1,8 @@
 @use "@/variables.scss" as *;
 @use "./mixins" as *;
 
-// 删除历史提交弹窗（记录级删除、内容不变语义）
-.gp-drop-dialog {
+// 删除历史提交弹窗（记录级删除、内容不变语义；组合选择器提优先级：单类会被基础 .gp-dialog 的 420px 同优先级后置覆盖）
+.gp-dialog.gp-drop-dialog {
   width: 480px;
   max-width: 92vw;
 }

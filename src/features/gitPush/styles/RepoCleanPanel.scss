@@ -182,9 +182,9 @@
   margin-top: $spacing-2;
 }
 
-// ── BFG 清理向导弹窗（复用 gp-mask / gp-dialog 基座）──
+// ── BFG 清理向导弹窗（复用 gp-mask / gp-dialog 基座；组合选择器提优先级：单类会被基础 .gp-dialog 的 420px 同优先级后置覆盖）──
 
-.grcp-wizard {
+.gp-dialog.grcp-wizard {
   width: 520px;
   max-width: calc(100vw - #{$spacing-4 * 2});
 }

@@ -271,8 +271,9 @@
   opacity: 0.6;
 }
 
-// 违规列表中的修正按钮
-.grc-item-fix {
+// 违规列表中的修正/删除按钮（共用样式）
+.grc-item-fix,
+.grc-item-drop {
   padding: 0 4px;
   border-radius: $radius-sm;
   opacity: 0.6;

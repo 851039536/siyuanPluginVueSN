@@ -120,7 +120,7 @@
           :title="i18n.ruleFixOpen + ': ' + entry.message"
           @click.stop="$emit('fixCommit', entry)"
         >{{ entry.message }}</span>
-        <!-- 查看提交文件按钮（hover 显示；点击弹出该提交修改的文件清单） -->
+        <!-- 查看提交文件按钮（常显；点击弹出该提交修改的文件清单） -->
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm bcl-files-btn"
           :title="i18n.commitFilesOpen"
@@ -169,7 +169,7 @@ import {
   computed,
   ref,
 } from "vue"
-import { formatDateTime } from "../../utils"
+import { DEFAULT_LOG_LIMIT, formatDateTime } from "../../utils"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -195,7 +195,7 @@ const emit = defineEmits<{
 const countOptions = [200, 300, 500, 1000, 2000, "all"] as const
 const searchKeyword = ref("")
 /** 选择框当前值：以卡片级 logLimit（initialCount prop）为初始值，切换 Tab 重建后仍沿用用户上次选择 */
-const displayCount = ref<number | "all">(props.initialCount ?? 200)
+const displayCount = ref<number | "all">(props.initialCount ?? DEFAULT_LOG_LIMIT)
 
 const filteredEntries = computed(() => {
   let list = props.entries

@@ -11,7 +11,7 @@ import type {
 import type { MdFileEntry } from "./useMarkdownFiles"
 import { inject, onMounted, ref, watch } from "vue"
 import { CARD_SERVICES_KEY } from "../types"
-import { getProjectRemoteNames, pruneRecordCache, resolveValidPath } from "../utils"
+import { DEFAULT_LOG_LIMIT, getProjectRemoteNames, pruneRecordCache, resolveValidPath } from "../utils"
 import { scanMarkdownFiles } from "./useMarkdownFiles"
 
 /** Tag→commit 映射拉取上限（防异常大仓库失控） */
@@ -45,7 +45,7 @@ export function useCardData(project: () => GitProject) {
   }
 
   /** 提交日志显示条数（卡片级共享真源：决定无参加载/重载的抓取条数；默认与 LOG 列表选择框一致） */
-  const logLimit = ref<number | "all">(200)
+  const logLimit = ref<number | "all">(DEFAULT_LOG_LIMIT)
 
   /** 更新显示条数（LOG 列表选择框变化时同步，保证后续无参刷新沿用当前选择） */
   function setLogLimit(count: number | "all") {

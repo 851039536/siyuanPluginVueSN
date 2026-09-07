@@ -5,6 +5,9 @@ import { ANALYSIS_WEEKDAY_KEYS, COMMIT_ANALYSIS_TYPE_META, FILE_STATUS_META, HEA
 import type { IconKey } from "@/config/icons"
 import { getElectronModules, getNodeFsPathOs } from "@/utils/nodeModules"
 
+/** LOG 默认显示条数（与 BranchCommitList.countOptions 首项保持一致） */
+export const DEFAULT_LOG_LIMIT = 200
+
 /** 按 ID 查找项目（消除散落在各处的 projects.value.find 重复） */
 export function findProject(projects: Ref<GitProject[]>, id: string): GitProject | undefined {
   return projects.value.find((p) => p.id === id)
@@ -214,6 +217,26 @@ export function parseDiffLines(diffText: string): DiffLine[] {
   if (last && (last.type === "ctx" || last.type === "meta") && last.text === "") result.pop()
   markInlineDiff(result)
   return result
+}
+
+/** diff 行类型 → 行首符号（渲染层符号列使用） */
+export const DIFF_SIGN: Record<DiffLineType, string> = {
+  add: "+",
+  del: "−",
+  hunk: "@",
+  ctx: " ",
+  meta: " ",
+}
+
+/** 统计 diff 增/删行数（标题行 +N / −N 展示） */
+export function countDiffStats(lines: DiffLine[]): { add: number, del: number } {
+  let add = 0
+  let del = 0
+  for (const line of lines) {
+    if (line.type === "add") add++
+    else if (line.type === "del") del++
+  }
+  return { add, del }
 }
 
 // 行内变化占比阈值：中间变化片段超过此比例视为整行重写，不做词级高亮（高亮反而添噪）

@@ -106,23 +106,58 @@
               <span>{{ error }}</span>
             </div>
 
-            <!-- 备份完成信息条：显示 bundle 完整路径，点击打开备份所在文件夹（删除前完整历史的唯一恢复点） -->
+            <!-- 备份操作条（常驻）：路径 + 打开文件夹 + 清理备份；有本次备份时显示 bundle 文件路径，否则显示备份目录路径 -->
             <div
-              v-if="backupPath"
+              v-if="!loading && projectPath"
               class="gp-drop-backup"
-              role="button"
-              tabindex="0"
-              :title="i18n.dropCommitOpenBackupTip"
-              @click="openBackupFolder"
-              @keydown.enter="openBackupFolder"
             >
-              <Icon icon="mdi:content-save-check-outline" height="12" />
-              <span class="gp-drop-backup-label">{{ i18n.dropCommitBackupDone }}</span>
-              <span class="gp-drop-backup-path">{{ backupPath }}</span>
-              <span class="gp-drop-backup-open">
-                <Icon icon="mdi:folder-open" height="12" />
-                {{ i18n.openFolder }}
+              <Icon
+                class="gp-drop-backup-icon"
+                icon="mdi:content-save-check-outline"
+                height="12"
+              />
+              <!-- 标签："备份目录"（有本次备份时："已备份删除前的完整历史"） -->
+              <span class="gp-drop-backup-label">{{ backupLabel }}</span>
+              <!-- 备份路径（等宽字体，超长省略，hover 提示全路径） -->
+              <span
+                class="gp-drop-backup-path"
+                :title="displayBackupPath"
+              >{{ displayBackupPath }}</span>
+              <span class="gp-drop-backup-actions">
+                <!-- 打开备份所在文件夹 -->
+                <button
+                  class="vp-btn vp-btn--ghost vp-btn--sm"
+                  :disabled="busy"
+                  :title="i18n.dropCommitOpenBackupTip"
+                  @click="openBackupFolder"
+                >
+                  <Icon icon="mdi:folder-open" height="12" />
+                  <span>{{ i18n.openFolder }}</span>
+                </button>
+                <!-- 清理备份：删除备份目录下全部 bundle 文件 -->
+                <button
+                  class="vp-btn vp-btn--ghost vp-btn--sm"
+                  :disabled="busy"
+                  :title="i18n.dropCommitBackupCleanupTip"
+                  @click="cleanupBackup"
+                >
+                  <Icon
+                    :icon="cleaningBackup ? 'mdi:loading' : 'mdi:delete-outline'"
+                    height="12"
+                    :class="{ 'gp-spin': cleaningBackup }"
+                  />
+                  <span>{{ cleaningBackup ? i18n.processing : i18n.dropCommitBackupCleanup }}</span>
+                </button>
               </span>
+            </div>
+
+            <!-- 备份已清理提示（含清理份数） -->
+            <div
+              v-if="backupCleaned"
+              class="gp-drop-backup-cleaned"
+            >
+              <Icon icon="mdi:check-circle-outline" height="12" />
+              <span>{{ i18n.dropCommitBackupCleaned.replace("{0}", String(backupCleanedCount)) }}</span>
             </div>
           </template>
         </div>
@@ -205,6 +240,14 @@ const dropProgress = ref<{ current: number, total: number } | null>(null)
 const error = ref("")
 /** 已生成的 bundle 备份文件完整路径（删除执行前的唯一恢复点；空 = 尚未生成） */
 const backupPath = ref("")
+/** 备份清理中（删除 bundle 恢复点文件） */
+const cleaningBackup = ref(false)
+/** 备份是否已被用户清理（清理后备份条切换为已清理提示） */
+const backupCleaned = ref(false)
+/** 本次清理的备份份数（已清理提示条展示用） */
+const backupCleanedCount = ref(0)
+/** 项目备份目录路径（init 时获取，操作条常驻展示与打开文件夹用） */
+const backupDir = ref("")
 /** 删除是否已成功完成（完成后停留展示备份路径，由用户点「完成」关闭） */
 const done = ref(false)
 const headHash = ref("")
@@ -213,10 +256,20 @@ const rebaseStuck = ref(false)
 /** 目标是否为当前 HEAD 的祖先（非祖先时删除无效） */
 const isAncestor = ref(false)
 
-/** 是否有操作进行中（备份/删除中禁止关闭与重复提交） */
-const busy = computed(() => backingUp.value || dropping.value)
+/** 是否有操作进行中（备份/删除/清理备份中禁止关闭与重复提交） */
+const busy = computed(() => backingUp.value || dropping.value || cleaningBackup.value)
 
 const projectPath = computed(() => project.value ? resolveValidPath(project.value) : "")
+
+/** 操作条展示路径：有本次备份时显示 bundle 文件路径，否则显示备份目录路径 */
+const displayBackupPath = computed(() =>
+  backupPath.value && !backupCleaned.value ? backupPath.value : backupDir.value,
+)
+
+/** 操作条标签：有本次备份时显示备份完成文案，否则显示备份目录文案 */
+const backupLabel = computed(() =>
+  backupPath.value && !backupCleaned.value ? props.i18n.dropCommitBackupDone : props.i18n.dropCommitBackupDirLabel,
+)
 
 /** 目标是否为 HEAD（删 HEAD = reset 语义，阻止） */
 const isHeadTarget = computed(() => !!headHash.value && headHash.value.startsWith(props.target.hash))
@@ -258,14 +311,16 @@ async function init() {
     project.value = p ?? null
     if (!p) return
     const path = resolveValidPath(p)
-    const [head, stuck, ancestor] = await Promise.all([
+    const [head, stuck, ancestor, backupDirPath] = await Promise.all([
       manager.getHeadHash(path),
       manager.isInRebaseState(path),
       manager.isAncestorOfHead(path, props.target.hash),
+      manager.getProjectBackupDir(path).catch(() => ""),
     ])
     headHash.value = head
     rebaseStuck.value = stuck
     isAncestor.value = ancestor
+    backupDir.value = backupDirPath
   } finally {
     loading.value = false
   }
@@ -277,6 +332,8 @@ async function performDrop() {
   error.value = ""
   done.value = false
   backupPath.value = ""
+  backupCleaned.value = false
+  backupCleanedCount.value = 0
   backingUp.value = true
   try {
     // 先备份后删除，成功后保留弹窗展示备份路径（撤销恢复点需用户主动关闭）
@@ -299,12 +356,30 @@ async function performDrop() {
   }
 }
 
-/** 在文件管理器中打开备份文件所在文件夹（bundle 保留删除前完整历史，可 git clone 恢复） */
+/** 清理备份：删除项目备份目录下全部 bundle 文件，成功后备份条切换为已清理提示 */
+async function cleanupBackup() {
+  if (!projectPath.value || cleaningBackup.value) return
+  cleaningBackup.value = true
+  error.value = ""
+  try {
+    backupCleanedCount.value = await manager.deleteProjectBackups(projectPath.value)
+    backupPath.value = ""
+    backupCleaned.value = true
+  } catch (e: unknown) {
+    console.error("[gitPush] 清理备份失败:", e)
+    error.value = getErrorMessage(e) || props.i18n.dropCommitBackupCleanupFailed
+  } finally {
+    cleaningBackup.value = false
+  }
+}
+
+/** 在文件管理器中打开备份文件夹（bundle 保留删除前完整历史，可 git clone 恢复） */
 async function openBackupFolder() {
-  if (!backupPath.value) return
   const nodePath = getNodeFsPathOs()?.path
   if (!nodePath) return
-  await openLocalPath(nodePath.dirname(backupPath.value))
+  const dir = backupDir.value || (backupPath.value ? nodePath.dirname(backupPath.value) : "")
+  if (!dir) return
+  await openLocalPath(dir)
 }
 </script>
 

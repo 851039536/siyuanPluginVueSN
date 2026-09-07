@@ -164,6 +164,27 @@ export class RepoCleanOps {
     return backupPath
   }
 
+  /** 清空项目备份目录下全部 bundle 备份（删除历史提交弹窗内用户主动清理；仅删 .bundle 文件防误删，目录保留） */
+  async deleteBackups(projectPath: string): Promise<number> {
+    const node = getNodeFsPathOs()
+    if (!node) throw new Error("Node 环境不可用")
+    const { fs, path } = node
+    const dir = await this.backupDirFor(projectPath)
+    let removed = 0
+    try {
+      for (const f of fs.readdirSync(dir)) {
+        if (!f.endsWith(".bundle")) continue
+        try { fs.rmSync(path.join(dir, f), { force: true }); removed++ } catch { /* 单文件失败不中断 */ }
+      }
+    } catch { /* 目录不存在视为无备份 */ }
+    return removed
+  }
+
+  /** 项目备份目录路径（删除历史提交弹窗常驻操作条展示与打开文件夹用） */
+  async backupDirOf(projectPath: string): Promise<string> {
+    return this.backupDirFor(projectPath)
+  }
+
   /** 备份 bundle 目录（<workspace>/data/storage/petal/<plugin.name>/bfg-backups/<项目名>/） */
   private async backupDirFor(projectPath: string): Promise<string> {
     const node = getNodeFsPathOs()

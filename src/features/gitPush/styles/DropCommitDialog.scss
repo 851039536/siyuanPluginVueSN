@@ -98,6 +98,56 @@
   transition: width 0.12s ease;
 }
 
+// 备份信息条：图标 + 标签 + 完整路径（等宽省略）+ 打开/清理操作
+.gp-drop-backup {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-2;
+  font-size: $font-size-2xs;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+}
+
+.gp-drop-backup-icon {
+  flex-shrink: 0;
+  color: var(--b3-theme-primary);
+}
+
+.gp-drop-backup-label {
+  flex-shrink: 0;
+  font-weight: $font-weight-semibold;
+}
+
+.gp-drop-backup-path {
+  flex: 1;
+  min-width: 0;
+  @include text-ellipsis;
+  font-family: $vp-mono;
+  opacity: 0.55;
+}
+
+.gp-drop-backup-actions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  flex-shrink: 0;
+}
+
+// 备份已清理提示（成功态信息条）
+.gp-drop-backup-cleaned {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-2;
+  font-size: $font-size-2xs;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  opacity: 0.6;
+}
+
 .gp-drop-hint {
   font-size: $font-size-2xs;
   opacity: 0.5;

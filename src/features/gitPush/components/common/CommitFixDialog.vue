@@ -37,11 +37,11 @@
               >{{ i18n[COMMIT_RULE_REASON_META[target.reason].labelKey] }}</span>
             </div>
 
-            <!-- 原提交信息 -->
+            <!-- 原提交信息（完整多行原文；提交日志的 %s 会折叠多行，故 init 时用 %B 重取） -->
             <div class="gp-fix-block">
               <!-- 标签："原提交信息" -->
               <label class="gp-label">{{ i18n.ruleFixOriginal }}</label>
-              <pre class="gp-fix-original">{{ target.message }}</pre>
+              <pre class="gp-fix-original">{{ fullMessage || target.message }}</pre>
             </div>
 
             <!-- 新提交信息 -->
@@ -234,6 +234,8 @@ const { manager } = services
 const project = ref<GitProject | null>(null)
 const loading = ref(true)
 const newMessage = ref(props.target.message)
+/** 完整原始提交信息（%B 多行原文；target.message 来自提交日志 %s，多行会被折叠成单行） */
+const fullMessage = ref("")
 const aiLoading = ref(false)
 /** AI 深度分析中（读取完整 diff 理解实际改动，耗时高于普通生成） */
 const deepLoading = ref(false)
@@ -303,14 +305,20 @@ async function init() {
     project.value = p ?? null
     if (!p) return
     const path = resolveValidPath(p)
-    const [head, wt, stuck] = await Promise.all([
+    const [head, wt, stuck, rawMessage] = await Promise.all([
       manager.getHeadHash(path),
       manager.getWorkingTreeStatus(path),
       manager.isInRebaseState(path),
+      manager.getCommitFullMessage(path, props.target.hash).catch(() => ""),
     ])
     headHash.value = head
     workingTreeClean.value = !wt.hasChanges
     rebaseStuck.value = stuck
+    // 多行提交信息以完整原文覆盖（加载阶段用户未交互，安全）；单行时与 target.message 一致无感知
+    if (rawMessage) {
+      fullMessage.value = rawMessage
+      newMessage.value = rawMessage
+    }
   } finally {
     loading.value = false
   }
@@ -322,7 +330,7 @@ async function runAiFix() {
   aiLoading.value = true
   aiError.value = ""
   try {
-    const result = await manager.generateCommitFix(projectPath.value, props.target.hash, props.target.message)
+    const result = await manager.generateCommitFix(projectPath.value, props.target.hash, fullMessage.value || props.target.message)
     if (result.message) {
       newMessage.value = result.message
     } else {
@@ -342,7 +350,7 @@ async function runDeepAnalyze() {
   deepLoading.value = true
   aiError.value = ""
   try {
-    const result = await manager.deepAnalyzeCommitFix(projectPath.value, props.target.hash, props.target.message)
+    const result = await manager.deepAnalyzeCommitFix(projectPath.value, props.target.hash, fullMessage.value || props.target.message)
     if (result.message) {
       newMessage.value = result.message
     } else {

@@ -159,48 +159,39 @@
   letter-spacing: 0;
 }
 
-// 违规类型分布条形
-.grc-bar-list {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-2;
-}
-
-.grc-bar-row {
+// 违规类型分布（紧凑单行 chips：标题与计数圆片同行折行，替代条形图省空间）
+.grc-reason-row {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  flex-wrap: wrap;
+  gap: $spacing-1 $spacing-2;
+  margin-bottom: $spacing-3;
+}
+
+.grc-reason-title {
+  @include gp-label-base;
   font-size: $font-size-xs;
 }
 
-.grc-bar-label {
-  flex: 0 0 88px; // 固定标签列宽，保证轨道对齐
-  @include text-ellipsis;
-  opacity: 0.75;
-}
-
-.grc-bar-track {
-  flex: 1;
-  height: 4px;
-  background: var(--b3-theme-surface);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.grc-bar-fill {
-  display: block;
-  height: 100%;
-  border-radius: 2px;
-  background: var(--b3-theme-warning);
-}
-
-.grc-bar-num {
-  flex: 0 0 auto;
-  min-width: 24px;
-  text-align: right;
-  font-family: $vp-mono;
+.grc-reason-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-px $spacing-1;
   font-size: $font-size-2xs;
-  opacity: 0.5;
+  line-height: $line-height-normal;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-full;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  opacity: 0.8;
+}
+
+.grc-reason-chip-num {
+  font-family: $vp-mono;
+  font-variant-numeric: tabular-nums;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-warning);
 }
 
 // 不合规提交列表（2 列网格；minmax(0,1fr) 防长内容撑破列宽）

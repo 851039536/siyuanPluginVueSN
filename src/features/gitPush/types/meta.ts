@@ -297,15 +297,18 @@ export interface CommitRuleConfig {
   bodyLineLimitEnabled: boolean
   /** 正文单行最大字符数（bodyLineLimitEnabled 开启时生效） */
   maxBodyLineLength: number
+  /** AI 生成提交信息时送入的 diff 上下文字符预算（按文件分块分配，设置弹窗可自定义） */
+  diffContextBudget: number
 }
 
-/** 提交规则默认配置（描述过短阈值 10 字 + 可选规则全部开启） */
+/** 提交规则默认配置（描述过短阈值 10 字 + 可选规则全部开启 + diff 上下文预算 10000 字符） */
 export const DEFAULT_COMMIT_RULE_CONFIG: CommitRuleConfig = {
   minSubjectLength: 10,
   requireCapitalizedSubject: true,
   detectWipSubject: true,
   bodyLineLimitEnabled: true,
   maxBodyLineLength: 72,
+  diffContextBudget: 10000,
 }
 
 /** 从规则检查偏好读取规则配置（旧数据缺字段时逐字段回退默认值，默认语义 = 可选规则全开） */
@@ -316,6 +319,7 @@ export function readCommitRuleConfig(prefs: RuleCheckPrefs): CommitRuleConfig {
     detectWipSubject: prefs.detectWipSubject ?? DEFAULT_COMMIT_RULE_CONFIG.detectWipSubject,
     bodyLineLimitEnabled: prefs.bodyLineLimitEnabled ?? DEFAULT_COMMIT_RULE_CONFIG.bodyLineLimitEnabled,
     maxBodyLineLength: prefs.maxBodyLineLength ?? DEFAULT_COMMIT_RULE_CONFIG.maxBodyLineLength,
+    diffContextBudget: prefs.diffContextBudget ?? DEFAULT_COMMIT_RULE_CONFIG.diffContextBudget,
   }
 }
 
@@ -361,6 +365,8 @@ export interface RuleCheckPrefs {
   bodyLineLimitEnabled?: boolean
   /** 正文单行最大字符数（缺省回退 DEFAULT_COMMIT_RULE_CONFIG.maxBodyLineLength） */
   maxBodyLineLength?: number
+  /** AI 生成提交信息的 diff 上下文字符预算（缺省回退 DEFAULT_COMMIT_RULE_CONFIG.diffContextBudget） */
+  diffContextBudget?: number
 }
 
 /** 提交信息修正偏好（上次选择的提交时间策略，持久化到 git-push-commitfix-prefs） */

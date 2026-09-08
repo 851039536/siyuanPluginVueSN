@@ -4,6 +4,7 @@ import type { CommitTemplate, GitPushStorage } from "../types/storage"
 import type { CommitRuleConfig } from "../types/meta"
 import { readCommitRuleConfig } from "../types/meta"
 import { buildCommitRulePrompt, fixCommitMessageHeuristically, normalizeCommitMessageFormat } from "../commitRuleChecker"
+import { buildDiffContext } from "../utils"
 import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi"
 import type { GitExecutor } from "./GitExecutor"
 import type { WorktreeOps } from "./WorktreeOps"
@@ -32,8 +33,9 @@ export class CommitMsgGenerator {
    */
   async generateCommitMessage(projectPath: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
     try {
+      // --stat=200 拓宽输出宽度，避免长路径被中间省略导致文件清单不完整
       const diffText = await this.executor.execGit(projectPath, [
-        "-c", "core.quotepath=false", "diff", "--text", "--cached", "--stat",
+        "-c", "core.quotepath=false", "diff", "--text", "--cached", "--stat=200",
       ])
       if (!diffText) { return { message: "chore: update files", source: "heuristic" } }
 
@@ -45,17 +47,32 @@ export class CommitMsgGenerator {
       const fullDiff = await this.executor.execGit(projectPath, [
         "-c", "core.quotepath=false", "diff", "--text", "--cached",
       ])
-      const diffSnippet = (fullDiff || diffText).substring(0, 3000)
       const ruleConfig = await this.getRuleConfig()
+      const diffContext = fullDiff ? buildDiffContext(fullDiff, ruleConfig.diffContextBudget) : diffText
 
       try {
         const result = await callAI(
-          `根据以下 git diff，生成一条中文 conventional commit 信息。\n格式：type: 中文描述\n${buildCommitRulePrompt(ruleConfig)}。\n示例：refactor: 重构用户服务模块为策略模式提升扩展性\n示例：fix: 修复订单列表分页加载时的空指针异常\n示例：feat: 新增导出报表为 PDF 文件的功能支持\n重要：只输出一行提交信息，不要输出分析、解释、Markdown 或任何别的内容。\nDiff:\n${diffSnippet}`,
+          `请基于以下 Git 暂存区的实际改动，分析本次提交做了什么，生成一条最贴合实际改动的中文 conventional commit 信息。
+输出格式：只输出一行，格式为 type(scope): 中文描述（${buildCommitRulePrompt(ruleConfig)}）
+要求：
+1. type 必须综合所有文件的改动判断，反映本次改动的主体性质，不要只依据单个文件
+2. 描述概括本次提交的主要改动意图，涉及多个文件时提炼共同目的，不要罗列文件名
+3. 只输出一行提交信息，不要输出分析、解释、Markdown 或任何别的内容
+
+示例：refactor: 重构用户服务模块为策略模式提升扩展性
+示例：fix: 修复订单列表分页加载时的空指针异常
+示例：feat: 新增导出报表为 PDF 文件的功能支持
+
+变更文件清单（含各文件增删行数）：
+${diffText}
+
+各文件改动内容（diff，超长文件已截断）：
+${diffContext}`,
           aiConfig,
           {
             systemPrompt: "输出要求：只输出一行 conventional commit 格式的提交信息。禁止输出解释、分析、额外文字。",
             temperature: 0.1,
-            maxTokens: 100,
+            maxTokens: 200,
             enableThinking: false,
           },
         )
@@ -108,8 +125,8 @@ export class CommitMsgGenerator {
     }
 
     try {
-      // 与深度分析同源：读取完整 diff 理解实际改动，仅输出格式不同（单行 vs 多行）
-      const diffContext = await this.worktreeOps.getCommitDeepContext(projectPath, hash)
+      // 与深度分析同源：读取完整 diff 理解实际改动，仅输出格式不同（单行 vs 多行）；diff 按文件分块分配预算
+      const diffContext = await this.worktreeOps.getCommitDeepContext(projectPath, hash, ruleConfig.diffContextBudget)
       if (!diffContext) {
         return { message: heuristic, source: "heuristic" }
       }
@@ -159,7 +176,7 @@ ${diffContext}`,
     }
 
     try {
-      const diffContext = await this.worktreeOps.getCommitDeepContext(projectPath, hash)
+      const diffContext = await this.worktreeOps.getCommitDeepContext(projectPath, hash, ruleConfig.diffContextBudget)
       if (!diffContext) {
         return { message: heuristic, source: "heuristic" }
       }

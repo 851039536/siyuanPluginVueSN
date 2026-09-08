@@ -14,7 +14,7 @@ import type {
   ProjectLineRankItem,
 } from "../types"
 import { computed, ref } from "vue"
-import { clampMaxBodyLineLength, clampMinSubjectLength, DEFAULT_ANALYSIS_VIEW_SETTINGS, DEFAULT_COMMIT_RULE_CONFIG, readCommitRuleConfig } from "../types"
+import { clampDiffContextBudget, clampMaxBodyLineLength, clampMinSubjectLength, DEFAULT_ANALYSIS_VIEW_SETTINGS, DEFAULT_COMMIT_RULE_CONFIG, readCommitRuleConfig } from "../types"
 import {
   buildDailyCommitBuckets,
   parseCommitAnalysisType,
@@ -522,6 +522,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
       ...patch,
       minSubjectLength: patch.minSubjectLength !== undefined ? clampMinSubjectLength(patch.minSubjectLength) : ruleConfig.value.minSubjectLength,
       maxBodyLineLength: patch.maxBodyLineLength !== undefined ? clampMaxBodyLineLength(patch.maxBodyLineLength) : ruleConfig.value.maxBodyLineLength,
+      diffContextBudget: patch.diffContextBudget !== undefined ? clampDiffContextBudget(patch.diffContextBudget) : ruleConfig.value.diffContextBudget,
     }
     if (JSON.stringify(merged) === JSON.stringify(ruleConfig.value)) return
     ruleConfig.value = merged

@@ -30,6 +30,7 @@ export type {
   WorkingTreeInfo,
 } from "./storage"
 export {
+  clampDiffContextBudget,
   clampGitConcurrency,
   clampMaxBodyLineLength,
   clampMinSubjectLength,
@@ -37,6 +38,8 @@ export {
   COMMIT_TYPE_VALUES,
   DEFAULT_ANALYSIS_VIEW_SETTINGS,
   DEFAULT_NETWORK_TIMEOUT,
+  DIFF_CONTEXT_BUDGET_MAX,
+  DIFF_CONTEXT_BUDGET_MIN,
   GIT_CONCURRENCY_MAX,
   GIT_CONCURRENCY_MIN,
   GitPushStorage,

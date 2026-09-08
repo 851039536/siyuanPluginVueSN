@@ -239,6 +239,32 @@ export function countDiffStats(lines: DiffLine[]): { add: number, del: number } 
   return { add, del }
 }
 
+/**
+ * 按文件分块构建 AI 分析的 diff 上下文：每个文件的 diff 均分配额，保证全部变更文件都被送入；
+ * 短文件未用满的预算按序回补给被截断的长文件，截断块追加标注。
+ * 替代整体 substring 硬截断（旧逻辑在首个大文件 diff 超限时，其余文件的改动对 AI 完全不可见）。
+ * 输入应为纯 diff（不含提交信息头等前导内容），无 diff 内容返回空串。
+ */
+export function buildDiffContext(fullDiff: string, budget: number): string {
+  const total = budget > 0 ? budget : 10000
+  const chunks = fullDiff.split(/\n(?=diff --git )/).filter((c) => c.trim())
+  if (chunks.length === 0) { return "" }
+  const perFile = chunks.length === 1 ? total : Math.floor(total / chunks.length)
+  const pieces = chunks.map((full) => ({ full, text: full.substring(0, perFile) }))
+
+  let remaining = total - pieces.reduce((sum, p) => sum + p.text.length, 0)
+  for (const p of pieces) {
+    if (remaining <= 0 || p.text.length >= p.full.length) { continue }
+    const extra = Math.min(remaining, p.full.length - p.text.length)
+    p.text += p.full.substring(p.text.length, p.text.length + extra)
+    remaining -= extra
+  }
+
+  return pieces
+    .map((p) => p.text.length < p.full.length ? `${p.text}\n（此文件 diff 过长已截断）` : p.text)
+    .join("\n\n")
+}
+
 // 行内变化占比阈值：中间变化片段超过此比例视为整行重写，不做词级高亮（高亮反而添噪）
 const INLINE_DIFF_MAX_CHANGED_RATIO = 0.6
 

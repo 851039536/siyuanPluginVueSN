@@ -8,6 +8,7 @@ import type {
   WorkingTreeInfo,
 } from "../types/storage"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
+import { buildDiffContext } from "../utils"
 import type { GitExecutor } from "./GitExecutor"
 import { HistoryRewriter } from "./HistoryRewriter"
 
@@ -311,13 +312,19 @@ export class WorktreeOps {
     }
   }
 
-  /** 获取某次提交的完整 diff 补丁（供 AI 修正/深度分析理解实际改动；截断 10000 字符防 token 爆量），失败返回空串 */
-  async getCommitDeepContext(projectPath: string, hash: string): Promise<string> {
+  /**
+   * 获取某次提交的完整 diff 补丁（供 AI 修正/深度分析理解实际改动），失败返回空串。
+   * 提交信息头原样保留不占预算；diff 部分按文件分块分配 budget（与暂存区生成的 diffContextBudget 同一配置），
+   * 替代旧的 substring(0, 10000) 整体硬截断——单提交多文件时首个大文件会挤占其余文件的可见性。
+   */
+  async getCommitDeepContext(projectPath: string, hash: string, budget = 10000): Promise<string> {
     try {
-      const raw = await this.executor.execGit(projectPath, [
+      const text = await this.executor.execGit(projectPath, [
         "-c", "core.quotepath=false", "show", "--text", "--format=%B", hash,
-      ])
-      return (raw || "").substring(0, 10000)
+      ]) || ""
+      const diffStart = text.indexOf("diff --git ")
+      if (diffStart < 0) { return text.substring(0, 10000) }
+      return text.substring(0, diffStart) + buildDiffContext(text.substring(diffStart), budget)
     } catch {
       return ""
     }

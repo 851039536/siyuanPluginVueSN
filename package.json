@@ -48,7 +48,7 @@
     "marked": "^17.0.1",
     "qrcode": "^1.5.4",
     "video.js": "^8.23.4",
-    "vue": "^3.5.40",
+    "vue": "^3.5.42",
     "vue-chartjs": "^5.3.3",
     "vue-diff": "^1.2.4"
   },
@@ -67,7 +67,7 @@
     "minimist": "^1.2.8",
     "rollup-plugin-livereload": "^2.0.5",
     "sass": "^1.101.0",
-    "siyuan": "1.2.3",
+    "siyuan": "1.2.7",
     "typescript": "^5.9.3",
     "vite": "^6.4.3",
     "vite-plugin-static-copy": "^4.1.1",

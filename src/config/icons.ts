@@ -454,7 +454,7 @@ export const COMMON_ICONS = {
     icon: "mdi:checkbox-multiple-outline",
   },
   pencilMultiple: {
-    icon: "mdi:pencil-multiple",
+    icon: "mdi:pencil-box-multiple",
   },
   add: {
     icon: "mdi:plus",

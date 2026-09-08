@@ -96,8 +96,8 @@ const {
   onHover,
 } = useNotebookHover()
 
-const SIZE = 160
-const RADIUS = 68
+const SIZE = 192
+const RADIUS = 82
 const localHover = ref<string | null>(null)
 
 // 合并本地与共享 hover（以名称统一，避免 data 索引与 pieArcs 索引错位）
@@ -153,7 +153,8 @@ const pieArcs = computed<PieArc[]>(() => {
   return nonZero.map((item) => {
     const ratio = item.words / total
     const percentage = ratio * 100
-    const sweepAngle = ratio * 360
+    // 钳制到 359.99：ratio=1（单一笔记本占 100%）时 360 会导致 SVG 弧起终点重合而不渲染
+    const sweepAngle = Math.min(ratio * 360, 359.99)
     const endAngle = startAngle + sweepAngle
     const d = describeArc(0, 0, RADIUS, startAngle, endAngle)
     const result = {

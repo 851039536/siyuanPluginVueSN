@@ -3460,7 +3460,6 @@
     "emptyText": "No data",
     "blockTypeStats": "Block Type Distribution",
     "notebookWordPie": "Notebook Word Proportion",
-    "notebookBlockTypeTitle": "Block Type per Notebook",
     "reportTitle": "Annual/Monthly Report",
     "predictionTitle": "Trend Forecast",
     "predAnalyzing": "Analyzing...",

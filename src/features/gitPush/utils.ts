@@ -239,9 +239,13 @@ export function countDiffStats(lines: DiffLine[]): { add: number, del: number } 
   return { add, del }
 }
 
+/** 单文件 diff 的最小分析配额（变更文件数超过预算容量时，仅完整覆盖前 capacity 个文件，其余由变更文件清单兜底） */
+const MIN_PER_FILE_DIFF_BUDGET = 500
+
 /**
- * 按文件分块构建 AI 分析的 diff 上下文：每个文件的 diff 均分配额，保证全部变更文件都被送入；
- * 短文件未用满的预算按序回补给被截断的长文件，截断块追加标注。
+ * 按文件分块构建 AI 分析的 diff 上下文：每个文件的 diff 均分配额，短文件未用满的预算回补长文件。
+ * 文件数超过预算容量（total / MIN_PER_FILE_DIFF_BUDGET）时仅取前 capacity 个文件分块并追加省略提示，
+ * 避免均分到极小配额产生无信息量的 diff 头碎片。
  * 替代整体 substring 硬截断（旧逻辑在首个大文件 diff 超限时，其余文件的改动对 AI 完全不可见）。
  * 输入应为纯 diff（不含提交信息头等前导内容），无 diff 内容返回空串。
  */
@@ -249,8 +253,11 @@ export function buildDiffContext(fullDiff: string, budget: number): string {
   const total = budget > 0 ? budget : 10000
   const chunks = fullDiff.split(/\n(?=diff --git )/).filter((c) => c.trim())
   if (chunks.length === 0) { return "" }
-  const perFile = chunks.length === 1 ? total : Math.floor(total / chunks.length)
-  const pieces = chunks.map((full) => ({ full, text: full.substring(0, perFile) }))
+
+  const capacity = Math.max(1, Math.floor(total / MIN_PER_FILE_DIFF_BUDGET))
+  const selected = chunks.slice(0, capacity)
+  const perFile = selected.length === 1 ? total : Math.floor(total / selected.length)
+  const pieces = selected.map((full) => ({ full, text: full.substring(0, perFile) }))
 
   let remaining = total - pieces.reduce((sum, p) => sum + p.text.length, 0)
   for (const p of pieces) {
@@ -260,9 +267,11 @@ export function buildDiffContext(fullDiff: string, budget: number): string {
     remaining -= extra
   }
 
-  return pieces
+  const body = pieces
     .map((p) => p.text.length < p.full.length ? `${p.text}\n（此文件 diff 过长已截断）` : p.text)
     .join("\n\n")
+  const omitted = chunks.length - selected.length
+  return omitted > 0 ? `${body}\n（其余 ${omitted} 个文件的 diff 因上下文预算省略，请结合变更文件清单判断）` : body
 }
 
 // 行内变化占比阈值：中间变化片段超过此比例视为整行重写，不做词级高亮（高亮反而添噪）

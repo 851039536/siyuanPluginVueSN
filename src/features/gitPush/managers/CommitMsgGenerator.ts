@@ -1,8 +1,8 @@
 // AI 提交信息与 stash 描述生成（含启发式降级）
 import type { Plugin } from "siyuan"
-import type { CommitTemplate, GitPushStorage } from "../types/storage"
+import type { CommitTemplate, FileChange, GitPushStorage } from "../types/storage"
 import type { CommitRuleConfig } from "../types/meta"
-import { readCommitRuleConfig } from "../types/meta"
+import { FILE_STATUS_META, readCommitRuleConfig } from "../types/meta"
 import { buildCommitRulePrompt, fixCommitMessageHeuristically, normalizeCommitMessageFormat } from "../commitRuleChecker"
 import { buildDiffContext } from "../utils"
 import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi"
@@ -93,6 +93,17 @@ ${diffContext}`,
     }
   }
 
+  /** 构建修正场景的变更文件清单段（name-status 列表，diff 因配额省略时兜底文件维度信息），空清单返回空串 */
+  private buildCommitFileListSection(files: FileChange[]): string {
+    if (files.length === 0) { return "" }
+    const lines = files.map((f) => {
+      const label = FILE_STATUS_META[f.status]?.title ?? f.status
+      const path = f.oldPath ? `${f.oldPath} → ${f.path}` : f.path
+      return `- ${path}（${label}）`
+    })
+    return `变更文件清单：\n${lines.join("\n")}\n\n`
+  }
+
   private heuristicCommitMessage(statText: string): string {
     const lines = statText.split("\n").filter(Boolean)
     const files = lines.slice(0, -1).map((l) => l.split("|")[0]?.trim()).filter(Boolean)
@@ -130,6 +141,7 @@ ${diffContext}`,
       if (!diffContext) {
         return { message: heuristic, source: "heuristic" }
       }
+      const fileListSection = this.buildCommitFileListSection(await this.worktreeOps.getCommitFiles(projectPath, hash))
       const result = await callAI(
         `请基于以下某次 Git 提交的完整改动内容（diff），分析这次提交实际做了什么，生成一条最贴合实际改动的修正提交信息。
 输出格式：只输出一行，格式为 type(scope): 中文描述（${buildCommitRulePrompt(ruleConfig)}）
@@ -140,7 +152,7 @@ ${diffContext}`,
 
 示例：fix: 修复订单列表分页加载时的空指针异常
 
-原提交信息：${currentMessage}
+${fileListSection}原提交信息：${currentMessage}
 
 完整改动内容（diff）：
 ${diffContext}`,
@@ -180,6 +192,7 @@ ${diffContext}`,
       if (!diffContext) {
         return { message: heuristic, source: "heuristic" }
       }
+      const fileListSection = this.buildCommitFileListSection(await this.worktreeOps.getCommitFiles(projectPath, hash))
       const result = await callAI(
         `请基于以下某次 Git 提交的完整改动内容（diff），深度分析这次提交实际做了什么，生成一条最贴合实际改动的修正提交信息。
 输出格式（多行）：
@@ -196,7 +209,7 @@ feat: 实现提交规则违规的批量修正功能，包含：
 - 新增批量修正弹窗，支持 AI 批量生成、逐条保存与进度展示
 - 补充多语言文案与样式文件
 
-原提交信息：${currentMessage}
+${fileListSection}原提交信息：${currentMessage}
 
 完整改动内容（diff）：
 ${diffContext}`,

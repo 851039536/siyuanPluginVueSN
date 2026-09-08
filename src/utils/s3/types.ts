@@ -54,8 +54,18 @@ export const DEFAULT_UPLOAD_TIMEOUT_SEC = 240
 /** S3 目录前缀默认值（兜底用） */
 export const DEFAULT_S3_PREFIX = "siyuan-backup/"
 
-/** 大文件警告阈值（100MB）：uploadBuffer 整体读入内存，超过阈值仅警告不阻断 */
+/**
+ * 大文件警告阈值（100MB）
+ * 语义升级：既是整包读入内存的降级警告阈值，也是自动切换 Multipart 分片上传的最小文件大小
+ * （≤100MB 走整包单 PUT 且不警告，>100MB 自动分片；代理不支持分片时才降级整包并给出警告）
+ */
 export const LARGE_FILE_WARN_SIZE = 100 * 1024 * 1024
+
+/** 走 Multipart 分片上传的最小文件大小（复用 100MB 阈值单一数据源，保证边界语义与旧版一致） */
+export const MULTIPART_MIN_SIZE = LARGE_FILE_WARN_SIZE
+
+/** Multipart 单分片大小（16MB）：分片路径内存峰值 ≈ 单片大小 + 常数开销，逐片独立签名上传 */
+export const MULTIPART_PART_SIZE = 16 * 1024 * 1024
 
 // ========== S3 配置默认值 ==========
 

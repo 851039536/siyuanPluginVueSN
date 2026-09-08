@@ -9,6 +9,7 @@ import { computed, ref } from "vue"
 import type { S3Config, S3FileInfo } from "../types"
 import { DEFAULT_S3_CONFIG, INCREMENTAL_SUBDIR } from "../types"
 import { S3Client } from "@/utils/s3/s3Client"
+import { uploadFileSmart as uploadFileSmartShared } from "@/utils/s3/s3Multipart"
 import type { BackupProgress } from "../modules/BackupManager"
 import { buildS3Key } from "../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
@@ -88,10 +89,16 @@ export function useS3Backup(options: { i18n: Record<string, string>; getSubPrefi
     await client.download(s3Key, localPath)
   }
 
-  /** 直接上传文件内容到 S3（跳过本地打包，用于逐文件上传模式；onProgress 上报字节级发送进度） */
+  /** 直接上传文件内容到 S3（跳过本地打包，用于 manifest 等内存 Buffer 场景；onProgress 上报字节级发送进度） */
   async function uploadFileContent(buffer: Buffer, key: string, onProgress?: (sent: number, total: number) => void): Promise<void> {
     const client = requireClient()
-    await client.uploadBuffer(buffer, key, onProgress)
+    await client.uploadBuffer(buffer, key, onProgress ?? (() => { /* 恒传回调使 256KB 分块写入生效，规避 req.write 整写双倍驻留 */ }))
+  }
+
+  /** 大文件感知上传（磁盘文件路径版）：>100MB 自动 Multipart 分片，存储端不支持时降级单 PUT；onProgress 按文件总字节上报 */
+  async function uploadFileSmart(filePath: string, key: string, onProgress?: (sent: number, total: number) => void): Promise<void> {
+    const client = requireClient()
+    await uploadFileSmartShared(client, filePath, key, onProgress)
   }
 
   /** 读取 S3 对象文本内容（404 返回 null，供增量清单读取使用） */
@@ -167,6 +174,7 @@ export function useS3Backup(options: { i18n: Record<string, string>; getSubPrefi
     testConnection,
     applyConfig,
     uploadFileContent,
+    uploadFileSmart,
     getObjectText,
     deleteObject,
     listBackups,

@@ -167,6 +167,35 @@ export function parseS3Error(xml: string, httpStatus?: number): string {
   return `${prefix}${code}: ${msg}`
 }
 
+// ========== Multipart Upload XML ==========
+
+/** Multipart 已完成分片（Complete 请求体元素）：分片号 + 服务端 ETag */
+export interface MultipartPart {
+  partNumber: number
+  etag: string
+}
+
+/**
+ * 构造 CompleteMultipartUpload 请求体 XML
+ * ETag 为十六进制+引号（如 "abc123"），引号/斜杠外无 XML 特殊字符，直接内插安全
+ */
+export function buildCompleteMultipartBody(parts: MultipartPart[]): string {
+  const inner = parts
+    .map((p) => `  <Part><PartNumber>${p.partNumber}</PartNumber><ETag>${p.etag}</ETag></Part>`)
+    .join("\n")
+  return `<CompleteMultipartUpload>\n${inner}\n</CompleteMultipartUpload>`
+}
+
+/**
+ * 解析单标签 XML 内容（如 <UploadId>xxx</UploadId>）
+ * 兼容响应体中夹带其他元素/命名空间，取首个匹配并反转义
+ */
+export function parseSingleTag(xml: string, tag: string): string {
+  const re = new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`)
+  const m = re.exec(xml)
+  return m ? unescapeXml(m[1]) : ""
+}
+
 /**
  * 格式化 S3 错误信息，附带响应头诊断（405 时显示 Allow 头）
  * 用于 upload/download/list/delete 等非 ok 响应的统一错误构造

@@ -26,7 +26,8 @@ export interface LocalBackupListDeps {
   backupList: Ref<S3FileInfo[]>
   /** 由文件 basename 构建 S3 上传 key */
   buildUploadKey: (fileName: string) => string
-  uploadFileContent: (buffer: Buffer, key: string) => Promise<void>
+  /** 大文件感知上传本地备份磁盘文件（>100MB 自动分片，小文件整读单 PUT） */
+  uploadFileSmart: (filePath: string, key: string) => Promise<void>
   refreshBackupList: () => Promise<void>
   addLog: (entry: Omit<BackupLog, "id" | "time" | "hostname">) => void
   i18n: Record<string, string>
@@ -113,10 +114,9 @@ export function useLocalBackupList(deps: LocalBackupListDeps) {
     }
     uploadingItems.value = { ...uploadingItems.value, [backup.path]: true }
     try {
-      const content = await node.fs.promises.readFile(backup.path)
-      // 上传 key 使用 basename：日期子目录条目上云后与顶层文件保持同一层级规则
+      // 上传 key 使用 basename：日期子目录条目上云后与顶层文件保持同一层级规则；磁盘路径版自动分片，不再整包 readFile
       const s3Key = deps.buildUploadKey(getBaseName(backup.name))
-      await deps.uploadFileContent(content, s3Key)
+      await deps.uploadFileSmart(backup.path, s3Key)
       await recordUploadHosts([backup.name])
       deps.addLog({ type: "s3Upload", action: i18n.uploadToS3, fileName: backup.name, success: true })
       showMessage(i18n.uploadSuccess, 2000, "info")

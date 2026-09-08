@@ -207,18 +207,19 @@ export class S3Client {
   // ========== 扩展操作委托入口 ==========
 
   /**
-   * 受控请求入口（供 ./s3ObjectOps 的扩展操作使用，避免主类膨胀突破行数阈值）
-   * extraHeaders 的 key 会转小写并加入 SigV4 签名头集合
+   * 受控请求入口（供 ./s3ObjectOps、./s3Multipart 的扩展操作使用，避免主类膨胀突破行数阈值）
+   * extraHeaders 的 key 会转小写并加入 SigV4 签名头集合；
+   * onProgress 透传给请求体分块写入（Multipart UploadPart 逐片上报用，256KB 粒度平滑进度）
    */
   sendRequest(
     method: string,
     key: string,
     queryString: string,
-    opts?: { body?: Buffer | null; extraHeaders?: Record<string, string> },
+    opts?: { body?: Buffer | null; extraHeaders?: Record<string, string>; onProgress?: (sent: number, total: number) => void },
   ): Promise<NodeResponse> {
     return this.request(
       method, this.buildUri(key), queryString, this.buildUrl(key),
-      opts?.body ?? null, undefined, undefined, opts?.extraHeaders,
+      opts?.body ?? null, opts?.onProgress, undefined, opts?.extraHeaders,
     )
   }
 

@@ -114,13 +114,15 @@
 
       <!-- ====== 联网搜索配置 ====== -->
       <div class="search-section-divider">
-        <span class="divider-text">联网搜索（RAG 模式）</span>
+        <!-- 分隔线标题："联网搜索（RAG 模式）" -->
+        <span class="divider-text">{{ i18n.searchSectionTitle }}</span>
       </div>
 
       <!-- 搜索引擎选择 -->
       <SettingGroup>
         <template #label>
-          搜索引擎
+          <!-- 分组标签："搜索引擎" -->
+          {{ i18n.searchEngine }}
         </template>
         <div class="search-provider-options">
           <button
@@ -130,7 +132,8 @@
             :class="{ active: settings.searchProvider === opt.value }"
             @click="updateSetting('searchProvider', opt.value)"
           >
-            {{ opt.label }}
+            <!-- 选项文案：如"Jina（免费）"、"博查搜索" -->
+            {{ i18n[opt.labelKey] }}
           </button>
         </div>
       </SettingGroup>
@@ -138,42 +141,32 @@
       <!-- 博查 API Key（仅博查搜索时显示） -->
       <SettingGroup v-if="settings.searchProvider === 'bocha'">
         <template #label>
-          博查 API Key
+          <!-- 分组标签："博查 API Key" -->
+          {{ i18n.searchBochaApiKeyLabel }}
         </template>
         <TextInput
           :model-value="settings.searchBochaApiKey"
           type="password"
-          placeholder="在 open.bochaai.com 注册获取"
+          :placeholder="i18n.searchBochaApiKeyPlaceholder"
           @update:model-value="(v: string) => updateSetting('searchBochaApiKey', v)"
         />
         <div class="setting-desc">
-          注册 <a
+          <!-- 说明文字："注册 博查AI 获取 API Key，免费额度 1000 次/月"（链接拆三段渲染） -->
+          {{ i18n.bochaDescStart }}
+          <a
             href="https://open.bochaai.com"
             target="_blank"
             class="setting-link"
-          >博查AI</a> 获取 API Key，免费额度 1000 次/月
-        </div>
-      </SettingGroup>
-
-      <!-- SearXNG 实例地址（仅 SearXNG 时显示） -->
-      <SettingGroup v-if="settings.searchProvider === 'searxng'">
-        <template #label>
-          SearXNG 实例地址
-        </template>
-        <TextInput
-          :model-value="settings.searchSearxngUrl"
-          placeholder="http://localhost:8080"
-          @update:model-value="(v: string) => updateSetting('searchSearxngUrl', v)"
-        />
-        <div class="setting-desc">
-          自建或公共 SearXNG 实例地址，需启用 JSON 格式输出
+          >{{ i18n.bochaBrand }}</a>
+          {{ i18n.bochaDescEnd }}
         </div>
       </SettingGroup>
 
       <!-- Jina 搜索提示 -->
       <SettingGroup v-if="settings.searchProvider === 'jina'">
         <div class="setting-desc jina-hint">
-          Jina Search 免费无需 API Key，国内可访问，开箱即用。适合轻度使用，重度推荐博查搜索。
+          <!-- 提示文案：Jina Search 免费无需 API Key，国内可访问，开箱即用 -->
+          {{ i18n.searchJinaHint }}
         </div>
       </SettingGroup>
 
@@ -184,7 +177,8 @@
           :disabled="isTestingSearch"
           @click="testSearch"
         >
-          {{ isTestingSearch ? '搜索中...' : '测试联网搜索' }}
+          <!-- 按钮文案："测试联网搜索" / "搜索中..." -->
+          {{ isTestingSearch ? i18n.searching : i18n.testSearchButton }}
         </button>
         <div
           v-if="searchTestResult"
@@ -243,18 +237,15 @@ const emit = defineEmits<Emits>()
 // 本地响应式副本，确保切换供应商时 UI 立即更新
 const settings = reactive<AiSettings>({ ...props.settings })
 
-const searchProviderOptions: { value: SearchProvider, label: string }[] = [
+// labelKey 为 i18n 键名，模板以 i18n[opt.labelKey] 渲染（键值见 superPanel.json）
+const searchProviderOptions: { value: SearchProvider, labelKey: string }[] = [
   {
     value: "jina",
-    label: "Jina（免费）",
+    labelKey: "searchProviderJina",
   },
   {
     value: "bocha",
-    label: "博查搜索",
-  },
-  {
-    value: "searxng",
-    label: "SearXNG（自建）",
+    labelKey: "searchProviderBocha",
   },
 ]
 
@@ -288,7 +279,6 @@ const testSearch = async () => {
     const results = await searchWeb("今天是几号 最新新闻", {
       searchProvider: settings.searchProvider as SearchProvider,
       bochaApiKey: settings.searchBochaApiKey || "",
-      searxngUrl: settings.searchSearxngUrl || "",
     })
 
     if (results.length > 0) {
@@ -296,7 +286,7 @@ const testSearch = async () => {
       showMessage("联网搜索测试成功", 2000, "info")
     } else {
       searchTestError.value = true
-      searchTestResult.value = "搜索未返回结果，请检查配置"
+      searchTestResult.value = props.i18n.searchNoResults
     }
   } catch (error) {
     searchTestError.value = true

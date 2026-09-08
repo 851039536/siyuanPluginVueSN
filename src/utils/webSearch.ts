@@ -1,6 +1,6 @@
 /**
  * 联网搜索模块 (RAG: 先搜后答)
- * 支持国内可用的搜索引擎：博查(Bocha)、Jina、SearXNG
+ * 支持国内可用的搜索引擎：博查(Bocha)、Jina
  * 搜索结果将注入 system prompt，让 LLM 基于真实数据回答，大幅降低幻觉
  */
 import type {
@@ -112,48 +112,6 @@ async function searchJina(
   })).filter((r: SearchResult) => r.title || r.content)
 }
 
-// ============ SearXNG ============
-
-/**
- * SearXNG 搜索 API 调用
- * 自建开源元搜索引擎，无需 API Key，隐私友好
- * 需要用户自行部署或使用公共实例
- */
-async function searchSearXNG(
-  query: string,
-  searxngUrl: string,
-  maxResults: number = DEFAULT_MAX_RESULTS,
-  language?: string,
-): Promise<SearchResult[]> {
-  let url = `${searxngUrl.replace(/\/$/, "")}/search?q=${encodeURIComponent(query)}&format=json&categories=general`
-  if (language && language !== "auto") {
-    url += `&language=${encodeURIComponent(language)}`
-  }
-
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      Accept: "application/json",
-    },
-  })
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`SearXNG搜索请求失败: ${response.status} ${errorText}`)
-  }
-
-  const data = await response.json()
-
-  // SearXNG 返回格式: { results: [{ title, url, content }] }
-  const results = data?.results || []
-  return results.slice(0, maxResults).map((item: any) => ({
-    title: item.title || "",
-    url: item.url || "",
-    content: item.content || "",
-    score: item.score,
-  })).filter((r: SearchResult) => r.title || r.content)
-}
-
 // ============ 语义重排序 (Semantic Reranking) ============
 
 /**
@@ -246,13 +204,6 @@ export async function searchWeb(
     case "jina":
       return searchJina(query, maxResults, searchLanguage)
 
-    case "searxng": {
-      if (!config.searxngUrl) {
-        throw new Error("SearXNG 搜索需要配置实例地址，请在超级面板中设置")
-      }
-      return searchSearXNG(query, config.searxngUrl, maxResults, searchLanguage)
-    }
-
     default:
       throw new Error(`不支持的搜索引擎: ${searchProvider}`)
   }
@@ -299,10 +250,14 @@ ${items}
  */
 export function getSearchConfigFromPlugin(plugin: any): SearchApiConfig {
   const settings = plugin?.settings || {}
+  // 兼容旧配置：已移除的 searxng 供应商降级为 jina
+  // 先以字符串读取旧值再收窄为 SearchProvider，避免联合类型不含旧值导致比较不成立
+  const rawProvider: string = settings.searchProvider || "jina"
   return {
-    searchProvider: settings.searchProvider || "jina",
+    searchProvider: rawProvider === "searxng"
+      ? "jina"
+      : (rawProvider as SearchApiConfig["searchProvider"]),
     bochaApiKey: settings.searchBochaApiKey || "",
-    searxngUrl: settings.searchSearxngUrl || "",
     searchLanguage: settings.searchLanguage || "auto",
     searchFreshness: settings.searchFreshness || "noLimit",
     jinaApiKey: settings.searchJinaApiKey || "",

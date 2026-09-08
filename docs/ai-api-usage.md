@@ -179,7 +179,7 @@ const result = await callAISmart(prompt, config, {
 })
 ```
 
-- 搜索供应商由超级面板配置（`bocha` / `jina` / `searxng`），配置在 `config.searchConfig` 中。
+- 搜索供应商由超级面板配置（`bocha` / `jina`），配置在 `config.searchConfig` 中。
 - 未显式传 `searchQuery` 时，自动从 prompt 提取（去代码块/标题/链接后取前 200 字）。
 - 搜索失败不中断生成：降级为"无搜索结果继续回答"，并注入失败说明。
 

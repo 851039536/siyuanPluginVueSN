@@ -322,7 +322,8 @@ export class WorktreeOps {
       const text = await this.executor.execGit(projectPath, [
         "-c", "core.quotepath=false", "show", "--text", "--format=%B", hash,
       ]) || ""
-      const diffStart = text.indexOf("diff --git ")
+      // 行首锚定匹配 diff 起点，防提交消息体恰好包含 "diff --git " 字符串时误判为 diff 开头
+      const diffStart = /^diff --git /m.exec(text)?.index ?? -1
       if (diffStart < 0) { return text.substring(0, 10000) }
       return text.substring(0, diffStart) + buildDiffContext(text.substring(diffStart), budget)
     } catch {

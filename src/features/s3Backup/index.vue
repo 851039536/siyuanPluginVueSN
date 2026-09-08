@@ -64,6 +64,7 @@
         v-if="isAnyTaskRunning"
         :progress="backupProgress"
         :phase-label="phaseLabel"
+        :i18n="i18n"
       />
 
       <!-- 手动备份 -->

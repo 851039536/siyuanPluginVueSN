@@ -161,6 +161,8 @@ export class SuperPanelManager {
       maskId: "super-panel-ai-settings-mask",
       width: "520px",
       height: "auto",
+      // 从超级面板之上弹出的二级弹窗：透明遮罩避免两层全屏遮罩叠加压暗
+      maskBackground: "rgba(0, 0, 0, 0)",
       getCloseHandler: () => this.closeAiSettings.bind(this),
       buildProps: () => this.buildAiSettingsProps(),
     })

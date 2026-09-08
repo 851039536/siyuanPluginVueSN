@@ -113,6 +113,12 @@ export interface ModalAppOptions {
   /** 弹窗高度 */
   height?: string
   /**
+   * 遮罩背景色，默认 "rgba(0, 0, 0, 0.5)"。
+   * 嵌套弹窗（从已有 Modal 之上再弹出的二级弹窗）应传透明/淡背景，
+   * 避免多层全屏遮罩叠加压暗视觉。
+   */
+  maskBackground?: string
+  /**
    * 持久模式：关闭时仅隐藏 DOM，不销毁 Vue 实例。
    * 适用于需要保留组件内部状态（如进行中的任务、表单内容）的场景。
    * 默认 false（关闭即销毁）。
@@ -151,6 +157,7 @@ export function createModalVueApp(
     maskId,
     width = "90vw",
     height = "85vh",
+    maskBackground = "rgba(0, 0, 0, 0.5)",
     persistent = false,
   } = options
 
@@ -205,7 +212,7 @@ export function createModalVueApp(
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
+      background: ${maskBackground};
       z-index: ${MODAL_MASK_Z_INDEX};
       display: flex;
       align-items: center;

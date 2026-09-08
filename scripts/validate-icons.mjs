@@ -22,7 +22,11 @@ async function validateIcons() {
       await fs.readFile(ICONS_DATA_PATH, 'utf-8'),
     )
 
-    const availableIcons = new Set(Object.keys(iconsData.icons))
+    // @iconify/vue 运行时支持别名（aliases 指向父图标）渲染，须一并纳入有效集
+    const availableIcons = new Set([
+      ...Object.keys(iconsData.icons),
+      ...Object.keys(iconsData.aliases || {}),
+    ])
 
     // 读取项目图标配置
     const configPath = path.resolve(process.cwd(), 'src/config/icons.ts')

@@ -375,6 +375,12 @@ export interface CommitFixPrefs {
   preserveDate: boolean
 }
 
+/** 删除历史提交偏好（是否删除前自动备份，持久化到 git-push-dropcommit-prefs） */
+export interface DropCommitPrefs {
+  /** true = 删除前创建 bundle 全量备份，false = 跳过备份直接删除（仅 reflog 可恢复） */
+  autoBackup: boolean
+}
+
 /** 行数排行基础字段（新增/删除/净增三要素） */
 interface LineRankBase {
   /** 新增行数（numstat 聚合） */

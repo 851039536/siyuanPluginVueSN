@@ -118,6 +118,34 @@
               <span>{{ error }}</span>
             </div>
 
+            <!-- 删除前自动备份开关（持久化偏好：切换即时保存，下次打开弹窗恢复上次选择） -->
+            <div
+              v-if="!loading && projectPath"
+              class="gp-drop-backup-toggle"
+            >
+              <label class="gp-drop-backup-toggle-label">
+                <input
+                  type="checkbox"
+                  class="gp-set-switch"
+                  :checked="autoBackup"
+                  :disabled="busy"
+                  @change="onAutoBackupChange(($event.target as HTMLInputElement).checked)"
+                />
+                <!-- 开关标签："删除前自动备份" -->
+                <span>{{ i18n.dropCommitAutoBackup }}</span>
+              </label>
+              <!-- 关闭态警告："已关闭自动备份，本次删除不会生成备份文件" -->
+              <span
+                v-if="!autoBackup"
+                class="gp-drop-backup-toggle-warn"
+              >{{ i18n.dropCommitNoBackupHint }}</span>
+              <!-- 开启态说明：关闭开关的后果 -->
+              <span
+                v-else
+                class="gp-drop-backup-toggle-tip"
+              >{{ i18n.dropCommitAutoBackupTip }}</span>
+            </div>
+
             <!-- 备份操作条（常驻）：路径 + 打开文件夹 + 清理备份；有本次备份时显示 bundle 文件路径，否则显示备份目录路径 -->
             <div
               v-if="!loading && projectPath"
@@ -175,8 +203,8 @@
         </div>
 
         <div class="gp-dialog-footer">
-          <!-- 底部提示：reflog 可恢复 -->
-          <span class="gp-drop-hint">{{ i18n.dropCommitRecoverHint }}</span>
+          <!-- 底部提示：随备份开关切换（开=已自动备份，关=仅 reflog 可恢复） -->
+          <span class="gp-drop-hint">{{ autoBackup ? i18n.dropCommitRecoverHint : i18n.dropCommitAutoBackupTip }}</span>
           <div class="gp-grow" />
           <!-- 完成（删除成功后展示备份路径，由用户点击关闭） -->
           <button
@@ -268,6 +296,8 @@ const headHash = ref("")
 const rebaseStuck = ref(false)
 /** 目标是否为当前 HEAD 的祖先（非祖先时删除无效） */
 const isAncestor = ref(false)
+/** 删除前是否自动创建 bundle 备份（持久化偏好，默认开启；关闭时跳过备份直接删除） */
+const autoBackup = ref(true)
 
 /** 是否有操作进行中（备份/删除/清理备份中禁止关闭与重复提交） */
 const busy = computed(() => backingUp.value || dropping.value || cleaningBackup.value)
@@ -324,22 +354,35 @@ async function init() {
     project.value = p ?? null
     if (!p) return
     const path = resolveValidPath(p)
-    const [head, stuck, ancestor, backupDirPath] = await Promise.all([
+    const [head, stuck, ancestor, backupDirPath, dropPrefs] = await Promise.all([
       manager.getHeadHash(path),
       manager.isInRebaseState(path),
       manager.isAncestorOfHead(path, props.target.hash),
       manager.getProjectBackupDir(path).catch(() => ""),
+      // 恢复上次选择的备份策略（持久化偏好，无记录时默认开启）
+      manager.storage.dropCommitPrefs.loadOrDefault(),
     ])
     headHash.value = head
     rebaseStuck.value = stuck
     isAncestor.value = ancestor
     backupDir.value = backupDirPath
+    autoBackup.value = dropPrefs.autoBackup
   } finally {
     loading.value = false
   }
 }
 
-/** 执行删除：先 bundle 全量备份（失败即中止），再 commit-tree 图重建删除；成功后停留展示备份位置 */
+/** 切换删除前自动备份：更新状态并即时持久化（下次打开弹窗恢复该选择） */
+async function onAutoBackupChange(val: boolean) {
+  autoBackup.value = val
+  try {
+    await manager.storage.dropCommitPrefs.save({ autoBackup: val })
+  } catch (e) {
+    console.error("[gitPush] 保存删除备份偏好失败:", e)
+  }
+}
+
+/** 执行删除：自动备份开启时先 bundle 全量备份（失败即中止）再图重建删除，关闭时跳过备份直接删除；成功后停留展示结果 */
 async function performDrop() {
   if (!canDrop.value || busy.value || !projectPath.value) return
   error.value = ""
@@ -347,11 +390,13 @@ async function performDrop() {
   backupPath.value = ""
   backupCleaned.value = false
   backupCleanedCount.value = 0
-  backingUp.value = true
   try {
-    // 先备份后删除，成功后保留弹窗展示备份路径（撤销恢复点需用户主动关闭）
-    backupPath.value = await manager.createProjectBackup(projectPath.value)
-    backingUp.value = false
+    // 开启时先备份后删除（成功后保留弹窗展示备份路径，撤销恢复点需用户主动关闭）
+    if (autoBackup.value) {
+      backingUp.value = true
+      backupPath.value = await manager.createProjectBackup(projectPath.value)
+      backingUp.value = false
+    }
     dropping.value = true
     dropProgress.value = null
     await manager.dropCommit(projectPath.value, props.target.hash, (current, total) => {

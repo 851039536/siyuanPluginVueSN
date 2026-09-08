@@ -106,7 +106,7 @@ export interface SkillItem {
 // ============ 联网搜索相关类型 ============
 
 /** 搜索引擎类型（均为国内可用） */
-export type SearchProvider = "bocha" | "jina" | "searxng"
+export type SearchProvider = "bocha" | "jina"
 
 /** 搜索结果条目 */
 export interface SearchResult {
@@ -122,8 +122,6 @@ export interface SearchApiConfig {
   searchProvider: SearchProvider
   /** 博查 API Key（searchProvider 为 bocha 时必填，注册 https://open.bochaai.com 获取） */
   bochaApiKey: string
-  /** SearXNG 实例地址（searchProvider 为 searxng 时必填，如 http://localhost:8080） */
-  searxngUrl: string
   /** 搜索语言偏好，如 "zh-CN"、"en"、"auto"，默认 "auto" 不限制语言 */
   searchLanguage?: string
   /** 博查 freshness 参数，如 "noLimit"(默认)、"oneWeek"、"oneMonth" */

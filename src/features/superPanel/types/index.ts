@@ -75,8 +75,6 @@ export interface AiSettings {
   searchProvider: string
   /** 博查 API Key */
   searchBochaApiKey: string
-  /** SearXNG 实例地址 */
-  searchSearxngUrl: string
 }
 
 /**
@@ -300,7 +298,6 @@ export class SuperPanelManager {
         aiEnableThinking: aiSettings.enableThinking,
         searchProvider: aiSettings.searchProvider || "jina",
         searchBochaApiKey: aiSettings.searchBochaApiKey || "",
-        searchSearxngUrl: aiSettings.searchSearxngUrl || "",
       },
       "AI配置已保存",
     )
@@ -361,7 +358,6 @@ export class SuperPanelManager {
         enableThinking: s.aiEnableThinking ?? false,
         searchProvider: s.searchProvider || "jina",
         searchBochaApiKey: s.searchBochaApiKey || "",
-        searchSearxngUrl: s.searchSearxngUrl || "",
       },
       "i18n": (this.plugin.i18n as any).superPanel || {},
       "onClose": () => {

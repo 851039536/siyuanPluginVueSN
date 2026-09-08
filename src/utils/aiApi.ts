@@ -737,11 +737,14 @@ export function getApiConfigFromPlugin(plugin: any): AiApiConfig {
     : (rawModel === "custom" ? (settings.aiCustomModel || "qwen-plus") : rawModel)
 
   // 构建搜索配置
-  const searchProvider = settings.searchProvider || "jina"
+  // 兼容旧配置：已移除的 searxng 供应商降级为 jina
+  // 先以字符串读取旧值再收窄为 SearchProvider，避免联合类型不含旧值导致比较不成立
+  const rawSearchProvider: string = settings.searchProvider || "jina"
   const searchConfig: SearchApiConfig = {
-    searchProvider: searchProvider as SearchApiConfig["searchProvider"],
+    searchProvider: rawSearchProvider === "searxng"
+      ? "jina"
+      : (rawSearchProvider as SearchApiConfig["searchProvider"]),
     bochaApiKey: settings.searchBochaApiKey || "",
-    searxngUrl: settings.searchSearxngUrl || "",
     searchLanguage: settings.searchLanguage || "auto",
     searchFreshness: settings.searchFreshness || "noLimit",
     jinaApiKey: settings.searchJinaApiKey || "",

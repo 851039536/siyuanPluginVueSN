@@ -257,6 +257,7 @@ const {
   testConnection,
   applyConfig,
   uploadFileContent,
+  uploadFileSmart,
   getObjectText,
   deleteObject,
   listBackups,
@@ -374,7 +375,7 @@ const {
   isConfigured,
   backupList,
   buildUploadKey: (fileName) => buildS3Key(s3Config.value.prefix, s3SubPrefix.value, fileName),
-  uploadFileContent,
+  uploadFileSmart,
   refreshBackupList: () => refreshBackupList(),
   addLog: (entry) => addLog(entry),
   i18n: props.i18n,
@@ -422,7 +423,7 @@ const { performS3Backup } = useFullS3Upload({
   s3SubPrefix,
   useDateFolder,
   listExistingKeys,
-  uploadFileContent,
+  uploadFileSmart,
   backupProgress,
   addLog: (entry) => addLog(entry),
   saveChecksum,
@@ -439,6 +440,7 @@ const isIncrementalRestoring = ref(false)
 
 const { performIncrementalBackup, performIncrementalRestore } = useIncrementalBackup({
   getBackupManager: () => backupManager,
+  uploadFileSmart,
   uploadFileContent,
   getObjectText,
   deleteObject,

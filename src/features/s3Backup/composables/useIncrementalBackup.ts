@@ -13,7 +13,7 @@ import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import type { BackupManager, BackupProgress } from "../modules/BackupManager"
 import type { BackupLog, BackupLogDetail, BackupManifest, IncrementalFileEntry } from "../types"
-import { LARGE_FILE_WARN_SIZE, MANIFEST_VERSION, MAX_LOG_DETAIL_FILES, MSG_DESKTOP_ONLY, TRANSFER_MAX_RETRIES } from "../types"
+import { MANIFEST_VERSION, MAX_LOG_DETAIL_FILES, MSG_DESKTOP_ONLY, TRANSFER_MAX_RETRIES } from "../types"
 import { buildIncrementalKey, buildManifestKey, diffManifest, getHostname, parseManifest, runWithConcurrency } from "../utils"
 
 /** 上传并发数（S3 客户端无内建并发管理，固定小并发防止请求风暴） */
@@ -28,6 +28,9 @@ function capFileList(files: string[]): [string[] | undefined, number] {
 /** 依赖注入：全部来自 index.vue 已有的状态与方法 */
 export interface IncrementalBackupDeps {
   getBackupManager: () => BackupManager | null
+  /** 大文件感知上传磁盘文件（>100MB 自动分片，小文件整读单 PUT） */
+  uploadFileSmart: (filePath: string, key: string) => Promise<void>
+  /** 内存 Buffer 上传（manifest 清单用，体积小不走分片） */
   uploadFileContent: (buffer: Buffer, key: string) => Promise<void>
   getObjectText: (key: string) => Promise<string | null>
   deleteObject: (key: string) => Promise<void>
@@ -89,13 +92,12 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
     }
   }
 
-  /** 带重试的单文件上传，成功返回 true */
+  /** 带重试的单文件上传（磁盘路径版：大文件自动分片，小文件整读单 PUT），成功返回 true */
   async function uploadWithRetry(file: IncrementalFileEntry, key: string): Promise<boolean> {
     const node = getNodeModules()
     if (!node) { return false }
     return withRetry(async () => {
-      const content = await node.fs.promises.readFile(file.fullPath)
-      await deps.uploadFileContent(content, key)
+      await deps.uploadFileSmart(file.fullPath, key)
     }, `上传失败: ${file.relativePath}`)
   }
 
@@ -152,9 +154,6 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
     const newFiles: BackupManifest["files"] = { ...diff.unchanged }
 
     await runWithConcurrency(diff.toUpload, UPLOAD_CONCURRENCY, async (file) => {
-      if (file.size > LARGE_FILE_WARN_SIZE) {
-        console.warn(`[S3增量] 大文件整体读入内存上传: ${file.relativePath}（${file.size} 字节）`)
-      }
       backupProgress.value = {
         phase: "uploading",
         currentFile: file.relativePath,

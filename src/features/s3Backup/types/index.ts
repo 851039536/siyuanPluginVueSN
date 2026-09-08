@@ -15,7 +15,7 @@ import { TypedStorage } from "@/utils/typedStorage"
 export type { S3Config, S3FileInfo } from "@/utils/s3/types"
 export {
   MSG_DESKTOP_ONLY, DEFAULT_UPLOAD_TIMEOUT_SEC, DEFAULT_S3_PREFIX,
-  LARGE_FILE_WARN_SIZE, DEFAULT_S3_CONFIG,
+  DEFAULT_S3_CONFIG,
 } from "@/utils/s3/types"
 
 // ========== 备份模式接口 ==========

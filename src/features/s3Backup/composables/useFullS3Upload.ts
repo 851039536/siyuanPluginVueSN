@@ -13,7 +13,7 @@ import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import type { BackupManager, BackupProgress, BackupResult, WorkspaceFile } from "../modules/BackupManager"
 import type { BackupLog, S3Config } from "../types"
-import { FULL_UPLOAD_CONCURRENCY, LARGE_FILE_WARN_SIZE, MSG_DESKTOP_ONLY, TRANSFER_MAX_RETRIES } from "../types"
+import { FULL_UPLOAD_CONCURRENCY, MSG_DESKTOP_ONLY, TRANSFER_MAX_RETRIES } from "../types"
 import { buildS3Key, getBaseName, makeBackupTimestamp, runWithConcurrency } from "../utils"
 
 /** 依赖注入：全部来自 index.vue 已有的状态与方法 */
@@ -24,8 +24,8 @@ export interface FullS3UploadDeps {
   s3SubPrefix: Ref<string>
   useDateFolder: Ref<boolean>
   listExistingKeys: () => Promise<Set<string>>
-  /** 上传文件内容（onProgress 上报单文件字节进度，供大文件上传时进度条流动） */
-  uploadFileContent: (buffer: Buffer, key: string, onProgress?: (sent: number, total: number) => void) => Promise<void>
+  /** 大文件感知上传磁盘文件（>100MB 自动分片；onProgress 按文件总字节上报，供进度条流动） */
+  uploadFileSmart: (filePath: string, key: string, onProgress?: (sent: number, total: number) => void) => Promise<void>
   backupProgress: Ref<BackupProgress>
   addLog: (entry: Omit<BackupLog, "id" | "time" | "hostname">) => void
   /** 保存校验值（persistNow=false 仅更新内存不落盘，供批量循环使用） */
@@ -131,14 +131,11 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
           percent: Math.round((processedCount / files.length) * 100),
         }
 
-        let content: Buffer
+        // 先 stat 获取大小（校验值记录用）并兜底文件缺失；大文件分片与否由共享层 uploadFileSmart 内部判定
+        let fileSize = 0
         try {
-          // 全量上传同样整体读入内存，大文件给出显式警告（与增量备份口径一致）
           const stats = await fs.stat(file.fullPath)
-          if (stats.size > LARGE_FILE_WARN_SIZE) {
-            console.warn(`[S3备份] 大文件整体读入内存上传: ${file.relativePath}（${stats.size} 字节）`)
-          }
-          content = await fs.readFile(file.fullPath)
+          fileSize = stats.size
         } catch (readErr: unknown) {
           console.warn(`跳过无法读取的文件: ${file.relativePath}`, getErrorMessage(readErr))
           failedCount++
@@ -146,13 +143,13 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
           return
         }
 
-        // 上传（带重试）与哈希并行执行，消除二次磁盘读的串行等待
+        // 上传（带重试）与哈希并行执行；上传改为磁盘路径流式/分片，不再整体 readFile 驻留内存
         const [uploadResult, hashResult] = await Promise.allSettled([
           (async () => {
             for (let attempt = 0; attempt <= TRANSFER_MAX_RETRIES; attempt++) {
               try {
                 // 字节级进度：单文件内发送比例折算到总进度（否则单大 ZIP 上传全程 0% 直跳 100%）
-                await deps.uploadFileContent(content, s3Key, (sent, total) => {
+                await deps.uploadFileSmart(file.fullPath, s3Key, (sent, total) => {
                   const percent = Math.round(((processedCount + sent / total) / files.length) * 100)
                   if (percent !== backupProgress.value.percent) { // 整数百分比变化才更新，避免高频响应式触发
                     backupProgress.value = { ...backupProgress.value, percent }
@@ -176,7 +173,7 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
 
         // 上传成功：保存校验值（哈希失败仅告警，不阻断）
         if (hashResult.status === "fulfilled") {
-          await deps.saveChecksum(file.relativePath, file.fullPath, content.length, hashResult.value, false)
+          await deps.saveChecksum(file.relativePath, file.fullPath, fileSize, hashResult.value, false)
         } else {
           console.warn("计算校验值失败:", file.relativePath, getErrorMessage(hashResult.reason))
         }

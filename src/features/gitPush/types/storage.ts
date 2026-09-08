@@ -54,6 +54,16 @@ export function clampMaxBodyLineLength(n: number): number {
   return Math.max(BODY_LINE_LENGTH_MIN, Math.min(BODY_LINE_LENGTH_MAX, num))
 }
 
+/** AI 生成提交信息的 diff 上下文字符预算允许范围（设置弹窗输入钳位的单一数据源） */
+export const DIFF_CONTEXT_BUDGET_MIN = 1000
+export const DIFF_CONTEXT_BUDGET_MAX = 50000
+
+/** 将 diff 上下文字符预算整数化并钳位到允许范围 */
+export function clampDiffContextBudget(n: number): number {
+  const num = Math.round(Number(n) || DEFAULT_COMMIT_RULE_CONFIG.diffContextBudget)
+  return Math.max(DIFF_CONTEXT_BUDGET_MIN, Math.min(DIFF_CONTEXT_BUDGET_MAX, num))
+}
+
 /** 预设 IDE 条目（扫描结果与预设列表共用，useIdeManagement 持有） */
 export interface IdeEntry {
   name: string

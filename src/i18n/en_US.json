@@ -1792,6 +1792,8 @@
     "ruleCheckReasonBodyLineTooLong": "Body line too long",
     "ruleCheckMinSubjectLength": "Min Description Length",
     "ruleCheckMinSubjectLengthHint": "Descriptions shorter than this are flagged as \"too short\" (1~100); re-run analysis after saving",
+    "ruleCheckDiffBudget": "Diff Context Budget",
+    "ruleCheckDiffBudgetHint": "Max diff characters fed to AI per commit message generation, split per file (1000~50000); increase when many files change",
     "ruleCheckOptCapitalized": "Capitalize Subject",
     "ruleCheckOptCapitalizedHint": "Flags subjects starting with a lowercase letter; Chinese/numeric starts are unaffected",
     "ruleCheckOptWip": "WIP Commit Detection",

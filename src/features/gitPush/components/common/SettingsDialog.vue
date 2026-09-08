@@ -222,6 +222,31 @@
             <div class="gp-set-hint">
               {{ i18n.ruleCheckOptBodyLineLimitHint }}
             </div>
+            <!-- AI diff 上下文预算设置行（生成提交信息时送入 AI 的字符预算） -->
+            <div class="gp-set-row gp-set-row--spaced">
+              <!-- 设置项标签："Diff 上下文预算" -->
+              <label class="gp-set-label">{{ i18n.ruleCheckDiffBudget }}</label>
+              <div class="gp-set-input-row">
+                <Input
+                  :model-value="localDiffContextBudget"
+                  type="number"
+                  size="xsmall"
+                  class="gp-set-concurrency-input"
+                  @update:model-value="localDiffContextBudget = clampDiffContextBudget(Number($event))"
+                />
+                <button
+                  class="vp-btn vp-btn--primary vp-btn--sm"
+                  @click="saveDiffContextBudget"
+                >
+                  <!-- 按钮文案："保存" -->
+                  {{ i18n.save }}
+                </button>
+              </div>
+            </div>
+            <!-- 提示文案："AI 生成提交信息时按文件分块送入的 diff 字符上限（1000~50000），改动文件较多时可调大" -->
+            <div class="gp-set-hint">
+              {{ i18n.ruleCheckDiffBudgetHint }}
+            </div>
           </template>
 
           <!-- ── 显示分区：提交分析显示设置 ── -->
@@ -257,7 +282,7 @@ import { ref, watch } from "vue"
 import Input from "@/components/Input.vue"
 import GitConfigSection from "./GitConfigSection.vue"
 import AnalysisSettingsForm from "../CommitAnalysis/AnalysisSettingsForm.vue"
-import { clampGitConcurrency, clampMaxBodyLineLength, clampMinSubjectLength, clampNetworkTimeout } from "../../types"
+import { clampDiffContextBudget, clampGitConcurrency, clampMaxBodyLineLength, clampMinSubjectLength, clampNetworkTimeout } from "../../types"
 import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
 
 type SettingsSection = "general" | "display" | "gitconfig"
@@ -300,6 +325,7 @@ const localConcurrency = ref(clampGitConcurrency(props.concurrency))
 const localNetworkTimeout = ref(clampNetworkTimeout(props.networkTimeout))
 const localMinSubjectLength = ref(clampMinSubjectLength(props.ruleConfig.minSubjectLength))
 const localMaxBodyLineLength = ref(clampMaxBodyLineLength(props.ruleConfig.maxBodyLineLength))
+const localDiffContextBudget = ref(clampDiffContextBudget(props.ruleConfig.diffContextBudget))
 const localBranchMode = ref<"all" | "head">(props.pushBranchMode)
 const activeSection = ref<SettingsSection>("general")
 const { rootRef } = useDialogKeyboard()
@@ -327,6 +353,11 @@ function saveBodyLineLimit() {
   emit("saveRuleConfig", { maxBodyLineLength: localMaxBodyLineLength.value })
 }
 
+/** 保存 Diff 上下文预算（保存按钮 / Enter 键共用） */
+function saveDiffContextBudget() {
+  emit("saveRuleConfig", { diffContextBudget: localDiffContextBudget.value })
+}
+
 /** 可选规则开关切换（checkbox 即时保存，同分支模式 radio 即时语义） */
 function onRuleToggle(key: "requireCapitalizedSubject" | "detectWipSubject" | "bodyLineLimitEnabled", e: Event) {
   const patch: Partial<CommitRuleConfig> = {}
@@ -334,13 +365,14 @@ function onRuleToggle(key: "requireCapitalizedSubject" | "detectWipSubject" | "b
   emit("saveRuleConfig", patch)
 }
 
-/** Enter 键仅在常规分区保存并发数、网络超时、描述最短字数与正文行长（Git 配置分区输入由组件内 stop 拦截，显示分区无提交语义） */
+/** Enter 键仅在常规分区保存并发数、网络超时、描述最短字数、正文行长与 Diff 预算（Git 配置分区输入由组件内 stop 拦截，显示分区无提交语义） */
 function onEnterKey() {
   if (activeSection.value === "general") {
     saveConcurrency()
     saveNetworkTimeout()
     saveMinSubjectLength()
     saveBodyLineLimit()
+    saveDiffContextBudget()
   }
 }
 </script>

@@ -1798,6 +1798,8 @@
     "ruleCheckOptWipHint": "描述以 wip/todo/fixme/tbd 等临时标记开头判违规",
     "ruleCheckOptBodyLineLimit": "正文行长限制",
     "ruleCheckOptBodyLineLimitHint": "多行提交信息正文每行超过该字符数判违规（1~500），空行不检查",
+    "ruleCheckDiffBudget": "Diff 上下文预算",
+    "ruleCheckDiffBudgetHint": "AI 生成提交信息时按文件分块送入的 diff 字符上限（1000~50000），改动文件较多时可调大",
     "ruleFixOpen": "修正",
     "ruleFixTitle": "修正提交信息",
     "ruleFixOriginal": "原提交信息",

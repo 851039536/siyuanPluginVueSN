@@ -4,7 +4,8 @@
     class="ai-settings-panel"
   >
     <div class="ai-settings-header">
-      <span>{{ i18n.aiSettings || 'AI大模型配置' }}</span>
+      <!-- 面板标题："AI大模型配置" -->
+      <span>{{ i18n.aiSettings }}</span>
       <Button
         variant="ghost"
         size="xsmall"
@@ -17,7 +18,8 @@
       <!-- API供应商选择 -->
       <SettingGroup>
         <template #label>
-          {{ i18n.apiProvider || 'API供应商' }}
+          <!-- 分组标签："API供应商" -->
+          {{ i18n.apiProvider }}
         </template>
         <AiProviderSelect
           :model-value="settings.provider"
@@ -29,7 +31,8 @@
       <!-- 模型选择 -->
       <SettingGroup v-if="settings.provider !== 'custom'">
         <template #label>
-          {{ i18n.aiModel || '模型' }}
+          <!-- 分组标签："模型" -->
+          {{ i18n.aiModel }}
         </template>
         <AiModelSelect
           :provider="settings.provider"
@@ -41,27 +44,48 @@
         />
       </SettingGroup>
 
+      <!-- 自定义模型名（自定义API供应商时直接输入） -->
+      <SettingGroup v-if="settings.provider === 'custom'">
+        <template #label>
+          <!-- 分组标签："模型" -->
+          {{ i18n.aiModel }}
+        </template>
+        <TextInput
+          :model-value="settings.customModel"
+          :placeholder="i18n.customModelPlaceholder"
+          @update:model-value="(v: string) => updateSetting('customModel', v)"
+        />
+        <div class="setting-desc">
+          <!-- 说明文字：模型名称须与 API 服务实际提供的名称一致 -->
+          {{ i18n.customModelDesc }}
+        </div>
+      </SettingGroup>
+
       <!-- 思考模式开关（仅DeepSeek显示） -->
       <SettingGroup v-if="settings.provider === 'deepseek'">
         <div class="thinking-toggle-row">
-          <label class="thinking-toggle-label">{{ i18n.thinkingMode || '思考模式' }}</label>
+          <!-- 开关标签："思考模式" -->
+          <label class="thinking-toggle-label">{{ i18n.thinkingMode }}</label>
           <button
             class="toggle-btn"
             :class="{ active: settings.enableThinking }"
             @click="updateSetting('enableThinking', !settings.enableThinking)"
           >
-            {{ settings.enableThinking ? (i18n.thinkingOn || '已开启') : (i18n.thinkingOff || '已关闭') }}
+            <!-- 开关状态文案："已开启" / "已关闭" -->
+            {{ settings.enableThinking ? i18n.thinkingOn : i18n.thinkingOff }}
           </button>
         </div>
         <div class="setting-desc">
-          {{ i18n.thinkingDesc || '开启后模型会先进行深度思考再回答，适合复杂推理任务' }}
+          <!-- 说明文字：开启后模型会先进行深度思考再回答 -->
+          {{ i18n.thinkingDesc }}
         </div>
       </SettingGroup>
 
       <!-- API密钥输入 -->
       <SettingGroup>
         <template #label>
-          {{ i18n.apiKey || 'API密钥' }}
+          <!-- 分组标签："API密钥" -->
+          {{ i18n.apiKey }}
         </template>
         <ApiKeyInput
           :provider="settings.provider"
@@ -74,15 +98,17 @@
       <!-- 自定义API端点 -->
       <SettingGroup v-if="settings.provider === 'custom'">
         <template #label>
-          {{ i18n.customEndpoint || 'API端点' }}
+          <!-- 分组标签："API端点" -->
+          {{ i18n.customEndpoint }}
         </template>
         <TextInput
           :model-value="settings.customEndpoint"
-          placeholder="https://api.example.com/v1/chat/completions"
+          placeholder="https://api.example.com/v1"
           @update:model-value="(v: string) => updateSetting('customEndpoint', v)"
         />
         <div class="setting-desc">
-          自定义API端点URL，用于连接自定义API服务
+          <!-- 说明文字：支持 OpenAI 兼容基地址（自动补全 /chat/completions）或完整端点 URL -->
+          {{ i18n.customEndpointDesc }}
         </div>
       </SettingGroup>
 

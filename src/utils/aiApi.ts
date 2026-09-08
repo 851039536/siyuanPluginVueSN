@@ -85,11 +85,51 @@ function supportsThinkingMode(model: string): boolean {
 }
 
 /**
+ * 规范化自定义 API 端点：兼容 OpenAI Chat Completions 协议的基地址写法
+ *
+ * 规则（保守，向后兼容，仅请求时规范化、不改存储值）：
+ * 1. trim + 去尾部斜杠
+ * 2. 已以 /chat/completions 或 /completions 结尾 → 原样返回（旧配置零影响）
+ * 3. 纯域名（路径为空）或以 /v数字 结尾（/v1、/api/v1 等）→ 自动追加 /chat/completions
+ * 4. 其他自定义路径 → 原样返回（用户明确指定的完整端点不动）
+ */
+export function normalizeCustomEndpoint(endpoint: string): string {
+  const trimmed = endpoint.trim().replace(/\/+$/, "")
+  if (!trimmed) {
+    return trimmed
+  }
+
+  // 完整端点（已含 completions 路径）：原样使用
+  if (/\/(chat\/)?completions$/.test(trimmed)) {
+    return trimmed
+  }
+
+  // 非法 URL 交给 fetch 阶段报错，此处不拦截
+  let parsed: URL
+  try {
+    parsed = new URL(trimmed)
+  } catch {
+    return trimmed
+  }
+
+  // OpenAI 兼容基地址：纯域名或 /v1 风格版本号结尾 → 自动补全 chat completions 路径
+  const path = parsed.pathname.replace(/\/+$/, "")
+  if (path === "" || /\/v\d+$/.test(path)) {
+    parsed.pathname = `${path}/chat/completions`
+    return parsed.toString()
+  }
+
+  return trimmed
+}
+
+/**
  * 获取 API URL
  */
 function getApiUrl(config: AiApiConfig, providerConfig: ProviderConfig): string {
   const url =
-    config.provider === "custom" ? config.customEndpoint : providerConfig.url
+    config.provider === "custom"
+      ? normalizeCustomEndpoint(config.customEndpoint)
+      : providerConfig.url
   if (!url) {
     throw new Error("API端点未设置")
   }
@@ -400,6 +440,11 @@ function resolveBaseParams(
 
   const apiUrl = getApiUrl(config, providerConfig)
 
+  // 自定义API供应商：模型名必须显式设置（OpenAI 协议 model 必填），不做静默兜底
+  if (config.provider === "custom" && !config.model) {
+    throw new Error("请先在超级面板中设置自定义API的模型名称")
+  }
+
   if (!config.apiKey) {
     throw new Error("请先在超级面板中配置API密钥")
   }
@@ -672,12 +717,24 @@ export async function callAISmart(
  */
 export function getApiConfigFromPlugin(plugin: any): AiApiConfig {
   const settings = plugin?.settings || {}
+
+  // 先解析 provider（带默认值），再据此解析 model 与 apiKey，
+  // 避免 aiApiProvider 未设置时 aiApiKeys[undefined] 取不到已配置的 key
+  // 兼容迁移：已废弃的 openai/zhipu 供应商降级为 tongyi
+  // 先以字符串读取旧值再收窄为 AiProvider，避免联合类型不含旧值导致比较不成立
+  const rawProvider: string = settings.aiApiProvider || "tongyi"
+  const provider: AiProvider = rawProvider === "openai" || rawProvider === "zhipu"
+    ? "tongyi"
+    : (rawProvider as AiProvider)
+
+  // 解析实际模型名称：
+  // - 内置供应商：选择"自定义模型"选项时使用用户输入的 customModel
+  // - 自定义API供应商：模型名直接来自 customModel（设置面板的模型输入框），
+  //   不做默认值兜底，缺失时由 resolveBaseParams 显式报错
   const rawModel = settings.aiModel || "qwen-plus"
-  // 解析实际模型名称：如果选择的是"自定义模型"，使用用户输入的 customModel
-  const model =
-    rawModel === "custom"
-      ? settings.aiCustomModel || "qwen-plus"
-      : rawModel
+  const model = provider === "custom"
+    ? (settings.aiCustomModel || "")
+    : (rawModel === "custom" ? (settings.aiCustomModel || "qwen-plus") : rawModel)
 
   // 构建搜索配置
   const searchProvider = settings.searchProvider || "jina"
@@ -689,15 +746,6 @@ export function getApiConfigFromPlugin(plugin: any): AiApiConfig {
     searchFreshness: settings.searchFreshness || "noLimit",
     jinaApiKey: settings.searchJinaApiKey || "",
   }
-
-  // 先解析 provider（带默认值），再据此查找 apiKey，
-  // 避免 aiApiProvider 未设置时 aiApiKeys[undefined] 取不到已配置的 key
-  // 兼容迁移：已废弃的 openai/zhipu 供应商降级为 tongyi
-  // 先以字符串读取旧值再收窄为 AiProvider，避免联合类型不含旧值导致比较不成立
-  const rawProvider: string = settings.aiApiProvider || "tongyi"
-  let provider: AiProvider = rawProvider === "openai" || rawProvider === "zhipu"
-    ? "tongyi"
-    : (rawProvider as AiProvider)
 
   return {
     provider,

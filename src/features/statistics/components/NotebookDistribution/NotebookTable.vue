@@ -147,7 +147,7 @@ const mergedRows = computed(() => {
       docPct: 0,
       wordPct: 0,
       pct: 0,
-      color: ws?.color ?? '#888',
+      color: ws?.color ?? 'var(--b3-border-color)',
     })
   }
 

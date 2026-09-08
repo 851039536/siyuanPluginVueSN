@@ -4,7 +4,7 @@ export {
   getStatistics,
 } from "./baseStats"
 export {
-  getNotebookBlockTypeStats,
+  getNotebookActivityTrend,
   getNotebookDocStats,
   getNotebookWordStats,
 } from "./notebookStats"

@@ -192,7 +192,7 @@ $color-rank-bronze: #cd7f32;
 }
 
 // ========== Shared Utility Classes ==========
-// These are used across multiple child components (DocBarChart, HeatmapCard,
+// These are used across multiple child components (HeatmapCard,
 // TrendView, WordRanking, etc.) so they must remain global.
 
 .section-title {
@@ -345,15 +345,11 @@ $color-rank-bronze: #cd7f32;
 
 .notebook-distribution-tab {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto auto auto auto;
-  gap: $spacing-1 $spacing-3; // 模块上下间距统一 4px，列间距保持 12px
-  align-items: stretch;
+  grid-template-columns: 1fr;
+  gap: $spacing-2; // 纵向单列流，模块间距统一 8px
 }
 
 .dist-summary-bar {
-  grid-column: 1 / -1;
-  grid-row: 1;
   display: flex;
   align-items: center;
   gap: $spacing-2;
@@ -388,24 +384,7 @@ $color-rank-bronze: #cd7f32;
   font-size: $font-size-xs;
 }
 
-.dist-left {
-  grid-row: 2 / 4;
-  grid-column: 1;
-}
-
-.dist-right-pie {
-  grid-row: 2;
-  grid-column: 2;
-}
-
-.dist-right-stack {
-  grid-row: 3;
-  grid-column: 2;
-}
-
 .dist-table {
-  grid-row: 4;
-  grid-column: 1 / -1;
   min-height: 200px;
 }
 

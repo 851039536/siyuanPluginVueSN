@@ -1,22 +1,16 @@
-// 笔记本分布查询（文档数/字数/活跃度/块类型）
+// 笔记本分布查询（文档数/字数/活跃度）
 
 import type {
   DailyWordCount,
   NotebookActivityItem,
   NotebookActivityRow,
-  NotebookBlockTypeRow,
-  NotebookBlockTypeStat,
   NotebookDocCount,
   NotebookDocCountRow,
   NotebookWordRow,
   NotebookWordStat,
-  NotebookWordSumRow,
 } from "../types"
 import { lsNotebooks } from "@/api"
-import {
-  BLOCK_TYPE_LABELS,
-  NOTEBOOK_COLORS,
-} from "../types/constants"
+import { NOTEBOOK_COLORS } from "../types/constants"
 import {
   filterActiveNotebooks,
   formatDate,
@@ -33,34 +27,41 @@ interface OpenNotebooks {
   idToName: Map<string, string>
 }
 
-/** Module-level cache with 10s TTL to avoid repeated lsNotebooks calls within one refresh cycle */
-let _cache: { data: OpenNotebooks, ts: number } | null = null
+/** Module-level cache (Promise + 10s TTL)：缓存 Promise 本身，并发调用共享同一次 lsNotebooks 请求 */
+let _cache: { data: Promise<OpenNotebooks>, ts: number } | null = null
 const CACHE_TTL = 10_000
 
-async function getOpenNotebooks(): Promise<OpenNotebooks> {
+function getOpenNotebooks(): Promise<OpenNotebooks> {
   const now = Date.now()
   if (_cache && now - _cache.ts < CACHE_TTL) return _cache.data
 
-  const data = await lsNotebooks()
-  const notebooks = filterActiveNotebooks(data?.notebooks ?? [])
-  const idList = notebooks
-    .map((nb) => `'${nb.id.replace(/'/g, "''")}'`)
-    .join(",")
-  const idToName = new Map<string, string>()
-  for (const nb of notebooks) {
-    idToName.set(nb.id, nb.name)
-  }
-
-  const result: OpenNotebooks = {
-    notebooks,
-    idList,
-    idToName,
-  }
+  const dataPromise = (async (): Promise<OpenNotebooks> => {
+    const data = await lsNotebooks()
+    const notebooks = filterActiveNotebooks(data?.notebooks ?? [])
+    const idList = notebooks
+      .map((nb) => `'${nb.id.replace(/'/g, "''")}'`)
+      .join(",")
+    const idToName = new Map<string, string>()
+    for (const nb of notebooks) {
+      idToName.set(nb.id, nb.name)
+    }
+    return {
+      notebooks,
+      idList,
+      idToName,
+    }
+  })()
+  // 失败不缓存：清除后下一次调用重新发起请求，避免 10 秒内持续拿到 rejected Promise
+  dataPromise.catch(() => {
+    if (_cache?.data === dataPromise) {
+      _cache = null
+    }
+  })
   _cache = {
-    data: result,
+    data: dataPromise,
     ts: now,
   }
-  return result
+  return dataPromise
 }
 
 export async function getNotebookDocStats(): Promise<NotebookDocCount[]> {
@@ -121,11 +122,11 @@ export async function getNotebookWordStats(): Promise<NotebookWordStat[]> {
     if (notebooks.length === 0) return []
 
     const rows = await executeSql<NotebookWordRow>(`
-      SELECT box as notebook_id, SUM(length) as total_words
+      SELECT box as notebook_id, SUM(length) as words
       FROM blocks
       WHERE type = 'p' AND length > 0 AND box IN (${idList})
       GROUP BY box
-      ORDER BY total_words DESC
+      ORDER BY words DESC
     `)
 
     const result: NotebookWordStat[] = []
@@ -135,7 +136,7 @@ export async function getNotebookWordStats(): Promise<NotebookWordStat[]> {
     if (rows && rows.length > 0) {
       for (const row of rows) {
         const name = idToName.get(row.notebook_id) || ""
-        const words = Number(row.total_words || 0)
+        const words = Number(row.words || 0)
         totalWordsAll += words
         result.push({
           name,
@@ -263,7 +264,7 @@ export async function getMostProductiveNotebook(
     }
     }
 
-    const rows = await executeSql<NotebookWordSumRow>(`
+    const rows = await executeSql<NotebookWordRow>(`
       SELECT box as notebook_id, SUM(length) as words
       FROM blocks
       WHERE type = 'p' AND length > 0 AND box IN (${idList})
@@ -289,54 +290,5 @@ export async function getMostProductiveNotebook(
       name: "",
       words: 0,
     }
-  }
-}
-
-export async function getNotebookBlockTypeStats(): Promise<NotebookBlockTypeStat[]> {
-  try {
-    const {
-      notebooks,
-      idList,
-      idToName,
-    } = await getOpenNotebooks()
-    if (notebooks.length === 0) return []
-
-    const rows = await executeSql<NotebookBlockTypeRow>(`
-      SELECT box as notebook_id, type, COUNT(*) as cnt
-      FROM blocks
-      WHERE box IN (${idList})
-      GROUP BY box, type
-      ORDER BY box, cnt DESC
-      LIMIT 512
-    `)
-
-    const grouped = new Map<string, Array<{ name: string, count: number, label: string }>>()
-    if (rows) {
-      for (const row of rows) {
-        const nbName = idToName.get(row.notebook_id) || ""
-        if (!grouped.has(nbName)) {
-          grouped.set(nbName, [])
-        }
-        grouped.get(nbName)!.push({
-          name: row.type,
-          count: Number(row.cnt || 0),
-          label: BLOCK_TYPE_LABELS[row.type] || row.type,
-        })
-      }
-    }
-
-    for (const nb of notebooks) {
-      if (!grouped.has(nb.name)) {
-        grouped.set(nb.name, [])
-      }
-    }
-
-    return Array.from(grouped.entries()).map(([notebook, blockTypes]) => ({
-      notebook,
-      blockTypes,
-    }))
-  } catch (error) {
-    console.error("获取笔记本块类型分布失败:", error)
-    return []
   }
 }

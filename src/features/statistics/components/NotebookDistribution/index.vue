@@ -1,4 +1,4 @@
-<!-- 笔记本分布 Tab 入口容器：自加载笔记本统计并编排双列均衡布局 -->
+<!-- 笔记本分布 Tab 入口容器：自加载笔记本统计并编排纵向单列布局 -->
 <template>
   <div class="notebook-distribution-tab">
     <!-- 汇总摘要 -->
@@ -22,44 +22,7 @@
       </span>
     </div>
 
-    <!-- 左列：文档数条形图（全高） -->
-    <section class="dist-section dist-left">
-      <h3 class="dist-section-title">
-        <!-- 卡片标题："各笔记本文档数" -->
-        {{ i18n.docBarChartTitle }}
-      </h3>
-      <DocBarChart
-        :chart-data="notebookDocStats"
-        :loading="docChartLoading"
-        :i18n="i18n"
-      />
-    </section>
-
-    <!-- 右列上：字数占比饼图 -->
-    <section class="dist-section dist-right-pie">
-      <h3 class="dist-section-title">
-        <!-- 卡片标题："笔记本字数占比" -->
-        {{ i18n.notebookWordPie }}
-      </h3>
-      <NotebookWordPie
-        :data="notebookWordStats"
-        :i18n="i18n"
-      />
-    </section>
-
-    <!-- 右列下：各笔记本块类型堆叠图 -->
-    <section class="dist-section dist-right-stack">
-      <h3 class="dist-section-title">
-        <!-- 卡片标题："各笔记本块类型分布" -->
-        {{ i18n.notebookBlockTypeTitle }}
-      </h3>
-      <NotebookBlockTypeChart
-        :data="notebookBlockTypeStats"
-        :i18n="i18n"
-      />
-    </section>
-
-    <!-- 底部全宽：可排序详情表格 -->
+    <!-- 第二位：可排序排行表格（含文档数/字数/总占比，信息密度最高） -->
     <section class="dist-section dist-table">
       <h3 class="dist-section-title">
         <!-- 卡片标题："笔记本排行" -->
@@ -68,6 +31,18 @@
       <NotebookTable
         :doc-stats="notebookDocStats"
         :word-stats="notebookWordStats"
+        :i18n="i18n"
+      />
+    </section>
+
+    <!-- 底部：字数占比饼图 -->
+    <section class="dist-section dist-pie">
+      <h3 class="dist-section-title">
+        <!-- 卡片标题："笔记本字数占比" -->
+        {{ i18n.notebookWordPie }}
+      </h3>
+      <NotebookWordPie
+        :data="notebookWordStats"
         :i18n="i18n"
       />
     </section>
@@ -84,8 +59,6 @@ import {
   provideNotebookHover,
 } from "../../composables/useNotebookHover"
 import { useNotebookStats } from "../../composables/useNotebookStats"
-import DocBarChart from "./DocBarChart.vue"
-import NotebookBlockTypeChart from "./NotebookBlockTypeChart.vue"
 import NotebookTable from "./NotebookTable.vue"
 import NotebookWordPie from "./NotebookWordPie.vue"
 
@@ -103,12 +76,9 @@ const i18n = computed(() => props.i18n)
 
 const {
   notebookDocStats,
-  docChartLoading,
   notebookWordStats,
-  notebookBlockTypeStats,
   loadNotebookDocStats,
   loadNotebookWordStats,
-  loadNotebookBlockTypeStats,
 } = useNotebookStats()
 
 // 笔记本分布 hover 联动
@@ -132,7 +102,6 @@ async function loadNotebookStats(): Promise<void> {
   await Promise.all([
     loadNotebookDocStats(),
     loadNotebookWordStats(),
-    loadNotebookBlockTypeStats(),
   ])
 }
 

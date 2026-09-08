@@ -189,14 +189,6 @@ export interface ReportData {
 }
 
 /**
- * 笔记本块类型分布
- */
-export interface NotebookBlockTypeStat {
-  notebook: string
-  blockTypes: Array<{ name: string, count: number, label: string }>
-}
-
-/**
  * 趋势预测数据
  */
 export interface TrendPrediction {

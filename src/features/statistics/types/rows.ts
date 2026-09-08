@@ -64,14 +64,8 @@ export interface NotebookDocCountRow {
   doc_count?: number
 }
 
-/** 笔记本字数聚合行（total_words 别名） */
+/** 笔记本字数聚合行 */
 export interface NotebookWordRow {
-  notebook_id: string
-  total_words?: number
-}
-
-/** 笔记本字数聚合行（words 别名） */
-export interface NotebookWordSumRow {
   notebook_id: string
   words?: number
 }
@@ -81,11 +75,4 @@ export interface NotebookActivityRow {
   notebook_id: string
   date: string
   words?: number
-}
-
-/** 笔记本块类型分布行 */
-export interface NotebookBlockTypeRow {
-  notebook_id: string
-  type: string
-  cnt?: number
 }

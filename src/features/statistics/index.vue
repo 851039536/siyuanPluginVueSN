@@ -136,7 +136,7 @@ import {
   getHeatmapActivityData,
   getHeatmapDailyDetail,
 } from "./queries/heatmapStats"
-import { getNotebookActivityTrend } from "./queries/notebookStats"
+import { getNotebookActivityTrend } from "./queries"
 import {
   getComparisonData,
   getReportData,

@@ -8,19 +8,19 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 8px 0;
+  padding: 4px 0;
 }
 
 .pie-layout {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
 }
 
 .pie-chart-area {
   flex-shrink: 0;
-  width: 160px;
-  height: 160px;
+  width: 192px;
+  height: 192px;
 }
 
 .pie-svg {
@@ -38,7 +38,7 @@
 .pie-arc-hover {
   opacity: 1;
   stroke: var(--b3-theme-on-background);
-  stroke-width: 2px;
+  stroke-width: 2.5px;
 }
 
 .pie-center-name {
@@ -64,18 +64,17 @@
 
 .pie-legend {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  max-height: 160px;
-  overflow-y: auto;
+  display: grid;
+  // 多列自适应网格：图例项均分卡片剩余横向空间，消除单列列表在宽卡片下的空位
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 4px 12px;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 6px;
+  padding: 4px 8px;
   border-radius: stats.$radius-sm;
   font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface);
@@ -88,8 +87,8 @@
 }
 
 .legend-color {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   border-radius: stats.$radius-sm;
   flex-shrink: 0;
 }

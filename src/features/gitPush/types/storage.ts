@@ -1,6 +1,6 @@
 // Git 项目持久化存储与类型定义
 import type { Plugin } from "siyuan"
-import type { BfgPrefs, CommitAnalysisCache, CommitAnalysisViewSettings, CommitFixPrefs, LineStatsCache, PlatformKey, RepoCleanPrefs, RuleCheckPrefs } from "./meta"
+import type { BfgPrefs, CommitAnalysisCache, CommitAnalysisViewSettings, CommitFixPrefs, DropCommitPrefs, LineStatsCache, PlatformKey, RepoCleanPrefs, RuleCheckPrefs } from "./meta"
 import { DEFAULT_COMMIT_RULE_CONFIG } from "./meta"
 import type { ConsistencyCache } from "./consistency"
 import { EMPTY_CONSISTENCY_CACHE } from "./consistency"
@@ -395,6 +395,9 @@ const DEFAULT_RULE_CHECK_PREFS: RuleCheckPrefs = { projectId: "", ...DEFAULT_COM
 /** 提交信息修正偏好默认值（默认保留原始提交时间） */
 const DEFAULT_COMMIT_FIX_PREFS: CommitFixPrefs = { preserveDate: true }
 
+/** 删除历史提交偏好默认值（默认删除前自动备份，保持安全行为） */
+const DEFAULT_DROP_COMMIT_PREFS: DropCommitPrefs = { autoBackup: true }
+
 /** 仓库清理视图偏好默认值（默认取第一个项目 + 10MB 阈值） */
 const DEFAULT_REPO_CLEAN_PREFS: RepoCleanPrefs = { projectId: "", thresholdMb: 10 }
 
@@ -440,6 +443,8 @@ export class GitPushStorage {
   readonly ruleCheckPrefs: TypedStorage<RuleCheckPrefs>
   /** 提交信息修正偏好（上次选择的提交时间策略，跨会话恢复选择） */
   readonly commitFixPrefs: TypedStorage<CommitFixPrefs>
+  /** 删除历史提交偏好（是否删除前自动备份，跨会话恢复选择） */
+  readonly dropCommitPrefs: TypedStorage<DropCommitPrefs>
   /** 仓库清理视图偏好（上次选中项目 + 大文件阈值，跨会话恢复选择） */
   readonly repoCleanPrefs: TypedStorage<RepoCleanPrefs>
   /** BFG 运行时路径覆盖（自定义 java / jar 路径，空 = 自动） */
@@ -464,6 +469,7 @@ export class GitPushStorage {
     this.consistencyCache = new TypedStorage(storage, "git-push-consistency-cache", EMPTY_CONSISTENCY_CACHE)
     this.ruleCheckPrefs = new TypedStorage(storage, "git-push-rulecheck-prefs", DEFAULT_RULE_CHECK_PREFS)
     this.commitFixPrefs = new TypedStorage(storage, "git-push-commitfix-prefs", DEFAULT_COMMIT_FIX_PREFS)
+    this.dropCommitPrefs = new TypedStorage(storage, "git-push-dropcommit-prefs", DEFAULT_DROP_COMMIT_PREFS)
     this.repoCleanPrefs = new TypedStorage(storage, "git-push-repoclean-prefs", DEFAULT_REPO_CLEAN_PREFS)
     this.bfgPrefs = new TypedStorage(storage, "git-push-bfg-prefs", DEFAULT_BFG_PREFS)
   }

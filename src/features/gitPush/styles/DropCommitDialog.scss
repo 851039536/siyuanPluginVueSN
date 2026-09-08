@@ -103,6 +103,38 @@
   transition: width 0.12s ease;
 }
 
+// 删除前自动备份开关行：开关 + 标签 + 状态提示（开启=灰色说明，关闭=红色警告）
+.gp-drop-backup-toggle {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $spacing-1 $spacing-2;
+  padding: $spacing-1 $spacing-2;
+  font-size: $font-size-2xs;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+}
+
+.gp-drop-backup-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  cursor: pointer;
+  font-weight: $font-weight-semibold;
+}
+
+// 开启态说明（描述关闭开关的后果，弱化灰字）
+.gp-drop-backup-toggle-tip {
+  opacity: 0.55;
+}
+
+// 关闭态警告（本次删除无备份，危险色强调）
+.gp-drop-backup-toggle-warn {
+  color: var(--b3-theme-error, $color-danger);
+  font-weight: $font-weight-semibold;
+}
+
 // 备份信息条：图标 + 标签 + 完整路径（等宽省略）+ 打开/清理操作
 .gp-drop-backup {
   display: flex;

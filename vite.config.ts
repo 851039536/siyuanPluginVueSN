@@ -8,6 +8,7 @@ import livereload from "rollup-plugin-livereload"
 import {
   defineConfig,
   loadEnv,
+  type Plugin,
 } from "vite"
 import { viteStaticCopy } from "vite-plugin-static-copy"
 import zipPack from "vite-plugin-zip-pack"
@@ -43,6 +44,23 @@ export default defineConfig(({
   console.log()
   console.log("isWatch=>", isWatch)
   console.log("distDir=>", distDir)
+
+  // watch 模式监听外部静态资源（i18n 合并产物 / README / plugin.json），变化即触发重建。
+  // vite 8（Rolldown）下 hook 的 this 需借助 vite 的 Plugin 类型标注才能获得 addWatchFile 上下文。
+  const watchExternalPlugin: Plugin = {
+    name: "watch-external",
+    async buildStart() {
+      const files = await fg([
+        "src/i18n/*.json",
+        "src/i18n/**/*.json",
+        "./README*.md",
+        "./plugin.json",
+      ])
+      for (const file of files) {
+        this.addWatchFile(file)
+      }
+    },
+  }
 
   return {
     resolve: {
@@ -183,14 +201,8 @@ export default defineConfig(({
       outDir: distDir,
       emptyOutDir: !isWatch,
 
-      commonjsOptions: {
-        // jszip 的 support.js 在 try/catch 内 require("readable-stream") 做 nodestream 能力探测，
-        // @rollup/plugin-commonjs 默认 ignoreTryCatch: true 会原样保留该调用，
-        // 而思源运行时环境没有 readable-stream 包 → 探测失败 → nodestream=false，
-        // 导致 s3Backup 的 generateNodeStream 报 "nodestream is not supported"。
-        // 仅对 readable-stream 强制打包转换，使其走上方 alias → 原生 stream 模块。
-        ignoreTryCatch: (id: string) => id !== "readable-stream",
-      },
+      // 注：vite 8（Rolldown）已废弃 build.commonjsOptions（no-op），jszip 的
+      // nodestream 探测依赖 Rolldown 保留 require + 上方 alias → 原生 stream 的机制。
 
       // 构建后是否生成 source map 文件
       sourcemap: false,
@@ -213,21 +225,7 @@ export default defineConfig(({
           ...(isWatch
             ? [
                 livereload(devDistDir),
-                {
-                  // 监听静态资源文件
-                  name: "watch-external",
-                  async buildStart() {
-                    const files = await fg([
-                      "src/i18n/*.json",
-                      "src/i18n/**/*.json",
-                      "./README*.md",
-                      "./plugin.json",
-                    ])
-                    for (const file of files) {
-                      this.addWatchFile(file)
-                    }
-                  },
-                },
+                watchExternalPlugin,
               ]
             : [
                 zipPack({
@@ -240,7 +238,7 @@ export default defineConfig(({
 
         // make sure to externalize deps that shouldn't be bundled
         // into your library
-        external: ["siyuan", "process", "stream", "node:fs", "node:path", "node:child_process", "node:os", "node:http", "node:https", "node:crypto"],
+        external: ["siyuan", "process", "stream", "node:fs", "node:path", "node:child_process", "node:os", "node:util", "node:stream", "node:http", "node:https", "node:crypto"],
 
         output: {
           entryFileNames: "[name].js",
@@ -248,7 +246,8 @@ export default defineConfig(({
             if (assetInfo.name === "style.css") {
               return "index.css"
             }
-            return assetInfo.name
+            // Rolldown 下 PreRenderedAsset.name 可能为空，回退到 names[0] 保证返回 string
+            return assetInfo.name || assetInfo.names?.[0] || "asset"
           },
         },
       },

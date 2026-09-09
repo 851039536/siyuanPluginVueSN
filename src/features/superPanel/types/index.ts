@@ -1,6 +1,7 @@
 import type { IconKey } from "@/config/icons"
 import type { PluginSettings } from "@/config/settings"
 import type { FeatureAction } from "@/features/config"
+import type { AiProfileConfig } from "@/types/ai"
 import type { ModalAppInstance } from "@/utils/vueAppHelper"
 /**
  * 超级面板 - 类型定义
@@ -281,6 +282,20 @@ export class SuperPanelManager {
     showMessage("功能开发中...", 2000, "info")
   }
 
+  private async handleUpdateAiProfiles(profiles: AiProfileConfig[]) {
+    // 档案列表整体持久化（内部敏感字段由 settings.ts 的加密链路统一处理）
+    const current = (this.plugin as any).settings?.aiProfiles || []
+    const message = profiles.length < current.length
+      ? (this.plugin.i18n as any).superPanel?.profileDeletedMsg || "AI配置档案已删除"
+      : (this.plugin.i18n as any).superPanel?.profileSavedMsg || "AI配置档案已保存"
+    await this._updatePluginSettings(
+      {
+        aiProfiles: profiles,
+      },
+      message,
+    )
+  }
+
   private async handleUpdateAiSettings(aiSettings: AiSettings) {
     // 将当前供应商的 API Key 存入按供应商隔离的 KeyMap
     const pluginSample = this.plugin as any
@@ -361,12 +376,16 @@ export class SuperPanelManager {
         searchProvider: s.searchProvider || "jina",
         searchBochaApiKey: s.searchBochaApiKey || "",
       },
+      "profiles": s.aiProfiles || [],
       "i18n": (this.plugin.i18n as any).superPanel || {},
       "onClose": () => {
         this.closeAiSettings()
       },
       'onUpdate:settings': async (aiSettings: AiSettings) => {
         await this.handleUpdateAiSettings(aiSettings)
+      },
+      'onUpdate:profiles': async (profiles: AiProfileConfig[]) => {
+        await this.handleUpdateAiProfiles(profiles)
       },
     }
   }

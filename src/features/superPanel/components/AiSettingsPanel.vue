@@ -15,6 +15,21 @@
       />
     </div>
     <div class="ai-settings-content">
+      <!-- ====== AI 配置档案 ====== -->
+      <SettingGroup>
+        <template #label>
+          <!-- 分组标签："配置档案" -->
+          {{ i18n.aiProfileTitle }}
+        </template>
+        <AiProfileManager
+          :profiles="profileList"
+          :i18n="i18n"
+          @save="handleProfileSave"
+          @apply="handleProfileApply"
+          @delete="handleProfileDelete"
+        />
+      </SettingGroup>
+
       <!-- API供应商选择 -->
       <SettingGroup>
         <template #label>
@@ -194,7 +209,11 @@
 
 <script setup lang="ts">
 import type { AiSettings } from "../types"
-import type { SearchProvider } from "@/types/ai"
+import type {
+  AiProfileConfig,
+  AiProvider,
+  SearchProvider,
+} from "@/types/ai"
 import { showMessage } from "siyuan"
 import {
   reactive,
@@ -203,6 +222,7 @@ import {
 import Button from "@/components/Button.vue"
 import { searchWeb } from "@/utils/webSearch"
 import AiModelSelect from "./AiModelSelect.vue"
+import AiProfileManager from "./AiProfileManager.vue"
 import AiProviderSelect from "./AiProviderSelect.vue"
 import ApiKeyInput from "./ApiKeyInput.vue"
 import { getDefaultModel } from "./providers"
@@ -212,6 +232,7 @@ import TextInput from "./TextInput.vue"
 interface Props {
   visible: boolean
   settings: AiSettings
+  profiles: AiProfileConfig[]
   i18n: {
     aiSettings?: string
     apiProvider?: string
@@ -229,6 +250,7 @@ interface Props {
 interface Emits {
   (e: "close"): void
   (e: "update:settings", settings: AiSettings): void
+  (e: "update:profiles", profiles: AiProfileConfig[]): void
 }
 
 const props = defineProps<Props>()
@@ -236,6 +258,11 @@ const emit = defineEmits<Emits>()
 
 // 本地响应式副本，确保切换供应商时 UI 立即更新
 const settings = reactive<AiSettings>({ ...props.settings })
+
+// 已保存档案列表（本地唯一事实源，变更后整体上抛持久化）
+const profileList = ref<AiProfileConfig[]>(
+  props.profiles ? [...props.profiles] : [],
+)
 
 // labelKey 为 i18n 键名，模板以 i18n[opt.labelKey] 渲染（键值见 superPanel.json）
 const searchProviderOptions: { value: SearchProvider, labelKey: string }[] = [
@@ -268,6 +295,68 @@ const handleProviderChange = (provider: string) => {
   settings.apiKey = settings.apiKeys[provider] || ""
   emit("update:settings", { ...settings })
   showMessage("供应商已更新", 2000, "info")
+}
+
+/**
+ * 保存当前整套 AI 配置为命名档案（同名覆盖），变更后整体上抛持久化
+ */
+const handleProfileSave = (name: string) => {
+  const trimmed = name.trim()
+  if (!trimmed) {
+    return
+  }
+  const snapshot: AiProfileConfig = {
+    name: trimmed,
+    provider: settings.provider as AiProvider,
+    model: settings.model,
+    customModel: settings.customModel,
+    apiKey: settings.apiKey,
+    customEndpoint: settings.customEndpoint,
+    enableThinking: settings.enableThinking,
+    searchProvider: settings.searchProvider as SearchProvider,
+    searchBochaApiKey: settings.searchBochaApiKey,
+  }
+  const next = [...profileList.value]
+  const existingIndex = next.findIndex((p) => p.name === trimmed)
+  if (existingIndex >= 0) {
+    next[existingIndex] = snapshot
+  } else {
+    next.push(snapshot)
+  }
+  profileList.value = next
+  emit("update:profiles", next)
+}
+
+/**
+ * 应用所选档案：整组字段回填本地 settings 后单次上抛，直接覆盖生效（沿用自动保存机制）
+ */
+const handleProfileApply = (name: string) => {
+  const profile = profileList.value.find((p) => p.name === name)
+  if (!profile) {
+    return
+  }
+  settings.provider = profile.provider
+  settings.model = profile.model
+  settings.customModel = profile.customModel
+  settings.apiKey = profile.apiKey
+  settings.customEndpoint = profile.customEndpoint
+  settings.enableThinking = profile.enableThinking
+  settings.searchProvider = profile.searchProvider
+  settings.searchBochaApiKey = profile.searchBochaApiKey
+  if (profile.apiKey) {
+    settings.apiKeys[profile.provider] = profile.apiKey
+  } else {
+    delete settings.apiKeys[profile.provider]
+  }
+  emit("update:settings", { ...settings })
+}
+
+/**
+ * 删除所选档案，变更后整体上抛持久化
+ */
+const handleProfileDelete = (name: string) => {
+  profileList.value = profileList.value.filter((p) => p.name !== name)
+  emit("update:profiles", profileList.value)
 }
 
 const testSearch = async () => {

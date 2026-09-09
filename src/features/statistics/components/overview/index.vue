@@ -55,11 +55,6 @@
         :chart-data="displayDailyStats"
         :i18n="i18n"
       />
-
-      <WordRanking
-        :chart-data="displayDailyStats"
-        :i18n="i18n"
-      />
     </div>
   </div>
 </template>
@@ -81,7 +76,6 @@ import BarChart from "./BarChart.vue"
 import DocChangeSection from "./DocChangeSection.vue"
 import StatsCardsCompact from "./StatsCardsCompact.vue"
 import ViewModeSection from "./ViewModeSection.vue"
-import WordRanking from "./WordRanking.vue"
 
 interface Changes {
   createdChange: number | null

@@ -1,4 +1,4 @@
-<!-- 超级面板主视图：功能搜索、状态统计与功能卡片列表 -->
+<!-- 超级面板主视图：功能搜索与功能卡片列表 -->
 <template>
   <!-- 面板容器 -->
   <div class="super-panel-container">
@@ -7,7 +7,6 @@
       :title="i18n.title || '超级面板'"
       :i18n="i18n"
       @toggle-ai-settings="props.onOpenAiSettings?.()"
-      @refresh="emit('refresh')"
       @close="emit('close')"
     />
 
@@ -43,20 +42,6 @@
       >{{ filteredFeatures.length }}/{{ features.length }}</span>
     </div>
 
-    <!-- 状态统计 -->
-    <div class="super-panel-stats">
-      <span
-        v-for="s in FEATURE_STATUSES"
-        :key="s"
-        class="stats-item"
-        :class="`stats-${s}`"
-      >
-        <span class="stats-dot" />
-        {{ statusLabels[s] || s }}
-        <span class="stats-count">{{ statusStats[s] }}</span>
-      </span>
-    </div>
-
     <!-- 内容区 -->
     <div class="super-panel-content">
       <!-- 空结果提示 -->
@@ -86,13 +71,11 @@
           :show-toggle="canToggle(feature.id)"
           :selector-options="getSelectorOptions(feature.id)"
           :selected-option="getSelectedOption(feature.id)"
-          :status-labels="statusLabels"
           :color-value="getColorValue(feature.id)"
           :color-label="feature.id === 'themeColor' ? (props.themeColorI18n.customColorLabel || '自定义颜色') : undefined"
           @action="emit('action', $event)"
           @toggle="emit('toggleFeature', feature.id, $event)"
           @select="emit('selectFeature', feature.id, $event)"
-          @status-change="emit('statusFeature', feature.id, $event)"
           @toggle-sub-feature="emit('toggleSubFeature', $event)"
           @color-change="(value) => emit('colorChange', feature.id, value)"
         />
@@ -105,7 +88,6 @@
 import type { SelectorOption } from "./components/FeatureCard.vue"
 import type {
   Feature,
-  FeatureStatus,
   SubFeature,
 } from "./types"
 import type { IconKey } from "@/config/icons"
@@ -130,7 +112,6 @@ import {
 } from "@/features/themeColor"
 import FeatureCard from "./components/FeatureCard.vue"
 import SuperPanelHeader from "./components/SuperPanelHeader.vue"
-import { FEATURE_STATUSES } from "./types"
 
 interface Props {
   settings: PluginSettings
@@ -142,10 +123,8 @@ interface Props {
 interface Emits {
   (e: "close"): void
   (e: "action", action: string): void
-  (e: "refresh"): void
   (e: "toggleFeature", featureId: string, enabled: boolean): void
   (e: "selectFeature", featureId: string, value: string): void
-  (e: "statusFeature", featureId: string, status: string): void
   (e: "toggleSubFeature", featureId: string): void
   (e: "colorChange", featureId: string, value: string): void
 }
@@ -181,7 +160,6 @@ const features = computed<Feature[]>(() =>
       title: (titleI18nKey ? resolveI18n(props.i18n, titleI18nKey) : props.i18n[id]) || defaultTitle,
       desc: (descI18nKey ? resolveI18n(props.i18n, descI18nKey) : props.i18n[`${id}Desc`]) || defaultDesc,
       actions: actions || [],
-      status: (props.settings.featureStatus?.[id] || "") as FeatureStatus,
       subFeatures: subFeatures?.map((sub: SubFeatureMeta): SubFeature => ({
         id: sub.id,
         label: (sub.labelI18nKey ? resolveI18n(props.i18n, sub.labelI18nKey) : "") || sub.defaultLabel,
@@ -208,18 +186,6 @@ const clearSearch = (): void => {
   searchInputRef.value?.focus()
 }
 
-const statusStats = computed(() => {
-  const counts: Record<string, number> = {}
-  FEATURE_STATUSES.forEach((s) => {
-    counts[s] = 0
-  })
-  const source = searchQuery.value ? filteredFeatures.value : features.value
-  source.forEach((f) => {
-    if (f.status) counts[f.status] = (counts[f.status] || 0) + 1
-  })
-  return counts
-})
-
 onMounted(() => {
   nextTick(() => searchInputRef.value?.focus())
 })
@@ -231,13 +197,6 @@ const getFeatureEnabled = (featureId: string): boolean => {
 }
 
 const canToggle = (featureId: string): boolean => featureId !== "superPanel"
-
-const statusLabels = computed<Record<string, string>>(() => ({
-  stable: props.i18n.statusStable || "",
-  needsFix: props.i18n.statusNeedsFix || "",
-  critical: props.i18n.statusCritical || "",
-  minor: props.i18n.statusMinor || "",
-}))
 
 const themeSchemeOptions = computed<SelectorOption[]>(() => [
   ...Object.entries(THEMES).map(([id, scheme]) => ({

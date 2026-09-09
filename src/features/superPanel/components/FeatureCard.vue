@@ -1,4 +1,4 @@
-<!-- 超级面板功能卡片：状态标记、开关与快捷操作 -->
+<!-- 超级面板功能卡片：开关、主题选择与快捷操作 -->
 <template>
   <div
     class="feature-card"
@@ -14,37 +14,6 @@
         </div>
         <div class="feature-info">
           <span class="feature-title">{{ feature.title }}</span>
-          <span class="status-badge-wrapper">
-            <span
-              ref="statusBadgeRef"
-              class="status-badge"
-              :class="feature.status ? `status-${feature.status}` : ''"
-              title="点击选择状态"
-              @click.stop="toggleStatusMenu"
-            >{{ feature.status ? statusLabels?.[feature.status] || feature.status : '+' }}</span>
-            <Transition name="status-popover">
-              <div
-                v-if="showStatusMenu"
-                class="status-popover"
-                @click.stop
-              >
-                <button
-                  v-for="opt in statusOptions"
-                  :key="opt.value"
-                  class="status-option"
-                  :class="{ active: feature.status === opt.value }"
-                  @click="selectStatus(opt.value)"
-                >
-                  <span
-                    v-if="opt.value"
-                    class="status-option-dot"
-                    :class="`status-${opt.value}`"
-                  />
-                  {{ opt.label }}
-                </button>
-              </div>
-            </Transition>
-          </span>
         </div>
         <div
           v-if="feature.actions.length > 0"
@@ -134,20 +103,11 @@
 </template>
 
 <script setup lang="ts">
-import type {
-  Feature,
-  FeatureStatus,
-} from "../types"
+import type { Feature } from "../types"
 import { Icon } from "@iconify/vue"
-import {
-  computed,
-  ref,
-} from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Switch from "@/components/Switch.vue"
-import { useClickOutside } from "../composables/useClickOutside"
-import { FEATURE_STATUSES } from "../types"
 
 export interface SelectorOption {
   value: string
@@ -161,7 +121,6 @@ interface Props {
   showToggle?: boolean
   selectorOptions?: SelectorOption[]
   selectedOption?: string
-  statusLabels?: Record<string, string>
   colorValue?: string
   colorLabel?: string
 }
@@ -170,38 +129,12 @@ interface Emits {
   (e: "action", action: string): void
   (e: "toggle", value: boolean): void
   (e: "select", value: string): void
-  (e: "statusChange", status: FeatureStatus): void
   (e: "toggleSubFeature", featureId: string): void
   (e: "colorChange", value: string): void
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
-
-const statusBadgeRef = ref<HTMLElement | null>(null)
-const showStatusMenu = ref(false)
-
-useClickOutside(statusBadgeRef, showStatusMenu)
-
-const statusOptions = computed(() => [
-  ...FEATURE_STATUSES.map((v) => ({
-    value: v,
-    label: props.statusLabels?.[v] || v,
-  })),
-  {
-    value: "" as FeatureStatus,
-    label: "清空",
-  },
-])
-
-const toggleStatusMenu = (): void => {
-  showStatusMenu.value = !showStatusMenu.value
-}
-
-const selectStatus = (status: FeatureStatus): void => {
-  emit("statusChange", status)
-  showStatusMenu.value = false
-}
 
 const handleAction = (actionKey: string): void => {
   emit("action", actionKey)

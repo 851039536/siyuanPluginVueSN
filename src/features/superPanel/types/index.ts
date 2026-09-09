@@ -20,9 +20,6 @@ import { createModalVueApp } from "@/utils/vueAppHelper"
 import AiSettingsPanel from "../components/AiSettingsPanel.vue"
 import SuperPanelPanel from "../index.vue"
 
-export const FEATURE_STATUSES = ["stable", "needsFix", "critical", "minor"] as const
-export type FeatureStatus = typeof FEATURE_STATUSES[number] | ""
-
 /**
  * 子功能配置
  */
@@ -53,8 +50,6 @@ export interface Feature {
   desc: string
   /** 操作列表 */
   actions: FeatureAction[]
-  /** 状态标识 */
-  status: FeatureStatus
   /** 子功能列表 */
   subFeatures?: SubFeature[]
 }
@@ -132,9 +127,6 @@ export class SuperPanelManager {
         onAction: (action: string) => {
           this.handleFeatureAction(action)
         },
-        onRefresh: async () => {
-          await this.handleRefresh()
-        },
         onToggleFeature: async (featureId: string, enabled: boolean) => {
           await this.handleToggleFeature(featureId, enabled)
         },
@@ -142,9 +134,6 @@ export class SuperPanelManager {
           const settingKey = featureIdToSettingKey(featureId)
           const current = (this.reactiveSettings as any)?.[settingKey] ?? false
           await this.handleToggleFeature(featureId, !current)
-        },
-        onStatusFeature: async (featureId: string, status: string) => {
-          await this.handleStatusFeature(featureId, status)
         },
         onSelectFeature: async (featureId: string, value: string) => {
           await this.handleSelectFeature(featureId, value)
@@ -220,27 +209,6 @@ export class SuperPanelManager {
   private close() {
     this.panel.close()
     this.reactiveSettings = null
-  }
-
-  private async handleRefresh() {
-    try {
-      showMessage(
-        (this.plugin.i18n as any).superPanel?.refreshing || "正在刷新...",
-        1000,
-        "info",
-      )
-      this.close()
-      await new Promise((resolve) => setTimeout(resolve, 100))
-      this.open()
-      showMessage(
-        (this.plugin.i18n as any).superPanel?.refreshSuccess || "已刷新",
-        1500,
-        "info",
-      )
-    } catch (error) {
-      console.error("刷新失败:", error)
-      showMessage("刷新失败", 2000, "error")
-    }
   }
 
   private async _updatePluginSettings(
@@ -325,15 +293,6 @@ export class SuperPanelManager {
     await this._updatePluginSettings({
       [settingKey]: enabled,
     } as Partial<PluginSettings>)
-  }
-
-  private async handleStatusFeature(featureId: string, featureStatus: string) {
-    const s = (this.plugin as any).settings || {}
-    const currentStatus = { ...(s.featureStatus || {}) }
-    currentStatus[featureId] = featureStatus
-    await this._updatePluginSettings({
-      featureStatus: currentStatus,
-    })
   }
 
   private async handleSelectFeature(featureId: string, value: string) {

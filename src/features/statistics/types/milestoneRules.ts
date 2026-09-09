@@ -27,6 +27,9 @@ export const TIER_LABELS: Record<Tier, string> = {
   legendary: "tierLegendary",
 }
 
+/** 稀有度顺序常量（遍历/映射稀有度时的单一数据源，避免字面量数组重复） */
+export const TIERS = Object.keys(TIER_LABELS) as Tier[]
+
 /** 11 种里程碑类型（labelKey 为 i18n 键，渲染时查 i18n） */
 export const MILESTONE_TYPES = [
   {

@@ -1,8 +1,8 @@
 <!-- 成就墙：分类/稀有度筛选 Tab + 已解锁网格 + 未获得折叠区，内部管理筛选状态 -->
 <template>
   <div class="achievement-section">
+    <!-- 区块标题："成就" -->
     <div class="section-label">
-      <!-- 区块标题："成就" -->
       {{ i18n.achievementsLabel }}
     </div>
 
@@ -45,34 +45,18 @@
       </button>
     </div>
 
+    <!-- 已解锁网格 -->
     <div class="achievement-grid">
-      <div
+      <AchievementCard
         v-for="ach in filteredUnlocked"
         :key="ach.id"
-        class="achievement-card"
-        :class="[`tier-${ach.tier}`, { 'custom-ach': ach._custom }]"
-      >
-        <button
-          v-if="ach._custom"
-          class="btn-del-ach"
-          :title="i18n.deleteAchievementHint"
-          @click="onDeleteCustom(ach.id)"
-        >
-          <IconWrapper
-            name="close"
-            :size="12"
-          />
-        </button>
-        <IconWrapper
-          class="ach-icon"
-          :name="ach.icon as IconKey"
-        />
-        <span class="ach-title">{{ achText(ach.title) }}</span>
-        <span class="ach-desc">{{ achText(ach.description) }}</span>
-      </div>
+        :ach="ach"
+        :i18n="i18n"
+        @delete="onDeleteCustom"
+      />
     </div>
 
-    <!-- locked toggle -->
+    <!-- 未获得折叠开关 -->
     <button
       v-if="filteredLocked.length > 0"
       class="locked-toggle"
@@ -89,47 +73,32 @@
         :class="{ rotated: showLocked }"
       />
     </button>
+    <!-- 未获得折叠网格（locked 态由 AchievementCard 统一渲染） -->
     <div
       v-if="showLocked && filteredLocked.length > 0"
       class="achievement-grid locked"
     >
-      <div
+      <AchievementCard
         v-for="ach in filteredLocked"
         :key="ach.id"
-        class="achievement-card locked-card"
-        :class="[`tier-${ach.tier}`, { 'custom-ach': ach._custom }]"
-      >
-        <button
-          v-if="ach._custom"
-          class="btn-del-ach"
-          :title="i18n.deleteAchievementHint"
-          @click="onDeleteCustom(ach.id)"
-        >
-          <IconWrapper
-            name="close"
-            :size="12"
-          />
-        </button>
-        <IconWrapper
-          class="ach-icon"
-          name="pageLock"
-          :size="18"
-        />
-        <span class="ach-title">{{ achText(ach.title) }}</span>
-        <span class="ach-desc">{{ achText(ach.description) }}</span>
-      </div>
+        :ach="ach"
+        locked
+        :i18n="i18n"
+        @delete="onDeleteCustom"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+// 成就墙：分类/稀有度双 Tab 筛选 + 解锁/未获得网格（卡片复用 AchievementCard 子组件）
 import type { AchievementDef, Tier } from "../../types/milestoneData"
 import type { IconKey } from "@/config/icons"
 import { computed, ref } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import AchievementCard from "./AchievementCard.vue"
 import { ACH_CATEGORIES } from "../../types/milestoneData"
 import { matchCategory, matchTier } from "../../utils/achievements"
-import { resolveI18nText } from "../../utils"
 
 interface Props {
   unlocked: AchievementDef[]
@@ -147,12 +116,7 @@ const showLocked = ref(false)
 const activeAchCategory = ref("all")
 const activeAchTier = ref("all")
 
-/** 成就文案解析：内置成就为 i18n 键，自定义成就为用户字面文本 */
-function achText(keyOrText: string): string {
-  return resolveI18nText(props.i18n, keyOrText)
-}
-
-// 分类 Tab：i18nKey → 文案（新增 catAll/catMeta 键）
+// 分类 Tab：i18nKey → 文案（catAll/catMeta 等键）
 const achCategories = computed(() =>
   ACH_CATEGORIES.map((cat) => ({
     ...cat,
@@ -189,7 +153,7 @@ function getTierCount(tierId: string): number {
 }
 
 function onDeleteCustom(id: string) {
-  // 删除不可撤销，先经原生确认（与 AchievementsTab 删除行为一致）
+  // 删除不可撤销，先经原生确认（与自定义成就管理删除行为一致）
   if (!window.confirm(props.i18n.confirmDeleteAchievement)) return
   emit("deleteCustom", id)
 }

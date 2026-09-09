@@ -65,8 +65,8 @@ export interface AchievementDef {
 
 /** 阈值型成就单项（文案为派生 i18n 键，见 utils/achievements 的 achI18nKey） */
 export interface ThresholdItem { v: number, icon: string, tier: Tier }
-/** 阈值型成就分组 */
-export interface ThresholdGroup { prefix: string, type: string, items: ThresholdItem[] }
+/** 阈值型成就分组（id 由 type 直接推导，无需冗余 prefix） */
+export interface ThresholdGroup { type: string, items: ThresholdItem[] }
 
 /** 每个大阶级的等级数 */
 export const TIER_SIZE = 20
@@ -101,7 +101,6 @@ export const TIER_PREFIXES = Array.from({ length: 30 }, (_, i) => `tierPrefix${i
 /** 阈值型成就配置（数据驱动；文案由 type+阈值派生 i18n 键） */
 export const THRESHOLD_ACHIEVEMENTS: ThresholdGroup[] = [
   {
-    prefix: "ach",
     type: "notes",
     items: [
       { v: 1, icon: "star", tier: "common" },
@@ -114,7 +113,6 @@ export const THRESHOLD_ACHIEVEMENTS: ThresholdGroup[] = [
     ],
   },
   {
-    prefix: "ach",
     type: "blocks",
     items: [
       { v: 100, icon: "format", tier: "common" },
@@ -126,7 +124,6 @@ export const THRESHOLD_ACHIEVEMENTS: ThresholdGroup[] = [
     ],
   },
   {
-    prefix: "ach",
     type: "words",
     items: [
       { v: 10000, icon: "edit", tier: "common" },
@@ -139,7 +136,6 @@ export const THRESHOLD_ACHIEVEMENTS: ThresholdGroup[] = [
     ],
   },
   {
-    prefix: "ach",
     type: "notebooks",
     items: [
       { v: 1, icon: "file", tier: "common" },
@@ -149,7 +145,6 @@ export const THRESHOLD_ACHIEVEMENTS: ThresholdGroup[] = [
     ],
   },
   {
-    prefix: "ach",
     type: "streak",
     items: [
       { v: 3, icon: "star", tier: "common" },
@@ -163,7 +158,6 @@ export const THRESHOLD_ACHIEVEMENTS: ThresholdGroup[] = [
     ],
   },
   {
-    prefix: "ach",
     type: "activeDays",
     items: [
       { v: 30, icon: "list", tier: "common" },
@@ -172,7 +166,6 @@ export const THRESHOLD_ACHIEVEMENTS: ThresholdGroup[] = [
     ],
   },
   {
-    prefix: "ach",
     type: "tags",
     items: [
       { v: 1, icon: "list", tier: "common" },
@@ -181,7 +174,6 @@ export const THRESHOLD_ACHIEVEMENTS: ThresholdGroup[] = [
     ],
   },
   {
-    prefix: "ach",
     type: "backlinks",
     items: [
       { v: 1, icon: "forward", tier: "common" },
@@ -191,7 +183,6 @@ export const THRESHOLD_ACHIEVEMENTS: ThresholdGroup[] = [
     ],
   },
   {
-    prefix: "ach",
     type: "assets",
     items: [
       { v: 1, icon: "folder", tier: "common" },
@@ -200,7 +191,6 @@ export const THRESHOLD_ACHIEVEMENTS: ThresholdGroup[] = [
     ],
   },
   {
-    prefix: "ach",
     type: "images",
     items: [
       { v: 50, icon: "image", tier: "common" },
@@ -209,7 +199,6 @@ export const THRESHOLD_ACHIEVEMENTS: ThresholdGroup[] = [
     ],
   },
   {
-    prefix: "ach",
     type: "code",
     items: [
       { v: 1, icon: "code", tier: "common" },

@@ -5,17 +5,18 @@
 .rule-editor-overlay {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: 10000; // 全屏遮罩统一层级
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.5); // 遮罩统一透明度，不使用 backdrop-filter
   // 弹窗遮罩基准字号（防止内部文字继承思源全局默认字号）
   font-size: $font-size-xs;
 }
 
 .rule-editor-panel {
   width: 720px;
+  max-width: calc(100vw - 32px); // 窄屏/独立浮动窗下避免横向溢出
   max-height: 80vh;
   display: flex;
   flex-direction: column;
@@ -294,7 +295,6 @@
   &:focus {
     outline: none;
     border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.15);
   }
 }
 
@@ -436,8 +436,8 @@
 
   &:hover {
     opacity: 1;
-    color: var(--stat-color-danger, #cf222e);
-    background: rgba(207, 34, 46, 0.08);
+    color: stats.$color-danger;
+    background: rgba(stats.$color-danger, 0.08);
   }
 }
 
@@ -512,7 +512,6 @@
   &:focus {
     outline: none;
     border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.12);
   }
 }
 
@@ -659,7 +658,6 @@
   &:focus {
     outline: none;
     border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.15);
   }
 }
 
@@ -690,7 +688,6 @@
   &:focus {
     outline: none;
     border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 2px rgba(var(--b3-theme-primary-rgb), 0.15);
   }
 }
 
@@ -759,5 +756,17 @@
 
   &:hover {
     opacity: 0.85;
+  }
+}
+
+// 窄屏适配：压缩左侧类型列宽，保证规则表不横向溢出
+@media (max-width: 640px) {
+  .level-header-spacer,
+  .rule-row-header {
+    width: 92px;
+  }
+
+  .rule-row-header {
+    gap: 4px;
   }
 }

@@ -130,6 +130,7 @@
     <MilestoneCategoryList
       :category-views="categoryViews"
       :tier-labels="tierLabels"
+      :i18n="props.i18n"
       @toggle="toggleCategory"
     />
 
@@ -146,6 +147,7 @@
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
+import type { StatisticsData } from "../../types"
 import type {
   AchievementDef,
   CategoryDef,
@@ -181,33 +183,13 @@ import MilestoneRuleEditor from "./MilestoneRuleEditor.vue"
 
 interface Props {
   plugin?: Plugin
-  totalNotes?: number
-  totalWords?: number
-  totalTags?: number
-  totalBacklinks?: number
-  totalAssets?: number
-  totalImages?: number
-  totalBlocks?: number
-  notebookCount?: number
-  codeBlocks?: number
-  writingStreak?: number
-  activeDays?: number
+  stats?: StatisticsData | null
   i18n?: Record<string, any>
 }
 
 const props = withDefaults(defineProps<Props>(), {
   plugin: undefined,
-  totalNotes: 0,
-  totalWords: 0,
-  totalTags: 0,
-  totalBacklinks: 0,
-  totalAssets: 0,
-  totalImages: 0,
-  totalBlocks: 0,
-  notebookCount: 0,
-  codeBlocks: 0,
-  writingStreak: 0,
-  activeDays: 0,
+  stats: null,
   i18n: () => ({}),
 })
 
@@ -227,37 +209,46 @@ onMounted(() => {
 
 const expandedCategories = ref<Set<string>>(new Set())
 
-// 稀有度标签（普通/稀有/史诗/传说）
-const tierLabels: Record<Tier, string> = {
-  common: props.i18n.tierCommon,
-  rare: props.i18n.tierRare,
-  epic: props.i18n.tierEpic,
-  legendary: props.i18n.tierLegendary,
+/** i18n 键解析：命中返回译文，未命中返回空串（禁止键名直显/中文兜底） */
+function textByKey(key: string | undefined): string {
+  const v = typeof key === "string" ? props.i18n[key] : undefined
+  return typeof v === "string" ? v : ""
 }
+
+// 稀有度标签（普通/稀有/史诗/传说）——computed 随 i18n 注入响应更新
+const tierLabels = computed<Record<Tier, string>>(() => ({
+  common: textByKey("tierCommon"),
+  rare: textByKey("tierRare"),
+  epic: textByKey("tierEpic"),
+  legendary: textByKey("tierLegendary"),
+}))
 
 const categories = computed<CategoryDef[]>(() =>
   CATEGORY_DEFS.map((c) => ({
     id: c.id,
     icon: c.icon,
-    name: props.i18n[c.i18nKey],
+    name: textByKey(c.i18nKey),
     types: c.types,
   })),
 )
 
-// ===== 统一统计值 =====
-const statCounts = computed<Record<string, number>>(() => ({
-  notes: props.totalNotes,
-  notebooks: props.notebookCount,
-  words: props.totalWords,
-  code: props.codeBlocks,
-  tags: props.totalTags,
-  backlinks: props.totalBacklinks,
-  assets: props.totalAssets,
-  images: props.totalImages,
-  blocks: props.totalBlocks,
-  streak: props.writingStreak,
-  activeDays: props.activeDays,
-}))
+// ===== 统一统计值（stats 对象字段映射到里程碑 type 键） =====
+const statCounts = computed<Record<string, number>>(() => {
+  const s = props.stats
+  return {
+    notes: s?.totalNotes ?? 0,
+    notebooks: s?.notebookCount ?? 0,
+    words: s?.totalWords ?? 0,
+    code: s?.codeBlocks ?? 0,
+    tags: s?.totalTags ?? 0,
+    backlinks: s?.totalBacklinks ?? 0,
+    assets: s?.totalAssets ?? 0,
+    images: s?.totalImages ?? 0,
+    blocks: s?.totalBlocks ?? 0,
+    streak: s?.writingStreak ?? 0,
+    activeDays: s?.activeDays ?? 0,
+  }
+})
 
 // ===== 公式化无限里程碑（TYPE_META / generateMilestones 见 utils/milestones） =====
 const allMilestones = computed((): MilestoneDef[] => {

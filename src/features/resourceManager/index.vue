@@ -92,85 +92,9 @@
           :on-copy-md-ref="copyMarkdownRef"
           :on-open-folder="openAssetInExplorer"
           :on-locate="handleLocateAsset"
-          :on-move="handleStartMove"
+          :on-move="startMoveAsset"
           :on-preview="openAssetPreview"
         />
-        <!-- 移动表单卡（区块级，点击卡片「移动」后展开并自动滚入视口） -->
-        <div
-          v-if="movingAsset"
-          ref="moveFormRef"
-          class="rm-move-form"
-        >
-          <div class="rm-move-form__row">
-            <!-- 标签："当前路径" -->
-            <span class="rm-move-form__label">{{ i18n.currentPath }}:</span>
-            <span class="rm-move-form__path">{{ activeMovePath }}</span>
-          </div>
-          <div class="rm-move-form__row">
-            <!-- 标签："新路径" -->
-            <span class="rm-move-form__label">{{ i18n.newPath }}:</span>
-            <!-- 输入框占位："输入新路径，如 assets/分类/xxx.png" -->
-            <input
-              v-model="moveNewPath"
-              class="rm-move-form__input"
-              :placeholder="i18n.movePathPlaceholder"
-              @keyup.enter="handleMoveAsset(activeMovePath)"
-            />
-          </div>
-          <div class="rm-move-form__row">
-            <!-- 标签："快速分类" -->
-            <span class="rm-move-form__label">{{ i18n.category }}:</span>
-            <div class="rm-move-form__categories">
-              <!-- 分类快捷 chips 一排："图片 / NET / tool / 其他" 及自定义分类 -->
-              <div class="rm-move-form__chips">
-                <button
-                  v-for="cat in quickCategories"
-                  :key="cat.key"
-                  class="rm-btn small"
-                  @click="applyCategory(activeMovePath, cat.key)"
-                >
-                  {{ cat.label }}
-                </button>
-              </div>
-              <!-- 自定义分类输入行（独立第二行，避免与 chips 混排换行悬尾） -->
-              <div class="rm-move-form__custom">
-                <!-- 输入框占位："自定义" -->
-                <input
-                  v-model="customCategory"
-                  class="rm-move-form__category-input"
-                  :placeholder="i18n.customCategoryPlaceholder"
-                  @keyup.enter="applyCustomCategory(activeMovePath)"
-                />
-                <!-- 按钮："应用" -->
-                <button
-                  class="rm-btn small"
-                  :disabled="!customCategory"
-                  @click="applyCustomCategory(activeMovePath)"
-                >
-                  {{ i18n.apply }}
-                </button>
-              </div>
-            </div>
-          </div>
-          <!-- 移动表单操作栏 -->
-          <div class="rm-move-form__actions">
-            <!-- 按钮："确认移动" -->
-            <button
-              class="rm-btn small primary"
-              :disabled="!moveNewPath"
-              @click="handleMoveAsset(activeMovePath)"
-            >
-              {{ i18n.confirmMove }}
-            </button>
-            <!-- 按钮："取消" -->
-            <button
-              class="rm-btn small"
-              @click="cancelMove"
-            >
-              {{ i18n.cancel }}
-            </button>
-          </div>
-        </div>
       </div>
 
       <!-- 当前文档资源（自包含组件，自行加载活动文档的资源列表） -->
@@ -356,6 +280,21 @@
         </div>
       </Transition>
     </Teleport>
+    <!-- 移动资源弹窗（点击卡片「移动」后居中弹出，Teleport 至 body） -->
+    <MoveAssetDialog
+      v-if="movingAsset"
+      :i18n="i18n"
+      :categories="quickCategories"
+      :current-path="activeMovePath"
+      :new-path="moveNewPath"
+      :custom="customCategory"
+      @update:newPath="moveNewPath = $event"
+      @update:custom="customCategory = $event"
+      @confirm="handleMoveAsset(activeMovePath)"
+      @cancel="cancelMove"
+      @applyCategory="applyCategory(activeMovePath, $event)"
+      @applyCustom="applyCustomCategory(activeMovePath)"
+    />
     <!-- 分类设置弹窗：集中删除空分类 / 恢复内置分类（Teleport 至 body 全屏遮罩） -->
     <CategorySettingsDialog
       v-if="settingsOpen"
@@ -372,13 +311,14 @@
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
 import type { ResourceManagerI18n } from "./types"
-import { computed, nextTick, ref } from "vue"
+import { computed, ref } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import AssetGridList from "./components/AssetGridList.vue"
 import CategoryFilterBar from "./components/CategoryFilterBar.vue"
 import CategorySettingsDialog from "./components/CategorySettingsDialog.vue"
 import DocAssetsSection from "./components/DocAssetsSection.vue"
 import EmptyState from "./components/EmptyState.vue"
+import MoveAssetDialog from "./components/MoveAssetDialog.vue"
 import { useResourceManager } from "./composables/useResourceManager"
 import { buildAssetSrc } from "./utils"
 
@@ -430,8 +370,6 @@ const activeMovePath = computed(() => movingAsset.value ?? "")
 
 // 图片放大预览的当前资源路径（空串 = 关闭）
 const previewAsset = ref("")
-// 区块级移动表单元素（展开后自动滚入视口，避免表单在可视区外导致"点了没反应"）
-const moveFormRef = ref<HTMLElement | null>(null)
 
 /** 打开图片放大预览 */
 function openAssetPreview(path: string) {
@@ -441,13 +379,6 @@ function openAssetPreview(path: string) {
 /** 关闭图片放大预览 */
 function closeAssetPreview() {
   previewAsset.value = ""
-}
-
-/** 展开移动表单并滚动至可视区域，提升"移动"点击的即时反馈 */
-async function handleStartMove(path: string) {
-  startMoveAsset(path)
-  await nextTick()
-  moveFormRef.value?.scrollIntoView({ behavior: "smooth", block: "nearest" })
 }
 
 const tabs = computed(() => [

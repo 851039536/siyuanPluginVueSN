@@ -68,6 +68,7 @@
     "restoreSuccess": "Category restored",
     "categorySettings": "Category Settings",
     "categorySettingsHint": "Only empty categories can be deleted; they disappear from the bar. Built-in ones can be restored under \"Hidden\" below.",
+    "moveInstantlyHint": "Pick a category or press Enter after typing a new path to move the asset immediately",
     "categoryBuiltIn": "Built-in",
     "noCategories": "No visible categories"
   }

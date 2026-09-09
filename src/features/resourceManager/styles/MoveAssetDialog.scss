@@ -1,0 +1,190 @@
+@use "@/variables.scss" as *;
+
+// 移动资源弹窗（Teleport 至 body，样式自持；遮罩点击取消）
+.rm-move-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-4;
+  background: rgba(0, 0, 0, 0.5);
+}
+.rm-move-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(92vw, 520px);
+  max-height: 99vh;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  overflow: hidden;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $spacing-2;
+    padding: $spacing-2 $spacing-3;
+    border-bottom: 1px solid var(--b3-border-color);
+    flex-shrink: 0;
+  }
+
+  &__title {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    color: var(--b3-theme-on-background);
+  }
+
+  &__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: $spacing-4;
+    height: $spacing-4;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: $radius-sm;
+    background: transparent;
+    color: var(--b3-theme-on-surface-light);
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+
+    &:hover {
+      background: var(--b3-list-hover);
+      color: var(--b3-theme-on-surface);
+    }
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-2;
+    padding: $spacing-3;
+    overflow-y: auto;
+  }
+
+  // 即时移动说明（弱化小字提示，避免误触）
+  &__hint {
+    font-size: $font-size-2xs;
+    line-height: $line-height-normal;
+    color: var(--b3-theme-on-surface-light);
+    background: var(--b3-theme-surface-light);
+    padding: $spacing-1 $spacing-2;
+    border-radius: $radius-sm;
+  }
+
+  &__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: $spacing-1;
+    padding: $spacing-2 $spacing-3;
+    border-top: 1px solid var(--b3-border-color);
+    flex-shrink: 0;
+  }
+}
+
+// 行：两列 grid（固定标签列 + 内容列）；--stack 内容为纵向两块
+.rm-move-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: $spacing-1 $spacing-2;
+  font-size: $font-size-xs;
+
+  &__label {
+    color: var(--b3-theme-on-surface-light);
+    padding-top: $spacing-2px;
+    white-space: nowrap;
+  }
+
+  &__path {
+    min-width: 0;
+    font-size: $font-size-xs;
+    color: var(--b3-theme-on-surface);
+    word-break: break-all;
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-1;
+    min-width: 0;
+  }
+
+  &__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $spacing-1;
+  }
+
+  &__custom {
+    display: flex;
+    gap: $spacing-1;
+    min-width: 0;
+  }
+
+  &__input {
+    width: 100%;
+    min-width: 0;
+    padding: $spacing-1 $spacing-2;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $radius-sm;
+    font-size: $font-size-xs;
+    background: var(--b3-theme-surface);
+    color: var(--b3-theme-on-surface);
+    outline: none;
+    transition: border-color 0.12s;
+
+    &:focus {
+      border-color: $color-primary;
+    }
+
+    &::placeholder {
+      color: var(--b3-theme-on-surface-light);
+    }
+
+    &--inline {
+      flex: 1;
+      padding: $spacing-2px $spacing-1;
+    }
+  }
+}
+
+// 弹窗内按钮（Teleport 场景自持，不依赖主面板 .rm-btn）
+.rm-move-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  cursor: pointer;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  white-space: nowrap;
+  transition: background 0.12s, opacity 0.12s, border-color 0.12s;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+// 过渡：淡入淡出 0.12s
+.rm-move-fade-enter-active,
+.rm-move-fade-leave-active {
+  transition: opacity 0.12s ease;
+}
+
+.rm-move-fade-enter-from,
+.rm-move-fade-leave-to {
+  opacity: 0;
+}

@@ -7,6 +7,7 @@
  * 此处仅保留插件全局配置（PluginSettings）。
  */
 import type { ThemeColorSchemeId } from "@/features/themeColor"
+import type { AiProfileConfig } from "@/types/ai"
 import { Plugin } from "siyuan"
 import { getNodeModules } from "@/utils/nodeModules"
 
@@ -82,6 +83,7 @@ export interface PluginSettings {
   aiApiKeys: Record<string, string> // AI API密钥（按供应商存储）
   aiCustomEndpoint: string // 自定义API端点(仅在provider为custom时使用)
   aiEnableThinking: boolean // DeepSeek思考模式开关
+  aiProfiles: AiProfileConfig[] // AI配置档案（整套AI设置的命名快照，应用时回填激活字段）
   // 联网搜索配置（RAG 模式）
   searchProvider: string // 搜索引擎供应商: 'jina' | 'bocha'
   searchBochaApiKey: string // 博查搜索 API Key
@@ -160,6 +162,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   aiApiKeys: {},
   aiCustomEndpoint: "",
   aiEnableThinking: false,
+  aiProfiles: [],
   // 联网搜索默认值
   searchProvider: "jina",
   searchBochaApiKey: "",
@@ -299,6 +302,19 @@ async function encryptSensitiveFields(
     }
   }
   encrypted.searchBochaApiKey = await encryptSetting(settings.searchBochaApiKey)
+  // 逐份档案加密内部敏感字段（apiKey / searchBochaApiKey），与 aiApiKeys 同机制
+  const profiles = settings.aiProfiles || []
+  if (profiles.length > 0) {
+    encrypted.aiProfiles = await Promise.all(
+      profiles.map(async (profile) => ({
+        ...profile,
+        apiKey: await encryptSetting(profile.apiKey || ""),
+        searchBochaApiKey: await encryptSetting(profile.searchBochaApiKey || ""),
+      })),
+    )
+  } else {
+    encrypted.aiProfiles = profiles
+  }
   return encrypted
 }
 
@@ -317,6 +333,19 @@ async function decryptSensitiveFields(
     }
   }
   decrypted.searchBochaApiKey = await decryptSetting(settings.searchBochaApiKey)
+  // 逐份档案解密内部敏感字段（兼容未加密的旧数据：decryptSetting 对无 enc: 前缀值原样返回）
+  const profiles = settings.aiProfiles || []
+  if (profiles.length > 0) {
+    decrypted.aiProfiles = await Promise.all(
+      profiles.map(async (profile) => ({
+        ...profile,
+        apiKey: await decryptSetting(profile.apiKey || ""),
+        searchBochaApiKey: await decryptSetting(profile.searchBochaApiKey || ""),
+      })),
+    )
+  } else {
+    decrypted.aiProfiles = profiles
+  }
   return decrypted
 }
 

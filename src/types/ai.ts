@@ -130,6 +130,34 @@ export interface SearchApiConfig {
   jinaApiKey?: string
 }
 
+// ============ AI 配置档案相关类型 ============
+
+/**
+ * AI 配置档案（整套 AI 设置的命名快照）
+ * 由超级面板 AI 设置弹窗维护，name 唯一（同名保存视为覆盖），应用时整组回填激活配置。
+ * 激活态仍由 PluginSettings 的 aiApiProvider 等单组字段承载，档案仅作"可回填的仓库"。
+ */
+export interface AiProfileConfig {
+  /** 档案名称（唯一标识） */
+  name: string
+  /** API 供应商 */
+  provider: AiProvider
+  /** 模型（内置供应商为模型列表选择值，"custom" 选项代表使用自定义模型名） */
+  model: string
+  /** 自定义模型名称（provider 为 custom 或模型选择"自定义模型"时使用） */
+  customModel: string
+  /** 当前供应商的 API Key */
+  apiKey: string
+  /** 自定义 API 端点（provider 为 custom 时使用） */
+  customEndpoint: string
+  /** DeepSeek 思考模式开关 */
+  enableThinking: boolean
+  /** 搜索引擎供应商 */
+  searchProvider: SearchProvider
+  /** 博查 API Key */
+  searchBochaApiKey: string
+}
+
 // ============ 审核相关类型 ============
 
 /** 审核评级（AI 输出的中文业务枚举） */

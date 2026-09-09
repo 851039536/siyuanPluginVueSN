@@ -2,10 +2,10 @@
  * S3 增量备份编排逻辑
  *
  * 备份流程：下载云端 manifest → 扫描 data/ → diff 对比 → 并发上传变更文件
- * → 清理已删除文件 → 上传新 manifest。
- * 还原流程：下载云端 manifest → 按清单并发下载全部文件到本地还原文件夹（不触碰 data/）。
+ * → 并发清理已删除文件（失败条目回填新清单，下次重试删除）→ 上传新 manifest。
+ * 还原流程：下载云端 manifest → 路径穿越过滤 → 按清单并发下载全部文件到本地还原文件夹（不触碰 data/）。
  * manifest 以 S3 为唯一事实源；失败文件不写入新 manifest，下次自动重传（幂等）。
- * 依赖注入方式接入 index.vue，不接触其他 composable 的内部状态。
+ * 依赖注入方式接入 useIncrementalPanel，不接触其他 composable 的内部状态。
  */
 import type { Ref } from "vue"
 import { showMessage } from "siyuan"
@@ -68,6 +68,17 @@ async function withRetry(task: () => Promise<void>, failLabel: string): Promise<
     }
   }
   return false
+}
+
+/**
+ * 判断清单相对路径是否不安全（绝对路径/盘符/父目录穿越/空段），
+ * 还原时必须跳过，防止恶意或损坏的清单覆盖工作区外文件
+ */
+function isUnsafeRelativePath(relativePath: string): boolean {
+  if (relativePath.startsWith("/") || relativePath.startsWith("\\")) { return true }
+  if (/^[A-Za-z]:[\/]/.test(relativePath)) { return true }
+  const parts = relativePath.split(/[\/]+/)
+  return parts.some((part) => part === ".." || part === "")
 }
 
 export function useIncrementalBackup(deps: IncrementalBackupDeps) {
@@ -145,7 +156,7 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
     const totalTasks = diff.toUpload.length + diff.toDelete.length
     let processed = 0
     let uploaded = 0
-    let failed = 0
+    let uploadFailed = 0
     // 上传成功/失败与删除成功的文件相对路径（写入日志详情，便于用户定位而无需打开控制台）
     const uploadedFiles: string[] = []
     const failedFiles: string[] = []
@@ -167,15 +178,16 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
         uploaded++
         uploadedFiles.push(file.relativePath)
       } else {
-        failed++
+        uploadFailed++
         failedFiles.push(file.relativePath)
       }
       processed++
     })
 
-    // 6. 清理本地已删除的远端文件（失败仅警告不中断，条目保留在旧清单外自然消失）
+    // 6. 清理本地已删除的远端文件（与上传同并发池 + 重试；失败条目回填新 manifest，下次备份重试删除）
     let deleted = 0
-    for (const relativePath of diff.toDelete) {
+    let deleteFailed = 0
+    await runWithConcurrency(diff.toDelete, UPLOAD_CONCURRENCY, async (relativePath) => {
       backupProgress.value = {
         phase: "uploading",
         currentFile: relativePath,
@@ -183,16 +195,24 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
         totalFiles: totalTasks,
         percent: totalTasks > 0 ? Math.round((processed / totalTasks) * 100) : 100,
       }
-      try {
-        await deps.deleteObject(buildIncrementalKey(prefix, subPrefix, relativePath))
+      const ok = await withRetry(
+        () => deps.deleteObject(buildIncrementalKey(prefix, subPrefix, relativePath)),
+        `删除远端文件失败: ${relativePath}`,
+      )
+      if (ok) {
         deleted++
         deletedFiles.push(relativePath)
-      } catch (err: unknown) {
-        // 删除失败：条目不在新 manifest 中，仅残留孤儿对象，不影响后续备份正确性
-        console.warn(`[S3增量] 删除远端文件失败: ${relativePath}`, getErrorMessage(err))
+      } else {
+        deleteFailed++
+        failedFiles.push(relativePath)
+        // 回填旧清单条目：保留在新 manifest 中，下次 diff 仍判定"本地已删除"并继续重试删除
+        const oldEntry = oldManifest?.files[relativePath]
+        if (oldEntry) { newFiles[relativePath] = oldEntry }
       }
       processed++
-    }
+    })
+    // 传输失败总数 = 上传失败 + 删除失败（统一计入结果统计与失败日志清单）
+    const failed = uploadFailed + deleteFailed
 
     // 7. 上传新 manifest（部分失败也上传，失败文件缺席 → 下次自动重传）
     const newManifest: BackupManifest = {
@@ -296,12 +316,19 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
 
     // 路径穿越防护：manifest 中的 relativePath 必须被限制在 targetDir 内。
     // 校验通过后再拼接到下载路径，防止恶意/损坏清单覆盖工作区外文件。
-    const safeRelativePaths = Object.keys(manifest.files).filter((relativePath) => {
-      if (relativePath.startsWith("/") || relativePath.startsWith("\\")) return false
-      if (/^[A-Za-z]:[\/]/.test(relativePath)) return false
-      const parts = relativePath.split(/[\/]+/)
-      return parts.every((part) => part !== ".." && part !== "")
-    })
+    const safeRelativePaths: string[] = []
+    const unsafePaths: string[] = []
+    for (const relativePath of Object.keys(manifest.files)) {
+      if (isUnsafeRelativePath(relativePath)) {
+        unsafePaths.push(relativePath)
+      } else {
+        safeRelativePaths.push(relativePath)
+      }
+    }
+    if (unsafePaths.length > 0) {
+      // 过滤不再静默：控制台留痕 + 结果消息计数上报，便于排查清单污染来源
+      console.warn(`[S3增量] 清单中跳过 ${unsafePaths.length} 个不安全路径:`, unsafePaths)
+    }
 
     // 2. 并发下载（复用备份的并发池与重试次数；download 内部自动创建中间目录）
     const relativePaths = safeRelativePaths
@@ -344,6 +371,10 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
       .replace("{path}", targetDir)
     if (failed > 0) {
       message += (i18n.incrementalRestoreFailed || "").replace("{failed}", String(failed))
+    }
+    if (unsafePaths.length > 0) {
+      // 跳过计数："，已跳过 N 个不安全路径"（与失败段并列展示，还原不完整时用户可感知原因）
+      message += (i18n.incrementalRestoreSkippedUnsafe || "").replace("{count}", String(unsafePaths.length))
     }
     const [cappedFailed, omittedFailed] = capFileList(failedFiles)
     addLog({

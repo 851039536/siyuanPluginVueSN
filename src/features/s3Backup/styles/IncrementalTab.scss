@@ -1,0 +1,70 @@
+/**
+ * IncrementalTab 组件专属样式
+ *
+ * 实验性警告横幅（warning 语义色）+ 清单信息网格扩展 + 空态文案。
+ * 颜色全部使用思源主题变量 / 全局设计 Token，禁止硬编码。
+ */
+@use '@/variables.scss' as *;
+
+// ========== 实验性警告横幅 ==========
+
+.inc-warning-banner {
+  border: 1px solid var(--b3-theme-warning-lighter, var(--b3-theme-warning));
+  border-left: 3px solid var(--b3-theme-warning);
+  background: var(--b3-theme-warning-lightest);
+}
+
+.inc-banner-head {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin-bottom: $spacing-2;
+}
+
+.inc-banner-badge {
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  text-transform: uppercase;
+  color: var(--b3-theme-warning);
+  border: 1px solid var(--b3-theme-warning-lighter, var(--b3-theme-warning));
+  border-radius: 3px;
+  padding: 0 $spacing-1;
+  line-height: $line-height-normal;
+  flex-shrink: 0;
+}
+
+.inc-banner-title {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-surface);
+}
+
+.inc-banner-text {
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface-light);
+  line-height: $line-height-normal;
+  margin: 0;
+}
+
+// ========== 云端清单信息 ==========
+
+.inc-host {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: $vp-mono;
+  max-width: 160px;
+}
+
+// ========== 空态 / 加载失败文案 ==========
+
+.inc-empty {
+  font-size: $font-size-sm;
+  color: var(--b3-theme-on-surface-light);
+  margin: 0;
+
+  &--error {
+    color: var(--b3-theme-error);
+  }
+}

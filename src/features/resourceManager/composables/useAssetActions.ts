@@ -1,9 +1,16 @@
 // 资源行内快捷操作 composable：复制 Markdown 引用、在系统文件管理器中打开资源目录
 import type { ResourceManagerI18n } from "../types"
+import { getFrontend } from "siyuan"
 import { resolveAssetPath } from "@/api"
 import { copyToClipboard } from "@/utils/domUtils"
 import { openFolderInExplorer } from "@/utils/electronDialog"
 import { resolveDiskPath, safeDecodeURI, toMarkdownPath } from "../utils"
+
+/** 是否为桌面端（仅桌面端支持用系统文件管理器打开目录） */
+function isDesktopFrontend(): boolean {
+  const frontend = getFrontend()
+  return frontend === "desktop" || frontend === "desktop-window"
+}
 
 /** 行内快捷操作逻辑，供 useResourceManager 组合复用；showMsg 由调用方注入以复用统一提示封装 */
 export function useAssetActions(i18n: ResourceManagerI18n, showMsg: (msg: string) => void) {
@@ -16,8 +23,10 @@ export function useAssetActions(i18n: ResourceManagerI18n, showMsg: (msg: string
     showMsg(ok ? i18n.mdRefCopied : i18n.copyFailed)
   }
 
-  /** 在系统文件管理器中打开资源所在目录（浏览器/移动端 openFolderInExplorer 自然降级返回 false） */
+  /** 在系统文件管理器中打开资源所在目录（非桌面端静默跳过，避免误报"打开失败"） */
   async function openAssetInExplorer(path: string) {
+    // 浏览器/移动端无 Electron shell，属预期能力缺失而非错误
+    if (!isDesktopFrontend()) return
     try {
       // 磁盘文件名可能是解码形态，先确认真实路径再解析为 OS 绝对路径
       const diskPath = await resolveDiskPath(path)

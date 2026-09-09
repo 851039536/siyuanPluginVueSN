@@ -36,10 +36,23 @@ export async function queryBlocksByMarkdown(
   ) as { id: string, root_id: string, markdown: string }[] | null
 }
 
-/** 校验移动目标路径：先解码再校验，必须位于 assets/ 下、不含路径穿越（含 %2e%2e 等编码形态）、不以 / 结尾 */
+/**
+ * 校验移动目标路径：先解码再校验，必须位于 assets/ 下、不含路径穿越
+ * （含 %2e%2e 等编码形态）、不含反斜杠/NUL/空目录段、不以 / 结尾
+ */
 export function isValidAssetMovePath(path: string): boolean {
   const decoded = safeDecodeURI(path)
-  return decoded.startsWith("assets/") && !decoded.includes("..") && !decoded.endsWith("/")
+  if (!decoded.startsWith("assets/")) return false
+  if (decoded.includes("..")) return false
+  if (decoded.includes("\\") || decoded.includes("\0")) return false
+  if (decoded.includes("//")) return false
+  if (decoded.endsWith("/")) return false
+  return true
+}
+
+/** 归一化分类 key：统一小写并去除首尾空白，保证磁盘目录名与筛选前缀一致 */
+export function normalizeCategoryKey(raw: string): string {
+  return raw.trim().toLowerCase()
 }
 
 /** 判断路径是否为图片资源 */
@@ -97,6 +110,27 @@ export function buildVariantPairs(from: string, to: string): { from: string, to:
   return pairs
 }
 
+/**
+ * 文件名兜底替换对：`from` 为旧文件名（三种编码形态，按 from 去重），
+ * `to` 为同一编码形态下的新完整路径。
+ * 不可复用 buildVariantPairs——其 from/to 共享同一变换，而此处 from 为文件名、
+ * to 为完整路径，语义不同源，直接复用会产出错误形态的替换目标。
+ */
+export function buildNameFallbackPairs(
+  baseName: string,
+  newPath: string,
+): { from: string, to: string }[] {
+  const seen = new Set<string>()
+  const pairs: { from: string, to: string }[] = []
+  for (const transform of PATH_ENCODING_TRANSFORMS) {
+    const f = transform(baseName)
+    if (seen.has(f)) continue
+    seen.add(f)
+    pairs.push({ from: f, to: transform(newPath) })
+  }
+  return pairs
+}
+
 /** 转义正则表达式元字符 */
 export function escapeRegExp(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
@@ -104,6 +138,8 @@ export function escapeRegExp(str: string): string {
 
 /** 检查资源文件是否存在于磁盘（通过列出父目录比对文件名） */
 export async function assetFileExists(path: string): Promise<boolean> {
+  // 无目录段的路径会导致 readDir("") 扫描整个 /data，直接判定不存在
+  if (!path.includes("/")) return false
   const segments = `/data/${path}`.split("/")
   const name = segments.pop()
   const entries = await readDir(segments.join("/"))
@@ -123,20 +159,31 @@ export async function resolveDiskPath(path: string): Promise<string | null> {
   return null
 }
 
-/** 递归扫描资源目录，子目录并行收集，返回相对 /data/ 的路径列表 */
+/** 目录递归扫描的并发上限（避免大树下瞬时打出大量内核请求） */
+const SCAN_CONCURRENCY = 8
+
+/** 递归扫描资源目录，有界并发收集，返回相对 /data/ 的路径列表 */
 export async function scanAssetDir(dirPath: string): Promise<string[]> {
   try {
     const entries = await readDir(dirPath)
     if (!entries) return []
     const files = Array.isArray(entries) ? entries : [entries]
-    const results = await Promise.all(files.map(async (entry) => {
-      const fullPath = `${dirPath}/${entry.name}`
-      if (entry.isDir) return scanAssetDir(fullPath)
-      return [fullPath.replace(/^\/data\//, "")]
-    }))
-    return results.flat()
+    const results: string[] = []
+    // 分批并发：每批最多 SCAN_CONCURRENCY 个条目，批内并行、批间串行
+    for (let i = 0; i < files.length; i += SCAN_CONCURRENCY) {
+      const batch = files.slice(i, i + SCAN_CONCURRENCY)
+      const batchResults = await Promise.all(batch.map(async (entry) => {
+        const fullPath = `${dirPath}/${entry.name}`
+        if (entry.isDir) return scanAssetDir(fullPath)
+        return [fullPath.replace(/^\/data\//, "")]
+      }))
+      results.push(...batchResults.flat())
+    }
+    return results
   }
-  catch {
+  catch (e: unknown) {
+    // 单目录读取异常不应中断整体扫描，但须留痕以便排查权限/编码问题
+    console.error("扫描资源目录失败:", dirPath, e)
     return []
   }
 }

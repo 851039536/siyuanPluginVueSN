@@ -114,12 +114,14 @@
             >
               <img
                 :src="buildAssetSrc(path)"
+                alt=""
                 loading="lazy"
                 @error="thumbErrors.add(path)"
               />
               <img
                 v-if="hoveredThumb === path"
                 class="rm-asset-item__preview"
+                alt=""
                 :src="buildAssetSrc(path)"
               />
             </div>
@@ -394,7 +396,7 @@
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
 import type { ResourceManagerI18n } from "./types"
-import { computed, reactive, ref } from "vue"
+import { computed, reactive, ref, watch } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import DocAssetsSection from "./components/DocAssetsSection.vue"
 import { useResourceManager } from "./composables/useResourceManager"
@@ -440,6 +442,12 @@ const {
 // 缩略图交互状态：hover 中的资源路径（控制放大预览按需加载）与加载失败集合
 const hoveredThumb = ref("")
 const thumbErrors = reactive(new Set<string>())
+
+// 可见列表变化（加载完成/筛选/限制变更）时重置失败缓存，避免资源修复后缩略图永久缺失
+watch(currentAssetList, () => {
+  thumbErrors.clear()
+  hoveredThumb.value = ""
+})
 
 const tabs = computed(() => [
   { key: "imageAssets", label: props.i18n.imageAssets },

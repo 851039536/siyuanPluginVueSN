@@ -120,7 +120,6 @@
       font-weight: $font-weight-semibold;
       color: var(--b3-theme-on-surface-light);
       text-transform: uppercase;
-      letter-spacing: 0.06em;
       margin-bottom: $spacing-2;
       padding: 0 $spacing-2px;
     }
@@ -243,6 +242,7 @@
 
       .rm-limit-input {
         @include form-input;
+        // 宽度复用 $spacing-16(64px)：Dock 面板窄栏下足够容纳 4 位数字
         width: $spacing-16;
         text-align: center;
       }
@@ -313,6 +313,7 @@
 
     &__category-input {
       @include form-input;
+      // 宽度复用 $spacing-16(64px)：自定义分类名输入框
       width: $spacing-16;
       padding: $spacing-2px $spacing-1;
     }
@@ -349,11 +350,12 @@
       cursor: not-allowed;
     }
 
-    // 主操作
+    // 主操作（与全仓 20+ 处 feature 一致：用主题主色而非 $color-primary，
+    // 后者是暖黑中性色，配 --b3-theme-on-primary 在深色主题下对比度不足）
     &.primary {
-      background: $color-primary;
+      background: var(--b3-theme-primary);
       color: var(--b3-theme-on-primary);
-      border-color: $color-primary;
+      border-color: var(--b3-theme-primary);
       padding: $spacing-2 $spacing-3;
 
       &:hover:not(:disabled) {
@@ -361,10 +363,10 @@
       }
     }
 
-    // 危险操作
+    // 危险操作（$color-danger 为固定红，文字用纯白保证对比度）
     &.danger {
       background: $color-danger;
-      color: var(--b3-theme-on-primary);
+      color: #fff;
       border-color: $color-danger;
 
       &:hover:not(:disabled) {

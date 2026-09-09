@@ -45,7 +45,6 @@ interface Props {
 
 interface Emits {
   (e: "toggleAiSettings"): void
-  (e: "refresh"): void
   (e: "close"): void
 }
 
@@ -58,12 +57,6 @@ const actions = computed<HeaderAction[]>(() => [
     icon: "settings",
     title: props.i18n.aiSettings || "AI配置",
     handler: () => emit("toggleAiSettings"),
-  },
-  {
-    key: "refresh",
-    icon: "refresh",
-    title: props.i18n.refresh || "刷新",
-    handler: () => emit("refresh"),
   },
   {
     key: "close",

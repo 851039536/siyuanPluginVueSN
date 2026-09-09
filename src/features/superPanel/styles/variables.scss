@@ -8,9 +8,3 @@ $spacing-xs: 4px !default;
 $spacing-sm: 8px !default;
 $spacing-md: 12px !default;
 $spacing-lg: 16px !default;
-
-// 状态色（语义对齐全局 $color-success / $color-warning / $color-info / $color-danger）
-$status-stable: #22c55e !default;
-$status-needsFix: #d97706 !default;
-$status-critical: #ef4444 !default;
-$status-minor: #3b82f6 !default;

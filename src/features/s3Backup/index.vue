@@ -42,6 +42,16 @@
       >
         {{ i18n.checksumsTab }}
       </button>
+      <button
+        class="s3-tab-btn"
+        :class="{ active: activeTab === 'incremental' }"
+        @click="activeTab = 'incremental'"
+      >
+        <!-- 标签："增量" -->
+        {{ i18n.incrementalTab }}
+        <!-- 实验性徽标："实验" -->
+        <span class="s3-tab-badge">{{ i18n.experimentalBadge }}</span>
+      </button>
     </div>
 
     <!-- Tab: 备份（视图与操作在 BackupTab） -->
@@ -109,6 +119,13 @@
         @remove-one="removeOneChecksum"
       />
     </div>
+
+    <!-- Tab: 增量（实验性，视图与操作在 IncrementalTab） -->
+    <IncrementalTab
+      v-if="activeTab === 'incremental'"
+      :orch="orch"
+      :i18n="i18n"
+    />
   </div>
 </template>
 
@@ -128,6 +145,7 @@ import FileChecksumsCard from "./components/FileChecksumsCard.vue"
 import BackupModeSelector from "./components/BackupModeSelector.vue"
 import AutoBackupCard from "./components/AutoBackupCard.vue"
 import BackupTab from "./components/BackupTab.vue"
+import IncrementalTab from "./components/IncrementalTab.vue"
 import Button from "@/components/Button.vue"
 
 // ========== Props ==========
@@ -144,7 +162,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 // ========== Tab 状态 ==========
 
-const activeTab = ref<"backup" | "config" | "log" | "checksums">("backup")
+const activeTab = ref<"backup" | "config" | "log" | "checksums" | "incremental">("backup")
 
 // ========== 日志 / 校验值管理（composable，仅 log/checksums Tab 使用） ==========
 

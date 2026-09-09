@@ -2,16 +2,17 @@
  * S3 备份编排 composable
  *
  * 聚合 useS3Backup/useWorkspaceSettings/useLocalBackupList/useFullS3Upload/
- * useIncrementalBackup/useCloudBackupActions 六个领域 composable，
+ * useIncrementalPanel/useCloudBackupActions 六个领域 composable，
  * 统一持有备份管理器初始化、四入口互斥守卫（进入即置位、finally 复位）、
- * 自动备份触发与状态栏进度上报，以 reactive 聚合对象供面板与 BackupTab 绑定。
+ * 自动备份触发与状态栏进度上报，以 reactive 聚合对象供面板与各 Tab 绑定。
+ * 增量备份/还原的触发入口与实验 Tab 专属状态（清单信息/还原目录）由 useIncrementalPanel 提供。
  */
 import { computed, reactive, ref, watch } from "vue"
 import { showMessage } from "siyuan"
 import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import { useS3Backup } from "./useS3Backup"
-import { useIncrementalBackup } from "./useIncrementalBackup"
+import { useIncrementalPanel } from "./useIncrementalPanel"
 import { useLocalBackupList } from "./useLocalBackupList"
 import { useFullS3Upload } from "./useFullS3Upload"
 import { useWorkspaceSettings } from "./useWorkspaceSettings"
@@ -23,7 +24,6 @@ import { BackupManager } from "../modules/BackupManager"
 import type { BackupResult } from "../modules/BackupManager"
 import { getS3BackupInstance } from "../instance"
 import { buildBackupUploadKey, makeBackupTimestamp } from "../utils"
-import { DEFAULT_BACKUP_DIR } from "../types"
 import type { BackupLog, BackupMode, S3BackupStorage } from "../types"
 
 /** 依赖注入：日志与校验值状态由宿主（index.vue）持有，编排层仅回调 */
@@ -68,8 +68,6 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
   // ========== 基础状态 ==========
 
   const isZipBackingUp = ref(false)
-  const isIncrementalRunning = ref(false)
-  const isIncrementalRestoring = ref(false)
 
   // 状态栏后台任务：备份/还原进度显示在底部状态栏（自动备份时弹窗隐藏，状态栏是唯一可见反馈）
   const statusTask = useStatusBarTask("s3Backup", "mdi:cloud-upload")
@@ -126,6 +124,41 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
   /** S3 上传在桶中的完整路径预览（复用 useS3Backup.getListPrefix，消除重复拼接） */
   const resolvedS3Path = computed(() => {
     return getListPrefix()
+  })
+
+  // ========== 增量面板（运行标志+触发入口+清单信息/还原目录，实验 Tab 专属状态） ==========
+
+  const {
+    isIncrementalRunning,
+    isIncrementalRestoring,
+    lastRestoreDir,
+    manifestInfo,
+    isLoadingManifest,
+    manifestLoadFailed,
+    runIncrementalBackup,
+    triggerIncrementalOnly,
+    triggerIncrementalRestore,
+    refreshIncrementalManifest,
+    openRestoreFolder,
+  } = useIncrementalPanel({
+    i18n,
+    addLog: (entry) => addLog(entry),
+    getBackupManager: () => backupManager,
+    uploadFileSmart,
+    uploadFileContent,
+    getObjectText,
+    deleteObject,
+    downloadObject: downloadBackup,
+    isConfigured,
+    s3Config,
+    s3SubPrefix,
+    workspaceRoot,
+    localBackupDir,
+    backupProgress,
+    statusTask,
+    // 互斥守卫惰性求值：isAnyTaskRunning 依赖本块解构的运行标志，构造期不可直接读值
+    isAnyTaskRunning: () => isAnyTaskRunning.value,
+    ensureWorkspaceReady,
   })
 
   // ========== 计算属性 ==========
@@ -230,7 +263,7 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     statusTask,
   })
 
-  // ========== S3 全量上传 / 增量备份 / 云端操作（仅接线） ==========
+  // ========== S3 全量上传 / 云端操作（仅接线） ==========
 
   const { performS3Backup } = useFullS3Upload({
     getBackupManager: () => backupManager,
@@ -246,18 +279,6 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     persistChecksums: deps.persistChecksums,
     recordUploadHosts,
     refreshBackupList: () => refreshBackupList(),
-    i18n,
-  })
-
-  const { performIncrementalBackup, performIncrementalRestore } = useIncrementalBackup({
-    getBackupManager: () => backupManager,
-    uploadFileSmart,
-    uploadFileContent,
-    getObjectText,
-    deleteObject,
-    downloadObject: downloadBackup,
-    backupProgress,
-    addLog: (entry) => addLog(entry),
     i18n,
   })
 
@@ -286,14 +307,6 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
   async function refreshBackupList(): Promise<void> {
     if (!isConfigured.value) { return }
     await listBackups()
-  }
-
-  /** 执行增量备份（传入当前 S3 前缀与子路径） */
-  async function runIncrementalBackup(): Promise<void> {
-    if (!isConfigured.value) {
-      throw new Error(i18n.s3NotConfigured)
-    }
-    await performIncrementalBackup(s3Config.value.prefix, s3SubPrefix.value)
   }
 
   // ========== 备份操作 ==========
@@ -355,53 +368,6 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
       return false
     } finally {
       isBackingUp.value = false
-    }
-  }
-
-  /** 独立增量备份按钮（不依赖模式开关，单独触发一次增量上传） */
-  async function triggerIncrementalOnly(): Promise<void> {
-    if (isAnyTaskRunning.value || !backupManager) { return }
-    // 进入即置位：目录对话框挂起期间也纳入互斥范围，防止自动备份 tick 穿透空窗并发执行
-    isIncrementalRunning.value = true
-    try {
-      if (!(await ensureWorkspaceReady())) { return }
-      await runIncrementalBackup()
-      // 状态栏："备份完成"
-      statusTask.complete(i18n.statusBackupDone)
-    } catch (err: unknown) {
-      // 状态栏："备份失败"
-      statusTask.fail(i18n.statusBackupFailed)
-      showMessage(`${i18n.incrementalBackup}: ${getErrorMessage(err)}`, 5000, "error")
-    } finally {
-      isIncrementalRunning.value = false
-    }
-  }
-
-  /** 增量还原：按云端 manifest 下载全部文件到本地备份目录下的时间戳还原文件夹 */
-  async function triggerIncrementalRestore(): Promise<void> {
-    if (isAnyTaskRunning.value || !workspaceRoot.value || !pathModule) { return }
-    if (!isConfigured.value) {
-      showMessage(i18n.s3NotConfigured, 3000, "error")
-      return
-    }
-    const confirmed = confirm(i18n.confirmIncrementalRestore)
-    if (!confirmed) { return }
-    isIncrementalRestoring.value = true
-    try {
-      const targetDir = pathModule.join(
-        workspaceRoot.value,
-        localBackupDir.value || DEFAULT_BACKUP_DIR,
-        `incremental-restore-${makeBackupTimestamp()}`,
-      )
-      await performIncrementalRestore(s3Config.value.prefix, s3SubPrefix.value, targetDir)
-      // 状态栏："还原完成"
-      statusTask.complete(i18n.statusRestoreDone)
-    } catch (err: unknown) {
-      // 状态栏："还原失败"
-      statusTask.fail(i18n.statusRestoreFailed)
-      showMessage(`${i18n.incrementalRestore}: ${getErrorMessage(err)}`, 5000, "error")
-    } finally {
-      isIncrementalRestoring.value = false
     }
   }
 
@@ -467,6 +433,11 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     isZipBackingUp,
     isIncrementalRunning,
     isIncrementalRestoring,
+    // 增量实验 Tab 专属状态（来自 useIncrementalPanel）
+    lastRestoreDir,
+    manifestInfo,
+    isLoadingManifest,
+    manifestLoadFailed,
     localBackupList,
     isLoadingLocal,
     uploadingItems,
@@ -492,6 +463,9 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     triggerZipBackupOnly,
     triggerIncrementalOnly,
     triggerIncrementalRestore,
+    // 增量实验 Tab 专属方法（来自 useIncrementalPanel）
+    refreshIncrementalManifest,
+    openRestoreFolder,
     handleAutoBackupTrigger,
     init,
     statusTask,

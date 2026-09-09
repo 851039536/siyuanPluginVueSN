@@ -28,26 +28,6 @@
       >
         {{ i18n.zipBackup }}
       </Button>
-      <!-- 按钮："增量备份" -->
-      <Button
-        variant="ghost"
-        size="xsmall"
-        :disabled="isAnyTaskRunning || isBackingUp || isIncrementalRunning || !isConfigured || !workspacePath"
-        :loading="isIncrementalRunning"
-        @click="$emit('triggerIncremental')"
-      >
-        {{ i18n.incrementalBackup }}
-      </Button>
-      <!-- 按钮："增量还原" -->
-      <Button
-        variant="ghost"
-        size="xsmall"
-        :disabled="isAnyTaskRunning || isBackingUp || isIncrementalRestoring || !isConfigured || !workspacePath"
-        :loading="isIncrementalRestoring"
-        @click="$emit('triggerIncrementalRestore')"
-      >
-        {{ i18n.incrementalRestore }}
-      </Button>
     </div>
     <!-- 日期文件夹开关 -->
     <div class="form-group form-group-checkbox">
@@ -113,7 +93,6 @@ const props = defineProps<{
   isAnyTaskRunning: boolean
   isBackingUp: boolean
   canBackup: boolean
-  isConfigured: boolean
   workspacePath: string
   resolvedLocalBackupPath: string
   resolvedS3Path: string
@@ -121,16 +100,12 @@ const props = defineProps<{
   backupModeS3Upload: boolean
   backupModeS3Incremental?: boolean
   isZipBackingUp?: boolean
-  isIncrementalRunning?: boolean
-  isIncrementalRestoring?: boolean
   i18n: Record<string, string>
 }>()
 
 defineEmits<{
   (e: "performBackup"): void
   (e: "triggerZipBackup"): void
-  (e: "triggerIncremental"): void
-  (e: "triggerIncrementalRestore"): void
 }>()
 
 const backupHintText = computed(() => {

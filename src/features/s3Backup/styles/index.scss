@@ -68,6 +68,21 @@
       border-radius: 1px 1px 0 0;
     }
   }
+
+  // 实验性功能徽标（增量 Tab）
+  .s3-tab-badge {
+    font-family: $vp-mono;
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-semibold;
+    text-transform: uppercase;
+    color: var(--b3-theme-warning);
+    background: var(--b3-theme-warning-lightest);
+    border: 1px solid var(--b3-theme-warning-lighter, var(--b3-theme-warning));
+    border-radius: 3px;
+    padding: 0 3px;
+    margin-left: $spacing-1;
+    vertical-align: middle;
+  }
 }
 
 // ========== 内容容器 ==========

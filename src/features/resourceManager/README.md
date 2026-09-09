@@ -6,7 +6,7 @@
 
 图片资源页签行首显示缩略图（`/assets/` 相对 URL 直出 + `loading="lazy"`），hover 弹出放大预览（与缩略图同 URL 命中缓存，加载失败自动隐藏；可见列表变化时重置失败缓存）。
 
-图片/文件页签资源以**卡片网格**展示（`AssetGridList`，图库式）：自适应列网格（列最小 104px），每张卡片 = 正方形媒体区（图片缩略图 cover、**点击弹出放大预览**；文件页/加载失败回退扩展名或文件图标占位）+ 底部单行路径名 + **hover 显现的图标操作条**（复制路径 / 复制MD / 打开目录 / 定位 / 移动置亮）。移动表单为区块级卡片（grid 标签列对齐；快速分类 chips 与自定义输入分两行；操作右对齐），点击卡片「移动」后在网格下方展开并自动滚入视口。丢失/未使用/文档资源页签沿用行式列表（文档资源为两段式 `rm-asset-item--panel`）。空/加载占位统一 `EmptyState`（居中图标 + 文案，加载态图标旋转）。
+图片/文件页签资源以**卡片网格**展示（`AssetGridList`，图库式）：自适应列网格（列最小 104px），每张卡片 = 正方形媒体区（图片缩略图 cover、**点击弹出放大预览**；文件页/加载失败回退扩展名或文件图标占位）+ 底部单行路径名 + **hover 显现的图标操作条**（复制路径 / 复制MD / 打开目录 / 定位 / 移动置亮）。点击「移动」弹出**居中移动弹窗**（`MoveAssetDialog`）：当前/新路径、快捷分类 chips 与自定义输入分行。移动为**即时动作**——选择分类、自定义应用或输入新路径回车即执行并自动关闭（弹窗内说明提示避免误触），仅保留关闭/取消；失败时弹窗保留并提示原因。丢失/未使用/文档资源页签沿用行式列表（文档资源为两段式 `rm-asset-item--panel`）。空/加载占位统一 `EmptyState`（居中图标 + 文案，加载态图标旋转）。
 
 「文档资源」页签展示当前活动文档引用的全部资源（`getDocAssets`，含文件大小），支持定位/复制路径/复制 MD 引用。
 
@@ -31,6 +31,7 @@ resourceManager/
 │   ├── CategoryFilterBar.vue         # 分类筛选栏：chip 切换 + 「分类设置」入口
 │   ├── CategorySettingsDialog.vue    # 分类设置弹窗：删除空分类、恢复隐藏的内置分类
 │   ├── EmptyState.vue                # 空/加载占位：居中图标 + 文案（加载态图标旋转）
+│   ├── MoveAssetDialog.vue           # 移动资源弹窗：当前/新路径、快捷分类、确认/取消
 │   └── DocAssetsSection.vue          # 「文档资源」页签（自包含加载活动文档资源）
 ├── composables/
 │   ├── useResourceManager.ts         # 资源加载与缓存、分类筛选、移动/删除/重建索引
@@ -38,7 +39,7 @@ resourceManager/
 │   ├── useAssetLocator.ts            # 引用定位三级兜底（assets → blocks 全路径 → 文件名）
 │   ├── useAssetActions.ts            # 复制 MD 引用、文件管理器中打开目录
 │   └── useDocAssets.ts               # 活动文档资源加载（含请求代际令牌）
-└── styles/                           # index.scss + AssetGridList.scss + EmptyState.scss + DocAssetsSection.scss + CategoryFilterBar.scss + CategorySettingsDialog.scss
+└── styles/                           # index.scss + AssetGridList.scss + MoveAssetDialog.scss + EmptyState.scss + DocAssetsSection.scss + CategoryFilterBar.scss + CategorySettingsDialog.scss
 ```
 
 ## 关键实现说明

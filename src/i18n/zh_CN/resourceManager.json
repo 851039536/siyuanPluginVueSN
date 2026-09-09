@@ -68,6 +68,7 @@
     "restoreSuccess": "分类已恢复",
     "categorySettings": "分类设置",
     "categorySettingsHint": "仅空分类可删除：删除后不再出现在分类栏；内置分类可随时在下方「已隐藏」中恢复。",
+    "moveInstantlyHint": "选择分类、或在输入新路径后按回车，即立即移动该资源",
     "categoryBuiltIn": "内置",
     "noCategories": "暂无可见分类"
   }

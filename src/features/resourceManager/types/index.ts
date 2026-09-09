@@ -71,6 +71,7 @@ export interface ResourceManagerI18n {
   categorySettingsHint: string
   categoryBuiltIn: string
   noCategories: string
+  moveInstantlyHint: string
 }
 
 /** 分类栏条目：key 为归一化小写分类目录名，label 为展示文案 */

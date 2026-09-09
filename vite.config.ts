@@ -13,7 +13,7 @@ import {
 import { viteStaticCopy } from "vite-plugin-static-copy"
 import zipPack from "vite-plugin-zip-pack"
 
-import pluginInfo from "./plugin.json"
+import pluginInfo from "./plugin.json" with { type: "json" }
 
 export default defineConfig(({
   mode,
@@ -65,55 +65,55 @@ export default defineConfig(({
   return {
     resolve: {
       alias: {
-        "@": resolve(__dirname, "src"),
+        "@": resolve(import.meta.dirname, "src"),
         // ===== 功能模块别名：@<featureName> → src/features/<featureName> =====
         // 新增功能模块时，务必同时更新 vite.config.ts / tsconfig.json / AGENTS.md / AGENTS_API.md
-        "@aiContentGenerator": resolve(__dirname, "src/features/aiContentGenerator"),
-        "@apiDebugger": resolve(__dirname, "src/features/apiDebugger"),
-        "@bookmarkMarker": resolve(__dirname, "src/features/bookmarkMarker"),
-        "@compactMode": resolve(__dirname, "src/features/compactMode"),
-        "@dataSnapshot": resolve(__dirname, "src/features/dataSnapshot"),
-        "@diskBrowser": resolve(__dirname, "src/features/diskBrowser"),
-        "@docAnalysis": resolve(__dirname, "src/features/docAnalysis"),
-        "@docNavigation": resolve(__dirname, "src/features/docNavigation"),
-        "@encryption": resolve(__dirname, "src/features/encryption"),
-        "@everythingSearch": resolve(__dirname, "src/features/everythingSearch"),
-        "@flashcardReading": resolve(__dirname, "src/features/flashcardReading"),
-        "@floatingBox": resolve(__dirname, "src/features/floatingBox"),
-        "@floatingToolbar": resolve(__dirname, "src/features/floatingToolbar"),
-        "@formatAssistant": resolve(__dirname, "src/features/formatAssistant"),
-        "@generalSettings": resolve(__dirname, "src/features/generalSettings"),
-        "@gitPush": resolve(__dirname, "src/features/gitPush"),
-        "@htmlViewer": resolve(__dirname, "src/features/htmlViewer"),
-        "@imageCompressor": resolve(__dirname, "src/features/imageCompressor"),
-        "@imageCreation": resolve(__dirname, "src/features/imageCreation"),
-        "@pageLock": resolve(__dirname, "src/features/pageLock"),
-        "@passwordVault": resolve(__dirname, "src/features/passwordVault"),
-        "@prompts": resolve(__dirname, "src/features/prompts"),
-        "@quickNote": resolve(__dirname, "src/features/quickNote"),
-        "@resourceManager": resolve(__dirname, "src/features/resourceManager"),
-        "@rssReader": resolve(__dirname, "src/features/rssReader"),
-        "@s3Backup": resolve(__dirname, "src/features/s3Backup"),
-        "@s3FileManager": resolve(__dirname, "src/features/s3FileManager"),
-        "@scriptLauncher": resolve(__dirname, "src/features/scriptLauncher"),
-        "@shortcut": resolve(__dirname, "src/features/shortcut"),
-        "@skillLearning": resolve(__dirname, "src/features/skillLearning"),
-        "@skillsViewer": resolve(__dirname, "src/features/skillsViewer"),
-        "@statistics": resolve(__dirname, "src/features/statistics"),
-        "@statusBar": resolve(__dirname, "src/features/statusBar"),
-        "@superPanel": resolve(__dirname, "src/features/superPanel"),
-        "@tableOfContents": resolve(__dirname, "src/features/tableOfContents"),
-        "@textDiff": resolve(__dirname, "src/features/textDiff"),
-        "@themeColor": resolve(__dirname, "src/features/themeColor"),
-        "@toolCollection": resolve(__dirname, "src/features/toolCollection"),
-        "@video": resolve(__dirname, "src/features/video"),
-        "@websiteNavigation": resolve(__dirname, "src/features/websiteNavigation"),
+        "@aiContentGenerator": resolve(import.meta.dirname, "src/features/aiContentGenerator"),
+        "@apiDebugger": resolve(import.meta.dirname, "src/features/apiDebugger"),
+        "@bookmarkMarker": resolve(import.meta.dirname, "src/features/bookmarkMarker"),
+        "@compactMode": resolve(import.meta.dirname, "src/features/compactMode"),
+        "@dataSnapshot": resolve(import.meta.dirname, "src/features/dataSnapshot"),
+        "@diskBrowser": resolve(import.meta.dirname, "src/features/diskBrowser"),
+        "@docAnalysis": resolve(import.meta.dirname, "src/features/docAnalysis"),
+        "@docNavigation": resolve(import.meta.dirname, "src/features/docNavigation"),
+        "@encryption": resolve(import.meta.dirname, "src/features/encryption"),
+        "@everythingSearch": resolve(import.meta.dirname, "src/features/everythingSearch"),
+        "@flashcardReading": resolve(import.meta.dirname, "src/features/flashcardReading"),
+        "@floatingBox": resolve(import.meta.dirname, "src/features/floatingBox"),
+        "@floatingToolbar": resolve(import.meta.dirname, "src/features/floatingToolbar"),
+        "@formatAssistant": resolve(import.meta.dirname, "src/features/formatAssistant"),
+        "@generalSettings": resolve(import.meta.dirname, "src/features/generalSettings"),
+        "@gitPush": resolve(import.meta.dirname, "src/features/gitPush"),
+        "@htmlViewer": resolve(import.meta.dirname, "src/features/htmlViewer"),
+        "@imageCompressor": resolve(import.meta.dirname, "src/features/imageCompressor"),
+        "@imageCreation": resolve(import.meta.dirname, "src/features/imageCreation"),
+        "@pageLock": resolve(import.meta.dirname, "src/features/pageLock"),
+        "@passwordVault": resolve(import.meta.dirname, "src/features/passwordVault"),
+        "@prompts": resolve(import.meta.dirname, "src/features/prompts"),
+        "@quickNote": resolve(import.meta.dirname, "src/features/quickNote"),
+        "@resourceManager": resolve(import.meta.dirname, "src/features/resourceManager"),
+        "@rssReader": resolve(import.meta.dirname, "src/features/rssReader"),
+        "@s3Backup": resolve(import.meta.dirname, "src/features/s3Backup"),
+        "@s3FileManager": resolve(import.meta.dirname, "src/features/s3FileManager"),
+        "@scriptLauncher": resolve(import.meta.dirname, "src/features/scriptLauncher"),
+        "@shortcut": resolve(import.meta.dirname, "src/features/shortcut"),
+        "@skillLearning": resolve(import.meta.dirname, "src/features/skillLearning"),
+        "@skillsViewer": resolve(import.meta.dirname, "src/features/skillsViewer"),
+        "@statistics": resolve(import.meta.dirname, "src/features/statistics"),
+        "@statusBar": resolve(import.meta.dirname, "src/features/statusBar"),
+        "@superPanel": resolve(import.meta.dirname, "src/features/superPanel"),
+        "@tableOfContents": resolve(import.meta.dirname, "src/features/tableOfContents"),
+        "@textDiff": resolve(import.meta.dirname, "src/features/textDiff"),
+        "@themeColor": resolve(import.meta.dirname, "src/features/themeColor"),
+        "@toolCollection": resolve(import.meta.dirname, "src/features/toolCollection"),
+        "@video": resolve(import.meta.dirname, "src/features/video"),
+        "@websiteNavigation": resolve(import.meta.dirname, "src/features/websiteNavigation"),
         // jszip 默认按 browser 字段解析到浏览器版 dist/jszip.min.js（nodestream 能力被裁剪），
         // 会导致 s3Backup 的流式打包（zip.file 挂载 Node 流 + generateNodeStream）
         // 抛出 "nodestream is not supported by this platform"。
         // 思源桌面端是 Electron 渲染进程，具备完整 Node 能力，这里强制打包 Node 源码版，
         // 并把 readable-stream 指向运行时内置的原生 stream 模块（下方 external 列表中外部化）。
-        "jszip": resolve(__dirname, "node_modules/jszip/lib/index.js"),
+        "jszip": resolve(import.meta.dirname, "node_modules/jszip/lib/index.js"),
         "readable-stream": "stream",
       },
     },
@@ -215,7 +215,7 @@ export default defineConfig(({
 
       lib: {
         // Could also be a dictionary or array of multiple entry points
-        entry: resolve(__dirname, "src/index.ts"),
+        entry: resolve(import.meta.dirname, "src/index.ts"),
         // the proper extensions will be added
         fileName: "index",
         formats: ["cjs"],

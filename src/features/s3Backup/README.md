@@ -25,7 +25,7 @@
 在「配置」Tab 的备份模式中开启「S3 增量备份」（默认关闭，可与本地 ZIP / S3 上传叠加）。
 
 **工作原理**：
-- 扫描 `{workspace}/data`（跳过 temp/.recycle），与云端清单 manifest（`relativePath → {mtime, size}`）对比
+- 扫描 `{workspace}/data`（跳过 temp/.recycle/filesys_status_check），与云端清单 manifest（`relativePath → {mtime, size}`）对比
 - mtime 或 size 任一变化即视为修改（宽松触发，宁多传不漏传）
 - 新增/变更 → 覆盖式上传到 `{prefix}/{s3SubPrefix}/incremental/data/{relativePath}`（固定 key，4 并发 + 2 次重试）
 - 本地已删除 → 删除对应 S3 对象
@@ -62,8 +62,9 @@
 ## 技术实现
 
 - **签名算法**：AWS Signature V4，基于 Node.js crypto 模块，无外部 SDK 依赖
-- **备份方式**：本地 ZIP 打包（JSZip）→ 上传 `data-backup/` 中的 ZIP（上传超时可配置（默认 240s），扫描跳过 temp/.recycle 目录）。开启日期子文件夹时，S3 key 的日期段只取日期部分（YYYYMMDD），与本地目录语义一致，保证跨备份去重可命中
+- **备份方式**：本地 ZIP 打包（JSZip）→ 上传 `data-backup/` 中的 ZIP（上传超时可配置（默认 240s），扫描跳过 temp/.recycle/filesys_status_check 目录）。S3 key 的日期段取备份文件自身日期（日期子目录名或文件名内嵌日期，YYYYMMDD），与本地目录语义一致；手动上传与自动上传共用同一 key 规则（`utils.buildBackupUploadKey`），保证跨备份去重可命中。ZIP 打包中断时自动清理半成品文件（删除失败时改名 `.part`，避免损坏包被当作有效备份）
 - **增量对比**：`utils.ts` 纯函数 diff（mtime+size 快筛）+ `composables/useIncrementalBackup.ts` 编排，绝不使用 listObjects 做增量判断（1000 条截断风险）
 - **任务互斥**：立即备份/压缩包备份/增量备份/增量还原以及自动备份触发共用运行守卫，任一任务运行中不并发启动新任务（自动备份遇忙记日志跳过）
-- **存储**：PluginStorage + TypedStorage 持久化配置
+- **存储**：PluginStorage + TypedStorage 持久化配置；操作日志上限 200 条（单条结构化清单每类最多 200 项）、校验值上限 100 条、上传来源映射上限 200 条（均超限丢弃最旧），抑制存储单调膨胀
+- **任务编排**：四个入口（立即备份/压缩包/增量备份/增量还原）共用互斥守卫，运行标志在进入时即置位（含目录选择对话框挂起期间），避免并发空窗
 - **UI**：Vue 3 Modal，Codex 风格

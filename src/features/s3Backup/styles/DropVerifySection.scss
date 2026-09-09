@@ -1,0 +1,125 @@
+/** 拖放文件即时校验区样式 (Codex) */
+@use '@/variables.scss' as *;
+@use './mixins' as m;
+
+// ========== 拖放区域 ==========
+
+.drop-zone {
+  border: 2px dashed var(--b3-theme-surface-lighter);
+  border-radius: $vp-radius;
+  padding: $spacing-4;
+  text-align: center;
+  transition: border-color 0.12s ease, background 0.12s ease;
+  margin-bottom: $spacing-3;
+
+  &.drop-active {
+    border-color: var(--b3-theme-primary);
+    background: var(--b3-theme-primary-lightest);
+  }
+}
+
+.drop-zone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: $font-size-sm;
+  color: var(--b3-theme-on-surface-light);
+}
+
+.drop-zone-icon {
+  opacity: 0.6;
+}
+
+// ========== 拖放结果 ==========
+
+.drop-results {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2px;
+}
+
+.drop-result-item {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-2;
+  padding: $spacing-2;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-sm;
+
+  &.drop-compare-match {
+    border-color: var(--b3-theme-success);
+    background: rgba(var(--b3-theme-success-rgb, 45, 170, 78), 0.04);
+  }
+
+  &.drop-compare-mismatch {
+    border-color: var(--b3-theme-error);
+    background: rgba(var(--b3-theme-error-rgb, 212, 59, 59), 0.04);
+  }
+}
+
+.drop-result-info {
+  flex-shrink: 0;
+  min-width: 140px;
+}
+
+.drop-result-name {
+  display: block;
+  font-family: $vp-mono;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+.drop-result-hash {
+  flex: 1;
+  min-width: 0;
+
+  .checksum-hash-value {
+    display: block;
+  }
+}
+
+.drop-result-copy {
+  flex-shrink: 0;
+}
+
+// ========== 拖放结果比对 ==========
+
+.drop-result-compare {
+  flex-shrink: 0;
+  min-width: 120px;
+}
+
+.compare-select {
+  width: 100%;
+  max-width: 160px;
+  padding: 2px $spacing-1;
+  font-size: $font-size-2xs;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-sm;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  outline: none;
+  cursor: pointer;
+
+  &:focus {
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+.compare-badge {
+  @include m.status-badge;
+  white-space: nowrap;
+
+  &.compare-ok {
+    @include m.status-badge-ok;
+  }
+
+  &.compare-fail {
+    @include m.status-badge-fail;
+  }
+}

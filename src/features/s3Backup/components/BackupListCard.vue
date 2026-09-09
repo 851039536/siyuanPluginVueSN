@@ -16,7 +16,12 @@
     </div>
     <!-- 备份条目列表 -->
     <div v-if="items.length > 0" class="backup-list">
-      <div v-for="item in items" :key="item.name" class="backup-item">
+      <!-- key 用云端对象 key / 本地 path 优先，云端不同目录同名对象时仍保持唯一 -->
+      <div
+        v-for="item in items"
+        :key="item.key || item.path || item.name"
+        class="backup-item"
+      >
         <div class="backup-info">
           <!-- 备份文件名 -->
           <span class="backup-name">{{ item.name }}</span>

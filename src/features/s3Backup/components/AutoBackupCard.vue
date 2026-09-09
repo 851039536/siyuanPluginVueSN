@@ -27,11 +27,14 @@
         <template v-if="backupFrequency === 'daily'">
           <!-- 行内标签："备份时间" -->
           <span class="inline-label">{{ i18n.backupTime }}</span>
+          <!-- 备份时间用草稿编辑，失焦/回车才提交，避免逐键重启自动备份定时器 -->
           <Input
-            v-model="backupTime"
+            v-model="backupTimeDraft"
             type="text"
             size="xsmall"
             placeholder="03:00"
+            @blur="commitBackupTime"
+            @keydown="onBackupTimeKeydown"
           />
         </template>
         <!-- 行内标签："保留" -->
@@ -58,7 +61,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, ref, watch } from "vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
 import type { BackupFrequency } from "../types"
@@ -76,6 +79,27 @@ const autoBackupEnabled = defineModel<boolean>("autoBackupEnabled", { required: 
 const backupFrequency = defineModel<BackupFrequency>("backupFrequency", { required: true })
 const backupTime = defineModel<string>("backupTime", { required: true })
 const keepBackupCount = defineModel<number>("keepBackupCount", { required: true })
+
+// 备份时间草稿：失焦/回车才写回 backupTime，避免每次按键都触发父级 watch 重启定时器
+const backupTimeDraft = ref(backupTime.value)
+
+watch(backupTime, (v) => {
+  backupTimeDraft.value = v
+})
+
+/** 将草稿提交到 backupTime（仅值变化时写回） */
+function commitBackupTime(): void {
+  if (backupTimeDraft.value !== backupTime.value) {
+    backupTime.value = backupTimeDraft.value
+  }
+}
+
+/** 回车键即时提交草稿 */
+function onBackupTimeKeydown(e: KeyboardEvent): void {
+  if (e.key === "Enter") {
+    commitBackupTime()
+  }
+}
 
 const props = defineProps<{
   i18n: Record<string, string>

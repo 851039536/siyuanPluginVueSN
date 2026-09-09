@@ -13,7 +13,7 @@ import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import type { BackupManager } from "../modules/BackupManager"
 import type { BackupLog, LocalBackupInfo, PersistFn, S3FileInfo } from "../types"
-import { MAX_LOCAL_BACKUP_COUNT } from "../types"
+import { MAX_LOCAL_BACKUP_COUNT, MAX_UPLOAD_HOST_MAP } from "../types"
 import { getBaseName, getHostname } from "../utils"
 
 /** 依赖注入：全部来自 index.vue 已有的状态与方法 */
@@ -92,13 +92,20 @@ export function useLocalBackupList(deps: LocalBackupListDeps) {
     return deps.backupList.value.some((f) => f.name === base || f.key.endsWith(`/${base}`))
   }
 
-  /** 批量记录上传来源设备名并持久化（仅传入实际上传成功的文件） */
+  /** 批量记录上传来源设备名并持久化（仅传入实际上传成功的文件；超限丢弃最旧条目） */
   async function recordUploadHosts(fileNames: string[]): Promise<void> {
     const hostname = getHostname()
     if (!hostname || fileNames.length === 0) { return }
     const next = { ...uploadHostMap.value }
     for (const name of fileNames) {
       next[getBaseName(name)] = hostname
+    }
+    // 上限截断：对象键序即插入序，删除头部最旧条目，防止存储单调膨胀
+    const keys = Object.keys(next)
+    if (keys.length > MAX_UPLOAD_HOST_MAP) {
+      for (const staleKey of keys.slice(0, keys.length - MAX_UPLOAD_HOST_MAP)) {
+        delete next[staleKey]
+      }
     }
     uploadHostMap.value = next
     await deps.persist((s) => s.uploadHostMap.save({ map: uploadHostMap.value }))

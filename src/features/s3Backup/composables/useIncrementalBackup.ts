@@ -201,10 +201,23 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
       hostname: getHostname(),
       files: newFiles,
     }
-    await deps.uploadFileContent(
-      Buffer.from(JSON.stringify(newManifest), "utf-8"),
-      manifestKey,
-    )
+    try {
+      await deps.uploadFileContent(
+        Buffer.from(JSON.stringify(newManifest), "utf-8"),
+        manifestKey,
+      )
+    } catch (err: unknown) {
+      // manifest 上传失败：文件可能已全部上传成功但清单未更新 → 下次将全量重传；
+      // 记录失败日志后再抛出，避免整次备份在日志中不留痕迹
+      addLog({
+        type: "s3Incremental",
+        action: i18n.s3Incremental,
+        fileName: "",
+        success: false,
+        message: `${i18n.manifestUploadFailed}: ${getErrorMessage(err)}`,
+      })
+      throw err
+    }
 
     backupProgress.value = {
       phase: "uploading",
@@ -325,7 +338,7 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
       percent: 100,
     }
 
-    // 3. 结果上报：日志 + 消息（type 复用既有 s3Download；仅失败清单入 detail，下载成功清单不记避免冗余）
+    // 3. 结果上报：日志 + 消息（独立类型 s3IncrementalRestore 与普通下载区分；仅失败清单入 detail）
     let message = (i18n.incrementalRestoreResult || "")
       .replace("{downloaded}", String(downloaded))
       .replace("{path}", targetDir)
@@ -334,7 +347,7 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
     }
     const [cappedFailed, omittedFailed] = capFileList(failedFiles)
     addLog({
-      type: "s3Download",
+      type: "s3IncrementalRestore",
       action: i18n.incrementalRestore,
       // 日志文件名："N 个文件"
       fileName: downloaded > 0 ? i18n.filesCount.replace("{count}", String(downloaded)) : "",

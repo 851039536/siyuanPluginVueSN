@@ -1,0 +1,104 @@
+/** 已存储校验值列表区样式 (Codex) */
+@use '@/variables.scss' as *;
+@use './mixins' as m;
+
+// ========== 校验值列表 ==========
+
+.checksum-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2px;
+  max-height: 520px;
+  overflow-y: auto;
+}
+
+.checksum-item {
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-sm;
+  padding: $spacing-2;
+  transition: border-color 0.12s ease, background 0.12s ease;
+
+  &.verify-match {
+    border-color: var(--b3-theme-success);
+    background: rgba(var(--b3-theme-success-rgb, 45, 170, 78), 0.04);
+  }
+
+  &.verify-mismatch {
+    border-color: var(--b3-theme-error);
+    background: rgba(var(--b3-theme-error-rgb, 212, 59, 59), 0.04);
+  }
+}
+
+.checksum-main {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin-bottom: $spacing-1;
+}
+
+.checksum-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: $vp-mono;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  min-width: 0;
+}
+
+.checksum-path-icon {
+  flex-shrink: 0;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface-light);
+  cursor: help;
+  line-height: 1;
+  transition: color 0.12s ease;
+
+  &:hover {
+    color: var(--b3-theme-primary);
+  }
+}
+
+.checksum-meta {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  flex-shrink: 0;
+  color: var(--b3-theme-on-surface-light);
+  font-size: $font-size-2xs;
+  white-space: nowrap;
+}
+
+// 相对时间（如"5分钟前"），比绝对时间弱化一级（字号/颜色继承自 .checksum-meta）
+.checksum-relative {
+  opacity: 0.75;
+}
+
+.checksum-hash {
+  margin-bottom: $spacing-1;
+}
+
+.checksum-actions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.checksum-sep {
+  @include m.meta-sep;
+}
+
+.verify-badge {
+  @include m.status-badge;
+
+  &.verify-ok {
+    @include m.status-badge-ok;
+  }
+
+  &.verify-fail {
+    @include m.status-badge-fail;
+  }
+}

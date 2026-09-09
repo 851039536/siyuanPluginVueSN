@@ -14,7 +14,7 @@ import { getErrorMessage } from "@/utils/stringUtils"
 import type { BackupManager, BackupProgress, BackupResult, WorkspaceFile } from "../modules/BackupManager"
 import type { BackupLog, S3Config } from "../types"
 import { FULL_UPLOAD_CONCURRENCY, MSG_DESKTOP_ONLY, TRANSFER_MAX_RETRIES } from "../types"
-import { buildS3Key, getBaseName, makeBackupTimestamp, runWithConcurrency } from "../utils"
+import { buildBackupUploadKey, getBaseName, makeBackupTimestamp, runWithConcurrency } from "../utils"
 
 /** 依赖注入：全部来自 index.vue 已有的状态与方法 */
 export interface FullS3UploadDeps {
@@ -42,13 +42,18 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
   const { backupProgress, addLog, i18n } = deps
 
   /**
-   * 构建 S3 对象 key（复用 utils.buildS3Key，日期子文件夹由 useDateFolder 控制）
-   * datePath 只取时间戳的日期部分（YYYYMMDD），与本地 ZIP 的日期目录语义对齐；
-   * 完整时间戳会导致每次备份 key 必不同，全 key 去重永不命中（历史 bug）。
+   * 构建 S3 对象 key（复用 utils.buildBackupUploadKey 统一规则）
+   * 日期段取备份文件自身日期（日期子目录名或文件名内嵌日期），与本地 ZIP 目录语义对齐；
+   * 旧实现把"今日时间戳"叠在已含日期目录的 relativePath 之前，产生双日期嵌套（历史 bug）。
    */
   function makeS3Key(relativePath: string, timestamp: string): string {
-    const datePath = deps.useDateFolder.value ? timestamp.slice(0, 8) : ""
-    return buildS3Key(deps.s3Config.value.prefix, deps.s3SubPrefix.value, relativePath, datePath)
+    return buildBackupUploadKey(
+      deps.s3Config.value.prefix,
+      deps.s3SubPrefix.value,
+      relativePath,
+      deps.useDateFolder.value,
+      timestamp.slice(0, 8),
+    )
   }
 
   /** S3 备份
@@ -67,9 +72,21 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
       // A4 修复：仅上传刚生成的 ZIP 文件，避免每次重复上传 data-backup/ 中的全部历史备份
       files = [{ fullPath: latestZip.filePath, relativePath: latestZip.fileName }]
     } else {
-      files = await backupManager.getWorkspaceFiles((p) => {
-        backupProgress.value = { ...p }
-      })
+      try {
+        files = await backupManager.getWorkspaceFiles((p) => {
+          backupProgress.value = { ...p }
+        })
+      } catch (err: unknown) {
+        // 扫描失败：记录失败日志后再抛出，避免整次上传在日志中不留痕迹
+        addLog({
+          type: "s3Upload",
+          action: i18n.s3Upload,
+          fileName: "",
+          success: false,
+          message: getErrorMessage(err),
+        })
+        throw err
+      }
     }
 
     if (files.length === 0) {
@@ -104,7 +121,7 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
     let processedCount = 0 // 已处理文件数（含跳过 + 上传 + 失败）
     const uploadedNames: string[] = [] // 实际上传成功的文件名（hostMap 只记录这些）
 
-    // try/finally 兜底：即使 worker 意外抛错，也保住已成功文件的校验值落盘
+    // try/catch/finally 兜底：worker 意外抛错时记录失败日志，且保住已成功文件的校验值落盘
     try {
       await runWithConcurrency(files, FULL_UPLOAD_CONCURRENCY, async (file) => {
         const s3Key = makeS3Key(file.relativePath, timestamp)
@@ -143,6 +160,8 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
           return
         }
 
+        // 本 worker 已上报的最大百分比（并发 worker 间共享 processedCount 会造成读值竞态，用本地值去重）
+        let lastReportedPercent = -1
         // 上传（带重试）与哈希并行执行；上传改为磁盘路径流式/分片，不再整体 readFile 驻留内存
         const [uploadResult, hashResult] = await Promise.allSettled([
           (async () => {
@@ -151,7 +170,8 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
                 // 字节级进度：单文件内发送比例折算到总进度（否则单大 ZIP 上传全程 0% 直跳 100%）
                 await deps.uploadFileSmart(file.fullPath, s3Key, (sent, total) => {
                   const percent = Math.round(((processedCount + sent / total) / files.length) * 100)
-                  if (percent !== backupProgress.value.percent) { // 整数百分比变化才更新，避免高频响应式触发
+                  if (percent !== lastReportedPercent) { // 整数百分比变化才更新，避免高频响应式触发
+                    lastReportedPercent = percent
                     backupProgress.value = { ...backupProgress.value, percent }
                   }
                 })
@@ -181,6 +201,16 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
         uploadedCount++
         processedCount++
       })
+    } catch (err: unknown) {
+      // 防御性兜底：worker 意外异常时记录失败日志再抛出，交由上层统一提示
+      addLog({
+        type: "s3Upload",
+        action: i18n.s3Upload,
+        fileName: "",
+        success: false,
+        message: getErrorMessage(err),
+      })
+      throw err
     } finally {
       // 批量统一落盘校验值（O(N) 写入 → O(1)）；零上传时跳过无意义写入
       // 落盘失败仅告警，避免掩盖循环内的原始上传错误

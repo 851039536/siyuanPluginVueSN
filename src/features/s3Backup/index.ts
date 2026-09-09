@@ -3,24 +3,18 @@
  *
  * 提供统一的备份功能：本地 ZIP 压缩备份 + S3 兼容存储上传。
  * 支持手动备份、自动备份定时器、备份列表管理（本地 + 云端）。
- * S3Backup 类管理 persistent Modal、工作区路径、自动备份调度。
+ * S3Backup 类管理 persistent Modal、自动备份调度与备份时间戳（运行时唯一事实源）；
+ * 模块级单例引用由 instance.ts 持有（避免与面板组件循环依赖）。
  */
 import type { ModalAppInstance } from "@/utils/vueAppHelper"
 import { Plugin } from "siyuan"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { createModalVueApp } from "@/utils/vueAppHelper"
 import { TimerRegistry, type TimerHandle } from "@/utils/timerRegistry"
-import { getWorkspaceDir } from "@/api"
 import S3BackupPanel from "./index.vue"
 import { S3BackupStorage, DEFAULT_BACKUP_SETTINGS } from "./types"
 import type { BackupSettings, BackupFrequency } from "./types"
-
-let s3BackupInstance: S3Backup | null = null
-
-/** 获取当前 S3Backup 实例（供 Vue 面板查询工作区路径等状态） */
-export function getS3BackupInstance(): S3Backup | null {
-  return s3BackupInstance
-}
+import { getS3BackupInstance, setS3BackupInstance } from "./instance"
 
 export class S3Backup {
   private plugin: Plugin
@@ -29,14 +23,13 @@ export class S3Backup {
   private _openHandler: (() => void) | null = null
   private readonly timers = new TimerRegistry()
   private autoBackupTimer: TimerHandle | null = null
+  /** 上次备份时间戳（运行时唯一事实源；持久化值经 initAutoBackup 回填，完成后经 updateLastBackupTime 更新） */
   private lastBackupTimestamp = 0
   /** A6 修复：防重复执行状态提升为实例字段，避免重启定时器时丢失 */
   private lastExecutedHour = -1
   private lastExecutedDateStr = ""
   /** 设置保存串行链：面板多个 @update 连发时防止 load-merge-save 交错覆盖 */
   private saveChain: Promise<void> = Promise.resolve()
-
-  private cachedWorkspaceRoot = ""
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
@@ -56,7 +49,6 @@ export class S3Backup {
   }
 
   async init(): Promise<void> {
-    await this.detectAndInitWorkspace()
     await this.initAutoBackup()
 
     this._openHandler = () => this.open()
@@ -73,11 +65,6 @@ export class S3Backup {
 
   close = (): void => {
     this.modal.close()
-  }
-
-  /** 获取当前工作区根目录（供 Vue 面板读取） */
-  getWorkspaceRoot(): string {
-    return this.cachedWorkspaceRoot
   }
 
   /** 获取持久化存储实例（供 Vue 面板共用，避免重复创建） */
@@ -243,45 +230,24 @@ export class S3Backup {
     return task
   }
 
-  // ========== 工作区检测 ==========
-
-  private async detectAndInitWorkspace(): Promise<void> {
-    // 1. API 自动获取（最可靠的方式）
-    try {
-      const dir = await getWorkspaceDir()
-      if (dir) {
-        this.setWorkspacePaths(dir)
-        return
-      }
-    } catch { /* ignore */ }
-
-    // 2. 持久化存储（兜底）
-    try {
-      const data = await this.storage.backupSettings.loadOrDefault()
-      if (data.workspaceRoot) {
-        this.setWorkspacePaths(data.workspaceRoot)
-        return
-      }
-    } catch { /* ignore */ }
-  }
-
-  setWorkspacePaths(root: string): void {
-    this.cachedWorkspaceRoot = root
+  /** 获取上次备份时间戳（运行时单一事实源，供设置持久化读取） */
+  getLastBackupTimestamp(): number {
+    return this.lastBackupTimestamp
   }
 
   // ========== 生命周期 ==========
 
   destroy(): void {
     this.stopAutoBackupTimer()
+    // 注册表全量兜底清理，防止未来新增定时器后遗漏单独 stop 逻辑
+    this.timers.clearAll()
     if (this._openHandler) {
       window.removeEventListener("openS3Backup", this._openHandler)
       this._openHandler = null
     }
     this.modal.destroy()
     // 释放模块级单例引用，避免卸载后 Vue 面板拿到失效实例
-    if (s3BackupInstance === this) {
-      s3BackupInstance = null
-    }
+    setS3BackupInstance(null)
   }
 }
 
@@ -290,11 +256,12 @@ export class S3Backup {
  */
 export function registerS3Backup(plugin: Plugin): void {
   // 重复注册防护：先销毁旧实例，避免定时器/监听器/persistent Modal 泄漏
-  s3BackupInstance?.destroy()
-  s3BackupInstance = new S3Backup(plugin)
+  getS3BackupInstance()?.destroy()
+  const instance = new S3Backup(plugin)
+  setS3BackupInstance(instance)
   // 挂到 plugin 实例供 onunload() 销毁钩子调用（缺失会导致定时器与事件监听器泄漏）
-  ;(plugin as any).__s3Backup = s3BackupInstance
-  s3BackupInstance.init().catch((err) => {
+  ;(plugin as any).__s3Backup = instance
+  instance.init().catch((err) => {
     console.error("S3 备份初始化失败:", err)
   })
 }

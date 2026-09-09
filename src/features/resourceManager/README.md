@@ -14,6 +14,8 @@
 
 分类目录名与筛选前缀统一小写（`normalizeCategoryKey`）：自定义分类输入 `Photos` 会落盘为 `assets/photos/`，与筛选前缀一致，避免「分类筛选结果恒为空」。
 
+**分类可删除（仅空分类）**：分类筛选栏末尾「分类设置」按钮打开集中管理弹窗（`CategorySettingsDialog`），可见分类列表每行提供删除入口，仅当该分类目录下无资源时允许删除（内存缓存前缀 + 磁盘 `readDir` 双重校验，有资源的分类提示先移动/删除）。内置分类 images/net/tool/other 删除 = 隐藏并持久化（`resourceManager-hiddenBuiltIn`），分类栏不再显示，可在弹窗「已隐藏」区一键恢复；自定义分类删除后从存储（`resourceManager-customCategories`）移除，磁盘空目录一并清理。
+
 ## 文件结构
 
 ```
@@ -21,15 +23,18 @@ resourceManager/
 ├── index.ts                          # registerResourceManager — 创建 Dock 面板
 ├── index.vue                         # 主面板：页签切换、资源列表、移动表单、缩略图预览
 ├── utils.ts                          # 纯函数与共享常量：SQL 转义、路径形态变换、目录扫描
-├── types/index.ts                    # ResourceManagerI18n 文案接口
+├── types/index.ts                    # ResourceManagerI18n 文案接口 + CategoryItem 分类条目类型
 ├── components/
+│   ├── CategoryFilterBar.vue         # 分类筛选栏：chip 切换 + 「分类设置」入口
+│   ├── CategorySettingsDialog.vue    # 分类设置弹窗：删除空分类、恢复隐藏的内置分类
 │   └── DocAssetsSection.vue          # 「文档资源」页签（自包含加载活动文档资源）
 ├── composables/
 │   ├── useResourceManager.ts         # 资源加载与缓存、分类筛选、移动/删除/重建索引
+│   ├── useCategoryManager.ts         # 分类可见性组装、空分类删除、内置分类隐藏/恢复与持久化
 │   ├── useAssetLocator.ts            # 引用定位三级兜底（assets → blocks 全路径 → 文件名）
 │   ├── useAssetActions.ts            # 复制 MD 引用、文件管理器中打开目录
 │   └── useDocAssets.ts               # 活动文档资源加载（含请求代际令牌）
-└── styles/                           # index.scss（主面板）+ DocAssetsSection.scss
+└── styles/                           # index.scss + DocAssetsSection.scss + CategoryFilterBar.scss + CategorySettingsDialog.scss
 ```
 
 ## 关键实现说明

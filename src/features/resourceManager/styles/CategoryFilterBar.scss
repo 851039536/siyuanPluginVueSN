@@ -1,0 +1,26 @@
+@use "@/variables.scss" as *;
+
+// 分类筛选栏：chips 横向流式排布，末尾「分类设置」按钮
+.rm-category-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $spacing-1;
+  margin-bottom: $spacing-2;
+
+  // 激活态高亮（主题主色，与 .rm-filter-bar .rm-btn.active 一致）
+  .rm-btn.active {
+    background: var(--b3-theme-primary);
+    color: var(--b3-theme-on-primary);
+    border-color: var(--b3-theme-primary);
+  }
+
+  // 分类设置按钮：图标 + 文字内联，与 chips 视觉略区分（辅助色）
+  &__manage {
+    display: inline-flex;
+    align-items: center;
+    gap: $spacing-1;
+    color: var(--b3-theme-secondary);
+    margin-left: $spacing-1;
+  }
+}

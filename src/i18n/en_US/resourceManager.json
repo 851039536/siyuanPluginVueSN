@@ -58,6 +58,17 @@
     "docAssets": "Doc Assets",
     "noDocAssets": "No assets referenced in current document",
     "noActiveDoc": "Please open a document first",
-    "currentDoc": "Current Doc"
+    "currentDoc": "Current Doc",
+    "deleteCategory": "Delete Category",
+    "deleteCategoryConfirm": "Delete empty category \"{cat}\"? It will be removed from the category bar.",
+    "categoryNotEmpty": "This category still contains assets. Move or delete them first.",
+    "deleteCategorySuccess": "Category deleted",
+    "hiddenCategories": "Hidden",
+    "restore": "Restore",
+    "restoreSuccess": "Category restored",
+    "categorySettings": "Category Settings",
+    "categorySettingsHint": "Only empty categories can be deleted; they disappear from the bar. Built-in ones can be restored under \"Hidden\" below.",
+    "categoryBuiltIn": "Built-in",
+    "noCategories": "No visible categories"
   }
 }

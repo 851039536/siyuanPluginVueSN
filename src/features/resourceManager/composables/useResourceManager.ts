@@ -22,12 +22,11 @@ import {
   updateBlock,
 } from "@/api"
 import { copyToClipboard } from "@/utils/domUtils"
-import { PluginStorage } from "@/utils/pluginStorage"
 import {
-  BUILT_IN_CATEGORY_KEYS,
   buildAssetList,
   buildNameFallbackPairs,
   buildVariantPairs,
+  categoryDirPrefix,
   escapeRegExp,
   isValidAssetMovePath,
   normalizeCategoryKey,
@@ -35,10 +34,10 @@ import {
   resolveDiskPath,
   safeDecodeURI,
   scanAssetDir,
-  STORAGE_KEY,
 } from "../utils"
 import { useAssetActions } from "./useAssetActions"
 import { useAssetLocator } from "./useAssetLocator"
+import { useCategoryManager } from "./useCategoryManager"
 
 /** 引用更新分批并发大小 */
 const UPDATE_BATCH_SIZE = 10
@@ -50,7 +49,6 @@ const MAX_ASSET_QUERY_ROWS = 102400
 const REF_QUERY_LIMIT = 1000
 
 export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
-  const storage = new PluginStorage(plugin)
   const isMounted = ref(false)
   const activeTab = ref("imageAssets")
   const loading = ref(false)
@@ -66,29 +64,24 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
   const movingAsset = ref<string | null>(null)
   const moveNewPath = ref("")
   const customCategory = ref("")
-  const customCategories = ref<string[]>([])
 
   const rebuildResult = ref("")
 
   // 请求代际令牌：快速切换页签时丢弃过期响应
   let requestToken = 0
 
+  // 分类管理（可见性组装/空分类删除/内置隐藏恢复/持久化）；注入全量路径读取用于空分类判定
+  const {
+    quickCategories,
+    hiddenBuiltInCategories,
+    isCategoryEmpty,
+    deleteCategory,
+    restoreBuiltIn,
+    addCustomCategory,
+  } = useCategoryManager(plugin, i18n, () => allAssetPaths.value)
+
   const imageAssets = computed(() => buildAssetList(allAssetPaths.value, true))
   const fileAssets = computed(() => buildAssetList(allAssetPaths.value, false))
-
-  const quickCategories = computed(() => {
-    const builtIn = [
-      { key: "images", label: i18n.categoryImages },
-      { key: "net", label: i18n.categoryNet },
-      { key: "tool", label: i18n.categoryTool },
-      { key: "other", label: i18n.categoryOther },
-    ]
-    const custom = customCategories.value.map((cat) => ({
-      key: cat,
-      label: cat,
-    }))
-    return [...builtIn, ...custom]
-  })
 
   // 加载数量兜底：空串/NaN/小于 1 时回退默认值
   const effectiveLimit = computed(() => {
@@ -102,14 +95,14 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     let matched: string[]
     if (!categoryFilter.value) {
       // 空筛选 = 待分类视图：排除所有已归入分类目录的资源
-      const prefixes = quickCategories.value.map((c) => `assets/${c.key.toLowerCase()}/`)
+      const prefixes = quickCategories.value.map((c) => categoryDirPrefix(c.key))
       matched = list.filter((path) => {
         const lower = path.toLowerCase()
         return !prefixes.some((prefix) => lower.startsWith(prefix))
       })
     }
     else {
-      const prefix = `assets/${categoryFilter.value.toLowerCase()}/`
+      const prefix = categoryDirPrefix(categoryFilter.value)
       matched = list.filter((path) => path.toLowerCase().startsWith(prefix))
     }
     return {
@@ -258,6 +251,38 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     }
   }
 
+  // ── Category ──
+
+  /** 删除空分类（内置=隐藏）：先预检空分类拦截不可删，再确认后执行；筛选正指向该分类时复位 */
+  async function handleDeleteCategory(key: string, label: string) {
+    const empty = await isCategoryEmpty(key)
+    if (!isMounted.value) return
+    if (!empty) {
+      showMsg(i18n.categoryNotEmpty)
+      return
+    }
+    const tip = t(i18n.deleteCategoryConfirm).replace("{cat}", label)
+    if (!window.confirm(tip || t(i18n.deleteCategory))) return
+    const result = await deleteCategory(key)
+    if (!isMounted.value) return
+    if (result === "notEmpty") {
+      showMsg(i18n.categoryNotEmpty)
+      return
+    }
+    if (result === "failed") {
+      showMsg(i18n.deleteFailed)
+      return
+    }
+    if (categoryFilter.value === key) categoryFilter.value = ""
+    showMsg(i18n.deleteCategorySuccess)
+  }
+
+  /** 恢复被隐藏的内置分类（快捷分类栏重新出现） */
+  async function handleRestoreBuiltIn(key: string) {
+    await restoreBuiltIn(key)
+    if (isMounted.value) showMsg(i18n.restoreSuccess)
+  }
+
   // ── Move ──
 
   function startMoveAsset(path: string) {
@@ -284,11 +309,8 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     if (!cat) return
     const moved = await applyCategory(currentPath, cat)
 
-    // 仅移动成功时才把自定义分类写入持久化，避免移动失败仍新增分类
-    if (moved && !BUILT_IN_CATEGORY_KEYS.has(cat) && !customCategories.value.includes(cat)) {
-      customCategories.value = [...customCategories.value, cat]
-      await storage.save(STORAGE_KEY, customCategories.value)
-    }
+    // 仅移动成功时才记录自定义分类，避免移动失败仍新增分类
+    if (moved) await addCustomCategory(cat)
     customCategory.value = ""
   }
 
@@ -458,14 +480,8 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
 
   // ── Lifecycle ──
 
-  onMounted(async () => {
+  onMounted(() => {
     isMounted.value = true
-    try {
-      const saved = await storage.load<string[]>(STORAGE_KEY)
-      // 历史数据可能含大写/空白，读取时归一化并去重，保证筛选前缀一致
-      if (saved) customCategories.value = [...new Set(saved.map(normalizeCategoryKey).filter(Boolean))]
-    }
-    catch { /* ignore */ }
   })
 
   onUnmounted(() => {
@@ -501,6 +517,7 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     customCategory,
     rebuildResult,
     quickCategories,
+    hiddenBuiltInCategories,
     totalAssetCount,
     currentAssetList,
     refresh,
@@ -510,6 +527,8 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     handleLocateAsset,
     handleDeleteUnused,
     handleDeleteAllUnused,
+    handleDeleteCategory,
+    handleRestoreBuiltIn,
     startMoveAsset,
     cancelMove,
     applyCategory,

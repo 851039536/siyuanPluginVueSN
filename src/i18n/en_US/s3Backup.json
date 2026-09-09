@@ -55,6 +55,7 @@
   "never": "Never",
   "notSet": "Not Set",
   "selectPath": "Select Path",
+  "openFolder": "Open Folder",
   "refresh": "Refresh",
   "s3BackupDesc": "Backup workspace to S3-compatible storage, supports local ZIP + S3 upload",
   "useDateFolder": "Create date subfolder",

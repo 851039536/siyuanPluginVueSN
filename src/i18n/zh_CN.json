@@ -2934,6 +2934,7 @@
   "never": "从未",
   "notSet": "未设置",
   "selectPath": "选择路径",
+  "openFolder": "打开文件夹",
   "s3BackupDesc": "将工作区备份到 S3 兼容存储，支持本地 ZIP + S3 上传",
   "useDateFolder": "生成日期子文件夹",
   "useDateFolderHint": "勾选后按日期（如 siyuan-backup/20260706-012735/）分类存储，不勾选则直接放在目录前缀下",

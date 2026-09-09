@@ -26,9 +26,11 @@ import { PluginStorage } from "@/utils/pluginStorage"
 import {
   BUILT_IN_CATEGORY_KEYS,
   buildAssetList,
+  buildNameFallbackPairs,
   buildVariantPairs,
   escapeRegExp,
   isValidAssetMovePath,
+  normalizeCategoryKey,
   queryBlocksByMarkdown,
   resolveDiskPath,
   safeDecodeURI,
@@ -42,6 +44,10 @@ import { useAssetLocator } from "./useAssetLocator"
 const UPDATE_BATCH_SIZE = 10
 /** 加载数量输入非法时的默认值 */
 const DEFAULT_LOAD_LIMIT = 30
+/** assets 表资源路径查询行数上限（超出部分不进入列表） */
+const MAX_ASSET_QUERY_ROWS = 102400
+/** 单次引用查询返回的块数上限 */
+const REF_QUERY_LIMIT = 1000
 
 export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
   const storage = new PluginStorage(plugin)
@@ -117,6 +123,14 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
 
   // ── Helpers ──
 
+  /**
+   * i18n 文案取值兜底：Dock 面板在 i18n 缺失时会传入空对象，
+   * 直接对 undefined 调用 replace() 会抛错，统一经此取值
+   */
+  function t(msg: string | undefined): string {
+    return msg ?? ""
+  }
+
   function showMsg(msg: string, timeout = 3000) {
     try { showMessage(msg, timeout, "info") }
     catch { /* ignore */ }
@@ -135,24 +149,34 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
 
   // ── Data Loading ──
 
-  async function loadAssets(token: number) {
-    try {
-      // 两个数据源相互独立，并行请求；磁盘扫描已覆盖未使用资源（其本质是磁盘上无引用的文件）
-      const [referenced, fsPaths] = await Promise.all([
-        sql("SELECT DISTINCT path FROM assets WHERE path LIKE 'assets/%' LIMIT 102400"),
-        scanAssetDir("/data/assets"),
-      ])
-      const refPaths = (referenced || [])
-        .map((r: { path: string }) => r.path)
-        .filter((p: unknown): p is string => typeof p === "string")
+  /** 全量资源加载的进行中 Promise：同代际重复请求复用同一次扫描，避免请求风暴 */
+  let assetLoadPromise: Promise<void> | null = null
 
-      if (!isMounted.value || token !== requestToken) return
-      allAssetPaths.value = [...new Set([...refPaths, ...fsPaths])].sort()
-    }
-    catch (e: unknown) {
-      console.error("加载资源列表失败:", e)
-      showMsg(i18n.loadFailed)
-    }
+  async function loadAssets(token: number) {
+    if (assetLoadPromise) return assetLoadPromise
+    assetLoadPromise = (async () => {
+      try {
+        // 两个数据源相互独立，并行请求；磁盘扫描已覆盖未使用资源（其本质是磁盘上无引用的文件）
+        const [referenced, fsPaths] = await Promise.all([
+          sql(`SELECT DISTINCT path FROM assets WHERE path LIKE 'assets/%' LIMIT ${MAX_ASSET_QUERY_ROWS}`),
+          scanAssetDir("/data/assets"),
+        ])
+        const refPaths = (referenced || [])
+          .map((r: { path: string }) => r.path)
+          .filter((p: unknown): p is string => typeof p === "string")
+
+        if (!isMounted.value || token !== requestToken) return
+        allAssetPaths.value = [...new Set([...refPaths, ...fsPaths])].sort()
+      }
+      catch (e: unknown) {
+        console.error("加载资源列表失败:", e)
+        showMsg(i18n.loadFailed)
+      }
+      finally {
+        assetLoadPromise = null
+      }
+    })()
+    return assetLoadPromise
   }
 
   async function loadMissingAssets(token: number) {
@@ -198,12 +222,20 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
 
   // ── Delete ──
 
+  /** 删除成功后同步剔除已失效路径，避免图片/文件页签残留幽灵条目 */
+  function forgetAssetPaths(paths: string[]) {
+    const removed = new Set(paths)
+    allAssetPaths.value = allAssetPaths.value.filter((p) => !removed.has(p))
+    missingAssets.value = missingAssets.value.filter((p) => !removed.has(p))
+  }
+
   async function handleDeleteUnused(path: string) {
-    if (!confirm(`${i18n.deleteConfirm} ${path}?`)) return
+    if (!window.confirm(`${i18n.deleteConfirm} ${path}?`)) return
     try {
       await removeUnusedAsset(path)
       if (!isMounted.value) return
       showMsg(i18n.deleteSuccess)
+      forgetAssetPaths([path])
       await loadUnusedAssets(requestToken)
     }
     catch {
@@ -212,11 +244,13 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
   }
 
   async function handleDeleteAllUnused() {
-    if (!confirm(`${i18n.deleteConfirm} (${unusedAssets.value.length})?`)) return
+    if (!window.confirm(`${i18n.deleteConfirm} (${unusedAssets.value.length})?`)) return
+    const pending = [...unusedAssets.value]
     try {
       await removeUnusedAssets()
       if (!isMounted.value) return
       showMsg(i18n.deleteSuccess)
+      forgetAssetPaths(pending)
       await loadUnusedAssets(requestToken)
     }
     catch {
@@ -239,13 +273,14 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
 
   async function applyCategory(currentPath: string, category: string): Promise<boolean> {
     const fileName = currentPath.split("/").pop() || currentPath
-    moveNewPath.value = `assets/${category}/${fileName}`
+    // 分类名统一小写，保证磁盘目录名与筛选前缀（同样小写化）一致
+    moveNewPath.value = `assets/${normalizeCategoryKey(category)}/${fileName}`
     // 点击分类即直接执行移动，避免"填入路径后未点确认"的静默无操作陷阱
     return await handleMoveAsset(currentPath)
   }
 
   async function applyCustomCategory(currentPath: string) {
-    const cat = customCategory.value.trim()
+    const cat = normalizeCategoryKey(customCategory.value)
     if (!cat) return
     const moved = await applyCategory(currentPath, cat)
 
@@ -261,11 +296,9 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     allAssetPaths.value = allAssetPaths.value
       .map((p) => (p === oldPath ? newPath : p))
       .sort()
-  }
-
-  /** 按 LIKE 片段查询含该资源引用的块；sql 静默失败时返回 null */
-  async function queryRefBlocks(likeNeedle: string): Promise<{ id: string, markdown: string }[] | null> {
-    return await queryBlocksByMarkdown(likeNeedle, 1000)
+    // 丢失/未使用列表中的旧路径同步失效
+    missingAssets.value = missingAssets.value.map((p) => (p === oldPath ? newPath : p))
+    unusedAssets.value = unusedAssets.value.filter((p) => p !== oldPath)
   }
 
   /**
@@ -283,7 +316,7 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     // 各形态分别查询，按块 id 去重
     const blockMap = new Map<string, string>()
     for (const variant of variants) {
-      const rows = await queryRefBlocks(variant.from)
+      const rows = await queryBlocksByMarkdown(variant.from, REF_QUERY_LIMIT)
       if (!rows) {
         // sql 静默失败返回 null：文件已移动但引用未更新，明确提示用户
         showMsg(i18n.refUpdateFailed)
@@ -295,11 +328,11 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     }
 
     // 文件名兜底：按【旧路径】文件名（含编码形态）补查引用了旧目录路径的块；
-    // pair.to 为同编码形态的新完整路径，替换时保持形态一致
+    // 每个 pair 的 to 为同编码形态的新完整路径，替换时保持形态一致
     const baseName = oldBase.split("/").pop() ?? ""
-    const namePairs = baseName ? buildVariantPairs(baseName, newBase) : []
+    const namePairs = baseName ? buildNameFallbackPairs(baseName, newBase) : []
     for (const pair of namePairs) {
-      const rows = await queryRefBlocks(`/${pair.from}`)
+      const rows = await queryBlocksByMarkdown(`/${pair.from}`, REF_QUERY_LIMIT)
       if (!rows) continue
       for (const row of rows) {
         if (!blockMap.has(row.id)) blockMap.set(row.id, row.markdown)
@@ -325,7 +358,9 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
       const batch = updates.slice(i, i + UPDATE_BATCH_SIZE)
       const results = await Promise.all(batch.map(async (u) => {
         try {
-          return (await updateBlock("markdown", u.next, u.id)) !== null
+          const res = await updateBlock("markdown", u.next, u.id)
+          // 内核失败时可能返回空数组而非 null，须按"有操作结果"判定成功
+          return Array.isArray(res) && res.length > 0
         }
         catch {
           return false
@@ -369,6 +404,9 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
       try { await fullReindexAssetContent() }
       catch { /* 索引重建失败不影响移动结果 */ }
 
+      // 面板已卸载时不再触碰编辑器与剪贴板（避免对已销毁的 Dock 做无意义副作用）
+      if (!isMounted.value) return true
+
       // 引用已写入内核，但打开中的编辑器仍渲染旧路径缓存，需主动重载
       if (updatedCount > 0) {
         for (const editor of getAllEditor()) editor.reload(false)
@@ -377,10 +415,9 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
       // 移动成功后自动复制新路径，便于直接粘贴引用
       const copied = await copyToClipboard(newPath)
 
-      if (!isMounted.value) return true
-      const refMsg = updatedCount > 0 ? `（${i18n.updatedRefs.replace("{count}", String(updatedCount))}）` : ""
-      const copyMsg = copied ? `（${i18n.pathCopied}）` : ""
-      showMsg(`${i18n.moveSuccess}${refMsg}（${i18n.newPath}: ${newPath}）${copyMsg}`)
+      const refMsg = updatedCount > 0 ? `（${t(i18n.updatedRefs).replace("{count}", String(updatedCount))}）` : ""
+      const copyMsg = copied ? `（${t(i18n.pathCopied)}）` : ""
+      showMsg(`${t(i18n.moveSuccess)}${refMsg}（${t(i18n.newPath)}: ${newPath}）${copyMsg}`)
       updateAssetPathAfterMove(oldPath, newPath)
       cancelMove()
       return true
@@ -388,7 +425,7 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     catch (e: unknown) {
       if (isMounted.value) {
         const msg = e instanceof Error ? e.message : String(e)
-        showMsg(`${i18n.moveFailed}: ${msg}`)
+        showMsg(`${t(i18n.moveFailed)}: ${msg}`)
       }
       return false
     }
@@ -425,7 +462,8 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     isMounted.value = true
     try {
       const saved = await storage.load<string[]>(STORAGE_KEY)
-      if (saved) customCategories.value = saved
+      // 历史数据可能含大写/空白，读取时归一化并去重，保证筛选前缀一致
+      if (saved) customCategories.value = [...new Set(saved.map(normalizeCategoryKey).filter(Boolean))]
     }
     catch { /* ignore */ }
   })
@@ -439,8 +477,9 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     // 图片/文件页签共享同一份资源缓存，互切时无需重新加载
     const assetTabs = ["imageAssets", "fileAssets"]
     if (
-      assetTabs.includes(tab) && prevTab !== undefined
-      && assetTabs.includes(prevTab) && allAssetPaths.value.length > 0
+      prevTab !== undefined
+      && assetTabs.includes(tab) && assetTabs.includes(prevTab)
+      && allAssetPaths.value.length > 0
     ) {
       return
     }

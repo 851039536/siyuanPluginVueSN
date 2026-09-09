@@ -1,6 +1,7 @@
 {
   "resourceManager": {
     "panelTitle": "资源管理",
+    "description": "管理思源笔记资源文件：查看、分类、移动、清理资源",
     "imageAssets": "图片资源",
     "fileAssets": "文件资源",
     "missingAssets": "丢失资源",

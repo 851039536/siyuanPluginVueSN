@@ -1,7 +1,7 @@
 // 当前文档资源 composable：获取活动编辑器文档 ID 并加载其引用的资源列表（含文件大小）
 import type { AssetInfo } from "@/api"
 import { getAllEditor } from "siyuan"
-import { ref, shallowRef } from "vue"
+import { onUnmounted, ref, shallowRef } from "vue"
 import { getDocAssets } from "@/api"
 
 /** 活动编辑器最小结构（仅声明本文件用到的字段） */
@@ -17,7 +17,7 @@ interface EditorLike {
 function getActiveDoc(): { id: string, title: string } | null {
   const editors = getAllEditor() as unknown as EditorLike[]
   if (!editors.length) return null
-  const active = editors.find((e) => e.protyle?.element?.closest?.(".layout__wnd--active")) ?? editors[0]
+  const active = editors.find((e) => e.protyle?.element?.closest(".layout__wnd--active")) ?? editors[0]
   const protyle = active.protyle
   const id = protyle?.block?.rootID
   if (!id) return null
@@ -34,10 +34,16 @@ export function useDocAssets() {
   const loadError = ref(false)
   const docTitle = ref("")
 
+  // 请求代际令牌：连点刷新时丢弃过期响应，避免旧结果覆盖新结果
+  let requestToken = 0
+  let disposed = false
+
   async function loadDocAssets() {
+    const token = ++requestToken
     loadError.value = false
     const doc = getActiveDoc()
     if (!doc) {
+      if (disposed || token !== requestToken) return
       noActiveDoc.value = true
       docAssets.value = []
       docTitle.value = ""
@@ -48,17 +54,25 @@ export function useDocAssets() {
     loading.value = true
     try {
       const result = await getDocAssets(doc.id)
+      if (disposed || token !== requestToken) return
       docAssets.value = result?.assets ?? []
     }
     catch (e: unknown) {
       console.error("加载文档资源失败:", e)
+      if (disposed || token !== requestToken) return
       docAssets.value = []
       loadError.value = true
     }
     finally {
-      loading.value = false
+      if (!disposed && token === requestToken) loading.value = false
     }
   }
+
+  // 组件卸载后不再写状态，避免对已销毁实例做无意义更新
+  onUnmounted(() => {
+    disposed = true
+    requestToken++
+  })
 
   return { docAssets, loading, noActiveDoc, loadError, docTitle, loadDocAssets }
 }

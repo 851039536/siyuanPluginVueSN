@@ -2747,6 +2747,7 @@
   },
   "resourceManager": {
     "panelTitle": "Resource Manager",
+    "description": "Manage SiYuan asset files: browse, categorize, move and clean up assets",
     "imageAssets": "Image Assets",
     "fileAssets": "File Assets",
     "missingAssets": "Missing Assets",

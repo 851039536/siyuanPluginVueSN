@@ -1,19 +1,9 @@
-<!-- 里程碑 Tab 入口容器：编排里程碑卡片 -->
+<!-- 里程碑 Tab 入口容器：编排里程碑卡片（stats 对象整传，由卡片内部按字段取值） -->
 <template>
   <div class="milestones-tab">
     <MilestonesCard
       :plugin="plugin"
-      :total-notes="stats?.totalNotes ?? 0"
-      :total-words="stats?.totalWords ?? 0"
-      :total-blocks="stats?.totalBlocks ?? 0"
-      :total-tags="stats?.totalTags ?? 0"
-      :total-backlinks="stats?.totalBacklinks ?? 0"
-      :total-assets="stats?.totalAssets ?? 0"
-      :total-images="stats?.totalImages ?? 0"
-      :notebook-count="stats?.notebookCount ?? 0"
-      :code-blocks="stats?.codeBlocks ?? 0"
-      :writing-streak="stats?.writingStreak ?? 0"
-      :active-days="stats?.activeDays ?? 0"
+      :stats="stats"
       :i18n="props.i18n"
     />
   </div>

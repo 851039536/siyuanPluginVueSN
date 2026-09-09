@@ -1,7 +1,21 @@
-// 里程碑工具函数：目标值计算 + 已达成数量统计 + 里程碑列表生成
+// 里程碑工具函数：目标值计算 + 达成数量统计 + 里程碑列表生成（稀有度按序号固定档位，保证稳定不倒退）
 import type { IconKey } from "@/config/icons"
 import type { MilestoneDef, Tier, TypeMeta } from "../types/milestoneData"
 import { MILESTONE_LABEL_FNS, MILESTONE_TYPES } from "../types/milestoneRules"
+
+/** 单类型里程碑生成/计数上限（兼顾展示量与性能，改动需同步 countMilestonesReached 默认值） */
+export const MAX_MILESTONES_PER_TYPE = 200
+
+/**
+ * 里程碑稀有度：按序号固定档位（不依赖当前进度下动态列表长度，达成后绝不因列表变长而降级）。
+ * 档位边界参考默认 10 级规则与典型展示前缀标定：越靠后目标值越大、稀有度越高。
+ */
+export function tierByIndex(n: number): Tier {
+  if (n <= 3) return "common"
+  if (n <= 7) return "rare"
+  if (n <= 12) return "epic"
+  return "legendary"
+}
 
 /**
  * 使用公式计算某类型第 n 个里程碑的目标值（硬编码默认值）。
@@ -56,7 +70,7 @@ export function countMilestonesReached(
   type: string,
   value: number,
   customRules?: Record<string, number[]>,
-  maxMilestones = 200,
+  maxMilestones = MAX_MILESTONES_PER_TYPE,
 ): number {
   if (value <= 0) return 0
   // 第一个里程碑都无法达成
@@ -90,15 +104,6 @@ export const TYPE_META: TypeMeta = Object.fromEntries(
   ]),
 ) as TypeMeta
 
-/** 根据里程碑序号在总量中的占比划分稀有度 */
-export function tierOf(idx: number, total: number): Tier {
-  const r = idx / total
-  if (r < 0.4) return "common"
-  if (r < 0.7) return "rare"
-  if (r < 0.9) return "epic"
-  return "legendary"
-}
-
 /**
  * 生成某类型的里程碑列表（公式化无限里程碑，上界随当前值动态扩展）。
  * @param i18n 用于标签本地化的 i18n 对象
@@ -117,7 +122,7 @@ export function generateMilestones(
   if (!isFinite(baseTarget) || baseTarget <= 0) return result
   const upperBound = current + extra * baseTarget
   let n = 1
-  while (n <= 200) {
+  while (n <= MAX_MILESTONES_PER_TYPE) {
     const target = milestoneTargetOfWithRules(type, n, customRules)
     // 0/Infinity 均表示该等级起终止（0 语义：该等级及之后不再生成里程碑）
     if (!isFinite(target) || target <= 0 || target > upperBound) break
@@ -127,14 +132,11 @@ export function generateMilestones(
       label: meta.labelFn(target, i18n),
       target,
       type,
-      tier: "common",
+      // 稀有度在生成时按序号一次定档，不再随列表长度动态重分配
+      tier: tierByIndex(n),
     })
     n++
   }
-  // 稀有度按实际生成的里程碑总数动态分配，避免固定分母导致占比失真
-  result.forEach((m, i) => {
-    m.tier = tierOf(i, result.length)
-  })
   return result
 }
 

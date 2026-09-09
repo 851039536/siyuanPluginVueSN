@@ -594,8 +594,8 @@
 
   &:hover {
     opacity: 1;
-    color: var(--stat-color-danger, #cf222e);
-    background: rgba(207, 34, 46, 0.08);
+    color: stats.$color-danger;
+    background: rgba(stats.$color-danger, 0.08);
   }
 }
 
@@ -669,4 +669,22 @@
   background: var(--b3-theme-primary);
   border-radius: stats.$radius-sm;
   transition: width 0.6s ease;
+}
+
+// 窄屏适配：压缩 Hero 图标/进度环尺寸并缩窄成就网格列，避免挤压
+@media (max-width: 480px) {
+  .hero-icon-wrap {
+    width: 44px;
+    height: 44px;
+  }
+
+  .hero-progress,
+  .progress-ring {
+    width: 48px;
+    height: 48px;
+  }
+
+  .achievement-grid {
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  }
 }

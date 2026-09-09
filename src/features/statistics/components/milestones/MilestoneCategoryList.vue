@@ -1,8 +1,9 @@
 <!-- 里程碑分类列表：按分类展示里程碑 chip（展开态全部 / 折叠态预览），纯展示组件 -->
 <template>
   <div class="categories-section">
+    <!-- 区块标题："里程碑分类" -->
     <div class="section-label">
-      里程碑分类
+      {{ i18n.milestonesCategoryLabel }}
     </div>
     <div
       v-for="category in categoryViews"
@@ -29,101 +30,65 @@
           />
         </span>
       </button>
+      <!-- 展开态：全部里程碑 -->
       <div
         v-if="category.expanded"
         class="category-body"
       >
         <div class="milestone-grid">
-          <div
+          <MilestoneChip
             v-for="m in category.allItems"
             :key="m.id"
-            class="milestone-chip"
-            :class="[`tier-${m.tier}`, {
-              achieved: m.achieved,
-              locked: !m.achieved && !m.isNext,
-              next: !m.achieved && m.isNext,
-            }]"
-          >
-            <IconWrapper
-              class="chip-icon"
-              :name="(m.achieved ? m.icon : (m.isNext ? 'star' : 'pageLock')) as any"
-              :size="14"
-            />
-            <span class="chip-label">{{ m.label }}</span>
-            <span
-              v-if="m.achieved"
-              class="chip-tier"
-            >{{ tierLabels[m.tier] }}</span>
-            <div
-              v-if="!m.achieved"
-              class="chip-progress"
-            >
-              <div
-                class="chip-progress-fill"
-                :style="{ width: `${m.progress}%` }"
-              />
-            </div>
-          </div>
+            :milestone="m"
+            :tier-labels="tierLabels"
+          />
         </div>
       </div>
-      <!-- collapsed preview: show last 3 achieved + 1 next -->
+      <!-- 折叠态：最近 3 个达成 + 1 个下一目标预览 -->
       <div
         v-else
         class="category-preview"
       >
-        <div
+        <MilestoneChip
           v-for="m in category.previewItems"
           :key="m.id"
-          class="milestone-chip"
-          :class="[`tier-${m.tier}`, {
-            achieved: m.achieved,
-            locked: !m.achieved && !m.isNext,
-            next: !m.achieved && m.isNext,
-          }]"
-        >
-          <IconWrapper
-            class="chip-icon"
-            :name="(m.achieved ? m.icon : (m.isNext ? 'star' : 'pageLock')) as any"
-            :size="14"
-          />
-          <span class="chip-label">{{ m.label }}</span>
-          <span
-            v-if="m.achieved"
-            class="chip-tier"
-          >{{ tierLabels[m.tier] }}</span>
-          <div
-            v-if="!m.achieved"
-            class="chip-progress"
-          >
-            <div
-              class="chip-progress-fill"
-              :style="{ width: `${m.progress}%` }"
-            />
-          </div>
-        </div>
+          :milestone="m"
+          :tier-labels="tierLabels"
+        />
+        <!-- 更多提示，如："+5 个更多" -->
         <span
           v-if="category.hiddenCount > 0"
           class="more-hint"
-        >+{{ category.hiddenCount }} 更多</span>
+        >{{ moreHintText(category.hiddenCount) }}</span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+// 里程碑分类列表：折叠/展开两类 chip 渲染（复用 MilestoneChip 子组件），标题与更多提示走 i18n
 import type { CategoryView, Tier } from "../../types/milestoneData"
 import type { IconKey } from "@/config/icons"
 import IconWrapper from "@/components/IconWrapper.vue"
+import MilestoneChip from "./MilestoneChip.vue"
 
 interface Props {
   categoryViews: CategoryView[]
   tierLabels: Record<Tier, string>
+  i18n?: Record<string, any>
 }
 
-defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  i18n: () => ({}),
+})
 const emit = defineEmits<{
   toggle: [catId: string]
 }>()
+
+/** 更多提示文案：{n} 占位符替换 */
+function moreHintText(count: number): string {
+  return String(props.i18n.moreMilestonesHint ?? "").replace("{n}", String(count))
+}
 </script>
 
 <style scoped lang="scss">

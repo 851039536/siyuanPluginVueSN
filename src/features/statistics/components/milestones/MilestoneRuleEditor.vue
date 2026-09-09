@@ -217,13 +217,13 @@ const activeTab = ref<"milestones" | "achievements" | "level">("milestones")
 const editableRows = ref<Row[]>([])
 
 function buildRows(rules: Record<string, number[]>): Row[] {
-  const hasRules = Object.keys(rules).length > 0
-  const defaults = hasRules ? null : generateDefaultRules()
+  // 默认规则恒作兜底：个别类型缺失/空数组时取默认列，避免编辑行空白
+  const defaults = generateDefaultRules()
   return MILESTONE_TYPES.map((t) => ({
     key: t.key,
     icon: t.icon,
     label: props.i18n[t.labelKey] ?? t.key,
-    targets: [...(rules[t.key] ?? defaults?.[t.key] ?? [])],
+    targets: [...(rules[t.key]?.length ? rules[t.key] : (defaults[t.key] ?? []))],
   }))
 }
 

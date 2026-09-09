@@ -38,7 +38,8 @@ export function buildThresholdAchievements(statCounts: Record<string, number>): 
   for (const group of THRESHOLD_ACHIEVEMENTS) {
     for (const item of group.items) {
       result.push({
-        id: `${group.prefix}-${group.type}-${item.v}`,
+        // id 由类型直接推导（如 notes-1），无需冗余 prefix
+        id: `${group.type}-${item.v}`,
         icon: item.icon,
         title: achI18nKey(group.type, item.v, "Title"),
         description: achI18nKey(group.type, item.v, "Desc"),
@@ -55,9 +56,8 @@ export function getAchType(ach: AchievementDef): string {
   if (ach._custom) return "custom"
   // meta 成就 id 形如 ach-all-* / ach-half-* / ach-level-*
   if (ach.id.startsWith("ach-all-") || ach.id.startsWith("ach-half-") || ach.id.startsWith("ach-level-")) return "meta"
-  // 阈值成就 id 形如 ach-{type}-{value}
-  const parts = ach.id.split("-")
-  return parts[1] || ""
+  // 阈值成就 id 形如 {type}-{value}（如 notes-30）
+  return ach.id.split("-")[0] || ""
 }
 
 /** 判断成就是否匹配指定分类 */

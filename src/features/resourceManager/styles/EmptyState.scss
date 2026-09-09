@@ -1,0 +1,35 @@
+@use "@/variables.scss" as *;
+
+// 空/加载占位：图标 + 文案垂直居中，弱化色保持安静不抢视觉
+.rm-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-6 $spacing-3;
+  text-align: center;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface-light);
+
+  &__icon {
+    opacity: 0.55;
+  }
+
+  &__text {
+    line-height: $line-height-normal;
+  }
+
+  // 加载态旋转动效
+  &__icon--spin {
+    animation: rm-empty-spin 1.1s linear infinite;
+  }
+}
+
+@keyframes rm-empty-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

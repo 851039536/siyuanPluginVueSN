@@ -423,9 +423,7 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
       await renameFile(`/data/${diskOldPath}`, `/data/${diskNewPath}`)
       const updatedCount = await updateAssetReferences(oldPath, newPath)
 
-      try { await fullReindexAssetContent() }
-      catch { /* 索引重建失败不影响移动结果 */ }
-
+      // 移动后不自动全量重建索引（思源按需维护资源索引，耗时操作留待「重建索引」页签手动触发）
       // 面板已卸载时不再触碰编辑器与剪贴板（避免对已销毁的 Dock 做无意义副作用）
       if (!isMounted.value) return true
 

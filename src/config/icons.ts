@@ -444,6 +444,18 @@ export const COMMON_ICONS = {
   delete: {
     icon: "mdi:delete",
   },
+  inbox: {
+    icon: "mdi:inbox",
+  },
+  linkOff: {
+    icon: "mdi:link-off",
+  },
+  magnify: {
+    icon: "mdi:magnify",
+  },
+  folderOpen: {
+    icon: "mdi:folder-open-outline",
+  },
   send: {
     icon: "mdi:send",
   },

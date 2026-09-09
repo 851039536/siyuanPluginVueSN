@@ -7,6 +7,7 @@
  */
 import { ref } from "vue"
 import type { FileChecksum, PersistFn } from "../types"
+import { MAX_CHECKSUM_COUNT } from "../types"
 
 export function useChecksums(deps: { persist: PersistFn }) {
   const checksums = ref<FileChecksum[]>([])
@@ -35,6 +36,10 @@ export function useChecksums(deps: { persist: PersistFn }) {
       checksums.value.splice(idx, 1)
     }
     checksums.value.unshift(item)
+    // 上限截断：丢弃最旧条目，防止存储单调膨胀
+    if (checksums.value.length > MAX_CHECKSUM_COUNT) {
+      checksums.value = checksums.value.slice(0, MAX_CHECKSUM_COUNT)
+    }
     if (persistNow) {
       await persistChecksums()
     }

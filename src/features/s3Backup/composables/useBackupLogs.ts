@@ -7,12 +7,13 @@
 import { ref } from "vue"
 import type { BackupLog, PersistFn } from "../types"
 import { MAX_LOG_COUNT } from "../types"
+import { getErrorMessage } from "@/utils/stringUtils"
 import { getHostname } from "../utils"
 
 export function useBackupLogs(deps: { persist: PersistFn }) {
   const backupLogs = ref<BackupLog[]>([])
 
-  /** 追加一条日志（自动补 id/时间/主机名）并持久化，超出上限截断 */
+  /** 追加一条日志（自动补 id/时间/主机名）并异步落盘，超出上限截断；落盘失败仅告警不产生 unhandled rejection */
   function addLog(entry: Omit<BackupLog, "id" | "time" | "hostname">): void {
     const log: BackupLog = {
       ...entry,
@@ -24,7 +25,9 @@ export function useBackupLogs(deps: { persist: PersistFn }) {
     if (backupLogs.value.length > MAX_LOG_COUNT) {
       backupLogs.value = backupLogs.value.slice(0, MAX_LOG_COUNT)
     }
-    saveLogs()
+    saveLogs().catch((err: unknown) => {
+      console.warn("[S3备份] 日志落盘失败:", getErrorMessage(err))
+    })
   }
 
   async function saveLogs(): Promise<void> {

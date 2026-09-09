@@ -37,7 +37,7 @@ export type BackupFrequency = "minute" | "hourly" | "daily"
 export interface BackupSettings {
   /** 上次备份时间文本 */
   lastBackupTime: string
-  /** 工作区路径 */
+  /** 工作区路径（@deprecated 与 workspaceRoot 恒等，仅为旧数据兼容保留；新代码一律读 workspaceRoot） */
   workspacePath: string
   /** 工作区根目录 */
   workspaceRoot: string
@@ -73,6 +73,10 @@ export interface LocalBackupInfo extends BackupListDisplayItem {
 export interface BackupListDisplayItem {
   name: string
   size: number
+  /** 云端对象完整 key（S3 列表条目，用作稳定唯一 v-for key） */
+  key?: string
+  /** 本地文件绝对路径（本地列表条目，用作稳定唯一 v-for key） */
+  path?: string
   time?: string
   lastModified?: string
   /** 真实 epoch 毫秒时间戳，存在时额外展示相对时间（如"5分钟前"） */
@@ -90,7 +94,7 @@ export interface BackupLog {
   /** 唯一 ID（时间戳） */
   id: string
   /** 操作类型 */
-  type: "localZip" | "s3Upload" | "s3Download" | "s3Delete" | "s3Incremental" | "autoBackup"
+  type: "localZip" | "s3Upload" | "s3Download" | "s3Delete" | "s3Incremental" | "s3IncrementalRestore" | "autoBackup"
   /** 操作描述文字 */
   action: string
   /** 相关文件名 */
@@ -144,6 +148,12 @@ export const MAX_LOG_DETAIL_FILES = 200
 /** 本地备份列表最大显示条数 */
 export const MAX_LOCAL_BACKUP_COUNT = 50
 
+/** 校验值列表最大保留条数（超限丢弃最旧条目，抑制存储单调膨胀） */
+export const MAX_CHECKSUM_COUNT = 100
+
+/** 上传来源设备映射最大条目数（超限丢弃最旧条目） */
+export const MAX_UPLOAD_HOST_MAP = 200
+
 /** 本地备份目录 / S3 子路径默认值（兜底用） */
 export const DEFAULT_BACKUP_DIR = "data-backup"
 
@@ -165,13 +175,8 @@ export const DEFAULT_BACKUP_SETTINGS: BackupSettings = {
 
 // ========== 增量备份接口 ==========
 
-/** 增量备份清单条目（以 relativePath 为键存储在 BackupManifest.files 中） */
-export interface ManifestEntry {
-  /** 文件修改时间（毫秒时间戳） */
-  mtime: number
-  /** 文件大小（字节） */
-  size: number
-}
+/** 增量备份清单条目（以 relativePath 为键存储在 BackupManifest.files 中；为扫描条目的状态投影，避免字段双写） */
+export type ManifestEntry = Omit<IncrementalFileEntry, "fullPath" | "relativePath">
 
 /** 增量备份清单（存储于 S3，为增量对比的唯一事实源） */
 export interface BackupManifest {

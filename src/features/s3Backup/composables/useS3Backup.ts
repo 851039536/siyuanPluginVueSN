@@ -173,6 +173,7 @@ export function useS3Backup(options: { i18n: Record<string, string>; getSubPrefi
     // 方法
     testConnection,
     applyConfig,
+    getListPrefix,
     uploadFileContent,
     uploadFileSmart,
     getObjectText,

@@ -189,6 +189,18 @@
   font-size: inherit;
 }
 
+// ========== 哈希值展示（StoredChecksumsSection / DropVerifySection 共用） ==========
+
+.checksum-hash-value {
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light);
+  background: var(--b3-theme-surface-lighter);
+  padding: 1px $spacing-1;
+  border-radius: 3px;
+  word-break: break-all;
+}
+
 
 
 

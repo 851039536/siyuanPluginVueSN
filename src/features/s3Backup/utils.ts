@@ -2,7 +2,7 @@
  * S3 备份功能纯工具函数
  *
  * 不依赖 Vue 响应式的纯函数：数字补零、备份时间戳生成、
- * S3 对象 key 构建、主机名获取（模块级缓存）、
+ * S3 对象 key 构建（含备份上传 key 归一化）、主机名获取（模块级缓存）、
  * 增量备份的 manifest 解析/对比与 key 生成、插件备份文件名判定、
  * 归档文件识别与惰性读取流创建。
  */
@@ -23,9 +23,10 @@ export function isArchiveFile(name: string): boolean {
 
 /**
  * 创建惰性读取流：注册进 JSZip 时不打开文件描述符，
- * 待压缩阶段实际消费时才 open 底层文件，避免大量文件同时占用 fd 触发 EMFILE
+ * 待压缩阶段实际消费时才 open 底层文件，避免大量文件同时占用 fd 触发 EMFILE；
+ * 返回类型显式携带 destroy 签名，供压缩中断时统一销毁兜底
  */
-export function createLazyReadStream(fsRaw: any, filePath: string): NodeJS.ReadableStream {
+export function createLazyReadStream(fsRaw: any, filePath: string): NodeJS.ReadableStream & { destroy: (err?: Error) => void } {
   const streamMod = getNodeStream()
   if (!streamMod) {
     throw new TypeError(MSG_DESKTOP_ONLY)
@@ -52,8 +53,8 @@ export function createLazyReadStream(fsRaw: any, filePath: string): NodeJS.Reada
   return lazy
 }
 
-/** 数字补零（如 padNum(3) → "03"） */
-export function padNum(n: number): string {
+/** 数字补零（如 padNum(3) → "03"；仅模块内时间戳格式化使用，不对外导出） */
+function padNum(n: number): string {
   return n.toString().padStart(2, "0")
 }
 
@@ -87,6 +88,55 @@ export function buildS3Key(prefix: string, sub: string, relativePath: string, da
   if (datePath) { parts.push(datePath.replace(/\/+$/, "")) }
   parts.push(relativePath.replace(/^\/+/, ""))
   return parts.join("/")
+}
+
+// ========== 备份上传 key 归一化 ==========
+
+/** 日期子目录名匹配（data-YYYYMMDD，捕获日期段） */
+const DATA_DATE_DIR_RE = /^data-(\d{8})$/
+
+/** 备份文件名内嵌日期段匹配（data-YYYYMMDD-HHmmss.zip） */
+const DATA_DATE_IN_NAME_RE = /^data-(\d{8})-/
+
+/** 备份归档相对路径拆解结果：datePath 为日期段（YYYYMMDD），baseName 为末段文件名 */
+export interface SplitRelativePath {
+  datePath: string
+  baseName: string
+}
+
+/**
+ * 拆解备份归档相对路径为「日期段 + 文件名」
+ * - 首段为 data-YYYYMMDD 日期子目录时以其为日期段（与本地目录语义一致）
+ * - 否则从文件名 data-YYYYMMDD- 前缀提取（data-backup 顶层归档）
+ * - 均无时回退 fallbackDate（今日，latestZip 场景文件名即当日）
+ */
+export function splitBackupRelativePath(relativePath: string, fallbackDate: string): SplitRelativePath {
+  const segments = relativePath.split("/")
+  const baseName = segments[segments.length - 1] || relativePath
+  if (segments.length >= 2) {
+    const dirMatch = DATA_DATE_DIR_RE.exec(segments[0])
+    if (dirMatch) {
+      return { datePath: dirMatch[1], baseName }
+    }
+  }
+  const nameMatch = DATA_DATE_IN_NAME_RE.exec(baseName)
+  return { datePath: nameMatch ? nameMatch[1] : fallbackDate, baseName }
+}
+
+/**
+ * 构建备份上传 S3 key（全量上传 / 手动上传共用，消除两套 key 规则）
+ * 日期段取备份文件自身日期（日期子目录名或文件名内嵌日期），无则回退 fallbackDate；
+ * useDateFolder 关闭时省略日期段，与本地目录语义一致（跨备份去重可命中）
+ */
+export function buildBackupUploadKey(
+  prefix: string,
+  sub: string,
+  relativePath: string,
+  useDateFolder: boolean,
+  fallbackDate: string,
+): string {
+  const { datePath, baseName } = splitBackupRelativePath(relativePath, fallbackDate)
+  return buildS3Key(prefix, sub, baseName, useDateFolder ? datePath : "")
 }
 
 // ========== 增量备份纯函数 ==========

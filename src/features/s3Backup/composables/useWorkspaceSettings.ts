@@ -12,7 +12,7 @@ import { pickDirectory, openFolderInExplorer } from "@/utils/electronDialog"
 import type { BackupManager } from "../modules/BackupManager"
 import type { BackupMode, BackupFrequency } from "../types"
 import { DEFAULT_BACKUP_MODE, DEFAULT_BACKUP_DIR } from "../types"
-import { getS3BackupInstance } from "../index"
+import { getS3BackupInstance } from "../instance"
 
 /** 依赖注入：backupManager 由 index.vue 持有（初始化时机在 onMounted） */
 export interface WorkspaceSettingsDeps {
@@ -37,8 +37,6 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
   const backupTime = ref("03:00")
   const keepBackupCount = ref(7)
 
-  let lastBackupTimestamp = 0
-
   // ========== 工作区路径 ==========
 
   function updateWorkspacePath(root: string, shouldSave = false): void {
@@ -46,10 +44,6 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
     workspacePath.value = root
     // 通知宿主幂等创建/同步 BackupManager（启动时无工作区、之后才选择路径时在此补建）
     deps.onWorkspaceUpdated?.()
-    const instance = getS3BackupInstance()
-    if (instance) {
-      instance.setWorkspacePaths(root)
-    }
     if (shouldSave) {
       saveWorkspaceSettings()
     }
@@ -66,14 +60,8 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
   }
 
   async function detectWorkspacePath(): Promise<void> {
-    const instance = getS3BackupInstance()
-    if (instance) {
-      const root = instance.getWorkspaceRoot()
-      if (root) {
-        updateWorkspacePath(root)
-        return
-      }
-    }
+    // 已有路径（loadWorkspaceSettings 的持久化兜底或此前检测过）时无需重复检测
+    if (workspaceRoot.value) { return }
     const apiPath = await fetchWorkspacePath()
     if (apiPath) {
       updateWorkspacePath(apiPath)
@@ -118,7 +106,6 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
         backupFrequency.value = data.backupFrequency
         backupTime.value = data.backupTime
         keepBackupCount.value = data.keepBackupCount
-        lastBackupTimestamp = data.lastBackupTimestamp
         // 空字符串视为未设置，回退默认目录
         localBackupDir.value = data.localBackupDir || DEFAULT_BACKUP_DIR
         s3SubPrefix.value = data.s3SubPrefix || DEFAULT_BACKUP_DIR
@@ -131,10 +118,10 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
           backupModeLocal.s3Incremental = data.backupMode.s3Incremental ?? false
         }
 
-        const root = instance.getWorkspaceRoot()
-        if (root && !workspaceRoot.value) {
-          workspaceRoot.value = root
-          workspacePath.value = root
+        // 持久化路径兜底：API 不可用时从设置恢复（detectWorkspacePath 检测到已有路径会跳过 API）
+        if (!workspaceRoot.value && data.workspaceRoot) {
+          workspaceRoot.value = data.workspaceRoot
+          workspacePath.value = data.workspaceRoot
         }
       }
     } catch (err) {
@@ -154,7 +141,8 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
       backupTime: backupTime.value,
       keepBackupCount: keepBackupCount.value,
       backupMode: { ...backupModeLocal },
-      lastBackupTimestamp,
+      // 备份时间戳以插件实例为运行时单一事实源（markBackupCompleted 先更新实例再落盘）
+      lastBackupTimestamp: getS3BackupInstance()?.getLastBackupTimestamp() ?? 0,
       localBackupDir: localBackupDir.value,
       s3SubPrefix: s3SubPrefix.value,
     }
@@ -174,8 +162,8 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
   /** 备份完成后更新上次备份时间并同步定时器防重时间戳 + 持久化（复用 saveWorkspaceSettings 的错误处理，保存失败不向备份流程抛异常） */
   async function markBackupCompleted(): Promise<void> {
     lastBackupTime.value = new Date().toLocaleString()
-    lastBackupTimestamp = Date.now()
-    getS3BackupInstance()?.updateLastBackupTime(lastBackupTimestamp)
+    // 时间戳先写入实例（单一事实源），随后 buildWorkspaceSettings 从实例读取一并落盘
+    getS3BackupInstance()?.updateLastBackupTime(Date.now())
     await saveWorkspaceSettings()
   }
 
@@ -191,7 +179,6 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
     backupFrequency,
     backupTime,
     keepBackupCount,
-    updateWorkspacePath,
     detectWorkspacePath,
     selectWorkspacePath,
     openWorkspaceFolder,

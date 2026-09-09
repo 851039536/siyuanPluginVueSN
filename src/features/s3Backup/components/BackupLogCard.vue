@@ -146,6 +146,7 @@ const TYPE_LABEL_KEYS: Record<BackupLog["type"], string> = {
   s3Download: "logTypeS3Download",
   s3Delete: "logTypeS3Delete",
   s3Incremental: "logTypeS3Incremental",
+  s3IncrementalRestore: "logTypeS3IncrementalRestore",
   autoBackup: "logTypeAutoBackup",
 }
 

@@ -30,4 +30,6 @@
   font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface-light);
   line-height: $line-height-tight;
+  // 与上方文件名保持轻微间距，形成「文件名 + 元信息」层级
+  margin-top: $spacing-2px;
 }

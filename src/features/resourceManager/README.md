@@ -6,6 +6,8 @@
 
 图片资源页签行首显示缩略图（`/assets/` 相对 URL 直出 + `loading="lazy"`），hover 弹出放大预览（与缩略图同 URL 命中缓存，加载失败自动隐藏；可见列表变化时重置失败缓存）。
 
+图片/文件页签资源以**卡片网格**展示（`AssetGridList`，图库式）：自适应列网格（列最小 104px），每张卡片 = 正方形媒体区（图片缩略图 cover、**点击弹出放大预览**；文件页/加载失败回退扩展名或文件图标占位）+ 底部单行路径名 + **hover 显现的图标操作条**（复制路径 / 复制MD / 打开目录 / 定位 / 移动置亮）。移动表单为区块级卡片（grid 标签列对齐；快速分类 chips 与自定义输入分两行；操作右对齐），点击卡片「移动」后在网格下方展开并自动滚入视口。丢失/未使用/文档资源页签沿用行式列表（文档资源为两段式 `rm-asset-item--panel`）。空/加载占位统一 `EmptyState`（居中图标 + 文案，加载态图标旋转）。
+
 「文档资源」页签展示当前活动文档引用的全部资源（`getDocAssets`，含文件大小），支持定位/复制路径/复制 MD 引用。
 
 定位查询三级兜底：assets 表 path 等值匹配（原文/仅空格编码/全量编码三形态）→ blocks 表全路径模糊匹配 → 文件名模糊匹配（覆盖移动后思源索引异步刷新的窗口期）。任一层查询失败（内核/数据库异常）即中止并提示定位失败，不再降级为「未找到引用该资源的文档」。
@@ -25,8 +27,10 @@ resourceManager/
 ├── utils.ts                          # 纯函数与共享常量：SQL 转义、路径形态变换、目录扫描
 ├── types/index.ts                    # ResourceManagerI18n 文案接口 + CategoryItem 分类条目类型
 ├── components/
+│   ├── AssetGridList.vue             # 图片/文件页签资源卡片网格（缩略图/占位 + hover 操作条）
 │   ├── CategoryFilterBar.vue         # 分类筛选栏：chip 切换 + 「分类设置」入口
 │   ├── CategorySettingsDialog.vue    # 分类设置弹窗：删除空分类、恢复隐藏的内置分类
+│   ├── EmptyState.vue                # 空/加载占位：居中图标 + 文案（加载态图标旋转）
 │   └── DocAssetsSection.vue          # 「文档资源」页签（自包含加载活动文档资源）
 ├── composables/
 │   ├── useResourceManager.ts         # 资源加载与缓存、分类筛选、移动/删除/重建索引
@@ -34,7 +38,7 @@ resourceManager/
 │   ├── useAssetLocator.ts            # 引用定位三级兜底（assets → blocks 全路径 → 文件名）
 │   ├── useAssetActions.ts            # 复制 MD 引用、文件管理器中打开目录
 │   └── useDocAssets.ts               # 活动文档资源加载（含请求代际令牌）
-└── styles/                           # index.scss + DocAssetsSection.scss + CategoryFilterBar.scss + CategorySettingsDialog.scss
+└── styles/                           # index.scss + AssetGridList.scss + EmptyState.scss + DocAssetsSection.scss + CategoryFilterBar.scss + CategorySettingsDialog.scss
 ```
 
 ## 关键实现说明

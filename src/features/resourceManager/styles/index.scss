@@ -79,14 +79,19 @@
     gap: 0;
     border-bottom: 1px solid var(--b3-border-color);
     flex-shrink: 0;
-    overflow-x: auto;
-    @include custom-scrollbar;
+    // 等分收缩：6 个页签在窄栏下均分整行，避免横向滚动与文字挤压
+    overflow-x: hidden;
 
     &__item {
-      padding: $spacing-2;
+      flex: 1 1 0;
+      min-width: 0;
+      padding: $spacing-2 $spacing-1;
       font-size: $font-size-xs;
+      text-align: center;
       cursor: pointer;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       color: var(--b3-theme-on-surface);
       border-bottom: 2px solid transparent;
       transition: color 0.12s, border-color 0.12s, background 0.12s;
@@ -109,7 +114,8 @@
   .rm-content {
     flex: 1;
     overflow-y: auto;
-    padding: $spacing-2;
+    // 水平 12px / 垂直 8px：列表等滚动内容不紧贴侧边栏（≥ $spacing-2）
+    padding: $spacing-2 $spacing-3 $spacing-3;
     @include custom-scrollbar;
   }
 
@@ -133,12 +139,7 @@
   }
 
   // ── 空状态 ──
-  .rm-empty {
-    text-align: center;
-    padding: $spacing-8 $spacing-4;
-    color: var(--b3-theme-on-surface-light);
-    font-size: $font-size-xs;
-  }
+  // 空/加载占位样式已随 EmptyState 子组件迁移至 EmptyState.scss
 
   // ── 资源列表 ──
   .rm-asset-list {
@@ -146,6 +147,8 @@
     padding: 0;
     margin: 0;
   }
+
+  // 资源卡片网格样式已随 AssetGridList 子组件迁移至 AssetGridList.scss
 
   .rm-asset-item {
     display: flex;
@@ -180,39 +183,34 @@
       flex-shrink: 0;
     }
 
-    // 图片缩略图（行首小图，hover 弹出放大预览）
-    &__thumb {
-      position: relative;
-      // 缩略图固定尺寸（正方形小图）
-      width: 24px;
-      height: 24px;
-      flex-shrink: 0;
+    // 两段式变体（文档资源页签等）：信息行（缩略图/名称）+ 操作行纵向分区，
+    // 操作按钮按「次要组 / 主操作」两端对齐，长路径下信息行不再被按钮挤压换行
+    &--panel {
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      gap: $spacing-1;
 
-      img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        border-radius: $radius-sm;
-        border: 1px solid var(--b3-border-color);
-        display: block;
+      .rm-asset-item__main {
+        display: flex;
+        align-items: center;
+        gap: $spacing-2;
+        min-width: 0;
       }
 
-      // 悬浮放大预览（与缩略图同 URL，命中浏览器缓存）
-      .rm-asset-item__preview {
-        position: absolute;
-        top: 0;
-        left: calc(100% + #{$spacing-1});
-        // 浮于列表行之上
-        z-index: 10;
-        width: auto;
-        height: auto;
-        // 预览浮层最大尺寸
-        max-width: 160px;
-        max-height: 160px;
-        object-fit: contain;
-        background: var(--b3-theme-background);
-        border: 1px solid var(--b3-border-color);
-        border-radius: $radius-sm;
+      .rm-asset-item__actions {
+        justify-content: space-between;
+      }
+
+      .rm-asset-item__action-group {
+        display: flex;
+        align-items: center;
+        gap: $spacing-1;
+        flex-wrap: wrap;
+
+        &--primary {
+          flex-shrink: 0;
+        }
       }
     }
   }
@@ -255,8 +253,10 @@
   .rm-asset-count {
     font-size: $font-size-xs;
     color: var(--b3-theme-on-surface-light);
+    // 细分隔线将统计行与列表分区，避免直接贴列表
+    border-top: 1px solid var(--b3-border-color);
+    padding: $spacing-2 $spacing-2px 0;
     margin-bottom: $spacing-2;
-    padding: 0 $spacing-2px;
   }
 
   // ── 移动表单 ──
@@ -268,46 +268,68 @@
     border-radius: $radius-sm;
     border: 1px solid var(--b3-border-color);
 
+    // 行采用两列 grid：固定标签列 + 内容列，超长路径在内容列内自由折行
     &__row {
-      display: flex;
-      align-items: center;
-      gap: $spacing-2;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: start;
+      gap: $spacing-1 $spacing-2;
       margin-bottom: $spacing-1;
       font-size: $font-size-xs;
     }
 
     &__label {
-      flex-shrink: 0;
-      min-width: $spacing-12;
       color: var(--b3-theme-on-surface-light);
+      // 与内容首行基线对齐（内容列可能多行折行）
+      padding-top: $spacing-2px;
+      white-space: nowrap;
     }
 
     &__path {
       color: var(--b3-theme-on-surface);
       word-break: break-all;
       font-size: $font-size-xs;
+      min-width: 0;
     }
 
     &__input {
       @include form-input;
-      flex: 1;
+      width: 100%;
+      min-width: 0;
     }
 
     &__categories {
       display: flex;
+      flex-direction: column;
       gap: $spacing-1;
+      min-width: 0;
+    }
+
+    // 快捷分类 chips 独立一排，可折行且换行有序
+    &__chips {
+      display: flex;
       flex-wrap: wrap;
+      gap: $spacing-1;
+    }
+
+    // 自定义分类输入行：输入框弹性占满 + 应用按钮定宽
+    &__custom {
+      display: flex;
+      gap: $spacing-1;
+      min-width: 0;
     }
 
     &__category-input {
       @include form-input;
-      // 宽度复用 $spacing-16(64px)：自定义分类名输入框
-      width: $spacing-16;
+      flex: 1;
+      min-width: 0;
       padding: $spacing-2px $spacing-1;
     }
 
+    // 操作区右对齐：主操作（确认移动）置右，取消居其左
     &__actions {
       display: flex;
+      justify-content: flex-end;
       gap: $spacing-1;
       margin-top: $spacing-1;
     }
@@ -387,4 +409,92 @@
     overflow-y: auto;
     border: 1px solid var(--b3-border-color);
   }
+}
+
+// 图片放大预览弹层（Teleport 至 body，顶层规则）
+.rm-preview-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-4;
+  background: rgba(0, 0, 0, 0.5);
+}
+.rm-preview-panel {
+  display: flex;
+  flex-direction: column;
+  width: min(86vw, 640px);
+  max-height: 86vh;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  overflow: hidden;
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $spacing-2;
+    padding: $spacing-2 $spacing-3;
+    border-bottom: 1px solid var(--b3-border-color);
+    flex-shrink: 0;
+  }
+
+  &__name {
+    flex: 1;
+    min-width: 0;
+    font-size: $font-size-xs;
+    color: var(--b3-theme-on-background);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: $spacing-4;
+    height: $spacing-4;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: $radius-sm;
+    background: transparent;
+    color: var(--b3-theme-on-surface-light);
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+
+    &:hover {
+      background: var(--b3-list-hover);
+      color: var(--b3-theme-on-surface);
+    }
+  }
+
+  &__body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: auto;
+    padding: $spacing-2;
+    background: var(--b3-theme-background);
+    img {
+      display: block;
+      max-width: 100%;
+      max-height: calc(86vh - #{$spacing-16});
+      object-fit: contain;
+      border-radius: $radius-sm;
+    }
+  }
+}
+
+.rm-preview-fade-enter-active,
+.rm-preview-fade-leave-active {
+  transition: opacity 0.12s ease;
+}
+
+.rm-preview-fade-enter-from,
+.rm-preview-fade-leave-to {
+  opacity: 0;
 }

@@ -60,4 +60,23 @@ export interface ResourceManagerI18n {
   noDocAssets: string
   noActiveDoc: string
   currentDoc: string
+  deleteCategory: string
+  deleteCategoryConfirm: string
+  categoryNotEmpty: string
+  deleteCategorySuccess: string
+  hiddenCategories: string
+  restore: string
+  restoreSuccess: string
+  categorySettings: string
+  categorySettingsHint: string
+  categoryBuiltIn: string
+  noCategories: string
+}
+
+/** 分类栏条目：key 为归一化小写分类目录名，label 为展示文案 */
+export interface CategoryItem {
+  key: string
+  label: string
+  /** 是否为内置预设分类（内置可删除=隐藏，删除后可从「已隐藏」恢复） */
+  builtIn: boolean
 }

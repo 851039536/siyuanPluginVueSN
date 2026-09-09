@@ -52,27 +52,14 @@
             class="rm-limit-input"
           />
         </div>
-        <!-- 分类筛选栏 -->
-        <div class="rm-filter-bar rm-filter-bar--category">
-          <!-- 按钮："待分类"（空筛选仅显示未归入分类目录的资源） -->
-          <button
-            class="rm-btn small"
-            :class="{ active: categoryFilter === '' }"
-            @click="categoryFilter = ''"
-          >
-            {{ i18n.uncategorized }}
-          </button>
-          <!-- 分类按钮："图片 / NET / tool / 其他" 及自定义分类 -->
-          <button
-            v-for="cat in quickCategories"
-            :key="cat.key"
-            class="rm-btn small"
-            :class="{ active: categoryFilter === cat.key }"
-            @click="categoryFilter = cat.key"
-          >
-            {{ cat.label }}
-          </button>
-        </div>
+        <!-- 分类筛选栏（自包含子组件：chip 切换 + 「分类设置」入口） -->
+        <CategoryFilterBar
+          :i18n="i18n"
+          :categories="quickCategories"
+          :active-key="categoryFilter"
+          @select="categoryFilter = $event"
+          @manage="settingsOpen = true"
+        />
         <!-- 资源统计 -->
         <div
           v-if="!loading && totalAssetCount > 0"
@@ -390,6 +377,17 @@
         </div>
       </div>
     </div>
+
+    <!-- 分类设置弹窗：集中删除空分类 / 恢复内置分类（Teleport 至 body 全屏遮罩） -->
+    <CategorySettingsDialog
+      v-if="settingsOpen"
+      :i18n="i18n"
+      :categories="quickCategories"
+      :hidden-built-ins="hiddenBuiltInCategories"
+      @close="settingsOpen = false"
+      @delete="handleDeleteCategory($event.key, $event.label)"
+      @restore="handleRestoreBuiltIn"
+    />
   </div>
 </template>
 
@@ -398,6 +396,8 @@ import type { Plugin } from "siyuan"
 import type { ResourceManagerI18n } from "./types"
 import { computed, reactive, ref, watch } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import CategoryFilterBar from "./components/CategoryFilterBar.vue"
+import CategorySettingsDialog from "./components/CategorySettingsDialog.vue"
 import DocAssetsSection from "./components/DocAssetsSection.vue"
 import { useResourceManager } from "./composables/useResourceManager"
 import { buildAssetSrc } from "./utils"
@@ -422,6 +422,7 @@ const {
   customCategory,
   rebuildResult,
   quickCategories,
+  hiddenBuiltInCategories,
   totalAssetCount,
   currentAssetList,
   refresh,
@@ -431,6 +432,8 @@ const {
   handleLocateAsset,
   handleDeleteUnused,
   handleDeleteAllUnused,
+  handleDeleteCategory,
+  handleRestoreBuiltIn,
   startMoveAsset,
   cancelMove,
   applyCategory,
@@ -448,6 +451,9 @@ watch(currentAssetList, () => {
   thumbErrors.clear()
   hoveredThumb.value = ""
 })
+
+// 分类设置弹窗开合状态
+const settingsOpen = ref(false)
 
 const tabs = computed(() => [
   { key: "imageAssets", label: props.i18n.imageAssets },

@@ -1,14 +1,34 @@
 // 资源管理模块纯工具函数与共享常量：路径过滤、SQL 转义、目录扫描
+import type { ResourceManagerI18n } from "./types"
 import { readDir, sql } from "@/api"
 
 /** 图片扩展名匹配 */
 const IMAGE_EXT = /\.(?:png|jpg|jpeg|gif|svg|webp|bmp|ico|tiff|avif)$/i
 
+/** 内置快速分类元数据：key 对应磁盘目录名（统一小写），i18nKey 对应 ResourceManagerI18n 文案键 */
+export const BUILT_IN_CATEGORY_DEFS = [
+  { key: "images", i18nKey: "categoryImages" },
+  { key: "net", i18nKey: "categoryNet" },
+  { key: "tool", i18nKey: "categoryTool" },
+  { key: "other", i18nKey: "categoryOther" },
+] as const
+
 /** 内置快速分类 key 集合 */
-export const BUILT_IN_CATEGORY_KEYS = new Set(["images", "net", "tool", "other"])
+export const BUILT_IN_CATEGORY_KEYS = new Set<string>(
+  BUILT_IN_CATEGORY_DEFS.map((def) => def.key),
+)
+
+/** 解析分类展示文案：内置分类读取 i18n 文案键（缺失时回退 key），自定义分类返回其 key */
+export function resolveCategoryLabel(i18n: ResourceManagerI18n, key: string): string {
+  const def = BUILT_IN_CATEGORY_DEFS.find((d) => d.key === key)
+  return def ? (i18n[def.i18nKey] || def.key) : key
+}
 
 /** 自定义分类持久化存储键 */
 export const STORAGE_KEY = "resourceManager-customCategories"
+
+/** 被隐藏（删除）的内置分类持久化存储键 */
+export const STORAGE_HIDDEN_KEY = "resourceManager-hiddenBuiltIn"
 
 /**
  * 转义 SQL LIKE 模式中的特殊字符（单引号、反斜杠、% 与 _ 通配符）
@@ -53,6 +73,11 @@ export function isValidAssetMovePath(path: string): boolean {
 /** 归一化分类 key：统一小写并去除首尾空白，保证磁盘目录名与筛选前缀一致 */
 export function normalizeCategoryKey(raw: string): string {
   return raw.trim().toLowerCase()
+}
+
+/** 构造分类目录筛选前缀（如 assets/images/），key 内部归一化保证小写 */
+export function categoryDirPrefix(key: string): string {
+  return `assets/${normalizeCategoryKey(key)}/`
 }
 
 /** 判断路径是否为图片资源 */

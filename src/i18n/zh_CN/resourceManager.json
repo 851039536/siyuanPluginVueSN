@@ -58,6 +58,17 @@
     "docAssets": "文档资源",
     "noDocAssets": "当前文档未引用资源",
     "noActiveDoc": "请先打开一个文档",
-    "currentDoc": "当前文档"
+    "currentDoc": "当前文档",
+    "deleteCategory": "删除分类",
+    "deleteCategoryConfirm": "确定删除分类「{cat}」？该分类当前为空，删除后将从分类栏移除",
+    "categoryNotEmpty": "该分类下仍有资源，请先移动或删除资源后再试",
+    "deleteCategorySuccess": "分类已删除",
+    "hiddenCategories": "已隐藏",
+    "restore": "恢复",
+    "restoreSuccess": "分类已恢复",
+    "categorySettings": "分类设置",
+    "categorySettingsHint": "仅空分类可删除：删除后不再出现在分类栏；内置分类可随时在下方「已隐藏」中恢复。",
+    "categoryBuiltIn": "内置",
+    "noCategories": "暂无可见分类"
   }
 }

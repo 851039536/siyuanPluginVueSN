@@ -1,0 +1,164 @@
+@use "@/variables.scss" as *;
+
+// 遮罩：全屏固定、半透明黑（禁 backdrop-filter，对齐 gitPush 范式）
+.rm-settings-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+// 弹窗卡片
+.rm-settings-dialog {
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  max-width: calc(100vw - #{$spacing-8});
+  max-height: 72vh;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  overflow: hidden;
+
+  // 头部
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $spacing-2;
+    padding: $spacing-2 $spacing-3;
+    border-bottom: 1px solid var(--b3-border-color);
+    flex-shrink: 0;
+  }
+
+  &__title {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    color: var(--b3-theme-on-background);
+  }
+
+  // 内容区
+  &__body {
+    flex: 1;
+    overflow-y: auto;
+    padding: $spacing-3;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-3;
+  }
+
+  // 规则说明
+  &__hint {
+    font-size: $font-size-2xs;
+    line-height: $line-height-normal;
+    color: var(--b3-theme-on-surface-light);
+    background: var(--b3-theme-surface-light);
+    padding: $spacing-1 $spacing-2;
+    border-radius: $radius-sm;
+  }
+}
+
+// 空态
+.rm-settings-empty {
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface-light);
+  text-align: center;
+  padding: $spacing-4 0;
+}
+
+// 分类分区
+.rm-settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+
+  &__title {
+    font-size: $font-size-2xs;
+    font-weight: $font-weight-medium;
+    text-transform: uppercase;
+    color: var(--b3-theme-secondary);
+  }
+}
+
+// 分类条目行
+.rm-settings-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-1 $spacing-2;
+  border-radius: $radius-sm;
+  background: var(--b3-theme-surface-light);
+
+  &__name {
+    flex: 1;
+    min-width: 0;
+    font-size: $font-size-xs;
+    color: var(--b3-theme-on-surface);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &--muted {
+      color: var(--b3-theme-on-surface-light);
+    }
+  }
+
+  // 内置分类徽标
+  &__badge {
+    flex-shrink: 0;
+    font-size: $font-size-2xs;
+    color: var(--b3-theme-secondary);
+    border: 1px solid var(--b3-border-color);
+    border-radius: $radius-sm;
+    padding: 0 $spacing-1;
+  }
+}
+
+// 通用图标按钮（头部关闭 / 行删除）
+.rm-settings-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: $spacing-4;
+  height: $spacing-4;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: $radius-sm;
+  background: transparent;
+  color: var(--b3-theme-on-surface-light);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+
+  &:hover {
+    background: var(--b3-list-hover);
+    color: var(--b3-theme-on-surface);
+  }
+
+  // 危险操作（删除）hover 红色提示
+  &--danger:hover {
+    color: $color-danger;
+  }
+}
+
+// 进入/离开过渡：淡入 + 轻微缩放（0.12s，对齐 gitPush 范式）
+.rm-settings-fade-enter-active,
+.rm-settings-fade-leave-active {
+  transition: opacity 0.12s ease;
+
+  .rm-settings-dialog {
+    transition: transform 0.12s ease;
+  }
+}
+
+.rm-settings-fade-enter-from,
+.rm-settings-fade-leave-to {
+  opacity: 0;
+
+  .rm-settings-dialog {
+    transform: scale(0.98);
+  }
+}

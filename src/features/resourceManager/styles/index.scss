@@ -248,19 +248,7 @@
       }
     }
 
-    &--category {
-      margin-top: -$spacing-1;
-
-      .rm-btn {
-        font-size: $font-size-xs;
-        padding: $spacing-2px $spacing-2;
-        opacity: 0.8;
-      }
-
-      .rm-btn.active {
-        opacity: 1;
-      }
-    }
+    // 分类筛选栏样式已随 CategoryFilterBar 子组件迁移至 CategoryFilterBar.scss
   }
 
   // ── 资源统计 ──

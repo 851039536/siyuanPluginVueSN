@@ -13,17 +13,20 @@
 - **快捷键冲突检查**：必须**递归搜索整个 `src/features/**`**，hotkey 也注册在 `features/<name>/types/index.ts`（video ⌃⌥V、formatAssistant ⌃⌥G、superPanel ⌃⌥P）。已知既有冲突：tableOfContents 与 ideaGenerator 同为 ⌃⌥I（未修）。思源 `ICommand.hotkey` 可选，不写即仅作命令面板入口
 - **禁止私自执行** `pnpm vite build` / `pnpm lint`（用户自行验证）；MewTool 等其他 C# 项目禁止 `dotnet build`
 
-## 共享组件库（`src/components/`，16 个）
-规则见 `AGENTS.md § 共享组件库使用规则（强制）`：**先查用法（组件预览面板 / `previewData/*.ts` / 源码 `interface Props`）→ 优先复用（13 类控件禁止 feature 自建）→ 改 API 必同步预览清单**。
-- 清单：Button / Input / Select / FormField / Label / Switch / **Checkbox** / Slider / Tag / Badge / Avatar / Card / Chart / **ColorField** / IconWrapper / Loader
+## 共享组件库（`src/components/`，17 个）
+规则见 `AGENTS.md § 共享组件库使用规则（强制）`：**先查用法（组件预览面板 / `previewData/*.ts` / 源码 `interface Props`）→ 优先复用（禁止 feature 自建同类控件）→ 改 API 必同步预览清单**。
+- 清单（公开组件平铺于 `src/components/`）：Button / Input / Select / **ColorField** / FormField / Label / Switch / **Checkbox** / **DatePicker** / Slider / Tag / Badge / Avatar / Card / Chart / IconWrapper / Loader
+- **结构约定**（2026-09-10 起，已写入 AGENTS.md）：单个组件的私有子部件与纯函数放同名小写子目录（如 `src/components/datePicker/`），子部件不计入组件清单、**禁止 feature 直接导入**；子部件样式必须各自独立 SCSS —— Vue scoped 样式只对子组件**根元素**生效，父组件的规则命不中子部件内部元素
+- **改计数前必须先实测**：组件数会被并行变更改变（2026-09-10 一天内 15→16→17），禁止凭上一轮记忆改 `AGENTS.md` / 根 `README.md` / `componentPreview/README.md` 里的「N 个」
 - 尺寸档位统一 `xsmall`/`small`/`medium`/`large`（默认 `small`），字号阶梯 10/12/14/16（`$font-size-2xs/xs/sm/base`，四档禁止同号；这是两级字号制中唯一允许 10px 出现在控件正文的场景）
-- 新增组件 = 改 3 处：`Checkbox.vue` 类文件 + `styles/<Name>.scss` + `previewData/*.ts`（`props` 与 `code` 严格一致）+ 文档计数（`AGENTS.md` 5 处 + 根 `README.md` + `componentPreview/README.md`）
+- 新增组件 = 改 4 类位置：`<Name>.vue` 公开入口 + `styles/<Name>.scss`（复杂组件再按子部件拆多份 SCSS）+ `previewData/<name>.ts`（`props` 与 `code` 严格一致，再接入 `previewData/index.ts` 聚合）+ 文档计数（`AGENTS.md` 5 处 + 清单表行 + 复用控件清单 + 根 `README.md` + `componentPreview/README.md` 的 L3/L8/L13/L14 与具名插槽表/事件契约表）
 - 允许自建例外：纯展示局部布局容器、无档位 26×26 `.icon-btn`
 - 改共享组件 API 必须同步 `previewData/*.ts` 与 `componentPreview/README.md`
 
 ### 组件约定与陷阱
 - **`Button`**：颜色轴 `variant`/`severity` × 外观轴 `outlined`/`text`。既有 5 个 variant 语义**不可改动**（180+ 处调用依赖），新增能力走新类名（`--severity-*`/`--outlined`/`--text`），颜色族经 CSS 变量 `--btn-color`/`--btn-on-color`/`--btn-soft`/`--btn-soft-strong`（`btn-color-family` mixin）。纯图标按钮必须给 `aria-label`/`title`；loading 用 `visibility: hidden` 保宽；图标随 size 档位 12/14/16/18
 - **`Checkbox`**（2026-09-10 新增）：原生隐藏 input 承载语义（Tab/Space + 表单），`isGroup = !binary && Array.isArray(modelValue)` 自动分模式；`indeterminate` 只能写 DOM 属性（`watch flush: "post"` + `onMounted`）；分组模式返回全新数组；受控回写 `nextTick(syncNativeState)` 防漂移；复用 `FormField`（只传 hint/error）+ `IconWrapper`（`check`/`minus`）
+- **`DatePicker`**（2026-09-10 新增，首个带私有子目录的组件）：`src/components/DatePicker.vue`（入口）+ `datePicker/`（types/formatUtils/utils/useDatePicker/PickerPanel/CalendarPanel/MonthYearPanel）。要点：①**零日期库**，自建 `dateFormat` 模板引擎（令牌严格对齐 PrimeVue，`parseDate` 反向解析只支持数值令牌）；②**无时区字符串必须按本地时间解析**（`new Date("2026-09-10")` 按 UTC 会跨日错位，用 `LOCAL_DATE_PATTERN` 显式构造）；③`isDateDisabled(date, options)` 收敛 min/max + disabledDays + disabledDates 四类约束，数组预处理为 `Set<number>`；④42 格元数据一次性 `computed`（模板只读 + `date` 插槽 scope 同源）；⑤**焦点三坑**：关闭后 `input.focus()` 会立即重开面板（需 `skipFocusOpen` 抑制标记）、视图切换后原按钮卸载导致焦点掉 body + Esc 失效（需 `focusActiveView()`）、面板容器要 `tabindex="-1"` 才能程序化聚焦；⑥有意偏离 PrimeVue：`dateFormat` 默认 `yy-mm-dd`、`firstDayOfWeek` 默认 1（周一起始），不做 `showTime`/`multiple`/`inline`/`numberOfMonths`；⑦弹层沿用 `Select` 相对定位范式，`overflow:hidden` 容器内可能被裁剪（已知限制，不用 Teleport）
 - **`ColorField`**（2026-09-10 由 `generalSettings` 提升为共享）：色块 + 32 色自绘调色板 + hex 文本双向联动。**原生 `<input type="color">` 在思源 Electron 中不弹取色器**，颜色选择一律用它；全项目仍有 8 个文件遗留原生实现待替换。事件：`update:modelValue`（实时值）+ `change`（提交信号：blur/回车/选色）
 - **`Input.borderless`**：去边框去底色（三条高特异性选择器覆盖基类 hover/focus-within），供 chips 类复合控件内嵌；焦点反馈由外层容器 `:focus-within` 承担
 - **「实时跟随 + 一次性落盘」交互统一用双事件**：`update:modelValue`（只改内存）+ `change`（落盘）。`Slider`/`ColorField`/`Input` 均如此；消费方据此避免逐像素写盘与提示刷屏
@@ -55,7 +58,7 @@
 - 冗余消除：公共函数提取、watch 合并、computed 预计算映射
 - 响应式布局：纯 CSS flex-wrap 替代 JS 监听
 - 拆分依据：重复 3 次前不抽象（Rule of Three），但**突破 500 行硬阈值同样是明示的拆分依据**
-- 重构 import 来源必须同轮全量切换（否则 build 报 `MISSING_EXPORT`）
+- **拆分文件后必须同轮全量切换 import 来源**（否则 build 报 `MISSING_EXPORT`）。2026-09-10 实测教训（DatePicker 拆 `utils.ts` → `utils.ts` + `formatUtils.ts`）：`parseDate` 已随模板引擎迁走，但 `useDatePicker.ts` 仍从 `./utils` 导入 → 用户 build 才暴露。**三道验证各查不同问题，缺一不可**：ESLint（`read_lints`）只查规范、**不查未导出成员也不查类型**；`npx tsc --noEmit` 能查出 `TS2614 无导出成员` 与 `TS2322 类型不匹配`（同轮还查出 `buildModelValue` 三元表达式产出 `(string | Date)[]` 不可赋给 `DatePickerValue` —— 需按分支分别 map）；rollup/vite build 才查 `MISSING_EXPORT`。故**改完导出边界后应本地跑一次 `npx tsc --noEmit` 并过滤新增文件路径**（该命令不在禁用清单内，只读）
 - 非 deep watch 对原地 splice 数组引用永不触发 → 返回全新数组
 - 组件内常量若被 composable 运行时引用，**不能**放 `types/index.ts`（其运行时 import `index.vue` 会形成循环），应拆 `types/xxx.ts` 独立文件
 - `read_lints` 偶有陈旧诊断（行号不随编辑移动）：需把报的行号对应代码读出来核对，**不要一律当陈旧忽略**（曾漏掉真实的少传参数 bug）

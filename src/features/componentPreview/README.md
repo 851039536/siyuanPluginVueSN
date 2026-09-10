@@ -1,17 +1,17 @@
 # 组件预览（Component Preview）
 
-在思源内以独立窗口/页签形态查看共享 Codex UI 组件库（`src/components/`）全部 16 个组件的真实渲染用法快照，附可复制的示例代码，便于组件开发者查看效果、改动后快速回归验证。
+在思源内以独立窗口/页签形态查看共享 Codex UI 组件库（`src/components/`）全部 17 个组件的真实渲染用法快照，附可复制的示例代码，便于组件开发者查看效果、改动后快速回归验证。
 
 ## 功能
 
 - **双形态承载（纯官方 API）**：`plugin.addTab` 注册自定义 Tab 模型 + `openTab({custom})` 在主窗口创建页签；面板头部「在独立窗口打开」调 `openWindow({tab})` 把页签移入浮动窗口；浮动窗口内经 `isFloating`（`getFrontend() === "desktop-window"`）隐藏重复面板标题与打开按钮。
-- **全组件覆盖**：Avatar / Badge / Button / Card / Chart / Checkbox / ColorField / FormField / IconWrapper / Input / Label / Loader / Select / Slider / Switch / Tag 各一个分组分区，分组内为典型 props 组合快照卡片。
+- **全组件覆盖**：Avatar / Badge / Button / Card / Chart / Checkbox / ColorField / DatePicker / FormField / IconWrapper / Input / Label / Loader / Select / Slider / Switch / Tag 各一个分组分区，分组内为典型 props 组合快照卡片。
 - **示例清单驱动**：预览数据集中在 `previewData/`（一份清单），渲染层通用遍历——新增组件/新用法只需在清单追加，不改渲染框架。清单里的 `code` 模板与渲染 props 共用同一数据源，杜绝漂移。
 - **复合控件内嵌能力**：`Input` 的 `borderless` 去边框去底色（三条高特异性选择器覆盖基类 hover/focus-within），供「标签输入框」这类自定义容器把输入框内嵌其中；焦点反馈由外层容器的 `:focus-within` 承担。
 - **代码复制**：每个示例卡片对应一段可复制的 Vue 用法代码（`copyToClipboard` + 已复制反馈）。
 - **导航与检索**：左侧锚点导航（按组件分区跳转）+ 组件名搜索过滤，兼容超长内容滚动。
-- **组件尺寸档位**：头部 XS / S / M / L 四档切换，作用于所有支持 `size` 的组件（`PreviewGroup.sizeable` 标记的 Button / Input / FormField / Label / Select / Switch / Checkbox / Slider / Tag / Badge / Avatar / Card）——渲染时向**未显式指定 `size`** 的示例注入全局档位；显式指定 `size` 的示例（尺寸对比用例）保持原样，避免标题与实际渲染不符。选择经 `TypedStorage` 持久化。
-  - 四档字号阶梯为 **10 / 12 / 14 / 16px**（`$font-size-2xs` / `$font-size-xs` / `$font-size-sm` / `$font-size-base`），切档后文字大小可辨；Card 标题四档同步为 10/12/14/16、副标题为 10/10/12/14，Switch 标签随档位变化，Checkbox 标签随档位变化（方框与指示器图标同步为 14/16/18/20px 与 10/12/14/16px），Select 的 XS 档下拉内部（筛选框/空态/分组标题）一并降为 10px。规则见 `AGENTS_STYLE.md` § 组件 size 档位字号阶梯。
+- **组件尺寸档位**：头部 XS / S / M / L 四档切换，作用于所有支持 `size` 的组件（`PreviewGroup.sizeable` 标记的 Button / Input / FormField / Label / Select / Switch / Checkbox / DatePicker / Slider / Tag / Badge / Avatar / Card）——渲染时向**未显式指定 `size`** 的示例注入全局档位；显式指定 `size` 的示例（尺寸对比用例）保持原样，避免标题与实际渲染不符。选择经 `TypedStorage` 持久化。
+  - 四档字号阶梯为 **10 / 12 / 14 / 16px**（`$font-size-2xs` / `$font-size-xs` / `$font-size-sm` / `$font-size-base`），切档后文字大小可辨；Card 标题四档同步为 10/12/14/16、副标题为 10/10/12/14，Switch 标签随档位变化，Checkbox 标签随档位变化（方框与指示器图标同步为 14/16/18/20px 与 10/12/14/16px），DatePicker 的输入框与日历单元格字号同阶变化（单元格边长 22/24/28/32px），Select 的 XS 档下拉内部（筛选框/空态/分组标题）一并降为 10px。规则见 `AGENTS_STYLE.md` § 组件 size 档位字号阶梯。
   - 注：Chart（`size` 为预设像素宽高，大档会撑破卡片）、IconWrapper（`size` 为像素数）、Loader（无 props）不参与档位切换；图标尺寸不随档位缩放。
 - **明暗适配**：不自行造主题——面板与组件全部消费思源 `--b3-theme-*` 变量，明暗随思源主题自动切换（Chart 经自身 `theme: "auto"` 同样跟随）。
 
@@ -30,6 +30,8 @@
 | --- | --- | --- | --- |
 | `Select` | `selected` | `{ option }` | 已选项富内容（如"名称 + 来源标记"）；不传时回退为纯文本 `option.label` |
 | `Select` | `option` | `{ option }` | 下拉选项富内容；不传时回退为纯文本 `option.label` |
+| `DatePicker` | `date` | `CalendarCell`（`date` / `inCurrentMonth` / `disabled` / `today` / `selected` / `inRange` / `rangeStart` / `rangeEnd`） | 自定义日期单元格内容（如价格、事件标记）；不传时回退为日序数字 |
+| `DatePicker` | `buttonbar` | `{ today, selectToday, clear }` | 面板底部按钮栏整体替换（默认渲染「今天 / 清除」两个文本按钮） |
 
 `SelectOption` 的 `keywords?: string` 为 `filterable` 的附加检索词（标签之外的别名/描述检索），清单中已有对应示例。
 
@@ -43,6 +45,7 @@
 | `ColorField` | `change` | 提交信号：文本框 blur/回车、或在调色板选色后触发；消费方据此落盘，避免逐字写盘 |
 | `Slider` | `update:modelValue` / `change` | 同上模式：拖动过程只发 `update:modelValue`，松手才发 `change` |
 | `Input` | `update:modelValue` / `change` | 同上模式：原生 `input` / `change` 分别转发 |
+| `DatePicker` | `update:modelValue` / `change` | 同日提交：选中、手输解析、清除时两者同时触发（无「实时跟随」阶段）；另有 `visibleChange`（弹层开合）、`viewChange`（视图切换）、`clear` |
 
 > 通用建议：需要「实时跟随 + 一次性落盘」的交互（滑块、颜色、文本输入），消费方应监听 `update:modelValue` 做内存更新、监听 `change` 做持久化，可避免写放大与提示刷屏。
 

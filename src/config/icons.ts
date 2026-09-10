@@ -593,6 +593,12 @@ export const COMMON_ICONS = {
   chevronRight: {
     icon: "mdi:chevron-right",
   },
+  chevronDoubleLeft: {
+    icon: "mdi:chevron-double-left",
+  },
+  chevronDoubleRight: {
+    icon: "mdi:chevron-double-right",
+  },
   shuffle: {
     icon: "mdi:shuffle-variant",
   },

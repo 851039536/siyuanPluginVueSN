@@ -16,6 +16,9 @@ import {
   checkboxPreviewGroups,
 } from "./checkbox"
 import {
+  datePickerPreviewGroups,
+} from "./datePicker"
+import {
   displayPreviewGroups,
 } from "./display"
 import {
@@ -32,6 +35,7 @@ export const PREVIEW_GROUPS: PreviewGroup[] = [
   ...controlPreviewGroups,
   ...colorFieldPreviewGroups,
   ...checkboxPreviewGroups,
+  ...datePickerPreviewGroups,
   ...tagAvatarPreviewGroups,
   ...displayPreviewGroups,
 ]

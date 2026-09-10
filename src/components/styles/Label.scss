@@ -29,13 +29,14 @@
     font-size: $font-size-base;
   }
 
-  // 状态变体
+  // 状态变体（错误色取 --b3-theme-error：设计基准里只定义了该变量，--b3-theme-destructive 从未定义、
+  // 会让暗色主题下的错误色恒走 fallback 而偏暗）
   &--default {
     color: var(--b3-theme-on-background, $color-fg);
   }
 
   &--error {
-    color: var(--b3-theme-destructive, $color-danger);
+    color: var(--b3-theme-error, $color-danger);
   }
 
   &--success {
@@ -46,17 +47,37 @@
     color: var(--b3-theme-warning, $color-warning);
   }
 
-  // 禁用状态
-  &--disabled {
+  // 禁用状态：三入口等价 —— disabled prop / 容器 data-disabled / 邻近兄弟控件被禁用
+  &--disabled,
+  &[data-disabled]:not([data-disabled="false"]) {
     opacity: m.$opacity-disabled;
     cursor: not-allowed;
   }
 
-  // 必填标记
+  // 邻近兜底：兄弟即原生禁用元素（Switch 的 button[disabled]、原生 input）或标记了 data-disabled 的容器。
+  // 仅取相邻兄弟（+）而非通用兄弟（~），避免同容器内下方的禁用控件误伤本标签。
+  &:has(+ :disabled),
+  &:has(+ [data-disabled]:not([data-disabled="false"])) {
+    opacity: m.$opacity-disabled;
+    cursor: not-allowed;
+  }
+
+  // 必填标记（* 对屏幕阅读器隐藏，语义由 __required-text 承担）
   &__required {
-    color: var(--b3-theme-destructive, $color-danger);
-    margin-left: 2px; // 2px 无对应 Token，保留
+    color: var(--b3-theme-error, $color-danger);
+    margin-left: $spacing-2px;
     font-weight: $font-weight-semibold;
+  }
+
+  // 必填的无障碍替代文本：裁剪式视觉隐藏，仅为屏幕阅读器播报
+  &__required-text {
+    position: absolute;
+    overflow: hidden;
+    width: $spacing-px;
+    height: $spacing-px;
+    margin: -$spacing-px;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   // 文本
@@ -69,7 +90,7 @@
     flex-shrink: 0;
   }
 
-  // 对齐方式
+  // 对齐方式（根 justify-content：服务于无 flex:1 文本层的包裹模式）
   &--align-left {
     justify-content: flex-start;
   }
@@ -80,6 +101,22 @@
 
   &--align-right {
     justify-content: flex-end;
+  }
+
+  // 对齐真实生效：默认模式下文本层 flex:1 占满剩余宽度，根 justify-content 无空间可分，
+  // 故对齐需落到文本层内部（flex 子项会被 blockify，text-align 生效）
+  &--align-center .si-label__text {
+    text-align: center;
+  }
+
+  &--align-right .si-label__text {
+    text-align: right;
+  }
+
+  // 包裹模式：插槽内容直出，把控件包进标签以建立原生隐式关联（无需 for）
+  &--wrapper {
+    white-space: normal; // 放开换行，允许「标题 + 说明」多行排布
+    font-weight: $font-weight-normal; // 避免 medium 字重被相邻控件文本继承
   }
 
   // 内联模式（非 label 标签）
@@ -105,7 +142,7 @@
     }
 
     &.si-label--danger {
-      background: var(--b3-theme-destructive, $color-danger);
+      background: var(--b3-theme-error, $color-danger);
       color: var(--b3-theme-on-primary, $color-bg);
     }
 
@@ -120,4 +157,10 @@
 .si-label:not(.si-label--inline) {
   display: inline-flex;
   margin-bottom: $spacing-1;
+}
+
+// 包裹模式不适用表单标签的下外边距。
+// 与上条同特异性、靠源码顺序胜出 —— 刻意不扩展上面的 :not() 链，避免抬高特异性影响 feature 侧覆盖。
+.si-label.si-label--wrapper {
+  margin-bottom: 0;
 }

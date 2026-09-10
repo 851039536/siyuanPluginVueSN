@@ -189,7 +189,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 | `FormField.vue` | 表单行容器：label + 控件 + hint/error + 字数计数 | `label` / `required` / `hint` / `error` / `size` / `showCount` / `countCurrent` / `countMax` |
 | `InputGroup.vue` | 输入框组合器容器：与 `Input` / `Select` / `DatePicker` / `Button` / `InputGroupAddon` 无缝拼接为一体化控件（**组内成员禁带 label/hint/error；容器禁设 `overflow: hidden`**） | `size`（需与组内成员同档） |
 | `InputGroupAddon.vue` | 输入框组合器附加项：前缀/后缀文本或图标，外观随 `InputGroup` 档位变量继承（可单独使用） | — |
-| `Label.vue` | 表单标签文本（可带图标、必填星号） | `size` / `variant` / `state` / `icon` / `iconPosition` / `tag` / `for` / `width` / `align` |
+| `Label.vue` | 表单标签文本（可带图标、必填星号）；**包裹控件建立隐式关联（`wrapper`）**；禁用态三入口（`disabled` / 容器 `data-disabled` / 邻近被禁用兄弟控件）；必填附无障碍替代文本 | `size` / `variant` / `state` / `icon` / `iconPosition` / `tag` / `for` / `width` / `align` / `disabled` / `wrapper` / `requiredText` |
 | `Switch.vue` | 开关 | `v-model` / `label` / `size` / `loading` / `labelBefore` / `activeColor` |
 | `Checkbox.vue` | 复选框（二元 / 数组分组多选 / 半选，描边与实底变体） | `v-model` / `value` / `trueValue` / `falseValue` / `binary` / `indeterminate` / `size` / `variant` / `label` / `hint` / `error` / `disabled` / `readonly` / `labelBefore` |
 | `DatePicker.vue` | 日期选择器（单选 / 区间、日-月-年三视图、`dateFormat` 模板、范围与禁用日期） | `v-model` / `selectionMode` / `view` / `dateFormat` / `valueFormat` / `minDate` / `maxDate` / `disabledDates` / `disabledDays` / `firstDayOfWeek` / `showClear` / `showButtonBar` / `manualInput` / `size` / `label` / `hint` / `error` / `disabled` / `readonly` |

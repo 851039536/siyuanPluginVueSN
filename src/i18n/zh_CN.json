@@ -413,7 +413,7 @@
     "copy": "复制",
     "palette": "快捷色板"
   },
-  "compactMode": "紧洛模式",
+  "compactMode": "紧凑模式",
   "compactModeEnabled": "紧凑模式已启用",
   "compactModeDisabled": "紧凑模式已禁用",
   "compactModeSettings": "紧凑模式",
@@ -421,6 +421,9 @@
   "compactModeDensity": "密度级别",
   "compactModeFontScale": "字号缩放",
   "compactModeAreas": "生效区域",
+  "compactDensityModerate": "适中",
+  "compactDensityCompact": "紧凑",
+  "compactDensityExtreme": "极简",
   "componentPreview": {
     "title": "组件预览",
     "subtitle": "共享 Codex UI 组件库 — 用法快照与示例代码",

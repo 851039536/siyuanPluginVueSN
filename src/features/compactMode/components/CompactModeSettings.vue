@@ -1,16 +1,17 @@
+<!-- 紧凑模式设置面板：密度档位、字号缩放与生效区域开关配置 -->
 <template>
   <div class="compact-mode-settings">
     <!-- 主开关 -->
     <div class="master-row">
-      <label class="section-header setting-label">
-        <IconWrapper
-          name="formatSize"
-          :size="14"
-          class="section-icon"
-        />
+      <Label
+        class="setting-title"
+        icon="formatSize"
+        :icon-size="14"
+        size="small"
+      >
         {{ i18n?.compactModeSettings || '紧凑模式' }}
-      </label>
-      <SiSwitch
+      </Label>
+      <Switch
         v-model="compactMode"
         @change="save"
       />
@@ -22,84 +23,74 @@
     <template v-if="compactMode">
       <!-- 密度级别 -->
       <div class="sub-section">
-        <div class="section-header sub-title">
-          <IconWrapper
-            name="formatSize"
-            :size="14"
-            class="section-icon"
-          />
+        <Label
+          class="sub-title"
+          icon="formatSize"
+          :icon-size="14"
+          size="xsmall"
+        >
           {{ i18n?.compactModeDensity || '密度级别' }}
-        </div>
+        </Label>
         <div class="options-row">
-          <label
+          <Button
             v-for="opt in densityOptions"
             :key="opt.value"
-            class="chip-option"
-            :class="{ active: density === opt.value }"
+            :variant="opt.value === density ? 'primary' : 'ghost'"
+            text
+            size="xsmall"
+            :aria-pressed="opt.value === density"
+            @click="selectDensity(opt.value)"
           >
-            <input
-              v-model="density"
-              type="radio"
-              :value="opt.value"
-              name="compact-density"
-              class="hidden-radio"
-              @change="save"
-            />
-            {{ opt.desc }}
-          </label>
+            {{ opt.label }}
+          </Button>
         </div>
       </div>
 
       <!-- 字号缩放 -->
       <div class="sub-section">
-        <div class="section-header sub-title">
-          <IconWrapper
-            name="code"
-            :size="14"
-            class="section-icon"
-          />
+        <Label
+          class="sub-title"
+          icon="code"
+          :icon-size="14"
+          size="xsmall"
+        >
           {{ i18n?.compactModeFontScale || '字号缩放' }}
-        </div>
+        </Label>
         <div class="options-row">
-          <label
+          <Button
             v-for="opt in fontScaleOptions"
             :key="opt.value"
-            class="chip-option"
-            :class="{ active: fontScale === opt.value }"
+            :variant="opt.value === fontScale ? 'primary' : 'ghost'"
+            text
+            size="xsmall"
+            :aria-pressed="opt.value === fontScale"
+            @click="selectFontScale(opt.value)"
           >
-            <input
-              v-model="fontScale"
-              type="radio"
-              :value="opt.value"
-              name="compact-font-scale"
-              class="hidden-radio"
-              @change="save"
-            />
-            {{ opt.desc }}
-          </label>
+            {{ opt.label }}
+          </Button>
         </div>
       </div>
 
-      <!-- 区域独立开关 -->
+      <!-- 生效区域 -->
       <div class="sub-section">
-        <div class="section-header sub-title">
-          <IconWrapper
-            name="forward"
-            :size="14"
-            class="section-icon"
-          />
+        <Label
+          class="sub-title"
+          icon="forward"
+          :icon-size="14"
+          size="xsmall"
+        >
           {{ i18n?.compactModeAreas || '生效区域' }}
-        </div>
+        </Label>
         <div class="areas-grid">
           <div
             v-for="area in areaOptions"
             :key="area.id"
             class="area-row"
           >
-            <label class="area-label">{{ area.label }}</label>
-            <SiSwitch
+            <Label size="small">{{ area.label }}</Label>
+            <Switch
               :model-value="areas[area.id]"
-              @update:model-value="(v: boolean) => { areas[area.id] = v; save() }"
+              @update:model-value="setArea(area.id, $event)"
             />
           </div>
         </div>
@@ -109,234 +100,144 @@
 </template>
 
 <script setup lang="ts">
-import type { CompactModeSettings } from "@/features/compactMode"
+import type PluginSample from "@/index"
+import {
+  ALL_AREAS,
+  ALL_DENSITIES,
+  ALL_FONT_SCALES,
+  applyCompactMode,
+  type CompactArea,
+  type CompactDensity,
+  type CompactModeSettings,
+} from "@/features/compactMode"
 import {
   computed,
   reactive,
   ref,
 } from "vue"
-import IconWrapper from "@/components/IconWrapper.vue"
-import SiSwitch from "@/components/Switch.vue"
+import Button from "@/components/Button.vue"
+import Label from "@/components/Label.vue"
+import Switch from "@/components/Switch.vue"
 import { saveSettings } from "@/config/settings"
-import { applyCompactMode } from "@/features/compactMode"
 
 interface Props {
   i18n?: Record<string, string>
-  plugin?: any
+  plugin?: PluginSample
 }
 
 const props = withDefaults(defineProps<Props>(), {
   i18n: () => ({}),
-  plugin: null,
+  plugin: undefined,
 })
 
-const s = () => props.plugin?.settings
+/** 未持久化过字号档位时的默认值（与 DEFAULT_SETTINGS 一致） */
+const DEFAULT_FONT_SCALE = 94
+/** 未持久化过密度档位时的默认值（与 DEFAULT_SETTINGS 一致） */
+const DEFAULT_DENSITY: CompactDensity = "compact"
 
-const compactMode = ref(s()?.compactMode ?? true)
+/** 密度档位 → i18n 键 */
+const DENSITY_LABEL_KEYS: Record<CompactDensity, string> = {
+  moderate: "compactDensityModerate",
+  compact: "compactDensityCompact",
+  extreme: "compactDensityExtreme",
+}
 
-const density = ref(s()?.compactModeDensity ?? 'compact')
-const densityOptions = [
-  {
-    value: 'moderate',
-    desc: '适中',
-  },
-  {
-    value: 'compact',
-    desc: '紧凑',
-  },
-  {
-    value: 'extreme',
-    desc: '极简',
-  },
-]
+/** 密度档位 → i18n 键缺失时的兜底文案 */
+const DENSITY_FALLBACK_TEXT: Record<CompactDensity, string> = {
+  moderate: "适中",
+  compact: "紧凑",
+  extreme: "极简",
+}
 
-const fontScale = ref(s()?.compactModeFontScale ?? 94)
-const fontScaleOptions = [
-  {
-    value: 100,
-    desc: '100%',
-  },
-  {
-    value: 98,
-    desc: '98%',
-  },
-  {
-    value: 96,
-    desc: '96%',
-  },
-  {
-    value: 94,
-    desc: '94%',
-  },
-  {
-    value: 92,
-    desc: '92%',
-  },
-  {
-    value: 90,
-    desc: '90%',
-  },
-]
+/** 生效区域 → i18n 键 */
+const AREA_LABEL_KEYS: Record<CompactArea, string> = {
+  sidebar: "compactAreaSidebar",
+  editor: "compactAreaEditor",
+  tabs: "compactAreaTabs",
+  dialogs: "compactAreaDialogs",
+  controls: "compactAreaControls",
+}
 
-const areas = reactive<Record<string, boolean>>({
-  sidebar: s()?.compactModeAreas?.sidebar ?? true,
-  editor: s()?.compactModeAreas?.editor ?? true,
-  tabs: s()?.compactModeAreas?.tabs ?? true,
-  dialogs: s()?.compactModeAreas?.dialogs ?? true,
-  controls: s()?.compactModeAreas?.controls ?? true,
-})
+/** 生效区域 → i18n 键缺失时的兜底文案 */
+const AREA_FALLBACK_TEXT: Record<CompactArea, string> = {
+  sidebar: "侧边栏与文件树",
+  editor: "编辑区",
+  tabs: "页签栏",
+  dialogs: "对话框",
+  controls: "按钮与菜单",
+}
 
-const areaOptions = computed(() => [
-  {
-    id: "sidebar",
-    label: props.i18n?.compactAreaSidebar || "侧边栏与文件树",
-  },
-  {
-    id: "editor",
-    label: props.i18n?.compactAreaEditor || "编辑区",
-  },
-  {
-    id: "tabs",
-    label: props.i18n?.compactAreaTabs || "页签栏",
-  },
-  {
-    id: "dialogs",
-    label: props.i18n?.compactAreaDialogs || "对话框",
-  },
-  {
-    id: "controls",
-    label: props.i18n?.compactAreaControls || "按钮与菜单",
-  },
-])
+const compactMode = ref(props.plugin?.settings.compactMode ?? true)
+const density = ref<CompactDensity>(props.plugin?.settings.compactModeDensity ?? DEFAULT_DENSITY)
+const fontScale = ref(props.plugin?.settings.compactModeFontScale ?? DEFAULT_FONT_SCALE)
+
+/** 区域开关初值：区域清单与 CSS 类体系共用 ALL_AREAS，避免两处各写一份 */
+const areas = reactive<Record<string, boolean>>(
+  Object.fromEntries(
+    ALL_AREAS.map((area) => [area, props.plugin?.settings.compactModeAreas?.[area] ?? true]),
+  ),
+)
+
+/** 密度档位按钮（选中态由 Button 的 variant 表达） */
+const densityOptions = computed(() =>
+  ALL_DENSITIES.map((value) => ({
+    value,
+    label: props.i18n?.[DENSITY_LABEL_KEYS[value]] || DENSITY_FALLBACK_TEXT[value],
+  })),
+)
+
+/** 字号档位按钮：值为百分比，无需 i18n */
+const fontScaleOptions = ALL_FONT_SCALES.map((value) => ({
+  value,
+  label: `${value}%`,
+}))
+
+/** 生效区域开关行 */
+const areaOptions = computed(() =>
+  ALL_AREAS.map((id) => ({
+    id,
+    label: props.i18n?.[AREA_LABEL_KEYS[id]] || AREA_FALLBACK_TEXT[id],
+  })),
+)
+
+function selectDensity(value: CompactDensity): void {
+  density.value = value
+  save()
+}
+
+function selectFontScale(value: number): void {
+  fontScale.value = value
+  save()
+}
+
+function setArea(id: string, value: boolean): void {
+  areas[id] = value
+  save()
+}
 
 function buildSettings(): CompactModeSettings {
   return {
     compactMode: compactMode.value,
-    compactModeDensity: density.value as CompactModeSettings['compactModeDensity'],
+    compactModeDensity: density.value,
     compactModeFontScale: fontScale.value,
     compactModeAreas: { ...areas },
   }
 }
 
-async function save() {
+/** 写回插件设置 → 落盘 → 同步 html 上的紧凑模式类名 */
+async function save(): Promise<void> {
   const plugin = props.plugin
-  if (!plugin) return
+  if (!plugin) {
+    return
+  }
 
-  const cs = buildSettings()
-  plugin.settings.compactMode = cs.compactMode
-  plugin.settings.compactModeDensity = cs.compactModeDensity
-  plugin.settings.compactModeFontScale = cs.compactModeFontScale
-  plugin.settings.compactModeAreas = cs.compactModeAreas
-
+  const next = buildSettings()
+  Object.assign(plugin.settings, next)
   await saveSettings(plugin, plugin.settings)
-  applyCompactMode(cs)
+  applyCompactMode(next)
 }
 </script>
 
-<style scoped>
-.compact-mode-settings {
-  padding: 16px;
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--b3-theme-on-surface);
-}
-
-.setting-label { margin-bottom: 0; }
-
-.section-icon {
-  font-size: 14px;
-  opacity: 0.8;
-}
-
-.toggle-description {
-  font-size: 12px;
-  color: var(--b3-theme-on-surface-variant);
-  margin-top: 8px;
-  line-height: 1.4;
-}
-
-.master-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.sub-section {
-  margin-top: 12px;
-  padding: 10px 12px;
-  background: var(--b3-theme-background);
-  border: 1px solid var(--b3-border-color);
-  border-radius: 6px;
-}
-
-/* --- Chip 选项（密度 / 字号共用） --- */
-.options-row {
-  display: flex;
-  gap: 6px;
-}
-
-.chip-option {
-  flex: 1;
-  text-align: center;
-  padding: 5px 2px;
-  font-size: 11px;
-  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
-  color: var(--b3-theme-on-surface-variant);
-  background: var(--b3-theme-background);
-  border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
-  cursor: pointer;
-  transition: border-color 0.12s, background 0.12s, color 0.12s, box-shadow 0.12s;
-  user-select: none;
-}
-
-.chip-option:hover {
-  border-color: var(--b3-theme-primary-light);
-}
-
-.chip-option.active {
-  border-color: var(--b3-theme-primary);
-  color: var(--b3-theme-primary);
-  background: var(--b3-theme-surface);
-  box-shadow: 0 0 0 1px var(--b3-theme-primary);
-}
-
-.sub-title {
-  margin-bottom: 10px;
-  font-size: 10px;
-  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--b3-theme-on-surface-variant);
-}
-
-.hidden-radio {
-  display: none;
-}
-
-/* --- 区域开关 --- */
-.areas-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.area-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 0;
-}
-
-.area-label {
-  font-size: 12px;
-  color: var(--b3-theme-on-surface);
-}
+<style scoped lang="scss">
+@use "../styles/CompactModeSettings.scss";
 </style>

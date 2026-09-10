@@ -421,6 +421,9 @@
   "compactModeDensity": "Density Level",
   "compactModeFontScale": "Font Scale",
   "compactModeAreas": "Affected Areas",
+  "compactDensityModerate": "Moderate",
+  "compactDensityCompact": "Compact",
+  "compactDensityExtreme": "Extreme",
   "componentPreview": {
     "title": "Component Preview",
     "subtitle": "Shared Codex UI library — usage snapshots & code samples",

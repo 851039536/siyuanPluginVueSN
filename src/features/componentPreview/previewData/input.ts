@@ -179,6 +179,16 @@ export const formFieldGroup: PreviewGroup = {
       slotText: "表单控件",
       code: "<FormField showCount :count-current=\"12\" :count-max=\"20\"><Input v-model=\"value\" /></FormField>",
     },
+    {
+      // labelId 无可见渲染差异，靠 code 承载「控件用 aria-labelledby 关联标签」的用法
+      title: "标签关联 id（labelId）",
+      props: {
+        label: "字段名",
+        labelId: "field-label-1",
+      },
+      slotText: "表单控件",
+      code: "<FormField label=\"字段名\" label-id=\"field-label-1\">\n  <Input v-model=\"value\" aria-labelledby=\"field-label-1\" />\n</FormField>",
+    },
   ],
 }
 

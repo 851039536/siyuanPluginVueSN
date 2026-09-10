@@ -1,6 +1,7 @@
 <template>
   <label
     v-if="label || $slots.label"
+    :id="labelId"
     class="si-form-field__label"
     :class="{ [`si-form-field__label--${size}`]: size }"
   >
@@ -38,6 +39,8 @@ type FormFieldSize = "xsmall" | "small" | "medium" | "large"
 
 interface Props {
   label?: string
+  /** 标签元素 id，供控件用 aria-labelledby 建立无障碍关联（不传时输出不变） */
+  labelId?: string
   required?: boolean
   hint?: string
   error?: string

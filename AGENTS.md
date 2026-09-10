@@ -184,10 +184,10 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 |------|------|-----------|
 | `Button.vue` | 按钮：颜色轴 × 外观轴、四档尺寸、图标四向、加载 | `variant` / `severity` / `outlined` / `text` / `size` / `icon` / `iconPosition` / `rounded` / `block` / `loading` / `type` / `title` / `ariaLabel` |
 | `Input.vue` | 单行/多行输入（前后缀图标、清除、密码、字数计数、无边框内嵌） | `v-model` / `type` / `size` / `prefixIcon` / `suffixIcon` / `clearable` / `borderless` / `showPassword` / `showCount` / `error` / `rows` / `autosize` |
-| `Select.vue` | 下拉选择（可筛选、可清除、可分组） | `v-model` / `options` / `size` / `filterable` / `clearable` / `placement` / `maxHeight` / `emptyText` |
+| `Select.vue` | 下拉选择（可筛选、可清除、可分组；**`role="combobox"` + listbox 无障碍语义、↑↓ 移动自动滚入视野、Esc 关闭返还焦点、打开定位已选项**） | `v-model` / `options` / `size` / `filterable` / `clearable` / `placement` / `maxHeight` / `emptyText` / `ariaLabel` / `ariaLabelledby` / `clearLabel` |
 | `Listbox.vue` | 内联列表选择：单选 / 多选、复选指示（`checkbox`）与勾选指示（`checkmark`）、内置筛选、单项与整体禁用、错误态（**无分组与字段映射；键盘仅基础键；指示器为装饰元素、不复用 `Checkbox`**） | `v-model` / `options`(必填) / `multiple` / `checkbox` / `checkmark` / `highlightOnSelect` / `filter` / `filterPlaceholder` / `emptyText` / `maxHeight` / `size` / `disabled` / `error` / `label` / `required` / `hint` / `ariaLabel` |
 | `ColorField.vue` | 颜色字段：色块 + 32 色自绘调色板弹层 + hex 文本双向联动（**思源 Electron 下原生 `input[type=color]` 不弹窗，禁止用原生取色器**） | `v-model` / `placeholder` |
-| `FormField.vue` | 表单行容器：label + 控件 + hint/error + 字数计数 | `label` / `required` / `hint` / `error` / `size` / `showCount` / `countCurrent` / `countMax` |
+| `FormField.vue` | 表单行容器：label + 控件 + hint/error + 字数计数 | `label` / `labelId` / `required` / `hint` / `error` / `size` / `showCount` / `countCurrent` / `countMax` |
 | `InputGroup.vue` | 输入框组合器容器：与 `Input` / `Select` / `DatePicker` / `Button` / `InputGroupAddon` 无缝拼接为一体化控件（**组内成员禁带 label/hint/error；容器禁设 `overflow: hidden`**） | `size`（需与组内成员同档） |
 | `InputGroupAddon.vue` | 输入框组合器附加项：前缀/后缀文本或图标，外观随 `InputGroup` 档位变量继承（可单独使用） | — |
 | `Label.vue` | 表单标签文本（可带图标、必填星号）；**包裹控件建立隐式关联（`wrapper`）**；禁用态三入口（`disabled` / 容器 `data-disabled` / 邻近被禁用兄弟控件）；必填附无障碍替代文本 | `size` / `variant` / `state` / `icon` / `iconPosition` / `tag` / `for` / `width` / `align` / `disabled` / `wrapper` / `requiredText` |

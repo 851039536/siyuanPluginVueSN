@@ -15,15 +15,15 @@
               class="skill-preview-desc"
             >{{ currentSkill.description }}</span>
           </div>
-          <button
-            class="skill-preview-close"
+          <!-- 纯图标按钮：关闭弹窗（ariaLabel："关闭"） -->
+          <Button
+            variant="ghost"
+            text
+            size="xsmall"
+            icon="close"
+            :aria-label="i18n.skillPreviewClose"
             @click="$emit('close')"
-          >
-            <svg
-              width="16"
-              height="16"
-            ><use xlink:href="#iconClose" /></svg>
-          </button>
+          />
         </div>
         <div class="skill-preview-body">
           <div
@@ -32,11 +32,16 @@
           ></div>
         </div>
         <div class="skill-preview-footer">
-          <span class="skill-preview-tool">来源: {{ currentSkill.tool }}</span>
-          <button
-            class="skill-preview-btn-close"
+          <!-- 元信息："来源: " + 工具名 -->
+          <span class="skill-preview-tool">{{ i18n.skillSourceLabel }} {{ currentSkill.tool }}</span>
+          <!-- 按钮："关闭" -->
+          <Button
+            variant="ghost"
+            size="xsmall"
             @click="$emit('close')"
-          >关闭</button>
+          >
+            {{ i18n.skillPreviewClose }}
+          </Button>
         </div>
       </div>
     </div>
@@ -46,9 +51,12 @@
 <script setup lang="ts">
 import type { SkillItem } from "@/types/ai"
 import { computed } from "vue"
+import Button from "@/components/Button.vue"
 import { renderMarkdown } from "../utils"
 
 const props = defineProps<{
+  /** 国际化文案 */
+  i18n: Record<string, string>
   currentSkill: SkillItem | null
 }>()
 

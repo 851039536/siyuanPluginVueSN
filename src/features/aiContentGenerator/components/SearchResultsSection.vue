@@ -2,8 +2,8 @@
 <template>
   <CollapsibleSection
     v-if="searchStatus || searchResults.length > 0"
-    title="搜索来源"
-    icon="#iconSearch"
+    :title="i18n.searchSourcesTitle"
+    icon="search"
     v-model:open="showPanel"
   >
     <template #headerRight>
@@ -50,6 +50,8 @@ import { ref } from "vue"
 import CollapsibleSection from "./CollapsibleSection.vue"
 
 defineProps<{
+  /** 国际化文案 */
+  i18n: Record<string, string>
   searchResults: SearchResult[]
   searchStatus?: string
 }>()

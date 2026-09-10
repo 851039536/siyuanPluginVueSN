@@ -29,11 +29,6 @@
   50% { opacity: 0.3; }
 }
 
-// ============ 加载旋转动画 ============
-@keyframes ai-spinner-rotate {
-  to { transform: rotate(360deg); }
-}
-
 // ============ Codex 元信息标签 ============
 @mixin codex-meta-label {
   font-size: $font-size-2xs;
@@ -76,6 +71,14 @@
   justify-content: center;
   text-align: center;
   color: var(--b3-theme-on-surface);
+}
+
+// ============ 闪烁状态点（MainContentArea 与 ReviewPanel 共用） ============
+.dot-flashing {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--b3-theme-primary);
 }
 
 // ============ Markdown 预览（MainContentArea 与 SkillPreviewModal 共用） ============

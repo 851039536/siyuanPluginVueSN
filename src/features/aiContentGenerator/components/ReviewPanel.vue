@@ -5,7 +5,10 @@
     <div class="review-header">
       <!-- 左侧：图标 + 标题 -->
       <div class="review-header-left">
-        <SvgIcon name="#iconCheck" />
+        <IconWrapper
+          name="check"
+          :size="12"
+        />
         <!-- 头栏标题："交叉审核" -->
         <span class="review-header-title">{{ i18n.reviewCrossReview }}</span>
       </div>
@@ -32,34 +35,26 @@
     >
       <!-- 总体评价 -->
       <div class="review-summary">
-        <SvgIcon name="#iconSparkles" />
+        <IconWrapper
+          name="sparkles"
+          :size="12"
+        />
         {{ reviewResult.summary }}
       </div>
 
-      <!-- 分项评分条形图 -->
-      <div
+      <!-- 分项评分（可折叠，复用模块内 CollapsibleSection） -->
+      <CollapsibleSection
         v-if="reviewResult.detailedScore"
-        class="score-section"
+        v-model:open="showScores"
+        :title="i18n.reviewDetailedScore"
       >
-        <button
-          class="subsection-toggle"
-          @click="showScores = !showScores"
-        >
-          <!-- 小节标题："分项评分" -->
-          <SvgIcon
-            name="#iconRight"
-            :size="10"
-            class="subsection-chevron"
-            :class="{ expanded: showScores }"
-          />
-          <span>{{ i18n.reviewDetailedScore }}</span>
-        </button>
-        <div v-if="showScores">
+        <div class="score-bars">
           <!-- 雷达图：六维得分分布总览 -->
           <ReviewRadarChart
             :scores="reviewResult.detailedScore"
             :labels="scoreLabelMap"
             :get-level="scoreLevel"
+            :chart-aria-label="i18n.reviewRadarAriaLabel"
           />
           <!-- 条形图：各维度精确读数 -->
           <div
@@ -78,22 +73,23 @@
             <span class="score-value">{{ value ?? 0 }}/10</span>
           </div>
         </div>
-      </div>
+      </CollapsibleSection>
 
-      <!-- 严重程度过滤 -->
+      <!-- 严重程度过滤：选中项走主色 text 外观 -->
       <div
         v-if="reviewResult.issues.length > 0"
         class="issue-filter"
       >
-        <button
+        <Button
           v-for="f in filterOptions"
           :key="f.key"
-          class="issue-filter-btn"
-          :class="{ active: issueFilter === f.key }"
+          :variant="issueFilter === f.key ? 'primary' : 'ghost'"
+          text
+          size="xsmall"
           @click="issueFilter = f.key"
         >
           {{ f.label }} ({{ filterCounts[f.key] }})
-        </button>
+        </Button>
       </div>
 
       <!-- 问题清单 -->
@@ -123,17 +119,15 @@
             class="issue-actions"
           >
             <!-- 按钮："修复"（title："定向修复此问题"） -->
-            <button
-              class="fix-issue-btn"
+            <Button
+              variant="primary"
+              size="xsmall"
+              icon="refresh"
               :title="i18n.reviewFixIssueTitle"
               @click="$emit('fixIssue', entry.originalIndex)"
             >
-              <SvgIcon
-                name="#iconRefresh"
-                :size="10"
-              />
               {{ i18n.reviewFix }}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -164,18 +158,16 @@
         <span class="review-time">{{ formatTime(reviewResult.reviewedAt) }}</span>
         <div class="review-footer-actions">
           <!-- 按钮："重新审核" -->
-          <button
+          <Button
             v-if="!isReviewing"
-            class="review-footer-btn"
+            variant="ghost"
+            size="xsmall"
+            icon="refresh"
             :title="i18n.reviewReReview"
             @click="$emit('reReview')"
           >
-            <SvgIcon
-              name="#iconRefresh"
-              :size="10"
-            />
             {{ i18n.reviewReReview }}
-          </button>
+          </Button>
           <!-- 修复进行中徽标："修复中..." -->
           <span
             v-if="isAutoFixing"
@@ -185,18 +177,16 @@
             {{ i18n.reviewFixing }}
           </span>
           <!-- 按钮："自动修复"（title："自动修复所有问题"） -->
-          <button
+          <Button
             v-else
-            class="review-footer-btn auto-fix-btn"
+            variant="warning"
+            size="xsmall"
+            icon="refresh"
             :title="i18n.reviewAutoFixTitle"
             @click="$emit('autoFix')"
           >
-            <SvgIcon
-              name="#iconRefresh"
-              :size="10"
-            />
             {{ i18n.reviewAutoFix }}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -210,8 +200,10 @@ import {
 } from "vue"
 import type { IssueSeverity, ReviewRating, ReviewResult } from "@/types/ai"
 import { RATING_NEEDS_FIX, SEVERITY_LEVELS } from "../types"
+import Button from "@/components/Button.vue"
+import IconWrapper from "@/components/IconWrapper.vue"
+import CollapsibleSection from "./CollapsibleSection.vue"
 import ReviewRadarChart from "./ReviewRadarChart.vue"
-import SvgIcon from "./SvgIcon.vue"
 
 interface Props {
   i18n: Record<string, string>

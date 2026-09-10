@@ -1,3 +1,4 @@
+<!-- AI 内容生成面板：编排内容展示区与底部输入区，衔接技能/生成/审核/编辑操作 -->
 <template>
   <div class="ai-content-panel">
     <!-- 内容显示区域 -->
@@ -43,6 +44,7 @@
 
     <!-- 底部输入区域 -->
     <BottomInputArea
+      :i18n="i18n"
       :is-generating="isGenerating"
       :edit-target-doc="editTargetDoc"
       :edit-custom-input="editCustomInput"
@@ -233,7 +235,7 @@ const renderedDisplayedMarkdown = computed(() => renderMarkdown(displayedContent
 
 const aiEditAction = async (action: EditActionKey) => {
   if (!editTargetDoc.value) {
-    showMessage("请先选择要编辑的文档", 2000, "info")
+    showMessage(props.i18n.msgSelectDocFirst, 2000, "info")
     return
   }
 
@@ -244,7 +246,7 @@ const aiEditAction = async (action: EditActionKey) => {
   )
 
   await executeGeneration(
-    "AI编辑",
+    props.i18n.taskAiEdit,
     () => buildGenerateOptions(
       `${ACTION_META[action].prompt}\n\n${editTargetDoc.value!.content}`,
       systemPromptText,
@@ -256,13 +258,13 @@ const aiEditAction = async (action: EditActionKey) => {
 
 const handleCustomEdit = async () => {
   if (!editTargetDoc.value && !currentSkill.value) {
-    showMessage("请先选择要编辑的文档或选择技能", 2000, "info")
+    showMessage(props.i18n.msgSelectDocOrSkill, 2000, "info")
     return
   }
 
   if (!editCustomInput.value.trim()) {
     if (!(editTargetDoc.value && currentSkill.value)) {
-      showMessage("请输入提问内容", 2000, "info")
+      showMessage(props.i18n.msgInputQuestion, 2000, "info")
       return
     }
   }
@@ -270,7 +272,7 @@ const handleCustomEdit = async () => {
   // 执行前快照输入指令：onSuccess 会清空 editCustomInput，审核阶段需要真实指令
   const reviewRequest = editCustomInput.value.trim()
 
-  await executeGeneration("自定义编辑", () => {
+  await executeGeneration(props.i18n.taskCustomEdit, () => {
     let finalSystemPrompt: string
     let userInput: string
 

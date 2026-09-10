@@ -3,30 +3,36 @@
   <div class="diff-preview">
     <div class="diff-toolbar">
       <div class="diff-toolbar-left">
-        <span class="diff-toolbar-title">Diff 对比</span>
+        <!-- 工具栏标题："Diff 对比" -->
+        <span class="diff-toolbar-title">{{ i18n.diffTitle }}</span>
         <span class="diff-stats">
           <span class="stat-added">+{{ diffStats.addCount }}</span>
           <span class="stat-removed">-{{ diffStats.removeCount }}</span>
         </span>
       </div>
       <div class="diff-toolbar-right">
+        <!-- 分段切换：合并 / 分栏（选中态走主色 text 外观） -->
         <div class="diff-mode-toggle">
-          <button
-            class="mode-btn"
-            :class="[{ active: diffMode === 'unified' }]"
-            title="合并视图"
+          <!-- 按钮："合并"（title："合并视图"） -->
+          <Button
+            :variant="diffMode === 'unified' ? 'primary' : 'ghost'"
+            text
+            size="xsmall"
+            :title="i18n.diffModeUnifiedTitle"
             @click="diffMode = 'unified'"
           >
-            合并
-          </button>
-          <button
-            class="mode-btn"
-            :class="[{ active: diffMode === 'split' }]"
-            title="分栏视图"
+            {{ i18n.diffModeUnified }}
+          </Button>
+          <!-- 按钮："分栏"（title："分栏视图"） -->
+          <Button
+            :variant="diffMode === 'split' ? 'primary' : 'ghost'"
+            text
+            size="xsmall"
+            :title="i18n.diffModeSplitTitle"
             @click="diffMode = 'split'"
           >
-            分栏
-          </button>
+            {{ i18n.diffModeSplit }}
+          </Button>
         </div>
       </div>
     </div>
@@ -61,8 +67,11 @@ import {
 } from "vue"
 import { Diff } from "vue-diff"
 import "vue-diff/dist/index.css"
+import Button from "@/components/Button.vue"
 
 interface Props {
+  /** 国际化文案 */
+  i18n: Record<string, string>
   originalContent: string
   newContent: string
 }

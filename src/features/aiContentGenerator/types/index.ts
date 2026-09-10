@@ -1,6 +1,7 @@
 /**
  * AI 内容生成器类型定义与共享常量
  */
+import type { IconKey } from "@/config/icons"
 import type { IssueSeverity, ReviewRating, SkillItem } from "@/types/ai"
 
 /**
@@ -33,10 +34,10 @@ export const SEVERITY_LEVELS: readonly IssueSeverity[] = ["高", "中", "低"]
 
 /** AI 快捷编辑动作元数据（BottomInputArea 快捷按钮与 index.vue 动作执行/审核共用单一数据源） */
 export interface EditActionMeta {
-  /** 快捷按钮文案 */
-  label: string
-  /** 思源内置图标 symbol id（含 # 前缀） */
-  icon: string
+  /** 快捷按钮文案的 i18n 键名（扁平无前缀，见 src/i18n/{zh_CN,en_US}/aiContentGenerator.json） */
+  labelKey: string
+  /** 已注册的图标键（src/config/icons.ts 的 IconKey） */
+  icon: IconKey
   /** 发送给 AI 的编辑指令 */
   prompt: string
   /** 审核阶段理解"用户需求"的指令描述 */
@@ -46,38 +47,38 @@ export interface EditActionMeta {
 /** 六个快捷编辑动作的完整元数据表（键顺序即按钮展示顺序） */
 export const ACTION_META: Record<EditActionKey, EditActionMeta> = {
   polish: {
-    label: "润色",
-    icon: "#iconEdit",
+    labelKey: "actionPolish",
+    icon: "edit",
     prompt: "请对以下文档进行润色优化，保持原有结构，提升语言质量和可读性，使表达更加专业、流畅。保持Markdown格式，直接输出优化后的完整文档内容：",
     reviewLabel: "对文档进行润色优化",
   },
   expand: {
-    label: "扩写",
-    icon: "#iconAdd",
+    labelKey: "actionExpand",
+    icon: "plus",
     prompt: "请对以下文档进行扩写，增加更详细的说明、例子和补充信息，使内容更加丰富和全面。保持Markdown格式，直接输出扩写后的完整文档内容：",
     reviewLabel: "对文档进行扩写",
   },
   condense: {
-    label: "精简",
-    icon: "#iconMin",
+    labelKey: "actionCondense",
+    icon: "minus",
     prompt: "请对以下文档进行精简，去除冗余内容，保留核心要点，使表达更加简洁有力。保持Markdown格式，直接输出精简后的完整文档内容：",
     reviewLabel: "对文档进行精简",
   },
   fix: {
-    label: "纠错",
-    icon: "#iconCheck",
+    labelKey: "actionFix",
+    icon: "check",
     prompt: "请对以下文档进行错误检查和修正，包括拼写错误、语法错误、逻辑错误等。保持Markdown格式，直接输出修正后的完整文档内容：",
     reviewLabel: "对文档进行错误修正",
   },
   rewrite: {
-    label: "改写",
-    icon: "#iconRefresh",
+    labelKey: "actionRewrite",
+    icon: "refresh",
     prompt: "请用不同的表达方式重写以下文档，保持核心意思不变，但使用全新的语言风格和句式结构。保持Markdown格式，直接输出改写后的完整文档内容：",
     reviewLabel: "对文档进行改写",
   },
   summary: {
-    label: "总结",
-    icon: "#iconList",
+    labelKey: "actionSummary",
+    icon: "list",
     prompt: "请为以下文档生成一个简洁的总结，包括主要内容和关键要点。总结应该清晰明了，突出文档的核心信息。保持Markdown格式，直接输出总结内容：",
     reviewLabel: "为文档生成总结",
   },

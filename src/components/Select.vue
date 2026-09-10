@@ -23,7 +23,13 @@
         <span
           v-if="selectedLabel"
           class="si-select__value"
-        >{{ selectedLabel }}</span>
+        >
+          <!-- selected slot：已选项富内容（如名称 + 来源标记）；默认回退为纯文本标签 -->
+          <slot
+            name="selected"
+            :option="selectedOption"
+          >{{ selectedLabel }}</slot>
+        </span>
         <span
           v-else
           class="si-select__placeholder"
@@ -163,6 +169,8 @@ export interface SelectOption {
   label: string
   /** 是否禁用 */
   disabled?: boolean
+  /** 附加搜索关键词（filterable 时参与匹配，用于标签之外的别名/描述检索） */
+  keywords?: string
   /** 自定义数据 */
   [key: string]: any
 }
@@ -305,6 +313,11 @@ const selectedLabel = computed(() => selectedOption.value?.label || "")
 
 const hasGroups = computed(() => props.options.some(isGroupOption))
 
+/** 筛选匹配：标签 + 可选 keywords（别名/描述等附加检索词） */
+const matchOption = (option: SelectOption, query: string): boolean =>
+  option.label.toLowerCase().includes(query)
+  || (typeof option.keywords === "string" && option.keywords.toLowerCase().includes(query))
+
 const filteredOptions = computed(() => {
   if (!props.filterable || !filterQuery.value) {
     return props.options
@@ -315,12 +328,12 @@ const filteredOptions = computed(() => {
   const filterGroup = (group: SelectGroupOption): SelectGroupOption => ({
     ...group,
     options: group.options.filter((opt) =>
-      opt.label.toLowerCase().includes(query),
+      matchOption(opt, query),
     ),
   })
 
   const filterOption = (option: SelectOption): boolean =>
-    option.label.toLowerCase().includes(query)
+    matchOption(option, query)
 
   return props.options.reduce<OptionType[]>((acc, option) => {
     if (isGroupOption(option)) {

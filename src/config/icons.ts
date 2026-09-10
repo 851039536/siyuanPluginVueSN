@@ -817,6 +817,14 @@ export const COMMON_ICONS = {
   opencodeTool: {
     icon: "mdi:cube-outline",
   },
+
+  // 通用动作 / 视图切换
+  minus: {
+    icon: "mdi:minus",
+  },
+  columns: {
+    icon: "mdi:view-column",
+  },
 } as const
 
 /**

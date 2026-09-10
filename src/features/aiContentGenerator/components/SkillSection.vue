@@ -1,110 +1,80 @@
-<!-- 技能选择器区域组件 -->
+<!-- 技能选择器区域组件：共享 Select（可搜索）选择技能 + 技能细则预览入口 -->
 <template>
-  <div
-    ref="wrapperRef"
-    class="skill-selector-wrapper"
-    :class="{ open: showSkillDropdown }"
-  >
-    <div
-      class="skill-select-trigger"
-      title="选择预设技能作为系统指令"
-      @click="toggleSkillDropdown"
+  <div class="skill-selector-wrapper">
+    <!-- 技能下拉：选中项与下拉选项均展示"技能名 + 来源工具色点" -->
+    <Select
+      class="skill-select"
+      size="xsmall"
+      placement="top"
+      :max-height="240"
+      filterable
+      :model-value="selectedSkillId"
+      :options="skillOptions"
+      :placeholder="i18n.skillNone"
+      :title="i18n.skillSelectTitle"
+      :filter-placeholder="i18n.skillSearchPlaceholder"
+      :empty-text="i18n.skillNoMatch"
+      @update:model-value="onSelect"
     >
-      <span class="skill-select-value">
-        <template v-if="hasCurrentSkill">
-          {{ currentSkill?.name }}
-          <span class="skill-source-dots">
+      <!-- 已选项富内容：技能名 + 来源工具色点 -->
+      <template #selected="{ option }">
+        <span class="skill-item-main">
+          <span class="skill-item-name">{{ option?.label }}</span>
+          <span
+            v-if="option?.skill"
+            class="skill-source-dots"
+          >
             <span
-              v-for="(color, i) in getSourceDotColors(currentSkill)"
+              v-for="(color, i) in getSourceDotColors(option.skill)"
               :key="i"
               class="source-dot"
               :style="{ background: color }"
             ></span>
           </span>
-        </template>
-        <template v-else>无技能</template>
-      </span>
-      <svg
-        class="skill-select-arrow"
-        width="10"
-        height="10"
-      ><use xlink:href="#iconDown"></use></svg>
-    </div>
-    <!-- 技能预览按钮 -->
-    <button
+        </span>
+      </template>
+      <!-- 下拉选项富内容：技能名 + 来源工具色点 -->
+      <template #option="{ option }">
+        <span class="skill-item-main">
+          <span class="skill-item-name">{{ option.label }}</span>
+          <span
+            v-if="option.skill"
+            class="skill-source-dots"
+          >
+            <span
+              v-for="(color, i) in getSourceDotColors(option.skill)"
+              :key="i"
+              class="source-dot"
+              :style="{ background: color }"
+            ></span>
+          </span>
+        </span>
+      </template>
+    </Select>
+    <!-- 纯图标按钮：预览技能细则（ariaLabel："预览技能细则"） -->
+    <Button
       v-if="hasCurrentSkill"
-      class="skill-preview-btn"
-      title="预览技能细则"
+      variant="ghost"
+      text
+      size="xsmall"
+      icon="eye"
+      :aria-label="i18n.skillPreviewTitle"
       @click="$emit('showPreview')"
-    >
-      <svg
-        width="11"
-        height="11"
-      ><use xlink:href="#iconEye" /></svg>
-    </button>
-    <!-- 下拉面板 -->
-    <div
-      v-if="showSkillDropdown"
-      class="skill-dropdown"
-    >
-      <div class="skill-dropdown-search">
-        <svg
-          width="12"
-          height="12"
-        ><use xlink:href="#iconSearch"></use></svg>
-        <input
-          ref="skillSearchInputRef"
-          v-model="skillSearchQuery"
-          type="text"
-          placeholder="搜索技能..."
-          class="skill-search-input"
-          @keydown.escape.stop="showSkillDropdown = false"
-        />
-      </div>
-      <div class="skill-dropdown-list">
-        <div
-          class="skill-dropdown-item"
-          :class="{ active: currentSkillIndex === -1 }"
-          @click="selectSkill(-1)"
-        >
-          无技能
-        </div>
-        <div
-          v-for="skill in filteredSkills"
-          :key="skill.id"
-          class="skill-dropdown-item"
-          :class="{ active: currentSkill && currentSkill.id === skill.id }"
-          @click="selectSkillByItem(skill)"
-        >
-          <div class="skill-item-main">
-            <span class="skill-item-name">{{ skill.name }}</span>
-            <span class="skill-source-dots">
-              <span
-                v-for="(color, i) in getSourceDotColors(skill)"
-                :key="i"
-                class="source-dot"
-                :style="{ background: color }"
-              ></span>
-            </span>
-          </div>
-        </div>
-        <div
-          v-if="filteredSkills.length === 0"
-          class="skill-dropdown-empty"
-        >
-          无匹配技能
-        </div>
-      </div>
-    </div>
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+import type { SelectOption } from "@/components/Select.vue"
 import type { SkillItem } from "@/types/ai"
-import { computed, nextTick, onMounted, onUnmounted, ref } from "vue"
+import { computed } from "vue"
+import Button from "@/components/Button.vue"
+import Select from "@/components/Select.vue"
 import { getSourceDotColors } from "../utils"
 
 const props = defineProps<{
+  /** 国际化文案 */
+  i18n: Record<string, string>
   currentSkillIndex: number
   currentSkill: SkillItem | null
   skills: SkillItem[]
@@ -115,60 +85,43 @@ const emit = defineEmits<{
   'showPreview': []
 }>()
 
-const showSkillDropdown = ref(false)
-const skillSearchInputRef = ref<HTMLInputElement | null>(null)
-const wrapperRef = ref<HTMLElement | null>(null)
+/** "无技能"选项值（与 currentSkill 为空时的选中值一致） */
+const NONE_VALUE = ""
 
 /** 当前是否有选中技能（索引越界时 currentSkill 为 null，避免 UI 状态不一致） */
 const hasCurrentSkill = computed(() => props.currentSkillIndex >= 0 && !!props.currentSkill)
 
-// ===== 技能搜索（本地状态，仅服务本组件下拉过滤） =====
+/** 当前选中值：无技能时回落到"无技能"选项 */
+const selectedSkillId = computed(() => props.currentSkill?.id ?? NONE_VALUE)
 
-const skillSearchQuery = ref("")
+/**
+ * 下拉选项：首项为"无技能"，其余为技能列表。
+ * keywords 覆盖名称 + 描述 + 来源工具，保留原自建下拉的多字段检索能力。
+ */
+const skillOptions = computed<SelectOption[]>(() => [
+  { value: NONE_VALUE, label: props.i18n.skillNone },
+  ...props.skills.map((skill) => ({
+    value: skill.id,
+    label: skill.name,
+    keywords: [
+      skill.description,
+      ...skill.sources.map((src) => src.tool),
+    ].join(" "),
+    skill,
+  })),
+])
 
-/** 根据搜索关键词过滤技能 */
-const filteredSkills = computed(() => {
-  if (!skillSearchQuery.value.trim()) {
-    return props.skills
+/** 选择回调：按 id 反查索引（索引不稳定，持久化也按 id） */
+const onSelect = (value: string | number | boolean | null) => {
+  const id = String(value ?? "")
+  if (!id) {
+    emit("selectSkill", -1)
+    return
   }
-  const query = skillSearchQuery.value.toLowerCase().trim()
-  return props.skills.filter(
-    (s) =>
-      s.name.toLowerCase().includes(query)
-      || s.description.toLowerCase().includes(query)
-      || s.sources.some((src) => src.tool.toLowerCase().includes(query)),
-  )
-})
-
-const toggleSkillDropdown = () => {
-  showSkillDropdown.value = !showSkillDropdown.value
-  if (showSkillDropdown.value) {
-    nextTick(() => {
-      skillSearchInputRef.value?.focus()
-    })
-  }
-}
-
-const selectSkill = (index: number) => {
-  emit("selectSkill", index)
-  showSkillDropdown.value = false
-}
-
-/** 通过技能对象选择（在原始 skills 中找到索引） */
-const selectSkillByItem = (skill: SkillItem) => {
-  const index = props.skills.findIndex((s) => s.id === skill.id)
+  const index = props.skills.findIndex((s) => s.id === id)
   if (index === -1) return // 防御：找不到时静默退出，禁止误选"无技能"
-  selectSkill(index)
+  emit("selectSkill", index)
 }
-
-// 点击外部关闭下拉（基于组件根 ref，避免全局 querySelector 命中错误实例）
-const handleClickOutside = (e: MouseEvent) => {
-  if (wrapperRef.value && !wrapperRef.value.contains(e.target as Node)) {
-    showSkillDropdown.value = false
-  }
-}
-onMounted(() => document.addEventListener("click", handleClickOutside))
-onUnmounted(() => document.removeEventListener("click", handleClickOutside))
 </script>
 
 <style scoped lang="scss">

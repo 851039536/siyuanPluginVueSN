@@ -2,8 +2,8 @@
 <template>
   <CollapsibleSection
     v-if="reasoningContent"
-    title="思考过程"
-    icon="#iconSparkles"
+    :title="i18n.reasoningTitle"
+    icon="sparkles"
     :open="showReasoning"
     :status-dot="isGenerating"
     @update:open="$emit('toggle')"
@@ -15,11 +15,19 @@
 <script setup lang="ts">
 import CollapsibleSection from "./CollapsibleSection.vue"
 
-defineProps<{
-  reasoningContent?: string
-  showReasoning?: boolean
-  isGenerating: boolean
-}>()
+withDefaults(
+  defineProps<{
+    /** 国际化文案 */
+    i18n: Record<string, string>
+    reasoningContent?: string
+    showReasoning?: boolean
+    isGenerating: boolean
+  }>(),
+  {
+    reasoningContent: "",
+    showReasoning: false,
+  },
+)
 
 defineEmits<{
   (e: "toggle"): void

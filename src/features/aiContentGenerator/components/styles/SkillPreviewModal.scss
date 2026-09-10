@@ -48,24 +48,6 @@
   line-height: $line-height-tight;
 }
 
-.skill-preview-close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: $radius-sm;
-  background: transparent;
-  color: var(--b3-theme-on-surface);
-  cursor: pointer;
-  flex-shrink: 0;
-
-  &:hover {
-    background: var(--b3-theme-surface-lighter);
-  }
-}
-
 .skill-preview-body {
   flex: 1;
   overflow-y: auto;
@@ -115,19 +97,4 @@
 
 .skill-preview-tool {
   font-size: $font-size-2xs;
-}
-
-.skill-preview-btn-close {
-  padding: $spacing-1 $spacing-3;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-  color: var(--b3-theme-on-surface);
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-sm;
-  cursor: pointer;
-
-  &:hover {
-    background: var(--b3-theme-surface-light);
-  }
 }

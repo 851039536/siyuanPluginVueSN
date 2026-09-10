@@ -21,6 +21,17 @@
 - 命令入口：`addCommand` 的 langKey 为 `openComponentPreview`，**不绑定默认快捷键**（`⌃⌥V` 已由视频管理器占用），仅作为命令面板入口存在；超级面板 action 经 `ACTION_EVENT_MAP` 派发 `openComponentPreview` 全局事件打开。
 - 状态栏集成：已登记到 `statusBar/featureRegistry.ts` 功能列表——抽屉中可 pin 到状态栏快捷区、带功能开关角标（`enableComponentPreview`）、可分配自定义分类；点击派发 `openComponentPreview` 事件打开窗口。快捷项图标色 `--status-color-component-preview`。
 
+## 具名插槽（无法在快照中呈现，在此登记）
+
+`PreviewExample` 只支持 `props` + 默认插槽（`slotText`），具名/作用域插槽无法在快照卡片中渲染，故在此登记，改动时同步维护：
+
+| 组件 | 插槽 | 作用域参数 | 用途 |
+| --- | --- | --- | --- |
+| `Select` | `selected` | `{ option }` | 已选项富内容（如"名称 + 来源标记"）；不传时回退为纯文本 `option.label` |
+| `Select` | `option` | `{ option }` | 下拉选项富内容；不传时回退为纯文本 `option.label` |
+
+`SelectOption` 的 `keywords?: string` 为 `filterable` 的附加检索词（标签之外的别名/描述检索），清单中已有对应示例。
+
 ## 清单扩展指南
 
 1. 在 `previewData/` 对应分组文件（或新文件）追加 `PreviewGroup` / 往 `examples` 添加 `PreviewExample`：
@@ -31,6 +42,7 @@
 2. `previewData/index.ts` 聚合后导出 `PREVIEW_GROUPS`（index.vue 遍历渲染）。
 3. 面板 UI 文案走 i18n 分片（`componentPreview` 键），新增文案需 zh_CN / en_US 同步。
 4. 新增支持尺寸档位的组件：在该 `PreviewGroup` 上标记 `sizeable: true`（渲染时会注入全局尺寸档位）；增删档位改 `types/size.ts` 的 `COMPONENT_SIZES` 与 i18n 的 `sizeXsmall` 等键。
+5. 新增/修改共享组件的 props、行为或**具名插槽**后，必须同步 `previewData/*.ts` 与本文档（插槽部分见上方「具名插槽」表）。
 
 ## 视图偏好
 

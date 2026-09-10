@@ -45,14 +45,6 @@
   min-height: 0;
 }
 
-.loading-spinner-small {
-  width: 14px;
-  height: 14px;
-  border: 2px solid transparent;
-  border-top-color: currentColor;
-  animation: ai-spinner-rotate 0.6s linear infinite;
-}
-
 .error-icon { color: var(--b3-theme-error); margin-bottom: 16px; }
 
 .result-container {
@@ -86,13 +78,6 @@
   gap: 6px;
   font-size: $font-size-xs;
   color: var(--b3-theme-primary);
-}
-
-.dot-flashing {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--b3-theme-primary);
 }
 
 .result-actions { display: flex; gap: 4px; }
@@ -137,40 +122,12 @@
 }
 
 // ============ 视图模式切换 ============
+// 子按钮由共享 Button 渲染（text 外观 + variant 表达选中态），此处仅负责分组容器布局
 .view-mode-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: $spacing-px;
   background: var(--b3-theme-surface-lighter);
   border-radius: 4px;
   padding: 1px;
-}
-
-.view-mode-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-surface-variant);
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 3px;
-  cursor: pointer;
-  white-space: nowrap;
-
-  &:hover:not(:disabled) {
-    color: var(--b3-theme-on-background);
-  }
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-
-  &.active {
-    background: var(--b3-theme-background);
-    color: var(--b3-theme-primary);
-    border-color: var(--b3-theme-primary);
-  }
 }

@@ -1,4 +1,5 @@
 // 底部输入区域专属样式（顶栏 + 快捷操作 + 选项栏 + 输入行）
+// 控件本体（按钮/下拉/开关/输入框）由 src/components 共享组件渲染，此处仅负责布局与宽度约束
 @use "@/variables.scss" as *;
 
 // ============ 区块壳层 ============
@@ -55,11 +56,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
-  .clear-btn {
-    opacity: 0.6;
-    &:hover { opacity: 1; }
-  }
 }
 
 // ============ AI 快捷操作栏（平铺按钮） ============
@@ -71,40 +67,6 @@
   padding: 2px 0;
 }
 
-.quick-action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 3px 7px;
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-surface);
-  background: var(--b3-theme-background);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 4px;
-  cursor: pointer;
-  white-space: nowrap;
-  line-height: 1.4;
-
-  svg {
-    color: var(--b3-theme-primary);
-    opacity: 0.8;
-    flex-shrink: 0;
-  }
-
-  &:hover:not(:disabled) {
-    background: var(--b3-theme-surface-light);
-    border-color: var(--b3-theme-primary);
-    color: var(--b3-theme-on-background);
-
-    svg { opacity: 1; }
-  }
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-}
-
 // ============ 输入行 ============
 .input-row {
   display: flex;
@@ -112,151 +74,28 @@
   gap: 6px;
 
   .input-field { flex: 1; min-width: 0; }
-  .execute-btn { flex-shrink: 0; padding: 6px 10px !important; }
-}
-
-// ============ RAG 联网搜索开关 ============
-.rag-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 2px 6px;
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-surface);
-  background: var(--b3-theme-background);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-sm;
-  cursor: pointer;
-  user-select: none;
-  white-space: nowrap;
-  flex-shrink: 0;
-
-  svg {
-    opacity: 0.5;
-  }
-
-  input[type="checkbox"] {
-    display: none;
-  }
-
-  span {
-    opacity: 0.7;
-  }
-
-  &:hover {
-    border-color: var(--b3-theme-primary);
-  }
-
-  &.active {
-    color: var(--b3-theme-primary);
-    background: rgba(var(--b3-theme-primary-rgb, 53, 125, 221), 0.08);
-    border-color: var(--b3-theme-primary);
-
-    svg {
-      opacity: 1;
-      color: var(--b3-theme-primary);
-    }
-
-    span {
-      opacity: 1;
-      font-weight: $font-weight-medium;
-    }
-  }
+  .execute-btn { flex-shrink: 0; }
 }
 
 // ============ 选项行（模型选择 + 思考 + 审核） ============
 .options-bar {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
   padding: $spacing-1 10px;
   border-top: 1px solid var(--b3-theme-surface-lighter);
 }
 
+// 宽度约束：避免长模型名撑破选项行
 .model-select {
-  padding: 2px 6px;
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-background);
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-sm;
-  cursor: pointer;
-  max-width: 120px;
-  outline: none;
-
-  &:hover { border-color: var(--b3-theme-primary); }
-  &:focus { border-color: var(--b3-theme-primary); box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest); }
+  max-width: 140px;
 }
 
 .model-custom-input {
-  padding: 2px 6px;
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-background);
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-sm;
-  outline: none;
-  max-width: 100px;
-
-  &:hover { border-color: var(--b3-theme-primary); }
-  &:focus { border-color: var(--b3-theme-primary); box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest); }
-  &::placeholder { color: var(--b3-theme-on-surface); opacity: 0.4; }
+  max-width: 120px;
 }
 
-.thinking-toggle, .review-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 1px 5px;
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-surface);
-  border-radius: $radius-sm;
-  cursor: pointer;
-  user-select: none;
-  white-space: nowrap;
-
-  input[type="checkbox"] { width: 12px; height: 12px; cursor: pointer; }
-  &:hover { background: var(--b3-theme-surface); }
-}
-
-.thinking-toggle input[type="checkbox"] { accent-color: var(--b3-theme-primary); }
-.review-toggle input[type="checkbox"] { accent-color: var(--b3-theme-success); }
-
-// 思考强度选择器（与模型选择器同风格，更紧凑）
 .reasoning-effort-select {
-  padding: 2px 6px;
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-background);
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-sm;
-  cursor: pointer;
-  max-width: 96px;
-
-  &:hover { border-color: var(--b3-theme-primary); }
-  &:focus {
-    border-color: var(--b3-theme-primary);
-    outline: none;
-    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);
-  }
-}
-
-.thinking-label {
-  color: var(--b3-theme-on-surface);
-  opacity: 0.7;
-}
-.thinking-toggle input:checked + .thinking-label {
-  color: var(--b3-theme-primary); opacity: 1; font-weight: $font-weight-medium;
-}
-
-.review-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.7;
-  svg { color: var(--b3-theme-success); }
-}
-.review-toggle input:checked + .review-label {
-  color: var(--b3-theme-success); opacity: 1; font-weight: $font-weight-medium;
+  max-width: 110px;
 }

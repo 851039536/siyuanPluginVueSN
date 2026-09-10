@@ -54,32 +54,13 @@
   align-items: center;
 }
 
+// 子按钮由共享 Button 渲染（text 外观 + variant 表达选中态），此处仅负责分组容器布局
 .diff-mode-toggle {
   display: inline-flex;
-  gap: 2px;
+  gap: $spacing-px;
   background: var(--b3-theme-surface-lighter);
   border-radius: 3px;
   padding: 1px;
-}
-
-.mode-btn {
-  padding: 2px 8px;
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-surface-variant);
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: $radius-sm;
-  cursor: pointer;
-
-  &:hover {
-    color: var(--b3-theme-on-background);
-  }
-
-  &.active {
-    background: var(--b3-theme-background);
-    color: var(--b3-theme-primary);
-    border-color: var(--b3-theme-primary);
-  }
 }
 
 .diff-viewer-wrapper {

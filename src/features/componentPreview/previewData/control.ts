@@ -92,6 +92,19 @@ export const selectGroup: PreviewGroup = {
       code: "<Select v-model=\"value\" filterable :options=\"options\" />",
     },
     {
+      title: "关键词筛选（keywords）",
+      props: {
+        filterable: true,
+        filterPlaceholder: "搜索技能名或来源",
+        modelValue: "lint",
+        options: [
+          { value: "lint", label: "代码检查", keywords: "eslint 静态分析" },
+          { value: "format", label: "代码格式化", keywords: "prettier 排版" },
+        ],
+      },
+      code: "<Select v-model=\"value\" filterable :options=\"options\" />\n<!-- options 项：{ value: \"lint\", label: \"代码检查\", keywords: \"eslint 静态分析\" } -->",
+    },
+    {
       title: "可清空",
       props: {
         clearable: true,

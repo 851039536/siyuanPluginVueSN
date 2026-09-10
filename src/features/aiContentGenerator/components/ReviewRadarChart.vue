@@ -6,7 +6,7 @@
       class="review-radar-svg"
       viewBox="-110 -85 220 170"
       role="img"
-      aria-label="分项评分雷达图"
+      :aria-label="chartAriaLabel"
     >
       <!-- 网格层：5/8/10 分档同心多边形 -->
       <polygon
@@ -85,6 +85,8 @@ interface Props {
   scores?: Record<string, number>
   labels: Record<string, string>
   getLevel: (value: number) => string
+  /** 图表可访问名称（由调用方从 i18n 注入，避免图表内硬编码文案） */
+  chartAriaLabel: string
 }
 
 const props = defineProps<Props>()

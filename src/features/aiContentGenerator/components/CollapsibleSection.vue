@@ -1,23 +1,24 @@
 <!-- 通用可折叠区块：chevron + 图标 + 标题 + 状态点/徽标（headerRight slot）+ 折叠体 -->
 <template>
   <div class="collapsible-section">
+    <!-- 折叠头：整行可点击展开/收起（aria-expanded 暴露展开态，aria-controls 关联折叠体） -->
     <button
       class="collapsible-toggle"
+      :aria-expanded="open"
+      :aria-controls="bodyId"
       @click="$emit('update:open', !open)"
     >
-      <svg
-        width="12"
-        height="12"
+      <IconWrapper
+        name="chevronRight"
+        :size="12"
         class="collapsible-chevron"
         :class="{ expanded: open }"
-      >
-        <use xlink:href="#iconRight"></use>
-      </svg>
-      <svg
+      />
+      <IconWrapper
         v-if="icon"
-        width="14"
-        height="14"
-      ><use :xlink:href="icon"></use></svg>
+        :name="icon"
+        :size="14"
+      />
       <span>{{ title }}</span>
       <span
         v-if="statusDot"
@@ -30,6 +31,7 @@
     </button>
     <div
       v-if="open"
+      :id="bodyId"
       class="collapsible-body"
     >
       <slot></slot>
@@ -38,11 +40,15 @@
 </template>
 
 <script setup lang="ts">
+import type { IconKey } from "@/config/icons"
+import { useId } from "vue"
+import IconWrapper from "@/components/IconWrapper.vue"
+
 defineProps<{
   /** 折叠头标题 */
   title: string
-  /** 标题前图标（Iconify xlink:href，如 "#iconSparkles"） */
-  icon?: string
+  /** 标题前图标（src/config/icons.ts 已注册的 IconKey） */
+  icon?: IconKey
   /** 是否展开（v-model:open 受控） */
   open: boolean
   /** 是否显示加载状态点（primary 色，闪烁动画） */
@@ -52,6 +58,9 @@ defineProps<{
 defineEmits<{
   (e: "update:open", value: boolean): void
 }>()
+
+/** 折叠体 id（aria-controls 关联用，避免同页多实例 id 冲突） */
+const bodyId = `ai-collapsible-body-${useId()}`
 </script>
 
 <style scoped lang="scss">

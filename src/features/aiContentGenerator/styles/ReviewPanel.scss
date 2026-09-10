@@ -104,34 +104,11 @@
 }
 
 // ============ 分项评分条形图 ============
-.score-section {
+// 折叠容器由 CollapsibleSection 提供，此处仅负责内容纵向排布
+.score-bars {
   display: flex;
   flex-direction: column;
-  gap: $spacing-px;
-}
-
-// 折叠切换按钮（重置默认 button 样式 + 提示可点击）
-.subsection-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: $spacing-px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-medium;
-  color: var(--b3-theme-on-surface);
-  text-align: left;
-
-  &:hover {
-    color: var(--b3-theme-primary);
-  }
-}
-
-// 折叠箭头旋转动画（复用共享 mixin）
-.subsection-chevron {
-  @include collapsible-chevron;
+  gap: $spacing-1;
 }
 
 .score-bar-row {
@@ -185,32 +162,11 @@
 }
 
 // ============ 严重程度过滤 Tabs ============
+// 子按钮由共享 Button 渲染，此处仅负责分组容器布局
 .issue-filter {
   display: flex;
+  flex-wrap: wrap;
   gap: $spacing-px;
-}
-
-.issue-filter-btn {
-  padding: $spacing-2px $spacing-2;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-medium;
-  color: var(--b3-theme-on-surface);
-  background: var(--b3-theme-surface-lighter);
-  border: 1px solid transparent;
-  border-radius: $radius-sm;
-  cursor: pointer;
-  opacity: 0.6;
-
-  &:hover {
-    opacity: 0.8;
-  }
-
-  &.active {
-    opacity: 1;
-    background: var(--b3-theme-surface);
-    border-color: var(--b3-theme-primary);
-    color: var(--b3-theme-primary);
-  }
 }
 
 // ============ 问题清单 ============
@@ -285,24 +241,6 @@
   flex-shrink: 0;
 }
 
-.fix-issue-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: $spacing-2px;
-  padding: $spacing-2px 6px; // 6px 无精确 token，保留
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-primary);
-  background: rgba(var(--b3-theme-primary-rgb, 53, 125, 221), 0.08);
-  border: 1px solid rgba(var(--b3-theme-primary-rgb, 53, 125, 221), 0.2);
-  border-radius: $radius-sm;
-  cursor: pointer;
-  white-space: nowrap;
-
-  &:hover {
-    background: rgba(var(--b3-theme-primary-rgb, 53, 125, 221), 0.15);
-  }
-}
-
 // ============ 改进建议 ============
 .review-suggestions {
   display: flex;
@@ -349,34 +287,6 @@
   align-items: center;
   gap: $spacing-1;
   margin-left: auto;
-}
-
-.review-footer-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: $spacing-px;
-  padding: $spacing-2px $spacing-2;
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-on-surface);
-  background: var(--b3-theme-surface-lighter);
-  border: none;
-  border-radius: $radius-sm;
-  cursor: pointer;
-  white-space: nowrap;
-
-  &:hover {
-    background: var(--b3-theme-surface-light);
-    color: var(--b3-theme-primary);
-  }
-
-  &.auto-fix-btn {
-    color: #fff;
-    background: var(--b3-theme-warning, #e6a23c);
-
-    &:hover {
-      opacity: 0.9;
-    }
-  }
 }
 
 .auto-fixing-badge {

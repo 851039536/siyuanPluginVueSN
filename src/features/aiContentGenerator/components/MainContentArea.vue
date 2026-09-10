@@ -14,13 +14,11 @@
       v-else-if="errorMessage && !displayedContent && !generatedContent"
       class="error-state"
     >
-      <svg
-        width="48"
-        height="48"
+      <IconWrapper
+        name="cancel"
+        :size="48"
         class="error-icon"
-      >
-        <use xlink:href="#iconCloseRound"></use>
-      </svg>
+      />
       <p>{{ errorMessage }}</p>
     </div>
 
@@ -36,7 +34,8 @@
             class="generating-indicator"
           >
             <span class="dot-flashing"></span>
-            生成中...
+            <!-- 流式输出提示："生成中..." -->
+            {{ i18n.generatingLabel }}
             <span
               v-if="generationTip"
               class="generation-tip"
@@ -47,179 +46,77 @@
               v-if="generationElapsed"
               class="elapsed-badge"
             >
-              <svg
-                width="11"
-                height="11"
-              ><use xlink:href="#iconTime"></use></svg>
+              <IconWrapper
+                name="timerOutline"
+                :size="11"
+              />
               {{ generationElapsed }}
             </span>
+            <!-- 分段切换：预览 / 对比 / 审查（选中态走主色 text 外观） -->
             <div class="view-mode-toggle">
-              <button
-                class="view-mode-btn"
-                :class="[{ active: viewMode === 'preview' }]"
-                title="预览"
+              <!-- 按钮："预览" -->
+              <Button
+                :variant="viewMode === 'preview' ? 'primary' : 'ghost'"
+                text
+                size="xsmall"
+                icon="eye"
+                :title="i18n.viewModePreview"
                 @click="viewMode = 'preview'"
               >
-                <svg
-                  width="14"
-                  height="14"
-                ><use xlink:href="#iconEye"></use></svg>
-                预览
-              </button>
-              <button
-                class="view-mode-btn"
-                :class="[{ active: viewMode === 'diff' }]"
+                {{ i18n.viewModePreview }}
+              </Button>
+              <!-- 按钮："对比" -->
+              <Button
+                :variant="viewMode === 'diff' ? 'primary' : 'ghost'"
+                text
+                size="xsmall"
+                icon="columns"
                 :disabled="!hasDiff"
-                title="对比"
+                :title="i18n.viewModeDiff"
                 @click="viewMode = 'diff'"
               >
-                <svg
-                  width="14"
-                  height="14"
-                ><use xlink:href="#iconColumns"></use></svg>
-                对比
-              </button>
+                {{ i18n.viewModeDiff }}
+              </Button>
               <!-- Tab："审查"（交叉审核结果独立页签） -->
-              <button
-                class="view-mode-btn"
-                :class="[{ active: viewMode === 'review' }]"
+              <Button
+                :variant="viewMode === 'review' ? 'primary' : 'ghost'"
+                text
+                size="xsmall"
+                icon="sparkles"
                 :disabled="!generatedContent"
                 :title="i18n.reviewTab"
                 @click="viewMode = 'review'"
               >
-                <svg
-                  width="14"
-                  height="14"
-                ><use xlink:href="#iconSparkles"></use></svg>
                 {{ i18n.reviewTab }}
-              </button>
+              </Button>
             </div>
           </template>
         </span>
-        <div class="result-actions">
-          <!-- 主要操作 -->
-          <Button
-            v-if="isGenerating"
-            title="停止生成"
-            variant="danger"
-            size="xsmall"
-            @click="$emit('stop')"
-          >
-            <svg
-              width="14"
-              height="14"
-            ><use xlink:href="#iconClose"></use></svg>
-            停止
-          </Button>
-          <Button
-            :disabled="!canApply"
-            title="应用编辑"
-            variant="primary"
-            size="xsmall"
-            @click="$emit('applyEdit')"
-          >
-            <div
-              v-if="isApplying"
-              class="loading-spinner-small"
-            ></div>
-            <svg
-              v-else
-              width="14"
-              height="14"
-            ><use xlink:href="#iconCheck"></use></svg>
-            应用
-          </Button>
-          <!-- 次要操作 -->
-          <Button
-            :disabled="!canInsertSubDoc"
-            title="插入为子文档"
-            variant="ghost"
-            size="xsmall"
-            @click="$emit('insertSubdoc')"
-          >
-            <div
-              v-if="isInsertingSubDoc"
-              class="loading-spinner-small"
-            ></div>
-            <svg
-              v-else
-              width="14"
-              height="14"
-            ><use xlink:href="#iconAdd"></use></svg>
-          </Button>
-          <Button
-            v-if="canUndo"
-            :disabled="isUndoing"
-            title="撤回编辑"
-            variant="ghost"
-            size="xsmall"
-            @click="$emit('undoEdit')"
-          >
-            <div
-              v-if="isUndoing"
-              class="loading-spinner-small"
-            ></div>
-            <svg
-              v-else
-              width="14"
-              height="14"
-            ><use xlink:href="#iconUndo"></use></svg>
-          </Button>
-          <Button
-            title="复制"
-            variant="ghost"
-            size="xsmall"
-            @click="$emit('copy')"
-          >
-            <svg
-              width="14"
-              height="14"
-            ><use xlink:href="#iconCopy"></use></svg>
-          </Button>
-          <!-- 直接审查：绕过 enableReview 开关，随时对当前内容发起交叉审核 -->
-          <Button
-            v-if="!isGenerating && generatedContent && !isReviewing"
-            :title="i18n.directReviewTitle"
-            variant="primary"
-            size="xsmall"
-            @click="$emit('directReview')"
-          >
-            <svg
-              width="14"
-              height="14"
-            ><use xlink:href="#iconSparkles"></use></svg>
-            {{ i18n.directReview }}
-          </Button>
-          <!-- 对话控制 -->
-          <Button
-            v-if="!isGenerating && conversationCount > 0"
-            :title="`清空对话历史（${conversationCount} 轮）`"
-            variant="ghost"
-            size="xsmall"
-            @click="$emit('clearConversation')"
-          >
-            <svg
-              width="14"
-              height="14"
-            ><use xlink:href="#iconRefresh"></use></svg>
-            <span class="conv-count">{{ conversationCount }}</span>
-          </Button>
-          <Button
-            title="清除"
-            variant="ghost"
-            size="xsmall"
-            @click="$emit('clear')"
-          >
-            <svg
-              width="14"
-              height="14"
-            ><use xlink:href="#iconTrashcan"></use></svg>
-          </Button>
-        </div>
+        <ResultActionsBar
+          :i18n="i18n"
+          :is-generating="isGenerating"
+          :is-applying="isApplying"
+          :is-undoing="isUndoing"
+          :is-inserting-sub-doc="isInsertingSubDoc"
+          :can-apply="canApply"
+          :can-insert-sub-doc="canInsertSubDoc"
+          :can-undo="canUndo"
+          :show-direct-review="showDirectReview"
+          :conversation-count="conversationCount"
+          @stop="$emit('stop')"
+          @applyEdit="$emit('applyEdit')"
+          @insertSubdoc="$emit('insertSubdoc')"
+          @undoEdit="$emit('undoEdit')"
+          @copy="$emit('copy')"
+          @clear="$emit('clear')"
+          @directReview="$emit('directReview')"
+          @clearConversation="$emit('clearConversation')"
+        />
       </div>
 
       <!-- 思考过程（可折叠） -->
       <ReasoningSection
+        :i18n="i18n"
         :reasoning-content="reasoningContent"
         :show-reasoning="showReasoning"
         :is-generating="isGenerating"
@@ -228,6 +125,7 @@
 
       <!-- RAG 联网搜索结果（可折叠） -->
       <SearchResultsSection
+        :i18n="i18n"
         :search-results="searchResults"
         :search-status="searchStatus"
       />
@@ -242,6 +140,7 @@
         <!-- Diff 对比模式 -->
         <DiffPreview
           v-else-if="viewMode === 'diff' && hasDiff"
+          :i18n="i18n"
           :original-content="originalContent"
           :new-content="generatedContent"
         />
@@ -265,11 +164,11 @@
             v-else
             class="review-tab-empty"
           >
-            <svg
-              width="22"
-              height="22"
+            <IconWrapper
+              name="sparkles"
+              :size="22"
               class="review-tab-empty-icon"
-            ><use xlink:href="#iconSparkles"></use></svg>
+            />
             <p>{{ i18n.reviewTabEmpty }}</p>
           </div>
         </div>
@@ -279,6 +178,7 @@
     <!-- 空状态 -->
     <ContentAreaEmpty
       v-else
+      :i18n="i18n"
     />
   </div>
 </template>
@@ -291,9 +191,11 @@ import {
 } from "vue"
 import type { ReviewResult, SearchResult } from "@/types/ai"
 import Button from "@/components/Button.vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 import Loader from "@/components/Loader.vue"
 import DiffPreview from "./DiffPreview.vue"
 import ReviewPanel from "./ReviewPanel.vue"
+import ResultActionsBar from "./ResultActionsBar.vue"
 import ContentAreaEmpty from "./ContentAreaEmpty.vue"
 import ReasoningSection from "./ReasoningSection.vue"
 import SearchResultsSection from "./SearchResultsSection.vue"
@@ -375,6 +277,11 @@ const hasDiff = computed(() => {
   return !!props.originalContent && !!props.generatedContent
     && props.originalContent !== props.generatedContent
 })
+
+// "直接审查"按钮可用性：有生成内容且未在生成/审核中
+const showDirectReview = computed(() =>
+  !props.isGenerating && !!props.generatedContent && !props.isReviewing,
+)
 
 // 生成开始时重置为预览模式：流式输出需要预览展示，且生成完成后默认停留在预览界面，由用户手动切换对比
 watch(() => props.isGenerating, (newVal) => {

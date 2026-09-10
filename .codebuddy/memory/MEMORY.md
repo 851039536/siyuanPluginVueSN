@@ -1,6 +1,6 @@
 # 项目记忆（siyuanPluginVueSN）
 
-> 最后整理：2026-09-10（第 2 次压缩去重；共享组件库 **24 个**）
+> 最后整理：2026-09-10（第 2 次压缩去重；共享组件库 **25 个**）
 > 编码规范正文见随项目上下文自动加载的 `AGENTS*.md`，此处只记**不在规范文档里的经验与陷阱**。
 
 ## 环境（本机 pnpm 12）
@@ -16,8 +16,8 @@
 - 独立窗体精简：`isFloating`（`getFrontend() === "desktop-window"`）+ `v-if="!isFloating"` 隐藏重复标题
 - 统一入口清单见 `AGENTS.md`；新功能 8 处注册；i18n 只改分片（顶层 JSON 由 merge 生成）
 
-## 共享组件库（`src/components/`，24 个）
-- 清单：Button / **ToggleButton** / Input / **Textarea** / Select / Listbox / ColorField / FormField / InputGroup / InputGroupAddon / Label / Switch / Checkbox / RadioButton / DatePicker / Slider / Tag / Badge / Avatar / Card / ConfirmDialog / Chart / IconWrapper / Loader
+## 共享组件库（`src/components/`，25 个）
+- 清单：Button / **ToggleButton** / **SpeedDial** / Input / **Textarea** / Select / Listbox / ColorField / FormField / InputGroup / InputGroupAddon / Label / Switch / Checkbox / RadioButton / DatePicker / Slider / Tag / Badge / Avatar / Card / ConfirmDialog / Chart / IconWrapper / Loader
 - **改计数前必须 `list_dir` 实测**（并行会话频繁变动，曾一天内 15→16→17→19→20→21→22→23）。新增组件 = 4 类位置：`<Name>.vue` + `styles/<Name>.scss` + `previewData/<name>.ts`（**双导出**「分组对象 + 分组数组」并接入 `previewData/index.ts`）+ 文档计数（`AGENTS.md` 5 处 + 清单表行 + 复用枚举、根 `README.md`、`componentPreview/README.md` 3 处 + 能力条目 + 具名插槽表 / 事件契约表）
 - 私有子部件与**纯函数**放同名小写子目录（`datePicker/`、`select/`、`textarea/`），不计入清单且禁止 feature 直接导入；配套但需 feature 直接使用的组件也平铺（`InputGroup` + `InputGroupAddon` 共用预览分区）
 - 尺寸四档 `xsmall/small/medium/large`（默认 `small`），字号阶梯 10/12/14/16，四档禁同号；**只改字号，不联动 padding/min-height/gap/图标**
@@ -29,8 +29,10 @@
 ### 组件特有陷阱
 - `Button`：既有 5 个 variant 语义不可改（180+ 处依赖），新能力走 `--severity-*` / `--outlined` / `--text` + `--btn-*` CSS 变量；纯图标必须 `aria-label`；loading 用 `visibility:hidden` 保宽；图标随档 12/14/16/18。**`isIconOnly` computed 陈旧 + 2 项冗余属已知并有意保留，勿重提**
 - `ToggleButton`（2026-09-10 新增，第 24 个）：单按钮布尔开关，**内部复用 `Button`（零样式复制）** —— `variant="ghost"` 恒定，`:severity="error ? 'danger' : (pressed ? 'primary' : undefined)"`，`:outlined="!pressed"`。两个关键机制：①**`--severity-*` 设置 `--btn-color` 后会污染 `--outlined` 的取色**（使未按下变成主色描边而非中性描边）→ 「未按下不传 severity」才能拿到中性描边；②**无文案时必须不传默认插槽**（否则 `$slots.default` 恒真会让 `Button.isIconOnly` 失效，多出的 `gap` 还会让图标偏心）→ 用 `v-if/v-else` 双分支 + `v-bind="buttonProps"` 共用参数。`onLabel`/`offLabel`/`onIcon`/`offIcon` 均**无默认值**（禁止硬编码 UI 文案），DEV 下对「内容为空」与「可见文案/图标随状态变化却未提供不随状态变化的 `ariaLabel`/`ariaLabelledby`/`title`」告警（PrimeVue 无障碍强制建议）。`fluid` 默认 **`false`**（与 `Textarea.fluid` 默认 `true` 相反）。⚠️ 选用边界：单按钮开关用它，一组互斥选项的分段切换仍用 `Button` 分组 + `:aria-pressed`（未迁移）。⚠️ **预览清单 props 里的图标必须写已注册的语义 `IconKey`**（如 `eye`/`star`），写 `mdi:xxx` 原样不会渲染（`getIconConfig` 按 key 查表）
+- `SpeedDial`（2026-09-10 新增，第 25 个）：浮动动作按钮，8 向 × 四档轨迹展开动作，**内部复用 `Button`（零样式复制）**，私有目录 `speedDial/`（`types.ts` 8 向角度与档位边长表、`geometry.ts` 轨迹纯函数、`useSpeedDial.ts` 开合/键盘）。要点：①**`position` 四档角落用类输出而非内联样式**（`right/bottom` + `--si-speeddial-offset` 单点驱动）→ 预览沙箱才能一条规则覆盖成 `absolute`；②轨迹位移与逐项延迟经 `--si-speeddial-x/y/delay` 内联变量承载，样式侧不按项数生成规则；③收起态用 **`visibility: hidden`**（自动移出 Tab 序列与无障碍树），开合过渡的 `transition-delay` 必须写**三段**（opacity/transform 逐项递增、visibility 0ms），否则展开瞬间不渲染导致淡入被吞；④**`linear` 距离必须从 `(index + 1) × (按钮边长 + 间隙)` 起算**（写 `index × 步距` 会让第一个动作与主按钮完全重叠 —— 已由纯函数数值断言抓出）；⑤`radius` 小于按钮边长时抬到按钮边长，避免曲线轨迹全塌到主按钮上；⑥键盘与 ARIA 按官方落实：`role="menu"`/`menuitem` + `aria-haspopup/expanded/controls`、方向键/Home/End 移焦、Esc 关闭并**返还焦点**；⑦**键盘触发靠 `event.detail === 0` 判别**（原生 button 的键盘 click 其 detail 为 0）→ 只有键盘操作才把焦点移入首项，鼠标点击不抢焦点；⑧动作气泡复用思源内置 `b3-tooltips b3-tooltips__{dir}` + `aria-label`；⑨**不做 `mask`**（用户未选 + 官方默认 false）；⑩`size` 同时决定按钮边长与几何，**文档明确禁止经 `buttonProps.size` 覆盖**（否则几何与渲染脱节）；⑪图标旋转靠 `:deep(.si-button__icon)`（Button 内部元素不带 SpeedDial 的 scope 属性）
 - `ConfirmDialog`：`visible` 受控；`confirm` 后**不自动关闭**（父决定时机以容纳异步）；**只监听 Esc、Enter 不绑定**（否则与聚焦按钮原生 click 重复派发）；打开时焦点给容器而非确认按钮。三处 feature 本地实现（s3FileManager / gitPush / shortcut）**尚未迁移**，属后续清理项
-- **弹层类组件预览必须沙箱覆盖**：`componentPreview/styles/PreviewSection.scss` 的 `.cp-card__stage` 设 `position: relative`，并把舞台内遮罩类覆盖为 `absolute; z-index: 1`（仅沙箱，不改组件本体）
+- **弹层/浮层类组件预览必须沙箱覆盖**：`componentPreview/styles/PreviewSection.scss` 的 `.cp-card__stage` 设 `position: relative`，并把舞台内浮层类覆盖为相对定位（仅沙箱，不改组件本体）。**⚠️ 覆盖规则必须抬特异性 —— 类名写两遍**（`.si-xxx.si-xxx` → (0,3,0)）：组件侧经 scoped 编译后是 `.si-xxx[data-v-hash]`，**同样是 (0,2,0)**，只写 `.cp-card__stage .si-xxx` 会退化成「比 CSS 顺序」，而顺序由模块图决定、不可控。2026-09-10 实测事故：`.si-speeddial[data-v-*]`（组件侧 `position: fixed`）**排在沙箱规则之后** → 覆盖失效 → 12 个 SpeedDial 全部逃出预览卡、以 `z-index:1000` 钉在视口右下角 → **SpeedDial 分区整片空白**（而 `ConfirmDialog` 侥幸生效只是因为它的组件规则排在沙箱规则之前）。排查手段：直接读构建产物 `index.css`，`indexOf` 比较两条同特异性规则的先后
+- **`SpeedDial` 沙箱**：默认 `position: fixed` 悬浮视口角落（4 档 `position` + `offset`）→ 舞台内覆盖为 `absolute`（`right/bottom` 遂相对舞台生效）；另需 `.cp-card__stage--speeddial { height: 260px }`，因为 **`.cp-card` 是 `overflow: hidden`，展开后超出舞台的动作会被裁掉**（所以 `position: top-*` 的示例必须配 `direction: down`）。高度类由 `PreviewSection.vue` 按 `group.id === 'speedDial'` 判定
 - `Checkbox`：`isGroup = !binary && Array.isArray(modelValue)` 自动分模式；`indeterminate` 只能写 DOM 属性（`watch flush:"post"` + `onMounted`）；分组模式返回新数组；受控回写 `nextTick(syncNativeState)`
 - `RadioButton`：结构同构 `Checkbox`；差异 —— **无数组模式、无 `indeterminate`、不依赖 `IconWrapper`**（圆点纯 CSS，`scale(0)→scale(1)`，尺寸取圆框 50%）；`checked = binary ? !!modelValue : modelValue === value`；emit `binary ? true : value`（**单选项不可取消**）；**同组必须传同一 `name`**，键盘与 ARIA 语义由浏览器原生提供；**只读拦截必须含方向键**（原生方向键会改选并移动组内焦点）；`.ts` 预览中组用法只能写在 `code`（`render` 是默认插槽内容）
 - **`Textarea`**（2026-09-10 新增，第 23 个）：独立多行控件，与 PrimeVue `Textarea` 语义对齐。`fluid` **默认 `true`**（项目其他控件默认 `width:100%`），`:fluid="false"` 退回原生 `cols` 固有宽度；`autoResize` 时 `rows` 兼任初始高度与 `minRows` 兜底、`maxRows` 不传则不设上限（超限转内部滚动）；`variant: outlined|filled` 与 Checkbox/RadioButton 同名字段，**实底聚焦必须用内嵌 outline（`-1px`），`focus-ring` mixin 只改 border-color 在透明边框上不可见**；高度算法抽到私有 `src/components/textarea/autoResize.ts`（`applyAutoResize` / `clearAutoResize`）—— 纯函数抽取的正当理由不止 Rule of Three，**突破 300 警戒线且具内聚语义同样是依据**。⚠️ `Input` 的 `type="textarea"`（16 文件 19 处）按用户决定**原样保留为兼容入口，新代码一律用 `Textarea`**

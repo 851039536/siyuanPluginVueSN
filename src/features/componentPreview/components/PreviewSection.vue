@@ -24,7 +24,10 @@
       >
         <div
           class="cp-card__stage"
-          :class="{ 'cp-card__stage--loader': group.id === 'loader' }"
+          :class="{
+            'cp-card__stage--loader': group.id === 'loader',
+            'cp-card__stage--speeddial': group.id === 'speedDial',
+          }"
         >
           <!-- 受控示例由 PreviewStage 持有本地值，使 v-model 在预览中真正可交互 -->
           <PreviewStage

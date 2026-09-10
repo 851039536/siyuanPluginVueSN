@@ -37,6 +37,9 @@ import {
   radioButtonPreviewGroups,
 } from "./radioButton"
 import {
+  speedDialPreviewGroups,
+} from "./speedDial"
+import {
   tagAvatarPreviewGroups,
 } from "./tagAvatar"
 import {
@@ -53,6 +56,7 @@ export const PREVIEW_GROUPS: PreviewGroup[] = [
   ...textareaPreviewGroups,
   ...inputGroupPreviewGroups,
   ...toggleButtonPreviewGroups,
+  ...speedDialPreviewGroups,
   ...controlPreviewGroups,
   ...listboxPreviewGroups,
   ...colorFieldPreviewGroups,

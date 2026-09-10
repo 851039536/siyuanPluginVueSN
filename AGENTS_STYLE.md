@@ -94,8 +94,9 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 | **focus 发光** | 输入框/控件聚焦 | `box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);` |
 | **分割线** | section 间 | `border-bottom: 1px solid var(--b3-border-color);` 或 `1px dashed` |
 | **空状态** | 居中斜体灰字 | `text-align: center; padding: 32px $spacing-4; font-style: italic; opacity: 0.35;` |
-| **按钮** | 主按钮实底 / 次按钮描边 | `&--primary { background: var(--b3-theme-primary); color: #fff; }` / `&--ghost { border: 1px solid; background: transparent; }` |
-| **图标按钮** | 固定尺寸，无 padding | `width: 26px; height: 26px; padding: 0; @include flex-center;` icon: `16px`（关闭按钮等） |
+| **按钮** | 优先用共享 `<Button>` | 颜色轴 `variant`/`severity` × 外观轴 `outlined`/`text`；尺寸 4 档；细节见「强制规则：按钮交互与无障碍」 |
+| **图标按钮（自建 `.icon-btn`）** | 固定尺寸，无 padding | `width: 26px; height: 26px; padding: 0; @include flex-center;` icon: `16px`（关闭按钮等） |
+| **图标按钮（共享 `<Button icon-only>`）** | 尺寸随 `size` 档位 | 22 / 28 / 36 / 44px（与文字按钮 `min-height` 对齐），图标随档位 12/14/16/18 |
 | **动画** | 统一 0.12s 过渡 | `transition: all 0.12s;` 或 `transition: border-color 0.12s;` |
 
 ### `.vp-*` 组件模式库
@@ -184,7 +185,7 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 | `font-family: monospace` / `"Consolas"` | `font-family: $vp-mono`（全局可用） |
 | `$spacing-xs` / `$spacing-sm` / `$spacing-md` / `$spacing-lg` | `$spacing-1` / `$spacing-2` / `$spacing-3` / `$spacing-4`（数字后缀是全局标准） |
 | emoji 表情作为图标 | `<IconWrapper name="iconName">` |
-| 图标按钮用 `padding` 控制尺寸 | 固定 `width: 26px; height: 26px; padding: 0;`，icon `16px` |
+| 图标按钮用 `padding` 控制尺寸 | 自建 `.icon-btn` 固定 `width/height: 26px; padding: 0;` icon `16px`；共享 `<Button>` 纯图标模式随 `size` 档位 22/28/36/44 |
 | 标题 font-size > 16px | 统一 `$font-size-base`（16px），极少数场景可用 15px（如 superPanel-title） |
 | 各模块重复声明 `$vp-radius` / `$vp-mono` | 直接从 `@/variables.scss` 继承（已全局定义） |
 | 根容器缺基准字号 / JS 硬编码 `font-size: 12px` | 根容器显式声明 `font-size: $font-size-xs`；自建挂载容器补 `vp-dock-root` / `vp-modal-mask` 类 |
@@ -250,6 +251,38 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 - `src/features/gitPush/styles/`（两级字号制源头实现）
 - `src/index.scss`（全局基准规则 + `--vp-font-size-xs` 变量）
 - `src/utils/vueAppHelper.ts`（`vp-dock-root` / `vp-modal-mask` 类的自动挂载点）
+
+## 强制规则：按钮交互与无障碍（2026-09-10）
+
+共享组件 `src/components/Button.vue` 是全项目按钮的唯一入口（`SiButton` 只是其别名），交互与无障碍约定如下。
+
+### 颜色轴 × 外观轴
+
+| 轴 | 传参 | 取值 |
+|----|------|------|
+| 颜色 | `variant` / `severity` | `primary` / `secondary` / `success` / `info` / `warning` / `danger`（`variant` 额外兼容 `ghost`） |
+| 外观 | `outlined` / `text` | 布尔修饰，叠加在颜色之上；都不传则为填充态 |
+
+- `severity` 显式指定时覆盖 `variant` 推导出的颜色族，用于「颜色 ≠ 变体默认色」的场景
+- **既有语义不可改动**：`variant="danger"` 仍是描边红、`variant="ghost"` 仍是中性纯文本——全项目 180+ 处调用依赖此行为
+- 新增能力一律走**新类名**（`--severity-*` / `--outlined` / `--text`），不复用既有 `--primary` 等类名
+
+### 焦点与加载
+
+- **焦点环必须可见**：`&:focus-visible { outline: 2px solid var(--b3-theme-primary); outline-offset: 1px; }`。禁止只写 `outline: none` 而不补焦点样式
+- **加载态保宽**：`loading` 时对图标与文案用 `visibility: hidden`（保留盒模型占位），spinner 绝对居中。禁止用 `display: none` 或移除节点——会导致按钮宽度跳变、文案被 spinner 压住
+
+### 无障碍命名
+
+- 纯图标按钮**必须**提供 `aria-label` 或 `title`（纯图标场景下 `title` 会自动派生为 `aria-label`），否则屏幕阅读器无法朗读；开发环境下组件会 `console.warn` 提示
+- 文字按钮无需额外声明——`aria-label` 仅在纯图标场景从 `title` 派生，不会覆盖可见文案
+
+### 尺寸与图标
+
+- 纯图标按钮尺寸随 `size` 档位：22 / 28 / 36 / 44px（与文字按钮 `min-height` 对齐）；自建 `.icon-btn` 的 26px 固定值**不适用于**共享 `<Button>`
+- 图标默认边长随档位 12 / 14 / 16 / 18px（`Button.vue` 的 `TIER_ICON_SIZE`，与 SCSS 中 spinner 尺寸表一一对应，改动须同步两处）；显式传 `iconSize` 时以显式值为准
+- `iconPosition` 支持 `left` / `right` / `top` / `bottom`，纵向堆叠时 `&__text` 自动改为 `flex: none`
+- `block` 块级按钮的文案在剩余空间内居中（`.si-button--block .si-button__text { justify-content: center }`），兼容 `iconPosition: right` 时图标贴右
 
 ## 强制规则：背景与过渡对齐 gitPush 范式（2026-09-02）
 

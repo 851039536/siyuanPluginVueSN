@@ -10,7 +10,7 @@ export const buttonGroup: PreviewGroup = {
   id: "button",
   component: Button,
   name: "Button",
-  summary: "按钮：variant 变体 / size 尺寸 / 图标 / 加载 / 禁用 / 块级",
+  summary: "按钮：颜色变体 / 外观修饰（描边·文本）/ severity 颜色轴 / size 尺寸 / 图标四向 / 加载 / 禁用 / 块级 / 圆形 / 无障碍命名",
   importCode: "import Button from \"@/components/Button.vue\"",
   sizeable: true,
   examples: [
@@ -33,6 +33,18 @@ export const buttonGroup: PreviewGroup = {
       code: "<Button variant=\"success\">完成</Button>",
     },
     {
+      title: "info",
+      props: { variant: "info" },
+      slotText: "提示",
+      code: "<Button variant=\"info\">提示</Button>",
+    },
+    {
+      title: "warning",
+      props: { variant: "warning" },
+      slotText: "注意",
+      code: "<Button variant=\"warning\">注意</Button>",
+    },
+    {
       title: "danger",
       props: { variant: "danger" },
       slotText: "删除",
@@ -43,6 +55,48 @@ export const buttonGroup: PreviewGroup = {
       props: { variant: "ghost" },
       slotText: "取消",
       code: "<Button variant=\"ghost\">取消</Button>",
+    },
+    {
+      title: "描边（outlined）",
+      props: {
+        variant: "primary",
+        outlined: true,
+      },
+      slotText: "描边主色",
+      code: "<Button variant=\"primary\" outlined>描边主色</Button>",
+    },
+    {
+      title: "文本（text）",
+      props: {
+        variant: "primary",
+        text: true,
+      },
+      slotText: "文本主色",
+      code: "<Button variant=\"primary\" text>文本主色</Button>",
+    },
+    {
+      title: "severity 覆盖颜色（warning）",
+      props: { severity: "warning" },
+      slotText: "severity 警告",
+      code: "<Button severity=\"warning\">severity 警告</Button>",
+    },
+    {
+      title: "描边危险（severity + outlined）",
+      props: {
+        severity: "danger",
+        outlined: true,
+      },
+      slotText: "描边危险",
+      code: "<Button severity=\"danger\" outlined>描边危险</Button>",
+    },
+    {
+      title: "文本危险（severity + text）",
+      props: {
+        severity: "danger",
+        text: true,
+      },
+      slotText: "文本危险",
+      code: "<Button severity=\"danger\" text>文本危险</Button>",
     },
     {
       title: "尺寸 xsmall",
@@ -84,7 +138,25 @@ export const buttonGroup: PreviewGroup = {
       code: "<Button icon=\"chevronDown\" iconPosition=\"right\">更多</Button>",
     },
     {
-      title: "纯图标按钮",
+      title: "图标在上（iconPosition: top）",
+      props: {
+        icon: "save",
+        iconPosition: "top",
+      },
+      slotText: "保存",
+      code: "<Button icon=\"save\" iconPosition=\"top\">保存</Button>",
+    },
+    {
+      title: "图标在下（iconPosition: bottom）",
+      props: {
+        icon: "chevronDown",
+        iconPosition: "bottom",
+      },
+      slotText: "展开",
+      code: "<Button icon=\"chevronDown\" iconPosition=\"bottom\">展开</Button>",
+    },
+    {
+      title: "纯图标按钮（title 作可访问名称）",
       props: {
         icon: "settings",
         title: "设置",
@@ -92,7 +164,24 @@ export const buttonGroup: PreviewGroup = {
       code: "<Button icon=\"settings\" title=\"设置\" />",
     },
     {
-      title: "加载状态",
+      title: "纯图标按钮（ariaLabel）",
+      props: {
+        icon: "plus",
+        ariaLabel: "新增条目",
+      },
+      code: "<Button icon=\"plus\" ariaLabel=\"新增条目\" />",
+    },
+    {
+      title: "圆形纯图标按钮（rounded）",
+      props: {
+        icon: "refresh",
+        rounded: true,
+        ariaLabel: "刷新",
+      },
+      code: "<Button icon=\"refresh\" rounded ariaLabel=\"刷新\" />",
+    },
+    {
+      title: "加载状态（文案保留占位，宽度不跳变）",
       props: { loading: true },
       slotText: "保存中…",
       code: "<Button loading>保存中…</Button>",
@@ -104,7 +193,7 @@ export const buttonGroup: PreviewGroup = {
       code: "<Button disabled>禁用</Button>",
     },
     {
-      title: "块级按钮",
+      title: "块级按钮（文案居中）",
       props: { block: true },
       slotText: "块级按钮",
       code: "<Button block>块级按钮</Button>",

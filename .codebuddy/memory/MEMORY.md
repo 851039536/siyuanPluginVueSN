@@ -1,6 +1,6 @@
 # 项目记忆（siyuanPluginVueSN）
 
-> 最后整理：2026-09-10（第 2 次压缩去重；共享组件库 **23 个**）
+> 最后整理：2026-09-10（第 2 次压缩去重；共享组件库 **24 个**）
 > 编码规范正文见随项目上下文自动加载的 `AGENTS*.md`，此处只记**不在规范文档里的经验与陷阱**。
 
 ## 环境（本机 pnpm 12）
@@ -16,8 +16,8 @@
 - 独立窗体精简：`isFloating`（`getFrontend() === "desktop-window"`）+ `v-if="!isFloating"` 隐藏重复标题
 - 统一入口清单见 `AGENTS.md`；新功能 8 处注册；i18n 只改分片（顶层 JSON 由 merge 生成）
 
-## 共享组件库（`src/components/`，23 个）
-- 清单：Button / Input / **Textarea** / Select / Listbox / ColorField / FormField / InputGroup / InputGroupAddon / Label / Switch / Checkbox / RadioButton / DatePicker / Slider / Tag / Badge / Avatar / Card / ConfirmDialog / Chart / IconWrapper / Loader
+## 共享组件库（`src/components/`，24 个）
+- 清单：Button / **ToggleButton** / Input / **Textarea** / Select / Listbox / ColorField / FormField / InputGroup / InputGroupAddon / Label / Switch / Checkbox / RadioButton / DatePicker / Slider / Tag / Badge / Avatar / Card / ConfirmDialog / Chart / IconWrapper / Loader
 - **改计数前必须 `list_dir` 实测**（并行会话频繁变动，曾一天内 15→16→17→19→20→21→22→23）。新增组件 = 4 类位置：`<Name>.vue` + `styles/<Name>.scss` + `previewData/<name>.ts`（**双导出**「分组对象 + 分组数组」并接入 `previewData/index.ts`）+ 文档计数（`AGENTS.md` 5 处 + 清单表行 + 复用枚举、根 `README.md`、`componentPreview/README.md` 3 处 + 能力条目 + 具名插槽表 / 事件契约表）
 - 私有子部件与**纯函数**放同名小写子目录（`datePicker/`、`select/`、`textarea/`），不计入清单且禁止 feature 直接导入；配套但需 feature 直接使用的组件也平铺（`InputGroup` + `InputGroupAddon` 共用预览分区）
 - 尺寸四档 `xsmall/small/medium/large`（默认 `small`），字号阶梯 10/12/14/16，四档禁同号；**只改字号，不联动 padding/min-height/gap/图标**
@@ -28,6 +28,7 @@
 
 ### 组件特有陷阱
 - `Button`：既有 5 个 variant 语义不可改（180+ 处依赖），新能力走 `--severity-*` / `--outlined` / `--text` + `--btn-*` CSS 变量；纯图标必须 `aria-label`；loading 用 `visibility:hidden` 保宽；图标随档 12/14/16/18。**`isIconOnly` computed 陈旧 + 2 项冗余属已知并有意保留，勿重提**
+- `ToggleButton`（2026-09-10 新增，第 24 个）：单按钮布尔开关，**内部复用 `Button`（零样式复制）** —— `variant="ghost"` 恒定，`:severity="error ? 'danger' : (pressed ? 'primary' : undefined)"`，`:outlined="!pressed"`。两个关键机制：①**`--severity-*` 设置 `--btn-color` 后会污染 `--outlined` 的取色**（使未按下变成主色描边而非中性描边）→ 「未按下不传 severity」才能拿到中性描边；②**无文案时必须不传默认插槽**（否则 `$slots.default` 恒真会让 `Button.isIconOnly` 失效，多出的 `gap` 还会让图标偏心）→ 用 `v-if/v-else` 双分支 + `v-bind="buttonProps"` 共用参数。`onLabel`/`offLabel`/`onIcon`/`offIcon` 均**无默认值**（禁止硬编码 UI 文案），DEV 下对「内容为空」与「可见文案/图标随状态变化却未提供不随状态变化的 `ariaLabel`/`ariaLabelledby`/`title`」告警（PrimeVue 无障碍强制建议）。`fluid` 默认 **`false`**（与 `Textarea.fluid` 默认 `true` 相反）。⚠️ 选用边界：单按钮开关用它，一组互斥选项的分段切换仍用 `Button` 分组 + `:aria-pressed`（未迁移）。⚠️ **预览清单 props 里的图标必须写已注册的语义 `IconKey`**（如 `eye`/`star`），写 `mdi:xxx` 原样不会渲染（`getIconConfig` 按 key 查表）
 - `ConfirmDialog`：`visible` 受控；`confirm` 后**不自动关闭**（父决定时机以容纳异步）；**只监听 Esc、Enter 不绑定**（否则与聚焦按钮原生 click 重复派发）；打开时焦点给容器而非确认按钮。三处 feature 本地实现（s3FileManager / gitPush / shortcut）**尚未迁移**，属后续清理项
 - **弹层类组件预览必须沙箱覆盖**：`componentPreview/styles/PreviewSection.scss` 的 `.cp-card__stage` 设 `position: relative`，并把舞台内遮罩类覆盖为 `absolute; z-index: 1`（仅沙箱，不改组件本体）
 - `Checkbox`：`isGroup = !binary && Array.isArray(modelValue)` 自动分模式；`indeterminate` 只能写 DOM 属性（`watch flush:"post"` + `onMounted`）；分组模式返回新数组；受控回写 `nextTick(syncNativeState)`

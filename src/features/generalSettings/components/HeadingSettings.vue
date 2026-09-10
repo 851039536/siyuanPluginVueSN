@@ -227,6 +227,7 @@ import {
   ref,
   watch,
 } from "vue"
+import ColorField from "@/components/ColorField.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Switch from "@/components/Switch.vue"
 import {
@@ -234,7 +235,6 @@ import {
   GeneralSettingsStorage,
 } from "@/features/generalSettings/types/storage"
 import { HEADING_COLOR_STYLES } from "../utils/styles"
-import ColorField from "./ColorField.vue"
 import SettingLabel from "./SettingLabel.vue"
 import SettingSlider from "./SettingSlider.vue"
 

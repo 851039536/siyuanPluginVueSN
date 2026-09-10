@@ -188,13 +188,13 @@ import {
   onUnmounted,
   ref,
 } from "vue"
+import ColorField from "@/components/ColorField.vue"
 import SiSwitch from "@/components/Switch.vue"
 import {
   DEFAULT_DOC_COUNT_SETTINGS,
   DOC_COUNT_FORMATTERS,
   GeneralSettingsStorage,
 } from "../types/storage"
-import ColorField from "./ColorField.vue"
 import SettingLabel from "./SettingLabel.vue"
 import SettingSlider from "./SettingSlider.vue"
 

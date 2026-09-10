@@ -123,6 +123,7 @@ import {
   reactive,
   ref,
 } from "vue"
+import ColorField from "@/components/ColorField.vue"
 import SiInput from "@/components/Input.vue"
 import SiSelect from "@/components/Select.vue"
 import SiSwitch from "@/components/Switch.vue"
@@ -131,7 +132,6 @@ import {
   GeneralSettingsStorage,
 } from "../types/storage"
 import type { PronunciationSource } from "../types/storage"
-import ColorField from "./ColorField.vue"
 import SettingLabel from "./SettingLabel.vue"
 
 interface Props {

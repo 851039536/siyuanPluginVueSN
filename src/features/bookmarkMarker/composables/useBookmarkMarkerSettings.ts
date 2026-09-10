@@ -12,15 +12,17 @@ import {
 } from "../types/storage"
 import { normalizeRules } from "../utils"
 
-export function useBookmarkMarkerSettings(plugin: Plugin) {
-  const storage = new BookmarkMarkerStorage(plugin)
+export function useBookmarkMarkerSettings(plugin?: Plugin) {
+  // 面板在无 plugin 实例时不具备持久化能力，读写均静默跳过（形状与返回值保持不变）
+  const storage = plugin ? new BookmarkMarkerStorage(plugin) : null
 
   const enableBookmarkMarker = ref(true)
   // 深拷贝默认规则，避免面板编辑时污染 DEFAULT 常量本体
   const rules = ref<BookmarkRule[]>(structuredClone(DEFAULT_BOOKMARK_MARKER_SETTINGS.rules))
   const updateInterval = ref(DEFAULT_BOOKMARK_MARKER_SETTINGS.updateInterval.toString())
 
-  async function load() {
+  async function load(): Promise<void> {
+    if (!storage) return
     try {
       const data = await storage.settings.loadOrDefault()
       enableBookmarkMarker.value = data.enableBookmarkMarker
@@ -33,7 +35,8 @@ export function useBookmarkMarkerSettings(plugin: Plugin) {
     }
   }
 
-  async function save() {
+  async function save(): Promise<void> {
+    if (!storage) return
     try {
       await storage.settings.save({
         enableBookmarkMarker: enableBookmarkMarker.value,

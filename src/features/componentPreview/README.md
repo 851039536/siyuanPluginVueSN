@@ -1,12 +1,13 @@
 # 组件预览（Component Preview）
 
-在思源内以独立窗口/页签形态查看共享 Codex UI 组件库（`src/components/`）全部 15 个组件的真实渲染用法快照，附可复制的示例代码，便于组件开发者查看效果、改动后快速回归验证。
+在思源内以独立窗口/页签形态查看共享 Codex UI 组件库（`src/components/`）全部 16 个组件的真实渲染用法快照，附可复制的示例代码，便于组件开发者查看效果、改动后快速回归验证。
 
 ## 功能
 
 - **双形态承载（纯官方 API）**：`plugin.addTab` 注册自定义 Tab 模型 + `openTab({custom})` 在主窗口创建页签；面板头部「在独立窗口打开」调 `openWindow({tab})` 把页签移入浮动窗口；浮动窗口内经 `isFloating`（`getFrontend() === "desktop-window"`）隐藏重复面板标题与打开按钮。
-- **全组件覆盖**：Avatar / Badge / Button / Card / Chart / Checkbox / FormField / IconWrapper / Input / Label / Loader / Select / Slider / Switch / Tag 各一个分组分区，分组内为典型 props 组合快照卡片。
+- **全组件覆盖**：Avatar / Badge / Button / Card / Chart / Checkbox / ColorField / FormField / IconWrapper / Input / Label / Loader / Select / Slider / Switch / Tag 各一个分组分区，分组内为典型 props 组合快照卡片。
 - **示例清单驱动**：预览数据集中在 `previewData/`（一份清单），渲染层通用遍历——新增组件/新用法只需在清单追加，不改渲染框架。清单里的 `code` 模板与渲染 props 共用同一数据源，杜绝漂移。
+- **复合控件内嵌能力**：`Input` 的 `borderless` 去边框去底色（三条高特异性选择器覆盖基类 hover/focus-within），供「标签输入框」这类自定义容器把输入框内嵌其中；焦点反馈由外层容器的 `:focus-within` 承担。
 - **代码复制**：每个示例卡片对应一段可复制的 Vue 用法代码（`copyToClipboard` + 已复制反馈）。
 - **导航与检索**：左侧锚点导航（按组件分区跳转）+ 组件名搜索过滤，兼容超长内容滚动。
 - **组件尺寸档位**：头部 XS / S / M / L 四档切换，作用于所有支持 `size` 的组件（`PreviewGroup.sizeable` 标记的 Button / Input / FormField / Label / Select / Switch / Checkbox / Slider / Tag / Badge / Avatar / Card）——渲染时向**未显式指定 `size`** 的示例注入全局档位；显式指定 `size` 的示例（尺寸对比用例）保持原样，避免标题与实际渲染不符。选择经 `TypedStorage` 持久化。
@@ -32,6 +33,19 @@
 
 `SelectOption` 的 `keywords?: string` 为 `filterable` 的附加检索词（标签之外的别名/描述检索），清单中已有对应示例。
 
+## 事件契约（无法在快照中呈现，在此登记）
+
+快照只能展示初始 props 的渲染结果，**事件语义**无法呈现。约定语义特殊（非纯 `v-model`）的事件在此登记，改动时同步维护：
+
+| 组件 | 事件 | 语义 |
+| --- | --- | --- |
+| `ColorField` | `update:modelValue` | 实时值：hex 文本框逐字输入时持续触发，仅更新内存 |
+| `ColorField` | `change` | 提交信号：文本框 blur/回车、或在调色板选色后触发；消费方据此落盘，避免逐字写盘 |
+| `Slider` | `update:modelValue` / `change` | 同上模式：拖动过程只发 `update:modelValue`，松手才发 `change` |
+| `Input` | `update:modelValue` / `change` | 同上模式：原生 `input` / `change` 分别转发 |
+
+> 通用建议：需要「实时跟随 + 一次性落盘」的交互（滑块、颜色、文本输入），消费方应监听 `update:modelValue` 做内存更新、监听 `change` 做持久化，可避免写放大与提示刷屏。
+
 ## 清单扩展指南
 
 1. 在 `previewData/` 对应分组文件（或新文件）追加 `PreviewGroup` / 往 `examples` 添加 `PreviewExample`：
@@ -42,7 +56,7 @@
 2. `previewData/index.ts` 聚合后导出 `PREVIEW_GROUPS`（index.vue 遍历渲染）。
 3. 面板 UI 文案走 i18n 分片（`componentPreview` 键），新增文案需 zh_CN / en_US 同步。
 4. 新增支持尺寸档位的组件：在该 `PreviewGroup` 上标记 `sizeable: true`（渲染时会注入全局尺寸档位）；增删档位改 `types/size.ts` 的 `COMPONENT_SIZES` 与 i18n 的 `sizeXsmall` 等键。
-5. 新增/修改共享组件的 props、行为或**具名插槽**后，必须同步 `previewData/*.ts` 与本文档（插槽部分见上方「具名插槽」表）。
+5. 新增/修改共享组件的 props、行为、**具名插槽**或**事件契约**后，必须同步 `previewData/*.ts` 与本文档（见上方「具名插槽」表与「事件契约」表）。
 
 ## 视图偏好
 

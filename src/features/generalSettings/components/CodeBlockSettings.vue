@@ -310,6 +310,7 @@ import {
   ref,
   watch,
 } from "vue"
+import ColorField from "@/components/ColorField.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Switch from "@/components/Switch.vue"
 import {
@@ -318,7 +319,6 @@ import {
 } from "@/features/generalSettings/types/storage"
 import { BUILTIN_FONTS, CODEBLOCK_STYLE_META } from "../utils/styles"
 import BuiltinFontHint from "./BuiltinFontHint.vue"
-import ColorField from "./ColorField.vue"
 import SettingLabel from "./SettingLabel.vue"
 import SettingSlider from "./SettingSlider.vue"
 

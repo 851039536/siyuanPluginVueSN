@@ -1,0 +1,38 @@
+// 书签名多标签输入样式（TagInputField.vue 专属）
+// chips 由共享 Tag 渲染、内联输入由共享 Input(borderless) 渲染，此处仅负责容器布局与焦点反馈
+@use "@/variables.scss" as *;
+
+.tags-input-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-1;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  padding: $spacing-px $spacing-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $vp-radius;
+  background: var(--b3-theme-background);
+  min-height: 32px; // 与同行共享控件的 min-height 对齐
+  transition: border-color 0.12s;
+
+  // 内联输入为 borderless，焦点反馈由本容器承担（Codex 规范：focus 用 outline）
+  &:focus-within {
+    border-color: var(--b3-theme-primary);
+    outline: 2px solid var(--b3-theme-primary-lightest);
+    outline-offset: 0;
+  }
+}
+
+.tag-text {
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// 无边框内联输入：占满剩余宽度（边框与底色由共享 Input 的 borderless 去掉）
+.tag-input {
+  flex: 1;
+  min-width: 80px;
+}

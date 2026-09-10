@@ -299,4 +299,17 @@
       border-color: var(--b3-theme-error, $color-danger);
     }
   }
+
+  // 无边框：供复合控件内嵌（如标签输入框的内联输入）
+  // 去边框与底色；焦点反馈交由外层复合容器以 :focus-within 承担，此处不画 focus ring
+  // （三条选择器顺序书写以覆盖基类的 hover / focus-within 规则，特异性逐条递增）
+  &--borderless {
+    .si-input__wrapper,
+    .si-input__wrapper:hover:not(.si-input--disabled .si-input__wrapper),
+    .si-input__wrapper:focus-within {
+      background: transparent;
+      border-color: transparent;
+      border-radius: 0;
+    }
+  }
 }

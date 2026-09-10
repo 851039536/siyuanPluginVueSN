@@ -1,0 +1,36 @@
+// 图标字段样式（IconSelectField.vue 专属）
+// 输入框与预设字形按钮由共享 Input / Button 渲染，此处仅负责布局与字形预览块
+@use "@/variables.scss" as *;
+
+.icon-input-wrapper {
+  display: flex;
+  gap: $spacing-2;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.icon-input {
+  flex: 1;
+  min-width: 0;
+}
+
+// 当前字形预览块（底色/文字色由规则自身的颜色设置驱动）
+.icon-preview-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  font-size: $font-size-lg;
+  border-radius: $vp-radius;
+  flex-shrink: 0;
+}
+
+.icon-picker-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-1;
+  flex: 1;
+  min-width: 0;
+}

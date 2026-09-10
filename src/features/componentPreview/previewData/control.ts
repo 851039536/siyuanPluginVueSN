@@ -233,7 +233,7 @@ export const sliderGroup: PreviewGroup = {
   id: "slider",
   component: Slider,
   name: "Slider",
-  summary: "滑块：值 / 范围 / 步长 / 显示当前值 / 禁用",
+  summary: "滑块：值 / 范围 / 步长 / 当前值与极值展示 / 禁用与只读",
   importCode: "import Slider from \"@/components/Slider.vue\"",
   sizeable: true,
   examples: [
@@ -288,6 +288,37 @@ export const sliderGroup: PreviewGroup = {
         showValue: true,
       },
       code: "<Slider v-model=\"value\" disabled showValue />",
+    },
+    {
+      title: "显示极值范围",
+      props: {
+        modelValue: 30,
+        showMinMax: true,
+        label: "音量",
+      },
+      code: "<Slider v-model=\"value\" label=\"音量\" showMinMax />",
+    },
+    {
+      title: "极值 + 当前值",
+      props: {
+        modelValue: 65,
+        min: 10,
+        max: 90,
+        showValue: true,
+        showMinMax: true,
+        formatValue: (v: number) => `${v}%`,
+      },
+      code: "<Slider v-model=\"value\" :min=\"10\" :max=\"90\" showValue showMinMax :format-value=\"(v) => `${v}%`\" />",
+    },
+    {
+      title: "只读",
+      props: {
+        modelValue: 50,
+        readonly: true,
+        showValue: true,
+        label: "固定比例",
+      },
+      code: "<Slider v-model=\"value\" readonly showValue label=\"固定比例\" />",
     },
     {
       title: "错误状态",

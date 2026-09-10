@@ -1,0 +1,6 @@
+# pnpm 12 构建脚本白名单：未列入者其 postinstall 会被跳过并让 install 以 ERR_PNPM_IGNORED_BUILDS 收尾
+# 这三个是 vite/esbuild/parcel 与 vue-demi 的常规安装脚本（非可疑包）；vue-demi 的脚本用于切换 Vue 2/3 入口，必须允许
+allowBuilds:
+  '@parcel/watcher': true
+  esbuild: true
+  vue-demi: true

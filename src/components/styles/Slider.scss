@@ -3,6 +3,10 @@
 @use '@/variables.scss' as *;
 
 .si-slider {
+  // 档位单点驱动：基础规则与 4 个伪元素统一消费（沿用 DatePicker --dp-* / InputGroup --ig-addon-* 范式）
+  --si-slider-track-h: 6px; // 无对应 Token（中档基准）
+  --si-slider-thumb-size: #{$spacing-4}; // 16px
+
   display: inline-flex;
   flex-direction: column;
   position: relative;
@@ -16,13 +20,23 @@
     position: relative;
   }
 
-  &__field {
+  // 轨道列：极值标签需与轨道等宽并对齐左右端，故与 input 同列
+  &__field-column {
+    display: flex;
+    flex-direction: column;
     flex: 1;
+    min-width: 0;
+    gap: $spacing-1; // 4px — 轨道与极值标签行间距
+  }
+
+  &__field {
     width: 100%;
-    height: 6px; // 滑块轨道高度，无对应 Token
+    height: var(--si-slider-track-h, 6px); // 滑块轨道高度，无对应 Token
     border: none;
     outline: none;
-    background: var(--b3-theme-surface, $color-surface);
+    // 轨道取 border 色：面板底色多为 --b3-theme-background（浅色下 #ffffff），
+    // 而 --b3-theme-surface 为 #f7f7f5，二者仅差 ~3% 灰度、轨道等同不可见
+    background: var(--b3-border-color, $color-border);
     border-radius: $radius-sm;
     cursor: pointer;
     appearance: none;
@@ -30,11 +44,15 @@
 
     // Webkit (Chrome, Safari, Edge) 滑块拇指样式
     // thumb box-shadow 保留 — range input 需要视觉层级区分拖拽手柄
+    // 尺寸经 CSS 变量自根类继承（带 fallback，若伪元素未继承则优雅退化为基础档）
     &::-webkit-slider-thumb {
       -webkit-appearance: none;
       appearance: none;
-      width: $spacing-4; // 16px
-      height: $spacing-4;
+      width: var(--si-slider-thumb-size, #{$spacing-4}); // 16px
+      height: var(--si-slider-thumb-size, #{$spacing-4});
+      // Chromium 的拇指默认与轨道「顶」对齐，须上移半个高度差才能与轨道同心；
+      // 不补这行时拇指会整体垂到轨道下方，视觉重心也随之偏下（看着像没居中）
+      margin-top: calc((var(--si-slider-track-h, 6px) - var(--si-slider-thumb-size, #{$spacing-4})) / 2);
       background: var(--b3-theme-primary, $color-danger);
       border-radius: 50%;
       cursor: grab;
@@ -53,8 +71,8 @@
 
     // Firefox 滑块拇指样式
     &::-moz-range-thumb {
-      width: $spacing-4; // 16px
-      height: $spacing-4;
+      width: var(--si-slider-thumb-size, #{$spacing-4}); // 16px
+      height: var(--si-slider-thumb-size, #{$spacing-4});
       background: var(--b3-theme-primary, $color-danger);
       border: none;
       border-radius: 50%;
@@ -72,19 +90,19 @@
       }
     }
 
-    // Webkit 轨道样式
+    // Webkit 轨道样式（高度必须与 __field 同源，否则档位对轨道无效）
     &::-webkit-slider-runnable-track {
       width: 100%;
-      height: 6px;
-      background: var(--b3-theme-surface, $color-surface);
+      height: var(--si-slider-track-h, 6px); // 无对应 Token
+      background: var(--b3-border-color, $color-border);
       border-radius: $radius-sm;
     }
 
     // Firefox 轨道样式
     &::-moz-range-track {
       width: 100%;
-      height: 6px;
-      background: var(--b3-theme-surface, $color-surface);
+      height: var(--si-slider-track-h, 6px); // 无对应 Token
+      background: var(--b3-border-color, $color-border);
       border-radius: $radius-sm;
     }
 
@@ -124,6 +142,18 @@
     font-family: $font-zh;
   }
 
+  // 极值标签行：min 靠左、max 靠右，与轨道同宽
+  &__minmax {
+    display: flex;
+    justify-content: space-between;
+    color: var(--b3-theme-secondary, $color-muted);
+    line-height: $line-height-tight;
+  }
+
+  &__minmax-value {
+    font-size: $font-size-sm; // 兜底值（等同 M 档）
+  }
+
   &--disabled {
     .si-slider__field {
       cursor: not-allowed;
@@ -139,97 +169,69 @@
   &--error {
     .si-slider__field {
       &::-webkit-slider-thumb {
-        background: var(--b3-theme-destructive, $color-danger);
+        background: var(--b3-theme-error, $color-danger);
       }
 
       &::-moz-range-thumb {
-        background: var(--b3-theme-destructive, $color-danger);
+        background: var(--b3-theme-error, $color-danger);
       }
     }
   }
 
-  // 尺寸变体
+  // 尺寸变体：仅赋值档位变量（轨道与拇指由变量单点消费）
   &--xsmall {
-    .si-slider__field {
-      height: 3px; // 无对应 Token
-
-      &::-webkit-slider-thumb {
-        width: 10px; // 无对应 Token
-        height: 10px;
-      }
-
-      &::-moz-range-thumb {
-        width: 10px; // 无对应 Token
-        height: 10px;
-      }
-    }
+    --si-slider-track-h: 3px; // 无对应 Token
+    --si-slider-thumb-size: 10px; // 无对应 Token
 
     .si-slider__value {
       font-size: $font-size-2xs;
       min-width: 24px; // 无对应 Token
     }
+
+    .si-slider__minmax-value {
+      font-size: $font-size-2xs; // XS 档：10px
+    }
   }
 
   &--small {
-    .si-slider__field {
-      height: $spacing-1; // 4px
-
-      &::-webkit-slider-thumb {
-        width: 14px; // 无对应 Token
-        height: 14px;
-      }
-
-      &::-moz-range-thumb {
-        width: 14px;
-        height: 14px;
-      }
-    }
+    --si-slider-track-h: #{$spacing-1}; // 4px
+    --si-slider-thumb-size: 14px; // 无对应 Token
 
     .si-slider__value {
       font-size: $font-size-xs;
       min-width: 32px; // 无对应 Token
     }
+
+    .si-slider__minmax-value {
+      font-size: $font-size-xs; // S 档：12px
+    }
   }
 
   &--medium {
-    .si-slider__field {
-      height: 6px; // 无对应 Token
-
-      &::-webkit-slider-thumb {
-        width: $spacing-4; // 16px
-        height: $spacing-4;
-      }
-
-      &::-moz-range-thumb {
-        width: $spacing-4;
-        height: $spacing-4;
-      }
-    }
+    --si-slider-track-h: 6px; // 无对应 Token
+    --si-slider-thumb-size: #{$spacing-4}; // 16px
 
     .si-slider__value {
       font-size: $font-size-sm;
       min-width: 40px;
     }
+
+    .si-slider__minmax-value {
+      font-size: $font-size-sm; // M 档：14px
+    }
   }
 
   &--large {
-    .si-slider__field {
-      height: $spacing-2; // 8px
-
-      &::-webkit-slider-thumb {
-        width: 18px; // 无对应 Token
-        height: 18px;
-      }
-
-      &::-moz-range-thumb {
-        width: 18px;
-        height: 18px;
-      }
-    }
+    --si-slider-track-h: #{$spacing-2}; // 8px
+    --si-slider-thumb-size: 18px; // 无对应 Token
 
     .si-slider__value {
-      font-size: $font-size-base; // 原 15px → base(16px)
+      font-size: $font-size-base;
       min-width: 48px; // 无对应 Token
+    }
+
+    .si-slider__minmax-value {
+      font-size: $font-size-base; // L 档：16px
     }
   }
 }

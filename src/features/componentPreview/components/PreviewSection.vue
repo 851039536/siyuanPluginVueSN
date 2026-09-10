@@ -1,4 +1,4 @@
-<!-- 组件预览 — 单个组件分区：组件名 + 说明 + 快照卡片网格（真实组件渲染 + 可复制代码） -->
+<!-- 组件预览 — 单个组件分区：组件名 + 说明 + 卡片网格（真实组件渲染，受控组件可交互 + 可复制代码） -->
 <template>
   <section
     :id="`cp-group-${group.id}`"
@@ -26,9 +26,11 @@
           class="cp-card__stage"
           :class="{ 'cp-card__stage--loader': group.id === 'loader' }"
         >
-          <component
-            :is="group.component"
-            v-bind="resolveProps(example)"
+          <!-- 受控示例由 PreviewStage 持有本地值，使 v-model 在预览中真正可交互 -->
+          <PreviewStage
+            :component="group.component"
+            :component-props="resolveProps(example)"
+            :has-slot="!!example.render || !!example.slotText"
           >
             <!-- 复合示例：默认插槽需放多个子组件，交由 render 函数组装 -->
             <SlotRenderer
@@ -38,7 +40,7 @@
             />
             <!-- 默认插槽示例文本 -->
             <template v-else-if="example.slotText">{{ example.slotText }}</template>
-          </component>
+          </PreviewStage>
         </div>
         <footer class="cp-card__foot">
           <span class="cp-card__title">{{ example.title }}</span>
@@ -66,10 +68,16 @@
 </template>
 
 <script setup lang="ts">
-import type { PropType, VNode } from "vue"
+import type {
+  Component,
+  PropType,
+  VNode,
+} from "vue"
 import {
   defineComponent,
+  h,
   ref,
+  toRef,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import type {
@@ -104,6 +112,68 @@ interface Props {
   /** 全局组件尺寸档位 */
   size: ComponentSize
 }
+
+/**
+ * 组件是否声明了 modelValue：只有声明了才注入 v-model 相关 props。
+ * 未声明时不注入任何额外属性 —— 否则 `modelValue` / `onUpdate:modelValue` 会落进 attrs，
+ * 多根组件（如 `FormField`）会因此产生 extraneous attrs 警告。
+ */
+const isControlledComponent = (component: Component): boolean => {
+  const declared = (component as unknown as { props?: Record<string, unknown> }).props
+  return !!declared && Object.prototype.hasOwnProperty.call(declared, "modelValue")
+}
+
+/**
+ * 示例舞台：为受控示例持有本地值并回写 `update:modelValue`，使 v-model 在预览中真正可交互
+ * （拖动 / 输入 / 点选都会反映到组件状态）。
+ * 其余 props 每次渲染重新解析 —— 故切换全局尺寸档位即时生效，且不会覆盖用户已改的本地值。
+ */
+const PreviewStage = defineComponent({
+  name: "PreviewStage",
+  props: {
+    component: {
+      type: [Object, Function] as PropType<Component>,
+      required: true,
+    },
+    componentProps: {
+      type: Object as PropType<Record<string, any>>,
+      required: true,
+    },
+    /** 是否把默认插槽转发给目标组件（无插槽内容时必须为 false，否则 `$slots.default` 恒真会改变组件内部分支） */
+    hasSlot: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  setup: (stageProps, { slots }) => {
+    const resolvedProps = toRef(stageProps, "componentProps")
+    /** 受控值：初始取示例声明的 modelValue，之后仅由 update:modelValue 更新 */
+    const modelValue = ref<unknown>(resolvedProps.value.modelValue)
+
+    return (): VNode => {
+      const componentProps: Record<string, any> = {
+        ...resolvedProps.value,
+      }
+
+      if (isControlledComponent(stageProps.component)) {
+        componentProps.modelValue = modelValue.value
+        componentProps["onUpdate:modelValue"] = (value: unknown) => {
+          modelValue.value = value
+        }
+      }
+
+      const children = stageProps.hasSlot && slots.default
+        ? { default: slots.default }
+        : undefined
+
+      return h(
+        stageProps.component as Component,
+        componentProps,
+        children,
+      )
+    }
+  },
+})
 
 const props = defineProps<Props>()
 

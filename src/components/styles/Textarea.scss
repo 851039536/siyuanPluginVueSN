@@ -1,0 +1,166 @@
+// ========== Textarea.scss ==========
+@use './_mixins.scss' as m;
+@use '@/variables.scss' as *;
+
+.si-textarea {
+  display: inline-flex;
+  flex-direction: column;
+  position: relative;
+  font-family: $font-zh;
+  width: 100%;
+
+  &__wrapper {
+    display: flex;
+    // 多行必需：让文本域撑满 wrapper 高度而非垂直居中
+    align-items: stretch;
+    position: relative;
+    background: var(--b3-theme-background, $color-bg);
+    border: 1px solid var(--b3-border-color, $color-border);
+    border-radius: $vp-radius;
+    outline: none;
+    transition: border-color 0.12s;
+
+    &:hover:not(.si-textarea--disabled .si-textarea__wrapper) {
+      border-color: var(--b3-theme-secondary, $color-info);
+    }
+
+    // Codex 边框优先策略 — 替代原 box-shadow: 0 0 0 3px
+    &:focus-within {
+      @include m.focus-ring;
+    }
+  }
+
+  &__field {
+    flex: 1;
+    width: 100%;
+    // 高度计算依赖 border-box：scrollHeight 含 padding 不含 border，
+    // 字段自身无边框时 height = scrollHeight 恰好等于内容高
+    box-sizing: border-box;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: $font-zh;
+    // 多行文本比单行输入更宽松，取 relaxed 行高
+    line-height: $line-height-relaxed;
+    color: var(--b3-theme-on-background, $color-fg);
+
+    &::placeholder {
+      color: var(--b3-theme-secondary, $color-muted);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: m.$opacity-muted;
+    }
+
+    &:read-only {
+      cursor: default;
+    }
+
+    // 长内容自带项目统一样式的细滚动条
+    &::-webkit-scrollbar {
+      width: $spacing-2; // 8px
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: var(--b3-theme-surface-light, $color-surface);
+      border-radius: $radius-sm;
+
+      &:hover {
+        background: var(--b3-theme-secondary, $color-muted);
+      }
+    }
+  }
+
+  // 宽度控制：fluid（默认）占满容器；关闭后由原生 cols 决定固有宽度
+  &--fluid {
+    width: 100%;
+  }
+
+  &:not(.si-textarea--fluid) {
+    width: auto;
+
+    // 固有宽度由 cols 决定，字段不能再写死 100%（否则与内容宽度循环依赖）
+    .si-textarea__field {
+      width: auto;
+    }
+  }
+
+  // 自动增高：高度由 adjustHeight() 内联写入，此处只固定「无拖拽角、不溢出」
+  &--autoresize {
+    .si-textarea__field {
+      resize: none;
+      overflow: hidden;
+    }
+  }
+
+  // 实底变体：浅表面填充 + 透明边框，强调度高于描边态（同 Checkbox / RadioButton）
+  &--filled {
+    .si-textarea__wrapper {
+      background: var(--b3-theme-surface-lighter, $color-surface);
+      border-color: transparent;
+    }
+
+    // 实底态 border 为 transparent，focus-ring mixin 只改 border-color 会完全不可见
+    // → 改用内嵌 outline 呈现聚焦反馈（同 Listbox 的 inset 环）
+    .si-textarea__wrapper:focus-within {
+      border-color: transparent;
+      outline: 2px solid var(--b3-theme-primary, $color-danger);
+      outline-offset: -1px;
+    }
+  }
+
+  &--disabled {
+    .si-textarea__wrapper {
+      background: var(--b3-theme-surface, $color-surface);
+      cursor: not-allowed;
+    }
+  }
+
+  &--readonly {
+    .si-textarea__wrapper {
+      background: var(--b3-theme-surface-lighter, $color-surface);
+    }
+  }
+
+  // 校验态：置于 filled 之后，且同时覆盖聚焦态，保证实底态也能显示错误边框
+  &--error {
+    .si-textarea__wrapper,
+    .si-textarea__wrapper:focus-within {
+      border-color: var(--b3-theme-error, $color-danger);
+    }
+  }
+
+  // 尺寸档位：字号阶梯 10 / 12 / 14 / 16，四档不得同号
+  &--xsmall {
+    .si-textarea__field {
+      padding: $spacing-2px m.$gap-xs; // 2px 6px
+      font-size: $font-size-2xs;
+    }
+  }
+
+  &--small {
+    .si-textarea__field {
+      padding: $spacing-2px m.$gap-xs; // 2px 6px
+      font-size: $font-size-xs;
+    }
+  }
+
+  &--medium {
+    .si-textarea__field {
+      padding: m.$gap-xs m.$spacing-2_5; // 6px 10px
+      font-size: $font-size-sm;
+    }
+  }
+
+  &--large {
+    .si-textarea__field {
+      padding: m.$spacing-2_5 14px; // 10px 14px；14px 无对应 Token
+      font-size: $font-size-base;
+    }
+  }
+}

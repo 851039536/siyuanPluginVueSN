@@ -104,7 +104,7 @@
     padding: m.$gap-xs m.$spacing-2_5; // 6px 10px
     border: 1px solid var(--b3-border-color);
     border-radius: $radius-sm;
-    font-size: $font-size-xs; // 与下拉选项字号一致（原 14px 在 12px 选项上方显突兀）
+    font-size: $font-size-xs; // 与下拉选项默认档字号一致（XS 档在 &--xsmall 内单独覆盖为 10px）
     font-family: $font-zh;
     outline: none;
     background: var(--b3-theme-background);
@@ -202,12 +202,19 @@
     .si-select__trigger {
       min-height: 22px; // 无对应 Token
       padding: 2px 6px; // 特小号，无对应 Token，保留
-      font-size: $font-size-xs;
+      font-size: $font-size-2xs; // XS 档字号阶梯：10px
     }
 
     .si-select__option {
       padding: $spacing-1 $spacing-4; // 水平 16px：避免选项文字贴近下拉面板左缘（原 8px 过贴），与 large 一致
-      font-size: $font-size-xs;
+      font-size: $font-size-2xs; // XS 档字号阶梯：10px
+    }
+
+    // XS 档下拉内部随选项同步降到 10px，避免「筛选框/分组标题比选项大」的割裂观感
+    .si-select__filter-input,
+    .si-select__empty,
+    .si-select__group-label {
+      font-size: $font-size-2xs;
     }
   }
 

@@ -45,11 +45,11 @@
     }
 
     .si-card__title {
-      font-size: $font-size-xs;
+      font-size: $font-size-2xs; // XS 档字号阶梯：10px
     }
 
     .si-card__subtitle {
-      font-size: $font-size-2xs;
+      font-size: $font-size-2xs; // 与 XS 标题同号，靠 semibold 字重 + 弱化色区分层级
     }
 
     .si-card__body {
@@ -71,11 +71,11 @@
     }
 
     .si-card__title {
-      font-size: $font-size-sm;
+      font-size: $font-size-xs; // S 档字号阶梯：12px
     }
 
     .si-card__subtitle {
-      font-size: $font-size-xs;
+      font-size: $font-size-2xs;
     }
 
     .si-card__body {
@@ -97,7 +97,7 @@
     }
 
     .si-card__title {
-      font-size: $font-size-base;
+      font-size: $font-size-sm; // M 档字号阶梯：14px
     }
 
     .si-card__subtitle {
@@ -123,7 +123,7 @@
     }
 
     .si-card__title {
-      font-size: $font-size-lg;
+      font-size: $font-size-base; // L 档字号阶梯：16px
     }
 
     .si-card__subtitle {

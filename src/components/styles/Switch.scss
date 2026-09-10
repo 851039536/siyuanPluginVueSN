@@ -156,10 +156,26 @@
     }
   }
 
-  // 标签
+  // 标签（字号随档位变化：10 / 12 / 14 / 16，与其它组件的 XS/S/M/L 阶梯一致）
   &__label {
-    font-size: $font-size-sm;
+    font-size: $font-size-xs; // 兜底值（等同 S 档）
     color: var(--b3-theme-on-background, $color-fg);
     line-height: $line-height-normal;
+
+    .si-switch--xsmall & {
+      font-size: $font-size-2xs; // XS 档：10px
+    }
+
+    .si-switch--small & {
+      font-size: $font-size-xs; // S 档：12px
+    }
+
+    .si-switch--medium & {
+      font-size: $font-size-sm; // M 档：14px
+    }
+
+    .si-switch--large & {
+      font-size: $font-size-base; // L 档：16px
+    }
   }
 }

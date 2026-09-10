@@ -10,7 +10,8 @@
 - **代码复制**：每个示例卡片对应一段可复制的 Vue 用法代码（`copyToClipboard` + 已复制反馈）。
 - **导航与检索**：左侧锚点导航（按组件分区跳转）+ 组件名搜索过滤，兼容超长内容滚动。
 - **组件尺寸档位**：头部 XS / S / M / L 四档切换，作用于所有支持 `size` 的组件（`PreviewGroup.sizeable` 标记的 Button / Input / FormField / Label / Select / Switch / Slider / Tag / Badge / Avatar / Card）——渲染时向**未显式指定 `size`** 的示例注入全局档位；显式指定 `size` 的示例（尺寸对比用例）保持原样，避免标题与实际渲染不符。选择经 `TypedStorage` 持久化。
-  - 注：Chart（`size` 为预设像素宽高，大档会撑破卡片）、IconWrapper（`size` 为像素数）、Loader（无 props）不参与档位切换。
+  - 四档字号阶梯为 **10 / 12 / 14 / 16px**（`$font-size-2xs` / `$font-size-xs` / `$font-size-sm` / `$font-size-base`），切档后文字大小可辨；Card 标题四档同步为 10/12/14/16、副标题为 10/10/12/14，Switch 标签随档位变化，Select 的 XS 档下拉内部（筛选框/空态/分组标题）一并降为 10px。规则见 `AGENTS_STYLE.md` § 组件 size 档位字号阶梯。
+  - 注：Chart（`size` 为预设像素宽高，大档会撑破卡片）、IconWrapper（`size` 为像素数）、Loader（无 props）不参与档位切换；图标尺寸不随档位缩放。
 - **明暗适配**：不自行造主题——面板与组件全部消费思源 `--b3-theme-*` 变量，明暗随思源主题自动切换（Chart 经自身 `theme: "auto"` 同样跟随）。
 
 ## 承载与生命周期

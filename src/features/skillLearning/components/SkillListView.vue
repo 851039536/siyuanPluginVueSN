@@ -56,22 +56,16 @@
       </div>
     </div>
     <div
-      v-if="paginated"
+      v-if="filteredCards.length > pageSize"
       class="skill-list-view__pagination"
     >
-      <button
-        :disabled="page <= 1"
-        @click="page--"
-      >
-        &laquo;
-      </button>
-      <span>{{ page }} / {{ totalPages }}</span>
-      <button
-        :disabled="page >= totalPages"
-        @click="page++"
-      >
-        &raquo;
-      </button>
+      <Paginator
+        v-model:page="page"
+        :rows="pageSize"
+        :total="filteredCards.length"
+        :show-page-links="false"
+        size="xsmall"
+      />
     </div>
   </div>
 </template>
@@ -82,6 +76,7 @@ import type {
   SkillI18n,
 } from "../types"
 import { computed } from "vue"
+import Paginator from "@/components/Paginator.vue"
 import { useFilteredCards } from "../composables/useFilteredCards"
 import CategoryFilter from "./CategoryFilter.vue"
 import DifficultyBadge from "./DifficultyBadge.vue"
@@ -105,11 +100,10 @@ const {
   selectedCategory,
   selectedDifficulty,
   page,
+  pageSize,
   languageList,
   categoryList,
   filteredCards,
-  totalPages,
-  paginated,
   paginatedCards,
 } = useFilteredCards(cardsRef, {
   pageSize: 10,

@@ -108,29 +108,11 @@
     font-feature-settings: "tnum";
     font-family: $vp-mono;
   }
+  // 分页容器：仅负责居中与间距，控件本体来自共享 Paginator（禁止在 feature 内自建控件样式）
   &__pagination {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: $spacing-3;
     padding: $spacing-3 0 $spacing-1;
-    font-size: $font-size-xs;
-    color: #94a3b8;
-    button {
-      background: transparent;
-      border: 1px solid var(--b3-border-color);
-      border-radius: $radius-sm;
-      padding: $spacing-1 $spacing-2;
-      cursor: pointer;
-      color: var(--b3-theme-on-background, #333);
-      transition: border-color 0.12s;
-      &:hover:not(:disabled) {
-        border-color: var(--b3-theme-primary);
-      }
-      &:disabled {
-        opacity: 0.4;
-        cursor: default;
-      }
-    }
   }
 }

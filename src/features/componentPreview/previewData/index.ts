@@ -34,6 +34,9 @@ import {
   listboxPreviewGroups,
 } from "./listbox"
 import {
+  paginatorPreviewGroups,
+} from "./paginator"
+import {
   radioButtonPreviewGroups,
 } from "./radioButton"
 import {
@@ -57,6 +60,7 @@ export const PREVIEW_GROUPS: PreviewGroup[] = [
   ...inputGroupPreviewGroups,
   ...toggleButtonPreviewGroups,
   ...speedDialPreviewGroups,
+  ...paginatorPreviewGroups,
   ...controlPreviewGroups,
   ...listboxPreviewGroups,
   ...colorFieldPreviewGroups,

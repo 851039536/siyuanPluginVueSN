@@ -9,6 +9,7 @@
 - **示例清单驱动**：预览数据集中在 `previewData/`（一份清单），渲染层通用遍历——新增组件/新用法只需在清单追加，不改渲染框架。清单里的 `code` 模板与渲染 props 共用同一数据源，杜绝漂移。
 - **复合控件内嵌能力**：`Input` 的 `borderless` 去边框去底色（三条高特异性选择器覆盖基类 hover/focus-within），供「标签输入框」这类自定义容器把输入框内嵌其中；焦点反馈由外层容器的 `:focus-within` 承担。
 - **无缝拼接控件**：`InputGroup` + `InputGroupAddon` 把输入框、按钮、下拉、日期与附加项拼成一体化控件（组内零间距、相邻边框 1px 重叠、仅最外侧保留圆角，档位经 `--ig-addon-*` CSS 变量从容器继承）；组内按钮建议用描边外观（`outlined` / `variant="secondary"`），填充态按钮边框为透明，拼接处会呈现实色块；示例默认插槽需渲染多个子组件，故由 `PreviewExample.render` 组装（见下方「清单扩展指南」）。
+- **表单标签能力**：`Label` 支持包裹控件建立**原生隐式关联**（`wrapper`，插槽内容直出、不套文本层，避免控件被文本层挤压与样式串染）、**禁用态三入口**（`disabled` prop / 容器 `data-disabled` / 邻近被禁用的兄弟控件）、**必填无障碍**（`required` 的 `*` 对屏幕阅读器隐藏，`required-text` 以视觉隐藏文本播报）。⚠️ 禁用联动的「邻近兜底」仅覆盖**禁用态就在根元素上**的成员（`Switch` 的原生 `button[disabled]`、原生 `input`）；`Input` / `Select` / `DatePicker` 的禁用态加在内部元素上，根元素无 `disabled`，**需由包装层显式标记 `data-disabled`**。
 - **代码复制**：每个示例卡片对应一段可复制的 Vue 用法代码（`copyToClipboard` + 已复制反馈）。
 - **导航与检索**：左侧锚点导航（按组件分区跳转）+ 组件名搜索过滤，兼容超长内容滚动。
 - **组件尺寸档位**：头部 XS / S / M / L 四档切换，作用于所有支持 `size` 的组件（`PreviewGroup.sizeable` 标记的 Button / Input / InputGroup / FormField / Label / Select / Switch / Checkbox / DatePicker / Slider / Tag / Badge / Avatar / Card / ConfirmDialog）——渲染时向**未显式指定 `size`** 的示例注入全局档位；显式指定 `size` 的示例（尺寸对比用例）保持原样，避免标题与实际渲染不符。选择经 `TypedStorage` 持久化。
@@ -29,7 +30,7 @@
 
 ## 具名插槽（无法在快照中呈现，在此登记）
 
-`PreviewExample` 只支持 `props` + 默认插槽（`slotText`），具名/作用域插槽无法在快照卡片中渲染，故在此登记，改动时同步维护：
+`PreviewExample` 支持 `props` + 默认插槽（`slotText`，或 `render` 函数组装多个子组件）；**具名/作用域插槽无法在快照卡片中渲染**，故在此登记，改动时同步维护：
 
 | 组件 | 插槽 | 作用域参数 | 用途 |
 | --- | --- | --- | --- |
@@ -40,6 +41,7 @@
 | `InputGroup` | 默认插槽（**多个子组件**） | — | 组内成员，可放 `Input` / `Select` / `DatePicker` / `Button` / `InputGroupAddon`，数量与顺序不限；成员**不得带 `label`/`hint`/`error`**（会撑高错位），容器**禁设 `overflow: hidden`**（会裁剪 `Select` 下拉） |
 | `InputGroupAddon` | 默认插槽 | — | 附加项内容（前缀/后缀文本或图标） |
 | `ConfirmDialog` | 默认插槽 | — | 覆盖消息区，用于承载富内容（如快照备注与时间）；不传时按 `message` 的 `\n` 拆行渲染 |
+| `Label` | 默认插槽 | — | 标签文本；`wrapper` 模式下插槽内容**直出**（不套 `.si-label__text`），可放控件以建立原生隐式关联；`wrapper` 建议配合 `tag="label"`（默认值），与 `tag="span"/"div"` 的 inline 外观语义冲突 |
 
 `SelectOption` 的 `keywords?: string` 为 `filterable` 的附加检索词（标签之外的别名/描述检索），清单中已有对应示例。
 
@@ -70,6 +72,8 @@
 3. 面板 UI 文案走 i18n 分片（`componentPreview` 键），新增文案需 zh_CN / en_US 同步。
 4. 新增支持尺寸档位的组件：在该 `PreviewGroup` 上标记 `sizeable: true`（渲染时会注入全局尺寸档位）；增删档位改 `types/size.ts` 的 `COMPONENT_SIZES` 与 i18n 的 `sizeXsmall` 等键。
 5. 新增/修改共享组件的 props、行为、**具名插槽**或**事件契约**后，必须同步 `previewData/*.ts` 与本文档（见上方「具名插槽」表与「事件契约」表）。
+
+> 约定：`Label` 的 `required` 只负责**视觉标记 + 屏幕阅读器替代文本**（`*` 已 `aria-hidden`、`required-text` 视觉隐藏播报），**控件侧仍需自行声明 `required` / `aria-required`** —— 有意不在 `<label>` 上输出 `aria-required`（该属性属输入类角色，放在标签元素上是无效 ARIA）。
 
 ## 视图偏好
 

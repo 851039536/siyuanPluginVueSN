@@ -1,11 +1,15 @@
 /**
  * 组件预览清单 — Input / FormField / Label 分组数据
- * 清单条目：title（示例名）、props（透传给组件）、slotText（默认插槽文本）、code（对应可复制模板）
+ * 清单条目：title（示例名）、props（透传给组件）、slotText（默认插槽文本）、
+ * render（复合示例的自定义插槽，见 Label「包裹控件」示例）、code（对应可复制模板）
  */
+import type { VNode } from "vue"
+import { createTextVNode, h } from "vue"
 import type { PreviewGroup } from "../types"
 import Input from "@/components/Input.vue"
 import FormField from "@/components/FormField.vue"
 import Label from "@/components/Label.vue"
+import Switch from "@/components/Switch.vue"
 
 export const inputGroup: PreviewGroup = {
   id: "input",
@@ -182,7 +186,7 @@ export const labelGroup: PreviewGroup = {
   id: "label",
   component: Label,
   name: "Label",
-  summary: "标签：必填星号 / 状态色 / 图标 / 变体展示",
+  summary: "标签：必填星号 + 无障碍替代文本 / 状态色 / 图标 / 变体 / 包裹控件隐式关联 / 禁用态三入口 / 对齐三档",
   importCode: "import Label from \"@/components/Label.vue\"",
   sizeable: true,
   examples: [
@@ -218,15 +222,72 @@ export const labelGroup: PreviewGroup = {
     },
     {
       title: "变体展示-primary",
-      props: { variant: "primary" },
+      props: {
+        tag: "span",
+        variant: "primary",
+      },
       slotText: "Primary",
-      code: "<Label variant=\"primary\">Primary</Label>",
+      code: "<Label tag=\"span\" variant=\"primary\">Primary</Label>",
     },
     {
       title: "span 渲染",
       props: { tag: "span" },
       slotText: "行内标签",
       code: "<Label tag=\"span\">行内标签</Label>",
+    },
+    {
+      title: "包裹控件（隐式关联）",
+      props: { wrapper: true },
+      render: (p): VNode[] => [
+        h(Switch, {
+          size: p.size,
+          modelValue: true,
+        }),
+        createTextVNode("启用同步通知"),
+      ],
+      code: `<Label wrapper>
+  <Switch v-model="enabled" />
+  启用同步通知
+</Label>`,
+    },
+    {
+      title: "禁用态-容器标记",
+      props: { "data-disabled": "true" },
+      slotText: "不可编辑字段",
+      code: "<Label data-disabled=\"true\">不可编辑字段</Label>",
+    },
+    {
+      title: "禁用态-手动 prop",
+      props: { disabled: true },
+      slotText: "不可编辑字段",
+      code: "<Label disabled>不可编辑字段</Label>",
+    },
+    {
+      title: "必填 + 无障碍替代文本",
+      props: {
+        required: true,
+        requiredText: "必填",
+      },
+      slotText: "邮箱",
+      code: "<Label required required-text=\"必填\">邮箱</Label>",
+    },
+    {
+      title: "对齐-居中",
+      props: {
+        align: "center",
+        width: "120px",
+      },
+      slotText: "居中标签",
+      code: "<Label align=\"center\" width=\"120px\">居中标签</Label>",
+    },
+    {
+      title: "对齐-右对齐",
+      props: {
+        align: "right",
+        width: "120px",
+      },
+      slotText: "右对齐标签",
+      code: "<Label align=\"right\" width=\"120px\">右对齐标签</Label>",
     },
   ],
 }

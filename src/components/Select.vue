@@ -1,3 +1,4 @@
+<!-- 下拉选择：单选 / 分组 / 筛选 / 可清空 / 四档尺寸；提供 combobox + listbox 无障碍语义与完整键盘操作 -->
 <template>
   <div
     :class="selectClasses"
@@ -5,149 +6,191 @@
   >
     <FormField
       :label="label"
+      :label-id="labelId"
       :required="required"
       :hint="hint"
       :size="size"
-    />
-    <div
-      ref="wrapperRef"
-      class="si-select__wrapper"
     >
       <div
-        class="si-select__trigger"
-        :class="{ 'si-select__trigger--disabled': disabled }"
-        :tabindex="disabled ? -1 : 0"
-        @click="toggleDropdown"
-        @keydown="handleKeydown"
+        ref="wrapperRef"
+        class="si-select__wrapper"
       >
-        <span
-          v-if="selectedLabel"
-          class="si-select__value"
-        >
-          <!-- selected slot：已选项富内容（如名称 + 来源标记）；默认回退为纯文本标签 -->
-          <slot
-            name="selected"
-            :option="selectedOption"
-          >{{ selectedLabel }}</slot>
-        </span>
-        <span
-          v-else
-          class="si-select__placeholder"
-        >{{ placeholder }}</span>
-        <span
-          v-if="clearable && selectedOption && !disabled"
-          class="si-select__clear"
-          @click.stop="handleClear"
-        >
-          <IconWrapper
-            :name="'x' as IconKey"
-            :size="iconSize"
-          />
-        </span>
-        <IconWrapper
-          :name="(isOpen ? 'chevronUp' : 'chevronDown') as IconKey"
-          :size="iconSize"
-          class="si-select__arrow"
-        />
-      </div>
-
-      <Transition name="si-select-dropdown">
         <div
-          v-if="isOpen && !disabled"
-          class="si-select__dropdown"
-          :class="dropdownClasses"
-          :style="dropdownStyle"
+          class="si-select__trigger"
+          :class="{ 'si-select__trigger--disabled': disabled }"
+          role="combobox"
+          aria-haspopup="listbox"
+          :aria-expanded="isOpen ? 'true' : 'false'"
+          :aria-controls="listId"
+          :aria-activedescendant="isOpen ? activeDescendantId : undefined"
+          :aria-disabled="disabled ? 'true' : undefined"
+          :aria-labelledby="ariaLabelledby || (label ? labelId : undefined)"
+          :aria-label="ariaLabel"
+          :tabindex="disabled ? -1 : 0"
+          @click="toggleDropdown"
+          @keydown="handleKeydown"
         >
-          <div
-            v-if="filterable && filteredOptions.length > 0"
-            class="si-select__filter"
+          <span
+            v-if="selectedLabel"
+            class="si-select__value"
           >
-            <input
-              ref="filterInputRef"
-              v-model="filterQuery"
-              type="text"
-              class="si-select__filter-input"
-              :placeholder="filterPlaceholder"
-              @click.stop
-            />
-          </div>
-
-          <div
-            v-if="filteredOptions.length === 0"
-            class="si-select__empty"
-          >
-            {{ emptyText }}
-          </div>
-
-          <div
+            <!-- selected slot：已选项富内容（如名称 + 来源标记）；默认回退为纯文本标签 -->
+            <slot
+              name="selected"
+              :option="selectedOption"
+            >{{ selectedLabel }}</slot>
+          </span>
+          <span
             v-else
-            class="si-select__options"
-            :class="{ 'si-select__options--grouped': hasGroups }"
+            class="si-select__placeholder"
+          >{{ placeholder }}</span>
+          <!-- 清除按钮：鼠标便捷入口，保持在 Tab 序列之外（tabindex=-1），仅虚拟光标可达 -->
+          <span
+            v-if="clearable && selectedOption && !disabled"
+            class="si-select__clear"
+            role="button"
+            tabindex="-1"
+            :aria-label="clearLabel"
+            @click.stop="handleClear"
           >
-            <template
-              v-for="(option, index) in filteredOptions"
-              :key="getOptionKey(option, index)"
+            <IconWrapper
+              :name="'x' as IconKey"
+              :size="iconSize"
+              aria-hidden="true"
+            />
+          </span>
+          <IconWrapper
+            :name="(isOpen ? 'chevronUp' : 'chevronDown') as IconKey"
+            :size="iconSize"
+            class="si-select__arrow"
+            aria-hidden="true"
+          />
+        </div>
+
+        <Transition name="si-select-dropdown">
+          <div
+            v-if="isOpen && !disabled"
+            class="si-select__dropdown"
+            :class="dropdownClasses"
+            :style="dropdownStyle"
+          >
+            <div
+              v-if="filterable"
+              class="si-select__filter"
             >
-              <!-- 分组选项 -->
+              <input
+                ref="filterInputRef"
+                :value="filterQuery"
+                type="text"
+                class="si-select__filter-input"
+                :placeholder="filterPlaceholder"
+                :aria-label="filterPlaceholder"
+                :aria-controls="listId"
+                :aria-activedescendant="activeDescendantId"
+                aria-autocomplete="list"
+                @input="handleFilterInput"
+                @click.stop
+                @keydown="handleFilterKeydown"
+              />
+            </div>
+
+            <!-- 列表容器恒常渲染（无匹配时也保留 listbox 落点），空态作为其子节点 -->
+            <div
+              :id="listId"
+              class="si-select__options"
+              :class="{ 'si-select__options--grouped': hasGroups }"
+              role="listbox"
+              :aria-labelledby="ariaLabelledby || (label ? labelId : undefined)"
+            >
               <div
-                v-if="isGroupOption(option)"
-                class="si-select__group"
+                v-if="filteredOptions.length === 0"
+                class="si-select__empty"
               >
-                <div class="si-select__group-label">
-                  {{ option.label }}
-                </div>
+                {{ emptyText }}
+              </div>
+
+              <template
+                v-for="(option, index) in filteredOptions"
+                :key="resolveOptionKey(option, index)"
+              >
+                <!-- 分组选项 -->
                 <div
-                  v-for="(groupOption, groupIndex) in option.options"
-                  :key="getOptionKey(groupOption, groupIndex)"
+                  v-if="isGroup(option)"
+                  class="si-select__group"
+                  role="group"
+                  :aria-labelledby="groupId(index)"
+                >
+                  <div
+                    :id="groupId(index)"
+                    class="si-select__group-label"
+                  >
+                    {{ option.label }}
+                  </div>
+                  <div
+                    v-for="(groupOption, groupIndex) in option.options"
+                    :key="resolveOptionKey(groupOption, groupIndex)"
+                    :id="optionId(domIndex(groupOption))"
+                    :ref="(el) => setOptionRef(el, domIndex(groupOption))"
+                    class="si-select__option"
+                    role="option"
+                    :class="{
+                      'si-select__option--selected': isSelected(groupOption.value),
+                      'si-select__option--disabled': groupOption.disabled,
+                      'si-select__option--hovered': isActive(groupOption),
+                    }"
+                    :title="groupOption.label"
+                    :aria-selected="isSelected(groupOption.value) ? 'true' : 'false'"
+                    :aria-disabled="groupOption.disabled ? 'true' : undefined"
+                    @click.stop="selectOption(groupOption)"
+                    @mouseenter="setActiveByOption(groupOption)"
+                  >
+                    <slot
+                      name="option"
+                      :option="groupOption"
+                    >{{ groupOption.label }}</slot>
+                  </div>
+                </div>
+
+                <!-- 普通选项 -->
+                <div
+                  v-else
+                  :id="optionId(domIndex(option))"
+                  :ref="(el) => setOptionRef(el, domIndex(option))"
                   class="si-select__option"
+                  role="option"
                   :class="{
-                    'si-select__option--selected': isSelected(groupOption.value),
-                    'si-select__option--disabled': groupOption.disabled,
-                    'si-select__option--hovered': hoveredGroupKey === `${index}-${groupIndex}`,
+                    'si-select__option--selected': isSelected(option.value),
+                    'si-select__option--disabled': option.disabled,
+                    'si-select__option--hovered': isActive(option),
                   }"
-                  :title="groupOption.label"
-                  @click.stop="selectOption(groupOption)"
-                  @mouseenter="setHoveredGroupOption(index, groupIndex)"
+                  :title="option.label"
+                  :aria-selected="isSelected(option.value) ? 'true' : 'false'"
+                  :aria-disabled="option.disabled ? 'true' : undefined"
+                  @click.stop="selectOption(option)"
+                  @mouseenter="setActiveByOption(option)"
                 >
                   <slot
                     name="option"
-                    :option="groupOption"
-                  >
-                    {{ groupOption.label }}
-                  </slot>
+                    :option="option"
+                  >{{ option.label }}</slot>
                 </div>
-              </div>
-
-              <!-- 普通选项 -->
-              <div
-                v-else
-                class="si-select__option"
-                :class="{
-                  'si-select__option--selected': isSelected(option.value),
-                  'si-select__option--disabled': option.disabled,
-                  'si-select__option--hovered': hoveredIndex === index,
-                }"
-                :title="option.label"
-                @click.stop="selectOption(option)"
-                @mouseenter="setHoveredIndex(index)"
-              >
-                <slot
-                  name="option"
-                  :option="option"
-                >
-                  {{ option.label }}
-                </slot>
-              </div>
-            </template>
+              </template>
+            </div>
           </div>
-        </div>
-      </Transition>
-    </div>
+        </Transition>
+      </div>
+    </FormField>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { IconKey } from "@/config/icons"
+import type {
+  OptionType,
+  SelectGroupOption as SelectGroupOptionShape,
+  SelectOption as SelectOptionShape,
+  SelectSize,
+} from "./select/types"
 import {
   computed,
   nextTick,
@@ -159,33 +202,22 @@ import {
 } from "vue"
 import FormField from "@/components/FormField.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import { isGroupOption as isGroupLike } from "./select/navigation"
+import { useSelectKeyboard } from "./select/useSelectKeyboard"
+import { useSelectNavigation } from "./select/useSelectNavigation"
+import {
+  filterOptionList,
+  findSelectedOption,
+  hasGroupOption,
+  resolveOptionKey,
+} from "./select/utils"
 
-type SelectSize = "xsmall" | "small" | "medium" | "large"
-
-export interface SelectOption {
-  /** 选项值 */
-  value: string | number | boolean
-  /** 显示标签 */
-  label: string
-  /** 是否禁用 */
-  disabled?: boolean
-  /** 附加搜索关键词（filterable 时参与匹配，用于标签之外的别名/描述检索） */
-  keywords?: string
-  /** 自定义数据 */
-  [key: string]: any
-}
-
-export interface SelectGroupOption {
-  /** 分组标识 */
-  isGroup: true
-  /** 分组标签 */
-  label: string
-  /** 分组选项 */
-  options: SelectOption[]
-}
-
-type OptionType = SelectOption | SelectGroupOption
-
+/**
+ * 选项类型对外导出：`Listbox.vue` 与多个 feature 依赖 `@/components/Select.vue` 这一导入路径，
+ * 故真实定义下沉到 `./select/types`（纯 TS 模块，可被同目录工具共享），此处仅作类型别名导出。
+ */
+export type SelectOption = SelectOptionShape
+export type SelectGroupOption = SelectGroupOptionShape
 interface Props {
   /** 选项数据 */
   options: OptionType[]
@@ -217,6 +249,12 @@ interface Props {
   iconSize?: number
   /** 是否可清除 */
   clearable?: boolean
+  /** 无障碍名称（无可见 label 时使用；与 aria-labelledby 同时存在时后者优先） */
+  ariaLabel?: string
+  /** 无障碍名称来源元素 id（优先于由 label 推导的 id） */
+  ariaLabelledby?: string
+  /** 清除按钮的无障碍名称 */
+  clearLabel?: string
 }
 
 interface Emits {
@@ -242,11 +280,13 @@ const props = withDefaults(defineProps<Props>(), {
   maxHeight: 200,
   iconSize: 14,
   clearable: false,
+  clearLabel: "清除",
 })
 
 const emit = defineEmits<Emits>()
 const attrs = useAttrs()
 
+/** 仅保留非 class/style 属性透传，避免与内部类名/宽度控制互相污染 */
 const containerAttrs = computed(() => {
   const {
     class: className,
@@ -259,15 +299,12 @@ const containerAttrs = computed(() => {
 // 状态
 const isOpen = ref(false)
 const filterQuery = ref("")
-const hoveredIndex = ref(-1)
-const hoveredGroupKey = ref<string | null>(null)
 const wrapperRef = ref<HTMLElement>()
 const filterInputRef = ref<HTMLInputElement>()
 const resolvedPlacement = ref<"top" | "bottom">("bottom")
 
-// 类型守卫
-const isGroupOption = (option: OptionType): option is SelectGroupOption =>
-  (option as SelectGroupOption).isGroup === true
+// 类型守卫（包装私有泛型守卫，保持本地精确类型）
+const isGroup = (option: OptionType): option is SelectGroupOption => isGroupLike(option)
 
 // 计算属性
 const selectClasses = computed(() => [
@@ -279,129 +316,63 @@ const selectClasses = computed(() => [
   },
 ])
 
-const dropdownClasses = computed(() => [
-  `si-select__dropdown--${resolvedPlacement.value}`,
-])
+const dropdownClasses = computed(() => [`si-select__dropdown--${resolvedPlacement.value}`])
 
 const dropdownStyle = computed(() => ({
   maxHeight: typeof props.maxHeight === "number" ? `${props.maxHeight}px` : props.maxHeight,
 }))
 
-const selectedOption = computed<SelectOption | null>(() => {
-  if (props.modelValue === null || props.modelValue === undefined) {
-    return null
-  }
-
-  const findOption = (options: OptionType[]): SelectOption | null => {
-    for (const option of options) {
-      if (isGroupOption(option)) {
-        const found = option.options.find(
-          (opt) => opt.value === props.modelValue,
-        )
-        if (found) return found
-      } else if (option.value === props.modelValue) {
-        return option
-      }
-    }
-    return null
-  }
-
-  return findOption(props.options)
-})
+const selectedOption = computed(() =>
+  findSelectedOption(props.options, props.modelValue),
+)
 
 const selectedLabel = computed(() => selectedOption.value?.label || "")
 
-const hasGroups = computed(() => props.options.some(isGroupOption))
+const hasGroups = computed(() => hasGroupOption(props.options))
 
-/** 筛选匹配：标签 + 可选 keywords（别名/描述等附加检索词） */
-const matchOption = (option: SelectOption, query: string): boolean =>
-  option.label.toLowerCase().includes(query)
-  || (typeof option.keywords === "string" && option.keywords.toLowerCase().includes(query))
+const filteredOptions = computed<OptionType[]>(() => (
+  props.filterable
+    ? filterOptionList(props.options, filterQuery.value.toLowerCase())
+    : props.options
+))
 
-const filteredOptions = computed(() => {
-  if (!props.filterable || !filterQuery.value) {
-    return props.options
-  }
-
-  const query = filterQuery.value.toLowerCase()
-
-  const filterGroup = (group: SelectGroupOption): SelectGroupOption => ({
-    ...group,
-    options: group.options.filter((opt) =>
-      matchOption(opt, query),
-    ),
-  })
-
-  const filterOption = (option: SelectOption): boolean =>
-    matchOption(option, query)
-
-  return props.options.reduce<OptionType[]>((acc, option) => {
-    if (isGroupOption(option)) {
-      const filtered = filterGroup(option)
-      if (filtered.options.length > 0) {
-        acc.push(filtered)
-      }
-    } else if (filterOption(option)) {
-      acc.push(option)
-    }
-    return acc
-  }, [])
+// 导航与 ARIA（平铺下标 / 激活项 id / 滚动定位）
+const {
+  listId,
+  labelId,
+  optionId,
+  groupId,
+  flatItems,
+  activeIndex,
+  activeDescendantId,
+  domIndex,
+  isActive,
+  setActiveIndex,
+  setActiveByOption,
+  setOptionRef,
+  anchorIndex,
+} = useSelectNavigation({
+  visibleOptions: () => filteredOptions.value,
+  isSelected: (option) => option.value === props.modelValue,
 })
-
-/** 展开所有分组，返回可导航的平铺选项列表 */
-const flatNavigableOptions = computed<Array<{ option: SelectOption, groupIndex: number, optionIndex: number } | null>>(() => {
-  const result: Array<{ option: SelectOption, groupIndex: number, optionIndex: number } | null> = []
-  for (let i = 0; i < filteredOptions.value.length; i++) {
-    const opt = filteredOptions.value[i]
-    if (isGroupOption(opt)) {
-      for (let j = 0; j < opt.options.length; j++) {
-        result.push({
-          option: opt.options[j],
-          groupIndex: i,
-          optionIndex: j,
-        })
-      }
-    } else {
-      result.push(null) // null 表示非分组占位，对应 hoveredIndex
-    }
-  }
-  return result
-})
-
-const totalNavigableCount = computed(() =>
-  flatNavigableOptions.value.filter(Boolean).length,
-)
 
 // 方法
-const getOptionKey = (
-  option: SelectOption | SelectGroupOption,
-  index: number,
-): string => {
-  if (isGroupOption(option)) {
-    return `group-${option.label}-${index}`
-  }
-  return `option-${option.value}-${index}`
+const isSelected = (value: string | number | boolean) => value === props.modelValue
+
+const focusTrigger = () => {
+  wrapperRef.value?.querySelector<HTMLDivElement>(".si-select__trigger")?.focus()
 }
 
-const isSelected = (value: string | number | boolean) =>
-  value === props.modelValue
-
-const setHoveredIndex = (index: number) => {
-  hoveredIndex.value = index
-  hoveredGroupKey.value = null
-}
-
-const setHoveredGroupOption = (groupIndex: number, optionIndex: number) => {
-  hoveredIndex.value = -1
-  hoveredGroupKey.value = `${groupIndex}-${optionIndex}`
-}
-
-const selectOption = (option: SelectOption) => {
+/**
+ * 选中选项。键盘路径传 `restoreFocus: true` 把焦点收回触发器（便于连续操作）；
+ * 鼠标点击路径不抢焦点。
+ */
+const selectOption = (option: SelectOption, options: { restoreFocus?: boolean } = {}) => {
   if (option.disabled) return
 
   emit("update:modelValue", option.value)
   emit("change", option.value, option)
-  closeDropdown()
+  closeDropdown(options)
 }
 
 const handleClear = () => {
@@ -416,16 +387,17 @@ const toggleDropdown = () => {
   if (isOpen.value) {
     closeDropdown()
   } else {
-    openDropdown()
+    openDropdown("first")
   }
 }
 
-const openDropdown = () => {
+/** 打开面板并定位到已选项（无已选项时按 fallback 取首/末项），随后滚动入视野 */
+const openDropdown = (fallback: "first" | "last" = "first") => {
   isOpen.value = true
-  hoveredIndex.value = -1
-  hoveredGroupKey.value = null
   filterQuery.value = ""
   emit("visible-change", true)
+
+  setActiveIndex(anchorIndex(fallback))
 
   nextTick(() => {
     resolvePlacement()
@@ -435,12 +407,21 @@ const openDropdown = () => {
   })
 }
 
-const closeDropdown = () => {
+/** 关闭面板。仅在 `restoreFocus` 为真时把焦点收回触发器，避免外部点击时抢焦点 */
+const closeDropdown = (options: { restoreFocus?: boolean } = {}) => {
+  const wasOpen = isOpen.value
+
   isOpen.value = false
-  emit("visible-change", false)
   filterQuery.value = ""
-  hoveredIndex.value = -1
-  hoveredGroupKey.value = null
+  activeIndex.value = -1
+
+  if (wasOpen) {
+    emit("visible-change", false)
+  }
+
+  if (options.restoreFocus) {
+    nextTick(focusTrigger)
+  }
 }
 
 const resolvePlacement = () => {
@@ -455,84 +436,23 @@ const resolvePlacement = () => {
   resolvedPlacement.value = spaceBelow >= spaceAbove ? "bottom" : "top"
 }
 
-/** 获取第 flatIndex 个可导航选项并执行回调 */
-const navigateFlatOption = (flatIndex: number, callback: (opt: SelectOption) => void) => {
-  const navigable = flatNavigableOptions.value.filter(Boolean)
-  const item = navigable[flatIndex]
-  if (item) {
-    callback(item.option)
-  }
-}
-
-/** 同步 hover 状态到当前 flatIndex */
-const syncHoverState = (flatIndex: number) => {
-  const navigable = flatNavigableOptions.value.filter(Boolean)
-  const item = navigable[flatIndex]
-  if (!item) return
-
-  if (hasGroups.value) {
-    hoveredIndex.value = -1
-    hoveredGroupKey.value = `${item.groupIndex}-${item.optionIndex}`
-  } else {
-    hoveredIndex.value = flatIndex
-    hoveredGroupKey.value = null
-  }
-}
-
-/** 追踪当前可导航 flat 索引 */
-const currentFlatHoverIndex = computed(() => {
-  if (!hasGroups.value) return hoveredIndex.value
-
-  const navigable = flatNavigableOptions.value.filter(Boolean)
-  if (!hoveredGroupKey.value) return -1
-
-  const [gi, oi] = hoveredGroupKey.value.split("-").map(Number)
-  return navigable.findIndex(
-    (item) => item && item.groupIndex === gi && item.optionIndex === oi,
-  )
+// 键盘（收起/展开态方向键、Enter/Space、Esc、Tab；筛选框仅委托部分按键）
+const { handleKeydown, handleFilterKeydown } = useSelectKeyboard({
+  isOpen: () => isOpen.value,
+  disabled: () => props.disabled,
+  flatItems: () => flatItems.value,
+  activeIndex: () => activeIndex.value,
+  setActiveIndex,
+  open: openDropdown,
+  close: closeDropdown,
+  toggle: toggleDropdown,
+  select: selectOption,
 })
 
-const handleKeydown = (event: KeyboardEvent) => {
-  if (props.disabled) return
-
-  switch (event.key) {
-    case "Enter":
-    case " ": {
-      event.preventDefault()
-      const idx = currentFlatHoverIndex.value
-      if (isOpen.value && idx >= 0) {
-        navigateFlatOption(idx, (opt) => {
-          if (!opt.disabled) selectOption(opt)
-        })
-      } else {
-        toggleDropdown()
-      }
-      break
-    }
-    case "Escape":
-      event.preventDefault()
-      closeDropdown()
-      break
-    case "ArrowDown":
-      event.preventDefault()
-      if (!isOpen.value) {
-        openDropdown()
-      } else {
-        const next = Math.min(currentFlatHoverIndex.value + 1, totalNavigableCount.value - 1)
-        syncHoverState(next)
-      }
-      break
-    case "ArrowUp":
-      event.preventDefault()
-      if (isOpen.value) {
-        const prev = Math.max(currentFlatHoverIndex.value - 1, 0)
-        syncHoverState(prev)
-      }
-      break
-    case "Tab":
-      closeDropdown()
-      break
-  }
+/** 筛选输入：更新查询词并把激活项复位（避免指向已被过滤掉的项） */
+const handleFilterInput = (event: Event) => {
+  filterQuery.value = (event.target as HTMLInputElement).value
+  activeIndex.value = -1
 }
 
 const handleClickOutside = (event: MouseEvent) => {
@@ -560,9 +480,9 @@ onUnmounted(() => {
 
 // 暴露公共方法
 defineExpose({
-  focus: () => wrapperRef.value?.querySelector<HTMLDivElement>(".si-select__trigger")?.focus(),
+  focus: focusTrigger,
   blur: () => wrapperRef.value?.querySelector<HTMLDivElement>(".si-select__trigger")?.blur(),
-  open: openDropdown,
+  open: () => openDropdown("first"),
   close: closeDropdown,
 })
 </script>

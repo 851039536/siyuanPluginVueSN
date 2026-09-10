@@ -79,6 +79,8 @@
   &__dropdown {
     position: absolute;
     z-index: m.$z-select-dropdown;
+    display: flex;
+    flex-direction: column;
     width: 100%;
     background: var(--b3-theme-background);
     border: 1px solid var(--b3-border-color);
@@ -94,6 +96,7 @@
   }
 
   &__filter {
+    flex-shrink: 0; // 面板高度不足时只压缩列表，筛选框保持原高
     padding: $spacing-2;
     border-bottom: 1px solid var(--b3-border-color);
   }
@@ -129,7 +132,10 @@
   }
 
   &__options {
-    max-height: inherit;
+    // 弹性列布局下由列表吸收面板剩余高度：筛选框常驻后，原 max-height: inherit
+    // 会使「筛选框 + 列表」总高超出面板，末尾选项被 overflow: hidden 裁掉且滚动够不到
+    flex: 1 1 auto;
+    min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
 

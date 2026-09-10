@@ -140,6 +140,18 @@ export const selectGroup: PreviewGroup = {
       },
       code: "<Select v-model=\"value\" label=\"语言\" hint=\"选择后用于生成代码\" :options=\"options\" />",
     },
+    {
+      title: "无障碍命名（无可见标签）",
+      props: {
+        ariaLabel: "技术栈",
+        options: [
+          { value: "vue", label: "Vue" },
+          { value: "react", label: "React" },
+        ],
+        modelValue: "vue",
+      },
+      code: "<Select v-model=\"value\" aria-label=\"技术栈\" :options=\"options\" />",
+    },
   ],
 }
 

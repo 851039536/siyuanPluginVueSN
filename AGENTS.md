@@ -157,7 +157,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 ## 共享组件库使用规则（强制）
 
-`src/components/` 是**全项目唯一的 UI 控件来源**（22 个组件）。三条强制要求：**先查用法 → 优先复用 → 改 API 必同步**。
+`src/components/` 是**全项目唯一的 UI 控件来源**（23 个组件）。三条强制要求：**先查用法 → 优先复用 → 改 API 必同步**。
 
 ### 1. 先查用法，禁止猜 props
 
@@ -165,7 +165,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 | 查询方式 | 位置 | 说明 |
 |---------|------|------|
-| **组件预览面板（推荐）** | 命令面板搜「组件预览」/ 状态栏功能列表 | 22 个组件的**真实渲染**快照 + 可复制代码；改完组件样式可直接目视回归 |
+| **组件预览面板（推荐）** | 命令面板搜「组件预览」/ 状态栏功能列表 | 23 个组件的**真实渲染**快照 + 可复制代码；改完组件样式可直接目视回归 |
 | 用法清单（源码） | `src/features/componentPreview/previewData/*.ts` | `props` 与 `code` 同源，是 props 的权威示例 |
 | 组件源码 | `src/components/<Name>.vue` 的 `interface Props` | 最终事实来源（含 JSDoc 注释） |
 
@@ -174,16 +174,17 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 ### 2. 优先复用，禁止在 feature 内自建同类控件
 
-- 需要按钮 / 输入框 / 下拉 / 列表选择 / 开关 / 复选框 / 单选框 / 日期选择 / 滑块 / 标签 / 徽标 / 头像 / 卡片 / 图表 / 图标 / 加载态 / 颜色字段 / 输入框组合器 / 确认对话框时，**必须**使用共享组件
+- 需要按钮 / 输入框 / 多行文本域 / 下拉 / 列表选择 / 开关 / 复选框 / 单选框 / 日期选择 / 滑块 / 标签 / 徽标 / 头像 / 卡片 / 图表 / 图标 / 加载态 / 颜色字段 / 输入框组合器 / 确认对话框时，**必须**使用共享组件（多行输入用 `Textarea`，不用 `Input` 的 `type="textarea"` 旧入口）
 - 共享组件缺能力时：**先扩展共享组件**（在 `interface Props` 加可选参数，保持向后兼容），再在 feature 中消费；禁止在 feature 内复制一份改改
 - 允许自建的例外：纯展示的局部布局容器，以及 `.icon-btn` 这类无档位的 26×26 固定尺寸图标按钮（见 [AGENTS_STYLE.md § 核心规范速查表](./AGENTS_STYLE.md#核心规范速查表)）
 
-### 3. 组件清单（22 个）
+### 3. 组件清单（23 个）
 
 | 组件 | 职责 | 关键 props |
 |------|------|-----------|
 | `Button.vue` | 按钮：颜色轴 × 外观轴、四档尺寸、图标四向、加载 | `variant` / `severity` / `outlined` / `text` / `size` / `icon` / `iconPosition` / `rounded` / `block` / `loading` / `type` / `title` / `ariaLabel` |
-| `Input.vue` | 单行/多行输入（前后缀图标、清除、密码、字数计数、无边框内嵌） | `v-model` / `type` / `size` / `prefixIcon` / `suffixIcon` / `clearable` / `borderless` / `showPassword` / `showCount` / `error` / `rows` / `autosize` |
+| `Input.vue` | 单行输入（前后缀图标、清除、密码、字数计数、无边框内嵌）；`type="textarea"` 多行模式为**兼容保留** | `v-model` / `type` / `size` / `prefixIcon` / `suffixIcon` / `clearable` / `borderless` / `showPassword` / `showCount` / `error` / `rows` / `autosize` |
+| `Textarea.vue` | 多行文本域：四档尺寸、描边/实底变体、自动增高、宽度控制与字数统计（**新代码一律用本组件**；`fluid` 默认 `true`，`autoResize` 时 `maxRows` 不传则不设上限） | `v-model` / `size` / `variant` / `fluid` / `autoResize` / `minRows` / `maxRows` / `rows` / `cols` / `resize` / `label` / `required` / `hint` / `error` / `showCount` / `maxlength` / `disabled` / `readonly` / `ariaLabel` / `ariaLabelledby` |
 | `Select.vue` | 下拉选择（可筛选、可清除、可分组；**`role="combobox"` + listbox 无障碍语义、↑↓ 移动自动滚入视野、Esc 关闭返还焦点、打开定位已选项**） | `v-model` / `options` / `size` / `filterable` / `clearable` / `placement` / `maxHeight` / `emptyText` / `ariaLabel` / `ariaLabelledby` / `clearLabel` |
 | `Listbox.vue` | 内联列表选择：单选 / 多选、复选指示（`checkbox`）与勾选指示（`checkmark`）、内置筛选、单项与整体禁用、错误态（**无分组与字段映射；键盘仅基础键；指示器为装饰元素、不复用 `Checkbox`**） | `v-model` / `options`(必填) / `multiple` / `checkbox` / `checkmark` / `highlightOnSelect` / `filter` / `filterPlaceholder` / `emptyText` / `maxHeight` / `size` / `disabled` / `error` / `label` / `required` / `hint` / `ariaLabel` |
 | `ColorField.vue` | 颜色字段：色块 + 32 色自绘调色板弹层 + hex 文本双向联动（**思源 Electron 下原生 `input[type=color]` 不弹窗，禁止用原生取色器**） | `v-model` / `placeholder` |
@@ -447,7 +448,7 @@ src/
 │   ├── iconHelper.ts       # replaceTopBarIcon / createIconElement
 │   ├── mdRenderer.ts       # parseMarkdown / convertHljsToInlineStyles — Markdown 渲染统一入口
 │   └── settingsBackup.ts   # backupPluginData / restoreFromUpload
-├── components/             # 共享组件库 22 个（Button/Input/Select/Listbox/Checkbox/RadioButton/DatePicker/ColorField/InputGroup/ConfirmDialog/Card/Chart 等）— 使用规则见「共享组件库使用规则」
+├── components/             # 共享组件库 23 个（Button/Input/Textarea/Select/Listbox/Checkbox/RadioButton/DatePicker/ColorField/InputGroup/ConfirmDialog/Card/Chart 等）— 使用规则见「共享组件库使用规则」
 ├── features/
 │   ├── statusBar/
 │   │   └── composables/
@@ -485,4 +486,4 @@ src/
 | [AGENTS_I18N.md](./AGENTS_I18N.md) | i18n 不生效问题排查、禁止 i18n 硬编码兜底值 | 处理 i18n 文案或排查翻译不生效时 |
 | [AGENTS_BUILD.md](./AGENTS_BUILD.md) | 构建与验证、viteStaticCopy stripBase、依赖清单 | 构建配置、静态资源复制、验证流程时 |
 | [docs/ai-api-usage.md](./docs/ai-api-usage.md) | 完整 AI 调用用法（标准/流式/思考模式/RAG/多轮对话 + 调用方清单） | 需要实现 AI 功能时（唯一 AI 调用参考文档） |
-| [src/features/componentPreview/README.md](./src/features/componentPreview/README.md) | 共享组件预览面板机制（22 个组件的用法快照、受控示例可交互、组件尺寸档位、`sizeable`/`resolveProps`、复合示例 `render`、弹层类沙箱覆盖、清单扩展指南） | 使用共享组件前查用法、或改共享组件 API 后同步预览清单时 |
+| [src/features/componentPreview/README.md](./src/features/componentPreview/README.md) | 共享组件预览面板机制（23 个组件的用法快照、受控示例可交互、组件尺寸档位、`sizeable`/`resolveProps`、复合示例 `render`、弹层类沙箱覆盖、清单扩展指南） | 使用共享组件前查用法、或改共享组件 API 后同步预览清单时 |

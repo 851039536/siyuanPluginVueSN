@@ -1,11 +1,11 @@
 # 组件预览（Component Preview）
 
-在思源内以独立窗口/页签形态查看共享 Codex UI 组件库（`src/components/`）全部 21 个组件的真实渲染用法快照，附可复制的示例代码，便于组件开发者查看效果、改动后快速回归验证。
+在思源内以独立窗口/页签形态查看共享 Codex UI 组件库（`src/components/`）全部 22 个组件的真实渲染用法快照，附可复制的示例代码，便于组件开发者查看效果、改动后快速回归验证。
 
 ## 功能
 
 - **双形态承载（纯官方 API）**：`plugin.addTab` 注册自定义 Tab 模型 + `openTab({custom})` 在主窗口创建页签；面板头部「在独立窗口打开」调 `openWindow({tab})` 把页签移入浮动窗口；浮动窗口内经 `isFloating`（`getFrontend() === "desktop-window"`）隐藏重复面板标题与打开按钮。
-- **全组件覆盖**：Avatar / Badge / Button / Card / Chart / Checkbox / ColorField / ConfirmDialog / DatePicker / FormField / IconWrapper / Input / InputGroup / Label / Listbox / Loader / Select / Slider / Switch / Tag 各一个分组分区（`InputGroup` 与 `InputGroupAddon` 为配套组件，共用「InputGroup」一个分区），分组内为典型 props 组合快照卡片。
+- **全组件覆盖**：Avatar / Badge / Button / Card / Chart / Checkbox / ColorField / ConfirmDialog / DatePicker / FormField / IconWrapper / Input / InputGroup / Label / Listbox / Loader / RadioButton / Select / Slider / Switch / Tag 各一个分组分区（`InputGroup` 与 `InputGroupAddon` 为配套组件，共用「InputGroup」一个分区），分组内为典型 props 组合快照卡片。
 - **示例清单驱动**：预览数据集中在 `previewData/`（一份清单），渲染层通用遍历——新增组件/新用法只需在清单追加，不改渲染框架。清单里的 `code` 模板与渲染 props 共用同一数据源，杜绝漂移。
 - **复合控件内嵌能力**：`Input` 的 `borderless` 去边框去底色（三条高特异性选择器覆盖基类 hover/focus-within），供「标签输入框」这类自定义容器把输入框内嵌其中；焦点反馈由外层容器的 `:focus-within` 承担。
 - **无缝拼接控件**：`InputGroup` + `InputGroupAddon` 把输入框、按钮、下拉、日期与附加项拼成一体化控件（组内零间距、相邻边框 1px 重叠、仅最外侧保留圆角，档位经 `--ig-addon-*` CSS 变量从容器继承）；组内按钮建议用描边外观（`outlined` / `variant="secondary"`），填充态按钮边框为透明，拼接处会呈现实色块；示例默认插槽需渲染多个子组件，故由 `PreviewExample.render` 组装（见下方「清单扩展指南」）。
@@ -13,10 +13,11 @@
 - **内联列表选择**：`Listbox` 在页面上平铺选项列表（与下拉形态的 `Select` 互补），支持单选 / 多选（`multiple`，多选时 `v-model` 为数组）、复选指示（`checkbox`，每项常驻方框）与勾选指示（`checkmark`，配 `highlightOnSelect: false` 可做到「仅勾选、不高亮整行」）、内置筛选（复用 `Input`，按 `label` 与 `keywords` 双字段匹配）、单项禁用（`option.disabled`）、整体禁用与 `error` 校验态；无数据与筛选无结果共用 `emptyText`。⚠️ 键盘范围**只含基础键**（Tab / ↑↓ / Enter / Space / Home / End），不做 Shift/Ctrl 组合键、字符定位与虚拟滚动，也不做选项分组与字段映射。指示器是**纯装饰元素**（`role="option"` 内不得嵌套可交互元素，故刻意不复用 `Checkbox`；勾选图标复用 `IconWrapper`）。
 - **代码复制**：每个示例卡片对应一段可复制的 Vue 用法代码（`copyToClipboard` + 已复制反馈）。
 - **导航与检索**：左侧锚点导航（按组件分区跳转）+ 组件名搜索过滤，兼容超长内容滚动。
-- **组件尺寸档位**：头部 XS / S / M / L 四档切换，作用于所有支持 `size` 的组件（`PreviewGroup.sizeable` 标记的 Button / Input / InputGroup / FormField / Label / Select / Listbox / Switch / Checkbox / DatePicker / Slider / Tag / Badge / Avatar / Card / ConfirmDialog）——渲染时向**未显式指定 `size`** 的示例注入全局档位；显式指定 `size` 的示例（尺寸对比用例）保持原样，避免标题与实际渲染不符。选择经 `TypedStorage` 持久化。
-  - 四档字号阶梯为 **10 / 12 / 14 / 16px**（`$font-size-2xs` / `$font-size-xs` / `$font-size-sm` / `$font-size-base`），切档后文字大小可辨；Card 标题四档同步为 10/12/14/16、副标题为 10/10/12/14，Switch 标签随档位变化，Checkbox 标签随档位变化（方框与指示器图标同步为 14/16/18/20px 与 10/12/14/16px），DatePicker 的输入框与日历单元格字号同阶变化（单元格边长 22/24/28/32px），Select 的 XS 档下拉内部（筛选框/空态/分组标题）一并降为 10px。规则见 `AGENTS_STYLE.md` § 组件 size 档位字号阶梯。
+- **组件尺寸档位**：头部 XS / S / M / L 四档切换，作用于所有支持 `size` 的组件（`PreviewGroup.sizeable` 标记的 Button / Input / InputGroup / FormField / Label / Select / Listbox / Switch / Checkbox / RadioButton / DatePicker / Slider / Tag / Badge / Avatar / Card / ConfirmDialog）——渲染时向**未显式指定 `size`** 的示例注入全局档位；显式指定 `size` 的示例（尺寸对比用例）保持原样，避免标题与实际渲染不符。选择经 `TypedStorage` 持久化。
+  - 四档字号阶梯为 **10 / 12 / 14 / 16px**（`$font-size-2xs` / `$font-size-xs` / `$font-size-sm` / `$font-size-base`），切档后文字大小可辨；Card 标题四档同步为 10/12/14/16、副标题为 10/10/12/14，Switch 标签随档位变化，Checkbox 标签随档位变化（方框与指示器图标同步为 14/16/18/20px 与 10/12/14/16px），RadioButton 标签随档位变化（圆框同步为 14/16/18/20px，内部圆点按 50% 等比），DatePicker 的输入框与日历单元格字号同阶变化（单元格边长 22/24/28/32px），Select 的 XS 档下拉内部（筛选框/空态/分组标题）一并降为 10px。规则见 `AGENTS_STYLE.md` § 组件 size 档位字号阶梯。
   - 注：Chart（`size` 为预设像素宽高，大档会撑破卡片）、IconWrapper（`size` 为像素数）、Loader（无 props）不参与档位切换；图标尺寸不随档位缩放。
 - **明暗适配**：不自行造主题——面板与组件全部消费思源 `--b3-theme-*` 变量，明暗随思源主题自动切换（Chart 经自身 `theme: "auto"` 同样跟随）。
+- **单选组的快照局限**：`RadioButton` 是「多实例互相约束」的组件（同组共享同一个 `v-model` 与 `name`，各实例 `value` 不同），单卡片快照只能呈现一个实例，因此分区内快照用于确认外观与状态；组用法见 `previewData/radioButton.ts` 中「单选组（同 v-model + 同 name）」示例的 `code` 模板。
 
 ## 承载与生命周期
 

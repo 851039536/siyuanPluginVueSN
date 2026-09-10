@@ -1,0 +1,155 @@
+// ========== RadioButton.scss ==========
+@use './_mixins.scss' as m;
+@use '@/variables.scss' as *;
+
+.si-radiobutton {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-family: $font-zh;
+  vertical-align: middle;
+
+  // 控件行（圆框 + 标签），整行可点击
+  &__control {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: $spacing-2; // 8px
+    cursor: pointer;
+    user-select: none;
+
+    &--label-before {
+      flex-direction: row-reverse;
+    }
+
+    .si-radiobutton--xsmall & {
+      gap: m.$gap-xs; // 6px
+    }
+
+    .si-radiobutton--disabled & {
+      cursor: not-allowed;
+    }
+
+    .si-radiobutton--readonly & {
+      cursor: default;
+    }
+  }
+
+  // 视觉隐藏的原生 radio — 承载表单语义、单选组键盘行为与 ARIA 语义
+  &__input {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1px; // 无对应 Token
+    height: 1px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  // 可视圆框
+  &__box {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: transparent;
+    border: 1px solid var(--b3-border-color, $color-border);
+    border-radius: $radius-full;
+    transition: background-color 0.12s ease, border-color 0.12s ease;
+
+    // 尺寸档位（圆框 14 / 16 / 18 / 20）
+    .si-radiobutton--xsmall & {
+      width: 14px; // 无对应 Token
+      height: 14px;
+    }
+
+    .si-radiobutton--small & {
+      width: $spacing-4; // 16px
+      height: $spacing-4;
+    }
+
+    .si-radiobutton--medium & {
+      width: 18px; // 无对应 Token
+      height: 18px;
+    }
+
+    .si-radiobutton--large & {
+      width: $spacing-5; // 20px
+      height: $spacing-5;
+    }
+
+    // 实底变体：未选中时以浅表面填充，强调度高于描边态
+    .si-radiobutton--filled & {
+      background: var(--b3-theme-surface-lighter, $color-surface);
+      border-color: transparent;
+    }
+
+    // 选中：主题主色填充
+    .si-radiobutton--checked & {
+      background: var(--b3-theme-primary, $color-danger);
+      border-color: var(--b3-theme-primary, $color-danger);
+    }
+
+    // 悬停强调（仅未选中时改描边，避免覆盖选中填充）
+    .si-radiobutton:not(.si-radiobutton--checked) .si-radiobutton__control:hover & {
+      border-color: var(--b3-theme-primary, $color-danger);
+    }
+
+    // 校验失败态
+    .si-radiobutton--error & {
+      border-color: var(--b3-theme-error, $color-danger);
+    }
+  }
+
+  // 选中圆点：纯 CSS 实心圆，随圆框等比（50%），选中时放大淡入
+  &__dot {
+    width: 50%;
+    height: 50%;
+    border-radius: $radius-full;
+    background: var(--b3-theme-on-primary, $color-bg);
+    transform: scale(0);
+    transition: transform 0.12s ease;
+
+    .si-radiobutton--checked & {
+      transform: scale(1);
+    }
+  }
+
+  // 行内标签（字号随档位变化：10 / 12 / 14 / 16，与其它组件的 XS/S/M/L 阶梯一致）
+  &__label {
+    color: var(--b3-theme-on-background, $color-fg);
+    line-height: $line-height-normal;
+    font-size: $font-size-xs; // 兜底值（等同 S 档）
+
+    .si-radiobutton--xsmall & {
+      font-size: $font-size-2xs; // XS 档：10px
+    }
+
+    .si-radiobutton--small & {
+      font-size: $font-size-xs; // S 档：12px
+    }
+
+    .si-radiobutton--medium & {
+      font-size: $font-size-sm; // M 档：14px
+    }
+
+    .si-radiobutton--large & {
+      font-size: $font-size-base; // L 档：16px
+    }
+  }
+
+  // 禁用：整体降透明度
+  &--disabled {
+    opacity: m.$opacity-disabled;
+  }
+
+  // 焦点环用 outline —— focus-ring mixin 只改 border-color，实底圆框上不可见
+  &__input:focus-visible + &__box {
+    outline: 2px solid var(--b3-theme-primary, $color-danger);
+    outline-offset: 2px;
+  }
+}

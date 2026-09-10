@@ -157,7 +157,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 ## 共享组件库使用规则（强制）
 
-`src/components/` 是**全项目唯一的 UI 控件来源**（21 个组件）。三条强制要求：**先查用法 → 优先复用 → 改 API 必同步**。
+`src/components/` 是**全项目唯一的 UI 控件来源**（22 个组件）。三条强制要求：**先查用法 → 优先复用 → 改 API 必同步**。
 
 ### 1. 先查用法，禁止猜 props
 
@@ -165,7 +165,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 | 查询方式 | 位置 | 说明 |
 |---------|------|------|
-| **组件预览面板（推荐）** | 命令面板搜「组件预览」/ 状态栏功能列表 | 21 个组件的**真实渲染**快照 + 可复制代码；改完组件样式可直接目视回归 |
+| **组件预览面板（推荐）** | 命令面板搜「组件预览」/ 状态栏功能列表 | 22 个组件的**真实渲染**快照 + 可复制代码；改完组件样式可直接目视回归 |
 | 用法清单（源码） | `src/features/componentPreview/previewData/*.ts` | `props` 与 `code` 同源，是 props 的权威示例 |
 | 组件源码 | `src/components/<Name>.vue` 的 `interface Props` | 最终事实来源（含 JSDoc 注释） |
 
@@ -174,11 +174,11 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 ### 2. 优先复用，禁止在 feature 内自建同类控件
 
-- 需要按钮 / 输入框 / 下拉 / 列表选择 / 开关 / 复选框 / 日期选择 / 滑块 / 标签 / 徽标 / 头像 / 卡片 / 图表 / 图标 / 加载态 / 颜色字段 / 输入框组合器 / 确认对话框时，**必须**使用共享组件
+- 需要按钮 / 输入框 / 下拉 / 列表选择 / 开关 / 复选框 / 单选框 / 日期选择 / 滑块 / 标签 / 徽标 / 头像 / 卡片 / 图表 / 图标 / 加载态 / 颜色字段 / 输入框组合器 / 确认对话框时，**必须**使用共享组件
 - 共享组件缺能力时：**先扩展共享组件**（在 `interface Props` 加可选参数，保持向后兼容），再在 feature 中消费；禁止在 feature 内复制一份改改
 - 允许自建的例外：纯展示的局部布局容器，以及 `.icon-btn` 这类无档位的 26×26 固定尺寸图标按钮（见 [AGENTS_STYLE.md § 核心规范速查表](./AGENTS_STYLE.md#核心规范速查表)）
 
-### 3. 组件清单（21 个）
+### 3. 组件清单（22 个）
 
 | 组件 | 职责 | 关键 props |
 |------|------|-----------|
@@ -193,6 +193,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 | `Label.vue` | 表单标签文本（可带图标、必填星号）；**包裹控件建立隐式关联（`wrapper`）**；禁用态三入口（`disabled` / 容器 `data-disabled` / 邻近被禁用兄弟控件）；必填附无障碍替代文本 | `size` / `variant` / `state` / `icon` / `iconPosition` / `tag` / `for` / `width` / `align` / `disabled` / `wrapper` / `requiredText` |
 | `Switch.vue` | 开关 | `v-model` / `label` / `size` / `loading` / `labelBefore` / `activeColor` |
 | `Checkbox.vue` | 复选框（二元 / 数组分组多选 / 半选，描边与实底变体） | `v-model` / `value` / `trueValue` / `falseValue` / `binary` / `indeterminate` / `size` / `variant` / `label` / `hint` / `error` / `disabled` / `readonly` / `labelBefore` |
+| `RadioButton.vue` | 单选框（单选组 / 二值模式，描边与实底变体；**同组必须传同一个 `name`，方向键与 ARIA 语义依赖原生单选组**） | `v-model` / `value` / `binary` / `size` / `variant` / `label` / `hint` / `error` / `disabled` / `readonly` / `name` / `inputId` / `labelBefore` |
 | `DatePicker.vue` | 日期选择器（单选 / 区间、日-月-年三视图、`dateFormat` 模板、范围与禁用日期） | `v-model` / `selectionMode` / `view` / `dateFormat` / `valueFormat` / `minDate` / `maxDate` / `disabledDates` / `disabledDays` / `firstDayOfWeek` / `showClear` / `showButtonBar` / `manualInput` / `size` / `label` / `hint` / `error` / `disabled` / `readonly` |
 | `Slider.vue` | 滑块（可显示数值与最小最大） | `v-model` / `size` / `min` / `max` / `step` / `showValue` / `showMinMax` / `formatValue` |
 | `Tag.vue` | 标签（可关闭、可自定义三色） | `size` / `variant` / `shape` / `icon` / `closable` / `color` / `textColor` / `borderColor` |
@@ -446,7 +447,7 @@ src/
 │   ├── iconHelper.ts       # replaceTopBarIcon / createIconElement
 │   ├── mdRenderer.ts       # parseMarkdown / convertHljsToInlineStyles — Markdown 渲染统一入口
 │   └── settingsBackup.ts   # backupPluginData / restoreFromUpload
-├── components/             # 共享组件库 21 个（Button/Input/Select/Listbox/Checkbox/DatePicker/ColorField/InputGroup/ConfirmDialog/Card/Chart 等）— 使用规则见「共享组件库使用规则」
+├── components/             # 共享组件库 22 个（Button/Input/Select/Listbox/Checkbox/RadioButton/DatePicker/ColorField/InputGroup/ConfirmDialog/Card/Chart 等）— 使用规则见「共享组件库使用规则」
 ├── features/
 │   ├── statusBar/
 │   │   └── composables/
@@ -484,4 +485,4 @@ src/
 | [AGENTS_I18N.md](./AGENTS_I18N.md) | i18n 不生效问题排查、禁止 i18n 硬编码兜底值 | 处理 i18n 文案或排查翻译不生效时 |
 | [AGENTS_BUILD.md](./AGENTS_BUILD.md) | 构建与验证、viteStaticCopy stripBase、依赖清单 | 构建配置、静态资源复制、验证流程时 |
 | [docs/ai-api-usage.md](./docs/ai-api-usage.md) | 完整 AI 调用用法（标准/流式/思考模式/RAG/多轮对话 + 调用方清单） | 需要实现 AI 功能时（唯一 AI 调用参考文档） |
-| [src/features/componentPreview/README.md](./src/features/componentPreview/README.md) | 共享组件预览面板机制（21 个组件的用法快照、组件尺寸档位、`sizeable`/`resolveProps`、复合示例 `render`、弹层类沙箱覆盖、清单扩展指南） | 使用共享组件前查用法、或改共享组件 API 后同步预览清单时 |
+| [src/features/componentPreview/README.md](./src/features/componentPreview/README.md) | 共享组件预览面板机制（22 个组件的用法快照、组件尺寸档位、`sizeable`/`resolveProps`、复合示例 `render`、弹层类沙箱覆盖、清单扩展指南） | 使用共享组件前查用法、或改共享组件 API 后同步预览清单时 |

@@ -1,0 +1,127 @@
+// ========== InputGroup.scss ==========
+// 输入框组合器：横向无缝拼接容器（成员零间距、相邻边框 1px 重叠、仅最外侧保留圆角）
+// 档位变量 --ig-addon-* 在本文件根类输出，由 InputGroupAddon 经 CSS 继承消费
+//
+// ⚠ 所有命中「成员」的选择器必须走 :deep()：组内成员是调用方传入的插槽内容，
+// 其元素带的是**调用方**的 scope 属性（插槽内容归调用方所有，接收方得不到），
+// 若写成 `.si-input-group > .si-input` 会被编译为 `.si-input-group[data-v-x] > .si-input[data-v-x]` 而永不匹配。
+// 保留 `>` 前缀可把匹配范围限制为直接子元素（成员根），成员**内部**的边框承载元素用后代形式（更耐受成员内部结构变化）。
+@use './_mixins.scss' as m;
+@use '@/variables.scss' as *;
+
+// 四角圆角工具（组内仅最外侧保留圆角）
+@mixin ig-radius($tl, $tr, $br, $bl) {
+  border-top-left-radius: $tl;
+  border-top-right-radius: $tr;
+  border-bottom-right-radius: $br;
+  border-bottom-left-radius: $bl;
+}
+
+.si-input-group {
+  // 附加项档位变量默认值（等同 S 档，被下方档位类覆盖）
+  --ig-addon-pad-y: #{$spacing-2px};
+  --ig-addon-pad-x: #{m.$gap-xs};
+  --ig-addon-font: #{$font-size-xs};
+  --ig-addon-min-h: 28px; // 无对应 Token
+
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  font-family: $font-zh;
+
+  // ===== 尺寸档位（内边距 / 字号 / 最小高度与 Input 同档一致） =====
+  &--xsmall {
+    --ig-addon-pad-y: #{$spacing-2px};
+    --ig-addon-pad-x: #{m.$gap-xs};
+    --ig-addon-font: #{$font-size-2xs};
+    --ig-addon-min-h: 22px; // 无对应 Token
+  }
+
+  &--small {
+    --ig-addon-pad-y: #{$spacing-2px};
+    --ig-addon-pad-x: #{m.$gap-xs};
+    --ig-addon-font: #{$font-size-xs};
+    --ig-addon-min-h: 28px; // 无对应 Token
+  }
+
+  &--medium {
+    --ig-addon-pad-y: #{m.$gap-xs};
+    --ig-addon-pad-x: #{m.$spacing-2_5};
+    --ig-addon-font: #{$font-size-sm};
+    --ig-addon-min-h: 36px;
+  }
+
+  &--large {
+    --ig-addon-pad-y: #{m.$spacing-2_5};
+    --ig-addon-pad-x: 14px; // 无对应 Token
+    --ig-addon-font: #{$font-size-base};
+    --ig-addon-min-h: 44px;
+  }
+
+  // ===== 成员伸缩：输入类成员吃掉剩余宽度，其余按内容宽度紧贴 =====
+  // Input / DatePicker 自带 width:100%，靠 flex-basis:0 压制（否则会撑破容器）
+  > :deep(.si-input),
+  > :deep(.si-datepicker) {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  > :deep(.si-select) {
+    flex: 0 1 auto;
+    min-width: 6rem; // 保证下拉触发器有可读宽度，无对应 Token
+  }
+
+  > :deep(.si-button),
+  > :deep(.si-input-group-addon) {
+    flex: 0 0 auto;
+  }
+
+  // 统一建立定位上下文，供 hover / 聚焦时的层级抬升生效
+  > :deep(*) {
+    position: relative;
+  }
+
+  // ===== 边框承载元素归一：圆角归零 + 撑满组高（成员边框多在内部元素上） =====
+  :deep(.si-input__wrapper),
+  :deep(.si-select__trigger),
+  :deep(.si-datepicker__wrapper),
+  > :deep(.si-button),
+  > :deep(.si-input-group-addon) {
+    border-radius: 0;
+    height: 100%;
+  }
+
+  // ===== 相邻边框合并：与前一成员重叠 1px，消除双线 =====
+  > :deep(* + *) {
+    margin-left: -1px; // 无对应 Token
+  }
+
+  // ===== 仅最外侧保留圆角（单成员时首末规则同时命中，四角均为 $vp-radius） =====
+  > :deep(:first-child.si-button),
+  > :deep(:first-child.si-input-group-addon),
+  > :deep(:first-child .si-input__wrapper),
+  > :deep(:first-child .si-select__trigger),
+  > :deep(:first-child .si-datepicker__wrapper) {
+    @include ig-radius($vp-radius, 0, 0, $vp-radius);
+  }
+
+  > :deep(:last-child.si-button),
+  > :deep(:last-child.si-input-group-addon),
+  > :deep(:last-child .si-input__wrapper),
+  > :deep(:last-child .si-select__trigger),
+  > :deep(:last-child .si-datepicker__wrapper) {
+    @include ig-radius(0, $vp-radius, $vp-radius, 0);
+  }
+
+  // ===== 交互反馈：hover / 聚焦成员抬升层级，避免边框被相邻负边距遮住 =====
+  > :deep(*:hover),
+  > :deep(*:focus-within) {
+    z-index: 1;
+  }
+
+  // ===== 焦点环收边：避免 outline 压到相邻成员（不改动成员自身样式） =====
+  > :deep(.si-button:focus-visible),
+  :deep(.si-datepicker__wrapper:focus-within) {
+    outline-offset: -1px;
+  }
+}

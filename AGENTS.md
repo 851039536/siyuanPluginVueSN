@@ -195,7 +195,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 | `Checkbox.vue` | 复选框（二元 / 数组分组多选 / 半选，描边与实底变体） | `v-model` / `value` / `trueValue` / `falseValue` / `binary` / `indeterminate` / `size` / `variant` / `label` / `hint` / `error` / `disabled` / `readonly` / `labelBefore` |
 | `RadioButton.vue` | 单选框（单选组 / 二值模式，描边与实底变体；**同组必须传同一个 `name`，方向键与 ARIA 语义依赖原生单选组**） | `v-model` / `value` / `binary` / `size` / `variant` / `label` / `hint` / `error` / `disabled` / `readonly` / `name` / `inputId` / `labelBefore` |
 | `DatePicker.vue` | 日期选择器（单选 / 区间、日-月-年三视图、`dateFormat` 模板、范围与禁用日期） | `v-model` / `selectionMode` / `view` / `dateFormat` / `valueFormat` / `minDate` / `maxDate` / `disabledDates` / `disabledDays` / `firstDayOfWeek` / `showClear` / `showButtonBar` / `manualInput` / `size` / `label` / `hint` / `error` / `disabled` / `readonly` |
-| `Slider.vue` | 滑块（可显示数值与最小最大） | `v-model` / `size` / `min` / `max` / `step` / `showValue` / `showMinMax` / `formatValue` |
+| `Slider.vue` | 滑块（原生 `input[type=range]`；可显示当前值与极值，支持只读） | `v-model` / `size` / `min` / `max` / `step` / `showValue` / `showMinMax` / `formatValue` / `disabled` / `readonly` / `label` / `hint` / `error` |
 | `Tag.vue` | 标签（可关闭、可自定义三色） | `size` / `variant` / `shape` / `icon` / `closable` / `color` / `textColor` / `borderColor` |
 | `Badge.vue` | 徽标/角标（圆点、四角定位、上限折叠） | `content` / `dot` / `size` / `variant` / `position` / `max` / `offset` / `hidden` |
 | `Avatar.vue` | 头像（图片/文字/图标，5 档尺寸含 `xlarge`） | `src` / `text` / `icon` / `size` / `shape` / `customSize` / `clickable` |
@@ -485,4 +485,4 @@ src/
 | [AGENTS_I18N.md](./AGENTS_I18N.md) | i18n 不生效问题排查、禁止 i18n 硬编码兜底值 | 处理 i18n 文案或排查翻译不生效时 |
 | [AGENTS_BUILD.md](./AGENTS_BUILD.md) | 构建与验证、viteStaticCopy stripBase、依赖清单 | 构建配置、静态资源复制、验证流程时 |
 | [docs/ai-api-usage.md](./docs/ai-api-usage.md) | 完整 AI 调用用法（标准/流式/思考模式/RAG/多轮对话 + 调用方清单） | 需要实现 AI 功能时（唯一 AI 调用参考文档） |
-| [src/features/componentPreview/README.md](./src/features/componentPreview/README.md) | 共享组件预览面板机制（22 个组件的用法快照、组件尺寸档位、`sizeable`/`resolveProps`、复合示例 `render`、弹层类沙箱覆盖、清单扩展指南） | 使用共享组件前查用法、或改共享组件 API 后同步预览清单时 |
+| [src/features/componentPreview/README.md](./src/features/componentPreview/README.md) | 共享组件预览面板机制（22 个组件的用法快照、受控示例可交互、组件尺寸档位、`sizeable`/`resolveProps`、复合示例 `render`、弹层类沙箱覆盖、清单扩展指南） | 使用共享组件前查用法、或改共享组件 API 后同步预览清单时 |

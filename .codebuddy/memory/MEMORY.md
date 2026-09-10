@@ -3,6 +3,12 @@
 > 最后整理：2026-09-10（去重压缩；共享组件库 22 个）
 > 说明：编码规范正文见随项目上下文自动加载的 `AGENTS*.md`，此处只记**不在规范文档里的经验与陷阱**。
 
+## 环境（本机 pnpm 12）
+- 启用了**构建脚本白名单**：`pnpm-workspace.yaml` 的 `allowBuilds`（`@parcel/watcher` / `esbuild` / `vue-demi` = `true`）。若 install 报 `ERR_PNPM_IGNORED_BUILDS`，先看这个文件 —— pnpm 会**自动生成占位内容**（`set this to true or false`）导致 install 以报错收尾。`vue-demi` 的脚本必须允许（切换 Vue 2/3 入口）；`esbuild` / `@parcel/watcher` 靠 optional 平台包即可工作
+- **依赖包损坏的诊断**（`pnpm dev` 报 `Cannot find module 'xxx'` 时）：扫 `.pnpm/*/node_modules/<pkg>` 是否缺 `package.json`，一次拿到全量损坏清单与「单点/面性」判断
+- **修复一律走 pnpm 自身命令**（如 `pnpm install --force`）：`.pnpm/<pkg>/node_modules/<dep>` 多为 junction，手删目录有「跟随 junction 删掉目标真包」的风险
+- `pnpm dev` 是 `vite build --watch`，属禁止 AI 执行项（见「硬性边界」）
+
 ## 硬性边界
 - **禁止私自执行** `pnpm vite build` / `pnpm lint`（用户自行验证）；其他 C# 项目禁止 `dotnet build`。可执行：`read_lints`、`npx tsc --noEmit`、`pnpm i18n:merge`
 - 统一入口清单见 `AGENTS.md`；新功能 8 处注册；i18n 只改分片（顶层 JSON 由 merge 生成）
@@ -29,9 +35,11 @@
 - `ColorField`：**原生 `<input type="color">` 在思源 Electron 中不弹取色器**，颜色选择一律用它；全项目仍有 8 个文件遗留原生实现待替换。事件 `update:modelValue`（实时）+ `change`（提交）
 - `Listbox`：**指示器自绘、不复用 `Checkbox`**（`role="option"` 内不得嵌套可交互元素，`Checkbox` 是 `<label>` + 原生 input 会双重语义且双触发），仅勾选图标复用 `IconWrapper`；键盘**只做基础键**（`aria-activedescendant` + 容器 tabindex），不做组合键/字符定位/虚拟滚动/分组与字段映射；校验态按项目约定用 `error`（非 `invalid`）
 - `InputGroup` + `InputGroupAddon`：成员边框**不在根元素**上（`Input` 在 `__wrapper`、`Select` 在 `__trigger`、`DatePicker` 在 `__wrapper`、`Button`/`Addon` 在根）→ 命中成员必须 `> :deep(.si-input)` / `:deep(.si-input__wrapper)`；`margin-left: -1px` 合并边框 + hover/focus-within 抬 `z-index:1`；档位经 `--ig-addon-*` CSS 变量跨组件继承（Sass 中 CSS 变量值必须插值 `#{$var}`）；Input/DatePicker 组内 `flex: 1 1 0` 压制自带 `width:100%`；**容器禁设 `overflow:hidden`**（会裁 Select 下拉）；成员不得带 label/hint/error
+- `Slider`（2026-09-10 修 5 项缺陷）：原生 `input[type=range]`，键盘与 `role="slider"` + `aria-valuemin|max|now` 全由浏览器提供（**不要自实现**）。①`readonly` 原生不支持 → `handleInput`/`handleChange` 守卫 + `syncNativeValue()` **同步回滚**（`modelValue` 未变时 Vue 不会重 patch `value`，必须自行写回）+ `handleKeydown` 拦 8 个改值键（**Tab 放行**）+ `aria-readonly`；②`showMinMax` 排在**轨道下方两侧**（`__field-column` 列容器使极值与轨道等宽），与 `showValue` 共用 `formatValue`；③档位尺寸经 `--si-slider-track-h`/`--si-slider-thumb-size` 单点驱动 4 个伪元素（原来 track 伪元素写死 6px → 档位对轨道完全无效），**必须带 fallback** 以防伪元素不继承时拇指消失；④`.si-slider__field` 在列布局中**不能有 `flex: 1`**（会纵向拉伸），改由 `__field-column` 承担；⑤**Chromium 的 `::-webkit-slider-thumb` 默认与轨道「顶」对齐**（不是垂直居中）→ 必须补 `margin-top: calc((轨道高 - 拇指高) / 2)`，否则拇指整体垂到轨道下方，视觉重心偏下、看着像「没居中」；Firefox 的 `::-moz-range-thumb` 由浏览器自动居中，**不要**给它加 margin；⑥**轨道色必须取 `--b3-border-color`**（浅色 `#e0deda`）—— 原用 `--b3-theme-surface`（`#f7f7f5`）在面板底色 `--b3-theme-background`（`#ffffff`）上仅差 ~3% 灰度、肉眼等同不可见（用户报「看不到横线，只看得到圆形的」）；⑥`.si-slider` 焦点环的 fallback `rgba(hsl(...), 0.2)` 是**非法 CSS**（变量缺失时整条丢弃），但该变量由 `themeColor` 运行时写入、全项目 60+ 处同写法 → 已知潜在问题，勿单独"修正"
 - `FormField`：新增可选 `labelId`（`:id` 打在 `.si-form-field__label` 上，供控件 `aria-labelledby` 关联；不传输出不变）。**它是多根组件（label → 默认插槽 → hint → 计数）→ 控件必须放进默认插槽**，写成自闭合 sibling 会让 hint 排到控件上方
 - `Label`：**禁用态邻近兜底 `:has(+ :disabled)` 只命中「禁用态在根元素上」的成员**（原生 `button[disabled]`、原生 `input`）；`Input`/`Select`/`DatePicker` 须包装层显式加 `data-disabled`。`variant` 仅在 `--inline`（`tag !== "label"`）下可见；**不得加 `inheritAttrs:false`**
-- **错误色 Token 陷阱**：`--b3-theme-destructive` **从未定义**（只有 `--b3-theme-error`）→ 写它恒走 fallback 且暗色偏暗。已修 `Label.scss`；**残留 6 处**：`Tag.scss`(3) / `Slider.scss`(2) / `Badge.scss`(1)
+- **相邻色陷阱（面板/卡片对）**：`--b3-theme-surface` 与 `--b3-theme-background` 是「卡片 / 面板」这一对相邻色，**不能用来画需要与面板区分开的细线** —— 浅色下 `#f7f7f5` vs `#ffffff` 仅差 ~3% 灰度，等同不可见（`Slider` 轨道曾因此「看不到横线」，已改 `--b3-border-color` = 浅色 `#e0deda` / 暗色 `#3a3a3c`，语义即凹槽/分隔）。同类偏弱：`--b3-theme-surface-lighter`（`Switch` 轨道）
+- **错误色 Token 陷阱**：`--b3-theme-destructive` **从未定义**（只有 `--b3-theme-error`）→ 写它恒走 fallback 且暗色偏暗。已修 `Label.scss` + `Slider.scss`；**残留 4 处**：`Tag.scss`(3) / `Badge.scss`(1)
 - `Select`（2026-09-10 ARIA + 键盘改造）：`#selected` / `#option` 作用域插槽 + `SelectOption.keywords`；`@update:model-value` 载荷 `string|number|boolean|null`；`containerAttrs` 剥离 `class`/`style`（预览不能靠 props 控宽）。ARIA：trigger `role="combobox"`、面板 `role="listbox"`、选项 `role="option"`（`aria-selected`/`aria-disabled`）、分组 `role="group"` + `aria-labelledby` 指向可见分组标题；**列表容器恒常渲染**（空态是其子节点，否则 `aria-controls` 悬空）；**筛选框必须常驻**（原条件含 `filteredOptions.length > 0` → 输入不匹配字符即卸载输入框且焦点掉 body）。键盘：单一 `activeIndex`（渲染顺序 = 导航顺序 = DOM 顺序）驱动高亮 + `aria-activedescendant` + `scrollIntoView`；打开定位已选项（无则 ↓ 首项 / ↑ 末项）；`closeDropdown({ restoreFocus })` 仅 Esc 与键盘选中传 true（外部点击/Tab/鼠标选中须 false，否则抢焦点）；**筛选框按键须单独处理**（复用主处理器会 `preventDefault` 掉 `Space` → 打不出空格）。私有实现目录 `src/components/select/`（types/导航/工具/2 composable，禁止 feature 直接导入；`SelectOption`/`SelectGroupOption` 有 24 个文件从 `@/components/Select.vue` 导入 → **导出路径不可变**）
 - `Loader` 无 props 且 `height:100%`（父容器必须给显式高度）；`Chart.vue` 仅 line/bar/pie/doughnut/area（无 radar）
 - `Input.borderless`：去边框去底色，供 chips 类复合控件内嵌，焦点反馈由外层 `:focus-within` 承担
@@ -54,17 +62,13 @@
 - `read_lints` 偶有陈旧诊断（行号不随编辑移动）：须读出对应代码核对，不要一律当陈旧忽略（曾漏掉真实少传参数 bug）
 - 组件 props 中的 plugin 类型：思源 `Plugin` 基类无 `settings`，项目先例 `import type PluginSample from "@/index"`（`import type` 被擦除，无运行时循环）
 
-## 功能模块状态（摘要）
-- **gitPush**：多本地路径（`resolveValidPath`）、历史重写 fast-import 化（`cat-file --batch` + 临时 ref + CAS 切回）；提交规则 14 条，配置经 `DEFAULT_COMMIT_RULE_CONFIG` / `readCommitRuleConfig(prefs)` 单一入口
-- **S3 备份**：直接上传（无 zip）+ 状态栏集成；第五个「增量」Tab（实验性）；`instance.ts` 断循环依赖
-- **componentPreview**：addTab + openWindow 双形态；`types/size.ts` + `usePreviewSize`（key `component-preview-size`）；`sizeable` + `resolveProps` 只注入未显式指定 size 的示例；无默认快捷键（⌃⌥V 已被 video 占用）
-- **toolCollection**：底部面板 + Tab 切换，首个工具 base64Image（已转 `_ConfigOnly`）
-- **dataSnapshot**：控件全量换共享组件；`index.vue` 228 行 + 3 个子组件 + `types/i18n.ts`；API 层走 `requestOrThrow`
-- **aiContentGenerator**：共享组件合规完成（内联 svg 30→0、原生 button 13→1 例外）；`ReviewRadarChart` 未迁移（Chart 无 radar）
-- **bookmarkMarker**：原生控件 29→0；`RuleItem.vue` 422→202 行（拆 `ruleItem/{TagInputField,IconSelectField,ModeGroupField}.vue`）；数据流 `patch`/`commit`/`remove`；i18n 扁平 34 键
+## 功能模块状态（摘要，只留仍可执行的事实）
+- **待迁移清单（已确认、尚未动）**：`ConfirmDialog` 的三处本地实现（`s3FileManager` / `gitPush` / `shortcut`）；`ReviewRadarChart` 未迁到 `Chart`（Chart 无 radar 控制器）；feature 内原生 radio 5 处（`video/CompressDialog`、`wordQuery/WordQueryPanel`、`gitPush` 的 `SettingsDialog`/`CommitFixDialog`/`BatchFixDialog`）
+- **gitPush**：多本地路径（`resolveValidPath`）；历史重写 fast-import 化；提交规则 14 条经 `DEFAULT_COMMIT_RULE_CONFIG` / `readCommitRuleConfig(prefs)` 单一入口
+- **componentPreview**：addTab + openWindow 双形态；`usePreviewSize`（key `component-preview-size`）；`sizeable` + `resolveProps` 只注入未显式指定 size 的示例；**受控示例在预览中可交互**（2026-09-10 起）：`PreviewSection.vue` 的内联 `PreviewStage` 持有本地 `modelValue` 并回写 `update:modelValue`，其余 props 每次渲染重解析（切档位即时生效且不覆盖用户已改的值）。两个关键约束：①`isControlledComponent()` 用 `component.props` 判断组件是否声明了 `modelValue`，**未声明则一个额外属性都不注入**（否则落进 attrs 会让多根组件如 `FormField` 报 extraneous attrs 警告）；②`hasSlot` prop 控制是否转发默认插槽，**无插槽内容时必须为 false**（否则 `$slots.default` 恒真，会改变 `Button.isIconOnly`、`Checkbox`/`Switch` 的 `label || $slots.default`、`RadioButton` 多渲染空 label 撑出 gap 等分支）。`render` 复合示例内部的子组件仍是静态 props；无默认快捷键（⌃⌥V 被 video 占用）
 - **compactMode**：3 档密度 + 6 档字号 + 5 区域开关；`ALL_*` 常量单一来源；`applyCompactMode` 先复位再置位（幂等）
-- **statistics**：分布 Tab 单列纵向流；`BLOCK_TYPE_LABELS` 仍被 baseStats 使用勿删
-- **skillLearning**：代码片段练习库 + 闪卡记忆
+- **statistics**：`BLOCK_TYPE_LABELS` 仍被 `baseStats` 使用，勿删
+- 其余模块（S3 备份 / toolCollection / dataSnapshot / aiContentGenerator / bookmarkMarker / skillLearning）的实现细节见各自 `src/features/<name>/README.md` 与当日日志，不在此重复
 
 ## 禁止事项
 - 禁止执行 `pnpm vite build` / `pnpm lint`；禁止 `dotnet build`

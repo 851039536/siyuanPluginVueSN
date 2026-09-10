@@ -31,6 +31,9 @@ import {
   inputGroupPreviewGroups,
 } from "./inputGroup"
 import {
+  listboxPreviewGroups,
+} from "./listbox"
+import {
   tagAvatarPreviewGroups,
 } from "./tagAvatar"
 
@@ -40,6 +43,7 @@ export const PREVIEW_GROUPS: PreviewGroup[] = [
   ...inputPreviewGroups,
   ...inputGroupPreviewGroups,
   ...controlPreviewGroups,
+  ...listboxPreviewGroups,
   ...colorFieldPreviewGroups,
   ...checkboxPreviewGroups,
   ...datePickerPreviewGroups,

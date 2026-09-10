@@ -1,0 +1,71 @@
+// ========== DatePickerMonthYear.scss ==========
+// 月视图 4 列 × 3 行 = 12；年视图 5 列 × 2 行 = 10（两视图等宽，均为 7 个日期格的宽度）
+@use './_mixins.scss' as m;
+@use '@/variables.scss' as *;
+
+.si-datepicker {
+  &__matrix {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-1;
+    padding: $spacing-2;
+    width: max-content;
+  }
+
+  &__matrix-row {
+    display: flex;
+    gap: $spacing-1;
+  }
+
+  &__matrix-cell {
+    display: flex;
+  }
+
+  &__matrix-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    // 列宽由 CSS 变量驱动：月视图 1.75 格、年视图 1.4 格（两者合计均为 7 格宽）
+    width: calc(var(--dp-cell-size, 24px) * 1.75);
+    height: calc(var(--dp-cell-size, 24px) * 1.5);
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: $radius-sm;
+    background: transparent;
+    font-family: $font-zh;
+    font-size: var(--dp-cell-font, #{$font-size-xs});
+    color: var(--b3-theme-on-background, $color-fg);
+    cursor: pointer;
+    transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+
+    // 年视图列宽略窄（4 位数字仍可容纳）
+    .si-datepicker__matrix--year & {
+      width: calc(var(--dp-cell-size, 24px) * 1.4);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--b3-theme-primary, $color-danger);
+      outline-offset: 1px;
+    }
+
+    &:hover:not(:disabled):not(.si-datepicker__matrix-btn--selected) {
+      border-color: var(--b3-theme-primary, $color-danger);
+    }
+
+    // 当前月 / 当年
+    &--current {
+      border-color: var(--b3-theme-primary, $color-danger);
+    }
+
+    &--selected {
+      background: var(--b3-theme-primary, $color-danger);
+      border-color: var(--b3-theme-primary, $color-danger);
+      color: var(--b3-theme-on-primary, $color-bg);
+    }
+
+    &:disabled {
+      opacity: m.$opacity-disabled;
+      cursor: not-allowed;
+    }
+  }
+}

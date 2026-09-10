@@ -1,0 +1,187 @@
+// ========== DatePicker.scss ==========
+// 根类上定义档位 CSS 变量（单一数据源），供 DatePickerCalendar / DatePickerMonthYear 跨文件消费
+@use './_mixins.scss' as m;
+@use '@/variables.scss' as *;
+
+.si-datepicker {
+  // 档位变量默认值（等同 S 档，被下方 --xsmall/--medium/--large 覆盖）
+  --dp-cell-size: #{$spacing-6}; // 24px
+  --dp-cell-font: #{$font-size-xs};
+  --dp-input-min-height: 28px; // 无对应 Token
+
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  width: 100%;
+  font-family: $font-zh;
+  vertical-align: middle;
+
+  // ===== 尺寸档位（方框 / 字号 / 输入框最小高度同步递进） =====
+  &--xsmall {
+    --dp-cell-size: 22px; // 无对应 Token
+    --dp-cell-font: #{$font-size-2xs};
+    --dp-input-min-height: 26px; // 无对应 Token
+  }
+
+  &--small {
+    --dp-cell-size: #{$spacing-6}; // 24px
+    --dp-cell-font: #{$font-size-xs};
+    --dp-input-min-height: 28px; // 无对应 Token
+  }
+
+  &--medium {
+    --dp-cell-size: 28px; // 无对应 Token
+    --dp-cell-font: #{$font-size-sm};
+    --dp-input-min-height: #{$spacing-8}; // 32px
+  }
+
+  &--large {
+    --dp-cell-size: #{$spacing-8}; // 32px
+    --dp-cell-font: #{$font-size-base};
+    --dp-input-min-height: 36px; // 无对应 Token
+  }
+
+  // ===== 输入框 =====
+  &__wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: $spacing-1;
+    min-height: var(--dp-input-min-height, 28px);
+    padding: 0 $spacing-2;
+    background: var(--b3-theme-background, $color-bg);
+    border: 1px solid var(--b3-border-color, $color-border);
+    border-radius: $vp-radius;
+    cursor: pointer;
+    transition: border-color 0.12s ease;
+
+    // 聚焦环用 outline —— focus-ring mixin 只改 border-color，本组件实底控件上不可见
+    &:focus-within {
+      outline: 2px solid var(--b3-theme-primary, $color-danger);
+      outline-offset: 2px;
+    }
+  }
+
+  &:not(.si-datepicker--disabled) &__wrapper:hover {
+    border-color: var(--b3-theme-primary, $color-danger);
+  }
+
+  &--error &__wrapper {
+    border-color: var(--b3-theme-error, $color-danger);
+  }
+
+  &--disabled &__wrapper {
+    cursor: not-allowed;
+    opacity: m.$opacity-disabled;
+  }
+
+  &__input {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: $font-zh;
+    font-size: var(--dp-cell-font, #{$font-size-xs});
+    color: var(--b3-theme-on-background, $color-fg);
+    cursor: inherit;
+
+    &::placeholder {
+      color: var(--b3-theme-secondary, $color-muted);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+
+  &__clear,
+  &__trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: $spacing-1;
+    border: none;
+    border-radius: $radius-sm;
+    background: transparent;
+    color: var(--b3-theme-secondary, $color-muted);
+    cursor: pointer;
+    transition: background-color 0.12s ease, color 0.12s ease;
+
+    &:hover:not(:disabled) {
+      background: var(--b3-theme-surface-lighter, $color-surface);
+      color: var(--b3-theme-primary, $color-danger);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--b3-theme-primary, $color-danger);
+      outline-offset: 1px;
+    }
+  }
+
+  &__trigger:disabled {
+    cursor: not-allowed;
+  }
+
+  // ===== 弹层 =====
+  &__panel {
+    position: absolute;
+    left: 0;
+    z-index: m.$z-select-dropdown;
+    width: max-content;
+    min-width: 100%;
+    background: var(--b3-theme-background, $color-bg);
+    border: 1px solid var(--b3-border-color, $color-border);
+    border-radius: $vp-radius;
+    overflow: hidden;
+
+    &--bottom {
+      top: 100%;
+      margin-top: $spacing-1;
+    }
+
+    &--top {
+      bottom: 100%;
+      margin-bottom: $spacing-1;
+    }
+  }
+
+  // 仅屏幕阅读器可见（选中结果 aria-live 播报区）
+  &__live {
+    position: absolute;
+    width: 1px; // 无对应 Token
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+}
+
+// ===== 弹层过渡（fade + scale + 位移，transform-origin 随展开方向翻转） =====
+.si-datepicker-panel-enter-active,
+.si-datepicker-panel-leave-active {
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  transform-origin: top;
+}
+
+.si-datepicker-panel-enter-from,
+.si-datepicker-panel-leave-to {
+  opacity: 0;
+  transform: scale(0.96) translateY(-4px);
+}
+
+.si-datepicker__panel--top.si-datepicker-panel-enter-active,
+.si-datepicker__panel--top.si-datepicker-panel-leave-active {
+  transform-origin: bottom;
+}
+
+.si-datepicker__panel--top.si-datepicker-panel-enter-from,
+.si-datepicker__panel--top.si-datepicker-panel-leave-to {
+  transform: scale(0.96) translateY(4px);
+}

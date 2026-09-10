@@ -1,0 +1,113 @@
+// 组件预览 — 分区样式（分区标题 / import 行 / 快照卡片网格）
+@use '@/variables.scss' as *;
+
+.cp-section {
+  margin-bottom: $spacing-6;
+  scroll-margin-top: $spacing-3;
+}
+
+// 分区头部：组件名 + 中文说明
+.cp-section__head {
+  display: flex;
+  align-items: baseline;
+  gap: $spacing-3;
+  padding-bottom: $spacing-2;
+  margin-bottom: $spacing-2;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+}
+
+.cp-section__name {
+  font-family: $vp-mono;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-background);
+}
+
+.cp-section__summary {
+  font-size: $font-size-xs;
+  color: $color-muted;
+}
+
+// import 示例行（内联代码块横向排布）
+.cp-section__import {
+  margin-bottom: $spacing-3;
+}
+
+// ==================== 快照卡片网格 ====================
+
+.cp-section__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: $spacing-3;
+}
+
+.cp-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-base;
+  overflow: hidden;
+  transition: border-color 0.12s ease;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+// 组件渲染舞台
+.cp-card__stage {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: 96px; // 快照舞台最小高度，无对应 Token
+  padding: $spacing-4;
+  background: var(--b3-theme-surface);
+}
+
+// Loader 组件高度依赖父容器显式高度，单独给足舞台空间
+.cp-card__stage--loader {
+  height: 160px; // 动画展示高度，无对应 Token
+}
+
+// 卡片底部：示例名 + 代码切换按钮
+.cp-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-3;
+  border-top: 1px solid var(--b3-theme-surface-lighter);
+}
+
+.cp-card__title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: $font-size-2xs;
+  color: $color-muted;
+}
+
+.cp-card__code-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px; // 图标按钮尺寸，无对应 Token
+  height: 22px; // 图标按钮尺寸，无对应 Token
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: $radius-sm;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+    color: var(--b3-theme-primary);
+  }
+}

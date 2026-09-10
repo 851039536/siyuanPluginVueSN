@@ -42,6 +42,10 @@ export {
 } from "./imageCreation"
 export { registerImageCompressor } from "./imageCompressor"
 export { registerMinimalBrowser, showMinimalBrowser } from "./minimalBrowser"
+export {
+  registerComponentPreview,
+  showComponentPreview,
+} from "./componentPreview"
 /**
  * 功能模块统一导出
  *
@@ -123,6 +127,7 @@ type _Registered =
   | "skillsViewer" | "themeColor" | "bookmarkMarker" | "apiDebugger"
   | "scriptLauncher" | "websiteNavigation" | "minimalBrowser" | "dataSnapshot" | "gitPush" | "skillLearning" | "prompts" | "toolCollection" | "s3Backup" | "s3FileManager"
   | "globalRelations"
+  | "componentPreview"
   | "quickNote"
   | "ideaGenerator"
 

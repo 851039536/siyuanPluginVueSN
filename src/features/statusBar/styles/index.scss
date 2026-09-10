@@ -120,6 +120,7 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
   --status-color-format: #07c160;
   --status-color-website: #8b5cf6;
   --status-color-tool: #6366f1;
+  --status-color-component-preview: #0ea5e9;
 
   .video-manager-item {
     color: var(--b3-theme-primary);
@@ -147,6 +148,10 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
 
   .tool-collection-item {
     color: var(--status-color-tool);
+  }
+
+  .component-preview-item {
+    color: var(--status-color-component-preview);
   }
 
   .status-bar-task-item {

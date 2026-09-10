@@ -1,0 +1,86 @@
+// 组件预览 — 导航侧栏样式（组件锚点列表 + 激活高亮）
+@use '@/variables.scss' as *;
+
+.cp-nav {
+  display: flex;
+  flex-direction: column;
+  width: 180px; // 侧栏固定宽度，无对应 Token
+  flex-shrink: 0;
+  border-right: 1px solid var(--b3-theme-surface-lighter);
+  overflow-y: auto;
+  padding: $spacing-2 $spacing-1 $spacing-3;
+}
+
+.cp-nav__label {
+  padding: $spacing-1 $spacing-2;
+  margin-bottom: $spacing-1;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-bold;
+  opacity: 0.45;
+  color: var(--b3-theme-on-surface);
+}
+
+.cp-nav__list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cp-nav__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+  width: 100%;
+  padding: $spacing-1 $spacing-2;
+  border: none;
+  border-radius: $radius-base;
+  background: transparent;
+  font-family: $font-zh;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.12s ease, color 0.12s ease;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+    color: var(--b3-theme-on-background);
+  }
+}
+
+.cp-nav__item--active {
+  background: var(--b3-theme-surface-lighter);
+  color: var(--b3-theme-primary);
+  font-weight: $font-weight-medium;
+}
+
+.cp-nav__item-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cp-nav__item-count {
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  opacity: 0.55;
+}
+
+.cp-nav__empty {
+  padding: $spacing-3 $spacing-2;
+  font-size: $font-size-2xs;
+  color: $color-muted;
+}
+
+// 窄屏：隐藏侧栏，仅保留内容滚动
+@media (max-width: 720px) {
+  .cp-nav {
+    display: none;
+  }
+}

@@ -23,6 +23,7 @@ import {
   registerAIContentGenerator,
   registerApiDebugger,
   registerBookmarkMarker,
+  registerComponentPreview,
   registerDataSnapshot,
   registerDiskBrowser,
   registerDocAnalysis,
@@ -127,6 +128,7 @@ export default class PluginSample extends Plugin {
     "__ideaGenerator", // 灵感生成器（addTab 模型 + 独立窗口 + 全局事件监听）
     "__globalRelations", // 全局关系列表（Modal，register 内部自挂载）
     "__statistics", // 数据统计（自动刷新定时器 + 事件监听器，register 内部自挂载）
+    "__componentPreview", // 组件预览（addTab 模型 + 独立窗口 + 全局事件监听）
   ] as const
 
   onload() {
@@ -247,6 +249,7 @@ export default class PluginSample extends Plugin {
     if (s.enableApiDebugger) registerApiDebugger(this)
     if (s.enableWebsiteNavigation) registerWebsiteNavigation(this)
     if (s.enableMinimalBrowser) registerMinimalBrowser(this)
+    if (s.enableComponentPreview) registerComponentPreview(this)
     if (s.enableScriptLauncher) registerScriptLauncher(this)
     if (s.enableDataSnapshot) registerDataSnapshot(this)
     if (s.enableGitPush) this.__gitPush = registerGitPush(this)

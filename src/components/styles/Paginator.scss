@@ -1,0 +1,60 @@
+// ========== Paginator.scss ==========
+@use './_mixins.scss' as m;
+@use '@/variables.scss' as *;
+
+// 仅承载布局、报告文本与省略号：按钮/下拉/输入的外观全部来自共享组件（零样式复制）
+.si-paginator {
+  // 档位字号单点驱动（与 Button 的 10/12/14/16 阶梯对齐，供报告与省略号消费）
+  --si-paginator-font: #{$font-size-xs};
+
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap; // 窄容器（如工具条）内允许换行，避免撑破
+  gap: $spacing-1; // 4px
+  font-family: $font-zh;
+
+  &--xsmall {
+    --si-paginator-font: #{$font-size-2xs}; // 10px
+  }
+
+  &--small {
+    --si-paginator-font: #{$font-size-xs}; // 12px
+  }
+
+  &--medium {
+    --si-paginator-font: #{$font-size-sm}; // 14px
+  }
+
+  &--large {
+    --si-paginator-font: #{$font-size-base}; // 16px
+  }
+
+  &__report {
+    padding: 0 $spacing-2;
+    font-size: var(--si-paginator-font, #{$font-size-xs});
+    color: var(--b3-theme-on-surface, $color-fg);
+    // 等宽数字：翻页时文本宽度不抖动
+    font-variant-numeric: tabular-nums;
+  }
+
+  // 省略号为文本延续标记（非图标），不加交互
+  &__ellipsis {
+    padding: 0 $spacing-1;
+    font-size: var(--si-paginator-font, #{$font-size-xs});
+    color: var(--b3-theme-secondary, $color-muted);
+    user-select: none;
+  }
+
+  &__rows {
+    min-width: 72px; // 每页条数下拉最小宽度，无对应 Token
+  }
+
+  &__jump {
+    width: 64px; // 跳页输入宽度，无对应 Token
+  }
+
+  // 禁用态：子控件已各自禁用，这里整体降不透明度以提示不可交互
+  &--disabled {
+    opacity: m.$opacity-dimmed;
+  }
+}

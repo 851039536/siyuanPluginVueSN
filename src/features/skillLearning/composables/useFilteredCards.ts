@@ -21,11 +21,11 @@ export interface FilteredCardsResult {
   selectedCategory: Ref<string>
   selectedDifficulty: Ref<string>
   page: Ref<number>
+  /** 每页条数（供共享 Paginator 的 :rows 使用） */
+  pageSize: number
   languageList: ComputedRef<string[]>
   categoryList: ComputedRef<string[]>
   filteredCards: ComputedRef<SkillCard[]>
-  totalPages: ComputedRef<number>
-  paginated: ComputedRef<boolean>
   paginatedCards: ComputedRef<SkillCard[]>
 }
 
@@ -70,8 +70,6 @@ export function useFilteredCards(
     },
   )
 
-  const totalPages = computed(() => Math.max(1, Math.ceil(filteredCards.value.length / pageSize)))
-  const paginated = computed(() => filteredCards.value.length > pageSize)
   const paginatedCards = computed(() => {
     const start = (page.value - 1) * pageSize
     return filteredCards.value.slice(start, start + pageSize)
@@ -83,11 +81,10 @@ export function useFilteredCards(
     selectedCategory,
     selectedDifficulty,
     page,
+    pageSize,
     languageList,
     categoryList,
     filteredCards,
-    totalPages,
-    paginated,
     paginatedCards,
   }
 }

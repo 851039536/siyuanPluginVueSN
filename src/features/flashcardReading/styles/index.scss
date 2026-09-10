@@ -324,19 +324,11 @@ $fc-pad-nav: 14px; // 14px 导航水平内边距（无匹配全局Token）
     }
   }
 
+  // 分页容器：仅负责居中，控件本体来自共享 Paginator（禁止在 feature 内自建控件样式）
   .pagination {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: $spacing-3;
-
-    .page-info {
-      font-size: $font-size-xs;
-      font-weight: $font-weight-semibold;
-      font-family: $vp-mono;
-      color: var(--b3-theme-on-surface);
-      opacity: 0.7;
-    }
   }
 
   .view-mode-toggle {

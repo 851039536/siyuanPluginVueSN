@@ -199,18 +199,6 @@
   width: 160px
 }
 
-.pagination-controls {
-  @include flex-center;
-  gap: $spacing-2;
-  font-size: $font-size-xs;
-  color: var(--b3-theme-on-background);
-
-  .page-info {
-    padding: 0 $spacing-2;
-    font-weight: $font-weight-medium;
-  }
-}
-
 .progress-bar {
   position: relative;
   height: 20px;

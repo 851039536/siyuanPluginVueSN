@@ -65,49 +65,16 @@
 
         <div class="toolbar-spacer"></div>
 
-        <template v-if="totalPages > 1">
-          <div class="pagination-controls">
-            <SiButton
-              variant="ghost"
-              size="xsmall"
-              :disabled="currentPage === 1"
-              @click="currentPage = 1"
-            >
-              {{ i18n.firstPage }}
-            </SiButton>
-            <SiButton
-              variant="ghost"
-              size="xsmall"
-              :disabled="currentPage === 1"
-              @click="currentPage--"
-            >
-              {{ i18n.prevPage }}
-            </SiButton>
-            <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
-            <SiButton
-              variant="ghost"
-              size="xsmall"
-              :disabled="currentPage === totalPages"
-              @click="currentPage++"
-            >
-              {{ i18n.nextPage }}
-            </SiButton>
-            <SiButton
-              variant="ghost"
-              size="xsmall"
-              :disabled="currentPage === totalPages"
-              @click="currentPage = totalPages"
-            >
-              {{ i18n.lastPage }}
-            </SiButton>
-            <SiSelect
-              :options="pageSizeOptions"
-              :model-value="pageSize"
-              size="xsmall"
-              @update:model-value="(v) => { pageSize = Number(v); currentPage = 1 }"
-            />
-          </div>
-        </template>
+        <Paginator
+          v-model:page="currentPage"
+          v-model:rows="pageSize"
+          :total="filteredImages.length"
+          :always-show="false"
+          :show-page-links="false"
+          :rows-per-page-options="pageSizeOptions"
+          :labels="paginationLabels"
+          size="xsmall"
+        />
 
         <SiButton
           variant="ghost"
@@ -352,6 +319,7 @@ import {
 } from "vue"
 import * as api from "@/api"
 import SiButton from "@/components/Button.vue"
+import Paginator from "@/components/Paginator.vue"
 import SiSelect from "@/components/Select.vue"
 import { copyToClipboard } from "@/utils/domUtils"
 import CompressDialog from "./components/CompressDialog.vue"
@@ -397,7 +365,6 @@ const {
   minFileSize,
   imageListRef,
   filteredImages,
-  totalPages,
   paginatedImages,
 } = useImagePagination(images)
 
@@ -466,6 +433,14 @@ const pageSizeOptions = computed(() => {
     label: tpl.replace("{num}", String(n)),
   }))
 })
+
+/** 分页导航文案：沿用既有 i18n 键（避免迁移后产生孤儿键） */
+const paginationLabels = computed(() => ({
+  first: props.i18n.firstPage,
+  prev: props.i18n.prevPage,
+  next: props.i18n.nextPage,
+  last: props.i18n.lastPage,
+}))
 
 // ── 扫描（组合 composable + 选中清空） ────────────────────────
 

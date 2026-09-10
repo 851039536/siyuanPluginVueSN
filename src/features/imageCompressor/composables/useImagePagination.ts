@@ -21,10 +21,6 @@ export function useImagePagination(images: Ref<ImageInfo[]>) {
     return images.value.filter((img) => img.size >= minBytes)
   })
 
-  const totalPages = computed(() =>
-    Math.ceil(filteredImages.value.length / pageSize.value),
-  )
-
   const paginatedImages = computed(() => {
     const start = (currentPage.value - 1) * pageSize.value
     const end = start + pageSize.value
@@ -44,18 +40,12 @@ export function useImagePagination(images: Ref<ImageInfo[]>) {
     currentPage.value = 1
   })
 
-  const resetPagination = () => {
-    currentPage.value = 1
-  }
-
   return {
     currentPage,
     pageSize,
     minFileSize,
     imageListRef,
     filteredImages,
-    totalPages,
     paginatedImages,
-    resetPagination,
   }
 }

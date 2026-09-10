@@ -87,26 +87,17 @@
       </div>
 
       <div
-        v-if="viewMode === 'list' && totalPages > 1"
+        v-if="viewMode === 'list' && filteredCards.length > CARD_CONFIG.PAGE_SIZE"
         class="pagination"
       >
-        <Button
-          variant="secondary"
+        <Paginator
+          v-model:page="currentPage"
+          :rows="CARD_CONFIG.PAGE_SIZE"
+          :total="filteredCards.length"
+          :show-page-links="false"
+          :labels="paginationLabels"
           size="xsmall"
-          :disabled="currentPage === 1"
-          @click="currentPage--"
-        >
-          {{ t.previous }}
-        </Button>
-        <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
-        <Button
-          variant="secondary"
-          size="xsmall"
-          :disabled="currentPage === totalPages"
-          @click="currentPage++"
-        >
-          {{ t.next }}
-        </Button>
+        />
       </div>
     </div>
 
@@ -188,6 +179,7 @@ import {
 } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import Paginator from "@/components/Paginator.vue"
 import { emitCustomEvent } from "@/utils/eventBus"
 import CardDialog from "./components/CardDialog.vue"
 import CardList from "./components/CardList.vue"
@@ -317,9 +309,11 @@ const typingCards = computed(() => {
 
 const typingQueue = useTypingQueue(typingCards)
 
-const totalPages = computed(() =>
-  Math.ceil(filteredCards.value.length / CARD_CONFIG.PAGE_SIZE),
-)
+/** 分页导航文案：沿用既有 i18n 键（避免迁移后产生孤儿键） */
+const paginationLabels = computed(() => ({
+  prev: t.value.previous,
+  next: t.value.next,
+}))
 
 const paginatedCards = computed(() => {
   const start = (currentPage.value - 1) * CARD_CONFIG.PAGE_SIZE

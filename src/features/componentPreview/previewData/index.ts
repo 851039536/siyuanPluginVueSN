@@ -10,6 +10,9 @@ import {
   controlPreviewGroups,
 } from "./control"
 import {
+  checkboxPreviewGroups,
+} from "./checkbox"
+import {
   displayPreviewGroups,
 } from "./display"
 import {
@@ -24,6 +27,7 @@ export const PREVIEW_GROUPS: PreviewGroup[] = [
   ...buttonPreviewGroups,
   ...inputPreviewGroups,
   ...controlPreviewGroups,
+  ...checkboxPreviewGroups,
   ...tagAvatarPreviewGroups,
   ...displayPreviewGroups,
 ]

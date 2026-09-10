@@ -157,7 +157,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 ## 共享组件库使用规则（强制）
 
-`src/components/` 是**全项目唯一的 UI 控件来源**（17 个组件）。三条强制要求：**先查用法 → 优先复用 → 改 API 必同步**。
+`src/components/` 是**全项目唯一的 UI 控件来源**（19 个组件）。三条强制要求：**先查用法 → 优先复用 → 改 API 必同步**。
 
 ### 1. 先查用法，禁止猜 props
 
@@ -165,7 +165,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 | 查询方式 | 位置 | 说明 |
 |---------|------|------|
-| **组件预览面板（推荐）** | 命令面板搜「组件预览」/ 状态栏功能列表 | 17 个组件的**真实渲染**快照 + 可复制代码；改完组件样式可直接目视回归 |
+| **组件预览面板（推荐）** | 命令面板搜「组件预览」/ 状态栏功能列表 | 19 个组件的**真实渲染**快照 + 可复制代码；改完组件样式可直接目视回归 |
 | 用法清单（源码） | `src/features/componentPreview/previewData/*.ts` | `props` 与 `code` 同源，是 props 的权威示例 |
 | 组件源码 | `src/components/<Name>.vue` 的 `interface Props` | 最终事实来源（含 JSDoc 注释） |
 
@@ -174,11 +174,11 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 ### 2. 优先复用，禁止在 feature 内自建同类控件
 
-- 需要按钮 / 输入框 / 下拉 / 开关 / 复选框 / 日期选择 / 滑块 / 标签 / 徽标 / 头像 / 卡片 / 图表 / 图标 / 加载态 / 颜色字段时，**必须**使用共享组件
+- 需要按钮 / 输入框 / 下拉 / 开关 / 复选框 / 日期选择 / 滑块 / 标签 / 徽标 / 头像 / 卡片 / 图表 / 图标 / 加载态 / 颜色字段 / 输入框组合器时，**必须**使用共享组件
 - 共享组件缺能力时：**先扩展共享组件**（在 `interface Props` 加可选参数，保持向后兼容），再在 feature 中消费；禁止在 feature 内复制一份改改
 - 允许自建的例外：纯展示的局部布局容器，以及 `.icon-btn` 这类无档位的 26×26 固定尺寸图标按钮（见 [AGENTS_STYLE.md § 核心规范速查表](./AGENTS_STYLE.md#核心规范速查表)）
 
-### 3. 组件清单（17 个）
+### 3. 组件清单（19 个）
 
 | 组件 | 职责 | 关键 props |
 |------|------|-----------|
@@ -187,6 +187,8 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 | `Select.vue` | 下拉选择（可筛选、可清除、可分组） | `v-model` / `options` / `size` / `filterable` / `clearable` / `placement` / `maxHeight` / `emptyText` |
 | `ColorField.vue` | 颜色字段：色块 + 32 色自绘调色板弹层 + hex 文本双向联动（**思源 Electron 下原生 `input[type=color]` 不弹窗，禁止用原生取色器**） | `v-model` / `placeholder` |
 | `FormField.vue` | 表单行容器：label + 控件 + hint/error + 字数计数 | `label` / `required` / `hint` / `error` / `size` / `showCount` / `countCurrent` / `countMax` |
+| `InputGroup.vue` | 输入框组合器容器：与 `Input` / `Select` / `DatePicker` / `Button` / `InputGroupAddon` 无缝拼接为一体化控件（**组内成员禁带 label/hint/error；容器禁设 `overflow: hidden`**） | `size`（需与组内成员同档） |
+| `InputGroupAddon.vue` | 输入框组合器附加项：前缀/后缀文本或图标，外观随 `InputGroup` 档位变量继承（可单独使用） | — |
 | `Label.vue` | 表单标签文本（可带图标、必填星号） | `size` / `variant` / `state` / `icon` / `iconPosition` / `tag` / `for` / `width` / `align` |
 | `Switch.vue` | 开关 | `v-model` / `label` / `size` / `loading` / `labelBefore` / `activeColor` |
 | `Checkbox.vue` | 复选框（二元 / 数组分组多选 / 半选，描边与实底变体） | `v-model` / `value` / `trueValue` / `falseValue` / `binary` / `indeterminate` / `size` / `variant` / `label` / `hint` / `error` / `disabled` / `readonly` / `labelBefore` |
@@ -200,7 +202,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 | `IconWrapper.vue` | 图标（按 `IconKey` 渲染 Iconify） | `name`（必填）/ `size` / `color` / `title` |
 | `Loader.vue` | 加载动画（无 props，父容器需给显式高度） | — |
 
-**结构约定**：公开组件平铺于 `src/components/`（保持 `import X from "@/components/X.vue"` 单一导入约定，上表只登记这些条目）；单个组件的**私有子部件与纯函数**放同名小写子目录（如 `src/components/datePicker/` 承载 `PickerPanel.vue` / `CalendarPanel.vue` / `utils.ts`），子部件**不计入**本清单，且**禁止 feature 直接导入**。子部件样式同样外置到 `src/components/styles/<Name>.scss`（每个 `.vue` 的 `<style scoped>` 只 `@use` 自己那一份，避免父组件样式对子部件内部元素失效）。
+**结构约定**：公开组件平铺于 `src/components/`（保持 `import X from "@/components/X.vue"` 单一导入约定，上表只登记这些条目）；单个组件的**私有子部件与纯函数**放同名小写子目录（如 `src/components/datePicker/` 承载 `PickerPanel.vue` / `CalendarPanel.vue` / `utils.ts`），子部件**不计入**本清单，且**禁止 feature 直接导入**。配套但需被 feature 直接使用的组件同样平铺为独立公开条目（如 `InputGroup.vue` / `InputGroupAddon.vue`，两者共用「InputGroup」一个预览分区）。子部件样式同样外置到 `src/components/styles/<Name>.scss`（每个 `.vue` 的 `<style scoped>` 只 `@use` 自己那一份，避免父组件样式对子部件内部元素失效）。
 
 ### 4. 改组件 API 必须同步预览清单
 
@@ -442,7 +444,7 @@ src/
 │   ├── iconHelper.ts       # replaceTopBarIcon / createIconElement
 │   ├── mdRenderer.ts       # parseMarkdown / convertHljsToInlineStyles — Markdown 渲染统一入口
 │   └── settingsBackup.ts   # backupPluginData / restoreFromUpload
-├── components/             # 共享组件库 17 个（Button/Input/Select/Checkbox/DatePicker/ColorField/Card/Chart 等）— 使用规则见「共享组件库使用规则」
+├── components/             # 共享组件库 19 个（Button/Input/Select/Checkbox/DatePicker/ColorField/InputGroup/Card/Chart 等）— 使用规则见「共享组件库使用规则」
 ├── features/
 │   ├── statusBar/
 │   │   └── composables/
@@ -480,4 +482,4 @@ src/
 | [AGENTS_I18N.md](./AGENTS_I18N.md) | i18n 不生效问题排查、禁止 i18n 硬编码兜底值 | 处理 i18n 文案或排查翻译不生效时 |
 | [AGENTS_BUILD.md](./AGENTS_BUILD.md) | 构建与验证、viteStaticCopy stripBase、依赖清单 | 构建配置、静态资源复制、验证流程时 |
 | [docs/ai-api-usage.md](./docs/ai-api-usage.md) | 完整 AI 调用用法（标准/流式/思考模式/RAG/多轮对话 + 调用方清单） | 需要实现 AI 功能时（唯一 AI 调用参考文档） |
-| [src/features/componentPreview/README.md](./src/features/componentPreview/README.md) | 共享组件预览面板机制（17 个组件的用法快照、组件尺寸档位、`sizeable`/`resolveProps`、清单扩展指南） | 使用共享组件前查用法、或改共享组件 API 后同步预览清单时 |
+| [src/features/componentPreview/README.md](./src/features/componentPreview/README.md) | 共享组件预览面板机制（19 个组件的用法快照、组件尺寸档位、`sizeable`/`resolveProps`、复合示例 `render`、清单扩展指南） | 使用共享组件前查用法、或改共享组件 API 后同步预览清单时 |

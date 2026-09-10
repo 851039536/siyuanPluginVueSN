@@ -1,0 +1,23 @@
+// ========== InputGroupAddon.scss ==========
+// 附加项（前缀/后缀文本或图标）：外观自包含；组内档位由 InputGroup 根类输出的
+// --ig-addon-pad-y / --ig-addon-pad-x / --ig-addon-font / --ig-addon-min-h 变量继承驱动
+@use './_mixins.scss' as m;
+@use '@/variables.scss' as *;
+
+.si-input-group-addon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  white-space: nowrap;
+  padding: var(--ig-addon-pad-y, #{$spacing-2px}) var(--ig-addon-pad-x, #{m.$gap-xs});
+  min-height: var(--ig-addon-min-h, 28px); // 无对应 Token
+  font-family: $font-zh;
+  font-size: var(--ig-addon-font, #{$font-size-xs});
+  line-height: $line-height-tight;
+  color: var(--b3-theme-secondary, $color-muted);
+  background: var(--b3-theme-surface, $color-surface);
+  border: 1px solid var(--b3-border-color, $color-border);
+  border-radius: $vp-radius;
+}

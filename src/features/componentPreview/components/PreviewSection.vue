@@ -30,8 +30,14 @@
             :is="group.component"
             v-bind="resolveProps(example)"
           >
+            <!-- 复合示例：默认插槽需放多个子组件，交由 render 函数组装 -->
+            <SlotRenderer
+              v-if="example.render"
+              :render="example.render"
+              :example-props="resolveProps(example)"
+            />
             <!-- 默认插槽示例文本 -->
-            <template v-if="example.slotText">{{ example.slotText }}</template>
+            <template v-else-if="example.slotText">{{ example.slotText }}</template>
           </component>
         </div>
         <footer class="cp-card__foot">
@@ -60,7 +66,9 @@
 </template>
 
 <script setup lang="ts">
+import type { PropType, VNode } from "vue"
 import {
+  defineComponent,
   ref,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
@@ -71,6 +79,24 @@ import type {
   PreviewGroup,
 } from "../types"
 import CodeBlock from "./CodeBlock.vue"
+
+/** 复合示例插槽渲染器：把 example.render 的返回值作为插槽内容渲染（无 render 时该组件不挂载） */
+const SlotRenderer = defineComponent({
+  name: "PreviewSlotRenderer",
+  props: {
+    render: {
+      type: Function as PropType<(props: Record<string, any>) => VNode | VNode[]>,
+      required: true,
+    },
+    exampleProps: {
+      type: Object as PropType<Record<string, any>>,
+      required: true,
+    },
+  },
+  setup(props): () => VNode | VNode[] {
+    return () => props.render(props.exampleProps)
+  },
+})
 
 interface Props {
   group: PreviewGroup

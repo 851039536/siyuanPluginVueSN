@@ -12,6 +12,7 @@ import {
 } from "siyuan"
 import type { Component } from "vue"
 import type { App } from "vue"
+import type { VNode } from "vue"
 import {
   createApp,
   h,
@@ -58,6 +59,11 @@ export interface PreviewExample {
   props?: Record<string, any>
   /** 默认插槽文本（无插槽需求的组件省略） */
   slotText?: string
+  /**
+   * 复合示例的自定义插槽渲染（入参为注入全局档位后的实际渲染 props）。
+   * 存在时优先于 slotText，用于 InputGroup 这类默认插槽需放多个子组件的示例。
+   */
+  render?: (props: Record<string, any>) => VNode | VNode[]
   /** 与该示例等价的可复制 Vue 模板代码 */
   code: string
 }

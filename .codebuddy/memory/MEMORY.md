@@ -1,6 +1,6 @@
 # 项目记忆（siyuanPluginVueSN）
 
-> 最后整理：2026-09-10（压缩去重 + compactMode 合规改造）
+> 最后整理：2026-09-10（压缩去重 + compactMode 合规改造 + 共享组件库扩至 19 个：InputGroup / InputGroupAddon）
 
 ## 编码规范偏好
 - 统一入口原则（禁止在 feature 内直接调思源框架）：存储 `PluginStorage`/`TypedStorage`；Node `getNodeModules`；事件 `emitCustomEvent`；SQL `@/api`；AI `@/utils/aiApi`；定时器 `TimerRegistry`；Dock 预加载 `@/utils/dockPreload`；剪贴板/下载/动态样式 `@/utils/domUtils`；Dock/Modal `@/utils/vueAppHelper`
@@ -12,11 +12,11 @@
 - 快捷键冲突检查：须递归搜 `src/features/**`（hotkey 也注册在 `features/<name>/types/index.ts`）。已知未修冲突：tableOfContents 与 ideaGenerator 同为 ⌃⌥I
 - **禁止私自执行** `pnpm vite build` / `pnpm lint`（用户自行验证）；其他 C# 项目禁止 `dotnet build`
 
-## 共享组件库（`src/components/`，17 个）
+## 共享组件库（`src/components/`，19 个）
 - 规则：**先查用法（组件预览面板 / `previewData/*.ts` / 源码 `interface Props`）→ 优先复用（禁止 feature 自建同类）→ 改 API 必同步预览清单**
-- 清单：Button / Input / Select / ColorField / FormField / Label / Switch / Checkbox / DatePicker / Slider / Tag / Badge / Avatar / Card / Chart / IconWrapper / Loader
-- 结构约定：组件私有子部件与纯函数放同名小写子目录（如 `datePicker/`），不计入清单且**禁止 feature 直接导入**；子部件样式必须各自独立 SCSS（scoped 只对子组件根元素生效）
-- **改计数前必须实测**：并行变更频繁（曾一天 15→16→17），禁止凭记忆改文档「N 个」
+- 清单：Button / Input / Select / ColorField / FormField / **InputGroup** / **InputGroupAddon** / Label / Switch / Checkbox / DatePicker / Slider / Tag / Badge / Avatar / Card / Chart / IconWrapper / Loader
+- 结构约定：组件私有子部件与纯函数放同名小写子目录（如 `datePicker/`），不计入清单且**禁止 feature 直接导入**；子部件样式必须各自独立 SCSS（scoped 只对子组件根元素生效）；配套但需被 feature 直接使用的组件也平铺为公开条目（`InputGroup` + `InputGroupAddon` 共用「InputGroup」一个预览分区）
+- **改计数前必须实测**：并行变更频繁（曾一天 15→16→17→19），禁止凭记忆改文档「N 个」
 - 尺寸档位：`xsmall`/`small`/`medium`/`large`（默认 `small`），字号阶梯 10/12/14/16（`$font-size-2xs/xs/sm/base`，四档禁止同号）
 - 新增组件 = 4 类位置：`<Name>.vue` + `styles/<Name>.scss`（复杂组件拆多份）+ `previewData/<name>.ts`（`props` 与 `code` 严格一致 + 接入 `index.ts`）+ 文档计数（`AGENTS.md` 5 处、清单表行、复用清单、根 `README.md`、`componentPreview/README.md`）
 - 允许自建例外：纯展示局部布局容器、无档位 26×26 `.icon-btn`
@@ -28,6 +28,7 @@
 - `DatePicker`（首个带私有子目录的组件）：入口 + `datePicker/`（types/formatUtils/utils/useDatePicker/PickerPanel/CalendarPanel/MonthYearPanel）。①零日期库，自建 `dateFormat` 模板引擎（令牌对齐 PrimeVue，`parseDate` 只支持数值令牌）；②**无时区字符串必须按本地时间解析**（`LOCAL_DATE_PATTERN` 显式构造，否则 UTC 跨日错位）；③`isDateDisabled` 收敛 min/max + disabledDays + disabledDates（数组预处理为 `Set`）；④42 格元数据一次性 `computed`；⑤焦点三坑：关闭后 `input.focus()` 会重开面板（`skipFocusOpen` 抑制）、视图切换后原按钮卸载导致焦点掉 body + Esc 失效（`focusActiveView()`）、面板容器需 `tabindex="-1"`；⑥有意偏离 PrimeVue：`dateFormat` 默认 `yy-mm-dd`、`firstDayOfWeek` 默认 1，不做 `showTime`/`multiple`/`inline`/`numberOfMonths`；⑦弹层沿用 `Select` 相对定位，`overflow:hidden` 容器内可能被裁剪（已知限制，不用 Teleport）
 - `ColorField`（由 `generalSettings` 提升为共享）：色块 + 32 色自绘调色板 + hex 文本双向联动。**原生 `<input type="color">` 在思源 Electron 中不弹取色器**，颜色选择一律用它；全项目仍有 8 个文件遗留原生实现待替换。事件：`update:modelValue`（实时）+ `change`（提交）
 - `Input.borderless`：去边框去底色（三条高特异性选择器覆盖基类 hover/focus-within），供 chips 类复合控件内嵌；焦点反馈由外层 `:focus-within` 承担
+- `InputGroup` + `InputGroupAddon`（2026-09-10 新增，参照 PrimeVue）：无缝拼接容器。成员边框**不在根元素**上（`Input` 在 `__wrapper`、`Select` 在 `__trigger`、`DatePicker` 在 `__wrapper`、`Button`/`Addon` 在根）。要点：①**插槽子组件不带接收方的 scope 属性**（见下方「scoped 陷阱」），故所有命中成员的规则必须写成 `> :deep(.si-input)`（直接子）或 `:deep(.si-input__wrapper)`（成员内部，后代形式更耐受结构调整）；②`margin-left: -1px` 合并相邻边框 + hover/focus-within 抬 `z-index:1`，否则聚焦边框缺一段；③档位（内边距/字号/最小高度）经根类输出 `--ig-addon-*` CSS 变量**跨组件继承**给 Addon，不用 provide/inject；④Input/DatePicker 在组内 `flex: 1 1 0`（`flex-basis:0` 可压制它们自带的 `width:100%`），Select `0 1 auto` + min-width，Addon/Button `0 0 auto`；⑤**容器禁设 `overflow:hidden`**（Select 下拉是 wrapper 内相对定位，会被裁剪）；⑥成员不得带 label/hint/error（FormField 撑高错位）；⑦DatePicker 组内 `outline-offset` 归一为 -1px
 - 「实时跟随 + 一次性落盘」统一双事件：`update:modelValue`（内存）+ `change`（落盘）；`Slider`/`ColorField`/`Input` 均如此
 - `Input`/`Select` 在弹窗/表单中必须显式 `size="small"`（默认 medium 36px 过高）
 - 实底控件禁用 `focus-ring` mixin（只改 `border-color`，实底 border 为 transparent 会完全不可见）→ 用 `outline`（同 `Switch.scss`）
@@ -50,6 +51,7 @@
 - `--b3-theme-primary` 的 fallback 全库统一 `$color-danger`（历史约定，勿"修正"）
 - 背景与过渡对齐 gitPush 范式：底色 `background` + 卡片 `surface`；遮罩 `rgba(0,0,0,0.5)` 禁 `backdrop-filter`；过渡统一 0.12s ease；全屏遮罩 `z-index: 10000`
 - **Vue scoped 的父 scope 只传给子组件单根节点**：带布局 class 的模板拆成多根节点后父样式完全失效；跨组件共用布局 class 必须抽独立 partial，每个组件各自 `@use`
+- **scoped 的两个反直觉点**（2026-09-10 InputGroup 实测）：①父 scope 只加在「模板里直接写」的子组件根元素上；②**经插槽传入的子组件带的是调用方的 scope 属性**（`withCtx` 把渲染实例切回插槽归属者），容器组件写 `.容器 > .子组件` 会被编译成 `.容器[data-v-x] > .子组件[data-v-x]` 而**永不匹配**，必须写 `> :deep(.子组件)`。校验手段：`@vue/compiler-sfc` 的 `compileStyle({scoped:true})`，但**必须先用 Sass 展平**再喂进去（喂嵌套 CSS 会得出错误结论）
 - Dock 面板根容器 `padding-right` ≥ `$spacing-2`
 
 ## 重构模式（已验证）
@@ -63,7 +65,7 @@
 ## 功能模块状态（摘要）
 - **gitPush**：多本地路径（`resolveValidPath`）、响应式双列、commit log 数量选择、StatsView 卡片化网格；历史重写 fast-import 化（`cat-file --batch` + deleteall/全量 M + 临时 ref + CAS 切回）；提交规则 14 条，配置经 `DEFAULT_COMMIT_RULE_CONFIG` / `readCommitRuleConfig(prefs)` 单一入口，AI 生成后走 `normalizeCommitMessageFormat`
 - **S3 备份**：直接上传（无 zip）+ 状态栏集成；第五个「增量」Tab（实验性）；`buildBackupUploadKey` 统一 key；`useBackupOrchestrator` + `BackupTab` + `IncrementalTab`；`instance.ts` 断循环依赖
-- **componentPreview**：addTab + openWindow 双形态；`types/size.ts` + `usePreviewSize`（key `component-preview-size`）；`sizeable` 标记 + `resolveProps` 只注入未显式指定 size 的示例；无默认快捷键；已集成状态栏功能列表
+- **componentPreview**：addTab + openWindow 双形态；`types/size.ts` + `usePreviewSize`（key `component-preview-size`）；`sizeable` 标记 + `resolveProps` 只注入未显式指定 size 的示例；**`PreviewExample.render?: (props) => VNode | VNode[]`**（2026-09-10 新增，默认插槽需放多个子组件的复合示例用，`PreviewSection` 内 `defineComponent` 的 `SlotRenderer` 承载，存在时优先于 `slotText`）；无默认快捷键；已集成状态栏功能列表
 - **toolCollection**：底部面板 + Tab 切换，首个工具 base64Image（已转 `_ConfigOnly`）
 - **aiContentGenerator**：共享组件合规（内联 svg 30→0、原生 button 13→1 例外、原生表单控件 →0）；`CollapsibleSection` 保留原生 button（合规例外，已补 aria）；`ReviewRadarChart` 未迁移（Chart 无 radar）
 - **bookmarkMarker**：原生控件 29 处 → 0；`RuleItem.vue` 422→202 行（拆 `ruleItem/{TagInputField,IconSelectField,ModeGroupField}.vue`）；数据流改 `patch`/`commit`/`remove` 三事件；`v-for` key 改 `WeakMap` 稳定 key；i18n 分片扁平 34 键

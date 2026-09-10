@@ -18,7 +18,14 @@
   user-select: none;
   position: relative;
 
-  // 尺寸变体
+  // 键盘焦点环：仅键盘导航触发（鼠标点击不显示），避免污染视觉
+  &:focus-visible {
+    outline: 2px solid var(--b3-theme-primary, $color-danger);
+    outline-offset: 1px;
+  }
+
+  // ========== 尺寸变体（字号阶梯 10/12/14/16） ==========
+  // spinner 尺寸表需与 Button.vue 的 TIER_ICON_SIZE（图标尺寸表）保持一致，改动同步两处
   &--xsmall {
     padding: 2px 6px; // 特小号，无对应 Token，保留
     font-size: $font-size-2xs; // XS 档字号阶梯：10px
@@ -67,55 +74,144 @@
     }
   }
 
-  // 颜色变体
+  // ========== 颜色变体 ==========
+  // 既有 5 个变体的渲染结果保持不变；额外通过 btn-color-family 挂上颜色族变量，
+  // 供后面的 --outlined / --text 外观修饰与 --severity-* 覆盖复用
   &--primary {
+    @include m.btn-color-family("--b3-theme-primary", $color-danger, var(--b3-theme-on-primary, $color-bg));
     background: var(--b3-theme-primary, $color-danger);
     color: var(--b3-theme-on-primary, $color-bg);
     @include m.interactive-raised;
   }
 
   &--secondary {
-    background: var(--b3-theme-background, $color-info);
-    color: var(--b3-theme-on-background, $color-bg);
-    border: 1px solid var(--b3-theme-border, rgba(0, 0, 0, 0.1));
+    @include m.btn-color-family("--b3-theme-on-background", $color-fg, var(--b3-theme-on-primary, $color-bg));
+    background: var(--b3-theme-background, $color-bg);
+    color: var(--b3-theme-on-background, $color-fg);
+    border: 1px solid var(--b3-theme-border, $color-border);
     @include m.interactive-raised;
   }
 
   &--success {
+    @include m.btn-color-family("--b3-theme-success", $color-success, var(--b3-theme-on-primary, $color-bg));
     background: var(--b3-theme-success, $color-success);
     color: var(--b3-theme-on-primary, $color-bg);
     @include m.interactive-raised(var(--b3-theme-success, $color-success));
   }
 
   &--danger {
+    @include m.btn-color-family("--b3-theme-error", $color-danger-bright, var(--b3-theme-on-primary, $color-bg));
     background: transparent;
-    color: var(--b3-theme-error, #ef4444);
-    border-color: var(--b3-theme-error, #ef4444);
-
-    &:hover:not(.si-button--disabled):not(.si-button--loading) {
-      background: rgba(239, 68, 68, 0.1);
-      border-color: #dc2626;
-    }
-
-    &:active:not(.si-button--disabled):not(.si-button--loading) {
-      background: rgba(239, 68, 68, 0.15);
-    }
+    color: var(--b3-theme-error, $color-danger-bright);
+    border-color: var(--b3-theme-error, $color-danger-bright);
+    @include m.interactive-soft;
   }
 
   &--ghost {
+    // 中性纯文本：刻意不设颜色族变量 → interactive-soft 回退到中性底色，
+    // hover 与改动前完全一致（--outlined / --text 叠加时同样走中性回退色）
     background: transparent;
     color: var(--b3-theme-on-surface, $color-fg);
     border-color: var(--b3-theme-surface-lighter, $color-border);
+    @include m.interactive-soft;
+  }
+
+  // 新增颜色变体：提示 / 警告
+  &--info {
+    @include m.btn-color-family("--b3-theme-info", $color-info, var(--b3-theme-on-primary, $color-bg));
+    background: var(--b3-theme-info, $color-info);
+    color: var(--b3-theme-on-primary, $color-bg);
+    @include m.interactive-raised(var(--b3-theme-info, $color-info));
+  }
+
+  &--warning {
+    @include m.btn-color-family("--b3-theme-warning", $color-warning, var(--b3-theme-on-primary, $color-bg));
+    background: var(--b3-theme-warning, $color-warning);
+    color: var(--b3-theme-on-primary, $color-bg);
+    @include m.interactive-raised(var(--b3-theme-warning, $color-warning));
+  }
+
+  // ========== severity（颜色轴） ==========
+  // 显式指定时覆盖 variant 推导出的颜色族；一律回到填充外观，外观修饰排在其后可再覆盖
+  &--severity-primary {
+    @include m.btn-color-family("--b3-theme-primary", $color-danger, var(--b3-theme-on-primary, $color-bg));
+  }
+
+  &--severity-success {
+    @include m.btn-color-family("--b3-theme-success", $color-success, var(--b3-theme-on-primary, $color-bg));
+  }
+
+  &--severity-info {
+    @include m.btn-color-family("--b3-theme-info", $color-info, var(--b3-theme-on-primary, $color-bg));
+  }
+
+  &--severity-warning {
+    @include m.btn-color-family("--b3-theme-warning", $color-warning, var(--b3-theme-on-primary, $color-bg));
+  }
+
+  &--severity-danger {
+    @include m.btn-color-family("--b3-theme-error", $color-danger-bright, var(--b3-theme-on-primary, $color-bg));
+  }
+
+  // secondary 为中性面：填充态用 surface 底 + 边框，而非彩色实底
+  &--severity-secondary {
+    @include m.btn-color-family("--b3-theme-on-background", $color-fg, var(--b3-theme-on-primary, $color-bg));
+    background: var(--b3-theme-surface, $color-surface);
+    color: var(--b3-theme-on-surface, $color-fg);
+    border-color: var(--b3-border-color, $color-border);
+    @include m.interactive-raised;
+  }
+
+  &--severity-primary,
+  &--severity-success,
+  &--severity-info,
+  &--severity-warning,
+  &--severity-danger {
+    background: var(--btn-color);
+    color: var(--btn-on-color);
+    border-color: transparent;
+    @include m.interactive-raised(var(--btn-color));
+  }
+
+  // ========== 外观修饰（必须排在所有颜色块之后：同特异性靠源码顺序覆盖） ==========
+
+  // 描边：透明底 + 彩色边框与文字（颜色取自所在颜色块的 --btn-color）
+  &--outlined {
+    transition: all 0.12s;
+    background: transparent;
+    color: var(--btn-color, var(--b3-theme-on-background, $color-fg));
+    border-color: var(--btn-color, var(--b3-border-color, $color-border));
 
     &:hover:not(.si-button--disabled):not(.si-button--loading) {
-      background: var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.05));
-      border-color: var(--b3-theme-on-surface-variant, $color-muted);
+      background: var(--btn-soft, var(--b3-theme-surface-lighter, $color-surface));
+      border-color: var(--btn-color, var(--b3-border-color, $color-border));
     }
 
     &:active:not(.si-button--disabled):not(.si-button--loading) {
-      background: rgba(0, 0, 0, 0.08);
+      background: var(--btn-soft-strong, var(--b3-theme-surface-light, $color-surface));
+      border-color: var(--btn-color, var(--b3-border-color, $color-border));
     }
   }
+
+  // 纯文本：透明底无边框，文字取颜色轴色值
+  &--text {
+    transition: all 0.12s;
+    background: transparent;
+    color: var(--btn-color, var(--b3-theme-on-surface, $color-fg));
+    border-color: transparent;
+
+    &:hover:not(.si-button--disabled):not(.si-button--loading) {
+      background: var(--btn-soft, var(--b3-theme-surface-lighter, $color-surface));
+      border-color: transparent;
+    }
+
+    &:active:not(.si-button--disabled):not(.si-button--loading) {
+      background: var(--btn-soft-strong, var(--b3-theme-surface-light, $color-surface));
+      border-color: transparent;
+    }
+  }
+
+  // ========== 状态 ==========
 
   // 禁用状态
   &--disabled {
@@ -124,18 +220,21 @@
     pointer-events: none;
   }
 
-  // 加载状态
+  // 加载状态：spinner 绝对居中，图标与文案用 visibility 隐藏
+  // visibility 保留盒模型占位 → 加载前后按钮宽度零跳变，且文字不会被 spinner 压住
   &--loading {
     cursor: wait;
     pointer-events: none;
 
-    .si-button__text,
-    .si-button__icon {
-      opacity: m.$opacity-dimmed;
+    .si-button__icon,
+    .si-button__text {
+      visibility: hidden;
     }
   }
 
-  // 仅图标按钮
+  // ========== 布局变体 ==========
+
+  // 仅图标按钮（尺寸随档位：22 / 28 / 36 / 44，与文字按钮 min-height 对齐）
   &--icon-only {
     padding: 0;
     width: var(--button-size, 36px);
@@ -158,18 +257,41 @@
     }
   }
 
-  // 块级按钮
+  // 块级按钮：文案在剩余空间内居中（保留 __text 的 flex:1 以维持 icon-right 时图标贴右）
   &--block {
     display: flex;
     width: 100%;
+
+    .si-button__text {
+      justify-content: center;
+    }
   }
 
-  // 图标右侧
+  // 圆形外观（主要配合纯图标按钮）
+  &--rounded {
+    border-radius: $radius-full;
+  }
+
+  // 图标位置
   &--icon-right {
     flex-direction: row-reverse;
   }
 
-  // 内部元素样式
+  // 纵向堆叠（图标在上/下）：文案不再占满剩余空间，避免撑高错位
+  &--icon-top,
+  &--icon-bottom {
+    flex-direction: column;
+
+    .si-button__text {
+      flex: none;
+    }
+  }
+
+  &--icon-bottom {
+    flex-direction: column-reverse;
+  }
+
+  // ========== 内部元素 ==========
   &__icon {
     flex-shrink: 0;
   }

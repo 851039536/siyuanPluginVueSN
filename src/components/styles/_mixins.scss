@@ -20,19 +20,53 @@ $gap-xs: 6px;
 $spacing-2_5: 10px;
 
 // ========== Codex 交互反馈 mixin（边框变色 + 亮度，禁用 box-shadow） ==========
-@mixin interactive-raised($border-color: var(--b3-theme-primary)) {
+// $lift：是否附加 1px 上浮位移。默认关闭 —— 密集工具栏中并排按钮会因位移产生抖动
+@mixin interactive-raised($border-color: var(--b3-theme-primary), $lift: false) {
   transition: all 0.12s;
 
   &:hover:not(.si-button--disabled):not(.si-button--loading) {
     filter: brightness(1.08);
-    transform: translateY(-1px);
     border-color: $border-color;
+
+    @if $lift {
+      transform: translateY(-1px);
+    }
   }
 
   &:active:not(.si-button--disabled):not(.si-button--loading) {
     filter: brightness(0.95);
-    transform: translateY(0);
+    border-color: $border-color;
+
+    @if $lift {
+      transform: translateY(0);
+    }
   }
+}
+
+// ========== 透明底按钮的交互反馈 mixin ==========
+// 与 interactive-raised 结构一致（0.12s 过渡、无位移），仅把亮度反馈换为主题感知的弱底色
+// 依赖颜色族变量 --btn-soft / --btn-soft-strong（由 btn-color-family 输出），未设置时回退中性底色
+@mixin interactive-soft {
+  transition: all 0.12s;
+
+  &:hover:not(.si-button--disabled):not(.si-button--loading) {
+    background: var(--btn-soft, var(--b3-theme-surface-lighter, $color-surface));
+  }
+
+  &:active:not(.si-button--disabled):not(.si-button--loading) {
+    background: var(--btn-soft-strong, var(--b3-theme-surface-light, $color-surface));
+  }
+}
+
+// ========== 按钮颜色族变量 ==========
+// 输出：--btn-color（主色）/ --btn-on-color（主色上的文字色）
+//       --btn-soft（hover 弱底色）/ --btn-soft-strong（active 加强底色）
+// 弱底色用相对颜色语法从主题变量取 alpha，明暗主题下自动正确（同 Tag.scss 既有写法）
+@mixin btn-color-family($theme-var, $fallback, $on-color) {
+  --btn-color: var(#{$theme-var}, #{$fallback});
+  --btn-on-color: #{$on-color};
+  --btn-soft: hsla(from var(#{$theme-var}, #{$fallback}) h s l / 0.12);
+  --btn-soft-strong: hsla(from var(#{$theme-var}, #{$fallback}) h s l / 0.2);
 }
 
 // ========== focus 环（Codex 边框优先策略，替代 box-shadow） ==========

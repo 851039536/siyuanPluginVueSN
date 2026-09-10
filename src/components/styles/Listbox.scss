@@ -1,0 +1,224 @@
+// ========== Listbox.scss ==========
+// 内联列表选择：面板 + 选项列表。无浮层，故面板可安全 overflow: hidden（列表自带纵向滚动）
+@use './_mixins.scss' as m;
+@use '@/variables.scss' as *;
+
+.si-listbox {
+  display: inline-flex;
+  flex-direction: column;
+  width: 100%;
+  font-family: $font-zh;
+  vertical-align: middle;
+
+  // ===== 面板 =====
+  &__panel {
+    background: var(--b3-theme-background, $color-bg);
+    border: 1px solid var(--b3-border-color, $color-border);
+    border-radius: $vp-radius;
+    overflow: hidden;
+    transition: border-color 0.12s ease;
+  }
+
+  // ===== 筛选区（内嵌无边框 Input，焦点反馈由本容器承担） =====
+  &__filter {
+    padding: $spacing-2;
+    border-bottom: 1px solid var(--b3-border-color, $color-border);
+    transition: background-color 0.12s ease;
+
+    &:focus-within {
+      background: var(--b3-theme-surface-lighter, $color-surface);
+    }
+  }
+
+  // ===== 列表（自带滚动，避免超长列表撑破面板） =====
+  &__list {
+    overflow-y: auto;
+    overflow-x: hidden;
+    outline: none;
+
+    &:focus-visible {
+      outline: 2px solid var(--b3-theme-primary, $color-danger);
+      outline-offset: -2px;
+    }
+
+    &::-webkit-scrollbar {
+      width: m.$gap-xs; // 6px
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: var(--b3-theme-surface-light, $color-surface);
+      border-radius: $radius-sm;
+
+      &:hover {
+        background: var(--b3-theme-secondary, $color-muted);
+      }
+    }
+  }
+
+  // ===== 选项（默认值取 S 档兜底，档位块覆盖） =====
+  &__option {
+    display: flex;
+    align-items: center;
+    gap: m.$gap-xs; // 6px
+    padding: $spacing-2px m.$gap-xs; // 2px 6px
+    min-height: 28px; // 无对应 Token
+    font-size: $font-size-xs;
+    color: var(--b3-theme-on-background, $color-fg);
+    cursor: pointer;
+    transition: background-color 0.12s ease, color 0.12s ease;
+
+    &:hover:not(.si-listbox__option--disabled) {
+      background: var(--b3-theme-surface-lighter, $color-surface);
+    }
+
+    // 选中底色：弱化主色（相对颜色语法，明暗主题下自动正确）
+    &--highlight {
+      background: hsla(from var(--b3-theme-primary, $color-danger) h s l / 0.12);
+
+      &:hover:not(.si-listbox__option--disabled) {
+        background: hsla(from var(--b3-theme-primary, $color-danger) h s l / 0.18);
+      }
+    }
+
+    &--selected {
+      color: var(--b3-theme-on-background, $color-fg);
+      font-weight: $font-weight-medium;
+    }
+
+    &--disabled {
+      opacity: m.$opacity-disabled;
+      cursor: not-allowed;
+    }
+
+    // 键盘活动项：内嵌轮廓，与选中底色可同时存在而不混淆
+    &--active:not(.si-listbox__option--disabled) {
+      outline: 2px solid var(--b3-theme-primary, $color-danger);
+      outline-offset: -2px;
+    }
+  }
+
+  &__option-text {
+    flex: 1;
+    min-width: 0;
+    line-height: $line-height-normal;
+    word-break: break-word;
+  }
+
+  // ===== 指示器：checkbox 常驻方框 / checkmark 仅选中时显示勾选 =====
+  &__check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    color: var(--b3-theme-primary, $color-danger);
+    transition: background-color 0.12s ease, border-color 0.12s ease;
+  }
+
+  &--checkbox &__check {
+    border: 1px solid var(--b3-border-color, $color-border);
+    border-radius: $radius-sm;
+    color: var(--b3-theme-on-primary, $color-bg);
+  }
+
+  &--checkbox &__option--selected &__check {
+    background: var(--b3-theme-primary, $color-danger);
+    border-color: var(--b3-theme-primary, $color-danger);
+  }
+
+  // ===== 空态（无数据与筛选无结果共用） =====
+  &__empty {
+    padding: $spacing-3;
+    text-align: center;
+    color: var(--b3-theme-secondary, $color-muted);
+    font-size: $font-size-xs;
+  }
+
+  // ===== 状态 =====
+  &--error &__panel {
+    border-color: var(--b3-theme-error, $color-danger);
+  }
+
+  &--disabled &__panel {
+    opacity: m.$opacity-disabled;
+    cursor: not-allowed;
+  }
+
+  // 禁用时整体不响应指针（同时屏蔽悬停底色与点击）
+  &--disabled &__list {
+    pointer-events: none;
+  }
+
+  // ===== 尺寸档位（字号阶梯 10 / 12 / 14 / 16，行内边距与最小行高同步递进） =====
+  &--xsmall {
+    .si-listbox__option {
+      padding: $spacing-2px m.$gap-xs; // 2px 6px
+      min-height: 22px; // 无对应 Token
+      font-size: $font-size-2xs;
+    }
+
+    .si-listbox__check {
+      width: 14px; // 无对应 Token
+      height: 14px;
+    }
+
+    .si-listbox__empty {
+      font-size: $font-size-2xs;
+    }
+  }
+
+  &--small {
+    .si-listbox__option {
+      padding: $spacing-2px m.$gap-xs; // 2px 6px
+      min-height: 28px; // 无对应 Token
+      font-size: $font-size-xs;
+    }
+
+    .si-listbox__check {
+      width: $spacing-4; // 16px
+      height: $spacing-4;
+    }
+
+    .si-listbox__empty {
+      font-size: $font-size-xs;
+    }
+  }
+
+  &--medium {
+    .si-listbox__option {
+      padding: m.$gap-xs m.$spacing-2_5; // 6px 10px
+      min-height: 36px;
+      font-size: $font-size-sm;
+    }
+
+    .si-listbox__check {
+      width: 18px; // 无对应 Token
+      height: 18px;
+    }
+
+    .si-listbox__empty {
+      font-size: $font-size-sm;
+    }
+  }
+
+  &--large {
+    .si-listbox__option {
+      padding: m.$spacing-2_5 14px; // 10px 14px；14px 无对应 Token
+      min-height: 44px;
+      font-size: $font-size-base;
+    }
+
+    .si-listbox__check {
+      width: $spacing-5; // 20px
+      height: $spacing-5;
+    }
+
+    .si-listbox__empty {
+      font-size: $font-size-base;
+    }
+  }
+}

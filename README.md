@@ -145,7 +145,7 @@ src/
 ├── index.scss                   # 全局样式入口
 ├── _variables.scss              # SCSS 变量
 ├── commands/                    # 斜杠命令
-├── components/                  # 共享 UI 组件（20 个原子组件）
+├── components/                  # 共享 UI 组件（21 个原子组件）
 ├── config/                      # 配置（settings.ts, icons.ts）
 ├── features/                    # 40+ 功能模块
 │   ├── config.ts                # FEATURE_CONFIG 单一数据源

@@ -67,17 +67,34 @@
   padding: $spacing-4;
   background: var(--b3-theme-surface);
 
+  // ⚠️ 沙箱覆盖必须抬特异性（类名写两遍 = (0,3,0)）：
+  // 组件侧经 scoped 编译后是 `.si-xxx[data-v-hash]`（同样是 (0,2,0)），
+  // 若只写 `.cp-card__stage .si-xxx` 就会退化为「比 CSS 顺序」——
+  // 实测产物里 `.si-speeddial[data-v-*]` 排在沙箱规则之后，覆盖直接失效。
+  // 抬到 (0,3,0) 后与顺序无关，新增此类覆盖请照此写法。
+
   // 弹层组件（如 ConfirmDialog）本体以 position: fixed 铺满视口，
   // 快照中改为相对舞台定位，避免覆盖整个预览窗口
-  .si-confirm-mask {
+  .si-confirm-mask.si-confirm-mask {
     position: absolute;
     z-index: 1;
+  }
+
+  // SpeedDial 默认 position: fixed 悬浮于视口角落，快照中改为相对舞台定位
+  // （舞台已 position: relative，故 right/bottom 档位改为相对舞台生效）
+  .si-speeddial.si-speeddial {
+    position: absolute;
   }
 }
 
 // Loader 组件高度依赖父容器显式高度，单独给足舞台空间
 .cp-card__stage--loader {
   height: 160px; // 动画展示高度，无对应 Token
+}
+
+// SpeedDial 展开后动作会沿轨迹外扩，需给足舞台高度（卡片为 overflow: hidden 会裁掉溢出部分）
+.cp-card__stage--speeddial {
+  height: 260px; // 轨迹展开所需高度，无对应 Token
 }
 
 // 卡片底部：示例名 + 代码切换按钮

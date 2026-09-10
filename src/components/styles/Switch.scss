@@ -5,7 +5,7 @@
 .si-switch {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-3;
+  gap: m.$spacing-2_5; // 10px（原 12px）— 轨道与标签间距
   border: none;
   background: transparent;
   cursor: pointer;

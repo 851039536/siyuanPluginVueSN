@@ -18,6 +18,7 @@
 - 模块内代码分层：共享常量→types/index.ts，纯工具函数→utils.ts，禁止复制粘贴
 - 禁止 emoji 图标，使用 Iconify 图标
 - 禁止硬编码 font-size/font-weight/line-height/颜色，使用设计 Token
+- **±2px 间距的 Token 映射**（2026-09-10）：全局间距 Token 为 4/8/12/16/20/24px，落在中间的值用：2px=`$spacing-2px`、3px=`$spacing-px`、6px=`m.$gap-xs`、10px=`m.$spacing-2_5`（后两者定义在 `src/components/styles/_mixins.scss`）；**14px / 18px 无对应 Token**，只能硬编码并加 `// 14px 无对应 Token` 注释
 - **组件 size 档位字号阶梯**（2026-09-10）：`src/components/` 的 `size` 档位统一 `xsmall`/`small`/`medium`/`large` = `$font-size-2xs`/`xs`/`sm`/`base` = 10/12/14/16px，四档禁止同号（曾出现 XS 与 S 同为 12px）。这是两级字号制中**唯一**允许 10px 出现在控件正文的场景，例外仅限组件库档位变体（`src/components/styles/*.scss`），不得据此在 feature 业务样式把正文降到 10px；只改字号，不联动 padding/min-height/gap/图标尺寸。规则已写入 `AGENTS_STYLE.md` § 组件 size 档位字号阶梯
 - 颜色 Token 统一用 `$color-*` 语义色（`$color-fg/bg/muted/surface/border/primary/secondary/accent/danger/danger-bright/success/warning/info`）；旧 `$brand-*` 系列已于 2026-08 全部迁移删除，禁止使用
 

@@ -201,6 +201,23 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 | 12px | `$font-size-xs` | 标题与正文内容（面板/弹窗统一基准字号） |
 | 14px+ | `$font-size-sm` 及以上 | 仅限阅读区正文（如 Markdown 预览）与数据突出展示（如统计数值），必须加注释说明用途 |
 
+### 组件 size 档位字号阶梯（两级字号制的唯一例外）
+
+`src/components/` 共享组件库的 `size` 档位（`xsmall` / `small` / `medium` / `large`）一律按下表取字号，四档必须形成肉眼可辨的梯度（**禁止 XS 与 S 同号**）：
+
+| 档位 | Token | 值 |
+|------|-------|-----|
+| `xsmall` | `$font-size-2xs` | 10px |
+| `small` | `$font-size-xs` | 12px |
+| `medium` | `$font-size-sm` | 14px |
+| `large` | `$font-size-base` | 16px |
+
+- 这是两级字号制中**唯一**允许 10px 出现在控件正文（按钮/输入框/下拉选项文字）的场景：档位本身表达「更紧凑」的语义，与「辅助文字用 10px」的规则不冲突
+- 例外仅适用于组件库的 `size` 档位变体（`src/components/styles/*.scss` 中的 `&--xsmall` / `&--small` / `&--medium` / `&--large`）；**不得**据此在 feature 业务样式中把正文降到 10px
+- 容器类组件（Card）的标题/副标题同样遵循该阶梯；副标题取「标题降一档、下限 10px」，保证标题不小于副标题
+- 下拉/浮层内部随档位联动：如 Select 的筛选框、空态提示、分组标题在 XS 档同步降为 10px，避免「浮层内文字比选项大」的割裂观感
+- 只改字号，**不得**联动改动 padding / min-height / gap / 图标尺寸（图标随档位缩放属独立议题）
+
 ### 全局基准字号机制
 
 全局样式入口 `src/index.scss` 已定义（经 `src/index.ts:81` 全局加载）：

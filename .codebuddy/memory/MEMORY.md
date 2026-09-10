@@ -18,6 +18,7 @@
 - 模块内代码分层：共享常量→types/index.ts，纯工具函数→utils.ts，禁止复制粘贴
 - 禁止 emoji 图标，使用 Iconify 图标
 - 禁止硬编码 font-size/font-weight/line-height/颜色，使用设计 Token
+- **组件 size 档位字号阶梯**（2026-09-10）：`src/components/` 的 `size` 档位统一 `xsmall`/`small`/`medium`/`large` = `$font-size-2xs`/`xs`/`sm`/`base` = 10/12/14/16px，四档禁止同号（曾出现 XS 与 S 同为 12px）。这是两级字号制中**唯一**允许 10px 出现在控件正文的场景，例外仅限组件库档位变体（`src/components/styles/*.scss`），不得据此在 feature 业务样式把正文降到 10px；只改字号，不联动 padding/min-height/gap/图标尺寸。规则已写入 `AGENTS_STYLE.md` § 组件 size 档位字号阶梯
 - 颜色 Token 统一用 `$color-*` 语义色（`$color-fg/bg/muted/surface/border/primary/secondary/accent/danger/danger-bright/success/warning/info`）；旧 `$brand-*` 系列已于 2026-08 全部迁移删除，禁止使用
 
 ## 重构模式（已验证可复用）
@@ -37,7 +38,7 @@
 - statistics 分布 Tab（2026-09-08）：已移除「各笔记本块类型分布」堆叠图与「各笔记本文档数」柱状图（后者被排行表格完全覆盖属冗余；组件/SCSS/查询/类型/i18n 全链路清理），最终布局为单列纵向流：汇总栏 → 排行表格（含文档数/字数/总占比）→ 字数饼图（192px 环形图，图例多列 auto-fill 网格填满宽卡片）；BLOCK_TYPE_LABELS 常量与 blockType* i18n 键仍被 baseStats 整体块类型分布使用，勿删；docBarChartTitle 键因摘要栏复用保留
 - compactMode：独立模块，3 档密度 + 5 档字号 + 5 区域开关
 - skillLearning：代码片段练习库 + 闪卡记忆
-- componentPreview（2026-09-10）：组件预览 feature，addTab+openWindow 独立窗口展示 src/components 全部 14 个组件的用法快照 + 可复制代码（静态快照定位，无交互 props 调节）。结构 = types/PreviewManager + types/density.ts（卡片尺寸档位）+ previewData/（5 数据文件聚合）+ components/（PreviewSection/CodeBlock/NavSidebar）+ composables/usePreviewDensity + styles/4 SCSS。**组件尺寸档位**（用户明确：是组件自身 size prop，不是卡片/网格尺寸）XS/S/M/L，`types/size.ts` + `composables/usePreviewSize.ts`（key `component-preview-size`）；`PreviewGroup.sizeable` 标记 11 个支持 size 的组件（Button/Input/FormField/Label/Select/Switch/Slider/Tag/Badge/Avatar/Card，Chart/IconWrapper/Loader 不参与），`PreviewSection.resolveProps` 只向**未显式指定 size** 的示例注入全局档位（显式指定者作尺寸对比用例保持原样）。经验：Select/Input/Slider 的 containerAttrs 会剥离 class/style，预览不能靠 props 传 style 控宽；Loader height:100% 需父容器显式高度；**feature 内常量若被 composable 运行时引用，不能放 types/index.ts（其运行时 import ../index.vue 会与面板形成循环），应拆 types/density.ts 类独立文件**；**不绑定默认快捷键**（⌃⌥V 已被 video 占用，误用后已移除，仅保留命令面板入口）；已集成到底部状态栏功能列表（statusBar/featureRegistry.ts 加一条即自动获得抽屉项 + 开关角标 + pin 快捷 + 自定义分类，开关键由 featureIdToSettingKey 自动推导为 enableComponentPreview）
+- componentPreview（2026-09-10）：组件预览 feature，addTab+openWindow 独立窗口展示 src/components 全部 14 个组件的用法快照 + 可复制代码（静态快照定位，无交互 props 调节）。结构 = types/PreviewManager + types/size.ts（组件尺寸档位常量）+ previewData/（5 数据文件聚合）+ components/（PreviewSection/CodeBlock/NavSidebar）+ composables/usePreviewSize + styles/4 SCSS（曾实现的「预览卡片尺寸档位」density.ts/usePreviewDensity 已作废删除）。**组件尺寸档位**（用户明确：是组件自身 size prop，不是卡片/网格尺寸）XS/S/M/L，`types/size.ts` + `composables/usePreviewSize.ts`（key `component-preview-size`）；`PreviewGroup.sizeable` 标记 11 个支持 size 的组件（Button/Input/FormField/Label/Select/Switch/Slider/Tag/Badge/Avatar/Card，Chart/IconWrapper/Loader 不参与），`PreviewSection.resolveProps` 只向**未显式指定 size** 的示例注入全局档位（显式指定者作尺寸对比用例保持原样）。经验：Select/Input/Slider 的 containerAttrs 会剥离 class/style，预览不能靠 props 传 style 控宽；Loader height:100% 需父容器显式高度；**feature 内常量若被 composable 运行时引用，不能放 types/index.ts（其运行时 import ../index.vue 会与面板形成循环），应拆 types/size.ts 类独立文件**；**不绑定默认快捷键**（⌃⌥V 已被 video 占用，误用后已移除，仅保留命令面板入口）；已集成到底部状态栏功能列表（statusBar/featureRegistry.ts 加一条即自动获得抽屉项 + 开关角标 + pin 快捷 + 自定义分类，开关键由 featureIdToSettingKey 自动推导为 enableComponentPreview）
 
 ## 禁止事项
 - 禁止私自执行 `dotnet build`（太慢太卡）

@@ -190,7 +190,7 @@
   &--xsmall {
     .si-input__field {
       padding: 2px 6px; // 特小号，无对应 Token，保留
-      font-size: $font-size-xs;
+      font-size: $font-size-2xs; // XS 档字号阶梯：10px
       min-height: 22px; // 无对应 Token
     }
 

@@ -23,12 +23,13 @@ import {
   removeCloudRepoTag,
 } from "@/api"
 import { useStatusBarTask } from "@/features/statusBar/composables/useStatusBarTask"
+import { getDataSnapshotI18n } from "../types/i18n"
 import { getErrorMessage } from "@/utils/stringUtils"
 
 export function useDataSnapshot(plugin: Plugin) {
   const snapshotTask = useStatusBarTask("dataSnapshot", "mdi:camera-marker")
 
-  const i18n = computed(() => (plugin.i18n as any)?.dataSnapshot || {})
+  const i18n = computed(() => getDataSnapshotI18n(plugin))
 
   const currentView = ref<SnapshotView>("local")
   const snapshots = ref<SnapshotInfo[]>([])
@@ -49,7 +50,8 @@ export function useDataSnapshot(plugin: Plugin) {
     loading.value = true
     try {
       snapshots.value = await getRepoSnapshots()
-    } catch {
+    } catch (e: unknown) {
+      console.error("[dataSnapshot] loadLocalSnapshots error:", getErrorMessage(e))
       snapshots.value = []
     } finally {
       loading.value = false
@@ -97,7 +99,8 @@ export function useDataSnapshot(plugin: Plugin) {
     cloudLoading.value = true
     try {
       cloudTags.value = await getCloudRepoTagSnapshots()
-    } catch {
+    } catch (e: unknown) {
+      console.error("[dataSnapshot] loadCloudSnapshots error:", getErrorMessage(e))
       cloudTags.value = []
     } finally {
       cloudLoading.value = false

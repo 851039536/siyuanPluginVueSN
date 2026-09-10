@@ -58,6 +58,7 @@
 
 // 组件渲染舞台
 .cp-card__stage {
+  position: relative; // 弹层类组件的快照定位基准
   display: flex;
   flex: 1;
   align-items: center;
@@ -65,6 +66,13 @@
   min-height: 96px; // 快照舞台最小高度，无对应 Token
   padding: $spacing-4;
   background: var(--b3-theme-surface);
+
+  // 弹层组件（如 ConfirmDialog）本体以 position: fixed 铺满视口，
+  // 快照中改为相对舞台定位，避免覆盖整个预览窗口
+  .si-confirm-mask {
+    position: absolute;
+    z-index: 1;
+  }
 }
 
 // Loader 组件高度依赖父容器显式高度，单独给足舞台空间

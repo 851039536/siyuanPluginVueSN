@@ -1,17 +1,17 @@
 # 组件预览（Component Preview）
 
-在思源内以独立窗口/页签形态查看共享 Codex UI 组件库（`src/components/`）全部 19 个组件的真实渲染用法快照，附可复制的示例代码，便于组件开发者查看效果、改动后快速回归验证。
+在思源内以独立窗口/页签形态查看共享 Codex UI 组件库（`src/components/`）全部 20 个组件的真实渲染用法快照，附可复制的示例代码，便于组件开发者查看效果、改动后快速回归验证。
 
 ## 功能
 
 - **双形态承载（纯官方 API）**：`plugin.addTab` 注册自定义 Tab 模型 + `openTab({custom})` 在主窗口创建页签；面板头部「在独立窗口打开」调 `openWindow({tab})` 把页签移入浮动窗口；浮动窗口内经 `isFloating`（`getFrontend() === "desktop-window"`）隐藏重复面板标题与打开按钮。
-- **全组件覆盖**：Avatar / Badge / Button / Card / Chart / Checkbox / ColorField / DatePicker / FormField / IconWrapper / Input / InputGroup / Label / Loader / Select / Slider / Switch / Tag 各一个分组分区（`InputGroup` 与 `InputGroupAddon` 为配套组件，共用「InputGroup」一个分区），分组内为典型 props 组合快照卡片。
+- **全组件覆盖**：Avatar / Badge / Button / Card / Chart / Checkbox / ColorField / ConfirmDialog / DatePicker / FormField / IconWrapper / Input / InputGroup / Label / Loader / Select / Slider / Switch / Tag 各一个分组分区（`InputGroup` 与 `InputGroupAddon` 为配套组件，共用「InputGroup」一个分区），分组内为典型 props 组合快照卡片。
 - **示例清单驱动**：预览数据集中在 `previewData/`（一份清单），渲染层通用遍历——新增组件/新用法只需在清单追加，不改渲染框架。清单里的 `code` 模板与渲染 props 共用同一数据源，杜绝漂移。
 - **复合控件内嵌能力**：`Input` 的 `borderless` 去边框去底色（三条高特异性选择器覆盖基类 hover/focus-within），供「标签输入框」这类自定义容器把输入框内嵌其中；焦点反馈由外层容器的 `:focus-within` 承担。
 - **无缝拼接控件**：`InputGroup` + `InputGroupAddon` 把输入框、按钮、下拉、日期与附加项拼成一体化控件（组内零间距、相邻边框 1px 重叠、仅最外侧保留圆角，档位经 `--ig-addon-*` CSS 变量从容器继承）；组内按钮建议用描边外观（`outlined` / `variant="secondary"`），填充态按钮边框为透明，拼接处会呈现实色块；示例默认插槽需渲染多个子组件，故由 `PreviewExample.render` 组装（见下方「清单扩展指南」）。
 - **代码复制**：每个示例卡片对应一段可复制的 Vue 用法代码（`copyToClipboard` + 已复制反馈）。
 - **导航与检索**：左侧锚点导航（按组件分区跳转）+ 组件名搜索过滤，兼容超长内容滚动。
-- **组件尺寸档位**：头部 XS / S / M / L 四档切换，作用于所有支持 `size` 的组件（`PreviewGroup.sizeable` 标记的 Button / Input / InputGroup / FormField / Label / Select / Switch / Checkbox / DatePicker / Slider / Tag / Badge / Avatar / Card）——渲染时向**未显式指定 `size`** 的示例注入全局档位；显式指定 `size` 的示例（尺寸对比用例）保持原样，避免标题与实际渲染不符。选择经 `TypedStorage` 持久化。
+- **组件尺寸档位**：头部 XS / S / M / L 四档切换，作用于所有支持 `size` 的组件（`PreviewGroup.sizeable` 标记的 Button / Input / InputGroup / FormField / Label / Select / Switch / Checkbox / DatePicker / Slider / Tag / Badge / Avatar / Card / ConfirmDialog）——渲染时向**未显式指定 `size`** 的示例注入全局档位；显式指定 `size` 的示例（尺寸对比用例）保持原样，避免标题与实际渲染不符。选择经 `TypedStorage` 持久化。
   - 四档字号阶梯为 **10 / 12 / 14 / 16px**（`$font-size-2xs` / `$font-size-xs` / `$font-size-sm` / `$font-size-base`），切档后文字大小可辨；Card 标题四档同步为 10/12/14/16、副标题为 10/10/12/14，Switch 标签随档位变化，Checkbox 标签随档位变化（方框与指示器图标同步为 14/16/18/20px 与 10/12/14/16px），DatePicker 的输入框与日历单元格字号同阶变化（单元格边长 22/24/28/32px），Select 的 XS 档下拉内部（筛选框/空态/分组标题）一并降为 10px。规则见 `AGENTS_STYLE.md` § 组件 size 档位字号阶梯。
   - 注：Chart（`size` 为预设像素宽高，大档会撑破卡片）、IconWrapper（`size` 为像素数）、Loader（无 props）不参与档位切换；图标尺寸不随档位缩放。
 - **明暗适配**：不自行造主题——面板与组件全部消费思源 `--b3-theme-*` 变量，明暗随思源主题自动切换（Chart 经自身 `theme: "auto"` 同样跟随）。
@@ -22,6 +22,10 @@
 - 注册入口（`index.ts`）：`registerComponentPreview(plugin)` 内部实例化并自挂载 `(plugin as any).__componentPreview`（实现 `destroy()`），已加入 `src/index.ts` 的 `DESTROYABLE_KEYS` 统一销毁；另注册页签图标。
 - 命令入口：`addCommand` 的 langKey 为 `openComponentPreview`，**不绑定默认快捷键**（`⌃⌥V` 已由视频管理器占用），仅作为命令面板入口存在；超级面板 action 经 `ACTION_EVENT_MAP` 派发 `openComponentPreview` 全局事件打开。
 - 状态栏集成：已登记到 `statusBar/featureRegistry.ts` 功能列表——抽屉中可 pin 到状态栏快捷区、带功能开关角标（`enableComponentPreview`）、可分配自定义分类；点击派发 `openComponentPreview` 事件打开窗口。快捷项图标色 `--status-color-component-preview`。
+
+## 弹层类组件的预览沙箱
+
+`ConfirmDialog` 这类弹层组件的遮罩是 `position: fixed; inset: 0`，直接放进快照会铺满整个预览窗口。`styles/PreviewSection.scss` 的 `.cp-card__stage` 因此设置 `position: relative`，并把舞台内的 `.si-confirm-mask` 覆盖为 `position: absolute; z-index: 1` —— **仅作用于预览沙箱，不改组件本体**（组件在真实调用处仍是全屏固定弹层）。后续新增其它弹层类共享组件时，在同一处追加对应遮罩类名即可。
 
 ## 具名插槽（无法在快照中呈现，在此登记）
 
@@ -35,6 +39,7 @@
 | `DatePicker` | `buttonbar` | `{ today, selectToday, clear }` | 面板底部按钮栏整体替换（默认渲染「今天 / 清除」两个文本按钮） |
 | `InputGroup` | 默认插槽（**多个子组件**） | — | 组内成员，可放 `Input` / `Select` / `DatePicker` / `Button` / `InputGroupAddon`，数量与顺序不限；成员**不得带 `label`/`hint`/`error`**（会撑高错位），容器**禁设 `overflow: hidden`**（会裁剪 `Select` 下拉） |
 | `InputGroupAddon` | 默认插槽 | — | 附加项内容（前缀/后缀文本或图标） |
+| `ConfirmDialog` | 默认插槽 | — | 覆盖消息区，用于承载富内容（如快照备注与时间）；不传时按 `message` 的 `\n` 拆行渲染 |
 
 `SelectOption` 的 `keywords?: string` 为 `filterable` 的附加检索词（标签之外的别名/描述检索），清单中已有对应示例。
 
@@ -49,6 +54,7 @@
 | `Slider` | `update:modelValue` / `change` | 同上模式：拖动过程只发 `update:modelValue`，松手才发 `change` |
 | `Input` | `update:modelValue` / `change` | 同上模式：原生 `input` / `change` 分别转发 |
 | `DatePicker` | `update:modelValue` / `change` | 同日提交：选中、手输解析、清除时两者同时触发（无「实时跟随」阶段）；另有 `visibleChange`（弹层开合）、`viewChange`（视图切换）、`clear` |
+| `ConfirmDialog` | `confirm` / `cancel` | 确认按钮触发 `confirm`（不自动关闭，由父组件决定关闭时机，便于异步操作）；取消（取消按钮 / 遮罩点关 / Esc）触发 `cancel` 并同时派发 `update:visible(false)`，故支持 `v-model:visible` |
 
 > 通用建议：需要「实时跟随 + 一次性落盘」的交互（滑块、颜色、文本输入），消费方应监听 `update:modelValue` 做内存更新、监听 `change` 做持久化，可避免写放大与提示刷屏。
 

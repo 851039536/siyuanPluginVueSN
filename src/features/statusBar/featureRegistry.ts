@@ -43,6 +43,7 @@ function buildFeatures(plugin: Plugin): FeatureRegistryEntry[] {
   const s3FileManagerI18n = getI18nShard(plugin, "s3FileManager")
   const imageCompressorI18n = getI18nShard(plugin, "imageCompressor")
   const bookmarkMarkerI18n = getI18nShard(plugin, "bookmarkMarker")
+  const componentPreviewI18n = getI18nShard(plugin, "componentPreview")
   const statusBarI18n = getI18nShard(plugin, "statusBar")
 
   return [
@@ -229,6 +230,18 @@ function buildFeatures(plugin: Plugin): FeatureRegistryEntry[] {
         itemClass: "action-item tool-collection-item",
       },
       action: () => emitCustomEvent("toggleToolCollection"),
+    },
+    {
+      id: "componentPreview",
+      icon: "mdi:view-grid-outline",
+      color: "#0ea5e9",
+      title: componentPreviewI18n.title || "组件预览",
+      pinnable: true,
+      shortcut: {
+        icon: "mdi:view-grid-outline",
+        itemClass: "action-item component-preview-item",
+      },
+      action: () => emitCustomEvent("openComponentPreview"),
     },
     {
       id: "bookmarkMarker",

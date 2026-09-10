@@ -9,6 +9,7 @@
 - if 语句必须有花括号 `{}`，即使只有一行
 - i18n 只改分片文件（`src/i18n/{zh_CN,en_US}/<feature>.json`）；顶层合并 JSON（`src/i18n/zh_CN.json` / `en_US.json`）由 `pnpm i18n:merge` 脚本自动生成，**禁止手动修改**
 - **独立窗体 UI 精简规则**（2026-08-24）：addTab + openWindow 独立窗体/浮动窗口中，页签标题已标识功能名，面板头部不再显示重复标题字样（如 toolCollection 的"工具合集" header-title），用 `isFloating`（`getFrontend() === "desktop-window"`）+ `v-if="!isFloating"` 隐藏，仅移除显示、功能逻辑零改动。规则已写入 AGENTS.md / AGENTS_API.md
+- **快捷键冲突检查**（2026-09-10）：核查 hotkey 占用必须**递归搜索整个 `src/features/**`**（`Get-ChildItem -Recurse`），不能用 `features/*/index.ts` 通配符——hotkey 也注册在 `features/<name>/types/index.ts`（video ⌃⌥V、formatAssistant ⌃⌥G、superPanel ⌃⌥P 都在 types 里）。新功能加 addCommand 前先跑一遍全量占用表。补充：思源 `ICommand.hotkey?: string` 为可选，不写 hotkey 时命令仅作命令面板入口（不占快捷键）
 
 ## 代码风格硬规则
 - 单文件行数：300 行警戒，500 行硬阈值，≥1000 行必须重构
@@ -36,6 +37,7 @@
 - statistics 分布 Tab（2026-09-08）：已移除「各笔记本块类型分布」堆叠图与「各笔记本文档数」柱状图（后者被排行表格完全覆盖属冗余；组件/SCSS/查询/类型/i18n 全链路清理），最终布局为单列纵向流：汇总栏 → 排行表格（含文档数/字数/总占比）→ 字数饼图（192px 环形图，图例多列 auto-fill 网格填满宽卡片）；BLOCK_TYPE_LABELS 常量与 blockType* i18n 键仍被 baseStats 整体块类型分布使用，勿删；docBarChartTitle 键因摘要栏复用保留
 - compactMode：独立模块，3 档密度 + 5 档字号 + 5 区域开关
 - skillLearning：代码片段练习库 + 闪卡记忆
+- componentPreview（2026-09-10）：组件预览 feature，addTab+openWindow 独立窗口展示 src/components 全部 14 个组件的用法快照 + 可复制代码（静态快照定位，无交互 props 调节）。结构 = types/PreviewManager + types/density.ts（卡片尺寸档位）+ previewData/（5 数据文件聚合）+ components/（PreviewSection/CodeBlock/NavSidebar）+ composables/usePreviewDensity + styles/4 SCSS。**组件尺寸档位**（用户明确：是组件自身 size prop，不是卡片/网格尺寸）XS/S/M/L，`types/size.ts` + `composables/usePreviewSize.ts`（key `component-preview-size`）；`PreviewGroup.sizeable` 标记 11 个支持 size 的组件（Button/Input/FormField/Label/Select/Switch/Slider/Tag/Badge/Avatar/Card，Chart/IconWrapper/Loader 不参与），`PreviewSection.resolveProps` 只向**未显式指定 size** 的示例注入全局档位（显式指定者作尺寸对比用例保持原样）。经验：Select/Input/Slider 的 containerAttrs 会剥离 class/style，预览不能靠 props 传 style 控宽；Loader height:100% 需父容器显式高度；**feature 内常量若被 composable 运行时引用，不能放 types/index.ts（其运行时 import ../index.vue 会与面板形成循环），应拆 types/density.ts 类独立文件**；**不绑定默认快捷键**（⌃⌥V 已被 video 占用，误用后已移除，仅保留命令面板入口）；已集成到底部状态栏功能列表（statusBar/featureRegistry.ts 加一条即自动获得抽屉项 + 开关角标 + pin 快捷 + 自定义分类，开关键由 featureIdToSettingKey 自动推导为 enableComponentPreview）
 
 ## 禁止事项
 - 禁止私自执行 `dotnet build`（太慢太卡）

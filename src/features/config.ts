@@ -270,6 +270,17 @@ export const FEATURE_CONFIG = [
     }],
   },
   {
+    id: "componentPreview",
+    defaultTitle: "组件预览",
+    defaultDesc: "在独立窗口查看共享 Codex UI 组件的用法快照与代码示例",
+    titleI18nKey: "componentPreview.title",
+    descI18nKey: "enableComponentPreviewDesc",
+    actions: [{
+      key: "openComponentPreview",
+      label: "打开",
+    }],
+  },
+  {
     id: "scriptLauncher",
     defaultTitle: "脚本启动器",
     defaultDesc: "快速启动和管理自定义脚本，支持多种语言分类",

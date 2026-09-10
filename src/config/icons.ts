@@ -407,6 +407,12 @@ export const FEATURE_ICONS = {
     icon: "mdi:star-four-points",
     color: "#fbbf24",
   },
+
+  // 组件预览
+  componentPreview: {
+    icon: "mdi:view-grid-outline",
+    color: "#0ea5e9",
+  },
 } as const
 
 /**

@@ -66,6 +66,7 @@ export interface PluginSettings {
   enableQuickNote: boolean // 是否启用速记功能
   enableQuickNoteAutoOpen: boolean // 速记子开关：启动时自动打开速记弹窗
   enableIdeaGenerator: boolean // 是否启用灵感生成器功能
+  enableComponentPreview: boolean // 是否启用组件预览功能
   themeColorScheme: ThemeColorSchemeId // 主题色方案 ID（内置主题 + "custom"）
   customThemeColor: string // 自定义主题色（schemeId 为 "custom" 时使用）
   videoCategories?: string[] // 视频分类列表
@@ -138,6 +139,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableQuickNote: true,
   enableQuickNoteAutoOpen: false,
   enableIdeaGenerator: true,
+  enableComponentPreview: true,
   themeColorScheme: "orange",
   customThemeColor: "#d97757",
   videoCategories: ["默认分类", "教程", "演示", "其他"],

@@ -1,0 +1,51 @@
+// 组件预览 — 代码块样式（等宽代码 + 右上复制按钮）
+@use '@/variables.scss' as *;
+
+.cp-codeblock {
+  position: relative;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-base;
+  overflow: hidden;
+}
+
+.cp-codeblock__pre {
+  margin: 0;
+  padding: $spacing-2 $spacing-3;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  line-height: $line-height-normal;
+  color: var(--b3-theme-on-background);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.cp-codeblock__copy {
+  position: absolute;
+  top: $spacing-1;
+  right: $spacing-1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px; // 图标按钮尺寸，无对应 Token
+  height: 24px; // 图标按钮尺寸，无对应 Token
+  padding: 0;
+  border: none;
+  border-radius: $radius-sm;
+  background: var(--b3-theme-surface-lighter);
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 0.12s ease, color 0.12s ease;
+
+  &:hover {
+    opacity: 1;
+    color: var(--b3-theme-primary);
+  }
+}
+
+.cp-codeblock__copy--copied {
+  opacity: 1;
+  color: var(--b3-theme-success);
+}

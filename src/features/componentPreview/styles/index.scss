@@ -1,0 +1,132 @@
+// 组件预览 — 主面板样式（头部 / 布局 / 导航 / 分区 / 网格）
+@use '@/variables.scss' as *;
+
+.cp-panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  // 根容器显式基准字号（Dock 面板兜底规则）
+  font-size: $font-size-xs;
+  background: var(--b3-theme-background);
+}
+
+// ==================== 头部工具栏 ====================
+
+.cp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+  padding: $spacing-2 $spacing-3;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  flex-shrink: 0;
+}
+
+.cp-header__brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cp-header__title {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-background);
+}
+
+.cp-header__subtitle {
+  font-size: $font-size-2xs;
+  color: $color-muted;
+}
+
+.cp-header__actions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  flex-shrink: 0;
+}
+
+.cp-header__search {
+  width: 200px; // 搜索框固定宽度，无对应 Token
+}
+
+// ==================== 组件尺寸档位切换器 ====================
+
+.cp-size {
+  display: flex;
+  gap: $spacing-px;
+  padding: $spacing-2px;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $radius-base;
+}
+
+.cp-size__btn {
+  min-width: 22px; // 档位按钮最小宽度，无对应 Token
+  padding: $spacing-2px $spacing-2;
+  border: 1px solid transparent;
+  border-radius: $radius-sm;
+  background: transparent;
+  font-family: $vp-mono;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-medium;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+
+  &:hover {
+    color: var(--b3-theme-on-background);
+  }
+}
+
+.cp-size__btn--active {
+  background: var(--b3-theme-background);
+  border-color: var(--b3-theme-surface-lighter);
+  color: var(--b3-theme-primary);
+  font-weight: $font-weight-semibold;
+}
+
+// ==================== 主体布局 ====================
+
+.cp-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.cp-content {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: $spacing-4 $spacing-5;
+  // 滚动内容不紧贴侧栏（Dock 面板侧边栏间距规则）
+  box-sizing: border-box;
+}
+
+.cp-content__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-12 $spacing-4;
+  color: $color-muted;
+  font-style: italic;
+}
+
+// ==================== 响应式 ====================
+
+@media (max-width: 720px) {
+  .cp-header__subtitle {
+    display: none;
+  }
+
+  .cp-header__search {
+    width: 140px; // 窄屏搜索框宽度，无对应 Token
+  }
+
+  .cp-content {
+    padding: $spacing-3;
+  }
+}

@@ -11,7 +11,7 @@ export const inputGroup: PreviewGroup = {
   id: "input",
   component: Input,
   name: "Input",
-  summary: "输入框：类型 / 尺寸 / 前后缀图标 / 密码可见 / 可清空 / 字数统计 / 校验态",
+  summary: "输入框：类型 / 尺寸 / 前后缀图标 / 密码可见 / 可清空 / 字数统计 / 校验态 / 无边框内嵌",
   importCode: "import Input from \"@/components/Input.vue\"",
   sizeable: true,
   examples: [
@@ -117,6 +117,15 @@ export const inputGroup: PreviewGroup = {
         modelValue: "第一行\n第二行",
       },
       code: "<Input v-model=\"value\" type=\"textarea\" :rows=\"3\" placeholder=\"支持多行输入\" />",
+    },
+    {
+      title: "无边框（borderless）",
+      props: {
+        borderless: true,
+        placeholder: "内嵌到自定义容器中",
+        modelValue: "",
+      },
+      code: "<Input v-model=\"value\" borderless placeholder=\"内嵌到自定义容器中\" />",
     },
   ],
 }

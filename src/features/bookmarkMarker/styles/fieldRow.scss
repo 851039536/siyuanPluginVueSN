@@ -1,0 +1,11 @@
+// 规则卡片字段行布局（RuleItem 与其字段子组件共用）
+// 注意：每个渲染 .rule-row 的组件都必须各自 @use 本文件，
+// 这样 scoped 编译时才会带上「自身」的 data-v 属性——
+// 依赖父组件 scope 传递在「子组件多根节点」场景下会失效。
+@use "@/variables.scss" as *;
+
+.rule-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}

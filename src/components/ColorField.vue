@@ -1,4 +1,5 @@
-<!-- 颜色字段：色块弹出自绘预设调色板 + 文本输入框双向联动（思源 Electron 环境不弹出原生 input[type=color] 取色器，故改用自绘调色板），供代码块/标题/表格/列表样式设置复用 -->
+<!-- 颜色字段：色块弹出自绘预设调色板 + 文本输入框双向联动（思源 Electron 环境不弹出原生 input[type=color] 取色器，故改用自绘调色板），供代码块/标题/表格/列表样式与书签标记等场景复用。
+     update:modelValue = 实时值（文本逐字输入时持续触发，仅更新内存）；change = 提交信号（文本 blur/回车、调色板选色），消费方据此落盘，避免逐字写盘 -->
 <template>
   <div
     ref="rootEl"
@@ -17,7 +18,8 @@
       type="text"
       class="color-input"
       :placeholder="placeholder"
-      @input="onChange"
+      @input="onInput"
+      @change="emitCommit"
     />
     <!-- 预设调色板弹层 -->
     <div
@@ -48,13 +50,19 @@ import {
 } from "vue"
 
 interface Props {
+  /** 当前颜色（hex） */
   modelValue: string
+  /** 文本输入框占位符 */
   placeholder?: string
 }
 
 defineProps<Props>()
 
-const emit = defineEmits<{ (e: "update:modelValue", value: string): void }>()
+const emit = defineEmits<{
+  (e: "update:modelValue", value: string): void
+  /** 提交信号：文本 blur/回车或调色板选色后触发，供消费方落盘 */
+  (e: "change"): void
+}>()
 
 /** 预设调色板：灰阶 / 明亮 / 标准 / 深色 四行，覆盖常用配色场景 */
 const PALETTE = [
@@ -71,12 +79,17 @@ const PALETTE = [
 const rootEl = ref<HTMLElement | null>(null)
 const showPalette = ref(false)
 
-function onChange(e: Event) {
+function onInput(e: Event) {
   emit("update:modelValue", (e.target as HTMLInputElement).value)
+}
+
+function emitCommit() {
+  emit("change")
 }
 
 function pickColor(color: string) {
   emit("update:modelValue", color)
+  emit("change")
   showPalette.value = false
 }
 
@@ -105,5 +118,5 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
-@use "../styles/ColorField.scss";
+@use "./styles/ColorField.scss";
 </style>

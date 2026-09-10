@@ -138,13 +138,13 @@ import {
   ref,
   watch,
 } from "vue"
+import ColorField from "@/components/ColorField.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import SiSwitch from "@/components/Switch.vue"
 import {
   DEFAULT_TABLE_STYLE_SETTINGS,
   GeneralSettingsStorage,
 } from "../types/storage"
-import ColorField from "./ColorField.vue"
 import SettingLabel from "./SettingLabel.vue"
 import SettingSlider from "./SettingSlider.vue"
 

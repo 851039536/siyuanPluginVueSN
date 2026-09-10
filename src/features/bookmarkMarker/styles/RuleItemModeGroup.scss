@@ -1,0 +1,12 @@
+// 单选分段组样式（ModeGroupField.vue 专属）
+// 子按钮外观（选中态主色 text）由共享 Button 提供，此处仅负责分组容器布局
+@use "@/variables.scss" as *;
+
+.mode-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-1;
+  flex: 1;
+  min-width: 0;
+}

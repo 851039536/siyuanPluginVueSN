@@ -4,6 +4,7 @@
  */
 import type { Plugin } from "siyuan"
 import type { ModalAppInstance } from "@/utils/vueAppHelper"
+import type { BookmarkMarkerActionPayload, BookmarkMarkerI18n } from "./types"
 import { createModalVueApp } from "@/utils/vueAppHelper"
 import { BookmarkMarker } from "./modules/BookmarkMarker"
 import { BookmarkMarkerStorage } from "./types/storage"
@@ -18,7 +19,11 @@ export class BookmarkMarkerManager {
   constructor(plugin: Plugin) {
     this.storage = new BookmarkMarkerStorage(plugin)
 
-    const i18n = (plugin.i18n?.bookmarkMarker as unknown as Record<string, any>) || {}
+    // i18n 兼容两种合并结构：扁平（各键位于顶层，当前风格）与嵌套（bookmarkMarker 子对象）
+    const i18n = (
+      (plugin.i18n as unknown as { bookmarkMarker?: BookmarkMarkerI18n }).bookmarkMarker
+      ?? plugin.i18n
+    ) as unknown as BookmarkMarkerI18n
     const close = this.close.bind(this)
 
     this.modal = createModalVueApp(BookmarkMarkerPanel, {
@@ -36,7 +41,8 @@ export class BookmarkMarkerManager {
   }
 
   init(): void {
-    this.applySettings()
+    // applySettings 内部已 try-catch，无需额外兜底
+    void this.applySettings()
   }
 
   destroy(): void {
@@ -69,30 +75,34 @@ export class BookmarkMarkerManager {
     }
   }
 
-  private handleChange(action: string, data: any): void {
-    switch (action) {
+  /** 面板变更派发（判别联合载荷，取代原先的 (action: string, data: any)） */
+  private handleChange(payload: BookmarkMarkerActionPayload): void {
+    switch (payload.action) {
       case "toggle":
-        if (data.enabled) {
+        if (payload.enabled) {
           if (this.bookmarkMarker) {
             // 重新启用时同步最新配置，避免沿用禁用期间的旧规则/旧间隔
-            this.bookmarkMarker.updateOptions({ rules: normalizeRules(data.rules) })
-            this.bookmarkMarker.setUpdateInterval(data.updateInterval)
+            this.bookmarkMarker.updateOptions({ rules: normalizeRules(payload.rules) })
+            this.bookmarkMarker.setUpdateInterval(payload.updateInterval)
           } else {
             this.bookmarkMarker = new BookmarkMarker({
-              rules: normalizeRules(data.rules),
-              updateInterval: data.updateInterval,
+              rules: normalizeRules(payload.rules),
+              updateInterval: payload.updateInterval,
             })
           }
-          this.bookmarkMarker.start()
+          // start() 内部已对书签查询链路做异常兜底，此处仍需 catch 以防同步异常冒泡
+          void this.bookmarkMarker.start().catch((error) => {
+            console.error("启动书签标记失败:", error)
+          })
         } else {
           this.bookmarkMarker?.stop()
         }
         break
       case "rulesChanged":
-        this.bookmarkMarker?.updateOptions({ rules: normalizeRules(data.rules) })
+        this.bookmarkMarker?.updateOptions({ rules: normalizeRules(payload.rules) })
         break
       case "intervalChanged":
-        this.bookmarkMarker?.setUpdateInterval(data.updateInterval)
+        this.bookmarkMarker?.setUpdateInterval(payload.updateInterval)
         break
     }
   }

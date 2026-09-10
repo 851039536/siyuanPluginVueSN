@@ -157,7 +157,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 ## 共享组件库使用规则（强制）
 
-`src/components/` 是**全项目唯一的 UI 控件来源**（15 个组件）。三条强制要求：**先查用法 → 优先复用 → 改 API 必同步**。
+`src/components/` 是**全项目唯一的 UI 控件来源**（16 个组件）。三条强制要求：**先查用法 → 优先复用 → 改 API 必同步**。
 
 ### 1. 先查用法，禁止猜 props
 
@@ -165,7 +165,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 | 查询方式 | 位置 | 说明 |
 |---------|------|------|
-| **组件预览面板（推荐）** | 命令面板搜「组件预览」/ 状态栏功能列表 | 15 个组件的**真实渲染**快照 + 可复制代码；改完组件样式可直接目视回归 |
+| **组件预览面板（推荐）** | 命令面板搜「组件预览」/ 状态栏功能列表 | 16 个组件的**真实渲染**快照 + 可复制代码；改完组件样式可直接目视回归 |
 | 用法清单（源码） | `src/features/componentPreview/previewData/*.ts` | `props` 与 `code` 同源，是 props 的权威示例 |
 | 组件源码 | `src/components/<Name>.vue` 的 `interface Props` | 最终事实来源（含 JSDoc 注释） |
 
@@ -174,17 +174,18 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 ### 2. 优先复用，禁止在 feature 内自建同类控件
 
-- 需要按钮 / 输入框 / 下拉 / 开关 / 复选框 / 滑块 / 标签 / 徽标 / 头像 / 卡片 / 图表 / 图标 / 加载态时，**必须**使用共享组件
+- 需要按钮 / 输入框 / 下拉 / 开关 / 复选框 / 滑块 / 标签 / 徽标 / 头像 / 卡片 / 图表 / 图标 / 加载态 / 颜色字段时，**必须**使用共享组件
 - 共享组件缺能力时：**先扩展共享组件**（在 `interface Props` 加可选参数，保持向后兼容），再在 feature 中消费；禁止在 feature 内复制一份改改
 - 允许自建的例外：纯展示的局部布局容器，以及 `.icon-btn` 这类无档位的 26×26 固定尺寸图标按钮（见 [AGENTS_STYLE.md § 核心规范速查表](./AGENTS_STYLE.md#核心规范速查表)）
 
-### 3. 组件清单（15 个）
+### 3. 组件清单（16 个）
 
 | 组件 | 职责 | 关键 props |
 |------|------|-----------|
 | `Button.vue` | 按钮：颜色轴 × 外观轴、四档尺寸、图标四向、加载 | `variant` / `severity` / `outlined` / `text` / `size` / `icon` / `iconPosition` / `rounded` / `block` / `loading` / `type` / `title` / `ariaLabel` |
-| `Input.vue` | 单行/多行输入（前后缀图标、清除、密码、字数计数） | `v-model` / `type` / `size` / `prefixIcon` / `suffixIcon` / `clearable` / `showPassword` / `showCount` / `error` / `rows` / `autosize` |
+| `Input.vue` | 单行/多行输入（前后缀图标、清除、密码、字数计数、无边框内嵌） | `v-model` / `type` / `size` / `prefixIcon` / `suffixIcon` / `clearable` / `borderless` / `showPassword` / `showCount` / `error` / `rows` / `autosize` |
 | `Select.vue` | 下拉选择（可筛选、可清除、可分组） | `v-model` / `options` / `size` / `filterable` / `clearable` / `placement` / `maxHeight` / `emptyText` |
+| `ColorField.vue` | 颜色字段：色块 + 32 色自绘调色板弹层 + hex 文本双向联动（**思源 Electron 下原生 `input[type=color]` 不弹窗，禁止用原生取色器**） | `v-model` / `placeholder` |
 | `FormField.vue` | 表单行容器：label + 控件 + hint/error + 字数计数 | `label` / `required` / `hint` / `error` / `size` / `showCount` / `countCurrent` / `countMax` |
 | `Label.vue` | 表单标签文本（可带图标、必填星号） | `size` / `variant` / `state` / `icon` / `iconPosition` / `tag` / `for` / `width` / `align` |
 | `Switch.vue` | 开关 | `v-model` / `label` / `size` / `loading` / `labelBefore` / `activeColor` |
@@ -247,7 +248,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 - **模块提取判定**：重复远比错误抽象便宜，同一问题第 3 次出现前不要抽象（Rule of Three）。详见 [AGENTS_ARCH.md § 强制规则：模块提取判定标准](./AGENTS_ARCH.md#强制规则模块提取判定标准)
 - **组件文件夹组织**：按功能单元建语义化文件夹、入口统一 `index.vue`、复用组件放 `common/`、复用逻辑放 `composables/`。详见 [AGENTS_ARCH.md § 四、组件文件夹组织标准](./AGENTS_ARCH.md#四组件文件夹组织标准components-子目录)
 - **共享组件先查后用**：写 `src/components/` 组件前，先查组件预览面板或 `previewData/` 清单确认真实 props，禁止凭记忆猜 props 名/取值（见上方「共享组件库使用规则」）
-- **共享组件优先复用**：按钮/输入框/下拉/开关/滑块/标签/徽标/头像/卡片/图表/图标/加载态必须用 `src/components/` 共享组件，禁止在 feature 内自建同类；缺能力时先扩展共享组件（加可选 props 保持向后兼容）
+- **共享组件优先复用**：按钮/输入框/下拉/开关/复选框/滑块/标签/徽标/头像/卡片/图表/图标/加载态/颜色字段必须用 `src/components/` 共享组件，禁止在 feature 内自建同类；缺能力时先扩展共享组件（加可选 props 保持向后兼容）
 - **组件 API 变更同步预览清单**：新增/修改共享组件 props 或行为后，必须同步 `src/features/componentPreview/previewData/*.ts` 示例（`props` 与 `code` 一致）与 `componentPreview/README.md`
 - **字号层级规范**：两级字号制（`$font-size-xs` 12px / `$font-size-2xs` 10px），根容器显式设置基准字号。详见 [AGENTS_STYLE.md § 强制规则：字号层级与全局基准字号](./AGENTS_STYLE.md#强制规则字号层级与全局基准字号)
 - **背景与过渡 gitPush 范式**：弹窗/面板底色 `background` + 卡片 `surface` 凸出；遮罩 `rgba(0,0,0,0.5)` 禁 `backdrop-filter`；过渡统一 0.12s ease（fade + scale 0.98），禁自定义缓动与装饰性 `letter-spacing`；全屏遮罩 `z-index: 10000`。详见 [AGENTS_STYLE.md § 强制规则：背景与过渡对齐 gitPush 范式](./AGENTS_STYLE.md#强制规则背景与过渡对齐-gitpush-范式2026-09-02)
@@ -438,7 +439,7 @@ src/
 │   ├── iconHelper.ts       # replaceTopBarIcon / createIconElement
 │   ├── mdRenderer.ts       # parseMarkdown / convertHljsToInlineStyles — Markdown 渲染统一入口
 │   └── settingsBackup.ts   # backupPluginData / restoreFromUpload
-├── components/             # 共享组件库 15 个（Button/Input/Select/Checkbox/Card/Chart 等）— 使用规则见「共享组件库使用规则」
+├── components/             # 共享组件库 16 个（Button/Input/Select/Checkbox/ColorField/Card/Chart 等）— 使用规则见「共享组件库使用规则」
 ├── features/
 │   ├── statusBar/
 │   │   └── composables/

@@ -156,6 +156,8 @@ interface Props {
   autocomplete?: string
   pattern?: string
   clearable?: boolean
+  /** 无边框外观：去掉 wrapper 的边框与底色，供复合控件（如标签输入框）内嵌使用 */
+  borderless?: boolean
   showPassword?: boolean
   showCount?: boolean
   showCountWithoutMax?: boolean
@@ -194,6 +196,7 @@ const props = withDefaults(defineProps<Props>(), {
   required: false,
   iconSize: 16,
   clearable: false,
+  borderless: false,
   showPassword: false,
   showCount: false,
   showCountWithoutMax: false,
@@ -252,6 +255,7 @@ const inputClasses = computed(() => [
     "si-input--disabled": props.disabled,
     "si-input--readonly": props.readonly,
     "si-input--error": props.error,
+    "si-input--borderless": props.borderless,
     "si-input--textarea": isTextarea.value,
     "si-input--with-prefix": props.prefixIcon && !isTextarea.value,
     "si-input--with-suffix":

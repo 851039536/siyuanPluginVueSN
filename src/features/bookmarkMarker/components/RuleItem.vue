@@ -1,283 +1,113 @@
+<!-- 单条书签标记规则编辑卡片：字段编辑只上报 patch（内存）+ commit（落盘），不直接改写父级对象 -->
 <template>
-  <!-- 单条书签标记规则编辑卡片 -->
   <div class="rule-item">
-    <!-- 卡片头部：序号 + 删除按钮 -->
+    <!-- 卡片头部：序号 + 删除按钮（ariaLabel："删除此规则"） -->
     <div class="rule-header">
       <span class="rule-index">#{{ index + 1 }}</span>
-      <button
-        class="rule-remove-btn"
-        @click="emit('remove')"
-      >
-        <IconWrapper
-          name="close"
-          :size="12"
-        />
-      </button>
+      <Button
+        variant="ghost"
+        text
+        size="xsmall"
+        icon="close"
+        :aria-label="i18n.ruleRemoveLabel"
+        @click="$emit('remove')"
+      />
     </div>
+
     <div class="rule-fields">
       <!-- 书签名称标签输入 -->
       <div class="rule-row">
         <!-- 标签："书签名称" -->
-        <label class="rule-label">
-          {{ i18n.bookmarkName }}
-        </label>
-        <div class="tags-input-wrapper">
-          <div
-            v-for="(tag, tagIndex) in rule.bookmarkNames"
-            :key="tagIndex"
-            class="tag-chip"
-          >
-            <span class="tag-text">{{ tag }}</span>
-            <span
-              class="tag-remove"
-              @click="removeTag(tagIndex)"
-            >×</span>
-          </div>
-          <!-- 占位符："输入书签名，回车添加" -->
-          <input
-            type="text"
-            class="tag-input"
-            :placeholder="i18n.bookmarkNamePlaceholder"
-            @keydown.enter.prevent="addTag($event)"
-            @keydown.backspace="handleTagBackspace($event)"
-            @keydown="handleKeydown"
-          />
-        </div>
+        <Label
+          size="small"
+          width="70px"
+        >{{ i18n.bookmarkName }}</Label>
+        <TagInputField
+          :i18n="i18n"
+          :names="rule.bookmarkNames"
+          @add="applyNames([...rule.bookmarkNames, $event])"
+          @remove="applyNames(rule.bookmarkNames.filter((_, i) => i !== $event))"
+        />
       </div>
-      <!-- 图标输入 -->
-      <div class="rule-row">
-        <!-- 标签："图标" -->
-        <label class="rule-label">
-          {{ i18n.markerIcon }}
-        </label>
-        <div class="icon-input-wrapper">
-          <!-- 占位符："🔖 输入 emoji" -->
-          <input
-            v-model="rule.icon"
-            type="text"
-            class="rule-input icon-input"
-            :placeholder="i18n.markerIconPlaceholder"
-            maxlength="2"
-            @change="emit('change')"
-          />
-          <span
-            v-if="rule.icon"
-            class="icon-preview-tag"
-            :style="{
-              color: rule.color,
-              backgroundColor: rule.backgroundColor,
-            }"
-          >{{ rule.icon }}</span>
-        </div>
-      </div>
-      <!-- 预设图标选择器 -->
-      <div
-        v-if="rule.displayMode && rule.displayMode !== 'bg'"
-        class="rule-row icon-picker-row"
-      >
-        <!-- 标签："预设图标" -->
-        <label class="rule-label">
-          {{ i18n.presetIcons }}
-        </label>
-        <div class="icon-picker-grid">
-          <span
-            v-for="icon in PRESET_ICONS"
-            :key="icon"
-            class="icon-option"
-            :class="{ selected: rule.icon === icon }"
-            @click="selectIcon(icon)"
-          >{{ icon }}</span>
-        </div>
-      </div>
+
+      <!-- 图标名输入 + 预设字形网格 -->
+      <IconSelectField
+        :i18n="i18n"
+        :icon="rule.icon ?? ''"
+        :color="rule.color"
+        :background-color="rule.backgroundColor"
+        :show-preset="mode !== 'bg'"
+        @update:icon="applyIcon"
+        @commit="commit"
+      />
+
       <!-- 文字颜色 -->
       <div class="rule-row">
         <!-- 标签："文字颜色" -->
-        <label class="rule-label">
-          {{ i18n.markerTextColor }}
-        </label>
-        <div class="color-input-wrapper">
-          <input
-            v-model="rule.color"
-            type="color"
-            class="color-picker"
-            @input="emit('change')"
-          />
-          <input
-            v-model="rule.color"
-            type="text"
-            class="color-text"
-            placeholder="#ffffff"
-            @change="emit('change')"
-          />
-        </div>
+        <Label
+          size="small"
+          width="70px"
+        >{{ i18n.markerTextColor }}</Label>
+        <ColorField
+          :model-value="rule.color"
+          placeholder="#ffffff"
+          @update:model-value="patch({ color: $event })"
+          @change="commit"
+        />
       </div>
+
       <!-- 背景颜色 -->
       <div class="rule-row">
         <!-- 标签："背景颜色" -->
-        <label class="rule-label">
-          {{ i18n.markerBgColor }}
-        </label>
-        <div class="color-input-wrapper">
-          <input
-            v-model="rule.backgroundColor"
-            type="color"
-            class="color-picker"
-            @input="emit('change')"
-          />
-          <input
-            v-model="rule.backgroundColor"
-            type="text"
-            class="color-text"
-            placeholder="#52c41a"
-            @change="emit('change')"
-          />
-        </div>
+        <Label
+          size="small"
+          width="70px"
+        >{{ i18n.markerBgColor }}</Label>
+        <ColorField
+          :model-value="rule.backgroundColor"
+          placeholder="#52c41a"
+          @update:model-value="patch({ backgroundColor: $event })"
+          @change="commit"
+        />
       </div>
-      <!-- 显示模式 -->
-      <div class="rule-row">
-        <!-- 标签："显示模式" -->
-        <label class="rule-label">
-          {{ i18n.displayMode }}
-        </label>
-        <div class="display-mode-group">
-          <label
-            class="mode-option"
-            :class="{ active: rule.displayMode === 'bg' || !rule.displayMode }"
-          >
-            <input
-              v-model="rule.displayMode"
-              type="radio"
-              value="bg"
-              @change="emit('change')"
-            />
-            <IconWrapper
-              name="file"
-              :size="14"
-            />
-            <!-- 选项："文字标签" -->
-            {{ i18n.modeTextLabel }}
-          </label>
-          <label
-            class="mode-option"
-            :class="{ active: rule.displayMode === 'icon' }"
-          >
-            <input
-              v-model="rule.displayMode"
-              type="radio"
-              value="icon"
-              @change="emit('change')"
-            />
-            <IconWrapper
-              name="image"
-              :size="14"
-            />
-            <!-- 选项："仅图标" -->
-            {{ i18n.modeIconOnly }}
-          </label>
-          <label
-            class="mode-option"
-            :class="{ active: rule.displayMode === 'icon-bg' }"
-          >
-            <input
-              v-model="rule.displayMode"
-              type="radio"
-              value="icon-bg"
-              @change="emit('change')"
-            />
-            <IconWrapper
-              name="image"
-              :size="14"
-            />
-            <!-- 选项："图标+背景" -->
-            {{ i18n.modeIconBg }}
-          </label>
-          <label
-            class="mode-option"
-            :class="{ active: rule.displayMode === 'row' }"
-          >
-            <input
-              v-model="rule.displayMode"
-              type="radio"
-              value="row"
-              @change="emit('change')"
-            />
-            <IconWrapper
-              name="format"
-              :size="14"
-            />
-            <!-- 选项："字体背景" -->
-            {{ i18n.modeRow }}
-          </label>
-        </div>
-      </div>
-      <!-- 背景透明度滑块 -->
+
+      <!-- 显示模式：文字标签 / 仅图标 / 图标+背景 / 字体背景 -->
+      <ModeGroupField
+        :label="i18n.markerDisplayMode"
+        :model-value="mode"
+        :options="displayModeOptions"
+        @select="applyDisplayMode"
+      />
+
+      <!-- 背景透明度（拖动只更新内存，松手才落盘） -->
       <div class="rule-row">
         <!-- 标签："背景透明度" -->
-        <label class="rule-label">
-          {{ i18n.bgAlpha }}
-        </label>
-        <div class="slider-container">
-          <input
-            v-model.number="rule.alpha"
-            type="range"
-            min="0"
-            max="1"
-            step="0.05"
-            class="alpha-slider"
-            @input="emit('change')"
-          />
-          <span class="alpha-value">{{ (resolveAlpha(rule) * 100).toFixed(0) }}%</span>
-        </div>
+        <Label
+          size="small"
+          width="70px"
+        >{{ i18n.bgAlpha }}</Label>
+        <Slider
+          class="alpha-slider"
+          :model-value="alpha"
+          :min="0"
+          :max="1"
+          :step="0.05"
+          show-value
+          :format-value="formatAlpha"
+          @update:model-value="applyAlpha"
+          @change="commit"
+        />
       </div>
-      <!-- 匹配模式 -->
-      <div class="rule-row">
-        <!-- 标签："匹配模式" -->
-        <label class="rule-label">
-          {{ i18n.matchMode }}
-        </label>
-        <div class="match-mode-group">
-          <label
-            class="mode-option"
-            :class="{ active: !rule.matchMode || rule.matchMode === 'exact' }"
-          >
-            <input
-              v-model="rule.matchMode"
-              type="radio"
-              value="exact"
-              @change="emit('change')"
-            />
-            <!-- 选项："精确" -->
-            {{ i18n.matchExact }}
-          </label>
-          <label
-            class="mode-option"
-            :class="{ active: rule.matchMode === 'prefix' }"
-          >
-            <input
-              v-model="rule.matchMode"
-              type="radio"
-              value="prefix"
-              @change="emit('change')"
-            />
-            <!-- 选项："前缀" -->
-            {{ i18n.matchPrefix }}
-          </label>
-          <label
-            class="mode-option"
-            :class="{ active: rule.matchMode === 'contains' }"
-          >
-            <input
-              v-model="rule.matchMode"
-              type="radio"
-              value="contains"
-              @change="emit('change')"
-            />
-            <!-- 选项："包含" -->
-            {{ i18n.matchContains }}
-          </label>
-        </div>
-      </div>
+
+      <!-- 匹配模式：精确 / 前缀 / 包含 -->
+      <ModeGroupField
+        :label="i18n.matchMode"
+        :model-value="rule.matchMode ?? 'exact'"
+        :options="matchModeOptions"
+        @select="applyMatchMode"
+      />
     </div>
+
     <!-- 效果预览 -->
     <div class="rule-preview">
       <!-- 文案："预览：" -->
@@ -291,13 +121,17 @@
 </template>
 
 <script setup lang="ts">
-/**
- * 书签标记 — 单条规则编辑器
- * 直接编辑父级传入的 rule 对象（嵌套字段），修改后 emit change 通知父级持久化
- */
+import type { IconKey } from "@/config/icons"
+import type { BookmarkMarkerI18n, BookmarkRule, DisplayMode, MatchMode, RulePatch } from "../types"
 import { computed } from "vue"
-import IconWrapper from "@/components/IconWrapper.vue"
-import type { BookmarkRule } from "../types"
+import Button from "@/components/Button.vue"
+import ColorField from "@/components/ColorField.vue"
+import Label from "@/components/Label.vue"
+import Slider from "@/components/Slider.vue"
+import IconSelectField from "./ruleItem/IconSelectField.vue"
+import ModeGroupField from "./ruleItem/ModeGroupField.vue"
+import TagInputField from "./ruleItem/TagInputField.vue"
+import { DEFAULT_ALPHA } from "../types"
 import {
   hexToRgba,
   resolveAlpha,
@@ -305,62 +139,60 @@ import {
 } from "../utils"
 
 const props = defineProps<{
+  /** 规则对象（只读：编辑一律经 patch 上报，禁止直接改写） */
   rule: BookmarkRule
   index: number
-  i18n: Record<string, string>
+  i18n: BookmarkMarkerI18n
 }>()
 
 const emit = defineEmits<{
-  change: []
+  /** 单字段补丁：父级在自己拥有的规则对象上合并（仅内存生效） */
+  patch: [patch: RulePatch]
+  /** 提交信号：父级落盘 + 通知 Manager + 提示 */
+  commit: []
+  /** 删除本规则：父级按对象身份定位 */
   remove: []
 }>()
 
-/** 预设 emoji 图标（供快速选择） */
-const PRESET_ICONS = [
-  "🔖",
-  "🏷️",
-  "📑",
-  "📌",
-  "📍",
-  "✅",
-  "❌",
-  "⚠️",
-  "🔄",
-  "📝",
-  "⭐",
-  "🏆",
-  "🚀",
-  "🔥",
-  "⚡",
-  "🎉",
-  "💡",
-  "📄",
-  "📁",
-  "🖊️",
-  "✏️",
-  "📎",
-  "🔗",
-  "🌈",
-  "✨",
-  "💫",
-  "🪄",
-  "💬",
-  "💭",
-  "🗨️",
-  "🔔",
-  "🔐",
-  "🔒",
-  "🔑",
-  "🛡️",
-  "🔍",
-  "🗂️",
-  "📚",
-  "📦",
-]
+const mode = computed(() => resolveMode(props.rule))
+const alpha = computed(() => resolveAlpha(props.rule))
+
+/** 提交补丁（默认同时触发落盘；持续型交互可只 patch，由 change 时机 commit） */
+const patch = (payload: RulePatch, persist = true) => {
+  emit("patch", payload)
+  if (persist) emit("commit")
+}
+
+const commit = () => emit("commit")
+
+const applyNames = (names: string[]) => patch({ bookmarkNames: names })
+
+/** 字形变更：预设网格点击即时落盘，手输字符由输入框 change 触发落盘 */
+const applyIcon = (icon: string) => patch({ icon })
+
+/** 透明度拖动：只更新内存（百分比实时跟随），松手时由 change 触发落盘 */
+const applyAlpha = (value: number | null) => patch({ alpha: value ?? DEFAULT_ALPHA }, false)
+
+const applyDisplayMode = (value: string) => patch({ displayMode: value as DisplayMode })
+const applyMatchMode = (value: string) => patch({ matchMode: value as MatchMode })
+
+const formatAlpha = (value: number): string => `${(value * 100).toFixed(0)}%`
+
+const displayModeOptions = computed<Array<{ value: DisplayMode, label: string, icon: IconKey }>>(() => [
+  { value: "bg", label: props.i18n.modeTextLabel, icon: "file" },
+  { value: "icon", label: props.i18n.modeIconOnly, icon: "image" },
+  { value: "icon-bg", label: props.i18n.modeIconBg, icon: "image" },
+  { value: "row", label: props.i18n.modeRow, icon: "format" },
+])
+
+const matchModeOptions = computed<Array<{ value: MatchMode, label: string }>>(() => [
+  { value: "exact", label: props.i18n.matchExact },
+  { value: "prefix", label: props.i18n.matchPrefix },
+  { value: "contains", label: props.i18n.matchContains },
+])
 
 const previewStyle = computed(() => {
-  const mode = resolveMode(props.rule)
-  if (mode === "icon" && props.rule.icon) {
+  if (mode.value === "icon" && props.rule.icon) {
     return {
       color: props.rule.color,
       backgroundColor: "transparent",
@@ -368,9 +200,9 @@ const previewStyle = computed(() => {
   }
   const base = {
     color: props.rule.color,
-    backgroundColor: hexToRgba(props.rule.backgroundColor, resolveAlpha(props.rule)),
+    backgroundColor: hexToRgba(props.rule.backgroundColor, alpha.value),
   }
-  if (mode === "row") {
+  if (mode.value === "row") {
     return {
       ...base,
       padding: "6px 12px",
@@ -381,54 +213,14 @@ const previewStyle = computed(() => {
 })
 
 const previewText = computed(() => {
-  const mode = resolveMode(props.rule)
   // 文案："未命名"
   const name = props.rule.bookmarkNames?.[0] || props.i18n.unnamed
-  if ((mode === "icon" || mode === "icon-bg") && props.rule.icon) return props.rule.icon
+  if ((mode.value === "icon" || mode.value === "icon-bg") && props.rule.icon) return props.rule.icon
   return props.rule.icon ? `${props.rule.icon} ${name}` : name
 })
-
-const addTag = (event: KeyboardEvent) => {
-  const input = event.target as HTMLInputElement
-  const value = input.value.trim()
-  if (!value) return
-  if (!props.rule.bookmarkNames.includes(value)) {
-    props.rule.bookmarkNames.push(value)
-    input.value = ""
-    emit("change")
-  }
-}
-
-const handleKeydown = (event: KeyboardEvent) => {
-  // 逗号键快捷添加标签；其余按键不做拦截，保证正常输入
-  if (event.key === ",") {
-    event.preventDefault()
-    addTag(event)
-  }
-}
-
-const removeTag = (tagIndex: number) => {
-  props.rule.bookmarkNames.splice(tagIndex, 1)
-  emit("change")
-}
-
-const handleTagBackspace = (event: KeyboardEvent) => {
-  const input = event.target as HTMLInputElement
-  if (input.value === "") {
-    if (props.rule.bookmarkNames.length > 0) {
-      props.rule.bookmarkNames.pop()
-      emit("change")
-    }
-  }
-}
-
-const selectIcon = (icon: string) => {
-  props.rule.icon = props.rule.icon === icon ? "" : icon
-  emit("change")
-}
 </script>
 
 <style scoped lang="scss">
+@use "../styles/fieldRow.scss" as *;
 @use "../styles/RuleItem.scss";
-@use "../styles/index.scss";
 </style>

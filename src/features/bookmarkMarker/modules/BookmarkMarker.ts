@@ -22,6 +22,9 @@ import {
   resolveMode,
 } from "../utils"
 
+/** 书签查询行数上限（防御性上限，避免异常数据导致内存膨胀） */
+const BOOKMARK_QUERY_LIMIT = 999999
+
 export class BookmarkMarker {
   private readonly timers = new TimerRegistry()
   private updateTimer: TimerHandle | null = null
@@ -45,7 +48,8 @@ export class BookmarkMarker {
 
   updateOptions(options: Partial<BookmarkMarkerOptions>) {
     Object.assign(this.options, options)
-    if (this.active) this.applyMarkers()
+    // applyMarkers 内部已兜底异常，void 即可（不会产生 unhandled rejection）
+    if (this.active) void this.applyMarkers()
   }
 
   async start(): Promise<void> {
@@ -74,6 +78,8 @@ export class BookmarkMarker {
   }
 
   setUpdateInterval(interval: number): void {
+    // 等值短路：间隔未变化时无需重启定时器
+    if (this.options.updateInterval === interval) return
     this.options.updateInterval = interval
     if (this.updateTimer) {
       this.stopAutoUpdate()
@@ -86,14 +92,21 @@ export class BookmarkMarker {
   // ============================================================
 
   private async loadBookmarkCache(): Promise<void> {
-    const result = await sql(
-      `SELECT block_id as id, value as bookmark FROM attributes WHERE name = 'bookmark' AND block_id = root_id LIMIT 999999`,
-    )
+    let result: AttrRow[] = []
+    try {
+      result = (await sql(
+        `SELECT block_id as id, value as bookmark FROM attributes WHERE name = 'bookmark' AND block_id = root_id LIMIT ${BOOKMARK_QUERY_LIMIT}`,
+      )) as AttrRow[]
+    } catch (error) {
+      // 查询失败不抛出：保持 cacheLoaded = false，applyMarkersFor 的既有守卫会跳过本轮标记应用
+      console.error("查询书签数据失败:", error)
+      return
+    }
     // stop() 后在途查询返回时不回填缓存，避免停用后数据驻留
     if (!this.active) return
     this.bookmarkCache.clear()
     if (result?.length) {
-      for (const row of result as AttrRow[]) {
+      for (const row of result) {
         this.bookmarkCache.set(row.id, row.bookmark)
       }
     }
@@ -112,13 +125,22 @@ export class BookmarkMarker {
   // DOM 标记应用 — 文件树
   // ============================================================
 
+  /**
+   * 拉取书签缓存并应用标记。
+   * 内部兜底所有异常（记录日志后吞掉），因此**永不 reject** —— 定时刷新、
+   * 选项变更等 fire-and-forget 调用点无需再逐处 catch。
+   */
   private async applyMarkers(): Promise<void> {
     if (!this.active) return
-    await this.loadBookmarkCache()
-    if (!this.active) return
-    // 缓存为空时也需执行：循环内的 remove 分支负责清理已无书签的旧标记
-    this.applyMarkersToDOM()
-    this.applyMarkersToProtyle()
+    try {
+      await this.loadBookmarkCache()
+      if (!this.active) return
+      // 缓存为空时也需执行：循环内的 remove 分支负责清理已无书签的旧标记
+      this.applyMarkersToDOM()
+      this.applyMarkersToProtyle()
+    } catch (error) {
+      console.error("应用书签标记失败:", error)
+    }
   }
 
   private applyMarkersToDOM(): void {
@@ -443,7 +465,10 @@ export class BookmarkMarker {
   private startAutoUpdate(): void {
     // 防御：确保无残留定时器，避免异常路径下重复 interval
     this.stopAutoUpdate()
-    this.updateTimer = this.timers.setInterval(() => this.applyMarkers(), this.options.updateInterval)
+    this.updateTimer = this.timers.setInterval(
+      () => void this.applyMarkers(),
+      this.options.updateInterval,
+    )
   }
 
   private stopAutoUpdate(): void {

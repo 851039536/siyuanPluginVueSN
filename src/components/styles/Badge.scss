@@ -29,7 +29,7 @@
 
     &--small {
       height: $spacing-4; // 16px
-      padding: 0 5px; // 5px 无对应 Token，保留
+      padding: 0 $spacing-px; // 3px（原 5px，减 2px）
       font-size: $font-size-xs; // S 档：12px
       line-height: $line-height-tight;
       min-width: $spacing-4;
@@ -37,7 +37,7 @@
 
     &--medium {
       height: $spacing-5; // 20px
-      padding: 0 6px; // 6px 无对应 Token
+      padding: 0 $spacing-1; // 4px（原 6px，减 2px）
       font-size: $font-size-xs; // M 档：12px
       line-height: $line-height-tight;
       min-width: $spacing-5;
@@ -45,7 +45,7 @@
 
     &--large {
       height: $spacing-6; // 24px
-      padding: 0 $spacing-2; // 8px — 原 8px
+      padding: 0 m.$gap-xs; // 6px（原 8px，减 2px）
       font-size: $font-size-xs; // L 档：12px
       line-height: $line-height-tight;
       min-width: $spacing-6;

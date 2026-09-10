@@ -32,10 +32,10 @@
   }
 
   &--small {
-    padding: $spacing-2 $spacing-3;
+    padding: m.$gap-xs m.$spacing-2_5; // 6px 10px（原 8px 12px，各减 2px）
     font-size: $font-size-xs;
     min-height: 28px; // 无对应 Token，尺寸级保留
-    gap: $spacing-1;
+    gap: $spacing-2px; // 2px（原 4px）
 
     .si-button__spinner {
       width: 14px;
@@ -44,10 +44,10 @@
   }
 
   &--medium {
-    padding: $spacing-2 $spacing-4;
+    padding: m.$gap-xs 14px; // 6px 14px（原 8px 16px）；14px 无对应 Token
     font-size: $font-size-sm;
     min-height: 36px;
-    gap: $spacing-2;
+    gap: m.$gap-xs; // 6px（原 8px）
 
     .si-button__spinner {
       width: 16px;
@@ -56,10 +56,10 @@
   }
 
   &--large {
-    padding: $spacing-3 $spacing-5;
+    padding: m.$spacing-2_5 18px; // 10px 18px（原 12px 20px）；18px 无对应 Token
     font-size: $font-size-base; // 原 15px → 统一为 base(16px)
     min-height: 44px;
-    gap: $spacing-3;
+    gap: m.$spacing-2_5; // 10px（原 12px）
 
     .si-button__spinner {
       width: 18px;

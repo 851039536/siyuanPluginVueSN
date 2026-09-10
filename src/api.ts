@@ -1115,23 +1115,14 @@ export async function getRepoSnapshots(page: number = 1): Promise<SnapshotInfo[]
  */
 export async function getRepoSnapshotContent(id: string, tag?: string): Promise<SnapshotContentFile[]> {
   const url = "/api/repo/getRepoSnapshotContent"
-  const params = tag
-    ? {
-        id,
-        tag,
-      }
-    : { id }
   try {
-    const resp = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(params),
-    })
-    const text = await resp.text()
-    if (!text) return []
-    const json = JSON.parse(text)
-    if (json.code !== 0) return []
-    const data = json.data
+    // 走统一请求封装（fetchSyncPost）；失败时保持「返回空列表」的既有容错语义
+    const data = await requestOrThrow(url, tag
+      ? {
+          id,
+          tag,
+        }
+      : { id })
     if (Array.isArray(data)) return data
     return data?.files ?? data?.content ?? data?.diff ?? []
   } catch (e: unknown) {
@@ -1162,7 +1153,7 @@ export async function getCloudRepoTagSnapshots(page: number = 1): Promise<CloudS
   if (snapshots.length === 0) return []
   const grouped = new Map<string, SnapshotInfo[]>()
   for (const snap of snapshots) {
-    const tag = (snap as any).tag || "default"
+    const tag = snap.tag || "default"
     if (!grouped.has(tag)) grouped.set(tag, [])
     grouped.get(tag)!.push(snap)
   }

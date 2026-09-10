@@ -1,6 +1,7 @@
+// dataSnapshot 面板样式（共享基座：入口与子组件各自 @use）
+// 控件外观全部由共享 Button / Input / ConfirmDialog 提供，此处只保留布局与容器
 @use "@/variables.scss" as *;
 
-// ==================== Mixins ====================
 @mixin text-ellipsis {
   white-space: nowrap;
   overflow: hidden;
@@ -9,357 +10,223 @@
 
 @mixin custom-scrollbar {
   &::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
+    width: 4px; // 滚动条宽度，无对应 Token
+    height: 4px; // 滚动条高度，无对应 Token
   }
+
   &::-webkit-scrollbar-thumb {
-    background: var(--b3-theme-surface-lighter);
-    border-radius: 2px;
+    background: var(--b3-theme-surface-lighter, $color-border);
+    border-radius: $radius-sm;
   }
+
   &::-webkit-scrollbar-track {
     background: transparent;
   }
 }
 
-// ==================== Panel ====================
+/* ==================== 面板与头部 ==================== */
 .data-snapshot-panel {
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  font-size: $font-size-sm;
+  padding-right: $spacing-2; // Dock 面板滚动内容不紧贴侧边栏
+  font-size: $font-size-xs; // 面板基准字号
+  background: var(--b3-theme-background, $color-bg);
+  color: var(--b3-theme-on-background, $color-fg);
+}
 
-  // ── Header ──
-  .ds-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--b3-border-color);
-    flex-shrink: 0;
-    gap: $spacing-2;
+.ds-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-3;
+  border-bottom: 1px solid var(--b3-theme-outline, $color-border);
+  flex-shrink: 0;
+}
 
-    &__title {
-      font-size: $font-size-base;
-      font-weight: $font-weight-semibold;
-    }
+.ds-header__title {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-surface, $color-fg);
+}
 
-    &__actions {
-      display: flex;
-      gap: $spacing-1;
-      flex-shrink: 0;
-    }
+/* 页签：仅布局容器，选中态由共享 Button 的 text 外观 + variant 表达 */
+.ds-tabs {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-3;
+  border-bottom: 1px solid var(--b3-theme-outline, $color-border);
+  flex-shrink: 0;
+}
+
+/* ==================== 创建行与内容区 ==================== */
+.ds-create {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-3;
+  border-bottom: 1px solid var(--b3-theme-outline, $color-border);
+  flex-shrink: 0;
+}
+
+.ds-create .si-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.ds-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: $spacing-3;
+  @include custom-scrollbar;
+}
+
+/* ==================== 列表与状态提示 ==================== */
+.ds-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+}
+
+.ds-state {
+  padding: $spacing-10 $spacing-3;
+  text-align: center;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface-light, $color-muted);
+}
+
+/* 快照条目：面板底色 + 卡片 surface 分层 */
+.ds-item {
+  padding: $spacing-2 $spacing-3;
+  border: 1px solid var(--b3-theme-outline, $color-border);
+  border-radius: $radius-sm;
+  background: var(--b3-theme-surface, $color-surface);
+  transition: border-color 0.12s ease;
+
+  &:hover {
+    border-color: var(--b3-theme-primary, $color-danger);
   }
+}
 
-  // ── Tabs ──
-  .ds-tabs {
-    display: flex;
-    gap: 0;
-    border-bottom: 1px solid var(--b3-border-color);
-    flex-shrink: 0;
-    overflow-x: auto;
-    @include custom-scrollbar;
+.ds-item__memo {
+  @include text-ellipsis;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: var(--b3-theme-on-surface, $color-fg);
+}
 
-    &__item {
-      padding: 7px 10px;
-      font-size: $font-size-xs;
-      cursor: pointer;
-      white-space: nowrap;
-      color: var(--b3-theme-on-surface);
-      border: none;
-      background: none;
-      border-bottom: 2px solid transparent;
-      transition: color 0.15s, border-color 0.15s, background 0.15s;
-      user-select: none;
+.ds-item__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-1;
+  margin-top: $spacing-2px;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light, $color-muted);
+}
 
-      &:hover {
-        color: var(--b3-theme-on-surface);
-        background: var(--b3-list-hover);
-      }
+.ds-item__actions {
+  display: flex;
+  gap: $spacing-1;
+  margin-top: $spacing-2;
+}
 
-      &--active {
-        color: var(--b3-theme-primary);
-        border-bottom-color: var(--b3-theme-primary);
-        font-weight: $font-weight-medium;
-      }
-    }
-  }
+/* ==================== 云端标签分组 ==================== */
+.ds-cloud-tag {
+  margin-bottom: $spacing-3;
+}
 
-  // ── Create form ──
-  .ds-create {
-    display: flex;
-    gap: $spacing-2;
-    padding: $spacing-3;
-    border-bottom: 1px solid var(--b3-border-color);
-    flex-shrink: 0;
+.ds-cloud-tag__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-3;
+}
 
-    &__input {
-      flex: 1;
-      padding: 4px 8px;
-      border: 1px solid var(--b3-border-color);
-      border-radius: $radius-sm;
-      font-size: $font-size-xs;
-      background: var(--b3-theme-surface);
-      color: var(--b3-theme-on-surface);
-      outline: none;
-      transition: border-color 0.15s;
+.ds-cloud-tag__name {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-primary, $color-danger);
+}
 
-      &:focus {
-        border-color: $color-accent;
-      }
+.ds-cloud-tag__actions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
 
-      &::placeholder {
-        color: var(--b3-theme-on-surface-light);
-      }
-    }
-  }
+.ds-cloud-tag__count {
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface-light, $color-muted);
+}
 
-  // ── Content ──
-  .ds-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: $spacing-3;
-    @include custom-scrollbar;
-  }
+/* ==================== 详情视图 ==================== */
+.ds-detail .ds-detail__back {
+  justify-content: flex-start;
+  padding: $spacing-2 $spacing-3;
+  border-bottom: 1px solid var(--b3-theme-outline, $color-border);
+  border-radius: 0;
+  color: var(--b3-theme-primary, $color-danger);
+}
 
-  // ── List ──
-  .ds-empty {
-    padding: $spacing-10 $spacing-3;
-    text-align: center;
-    color: var(--b3-theme-on-surface-light);
-    font-size: $font-size-xs;
-  }
+.ds-detail__info {
+  padding: $spacing-3;
+  font-size: $font-size-xs;
+  line-height: $line-height-relaxed;
+  color: var(--b3-theme-on-surface, $color-fg);
+}
 
-  .ds-loading {
-    padding: $spacing-5 $spacing-3;
-    text-align: center;
-    color: var(--b3-theme-on-surface-light);
-    font-size: $font-size-xs;
-  }
+.ds-detail__info > div {
+  margin-bottom: $spacing-1;
+}
 
-  // ── Snapshot item ──
-  .ds-item {
-    padding: $spacing-2 $spacing-3;
-    border-radius: $radius-sm;
-    transition: background 0.15s;
-    margin-bottom: $spacing-1;
+.ds-detail__key {
+  font-weight: $font-weight-semibold;
+}
 
-    &:hover {
-      background: var(--b3-list-hover);
-    }
+.ds-detail__section {
+  padding-bottom: $spacing-3;
+}
 
-    &__header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: $spacing-2;
-    }
+.ds-detail__section-title {
+  padding: 0 $spacing-3;
+  margin-bottom: $spacing-2;
+  font-size: $font-size-2xs;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-surface-light, $color-muted);
+}
 
-    &__memo {
-      flex: 1;
-      @include text-ellipsis;
-      font-size: $font-size-sm;
-      font-weight: $font-weight-medium;
-    }
+.ds-detail__type-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-1 $spacing-3;
+  font-size: $font-size-2xs;
+}
 
-    &__time {
-      font-size: $font-size-xs;
-      color: var(--b3-theme-on-surface-light);
-      margin-top: 2px;
-    }
+.ds-detail__type-name {
+  font-family: $vp-mono;
+  color: var(--b3-theme-on-surface, $color-fg);
+}
 
-    &__actions {
-      display: flex;
-      gap: $spacing-1;
-      margin-top: $spacing-2;
-    }
-  }
+.ds-detail__type-count {
+  color: var(--b3-theme-on-surface-light, $color-muted);
+  font-variant-numeric: tabular-nums;
+}
 
-  // ── Cloud tag group ──
-  .ds-cloud-tag {
-    margin-bottom: $spacing-3;
+/* ==================== 确认弹窗插槽内容 ==================== */
+.ds-confirm-text {
+  margin: 0 0 $spacing-2;
+  color: var(--b3-theme-on-surface, $color-fg);
+}
 
-    &__header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: $spacing-2 $spacing-3;
-      font-weight: $font-weight-semibold;
-      font-size: $font-size-xs;
-      color: var(--b3-theme-primary);
-    }
-
-    &__actions {
-      display: flex;
-      align-items: center;
-      gap: $spacing-2;
-    }
-
-    &__count {
-      font-size: $font-size-xs;
-      font-weight: $font-weight-normal;
-      color: var(--b3-theme-on-surface-light);
-    }
-  }
-
-  // ── Detail view ──
-  .ds-detail {
-    &__back {
-      display: flex;
-      align-items: center;
-      gap: $spacing-1;
-      padding: $spacing-2 $spacing-3;
-      cursor: pointer;
-      color: var(--b3-theme-primary);
-      font-size: $font-size-xs;
-      background: none;
-      border: none;
-      border-bottom: 1px solid var(--b3-border-color);
-      width: 100%;
-      text-align: left;
-      transition: background 0.15s;
-
-      &:hover {
-        background: var(--b3-list-hover);
-      }
-    }
-
-    &__info {
-      padding: $spacing-3;
-      font-size: $font-size-xs;
-      color: var(--b3-theme-on-surface);
-      line-height: $line-height-relaxed;
-
-      > div {
-        margin-bottom: $spacing-1;
-      }
-    }
-
-    &__section-title {
-      padding: 0 $spacing-3;
-      font-size: $font-size-xs;
-      font-weight: $font-weight-semibold;
-      color: var(--b3-theme-on-surface-light);
-      margin-bottom: $spacing-2;
-    }
-
-    &__type-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: $spacing-1 $spacing-3;
-      font-size: $font-size-xs;
-
-      &-ext {
-        font-family: var(--b3-font-family-code);
-        color: var(--b3-theme-on-surface);
-      }
-
-      &-count {
-        color: var(--b3-theme-on-surface-light);
-        font-variant-numeric: tabular-nums;
-      }
-    }
-  }
-
-  // ── Confirm dialog ──
-  .ds-confirm {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10001;
-    background: rgba(0, 0, 0, 0.4);
-
-    &__box {
-      background: var(--b3-theme-surface);
-      border: 1px solid var(--b3-border-color);
-      border-radius: $radius-md;
-      padding: $spacing-5;
-      width: 320px;
-    }
-
-    &__text {
-      font-size: $font-size-sm;
-      margin-bottom: $spacing-4;
-      line-height: $line-height-normal;
-      color: var(--b3-theme-on-surface);
-    }
-
-    &__actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: $spacing-2;
-    }
-
-    &__info {
-      margin-top: $spacing-2;
-      padding: $spacing-2;
-      background: var(--b3-theme-surface);
-      border-radius: $radius-sm;
-      font-size: $font-size-xs;
-    }
-  }
-
-  // ── Buttons ──
-  .ds-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: $spacing-1;
-    padding: 4px 10px;
-    border-radius: $radius-sm;
-    font-size: $font-size-xs;
-    cursor: pointer;
-    border: 1px solid var(--b3-border-color);
-    background: var(--b3-theme-surface);
-    color: var(--b3-theme-on-surface);
-    transition: all 0.15s;
-    white-space: nowrap;
-
-    &:hover {
-      background: var(--b3-list-hover);
-    }
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    &--primary {
-      background: var(--b3-theme-primary);
-      color: var(--b3-theme-on-primary);
-      border-color: var(--b3-theme-primary);
-
-      &:hover {
-        opacity: 0.85;
-      }
-    }
-
-    &--danger {
-      color: $color-danger;
-      border-color: hsl(0 72% 51% / 0.3);
-
-      &:hover {
-        background: hsl(0 72% 51% / 0.08);
-      }
-    }
-
-    &--small {
-      padding: 2px 8px;
-      font-size: $font-size-xs;
-    }
-
-    &--icon {
-      padding: 4px;
-      border: none;
-      background: transparent;
-
-      &:hover {
-        background: var(--b3-list-hover);
-      }
-    }
-  }
+.ds-confirm-info {
+  padding: $spacing-2;
+  border: 1px solid var(--b3-theme-outline, $color-border);
+  border-radius: $radius-sm;
+  font-size: $font-size-2xs;
+  color: var(--b3-theme-on-surface, $color-fg);
 }

@@ -12,9 +12,9 @@
 - 快捷键冲突检查：须递归搜 `src/features/**`（hotkey 也注册在 `features/<name>/types/index.ts`）。已知未修冲突：tableOfContents 与 ideaGenerator 同为 ⌃⌥I
 - **禁止私自执行** `pnpm vite build` / `pnpm lint`（用户自行验证）；其他 C# 项目禁止 `dotnet build`
 
-## 共享组件库（`src/components/`，19 个）
+## 共享组件库（`src/components/`，20 个）
 - 规则：**先查用法（组件预览面板 / `previewData/*.ts` / 源码 `interface Props`）→ 优先复用（禁止 feature 自建同类）→ 改 API 必同步预览清单**
-- 清单：Button / Input / Select / ColorField / FormField / **InputGroup** / **InputGroupAddon** / Label / Switch / Checkbox / DatePicker / Slider / Tag / Badge / Avatar / Card / Chart / IconWrapper / Loader
+- 清单：Button / Input / Select / ColorField / FormField / **InputGroup** / **InputGroupAddon** / Label / Switch / Checkbox / DatePicker / Slider / Tag / Badge / Avatar / Card / **ConfirmDialog** / Chart / IconWrapper / Loader
 - 结构约定：组件私有子部件与纯函数放同名小写子目录（如 `datePicker/`），不计入清单且**禁止 feature 直接导入**；子部件样式必须各自独立 SCSS（scoped 只对子组件根元素生效）；配套但需被 feature 直接使用的组件也平铺为公开条目（`InputGroup` + `InputGroupAddon` 共用「InputGroup」一个预览分区）
 - **改计数前必须实测**：并行变更频繁（曾一天 15→16→17→19），禁止凭记忆改文档「N 个」
 - 尺寸档位：`xsmall`/`small`/`medium`/`large`（默认 `small`），字号阶梯 10/12/14/16（`$font-size-2xs/xs/sm/base`，四档禁止同号）
@@ -24,6 +24,8 @@
 
 ### 组件约定与陷阱
 - `Button`：颜色轴 `variant`/`severity` × 外观轴 `outlined`/`text`；既有 5 个 variant 语义不可改（180+ 处依赖），新能力走 `--severity-*`/`--outlined`/`--text` + CSS 变量 `--btn-color`/`--btn-on-color`/`--btn-soft`/`--btn-soft-strong`。纯图标按钮必须 `aria-label`/`title`；loading 用 `visibility:hidden` 保宽；图标随档 12/14/16/18
+- `ConfirmDialog`（2026-09-10 新增，第 20 个组件）：`visible` 受控 + `title`/`message`（`\n` 多行）/`confirmText`/`cancelText`/`danger`/`size`/`closeOnMask`/`confirmLoading`；emits `confirm`（**确认后不自动关闭**，由父决定关闭时机以容纳异步）/`cancel`/`update:visible`（取消时与 `cancel` 一并派发，故支持 `v-model:visible`）；默认插槽覆盖消息区。**只有 Esc 走 window 监听，Enter 不绑定**（否则与聚焦按钮的原生 click 重复派发确认）；打开时焦点给对话框容器而非确认按钮（危险操作默认聚焦确认按钮会被 Enter 误触）。三处 feature 先例（s3FileManager/gitPush/shortcut）的本地实现**尚未迁移**，是后续清理项
+- 弹层类共享组件（含 `ConfirmDialog`）在组件预览中必须**沙箱覆盖**：遮罩是 `position: fixed`，直接快照会铺满整个窗口 → `componentPreview/styles/PreviewSection.scss` 的 `.cp-card__stage` 设 `position: relative`，并把舞台内 `.si-confirm-mask` 覆盖为 `absolute; z-index: 1`（只影响预览沙箱，不改组件本体）；新增其它弹层组件时在同一处追加遮罩类名
 - `Checkbox`：原生隐藏 input 承载语义，`isGroup = !binary && Array.isArray(modelValue)` 自动分模式；`indeterminate` 只能写 DOM 属性（`watch flush:"post"` + `onMounted`）；分组模式返回新数组；受控回写 `nextTick(syncNativeState)`
 - `DatePicker`（首个带私有子目录的组件）：入口 + `datePicker/`（types/formatUtils/utils/useDatePicker/PickerPanel/CalendarPanel/MonthYearPanel）。①零日期库，自建 `dateFormat` 模板引擎（令牌对齐 PrimeVue，`parseDate` 只支持数值令牌）；②**无时区字符串必须按本地时间解析**（`LOCAL_DATE_PATTERN` 显式构造，否则 UTC 跨日错位）；③`isDateDisabled` 收敛 min/max + disabledDays + disabledDates（数组预处理为 `Set`）；④42 格元数据一次性 `computed`；⑤焦点三坑：关闭后 `input.focus()` 会重开面板（`skipFocusOpen` 抑制）、视图切换后原按钮卸载导致焦点掉 body + Esc 失效（`focusActiveView()`）、面板容器需 `tabindex="-1"`；⑥有意偏离 PrimeVue：`dateFormat` 默认 `yy-mm-dd`、`firstDayOfWeek` 默认 1，不做 `showTime`/`multiple`/`inline`/`numberOfMonths`；⑦弹层沿用 `Select` 相对定位，`overflow:hidden` 容器内可能被裁剪（已知限制，不用 Teleport）
 - `ColorField`（由 `generalSettings` 提升为共享）：色块 + 32 色自绘调色板 + hex 文本双向联动。**原生 `<input type="color">` 在思源 Electron 中不弹取色器**，颜色选择一律用它；全项目仍有 8 个文件遗留原生实现待替换。事件：`update:modelValue`（实时）+ `change`（提交）
@@ -57,6 +59,7 @@
 ## 重构模式（已验证）
 - 巨型文件拆分：Manager 独立文件 + composable 按领域拆 + 子组件提取；样式硬编码→Token、box-shadow→border
 - 拆分依据：重复 3 次前不抽象（Rule of Three），但突破 500 行硬阈值同样是明示拆分依据
+- **i18n 类型用「键清单派生」避免可选键污染调用方**：写成 `const I18N_KEYS = [...] as const` + `type I18n = Record<(typeof I18N_KEYS)[number], string>`，取值函数按清单逐键 `?? ""` 填充 → 调用方永远拿到 `string`。若写成 `interface { title?: string }`，所有 `snapshotTask.progress({ label: i18n.value.xxx })` 都报 TS2322（`string | undefined` 不可赋 `string`），逐处 `?? ""` 更啰嗦
 - **拆文件后必须同轮全量切换 import 来源**（否则 build 报 `MISSING_EXPORT`）。三道验证各查不同问题，缺一不可：ESLint（`read_lints`）只查规范，**不查未导出成员、不查类型**；`npx tsc --noEmit` 查 `TS2614 无导出成员`/`TS2322 类型不匹配`（只读，允许跑）；rollup/vite build 才查 `MISSING_EXPORT`。故改完导出边界应跑一次 `npx tsc --noEmit` 过滤新增文件
 - 非 deep watch 对原地 splice 不触发 → 返回全新数组
 - 组件内常量若被 composable 运行时引用，不能放 `types/index.ts`（会与 `index.vue` 循环），应拆 `types/xxx.ts`
@@ -67,6 +70,7 @@
 - **S3 备份**：直接上传（无 zip）+ 状态栏集成；第五个「增量」Tab（实验性）；`buildBackupUploadKey` 统一 key；`useBackupOrchestrator` + `BackupTab` + `IncrementalTab`；`instance.ts` 断循环依赖
 - **componentPreview**：addTab + openWindow 双形态；`types/size.ts` + `usePreviewSize`（key `component-preview-size`）；`sizeable` 标记 + `resolveProps` 只注入未显式指定 size 的示例；**`PreviewExample.render?: (props) => VNode | VNode[]`**（2026-09-10 新增，默认插槽需放多个子组件的复合示例用，`PreviewSection` 内 `defineComponent` 的 `SlotRenderer` 承载，存在时优先于 `slotText`）；无默认快捷键；已集成状态栏功能列表
 - **toolCollection**：底部面板 + Tab 切换，首个工具 base64Image（已转 `_ConfigOnly`）
+- **dataSnapshot**（2026-09-10 合规改造）：控件全量换共享 `Button`/`Input`/`ConfirmDialog`（自建 `.ds-btn*`/`.ds-create__input`/`.ds-confirm*` 三段样式删除）；入口 358→228 行，拆 `components/{LocalSnapshotList,CloudSnapshotList,SnapshotDetail}.vue` + `types/i18n.ts`；API 层 `getRepoSnapshotContent` 由裸 `fetch` 改走 `requestOrThrow`（失败仍返回 `[]`）；`(snap as any).tag` 断言删除（接口本就有 `tag?`）；两处静默 `catch {}` 补日志；样式引入由 `import "./styles/index.scss"` 改为 `<style scoped lang="scss">@use`；Dock 根容器补 `padding-right`
 - **aiContentGenerator**：共享组件合规（内联 svg 30→0、原生 button 13→1 例外、原生表单控件 →0）；`CollapsibleSection` 保留原生 button（合规例外，已补 aria）；`ReviewRadarChart` 未迁移（Chart 无 radar）
 - **bookmarkMarker**：原生控件 29 处 → 0；`RuleItem.vue` 422→202 行（拆 `ruleItem/{TagInputField,IconSelectField,ModeGroupField}.vue`）；数据流改 `patch`/`commit`/`remove` 三事件；`v-for` key 改 `WeakMap` 稳定 key；i18n 分片扁平 34 键
 - **statistics**：分布 Tab 单列纵向流；`BLOCK_TYPE_LABELS` 仍被 baseStats 使用勿删

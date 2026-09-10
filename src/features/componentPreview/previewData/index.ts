@@ -16,6 +16,9 @@ import {
   checkboxPreviewGroups,
 } from "./checkbox"
 import {
+  confirmDialogPreviewGroups,
+} from "./confirmDialog"
+import {
   datePickerPreviewGroups,
 } from "./datePicker"
 import {
@@ -42,4 +45,5 @@ export const PREVIEW_GROUPS: PreviewGroup[] = [
   ...datePickerPreviewGroups,
   ...tagAvatarPreviewGroups,
   ...displayPreviewGroups,
+  ...confirmDialogPreviewGroups,
 ]

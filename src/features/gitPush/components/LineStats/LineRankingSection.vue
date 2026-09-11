@@ -1,4 +1,4 @@
-<!-- gitPush 行数统计项目代码行数排行区块（表头 + 条形 + 数字列 + 总行数列，行可点击打开详情弹窗） -->
+<!-- gitPush 行数统计项目代码行数排行区块（吸顶表头 + 条形 + 数字列 + 总行数列，整行可键盘激活打开详情） -->
 <template>
   <div class="gls-section">
     <!-- 区块标题："项目代码行数排行" -->
@@ -6,7 +6,7 @@
       {{ i18n.analysisLineProjectRanking }}
     </div>
     <div class="gls-bar-list">
-      <!-- 表头行："新增 / 删除 / 净增 / 占比 / 总行数"（净增加粗主题色 = 实际行数，悬停见说明） -->
+      <!-- 吸顶表头行："新增 / 删除 / 净增 / 占比 / 总行数"（净增加粗主题色 = 实际行数，悬停见说明） -->
       <div class="gls-bar-head">
         <span class="gls-bar-rank"></span>
         <span class="gls-bar-label"></span>
@@ -33,10 +33,12 @@
           :title="i18n.lineStatsTotalHint"
         >{{ i18n.analysisLineTotal }}</span>
       </div>
-      <div
+      <!-- 数据行：原生 button 承载（Tab 聚焦 + Enter/Space 打开详情，与鼠标点击同一入口） -->
+      <button
         v-for="(row, idx) in rows"
         :key="row.id"
-        class="gls-bar-row gls-bar-row--clickable"
+        type="button"
+        class="gls-bar-row"
         :title="i18n.lineDetailClickHint"
         @click="emit('viewProject', row.id)"
       >
@@ -73,20 +75,20 @@
         <span class="gls-bar-share">{{ row.share }}</span>
         <!-- 总行数列：当前实际行数（存量，等宽右对齐中性色；旧缓存缺失时显示 —） -->
         <span class="gls-line-total">{{ row.totalLines?.toLocaleString() ?? "—" }}</span>
-      </div>
+      </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-// gitPush 行数统计项目代码行数排行区块（表头 + 条形 + 数字列，行点击打开详情弹窗）
+// gitPush 行数统计项目代码行数排行区块（吸顶表头 + 条形 + 数字列，整行激活打开详情）
 import type { ProjectLineRankItem } from "../../types"
 import { computed } from "vue"
 import { netClass as sharedNetClass, withLineBarPct } from "../../utils"
 
 const props = defineProps<{
   i18n: Record<string, any>
-  /** 项目代码行数排行（按净增降序） */
+  /** 项目代码行数排行（按总行数存量降序） */
   projectRanking: ProjectLineRankItem[]
 }>()
 

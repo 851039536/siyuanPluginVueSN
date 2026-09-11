@@ -1694,6 +1694,7 @@
     "lineStatsShareHint": "Share = |net| as a percentage of total |net|",
     "lineStatsTotalShareHint": "Share = project lines as a percentage of all projects' total lines",
     "lineDetailTitleHint": "Line Stats Detail",
+    "lineDetailTabsLabel": "Line detail view switcher",
     "lineDetailFileTab": "Files",
     "lineDetailAuthorTab": "Authors",
     "lineDetailFileColumn": "File Path",

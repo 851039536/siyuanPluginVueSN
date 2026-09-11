@@ -1,23 +1,8 @@
 @use "@/variables.scss" as *;
 @use "./mixins" as *;
 
-// ── 项目行数详情弹窗：遮罩 + 双 Tab（文件明细表格 / 作者行数排行）──
-.pld-mask {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 99999;
-  // 基准字号：弹窗内文字继承内容级 12px
-  font-size: $t-xs;
-
-  &:focus {
-    outline: none;
-  }
-}
-
+// ── 项目行数详情弹窗：双 Tab（文件明细表格 / 作者行数排行）
+// 遮罩、层级与基准字号取自共享基座 .gp-mask，本地只留弹窗尺寸与进出场缩放 ──
 .pld-dialog {
   width: 720px;
   max-width: 92vw;
@@ -28,9 +13,15 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: transform 0.12s ease;
 }
 
-// 标题栏：项目名（主）+ 说明（次）+ 关闭按钮
+.gp-dialog-fade-enter-from .pld-dialog,
+.gp-dialog-fade-leave-to .pld-dialog {
+  transform: scale(0.98);
+}
+
+// 标题栏：项目名（主）+ 说明（次）+ 当前总行数 chip + 刷新/关闭按钮
 .pld-header {
   display: flex;
   align-items: center;
@@ -80,121 +71,26 @@
 
 .pld-total-value {
   font-family: $ff-mono;
+  font-variant-numeric: tabular-nums;
   font-weight: $fw-semibold;
 }
 
-.pld-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  width: 20px;
-  height: 20px;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.6;
-  background: transparent;
-  border: none;
-  border-radius: $r-sm;
-  cursor: pointer;
-  font-size: $t-sm;
-
-  &:hover {
-    opacity: 1;
-    background: var(--b3-theme-primary-lightest);
-    color: var(--b3-theme-primary);
-  }
-
-  &:focus {
-    @include focus-ring;
-  }
-}
-
-// 刷新按钮（与关闭按钮同视觉模式，紧贴其左；刷新中图标 gp-spin 旋转 + 禁用）
-.pld-refresh {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  width: 20px;
-  height: 20px;
-  margin-right: $s-px2;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.6;
-  background: transparent;
-  border: none;
-  border-radius: $r-sm;
-  cursor: pointer;
-  font-size: $t-sm;
-
-  &:hover:not(:disabled) {
-    opacity: 1;
-    background: var(--b3-theme-primary-lightest);
-    color: var(--b3-theme-primary);
-  }
-
-  &:focus {
-    @include focus-ring;
-  }
-
-  &:disabled {
-    cursor: default;
-  }
-}
-
-// ── Tab 切换栏 ──
+// ── 标签页容器：占满标题栏与底栏之间的剩余高度（面板区独立滚动）──
 .pld-tabs {
-  display: flex;
-  gap: $s-1;
+  flex: 1;
+  min-height: 0;
+}
+
+// 标签栏内缩对齐弹窗内边距（下边线由共享 TabList 自带）
+.pld-tabs-bar {
   padding: $s-2 $s-4 0;
-  border-bottom: 1px solid var(--b3-border-color);
 }
 
-.pld-tab {
-  @include gp-label-base;
-  display: inline-flex;
-  align-items: center;
-  gap: $s-1;
-  padding: $s-1 $s-3 $s-2;
-  border: none;
-  border-bottom: 2px solid transparent;
-  background: none;
-  cursor: pointer;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.5;
-  transition: opacity 0.12s, border-color 0.12s, color 0.12s;
-
-  &:hover {
-    opacity: 0.8;
-  }
-
-  &:focus {
-    @include focus-ring;
-  }
-
-  &--active {
-    opacity: 1;
-    border-bottom-color: var(--b3-theme-primary);
-    color: var(--b3-theme-primary);
-  }
-}
-
-// Tab 计数徽章
-.pld-tab-count {
-  font-size: $t-2xs;
-  font-family: $ff-mono;
-  font-weight: $fw-bold;
-  padding: 0 $s-px6;
-  border-radius: $r-full;
-  background: var(--b3-theme-primary-lightest);
-  color: var(--b3-theme-primary);
-  line-height: $lh-normal;
-}
-
-// ── 内容区（滚动）──
+// ── 内容区（滚动容器：吸顶表头以此为滚动祖先；上间距由 TabPanel 自带）──
 .pld-body {
   flex: 1;
   overflow-y: auto;
-  padding: $s-3 $s-4;
+  padding: 0 $s-4 $s-3;
 }
 
 // ── 文件明细表格 ──
@@ -253,6 +149,7 @@
     text-align: right;
     font-family: $ff-mono;
     font-size: $t-2xs;
+    font-variant-numeric: tabular-nums;
     color: var(--b3-theme-on-surface);
   }
 
@@ -262,6 +159,7 @@
     text-align: right;
     font-family: $ff-mono;
     font-size: $t-2xs;
+    font-variant-numeric: tabular-nums;
   }
 
   // 占比列：迷你条形 + 文本
@@ -278,6 +176,7 @@
     text-align: right;
     font-family: $ff-mono;
     font-size: $t-2xs;
+    font-variant-numeric: tabular-nums;
     color: var(--b3-theme-on-surface);
     opacity: 0.7;
   }
@@ -294,8 +193,10 @@
 .pld-share-fill {
   display: block;
   height: 100%;
+  min-width: 2px; // 极小占比也保留 2px 可见宽度（可读性优先于严格比例，有意取舍）
   border-radius: $r-sm;
   background: var(--b3-theme-primary);
+  transition: width 0.12s ease;
 }
 
 .pld-share-text {
@@ -303,6 +204,7 @@
   text-align: right;
   font-family: $ff-mono;
   font-size: $t-2xs;
+  font-variant-numeric: tabular-nums;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
 }
@@ -347,8 +249,10 @@
 .pld-bar-fill {
   display: block;
   height: 100%;
+  min-width: 2px; // 极小占比也保留 2px 可见宽度（可读性优先于严格比例，有意取舍）
   border-radius: $r-sm;
   background: var(--b3-theme-primary);
+  transition: width 0.12s ease;
 }
 
 .pld-line-nums {
@@ -357,6 +261,7 @@
   align-items: center;
   font-family: $ff-mono;
   font-size: $t-2xs;
+  font-variant-numeric: tabular-nums;
 }
 
 .pld-line-num {
@@ -375,6 +280,7 @@
   flex: 0 0 42px;
   font-family: $ff-mono;
   font-size: $t-2xs;
+  font-variant-numeric: tabular-nums;
   text-align: right;
   white-space: nowrap;
   color: var(--b3-theme-on-surface);

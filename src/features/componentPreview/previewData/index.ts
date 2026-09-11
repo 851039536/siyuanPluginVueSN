@@ -55,6 +55,9 @@ import {
   tagAvatarPreviewGroups,
 } from "./tagAvatar"
 import {
+  tabsPreviewGroups,
+} from "./tabs"
+import {
   textareaPreviewGroups,
 } from "./textarea"
 import {
@@ -83,6 +86,7 @@ export const PREVIEW_GROUPS: PreviewGroup[] = [
   ...datePickerPreviewGroups,
   ...tagAvatarPreviewGroups,
   ...timelinePreviewGroups,
+  ...tabsPreviewGroups,
   ...displayPreviewGroups,
   ...dividerPreviewGroups,
   ...confirmDialogPreviewGroups,

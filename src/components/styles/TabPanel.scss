@@ -1,0 +1,15 @@
+// ========== TabPanel.scss ==========
+@use '../kit/variables.scss' as *;
+
+// 单个面板：与标签栏以下边线分隔，仅靠上内边距让内容与分隔线拉开距离
+.si-tabpanel {
+  padding-top: var(--si-tabs-panel-padding-y, #{$s-3});
+  font-size: var(--si-tabs-font, #{$t-xs});
+  color: var(--b3-theme-on-background, $c-fg);
+
+  // 面板自身可聚焦（tabindex 来自 Tabs 的 tabindex）：保留浏览器焦点环并留出偏移，
+  // 它是「焦点已进入面板内容区」的唯一提示 —— 容器没有可改色的边框位置
+  &:focus-visible {
+    outline-offset: $s-px2;
+  }
+}

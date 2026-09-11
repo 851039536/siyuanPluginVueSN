@@ -1,0 +1,60 @@
+// ========== Tab.scss ==========
+@use './_mixins.scss' as m;
+@use '../kit/variables.scss' as *;
+
+// 单个标签：文本为主，激活态 = 主色文字 + 2px 主色下划线
+.si-tab {
+  position: relative;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: $s-px6;
+  padding: $s-px6 var(--si-tabs-tab-padding-x, #{$s-2});
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: var(--si-tabs-font, #{$t-xs});
+  line-height: $lh-normal;
+  color: var(--b3-theme-secondary, $c-muted);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.12s, background-color 0.12s;
+
+  // 下划线指示器：压在标签栏的下边线上（bottom: -1px），故各档共用同一条视觉线
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px; // 下划线厚度恒定，无对应 Token（不随档位缩放）
+    background: transparent;
+    transition: background-color 0.12s;
+  }
+
+  &:hover:not(.si-tab--disabled) {
+    color: var(--b3-theme-primary, $c-primary);
+  }
+
+  // 键盘焦点：底色 + 主色文字（下划线控件不用边框表达焦点，避免线与线叠在一起）
+  &:focus-visible {
+    outline: none;
+    background: var(--b3-theme-surface-lighter, $c-surface);
+    color: var(--b3-theme-primary, $c-primary);
+  }
+
+  // 激活态：只改颜色与下划线，不改字重 —— 字重变化会改变文本宽度，切换时标签会左右抖动
+  &--active {
+    color: var(--b3-theme-primary, $c-primary);
+
+    &::after {
+      background: var(--b3-theme-primary, $c-primary);
+    }
+  }
+
+  &--disabled {
+    color: var(--b3-theme-secondary, $c-muted);
+    opacity: m.$opacity-disabled;
+    cursor: default;
+  }
+}

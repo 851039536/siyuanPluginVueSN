@@ -64,6 +64,9 @@ import {
   timelinePreviewGroups,
 } from "./timeline"
 import {
+  toolbarPreviewGroups,
+} from "./toolbar"
+import {
   toggleButtonPreviewGroups,
 } from "./toggleButton"
 
@@ -87,6 +90,7 @@ export const PREVIEW_GROUPS: PreviewGroup[] = [
   ...tagAvatarPreviewGroups,
   ...timelinePreviewGroups,
   ...tabsPreviewGroups,
+  ...toolbarPreviewGroups,
   ...displayPreviewGroups,
   ...dividerPreviewGroups,
   ...confirmDialogPreviewGroups,

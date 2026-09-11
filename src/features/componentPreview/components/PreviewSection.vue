@@ -151,9 +151,13 @@ const PreviewStage = defineComponent({
     /**
      * 具名 / 作用域插槽：键为插槽名，值为接收该插槽作用域参数的 VNode 工厂。
      * 工厂每次调用都必须新建 VNode —— 同一实例重复挂载会触发 Vue 告警。
+     * 工厂第二个入参为注入全局档位后的实际渲染 props（供插槽内共享控件取同档 `size`）。
      */
     namedSlots: {
-      type: Object as PropType<Record<string, (slotProps: Record<string, any>) => VNode | VNode[]>>,
+      type: Object as PropType<Record<string, (
+        slotProps: Record<string, any>,
+        exampleProps: Record<string, any>,
+      ) => VNode | VNode[]>>,
     },
   },
   setup: (stageProps, { slots }) => {
@@ -180,7 +184,8 @@ const PreviewStage = defineComponent({
       }
       for (const [name, factory] of Object.entries(stageProps.namedSlots ?? {})) {
         children[name] = (slotProps: Record<string, any>) => {
-          const rendered = factory(slotProps ?? {})
+          // 第二参传本次渲染的实际 props（含注入的全局档位），插槽内共享控件据此对齐档位
+          const rendered = factory(slotProps ?? {}, componentProps)
           return Array.isArray(rendered) ? rendered : [rendered]
         }
       }

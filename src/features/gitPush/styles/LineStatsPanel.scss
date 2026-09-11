@@ -9,86 +9,18 @@
   padding: $s-1 $s-2 $s-1 0;
 }
 
-// ── 顶部工具条 ──
+// ── 顶部工具条（flex 三段布局由共享 Toolbar 承载，此处仅调与下方内容间距）──
 .gls-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: $s-2;
   margin-bottom: $s-3;
 }
 
-// 分析状态文案（未分析/分析中/完成；占满剩余空间，超长省略避免挤压右侧控件）
+// 分析状态文案（未分析/分析中/完成；占满 start 槽剩余空间，超长省略避免挤压右侧控件）
 .gls-status {
   flex: 1;
   min-width: 0;
   @include text-ellipsis;
   font-size: $t-xs;
   opacity: 0.6;
-}
-
-.gls-toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: $s-1;
-}
-
-// 文件格式过滤配置按钮（点击弹出扩展名多选弹窗；分析中禁用降低透明度）
-.gls-ext-btn {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 22px;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.7;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-sm;
-  cursor: pointer;
-  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
-
-  &:hover:not(:disabled) {
-    opacity: 1;
-    border-color: var(--b3-theme-primary);
-    color: var(--b3-theme-primary);
-  }
-
-  &:focus {
-    @include focus-ring;
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
-
-// 有生效过滤时：主色描边提示
-.gls-ext-btn--active {
-  border-color: var(--b3-theme-primary);
-  color: var(--b3-theme-primary);
-  background: var(--b3-theme-primary-lightest);
-}
-
-// 已选扩展名数量徽标（右上角悬浮）
-.gls-ext-badge {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  min-width: 13px;
-  height: 13px;
-  padding: 0 $s-px3;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: $t-2xs;
-  font-family: $ff-mono;
-  line-height: 1;
-  color: #fff;
-  background: var(--b3-theme-primary);
-  border-radius: 7px;
 }
 
 // 抓取失败提示（弱化展示，不打断正常结果阅读）
@@ -109,27 +41,33 @@
   }
 }
 
-// ── 顶部汇总卡片（总新增 / 总删除 / 总净增，复用 CommitAnalysisPanel 总览卡片视觉模式）──
+// ── 顶部汇总卡片（总新增 / 总删除 / 总净增 / 当前总行数，复用 CommitAnalysisPanel 总览卡片视觉模式）──
 .gls-cards {
   display: grid;
-  // 四列等宽卡片（总新增 + 总删除 + 总净增 + 当前总行数）
-  grid-template-columns: repeat(4, 1fr);
+  // 自适应列宽：常规面板宽度下一行四张，窄面板自动折行；每张不低于 78px，数值不被压碎
+  grid-template-columns: repeat(auto-fit, minmax(78px, 1fr));
   gap: $s-2;
   margin-bottom: $s-2;
 }
 
-.gls-card {
-  text-align: center;
-  padding: $s-2 $s-1;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-base;
+// 共享 Card 落地外观收敛：底色取 surface 凸出（Card 默认 background 与面板同底），圆角沿用 6px 既有观感。
+// 类名重复一次是为了压过 Card 组件内 scoped 的 `.si-card[data-v-*]`（同特异性时胜负取决于样式注入顺序，不稳定）
+.gls-cards .gls-card.gls-card {
   background: var(--b3-theme-surface);
+  border-radius: $r-base;
+}
+
+// 卡片内层（Card 走 body-no-padding，内边距与居中由本层自控）
+.gls-card-inner {
+  padding: $s-2 $s-1;
+  text-align: center;
 }
 
 .gls-card-value {
   font-size: $t-lg; // 数据突出展示：汇总统计数值大号字体
   font-weight: $fw-bold;
   font-family: $ff-mono;
+  font-variant-numeric: tabular-nums; // 等宽数字：数值变化时列宽不抖动
   line-height: $lh-tight;
   color: var(--b3-theme-on-surface);
 }
@@ -169,24 +107,31 @@
   gap: $s-1;
 }
 
-// ── 水平条形（项目/作者行数排行共用：标签 + 轨道 + 三列数字）──
+// ── 行数排行列模板（表头与数据行必须共用）：排名 | 名称 | 条形轨道 | 增删净数字 | 占比 | 总行数 ──
+// 名称与轨道都用比例宽度：长项目名不再被固定列截断，且各行轨道起止点仍然对齐（grid 保证列宽一致）
+$_gls-rank-cols: 18px minmax(64px, 1.1fr) minmax(36px, 1fr) auto 40px minmax(40px, auto);
+
 .gls-bar-list {
   display: flex;
   flex-direction: column;
   gap: $s-2;
 }
 
-// 表头行（项目/作者行数排行共用）：与数据行 flex 列结构一致，保证文字与下方数字右对齐
+// 表头行：吸顶贴住面板顶部（不透明底遮挡滚过的数据行），与数据行同列模板
 .gls-bar-head {
-  display: flex;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: $_gls-rank-cols;
   align-items: center;
   gap: $s-2;
   padding-bottom: $s-1;
-  margin-bottom: $s-1;
   font-size: $t-2xs; // 表头弱化（两级字号制）
   font-weight: $fw-bold;
   letter-spacing: 0.06em;
   color: var(--b3-theme-on-surface-light);
+  background: var(--b3-theme-background); // 吸顶遮挡：必须不透明
   border-bottom: 1px solid var(--b3-border-color);
 
   // 排名/名称/轨道三列仅作占位，空轨道不显示背景避免视觉干扰
@@ -207,21 +152,21 @@
   color: var(--b3-theme-primary);
 }
 
+// 数据行：原生 button（重置自带外观），整行可点击 + 可键盘聚焦激活
 .gls-bar-row {
-  display: flex;
+  @include btn-reset;
+  display: grid;
+  grid-template-columns: $_gls-rank-cols;
   align-items: center;
   gap: $s-2;
+  width: 100%;
+  padding: $s-1 0; // 仅纵向内边距：横向为 0，保持与表头列对齐
   font-size: $t-xs;
-}
-
-// 可点击项目行：hover 时项目名变主题色，提示可打开详情（与 CommitAnalysisPanel 交互模式一致）
-.gls-bar-row--clickable {
-  cursor: pointer;
-  padding: $s-1;
-  margin: -$s-1;
+  text-align: left;
   border-radius: $r-sm;
   transition: background-color 0.12s;
 
+  // hover 时项目名变主题色，提示可打开详情（与 CommitAnalysisPanel 交互模式一致）
   &:hover {
     background: var(--b3-theme-surface);
 
@@ -229,11 +174,14 @@
       color: var(--b3-theme-primary);
     }
   }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
 }
 
 // 排名序号列（等宽数字右对齐，弱化强调，非交互）
 .gls-bar-rank {
-  flex: 0 0 20px;
   font-family: $ff-mono;
   font-size: $t-2xs;
   text-align: right;
@@ -241,16 +189,17 @@
   opacity: 0.5;
 }
 
+// 项目名列：比例宽度 + 省略号（完整名称走行内 title），不再固定 72px 截断
 .gls-bar-label {
-  flex: 0 0 72px; // 固定标签列宽（让出排名列），保证轨道对齐
+  min-width: 0;
   @include text-ellipsis;
   opacity: 0.75;
 }
 
 .gls-bar-track {
-  flex: 1;
   // 轨道高度 5px、圆角 4px（radius-sm），色块存在感更强
   height: 5px;
+  min-width: 0;
   background: var(--b3-theme-surface);
   border-radius: $r-sm;
   overflow: hidden;
@@ -259,24 +208,25 @@
 .gls-bar-fill {
   display: block;
   height: 100%;
+  min-width: 2px; // 极小占比也保留 2px 可见宽度（可读性优先于严格比例，有意取舍）
   border-radius: $r-sm;
   background: var(--b3-theme-primary);
+  transition: width 0.12s ease;
 }
 
-// ── 行数排行数字列（+新增 / -删除 / 净增 三列等宽数字）──
-// 靠右对齐让三列数字尾部对齐；相邻数字用 margin 保证间距（不依赖 flex gap 支持，根除粘连）
+// ── 行数排行数字列（+新增 / −删除 / 净增 三列等宽数字，整块右对齐）──
+// 靠右对齐让三列数字尾部跨行对齐；相邻数字用 margin 保证间距（不依赖 flex gap 支持，根除粘连）
 .gls-line-nums {
-  flex: 0 0 auto;
-  margin-left: auto;
   display: flex;
+  justify-content: flex-end;
   align-items: center;
   font-family: $ff-mono;
   font-size: $t-2xs;
+  font-variant-numeric: tabular-nums; // 等宽数字：数字变化时列宽不抖动
 }
 
 // 数字单元格：自适应数字宽度（含千位分隔符），禁止换行挤压
 .gls-line-num {
-  flex-shrink: 0;
   white-space: nowrap;
   text-align: right;
   color: var(--b3-theme-on-surface);
@@ -287,9 +237,8 @@
   margin-left: $s-2;
 }
 
-// 占比列（净增绝对值占总净增绝对值的百分比，与净增排序同口径，等宽右对齐弱化展示）
+// 占比列（该项目总行数占全部项目总行数的百分比，与排序同口径，等宽右对齐弱化展示）
 .gls-bar-share {
-  flex: 0 0 42px;
   font-family: $ff-mono;
   font-size: $t-2xs;
   text-align: right;
@@ -300,11 +249,9 @@
 
 // 总行数列（当前工作区实际行数，存量口径，等宽右对齐中性色；与增量数字列区分）
 .gls-line-total {
-  flex: 0 0 auto;
-  margin-left: $s-2;
-  min-width: 44px; // 稳定列宽，避免大数字波动挤压轨道（与占比列同宽级别）
   font-family: $ff-mono;
   font-size: $t-2xs;
+  font-variant-numeric: tabular-nums;
   text-align: right;
   white-space: nowrap;
   color: var(--b3-theme-on-surface);

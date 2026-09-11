@@ -474,6 +474,7 @@
     "lineStatsShareHint": "占比 = 净增绝对值占总净增绝对值的百分比",
     "lineStatsTotalShareHint": "占比 = 该项目总行数占全部项目总行数的百分比",
     "lineDetailTitleHint": "行数统计详情",
+    "lineDetailTabsLabel": "行数明细视图切换",
     "lineDetailFileTab": "文件明细",
     "lineDetailAuthorTab": "作者明细",
     "lineDetailFileColumn": "文件路径",

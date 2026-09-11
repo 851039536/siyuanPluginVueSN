@@ -1,23 +1,7 @@
 @use "@/variables.scss" as *;
 @use "./mixins" as *;
 
-// ── 文件格式过滤配置弹窗 ──
-.gfe-mask {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 99999;
-  // 基准字号：弹窗内文字继承内容级 12px
-  font-size: $t-xs;
-
-  &:focus {
-    outline: none;
-  }
-}
-
+// ── 文件格式过滤配置弹窗（遮罩/层级/基准字号取自共享基座 .gp-mask）──
 .gfe-dialog {
   width: 380px;
   max-width: 90vw;
@@ -27,6 +11,13 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  // 进出场缩放（透明度由共享 .gp-dialog-fade 负责）
+  transition: transform 0.12s ease;
+}
+
+.gp-dialog-fade-enter-from .gfe-dialog,
+.gp-dialog-fade-leave-to .gfe-dialog {
+  transform: scale(0.98);
 }
 
 // 标题栏
@@ -34,38 +25,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: $s-2;
   padding: $s-3 $s-4;
   font-weight: $fw-semibold;
   font-size: $t-xs;
   color: var(--b3-theme-on-background);
   border-bottom: 1px solid var(--b3-border-color);
   background: var(--b3-theme-surface);
-}
-
-.gfe-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  width: 20px;
-  height: 20px;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.6;
-  background: transparent;
-  border: none;
-  border-radius: $r-sm;
-  cursor: pointer;
-  font-size: $t-sm;
-
-  &:hover {
-    opacity: 1;
-    background: var(--b3-theme-primary-lightest);
-    color: var(--b3-theme-primary);
-  }
-
-  &:focus {
-    @include focus-ring;
-  }
 }
 
 // 说明文字
@@ -77,7 +43,7 @@
   opacity: 0.6;
 }
 
-// 操作区：已选计数 + 全选/清空
+// 操作区：已排除计数 + 全选/清空
 .gfe-actions {
   display: flex;
   align-items: center;
@@ -89,66 +55,24 @@
   flex: 1;
   font-size: $t-2xs;
   font-family: $ff-mono;
+  font-variant-numeric: tabular-nums;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
 }
 
-.gfe-act-btn {
-  font-size: $t-2xs;
-  color: var(--b3-theme-primary);
-  background: transparent;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-sm;
-  padding: $s-px2 $s-2;
-  cursor: pointer;
-
-  &:hover {
-    border-color: var(--b3-theme-primary);
-    background: var(--b3-theme-primary-lightest);
-  }
-
-  &:focus {
-    @include focus-ring;
-  }
-}
-
-// 扩展名多选网格
+// 扩展名多选网格（共享 Checkbox 数组模式；横向自适应列宽，纵向超长可滚动）
 .gfe-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: $s-1;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: $s-2;
   padding: $s-3 $s-4;
   max-height: 220px;
   overflow-y: auto;
 }
 
-.gfe-chip {
-  font-size: $t-2xs; // 辅助控制文字（两级字号制）
+// 扩展名文案：等宽字体（与统计输出中的路径/数字观感一致）
+.gfe-ext-name {
   font-family: $ff-mono;
-  color: var(--b3-theme-on-surface);
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-sm;
-  padding: $s-px3 0;
-  cursor: pointer;
-  line-height: $lh-normal;
-  text-align: center;
-  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
-
-  &:hover {
-    border-color: var(--b3-theme-primary);
-  }
-
-  &:focus {
-    @include focus-ring;
-  }
-}
-
-// 选中态：主题色高亮
-.gfe-chip--active {
-  background: var(--b3-theme-primary-lightest);
-  border-color: var(--b3-theme-primary);
-  color: var(--b3-theme-primary);
 }
 
 // 底部操作栏

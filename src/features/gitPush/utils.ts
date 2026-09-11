@@ -617,10 +617,15 @@ export function analysisStatusText(opts: {
   analyzedAt: string
   i18n: Record<string, any>
   notRunKey: string
+  /** 相对时间不可用时（analyzedAt 缺失/无法解析）的兜底文案键，如 timeJustNow；不传则保留空串（既有行为） */
+  fallbackKey?: string
 }): string {
-  const { analyzing, analyzed, analyzedAt, i18n, notRunKey } = opts
+  const { analyzing, analyzed, analyzedAt, i18n, notRunKey, fallbackKey } = opts
   if (analyzing) return i18n.auditing
-  if (analyzed) return i18n.analysisLastRun.replace("{0}", relativeTime(analyzedAt, i18n))
+  if (analyzed) {
+    const relative = relativeTime(analyzedAt, i18n) || (fallbackKey ? i18n[fallbackKey] : "")
+    return i18n.analysisLastRun.replace("{0}", relative)
+  }
   return i18n[notRunKey]
 }
 

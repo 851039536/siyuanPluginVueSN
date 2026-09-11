@@ -691,6 +691,12 @@ export const COMMON_ICONS = {
   filter: {
     icon: "mdi:filter",
   },
+  filterVariant: {
+    icon: "mdi:filter-variant",
+  },
+  codeTags: {
+    icon: "mdi:code-tags",
+  },
   sort: {
     icon: "mdi:sort",
   },

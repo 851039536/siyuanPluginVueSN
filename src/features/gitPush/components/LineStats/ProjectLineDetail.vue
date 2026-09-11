@@ -1,15 +1,16 @@
 <!-- gitPush 项目行数详情弹窗：点击项目行弹出，双 Tab（文件明细表格 + 作者行数排行），数据由 getNumstat 即时聚合 -->
 <template>
   <Transition name="gp-dialog-fade">
+    <!-- 遮罩/层级/基准字号取自共享基座 .gp-mask，本地仅保留弹窗尺寸与进出场缩放 -->
     <div
       ref="rootRef"
       tabindex="-1"
-      class="pld-mask"
+      class="gp-mask"
       @keydown.escape="emit('close')"
       @click.self="emit('close')"
     >
       <div class="pld-dialog">
-        <!-- 弹窗头部：项目名 + 关闭按钮 -->
+        <!-- 弹窗头部：项目名 + 刷新 + 关闭 -->
         <div class="pld-header">
           <div class="pld-title-wrap">
             <span class="pld-title">{{ projectName }}</span>
@@ -23,172 +24,188 @@
               <span class="pld-total-value">{{ totalLines?.toLocaleString() ?? "—" }}</span>
             </span>
           </div>
-          <!-- 刷新按钮：重抓该项目行数数据（刷新中旋转禁用） -->
-          <button
-            class="pld-refresh"
+          <!-- 刷新按钮：重抓该项目行数数据（刷新中转为 loading 占位） -->
+          <Button
+            icon="refresh"
+            size="xsmall"
+            variant="ghost"
+            :text="true"
+            :loading="refreshing"
             :title="i18n.lineDetailRefreshHint"
-            :disabled="refreshing"
             @click="refreshProject(projectId)"
-          >
-            <Icon
-              icon="mdi:refresh"
-              :class="{ 'gp-spin': refreshing }"
-            />
-          </button>
-          <button
-            class="pld-close"
+          />
+          <Button
+            icon="close"
+            size="xsmall"
+            variant="ghost"
+            :text="true"
             :title="i18n.close"
             @click="emit('close')"
-          >
-            <Icon icon="mdi:close" />
-          </button>
+          />
         </div>
 
-        <!-- Tab 切换：文件明细 / 作者明细 -->
-        <div class="pld-tabs">
-          <button
-            class="pld-tab"
-            :class="{ 'pld-tab--active': activeTab === 'file' }"
-            @click="activeTab = 'file'"
+        <!-- Tab 切换：文件明细 / 作者明细（共享 Tabs 五件套，含方向键漫游与 aria 关联） -->
+        <Tabs
+          v-model:value="activeTab"
+          class="pld-tabs"
+          size="xsmall"
+        >
+          <TabList
+            class="pld-tabs-bar"
+            :aria-label="i18n.lineDetailTabsLabel"
           >
-            <Icon icon="mdi:file-document-outline" />
-            {{ i18n.lineDetailFileTab }}
-            <span class="pld-tab-count">{{ fileRows.length }}</span>
-          </button>
-          <button
-            class="pld-tab"
-            :class="{ 'pld-tab--active': activeTab === 'author' }"
-            @click="activeTab = 'author'"
-          >
-            <Icon icon="mdi:account-group-outline" />
-            {{ i18n.lineDetailAuthorTab }}
-            <span class="pld-tab-count">{{ authorRows.length }}</span>
-          </button>
-        </div>
+            <Tab value="file">
+              <IconWrapper
+                name="fileOutline"
+                :size="12"
+              />
+              {{ i18n.lineDetailFileTab }}
+              <Tag
+                size="xsmall"
+                variant="primary"
+                shape="rounded"
+              >{{ fileRows.length }}</Tag>
+            </Tab>
+            <Tab value="author">
+              <IconWrapper
+                name="accountGroup"
+                :size="12"
+              />
+              {{ i18n.lineDetailAuthorTab }}
+              <Tag
+                size="xsmall"
+                variant="primary"
+                shape="rounded"
+              >{{ authorRows.length }}</Tag>
+            </Tab>
+          </TabList>
 
-        <!-- 内容区 -->
-        <div class="pld-body">
-          <!-- 文件明细 Tab：表头 + 文件行（路径/修改/作者/增删净/占比/总行数） -->
-          <template v-if="activeTab === 'file'">
-            <EmptyState
-              v-if="fileRows.length === 0"
-              icon="mdi:file-document-outline"
-              :text="i18n.lineDetailFileEmpty"
-            />
-            <template v-else>
-              <!-- 表头 -->
-              <div class="pld-table-head">
-                <span class="pld-cell pld-cell--rank">#</span>
-                <span class="pld-cell pld-cell--file">{{ i18n.lineDetailFileColumn }}</span>
-                <span class="pld-cell pld-cell--num">{{ i18n.lineDetailMods }}</span>
-                <span class="pld-cell pld-cell--num">{{ i18n.lineDetailAuthors }}</span>
-                <span class="pld-cell pld-cell--num">{{ i18n.analysisLineAdded }}</span>
-                <span class="pld-cell pld-cell--num">{{ i18n.analysisLineDeleted }}</span>
-                <span class="pld-cell pld-cell--net">{{ i18n.analysisLineNet }}</span>
-                <!-- 表头列："占比"（净增绝对值占比，tooltip 说明口径） -->
-                <span
-                  class="pld-cell pld-cell--share"
-                  :title="i18n.lineStatsShareHint"
-                >{{ i18n.lineDetailShare }}</span>
-                <!-- 表头列："总行数"（存量，等宽右对齐，tooltip 说明口径） -->
-                <span
-                  class="pld-cell pld-cell--total"
-                  :title="i18n.lineStatsTotalHint"
-                >{{ i18n.analysisLineTotal }}</span>
-              </div>
-              <!-- 文件行 -->
+          <!-- 内容区（滚动容器：吸顶表头以本容器为滚动祖先） -->
+          <TabPanels class="pld-body">
+            <!-- 文件明细 Tab：表头 + 文件行（路径/修改/作者/增删净/占比/总行数） -->
+            <TabPanel value="file">
+              <EmptyState
+                v-if="fileRows.length === 0"
+                icon="mdi:file-document-outline"
+                :text="i18n.lineDetailFileEmpty"
+              />
+              <template v-else>
+                <!-- 表头 -->
+                <div class="pld-table-head">
+                  <span class="pld-cell pld-cell--rank">#</span>
+                  <span class="pld-cell pld-cell--file">{{ i18n.lineDetailFileColumn }}</span>
+                  <span class="pld-cell pld-cell--num">{{ i18n.lineDetailMods }}</span>
+                  <span class="pld-cell pld-cell--num">{{ i18n.lineDetailAuthors }}</span>
+                  <span class="pld-cell pld-cell--num">{{ i18n.analysisLineAdded }}</span>
+                  <span class="pld-cell pld-cell--num">{{ i18n.analysisLineDeleted }}</span>
+                  <span class="pld-cell pld-cell--net">{{ i18n.analysisLineNet }}</span>
+                  <!-- 表头列："占比"（净增绝对值占比，tooltip 说明口径） -->
+                  <span
+                    class="pld-cell pld-cell--share"
+                    :title="i18n.lineStatsShareHint"
+                  >{{ i18n.lineDetailShare }}</span>
+                  <!-- 表头列："总行数"（存量，等宽右对齐，tooltip 说明口径） -->
+                  <span
+                    class="pld-cell pld-cell--total"
+                    :title="i18n.lineStatsTotalHint"
+                  >{{ i18n.analysisLineTotal }}</span>
+                </div>
+                <!-- 文件行 -->
+                <div
+                  v-for="(row, idx) in fileRows"
+                  :key="row.path"
+                  class="pld-file-row"
+                >
+                  <span class="pld-cell pld-cell--rank">{{ idx + 1 }}</span>
+                  <span
+                    class="pld-cell pld-cell--file"
+                    :title="`${row.path}\n${i18n.lineDetailModsCount.replace('{0}', String(row.modCount))} · ${i18n.lineDetailAuthorCount.replace('{0}', String(row.authorCount))}`"
+                  >{{ row.path }}</span>
+                  <span class="pld-cell pld-cell--num">{{ row.modCount }}</span>
+                  <span class="pld-cell pld-cell--num">{{ row.authorCount }}</span>
+                  <span class="pld-cell pld-cell--num pld-num--add">{{ row.added.toLocaleString() }}</span>
+                  <span class="pld-cell pld-cell--num pld-num--del">{{ row.deleted.toLocaleString() }}</span>
+                  <span
+                    class="pld-cell pld-cell--net"
+                    :class="netClass(row.net)"
+                  >{{ row.net.toLocaleString() }}</span>
+                  <span class="pld-cell pld-cell--share">
+                    <span class="pld-share-track">
+                      <span
+                        class="pld-share-fill"
+                        :class="netClass(row.net)"
+                        :style="{ width: row.pct }"
+                      />
+                    </span>
+                    <span class="pld-share-text">{{ row.share }}</span>
+                  </span>
+                  <!-- 总行数列：该文件当前存量行数（等宽右对齐中性色；2MB/二进制/已删除或旧数据缺失显示 —） -->
+                  <span
+                    class="pld-cell pld-cell--total"
+                    :title="`${i18n.analysisLineTotal} ${row.totalLines?.toLocaleString() ?? '—'}`"
+                  >{{ row.totalLines?.toLocaleString() ?? "—" }}</span>
+                </div>
+              </template>
+            </TabPanel>
+
+            <!-- 作者明细 Tab：与全局作者排行同模式（rank + 作者 + 轨道 + 增删净 + 占比） -->
+            <TabPanel value="author">
+              <EmptyState
+                v-if="authorRows.length === 0"
+                icon="mdi:account-group-outline"
+                :text="i18n.lineDetailAuthorEmpty"
+              />
               <div
-                v-for="(row, idx) in fileRows"
-                :key="row.path"
-                class="pld-file-row"
+                v-else
+                class="pld-bar-list"
               >
-                <span class="pld-cell pld-cell--rank">{{ idx + 1 }}</span>
-                <span
-                  class="pld-cell pld-cell--file"
-                  :title="`${row.path}\n${i18n.lineDetailModsCount.replace('{0}', String(row.modCount))} · ${i18n.lineDetailAuthorCount.replace('{0}', String(row.authorCount))}`"
-                >{{ row.path }}</span>
-                <span class="pld-cell pld-cell--num">{{ row.modCount }}</span>
-                <span class="pld-cell pld-cell--num">{{ row.authorCount }}</span>
-                <span class="pld-cell pld-cell--num pld-num--add">{{ row.added.toLocaleString() }}</span>
-                <span class="pld-cell pld-cell--num pld-num--del">{{ row.deleted.toLocaleString() }}</span>
-                <span
-                  class="pld-cell pld-cell--net"
-                  :class="netClass(row.net)"
-                >{{ row.net.toLocaleString() }}</span>
-                <span class="pld-cell pld-cell--share">
-                  <span class="pld-share-track">
+                <div
+                  v-for="(row, idx) in authorRows"
+                  :key="row.author"
+                  class="pld-bar-row"
+                >
+                  <span class="pld-bar-rank">{{ idx + 1 }}</span>
+                  <span
+                    class="pld-bar-label"
+                    :title="row.author"
+                  >{{ row.author }}</span>
+                  <span class="pld-bar-track">
                     <span
-                      class="pld-share-fill"
+                      class="pld-bar-fill"
                       :class="netClass(row.net)"
                       :style="{ width: row.pct }"
                     />
                   </span>
-                  <span class="pld-share-text">{{ row.share }}</span>
-                </span>
-                <!-- 总行数列：该文件当前存量行数（等宽右对齐中性色；2MB/二进制/已删除或旧数据缺失显示 —） -->
-                <span
-                  class="pld-cell pld-cell--total"
-                  :title="`${i18n.analysisLineTotal} ${row.totalLines?.toLocaleString() ?? '—'}`"
-                >{{ row.totalLines?.toLocaleString() ?? "—" }}</span>
+                  <span class="pld-line-nums">
+                    <span
+                      class="pld-line-num pld-num--add"
+                      :title="`${i18n.analysisLineAdded} ${row.added}`"
+                    >+{{ row.added.toLocaleString() }}</span>
+                    <span
+                      class="pld-line-num pld-num--del"
+                      :title="`${i18n.analysisLineDeleted} ${row.deleted}`"
+                    >−{{ row.deleted.toLocaleString() }}</span>
+                    <span
+                      class="pld-line-num pld-num--net"
+                      :class="netClass(row.net)"
+                      :title="`${i18n.analysisLineNet} ${row.net}`"
+                    >{{ row.net.toLocaleString() }}</span>
+                  </span>
+                  <span class="pld-bar-share">{{ row.share }}</span>
+                </div>
               </div>
-            </template>
-          </template>
-
-          <!-- 作者明细 Tab：与全局作者排行同模式（rank + 作者 + 轨道 + 增删净 + 占比） -->
-          <template v-else>
-            <EmptyState
-              v-if="authorRows.length === 0"
-              icon="mdi:account-group-outline"
-              :text="i18n.lineDetailAuthorEmpty"
-            />
-            <div
-              v-else
-              class="pld-bar-list"
-            >
-              <div
-                v-for="(row, idx) in authorRows"
-                :key="row.author"
-                class="pld-bar-row"
-              >
-                <span class="pld-bar-rank">{{ idx + 1 }}</span>
-                <span
-                  class="pld-bar-label"
-                  :title="row.author"
-                >{{ row.author }}</span>
-                <span class="pld-bar-track">
-                  <span
-                    class="pld-bar-fill"
-                    :class="netClass(row.net)"
-                    :style="{ width: row.pct }"
-                  />
-                </span>
-                <span class="pld-line-nums">
-                  <span
-                    class="pld-line-num pld-num--add"
-                    :title="`${i18n.analysisLineAdded} ${row.added}`"
-                  >+{{ row.added.toLocaleString() }}</span>
-                  <span
-                    class="pld-line-num pld-num--del"
-                    :title="`${i18n.analysisLineDeleted} ${row.deleted}`"
-                  >−{{ row.deleted.toLocaleString() }}</span>
-                  <span
-                    class="pld-line-num pld-num--net"
-                    :class="netClass(row.net)"
-                    :title="`${i18n.analysisLineNet} ${row.net}`"
-                  >{{ row.net.toLocaleString() }}</span>
-                </span>
-                <span class="pld-bar-share">{{ row.share }}</span>
-              </div>
-            </div>
-          </template>
-        </div>
+            </TabPanel>
+          </TabPanels>
+        </Tabs>
 
         <!-- 底部操作栏：关闭 -->
         <div class="pld-footer">
-          <button
-            class="vp-btn vp-btn--ghost vp-btn--sm"
+          <Button
+            variant="ghost"
+            :outlined="true"
+            size="small"
             @click="emit('close')"
-          >{{ i18n.close }}</button>
+          >{{ i18n.close }}</Button>
         </div>
       </div>
     </div>
@@ -196,10 +213,18 @@
 </template>
 
 <script setup lang="ts">
+// gitPush 项目行数详情弹窗（双 Tab：文件明细表格 + 作者行数排行，数据由 getNumstat 即时聚合）
 import type { NumstatCommit } from "../../reportMetrics"
 import type { FileLineDetailRow } from "../../types"
-import { Icon } from "@iconify/vue"
 import { computed, ref } from "vue"
+import Button from "@/components/Button.vue"
+import IconWrapper from "@/components/IconWrapper.vue"
+import Tab from "@/components/Tab.vue"
+import TabList from "@/components/TabList.vue"
+import TabPanel from "@/components/TabPanel.vue"
+import TabPanels from "@/components/TabPanels.vue"
+import Tabs from "@/components/Tabs.vue"
+import Tag from "@/components/Tag.vue"
 import { aggregateFileStats, shouldIncludeFile, sumAuthorLines } from "../../reportMetrics"
 import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
 import { netClass as sharedNetClass, withLineBarPct } from "../../utils"
@@ -221,14 +246,14 @@ const props = defineProps<{
   extensions: string[]
   /** 单项目行数刷新（重抓该项目 numstat + 存量行数，由父级 composable 处理） */
   refreshProject: (projectId: string) => void
-  /** 刷新进行中（按钮禁用 + 图标旋转） */
+  /** 刷新进行中（按钮 loading 占位） */
   refreshing: boolean
 }>()
 
 const emit = defineEmits<{ close: [] }>()
 
-/** 当前激活 Tab：file=文件明细 / author=作者明细 */
-const activeTab = ref<"file" | "author">("file")
+/** 当前激活 Tab：file=文件明细 / author=作者明细（与 TabPanel 的 value 对应） */
+const activeTab = ref<string | number>("file")
 
 /** 该项目的原始 numstat 提交列表（projectId 无数据时为空数组，展示空态） */
 const commits = computed(() => props.getNumstat(props.projectId))

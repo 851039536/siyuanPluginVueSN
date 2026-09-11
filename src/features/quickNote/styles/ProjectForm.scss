@@ -6,26 +6,26 @@
 .qn-proj-form {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .qn-proj-form__row {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .qn-proj-form__name {
   flex: 1;
   min-width: 0;
-  font-weight: $font-weight-medium;
+  font-weight: $fw-medium;
 }
 
 .qn-proj-form__status {
   width: 6.5rem;
   flex-shrink: 0;
   // 辅助文字
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-background);
 }
 
@@ -34,7 +34,7 @@
   width: 100%;
   box-sizing: border-box;
   // 辅助文字
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
 }
 
 .qn-proj-form__actions {
@@ -48,8 +48,8 @@
   @extend %qn-primary-btn;
   display: inline-flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-1 $spacing-3;
+  gap: $s-1;
+  padding: $s-1 $s-3;
 }
 
 // 取消按钮（编辑模式，灰色边框透明底，与保存按钮左右分布）
@@ -57,7 +57,7 @@
   @extend %qn-cancel-btn;
   display: inline-flex;
   align-items: center;
-  padding: $spacing-1 $spacing-3;
+  padding: $s-1 $s-3;
   color: var(--b3-theme-on-background);
   // 悬停过渡只作用于背景色
   transition: background 0.12s;

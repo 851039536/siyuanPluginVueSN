@@ -6,58 +6,58 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  background: var(--b3-theme-background, $color-bg);
-  font-family: $font-zh;
+  background: var(--b3-theme-background, $c-bg);
+  font-family: $ff-zh;
   overflow: hidden;
 
   // 变体样式
   &--bordered {
-    border: 1px solid var(--b3-border-color, $color-border);
+    border: 1px solid var(--b3-border-color, $c-border);
   }
 
   &--elevated {
-    border: 1px solid var(--b3-border-color, $color-border);
+    border: 1px solid var(--b3-border-color, $c-border);
 
     &:hover {
-      border-color: var(--b3-theme-primary, $color-danger);
+      border-color: var(--b3-theme-primary, $c-danger);
     }
   }
 
   &--flat {
     border: none;
-    background: var(--b3-theme-surface-lighter, $color-surface);
+    background: var(--b3-theme-surface-lighter, $c-surface);
   }
 
   &--outlined {
-    border: 2px solid var(--b3-border-color, $color-border);
+    border: 2px solid var(--b3-border-color, $c-border);
     background: transparent;
   }
 
   // 圆角
   &--rounded {
-    border-radius: $radius-md;
+    border-radius: $r-md;
   }
 
   // 尺寸变体
   &--xsmall {
     .si-card__header {
-      padding: $spacing-1 $spacing-2; // 4px 8px
+      padding: $s-1 $s-2; // 4px 8px
     }
 
     .si-card__title {
-      font-size: $font-size-2xs; // XS 档字号阶梯：10px
+      font-size: $t-2xs; // XS 档字号阶梯：10px
     }
 
     .si-card__subtitle {
-      font-size: $font-size-2xs; // 与 XS 标题同号，靠 semibold 字重 + 弱化色区分层级
+      font-size: $t-2xs; // 与 XS 标题同号，靠 semibold 字重 + 弱化色区分层级
     }
 
     .si-card__body {
-      padding: $spacing-2; // 8px
+      padding: $s-2; // 8px
     }
 
     .si-card__footer {
-      padding: $spacing-1 $spacing-2;
+      padding: $s-1 $s-2;
     }
 
     .si-card__cover {
@@ -67,15 +67,15 @@
 
   &--small {
     .si-card__header {
-      padding: $spacing-2 m.$spacing-2_5; // 8px 10px（原 10px 12px，各减 2px）
+      padding: $s-2 m.$spacing-2_5; // 8px 10px（原 10px 12px，各减 2px）
     }
 
     .si-card__title {
-      font-size: $font-size-xs; // S 档字号阶梯：12px
+      font-size: $t-xs; // S 档字号阶梯：12px
     }
 
     .si-card__subtitle {
-      font-size: $font-size-2xs;
+      font-size: $t-2xs;
     }
 
     .si-card__body {
@@ -83,7 +83,7 @@
     }
 
     .si-card__footer {
-      padding: $spacing-2 m.$spacing-2_5; // 8px 10px（原 10px 12px）
+      padding: $s-2 m.$spacing-2_5; // 8px 10px（原 10px 12px）
     }
 
     .si-card__cover {
@@ -93,23 +93,23 @@
 
   &--medium {
     .si-card__header {
-      padding: $spacing-3 $spacing-14px; // 12px 14px（原 14px 16px，各减 2px）；14px 已收敛为全局 Token
+      padding: $s-3 $s-px14; // 12px 14px（原 14px 16px，各减 2px）；14px 已收敛为全局 Token
     }
 
     .si-card__title {
-      font-size: $font-size-sm; // M 档字号阶梯：14px
+      font-size: $t-sm; // M 档字号阶梯：14px
     }
 
     .si-card__subtitle {
-      font-size: $font-size-xs;
+      font-size: $t-xs;
     }
 
     .si-card__body {
-      padding: $spacing-14px; // 14px（原 16px）；已收敛为全局 Token
+      padding: $s-px14; // 14px（原 16px）；已收敛为全局 Token
     }
 
     .si-card__footer {
-      padding: $spacing-3 $spacing-14px; // 12px 14px（原 14px 16px）
+      padding: $s-3 $s-px14; // 12px 14px（原 14px 16px）
     }
 
     .si-card__cover {
@@ -119,23 +119,23 @@
 
   &--large {
     .si-card__header {
-      padding: $spacing-4 $spacing-18px; // 16px 18px（原 18px 20px，各减 2px）；18px 已收敛为全局 Token
+      padding: $s-4 $s-px18; // 16px 18px（原 18px 20px，各减 2px）；18px 已收敛为全局 Token
     }
 
     .si-card__title {
-      font-size: $font-size-base; // L 档字号阶梯：16px
+      font-size: $t-base; // L 档字号阶梯：16px
     }
 
     .si-card__subtitle {
-      font-size: $font-size-sm;
+      font-size: $t-sm;
     }
 
     .si-card__body {
-      padding: $spacing-18px; // 18px（原 20px）；已收敛为全局 Token
+      padding: $s-px18; // 18px（原 20px）；已收敛为全局 Token
     }
 
     .si-card__footer {
-      padding: $spacing-4 $spacing-18px; // 16px 18px（原 18px 20px）
+      padding: $s-4 $s-px18; // 16px 18px（原 18px 20px）
     }
 
     .si-card__cover {
@@ -148,7 +148,7 @@
     cursor: pointer;
 
     &:hover:not(.si-card--disabled):not(.si-card--loading) {
-      border-color: var(--b3-theme-secondary, $color-info);
+      border-color: var(--b3-theme-secondary, $c-info);
       transform: translateY(-2px);
     }
 
@@ -159,7 +159,7 @@
 
   // 激活态 — Codex 边框变色策略（替代原 box-shadow: 0 0 0 1px）
   &--active {
-    border-color: var(--b3-theme-primary, $color-danger);
+    border-color: var(--b3-theme-primary, $c-danger);
 
     &.si-card--bordered,
     &.si-card--outlined {
@@ -177,7 +177,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid var(--b3-border-color, $color-surface);
+    border-bottom: 1px solid var(--b3-border-color, $c-surface);
 
     &-content {
       flex: 1;
@@ -186,31 +186,31 @@
 
     &-extra {
       flex-shrink: 0;
-      margin-left: $spacing-3;
+      margin-left: $s-3;
     }
   }
 
   &__title {
     margin: 0;
-    font-family: $font-zh;
-    font-weight: $font-weight-semibold;
-    color: var(--b3-theme-on-background, $color-fg);
-    line-height: $line-height-tight; // 原 1.4 → 1.25
+    font-family: $ff-zh;
+    font-weight: $fw-semibold;
+    color: var(--b3-theme-on-background, $c-fg);
+    line-height: $lh-tight; // 原 1.4 → 1.25
   }
 
   &__subtitle {
-    margin: $spacing-1 0 0;
-    font-family: $font-zh;
-    font-size: $font-size-xs;
-    color: var(--b3-theme-secondary, $color-muted);
-    line-height: $line-height-tight;
+    margin: $s-1 0 0;
+    font-family: $ff-zh;
+    font-size: $t-xs;
+    color: var(--b3-theme-secondary, $c-muted);
+    line-height: $lh-tight;
   }
 
   // 封面
   &__cover {
     position: relative;
     overflow: hidden;
-    background: var(--b3-theme-surface, $color-surface);
+    background: var(--b3-theme-surface, $c-surface);
 
     &-image {
       width: 100%;
@@ -230,7 +230,7 @@
   // 主体
   &__body {
     flex: 1;
-    color: var(--b3-theme-on-background, $color-fg);
+    color: var(--b3-theme-on-background, $c-fg);
 
     &--no-padding {
       padding: 0;
@@ -239,11 +239,11 @@
 
   // 底部
   &__footer {
-    border-top: 1px solid var(--b3-border-color, $color-surface);
+    border-top: 1px solid var(--b3-border-color, $c-surface);
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: $spacing-2;
+    gap: $s-2;
   }
 
   // 加载状态
@@ -253,7 +253,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(var(--b3-theme-background-rgb, $color-bg), m.$opacity-overlay);
+    background: rgba(var(--b3-theme-background-rgb, $c-bg), m.$opacity-overlay);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -263,8 +263,8 @@
   &__loading-spinner {
     width: 32px;
     height: 32px;
-    border: 3px solid var(--b3-theme-surface-lighter, $color-surface);
-    border-top-color: var(--b3-theme-primary, $color-danger);
+    border: 3px solid var(--b3-theme-surface-lighter, $c-surface);
+    border-top-color: var(--b3-theme-primary, $c-danger);
     border-radius: 50%;
     animation: si-spin 0.8s linear infinite;
   }

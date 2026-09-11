@@ -6,7 +6,7 @@
   flex: 1;
   overflow-y: auto;
   // 右侧留白 8px，避免滚动条/内容紧贴侧边栏（规则见 AGENTS_STYLE §Dock 面板侧边栏间距）
-  padding: $spacing-1 $spacing-2 $spacing-1 0;
+  padding: $s-1 $s-2 $s-1 0;
 }
 
 // ── 顶部工具条 ──
@@ -14,8 +14,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-2;
-  margin-bottom: $spacing-3;
+  gap: $s-2;
+  margin-bottom: $s-3;
 }
 
 // 分析状态文案（未分析/分析中/完成；占满剩余空间，超长省略避免挤压右侧控件）
@@ -23,14 +23,14 @@
   flex: 1;
   min-width: 0;
   @include text-ellipsis;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   opacity: 0.6;
 }
 
 .gpa-toolbar-right {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 // ── 总览卡片（复用 gp-stat-card 视觉模式）──
@@ -38,8 +38,8 @@
   display: grid;
   // 两列等宽卡片（总提交次数 + 已分析项目）
   grid-template-columns: repeat(2, 1fr);
-  gap: $spacing-2;
-  margin-bottom: $spacing-3;
+  gap: $s-2;
+  margin-bottom: $s-3;
 }
 
 // 卡片三件套复用共享 mixin（与代码统计报告的 .gpr-card / .gpc-card 同构，消除第三份逐行重复）。
@@ -58,14 +58,14 @@
 
 // 抓取失败提示（弱化展示，不打断正常结果阅读）
 .gpa-fail-hint {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-warning);
-  margin-bottom: $spacing-2;
+  margin-bottom: $s-2;
 }
 
 // ── 区块标题（复用 gp-stats-section-title 视觉模式）──
 .gpa-section {
-  margin-bottom: $spacing-3;
+  margin-bottom: $s-3;
 }
 
 // ── 双栏区块（项目排行+最近记录 / 作者+内容类型 同排）──
@@ -74,8 +74,8 @@
 .gpa-pair {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: $spacing-3;
-  margin-bottom: $spacing-3;
+  gap: $s-3;
+  margin-bottom: $s-3;
 
   > .gpa-section {
     margin-bottom: 0; // 网格内由 gap 控制间距，不叠加底部 margin
@@ -107,7 +107,7 @@
 
     &::-webkit-scrollbar-thumb {
       background: var(--b3-border-color);
-      border-radius: $radius-2px;
+      border-radius: $r-px2;
     }
   }
 }
@@ -119,21 +119,21 @@
 
 .gpa-section-title {
   @include gp-label-base;
-  font-size: $font-size-xs;
-  margin-bottom: $spacing-2;
+  font-size: $t-xs;
+  margin-bottom: $s-2;
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .gpa-section-count {
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
-  padding: 0 $spacing-6px;
-  border-radius: $radius-sm;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
+  padding: 0 $s-px6;
+  border-radius: $r-sm;
   background: var(--b3-theme-primary-lightest);
   color: var(--b3-theme-primary);
-  font-weight: $font-weight-semibold;
+  font-weight: $fw-semibold;
   letter-spacing: 0;
 }
 
@@ -141,14 +141,14 @@
 .gpa-bar-list {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .gpa-bar-row {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  font-size: $font-size-xs;
+  gap: $s-2;
+  font-size: $t-xs;
 }
 
 .gpa-bar-row--clickable {
@@ -170,14 +170,14 @@
   flex: 1;
   height: 4px;
   background: var(--b3-theme-surface);
-  border-radius: $radius-2px;
+  border-radius: $r-px2;
   overflow: hidden;
 }
 
 .gpa-bar-fill {
   display: block;
   height: 100%;
-  border-radius: $radius-2px;
+  border-radius: $r-px2;
   background: var(--b3-theme-primary);
 }
 
@@ -185,8 +185,8 @@
   flex: 0 0 auto;
   min-width: 24px;
   text-align: right;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
   opacity: 0.5;
 }
 
@@ -194,9 +194,9 @@
 .gpa-daily {
   display: flex;
   align-items: flex-end;
-  gap: $spacing-2px;
+  gap: $s-px2;
   height: 64px; // 条形图固定高度，视觉稳定
-  padding: $spacing-1 0 0;
+  padding: $s-1 0 0;
   border-bottom: 1px solid var(--b3-border-color);
 }
 
@@ -225,34 +225,34 @@
 .gpa-commit-list {
   display: flex;
   flex-direction: column;
-  gap: $spacing-px;
+  gap: $s-px3;
 }
 
 .gpa-commit-item {
   display: flex;
   flex-direction: column;
-  gap: $spacing-px;
-  padding: $spacing-1 0;
+  gap: $s-px3;
+  padding: $s-1 0;
   @include row-divider;
 }
 
 .gpa-commit-hash {
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
   opacity: 0.45;
 }
 
 .gpa-commit-msg {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   @include text-ellipsis;
 }
 
 .gpa-commit-meta {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
   flex-wrap: wrap; // 宽面板仍单行，窄列自动折行
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   opacity: 0.6;
 }
 

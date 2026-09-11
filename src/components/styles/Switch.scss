@@ -10,12 +10,12 @@
   background: transparent;
   cursor: pointer;
   padding: 0;
-  font-family: $font-zh;
+  font-family: $ff-zh;
   user-select: none;
   vertical-align: middle;
 
   &:focus-visible {
-    outline: 2px solid var(--b3-theme-primary, $color-danger);
+    outline: 2px solid var(--b3-theme-primary, $c-danger);
     outline-offset: 2px;
   }
 
@@ -35,7 +35,7 @@
     position: relative;
     display: inline-block;
     background: var(--b3-theme-surface-lighter, #e5e5e5);
-    border-radius: $radius-full;
+    border-radius: $r-full;
     // 内凹效果 — 保留为设计需要（开关凹槽视觉层级）
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
 
@@ -47,12 +47,12 @@
 
     .si-switch--small & {
       width: 36px;
-      height: $spacing-5; // 20px
+      height: $s-5; // 20px
     }
 
     .si-switch--medium & {
       width: 44px;
-      height: $spacing-6; // 24px
+      height: $s-6; // 24px
     }
 
     .si-switch--large & {
@@ -62,7 +62,7 @@
 
     // 选中状态
     .si-switch--checked & {
-      background: var(--b3-theme-primary, $color-danger);
+      background: var(--b3-theme-primary, $c-danger);
     }
   }
 
@@ -71,8 +71,8 @@
     position: absolute;
     top: 2px; // 2px 无对应 Token，保留
     left: 2px;
-    background: var(--b3-theme-on-primary, $color-bg);
-    border-radius: $radius-full;
+    background: var(--b3-theme-on-primary, $c-bg);
+    border-radius: $r-full;
     // 滑块投影 — 保留为设计需要（thumb 视觉层级）
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 
@@ -83,18 +83,18 @@
     }
 
     .si-switch--small & {
-      width: $spacing-4; // 16px
-      height: $spacing-4;
+      width: $s-4; // 16px
+      height: $s-4;
     }
 
     .si-switch--medium & {
-      width: $spacing-5; // 20px
-      height: $spacing-5;
+      width: $s-5; // 20px
+      height: $s-5;
     }
 
     .si-switch--large & {
-      width: $spacing-6; // 24px
-      height: $spacing-6;
+      width: $s-6; // 24px
+      height: $s-6;
     }
 
     // 选中状态 - 滑块位置
@@ -103,15 +103,15 @@
     }
 
     .si-switch--checked.si-switch--small & {
-      transform: translateX($spacing-4); // 16px
+      transform: translateX($s-4); // 16px
     }
 
     .si-switch--checked.si-switch--medium & {
-      transform: translateX($spacing-5); // 20px
+      transform: translateX($s-5); // 20px
     }
 
     .si-switch--checked.si-switch--large & {
-      transform: translateX($spacing-6); // 24px
+      transform: translateX($s-6); // 24px
     }
   }
 
@@ -121,34 +121,34 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    border-radius: $radius-full;
+    border-radius: $r-full;
 
     .si-switch--xsmall & {
       width: 10px; // 无对应 Token
       height: 10px;
       border: 2px solid rgba(255, 255, 255, 0.3);
-      border-top-color: var(--b3-theme-on-primary, $color-bg);
+      border-top-color: var(--b3-theme-on-primary, $c-bg);
     }
 
     .si-switch--small & {
-      width: $spacing-4; // 16px
-      height: $spacing-4;
+      width: $s-4; // 16px
+      height: $s-4;
       border: 2px solid rgba(255, 255, 255, 0.3);
-      border-top-color: var(--b3-theme-on-primary, $color-bg);
+      border-top-color: var(--b3-theme-on-primary, $c-bg);
     }
 
     .si-switch--medium & {
-      width: $spacing-5; // 20px
-      height: $spacing-5;
+      width: $s-5; // 20px
+      height: $s-5;
       border: 2px solid rgba(255, 255, 255, 0.3);
-      border-top-color: var(--b3-theme-on-primary, $color-bg);
+      border-top-color: var(--b3-theme-on-primary, $c-bg);
     }
 
     .si-switch--large & {
-      width: $spacing-6; // 24px
-      height: $spacing-6;
+      width: $s-6; // 24px
+      height: $s-6;
       border: 2px solid rgba(255, 255, 255, 0.3);
-      border-top-color: var(--b3-theme-on-primary, $color-bg);
+      border-top-color: var(--b3-theme-on-primary, $c-bg);
     }
 
     .si-switch--checked & {
@@ -158,24 +158,24 @@
 
   // 标签（字号随档位变化：10 / 12 / 14 / 16，与其它组件的 XS/S/M/L 阶梯一致）
   &__label {
-    font-size: $font-size-xs; // 兜底值（等同 S 档）
-    color: var(--b3-theme-on-background, $color-fg);
-    line-height: $line-height-normal;
+    font-size: $t-xs; // 兜底值（等同 S 档）
+    color: var(--b3-theme-on-background, $c-fg);
+    line-height: $lh-normal;
 
     .si-switch--xsmall & {
-      font-size: $font-size-2xs; // XS 档：10px
+      font-size: $t-2xs; // XS 档：10px
     }
 
     .si-switch--small & {
-      font-size: $font-size-xs; // S 档：12px
+      font-size: $t-xs; // S 档：12px
     }
 
     .si-switch--medium & {
-      font-size: $font-size-sm; // M 档：14px
+      font-size: $t-sm; // M 档：14px
     }
 
     .si-switch--large & {
-      font-size: $font-size-base; // L 档：16px
+      font-size: $t-base; // L 档：16px
     }
   }
 }

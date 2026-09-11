@@ -6,29 +6,29 @@
 .comparison-section {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: $spacing-2;
-  margin-bottom: $spacing-1; // 模块上下间距统一 4px
+  gap: $s-2;
+  margin-bottom: $s-1; // 模块上下间距统一 4px
 
   .comparison-card {
     @include stats.stats-card-base;
-    border-radius: stats.$radius-sm;
+    border-radius: stats.$r-sm;
 
     .comparison-header {
       display: flex;
       align-items: center;
-      gap: $spacing-6px;
-      padding: $spacing-2 $spacing-10px;
+      gap: $s-px6;
+      padding: $s-2 $s-px10;
       background: rgba(var(--b3-theme-primary-rgb), 0.06);
       border-bottom: 1px solid var(--b3-border-color);
 
       .comparison-icon {
-        font-size: $font-size-sm; // 图标字形尺寸（非正文文字）
+        font-size: $t-sm; // 图标字形尺寸（非正文文字）
       }
 
       .comparison-title {
         font-family: stats.$font-mono;
-        font-size: $font-size-2xs;
-        font-weight: $font-weight-bold;
+        font-size: $t-2xs;
+        font-weight: $fw-bold;
         letter-spacing: 0.04em;
         text-transform: uppercase;
         color: var(--b3-theme-primary);
@@ -36,13 +36,13 @@
     }
 
     .comparison-body {
-      padding: $spacing-6px $spacing-2;
+      padding: $s-px6 $s-2;
 
       .comparison-item {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: $spacing-1 0;
+        padding: $s-1 0;
         border-bottom: 1px dashed var(--b3-border-color);
         opacity: 0.9;
 
@@ -52,8 +52,8 @@
 
         .item-label {
           font-family: stats.$font-mono;
-          font-size: $font-size-2xs;
-          font-weight: $font-weight-bold;
+          font-size: $t-2xs;
+          font-weight: $fw-bold;
           letter-spacing: 0.04em;
           text-transform: uppercase;
           color: var(--b3-theme-on-surface);
@@ -64,16 +64,16 @@
         .item-values {
           display: flex;
           align-items: center;
-          gap: $spacing-px;
-          font-size: $font-size-2xs;
+          gap: $s-px3;
+          font-size: $t-2xs;
 
           .current-value {
-            font-weight: $font-weight-bold;
+            font-weight: $fw-bold;
             color: var(--b3-theme-primary);
           }
 
           .vs-label {
-            font-size: $font-size-2xs;
+            font-size: $t-2xs;
             opacity: 0.4;
           }
 
@@ -83,20 +83,20 @@
         }
 
         .change-tag {
-          padding: $spacing-1px $spacing-1;
-          border-radius: stats.$radius-sm;
+          padding: $s-px1 $s-1;
+          border-radius: stats.$r-sm;
           font-family: stats.$font-mono;
-          font-size: $font-size-2xs;
-          font-weight: $font-weight-bold;
+          font-size: $t-2xs;
+          font-weight: $fw-bold;
 
           &.positive {
-            background: rgba(stats.$color-success, 0.15);
-            color: stats.$color-success;
+            background: rgba(stats.$c-success, 0.15);
+            color: stats.$c-success;
           }
 
           &.negative {
-            background: rgba(stats.$color-danger, 0.15);
-            color: stats.$color-danger;
+            background: rgba(stats.$c-danger, 0.15);
+            color: stats.$c-danger;
           }
 
           &.neutral {

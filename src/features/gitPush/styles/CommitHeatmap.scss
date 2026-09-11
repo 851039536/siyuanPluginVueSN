@@ -8,7 +8,7 @@ $gpa-weekday-col: 28px;
 
 // 热力图容器（周数由行内 CSS 变量 --gpa-heat-weeks 驱动，独立 SCSS 无法用 v-bind）
 .gpa-heat {
-  margin-bottom: $spacing-2;
+  margin-bottom: $s-2;
 }
 
 // 横向滚动容器（最近一年约 53 周 ≈ 790px，窄面板可横向滚动）
@@ -21,15 +21,15 @@ $gpa-weekday-col: 28px;
 .gpa-heat-months {
   display: grid;
   grid-template-columns: repeat(var(--gpa-heat-weeks), 12px);
-  gap: $spacing-px;
-  padding-left: calc(#{$gpa-weekday-col} + #{$spacing-px}); // 对齐星期标签列 + 网格 gap
-  margin-bottom: $spacing-1;
+  gap: $s-px3;
+  padding-left: calc(#{$gpa-weekday-col} + #{$s-px3}); // 对齐星期标签列 + 网格 gap
+  margin-bottom: $s-1;
 }
 
 .gpa-heat-month {
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--b3-theme-on-surface-light);
@@ -41,20 +41,20 @@ $gpa-weekday-col: 28px;
 .gpa-heat-body {
   display: grid;
   grid-template-columns: $gpa-weekday-col 1fr;
-  gap: $spacing-px;
+  gap: $s-px3;
 }
 
 // 星期标签列（3 个标签定位到第 1/3/5 行，与格子行严格对齐）
 .gpa-heat-weekdays {
   display: grid;
   grid-template-rows: repeat(7, 12px);
-  gap: $spacing-px;
+  gap: $s-px3;
 }
 
 .gpa-heat-weekday {
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--b3-theme-on-surface-light);
@@ -72,13 +72,13 @@ $gpa-weekday-col: 28px;
   grid-template-columns: repeat(var(--gpa-heat-weeks), 12px);
   grid-template-rows: repeat(7, 12px);
   grid-auto-flow: column;
-  gap: $spacing-px;
+  gap: $s-px3;
 }
 
 .gpa-heat-cell {
   width: 12px;
   height: 12px;
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   transition: outline 0.12s;
 
   // 范围外补齐周的空单元格（占位不显示）
@@ -98,18 +98,18 @@ $gpa-weekday-col: 28px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: $spacing-px;
-  margin-top: $spacing-2;
+  gap: $s-px3;
+  margin-top: $s-2;
 
   .gpa-heat-legend-text {
-    font-size: $font-size-2xs;
+    font-size: $t-2xs;
     opacity: 0.45;
-    margin: 0 $spacing-1;
+    margin: 0 $s-1;
   }
 
   .gpa-heat-legend-cell {
     width: 12px;
     height: 12px;
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
   }
 }

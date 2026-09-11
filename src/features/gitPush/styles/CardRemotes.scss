@@ -5,14 +5,14 @@
 .gp-remotes {
   display: inline-flex; // 收缩为内容宽度：远程项少时行不占满卡片，杜绝任何拉伸导致的松散观感
   align-items: center;
-  gap: $spacing-1; // 4px：隐藏未配置远程后项变短，8px 间距视觉上被放大，收紧与项内间距一致
-  margin: $spacing-px 0;
+  gap: $s-1; // 4px：隐藏未配置远程后项变短，8px 间距视觉上被放大，收紧与项内间距一致
+  margin: $s-px3 0;
   max-width: 100%;
 }
 
 .gp-remotes-label {
   @include gp-label-base;
-  margin-right: $spacing-2px;
+  margin-right: $s-px2;
 }
 
 .gp-section-refresh {
@@ -29,9 +29,9 @@
 .gp-remote-branch {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-px;
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
+  gap: $s-px3;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
   color: var(--b3-theme-on-surface-light);
   white-space: nowrap;
 }
@@ -39,10 +39,10 @@
 .gp-remote-item {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
   flex: none; // 显式禁止伸缩，项宽恒为内容宽
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
   opacity: 0.35;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -57,22 +57,22 @@
 .gp-conflict-warn {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-1 $spacing-2;
-  margin-top: $spacing-6px;
-  font-size: $font-size-xs;
+  gap: $s-1;
+  padding: $s-1 $s-2;
+  margin-top: $s-px6;
+  font-size: $t-xs;
   color: var(--b3-theme-warning);
   background: var(--b3-theme-warning-lightest);
   border: 1px solid var(--b3-theme-warning-lighter, var(--b3-theme-warning));
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
 }
 
 .gp-status-badge {
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
-  padding: $spacing-1px $spacing-5px;
-  border-radius: $radius-sm;
-  margin-left: $spacing-1;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  padding: $s-px1 $s-px5;
+  border-radius: $r-sm;
+  margin-left: $s-1;
   letter-spacing: 0;
 
   &.gp-ahead {

@@ -5,20 +5,20 @@
 
 .collapsible-section {
   border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   overflow: hidden;
   background: var(--b3-theme-surface);
 
   .collapse-header {
     display: flex;
     align-items: center;
-    gap: $spacing-6px;
+    gap: $s-px6;
     width: 100%;
-    padding: $spacing-2 $spacing-3;
+    padding: $s-2 $s-3;
     background: rgba(var(--b3-theme-primary-rgb), 0.03);
     border: none;
     cursor: pointer;
-    font-family: $font-zh;
+    font-family: $ff-zh;
     color: var(--b3-theme-on-surface);
 
     &:hover {
@@ -27,7 +27,7 @@
   }
 
   .collapse-icon {
-    font-size: $font-size-2xs;
+    font-size: $t-2xs;
     color: var(--b3-theme-primary);
     opacity: 0.7;
     transition: transform 0.2s;
@@ -42,23 +42,23 @@
   .collapse-badge {
     margin-left: auto;
     font-family: stats.$font-mono;
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-bold;
+    font-size: $t-2xs;
+    font-weight: $fw-bold;
     color: var(--b3-theme-primary);
     opacity: 0.5;
   }
 
   .collapse-body {
-    padding: $spacing-2;
+    padding: $s-2;
     border-top: 1px solid var(--b3-border-color);
   }
 }
 
 .changed-range-picker {
   display: flex;
-  gap: $spacing-1;
+  gap: $s-1;
   flex-wrap: wrap;
-  margin-bottom: $spacing-10px;
+  margin-bottom: $s-px10;
 }
 
 .changed-range-btn {
@@ -72,7 +72,7 @@
 }
 
 .recent-group-header {
-  padding: $spacing-3 $spacing-3 $spacing-1;
+  padding: $s-3 $s-3 $s-1;
   @include stats.codex-label;
   color: var(--b3-theme-on-surface);
   opacity: 0.35;
@@ -81,12 +81,12 @@
 .recent-doc-item {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-6px $spacing-3;
-  border-radius: stats.$radius-sm;
+  gap: $s-2;
+  padding: $s-px6 $s-3;
+  border-radius: stats.$r-sm;
   cursor: pointer;
   transition: background 0.12s;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface);
 
   &:hover {
@@ -97,26 +97,26 @@
 .recent-doc-badge {
   width: 18px;
   height: 18px;
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   flex-shrink: 0;
-  background: rgba(stats.$color-warning, 0.12);
-  color: stats.$color-warning;
+  background: rgba(stats.$c-warning, 0.12);
+  color: stats.$c-warning;
 }
 
 .recent-doc-item.new .recent-doc-badge {
-  background: rgba(stats.$color-success, 0.12);
-  color: stats.$color-success;
+  background: rgba(stats.$c-success, 0.12);
+  color: stats.$c-success;
 }
 
 .recent-doc-notebook {
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--b3-theme-on-surface);
@@ -133,13 +133,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-weight: $font-weight-medium;
+  font-weight: $fw-medium;
 }
 
 .recent-doc-time {
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   letter-spacing: 0.06em;
   color: var(--b3-theme-on-surface);
   opacity: 0.35;
@@ -150,22 +150,22 @@
 
 // ---- 范围柱状图 ----
 .range-chart-section {
-  margin-bottom: $spacing-2;
+  margin-bottom: $s-2;
 }
 
 .range-chart-bar-group {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2px;
+  gap: $s-px2;
   max-height: 280px;
   overflow-y: auto;
 }
 
 .range-chart-legend {
   display: flex;
-  gap: $spacing-3;
-  padding: $spacing-2px $spacing-1 $spacing-6px;
-  font-size: $font-size-2xs;
+  gap: $s-3;
+  padding: $s-px2 $s-1 $s-px6;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.7;
 }
@@ -174,21 +174,21 @@
   display: inline-block;
   width: 8px;
   height: 8px;
-  border-radius: stats.$radius-sm;
-  margin-right: $spacing-px;
+  border-radius: stats.$r-sm;
+  margin-right: $s-px3;
   vertical-align: middle;
 
-  &.new { background: stats.$color-success; }
-  &.modified { background: stats.$color-warning; }
-  &.deleted { background: stats.$color-danger; }
+  &.new { background: stats.$c-success; }
+  &.modified { background: stats.$c-warning; }
+  &.deleted { background: stats.$c-danger; }
 }
 
 .range-chart-row {
   display: flex;
   align-items: center;
-  gap: $spacing-6px;
-  padding: $spacing-2px $spacing-1;
-  border-radius: stats.$radius-sm;
+  gap: $s-px6;
+  padding: $s-px2 $s-1;
+  border-radius: stats.$r-sm;
   cursor: pointer;
   transition: background 0.12s;
 
@@ -204,8 +204,8 @@
 .range-chart-label {
   width: 32px;
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   color: var(--b3-theme-on-surface);
   opacity: 0.7;
   flex-shrink: 0;
@@ -215,45 +215,45 @@
 .range-chart-bars {
   flex: 1;
   display: flex;
-  gap: $spacing-2px;
+  gap: $s-px2;
   align-items: center;
   height: 18px;
 }
 
 .range-chart-bar {
   height: 16px;
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   color: #fff;
   display: flex;
   align-items: center;
-  padding-left: $spacing-1;
+  padding-left: $s-1;
   min-width: 20px;
 
-  &.new { background: stats.$color-success; }
-  &.modified { background: stats.$color-warning; }
-  &.deleted { background: stats.$color-danger; }
+  &.new { background: stats.$c-success; }
+  &.modified { background: stats.$c-warning; }
+  &.deleted { background: stats.$c-danger; }
 }
 
 .changed-date-picker {
   display: flex;
-  gap: $spacing-2;
+  gap: $s-2;
   align-items: center;
-  margin-bottom: $spacing-10px;
+  margin-bottom: $s-px10;
 }
 
 .changed-date-input {
   flex: 1;
-  padding: $spacing-1 $spacing-2;
+  padding: $s-1 $s-2;
   border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
   outline: none;
 
   @include stats.codex-focus-glow;
@@ -262,21 +262,21 @@
 .changed-date-today {
   @include stats.small-action-btn;
   white-space: nowrap;
-  padding: $spacing-1 $spacing-3;
+  padding: $s-1 $s-3;
 }
 
 .changed-docs-loading {
   text-align: center;
-  padding: $spacing-4;
-  font-size: $font-size-xs;
+  padding: $s-4;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
 }
 
 .changed-docs-empty {
   text-align: center;
-  padding: $spacing-4;
-  font-size: $font-size-xs;
+  padding: $s-4;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
 }
@@ -287,7 +287,7 @@
 }
 
 .changed-docs-group {
-  margin-bottom: $spacing-3;
+  margin-bottom: $s-3;
 
   &:last-child {
     margin-bottom: 0;
@@ -296,17 +296,17 @@
 
 .changed-docs-group-title {
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--b3-theme-on-surface);
-  margin-bottom: $spacing-6px;
-  padding: 0 $spacing-1;
+  margin-bottom: $s-px6;
+  padding: 0 $s-1;
 }
 
 .range-deleted-group {
-  margin-top: $spacing-2;
+  margin-top: $s-2;
 }
 
 .range-deleted-list {
@@ -319,14 +319,14 @@
 
   &::-webkit-scrollbar-thumb {
     background: var(--b3-border-color);
-    border-radius: $radius-2px;
+    border-radius: $r-px2;
   }
 }
 
 .range-deleted-date {
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   color: var(--b3-theme-on-surface);
   opacity: 0.45;
   flex-shrink: 0;
@@ -336,11 +336,11 @@
 .changed-doc-item {
   display: flex;
   align-items: center;
-  gap: $spacing-6px;
-  padding: $spacing-1 $spacing-2;
-  border-radius: stats.$radius-sm;
+  gap: $s-px6;
+  padding: $s-1 $s-2;
+  border-radius: stats.$r-sm;
   cursor: pointer;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface);
   transition: background 0.12s;
 
@@ -351,23 +351,23 @@
   .changed-doc-icon {
     width: 16px;
     height: 16px;
-    border-radius: stats.$radius-sm;
+    border-radius: stats.$r-sm;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-bold;
+    font-size: $t-2xs;
+    font-weight: $fw-bold;
     flex-shrink: 0;
   }
 
   &.new .changed-doc-icon {
-    background: rgba(stats.$color-success, 0.15);
-    color: stats.$color-success;
+    background: rgba(stats.$c-success, 0.15);
+    color: stats.$c-success;
   }
 
   &.modified .changed-doc-icon {
-    background: rgba(stats.$color-warning, 0.15);
-    color: stats.$color-warning;
+    background: rgba(stats.$c-warning, 0.15);
+    color: stats.$c-warning;
   }
 
   &.deleted {
@@ -378,8 +378,8 @@
     }
 
     .changed-doc-icon {
-      background: rgba(stats.$color-danger, 0.15);
-      color: stats.$color-danger;
+      background: rgba(stats.$c-danger, 0.15);
+      color: stats.$c-danger;
     }
 
     .changed-doc-title {
@@ -397,8 +397,8 @@
 
   .changed-doc-time {
     font-family: stats.$font-mono;
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-bold;
+    font-size: $t-2xs;
+    font-weight: $fw-bold;
     color: var(--b3-theme-on-surface);
     opacity: 0.35;
     flex-shrink: 0;

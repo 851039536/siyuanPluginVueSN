@@ -14,7 +14,7 @@
 
   &::-webkit-scrollbar-thumb {
     background: var(--b3-theme-surface-lighter);
-    border-radius: $radius-px;
+    border-radius: $r-px3;
 
     &:hover {
       background: var(--b3-theme-on-surface);

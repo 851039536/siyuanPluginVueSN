@@ -1,15 +1,15 @@
 @use "@/variables.scss" as *;
 
 .list-style-settings {
-  padding: $spacing-3;
+  padding: $s-3;
   box-sizing: border-box;
-  font-size: $font-size-xs; // 基准字号，防止继承思源全局默认字号导致偏大
+  font-size: $t-xs; // 基准字号，防止继承思源全局默认字号导致偏大
 }
 
 .settings-container {
   display: flex;
   flex-direction: column;
-  gap: $spacing-3;
+  gap: $s-3;
   max-width: 100%;
 }
 
@@ -21,52 +21,52 @@
 .setting-item {
   display: flex;
   flex-direction: column;
-  gap: $spacing-6px; // 标签与控件的紧凑间距（已收敛为全局 Token）
+  gap: $s-px6; // 标签与控件的紧凑间距（已收敛为全局 Token）
   width: 100%;
 }
 
 .setting-description {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
-  margin: $spacing-1 0 0 0;
-  line-height: $line-height-normal;
+  margin: $s-1 0 0 0;
+  line-height: $lh-normal;
 }
 
 /* 开关样式（使用 SiSwitch 组件，此处仅保留布局） */
 .toggle-container {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .toggle-description {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.7;
 }
 
 /* 设置区块 */
 .setting-section {
-  margin-top: $spacing-2;
-  padding: $spacing-3;
+  margin-top: $s-2;
+  padding: $s-3;
   border: 1px solid var(--b3-theme-outline);
-  border-radius: $radius-md;
+  border-radius: $r-md;
   background: var(--b3-theme-surface);
 }
 
 .section-header {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  margin-bottom: $spacing-3;
-  padding-bottom: $spacing-2;
+  gap: $s-2;
+  margin-bottom: $s-3;
+  padding-bottom: $s-2;
   border-bottom: 1px solid var(--b3-theme-outline);
 }
 
 .section-title {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface);
 }
 
@@ -74,27 +74,27 @@
 .color-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: $spacing-3;
+  gap: $s-3;
 }
 
 .color-item {
   display: flex;
   flex-direction: column;
-  gap: $spacing-6px; // 层级标签与颜色控件的紧凑间距（已收敛为全局 Token）
+  gap: $s-px6; // 层级标签与颜色控件的紧凑间距（已收敛为全局 Token）
 }
 
 .color-label {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.7;
-  font-weight: $font-weight-medium;
+  font-weight: $fw-medium;
 }
 
 /* 预览区域 */
 .preview-section {
-  margin-top: $spacing-2;
+  margin-top: $s-2;
   border: 1px solid var(--b3-theme-outline);
-  border-radius: $radius-md;
+  border-radius: $r-md;
   overflow: hidden;
   background: var(--b3-theme-surface);
 }
@@ -102,8 +102,8 @@
 .preview-toggle {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-10px $spacing-3; // 10px 垂直内边距介于 Token 之间，保持原折叠头高度
+  gap: $s-2;
+  padding: $s-px10 $s-3; // 10px 垂直内边距介于 Token 之间，保持原折叠头高度
   cursor: pointer;
   background: var(--b3-theme-surface);
   user-select: none;
@@ -124,16 +124,16 @@
 }
 
 .preview-content {
-  padding: $spacing-4;
+  padding: $s-4;
   background: var(--b3-theme-background);
   border-top: 1px solid var(--b3-theme-outline);
 }
 
 .preview-section-title {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface);
-  margin: $spacing-3 0 $spacing-2 0;
+  margin: $s-3 0 $s-2 0;
 
   &:first-child {
     margin-top: 0;
@@ -141,16 +141,16 @@
 }
 
 .preview-list {
-  margin-left: $spacing-5;
-  line-height: $line-height-relaxed;
+  margin-left: $s-5;
+  line-height: $lh-relaxed;
 
   li {
-    margin: $spacing-1 0;
+    margin: $s-1 0;
   }
 
   ol,
   ul {
-    margin-left: $spacing-5;
+    margin-left: $s-5;
   }
 }
 
@@ -158,17 +158,17 @@
 .preview-ordered {
   > li::marker {
     color: var(--preview-ordered-1);
-    font-weight: $font-weight-bold;
+    font-weight: $fw-bold;
   }
 
   > li > ol > li::marker {
     color: var(--preview-ordered-2);
-    font-weight: $font-weight-bold;
+    font-weight: $fw-bold;
   }
 
   > li > ol > li > ol > li::marker {
     color: var(--preview-ordered-3);
-    font-weight: $font-weight-bold;
+    font-weight: $fw-bold;
   }
 }
 
@@ -177,7 +177,7 @@
   li::marker {
     content: "•  ";
     font-size: var(--preview-symbol-size);
-    font-weight: $font-weight-bold;
+    font-weight: $fw-bold;
   }
 
   > li::marker {
@@ -210,14 +210,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: $spacing-6px; // 图标与文案的紧凑间距（已收敛为全局 Token）
-  padding: $spacing-2 $spacing-4;
+  gap: $s-px6; // 图标与文案的紧凑间距（已收敛为全局 Token）
+  padding: $s-2 $s-4;
   width: 100%;
   border: 1px solid var(--b3-theme-outline);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   cursor: pointer;
   transition: all 0.12s ease;
 

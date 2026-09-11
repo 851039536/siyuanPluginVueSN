@@ -4,7 +4,7 @@
 
 .entry-card {
   @include card-base;
-  padding: $spacing-3;
+  padding: $s-3;
 
   &:hover {
     border-color: var(--b3-theme-primary);
@@ -15,11 +15,11 @@
   @include flex-row;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: $spacing-2;
+  margin-bottom: $s-2;
 }
 
 .entry-title-wrapper {
-  @include flex-row-gap($spacing-2);
+  @include flex-row-gap($s-2);
   flex: 1;
   min-width: 0;
 }
@@ -30,38 +30,38 @@
 }
 
 .entry-header h3 {
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
+  font-size: $t-sm;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-background);
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-family: $font-zh;
+  font-family: $ff-zh;
 }
 
 .entry-category-tag {
-  padding: $spacing-1px $spacing-6px;
-  border-radius: $radius-sm;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  padding: $s-px1 $s-px6;
+  border-radius: $r-sm;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   flex-shrink: 0;
 }
 
 .entry-actions {
-  @include flex-row-gap($vp-radius);
+  @include flex-row-gap($r-base);
   opacity: 0;
   transition: opacity 0.12s;
 
   button {
-    padding: $spacing-px $spacing-2;
+    padding: $s-px3 $s-2;
     background: transparent;
     border: 1px solid var(--b3-border-color);
-    border-radius: $radius-sm;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-semibold;
+    border-radius: $r-sm;
+    font-size: $t-xs;
+    font-weight: $fw-semibold;
     color: var(--b3-theme-on-surface);
     cursor: pointer;
     transition: all 0.12s;
@@ -73,7 +73,7 @@
     }
 
     &:last-child {
-      padding: $spacing-px $spacing-6px;
+      padding: $s-px3 $s-px6;
     }
   }
 }
@@ -85,12 +85,12 @@
 .entry-account {
   @include flex-row-gap(6px);
   justify-content: space-between;
-  padding: $spacing-2 $spacing-10px;
+  padding: $s-2 $s-px10;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   cursor: pointer;
-  margin-bottom: $spacing-1;
+  margin-bottom: $s-1;
 
   &:hover {
     background: var(--b3-theme-surface);
@@ -104,7 +104,7 @@
 
   .account-text {
     flex: 1;
-    font-size: $font-size-sm;
+    font-size: $t-sm;
     color: var(--b3-theme-on-background);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -112,44 +112,44 @@
   }
 
   .action-hint {
-    @include flex-row-gap($spacing-1);
-    font-size: $font-size-xs;
+    @include flex-row-gap($s-1);
+    font-size: $t-xs;
     color: var(--b3-theme-on-surface-light);
     flex-shrink: 0;
   }
 }
 
 .entry-description {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface-light);
-  margin-bottom: $spacing-2;
-  line-height: $line-height-tight;
+  margin-bottom: $s-2;
+  line-height: $lh-tight;
 }
 
 .entry-field {
-  @include flex-row-gap($spacing-1);
-  padding: $spacing-2 $spacing-10px;
+  @include flex-row-gap($s-1);
+  padding: $s-2 $s-px10;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
 }
 
 .field-label {
-  @include flex-row-gap($spacing-1);
+  @include flex-row-gap($s-1);
   @include uppercase-label;
   flex-shrink: 0;
 }
 
 .field-value {
   flex: 1;
-  @include flex-row-gap($spacing-2);
+  @include flex-row-gap($s-2);
   justify-content: space-between;
   cursor: pointer;
   min-width: 0;
 
   .password-mask {
-    font-family: $vp-mono;
-    font-size: $font-size-sm;
+    font-family: $ff-mono;
+    font-size: $t-sm;
     color: var(--b3-theme-on-background);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -157,8 +157,8 @@
   }
 
   .action-hint {
-    @include flex-row-gap($spacing-1);
-    font-size: $font-size-xs;
+    @include flex-row-gap($s-1);
+    font-size: $t-xs;
     color: var(--b3-theme-on-surface-light);
     flex-shrink: 0;
   }

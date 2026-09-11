@@ -4,10 +4,10 @@
 
 // 状态徽章基础样式（三处徽章共用：日志状态 / 校验结果 / 比对结果）
 @mixin status-badge {
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
-  padding: $spacing-1px $spacing-1;
-  border-radius: $radius-px;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
+  padding: $s-px1 $s-1;
+  border-radius: $r-px3;
 }
 
 // 成功态（绿色）
@@ -24,7 +24,7 @@
 
 // 元信息分隔符（"·"）
 @mixin meta-sep {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface-light);
   opacity: 0.5;
   flex-shrink: 0;

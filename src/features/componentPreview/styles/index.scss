@@ -8,7 +8,7 @@
   height: 100%;
   overflow: hidden;
   // 根容器显式基准字号（Dock 面板兜底规则）
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   background: var(--b3-theme-background);
 }
 
@@ -18,8 +18,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-3;
-  padding: $spacing-2 $spacing-3;
+  gap: $s-3;
+  padding: $s-2 $s-3;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
   flex-shrink: 0;
 }
@@ -27,25 +27,25 @@
 .cp-header__brand {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2px;
+  gap: $s-px2;
   min-width: 0;
 }
 
 .cp-header__title {
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
+  font-size: $t-sm;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-background);
 }
 
 .cp-header__subtitle {
-  font-size: $font-size-2xs;
-  color: $color-muted;
+  font-size: $t-2xs;
+  color: $c-muted;
 }
 
 .cp-header__actions {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
   flex-shrink: 0;
 }
 
@@ -57,22 +57,22 @@
 
 .cp-size {
   display: flex;
-  gap: $spacing-px;
-  padding: $spacing-2px;
+  gap: $s-px3;
+  padding: $s-px2;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-base;
+  border-radius: $r-base;
 }
 
 .cp-size__btn {
   min-width: 22px; // 档位按钮最小宽度，无对应 Token
-  padding: $spacing-2px $spacing-2;
+  padding: $s-px2 $s-2;
   border: 1px solid transparent;
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: transparent;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-medium;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-medium;
   color: var(--b3-theme-on-surface);
   cursor: pointer;
   transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
@@ -86,7 +86,7 @@
   background: var(--b3-theme-background);
   border-color: var(--b3-theme-surface-lighter);
   color: var(--b3-theme-primary);
-  font-weight: $font-weight-semibold;
+  font-weight: $fw-semibold;
 }
 
 // ==================== 主体布局 ====================
@@ -101,7 +101,7 @@
   flex: 1;
   min-width: 0;
   overflow-y: auto;
-  padding: $spacing-4 $spacing-5;
+  padding: $s-4 $s-5;
   // 滚动内容不紧贴侧栏（Dock 面板侧边栏间距规则）
   box-sizing: border-box;
 }
@@ -110,8 +110,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: $spacing-12 $spacing-4;
-  color: $color-muted;
+  padding: $s-12 $s-4;
+  color: $c-muted;
   font-style: italic;
 }
 
@@ -127,6 +127,6 @@
   }
 
   .cp-content {
-    padding: $spacing-3;
+    padding: $s-3;
   }
 }

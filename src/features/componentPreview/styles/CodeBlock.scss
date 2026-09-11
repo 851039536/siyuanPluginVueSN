@@ -5,16 +5,16 @@
   position: relative;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   overflow: hidden;
 }
 
 .cp-codeblock__pre {
   margin: 0;
-  padding: $spacing-2 $spacing-3;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  line-height: $line-height-normal;
+  padding: $s-2 $s-3;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  line-height: $lh-normal;
   color: var(--b3-theme-on-background);
   overflow-x: auto;
   white-space: pre-wrap;
@@ -23,8 +23,8 @@
 
 .cp-codeblock__copy {
   position: absolute;
-  top: $spacing-1;
-  right: $spacing-1;
+  top: $s-1;
+  right: $s-1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -32,7 +32,7 @@
   height: 24px; // 图标按钮尺寸，无对应 Token
   padding: 0;
   border: none;
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: var(--b3-theme-surface-lighter);
   color: var(--b3-theme-on-surface);
   cursor: pointer;

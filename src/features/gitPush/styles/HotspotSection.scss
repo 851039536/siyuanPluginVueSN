@@ -3,11 +3,11 @@
 @use "./mixins" as *;
 
 // ── 纵向两行布局容器（第一行表格，第二行统计摘要，均在各自行内自然排布）──
-// 间距与同面板其它分区一致（$spacing-3），此前误用 $spacing-4 导致本分区区块间距明显偏大
+// 间距与同面板其它分区一致（$s-3），此前误用 $s-4 导致本分区区块间距明显偏大
 .gpr-hot-grid {
   display: flex;
   flex-direction: column;
-  gap: $spacing-3;
+  gap: $s-3;
 }
 
 // 第一行：表格 + 截断提示（全宽）
@@ -30,15 +30,15 @@
   width: 100%;
   min-width: 420px;
   border-collapse: collapse;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   table-layout: fixed;
 }
 
 // 表头
 .gpr-hot-th {
-  padding: $spacing-2 $spacing-2;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
+  padding: $s-2 $s-2;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface-light);
   text-transform: uppercase;
   text-align: left;
@@ -76,7 +76,7 @@
 
 // 单元格
 .gpr-hot-cell {
-  padding: $spacing-1 $spacing-2;
+  padding: $s-1 $s-2;
 
   &--level {
     text-align: center;
@@ -87,16 +87,16 @@
   }
 
   &--num {
-    font-family: $vp-mono;
-    font-size: $font-size-2xs;
+    font-family: $ff-mono;
+    font-size: $t-2xs;
     color: var(--b3-theme-on-surface-light);
     text-align: right;
     white-space: nowrap;
   }
 
   &--time {
-    font-family: $vp-mono;
-    font-size: $font-size-2xs;
+    font-family: $ff-mono;
+    font-size: $t-2xs;
     color: var(--b3-theme-on-surface-light);
     text-align: right;
     white-space: nowrap;
@@ -126,20 +126,20 @@
 
 // 路径文件名部分（中等字重 + hover 颜色过渡）
 .gpr-path-base {
-  font-weight: $font-weight-medium;
+  font-weight: $fw-medium;
   transition: color 0.15s ease;
 }
 
 // ── 热度徽章（仅数值，颜色编码等级）──
 .gpr-heat-chip {
   display: inline-block;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
-  font-family: $vp-mono;
-  padding: $spacing-1px $spacing-5px;
-  border-radius: $radius-sm;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  font-family: $ff-mono;
+  padding: $s-px1 $s-px5;
+  border-radius: $r-sm;
   white-space: nowrap;
-  line-height: $line-height-normal;
+  line-height: $lh-normal;
 
   &--hot {
     background: var(--b3-theme-error-lightest);
@@ -166,34 +166,34 @@
 .gpr-hot-truncated {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  margin-top: $spacing-2;
-  font-size: $font-size-2xs;
+  gap: $s-1;
+  margin-top: $s-2;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-light);
 }
 
 // ── 汇总子区块（右侧面板内，底部留间距）──
 .gpr-subsection {
-  margin-bottom: $spacing-3;
+  margin-bottom: $s-3;
 }
 
 // 汇总表热度等级色点
 .gpr-heat-dot {
-  width: $spacing-2;
-  height: $spacing-2;
+  width: $s-2;
+  height: $s-2;
   border-radius: 50%;
-  margin-right: $spacing-1;
+  margin-right: $s-1;
 }
 
 // ── 优化建议条 ──
 .gpr-suggestion {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-2;
-  font-size: $font-size-xs;
+  gap: $s-1;
+  padding: $s-2;
+  font-size: $t-xs;
   color: var(--b3-theme-success);
   background: var(--b3-theme-success-lightest);
   border: 1px solid var(--b3-theme-success-lighter, var(--b3-theme-success));
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
 }

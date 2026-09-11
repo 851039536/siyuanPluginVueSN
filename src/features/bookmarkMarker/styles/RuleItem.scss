@@ -7,14 +7,14 @@
 // ========== 规则项卡片 ==========
 
 .rule-item {
-  padding: $spacing-3;
+  padding: $s-3;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
-  margin-bottom: $spacing-2;
+  border-radius: $r-base;
+  margin-bottom: $s-2;
 
   &:last-of-type {
-    margin-bottom: $spacing-3;
+    margin-bottom: $s-3;
   }
 }
 
@@ -22,12 +22,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: $spacing-2;
+  margin-bottom: $s-2;
 }
 
 .rule-index {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface-variant);
 }
 
@@ -36,7 +36,7 @@
 .rule-fields {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 // .rule-row 由 fieldRow.scss 提供（与字段子组件共用）
@@ -52,22 +52,22 @@
 .rule-preview {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  margin-top: $spacing-2;
-  padding-top: $spacing-2;
+  gap: $s-2;
+  margin-top: $s-2;
+  padding-top: $s-2;
   border-top: 1px solid var(--b3-border-color);
 }
 
 .preview-label-text {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface-variant);
 }
 
 .preview-tag {
   display: inline-block;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   line-height: 1;
-  padding: $spacing-2px $spacing-1;
-  border-radius: $radius-sm;
-  font-weight: $font-weight-medium;
+  padding: $s-px2 $s-1;
+  border-radius: $r-sm;
+  font-weight: $fw-medium;
 }

@@ -8,27 +8,27 @@
   min-height: 200px;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
-  font-size: $font-size-xs;
-  line-height: $line-height-normal;
+  font-size: $t-xs;
+  line-height: $lh-normal;
   overflow: hidden;
 
   .dc-tabs {
     display: flex;
-    gap: $spacing-px;
-    padding: $spacing-2;
+    gap: $s-px3;
+    padding: $s-2;
     border-bottom: 1px solid var(--b3-border-color);
     flex-shrink: 0;
 
     .dc-tab {
-      padding: $spacing-1 $spacing-3;
-      font-size: $font-size-2xs;
-      font-weight: $font-weight-medium;
+      padding: $s-1 $s-3;
+      font-size: $t-2xs;
+      font-weight: $fw-medium;
       letter-spacing: 0.04em;
       text-transform: uppercase;
       color: var(--b3-theme-on-background);
       opacity: 0.55;
       border: 1px solid transparent;
-      border-radius: $vp-radius;
+      border-radius: $r-base;
       cursor: pointer;
       background: transparent;
       transition: opacity 0.12s, border-color 0.12s;
@@ -50,21 +50,21 @@
     flex: 1;
     overflow-y: auto;
     min-height: 0;
-    padding: $spacing-3 $spacing-4;
+    padding: $s-3 $s-4;
   }
 
   // 底部官网链接栏
   .dc-footer {
     display: flex;
     align-items: center;
-    gap: $spacing-3;
-    padding: $spacing-2 $spacing-4;
+    gap: $s-3;
+    padding: $s-2 $s-4;
     border-top: 1px solid var(--b3-border-color);
     flex-shrink: 0;
 
     .dc-footer-label {
-      font-size: $font-size-2xs;
-      font-weight: $font-weight-bold;
+      font-size: $t-2xs;
+      font-weight: $fw-bold;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       opacity: 0.45;
@@ -72,7 +72,7 @@
     }
 
     .dc-link {
-      font-size: $font-size-2xs;
+      font-size: $t-2xs;
       color: var(--b3-theme-primary);
       text-decoration: none;
       opacity: 0.75;
@@ -89,29 +89,29 @@
 // ===== 共享表单元素（顶层类，供子面板 @use 复用） =====
 
 .dc-field {
-  margin-bottom: $spacing-3;
+  margin-bottom: $s-3;
 }
 
 .dc-label {
   display: block;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   opacity: 0.45;
   color: var(--b3-theme-on-surface);
-  margin-bottom: $spacing-1;
+  margin-bottom: $s-1;
 }
 
 .dc-input {
   width: 100%;
-  padding: $spacing-2 $spacing-2;
+  padding: $s-2 $s-2;
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-background);
-  font-family: $vp-mono;
-  font-size: $font-size-xs;
+  font-family: $ff-mono;
+  font-size: $t-xs;
   outline: none;
 
   &:focus {
@@ -120,18 +120,18 @@
 }
 
 .dc-hint {
-  margin: $spacing-1 0 $spacing-3;
-  font-size: $font-size-2xs;
+  margin: $s-1 0 $s-3;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
-  line-height: $line-height-normal;
+  line-height: $lh-normal;
 }
 
 .dc-check {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-1;
-  font-size: $font-size-2xs;
+  gap: $s-1;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   cursor: pointer;
 }

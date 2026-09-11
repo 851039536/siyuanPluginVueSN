@@ -5,18 +5,18 @@
 .si-slider {
   // 档位单点驱动：基础规则与 4 个伪元素统一消费（沿用 DatePicker --dp-* / InputGroup --ig-addon-* 范式）
   --si-slider-track-h: 6px; // 无对应 Token（中档基准）
-  --si-slider-thumb-size: #{$spacing-4}; // 16px
+  --si-slider-thumb-size: #{$s-4}; // 16px
 
   display: inline-flex;
   flex-direction: column;
   position: relative;
-  font-family: $font-zh;
+  font-family: $ff-zh;
   width: 100%;
 
   &__wrapper {
     display: flex;
     align-items: center;
-    gap: $spacing-3;
+    gap: $s-3;
     position: relative;
   }
 
@@ -26,7 +26,7 @@
     flex-direction: column;
     flex: 1;
     min-width: 0;
-    gap: $spacing-1; // 4px — 轨道与极值标签行间距
+    gap: $s-1; // 4px — 轨道与极值标签行间距
   }
 
   &__field {
@@ -36,8 +36,8 @@
     outline: none;
     // 轨道取 border 色：面板底色多为 --b3-theme-background（浅色下 #ffffff），
     // 而 --b3-theme-surface 为 #f7f7f5，二者仅差 ~3% 灰度、轨道等同不可见
-    background: var(--b3-border-color, $color-border);
-    border-radius: $radius-sm;
+    background: var(--b3-border-color, $c-border);
+    border-radius: $r-sm;
     cursor: pointer;
     appearance: none;
     -webkit-appearance: none;
@@ -48,12 +48,12 @@
     &::-webkit-slider-thumb {
       -webkit-appearance: none;
       appearance: none;
-      width: var(--si-slider-thumb-size, #{$spacing-4}); // 16px
-      height: var(--si-slider-thumb-size, #{$spacing-4});
+      width: var(--si-slider-thumb-size, #{$s-4}); // 16px
+      height: var(--si-slider-thumb-size, #{$s-4});
       // Chromium 的拇指默认与轨道「顶」对齐，须上移半个高度差才能与轨道同心；
       // 不补这行时拇指会整体垂到轨道下方，视觉重心也随之偏下（看着像没居中）
-      margin-top: calc((var(--si-slider-track-h, 6px) - var(--si-slider-thumb-size, #{$spacing-4})) / 2);
-      background: var(--b3-theme-primary, $color-danger);
+      margin-top: calc((var(--si-slider-track-h, 6px) - var(--si-slider-thumb-size, #{$s-4})) / 2);
+      background: var(--b3-theme-primary, $c-danger);
       border-radius: 50%;
       cursor: grab;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -71,9 +71,9 @@
 
     // Firefox 滑块拇指样式
     &::-moz-range-thumb {
-      width: var(--si-slider-thumb-size, #{$spacing-4}); // 16px
-      height: var(--si-slider-thumb-size, #{$spacing-4});
-      background: var(--b3-theme-primary, $color-danger);
+      width: var(--si-slider-thumb-size, #{$s-4}); // 16px
+      height: var(--si-slider-thumb-size, #{$s-4});
+      background: var(--b3-theme-primary, $c-danger);
       border: none;
       border-radius: 50%;
       cursor: grab;
@@ -94,25 +94,25 @@
     &::-webkit-slider-runnable-track {
       width: 100%;
       height: var(--si-slider-track-h, 6px); // 无对应 Token
-      background: var(--b3-border-color, $color-border);
-      border-radius: $radius-sm;
+      background: var(--b3-border-color, $c-border);
+      border-radius: $r-sm;
     }
 
     // Firefox 轨道样式
     &::-moz-range-track {
       width: 100%;
       height: var(--si-slider-track-h, 6px); // 无对应 Token
-      background: var(--b3-border-color, $color-border);
-      border-radius: $radius-sm;
+      background: var(--b3-border-color, $c-border);
+      border-radius: $r-sm;
     }
 
     &:focus {
       &::-webkit-slider-thumb {
-        box-shadow: 0 0 0 4px rgba(var(--b3-theme-primary-rgb, $color-danger), 0.2);
+        box-shadow: 0 0 0 4px rgba(var(--b3-theme-primary-rgb, $c-danger), 0.2);
       }
 
       &::-moz-range-thumb {
-        box-shadow: 0 0 0 4px rgba(var(--b3-theme-primary-rgb, $color-danger), 0.2);
+        box-shadow: 0 0 0 4px rgba(var(--b3-theme-primary-rgb, $c-danger), 0.2);
       }
     }
 
@@ -122,12 +122,12 @@
 
       &::-webkit-slider-thumb {
         cursor: not-allowed;
-        background: var(--b3-theme-secondary, $color-muted);
+        background: var(--b3-theme-secondary, $c-muted);
       }
 
       &::-moz-range-thumb {
         cursor: not-allowed;
-        background: var(--b3-theme-secondary, $color-muted);
+        background: var(--b3-theme-secondary, $c-muted);
       }
     }
   }
@@ -136,22 +136,22 @@
     flex-shrink: 0;
     min-width: 40px; // 无对应 Token
     text-align: center;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-medium;
-    color: var(--b3-theme-primary, $color-danger);
-    font-family: $font-zh;
+    font-size: $t-sm;
+    font-weight: $fw-medium;
+    color: var(--b3-theme-primary, $c-danger);
+    font-family: $ff-zh;
   }
 
   // 极值标签行：min 靠左、max 靠右，与轨道同宽
   &__minmax {
     display: flex;
     justify-content: space-between;
-    color: var(--b3-theme-secondary, $color-muted);
-    line-height: $line-height-tight;
+    color: var(--b3-theme-secondary, $c-muted);
+    line-height: $lh-tight;
   }
 
   &__minmax-value {
-    font-size: $font-size-sm; // 兜底值（等同 M 档）
+    font-size: $t-sm; // 兜底值（等同 M 档）
   }
 
   &--disabled {
@@ -169,11 +169,11 @@
   &--error {
     .si-slider__field {
       &::-webkit-slider-thumb {
-        background: var(--b3-theme-error, $color-danger);
+        background: var(--b3-theme-error, $c-danger);
       }
 
       &::-moz-range-thumb {
-        background: var(--b3-theme-error, $color-danger);
+        background: var(--b3-theme-error, $c-danger);
       }
     }
   }
@@ -184,54 +184,54 @@
     --si-slider-thumb-size: 10px; // 无对应 Token
 
     .si-slider__value {
-      font-size: $font-size-2xs;
+      font-size: $t-2xs;
       min-width: 24px; // 无对应 Token
     }
 
     .si-slider__minmax-value {
-      font-size: $font-size-2xs; // XS 档：10px
+      font-size: $t-2xs; // XS 档：10px
     }
   }
 
   &--small {
-    --si-slider-track-h: #{$spacing-1}; // 4px
+    --si-slider-track-h: #{$s-1}; // 4px
     --si-slider-thumb-size: 14px; // 无对应 Token
 
     .si-slider__value {
-      font-size: $font-size-xs;
+      font-size: $t-xs;
       min-width: 32px; // 无对应 Token
     }
 
     .si-slider__minmax-value {
-      font-size: $font-size-xs; // S 档：12px
+      font-size: $t-xs; // S 档：12px
     }
   }
 
   &--medium {
     --si-slider-track-h: 6px; // 无对应 Token
-    --si-slider-thumb-size: #{$spacing-4}; // 16px
+    --si-slider-thumb-size: #{$s-4}; // 16px
 
     .si-slider__value {
-      font-size: $font-size-sm;
+      font-size: $t-sm;
       min-width: 40px;
     }
 
     .si-slider__minmax-value {
-      font-size: $font-size-sm; // M 档：14px
+      font-size: $t-sm; // M 档：14px
     }
   }
 
   &--large {
-    --si-slider-track-h: #{$spacing-2}; // 8px
+    --si-slider-track-h: #{$s-2}; // 8px
     --si-slider-thumb-size: 18px; // 无对应 Token
 
     .si-slider__value {
-      font-size: $font-size-base;
+      font-size: $t-base;
       min-width: 48px; // 无对应 Token
     }
 
     .si-slider__minmax-value {
-      font-size: $font-size-base; // L 档：16px
+      font-size: $t-base; // L 档：16px
     }
   }
 }

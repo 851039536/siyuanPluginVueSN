@@ -13,10 +13,10 @@ $sv-scrollbar-size: 5px;
     background: transparent;
   }
   &::-webkit-scrollbar-thumb {
-    background: var(--b3-theme-surface-lighter, $color-surface);
-    border-radius: $radius-sm;
+    background: var(--b3-theme-surface-lighter, $c-surface);
+    border-radius: $r-sm;
     &:hover {
-      background: var(--b3-theme-on-surface, $color-muted);
+      background: var(--b3-theme-on-surface, $c-muted);
     }
   }
 }

@@ -6,38 +6,38 @@
 .gpr-debt-detail {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
-  padding: $spacing-2 $spacing-3;
+  gap: $s-2;
+  padding: $s-2 $s-3;
   background: var(--b3-list-hover);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 }
 
 // 指标网格（2 列自适应）
 .gpr-debt-detail-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: $spacing-1 $spacing-3;
+  gap: $s-1 $s-3;
 }
 
 // 指标单元格
 .gpr-debt-detail-cell {
   display: flex;
   align-items: baseline;
-  gap: $spacing-1;
+  gap: $s-1;
   min-width: 0;
 }
 
 // 指标标签（淡色辅助文字）
 .gpr-debt-detail-label {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   opacity: 0.45;
   flex-shrink: 0;
 }
 
 // 指标值（等宽数字）
 .gpr-debt-detail-value {
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
   @include text-ellipsis;
   min-width: 0;
 }
@@ -46,53 +46,53 @@
 .gpr-debt-trend {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-px $spacing-2;
+  gap: $s-1;
+  padding: $s-px3 $s-2;
   border: 1px solid;
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: var(--b3-theme-surface);
 }
 
 // 趋势箭头
 .gpr-debt-trend-arrow {
-  font-family: $vp-mono;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-bold;
+  font-family: $ff-mono;
+  font-size: $t-xs;
+  font-weight: $fw-bold;
   flex-shrink: 0;
 }
 
 // 趋势文案
 .gpr-debt-trend-text {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
 }
 
 // 近期共变区块
 .gpr-debt-coupling {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 // 共变区块标题（+ 启发式说明）
 .gpr-debt-coupling-title {
   display: flex;
   align-items: baseline;
-  gap: $spacing-1;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  gap: $s-1;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
 }
 
 // 共变说明（淡色辅助文字）
 .gpr-debt-coupling-hint {
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-normal;
+  font-size: $t-2xs;
+  font-weight: $fw-normal;
   opacity: 0.45;
 }
 
 // 共变空态
 .gpr-debt-coupling-empty {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   opacity: 0.4;
   font-style: italic;
 }
@@ -101,9 +101,9 @@
 .gpr-debt-coupling-item {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-2px $spacing-1;
-  font-size: $font-size-2xs;
+  gap: $s-1;
+  padding: $s-px2 $s-1;
+  font-size: $t-2xs;
   @include row-divider;
 }
 
@@ -119,20 +119,20 @@
 .gpr-debt-coupling-path {
   flex: 1;
   min-width: 0;
-  font-family: $vp-mono;
+  font-family: $ff-mono;
   @include text-ellipsis;
 }
 
 // 共变修改次数（等宽数字，淡色）
 .gpr-debt-coupling-mods {
   flex-shrink: 0;
-  font-family: $vp-mono;
+  font-family: $ff-mono;
   opacity: 0.5;
 }
 
 // 共变风险评分（等宽数字）
 .gpr-debt-coupling-score {
   flex-shrink: 0;
-  font-family: $vp-mono;
-  font-weight: $font-weight-bold;
+  font-family: $ff-mono;
+  font-weight: $fw-bold;
 }

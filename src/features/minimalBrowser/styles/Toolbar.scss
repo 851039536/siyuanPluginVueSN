@@ -4,9 +4,9 @@
 .mb-toolbar {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-2;
-  border-bottom: 1px solid $color-border;
+  gap: $s-1;
+  padding: $s-2;
+  border-bottom: 1px solid $c-border;
   background: var(--b3-theme-background);
 }
 
@@ -16,24 +16,24 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  margin: 0 $spacing-1;
+  margin: 0 $s-1;
 }
 
 .mb-address-input {
   width: 100%;
   height: 28px;
-  padding: 0 $spacing-3;
-  border: 1px solid $color-border;
-  border-radius: $radius-full;
+  padding: 0 $s-3;
+  border: 1px solid $c-border;
+  border-radius: $r-full;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-xs;
-  font-family: $vp-mono;
+  font-size: $t-xs;
+  font-family: $ff-mono;
   outline: none;
   transition: border-color 0.15s;
 
   &:focus {
-    border-color: $color-info;
+    border-color: $c-info;
     background: var(--b3-theme-background);
   }
 }

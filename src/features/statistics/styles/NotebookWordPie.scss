@@ -8,13 +8,13 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: $spacing-1 0;
+  padding: $s-1 0;
 }
 
 .pie-layout {
   display: flex;
   align-items: center;
-  gap: $spacing-3;
+  gap: $s-3;
 }
 
 .pie-chart-area {
@@ -42,22 +42,22 @@
 }
 
 .pie-center-name {
-  font-family: $font-zh;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
+  font-family: $ff-zh;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
   fill: var(--b3-theme-on-surface);
 }
 
 .pie-center-pct {
   font-family: stats.$font-mono;
-  font-size: $font-size-base; // 数据突出展示（饼图中心百分比）
-  font-weight: $font-weight-bold;
+  font-size: $t-base; // 数据突出展示（饼图中心百分比）
+  font-weight: $fw-bold;
   fill: var(--b3-theme-primary);
 }
 
 .pie-center-words {
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   fill: var(--b3-theme-on-surface);
   opacity: 0.5;
 }
@@ -67,16 +67,16 @@
   display: grid;
   // 多列自适应网格：图例项均分卡片剩余横向空间，消除单列列表在宽卡片下的空位
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: $spacing-1 $spacing-3;
+  gap: $s-1 $s-3;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: $spacing-6px;
-  padding: $spacing-1 $spacing-2;
-  border-radius: stats.$radius-sm;
-  font-size: $font-size-2xs;
+  gap: $s-px6;
+  padding: $s-1 $s-2;
+  border-radius: stats.$r-sm;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   transition: background 0.15s;
 
@@ -89,7 +89,7 @@
 .legend-color {
   width: 12px;
   height: 12px;
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   flex-shrink: 0;
 }
 
@@ -98,14 +98,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-weight: $font-weight-medium;
+  font-weight: $fw-medium;
 }
 
 .legend-pct {
   font-family: stats.$font-mono;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
-  font-weight: $font-weight-semibold;
+  font-weight: $fw-semibold;
   min-width: 32px;
   text-align: right;
 }

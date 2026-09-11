@@ -13,13 +13,13 @@ $fc-gap-tight: 6px; // 6px 紧密间距（无匹配全局Token）
     justify-content: center;
     z-index: 1000;
     // 弹窗遮罩层基准字号（硬规则：防止继承思源全局默认字号）
-    font-size: $font-size-xs;
+    font-size: $t-xs;
   }
 
   .dialog {
     background: var(--b3-theme-background);
     border: 1px solid var(--b3-border-color);
-    border-radius: $vp-radius;
+    border-radius: $r-base;
     width: 90%;
     max-width: 500px;
     max-height: 95vh;
@@ -29,29 +29,29 @@ $fc-gap-tight: 6px; // 6px 紧密间距（无匹配全局Token）
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: $spacing-3 $spacing-4;
+      padding: $s-3 $s-4;
       border-bottom: 1px solid var(--b3-border-color);
 
       h4 {
         margin: 0;
-        font-size: $font-size-xs;
-        font-weight: $font-weight-bold;
+        font-size: $t-xs;
+        font-weight: $fw-bold;
         letter-spacing: 0.02em;
       }
     }
 
     &-body {
-      padding: $spacing-4;
+      padding: $s-4;
       display: flex;
       flex-direction: column;
-      gap: $spacing-3;
+      gap: $s-3;
     }
 
     &-footer {
       display: flex;
       justify-content: flex-end;
-      gap: $spacing-2;
-      padding: $spacing-3 $spacing-4;
+      gap: $s-2;
+      padding: $s-3 $s-4;
       border-top: 1px solid var(--b3-border-color);
     }
   }
@@ -63,7 +63,7 @@ $fc-gap-tight: 6px; // 6px 紧密间距（无匹配全局Token）
 
     label {
       @include fc-label;
-      font-size: $font-size-2xs;
+      font-size: $t-2xs;
     }
   }
 
@@ -73,6 +73,6 @@ $fc-gap-tight: 6px; // 6px 紧密间距（无匹配全局Token）
     gap: $fc-gap-tight;
 
     .si-select { width: 100%; }
-    .custom-category-input { margin-top: $spacing-1; }
+    .custom-category-input { margin-top: $s-1; }
   }
 }

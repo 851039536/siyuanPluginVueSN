@@ -8,8 +8,8 @@
 .platform-filter-bar {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-1 $spacing-10px;
+  gap: $s-1;
+  padding: $s-1 $s-px10;
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
   overflow-x: auto;
@@ -20,25 +20,25 @@
   }
 
   .platform-filter-label {
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-bold;
+    font-size: $t-2xs;
+    font-weight: $fw-bold;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     opacity: 0.35;
     white-space: nowrap;
-    margin-right: $spacing-2px;
+    margin-right: $s-px2;
     flex-shrink: 0;
   }
 
   .platform-chip {
     display: inline-flex;
     align-items: center;
-    padding: $spacing-2px $spacing-2;
+    padding: $s-px2 $s-2;
     border: 1px solid var(--b3-border-color);
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     background: transparent;
     color: var(--b3-theme-on-surface-variant);
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     cursor: pointer;
     white-space: nowrap;
     flex-shrink: 0;
@@ -67,14 +67,14 @@
       justify-content: center;
       min-width: 16px;
       height: 15px;
-      padding: 0 $spacing-1;
-      border-radius: $radius-sm;
+      padding: 0 $s-1;
+      border-radius: $r-sm;
       background: var(--b3-theme-on-surface-variant, #6b7280);
       color: var(--b3-theme-on-primary, #fff);
-      font-size: $font-size-2xs;
-      font-weight: $font-weight-bold;
-      font-family: $vp-mono;
-      margin-left: $spacing-px;
+      font-size: $t-2xs;
+      font-weight: $fw-bold;
+      font-family: $ff-mono;
+      margin-left: $s-px3;
       line-height: 1;
     }
   }
@@ -86,11 +86,11 @@
     width: 20px;
     height: 20px;
     border: none;
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     background: var(--b3-theme-surface-light);
     color: var(--b3-theme-on-surface-variant);
     cursor: pointer;
-    font-size: $font-size-sm;
+    font-size: $t-sm;
     flex-shrink: 0;
 
     &:hover {
@@ -103,9 +103,9 @@
 .platform-filter-hint {
   display: flex;
   align-items: center;
-  gap: $spacing-6px;
-  padding: $spacing-1 $spacing-10px;
-  font-size: $font-size-xs;
+  gap: $s-px6;
+  padding: $s-1 $s-px10;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface-variant);
   background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.05));
   border-bottom: 1px solid var(--b3-border-color);
@@ -113,6 +113,6 @@
 
   strong {
     color: var(--b3-theme-primary);
-    margin: 0 $spacing-2px;
+    margin: 0 $s-px2;
   }
 }

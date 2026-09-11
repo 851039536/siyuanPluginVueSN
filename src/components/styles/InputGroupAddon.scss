@@ -11,13 +11,13 @@
   flex-shrink: 0;
   position: relative;
   white-space: nowrap;
-  padding: var(--ig-addon-pad-y, #{$spacing-2px}) var(--ig-addon-pad-x, #{m.$gap-xs});
+  padding: var(--ig-addon-pad-y, #{$s-px2}) var(--ig-addon-pad-x, #{m.$gap-xs});
   min-height: var(--ig-addon-min-h, 28px); // 无对应 Token
-  font-family: $font-zh;
-  font-size: var(--ig-addon-font, #{$font-size-xs});
-  line-height: $line-height-tight;
-  color: var(--b3-theme-secondary, $color-muted);
-  background: var(--b3-theme-surface, $color-surface);
-  border: 1px solid var(--b3-border-color, $color-border);
-  border-radius: $vp-radius;
+  font-family: $ff-zh;
+  font-size: var(--ig-addon-font, #{$t-xs});
+  line-height: $lh-tight;
+  color: var(--b3-theme-secondary, $c-muted);
+  background: var(--b3-theme-surface, $c-surface);
+  border: 1px solid var(--b3-border-color, $c-border);
+  border-radius: $r-base;
 }

@@ -6,7 +6,7 @@
 .gpr-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 // 卡片（与提交趋势摘要卡同构，复用共享 mixin）

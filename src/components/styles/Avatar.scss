@@ -8,50 +8,50 @@
   justify-content: center;
   position: relative;
   overflow: hidden;
-  background: var(--b3-theme-surface-lighter, $color-surface);
-  color: var(--b3-theme-on-surface, $color-fg);
-  font-family: $font-zh;
-  font-weight: $font-weight-medium;
+  background: var(--b3-theme-surface-lighter, $c-surface);
+  color: var(--b3-theme-on-surface, $c-fg);
+  font-family: $ff-zh;
+  font-weight: $fw-medium;
   user-select: none;
 
   // 尺寸变体
   &--xsmall {
     width: 24px;
     height: 24px;
-    font-size: $font-size-2xs; // XS 档字号阶梯：10px
+    font-size: $t-2xs; // XS 档字号阶梯：10px
   }
 
   &--small {
     width: 32px;
     height: 32px;
-    font-size: $font-size-xs;
+    font-size: $t-xs;
   }
 
   &--medium {
     width: 40px;
     height: 40px;
-    font-size: $font-size-sm;
+    font-size: $t-sm;
   }
 
   &--large {
     width: 48px;
     height: 48px;
-    font-size: $font-size-base;
+    font-size: $t-base;
   }
 
   &--xlarge {
     width: 64px;
     height: 64px;
-    font-size: $font-size-lg;
+    font-size: $t-lg;
   }
 
   // 形状变体
   &--circle {
-    border-radius: $radius-full;
+    border-radius: $r-full;
   }
 
   &--square {
-    border-radius: $radius-md;
+    border-radius: $r-md;
   }
 
   // 交互状态
@@ -60,7 +60,7 @@
 
     &:hover:not(.si-avatar--disabled) {
       transform: scale(1.05);
-      border-color: var(--b3-theme-primary, $color-danger);
+      border-color: var(--b3-theme-primary, $c-danger);
     }
 
     &:active:not(.si-avatar--disabled) {
@@ -70,7 +70,7 @@
 
   // 激活态 — Codex 边框优先策略（替代原 box-shadow: 0 0 0 2px）
   &--active {
-    outline: 2px solid var(--b3-theme-primary, $color-danger);
+    outline: 2px solid var(--b3-theme-primary, $c-danger);
     outline-offset: 0;
   }
 
@@ -89,7 +89,7 @@
 
   // 文本
   &__text {
-    line-height: $line-height-tight;
+    line-height: $lh-tight;
     white-space: nowrap;
     overflow: hidden;
   }

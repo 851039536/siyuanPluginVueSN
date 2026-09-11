@@ -8,11 +8,11 @@
 .doc-nav-tree-row {
   display: flex;
   align-items: center;
-  gap: $spacing-2px;
+  gap: $s-px2;
   min-width: 0;
   height: 28px;
-  padding: 0 $spacing-1;
-  border-radius: $radius-sm;
+  padding: 0 $s-1;
+  border-radius: $r-sm;
 
   &:hover {
     background: var(--b3-theme-surface-lighter);
@@ -23,12 +23,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: $spacing-4;
-  height: $spacing-4;
+  width: $s-4;
+  height: $s-4;
   flex-shrink: 0;
   padding: 0;
   border: none;
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: transparent;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
@@ -56,13 +56,13 @@
 .doc-nav-tree-link {
   flex: 1;
   min-width: 0;
-  padding: $spacing-2px $spacing-1;
+  padding: $s-px2 $s-1;
   border-left: 2px solid transparent;
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   color: var(--b3-theme-primary);
   text-decoration: none;
-  font-size: $font-size-xs;
-  line-height: $line-height-tight;
+  font-size: $t-xs;
+  line-height: $lh-tight;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -72,21 +72,21 @@
   }
 
   &.doc-nav-tree-current {
-    font-weight: $font-weight-semibold;
+    font-weight: $fw-semibold;
     border-left-color: var(--b3-theme-primary);
   }
 }
 
 .doc-nav-tree-children {
-  margin-left: $spacing-3;
+  margin-left: $s-3;
   min-width: 0;
 }
 
 .doc-nav-tree-loading,
 .doc-nav-tree-empty {
-  padding: $spacing-1 $spacing-2;
+  padding: $s-1 $s-2;
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   font-style: italic;
   opacity: 0.6;
 }

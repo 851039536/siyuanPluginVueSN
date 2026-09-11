@@ -2,25 +2,25 @@
 @use "./mixins" as m;
 
 .vp-freq-keywords {
-  padding: $spacing-1 $spacing-3 $spacing-2;
+  padding: $s-1 $s-3 $s-2;
 
   &__row {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: $spacing-1;
+    gap: $s-1;
   }
 
   &__label {
     @include m.uppercase-label;
 
     opacity: 0.55;
-    margin-right: $spacing-1;
+    margin-right: $s-1;
     flex-shrink: 0;
   }
 
   &__empty {
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     color: var(--b3-theme-on-surface);
     opacity: 0.4;
     font-style: italic;
@@ -29,13 +29,13 @@
   &__chip {
     display: inline-flex;
     align-items: center;
-    gap: $spacing-2px;
-    padding: $spacing-2px $spacing-2;
-    border-radius: $radius-full;
+    gap: $s-px2;
+    padding: $s-px2 $s-2;
+    border-radius: $r-full;
     border: 1px solid var(--b3-border-color);
     background: var(--b3-theme-surface);
     color: var(--b3-theme-on-surface);
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     cursor: pointer;
     transition: background 0.12s, border-color 0.12s;
     max-width: 160px;
@@ -60,7 +60,7 @@
     width: 16px;
     height: 16px;
     border-radius: 50%;
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     line-height: 1;
     color: var(--b3-theme-on-surface);
     opacity: 0.4;
@@ -83,7 +83,7 @@
     background: transparent;
     color: var(--b3-theme-on-surface);
     opacity: 0.5;
-    font-size: $font-size-base;
+    font-size: $t-base;
     line-height: 1;
     cursor: pointer;
     transition: opacity 0.12s, border-color 0.12s;
@@ -97,19 +97,19 @@
   &__add-wrap {
     display: inline-flex;
     align-items: center;
-    gap: $spacing-1;
+    gap: $s-1;
   }
 
   &__add-input {
     box-sizing: border-box;
     width: 120px;
     height: 28px;
-    padding: 0 $spacing-2;
-    border-radius: $radius-sm;
+    padding: 0 $s-2;
+    border-radius: $r-sm;
     border: 1px solid var(--b3-theme-primary-lighter);
     background: var(--b3-theme-surface);
     color: var(--b3-theme-on-surface);
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     outline: none;
 
     &::placeholder {
@@ -122,9 +122,9 @@
   &__add-cancel {
     box-sizing: border-box;
     height: 28px;
-    padding: 0 $spacing-2;
-    border-radius: $radius-sm;
-    font-size: $font-size-xs;
+    padding: 0 $s-2;
+    border-radius: $r-sm;
+    font-size: $t-xs;
     cursor: pointer;
     transition: background 0.12s;
     border: none;

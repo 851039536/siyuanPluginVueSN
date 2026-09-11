@@ -11,22 +11,22 @@
 .doc-nav-publish-trigger {
   display: inline-flex;
   align-items: center;
-  padding: 0 $spacing-1;
+  padding: 0 $s-1;
   border: none;
   background: transparent;
   cursor: pointer;
-  font-size: $font-size-2xs;
-  line-height: $line-height-tight;
+  font-size: $t-2xs;
+  line-height: $lh-tight;
   white-space: nowrap;
   opacity: 0.85;
   transition: opacity 0.15s ease;
 
   &.is-published {
-    color: $color-success;
+    color: $c-success;
   }
 
   &.is-unpublished {
-    color: $color-muted;
+    color: $c-muted;
   }
 
   &:hover,
@@ -42,27 +42,27 @@
 // 浮层面板
 .doc-nav-publish-panel {
   position: absolute;
-  top: calc(100% + $spacing-1);
+  top: calc(100% + $s-1);
   left: 0;
   z-index: 100;
   min-width: 120px;
-  padding: $spacing-2;
+  padding: $s-2;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $vp-radius;
-  font-size: $font-size-xs;
-  line-height: $line-height-normal;
+  border-radius: $r-base;
+  font-size: $t-xs;
+  line-height: $lh-normal;
 }
 
 // 面板标题
 .doc-nav-publish-panel-title {
-  margin-bottom: $spacing-1;
-  padding-bottom: $spacing-2px;
+  margin-bottom: $s-1;
+  padding-bottom: $s-px2;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-medium;
-  line-height: $line-height-tight;
+  font-size: $t-2xs;
+  font-weight: $fw-medium;
+  line-height: $lh-tight;
   text-transform: uppercase;
   letter-spacing: 0.02em;
   opacity: 0.7;
@@ -76,15 +76,15 @@
 }
 
 .doc-nav-publish-panel-item {
-  padding: $spacing-2px 0;
+  padding: $s-px2 0;
   color: var(--b3-theme-on-surface);
 }
 
 // 未发布空态
 .doc-nav-publish-panel-empty {
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-2xs;
-  line-height: $line-height-tight;
+  font-size: $t-2xs;
+  line-height: $lh-tight;
   opacity: 0.5;
 }
 
@@ -97,7 +97,7 @@
 .doc-nav-publish-fade-enter-from,
 .doc-nav-publish-fade-leave-to {
   opacity: 0;
-  transform: translateY(-$spacing-1);
+  transform: translateY(-$s-1);
 }
 
 .doc-nav-publish-fade-enter-to,

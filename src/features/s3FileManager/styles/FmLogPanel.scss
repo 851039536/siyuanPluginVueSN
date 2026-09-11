@@ -11,7 +11,7 @@
 .fm-log-header-actions {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .fm-log-body {
@@ -22,33 +22,33 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: $spacing-8;
-  font-size: $font-size-xs;
+  padding: $s-8;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface-light);
 }
 
 .fm-log-item {
-  padding: $spacing-2 0;
+  padding: $s-2 0;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
 }
 
 .fm-log-line {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  font-size: $font-size-xs;
+  gap: $s-2;
+  font-size: $t-xs;
 }
 
 .fm-log-badge {
   flex-shrink: 0;
-  padding: $spacing-0 $spacing-1;
-  border-radius: $radius-sm;
-  font-size: $font-size-2xs; // 徽章为辅助文字
+  padding: $s-0 $s-1;
+  border-radius: $r-sm;
+  font-size: $t-2xs; // 徽章为辅助文字
   border: 1px solid transparent;
 
   &.success {
-    color: var(--b3-theme-success, $color-success);
-    border-color: var(--b3-theme-success, $color-success);
+    color: var(--b3-theme-success, $c-success);
+    border-color: var(--b3-theme-success, $c-success);
   }
 
   &.error {
@@ -58,7 +58,7 @@
 }
 
 .fm-log-action {
-  font-weight: $font-weight-medium;
+  font-weight: $fw-medium;
   flex-shrink: 0;
 }
 
@@ -73,20 +73,20 @@
 
 .fm-log-time {
   flex-shrink: 0;
-  font-size: $font-size-2xs; // 时间为辅助元信息
+  font-size: $t-2xs; // 时间为辅助元信息
   color: var(--b3-theme-on-surface-light);
 }
 
 .fm-log-message {
-  margin-top: $spacing-1;
-  font-size: $font-size-2xs; // 附加消息为辅助文字
+  margin-top: $s-1;
+  font-size: $t-2xs; // 附加消息为辅助文字
   color: var(--b3-theme-on-surface-light);
   word-break: break-all;
 }
 
 .fm-log-detail {
-  margin-top: $spacing-1;
-  font-size: $font-size-2xs;
+  margin-top: $s-1;
+  font-size: $t-2xs;
 
   summary {
     cursor: pointer;
@@ -95,14 +95,14 @@
 }
 
 .fm-log-detail-line {
-  padding-left: $spacing-3;
-  font-family: $vp-mono;
+  padding-left: $s-3;
+  font-family: $ff-mono;
   color: var(--b3-theme-on-surface-light);
   word-break: break-all;
 }
 
 .fm-log-detail-omitted {
-  padding-left: $spacing-3;
+  padding-left: $s-3;
   color: var(--b3-theme-on-surface-light);
   font-style: italic;
 }

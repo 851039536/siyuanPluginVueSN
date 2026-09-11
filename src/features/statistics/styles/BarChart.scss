@@ -6,8 +6,8 @@
 .bar-chart-section {
   .bar-chart-container {
     overflow-x: auto;
-    margin-bottom: $spacing-4;
-    padding-bottom: $spacing-2;
+    margin-bottom: $s-4;
+    padding-bottom: $s-2;
     @include scrollbar-thin;
 
     &::-webkit-scrollbar {
@@ -18,9 +18,9 @@
   .chart-viewport {
     display: flex;
     align-items: flex-end;
-    gap: $spacing-2;
+    gap: $s-2;
     min-height: 160px;
-    padding: 15px $spacing-5px 35px $spacing-5px;
+    padding: 15px $s-px5 35px $s-px5;
     position: relative;
 
     .bar-item {
@@ -39,15 +39,15 @@
 
         .bar-value {
           opacity: 1;
-          transform: translateX(-50%) translateY(-$spacing-1);
+          transform: translateX(-50%) translateY(-$s-1);
         }
       }
 
       .bar-value {
         position: absolute;
         font-family: stats.$font-mono;
-        font-size: $font-size-2xs;
-        font-weight: $font-weight-bold;
+        font-size: $t-2xs;
+        font-weight: $fw-bold;
         color: var(--b3-theme-primary);
         white-space: nowrap;
         transform: translateX(-50%);
@@ -58,7 +58,7 @@
       .bar {
         width: 100%;
         background: stats.$gradient-primary;
-        border-radius: stats.$radius-sm;
+        border-radius: stats.$r-sm;
         cursor: pointer;
 
         &.today {
@@ -71,10 +71,10 @@
 
       .bar-label {
         position: absolute;
-        bottom: -$spacing-4;
+        bottom: -$s-4;
         font-family: stats.$font-mono;
-        font-size: $font-size-2xs;
-        font-weight: $font-weight-bold;
+        font-size: $t-2xs;
+        font-weight: $fw-bold;
         letter-spacing: 0.06em;
         color: var(--b3-theme-on-surface);
         opacity: 0.45;

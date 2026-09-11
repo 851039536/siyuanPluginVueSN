@@ -11,26 +11,26 @@
 .fm-config-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: $spacing-3;
+  gap: $s-3;
 }
 
 .fm-config-switches {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-4;
-  margin-top: $spacing-4;
+  gap: $s-4;
+  margin-top: $s-4;
 }
 
 .fm-config-result {
-  margin-top: $spacing-3;
-  padding: $spacing-2 $spacing-3;
-  border-radius: $vp-radius;
-  font-size: $font-size-2xs; // 结果提示为辅助文字
+  margin-top: $s-3;
+  padding: $s-2 $s-3;
+  border-radius: $r-base;
+  font-size: $t-2xs; // 结果提示为辅助文字
   border: 1px solid transparent;
 
   &.success {
-    color: var(--b3-theme-success, $color-success);
-    border-color: var(--b3-theme-success, $color-success);
+    color: var(--b3-theme-success, $c-success);
+    border-color: var(--b3-theme-success, $c-success);
   }
 
   &.error {

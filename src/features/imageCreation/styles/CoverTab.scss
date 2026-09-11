@@ -27,35 +27,35 @@
 .size-presets {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .size-preset-btn {
   @include btn-interactive;
-  padding: $spacing-1 $spacing-2;
-  border-radius: $radius-sm;
-  font-size: $font-size-2xs;
+  padding: $s-1 $s-2;
+  border-radius: $r-sm;
+  font-size: $t-2xs;
 }
 
 .size-custom {
-  margin-top: $spacing-1;
+  margin-top: $s-1;
 }
 
 .size-input-group {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
 
   .size-x {
     color: var(--b3-theme-on-surface);
     opacity: 0.4;
-    font-size: $font-size-xs;
+    font-size: $t-xs;
   }
 
   .size-unit {
     color: var(--b3-theme-on-surface);
     opacity: 0.5;
-    font-size: $font-size-xs;
+    font-size: $t-xs;
   }
 }
 
@@ -63,7 +63,7 @@
 .style-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: $spacing-px;
+  gap: $s-px3;
 }
 
 .style-btn {
@@ -71,8 +71,8 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: $spacing-2;
-  border-radius: $vp-radius;
+  padding: $s-2;
+  border-radius: $r-base;
   text-align: left;
 
   &.active {
@@ -80,35 +80,35 @@
   }
 
   .style-name {
-    font-size: $font-size-xs;
-    font-weight: $font-weight-medium;
+    font-size: $t-xs;
+    font-weight: $fw-medium;
     color: var(--b3-theme-on-surface);
   }
 
   .style-desc {
     // 辅助文字
-    font-size: $font-size-2xs;
+    font-size: $t-2xs;
     color: var(--b3-theme-on-surface);
     opacity: 0.5;
-    margin-top: $spacing-2px;
-    line-height: $line-height-tight;
+    margin-top: $s-px2;
+    line-height: $lh-tight;
   }
 }
 
 // 操作按钮
 .config-actions {
   display: flex;
-  gap: $spacing-2;
-  margin-top: $spacing-1;
+  gap: $s-2;
+  margin-top: $s-1;
 }
 
 // 错误信息
 .error-message {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-error, #e74c3c);
-  padding: $spacing-px $spacing-2;
+  padding: $s-px3 $s-2;
   background: color-mix(in srgb, var(--b3-theme-error, #e74c3c) 8%, transparent);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
 }
 
 // 空状态
@@ -116,7 +116,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
   color: var(--b3-theme-on-surface);
   opacity: 0.3;
   position: relative;
@@ -141,13 +141,13 @@
 
   p {
     margin: 0;
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     position: relative;
   }
 
   .preview-hint {
     // 辅助文字
-    font-size: $font-size-2xs;
+    font-size: $t-2xs;
     opacity: 0.7;
     position: relative;
   }
@@ -160,7 +160,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: $spacing-4;
+  padding: $s-4;
   overflow: hidden;
   position: relative;
 }
@@ -179,8 +179,8 @@
 }
 
 .preview-meta {
-  padding: $spacing-px $spacing-3;
-  font-size: $font-size-2xs;
+  padding: $s-px3 $s-3;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.4;
   text-align: center;

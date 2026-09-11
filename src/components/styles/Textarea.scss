@@ -6,7 +6,7 @@
   display: inline-flex;
   flex-direction: column;
   position: relative;
-  font-family: $font-zh;
+  font-family: $ff-zh;
   width: 100%;
 
   &__wrapper {
@@ -14,14 +14,14 @@
     // 多行必需：让文本域撑满 wrapper 高度而非垂直居中
     align-items: stretch;
     position: relative;
-    background: var(--b3-theme-background, $color-bg);
-    border: 1px solid var(--b3-border-color, $color-border);
-    border-radius: $vp-radius;
+    background: var(--b3-theme-background, $c-bg);
+    border: 1px solid var(--b3-border-color, $c-border);
+    border-radius: $r-base;
     outline: none;
     transition: border-color 0.12s;
 
     &:hover:not(.si-textarea--disabled .si-textarea__wrapper) {
-      border-color: var(--b3-theme-secondary, $color-info);
+      border-color: var(--b3-theme-secondary, $c-info);
     }
 
     // Codex 边框优先策略 — 替代原 box-shadow: 0 0 0 3px
@@ -39,13 +39,13 @@
     border: none;
     outline: none;
     background: transparent;
-    font-family: $font-zh;
+    font-family: $ff-zh;
     // 多行文本比单行输入更宽松，取 relaxed 行高
-    line-height: $line-height-relaxed;
-    color: var(--b3-theme-on-background, $color-fg);
+    line-height: $lh-relaxed;
+    color: var(--b3-theme-on-background, $c-fg);
 
     &::placeholder {
-      color: var(--b3-theme-secondary, $color-muted);
+      color: var(--b3-theme-secondary, $c-muted);
     }
 
     &:disabled {
@@ -59,7 +59,7 @@
 
     // 长内容自带项目统一样式的细滚动条
     &::-webkit-scrollbar {
-      width: $spacing-2; // 8px
+      width: $s-2; // 8px
     }
 
     &::-webkit-scrollbar-track {
@@ -67,11 +67,11 @@
     }
 
     &::-webkit-scrollbar-thumb {
-      background: var(--b3-theme-surface-light, $color-surface);
-      border-radius: $radius-sm;
+      background: var(--b3-theme-surface-light, $c-surface);
+      border-radius: $r-sm;
 
       &:hover {
-        background: var(--b3-theme-secondary, $color-muted);
+        background: var(--b3-theme-secondary, $c-muted);
       }
     }
   }
@@ -101,7 +101,7 @@
   // 实底变体：浅表面填充 + 透明边框，强调度高于描边态（同 Checkbox / RadioButton）
   &--filled {
     .si-textarea__wrapper {
-      background: var(--b3-theme-surface-lighter, $color-surface);
+      background: var(--b3-theme-surface-lighter, $c-surface);
       border-color: transparent;
     }
 
@@ -109,21 +109,21 @@
     // → 改用内嵌 outline 呈现聚焦反馈（同 Listbox 的 inset 环）
     .si-textarea__wrapper:focus-within {
       border-color: transparent;
-      outline: 2px solid var(--b3-theme-primary, $color-danger);
+      outline: 2px solid var(--b3-theme-primary, $c-danger);
       outline-offset: -1px;
     }
   }
 
   &--disabled {
     .si-textarea__wrapper {
-      background: var(--b3-theme-surface, $color-surface);
+      background: var(--b3-theme-surface, $c-surface);
       cursor: not-allowed;
     }
   }
 
   &--readonly {
     .si-textarea__wrapper {
-      background: var(--b3-theme-surface-lighter, $color-surface);
+      background: var(--b3-theme-surface-lighter, $c-surface);
     }
   }
 
@@ -131,36 +131,36 @@
   &--error {
     .si-textarea__wrapper,
     .si-textarea__wrapper:focus-within {
-      border-color: var(--b3-theme-error, $color-danger);
+      border-color: var(--b3-theme-error, $c-danger);
     }
   }
 
   // 尺寸档位：字号阶梯 10 / 12 / 14 / 16，四档不得同号
   &--xsmall {
     .si-textarea__field {
-      padding: $spacing-2px m.$gap-xs; // 2px 6px
-      font-size: $font-size-2xs;
+      padding: $s-px2 m.$gap-xs; // 2px 6px
+      font-size: $t-2xs;
     }
   }
 
   &--small {
     .si-textarea__field {
-      padding: $spacing-2px m.$gap-xs; // 2px 6px
-      font-size: $font-size-xs;
+      padding: $s-px2 m.$gap-xs; // 2px 6px
+      font-size: $t-xs;
     }
   }
 
   &--medium {
     .si-textarea__field {
       padding: m.$gap-xs m.$spacing-2_5; // 6px 10px
-      font-size: $font-size-sm;
+      font-size: $t-sm;
     }
   }
 
   &--large {
     .si-textarea__field {
       padding: m.$spacing-2_5 14px; // 10px 14px；14px 无对应 Token
-      font-size: $font-size-base;
+      font-size: $t-base;
     }
   }
 }

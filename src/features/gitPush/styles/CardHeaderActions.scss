@@ -5,7 +5,7 @@
 .gp-card-actions {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
   flex-shrink: 0;
 }
 
@@ -13,7 +13,7 @@
 .gp-actions-divider {
   width: 1px;
   height: 14px;
-  margin: 0 $spacing-px;
+  margin: 0 $s-px3;
   background: var(--b3-border-color);
   flex-shrink: 0;
 }
@@ -27,7 +27,7 @@
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
-  margin-top: $spacing-6px;
+  margin-top: $s-px6;
   min-width: 140px;
 }
 
@@ -42,7 +42,7 @@
 
 .gp-refresh-divider {
   height: 1px;
-  margin: $spacing-1 $spacing-6px;
+  margin: $s-1 $s-px6;
   background: var(--b3-border-color);
 }
 
@@ -60,7 +60,7 @@
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
-  margin-top: $spacing-6px;
+  margin-top: $s-px6;
   min-width: 140px;
 }
 
@@ -79,7 +79,7 @@
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
-  margin-top: $spacing-6px;
+  margin-top: $s-px6;
   min-width: 160px;
 }
 
@@ -100,17 +100,17 @@
 
 .gp-ide-item--custom {
   // 为删除按钮留空间
-  padding-right: $spacing-1;
+  padding-right: $s-1;
 }
 
 .gp-ide-item-del {
   margin-left: auto;
-  padding: $spacing-2px $spacing-1;
+  padding: $s-px2 $s-1;
   color: var(--b3-theme-on-surface);
   opacity: 0;
   background: none;
   border: none;
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   cursor: pointer;
   transition: opacity 0.12s;
 
@@ -129,19 +129,19 @@
 
 .gp-ide-del-confirm {
   margin-left: auto;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   opacity: 0.6;
   white-space: nowrap;
 }
 
 .gp-ide-del-yes,
 .gp-ide-del-no {
-  padding: $spacing-1px $spacing-6px;
-  font-size: $font-size-2xs;
-  border-radius: $radius-sm;
+  padding: $s-px1 $s-px6;
+  font-size: $t-2xs;
+  border-radius: $r-sm;
   border: none;
   cursor: pointer;
-  line-height: $line-height-normal;
+  line-height: $lh-normal;
 }
 
 .gp-ide-del-yes {
@@ -158,7 +158,7 @@
 
 .gp-ide-divider {
   height: 1px;
-  margin: $spacing-1 $spacing-6px;
+  margin: $s-1 $s-px6;
   background: var(--b3-border-color);
 }
 
@@ -166,10 +166,10 @@
 .gp-cat-select {
   background: transparent;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-2xs;
-  padding: $spacing-1px $spacing-2px;
+  font-size: $t-2xs;
+  padding: $s-px1 $s-px2;
   cursor: pointer;
   max-width: 60px;
   opacity: 0.5;

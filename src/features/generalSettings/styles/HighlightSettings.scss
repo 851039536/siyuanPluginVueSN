@@ -2,38 +2,38 @@
 @use "@/variables.scss" as *;
 
 .highlight-settings {
-  padding: $spacing-4;
-  font-size: $font-size-xs; // 基准字号，防止内部文字继承思源全局默认字号
+  padding: $s-4;
+  font-size: $t-xs; // 基准字号，防止内部文字继承思源全局默认字号
 }
 
 .toggle-label {
-  margin-bottom: $spacing-3;
+  margin-bottom: $s-3;
 }
 
 .toggle-description {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-variant);
-  margin-top: $spacing-2;
-  line-height: $line-height-normal;
+  margin-top: $s-2;
+  line-height: $lh-normal;
 }
 
 .style-settings {
-  margin-top: $spacing-5;
-  padding: $spacing-3;
+  margin-top: $s-5;
+  padding: $s-3;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
 }
 
 .style-settings-title {
-  margin-bottom: $spacing-3;
+  margin-bottom: $s-3;
 }
 
 .style-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: $spacing-2;
+  margin-bottom: $s-2;
 }
 
 .style-row:last-child {
@@ -41,7 +41,7 @@
 }
 
 .style-label {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface);
   flex-shrink: 0;
 }

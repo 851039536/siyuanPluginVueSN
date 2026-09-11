@@ -7,12 +7,12 @@
   .settings-row {
     display: flex;
     align-items: center;
-    gap: $spacing-2;
+    gap: $s-2;
     flex-wrap: wrap;
   }
 
   .inline-label {
-    font-size: $font-size-sm;
+    font-size: $t-sm;
     color: var(--b3-theme-on-surface);
     white-space: nowrap;
   }

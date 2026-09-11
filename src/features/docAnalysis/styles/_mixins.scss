@@ -1,4 +1,4 @@
-// 全局设计 Token（Codex 增强 Token：$vp-radius / $vp-mono / $font-size-* / $spacing-*）
+// 全局设计 Token（Codex 增强 Token：$r-base / $ff-mono / $font-size-* / $spacing-*）
 @use '@/variables.scss' as *;
 
 // 旋转动画（loading spinner 共享）
@@ -19,7 +19,7 @@
   }
   &::-webkit-scrollbar-thumb {
     background: var(--b3-scroll-color);
-    border-radius: $radius-px;
+    border-radius: $r-px3;
   }
 }
 
@@ -45,7 +45,7 @@
   max-width: 92vw;
   max-height: 70vh;
   background: var(--b3-theme-background);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   border: 1px solid var(--b3-border-color);
   display: flex;
   flex-direction: column;
@@ -57,17 +57,17 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-3 $spacing-4;
+  padding: $s-3 $s-4;
   border-bottom: 1px solid var(--b3-border-color);
 }
 
-// 弹窗标题（$font-size-sm 为弹窗标题字号，与 PlatformManageModal 保持一致）
+// 弹窗标题（$t-sm 为弹窗标题字号，与 PlatformManageModal 保持一致）
 %modal-title {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
+  gap: $s-1;
+  font-size: $t-sm;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-background);
 }
 
@@ -79,11 +79,11 @@
   width: 28px;
   height: 28px;
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: transparent;
   color: var(--b3-theme-on-surface-variant);
   cursor: pointer;
-  font-size: $font-size-lg;
+  font-size: $t-lg;
 
   &:hover {
     border-color: var(--b3-theme-primary);
@@ -95,8 +95,8 @@
 %modal-footer {
   display: flex;
   justify-content: flex-end;
-  gap: $spacing-2;
-  padding: $spacing-3 $spacing-4;
+  gap: $s-2;
+  padding: $s-3 $s-4;
   border-top: 1px solid var(--b3-border-color);
 }
 
@@ -104,6 +104,6 @@
 %modal-body {
   flex: 1;
   overflow-y: auto;
-  padding: $spacing-2;
+  padding: $s-2;
   @include da-scrollbar;
 }

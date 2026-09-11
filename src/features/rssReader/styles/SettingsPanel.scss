@@ -5,33 +5,33 @@
 .rss-reader-panel {
   // --- OPML 导入导出 ---
   .opml-section {
-    margin-bottom: $spacing-3;
-    padding: $spacing-2 $spacing-2 $spacing-3;
+    margin-bottom: $s-3;
+    padding: $s-2 $s-2 $s-3;
     border: 1px solid var(--b3-border-color);
-    border-radius: $radius-md;
+    border-radius: $r-md;
 
     .setting-label {
-      font-size: $font-size-sm;
-      font-weight: $font-weight-medium;
-      margin-bottom: $spacing-1;
+      font-size: $t-sm;
+      font-weight: $fw-medium;
+      margin-bottom: $s-1;
     }
 
     .setting-desc {
-      font-size: $font-size-xs;
+      font-size: $t-xs;
       color: var(--b3-theme-on-surface-muted);
-      margin-bottom: $spacing-1;
+      margin-bottom: $s-1;
     }
 
     .opml-btn {
       display: inline-flex;
       align-items: center;
-      gap: $spacing-1;
-      padding: $spacing-5px $spacing-10px;
+      gap: $s-1;
+      padding: $s-px5 $s-px10;
       border: 1px solid $rr-accent;
-      border-radius: $radius-sm;
+      border-radius: $r-sm;
       background: transparent;
       color: $rr-accent;
-      font-size: $font-size-sm;
+      font-size: $t-sm;
       cursor: pointer;
       transition: $rr-transition;
 
@@ -44,20 +44,20 @@
     .opml-import-row {
       display: flex;
       align-items: center;
-      gap: $spacing-2;
+      gap: $s-2;
 
       input[type="file"] {
-        font-size: $font-size-xs;
+        font-size: $t-xs;
         color: var(--b3-theme-on-surface);
         &::file-selector-button {
-          padding: $spacing-1 $spacing-2;
+          padding: $s-1 $s-2;
           border: 1px solid var(--b3-theme-surface-lighter);
-          border-radius: $radius-sm;
+          border-radius: $r-sm;
           background: var(--b3-theme-surface-lighter);
           color: var(--b3-theme-on-surface);
-          font-size: $font-size-xs;
+          font-size: $t-xs;
           cursor: pointer;
-          margin-right: $spacing-6px;
+          margin-right: $s-px6;
           &:hover { background: var(--b3-theme-surface); }
         }
       }
@@ -65,8 +65,8 @@
       .opml-importing {
         display: flex;
         align-items: center;
-        gap: $spacing-1;
-        font-size: $font-size-xs;
+        gap: $s-1;
+        font-size: $t-xs;
         color: var(--b3-theme-on-surface-muted);
       }
     }

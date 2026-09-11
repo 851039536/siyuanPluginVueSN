@@ -6,26 +6,26 @@
 .gpc-legend {
   display: flex;
   align-items: center;
-  gap: $spacing-3;
+  gap: $s-3;
   flex-wrap: wrap;
-  margin-bottom: $spacing-2;
-  font-size: $font-size-2xs;
+  margin-bottom: $s-2;
+  font-size: $t-2xs;
 }
 
 // 图例条目：色块 + 文案
 .gpc-legend-item {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 // 涨/跌/平色块（与 canvas 实心颜色一致）
 // 下列色值必须与 types/report.ts 的 REPORT_CHART_COLORS 保持一致：
 // canvas 上下文无法解析 CSS 自定义属性，颜色只能在 TS 侧定义，SCSS 侧以同名注释对齐防漂移
 .gpc-legend-dot {
-  width: $spacing-2;
-  height: $spacing-2;
-  border-radius: $radius-full;
+  width: $s-2;
+  height: $s-2;
+  border-radius: $r-full;
 }
 
 .gpc-legend-dot--up {
@@ -42,9 +42,9 @@
 
 // 聚合提示（日期数超上限时按连续天数分桶，提示"每根 K 线代表 N 天"）
 .gpc-legend-agg {
-  padding: 0 $spacing-1;
+  padding: 0 $s-1;
   border: 1px dashed var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   color: var(--b3-theme-on-surface-light);
 }
 
@@ -72,10 +72,10 @@
   height: 28px;
   padding: 0;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-full;
+  border-radius: $r-full;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-sm; // 图标尺寸 14px（Iconify 图标随字号缩放，非正文）
+  font-size: $t-sm; // 图标尺寸 14px（Iconify 图标随字号缩放，非正文）
   opacity: 0.45;
   cursor: pointer;
   transition:
@@ -118,16 +118,16 @@
 
   &::-webkit-scrollbar-thumb {
     background: var(--b3-border-color);
-    border-radius: $radius-2px;
+    border-radius: $r-px2;
   }
 }
 
 // ── K 线图容器（边框卡片 + 固定高度撑起 canvas；min-width 由行内样式按日期数动态控制）──
 .gpc-chart-wrap {
   height: 260px;
-  padding: $spacing-2;
+  padding: $s-2;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
 }
 
@@ -135,8 +135,8 @@
 .gpc-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: $spacing-1;
-  margin-top: $spacing-2;
+  gap: $s-1;
+  margin-top: $s-2;
 }
 
 // 卡片（与团队总览 KPI 卡同构，复用共享 mixin）
@@ -166,15 +166,15 @@
 .gpc-rhythm {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: $spacing-2;
-  margin-top: $spacing-2;
+  gap: $s-2;
+  margin-top: $s-2;
 }
 
 // 迷你图卡片（与图表容器同构的边框卡片）
 .gpc-rhythm-card {
-  padding: $spacing-2;
+  padding: $s-2;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
 }
 
@@ -183,9 +183,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-2;
-  margin-bottom: $spacing-2;
-  font-size: $font-size-2xs;
+  gap: $s-2;
+  margin-bottom: $s-2;
+  font-size: $t-2xs;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   opacity: 0.6;
@@ -193,10 +193,10 @@
 
 // 徽章（最长连续提交 / 高峰时段）
 .gpc-rhythm-badge {
-  padding: $spacing-1px $spacing-2; // 上下 1px 微调（与 gpc-card-value 的 1px 惯例一致）
+  padding: $s-px1 $s-2; // 上下 1px 微调（与 gpc-card-value 的 1px 惯例一致）
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-full;
-  font-family: $vp-mono;
+  border-radius: $r-full;
+  font-family: $ff-mono;
   text-transform: none;
   letter-spacing: normal;
   opacity: 1;
@@ -212,7 +212,7 @@
 // ── 星期分布（7 根迷你柱）──
 .gpc-weekdays {
   display: flex;
-  gap: $spacing-1;
+  gap: $s-1;
   height: 72px;
 }
 
@@ -222,7 +222,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: $spacing-2px; // 柱/标签/计数间的微距（小于 $spacing-1，刻意紧贴）
+  gap: $s-px2; // 柱/标签/计数间的微距（小于 $s-1，刻意紧贴）
   min-width: 0;
 }
 
@@ -240,7 +240,7 @@
 .gpc-weekday-bar {
   width: 55%;
   min-height: 2px;
-  border-radius: $radius-2px $radius-2px 0 0;
+  border-radius: $r-px2 $r-px2 0 0;
   background: #64748b; // REPORT_CHART_COLORS.flat（非高峰星期用中性色）
   transition: background 0.15s;
 }
@@ -252,21 +252,21 @@
 
 // 星期标签（两级字号制：辅助标签）
 .gpc-weekday-label {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   opacity: 0.6;
 }
 
 // 提交计数（等宽小字）
 .gpc-weekday-count {
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
   opacity: 0.8;
 }
 
 // ── 时段热力条（12 格 × 2 小时）──
 .gpc-hourly {
   display: flex;
-  gap: $spacing-2px;
+  gap: $s-px2;
   height: 26px;
   align-items: stretch;
 }
@@ -275,7 +275,7 @@
 .gpc-hour-cell {
   flex: 1;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-2px;
+  border-radius: $r-px2;
   cursor: default;
   transition: opacity 0.15s;
 
@@ -293,7 +293,7 @@
 .gpc-hourly-scale {
   display: flex;
   justify-content: space-between;
-  margin-top: $spacing-2px;
-  font-size: $font-size-2xs;
+  margin-top: $s-px2;
+  font-size: $t-2xs;
   opacity: 0.5;
 }

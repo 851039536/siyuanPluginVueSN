@@ -7,14 +7,14 @@
   // ===== 趋势图表 =====
   .trend-chart-section {
     @include stats.stats-card-base;
-    border-radius: stats.$radius-sm;
-    margin-bottom: $spacing-1; // 模块上下间距统一 4px
+    border-radius: stats.$r-sm;
+    margin-bottom: $s-1; // 模块上下间距统一 4px
 
     .chart-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: $spacing-2 $spacing-10px;
+      padding: $s-2 $s-px10;
       background: rgba(var(--b3-theme-primary-rgb), 0.04);
       border-bottom: 1px solid var(--b3-border-color);
 
@@ -26,30 +26,30 @@
     .chart-header-controls {
       display: flex;
       align-items: center;
-      gap: $spacing-2;
+      gap: $s-2;
     }
 
     // 图表模式切换（折线 / K 线）：与指标 tabs 同构，右侧分隔线区分两组控件
     .chart-mode-tabs,
     .chart-metric-tabs {
       display: flex;
-      gap: $spacing-1;
+      gap: $s-1;
     }
 
     .chart-mode-tabs {
-      padding-right: $spacing-2;
+      padding-right: $s-2;
       border-right: 1px solid var(--b3-border-color);
     }
 
     // 模式按钮与指标按钮共用（.chart-mode-tabs / .chart-metric-tabs 内的 .metric-tab）
     .metric-tab {
-      padding: $spacing-px $spacing-2;
-      border-radius: stats.$radius-sm;
+      padding: $s-px3 $s-2;
+      border-radius: stats.$r-sm;
       border: 1px solid transparent;
       background: transparent;
       font-family: stats.$font-mono;
-      font-size: $font-size-2xs;
-      font-weight: $font-weight-semibold;
+      font-size: $t-2xs;
+      font-weight: $fw-semibold;
       color: var(--b3-theme-on-surface);
       opacity: 0.55;
       cursor: pointer;
@@ -65,13 +65,13 @@
         background: rgba(var(--b3-theme-primary-rgb), 0.1);
         border-color: var(--b3-theme-primary);
         color: var(--b3-theme-primary);
-        font-weight: $font-weight-bold;
+        font-weight: $fw-bold;
       }
     }
 
     .trend-chart-container {
       position: relative;
-      padding: $spacing-2 $spacing-1 $spacing-1;
+      padding: $s-2 $s-1 $s-1;
       overflow-x: auto;
       overflow-y: hidden;
 
@@ -87,14 +87,14 @@
         }
 
         .chart-y-label {
-          font-size: $font-size-2xs;
+          font-size: $t-2xs;
           fill: var(--b3-theme-on-surface);
           opacity: 0.45;
           font-family: stats.$font-mono;
         }
 
         .chart-x-label {
-          font-size: $font-size-2xs;
+          font-size: $t-2xs;
           fill: var(--b3-theme-on-surface);
           opacity: 0.45;
           font-family: stats.$font-mono;
@@ -145,39 +145,39 @@
         left: 50%;
         transform: translateX(-50%);
         width: fit-content;
-        padding: $spacing-6px $spacing-10px;
+        padding: $s-px6 $s-px10;
         background: var(--b3-theme-surface);
         border: 1px solid var(--b3-theme-primary);
-        border-radius: stats.$radius-sm;
-        font-size: $font-size-2xs;
+        border-radius: stats.$r-sm;
+        font-size: $t-2xs;
         pointer-events: none;
         z-index: 10;
         white-space: nowrap;
 
         .tooltip-date {
           font-family: stats.$font-mono;
-          font-size: $font-size-2xs;
-          font-weight: $font-weight-bold;
+          font-size: $t-2xs;
+          font-weight: $fw-bold;
           letter-spacing: 0.04em;
           color: var(--b3-theme-on-surface);
           opacity: 0.6;
-          margin-bottom: $spacing-2px;
+          margin-bottom: $s-px2;
         }
 
         .tooltip-value {
           font-family: stats.$font-mono;
-          font-weight: $font-weight-bold;
+          font-weight: $fw-bold;
           color: var(--b3-theme-primary);
 
           .tooltip-metric-icon {
-            margin-right: $spacing-px;
+            margin-right: $s-px3;
           }
 
           .tooltip-unit {
-            font-size: $font-size-2xs;
-            font-weight: $font-weight-normal;
+            font-size: $t-2xs;
+            font-weight: $fw-normal;
             opacity: 0.6;
-            margin-left: $spacing-2px;
+            margin-left: $s-px2;
           }
         }
       }
@@ -192,23 +192,23 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: $spacing-1;
-    padding-bottom: $spacing-6px;
+    margin-bottom: $s-1;
+    padding-bottom: $s-px6;
     border-bottom: 1px solid var(--b3-border-color);
 
     .section-title {
       margin: 0;
-      font-size: $font-size-xs;
-      font-weight: $font-weight-bold;
+      font-size: $t-xs;
+      font-weight: $fw-bold;
       color: var(--b3-theme-primary);
     }
 
     .trend-stats-inline {
       display: flex;
-      gap: $spacing-4;
+      gap: $s-4;
       font-family: stats.$font-mono;
-      font-size: $font-size-2xs;
-      font-weight: $font-weight-bold;
+      font-size: $t-2xs;
+      font-weight: $fw-bold;
       letter-spacing: 0.04em;
 
       .stat-item {
@@ -217,8 +217,8 @@
 
         strong {
           color: var(--b3-theme-primary);
-          font-weight: $font-weight-bold;
-          margin-left: $spacing-1;
+          font-weight: $fw-bold;
+          margin-left: $s-1;
         }
       }
     }
@@ -246,14 +246,14 @@
     .section-header {
       flex-direction: column;
       align-items: flex-start;
-      gap: $spacing-6px;
+      gap: $s-px6;
     }
 
     .trend-chart-section {
       .chart-header {
         flex-direction: column;
         align-items: flex-start;
-        gap: $spacing-6px;
+        gap: $s-px6;
       }
 
       .chart-header-controls {
@@ -261,8 +261,8 @@
       }
 
       .metric-tab {
-        font-size: $font-size-2xs;
-        padding: $spacing-2px $spacing-6px;
+        font-size: $t-2xs;
+        padding: $s-px2 $s-px6;
       }
     }
   }

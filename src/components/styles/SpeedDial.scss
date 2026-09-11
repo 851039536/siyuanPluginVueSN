@@ -5,32 +5,32 @@
 // 仅承载「定位 + 轨迹排布 + 开合动效」：主按钮与动作按钮的外观全部来自内部共享 Button（零样式复制）
 .si-speeddial {
   // 距视口边缘的距离：可经 offset prop 覆写，默认取间距 Token（单点驱动四个角落档位）
-  --si-speeddial-offset: #{$spacing-4};
+  --si-speeddial-offset: #{$s-4};
 
   position: fixed;
   // 浮层层级：取下拉浮层档，低于全屏遮罩（10000），避免与对话框互相遮挡
   z-index: m.$z-select-dropdown;
-  font-family: $font-zh;
+  font-family: $ff-zh;
 
   // ========== 角落定位档位 ==========
   &--bottom-right {
-    right: var(--si-speeddial-offset, #{$spacing-4});
-    bottom: var(--si-speeddial-offset, #{$spacing-4});
+    right: var(--si-speeddial-offset, #{$s-4});
+    bottom: var(--si-speeddial-offset, #{$s-4});
   }
 
   &--bottom-left {
-    left: var(--si-speeddial-offset, #{$spacing-4});
-    bottom: var(--si-speeddial-offset, #{$spacing-4});
+    left: var(--si-speeddial-offset, #{$s-4});
+    bottom: var(--si-speeddial-offset, #{$s-4});
   }
 
   &--top-right {
-    right: var(--si-speeddial-offset, #{$spacing-4});
-    top: var(--si-speeddial-offset, #{$spacing-4});
+    right: var(--si-speeddial-offset, #{$s-4});
+    top: var(--si-speeddial-offset, #{$s-4});
   }
 
   &--top-left {
-    left: var(--si-speeddial-offset, #{$spacing-4});
-    top: var(--si-speeddial-offset, #{$spacing-4});
+    left: var(--si-speeddial-offset, #{$s-4});
+    top: var(--si-speeddial-offset, #{$s-4});
   }
 
   // ========== 动作列表容器 ==========

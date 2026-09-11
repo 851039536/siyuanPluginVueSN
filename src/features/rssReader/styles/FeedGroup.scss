@@ -11,8 +11,8 @@
     .feed-group-header {
       display: flex;
       align-items: center;
-      gap: $spacing-1;
-      padding: $spacing-6px $spacing-3;
+      gap: $s-1;
+      padding: $s-px6 $s-3;
       background: var(--b3-theme-surface-lighter);
       cursor: pointer;
       user-select: none;
@@ -26,14 +26,14 @@
       }
 
       .group-collapse-icon {
-        font-size: $font-size-base;
+        font-size: $t-base;
         color: var(--b3-theme-on-surface-muted);
         flex-shrink: 0;
       }
 
       .group-label {
-        font-size: $font-size-2xs;
-        font-weight: $font-weight-bold;
+        font-size: $t-2xs;
+        font-weight: $fw-bold;
         letter-spacing: 0.06em;
         color: var(--b3-theme-on-surface);
         text-transform: uppercase;
@@ -45,13 +45,13 @@
       }
 
       .group-count {
-        font-size: $font-size-2xs;
-        font-family: $vp-mono;
+        font-size: $t-2xs;
+        font-family: $ff-mono;
         color: var(--b3-theme-on-surface-muted);
         background: var(--b3-theme-background);
-        padding: 0 $spacing-5px;
+        padding: 0 $s-px5;
         line-height: 14px;
-        border-radius: $radius-full;
+        border-radius: $r-full;
         flex-shrink: 0;
       }
 
@@ -65,13 +65,13 @@
 
       .group-rename-input {
         flex: 1;
-        padding: $spacing-1px $spacing-6px;
+        padding: $s-px1 $s-px6;
         border: 1px solid $rr-accent;
-        border-radius: $radius-sm;
+        border-radius: $r-sm;
         background: var(--b3-theme-background);
         color: var(--b3-theme-on-background);
-        font-size: $font-size-xs;
-        font-weight: $font-weight-semibold;
+        font-size: $t-xs;
+        font-weight: $fw-semibold;
         outline: none;
         min-width: 0;
         @include input-focus-ring;
@@ -95,8 +95,8 @@
     .feed-item {
       display: flex;
       align-items: center;
-      gap: $spacing-2;
-      padding: $spacing-2 $spacing-3 $spacing-2 28px;
+      gap: $s-2;
+      padding: $s-2 $s-3 $s-2 28px;
       cursor: pointer;
       border-bottom: 1px solid var(--b3-border-color);
       transition: $rr-transition;
@@ -112,12 +112,12 @@
 
       .feed-icon {
         width: 24px; height: 24px;
-        border-radius: $radius-sm;
+        border-radius: $r-sm;
         flex-shrink: 0;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: $font-size-sm;
+        font-size: $t-sm;
         background: rgba($rr-accent, 0.08);
         color: $rr-accent;
         overflow: hidden;
@@ -127,16 +127,16 @@
       .feed-info {
         flex: 1; min-width: 0;
         .feed-title {
-          font-size: $font-size-sm; font-weight: $font-weight-medium;
+          font-size: $t-sm; font-weight: $fw-medium;
           overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
           line-height: 1.4;
         }
         .feed-url {
-          font-size: $font-size-xs;
-          font-family: $vp-mono;
+          font-size: $t-xs;
+          font-family: $ff-mono;
           color: var(--b3-theme-on-surface-muted);
           overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-          line-height: 1.3; margin-top: $spacing-1px;
+          line-height: 1.3; margin-top: $s-px1;
           opacity: 0.6;
         }
       }
@@ -148,7 +148,7 @@
       }
 
       .feed-actions {
-        display: flex; gap: $spacing-2px; opacity: 0; transition: opacity 0.12s;
+        display: flex; gap: $s-px2; opacity: 0; transition: opacity 0.12s;
         button {
           @include btn-icon-base(22px);
           color: var(--b3-theme-on-surface-muted);
@@ -163,34 +163,34 @@
         z-index: 10;
         background: var(--b3-theme-background);
         border: 1px solid var(--b3-theme-surface);
-        border-radius: $radius-sm;
+        border-radius: $r-sm;
         min-width: 140px;
-        padding: $spacing-1 0;
+        padding: $s-1 0;
 
         .move-option {
-          padding: $spacing-5px $spacing-3;
-          font-size: $font-size-xs;
+          padding: $s-px5 $s-3;
+          font-size: $t-xs;
           color: var(--b3-theme-on-surface);
           cursor: pointer;
           white-space: nowrap;
 
           &:hover { background: var(--b3-theme-surface-lighter); }
-          &.active { color: $rr-accent; font-weight: $font-weight-medium; }
+          &.active { color: $rr-accent; font-weight: $fw-medium; }
         }
 
         .new-group-option {
-          padding: $spacing-1 $spacing-2;
+          padding: $s-1 $s-2;
           border-top: 1px solid var(--b3-theme-surface-lighter);
-          margin-top: $spacing-2px;
+          margin-top: $s-px2;
 
           input {
             width: 100%;
-            padding: $spacing-2px $spacing-6px;
+            padding: $s-px2 $s-px6;
             border: 1px solid var(--b3-theme-surface-lighter);
-            border-radius: $radius-sm;
+            border-radius: $r-sm;
             background: var(--b3-theme-background);
             color: var(--b3-theme-on-background);
-            font-size: $font-size-xs;
+            font-size: $t-xs;
             outline: none;
             box-sizing: border-box;
             @include input-focus-ring;

@@ -7,8 +7,8 @@
     display: flex; flex-direction: column; height: 100%;
 
     .detail-header {
-      display: flex; align-items: center; gap: $spacing-1;
-      padding: $spacing-6px $spacing-3;
+      display: flex; align-items: center; gap: $s-1;
+      padding: $s-px6 $s-3;
       border-bottom: 1px solid var(--b3-border-color);
       flex-shrink: 0; min-height: 36px;
 
@@ -19,16 +19,16 @@
       }
 
       .detail-actions {
-        margin-left: auto; display: flex; gap: $spacing-1;
+        margin-left: auto; display: flex; gap: $s-1;
         button {
-          display: flex; align-items: center; gap: $spacing-px;
-          padding: $spacing-px $spacing-7px;
+          display: flex; align-items: center; gap: $s-px3;
+          padding: $s-px3 $s-px7;
           border: 1px solid var(--b3-border-color);
-          border-radius: $radius-sm;
+          border-radius: $r-sm;
           background: transparent; cursor: pointer;
-          color: var(--b3-theme-on-surface); font-size: $font-size-xs;
+          color: var(--b3-theme-on-surface); font-size: $t-xs;
           transition: $rr-transition;
-          .btn-label { font-size: $font-size-xs; }
+          .btn-label { font-size: $t-xs; }
           &:hover {
             background: var(--b3-theme-surface-lighter);
             border-color: var(--b3-theme-primary);
@@ -38,46 +38,46 @@
     }
 
     .detail-content {
-      flex: 1; overflow-y: auto; padding: $spacing-3;
+      flex: 1; overflow-y: auto; padding: $s-3;
 
       .detail-title {
-        font-size: $font-size-base; font-weight: $font-weight-semibold;
-        margin: 0 0 $spacing-2; line-height: 1.4;
+        font-size: $t-base; font-weight: $fw-semibold;
+        margin: 0 0 $s-2; line-height: 1.4;
       }
       .detail-meta {
-        display: flex; flex-wrap: wrap; gap: $spacing-2;
-        font-size: $font-size-xs;
-        margin-bottom: $spacing-3;
+        display: flex; flex-wrap: wrap; gap: $s-2;
+        font-size: $t-xs;
+        margin-bottom: $s-3;
 
         .meta-chip {
-          font-size: $font-size-xs;
+          font-size: $t-xs;
           color: var(--b3-theme-on-surface);
           opacity: 0.7;
         }
 
         .meta-key {
-          font-size: $font-size-2xs;
-          font-weight: $font-weight-bold;
+          font-size: $t-2xs;
+          font-weight: $fw-bold;
           letter-spacing: 0.06em;
           text-transform: uppercase;
           color: var(--b3-theme-on-surface);
           opacity: 0.45;
-          margin-right: $spacing-2px;
+          margin-right: $s-px2;
         }
       }
       .detail-body {
-        font-size: $font-size-sm; line-height: 1.7;
+        font-size: $t-sm; line-height: 1.7;
         color: var(--b3-theme-on-background);
-        :deep(img) { max-width: 100%; height: auto; border-radius: $radius-sm; }
+        :deep(img) { max-width: 100%; height: auto; border-radius: $r-sm; }
         :deep(a) { color: $rr-accent; text-decoration: none; &:hover { text-decoration: underline; } }
         :deep(pre) {
           background: var(--b3-theme-surface-lighter);
-          padding: $spacing-2; border-radius: $radius-sm;
-          overflow-x: auto; font-size: $font-size-xs;
+          padding: $s-2; border-radius: $r-sm;
+          overflow-x: auto; font-size: $t-xs;
         }
         :deep(blockquote) {
           border-left: 3px solid $rr-accent;
-          padding-left: $spacing-2; margin-left: 0;
+          padding-left: $s-2; margin-left: 0;
           color: var(--b3-theme-on-surface-muted);
         }
       }
@@ -87,16 +87,16 @@
   .detail-font-controls {
     display: flex;
     align-items: center;
-    gap: $spacing-2px;
+    gap: $s-px2;
     flex-shrink: 0;
 
     .font-btn {
       @include btn-icon-base(22px);
       color: var(--b3-theme-on-surface);
-      font-size: $font-size-xs;
+      font-size: $t-xs;
       line-height: 1;
 
-      sup { font-size: $font-size-2xs; }
+      sup { font-size: $t-2xs; }
 
       &:hover {
         background: var(--b3-theme-surface-lighter);
@@ -105,8 +105,8 @@
     }
 
     .font-size-label {
-      font-size: $font-size-2xs;
-      font-family: $vp-mono;
+      font-size: $t-2xs;
+      font-family: $ff-mono;
       color: var(--b3-theme-on-surface-muted);
       min-width: 18px;
       text-align: center;

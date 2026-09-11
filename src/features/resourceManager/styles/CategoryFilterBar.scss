@@ -5,8 +5,8 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: $spacing-1;
-  margin-bottom: $spacing-2;
+  gap: $s-1;
+  margin-bottom: $s-2;
 
   // 激活态高亮（主题主色，与 .rm-filter-bar .rm-btn.active 一致）
   .rm-btn.active {
@@ -19,8 +19,8 @@
   &__manage {
     display: inline-flex;
     align-items: center;
-    gap: $spacing-1;
+    gap: $s-1;
     color: var(--b3-theme-secondary);
-    margin-left: $spacing-1;
+    margin-left: $s-1;
   }
 }

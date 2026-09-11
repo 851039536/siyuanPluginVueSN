@@ -13,7 +13,7 @@
   height: 28px;
   padding: 0;
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: transparent;
   color: var(--b3-theme-on-surface-variant);
   cursor: pointer;
@@ -34,11 +34,11 @@
 /** 品牌蓝色主按钮（背景填充 + hover 降透明） */
 %qn-primary-btn {
   border: none;
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: var(--b3-theme-primary);
   color: var(--b3-theme-on-primary);
   // 辅助文字
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   font-family: inherit;
   cursor: pointer;
   transition: opacity 0.12s;
@@ -56,10 +56,10 @@
 /** 取消按钮（灰色边框 + 透明底） */
 %qn-cancel-btn {
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: transparent;
   // 辅助文字
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   font-family: inherit;
   cursor: pointer;
   transition: all 0.12s;
@@ -68,14 +68,14 @@
 /** 辅助文字（2xs 字号 + 次要色） */
 %qn-helper-text {
   // 辅助文字
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-variant);
 }
 
 /** 空态提示（斜体 + 弱化） */
 %qn-empty-state {
   // 辅助文字
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-variant);
   font-style: italic;
   opacity: 0.6;
@@ -87,7 +87,7 @@
   flex-direction: column;
   overflow: hidden;
   // 弹窗基准字号（防止内部未声明字号的文字继承思源全局默认字号）
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 
   // 最小化态：容器尺寸由 Manager 改为 auto，面板随内容（最小化条）自适应
   &--minimized {
@@ -100,13 +100,13 @@
 .mini-bar {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-2 $spacing-3;
+  gap: $s-2;
+  padding: $s-2 $s-3;
   border: none;
   background: transparent;
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   font-family: inherit;
   // 可拖动把手（pointer 拖拽需禁用默认触控手势）
   cursor: grab;
@@ -124,7 +124,7 @@
   // 竖条态（位置为左/右贴边）：纵向堆叠，标题纵向排版
   &--vertical {
     flex-direction: column;
-    padding: $spacing-3 $spacing-2;
+    padding: $s-3 $s-2;
 
     .mini-bar__title {
       writing-mode: vertical-rl;
@@ -134,9 +134,9 @@
 
 .mini-bar__count {
   // 辅助文字：未完成待办计数徽标
-  font-size: $font-size-2xs;
-  padding: 0 $spacing-1;
-  border-radius: $radius-full;
+  font-size: $t-2xs;
+  padding: 0 $s-1;
+  border-radius: $r-full;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
   color: var(--b3-theme-on-surface-variant);
@@ -152,7 +152,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-1 $spacing-2;
+  padding: $s-1 $s-2;
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
   // 拖拽把手：禁止选中文本/默认触控手势，grab 光标提示可拖动
@@ -169,9 +169,9 @@
   margin: 0;
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  gap: $s-2;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface);
 }
 
@@ -182,7 +182,7 @@
 .header-actions {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 // 预设位置菜单容器（为下拉菜单提供定位锚点）
@@ -193,25 +193,25 @@
 // 预设位置下拉菜单（Codex 风格：边框代替阴影）
 .position-menu {
   position: absolute;
-  top: calc(100% + #{$spacing-1});
+  top: calc(100% + #{$s-1});
   right: 0;
   z-index: 1;
   display: flex;
   flex-direction: column;
   min-width: 72px;
-  padding: $spacing-1;
+  padding: $s-1;
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: var(--b3-theme-background);
 }
 
 .position-menu__item {
-  padding: $spacing-1 $spacing-2;
+  padding: $s-1 $s-2;
   border: none;
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: transparent;
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   font-family: inherit;
   text-align: left;
   cursor: pointer;
@@ -236,7 +236,7 @@
   height: 20px;
   padding: 0;
   border: 1px solid transparent;
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: transparent;
   color: var(--b3-theme-on-surface-variant);
   cursor: pointer;
@@ -263,19 +263,19 @@
 
 .panel-tabs {
   display: flex;
-  gap: $spacing-3;
-  padding: $spacing-1 $spacing-3;
+  gap: $s-3;
+  padding: $s-1 $s-3;
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
 }
 
 .panel-tab {
-  padding: $spacing-1;
+  padding: $s-1;
   border: none;
   border-bottom: 2px solid transparent;
   background: transparent;
   color: var(--b3-theme-on-surface-variant);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   font-family: inherit;
   cursor: pointer;
   transition: all 0.12s;
@@ -288,7 +288,7 @@
   &--active {
     color: var(--b3-theme-primary);
     border-bottom-color: var(--b3-theme-primary);
-    font-weight: $font-weight-semibold;
+    font-weight: $fw-semibold;
   }
 }
 
@@ -297,16 +297,16 @@
 .panel-body {
   flex: 1;
   overflow-y: auto;
-  padding: $spacing-3 $spacing-2 $spacing-3 $spacing-3;
+  padding: $s-3 $s-2 $s-3 $s-3;
   display: flex;
   flex-direction: column;
-  gap: $spacing-3;
+  gap: $s-3;
 }
 
 .panel-section {
   display: flex;
   flex-direction: column;
-  gap: $spacing-3;
+  gap: $s-3;
 }
 
 // ========== 待办分组 ==========
@@ -314,34 +314,34 @@
 .todo-group-list {
   display: flex;
   flex-direction: column;
-  gap: $spacing-3;
+  gap: $s-3;
 }
 
 .todo-group {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 // 分组标题（辅助文字：标签级）
 .todo-group__label {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
   // 辅助文字
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--b3-theme-on-surface-variant);
-  padding-left: $spacing-1;
+  padding-left: $s-1;
 }
 
 .todo-group__count {
   // 辅助文字
-  font-size: $font-size-2xs;
-  padding: 0 $spacing-1;
-  border-radius: $radius-full;
+  font-size: $t-2xs;
+  padding: 0 $s-1;
+  border-radius: $r-full;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
 }
@@ -352,7 +352,7 @@
 .project-list {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 // 空态提示
@@ -360,5 +360,5 @@
 .project-list__empty {
   @extend %qn-empty-state;
   text-align: center;
-  padding: $spacing-6 0;
+  padding: $s-6 0;
 }

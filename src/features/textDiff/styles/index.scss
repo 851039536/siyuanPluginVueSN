@@ -19,7 +19,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: $spacing-1 $spacing-3; // 与 .panel-header 垂直内边距统一（$spacing-1），消除工具栏偏胖
+  padding: $s-1 $s-3; // 与 .panel-header 垂直内边距统一（$s-1），消除工具栏偏胖
   background: var(--b3-theme-surface);
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
@@ -27,21 +27,21 @@
 
 .toolbar-left {
   display: flex;
-  gap: $spacing-4;
+  gap: $s-4;
   align-items: center;
   flex-wrap: wrap;
 }
 
 .toolbar-right {
   display: flex;
-  gap: $spacing-2;
+  gap: $s-2;
   flex-shrink: 0;
 }
 
 .option-group {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .option-label {
@@ -53,8 +53,8 @@
 
 .toggle-btn {
   @include m.codex-btn-base;
-  padding: $spacing-1 $spacing-3;
-  font-size: $font-size-xs;
+  padding: $s-1 $s-3;
+  font-size: $t-xs;
   white-space: nowrap;
 
   // 选中态对齐 gitPush 范式：淡主色底 + 主色文字（不用实心主色块）
@@ -76,10 +76,10 @@
 // ==================== Font Select ====================
 
 .font-select {
-  padding: $spacing-1 $spacing-3;
-  font-size: $font-size-xs;
+  padding: $s-1 $s-3;
+  font-size: $t-xs;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   cursor: pointer;
@@ -98,9 +98,9 @@
   @include m.codex-btn-base;
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-1 $spacing-3;
-  font-size: $font-size-xs;
+  gap: $s-1;
+  padding: $s-1 $s-3;
+  font-size: $t-xs;
 
   svg {
     flex-shrink: 0;
@@ -126,8 +126,8 @@
 .input-section {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: $spacing-2;
-  padding: $spacing-2;
+  gap: $s-2;
+  padding: $s-2;
   flex-shrink: 0;
   max-height: 35vh;
 }
@@ -138,7 +138,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: $spacing-1 $spacing-3;
+  padding: $s-1 $s-3;
   background: var(--b3-theme-surface);
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
@@ -169,7 +169,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: $spacing-2;
+  gap: $s-2;
   color: var(--b3-theme-on-surface-light);
   min-height: 0;
 
@@ -197,7 +197,7 @@
   // 覆盖 vue-diff 第三方硬编码 font-size: 16px（定义在 .vue-diff-viewer 上），改用用户可调字号变量
   :deep(.vue-diff-viewer) {
     font-size: var(--diff-font-size, 14px) !important;
-    line-height: $line-height-normal !important;
+    line-height: $lh-normal !important;
     background: var(--b3-theme-surface) !important;
   }
 
@@ -212,7 +212,7 @@
 @media (max-width: 900px) {
   .diff-toolbar {
     flex-wrap: wrap;
-    padding: $spacing-1 $spacing-3; // 与默认态保持一致
+    padding: $s-1 $s-3; // 与默认态保持一致
   }
 
   .toolbar-left {

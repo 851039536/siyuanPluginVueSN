@@ -3,14 +3,14 @@
 @use "../styles/index.scss" as stats;
 
 .trend-prediction {
-  padding: $spacing-1 0;
+  padding: $s-1 0;
 }
 
 .pred-loading,
 .pred-empty {
   text-align: center;
-  padding: $spacing-4;
-  font-size: $font-size-xs;
+  padding: $s-4;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
 }
@@ -18,14 +18,14 @@
 .pred-content {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 // 指标卡行：三卡等宽（拟合度 / 下周预计 / 下月预计），对齐概览核心指标卡
 .pred-stats-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .pred-stat-card {
@@ -33,27 +33,27 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: $spacing-2 $spacing-1;
+  padding: $s-2 $s-1;
   text-align: center;
 }
 
 .pred-stat-label {
   @include stats.codex-label;
-  margin-bottom: $spacing-2px;
+  margin-bottom: $s-px2;
 }
 
 .pred-stat-value {
   font-family: stats.$font-mono;
-  font-size: $font-size-sm; // 数据突出展示（预测数值）
-  font-weight: $font-weight-bold;
+  font-size: $t-sm; // 数据突出展示（预测数值）
+  font-weight: $fw-bold;
   color: var(--b3-theme-primary);
-  line-height: $line-height-tight;
+  line-height: $lh-tight;
 }
 
 .pred-stat-unit {
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-normal;
+  font-size: $t-2xs;
+  font-weight: $fw-normal;
   color: var(--b3-theme-on-surface);
   opacity: 0.4;
 }
@@ -61,26 +61,26 @@
 .pred-trend-label {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
 
   .trend-icon {
     display: inline-flex;
     align-items: center;
 
-    &.trend-pos { color: stats.$color-success; }
-    &.trend-neg { color: stats.$color-danger; }
+    &.trend-pos { color: stats.$c-success; }
+    &.trend-neg { color: stats.$c-danger; }
     &.trend-flat { color: var(--b3-theme-on-surface); opacity: 0.5; }
   }
 
   .trend-pos {
-    color: stats.$color-success;
+    color: stats.$c-success;
   }
 
   .trend-neg {
-    color: stats.$color-danger;
+    color: stats.$c-danger;
   }
 
   .trend-flat {
@@ -107,7 +107,7 @@
 
 .chart-y-label {
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   fill: var(--b3-theme-on-surface);
   opacity: 0.5;
 }
@@ -127,7 +127,7 @@
   }
 
   &.predict {
-    stroke: stats.$color-warning;
+    stroke: stats.$c-warning;
     stroke-dasharray: 6 3;
   }
 }
@@ -140,7 +140,7 @@
   }
 
   &.predict {
-    fill: stats.$color-warning;
+    fill: stats.$c-warning;
   }
 }
 
@@ -149,7 +149,7 @@
 }
 
 .dot-predict {
-  fill: stats.$color-warning;
+  fill: stats.$c-warning;
 }
 
 .chart-hit-area {
@@ -166,46 +166,46 @@
   position: absolute;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
-  padding: $spacing-1 $spacing-2;
-  font-size: $font-size-2xs;
+  border-radius: stats.$r-sm;
+  padding: $s-1 $s-2;
+  font-size: $t-2xs;
   z-index: 10;
 }
 
 .tooltip-label {
   font-family: stats.$font-mono;
-  font-weight: $font-weight-medium;
+  font-weight: $fw-medium;
   color: var(--b3-theme-on-surface);
 }
 
 .tooltip-pred-badge {
   display: inline-block;
-  background: stats.$color-warning;
+  background: stats.$c-warning;
   color: #fff;
-  font-size: $font-size-2xs;
-  padding: $spacing-1px $spacing-1;
-  border-radius: stats.$radius-sm;
-  margin-left: $spacing-1;
+  font-size: $t-2xs;
+  padding: $s-px1 $s-1;
+  border-radius: stats.$r-sm;
+  margin-left: $s-1;
 }
 
 .tooltip-val {
   font-family: stats.$font-mono;
-  font-weight: $font-weight-bold;
+  font-weight: $fw-bold;
   color: var(--b3-theme-on-surface);
 }
 
 .pred-legend {
   display: flex;
-  gap: $spacing-3;
-  padding: $spacing-2px 0;
+  gap: $s-3;
+  padding: $s-px2 0;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
 }
@@ -213,13 +213,13 @@
 .legend-dot {
   width: 12px;
   height: 3px;
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
 
   &.history {
     background: var(--b3-theme-primary);
   }
 
   &.predict {
-    background: stats.$color-warning;
+    background: stats.$c-warning;
   }
 }

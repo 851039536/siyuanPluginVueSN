@@ -3,7 +3,7 @@
 @forward '@/variables.scss';
 @use '@/variables.scss' as *;
 
-// 间距规范（对齐全局 $spacing-1 ~ $spacing-4）
+// 间距规范（对齐全局 $s-1 ~ $s-4）
 $spacing-xs: 4px !default;
 $spacing-sm: 8px !default;
 $spacing-md: 12px !default;

@@ -5,10 +5,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-6 $spacing-3;
+  gap: $s-1;
+  padding: $s-6 $s-3;
   text-align: center;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface-light);
 
   &__icon {
@@ -16,7 +16,7 @@
   }
 
   &__text {
-    line-height: $line-height-normal;
+    line-height: $lh-normal;
   }
 
   // 加载态旋转动效

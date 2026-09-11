@@ -11,24 +11,24 @@
 .fm-mc-path {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
   flex-wrap: wrap;
-  padding-bottom: $spacing-2;
-  margin-bottom: $spacing-2;
+  padding-bottom: $s-2;
+  margin-bottom: $s-2;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
 }
 
 .fm-mc-crumb {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-1;
+  gap: $s-1;
+  padding: $s-1;
   border: none;
   background: transparent;
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   cursor: pointer;
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
 
   &:hover {
     color: var(--b3-theme-primary);
@@ -37,7 +37,7 @@
 
 .fm-mc-sep {
   color: var(--b3-theme-on-surface-light);
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
 }
 
 .fm-mc-list {
@@ -50,8 +50,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: $spacing-6;
-  font-size: $font-size-2xs; // 空态为辅助文字
+  padding: $s-6;
+  font-size: $t-2xs; // 空态为辅助文字
   color: var(--b3-theme-on-surface-light);
 }
 
@@ -64,16 +64,16 @@
 .fm-mc-folder {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
   width: 100%;
-  padding: $spacing-1 $spacing-2;
+  padding: $s-1 $s-2;
   border: none;
   background: transparent;
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   text-align: left;
   cursor: pointer;
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
 
   &:hover {
     background: var(--b3-theme-surface-lighter);
@@ -81,9 +81,9 @@
 }
 
 .fm-mc-target {
-  font-size: $font-size-2xs; // 目标路径提示为辅助元信息
+  font-size: $t-2xs; // 目标路径提示为辅助元信息
   color: var(--b3-theme-on-surface-light);
-  font-family: $vp-mono;
+  font-family: $ff-mono;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

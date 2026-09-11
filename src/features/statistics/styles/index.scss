@@ -5,18 +5,18 @@
 @use './mixins' as *;
 
 // ========== Variables ==========
-$stats-card-radius: $radius-sm;
+$stats-card-radius: $r-sm;
 
-// Codex monospace font — delegates to global $vp-mono
-$font-mono: $vp-mono;
+// Codex monospace font — delegates to global $ff-mono
+$font-mono: $ff-mono;
 
 $gradient-primary: linear-gradient(135deg, var(--b3-theme-primary) 0%, var(--b3-theme-primary-light, #5d87ff) 100%);
 $gradient-surface: linear-gradient(180deg, var(--b3-theme-surface) 0%, var(--b3-theme-background) 100%);
 
-// Status colors (GitHub-style, intentionally different from global $color-success/$color-danger/$color-warning)
-$color-success: #2da44e;
-$color-danger: #cf222e;
-$color-warning: #d97706;
+// Status colors (GitHub-style, intentionally different from global $c-success/$c-danger/$c-warning)
+$c-success: #2da44e;
+$c-danger: #cf222e;
+$c-warning: #d97706;
 
 // Tier / rank semantic colors
 $color-tier-epic: #a855f7;
@@ -46,8 +46,8 @@ $color-rank-bronze: #cd7f32;
 // Codex uppercase label (used for metadata keys)
 @mixin codex-label {
   font-family: $font-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   opacity: 0.55;
@@ -56,21 +56,21 @@ $color-rank-bronze: #cd7f32;
 @mixin progress-bar($height: 6px) {
   height: $height;
   background: rgba(var(--b3-theme-primary-rgb), 0.1);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   overflow: hidden;
 
   .fill {
     height: 100%;
     background: var(--b3-theme-primary);
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     transition: width 0.6s ease;
   }
 }
 
 @mixin tier-badge-colors($child: '') {
   &.tier-common #{$child} {
-    background: rgba($color-success, 0.2);
-    color: $color-success;
+    background: rgba($c-success, 0.2);
+    color: $c-success;
   }
   &.tier-rare #{$child} {
     background: rgba(var(--b3-theme-primary-rgb), 0.2);
@@ -89,10 +89,10 @@ $color-rank-bronze: #cd7f32;
 // Achieved milestone chip tier-specific colors
 @mixin tier-chip-achieved {
   &.tier-common {
-    background: rgba($color-success, 0.08);
-    border-color: rgba($color-success, 0.15);
-    .chip-label { color: $color-success; }
-    .chip-tier { background: rgba($color-success, 0.15); color: $color-success; }
+    background: rgba($c-success, 0.08);
+    border-color: rgba($c-success, 0.15);
+    .chip-label { color: $c-success; }
+    .chip-tier { background: rgba($c-success, 0.15); color: $c-success; }
   }
   &.tier-rare {
     background: rgba(var(--b3-theme-primary-rgb), 0.08);
@@ -109,17 +109,17 @@ $color-rank-bronze: #cd7f32;
   &.tier-legendary {
     background: linear-gradient(135deg, rgba($color-tier-legendary, 0.12), rgba(234, 88, 12, 0.06));
     border-color: rgba($color-tier-legendary, 0.3);
-    .chip-label { color: $color-tier-legendary; font-weight: $font-weight-bold; }
+    .chip-label { color: $color-tier-legendary; font-weight: $fw-bold; }
     .chip-tier { background: rgba($color-tier-legendary, 0.2); color: $color-tier-legendary; }
   }
 }
 
 @mixin heatmap-level-colors {
   &.level-0 { background: rgba(var(--b3-theme-on-surface-rgb), 0.05); }
-  &.level-1 { background: rgba($color-success, 0.2); }
-  &.level-2 { background: rgba($color-success, 0.4); }
-  &.level-3 { background: rgba($color-success, 0.6); }
-  &.level-4 { background: $color-success; }
+  &.level-1 { background: rgba($c-success, 0.2); }
+  &.level-2 { background: rgba($c-success, 0.4); }
+  &.level-3 { background: rgba($c-success, 0.6); }
+  &.level-4 { background: $c-success; }
 }
 
 @mixin stats-card-base {
@@ -141,42 +141,42 @@ $color-rank-bronze: #cd7f32;
   .summary-cards {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: $spacing-2;
+    gap: $s-2;
   }
 
   .summary-card {
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
-    border-radius: $radius-sm;
-    padding: $spacing-10px $spacing-2;
+    border-radius: $r-sm;
+    padding: $s-px10 $s-2;
     text-align: center;
 
     @include card-hover-border;
 
     .summary-value {
       font-family: $font-mono;
-      font-weight: $font-weight-bold;
+      font-weight: $fw-bold;
       color: var(--b3-theme-primary);
-      line-height: $line-height-tight;
+      line-height: $lh-tight;
     }
 
     .summary-label {
       @include codex-label;
       color: var(--b3-theme-on-surface);
-      margin-top: $spacing-1;
+      margin-top: $s-1;
     }
   }
 }
 
 @mixin small-action-btn {
-  padding: $spacing-1 $spacing-10px;
+  padding: $s-1 $s-px10;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-family: $font-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
   cursor: pointer;
 
   &:hover {
@@ -196,19 +196,19 @@ $color-rank-bronze: #cd7f32;
 // TrendView, etc.) so they must remain global.
 
 .section-title {
-  margin: 0 0 $spacing-3 0;
-  font-family: $font-zh;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-bold;
+  margin: 0 0 $s-3 0;
+  font-family: $ff-zh;
+  font-size: $t-xs;
+  font-weight: $fw-bold;
   letter-spacing: 0.02em;
   color: var(--b3-theme-on-surface);
 }
 
 .subsection-title {
-  margin: 0 0 $spacing-2 0;
+  margin: 0 0 $s-2 0;
   font-family: $font-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--b3-theme-on-surface);
@@ -225,9 +225,9 @@ $color-rank-bronze: #cd7f32;
   overflow: hidden;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
-  font-family: $font-zh;
+  font-family: $ff-zh;
   // Dock 根容器基准字号（防止继承思源全局 14px+ 默认字号）
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 
   --stat-color-success: #2da44e;
   --stat-color-danger: #cf222e;
@@ -239,7 +239,7 @@ $color-rank-bronze: #cd7f32;
   min-height: 0;
   overflow-y: auto;
   // 右侧留白 8px，避免滚动条/内容紧贴侧边栏
-  padding: $spacing-1 $spacing-2;
+  padding: $s-1 $s-2;
   background: var(--b3-theme-background);
 
   // Custom scrollbar (6px width, themed colors)
@@ -248,7 +248,7 @@ $color-rank-bronze: #cd7f32;
   }
   &::-webkit-scrollbar-thumb {
     background: var(--b3-border-color);
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     &:hover {
       background: var(--b3-theme-on-surface);
       opacity: 0.2;
@@ -257,22 +257,22 @@ $color-rank-bronze: #cd7f32;
 }
 
 .doc-change-section {
-  margin: $spacing-1 0;
+  margin: $s-1 0;
 }
 
 .chart-section {
-  margin: $spacing-1 0;
-  padding: $spacing-6px;
+  margin: $s-1 0;
+  padding: $s-px6;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
 
   .section-title {
-    margin-bottom: $spacing-4;
-    font-weight: $font-weight-bold;
+    margin-bottom: $s-4;
+    font-weight: $fw-bold;
     display: flex;
     align-items: center;
-    gap: $spacing-2;
+    gap: $s-2;
 
     &::before {
       content: '';
@@ -280,7 +280,7 @@ $color-rank-bronze: #cd7f32;
       width: 3px;
       height: 14px;
       background: var(--b3-theme-primary);
-      border-radius: $radius-sm;
+      border-radius: $r-sm;
     }
   }
 }
@@ -289,7 +289,7 @@ $color-rank-bronze: #cd7f32;
   display: flex;
   flex-wrap: wrap;
   gap: 0;
-  padding: 0 $spacing-3;
+  padding: 0 $s-3;
   background: var(--b3-theme-surface);
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
@@ -297,19 +297,19 @@ $color-rank-bronze: #cd7f32;
 }
 
 .tab-item {
-  padding: $spacing-2 $spacing-14px;
+  padding: $s-2 $s-px14;
   border: none;
   background: transparent;
   color: var(--b3-theme-on-surface-light);
-  font-family: $font-zh;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-family: $ff-zh;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   letter-spacing: 0.02em;
   cursor: pointer;
   position: relative;
   display: flex;
   align-items: center;
-  gap: $spacing-6px;
+  gap: $s-px6;
   transition: color 0.12s;
 
   &:hover {
@@ -318,14 +318,14 @@ $color-rank-bronze: #cd7f32;
 
   &.active {
     color: var(--b3-theme-primary);
-    font-weight: $font-weight-bold;
+    font-weight: $fw-bold;
 
     &::after {
       content: '';
       position: absolute;
       bottom: 0;
-      left: $spacing-2;
-      right: $spacing-2;
+      left: $s-2;
+      right: $s-2;
       height: 2px;
       background: var(--b3-theme-primary);
       border-radius: 1px 1px 0 0;
@@ -335,53 +335,53 @@ $color-rank-bronze: #cd7f32;
 
 .tab-badge {
   font-family: $font-mono;
-  font-size: $font-size-2xs;
-  padding: $spacing-1px $spacing-6px;
-  border-radius: $radius-sm;
+  font-size: $t-2xs;
+  padding: $s-px1 $s-px6;
+  border-radius: $r-sm;
   background: rgba(var(--b3-theme-primary-rgb), 0.1);
   color: var(--b3-theme-primary);
-  font-weight: $font-weight-bold;
+  font-weight: $fw-bold;
 }
 
 .notebook-distribution-tab {
   display: grid;
   grid-template-columns: 1fr;
-  gap: $spacing-2; // 纵向单列流，模块间距统一 8px
+  gap: $s-2; // 纵向单列流，模块间距统一 8px
 }
 
 .dist-summary-bar {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-2 $spacing-3;
+  gap: $s-2;
+  padding: $s-2 $s-3;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   flex-shrink: 0;
 }
 
 .dist-summary-item {
   display: flex;
   align-items: baseline;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .dist-summary-label {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
 }
 
 .dist-summary-value {
   font-family: $font-mono;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-xs;
+  font-weight: $fw-bold;
   color: var(--b3-theme-primary);
 }
 
 .dist-summary-sep {
   color: var(--b3-border-color);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 }
 
 .dist-table {
@@ -394,22 +394,22 @@ $color-rank-bronze: #cd7f32;
   min-height: 0;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
-  padding: $spacing-3;
+  border-radius: $r-sm;
+  padding: $s-3;
 }
 
 .dist-section-title {
-  margin: 0 0 $spacing-10px 0;
+  margin: 0 0 $s-px10 0;
   font-family: $font-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
   display: flex;
   align-items: center;
-  gap: $spacing-6px;
+  gap: $s-px6;
 }
 
 .loading-wrapper {

@@ -13,7 +13,7 @@
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(2px);
   // 基准字号：弹窗内未显式声明字号的文字继承内容级 12px
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   outline: none;
 }
 
@@ -25,7 +25,7 @@
   flex-direction: column;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-lg;
+  border-radius: $r-lg;
   overflow: hidden;
 }
 
@@ -45,8 +45,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-2;
-  padding: $spacing-2 $spacing-3;
+  gap: $s-2;
+  padding: $s-2 $s-3;
   background: var(--b3-theme-surface);
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
@@ -55,20 +55,20 @@
 .gp-logd-title {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
   min-width: 0;
 }
 
 // 操作类型徽章（LogPanel 同款视觉，弹窗自包含）
 .gp-logd-badge {
   flex-shrink: 0;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
-  font-family: $vp-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  font-family: $ff-mono;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  padding: $spacing-1px $spacing-6px;
-  border-radius: $radius-sm;
+  padding: $s-px1 $s-px6;
+  border-radius: $r-sm;
 
   &--push {
     background: var(--b3-theme-primary-lightest);
@@ -92,8 +92,8 @@
   max-width: 220px;
   cursor: pointer;
   color: var(--b3-theme-primary);
-  font-weight: $font-weight-semibold;
-  font-size: $font-size-xs;
+  font-weight: $fw-semibold;
+  font-size: $t-xs;
   @include text-ellipsis;
 
   &:hover {
@@ -104,10 +104,10 @@
 // 整体状态徽章（成功/失败）
 .gp-logd-status {
   flex-shrink: 0;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
-  padding: $spacing-1px $spacing-6px;
-  border-radius: $radius-sm;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
+  padding: $s-px1 $s-px6;
+  border-radius: $r-sm;
 
   &--ok {
     background: var(--b3-theme-success-lightest);
@@ -125,7 +125,7 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: $spacing-3 $spacing-4;
+  padding: $s-3 $s-4;
   user-select: text;
   -webkit-user-select: text;
 }
@@ -134,17 +134,17 @@
 .gp-logd-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-1 $spacing-4;
-  margin-bottom: $spacing-3;
-  padding-bottom: $spacing-3;
+  gap: $s-1 $s-4;
+  margin-bottom: $s-3;
+  padding-bottom: $s-3;
   border-bottom: 1px solid var(--b3-border-color);
 }
 
 .gp-logd-meta-item {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  font-size: $font-size-2xs;
+  gap: $s-2;
+  font-size: $t-2xs;
 }
 
 .gp-logd-meta-label {
@@ -154,13 +154,13 @@
 }
 
 .gp-logd-meta-value {
-  font-family: $vp-mono;
+  font-family: $ff-mono;
   color: var(--b3-theme-on-background);
 }
 
 // 区块标题（大写小标签）
 .gp-logd-section {
-  margin-bottom: $spacing-3;
+  margin-bottom: $s-3;
 
   &:last-child {
     margin-bottom: 0;
@@ -169,13 +169,13 @@
 
 .gp-logd-section-title {
   @include gp-label-base;
-  margin-bottom: $spacing-1;
+  margin-bottom: $s-1;
 }
 
 // 摘要：完整展示，允许换行不截断
 .gp-logd-summary {
-  font-size: $font-size-xs;
-  line-height: $line-height-normal;
+  font-size: $t-xs;
+  line-height: $lh-normal;
   color: var(--b3-theme-on-background);
   white-space: pre-wrap;
   word-break: break-word;
@@ -186,17 +186,17 @@
 .gp-logd-platforms {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .gp-logd-platform {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  font-size: $font-size-2xs;
-  padding: $spacing-1 $spacing-2;
+  gap: $s-2;
+  font-size: $t-2xs;
+  padding: $s-1 $s-2;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: var(--b3-theme-surface);
 }
 
@@ -204,15 +204,15 @@
   flex-shrink: 0;
   width: 14px;
   text-align: center;
-  font-family: $vp-mono;
-  font-weight: $font-weight-bold;
+  font-family: $ff-mono;
+  font-weight: $fw-bold;
 }
 
 .gp-logd-platform-label {
   flex-shrink: 0;
   min-width: 48px;
   opacity: 0.6;
-  font-weight: $font-weight-semibold;
+  font-weight: $fw-semibold;
 }
 
 .gp-logd-platform-skip {
@@ -229,15 +229,15 @@
 
 // 提交信息：等宽完整展示
 .gp-logd-message {
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  line-height: $line-height-normal;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  line-height: $lh-normal;
   color: var(--b3-theme-on-surface);
   white-space: pre-wrap;
   word-break: break-all;
-  padding: $spacing-2;
+  padding: $s-2;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: var(--b3-theme-surface);
 }
 
@@ -259,8 +259,8 @@
 .gp-logd-footer {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-2 $spacing-3;
+  gap: $s-2;
+  padding: $s-2 $s-3;
   background: var(--b3-theme-surface);
   border-top: 1px solid var(--b3-border-color);
   flex-shrink: 0;

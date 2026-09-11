@@ -4,21 +4,21 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: $spacing-3;
-  gap: $spacing-3;
+  padding: $s-3;
+  gap: $s-3;
   overflow-y: auto;
-  font-family: $font-zh;
-  font-size: $font-size-sm;
+  font-family: $ff-zh;
+  font-size: $t-sm;
 
   &__section {
     display: flex;
     flex-direction: column;
-    gap: $spacing-2;
+    gap: $s-2;
   }
 
   &__section-title {
-    font-size: $font-size-xs;
-    font-weight: $font-weight-semibold;
+    font-size: $t-xs;
+    font-weight: $fw-semibold;
     color: var(--b3-theme-on-background);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -27,7 +27,7 @@
 
   &__row {
     display: flex;
-    gap: $spacing-2;
+    gap: $s-2;
     align-items: flex-end;
   }
 
@@ -43,7 +43,7 @@
 
   &__actions {
     display: flex;
-    gap: $spacing-2;
+    gap: $s-2;
   }
 
   // Tab bar
@@ -54,9 +54,9 @@
   }
 
   &__tab {
-    padding: $spacing-2 $spacing-3;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-medium;
+    padding: $s-2 $s-3;
+    font-size: $t-xs;
+    font-weight: $fw-medium;
     color: var(--b3-theme-on-background);
     opacity: 0.6;
     cursor: pointer;
@@ -73,29 +73,29 @@
 
     &--active {
       opacity: 1;
-      border-bottom-color: $color-primary;
-      color: $color-primary;
+      border-bottom-color: $c-primary;
+      color: $c-primary;
     }
   }
 
   // Response area
   &__response-meta {
     display: flex;
-    gap: $spacing-3;
+    gap: $s-3;
     align-items: center;
-    padding: $spacing-2;
+    padding: $s-2;
     background: var(--b3-theme-surface);
-    border-radius: $radius-sm;
-    font-size: $font-size-xs;
+    border-radius: $r-sm;
+    font-size: $t-xs;
   }
 
   &__status-badge {
     display: inline-flex;
     align-items: center;
-    padding: $spacing-2px $spacing-2;
-    border-radius: $radius-sm;
-    font-weight: $font-weight-semibold;
-    font-size: $font-size-xs;
+    padding: $s-px2 $s-2;
+    border-radius: $r-sm;
+    font-weight: $fw-semibold;
+    font-size: $t-xs;
 
     &--success {
       background: rgba(16, 185, 129, 0.15);
@@ -119,29 +119,29 @@
 
   &__response-body {
     background: var(--b3-theme-surface);
-    border-radius: $radius-sm;
-    padding: $spacing-3;
+    border-radius: $r-sm;
+    padding: $s-3;
     overflow: auto;
     max-height: 400px;
-    font-family: $vp-mono;
-    font-size: $font-size-xs;
-    line-height: $line-height-normal;
+    font-family: $ff-mono;
+    font-size: $t-xs;
+    line-height: $lh-normal;
     white-space: pre-wrap;
     word-break: break-all;
   }
 
   &__error-msg {
     color: var(--b3-theme-error);
-    font-size: $font-size-xs;
-    padding: $spacing-2;
+    font-size: $t-xs;
+    padding: $s-2;
     background: rgba(239, 68, 68, 0.1);
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
   }
 
   // Custom headers
   &__header-row {
     display: flex;
-    gap: $spacing-2;
+    gap: $s-2;
     align-items: center;
   }
 
@@ -158,13 +158,13 @@
   &__history-actions {
     display: flex;
     justify-content: flex-end;
-    margin-bottom: $spacing-1;
+    margin-bottom: $s-1;
   }
 
   &__history-list {
     display: flex;
     flex-direction: column;
-    gap: $spacing-1;
+    gap: $s-1;
     max-height: 400px;
     overflow-y: auto;
   }
@@ -172,12 +172,12 @@
   &__history-item {
     display: flex;
     align-items: center;
-    gap: $spacing-2;
-    padding: $spacing-2;
-    border-radius: $radius-sm;
+    gap: $s-2;
+    padding: $s-2;
+    border-radius: $r-sm;
     cursor: pointer;
     transition: background 0.15s ease;
-    font-size: $font-size-xs;
+    font-size: $t-xs;
 
     &:hover {
       background: var(--b3-theme-hover);
@@ -189,10 +189,10 @@
     align-items: center;
     justify-content: center;
     width: 48px;
-    padding: $spacing-1px $spacing-1;
-    border-radius: $radius-px;
-    font-weight: $font-weight-semibold;
-    font-size: $font-size-2xs;
+    padding: $s-px1 $s-1;
+    border-radius: $r-px3;
+    font-weight: $fw-semibold;
+    font-size: $t-2xs;
     flex-shrink: 0;
 
     &--post {
@@ -227,7 +227,7 @@
 
   &__history-status {
     flex-shrink: 0;
-    font-weight: $font-weight-medium;
+    font-weight: $fw-medium;
 
     &--success {
       color: var(--b3-theme-success);
@@ -246,10 +246,10 @@
 
   &__empty {
     text-align: center;
-    padding: $spacing-6;
+    padding: $s-6;
     color: var(--b3-theme-on-background);
     opacity: 0.5;
-    font-size: $font-size-xs;
+    font-size: $t-xs;
   }
 }
 

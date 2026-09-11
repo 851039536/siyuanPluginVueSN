@@ -12,26 +12,26 @@
 .fm-context-menu {
   position: fixed;
   min-width: 160px;
-  padding: $spacing-1;
+  padding: $s-1;
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: var(--b3-theme-background);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 }
 
 .fm-context-menu-item {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
   width: 100%;
-  padding: $spacing-1 $spacing-2;
+  padding: $s-1 $s-2;
   border: none;
   background: transparent;
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   text-align: left;
   cursor: pointer;
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
 
   &:hover {
     background: var(--b3-theme-surface-lighter);

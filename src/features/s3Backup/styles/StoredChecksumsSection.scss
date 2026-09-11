@@ -7,15 +7,15 @@
 .checksum-list {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2px;
+  gap: $s-px2;
   max-height: 520px;
   overflow-y: auto;
 }
 
 .checksum-item {
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-sm;
-  padding: $spacing-2;
+  border-radius: $r-sm;
+  padding: $s-2;
   transition: border-color 0.12s ease, background 0.12s ease;
 
   &.verify-match {
@@ -32,8 +32,8 @@
 .checksum-main {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  margin-bottom: $spacing-1;
+  gap: $s-2;
+  margin-bottom: $s-1;
 }
 
 .checksum-name {
@@ -41,15 +41,15 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: $vp-mono;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
+  font-family: $ff-mono;
+  font-size: $t-sm;
+  font-weight: $fw-medium;
   min-width: 0;
 }
 
 .checksum-path-icon {
   flex-shrink: 0;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface-light);
   cursor: help;
   line-height: 1;
@@ -63,10 +63,10 @@
 .checksum-meta {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
   flex-shrink: 0;
   color: var(--b3-theme-on-surface-light);
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   white-space: nowrap;
 }
 
@@ -76,13 +76,13 @@
 }
 
 .checksum-hash {
-  margin-bottom: $spacing-1;
+  margin-bottom: $s-1;
 }
 
 .checksum-actions {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
   margin-left: auto;
   flex-shrink: 0;
 }

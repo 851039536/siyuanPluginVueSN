@@ -6,7 +6,7 @@
   display: inline-flex;
   flex-direction: column;
   position: relative;
-  font-family: $font-zh;
+  font-family: $ff-zh;
 
   &__wrapper {
     position: relative;
@@ -16,10 +16,10 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: $spacing-2;
+    gap: $s-2;
     background: var(--b3-theme-background);
     border: 1px solid var(--b3-border-color);
-    border-radius: $vp-radius;
+    border-radius: $r-base;
     cursor: pointer;
     outline: none;
     user-select: none;
@@ -53,8 +53,8 @@
     justify-content: center;
     cursor: pointer;
     color: var(--b3-theme-secondary);
-    border-radius: $radius-sm;
-    padding: $spacing-2px; // 2px 已收敛为全局 Token
+    border-radius: $r-sm;
+    padding: $s-px2; // 2px 已收敛为全局 Token
 
     &:hover {
       color: var(--b3-theme-on-background);
@@ -84,20 +84,20 @@
     width: 100%;
     background: var(--b3-theme-background);
     border: 1px solid var(--b3-border-color);
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     overflow: hidden;
-    margin-top: $spacing-1;
+    margin-top: $s-1;
 
     &--top {
       bottom: 100%;
-      margin-bottom: $spacing-1; // 4px
+      margin-bottom: $s-1; // 4px
       margin-top: 0;
     }
   }
 
   &__filter {
     flex-shrink: 0; // 面板高度不足时只压缩列表，筛选框保持原高
-    padding: $spacing-2;
+    padding: $s-2;
     border-bottom: 1px solid var(--b3-border-color);
   }
 
@@ -106,9 +106,9 @@
     box-sizing: border-box; // 含 padding+border 计入 100% 宽：默认 content-box 会右溢出被面板裁切
     padding: m.$gap-xs m.$spacing-2_5; // 6px 10px
     border: 1px solid var(--b3-border-color);
-    border-radius: $radius-sm;
-    font-size: $font-size-xs; // 与下拉选项默认档字号一致（XS 档在 &--xsmall 内单独覆盖为 10px）
-    font-family: $font-zh;
+    border-radius: $r-sm;
+    font-size: $t-xs; // 与下拉选项默认档字号一致（XS 档在 &--xsmall 内单独覆盖为 10px）
+    font-family: $ff-zh;
     outline: none;
     background: var(--b3-theme-background);
     color: var(--b3-theme-on-background);
@@ -125,10 +125,10 @@
   }
 
   &__empty {
-    padding: $spacing-3;
+    padding: $s-3;
     text-align: center;
     color: var(--b3-theme-secondary);
-    font-size: $font-size-xs;
+    font-size: $t-xs;
   }
 
   &__options {
@@ -149,7 +149,7 @@
 
     &::-webkit-scrollbar-thumb {
       background: var(--b3-theme-surface-light);
-      border-radius: $radius-sm;
+      border-radius: $r-sm;
 
       &:hover {
         background: var(--b3-theme-secondary);
@@ -157,15 +157,15 @@
     }
 
     &--grouped {
-      padding: $spacing-1 0;
+      padding: $s-1 0;
     }
   }
 
   &__group {
     &-label {
-      padding: $spacing-2 $spacing-3 $spacing-1;
-      font-size: $font-size-xs;
-      font-weight: $font-weight-semibold;
+      padding: $s-2 $s-3 $s-1;
+      font-size: $t-xs;
+      font-weight: $fw-semibold;
       color: var(--b3-theme-secondary);
       text-transform: uppercase;
       letter-spacing: 0.5px; // 0.5px 无对应 Token，保留
@@ -173,8 +173,8 @@
   }
 
   &__option {
-    padding: $spacing-2 $spacing-3;
-    font-size: $font-size-sm;
+    padding: $s-2 $s-3;
+    font-size: $t-sm;
     color: var(--b3-theme-on-background);
     cursor: pointer;
     user-select: none;
@@ -189,7 +189,7 @@
       // 选中态文字改用常规前景色 + 加粗：原 primary 在部分暗色主题下偏灰暗，文字几乎不可读，
       // 选中辨识改由高亮背景 + 字重承担
       color: var(--b3-theme-on-background);
-      font-weight: $font-weight-semibold;
+      font-weight: $fw-semibold;
 
       &:hover,
       &.si-select__option--hovered {
@@ -207,33 +207,33 @@
   &--xsmall {
     .si-select__trigger {
       min-height: 22px; // 无对应 Token
-      padding: $spacing-2px $spacing-6px; // 特小号，已收敛为全局 Token，保留
-      font-size: $font-size-2xs; // XS 档字号阶梯：10px
+      padding: $s-px2 $s-px6; // 特小号，已收敛为全局 Token，保留
+      font-size: $t-2xs; // XS 档字号阶梯：10px
     }
 
     .si-select__option {
-      padding: $spacing-1 $spacing-4; // 水平 16px：避免选项文字贴近下拉面板左缘（原 8px 过贴），与 large 一致
-      font-size: $font-size-2xs; // XS 档字号阶梯：10px
+      padding: $s-1 $s-4; // 水平 16px：避免选项文字贴近下拉面板左缘（原 8px 过贴），与 large 一致
+      font-size: $t-2xs; // XS 档字号阶梯：10px
     }
 
     // XS 档下拉内部随选项同步降到 10px，避免「筛选框/分组标题比选项大」的割裂观感
     .si-select__filter-input,
     .si-select__empty,
     .si-select__group-label {
-      font-size: $font-size-2xs;
+      font-size: $t-2xs;
     }
   }
 
   &--small {
     .si-select__trigger {
       min-height: 28px;
-      padding: $spacing-2px m.$gap-xs; // 2px 6px（原 4px 8px，各减 2px）
-      font-size: $font-size-xs;
+      padding: $s-px2 m.$gap-xs; // 2px 6px（原 4px 8px，各减 2px）
+      font-size: $t-xs;
     }
 
     .si-select__option {
-      padding: $spacing-2px $spacing-14px; // 2px 14px（原 4px 16px）；14px 已收敛为全局 Token
-      font-size: $font-size-xs;
+      padding: $s-px2 $s-px14; // 2px 14px（原 4px 16px）；14px 已收敛为全局 Token
+      font-size: $t-xs;
     }
   }
 
@@ -241,25 +241,25 @@
     .si-select__trigger {
       min-height: 36px;
       padding: m.$gap-xs m.$spacing-2_5; // 6px 10px（原 8px 12px，各减 2px）
-      font-size: $font-size-sm;
+      font-size: $t-sm;
     }
 
     .si-select__option {
-      padding: m.$gap-xs $spacing-14px; // 6px 14px（原 8px 16px）；14px 已收敛为全局 Token
-      font-size: $font-size-sm;
+      padding: m.$gap-xs $s-px14; // 6px 14px（原 8px 16px）；14px 已收敛为全局 Token
+      font-size: $t-sm;
     }
   }
 
   &--large {
     .si-select__trigger {
       min-height: 44px;
-      padding: m.$gap-xs $spacing-14px; // 6px 14px（原 8px 16px，各减 2px）；14px 已收敛为全局 Token
-      font-size: $font-size-base; // 原 15px → base(16px)
+      padding: m.$gap-xs $s-px14; // 6px 14px（原 8px 16px，各减 2px）；14px 已收敛为全局 Token
+      font-size: $t-base; // 原 15px → base(16px)
     }
 
     .si-select__option {
-      padding: m.$gap-xs $spacing-14px; // 6px 14px（原 8px 16px）
-      font-size: $font-size-sm;
+      padding: m.$gap-xs $s-px14; // 6px 14px（原 8px 16px）
+      font-size: $t-sm;
     }
   }
 

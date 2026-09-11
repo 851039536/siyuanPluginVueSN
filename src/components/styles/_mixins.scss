@@ -14,10 +14,10 @@ $z-local-overlay: 10;
 $z-select-dropdown: 1000;
 
 // ========== 非标准间距（组件内部语义别名，取值统一来自全局 Token） ==========
-// 6px：$spacing-1(4px) 偏小、$spacing-2(8px) 偏大 → 全局 $spacing-6px 即为此档
-$gap-xs: $spacing-6px;
-// 10px：中等尺寸元素的 padding/gap，介于 $spacing-2(8px) 与 $spacing-3(12px) → 全局 $spacing-10px
-$spacing-2_5: $spacing-10px;
+// 6px：$s-1(4px) 偏小、$s-2(8px) 偏大 → 全局 $s-px6 即为此档
+$gap-xs: $s-px6;
+// 10px：中等尺寸元素的 padding/gap，介于 $s-2(8px) 与 $s-3(12px) → 全局 $s-px10
+$spacing-2_5: $s-px10;
 
 // ========== Codex 交互反馈 mixin（边框变色 + 亮度，禁用 box-shadow） ==========
 // $lift：是否附加 1px 上浮位移。默认关闭 —— 密集工具栏中并排按钮会因位移产生抖动
@@ -50,11 +50,11 @@ $spacing-2_5: $spacing-10px;
   transition: all 0.12s;
 
   &:hover:not(.si-button--disabled):not(.si-button--loading) {
-    background: var(--btn-soft, var(--b3-theme-surface-lighter, $color-surface));
+    background: var(--btn-soft, var(--b3-theme-surface-lighter, $c-surface));
   }
 
   &:active:not(.si-button--disabled):not(.si-button--loading) {
-    background: var(--btn-soft-strong, var(--b3-theme-surface-light, $color-surface));
+    background: var(--btn-soft-strong, var(--b3-theme-surface-light, $c-surface));
   }
 }
 

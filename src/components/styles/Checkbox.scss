@@ -6,7 +6,7 @@
   display: inline-flex;
   flex-direction: column;
   align-items: flex-start;
-  font-family: $font-zh;
+  font-family: $ff-zh;
   vertical-align: middle;
 
   // 控件行（方框 + 标签），整行可点击
@@ -14,7 +14,7 @@
     position: relative;
     display: inline-flex;
     align-items: center;
-    gap: $spacing-2; // 8px
+    gap: $s-2; // 8px
     cursor: pointer;
     user-select: none;
 
@@ -49,8 +49,8 @@
     justify-content: center;
     flex-shrink: 0;
     background: transparent;
-    border: 1px solid var(--b3-border-color, $color-border);
-    border-radius: $vp-radius; // 6px — Codex 标准圆角
+    border: 1px solid var(--b3-border-color, $c-border);
+    border-radius: $r-base; // 6px — Codex 标准圆角
     transition: background-color 0.12s ease, border-color 0.12s ease;
 
     // 尺寸档位（方框 14 / 16 / 18 / 20）
@@ -60,8 +60,8 @@
     }
 
     .si-checkbox--small & {
-      width: $spacing-4; // 16px
-      height: $spacing-4;
+      width: $s-4; // 16px
+      height: $s-4;
     }
 
     .si-checkbox--medium & {
@@ -70,31 +70,31 @@
     }
 
     .si-checkbox--large & {
-      width: $spacing-5; // 20px
-      height: $spacing-5;
+      width: $s-5; // 20px
+      height: $s-5;
     }
 
     // 实底变体：未选中时以浅表面填充，强调度高于描边态
     .si-checkbox--filled & {
-      background: var(--b3-theme-surface-lighter, $color-surface);
+      background: var(--b3-theme-surface-lighter, $c-surface);
       border-color: transparent;
     }
 
     // 选中 / 半选：主题主色填充
     .si-checkbox--checked &,
     .si-checkbox--indeterminate & {
-      background: var(--b3-theme-primary, $color-danger);
-      border-color: var(--b3-theme-primary, $color-danger);
+      background: var(--b3-theme-primary, $c-danger);
+      border-color: var(--b3-theme-primary, $c-danger);
     }
 
     // 悬停强调（仅未选中且未半选时改描边，避免覆盖选中填充）
     .si-checkbox:not(.si-checkbox--checked):not(.si-checkbox--indeterminate) .si-checkbox__control:hover & {
-      border-color: var(--b3-theme-primary, $color-danger);
+      border-color: var(--b3-theme-primary, $c-danger);
     }
 
     // 校验失败态
     .si-checkbox--error & {
-      border-color: var(--b3-theme-error, $color-danger);
+      border-color: var(--b3-theme-error, $c-danger);
     }
   }
 
@@ -103,8 +103,8 @@
     display: none;
     align-items: center;
     justify-content: center;
-    color: var(--b3-theme-on-primary, $color-bg);
-    line-height: $line-height-tight;
+    color: var(--b3-theme-on-primary, $c-bg);
+    line-height: $lh-tight;
 
     .si-checkbox--checked &,
     .si-checkbox--indeterminate & {
@@ -114,24 +114,24 @@
 
   // 行内标签（字号随档位变化：10 / 12 / 14 / 16，与其它组件的 XS/S/M/L 阶梯一致）
   &__label {
-    color: var(--b3-theme-on-background, $color-fg);
-    line-height: $line-height-normal;
-    font-size: $font-size-xs; // 兜底值（等同 S 档）
+    color: var(--b3-theme-on-background, $c-fg);
+    line-height: $lh-normal;
+    font-size: $t-xs; // 兜底值（等同 S 档）
 
     .si-checkbox--xsmall & {
-      font-size: $font-size-2xs; // XS 档：10px
+      font-size: $t-2xs; // XS 档：10px
     }
 
     .si-checkbox--small & {
-      font-size: $font-size-xs; // S 档：12px
+      font-size: $t-xs; // S 档：12px
     }
 
     .si-checkbox--medium & {
-      font-size: $font-size-sm; // M 档：14px
+      font-size: $t-sm; // M 档：14px
     }
 
     .si-checkbox--large & {
-      font-size: $font-size-base; // L 档：16px
+      font-size: $t-base; // L 档：16px
     }
   }
 
@@ -151,7 +151,7 @@
 
   // 焦点环用 outline —— focus-ring mixin 只改 border-color，实底方框上不可见
   &__input:focus-visible + &__box {
-    outline: 2px solid var(--b3-theme-primary, $color-danger);
+    outline: 2px solid var(--b3-theme-primary, $c-danger);
     outline-offset: 2px;
   }
 }

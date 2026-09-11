@@ -30,22 +30,22 @@
 .super-panel-title {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
+  gap: $s-2;
+  font-size: $t-sm;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-background);
 }
 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: $spacing-3;
+  gap: $s-3;
 }
 
 // ==================== AI配置面板 ====================
@@ -56,7 +56,7 @@
   flex-shrink: 0;
   max-height: 80vh;
   overflow-y: auto;
-  border-radius: $radius-md;
+  border-radius: $r-md;
   border: 1px solid var(--b3-border-color);
 }
 
@@ -65,8 +65,8 @@
   justify-content: space-between;
   align-items: center;
   padding: $spacing-sm $spacing-lg;
-  font-weight: $font-weight-semibold;
-  font-size: $font-size-xs;
+  font-weight: $fw-semibold;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface);
   background: var(--b3-theme-surface);
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
@@ -86,8 +86,8 @@
 }
 
 .setting-label {
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--b3-theme-on-surface);
@@ -98,13 +98,13 @@
 
 .setting-select,
 .setting-input {
-  padding: $spacing-6px $spacing-10px;
+  padding: $s-px6 $s-px10;
   border: 1px solid var(--b3-theme-surface-light);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   outline: none;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 
   &:focus {
     border-color: var(--b3-theme-primary);
@@ -129,12 +129,12 @@
 
   .setting-input {
     flex: 1;
-    border-radius: $radius-sm 0 0 $radius-sm;
+    border-radius: $r-sm 0 0 $r-sm;
   }
 }
 
 .setting-desc {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
   line-height: 1.4;
@@ -156,11 +156,11 @@
   flex: 1;
   display: flex;
   align-items: center;
-  gap: $spacing-6px;
-  padding: $spacing-5px $spacing-10px;
+  gap: $s-px6;
+  padding: $s-px5 $s-px10;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   transition: border-color 0.15s, box-shadow 0.15s;
 
   &:focus-within {
@@ -181,7 +181,7 @@
   border: none;
   background: transparent;
   outline: none;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-background);
   line-height: 1.4;
 
@@ -213,7 +213,7 @@
 }
 
 .search-count {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
   white-space: nowrap;
@@ -245,7 +245,7 @@
   align-items: center;
   justify-content: center;
   gap: $spacing-sm;
-  padding: $spacing-8 0;
+  padding: $s-8 0;
   color: var(--b3-theme-on-surface);
 }
 
@@ -254,7 +254,7 @@
 }
 
 .search-empty-text {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   opacity: 0.5;
 }
 
@@ -289,7 +289,7 @@
   }
 
   .super-panel-title {
-    font-size: $font-size-xs;
+    font-size: $t-xs;
   }
 }
 

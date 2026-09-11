@@ -7,17 +7,17 @@
   margin-left: auto;
   display: inline-flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
   text-transform: none;
   letter-spacing: 0;
 }
 
 // 未分析/分析中提示文案（辅助文字）
 .gp-audit-hint {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   opacity: 0.45;
   font-style: italic;
-  padding: $spacing-1 0;
+  padding: $s-1 0;
 }
 
 // 不一致汇总 chip（错误色系，补充 StatsPanel 既有 ahead/behind/synced 修饰类）

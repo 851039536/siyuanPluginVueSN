@@ -2,12 +2,12 @@
 @use '@/variables.scss' as *;
 
 .upload-section {
-  margin-bottom: $spacing-4;
+  margin-bottom: $s-4;
 
   .upload-area {
     border: 2px dashed var(--b3-theme-surface-lighter);
-    border-radius: $radius-md;
-    padding: $spacing-8;
+    border-radius: $r-md;
+    padding: $s-8;
     text-align: center;
     background: var(--b3-theme-surface);
 
@@ -19,14 +19,14 @@
     .upload-content {
       .upload-icon {
         color: var(--b3-theme-on-surface-variant);
-        margin-bottom: $spacing-3;
+        margin-bottom: $s-3;
       }
 
       .upload-text {
         // 上传区操作提示（辅助文字）
-        margin: 0 0 $spacing-3 0;
+        margin: 0 0 $s-3 0;
         color: var(--b3-theme-on-surface-variant);
-        font-size: $font-size-2xs;
+        font-size: $t-2xs;
       }
     }
   }

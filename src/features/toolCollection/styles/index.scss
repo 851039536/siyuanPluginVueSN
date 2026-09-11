@@ -26,7 +26,7 @@ $tc-dur-slide: 0.25s;
   // maxHeight 与 types/index.ts 的 PANEL_MAX_HEIGHT 保持一致
   max-height: calc(88vh - 36px);
   background: var(--b3-theme-background);
-  border-radius: $radius-lg $radius-lg 0 0;
+  border-radius: $r-lg $r-lg 0 0;
   border: 1px solid var(--b3-border-color);
   border-bottom: none;
   display: flex;
@@ -57,23 +57,23 @@ $tc-dur-slide: 0.25s;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-1 $spacing-3;
+  padding: $s-1 $s-3;
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
   min-height: 0;
 
   .header-title {
-    font-size: $font-size-sm;
-    font-weight: $font-weight-semibold;
+    font-size: $t-sm;
+    font-weight: $fw-semibold;
     color: var(--b3-theme-on-background);
   }
 
   .header-resize {
     display: flex;
     align-items: center;
-    gap: $spacing-2px;
+    gap: $s-px2;
     margin-left: auto;
-    margin-right: $spacing-2;
+    margin-right: $s-2;
   }
 
   .resize-btn {
@@ -83,11 +83,11 @@ $tc-dur-slide: 0.25s;
     width: 22px;
     height: 22px;
     border: 1px solid var(--b3-border-color);
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     background: transparent;
     color: var(--b3-theme-on-surface);
     cursor: pointer;
-    font-size: $font-size-2xs;
+    font-size: $t-2xs;
     opacity: 0.5;
     transition: opacity $tc-dur-fast, color $tc-dur-fast, border-color $tc-dur-fast;
 
@@ -105,8 +105,8 @@ $tc-dur-slide: 0.25s;
   }
 
   .resize-label {
-    font-family: $vp-mono;
-    font-size: $font-size-2xs;
+    font-family: $ff-mono;
+    font-size: $t-2xs;
     color: var(--b3-theme-on-surface);
     opacity: 0.6;
     min-width: 42px;
@@ -117,7 +117,7 @@ $tc-dur-slide: 0.25s;
   .resize-divider {
     width: 1px;
     height: 12px;
-    margin: 0 $spacing-2px;
+    margin: 0 $s-px2;
     background: var(--b3-border-color);
     flex-shrink: 0;
   }
@@ -130,7 +130,7 @@ $tc-dur-slide: 0.25s;
     width: 22px;
     height: 22px;
     border: 1px solid var(--b3-border-color);
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     background: transparent;
     color: var(--b3-theme-on-surface);
     cursor: pointer;
@@ -167,7 +167,7 @@ $tc-dur-slide: 0.25s;
 .tool-list {
   flex: 1;
   overflow-y: auto;
-  padding: $spacing-2;
+  padding: $s-2;
   min-height: 0;
 
   &::-webkit-scrollbar {
@@ -176,7 +176,7 @@ $tc-dur-slide: 0.25s;
 
   &::-webkit-scrollbar-thumb {
     background: var(--b3-scrollbar-color);
-    border-radius: $radius-2px;
+    border-radius: $r-px2;
   }
 }
 
@@ -186,14 +186,14 @@ $tc-dur-slide: 0.25s;
   display: flex;
   align-items: center;
   width: 100%;
-  padding: $spacing-2 $spacing-3;
+  padding: $s-2 $s-3;
   border: 1px solid transparent;
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: transparent;
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-  line-height: $line-height-normal;
+  font-size: $t-xs;
+  font-weight: $fw-medium;
+  line-height: $lh-normal;
   text-align: left;
   cursor: pointer;
   user-select: none;
@@ -216,8 +216,8 @@ $tc-dur-slide: 0.25s;
       top: 50%;
       transform: translateY(-50%);
       width: 2px;
-      height: $font-size-sm;
-      border-radius: 0 $radius-2px $radius-2px 0;
+      height: $t-sm;
+      border-radius: 0 $r-px2 $r-px2 0;
       background: var(--b3-theme-primary);
     }
   }
@@ -240,11 +240,11 @@ $tc-dur-slide: 0.25s;
 // 侧栏底部键盘提示
 .tool-keyhint {
   flex-shrink: 0;
-  padding: $spacing-2;
+  padding: $s-2;
   border-top: 1px solid var(--b3-border-color);
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  line-height: $line-height-normal;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  line-height: $lh-normal;
   text-align: center;
   color: var(--b3-theme-on-surface);
   opacity: 0.35;
@@ -256,7 +256,7 @@ $tc-dur-slide: 0.25s;
   flex: 1;
   min-width: 0;
   overflow-y: auto;
-  padding: $spacing-3;
+  padding: $s-3;
   min-height: 0;
 
   &::-webkit-scrollbar {
@@ -265,7 +265,7 @@ $tc-dur-slide: 0.25s;
 
   &::-webkit-scrollbar-thumb {
     background: var(--b3-scrollbar-color);
-    border-radius: $radius-px;
+    border-radius: $r-px3;
   }
 }
 
@@ -315,7 +315,7 @@ $tc-dur-slide: 0.25s;
   }
 
   .tool-collection-content {
-    padding: $spacing-2;
+    padding: $s-2;
   }
 }
 

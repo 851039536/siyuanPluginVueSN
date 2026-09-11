@@ -1,16 +1,16 @@
 @use "@/variables.scss" as *;
 
 .document-font-settings {
-  padding: $spacing-3;
+  padding: $s-3;
   box-sizing: border-box;
   // 面板基准字号，防止继承思源全局默认字号
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 }
 
 .settings-container {
   display: flex;
   flex-direction: column;
-  gap: $spacing-3;
+  gap: $s-3;
   max-width: 100%;
 }
 
@@ -22,16 +22,16 @@
 .setting-item {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
+  gap: $s-1;
   width: 100%;
 }
 
 .setting-label {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  gap: $s-1;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface);
   margin: 0;
 }
@@ -41,22 +41,22 @@
 }
 
 .setting-description {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
-  margin: $spacing-1 0 0 0;
-  line-height: $line-height-normal;
+  margin: $s-1 0 0 0;
+  line-height: $lh-normal;
 }
 
 /* 开关行 */
 .toggle-container {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .toggle-description {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.7;
 }
@@ -64,7 +64,7 @@
 /* 字体族输入组 */
 .input-group {
   display: flex;
-  gap: $spacing-2;
+  gap: $s-2;
   align-items: center;
   flex-wrap: wrap;
 }
@@ -72,12 +72,12 @@
 .text-input {
   flex: 1;
   min-width: 180px;
-  padding: $spacing-1 $spacing-2;
+  padding: $s-1 $s-2;
   border: 1px solid var(--b3-theme-outline);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 
   &:focus {
     outline: none;
@@ -102,18 +102,18 @@
 /* 预设按钮 */
 .preset-buttons {
   display: flex;
-  gap: $spacing-1;
+  gap: $s-1;
   flex-wrap: wrap;
-  margin-top: $spacing-1;
+  margin-top: $s-1;
 }
 
 .preset-btn {
-  padding: $spacing-1 $spacing-3;
+  padding: $s-1 $s-3;
   border: 1px solid var(--b3-theme-outline);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   cursor: pointer;
 
   &:hover {
@@ -131,17 +131,17 @@
 /* 字重选项 */
 .font-weight-options {
   display: flex;
-  gap: $spacing-1;
+  gap: $s-1;
   flex-wrap: wrap;
 }
 
 .weight-btn {
-  padding: $spacing-1 $spacing-3;
+  padding: $s-1 $s-3;
   border: 1px solid var(--b3-theme-outline);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   cursor: pointer;
 
   &:hover {
@@ -158,9 +158,9 @@
 
 /* 预览区域 */
 .preview-section {
-  margin-top: $spacing-2;
+  margin-top: $s-2;
   border: 1px solid var(--b3-theme-outline);
-  border-radius: $radius-md;
+  border-radius: $r-md;
   overflow: hidden;
   background: var(--b3-theme-surface);
 }
@@ -168,8 +168,8 @@
 .preview-toggle {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-2 $spacing-3;
+  gap: $s-2;
+  padding: $s-2 $s-3;
   cursor: pointer;
   background: var(--b3-theme-surface);
   user-select: none;
@@ -180,16 +180,16 @@
 }
 
 .preview-icon {
-  font-size: $font-size-sm; // 折叠区眼睛图标需略大以保证可点击辨识
+  font-size: $t-sm; // 折叠区眼睛图标需略大以保证可点击辨识
 }
 
 .toggle-arrow {
   margin-left: auto;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
 }
 
 .preview-content {
-  padding: $spacing-4;
+  padding: $s-4;
   background: var(--b3-theme-background);
   border-top: 1px solid var(--b3-theme-outline);
   max-height: 300px;
@@ -197,12 +197,12 @@
 
   h2 {
     font-size: 1.5em; // 阅读区示例标题：随预览字号等比缩放，故用 em 而非 Token
-    margin-bottom: $spacing-3;
+    margin-bottom: $s-3;
     color: var(--b3-theme-on-background);
   }
 
   p {
-    margin-bottom: $spacing-3;
+    margin-bottom: $s-3;
     color: var(--b3-theme-on-background);
     opacity: 0.85;
   }
@@ -225,14 +225,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: $spacing-1;
-  padding: $spacing-2 $spacing-4;
+  gap: $s-1;
+  padding: $s-2 $s-4;
   width: 100%;
   border: 1px solid var(--b3-theme-outline);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   cursor: pointer;
 
   &:hover {
@@ -242,7 +242,7 @@
 }
 
 .btn-icon {
-  font-size: $font-size-sm; // 按钮内图标需略大以对齐文字行高
+  font-size: $t-sm; // 按钮内图标需略大以对齐文字行高
 }
 
 /* 响应式设计 */

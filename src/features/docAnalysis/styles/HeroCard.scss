@@ -5,37 +5,37 @@
 .hero-card {
   display: flex;
   flex-direction: column;
-  padding: $spacing-2 $spacing-3;
-  margin-bottom: $spacing-2;
+  padding: $s-2 $s-3;
+  margin-bottom: $s-2;
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
 
   .hero-top {
     display: flex;
     align-items: center;
-    gap: $spacing-3;
+    gap: $s-3;
   }
 
   .hero-left {
     display: flex;
     flex-direction: row;
     align-items: baseline;
-    gap: $spacing-1;
+    gap: $s-1;
     flex-shrink: 0;
   }
 
   .hero-label {
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-semibold;
+    font-size: $t-2xs;
+    font-weight: $fw-semibold;
     color: var(--b3-theme-on-surface-variant);
     white-space: nowrap;
   }
 
   // 数据突出展示：总文档数
   .hero-value {
-    font-size: $font-size-lg;
-    font-weight: $font-weight-bold;
-    font-family: $vp-mono;
+    font-size: $t-lg;
+    font-weight: $fw-bold;
+    font-family: $ff-mono;
     color: var(--b3-theme-on-background);
     line-height: 1;
   }
@@ -44,13 +44,13 @@
     flex: 1;
     display: flex;
     align-items: center;
-    gap: $spacing-2;
+    gap: $s-2;
     min-width: 0;
   }
 
   .hero-health-label {
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-bold;
+    font-size: $t-2xs;
+    font-weight: $fw-bold;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     opacity: 0.45;
@@ -60,7 +60,7 @@
   .hero-health-bar {
     flex: 1;
     height: 6px;
-    border-radius: $radius-px;
+    border-radius: $r-px3;
     background: var(--b3-theme-surface-light);
     overflow: hidden;
     min-width: 40px;
@@ -68,16 +68,16 @@
 
   .hero-health-fill {
     height: 100%;
-    border-radius: $radius-px;
+    border-radius: $r-px3;
     background: var(--b3-theme-primary);
     transition: width 0.5s ease;
   }
 
   // 数据突出展示：健康度百分比
   .hero-health-value {
-    font-size: $font-size-sm;
-    font-weight: $font-weight-bold;
-    font-family: $vp-mono;
+    font-size: $t-sm;
+    font-weight: $fw-bold;
+    font-family: $ff-mono;
     color: var(--b3-theme-primary);
     white-space: nowrap;
   }

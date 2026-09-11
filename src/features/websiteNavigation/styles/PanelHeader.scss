@@ -4,23 +4,23 @@
 .wn-header {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
   // 水平 10px：紧凑头部留白，介于 spacing-2/3 之间无对应 Token
-  padding: $spacing-2px $spacing-10px;
+  padding: $s-px2 $s-px10;
 }
 
 .wn-header-left {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
   flex-shrink: 0;
   flex: 1;
   min-width: 0;
 }
 
 .wn-title {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
 }
 
 // 计数徽章（显示 已筛选/总数，胶囊形态对齐 gitPush 进度指示器）
@@ -28,13 +28,13 @@
   display: inline-flex;
   align-items: center;
   height: 18px;
-  padding: 0 $spacing-7px;
-  border-radius: $radius-full;
+  padding: 0 $s-px7;
+  border-radius: $r-full;
   background: var(--b3-theme-primary-lightest);
   color: var(--b3-theme-primary);
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
+  font-weight: $fw-bold;
   font-variant-numeric: tabular-nums; // 计数变化时数字宽度稳定不抖动
   white-space: nowrap;
 }
@@ -42,7 +42,7 @@
 .wn-header-btns {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
   flex-shrink: 0;
 }
 

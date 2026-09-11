@@ -1,16 +1,16 @@
 @use '@/variables.scss' as *;
 
 .tab-pin-settings {
-  padding: $spacing-3;
+  padding: $s-3;
   box-sizing: border-box;
   // 面板基准字号，防止内部未声明字号的文字继承思源全局默认字号
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 }
 
 .settings-container {
   display: flex;
   flex-direction: column;
-  gap: $spacing-3;
+  gap: $s-3;
   max-width: 100%;
 }
 
@@ -18,7 +18,7 @@
 .setting-row {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
+  gap: $s-1;
   width: 100%;
 }
 
@@ -32,9 +32,9 @@
 .setting-label {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  gap: $s-1;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface);
   margin: 0;
 }
@@ -47,8 +47,8 @@
 .mode-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: $spacing-2;
-  margin-top: $spacing-1;
+  gap: $s-2;
+  margin-top: $s-1;
 }
 
 .mode-card {
@@ -56,10 +56,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-2;
+  gap: $s-1;
+  padding: $s-2;
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   cursor: pointer;
@@ -85,22 +85,22 @@
 }
 
 .mode-card-label {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   user-select: none;
 }
 
 .mode-card-check {
   position: absolute;
-  top: $spacing-1;
-  right: $spacing-1;
+  top: $s-1;
+  right: $s-1;
   color: var(--b3-theme-primary);
 }
 
 /* 预设色板：小方块横排，选中态主题色描边 */
 .preset-swatches {
   display: flex;
-  gap: $spacing-1;
-  margin-top: $spacing-1;
+  gap: $s-1;
+  margin-top: $s-1;
 }
 
 .preset-swatch {
@@ -108,7 +108,7 @@
   height: 22px;
   padding: 0;
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   cursor: pointer;
   transition: border-color 0.12s, transform 0.12s;
 }
@@ -125,7 +125,7 @@
 /* 颜色输入组 */
 .color-input-group {
   display: flex;
-  gap: $spacing-2;
+  gap: $s-2;
   align-items: center;
   flex-wrap: wrap;
 }
@@ -134,7 +134,7 @@
   width: 48px;
   height: 32px;
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   cursor: pointer;
   background: transparent;
 }
@@ -146,13 +146,13 @@
 .color-text {
   flex: 1;
   min-width: 100px;
-  padding: $spacing-1 $spacing-2;
+  padding: $s-1 $s-2;
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-xs;
-  font-family: $vp-mono;
+  font-size: $t-xs;
+  font-family: $ff-mono;
   text-transform: uppercase;
 }
 
@@ -162,12 +162,12 @@
 }
 
 .reset-color-btn {
-  padding: $spacing-1 $spacing-3;
+  padding: $s-1 $s-3;
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -182,11 +182,11 @@
 .preview-tabbar {
   display: flex;
   align-items: center;
-  gap: $spacing-2px;
-  margin-top: $spacing-1;
-  padding: $spacing-1;
+  gap: $s-px2;
+  margin-top: $s-1;
+  padding: $s-1;
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: var(--b3-theme-background);
   overflow: hidden;
 }
@@ -194,11 +194,11 @@
 .preview-tab {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-1 $spacing-2;
-  border-radius: $radius-sm;
+  gap: $s-1;
+  padding: $s-1 $s-2;
+  border-radius: $r-sm;
   // 辅助展示文字，按两级字号制使用 2xs
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   white-space: nowrap;
 }
@@ -224,14 +224,14 @@
 .tab-pin-hint {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  margin-top: $spacing-1;
-  padding: $spacing-1 $spacing-2;
+  gap: $s-1;
+  margin-top: $s-1;
+  padding: $s-1 $s-2;
   background: rgba(var(--b3-theme-primary-rgb), 0.08);
   border-left: 3px solid var(--b3-theme-primary);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   // 辅助提示文字，按两级字号制使用 2xs
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-variant);
 }
 
@@ -241,7 +241,7 @@
 
 .hint-text {
   flex: 1;
-  line-height: $line-height-normal;
+  line-height: $lh-normal;
 }
 
 /* 响应式调整 */

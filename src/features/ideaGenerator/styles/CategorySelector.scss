@@ -4,37 +4,37 @@
 .ig-cat {
   display: flex;
   align-items: center;
-  gap: $spacing-3;
+  gap: $s-3;
   min-width: 0;
 }
 
 .ig-cat-label {
   flex-shrink: 0;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: $color-muted;
+  color: $c-muted;
 }
 
 .ig-cat-list {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .ig-cat-item {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-1 $spacing-3;
-  border: 1px solid $color-border;
-  border-radius: $radius-full;
+  gap: $s-1;
+  padding: $s-1 $s-3;
+  border: 1px solid $c-border;
+  border-radius: $r-full;
   background: transparent;
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-medium;
-  line-height: $line-height-normal;
+  font-size: $t-2xs;
+  font-weight: $fw-medium;
+  line-height: $lh-normal;
   cursor: pointer;
   transition:
     border-color 0.15s,
@@ -42,22 +42,22 @@
     background 0.15s;
 
   &:hover {
-    border-color: $color-accent;
+    border-color: $c-accent;
     color: var(--b3-theme-on-background);
   }
 
   &:focus-visible {
     outline: none;
-    border-color: $color-accent;
+    border-color: $c-accent;
   }
 }
 
 .ig-cat-item--active {
-  border-color: $color-accent;
+  border-color: $c-accent;
   background: rgba(251, 191, 36, 0.12);
   color: var(--b3-theme-on-background);
 
   .ig-icon {
-    color: $color-accent;
+    color: $c-accent;
   }
 }

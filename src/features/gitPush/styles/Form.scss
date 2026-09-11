@@ -5,7 +5,7 @@
 .gp-form-group {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .gp-label {
@@ -15,11 +15,11 @@
 .gp-input {
   width: 100%;
   box-sizing: border-box;
-  padding: $spacing-7px $spacing-10px;
+  padding: $s-px7 $s-px10;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
-  font-size: $font-size-xs;
-  font-family: $vp-mono;
+  border-radius: $r-sm;
+  font-size: $t-xs;
+  font-family: $ff-mono;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   outline: none;
@@ -37,11 +37,11 @@
 // ── 公共表单辅助样式 ──
 .gp-path-row {
   display: flex;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .gp-error {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-error);
 }
 
@@ -51,15 +51,15 @@
 }
 
 .gp-checking {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   display: flex;
   align-items: center;
-  gap: $spacing-6px;
+  gap: $s-px6;
   opacity: 0.6;
 }
 
 .gp-check-result {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
 
   &.success {
     color: var(--b3-theme-primary);

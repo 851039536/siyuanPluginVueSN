@@ -3,14 +3,14 @@
 .setting-slider {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
   width: 100%;
 }
 
 .range-slider {
   flex: 1;
   height: 5px;
-  border-radius: $radius-px;
+  border-radius: $r-px3;
   background: var(--b3-theme-surface-variant);
   outline: none;
   cursor: pointer;
@@ -45,11 +45,11 @@
   height: 24px;
   padding: 0;
   border: 1px solid var(--b3-theme-outline);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-sm; // 加减号字符需略大以保证可读性
-  font-weight: $font-weight-semibold;
+  font-size: $t-sm; // 加减号字符需略大以保证可读性
+  font-weight: $fw-semibold;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -65,12 +65,12 @@
 
 .slider-value {
   min-width: 40px;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-medium;
+  font-size: $t-2xs;
+  font-weight: $fw-medium;
   color: var(--b3-theme-on-surface);
-  padding: $spacing-2px $spacing-1;
+  padding: $s-px2 $s-1;
   background: var(--b3-theme-surface);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   border: 1px solid var(--b3-theme-outline);
   text-align: center;
 }

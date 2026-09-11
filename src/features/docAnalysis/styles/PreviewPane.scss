@@ -11,7 +11,7 @@
 
   &::-webkit-scrollbar-thumb {
     background: rgba(0, 0, 0, 0.15);
-    border-radius: $radius-px;
+    border-radius: $r-px3;
   }
 
   &::-webkit-scrollbar-track {
@@ -25,26 +25,26 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  padding: $spacing-10 $spacing-6;
+  padding: $s-10 $s-6;
   text-align: center;
 }
 
 .preview-empty-icon {
-  font-size: $font-size-4xl;
-  margin-bottom: $spacing-4;
+  font-size: $t-4xl;
+  margin-bottom: $s-4;
   opacity: 0.5;
 }
 
 .preview-empty-title {
   margin: 0;
-  font-size: $font-size-base;
-  font-weight: $font-weight-semibold;
+  font-size: $t-base;
+  font-weight: $fw-semibold;
   color: rgba(0, 0, 0, 0.4);
 }
 
 .preview-empty-desc {
-  margin: $spacing-2 0 0;
-  font-size: $font-size-xs;
+  margin: $s-2 0 0;
+  font-size: $t-xs;
   color: rgba(0, 0, 0, 0.3);
   line-height: 1.6;
   max-width: 300px;
@@ -53,7 +53,7 @@
 .preview-card-wrapper {
   display: flex;
   justify-content: center;
-  padding: $spacing-5 $spacing-3;
+  padding: $s-5 $s-3;
   min-height: 100%;
 }
 
@@ -61,7 +61,7 @@
   width: 100%;
   max-width: 480px;
   background: #ffffff;
-  border-radius: $radius-md;
+  border-radius: $r-md;
   overflow: hidden;
 }
 
@@ -73,10 +73,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-2 $spacing-4;
+  padding: $s-2 $s-4;
   border-top: 1px solid var(--b3-border-color);
   background: #fafafa;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: rgba(0, 0, 0, 0.3);
   letter-spacing: 0.04em;
 }

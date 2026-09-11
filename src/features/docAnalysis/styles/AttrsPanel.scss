@@ -16,45 +16,45 @@
   max-width: 90vw;
   max-height: 80vh;
   background: var(--b3-theme-background);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   border: 1px solid var(--b3-border-color);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 }
 
 .attrs-panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-14px $spacing-18px;
+  padding: $s-px14 $s-px18;
   border-bottom: 1px solid var(--b3-border-color);
 
   .header-title {
     display: flex;
     align-items: center;
-    gap: $spacing-2;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-semibold;
+    gap: $s-2;
+    font-size: $t-sm;
+    font-weight: $fw-semibold;
     color: var(--b3-theme-on-background);
     min-width: 0;
 
     .header-icon {
-      font-size: $font-size-base;
+      font-size: $t-base;
       color: var(--b3-theme-primary);
       flex-shrink: 0;
     }
 
     .header-doc-title {
-      font-size: $font-size-xs;
-      font-weight: $font-weight-normal;
+      font-size: $t-xs;
+      font-weight: $fw-normal;
       color: var(--b3-theme-on-surface-variant);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      margin-left: $spacing-3;
-      padding-left: $spacing-3;
+      margin-left: $s-3;
+      padding-left: $s-3;
       border-left: 1px solid var(--b3-border-color);
     }
   }
@@ -66,11 +66,11 @@
     width: 28px;
     height: 28px;
     border: 1px solid var(--b3-border-color);
-    border-radius: $vp-radius;
+    border-radius: $r-base;
     background: transparent;
     color: var(--b3-theme-on-surface-variant);
     cursor: pointer;
-    font-size: $font-size-base;
+    font-size: $t-base;
     flex-shrink: 0;
 
     &:hover {
@@ -86,18 +86,18 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: $spacing-10;
+  padding: $s-10;
   color: var(--b3-theme-on-surface-variant);
-  font-size: $font-size-xs;
-  gap: $spacing-2;
+  font-size: $t-xs;
+  gap: $s-2;
 
   .loading-icon {
-    font-size: $font-size-4xl;
+    font-size: $t-4xl;
     color: var(--b3-theme-primary);
   }
 
   .error-icon {
-    font-size: $font-size-4xl;
+    font-size: $t-4xl;
     color: var(--b3-theme-error, #ef4444);
   }
 }
@@ -110,29 +110,29 @@
 }
 
 .publish-status-section {
-  padding: $spacing-14px $spacing-18px;
+  padding: $s-px14 $s-px18;
   border-bottom: 1px solid var(--b3-border-color);
 
   .section-title {
     display: flex;
     align-items: center;
-    gap: $spacing-1;
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-bold;
+    gap: $s-1;
+    font-size: $t-2xs;
+    font-weight: $fw-bold;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     opacity: 0.45;
-    margin-bottom: $spacing-2;
+    margin-bottom: $s-2;
   }
 
   // 两列网格行式卡片，超出高度内部滚动（右侧留出滚动条呼吸空间）
   .platform-status-list {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: $spacing-2;
+    gap: $s-2;
     max-height: 260px;
     overflow-y: auto;
-    padding-right: $spacing-1;
+    padding-right: $s-1;
     @include da-scrollbar;
   }
 
@@ -140,11 +140,11 @@
   .platform-status-item {
     display: flex;
     align-items: center;
-    gap: $spacing-2;
-    padding: $spacing-1 $spacing-2;
+    gap: $s-2;
+    padding: $s-1 $s-2;
     border: 1px solid var(--b3-border-color);
-    border-radius: $vp-radius;
-    font-size: $font-size-xs;
+    border-radius: $r-base;
+    font-size: $t-xs;
     background: var(--b3-theme-surface-light);
     color: var(--b3-theme-on-background);
     user-select: none;
@@ -153,18 +153,18 @@
     .platform-info {
       display: flex;
       align-items: center;
-      gap: $spacing-1;
+      gap: $s-1;
       min-width: 0;
       flex: 1;
     }
 
     .status-icon {
-      font-size: $font-size-xs;
+      font-size: $t-xs;
       flex-shrink: 0;
     }
 
     .platform-name {
-      font-weight: $font-weight-medium;
+      font-weight: $fw-medium;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -173,12 +173,12 @@
     // 状态徽章：辅助文字字号 + 小圆角底色标签
     .status-badge {
       flex-shrink: 0;
-      padding: 0 $spacing-2;
-      border-radius: $radius-sm;
-      font-size: $font-size-2xs;
-      font-weight: $font-weight-bold;
+      padding: 0 $s-2;
+      border-radius: $r-sm;
+      font-size: $t-2xs;
+      font-weight: $fw-bold;
       letter-spacing: 0.04em;
-      line-height: $line-height-normal;
+      line-height: $lh-normal;
       background: var(--b3-theme-surface);
       border: 1px solid var(--b3-border-color);
       color: var(--b3-theme-on-surface-variant);
@@ -193,7 +193,7 @@
     .platform-actions {
       display: flex;
       align-items: center;
-      gap: $spacing-1;
+      gap: $s-1;
       margin-left: auto;
       flex-shrink: 0;
     }
@@ -209,7 +209,7 @@
       background: var(--b3-theme-primary);
       color: var(--b3-theme-on-primary);
       cursor: pointer;
-      font-size: $font-size-xs;
+      font-size: $t-xs;
       flex-shrink: 0;
 
       &:hover:not(:disabled) {
@@ -291,9 +291,9 @@
 }
 
 .attrs-table {
-  margin: $spacing-14px $spacing-18px;
+  margin: $s-px14 $s-px18;
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   overflow: hidden;
 
   .attr-row {
@@ -318,9 +318,9 @@
     .attr-key,
     .attr-value {
       background: var(--b3-theme-surface);
-      font-family: $vp-mono;
-      font-size: $font-size-2xs;
-      font-weight: $font-weight-bold;
+      font-family: $ff-mono;
+      font-size: $t-2xs;
+      font-weight: $fw-bold;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       opacity: 0.45;
@@ -330,9 +330,9 @@
   .attr-key {
     width: 160px;
     flex-shrink: 0;
-    padding: $spacing-10px $spacing-4;
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-bold;
+    padding: $s-px10 $s-4;
+    font-size: $t-2xs;
+    font-weight: $fw-bold;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     opacity: 0.45;
@@ -343,14 +343,14 @@
 
   .attr-value {
     flex: 1;
-    padding: $spacing-10px $spacing-4;
-    font-size: $font-size-xs;
+    padding: $s-px10 $s-4;
+    font-size: $t-xs;
     color: var(--b3-theme-on-background);
     word-break: break-all;
     min-width: 0;
 
     .attr-text {
-      line-height: $line-height-normal;
+      line-height: $lh-normal;
     }
 
     .attr-empty {
@@ -365,14 +365,14 @@
       width: 22px;
       height: 22px;
       border: none;
-      border-radius: $radius-sm;
+      border-radius: $r-sm;
       background: transparent;
       color: var(--b3-theme-on-surface-variant);
       cursor: pointer;
-      font-size: $font-size-xs;
+      font-size: $t-xs;
       flex-shrink: 0;
       vertical-align: middle;
-      margin-left: $spacing-2;
+      margin-left: $s-2;
       opacity: 0.4;
       transition: opacity 0.15s;
 
@@ -387,22 +387,22 @@
   .yaml-toggle {
     display: flex;
     align-items: center;
-    gap: $spacing-1;
+    gap: $s-1;
     cursor: pointer;
-    padding: $spacing-2px 0;
+    padding: $s-px2 0;
     user-select: none;
 
     .toggle-icon {
-      font-size: $font-size-sm;
+      font-size: $t-sm;
       flex-shrink: 0;
     }
 
     .yaml-label {
-      font-weight: $font-weight-medium;
+      font-weight: $fw-medium;
     }
 
     .yaml-size {
-      font-size: $font-size-xs;
+      font-size: $t-xs;
       color: var(--b3-theme-on-surface-variant);
       opacity: 0.7;
     }
@@ -413,13 +413,13 @@
   }
 
   .yaml-content {
-    margin-top: $spacing-2;
-    padding: $spacing-10px $spacing-14px;
+    margin-top: $s-2;
+    padding: $s-px10 $s-px14;
     background: var(--b3-theme-surface, rgba(0, 0, 0, 0.03));
-    border-radius: $vp-radius;
-    font-size: $font-size-xs;
-    line-height: $line-height-normal;
-    font-family: $vp-mono;
+    border-radius: $r-base;
+    font-size: $t-xs;
+    line-height: $lh-normal;
+    font-family: $ff-mono;
     white-space: pre-wrap;
     word-break: break-all;
     overflow-x: auto;
@@ -434,7 +434,7 @@
 
     &::-webkit-scrollbar-thumb {
       background: var(--b3-scroll-color);
-      border-radius: $radius-sm;
+      border-radius: $r-sm;
     }
   }
 }
@@ -442,8 +442,8 @@
 .attrs-panel-footer {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-3 $spacing-18px;
+  gap: $s-2;
+  padding: $s-3 $s-px18;
   border-top: 1px solid var(--b3-border-color);
 
   .footer-spacer {
@@ -453,13 +453,13 @@
   .footer-btn {
     display: flex;
     align-items: center;
-    gap: $spacing-1;
-    padding: $spacing-6px $spacing-14px;
+    gap: $s-1;
+    padding: $s-px6 $s-px14;
     border: 1px solid var(--b3-border-color);
-    border-radius: $vp-radius;
+    border-radius: $r-base;
     background: var(--b3-theme-background);
     color: var(--b3-theme-on-background);
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     cursor: pointer;
 
     &:hover:not(:disabled) {

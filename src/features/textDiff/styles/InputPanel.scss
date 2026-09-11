@@ -26,18 +26,18 @@
 }
 
 .header-left {
-  @include m.flex-row($spacing-2);
+  @include m.flex-row($s-2);
   overflow: hidden;
 }
 
 .header-right {
-  @include m.flex-row($spacing-2);
+  @include m.flex-row($s-2);
   flex-shrink: 0;
 }
 
 .file-name {
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
   color: var(--b3-theme-primary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -45,8 +45,8 @@
 }
 
 .char-count {
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-variant);
 }
 
@@ -68,7 +68,7 @@
 
 .input-textarea {
   flex: 1;
-  padding: $spacing-1 $spacing-3;
+  padding: $s-1 $s-3;
   font-size: var(--diff-font-size, 14px); // 用户可调字号变量（12-24px），兜底 14px
   font-family: inherit;
   border: 1px solid transparent;
@@ -76,7 +76,7 @@
   color: var(--b3-theme-on-background);
   resize: none;
   outline: none;
-  line-height: $line-height-normal;
+  line-height: $lh-normal;
 
   &:focus {
     border-color: var(--b3-theme-primary);
@@ -96,18 +96,18 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: $spacing-2;
+  gap: $s-2;
   // 主色淡底：color-mix 替代硬编码 RGB fallback
   background: color-mix(in srgb, var(--b3-theme-primary) 10%, transparent);
   border: 2px dashed var(--b3-theme-primary);
-  border-radius: 0 0 $vp-radius $vp-radius;
+  border-radius: 0 0 $r-base $r-base;
   color: var(--b3-theme-primary);
   pointer-events: none;
   z-index: 10;
 
   span {
-    font-size: $font-size-xs; // 辅助提示文字，二级字号
-    font-weight: $font-weight-medium;
+    font-size: $t-xs; // 辅助提示文字，二级字号
+    font-weight: $fw-medium;
   }
 }
 

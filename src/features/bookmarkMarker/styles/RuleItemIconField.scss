@@ -4,7 +4,7 @@
 
 .icon-input-wrapper {
   display: flex;
-  gap: $spacing-2;
+  gap: $s-2;
   align-items: center;
   flex: 1;
   min-width: 0;
@@ -22,15 +22,15 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  font-size: $font-size-lg;
-  border-radius: $vp-radius;
+  font-size: $t-lg;
+  border-radius: $r-base;
   flex-shrink: 0;
 }
 
 .icon-picker-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-1;
+  gap: $s-1;
   flex: 1;
   min-width: 0;
 }

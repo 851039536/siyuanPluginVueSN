@@ -22,7 +22,7 @@
 
 .html-viewer-dialog {
   background: var(--b3-theme-surface);
-  border-radius: $radius-lg;
+  border-radius: $r-lg;
   width: 90vw;
   max-width: 1100px;
   height: 80vh;
@@ -49,19 +49,19 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-14px $spacing-5;
+  padding: $s-px14 $s-5;
   border-bottom: 1px solid var(--b3-theme-background-light);
   flex-shrink: 0;
 
   .header-title {
     display: flex;
     align-items: center;
-    gap: $spacing-10px;
+    gap: $s-px10;
 
     h2 {
       margin: 0;
-      font-size: $font-size-base;
-      font-weight: $font-weight-semibold;
+      font-size: $t-base;
+      font-weight: $fw-semibold;
       color: var(--b3-theme-on-surface);
     }
   }
@@ -69,25 +69,25 @@
   .header-actions {
     display: flex;
     align-items: center;
-    gap: $spacing-2;
+    gap: $s-2;
   }
 }
 
 .mode-switcher {
   display: flex;
   background: var(--b3-theme-background-light);
-  border-radius: $vp-radius;
-  padding: $spacing-2px;
-  gap: $spacing-2px;
+  border-radius: $r-base;
+  padding: $s-px2;
+  gap: $s-px2;
 
   .mode-btn {
-    padding: $spacing-1 $spacing-3;
+    padding: $s-1 $s-3;
     border: none;
     background: transparent;
     color: var(--b3-theme-on-surface);
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     cursor: pointer;
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     transition: all 0.2s;
 
     &.active {
@@ -104,12 +104,12 @@
 .dialog-body {
   flex: 1;
   overflow: auto;
-  padding: $spacing-4 $spacing-5;
+  padding: $s-4 $s-5;
 }
 
 .content-area {
   display: flex;
-  gap: $spacing-3;
+  gap: $s-3;
   height: 100%;
   min-height: 400px;
 }
@@ -120,7 +120,7 @@
   display: flex;
   flex-direction: column;
   border: 1px solid var(--b3-theme-background-light);
-  border-radius: $radius-md;
+  border-radius: $r-md;
   overflow: hidden;
 }
 
@@ -128,25 +128,25 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-2 $spacing-3;
+  padding: $s-2 $s-3;
   background: var(--b3-theme-background-light);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface);
-  font-weight: $font-weight-medium;
+  font-weight: $fw-medium;
   flex-shrink: 0;
 
   .panel-actions {
     display: flex;
-    gap: $spacing-1;
+    gap: $s-1;
   }
 }
 
 .html-source-editor {
   flex: 1;
   border: none;
-  padding: $spacing-3;
-  font-family: $vp-mono;
-  font-size: $font-size-xs;
+  padding: $s-3;
+  font-family: $ff-mono;
+  font-size: $t-xs;
   line-height: 1.6;
   color: var(--b3-theme-on-surface);
   background: var(--b3-theme-background);
@@ -177,17 +177,17 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-10px $spacing-5;
+  padding: $s-px10 $s-5;
   border-top: 1px solid var(--b3-theme-background-light);
   flex-shrink: 0;
 
   .footer-info {
     display: flex;
     align-items: center;
-    gap: $spacing-3;
+    gap: $s-3;
 
     .content-size {
-      font-size: $font-size-xs;
+      font-size: $t-xs;
       color: var(--b3-theme-on-surface);
       opacity: 0.5;
     }
@@ -199,28 +199,28 @@
 .edit-form {
   display: flex;
   flex-direction: column;
-  gap: $spacing-14px;
+  gap: $s-px14;
 
   .form-group {
     display: flex;
     flex-direction: column;
-    gap: $spacing-6px;
+    gap: $s-px6;
   }
 
   .form-label {
-    font-size: $font-size-xs;
-    font-weight: $font-weight-medium;
+    font-size: $t-xs;
+    font-weight: $fw-medium;
     color: var(--b3-theme-on-surface);
   }
 
   .edit-content-editor {
     width: 100%;
     border: 1px solid var(--b3-theme-background-light);
-    border-radius: $vp-radius;
-    padding: $spacing-10px;
-    font-family: $vp-mono;
-    font-size: $font-size-xs;
-    line-height: $line-height-normal;
+    border-radius: $r-base;
+    padding: $s-px10;
+    font-family: $ff-mono;
+    font-size: $t-xs;
+    line-height: $lh-normal;
     color: var(--b3-theme-on-surface);
     background: var(--b3-theme-background);
     resize: vertical;
@@ -235,8 +235,8 @@
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: $spacing-2;
-  margin-top: $spacing-2;
+  gap: $s-2;
+  margin-top: $s-2;
 }
 
 // 分类筛选
@@ -244,25 +244,25 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: $spacing-3;
+  margin-bottom: $s-3;
 
   .category-chips {
     display: flex;
-    gap: $spacing-6px;
+    gap: $s-px6;
     flex-wrap: wrap;
   }
 
   .category-chip {
     display: flex;
     align-items: center;
-    gap: $spacing-5px;
-    padding: $spacing-1 $spacing-10px;
+    gap: $s-px5;
+    padding: $s-1 $s-px10;
     border: 1px solid var(--b3-theme-background-light);
     border-radius: 14px;
     background: transparent;
     color: var(--b3-theme-on-surface);
     cursor: pointer;
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     transition: all 0.2s;
 
     &.active {
@@ -283,8 +283,8 @@
 .snippet-controls {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  margin-bottom: $spacing-3;
+  gap: $s-2;
+  margin-bottom: $s-3;
   position: relative;
 
   .search-icon {
@@ -300,12 +300,12 @@
 .snippet-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: $spacing-3;
+  gap: $s-3;
 }
 
 .snippet-card {
   border: 1px solid var(--b3-theme-background-light);
-  border-radius: $radius-md;
+  border-radius: $r-md;
   overflow: hidden;
   transition: all 0.2s;
 
@@ -315,15 +315,15 @@
   }
 
   .snippet-header {
-    padding: $spacing-10px $spacing-3 $spacing-6px;
+    padding: $s-px10 $s-3 $s-px6;
     display: flex;
     align-items: center;
     justify-content: space-between;
 
     h3 {
       margin: 0;
-      font-size: $font-size-xs;
-      font-weight: $font-weight-semibold;
+      font-size: $t-xs;
+      font-weight: $fw-semibold;
       color: var(--b3-theme-on-surface);
       overflow: hidden;
       text-overflow: ellipsis;
@@ -332,17 +332,17 @@
   }
 
   .snippet-category-tag {
-    font-size: $font-size-2xs;
-    padding: $spacing-2px $spacing-6px;
-    border-radius: $radius-md;
+    font-size: $t-2xs;
+    padding: $s-px2 $s-px6;
+    border-radius: $r-md;
     white-space: nowrap;
     flex-shrink: 0;
   }
 
   .snippet-preview-mini {
     height: 80px;
-    margin: $spacing-6px $spacing-3;
-    border-radius: $radius-sm;
+    margin: $s-px6 $s-3;
+    border-radius: $r-sm;
     overflow: hidden;
     background: #fff;
     border: 1px solid var(--b3-theme-background-light);
@@ -355,8 +355,8 @@
   }
 
   .snippet-meta {
-    padding: 0 $spacing-3;
-    font-size: $font-size-2xs;
+    padding: 0 $s-3;
+    font-size: $t-2xs;
     color: var(--b3-theme-on-surface);
     opacity: 0.5;
   }
@@ -365,43 +365,43 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    padding: $spacing-1 $spacing-2 $spacing-2;
-    gap: $spacing-1;
+    padding: $s-1 $s-2 $s-2;
+    gap: $s-1;
   }
 }
 
 .no-snippets {
   grid-column: 1 / -1;
   text-align: center;
-  padding: $spacing-10 $spacing-5;
+  padding: $s-10 $s-5;
   color: var(--b3-theme-on-surface);
   opacity: 0.4;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 }
 
 // 分类管理
 .add-category-section,
 .category-list-section {
-  margin-bottom: $spacing-4;
+  margin-bottom: $s-4;
 
   h3 {
-    font-size: $font-size-xs;
-    font-weight: $font-weight-semibold;
+    font-size: $t-xs;
+    font-weight: $fw-semibold;
     color: var(--b3-theme-on-surface);
-    margin: 0 0 $spacing-2;
+    margin: 0 0 $s-2;
   }
 }
 
 .add-category-form {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
   flex-wrap: wrap;
 }
 
 .color-picker-wrapper {
   display: flex;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .color-option {
@@ -425,15 +425,15 @@
 .category-list {
   display: flex;
   flex-direction: column;
-  gap: $spacing-6px;
+  gap: $s-px6;
 }
 
 .category-item {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-6px $spacing-10px;
-  border-radius: $vp-radius;
+  gap: $s-2;
+  padding: $s-px6 $s-px10;
+  border-radius: $r-base;
   background: var(--b3-theme-background-light);
 
   .category-dot {
@@ -445,12 +445,12 @@
 
   .category-name {
     flex: 1;
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     color: var(--b3-theme-on-surface);
   }
 
   .default-badge {
-    font-size: $font-size-2xs;
+    font-size: $t-2xs;
     color: var(--b3-theme-on-surface);
     opacity: 0.5;
   }
@@ -459,24 +459,24 @@
 // JSON 格式化
 .json-btn-active {
   color: var(--b3-theme-primary) !important;
-  font-weight: $font-weight-semibold !important;
+  font-weight: $fw-semibold !important;
 }
 
 .json-format-badge {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-6px $spacing-3;
+  gap: $s-2;
+  padding: $s-px6 $s-3;
   background: #f0fff4;
   border: 1px solid #b7eb8f;
-  border-radius: $radius-sm;
-  font-size: $font-size-xs;
+  border-radius: $r-sm;
+  font-size: $t-xs;
   color: #135200;
-  margin-bottom: $spacing-2;
+  margin-bottom: $s-2;
 
   .json-badge-icon {
-    font-weight: $font-weight-bold;
-    font-size: $font-size-sm; // 图标尺寸
+    font-weight: $fw-bold;
+    font-size: $t-sm; // 图标尺寸
     color: #52c41a;
   }
 

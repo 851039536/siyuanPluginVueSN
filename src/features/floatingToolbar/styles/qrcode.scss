@@ -22,13 +22,13 @@
 // ========================================
 .dialog-header {
   @include ft.dialog-header(false);
-  padding: g.$spacing-3 g.$spacing-4;
+  padding: g.$s-3 g.$s-4;
 }
 
 .dialog-title {
   @include ft.dialog-title(false);
-  font-size: g.$font-size-sm;
-  gap: g.$spacing-2;
+  font-size: g.$t-sm;
+  gap: g.$s-2;
 }
 
 .dialog-icon {
@@ -40,12 +40,12 @@
 // ========================================
 .dialog-body {
   @include ft.dialog-body;
-  padding: g.$spacing-4;
-  gap: g.$spacing-3;
+  padding: g.$s-4;
+  gap: g.$s-3;
   @include ft.custom-scrollbar;
 
   @media (max-width: ft.$breakpoint-md) {
-    padding: g.$spacing-3;
+    padding: g.$s-3;
   }
 }
 
@@ -57,8 +57,8 @@
   min-height: 180px;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: g.$radius-sm;
-  padding: g.$spacing-3;
+  border-radius: g.$r-sm;
+  padding: g.$s-3;
 
   // 画布由 QRCode.toCanvas 运行时创建，无 scope 属性，需用 :deep 穿透
   :deep(canvas) {
@@ -68,7 +68,7 @@
 
   @media (max-width: ft.$breakpoint-md) {
     min-height: 160px;
-    padding: g.$spacing-2;
+    padding: g.$s-2;
   }
 }
 
@@ -77,7 +77,7 @@
   border-style: dashed;
 
   span {
-    font-size: g.$font-size-xs;
+    font-size: g.$t-xs;
     color: var(--b3-theme-on-surface-variant);
   }
 }
@@ -88,7 +88,7 @@
 .settings-row {
   display: flex;
   align-items: flex-start;
-  gap: g.$spacing-3;
+  gap: g.$s-3;
 
   .setting-size {
     flex: 1;
@@ -117,5 +117,5 @@
 .actions-row {
   display: flex;
   justify-content: flex-end;
-  gap: g.$spacing-2;
+  gap: g.$s-2;
 }

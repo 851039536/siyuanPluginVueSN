@@ -14,16 +14,16 @@
   max-height: 85vh;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-lg;
+  border-radius: $r-lg;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 
   &__title {
     margin: 0;
-    padding: $spacing-14px $spacing-5;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-bold;
+    padding: $s-px14 $s-5;
+    font-size: $t-sm;
+    font-weight: $fw-bold;
     text-align: center;
     letter-spacing: 0.02em;
     color: var(--b3-theme-on-background);
@@ -31,13 +31,13 @@
     background: var(--b3-theme-surface);
   }
   &__body {
-    padding: $spacing-3 $spacing-4;
+    padding: $s-3 $s-4;
     overflow-y: auto;
     flex: 1;
   }
   &__title-row {
     display: flex;
-    gap: $spacing-6px;
+    gap: $s-px6;
     .skill-dialog__input { flex: 1; }
   }
   &__ai-btn {
@@ -48,10 +48,10 @@
     align-items: center;
     justify-content: center;
     border: 1px solid var(--b3-border-color);
-    border-radius: $vp-radius;
+    border-radius: $r-base;
     background: var(--b3-theme-background, #fff);
     cursor: pointer;
-    font-size: $font-size-base;
+    font-size: $t-base;
     transition: all 0.12s;
     &:hover:not(:disabled) {
       border-color: var(--b3-theme-primary);
@@ -60,8 +60,8 @@
     &:disabled { opacity: 0.5; cursor: not-allowed; }
   }
   &__ai-spinner {
-    width: $spacing-4;
-    height: $spacing-4;
+    width: $s-4;
+    height: $s-4;
     border: 2px solid var(--b3-border-color);
     border-top-color: var(--b3-theme-primary);
     border-radius: 50%;
@@ -69,21 +69,21 @@
   }
   &__label {
     display: block;
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-bold;
+    font-size: $t-2xs;
+    font-weight: $fw-bold;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     opacity: 0.45;
-    margin-bottom: $spacing-1;
-    margin-top: $spacing-10px;
+    margin-bottom: $s-1;
+    margin-top: $s-px10;
     &:first-child { margin-top: 0; }
   }
   &__input, &__select {
     width: 100%;
-    padding: $spacing-7px $spacing-10px;
+    padding: $s-px7 $s-px10;
     border: 1px solid var(--b3-border-color);
-    border-radius: $vp-radius;
-    font-size: $font-size-sm;
+    border-radius: $r-base;
+    font-size: $t-sm;
     background: var(--b3-theme-background);
     color: var(--b3-theme-on-background);
     outline: none;
@@ -95,10 +95,10 @@
   }
   &__textarea {
     width: 100%;
-    padding: $spacing-7px $spacing-10px;
+    padding: $s-px7 $s-px10;
     border: 1px solid var(--b3-border-color);
-    border-radius: $vp-radius;
-    font-size: $font-size-sm;
+    border-radius: $r-base;
+    font-size: $t-sm;
     font-family: inherit;
     background: var(--b3-theme-background);
     color: var(--b3-theme-on-background);
@@ -111,7 +111,7 @@
     }
   }
   &__code {
-    font-family: $vp-mono;
+    font-family: $ff-mono;
     background: #1e293b;
     color: #e2e8f0;
     border-color: #334155;
@@ -121,7 +121,7 @@
   }
   &__row {
     display: flex;
-    gap: $spacing-10px;
+    gap: $s-px10;
   }
   &__field {
     flex: 1;
@@ -129,16 +129,16 @@
   &__footer {
     display: flex;
     justify-content: flex-end;
-    gap: $spacing-2;
-    padding: $spacing-3 $spacing-4;
+    gap: $s-2;
+    padding: $s-3 $s-4;
     border-top: 1px solid var(--b3-border-color);
     background: var(--b3-theme-surface);
   }
   &__btn {
-    padding: $spacing-2 $spacing-5;
-    border-radius: $radius-md;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-medium;
+    padding: $s-2 $s-5;
+    border-radius: $r-md;
+    font-size: $t-sm;
+    font-weight: $fw-medium;
     border: none;
     cursor: pointer;
     &--cancel {
@@ -154,13 +154,13 @@
     }
   }
   &__ai-error {
-    margin-top: $spacing-1;
-    padding: $spacing-2 $spacing-10px;
-    border-radius: $vp-radius;
+    margin-top: $s-1;
+    padding: $s-2 $s-px10;
+    border-radius: $r-base;
     background: rgba(239, 68, 68, 0.08);
     border: 1px solid rgba(239, 68, 68, 0.2);
     color: var(--b3-theme-error);
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     line-height: 1.4;
   }
 }

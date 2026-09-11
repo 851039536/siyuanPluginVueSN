@@ -5,13 +5,13 @@
 .tags-input-wrapper {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-1;
+  gap: $s-1;
   align-items: center;
   flex: 1;
   min-width: 0;
-  padding: $spacing-px $spacing-2;
+  padding: $s-px3 $s-2;
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: var(--b3-theme-background);
   min-height: 32px; // 与同行共享控件的 min-height 对齐
   transition: border-color 0.12s;

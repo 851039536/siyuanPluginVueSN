@@ -6,7 +6,7 @@
   flex: 1;
   overflow-y: auto;
   // 右侧留白 8px，避免滚动条/内容紧贴侧边栏（规则见 AGENTS_STYLE §Dock 面板侧边栏间距）
-  padding: $spacing-1 $spacing-2 $spacing-1 0;
+  padding: $s-1 $s-2 $s-1 0;
 }
 
 // ── 顶部工具条 ──
@@ -14,8 +14,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-2;
-  margin-bottom: $spacing-3;
+  gap: $s-2;
+  margin-bottom: $s-3;
 }
 
 // 分析状态文案（未分析/分析中/完成；占满剩余空间，超长省略避免挤压右侧控件）
@@ -23,14 +23,14 @@
   flex: 1;
   min-width: 0;
   @include text-ellipsis;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   opacity: 0.6;
 }
 
 .gls-toolbar-right {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 // 文件格式过滤配置按钮（点击弹出扩展名多选弹窗；分析中禁用降低透明度）
@@ -45,7 +45,7 @@
   opacity: 0.7;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   cursor: pointer;
   transition: background-color 0.15s, border-color 0.15s, color 0.15s;
 
@@ -79,12 +79,12 @@
   right: -5px;
   min-width: 13px;
   height: 13px;
-  padding: 0 $spacing-px;
+  padding: 0 $s-px3;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
   line-height: 1;
   color: #fff;
   background: var(--b3-theme-primary);
@@ -93,16 +93,16 @@
 
 // 抓取失败提示（弱化展示，不打断正常结果阅读）
 .gls-fail-hint {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-warning);
-  margin-bottom: $spacing-2;
+  margin-bottom: $s-2;
 }
 
 // ── 单栏堆叠（汇总卡片 + 项目行数排行 + 作者行数排行 纵向排列，各占整行）──
 .gls-pair {
   display: flex;
   flex-direction: column;
-  gap: $spacing-3;
+  gap: $s-3;
 
   > .gls-section {
     margin-bottom: 0; // flex 内由 gap 控制间距，不叠加底部 margin
@@ -114,28 +114,28 @@
   display: grid;
   // 四列等宽卡片（总新增 + 总删除 + 总净增 + 当前总行数）
   grid-template-columns: repeat(4, 1fr);
-  gap: $spacing-2;
-  margin-bottom: $spacing-2;
+  gap: $s-2;
+  margin-bottom: $s-2;
 }
 
 .gls-card {
   text-align: center;
-  padding: $spacing-2 $spacing-1;
+  padding: $s-2 $s-1;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
 }
 
 .gls-card-value {
-  font-size: $font-size-lg; // 数据突出展示：汇总统计数值大号字体
-  font-weight: $font-weight-bold;
-  font-family: $vp-mono;
-  line-height: $line-height-tight;
+  font-size: $t-lg; // 数据突出展示：汇总统计数值大号字体
+  font-weight: $fw-bold;
+  font-family: $ff-mono;
+  line-height: $lh-tight;
   color: var(--b3-theme-on-surface);
 }
 
 .gls-card-label {
-  font-size: $font-size-2xs; // 辅助标签弱化展示（两级字号制）
+  font-size: $t-2xs; // 辅助标签弱化展示（两级字号制）
   opacity: 0.5;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -157,34 +157,34 @@
 }
 
 .gls-section {
-  margin-bottom: $spacing-3;
+  margin-bottom: $s-3;
 }
 
 .gls-section-title {
   @include gp-label-base;
-  font-size: $font-size-xs;
-  margin-bottom: $spacing-2;
+  font-size: $t-xs;
+  margin-bottom: $s-2;
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 // ── 水平条形（项目/作者行数排行共用：标签 + 轨道 + 三列数字）──
 .gls-bar-list {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 // 表头行（项目/作者行数排行共用）：与数据行 flex 列结构一致，保证文字与下方数字右对齐
 .gls-bar-head {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  padding-bottom: $spacing-1;
-  margin-bottom: $spacing-1;
-  font-size: $font-size-2xs; // 表头弱化（两级字号制）
-  font-weight: $font-weight-bold;
+  gap: $s-2;
+  padding-bottom: $s-1;
+  margin-bottom: $s-1;
+  font-size: $t-2xs; // 表头弱化（两级字号制）
+  font-weight: $fw-bold;
   letter-spacing: 0.06em;
   color: var(--b3-theme-on-surface-light);
   border-bottom: 1px solid var(--b3-border-color);
@@ -210,16 +210,16 @@
 .gls-bar-row {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  font-size: $font-size-xs;
+  gap: $s-2;
+  font-size: $t-xs;
 }
 
 // 可点击项目行：hover 时项目名变主题色，提示可打开详情（与 CommitAnalysisPanel 交互模式一致）
 .gls-bar-row--clickable {
   cursor: pointer;
-  padding: $spacing-1;
-  margin: -$spacing-1;
-  border-radius: $radius-sm;
+  padding: $s-1;
+  margin: -$s-1;
+  border-radius: $r-sm;
   transition: background-color 0.12s;
 
   &:hover {
@@ -234,8 +234,8 @@
 // 排名序号列（等宽数字右对齐，弱化强调，非交互）
 .gls-bar-rank {
   flex: 0 0 20px;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
   text-align: right;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
@@ -252,14 +252,14 @@
   // 轨道高度 5px、圆角 4px（radius-sm），色块存在感更强
   height: 5px;
   background: var(--b3-theme-surface);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   overflow: hidden;
 }
 
 .gls-bar-fill {
   display: block;
   height: 100%;
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: var(--b3-theme-primary);
 }
 
@@ -270,8 +270,8 @@
   margin-left: auto;
   display: flex;
   align-items: center;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
 }
 
 // 数字单元格：自适应数字宽度（含千位分隔符），禁止换行挤压
@@ -284,14 +284,14 @@
 }
 
 .gls-line-num + .gls-line-num {
-  margin-left: $spacing-2;
+  margin-left: $s-2;
 }
 
 // 占比列（净增绝对值占总净增绝对值的百分比，与净增排序同口径，等宽右对齐弱化展示）
 .gls-bar-share {
   flex: 0 0 42px;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
   text-align: right;
   white-space: nowrap;
   color: var(--b3-theme-on-surface);
@@ -301,10 +301,10 @@
 // 总行数列（当前工作区实际行数，存量口径，等宽右对齐中性色；与增量数字列区分）
 .gls-line-total {
   flex: 0 0 auto;
-  margin-left: $spacing-2;
+  margin-left: $s-2;
   min-width: 44px; // 稳定列宽，避免大数字波动挤压轨道（与占比列同宽级别）
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
   text-align: right;
   white-space: nowrap;
   color: var(--b3-theme-on-surface);

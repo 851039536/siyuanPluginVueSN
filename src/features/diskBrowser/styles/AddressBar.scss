@@ -4,7 +4,7 @@
 .db-address-bar {
   @include flex-align-center;
   justify-content: space-between;
-  padding: $spacing-6px $spacing-2;
+  padding: $s-px6 $s-2;
   background: var(--b3-theme-surface);
   border-bottom: 1px solid $border;
   flex-shrink: 0;
@@ -12,7 +12,7 @@
 
 .db-address-left {
   @include flex-align-center;
-  gap: $spacing-1;
+  gap: $s-1;
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -35,14 +35,14 @@
 .db-crumb {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-px;
-  padding: $spacing-2px $spacing-5px;
+  gap: $s-px3;
+  padding: $s-px2 $s-px5;
   border: none;
   background: transparent;
-  border-radius: $radius-px;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-medium;
+  border-radius: $r-px3;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-medium;
   color: var(--b3-theme-on-surface);
   cursor: pointer;
   transition:
@@ -57,34 +57,34 @@
 
   &:last-child {
     color: var(--b3-theme-on-background);
-    font-weight: $font-weight-semibold;
+    font-weight: $fw-semibold;
   }
 }
 
 .db-crumb-sep {
   flex-shrink: 0;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-light);
   opacity: 0.35;
-  margin: 0 $spacing-1px;
+  margin: 0 $s-px1;
 }
 
 .db-toolbar-actions {
   @include flex-align-center;
-  gap: $spacing-2px;
+  gap: $s-px2;
   flex-shrink: 0;
-  margin-left: $spacing-1;
+  margin-left: $s-1;
 }
 
 .db-item-count {
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
-  padding: $spacing-1px $spacing-5px;
+  padding: $s-px1 $s-px5;
   background: var(--b3-theme-surface-lighter);
-  border-radius: $radius-px;
+  border-radius: $r-px3;
   white-space: nowrap;
-  margin-right: $spacing-2px;
+  margin-right: $s-px2;
 }

@@ -5,7 +5,7 @@
 $ac-space-6: 6px; // 无对应 Token（全局间距档为 4px → 8px）
 $ac-space-10: 10px; // 无对应 Token（全局间距档为 8px → 12px）
 $ac-space-14: 14px; // 无对应 Token
-$ac-font-11: 11px; // 无对应 Token（介于 $font-size-2xs 与 $font-size-xs）
+$ac-font-11: 11px; // 无对应 Token（介于 $t-2xs 与 $t-xs）
 
 .ascii-converter {
   display: flex;
@@ -25,7 +25,7 @@ $ac-font-11: 11px; // 无对应 Token（介于 $font-size-2xs 与 $font-size-xs�
     .range-controls {
       display: flex;
       align-items: center;
-      gap: $spacing-2;
+      gap: $s-2;
 
       span {
         color: var(--b3-theme-on-surface);
@@ -36,7 +36,7 @@ $ac-font-11: 11px; // 无对应 Token（介于 $font-size-2xs 与 $font-size-xs�
 
   .ascii-table {
     border: 1px solid var(--b3-border-color);
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     overflow: hidden;
     max-height: 300px;
     overflow-y: auto;
@@ -59,7 +59,7 @@ $ac-font-11: 11px; // 无对应 Token（介于 $font-size-2xs 与 $font-size-xs�
         display: grid;
         grid-template-columns: 1fr 1fr 1.5fr 1.5fr;
         border-bottom: 1px solid var(--b3-border-color);
-        font-family: $vp-mono;
+        font-family: $ff-mono;
         font-size: $ac-font-11;
 
         &:last-child {
@@ -71,17 +71,17 @@ $ac-font-11: 11px; // 无对应 Token（介于 $font-size-2xs 与 $font-size-xs�
         }
 
         span {
-          padding: $spacing-1 $ac-space-10;
+          padding: $s-1 $ac-space-10;
           text-align: center;
           color: var(--b3-theme-on-surface);
 
           &:first-child {
-            font-weight: $font-weight-semibold;
+            font-weight: $fw-semibold;
             opacity: 0.7;
           }
 
           &:last-child {
-            font-weight: $font-weight-medium;
+            font-weight: $fw-medium;
             color: var(--b3-theme-primary);
           }
         }

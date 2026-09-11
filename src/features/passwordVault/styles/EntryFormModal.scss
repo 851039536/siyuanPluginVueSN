@@ -5,13 +5,13 @@
 .entry-form {
   display: flex;
   flex-direction: column;
-  gap: $spacing-3;
+  gap: $s-3;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
+  gap: $s-1;
 
   label {
     @include uppercase-label;

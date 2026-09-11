@@ -6,7 +6,7 @@
   grid-template-columns: minmax(0, 1fr) 68px 78px auto;
   align-items: center;
   gap: 0;
-  padding: $spacing-5px $spacing-2;
+  padding: $s-px5 $s-2;
   border-bottom: 1px solid var(--b3-border-color);
   cursor: pointer;
   transition: background-color 0.12s;
@@ -25,7 +25,7 @@
     }
 
     .db-item-label {
-      font-family: $vp-mono;
+      font-family: $ff-mono;
     }
   }
 }
@@ -34,8 +34,8 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: $spacing-6px;
-  padding-right: $spacing-2;
+  gap: $s-px6;
+  padding-right: $s-2;
 }
 
 .db-item-icon {
@@ -44,30 +44,30 @@
 }
 
 .db-item-label {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-background);
   @include text-ellipsis;
 }
 
 .db-item-size {
   text-align: right;
-  padding: 0 $spacing-6px;
+  padding: 0 $s-px6;
   @include small-mono-dimmed;
 }
 
 .db-item-date {
   text-align: right;
-  padding: 0 $spacing-6px;
+  padding: 0 $s-px6;
   @include small-mono-dimmed;
 }
 
 .db-item-actions {
   display: flex;
   align-items: center;
-  gap: $spacing-1px;
+  gap: $s-px1;
   opacity: 0;
   transition: opacity 0.12s;
-  margin-left: $spacing-1;
+  margin-left: $s-1;
 }
 
 .db-action-btn {

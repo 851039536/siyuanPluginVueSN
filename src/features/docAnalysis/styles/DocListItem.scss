@@ -5,7 +5,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-10px $spacing-4;
+  padding: $s-px10 $s-4;
   cursor: pointer;
   border-bottom: 1px solid var(--b3-border-color);
 
@@ -21,13 +21,13 @@
   .doc-title {
     display: flex;
     align-items: center;
-    gap: $spacing-6px;
-    font-size: $font-size-sm;
+    gap: $s-px6;
+    font-size: $t-sm;
     color: var(--b3-theme-on-background);
-    font-weight: $font-weight-medium;
+    font-weight: $fw-medium;
 
     .doc-icon {
-      font-size: $font-size-base;
+      font-size: $t-base;
       color: var(--b3-theme-primary);
       flex-shrink: 0;
     }
@@ -42,21 +42,21 @@
   .doc-meta {
     display: flex;
     align-items: center;
-    gap: $spacing-2;
-    margin-top: $spacing-1;
-    font-size: $font-size-2xs;
+    gap: $s-2;
+    margin-top: $s-1;
+    font-size: $t-2xs;
     color: var(--b3-theme-on-surface-variant);
     opacity: 0.6;
 
     .meta-notebook {
       display: flex;
       align-items: center;
-      gap: $spacing-px;
+      gap: $s-px3;
       flex-shrink: 0;
     }
 
     .meta-icon {
-      font-size: $font-size-xs;
+      font-size: $t-xs;
     }
 
     .meta-path {
@@ -70,24 +70,24 @@
   .doc-badges {
     display: flex;
     align-items: center;
-    gap: $spacing-1;
-    margin-left: $spacing-2;
+    gap: $s-1;
+    margin-left: $s-2;
     flex-shrink: 0;
   }
 
   .badge {
     display: inline-flex;
     align-items: center;
-    gap: $spacing-2px;
-    font-size: $font-size-xs;
-    padding: $spacing-2px $spacing-6px;
-    border-radius: $vp-radius;
+    gap: $s-px2;
+    font-size: $t-xs;
+    padding: $s-px2 $s-px6;
+    border-radius: $r-base;
     background: var(--b3-theme-surface-light);
     color: var(--b3-theme-on-surface-variant);
     white-space: nowrap;
 
     .badge-icon {
-      font-size: $font-size-xs;
+      font-size: $t-xs;
     }
 
     &.time-green {
@@ -128,10 +128,10 @@
 
   .doc-actions {
     flex-shrink: 0;
-    margin-left: $spacing-1;
+    margin-left: $s-1;
     display: flex;
     align-items: center;
-    gap: $spacing-2px;
+    gap: $s-px2;
   }
 
   .attrs-btn-wrapper {
@@ -144,8 +144,8 @@
       left: 50%;
       transform: translateX(-50%);
       min-width: 110px;
-      padding: $spacing-6px $spacing-10px;
-      border-radius: $vp-radius;
+      padding: $s-px6 $s-px10;
+      border-radius: $r-base;
       background: var(--b3-theme-background);
       border: 1px solid var(--b3-border-color);
       z-index: 100;
@@ -156,31 +156,31 @@
       }
       &::-webkit-scrollbar-thumb {
         background: var(--b3-scroll-color);
-        border-radius: $radius-2px;
+        border-radius: $r-px2;
       }
 
       .tooltip-header {
-        font-size: $font-size-2xs;
-        font-weight: $font-weight-bold;
+        font-size: $t-2xs;
+        font-weight: $fw-bold;
         letter-spacing: 0.06em;
         text-transform: uppercase;
         opacity: 0.45;
-        margin-bottom: $spacing-6px;
-        padding-bottom: $spacing-1;
+        margin-bottom: $s-px6;
+        padding-bottom: $s-1;
         border-bottom: 1px solid var(--b3-border-color);
       }
 
       .tooltip-item {
-        font-size: $font-size-xs;
-        padding: $spacing-px 0;
+        font-size: $t-xs;
+        padding: $s-px3 0;
         color: var(--b3-theme-on-background);
         display: flex;
         align-items: center;
-        gap: $spacing-1;
+        gap: $s-1;
 
         &::before {
           content: "✕";
-          font-size: $font-size-2xs;
+          font-size: $t-2xs;
           color: var(--b3-theme-error, #ef4444);
           opacity: 0.7;
         }
@@ -204,11 +204,11 @@
     width: 28px;
     height: 28px;
     border: 1px solid var(--b3-border-color);
-    border-radius: $vp-radius;
+    border-radius: $r-base;
     background: transparent;
     color: var(--b3-theme-on-surface-variant);
     cursor: pointer;
-    font-size: $font-size-base;
+    font-size: $t-base;
 
     &:hover {
       background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
@@ -218,25 +218,25 @@
 
   .doc-size {
     flex-shrink: 0;
-    margin-left: $spacing-3;
+    margin-left: $s-3;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: $spacing-2px;
+    gap: $s-px2;
 
     .wordcount-value {
-      font-size: $font-size-xs;
-      font-family: $vp-mono;
+      font-size: $t-xs;
+      font-family: $ff-mono;
       color: var(--b3-theme-on-surface-variant);
       background: var(--b3-theme-surface-light);
-      padding: $spacing-2px $spacing-2;
-      border-radius: $vp-radius;
+      padding: $s-px2 $s-2;
+      border-radius: $r-base;
       white-space: nowrap;
     }
 
     .size-value {
-      font-size: $font-size-xs;
-      font-family: $vp-mono;
+      font-size: $t-xs;
+      font-family: $ff-mono;
       color: var(--b3-theme-on-surface-variant);
       opacity: 0.7;
       white-space: nowrap;

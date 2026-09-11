@@ -24,11 +24,11 @@
   max-height: 85vh;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-lg;
+  border-radius: $r-lg;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  font-family: $font-zh;
+  font-family: $ff-zh;
 
   &.small {
     width: 450px;
@@ -88,31 +88,31 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  padding: $spacing-3;
+  padding: $s-3;
 }
 
 // 分类筛选器
 .category-filter {
   @include flex-row-gap(10px);
   justify-content: space-between;
-  margin-bottom: $spacing-3;
+  margin-bottom: $s-3;
 }
 
 .category-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-2;
+  gap: $s-2;
   flex: 1;
 }
 
 .category-chip {
   @include flex-row-gap(6px);
-  padding: $spacing-5px $spacing-3;
+  padding: $s-px5 $s-3;
   background: var(--b3-theme-surface-light);
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-full;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
+  border-radius: $r-full;
+  font-size: $t-xs;
+  font-weight: $fw-medium;
   color: var(--b3-theme-on-surface);
   cursor: pointer;
   transition: all 0.12s;
@@ -141,10 +141,10 @@
 
 .manage-categories-btn {
   @extend %icon-button;
-  padding: $spacing-6px;
+  padding: $s-px6;
   background: var(--b3-theme-surface-light);
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   color: var(--b3-theme-on-surface);
   flex-shrink: 0;
   transition: all 0.12s;
@@ -158,8 +158,8 @@
 
 // 控制区域
 .entries-controls {
-  @include flex-row-gap($spacing-2);
-  margin-bottom: $spacing-3;
+  @include flex-row-gap($s-2);
+  margin-bottom: $s-3;
 
   .search-icon {
     color: var(--b3-theme-on-surface-light);
@@ -173,13 +173,13 @@
   overflow-y: auto;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .no-entries {
   @include flex-center;
-  padding: $spacing-10 $spacing-3;
-  font-size: $font-size-xs;
+  padding: $s-10 $s-3;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface-light);
   font-style: italic;
   opacity: 0.5;
@@ -190,9 +190,9 @@
 // ============================================================
 
 .dialog-footer {
-  @include flex-row-gap($spacing-2);
+  @include flex-row-gap($s-2);
   justify-content: space-between;
-  padding: $spacing-10px $spacing-3;
+  padding: $s-px10 $s-3;
   background: var(--b3-theme-surface);
   border-top: 1px solid var(--b3-border-color);
 }
@@ -204,8 +204,8 @@
 .storage-footer {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-2 $spacing-4;
+  gap: $s-2;
+  padding: $s-2 $s-4;
   background: var(--b3-theme-surface);
   border-top: 1px solid var(--b3-border-color);
   cursor: pointer;
@@ -223,9 +223,9 @@
 }
 
 .storage-footer-label {
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface-light);
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -234,8 +234,8 @@
 }
 
 .storage-footer-path {
-  font-family: $vp-mono;
-  font-size: $font-size-xs;
+  font-family: $ff-mono;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.45;
   overflow: hidden;
@@ -251,6 +251,6 @@
 // ============================================================
 
 .form-actions {
-  @include flex-row-gap($spacing-2);
-  margin-top: $spacing-1;
+  @include flex-row-gap($s-2);
+  margin-top: $s-1;
 }

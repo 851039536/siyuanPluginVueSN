@@ -11,8 +11,8 @@
   @include codex-meta-label;
   display: inline-flex;
   align-items: center;
-  gap: $spacing-px;
-  font-family: $vp-mono;
+  gap: $s-px3;
+  font-family: $ff-mono;
   font-variant-numeric: tabular-nums;
 
   svg {
@@ -23,18 +23,18 @@
 
 // ============ 流式输出提示 ============
 .generation-tip {
-  margin-left: $spacing-2;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-normal;
+  margin-left: $s-2;
+  font-size: $t-2xs;
+  font-weight: $fw-normal;
   opacity: 0.5;
-  font-family: $vp-mono;
+  font-family: $ff-mono;
 }
 
 // ============ 对话计数徽章 ============
 .conv-count {
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
-  font-family: $vp-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
+  font-family: $ff-mono;
 }
 
 // ============ 内容区布局 ============
@@ -45,12 +45,12 @@
   min-height: 0;
 }
 
-.error-icon { color: var(--b3-theme-error); margin-bottom: $spacing-4; }
+.error-icon { color: var(--b3-theme-error); margin-bottom: $s-4; }
 
 .result-container {
   display: flex;
   flex-direction: column;
-  gap: $spacing-6px;
+  gap: $s-px6;
   flex: 1;
   min-height: 0;
 }
@@ -59,28 +59,28 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: $spacing-1 0;
+  padding: $s-1 0;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
 }
 
 .result-title {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface);
   display: flex;
   align-items: center;
-  gap: $spacing-6px;
+  gap: $s-px6;
   min-height: 20px;
 }
 
 .generating-indicator {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-6px;
-  font-size: $font-size-xs;
+  gap: $s-px6;
+  font-size: $t-xs;
   color: var(--b3-theme-primary);
 }
 
-.result-actions { display: flex; gap: $spacing-1; }
+.result-actions { display: flex; gap: $s-1; }
 
 .result-content {
   display: flex;
@@ -96,7 +96,7 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding-right: $spacing-2; // 右侧留白，避免滚动条贴住侧边栏
+  padding-right: $s-2; // 右侧留白，避免滚动条贴住侧边栏
 }
 
 .review-tab-empty {
@@ -105,14 +105,14 @@
   align-items: center;
   justify-content: center;
   flex: 1;
-  gap: $spacing-2;
+  gap: $s-2;
   color: var(--b3-theme-on-surface-variant);
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
 
   p {
     margin: 0;
     text-align: center;
-    line-height: $line-height-normal;
+    line-height: $lh-normal;
   }
 }
 
@@ -126,8 +126,8 @@
 .view-mode-toggle {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-px;
+  gap: $s-px3;
   background: var(--b3-theme-surface-lighter);
-  border-radius: $radius-sm;
-  padding: $spacing-1px;
+  border-radius: $r-sm;
+  padding: $s-px1;
 }

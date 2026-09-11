@@ -6,32 +6,32 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: $spacing-10px;
-  padding: $spacing-4 0;
+  gap: $s-px10;
+  padding: $s-4 0;
   text-align: center;
 
   .warning-icon {
     width: 40px;
     height: 40px;
     color: var(--b3-theme-warning, #f0ad4e);
-    margin-bottom: $spacing-1;
+    margin-bottom: $s-1;
   }
 
   .warning-text {
-    font-size: $font-size-sm;
+    font-size: $t-sm;
     color: var(--b3-theme-warning, #f0ad4e);
-    line-height: $line-height-normal;
+    line-height: $lh-normal;
     margin: 0;
   }
 
   .warning-sub {
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     color: var(--b3-theme-on-surface, #888);
     margin: 0;
   }
 
   .warning-count {
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     color: var(--b3-theme-on-background, #666);
     margin: 0;
   }
@@ -41,18 +41,18 @@
 .export-verify {
   display: flex;
   flex-direction: column;
-  gap: $spacing-10px;
-  padding: $spacing-2 0 0;
+  gap: $s-px10;
+  padding: $s-2 0 0;
 
   .verify-hint {
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     color: var(--b3-theme-on-background, #666);
     margin: 0;
     text-align: center;
   }
 
   .error-text {
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     color: var(--b3-theme-error, #e5484d);
     margin: 0;
     text-align: center;

@@ -7,26 +7,26 @@
   display: inline-flex;
   flex-direction: column;
   width: 100%;
-  font-family: $font-zh;
+  font-family: $ff-zh;
   vertical-align: middle;
 
   // ===== 面板 =====
   &__panel {
-    background: var(--b3-theme-background, $color-bg);
-    border: 1px solid var(--b3-border-color, $color-border);
-    border-radius: $vp-radius;
+    background: var(--b3-theme-background, $c-bg);
+    border: 1px solid var(--b3-border-color, $c-border);
+    border-radius: $r-base;
     overflow: hidden;
     transition: border-color 0.12s ease;
   }
 
   // ===== 筛选区（内嵌无边框 Input，焦点反馈由本容器承担） =====
   &__filter {
-    padding: $spacing-2;
-    border-bottom: 1px solid var(--b3-border-color, $color-border);
+    padding: $s-2;
+    border-bottom: 1px solid var(--b3-border-color, $c-border);
     transition: background-color 0.12s ease;
 
     &:focus-within {
-      background: var(--b3-theme-surface-lighter, $color-surface);
+      background: var(--b3-theme-surface-lighter, $c-surface);
     }
   }
 
@@ -37,7 +37,7 @@
     outline: none;
 
     &:focus-visible {
-      outline: 2px solid var(--b3-theme-primary, $color-danger);
+      outline: 2px solid var(--b3-theme-primary, $c-danger);
       outline-offset: -2px;
     }
 
@@ -50,11 +50,11 @@
     }
 
     &::-webkit-scrollbar-thumb {
-      background: var(--b3-theme-surface-light, $color-surface);
-      border-radius: $radius-sm;
+      background: var(--b3-theme-surface-light, $c-surface);
+      border-radius: $r-sm;
 
       &:hover {
-        background: var(--b3-theme-secondary, $color-muted);
+        background: var(--b3-theme-secondary, $c-muted);
       }
     }
   }
@@ -64,29 +64,29 @@
     display: flex;
     align-items: center;
     gap: m.$gap-xs; // 6px
-    padding: $spacing-2px m.$gap-xs; // 2px 6px
+    padding: $s-px2 m.$gap-xs; // 2px 6px
     min-height: 28px; // 无对应 Token
-    font-size: $font-size-xs;
-    color: var(--b3-theme-on-background, $color-fg);
+    font-size: $t-xs;
+    color: var(--b3-theme-on-background, $c-fg);
     cursor: pointer;
     transition: background-color 0.12s ease, color 0.12s ease;
 
     &:hover:not(.si-listbox__option--disabled) {
-      background: var(--b3-theme-surface-lighter, $color-surface);
+      background: var(--b3-theme-surface-lighter, $c-surface);
     }
 
     // 选中底色：弱化主色（相对颜色语法，明暗主题下自动正确）
     &--highlight {
-      background: hsla(from var(--b3-theme-primary, $color-danger) h s l / 0.12);
+      background: hsla(from var(--b3-theme-primary, $c-danger) h s l / 0.12);
 
       &:hover:not(.si-listbox__option--disabled) {
-        background: hsla(from var(--b3-theme-primary, $color-danger) h s l / 0.18);
+        background: hsla(from var(--b3-theme-primary, $c-danger) h s l / 0.18);
       }
     }
 
     &--selected {
-      color: var(--b3-theme-on-background, $color-fg);
-      font-weight: $font-weight-medium;
+      color: var(--b3-theme-on-background, $c-fg);
+      font-weight: $fw-medium;
     }
 
     &--disabled {
@@ -96,7 +96,7 @@
 
     // 键盘活动项：内嵌轮廓，与选中底色可同时存在而不混淆
     &--active:not(.si-listbox__option--disabled) {
-      outline: 2px solid var(--b3-theme-primary, $color-danger);
+      outline: 2px solid var(--b3-theme-primary, $c-danger);
       outline-offset: -2px;
     }
   }
@@ -104,7 +104,7 @@
   &__option-text {
     flex: 1;
     min-width: 0;
-    line-height: $line-height-normal;
+    line-height: $lh-normal;
     word-break: break-word;
   }
 
@@ -115,32 +115,32 @@
     justify-content: center;
     flex-shrink: 0;
     box-sizing: border-box;
-    color: var(--b3-theme-primary, $color-danger);
+    color: var(--b3-theme-primary, $c-danger);
     transition: background-color 0.12s ease, border-color 0.12s ease;
   }
 
   &--checkbox &__check {
-    border: 1px solid var(--b3-border-color, $color-border);
-    border-radius: $radius-sm;
-    color: var(--b3-theme-on-primary, $color-bg);
+    border: 1px solid var(--b3-border-color, $c-border);
+    border-radius: $r-sm;
+    color: var(--b3-theme-on-primary, $c-bg);
   }
 
   &--checkbox &__option--selected &__check {
-    background: var(--b3-theme-primary, $color-danger);
-    border-color: var(--b3-theme-primary, $color-danger);
+    background: var(--b3-theme-primary, $c-danger);
+    border-color: var(--b3-theme-primary, $c-danger);
   }
 
   // ===== 空态（无数据与筛选无结果共用） =====
   &__empty {
-    padding: $spacing-3;
+    padding: $s-3;
     text-align: center;
-    color: var(--b3-theme-secondary, $color-muted);
-    font-size: $font-size-xs;
+    color: var(--b3-theme-secondary, $c-muted);
+    font-size: $t-xs;
   }
 
   // ===== 状态 =====
   &--error &__panel {
-    border-color: var(--b3-theme-error, $color-danger);
+    border-color: var(--b3-theme-error, $c-danger);
   }
 
   &--disabled &__panel {
@@ -156,9 +156,9 @@
   // ===== 尺寸档位（字号阶梯 10 / 12 / 14 / 16，行内边距与最小行高同步递进） =====
   &--xsmall {
     .si-listbox__option {
-      padding: $spacing-2px m.$gap-xs; // 2px 6px
+      padding: $s-px2 m.$gap-xs; // 2px 6px
       min-height: 22px; // 无对应 Token
-      font-size: $font-size-2xs;
+      font-size: $t-2xs;
     }
 
     .si-listbox__check {
@@ -167,24 +167,24 @@
     }
 
     .si-listbox__empty {
-      font-size: $font-size-2xs;
+      font-size: $t-2xs;
     }
   }
 
   &--small {
     .si-listbox__option {
-      padding: $spacing-2px m.$gap-xs; // 2px 6px
+      padding: $s-px2 m.$gap-xs; // 2px 6px
       min-height: 28px; // 无对应 Token
-      font-size: $font-size-xs;
+      font-size: $t-xs;
     }
 
     .si-listbox__check {
-      width: $spacing-4; // 16px
-      height: $spacing-4;
+      width: $s-4; // 16px
+      height: $s-4;
     }
 
     .si-listbox__empty {
-      font-size: $font-size-xs;
+      font-size: $t-xs;
     }
   }
 
@@ -192,7 +192,7 @@
     .si-listbox__option {
       padding: m.$gap-xs m.$spacing-2_5; // 6px 10px
       min-height: 36px;
-      font-size: $font-size-sm;
+      font-size: $t-sm;
     }
 
     .si-listbox__check {
@@ -201,7 +201,7 @@
     }
 
     .si-listbox__empty {
-      font-size: $font-size-sm;
+      font-size: $t-sm;
     }
   }
 
@@ -209,16 +209,16 @@
     .si-listbox__option {
       padding: m.$spacing-2_5 14px; // 10px 14px；14px 无对应 Token
       min-height: 44px;
-      font-size: $font-size-base;
+      font-size: $t-base;
     }
 
     .si-listbox__check {
-      width: $spacing-5; // 20px
-      height: $spacing-5;
+      width: $s-5; // 20px
+      height: $s-5;
     }
 
     .si-listbox__empty {
-      font-size: $font-size-base;
+      font-size: $t-base;
     }
   }
 }

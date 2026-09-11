@@ -7,15 +7,15 @@
 
 .toolbar-row {
   display: flex;
-  gap: $spacing-2;
-  padding: $spacing-2 $spacing-3;
+  gap: $s-2;
+  padding: $s-2 $s-3;
   align-items: center;
 }
 
 .toolbar-row-secondary {
   display: flex;
-  gap: $spacing-2;
-  padding: 0 $spacing-3 $spacing-2;
+  gap: $s-2;
+  padding: 0 $s-3 $s-2;
   align-items: center;
   justify-content: space-between;
 }
@@ -36,7 +36,7 @@
 
 .filter-group {
   display: flex;
-  gap: $spacing-1;
+  gap: $s-1;
 
   // 筛选按钮选中态：Codex 边框强调，不用背景色硬切换
   .si-button.active {
@@ -46,11 +46,11 @@
   }
 }
 
-// 快捷键总数（数据突出展示，字号允许使用 $font-size-xs）
+// 快捷键总数（数据突出展示，字号允许使用 $t-xs）
 .total-count {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-  line-height: $line-height-tight;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
+  line-height: $lh-tight;
   color: var(--b3-theme-on-surface-variant);
-  padding: 0 $spacing-1;
+  padding: 0 $s-1;
 }

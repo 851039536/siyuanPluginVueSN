@@ -1,7 +1,7 @@
 @use '@/variables.scss' as *;
 
 // ===== 本地变量 =====
-$rr-accent: $color-accent;
+$rr-accent: $c-accent;
 $rr-transition: all 0.12s;
 
 // ===== 可复用 Mixins =====
@@ -14,7 +14,7 @@ $rr-transition: all 0.12s;
   width: $size;
   height: $size;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: transparent;
   cursor: pointer;
   flex-shrink: 0;
@@ -40,12 +40,12 @@ $rr-transition: all 0.12s;
 
 // 未读/计数徽章
 @mixin badge($line-h: 16px, $min-w: 16px, $pad-h: 5px) {
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
-  font-weight: $font-weight-semibold;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
+  font-weight: $fw-semibold;
   padding: 0 $pad-h;
   line-height: $line-h;
-  border-radius: $radius-full;
+  border-radius: $r-full;
   min-width: $min-w;
   text-align: center;
   flex-shrink: 0;

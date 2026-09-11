@@ -6,7 +6,7 @@
 .milestones-panel {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1; // 模块上下间距统一 4px
+  gap: $s-1; // 模块上下间距统一 4px
 }
 
 // ===== 0. Top Bar =====
@@ -18,14 +18,14 @@
 .btn-settings {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-5px;
-  padding: $spacing-5px $spacing-10px;
+  gap: $s-px5;
+  padding: $s-px5 $s-px10;
   border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 
@@ -45,9 +45,9 @@
 .hero-banner {
   display: flex;
   align-items: center;
-  gap: $spacing-3;
-  padding: $spacing-4;
-  border-radius: $vp-radius;
+  gap: $s-3;
+  padding: $s-4;
+  border-radius: $r-base;
   background: linear-gradient(135deg, rgba(var(--b3-theme-primary-rgb), 0.1) 0%, rgba(var(--b3-theme-primary-rgb), 0.03) 100%);
   border: 1px solid rgba(var(--b3-theme-primary-rgb), 0.15);
 }
@@ -58,14 +58,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: $radius-lg;
+  border-radius: $r-lg;
   background: rgba(var(--b3-theme-primary-rgb), 0.12);
   flex-shrink: 0;
 }
 
 .hero-icon {
   font-size: 28px; // 无精确 Token（英雄区大图标字形）
-  line-height: $line-height-tight;
+  line-height: $lh-tight;
 }
 
 .hero-body {
@@ -75,51 +75,51 @@
 
 .hero-level {
   font-family: stats.$font-mono;
-  font-size: $font-size-sm; // 数据突出展示（等级数值）
-  font-weight: $font-weight-bold;
+  font-size: $t-sm; // 数据突出展示（等级数值）
+  font-weight: $fw-bold;
   color: var(--b3-theme-primary);
   letter-spacing: 0.02em;
 }
 
 .hero-title {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-xs;
+  font-weight: $fw-bold;
   color: var(--b3-theme-on-surface);
-  margin-top: $spacing-1px;
+  margin-top: $s-px1;
 }
 
 .hero-meta {
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
-  margin-top: $spacing-2px;
+  margin-top: $s-px2;
 }
 
 .hero-stats {
   display: flex;
   align-items: center;
-  gap: $spacing-6px;
-  margin-top: $spacing-6px;
+  gap: $s-px6;
+  margin-top: $s-px6;
 }
 
 .hero-stat {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-1;
-  font-size: $font-size-2xs;
+  gap: $s-1;
+  font-size: $t-2xs;
 }
 
 .hero-stat-num {
   font-family: stats.$font-mono;
-  font-weight: $font-weight-bold;
+  font-weight: $fw-bold;
   color: var(--b3-theme-primary);
 }
 
 .hero-stat-key {
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -164,8 +164,8 @@
   align-items: center;
   justify-content: center;
   font-family: stats.$font-mono;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-xs;
+  font-weight: $fw-bold;
   color: var(--b3-theme-primary);
 }
 
@@ -173,12 +173,12 @@
 .level-next-row {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  padding: 0 $spacing-1;
+  gap: $s-2;
+  padding: 0 $s-1;
 }
 
 .level-next-label {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.45;
   white-space: nowrap;
@@ -189,21 +189,21 @@
   flex: 1;
   height: 3px;
   background: rgba(var(--b3-theme-on-surface-rgb), 0.06);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   overflow: hidden;
 }
 
 .level-bar-fill {
   height: 100%;
   background: var(--b3-theme-primary);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   transition: width 0.6s ease;
 }
 
 // ===== 2. Next Goal =====
 .next-goal-card {
-  padding: $spacing-3;
-  border-radius: $vp-radius;
+  padding: $s-3;
+  border-radius: $r-base;
   background: rgba(var(--b3-theme-primary-rgb), 0.04);
   border: 1px dashed rgba(var(--b3-theme-primary-rgb), 0.2);
 }
@@ -212,13 +212,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: $spacing-6px;
+  margin-bottom: $s-px6;
 }
 
 .next-goal-prefix {
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--b3-theme-on-surface);
@@ -227,16 +227,16 @@
 
 .next-goal-percent {
   font-family: stats.$font-mono;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-xs;
+  font-weight: $fw-bold;
   color: var(--b3-theme-primary);
 }
 
 .next-goal-main {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  margin-bottom: $spacing-2;
+  gap: $s-2;
+  margin-bottom: $s-2;
 }
 
 .next-goal-icon {
@@ -244,8 +244,8 @@
 }
 
 .next-goal-name {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
 }
@@ -253,20 +253,20 @@
 .next-goal-bar {
   height: 6px;
   background: rgba(var(--b3-theme-primary-rgb), 0.1);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   overflow: hidden;
-  margin-bottom: $spacing-6px;
+  margin-bottom: $s-px6;
 }
 
 .next-goal-bar-fill {
   height: 100%;
   background: var(--b3-theme-primary);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   transition: width 0.6s ease;
 }
 
 .next-goal-encourage {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.55;
   font-style: italic;
@@ -276,24 +276,24 @@
 .categories-section {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .section-label {
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--b3-theme-on-surface);
   opacity: 0.45;
-  padding-bottom: $spacing-1;
+  padding-bottom: $s-1;
   border-bottom: 1px solid var(--b3-border-color);
 }
 
 .category-card {
   border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   overflow: hidden;
   background: var(--b3-theme-surface);
 
@@ -305,14 +305,14 @@
 .category-header {
   display: flex;
   align-items: center;
-  gap: $spacing-6px;
+  gap: $s-px6;
   width: 100%;
-  padding: $spacing-10px $spacing-3;
+  padding: $s-px10 $s-3;
   border: none;
   background: transparent;
   color: var(--b3-theme-on-surface);
   cursor: pointer;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   transition: background 0.15s;
 
   &:hover {
@@ -321,19 +321,19 @@
 }
 
 .category-icon {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   flex-shrink: 0;
 }
 
 .category-name {
-  font-weight: $font-weight-semibold;
+  font-weight: $fw-semibold;
   flex: 1;
   text-align: left;
 }
 
 .category-count {
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-primary);
   opacity: 0.6;
 }
@@ -352,7 +352,7 @@
 
 .category-body,
 .category-preview {
-  padding: $spacing-2 $spacing-3 $spacing-10px;
+  padding: $s-2 $s-3 $s-px10;
   border-top: 1px solid var(--b3-border-color);
 }
 
@@ -360,22 +360,22 @@
 .milestone-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-6px;
+  gap: $s-px6;
 }
 
 .category-preview {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: $spacing-6px;
+  gap: $s-px6;
 }
 
 .more-hint {
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.35;
-  padding: $spacing-1 $spacing-2;
+  padding: $s-1 $s-2;
 }
 
 // ===== 4. Achievement Wall =====
@@ -387,21 +387,21 @@
 .ach-category-bar {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-1;
-  margin: $spacing-2 0;
+  gap: $s-1;
+  margin: $s-2 0;
 }
 
 .ach-category-tab {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-1 $spacing-10px;
+  gap: $s-1;
+  padding: $s-1 $s-px10;
   border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   background: transparent;
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   cursor: pointer;
   transition: all 0.15s;
 
@@ -414,36 +414,36 @@
     border-color: var(--b3-theme-primary);
     background: rgba(var(--b3-theme-primary-rgb), 0.08);
     color: var(--b3-theme-primary);
-    font-weight: $font-weight-bold;
+    font-weight: $fw-bold;
   }
 }
 
 .ach-cat-icon {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   flex-shrink: 0;
 }
 
 .ach-cat-name {
-  font-weight: $font-weight-semibold;
+  font-weight: $fw-semibold;
 }
 
 .ach-cat-count {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   opacity: 0.5;
-  font-weight: $font-weight-bold;
+  font-weight: $fw-bold;
 }
 
 // Tier bar active colors
 .ach-tier-bar {
   margin-top: 0;
-  margin-bottom: $spacing-1;
+  margin-bottom: $s-1;
 }
 
 .ach-tier-tab {
   &.tier-active-common {
-    border-color: stats.$color-success;
-    background: rgba(stats.$color-success, 0.08);
-    color: stats.$color-success;
+    border-color: stats.$c-success;
+    background: rgba(stats.$c-success, 0.08);
+    color: stats.$c-success;
   }
 
   &.tier-active-rare {
@@ -468,11 +468,11 @@
 .achievement-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  gap: $spacing-6px;
-  margin-top: $spacing-2;
+  gap: $s-px6;
+  margin-top: $s-2;
 
   &.locked {
-    margin-top: $spacing-6px;
+    margin-top: $s-px6;
   }
 }
 
@@ -480,8 +480,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: $spacing-10px $spacing-2;
-  border-radius: stats.$radius-sm;
+  padding: $s-px10 $s-2;
+  border-radius: stats.$r-sm;
   text-align: center;
   position: relative;
   transition: transform 0.15s ease;
@@ -491,8 +491,8 @@
   }
 
   &.tier-common {
-    background: rgba(stats.$color-success, 0.06);
-    border: 1px solid rgba(stats.$color-success, 0.15);
+    background: rgba(stats.$c-success, 0.06);
+    border: 1px solid rgba(stats.$c-success, 0.15);
   }
 
   &.tier-rare {
@@ -512,29 +512,29 @@
 
   .ach-icon {
     font-size: 22px; // 无精确 Token（成就大图标字形）
-    margin-bottom: $spacing-1;
+    margin-bottom: $s-1;
   }
 
   .ach-title {
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-bold;
+    font-size: $t-2xs;
+    font-weight: $fw-bold;
     color: var(--b3-theme-on-surface);
-    line-height: $line-height-tight;
+    line-height: $lh-tight;
   }
 
   .ach-desc {
-    font-size: $font-size-2xs;
+    font-size: $t-2xs;
     color: var(--b3-theme-on-surface);
     opacity: 0.4;
-    line-height: $line-height-tight;
-    margin-top: $spacing-2px;
+    line-height: $lh-tight;
+    margin-top: $s-px2;
   }
 
   &.locked-card {
     opacity: 0.35;
     filter: grayscale(0.5);
 
-    .ach-icon { font-size: $font-size-lg; } // 图标字形尺寸（非正文文字）
+    .ach-icon { font-size: $t-lg; } // 图标字形尺寸（非正文文字）
   }
 }
 
@@ -543,13 +543,13 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: $spacing-6px $spacing-10px;
-  margin-top: $spacing-2;
+  padding: $s-px6 $s-px10;
+  margin-top: $s-2;
   border: 1px dashed var(--b3-border-color);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   background: transparent;
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   cursor: pointer;
 
   &:hover {
@@ -570,7 +570,7 @@
 // ===== Custom achievement card =====
 .achievement-card.custom-ach {
   position: relative;
-  padding-top: $spacing-14px;
+  padding-top: $s-px14;
 }
 
 .btn-del-ach {
@@ -586,16 +586,16 @@
   background: transparent;
   color: var(--b3-theme-on-surface);
   opacity: 0.25;
-  font-size: $font-size-xs;
-  line-height: $line-height-tight;
+  font-size: $t-xs;
+  line-height: $lh-tight;
   cursor: pointer;
-  border-radius: $radius-2px;
+  border-radius: $r-px2;
   padding: 0;
 
   &:hover {
     opacity: 1;
-    color: stats.$color-danger;
-    background: rgba(stats.$color-danger, 0.08);
+    color: stats.$c-danger;
+    background: rgba(stats.$c-danger, 0.08);
   }
 }
 
@@ -604,10 +604,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: $spacing-2px;
-  padding: $spacing-2 $spacing-10px;
+  gap: $s-px2;
+  padding: $s-2 $s-px10;
   min-width: 68px;
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   position: relative;
   background: rgba(var(--b3-theme-on-surface-rgb), 0.03);
   border: 1px solid transparent;
@@ -624,7 +624,7 @@
 
     .chip-label {
       color: var(--b3-theme-primary);
-      font-weight: $font-weight-semibold;
+      font-weight: $fw-semibold;
     }
   }
 
@@ -635,39 +635,39 @@
 }
 
 .chip-icon {
-  font-size: $font-size-sm; // 图标字形尺寸（非正文文字）
-  line-height: $line-height-tight;
+  font-size: $t-sm; // 图标字形尺寸（非正文文字）
+  line-height: $lh-tight;
 }
 
 .chip-label {
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   text-align: center;
   white-space: nowrap;
-  line-height: $line-height-tight;
+  line-height: $lh-tight;
 }
 
 .chip-tier {
-  font-size: $font-size-2xs;
-  padding: 0 $spacing-1;
-  border-radius: $radius-px;
-  font-weight: $font-weight-bold;
-  line-height: $line-height-normal;
+  font-size: $t-2xs;
+  padding: 0 $s-1;
+  border-radius: $r-px3;
+  font-weight: $fw-bold;
+  line-height: $lh-normal;
 }
 
 .chip-progress {
   width: 100%;
   height: 2px;
   background: rgba(var(--b3-theme-on-surface-rgb), 0.08);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   overflow: hidden;
-  margin-top: $spacing-2px;
+  margin-top: $s-px2;
 }
 
 .chip-progress-fill {
   height: 100%;
   background: var(--b3-theme-primary);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   transition: width 0.6s ease;
 }
 

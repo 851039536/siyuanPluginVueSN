@@ -6,7 +6,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .gp-card-info {
@@ -15,32 +15,32 @@
 }
 
 .gp-card-name {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-  margin-bottom: $spacing-1px;
-  border-radius: $radius-sm;
-  padding: $spacing-1px $spacing-1;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
+  margin-bottom: $s-px1;
+  border-radius: $r-sm;
+  padding: $s-px1 $s-1;
 
   // 搜索关键词高亮片段
   .gp-hl {
     background: var(--b3-theme-primary-lightest);
     color: var(--b3-theme-primary);
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
   }
 }
 
 .gp-card-note {
   display: flex;
   align-items: flex-start;
-  gap: $spacing-1;
-  margin-top: $spacing-px;
-  padding: $spacing-px $spacing-6px;
-  font-size: $font-size-2xs;
+  gap: $s-1;
+  margin-top: $s-px3;
+  padding: $s-px3 $s-px6;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.55;
   background: var(--b3-theme-surface);
-  border-radius: $radius-sm;
-  line-height: $line-height-normal;
+  border-radius: $r-sm;
+  line-height: $lh-normal;
   @include text-ellipsis;
 
   span {
@@ -52,8 +52,8 @@
 .gp-md-files {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-px;
-  margin-top: $spacing-px;
+  gap: $s-px3;
+  margin-top: $s-px3;
 }
 
 // Markdown 文件徽章（按文件类型着色，readme/agents/claude/codebuddy/other 五档）
@@ -135,9 +135,9 @@
 .gp-card-path {
   display: flex;
   align-items: center;
-  gap: $spacing-px;
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
+  gap: $s-px3;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
   opacity: 0.5;
   max-width: 280px;
 
@@ -155,21 +155,21 @@
 .gp-branch-row {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  margin-top: $spacing-px;
+  gap: $s-1;
+  margin-top: $s-px3;
   flex-wrap: wrap;
 }
 
 .gp-branch-tag {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-2px;
-  padding: $spacing-1px $spacing-6px;
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
-  font-weight: $font-weight-semibold;
+  gap: $s-px2;
+  padding: $s-px1 $s-px6;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
+  font-weight: $fw-semibold;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: transparent;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
@@ -193,8 +193,8 @@
 .gp-card-name-row {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  margin-bottom: $spacing-2px;
+  gap: $s-1;
+  margin-bottom: $s-px2;
 }
 
 .gp-star-btn {
@@ -220,11 +220,11 @@
 .gp-archived-tag {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-2px;
-  padding: $spacing-1px $spacing-5px;
-  border-radius: $radius-sm;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
+  gap: $s-px2;
+  padding: $s-px1 $s-px5;
+  border-radius: $r-sm;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
   background: var(--b3-theme-on-surface);
   color: var(--b3-theme-background);
   opacity: 0.5;
@@ -233,9 +233,9 @@
 .gp-activity {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-2px;
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
+  gap: $s-px2;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
   white-space: nowrap;
 
   &.gp-act-fresh { color: var(--b3-theme-success); opacity: 0.8; }
@@ -248,12 +248,12 @@
 .gp-multi-path-badge {
   display: inline-flex;
   align-items: center;
-  margin-left: $spacing-6px;
-  padding: 0 $spacing-5px;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-medium;
-  line-height: $line-height-tight;
-  border-radius: $radius-sm;
+  margin-left: $s-px6;
+  padding: 0 $s-px5;
+  font-size: $t-2xs;
+  font-weight: $fw-medium;
+  line-height: $lh-tight;
+  border-radius: $r-sm;
   background: var(--b3-theme-primary-lightest);
   color: var(--b3-theme-primary);
   opacity: 0.7;

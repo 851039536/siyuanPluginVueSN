@@ -6,7 +6,7 @@
 
 .si-datepicker {
   &__calendar {
-    padding: $spacing-2;
+    padding: $s-2;
     width: max-content;
   }
 
@@ -21,9 +21,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    height: $spacing-5; // 20px
-    font-size: $font-size-2xs;
-    color: var(--b3-theme-secondary, $color-muted);
+    height: $s-5; // 20px
+    font-size: $t-2xs;
+    color: var(--b3-theme-secondary, $c-muted);
     user-select: none;
   }
 
@@ -41,37 +41,37 @@
     height: var(--dp-cell-size, 24px);
     padding: 0;
     border: 1px solid transparent;
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     background: transparent;
-    font-family: $font-zh;
-    font-size: var(--dp-cell-font, #{$font-size-xs});
-    color: var(--b3-theme-on-background, $color-fg);
+    font-family: $ff-zh;
+    font-size: var(--dp-cell-font, #{$t-xs});
+    color: var(--b3-theme-on-background, $c-fg);
     cursor: pointer;
     transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
 
     // 焦点环用 outline —— focus-ring mixin 只改 border-color，本组件实底单元格上不可见
     &:focus-visible {
-      outline: 2px solid var(--b3-theme-primary, $color-danger);
+      outline: 2px solid var(--b3-theme-primary, $c-danger);
       outline-offset: 1px;
     }
 
     &:hover:not(:disabled):not(.si-datepicker__day--selected) {
-      border-color: var(--b3-theme-primary, $color-danger);
+      border-color: var(--b3-theme-primary, $c-danger);
     }
 
     // 非本月日期弱化
     &--outside {
-      color: var(--b3-theme-secondary, $color-muted);
+      color: var(--b3-theme-secondary, $c-muted);
     }
 
     // 今日描边标记
     &--today {
-      border-color: var(--b3-theme-primary, $color-danger);
+      border-color: var(--b3-theme-primary, $c-danger);
     }
 
     // 区间内部：浅主色底，去圆角以形成连续区间条
     &--in-range {
-      background: hsla(from var(--b3-theme-primary, $color-danger) h s l / 0.12);
+      background: hsla(from var(--b3-theme-primary, $c-danger) h s l / 0.12);
       border-radius: 0;
     }
 
@@ -82,22 +82,22 @@
     }
 
     &--range-start {
-      border-top-left-radius: $radius-sm;
-      border-bottom-left-radius: $radius-sm;
+      border-top-left-radius: $r-sm;
+      border-bottom-left-radius: $r-sm;
     }
 
     &--range-end {
-      border-top-right-radius: $radius-sm;
-      border-bottom-right-radius: $radius-sm;
+      border-top-right-radius: $r-sm;
+      border-bottom-right-radius: $r-sm;
     }
 
     // 选中 / 区间端点：主色实底
     &--selected,
     &--range-start,
     &--range-end {
-      background: var(--b3-theme-primary, $color-danger);
-      border-color: var(--b3-theme-primary, $color-danger);
-      color: var(--b3-theme-on-primary, $color-bg);
+      background: var(--b3-theme-primary, $c-danger);
+      border-color: var(--b3-theme-primary, $c-danger);
+      color: var(--b3-theme-on-primary, $c-bg);
     }
 
     &:disabled {

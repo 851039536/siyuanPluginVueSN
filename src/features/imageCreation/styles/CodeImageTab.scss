@@ -15,16 +15,16 @@
 .mode-toggle {
   display: flex;
   border: 1px solid var(--b3-theme-background-light);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   overflow: hidden;
 
   .mode-btn {
     flex: 1;
-    padding: $spacing-1 $spacing-3;
+    padding: $s-1 $s-3;
     border: none;
     background: transparent;
     color: var(--b3-theme-on-surface);
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     cursor: pointer;
     transition: all 0.15s;
 
@@ -41,7 +41,7 @@
 
 // 代码输入
 .code-input {
-  font-family: $vp-mono !important;
+  font-family: $ff-mono !important;
   resize: vertical;
 }
 
@@ -66,14 +66,14 @@
 // 代码/文字内容使用等宽字体（内联 font-family 覆盖具体选择）
 .code-content pre code,
 .text-body {
-  font-family: $vp-mono;
+  font-family: $ff-mono;
 }
 
 // 滑块
 .slider-control {
   width: 100%;
   height: 4px;
-  border-radius: $radius-2px;
+  border-radius: $r-px2;
   -webkit-appearance: none;
   appearance: none;
   background: var(--b3-theme-background-light);
@@ -95,7 +95,7 @@
   flex: 1;
   min-width: 0;
   height: 4px;
-  border-radius: $radius-2px;
+  border-radius: $r-px2;
   -webkit-appearance: none;
   appearance: none;
   background: var(--b3-theme-background-light);
@@ -114,12 +114,12 @@
 
 // 预览区域
 .code-preview-wrapper {
-  padding: $spacing-3;
+  padding: $s-3;
   overflow: auto;
 }
 
 .code-preview {
-  border-radius: $radius-md;
+  border-radius: $r-md;
   overflow: hidden;
   // UI 容器用边框替代阴影（Codex 风格）
   border: 1px solid var(--b3-theme-background-light);
@@ -131,15 +131,15 @@
 .window-header {
   display: flex;
   align-items: center;
-  padding: $spacing-2 $spacing-3;
+  padding: $s-2 $s-3;
   background: rgba(0, 0, 0, 0.05);
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .window-buttons {
   display: flex;
-  gap: $spacing-px;
+  gap: $s-px3;
 }
 
 .window-btn {
@@ -155,20 +155,20 @@
 
 .window-title {
   // 辅助文字
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-medium;
+  font-size: $t-2xs;
+  font-weight: $fw-medium;
   color: var(--b3-theme-on-surface);
   flex: 1;
   text-align: center;
 }
 
 .code-content {
-  padding: $spacing-3;
+  padding: $s-3;
   overflow-x: auto;
 
   pre {
     margin: 0;
-    line-height: $line-height-normal;
+    line-height: $lh-normal;
   }
 
   code {
@@ -179,7 +179,7 @@
 
 // 文字预览
 .text-preview {
-  border-radius: $radius-lg;
+  border-radius: $r-lg;
   overflow: hidden;
   // UI 容器用边框替代阴影（Codex 风格）
   border: 1px solid var(--b3-theme-background-light);
@@ -192,35 +192,35 @@
 
 // 底色取色器与背景图缩略图
 .color-swatch {
-  width: $spacing-6;
-  height: $spacing-5;
+  width: $s-6;
+  height: $s-5;
   padding: 0;
   border: 1px solid var(--b3-theme-background-light);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: transparent;
   cursor: pointer;
 }
 
 .bg-thumb {
-  width: $spacing-8;
-  height: $spacing-8;
+  width: $s-8;
+  height: $s-8;
   object-fit: contain;
   border: 1px solid var(--b3-theme-background-light);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: var(--b3-theme-surface, #ffffff);
-  padding: $spacing-1;
+  padding: $s-1;
 }
 
 .bg-empty-hint {
   // 辅助文字
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.45;
 }
 
 .text-content {
   flex: 1;
-  padding: $spacing-6;
+  padding: $s-6;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -230,13 +230,13 @@
 .text-body {
   white-space: pre-wrap;
   word-wrap: break-word;
-  line-height: $line-height-relaxed;
+  line-height: $lh-relaxed;
 }
 
 // 装饰元素
 .decorations {
   position: relative;
-  padding: $spacing-2 $spacing-3;
+  padding: $s-2 $s-3;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -244,15 +244,15 @@
 }
 
 .watermark {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: rgba(0, 0, 0, 0.5);
-  font-weight: $font-weight-medium;
+  font-weight: $fw-medium;
 }
 
 .metadata {
   display: flex;
-  gap: $spacing-2;
-  font-size: $font-size-2xs;
+  gap: $s-2;
+  font-size: $t-2xs;
   color: rgba(0, 0, 0, 0.7);
 }
 
@@ -261,7 +261,7 @@
   display: inline-block;
   width: 12px;
   height: 12px;
-  margin-right: $spacing-px;
+  margin-right: $s-px3;
   vertical-align: -1px;
   background: currentColor;
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E") no-repeat center;
@@ -275,7 +275,7 @@
   display: inline-block;
   width: 12px;
   height: 12px;
-  margin-right: $spacing-px;
+  margin-right: $s-px3;
   vertical-align: -1px;
   background: currentColor;
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z'/%3E%3C/svg%3E") no-repeat center;

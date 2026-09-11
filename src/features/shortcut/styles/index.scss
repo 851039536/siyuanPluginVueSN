@@ -1,12 +1,12 @@
 @use "@/variables.scss" as *;
 
-// 面板根容器：基准字号对齐全局 $font-size-xs(12px)
+// 面板根容器：基准字号对齐全局 $t-xs(12px)
 .shortcut-panel {
   display: flex;
   flex-direction: column;
   height: 100%;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   overflow: hidden;
 }

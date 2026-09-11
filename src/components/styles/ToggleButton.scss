@@ -5,7 +5,7 @@
 .si-togglebutton {
   display: inline-flex;
   flex-direction: column;
-  font-family: $font-zh;
+  font-family: $ff-zh;
 
   // fluid：容器同步铺满，内部按钮经 Button 的 block 撑满宽度
   &--fluid {

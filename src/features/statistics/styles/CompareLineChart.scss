@@ -5,7 +5,7 @@
 .cmp-line-chart {
   display: flex;
   flex-direction: column;
-  gap: $spacing-6px;
+  gap: $s-px6;
 }
 
 .cmp-line-svg {
@@ -56,24 +56,24 @@
 
 .cmp-legend {
   display: flex;
-  gap: $spacing-3;
+  gap: $s-3;
   align-items: center;
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-light);
 }
 
 .cmp-legend-item {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .cmp-legend-dot {
   display: inline-block;
   width: 10px;
   height: 3px;
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
 
   &.cmp-dot-a-bg {
     background: rgba(var(--b3-theme-on-surface-rgb), 0.4);

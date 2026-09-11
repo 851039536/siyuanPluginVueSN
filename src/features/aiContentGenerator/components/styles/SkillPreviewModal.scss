@@ -16,7 +16,7 @@
   max-height: 75vh;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-theme-surface-light);
-  border-radius: $radius-lg;
+  border-radius: $r-lg;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -26,55 +26,55 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: $spacing-3 $spacing-4;
+  padding: $s-3 $s-4;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
-  gap: $spacing-3;
+  gap: $s-3;
 }
 
 .skill-preview-title {
   display: block;
-  font-size: $font-size-base;
-  font-weight: $font-weight-semibold;
+  font-size: $t-base;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-background);
-  margin-bottom: $spacing-2px;
+  margin-bottom: $s-px2;
 }
 
 .skill-preview-desc {
   display: block;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
-  line-height: $line-height-tight;
+  line-height: $lh-tight;
 }
 
 .skill-preview-body {
   flex: 1;
   overflow-y: auto;
-  padding: $spacing-4;
+  padding: $s-4;
 }
 
 .skill-preview-content {
-  font-size: $font-size-sm;
+  font-size: $t-sm;
   line-height: 1.6;
   color: var(--b3-theme-on-surface);
 
   :deep(h2), :deep(h3) {
     margin-top: 0.8em;
     margin-bottom: 0.4em;
-    font-weight: $font-weight-medium;
+    font-weight: $fw-medium;
   }
   :deep(p) { margin: 0.4em 0; }
   :deep(ul), :deep(ol) { margin: 0.3em 0; padding-left: 1.4em; }
   :deep(code) {
-    padding: $spacing-1px $spacing-1;
+    padding: $s-px1 $s-1;
     background: var(--b3-theme-surface-lighter);
-    border-radius: $radius-2px;
+    border-radius: $r-px2;
     font-size: 0.85em;
   }
   :deep(pre) {
-    padding: $spacing-2;
+    padding: $s-2;
     background: var(--b3-theme-surface-lighter);
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     overflow-x: auto;
     margin: 0.4em 0;
   }
@@ -90,10 +90,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-10px $spacing-4;
+  padding: $s-px10 $s-4;
   border-top: 1px solid var(--b3-theme-surface-lighter);
 }
 
 .skill-preview-tool {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
 }

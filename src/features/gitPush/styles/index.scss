@@ -19,15 +19,15 @@
   flex-direction: column;
   width: 100%;
   height: 100%;
-  padding: $spacing-5px $spacing-px;
+  padding: $s-px5 $s-px3;
   overflow: hidden;
   // 基准字号：未显式声明字号的文字继承内容级 12px，而非思源默认的更大字号
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 }
 
 .gp-divider {
   border-bottom: 1px solid var(--b3-border-color);
-  margin: $spacing-10px 0;
+  margin: $s-px10 0;
 }
 
 
@@ -39,12 +39,12 @@
   justify-content: center;
   flex: 1;
   color: var(--b3-theme-on-surface-light);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 }
 
 .gp-empty-icon {
   opacity: 0.3;
-  margin-bottom: $spacing-2;
+  margin-bottom: $s-2;
 }
 
 // loading 态：为常驻动画 Loader 提供受限的定位容器，避免其绝对定位逃逸到视口中心
@@ -61,7 +61,7 @@
   right: 0;
   text-align: center;
   color: var(--b3-theme-on-surface-light);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 }
 
 .gp-list {
@@ -71,9 +71,9 @@
   display: flex !important;
   flex-wrap: wrap !important;
   align-content: flex-start;
-  gap: $spacing-1;
+  gap: $s-1;
   overflow-y: auto;
-  padding: $spacing-1 $spacing-1 $spacing-1 0 !important;
+  padding: $s-1 $s-1 $s-1 0 !important;
   width: 100% !important;
 
   // 细滚动条：内容增减导致滚动条出现/消失时，宽度占用仅 4px，
@@ -88,15 +88,15 @@
   flex: 1 1 calc(50% - 10px) !important;
   min-width: 390px !important;
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
-  padding: $spacing-2 $spacing-10px;
+  border-radius: $r-base;
+  padding: $s-2 $s-px10;
   transition: border-color 0.15s;
 
   &:hover {
     border-color: var(--b3-theme-primary);
   }
 
-  .vp-btn--sm { padding: $spacing-px $spacing-5px; font-size: $font-size-2xs; }
+  .vp-btn--sm { padding: $s-px3 $s-px5; font-size: $t-2xs; }
 }
 
 // 顶栏/操作区/菜单样式 → CardHeader.scss（IDE 管理弹窗与通用弹窗样式保留在 index.scss 与 Dialog.scss）
@@ -105,41 +105,41 @@
 .gp-ide-mgmt-list {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
-  margin-bottom: $spacing-1;
+  gap: $s-1;
+  margin-bottom: $s-1;
 }
 
 .gp-ide-mgmt-row {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-1 0;
+  gap: $s-1;
+  padding: $s-1 0;
 }
 
 .gp-ide-mgmt-name {
-  font-weight: $font-weight-semibold;
-  font-size: $font-size-xs;
+  font-weight: $fw-semibold;
+  font-size: $t-xs;
   min-width: 100px; // 预设名称列最小宽度，保证各行路径列左对齐
 }
 
 .gp-ide-mgmt-path {
   flex: 1;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   opacity: 0.5;
   @include text-ellipsis;
 }
 
 .gp-ide-mgmt-empty {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   opacity: 0.4;
   font-style: italic;
   text-align: center;
-  padding: $spacing-3 0 $spacing-1;
+  padding: $s-3 0 $s-1;
 }
 
 .gp-ide-mgmt-add {
   display: flex;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 // 预设 IDE 下拉（固定窄宽，容纳最长预设名，路径输入占满剩余）
@@ -155,15 +155,15 @@
 // Stash 暂存
 .gp-stash-wrap {
   .vp-btn--sm {
-    padding: $spacing-2px $spacing-5px;
-    font-size: $font-size-2xs;
+    padding: $s-px2 $s-px5;
+    font-size: $t-2xs;
   }
 }
 
 .gp-stash-header {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .gp-stash-help {
@@ -182,21 +182,21 @@
 }
 
 .gp-stash-list {
-  margin-top: $spacing-1;
+  margin-top: $s-1;
   max-height: 120px;
   overflow-y: auto;
 }
 
 // 待暂存变更预览：标题 + 只读文件列表（状态标记复用 WorkingTreePanel 的 .wt-file-status 着色）
 .gp-stash-pending {
-  margin-top: $spacing-2;
-  padding-top: $spacing-1;
+  margin-top: $s-2;
+  padding-top: $s-1;
   border-top: 1px solid var(--b3-border-color);
 }
 
 .gp-stash-pending-title {
   @include gp-label-base;
-  margin-bottom: $spacing-1;
+  margin-bottom: $s-1;
 }
 
 .gp-stash-pending-list {
@@ -207,15 +207,15 @@
 .gp-stash-pending-row {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-1px 0;
+  gap: $s-1;
+  padding: $s-px1 0;
 }
 
 .gp-stash-pending-path {
   flex: 1;
   min-width: 0;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
   opacity: 0.75;
   @include text-ellipsis;
 }
@@ -223,35 +223,35 @@
 .gp-stash-row {
   display: flex;
   align-items: center;
-  gap: $spacing-px;
-  padding: $spacing-2px 0;
-  font-size: $font-size-2xs;
+  gap: $s-px3;
+  padding: $s-px2 0;
+  font-size: $t-2xs;
   @include row-divider;
 }
 
 .gp-stash-index {
-  font-family: $vp-mono;
+  font-family: $ff-mono;
   opacity: 0.5;
   flex-shrink: 0;
 }
 
 .gp-stash-msg {
   flex: 1;
-  font-family: $vp-mono;
+  font-family: $ff-mono;
   @include text-ellipsis;
 }
 
 // ── 控制台风格输出面板 ──
 .gp-output {
-  margin-top: $spacing-2;
+  margin-top: $s-2;
   max-height: 200px; // 输出面板高度上限，超出滚动
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: var(--b3-theme-surface);
   overflow: hidden;
-  font-family: $vp-mono;
+  font-family: $ff-mono;
   // 控制台输出统一 2xs 等宽字号
-  font-size: $font-size-2xs;
-  line-height: $line-height-normal;
+  font-size: $t-2xs;
+  line-height: $lh-normal;
   color: var(--b3-theme-on-surface);
   user-select: text;
 }
@@ -259,7 +259,7 @@
 .gp-output-scroll {
   max-height: 200px; // 与 .gp-output 上限一致
   overflow-y: auto;
-  padding: $spacing-2;
+  padding: $s-2;
 }
 
 // 控制台单行：头行按状态着色，stdout/stderr 详情行缩进
@@ -271,7 +271,7 @@
   &--run {
     display: inline-flex;
     align-items: baseline;
-    gap: $spacing-1;
+    gap: $s-1;
     color: var(--b3-theme-primary);
   }
 
@@ -283,12 +283,12 @@
   // 运行中平台名列表：主题色强调（当前仍在推送/拉取的平台）
   .gp-console-remotes {
     color: var(--b3-theme-primary);
-    font-weight: $font-weight-medium;
+    font-weight: $fw-medium;
   }
 
   // 运行中实时耗时：等宽 + 表格数字对齐（数值文本规范）
   .gp-console-elapsed {
-    font-family: $vp-mono;
+    font-family: $ff-mono;
     font-variant-numeric: tabular-nums;
     color: var(--b3-theme-on-surface-light);
   }
@@ -307,12 +307,12 @@
   }
 
   &--out {
-    padding-left: $spacing-3;
+    padding-left: $s-3;
     color: var(--b3-theme-on-surface-light);
   }
 
   &--err {
-    padding-left: $spacing-3;
+    padding-left: $s-3;
     color: var(--b3-theme-error);
   }
 }
@@ -321,7 +321,7 @@
 .gp-output-ai {
   display: flex;
   justify-content: flex-end;
-  padding: 0 $spacing-2 $spacing-2;
+  padding: 0 $s-2 $s-2;
 }
 
 .gp-output-ai-btn {
@@ -337,17 +337,17 @@
 .gp-set-radio-group {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .gp-set-radio {
   display: flex;
   align-items: center;
-  gap: $spacing-6px;
-  font-size: $font-size-xs;
+  gap: $s-px6;
+  font-size: $t-xs;
   color: var(--b3-theme-on-background);
   cursor: pointer;
-  padding: $spacing-2px 0;
+  padding: $s-px2 0;
 
   input[type="radio"] {
     accent-color: var(--b3-theme-primary);
@@ -361,23 +361,23 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 // 设置弹窗内相邻设置组之间的垂直间距
 .gp-set-row--spaced {
-  margin-top: $spacing-3;
+  margin-top: $s-3;
 }
 
 .gp-set-label {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   white-space: nowrap;
 }
 
 .gp-set-input-row {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 // 并发数数字输入框：固定窄宽度（仅需容纳 1~2 位数字）
@@ -392,15 +392,15 @@
 }
 
 .gp-set-hint {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   opacity: 0.4;
 }
 
 .gp-cat-row {
   display: flex;
   align-items: center;
-  gap: $spacing-6px;
-  padding: $spacing-1 0;
+  gap: $s-px6;
+  padding: $s-1 0;
   border-bottom: 1px solid var(--b3-border-color);
 
   &:last-of-type {
@@ -417,22 +417,22 @@
 
 .gp-cat-name-sm {
   flex: 1;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 }
 
 .gp-cat-add-row {
   display: flex;
-  gap: $spacing-1;
-  margin-top: $spacing-2;
+  gap: $s-1;
+  margin-top: $s-2;
 }
 
 .gp-color-input {
   width: 28px;
   height: 28px;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   cursor: pointer;
-  padding: $spacing-2px;
+  padding: $s-px2;
   background: none;
 }
 
@@ -446,43 +446,43 @@
   max-height: 200px;
   overflow-y: auto;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
 }
 
 .gp-remote-row {
   display: flex;
   align-items: center;
-  gap: $spacing-6px;
-  padding: $spacing-1 $spacing-6px;
-  font-size: $font-size-xs;
+  gap: $s-px6;
+  padding: $s-1 $s-px6;
+  font-size: $t-xs;
   @include row-divider;
 }
 
 .gp-remote-name {
-  font-family: $vp-mono;
-  font-weight: $font-weight-semibold;
+  font-family: $ff-mono;
+  font-weight: $fw-semibold;
   flex-shrink: 0;
 }
 
 .gp-remote-url {
   flex: 1;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
   opacity: 0.5;
   @include text-ellipsis;
 }
 
 .gp-remote-empty {
-  padding: $spacing-3;
+  padding: $s-3;
   text-align: center;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   opacity: 0.4;
 }
 
 .gp-remote-add {
   display: flex;
-  gap: $spacing-1;
-  margin-top: $spacing-1;
+  gap: $s-1;
+  margin-top: $s-1;
 }
 
 // 添加行的平台下拉（固定窄宽，URL 输入占满剩余）
@@ -492,25 +492,25 @@
 
 // 远程区块错误提示与上方内容留出间距
 .gp-remote-error {
-  margin-top: $spacing-1;
+  margin-top: $s-1;
 }
 
 // ── 克隆日志面板（EditProjectDialog：git clone --progress 实时输出）──
 .gp-clone-log {
-  margin-top: $spacing-1;
+  margin-top: $s-1;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   overflow: hidden;
 }
 
 .gp-clone-log-header {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-1 $spacing-2;
+  gap: $s-1;
+  padding: $s-1 $s-2;
   border-bottom: 1px solid var(--b3-border-color);
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
 }
 
 // 日志面板头部关闭按钮（推到最右侧）
@@ -521,10 +521,10 @@
 .gp-clone-log-body {
   max-height: 140px; // 约 10 行日志高度，超出滚动，避免撑高弹窗
   overflow-y: auto;
-  padding: $spacing-1 $spacing-2;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  line-height: $line-height-normal;
+  padding: $s-1 $s-2;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  line-height: $lh-normal;
   opacity: 0.8;
 }
 
@@ -559,20 +559,20 @@
 .gp-scan-action-row {
   display: flex;
   justify-content: center;
-  margin-top: $spacing-1;
+  margin-top: $s-1;
 }
 
 // 结果列表头部的"全选"按钮（辅助操作，用 2xs 字号）
 .gp-scan-select-all {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
 }
 
 .gp-scan-results {
   max-height: 300px;
   overflow-y: auto;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
-  padding: $spacing-2;
+  border-radius: $r-sm;
+  padding: $s-2;
 
   &::-webkit-scrollbar {
     width: 4px;
@@ -583,12 +583,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 0 $spacing-6px;
+  padding: 0 0 $s-px6;
 }
 
 .gp-scan-count {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   opacity: 0.6;
 }
 
@@ -599,8 +599,8 @@
 .gp-scan-item-row {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-6px $spacing-1;
+  gap: $s-2;
+  padding: $s-px6 $s-1;
   cursor: pointer;
   transition: background 0.1s;
 
@@ -624,26 +624,26 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: $spacing-1px;
+  gap: $s-px1;
 }
 
 .gp-scan-item-name {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
 }
 
 .gp-scan-item-path {
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
   opacity: 0.5;
   @include text-ellipsis;
 }
 
 .gp-scan-badge {
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
-  padding: $spacing-2px $spacing-6px;
-  border-radius: $radius-sm;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  padding: $s-px2 $s-px6;
+  border-radius: $r-sm;
   background: var(--b3-theme-primary-lightest);
   color: var(--b3-theme-primary);
   white-space: nowrap;
@@ -656,7 +656,7 @@
 .gp-edit-row {
   display: flex;
   align-items: flex-end;
-  gap: $spacing-10px;
+  gap: $s-px10;
 }
 
 .gp-edit-name {
@@ -672,7 +672,7 @@
 
 .gp-toggle-row {
   display: flex;
-  gap: $spacing-1;
+  gap: $s-1;
   align-items: center;
   height: 32px;
   flex-wrap: nowrap;
@@ -681,13 +681,13 @@
 .gp-toggle-chip {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-px;
-  padding: $spacing-2px $spacing-6px;
+  gap: $s-px3;
+  padding: $s-px2 $s-px6;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: transparent;
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   cursor: pointer;
   transition: opacity 0.15s, border-color 0.15s, background 0.15s;
   opacity: 0.55;
@@ -706,23 +706,23 @@
 
 // 编辑弹窗：多本地路径编辑
 .gp-label-hint {
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-normal;
+  font-size: $t-2xs;
+  font-weight: $fw-normal;
   opacity: 0.45;
-  margin-left: $spacing-1;
+  margin-left: $s-1;
 }
 
 .gp-edit-paths {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
-  margin-bottom: $spacing-6px;
+  gap: $s-1;
+  margin-bottom: $s-px6;
 }
 
 .gp-edit-path-row {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
 
   input {
     flex: 1;
@@ -743,8 +743,8 @@
 .gp-add-path-btn {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-1;
-  font-size: $font-size-2xs;
+  gap: $s-1;
+  font-size: $t-2xs;
   opacity: 0.6;
   transition: opacity 0.12s;
   &:hover { opacity: 1; }
@@ -759,8 +759,8 @@
   .gp-tag-header {
     display: flex;
     align-items: center;
-    gap: $spacing-1;
-    margin-bottom: $spacing-1;
+    gap: $s-1;
+    margin-bottom: $s-1;
   }
 
   .gp-tag-label {
@@ -777,19 +777,19 @@
     flex: 1;
     min-width: 0;
     height: 22px;
-    padding: 0 $spacing-5px;
-    font-size: $font-size-2xs;
-    font-family: $vp-mono;
+    padding: 0 $s-px5;
+    font-size: $t-2xs;
+    font-family: $ff-mono;
     border: 1px solid var(--b3-border-color);
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     background: var(--b3-theme-surface);
     color: var(--b3-theme-on-surface);
     &:focus { @include focus-ring; outline: none; }
   }
 
   .vp-btn--sm {
-    padding: $spacing-2px $spacing-5px;
-    font-size: $font-size-2xs;
+    padding: $s-px2 $s-px5;
+    font-size: $t-2xs;
   }
 }
 
@@ -801,15 +801,15 @@
 .gp-tag-row {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-2px 0;
-  font-size: $font-size-2xs;
+  gap: $s-1;
+  padding: $s-px2 0;
+  font-size: $t-2xs;
   @include row-divider;
 }
 
 .gp-tag-name {
-  font-family: $vp-mono;
-  font-weight: $font-weight-semibold;
+  font-family: $ff-mono;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-primary);
   min-width: 0;
   @include text-ellipsis;
@@ -818,85 +818,85 @@
 .gp-tag-msg {
   flex: 1;
   opacity: 0.45;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   @include text-ellipsis;
 }
 
 .gp-tag-date {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   opacity: 0.35;
-  font-family: $vp-mono;
+  font-family: $ff-mono;
 }
 
 .gp-tag-empty {
   display: flex;
   align-items: center;
-  gap: $spacing-6px;
-  padding: $spacing-6px 0;
-  font-size: $font-size-2xs;
+  gap: $s-px6;
+  padding: $s-px6 0;
+  font-size: $t-2xs;
   opacity: 0.35;
   font-style: italic;
 }
 
 // ── 冲突警告条 ──
 .gp-conflict-bar {
-  margin: $spacing-2 0;
-  padding: $spacing-2 $spacing-10px;
+  margin: $s-2 0;
+  padding: $s-2 $s-px10;
   border: 1px solid var(--b3-theme-error-lighter);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: var(--b3-theme-error-lightest);
 }
 
 .gp-conflict-header {
   display: flex;
   align-items: center;
-  gap: $spacing-6px;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  gap: $s-px6;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-error);
-  margin-bottom: $spacing-6px;
+  margin-bottom: $s-px6;
 }
 
 .gp-conflict-files {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-1;
-  margin-bottom: $spacing-6px;
+  gap: $s-1;
+  margin-bottom: $s-px6;
 }
 
 .gp-conflict-file {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-2px $spacing-6px;
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
+  gap: $s-1;
+  padding: $s-px2 $s-px6;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: var(--b3-theme-surface);
 }
 
 .gp-conflict-actions {
   display: flex;
-  gap: $spacing-6px;
+  gap: $s-px6;
 }
 
 // ── 搜索框 ──
 .gp-search-wrap {
-  padding: $spacing-1 $spacing-10px $spacing-1 0;
+  padding: $s-1 $s-px10 $s-1 0;
 }
 
 // ── 加载更多（LogPanel / CommitAnalysisPanel 共用）──
 .gp-load-more {
   display: flex;
   justify-content: center;
-  padding: $spacing-2;
+  padding: $s-2;
 }
 
 // ════ 代码统计报告（gpr-）共享基座：表格/徽章/区块标题原语（4 个分区 SCSS 复用，避免重复定义）════
 // 标题/计数样式与 StatsPanel.scss 的 .gp-stats-section-* 共用 _mixins.scss 的 gp-section-title-base / gp-section-count-base
 .gpr-section {
-  margin-bottom: $spacing-3;
+  margin-bottom: $s-3;
 }
 
 .gpr-section-title {
@@ -914,7 +914,7 @@
 // contain: paint 把重排范围限制在表格内，长表格（技术债务数百行）滚动时的布局计算不再外溢到整个面板。
 .gpr-table-wrap {
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   overflow-y: auto;
   max-height: 50vh;
   contain: paint;
@@ -923,9 +923,9 @@
 .gpr-row {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-5px $spacing-2;
-  font-size: $font-size-xs;
+  gap: $s-2;
+  padding: $s-px5 $s-2;
+  font-size: $t-xs;
   @include row-divider;
 
   &--head {
@@ -935,8 +935,8 @@
     z-index: 1;
     background: var(--b3-theme-surface);
     color: var(--b3-theme-on-surface-light);
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-bold;
+    font-size: $t-2xs;
+    font-weight: $fw-bold;
     text-transform: uppercase;
     letter-spacing: 0.06em;
   }
@@ -960,16 +960,16 @@
   &--pct {
     width: 48px;
     text-align: right;
-    font-family: $vp-mono;
-    font-size: $font-size-2xs;
+    font-family: $ff-mono;
+    font-size: $t-2xs;
   }
 
   &--num {
     width: 42px;
     text-align: right;
-    padding-right: $spacing-1;
-    font-family: $vp-mono;
-    font-size: $font-size-2xs;
+    padding-right: $s-1;
+    font-family: $ff-mono;
+    font-size: $t-2xs;
   }
 
 }

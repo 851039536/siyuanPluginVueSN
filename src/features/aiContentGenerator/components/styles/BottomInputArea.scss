@@ -4,26 +4,26 @@
 
 // ============ 区块壳层 ============
 .bottom-input-section {
-  padding: $spacing-6px;
+  padding: $s-px6;
   background: var(--b3-theme-surface);
   border-top: 1px solid var(--b3-theme-surface-lighter);
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .top-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-6px;
+  gap: $s-px6;
 }
 
 .top-bar-left {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
   flex: 1;
   min-width: 0;
 }
@@ -31,14 +31,14 @@
 .top-bar-center {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
   flex-shrink: 0;
 }
 
 .top-bar-right {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
   flex-shrink: 0;
 }
 
@@ -46,7 +46,7 @@
 .doc-selector {
   display: flex;
   align-items: center;
-  gap: $spacing-2px;
+  gap: $s-px2;
   flex: 0 1 auto;
   min-width: 0;
   max-width: 200px;
@@ -62,16 +62,16 @@
 .quick-actions-bar {
   display: flex;
   align-items: center;
-  gap: $spacing-px;
+  gap: $s-px3;
   flex-wrap: wrap;
-  padding: $spacing-2px 0;
+  padding: $s-px2 0;
 }
 
 // ============ 输入行 ============
 .input-row {
   display: flex;
   align-items: flex-end;
-  gap: $spacing-6px;
+  gap: $s-px6;
 
   .input-field { flex: 1; min-width: 0; }
   .execute-btn { flex-shrink: 0; }
@@ -82,8 +82,8 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: $spacing-6px;
-  padding: $spacing-1 $spacing-10px;
+  gap: $s-px6;
+  padding: $s-1 $s-px10;
   border-top: 1px solid var(--b3-theme-surface-lighter);
 }
 

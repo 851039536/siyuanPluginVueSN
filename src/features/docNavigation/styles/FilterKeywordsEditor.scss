@@ -15,7 +15,7 @@
   height: 22px;
   padding: 0;
   border: 1px solid transparent;
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: transparent;
   color: var(--b3-theme-on-surface);
   cursor: pointer;
@@ -37,28 +37,28 @@
 // 内联编辑面板
 .doc-nav-filter-editor-panel {
   position: absolute;
-  top: calc(100% + $spacing-1);
+  top: calc(100% + $s-1);
   left: 0;
   z-index: 100;
   min-width: 200px;
   max-width: 280px;
-  padding: $spacing-2;
+  padding: $s-2;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $vp-radius;
-  font-size: $font-size-xs;
-  line-height: $line-height-normal;
+  border-radius: $r-base;
+  font-size: $t-xs;
+  line-height: $lh-normal;
 }
 
 // 面板标题
 .doc-nav-filter-editor-header {
-  margin-bottom: $spacing-2;
-  padding-bottom: $spacing-2px;
+  margin-bottom: $s-2;
+  padding-bottom: $s-px2;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-medium;
-  line-height: $line-height-tight;
+  font-size: $t-2xs;
+  font-weight: $fw-medium;
+  line-height: $lh-tight;
   text-transform: uppercase;
   letter-spacing: 0.02em;
   opacity: 0.7;
@@ -67,15 +67,15 @@
 // 输入框
 .doc-nav-filter-editor-input {
   width: 100%;
-  padding: $spacing-1 $spacing-2;
-  margin-bottom: $spacing-1;
+  padding: $s-1 $s-2;
+  margin-bottom: $s-1;
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-xs;
-  font-family: $vp-mono;
-  line-height: $line-height-normal;
+  font-size: $t-xs;
+  font-family: $ff-mono;
+  line-height: $lh-normal;
   box-sizing: border-box;
 
   &:focus {
@@ -92,35 +92,35 @@
 
 // 提示文字
 .doc-nav-filter-editor-hint {
-  margin-bottom: $spacing-2;
+  margin-bottom: $s-2;
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-2xs;
-  line-height: $line-height-tight;
+  font-size: $t-2xs;
+  line-height: $lh-tight;
   opacity: 0.5;
 }
 
 // 发布状态开关行（与关键词编辑区分隔）
 .doc-nav-filter-editor-toggle {
-  margin-bottom: $spacing-2;
-  padding-top: $spacing-1;
+  margin-bottom: $s-2;
+  padding-top: $s-1;
   border-top: 1px solid var(--b3-theme-surface-lighter);
 }
 
 // 操作按钮行
 .doc-nav-filter-editor-actions {
   display: flex;
-  gap: $spacing-1;
+  gap: $s-1;
   justify-content: flex-end;
 }
 
 // 按钮共用样式
 .doc-nav-filter-editor-btn {
-  padding: $spacing-2px $spacing-2;
+  padding: $s-px2 $s-2;
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-sm;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-  line-height: $line-height-tight;
+  border-radius: $r-sm;
+  font-size: $t-xs;
+  font-weight: $fw-medium;
+  line-height: $lh-tight;
   cursor: pointer;
   transition: background 0.15s ease;
 
@@ -159,7 +159,7 @@
 .doc-nav-filter-editor-fade-enter-from,
 .doc-nav-filter-editor-fade-leave-to {
   opacity: 0;
-  transform: translateY(-$spacing-1);
+  transform: translateY(-$s-1);
 }
 
 .doc-nav-filter-editor-fade-enter-to,

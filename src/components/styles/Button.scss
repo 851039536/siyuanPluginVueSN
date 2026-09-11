@@ -7,11 +7,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: $spacing-2;
+  gap: $s-2;
   border: 1px solid transparent;
-  border-radius: $vp-radius;
-  font-family: $font-zh;
-  font-weight: $font-weight-medium;
+  border-radius: $r-base;
+  font-family: $ff-zh;
+  font-weight: $fw-medium;
   cursor: pointer;
   outline: none;
   white-space: nowrap;
@@ -20,17 +20,17 @@
 
   // 键盘焦点环：仅键盘导航触发（鼠标点击不显示），避免污染视觉
   &:focus-visible {
-    outline: 2px solid var(--b3-theme-primary, $color-danger);
+    outline: 2px solid var(--b3-theme-primary, $c-danger);
     outline-offset: 1px;
   }
 
   // ========== 尺寸变体（字号阶梯 10/12/14/16） ==========
   // spinner 尺寸表需与 Button.vue 的 TIER_ICON_SIZE（图标尺寸表）保持一致，改动同步两处
   &--xsmall {
-    padding: $spacing-2px $spacing-6px; // 特小号，无对应 Token，保留
-    font-size: $font-size-2xs; // XS 档字号阶梯：10px
+    padding: $s-px2 $s-px6; // 特小号，无对应 Token，保留
+    font-size: $t-2xs; // XS 档字号阶梯：10px
     min-height: 22px; // 无对应 Token
-    gap: $spacing-2px;
+    gap: $s-px2;
 
     .si-button__spinner {
       width: 12px;
@@ -40,9 +40,9 @@
 
   &--small {
     padding: m.$gap-xs m.$spacing-2_5; // 6px 10px（原 8px 12px，各减 2px）
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     min-height: 28px; // 无对应 Token，尺寸级保留
-    gap: $spacing-2px; // 2px（原 4px）
+    gap: $s-px2; // 2px（原 4px）
 
     .si-button__spinner {
       width: 14px;
@@ -52,7 +52,7 @@
 
   &--medium {
     padding: m.$gap-xs 14px; // 6px 14px（原 8px 16px）；14px 无对应 Token
-    font-size: $font-size-sm;
+    font-size: $t-sm;
     min-height: 36px;
     gap: m.$gap-xs; // 6px（原 8px）
 
@@ -64,7 +64,7 @@
 
   &--large {
     padding: m.$spacing-2_5 18px; // 10px 18px（原 12px 20px）；18px 无对应 Token
-    font-size: $font-size-base; // 原 15px → 统一为 base(16px)
+    font-size: $t-base; // 原 15px → 统一为 base(16px)
     min-height: 44px;
     gap: m.$spacing-2_5; // 10px（原 12px）
 
@@ -78,32 +78,32 @@
   // 既有 5 个变体的渲染结果保持不变；额外通过 btn-color-family 挂上颜色族变量，
   // 供后面的 --outlined / --text 外观修饰与 --severity-* 覆盖复用
   &--primary {
-    @include m.btn-color-family("--b3-theme-primary", $color-danger, var(--b3-theme-on-primary, $color-bg));
-    background: var(--b3-theme-primary, $color-danger);
-    color: var(--b3-theme-on-primary, $color-bg);
+    @include m.btn-color-family("--b3-theme-primary", $c-danger, var(--b3-theme-on-primary, $c-bg));
+    background: var(--b3-theme-primary, $c-danger);
+    color: var(--b3-theme-on-primary, $c-bg);
     @include m.interactive-raised;
   }
 
   &--secondary {
-    @include m.btn-color-family("--b3-theme-on-background", $color-fg, var(--b3-theme-on-primary, $color-bg));
-    background: var(--b3-theme-background, $color-bg);
-    color: var(--b3-theme-on-background, $color-fg);
-    border: 1px solid var(--b3-theme-border, $color-border);
+    @include m.btn-color-family("--b3-theme-on-background", $c-fg, var(--b3-theme-on-primary, $c-bg));
+    background: var(--b3-theme-background, $c-bg);
+    color: var(--b3-theme-on-background, $c-fg);
+    border: 1px solid var(--b3-theme-border, $c-border);
     @include m.interactive-raised;
   }
 
   &--success {
-    @include m.btn-color-family("--b3-theme-success", $color-success, var(--b3-theme-on-primary, $color-bg));
-    background: var(--b3-theme-success, $color-success);
-    color: var(--b3-theme-on-primary, $color-bg);
-    @include m.interactive-raised(var(--b3-theme-success, $color-success));
+    @include m.btn-color-family("--b3-theme-success", $c-success, var(--b3-theme-on-primary, $c-bg));
+    background: var(--b3-theme-success, $c-success);
+    color: var(--b3-theme-on-primary, $c-bg);
+    @include m.interactive-raised(var(--b3-theme-success, $c-success));
   }
 
   &--danger {
-    @include m.btn-color-family("--b3-theme-error", $color-danger-bright, var(--b3-theme-on-primary, $color-bg));
+    @include m.btn-color-family("--b3-theme-error", $c-danger-bright, var(--b3-theme-on-primary, $c-bg));
     background: transparent;
-    color: var(--b3-theme-error, $color-danger-bright);
-    border-color: var(--b3-theme-error, $color-danger-bright);
+    color: var(--b3-theme-error, $c-danger-bright);
+    border-color: var(--b3-theme-error, $c-danger-bright);
     @include m.interactive-soft;
   }
 
@@ -111,54 +111,54 @@
     // 中性纯文本：刻意不设颜色族变量 → interactive-soft 回退到中性底色，
     // hover 与改动前完全一致（--outlined / --text 叠加时同样走中性回退色）
     background: transparent;
-    color: var(--b3-theme-on-surface, $color-fg);
-    border-color: var(--b3-theme-surface-lighter, $color-border);
+    color: var(--b3-theme-on-surface, $c-fg);
+    border-color: var(--b3-theme-surface-lighter, $c-border);
     @include m.interactive-soft;
   }
 
   // 新增颜色变体：提示 / 警告
   &--info {
-    @include m.btn-color-family("--b3-theme-info", $color-info, var(--b3-theme-on-primary, $color-bg));
-    background: var(--b3-theme-info, $color-info);
-    color: var(--b3-theme-on-primary, $color-bg);
-    @include m.interactive-raised(var(--b3-theme-info, $color-info));
+    @include m.btn-color-family("--b3-theme-info", $c-info, var(--b3-theme-on-primary, $c-bg));
+    background: var(--b3-theme-info, $c-info);
+    color: var(--b3-theme-on-primary, $c-bg);
+    @include m.interactive-raised(var(--b3-theme-info, $c-info));
   }
 
   &--warning {
-    @include m.btn-color-family("--b3-theme-warning", $color-warning, var(--b3-theme-on-primary, $color-bg));
-    background: var(--b3-theme-warning, $color-warning);
-    color: var(--b3-theme-on-primary, $color-bg);
-    @include m.interactive-raised(var(--b3-theme-warning, $color-warning));
+    @include m.btn-color-family("--b3-theme-warning", $c-warning, var(--b3-theme-on-primary, $c-bg));
+    background: var(--b3-theme-warning, $c-warning);
+    color: var(--b3-theme-on-primary, $c-bg);
+    @include m.interactive-raised(var(--b3-theme-warning, $c-warning));
   }
 
   // ========== severity（颜色轴） ==========
   // 显式指定时覆盖 variant 推导出的颜色族；一律回到填充外观，外观修饰排在其后可再覆盖
   &--severity-primary {
-    @include m.btn-color-family("--b3-theme-primary", $color-danger, var(--b3-theme-on-primary, $color-bg));
+    @include m.btn-color-family("--b3-theme-primary", $c-danger, var(--b3-theme-on-primary, $c-bg));
   }
 
   &--severity-success {
-    @include m.btn-color-family("--b3-theme-success", $color-success, var(--b3-theme-on-primary, $color-bg));
+    @include m.btn-color-family("--b3-theme-success", $c-success, var(--b3-theme-on-primary, $c-bg));
   }
 
   &--severity-info {
-    @include m.btn-color-family("--b3-theme-info", $color-info, var(--b3-theme-on-primary, $color-bg));
+    @include m.btn-color-family("--b3-theme-info", $c-info, var(--b3-theme-on-primary, $c-bg));
   }
 
   &--severity-warning {
-    @include m.btn-color-family("--b3-theme-warning", $color-warning, var(--b3-theme-on-primary, $color-bg));
+    @include m.btn-color-family("--b3-theme-warning", $c-warning, var(--b3-theme-on-primary, $c-bg));
   }
 
   &--severity-danger {
-    @include m.btn-color-family("--b3-theme-error", $color-danger-bright, var(--b3-theme-on-primary, $color-bg));
+    @include m.btn-color-family("--b3-theme-error", $c-danger-bright, var(--b3-theme-on-primary, $c-bg));
   }
 
   // secondary 为中性面：填充态用 surface 底 + 边框，而非彩色实底
   &--severity-secondary {
-    @include m.btn-color-family("--b3-theme-on-background", $color-fg, var(--b3-theme-on-primary, $color-bg));
-    background: var(--b3-theme-surface, $color-surface);
-    color: var(--b3-theme-on-surface, $color-fg);
-    border-color: var(--b3-border-color, $color-border);
+    @include m.btn-color-family("--b3-theme-on-background", $c-fg, var(--b3-theme-on-primary, $c-bg));
+    background: var(--b3-theme-surface, $c-surface);
+    color: var(--b3-theme-on-surface, $c-fg);
+    border-color: var(--b3-border-color, $c-border);
     @include m.interactive-raised;
   }
 
@@ -179,17 +179,17 @@
   &--outlined {
     transition: all 0.12s;
     background: transparent;
-    color: var(--btn-color, var(--b3-theme-on-background, $color-fg));
-    border-color: var(--btn-color, var(--b3-border-color, $color-border));
+    color: var(--btn-color, var(--b3-theme-on-background, $c-fg));
+    border-color: var(--btn-color, var(--b3-border-color, $c-border));
 
     &:hover:not(.si-button--disabled):not(.si-button--loading) {
-      background: var(--btn-soft, var(--b3-theme-surface-lighter, $color-surface));
-      border-color: var(--btn-color, var(--b3-border-color, $color-border));
+      background: var(--btn-soft, var(--b3-theme-surface-lighter, $c-surface));
+      border-color: var(--btn-color, var(--b3-border-color, $c-border));
     }
 
     &:active:not(.si-button--disabled):not(.si-button--loading) {
-      background: var(--btn-soft-strong, var(--b3-theme-surface-light, $color-surface));
-      border-color: var(--btn-color, var(--b3-border-color, $color-border));
+      background: var(--btn-soft-strong, var(--b3-theme-surface-light, $c-surface));
+      border-color: var(--btn-color, var(--b3-border-color, $c-border));
     }
   }
 
@@ -197,16 +197,16 @@
   &--text {
     transition: all 0.12s;
     background: transparent;
-    color: var(--btn-color, var(--b3-theme-on-surface, $color-fg));
+    color: var(--btn-color, var(--b3-theme-on-surface, $c-fg));
     border-color: transparent;
 
     &:hover:not(.si-button--disabled):not(.si-button--loading) {
-      background: var(--btn-soft, var(--b3-theme-surface-lighter, $color-surface));
+      background: var(--btn-soft, var(--b3-theme-surface-lighter, $c-surface));
       border-color: transparent;
     }
 
     &:active:not(.si-button--disabled):not(.si-button--loading) {
-      background: var(--btn-soft-strong, var(--b3-theme-surface-light, $color-surface));
+      background: var(--btn-soft-strong, var(--b3-theme-surface-light, $c-surface));
       border-color: transparent;
     }
   }
@@ -269,7 +269,7 @@
 
   // 圆形外观（主要配合纯图标按钮）
   &--rounded {
-    border-radius: $radius-full;
+    border-radius: $r-full;
   }
 
   // 图标位置
@@ -300,8 +300,8 @@
     flex: 1;
     display: inline-flex;
     align-items: center;
-    gap: $spacing-1;
-    line-height: $line-height-tight; // 原 1.4 → 1.25
+    gap: $s-1;
+    line-height: $lh-tight; // 原 1.4 → 1.25
   }
 
   // 加载动画（使用 _mixins 中的 @include m.btn-spinner）

@@ -24,7 +24,7 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
 // 状态栏面板样式
 .status__resUsage {
   @extend %flex-center;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   gap: 0;
   padding: 0;
   height: 29px;
@@ -34,15 +34,15 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
     @extend %flex-center;
     gap: 0;
     height: 100%;
-    padding: 0 $spacing-px;
+    padding: 0 $s-px3;
 
     .monitor-icon {
-      font-size: $font-size-sm; // 图标尺寸
+      font-size: $t-sm; // 图标尺寸
       opacity: 0.7;
     }
 
     .monitor-value {
-      font-weight: $font-weight-semibold;
+      font-weight: $fw-semibold;
       font-variant-numeric: tabular-nums;
     }
 
@@ -80,7 +80,7 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
     border-left: 1px solid var(--b3-theme-border);
 
     .monitor-value {
-      font-weight: $font-weight-normal;
+      font-weight: $fw-normal;
     }
   }
 
@@ -90,7 +90,7 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
     display: inline-block;
     width: 1px;
     height: 18px;
-    margin: 0 $spacing-2px;
+    margin: 0 $s-px2;
     background: var(--b3-theme-border);
     align-self: center;
   }
@@ -98,7 +98,7 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
   // 可点击项目通用样式
   .action-item {
     cursor: pointer;
-    padding: 0 $spacing-1;
+    padding: 0 $s-1;
 
     &:hover {
       background: var(--b3-theme-surface-lighter);
@@ -111,7 +111,7 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
   .password-vault-item {
     color: var(--b3-theme-success);
     border-left: 1px solid var(--b3-theme-border);
-    padding-left: $spacing-6px;
+    padding-left: $s-px6;
   }
 
   // 功能快捷入口颜色（硬编码色值提取为 CSS 自定义属性，便于主题化）
@@ -156,11 +156,11 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
 
   .status-bar-task-item {
     color: var(--b3-theme-primary);
-    font-family: $vp-mono;
-    font-size: $font-size-2xs;
+    font-family: $ff-mono;
+    font-size: $t-2xs;
 
     .monitor-value {
-      font-weight: $font-weight-normal; // 覆盖默认 semibold，任务文案更轻量
+      font-weight: $fw-normal; // 覆盖默认 semibold，任务文案更轻量
     }
 
     &[data-level="medium"] {
@@ -178,14 +178,14 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
 // 响应式调整
 @media (max-width: 1024px) {
   .status__resUsage {
-    gap: $spacing-1;
+    gap: $s-1;
     .uptime-item { display: none; }
   }
 }
 
 @media (max-width: 768px) {
   .status__resUsage {
-    padding: 0 $spacing-1;
+    padding: 0 $s-1;
   }
 }
 
@@ -199,13 +199,13 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
 
 .feature-drawer {
   position: fixed;
-  right: $spacing-2;
+  right: $s-2;
   bottom: 36px;
   width: 450px;
   max-height: 420px;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-lg;
+  border-radius: $r-lg;
   z-index: 9998;
   display: flex;
   flex-direction: column;
@@ -215,19 +215,19 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
 .feature-drawer-header {
   @extend %flex-center, %flex-shrink-0;
   justify-content: space-between;
-  padding: $spacing-2 $spacing-3;
+  padding: $s-2 $s-3;
   border-bottom: 1px dashed var(--b3-border-color);
 }
 
 .feature-drawer-title {
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
+  font-size: $t-sm;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-background);
 }
 
 .feature-drawer-header-actions {
   @extend %flex-center;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .feature-drawer-view-btn,
@@ -238,7 +238,7 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
   width: 24px;
   height: 24px;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: transparent;
   color: var(--b3-theme-on-surface);
   cursor: pointer;
@@ -255,8 +255,8 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
 // 搜索栏
 .feature-drawer-search {
   @extend %flex-center, %flex-shrink-0;
-  gap: $spacing-1;
-  padding: $spacing-1 $spacing-2;
+  gap: $s-1;
+  padding: $s-1 $s-2;
   border-bottom: 1px solid var(--b3-border-color);
 
   .search-icon {
@@ -270,9 +270,9 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
     border: none;
     background: transparent;
     color: var(--b3-theme-on-background);
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     outline: none;
-    padding: $spacing-1 0;
+    padding: $s-1 0;
 
     &::placeholder {
       color: var(--b3-theme-on-surface);
@@ -298,9 +298,9 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .feature-drawer-empty {
-  padding: $spacing-6 $spacing-3;
+  padding: $s-6 $s-3;
   text-align: center;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
 }
@@ -309,20 +309,20 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
 .feature-drawer-tabs {
   @extend %flex-shrink-0;
   display: flex;
-  gap: $spacing-1;
-  padding: $spacing-1 $spacing-2;
+  gap: $s-1;
+  padding: $s-1 $s-2;
   border-bottom: 1px solid var(--b3-border-color);
   overflow-x: auto;
 }
 
 .feature-drawer-tab {
   @extend %flex-shrink-0;
-  padding: $spacing-px $_pad-tab-x;
+  padding: $s-px3 $_pad-tab-x;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-lg;
+  border-radius: $r-lg;
   background: transparent;
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.12s, color 0.12s; // 移除多余 border-color transition（active 是瞬间切换）
@@ -341,13 +341,13 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
 .feature-drawer-list {
   flex: 1;
   overflow-y: auto;
-  padding: $spacing-1 0;
+  padding: $s-1 0;
 
   // 列表模式
   .feature-drawer-item {
     @extend %flex-center;
-    gap: $spacing-2;
-    padding: $spacing-2 $spacing-3;
+    gap: $s-2;
+    padding: $s-2 $s-3;
     cursor: pointer;
 
     &:hover {
@@ -366,13 +366,13 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
     justify-content: center;
     width: 25px;
     height: 25px;
-    border-radius: $vp-radius;
+    border-radius: $r-base;
     background: var(--b3-theme-surface);
   }
 
   .feature-drawer-item-title {
-    font-size: $font-size-xs;
-    font-weight: $font-weight-medium;
+    font-size: $t-xs;
+    font-weight: $fw-medium;
     color: var(--b3-theme-on-background);
     flex: 1;
   }
@@ -421,15 +421,15 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
   &.grid-mode {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: $spacing-1;
-    padding: $spacing-1;
+    gap: $s-1;
+    padding: $s-1;
 
     .feature-drawer-item {
       flex-direction: column;
       align-items: center;
-      gap: $spacing-px;
-      padding: $spacing-1;
-      border-radius: $vp-radius;
+      gap: $s-px3;
+      padding: $s-1;
+      border-radius: $r-base;
       position: relative;
     }
 
@@ -463,30 +463,30 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
 .feature-drawer-manage {
   flex: 1;
   overflow-y: auto;
-  padding: $spacing-2 $spacing-3;
+  padding: $s-2 $s-3;
 
   .feature-drawer-manage-row,
   .feature-drawer-manage-add {
     @extend %flex-center;
-    gap: $spacing-2;
-    padding: $spacing-1 0;
+    gap: $s-2;
+    padding: $s-1 0;
   }
 
   .feature-drawer-manage-add {
     border-top: 1px dashed var(--b3-border-color);
-    margin-top: $spacing-1;
-    padding-top: $spacing-2;
+    margin-top: $s-1;
+    padding-top: $s-2;
   }
 
   .manage-input {
     flex: 1;
     min-width: 0;
-    padding: $spacing-px $spacing-2;
+    padding: $s-px3 $s-2;
     border: 1px solid var(--b3-border-color);
-    border-radius: $vp-radius;
+    border-radius: $r-base;
     background: transparent;
     color: var(--b3-theme-on-background);
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     outline: none;
 
     &:focus {
@@ -500,7 +500,7 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
 
   .manage-count {
     @extend %flex-shrink-0;
-    font-size: $font-size-2xs;
+    font-size: $t-2xs;
     color: var(--b3-theme-on-surface);
     opacity: 0.6;
   }
@@ -512,7 +512,7 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
     width: 24px;
     height: 24px;
     border: 1px solid var(--b3-border-color);
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     background: transparent;
     color: var(--b3-theme-on-surface);
     cursor: pointer;
@@ -527,8 +527,8 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .manage-error {
-    padding: $spacing-px 0;
-    font-size: $font-size-2xs;
+    padding: $s-px3 0;
+    font-size: $t-2xs;
     color: var(--b3-theme-error);
   }
 }
@@ -547,20 +547,20 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
   max-width: 240px; // 防止长分类名撑宽菜单溢出视口（与 openAssignMenu 的 MENU_WIDTH 钳制对齐）
   max-height: 220px;
   overflow-y: auto;
-  padding: $spacing-1;
+  padding: $s-1;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-lg;
+  border-radius: $r-lg;
 
   .category-assign-item {
     @extend %flex-center;
     width: 100%;
-    padding: $spacing-1 $spacing-2;
+    padding: $s-1 $s-2;
     border: none;
-    border-radius: $vp-radius;
+    border-radius: $r-base;
     background: transparent;
     color: var(--b3-theme-on-background);
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     cursor: pointer;
     text-align: left;
 
@@ -583,8 +583,8 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .category-assign-empty {
-    padding: $spacing-2;
-    font-size: $font-size-2xs;
+    padding: $s-2;
+    font-size: $t-2xs;
     color: var(--b3-theme-on-surface);
     opacity: 0.5;
   }
@@ -612,8 +612,8 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
 // 响应式：小屏幕调整宽度
 @media (max-width: 540px) {
   .feature-drawer {
-    right: $spacing-1;
-    left: $spacing-1;
+    right: $s-1;
+    left: $s-1;
     width: auto;
   }
 }

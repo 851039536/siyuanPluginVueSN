@@ -1,55 +1,55 @@
 @use "@/variables.scss" as *;
 
 .markdown-export-settings {
-  padding: $spacing-3;
+  padding: $s-3;
   // 基准字号，防止内部未声明字号的文字继承思源全局默认字号
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 }
 
 .settings-section {
-  margin-bottom: $spacing-4;
+  margin-bottom: $s-4;
 }
 
 .section-title {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-background);
-  margin: 0 0 $spacing-1;
+  margin: 0 0 $s-1;
 }
 
 .section-desc {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
-  margin: 0 0 $spacing-3;
+  margin: 0 0 $s-3;
 }
 
 .action-buttons {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
-  margin-bottom: $spacing-3;
+  gap: $s-2;
+  margin-bottom: $s-3;
 }
 
 .button-group {
   display: flex;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .export-tips {
-  margin-bottom: $spacing-3;
-  padding: $spacing-2;
+  margin-bottom: $s-3;
+  padding: $s-2;
   background: var(--b3-theme-surface);
-  border-radius: $radius-sm;
-  border-left: $spacing-px solid var(--b3-theme-primary);
+  border-radius: $r-sm;
+  border-left: $s-px3 solid var(--b3-theme-primary);
 }
 
 .tip-item {
   display: flex;
   align-items: flex-start;
-  gap: $spacing-1;
-  margin-bottom: $spacing-1;
-  font-size: $font-size-2xs;
+  gap: $s-1;
+  margin-bottom: $s-1;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
 
   &:last-child {
@@ -59,41 +59,41 @@
 
 .tip-icon {
   flex-shrink: 0;
-  font-size: $font-size-xs; // 图标尺寸（非文字）
+  font-size: $t-xs; // 图标尺寸（非文字）
   color: var(--b3-theme-primary);
 }
 
 .tip-text {
   flex: 1;
-  line-height: $line-height-normal;
+  line-height: $lh-normal;
 }
 
 .notebook-list {
-  margin-bottom: $spacing-3;
+  margin-bottom: $s-3;
 }
 
 .loading,
 .empty {
   text-align: center;
-  padding: $spacing-6;
+  padding: $s-6;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 }
 
 .notebook-items {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .notebook-item {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-2;
+  gap: $s-2;
+  padding: $s-2;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   cursor: pointer;
 
   &:hover {
@@ -106,38 +106,38 @@
   }
 
   input[type="checkbox"] {
-    width: $spacing-4; // 16px 复选框尺寸
-    height: $spacing-4;
+    width: $s-4; // 16px 复选框尺寸
+    height: $s-4;
     cursor: pointer;
   }
 
   .notebook-icon {
-    font-size: $font-size-sm; // 图标尺寸（非文字）
+    font-size: $t-sm; // 图标尺寸（非文字）
     flex-shrink: 0;
   }
 
   .notebook-name {
     flex: 1;
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     color: var(--b3-theme-on-background);
   }
 
   .notebook-count {
-    font-size: $font-size-2xs;
+    font-size: $t-2xs;
     color: var(--b3-theme-on-surface);
     opacity: 0.6;
   }
 }
 
 .export-progress {
-  margin-bottom: $spacing-3;
+  margin-bottom: $s-3;
 
   .progress-bar {
     height: 6px; // 进度条轨道高度
     background: var(--b3-theme-surface-light);
-    border-radius: $radius-full;
+    border-radius: $r-full;
     overflow: hidden;
-    margin-bottom: $spacing-1;
+    margin-bottom: $s-1;
   }
 
   .progress-fill {
@@ -147,18 +147,18 @@
 
   .progress-text {
     text-align: center;
-    font-size: $font-size-2xs;
+    font-size: $t-2xs;
     color: var(--b3-theme-on-surface);
   }
 }
 
 .export-logs {
-  margin-top: $spacing-3;
+  margin-top: $s-3;
 
   h4 {
-    margin: 0 0 $spacing-2;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-semibold;
+    margin: 0 0 $s-2;
+    font-size: $t-xs;
+    font-weight: $fw-semibold;
     color: var(--b3-theme-on-background);
   }
 
@@ -166,21 +166,21 @@
     max-height: 150px; // 日志区最大高度，超出滚动
     overflow-y: auto;
     background: var(--b3-theme-surface);
-    border-radius: $radius-sm;
-    padding: $spacing-2;
+    border-radius: $r-sm;
+    padding: $s-2;
   }
 
   .log-item {
-    font-size: $font-size-2xs;
-    padding: $spacing-2px 0;
-    font-family: $vp-mono;
+    font-size: $t-2xs;
+    padding: $s-px2 0;
+    font-family: $ff-mono;
 
     &.success {
-      color: var(--b3-card-success-color, $color-success);
+      color: var(--b3-card-success-color, $c-success);
     }
 
     &.error {
-      color: var(--b3-card-error-color, $color-danger);
+      color: var(--b3-card-error-color, $c-danger);
     }
 
     &.info {

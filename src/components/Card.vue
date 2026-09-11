@@ -1,3 +1,4 @@
+<!-- 卡片容器：标题/副标题/封面/主体/底部与容器 class 钩子，支持变体、点击、加载与四档尺寸 -->
 <template>
   <div
     :class="cardClasses"
@@ -6,22 +7,25 @@
     @click="handleClick"
   >
     <div
-      v-if="$slots.header || title"
+      v-if="$slots.header || $slots.title || $slots.subtitle || title || subtitle"
       class="si-card__header"
     >
-      <div class="si-card__header-content">
+      <div
+        class="si-card__header-content"
+        :class="captionClass"
+      >
         <slot name="header">
           <h3
-            v-if="title"
+            v-if="title || $slots.title"
             class="si-card__title"
           >
-            {{ title }}
+            <slot name="title">{{ title }}</slot>
           </h3>
           <p
-            v-if="subtitle"
+            v-if="subtitle || $slots.subtitle"
             class="si-card__subtitle"
           >
-            {{ subtitle }}
+            <slot name="subtitle">{{ subtitle }}</slot>
           </p>
         </slot>
       </div>
@@ -49,9 +53,13 @@
 
     <div
       class="si-card__body"
-      :class="{ 'si-card__body--no-padding': bodyNoPadding }"
+      :class="[
+        { 'si-card__body--no-padding': bodyNoPadding },
+        contentClass,
+      ]"
     >
-      <slot />
+      <!-- 具名 content 优先，未传时回落默认插槽（官方写法可直接照搬） -->
+      <slot name="content"><slot /></slot>
     </div>
 
     <div
@@ -108,6 +116,10 @@ interface Props {
   rounded?: boolean
   /** 主体内容是否无内边距 */
   bodyNoPadding?: boolean
+  /** 主体容器的附加类名（对应官方 contentClass） */
+  contentClass?: string
+  /** 标题 + 副标题所在标题区容器的附加类名（对应官方 PassThrough 的 caption 元素） */
+  captionClass?: string
   /** 宽度 */
   width?: string | number
   /** 高度 */

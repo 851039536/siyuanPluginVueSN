@@ -61,6 +61,13 @@
 | `Timeline` | `content` | `{ item, index }` | 事件主内容（渲染在线的内容侧：竖向为左/右、横向为上/下）；组件不校验，未传时该侧留空 |
 | `Timeline` | `opposite` | `{ item, index }` | 线另一侧的附加内容（典型为时间戳）；**容器恒渲染**，未传该插槽时对侧留空（两侧等宽 / 等高、线位置稳定） |
 | `Timeline` | `marker` | `{ item, index }` | 自定义节点（序号 / 图标 / 缩略图）；未传时回退为 10px 主题色空心圆 |
+| `Card` | `title` | — | 覆盖标题内容（渲染在标题样式容器 `.si-card__title` 内，可放「图标 + 文本」等富内容）；不传时回退 `title` prop |
+| `Card` | `subtitle` | — | 覆盖副标题内容；不传时回退 `subtitle` prop |
+| `Card` | `content` | — | 覆盖主体内容；**未传时回落默认插槽**，故官方的 `<template #content>` 写法可直接照搬 |
+| `Card` | `header` | — | ⚠️ **语义与官方不同**：本项目是「整块替换标题栏（caption + `header-extra`）」，官方是 body 之外的通栏区（通常是整宽图片）——对应官方通栏请用 `cover` |
+| `Card` | `header-extra` | — | 标题栏右侧附加区（按钮、徽标等）；标题栏渲染时才可见 |
+| `Card` | `cover` | — | 封面区（`cover` prop 的图片也可由本插槽替换），承担官方的通栏 header 角色 |
+| `Card` | `footer` | — | 底部区；⚠️ 本项目为**独立分区并带上边框**（官方 footer 位于 body 内、无上边框），内容排列（如按钮组）由调用方自行提供 |
 
 `SelectOption` 的 `keywords?: string` 为 `filterable` 的附加检索词（标签之外的别名/描述检索），清单中已有对应示例。
 
@@ -81,6 +88,7 @@
 | `Paginator` | `update:page` / `update:rows` / `change` | `update:page`（1 基新页码）与 `update:rows`（每页条数）为实时跟随；`change` 为一次性提交信号，载荷 `{ page, rows, total, totalPages, first, last }`。**`rows` 变更会在同一次交互中先派发 `update:rows`、再（必要时）派发 `update:page(1)`，最后派发一次 `change`** —— 消费方按 `change` 落盘即可 |
 | `DatePicker` | `update:modelValue` / `change` | 同日提交：选中、手输解析、清除时两者同时触发（无「实时跟随」阶段）；另有 `visibleChange`（弹层开合）、`viewChange`（视图切换）、`clear` |
 | `ConfirmDialog` | `confirm` / `cancel` | 确认按钮触发 `confirm`（不自动关闭，由父组件决定关闭时机，便于异步操作）；取消（取消按钮 / 遮罩点关 / Esc）触发 `cancel` 并同时派发 `update:visible(false)`，故支持 `v-model:visible` |
+| `Card` | `click` | 仅在 `clickable` 为真且非 `disabled` / `loading` 时派发（载荷为原生 `MouseEvent`）；`disabled` / `loading` 时静默不派发 |
 
 > 通用建议：需要「实时跟随 + 一次性落盘」的交互（滑块、颜色、文本输入），消费方应监听 `update:modelValue` 做内存更新、监听 `change` 做持久化，可避免写放大与提示刷屏。
 

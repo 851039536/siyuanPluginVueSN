@@ -6,27 +6,27 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-6px;
-  margin-bottom: $spacing-6px;
+  gap: $s-px6;
+  margin-bottom: $s-px6;
 }
 
 .gp-view-modes {
   display: flex;
-  gap: $spacing-2px;
+  gap: $s-px2;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   overflow: hidden;
 }
 
 .gp-vm-btn {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-px;
-  padding: $spacing-px $spacing-7px;
+  gap: $s-px3;
+  padding: $s-px3 $s-px7;
   border: none;
   background: transparent;
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   opacity: 0.45;
   cursor: pointer;
   transition: opacity 0.15s, background 0.15s;
@@ -37,26 +37,26 @@
     opacity: 1;
     background: var(--b3-theme-primary-lightest);
     color: var(--b3-theme-primary);
-    font-weight: $font-weight-semibold;
+    font-weight: $fw-semibold;
   }
 }
 
 .gp-filter-toggles {
   display: flex;
-  gap: $spacing-1;
-  padding-right: $spacing-3;
+  gap: $s-1;
+  padding-right: $s-3;
 }
 
 .gp-ft-btn {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-px;
-  padding: $spacing-px $spacing-6px;
+  gap: $s-px3;
+  padding: $s-px3 $s-px6;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: transparent;
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   opacity: 0.45;
   cursor: pointer;
   transition: opacity 0.15s, border-color 0.15s, background 0.15s;
@@ -74,9 +74,9 @@
 // ========== 分类 TAB 导航栏 ==========
 .gp-tabs {
   display: flex;
-  gap: $spacing-2px;
+  gap: $s-px2;
   overflow-x: auto;
-  padding: 0 0 $spacing-1;
+  padding: 0 0 $s-1;
   -webkit-overflow-scrolling: touch;
   @include hide-h-scrollbar;
 }
@@ -84,15 +84,15 @@
 .gp-tab {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
   flex-shrink: 0;
-  padding: $spacing-1 $spacing-10px;
+  padding: $s-1 $s-px10;
   border: none;
   border-bottom: 2px solid transparent;
-  border-radius: $radius-sm $radius-sm 0 0;
+  border-radius: $r-sm $r-sm 0 0;
   background: transparent;
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   opacity: 0.5;
   cursor: pointer;
   transition: opacity 0.15s, border-color 0.15s;
@@ -104,7 +104,7 @@
 
   &.active {
     opacity: 1;
-    font-weight: $font-weight-semibold;
+    font-weight: $fw-semibold;
     border-bottom-color: var(--b3-theme-primary);
     background: var(--b3-theme-primary-lightest);
   }
@@ -118,7 +118,7 @@
 }
 
 .gp-tab-count {
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
   opacity: 0.4;
 }

@@ -1,7 +1,7 @@
 /**
  * S3 备份面板样式 (Codex 风格)
  *
- * 使用全局设计 Token ($vp-radius / $spacing-* / $font-size-*)
+ * 使用全局设计 Token ($r-base / $spacing-* / $font-size-*)
  * 禁止 box-shadow，使用 border 代替
  */
 @use '@/variables.scss' as *;
@@ -20,13 +20,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-3 $spacing-4;
+  padding: $s-3 $s-4;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
   flex-shrink: 0;
 
   &-title {
-    font-size: $font-size-lg;
-    font-weight: $font-weight-semibold;
+    font-size: $t-lg;
+    font-weight: $fw-semibold;
   }
 }
 
@@ -35,18 +35,18 @@
 .s3-tab-bar {
   display: flex;
   gap: 0;
-  padding: 0 $spacing-4;
+  padding: 0 $s-4;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
   flex-shrink: 0;
 }
 
 .s3-tab-btn {
   position: relative;
-  padding: $spacing-2 $spacing-3;
+  padding: $s-2 $s-3;
   border: none;
   background: transparent;
   color: var(--b3-theme-on-surface-light);
-  font-size: $font-size-sm;
+  font-size: $t-sm;
   cursor: pointer;
   transition: color 0.15s ease;
 
@@ -61,8 +61,8 @@
       content: "";
       position: absolute;
       bottom: 0;
-      left: $spacing-1;
-      right: $spacing-1;
+      left: $s-1;
+      right: $s-1;
       height: 2px;
       background: var(--b3-theme-primary);
       border-radius: 1px 1px 0 0;
@@ -71,16 +71,16 @@
 
   // 实验性功能徽标（增量 Tab）
   .s3-tab-badge {
-    font-family: $vp-mono;
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-semibold;
+    font-family: $ff-mono;
+    font-size: $t-2xs;
+    font-weight: $fw-semibold;
     text-transform: uppercase;
     color: var(--b3-theme-warning);
     background: var(--b3-theme-warning-lightest);
     border: 1px solid var(--b3-theme-warning-lighter, var(--b3-theme-warning));
-    border-radius: $radius-px;
-    padding: 0 $spacing-px;
-    margin-left: $spacing-1;
+    border-radius: $r-px3;
+    padding: 0 $s-px3;
+    margin-left: $s-1;
     vertical-align: middle;
   }
 }
@@ -90,28 +90,28 @@
 .settings-container {
   flex: 1;
   overflow-y: auto;
-  padding: $spacing-4;
+  padding: $s-4;
 }
 
 // ========== 卡片区块（共享基座） ==========
 
 .card-section {
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $vp-radius;
-  padding: $spacing-4;
-  margin-bottom: $spacing-4;
+  border-radius: $r-base;
+  padding: $s-4;
+  margin-bottom: $s-4;
 }
 
 .section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: $spacing-3;
+  margin-bottom: $s-3;
 
   h4 {
     margin: 0;
-    font-size: $font-size-base;
-    font-weight: $font-weight-semibold;
+    font-size: $t-base;
+    font-weight: $fw-semibold;
   }
 }
 
@@ -120,7 +120,7 @@
 .workspace-path-row {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
   flex: 1;
   min-width: 0;
 }
@@ -135,12 +135,12 @@
 
 .path-actions {
   display: flex;
-  gap: $spacing-1;
+  gap: $s-1;
   flex-shrink: 0;
 }
 
 .info-value {
-  font-size: $font-size-sm;
+  font-size: $t-sm;
   color: var(--b3-theme-on-surface);
 }
 
@@ -148,27 +148,27 @@
 
 .backup-actions-row {
   display: flex;
-  gap: $spacing-2;
+  gap: $s-2;
   flex-wrap: wrap;
 }
 
 .backup-hint {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface-light);
-  margin-top: $spacing-2;
+  margin-top: $s-2;
   margin-bottom: 0;
 }
 
 // ========== 表单控件（共享） ==========
 
 .form-group-checkbox {
-  margin-top: $spacing-3;
+  margin-top: $s-3;
 }
 
 .form-hint {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface-light);
-  margin-top: $spacing-2px;
+  margin-top: $s-px2;
 }
 
 // ========== 路径预览（ManualBackupCard 共用） ==========
@@ -176,12 +176,12 @@
 .path-preview {
   display: flex;
   align-items: flex-start;
-  gap: $spacing-1;
-  margin-top: $spacing-1;
-  padding: $spacing-1 $spacing-2;
+  gap: $s-1;
+  margin-top: $s-1;
+  padding: $s-1 $s-2;
   background: var(--b3-theme-surface-lighter);
-  border-radius: $vp-radius;
-  font-size: $font-size-xs;
+  border-radius: $r-base;
+  font-size: $t-xs;
 }
 
 .path-preview-label {
@@ -195,7 +195,7 @@
 }
 
 .path-preview-value {
-  font-family: $vp-mono;
+  font-family: $ff-mono;
   color: var(--b3-theme-primary);
   word-break: break-all;
   background: transparent;
@@ -207,12 +207,12 @@
 // ========== 哈希值展示（StoredChecksumsSection / DropVerifySection 共用） ==========
 
 .checksum-hash-value {
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-light);
   background: var(--b3-theme-surface-lighter);
-  padding: $spacing-1px $spacing-1;
-  border-radius: $radius-px;
+  padding: $s-px1 $s-1;
+  border-radius: $r-px3;
   word-break: break-all;
 }
 

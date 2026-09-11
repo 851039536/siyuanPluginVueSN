@@ -4,7 +4,7 @@
   position: relative; // 调色板弹层的定位锚点
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
   width: 100%;
 }
 
@@ -14,7 +14,7 @@
   width: 40px;
   height: 28px;
   border: 1px solid var(--b3-theme-outline);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   cursor: pointer;
   padding: 0;
 
@@ -26,10 +26,10 @@
 .color-input {
   flex: 1;
   min-width: 0;
-  padding: $spacing-1 $spacing-2;
-  font-size: $font-size-xs;
+  padding: $s-1 $s-2;
+  font-size: $t-xs;
   border: 1px solid var(--b3-theme-outline);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
 
@@ -42,19 +42,19 @@
 /* 预设调色板弹层 */
 .color-popover {
   position: absolute;
-  top: calc(100% + #{$spacing-1});
+  top: calc(100% + #{$s-1});
   left: 0;
   z-index: 10; // 覆盖面板内相邻表单控件
-  padding: $spacing-2;
+  padding: $s-2;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-theme-outline);
-  border-radius: $radius-md;
+  border-radius: $r-md;
 }
 
 .palette-grid {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .palette-swatch {
@@ -63,7 +63,7 @@
   height: 18px;
   padding: 0;
   border: 1px solid var(--b3-theme-outline);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   cursor: pointer;
 
   &:hover {

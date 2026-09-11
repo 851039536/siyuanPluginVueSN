@@ -11,21 +11,21 @@
 
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
+  gap: $s-1;
 
   // 行容器：水平 flex，元素等距排列
   &__row {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: $spacing-2 $spacing-3;
+    gap: $s-2 $s-3;
   }
 
   // 选项项
   &__item {
     display: flex;
     align-items: center;
-    gap: $spacing-1;
+    gap: $s-1;
   }
 
   // 选项标签（数量/延迟/排序/大小）
@@ -41,18 +41,18 @@
     box-sizing: border-box;
     width: 48px;
     height: 28px;
-    padding: 0 $spacing-6px;
-    font-size: $font-size-sm;
-    font-family: $vp-mono;
+    padding: 0 $s-px6;
+    font-size: $t-sm;
+    font-family: $ff-mono;
     color: var(--b3-theme-on-surface);
     background: var(--b3-theme-background);
     border: 1px solid var(--b3-border-color);
-    border-radius: $radius-base;
+    border-radius: $r-base;
     outline: none;
     text-align: center;
 
     &:focus {
-      border-color: $color-danger;
+      border-color: $c-danger;
     }
 
     // 隐藏数字输入框的上下箭头
@@ -66,10 +66,10 @@
 
   // 文件大小分隔符
   &__size-sep {
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     color: var(--b3-theme-on-surface);
     opacity: 0.3;
-    font-weight: $font-weight-bold;
+    font-weight: $fw-bold;
   }
 
   // 路径范围过滤区块（行4）
@@ -80,7 +80,7 @@
   &__path-group {
     display: flex;
     flex-direction: column;
-    gap: $spacing-1;
+    gap: $s-1;
     min-width: 260px;
     flex: 1;
   }
@@ -90,7 +90,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: $spacing-2;
+    gap: $s-2;
   }
 
   // 路径输入框（每行一个路径，换行分隔）
@@ -98,19 +98,19 @@
     box-sizing: border-box;
     width: 100%;
     min-height: 52px;
-    padding: $spacing-1 $spacing-2;
-    font-size: $font-size-2xs;
-    font-family: $vp-mono;
-    line-height: $line-height-normal;
+    padding: $s-1 $s-2;
+    font-size: $t-2xs;
+    font-family: $ff-mono;
+    line-height: $lh-normal;
     color: var(--b3-theme-on-surface);
     background: var(--b3-theme-background);
     border: 1px solid var(--b3-border-color);
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     outline: none;
     resize: vertical;
 
     &:focus {
-      border-color: $color-danger;
+      border-color: $c-danger;
     }
 
     &::placeholder {

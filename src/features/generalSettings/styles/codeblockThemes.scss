@@ -21,7 +21,7 @@ body[class*="codeblock-style-"] {
     .protyle-action {
       display: flex;
       align-items: center;
-      min-height: $spacing-6;
+      min-height: $s-6;
       position: relative;
 
       .protyle-action__language {
@@ -29,8 +29,8 @@ body[class*="codeblock-style-"] {
         left: 50%;
         // 负 margin 居中微调：抵消自身宽度一半，无对应 Token，保留精确值
         margin-left: -0.375rem;
-        font-size: $font-size-xs;
-        font-weight: $font-weight-semibold;
+        font-size: $t-xs;
+        font-weight: $fw-semibold;
         // 语言标签字母间距，非字体三要素，保留精确值
         letter-spacing: 0.5px;
       }
@@ -47,7 +47,7 @@ body[class*="codeblock-style-"] {
 
     .hljs {
       background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.015) !important;
-      padding: $codeblock-padding $spacing-2;
+      padding: $codeblock-padding $s-2;
       font-size: $codeblock-font-size;
       line-height: $codeblock-line-height;
       color: var(--b3-theme-on-surface);
@@ -84,11 +84,11 @@ body.codeblock-style-github {
       background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.03);
       border-bottom: 1px solid var(--b3-theme-outline);
       // 0.875rem(14px) 无对应间距 Token，保留精确值
-      padding: $spacing-2px 0.875rem;
+      padding: $s-px2 0.875rem;
 
       .protyle-action__language {
         // 覆盖通用块居中定位，改为左对齐（真实 GitHub header 语言标签居左）
-        left: $spacing-2;
+        left: $s-2;
         margin-left: 0;
         text-transform: uppercase;
       }
@@ -121,7 +121,7 @@ body.codeblock-style-github {
 body.codeblock-style-mac {
   #{$codeblock-roots} {
     border: 1px solid var(--b3-theme-outline);
-    border-radius: $radius-lg;
+    border-radius: $r-lg;
 
     &:hover {
       border-color: var(--b3-theme-primary);
@@ -131,13 +131,13 @@ body.codeblock-style-mac {
       // macOS 终端/iTerm 标题栏固定深色，与三色点同为"固定品牌色 + 注释"例外
       background: #1f1f1f;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      padding: $spacing-2px $spacing-3;
+      padding: $s-px2 $s-3;
       color: rgba(255, 255, 255, 0.85);
 
       &::before {
         content: '';
-        width: $spacing-3;
-        height: $spacing-3;
+        width: $s-3;
+        height: $s-3;
         border-radius: 50%;
         // Mac 红黄绿三色按钮为固定品牌色，直接写死 hex（原为无注入源的 CSS 变量包装）
         background: #ff5f56;
@@ -159,7 +159,7 @@ body.codeblock-style-mac {
     .hljs {
       /* macOS 风格滚动条 */
       &::-webkit-scrollbar {
-        height: $spacing-2;
+        height: $s-2;
       }
 
       &::-webkit-scrollbar-track {
@@ -168,7 +168,7 @@ body.codeblock-style-mac {
 
       &::-webkit-scrollbar-thumb {
         background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.2);
-        border-radius: $radius-sm;
+        border-radius: $r-sm;
 
         &:hover {
           background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.3);

@@ -4,10 +4,10 @@
 .gd-dir {
   display: flex;
   align-items: center;
-  gap: $spacing-3;
-  padding: $spacing-3 $spacing-4;
-  border: 1px solid $color-border;
-  border-radius: $vp-radius;
+  gap: $s-3;
+  padding: $s-3 $s-4;
+  border: 1px solid $c-border;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
   text-align: left;
   cursor: pointer;
@@ -16,45 +16,45 @@
     transform 0.15s;
 
   &:hover {
-    border-color: $color-accent;
+    border-color: $c-accent;
     transform: translateY(-1px);
   }
 
   &:focus-visible {
     outline: none;
-    border-color: $color-accent;
+    border-color: $c-accent;
   }
 }
 
 .gd-dir-index {
   flex-shrink: 0;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
-  line-height: $line-height-normal;
-  color: $color-accent;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
+  line-height: $lh-normal;
+  color: $c-accent;
 }
 
 .gd-dir-content {
   display: flex;
   flex-direction: column;
-  gap: $spacing-px;
+  gap: $s-px3;
   flex: 1;
   min-width: 0;
 }
 
 .gd-dir-label {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-  line-height: $line-height-normal;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
+  line-height: $lh-normal;
   color: var(--b3-theme-on-background);
 }
 
 .gd-dir-desc {
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-normal;
-  line-height: $line-height-normal;
-  color: $color-muted;
+  font-size: $t-2xs;
+  font-weight: $fw-normal;
+  line-height: $lh-normal;
+  color: $c-muted;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -62,5 +62,5 @@
 
 .gd-dir-arrow {
   flex-shrink: 0;
-  color: $color-muted;
+  color: $c-muted;
 }

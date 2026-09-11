@@ -4,7 +4,7 @@
 .profile-manager {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
+  gap: $s-1;
   width: 100%;
 }
 
@@ -16,7 +16,7 @@
 .profile-save-row {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .profile-name-input {

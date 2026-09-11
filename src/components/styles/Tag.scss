@@ -6,19 +6,19 @@
   display: inline-flex;
   align-items: center;
   gap: m.$gap-xs; // 6px
-  padding: $spacing-1 m.$spacing-2_5; // 4px 10px
+  padding: $s-1 m.$spacing-2_5; // 4px 10px
   border: 1px solid transparent;
-  font-family: $font-zh;
-  font-weight: $font-weight-medium;
-  line-height: $line-height-normal;
+  font-family: $ff-zh;
+  font-weight: $fw-medium;
+  line-height: $lh-normal;
   white-space: nowrap;
   user-select: none;
   cursor: default;
 
   // 尺寸变体
   &--xsmall {
-    font-size: $font-size-2xs;
-    padding: 1px $spacing-1; // 无对应 Token
+    font-size: $t-2xs;
+    padding: 1px $s-1; // 无对应 Token
 
     .si-tag__close {
       width: 10px;
@@ -27,8 +27,8 @@
   }
 
   &--small {
-    font-size: $font-size-xs;
-    padding: $spacing-2px m.$gap-xs; // 2px 6px（水平 8px→6px；纵向 2px 已到下限，保留）
+    font-size: $t-xs;
+    padding: $s-px2 m.$gap-xs; // 2px 6px（水平 8px→6px；纵向 2px 已到下限，保留）
 
     .si-tag__close {
       width: 12px;
@@ -37,8 +37,8 @@
   }
 
   &--medium {
-    font-size: $font-size-sm;
-    padding: $spacing-2px $spacing-2; // 2px 8px（原 4px 10px，各减 2px）
+    font-size: $t-sm;
+    padding: $s-px2 $s-2; // 2px 8px（原 4px 10px，各减 2px）
 
     .si-tag__close {
       width: 14px;
@@ -47,8 +47,8 @@
   }
 
   &--large {
-    font-size: $font-size-base;
-    padding: $spacing-1 $spacing-3; // 4px 12px（原 6px 14px，各减 2px）
+    font-size: $t-base;
+    padding: $s-1 $s-3; // 4px 12px（原 6px 14px，各减 2px）
 
     .si-tag__close {
       width: 16px;
@@ -58,52 +58,52 @@
 
   // 形状变体
   &--rounded {
-    border-radius: $radius-md;
+    border-radius: $r-md;
   }
 
   &--square {
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
   }
 
   &--circle {
-    border-radius: $radius-full;
+    border-radius: $r-full;
   }
 
   // 变体样式
   &--default {
-    background: var(--b3-theme-surface-lighter, $color-surface);
-    color: var(--b3-theme-on-surface, $color-fg);
-    border-color: var(--b3-border-color, $color-border);
+    background: var(--b3-theme-surface-lighter, $c-surface);
+    color: var(--b3-theme-on-surface, $c-fg);
+    border-color: var(--b3-border-color, $c-border);
   }
 
   &--primary {
-    background: hsla(from var(--b3-theme-primary, $color-danger) h s l / 0.1);
-    color: var(--b3-theme-primary, $color-danger);
-    border-color: hsla(from var(--b3-theme-primary, $color-danger) h s l / 0.2);
+    background: hsla(from var(--b3-theme-primary, $c-danger) h s l / 0.1);
+    color: var(--b3-theme-primary, $c-danger);
+    border-color: hsla(from var(--b3-theme-primary, $c-danger) h s l / 0.2);
   }
 
   &--success {
-    background: hsla(from var(--b3-theme-success, $color-success) h s l / 0.1);
-    color: var(--b3-theme-success, $color-success);
-    border-color: hsla(from var(--b3-theme-success, $color-success) h s l / 0.2);
+    background: hsla(from var(--b3-theme-success, $c-success) h s l / 0.1);
+    color: var(--b3-theme-success, $c-success);
+    border-color: hsla(from var(--b3-theme-success, $c-success) h s l / 0.2);
   }
 
   &--warning {
-    background: hsla(from var(--b3-theme-warning, $color-warning) h s l / 0.1);
-    color: var(--b3-theme-warning, $color-warning);
-    border-color: hsla(from var(--b3-theme-warning, $color-warning) h s l / 0.2);
+    background: hsla(from var(--b3-theme-warning, $c-warning) h s l / 0.1);
+    color: var(--b3-theme-warning, $c-warning);
+    border-color: hsla(from var(--b3-theme-warning, $c-warning) h s l / 0.2);
   }
 
   &--danger {
-    background: hsla(from var(--b3-theme-error, $color-danger) h s l / 0.1);
-    color: var(--b3-theme-error, $color-danger);
-    border-color: hsla(from var(--b3-theme-error, $color-danger) h s l / 0.2);
+    background: hsla(from var(--b3-theme-error, $c-danger) h s l / 0.1);
+    color: var(--b3-theme-error, $c-danger);
+    border-color: hsla(from var(--b3-theme-error, $c-danger) h s l / 0.2);
   }
 
   &--info {
-    background: hsla(from var(--b3-theme-info, $color-info) h s l / 0.1);
-    color: var(--b3-theme-info, $color-info);
-    border-color: hsla(from var(--b3-theme-info, $color-info) h s l / 0.2);
+    background: hsla(from var(--b3-theme-info, $c-info) h s l / 0.1);
+    color: var(--b3-theme-info, $c-info);
+    border-color: hsla(from var(--b3-theme-info, $c-info) h s l / 0.2);
   }
 
   // 自定义颜色
@@ -141,16 +141,16 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: $spacing-4; // 16px
-    height: $spacing-4;
+    width: $s-4; // 16px
+    height: $s-4;
     border: none;
     background: transparent;
     cursor: pointer;
     padding: 0;
-    margin-left: $spacing-2px; // 2px 无对应 Token
+    margin-left: $s-px2; // 2px 无对应 Token
     color: inherit;
     opacity: m.$opacity-muted;
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
 
     &:hover {
       opacity: 1;

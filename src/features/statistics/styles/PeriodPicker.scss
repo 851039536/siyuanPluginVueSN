@@ -4,26 +4,26 @@
 
 .period-picker {
   display: flex;
-  gap: $spacing-1;
+  gap: $s-1;
   align-items: center;
 }
 
 .period-label {
   font-family: stats.$font-mono;
-  font-size: stats.$font-size-2xs;
-  font-weight: stats.$font-weight-bold;
+  font-size: stats.$t-2xs;
+  font-weight: stats.$fw-bold;
   color: var(--b3-theme-primary);
   width: 14px;
 }
 
 .period-select {
-  padding: $spacing-1 $spacing-6px;
+  padding: $s-1 $s-px6;
   border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
-  font-size: stats.$font-size-xs;
+  font-size: stats.$t-xs;
   outline: none;
 
   @include stats.codex-focus-glow;

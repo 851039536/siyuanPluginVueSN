@@ -12,18 +12,18 @@
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   overflow: hidden;
-  font-size: $font-size-xs; // 基准字号，防止继承思源全局默认字号导致偏大
+  font-size: $t-xs; // 基准字号，防止继承思源全局默认字号导致偏大
 }
 
 .settings-header {
-  padding: $spacing-4 $spacing-5;
+  padding: $s-4 $s-5;
   border-bottom: 1px solid var(--b3-theme-surface-variant);
   flex-shrink: 0;
 
   h3 {
     margin: 0;
-    font-size: $font-size-sm; // 面板主标题，允许高于两级字号制以突出层级
-    font-weight: $font-weight-semibold;
+    font-size: $t-sm; // 面板主标题，允许高于两级字号制以突出层级
+    font-weight: $fw-semibold;
     color: var(--b3-theme-on-surface);
   }
 }
@@ -41,7 +41,7 @@
   border-right: 1px solid var(--b3-theme-surface-variant);
   overflow-y: auto;
   flex-shrink: 0;
-  padding: $spacing-2 0;
+  padding: $s-2 0;
 
   &::-webkit-scrollbar {
     width: 4px;
@@ -49,15 +49,15 @@
 
   &::-webkit-scrollbar-thumb {
     background: var(--b3-theme-surface-variant);
-    border-radius: $radius-2px;
+    border-radius: $r-px2;
   }
 }
 
 .sidebar-item {
-  margin: $spacing-1 $spacing-2;
-  padding: $spacing-3 $spacing-14px;
+  margin: $s-1 $s-2;
+  padding: $s-3 $s-px14;
   cursor: pointer;
-  border-radius: $radius-md;
+  border-radius: $r-md;
   border-left: 3px solid transparent;
 
   &:hover {
@@ -71,16 +71,16 @@
 }
 
 .sidebar-title {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
+  font-size: $t-xs;
+  font-weight: $fw-medium;
   color: var(--b3-theme-on-surface);
   display: block;
-  line-height: $line-height-normal;
+  line-height: $lh-normal;
 }
 
 .sidebar-item.active .sidebar-title {
   color: var(--b3-theme-primary);
-  font-weight: $font-weight-semibold;
+  font-weight: $fw-semibold;
 }
 
 /* 内容区 */
@@ -89,7 +89,7 @@
   overflow-y: auto;
   background: var(--b3-theme-background);
   // 右侧留白，避免滚动条紧贴面板侧边栏（各子页面自带 padding，此处只补滚动条呼吸空间）
-  padding-right: $spacing-2;
+  padding-right: $s-2;
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -97,7 +97,7 @@
 
   &::-webkit-scrollbar-thumb {
     background: var(--b3-theme-surface-variant);
-    border-radius: $radius-px;
+    border-radius: $r-px3;
   }
 }
 
@@ -110,39 +110,39 @@
 @media (max-width: 500px) {
   .settings-sidebar {
     width: 110px;
-    padding: $spacing-6px 0;
+    padding: $s-px6 0;
   }
 
   .sidebar-item {
-    margin: $spacing-px $spacing-6px;
-    padding: $spacing-10px;
+    margin: $s-px3 $s-px6;
+    padding: $s-px10;
   }
 
   .sidebar-title {
-    font-size: $font-size-xs;
+    font-size: $t-xs;
   }
 }
 
 @media (max-width: 400px) {
   .settings-header {
-    padding: $spacing-3 $spacing-14px;
+    padding: $s-3 $s-px14;
 
     h3 {
-      font-size: $font-size-xs;
+      font-size: $t-xs;
     }
   }
 
   .settings-sidebar {
     width: 90px;
-    padding: $spacing-1 0;
+    padding: $s-1 0;
   }
 
   .sidebar-item {
-    margin: $spacing-2px $spacing-1;
-    padding: $spacing-2;
+    margin: $s-px2 $s-1;
+    padding: $s-2;
   }
 
   .sidebar-title {
-    font-size: $font-size-2xs;
+    font-size: $t-2xs;
   }
 }

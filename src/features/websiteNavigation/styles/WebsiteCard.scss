@@ -6,8 +6,8 @@
   box-sizing: border-box;
   width: 100%;
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
-  padding: $spacing-2 $spacing-10px;
+  border-radius: $r-base;
+  padding: $s-2 $s-px10;
   background: var(--b3-theme-surface);
   transition: border-color 0.15s;
 
@@ -19,7 +19,7 @@
 .wn-card-main {
   display: flex;
   justify-content: space-between;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .wn-card-info {
@@ -30,8 +30,8 @@
 .wn-card-name-row {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  margin-bottom: $spacing-1;
+  gap: $s-2;
+  margin-bottom: $s-1;
 
   .wn-card-icon {
     flex-shrink: 0;
@@ -40,20 +40,20 @@
 }
 
 .wn-card-name {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-background);
   @include wn-text-ellipsis;
 }
 
 // 分类标签（沿用分类色着色，规格对齐 gitPush 徽章）
 .wn-card-tag {
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  padding: $spacing-px $spacing-2;
-  border-radius: $radius-sm;
+  padding: $s-px3 $s-2;
+  border-radius: $r-sm;
   flex-shrink: 0;
   white-space: nowrap;
 }
@@ -61,11 +61,11 @@
 .wn-card-url {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  margin-bottom: $spacing-2px;
+  gap: $s-1;
+  margin-bottom: $s-px2;
   cursor: pointer;
   color: var(--b3-theme-primary);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 
   .url-text {
     @include wn-text-ellipsis;
@@ -78,14 +78,14 @@
 }
 
 .wn-card-desc {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-secondary);
   @include wn-text-ellipsis;
 }
 
 .wn-card-actions {
   display: flex;
-  gap: $spacing-2px;
+  gap: $s-px2;
   flex-shrink: 0;
   align-items: flex-start;
 }

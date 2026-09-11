@@ -9,12 +9,12 @@
 
 @mixin custom-scrollbar {
   &::-webkit-scrollbar {
-    width: $spacing-1;
-    height: $spacing-1;
+    width: $s-1;
+    height: $s-1;
   }
   &::-webkit-scrollbar-thumb {
     background: var(--b3-theme-surface-lighter);
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
   }
   &::-webkit-scrollbar-track {
     background: transparent;
@@ -22,17 +22,17 @@
 }
 
 @mixin form-input {
-  padding: $spacing-1 $spacing-2;
+  padding: $s-1 $s-2;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
-  font-size: $font-size-xs;
+  border-radius: $r-sm;
+  font-size: $t-xs;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   outline: none;
   transition: border-color 0.12s;
 
   &:focus {
-    border-color: $color-primary;
+    border-color: $c-primary;
   }
 
   &::placeholder {
@@ -49,26 +49,26 @@
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   // Dock 面板根容器基准字号，防止继承思源全局默认字号
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 
   // ── Header ──
   .rm-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: $spacing-2 $spacing-3;
+    padding: $s-2 $s-3;
     border-bottom: 1px solid var(--b3-border-color);
     flex-shrink: 0;
-    gap: $spacing-2;
+    gap: $s-2;
 
     &__title {
-      font-size: $font-size-xs;
-      font-weight: $font-weight-semibold;
+      font-size: $t-xs;
+      font-weight: $fw-semibold;
     }
 
     &__actions {
       display: flex;
-      gap: $spacing-1;
+      gap: $s-1;
       flex-shrink: 0;
     }
   }
@@ -85,8 +85,8 @@
     &__item {
       flex: 1 1 0;
       min-width: 0;
-      padding: $spacing-2 $spacing-1;
-      font-size: $font-size-xs;
+      padding: $s-2 $s-1;
+      font-size: $t-xs;
       text-align: center;
       cursor: pointer;
       white-space: nowrap;
@@ -105,7 +105,7 @@
       &.active {
         color: var(--b3-theme-primary);
         border-bottom-color: var(--b3-theme-primary);
-        font-weight: $font-weight-medium;
+        font-weight: $fw-medium;
       }
     }
   }
@@ -114,26 +114,26 @@
   .rm-content {
     flex: 1;
     overflow-y: auto;
-    // 水平 12px / 垂直 8px：列表等滚动内容不紧贴侧边栏（≥ $spacing-2）
-    padding: $spacing-2 $spacing-3 $spacing-3;
+    // 水平 12px / 垂直 8px：列表等滚动内容不紧贴侧边栏（≥ $s-2）
+    padding: $s-2 $s-3 $s-3;
     @include custom-scrollbar;
   }
 
   // ── 区域 ──
   .rm-section {
     &__title {
-      font-size: $font-size-xs;
-      font-weight: $font-weight-semibold;
+      font-size: $t-xs;
+      font-weight: $fw-semibold;
       color: var(--b3-theme-on-surface-light);
       text-transform: uppercase;
-      margin-bottom: $spacing-2;
-      padding: 0 $spacing-2px;
+      margin-bottom: $s-2;
+      padding: 0 $s-px2;
     }
 
     &__actions {
       display: flex;
-      gap: $spacing-1;
-      margin-bottom: $spacing-2;
+      gap: $s-1;
+      margin-bottom: $s-2;
       flex-wrap: wrap;
     }
   }
@@ -154,10 +154,10 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: $spacing-2 $spacing-1;
-    border-radius: $radius-sm;
-    font-size: $font-size-xs;
-    gap: $spacing-2;
+    padding: $s-2 $s-1;
+    border-radius: $r-sm;
+    font-size: $t-xs;
+    gap: $s-2;
     transition: background 0.12s;
     flex-wrap: wrap;
 
@@ -172,14 +172,14 @@
     }
 
     &__name {
-      font-weight: $font-weight-medium;
+      font-weight: $fw-medium;
       @include text-ellipsis;
-      line-height: $line-height-tight;
+      line-height: $lh-tight;
     }
 
     &__actions {
       display: flex;
-      gap: $spacing-1;
+      gap: $s-1;
       flex-shrink: 0;
     }
 
@@ -189,12 +189,12 @@
       flex-direction: column;
       align-items: stretch;
       justify-content: flex-start;
-      gap: $spacing-1;
+      gap: $s-1;
 
       .rm-asset-item__main {
         display: flex;
         align-items: center;
-        gap: $spacing-2;
+        gap: $s-2;
         min-width: 0;
       }
 
@@ -205,7 +205,7 @@
       .rm-asset-item__action-group {
         display: flex;
         align-items: center;
-        gap: $spacing-1;
+        gap: $s-1;
         flex-wrap: wrap;
 
         &--primary {
@@ -218,8 +218,8 @@
   // ── 过滤栏 ──
   .rm-filter-bar {
     display: flex;
-    gap: $spacing-1;
-    margin-bottom: $spacing-2;
+    gap: $s-1;
+    margin-bottom: $s-2;
     flex-wrap: wrap;
 
     .rm-btn.active {
@@ -230,18 +230,18 @@
 
     &--limit {
       align-items: center;
-      gap: $spacing-2;
+      gap: $s-2;
 
       .rm-filter-bar__label {
-        font-size: $font-size-xs;
+        font-size: $t-xs;
         color: var(--b3-theme-on-surface-light);
         white-space: nowrap;
       }
 
       .rm-limit-input {
         @include form-input;
-        // 宽度复用 $spacing-16(64px)：Dock 面板窄栏下足够容纳 4 位数字
-        width: $spacing-16;
+        // 宽度复用 $s-16(64px)：Dock 面板窄栏下足够容纳 4 位数字
+        width: $s-16;
         text-align: center;
       }
     }
@@ -251,12 +251,12 @@
 
   // ── 资源统计 ──
   .rm-asset-count {
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     color: var(--b3-theme-on-surface-light);
     // 细分隔线将统计行与列表分区，避免直接贴列表
     border-top: 1px solid var(--b3-border-color);
-    padding: $spacing-2 $spacing-2px 0;
-    margin-bottom: $spacing-2;
+    padding: $s-2 $s-px2 0;
+    margin-bottom: $s-2;
   }
 
   // 移动弹窗表单样式已随 MoveAssetDialog 子组件迁移至 MoveAssetDialog.scss
@@ -265,11 +265,11 @@
   .rm-btn {
     display: inline-flex;
     align-items: center;
-    gap: $spacing-1;
-    padding: $spacing-1 $spacing-2;
+    gap: $s-1;
+    padding: $s-1 $s-2;
     border: 1px solid var(--b3-border-color);
-    border-radius: $radius-sm;
-    font-size: $font-size-xs;
+    border-radius: $r-sm;
+    font-size: $t-xs;
     cursor: pointer;
     background: var(--b3-theme-surface);
     color: var(--b3-theme-on-surface);
@@ -286,24 +286,24 @@
       cursor: not-allowed;
     }
 
-    // 主操作（与全仓 20+ 处 feature 一致：用主题主色而非 $color-primary，
+    // 主操作（与全仓 20+ 处 feature 一致：用主题主色而非 $c-primary，
     // 后者是暖黑中性色，配 --b3-theme-on-primary 在深色主题下对比度不足）
     &.primary {
       background: var(--b3-theme-primary);
       color: var(--b3-theme-on-primary);
       border-color: var(--b3-theme-primary);
-      padding: $spacing-2 $spacing-3;
+      padding: $s-2 $s-3;
 
       &:hover:not(:disabled) {
         opacity: 0.88;
       }
     }
 
-    // 危险操作（$color-danger 为固定红，文字用纯白保证对比度）
+    // 危险操作（$c-danger 为固定红，文字用纯白保证对比度）
     &.danger {
-      background: $color-danger;
+      background: $c-danger;
       color: #fff;
-      border-color: $color-danger;
+      border-color: $c-danger;
 
       &:hover:not(:disabled) {
         opacity: 0.88;
@@ -312,8 +312,8 @@
 
     // 小号按钮（列表项）
     &.small {
-      padding: $spacing-2px $spacing-2;
-      font-size: $font-size-xs;
+      padding: $s-px2 $s-2;
+      font-size: $t-xs;
     }
 
     // 带图标按钮
@@ -324,14 +324,14 @@
 
   // ── 结果展示 ──
   .rm-result {
-    padding: $spacing-2;
+    padding: $s-2;
     background: var(--b3-theme-surface-light);
-    border-radius: $radius-sm;
-    margin-top: $spacing-2;
-    font-size: $font-size-xs;
+    border-radius: $r-sm;
+    margin-top: $s-2;
+    font-size: $t-xs;
     word-break: break-all;
-    line-height: $line-height-normal;
-    max-height: $spacing-16 + $spacing-8;
+    line-height: $lh-normal;
+    max-height: $s-16 + $s-8;
     overflow-y: auto;
     border: 1px solid var(--b3-border-color);
   }
@@ -345,7 +345,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: $spacing-4;
+  padding: $s-4;
   background: rgba(0, 0, 0, 0.5);
 }
 .rm-preview-panel {
@@ -355,14 +355,14 @@
   max-height: 86vh;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   overflow: hidden;
   &__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: $spacing-2;
-    padding: $spacing-2 $spacing-3;
+    gap: $s-2;
+    padding: $s-2 $s-3;
     border-bottom: 1px solid var(--b3-border-color);
     flex-shrink: 0;
   }
@@ -370,7 +370,7 @@
   &__name {
     flex: 1;
     min-width: 0;
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     color: var(--b3-theme-on-background);
     white-space: nowrap;
     overflow: hidden;
@@ -382,11 +382,11 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    width: $spacing-4;
-    height: $spacing-4;
+    width: $s-4;
+    height: $s-4;
     padding: 0;
     border: 1px solid transparent;
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     background: transparent;
     color: var(--b3-theme-on-surface-light);
     cursor: pointer;
@@ -403,14 +403,14 @@
     justify-content: center;
     align-items: center;
     overflow: auto;
-    padding: $spacing-2;
+    padding: $s-2;
     background: var(--b3-theme-background);
     img {
       display: block;
       max-width: 100%;
-      max-height: calc(86vh - #{$spacing-16});
+      max-height: calc(86vh - #{$s-16});
       object-fit: contain;
-      border-radius: $radius-sm;
+      border-radius: $r-sm;
     }
   }
 }

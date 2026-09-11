@@ -2,16 +2,16 @@
 @use "./mixins" as *;
 
 .stats-overview {
-  // 右侧留白由父容器 .tab-panel 统一提供（padding-right: $spacing-2），此处不叠加
-  padding: $spacing-2 0 $spacing-2 $spacing-3;
+  // 右侧留白由父容器 .tab-panel 统一提供（padding-right: $s-2），此处不叠加
+  padding: $s-2 0 $s-2 $s-3;
 }
 
 // ============ 分区元信息弱化（headerExtra 槽位） ============
 .section-hint {
-  font-weight: $font-weight-normal;
+  font-weight: $fw-normal;
   letter-spacing: 0;
   text-transform: none;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-variant);
 }
 
@@ -20,10 +20,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: $spacing-8;
+  padding: $s-8;
   color: var(--b3-theme-on-surface-variant);
-  font-size: $font-size-xs;
-  gap: $spacing-2;
+  font-size: $t-xs;
+  gap: $s-2;
 
   .placeholder-icon {
     font-size: 40px; // 图标尺寸（占位图标，无精确 Token）
@@ -37,11 +37,11 @@
 .stats-grid {
   // CSS 多列瀑布流：各列独立堆叠，高度参差（列内纵向填充，首列填满再入次列）
   columns: 2;
-  column-gap: $spacing-2;
+  column-gap: $s-2;
 
   // 瀑布流列内完整块：防止表格跨列拆分，垂直间距由自身底部外边距提供
   .stat-table {
     break-inside: avoid;
-    margin-bottom: $spacing-2;
+    margin-bottom: $s-2;
   }
 }

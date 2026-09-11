@@ -5,29 +5,29 @@
   position: relative;
 
   .dropdown-arrow {
-    margin-left: $spacing-1;
-    font-size: $font-size-2xs;
+    margin-left: $s-1;
+    font-size: $t-2xs;
   }
 
   .dropdown-menu {
     position: absolute;
     top: 100%;
     left: 0;
-    margin-top: $spacing-1;
+    margin-top: $s-1;
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-theme-surface-lighter);
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     z-index: 1000;
     min-width: 180px;
 
     .dropdown-item {
       width: 100%;
-      padding: $spacing-2 $spacing-3;
+      padding: $s-2 $s-3;
       border: none;
       background: transparent;
       color: var(--b3-theme-on-surface);
       cursor: pointer;
-      font-size: $font-size-xs;
+      font-size: $t-xs;
       text-align: left;
 
       &:hover {
@@ -35,11 +35,11 @@
       }
 
       &:first-child {
-        border-radius: $radius-sm $radius-sm 0 0;
+        border-radius: $r-sm $r-sm 0 0;
       }
 
       &:last-child {
-        border-radius: 0 0 $radius-sm $radius-sm;
+        border-radius: 0 0 $r-sm $r-sm;
       }
     }
   }

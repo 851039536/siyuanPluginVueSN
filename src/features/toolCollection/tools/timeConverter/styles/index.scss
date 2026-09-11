@@ -2,8 +2,8 @@
 @use '@/variables.scss' as *;
 
 @mixin label-style {
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   opacity: 0.45;
@@ -14,22 +14,22 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: $spacing-14px;
-  font-size: $font-size-xs;
+  gap: $s-px14;
+  font-size: $t-xs;
 
   // ========== 智能识别输入区 ==========
   .tc-input-section {
     display: flex;
     flex-direction: column;
-    gap: $spacing-6px;
+    gap: $s-px6;
   }
 
   .tc-recognize-badge {
     align-self: flex-start;
-    padding: $spacing-2px $spacing-2;
+    padding: $s-px2 $s-2;
     border: 1px solid var(--b3-theme-primary);
-    border-radius: $radius-sm;
-    font-size: $font-size-2xs;
+    border-radius: $r-sm;
+    font-size: $t-2xs;
     color: var(--b3-theme-primary);
 
     &.invalid {
@@ -42,14 +42,14 @@
   .tc-result-section {
     display: flex;
     flex-direction: column;
-    gap: $spacing-6px;
+    gap: $s-px6;
   }
 
   .tc-now-badge {
     @include label-style;
     display: inline-flex;
     align-items: center;
-    gap: $spacing-1;
+    gap: $s-1;
 
     &::before {
       content: '';
@@ -65,15 +65,15 @@
     display: flex;
     flex-direction: column;
     border: 1px solid var(--b3-border-color);
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     overflow: hidden;
   }
 
   .tc-result-row {
     display: flex;
     align-items: center;
-    gap: $spacing-2;
-    padding: $spacing-6px $spacing-10px;
+    gap: $s-2;
+    padding: $s-px6 $s-px10;
     background: var(--b3-theme-surface);
     border-bottom: 1px solid var(--b3-border-color);
     transition: background 0.15s;
@@ -100,22 +100,22 @@
   .tc-row-value {
     flex: 1;
     min-width: 0;
-    font-family: $vp-mono;
+    font-family: $ff-mono;
     font-variant-numeric: tabular-nums;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-medium;
+    font-size: $t-xs;
+    font-weight: $fw-medium;
     color: var(--b3-theme-primary);
     word-break: break-all;
-    line-height: $line-height-normal;
+    line-height: $lh-normal;
   }
 
   .tc-copy-btn {
     flex-shrink: 0;
-    padding: $spacing-2px $spacing-2;
+    padding: $s-px2 $s-2;
     border: 1px solid var(--b3-border-color);
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     background: transparent;
-    font-size: $font-size-2xs;
+    font-size: $t-2xs;
     color: var(--b3-theme-on-surface);
     cursor: pointer;
     opacity: 0.5;
@@ -131,12 +131,12 @@
 
   // ========== 错误提示 ==========
   .tc-error {
-    padding: $spacing-10px $spacing-3;
+    padding: $s-px10 $s-3;
     border: 1px solid var(--b3-error);
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     background: var(--b3-theme-error-container);
-    font-family: $vp-mono;
-    font-size: $font-size-xs;
+    font-family: $ff-mono;
+    font-size: $t-xs;
     color: var(--b3-error);
     text-align: center;
   }
@@ -145,24 +145,24 @@
   .tc-now-section,
   .tc-info {
     border-top: 1px dashed var(--b3-border-color);
-    padding-top: $spacing-10px;
+    padding-top: $s-px10;
   }
 
   h4 {
     @include label-style;
-    margin: 0 0 $spacing-2;
+    margin: 0 0 $s-2;
   }
 
   .tc-info ul {
     margin: 0;
-    padding-left: $spacing-4;
-    font-size: $font-size-xs;
+    padding-left: $s-4;
+    font-size: $t-xs;
     color: var(--b3-theme-on-surface);
     opacity: 0.7;
     line-height: 1.7;
 
     li {
-      margin-bottom: $spacing-2px;
+      margin-bottom: $s-px2;
     }
   }
 }

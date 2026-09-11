@@ -6,7 +6,7 @@
   display: inline-flex;
   flex-direction: column;
   align-items: flex-start;
-  font-family: $font-zh;
+  font-family: $ff-zh;
   vertical-align: middle;
 
   // 控件行（圆框 + 标签），整行可点击
@@ -14,7 +14,7 @@
     position: relative;
     display: inline-flex;
     align-items: center;
-    gap: $spacing-2; // 8px
+    gap: $s-2; // 8px
     cursor: pointer;
     user-select: none;
 
@@ -57,8 +57,8 @@
     justify-content: center;
     flex-shrink: 0;
     background: transparent;
-    border: 1px solid var(--b3-border-color, $color-border);
-    border-radius: $radius-full;
+    border: 1px solid var(--b3-border-color, $c-border);
+    border-radius: $r-full;
     transition: background-color 0.12s ease, border-color 0.12s ease;
 
     // 尺寸档位（圆框 14 / 16 / 18 / 20）
@@ -68,8 +68,8 @@
     }
 
     .si-radiobutton--small & {
-      width: $spacing-4; // 16px
-      height: $spacing-4;
+      width: $s-4; // 16px
+      height: $s-4;
     }
 
     .si-radiobutton--medium & {
@@ -78,30 +78,30 @@
     }
 
     .si-radiobutton--large & {
-      width: $spacing-5; // 20px
-      height: $spacing-5;
+      width: $s-5; // 20px
+      height: $s-5;
     }
 
     // 实底变体：未选中时以浅表面填充，强调度高于描边态
     .si-radiobutton--filled & {
-      background: var(--b3-theme-surface-lighter, $color-surface);
+      background: var(--b3-theme-surface-lighter, $c-surface);
       border-color: transparent;
     }
 
     // 选中：主题主色填充
     .si-radiobutton--checked & {
-      background: var(--b3-theme-primary, $color-danger);
-      border-color: var(--b3-theme-primary, $color-danger);
+      background: var(--b3-theme-primary, $c-danger);
+      border-color: var(--b3-theme-primary, $c-danger);
     }
 
     // 悬停强调（仅未选中时改描边，避免覆盖选中填充）
     .si-radiobutton:not(.si-radiobutton--checked) .si-radiobutton__control:hover & {
-      border-color: var(--b3-theme-primary, $color-danger);
+      border-color: var(--b3-theme-primary, $c-danger);
     }
 
     // 校验失败态
     .si-radiobutton--error & {
-      border-color: var(--b3-theme-error, $color-danger);
+      border-color: var(--b3-theme-error, $c-danger);
     }
   }
 
@@ -109,8 +109,8 @@
   &__dot {
     width: 50%;
     height: 50%;
-    border-radius: $radius-full;
-    background: var(--b3-theme-on-primary, $color-bg);
+    border-radius: $r-full;
+    background: var(--b3-theme-on-primary, $c-bg);
     transform: scale(0);
     transition: transform 0.12s ease;
 
@@ -121,24 +121,24 @@
 
   // 行内标签（字号随档位变化：10 / 12 / 14 / 16，与其它组件的 XS/S/M/L 阶梯一致）
   &__label {
-    color: var(--b3-theme-on-background, $color-fg);
-    line-height: $line-height-normal;
-    font-size: $font-size-xs; // 兜底值（等同 S 档）
+    color: var(--b3-theme-on-background, $c-fg);
+    line-height: $lh-normal;
+    font-size: $t-xs; // 兜底值（等同 S 档）
 
     .si-radiobutton--xsmall & {
-      font-size: $font-size-2xs; // XS 档：10px
+      font-size: $t-2xs; // XS 档：10px
     }
 
     .si-radiobutton--small & {
-      font-size: $font-size-xs; // S 档：12px
+      font-size: $t-xs; // S 档：12px
     }
 
     .si-radiobutton--medium & {
-      font-size: $font-size-sm; // M 档：14px
+      font-size: $t-sm; // M 档：14px
     }
 
     .si-radiobutton--large & {
-      font-size: $font-size-base; // L 档：16px
+      font-size: $t-base; // L 档：16px
     }
   }
 
@@ -149,7 +149,7 @@
 
   // 焦点环用 outline —— focus-ring mixin 只改 border-color，实底圆框上不可见
   &__input:focus-visible + &__box {
-    outline: 2px solid var(--b3-theme-primary, $color-danger);
+    outline: 2px solid var(--b3-theme-primary, $c-danger);
     outline-offset: 2px;
   }
 }

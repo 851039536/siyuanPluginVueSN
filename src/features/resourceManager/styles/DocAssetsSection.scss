@@ -4,14 +4,14 @@
 .rm-doc-bar {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  margin-bottom: $spacing-2;
-  font-size: $font-size-xs;
+  gap: $s-2;
+  margin-bottom: $s-2;
+  font-size: $t-xs;
 
   &__label {
     flex-shrink: 0;
     // 辅助标签文字
-    font-size: $font-size-2xs;
+    font-size: $t-2xs;
     color: var(--b3-theme-on-surface-light);
   }
 
@@ -21,15 +21,15 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-weight: $font-weight-medium;
+    font-weight: $fw-medium;
   }
 }
 
 // 文件大小元信息（辅助文字）
 .rm-asset-item__size {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-light);
-  line-height: $line-height-tight;
+  line-height: $lh-tight;
   // 与上方文件名保持轻微间距，形成「文件名 + 元信息」层级
-  margin-top: $spacing-2px;
+  margin-top: $s-px2;
 }

@@ -6,14 +6,14 @@
 .gpa-cal {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .gpa-cal-month {
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
-  padding: $spacing-2;
+  padding: $s-2;
 }
 
 // 月标题：YYYY-MM + 月提交总数
@@ -21,12 +21,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: $spacing-1;
+  margin-bottom: $s-1;
 
   .gpa-cal-month-title {
-    font-family: $vp-mono;
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-bold;
+    font-family: $ff-mono;
+    font-size: $t-2xs;
+    font-weight: $fw-bold;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--b3-theme-on-surface-light);
@@ -34,8 +34,8 @@
   }
 
   .gpa-cal-month-total {
-    font-family: $vp-mono;
-    font-size: $font-size-2xs;
+    font-family: $ff-mono;
+    font-size: $t-2xs;
     opacity: 0.45;
   }
 }
@@ -44,11 +44,11 @@
 .gpa-cal-weekhead {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: $spacing-px;
-  margin-bottom: $spacing-px;
+  gap: $s-px3;
+  margin-bottom: $s-px3;
 
   .gpa-cal-weekhead-cell {
-    font-size: $font-size-2xs;
+    font-size: $t-2xs;
     text-align: center;
     opacity: 0.45;
   }
@@ -58,12 +58,12 @@
 .gpa-cal-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: $spacing-px;
+  gap: $s-px3;
 }
 
 .gpa-cal-day {
   min-height: 24px; // 内容（日号+计数）约 22px，留 2px 余量；行高由内容撑起自动均匀
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -93,18 +93,18 @@
   }
 
   .gpa-cal-day-num {
-    font-family: $vp-mono;
-    font-size: $font-size-2xs;
+    font-family: $ff-mono;
+    font-size: $t-2xs;
     line-height: 1;
     opacity: 0.8;
   }
 
   .gpa-cal-day-count {
-    font-family: $vp-mono;
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-bold;
+    font-family: $ff-mono;
+    font-size: $t-2xs;
+    font-weight: $fw-bold;
     line-height: 1;
-    margin-top: $spacing-2px;
+    margin-top: $s-px2;
     color: var(--b3-theme-on-surface);
   }
 }

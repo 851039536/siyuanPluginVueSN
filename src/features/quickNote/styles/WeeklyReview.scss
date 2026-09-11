@@ -6,7 +6,7 @@
 .qn-review {
   display: flex;
   flex-direction: column;
-  gap: $spacing-3;
+  gap: $s-3;
 }
 
 // ========== 周切换头（← 更早 / 周标签 + 日期范围 / → 更近） ==========
@@ -15,24 +15,24 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-2;
-  padding: $spacing-1 $spacing-2;
+  gap: $s-2;
+  padding: $s-1 $s-2;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
 }
 
 .qn-review__week-info {
   display: flex;
   align-items: baseline;
-  gap: $spacing-2;
+  gap: $s-2;
   min-width: 0;
 }
 
 // 周标签（本周/上周/N 周前）
 .qn-review__week-label {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface);
 }
 
@@ -46,16 +46,16 @@
 .qn-review__stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .qn-review__stat {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
-  padding: $spacing-2 $spacing-3;
+  gap: $s-1;
+  padding: $s-2 $s-3;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
 }
 
@@ -63,17 +63,17 @@
   @extend %qn-helper-text;
 }
 
-// 突出数字（数据突出展示，允许 $font-size-sm 以上）
+// 突出数字（数据突出展示，允许 $t-sm 以上）
 .qn-review__stat-value {
-  font-size: $font-size-lg;
-  font-weight: $font-weight-bold;
+  font-size: $t-lg;
+  font-weight: $fw-bold;
   color: var(--b3-theme-primary);
   line-height: 1;
   font-variant-numeric: tabular-nums;
 
   // 环比趋势变体（数字较小，由涨跌修饰类着色）
   &--trend {
-    font-size: $font-size-sm;
+    font-size: $t-sm;
   }
 }
 
@@ -95,20 +95,20 @@
 .qn-review__charts {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: $spacing-3;
+  gap: $s-3;
 }
 
 .qn-review__chart-col {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 // 辅助文字：图表标题
 .qn-review__chart-title {
   // 辅助文字
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--b3-theme-on-surface);
@@ -117,9 +117,9 @@
 // 图表容器（固定高度，Chart 内部 maintainAspectRatio: false）
 .qn-review__chart-box {
   height: 130px;
-  padding: $spacing-2;
+  padding: $s-2;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
 }
 
@@ -137,10 +137,10 @@
 .qn-review__blocks {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
-  padding: $spacing-3;
+  gap: $s-2;
+  padding: $s-3;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
 }
 
@@ -149,14 +149,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 // 区块标题
 .qn-review__section-title {
   // 辅助文字
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--b3-theme-on-surface);
@@ -165,9 +165,9 @@
 // 实时状态徽章（"当前"，提示卡点非所选周历史）
 .qn-review__block-now {
   @extend %qn-helper-text;
-  padding: 0 $spacing-1;
+  padding: 0 $s-1;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-full;
+  border-radius: $r-full;
   background: var(--b3-theme-surface-lighter);
 }
 
@@ -177,21 +177,21 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .qn-review__block-item {
   display: flex;
   align-items: flex-start;
-  gap: $spacing-1;
+  gap: $s-1;
   // 辅助文字
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-card-error-color);
-  line-height: $line-height-tight;
+  line-height: $lh-tight;
 }
 
 .qn-review__block-name {
-  font-weight: $font-weight-semibold;
+  font-weight: $fw-semibold;
   flex-shrink: 0;
 }
 

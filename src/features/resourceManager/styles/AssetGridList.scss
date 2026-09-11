@@ -8,7 +8,7 @@
   display: grid;
   // 窄栏自适应列数：每列最小 104px，多余空间均分
   grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .rm-asset-card {
@@ -17,7 +17,7 @@
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: var(--b3-theme-surface);
   transition: border-color 0.12s, background 0.12s;
 
@@ -50,9 +50,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: $vp-mono;
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-semibold;
+    font-family: $ff-mono;
+    font-size: $t-2xs;
+    font-weight: $fw-semibold;
     color: var(--b3-theme-on-surface-light);
     opacity: 0.75;
   }
@@ -61,16 +61,16 @@
   &__footer {
     display: flex;
     flex-direction: column;
-    gap: $spacing-1;
-    padding: $spacing-1;
+    gap: $s-1;
+    padding: $s-1;
   }
 
   &__name {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: $font-size-2xs;
-    line-height: $line-height-tight;
+    font-size: $t-2xs;
+    line-height: $lh-tight;
     color: var(--b3-theme-on-surface);
   }
 
@@ -91,11 +91,11 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: $spacing-4;
-    height: $spacing-4;
+    width: $s-4;
+    height: $s-4;
     padding: 0;
     border: none;
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     background: transparent;
     color: var(--b3-theme-on-surface-light);
     cursor: pointer;

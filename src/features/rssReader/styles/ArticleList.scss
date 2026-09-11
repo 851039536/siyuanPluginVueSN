@@ -7,8 +7,8 @@
     .rss-item {
       display: flex;
       flex-direction: column;
-      gap: $spacing-px;
-      padding: $spacing-2 $spacing-3;
+      gap: $s-px3;
+      padding: $s-2 $s-3;
       cursor: pointer;
       border-bottom: 1px solid var(--b3-border-color);
       transition: $rr-transition;
@@ -19,16 +19,16 @@
       }
 
       &.unread {
-        .item-title { font-weight: $font-weight-semibold; }
-        .item-feed-tag { font-weight: $font-weight-medium; }
+        .item-title { font-weight: $fw-semibold; }
+        .item-feed-tag { font-weight: $fw-medium; }
       }
 
       .item-header {
-        display: flex; align-items: center; gap: $spacing-1;
+        display: flex; align-items: center; gap: $s-1;
         min-height: 18px;
         .item-feed-tag {
-          font-size: $font-size-2xs;
-          font-weight: $font-weight-bold;
+          font-size: $t-2xs;
+          font-weight: $fw-bold;
           letter-spacing: 0.04em;
           text-transform: uppercase;
           color: $rr-accent; flex-shrink: 0;
@@ -36,8 +36,8 @@
           overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
         .item-date {
-          font-size: $font-size-2xs;
-          font-family: $vp-mono;
+          font-size: $t-2xs;
+          font-family: $ff-mono;
           color: var(--b3-theme-on-surface-muted);
           margin-left: auto; flex-shrink: 0;
           opacity: 0.6;
@@ -45,14 +45,14 @@
       }
 
       .item-title {
-        font-size: $font-size-sm; line-height: 1.4;
+        font-size: $t-sm; line-height: 1.4;
         color: var(--b3-theme-on-background);
         display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
         overflow: hidden; word-break: break-word;
       }
 
       .item-desc {
-        font-size: $font-size-xs; color: var(--b3-theme-on-surface-muted);
+        font-size: $t-xs; color: var(--b3-theme-on-surface-muted);
         line-height: 1.4;
         display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
         overflow: hidden;
@@ -64,10 +64,10 @@
         .item-star-btn {
           display: flex; align-items: center; justify-content: center;
           width: 22px; height: 22px;
-          border: none; border-radius: $radius-sm;
+          border: none; border-radius: $r-sm;
           background: transparent; cursor: pointer;
           color: var(--b3-theme-on-surface-muted);
-          font-size: $font-size-sm;
+          font-size: $t-sm;
           transition: $rr-transition;
           &.starred { color: var(--b3-theme-warning); }
           &:hover { background: var(--b3-theme-surface-lighter); }

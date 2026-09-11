@@ -1,6 +1,6 @@
 // ============================================================
 // 图片生成弹窗外壳 + 两个 Tab 共享布局基座
-// 基准字号：弹窗遮罩显式设置 $font-size-xs，防止继承思源全局默认字号
+// 基准字号：弹窗遮罩显式设置 $t-xs，防止继承思源全局默认字号
 // ============================================================
 
 @use "@/variables.scss" as *;
@@ -18,12 +18,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 }
 
 .image-creation-dialog {
   background: var(--b3-theme-surface, #ffffff);
-  border-radius: $radius-lg;
+  border-radius: $r-lg;
   width: 92vw;
   max-width: 1200px;
   height: 85vh;
@@ -32,7 +32,7 @@
   flex-direction: column;
   border: 1px solid var(--b3-border-color);
   overflow: hidden;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   position: relative;
 
   // 顶部细条点缀
@@ -57,20 +57,20 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: $spacing-3 $spacing-5;
+    padding: $s-3 $s-5;
     border-bottom: 1px solid var(--b3-theme-background-light);
     flex-shrink: 0;
 
     .header-title {
       display: flex;
       align-items: center;
-      gap: $spacing-2;
+      gap: $s-2;
 
       h2 {
         margin: 0;
         // 标题与正文同一字号层级
-        font-size: $font-size-xs;
-        font-weight: $font-weight-semibold;
+        font-size: $t-xs;
+        font-weight: $fw-semibold;
         color: var(--b3-theme-on-surface);
       }
     }
@@ -80,7 +80,7 @@
   .tab-bar {
     display: flex;
     gap: 0;
-    padding: 0 $spacing-5;
+    padding: 0 $s-5;
     border-bottom: 1px solid var(--b3-theme-background-light);
     background: var(--b3-theme-surface);
     flex-shrink: 0;
@@ -88,14 +88,14 @@
     .tab-btn {
       display: flex;
       align-items: center;
-      gap: $spacing-px;
-      padding: $spacing-2 $spacing-4;
+      gap: $s-px3;
+      padding: $s-2 $s-4;
       border: none;
       background: transparent;
       color: var(--b3-theme-on-surface);
       opacity: 0.6;
-      font-size: $font-size-xs;
-      font-weight: $font-weight-medium;
+      font-size: $t-xs;
+      font-weight: $fw-medium;
       cursor: pointer;
       transition: all 0.2s ease;
       position: relative;
@@ -105,10 +105,10 @@
         content: "";
         position: absolute;
         bottom: 0;
-        left: $spacing-4;
-        right: $spacing-4;
-        height: $spacing-2px;
-        border-radius: $radius-sm $radius-sm 0 0;
+        left: $s-4;
+        right: $s-4;
+        height: $s-px2;
+        border-radius: $r-sm $r-sm 0 0;
         background: transparent;
         transition: background 0.2s ease;
       }
@@ -132,7 +132,7 @@
   .dialog-body {
     flex: 1;
     overflow: auto;
-    padding: $spacing-4 $spacing-5;
+    padding: $s-4 $s-5;
   }
 }
 
@@ -140,7 +140,7 @@
 
 .cover-layout {
   display: flex;
-  gap: $spacing-5;
+  gap: $s-5;
   height: 100%;
 }
 
@@ -150,9 +150,9 @@
   min-width: 340px;
   display: flex;
   flex-direction: column;
-  gap: $spacing-3;
+  gap: $s-3;
   overflow-y: auto;
-  padding-right: $spacing-2;
+  padding-right: $s-2;
   // 底部暗纹 — 从 section 间隙之间透出极浅的装饰
   background-image:
     linear-gradient(
@@ -166,33 +166,33 @@
 .config-section {
   display: flex;
   flex-direction: column;
-  gap: $spacing-px;
+  gap: $s-px3;
 }
 
 .config-label {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
+  font-size: $t-xs;
+  font-weight: $fw-medium;
   color: var(--b3-theme-on-surface);
 
   .config-hint {
     // 辅助文字
-    font-weight: $font-weight-normal;
+    font-weight: $fw-normal;
     opacity: 0.45;
-    font-size: $font-size-2xs;
+    font-size: $t-2xs;
   }
 }
 
 // 内容摘要 textarea
 .content-textarea {
   width: 94.5%;
-  padding: $spacing-2;
+  padding: $s-2;
   border: 1px solid var(--b3-theme-background-light);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: var(--b3-theme-surface, #ffffff);
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   font-family: inherit;
-  line-height: $line-height-normal;
+  line-height: $lh-normal;
   resize: vertical;
   min-height: 60px;
 
@@ -213,7 +213,7 @@
   display: flex;
   flex-direction: column;
   border: 1px solid var(--b3-theme-background-light);
-  border-radius: $radius-md;
+  border-radius: $r-md;
   overflow: hidden;
   min-width: 0;
 
@@ -221,16 +221,16 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: $spacing-2 $spacing-3;
+    padding: $s-2 $s-3;
     background: var(--b3-theme-background-light);
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     color: var(--b3-theme-on-surface);
-    font-weight: $font-weight-medium;
+    font-weight: $fw-medium;
     flex-shrink: 0;
 
     .preview-actions {
       display: flex;
-      gap: $spacing-1;
+      gap: $s-1;
       flex-wrap: wrap;
       justify-content: flex-end;
     }
@@ -253,9 +253,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-2;
+  padding: $s-2;
   background: var(--b3-theme-background-light);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   cursor: pointer;
   user-select: none;
 
@@ -264,8 +264,8 @@
   }
 
   .decoration-title-text {
-    font-size: $font-size-xs;
-    font-weight: $font-weight-medium;
+    font-size: $t-xs;
+    font-weight: $fw-medium;
     color: var(--b3-theme-on-surface);
   }
 
@@ -280,28 +280,28 @@
 }
 
 .decoration-body {
-  padding: $spacing-2;
+  padding: $s-2;
   border: 1px solid var(--b3-theme-background-light);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .deco-row {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .deco-input {
   flex: 1;
-  padding: $spacing-1 $spacing-2;
+  padding: $s-1 $s-2;
   border: 1px solid var(--b3-theme-background-light);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   outline: none;
 
   &:focus {
@@ -310,31 +310,31 @@
 }
 
 .deco-group-title {
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   color: var(--b3-theme-primary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  padding: $spacing-1 0 $spacing-2px;
+  padding: $s-1 0 $s-px2;
 }
 
 .deco-slider-row {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .deco-slider-label {
   // 辅助文字
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   min-width: 65px;
 }
 
 .deco-slider-val {
   // 辅助文字
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface);
   min-width: 32px;
   text-align: right;

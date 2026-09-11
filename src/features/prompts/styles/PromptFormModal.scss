@@ -5,7 +5,7 @@
 
 .vp-form {
   .vp-form-group {
-    margin-bottom: $spacing-3;
+    margin-bottom: $s-3;
 
     label {
       @include m.form-label;
@@ -28,13 +28,13 @@
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M6 9l6 6 6-6' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 12px center;
-      padding-right: $spacing-10;
+      padding-right: $s-10;
     }
 
     .vp-textarea {
       resize: vertical;
       min-height: 100px;
-      line-height: $line-height-normal;
+      line-height: $lh-normal;
     }
   }
 }
@@ -46,21 +46,21 @@
 
 // 动态内容块编辑器
 .vp-content-editor {
-  margin-bottom: $spacing-3;
+  margin-bottom: $s-3;
 }
 
 // 内容块不做卡片包裹：以间距分隔，仅输入框自身描边，消解"盒中盒"层次
 .vp-content-editor-item {
   display: flex;
-  gap: $spacing-2;
-  margin-bottom: $spacing-3;
+  gap: $s-2;
+  margin-bottom: $s-3;
 }
 
 .vp-content-editor-inputs {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  gap: $s-2;
   min-width: 0;
 
   .vp-textarea {
@@ -68,30 +68,30 @@
     background-color: transparent;
     resize: vertical;
     min-height: 80px;
-    line-height: $line-height-normal;
+    line-height: $lh-normal;
   }
 }
 
 .vp-content-editor-actions {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
+  gap: $s-1;
   flex-shrink: 0;
-  padding-top: $spacing-2px;
+  padding-top: $s-px2;
 }
 
 .vp-content-editor-add {
   width: 100%;
   border: 1px dashed var(--b3-border-color);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   justify-content: center;
   color: var(--b3-theme-primary);
   background: transparent;
-  padding: $spacing-2 $spacing-4;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-  line-height: $line-height-tight;
-  font-family: $font-zh;
+  padding: $s-2 $s-4;
+  font-size: $t-xs;
+  font-weight: $fw-medium;
+  line-height: $lh-tight;
+  font-family: $ff-zh;
   transition:
     border-color 0.12s,
     background-color 0.12s;
@@ -104,10 +104,10 @@
 
 // ==================== 响应式 ====================
 
-@media (max-width: $mobile-breakpoint) {
+@media (max-width: $bp-mobile) {
   .vp-content-editor-item {
     flex-direction: column;
-    gap: $spacing-2;
+    gap: $s-2;
   }
 
   .vp-content-editor-actions {

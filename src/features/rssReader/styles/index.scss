@@ -8,26 +8,26 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  font-size: $font-size-sm;
+  font-size: $t-sm;
   color: var(--b3-theme-on-background);
 
   // --- 顶部操作栏 ---
   .rss-toolbar {
     display: flex;
     align-items: center;
-    gap: $spacing-1;
-    padding: $spacing-6px $spacing-3;
+    gap: $s-1;
+    padding: $s-px6 $s-3;
     border-bottom: 1px solid var(--b3-theme-surface-lighter);
     flex-shrink: 0;
     min-height: 36px;
 
     .rss-toolbar-title {
-      font-size: $font-size-sm;
-      font-weight: $font-weight-semibold;
+      font-size: $t-sm;
+      font-weight: $fw-semibold;
       flex: 1;
       display: flex;
       align-items: center;
-      gap: $spacing-1;
+      gap: $s-1;
       min-width: 0;
 
       .rss-title-icon { color: $rr-accent; }
@@ -48,22 +48,22 @@
 
   // --- 搜索栏 ---
   .rss-search-bar {
-    padding: $spacing-1 $spacing-3;
+    padding: $s-1 $s-3;
     flex-shrink: 0;
 
     input {
       width: 100%;
-      padding: $spacing-1 $spacing-2;
+      padding: $s-1 $s-2;
       border: 1px solid var(--b3-theme-surface-lighter);
-      border-radius: $radius-base;
+      border-radius: $r-base;
       background: var(--b3-theme-background);
       color: var(--b3-theme-on-background);
-      font-size: $font-size-sm;
+      font-size: $t-sm;
       outline: none;
       box-sizing: border-box;
       @include input-focus-ring;
 
-      &::placeholder { color: var(--b3-theme-on-surface-muted); font-size: $font-size-xs; }
+      &::placeholder { color: var(--b3-theme-on-surface-muted); font-size: $t-xs; }
     }
   }
 
@@ -71,8 +71,8 @@
   .rss-filter-bar {
     display: flex;
     align-items: center;
-    gap: $spacing-1;
-    padding: $spacing-1 $spacing-3;
+    gap: $s-1;
+    padding: $s-1 $s-3;
     border-bottom: 1px solid var(--b3-theme-surface-lighter);
     flex-shrink: 0;
     overflow-x: auto;
@@ -83,9 +83,9 @@
     .filter-tag {
       display: inline-flex;
       align-items: center;
-      padding: $spacing-2px $spacing-2;
-      border-radius: $radius-full;
-      font-size: $font-size-xs;
+      padding: $s-px2 $s-2;
+      border-radius: $r-full;
+      font-size: $t-xs;
       cursor: pointer;
       border: 1px solid var(--b3-theme-surface-lighter);
       background: transparent;
@@ -107,10 +107,10 @@
     overflow-y: auto;
     overflow-x: hidden;
     // 右侧留白，避免滚动条/内容紧贴侧边栏
-    padding-right: $spacing-2;
+    padding-right: $s-2;
 
     &::-webkit-scrollbar { width: 4px; }
-    &::-webkit-scrollbar-thumb { background: var(--b3-theme-surface-lighter); border-radius: $radius-2px; }
+    &::-webkit-scrollbar-thumb { background: var(--b3-theme-surface-lighter); border-radius: $r-px2; }
   }
 }
 @keyframes spin {

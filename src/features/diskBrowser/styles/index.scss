@@ -44,15 +44,15 @@ $border: var(--b3-border-color);
   justify-content: center;
   width: $size;
   height: $size;
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: $bg;
   color: $color;
 }
 
 /// Codex 大写元信息标签
 @mixin meta-label {
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   opacity: 0.45;
@@ -61,7 +61,7 @@ $border: var(--b3-border-color);
 /// Codex 边框卡片
 @mixin border-card {
   border: 1px solid $border;
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   transition: border-color 0.15s;
 
   &:hover {
@@ -70,8 +70,8 @@ $border: var(--b3-border-color);
 }
 
 @mixin small-mono-dimmed {
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-light);
   opacity: 0.6;
 }
@@ -83,8 +83,8 @@ $border: var(--b3-border-color);
   height: 100%;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
-  font-size: $font-size-xs;
-  line-height: $line-height-normal;
+  font-size: $t-xs;
+  line-height: $lh-normal;
   overflow: hidden;
 }
 
@@ -105,36 +105,36 @@ $border: var(--b3-border-color);
 
 .db-all-drives-header {
   @include flex-align-center;
-  gap: $spacing-2;
-  padding: $spacing-10px $spacing-14px;
+  gap: $s-2;
+  padding: $s-px10 $s-px14;
   border-bottom: 1px solid $border;
   flex-shrink: 0;
 }
 
 .db-all-drives-heading {
   @include flex-align-center;
-  gap: $spacing-2;
+  gap: $s-2;
   flex: 1;
   min-width: 0;
 
   span {
-    font-size: $font-size-sm;
-    font-weight: $font-weight-semibold;
+    font-size: $t-sm;
+    font-weight: $fw-semibold;
     color: var(--b3-theme-on-background);
   }
 }
 
 .db-all-overview {
   @include flex-align-center;
-  gap: $spacing-3;
-  padding: $spacing-3 $spacing-14px;
+  gap: $s-3;
+  padding: $s-3 $s-px14;
   border-bottom: 1px solid $border;
   flex-shrink: 0;
 }
 
 .db-all-overview-icon {
   @include icon-container(40px, var(--b3-theme-primary-lightest), var(--b3-theme-primary));
-  border-radius: $radius-md;
+  border-radius: $r-md;
 }
 
 .db-all-overview-info {
@@ -142,7 +142,7 @@ $border: var(--b3-border-color);
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: $spacing-2px;
+  gap: $s-px2;
 }
 
 .db-all-overview-meta {
@@ -152,15 +152,15 @@ $border: var(--b3-border-color);
 
 .db-all-overview-capacity {
   @include flex-align-center;
-  gap: $spacing-6px;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  gap: $s-px6;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
 }
 
 .db-all-overview-used {
   color: var(--b3-theme-on-background);
-  font-weight: $font-weight-semibold;
+  font-weight: $fw-semibold;
 }
 
 .db-all-overview-divider {
@@ -168,7 +168,7 @@ $border: var(--b3-border-color);
 }
 
 .db-all-overview-hint {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-light);
   opacity: 0.6;
 }
@@ -176,8 +176,8 @@ $border: var(--b3-border-color);
 .db-all-drives-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: $spacing-2;
-  padding: $spacing-10px;
+  gap: $s-2;
+  padding: $s-px10;
   overflow-y: auto;
   flex-shrink: 0;
   max-height: 240px;
@@ -186,8 +186,8 @@ $border: var(--b3-border-color);
 .db-all-drive-card {
   display: flex;
   flex-direction: column;
-  gap: $spacing-6px;
-  padding: $spacing-10px;
+  gap: $s-px6;
+  padding: $s-px10;
   background: var(--b3-theme-surface);
   cursor: pointer;
   @include border-card;
@@ -208,7 +208,7 @@ $border: var(--b3-border-color);
 
 .db-all-drive-card-head {
   @include flex-align-center;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .db-all-drive-icon {
@@ -224,15 +224,15 @@ $border: var(--b3-border-color);
 }
 
 .db-all-drive-label {
-  font-family: $vp-mono;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
+  font-family: $ff-mono;
+  font-size: $t-sm;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-background);
-  line-height: $line-height-tight;
+  line-height: $lh-tight;
 }
 
 .db-all-drive-name {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-light);
   opacity: 0.7;
   @include text-ellipsis;
@@ -241,9 +241,9 @@ $border: var(--b3-border-color);
 
 .db-all-drive-percent {
   flex-shrink: 0;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
 
   &.tone-normal {
     color: var(--b3-theme-primary);
@@ -262,7 +262,7 @@ $border: var(--b3-border-color);
   width: 100%;
   height: 4px;
   background: var(--b3-theme-surface-lighter);
-  border-radius: $radius-2px;
+  border-radius: $r-px2;
   overflow: hidden;
 }
 
@@ -284,9 +284,9 @@ $border: var(--b3-border-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-1;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  gap: $s-1;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-light);
   opacity: 0.7;
 }
@@ -299,8 +299,8 @@ $border: var(--b3-border-color);
 .db-all-empty {
   @include flex-center;
   flex-direction: column;
-  gap: $spacing-2;
-  padding: $spacing-6 $spacing-5;
+  gap: $s-2;
+  padding: $s-6 $s-5;
   color: var(--b3-theme-on-surface-light);
 
   svg, :deep(svg) {
@@ -309,7 +309,7 @@ $border: var(--b3-border-color);
 
   p {
     margin: 0;
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     opacity: 0.5;
     font-style: italic;
   }
@@ -323,8 +323,8 @@ $border: var(--b3-border-color);
 
 .db-all-fav-header {
   @include flex-align-center;
-  gap: $spacing-6px;
-  padding: $spacing-6px $spacing-14px;
+  gap: $s-px6;
+  padding: $s-px6 $s-px14;
   border-bottom: 1px dashed $border;
 
   span {
@@ -334,13 +334,13 @@ $border: var(--b3-border-color);
 }
 
 .db-all-fav-list {
-  padding: $spacing-1 0;
+  padding: $s-1 0;
 }
 
 .db-all-fav-row {
   @include flex-align-center;
-  gap: $spacing-2;
-  padding: $spacing-6px $spacing-14px;
+  gap: $s-2;
+  padding: $s-px6 $s-px14;
   cursor: pointer;
   transition: background-color 0.12s;
 
@@ -349,9 +349,9 @@ $border: var(--b3-border-color);
   }
 
   span {
-    font-family: $vp-mono;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-medium;
+    font-family: $ff-mono;
+    font-size: $t-xs;
+    font-weight: $fw-medium;
     color: var(--b3-theme-on-background);
     @include text-ellipsis;
   }
@@ -360,8 +360,8 @@ $border: var(--b3-border-color);
 .db-all-fav-empty {
   @include flex-center;
   flex-direction: column;
-  gap: $spacing-2;
-  padding: $spacing-8 $spacing-5;
+  gap: $s-2;
+  padding: $s-8 $s-5;
   color: var(--b3-theme-on-surface-light);
 
   svg, :deep(svg) {
@@ -370,10 +370,10 @@ $border: var(--b3-border-color);
 
   p {
     margin: 0;
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     opacity: 0.5;
     font-style: italic;
     text-align: center;
-    line-height: $line-height-normal;
+    line-height: $lh-normal;
   }
 }

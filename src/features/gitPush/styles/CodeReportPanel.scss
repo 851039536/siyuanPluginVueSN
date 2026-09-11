@@ -6,15 +6,15 @@
 .gpr-panel {
   flex: 1;
   overflow-y: auto;
-  padding: $spacing-1 $spacing-2 $spacing-1 0;
+  padding: $s-1 $s-2 $s-1 0;
 }
 
 // ── 顶部工具条（项目下拉 + 时间范围下拉 + 生成按钮）──
 .gpr-toolbar {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  margin-bottom: $spacing-2;
+  gap: $s-1;
+  margin-bottom: $s-2;
 }
 
 // 项目下拉：固定基准宽度（名称超长省略；不再拉伸占满整行，容器过窄时可收缩）
@@ -31,17 +31,17 @@
 // 生成/重新生成按钮（紧凑，与头部按钮一致）
 .gpr-run-btn {
   flex-shrink: 0;
-  padding: $spacing-1 $spacing-6px; // 水平 6px 与头部按钮统一，已收敛为全局 Token
+  padding: $s-1 $s-px6; // 水平 6px 与头部按钮统一，已收敛为全局 Token
 }
 
 // ── 生成信息行（生成时间 + 时间范围 + 数据源概况）──
 .gpr-meta {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
   flex-wrap: wrap;
-  margin-bottom: $spacing-2;
-  font-size: $font-size-2xs;
+  margin-bottom: $s-2;
+  font-size: $t-2xs;
   opacity: 0.45;
 }
 
@@ -49,20 +49,20 @@
 .gpr-fail {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-2;
-  font-size: $font-size-xs;
+  gap: $s-1;
+  padding: $s-2;
+  font-size: $t-xs;
   color: var(--b3-theme-warning);
   background: var(--b3-theme-warning-lightest);
   border: 1px solid var(--b3-theme-warning-lighter, var(--b3-theme-warning));
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
 }
 
 // ── 分区 Tab 栏（团队总览[含代码贡献度]/技术债务/代码热点）──
 .gpr-tabs {
   display: flex;
-  gap: $spacing-2px;
-  margin-bottom: $spacing-3;
+  gap: $s-px2;
+  margin-bottom: $s-3;
   border-bottom: 1px solid var(--b3-border-color);
 }
 
@@ -70,8 +70,8 @@
   @include gp-label-base;
   display: inline-flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-1 $spacing-2;
+  gap: $s-1;
+  padding: $s-1 $s-2;
   border: none;
   border-bottom: 2px solid transparent;
   background: none;
@@ -92,12 +92,12 @@
 
 // 分区条数徽章（总览作者数 / 债务问题数 / 热点文件数）
 .gpr-tab-count {
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
-  font-weight: $font-weight-bold;
-  padding: 0 $spacing-1;
-  border-radius: $radius-full;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
+  font-weight: $fw-bold;
+  padding: 0 $s-1;
+  border-radius: $r-full;
   background: var(--b3-theme-primary-lightest);
   color: var(--b3-theme-primary);
-  line-height: $line-height-normal;
+  line-height: $lh-normal;
 }

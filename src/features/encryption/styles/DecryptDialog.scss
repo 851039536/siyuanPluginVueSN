@@ -25,8 +25,8 @@
 .decrypt-dialog {
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-lg;
-  padding: $spacing-6;
+  border-radius: $r-lg;
+  padding: $s-6;
   max-width: 500px;
   width: 90%;
   max-height: 80vh;
@@ -34,40 +34,40 @@
 }
 
 .dialog-section {
-  margin-bottom: $spacing-5;
+  margin-bottom: $s-5;
 }
 
 .dialog-title {
-  margin: 0 0 $spacing-2 0;
-  font-size: $font-size-lg;
-  font-weight: $font-weight-semibold;
+  margin: 0 0 $s-2 0;
+  font-size: $t-lg;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-background);
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .dialog-desc {
   margin: 0;
-  font-size: $font-size-sm;
+  font-size: $t-sm;
   color: var(--b3-theme-on-surface-light);
 }
 
 .field-label {
   display: block;
-  margin-bottom: $spacing-2;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
+  margin-bottom: $s-2;
+  font-size: $t-sm;
+  font-weight: $fw-medium;
   color: var(--b3-theme-on-background);
 }
 
 .password-input {
   width: 100%;
-  padding: $spacing-2 $spacing-3;
+  padding: $s-2 $s-3;
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   box-sizing: border-box;
-  font-size: $font-size-sm;
+  font-size: $t-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-background);
   outline: none;
@@ -80,24 +80,24 @@
 }
 
 .error-msg {
-  margin-top: $spacing-2;
+  margin-top: $s-2;
   color: var(--b3-card-error-color);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 }
 
 .result-textarea {
   width: 100%;
   min-height: 150px;
   max-height: 300px;
-  padding: $spacing-3;
+  padding: $s-3;
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   box-sizing: border-box;
-  font-size: $font-size-sm;
+  font-size: $t-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-background);
-  font-family: $vp-mono;
-  line-height: $line-height-relaxed;
+  font-family: $ff-mono;
+  line-height: $lh-relaxed;
   resize: vertical;
   outline: none;
   transition: border-color 0.12s, box-shadow 0.12s;
@@ -110,21 +110,21 @@
 
 .dialog-actions {
   display: flex;
-  gap: $spacing-2;
+  gap: $s-2;
   justify-content: flex-end;
   flex-wrap: wrap;
 }
 
 .btn {
-  padding: $spacing-2 $spacing-5;
-  border-radius: $radius-base;
+  padding: $s-2 $s-5;
+  border-radius: $r-base;
   cursor: pointer;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
+  font-size: $t-sm;
+  font-weight: $fw-medium;
   border: none;
   display: inline-flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
   transition: opacity 0.12s;
 
   &:disabled {

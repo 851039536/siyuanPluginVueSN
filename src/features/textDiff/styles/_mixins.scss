@@ -3,8 +3,8 @@
 
 // 大写元信息标签（面板标题 / 工具栏选项标签共用）
 @mixin codex-meta-label {
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   opacity: 0.45;
@@ -14,7 +14,7 @@
 // Codex 边框卡片（输入面板 / 结果区共用）
 @mixin codex-border-card {
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
   transition: border-color 0.12s;
 
@@ -26,7 +26,7 @@
 // 按钮基础样式（toggle-btn / action-btn / file-btn 共用，hover 由各按钮自行定义）
 @mixin codex-btn-base {
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: transparent;
   color: var(--b3-theme-on-surface);
   cursor: pointer;

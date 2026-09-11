@@ -4,7 +4,7 @@
   flex: 1;
   overflow-y: auto;
   // Dock 侧边栏间距：右侧为滚动条与侧边栏留出呼吸空间
-  padding: $spacing-2 $spacing-2 $spacing-2 $spacing-2;
+  padding: $s-2 $s-2 $s-2 $s-2;
 }
 
 .shortcut-empty {
@@ -14,8 +14,8 @@
   justify-content: center;
   height: 200px;
   color: var(--b3-theme-on-surface-variant);
-  font-size: $font-size-xs;
-  gap: $spacing-3;
+  font-size: $t-xs;
+  gap: $s-3;
 }
 
 .empty-icon {
@@ -26,17 +26,17 @@
 
 .shortcut-group {
   padding: 0;
-  margin-bottom: $spacing-4;
+  margin-bottom: $s-4;
 }
 
 .group-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-2 $spacing-3 $spacing-2;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-bold;
-  line-height: $line-height-tight;
+  padding: $s-2 $s-3 $s-2;
+  font-size: $t-xs;
+  font-weight: $fw-bold;
+  line-height: $lh-tight;
   color: var(--b3-theme-primary);
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -57,19 +57,19 @@
   justify-content: center;
   min-width: 20px;
   height: 20px;
-  padding: 0 $spacing-6px;
+  padding: 0 $s-px6;
   background: var(--b3-theme-primary);
   color: var(--b3-theme-on-primary, #fff);
-  border-radius: $radius-full;
-  font-size: $font-size-2xs;
-  line-height: $line-height-tight;
+  border-radius: $r-full;
+  font-size: $t-2xs;
+  line-height: $lh-tight;
 }
 
 .shortcut-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: $spacing-1;
-  padding: $spacing-2 $spacing-3;
+  gap: $s-1;
+  padding: $s-2 $s-3;
 }
 
 .shortcut-content::-webkit-scrollbar {
@@ -82,7 +82,7 @@
 
 .shortcut-content::-webkit-scrollbar-thumb {
   background: var(--b3-theme-surface-lighter);
-  border-radius: $radius-2px;
+  border-radius: $r-px2;
 }
 
 .shortcut-content::-webkit-scrollbar-thumb:hover {

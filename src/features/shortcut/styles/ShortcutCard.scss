@@ -1,9 +1,9 @@
 @use "@/variables.scss" as *;
 
 .shortcut-card {
-  padding: $spacing-2 $spacing-3;
+  padding: $s-2 $s-3;
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: var(--b3-theme-background);
 }
 
@@ -22,19 +22,19 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: $spacing-2;
-  margin-bottom: $spacing-1;
+  gap: $s-2;
+  margin-bottom: $s-1;
 }
 
 .shortcut-name {
-  font-weight: $font-weight-semibold;
-  line-height: $line-height-tight;
+  font-weight: $fw-semibold;
+  line-height: $lh-tight;
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   flex: 1;
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
   min-width: 0;
 }
 
@@ -47,43 +47,43 @@
 
 .platform-badge {
   display: inline-block;
-  padding: $spacing-1px $spacing-5px;
+  padding: $s-px1 $s-px5;
   background: var(--b3-theme-surface-lighter);
   color: var(--b3-theme-on-surface-variant);
-  border-radius: $radius-sm;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
-  line-height: $line-height-tight;
+  border-radius: $r-sm;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
+  line-height: $lh-tight;
   text-transform: uppercase;
   flex-shrink: 0;
 }
 
 .tool-badge {
   display: inline-block;
-  padding: $spacing-1px $spacing-5px;
+  padding: $s-px1 $s-px5;
   background: var(--b3-theme-primary-lightest);
   color: var(--b3-theme-primary);
-  border-radius: $radius-sm;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
-  line-height: $line-height-tight;
+  border-radius: $r-sm;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
+  line-height: $lh-tight;
   text-transform: uppercase;
   flex-shrink: 0;
 }
 
 .shortcut-desc {
-  font-size: $font-size-2xs;
-  line-height: $line-height-normal;
+  font-size: $t-2xs;
+  line-height: $lh-normal;
   color: var(--b3-theme-on-surface-variant);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  margin-top: $spacing-1;
+  margin-top: $s-1;
 }
 
 .shortcut-keys {
   display: flex;
-  gap: $spacing-1;
+  gap: $s-1;
   flex-wrap: wrap;
   cursor: pointer;
 }
@@ -99,21 +99,21 @@
 // Codex 风格按键徽章：等宽字体、边框、浅色背景
 .key-badge {
   display: inline-block;
-  padding: $spacing-2px $spacing-7px;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
-  line-height: $line-height-tight;
+  padding: $s-px2 $s-px7;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
+  line-height: $lh-tight;
   color: var(--b3-theme-primary);
   background: var(--b3-theme-primary-lightest);
   border: 1px solid var(--b3-theme-primary-light);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   white-space: nowrap;
   letter-spacing: 0.3px;
 }
 
 .shortcut-actions {
   display: flex;
-  gap: $spacing-2px;
+  gap: $s-px2;
   flex-shrink: 0;
 }

@@ -4,24 +4,24 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  font-size: $font-size-xs;
-  gap: $spacing-2;
-  padding: $spacing-3;
+  font-size: $t-xs;
+  gap: $s-2;
+  padding: $s-3;
   overflow: hidden;
 
   .jf-toolbar {
     display: flex;
     align-items: center;
-    gap: $spacing-2;
+    gap: $s-2;
     flex-shrink: 0;
 
     .jf-btn {
-      padding: $spacing-1 $spacing-3;
+      padding: $s-1 $s-3;
       border: 1px solid var(--b3-border-color);
-      border-radius: $vp-radius;
+      border-radius: $r-base;
       background: var(--b3-theme-background);
       color: var(--b3-theme-on-background);
-      font-size: $font-size-2xs;
+      font-size: $t-2xs;
       cursor: pointer;
       transition: background 0.15s;
 
@@ -37,32 +37,32 @@
     }
 
     .jf-indent-select {
-      padding: $spacing-1 $spacing-2;
+      padding: $s-1 $s-2;
       border: 1px solid var(--b3-border-color);
-      border-radius: $vp-radius;
+      border-radius: $r-base;
       background: var(--b3-theme-background);
       color: var(--b3-theme-on-background);
-      font-size: $font-size-2xs;
+      font-size: $t-2xs;
     }
 
     .jf-status {
       margin-left: auto;
-      font-size: $font-size-2xs;
+      font-size: $t-2xs;
       color: var(--b3-theme-on-surface);
 
       &.success {
-        color: $color-success;
+        color: $c-success;
       }
 
       &.error {
-        color: $color-danger-bright;
+        color: $c-danger-bright;
       }
     }
   }
 
   .jf-panels {
     display: flex;
-    gap: $spacing-2;
+    gap: $s-2;
     flex: 1;
     min-height: 0;
   }
@@ -74,9 +74,9 @@
     min-width: 0;
 
     .jf-panel-label {
-      font-size: $font-size-2xs;
+      font-size: $t-2xs;
       color: var(--b3-theme-on-surface);
-      margin-bottom: $spacing-1;
+      margin-bottom: $s-1;
       flex-shrink: 0;
     }
 
@@ -84,13 +84,13 @@
       flex: 1;
       resize: none;
       border: 1px solid var(--b3-border-color);
-      border-radius: $vp-radius;
-      padding: $spacing-2;
+      border-radius: $r-base;
+      padding: $s-2;
       background: var(--b3-theme-surface);
       color: var(--b3-theme-on-background);
-      font-family: $vp-mono;
-      font-size: $font-size-2xs;
-      line-height: $line-height-normal;
+      font-family: $ff-mono;
+      font-size: $t-2xs;
+      line-height: $lh-normal;
       outline: none;
 
       &:focus {
@@ -101,12 +101,12 @@
     .jf-output {
       flex: 1;
       border: 1px solid var(--b3-border-color);
-      border-radius: $vp-radius;
-      padding: $spacing-2;
+      border-radius: $r-base;
+      padding: $s-2;
       background: var(--b3-theme-surface);
-      font-family: $vp-mono;
-      font-size: $font-size-2xs;
-      line-height: $line-height-normal;
+      font-family: $ff-mono;
+      font-size: $t-2xs;
+      line-height: $lh-normal;
       overflow: auto;
       white-space: pre-wrap;
       word-break: break-all;

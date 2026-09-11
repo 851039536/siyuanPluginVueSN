@@ -5,21 +5,21 @@
 .gcl-head {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  margin-bottom: $spacing-1;
-  font-size: $font-size-2xs;
+  gap: $s-2;
+  margin-bottom: $s-1;
+  font-size: $t-2xs;
 }
 
 // 小节标题（宿主传入时显示，如修正弹窗的"修改的文件"）
 .gcl-head-label {
-  font-weight: $font-weight-semibold;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-primary);
 }
 
 // 文件计数（无标题时靠右显示）
 .gcl-count {
   margin-left: auto;
-  font-family: $vp-mono;
+  font-family: $ff-mono;
   opacity: 0.6;
 
   &--alone {
@@ -33,18 +33,18 @@
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
-  gap: $spacing-1;
-  font-size: $font-size-2xs;
+  gap: $s-1;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-light, var(--b3-theme-on-surface));
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
-  padding: $spacing-1 $spacing-2;
+  border-radius: $r-sm;
+  padding: $s-1 $s-2;
 
   &--error {
-    color: var(--b3-theme-error, $color-danger);
+    color: var(--b3-theme-error, $c-danger);
     background: var(--b3-theme-error-background, transparent);
-    border-color: var(--b3-theme-error, $color-danger);
+    border-color: var(--b3-theme-error, $c-danger);
   }
 }
 
@@ -55,17 +55,17 @@
   max-height: var(--gcl-list-max-height, 240px);
   overflow-y: auto;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
 }
 
 // 文件行（状态标记/路径复用 .wt-file-status/.wt-file-path；整行可点击查看差异）
 .gcl-row {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-px $spacing-2;
+  gap: $s-1;
+  padding: $s-px3 $s-2;
   cursor: pointer;
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
 
   & + & {
     border-top: 1px solid color-mix(in srgb, var(--b3-border-color) 60%, transparent);
@@ -88,8 +88,8 @@
 .gcl-old {
   flex-shrink: 0;
   max-width: 45%;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
   @include text-ellipsis;
   opacity: 0.45;
 }

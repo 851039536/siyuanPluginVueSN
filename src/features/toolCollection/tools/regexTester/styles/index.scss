@@ -3,11 +3,11 @@
 // 输入框公共样式（pattern 输入框与测试文本 textarea 复用）
 @mixin rt-input-field {
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-background);
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
   outline: none;
 
   &:focus {
@@ -19,41 +19,41 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  font-size: $font-size-xs;
-  gap: $spacing-2;
-  padding: $spacing-3;
+  font-size: $t-xs;
+  gap: $s-2;
+  padding: $s-3;
   overflow: hidden;
 
   .rt-pattern-row {
     display: flex;
     align-items: center;
-    gap: $spacing-2;
+    gap: $s-2;
     flex-shrink: 0;
 
     .rt-slash {
-      font-family: $vp-mono;
-      font-size: $font-size-xs;
+      font-family: $ff-mono;
+      font-size: $t-xs;
       color: var(--b3-theme-on-surface);
     }
 
     .rt-pattern-input {
       flex: 1;
-      padding: $spacing-1 $spacing-2;
+      padding: $s-1 $s-2;
       @include rt-input-field;
     }
 
     .rt-flags {
       display: flex;
-      gap: $spacing-1;
+      gap: $s-1;
 
       .rt-flag {
-        padding: $spacing-1 $spacing-1;
+        padding: $s-1 $s-1;
         border: 1px solid var(--b3-border-color);
-        border-radius: $radius-sm;
+        border-radius: $r-sm;
         background: var(--b3-theme-background);
         color: var(--b3-theme-on-surface);
-        font-family: $vp-mono;
-        font-size: $font-size-2xs;
+        font-family: $ff-mono;
+        font-size: $t-2xs;
         cursor: pointer;
         min-width: 20px;
         text-align: center;
@@ -68,8 +68,8 @@
   }
 
   .rt-error {
-    font-size: $font-size-2xs;
-    color: $color-danger-bright;
+    font-size: $t-2xs;
+    color: $c-danger-bright;
     flex-shrink: 0;
   }
 
@@ -77,7 +77,7 @@
   .rt-explain {
     display: flex;
     flex-wrap: wrap;
-    gap: $spacing-1;
+    gap: $s-1;
     flex-shrink: 0;
     max-height: 96px;
     overflow-y: auto;
@@ -86,26 +86,26 @@
       display: inline-flex;
       flex-direction: column;
       align-items: center;
-      gap: $spacing-1px;
-      padding: $spacing-2px $spacing-1;
+      gap: $s-px1;
+      padding: $s-px2 $s-1;
       border: 1px solid var(--b3-border-color);
-      border-radius: $radius-sm;
+      border-radius: $r-sm;
       background: var(--b3-theme-surface);
       cursor: help;
 
       &.meta {
-        border-color: $color-accent;
+        border-color: $c-accent;
       }
 
       .rt-explain-raw {
-        font-family: $vp-mono;
-        font-size: $font-size-2xs;
+        font-family: $ff-mono;
+        font-size: $t-2xs;
         color: var(--b3-theme-primary);
         line-height: 1.3;
       }
 
       .rt-explain-mean {
-        font-size: $font-size-2xs;
+        font-size: $t-2xs;
         color: var(--b3-theme-on-surface);
         opacity: 0.7;
         line-height: 1.3;
@@ -117,44 +117,44 @@
   .rt-intro {
     display: flex;
     flex-direction: column;
-    gap: $spacing-2;
+    gap: $s-2;
     flex: 1;
     justify-content: center;
     align-items: center;
     text-align: center;
-    padding: $spacing-4;
+    padding: $s-4;
     border: 1px dashed var(--b3-border-color);
-    border-radius: $vp-radius;
+    border-radius: $r-base;
     background: var(--b3-theme-surface);
     overflow-y: auto;
 
     .rt-intro-title {
-      font-size: $font-size-sm;
-      font-weight: $font-weight-medium;
+      font-size: $t-sm;
+      font-weight: $fw-medium;
       color: var(--b3-theme-on-background);
     }
 
     .rt-intro-desc {
-      font-size: $font-size-2xs;
+      font-size: $t-2xs;
       color: var(--b3-theme-on-surface);
       opacity: 0.7;
-      line-height: $line-height-normal;
+      line-height: $lh-normal;
       max-width: 320px;
     }
 
     .rt-example-list {
       display: flex;
       flex-wrap: wrap;
-      gap: $spacing-2;
+      gap: $s-2;
       justify-content: center;
 
       .rt-example-btn {
-        padding: $spacing-1 $spacing-3;
+        padding: $s-1 $s-3;
         border: 1px solid var(--b3-border-color);
-        border-radius: $vp-radius;
+        border-radius: $r-base;
         background: var(--b3-theme-background);
         color: var(--b3-theme-primary);
-        font-size: $font-size-2xs;
+        font-size: $t-2xs;
         cursor: pointer;
         transition: transform 0.1s, border-color 0.12s;
 
@@ -173,17 +173,17 @@
     min-height: 0;
 
     .rt-test-label {
-      font-size: $font-size-2xs;
+      font-size: $t-2xs;
       color: var(--b3-theme-on-surface);
-      margin-bottom: $spacing-1;
+      margin-bottom: $s-1;
       flex-shrink: 0;
     }
 
     textarea {
       flex: 1;
       resize: none;
-      padding: $spacing-2;
-      line-height: $line-height-normal;
+      padding: $s-2;
+      line-height: $lh-normal;
       @include rt-input-field;
     }
   }
@@ -194,70 +194,70 @@
     overflow-y: auto;
 
     .rt-results-header {
-      font-size: $font-size-2xs;
+      font-size: $t-2xs;
       color: var(--b3-theme-on-surface);
-      margin-bottom: $spacing-1;
+      margin-bottom: $s-1;
     }
 
     .rt-no-match {
       display: block;
-      font-size: $font-size-2xs;
+      font-size: $t-2xs;
       color: var(--b3-theme-on-surface);
       opacity: 0.6;
-      margin-bottom: $spacing-1;
+      margin-bottom: $s-1;
     }
 
     // 测试文本高亮预览
     .rt-highlight {
-      margin: 0 0 $spacing-2;
-      padding: $spacing-2;
+      margin: 0 0 $s-2;
+      padding: $s-2;
       border: 1px solid var(--b3-border-color);
-      border-radius: $vp-radius;
+      border-radius: $r-base;
       background: var(--b3-theme-surface);
-      font-family: $vp-mono;
-      font-size: $font-size-2xs;
-      line-height: $line-height-normal;
+      font-family: $ff-mono;
+      font-size: $t-2xs;
+      line-height: $lh-normal;
       white-space: pre-wrap;
       word-break: break-all;
       overflow-wrap: anywhere;
 
       mark {
-        background: $color-accent;
-        color: $color-fg;
-        border-radius: $radius-2px;
-        padding: 0 $spacing-1px;
+        background: $c-accent;
+        color: $c-fg;
+        border-radius: $r-px2;
+        padding: 0 $s-px1;
       }
     }
 
     .rt-match-list {
       display: flex;
       flex-direction: column;
-      gap: $spacing-1;
+      gap: $s-1;
 
       .rt-match-item {
         display: flex;
         align-items: baseline;
-        gap: $spacing-2;
-        font-size: $font-size-2xs;
-        padding: $spacing-1 $spacing-2;
-        border-radius: $radius-sm;
+        gap: $s-2;
+        font-size: $t-2xs;
+        padding: $s-1 $s-2;
+        border-radius: $r-sm;
         background: var(--b3-theme-surface);
 
         .rt-match-idx {
           color: var(--b3-theme-on-surface);
-          font-family: $vp-mono;
+          font-family: $ff-mono;
           flex-shrink: 0;
         }
 
         .rt-match-text {
-          font-family: $vp-mono;
+          font-family: $ff-mono;
           color: var(--b3-theme-on-background);
           word-break: break-all;
         }
 
         .rt-match-groups {
           color: var(--b3-theme-on-surface);
-          font-family: $vp-mono;
+          font-family: $ff-mono;
           margin-left: auto;
           flex-shrink: 0;
         }
@@ -272,12 +272,12 @@
     .rt-cheatsheet-toggle {
       display: flex;
       align-items: center;
-      gap: $spacing-1;
+      gap: $s-1;
       padding: 0;
       border: none;
       background: transparent;
       color: var(--b3-theme-on-surface);
-      font-size: $font-size-2xs;
+      font-size: $t-2xs;
       cursor: pointer;
       opacity: 0.8;
 
@@ -286,40 +286,40 @@
       }
 
       .rt-chevron {
-        font-size: $font-size-2xs;
+        font-size: $t-2xs;
       }
     }
 
     .rt-cheatsheet-body {
       display: flex;
       flex-direction: column;
-      gap: $spacing-2;
-      padding: $spacing-2 0 0;
+      gap: $s-2;
+      padding: $s-2 0 0;
       border-top: 1px solid var(--b3-border-color);
-      margin-top: $spacing-2;
+      margin-top: $s-2;
 
       .rt-cheatsheet-section {
         .rt-cheatsheet-section-title {
           display: block;
-          font-size: $font-size-2xs;
+          font-size: $t-2xs;
           color: var(--b3-theme-on-surface);
           opacity: 0.6;
-          margin-bottom: $spacing-1;
+          margin-bottom: $s-1;
         }
 
         .rt-cheatsheet-grid {
           display: flex;
           flex-wrap: wrap;
-          gap: $spacing-1;
+          gap: $s-1;
 
           .rt-cheatsheet-item {
             display: inline-flex;
             flex-direction: column;
             align-items: center;
-            gap: $spacing-2px;
-            padding: $spacing-1 $spacing-2;
+            gap: $s-px2;
+            padding: $s-1 $s-2;
             border: 1px solid var(--b3-border-color);
-            border-radius: $radius-sm;
+            border-radius: $r-sm;
             background: var(--b3-theme-surface);
             cursor: pointer;
             transition: transform 0.1s, border-color 0.12s;
@@ -330,13 +330,13 @@
             }
 
             .rt-cheatsheet-symbol {
-              font-family: $vp-mono;
-              font-size: $font-size-2xs;
+              font-family: $ff-mono;
+              font-size: $t-2xs;
               color: var(--b3-theme-primary);
             }
 
             .rt-cheatsheet-desc {
-              font-size: $font-size-2xs;
+              font-size: $t-2xs;
               color: var(--b3-theme-on-surface);
               opacity: 0.8;
             }

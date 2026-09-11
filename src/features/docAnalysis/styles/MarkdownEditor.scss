@@ -11,24 +11,24 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-2 $spacing-3;
+  padding: $s-2 $s-3;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
   background: rgba(0, 0, 0, 0.2);
 }
 
 .md-editor-label {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-xs;
+  font-weight: $fw-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.45);
 }
 
 .md-editor-hint {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: rgba(255, 255, 255, 0.25);
-  font-family: $vp-mono;
+  font-family: $ff-mono;
 }
 
 .md-editor-textarea {
@@ -38,11 +38,11 @@
   border: none;
   outline: none;
   resize: none;
-  padding: $spacing-14px $spacing-4;
+  padding: $s-px14 $s-4;
   background: transparent;
   color: #e0e0e0;
-  font-family: $vp-mono;
-  font-size: $font-size-sm;
+  font-family: $ff-mono;
+  font-size: $t-sm;
   line-height: 1.7;
   tab-size: 2;
 
@@ -57,7 +57,7 @@
 
   &::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.12);
-    border-radius: $radius-px;
+    border-radius: $r-px3;
   }
 
   &::-webkit-scrollbar-track {

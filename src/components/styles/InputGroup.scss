@@ -19,42 +19,42 @@
 
 .si-input-group {
   // 附加项档位变量默认值（等同 S 档，被下方档位类覆盖）
-  --ig-addon-pad-y: #{$spacing-2px};
+  --ig-addon-pad-y: #{$s-px2};
   --ig-addon-pad-x: #{m.$gap-xs};
-  --ig-addon-font: #{$font-size-xs};
+  --ig-addon-font: #{$t-xs};
   --ig-addon-min-h: 28px; // 无对应 Token
 
   display: flex;
   align-items: stretch;
   width: 100%;
-  font-family: $font-zh;
+  font-family: $ff-zh;
 
   // ===== 尺寸档位（内边距 / 字号 / 最小高度与 Input 同档一致） =====
   &--xsmall {
-    --ig-addon-pad-y: #{$spacing-2px};
+    --ig-addon-pad-y: #{$s-px2};
     --ig-addon-pad-x: #{m.$gap-xs};
-    --ig-addon-font: #{$font-size-2xs};
+    --ig-addon-font: #{$t-2xs};
     --ig-addon-min-h: 22px; // 无对应 Token
   }
 
   &--small {
-    --ig-addon-pad-y: #{$spacing-2px};
+    --ig-addon-pad-y: #{$s-px2};
     --ig-addon-pad-x: #{m.$gap-xs};
-    --ig-addon-font: #{$font-size-xs};
+    --ig-addon-font: #{$t-xs};
     --ig-addon-min-h: 28px; // 无对应 Token
   }
 
   &--medium {
     --ig-addon-pad-y: #{m.$gap-xs};
     --ig-addon-pad-x: #{m.$spacing-2_5};
-    --ig-addon-font: #{$font-size-sm};
+    --ig-addon-font: #{$t-sm};
     --ig-addon-min-h: 36px;
   }
 
   &--large {
     --ig-addon-pad-y: #{m.$spacing-2_5};
     --ig-addon-pad-x: 14px; // 无对应 Token
-    --ig-addon-font: #{$font-size-base};
+    --ig-addon-font: #{$t-base};
     --ig-addon-min-h: 44px;
   }
 
@@ -96,13 +96,13 @@
     margin-left: -1px; // 无对应 Token
   }
 
-  // ===== 仅最外侧保留圆角（单成员时首末规则同时命中，四角均为 $vp-radius） =====
+  // ===== 仅最外侧保留圆角（单成员时首末规则同时命中，四角均为 $r-base） =====
   > :deep(:first-child.si-button),
   > :deep(:first-child.si-input-group-addon),
   > :deep(:first-child .si-input__wrapper),
   > :deep(:first-child .si-select__trigger),
   > :deep(:first-child .si-datepicker__wrapper) {
-    @include ig-radius($vp-radius, 0, 0, $vp-radius);
+    @include ig-radius($r-base, 0, 0, $r-base);
   }
 
   > :deep(:last-child.si-button),
@@ -110,7 +110,7 @@
   > :deep(:last-child .si-input__wrapper),
   > :deep(:last-child .si-select__trigger),
   > :deep(:last-child .si-datepicker__wrapper) {
-    @include ig-radius(0, $vp-radius, $vp-radius, 0);
+    @include ig-radius(0, $r-base, $r-base, 0);
   }
 
   // ===== 交互反馈：hover / 聚焦成员抬升层级，避免边框被相邻负边距遮住 =====

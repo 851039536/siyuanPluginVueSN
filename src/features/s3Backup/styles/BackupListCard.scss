@@ -15,9 +15,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-2 0;
+  padding: $s-2 0;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
-  gap: $spacing-2;
+  gap: $s-2;
 
   &:last-child {
     border-bottom: none;
@@ -28,15 +28,15 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
   flex: 1;
   min-width: 0;
   overflow: hidden;
 }
 
 .backup-name {
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
+  font-size: $t-sm;
+  font-weight: $fw-medium;
   color: var(--b3-theme-on-surface);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -46,7 +46,7 @@
 }
 
 .backup-time {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface-light);
   white-space: nowrap;
   flex-shrink: 0;
@@ -54,7 +54,7 @@
 
 // 相对时间（如"5分钟前"），比绝对时间弱化一级
 .backup-relative {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-light);
   opacity: 0.75;
   white-space: nowrap;
@@ -62,22 +62,22 @@
 }
 
 .backup-sep {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface-light);
   opacity: 0.5;
   flex-shrink: 0;
 }
 
 .backup-size {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface-light);
   white-space: nowrap;
   flex-shrink: 0;
 }
 
 .backup-host {
-  font-size: $font-size-xs;
-  font-family: $vp-mono;
+  font-size: $t-xs;
+  font-family: $ff-mono;
   color: var(--b3-theme-on-surface-light);
   white-space: nowrap;
   flex-shrink: 0;
@@ -85,17 +85,17 @@
 
 .backup-actions {
   display: flex;
-  gap: $spacing-1;
+  gap: $s-1;
   flex-shrink: 0;
 }
 
 .empty-state {
   text-align: center;
-  padding: $spacing-8 0;
+  padding: $s-8 0;
   color: var(--b3-theme-on-surface-light);
 
   p {
     margin: 0;
-    font-size: $font-size-sm;
+    font-size: $t-sm;
   }
 }

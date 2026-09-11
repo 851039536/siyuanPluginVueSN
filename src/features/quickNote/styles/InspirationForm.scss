@@ -6,27 +6,27 @@
 .qn-insp-form {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 // 新增表单
 .qn-insp-form__add {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .qn-insp-form__textarea {
   width: 100%;
   box-sizing: border-box;
-  padding: $spacing-2;
+  padding: $s-2;
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   font-family: inherit;
-  line-height: $line-height-normal;
+  line-height: $lh-normal;
   resize: vertical;
 
   &:focus {
@@ -36,7 +36,7 @@
 
   &::placeholder {
     // 辅助文字：占位提示
-    font-size: $font-size-2xs;
+    font-size: $t-2xs;
     color: var(--b3-theme-on-surface-variant);
   }
 }
@@ -44,15 +44,15 @@
 .qn-insp-form__row {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .qn-insp-form__tag-input {
   flex: 1;
   min-width: 0;
-  padding: $spacing-1 $spacing-2;
+  padding: $s-1 $s-2;
   // 辅助文字
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
 }
 
 // 图标操作按钮（AI 润色）
@@ -78,19 +78,19 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: $spacing-1;
-  padding: $spacing-1 0;
+  gap: $s-1;
+  padding: $s-1 0;
   border-top: 1px solid var(--b3-border-color);
 }
 
 .qn-insp-form__filter-tag {
-  padding: $spacing-1px $spacing-2;
+  padding: $s-px1 $s-2;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-full;
+  border-radius: $r-full;
   background: transparent;
   color: var(--b3-theme-on-surface-variant);
   // 辅助文字
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   cursor: pointer;
   transition: all 0.12s;
 

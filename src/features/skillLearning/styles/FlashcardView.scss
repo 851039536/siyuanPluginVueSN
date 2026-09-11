@@ -5,7 +5,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: $spacing-2 0;
+  padding: $s-2 0;
 
   &__empty {
     @include shared-empty;
@@ -14,7 +14,7 @@
   // ---- filter ----
   &__filter {
     flex-shrink: 0;
-    margin-bottom: $spacing-2;
+    margin-bottom: $s-2;
   }
 
   // ---- header & progress ----
@@ -26,8 +26,8 @@
     display: flex;
     flex-direction: column;
     border: 1px solid var(--b3-border-color);
-    border-radius: $radius-lg;
-    padding: $spacing-5;
+    border-radius: $r-lg;
+    padding: $s-5;
     background: var(--b3-theme-background, #fff);
     overflow-y: auto;
     transition: border-color 0.12s;
@@ -38,31 +38,31 @@
 
   // ---- question ----
   &__q-body {
-    margin-bottom: $spacing-4;
+    margin-bottom: $s-4;
   }
 
   &__q-title {
-    font-size: $font-size-sm;
-    font-weight: $font-weight-semibold;
+    font-size: $t-sm;
+    font-weight: $fw-semibold;
     line-height: 1.6;
     color: var(--b3-theme-on-background, #1e293b);
     display: block;
-    font-family: $vp-mono;
+    font-family: $ff-mono;
   }
 
   &__q-meta {
     display: flex;
-    gap: $spacing-6px;
+    gap: $s-px6;
     align-items: center;
-    margin-top: $spacing-2;
+    margin-top: $s-2;
   }
 
   &__lang-tag {
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-bold;
+    font-size: $t-2xs;
+    font-weight: $fw-bold;
     text-transform: uppercase;
-    padding: $spacing-1px $spacing-6px;
-    border-radius: $radius-sm;
+    padding: $s-px1 $s-px6;
+    border-radius: $r-sm;
     color: #fff;
     @include lang-tag-colors;
   }
@@ -71,21 +71,21 @@
   &__options {
     display: flex;
     flex-direction: column;
-    gap: $spacing-2;
+    gap: $s-2;
     flex: 1;
   }
 
   &__option {
     display: flex;
     align-items: center;
-    gap: $spacing-3;
-    padding: $spacing-3 $spacing-3;
+    gap: $s-3;
+    padding: $s-3 $s-3;
     border: 1px solid var(--b3-border-color);
     border-radius: 10px;
     background: var(--b3-theme-background, #f8fafc);
     cursor: pointer;
     text-align: left;
-    font-size: $font-size-sm;
+    font-size: $t-sm;
     color: var(--b3-theme-on-background, #333);
     transition: border-color 0.12s;
     &:hover:not(:disabled) {
@@ -114,18 +114,18 @@
     border-radius: 50%;
     background: rgba(99, 102, 241, 0.1);
     color: var(--b3-theme-primary);
-    font-size: $font-size-xs;
-    font-weight: $font-weight-bold;
+    font-size: $t-xs;
+    font-weight: $fw-bold;
     flex-shrink: 0;
   }
 
   &__option-text {
     flex: 1;
-    line-height: $line-height-normal;
+    line-height: $lh-normal;
   }
 
   &__option-icon {
-    font-size: $font-size-base;
+    font-size: $t-base;
     flex-shrink: 0;
   }
 
@@ -133,17 +133,17 @@
   &__feedback-area {
     display: flex;
     flex-direction: column;
-    gap: $spacing-3;
-    margin-top: $spacing-4;
-    padding-top: $spacing-4;
+    gap: $s-3;
+    margin-top: $s-4;
+    padding-top: $s-4;
     border-top: 1px solid var(--b3-border-color);
   }
 
   &__feedback-banner {
-    font-size: $font-size-sm;
-    font-weight: $font-weight-semibold;
-    padding: $spacing-2 $spacing-3;
-    border-radius: $radius-md;
+    font-size: $t-sm;
+    font-weight: $fw-semibold;
+    padding: $s-2 $s-3;
+    border-radius: $r-md;
     border: 1px solid;
 
     &--ok {
@@ -163,9 +163,9 @@
     background: transparent;
     border: none;
     color: var(--b3-theme-primary);
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     cursor: pointer;
-    padding: $spacing-1 0;
+    padding: $s-1 0;
     &:hover { text-decoration: underline; }
   }
 
@@ -173,10 +173,10 @@
 
   // ---- buttons ----
   &__btn {
-    padding: $spacing-2 $spacing-6;
-    border-radius: $radius-md;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-semibold;
+    padding: $s-2 $s-6;
+    border-radius: $r-md;
+    font-size: $t-sm;
+    font-weight: $fw-semibold;
     border: none;
     cursor: pointer;
     transition: all 0.12s;
@@ -189,7 +189,7 @@
 
     &--next {
       align-self: center;
-      margin-top: $spacing-1;
+      margin-top: $s-1;
     }
   }
 
@@ -200,43 +200,43 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: $spacing-2;
+    gap: $s-2;
   }
 
   &__result-score {
     font-size: 2.25rem;
-    font-weight: $font-weight-bold;
+    font-weight: $fw-bold;
     color: var(--b3-theme-primary);
     font-feature-settings: "tnum";
-    font-family: $vp-mono;
+    font-family: $ff-mono;
   }
 
   &__result-label {
-    font-size: $font-size-sm;
+    font-size: $t-sm;
     color: var(--b3-theme-on-surface-variant);
   }
 
   &__result-icon {
     width: 48px;
     height: 48px;
-    margin: $spacing-1 0;
+    margin: $s-1 0;
     color: var(--b3-theme-primary);
     opacity: 0.6;
   }
 
   &__result-actions {
     display: flex;
-    gap: $spacing-3;
-    margin-top: $spacing-5;
+    gap: $s-3;
+    margin-top: $s-5;
   }
 
   &__result-detail-btn {
-    padding: $spacing-2 $spacing-4;
+    padding: $s-2 $s-4;
     border: 1px solid var(--b3-border-color);
-    border-radius: $radius-md;
+    border-radius: $r-md;
     background: transparent;
     color: var(--b3-theme-on-surface-variant);
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     cursor: pointer;
     transition: all 0.12s;
     &:hover { border-color: var(--b3-theme-primary); color: var(--b3-theme-primary); }
@@ -246,19 +246,19 @@
     width: 100%;
     max-height: 200px;
     overflow-y: auto;
-    margin-top: $spacing-3;
+    margin-top: $s-3;
     border-top: 1px solid var(--b3-border-color);
-    padding-top: $spacing-2;
+    padding-top: $s-2;
   }
 
   &__result-item {
     display: flex;
     align-items: flex-start;
-    gap: $spacing-2;
-    padding: $spacing-6px $spacing-2;
-    font-size: $font-size-xs;
-    line-height: $line-height-normal;
-    border-radius: $vp-radius;
+    gap: $s-2;
+    padding: $s-px6 $s-2;
+    font-size: $t-xs;
+    line-height: $lh-normal;
+    border-radius: $r-base;
 
     &--ok { color: var(--b3-theme-success); }
     &--fail { color: var(--b3-theme-error); }
@@ -266,8 +266,8 @@
 
   &__result-mark {
     flex-shrink: 0;
-    font-weight: $font-weight-bold;
-    margin-top: $spacing-1px;
+    font-weight: $fw-bold;
+    margin-top: $s-px1;
   }
 
   &__result-title {

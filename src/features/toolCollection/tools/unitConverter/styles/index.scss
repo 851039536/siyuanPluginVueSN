@@ -2,8 +2,8 @@
 @use '@/variables.scss' as *;
 
 @mixin label-style {
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   opacity: 0.45;
@@ -16,17 +16,17 @@
   flex-direction: column;
   background: var(--b3-theme-background);
   box-sizing: border-box;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 
   .converter-header {
-    padding: $spacing-3 $spacing-4;
+    padding: $s-3 $s-4;
     border-bottom: 1px solid var(--b3-border-color);
 
     h3 {
       margin: 0;
-      font-family: $vp-mono;
-      font-size: $font-size-xs;
-      font-weight: $font-weight-bold;
+      font-family: $ff-mono;
+      font-size: $t-xs;
+      font-weight: $fw-bold;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--b3-theme-on-background);
@@ -38,15 +38,15 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0;
-    padding: 0 $spacing-3;
+    padding: 0 $s-3;
     border-bottom: 1px solid var(--b3-border-color);
   }
 
   .converter-tab {
-    padding: $spacing-2 $spacing-10px;
-    font-family: $vp-mono;
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-medium;
+    padding: $s-2 $s-px10;
+    font-family: $ff-mono;
+    font-size: $t-2xs;
+    font-weight: $fw-medium;
     color: var(--b3-theme-on-background);
     opacity: 0.45;
     cursor: pointer;
@@ -69,7 +69,7 @@
     flex: 1;
     overflow-y: auto;
     min-height: 0;
-    padding: $spacing-3 $spacing-4;
+    padding: $s-3 $s-4;
   }
 }
 
@@ -77,15 +77,15 @@
 
 // 结果显示卡片
 .converter-result {
-  padding: $spacing-14px $spacing-4;
+  padding: $s-px14 $s-4;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
 
   .result-value {
-    font-family: $vp-mono;
-    font-size: $font-size-sm; // 数据突出展示：转换结果数值
-    font-weight: $font-weight-medium;
+    font-family: $ff-mono;
+    font-size: $t-sm; // 数据突出展示：转换结果数值
+    font-weight: $fw-medium;
     text-align: center;
     line-height: 1.6;
 
@@ -97,31 +97,31 @@
     .equals {
       color: var(--b3-theme-on-surface);
       opacity: 0.3;
-      margin: 0 $spacing-6px;
+      margin: 0 $s-px6;
     }
 
     .output-display {
       color: var(--b3-theme-primary);
-      font-weight: $font-weight-semibold;
+      font-weight: $fw-semibold;
     }
   }
 }
 
 // 快速转换结果
 .converter-quick-results {
-  margin-top: $spacing-1;
+  margin-top: $s-1;
 
   h4 {
     @include label-style;
-    margin: 0 0 $spacing-2;
+    margin: 0 0 $s-2;
   }
 
   .quick-results-grid {
     display: flex;
     flex-direction: column;
-    gap: $spacing-1px;
+    gap: $s-px1;
     border: 1px solid var(--b3-border-color);
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     overflow: hidden;
   }
 
@@ -129,9 +129,9 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: $spacing-6px $spacing-10px;
+    padding: $s-px6 $s-px10;
     background: var(--b3-theme-surface);
-    font-size: $font-size-xs;
+    font-size: $t-xs;
 
     &:hover {
       background: var(--b3-theme-background);
@@ -140,13 +140,13 @@
     .unit-name,
     .base-name {
       @include label-style;
-      font-family: $vp-mono;
+      font-family: $ff-mono;
     }
 
     .unit-value,
     .base-value {
-      font-family: $vp-mono;
-      font-weight: $font-weight-medium;
+      font-family: $ff-mono;
+      font-weight: $fw-medium;
       color: var(--b3-theme-primary);
     }
   }
@@ -154,14 +154,14 @@
 
 // 错误提示
 .converter-error {
-  padding: $spacing-3 $spacing-4;
+  padding: $s-3 $s-4;
   border: 1px solid var(--b3-error);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: var(--b3-theme-error-container);
 
   .error-message {
-    font-size: $font-size-xs;
-    font-family: $vp-mono;
+    font-size: $t-xs;
+    font-family: $ff-mono;
     color: var(--b3-error);
     text-align: center;
   }
@@ -170,24 +170,24 @@
 // 使用说明
 .converter-info {
   border-top: 1px dashed var(--b3-border-color);
-  padding-top: $spacing-3;
-  margin-top: $spacing-1;
+  padding-top: $s-3;
+  margin-top: $s-1;
 
   h4 {
     @include label-style;
-    margin: 0 0 $spacing-2;
+    margin: 0 0 $s-2;
   }
 
   ul {
     margin: 0;
-    padding-left: $spacing-4;
-    font-size: $font-size-xs;
+    padding-left: $s-4;
+    font-size: $t-xs;
     color: var(--b3-theme-on-surface);
     opacity: 0.7;
     line-height: 1.7;
 
     li {
-      margin-bottom: $spacing-2px;
+      margin-bottom: $s-px2;
     }
   }
 }
@@ -195,13 +195,13 @@
 // 转换器分区卡片
 .converter-section {
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
-  padding: $spacing-14px;
+  border-radius: $r-base;
+  padding: $s-px14;
   background: var(--b3-theme-surface);
 
   h4 {
     @include label-style;
-    margin: 0 0 $spacing-10px;
+    margin: 0 0 $s-px10;
   }
 }
 
@@ -209,8 +209,8 @@
 .output-group {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
-  margin-top: $spacing-10px;
+  gap: $s-1;
+  margin-top: $s-px10;
 
   label {
     @include label-style;
@@ -218,16 +218,16 @@
 
   .ascii-output,
   .text-output {
-    padding: $spacing-10px $spacing-3;
+    padding: $s-px10 $s-3;
     background: var(--b3-theme-background);
     border: 1px solid var(--b3-border-color);
-    border-radius: $radius-sm;
-    font-family: $vp-mono;
-    font-size: $font-size-xs;
+    border-radius: $r-sm;
+    font-family: $ff-mono;
+    font-size: $t-xs;
     color: var(--b3-theme-primary);
     min-height: 36px;
     word-break: break-all;
-    line-height: $line-height-normal;
+    line-height: $lh-normal;
   }
 }
 
@@ -240,7 +240,7 @@
   height: 28px;
   margin: 0 auto;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
@@ -264,7 +264,7 @@
 .unit-select-row {
   display: flex;
   align-items: flex-end;
-  gap: $spacing-2;
+  gap: $s-2;
 
   .select-wrapper {
     flex: 1;

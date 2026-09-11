@@ -13,13 +13,13 @@ $floating-transition: 0.12s ease;
 
 .floating-box-wrapper {
   position: fixed;
-  right: $spacing-5;
+  right: $s-5;
   top: 50%;
   transform: translateY(-50%);
   z-index: $floating-z-index;
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
   transition: opacity $floating-transition;
 
   &.collapsed {
@@ -35,7 +35,7 @@ $floating-transition: 0.12s ease;
   position: relative;
   width: $trigger-size;
   height: $trigger-size;
-  border-radius: $radius-full;
+  border-radius: $r-full;
   background: var(--b3-theme-primary);
   color: var(--b3-theme-on-primary);
   display: flex;
@@ -56,19 +56,19 @@ $floating-transition: 0.12s ease;
   right: $toolbar-offset;
   display: flex;
   flex-direction: column;
-  gap: $spacing-2px;
-  padding: $spacing-1;
+  gap: $s-px2;
+  padding: $s-1;
   background: var(--b3-theme-background);
-  border-radius: $radius-lg;
+  border-radius: $r-lg;
   border: 1px solid var(--b3-border-color);
 }
 
 .tool-item {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-1 $spacing-2;
-  border-radius: $vp-radius;
+  gap: $s-2;
+  padding: $s-1 $s-2;
+  border-radius: $r-base;
   cursor: pointer;
   min-width: 5rem;
   transition: background $floating-transition;
@@ -86,7 +86,7 @@ $floating-transition: 0.12s ease;
 .tool-icon {
   width: $icon-box;
   height: $icon-box;
-  border-radius: $radius-base;
+  border-radius: $r-base;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -97,9 +97,9 @@ $floating-transition: 0.12s ease;
 }
 
 .tool-label {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-normal;
-  line-height: $line-height-normal;
+  font-size: $t-xs;
+  font-weight: $fw-normal;
+  line-height: $lh-normal;
   color: var(--b3-theme-on-background);
   white-space: nowrap;
 }
@@ -120,7 +120,7 @@ $floating-transition: 0.12s ease;
     position: absolute;
     top: 0;
     right: 100%;
-    width: $spacing-2;
+    width: $s-2;
     height: 100%;
     z-index: 0;
   }
@@ -128,14 +128,14 @@ $floating-transition: 0.12s ease;
   .tool-submenu {
     display: none;
     position: absolute;
-    right: calc(100% + #{$spacing-1});
+    right: calc(100% + #{$s-1});
     top: 50%;
     transform: translateY(-50%);
     flex-direction: column;
-    gap: $spacing-2px;
-    padding: $spacing-px;
+    gap: $s-px2;
+    padding: $s-px3;
     background: var(--b3-theme-background);
-    border-radius: $radius-md;
+    border-radius: $r-md;
     border: 1px solid var(--b3-border-color);
     min-width: 6rem;
     z-index: calc($floating-z-index + 1);
@@ -147,11 +147,11 @@ $floating-transition: 0.12s ease;
 }
 
 .submenu-item {
-  padding: $spacing-1 $spacing-2;
-  border-radius: $radius-sm;
+  padding: $s-1 $s-2;
+  border-radius: $r-sm;
   cursor: pointer;
-  font-size: $font-size-xs;
-  line-height: $line-height-normal;
+  font-size: $t-xs;
+  line-height: $lh-normal;
   color: var(--b3-theme-on-background);
   white-space: nowrap;
   transition: background $floating-transition, color $floating-transition;
@@ -170,12 +170,12 @@ $floating-transition: 0.12s ease;
 .toolbar-enter-from,
 .toolbar-leave-to {
   opacity: 0;
-  transform: translateX($spacing-2);
+  transform: translateX($s-2);
 }
 
-@media (max-width: $mobile-breakpoint) {
+@media (max-width: $bp-mobile) {
   .floating-box-wrapper {
-    right: $spacing-3;
+    right: $s-3;
   }
 
   .floating-box-trigger {
@@ -188,7 +188,7 @@ $floating-transition: 0.12s ease;
   }
 
   .tool-item {
-    padding: $spacing-2 $spacing-3;
+    padding: $s-2 $s-3;
   }
 
   .tool-icon {
@@ -197,6 +197,6 @@ $floating-transition: 0.12s ease;
   }
 
   .submenu-item {
-    padding: $spacing-2 $spacing-3;
+    padding: $s-2 $s-3;
   }
 }

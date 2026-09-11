@@ -2,25 +2,25 @@
 @use "./mixins" as *;
 
 .wt-panel {
-  margin-top: $spacing-1;
-  padding-top: $spacing-2px;
+  margin-top: $s-1;
+  padding-top: $s-px2;
 }
 
 .wt-summary {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-1 0;
-  font-size: $font-size-xs;
+  gap: $s-1;
+  padding: $s-1 0;
+  font-size: $t-xs;
   opacity: 0.9;
   user-select: none;
 }
 
 .wt-count {
   display: flex;
-  gap: $spacing-1;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  gap: $s-1;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
 }
 
 .wt-staged {
@@ -37,22 +37,22 @@
 }
 
 .wt-summary-text {
-  margin-left: $spacing-2px;
+  margin-left: $s-px2;
 }
 
 .wt-summary-actions {
   display: flex;
-  gap: $spacing-2px;
+  gap: $s-px2;
   margin-left: auto;
 
-  .vp-btn { font-size: $font-size-2xs; padding: $spacing-1px $spacing-6px; }
+  .vp-btn { font-size: $t-2xs; padding: $s-px1 $s-px6; }
 }
 
 .wt-clean {
   color: var(--b3-theme-success);
-  font-weight: $font-weight-semibold;
+  font-weight: $fw-semibold;
   // 辅助状态提示，与周围 10px 辅助信息一致
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
 }
 
 .wt-body {
@@ -64,16 +64,16 @@
   max-height: 200px;
   overflow-y: auto;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
-  margin-bottom: $spacing-px;
+  border-radius: $r-sm;
+  margin-bottom: $s-px3;
 }
 
 .wt-file-row {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-1 $spacing-6px;
-  font-size: $font-size-xs;
+  gap: $s-1;
+  padding: $s-1 $s-px6;
+  font-size: $t-xs;
   @include row-divider;
   cursor: pointer; // 整行可点击查看差异
   transition: background 0.1s;
@@ -90,7 +90,7 @@
   &.diff-active {
     background: var(--b3-theme-primary-lightest);
     border-left: 2px solid var(--b3-theme-primary);
-    padding-left: $spacing-1;
+    padding-left: $s-1;
   }
 }
 
@@ -125,9 +125,9 @@
   width: 18px;
   flex-shrink: 0;
   text-align: center;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
-  font-family: $vp-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  font-family: $ff-mono;
   overflow: hidden;
 
   &.wt-s-modified { color: var(--b3-theme-warning); }
@@ -142,8 +142,8 @@
 .wt-file-path {
   flex: 1;
   min-width: 0;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
   @include text-ellipsis;
 
   .wt-file-row:hover & {
@@ -154,8 +154,8 @@
 .wt-discard-btn {
   flex-shrink: 0;
   opacity: 0.3;
-  font-size: $font-size-2xs;
-  padding: $spacing-1px $spacing-6px;
+  font-size: $t-2xs;
+  padding: $s-px1 $s-px6;
   transition: opacity 0.15s;
   color: var(--b3-theme-error, #cf222e);
 
@@ -174,31 +174,31 @@
 .wt-commit-form {
   display: flex;
   flex-direction: column;
-  gap: $spacing-6px;
+  gap: $s-px6;
 }
 
 .wt-commit-types {
   display: flex;
-  gap: $spacing-px;
+  gap: $s-px3;
   flex-wrap: wrap;
 }
 
 .wt-template-row {
   display: flex;
   align-items: center;
-  gap: $spacing-6px;
-  padding: $spacing-1 0;
+  gap: $s-px6;
+  padding: $s-1 0;
   color: var(--b3-theme-on-surface-light);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 }
 
 .wt-template-select {
   flex: 1;
   height: 26px;
-  padding: 0 $spacing-6px;
-  font-size: $font-size-xs;
+  padding: 0 $s-px6;
+  font-size: $t-xs;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   cursor: pointer;
@@ -206,12 +206,12 @@
 }
 
 .wt-type-btn {
-  padding: $spacing-1px $spacing-6px;
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
-  font-weight: $font-weight-semibold;
+  padding: $s-px1 $s-px6;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
+  font-weight: $fw-semibold;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: transparent;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
@@ -233,11 +233,11 @@
 .wt-commit-msg {
   width: 100%;
   box-sizing: border-box;
-  padding: $spacing-6px $spacing-2;
+  padding: $s-px6 $s-2;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
-  font-size: $font-size-xs;
-  font-family: $vp-mono;
+  border-radius: $r-sm;
+  font-size: $t-xs;
+  font-family: $ff-mono;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   resize: vertical;
@@ -250,19 +250,19 @@
 
 .wt-commit-actions {
   display: flex;
-  gap: $spacing-6px;
+  gap: $s-px6;
   justify-content: flex-end;
 }
 
 // 提交信息实时校验违规提示（与 CommitFixDialog 的 gp-fix-invalid 同风格）
 .wt-commit-invalid {
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-error, $color-danger);
+  font-size: $t-2xs;
+  color: var(--b3-theme-error, $c-danger);
 }
 
 .wt-commit-output {
   position: relative;
-  padding: $spacing-6px $spacing-2;
+  padding: $s-px6 $s-2;
   padding-right: 28px;
   max-height: 100px;
   @include output-base;
@@ -277,9 +277,9 @@
   cursor: pointer;
   color: var(--b3-theme-on-surface);
   opacity: 0.4;
-  font-size: $font-size-sm;
+  font-size: $t-sm;
   line-height: 1;
-  padding: 0 $spacing-1;
+  padding: 0 $s-1;
 
   &:hover {
     opacity: 1;

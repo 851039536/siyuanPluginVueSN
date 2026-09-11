@@ -3,7 +3,7 @@
 .script-list {
   display: flex;
   flex-direction: column;
-  gap: $spacing-3;
+  gap: $s-3;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -11,8 +11,8 @@
   &__filters {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: $spacing-2;
-    padding: $spacing-2;
+    gap: $s-2;
+    padding: $s-2;
 
     .si-input {
       grid-column: 1 / -1;
@@ -22,29 +22,29 @@
   &__groups {
     display: flex;
     flex-direction: column;
-    gap: $spacing-3;
-    padding: 0 $spacing-2 $spacing-2;
+    gap: $s-3;
+    padding: 0 $s-2 $s-2;
   }
 
   &__group {
     display: flex;
     flex-direction: column;
-    gap: $spacing-2;
+    gap: $s-2;
   }
 
   &__group-header {
     display: flex;
     align-items: center;
-    gap: $spacing-2;
-    padding: $spacing-2 $spacing-3;
-    border-left: $spacing-px solid transparent;
+    gap: $s-2;
+    padding: $s-2 $s-3;
+    border-left: $s-px3 solid transparent;
     background: var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.03));
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
   }
 
   &__group-title {
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-bold;
+    font-size: $t-2xs;
+    font-weight: $fw-bold;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     flex: 1;
@@ -53,14 +53,14 @@
   &__cards {
     display: flex;
     flex-direction: column;
-    gap: $spacing-2;
+    gap: $s-2;
   }
 
   &__card {
     cursor: pointer;
 
     &:hover {
-      border-color: var(--b3-theme-primary, $color-primary);
+      border-color: var(--b3-theme-primary, $c-primary);
 
       .script-list__card-actions {
         opacity: 1;
@@ -72,15 +72,15 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: $spacing-2;
+    gap: $s-2;
     width: 100%;
   }
 
   &__card-name {
-    font-weight: $font-weight-semibold;
+    font-weight: $fw-semibold;
     // 14px 数据突出展示（脚本名称）
-    font-size: $font-size-sm;
-    color: var(--b3-theme-on-background, $color-fg);
+    font-size: $t-sm;
+    color: var(--b3-theme-on-background, $c-fg);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -89,12 +89,12 @@
   &__card-body {
     display: flex;
     flex-direction: column;
-    gap: $spacing-1;
+    gap: $s-1;
   }
 
   &__card-desc {
-    font-size: $font-size-xs;
-    color: var(--b3-theme-secondary, $color-muted);
+    font-size: $t-xs;
+    color: var(--b3-theme-secondary, $c-muted);
     margin: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -107,21 +107,21 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-bold;
+    font-size: $t-2xs;
+    font-weight: $fw-bold;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--b3-theme-secondary, $color-muted);
+    color: var(--b3-theme-secondary, $c-muted);
     opacity: 0.45;
     margin: 0;
   }
 
   &__card-path {
-    font-size: $font-size-2xs;
-    font-family: $vp-mono;
-    color: var(--b3-theme-secondary, $color-muted);
+    font-size: $t-2xs;
+    font-family: $ff-mono;
+    color: var(--b3-theme-secondary, $c-muted);
     opacity: 0.5;
-    margin: $spacing-2px 0 0;
+    margin: $s-px2 0 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -131,18 +131,18 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: $spacing-1;
+    gap: $s-1;
     opacity: 0;
     transition: opacity 0.12s;
   }
 
   &__btn-run {
-    background: rgba($color-success, 0.15) !important;
-    color: $color-success !important;
-    border: 1px solid rgba($color-success, 0.3) !important;
+    background: rgba($c-success, 0.15) !important;
+    color: $c-success !important;
+    border: 1px solid rgba($c-success, 0.3) !important;
 
     &:hover {
-      background: rgba($color-success, 0.25) !important;
+      background: rgba($c-success, 0.25) !important;
     }
   }
 
@@ -151,9 +151,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: $spacing-3;
-    padding: $spacing-8 $spacing-4;
-    color: var(--b3-theme-secondary, $color-muted);
+    gap: $s-3;
+    padding: $s-8 $s-4;
+    color: var(--b3-theme-secondary, $c-muted);
     text-align: center;
   }
 }

@@ -6,11 +6,11 @@
 
 .drop-zone {
   border: 2px dashed var(--b3-theme-surface-lighter);
-  border-radius: $vp-radius;
-  padding: $spacing-4;
+  border-radius: $r-base;
+  padding: $s-4;
   text-align: center;
   transition: border-color 0.12s ease, background 0.12s ease;
-  margin-bottom: $spacing-3;
+  margin-bottom: $s-3;
 
   &.drop-active {
     border-color: var(--b3-theme-primary);
@@ -22,8 +22,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: $spacing-2;
-  font-size: $font-size-sm;
+  gap: $s-2;
+  font-size: $t-sm;
   color: var(--b3-theme-on-surface-light);
 }
 
@@ -36,16 +36,16 @@
 .drop-results {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2px;
+  gap: $s-px2;
 }
 
 .drop-result-item {
   display: flex;
   align-items: flex-start;
-  gap: $spacing-2;
-  padding: $spacing-2;
+  gap: $s-2;
+  padding: $s-2;
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
 
   &.drop-compare-match {
     border-color: var(--b3-theme-success);
@@ -65,9 +65,9 @@
 
 .drop-result-name {
   display: block;
-  font-family: $vp-mono;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
+  font-family: $ff-mono;
+  font-size: $t-sm;
+  font-weight: $fw-medium;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -97,10 +97,10 @@
 .compare-select {
   width: 100%;
   max-width: 160px;
-  padding: $spacing-2px $spacing-1;
-  font-size: $font-size-2xs;
+  padding: $s-px2 $s-1;
+  font-size: $t-2xs;
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   outline: none;

@@ -12,16 +12,16 @@
 
 .db-sidebar-header {
   @include flex-align-center;
-  gap: $spacing-6px;
-  padding: $spacing-2 $spacing-10px;
+  gap: $s-px6;
+  padding: $s-2 $s-px10;
   border-bottom: 1px solid $border;
   flex-shrink: 0;
 }
 
 .db-sidebar-title {
   flex: 1;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-background);
   @include text-ellipsis;
 }
@@ -32,13 +32,13 @@
 
 .db-drives {
   flex-shrink: 0;
-  padding: $spacing-1 0;
+  padding: $s-1 0;
 }
 
 .db-drive-row {
   @include flex-align-center;
-  gap: $spacing-2;
-  padding: $spacing-6px $spacing-10px;
+  gap: $s-2;
+  padding: $s-px6 $s-px10;
   cursor: pointer;
   transition: background-color 0.12s;
   position: relative;
@@ -77,27 +77,27 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: $spacing-1px;
+  gap: $s-px1;
 }
 
 .db-drive-heading {
   @include flex-align-center;
-  gap: $spacing-6px;
+  gap: $s-px6;
   min-width: 0;
 }
 
 .db-drive-label {
   flex-shrink: 0;
-  font-family: $vp-mono;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-family: $ff-mono;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-background);
 }
 
 .db-drive-name {
   flex: 1;
   min-width: 0;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-light);
   opacity: 0.6;
   @include text-ellipsis;
@@ -105,14 +105,14 @@
 
 .db-drive-capacity {
   @include flex-align-center;
-  gap: $spacing-6px;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  gap: $s-px6;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-light);
 }
 
 .db-drive-usage {
-  font-weight: $font-weight-semibold;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface);
 }
 
@@ -130,8 +130,8 @@
 
 .db-favorites-title {
   @include flex-align-center;
-  gap: $spacing-5px;
-  padding: $spacing-6px $spacing-10px;
+  gap: $s-px5;
+  padding: $s-px6 $s-px10;
   border-bottom: 1px dashed $border;
   flex-shrink: 0;
 
@@ -143,14 +143,14 @@
 }
 
 .db-fav-list {
-  padding: $spacing-2px 0;
+  padding: $s-px2 0;
   overflow-y: auto;
 }
 
 .db-fav-row {
   @include flex-align-center;
-  gap: $spacing-6px;
-  padding: $spacing-1 $spacing-10px;
+  gap: $s-px6;
+  padding: $s-1 $s-px10;
   cursor: pointer;
   transition: background-color 0.12s;
 
@@ -166,9 +166,9 @@
 .db-fav-name {
   flex: 1;
   min-width: 0;
-  font-family: $vp-mono;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
+  font-family: $ff-mono;
+  font-size: $t-xs;
+  font-weight: $fw-medium;
   color: var(--b3-theme-on-background);
   @include text-ellipsis;
 }
@@ -179,8 +179,8 @@
 }
 
 .db-fav-empty {
-  padding: $spacing-3 $spacing-10px;
-  font-size: $font-size-2xs;
+  padding: $s-3 $s-px10;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-light);
   opacity: 0.55;
   font-style: italic;
@@ -189,18 +189,18 @@
 
 .db-sidebar-footer {
   flex-shrink: 0;
-  padding: $spacing-1 $spacing-10px;
+  padding: $s-1 $s-px10;
   border-top: 1px solid $border;
 }
 
 .db-cache-tag {
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
   letter-spacing: 0.04em;
   white-space: nowrap;
-  padding: $spacing-1px $spacing-6px;
-  border-radius: $radius-px;
+  padding: $s-px1 $s-px6;
+  border-radius: $r-px3;
   color: var(--b3-theme-primary);
   background: var(--b3-theme-primary-lightest);
 

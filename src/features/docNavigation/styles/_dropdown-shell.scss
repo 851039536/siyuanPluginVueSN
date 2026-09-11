@@ -11,15 +11,15 @@
 .doc-nav-dropdown-trigger {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-2px $spacing-2;
+  gap: $s-1;
+  padding: $s-px2 $s-2;
   border: 1px solid transparent;
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: var(--b3-theme-surface-lighter);
   color: var(--b3-theme-primary);
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-  line-height: $line-height-tight;
+  font-size: $t-xs;
+  font-weight: $fw-medium;
+  line-height: $lh-tight;
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.15s ease, border-color 0.15s ease;
@@ -62,29 +62,29 @@
 
 .doc-nav-dropdown-panel {
   position: absolute;
-  top: calc(100% + $spacing-1);
+  top: calc(100% + $s-1);
   left: 0;
   z-index: 100;
   min-width: 180px;
   max-width: 320px;
   max-height: 280px;
   overflow-y: auto;
-  padding: $spacing-1;
+  padding: $s-1;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $vp-radius;
-  font-size: $font-size-xs;
-  line-height: $line-height-normal;
+  border-radius: $r-base;
+  font-size: $t-xs;
+  line-height: $lh-normal;
 }
 
 .doc-nav-dropdown-header {
-  padding: $spacing-1 $spacing-2 $spacing-2px;
-  margin-bottom: $spacing-1;
+  padding: $s-1 $s-2 $s-px2;
+  margin-bottom: $s-1;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-medium;
-  line-height: $line-height-tight;
+  font-size: $t-2xs;
+  font-weight: $fw-medium;
+  line-height: $lh-tight;
   text-transform: uppercase;
   letter-spacing: 0.02em;
   opacity: 0.7;
@@ -98,7 +98,7 @@
 .doc-nav-dropdown-fade-enter-from,
 .doc-nav-dropdown-fade-leave-to {
   opacity: 0;
-  transform: translateY(-$spacing-1);
+  transform: translateY(-$s-1);
 }
 
 .doc-nav-dropdown-fade-enter-to,

@@ -6,36 +6,36 @@
 .view-mode-section {
   .mode-row {
     display: flex;
-    gap: $spacing-6px;
+    gap: $s-px6;
     align-items: center;
   }
 
   .mode-tabs {
     display: flex;
     flex: 1;
-    gap: $spacing-1;
-    padding: $spacing-px;
+    gap: $s-1;
+    padding: $s-px3;
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
-    border-radius: stats.$radius-sm;
+    border-radius: stats.$r-sm;
     align-items: center;
   }
 
   .mode-tab {
     flex: 1;
-    padding: $spacing-6px $spacing-1;
+    padding: $s-px6 $s-1;
     border: none;
     background: transparent;
     color: var(--b3-theme-on-surface);
     cursor: pointer;
     font-family: stats.$font-mono;
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-semibold;
+    font-size: $t-2xs;
+    font-weight: $fw-semibold;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: $spacing-1;
-    border-radius: stats.$radius-sm;
+    gap: $s-1;
+    border-radius: stats.$r-sm;
     white-space: nowrap;
 
     &:hover {
@@ -52,21 +52,21 @@
   .range-selector {
     display: flex;
     flex-wrap: wrap;
-    gap: $spacing-6px;
-    margin: $spacing-1;
+    gap: $s-px6;
+    margin: $s-1;
     justify-content: center;
   }
 
   .range-btn {
-    padding: $spacing-5px $spacing-3;
+    padding: $s-px5 $s-3;
     border: 1px solid var(--b3-border-color);
     background: var(--b3-theme-surface);
     color: var(--b3-theme-on-surface);
     cursor: pointer;
     font-family: stats.$font-mono;
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-semibold;
-    border-radius: stats.$radius-sm;
+    font-size: $t-2xs;
+    font-weight: $fw-semibold;
+    border-radius: stats.$r-sm;
 
     &:hover {
       border-color: var(--b3-theme-primary);
@@ -83,17 +83,17 @@
 
   .year-selector {
 
-    margin-top: $spacing-10px;
+    margin-top: $s-px10;
     .year-select {
       width: 100%;
-      padding: $spacing-6px $spacing-3;
+      padding: $s-px6 $s-3;
       border: 1px solid var(--b3-border-color);
-      border-radius: stats.$radius-sm;
+      border-radius: stats.$r-sm;
       background: var(--b3-theme-surface);
       color: var(--b3-theme-on-surface);
       font-family: stats.$font-mono;
-      font-size: $font-size-xs;
-      font-weight: $font-weight-semibold;
+      font-size: $t-xs;
+      font-weight: $fw-semibold;
       cursor: pointer;
       outline: none;
 
@@ -109,14 +109,14 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 0;
     border-top: 1px solid var(--b3-border-color);
-    margin-top: $spacing-6px;
+    margin-top: $s-px6;
   }
 
   .period-stat-card {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    padding: $spacing-6px $spacing-3;
+    padding: $s-px6 $s-3;
     border-left: 1px solid var(--b3-border-color);
 
     &:first-child {
@@ -125,19 +125,19 @@
 
     .stat-label {
       font-family: stats.$font-mono;
-      font-size: $font-size-2xs;
-      font-weight: $font-weight-bold;
+      font-size: $t-2xs;
+      font-weight: $fw-bold;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       color: var(--b3-theme-on-surface);
       opacity: 0.45;
-      margin-bottom: $spacing-2px;
+      margin-bottom: $s-px2;
     }
 
     .stat-value {
       font-family: stats.$font-mono;
-      font-size: $font-size-base; // 数据突出展示（时段统计数值）
-      font-weight: $font-weight-bold;
+      font-size: $t-base; // 数据突出展示（时段统计数值）
+      font-weight: $fw-bold;
       color: var(--b3-theme-primary);
     }
   }
@@ -149,7 +149,7 @@
   .view-mode-section {
     .mode-tabs {
       overflow-x: auto;
-      padding-bottom: $spacing-1;
+      padding-bottom: $s-1;
 
       &::-webkit-scrollbar {
         display: none;
@@ -158,7 +158,7 @@
 
     .mode-tab {
       flex: none;
-      padding: $spacing-2 $spacing-4;
+      padding: $s-2 $s-4;
     }
 
     .range-selector {
@@ -167,7 +167,7 @@
 
     .period-stats-cards {
       grid-template-columns: 1fr;
-      gap: $spacing-3;
+      gap: $s-3;
     }
   }
 }

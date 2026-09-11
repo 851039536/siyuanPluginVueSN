@@ -12,7 +12,7 @@
 .gp-fix-batch-list {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  gap: $s-2;
   max-height: 42vh;
   overflow-y: auto;
 }
@@ -21,10 +21,10 @@
 .gp-fix-batch-item {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
-  padding: $spacing-2;
+  gap: $s-2;
+  padding: $s-2;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
 }
 
@@ -35,7 +35,7 @@
 
 // 条目序号（等宽弱化，tabular-nums 对齐数值规范）
 .gp-fix-batch-index {
-  font-family: $vp-mono;
+  font-family: $ff-mono;
   font-variant-numeric: tabular-nums;
   opacity: 0.4;
 }
@@ -51,11 +51,11 @@
 }
 
 .gp-fix-batch-state--error {
-  color: var(--b3-theme-error, $color-danger);
+  color: var(--b3-theme-error, $c-danger);
 }
 
 // 重写计数文案（与进度条同行前置）
 .gp-fix-rewrite-count {
-  font-family: $vp-mono;
+  font-family: $ff-mono;
   font-variant-numeric: tabular-nums;
 }

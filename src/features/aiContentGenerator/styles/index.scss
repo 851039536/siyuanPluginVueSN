@@ -31,8 +31,8 @@
 
 // ============ Codex 元信息标签 ============
 @mixin codex-meta-label {
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--b3-theme-on-surface);
@@ -46,7 +46,7 @@
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   // 基准字号:未显式声明字号的文字继承内容级 12px,而非思源默认的更大字号
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   overflow: hidden;
   position: relative;
 }
@@ -54,10 +54,10 @@
 .content-display-section {
   flex: 1;
   overflow-y: auto;
-  padding: $spacing-10px;
+  padding: $s-px10;
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  gap: $s-2;
   min-height: 0;
 }
 
@@ -83,23 +83,23 @@
 
 // ============ Markdown 预览（MainContentArea 与 SkillPreviewModal 共用） ============
 .markdown-preview {
-  padding: $spacing-2 $spacing-10px;
+  padding: $s-2 $s-px10;
   background: var(--b3-theme-surface);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   border: 1px solid var(--b3-theme-surface-lighter);
-  line-height: $line-height-normal;
+  line-height: $lh-normal;
   overflow-wrap: break-word;
   overflow-y: auto;
   flex: 1;
   min-height: 0;
   user-select: text;
   cursor: text;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 
   :deep(h1), :deep(h2), :deep(h3), :deep(h4), :deep(h5), :deep(h6) {
     margin-top: 0.6em;
     margin-bottom: 0.3em;
-    font-weight: $font-weight-medium;
+    font-weight: $fw-medium;
     &:first-child { margin-top: 0; }
   }
   :deep(h1) { font-size: 1.4em; }
@@ -108,15 +108,15 @@
   :deep(p) { margin: 0.3em 0; }
   :deep(ul), :deep(ol) { margin: 0.3em 0; padding-left: 1.4em; }
   :deep(code) {
-    padding: $spacing-1px $spacing-1;
+    padding: $s-px1 $s-1;
     background: var(--b3-theme-surface-lighter);
-    border-radius: $radius-2px;
+    border-radius: $r-px2;
     font-size: 0.85em;
   }
   :deep(pre) {
-    padding: $spacing-2;
+    padding: $s-2;
     background: var(--b3-theme-surface-lighter);
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     overflow-x: auto;
     margin: 0.4em 0;
     code { padding: 0; background: transparent; }
@@ -132,6 +132,6 @@
     border-collapse: collapse;
     width: 100%;
     margin: 0.4em 0;
-    th, td { border: 1px solid var(--b3-theme-surface-lighter); padding: $spacing-1 $spacing-6px; }
+    th, td { border: 1px solid var(--b3-theme-surface-lighter); padding: $s-1 $s-px6; }
   }
 }

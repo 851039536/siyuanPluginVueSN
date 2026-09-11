@@ -5,8 +5,8 @@
 .si-chart {
   position: relative;
   display: inline-block;
-  background: var(--b3-theme-background, $color-bg);
-  border-radius: $radius-md;
+  background: var(--b3-theme-background, $c-bg);
+  border-radius: $r-md;
   overflow: hidden;
 
   &--xsmall {
@@ -57,8 +57,8 @@
   &__spinner {
     width: 32px;
     height: 32px;
-    border: 3px solid var(--b3-theme-surface-lighter, $color-surface);
-    border-top-color: var(--b3-theme-primary, $color-danger);
+    border: 3px solid var(--b3-theme-surface-lighter, $c-surface);
+    border-top-color: var(--b3-theme-primary, $c-danger);
     border-radius: 50%;
     animation: si-spin 0.8s linear infinite;
   }
@@ -72,8 +72,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--b3-theme-secondary, $color-muted);
-    font-family: $font-zh;
-    font-size: $font-size-sm;
+    color: var(--b3-theme-secondary, $c-muted);
+    font-family: $ff-zh;
+    font-size: $t-sm;
   }
 }

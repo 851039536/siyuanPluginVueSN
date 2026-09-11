@@ -14,11 +14,11 @@ $gr-space-7: 7px; // 无对应 Token
 $gr-space-10: 10px; // 无对应 Token（全局间距档为 8px → 12px，无 10px）
 $gr-space-14: 14px; // 无对应 Token（面板横向内边距）
 $gr-space-26: 26px; // 无对应 Token（搜索框内图标占位宽度）
-$gr-font-11: 11px; // 无对应 Token（介于 $font-size-2xs 与 $font-size-xs）
-$gr-radius-3: 3px; // 无对应 Token（$radius-sm 为 4px）
-$gr-radius-5: 5px; // 无对应 Token（$radius-sm / $vp-radius 为 4px / 6px）
-$gr-lh-12: 1.2; // 无对应 Token（$line-height-tight 为 1.25）
-$gr-lh-16: 1.6; // 无对应 Token（$line-height-normal 为 1.5）
+$gr-font-11: 11px; // 无对应 Token（介于 $t-2xs 与 $t-xs）
+$gr-radius-3: 3px; // 无对应 Token（$r-sm 为 4px）
+$gr-radius-5: 5px; // 无对应 Token（$r-sm / $r-base 为 4px / 6px）
+$gr-lh-12: 1.2; // 无对应 Token（$lh-tight 为 1.25）
+$gr-lh-16: 1.6; // 无对应 Token（$lh-normal 为 1.5）
 
 .global-relations-panel {
   display: flex;
@@ -42,13 +42,13 @@ $gr-lh-16: 1.6; // 无对应 Token（$line-height-normal 为 1.5）
   &__left {
     display: flex;
     align-items: center;
-    gap: $spacing-2;
+    gap: $s-2;
     min-width: 0;
   }
 
   &__title {
-    font-size: $font-size-sm;
-    font-weight: $font-weight-semibold;
+    font-size: $t-sm;
+    font-weight: $fw-semibold;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -67,9 +67,9 @@ $gr-lh-16: 1.6; // 无对应 Token（$line-height-normal 为 1.5）
   display: inline-flex;
   align-items: center;
   gap: $gr-space-5;
-  padding: $spacing-1 $gr-space-10;
-  font-size: $font-size-xs;
-  line-height: $line-height-normal;
+  padding: $s-1 $gr-space-10;
+  font-size: $t-xs;
+  line-height: $lh-normal;
   color: var(--b3-theme-on-background);
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
@@ -87,11 +87,11 @@ $gr-lh-16: 1.6; // 无对应 Token（$line-height-normal 为 1.5）
   }
 
   &--icon {
-    padding: $spacing-1 $gr-space-7;
+    padding: $s-1 $gr-space-7;
   }
 
   &--small {
-    padding: $spacing-2px $spacing-2;
+    padding: $s-px2 $s-2;
     font-size: $gr-font-11;
   }
 
@@ -106,7 +106,7 @@ $gr-lh-16: 1.6; // 无对应 Token（$line-height-normal 为 1.5）
 .gr-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: $spacing-2;
+  gap: $s-2;
   padding: $gr-space-10 $gr-space-14;
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
@@ -116,15 +116,15 @@ $gr-lh-16: 1.6; // 无对应 Token（$line-height-normal 为 1.5）
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: $spacing-2px;
-  padding: $spacing-2 $spacing-1;
+  gap: $s-px2;
+  padding: $s-2 $s-1;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
 
   &__value {
-    font-size: $font-size-lg;
-    font-weight: $font-weight-bold;
+    font-size: $t-lg;
+    font-weight: $fw-bold;
     line-height: $gr-lh-12;
     color: var(--b3-theme-on-background);
   }
@@ -144,8 +144,8 @@ $gr-lh-16: 1.6; // 无对应 Token（$line-height-normal 为 1.5）
 .gr-toolbar {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-2 $gr-space-14;
+  gap: $s-2;
+  padding: $s-2 $gr-space-14;
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
 }
@@ -157,7 +157,7 @@ $gr-lh-16: 1.6; // 无对应 Token（$line-height-normal 为 1.5）
 
   &__icon {
     position: absolute;
-    left: $spacing-2;
+    left: $s-2;
     top: 50%;
     transform: translateY(-50%);
     color: var(--b3-theme-on-surface);
@@ -167,8 +167,8 @@ $gr-lh-16: 1.6; // 无对应 Token（$line-height-normal 为 1.5）
   &__input {
     width: 100%;
     box-sizing: border-box;
-    padding: $gr-space-5 $spacing-2 $gr-space-5 $gr-space-26;
-    font-size: $font-size-xs;
+    padding: $gr-space-5 $s-2 $gr-space-5 $gr-space-26;
+    font-size: $t-xs;
     color: var(--b3-theme-on-background);
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
@@ -183,7 +183,7 @@ $gr-lh-16: 1.6; // 无对应 Token（$line-height-normal 为 1.5）
 
 .gr-direction-filter {
   display: flex;
-  gap: $spacing-1;
+  gap: $s-1;
   flex-shrink: 0;
 }
 
@@ -192,7 +192,7 @@ $gr-lh-16: 1.6; // 无对应 Token（$line-height-normal 为 1.5）
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: $spacing-2 $gr-space-14;
+  padding: $s-2 $gr-space-14;
 }
 
 .gr-empty {
@@ -200,10 +200,10 @@ $gr-lh-16: 1.6; // 无对应 Token（$line-height-normal 为 1.5）
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: $spacing-2;
+  gap: $s-2;
   height: 100%;
   min-height: 120px;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface);
 
   &--error {
@@ -223,15 +223,15 @@ $gr-lh-16: 1.6; // 无对应 Token（$line-height-normal 为 1.5）
 
 .gr-row {
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
   overflow: hidden;
 
   &__main {
     display: flex;
     align-items: center;
-    gap: $spacing-2;
-    padding: $spacing-2 $gr-space-10;
+    gap: $s-2;
+    padding: $s-2 $gr-space-10;
     cursor: pointer;
 
     &:hover {
@@ -255,8 +255,8 @@ $gr-lh-16: 1.6; // 无对应 Token（$line-height-normal 为 1.5）
   }
 
   &__doc-name {
-    font-size: $font-size-xs;
-    font-weight: $font-weight-medium;
+    font-size: $t-xs;
+    font-weight: $fw-medium;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -269,7 +269,7 @@ $gr-lh-16: 1.6; // 无对应 Token（$line-height-normal 为 1.5）
   }
 
   &__doc-path {
-    font-size: $font-size-2xs;
+    font-size: $t-2xs;
     color: var(--b3-theme-on-surface);
     white-space: nowrap;
     overflow: hidden;
@@ -299,7 +299,7 @@ $gr-lh-16: 1.6; // 无对应 Token（$line-height-normal 为 1.5）
 
   &__details {
     border-top: 1px solid var(--b3-border-color);
-    padding: $spacing-2 $gr-space-10;
+    padding: $s-2 $gr-space-10;
     display: flex;
     flex-direction: column;
     gap: $gr-space-6;
@@ -308,7 +308,7 @@ $gr-lh-16: 1.6; // 无对应 Token（$line-height-normal 为 1.5）
 
   &__details-title {
     font-size: $gr-font-11;
-    font-weight: $font-weight-semibold;
+    font-weight: $fw-semibold;
     color: var(--b3-theme-on-surface);
   }
 
@@ -324,12 +324,12 @@ $gr-lh-16: 1.6; // 无对应 Token（$line-height-normal 为 1.5）
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: $spacing-1;
+    gap: $s-1;
   }
 
   &__content-item {
     font-size: $gr-font-11;
-    padding: $spacing-1 $spacing-2;
+    padding: $s-1 $s-2;
     background: var(--b3-theme-surface);
     border-left: 2px solid var(--b3-theme-primary);
     border-radius: $gr-radius-3;
@@ -342,18 +342,18 @@ $gr-lh-16: 1.6; // 无对应 Token（$line-height-normal 为 1.5）
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: $spacing-1;
+    gap: $s-1;
   }
 
   &__backlink-item {
     display: flex;
     flex-direction: column;
     gap: $gr-space-1;
-    padding: $gr-space-5 $spacing-2;
+    padding: $gr-space-5 $s-2;
     font-size: $gr-font-11;
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     cursor: pointer;
 
     &:hover {
@@ -362,7 +362,7 @@ $gr-lh-16: 1.6; // 无对应 Token（$line-height-normal 为 1.5）
   }
 
   &__backlink-name {
-    font-weight: $font-weight-medium;
+    font-weight: $fw-medium;
     color: var(--b3-theme-on-background);
     white-space: nowrap;
     overflow: hidden;
@@ -370,7 +370,7 @@ $gr-lh-16: 1.6; // 无对应 Token（$line-height-normal 为 1.5）
   }
 
   &__backlink-path {
-    font-size: $font-size-2xs;
+    font-size: $t-2xs;
     color: var(--b3-theme-on-surface);
     white-space: nowrap;
     overflow: hidden;
@@ -383,9 +383,9 @@ $gr-lh-16: 1.6; // 无对应 Token（$line-height-normal 为 1.5）
   display: inline-flex;
   align-items: center;
   padding: $gr-space-1 $gr-space-7;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   line-height: $gr-lh-16;
-  border-radius: $radius-full;
+  border-radius: $r-full;
   white-space: nowrap;
 
   &--bidirectional {

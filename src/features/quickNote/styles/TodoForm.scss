@@ -6,14 +6,14 @@
 .qn-todo-form {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 // 行容器（输入+按钮 / 优先级+日期+项目）
 .qn-todo-form__row {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 // 首行修饰（多行输入框 + 按钮组：按钮贴输入框底沿，避免居中悬空）
@@ -57,7 +57,7 @@
 // 取消按钮（边框，编辑模式）
 .qn-todo-form__cancel-btn {
   @extend %qn-cancel-btn;
-  padding: $spacing-2px $spacing-3;
+  padding: $s-px2 $s-3;
   color: var(--b3-theme-on-surface-variant);
   flex-shrink: 0;
 
@@ -70,7 +70,7 @@
 // 保存按钮（品牌蓝色块，编辑模式）
 .qn-todo-form__save-btn {
   @extend %qn-primary-btn;
-  padding: $spacing-2px $spacing-3;
+  padding: $s-px2 $s-3;
   flex-shrink: 0;
 }
 
@@ -78,7 +78,7 @@
 .qn-todo-form__priorities {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .qn-todo-form__prio {
@@ -86,7 +86,7 @@
   height: 14px;
   padding: 0;
   border: 2px solid transparent;
-  border-radius: $radius-full;
+  border-radius: $r-full;
   cursor: pointer;
   opacity: 0.55;
   transition: all 0.12s;
@@ -109,24 +109,24 @@
 .qn-todo-form__date {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
   color: var(--b3-theme-on-surface-variant);
   flex-shrink: 0;
 }
 
 .qn-todo-form__date-input {
   width: 8.5rem;
-  padding: $spacing-1 $spacing-2;
+  padding: $s-1 $s-2;
   // 辅助文字
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
 }
 
 // 关联项目下拉
 .qn-todo-form__project {
   flex: 1;
   min-width: 0;
-  padding: $spacing-1 $spacing-2;
+  padding: $s-1 $s-2;
   // 辅助文字
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-background);
 }

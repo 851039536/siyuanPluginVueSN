@@ -11,7 +11,7 @@
   justify-content: center;
   z-index: 99999;
   // 基准字号：弹窗内文字继承内容级 12px
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 
   &:focus {
     outline: none;
@@ -24,7 +24,7 @@
   max-height: 82vh;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-lg;
+  border-radius: $r-lg;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -35,8 +35,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-2;
-  padding: $spacing-3 $spacing-4;
+  gap: $s-2;
+  padding: $s-3 $s-4;
   border-bottom: 1px solid var(--b3-border-color);
   background: var(--b3-theme-surface);
 }
@@ -46,19 +46,19 @@
   min-width: 0;
   display: flex;
   align-items: baseline;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .pld-title {
-  font-weight: $font-weight-semibold;
-  font-size: $font-size-xs;
+  font-weight: $fw-semibold;
+  font-size: $t-xs;
   color: var(--b3-theme-on-background);
   @include text-ellipsis;
 }
 
 .pld-title-sub {
   flex-shrink: 0;
-  font-size: $font-size-2xs; // 辅助说明（两级字号制）
+  font-size: $t-2xs; // 辅助说明（两级字号制）
   opacity: 0.45;
 }
 
@@ -67,20 +67,20 @@
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-1px $spacing-2;
+  gap: $s-1;
+  padding: $s-px1 $s-2;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: var(--b3-theme-surface);
-  font-size: $font-size-2xs; // 辅助文字（两级字号制）
+  font-size: $t-2xs; // 辅助文字（两级字号制）
   color: var(--b3-theme-on-surface);
   opacity: 0.8;
   cursor: help;
 }
 
 .pld-total-value {
-  font-family: $vp-mono;
-  font-weight: $font-weight-semibold;
+  font-family: $ff-mono;
+  font-weight: $fw-semibold;
 }
 
 .pld-close {
@@ -94,9 +94,9 @@
   opacity: 0.6;
   background: transparent;
   border: none;
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   cursor: pointer;
-  font-size: $font-size-sm;
+  font-size: $t-sm;
 
   &:hover {
     opacity: 1;
@@ -117,14 +117,14 @@
   padding: 0;
   width: 20px;
   height: 20px;
-  margin-right: $spacing-2px;
+  margin-right: $s-px2;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
   background: transparent;
   border: none;
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   cursor: pointer;
-  font-size: $font-size-sm;
+  font-size: $t-sm;
 
   &:hover:not(:disabled) {
     opacity: 1;
@@ -144,8 +144,8 @@
 // ── Tab 切换栏 ──
 .pld-tabs {
   display: flex;
-  gap: $spacing-1;
-  padding: $spacing-2 $spacing-4 0;
+  gap: $s-1;
+  padding: $s-2 $s-4 0;
   border-bottom: 1px solid var(--b3-border-color);
 }
 
@@ -153,8 +153,8 @@
   @include gp-label-base;
   display: inline-flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-1 $spacing-3 $spacing-2;
+  gap: $s-1;
+  padding: $s-1 $s-3 $s-2;
   border: none;
   border-bottom: 2px solid transparent;
   background: none;
@@ -180,21 +180,21 @@
 
 // Tab 计数徽章
 .pld-tab-count {
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
-  font-weight: $font-weight-bold;
-  padding: 0 $spacing-6px;
-  border-radius: $radius-full;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
+  font-weight: $fw-bold;
+  padding: 0 $s-px6;
+  border-radius: $r-full;
   background: var(--b3-theme-primary-lightest);
   color: var(--b3-theme-primary);
-  line-height: $line-height-normal;
+  line-height: $lh-normal;
 }
 
 // ── 内容区（滚动）──
 .pld-body {
   flex: 1;
   overflow-y: auto;
-  padding: $spacing-3 $spacing-4;
+  padding: $s-3 $s-4;
 }
 
 // ── 文件明细表格 ──
@@ -202,17 +202,17 @@
 .pld-file-row {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  font-size: $font-size-xs;
+  gap: $s-2;
+  font-size: $t-xs;
 }
 
 .pld-table-head {
   position: sticky;
   top: 0;
   z-index: 1;
-  padding-bottom: $spacing-1;
-  font-size: $font-size-2xs; // 表头弱化（两级字号制）
-  font-weight: $font-weight-bold;
+  padding-bottom: $s-1;
+  font-size: $t-2xs; // 表头弱化（两级字号制）
+  font-weight: $fw-bold;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--b3-theme-on-surface-light);
@@ -220,7 +220,7 @@
 }
 
 .pld-file-row {
-  padding: $spacing-1 0;
+  padding: $s-1 0;
   @include row-divider;
 }
 
@@ -230,8 +230,8 @@
 
   &--rank {
     width: 20px;
-    font-family: $vp-mono;
-    font-size: $font-size-2xs;
+    font-family: $ff-mono;
+    font-size: $t-2xs;
     text-align: right;
     color: var(--b3-theme-on-surface);
     opacity: 0.5;
@@ -241,8 +241,8 @@
   &--file {
     flex: 1;
     min-width: 0;
-    font-family: $vp-mono;
-    font-size: $font-size-2xs;
+    font-family: $ff-mono;
+    font-size: $t-2xs;
     color: var(--b3-theme-on-surface);
     @include text-ellipsis;
   }
@@ -251,8 +251,8 @@
   &--num {
     width: 40px;
     text-align: right;
-    font-family: $vp-mono;
-    font-size: $font-size-2xs;
+    font-family: $ff-mono;
+    font-size: $t-2xs;
     color: var(--b3-theme-on-surface);
   }
 
@@ -260,8 +260,8 @@
   &--net {
     width: 52px;
     text-align: right;
-    font-family: $vp-mono;
-    font-size: $font-size-2xs;
+    font-family: $ff-mono;
+    font-size: $t-2xs;
   }
 
   // 占比列：迷你条形 + 文本
@@ -269,15 +269,15 @@
     width: 84px;
     display: flex;
     align-items: center;
-    gap: $spacing-1;
+    gap: $s-1;
   }
 
   // 总行数列（该文件当前存量行数，等宽右对齐中性色；与增量数字列区分）
   &--total {
     min-width: 44px;
     text-align: right;
-    font-family: $vp-mono;
-    font-size: $font-size-2xs;
+    font-family: $ff-mono;
+    font-size: $t-2xs;
     color: var(--b3-theme-on-surface);
     opacity: 0.7;
   }
@@ -287,22 +287,22 @@
   flex: 1;
   height: 5px;
   background: var(--b3-theme-surface);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   overflow: hidden;
 }
 
 .pld-share-fill {
   display: block;
   height: 100%;
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: var(--b3-theme-primary);
 }
 
 .pld-share-text {
   flex: 0 0 40px;
   text-align: right;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
 }
@@ -311,20 +311,20 @@
 .pld-bar-list {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .pld-bar-row {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  font-size: $font-size-xs;
+  gap: $s-2;
+  font-size: $t-xs;
 }
 
 .pld-bar-rank {
   flex: 0 0 20px;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
   text-align: right;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
@@ -340,14 +340,14 @@
   flex: 1;
   height: 5px;
   background: var(--b3-theme-surface);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   overflow: hidden;
 }
 
 .pld-bar-fill {
   display: block;
   height: 100%;
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: var(--b3-theme-primary);
 }
 
@@ -355,8 +355,8 @@
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
 }
 
 .pld-line-num {
@@ -368,13 +368,13 @@
 }
 
 .pld-line-num + .pld-line-num {
-  margin-left: $spacing-2;
+  margin-left: $s-2;
 }
 
 .pld-bar-share {
   flex: 0 0 42px;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
   text-align: right;
   white-space: nowrap;
   color: var(--b3-theme-on-surface);
@@ -391,7 +391,7 @@
 }
 
 .pld-num--net {
-  font-weight: $font-weight-semibold;
+  font-weight: $fw-semibold;
 }
 
 // 净增语义色：正→绿 / 负→红 / 零→灰（数字与条形 fill 共用）
@@ -421,7 +421,7 @@
 .pld-footer {
   display: flex;
   justify-content: flex-end;
-  padding: $spacing-3 $spacing-4;
+  padding: $s-3 $s-4;
   border-top: 1px solid var(--b3-border-color);
   background: var(--b3-theme-surface);
 }

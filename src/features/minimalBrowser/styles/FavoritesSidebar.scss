@@ -7,7 +7,7 @@
   flex-direction: column;
   flex-shrink: 0;
   // 宽度由组件内联 style 绑定（默认 200px，可拖拽缩放），此处不写死
-  border-right: 1px solid $color-border;
+  border-right: 1px solid $c-border;
   background: var(--b3-theme-background);
   overflow: hidden;
 }
@@ -26,7 +26,7 @@
 
   &:hover,
   &:active {
-    background: $color-info;
+    background: $c-info;
     opacity: 0.4;
   }
 }
@@ -34,12 +34,12 @@
 .mb-favorites-header {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  // 头部左内边距与条目/分组对齐（$spacing-3 = 12px）
-  padding: $spacing-2 $spacing-3;
+  gap: $s-2;
+  // 头部左内边距与条目/分组对齐（$s-3 = 12px）
+  padding: $s-2 $s-3;
   flex-shrink: 0;
-  border-bottom: 1px solid $color-border;
-  color: $color-accent;
+  border-bottom: 1px solid $c-border;
+  color: $c-accent;
 }
 
 // 收起/展开切换按钮（展开态靠右，收起态居中）
@@ -50,7 +50,7 @@
 
 .collapsed .mb-favorites-header {
   justify-content: center;
-  padding: $spacing-2 $spacing-1;
+  padding: $s-2 $s-1;
 }
 
 .collapsed .mb-collapse-btn {
@@ -63,10 +63,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
   flex: 1;
   min-height: 0;
-  padding: $spacing-2 $spacing-1;
+  padding: $s-2 $s-1;
   overflow-y: auto;
 }
 
@@ -78,10 +78,10 @@
   height: 32px;
   flex-shrink: 0;
   border: 1px solid;
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   cursor: pointer;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   transition: transform 0.15s, border-color 0.15s;
 
   &:hover {
@@ -95,15 +95,15 @@
 }
 
 .mb-favorites-title {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-background);
 }
 
 .mb-favorites-empty {
-  padding: $spacing-4 $spacing-3;
-  font-size: $font-size-2xs;
-  color: $color-muted;
+  padding: $s-4 $s-3;
+  font-size: $t-2xs;
+  color: $c-muted;
   text-align: center;
 }
 
@@ -111,29 +111,29 @@
   flex: 1;
   min-height: 0;
   // 滚动区右侧留出呼吸空间（Dock 面板侧边栏间距规则）
-  padding: $spacing-2 $spacing-2 $spacing-2 $spacing-3;
+  padding: $s-2 $s-2 $s-2 $s-3;
   overflow-y: auto;
   overflow-x: hidden;
 }
 
 .mb-favorites-group {
-  margin-bottom: $spacing-3;
+  margin-bottom: $s-3;
 }
 
 .mb-favorites-group-name {
   display: block;
-  padding: $spacing-1 $spacing-1;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-medium;
-  color: $color-muted;
+  padding: $s-1 $s-1;
+  font-size: $t-2xs;
+  font-weight: $fw-medium;
+  color: $c-muted;
 }
 
 .mb-favorite-item {
   display: flex;
   align-items: center;
-  gap: $spacing-px;
-  padding: $spacing-1;
-  border-radius: $vp-radius;
+  gap: $s-px3;
+  padding: $s-1;
+  border-radius: $r-base;
   transition: background-color 0.15s;
 
   &:hover {
@@ -145,14 +145,14 @@
 
   &.active {
     background: var(--b3-theme-surface);
-    border-color: $color-info;
+    border-color: $c-info;
   }
 }
 
 .mb-favorite-main {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2px;
+  gap: $s-px2;
   flex: 1;
   min-width: 0;
   padding: 0;
@@ -164,8 +164,8 @@
 
 .mb-favorite-name {
   overflow: hidden;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
+  font-size: $t-xs;
+  font-weight: $fw-medium;
   color: var(--b3-theme-on-background);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -173,8 +173,8 @@
 
 .mb-favorite-host {
   overflow: hidden;
-  font-size: $font-size-2xs;
-  color: $color-muted;
+  font-size: $t-2xs;
+  color: $c-muted;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

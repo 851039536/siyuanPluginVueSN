@@ -5,7 +5,7 @@
 
 // 选中/拖拽悬停共用状态（详细信息行与图标网格项复用）
 %fm-item-selected {
-  background: var(--b3-theme-primary-lightest, $color-info);
+  background: var(--b3-theme-primary-lightest, $c-info);
 }
 
 %fm-item-drag-over {
@@ -19,7 +19,7 @@
   display: flex;
   flex-direction: column;
   // 右侧留白，避免滚动条/内容紧贴侧边栏
-  padding-right: $spacing-2;
+  padding-right: $s-2;
 }
 
 // ========== 状态占位 ==========
@@ -30,9 +30,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: $spacing-2;
-  padding: $spacing-8;
-  font-size: $font-size-xs;
+  gap: $s-2;
+  padding: $s-8;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface-light);
 }
 
@@ -45,7 +45,7 @@
 .fm-column-headers {
   display: flex;
   align-items: center;
-  padding: $spacing-1 $spacing-4;
+  padding: $s-1 $s-4;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
   position: sticky;
   top: 0;
@@ -57,7 +57,7 @@
   border: none;
   background: transparent;
   color: var(--b3-theme-on-surface-light);
-  font-size: $font-size-2xs; // 列标题为辅助文字
+  font-size: $t-2xs; // 列标题为辅助文字
   cursor: pointer;
   text-align: left;
   padding: 0;
@@ -68,8 +68,8 @@
 }
 
 .fm-sort-arrow {
-  margin-left: $spacing-1;
-  font-size: $font-size-2xs;
+  margin-left: $s-1;
+  font-size: $t-2xs;
   color: var(--b3-theme-primary);
 }
 
@@ -78,7 +78,7 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .fm-col-size {
@@ -99,8 +99,8 @@
 .fm-detail-row {
   display: flex;
   align-items: center;
-  padding: $spacing-1 $spacing-4;
-  font-size: $font-size-xs;
+  padding: $s-1 $s-4;
+  font-size: $t-xs;
   cursor: default;
   user-select: none;
   border-bottom: 1px solid transparent;
@@ -121,7 +121,7 @@
 
   .fm-col-size,
   .fm-col-date {
-    font-size: $font-size-2xs; // 大小/日期为辅助元信息
+    font-size: $t-2xs; // 大小/日期为辅助元信息
     color: var(--b3-theme-on-surface-light);
   }
 }
@@ -137,17 +137,17 @@
 .fm-icon-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-  gap: $spacing-2;
-  padding: $spacing-4;
+  gap: $s-2;
+  padding: $s-4;
 }
 
 .fm-icon-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-2;
-  border-radius: $vp-radius;
+  gap: $s-1;
+  padding: $s-2;
+  border-radius: $r-base;
   cursor: default;
   user-select: none;
 
@@ -167,7 +167,7 @@
 }
 
 .fm-icon-name {
-  font-size: $font-size-2xs; // 图标下文件名为辅助文字
+  font-size: $t-2xs; // 图标下文件名为辅助文字
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -180,5 +180,5 @@
 .fm-load-more {
   display: flex;
   justify-content: center;
-  padding: $spacing-2;
+  padding: $s-2;
 }

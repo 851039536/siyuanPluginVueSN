@@ -4,19 +4,19 @@
 // 共享模式
 // ============================================================
 @mixin card-panel {
-  margin-top: $spacing-5;
-  padding: $spacing-3;
+  margin-top: $s-5;
+  padding: $s-3;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-md;
+  border-radius: $r-md;
 }
 
 @mixin section-title {
   display: flex;
   align-items: center;
-  gap: $spacing-6px; // 图标与文案的紧凑间距（已收敛为全局 Token）
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  gap: $s-px6; // 图标与文案的紧凑间距（已收敛为全局 Token）
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface);
 }
 
@@ -25,15 +25,15 @@
 // ============================================================
 
 .table-style-settings {
-  padding: $spacing-4;
-  font-size: $font-size-xs; // 基准字号，防止继承思源全局默认字号导致偏大
+  padding: $s-4;
+  font-size: $t-xs; // 基准字号，防止继承思源全局默认字号导致偏大
 }
 
 .toggle-description {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface-variant);
-  margin-top: $spacing-2;
-  line-height: $line-height-normal;
+  margin-top: $s-2;
+  line-height: $lh-normal;
 }
 
 // 颜色设置卡片
@@ -43,7 +43,7 @@
 
 .card-title {
   @include section-title;
-  margin-bottom: $spacing-14px; // 卡片标题与内容的间距（介于 Token 之间，保持原视觉节奏）
+  margin-bottom: $s-px14; // 卡片标题与内容的间距（介于 Token 之间，保持原视觉节奏）
 }
 
 .title-icon {
@@ -51,31 +51,31 @@
 }
 
 .style-row {
-  margin-bottom: $spacing-3;
+  margin-bottom: $s-3;
 
   &:last-of-type { margin-bottom: 0; }
 }
 
 .style-label {
   display: block;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
+  font-size: $t-xs;
+  font-weight: $fw-medium;
   color: var(--b3-theme-on-surface-variant);
-  margin-bottom: $spacing-6px; // 标签与控件的紧凑间距（已收敛为全局 Token）
+  margin-bottom: $s-px6; // 标签与控件的紧凑间距（已收敛为全局 Token）
 }
 
 .slider-value {
   margin-left: auto;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-primary);
-  font-weight: $font-weight-medium;
+  font-weight: $fw-medium;
 }
 
 // 预览卡片
 .preview-card {
-  margin-top: $spacing-5;
+  margin-top: $s-5;
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-md;
+  border-radius: $r-md;
   overflow: hidden;
   background: var(--b3-theme-surface);
 }
@@ -83,8 +83,8 @@
 .preview-header {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-10px $spacing-3;
+  gap: $s-2;
+  padding: $s-px10 $s-3;
   cursor: pointer;
   background: var(--b3-theme-surface);
   user-select: none;
@@ -102,7 +102,7 @@
 }
 
 .preview-body {
-  padding: $spacing-4;
+  padding: $s-4;
   background: var(--b3-theme-background);
   border-top: 1px solid var(--b3-border-color);
   overflow-x: auto;
@@ -114,7 +114,7 @@
   overflow: hidden;
 
   th, td {
-    padding: $spacing-2 $spacing-3;
+    padding: $s-2 $s-3;
     text-align: left;
     border: 1px solid var(--preview-cell-border, rgba(0, 0, 0, 0.171));
   }
@@ -122,7 +122,7 @@
   th {
     background: var(--preview-header-bg, #e0ffd6);
     color: var(--preview-text-color, #000);
-    font-weight: $font-weight-semibold;
+    font-weight: $fw-semibold;
   }
 
   tr:nth-child(odd) {
@@ -143,15 +143,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: $spacing-6px;
-  padding: $spacing-2 $spacing-4;
+  gap: $s-px6;
+  padding: $s-2 $s-4;
   width: 100%;
-  margin-top: $spacing-4;
+  margin-top: $s-4;
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   cursor: pointer;
 
   &:hover {

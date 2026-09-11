@@ -2,7 +2,7 @@
 @use "@/variables.scss" as *;
 
 $vpd-font-15: 15px; // 无对应 Token（AGENTS_STYLE 允许标题使用的 15px 场景）
-$vpd-font-13: 13px; // 无对应 Token（介于 $font-size-xs 与 $font-size-sm）
+$vpd-font-13: 13px; // 无对应 Token（介于 $t-xs 与 $t-sm）
 
 // 视频播放器对话框特定样式
 .dialog-header {
@@ -23,29 +23,29 @@ $vpd-font-13: 13px; // 无对应 Token（介于 $font-size-xs 与 $font-size-sm�
   align-items: center;
 
   .video-details {
-    margin-top: $spacing-4;
+    margin-top: $s-4;
     width: 100%;
 
     h4 {
-      margin: 0 0 $spacing-2 0;
+      margin: 0 0 $s-2 0;
       color: var(--b3-theme-on-background);
       font-size: $vpd-font-15;
-      font-weight: $font-weight-medium;
+      font-weight: $fw-medium;
     }
 
     .video-meta {
       display: flex;
       align-items: center;
-      gap: $spacing-3;
+      gap: $s-3;
       font-size: $vpd-font-13;
       color: var(--b3-theme-on-surface-light);
 
       .video-category {
-        padding: $spacing-2px $spacing-2;
+        padding: $s-px2 $s-2;
         background: var(--b3-theme-primary-lightest);
         color: var(--b3-theme-primary);
-        border-radius: $radius-sm;
-        font-size: $font-size-xs;
+        border-radius: $r-sm;
+        font-size: $t-xs;
       }
     }
   }

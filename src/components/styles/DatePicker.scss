@@ -5,39 +5,39 @@
 
 .si-datepicker {
   // 档位变量默认值（等同 S 档，被下方 --xsmall/--medium/--large 覆盖）
-  --dp-cell-size: #{$spacing-6}; // 24px
-  --dp-cell-font: #{$font-size-xs};
+  --dp-cell-size: #{$s-6}; // 24px
+  --dp-cell-font: #{$t-xs};
   --dp-input-min-height: 28px; // 无对应 Token
 
   position: relative;
   display: inline-flex;
   flex-direction: column;
   width: 100%;
-  font-family: $font-zh;
+  font-family: $ff-zh;
   vertical-align: middle;
 
   // ===== 尺寸档位（方框 / 字号 / 输入框最小高度同步递进） =====
   &--xsmall {
     --dp-cell-size: 22px; // 无对应 Token
-    --dp-cell-font: #{$font-size-2xs};
+    --dp-cell-font: #{$t-2xs};
     --dp-input-min-height: 26px; // 无对应 Token
   }
 
   &--small {
-    --dp-cell-size: #{$spacing-6}; // 24px
-    --dp-cell-font: #{$font-size-xs};
+    --dp-cell-size: #{$s-6}; // 24px
+    --dp-cell-font: #{$t-xs};
     --dp-input-min-height: 28px; // 无对应 Token
   }
 
   &--medium {
     --dp-cell-size: 28px; // 无对应 Token
-    --dp-cell-font: #{$font-size-sm};
-    --dp-input-min-height: #{$spacing-8}; // 32px
+    --dp-cell-font: #{$t-sm};
+    --dp-input-min-height: #{$s-8}; // 32px
   }
 
   &--large {
-    --dp-cell-size: #{$spacing-8}; // 32px
-    --dp-cell-font: #{$font-size-base};
+    --dp-cell-size: #{$s-8}; // 32px
+    --dp-cell-font: #{$t-base};
     --dp-input-min-height: 36px; // 无对应 Token
   }
 
@@ -46,28 +46,28 @@
     position: relative;
     display: flex;
     align-items: center;
-    gap: $spacing-1;
+    gap: $s-1;
     min-height: var(--dp-input-min-height, 28px);
-    padding: 0 $spacing-2;
-    background: var(--b3-theme-background, $color-bg);
-    border: 1px solid var(--b3-border-color, $color-border);
-    border-radius: $vp-radius;
+    padding: 0 $s-2;
+    background: var(--b3-theme-background, $c-bg);
+    border: 1px solid var(--b3-border-color, $c-border);
+    border-radius: $r-base;
     cursor: pointer;
     transition: border-color 0.12s ease;
 
     // 聚焦环用 outline —— focus-ring mixin 只改 border-color，本组件实底控件上不可见
     &:focus-within {
-      outline: 2px solid var(--b3-theme-primary, $color-danger);
+      outline: 2px solid var(--b3-theme-primary, $c-danger);
       outline-offset: 2px;
     }
   }
 
   &:not(.si-datepicker--disabled) &__wrapper:hover {
-    border-color: var(--b3-theme-primary, $color-danger);
+    border-color: var(--b3-theme-primary, $c-danger);
   }
 
   &--error &__wrapper {
-    border-color: var(--b3-theme-error, $color-danger);
+    border-color: var(--b3-theme-error, $c-danger);
   }
 
   &--disabled &__wrapper {
@@ -83,13 +83,13 @@
     border: none;
     outline: none;
     background: transparent;
-    font-family: $font-zh;
-    font-size: var(--dp-cell-font, #{$font-size-xs});
-    color: var(--b3-theme-on-background, $color-fg);
+    font-family: $ff-zh;
+    font-size: var(--dp-cell-font, #{$t-xs});
+    color: var(--b3-theme-on-background, $c-fg);
     cursor: inherit;
 
     &::placeholder {
-      color: var(--b3-theme-secondary, $color-muted);
+      color: var(--b3-theme-secondary, $c-muted);
     }
 
     &:disabled {
@@ -103,21 +103,21 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    padding: $spacing-1;
+    padding: $s-1;
     border: none;
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     background: transparent;
-    color: var(--b3-theme-secondary, $color-muted);
+    color: var(--b3-theme-secondary, $c-muted);
     cursor: pointer;
     transition: background-color 0.12s ease, color 0.12s ease;
 
     &:hover:not(:disabled) {
-      background: var(--b3-theme-surface-lighter, $color-surface);
-      color: var(--b3-theme-primary, $color-danger);
+      background: var(--b3-theme-surface-lighter, $c-surface);
+      color: var(--b3-theme-primary, $c-danger);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--b3-theme-primary, $color-danger);
+      outline: 2px solid var(--b3-theme-primary, $c-danger);
       outline-offset: 1px;
     }
   }
@@ -133,19 +133,19 @@
     z-index: m.$z-select-dropdown;
     width: max-content;
     min-width: 100%;
-    background: var(--b3-theme-background, $color-bg);
-    border: 1px solid var(--b3-border-color, $color-border);
-    border-radius: $vp-radius;
+    background: var(--b3-theme-background, $c-bg);
+    border: 1px solid var(--b3-border-color, $c-border);
+    border-radius: $r-base;
     overflow: hidden;
 
     &--bottom {
       top: 100%;
-      margin-top: $spacing-1;
+      margin-top: $s-1;
     }
 
     &--top {
       bottom: 100%;
-      margin-bottom: $spacing-1;
+      margin-bottom: $s-1;
     }
   }
 

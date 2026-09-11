@@ -11,14 +11,14 @@
     overflow-y: auto;
     overflow-x: hidden;
     border: 1px solid var(--b3-border-color);
-    border-radius: stats.$radius-sm;
+    border-radius: stats.$r-sm;
     @include scrollbar-thin;
 
     .historical-table {
       width: 100%;
       border-collapse: collapse;
       font-family: stats.$font-mono;
-      font-size: $font-size-2xs;
+      font-size: $t-2xs;
 
       thead {
         position: sticky;
@@ -27,11 +27,11 @@
         background: var(--b3-theme-surface);
 
         th {
-          padding: $spacing-5px $spacing-2;
+          padding: $s-px5 $s-2;
           text-align: left;
           font-family: stats.$font-mono;
-          font-size: $font-size-2xs;
-          font-weight: $font-weight-bold;
+          font-size: $t-2xs;
+          font-weight: $fw-bold;
           letter-spacing: 0.04em;
           text-transform: uppercase;
           color: var(--b3-theme-on-surface);
@@ -40,7 +40,7 @@
           background: var(--b3-theme-surface);
 
           .th-icon {
-            margin-right: $spacing-px;
+            margin-right: $s-px3;
           }
 
           &.col-date {
@@ -76,11 +76,11 @@
           }
 
           td {
-            padding: $spacing-5px $spacing-2;
+            padding: $s-px5 $s-2;
             color: var(--b3-theme-on-surface);
 
             &.col-date {
-              font-weight: $font-weight-bold;
+              font-weight: $fw-bold;
               font-family: stats.$font-mono;
               color: var(--b3-theme-primary);
             }
@@ -101,21 +101,21 @@
 
             .diff-tag {
               display: inline-block;
-              padding: $spacing-1px $spacing-6px;
-              border-radius: stats.$radius-sm;
+              padding: $s-px1 $s-px6;
+              border-radius: stats.$r-sm;
               font-family: stats.$font-mono;
-              font-weight: $font-weight-bold;
-              font-size: $font-size-2xs;
-              margin: 0 $spacing-1px;
+              font-weight: $fw-bold;
+              font-size: $t-2xs;
+              margin: 0 $s-px1;
 
               &.success {
-                background: rgba(stats.$color-success, 0.12);
-                color: stats.$color-success;
+                background: rgba(stats.$c-success, 0.12);
+                color: stats.$c-success;
               }
 
               &.danger {
-                background: rgba(stats.$color-danger, 0.12);
-                color: stats.$color-danger;
+                background: rgba(stats.$c-danger, 0.12);
+                color: stats.$c-danger;
               }
 
               &.secondary {
@@ -134,7 +134,7 @@
 // Responsive design
 @include mobile-only {
   .historical-data-list {
-    margin-left: $spacing-1;
-    margin-right: $spacing-1;
+    margin-left: $s-1;
+    margin-right: $s-1;
   }
 }

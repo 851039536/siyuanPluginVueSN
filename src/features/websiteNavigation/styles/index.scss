@@ -8,16 +8,16 @@
   flex-direction: column;
   height: 100%;
   // 紧凑留白：与 gitPush 面板一致，无对应尺寸 Token
-  padding: $spacing-5px $spacing-px;
+  padding: $s-px5 $s-px3;
   overflow: hidden;
   // 基准字号：未显式声明字号的文字继承内容级 12px
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 }
 
 // 头部与内容分隔线（对齐 gitPush .gp-divider）
 .wn-divider {
   border-bottom: 1px solid var(--b3-border-color);
-  margin: $spacing-10px 0;
+  margin: $s-px10 0;
 }
 
 // 条目列表（单列形态，细滚动条对齐 gitPush .gp-list）
@@ -26,10 +26,10 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
+  gap: $s-1;
   min-height: 0;
   overflow-y: auto;
-  padding-right: $spacing-1;
+  padding-right: $s-1;
 
   // 细滚动条：内容增减导致滚动条出现/消失时宽度占用仅 4px
   &::-webkit-scrollbar {
@@ -43,14 +43,14 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: $spacing-3;
+  gap: $s-3;
   flex: 1;
-  padding: $spacing-10 $spacing-5;
+  padding: $s-10 $s-5;
   color: var(--b3-theme-on-surface-light);
 
   p {
     margin: 0;
-    font-size: $font-size-xs;
+    font-size: $t-xs;
   }
 
   // 空状态图标淡化
@@ -69,13 +69,13 @@
   justify-content: center;
   z-index: 10000;
   // 基准字号：弹窗内未显式声明字号的提示文字继承内容级 12px
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 }
 
 .wn-dialog {
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-md;
+  border-radius: $r-md;
   width: 440px;
   max-width: 90vw;
   max-height: 85vh;
@@ -86,40 +86,40 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: $spacing-3 $spacing-4;
+  padding: $s-3 $s-4;
   border-bottom: 1px solid var(--b3-border-color);
 
   h3 {
     margin: 0;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-semibold;
+    font-size: $t-xs;
+    font-weight: $fw-semibold;
   }
 }
 
 .wn-dialog-body {
-  padding: $spacing-4;
+  padding: $s-4;
   display: flex;
   flex-direction: column;
-  gap: $spacing-4;
+  gap: $s-4;
 }
 
 .wn-dialog-footer {
   display: flex;
   justify-content: flex-end;
-  gap: $spacing-2;
-  padding: $spacing-3 $spacing-4;
+  gap: $s-2;
+  padding: $s-3 $s-4;
   border-top: 1px solid var(--b3-border-color);
 }
 
 .wn-form-group {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
+  gap: $s-1;
 
   .wn-label {
     // 对齐 gitPush gp-label-base：大写辅助标签
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-bold;
+    font-size: $t-2xs;
+    font-weight: $fw-bold;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     opacity: 0.45;

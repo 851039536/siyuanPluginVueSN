@@ -6,45 +6,45 @@
   display: inline-flex;
   align-items: center;
   gap: m.$gap-xs; // 6px
-  font-family: $font-zh;
-  font-weight: $font-weight-medium;
-  line-height: $line-height-normal;
+  font-family: $ff-zh;
+  font-weight: $fw-medium;
+  line-height: $lh-normal;
   user-select: none;
   white-space: nowrap;
 
   // 尺寸变体
   &--xsmall {
-    font-size: $font-size-2xs;
+    font-size: $t-2xs;
   }
 
   &--small {
-    font-size: $font-size-xs;
+    font-size: $t-xs;
   }
 
   &--medium {
-    font-size: $font-size-sm;
+    font-size: $t-sm;
   }
 
   &--large {
-    font-size: $font-size-base;
+    font-size: $t-base;
   }
 
   // 状态变体（错误色取 --b3-theme-error：设计基准里只定义了该变量，--b3-theme-destructive 从未定义、
   // 会让暗色主题下的错误色恒走 fallback 而偏暗）
   &--default {
-    color: var(--b3-theme-on-background, $color-fg);
+    color: var(--b3-theme-on-background, $c-fg);
   }
 
   &--error {
-    color: var(--b3-theme-error, $color-danger);
+    color: var(--b3-theme-error, $c-danger);
   }
 
   &--success {
-    color: var(--b3-theme-success, $color-success);
+    color: var(--b3-theme-success, $c-success);
   }
 
   &--warning {
-    color: var(--b3-theme-warning, $color-warning);
+    color: var(--b3-theme-warning, $c-warning);
   }
 
   // 禁用状态：三入口等价 —— disabled prop / 容器 data-disabled / 邻近兄弟控件被禁用
@@ -64,18 +64,18 @@
 
   // 必填标记（* 对屏幕阅读器隐藏，语义由 __required-text 承担）
   &__required {
-    color: var(--b3-theme-error, $color-danger);
-    margin-left: $spacing-2px;
-    font-weight: $font-weight-semibold;
+    color: var(--b3-theme-error, $c-danger);
+    margin-left: $s-px2;
+    font-weight: $fw-semibold;
   }
 
   // 必填的无障碍替代文本：裁剪式视觉隐藏，仅为屏幕阅读器播报
   &__required-text {
     position: absolute;
     overflow: hidden;
-    width: $spacing-px;
-    height: $spacing-px;
-    margin: -$spacing-px;
+    width: $s-px3;
+    height: $s-px3;
+    margin: -$s-px3;
     clip-path: inset(50%);
     white-space: nowrap;
   }
@@ -116,39 +116,39 @@
   // 包裹模式：插槽内容直出，把控件包进标签以建立原生隐式关联（无需 for）
   &--wrapper {
     white-space: normal; // 放开换行，允许「标题 + 说明」多行排布
-    font-weight: $font-weight-normal; // 避免 medium 字重被相邻控件文本继承
+    font-weight: $fw-normal; // 避免 medium 字重被相邻控件文本继承
   }
 
   // 内联模式（非 label 标签）
   &--inline {
     display: inline-flex;
-    padding: $spacing-1 m.$spacing-2_5; // 4px 10px
-    border-radius: $radius-md;
-    background: var(--b3-theme-surface-lighter, $color-surface);
+    padding: $s-1 m.$spacing-2_5; // 4px 10px
+    border-radius: $r-md;
+    background: var(--b3-theme-surface-lighter, $c-surface);
 
     &.si-label--primary {
-      background: var(--b3-theme-primary, $color-danger);
-      color: var(--b3-theme-on-primary, $color-bg);
+      background: var(--b3-theme-primary, $c-danger);
+      color: var(--b3-theme-on-primary, $c-bg);
     }
 
     &.si-label--success {
-      background: var(--b3-theme-success, $color-success);
-      color: var(--b3-theme-on-primary, $color-bg);
+      background: var(--b3-theme-success, $c-success);
+      color: var(--b3-theme-on-primary, $c-bg);
     }
 
     &.si-label--warning {
-      background: var(--b3-theme-warning, $color-warning);
-      color: var(--b3-theme-on-primary, $color-bg);
+      background: var(--b3-theme-warning, $c-warning);
+      color: var(--b3-theme-on-primary, $c-bg);
     }
 
     &.si-label--danger {
-      background: var(--b3-theme-error, $color-danger);
-      color: var(--b3-theme-on-primary, $color-bg);
+      background: var(--b3-theme-error, $c-danger);
+      color: var(--b3-theme-on-primary, $c-bg);
     }
 
     &.si-label--info {
-      background: var(--b3-theme-info, $color-info);
-      color: var(--b3-theme-on-primary, $color-bg);
+      background: var(--b3-theme-info, $c-info);
+      color: var(--b3-theme-on-primary, $c-bg);
     }
   }
 }
@@ -156,7 +156,7 @@
 // 独立 Label 样式（用于表单标签）
 .si-label:not(.si-label--inline) {
   display: inline-flex;
-  margin-bottom: $spacing-1;
+  margin-bottom: $s-1;
 }
 
 // 包裹模式不适用表单标签的下外边距。

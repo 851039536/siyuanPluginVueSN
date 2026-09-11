@@ -3,40 +3,40 @@
 
 .stats-section {
   background: var(--b3-theme-surface-lighter);
-  border-radius: $radius-base;
-  padding: $spacing-3;
-  margin-top: $spacing-3;
+  border-radius: $r-base;
+  padding: $s-3;
+  margin-top: $s-3;
 
   h4 {
-    margin: 0 0 $spacing-3 0;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-semibold;
+    margin: 0 0 $s-3 0;
+    font-size: $t-xs;
+    font-weight: $fw-semibold;
     color: var(--b3-theme-on-surface);
   }
 
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: $spacing-3;
+    gap: $s-3;
   }
 
   .stat-item {
     text-align: center;
-    padding: $spacing-2;
+    padding: $s-2;
     background: var(--b3-theme-surface);
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
 
     .stat-label {
       display: block;
-      font-size: $font-size-2xs;
+      font-size: $t-2xs;
       color: var(--b3-theme-on-surface-variant);
-      margin-bottom: $spacing-1;
+      margin-bottom: $s-1;
     }
 
     .stat-value {
       // 统计数值为数据突出展示，使用 sm 字号
-      font-size: $font-size-sm;
-      font-weight: $font-weight-semibold;
+      font-size: $t-sm;
+      font-weight: $fw-semibold;
       color: var(--b3-theme-on-surface);
 
       &.positive {

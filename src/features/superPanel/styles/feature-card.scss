@@ -6,9 +6,9 @@
   display: flex;
   flex-direction: column;
   gap: $spacing-sm;
-  padding: $spacing-14px;
+  padding: $s-px14;
   border: 2px solid var(--b3-border-color);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   cursor: pointer;
   break-inside: avoid;
   margin-bottom: $spacing-sm;
@@ -31,7 +31,7 @@
 .feature-icon {
   width: 20px;
   height: 20px;
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: var(--b3-theme-primary-lightest);
   display: flex;
   align-items: center;
@@ -44,7 +44,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: $spacing-6px;
+  gap: $s-px6;
   min-width: 0;
 }
 
@@ -54,12 +54,12 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .feature-title {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-background);
   line-height: 1.4;
   word-break: break-word;
@@ -67,10 +67,10 @@
 
 // ---- 描述文字 ----
 .feature-desc {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.55;
-  line-height: $line-height-normal;
+  line-height: $lh-normal;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -82,23 +82,23 @@
 .feature-selector {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-1;
-  margin-top: $spacing-2px;
+  gap: $s-1;
+  margin-top: $s-px2;
 }
 
 .theme-chip {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-2px $spacing-2;
+  gap: $s-1;
+  padding: $s-px2 $s-2;
   border-radius: 10px;
   border: 1px solid var(--b3-border-color);
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-medium;
+  font-size: $t-2xs;
+  font-weight: $fw-medium;
   cursor: pointer;
-  line-height: $line-height-normal;
+  line-height: $lh-normal;
 
   &:hover {
     border-color: var(--chip-color, var(--b3-theme-primary));
@@ -129,40 +129,40 @@
 .feature-header-actions {
   display: flex;
   align-items: center;
-  gap: $spacing-2px;
+  gap: $s-px2;
   flex-shrink: 0;
-  margin-left: $spacing-6px;
+  margin-left: $s-px6;
 
   button {
-    font-size: $font-size-2xs;
-    padding: $spacing-2px $spacing-6px;
+    font-size: $t-2xs;
+    padding: $s-px2 $s-px6;
     height: auto;
     line-height: 1.4;
   }
 }
 
 .action-hotkey {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   opacity: 0.5;
   background: var(--b3-theme-surface-lighter);
-  padding: $spacing-1px $spacing-5px;
-  border-radius: $radius-px;
-  margin-left: $spacing-1;
+  padding: $s-px1 $s-px5;
+  border-radius: $r-px3;
+  margin-left: $s-1;
 }
 
 // ---- 子功能开关列表（浮动工具栏下方） ----
 .feature-sub-features {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-6px;
+  gap: $s-px6;
 }
 
 .sub-feature-item {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-px $spacing-2;
-  border-radius: $vp-radius;
+  gap: $s-1;
+  padding: $s-px3 $s-2;
+  border-radius: $r-base;
   border: 1px solid var(--b3-border-color);
   background: var(--b3-theme-surface);
   transition: border-color 0.12s;
@@ -178,13 +178,13 @@
   justify-content: center;
   width: 16px;
   height: 16px;
-  border-radius: $radius-px;
+  border-radius: $r-px3;
   background: var(--b3-theme-primary-lightest);
 }
 
 .sub-feature-label {
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-medium;
+  font-size: $t-2xs;
+  font-weight: $fw-medium;
   color: var(--b3-theme-on-surface);
   opacity: 0.75;
   line-height: 1.4;
@@ -198,13 +198,13 @@
 .feature-color-input {
   display: flex;
   align-items: center;
-  gap: $spacing-6px;
-  margin-top: $spacing-2;
-  padding: $spacing-1 0;
+  gap: $s-px6;
+  margin-top: $s-2;
+  padding: $s-1 0;
 }
 
 .feature-color-label {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.75;
 }
@@ -214,7 +214,7 @@
   height: 20px;
   padding: 0;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: transparent;
   cursor: pointer;
 }

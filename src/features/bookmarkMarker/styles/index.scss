@@ -16,7 +16,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-3 $spacing-4;
+  padding: $s-3 $s-4;
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
 }
@@ -25,9 +25,9 @@
   margin: 0;
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  font-size: $font-size-base;
-  font-weight: $font-weight-semibold;
+  gap: $s-2;
+  font-size: $t-base;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface);
 }
 
@@ -42,7 +42,7 @@
 .panel-content {
   flex: 1;
   overflow-y: auto;
-  padding: $spacing-4;
+  padding: $s-4;
 }
 
 // ========== 功能开关区 ==========
@@ -51,31 +51,31 @@
 .toggle-row {
   display: flex;
   align-items: center;
-  gap: $spacing-3;
+  gap: $s-3;
 }
 
 .toggle-description {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface-variant);
   margin: 0;
-  line-height: $line-height-normal;
+  line-height: $lh-normal;
 }
 
 // ========== 规则设置区 ==========
 
 // 区块不做外盒：仅作分组间距，避免与内部规则卡片双层嵌套边框
 .rules-settings {
-  margin-top: $spacing-5;
+  margin-top: $s-5;
 }
 
 .settings-title {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
+  gap: $s-2;
+  font-size: $t-sm;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface);
-  margin-bottom: $spacing-3;
+  margin-bottom: $s-3;
 }
 
 // 规则卡片及字段子组件样式见 RuleItem.scss 与 RuleItem*.scss
@@ -84,5 +84,5 @@
 
 // 区块不做外盒：与规则设置区保持一致的扁平分组
 .update-interval {
-  margin-top: $spacing-5;
+  margin-top: $s-5;
 }

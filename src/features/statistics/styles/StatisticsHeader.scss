@@ -9,8 +9,8 @@ $stats-header-height: 56px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  // 右侧保留 $spacing-4 留白，避免与侧边栏滚动条区域重叠（Dock 面板侧边栏间距规则）
-  padding: 0 $spacing-4;
+  // 右侧保留 $s-4 留白，避免与侧边栏滚动条区域重叠（Dock 面板侧边栏间距规则）
+  padding: 0 $s-4;
   border-bottom: 1px solid var(--b3-border-color);
   background: var(--b3-theme-surface);
   flex-shrink: 0;
@@ -22,20 +22,20 @@ $stats-header-height: 56px;
 
   .header-left {
     display: flex;
-    gap: $spacing-2;
+    gap: $s-2;
     align-items: center;
   }
 
   .header-right {
     display: flex;
     align-items: center;
-    gap: $spacing-4;
+    gap: $s-4;
   }
 
   .last-update {
     font-family: stats.$font-mono;
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-bold;
+    font-size: $t-2xs;
+    font-weight: $fw-bold;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--b3-theme-on-surface);
@@ -47,14 +47,14 @@ $stats-header-height: 56px;
 @include mobile-only {
   .statistics-header {
     height: auto;
-    padding: $spacing-3 $spacing-4;
+    padding: $s-3 $s-4;
     flex-wrap: wrap;
-    gap: $spacing-3;
+    gap: $s-3;
 
     .header-right {
       width: 100%;
       justify-content: space-between;
-      gap: $spacing-2;
+      gap: $s-2;
     }
   }
 }
@@ -66,7 +66,7 @@ $stats-header-height: 56px;
   width: 28px;
   height: 28px;
   border: 1px solid transparent;
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   background: transparent;
   color: var(--b3-theme-on-surface);
   cursor: pointer;
@@ -93,12 +93,12 @@ $stats-header-height: 56px;
 .refresh-interval-select {
   height: 24px;
   border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-normal;
-  padding: 0 $spacing-1;
+  font-size: $t-2xs;
+  font-weight: $fw-normal;
+  padding: 0 $s-1;
   cursor: pointer;
   opacity: 0.35;
   transition: opacity 0.2s, border-color 0.2s;
@@ -114,27 +114,27 @@ $stats-header-height: 56px;
 }
 
 .storage-paths {
-  padding: $spacing-6px $spacing-3;
+  padding: $s-px6 $s-3;
   background: var(--b3-theme-background);
   border-bottom: 1px solid var(--b3-border-color);
   display: flex;
   flex-direction: column;
-  gap: $spacing-px;
-  font-family: $font-zh;
+  gap: $s-px3;
+  font-family: $ff-zh;
   user-select: all;
 }
 
 .storage-path-item {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  font-size: $font-size-2xs;
+  gap: $s-2;
+  font-size: $t-2xs;
 }
 
 .storage-key {
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--b3-theme-primary);
@@ -154,7 +154,7 @@ $stats-header-height: 56px;
   font-family: stats.$font-mono;
   color: var(--b3-theme-on-surface);
   opacity: 0.4;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

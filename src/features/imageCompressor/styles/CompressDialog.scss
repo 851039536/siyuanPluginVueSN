@@ -18,7 +18,7 @@
   @include header-base;
 
   h3 {
-    font-size: $font-size-lg;
+    font-size: $t-lg;
   }
 
   .close-btn {
@@ -31,7 +31,7 @@
     cursor: pointer;
     color: var(--b3-theme-on-background);
     opacity: 0.6;
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     transition: opacity 0.12s, background 0.12s;
 
     &:hover {
@@ -47,13 +47,13 @@
 }
 
 .dialog-content {
-  padding: $spacing-5;
+  padding: $s-5;
   max-height: 60vh;
   overflow-y: auto;
 }
 
 .setting-item {
-  margin-bottom: $spacing-6;
+  margin-bottom: $s-6;
 
   &:last-child {
     margin-bottom: 0;
@@ -61,17 +61,17 @@
 }
 
 .hint-text {
-  margin-top: $spacing-6px;
-  font-size: $font-size-xs;
+  margin-top: $s-px6;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface-light);
   opacity: 0.7;
 }
 
 .statistics-preview {
-  margin-top: $spacing-5;
-  padding: $spacing-4;
+  margin-top: $s-5;
+  padding: $s-4;
   background: var(--b3-theme-surface);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   border-left: 3px solid var(--b3-theme-primary);
 
   .stat-row {

@@ -3,8 +3,8 @@
 .video-toolbar {
   display: flex;
   align-items: center;
-  gap: $spacing-3;
-  padding: $spacing-3 $spacing-5;
+  gap: $s-3;
+  padding: $s-3 $s-5;
   border-bottom: 1px solid var(--b3-border-color);
   background: var(--b3-theme-surface);
 
@@ -34,19 +34,19 @@
   .category-filter {
     display: flex;
     align-items: center;
-    gap: $spacing-2;
+    gap: $s-2;
 
     label {
-      font-size: $font-size-xs;
+      font-size: $t-xs;
       color: var(--b3-theme-on-surface);
     }
   }
 
   .ffmpeg-tools {
     display: flex;
-    gap: $spacing-2;
+    gap: $s-2;
     align-items: center;
-    padding-left: $spacing-2;
+    padding-left: $s-2;
     border-left: 1px solid var(--b3-border-color);
 
     .btn-ffmpeg {
@@ -71,8 +71,8 @@
 @media (max-width: 768px) {
   .video-toolbar {
     flex-wrap: wrap;
-    padding: $spacing-2 $spacing-3;
-    gap: $spacing-2;
+    padding: $s-2 $s-3;
+    gap: $s-2;
 
     :deep(.si-button) span {
       display: none;

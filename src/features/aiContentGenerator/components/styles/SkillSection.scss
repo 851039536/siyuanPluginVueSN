@@ -4,7 +4,7 @@
 .skill-selector-wrapper {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 // 约束宽度，避免长技能名撑破顶栏
@@ -16,7 +16,7 @@
 .skill-item-main {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
   min-width: 0;
 }
 
@@ -29,8 +29,8 @@
 .skill-source-dots {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-px;
-  margin-left: $spacing-1;
+  gap: $s-px3;
+  margin-left: $s-1;
   flex-shrink: 0;
 }
 

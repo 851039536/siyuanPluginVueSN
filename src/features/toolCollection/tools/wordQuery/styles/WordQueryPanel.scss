@@ -11,13 +11,13 @@
 }
 
 .input-section {
-  padding: $spacing-4;
-  border-bottom: 1px solid var(--b3-border-color, $color-border);
+  padding: $s-4;
+  border-bottom: 1px solid var(--b3-border-color, $c-border);
   flex-shrink: 0;
 
   .input-wrapper {
     display: flex;
-    gap: $spacing-2;
+    gap: $s-2;
     width: 100%;
   }
 
@@ -28,7 +28,7 @@
 
 .query-content {
   flex: 1;
-  padding: $spacing-4;
+  padding: $s-4;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -41,7 +41,7 @@
     align-items: center;
     justify-content: center;
     height: 100%;
-    color: var(--b3-theme-on-background, $color-fg);
+    color: var(--b3-theme-on-background, $c-fg);
   }
 
   .query-error {
@@ -49,7 +49,7 @@
     align-items: center;
     justify-content: center;
     height: 100%;
-    color: var(--b3-theme-error, $color-danger);
+    color: var(--b3-theme-error, $c-danger);
     text-align: center;
   }
 
@@ -58,13 +58,13 @@
     flex-direction: column;
     height: 100%;
     min-height: 0;
-    gap: $spacing-3;
+    gap: $s-3;
 
     @include cutils.result-table;
 
     .result-actions {
       display: flex;
-      gap: $spacing-2;
+      gap: $s-2;
       flex-wrap: wrap;
       flex-shrink: 0;
     }
@@ -76,28 +76,28 @@
     align-items: center;
     justify-content: center;
     height: 100%;
-    gap: $spacing-3;
-    color: var(--b3-theme-secondary, $color-muted);
+    gap: $s-3;
+    color: var(--b3-theme-secondary, $c-muted);
     text-align: center;
-    padding: $spacing-8 $spacing-4;
+    padding: $s-8 $s-4;
 
     .empty-icon {
-      font-size: $font-size-2xl;
-      margin-bottom: $spacing-1;
+      font-size: $t-2xl;
+      margin-bottom: $s-1;
       opacity: 0.5;
       line-height: 1;
     }
 
     p {
-      font-size: $font-size-sm;
+      font-size: $t-sm;
       opacity: 0.6;
     }
   }
 }
 
 .common-panel {
-  border-bottom: 1px solid var(--b3-border-color, $color-border);
-  background: var(--b3-theme-surface-lighter, $color-surface);
+  border-bottom: 1px solid var(--b3-border-color, $c-border);
+  background: var(--b3-theme-surface-lighter, $c-surface);
   max-width: 100%;
   overflow: hidden;
   max-height: 300px;
@@ -106,32 +106,32 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: $spacing-3 $spacing-4;
-    font-weight: $font-weight-semibold;
-    font-size: $font-size-sm;
-    font-family: $font-zh;
-    color: var(--b3-theme-on-background, $color-fg);
-    background: var(--b3-theme-background, $color-bg);
-    border-bottom: 1px solid var(--b3-border-color, $color-border);
+    padding: $s-3 $s-4;
+    font-weight: $fw-semibold;
+    font-size: $t-sm;
+    font-family: $ff-zh;
+    color: var(--b3-theme-on-background, $c-fg);
+    background: var(--b3-theme-background, $c-bg);
+    border-bottom: 1px solid var(--b3-border-color, $c-border);
 
     .panel-actions {
       display: flex;
-      gap: $spacing-2;
+      gap: $s-2;
       align-items: center;
     }
   }
 
   .panel-content {
-    padding: $spacing-2;
+    padding: $s-2;
     max-height: 240px;
     overflow-y: auto;
   }
 
   .advanced-content {
-    padding: $spacing-4;
+    padding: $s-4;
 
     .option-group {
-      margin-bottom: $spacing-4;
+      margin-bottom: $s-4;
 
       &:last-child {
         margin-bottom: 0;
@@ -139,16 +139,16 @@
 
       .option-label {
         display: block;
-        font-weight: $font-weight-medium;
-        font-size: $font-size-sm;
-        font-family: $font-zh;
-        margin-bottom: $spacing-2;
-        color: var(--b3-theme-on-background, $color-fg);
+        font-weight: $fw-medium;
+        font-size: $t-sm;
+        font-family: $ff-zh;
+        margin-bottom: $s-2;
+        color: var(--b3-theme-on-background, $c-fg);
       }
 
       .option-row {
         display: flex;
-        gap: $spacing-4;
+        gap: $s-4;
         flex-wrap: wrap;
       }
 
@@ -156,15 +156,15 @@
       .checkbox-label {
         display: flex;
         align-items: center;
-        gap: $spacing-2;
-        font-size: $font-size-sm;
-        color: var(--b3-theme-on-background, $color-fg);
+        gap: $s-2;
+        font-size: $t-sm;
+        color: var(--b3-theme-on-background, $c-fg);
         cursor: pointer;
-        padding: $spacing-2;
-        border-radius: $radius-base;
+        padding: $s-2;
+        border-radius: $r-base;
 
         &:hover {
-          background-color: var(--b3-theme-surface-lighter, $color-surface);
+          background-color: var(--b3-theme-surface-lighter, $c-surface);
         }
 
         input[type="radio"],

@@ -6,7 +6,7 @@
 $modal-z-index: 1000;
 $modal-small-max-width: 500px;
 $modal-form-max-width: 900px;
-$card-border-radius: $radius-md;
+$card-border-radius: $r-md;
 // 遮罩底色（模块内唯一透明度控制点；思源未提供遮罩语义 Token，故以局部变量收敛）
 $modal-overlay-bg: rgba(0, 0, 0, 0.5);
 
@@ -22,12 +22,12 @@ $modal-overlay-bg: rgba(0, 0, 0, 0.5);
   justify-content: center;
   z-index: $modal-z-index;
   backdrop-filter: blur(4px);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 }
 
 @mixin modal-base {
   background: var(--b3-theme-background);
-  border-radius: $radius-lg;
+  border-radius: $r-lg;
   display: flex;
   flex-direction: column;
   border: 1px solid var(--b3-border-color);
@@ -37,14 +37,14 @@ $modal-overlay-bg: rgba(0, 0, 0, 0.5);
 
 @mixin form-input {
   width: 100%;
-  padding: $spacing-2 $spacing-3;
+  padding: $s-2 $s-3;
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-background);
-  font-size: $font-size-xs;
-  font-family: $font-zh;
-  line-height: $line-height-tight;
+  font-size: $t-xs;
+  font-family: $ff-zh;
+  line-height: $lh-tight;
   box-sizing: border-box;
 
   &::placeholder {
@@ -62,13 +62,13 @@ $modal-overlay-bg: rgba(0, 0, 0, 0.5);
 // 表单标签公共样式（字段标签/分组标签共享）
 @mixin form-label {
   display: block;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
   letter-spacing: 0.04em;
-  line-height: $line-height-tight;
+  line-height: $lh-tight;
   text-transform: uppercase;
   opacity: 0.55;
   color: var(--b3-theme-on-background);
-  margin-bottom: $spacing-2;
-  font-family: $font-zh;
+  margin-bottom: $s-2;
+  font-family: $ff-zh;
 }

@@ -5,10 +5,10 @@
 .qn-proj-item {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
-  padding: $spacing-3;
+  gap: $s-2;
+  padding: $s-3;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
   transition: border-color 0.12s;
 
@@ -18,7 +18,7 @@
 
   // 卡住态：红色左边框强调
   &--blocked {
-    border-left: $spacing-px solid var(--b3-card-error-color);
+    border-left: $s-px3 solid var(--b3-card-error-color);
   }
 }
 
@@ -27,19 +27,19 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .qn-proj-item__title-group {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
   min-width: 0;
 }
 
 .qn-proj-item__name {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -49,18 +49,18 @@
 // 状态徽章
 .qn-proj-item__status {
   // 辅助文字
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
-  padding: 0 $spacing-2;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
+  padding: 0 $s-2;
   border: 1px solid;
-  border-radius: $radius-full;
+  border-radius: $r-full;
   flex-shrink: 0;
 }
 
 .qn-proj-item__actions {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
   flex-shrink: 0;
 }
 
@@ -68,13 +68,13 @@
 .qn-proj-item__flow {
   display: flex;
   align-items: flex-start;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .qn-proj-item__flow-col {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2px;
+  gap: $s-px2;
   flex: 1;
   min-width: 0;
 }
@@ -82,14 +82,14 @@
 // 辅助文字：流程标签
 .qn-proj-item__flow-label {
   // 辅助文字
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-variant);
   opacity: 0.8;
 }
 
 .qn-proj-item__flow-text {
-  font-size: $font-size-xs;
-  line-height: $line-height-tight;
+  font-size: $t-xs;
+  line-height: $lh-tight;
   color: var(--b3-theme-on-surface);
   word-break: break-word;
 }
@@ -98,21 +98,21 @@
   color: var(--b3-theme-on-surface-variant);
   opacity: 0.6;
   flex-shrink: 0;
-  margin-top: $spacing-3;
+  margin-top: $s-3;
 }
 
 // 卡点警示
 .qn-proj-item__blocker {
   display: flex;
   align-items: flex-start;
-  gap: $spacing-1;
-  padding: $spacing-1 $spacing-2;
-  border-radius: $vp-radius;
+  gap: $s-1;
+  padding: $s-1 $s-2;
+  border-radius: $r-base;
   background: color-mix(in srgb, var(--b3-card-error-color) 8%, transparent);
   color: var(--b3-card-error-color);
   // 辅助文字
-  font-size: $font-size-2xs;
-  line-height: $line-height-tight;
+  font-size: $t-2xs;
+  line-height: $lh-tight;
   word-break: break-word;
 }
 
@@ -121,20 +121,20 @@
 .qn-proj-item__todos {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .qn-proj-item__progress-row {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 // 进度条轨道
 .qn-proj-item__progress-track {
   flex: 1;
   height: 6px;
-  border-radius: $radius-full;
+  border-radius: $r-full;
   background: var(--b3-theme-surface-lighter);
   overflow: hidden;
 }
@@ -142,14 +142,14 @@
 // 进度条填充（蓝绿渐变；唯一允许 transition width 0.3s 的例外）
 .qn-proj-item__progress-fill {
   height: 100%;
-  border-radius: $radius-full;
+  border-radius: $r-full;
   background: linear-gradient(90deg, var(--b3-theme-primary), var(--b3-theme-success));
   transition: width 0.3s;
 }
 
 .qn-proj-item__progress-text {
   // 辅助文字
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-variant);
   flex-shrink: 0;
 }
@@ -158,14 +158,14 @@
 .qn-proj-item__toggle {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-px;
+  gap: $s-px3;
   align-self: flex-start;
   padding: 0;
   border: none;
   background: transparent;
   color: var(--b3-theme-primary);
   // 辅助文字
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   cursor: pointer;
   transition: opacity 0.12s;
 
@@ -180,17 +180,17 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: $spacing-px;
+  gap: $s-px3;
 }
 
 .qn-proj-item__todo {
   display: flex;
   align-items: center;
-  gap: $spacing-px;
+  gap: $s-px3;
   // 辅助文字
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
-  line-height: $line-height-tight;
+  line-height: $lh-tight;
 
   // 已完成：删除线弱化
   &--done {

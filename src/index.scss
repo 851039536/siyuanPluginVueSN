@@ -5,14 +5,14 @@
 @use '@/variables.scss' as *;
 
 // 2. 全局基准字号（两级字号制）
-//    Dock 面板与弹窗遮罩统一以 $font-size-xs(12px) 为基准，防止内部未声明字号的
+//    Dock 面板与弹窗遮罩统一以 $t-xs(12px) 为基准，防止内部未声明字号的
 //    文字继承思源全局默认字号（14px+）导致偏大。
 :root {
   // CSS 变量桥接 SCSS Token，供 TS 内联样式（如 vueAppHelper.ts）引用
-  --vp-font-size-xs: #{$font-size-xs};
+  --vp-font-size-xs: #{$t-xs};
 }
 
 .vp-dock-root,
 .vp-modal-mask {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 }

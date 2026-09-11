@@ -17,25 +17,25 @@
 .vp-title {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
 
   &__icon {
-    font-size: $font-size-sm;
-    color: $color-danger;
+    font-size: $t-sm;
+    color: $c-danger;
   }
 
   &__text {
-    font-size: $font-size-sm;
-    font-weight: $font-weight-semibold;
-    font-family: $font-zh;
-    color: $color-danger;
+    font-size: $t-sm;
+    font-weight: $fw-semibold;
+    font-family: $ff-zh;
+    color: $c-danger;
   }
 }
 
 .vp-header__actions {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .vp-header__float,
@@ -53,15 +53,15 @@
   flex-shrink: 0;
   width: 24px;
   height: 24px;
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   cursor: pointer;
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   transition: background 0.12s, border-color 0.12s, color 0.12s;
 
   svg {
-    width: $font-size-xs;
-    height: $font-size-xs;
+    width: $t-xs;
+    height: $t-xs;
     flex-shrink: 0;
   }
 

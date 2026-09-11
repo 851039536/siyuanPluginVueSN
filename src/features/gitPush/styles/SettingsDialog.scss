@@ -20,8 +20,8 @@
 .gp-settings-nav {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
-  padding: $spacing-3 $spacing-2;
+  gap: $s-1;
+  padding: $s-3 $s-2;
   border-right: 1px solid var(--b3-border-color);
   flex-shrink: 0;
 }
@@ -30,14 +30,14 @@
 .gp-settings-nav-btn {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-1 $spacing-2;
+  gap: $s-1;
+  padding: $s-1 $s-2;
   border: none;
   border-left: 2px solid transparent;
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: transparent;
   color: var(--b3-theme-on-surface-light);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   cursor: pointer;
   text-align: left;
   white-space: nowrap;
@@ -52,7 +52,7 @@
     background: var(--b3-theme-primary-lightest);
     border-left-color: var(--b3-theme-primary);
     color: var(--b3-theme-primary);
-    font-weight: $font-weight-semibold;
+    font-weight: $fw-semibold;
   }
 }
 
@@ -61,17 +61,17 @@
 .gp-settings-nav-manage {
   margin-top: auto;
   border-top: 1px solid var(--b3-border-color);
-  border-radius: 0 0 $radius-sm $radius-sm;
-  padding-top: $spacing-2;
+  border-radius: 0 0 $r-sm $r-sm;
+  padding-top: $s-2;
 }
 
 // 右侧内容区（可滚动）
 .gp-settings-content {
   flex: 1;
   min-width: 0;
-  padding: $spacing-3 $spacing-4;
+  padding: $s-3 $s-4;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  gap: $s-2;
 }

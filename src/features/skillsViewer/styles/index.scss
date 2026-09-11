@@ -15,7 +15,7 @@
   align-items: center;
   justify-content: center;
   z-index: 10000;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 }
 
 // 弹窗底色用 background：与 surface 卡片形成「底—卡」凸出层级（对齐 gitPush 卡片范式）
@@ -25,7 +25,7 @@
   max-height: 86vh;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -37,31 +37,31 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-3 $spacing-4;
-  border-bottom: 1px solid var(--b3-border-color, $color-border);
+  padding: $s-3 $s-4;
+  border-bottom: 1px solid var(--b3-border-color, $c-border);
   flex-shrink: 0;
-  background: var(--b3-theme-surface, $color-surface);
+  background: var(--b3-theme-surface, $c-surface);
   user-select: none;
 
   .sv-header-left {
     display: flex;
     align-items: center;
-    gap: $spacing-3;
+    gap: $s-3;
 
     .sv-header-title {
-      font-size: $font-size-base;
-      font-weight: $font-weight-semibold;
-      color: var(--b3-theme-on-surface, $color-fg);
+      font-size: $t-base;
+      font-weight: $fw-semibold;
+      color: var(--b3-theme-on-surface, $c-fg);
     }
 
     .sv-header-badge {
-      font-size: $font-size-2xs;
-      padding: $spacing-px $spacing-2;
-      border-radius: $radius-full;
-      background: color-mix(in srgb, var(--b3-theme-primary, $color-primary) 10%, transparent);
-      color: var(--b3-theme-primary, $color-primary);
-      font-weight: $font-weight-semibold;
-      line-height: $line-height-tight;
+      font-size: $t-2xs;
+      padding: $s-px3 $s-2;
+      border-radius: $r-full;
+      background: color-mix(in srgb, var(--b3-theme-primary, $c-primary) 10%, transparent);
+      color: var(--b3-theme-primary, $c-primary);
+      font-weight: $fw-semibold;
+      line-height: $lh-tight;
     }
   }
 
@@ -71,18 +71,18 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid var(--b3-border-color, $color-border);
-    border-radius: $vp-radius;
+    border: 1px solid var(--b3-border-color, $c-border);
+    border-radius: $r-base;
     cursor: pointer;
     background: transparent;
-    color: var(--b3-theme-on-surface-variant, $color-muted);
-    font-size: $font-size-sm;
+    color: var(--b3-theme-on-surface-variant, $c-muted);
+    font-size: $t-sm;
     transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
 
     &:hover {
-      border-color: var(--b3-theme-primary, $color-primary);
-      color: var(--b3-theme-primary, $color-primary);
-      background: var(--b3-theme-surface-lighter, $color-secondary);
+      border-color: var(--b3-theme-primary, $c-primary);
+      color: var(--b3-theme-primary, $c-primary);
+      background: var(--b3-theme-surface-lighter, $c-secondary);
     }
   }
 }
@@ -92,17 +92,17 @@
 .skills-viewer-body {
   flex: 1;
   overflow-y: auto;
-  padding: $spacing-5;
+  padding: $s-5;
 
   @include sv-custom-scrollbar;
 
   .sv-description {
-    font-size: $font-size-xs;
-    color: var(--b3-theme-on-surface-variant, $color-muted);
-    line-height: $line-height-normal;
-    margin-bottom: $spacing-4;
-    padding-bottom: $spacing-3;
-    border-bottom: 1px dashed var(--b3-border-color, $color-border);
+    font-size: $t-xs;
+    color: var(--b3-theme-on-surface-variant, $c-muted);
+    line-height: $lh-normal;
+    margin-bottom: $s-4;
+    padding-bottom: $s-3;
+    border-bottom: 1px dashed var(--b3-border-color, $c-border);
     opacity: 0.75;
   }
 
@@ -111,17 +111,17 @@
   .sv-tools-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: $spacing-2;
-    margin-bottom: $spacing-4;
-    padding-bottom: $spacing-4;
-    border-bottom: 1px dashed var(--b3-border-color, $color-border);
+    gap: $s-2;
+    margin-bottom: $s-4;
+    padding-bottom: $s-4;
+    border-bottom: 1px dashed var(--b3-border-color, $c-border);
 
     .sv-tool-card {
-      padding: $spacing-3 $spacing-3 $spacing-2;
-      border: 1px solid var(--b3-border-color, $color-border);
-      border-radius: $vp-radius;
+      padding: $s-3 $s-3 $s-2;
+      border: 1px solid var(--b3-border-color, $c-border);
+      border-radius: $r-base;
       cursor: pointer;
-      background: var(--b3-theme-surface, $color-surface);
+      background: var(--b3-theme-surface, $c-surface);
       position: relative;
       transition: border-color 0.12s ease, background 0.12s ease;
 
@@ -131,21 +131,21 @@
         left: 0;
         top: 0;
         bottom: 0;
-        width: $spacing-px;
+        width: $s-px3;
         background: var(--tool-color);
-        border-radius: $radius-sm 0 0 $radius-sm;
+        border-radius: $r-sm 0 0 $r-sm;
         opacity: 0;
         transition: opacity 0.12s ease;
       }
 
       &:hover {
         border-color: var(--tool-color);
-        background: color-mix(in srgb, var(--b3-theme-primary, $color-primary) 3%, transparent);
+        background: color-mix(in srgb, var(--b3-theme-primary, $c-primary) 3%, transparent);
       }
 
       &.active {
         border-color: var(--tool-color);
-        background: color-mix(in srgb, var(--tool-color) 8%, var(--b3-theme-surface, $color-surface));
+        background: color-mix(in srgb, var(--tool-color) 8%, var(--b3-theme-surface, $c-surface));
 
         &::after {
           opacity: 1;
@@ -155,26 +155,26 @@
       .sv-tool-header {
         display: flex;
         align-items: center;
-        gap: $spacing-1;
-        margin-bottom: $spacing-1;
+        gap: $s-1;
+        margin-bottom: $s-1;
 
         .sv-tool-name {
-          font-size: $font-size-xs;
-          font-weight: $font-weight-semibold;
-          color: var(--b3-theme-on-surface, $color-fg);
+          font-size: $t-xs;
+          font-weight: $fw-semibold;
+          color: var(--b3-theme-on-surface, $c-fg);
         }
       }
 
       .sv-tool-status {
-        font-size: $font-size-2xs;
-        font-family: $vp-mono;
-        color: var(--b3-theme-on-surface-variant, $color-muted);
-        padding-left: $spacing-5;
-        line-height: $line-height-tight;
+        font-size: $t-2xs;
+        font-family: $ff-mono;
+        color: var(--b3-theme-on-surface-variant, $c-muted);
+        padding-left: $s-5;
+        line-height: $lh-tight;
 
         .sv-count {
           color: var(--tool-color);
-          font-weight: $font-weight-bold;
+          font-weight: $fw-bold;
           font-variant-numeric: tabular-nums;
         }
 
@@ -190,43 +190,43 @@
   /* ── project path ───────────────────────────── */
 
   .sv-project-path {
-    margin-bottom: $spacing-4;
-    padding: $spacing-3;
-    background: var(--b3-theme-surface-lighter, $color-secondary);
-    border: 1px solid var(--b3-border-color, $color-border);
-    border-radius: $vp-radius;
+    margin-bottom: $s-4;
+    padding: $s-3;
+    background: var(--b3-theme-surface-lighter, $c-secondary);
+    border: 1px solid var(--b3-border-color, $c-border);
+    border-radius: $r-base;
 
     .sv-path-label {
       display: flex;
       align-items: center;
-      gap: $spacing-1;
-      font-size: $font-size-2xs;
-      font-weight: $font-weight-bold;
+      gap: $s-1;
+      font-size: $t-2xs;
+      font-weight: $fw-bold;
       letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: var(--b3-theme-on-surface-variant, $color-muted);
-      margin-bottom: $spacing-2;
+      color: var(--b3-theme-on-surface-variant, $c-muted);
+      margin-bottom: $s-2;
       opacity: 0.45;
     }
 
     .sv-path-input-row {
       display: flex;
-      gap: $spacing-2;
+      gap: $s-2;
 
       .sv-path-input {
         flex: 1;
-        padding: $spacing-2 $spacing-3;
-        font-size: $font-size-xs;
-        border: 1px solid var(--b3-border-color, $color-border);
-        border-radius: $radius-sm;
-        background: var(--b3-theme-surface, $color-surface);
-        color: var(--b3-theme-on-surface, $color-fg);
+        padding: $s-2 $s-3;
+        font-size: $t-xs;
+        border: 1px solid var(--b3-border-color, $c-border);
+        border-radius: $r-sm;
+        background: var(--b3-theme-surface, $c-surface);
+        color: var(--b3-theme-on-surface, $c-fg);
         outline: none;
-        font-family: $vp-mono;
+        font-family: $ff-mono;
         transition: border-color 0.12s ease;
 
         &:focus {
-          border-color: var(--b3-theme-primary, $color-primary);
+          border-color: var(--b3-theme-primary, $c-primary);
         }
       }
     }
@@ -236,10 +236,10 @@
 
   .sv-actions {
     display: flex;
-    gap: $spacing-2;
-    margin-bottom: $spacing-3;
-    padding-bottom: $spacing-3;
-    border-bottom: 1px dashed var(--b3-border-color, $color-border);
+    gap: $s-2;
+    margin-bottom: $s-3;
+    padding-bottom: $s-3;
+    border-bottom: 1px dashed var(--b3-border-color, $c-border);
   }
 
   /* ── skills list ────────────────────────────── */
@@ -247,34 +247,34 @@
   .sv-skills-list {
     display: flex;
     flex-direction: column;
-    gap: $spacing-2;
+    gap: $s-2;
   }
 
   /* ── empty state ────────────────────────────── */
 
   .sv-empty {
     text-align: center;
-    padding: $spacing-10 $spacing-4;
+    padding: $s-10 $s-4;
 
     // 图标尺寸由模板 IconWrapper :size 控制（40px），此处仅留间距
     .sv-empty-icon {
-      margin-bottom: $spacing-3;
+      margin-bottom: $s-3;
       opacity: 0.35;
-      line-height: $line-height-tight;
+      line-height: $lh-tight;
     }
 
     .sv-empty-text {
-      font-size: $font-size-sm;
-      color: var(--b3-theme-on-surface-variant, $color-muted);
-      line-height: $line-height-normal;
+      font-size: $t-sm;
+      color: var(--b3-theme-on-surface-variant, $c-muted);
+      line-height: $lh-normal;
     }
 
     .sv-empty-hint {
-      font-size: $font-size-xs;
-      color: var(--b3-theme-on-surface-variant, $color-muted);
+      font-size: $t-xs;
+      color: var(--b3-theme-on-surface-variant, $c-muted);
       opacity: 0.5;
-      margin-top: $spacing-2;
-      font-family: $vp-mono;
+      margin-top: $s-2;
+      font-family: $ff-mono;
     }
   }
 
@@ -284,21 +284,21 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: $spacing-10;
-    gap: $spacing-3;
+    padding: $s-10;
+    gap: $s-3;
 
     .sv-loading-spinner {
       width: 18px;
       height: 18px;
-      border: 2px solid var(--b3-theme-surface-lighter, $color-surface);
-      border-top-color: var(--b3-theme-primary, $color-primary);
+      border: 2px solid var(--b3-theme-surface-lighter, $c-surface);
+      border-top-color: var(--b3-theme-primary, $c-primary);
       border-radius: 50%;
       animation: sv-spin 0.6s linear infinite;
     }
 
     .sv-loading-text {
-      font-size: $font-size-xs;
-      color: var(--b3-theme-on-surface-variant, $color-muted);
+      font-size: $t-xs;
+      color: var(--b3-theme-on-surface-variant, $c-muted);
       opacity: 0.7;
     }
   }
@@ -310,19 +310,19 @@
   /* ── unsupported ────────────────────────────── */
 
   .sv-unsupported {
-    padding: $spacing-6;
+    padding: $s-6;
     text-align: center;
 
     // 图标尺寸由模板 IconWrapper :size 控制（32px），此处仅留间距
     .sv-unsupported-icon {
-      margin-bottom: $spacing-3;
+      margin-bottom: $s-3;
       opacity: 0.4;
     }
 
     .sv-unsupported-text {
-      font-size: $font-size-xs;
-      color: var(--b3-theme-on-surface-variant, $color-muted);
-      line-height: $line-height-normal;
+      font-size: $t-xs;
+      color: var(--b3-theme-on-surface-variant, $c-muted);
+      line-height: $lh-normal;
     }
   }
 }

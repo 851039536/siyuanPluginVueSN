@@ -36,12 +36,12 @@
 .settings-footer {
   @extend %modal-footer;
   flex-shrink: 0;
-  padding: $spacing-1 $spacing-2;
+  padding: $s-1 $s-2;
 }
 
 // ============ 分区通用 ============
 .settings-section {
-  padding: $spacing-2 $spacing-3;
+  padding: $s-2 $s-3;
   border-bottom: 1px solid var(--b3-border-color);
 
   &:last-child {
@@ -50,36 +50,36 @@
 }
 
 .settings-section-title {
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
+  font-size: $t-sm;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-background);
-  margin-bottom: $spacing-1;
+  margin-bottom: $s-1;
 }
 
 .settings-subsection {
-  margin-top: $spacing-1;
-  padding-top: $spacing-1;
+  margin-top: $s-1;
+  padding-top: $s-1;
   border-top: 1px solid var(--b3-list-hover);
 }
 
 .settings-subsection-title {
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface-variant);
-  margin-bottom: $spacing-2px;
+  margin-bottom: $s-px2;
 }
 
 .settings-hint {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-variant);
-  margin: 0 0 $spacing-1;
+  margin: 0 0 $s-1;
   opacity: 0.7;
 }
 
 .settings-empty-tip {
   margin: 0;
-  padding: $spacing-2px $spacing-1;
-  font-size: $font-size-2xs;
+  padding: $s-px2 $s-1;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-variant);
 }
 
@@ -87,11 +87,11 @@
 .settings-check-row {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-2px $spacing-1;
-  border-radius: $vp-radius;
+  gap: $s-1;
+  padding: $s-px2 $s-1;
+  border-radius: $r-base;
   cursor: pointer;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 
   &:hover {
     background: var(--b3-list-hover);
@@ -115,10 +115,10 @@
 .deduction-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 0 $spacing-1;
+  gap: 0 $s-1;
 
   .settings-check-row {
-    flex: 0 0 calc(50% - #{$spacing-1} / 2);
+    flex: 0 0 calc(50% - #{$s-1} / 2);
     box-sizing: border-box;
   }
 }
@@ -133,13 +133,13 @@
 // ============ 名称排除文本域 ============
 .settings-textarea {
   width: 100%;
-  padding: $spacing-1;
+  padding: $s-1;
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-background);
-  font-size: $font-size-xs;
-  font-family: $vp-mono;
+  font-size: $t-xs;
+  font-family: $ff-mono;
   resize: vertical;
   outline: none;
   box-sizing: border-box;
@@ -153,25 +153,25 @@
 .settings-row {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-2px 0;
+  gap: $s-1;
+  padding: $s-px2 0;
 
   .settings-row-label {
     width: 96px;
     flex-shrink: 0;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-semibold;
+    font-size: $t-xs;
+    font-weight: $fw-semibold;
     color: var(--b3-theme-on-surface-variant);
   }
 }
 
 .settings-select {
-  padding: $spacing-2px $spacing-1;
+  padding: $s-px2 $s-1;
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-background);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   outline: none;
 
   &:focus {
@@ -187,11 +187,11 @@
 .platform-row {
   display: flex;
   align-items: flex-end;
-  gap: $spacing-2px;
-  padding: $spacing-2px $spacing-1;
+  gap: $s-px2;
+  padding: $s-px2 $s-1;
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
-  margin-bottom: $spacing-2px;
+  border-radius: $r-base;
+  margin-bottom: $s-px2;
 
   &:hover {
     background: var(--b3-list-hover);
@@ -209,7 +209,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-bottom: $spacing-1px;
+  padding-bottom: $s-px1;
 
   .fullcheck-toggle {
     color: var(--b3-theme-on-surface-variant);
@@ -227,30 +227,30 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-bottom: $spacing-1px;
+  padding-bottom: $s-px1;
 }
 
 // 字段单元格
 .cell-field {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1px;
+  gap: $s-px1;
   min-width: 0;
 }
 
 .cell-input {
   width: 100%;
-  padding: $spacing-px $spacing-6px;
+  padding: $s-px3 $s-px6;
   border: 1px solid transparent;
-  border-radius: $radius-px;
+  border-radius: $r-px3;
   background: transparent;
   color: var(--b3-theme-on-background);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   outline: none;
   transition: border-color 0.12s, background 0.12s;
 
   &--mono {
-    font-family: $vp-mono;
+    font-family: $ff-mono;
   }
 
   &:hover {
@@ -275,9 +275,9 @@
 // 操作按钮区
 .cell-actions {
   display: flex;
-  gap: $spacing-2px;
+  gap: $s-px2;
   flex-shrink: 0;
-  padding-bottom: $spacing-1px;
+  padding-bottom: $s-px1;
 }
 
 .row-btn-icon {
@@ -287,11 +287,11 @@
   width: 24px;
   height: 24px;
   border: none;
-  border-radius: $radius-px;
+  border-radius: $r-px3;
   background: transparent;
   color: var(--b3-theme-on-surface-variant);
   cursor: pointer;
-  font-size: $font-size-base;
+  font-size: $t-base;
   transition: color 0.12s, background 0.12s;
 
   &:hover:not(:disabled) {
@@ -316,30 +316,30 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: $spacing-1;
-  padding: $spacing-2;
+  gap: $s-1;
+  padding: $s-2;
   color: var(--b3-theme-on-surface-variant);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   opacity: 0.5;
 }
 
 // 平台操作栏
 .platform-actions {
   display: flex;
-  gap: $spacing-1;
-  margin-top: $spacing-1;
+  gap: $s-1;
+  margin-top: $s-1;
 }
 
 .platform-btn {
   display: flex;
   align-items: center;
-  gap: $spacing-2px;
-  padding: $spacing-2px $spacing-1;
+  gap: $s-px2;
+  padding: $s-px2 $s-1;
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   background: transparent;
   color: var(--b3-theme-on-background);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   cursor: pointer;
   transition: background 0.12s;
 
@@ -353,11 +353,11 @@
 .settings-save {
   display: flex;
   align-items: center;
-  gap: $spacing-2px;
-  padding: $spacing-2px $spacing-2;
+  gap: $s-px2;
+  padding: $s-px2 $s-2;
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
-  font-size: $font-size-xs;
+  border-radius: $r-base;
+  font-size: $t-xs;
   cursor: pointer;
   transition: background 0.12s;
 }

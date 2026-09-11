@@ -4,7 +4,7 @@
 
 // 二维码设置卡片
 .qrcode-settings {
-  margin-top: $spacing-3;
+  margin-top: $s-3;
   @include m.setting-group;
 
   .setting-group .quality-slider {
@@ -16,8 +16,8 @@
 .qrcode-result {
   .qrcode-preview {
     border: 1px solid var(--b3-theme-surface-lighter);
-    border-radius: $radius-base;
-    padding: $spacing-4;
+    border-radius: $r-base;
+    padding: $s-4;
     background: var(--b3-theme-background);
     display: flex;
     justify-content: center;
@@ -26,7 +26,7 @@
 
     img {
       max-width: 200px;
-      border-radius: $radius-sm;
+      border-radius: $r-sm;
     }
   }
 }

@@ -6,30 +6,30 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  // 右侧间距由共用根容器 .statistics-content 统一承担（至少 $spacing-2），此处仅保留轻量边距
-  padding: 0 $spacing-2px;
+  // 右侧间距由共用根容器 .statistics-content 统一承担（至少 $s-2），此处仅保留轻量边距
+  padding: 0 $s-px2;
 
   &::-webkit-scrollbar {
     width: 4px;
   }
   &::-webkit-scrollbar-thumb {
     background: var(--b3-border-color);
-    border-radius: $radius-2px;
+    border-radius: $r-px2;
   }
 }
 
 .notebook-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
 }
 
 .nb-th {
-  padding: $spacing-6px $spacing-2;
+  padding: $s-px6 $s-2;
   text-align: left;
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--b3-theme-on-surface);
@@ -54,8 +54,8 @@
 }
 
 .sort-arrow {
-  margin-left: $spacing-2px;
-  font-size: $font-size-2xs;
+  margin-left: $s-px2;
+  font-size: $t-2xs;
 }
 
 .nb-tr {
@@ -72,31 +72,31 @@
 }
 
 .nb-td {
-  padding: $spacing-5px $spacing-2;
+  padding: $s-px5 $s-2;
   border-bottom: 1px solid rgba(var(--b3-border-color-rgb, 128, 128, 128), 0.15);
 }
 
 .nb-td-name {
-  font-weight: $font-weight-medium;
+  font-weight: $fw-medium;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 140px;
   display: flex;
   align-items: center;
-  gap: $spacing-6px;
+  gap: $s-px6;
 }
 
 .nb-color-dot {
   width: 8px;
   height: 8px;
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   flex-shrink: 0;
 }
 
 .nb-td-num {
   font-family: stats.$font-mono;
-  font-weight: $font-weight-semibold;
+  font-weight: $fw-semibold;
   text-align: right;
   white-space: nowrap;
 }
@@ -104,7 +104,7 @@
 .nb-td-pct {
   display: flex;
   align-items: center;
-  gap: $spacing-6px;
+  gap: $s-px6;
   justify-content: flex-end;
 }
 
@@ -112,14 +112,14 @@
   width: 48px;
   height: 6px;
   background: rgba(var(--b3-theme-on-surface-rgb), 0.06);
-  border-radius: $radius-px;
+  border-radius: $r-px3;
   overflow: hidden;
   flex-shrink: 0;
 }
 
 .pct-bar {
   height: 100%;
-  border-radius: $radius-px;
+  border-radius: $r-px3;
   transition: width 0.3s ease;
   min-width: 1px;
 }

@@ -2,9 +2,9 @@
 
 // ============ 表格区块容器 ============
 .stat-table {
-  margin-bottom: $spacing-2;
+  margin-bottom: $s-2;
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   overflow: hidden;
 
   &:last-child {
@@ -16,10 +16,10 @@
 .st-header {
   display: flex;
   align-items: center;
-  gap: $spacing-2px;
-  padding: $spacing-2 $spacing-2 $spacing-1;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  gap: $s-px2;
+  padding: $s-2 $s-2 $s-1;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--b3-theme-on-surface-variant);
@@ -34,12 +34,12 @@
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
 }
 
 .st-th {
-  padding: $spacing-1 $spacing-2;
-  font-weight: $font-weight-semibold;
+  padding: $s-1 $s-2;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface-variant);
   text-align: left;
   background: var(--b3-theme-surface);
@@ -82,7 +82,7 @@
 }
 
 .st-td {
-  padding: $spacing-1 $spacing-2;
+  padding: $s-1 $s-2;
   color: var(--b3-theme-on-surface-variant);
 }
 
@@ -96,13 +96,13 @@
 // 数据突出展示：数量列（等宽字体 + 语义色）
 .st-td-count {
   text-align: right;
-  font-family: $vp-mono;
-  font-weight: $font-weight-semibold;
+  font-family: $ff-mono;
+  font-weight: $fw-semibold;
 }
 
 .st-td-pct {
   text-align: right;
-  font-family: $vp-mono;
+  font-family: $ff-mono;
   opacity: 0.6;
 }
 

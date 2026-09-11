@@ -27,10 +27,10 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: $spacing-2;
+  padding: $s-2;
   color: var(--b3-theme-on-background);
   opacity: 0.6;
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   transition: opacity 0.12s, background 0.12s;
 
   &:hover {
@@ -41,7 +41,7 @@
 
 @mixin dialog-base {
   background: var(--b3-theme-background);
-  border-radius: $radius-md;
+  border-radius: $r-md;
   border: 1px solid var(--b3-border-color);
   overflow: hidden;
   pointer-events: auto;
@@ -49,12 +49,12 @@
 
 @mixin header-base {
   @include flex-between;
-  padding: $spacing-4 $spacing-5;
+  padding: $s-4 $s-5;
   border-bottom: 1px solid var(--b3-border-color);
 
   h2, h3 {
     margin: 0;
-    font-weight: $font-weight-semibold;
+    font-weight: $fw-semibold;
     color: var(--b3-theme-on-background);
   }
 }
@@ -77,7 +77,7 @@
   }
 
   p {
-    margin-top: $spacing-2;
+    margin-top: $s-2;
   }
 }
 
@@ -85,8 +85,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: $spacing-2;
-  font-size: $font-size-sm;
+  margin-bottom: $s-2;
+  font-size: $t-sm;
   color: var(--b3-theme-on-background);
 
   &:last-child {
@@ -94,7 +94,7 @@
   }
 
   .stat-value {
-    font-weight: $font-weight-semibold;
+    font-weight: $fw-semibold;
     color: var(--b3-theme-primary);
   }
 }
@@ -102,8 +102,8 @@
 @mixin footer-base {
   display: flex;
   justify-content: flex-end;
-  gap: $spacing-3;
-  padding: $spacing-3 $spacing-4;
+  gap: $s-3;
+  padding: $s-3 $s-4;
   border-top: 1px solid var(--b3-border-color);
 }
 
@@ -117,7 +117,7 @@
   max-width: 1200px;
   height: 85vh;
   background: var(--b3-theme-background);
-  border-radius: $radius-lg;
+  border-radius: $r-lg;
   @include flex-column;
   border: 2px solid var(--b3-border-color);
   min-height: 0;
@@ -137,7 +137,7 @@
     cursor: pointer;
     color: var(--b3-theme-on-background);
     opacity: 0.6;
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     transition: opacity 0.12s, background 0.12s;
 
     &:hover {
@@ -153,33 +153,33 @@
 }
 
 .viewer-header {
-  padding: $spacing-3 $spacing-4;
+  padding: $s-3 $s-4;
   background: var(--b3-theme-surface);
 
   h2 {
-    font-size: $font-size-base;
-    font-weight: $font-weight-semibold;
+    font-size: $t-base;
+    font-weight: $fw-semibold;
   }
 
   .header-left {
     @include flex-center;
-    gap: $spacing-2;
+    gap: $s-2;
 
     .image-count {
-      padding: $spacing-2px $spacing-2;
+      padding: $s-px2 $s-2;
       background: var(--b3-theme-primary);
       color: var(--b3-theme-on-primary);
-      border-radius: $radius-lg;
-      font-size: $font-size-xs;
-      font-weight: $font-weight-medium;
+      border-radius: $r-lg;
+      font-size: $t-xs;
+      font-weight: $fw-medium;
     }
   }
 }
 
 .viewer-toolbar {
   @include flex-center;
-  gap: $spacing-2;
-  padding: $spacing-2 $spacing-4;
+  gap: $s-2;
+  padding: $s-2 $s-4;
   border-bottom: 1px solid var(--b3-border-color);
   background: var(--b3-theme-background);
   flex-wrap: wrap;
@@ -191,10 +191,10 @@
 
 .filter-group {
   @include flex-center;
-  gap: $spacing-2;
-  padding: $spacing-1 $spacing-2;
+  gap: $s-2;
+  padding: $s-1 $s-2;
   background: var(--b3-theme-surface);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   border: 1px solid var(--b3-border-color);
   width: 160px
 }
@@ -203,9 +203,9 @@
   position: relative;
   height: 20px;
   background: var(--b3-theme-surface);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   overflow: hidden;
-  margin: $spacing-2 $spacing-4;
+  margin: $s-2 $s-4;
 
   .progress-fill {
     height: 100%;
@@ -217,8 +217,8 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: $font-size-xs;
-    font-weight: $font-weight-medium;
+    font-size: $t-xs;
+    font-weight: $fw-medium;
     color: var(--b3-theme-on-background);
     white-space: nowrap;
   }
@@ -234,25 +234,25 @@
   }
 
   p {
-    margin: $spacing-4 0;
-    font-size: $font-size-base;
+    margin: $s-4 0;
+    font-size: $t-base;
   }
 }
 
 .image-list {
   flex: 1 1 0;
   overflow-y: auto;
-  padding: $spacing-3 $spacing-4;
+  padding: $s-3 $s-4;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: $spacing-3;
+  gap: $s-3;
   align-content: start;
   min-height: 0;
 }
 
 .image-item {
   background: var(--b3-theme-surface);
-  border-radius: $radius-md;
+  border-radius: $r-md;
   overflow: hidden;
   border: 2px solid transparent;
   min-height: 260px;
@@ -269,7 +269,7 @@
 }
 
 .image-checkbox {
-  padding: $spacing-2 $spacing-3;
+  padding: $s-2 $s-3;
   border-bottom: 1px solid var(--b3-border-color);
   cursor: pointer;
 
@@ -301,14 +301,14 @@
     bottom: 8px;
     left: 50%;
     transform: translateX(-50%);
-    padding: $spacing-1 $spacing-3;
+    padding: $s-1 $s-3;
     background: rgba(0, 0, 0, 0.7);
     color: var(--b3-theme-on-primary);
-    border-radius: $radius-sm;
-    font-size: $font-size-xs;
+    border-radius: $r-sm;
+    font-size: $t-xs;
     opacity: 0;
     @include flex-center;
-    gap: $spacing-1;
+    gap: $s-1;
     transition: opacity 0.12s;
 
     .icon {
@@ -333,20 +333,20 @@
   }
 
   p {
-    font-size: $font-size-xs;
+    font-size: $t-xs;
   }
 }
 
 .image-info {
-  padding: $spacing-3;
+  padding: $s-3;
   cursor: pointer;
 }
 
 .image-name {
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
+  font-size: $t-sm;
+  font-weight: $fw-medium;
   color: var(--b3-theme-on-background);
-  margin-bottom: $spacing-2;
+  margin-bottom: $s-2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -354,18 +354,18 @@
 
 .image-actions {
   display: flex;
-  gap: $spacing-2;
-  margin-bottom: $spacing-2;
+  gap: $s-2;
+  margin-bottom: $s-2;
 }
 
 .action-btn {
   @include flex-center;
-  gap: $spacing-1;
-  padding: $spacing-1 $spacing-2;
+  gap: $s-1;
+  padding: $s-1 $s-2;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
-  font-size: $font-size-xs;
+  border-radius: $r-sm;
+  font-size: $t-xs;
   color: var(--b3-theme-on-background);
   cursor: pointer;
   transition: background 0.12s, border-color 0.12s;
@@ -382,19 +382,19 @@
 }
 
 .image-meta {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface-light);
 }
 
 .meta-row {
   display: flex;
-  gap: $spacing-1;
-  margin-bottom: $spacing-1;
+  gap: $s-1;
+  margin-bottom: $s-1;
 }
 
 .meta-label,
 .meta-value {
-  font-weight: $font-weight-medium;
+  font-weight: $fw-medium;
 }
 
 .meta-value {
@@ -403,28 +403,28 @@
 
 .image-path {
   @extend .image-meta;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   opacity: 0.7;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: $spacing-2;
+  margin-top: $s-2;
 }
 
 .compress-results {
-  padding: $spacing-3 $spacing-4;
+  padding: $s-3 $s-4;
   border-top: 1px solid var(--b3-border-color);
   background: var(--b3-theme-surface);
 }
 
 .results-header {
   @include flex-between;
-  margin-bottom: $spacing-3;
+  margin-bottom: $s-3;
 
   h3 {
     margin: 0;
-    font-size: $font-size-base;
-    font-weight: $font-weight-semibold;
+    font-size: $t-base;
+    font-weight: $fw-semibold;
     color: var(--b3-theme-on-background);
   }
 }
@@ -432,14 +432,14 @@
 .results-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: $spacing-3;
-  margin-bottom: $spacing-4;
+  gap: $s-3;
+  margin-bottom: $s-4;
 }
 
 .stat-item {
-  padding: $spacing-3;
+  padding: $s-3;
   background: var(--b3-theme-background);
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   text-align: center;
   border-left: 3px solid transparent;
 
@@ -454,15 +454,15 @@
 
 .stat-label {
   display: block;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface-light);
-  margin-bottom: $spacing-1;
+  margin-bottom: $s-1;
 }
 
 .stat-value {
   display: block;
-  font-size: $font-size-lg;
-  font-weight: $font-weight-semibold;
+  font-size: $t-lg;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-background);
 }
 
@@ -477,7 +477,7 @@
   max-width: 1000px;
   max-height: 90vh;
   background: var(--b3-theme-background);
-  border-radius: $radius-lg;
+  border-radius: $r-lg;
   overflow: hidden;
   @include flex-column;
 }
@@ -485,13 +485,13 @@
 .preview-header {
   .preview-title {
     h3 {
-      font-size: $font-size-base;
+      font-size: $t-base;
     }
 
     .preview-meta {
       display: flex;
-      gap: $spacing-4;
-      font-size: $font-size-xs;
+      gap: $s-4;
+      font-size: $t-xs;
       color: var(--b3-theme-on-surface-light);
     }
   }
@@ -501,7 +501,7 @@
   flex: 1;
   overflow: auto;
   @include flex-center;
-  padding: $spacing-4;
+  padding: $s-4;
   min-height: 0;
 
   img {

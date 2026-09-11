@@ -10,27 +10,27 @@
 .gp-fix-meta {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
   flex-wrap: wrap;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
 }
 
 .gp-fix-project {
-  font-weight: $font-weight-semibold;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-primary);
   @include text-ellipsis;
   max-width: 40%;
 }
 
 .gp-fix-hash {
-  font-family: $vp-mono;
+  font-family: $ff-mono;
   opacity: 0.5;
 }
 
 .gp-fix-reason {
-  padding: 0 $spacing-6px;
-  border-radius: $radius-full;
-  font-weight: $font-weight-semibold;
+  padding: 0 $s-px6;
+  border-radius: $r-full;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-warning);
   background: var(--b3-theme-warning-lightest);
   border: 1px solid var(--b3-theme-warning-lighter, var(--b3-theme-warning));
@@ -39,40 +39,40 @@
 .gp-fix-block {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 // 该提交修改的文件面板（内嵌 CommitFilesList）与上方表单区块留白
 .gp-fix-files {
-  margin-top: $spacing-2;
+  margin-top: $s-2;
 }
 
 // 提交时间策略勾选（radio 横向排列；accent-color 由全局 radio 样式提供）
 .gp-fix-date-options {
   display: flex;
-  gap: $spacing-3;
+  gap: $s-3;
   flex-wrap: wrap;
 }
 
 .gp-fix-date-option {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-1;
-  font-size: $font-size-xs;
+  gap: $s-1;
+  font-size: $t-xs;
   cursor: pointer;
 }
 
 .gp-fix-original {
   margin: 0;
-  padding: $spacing-2;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  line-height: $line-height-normal;
+  padding: $s-2;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  line-height: $lh-normal;
   white-space: pre-wrap;
   word-break: break-all;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   color: var(--b3-theme-on-surface);
   opacity: 0.7;
 }
@@ -81,13 +81,13 @@
   width: 100%;
   box-sizing: border-box;
   font-family: inherit;
-  font-size: $font-size-xs;
-  line-height: $line-height-normal;
+  font-size: $t-xs;
+  line-height: $lh-normal;
   color: var(--b3-theme-on-surface);
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-base;
-  padding: $spacing-2;
+  border-radius: $r-base;
+  padding: $s-2;
   resize: vertical;
 
   &:focus {
@@ -96,40 +96,40 @@
 }
 
 .gp-fix-invalid {
-  font-size: $font-size-2xs;
-  color: var(--b3-theme-error, $color-danger);
+  font-size: $t-2xs;
+  color: var(--b3-theme-error, $c-danger);
 }
 
 .gp-fix-warning {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
-  gap: $spacing-1;
-  font-size: $font-size-2xs;
+  gap: $s-1;
+  font-size: $t-2xs;
   color: var(--b3-theme-warning);
   background: var(--b3-theme-warning-lightest);
   border: 1px solid var(--b3-theme-warning-lighter, var(--b3-theme-warning));
-  border-radius: $radius-base;
-  padding: $spacing-2;
-  line-height: $line-height-normal;
+  border-radius: $r-base;
+  padding: $s-2;
+  line-height: $lh-normal;
 }
 
 .gp-fix-hint {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   opacity: 0.5;
 }
 
 .gp-fix-warning--error {
-  color: var(--b3-theme-error, $color-danger);
+  color: var(--b3-theme-error, $c-danger);
   background: var(--b3-theme-error-background, transparent);
-  border-color: var(--b3-theme-error, $color-danger);
+  border-color: var(--b3-theme-error, $c-danger);
 }
 
 /* 历史提交重写进度条（细条：主色填充随计数实时变化） */
 .gp-fix-progress {
   flex-basis: 100%;
   height: 4px;
-  border-radius: $radius-full;
+  border-radius: $r-full;
   background: color-mix(in srgb, var(--b3-theme-primary) 12%, transparent);
   overflow: hidden;
 }

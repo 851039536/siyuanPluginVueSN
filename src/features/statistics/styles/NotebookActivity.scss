@@ -5,29 +5,29 @@
 .activity-page {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1; // 模块上下间距统一 4px
+  gap: $s-1; // 模块上下间距统一 4px
 }
 
 // ========== Range Selector ==========
 .range-selector {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-1;
+  gap: $s-1;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
-  padding: $spacing-px;
+  border-radius: stats.$r-sm;
+  padding: $s-px3;
   width: fit-content;
 }
 
 .range-btn {
-  padding: $spacing-1 $spacing-3;
+  padding: $s-1 $s-3;
   border: none;
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   background: transparent;
   color: var(--b3-theme-on-surface-light);
   font-family: stats.$font-mono;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   cursor: pointer;
   transition: all 0.15s;
 
@@ -39,7 +39,7 @@
   &.active {
     background: var(--b3-theme-primary);
     color: var(--b3-theme-on-primary);
-    font-weight: $font-weight-semibold;
+    font-weight: $fw-semibold;
   }
 }
 
@@ -47,7 +47,7 @@
 @include stats.summary-cards-base;
 
 .summary-card .summary-value {
-  font-size: $font-size-lg; // 数据突出展示（摘要卡数值）
+  font-size: $t-lg; // 数据突出展示（摘要卡数值）
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -65,9 +65,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: $spacing-2;
-  padding: $spacing-10 $spacing-5;
-  font-size: $font-size-xs;
+  gap: $s-2;
+  padding: $s-10 $s-5;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
 
@@ -84,8 +84,8 @@
 
 .trend-empty {
   text-align: center;
-  padding: $spacing-10 $spacing-5;
-  font-size: $font-size-xs;
+  padding: $s-10 $s-5;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
 }
@@ -100,17 +100,17 @@
 .chart-card {
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
-  padding: $spacing-14px;
+  border-radius: stats.$r-sm;
+  padding: $s-px14;
 }
 
 // 卡片标题（图表卡与排行卡共用）
 .card-title {
   font-family: stats.$font-mono;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface);
-  margin-bottom: $spacing-3;
+  margin-bottom: $s-3;
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
@@ -118,19 +118,19 @@
 .chart-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-10px;
-  margin-bottom: $spacing-10px;
+  gap: $s-px10;
+  margin-bottom: $s-px10;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: $spacing-5px;
-  font-size: $font-size-xs;
+  gap: $s-px5;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface);
   cursor: pointer;
-  padding: $spacing-px $spacing-6px;
-  border-radius: stats.$radius-sm;
+  padding: $s-px3 $s-px6;
+  border-radius: stats.$r-sm;
   transition: opacity 0.15s, background 0.15s;
 
   &:hover {
@@ -172,14 +172,14 @@
 
 .y-label {
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   fill: var(--b3-theme-on-surface);
   opacity: 0.5;
 }
 
 .x-label {
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   fill: var(--b3-theme-on-surface);
   opacity: 0.4;
 }
@@ -209,25 +209,25 @@
   position: absolute;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
-  padding: $spacing-2 $spacing-10px;
-  font-size: $font-size-xs;
+  border-radius: stats.$r-sm;
+  padding: $s-2 $s-px10;
+  font-size: $t-xs;
   min-width: 120px;
   z-index: 10;
 }
 
 .tooltip-date {
   font-family: stats.$font-mono;
-  font-weight: $font-weight-semibold;
-  margin-bottom: $spacing-1;
+  font-weight: $fw-semibold;
+  margin-bottom: $s-1;
   color: var(--b3-theme-on-surface);
 }
 
 .tooltip-row {
   display: flex;
   align-items: center;
-  gap: $spacing-5px;
-  padding: $spacing-2px 0;
+  gap: $s-px5;
+  padding: $s-px2 0;
   color: var(--b3-theme-on-surface);
   opacity: 0.85;
 }
@@ -245,30 +245,30 @@
 
 .tooltip-val {
   font-family: stats.$font-mono;
-  font-weight: $font-weight-semibold;
+  font-weight: $fw-semibold;
 }
 
 // ========== Ranking Table ==========
 .ranking-card {
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
-  padding: $spacing-14px;
+  border-radius: stats.$r-sm;
+  padding: $s-px14;
 }
 
 .ranking-table {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2px;
+  gap: $s-px2;
 }
 
 .ranking-header {
   display: flex;
   align-items: center;
-  padding: $spacing-6px $spacing-1;
+  padding: $s-px6 $s-1;
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--b3-theme-on-surface-light);
@@ -278,10 +278,10 @@
 .ranking-row {
   display: flex;
   align-items: center;
-  padding: $spacing-2 $spacing-1;
-  font-size: $font-size-xs;
+  padding: $s-2 $s-1;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   transition: background 0.15s;
 
   &:hover {
@@ -296,26 +296,26 @@
   text-align: center;
   border-radius: 50%;
   flex-shrink: 0;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-light);
 
   // 前三名奖牌色徽章（装饰色，非语义色）
   &.rank-gold {
     background: rgba(stats.$color-rank-gold, 0.16);
     color: stats.$color-rank-gold-text;
-    font-weight: $font-weight-bold;
+    font-weight: $fw-bold;
   }
 
   &.rank-silver {
     background: rgba(stats.$color-rank-silver, 0.22);
     color: #4b5563;
-    font-weight: $font-weight-bold;
+    font-weight: $fw-bold;
   }
 
   &.rank-bronze {
     background: rgba(stats.$color-rank-bronze, 0.2);
     color: #92400e;
-    font-weight: $font-weight-bold;
+    font-weight: $fw-bold;
   }
 }
 
@@ -323,7 +323,7 @@
   flex: 1;
   display: flex;
   align-items: center;
-  gap: $spacing-6px;
+  gap: $s-px6;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -342,7 +342,7 @@
   text-align: right;
   flex-shrink: 0;
   font-family: stats.$font-mono;
-  font-weight: $font-weight-semibold;
+  font-weight: $fw-semibold;
 }
 
 .col-days {
@@ -363,22 +363,22 @@
   width: 120px;
   display: flex;
   align-items: center;
-  gap: $spacing-6px;
+  gap: $s-px6;
   flex-shrink: 0;
-  padding-left: $spacing-2;
+  padding-left: $s-2;
 }
 
 .bar-track {
   flex: 1;
   height: 6px;
   background: rgba(var(--b3-theme-on-surface-rgb), 0.06);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   overflow: hidden;
 }
 
 .bar-fill {
   height: 100%;
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   transition: width 0.3s ease;
   min-width: 2px;
 }
@@ -386,7 +386,7 @@
 .bar-label {
   width: 32px;
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-light);
   text-align: right;
 }

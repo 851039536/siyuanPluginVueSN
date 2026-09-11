@@ -9,20 +9,20 @@ $transition-fast: 0.12s;
 .wn-category-filter {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
   flex-wrap: wrap;
-  padding: 0 $spacing-10px;
+  padding: 0 $s-px10;
   // 与下方卡片列表留出间距
-  margin-bottom: $spacing-3;
+  margin-bottom: $s-3;
 }
 
 .wn-category-chip {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-2px $spacing-2;
-  border-radius: $vp-radius;
-  font-size: $font-size-xs;
+  gap: $s-1;
+  padding: $s-px2 $s-2;
+  border-radius: $r-base;
+  font-size: $t-xs;
   border: 1px solid var(--b3-border-color);
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);

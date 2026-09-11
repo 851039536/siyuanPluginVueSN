@@ -4,11 +4,11 @@
 .base-converter {
   display: flex;
   flex-direction: column;
-  gap: $spacing-3;
+  gap: $s-3;
 
   sub {
     font-size: 0.7em; // 相对字号，随父级缩放（非 px 硬编码）
     opacity: 0.5;
-    margin-left: $spacing-2px;
+    margin-left: $s-px2;
   }
 }

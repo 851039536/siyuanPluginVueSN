@@ -7,11 +7,11 @@
 .translate-panel {
   display: flex;
   flex-direction: column;
-  gap: $spacing-3;
+  gap: $s-3;
   height: 100%;
   min-height: 0;
-  padding: $spacing-3;
-  background: var(--b3-theme-background, $color-bg);
+  padding: $s-3;
+  background: var(--b3-theme-background, $c-bg);
 }
 
 // ========== 语言选择栏 ==========
@@ -22,21 +22,21 @@
 .language-bar {
   display: flex;
   align-items: flex-end;
-  gap: $spacing-2;
+  gap: $s-2;
   flex-wrap: wrap;
 
   .language-item {
     display: flex;
     flex-direction: column;
-    gap: $spacing-1;
+    gap: $s-1;
     min-width: 120px;
     flex: 1 1 0;
   }
 
   .language-label {
-    font-size: $font-size-xs;
-    font-weight: $font-weight-medium;
-    color: var(--b3-theme-secondary, $color-muted);
+    font-size: $t-xs;
+    font-weight: $fw-medium;
+    color: var(--b3-theme-secondary, $c-muted);
     line-height: 1;
   }
 
@@ -55,26 +55,26 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: $spacing-3;
+  gap: $s-3;
 }
 
 .translate-source {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  gap: $s-2;
   min-height: 0;
 
   .source-actions {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: $spacing-2;
+    gap: $s-2;
     flex-shrink: 0;
 
     .char-count {
       margin-right: auto;
-      font-size: $font-size-2xs;
-      color: var(--b3-theme-secondary, $color-muted);
+      font-size: $t-2xs;
+      color: var(--b3-theme-secondary, $c-muted);
       font-variant-numeric: tabular-nums;
     }
   }
@@ -91,39 +91,39 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--b3-border-color, $color-border);
-  border-radius: $vp-radius;
-  background: var(--b3-theme-background, $color-bg);
+  border: 1px solid var(--b3-border-color, $c-border);
+  border-radius: $r-base;
+  background: var(--b3-theme-background, $c-bg);
   overflow: hidden;
 
   .result-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: $spacing-2;
-    padding: $spacing-2 $spacing-3;
-    border-bottom: 1px solid var(--b3-border-color, $color-border);
-    background: var(--b3-theme-surface, $color-surface);
+    gap: $s-2;
+    padding: $s-2 $s-3;
+    border-bottom: 1px solid var(--b3-border-color, $c-border);
+    background: var(--b3-theme-surface, $c-surface);
     flex-shrink: 0;
 
     .result-title {
       display: inline-flex;
       align-items: center;
-      gap: $spacing-1;
-      font-size: $font-size-xs;
-      font-weight: $font-weight-semibold;
-      color: var(--b3-theme-on-background, $color-fg);
+      gap: $s-1;
+      font-size: $t-xs;
+      font-weight: $fw-semibold;
+      color: var(--b3-theme-on-background, $c-fg);
     }
   }
 
   .translate-result {
     flex: 1;
     min-height: 0;
-    padding: $spacing-3;
+    padding: $s-3;
     overflow-y: auto;
-    font-size: $font-size-sm;
-    line-height: $line-height-relaxed;
-    color: var(--b3-theme-on-background, $color-fg);
+    font-size: $t-sm;
+    line-height: $lh-relaxed;
+    color: var(--b3-theme-on-background, $c-fg);
     white-space: pre-wrap;
     overflow-wrap: break-word;
   }
@@ -135,19 +135,19 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: $spacing-2;
-    padding: $spacing-4;
-    color: var(--b3-theme-secondary, $color-muted);
+    gap: $s-2;
+    padding: $s-4;
+    color: var(--b3-theme-secondary, $c-muted);
     text-align: center;
 
     p {
       margin: 0;
-      font-size: $font-size-sm;
+      font-size: $t-sm;
       opacity: 0.65;
     }
 
     &.is-error {
-      color: var(--b3-theme-error, $color-danger);
+      color: var(--b3-theme-error, $c-danger);
 
       p {
         opacity: 1;
@@ -162,15 +162,15 @@
 .translate-footer {
   display: flex;
   align-items: center;
-  gap: $spacing-3;
+  gap: $s-3;
   flex-shrink: 0;
 
   .auto-hint {
     display: inline-flex;
     align-items: center;
-    gap: $spacing-1;
-    font-size: $font-size-2xs;
-    color: var(--b3-theme-secondary, $color-muted);
+    gap: $s-1;
+    font-size: $t-2xs;
+    color: var(--b3-theme-secondary, $c-muted);
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -182,9 +182,9 @@
 .loading-spinner {
   width: 18px;
   height: 18px;
-  border: 2px solid var(--b3-theme-surface-lighter, $color-surface);
-  border-top-color: var(--b3-theme-primary, $color-danger);
-  border-radius: $radius-full;
+  border: 2px solid var(--b3-theme-surface-lighter, $c-surface);
+  border-top-color: var(--b3-theme-primary, $c-danger);
+  border-radius: $r-full;
   animation: translate-spin 0.7s linear infinite;
 }
 

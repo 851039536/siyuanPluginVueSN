@@ -11,35 +11,35 @@
 .gcf-meta {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
   flex-wrap: wrap;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
 }
 
 .gcf-project {
-  font-weight: $font-weight-semibold;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-primary);
   @include text-ellipsis;
   max-width: 40%;
 }
 
 .gcf-hash {
-  font-family: $vp-mono;
+  font-family: $ff-mono;
   opacity: 0.5;
 }
 
 // 提交信息（弱化展示，单行超长省略）
 .gcf-message {
   margin: 0;
-  padding: $spacing-1 $spacing-2;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  line-height: $line-height-normal;
+  padding: $s-1 $s-2;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  line-height: $lh-normal;
   white-space: nowrap;
   @include text-ellipsis;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   color: var(--b3-theme-on-surface);
   opacity: 0.7;
 }

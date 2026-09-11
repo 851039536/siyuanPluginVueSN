@@ -14,9 +14,9 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  gap: $s-1;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
 }
 
 // 严重度色点
@@ -29,14 +29,14 @@
 
 // 分组计数徽章
 .gpr-debt-count {
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
-  font-weight: $font-weight-bold;
-  padding: 0 $spacing-5px;
-  border-radius: $radius-full;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
+  font-weight: $fw-bold;
+  padding: 0 $s-px5;
+  border-radius: $r-full;
   background: var(--b3-theme-surface);
   opacity: 0.6;
-  line-height: $line-height-normal;
+  line-height: $lh-normal;
 }
 
 // 文件路径列图标（技术债务行）
@@ -84,20 +84,20 @@
 // 趋势徽章（箭头 + 方向文案；颜色由趋势方向驱动，边框描边风格）
 .gpr-debt-trend-chip {
   flex-shrink: 0;
-  margin-left: $spacing-1;
-  padding: 0 $spacing-5px;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
+  margin-left: $s-1;
+  padding: 0 $s-px5;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
   border: 1px solid;
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   white-space: nowrap;
-  line-height: $line-height-tight;
+  line-height: $lh-tight;
 }
 
 // 展开箭头（收起时右指，展开时下指并旋转；淡色）
 .gpr-debt-expand-icon {
   flex-shrink: 0;
-  margin-left: $spacing-1;
+  margin-left: $s-1;
   opacity: 0.35;
   transition: transform 0.15s;
 
@@ -108,13 +108,13 @@
 }
 
 // 最后修改列（相对时间文本）
-// 96px 而非 72px：列内还有 $spacing-1 右内边距，可用宽度约 84px 才能完整容纳
+// 96px 而非 72px：列内还有 $s-1 右内边距，可用宽度约 84px 才能完整容纳
 // 中文「3 个月前」与英文「3 months ago」等较长文案（72px 时会被省略号截断）
 .gpr-cell--date {
   width: 96px;
   text-align: right;
-  padding-right: $spacing-1;
-  font-size: $font-size-2xs;
+  padding-right: $s-1;
+  font-size: $t-2xs;
   opacity: 0.75;
   @include text-ellipsis;
 }

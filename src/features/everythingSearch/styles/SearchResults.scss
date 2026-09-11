@@ -24,14 +24,14 @@
   }
 
   &__header {
-    padding: $spacing-1 $spacing-4;
+    padding: $s-1 $s-4;
     background: var(--b3-theme-surface-light);
     border-bottom: 1px solid var(--b3-border-color);
   }
 
   &__count {
-    font-size: $font-size-xs;
-    font-family: $font-zh;
+    font-size: $t-xs;
+    font-family: $ff-zh;
     color: var(--b3-theme-on-surface);
     opacity: 0.5;
   }
@@ -49,11 +49,11 @@
     }
 
     &::-webkit-scrollbar-thumb {
-      background: $color-surface;
-      border-radius: $radius-px;
+      background: $c-surface;
+      border-radius: $r-px3;
 
       &:hover {
-        background: $color-muted;
+        background: $c-muted;
       }
     }
   }
@@ -70,29 +70,29 @@
 
   &__emoji {
     font-size: 32px; // 图标尺寸（空状态 emoji，无精确 Token）
-    margin-bottom: $spacing-2;
+    margin-bottom: $s-2;
   }
 
   &__msg {
-    font-size: $font-size-xs;
-    font-family: $font-zh;
+    font-size: $t-xs;
+    font-family: $ff-zh;
     color: var(--b3-theme-on-surface);
     opacity: 0.5;
   }
 
   &__hint {
-    font-size: $font-size-xs;
+    font-size: $t-xs;
     color: var(--b3-theme-on-surface);
     opacity: 0.35;
-    margin-top: $spacing-2;
+    margin-top: $s-2;
 
     code {
-      font-family: $vp-mono;
-      padding: $spacing-1px $spacing-1;
+      font-family: $ff-mono;
+      padding: $s-px1 $s-1;
       background: var(--b3-theme-surface);
       border: 1px solid var(--b3-border-color);
-      border-radius: $radius-2px;
-      font-size: $font-size-2xs;
+      border-radius: $r-px2;
+      font-size: $t-2xs;
       opacity: 0.7;
     }
   }

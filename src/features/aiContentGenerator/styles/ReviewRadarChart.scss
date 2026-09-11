@@ -4,7 +4,7 @@
 .review-radar-chart {
   display: flex;
   justify-content: center;
-  padding: $spacing-1 $spacing-2 $spacing-2;
+  padding: $s-1 $s-2 $s-2;
 }
 
 .review-radar-svg {
@@ -69,9 +69,9 @@
 
 // 数据点旁分数标注：等宽字体 + 等级色
 .radar-score-label {
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
-  font-family: $vp-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
+  font-family: $ff-mono;
 
   &.level-high {
     fill: var(--b3-theme-success);
@@ -88,7 +88,7 @@
 
 // 轴端点维度标签：弱化处理，避免与数据视觉竞争
 .radar-axis-label {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   fill: var(--b3-theme-on-surface);
   opacity: 0.45;
 }

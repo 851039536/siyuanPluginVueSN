@@ -8,16 +8,16 @@
 
 // 区块标题（h4）
 @mixin section-title {
-  margin: 0 0 $spacing-3 0;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  margin: 0 0 $s-3 0;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface);
 }
 
 // 信息文本段落（含加粗强调色）
 @mixin info-text {
-  margin: $spacing-1 0;
-  font-size: $font-size-xs;
+  margin: $s-1 0;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface-variant);
 
   strong {
@@ -30,7 +30,7 @@
   width: 100%;
   height: 4px;
   background: var(--b3-theme-surface-lighter);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   outline: none;
   cursor: pointer;
 
@@ -56,12 +56,12 @@
 // 文本输入框
 @mixin text-input {
   width: 100%;
-  padding: $spacing-2 $spacing-3;
+  padding: $s-2 $s-3;
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 
   &:focus {
     outline: none;
@@ -77,9 +77,9 @@
 @mixin card-surface {
   background: var(--b3-theme-surface-lighter);
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $radius-base;
-  padding: $spacing-3;
-  margin-bottom: $spacing-4;
+  border-radius: $r-base;
+  padding: $s-3;
+  margin-bottom: $s-4;
 
   h4 {
     @include section-title;
@@ -90,7 +90,7 @@
 // compression/filter/watermark/qrcode 四处卡片共用
 @mixin setting-group {
   .setting-group {
-    margin-bottom: $spacing-3;
+    margin-bottom: $s-3;
 
     &:last-child {
       margin-bottom: 0;
@@ -98,16 +98,16 @@
 
     label {
       display: block;
-      margin-bottom: $spacing-2;
-      font-size: $font-size-2xs;
+      margin-bottom: $s-2;
+      font-size: $t-2xs;
       color: var(--b3-theme-on-surface-variant);
-      font-weight: $font-weight-medium;
+      font-weight: $fw-medium;
     }
 
     .checkbox-label {
       display: flex;
       align-items: center;
-      gap: $spacing-2;
+      gap: $s-2;
       cursor: pointer;
 
       input[type="checkbox"] {

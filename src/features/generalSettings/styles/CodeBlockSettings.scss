@@ -1,14 +1,14 @@
 @use '@/variables.scss' as *;
 
 .codeblock-settings {
-  padding: $spacing-3;
+  padding: $s-3;
   box-sizing: border-box;
 }
 
 .settings-container {
   display: flex;
   flex-direction: column;
-  gap: $spacing-3;
+  gap: $s-3;
   max-width: 100%;
 }
 
@@ -20,12 +20,12 @@
 .setting-item {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
+  gap: $s-1;
   width: 100%;
 }
 
 .label-icon {
-  font-size: $font-size-sm; // 图标包裹容器基准尺寸
+  font-size: $t-sm; // 图标包裹容器基准尺寸
   opacity: 0.8;
 }
 
@@ -33,21 +33,21 @@
 .style-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: $spacing-2;
+  gap: $s-2;
   width: 100%;
 }
 
 .style-card {
   position: relative;
-  padding: $spacing-2;
+  padding: $s-2;
   border: 1px solid var(--b3-theme-outline);
-  border-radius: $radius-md;
+  border-radius: $r-md;
   background: var(--b3-theme-surface);
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
   overflow: hidden;
 
   &:hover {
@@ -63,27 +63,27 @@
 }
 
 .style-card-name {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface);
   text-align: center;
 }
 
 .style-card-desc {
-  font-size: $font-size-2xs;
-  line-height: $line-height-tight;
+  font-size: $t-2xs;
+  line-height: $lh-tight;
   color: var(--b3-theme-on-surface-variant);
   text-align: center;
 }
 
 .style-card-check {
   position: absolute;
-  top: $spacing-1;
-  right: $spacing-1;
+  top: $s-1;
+  right: $s-1;
   // 选中角标固定尺寸（圆形勾标），无对应间距 Token
   width: 16px;
   height: 16px;
-  border-radius: $radius-full;
+  border-radius: $r-full;
   background: var(--b3-theme-primary);
   color: var(--b3-theme-on-primary);
   display: flex;
@@ -94,23 +94,23 @@
 
 /* 高级设置 */
 .advanced-settings {
-  padding: $spacing-3;
+  padding: $s-3;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-theme-outline);
-  border-radius: $radius-md;
+  border-radius: $r-md;
   display: flex;
   flex-direction: column;
-  gap: $spacing-3;
+  gap: $s-3;
 }
 
 .setting-header {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  gap: $s-1;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface);
-  padding-bottom: $spacing-1;
+  padding-bottom: $s-1;
   border-bottom: 1px solid var(--b3-theme-outline);
 }
 
@@ -118,27 +118,27 @@
 .slider-labels {
   display: flex;
   justify-content: space-between;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-variant);
-  font-weight: $font-weight-medium;
-  padding: 0 $spacing-px;
+  font-weight: $fw-medium;
+  padding: 0 $s-px3;
 }
 
 /* 开关行：共享 Switch 组件 + 右侧状态徽标 */
 .toggle-container {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  margin-top: $spacing-px;
+  gap: $s-2;
+  margin-top: $s-px3;
 }
 
 .toggle-description {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-variant);
-  font-weight: $font-weight-medium;
-  padding: $spacing-2px $spacing-1;
+  font-weight: $fw-medium;
+  padding: $s-px2 $s-1;
   background: var(--b3-theme-surface-variant);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   border: 1px solid var(--b3-theme-outline);
 }
 
@@ -146,22 +146,22 @@
 .border-settings {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
-  padding: $spacing-2;
+  gap: $s-2;
+  padding: $s-2;
   background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.02);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   border: 1px solid var(--b3-theme-outline);
 }
 
 .border-row {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
 
   label {
     min-width: 80px;
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-medium;
+    font-size: $t-2xs;
+    font-weight: $fw-medium;
     color: var(--b3-theme-on-surface-variant);
   }
 }
@@ -170,15 +170,15 @@
 .shadow-options {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .shadow-btn {
-  padding: $spacing-1 $spacing-3;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-medium;
+  padding: $s-1 $s-3;
+  font-size: $t-2xs;
+  font-weight: $fw-medium;
   border: 1px solid var(--b3-theme-outline);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   cursor: pointer;
@@ -199,22 +199,22 @@
 .font-settings {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
-  padding: $spacing-2;
+  gap: $s-2;
+  padding: $s-2;
   background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.02);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   border: 1px solid var(--b3-theme-outline);
 }
 
 .font-row {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
 
   label {
     min-width: 80px;
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-medium;
+    font-size: $t-2xs;
+    font-weight: $fw-medium;
     color: var(--b3-theme-on-surface-variant);
   }
 }
@@ -222,16 +222,16 @@
 .input-group {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
   flex: 1;
 }
 
 .text-input {
   flex: 1;
-  padding: $spacing-1 $spacing-2;
-  font-size: $font-size-xs;
+  padding: $s-1 $s-2;
+  font-size: $t-xs;
   border: 1px solid var(--b3-theme-outline);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
 
@@ -246,10 +246,10 @@
 }
 
 .font-select {
-  padding: $spacing-1 $spacing-2;
-  font-size: $font-size-2xs;
+  padding: $s-1 $s-2;
+  font-size: $t-2xs;
   border: 1px solid var(--b3-theme-outline);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   cursor: pointer;
@@ -269,22 +269,22 @@
 .color-settings {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
-  padding: $spacing-2;
+  gap: $s-1;
+  padding: $s-2;
   background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.02);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   border: 1px solid var(--b3-theme-outline);
 }
 
 .color-row {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
 
   label {
     min-width: 100px;
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-medium;
+    font-size: $t-2xs;
+    font-weight: $fw-medium;
     color: var(--b3-theme-on-surface-variant);
   }
 }
@@ -300,7 +300,7 @@
   .color-row {
     flex-direction: column;
     align-items: flex-start;
-    gap: $spacing-1;
+    gap: $s-1;
 
     label {
       min-width: auto;
@@ -324,30 +324,30 @@
 @media (max-width: 400px) {
   .codeblock-settings,
   .advanced-settings {
-    padding: $spacing-2;
+    padding: $s-2;
   }
 
   .advanced-settings {
-    gap: $spacing-2;
+    gap: $s-2;
   }
 
   .settings-container {
-    gap: $spacing-3;
+    gap: $s-3;
   }
 
   .style-cards {
     grid-template-columns: 1fr;
-    gap: $spacing-1;
+    gap: $s-1;
   }
 
   .style-card {
     flex-direction: row;
-    padding: $spacing-2;
+    padding: $s-2;
 
     .style-card-name {
       flex: 1;
       text-align: left;
-      font-size: $font-size-2xs;
+      font-size: $t-2xs;
     }
   }
 }

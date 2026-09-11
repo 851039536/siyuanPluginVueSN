@@ -10,7 +10,7 @@
 
 .fm-name-error {
   display: block;
-  margin-top: $spacing-1;
-  font-size: $font-size-2xs; // 校验提示为辅助文字
+  margin-top: $s-1;
+  font-size: $t-2xs; // 校验提示为辅助文字
   color: var(--b3-theme-error);
 }

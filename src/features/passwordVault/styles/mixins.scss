@@ -36,20 +36,20 @@
 // ============================================================
 
 @mixin icon-button-base {
-  padding: $spacing-6px $spacing-2;
+  padding: $s-px6 $s-2;
   background: transparent;
   border: none;
-  border-radius: $vp-radius;
+  border-radius: $r-base;
   cursor: pointer;
   @include flex-center;
 }
 
 @mixin input-base {
-  padding: $spacing-7px $spacing-10px;
+  padding: $s-px7 $s-px10;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
-  border-radius: $vp-radius;
-  font-size: $font-size-xs;
+  border-radius: $r-base;
+  font-size: $t-xs;
   color: var(--b3-theme-on-background);
   outline: none;
   transition: border-color 0.12s, box-shadow 0.12s;
@@ -67,16 +67,16 @@
 @mixin card-base {
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-lg;
+  border-radius: $r-lg;
   transition: border-color 0.12s;
 }
 
 @mixin heading-style {
-  font-size: $font-size-lg;
-  font-weight: $font-weight-semibold;
+  font-size: $t-lg;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-background);
   margin: 0;
-  font-family: $font-zh;
+  font-family: $ff-zh;
 }
 
 // ============================================================
@@ -108,16 +108,16 @@
 @mixin dialog-header {
   @include flex-row-gap(10px);
   justify-content: space-between;
-  padding: $spacing-3 $spacing-4;
+  padding: $s-3 $s-4;
   border-bottom: 1px solid var(--b3-border-color);
   background: var(--b3-theme-surface);
 
   .header-title {
     @include flex-row-gap(10px);
-    font-size: $font-size-lg;
-    font-weight: $font-weight-semibold;
+    font-size: $t-lg;
+    font-weight: $fw-semibold;
     color: var(--b3-theme-on-background);
-    font-family: $font-zh;
+    font-family: $ff-zh;
 
     :deep(.icon-wrapper),
     svg {
@@ -129,14 +129,14 @@
     }
 
     .entry-count {
-      font-size: $font-size-xs;
-      font-weight: $font-weight-semibold;
+      font-size: $t-xs;
+      font-weight: $fw-semibold;
       font-variant-numeric: tabular-nums;
-      font-family: $vp-mono;
+      font-family: $ff-mono;
       color: var(--b3-theme-on-surface-light);
       background: var(--b3-theme-surface-light);
-      padding: $spacing-2px $spacing-2;
-      border-radius: $radius-sm;
+      padding: $s-px2 $s-2;
+      border-radius: $r-sm;
     }
   }
 }
@@ -146,16 +146,16 @@
 // ============================================================
 
 @mixin error-message {
-  @include flex-row-gap($spacing-2);
-  padding: $spacing-10px $spacing-14px;
-  background: rgba($color-danger, 0.1);
-  color: $color-danger;
-  border: 1px solid $color-danger;
-  border-radius: $vp-radius;
-  font-size: $font-size-xs;
+  @include flex-row-gap($s-2);
+  padding: $s-px10 $s-px14;
+  background: rgba($c-danger, 0.1);
+  color: $c-danger;
+  border: 1px solid $c-danger;
+  border-radius: $r-base;
+  font-size: $t-xs;
 
   :deep(.icon-wrapper) {
-    color: $color-danger;
+    color: $c-danger;
   }
 }
 
@@ -164,8 +164,8 @@
 // ============================================================
 
 @mixin uppercase-label {
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--b3-theme-on-surface);

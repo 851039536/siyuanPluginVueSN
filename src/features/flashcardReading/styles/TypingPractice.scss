@@ -9,19 +9,19 @@ $fc-pad-nav: 14px; // 14px 水平内边距（无匹配全局Token）
   .typing-practice {
     display: flex;
     flex-direction: column;
-    gap: $spacing-4;
+    gap: $s-4;
     overflow: hidden;
 
     .typing-controls {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: $spacing-2;
+      gap: $s-2;
       flex-shrink: 0;
 
       &__options {
         display: flex;
-        gap: $spacing-1;
+        gap: $s-1;
         flex-wrap: wrap;
       }
 
@@ -35,7 +35,7 @@ $fc-pad-nav: 14px; // 14px 水平内边距（无匹配全局Token）
       .typing-session-config {
         &__label {
           @include fc-label;
-          font-size: $font-size-2xs;
+          font-size: $t-2xs;
         }
 
         &__btn {
@@ -45,13 +45,13 @@ $fc-pad-nav: 14px; // 14px 水平内边距（无匹配全局Token）
           width: 22px;
           height: 22px;
           border: 1px solid var(--b3-border-color);
-          border-radius: $vp-radius;
+          border-radius: $r-base;
           background: var(--b3-theme-surface-lighter);
           color: var(--b3-theme-on-surface);
           cursor: pointer;
-          font-size: $font-size-xs;
-          font-weight: $font-weight-semibold;
-          line-height: $line-height-tight;
+          font-size: $t-xs;
+          font-weight: $fw-semibold;
+          line-height: $lh-tight;
           transition: border-color $fc-transition, color $fc-transition;
 
           &:hover {
@@ -61,16 +61,16 @@ $fc-pad-nav: 14px; // 14px 水平内边距（无匹配全局Token）
         }
 
         &__value {
-          font-family: $vp-mono;
-          font-size: $font-size-xs;
-          font-weight: $font-weight-bold;
+          font-family: $ff-mono;
+          font-size: $t-xs;
+          font-weight: $fw-bold;
           min-width: 24px;
           text-align: center;
         }
 
         &__unit {
           @include fc-label;
-          font-size: $font-size-2xs;
+          font-size: $t-2xs;
         }
       }
     }
@@ -79,14 +79,14 @@ $fc-pad-nav: 14px; // 14px 水平内边距（无匹配全局Token）
       display: inline-flex;
       align-items: center;
       gap: $fc-gap-tight;
-      padding: $spacing-1 $fc-pad-h;
+      padding: $s-1 $fc-pad-h;
       border: 1px solid var(--b3-border-color);
-      border-radius: $vp-radius;
+      border-radius: $r-base;
       background: var(--b3-theme-surface-lighter);
       color: var(--b3-theme-on-surface);
       cursor: pointer;
-      font-size: $font-size-xs;
-      font-weight: $font-weight-semibold;
+      font-size: $t-xs;
+      font-weight: $fw-semibold;
       transition: border-color $fc-transition, opacity $fc-transition, background-color $fc-transition, color $fc-transition;
       opacity: 0.65;
 
@@ -103,8 +103,8 @@ $fc-pad-nav: 14px; // 14px 水平内边距（无匹配全局Token）
       }
 
       &__label {
-        font-family: $vp-mono;
-        font-weight: $font-weight-bold;
+        font-family: $ff-mono;
+        font-weight: $fw-bold;
       }
 
       &__icon {
@@ -113,7 +113,7 @@ $fc-pad-nav: 14px; // 14px 水平内边距（无匹配全局Token）
 
       &__text {
         @include fc-label;
-        font-size: $font-size-2xs;
+        font-size: $t-2xs;
         opacity: 1;
         color: inherit;
       }
@@ -123,8 +123,8 @@ $fc-pad-nav: 14px; // 14px 水平内边距（无匹配全局Token）
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: $spacing-4;
-      padding: $spacing-2 0;
+      gap: $s-4;
+      padding: $s-2 0;
       flex-shrink: 0;
 
       .typing-reference {
@@ -135,13 +135,13 @@ $fc-pad-nav: 14px; // 14px 水平内边距（无匹配全局Token）
 
         &__content {
           margin: 0;
-          padding: $spacing-2 $spacing-3;
-          font-size: $font-size-xs;
-          line-height: $line-height-normal;
+          padding: $s-2 $s-3;
+          font-size: $t-xs;
+          line-height: $lh-normal;
           color: var(--b3-theme-on-background);
           background: rgba(var(--b3-theme-primary-rgb, 35, 131, 226), 0.06);
           border: 1px solid rgba(var(--b3-theme-primary-rgb, 35, 131, 226), 0.15);
-          border-radius: $vp-radius;
+          border-radius: $r-base;
           word-break: break-word;
           white-space: pre-wrap;
           height: 140px;
@@ -152,26 +152,26 @@ $fc-pad-nav: 14px; // 14px 水平内边距（无匹配全局Token）
           display: flex;
           justify-content: center;
           align-items: center;
-          gap: $spacing-2;
-          margin-top: $spacing-1;
+          gap: $s-2;
+          margin-top: $s-1;
         }
 
         &__meta {
           display: flex;
           align-items: center;
-          gap: $spacing-1;
+          gap: $s-1;
         }
       }
     }
 
     .typing-hint {
       @include fc-label;
-      font-size: $font-size-xs;
+      font-size: $t-xs;
     }
 
     .typing-target {
       display: flex;
-      gap: $spacing-1;
+      gap: $s-1;
       flex-wrap: wrap;
       justify-content: center;
 
@@ -182,25 +182,25 @@ $fc-pad-nav: 14px; // 14px 水平内边距（无匹配全局Token）
         width: 32px;
         height: 40px;
         // 字号白名单：打字字符格为数据突出展示，允许超出两级字号制
-        font-size: $font-size-lg;
-        font-weight: $font-weight-semibold;
-        font-family: $vp-mono;
-        border-radius: $vp-radius;
+        font-size: $t-lg;
+        font-weight: $fw-semibold;
+        font-family: $ff-mono;
+        border-radius: $r-base;
         background: var(--b3-theme-surface-lighter);
         color: var(--b3-theme-on-background);
         border: 1px solid var(--b3-border-color);
         transition: background-color $fc-transition, border-color $fc-transition, color $fc-transition;
 
         &--correct {
-          background: rgba($color-success, 0.12);
-          border-color: $color-success;
-          color: $color-success;
+          background: rgba($c-success, 0.12);
+          border-color: $c-success;
+          color: $c-success;
         }
 
         &--incorrect {
-          background: rgba($color-danger, 0.08);
-          border-color: $color-danger;
-          color: $color-danger;
+          background: rgba($c-danger, 0.08);
+          border-color: $c-danger;
+          color: $c-danger;
         }
       }
     }
@@ -214,12 +214,12 @@ $fc-pad-nav: 14px; // 14px 水平内边距（无匹配全局Token）
       width: 100%;
       padding: $fc-pad-h $fc-pad-nav;
       // 字号白名单：输入区为数据突出展示，与字符格字号对齐
-      font-size: $font-size-lg;
-      font-family: $vp-mono;
+      font-size: $t-lg;
+      font-family: $ff-mono;
       text-align: center;
-      letter-spacing: $spacing-1;
+      letter-spacing: $s-1;
       border: 1px solid var(--b3-border-color);
-      border-radius: $vp-radius;
+      border-radius: $r-base;
       background: var(--b3-theme-background);
       color: var(--b3-theme-on-background);
       outline: none;
@@ -232,7 +232,7 @@ $fc-pad-nav: 14px; // 14px 水平内边距（无匹配全局Token）
 
       &::placeholder {
         color: var(--b3-theme-secondary);
-        font-size: $font-size-xs;
+        font-size: $t-xs;
         letter-spacing: normal;
       }
     }
@@ -240,36 +240,36 @@ $fc-pad-nav: 14px; // 14px 水平内边距（无匹配全局Token）
     .typing-result {
       display: flex;
       align-items: center;
-      gap: $spacing-2;
-      font-size: $font-size-xs;
-      font-weight: $font-weight-semibold;
-      font-family: $vp-mono;
+      gap: $s-2;
+      font-size: $t-xs;
+      font-weight: $fw-semibold;
+      font-family: $ff-mono;
       padding: $fc-gap-tight $fc-pad-nav;
-      border-radius: $vp-radius;
+      border-radius: $r-base;
       border: 1px solid transparent;
 
       &--correct {
-        color: $color-success;
-        background: rgba($color-success, 0.08);
-        border-color: rgba($color-success, 0.3);
+        color: $c-success;
+        background: rgba($c-success, 0.08);
+        border-color: rgba($c-success, 0.3);
       }
 
       &--incorrect {
-        color: $color-danger;
-        background: rgba($color-danger, 0.08);
-        border-color: rgba($color-danger, 0.3);
+        color: $c-danger;
+        background: rgba($c-danger, 0.08);
+        border-color: rgba($c-danger, 0.3);
       }
     }
 
     .typing-streak {
-      font-size: $font-size-xs;
-      font-weight: $font-weight-bold;
-      color: $color-accent;
-      font-family: $vp-mono;
+      font-size: $t-xs;
+      font-weight: $fw-bold;
+      color: $c-accent;
+      font-family: $ff-mono;
       animation: streak-pulse 0.4s ease;
 
       &--inline {
-        margin-left: $spacing-2;
+        margin-left: $s-2;
       }
     }
 
@@ -278,10 +278,10 @@ $fc-pad-nav: 14px; // 14px 水平内边距（无匹配全局Token）
       align-items: center;
       justify-content: center;
       gap: $fc-gap-tight;
-      padding: $fc-gap-tight $spacing-3;
-      font-size: $font-size-xs;
-      font-weight: $font-weight-semibold;
-      font-family: $vp-mono;
+      padding: $fc-gap-tight $s-3;
+      font-size: $t-xs;
+      font-weight: $fw-semibold;
+      font-family: $ff-mono;
       color: var(--b3-theme-on-surface);
       opacity: 0.6;
       border-top: 1px solid var(--b3-border-color);
@@ -294,13 +294,13 @@ $fc-pad-nav: 14px; // 14px 水平内边距（无匹配全局Token）
     }
 
     .typing-timer {
-      font-family: $vp-mono;
-      font-weight: $font-weight-semibold;
+      font-family: $ff-mono;
+      font-weight: $fw-semibold;
       color: var(--b3-theme-primary);
 
       &__icon {
-        vertical-align: -$spacing-2px;
-        margin-right: $spacing-2px;
+        vertical-align: -$s-px2;
+        margin-right: $s-px2;
       }
     }
 
@@ -309,23 +309,23 @@ $fc-pad-nav: 14px; // 14px 水平内边距（无匹配全局Token）
       flex-direction: column;
       align-items: center;
       gap: $fc-pad-h;
-      padding: $spacing-4;
+      padding: $s-4;
       border: 1px solid var(--b3-border-color);
-      border-radius: $vp-radius;
+      border-radius: $r-base;
       background: var(--b3-theme-surface-lighter);
 
       &__title {
-        font-size: $font-size-xs;
-        font-weight: $font-weight-bold;
+        font-size: $t-xs;
+        font-weight: $fw-bold;
         color: var(--b3-theme-primary);
       }
 
       &__stats {
         display: flex;
         align-items: center;
-        gap: $spacing-2;
-        font-size: $font-size-xs;
-        font-family: $vp-mono;
+        gap: $s-2;
+        font-size: $t-xs;
+        font-family: $ff-mono;
         color: var(--b3-theme-on-surface);
       }
     }

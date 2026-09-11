@@ -8,7 +8,7 @@
   height: 100%;
   overflow: hidden;
   // 根容器显式基准字号（Dock 面板兜底规则）
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   background: var(--b3-theme-background);
 }
 
@@ -32,14 +32,14 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: $spacing-3;
+  gap: $s-3;
   flex: 1;
   color: var(--b3-theme-on-surface);
 }
 
 .mb-start-text {
-  font-size: $font-size-xs;
-  color: $color-muted;
+  font-size: $t-xs;
+  color: $c-muted;
 }
 
 // 网页视图 iframe
@@ -71,7 +71,7 @@
   justify-content: center;
   background: rgba(0, 0, 0, 0.5);
   // 弹窗遮罩显式基准字号
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 }
 
 .mb-dialog-panel {
@@ -79,8 +79,8 @@
   flex-direction: column;
   width: min(360px, 80vw);
   background: var(--b3-theme-background);
-  border: 1px solid $color-border;
-  border-radius: $vp-radius;
+  border: 1px solid $c-border;
+  border-radius: $r-base;
   overflow: hidden;
 }
 
@@ -88,48 +88,48 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-3 $spacing-4;
-  border-bottom: 1px solid $color-border;
+  padding: $s-3 $s-4;
+  border-bottom: 1px solid $c-border;
 }
 
 .mb-dialog-title {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-background);
 }
 
 .mb-dialog-body {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
-  padding: $spacing-4;
+  gap: $s-2;
+  padding: $s-4;
 }
 
 .mb-dialog-label {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
 }
 
 .mb-dialog-input {
   width: 100%;
-  padding: $spacing-2 $spacing-3;
-  border: 1px solid $color-border;
-  border-radius: $vp-radius;
+  padding: $s-2 $s-3;
+  border: 1px solid $c-border;
+  border-radius: $r-base;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   outline: none;
   transition: border-color 0.15s;
 
   &:focus {
-    border-color: $color-info;
+    border-color: $c-info;
   }
 }
 
 .mb-dialog-footer {
   display: flex;
   justify-content: flex-end;
-  gap: $spacing-2;
-  padding: $spacing-3 $spacing-4;
-  border-top: 1px solid $color-border;
+  gap: $s-2;
+  padding: $s-3 $s-4;
+  border-top: 1px solid $c-border;
 }

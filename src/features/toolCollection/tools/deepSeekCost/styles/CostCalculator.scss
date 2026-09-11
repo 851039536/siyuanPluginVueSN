@@ -4,20 +4,20 @@
 .dc-calc {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  gap: $s-2;
 
   .dc-model-row {
     display: flex;
-    gap: $spacing-1;
+    gap: $s-1;
     flex-wrap: wrap;
 
     .dc-model-btn {
-      padding: $spacing-1 $spacing-3;
-      font-family: $vp-mono;
-      font-size: $font-size-2xs;
+      padding: $s-1 $s-3;
+      font-family: $ff-mono;
+      font-size: $t-2xs;
       color: var(--b3-theme-on-surface);
       border: 1px solid var(--b3-border-color);
-      border-radius: $vp-radius;
+      border-radius: $r-base;
       background: var(--b3-theme-surface);
       cursor: pointer;
       transition: border-color 0.12s, color 0.12s;
@@ -29,7 +29,7 @@
       &.active {
         color: var(--b3-theme-primary);
         border-color: var(--b3-theme-primary);
-        font-weight: $font-weight-semibold;
+        font-weight: $fw-semibold;
       }
     }
   }
@@ -37,11 +37,11 @@
   .dc-fields {
     display: flex;
     flex-direction: column;
-    gap: $spacing-2;
+    gap: $s-2;
 
     .dc-input-item {
       .dc-label {
-        margin-bottom: $spacing-px;
+        margin-bottom: $s-px3;
       }
     }
   }
@@ -52,11 +52,11 @@
     align-items: center;
 
     .dc-example-btn {
-      padding: $spacing-1 $spacing-2;
-      font-size: $font-size-2xs;
+      padding: $s-1 $s-2;
+      font-size: $t-2xs;
       color: var(--b3-theme-primary);
       border: 1px solid var(--b3-border-color);
-      border-radius: $vp-radius;
+      border-radius: $r-base;
       background: transparent;
       cursor: pointer;
 
@@ -69,10 +69,10 @@
   .dc-result {
     display: flex;
     flex-direction: column;
-    gap: $spacing-2;
-    padding: $spacing-3;
+    gap: $s-2;
+    padding: $s-3;
     border: 1px solid var(--b3-border-color);
-    border-radius: $vp-radius;
+    border-radius: $r-base;
     background: var(--b3-theme-surface);
 
     .dc-total-row {
@@ -82,9 +82,9 @@
     }
 
     .dc-total {
-      font-family: $vp-mono;
-      font-size: $font-size-sm; // 数据突出展示，注释说明用途
-      font-weight: $font-weight-semibold;
+      font-family: $ff-mono;
+      font-size: $t-sm; // 数据突出展示，注释说明用途
+      font-weight: $fw-semibold;
       color: var(--b3-theme-primary);
     }
 
@@ -94,8 +94,8 @@
       align-items: baseline;
 
       .dc-hit-value {
-        font-family: $vp-mono;
-        font-weight: $font-weight-semibold;
+        font-family: $ff-mono;
+        font-weight: $fw-semibold;
         color: var(--b3-theme-primary);
       }
     }
@@ -103,18 +103,18 @@
     .dc-detail-list {
       display: flex;
       flex-direction: column;
-      gap: $spacing-px;
+      gap: $s-px3;
       border-top: 1px solid var(--b3-border-color);
-      padding-top: $spacing-2;
+      padding-top: $s-2;
 
       .dc-detail {
         display: flex;
         justify-content: space-between;
-        font-size: $font-size-2xs;
+        font-size: $t-2xs;
         color: var(--b3-theme-on-surface);
 
         span:last-child {
-          font-family: $vp-mono;
+          font-family: $ff-mono;
           color: var(--b3-theme-on-background);
         }
       }

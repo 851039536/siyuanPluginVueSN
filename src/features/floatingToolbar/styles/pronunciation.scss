@@ -7,7 +7,7 @@
 @use "@/variables.scss" as g;
 
 // 本地 Codex Token（NOT in @/variables.scss）
-// $vp-radius 已移至全局 @/variables.scss，此处不再重复定义
+// $r-base 已移至全局 @/variables.scss，此处不再重复定义
 
 // ========================================
 // 遮罩层和对话框主体
@@ -49,7 +49,7 @@
 .input-section {
   display: flex;
   align-items: center;
-  gap: g.$spacing-2;
+  gap: g.$s-2;
 
   .input-main {
     flex: 1;
@@ -65,29 +65,29 @@
 // 结果区域
 // ========================================
 .result-section {
-  @include ft.flex-column(g.$spacing-3);
-  padding: g.$spacing-4;
+  @include ft.flex-column(g.$s-3);
+  padding: g.$s-4;
   background: var(--b3-theme-surface);
-  border-radius: g.$radius-base;
+  border-radius: g.$r-base;
   border: 1px solid var(--b3-theme-surface-lighter);
 }
 
 .result-header {
   @include ft.flex-between;
-  gap: g.$spacing-3;
+  gap: g.$s-3;
 }
 
 .result-title {
   display: flex;
   align-items: center;
-  gap: g.$spacing-2;
+  gap: g.$s-2;
   flex-wrap: wrap;
 
   .result-label {
     @include ft.input-label;
     display: flex;
     align-items: center;
-    gap: g.$spacing-1;
+    gap: g.$s-1;
     margin: 0;
   }
 }
@@ -95,17 +95,17 @@
 .result-actions {
   display: flex;
   align-items: center;
-  gap: g.$spacing-2;
+  gap: g.$s-2;
 }
 
 // 来源标识徽章
 .source-badge {
-  font-size: g.$font-size-2xs;
-  padding: g.$spacing-1 g.$spacing-2;
-  border-radius: g.$radius-lg;
+  font-size: g.$t-2xs;
+  padding: g.$s-1 g.$s-2;
+  border-radius: g.$r-lg;
   background: var(--b3-theme-surface-lighter);
   color: var(--b3-theme-on-surface-variant);
-  font-weight: g.$font-weight-medium;
+  font-weight: g.$fw-medium;
   white-space: nowrap;
 
   &.local {
@@ -115,19 +115,19 @@
 }
 
 .result-content {
-  font-size: g.$font-size-sm;
-  line-height: g.$line-height-relaxed;
+  font-size: g.$t-sm;
+  line-height: g.$lh-relaxed;
   color: var(--b3-theme-on-background);
   word-break: break-word;
-  padding: g.$spacing-2 0;
+  padding: g.$s-2 0;
 
   :deep(strong) {
     color: var(--b3-theme-on-background);
-    font-weight: g.$font-weight-semibold;
+    font-weight: g.$fw-semibold;
   }
 
   @media (max-width: ft.$breakpoint-sm) {
-    line-height: g.$line-height-normal;
+    line-height: g.$lh-normal;
   }
 }
 
@@ -139,7 +139,7 @@
 }
 
 .empty-icon {
-  margin-bottom: g.$spacing-4;
+  margin-bottom: g.$s-4;
   color: var(--b3-theme-primary-lighter);
   width: 48px;
   height: 48px;
@@ -147,10 +147,10 @@
 }
 
 .empty-text {
-  font-size: g.$font-size-sm;
+  font-size: g.$t-sm;
   margin: 0;
   color: var(--b3-theme-on-surface);
-  line-height: g.$line-height-normal;
+  line-height: g.$lh-normal;
 }
 
 // 生成中加载区域
@@ -182,57 +182,57 @@
 
 .add-card-header {
   @include ft.flex-between;
-  padding: g.$spacing-3 g.$spacing-4;
+  padding: g.$s-3 g.$s-4;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
   background: var(--b3-theme-surface);
 
   h4 {
     margin: 0;
-    font-size: g.$font-size-sm;
-    font-weight: g.$font-weight-semibold;
+    font-size: g.$t-sm;
+    font-weight: g.$fw-semibold;
     color: var(--b3-theme-on-background);
   }
 }
 
 .add-card-body {
-  padding: g.$spacing-4;
-  @include ft.flex-column(g.$spacing-3);
+  padding: g.$s-4;
+  @include ft.flex-column(g.$s-3);
 }
 
 .add-card-info {
   background: var(--b3-theme-surface);
-  border-radius: g.$radius-sm;
-  padding: g.$spacing-3;
+  border-radius: g.$r-sm;
+  padding: g.$s-3;
   border: 1px solid var(--b3-theme-surface-lighter);
 }
 
 .info-item {
   display: flex;
   align-items: center;
-  gap: g.$spacing-2;
+  gap: g.$s-2;
 
   .info-label {
-    font-size: g.$font-size-xs;
+    font-size: g.$t-xs;
     color: var(--b3-theme-on-surface-variant);
-    font-weight: g.$font-weight-medium;
+    font-weight: g.$fw-medium;
   }
 
   .info-value {
-    font-size: g.$font-size-sm;
+    font-size: g.$t-sm;
     color: var(--b3-theme-on-background);
-    font-weight: g.$font-weight-semibold;
+    font-weight: g.$fw-semibold;
   }
 }
 
 .form-group {
-  @include ft.flex-column(g.$spacing-2);
+  @include ft.flex-column(g.$s-2);
 }
 
 .add-card-footer {
   display: flex;
   justify-content: flex-end;
-  gap: g.$spacing-3;
-  padding: g.$spacing-3 g.$spacing-4;
+  gap: g.$s-3;
+  padding: g.$s-3 g.$s-4;
   border-top: 1px solid var(--b3-theme-surface-lighter);
   background: var(--b3-theme-surface);
 }

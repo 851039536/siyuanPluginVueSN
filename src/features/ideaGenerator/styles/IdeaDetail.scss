@@ -6,7 +6,7 @@
   flex-direction: column;
   flex: 0 1 300px;
   min-width: 280px;
-  border-left: 1px solid $color-border;
+  border-left: 1px solid $c-border;
   background: var(--b3-theme-surface);
   overflow: hidden;
 }
@@ -14,42 +14,42 @@
 .ig-detail-header {
   display: flex;
   align-items: center;
-  padding: $spacing-3 $spacing-4;
-  border-bottom: 1px solid $color-border;
+  padding: $s-3 $s-4;
+  border-bottom: 1px solid $c-border;
 }
 
 .ig-detail-title {
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: $color-muted;
+  color: $c-muted;
 }
 
 .ig-detail-body {
   display: flex;
   flex-direction: column;
-  gap: $spacing-3;
+  gap: $s-3;
   flex: 1;
   min-height: 0;
-  padding: $spacing-4;
+  padding: $s-4;
   overflow-y: auto;
 }
 
 .ig-detail-idea {
   margin: 0;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  line-height: $line-height-normal;
+  font-size: $t-sm;
+  font-weight: $fw-semibold;
+  line-height: $lh-normal;
   color: var(--b3-theme-on-background);
   overflow-wrap: break-word;
 }
 
 .ig-detail-desc {
   margin: 0;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-normal;
-  line-height: $line-height-normal;
+  font-size: $t-2xs;
+  font-weight: $fw-normal;
+  line-height: $lh-normal;
   color: var(--b3-theme-on-surface);
   white-space: pre-wrap;
   overflow-wrap: break-word;
@@ -58,32 +58,32 @@
 .ig-detail-section {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .ig-detail-section-label {
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: $color-muted;
+  color: $c-muted;
 }
 
 .ig-detail-plan {
   min-height: 120px;
-  border: 1px solid $color-border;
-  border-radius: $vp-radius;
+  border: 1px solid $c-border;
+  border-radius: $r-base;
   background: var(--b3-theme-background);
   overflow: hidden;
 }
 
 .ig-detail-plan-text {
   margin: 0;
-  padding: $spacing-3;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-normal;
-  line-height: $line-height-relaxed;
+  padding: $s-3;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-normal;
+  line-height: $lh-relaxed;
   color: var(--b3-theme-on-background);
   white-space: pre-wrap;
   overflow-wrap: break-word;
@@ -91,15 +91,15 @@
 
 .ig-detail-hint {
   margin: 0;
-  padding: $spacing-4;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-normal;
-  line-height: $line-height-normal;
-  color: $color-muted;
+  padding: $s-4;
+  font-size: $t-2xs;
+  font-weight: $fw-normal;
+  line-height: $lh-normal;
+  color: $c-muted;
 }
 
 .ig-detail-hint--error {
-  color: $color-danger-bright;
+  color: $c-danger-bright;
 }
 
 .ig-detail-empty {
@@ -107,40 +107,40 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: $spacing-3;
+  gap: $s-3;
   flex: 1;
-  padding: $spacing-6;
-  color: $color-muted;
+  padding: $s-6;
+  color: $c-muted;
 }
 
 .ig-detail-empty-text {
   margin: 0;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-normal;
-  line-height: $line-height-normal;
+  font-size: $t-2xs;
+  font-weight: $fw-normal;
+  line-height: $lh-normal;
   text-align: center;
 }
 
 .ig-detail-actions {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-3 $spacing-4;
-  border-top: 1px solid $color-border;
+  gap: $s-2;
+  padding: $s-3 $s-4;
+  border-top: 1px solid $c-border;
 }
 
 .ig-detail-btn {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-1 $spacing-3;
-  border: 1px solid $color-border;
-  border-radius: $vp-radius;
+  gap: $s-1;
+  padding: $s-1 $s-3;
+  border: 1px solid $c-border;
+  border-radius: $r-base;
   background: transparent;
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-medium;
-  line-height: $line-height-normal;
+  font-size: $t-2xs;
+  font-weight: $fw-medium;
+  line-height: $lh-normal;
   cursor: pointer;
   transition:
     color 0.15s,
@@ -149,7 +149,7 @@
 
   &:hover {
     color: var(--b3-theme-on-background);
-    border-color: $color-accent;
+    border-color: $c-accent;
   }
 
   &:disabled {
@@ -159,8 +159,8 @@
 }
 
 .ig-detail-btn--primary {
-  border-color: $color-accent;
-  color: $color-accent;
+  border-color: $c-accent;
+  color: $c-accent;
 
   &:hover {
     background: rgba(251, 191, 36, 0.08);

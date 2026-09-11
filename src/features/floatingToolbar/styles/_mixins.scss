@@ -43,17 +43,17 @@
   pointer-events: auto;
 
   @media (max-width: $breakpoint-md) {
-    padding: g.$spacing-2;
+    padding: g.$s-2;
   }
 
   @media (max-width: $breakpoint-sm) {
-    padding: g.$spacing-1;
+    padding: g.$s-1;
   }
 }
 
 @mixin dialog-container($max-width: $dialog-max-width) {
   background: var(--b3-theme-background);
-  border-radius: $radius-xl;
+  border-radius: $r-xl;
   width: 100%;
   max-width: $max-width;
   max-height: 85vh;
@@ -70,7 +70,7 @@
 
 @mixin dialog-header($gradient: false) {
   @include flex-between;
-  padding: g.$spacing-4 g.$spacing-5;
+  padding: g.$s-4 g.$s-5;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
   flex-shrink: 0;
 
@@ -81,7 +81,7 @@
   }
 
   @media (max-width: $breakpoint-sm) {
-    padding: g.$spacing-3 g.$spacing-4;
+    padding: g.$s-3 g.$s-4;
   }
 }
 
@@ -89,9 +89,9 @@
 @mixin dialog-title($light: false) {
   display: flex;
   align-items: center;
-  gap: g.$spacing-2;
-  font-size: g.$font-size-base;
-  font-weight: g.$font-weight-semibold;
+  gap: g.$s-2;
+  font-size: g.$t-base;
+  font-weight: g.$fw-semibold;
 
   @if $light {
     color: var(--b3-theme-on-primary);
@@ -101,8 +101,8 @@
   }
 
   @media (max-width: $breakpoint-sm) {
-    font-size: g.$font-size-sm;
-    gap: g.$spacing-1;
+    font-size: g.$t-sm;
+    gap: g.$s-1;
   }
 }
 
@@ -127,31 +127,31 @@
 @mixin dialog-body {
   flex: 1;
   overflow-y: auto;
-  padding: g.$spacing-5;
-  @include flex-column(g.$spacing-4);
+  padding: g.$s-5;
+  @include flex-column(g.$s-4);
 
   @media (max-width: $breakpoint-md) {
-    padding: g.$spacing-4;
-    gap: g.$spacing-3;
+    padding: g.$s-4;
+    gap: g.$s-3;
   }
 
   @media (max-width: $breakpoint-sm) {
-    padding: g.$spacing-3;
-    gap: g.$spacing-2;
+    padding: g.$s-3;
+    gap: g.$s-2;
   }
 }
 
 @mixin dialog-footer {
   display: flex;
-  gap: g.$spacing-3;
-  padding: g.$spacing-4 g.$spacing-5;
+  gap: g.$s-3;
+  padding: g.$s-4 g.$s-5;
   border-top: 1px solid var(--b3-theme-surface-lighter);
   background: var(--b3-theme-surface);
   flex-shrink: 0;
 
   @media (max-width: $breakpoint-sm) {
-    padding: g.$spacing-3 g.$spacing-4;
-    gap: g.$spacing-2;
+    padding: g.$s-3 g.$s-4;
+    gap: g.$s-2;
     flex-direction: column;
   }
 }
@@ -162,12 +162,12 @@
 
 @mixin input-base {
   width: 100%;
-  padding: g.$spacing-2 g.$spacing-3;
+  padding: g.$s-2 g.$s-3;
   border: 1px solid var(--b3-theme-outline);
-  border-radius: g.$radius-base;
+  border-radius: g.$r-base;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
-  font-size: g.$font-size-sm;
+  font-size: g.$t-sm;
   outline: none;
 
   &:focus {
@@ -177,8 +177,8 @@
 }
 
 @mixin input-label {
-  font-size: g.$font-size-xs;
-  font-weight: g.$font-weight-semibold;
+  font-size: g.$t-xs;
+  font-weight: g.$fw-semibold;
   color: var(--b3-theme-primary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -189,16 +189,16 @@
 // ========================================
 
 @mixin btn-base {
-  padding: g.$spacing-2 g.$spacing-4;
+  padding: g.$s-2 g.$s-4;
   border: 1px solid var(--b3-theme-outline);
-  border-radius: g.$radius-base;
+  border-radius: g.$r-base;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
-  font-size: g.$font-size-sm;
-  font-weight: g.$font-weight-semibold;
+  font-size: g.$t-sm;
+  font-weight: g.$fw-semibold;
   cursor: pointer;
   @include flex-center;
-  gap: g.$spacing-1;
+  gap: g.$s-1;
 
   &:hover:not(:disabled) {
     background: var(--b3-theme-primary);
@@ -228,7 +228,7 @@
   height: $size;
   @include flex-center;
   border: none;
-  border-radius: $radius-full;
+  border-radius: $r-full;
   background: transparent;
   color: var(--b3-theme-on-surface-variant);
   cursor: pointer;
@@ -276,7 +276,7 @@
 
   &::-webkit-scrollbar-thumb {
     background: var(--b3-theme-surface-lighter);
-    border-radius: g.$radius-2px;
+    border-radius: g.$r-px2;
 
     &:hover {
       background: var(--b3-theme-on-surface-variant);
@@ -289,16 +289,16 @@
 // ========================================
 
 @mixin empty-state {
-  @include flex-column(g.$spacing-4);
+  @include flex-column(g.$s-4);
   @include flex-center;
-  padding: g.$spacing-8 g.$spacing-5;
+  padding: g.$s-8 g.$s-5;
   text-align: center;
   color: var(--b3-theme-on-surface-variant);
   background: var(--b3-theme-surface);
-  border-radius: g.$radius-base;
+  border-radius: g.$r-base;
   border: 1px dashed var(--b3-theme-surface-lighter);
 
   @media (max-width: $breakpoint-sm) {
-    padding: g.$spacing-6 g.$spacing-4;
+    padding: g.$s-6 g.$s-4;
   }
 }

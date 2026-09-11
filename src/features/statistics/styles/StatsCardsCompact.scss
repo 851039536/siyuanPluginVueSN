@@ -6,8 +6,8 @@
 .stats-section {
   display: flex;
   flex-direction: column;
-  gap: $spacing-6px;
-  padding-top: $spacing-1;
+  gap: $s-px6;
+  padding-top: $s-1;
 }
 
 // 核心指标：4 列大卡片（无界——仅列间竖线分隔）
@@ -19,7 +19,7 @@
 .core-card {
   display: flex;
   flex-direction: column;
-  padding: $spacing-6px $spacing-1;
+  padding: $s-px6 $s-1;
   text-align: center;
   border-left: 1px solid var(--b3-border-color);
 
@@ -30,47 +30,47 @@
 
 .core-label {
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--b3-theme-on-surface);
   opacity: 0.45;
-  margin-bottom: $spacing-2px;
+  margin-bottom: $s-px2;
 }
 
 .core-value-row {
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: $spacing-2px;
+  gap: $s-px2;
 }
 
 .core-value {
   font-family: stats.$font-mono;
-  font-size: $font-size-base; // 数据突出展示（核心指标数值）
-  font-weight: $font-weight-bold;
+  font-size: $t-base; // 数据突出展示（核心指标数值）
+  font-weight: $fw-bold;
   color: var(--b3-theme-primary);
-  line-height: $line-height-tight;
+  line-height: $lh-tight;
 }
 
 .core-change {
-  padding: $spacing-1px $spacing-px;
-  border-radius: stats.$radius-sm;
+  padding: $s-px1 $s-px3;
+  border-radius: stats.$r-sm;
   font-family: stats.$font-mono;
-  font-size: 8px; // 无精确 Token（小于 $font-size-2xs 的涨跌角标）
-  font-weight: $font-weight-bold;
-  line-height: $line-height-normal;
+  font-size: 8px; // 无精确 Token（小于 $t-2xs 的涨跌角标）
+  font-weight: $fw-bold;
+  line-height: $lh-normal;
 }
 
 .core-change.up {
-  background: rgba(stats.$color-success, 0.15);
-  color: stats.$color-success;
+  background: rgba(stats.$c-success, 0.15);
+  color: stats.$c-success;
 }
 
 .core-change.down {
-  background: rgba(stats.$color-danger, 0.15);
-  color: stats.$color-danger;
+  background: rgba(stats.$c-danger, 0.15);
+  color: stats.$c-danger;
 }
 
 // 次要指标：紧凑网格（顶部横线 + 列间竖线分隔）
@@ -78,7 +78,7 @@
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
-  gap: $spacing-1px;
+  gap: $s-px1;
   border-top: 1px solid var(--b3-border-color);
   background: var(--b3-border-color);
 }
@@ -88,28 +88,28 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: $spacing-6px $spacing-2px;
+  padding: $s-px6 $s-px2;
   background: var(--b3-theme-surface);
   text-align: center;
 }
 
 .secondary-value {
   font-family: stats.$font-mono;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-xs;
+  font-weight: $fw-bold;
   color: var(--b3-theme-on-surface);
-  line-height: $line-height-tight;
+  line-height: $lh-tight;
 }
 
 .secondary-label {
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--b3-theme-on-surface);
   opacity: 0.45;
-  margin-top: $spacing-2px;
+  margin-top: $s-px2;
 }
 
 @include mobile-only {

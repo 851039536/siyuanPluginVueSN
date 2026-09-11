@@ -9,20 +9,20 @@
 .s3-config-form {
   // section-header 扩展：覆盖 margin-bottom + 独有的连接状态/操作区
   .section-header {
-    margin-bottom: $spacing-4;
+    margin-bottom: $s-4;
 
     .connection-status {
-      font-size: $font-size-xs;
-      padding: $spacing-2px $spacing-2;
-      border-radius: $vp-radius;
+      font-size: $t-xs;
+      padding: $s-px2 $s-2;
+      border-radius: $r-base;
 
       &.status-connected {
-        color: $color-success;
+        color: $c-success;
         background: hsl(142, 76%, 36%, 0.1);
       }
 
       &.status-disconnected {
-        color: $color-danger;
+        color: $c-danger;
         background: hsl(0, 72%, 51%, 0.1);
       }
     }
@@ -30,45 +30,45 @@
     .header-actions {
       display: flex;
       align-items: center;
-      gap: $spacing-2;
+      gap: $s-2;
     }
   }
 
   // 配置指引面板
   .config-guide-panel {
-    margin-bottom: $spacing-4;
-    padding: $spacing-3;
+    margin-bottom: $s-4;
+    padding: $s-3;
     border: 1px solid var(--b3-theme-surface-lighter);
-    border-radius: $vp-radius;
+    border-radius: $r-base;
     background: hsl(45, 90%, 50%, 0.04);
 
     .guide-title {
       display: flex;
       align-items: center;
-      gap: $spacing-1;
-      font-size: $font-size-xs;
-      font-weight: $font-weight-semibold;
+      gap: $s-1;
+      font-size: $t-xs;
+      font-weight: $fw-semibold;
       color: var(--b3-theme-on-surface);
-      margin-bottom: $spacing-2;
+      margin-bottom: $s-2;
     }
 
     .guide-content {
       display: flex;
       flex-direction: column;
-      gap: $spacing-1;
+      gap: $s-1;
     }
 
     .guide-item {
       display: flex;
       align-items: baseline;
-      gap: $spacing-2;
-      font-size: $font-size-xs;
-      line-height: $line-height-normal;
+      gap: $s-2;
+      font-size: $t-xs;
+      line-height: $lh-normal;
 
       .guide-label {
         flex-shrink: 0;
         min-width: 120px;
-        font-weight: $font-weight-medium;
+        font-weight: $fw-medium;
         color: var(--b3-theme-on-surface);
       }
 
@@ -101,13 +101,13 @@
   .form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: $spacing-3;
+    gap: $s-3;
   }
 
   .form-group {
     display: flex;
     flex-direction: column;
-    gap: $spacing-1;
+    gap: $s-1;
     min-width: 0;
 
     &.form-group-checkbox {
@@ -118,24 +118,24 @@
   // 操作按钮区
   .form-actions {
     display: flex;
-    gap: $spacing-2;
-    margin-top: $spacing-4;
+    gap: $s-2;
+    margin-top: $s-4;
   }
 
   // 连接测试结果
   .connection-result {
-    margin-top: $spacing-3;
-    padding: $spacing-2 $spacing-3;
-    border-radius: $vp-radius;
-    font-size: $font-size-xs;
+    margin-top: $s-3;
+    padding: $s-2 $s-3;
+    border-radius: $r-base;
+    font-size: $t-xs;
 
     &.success {
-      color: $color-success;
+      color: $c-success;
       background: hsl(142, 76%, 36%, 0.08);
     }
 
     &.error {
-      color: $color-danger;
+      color: $c-danger;
       background: hsl(0, 72%, 51%, 0.08);
     }
   }

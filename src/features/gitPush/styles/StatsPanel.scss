@@ -5,7 +5,7 @@
   flex: 1;
   overflow-y: auto;
   // 右侧留白 8px，避免滚动条/内容紧贴侧边栏（规则见 AGENTS_STYLE §Dock 面板侧边栏间距）
-  padding: $spacing-1 $spacing-2 $spacing-1 0;
+  padding: $s-1 $s-2 $s-1 0;
 }
 
 // ── 总览卡片 ──
@@ -13,8 +13,8 @@
   display: grid;
   // 自适应列数：全屏单行 6 卡，窄 Dock（约 420px）自动折为 3 列两行（容器宽度驱动，不用 @media）
   grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: $spacing-2;
-  margin-bottom: $spacing-2;
+  gap: $s-2;
+  margin-bottom: $s-2;
 }
 
 // 卡片骨架与 _mixins.scss 的 stat-card 系列合流（原两处逐字重复，本次消除复制粘贴）
@@ -23,7 +23,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
   transition: border-color 0.12s ease;
 }
 
@@ -48,7 +48,7 @@
   // align-items: start 使同一行的窄卡按各自内容收缩，不互相拉伸出空腔
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(21rem, 1fr));
-  gap: $spacing-2;
+  gap: $s-2;
   align-items: start;
 
   // 表格类区块（待处理项目/平台矩阵/链接审计）跨全宽，阅读顺序自上而下不再被压入窄列
@@ -62,9 +62,9 @@
 // 属第 2 次出现（Rule of Three），第 3 处出现时再提取共享 mixin
 .gp-stats-section {
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-base;
+  border-radius: $r-base;
   background: var(--b3-theme-surface);
-  padding: $spacing-3;
+  padding: $s-3;
   transition: border-color 0.12s ease;
 
   &:hover {
@@ -74,21 +74,21 @@
 
 .gp-stats-section-title {
   @include gp-label-base;
-  font-size: $font-size-xs;
-  margin-bottom: $spacing-2;
+  font-size: $t-xs;
+  margin-bottom: $s-2;
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .gp-stats-section-count {
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
-  padding: 0 $spacing-6px;
-  border-radius: $radius-sm;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
+  padding: 0 $s-px6;
+  border-radius: $r-sm;
   background: var(--b3-theme-primary-lightest);
   color: var(--b3-theme-primary);
-  font-weight: $font-weight-semibold;
+  font-weight: $fw-semibold;
   letter-spacing: 0;
 }
 
@@ -96,27 +96,27 @@
 .gp-coverage-list {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .gp-coverage-item {
   display: flex;
   flex-direction: column;
-  gap: $spacing-px;
+  gap: $s-px3;
 }
 
 .gp-coverage-head {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  font-size: $font-size-xs;
+  gap: $s-1;
+  font-size: $t-xs;
   opacity: 0.7;
 }
 
 .gp-coverage-num {
   margin-left: auto;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
   opacity: 0.5;
 }
 
@@ -124,13 +124,13 @@
   height: 4px;
   // 轨道底色与卡片 surface 区分（原 surface 已随区块卡片化与卡片底同色，改用更深的面板底色形成内凹感）
   background: var(--b3-theme-background);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   overflow: hidden;
 }
 
 .gp-coverage-fill {
   height: 100%;
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: var(--b3-theme-primary);
   transition: width 0.3s ease;
 }
@@ -153,25 +153,25 @@
 .gp-status-bar {
   display: flex;
   flex-wrap: wrap; // 窄面板下四个 chip 自动换行防溢出
-  gap: $spacing-2;
-  margin-bottom: $spacing-2;
+  gap: $s-2;
+  margin-bottom: $s-2;
 }
 
 .gp-status-chip {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-1 $spacing-2;
-  border-radius: $radius-sm;
+  gap: $s-1;
+  padding: $s-1 $s-2;
+  border-radius: $r-sm;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface);
 
   span {
-    font-family: $vp-mono;
-    font-size: $font-size-xs;
+    font-family: $ff-mono;
+    font-size: $t-xs;
   }
 
   &--ahead {
@@ -200,9 +200,9 @@
 .gp-status-all-clear {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-2;
-  font-size: $font-size-xs;
+  gap: $s-1;
+  padding: $s-2;
+  font-size: $t-xs;
   opacity: 0.45;
   font-style: italic;
 }
@@ -210,7 +210,7 @@
 // ── 表格 ──
 .gp-table-wrap {
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   max-height: 320px; // 外层区块不再固高后的唯一滚动层上限（原 260px + 释放的外层空间）
   overflow-y: auto;
 }
@@ -218,9 +218,9 @@
 .gp-table-row {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  padding: $spacing-1 $spacing-2;
-  font-size: $font-size-xs;
+  gap: $s-1;
+  padding: $s-1 $s-2;
+  font-size: $t-xs;
   @include row-divider;
 
   &--head {
@@ -231,8 +231,8 @@
     z-index: 1;
     background: var(--b3-theme-surface);
     color: var(--b3-theme-on-surface-light);
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-bold;
+    font-size: $t-2xs;
+    font-weight: $fw-bold;
     text-transform: uppercase;
     letter-spacing: 0.06em;
   }
@@ -260,9 +260,9 @@
   &--num {
     width: 40px;
     text-align: right; // 等宽字体右对齐，数值纵向可比
-    padding-right: $spacing-1;
-    font-family: $vp-mono;
-    font-size: $font-size-2xs;
+    padding-right: $s-1;
+    font-family: $ff-mono;
+    font-size: $t-2xs;
   }
 
   &--act {
@@ -279,11 +279,11 @@
 
 .gp-badge-ahead {
   display: inline-block;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
-  font-family: $vp-mono;
-  padding: $spacing-1px $spacing-5px;
-  border-radius: $radius-sm;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  font-family: $ff-mono;
+  padding: $s-px1 $s-px5;
+  border-radius: $r-sm;
   background: var(--b3-theme-primary-lightest);
   color: var(--b3-theme-primary);
 }
@@ -294,8 +294,8 @@
 
 // 项目名后的错误标注（路径无效/检测失败；PlatformTable 的 nameSuffix 共享渲染）
 .gp-audit-error-text {
-  margin-left: $spacing-1;
-  font-size: $font-size-2xs;
+  margin-left: $s-1;
+  font-size: $t-2xs;
   color: var(--b3-theme-error);
   opacity: 0.8;
 }

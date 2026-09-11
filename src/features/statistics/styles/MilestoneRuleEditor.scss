@@ -11,7 +11,7 @@
   justify-content: center;
   background: rgba(0, 0, 0, 0.5); // 遮罩统一透明度，不使用 backdrop-filter
   // 弹窗遮罩基准字号（防止内部文字继承思源全局默认字号）
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 }
 
 .rule-editor-panel {
@@ -22,14 +22,14 @@
   flex-direction: column;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-md;
+  border-radius: $r-md;
 }
 
 .rule-editor-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-4 $spacing-5;
+  padding: $s-4 $s-5;
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
 }
@@ -37,8 +37,8 @@
 .rule-editor-title {
   margin: 0;
   font-family: stats.$font-mono;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-xs;
+  font-weight: $fw-bold;
   color: var(--b3-theme-on-background);
 }
 
@@ -52,7 +52,7 @@
   background: transparent;
   color: var(--b3-theme-on-surface-light);
   cursor: pointer;
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   &:hover {
     background: var(--b3-list-hover);
     color: var(--b3-theme-on-surface);
@@ -63,20 +63,20 @@
 .rule-editor-tabs {
   display: flex;
   gap: 0;
-  padding: 0 $spacing-5;
+  padding: 0 $s-5;
   background: var(--b3-theme-surface);
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
 }
 
 .tab-btn {
-  padding: $spacing-2 $spacing-14px;
+  padding: $s-2 $s-px14;
   border: none;
   background: transparent;
   color: var(--b3-theme-on-surface-light);
-  font-family: $font-zh;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-family: $ff-zh;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   letter-spacing: 0.02em;
   cursor: pointer;
   position: relative;
@@ -87,7 +87,7 @@
 
   &.active {
     color: var(--b3-theme-primary);
-    font-weight: $font-weight-bold;
+    font-weight: $fw-bold;
 
     &::after {
       content: '';
@@ -106,8 +106,8 @@
 .rule-editor-toolbar {
   display: flex;
   align-items: center;
-  gap: $spacing-4;
-  padding: $spacing-3 $spacing-5;
+  gap: $s-4;
+  padding: $s-3 $s-5;
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
 }
@@ -115,20 +115,20 @@
 .level-count-label {
   display: flex;
   align-items: center;
-  gap: $spacing-6px;
-  font-size: $font-size-xs;
+  gap: $s-px6;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface);
 }
 
 .level-count-input {
   width: 56px;
-  padding: $spacing-2px $spacing-6px;
+  padding: $s-px2 $s-px6;
   border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   text-align: center;
   &:focus {
     outline: none;
@@ -137,12 +137,12 @@
 }
 
 .btn-reset-all {
-  padding: $spacing-1 $spacing-3;
+  padding: $s-1 $s-3;
   border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   cursor: pointer;
   &:hover {
     background: var(--b3-list-hover);
@@ -153,39 +153,39 @@
 .rule-editor-body {
   flex: 1;
   overflow-y: auto;
-  padding: $spacing-2 $spacing-5 $spacing-4;
+  padding: $s-2 $s-5 $s-4;
 }
 
 // Help box
 .rule-editor-help {
-  padding: $spacing-10px $spacing-3;
-  margin-bottom: $spacing-10px;
+  padding: $s-px10 $s-3;
+  margin-bottom: $s-px10;
   background: rgba(var(--b3-theme-primary-rgb), 0.04);
   border: 1px solid rgba(var(--b3-theme-primary-rgb), 0.12);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
 }
 
 .help-title {
-  margin: 0 0 $spacing-6px 0;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-bold;
+  margin: 0 0 $s-px6 0;
+  font-size: $t-xs;
+  font-weight: $fw-bold;
   color: var(--b3-theme-primary);
 }
 
 .help-list {
   margin: 0;
-  padding-left: $spacing-4;
-  font-size: $font-size-2xs;
-  line-height: $line-height-normal;
+  padding-left: $s-4;
+  font-size: $t-2xs;
+  line-height: $lh-normal;
   color: var(--b3-theme-on-surface);
 
   li {
-    margin-bottom: $spacing-2px;
+    margin-bottom: $s-px2;
   }
 
   b {
     color: var(--b3-theme-on-surface);
-    font-weight: $font-weight-bold;
+    font-weight: $fw-bold;
   }
 }
 
@@ -193,10 +193,10 @@
 .level-header-row {
   display: flex;
   align-items: center;
-  gap: $spacing-3;
-  padding: $spacing-1 0 $spacing-2px;
+  gap: $s-3;
+  padding: $s-1 0 $s-px2;
   border-bottom: 1px solid var(--b3-border-color);
-  margin-bottom: $spacing-1;
+  margin-bottom: $s-1;
 }
 
 .level-header-spacer {
@@ -207,15 +207,15 @@
 .level-header-inputs {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-1;
+  gap: $s-1;
   flex: 1;
 }
 
 .level-header-label {
   width: 64px;
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   text-align: center;
   color: var(--b3-theme-on-surface);
   opacity: 0.35;
@@ -227,8 +227,8 @@
 .rule-row {
   display: flex;
   align-items: flex-start;
-  gap: $spacing-3;
-  padding: $spacing-2 0;
+  gap: $s-3;
+  padding: $s-2 0;
   border-bottom: 1px solid var(--b3-border-color);
   &:last-child {
     border-bottom: none;
@@ -238,19 +238,19 @@
 .rule-row-header {
   display: flex;
   align-items: center;
-  gap: $spacing-6px;
+  gap: $s-px6;
   width: 130px;
   flex-shrink: 0;
-  padding-top: $spacing-px;
+  padding-top: $s-px3;
 }
 
 .rule-row-icon {
-  font-size: $font-size-sm; // 图标字形尺寸（非正文文字）
+  font-size: $t-sm; // 图标字形尺寸（非正文文字）
 }
 
 .rule-row-label {
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface);
   flex: 1;
 }
@@ -262,10 +262,10 @@
   align-items: center;
   justify-content: center;
   border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   background: transparent;
   color: var(--b3-theme-on-surface-light);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   cursor: pointer;
   padding: 0;
   flex-shrink: 0;
@@ -278,19 +278,19 @@
 .rule-row-inputs {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-1;
+  gap: $s-1;
   flex: 1;
 }
 
 .rule-input {
   width: 64px;
-  padding: $spacing-px $spacing-6px;
+  padding: $s-px3 $s-px6;
   border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   text-align: right;
   &:focus {
     outline: none;
@@ -302,19 +302,19 @@
 .rule-editor-footer {
   display: flex;
   justify-content: flex-end;
-  gap: $spacing-2;
-  padding: $spacing-3 $spacing-5;
+  gap: $s-2;
+  padding: $s-3 $s-5;
   border-top: 1px solid var(--b3-border-color);
   flex-shrink: 0;
 }
 
 .btn-cancel {
-  padding: $spacing-6px $spacing-4;
+  padding: $s-px6 $s-4;
   border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   cursor: pointer;
   &:hover {
     background: var(--b3-list-hover);
@@ -322,13 +322,13 @@
 }
 
 .btn-save {
-  padding: $spacing-6px $spacing-5;
+  padding: $s-px6 $s-5;
   border: none;
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   background: var(--b3-theme-primary);
   color: var(--b3-theme-on-primary);
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   cursor: pointer;
   &:hover {
     opacity: 0.85;
@@ -340,13 +340,13 @@
 // ═══════════════════════════════════════
 
 .ach-tab {
-  padding-top: $spacing-1;
+  padding-top: $s-1;
 }
 
 .ach-empty {
-  padding: $spacing-6 0;
+  padding: $s-6 0;
   text-align: center;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.4;
 }
@@ -355,18 +355,18 @@
 .ach-list {
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .ach-list-item {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-6px $spacing-10px;
+  gap: $s-2;
+  padding: $s-px6 $s-px10;
   border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   background: var(--b3-theme-surface);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 
   &:hover {
     border-color: rgba(var(--b3-theme-primary-rgb), 0.3);
@@ -374,13 +374,13 @@
 }
 
 .ach-list-icon {
-  font-size: $font-size-base; // 图标字形尺寸（非正文文字）
+  font-size: $t-base; // 图标字形尺寸（非正文文字）
   flex-shrink: 0;
 }
 
 .ach-list-title {
   flex: 1;
-  font-weight: $font-weight-semibold;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface);
   min-width: 0;
   overflow: hidden;
@@ -390,20 +390,20 @@
 
 .ach-list-tier {
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
-  padding: $spacing-1px $spacing-6px;
-  border-radius: $radius-px;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  padding: $s-px1 $s-px6;
+  border-radius: $r-px3;
   flex-shrink: 0;
 
-  &.tier-common { background: rgba(stats.$color-success, 0.15); color: stats.$color-success; }
+  &.tier-common { background: rgba(stats.$c-success, 0.15); color: stats.$c-success; }
   &.tier-rare { background: rgba(var(--b3-theme-primary-rgb), 0.15); color: var(--b3-theme-primary); }
   &.tier-epic { background: rgba(stats.$color-tier-epic, 0.15); color: stats.$color-tier-epic; }
   &.tier-legendary { background: rgba(stats.$color-tier-legendary, 0.2); color: stats.$color-tier-legendary; }
 }
 
 .ach-list-type {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
   flex-shrink: 0;
@@ -411,7 +411,7 @@
 
 .ach-list-threshold {
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
   flex-shrink: 0;
@@ -429,15 +429,15 @@
   background: transparent;
   color: var(--b3-theme-on-surface);
   opacity: 0.25;
-  font-size: $font-size-sm; // 图标字形尺寸（非正文文字）
+  font-size: $t-sm; // 图标字形尺寸（非正文文字）
   cursor: pointer;
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   flex-shrink: 0;
 
   &:hover {
     opacity: 1;
-    color: stats.$color-danger;
-    background: rgba(stats.$color-danger, 0.08);
+    color: stats.$c-danger;
+    background: rgba(stats.$c-danger, 0.08);
   }
 }
 
@@ -445,15 +445,15 @@
 .btn-add-achievement {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-6px;
-  padding: $spacing-6px $spacing-3;
-  margin-top: $spacing-10px;
+  gap: $s-px6;
+  padding: $s-px6 $s-3;
+  margin-top: $s-px10;
   border: 1px dashed var(--b3-border-color);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   background: transparent;
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
 
@@ -464,34 +464,34 @@
 }
 
 .btn-add-icon {
-  font-size: $font-size-sm; // 图标字形尺寸（非正文文字）
-  font-weight: $font-weight-bold;
+  font-size: $t-sm; // 图标字形尺寸（非正文文字）
+  font-weight: $fw-bold;
 }
 
 // Add form
 .add-achievement-form {
-  margin-top: $spacing-2;
-  padding: $spacing-3;
+  margin-top: $s-2;
+  padding: $s-3;
   border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   background: rgba(var(--b3-theme-surface-rgb), 0.5);
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .ach-form-row {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .ach-form-label {
   width: 64px;
   flex-shrink: 0;
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--b3-theme-on-surface);
@@ -501,13 +501,13 @@
 
 .ach-form-input {
   width: 160px;
-  padding: $spacing-1 $spacing-2;
+  padding: $s-1 $s-2;
   border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 
   &:focus {
     outline: none;
@@ -518,16 +518,16 @@
 .ach-form-icon {
   width: 48px;
   text-align: center;
-  font-size: $font-size-base; // 图标字形尺寸（非正文文字）
+  font-size: $t-base; // 图标字形尺寸（非正文文字）
 }
 
 .ach-form-select {
-  padding: $spacing-1 $spacing-6px;
+  padding: $s-1 $s-px6;
   border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   cursor: pointer;
 
   &:focus {
@@ -537,7 +537,7 @@
 }
 
 .ach-form-hint {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.35;
   font-style: italic;
@@ -546,17 +546,17 @@
 .ach-form-actions {
   display: flex;
   justify-content: flex-end;
-  padding-top: $spacing-1;
+  padding-top: $s-1;
 }
 
 .btn-ach-submit {
-  padding: $spacing-5px $spacing-4;
+  padding: $s-px5 $s-4;
   border: none;
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   background: var(--b3-theme-primary);
   color: var(--b3-theme-on-primary);
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   cursor: pointer;
 
   &:hover {
@@ -569,75 +569,75 @@
 // ═══════════════════════════════════════
 
 .level-tab {
-  padding-top: $spacing-1;
+  padding-top: $s-1;
 }
 
 .level-config-help {
-  padding: $spacing-10px $spacing-3;
-  margin-bottom: $spacing-3;
+  padding: $s-px10 $s-3;
+  margin-bottom: $s-3;
   background: rgba(var(--b3-theme-primary-rgb), 0.04);
   border: 1px solid rgba(var(--b3-theme-primary-rgb), 0.12);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
 
   .help-title {
-    margin: 0 0 $spacing-6px 0;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-bold;
+    margin: 0 0 $s-px6 0;
+    font-size: $t-xs;
+    font-weight: $fw-bold;
     color: var(--b3-theme-primary);
   }
 
   .help-list {
     margin: 0;
-    padding-left: $spacing-4;
-    font-size: $font-size-2xs;
-    line-height: $line-height-normal;
+    padding-left: $s-4;
+    font-size: $t-2xs;
+    line-height: $lh-normal;
     color: var(--b3-theme-on-surface);
 
-    li { margin-bottom: $spacing-2px; }
-    b { color: var(--b3-theme-on-surface); font-weight: $font-weight-bold; }
+    li { margin-bottom: $s-px2; }
+    b { color: var(--b3-theme-on-surface); font-weight: $fw-bold; }
   }
 }
 
 .level-config-section {
-  margin-bottom: $spacing-14px;
+  margin-bottom: $s-px14;
 }
 
 .level-config-label {
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
-  margin-bottom: $spacing-2;
+  margin-bottom: $s-2;
 }
 
 .tier-points-grid {
   display: flex;
-  gap: $spacing-2;
+  gap: $s-2;
 }
 
 .tier-point-item {
   display: flex;
   align-items: center;
-  gap: $spacing-6px;
-  padding: $spacing-6px $spacing-10px;
+  gap: $s-px6;
+  padding: $s-px6 $s-px10;
   border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   background: var(--b3-theme-surface);
 }
 
 .tier-point-badge {
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
-  padding: $spacing-1px $spacing-6px;
-  border-radius: $radius-px;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  padding: $s-px1 $s-px6;
+  border-radius: $r-px3;
   min-width: 32px;
   text-align: center;
 
-  &.tier-common { background: rgba(stats.$color-success, 0.15); color: stats.$color-success; }
+  &.tier-common { background: rgba(stats.$c-success, 0.15); color: stats.$c-success; }
   &.tier-rare { background: rgba(var(--b3-theme-primary-rgb), 0.15); color: var(--b3-theme-primary); }
   &.tier-epic { background: rgba(stats.$color-tier-epic, 0.15); color: stats.$color-tier-epic; }
   &.tier-legendary { background: rgba(stats.$color-tier-legendary, 0.2); color: stats.$color-tier-legendary; }
@@ -645,14 +645,14 @@
 
 .tier-point-input {
   width: 56px;
-  padding: $spacing-px $spacing-6px;
+  padding: $s-px3 $s-px6;
   border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   text-align: center;
 
   &:focus {
@@ -662,7 +662,7 @@
 }
 
 .tier-point-unit {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.4;
 }
@@ -670,19 +670,19 @@
 .curve-row {
   display: flex;
   align-items: center;
-  gap: $spacing-3;
+  gap: $s-3;
 }
 
 .curve-input {
   width: 64px;
-  padding: $spacing-1 $spacing-2;
+  padding: $s-1 $s-2;
   border: 1px solid var(--b3-border-color);
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   font-family: stats.$font-mono;
-  font-size: $font-size-sm; // 数据突出展示（等级配置数值输入）
-  font-weight: $font-weight-semibold;
+  font-size: $t-sm; // 数据突出展示（等级配置数值输入）
+  font-weight: $fw-semibold;
   text-align: center;
 
   &:focus {
@@ -692,29 +692,29 @@
 }
 
 .curve-formula-hint {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
 
   code {
     font-family: stats.$font-mono;
-    font-size: $font-size-2xs;
+    font-size: $t-2xs;
     color: var(--b3-theme-primary);
     background: rgba(var(--b3-theme-primary-rgb), 0.06);
-    padding: $spacing-1px $spacing-1;
-    border-radius: $radius-2px;
+    padding: $s-px1 $s-1;
+    border-radius: $r-px2;
   }
 }
 
 .curve-preview {
-  margin-top: $spacing-2;
+  margin-top: $s-2;
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .curve-preview-label {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.4;
 }
@@ -722,36 +722,36 @@
 .curve-preview-values {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-1;
+  gap: $s-1;
 }
 
 .curve-preview-lv {
   font-family: stats.$font-mono;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.45;
   background: var(--b3-theme-surface);
-  padding: $spacing-2px $spacing-6px;
-  border-radius: $radius-px;
+  padding: $s-px2 $s-px6;
+  border-radius: $r-px3;
   border: 1px solid var(--b3-border-color);
 }
 
 .level-config-actions {
   display: flex;
   justify-content: flex-end;
-  padding-top: $spacing-2;
+  padding-top: $s-2;
   border-top: 1px solid var(--b3-border-color);
-  margin-top: $spacing-2;
+  margin-top: $s-2;
 }
 
 .btn-save-level {
-  padding: $spacing-5px $spacing-4;
+  padding: $s-px5 $s-4;
   border: none;
-  border-radius: stats.$radius-sm;
+  border-radius: stats.$r-sm;
   background: var(--b3-theme-primary);
   color: var(--b3-theme-on-primary);
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
   cursor: pointer;
 
   &:hover {
@@ -767,6 +767,6 @@
   }
 
   .rule-row-header {
-    gap: $spacing-1;
+    gap: $s-1;
   }
 }

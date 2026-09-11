@@ -7,14 +7,14 @@
   &__matrix {
     display: flex;
     flex-direction: column;
-    gap: $spacing-1;
-    padding: $spacing-2;
+    gap: $s-1;
+    padding: $s-2;
     width: max-content;
   }
 
   &__matrix-row {
     display: flex;
-    gap: $spacing-1;
+    gap: $s-1;
   }
 
   &__matrix-cell {
@@ -30,11 +30,11 @@
     height: calc(var(--dp-cell-size, 24px) * 1.5);
     padding: 0;
     border: 1px solid transparent;
-    border-radius: $radius-sm;
+    border-radius: $r-sm;
     background: transparent;
-    font-family: $font-zh;
-    font-size: var(--dp-cell-font, #{$font-size-xs});
-    color: var(--b3-theme-on-background, $color-fg);
+    font-family: $ff-zh;
+    font-size: var(--dp-cell-font, #{$t-xs});
+    color: var(--b3-theme-on-background, $c-fg);
     cursor: pointer;
     transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
 
@@ -44,23 +44,23 @@
     }
 
     &:focus-visible {
-      outline: 2px solid var(--b3-theme-primary, $color-danger);
+      outline: 2px solid var(--b3-theme-primary, $c-danger);
       outline-offset: 1px;
     }
 
     &:hover:not(:disabled):not(.si-datepicker__matrix-btn--selected) {
-      border-color: var(--b3-theme-primary, $color-danger);
+      border-color: var(--b3-theme-primary, $c-danger);
     }
 
     // 当前月 / 当年
     &--current {
-      border-color: var(--b3-theme-primary, $color-danger);
+      border-color: var(--b3-theme-primary, $c-danger);
     }
 
     &--selected {
-      background: var(--b3-theme-primary, $color-danger);
-      border-color: var(--b3-theme-primary, $color-danger);
-      color: var(--b3-theme-on-primary, $color-bg);
+      background: var(--b3-theme-primary, $c-danger);
+      border-color: var(--b3-theme-primary, $c-danger);
+      color: var(--b3-theme-on-primary, $c-bg);
     }
 
     &:disabled {

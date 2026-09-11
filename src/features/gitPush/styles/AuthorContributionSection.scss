@@ -8,7 +8,7 @@
   border-collapse: separate;
   border-spacing: 0;
   table-layout: auto;
-  font-size: $font-size-xs;
+  font-size: $t-xs;
 }
 
 // 表头（sticky：容器滚动时常驻顶部，实色背景防透出下层行）
@@ -17,9 +17,9 @@
   top: 0;
   z-index: 1;
   background: var(--b3-theme-surface);
-  padding: $spacing-2;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
+  padding: $s-2;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface-light);
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -75,7 +75,7 @@
 
 // 单元格
 .gpr-author-cell {
-  padding: $spacing-1 $spacing-2;
+  padding: $s-1 $s-2;
   vertical-align: middle;
 
   // 作者名列（占用剩余宽度，超长单行省略）
@@ -91,8 +91,8 @@
 
   // 数字列（等宽右对齐，内容自适应宽度）
   &--num {
-    font-family: $vp-mono;
-    font-size: $font-size-2xs;
+    font-family: $ff-mono;
+    font-size: $t-2xs;
     color: var(--b3-theme-on-surface-light);
     text-align: right;
     white-space: nowrap;
@@ -107,8 +107,8 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
   color: #fff;
 
   // 奖牌实色背景 + 白字，色值与上方 .gpr-author-row--top1/2/3 的底色一一对应
@@ -127,8 +127,8 @@
 
 // 普通排名数字（TOP3 之外，弱化处理）
 .gpr-rank {
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-light);
   opacity: 0.6;
 }
@@ -138,13 +138,13 @@
   display: inline-flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: $spacing-2px;
+  gap: $s-px2;
 }
 
 // 净增数值（正负着色复用 index.scss 的 .gpr-cell--pos / --neg）
 .gpr-net-value {
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
 }
 
 // 净增 mini bar（量级可视化：填充比例按最大净增归一化）
@@ -197,13 +197,13 @@
 
 // 详情单元格（跨全列，内含三块并排信息）
 .gpr-author-detail {
-  padding: $spacing-2 $spacing-3;
+  padding: $s-2 $s-3;
 }
 
 // 详情三块网格（弹性布局，窄容器自动换行）
 .gpr-detail-grid {
   display: flex;
-  gap: $spacing-3;
+  gap: $s-3;
   flex-wrap: wrap;
 }
 
@@ -213,7 +213,7 @@
   min-width: 150px;
 
   & + & {
-    padding-left: $spacing-3;
+    padding-left: $s-3;
     border-left: 1px solid var(--b3-border-color);
   }
 }
@@ -222,10 +222,10 @@
 .gpr-detail-label {
   display: flex;
   align-items: center;
-  gap: $spacing-5px;
-  margin-bottom: $spacing-1;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-semibold;
+  gap: $s-px5;
+  margin-bottom: $s-1;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--b3-theme-on-surface-light);
@@ -243,16 +243,16 @@
 
 // 详情值（主数据，等宽数字突出）
 .gpr-detail-value {
-  font-family: $vp-mono;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
+  font-family: $ff-mono;
+  font-size: $t-xs;
+  font-weight: $fw-medium;
   color: var(--b3-theme-on-surface);
 }
 
 // 详情副文案（弱化）
 .gpr-detail-sub {
-  margin-top: $spacing-px;
-  font-size: $font-size-2xs;
+  margin-top: $s-px3;
+  font-size: $t-2xs;
   color: var(--b3-theme-on-surface-light);
   opacity: 0.85;
 }
@@ -268,9 +268,9 @@
 .gpr-detail-file {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-2px $spacing-1;
-  border-radius: $radius-sm;
+  gap: $s-2;
+  padding: $s-px2 $s-1;
+  border-radius: $r-sm;
   cursor: pointer;
   transition: background 0.12s;
 
@@ -285,8 +285,8 @@
   &-name {
     flex: 1;
     min-width: 0;
-    font-family: $vp-mono;
-    font-size: $font-size-2xs;
+    font-family: $ff-mono;
+    font-size: $t-2xs;
     color: var(--b3-theme-on-surface);
     @include text-ellipsis;
   }
@@ -294,11 +294,11 @@
   // 修改次数徽章（浅色圆角底）
   &-count {
     flex-shrink: 0;
-    padding: 0 $spacing-5px;
-    border-radius: $radius-md;
-    font-family: $vp-mono;
-    font-size: $font-size-2xs;
-    font-weight: $font-weight-medium;
+    padding: 0 $s-px5;
+    border-radius: $r-md;
+    font-family: $ff-mono;
+    font-size: $t-2xs;
+    font-weight: $fw-medium;
     color: var(--b3-theme-on-surface);
     background: var(--b3-border-color);
   }
@@ -306,7 +306,7 @@
 
 // 无文件数据占位
 .gpr-detail-empty {
-  font-size: $font-size-xs;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface-light);
   opacity: 0.6;
   font-style: italic;

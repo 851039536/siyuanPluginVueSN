@@ -5,7 +5,7 @@
   flex: 1;
   overflow-y: auto;
   // 右侧留白 8px，避免滚动条/内容紧贴侧边栏（规则见 AGENTS_STYLE §Dock 面板侧边栏间距）
-  padding: $spacing-1 $spacing-2 $spacing-1 0;
+  padding: $s-1 $s-2 $s-1 0;
 }
 
 // ── 状态统计条（PUSH 12✓/2✗ · PULL 8✓ · COMMIT 45✓）──
@@ -13,20 +13,20 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: $spacing-1 $spacing-2;
-  margin-bottom: $spacing-2;
-  padding: $spacing-1 $spacing-2;
+  gap: $s-1 $s-2;
+  margin-bottom: $s-2;
+  padding: $s-1 $s-2;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   background: var(--b3-theme-surface);
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
 }
 
 .gp-log-stat {
   display: inline-flex;
   align-items: center;
-  gap: $spacing-px;
+  gap: $s-px3;
   white-space: nowrap;
 }
 
@@ -34,7 +34,7 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   opacity: 0.5;
-  margin-right: $spacing-1;
+  margin-right: $s-1;
 }
 
 .gp-log-stat-ok {
@@ -53,21 +53,21 @@
 .gp-log-toolbar {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  margin-bottom: $spacing-2;
-  padding: 0 $spacing-2;
+  gap: $s-2;
+  margin-bottom: $s-2;
+  padding: 0 $s-2;
 }
 
 // 项目搜索框（icon + input 组合，定宽可收缩）
 .gp-log-search {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
+  gap: $s-1;
   flex: 0 1 200px;
   min-width: 120px;
-  padding: $spacing-2px $spacing-2;
+  padding: $s-px2 $s-2;
   border: 1px solid var(--b3-border-color);
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   color: var(--b3-theme-on-surface-light);
   transition: border-color 0.12s;
 
@@ -82,7 +82,7 @@
     background: none;
     border: none;
     outline: none;
-    font-size: $font-size-2xs;
+    font-size: $t-2xs;
     color: var(--b3-theme-on-background);
 
     &::placeholder {
@@ -94,8 +94,8 @@
 
 .gp-log-count {
   flex-shrink: 0;
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
   opacity: 0.45;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -104,7 +104,7 @@
 .gp-log-filters {
   display: flex;
   align-items: center;
-  gap: $spacing-px;
+  gap: $s-px3;
   margin-left: auto;
 }
 
@@ -112,10 +112,10 @@
   @include btn-reset;
   display: inline-flex;
   align-items: center;
-  gap: $spacing-2px;
-  font-size: $font-size-2xs;
-  padding: $spacing-2px $spacing-2;
-  border-radius: $radius-sm;
+  gap: $s-px2;
+  font-size: $t-2xs;
+  padding: $s-px2 $s-2;
+  border-radius: $r-sm;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
   transition: opacity 0.12s, background 0.12s;
@@ -143,8 +143,8 @@
 .gp-log-clear-btn {
   @include btn-reset;
   opacity: 0.35;
-  padding: $spacing-2px;
-  border-radius: $radius-sm;
+  padding: $s-px2;
+  border-radius: $r-sm;
   transition: opacity 0.12s;
 
   &:hover {
@@ -163,8 +163,8 @@
 .gp-log-thead {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-1 $spacing-2;
+  gap: $s-2;
+  padding: $s-1 $s-2;
   position: sticky;
   top: 0;
   z-index: 2;
@@ -209,7 +209,7 @@
 .gp-log-tcol--ops {
   display: flex;
   align-items: center;
-  gap: $spacing-px;
+  gap: $s-px3;
   width: 44px;
 }
 
@@ -217,9 +217,9 @@
 .gp-log-trow {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-1 $spacing-2;
-  font-size: $font-size-xs;
+  gap: $s-2;
+  padding: $s-1 $s-2;
+  font-size: $t-xs;
   border-bottom: 1px solid var(--b3-border-color);
   cursor: pointer;
   transition: background 0.12s;
@@ -241,10 +241,10 @@
 
 // ── 日期分组标题（表格分隔行）──
 .gp-log-group-title {
-  padding: $spacing-1 $spacing-2;
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
-  font-weight: $font-weight-bold;
+  padding: $s-1 $s-2;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
+  font-weight: $fw-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--b3-theme-primary);
@@ -255,13 +255,13 @@
 // ── 操作类型徽章 ──
 .gp-log-badge {
   display: inline-block;
-  font-size: $font-size-2xs;
-  font-weight: $font-weight-bold;
-  font-family: $vp-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  font-family: $ff-mono;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  padding: $spacing-1px $spacing-6px;
-  border-radius: $radius-sm;
+  padding: $s-px1 $s-px6;
+  border-radius: $r-sm;
 
   &--push {
     background: var(--b3-theme-primary-lightest);
@@ -305,7 +305,7 @@
   width: 100%;
   cursor: pointer;
   color: var(--b3-theme-primary);
-  font-weight: $font-weight-semibold;
+  font-weight: $fw-semibold;
   @include text-ellipsis;
 
   &:hover {
@@ -326,8 +326,8 @@
   display: block;
   width: 100%;
   text-align: right;
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
   opacity: 0.35;
 }
 
@@ -340,7 +340,7 @@
   justify-content: center;
   width: 18px;
   height: 18px;
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   color: var(--b3-theme-on-surface);
   opacity: 0.4;
   transition: opacity 0.12s, background 0.12s;
@@ -360,7 +360,7 @@
   justify-content: center;
   width: 18px;
   height: 18px;
-  border-radius: $radius-sm;
+  border-radius: $r-sm;
   color: var(--b3-theme-on-surface);
   opacity: 0;
   transition: opacity 0.12s, background 0.12s;
@@ -379,33 +379,33 @@
 .gp-log-platforms {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2px;
+  gap: $s-px2;
 }
 
 .gp-log-platform-item {
   display: flex;
   align-items: center;
-  gap: $spacing-1;
-  font-size: $font-size-2xs;
+  gap: $s-1;
+  font-size: $t-2xs;
 }
 
 .gp-log-platform-ok {
   flex-shrink: 0;
   width: 14px;
   text-align: center;
-  font-family: $vp-mono;
-  font-size: $font-size-2xs;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
 }
 
 .gp-log-platform-label {
   flex-shrink: 0;
   opacity: 0.5;
   min-width: 40px;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
 }
 
 .gp-log-platform-skip {
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   opacity: 0.3;
 }
 
@@ -413,7 +413,7 @@
   flex: 1;
   min-width: 0;
   @include text-ellipsis;
-  font-size: $font-size-2xs;
+  font-size: $t-2xs;
   opacity: 0.5;
 }
 
@@ -421,8 +421,8 @@
 .gp-log-commit-msg {
   display: block;
   width: 100%;
-  font-size: $font-size-2xs;
-  font-family: $vp-mono;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
   opacity: 0.55;
   @include text-ellipsis;
 }

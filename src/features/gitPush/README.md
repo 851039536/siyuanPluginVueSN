@@ -20,7 +20,7 @@
 - **仓库清理视图**：两段式 — ① 仓库体检（纯 git：.git 打包体积/对象总数 + 可达大文件 Top 50 与占比条形，非本地引用锚定的残留标注「远程引用/其他引用」徽章）；② BFG 历史清理（[BFG Repo-Cleaner](https://github.com/rtyley/bfg-repo-cleaner)）：大文件阈值清理 / 按名删除文件·文件夹 / 敏感文本全历史替换，走 mirror 裸仓库安全工作流（bundle 全量备份 → clone --mirror → BFG → gc → CAS 回写），六步步骤条 + 实时日志；Java 运行时自动探测，bfg.jar 首次使用自动下载（Maven Central 主源 + GitHub 备源），结果页一键强推远端（强推后自动 fetch --prune + gc 收尾，清除本地残留）
 - **统计视图**：远程覆盖率、待处理项目合并视图（推送状态概览 + 待推送/暂存/未暂存表格）、平台配置状态
 - **远程与本地一致性分析**：头部按钮打开弹窗，批量比对所有项目各本地分支与各远程分支（存在性/领先/落后/分叉），可选先 fetch --prune（默认开启），支持进度显示、七态汇总与"仅显示问题"过滤；结果持久化缓存（打开弹窗直接展示上次结果并显示分析时间）
-- **行数统计视图**：独立 Tab，统计各项目/作者的代码新增、删除、净增行数排行（千位分隔数字，净增正绿负红），支持 30/50/100/200 条数选择；可配置文件格式过滤（扩展名多选排除列表，勾选后跳过对应格式，不选则统计所有文件）
+- **行数统计视图**：独立 Tab，统计各项目/作者的代码新增、删除、净增行数排行（千位分隔数字，净增正绿负红）；统计范围固定为「全部提交历史 + 工作区全部已跟踪文件」（无条数选择入口）；可配置文件格式过滤（扩展名多选排除列表，勾选后跳过对应格式，不选则统计所有文件）
 - **扫描导入**：递归扫描目录批量导入 Git 仓库
 - **远程配置**：添加/编辑/删除远程仓库，支持行内编辑 URL
 - **独立窗口承载**：面板头部「在独立窗口打开」按钮，将面板弹出为独立浮动窗口（`addTab + openTab + openWindow` 官方 API，浮动窗口内自动隐藏该按钮）
@@ -62,7 +62,7 @@ src/features/gitPush/
 │   ├── useCardMenu.ts               # 卡片内联下拉菜单共享（provide/inject，顶栏与操作栏菜单互斥）
 │   └── useCardData.ts               # 卡片 Tab 数据自包含（log/branches/stash/tags/冲突/diff/md）
 ├── components/
-│   ├── common/                      # 复用组件（跨 ≥2 个视图引用，25 个；二次确认统一用共享 ConfirmDialog）
+│   ├── common/                      # 复用组件（跨 ≥2 个视图引用，27 个；二次确认统一用共享 ConfirmDialog）
 │   │   ├── AddProjectDialog.vue     # 添加项目弹窗
 │   │   ├── CategoryDialog.vue       # 分类管理弹窗
 │   │   ├── SettingsDialog.vue       # 设置汇总弹窗（左侧分区导航：常规=并发数+分支模式 / 显示=分析显示设置 / Git 配置=全局 Git 配置管理；导航底部=管理分类入口）
@@ -80,8 +80,17 @@ src/features/gitPush/
 │   │   ├── LoadMoreButton.vue       # 加载更多按钮
 │   │   ├── CommitFixDialog.vue      # 提交信息修正弹窗（HEAD amend + AI 生成，列表 LOG Tab 与规则检查共用）
 │   │   ├── DropCommitDialog.vue     # 删除历史提交弹窗（四项前置校验 + bundle 备份 + fast-import 历史重建删除，LOG Tab 与规则检查共用）
-│   │   └── BatchFixDialog.vue       # 提交信息批量修正弹窗（规则检查多选：AI 逐条生成 + 逐条保存 + 逐项状态）
-│   ├── ListView/                    # 列表视图专属（17 个）
+│   │   ├── BatchFixDialog.vue       # 提交信息批量修正弹窗（规则检查多选：AI 逐条生成 + 逐条保存 + 逐项状态）
+│   │   ├── PanelHeader.vue          # 面板头部（搜索 + 视图切换 + 批量旋转进度指示器）
+│   │   ├── CommitCountSelect.vue    # 分析条数选择下拉（共享 Select xsmall 档，提交分析与规则检查工具条共用）
+│   │   ├── CommitFilesDialog.vue    # 提交文件列表弹窗
+│   │   ├── CommitFilesList.vue      # 提交文件列表
+│   │   ├── CommitFileDiffDialog.vue # 提交文件差异弹窗
+│   │   ├── DiffLines.vue            # diff 着色行共享渲染片段
+│   │   ├── TagCommitDialog.vue      # 标签提交弹窗
+│   │   ├── LineRankRow.vue          # 行数排行行（排名/名称/条形/增删净/占比/可选总行数；clickable 时原生 button 可键盘激活；行数统计面板与详情弹窗共用）
+│   │   └── LineShareBar.vue         # 行数占比迷你条（轨道 + 填充 + 百分比文本，填充按净增正负着色；详情弹窗文件明细占比列用）
+│   ├── ListView/                    # 列表视图专属（16 个）
 │   │   ├── index.vue               # 列表视图入口容器（工具栏 + 分组循环卡片，纯渲染）
 │   │   ├── ListViewToolbar.vue      # 列表工具栏
 │   │   ├── ProjectCard.vue          # 项目卡片编排层（仅 project prop，数据/操作全注入 + CardTabs 面板切换）
@@ -114,7 +123,7 @@ src/features/gitPush/
 │   │   ├── LogTable.vue             # 日志表格（表头 + 日期分组循环）
 │   │   ├── LogTableRow.vue          # 日志表格行（数据行 + 平台/commit 子行，展开/复制状态自持）
 │   │   └── LogDetailDialog.vue      # 日志条目详情弹窗
-│   ├── CommitAnalysis/              # 提交分析视图专属（10 个）
+│   ├── CommitAnalysis/              # 提交分析视图专属（12 个）
 │   │   ├── index.vue                # 提交分析视图入口容器（状态编排 + 各区块组合）
 │   │   ├── AnalysisToolbar.vue      # 顶部工具条（分析状态 + 条数 + 分析按钮 + 显示设置）
 │   │   ├── AnalysisOverviewCards.vue# 总览卡片（总提交/已分析项目 + 失败提示）
@@ -141,9 +150,9 @@ src/features/gitPush/
 │   │   └── format.ts                # 字节人类可读化工具（formatBytes）
 │   └── LineStats/                   # 行数统计专属（6 个）
 │       ├── index.vue                # 行数统计视图入口容器（状态编排 + 汇总卡片 + 排行 + 弹窗）
-│       ├── LineStatsToolbar.vue     # 顶部工具条（分析状态 + 过滤配置 + 条数 + 分析按钮）
+│       ├── LineStatsToolbar.vue     # 顶部工具条（分析状态 + 过滤配置 + 分析按钮；无条数选择，统计范围固定全部提交）
 │       ├── LineStatsCards.vue       # 顶部汇总卡片（总新增/删除/净增/当前总行数）
-│       ├── LineRankingSection.vue   # 项目/作者行数排行通用区块（mode prop 区分）
+│       ├── LineRankingSection.vue   # 项目代码行数排行区块（吸顶表头 + 共享 LineRankRow 行，点击行打开详情）
 │       ├── ExtFilterDialog.vue      # 文件格式过滤配置弹窗（扩展名多选排除列表）
 │       └── ProjectLineDetail.vue    # 项目行数详情弹窗
 │   └── CodeReport/                  # 代码统计报告视图专属（9 个；分区首次激活后才挂载）
@@ -170,7 +179,10 @@ src/features/gitPush/
     ├── DropCommitDialog.scss        # 删除历史提交弹窗样式
     ├── BatchFixDialog.scss          # 提交信息批量修正弹窗样式
     ├── RepoCleanPanel.scss          # 仓库清理面板样式（体检卡片 + 大文件列表 + BFG 向导弹窗）
-    ├── LineStatsPanel.scss          # 行数统计面板样式（含过滤按钮）
+    ├── LineStatsPanel.scss          # 行数统计面板样式（工具条 + 汇总卡片 + 净增语义色；排行行样式 → LineRankRow.scss）
+    ├── LineRankRow.scss             # 行数排行行样式（列模板单点定义 + 表头吸顶 + 条形 + 数字列 + lrr-net 语义色）
+    ├── LineShareBar.scss            # 行数占比迷你条样式
+    ├── ProjectLineDetail.scss       # 项目行数详情弹窗样式（弹窗尺寸 + 头部 + 文件明细表格）
     ├── ExtFilterDialog.scss         # 文件格式过滤弹窗样式
     ├── WorkingTreePanel.scss        # 工作区面板样式
     ├── WorkingTreeDiffDialog.scss   # 差异弹窗样式
@@ -178,8 +190,8 @@ src/features/gitPush/
     ├── BranchCommitList.scss        # 提交历史列表样式
     ├── variables.scss               # 全局 Token 透传（已废弃：引用方已统一为 @/variables.scss，可删除）
     ├── _mixins.scss                 # 共享混入
-    ├── _buttons.scss                # .vp-btn 按钮体系
-    └── _shared.scss                 # .gp-spin 旋转动画
+    ├── Buttons.scss                 # .vp-btn 按钮体系
+    └── Shared.scss                  # .gp-spin 旋转动画
 ```
 
 ## 架构

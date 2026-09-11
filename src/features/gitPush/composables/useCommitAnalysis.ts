@@ -17,13 +17,14 @@ import { computed, ref } from "vue"
 import { clampDiffContextBudget, clampMaxBodyLineLength, clampMinSubjectLength, DEFAULT_ANALYSIS_VIEW_SETTINGS, DEFAULT_COMMIT_RULE_CONFIG, readCommitRuleConfig } from "../types"
 import {
   buildDailyCommitBuckets,
+  compareProjectLineRank,
   parseCommitAnalysisType,
   rankByCount,
   resolveValidPath,
 } from "../utils"
 import { analyzeCommitRuleCompliance } from "../commitRuleChecker"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
-import { countTrackedFileLinesMap, shouldIncludeFile, sumAuthorLines, sumProjectLines, type NumstatCommit } from "../reportMetrics"
+import { countTrackedFileLinesMap, shouldIncludeFile, sumLineDeltas, sumProjectLines, type NumstatCommit } from "../reportMetrics"
 
 /** 每项目抓取条数选项（"all" = 全部提交，省略 git log -n 限制；仿 BranchCommitList.countOptions） */
 export const COMMIT_COUNT_OPTIONS = [30, 50, 100, 200, 300, 500, "all"] as const
@@ -125,13 +126,14 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
       if (typeof totalLines === "number") {
         projectTotalLines.set(projectId, (projectTotalLines.get(projectId) ?? 0) + totalLines)
       }
-      const psum = sumProjectLines(numstat, extensions)
+      // 单次遍历同时拿到项目合计与作者分组（原先两次遍历同一份 numstat）
+      const { project: psum, authors } = sumLineDeltas(numstat, extensions)
       const prevP = projectLines.get(projectId)
       projectLines.set(projectId, {
         added: (prevP?.added ?? 0) + psum.added,
         deleted: (prevP?.deleted ?? 0) + psum.deleted,
       })
-      for (const [author, agg] of sumAuthorLines(numstat, extensions)) {
+      for (const [author, agg] of authors) {
         const prevA = authorLines.get(author)
         authorLines.set(author, {
           added: (prevA?.added ?? 0) + agg.added,
@@ -160,7 +162,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         net: agg.added - agg.deleted,
         totalLines: projectTotalLines.get(id),
       }))
-      .sort((a, b) => (b.totalLines ?? 0) - (a.totalLines ?? 0) || b.net - a.net || b.added - a.added)
+      .sort(compareProjectLineRank)
     const authorRanking = [...authorLines.entries()]
       .filter(([, agg]) => agg.added + agg.deleted > 0)
       .map(([author, agg]) => ({
@@ -174,11 +176,11 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     return { projectRanking, authorRanking, summary }
   }
 
-  /** 抓取单项目行数数据：并行抓 numstat（增量）与 git ls-files（存量文件列表），统计每文件存量行数与项目总行数（全量分析与详情弹窗单项目刷新共用） */
+  /** 抓取单项目行数数据：并行抓 numstat（增量）与 git ls-files（存量文件列表），统计每文件存量行数与项目总行数（全量分析与详情弹窗单项目刷新共用）。
+   * 行数统计固定统计全部提交历史（不传 maxCount）—— 与「当前总行数=工作区存量全量」保持同一口径，不受条数选择影响。 */
   async function fetchProjectLineStats(p: GitProject, path: string) {
-    // "all" 时不传上限（getCommitStatsLog 省略 -n 即抓取全部提交）
     const [numstat, trackedFiles] = await Promise.all([
-      manager.getCommitStatsLog(path, typeof commitCount.value === "number" ? commitCount.value : undefined),
+      manager.getCommitStatsLog(path),
       manager.getTrackedFiles(path),
     ])
     // 单次遍历统计每个文件存量行数并据此聚合项目总行数（复用 countFileLines 口径，避免重复读文件）
@@ -308,7 +310,6 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
       // 行数统计请求时同步写入独立行数统计缓存（与提交分析缓存解耦，行数视图优先读此槽位）
       if (needNumstat) {
         await manager.storage.lineStatsCache.save({
-          commitCount: commitCount.value,
           analyzedAt: analyzedAt.value,
           failedCount: fail,
           projectLineRanking: projectLineRanking.value,
@@ -400,7 +401,6 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     selectedExtensions.value = cache.selectedExtensions ?? []
     // 独立槽位已有分析结果：直接恢复（无 entries，供行数视图独立复用）
     if (cache.projectLineRanking.length > 0 || cache.authorLineRanking.length > 0) {
-      commitCount.value = cache.commitCount
       failedCount.value = cache.failedCount
       analyzedAt.value = cache.analyzedAt
       projectLineRanking.value = cache.projectLineRanking.filter((r) => validProjectIds.value.has(r.id))
@@ -466,7 +466,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
       projectLineRanking.value = [
         ...projectLineRanking.value.filter((r) => r.id !== projectId),
         { id: projectId, name: p.name, added: agg.added, deleted: agg.deleted, net: agg.added - agg.deleted, totalLines },
-      ].sort((a, b) => (b.totalLines ?? 0) - (a.totalLines ?? 0) || b.net - a.net || b.added - a.added)
+      ].sort(compareProjectLineRank)
       // 汇总增量校正（旧条目缺席视为 0 贡献）
       const added = lineStatsSummary.value.added + agg.added - (old?.added ?? 0)
       const deleted = lineStatsSummary.value.deleted + agg.deleted - (old?.deleted ?? 0)
@@ -476,7 +476,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         net: added - deleted,
         totalLines: lineStatsSummary.value.totalLines + totalLines - (old?.totalLines ?? 0),
       }
-      // 持久化到独立行数统计缓存（commitCount/analyzedAt/扩展名沿用现有缓存值）
+      // 持久化到独立行数统计缓存（analyzedAt/扩展名沿用现有缓存值）
       const cache = await manager.storage.lineStatsCache.loadOrDefault()
       await manager.storage.lineStatsCache.save({
         ...cache,

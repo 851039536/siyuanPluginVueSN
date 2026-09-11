@@ -1,0 +1,201 @@
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// ── 行数排行行（项目排行 + 详情弹窗作者排行共用）
+// 列模板单点定义：数据行（.lrr-row）与表头（.lrr-head）必须共用同一模板，
+// 否则跨行条形起止点错位（这是排行可读性的硬约束）──
+// 排名 | 名称（自适应）| 条形轨道（自适应）| 三列数字 | 占比 | 总行数
+$_lrr-cols: 18px minmax(64px, 1.1fr) minmax(36px, 1fr) auto 40px minmax(40px, auto);
+// 无总行数列（作者明细场景）：占比列对齐到末列
+$_lrr-cols-no-total: 18px minmax(64px, 1.1fr) minmax(36px, 1fr) auto 42px;
+
+// 排行列表容器（两处共用：面板项目排行 + 弹窗作者排行）
+.lrr-list {
+  display: flex;
+  flex-direction: column;
+  gap: $s-2;
+}
+
+// 吸顶表头行：贴住面板顶部（不透明底遮挡滚过的数据行），与数据行同列模板
+.lrr-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: $_lrr-cols;
+  align-items: center;
+  gap: $s-2;
+  padding-bottom: $s-1;
+  font-size: $t-2xs; // 表头弱化（两级字号制）
+  font-weight: $fw-bold;
+  letter-spacing: 0.06em;
+  color: var(--b3-theme-on-surface-light);
+  background: var(--b3-theme-background); // 吸顶遮挡：必须不透明
+  border-bottom: 1px solid var(--b3-border-color);
+
+  // 排名/名称/轨道三列仅作占位，空轨道不显示背景避免视觉干扰
+  .lrr-track {
+    background: transparent;
+  }
+
+  // 表头数字与占比文字不弱化（覆盖数据行的 opacity 弱化）
+  .lrr-num,
+  .lrr-share,
+  .lrr-total {
+    opacity: 1;
+  }
+}
+
+// 净增表头："实际行数"主角，主题色强调（区别于新增绿/删除红）
+.lrr-head-net {
+  color: var(--b3-theme-primary);
+}
+
+// 数据行：clickable 时根为原生 button（重置自带外观），整行可点击 + 可键盘聚焦激活；
+// 非交互场景根为 div，天然不进入 Tab 序列
+.lrr-row {
+  @include btn-reset;
+  display: grid;
+  grid-template-columns: $_lrr-cols;
+  align-items: center;
+  gap: $s-2;
+  width: 100%;
+  padding: $s-1 0; // 仅纵向内边距：横向为 0，保持与表头列对齐
+  font-size: $t-xs;
+  text-align: left;
+  border-radius: $r-sm;
+  transition: background-color 0.12s;
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+// 无总行数列变体（作者明细）
+.lrr-row--no-total {
+  grid-template-columns: $_lrr-cols-no-total;
+}
+
+// 可点击行：hover 时名称变主题色，提示可打开详情（与 CommitAnalysisPanel 交互模式一致）
+.lrr-row--clickable {
+  cursor: pointer;
+
+  &:hover {
+    background: var(--b3-theme-surface);
+
+    .lrr-label {
+      color: var(--b3-theme-primary);
+    }
+  }
+}
+
+// 排名序号列（等宽数字右对齐，弱化强调，非交互）
+.lrr-rank {
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  text-align: right;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+}
+
+// 名称列：比例宽度 + 省略号（完整名称走行内 title）
+.lrr-label {
+  min-width: 0;
+  @include text-ellipsis;
+  opacity: 0.75;
+}
+
+.lrr-track {
+  // 轨道高度 5px、圆角 4px（radius-sm），色块存在感更强
+  height: 5px;
+  min-width: 0;
+  background: var(--b3-theme-surface);
+  border-radius: $r-sm;
+  overflow: hidden;
+}
+
+.lrr-fill {
+  display: block;
+  height: 100%;
+  min-width: 2px; // 极小占比也保留 2px 可见宽度（可读性优先于严格比例，有意取舍）
+  border-radius: $r-sm;
+  background: var(--b3-theme-primary);
+  transition: width 0.12s ease;
+}
+
+// ── 行数排行数字列（+新增 / −删除 / 净增 三列等宽数字，整块右对齐）──
+// 靠右对齐让三列数字尾部跨行对齐；相邻数字用 margin 保证间距（不依赖 flex gap 支持，根除粘连）
+.lrr-nums {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  font-variant-numeric: tabular-nums; // 等宽数字：数字变化时列宽不抖动
+}
+
+// 数字单元格：自适应数字宽度（含千位分隔符），禁止换行挤压
+.lrr-num {
+  white-space: nowrap;
+  text-align: right;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+}
+
+.lrr-num + .lrr-num {
+  margin-left: $s-2;
+}
+
+// 新增行 → 绿（success）
+.lrr-num--add {
+  color: var(--b3-theme-success);
+}
+
+// 删除行 → 红（error）
+.lrr-num--del {
+  color: var(--b3-theme-error);
+}
+
+// 占比列（占总和的百分比，等宽右对齐弱化展示）
+.lrr-share {
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+}
+
+// 总行数列（当前工作区实际行数，存量口径，等宽右对齐中性色；与增量数字列区分）
+.lrr-total {
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+}
+
+// ── 净增语义色（全 gitPush 行数统计统一前缀：正→绿 / 负→红 / 零→灰）──
+.lrr-net--pos {
+  color: var(--b3-theme-success);
+}
+
+.lrr-net--neg {
+  color: var(--b3-theme-error);
+}
+
+.lrr-net--zero {
+  opacity: 0.5;
+}
+
+// fill 的净增着色（barNetColored 场景：作者排行/净增口径占比）
+.lrr-fill.lrr-net--pos {
+  background: var(--b3-theme-success);
+}
+
+.lrr-fill.lrr-net--neg {
+  background: var(--b3-theme-error);
+}

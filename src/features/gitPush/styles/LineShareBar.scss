@@ -1,0 +1,45 @@
+@use "@/variables.scss" as *;
+
+// ── 行数占比迷你条（轨道 + 填充 + 百分比文本，文件明细表格占比列等场景）──
+.lsb {
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+}
+
+.lsb-track {
+  flex: 1;
+  height: 5px;
+  background: var(--b3-theme-surface);
+  border-radius: $r-sm;
+  overflow: hidden;
+}
+
+.lsb-fill {
+  display: block;
+  height: 100%;
+  min-width: 2px; // 极小占比也保留 2px 可见宽度（与 LineRankRow 的条形同取舍）
+  border-radius: $r-sm;
+  background: var(--b3-theme-primary);
+  transition: width 0.12s ease;
+}
+
+// fill 的净增着色：颜色规则与 LineRankRow.scss 的 .lrr-fill.lrr-net--* 保持同步维护
+// （前缀共用 lrr-net，fill 因组件不同各写一条，无可共享的落点）
+.lsb-fill.lrr-net--pos {
+  background: var(--b3-theme-success);
+}
+
+.lsb-fill.lrr-net--neg {
+  background: var(--b3-theme-error);
+}
+
+.lsb-text {
+  flex: 0 0 40px;
+  text-align: right;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  font-variant-numeric: tabular-nums;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+}

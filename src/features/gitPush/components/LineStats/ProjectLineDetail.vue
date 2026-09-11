@@ -130,14 +130,11 @@
                     :class="netClass(row.net)"
                   >{{ row.net.toLocaleString() }}</span>
                   <span class="pld-cell pld-cell--share">
-                    <span class="pld-share-track">
-                      <span
-                        class="pld-share-fill"
-                        :class="netClass(row.net)"
-                        :style="{ width: row.pct }"
-                      />
-                    </span>
-                    <span class="pld-share-text">{{ row.share }}</span>
+                    <LineShareBar
+                      :pct="row.pct"
+                      :share="row.share"
+                      :net="row.net"
+                    />
                   </span>
                   <!-- 总行数列：该文件当前存量行数（等宽右对齐中性色；2MB/二进制/已删除或旧数据缺失显示 —） -->
                   <span
@@ -148,7 +145,7 @@
               </template>
             </TabPanel>
 
-            <!-- 作者明细 Tab：与全局作者排行同模式（rank + 作者 + 轨道 + 增删净 + 占比） -->
+            <!-- 作者明细 Tab：共享 LineRankRow（非交互，无总行数列，fill 随净增着色） -->
             <TabPanel value="author">
               <EmptyState
                 v-if="authorRows.length === 0"
@@ -157,42 +154,21 @@
               />
               <div
                 v-else
-                class="pld-bar-list"
+                class="lrr-list"
               >
-                <div
+                <LineRankRow
                   v-for="(row, idx) in authorRows"
                   :key="row.author"
-                  class="pld-bar-row"
-                >
-                  <span class="pld-bar-rank">{{ idx + 1 }}</span>
-                  <span
-                    class="pld-bar-label"
-                    :title="row.author"
-                  >{{ row.author }}</span>
-                  <span class="pld-bar-track">
-                    <span
-                      class="pld-bar-fill"
-                      :class="netClass(row.net)"
-                      :style="{ width: row.pct }"
-                    />
-                  </span>
-                  <span class="pld-line-nums">
-                    <span
-                      class="pld-line-num pld-num--add"
-                      :title="`${i18n.analysisLineAdded} ${row.added}`"
-                    >+{{ row.added.toLocaleString() }}</span>
-                    <span
-                      class="pld-line-num pld-num--del"
-                      :title="`${i18n.analysisLineDeleted} ${row.deleted}`"
-                    >−{{ row.deleted.toLocaleString() }}</span>
-                    <span
-                      class="pld-line-num pld-num--net"
-                      :class="netClass(row.net)"
-                      :title="`${i18n.analysisLineNet} ${row.net}`"
-                    >{{ row.net.toLocaleString() }}</span>
-                  </span>
-                  <span class="pld-bar-share">{{ row.share }}</span>
-                </div>
+                  :rank="idx + 1"
+                  :label="row.author"
+                  :pct="row.pct"
+                  :share="row.share"
+                  :added="row.added"
+                  :deleted="row.deleted"
+                  :net="row.net"
+                  bar-net-colored
+                  :i18n="i18n"
+                />
               </div>
             </TabPanel>
           </TabPanels>
@@ -225,6 +201,8 @@ import TabPanel from "@/components/TabPanel.vue"
 import TabPanels from "@/components/TabPanels.vue"
 import Tabs from "@/components/Tabs.vue"
 import Tag from "@/components/Tag.vue"
+import LineRankRow from "../common/LineRankRow.vue"
+import LineShareBar from "../common/LineShareBar.vue"
 import { aggregateFileStats, shouldIncludeFile, sumAuthorLines } from "../../reportMetrics"
 import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
 import { netClass as sharedNetClass, withLineBarPct } from "../../utils"
@@ -293,9 +271,9 @@ const authorRows = computed(() => {
   return withLineBarPct(raw, (r) => r.net)
 })
 
-/** 净增行语义色（薄委托共享 netClass，前缀 pld-net，保持模板调用点零改动） */
+/** 净增行语义色（统一前缀 lrr-net，与共享排行行/占比条同一套样式） */
 function netClass(net: number): string {
-  return sharedNetClass(net, "pld-net")
+  return sharedNetClass(net, "lrr-net")
 }
 
 const { rootRef } = useDialogKeyboard()
@@ -303,5 +281,6 @@ const { rootRef } = useDialogKeyboard()
 
 <style lang="scss">
 @use "../../styles/ProjectLineDetail.scss";
+@use "../../styles/LineRankRow.scss";
 @use "../../styles/index.scss";
 </style>

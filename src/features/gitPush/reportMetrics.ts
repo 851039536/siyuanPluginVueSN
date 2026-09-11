@@ -236,36 +236,40 @@ interface LineDelta {
   deleted: number
 }
 
-/** 从 NumstatCommit[] 汇总单项目总增删行数（extensions 可选黑名单排除过滤） */
-export function sumProjectLines(commits: NumstatCommit[], extensions?: string[]): LineDelta {
-  let added = 0
-  let deleted = 0
+/** 单次遍历同时汇总项目合计与按作者分组（extensions 可选黑名单排除过滤）。
+ * sumProjectLines / sumAuthorLines 的共用核心：原先两函数各自完整遍历一遍 commits×files，
+ * 跨项目全量分析（"all" + 大仓库）时是纯 CPU 浪费，合并后单遍产出两者。 */
+export function sumLineDeltas(
+  commits: NumstatCommit[],
+  extensions?: string[],
+): { project: LineDelta, authors: Map<string, LineDelta> } {
+  const project: LineDelta = { added: 0, deleted: 0 }
+  const authors = new Map<string, LineDelta>()
   for (const c of commits) {
-    for (const f of c.files) {
-      if (!shouldIncludeFile(f.path, extensions)) continue
-      added += f.added
-      deleted += f.deleted
-    }
-  }
-  return { added, deleted }
-}
-
-/** 从 NumstatCommit[] 汇总每人增删行数（Map<作者名, {added, deleted}>，extensions 可选黑名单排除过滤） */
-export function sumAuthorLines(commits: NumstatCommit[], extensions?: string[]): Map<string, LineDelta> {
-  const map = new Map<string, LineDelta>()
-  for (const c of commits) {
-    let agg = map.get(c.author)
+    let agg = authors.get(c.author)
     if (!agg) {
       agg = { added: 0, deleted: 0 }
-      map.set(c.author, agg)
+      authors.set(c.author, agg)
     }
     for (const f of c.files) {
       if (!shouldIncludeFile(f.path, extensions)) continue
+      project.added += f.added
+      project.deleted += f.deleted
       agg.added += f.added
       agg.deleted += f.deleted
     }
   }
-  return map
+  return { project, authors }
+}
+
+/** 从 NumstatCommit[] 汇总单项目总增删行数（extensions 可选黑名单排除过滤）；薄包装 sumLineDeltas 的 project 维度 */
+export function sumProjectLines(commits: NumstatCommit[], extensions?: string[]): LineDelta {
+  return sumLineDeltas(commits, extensions).project
+}
+
+/** 从 NumstatCommit[] 汇总每人增删行数（Map<作者名, {added, deleted}>，extensions 可选黑名单排除过滤）；薄包装 sumLineDeltas 的 authors 维度 */
+export function sumAuthorLines(commits: NumstatCommit[], extensions?: string[]): Map<string, LineDelta> {
+  return sumLineDeltas(commits, extensions).authors
 }
 
 // ── K 线图：按日期聚合每日提交统计 ──

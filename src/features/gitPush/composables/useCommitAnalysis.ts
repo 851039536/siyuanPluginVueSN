@@ -11,14 +11,18 @@ import type {
   GitProject,
   GitPushManager,
   LineStatsSummary,
+  ProjectFetchFailure,
   ProjectLineRankItem,
 } from "../types"
 import { computed, ref } from "vue"
 import { clampDiffContextBudget, clampMaxBodyLineLength, clampMinSubjectLength, DEFAULT_ANALYSIS_VIEW_SETTINGS, DEFAULT_COMMIT_RULE_CONFIG, readCommitRuleConfig } from "../types"
 import {
   buildDailyCommitBuckets,
+  classifyFetchFailure,
   compareProjectLineRank,
+  fetchFailureReason,
   parseCommitAnalysisType,
+  ProjectFetchError,
   rankByCount,
   resolveValidPath,
 } from "../utils"
@@ -65,6 +69,8 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   const entries = ref<CommitAnalysisEntry[]>([])
   /** 分析失败的项目数（路径无效 throw 计入；行数统计分支 git 失败同样计入，提交分析分支 getCommitLog 内部吞错时不计入） */
   const failedCount = ref(0)
+  /** 失败项目明细（项目名 + 路径 + 原因分类 + 原始报错；与 failedCount 同源写入，供行数统计失败弹窗展示） */
+  const fetchFailures = ref<ProjectFetchFailure[]>([])
   /** 是否已尝试过从存储载入提交分析缓存（防重复读盘） */
   let cacheLoaded = false
   /** 是否已尝试过从存储载入行数统计独立缓存（防重复读盘） */
@@ -211,7 +217,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         // B 修复：路径无效的项目直接 throw 计入 failedCount（预检绕过 getCommitLog 内部吞错的语义，避免静默缺席）
         const modules = getNodeFsPathOs()
         if (modules && !modules.fs.existsSync(path)) {
-          throw new Error(`项目路径无效：${path}`)
+          throw new ProjectFetchError("pathMissing", `Path not found: ${path}`)
         }
         // 行数统计：单命令抓取（getCommitStatsLog 自带 hash/message/author/date + 每文件增删行），
         // git 失败直接抛错计入 failedCount（不再本地 try-catch 降级为空数据）
@@ -252,9 +258,24 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
       }))
       let fail = 0
       const flat: CommitAnalysisEntry[] = []
-      settled.forEach((r) => {
-        if (r.status === "fulfilled") flat.push(...r.value.entries)
-        else fail++
+      // 本次运行的失败明细：settled 下标与 targets 一一对应，失败项据此回填项目名与本次实际使用的路径
+      const runFailures: ProjectFetchFailure[] = []
+      settled.forEach((r, i) => {
+        if (r.status === "fulfilled") {
+          flat.push(...r.value.entries)
+          return
+        }
+        fail++
+        const target = targets[i]
+        if (!target) return
+        runFailures.push({
+          projectId: target.id,
+          projectName: target.name,
+          path: resolveValidPath(target),
+          // 路径预检失败自带分类（不经文案反推）；git 命令失败按其 stderr 关键字归类
+          kind: r.reason instanceof ProjectFetchError ? r.reason.kind : classifyFetchFailure(r.reason),
+          reason: fetchFailureReason(r.reason),
+        })
       })
       // 子集局部刷新（保存修正后）：按项目合并——移除目标项目旧条目（amend/rebase 后 hash 已变，整体替换）+ 追加新数据，其他项目保留
       const idSet = projectIds?.length && !needNumstat ? new Set(projectIds) : new Set<string>()
@@ -263,6 +284,8 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         // 目标项目旧失败贡献（缺席旧 entries 计 1）+ 本次新失败数（单项目 0/1），增量校正 failedCount
         const oldContribution = [...idSet].filter((id) => !prevEntries.some((e) => e.projectId === id)).length
         failedCount.value = failedCount.value - oldContribution + fail
+        // 失败明细同口径替换：先剔除目标项目旧明细，再并入本次运行结果
+        fetchFailures.value = [...fetchFailures.value.filter((f) => !idSet.has(f.projectId)), ...runFailures]
         const merged = [...prevEntries.filter((e) => !idSet.has(e.projectId)), ...flat]
         // 按项目配置顺序重排，保持显示稳定
         const order = new Map(projects.value.map((p, i) => [p.id, i]))
@@ -271,6 +294,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
       } else {
         failedCount.value = fail
         entries.value = flat
+        fetchFailures.value = runFailures
       }
       analyzedAt.value = new Date().toISOString()
       analyzed.value = true
@@ -312,6 +336,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         await manager.storage.lineStatsCache.save({
           analyzedAt: analyzedAt.value,
           failedCount: fail,
+          failures: fetchFailures.value,
           projectLineRanking: projectLineRanking.value,
           authorLineRanking: authorLineRanking.value,
           selectedExtensions: selectedExtensions.value,
@@ -402,6 +427,8 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     // 独立槽位已有分析结果：直接恢复（无 entries，供行数视图独立复用）
     if (cache.projectLineRanking.length > 0 || cache.authorLineRanking.length > 0) {
       failedCount.value = cache.failedCount
+      // 失败明细随缓存恢复（旧缓存无 failures 字段 → 空数组，仅计数可展示）；项目删除后其明细同步剔除
+      fetchFailures.value = (cache.failures ?? []).filter((f) => validProjectIds.value.has(f.projectId))
       analyzedAt.value = cache.analyzedAt
       projectLineRanking.value = cache.projectLineRanking.filter((r) => validProjectIds.value.has(r.id))
       authorLineRanking.value = cache.authorLineRanking
@@ -453,7 +480,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
       const path = resolveValidPath(p)
       const modules = getNodeFsPathOs()
       if (modules && !modules.fs.existsSync(path)) {
-        throw new Error(`项目路径无效：${path}`)
+        throw new ProjectFetchError("pathMissing", `Path not found: ${path}`)
       }
       const { numstat, fileLines, totalLines } = await fetchProjectLineStats(p, path)
       // 更新 per-project 内存缓存（numstat 为空时移除键，与全量分析「仅存有变更数据项目」口径一致）
@@ -591,6 +618,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     analyzed,
     analyzedAt,
     failedCount,
+    fetchFailures,
     commitCount,
     setCommitCount,
     runAnalysis,

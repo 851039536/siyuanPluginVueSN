@@ -85,6 +85,7 @@
       :analyzed="analysisAnalyzed"
       :analyzed-at="analysisAnalyzedAt"
       :failed-count="analysisFailedCount"
+      :fetch-failures="fetchFailures"
       :summary="lineStatsSummary"
       :selected-extensions="selectedExtensions"
       :line-detail-project-id="lineDetailProjectId"
@@ -593,6 +594,7 @@ const {
   analyzed: analysisAnalyzed,
   analyzedAt: analysisAnalyzedAt,
   failedCount: analysisFailedCount,
+  fetchFailures,
   commitCount: analysisCommitCount,
   setCommitCount,
   runAnalysis,

@@ -38,12 +38,20 @@
       />
 
       <template v-else>
-        <!-- 失败提示 -->
+        <!-- 失败提示：名称与原因收纳在明细弹窗里（旧缓存无明细时仅显示计数） -->
         <div
           v-if="failedCount > 0"
           class="gls-fail-hint"
         >
-          {{ i18n.analysisFailedCount.replace("{0}", String(failedCount)) }}
+          <span>{{ i18n.analysisFailedCount.replace("{0}", String(failedCount)) }}</span>
+          <Button
+            v-if="fetchFailures.length > 0"
+            variant="ghost"
+            :text="true"
+            size="xsmall"
+            icon="alertCircleOutline"
+            @click="showFailDialog = true"
+          >{{ i18n.lineStatsFailureShow }}</Button>
         </div>
 
         <!-- 空状态：分析完成但无行数数据 -->
@@ -97,16 +105,26 @@
       :refreshing="lineDetailRefreshing"
       @close="emit('closeLineDetail')"
     />
+
+    <!-- 项目抓取失败明细弹窗（点击失败提示中的「查看失败项目」打开，逐条展示项目名/路径/原因） -->
+    <FetchFailuresDialog
+      v-if="showFailDialog"
+      :i18n="i18n"
+      :failures="fetchFailures"
+      @close="showFailDialog = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 // gitPush 行数统计视图入口容器（状态编排 + 汇总卡片 + 排行区块 + 弹窗）
 import type { NumstatCommit } from "../../reportMetrics"
-import type { LineStatsSummary, ProjectLineRankItem } from "../../types"
+import type { LineStatsSummary, ProjectFetchFailure, ProjectLineRankItem } from "../../types"
 import { computed, ref } from "vue"
+import Button from "@/components/Button.vue"
 import EmptyState from "../common/EmptyState.vue"
 import ExtFilterDialog from "./ExtFilterDialog.vue"
+import FetchFailuresDialog from "./FetchFailuresDialog.vue"
 import LineRankingSection from "./LineRankingSection.vue"
 import LineStatsCards from "./LineStatsCards.vue"
 import LineStatsToolbar from "./LineStatsToolbar.vue"
@@ -127,6 +145,8 @@ const props = defineProps<{
   analyzedAt: string
   /** 抓取失败的项目数 */
   failedCount: number
+  /** 抓取失败项目明细（项目名 + 本次使用路径 + 原因分类 + 原始报错，失败明细弹窗数据源） */
+  fetchFailures: ProjectFetchFailure[]
   /** 选中的文件扩展名过滤（空数组 = 不过滤） */
   selectedExtensions: string[]
   /** 详情弹窗目标项目 id（非空即打开弹窗） */
@@ -150,6 +170,9 @@ const emit = defineEmits<{
 
 /** 过滤配置弹窗显示状态 */
 const showExtDialog = ref(false)
+
+/** 失败明细弹窗显示状态 */
+const showFailDialog = ref(false)
 
 /** 详情弹窗目标行（单次查找，项目名与总行数共用；项目已删除时为 undefined） */
 const lineDetailRow = computed(() => props.projectRanking.find((r) => r.id === props.lineDetailProjectId))

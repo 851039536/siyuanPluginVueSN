@@ -10,7 +10,7 @@
 .range-slider {
   flex: 1;
   height: 5px;
-  border-radius: 3px;
+  border-radius: $radius-px;
   background: var(--b3-theme-surface-variant);
   outline: none;
   cursor: pointer;

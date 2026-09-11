@@ -160,52 +160,6 @@ watch(
 </script>
 
 <style scoped lang="scss">
+@use "../styles/VideoPlayerDialog.scss";
 @use "../styles/index.scss";
-
-// 视频播放器对话框特定样式
-.dialog-header {
-  .icon-btn {
-    cursor: pointer;
-    color: var(--b3-theme-on-surface-light);
-
-    &:hover {
-      color: var(--b3-theme-on-background);
-    }
-  }
-}
-
-// 视频播放器容器
-.video-player-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-  .video-details {
-    margin-top: 16px;
-    width: 100%;
-
-    h4 {
-      margin: 0 0 8px 0;
-      color: var(--b3-theme-on-background);
-      font-size: 15px;
-      font-weight: 500;
-    }
-
-    .video-meta {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 13px;
-      color: var(--b3-theme-on-surface-light);
-
-      .video-category {
-        padding: 2px 8px;
-        background: var(--b3-theme-primary-lightest);
-        color: var(--b3-theme-primary);
-        border-radius: 4px;
-        font-size: 12px;
-      }
-    }
-  }
-}
 </style>

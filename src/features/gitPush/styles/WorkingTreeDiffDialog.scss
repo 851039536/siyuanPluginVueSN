@@ -35,7 +35,7 @@
   align-items: center;
   justify-content: space-between;
   gap: $spacing-2;
-  padding: 8px 12px;
+  padding: $spacing-2 $spacing-3;
   background: var(--b3-theme-surface);
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
@@ -44,7 +44,7 @@
 .wt-diff-title-row {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: $spacing-2px;
   min-width: 0;
 }
 
@@ -59,7 +59,7 @@
 
 .wt-diff-badge {
   font-size: $font-size-2xs;
-  padding: 1px 2px;
+  padding: $spacing-1px $spacing-2px;
   border-radius: $radius-sm;
   border: 1px solid var(--b3-border-color);
   opacity: 0.5;
@@ -70,7 +70,7 @@
 .wt-diff-stats {
   display: flex;
   gap: $spacing-1;
-  margin-left: 2px;
+  margin-left: $spacing-2px;
   font-size: $font-size-2xs;
   font-family: $vp-mono;
   font-weight: $font-weight-bold;
@@ -84,7 +84,7 @@
 .wt-diff-header-actions {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: $spacing-2px;
   flex-shrink: 0;
 }
 
@@ -94,7 +94,7 @@
   font-family: $vp-mono;
   opacity: 0.5;
   white-space: nowrap;
-  padding: 0 2px;
+  padding: 0 $spacing-2px;
 }
 
 // 操作分组竖向分隔线
@@ -117,7 +117,7 @@
 .wt-diff-legend {
   display: flex;
   gap: $spacing-3;
-  padding: 4px 10px;
+  padding: $spacing-1 $spacing-10px;
   font-size: $font-size-2xs;
   font-family: $vp-mono;
   border-bottom: 1px solid var(--b3-border-color);
@@ -150,7 +150,7 @@
 
 .wt-diff-line {
   display: flex;
-  padding: 0 8px 0 0;
+  padding: 0 $spacing-2 0 0;
   line-height: $line-height-normal;
 
   &.wt-dl-add {
@@ -169,9 +169,9 @@
 
   // hunk 行强化为分隔条，分段一目了然
   &.wt-dl-hunk {
-    margin-top: 4px;
-    padding-top: 2px;
-    padding-bottom: 2px;
+    margin-top: $spacing-1;
+    padding-top: $spacing-2px;
+    padding-bottom: $spacing-2px;
     background: var(--b3-theme-surface);
     color: var(--gp-diff-hunk-color);
 
@@ -192,7 +192,7 @@
 .wt-dl-no {
   flex-shrink: 0;
   width: 34px;
-  padding-right: 6px;
+  padding-right: $spacing-6px;
   text-align: right;
   opacity: 0.35;
   user-select: none;

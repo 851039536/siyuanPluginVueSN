@@ -75,6 +75,34 @@
 - 非 deep watch 对原地 splice 不触发 → 返回全新数组；组件内常量若被 composable 运行时引用，拆 `types/xxx.ts`（放 `types/index.ts` 会与 `index.vue` 循环）
 - 组件 props 中的 plugin 类型：思源 `Plugin` 基类无 `settings`，项目先例 `import type PluginSample from "@/index"`
 - sass 离线编译需自定义 importer 映射 `@/` → `src/`（`findFileUrl`），可端到端验证 SCSS 编译与选择器展开
+- **写 JS 扫描/分析脚本的两个静默陷阱**：①对象字面量 `{ line: i + 1, line }` 后者覆盖前者 → `findings.line` 变源码文本，**无任何报错**，且漏改一处 `ctx.line` 消费点会让 `RegExp.exec(数字)` 集体静默无匹配；②用 `m[0]`（含首尾引号）做前缀/形态判定会让规则**整体零命中**，须用捕获组 `m[1]`
+
+## 硬编码审查（2026-09-11 建立，工具与基线）
+- 工具：`scripts/audit-hardcode.mjs`（只读，31 条规则 / 四类 = SCSS Token + i18n 文案 + 业务常量 + 图标 emoji；内建 15 类例外白名单）。复跑 `node scripts/audit-hardcode.mjs` 即得「已消除 / 新增」diff，可作长期回归守卫
+- 交付：`docs/hardcode-audit.md`（报告 + 9 批次修复计划 + 不建议修清单）、`docs/hardcode-audit.data.json`（机器可读基线）
+- 基线：**3613 处**（P0 0 / P1 1422 / P2 2076 / P3 115），排除 1495 处；扫 **1292 文件 / 212915 行**（`src/features/` 实际 **1222 文件**——`gitPush` 209 / `statistics` 90 / `toolCollection` 75 / `docAnalysis` 50；IDE 早期快照的 596 已严重过期）
+- 三个高价值结论：①**9 个 `.vue` 内联样式共 402 行**（`formatAssistant/index.vue` 256 行最重），多数同时含字号/字重/圆角/间距硬编码；②**232 处图标名未在 `config/icons.ts` 注册**（`mdi:` 201 + `ph:` 31，分布 77 文件）——**能正常渲染故从未告警**（`iconifySetup` 已预加载 MDI+Phosphor，`validate:icons` 只查注册表条目），修法是批量注册或换 IconKey；③`globalRelations/styles/index.scss` 单文件犯字号/字重/行高/圆角/间距五类，整文件未 Token 化
+- 安全：**P0 = 0 无硬编码凭据**。`settingsCrypto.ts` 的 PBKDF2 密钥材料属**既定设计**（文件头已声明强度边界），勿当违规「修复」
+- 真违规残留：`--b3-theme-destructive`（该变量从未定义，应为 `--b3-theme-error`）= `Tag.scss`(3) + `Badge.scss`(1)
+- 务实口径排除项已代码化，扩展时只需追加 `I18N_DATA_TABLE_PATTERNS` / `CENTRAL_DATA_FILES` / `EXCLUDED_FILES` 条目
+- **修复进度（2026-09-11 七轮）**：3613 → **1693**（−1920，消除 53.1%；P1 993 / P2 629 / P3 71）。已归零：`scss/in-vue-inline` 402→0、`undefined-token` 4→0、`font-weight` 5→0、**`font-family` 120→0**；接近归零：`scss/spacing` 1139→**28**（B1+B4）、`border-radius` 132→**16**（B2）；语义色 58 处（B3）
+- **间距 Token 补齐**：全局 px 档位现为 1px/2px/3px/5px/6px/7px/10px/14px/18px + rem 档位 `$spacing-1~16`。**新增档位只补 rem 档位未覆盖的非 4 倍数**，避免语义重复。`em` 单位的间距（Markdown 排版 `:deep(p){margin:0.3em 0}`）**豁免** —— 转 px 会破坏文本缩放
+- **动手分析前别下结论**：曾猜「spacing 剩余 `1px` 82 处是 `border: 1px solid` 误报」，实际全是真 padding/gap/margin；真因是**没有对应 Token**
+- **修完要收尾过时注释**：新增 Token 后，一批 `// 无对应 Token` 会变得自相矛盾（值已是 Token），既误导维护又让扫描器误豁免，需批量改「已收敛为全局 Token」（本次 23 处）
+- **色值（B3）已按选项 B 执行**：`$color-*` 只是 `--b3-theme-*` 的 fallback（见 `_variables.scss` 开篇注释），是 hsl 语义色，与项目里的 Tailwind 色阶无等值关系 → 映射目标是 `var(--b3-theme-*)`（**CSS 变量，无需补 SCSS 导入**）。从 142 处族总量筛出 **58 处**可安全改；剔除的是 rgba 低透明度变体（无等价物）、图表色（带 `// REPORT_CHART_COLORS.*` 注释）、语义徽章（`heading-badge-*`、`lang--*`）、以及**三套必须整体保留的配套配色**（AntD success 四色 / slate 深色卡片三色 / 暗色编辑器）
+- **可机械替换的前提是「值即名称」Token 可新增**（`$spacing-7px`、`$radius-2px`）→ 等值。**语义档位 Token 无法等值替换**：`line-height`(Token 仅 1.25/1.5/1.75，实际 1.4/1.6/1.7)、`transition-duration`(规范 0.12s，实际 0.15/0.2/0.3/0.6s) 都不能机械改。还能等值扩 Token 的只剩 spacing 与 border-radius
+- **codemod 工具**：`scripts/codemod-hardcode-tokens.mjs`（原 spacing 专用版已删）。`--rules scss/spacing,scss/border-radius`，`FAMILIES` 表驱动声明正则 + px/rem 映射；默认干跑、`--write`、`--report`、幂等。等值替换原则：rem 只映射到 rem Token；负值/无 Token 档位保持原样
+- **`@use` 命名空间的三种坑（已全部加守卫）**：①判断「能否用裸 `$token`」只沿 **`@forward`** 链递归（`@use` 不传递成员）；②`@/` 解析要补回 `src/`；③**已有其他 `as *` 导入时不能再补全局 `as *`**（成员同名冲突）→ 此时改用**带命名空间的 `@use "@/variables.scss" as g;` + `g.$token`**，零冲突
+- **改扫描器脚本后必须复扫或回读源码验证** —— `replace_in_file` 曾返回 success 但内容未变，导致误报残留一轮
+- **编译通过 ≠ 正确**：Sass 不校验 CSS 属性值合法性。曾因正则剥掉 `#` 而生成 `#var(--b3-theme-error)` 非法值，58 处全中招却**编译全过**。**机械替换后必须抽查产物内容**（并做一次全库非法模式扫描）
+- **全局 Token 新增（2026-09-11）**：`$spacing-6px: 6px` / `$spacing-10px: 10px`（沿用 `$spacing-2px` 的「值即名称」写法）。**不要命名为 `$spacing-1_5`/`$spacing-2_5`** —— `src/components/styles/_mixins.scss` 已有本地 `$spacing-2_5`，同名会遮蔽。该文件的 `$gap-xs` / `$spacing-2_5` 已收敛为指向全局 Token
+- **B1 codemod（`scripts/codemod-spacing-tokens.mjs`，默认干跑、`--write` 落盘、幂等）的核心坑**：判断「文件能否用裸 `$spacing-*`」必须按 Sass 语义解析模块 —— 项目里有三种等价形态：`@use "@/variables.scss" as *` / `@use "../../../variables" as *`（**相对路径**，aiContentGenerator、statistics 在用）/ `@use "./variables" as *` 而该文件 **`@forward` 了全局**（superPanel）。**只按 `@forward` 链递归**（`@use` 不传递成员）；`@/` 解析要补回 `src/` 前缀。误判会插入重复模块加载 → 编译失败（初版误判 133 个文件）
+- **等值替换的两条纪律**：①**rem 不映射到 px Token**（`0.375rem`→`$spacing-6px` 在根字号≠16px 时变结果，8 处已在 compactMode 保留 rem）；②负值与无 Token 档位（1px/5px/7px/14px）保持原样，不做「就近取 Token」近似 —— 「零语义变化」才站得住
+- **`git diff --shortstat` 会因 `docs/hardcode-audit.data.json`（1.1 MB，每次扫描重写且处于 `AM` 暂存态）虚报数万行**。核对真实改动必须用 `git diff --numstat` 按文件排序看头部
+- **样式分离（迁移内联 SCSS）标准动作**：①读 `<style>` 块，**先查有无 `@use ... as X` / `@include X.mixin` 依赖**（`ASCIIConverter` 依赖 `index.label-style`，迁出后须在新文件写 `@use "./index" as index;`，忽略直接编译失败）②新建 `styles/<Component>.scss`，**首行显式 `@use "@/variables.scss" as *;`**（不靠链式传递）③无 Token 的值集中声明为 `$<缩写>-*` 局部变量 ④`.vue` 的 `<style>` 改**双行导入**（组件专属在前、`index.scss` 在后）⑤逐文件 `sass.compileAsync` + `read_lints` + 扫描器复跑。无 feature 归属的样式放 `src/styles/`（已建，含 `app.scss`）
+- Token 化实操三条：①**Sass 变量不跨文件传递**，替换前必须确认该文件已有 `@use '@/variables.scss' as *;`（`globalRelations` 原本完全没有 `@use`，直接替换必编译失败）；②**无对应 Token 的值集中声明为文件顶部局部变量**（`$gr-space-10: 10px; // 无对应 Token`）优于散落行尾注释 —— 单一来源 + 定义行能被扫描器的 `无对应 Token` 判定豁免；③**跨文件成对常量保留勿「Token 化」**（`$gr-accent: #06b6d4` 必须等于 `icons.ts:328` 的 globalRelations 图标色；`$fa-preview-bg: #fff` 是公众号预览固定白底）
+- **B1 间距 Token 化的关键分水岭（2026-09-11 查明）**：`scss/spacing` 1110 行中约一半值**全局无 Token** —— 6px(260)、10px(121)、1px(86)、5px(54)、14px(43)、7px(11)。但 `src/components/styles/_mixins.scss:17-20` 已为 6px/10px 命名：`$gap-xs: 6px`、`$spacing-2_5: 10px`（注释明写「6px 无直接 $spacing Token（8px 偏大、4px 偏小）」），组件库全部经 `m.$gap-xs` / `m.$spacing-2_5` 消费。**三条路线待用户决策**：A 全局新增 `$spacing-1_5: 6px` / `$spacing-2_5: 10px`（命名延续 1→4/2→8/3→12 的 ×4 序列，B1 几近全机械；需同步改 `_mixins.scss` 注释并收敛其本地别名）；B 各 feature 的 `_mixins.scss` 自建别名（= 已用的 `$gr-*` / `$fa-*` 做法，但违反「禁止各模块重复声明」）；C 保留裸字面量 + `// 无对应 Token`。`1px` 多为发丝线/`margin:-1px` 边框合并技巧，应标注而非替换
+- 审查工具两个操作坑：①`--dry` **不写盘**，随后查 JSON 会读到旧基线（曾据此误判修复未生效），核对前须跑一次落盘；②PowerShell 的 `node -e` 中含 `lang="ts"` 等双引号字面量会被外层引号吞掉 → 改用正则字面量。另 `@vue/compiler-sfc` **不可用**（是 `@vitejs/plugin-vue` 的传递依赖未提升），离线校验 SFC 只能靠 `read_lints` + 结构正则；Sass 离线编译用 `sass.compileAsync(file, { importers: [{ findFileUrl }] })` 映射 `@/` → `src/`（`import sass from 'sass'` 已废弃，用 `import * as sass`）
 
 ## 功能模块状态（只留仍可执行的事实）
 - **待迁移清单（已确认、尚未动）**：`ConfirmDialog` 三处本地实现（`s3FileManager` / `gitPush` / `shortcut`）；`ReviewRadarChart` 未迁到 `Chart`；feature 内原生 radio 5 处（`video/CompressDialog`、`wordQuery/WordQueryPanel`、`gitPush` 的 `SettingsDialog`/`CommitFixDialog`/`BatchFixDialog`）；**原生 `<input type="color">` 8 处**（`prompts/CategoryManageModal`、`toolCollection/tools/colorPicker`、`imageCreation/{CoverDecorationSettings,CodeImageTab}`、`superPanel/FeatureCard`、`gitPush/{common/CategoryDialog,CommitAnalysis/AnalysisSettingsForm}`、`generalSettings/TabPinSettings`）
@@ -82,6 +110,7 @@
 - **componentPreview**：addTab + openWindow 双形态；`usePreviewSize`（key `component-preview-size`）；`sizeable` + `resolveProps` 只注入未显式指定 size 的示例
 - **compactMode**：3 档密度 + 6 档字号 + 5 区域开关；`ALL_*` 常量单一来源；`applyCompactMode` 先复位再置位（幂等）
 - **statistics**：`BLOCK_TYPE_LABELS` 仍被 `baseStats` 使用，勿删
+- ⚠️ `src/components/` 出现未跟踪的 `Paginator.vue` + `paginator/` + `styles/Paginator.scss`（并行会话新增中）→ **改组件计数前必须 `list_dir` 实测**
 - 其余模块（S3 备份 / toolCollection / dataSnapshot / aiContentGenerator / bookmarkMarker / skillLearning）细节见各自 `src/features/<name>/README.md` 与当日日志
 
 ## 禁止事项

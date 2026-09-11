@@ -176,7 +176,7 @@ $tc-dur-slide: 0.25s;
 
   &::-webkit-scrollbar-thumb {
     background: var(--b3-scrollbar-color);
-    border-radius: 2px;
+    border-radius: $radius-2px;
   }
 }
 
@@ -217,7 +217,7 @@ $tc-dur-slide: 0.25s;
       transform: translateY(-50%);
       width: 2px;
       height: $font-size-sm;
-      border-radius: 0 2px 2px 0;
+      border-radius: 0 $radius-2px $radius-2px 0;
       background: var(--b3-theme-primary);
     }
   }
@@ -265,7 +265,7 @@ $tc-dur-slide: 0.25s;
 
   &::-webkit-scrollbar-thumb {
     background: var(--b3-scrollbar-color);
-    border-radius: 3px;
+    border-radius: $radius-px;
   }
 }
 

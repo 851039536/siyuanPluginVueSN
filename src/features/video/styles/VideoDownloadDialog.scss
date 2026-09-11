@@ -1,0 +1,8 @@
+// 视频下载对话框组件样式
+@use "@/variables.scss" as *;
+
+.path-input-group {
+  display: flex;
+  gap: $spacing-2;
+  align-items: center;
+}

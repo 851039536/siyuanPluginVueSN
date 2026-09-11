@@ -209,7 +209,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-bottom: 1px;
+  padding-bottom: $spacing-1px;
 
   .fullcheck-toggle {
     color: var(--b3-theme-on-surface-variant);
@@ -227,22 +227,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-bottom: 1px;
+  padding-bottom: $spacing-1px;
 }
 
 // 字段单元格
 .cell-field {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: $spacing-1px;
   min-width: 0;
 }
 
 .cell-input {
   width: 100%;
-  padding: 3px 6px;
+  padding: $spacing-px $spacing-6px;
   border: 1px solid transparent;
-  border-radius: 3px;
+  border-radius: $radius-px;
   background: transparent;
   color: var(--b3-theme-on-background);
   font-size: $font-size-xs;
@@ -275,9 +275,9 @@
 // 操作按钮区
 .cell-actions {
   display: flex;
-  gap: 2px;
+  gap: $spacing-2px;
   flex-shrink: 0;
-  padding-bottom: 1px;
+  padding-bottom: $spacing-1px;
 }
 
 .row-btn-icon {
@@ -287,7 +287,7 @@
   width: 24px;
   height: 24px;
   border: none;
-  border-radius: 3px;
+  border-radius: $radius-px;
   background: transparent;
   color: var(--b3-theme-on-surface-variant);
   cursor: pointer;

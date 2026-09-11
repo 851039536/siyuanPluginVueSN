@@ -2,21 +2,21 @@
 @use "../../../variables" as *;
 @use "./index.scss" as *;
 
-.empty-icon { color: var(--b3-theme-primary); opacity: 0.35; margin-bottom: 12px; }
-.empty-title { font-size: $font-size-xs; font-weight: $font-weight-medium; margin-bottom: 12px; color: var(--b3-theme-on-background); }
+.empty-icon { color: var(--b3-theme-primary); opacity: 0.35; margin-bottom: $spacing-3; }
+.empty-title { font-size: $font-size-xs; font-weight: $font-weight-medium; margin-bottom: $spacing-3; color: var(--b3-theme-on-background); }
 
 .empty-steps {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: $spacing-6px;
   text-align: left;
-  padding: 0 16px;
+  padding: 0 $spacing-4;
 }
 
 .empty-step {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: $spacing-2;
   font-size: $font-size-xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.7;

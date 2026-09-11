@@ -30,7 +30,7 @@
 .super-panel-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: $spacing-2;
   font-size: $font-size-sm;
   font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-background);
@@ -39,13 +39,13 @@
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: $spacing-1;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: $spacing-3;
 }
 
 // ==================== AI配置面板 ====================
@@ -56,7 +56,7 @@
   flex-shrink: 0;
   max-height: 80vh;
   overflow-y: auto;
-  border-radius: 8px;
+  border-radius: $radius-md;
   border: 1px solid var(--b3-border-color);
 }
 
@@ -98,9 +98,9 @@
 
 .setting-select,
 .setting-input {
-  padding: 6px 10px;
+  padding: $spacing-6px $spacing-10px;
   border: 1px solid var(--b3-theme-surface-light);
-  border-radius: 4px;
+  border-radius: $radius-sm;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
   outline: none;
@@ -129,7 +129,7 @@
 
   .setting-input {
     flex: 1;
-    border-radius: 4px 0 0 4px;
+    border-radius: $radius-sm 0 0 $radius-sm;
   }
 }
 
@@ -156,11 +156,11 @@
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
+  gap: $spacing-6px;
+  padding: $spacing-5px $spacing-10px;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: 6px;
+  border-radius: $vp-radius;
   transition: border-color 0.15s, box-shadow 0.15s;
 
   &:focus-within {
@@ -245,7 +245,7 @@
   align-items: center;
   justify-content: center;
   gap: $spacing-sm;
-  padding: 32px 0;
+  padding: $spacing-8 0;
   color: var(--b3-theme-on-surface);
 }
 

@@ -224,8 +224,12 @@ function formatTime(timestamp: number): string {
   })
 }
 
+// 缩略预览的独立文档样式：经 iframe srcdoc 注入，与插件样式表完全隔离，无法引用 SCSS Token
+const PREVIEW_DOC_STYLE =
+  "<style>body{margin:0;padding:4px;overflow:hidden;pointer-events:none;font-size:12px;}</style>"
+
 function getPreviewHtml(content: string): string {
-  return `<style>body{margin:0;padding:4px;overflow:hidden;pointer-events:none;font-size:12px;}</style>${content}`
+  return `${PREVIEW_DOC_STYLE}${content}`
 }
 </script>
 

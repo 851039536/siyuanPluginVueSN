@@ -166,7 +166,7 @@
     gap: $spacing-2;
 
     .image-count {
-      padding: 2px 8px;
+      padding: $spacing-2px $spacing-2;
       background: var(--b3-theme-primary);
       color: var(--b3-theme-on-primary);
       border-radius: $radius-lg;

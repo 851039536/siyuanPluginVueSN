@@ -32,7 +32,7 @@
   font-size: $font-size-2xs;
   font-family: $vp-mono;
   font-weight: $font-weight-bold;
-  padding: 0 5px;
+  padding: 0 $spacing-5px;
   border-radius: $radius-full;
   background: var(--b3-theme-surface);
   opacity: 0.6;
@@ -85,7 +85,7 @@
 .gpr-debt-trend-chip {
   flex-shrink: 0;
   margin-left: $spacing-1;
-  padding: 0 5px;
+  padding: 0 $spacing-5px;
   font-size: $font-size-2xs;
   font-weight: $font-weight-semibold;
   border: 1px solid;

@@ -19,14 +19,14 @@
     .vp-color-input {
       width: 40px;
       height: 36px;
-      padding: 2px;
+      padding: $spacing-2px;
       border: 1px solid var(--b3-border-color);
       border-radius: $vp-radius;
       cursor: pointer;
       background: var(--b3-theme-surface);
 
       &::-webkit-color-swatch-wrapper {
-        padding: 2px;
+        padding: $spacing-2px;
       }
 
       &::-webkit-color-swatch {

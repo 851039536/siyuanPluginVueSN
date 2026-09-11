@@ -16,7 +16,7 @@
     display: flex;
     align-items: center;
     gap: $spacing-1;
-    padding: 6px $spacing-3;
+    padding: $spacing-6px $spacing-3;
     border-bottom: 1px solid var(--b3-theme-surface-lighter);
     flex-shrink: 0;
     min-height: 36px;
@@ -48,12 +48,12 @@
 
   // --- 搜索栏 ---
   .rss-search-bar {
-    padding: 4px $spacing-3;
+    padding: $spacing-1 $spacing-3;
     flex-shrink: 0;
 
     input {
       width: 100%;
-      padding: 4px 8px;
+      padding: $spacing-1 $spacing-2;
       border: 1px solid var(--b3-theme-surface-lighter);
       border-radius: $radius-base;
       background: var(--b3-theme-background);
@@ -72,7 +72,7 @@
     display: flex;
     align-items: center;
     gap: $spacing-1;
-    padding: 4px $spacing-3;
+    padding: $spacing-1 $spacing-3;
     border-bottom: 1px solid var(--b3-theme-surface-lighter);
     flex-shrink: 0;
     overflow-x: auto;
@@ -83,7 +83,7 @@
     .filter-tag {
       display: inline-flex;
       align-items: center;
-      padding: 2px 8px;
+      padding: $spacing-2px $spacing-2;
       border-radius: $radius-full;
       font-size: $font-size-xs;
       cursor: pointer;
@@ -110,10 +110,15 @@
     padding-right: $spacing-2;
 
     &::-webkit-scrollbar { width: 4px; }
-    &::-webkit-scrollbar-thumb { background: var(--b3-theme-surface-lighter); border-radius: 2px; }
+    &::-webkit-scrollbar-thumb { background: var(--b3-theme-surface-lighter); border-radius: $radius-2px; }
   }
 }
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+// 加载中图标（spin 动画唯一使用点）
+.loading-icon {
+  animation: spin 1s linear infinite;
 }

@@ -40,8 +40,8 @@
   flex-shrink: 0;
   font-size: $font-size-2xs;
   font-weight: $font-weight-semibold;
-  padding: 1px $spacing-1;
-  border-radius: 3px;
+  padding: $spacing-1px $spacing-1;
+  border-radius: $radius-px;
   letter-spacing: 0.04em;
   min-width: 28px;
   text-align: center;
@@ -57,7 +57,7 @@
   }
 
   &.log-type-s3Download {
-    color: #0ea5e9;
+    color: var(--b3-theme-info);
     background: rgba(14, 165, 233, 0.1);
   }
 
@@ -177,7 +177,7 @@
   }
 
   &.log-detail-title-deleted {
-    color: #d97706;
+    color: var(--b3-theme-warning);
   }
 
   &.log-detail-title-failed {

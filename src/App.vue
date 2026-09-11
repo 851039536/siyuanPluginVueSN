@@ -297,22 +297,7 @@ onUnmounted(() => {
 })
 </script>
 
-<!-- 局部样式 -->
+<!-- 样式已分离至 src/styles/app.scss（强制规则：.vue 内只允许 @use） -->
 <style lang="scss" scoped>
-.plugin-app-main {
-  width: 100%;
-  height: 100%;
-  max-height: 100vh;
-  box-sizing: border-box;
-  pointer-events: none;
-
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 4;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: nowrap;
-}
+@use "./styles/app.scss";
 </style>

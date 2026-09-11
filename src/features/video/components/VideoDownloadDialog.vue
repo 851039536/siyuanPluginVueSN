@@ -723,11 +723,6 @@ async function handleAutoMerge(fileName: string) {
 </script>
 
 <style scoped lang="scss">
+@use "../styles/VideoDownloadDialog.scss";
 @use "../styles/index.scss";
-
-.path-input-group {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
 </style>

@@ -4,7 +4,7 @@
 
 .period-picker {
   display: flex;
-  gap: 4px;
+  gap: $spacing-1;
   align-items: center;
 }
 
@@ -17,7 +17,7 @@
 }
 
 .period-select {
-  padding: 4px 6px;
+  padding: $spacing-1 $spacing-6px;
   border: 1px solid var(--b3-border-color);
   border-radius: stats.$radius-sm;
   background: var(--b3-theme-surface);

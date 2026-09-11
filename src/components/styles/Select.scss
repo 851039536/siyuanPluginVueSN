@@ -54,7 +54,7 @@
     cursor: pointer;
     color: var(--b3-theme-secondary);
     border-radius: $radius-sm;
-    padding: 2px; // 2px 无对应 Token
+    padding: $spacing-2px; // 2px 已收敛为全局 Token
 
     &:hover {
       color: var(--b3-theme-on-background);
@@ -207,7 +207,7 @@
   &--xsmall {
     .si-select__trigger {
       min-height: 22px; // 无对应 Token
-      padding: 2px 6px; // 特小号，无对应 Token，保留
+      padding: $spacing-2px $spacing-6px; // 特小号，已收敛为全局 Token，保留
       font-size: $font-size-2xs; // XS 档字号阶梯：10px
     }
 
@@ -232,7 +232,7 @@
     }
 
     .si-select__option {
-      padding: $spacing-2px 14px; // 2px 14px（原 4px 16px）；14px 无对应 Token
+      padding: $spacing-2px $spacing-14px; // 2px 14px（原 4px 16px）；14px 已收敛为全局 Token
       font-size: $font-size-xs;
     }
   }
@@ -245,7 +245,7 @@
     }
 
     .si-select__option {
-      padding: m.$gap-xs 14px; // 6px 14px（原 8px 16px）；14px 无对应 Token
+      padding: m.$gap-xs $spacing-14px; // 6px 14px（原 8px 16px）；14px 已收敛为全局 Token
       font-size: $font-size-sm;
     }
   }
@@ -253,12 +253,12 @@
   &--large {
     .si-select__trigger {
       min-height: 44px;
-      padding: m.$gap-xs 14px; // 6px 14px（原 8px 16px，各减 2px）；14px 无对应 Token
+      padding: m.$gap-xs $spacing-14px; // 6px 14px（原 8px 16px，各减 2px）；14px 已收敛为全局 Token
       font-size: $font-size-base; // 原 15px → base(16px)
     }
 
     .si-select__option {
-      padding: m.$gap-xs 14px; // 6px 14px（原 8px 16px）
+      padding: m.$gap-xs $spacing-14px; // 6px 14px（原 8px 16px）
       font-size: $font-size-sm;
     }
   }

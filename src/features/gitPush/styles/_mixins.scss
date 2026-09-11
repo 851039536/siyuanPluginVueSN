@@ -12,8 +12,8 @@
 @mixin output-base {
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
-  padding: 8px;
+  border-radius: $radius-sm;
+  padding: $spacing-2;
   overflow: auto;
 
   pre {
@@ -48,7 +48,7 @@
 @mixin gp-section-count-base {
   font-size: $font-size-2xs;
   font-family: $vp-mono;
-  padding: 0 6px;
+  padding: 0 $spacing-6px;
   border-radius: $radius-sm;
   background: var(--b3-theme-primary-lightest);
   color: var(--b3-theme-primary);
@@ -77,7 +77,7 @@
 @mixin md-badge-base {
   display: inline-flex;
   align-items: center;
-  padding: 1px 6px; // 徽章微内边距：垂直 1px 保持行高紧凑，水平 6px 无对应 Token
+  padding: $spacing-1px $spacing-6px; // 徽章微内边距：垂直 1px 保持行高紧凑，水平 6px 已收敛为全局 Token
   font-size: $font-size-2xs;
   font-family: $vp-mono;
   font-weight: $font-weight-semibold;
@@ -116,7 +116,7 @@
   display: flex;
   align-items: center;
   gap: $spacing-2;
-  padding: 6px 10px;
+  padding: $spacing-6px $spacing-10px;
   font-size: $font-size-xs;
   color: var(--b3-theme-on-surface);
   background: none;
@@ -153,7 +153,7 @@
   font-weight: $font-weight-bold;
   font-family: $vp-mono;
   line-height: $line-height-tight;
-  margin-bottom: 1px; // 数值与标签的最小视觉间隔（小于 $spacing-2px，刻意紧贴）
+  margin-bottom: $spacing-1px; // 数值与标签的最小视觉间隔（小于 $spacing-2px，刻意紧贴）
   color: var(--b3-theme-on-surface);
 }
 

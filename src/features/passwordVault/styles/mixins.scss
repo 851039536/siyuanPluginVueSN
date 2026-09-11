@@ -36,7 +36,7 @@
 // ============================================================
 
 @mixin icon-button-base {
-  padding: 6px 8px;
+  padding: $spacing-6px $spacing-2;
   background: transparent;
   border: none;
   border-radius: $vp-radius;
@@ -45,7 +45,7 @@
 }
 
 @mixin input-base {
-  padding: 7px 10px;
+  padding: $spacing-7px $spacing-10px;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
   border-radius: $vp-radius;
@@ -108,7 +108,7 @@
 @mixin dialog-header {
   @include flex-row-gap(10px);
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: $spacing-3 $spacing-4;
   border-bottom: 1px solid var(--b3-border-color);
   background: var(--b3-theme-surface);
 
@@ -135,7 +135,7 @@
       font-family: $vp-mono;
       color: var(--b3-theme-on-surface-light);
       background: var(--b3-theme-surface-light);
-      padding: 2px 8px;
+      padding: $spacing-2px $spacing-2;
       border-radius: $radius-sm;
     }
   }
@@ -147,7 +147,7 @@
 
 @mixin error-message {
   @include flex-row-gap($spacing-2);
-  padding: 10px 14px;
+  padding: $spacing-10px $spacing-14px;
   background: rgba($color-danger, 0.1);
   color: $color-danger;
   border: 1px solid $color-danger;

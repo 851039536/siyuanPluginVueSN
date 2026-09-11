@@ -99,7 +99,7 @@
   background: transparent;
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
-  padding: 2px 8px;
+  padding: $spacing-2px $spacing-2;
   cursor: pointer;
 
   &:hover {
@@ -129,7 +129,7 @@
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
-  padding: 3px 0;
+  padding: $spacing-px 0;
   cursor: pointer;
   line-height: $line-height-normal;
   text-align: center;

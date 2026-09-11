@@ -118,7 +118,7 @@
 
   &::-webkit-scrollbar-thumb {
     background: var(--b3-border-color);
-    border-radius: 2px;
+    border-radius: $radius-2px;
   }
 }
 
@@ -193,7 +193,7 @@
 
 // 徽章（最长连续提交 / 高峰时段）
 .gpc-rhythm-badge {
-  padding: 1px $spacing-2; // 上下 1px 微调（与 gpc-card-value 的 1px 惯例一致）
+  padding: $spacing-1px $spacing-2; // 上下 1px 微调（与 gpc-card-value 的 1px 惯例一致）
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-full;
   font-family: $vp-mono;
@@ -222,7 +222,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px; // 柱/标签/计数间的微距（小于 $spacing-1，刻意紧贴）
+  gap: $spacing-2px; // 柱/标签/计数间的微距（小于 $spacing-1，刻意紧贴）
   min-width: 0;
 }
 
@@ -240,7 +240,7 @@
 .gpc-weekday-bar {
   width: 55%;
   min-height: 2px;
-  border-radius: 2px 2px 0 0;
+  border-radius: $radius-2px $radius-2px 0 0;
   background: #64748b; // REPORT_CHART_COLORS.flat（非高峰星期用中性色）
   transition: background 0.15s;
 }
@@ -266,7 +266,7 @@
 // ── 时段热力条（12 格 × 2 小时）──
 .gpc-hourly {
   display: flex;
-  gap: 2px;
+  gap: $spacing-2px;
   height: 26px;
   align-items: stretch;
 }
@@ -275,7 +275,7 @@
 .gpc-hour-cell {
   flex: 1;
   border: 1px solid var(--b3-border-color);
-  border-radius: 2px;
+  border-radius: $radius-2px;
   cursor: default;
   transition: opacity 0.15s;
 
@@ -293,7 +293,7 @@
 .gpc-hourly-scale {
   display: flex;
   justify-content: space-between;
-  margin-top: 2px;
+  margin-top: $spacing-2px;
   font-size: $font-size-2xs;
   opacity: 0.5;
 }

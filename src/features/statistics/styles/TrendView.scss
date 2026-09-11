@@ -14,7 +14,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 8px 10px;
+      padding: $spacing-2 $spacing-10px;
       background: rgba(var(--b3-theme-primary-rgb), 0.04);
       border-bottom: 1px solid var(--b3-border-color);
 
@@ -43,7 +43,7 @@
 
     // 模式按钮与指标按钮共用（.chart-mode-tabs / .chart-metric-tabs 内的 .metric-tab）
     .metric-tab {
-      padding: 3px 8px;
+      padding: $spacing-px $spacing-2;
       border-radius: stats.$radius-sm;
       border: 1px solid transparent;
       background: transparent;
@@ -71,7 +71,7 @@
 
     .trend-chart-container {
       position: relative;
-      padding: 8px 4px 4px;
+      padding: $spacing-2 $spacing-1 $spacing-1;
       overflow-x: auto;
       overflow-y: hidden;
 
@@ -145,7 +145,7 @@
         left: 50%;
         transform: translateX(-50%);
         width: fit-content;
-        padding: 6px 10px;
+        padding: $spacing-6px $spacing-10px;
         background: var(--b3-theme-surface);
         border: 1px solid var(--b3-theme-primary);
         border-radius: stats.$radius-sm;
@@ -161,7 +161,7 @@
           letter-spacing: 0.04em;
           color: var(--b3-theme-on-surface);
           opacity: 0.6;
-          margin-bottom: 2px;
+          margin-bottom: $spacing-2px;
         }
 
         .tooltip-value {
@@ -170,14 +170,14 @@
           color: var(--b3-theme-primary);
 
           .tooltip-metric-icon {
-            margin-right: 3px;
+            margin-right: $spacing-px;
           }
 
           .tooltip-unit {
             font-size: $font-size-2xs;
             font-weight: $font-weight-normal;
             opacity: 0.6;
-            margin-left: 2px;
+            margin-left: $spacing-2px;
           }
         }
       }
@@ -192,8 +192,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 4px;
-    padding-bottom: 6px;
+    margin-bottom: $spacing-1;
+    padding-bottom: $spacing-6px;
     border-bottom: 1px solid var(--b3-border-color);
 
     .section-title {
@@ -205,7 +205,7 @@
 
     .trend-stats-inline {
       display: flex;
-      gap: 16px;
+      gap: $spacing-4;
       font-family: stats.$font-mono;
       font-size: $font-size-2xs;
       font-weight: $font-weight-bold;
@@ -218,7 +218,7 @@
         strong {
           color: var(--b3-theme-primary);
           font-weight: $font-weight-bold;
-          margin-left: 4px;
+          margin-left: $spacing-1;
         }
       }
     }
@@ -246,14 +246,14 @@
     .section-header {
       flex-direction: column;
       align-items: flex-start;
-      gap: 6px;
+      gap: $spacing-6px;
     }
 
     .trend-chart-section {
       .chart-header {
         flex-direction: column;
         align-items: flex-start;
-        gap: 6px;
+        gap: $spacing-6px;
       }
 
       .chart-header-controls {
@@ -262,7 +262,7 @@
 
       .metric-tab {
         font-size: $font-size-2xs;
-        padding: 2px 6px;
+        padding: $spacing-2px $spacing-6px;
       }
     }
   }

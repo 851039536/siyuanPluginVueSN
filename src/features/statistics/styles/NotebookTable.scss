@@ -7,14 +7,14 @@
   min-height: 0;
   overflow-y: auto;
   // 右侧间距由共用根容器 .statistics-content 统一承担（至少 $spacing-2），此处仅保留轻量边距
-  padding: 0 2px;
+  padding: 0 $spacing-2px;
 
   &::-webkit-scrollbar {
     width: 4px;
   }
   &::-webkit-scrollbar-thumb {
     background: var(--b3-border-color);
-    border-radius: 2px;
+    border-radius: $radius-2px;
   }
 }
 
@@ -25,7 +25,7 @@
 }
 
 .nb-th {
-  padding: 6px 8px;
+  padding: $spacing-6px $spacing-2;
   text-align: left;
   font-family: stats.$font-mono;
   font-size: $font-size-2xs;
@@ -54,7 +54,7 @@
 }
 
 .sort-arrow {
-  margin-left: 2px;
+  margin-left: $spacing-2px;
   font-size: $font-size-2xs;
 }
 
@@ -72,7 +72,7 @@
 }
 
 .nb-td {
-  padding: 5px 8px;
+  padding: $spacing-5px $spacing-2;
   border-bottom: 1px solid rgba(var(--b3-border-color-rgb, 128, 128, 128), 0.15);
 }
 
@@ -84,7 +84,7 @@
   max-width: 140px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: $spacing-6px;
 }
 
 .nb-color-dot {
@@ -104,7 +104,7 @@
 .nb-td-pct {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: $spacing-6px;
   justify-content: flex-end;
 }
 
@@ -112,14 +112,14 @@
   width: 48px;
   height: 6px;
   background: rgba(var(--b3-theme-on-surface-rgb), 0.06);
-  border-radius: 3px;
+  border-radius: $radius-px;
   overflow: hidden;
   flex-shrink: 0;
 }
 
 .pct-bar {
   height: 100%;
-  border-radius: 3px;
+  border-radius: $radius-px;
   transition: width 0.3s ease;
   min-width: 1px;
 }

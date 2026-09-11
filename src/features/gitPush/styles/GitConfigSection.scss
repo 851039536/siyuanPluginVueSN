@@ -143,7 +143,7 @@
 .gp-cfg-select {
   flex: 1 1 150px;
   min-width: 0;
-  padding: 4px 6px;
+  padding: $spacing-1 $spacing-6px;
   font-size: $font-size-xs;
   color: var(--b3-theme-on-surface);
   background: var(--b3-theme-surface);
@@ -161,7 +161,7 @@
 .gp-cfg-input {
   flex: 1 1 120px;
   min-width: 0;
-  padding: 4px 8px;
+  padding: $spacing-1 $spacing-2;
   font-size: $font-size-xs;
   font-family: $vp-mono;
   color: var(--b3-theme-on-surface);

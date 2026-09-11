@@ -3,7 +3,7 @@
 
 .bcl-panel {
   border-top: 1px dashed var(--b3-border-color);
-  margin-top: 6px;
+  margin-top: $spacing-6px;
   padding-top: $spacing-1;
 }
 
@@ -19,7 +19,7 @@
 
 .bcl-search {
   display: flex;
-  gap: 3px;
+  gap: $spacing-px;
   margin-bottom: $spacing-1;
   align-items: center;
 }
@@ -32,7 +32,7 @@
 .bcl-search-input {
   flex: 1;
   min-width: 0;
-  padding: 2px 6px;
+  padding: $spacing-2px $spacing-6px;
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
   font-size: $font-size-2xs;
@@ -54,7 +54,7 @@
 .bcl-count-select {
   min-width: 44px;
   width: auto;
-  padding: 2px 2px 2px 4px;
+  padding: $spacing-2px $spacing-2px $spacing-2px $spacing-1;
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
   font-size: $font-size-2xs;
@@ -85,7 +85,7 @@
 .bcl-list {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: $spacing-2px;
   max-height: 160px;
   overflow-y: auto;
 }
@@ -93,8 +93,8 @@
 .bcl-entry {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 3px 4px;
+  gap: $spacing-6px;
+  padding: $spacing-px $spacing-1;
   font-size: $font-size-2xs;
   border-radius: $radius-sm;
   transition: background 0.1s;
@@ -124,7 +124,7 @@
 .bcl-tags {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: $spacing-px;
   flex-shrink: 0;
   min-width: 0;
 }
@@ -132,10 +132,10 @@
 .bcl-tag-chip {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: $spacing-2px;
   max-width: 150px;
   @include text-ellipsis;
-  padding: 0 4px;
+  padding: 0 $spacing-1;
   font-family: $vp-mono;
   font-size: $font-size-2xs;
   line-height: 14px;
@@ -163,7 +163,7 @@
 .bcl-tag-btn,
 .bcl-drop-btn {
   flex-shrink: 0;
-  padding: 0 2px;
+  padding: 0 $spacing-2px;
   opacity: 0.7;
   transition:
     opacity 0.12s ease,
@@ -178,7 +178,7 @@
 // 查看文件按钮（常显，点击进入提交文件清单；弱化色随 hover 增强）
 .bcl-files-btn {
   flex-shrink: 0;
-  padding: 0 2px;
+  padding: 0 $spacing-2px;
   opacity: 0.7;
   transition:
     opacity 0.12s ease,
@@ -216,7 +216,7 @@
   white-space: nowrap;
   opacity: 0.4;
   display: inline-flex;
-  gap: 6px;
+  gap: $spacing-6px;
 }
 
 .bcl-date-absolute {

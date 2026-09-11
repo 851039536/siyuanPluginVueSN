@@ -28,7 +28,7 @@
   text-transform: uppercase;
   color: var(--b3-theme-warning);
   border: 1px solid var(--b3-theme-warning-lighter, var(--b3-theme-warning));
-  border-radius: 3px;
+  border-radius: $radius-px;
   padding: 0 $spacing-1;
   line-height: $line-height-normal;
   flex-shrink: 0;

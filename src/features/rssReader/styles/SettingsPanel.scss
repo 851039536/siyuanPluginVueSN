@@ -25,8 +25,8 @@
     .opml-btn {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      padding: 5px 10px;
+      gap: $spacing-1;
+      padding: $spacing-5px $spacing-10px;
       border: 1px solid $rr-accent;
       border-radius: $radius-sm;
       background: transparent;
@@ -50,14 +50,14 @@
         font-size: $font-size-xs;
         color: var(--b3-theme-on-surface);
         &::file-selector-button {
-          padding: 4px 8px;
+          padding: $spacing-1 $spacing-2;
           border: 1px solid var(--b3-theme-surface-lighter);
           border-radius: $radius-sm;
           background: var(--b3-theme-surface-lighter);
           color: var(--b3-theme-on-surface);
           font-size: $font-size-xs;
           cursor: pointer;
-          margin-right: 6px;
+          margin-right: $spacing-6px;
           &:hover { background: var(--b3-theme-surface); }
         }
       }
@@ -65,7 +65,7 @@
       .opml-importing {
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: $spacing-1;
         font-size: $font-size-xs;
         color: var(--b3-theme-on-surface-muted);
       }

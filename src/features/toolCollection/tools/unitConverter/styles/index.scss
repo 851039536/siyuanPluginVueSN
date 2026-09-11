@@ -1,8 +1,6 @@
 // 单位转换器 — Codex 风格
 @use '@/variables.scss' as *;
 
-$mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
-
 @mixin label-style {
   font-size: $font-size-2xs;
   font-weight: $font-weight-bold;
@@ -21,12 +19,12 @@ $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   font-size: $font-size-xs;
 
   .converter-header {
-    padding: 12px 16px;
+    padding: $spacing-3 $spacing-4;
     border-bottom: 1px solid var(--b3-border-color);
 
     h3 {
       margin: 0;
-      font-family: $mono;
+      font-family: $vp-mono;
       font-size: $font-size-xs;
       font-weight: $font-weight-bold;
       letter-spacing: 0.08em;
@@ -40,13 +38,13 @@ $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
     display: flex;
     flex-wrap: wrap;
     gap: 0;
-    padding: 0 12px;
+    padding: 0 $spacing-3;
     border-bottom: 1px solid var(--b3-border-color);
   }
 
   .converter-tab {
-    padding: 8px 10px;
-    font-family: $mono;
+    padding: $spacing-2 $spacing-10px;
+    font-family: $vp-mono;
     font-size: $font-size-2xs;
     font-weight: $font-weight-medium;
     color: var(--b3-theme-on-background);
@@ -71,7 +69,7 @@ $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
     flex: 1;
     overflow-y: auto;
     min-height: 0;
-    padding: 12px 16px;
+    padding: $spacing-3 $spacing-4;
   }
 }
 
@@ -79,13 +77,13 @@ $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
 
 // 结果显示卡片
 .converter-result {
-  padding: 14px 16px;
+  padding: $spacing-14px $spacing-4;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 6px;
+  border-radius: $vp-radius;
 
   .result-value {
-    font-family: $mono;
+    font-family: $vp-mono;
     font-size: $font-size-sm; // 数据突出展示：转换结果数值
     font-weight: $font-weight-medium;
     text-align: center;
@@ -99,7 +97,7 @@ $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
     .equals {
       color: var(--b3-theme-on-surface);
       opacity: 0.3;
-      margin: 0 6px;
+      margin: 0 $spacing-6px;
     }
 
     .output-display {
@@ -111,19 +109,19 @@ $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
 
 // 快速转换结果
 .converter-quick-results {
-  margin-top: 4px;
+  margin-top: $spacing-1;
 
   h4 {
     @include label-style;
-    margin: 0 0 8px;
+    margin: 0 0 $spacing-2;
   }
 
   .quick-results-grid {
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: $spacing-1px;
     border: 1px solid var(--b3-border-color);
-    border-radius: 4px;
+    border-radius: $radius-sm;
     overflow: hidden;
   }
 
@@ -131,7 +129,7 @@ $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 6px 10px;
+    padding: $spacing-6px $spacing-10px;
     background: var(--b3-theme-surface);
     font-size: $font-size-xs;
 
@@ -142,12 +140,12 @@ $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
     .unit-name,
     .base-name {
       @include label-style;
-      font-family: $mono;
+      font-family: $vp-mono;
     }
 
     .unit-value,
     .base-value {
-      font-family: $mono;
+      font-family: $vp-mono;
       font-weight: $font-weight-medium;
       color: var(--b3-theme-primary);
     }
@@ -156,14 +154,14 @@ $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
 
 // 错误提示
 .converter-error {
-  padding: 12px 16px;
+  padding: $spacing-3 $spacing-4;
   border: 1px solid var(--b3-error);
-  border-radius: 6px;
+  border-radius: $vp-radius;
   background: var(--b3-theme-error-container);
 
   .error-message {
     font-size: $font-size-xs;
-    font-family: $mono;
+    font-family: $vp-mono;
     color: var(--b3-error);
     text-align: center;
   }
@@ -172,24 +170,24 @@ $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
 // 使用说明
 .converter-info {
   border-top: 1px dashed var(--b3-border-color);
-  padding-top: 12px;
-  margin-top: 4px;
+  padding-top: $spacing-3;
+  margin-top: $spacing-1;
 
   h4 {
     @include label-style;
-    margin: 0 0 8px;
+    margin: 0 0 $spacing-2;
   }
 
   ul {
     margin: 0;
-    padding-left: 16px;
+    padding-left: $spacing-4;
     font-size: $font-size-xs;
     color: var(--b3-theme-on-surface);
     opacity: 0.7;
     line-height: 1.7;
 
     li {
-      margin-bottom: 2px;
+      margin-bottom: $spacing-2px;
     }
   }
 }
@@ -197,13 +195,13 @@ $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
 // 转换器分区卡片
 .converter-section {
   border: 1px solid var(--b3-border-color);
-  border-radius: 6px;
-  padding: 14px;
+  border-radius: $vp-radius;
+  padding: $spacing-14px;
   background: var(--b3-theme-surface);
 
   h4 {
     @include label-style;
-    margin: 0 0 10px;
+    margin: 0 0 $spacing-10px;
   }
 }
 
@@ -211,8 +209,8 @@ $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
 .output-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-top: 10px;
+  gap: $spacing-1;
+  margin-top: $spacing-10px;
 
   label {
     @include label-style;
@@ -220,11 +218,11 @@ $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
 
   .ascii-output,
   .text-output {
-    padding: 10px 12px;
+    padding: $spacing-10px $spacing-3;
     background: var(--b3-theme-background);
     border: 1px solid var(--b3-border-color);
-    border-radius: 4px;
-    font-family: $mono;
+    border-radius: $radius-sm;
+    font-family: $vp-mono;
     font-size: $font-size-xs;
     color: var(--b3-theme-primary);
     min-height: 36px;
@@ -242,7 +240,7 @@ $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   height: 28px;
   margin: 0 auto;
   border: 1px solid var(--b3-border-color);
-  border-radius: 4px;
+  border-radius: $radius-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
@@ -266,7 +264,7 @@ $mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
 .unit-select-row {
   display: flex;
   align-items: flex-end;
-  gap: 8px;
+  gap: $spacing-2;
 
   .select-wrapper {
     flex: 1;

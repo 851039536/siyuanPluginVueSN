@@ -189,7 +189,7 @@
   // 尺寸变体
   &--xsmall {
     .si-input__field {
-      padding: 2px 6px; // 特小号，无对应 Token，保留
+      padding: $spacing-2px $spacing-6px; // 特小号，已收敛为全局 Token，保留
       font-size: $font-size-2xs; // XS 档字号阶梯：10px
       min-height: 22px; // 无对应 Token
     }
@@ -204,7 +204,7 @@
 
     .si-input__clear,
     .si-input__password-toggle {
-      padding: 1px;
+      padding: $spacing-1px;
       margin-right: $spacing-1;
     }
   }
@@ -255,7 +255,7 @@
 
   &--large {
     .si-input__field {
-      padding: m.$spacing-2_5 14px; // 10px 14px（原 12px 16px，各减 2px）；14px 无对应 Token
+      padding: m.$spacing-2_5 $spacing-14px; // 10px 14px（原 12px 16px，各减 2px）；14px 已收敛为全局 Token
       font-size: $font-size-base; // 原 15px → base(16px)
       min-height: 44px;
     }

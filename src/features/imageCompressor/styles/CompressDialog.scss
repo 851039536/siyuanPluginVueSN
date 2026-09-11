@@ -61,7 +61,7 @@
 }
 
 .hint-text {
-  margin-top: 6px;
+  margin-top: $spacing-6px;
   font-size: $font-size-xs;
   color: var(--b3-theme-on-surface-light);
   opacity: 0.7;

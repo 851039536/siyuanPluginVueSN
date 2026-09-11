@@ -8,7 +8,7 @@
   flex-direction: column;
   height: 100%;
   // 紧凑留白：与 gitPush 面板一致，无对应尺寸 Token
-  padding: 5px 3px;
+  padding: $spacing-5px $spacing-px;
   overflow: hidden;
   // 基准字号：未显式声明字号的文字继承内容级 12px
   font-size: $font-size-xs;
@@ -17,7 +17,7 @@
 // 头部与内容分隔线（对齐 gitPush .gp-divider）
 .wn-divider {
   border-bottom: 1px solid var(--b3-border-color);
-  margin: 10px 0;
+  margin: $spacing-10px 0;
 }
 
 // 条目列表（单列形态，细滚动条对齐 gitPush .gp-list）
@@ -26,7 +26,7 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: $spacing-1;
   min-height: 0;
   overflow-y: auto;
   padding-right: $spacing-1;

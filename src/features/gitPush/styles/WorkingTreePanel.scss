@@ -2,8 +2,8 @@
 @use "./mixins" as *;
 
 .wt-panel {
-  margin-top: 4px;
-  padding-top: 2px;
+  margin-top: $spacing-1;
+  padding-top: $spacing-2px;
 }
 
 .wt-summary {
@@ -37,15 +37,15 @@
 }
 
 .wt-summary-text {
-  margin-left: 2px;
+  margin-left: $spacing-2px;
 }
 
 .wt-summary-actions {
   display: flex;
-  gap: 2px;
+  gap: $spacing-2px;
   margin-left: auto;
 
-  .vp-btn { font-size: $font-size-2xs; padding: 1px 6px; }
+  .vp-btn { font-size: $font-size-2xs; padding: $spacing-1px $spacing-6px; }
 }
 
 .wt-clean {
@@ -65,14 +65,14 @@
   overflow-y: auto;
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
-  margin-bottom: 3px;
+  margin-bottom: $spacing-px;
 }
 
 .wt-file-row {
   display: flex;
   align-items: center;
   gap: $spacing-1;
-  padding: 4px 6px;
+  padding: $spacing-1 $spacing-6px;
   font-size: $font-size-xs;
   @include row-divider;
   cursor: pointer; // 整行可点击查看差异
@@ -90,7 +90,7 @@
   &.diff-active {
     background: var(--b3-theme-primary-lightest);
     border-left: 2px solid var(--b3-theme-primary);
-    padding-left: 4px;
+    padding-left: $spacing-1;
   }
 }
 
@@ -155,7 +155,7 @@
   flex-shrink: 0;
   opacity: 0.3;
   font-size: $font-size-2xs;
-  padding: 1px 6px;
+  padding: $spacing-1px $spacing-6px;
   transition: opacity 0.15s;
   color: var(--b3-theme-error, #cf222e);
 
@@ -174,20 +174,20 @@
 .wt-commit-form {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: $spacing-6px;
 }
 
 .wt-commit-types {
   display: flex;
-  gap: 3px;
+  gap: $spacing-px;
   flex-wrap: wrap;
 }
 
 .wt-template-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 0;
+  gap: $spacing-6px;
+  padding: $spacing-1 0;
   color: var(--b3-theme-on-surface-light);
   font-size: $font-size-xs;
 }
@@ -195,7 +195,7 @@
 .wt-template-select {
   flex: 1;
   height: 26px;
-  padding: 0 6px;
+  padding: 0 $spacing-6px;
   font-size: $font-size-xs;
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
@@ -206,7 +206,7 @@
 }
 
 .wt-type-btn {
-  padding: 1px 6px;
+  padding: $spacing-1px $spacing-6px;
   font-size: $font-size-2xs;
   font-family: $vp-mono;
   font-weight: $font-weight-semibold;
@@ -233,7 +233,7 @@
 .wt-commit-msg {
   width: 100%;
   box-sizing: border-box;
-  padding: 6px 8px;
+  padding: $spacing-6px $spacing-2;
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
   font-size: $font-size-xs;
@@ -250,7 +250,7 @@
 
 .wt-commit-actions {
   display: flex;
-  gap: 6px;
+  gap: $spacing-6px;
   justify-content: flex-end;
 }
 
@@ -262,7 +262,7 @@
 
 .wt-commit-output {
   position: relative;
-  padding: 6px 8px;
+  padding: $spacing-6px $spacing-2;
   padding-right: 28px;
   max-height: 100px;
   @include output-base;
@@ -279,7 +279,7 @@
   opacity: 0.4;
   font-size: $font-size-sm;
   line-height: 1;
-  padding: 0 4px;
+  padding: 0 $spacing-1;
 
   &:hover {
     opacity: 1;

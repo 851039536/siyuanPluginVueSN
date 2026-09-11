@@ -208,17 +208,6 @@ const result = computed(() => {
 </script>
 
 <style lang="scss" scoped>
-@use "../styles/index.scss" as *;
-
-.base-converter {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-
-  sub {
-    font-size: 0.7em;
-    opacity: 0.5;
-    margin-left: 2px;
-  }
-}
+@use "../styles/BaseConverter.scss";
+@use "../styles/index.scss";
 </style>

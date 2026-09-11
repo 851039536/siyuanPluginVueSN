@@ -14,19 +14,19 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: $spacing-14px;
   font-size: $font-size-xs;
 
   // ========== 智能识别输入区 ==========
   .tc-input-section {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: $spacing-6px;
   }
 
   .tc-recognize-badge {
     align-self: flex-start;
-    padding: 2px 8px;
+    padding: $spacing-2px $spacing-2;
     border: 1px solid var(--b3-theme-primary);
     border-radius: $radius-sm;
     font-size: $font-size-2xs;
@@ -42,14 +42,14 @@
   .tc-result-section {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: $spacing-6px;
   }
 
   .tc-now-badge {
     @include label-style;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: $spacing-1;
 
     &::before {
       content: '';
@@ -65,15 +65,15 @@
     display: flex;
     flex-direction: column;
     border: 1px solid var(--b3-border-color);
-    border-radius: 4px;
+    border-radius: $radius-sm;
     overflow: hidden;
   }
 
   .tc-result-row {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 10px;
+    gap: $spacing-2;
+    padding: $spacing-6px $spacing-10px;
     background: var(--b3-theme-surface);
     border-bottom: 1px solid var(--b3-border-color);
     transition: background 0.15s;
@@ -111,7 +111,7 @@
 
   .tc-copy-btn {
     flex-shrink: 0;
-    padding: 2px 8px;
+    padding: $spacing-2px $spacing-2;
     border: 1px solid var(--b3-border-color);
     border-radius: $radius-sm;
     background: transparent;
@@ -131,9 +131,9 @@
 
   // ========== 错误提示 ==========
   .tc-error {
-    padding: 10px 12px;
+    padding: $spacing-10px $spacing-3;
     border: 1px solid var(--b3-error);
-    border-radius: 4px;
+    border-radius: $radius-sm;
     background: var(--b3-theme-error-container);
     font-family: $vp-mono;
     font-size: $font-size-xs;
@@ -145,24 +145,24 @@
   .tc-now-section,
   .tc-info {
     border-top: 1px dashed var(--b3-border-color);
-    padding-top: 10px;
+    padding-top: $spacing-10px;
   }
 
   h4 {
     @include label-style;
-    margin: 0 0 8px;
+    margin: 0 0 $spacing-2;
   }
 
   .tc-info ul {
     margin: 0;
-    padding-left: 16px;
+    padding-left: $spacing-4;
     font-size: $font-size-xs;
     color: var(--b3-theme-on-surface);
     opacity: 0.7;
     line-height: 1.7;
 
     li {
-      margin-bottom: 2px;
+      margin-bottom: $spacing-2px;
     }
   }
 }

@@ -6,7 +6,7 @@
   grid-template-columns: minmax(0, 1fr) 68px 78px auto;
   align-items: center;
   gap: 0;
-  padding: 5px 8px;
+  padding: $spacing-5px $spacing-2;
   border-bottom: 1px solid var(--b3-border-color);
   cursor: pointer;
   transition: background-color 0.12s;
@@ -34,7 +34,7 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: $spacing-6px;
   padding-right: $spacing-2;
 }
 
@@ -51,23 +51,23 @@
 
 .db-item-size {
   text-align: right;
-  padding: 0 6px;
+  padding: 0 $spacing-6px;
   @include small-mono-dimmed;
 }
 
 .db-item-date {
   text-align: right;
-  padding: 0 6px;
+  padding: 0 $spacing-6px;
   @include small-mono-dimmed;
 }
 
 .db-item-actions {
   display: flex;
   align-items: center;
-  gap: 1px;
+  gap: $spacing-1px;
   opacity: 0;
   transition: opacity 0.12s;
-  margin-left: 4px;
+  margin-left: $spacing-1;
 }
 
 .db-action-btn {

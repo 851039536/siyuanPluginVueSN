@@ -1,0 +1,17 @@
+// 插件根布局容器样式（App.vue 宿主元素，无对应 feature 目录，故置于 src/styles/）
+.plugin-app-main {
+  width: 100%;
+  height: 100%;
+  max-height: 100vh;
+  box-sizing: border-box;
+  pointer-events: none;
+
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 4;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: nowrap;
+}

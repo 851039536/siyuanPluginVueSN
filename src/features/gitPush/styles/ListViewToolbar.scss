@@ -6,13 +6,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
-  margin-bottom: 6px;
+  gap: $spacing-6px;
+  margin-bottom: $spacing-6px;
 }
 
 .gp-view-modes {
   display: flex;
-  gap: 2px;
+  gap: $spacing-2px;
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
   overflow: hidden;
@@ -21,8 +21,8 @@
 .gp-vm-btn {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 3px 7px;
+  gap: $spacing-px;
+  padding: $spacing-px $spacing-7px;
   border: none;
   background: transparent;
   color: var(--b3-theme-on-surface);
@@ -50,8 +50,8 @@
 .gp-ft-btn {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 3px 6px;
+  gap: $spacing-px;
+  padding: $spacing-px $spacing-6px;
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
   background: transparent;
@@ -74,9 +74,9 @@
 // ========== 分类 TAB 导航栏 ==========
 .gp-tabs {
   display: flex;
-  gap: 2px;
+  gap: $spacing-2px;
   overflow-x: auto;
-  padding: 0 0 4px;
+  padding: 0 0 $spacing-1;
   -webkit-overflow-scrolling: touch;
   @include hide-h-scrollbar;
 }
@@ -86,7 +86,7 @@
   align-items: center;
   gap: $spacing-1;
   flex-shrink: 0;
-  padding: 4px 10px;
+  padding: $spacing-1 $spacing-10px;
   border: none;
   border-bottom: 2px solid transparent;
   border-radius: $radius-sm $radius-sm 0 0;

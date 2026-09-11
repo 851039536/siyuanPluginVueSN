@@ -67,7 +67,7 @@
   font-family: $vp-mono;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  padding: 1px 6px;
+  padding: $spacing-1px $spacing-6px;
   border-radius: $radius-sm;
 
   &--push {
@@ -106,7 +106,7 @@
   flex-shrink: 0;
   font-size: $font-size-2xs;
   font-weight: $font-weight-semibold;
-  padding: 1px 6px;
+  padding: $spacing-1px $spacing-6px;
   border-radius: $radius-sm;
 
   &--ok {

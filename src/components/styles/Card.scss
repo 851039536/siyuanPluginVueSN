@@ -93,7 +93,7 @@
 
   &--medium {
     .si-card__header {
-      padding: $spacing-3 14px; // 12px 14px（原 14px 16px，各减 2px）；14px 无对应 Token
+      padding: $spacing-3 $spacing-14px; // 12px 14px（原 14px 16px，各减 2px）；14px 已收敛为全局 Token
     }
 
     .si-card__title {
@@ -105,11 +105,11 @@
     }
 
     .si-card__body {
-      padding: 14px; // 14px（原 16px）；无对应 Token
+      padding: $spacing-14px; // 14px（原 16px）；已收敛为全局 Token
     }
 
     .si-card__footer {
-      padding: $spacing-3 14px; // 12px 14px（原 14px 16px）
+      padding: $spacing-3 $spacing-14px; // 12px 14px（原 14px 16px）
     }
 
     .si-card__cover {
@@ -119,7 +119,7 @@
 
   &--large {
     .si-card__header {
-      padding: $spacing-4 18px; // 16px 18px（原 18px 20px，各减 2px）；18px 无对应 Token
+      padding: $spacing-4 $spacing-18px; // 16px 18px（原 18px 20px，各减 2px）；18px 已收敛为全局 Token
     }
 
     .si-card__title {
@@ -131,11 +131,11 @@
     }
 
     .si-card__body {
-      padding: 18px; // 18px（原 20px）；无对应 Token
+      padding: $spacing-18px; // 18px（原 20px）；已收敛为全局 Token
     }
 
     .si-card__footer {
-      padding: $spacing-4 18px; // 16px 18px（原 18px 20px）
+      padding: $spacing-4 $spacing-18px; // 16px 18px（原 18px 20px）
     }
 
     .si-card__cover {

@@ -9,16 +9,16 @@
 }
 
 .search-results-body {
-  padding-top: 6px;
+  padding-top: $spacing-6px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: $spacing-6px;
   max-height: 220px;
   overflow-y: auto;
 }
 
 .search-result-item {
-  padding: 5px 0;
+  padding: $spacing-5px 0;
 
   & + & {
     border-top: 1px solid var(--b3-theme-surface-lighter);
@@ -28,7 +28,7 @@
 .search-result-header {
   display: flex;
   align-items: baseline;
-  gap: 4px;
+  gap: $spacing-1;
 }
 
 .search-result-index {
@@ -52,7 +52,7 @@
 }
 
 .search-result-content {
-  margin-top: 3px;
+  margin-top: $spacing-px;
   font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.65;

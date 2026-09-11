@@ -14,7 +14,7 @@
   grid-template-columns: minmax(0, 1fr) 68px 78px auto;
   align-items: center;
   gap: 0;
-  padding: 4px 8px;
+  padding: $spacing-1 $spacing-2;
   border-bottom: 1px solid $border;
   background: var(--b3-theme-surface);
   flex-shrink: 0;
@@ -34,12 +34,12 @@
 
 .db-col-size {
   text-align: right;
-  padding: 0 6px;
+  padding: 0 $spacing-6px;
 }
 
 .db-col-date {
   text-align: right;
-  padding: 0 6px;
+  padding: 0 $spacing-6px;
 }
 
 .db-col-actions {
@@ -57,12 +57,12 @@
 .db-empty {
   @include flex-center;
   flex-direction: column;
-  padding: 32px 20px;
+  padding: $spacing-8 $spacing-5;
   color: var(--b3-theme-on-surface-light);
 
   svg, :deep(svg) {
     opacity: 0.2;
-    margin-bottom: 8px;
+    margin-bottom: $spacing-2;
   }
 
   p {
@@ -81,7 +81,7 @@
 .db-status-bar {
   @include flex-align-center;
   justify-content: space-between;
-  padding: 3px 8px;
+  padding: $spacing-px $spacing-2;
   border-top: 1px solid $border;
   background: var(--b3-theme-surface);
   flex-shrink: 0;
@@ -93,13 +93,13 @@
 
 .db-status-left {
   @include flex-align-center;
-  gap: 6px;
+  gap: $spacing-6px;
 }
 
 .db-status-cache {
   font-size: $font-size-2xs;
-  padding: 0 4px;
-  border-radius: 2px;
+  padding: 0 $spacing-1;
+  border-radius: $radius-2px;
   color: var(--b3-theme-primary);
   background: var(--b3-theme-primary-lightest);
 

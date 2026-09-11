@@ -38,10 +38,10 @@
   border: none;
   outline: none;
   resize: none;
-  padding: 14px 16px;
+  padding: $spacing-14px $spacing-4;
   background: transparent;
   color: #e0e0e0;
-  font-family: Consolas, Monaco, 'Courier New', $vp-mono, monospace;
+  font-family: $vp-mono;
   font-size: $font-size-sm;
   line-height: 1.7;
   tab-size: 2;
@@ -57,7 +57,7 @@
 
   &::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.12);
-    border-radius: 3px;
+    border-radius: $radius-px;
   }
 
   &::-webkit-scrollbar-track {

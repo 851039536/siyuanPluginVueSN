@@ -7,7 +7,7 @@
   }
   &__input {
     width: 100%;
-    padding: 7px 10px;
+    padding: $spacing-7px $spacing-10px;
     border: 1px solid var(--b3-border-color);
     border-radius: $radius-md;
     font-size: $font-size-sm;
@@ -31,7 +31,7 @@
   }
   &__card {
     position: relative;
-    padding: 10px;
+    padding: $spacing-10px;
     border: 1px solid var(--b3-border-color);
     border-radius: $radius-md;
     cursor: pointer;
@@ -56,7 +56,7 @@
     border: none;
     border-radius: $radius-sm;
     background: transparent;
-    color: #94a3b8;
+    color: var(--b3-theme-on-surface-variant);
     font-size: $font-size-sm; // 图标尺寸
     line-height: 1;
     cursor: pointer;
@@ -64,14 +64,14 @@
     transition: opacity 0.12s, color 0.12s;
     padding: 0;
     &:hover {
-      color: #ef4444;
+      color: var(--b3-theme-error);
       background: rgba(239, 68, 68, 0.1);
     }
   }
   &__card-top {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: $spacing-6px;
     margin-bottom: $spacing-2;
   }
   &__lang-dot {
@@ -94,16 +94,16 @@
   &__card-bottom {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: $spacing-6px;
     flex-wrap: wrap;
   }
   &__card-category {
     font-size: $font-size-2xs;
-    color: #94a3b8;
+    color: var(--b3-theme-on-surface-variant);
   }
   &__card-count {
     font-size: $font-size-2xs;
-    color: #94a3b8;
+    color: var(--b3-theme-on-surface-variant);
     margin-left: auto;
     font-feature-settings: "tnum";
     font-family: $vp-mono;

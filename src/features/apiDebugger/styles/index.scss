@@ -92,19 +92,19 @@
   &__status-badge {
     display: inline-flex;
     align-items: center;
-    padding: 2px 8px;
+    padding: $spacing-2px $spacing-2;
     border-radius: $radius-sm;
     font-weight: $font-weight-semibold;
     font-size: $font-size-xs;
 
     &--success {
       background: rgba(16, 185, 129, 0.15);
-      color: #10b981;
+      color: var(--b3-theme-success);
     }
 
     &--error {
       background: rgba(239, 68, 68, 0.15);
-      color: #ef4444;
+      color: var(--b3-theme-error);
     }
   }
 
@@ -123,7 +123,7 @@
     padding: $spacing-3;
     overflow: auto;
     max-height: 400px;
-    font-family: "SFMono-Regular", "Consolas", "Liberation Mono", "Menlo", monospace;
+    font-family: $vp-mono;
     font-size: $font-size-xs;
     line-height: $line-height-normal;
     white-space: pre-wrap;
@@ -131,7 +131,7 @@
   }
 
   &__error-msg {
-    color: #ef4444;
+    color: var(--b3-theme-error);
     font-size: $font-size-xs;
     padding: $spacing-2;
     background: rgba(239, 68, 68, 0.1);
@@ -158,7 +158,7 @@
   &__history-actions {
     display: flex;
     justify-content: flex-end;
-    margin-bottom: 4px;
+    margin-bottom: $spacing-1;
   }
 
   &__history-list {
@@ -189,30 +189,30 @@
     align-items: center;
     justify-content: center;
     width: 48px;
-    padding: 1px 4px;
-    border-radius: 3px;
+    padding: $spacing-1px $spacing-1;
+    border-radius: $radius-px;
     font-weight: $font-weight-semibold;
     font-size: $font-size-2xs;
     flex-shrink: 0;
 
     &--post {
       background: rgba(16, 185, 129, 0.15);
-      color: #10b981;
+      color: var(--b3-theme-success);
     }
 
     &--get {
       background: rgba(59, 130, 246, 0.15);
-      color: #3b82f6;
+      color: var(--b3-theme-info);
     }
 
     &--put {
       background: rgba(245, 158, 11, 0.15);
-      color: #f59e0b;
+      color: var(--b3-theme-warning);
     }
 
     &--delete {
       background: rgba(239, 68, 68, 0.15);
-      color: #ef4444;
+      color: var(--b3-theme-error);
     }
   }
 
@@ -230,11 +230,11 @@
     font-weight: $font-weight-medium;
 
     &--success {
-      color: #10b981;
+      color: var(--b3-theme-success);
     }
 
     &--error {
-      color: #ef4444;
+      color: var(--b3-theme-error);
     }
   }
 
@@ -263,13 +263,13 @@
 }
 
 .json-number {
-  color: #d97706;
+  color: var(--b3-theme-warning);
 }
 
 .json-boolean {
-  color: #dc2626;
+  color: var(--b3-theme-error);
 }
 
 .json-null {
-  color: #6b7280;
+  color: var(--b3-theme-on-surface-variant);
 }

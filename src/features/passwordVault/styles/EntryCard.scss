@@ -41,7 +41,7 @@
 }
 
 .entry-category-tag {
-  padding: 1px 6px;
+  padding: $spacing-1px $spacing-6px;
   border-radius: $radius-sm;
   font-size: $font-size-2xs;
   font-weight: $font-weight-bold;
@@ -56,7 +56,7 @@
   transition: opacity 0.12s;
 
   button {
-    padding: 3px 8px;
+    padding: $spacing-px $spacing-2;
     background: transparent;
     border: 1px solid var(--b3-border-color);
     border-radius: $radius-sm;
@@ -73,7 +73,7 @@
     }
 
     &:last-child {
-      padding: 3px 6px;
+      padding: $spacing-px $spacing-6px;
     }
   }
 }
@@ -85,7 +85,7 @@
 .entry-account {
   @include flex-row-gap(6px);
   justify-content: space-between;
-  padding: 8px 10px;
+  padding: $spacing-2 $spacing-10px;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
   border-radius: $vp-radius;
@@ -128,7 +128,7 @@
 
 .entry-field {
   @include flex-row-gap($spacing-1);
-  padding: 8px 10px;
+  padding: $spacing-2 $spacing-10px;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
   border-radius: $vp-radius;

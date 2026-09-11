@@ -34,7 +34,7 @@
   align-items: center;
   justify-content: space-between;
   gap: $spacing-2;
-  padding: 8px 12px;
+  padding: $spacing-2 $spacing-3;
   background: var(--b3-theme-surface);
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
@@ -55,7 +55,7 @@
   font-size: $font-size-2xs;
   font-family: $vp-mono;
   font-weight: $font-weight-medium;
-  padding: 1px 6px;
+  padding: $spacing-1px $spacing-6px;
   border-radius: $radius-sm;
   border: 1px solid var(--b3-border-color);
   color: var(--b3-theme-on-surface);

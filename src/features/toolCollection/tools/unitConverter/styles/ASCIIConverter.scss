@@ -1,0 +1,91 @@
+// ASCII 转换器组件样式
+@use "@/variables.scss" as *;
+@use "./index" as index;
+
+$ac-space-6: 6px; // 无对应 Token（全局间距档为 4px → 8px）
+$ac-space-10: 10px; // 无对应 Token（全局间距档为 8px → 12px）
+$ac-space-14: 14px; // 无对应 Token
+$ac-font-11: 11px; // 无对应 Token（介于 $font-size-2xs 与 $font-size-xs）
+
+.ascii-converter {
+  display: flex;
+  flex-direction: column;
+  gap: $ac-space-14;
+
+  .ascii-table-controls {
+    display: flex;
+    flex-direction: column;
+    gap: $ac-space-6;
+    margin-bottom: $ac-space-10;
+
+    label {
+      @include index.label-style;
+    }
+
+    .range-controls {
+      display: flex;
+      align-items: center;
+      gap: $spacing-2;
+
+      span {
+        color: var(--b3-theme-on-surface);
+        opacity: 0.3;
+      }
+    }
+  }
+
+  .ascii-table {
+    border: 1px solid var(--b3-border-color);
+    border-radius: $radius-sm;
+    overflow: hidden;
+    max-height: 300px;
+    overflow-y: auto;
+
+    .table-header {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.5fr 1.5fr;
+      background: var(--b3-theme-surface);
+      border-bottom: 1px solid var(--b3-border-color);
+      @include index.label-style;
+      padding: $ac-space-6 $ac-space-10;
+
+      span {
+        text-align: center;
+      }
+    }
+
+    .table-body {
+      .table-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1.5fr 1.5fr;
+        border-bottom: 1px solid var(--b3-border-color);
+        font-family: $vp-mono;
+        font-size: $ac-font-11;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        &:hover {
+          background: var(--b3-theme-surface);
+        }
+
+        span {
+          padding: $spacing-1 $ac-space-10;
+          text-align: center;
+          color: var(--b3-theme-on-surface);
+
+          &:first-child {
+            font-weight: $font-weight-semibold;
+            opacity: 0.7;
+          }
+
+          &:last-child {
+            font-weight: $font-weight-medium;
+            color: var(--b3-theme-primary);
+          }
+        }
+      }
+    }
+  }
+}

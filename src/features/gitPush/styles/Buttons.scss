@@ -4,8 +4,8 @@
 .vp-btn {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 5px 10px;
+  gap: $spacing-px;
+  padding: $spacing-5px $spacing-10px;
   border-radius: $radius-sm;
   font-size: $font-size-xs;
   cursor: pointer;
@@ -13,13 +13,13 @@
   transition: opacity 0.15s, border-color 0.15s, background 0.15s;
 
   &--sm {
-    padding: 2px 5px;
+    padding: $spacing-2px $spacing-5px;
     font-size: $font-size-2xs;
   }
 
   // 比 --sm 再小一号（字号已是最小 Token，缩小体现在内边距与行高；用于可编辑远程列表的行内按钮）
   &--xs {
-    padding: 1px 3px;
+    padding: $spacing-1px $spacing-px;
     font-size: $font-size-2xs;
     line-height: $line-height-tight;
   }

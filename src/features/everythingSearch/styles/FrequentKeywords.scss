@@ -29,8 +29,8 @@
   &__chip {
     display: inline-flex;
     align-items: center;
-    gap: 2px;
-    padding: 2px $spacing-2;
+    gap: $spacing-2px;
+    padding: $spacing-2px $spacing-2;
     border-radius: $radius-full;
     border: 1px solid var(--b3-border-color);
     background: var(--b3-theme-surface);

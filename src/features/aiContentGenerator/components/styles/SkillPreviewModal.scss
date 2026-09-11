@@ -26,7 +26,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: $spacing-3 16px;
+  padding: $spacing-3 $spacing-4;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
   gap: $spacing-3;
 }
@@ -36,7 +36,7 @@
   font-size: $font-size-base;
   font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-background);
-  margin-bottom: 2px;
+  margin-bottom: $spacing-2px;
 }
 
 .skill-preview-desc {
@@ -50,7 +50,7 @@
 .skill-preview-body {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: $spacing-4;
 }
 
 .skill-preview-content {
@@ -66,9 +66,9 @@
   :deep(p) { margin: 0.4em 0; }
   :deep(ul), :deep(ol) { margin: 0.3em 0; padding-left: 1.4em; }
   :deep(code) {
-    padding: 1px 4px;
+    padding: $spacing-1px $spacing-1;
     background: var(--b3-theme-surface-lighter);
-    border-radius: 2px;
+    border-radius: $radius-2px;
     font-size: 0.85em;
   }
   :deep(pre) {
@@ -90,7 +90,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px;
+  padding: $spacing-10px $spacing-4;
   border-top: 1px solid var(--b3-theme-surface-lighter);
 }
 

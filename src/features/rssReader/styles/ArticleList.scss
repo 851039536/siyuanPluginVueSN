@@ -7,7 +7,7 @@
     .rss-item {
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: $spacing-px;
       padding: $spacing-2 $spacing-3;
       cursor: pointer;
       border-bottom: 1px solid var(--b3-border-color);
@@ -69,7 +69,7 @@
           color: var(--b3-theme-on-surface-muted);
           font-size: $font-size-sm;
           transition: $rr-transition;
-          &.starred { color: #f59e0b; }
+          &.starred { color: var(--b3-theme-warning); }
           &:hover { background: var(--b3-theme-surface-lighter); }
         }
       }

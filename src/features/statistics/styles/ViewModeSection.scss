@@ -6,15 +6,15 @@
 .view-mode-section {
   .mode-row {
     display: flex;
-    gap: 6px;
+    gap: $spacing-6px;
     align-items: center;
   }
 
   .mode-tabs {
     display: flex;
     flex: 1;
-    gap: 4px;
-    padding: 3px;
+    gap: $spacing-1;
+    padding: $spacing-px;
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
     border-radius: stats.$radius-sm;
@@ -23,7 +23,7 @@
 
   .mode-tab {
     flex: 1;
-    padding: 6px 4px;
+    padding: $spacing-6px $spacing-1;
     border: none;
     background: transparent;
     color: var(--b3-theme-on-surface);
@@ -34,7 +34,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: $spacing-1;
     border-radius: stats.$radius-sm;
     white-space: nowrap;
 
@@ -52,13 +52,13 @@
   .range-selector {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
-    margin: 4px;
+    gap: $spacing-6px;
+    margin: $spacing-1;
     justify-content: center;
   }
 
   .range-btn {
-    padding: 5px 12px;
+    padding: $spacing-5px $spacing-3;
     border: 1px solid var(--b3-border-color);
     background: var(--b3-theme-surface);
     color: var(--b3-theme-on-surface);
@@ -83,10 +83,10 @@
 
   .year-selector {
 
-    margin-top: 10px;
+    margin-top: $spacing-10px;
     .year-select {
       width: 100%;
-      padding: 6px 12px;
+      padding: $spacing-6px $spacing-3;
       border: 1px solid var(--b3-border-color);
       border-radius: stats.$radius-sm;
       background: var(--b3-theme-surface);
@@ -109,14 +109,14 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 0;
     border-top: 1px solid var(--b3-border-color);
-    margin-top: 6px;
+    margin-top: $spacing-6px;
   }
 
   .period-stat-card {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    padding: 6px 12px;
+    padding: $spacing-6px $spacing-3;
     border-left: 1px solid var(--b3-border-color);
 
     &:first-child {
@@ -131,7 +131,7 @@
       text-transform: uppercase;
       color: var(--b3-theme-on-surface);
       opacity: 0.45;
-      margin-bottom: 2px;
+      margin-bottom: $spacing-2px;
     }
 
     .stat-value {
@@ -149,7 +149,7 @@
   .view-mode-section {
     .mode-tabs {
       overflow-x: auto;
-      padding-bottom: 4px;
+      padding-bottom: $spacing-1;
 
       &::-webkit-scrollbar {
         display: none;
@@ -158,7 +158,7 @@
 
     .mode-tab {
       flex: none;
-      padding: 8px 16px;
+      padding: $spacing-2 $spacing-4;
     }
 
     .range-selector {
@@ -167,7 +167,7 @@
 
     .period-stats-cards {
       grid-template-columns: 1fr;
-      gap: 12px;
+      gap: $spacing-3;
     }
   }
 }

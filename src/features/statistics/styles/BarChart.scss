@@ -20,7 +20,7 @@
     align-items: flex-end;
     gap: $spacing-2;
     min-height: 160px;
-    padding: 15px 5px 35px 5px;
+    padding: 15px $spacing-5px 35px $spacing-5px;
     position: relative;
 
     .bar-item {

@@ -106,7 +106,7 @@ $border: var(--b3-border-color);
 .db-all-drives-header {
   @include flex-align-center;
   gap: $spacing-2;
-  padding: 10px 14px;
+  padding: $spacing-10px $spacing-14px;
   border-bottom: 1px solid $border;
   flex-shrink: 0;
 }
@@ -127,7 +127,7 @@ $border: var(--b3-border-color);
 .db-all-overview {
   @include flex-align-center;
   gap: $spacing-3;
-  padding: $spacing-3 14px;
+  padding: $spacing-3 $spacing-14px;
   border-bottom: 1px solid $border;
   flex-shrink: 0;
 }
@@ -142,7 +142,7 @@ $border: var(--b3-border-color);
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: $spacing-2px;
 }
 
 .db-all-overview-meta {
@@ -152,7 +152,7 @@ $border: var(--b3-border-color);
 
 .db-all-overview-capacity {
   @include flex-align-center;
-  gap: 6px;
+  gap: $spacing-6px;
   font-family: $vp-mono;
   font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface);
@@ -176,8 +176,8 @@ $border: var(--b3-border-color);
 .db-all-drives-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  padding: 10px;
+  gap: $spacing-2;
+  padding: $spacing-10px;
   overflow-y: auto;
   flex-shrink: 0;
   max-height: 240px;
@@ -186,8 +186,8 @@ $border: var(--b3-border-color);
 .db-all-drive-card {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 10px;
+  gap: $spacing-6px;
+  padding: $spacing-10px;
   background: var(--b3-theme-surface);
   cursor: pointer;
   @include border-card;
@@ -208,7 +208,7 @@ $border: var(--b3-border-color);
 
 .db-all-drive-card-head {
   @include flex-align-center;
-  gap: 8px;
+  gap: $spacing-2;
 }
 
 .db-all-drive-icon {
@@ -250,11 +250,11 @@ $border: var(--b3-border-color);
   }
 
   &.tone-warning {
-    color: #d97706;
+    color: var(--b3-theme-warning);
   }
 
   &.tone-danger {
-    color: #dc2626;
+    color: var(--b3-theme-error);
   }
 }
 
@@ -262,7 +262,7 @@ $border: var(--b3-border-color);
   width: 100%;
   height: 4px;
   background: var(--b3-theme-surface-lighter);
-  border-radius: 2px;
+  border-radius: $radius-2px;
   overflow: hidden;
 }
 
@@ -272,11 +272,11 @@ $border: var(--b3-border-color);
   transition: width 0.3s ease;
 
   &.tone-warning {
-    background: #d97706;
+    background: var(--b3-theme-warning);
   }
 
   &.tone-danger {
-    background: #dc2626;
+    background: var(--b3-theme-error);
   }
 }
 
@@ -284,7 +284,7 @@ $border: var(--b3-border-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 4px;
+  gap: $spacing-1;
   font-family: $vp-mono;
   font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface-light);
@@ -299,8 +299,8 @@ $border: var(--b3-border-color);
 .db-all-empty {
   @include flex-center;
   flex-direction: column;
-  gap: 8px;
-  padding: $spacing-6 20px;
+  gap: $spacing-2;
+  padding: $spacing-6 $spacing-5;
   color: var(--b3-theme-on-surface-light);
 
   svg, :deep(svg) {
@@ -323,8 +323,8 @@ $border: var(--b3-border-color);
 
 .db-all-fav-header {
   @include flex-align-center;
-  gap: 6px;
-  padding: 6px 14px;
+  gap: $spacing-6px;
+  padding: $spacing-6px $spacing-14px;
   border-bottom: 1px dashed $border;
 
   span {
@@ -334,13 +334,13 @@ $border: var(--b3-border-color);
 }
 
 .db-all-fav-list {
-  padding: 4px 0;
+  padding: $spacing-1 0;
 }
 
 .db-all-fav-row {
   @include flex-align-center;
-  gap: 8px;
-  padding: 6px 14px;
+  gap: $spacing-2;
+  padding: $spacing-6px $spacing-14px;
   cursor: pointer;
   transition: background-color 0.12s;
 
@@ -360,8 +360,8 @@ $border: var(--b3-border-color);
 .db-all-fav-empty {
   @include flex-center;
   flex-direction: column;
-  gap: 8px;
-  padding: $spacing-8 20px;
+  gap: $spacing-2;
+  padding: $spacing-8 $spacing-5;
   color: var(--b3-theme-on-surface-light);
 
   svg, :deep(svg) {

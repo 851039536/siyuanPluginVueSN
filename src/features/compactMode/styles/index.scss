@@ -31,12 +31,12 @@ $font-scales: (
   @media (max-width: $mobile-breakpoint) {
     .toolbar {
       gap: 0.125rem * $s;
-      padding: (0.125rem * $s) (0.25rem * $s);
+      padding: (0.125rem * $s) ($spacing-1 * $s);
     }
-    .protyle-content { padding: 0.5rem * $s; }
-    .b3-dialog { padding: 0.75rem * $s; }
+    .protyle-content { padding: $spacing-2 * $s; }
+    .b3-dialog { padding: $spacing-3 * $s; }
     .b3-dialog__body {
-      padding: 0.75rem * $s;
+      padding: $spacing-3 * $s;
       font-size: $font-size-xs;
     }
   }
@@ -73,7 +73,7 @@ html.siyuan-compact-mode {
       min-height: 1.5rem;
       line-height: 20px !important;
     }
-    .b3-menu { padding: 0.25rem 0; }
+    .b3-menu { padding: $spacing-1 0; }
   }
 }
 
@@ -87,56 +87,56 @@ html.siyuan-compact-mode {
         padding: 0.375rem * $s;
       }
       .b3-list-item {
-        padding: (0.25rem * $s) (0.5rem * $s);
+        padding: ($spacing-1 * $s) ($spacing-2 * $s);
       }
     }
 
     // --- 编辑区 ---
     &.compact-area-editor {
       .toolbar {
-        gap: 0.25rem * $s;
-        padding: (0.25rem * $s) (0.5rem * $s);
+        gap: $spacing-1 * $s;
+        padding: ($spacing-1 * $s) ($spacing-2 * $s);
       }
-      .protyle-content { padding: 0.5rem * $s; }
+      .protyle-content { padding: $spacing-2 * $s; }
       h1, h2, h3, h4, h5, h6 {
-        margin: (0.25rem * $s) 0;
-        padding: (0.25rem * $s) 0;
+        margin: ($spacing-1 * $s) 0;
+        padding: ($spacing-1 * $s) 0;
       }
       .hljs { padding: 0.375rem * $s; }
-      table { padding: 0.25rem * $s; }
-      td, th { padding: (0.25rem * $s) (0.5rem * $s); }
+      table { padding: $spacing-1 * $s; }
+      td, th { padding: ($spacing-1 * $s) ($spacing-2 * $s); }
     }
 
     // --- 页签栏 ---
     &.compact-area-tabs {
       .layout-tab-bar .item {
-        padding: (0.25rem * $s) (0.75rem * $s);
+        padding: ($spacing-1 * $s) ($spacing-3 * $s);
         line-height: 1.5rem * $s;
       }
       .tab {
-        padding: (0.375rem * $s) (0.75rem * $s);
+        padding: (0.375rem * $s) ($spacing-3 * $s);
       }
     }
 
     // --- 对话框 ---
     &.compact-area-dialogs {
-      .b3-dialog { padding: 0.75rem * $s; }
-      .b3-dialog__header { padding: (0.5rem * $s) (0.75rem * $s); }
-      .b3-dialog__body { padding: 0.5rem * $s; }
+      .b3-dialog { padding: $spacing-3 * $s; }
+      .b3-dialog__header { padding: ($spacing-2 * $s) ($spacing-3 * $s); }
+      .b3-dialog__body { padding: $spacing-2 * $s; }
     }
 
     // --- 按钮与控件 ---
     &.compact-area-controls {
       .b3-button {
-        padding: (0.375rem * $s) (0.75rem * $s);
+        padding: (0.375rem * $s) ($spacing-3 * $s);
       }
       .b3-text-field,
       .b3-input,
       .b3-select {
-        padding: (0.375rem * $s) (0.5rem * $s);
+        padding: (0.375rem * $s) ($spacing-2 * $s);
       }
       .b3-menu__item {
-        padding: (0.375rem * $s) (0.75rem * $s);
+        padding: (0.375rem * $s) ($spacing-3 * $s);
       }
     }
 

@@ -53,6 +53,10 @@ $line-height-relaxed: 1.75;
 // ========== 圆角（$radius-*） ==========
 
 $radius-none: 0;
+// 极小圆角档（沿用 $spacing-2px / $spacing-px 的「值即名称」写法）：
+// 2px 与 3px 圆角在代码库中出现 70+ 次（徽标、chip、滚动条拇指、小指示器），原无对应档位
+$radius-2px: 2px;         // 2px 极小圆角
+$radius-px: 3px;          // 3px 极小圆角
 $radius-sm: 0.25rem;      // 4px
 $radius-base: 0.375rem;   // 6px
 $radius-md: 0.5rem;       // 8px
@@ -67,8 +71,17 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 
 // ========== 间距（$spacing-*） ==========
 
+$spacing-1px: 1px;          // 1px 极细间距（紧凑控件内边距、细分隔线间距）
 $spacing-2px: 2px;          // 2px 超微间距（极窄分隔线间距、图标紧贴）
 $spacing-px: 3px;           // 3px 微间距（密集布局专用，如 grid gap、tiny padding）
+// 以下非 4px 倍数档沿用「值即名称」写法，只补齐 $spacing-1~16（4/8/12/16/20/24…）未覆盖的值，
+// 避免与 rem 档位语义重复；等值替换，不改变任何视觉表现。
+$spacing-5px: 5px;          // 5px 紧凑内边距（介于 $spacing-1=4px 与 $spacing-6px=6px 之间）
+$spacing-6px: 6px;          // 6px 最紧凑档（$spacing-1=4px 偏小、$spacing-2=8px 偏大）
+$spacing-7px: 7px;          // 7px 表单控件内边距（gitPush / passwordVault 表单长期使用的微调值）
+$spacing-10px: 10px;        // 10px 中等紧凑档（介于 $spacing-2=8px 与 $spacing-3=12px 之间）
+$spacing-14px: 14px;        // 14px 卡片水平内边距（组件库由 16px 微调而来，见 Card / Select）
+$spacing-18px: 18px;        // 18px 宽松卡片内边距（组件库由 20px 微调而来，见 Card）
 $spacing-0: 0;
 $spacing-1: 0.25rem;    // 4px
 $spacing-2: 0.5rem;     // 8px

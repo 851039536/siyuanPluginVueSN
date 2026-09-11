@@ -8,8 +8,8 @@
 .platform-filter-bar {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-10px;
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
   overflow-x: auto;
@@ -26,14 +26,14 @@
     text-transform: uppercase;
     opacity: 0.35;
     white-space: nowrap;
-    margin-right: 2px;
+    margin-right: $spacing-2px;
     flex-shrink: 0;
   }
 
   .platform-chip {
     display: inline-flex;
     align-items: center;
-    padding: 2px 8px;
+    padding: $spacing-2px $spacing-2;
     border: 1px solid var(--b3-border-color);
     border-radius: $radius-sm;
     background: transparent;
@@ -67,14 +67,14 @@
       justify-content: center;
       min-width: 16px;
       height: 15px;
-      padding: 0 4px;
+      padding: 0 $spacing-1;
       border-radius: $radius-sm;
       background: var(--b3-theme-on-surface-variant, #6b7280);
       color: var(--b3-theme-on-primary, #fff);
       font-size: $font-size-2xs;
       font-weight: $font-weight-bold;
       font-family: $vp-mono;
-      margin-left: 3px;
+      margin-left: $spacing-px;
       line-height: 1;
     }
   }
@@ -103,8 +103,8 @@
 .platform-filter-hint {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
+  gap: $spacing-6px;
+  padding: $spacing-1 $spacing-10px;
   font-size: $font-size-xs;
   color: var(--b3-theme-on-surface-variant);
   background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.05));
@@ -113,6 +113,6 @@
 
   strong {
     color: var(--b3-theme-primary);
-    margin: 0 2px;
+    margin: 0 $spacing-2px;
   }
 }
